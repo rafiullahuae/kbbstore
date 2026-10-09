@@ -102,7 +102,9 @@ it('draws the same header and footer on the Journal and an article as on a conte
     }
 
     $index = (string) $this->get('/blog/')->getContent();
-    expect($index)->toContain('<section class="hero">')->toContain('id="grid"')->toContain('KBB_BLOG_ALL_LABEL');
+    // Lane PH: the index opens on the brand page's header by default (Appearance
+    // -> Site layout -> Page header (brand design)); the chips and grid are its own.
+    expect($index)->toContain('id="brw-ph-title"')->toContain('id="chips"')->toContain('id="grid"')->toContain('KBB_BLOG_ALL_LABEL');
 
     $article = (string) $this->get('/blog/jsh-article/')->getContent();
     expect($article)->toContain('<article id="article">')->toContain('Oil dissolves oil.');

@@ -2422,6 +2422,23 @@ KBB_BH_CSS;
     {
         return [
             /*
+             * THE JOURNAL'S INDEX IN THE BRAND PAGE'S DESIGN.          (Lane PH)
+             *
+             * The owner, 9 October: "i want the same header style, which we
+             * used for categories and brands page. need the same for normal
+             * pages too." The Journal's index opens on the brand page's
+             * no-picture Panel -- its own heading and line -- in a box of its
+             * own just inside <main>, OUTSIDE .kbb-journal. FIRST, so Lane BH's
+             * two rules below see the page they were written for; the hero it
+             * replaces is cut from the other side in approvedRemovals(), and
+             * the tag chips' new row by the rule after BH's. One page, /blog/.
+             * PageBrandHeaderTest pins what is inside.
+             */
+            'the Journal index header, brand design with no picture (Lane PH)' => [
+                'pattern' => '#<div class="wrap kbb-cbw">\n<div class="brw-phw" data-kbb-brand-header>\n<section class="brw-ph brw-ph--frost brw-ph--pill-capsule brw-ph--logo-circle brw-ph--pos-center brw-ph--noimg" style="[^"<>]*" aria-labelledby="brw-ph-title">.*?</section>\n</div>\n</div>\n(?=<div class="kbb-journal">)#s',
+                'hits' => 1,
+            ],
+            /*
              * THE JOURNAL AND AN ARTICLE ON THE SHOP'S OWN LAYOUT (Lane BH).
              * The owner: "on blog page, and on article page, the main header is
              * not coming correct. i need the same as we have on all other
@@ -2449,8 +2466,16 @@ KBB_BH_CSS;
             'the journal and an article on the shared layout: footer and scripts (Lane BH)' => [
                 // Anchored on the content's first element at the very start, which
                 // only these two pages have once the rule above has cut their head.
-                'pattern' => '#\A(?=<section class="hero">|<article id="article">).*?\K</div>\n</main>.*\z#s',
+                // Lane PH: or the Journal's tag chips, which open the index now
+                // that the brand-design header (cut first) replaced its hero.
+                'pattern' => '#\A(?=<section class="hero">|<article id="article">|<div class="wrap"><div class="chips" id="chips">).*?\K</div>\n</main>.*\z#s',
                 'hits' => 2,
+            ],
+            // Lane PH: the Journal's tag chips, in a row of their own under the
+            // brand-design header -- the same element the hero held. /blog/ only.
+            'the Journal tag chips under its header (Lane PH)' => [
+                'pattern' => '#\A<div class="wrap"><div class="chips" id="chips"></div></div>\n#',
+                'hits' => 1,
             ],
             // The shop's 404 page in its place (Lane NF): see the removal of
             // the same name. The whole '(404)' document, design B, once.
@@ -2727,6 +2752,30 @@ KBB_BH_CSS;
              * this walk being told is red here. CategoryBannerTest pins what
              * is inside the section.
              */
+            /*
+             * THE CONTENT PAGES' HEADER, IN THE BRAND PAGE'S DESIGN.   (Lane PH)
+             *
+             * The owner, 9 October: "need the same for normal pages too." The
+             * seven content pages (About, Contact, Delivery, Returns, Terms,
+             * FAQ, Privacy) open on the brand page's NO-PICTURE Panel under the
+             * breadcrumb, carrying the page's one <h1> -- the <h1> the article
+             * drew is cut from the other side in approvedRemovals() -- and the
+             * brand header's stylesheet with the category rule and the page
+             * rule in <head> (the Journal's index has the same, inside the
+             * head Lane BH's first rule cuts whole, so seven). BEFORE
+             * Lane CB2's stylesheet rule, whose pattern this one would
+             * otherwise also satisfy. Every other page is compared byte for
+             * byte as before. PageBrandHeaderTest pins what is inside, and that
+             * "Normal page banner" renders these pages exactly as they were.
+             */
+            'the page header stylesheet, brand design (Lane PH)' => [
+                'pattern' => '#<link rel="preload" as="style" href="/build/assets/kbb-brand-header-[A-Za-z0-9_-]+\.css" /><link rel="stylesheet" href="/build/assets/kbb-brand-header-[A-Za-z0-9_-]+\.css" />\n?<style>\.kbb-cbw\{[^<]*\.kbb-home \.kbb-cbw \.brw-ph__name\{letter-spacing:-\.01em\}</style>\n?#',
+                'hits' => 7,
+            ],
+            'the content page header, brand design with no picture (Lane PH)' => [
+                'pattern' => '#<div class="kbb-cbw">\n<div class="brw-phw" data-kbb-brand-header>\n<section class="brw-ph brw-ph--frost brw-ph--pill-capsule brw-ph--logo-circle brw-ph--pos-center brw-ph--noimg" style="[^"<>]*" aria-labelledby="brw-ph-title">.*?</section>\n</div>\n</div>\n#s',
+                'hits' => 7,
+            ],
             'the category header stylesheet, brand design (Lane CB2)' => [
                 'pattern' => '#<link rel="preload" as="style" href="/build/assets/kbb-brand-header-[A-Za-z0-9_-]+\.css" /><link rel="stylesheet" href="/build/assets/kbb-brand-header-[A-Za-z0-9_-]+\.css" />\n?<style>\.kbb-cbw\{[^<]*</style>\n?#',
                 'hits' => 1,
@@ -3591,6 +3640,21 @@ KBB_BH_CSS;
             'the journal and an article on the shared layout: footer and scripts (Lane BH)' => [
                 'pattern' => '#<footer><div class="wrap fin">.*\z#s',
                 'hits' => 2,
+            ],
+            /*
+             * THE CONTENT PAGE'S OWN <h1>, AND THE JOURNAL'S HERO (Lane PH),
+             * AFTER Lane BH's two, whose cut ends at that hero: replaced by the brand-design header that carries the same words
+             * as the page's one <h1> -- the insertions of the same name. The
+             * article's heading on the seven content pages, and /blog/'s hero
+             * (eyebrow, heading, line, chips) once.
+             */
+            'the content page\'s own h1, now the brand-design header\'s (Lane PH)' => [
+                'pattern' => '#(?<=<article class="policy">\n)        <h1>[^\n]*</h1>\n#',
+                'hits' => 7,
+            ],
+            'the Journal\'s own hero, now the brand-design header (Lane PH)' => [
+                'pattern' => '#<section class="hero"><div class="wrap hero-in">\n.*?</div></section>\n#s',
+                'hits' => 1,
             ],
             /*
              * THE BARE FRAMEWORK 404 GOES (Lane NF). The owner: "i want 404 page

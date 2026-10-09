@@ -1008,6 +1008,164 @@ class SiteLayout
             ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
 
         /*
+         * THE PAGE HEADER, IN THE BRAND PAGE'S DESIGN.               (Lane PH)
+         *
+         * The owner, 9 October: "i want the same header style, which we used
+         * for categories and brands page. need the same for normal pages too.
+         * except homepage, we must should have control to display header or
+         * normal site banner, only that will be difference from other
+         * headers." So the content pages (About, Contact, Delivery, Returns,
+         * Terms, FAQ, Privacy ...) and the Journal index draw the brand
+         * page's Panel header -- the same partial, the same stylesheet, the
+         * same controls under this `pg_` prefix (App\Support\BrandPanel::
+         * PAGE_PREFIX), less the five logo controls: a page has no logo.
+         *
+         * ON, because he asked. "Normal page banner (as before)" puts every
+         * page back on what it drew before -- Pages -> Page header and Pages
+         * -> Page banners, byte for byte. Each page can choose for itself in
+         * Pages -> User pages -> Edit page -> Page header (`pages.
+         * header_layout`). Not CSS: in PGBANNER_KEYS, so isDefault() skips them.
+         */
+        'pg_hero' => ['select', 'Page header', 'panel',
+            'Brand-page design, as you asked: About, Contact, Delivery, Returns, Terms, FAQ, Privacy and every other content page get the brand page\'s header -- a picture as the background with a panel holding the page title and subtitle, or, with no picture, the brand page\'s no-picture look. Normal page banner: the page as before, with the header and banner from Pages → Page header and Pages → Page banners. Each page can choose for itself in Pages → User pages → Edit page → Page header. The homepage is never changed: it keeps its own slider.',
+            [
+                'panel' => 'Brand-page design (default)',
+                'banner' => 'Normal page banner (as before)',
+            ]],
+        'pg_blog' => ['select', 'The Journal (/blog/) header', 'pages',
+            'The top of the Journal\'s list of articles. Same as the pages follows "Page header" above. An article keeps its own title and cover picture whichever you pick.',
+            [
+                'pages' => 'Same as the pages (default)',
+                'panel' => 'Brand-page design',
+                'own' => 'The Journal\'s own header (as before)',
+            ]],
+        'pg_panel_style' => ['select', 'Banner · background', 'frost',
+            'Frosted white: a soft white panel with dark text, readable on any banner. Dark pink: a dark shade of the shop pink with white text.',
+            [
+                'frost' => 'Frosted white',
+                'brand' => 'Dark pink',
+            ]],
+        'pg_pill' => ['select', 'Banner · title on phones', 'capsule',
+            'The shape behind the page title on a phone\'s banner.',
+            [
+                'capsule' => 'Capsule',
+                'rect' => 'Rectangle',
+            ]],
+        'pg_header_w' => ['range', 'Banner · header width', 100,
+            'On a laptop: how much of the page width the banner takes, centred.',
+            ['min' => 60, 'max' => 100, 'step' => 1, 'unit' => '%']],
+        'pg_banner_h' => ['range', 'Banner · laptop · header height', 270,
+            'The height of the WHOLE header on a laptop -- the banner, with the panel on it. It grows past this only if the panel needs more room.',
+            ['min' => 160, 'max' => 460, 'step' => 5, 'unit' => 'px']],
+        'pg_banner_h_m' => ['range', 'Banner · phone · banner height', 165,
+            'The banner on a phone, with the page title on it. The subtitle card comes BELOW it, so the whole phone header is this, plus the gap, plus the card.',
+            ['min' => 100, 'max' => 300, 'step' => 5, 'unit' => 'px']],
+        'pg_content_w' => ['range', 'Banner · content width', 60,
+            'On a laptop: the panel\'s width, as a share of the banner\'s.',
+            ['min' => 40, 'max' => 85, 'step' => 1, 'unit' => '%']],
+        'pg_img_pos' => ['select', 'Banner · picture position', 'center',
+            'Which part of the banner stays in view when it is cropped to fit.',
+            [
+                'left' => 'Left',
+                'center' => 'Centre',
+                'right' => 'Right',
+            ]],
+        'pg_panel_x' => ['select', 'Banner · laptop · panel across the banner', 'left',
+            'On a laptop: the panel on the left of the banner (as designed), in the middle, or on the right.',
+            [
+                'left' => 'Left',
+                'center' => 'Centre',
+                'right' => 'Right',
+            ]],
+        'pg_panel_y' => ['select', 'Banner · laptop · panel up and down', 'middle',
+            'On a laptop: the panel in the middle of the banner\'s height, at its top, or at its bottom.',
+            [
+                'middle' => 'Middle',
+                'top' => 'Top',
+                'bottom' => 'Bottom',
+            ]],
+        'pg_panel_pad' => ['range', 'Banner · laptop · space inside the panel', 26,
+            'The padding at the panel\'s sides; top and bottom are 4px less.',
+            ['min' => 8, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'pg_panel_inset' => ['range', 'Banner · laptop · panel distance from the banner edge', 36,
+            'From the banner\'s side; from its top and bottom it is two thirds of this. At 36 it narrows on a small laptop.',
+            ['min' => 0, 'max' => 120, 'step' => 1, 'unit' => 'px']],
+        'pg_desc_gap' => ['range', 'Banner · laptop · gap between the title and the subtitle', 12,
+            'The space between the title and the subtitle, inside the panel.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'pg_name_fs' => ['range', 'Banner · laptop · page title size', 34,
+            'At 34 it narrows on a small laptop; any other size is kept exactly.',
+            ['min' => 18, 'max' => 56, 'step' => 1, 'unit' => 'px']],
+        'pg_desc_fs' => ['range', 'Banner · laptop · subtitle size', 15,
+            'The subtitle\'s text, inside the panel.',
+            ['min' => 12, 'max' => 22, 'step' => 1, 'unit' => 'px']],
+        'pg_pill_at' => ['select', 'Banner · phone · title position', 'bottom-center',
+            'On phones: where the capsule with the page title sits on the banner. Bottom centre, as on the brand page.',
+            [
+                'bottom-center' => 'Bottom centre',
+                'bottom-left' => 'Bottom left',
+                'bottom-right' => 'Bottom right',
+                'top-left' => 'Top left',
+                'top-center' => 'Top centre',
+                'top-right' => 'Top right',
+            ]],
+        'pg_pill_inset_m' => ['range', 'Banner · phone · capsule distance from the banner edge', 12,
+            'On phones.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'pg_card_gap_m' => ['range', 'Banner · phone · gap between the banner and the subtitle', 12,
+            'On phones: the space above the subtitle card.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'pg_card_pad_m' => ['range', 'Banner · phone · space inside the subtitle card', 14,
+            'On phones: top and bottom; the sides are 2px more.',
+            ['min' => 6, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'pg_name_fs_m' => ['range', 'Banner · phone · page title size', 22,
+            'On phones: the title in the capsule.',
+            ['min' => 14, 'max' => 36, 'step' => 1, 'unit' => 'px']],
+        'pg_desc_fs_m' => ['range', 'Banner · phone · subtitle size', 14,
+            'On phones: the text in the card below the banner.',
+            ['min' => 12, 'max' => 20, 'step' => 1, 'unit' => 'px']],
+        'pg_name_align' => ['select', 'Banner · laptop · page title alignment', 'center',
+            'On a laptop: the page title inside the panel. Centre, as on the brand page.',
+            [
+                'center' => 'Centre',
+                'left' => 'Left',
+                'right' => 'Right',
+            ]],
+        'pg_desc_align' => ['select', 'Banner · laptop · subtitle alignment', 'center',
+            'On a laptop: the subtitle\'s lines inside the panel. Centre, as on the brand page.',
+            [
+                'center' => 'Centre',
+                'left' => 'Left',
+                'right' => 'Right',
+            ]],
+        'pg_desc_align_m' => ['select', 'Banner · phone · subtitle alignment', 'center',
+            'On phones: the subtitle\'s lines in the card below the banner. Centre, as on the brand page.',
+            [
+                'center' => 'Centre',
+                'left' => 'Left',
+                'right' => 'Right',
+            ]],
+        'pg_desc_lines' => ['range', 'Banner · laptop · subtitle lines before "Read more"', 2,
+            'On a laptop: a longer subtitle is cut at this many lines, with "Read more" under it to open the rest in place and "Read less" to close it. Two, as on the brand page.',
+            ['min' => 1, 'max' => 6, 'step' => 1, 'unit' => '']],
+        'pg_desc_lines_m' => ['range', 'Banner · phone · subtitle lines before "Read more"', 2,
+            'On phones: the same, in the card below the banner. Two, as on the brand page.',
+            ['min' => 1, 'max' => 6, 'step' => 1, 'unit' => '']],
+        'pg_space_top' => ['range', 'Banner · laptop · space above the header', 22,
+            'On a laptop: from the menu bar down to the header.',
+            ['min' => 0, 'max' => 80, 'step' => 1, 'unit' => 'px']],
+        'pg_space_x' => ['range', 'Banner · laptop · space at the sides of the header', 22,
+            'On a laptop: from the page edge to the header, both sides.',
+            ['min' => 0, 'max' => 80, 'step' => 1, 'unit' => 'px']],
+        'pg_space_top_m' => ['range', 'Banner · phone · space above the header', 22,
+            'On phones: from the search bar down to the header.',
+            ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'pg_space_x_m' => ['range', 'Banner · phone · space at the sides of the header', 22,
+            'On phones: from the screen edge to the header, both sides. 0 runs it edge to edge.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+
+
+        /*
          * ── PRESS FEEDBACK ──────────────────────────────────────── Lane RD ──
          *
          * "when u click on any button or icon. it leaves gray square /
@@ -1187,6 +1345,13 @@ class SiteLayout
      */
     public const CATBANNER_KEYS = ['catb_hero', 'catb_panel_style', 'catb_pill', 'catb_logo_shape', 'catb_header_w', 'catb_banner_h', 'catb_banner_h_m', 'catb_content_w', 'catb_img_pos', 'catb_panel_x', 'catb_panel_y', 'catb_panel_pad', 'catb_panel_inset', 'catb_desc_gap', 'catb_name_fs', 'catb_desc_fs', 'catb_logo_size', 'catb_pill_at', 'catb_pill_inset_m', 'catb_card_gap_m', 'catb_card_pad_m', 'catb_name_fs_m', 'catb_desc_fs_m', 'catb_logo_size_m', 'catb_logo_show', 'catb_logo_show_m', 'catb_name_align', 'catb_desc_align', 'catb_desc_align_m', 'catb_desc_lines', 'catb_desc_lines_m', 'catb_space_top', 'catb_space_x', 'catb_space_top_m', 'catb_space_x_m'];
 
+    /**
+     * The page header's settings (Lane PH): not CSS, skipped by isDefault().
+     * The brand page's Panel keys under BrandPanel::PAGE_PREFIX, less the
+     * logo's five, after the page switch and the Journal's own.
+     */
+    public const PGBANNER_KEYS = ['pg_hero', 'pg_blog', 'pg_panel_style', 'pg_pill', 'pg_header_w', 'pg_banner_h', 'pg_banner_h_m', 'pg_content_w', 'pg_img_pos', 'pg_panel_x', 'pg_panel_y', 'pg_panel_pad', 'pg_panel_inset', 'pg_desc_gap', 'pg_name_fs', 'pg_desc_fs', 'pg_pill_at', 'pg_pill_inset_m', 'pg_card_gap_m', 'pg_card_pad_m', 'pg_name_fs_m', 'pg_desc_fs_m', 'pg_name_align', 'pg_desc_align', 'pg_desc_align_m', 'pg_desc_lines', 'pg_desc_lines_m', 'pg_space_top', 'pg_space_x', 'pg_space_top_m', 'pg_space_x_m'];
+
     /** Lane SP: page-change switches, read by App\Support\InstantNav; not CSS. */
     public const SPEED_KEYS = ['nav_instant', 'nav_fade'];
 
@@ -1322,6 +1487,9 @@ class SiteLayout
         'catheadersize' => ['Old category header · sizes & spacing',
             'Title and description sizes, the header\'s height, the space inside and around it, and its corners -- for phones and for laptops (900px and wider) separately.',
             self::HEADER_SIZE_KEYS],
+        'pagebanner' => ['Page header (brand design)',
+            'The top of every content page -- About, Contact, Delivery, Returns, Terms, FAQ, Privacy -- and of the Journal, in the brand page\'s design: the same look and the same controls as Brand page and Category header. A page with a picture shows it as the banner; one without gets the brand page\'s no-picture look. Each page can choose Brand-page design or Normal page banner, and set its own picture, title and subtitle, in Pages → User pages → Edit page → Page header. The homepage keeps its own slider.',
+            self::PGBANNER_KEYS],
         'brandpage' => ['Brand page',
             'What a brand\'s own page shows above its products, and whether it lists them all at once.',
             self::BRAND_KEYS],
@@ -1653,6 +1821,38 @@ class SiteLayout
         return ['written' => $written, 'rejected' => $rejected];
     }
 
+    /**
+     * Lane PH: the values of a few keys, cast exactly as all() casts them --
+     * for a page that needs a handful of settings and not the whole screen's.
+     * all() walks every field (some 200) on each call, about 4 ms on a loaded
+     * host; the content pages' header needs its 31. Same settings map, read
+     * through SettingsService, so it costs no settings-map read of its own.
+     * Not for a key in DEVICE_PAIRS, whose laptop half all() fills from the
+     * phone's: none of PGBANNER_KEYS is one.
+     *
+     * @param  list<string>  $keys
+     * @return array<string, mixed>
+     */
+    public function only(array $keys): array
+    {
+        $fields = self::normalised();
+        $out = [];
+
+        foreach ($keys as $key) {
+            if (! isset($fields[$key])) {
+                continue;
+            }
+
+            $field = $fields[$key];
+            $saved = $this->settings->get($field['alias'], null);
+            $out[$key] = $saved === null
+                ? $field['default']
+                : (ModuleSchema::cast($field, $saved) ?? $field['default']);
+        }
+
+        return $out;
+    }
+
     /** True when every field is still at its shipped default. */
     public function isDefault(): bool
     {
@@ -1662,6 +1862,7 @@ class SiteLayout
             if (in_array($key, self::LOAD_KEYS, true) || in_array($key, self::HEADER_KEYS, true)
                 || in_array($key, self::PRESS_KEYS, true) || in_array($key, self::BRAND_KEYS, true)
                 || in_array($key, self::CATBANNER_KEYS, true)
+                || in_array($key, self::PGBANNER_KEYS, true)
                 || in_array($key, self::FONT_KEYS, true) || $key === 'sold_out' || $key === 'sub_products'
                 || in_array($key, self::SPEED_KEYS, true)) {
                 continue;

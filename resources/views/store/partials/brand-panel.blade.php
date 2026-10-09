@@ -35,6 +35,12 @@
     (store/partials/category-panel-picture), and the "logo" is the category's
     own square picture behind the same switches. The brand page's branch
     below is untouched, byte for byte.
+
+    LANE PH. And on a CONTENT PAGE and the Journal's index: called with
+    BrandPanel::forPage() / forJournal()'s $panel and `$panelCategory` set (the
+    page, or true), so they draw the category branch -- the words are the
+    panel's own `heading`, the picture the same <picture>. A page has no logo:
+    `logo` is false, so no circle is printed.
 --}}
 <div class="brw-phw" data-kbb-brand-header>
 <section class="{{ $panel['class'] }}" style="{{ $panel['style'] }}" aria-labelledby="brw-ph-title">

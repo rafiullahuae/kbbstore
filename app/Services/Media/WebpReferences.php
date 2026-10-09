@@ -64,7 +64,8 @@ final class WebpReferences
         'menu_items' => ['id', ['icon']],
         'blocks' => ['id', ['content']],
         // Pages and the Journal.
-        'pages' => ['id', ['content', 'doc_json', 'css', 'seo']],
+        // header_layout (Lane PH): a content page's own Header picture is a key in it.
+        'pages' => ['id', ['content', 'doc_json', 'css', 'seo', 'header_layout']],
         'posts' => ['id', ['cover', 'body', 'excerpt', 'seo']],
         // Email templates and marketing drafts. mkt_campaigns.blocks_snapshot
         // is what a SENT campaign contained and is deliberately not here.

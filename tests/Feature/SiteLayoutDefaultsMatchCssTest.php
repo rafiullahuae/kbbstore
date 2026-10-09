@@ -197,6 +197,16 @@ it('emits every numeric setting into a property named by a constant in the servi
             continue;
         }
 
+        if (in_array($key, SiteLayout::PGBANNER_KEYS, true)) {
+            // Lane PH: the page header's sizes are the brand Panel's too,
+            // under BrandPanel::PAGE_PREFIX.
+            expect(in_array($key, array_map(static fn (string $s): string => \App\Support\BrandPanel::settingKey($s, \App\Support\BrandPanel::PAGE_PREFIX), array_column(\App\Support\BrandPanel::RANGES, 0)), true))->toBeTrue(
+                "range field '{$key}' is read by nothing that draws the page header"
+            );
+
+            continue;
+        }
+
         if (in_array($key, SiteLayout::CATBANNER_KEYS, true)) {
             // Lane CB: the category banner's sizes are the brand Panel's,
             // read through BrandPanel::RANGES under its category prefix.

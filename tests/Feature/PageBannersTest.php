@@ -55,6 +55,11 @@ function pbAboutPage(): void
 
 beforeEach(function () {
     PageBannersRoutes::wire($this->app);
+    // Lane PH: these pin a content page under "Normal page banner" -- the
+    // banner and header this module draws. The shipped brand-page design
+    // replaces both on a content page; PageBrandHeaderTest pins that.
+    app(\App\Services\SiteLayout::class)->save(['pg_hero' => 'banner']);
+    \App\Models\Setting::flushMap();
     SettingsService::forgetMemo();
 });
 

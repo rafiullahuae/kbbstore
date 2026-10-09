@@ -298,13 +298,35 @@ class PageController extends Controller
         $seoCtx['page_body'] = (string) $page->content;
         $seoCtx['seo_entity'] = 'page:' . $page->id; // SEO → Keywords (Lane KW)
 
+        /*
+         * THE PAGE HEADER IN THE BRAND PAGE'S DESIGN (Lane PH, 9 October). The
+         * owner: "i want the same header style, which we used for categories
+         * and brands page. need the same for normal pages too ... we must
+         * should have control to display header or normal site banner". So
+         * the brand page's Panel header -- or null, the "Normal page banner",
+         * and the page draws exactly what it drew before (the two lines
+         * below). The picture its normal banner would have shown is offered
+         * to the header, as a category's is. Off the row already loaded and
+         * settings the request has already read -- no query.
+         */
+        $pageKey = 'page:' . $slug;
+        $headers = app(\App\Services\PageHeaders::class);
+        $pagePanel = \App\Support\BrandPanel::forPage(
+            $page,
+            app(\App\Services\SiteLayout::class)->only(\App\Services\SiteLayout::PGBANNER_KEYS),
+            app(\App\Services\PageBanners::class)->forPage($pageKey)['img'] ?? null,
+            \App\Services\PageHeaders::picture($headers->bagFor($pageKey)),
+        );
+
         return view('store.page', [
             'page' => $page,
             'settings' => $this->settings,
+            'pagePanel' => $pagePanel,
             // Pages → Page header + Page banners (Lanes PH, SS, SP3): the header
             // area and the strip in the owner's order, or null = the original
             // title block and no strip. Two settings already loaded: no query.
-            'pageTop' => app(\App\Services\PageHeaders::class)->top('page:' . $slug, 'page'),
+            // Not drawn under the brand-design header, which replaces both.
+            'pageTop' => $pagePanel === null ? $headers->top($pageKey, 'page') : null,
             // The layout reads `$seoCtx` and merges it over its own defaults;
             // see resources/views/layouts/store.blade.php. An empty array is the
             // no-override case and merges to nothing.
@@ -561,6 +583,13 @@ class PageController extends Controller
             'posts' => $posts,
             'seoCtx' => $seoCtx,
             'settings' => $this->settings,
+            // Lane PH: the brand page's header on the Journal's index, or null
+            // for its own. Settings already loaded: no query.
+            'journalPanel' => \App\Support\BrandPanel::forJournal(
+                app(\App\Services\SiteLayout::class)->only(\App\Services\SiteLayout::PGBANNER_KEYS),
+                (string) __('store.journal.heading'),
+                (string) __('store.journal.subtitle'),
+            ),
         ]);
     }
 

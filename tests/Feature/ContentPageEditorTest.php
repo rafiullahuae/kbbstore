@@ -515,9 +515,10 @@ it('round-trips a shipped title byte-for-byte through the box', function () {
 
     expect($terms->refresh()->title)->toBe('Terms &amp; Conditions');
 
-    // And the h1 the shopper reads is the same h1.
-    preg_match('#<h1>(.*?)</h1>#s', $before, $wasH1);
-    preg_match('#<h1>(.*?)</h1>#s', (string) test()->get('/terms-and-conditions/')->getContent(), $nowH1);
+    // And the h1 the shopper reads is the same h1. (Lane PH: with or without a
+    // class -- the page's one h1 is the brand-design header's by default.)
+    preg_match('#<h1[^>]*>(.*?)</h1>#s', $before, $wasH1);
+    preg_match('#<h1[^>]*>(.*?)</h1>#s', (string) test()->get('/terms-and-conditions/')->getContent(), $nowH1);
 
     expect($nowH1[1] ?? 'x')->toBe($wasH1[1] ?? 'y');
 });
@@ -547,8 +548,9 @@ it('cannot put a tag in the heading of a public page', function () {
 
     $html = (string) test()->get('/faqs/')->getContent();
 
+    // Lane PH: the page's one h1 is the brand-design header's by default.
     expect($html)->not->toContain('onerror')
-        ->toContain('<h1>Sale &amp; returns</h1>');
+        ->toContain('id="brw-ph-title">Sale &amp; returns</h1>');
 
     // And the shape that is words rather than markup keeps its words, so the
     // stripping cannot be mistaken for the box eating input.

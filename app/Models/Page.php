@@ -18,7 +18,8 @@ class Page extends Model
 
     protected function casts(): array
     {
-        return ['seo' => 'array'];
+        // header_layout (Lane PH): the page's own header choices, BrandPanel::pageOwn().
+        return ['seo' => 'array', 'header_layout' => 'array'];
     }
 
 }

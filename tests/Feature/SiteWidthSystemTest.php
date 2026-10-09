@@ -793,6 +793,42 @@ it('ships every setting at the value the page already had, except the ones the o
         'catb_space_x' => 22,
         'catb_space_top_m' => 22,
         'catb_space_x_m' => 22,
+        // Lane PH: Appearance -> Site layout -> Page header (brand design) --
+        // the brand page's Panel controls again for the content pages, at the
+        // category's shipped values, less the five logo controls. pg_hero ships
+        // at 'panel' because the owner asked ("need the same for normal pages
+        // too"); pg_blog follows it.
+        'pg_hero' => 'panel',
+        'pg_blog' => 'pages',
+        'pg_panel_style' => 'frost',
+        'pg_pill' => 'capsule',
+        'pg_header_w' => 100,
+        'pg_banner_h' => 270,
+        'pg_banner_h_m' => 165,
+        'pg_content_w' => 60,
+        'pg_img_pos' => 'center',
+        'pg_panel_x' => 'left',
+        'pg_panel_y' => 'middle',
+        'pg_panel_pad' => 26,
+        'pg_panel_inset' => 36,
+        'pg_desc_gap' => 12,
+        'pg_name_fs' => 34,
+        'pg_desc_fs' => 15,
+        'pg_pill_at' => 'bottom-center',
+        'pg_pill_inset_m' => 12,
+        'pg_card_gap_m' => 12,
+        'pg_card_pad_m' => 14,
+        'pg_name_fs_m' => 22,
+        'pg_desc_fs_m' => 14,
+        'pg_name_align' => 'center',
+        'pg_desc_align' => 'center',
+        'pg_desc_align_m' => 'center',
+        'pg_desc_lines' => 2,
+        'pg_desc_lines_m' => 2,
+        'pg_space_top' => 22,
+        'pg_space_x' => 22,
+        'pg_space_top_m' => 22,
+        'pg_space_x_m' => 22,
         'press' => 'c',
         // Lane FP, as the owner asked: "it's good only for small things like
         // icons etc." -- a default he chose, not the old behaviour.

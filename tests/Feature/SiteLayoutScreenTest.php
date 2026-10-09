@@ -155,7 +155,9 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // Brand page Panel control again for categories; not CSS on :root.
     // ▲ Lane CB2: `catbanner` ("Category header (brand design)") moved up to
     // where the category header was -- every category page uses it now.
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catbanner', 'catheader', 'catheadersize', 'brandpage', 'press', 'fonts', 'speed']);
+    // ▲ Lane PH: `pagebanner` ("Page header (brand design)"), the same Panel
+    // controls for the content pages and the Journal; not CSS on :root.
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catbanner', 'catheader', 'catheadersize', 'pagebanner', 'brandpage', 'press', 'fonts', 'speed']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
@@ -199,7 +201,10 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // thirty-four Brand page Panel controls again, for category pages.
     // 172 with Lane SC: "Sub-category products on a parent category" on
     // Product grid, shipped at "Include sub-categories" (the owner asked).
-    expect($keys)->toHaveCount(172);
+    // 202 with Lane PH: the Page header (brand design) tab -- its switch, the
+    // Journal's, and the twenty-nine Panel controls a page has (no logo).
+    // 203 with both.
+    expect($keys)->toHaveCount(203);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

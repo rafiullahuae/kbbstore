@@ -2,6 +2,11 @@
 @php use App\Support\Url; $pageTitle = \App\Support\PageTitle::decoded($page->t('title')); @endphp
 
 @section('title', __('store.page.page_title', ['title' => $pageTitle]))
+{{-- The page header in the brand page's design (Lane PH): its stylesheet, only when the page draws it. At column 0 and on this comment's line, so a page on "Normal page banner" renders byte for byte as before. --}}@if (! empty($pagePanel))
+@push('styles')
+@include('store.partials.page-panel-head')
+@endpush
+@endif
 
 @section('content')
 <div class="kbb-home">
@@ -12,9 +17,14 @@
 @if (empty($pageTop))
     <nav class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <span>{!! $page->t('title') !!}</span></nav>
 @endif
+{{-- Lane PH: the brand page's header, under the breadcrumb, carrying the page's one <h1> (BrandPanel::forPage). The same partial a brand and a category draw; `panelCategory` picks its category branch -- the words from $panel, the picture with its img-cache srcset. --}}@if (! empty($pagePanel))
+<div class="kbb-cbw">
+@include('store.partials.brand-panel', ['panel' => $pagePanel, 'panelCategory' => $page])
+</div>
+@endif
 
     <article class="policy">
-@if (empty($pageTop))
+@if (empty($pageTop) && empty($pagePanel))
         <h1>{!! $page->t('title') !!}</h1>
 @endif
         {{-- Content is authored in the admin, so it is trusted HTML.

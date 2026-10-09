@@ -398,6 +398,7 @@ textarea.pg-ctl{resize:vertical;line-height:1.6}
 
       /* --------------------------------------------------------- right */
       + '<div>'
+      + headerCard()
       +   '<div class="pg-card">'
       +     '<h3>Publishing</h3>'
       +     '<div class="pg-f" style="margin-bottom:0"><label for="pg-status">Status</label>'
@@ -469,6 +470,92 @@ textarea.pg-ctl{resize:vertical;line-height:1.6}
     wire();
   }
 
+  /* LANE PH -- Page header. The owner: "we must should have control to display
+     header or normal site banner". So the first control is that choice, worded
+     as the shop setting is (Appearance -> Site layout -> Page header (brand
+     design)), then this page's own picture, title and subtitle for the
+     brand-page design. Every value is printed through esc(); the server
+     re-checks each one (PageEditorApiController::headerLayout) and refuses a
+     picture that is not an upload or an http(s) address. */
+  var HEROES = [['', 'Shop setting'], ['brand', 'Brand-page design'], ['banner', 'Normal page banner (as before)']];
+
+  function header(){ return model.header_layout || (model.header_layout = {}); }
+
+  function headerCard(){
+    var h = header();
+    var shop = model.header_shop === 'banner' ? 'Normal page banner' : 'Brand-page design';
+    return '<div class="pg-card" id="pg-hdr">'
+      +   '<h3>Page header</h3>'
+      +   '<div class="pg-f"><label for="pg-hdr-hero">Header</label>'
+      +     '<select id="pg-hdr-hero" class="pg-ctl">'
+      +       HEROES.map(function(o){
+                return '<option value="' + esc(o[0]) + '"' + ((h.hero || '') === o[0] ? ' selected' : '') + '>'
+                  + esc(o[0] === '' ? o[1] + ' (now: ' + shop + ')' : o[1]) + '</option>';
+              }).join('')
+      +     '</select>'
+      +     '<p class="pg-hint"><b>Brand-page design</b>: the header the brand and category pages have -- '
+      +       'a picture as the background with a panel holding the page title, or the no-picture look. '
+      +       '<b>Normal page banner</b>: this page as before, with its header and banner from '
+      +       '<b>Pages → Page header</b> and <b>Pages → Page banners</b>. <b>Shop setting</b> follows '
+      +       '<b>Appearance → Site layout → Page header (brand design)</b>.</p>'
+      +   '</div>'
+      +   '<div class="pg-f"><label for="pg-hdr-image">Header picture</label>'
+      +     '<div class="pg-img">'
+      +       '<div class="pg-img-prev" id="pg-hdr-prev">' + picturePreview(h.image) + '</div>'
+      +       '<input id="pg-hdr-image" class="pg-ctl" maxlength="2048" placeholder="/uploads/… or https://…" value="' + esc(h.image || '') + '">'
+      +       '<button class="btn ghost" id="pg-hdr-pick" type="button">Choose image</button>'
+      +       '<button class="btn ghost" id="pg-hdr-clear" type="button">Remove</button>'
+      +     '</div>'
+      +     '<p class="pg-hint">The brand-page design\u2019s background, 2400 × 600 or wider. Empty uses this '
+      +       'page\u2019s banner picture from Pages → Page banners if it has one, else the no-picture look. '
+      +       'A picture that is not on this server shows the no-picture look, never a broken image.</p>'
+      +   '</div>'
+      +   '<div class="pg-f"><label for="pg-hdr-title">Title in the header</label>'
+      +     '<input id="pg-hdr-title" class="pg-ctl" maxlength="160" placeholder="' + esc(model.title || '') + '" value="' + esc(h.title || '') + '">'
+      +     '<p class="pg-hint">Empty uses the page\u2019s Title. It is the page\u2019s heading (its one H1), '
+      +       'in English; the Arabic page keeps its translated title.</p>'
+      +   '</div>'
+      +   '<div class="pg-f" style="margin-bottom:0"><label for="pg-hdr-sub">Subtitle</label>'
+      +     '<textarea id="pg-hdr-sub" class="pg-ctl" rows="2" maxlength="300">' + esc(h.sub || '') + '</textarea>'
+      +     '<p class="pg-hint">One line under the title, in English. Empty shows none.</p>'
+      +   '</div>'
+      + '</div>';
+  }
+
+  function picturePreview(url){
+    url = String(url || '').trim();
+    var safe = /^https?:\/\//i.test(url) || (url.charAt(0) === '/' && url.charAt(1) !== '/');
+    return safe ? '<img src="' + esc(url) + '" alt="">' : 'No picture';
+  }
+
+  function wireHeader(){
+    var h = header();
+    var hero = $('#pg-hdr-hero');
+    if (hero) hero.onchange = function(){ h.hero = hero.value; };
+    var img = $('#pg-hdr-image');
+    var setImg = function(v){
+      h.image = v;
+      if (img) img.value = v;
+      var prev = $('#pg-hdr-prev');
+      if (prev) prev.innerHTML = picturePreview(v);
+    };
+    if (img) img.oninput = function(){ setImg(img.value); };
+    var clear = $('#pg-hdr-clear');
+    if (clear) clear.onclick = function(){ setImg(''); };
+    var pick = $('#pg-hdr-pick');
+    if (pick && window.kbbPickMedia) pick.onclick = function(){
+      kbbPickMedia({
+        title: 'Choose the header picture',
+        note: 'One wide picture, the background of this page\u2019s header in the brand-page design.',
+        onPick: function(urls){ setImg((urls && urls[0]) || ''); }
+      });
+    };
+    var title = $('#pg-hdr-title');
+    if (title) title.oninput = function(){ h.title = title.value; };
+    var sub = $('#pg-hdr-sub');
+    if (sub) sub.oninput = function(){ h.sub = sub.value; };
+  }
+
   function imagePreview(){
     var url = String((model.seo || {}).og_image || '').trim();
     var safe = /^https?:\/\//i.test(url) || (url.charAt(0) === '/' && url.charAt(1) !== '/');
@@ -510,6 +597,8 @@ textarea.pg-ctl{resize:vertical;line-height:1.6}
 
     var status = $('#pg-status');
     if (status) status.onchange = function(){ model.status = status.value; };
+
+    wireHeader();
 
     var image = $('#pg-seo-image');
     if (image) image.oninput = function(){
@@ -607,7 +696,14 @@ textarea.pg-ctl{resize:vertical;line-height:1.6}
         og_image: ($('#pg-seo-image') || {}).value || '',
         noindex: !!(($('#pg-seo-noindex') || {}).checked)
       },
-      translations: (window.KBBArabic ? KBBArabic.collect(content()) : {})
+      translations: (window.KBBArabic ? KBBArabic.collect(content()) : {}),
+      /* Lane PH: the four keys the server keeps, and nothing else. */
+      header_layout: {
+        hero: header().hero || '',
+        image: header().image || '',
+        title: header().title || '',
+        sub: header().sub || ''
+      }
     };
 
     try {

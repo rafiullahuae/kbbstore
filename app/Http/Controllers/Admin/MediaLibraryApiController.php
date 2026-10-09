@@ -560,6 +560,20 @@ class MediaLibraryApiController extends Controller
                 continue;
             }
 
+            /*
+             * Lane PH: 'site' has no owning table -- its rows are settings (the
+             * share image, the organisation logo) and the content pages' own
+             * Header pictures, all recorded with owner id 0, as MediaUsage
+             * names them. Looking 'site' up in MODELS was an "Undefined array
+             * key" 500 on any grid page holding such a file; it is named here
+             * the way MediaUsage::index() names it instead.
+             */
+            if (! isset(self::MODELS[$kind])) {
+                $names[$kind] = [0 => 'Site settings'];
+
+                continue;
+            }
+
             $names[$kind] = self::MODELS[$kind]::query()
                 ->whereIn('id', $ids)
                 ->pluck('name', 'id')

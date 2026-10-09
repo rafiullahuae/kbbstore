@@ -78,16 +78,28 @@
   @media(max-width:900px){.kbb-journal #grid.grid{grid-template-columns:1fr}.kbb-journal h1{font-size:29px}}
 </style>
 @endverbatim
+{{-- Lane PH: the brand page's header stylesheet, only when the Journal draws it -- the content pages' own head (store/partials/page-panel-head), so the two are one stylesheet. At column 0 on this comment's line, so the Journal's own header renders byte for byte as before. --}}@if (! empty($journalPanel))
+@include('store.partials.page-panel-head')
+@endif
 @endpush
 
 @section('content')
+{{-- Lane PH: the Journal's index in the brand page's design (BrandPanel::forJournal), OUTSIDE .kbb-journal so that sheet's bare `h1` rule cannot reach the panel's name. The heading and line are the Journal's own; the tag chips sit under the header, in a row of their own. --}}@if (! empty($journalPanel))
+<div class="wrap kbb-cbw">
+@include('store.partials.brand-panel', ['panel' => $journalPanel, 'panelCategory' => true])
+</div>
+@endif
 <div class="kbb-journal">
+@if (! empty($journalPanel))
+<div class="wrap"><div class="chips" id="chips"></div></div>
+@else
 <section class="hero"><div class="wrap hero-in">
   <div class="ey">{{ __('store.journal.eyebrow') }}</div>
   <h1>{{ __('store.journal.heading') }}</h1>
   <p>{{ __('store.journal.subtitle') }}</p>
   <div class="chips" id="chips"></div>
 </div></section>
+@endif
 
 <div class="wrap"><div class="grid" id="grid">
 

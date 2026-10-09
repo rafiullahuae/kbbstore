@@ -201,6 +201,8 @@ final class MediaUsage
                         'raw' => $raw,
                     ];
                 }
+
+                self::pageHeaderPictures($out);
             }
         }
 
@@ -273,6 +275,48 @@ final class MediaUsage
         }
 
         return $columns;
+    }
+
+    /**
+     * Lane PH: a content page's own Header picture (Pages -> User pages -> Edit
+     * page -> Page header, `pages.header_layout.image`) -- the file its header
+     * is drawn on, so not one the Media Library may offer to delete. Filed
+     * under the SITE kind, as the share image is: a page is not one of the
+     * kinds the grid names by row (TYPES), and the delete guard reads this
+     * index whatever the kind. One query over the seven-odd pages, only when
+     * the column exists.
+     *
+     * @param  array<string, list<array<string, mixed>>>  $out
+     */
+    private static function pageHeaderPictures(array &$out): void
+    {
+        try {
+            if (! \Illuminate\Support\Facades\Schema::hasColumn('pages', 'header_layout')) {
+                return;
+            }
+
+            $pages = \App\Models\Page::query()->whereNotNull('header_layout')->get(['id', 'title', 'header_layout']);
+        } catch (\Throwable) {
+            return;
+        }
+
+        foreach ($pages as $page) {
+            $raw = BrandPanel::pageOwn($page->getAttribute('header_layout'))['image'] ?? null;
+
+            if (! is_string($raw) || self::key($raw) === '') {
+                continue;
+            }
+
+            $out[self::key($raw)][] = [
+                'type' => 'site',
+                'id' => 0,
+                'name' => 'Page: '.PageTitle::decoded((string) $page->title),
+                'field' => 'Page header picture',
+                'column' => 'pages.header_layout',
+                'path' => self::normalise($raw),
+                'raw' => $raw,
+            ];
+        }
     }
 
     /**

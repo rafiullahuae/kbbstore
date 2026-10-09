@@ -201,6 +201,42 @@ final class BrandPanel
         .'.kbb-cbw .brw-initial{font-size:34px;color:var(--pink)}'
         .'.kbb-cbw .brw-desc p{margin:0 0 6px}.kbb-cbw .brw-desc p:last-child{margin-bottom:0}';
 
+    /**
+     * Lane PH: the same header on the CONTENT PAGES (About, Contact, Delivery,
+     * Returns, Terms, FAQ, Privacy ...) and the Journal's index -- the owner:
+     * "i want the same header style, which we used for categories and brands
+     * page. need the same for normal pages too." The brand page's settings
+     * under this prefix (Appearance -> Site layout -> Page header (brand
+     * design)), less the logo's: a page has no logo, so those five are not
+     * settings and shop() reads their stylesheet values.
+     */
+    public const PAGE_PREFIX = 'pg_';
+
+    /**
+     * Lane PH: a page's own choice (`pages.header_layout.hero`): the brand
+     * design, or the normal page banner it drew before -- the owner's "we
+     * must should have control to display header or normal site banner".
+     * Blank follows the shop.
+     */
+    public const PAGE_HEROES = ['brand', 'banner'];
+
+    /** Lane PH: the keys `pages.header_layout` may hold -- nothing else is stored. */
+    public const PAGE_KEYS = ['hero', 'image', 'title', 'sub'];
+
+    /** Lane PH: the longest own title and subtitle, in characters. */
+    public const PAGE_TITLE_MAX = 160;
+
+    public const PAGE_SUB_MAX = 300;
+
+    /**
+     * Lane PH: the one rule a content page needs beyond CATEGORY_CSS. A
+     * content page sits in `.kbb-home`, whose `h1` rule (kbb.css) would set the
+     * panel's name at -.02em; this puts it back to the brand sheet's -.01em,
+     * so the header is the brand page's to the letter. A CONSTANT, printed
+     * unescaped by store/partials/page-panel-head.
+     */
+    public const PAGE_CSS = '.kbb-home .kbb-cbw .brw-ph__name{letter-spacing:-.01em}';
+
     /** @var array<string, bool> table => whether its `header_layout` exists */
     private static array $column = [];
 
@@ -232,8 +268,14 @@ final class BrandPanel
      * category the same name under CATEGORY_PREFIX (`brand_banner_h` ->
      * `catb_banner_h`).
      */
-    public static function settingKey(string $brandSetting, bool $category = false): string
+    public static function settingKey(string $brandSetting, bool|string $category = false): string
     {
+        // Lane PH: a string is a prefix of its own (PAGE_PREFIX); true is the
+        // category's and false the brand page's own name, exactly as before.
+        if (is_string($category)) {
+            return $category.substr($brandSetting, strlen('brand_'));
+        }
+
         return $category ? self::CATEGORY_PREFIX.substr($brandSetting, strlen('brand_')) : $brandSetting;
     }
 
@@ -315,7 +357,7 @@ final class BrandPanel
      * @param  array<string, mixed>  $layout  SiteLayout::all()
      * @return array<string, string|int>
      */
-    public static function shop(array $layout, bool $category = false): array
+    public static function shop(array $layout, bool|string $category = false): array
     {
         $out = [];
 
@@ -333,7 +375,10 @@ final class BrandPanel
         }
 
         foreach (self::RANGES as $key => [$setting, $min, $max]) {
-            $out[$key] = max($min, min($max, (int) ($layout[self::settingKey($setting, $category)] ?? $min)));
+            // A setting the scope does not have (Lane PH: a page has no logo
+            // sizes) is the stylesheet's own value, so it prints nothing. The
+            // brand and category scopes have every key, so this changes neither.
+            $out[$key] = max($min, min($max, (int) ($layout[self::settingKey($setting, $category)] ?? self::QUIET[$key] ?? $min)));
         }
 
         return $out;
@@ -483,6 +528,178 @@ final class BrandPanel
             'heading' => $heading,
             'logo_image' => TitleHeader::safeImage($category->getAttribute('image')),
         ] + self::draw($v, $image, $description, self::FALLBACK_COLOUR);
+    }
+
+    /**
+     * Lane PH: the brand page's header for one CONTENT PAGE, or null -- and
+     * null is the page exactly as it was (Pages -> Page header and Pages ->
+     * Page banners, byte for byte): the "Normal page banner".
+     *
+     * ── WHICH HEADER ────────────────────────────────────────────────────────
+     *
+     * The page's own choice (Pages -> User pages -> Edit page -> Page header
+     * -> Header) wins; blank follows Appearance -> Site layout -> Page header
+     * (brand design) -> "Page header", which ships at the brand design, as
+     * the owner asked.
+     *
+     * ── WHICH PICTURE ───────────────────────────────────────────────────────
+     *
+     * The page's own Header picture first; else the picture its normal page
+     * banner would have shown (Pages -> Page banners), else its Pages -> Page
+     * header picture -- the category rule, "if there's banner, then the banner
+     * should be picked auto by new design". Each ONLY when it is a file on this
+     * server (onServer()): one that is not, or none at all, gets the brand
+     * page's no-picture look, never a broken picture. A banner's or a page
+     * header's own phone picture is offered to phones, when it is on this
+     * server too.
+     *
+     * ── THE WORDS ───────────────────────────────────────────────────────────
+     *
+     * heading      the page's own title (its one <h1>), translated; in English
+     *              the page's own Title override when one is set.
+     * description  in English the page's own Subtitle, escaped; none otherwise
+     *              -- a page has no description, and the subtitle has no Arabic.
+     *
+     * Reads the page row the controller already holds and the settings the
+     * request already loaded: no query. The files' headers are read from disk.
+     *
+     * @param  array<string, mixed>  $layout  SiteLayout::all()
+     * @param  array{d:string, m:string}|null  $banner  PageBanners::forPage()['img']
+     * @param  array{d:string, m:string}|null  $headerPicture  PageHeaders::picture()
+     * @return array<string, mixed>|null
+     */
+    public static function forPage(\App\Models\Page $page, array $layout, ?array $banner = null, ?array $headerPicture = null): ?array
+    {
+        $own = self::pageOwn($page->getAttribute('header_layout'));
+        $hero = self::pageHero($own) ?? (($layout['pg_hero'] ?? 'panel') === 'banner' ? 'banner' : 'brand');
+
+        if ($hero === 'banner') {
+            return null;
+        }
+
+        $english = Locale::segment() === '';
+        $title = $english ? self::line($own['title'] ?? null, self::PAGE_TITLE_MAX) : '';
+        $sub = $english ? self::line($own['sub'] ?? null, self::PAGE_SUB_MAX) : '';
+        $heading = $title !== '' ? $title : self::line(\App\Support\PageTitle::decoded((string) $page->t('title')), self::PAGE_TITLE_MAX);
+
+        $candidates = [
+            [TitleHeader::safeImage($own['image'] ?? null), null],
+            [TitleHeader::safeImage($banner['d'] ?? null), TitleHeader::safeImage($banner['m'] ?? null)],
+            [TitleHeader::safeImage($headerPicture['d'] ?? null), TitleHeader::safeImage($headerPicture['m'] ?? null)],
+        ];
+
+        return self::pagePanel(self::shop($layout, self::PAGE_PREFIX), $candidates, $heading, $sub === '' ? '' : e($sub));
+    }
+
+    /**
+     * Lane PH: the same header for the Journal's index (/blog/), or null for
+     * the Journal's own header as it was. Appearance -> Site layout -> Page
+     * header (brand design) -> "The Journal (/blog/) header": Same as the
+     * pages (the default, following "Page header"), Brand-page design, or the
+     * Journal's own. The words are the Journal's own heading and line; no
+     * picture, so the brand page's no-picture look. No query.
+     *
+     * @param  array<string, mixed>  $layout  SiteLayout::all()
+     * @return array<string, mixed>|null
+     */
+    public static function forJournal(array $layout, string $heading, string $subtitle): ?array
+    {
+        $choice = $layout['pg_blog'] ?? 'pages';
+        $on = $choice === 'panel' || ($choice === 'pages' && ($layout['pg_hero'] ?? 'panel') !== 'banner');
+
+        if (! $on) {
+            return null;
+        }
+
+        $subtitle = self::line($subtitle, self::PAGE_SUB_MAX);
+
+        return self::pagePanel(self::shop($layout, self::PAGE_PREFIX), [], self::line($heading, self::PAGE_TITLE_MAX), $subtitle === '' ? '' : e($subtitle));
+    }
+
+    /**
+     * Lane PH: a page's own header choices, decoded -- only PAGE_KEYS, each a
+     * string. The writer (PageEditorApiController) refuses anything else; this
+     * is the reader's half, so a row written another way prints nothing typed.
+     *
+     * @return array<string, string>
+     */
+    public static function pageOwn(mixed $raw): array
+    {
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach (self::PAGE_KEYS as $key) {
+            if (is_string($raw[$key] ?? null)) {
+                $out[$key] = $raw[$key];
+            }
+        }
+
+        return $out;
+    }
+
+    /** Lane PH: a page's own explicit header choice, or null to follow the shop. */
+    public static function pageHero(mixed $raw): ?string
+    {
+        $v = self::pageOwn($raw)['hero'] ?? null;
+
+        return is_string($v) && in_array($v, self::PAGE_HEROES, true) ? $v : null;
+    }
+
+    /**
+     * Lane PH: one header from its first picture that is on this server --
+     * forCategory()'s picture rules, for a list of [laptop, phone] candidates.
+     *
+     * @param  array<string, string|int>  $v
+     * @param  list<array{0:?string, 1:?string}>  $candidates
+     * @return array<string, mixed>
+     */
+    private static function pagePanel(array $v, array $candidates, string $heading, string $description): array
+    {
+        $image = null;
+        $ratio = null;
+        $phone = null;
+
+        foreach ($candidates as [$candidate, $candidatePhone]) {
+            if ($candidate !== null && ($ratio = self::onServer($candidate)) !== null) {
+                $image = $candidate;
+                $phone = $candidatePhone;
+
+                break;
+            }
+        }
+
+        // A phone picture that is not on this server is dropped, never drawn broken.
+        $phoneRatio = $phone !== null && $phone !== $image ? self::onServer($phone) : null;
+        $phone = $phoneRatio !== null ? $phone : null;
+
+        return [
+            'image_phone' => $phone,
+            'srcset' => $image === null ? '' : self::srcset($image),
+            'srcset_phone' => $phone === null ? '' : self::srcset($phone),
+            'sizes' => $image === null ? '' : self::sizes($image, (int) $v['height'], (int) $v['height_m'], $ratio),
+            'sizes_phone' => $phone === null ? '' : self::sizes($phone, (int) $v['height'], (int) $v['height_m'], $phoneRatio),
+            'heading' => $heading,
+            'logo_image' => null,
+        ] + self::draw($v, $image, $description, self::FALLBACK_COLOUR);
+    }
+
+    /** Lane PH: one line of plain text, tags removed, at most $max characters. */
+    private static function line(mixed $v, int $max): string
+    {
+        if (! is_string($v)) {
+            return '';
+        }
+
+        $v = html_entity_decode(strip_tags($v), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        return mb_substr(trim((string) preg_replace('/\s+/u', ' ', $v)), 0, $max);
     }
 
     /**

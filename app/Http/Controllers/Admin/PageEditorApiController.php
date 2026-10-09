@@ -6,13 +6,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Page;
+use App\Support\BrandPanel;
 use App\Support\PageTitle;
 use App\Support\RichText;
 use App\Support\RoutedPages;
+use App\Support\TitleHeader;
 use App\Support\TranslationInput;
 use App\Support\Url;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Pages → User pages → Edit — the content page editor, and with it the per-row SEO
@@ -326,7 +329,19 @@ class PageEditorApiController extends Controller
             }
         }
 
+        // Lane PH: the page's own header choices, refused (422) rather than
+        // dropped when a key, a choice or the picture is not one it may hold.
+        $header = $request->exists('header_layout') ? $this->headerLayout($request) : false;
+
         $this->fill($page, $data, $title);
+
+        // Never written before its migration has run: a package's files land
+        // before its database step, and an UPDATE naming a missing column fails
+        // the whole save. (A non-empty header was already refused above.)
+        if ($header !== false && BrandPanel::columnReady('pages')) {
+            $page->header_layout = $header;
+        }
+
         $page->save();
 
         $page->saveTranslations($this->translations($data['translations'] ?? []));
@@ -363,6 +378,13 @@ class PageEditorApiController extends Controller
             'seo.canonical' => ['nullable', 'string', 'max:500'],
             'seo.noindex' => ['nullable', 'boolean'],
             'translations' => ['nullable', 'array'],
+            // Lane PH: Page header -- each key checked here, then again by
+            // headerLayout(), which refuses a key that is not one of these.
+            'header_layout' => ['sometimes', 'nullable', 'array'],
+            'header_layout.hero' => ['nullable', 'string', 'in:'.implode(',', BrandPanel::PAGE_HEROES)],
+            'header_layout.image' => ['nullable', 'string', 'max:2048'],
+            'header_layout.title' => ['nullable', 'string', 'max:'.BrandPanel::PAGE_TITLE_MAX],
+            'header_layout.sub' => ['nullable', 'string', 'max:'.BrandPanel::PAGE_SUB_MAX],
         ], [
             'slug.prohibited' => 'A content page is served by a route that names its slug, so '
                 .'changing the slug would take the page off the shop at both addresses — the old '
@@ -404,6 +426,62 @@ class PageEditorApiController extends Controller
         if (array_key_exists('seo', $data)) {
             $page->seo = $this->seo(is_array($data['seo']) ? $data['seo'] : []);
         }
+    }
+
+    /**
+     * Lane PH: `pages.header_layout`, rebuilt from BrandPanel::PAGE_KEYS --
+     * the page's own Header choice, Header picture, title and subtitle. An
+     * unknown key is refused, not dropped; so is a picture that is not an
+     * uploaded path or an http(s) address (TitleHeader::safeImage, the
+     * category Banner picture's own check), so a typo is never saved as "no
+     * picture". Blank fields are left out; nothing left is NULL, "follow the
+     * shop". Read off the INPUT, which the rules above have checked key by key.
+     *
+     * @return array<string, string>|null
+     */
+    private function headerLayout(Request $request): ?array
+    {
+        $raw = $request->input('header_layout');
+        $raw = is_array($raw) ? $raw : [];
+        $unknown = array_diff(array_keys($raw), BrandPanel::PAGE_KEYS);
+
+        if ($unknown !== []) {
+            throw ValidationException::withMessages(['header_layout' => 'The page header has no setting called "'.mb_substr((string) reset($unknown), 0, 40).'".']);
+        }
+
+        $clean = [];
+        $hero = BrandPanel::pageHero(['hero' => $raw['hero'] ?? null]);
+
+        if ($hero !== null) {
+            $clean['hero'] = $hero;
+        }
+
+        $picture = trim((string) ($raw['image'] ?? ''));
+
+        if ($picture !== '') {
+            $safe = TitleHeader::safeImage($picture);
+
+            if ($safe === null) {
+                throw ValidationException::withMessages(['header_layout.image' => 'The header picture must be an uploaded file (/uploads/…) or an http(s) address.']);
+            }
+
+            $clean['image'] = $safe;
+        }
+
+        foreach (['title' => BrandPanel::PAGE_TITLE_MAX, 'sub' => BrandPanel::PAGE_SUB_MAX] as $key => $max) {
+            // One line of plain words: printed escaped, and kept as typed.
+            $value = trim((string) preg_replace('/\s+/u', ' ', (string) ($raw[$key] ?? '')));
+
+            if ($value !== '') {
+                $clean[$key] = mb_substr($value, 0, $max);
+            }
+        }
+
+        if ($clean !== [] && ! BrandPanel::columnReady('pages')) {
+            throw ValidationException::withMessages(['header_layout' => 'The page header needs this update\'s database step. Run the update again from Store → Core Updates.']);
+        }
+
+        return $clean === [] ? null : $clean;
     }
 
     /**
@@ -564,6 +642,11 @@ class PageEditorApiController extends Controller
             'path' => $path,
             'url' => $path === null ? null : Url::to($path),
             'seo' => is_array($page->seo) ? $page->seo : [],
+            // Lane PH: Page header -- the page's own choices, and the shop's
+            // switch the "Shop setting" option follows, so the screen can say
+            // which header that is today.
+            'header_layout' => BrandPanel::pageOwn($page->getAttribute('header_layout')),
+            'header_shop' => (app(\App\Services\SiteLayout::class)->only(['pg_hero'])['pg_hero'] ?? 'panel') === 'banner' ? 'banner' : 'brand',
             'translations' => self::decodedTranslations($page->translationsForEditor()),
         ];
     }
