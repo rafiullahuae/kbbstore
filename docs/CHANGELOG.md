@@ -3,6 +3,25 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.453
+**Checkout: GLOW coupon line, no back links, Shipping Details, Express Delivery labels;
+Apple Pay / Google Pay buttons fixed; space above the footer; cart icon on the cart page.**
+Apply after .452. Runs its migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "on very top, above summary row ... For Discount, Apply coupon {coupon-code} ... auto apply ... without refreshing" | Top of checkout: "For Discount, Apply coupon GLOW"; one tap applies it in place (total updates, no reload), then "Coupon GLOW applied". Appearance -> Checkout page -> Coupon line |
+| "turn off the back to shop link and back to cart button on checkout completely" | Both gone. Appearance -> Checkout page -> Back to shop & cart (both off) |
+| "Shipping address ... to Shipping Details, remove the phone and Full name from contact ... bring to Shipping Details" | Contact: Email and "Create an account". Shipping Details starts with Full name and Phone |
+| "Express Delivery or Free Express Delivery ... Free delivery over AED 199 ... only in UAE" | "Express Delivery · AED 20" or "Free Express Delivery · Free"; "Free delivery over AED 199" beside the Delivery heading for the UAE only, amount from your free-delivery setting. Appearance -> Checkout page -> Delivery labels |
+| "why google pay and apple pay not showing" | The checkout mounted Stripe's wallet buttons into a hidden, zero-width box, so Stripe drew nothing; fixed. The Apple file box takes the full file (old 8 KB limit) and refuses a pmd_ id with the reason; Store -> Payments -> Credit or debit card shows a red/green Apple Pay and Google Pay box; payment errors show the whole sentence |
+| "space controls above footer globally" | Appearance -> Footer -> Site footer · Desktop / Mobile -> Spacing -> "Space above the footer (every page)": Auto (as now) or 0-160 px |
+| "the cart panel icon should not open the cart panel on cart page" | On the Cart page the cart icon reloads the Cart page |
+
+After applying: open https://kbeautybliss.com/.well-known/apple-developer-merchantid-domain-association - it should show one long line. If not, paste Apple's file again at Store -> Payments -> Credit or debit card -> Apple Pay domain file.
+
+Files: see the package's update.json.
+
 ## 2.60.452
 **Analytics: Online now, a Google-style minute chart, a live funnel, movable blocks; Contact
 cards editable in the page editor with the Instagram card; SEO social links can no longer be
