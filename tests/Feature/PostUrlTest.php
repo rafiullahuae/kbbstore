@@ -227,7 +227,11 @@ it('sends bare /post and /skincare-guide to the Journal index', function () {
      * index draws no eyebrow, and this file was 16 passed / 0 failed. With the
      * needles below it is red.
      */
-    $eyebrow = '<div class="ey">The Glow Journal</div>';
+    // Lane PH: the Journal index opens with the brand-design page header by
+    // default (Appearance -> Site layout -> Page header -> The Journal), whose
+    // h1 is the index's own heading; the old eyebrow belongs to the Journal's
+    // own header, still one setting away. The fingerprint is that h1.
+    $eyebrow = 'id="brw-ph-title">Skincare tips &amp; the K-beauty edit</h1>';
 
     $this->followingRedirects()->get('/post')->assertOk()->assertSee($eyebrow, escape: false);
     $this->followingRedirects()->get('/skincare-guide')->assertOk()->assertSee($eyebrow, escape: false);

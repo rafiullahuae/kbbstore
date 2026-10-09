@@ -396,7 +396,8 @@ it('translates a category, a brand, a page, an article and a menu label too', fu
     // The page's own heading. 'About Us' is also this page's <title>, its
     // og:title and a navigation label, so bare it could not see the page body
     // at all (Lane PLC).
-    expect($english)->toContain('<h1>About Us</h1>')
+    // Lane PH: the h1 now sits in the brand-design page header, same words.
+    expect($english)->toContain('id="brw-ph-title">About Us</h1>')
         ->and(str_contains($english, 'ZZSENTINELPAGE'))->toBeFalse('The English page read the Arabic title.')
         ->and(str_contains($english, 'ZZSENTINELMENU'))->toBeFalse(
             'The English header read the Arabic menu label. NavigationService caches ONE '

@@ -146,7 +146,9 @@ it('splits the FAQ questions that were run into the answer before them, and ever
 it('serves the pages with real headings, bullets, paragraphs and mailto links', function () {
     $delivery = $this->get('/delivery/')->assertOk()->getContent();
 
-    expect($delivery)->toContain('<h1>Shipping &amp; Delivery</h1>')
+    // Lane PH: the page's one h1 is the brand-design header's (Appearance ->
+    // Site layout -> Page header), carrying the same words.
+    expect($delivery)->toContain('id="brw-ph-title">Shipping &amp; Delivery</h1>')
         ->toContain('<h3>Local Delivery:</h3>')
         ->toContain('<h3>International Delivery:</h3>')
         ->toContain('<h3>Customs / Import</h3>')
@@ -158,7 +160,7 @@ it('serves the pages with real headings, bullets, paragraphs and mailto links', 
         ->and($delivery)->toContain('<p>At K-Beauty Bliss, we are committed');
 
     $this->get('/refund_returns/')->assertOk()
-        ->assertSee('<h1>Refund and Returns Policy</h1>', false)
+        ->assertSee('id="brw-ph-title">Refund and Returns Policy</h1>', false)
         ->assertSee('please email us at <a href="mailto:info@kbeautybliss.com">info@kbeautybliss.com</a></p>', false);
 
     $privacy = $this->get('/privacy-policy/')->assertOk()->getContent();
