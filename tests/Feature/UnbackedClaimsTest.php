@@ -77,6 +77,14 @@ function clProduct(array $overrides = []): Product
 
 function clCheckout()
 {
+    // Lane QK9: the reviews card under Payment is OFF by default now (the
+    // owner crossed it out). Switched on here, so these tests still ask what
+    // it says WHEN it is shown -- the truth of the figure is unchanged.
+    app(\App\Services\CheckoutPage::class)->save(['trust_card' => true]);
+    \App\Models\Setting::flushMap();
+    SettingsService::forgetMemo();
+    app(SettingsService::class)->flush();
+
     $cart = Cart::create([
         'token' => (string) Str::uuid(),
         'currency' => 'AED',

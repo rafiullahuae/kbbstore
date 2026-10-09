@@ -1,0 +1,164 @@
+[
+ {
+  "L": "en",
+  "w": 320,
+  "geom": {
+   "formL": 20,
+   "formR": 300,
+   "moL": 20,
+   "moR": 300,
+   "joinGap": 0
+  },
+  "codSelected": true,
+  "placeHitTest": true,
+  "emptyTap": {
+   "url": "/checkout/",
+   "focused": "billing_email",
+   "focusedInView": true,
+   "scrollY": 0
+  },
+  "plusFound": 1,
+  "totalsLive": {
+   "before": "TotalAED 88",
+   "after": "TotalAED 148",
+   "stillMerged": true
+  },
+  "placed": "/checkout/success",
+  "errors": []
+ },
+ {
+  "L": "en",
+  "w": 390,
+  "geom": {
+   "formL": 20,
+   "formR": 370,
+   "moL": 20,
+   "moR": 370,
+   "joinGap": 0
+  },
+  "codSelected": true,
+  "placeHitTest": true,
+  "emptyTap": {
+   "url": "/checkout/",
+   "focused": "billing_email",
+   "focusedInView": true,
+   "scrollY": 0
+  },
+  "plusFound": 1,
+  "totalsLive": {
+   "before": "TotalAED 88",
+   "after": "TotalAED 148",
+   "stillMerged": true
+  },
+  "placed": "/checkout/success",
+  "errors": []
+ },
+ {
+  "L": "en",
+  "w": 768,
+  "geom": {
+   "formL": 20,
+   "formR": 748,
+   "moL": 20,
+   "moR": 748,
+   "joinGap": 0
+  },
+  "codSelected": true,
+  "placeHitTest": true,
+  "emptyTap": {
+   "url": "/checkout/",
+   "focused": "billing_email",
+   "focusedInView": true,
+   "scrollY": 0
+  },
+  "plusFound": 1,
+  "totalsLive": {
+   "before": "TotalAED 88",
+   "after": "TotalAED 148",
+   "stillMerged": true
+  },
+  "placed": "/checkout/success",
+  "errors": []
+ },
+ {
+  "L": "ar",
+  "w": 320,
+  "geom": {
+   "formL": 20,
+   "formR": 300,
+   "moL": 20,
+   "moR": 300,
+   "joinGap": 0
+  },
+  "codSelected": true,
+  "placeHitTest": true,
+  "emptyTap": {
+   "url": "/ar/checkout/",
+   "focused": "billing_email",
+   "focusedInView": true,
+   "scrollY": 0
+  },
+  "plusFound": 1,
+  "totalsLive": {
+   "before": "الإجماليAED 104",
+   "after": "الإجماليAED 178",
+   "stillMerged": true
+  },
+  "placed": "/ar/checkout/success",
+  "errors": []
+ },
+ {
+  "L": "ar",
+  "w": 390,
+  "geom": {
+   "formL": 20,
+   "formR": 370,
+   "moL": 20,
+   "moR": 370,
+   "joinGap": 0
+  },
+  "codSelected": true,
+  "placeHitTest": true,
+  "emptyTap": {
+   "url": "/ar/checkout/",
+   "focused": "billing_email",
+   "focusedInView": true,
+   "scrollY": 0
+  },
+  "plusFound": 1,
+  "totalsLive": {
+   "before": "الإجماليAED 104",
+   "after": "الإجماليAED 178",
+   "stillMerged": true
+  },
+  "placed": "/ar/checkout/success",
+  "errors": []
+ },
+ {
+  "L": "ar",
+  "w": 768,
+  "geom": {
+   "formL": 20,
+   "formR": 748,
+   "moL": 20,
+   "moR": 748,
+   "joinGap": 0
+  },
+  "codSelected": true,
+  "placeHitTest": true,
+  "emptyTap": {
+   "url": "/ar/checkout/",
+   "focused": "billing_email",
+   "focusedInView": true,
+   "scrollY": 0
+  },
+  "plusFound": 1,
+  "totalsLive": {
+   "before": "الإجماليAED 104",
+   "after": "الإجماليAED 178",
+   "stillMerged": true
+  },
+  "placed": "/ar/checkout/success",
+  "errors": []
+ }
+]

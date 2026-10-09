@@ -1257,6 +1257,28 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   /* full on-page Place order box on mobile */
   .kbb-checkout .kbb-mobile-order{display:block;background:#fff;border:1px solid var(--line-2);border-radius:var(--r);padding:var(--cop-secpad);margin-top:var(--cop-block);box-shadow:var(--sh)}
   .kbb-checkout .kbb-mobile-order .place{margin-top:14px}
+  /* Lane QK9 -- "the place order section and the payment section will have
+     same white background and merged with a slightly grey separator line ...
+     match to the payment gateway block width, so it will look as one block."
+     Appearance -> Checkout page -> Mobile · Layout -> "Payment and Place order
+     as one card" is ON, as asked, and these rules are the default; OFF puts
+     .cop-nomerge on the page and the separate bag card back. No wrapper: the
+     bag block keeps its own element, so every selector the live totals, the
+     floating bar and the placing overlay use is the one they used before.
+     - the 24px under the grid and the block's 16px top margin go: the bag
+       block starts where the Payment card ends, and the 24px moves under the
+       whole card, so it does not sit on the footer;
+     - the bag block takes the grid's own width (the same max-width and the
+       same --cop-padx gutter .co-grid uses), so its edges are the card's edges;
+     - the Payment card loses its bottom border, bottom corners and shadow; the
+       bag block loses its top corners, and its top border (the checkout's
+       --line-2, the divider between every section above) is the one line;
+     - one shadow, the form card's own, under the bottom of the whole card.
+       Its upward reach is zero (12px down, 36px blur, -24px spread), so it
+       cannot draw a seam across the join. */
+  .kbb-checkout:not(.cop-nomerge) .co-grid{padding-bottom:0}
+  .kbb-checkout:not(.cop-nomerge) .formbox{border-bottom:none;border-end-start-radius:0;border-end-end-radius:0;box-shadow:none}
+  .kbb-checkout:not(.cop-nomerge) .kbb-mobile-order{width:min(calc(100% - 2 * var(--cop-padx)), calc(var(--cop-d-max,1040px) - 2 * var(--cop-padx)));margin:0 auto 24px;border-start-start-radius:0;border-start-end-radius:0;box-shadow:0 12px 36px -24px rgba(42,34,40,.22)}
   /* fixed bottom pay bar (design .mpbar) */
   .kbb-checkout .mpbar{display:flex;position:fixed;inset-inline-start:0;inset-inline-end:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:11px 16px;z-index:80;align-items:center;gap:12px;box-shadow:0 -8px 24px -14px rgba(0,0,0,.25)}
   .kbb-checkout .mpbar .mt{font-weight:800;font-size:16px}

@@ -291,6 +291,18 @@ class CheckoutPage
          */
         'policy_links' => ['bool', 'Shipping & Delivery and Returns Information links under Place order', false,
                            'Two small links to /delivery/ and /refund_returns/, under the pay button on both the phone and the desktop page.'],
+        /*
+         * "remove the rating row, and also the empty space, so the place order
+         * section and the payment section will have same white background and
+         * merged" -- the owner, 9 October (Lane QK9), with the card crossed out
+         * on a phone screenshot. The WHOLE card under Payment -- the stars line
+         * and "100% authentic K-beauty" -- is off by default as he asked; the
+         * two switches below still decide what it says when it is back on.
+         * The small "SSL secure · 100% authentic" line under Place order is not
+         * this card and is not touched by it.
+         */
+        'trust_card'  => ['bool', 'Reviews & authenticity card under Payment', false,
+                          'The white card under the payment methods with the stars, the score and "100% authentic K-beauty". Off, as asked, so Place order sits right under the payment methods.'],
         'rating_on'   => ['bool', 'Show the reviews line', true,
                           'The stars and the score above the order summary. It already draws nothing until there are enough approved reviews to mean anything, so this is for a shop that never wants it.'],
         'rating_text' => ['text', 'Reviews line wording', '{rating} from {count} reviews',
@@ -305,6 +317,15 @@ class CheckoutPage
                               'smart'  => 'Only once the in-page button scrolls away',
                               'always' => 'Always, from the moment the page loads',
                           ]],
+        /*
+         * "the place order section and the payment section will have same white
+         * background and merged with a slightly grey separator line ... match
+         * to the payment gateway block width, so it will look as one block" --
+         * the owner, 9 October (Lane QK9). ON as asked. Off puts back the
+         * separate full-width bag card under a gap.
+         */
+        'm_merge'     => ['bool', 'Payment and Place order as one card', true,
+                          'The phone page joins the "Your bag" / totals / Place order block onto the bottom of the Payment card: one white card, the same width, a thin grey line between the payment methods and the bag. Nothing on this row reaches a desktop, where Place order sits in the order summary beside the form.'],
 
         /*
          * ── THE ORDER-SUMMARY PRODUCT ROWS ─────────────────────────────────
@@ -1107,7 +1128,7 @@ class CheckoutPage
         'mobile'       => ['Mobile · Layout', 'The single-column checkout, at 900px and below. Nothing on this tab can reach a desktop.',
                            ['m_shell_pt', 'm_shell_pb',
                             'm_pad_x', 'm_pad_y', 'm_title_pt', 'm_gap', 'm_block_gap', 'm_sec_pad', 'm_aside_pad',
-                            'm_float']],
+                            'm_float', 'm_merge']],
         'mobile_head'  => ['Mobile · Header', 'The same bar on a phone. Worth a look at 360px: the badge is the first thing that crowds the logo.',
                            ['m_head_pad_y', 'm_head_pad_x', 'm_head_max', 'm_head_align', 'm_head_logo', 'm_head_badge', 'm_head_sticky']],
         'mobile_type'  => ['Mobile · Text sizes', 'Same six roles, their own values. The field-text floor is the one control here that will not go below where it is, and it says why.',
@@ -1124,8 +1145,8 @@ class CheckoutPage
         'tocart'       => ['Back to shop & cart', 'The round back arrow beside the Checkout heading (on, as asked), then the "← Back to shop" link and the "Go back to cart" button at the top of the page — both off, as asked, and switched back on here. Which of the five LOOKS the cart button wears is chosen on Store → Ecommerce → Checkout → Mobile layout; everything about its SIZE is here.',
                            ['head_back', 'shop_link', 'cart_link', 'd_tocart_size', 'd_tocart_icon', 'd_tocart_r',
                             'm_tocart_size', 'm_tocart_icon', 'm_tocart_r', 'm_tocart_min']],
-        'trust'        => ['Trust & reviews', 'The stars and score above the order summary. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — "100% authentic" beside the pay button and "100% authentic K-beauty" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims. The two policy links under Place order are switched here too.',
-                           ['rating_on', 'rating_text', 'rating_min', 'policy_links']],
+        'trust'        => ['Trust & reviews', 'The card under Payment with the stars, the score and "100% authentic K-beauty" — off, as asked, so Place order sits right under the payment methods; the first switch brings it back. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — "100% authentic" beside the pay button and "100% authentic K-beauty" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims. The two policy links under Place order are switched here too.',
+                           ['trust_card', 'rating_on', 'rating_text', 'rating_min', 'policy_links']],
         'cues'         => ['Fields & attention', 'Which optional fields the page draws, and the two moving things on it: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces.',
                            ['optin_on', 'optin_checked', 'notes_on', 'addr_picker', 'state_list', 'sum_row', 'sum_totals', 'float_labels', 'browsed_on', 'remember_on',
                             'ph_weight', 'ph_tone', 'ph_italic',
@@ -1366,6 +1387,9 @@ class CheckoutPage
         /* The one switch here whose ON state is the class, because upright is
            the default and italic is the departure. */
         'ph_italic'      => ['', 'cop-phit'],
+        /* Lane QK9: the merged card is the stylesheet's default (as asked),
+           so OFF is the class that puts the separate bag card back. */
+        'm_merge'        => ['cop-nomerge', ''],
     ];
 
     /**

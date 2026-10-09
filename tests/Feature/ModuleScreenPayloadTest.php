@@ -262,6 +262,11 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // it); pay_tint's help, dl_note / dl_note_ar ("Free express delivery",
     // relabelled "Note beside “Delivery” (UAE only)") and cline_on (now OFF)
     // changed. slim-footer's second link is Privacy policy -> /privacy-policy/.
+    // ▲ Lane QK9 (9 October), the owner's request, spliced in, not
+    // regenerated: checkout-page gains trust_card ("Reviews & authenticity
+    // card under Payment", OFF, first on Trust & reviews, whose description
+    // names it) and m_merge ("Payment and Place order as one card", ON, after
+    // m_float on Mobile · Layout).
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
@@ -689,7 +694,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // says so. The cart page's sum_delivery_on help now names that switch.
     // 761 -> 766 (Lane QK8): checkout-page gains d_title_pt, m_title_pt,
     // pay_bg, pay_unsel and head_back, each the owner's request.
-    expect($compared)->toBe(766, 'the number of controls drawn changed');
+    // 766 -> 768 (Lane QK9): checkout-page gains trust_card and m_merge,
+    // each the owner's request.
+    expect($compared)->toBe(768, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

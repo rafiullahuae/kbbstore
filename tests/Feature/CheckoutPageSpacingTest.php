@@ -276,7 +276,11 @@ it('offers spacing and nothing structural', function () {
             // policy_links (Lane TP) shows or hides two small links under
             // Place order -- "two links on cart / checkout pages", which the
             // owner asked for; nothing else on the page moves.
-            'd_sticky', 'policy_links', 'rating_on', 'd_row_bold', 'd_row_brand', 'm_row_bold', 'm_row_brand',
+            // Lane QK9, each the owner's request: trust_card, the reviews card
+            // under Payment (OFF, he crossed it out), and m_merge, which joins
+            // the phone's bag block onto the Payment card (ON). The one card
+            // is his own; nothing else is added and no section goes.
+            'd_sticky', 'policy_links', 'trust_card', 'rating_on', 'm_merge', 'd_row_bold', 'd_row_brand', 'm_row_bold', 'm_row_brand',
             'd_head_sticky', 'm_head_sticky', 'm_t_input_floor',
             // addr_picker (Lane CK) swaps what is INSIDE section 2 -- the
             // picker row or the four typed fields -- and the section stays.

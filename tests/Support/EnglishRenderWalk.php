@@ -3741,6 +3741,22 @@ KBB_BH_CSS;
     {
         return [
             /*
+             * THE REVIEWS & AUTHENTICITY CARD UNDER PAYMENT GOES. (Lane QK9)
+             * The owner, on a phone screenshot of the live checkout with the
+             * card crossed out: "remove the rating row, and also the empty
+             * space, so the place order section and the payment section will
+             * have same white background and merged". Appearance -> Checkout
+             * page -> Trust & reviews -> "Reviews & authenticity card under
+             * Payment", OFF as asked; switched on, the card is exactly these
+             * bytes again (CheckoutQk9Test). Its leading indent stays on the
+             * line, which is why the cut starts at the tag. The merge itself is
+             * CSS only and adds no markup. Once, on the basket checkout.
+             */
+            'the reviews & authenticity card under Payment (Lane QK9)' => [
+                'pattern' => '#<div class="kbb-reassure">\n.*?\n    </div>\n#s',
+                'hits' => 1,
+            ],
+            /*
              * THE ADDRESS BOOK'S TYPED STATE BOX (Lane AD): Address line 1 and
              * 2, City, State, Postcode, Country as typed rows, replaced by the
              * insertion of the same name -- Building / Apartment or Villa,
