@@ -413,6 +413,15 @@ export function initCheckout() {
                     el.textContent = data.vat.label;
                 });
             }
+
+            // Lane QK12: with "Show VAT amount to customers" off the note row
+            // carries only .js-vat-short -- no .js-vat for an amount to land
+            // in -- and its sentence follows the new country's rate.
+            if (data.vat && typeof data.vat.short === 'string') {
+                document.querySelectorAll('.js-vat-short').forEach((el) => {
+                    el.textContent = data.vat.short;
+                });
+            }
         } catch {
             window.kbbToast?.(t('store.js.delivery_retry', 'Could not update delivery for that country — please try again.'));
             if (slot) slot.innerHTML = deliveryLoading();

@@ -2398,6 +2398,22 @@ final class EnglishRenderWalk
                 'with' => '$1<svg class="mm-fl" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13.2 2 4.6 13.4h6.1L9.8 22l8.6-11.6h-6.1z"/></svg>Super Sale</a>',
                 'hits' => 33, // every page: the phone menu is in the layout
             ],
+            /*
+             * THE CHECKOUT'S VAT NOTE: A SENTENCE, NO FIGURE. (Lane QK12, chunk
+             * C) "remove the vat price that comes above place order button,
+             * only mention 5% VAT included" -- Appearance -> Checkout page ->
+             * Trust & reviews -> "Show VAT amount to customers" ships OFF. The
+             * row's own tag is outside the substitution, so its place, its
+             * classes and its hidden state are still compared byte for byte;
+             * only the label and the amount inside it become the one span.
+             * Both order blocks: the phone's top summary and the one over
+             * Place order. Qk12VatDisplayTest pins the stored VAT unchanged.
+             */
+            'the checkout VAT note: "5% VAT inclusive", no amount (Lane QK12)' => [
+                'pattern' => '#(<div class="sumrow vat js-vat-row vat-note"[^>\n]*>)<span class="js-vat-label">[^<]*</span><span class="js-vat">[^\n]*?</span>(</div>\n)#',
+                'with' => '$1<span class="js-vat-short">5% VAT inclusive</span>$2',
+                'hits' => 2, // /checkout (with a basket): two order blocks
+            ],
         ];
     }
 

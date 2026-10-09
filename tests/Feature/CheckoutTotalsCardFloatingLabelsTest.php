@@ -353,7 +353,10 @@ it('renders the checkout byte for byte as before this lane with both switches of
     // the footer's links "under the wordmark" are the old position.
     cdSet(['sum_totals' => false, 'float_labels' => false, 'pay_style' => 'plain', 'state_list' => false, 'remember_on' => false,
         'shop_link' => true, 'cart_link' => true, 'dl_on' => false, 'dl_note_on' => false,
-        'coupon_head' => true, 'signin_on' => false]);
+        'coupon_head' => true, 'signin_on' => false,
+        // Lane QK12: "Show VAT amount to customers" ships OFF, as asked; ON is
+        // its byte-for-byte way back (Qk12VatDisplayTest).
+        'vat_amount' => true]);
     app(\App\Services\SlimFooter::class)->save(['links_pos' => 'brand']);
     // Lane LG2's lotus logo ships ON in the checkout's header and drawer;
     // "Text only (as before)" is its byte-for-byte way back (LogoLockupTest),

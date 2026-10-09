@@ -10442,6 +10442,33 @@
             "default": false,
             "value": false,
             "options": null
+          },
+          {
+            "key": "vat_amount",
+            "type": "bool",
+            "label": "Show VAT amount to customers",
+            "help": "Off, as asked: the checkout says only “5% VAT inclusive” under the Total. On: your VAT label from Store → Ecommerce → Tax with the amount beside it, as before. Display only — the VAT is calculated, stored, invoiced and e-mailed exactly the same either way.",
+            "default": false,
+            "value": false,
+            "options": null
+          },
+          {
+            "key": "vat_text",
+            "type": "text",
+            "label": "VAT line wording",
+            "help": "Shown while the amount is off. {rate} becomes the destination’s rate, e.g. 5.",
+            "default": "{rate}% VAT inclusive",
+            "value": "{rate}% VAT inclusive",
+            "options": null
+          },
+          {
+            "key": "vat_text_ar",
+            "type": "text",
+            "label": "VAT line wording — Arabic",
+            "help": "The same on the Arabic shop (/ar/).",
+            "default": "شامل ضريبة القيمة المضافة {rate}%",
+            "value": "شامل ضريبة القيمة المضافة {rate}%",
+            "options": null
           }
         ]
       },

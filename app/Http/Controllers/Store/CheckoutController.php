@@ -2730,6 +2730,9 @@ class CheckoutController extends Controller
                 'label' => $totals['vat']['label'],
                 'formatted' => $totals['vat']['formatted'],
                 'added' => $totals['vat']['added'],
+                // Lane QK12: the "5% VAT inclusive" sentence for the new
+                // country's rate, or null while the amount is shown.
+                'short' => app(\App\Services\CheckoutPage::class)->vatSentence((string) ($totals['vat']['rate'] ?? '')),
             ] : null,
         ]);
     }

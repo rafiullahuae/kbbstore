@@ -312,6 +312,9 @@ it('offers spacing and nothing structural', function () {
             // asked) and "Sign in" beside 1 Contact (ON, he asked). Neither
             // adds or removes a section.
             'coupon_head', 'signin_on',
+            // Lane QK12: "Show VAT amount to customers" (OFF, he asked: "only
+            // mention 5% VAT included"). The VAT note's wording; no section.
+            'vat_amount',
         ]);
 });
 

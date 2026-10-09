@@ -187,8 +187,20 @@
      invisible while one global rate applied everywhere. With a Saudi rate set,
      switching country moved the figure to 13.04 and left "You're paying VAT
      (5%)" printed beside it: a receipt contradicting itself. Both halves move
-     together. --}}
-<div class="sumrow vat js-vat-row vat-note"@if (! ($totals['vat'] && ! $totals['vat']['added'])) hidden @endif><span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span></div>
+     together.
+
+     Lane QK12: Appearance → Checkout page → Trust & reviews → "Show VAT
+     amount to customers", OFF as the owner asked ("only mention 5% VAT
+     included ... i don't want to display the value to the customer"). Off,
+     this row is one sentence with the rate and NO FIGURE, under its own hook
+     (.js-vat-short) so the country-change refresh, which rewrites .js-vat and
+     .js-vat-label, has nothing here to put an amount back into. Display only:
+     $totals is not touched, so the order, the gateway and the receipt carry
+     the same VAT as before. On: the row exactly as it was.
+
+     ON THE ROW'S OWN LINE, glued to it: a directive on a line of its own
+     leaves that line's newline in the page. --}}
+@php($kbbVatSay = app(\App\Services\CheckoutPage::class)->vatSentence((string) ($totals['vat']['rate'] ?? '')))<div class="sumrow vat js-vat-row vat-note"@if (! ($totals['vat'] && ! $totals['vat']['added'])) hidden @endif>@if ($kbbVatSay !== null)<span class="js-vat-short">{{ $totals['vat'] ? $kbbVatSay : '' }}</span>@else<span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span>@endif</div>
 @if ($kbbCot)</div>
 @endif
 

@@ -106,6 +106,8 @@
  *   (Lane QK12, chunk B: cart_panel `foot_gap_m` and cart_page `sum_first`,
  *   20 lines inserted; and cart_page `bar_pad` MOVED on purpose -- its max is
  *   80 now (the owner's 50 had to fit), so 99999 clamps to 80, 1 modified.)
+ *   (Lane QK12, chunk C: checkout_page `vat_amount`, `vat_text` and
+ *   `vat_text_ar`, 23 lines inserted, 0 modified, 0 removed.)
  *
  *   Take the new rows and nothing else: rebuild the corpus, then for every line
  *   whose identity (module|key|type|input) is already in the fixture, keep the

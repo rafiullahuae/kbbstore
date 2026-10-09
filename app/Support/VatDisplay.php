@@ -486,6 +486,10 @@ final class VatDisplay
             'formatted' => Money::format($quote['printed'], Money::receiptDecimals($quote['printed'])),
             'added' => $quote['added'],
             'basis' => $quote['basis'],
+            // Lane QK12: the rate as printed, "5" / "7.5", for the checkout's
+            // short ":rate% VAT inclusive" line -- from the same rule as the
+            // figure and the label, so the three cannot disagree.
+            'rate' => $this->printableRate((float) $quote['rate']),
         ];
     }
 

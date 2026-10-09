@@ -1106,12 +1106,44 @@ class CheckoutPage
                             'The same on the Arabic shop (/ar/).'],
         'signin_on'     => ['bool', '“Sign in” beside the Contact heading', true,
                             'On, as asked: a shopper who is not signed in sees "Sign in" on the right of "1 Contact". It opens a small sign-in window over the page (with "Forgot password?", no sign-up), fills in their saved name, email, phone and address, and closes itself. Never shown to a signed-in customer.'],
+        /*
+         * Lane QK12. The owner, 9 October, on phone screenshots of the summary
+         * over Place order and of the Order summary at the top of the phone
+         * checkout ("VAT inclusive (5%)  AED 21.67"): "remove the vat price
+         * that comes above place order button, only mention 5% VAT included"
+         * and "remove the vat value ... but at the backend the VAT will be
+         * calculated properly. only i don't want to display the value to the
+         * customer for confusion."
+         *
+         * OFF, as asked: the "of which" note under the Total -- in BOTH copies
+         * of the order block, the phone's top summary and the one over Place
+         * order -- prints the sentence below and no figure. DISPLAY ONLY:
+         * CartService::totals(), the stored order, invoices, e-mails, the
+         * order pages and every gateway amount are untouched. The rate is
+         * VatDisplay's per-country rate, the one the old label's {rate} was.
+         * An EXCLUSIVE basis in live mode keeps its row and figure above the
+         * Total, because there the tax is ADDED and the column has to add up
+         * to what is charged; the shop's own inclusive basis never draws it.
+         */
+        'vat_amount'    => ['bool', 'Show VAT amount to customers', false,
+                            'Off, as asked: the checkout says only “5% VAT inclusive” under the Total. On: your VAT label from Store → Ecommerce → Tax with the amount beside it, as before. Display only — the VAT is calculated, stored, invoiced and e-mailed exactly the same either way.'],
+        'vat_text'      => ['text', 'VAT line wording', self::VAT_TEXT,
+                            'Shown while the amount is off. {rate} becomes the destination’s rate, e.g. 5.'],
+        'vat_text_ar'   => ['text', 'VAT line wording — Arabic', self::VAT_TEXT_AR,
+                            'The same on the Arabic shop (/ar/).'],
     ];
 
     /** Lane CO: the heading over the wallet buttons, his words. */
     public const XC_HEAD = 'Express checkout';
 
     public const XC_HEAD_AR = 'الدفع السريع';
+
+    /** Lane QK12: the checkout's VAT sentence, with the amount off -- "5% VAT
+     *  inclusive", the owner's wording (he first wrote "included", then
+     *  corrected it). */
+    public const VAT_TEXT = '{rate}% VAT inclusive';
+
+    public const VAT_TEXT_AR = 'شامل ضريبة القيمة المضافة {rate}%';
 
     /** Lane QK6: the delivery labels and the line beside the heading, his words. */
     public const DL_PAID = 'Express Delivery';
@@ -1184,7 +1216,9 @@ class CheckoutPage
                            ['head_back', 'shop_link', 'cart_link', 'd_tocart_size', 'd_tocart_icon', 'd_tocart_r',
                             'm_tocart_size', 'm_tocart_icon', 'm_tocart_r', 'm_tocart_min']],
         'trust'        => ['Trust & reviews', 'The card under Payment with the stars, the score and "100% authentic K-beauty" — off, as asked, so Place order sits right under the payment methods; the first switch brings it back. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — "100% authentic" beside the pay button and "100% authentic K-beauty" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims. The two policy links under Place order are switched here too.',
-                           ['trust_card', 'rating_on', 'rating_text', 'rating_min', 'policy_links']],
+                           ['trust_card', 'rating_on', 'rating_text', 'rating_min', 'policy_links',
+                            // Lane QK12, last so every field above keeps its place.
+                            'vat_amount', 'vat_text', 'vat_text_ar']],
         'cues'         => ['Fields & attention', 'Which optional fields the page draws, and the two moving things on it: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces.',
                            ['optin_on', 'optin_checked', 'notes_on', 'addr_picker', 'state_list', 'sum_row', 'sum_totals', 'float_labels', 'browsed_on', 'remember_on',
                             'ph_weight', 'ph_tone', 'ph_italic',
@@ -1551,6 +1585,32 @@ class CheckoutPage
     public function desktopTotals(): bool
     {
         return $this->flag('sum_totals');
+    }
+
+    /**
+     * Lane QK12: Trust & reviews → "Show VAT amount to customers", OFF as
+     * asked. Null while it is on (the label and the amount, as before);
+     * otherwise the sentence to print, for the current locale, with {rate}
+     * filled. Plain text -- every caller escapes it ({{ }} or textContent).
+     */
+    public function vatSentence(string $rate): ?string
+    {
+        if ($this->flag('vat_amount')) {
+            return null;
+        }
+
+        $ar = ! \App\Support\Locale::isDefault() && \App\Support\Locale::current() === 'ar';
+        $text = $ar ? trim((string) $this->flagless('vat_text_ar')) : '';
+
+        if ($text === '') {
+            $text = trim((string) $this->flagless('vat_text'));
+        }
+
+        if ($text === '') {
+            $text = self::VAT_TEXT;
+        }
+
+        return str_replace('{rate}', $rate, $text);
     }
 
     /**
