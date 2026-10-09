@@ -44,30 +44,44 @@ const click = (p, sel, text) => p.locator(sel + ' button', { hasText: text }).fi
 const only = process.argv[3];
 const { p, ctx, errors } = await page(1720, 1000); // wide enough that the laptop screen draws at zoom 1
 if (!only || only === 'art') {
-  for (const [label, file] of [['White on deep tone', 'artwork-sheet-deep.png'], ['Line, ring only', 'artwork-sheet-ring.png'], ['Rose on pastel', 'artwork-sheet.png']]) {
+  await p.locator('#more-sets summary').click();
+  for (const [label, file] of [['White on deep tone', 'artwork-sheet-deep.png'], ['Line, ring only', 'artwork-sheet-ring.png'], ['Pastel light', 'artwork-sheet.png']]) {
     await click(p, '#c-pres', label);
     await p.locator('#sheet').screenshot({ path: join(out, file) });
   }
+  await p.locator('#more-sets summary').click();
 }
+const tap = async (sel, text) => { await click(p, sel, text); await p.waitForTimeout(120); };
+const sec = async (name) => {
+  await p.waitForTimeout(250);
+  await p.locator('#scr-m .skc').screenshot({ path: join(out, name + '-390.png') });
+  await p.locator('#scr-d .skc').screenshot({ path: join(out, name + '-1280.png') });
+};
 if (!only || only === 'designs') {
+  await tap('#c-view', 'Both');
   for (const d of ['A', 'B', 'C', 'D', 'E']) {
     await p.locator('#c-design button', { hasText: d + ' ·' }).click();
-    await click(p, '#c-view', 'Phone');
-    await p.waitForTimeout(150);
-    await p.locator('#scr-m').screenshot({ path: join(out, `design-${d}-390.png`) });
-    await click(p, '#c-view', 'Laptop');
-    await p.waitForTimeout(150);
-    await p.locator('#scr-d').screenshot({ path: join(out, `design-${d}-1280.png`) });
+    await sec('design-' + d);
   }
-  // Arabic, design A, both widths
   await p.locator('#c-design button', { hasText: 'A ·' }).click();
-  await click(p, '#c-lang', 'العربية');
-  await click(p, '#c-view', 'Phone');
-  await p.locator('#scr-m').screenshot({ path: join(out, 'design-A-390-arabic.png') });
-  await click(p, '#c-view', 'Laptop');
-  await p.locator('#scr-d').screenshot({ path: join(out, 'design-A-1280-arabic.png') });
-  await click(p, '#c-lang', 'English');
-  await click(p, '#c-view', 'Both');
+  await tap('#c-arrM', 'On');
+  for (const [st, name] of [['Round white', 'white'], ['Round pink', 'pink'], ['Outline ring', 'ring'], ['Square soft', 'square'], ['Chevron only', 'chevron']]) {
+    await tap('#c-arrStyle', st); await sec('arrows-' + name);
+  }
+  await tap('#c-arrStyle', 'Round white');
+  for (const [pos, name] of [['Outside the row', 'outside'], ['Top, by the heading', 'top'], ['Bottom centre', 'bottom'], ['Sides, over the row', 'sides']]) {
+    await tap('#c-arrPos', pos); await sec('arrows-pos-' + name);
+  }
+  for (const [pg, name] of [['None', 'none'], ['Progress bar', 'bar'], ['1 / 7', 'count'], ['Dots', 'dots']]) {
+    await tap('#c-pag', pg); await sec('pagination-' + name);
+  }
+  // it moves: one press of next on each frame
+  await p.evaluate(() => document.querySelectorAll('.screen .skc .nx').forEach(b => b.click()));
+  await p.waitForTimeout(900); await sec('after-next');
+  await tap('#c-lang', 'العربية'); await sec('arabic');
+  await p.evaluate(() => document.querySelectorAll('.screen .skc .nx').forEach(b => b.click()));
+  await p.waitForTimeout(900); await sec('arabic-after-next');
+  await tap('#c-lang', 'English'); await tap('#c-arrM', 'Off');
   await p.screenshot({ path: join(out, 'playground-1720.png') });
 }
 // the playground itself at phone width: no sideways page scroll
