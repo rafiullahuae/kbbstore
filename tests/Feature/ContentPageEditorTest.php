@@ -1166,12 +1166,14 @@ it('changes no page by existing', function () {
      * title, a seo default — and this is red.
      */
     /*
-     * Lane AB: 2027_10_15_110000_owner_about_us_story keeps the about page's
-     * previous wording as ONE draft row, `about-previous`, so the owner can get
-     * it back. It is never served (a draft), and this package still creates
-     * none: the seven routed pages are counted without it.
+     * The two content migrations that keep a page's previous wording as ONE
+     * hidden draft each: `about-previous` (Lane AB) and `contact-us-previous`
+     * (Lane CT, 2027_10_15_120300_contact_us_support_copy). Never served, and
+     * the seven routed pages are counted without them. (`about-previous` is
+     * named here so this line is already right once int/448 is merged.)
      */
-    expect(Page::query()->where('slug', '!=', 'about-previous')->count())->toBe(7)
+    expect(Page::query()->whereNotIn('slug', ['about-previous', 'contact-us-previous'])->count())->toBe(7)
+        ->and(Page::query()->where('slug', 'contact-us-previous')->value('status'))->toBe('draft')
         ->and(Page::query()->where('slug', 'about-previous')->value('status'))->toBe('draft')
         ->and(Page::query()->whereNotNull('seo')->count())->toBe(0);
 

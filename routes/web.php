@@ -1054,6 +1054,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/category-header-admin.php'; // Category "Edit header" panel (Lane CH)
         require __DIR__.'/pagination-admin.php';      // Catalog → Pagination (Lane PG)
         require __DIR__.'/not-found-page-admin.php';  // Safety → 404 page (Lane NF)
+        require __DIR__.'/contact-inquiries-admin.php';  // Store → Inquiries (Lane CT)
 
         // Core Updates panel (JSON). Sits alongside the standalone page, which
         // stays as the fallback for when the admin bundle itself is broken.
@@ -1381,6 +1382,7 @@ require __DIR__.'/instant-nav.php';   // Appearance -> Site layout -> Page speed
  * reachable without a login AND carry CSRF, which only this group gives.
  */
 require __DIR__.'/newsletter-public.php';
+require __DIR__.'/contact-form.php';      // Contact page inquiry form (Lane CT); web group for the session and CSRF
 require __DIR__.'/site-app-push.php';   // App → Site App: the shop app's notification ask (Lane NT); web group for the session and CSRF
 
 /*

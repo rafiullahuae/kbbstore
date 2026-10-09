@@ -126,6 +126,20 @@ final class SiteFooter
         'none' => '',
     ];
 
+    /**
+     * The four profile icons, keyed as socials() names them. CONSTANTS,
+     * printed unescaped: a setting only ever decides whether a row exists.
+     * Moved here byte for byte from footer-bliss.blade.php so the contact page
+     * (App\Support\ContactPage, Lane CT) draws the same marks rather than a
+     * second copy of them.
+     */
+    public const SOCIAL_ICONS = [
+        'instagram' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>',
+        'tiktok' => '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 3h3a4.5 4.5 0 0 0 4 4v3a7.4 7.4 0 0 1-4-1.3V15a6 6 0 1 1-6-6v3.1A3 3 0 1 0 14 15Z"/></svg>',
+        'facebook' => '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-7.5H16l.5-3h-3V8.6c0-.9.3-1.6 1.6-1.6h1.6V4.3A21 21 0 0 0 14.3 4C12 4 10.5 5.4 10.5 8v2.5H8v3h2.5V21Z"/></svg>',
+        'youtube' => '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 8.2a3 3 0 0 0-2.1-2.1C18 5.6 12 5.6 12 5.6s-6 0-7.9.5A3 3 0 0 0 2 8.2 31 31 0 0 0 1.6 12 31 31 0 0 0 2 15.8a3 3 0 0 0 2.1 2.1c1.9.5 7.9.5 7.9.5s6 0 7.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .4-3.8 31 31 0 0 0-.4-3.8ZM10 15V9l5.2 3Z"/></svg>',
+    ];
+
     public const PARTS = ['help', 'help_sub', 'logo', 'tag', 'soc', 'col1', 'col2', 'col3', 'visit', 'news', 'name', 'bot', 'pay'];
 
     /**
@@ -861,12 +875,7 @@ final class SiteFooter
          * none, so it appears only once he has entered one.
          */
         $s = app(SettingsService::class);
-        $socials = array_values(array_filter([
-            ['instagram', 'Instagram', SafeUrl::href((string) $s->get('social_instagram', 'https://www.instagram.com/kbeauty.bliss/'), '')],
-            ['tiktok', 'TikTok', SafeUrl::href((string) $s->get('social_tiktok', 'https://www.tiktok.com/@kbeauty.bliss'), '')],
-            ['facebook', 'Facebook', SafeUrl::href((string) $s->get('social_facebook', 'https://www.facebook.com/kbeautyblissuae'), '')],
-            ['youtube', 'YouTube', SafeUrl::href((string) $s->get('social_youtube', ''), '')],
-        ], static fn (array $row): bool => $row[2] !== '' && $row[2] !== '#'));
+        $socials = self::socials($s);
 
         $look = $this->presentation($c);
         $name = (bool) ($c['site_name_on'] ?? true) ? $text('site_name_text') : '';
@@ -897,5 +906,22 @@ final class SiteFooter
             // The app row (Lane FB): null when it is not printed.
             'app' => $this->app($c),
         ];
+    }
+
+    /**
+     * The owner's own profiles: [key, name, checked href] for each one that has
+     * an address, in the order the footer draws them. One reader for the
+     * footer and the contact page (Lane CT), so the two cannot disagree.
+     *
+     * @return list<array{0:string,1:string,2:string}>
+     */
+    public static function socials(SettingsService $s): array
+    {
+        return array_values(array_filter([
+            ['instagram', 'Instagram', SafeUrl::href((string) $s->get('social_instagram', 'https://www.instagram.com/kbeauty.bliss/'), '')],
+            ['tiktok', 'TikTok', SafeUrl::href((string) $s->get('social_tiktok', 'https://www.tiktok.com/@kbeauty.bliss'), '')],
+            ['facebook', 'Facebook', SafeUrl::href((string) $s->get('social_facebook', 'https://www.facebook.com/kbeautyblissuae'), '')],
+            ['youtube', 'YouTube', SafeUrl::href((string) $s->get('social_youtube', ''), '')],
+        ], static fn (array $row): bool => $row[2] !== '' && $row[2] !== '#'));
     }
 }

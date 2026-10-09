@@ -548,6 +548,15 @@ final class AdminCapabilities
         // two roles that run the shop, not the editor. (Lane NF)
         'notfoundpage.manage' => ['owner', 'manager'],
 
+        // Store → Inquiries: the contact page's messages (Lane CT). Reading
+        // them is a support job, as a customer record is, so support reads and
+        // marks them read; deleting one and the contact page's own settings
+        // (cards, form, recipient, topics) are the two roles that run the
+        // shop. The editor holds neither: a message carries a stranger's
+        // email and phone.
+        'inquiries.view' => ['owner', 'manager', 'support'],
+        'inquiries.manage' => ['owner', 'manager'],
+
         /*
          * THE STOREFRONT'S OWN ADMIN LAYER (Lane RA): the thin bar across the
          * top of every shop page and the pencil on a category or brand header.
@@ -1836,6 +1845,12 @@ final class AdminCapabilities
         // Safety → 404 page: the read and the save. One line and no '/**'
         // sibling: the screen has no sub-endpoint. (Lane NF)
         ['*', 'admin-api/not-found-page', 'notfoundpage.manage'],
+        // Store → Inquiries (Lane CT). The settings line first, so the
+        // one-segment wildcard below can never be what answers for it.
+        ['*', 'admin-api/inquiries/settings', 'inquiries.manage'],
+        ['DELETE', 'admin-api/inquiries/*', 'inquiries.manage'],
+        ['POST', 'admin-api/inquiries/*/read', 'inquiries.view'],
+        ['GET', 'admin-api/inquiries', 'inquiries.view'],
         ['*', 'admin-api/account-panel', 'content.manage'],
         // Exact, so it cannot reach the /demo-content/ endpoints mapped to
         // data.import further up.
