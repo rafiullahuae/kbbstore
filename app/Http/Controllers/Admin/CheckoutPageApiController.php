@@ -18,10 +18,9 @@ use Illuminate\Http\Request;
  * shape deliberately: the admin screen that draws it is generic, and a
  * controller answering in a different shape would need a renderer of its own.
  *
- * Two endpoints and no third. Unlike the cart page this screen picks no
- * products, so there is no catalogue search here and nothing that reads a
- * model — every value that crosses this boundary is an integer or a boolean
- * from a schema both sides already know.
+ * Two endpoints and no third. Every value that crosses this boundary is
+ * from a schema both sides already know; the one list read from a model is
+ * the coupon select's (Lane QK6), and it carries id, code and a label only.
  */
 class CheckoutPageApiController extends Controller
 {
@@ -52,6 +51,10 @@ class CheckoutPageApiController extends Controller
             // beside the schema it names, and a second copy would be a second
             // thing to forget when a control is added.
             'squeeze' => CheckoutPage::SQUEEZE,
+            // Coupon line → Coupon: the shop's coupons, usable first, the same
+            // list Appearance → Cart panel draws (Lane QK6). Ids and codes and
+            // a label; nothing else of a coupon row crosses here.
+            'coupons' => CartPanelApiController::couponList((int) $this->page->get('cline_coupon')),
         ]);
     }
 

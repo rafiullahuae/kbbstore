@@ -51,7 +51,10 @@ beforeEach(function () {
      * order, prefill, pricing and refusal are pinned in
      * AddressRegionsCheckoutTest.
      */
-    app(CheckoutPage::class)->save(['state_list' => false]);
+    // Lane QK6: these tests tell the Dubai rate from the UAE one by the
+    // method's stored title, which "Delivery labels" (ON, the owner's) shows
+    // as "Express Delivery" on both. OFF prints the titles as before.
+    app(CheckoutPage::class)->save(['state_list' => false, 'dl_on' => false]);
     SettingsService::forgetMemo();
 
     PaymentProvider::query()->delete();

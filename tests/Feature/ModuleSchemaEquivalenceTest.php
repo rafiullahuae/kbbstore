@@ -380,6 +380,13 @@ function mAllowedRepairs(): array
  * re-recorded: no existing row moved. `coupon_id` answers '0' for every
  * corpus input — it stores digits or "none", and whether the id names a real
  * coupon is CartPanel::save()'s check.
+ *
+ * Lane QK6 — Appearance → Checkout page: 107 rows for its fourteen new keys
+ * (cline_*, shop_link, cart_link, dl_*), spliced in after
+ * checkout_page|pay_tamara_logo because the walk visits SCHEMA in order. Added,
+ * not re-recorded: no existing row moved. `cline_coupon` answers 'cart' for
+ * every corpus input — it stores "cart" or digits, and whether the id names a
+ * real coupon is CheckoutPage::save()'s check.
  */
 it('answers every recorded cast exactly as it did before the shared schema', function () {
     $recorded = file(base_path('tests/Fixtures/module-cast-baseline.txt'), FILE_IGNORE_NEW_LINES);

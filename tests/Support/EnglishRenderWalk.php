@@ -1648,6 +1648,19 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * "i need Express Delivery or Free Express Delivery upon free
+             * delivery eligibility or with 20 aed charges. need to change the
+             * text." -- the owner (Lane QK6). Appearance -> Checkout page ->
+             * Delivery labels, ON as asked, on a UAE checkout: the walk's
+             * basket qualifies, so its one option, stored as "Free delivery",
+             * reads "Free Express Delivery" with "Free" on the right.
+             */
+            'the checkout\'s UAE delivery option, Free Express Delivery (Lane QK6)' => [
+                'pattern' => '#(<label for="shipping_method_\d+">)Free delivery(</label>)#',
+                'with' => '$1<span class="co-dl-t">Free Express Delivery</span><span class="co-dl-p">Free</span>$2',
+                'hits' => 1,
+            ],
+            /*
              * THE TOTALS CARD ABOVE PLACE ORDER (Lane CD). The owner: "ON
              * DESKTOP checkout: the summary bar should have only products,
              * rest of the sub total, delivery fees etc rows should be above the
@@ -3652,6 +3665,29 @@ KBB_BH_CSS;
                 'pattern' => '#<div class="ctc ctc-low[^"]*">\n.*?\n</div>\n(?=</div></section>)#s',
                 'hits' => 1,
             ],
+            /*
+             * Lane QK6: Contact keeps the email alone, and Shipping Details
+             * opens with Full name then Phone -- the pair of the removal of
+             * the same name. Once each, on the basket checkout.
+             */
+            'the checkout\'s Contact: email alone (Lane QK6)' => [
+                'pattern' => '#<span class="n">1</span> Contact.*?</h2>\n\K.*?id="billing_email_field".*?</p>\n#s',
+                'hits' => 1,
+            ],
+            /*
+             * "beside the Delivery section heading, i need a small one line
+             * Free delivery over AED 199. This line will show only in UAE." --
+             * the owner (Lane QK6). The walk's basket is a UAE one with a
+             * free-delivery minimum, so the line is drawn, once.
+             */
+            'the checkout\'s "Free delivery over" line beside Delivery (Lane QK6)' => [
+                'pattern' => '#(?<= Delivery)<span class="co-dnote" id="kbbDeliveryNote">Free delivery over <span class="woocommerce-Price-amount amount" dir="ltr">.*?</span></span>(?=</h2>)#',
+                'hits' => 1,
+            ],
+            'the checkout\'s Shipping Details: Full name, then Phone (Lane QK6)' => [
+                'pattern' => '#<span class="n">2</span> Shipping Details</h2>\n\K.*?id="billing_phone_field".*?</p>\n#s',
+                'hits' => 1,
+            ],
         ];
     }
 
@@ -4191,6 +4227,35 @@ KBB_BH_CSS;
                 // substitutions run after the removals), from the indent
                 // after the comment through its closing tag.
                 'pattern' => '#(?<=<!-- related -->\n)\s*<section class="sec">\n    <div class="eyebrow">Complete your routine</div>\n    <h2>You may also like</h2>\n.*?</section>\n\s*(?=</div>)#s',
+                'hits' => 1,
+            ],
+            /*
+             * THE TWO WAYS BACK GO (Lane QK6). The owner: "turn off the back to
+             * shop link and back to cart button on checkout completely!"
+             * Appearance -> Checkout page -> Back to shop & cart, both OFF as
+             * asked; the slim header's logo still links home. The link's whole
+             * line and the button's whole include, once each on the basket
+             * checkout; nothing is inserted in their place.
+             */
+            'the checkout\'s "Back to shop" link, off as asked (Lane QK6)' => [
+                'pattern' => '#(?<=<div class="co-titlebar-main">\n)                        <a class="backlink" href="[^"]*/shop/">← Back to shop</a>\n#',
+                'hits' => 1,
+            ],
+            /*
+             * FULL NAME AND PHONE MOVE TO "SHIPPING DETAILS" (Lane QK6). The
+             * owner: "remove the phone and Full name fields from the contact
+             * section and bring these two fields to Shipping Details section."
+             * Contact's fields as they were (name, then phone and email in a
+             * row) on the before side; the after side's two halves are the
+             * insertions of the same name. The fields' own markup is pinned
+             * attribute by attribute in CheckoutCouponLineTest.
+             */
+            'the checkout\'s Contact fields: name, phone and email (Lane QK6)' => [
+                'pattern' => '#<span class="n">1</span> Contact.*?</h2>\n\K.*?id="billing_email_field".*?</p>\n\s*</div>\n#s',
+                'hits' => 1,
+            ],
+            'the checkout\'s "Go back to cart" button, off as asked (Lane QK6)' => [
+                'pattern' => '#(?<=<p class="co-lead">Almost glowing — just a few details.</p>\n                    </div>\n)\s*<a class="co-tocart.*?</a>\n#s',
                 'hits' => 1,
             ],
         ];

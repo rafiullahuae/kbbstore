@@ -364,6 +364,7 @@
   var values = {};        // key -> current value, edited in place
   var mobileMax = 900;
   var squeezeKeys = [];  // which controls "Squeeze everything" drives to their minimum
+  var coupons = [];      // Coupon line -> Coupon: the shop's coupons, usable first (Lane QK6)
   var open = null;        // which tab is showing
   var banner = null;
   var busy = false;
@@ -465,6 +466,7 @@
       tabs = body.tabs || [];
       mobileMax = body.mobileMax || 900;
       squeezeKeys = body.squeeze || [];
+      coupons = body.coupons || [];
       values = {};
       tabs.forEach(function (t) {
         t.fields.forEach(function (f) { values[f.key] = f.value; });
@@ -515,6 +517,8 @@
     if (f.key === 'd_sticky_top') return !pvOn('d_sticky');
     /* Both only mean anything while the line above them is drawn at all. */
     if (f.key === 'rating_text' || f.key === 'rating_min') return !pvOn('rating_on');
+    /* (Lane QK6) The coupon line's coupon and wording, only while it is drawn. */
+    if (f.key === 'cline_coupon' || f.key === 'cline_text' || f.key === 'cline_text_ar') return !pvOn('cline_on');
     /* NOT HIDDEN ANY MORE. It was, on the grounds that "lined up with the page"
        mode read the page's side padding and this slider would move nothing. The
        reasoning was fine and the outcome was not: it left no way to set the
@@ -571,6 +575,15 @@
         return '<option value="' + esc(k) + '"' + (String(values[f.key]) === k ? ' selected' : '') + '>'
           + esc(f.options[k]) + '</option>';
       }).join('');
+      /* (Lane QK6) The coupon line's select: "Same as the cart panel", then
+         the shop's coupons from the `coupons` LIST in the order sent — usable
+         first. The server stores only "cart" or an id the coupons table holds. */
+      if (f.key === 'cline_coupon') {
+        opts += coupons.map(function (c) {
+          return '<option value="' + esc(c.id) + '"' + (String(values[f.key]) === String(c.id) ? ' selected' : '') + '>'
+            + esc(c.label) + '</option>';
+        }).join('');
+      }
 
       return '<div class="chp-f"><div class="chp-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
         + '<select class="chp-sel" id="' + id + '" data-chp-key="' + esc(f.key) + '">' + opts + '</select>'

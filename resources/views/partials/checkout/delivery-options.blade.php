@@ -4,7 +4,11 @@
     when the country changes renders the exact same markup the page itself
     does, rather than a second copy that could drift from it.
 
-    Inputs: $rates, $chosenRate, $deliveryEta.
+    Inputs: $rates, $chosenRate, $deliveryEta, and $deliveryCountry (Lane QK6):
+    on a UAE checkout Appearance -> Checkout page -> Delivery labels names the
+    option "Express Delivery" / "Free Express Delivery" with the price or
+    "Free" on the right, instead of the method's stored title. Off, another
+    country, or no country passed: the label is byte for byte what it was.
 
     $deliveryEta IS NOW PASSED BY BOTH CALLERS, and the note that used to stand
     here — "absent when called from the AJAX endpoint for a zone country, which
@@ -24,7 +28,7 @@
     <ul id="shipping_method" class="woocommerce-shipping-methods">
         <li>
             <input type="radio" name="shipping_method" data-index="{{ $i }}" id="shipping_method_{{ $i }}" value="{{ $rate['id'] }}" class="shipping_method" @checked($rate['id'] === $chosenRate)>
-            <label for="shipping_method_{{ $i }}">{{ $rate['title'] }}@if ($rate['cost'] > 0): {!! \App\Support\Money::format((int) $rate['cost']) !!}@endif</label>
+            <label for="shipping_method_{{ $i }}">@if ($kbbDl = app(\App\Services\CheckoutPage::class)->deliveryLabel($rate, $deliveryCountry ?? null))<span class="co-dl-t">{{ $kbbDl['text'] }}</span><span class="co-dl-p">{!! $kbbDl['free'] ? e(__('store.checkout.free')) : \App\Support\Money::format((int) $rate['cost']) !!}</span>@else{{ $rate['title'] }}{!! $rate['cost'] > 0 ? ': '.\App\Support\Money::format((int) $rate['cost']) : '' !!}@endif</label>
         </li>
     </ul>
 @empty

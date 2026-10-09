@@ -10020,106 +10020,133 @@
       },
       {
         "key": "tocart",
-        "label": "Back to cart",
-        "description": "The \"Go back to cart\" link at the top of the page — both surfaces on one tab. Which of the five LOOKS it wears is chosen on Store → Ecommerce → Checkout → Mobile layout; everything about its SIZE is here.",
+        "label": "Back to shop & cart",
+        "description": "The \"← Back to shop\" link and the \"Go back to cart\" button at the top of the page — both off, as asked, and switched back on here. Which of the five LOOKS the cart button wears is chosen on Store → Ecommerce → Checkout → Mobile layout; everything about its SIZE is here.",
         "fields": [
           {
+            "key": "shop_link",
+            "name": "shop_link",
+            "type": "bool",
+            "label": "Show “Back to shop”",
+            "help": "Off, as asked: no \"← Back to shop\" link above the Checkout heading. The logo in the header still goes to the home page.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
+            "key": "cart_link",
+            "name": "cart_link",
+            "type": "bool",
+            "label": "Show “Go back to cart”",
+            "help": "Off, as asked: no \"Go back to cart\" button beside the Checkout heading. On brings it back in the look chosen on Store → Ecommerce → Checkout → Mobile layout.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
             "key": "d_tocart_size",
+            "name": "d_tocart_size",
             "type": "range",
             "label": "Back-to-cart button size",
             "help": "Scales the text and the padding of the \"Go back to cart\" link together, whichever of the five looks is chosen on Store → Ecommerce. 100% is the size it is today.",
-            "default": 100,
-            "value": 100,
             "options": {
               "min": 60,
               "max": 140,
               "step": 5,
               "unit": "%"
-            }
+            },
+            "default": 100,
+            "value": 100
           },
           {
             "key": "d_tocart_icon",
+            "name": "d_tocart_icon",
             "type": "range",
             "label": "Back-to-cart arrow size",
             "help": "The chevron alone. Separate from the slider above because a smaller button usually wants a proportionally smaller glyph, not the same one.",
-            "default": 100,
-            "value": 100,
             "options": {
               "min": 50,
               "max": 160,
               "step": 5,
               "unit": "%"
-            }
+            },
+            "default": 100,
+            "value": 100
           },
           {
             "key": "d_tocart_r",
+            "name": "d_tocart_r",
             "type": "range",
             "label": "Back-to-cart corner radius",
             "help": "Read only by the rounded-rectangle look. The pill looks are round by definition and the icon-only look is a circle.",
-            "default": 10,
-            "value": 10,
             "options": {
               "min": 0,
               "max": 24,
               "step": 1,
               "unit": "px"
-            }
+            },
+            "default": 10,
+            "value": 10
           },
           {
             "key": "m_tocart_size",
+            "name": "m_tocart_size",
             "type": "range",
             "label": "Back-to-cart button size",
             "help": "The same link on a phone, its own value. 100% is today.",
-            "default": 100,
-            "value": 100,
             "options": {
               "min": 60,
               "max": 140,
               "step": 5,
               "unit": "%"
-            }
+            },
+            "default": 100,
+            "value": 100
           },
           {
             "key": "m_tocart_icon",
+            "name": "m_tocart_icon",
             "type": "range",
             "label": "Back-to-cart arrow size",
             "help": "The chevron alone, on a phone.",
-            "default": 100,
-            "value": 100,
             "options": {
               "min": 50,
               "max": 160,
               "step": 5,
               "unit": "%"
-            }
+            },
+            "default": 100,
+            "value": 100
           },
           {
             "key": "m_tocart_r",
+            "name": "m_tocart_r",
             "type": "range",
             "label": "Back-to-cart corner radius",
             "help": "The rounded-rectangle look only.",
-            "default": 10,
-            "value": 10,
             "options": {
               "min": 0,
               "max": 24,
               "step": 1,
               "unit": "px"
-            }
+            },
+            "default": 10,
+            "value": 10
           },
           {
             "key": "m_tocart_min",
+            "name": "m_tocart_min",
             "type": "range",
             "label": "Back-to-cart tap height",
             "help": "The smallest the link may be on a phone, whatever the size slider says. 44px is the touch-target minimum; below it the link is harder to hit than it should be.",
-            "default": 44,
-            "value": 44,
             "options": {
               "min": 0,
               "max": 60,
               "step": 2,
               "unit": "px"
-            }
+            },
+            "default": 44,
+            "value": 44
           }
         ]
       },
@@ -10515,6 +10542,142 @@
             },
             "default": "badge",
             "value": "badge"
+          }
+        ]
+      },
+      {
+        "key": "delivery",
+        "label": "Delivery labels",
+        "description": "The \"3 Delivery\" section on a UAE checkout: what the delivery option is called, paid and free, and the small free-delivery line beside the heading. One set of values for both surfaces.",
+        "fields": [
+          {
+            "key": "dl_on",
+            "name": "dl_on",
+            "type": "bool",
+            "label": "Delivery labels for the UAE",
+            "help": "On, as asked: on a UAE checkout the delivery option reads \"Express Delivery\" with its price on the right, or \"Free Express Delivery\" with \"Free\" once the order qualifies — and it switches by itself as the basket crosses the line. Off shows the method's own title from Store → Delivery & Shipping, which orders and emails keep printing either way.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "dl_paid",
+            "name": "dl_paid",
+            "type": "text",
+            "label": "Paid label",
+            "help": "When delivery is charged. The price is shown on the right. Up to 120 characters.",
+            "options": null,
+            "default": "Express Delivery",
+            "value": "Express Delivery"
+          },
+          {
+            "key": "dl_paid_ar",
+            "name": "dl_paid_ar",
+            "type": "text",
+            "label": "Paid label — Arabic",
+            "help": "The same on the Arabic shop (/ar/).",
+            "options": null,
+            "default": "توصيل سريع",
+            "value": "توصيل سريع"
+          },
+          {
+            "key": "dl_free",
+            "name": "dl_free",
+            "type": "text",
+            "label": "Free label",
+            "help": "When the order qualifies for free delivery. \"Free\" is shown on the right.",
+            "options": null,
+            "default": "Free Express Delivery",
+            "value": "Free Express Delivery"
+          },
+          {
+            "key": "dl_free_ar",
+            "name": "dl_free_ar",
+            "type": "text",
+            "label": "Free label — Arabic",
+            "help": "The same on the Arabic shop (/ar/).",
+            "options": null,
+            "default": "توصيل سريع مجاني",
+            "value": "توصيل سريع مجاني"
+          },
+          {
+            "key": "dl_note_on",
+            "name": "dl_note_on",
+            "type": "bool",
+            "label": "Free-delivery line beside “Delivery”",
+            "help": "On, as asked: a small line beside the Delivery heading, only while the country chosen is the United Arab Emirates and the UAE has a free-delivery amount (Store → Delivery & Shipping → the zone's free delivery minimum).",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "dl_note",
+            "name": "dl_note",
+            "type": "text",
+            "label": "Free-delivery line",
+            "help": "Use {amount} where the UAE free-delivery amount should appear; it is read from your shipping settings, so it follows them.",
+            "options": null,
+            "default": "Free delivery over {amount}",
+            "value": "Free delivery over {amount}"
+          },
+          {
+            "key": "dl_note_ar",
+            "name": "dl_note_ar",
+            "type": "text",
+            "label": "Free-delivery line — Arabic",
+            "help": "The same on the Arabic shop (/ar/).",
+            "options": null,
+            "default": "توصيل مجاني للطلبات فوق {amount}",
+            "value": "توصيل مجاني للطلبات فوق {amount}"
+          }
+        ]
+      },
+      {
+        "key": "cline",
+        "label": "Coupon line",
+        "description": "The line at the very top of the checkout: \"For Discount, Apply coupon GLOW\". Tapping the code applies it to the order in place. One set of values for both surfaces.",
+        "fields": [
+          {
+            "key": "cline_on",
+            "name": "cline_on",
+            "type": "bool",
+            "label": "Coupon line",
+            "help": "On, as asked: a line at the very top of the checkout — \"For Discount, Apply coupon GLOW\" — and tapping the code applies it to the order total in place, with no reload. It shows only while the coupon below can actually be used; when the coupon is already on the order it says so instead.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "cline_coupon",
+            "name": "cline_coupon",
+            "type": "select",
+            "label": "Coupon",
+            "help": "Same as the cart panel follows Appearance → Cart panel → Coupon hint → Coupon (GLOW unless you changed it). Or pick one of your coupons; an expired, not-yet-started or used-up coupon hides the line by itself.",
+            "options": {
+              "cart": "Same as the cart panel"
+            },
+            "default": "cart",
+            "value": "cart"
+          },
+          {
+            "key": "cline_text",
+            "name": "cline_text",
+            "type": "text",
+            "label": "Text",
+            "help": "Use {coupon-code} where the tappable code should appear; without it the code is added at the end. Up to 120 characters.",
+            "options": null,
+            "default": "For Discount, Apply coupon {coupon-code}",
+            "value": "For Discount, Apply coupon {coupon-code}"
+          },
+          {
+            "key": "cline_text_ar",
+            "name": "cline_text_ar",
+            "type": "text",
+            "label": "Text — Arabic",
+            "help": "The same line on the Arabic shop (/ar/). Cleared, it goes back to the shipped Arabic wording.",
+            "options": null,
+            "default": "للحصول على خصم، طبّق القسيمة {coupon-code}",
+            "value": "للحصول على خصم، طبّق القسيمة {coupon-code}"
           }
         ]
       }

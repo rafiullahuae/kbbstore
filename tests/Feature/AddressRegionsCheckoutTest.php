@@ -535,6 +535,10 @@ it('prices a state-level zone on the list\'s name, so a lower-case saved emirate
     ShippingZoneLocation::create(['shipping_zone_id' => $dubai->id, 'type' => 'state', 'code' => 'AE:Dubai']);
     ShippingMethod::create(['shipping_zone_id' => $dubai->id, 'type' => 'flat_rate', 'title' => 'Dubai delivery', 'cost' => 1000, 'enabled' => true, 'position' => 0]);
     ShippingService::flushZones();
+    // Lane QK6: this tells the Dubai rate by its stored title, which the
+    // owner's "Delivery labels" (ON) shows as "Express Delivery"; OFF prints it.
+    app(\App\Services\CheckoutPage::class)->save(['dl_on' => false]);
+    \App\Services\SettingsService::forgetMemo();
 
     $customer = Customer::create(['email' => 'dx@example.com', 'name' => 'Dee', 'password' => 'secret-secret']);
     $customer->addresses()->create(['type' => 'shipping', 'is_default' => true,
