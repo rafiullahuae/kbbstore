@@ -104,6 +104,17 @@ class OrdersApiController extends Controller
     private const BULK_MAX = 200;
 
     /**
+     * Ceiling on one bulk STATUS change (Lane ORD): the largest page the list
+     * shows, so "tick the header box, set a status" works on every page size
+     * the screen offers. It was BULK_MAX, and a 500-row page with every box
+     * ticked was refused whole with "nothing was changed". The selection is
+     * read BULK_CHUNK ids per query rather than in one IN() of 500.
+     */
+    public const BULK_STATUS_MAX = self::PER_PAGE_MAX;
+
+    private const BULK_CHUNK = 100;
+
+    /**
      * Statuses this application itself writes, so they are offered as chips
      * even before any order has reached them. Imported statuses are added to
      * this from the column at query time — see statusCounts().
@@ -194,6 +205,8 @@ class OrdersApiController extends Controller
             // instead of whatever order the database felt like returning.
             'statuses' => $counts['statuses'],
             'revenue_statuses' => Order::REAL_STATUSES,
+            // Lane ORD: for the bulk bar's confirmation line.
+            'status_emails' => self::emailingStatuses(),
             /*
              * How many invented rows the money above left out, so the screen
              * can say so rather than leaving the owner to wonder why the tiles
@@ -406,7 +419,7 @@ class OrdersApiController extends Controller
     public function bulkStatus(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'ids' => ['required', 'array', 'min:1', 'max:' . self::BULK_MAX],
+            'ids' => ['required', 'array', 'min:1', 'max:' . self::BULK_STATUS_MAX],
             'ids.*' => ['integer'],
             'status' => ['required', 'string', 'in:' . implode(',', self::BULK_SETTABLE)],
             // "Email the customer about this change", for the whole selection.
@@ -434,9 +447,28 @@ class OrdersApiController extends Controller
 
         $wasRevenue = in_array($status, Order::REAL_STATUSES, true);
 
-        $orders = Order::query()
-            ->whereIn('id', $ids)
-            ->get(['id', 'order_number', 'status', 'total']);
+        /*
+         * THE CUSTOMER EMAILS GO AFTER THE ANSWER (Lane ORD). Every order that
+         * moves can send its status email, and on this shop's SMTP relay a
+         * message is a TLS handshake, a login and a DATA exchange — OrderMailer
+         * measured ~600 ms each. In line, fifty "Completed" emails held the
+         * owner's Proceed for half a minute, past most hosts' time limit, with
+         * the rest of the selection unchanged behind the one that timed out.
+         * The checkout already defers its mail exactly this way; the same
+         * emails, the same gate and the same try/catch per send, just after
+         * fastcgi_finish_request() instead of before it. Nothing on this
+         * screen reports a send outcome, so nothing is lost by not waiting.
+         */
+        \App\Services\Mail\OrderMailer::deferUntilResponse();
+
+        // In chunks, never one IN() of the whole selection: the cap is the
+        // largest page now, and the four columns are all this loop reads.
+        $orders = collect();
+        foreach (array_chunk($ids, self::BULK_CHUNK) as $chunk) {
+            $orders = $orders->concat(Order::query()
+                ->whereIn('id', $chunk)
+                ->get(['id', 'order_number', 'status', 'total']));
+        }
 
         // Keyed for the refusal path below, which needs an order's number and
         // value to report it by name and has already loaded both.
@@ -444,11 +476,17 @@ class OrdersApiController extends Controller
 
         $changeable = [];
         $skipped = [];
+        // Already at the status asked for. Not an error and not a refusal,
+        // but the owner asked about these orders, so the answer names them
+        // ("1 skipped: already Completed") instead of quietly counting less.
+        $unchanged = [];
 
         foreach ($orders as $order) {
             $current = (string) $order->status;
 
             if ($current === $status) {
+                $unchanged[] = (int) $order->id;
+
                 continue;
             }
 
@@ -482,6 +520,7 @@ class OrdersApiController extends Controller
         $statuses = app(\App\Services\Orders\OrderStatus::class);
         $author = auth('admin')->user()?->name ?: 'Admin';
         $changed = 0;
+        $changedIds = [];
 
         foreach ($changeable as $id) {
             /*
@@ -503,6 +542,7 @@ class OrdersApiController extends Controller
             try {
                 $statuses->moveTo($id, $status, by: $author, reason: 'Set from the orders list.');
                 $changed++;
+                $changedIds[] = $id;
             } catch (\App\Services\Orders\OrderReviveRefused $e) {
                 $order = $byId[$id] ?? null;
 
@@ -531,7 +571,35 @@ class OrdersApiController extends Controller
             // forty orders updated over thirty-nine.
             'changed' => $changed,
             'skipped' => $skipped,
+            // Lane ORD: what the screen needs to redraw the rows in place
+            // rather than reload the list -- which ids moved, which were
+            // already there, and whether the new status counts as revenue.
+            'changed_ids' => $changedIds,
+            'unchanged_ids' => $unchanged,
+            'revenue' => $wasRevenue,
         ]);
+    }
+
+    /**
+     * Which settable statuses email the customer as things stand (Lane ORD),
+     * so the bulk bar can say "customers will be emailed" BEFORE Proceed.
+     *
+     * Asked of OrderStatusMailPolicy -- the one gate OrderMailer itself asks --
+     * so the line on the screen and the email that does or does not go can
+     * never disagree. A status with no message is false whatever the switch.
+     *
+     * @return array<string,bool>
+     */
+    public static function emailingStatuses(): array
+    {
+        $policy = app(\App\Services\Mail\OrderStatusMailPolicy::class);
+        $out = [];
+
+        foreach (self::BULK_SETTABLE as $status) {
+            $out[$status] = $policy->supported($status) && $policy->enabled($status);
+        }
+
+        return $out;
     }
 
     /**

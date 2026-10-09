@@ -100,6 +100,9 @@ final class OrdersController extends Controller
             $out['counts'] = (clone $base)->groupBy('o.status')->selectRaw('o.status as s, COUNT(*) as n')
                 ->pluck('n', 's')->map(fn ($n) => (int) $n);
             $out['payments'] = self::paymentMethods();
+            // Which statuses email the customer, for the bulk confirmation
+            // (Lane ORD). From the admin's own answer, so the two never differ.
+            $out['emails'] = OrdersApiController::emailingStatuses();
         }
 
         return response()->json($out);
@@ -337,6 +340,10 @@ final class OrdersController extends Controller
             'ok' => true,
             'status' => (string) ($d['status'] ?? ''),
             'changed' => (int) ($d['changed'] ?? 0),
+            // Lane ORD: the rows move in place, and "1 already Completed" is
+            // said rather than silently counted out.
+            'changed_ids' => array_map('intval', (array) ($d['changed_ids'] ?? [])),
+            'unchanged_ids' => array_map('intval', (array) ($d['unchanged_ids'] ?? [])),
             'skipped' => array_map(fn ($s) => [
                 'id' => (int) ($s['id'] ?? 0),
                 'number' => (string) ($s['label'] ?? ''),

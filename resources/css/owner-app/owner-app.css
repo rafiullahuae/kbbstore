@@ -226,6 +226,11 @@ button.pill { cursor: pointer; }
 .bulk-a { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .bulk-a button { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 9px 2px; border-radius: var(--r-sm); background: rgba(255,255,255,.1); font: 600 11px/1.1 var(--font); text-align: center; }
 .bulk-a .i { width: 20px; height: 20px; }
+/* Lane ORD. Selection mode shows an empty tick box on every row, not only on
+   the ticked ones; a long-press neither selects the row's text nor opens the
+   phone's link menu. Paint-only: nothing moves. */
+.selecting .row.ord .sel::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--surface); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink3) 60%, transparent); }
+.list .row.ord { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 
 /* ----------------------------------------------------------------- sheets */
 .scrim { position: fixed; inset: 0; z-index: 40; background: rgba(10,8,14,.42); opacity: 0; pointer-events: none; transition: opacity .25s; }
@@ -664,6 +669,6 @@ html.oa-acc .list .row.ord:is(.on, .cur) { background: var(--acc-soft); }
 html.oa-nofs :is(.ib.fs, .fsbar) { display: none !important; }
 html.oa-nosync .ib.sync { display: none; }
 html.oa-nocontact .cu-act { display: none; }
-html.oa-nobulk :is([data-act="selall"], .bulk) { display: none; }
+html.oa-nobulk :is([data-act="selall"], [data-act="selmode"], .bulk) { display: none; }
 html.oa-nobulk .sel { pointer-events: none; }
 

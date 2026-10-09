@@ -2,7 +2,8 @@
  * Orders (screens 07–09 and the tablet split view) — Petal.
  *
  * Grouped Today / Yesterday / Earlier, status chips with counts, search that
- * waits for a pause in typing, bulk selection (tap a customer's initials),
+ * waits for a pause in typing, bulk selection (long-press a row, tap a
+ * customer's initials, or "Select" in the header; Lane ORD),
  * and the order itself: products, payment with Tabby/Tamara instalments,
  * shipping, customer, attribution and the notes timeline.
  *
@@ -12,9 +13,13 @@
 import { S, fn, esc, api, $, $$, ic, av, th, pill, stWord, top, back, toast, sheet, busy, debounce, paint, errorBox, day, time, when, year, isTablet,
   screen, onScreen, mark, once, landed, isFresh, onReset, merge, ln, blk, times, skChips, skNote } from './core.js';
 
-const L = { q: '', status: '', from: '', to: '', payment: '', rows: [], next: null, counts: {}, payments: [], today: '', yesterday: '', sel: new Set(), loaded: false, at: null, paged: false, lastQ: '', cur: 0 };
+const L = { q: '', status: '', from: '', to: '', payment: '', rows: [], next: null, counts: {}, payments: [], emails: {}, today: '', yesterday: '', sel: new Set(), mode: false, loaded: false, at: null, paged: false, lastQ: '', cur: 0 };
 let O = null;
-onReset(() => { Object.assign(L, { rows: [], next: null, counts: {}, payments: [], loaded: false, at: null, paged: false, lastQ: '', cur: 0 }); L.sel.clear(); O = null; });
+onReset(() => { Object.assign(L, { rows: [], next: null, counts: {}, payments: [], emails: {}, mode: false, loaded: false, at: null, paged: false, lastQ: '', cur: 0 }); L.sel.clear(); O = null; });
+
+/* Selection mode (Lane ORD): on while anything is ticked, and also straight
+   after "Select" with nothing ticked yet. */
+const selecting = () => L.mode || L.sel.size > 0;
 const SETTABLE = ['pending', 'processing', 'onhold', 'shipped', 'completed', 'cancelled'];
 const appEl = () => document.getElementById('oa-app');
 
@@ -83,10 +88,13 @@ function markCur(view, id) {
 const selHdr = () => '<header class="top selhdr"><button class="ib plain" type="button" data-act="selnone" aria-label="Clear selection">' + ic('x') + '</button><div class="tt"><h3><span data-count>0</span> selected</h3></div><button class="tbtn" type="button" data-act="selall">Select all</button></header>';
 const bulkBar = () => '<div class="bulk" role="region" aria-label="Bulk actions"><div class="bulk-h"><span><b data-count>0</b> selected</span><button type="button" data-act="selnone">Cancel</button></div><div class="bulk-a">'
   + '<button type="button" data-act="bulk" data-v="processing">' + ic('refresh') + 'Processing</button><button type="button" data-act="bulk" data-v="completed">' + ic('check') + 'Complete</button>'
-  + '<button type="button" data-act="bulk" data-v="onhold">' + ic('clock') + 'On hold</button><button type="button" data-act="bulk-more">' + ic('dots') + 'More</button></div></div>';
+  + '<button type="button" data-act="bulk" data-v="onhold">' + ic('clock') + 'On hold</button><button type="button" data-act="bulk-more">' + ic('dots') + 'Set status…</button></div></div>';
+
+/* "Select" in the header: selection mode without a long-press. */
+const selBtn = () => '<button class="tbtn" type="button" data-act="selmode">Select</button>';
 
 function listShell(held) {
-  return selHdr() + top('Orders', '<span data-sub>' + (held ? '' : 'Syncing…') + '</span>', '', '', 'norm')
+  return selHdr() + top('Orders', '<span data-sub>' + (held ? '' : 'Syncing…') + '</span>', '', selBtn(), 'norm')
     + '<div class="body"><label class="search">' + ic('search', 's') + '<input type="search" data-search placeholder="Search orders, names, products" aria-label="Search orders" value="' + esc(L.q) + '" enterkeyhint="search"><kbd>/</kbd></label>'
     + '<div class="chips" role="group" aria-label="Filter by status" data-chips>' + (held ? '' : skChips(5)) + '</div><div data-list>' + (held ? '' : listSkel()) + '</div></div>' + bulkBar();
 }
@@ -129,12 +137,12 @@ export function fetchOrders(passive, force) {
     L.rows = merge(r.data.orders, L.rows, keep);
     if (!keep) { L.next = r.data.next; L.paged = false; }
     L.lastQ = q;
-    if (r.data.counts) { L.counts = r.data.counts; L.payments = r.data.payments || []; }
+    if (r.data.counts) { L.counts = r.data.counts; L.payments = r.data.payments || []; L.emails = r.data.emails || {}; }
     L.today = r.data.today || L.today; L.yesterday = r.data.yesterday || L.yesterday;
     L.loaded = true;
     L.at = new Date().toISOString();
     landed('orders');
-    if (host && !L.sel.size) { paintList(host); mark(host, 'orders', 0, false); }
+    if (host && !selecting()) { paintList(host); mark(host, 'orders', 0, false); }
     document.dispatchEvent(new CustomEvent('oa:badge'));
     return true;
   }, force);
@@ -185,13 +193,14 @@ export const plainRow = (o) => '<a class="row" href="#/orders/' + o.id + '"><div
 function syncSel(view) {
   const host = $('[data-pl]', view) || view;
   const n = L.sel.size;
-  host.classList.toggle('selecting', n > 0);
-  appEl().classList.toggle('selecting', n > 0);
+  host.classList.toggle('selecting', selecting());
+  appEl().classList.toggle('selecting', selecting());
   $$('[data-count]', host).forEach((x) => { x.textContent = n; });
 }
 
 export function clearSelection() {
   L.sel.clear();
+  L.mode = false;
   const app = appEl();
   if (app) app.classList.remove('selecting');
 }
@@ -286,14 +295,18 @@ export async function ordersClick(e, view) {
   if (b && b.hasAttribute('data-chip')) { L.status = b.getAttribute('data-chip'); await loadList(view); return true; }
   // Bulk status change switched off (Customise app, Lane OA4): no selecting at all; the server refuses it too.
   if (!fn('bulk') && ['sel', 'selall', 'selnone', 'bulk', 'bulk-more'].indexOf(act) !== -1) return true;
+  if (!fn('bulk') && act === 'selmode') return true;
+  // The click a long-press ends with is not a tap (Lane ORD).
+  if (rowEl && LP.fired) { LP.fired = false; e.preventDefault(); return true; }
   if (act === 'sel' && rowEl) { e.preventDefault(); toggle(view, rowEl); return true; }
-  if (rowEl && L.sel.size && !act) { e.preventDefault(); toggle(view, rowEl); return true; }
-  if (act === 'selall') { L.rows.forEach((o) => L.sel.add(o.id)); $$('.row.ord', view).forEach((r) => r.classList.add('on')); syncSel(view); return true; }
-  if (act === 'selnone') { L.sel.clear(); $$('.row.ord.on', view).forEach((r) => r.classList.remove('on')); syncSel(view); return true; }
+  if (rowEl && selecting() && !act) { e.preventDefault(); toggle(view, rowEl); return true; }
+  if (act === 'selmode') { L.mode = true; syncSel(view); return true; }
+  if (act === 'selall') { L.mode = true; L.rows.forEach((o) => L.sel.add(o.id)); $$('.row.ord', view).forEach((r) => r.classList.add('on')); syncSel(view); return true; }
+  if (act === 'selnone') { L.sel.clear(); L.mode = false; $$('.row.ord.on', view).forEach((r) => r.classList.remove('on')); syncSel(view); return true; }
   if (act === 'more') { await busy(b, () => loadList(view, true)); return true; }
   if (act === 'filters') { filters(view); return true; }
-  if (act === 'bulk') { await bulk(view, b.getAttribute('data-v'), b); return true; }
-  if (act === 'bulk-more') { statusSheet('Change ' + L.sel.size + ' orders', '', (s) => bulk(view, s)); return true; }
+  if (act === 'bulk') { askBulk(view, b.getAttribute('data-v')); return true; }
+  if (act === 'bulk-more') { if (L.sel.size) statusSheet('Set ' + L.sel.size + ' order' + (L.sel.size === 1 ? '' : 's') + ' to…', '', (s) => askBulk(view, s)); return true; }
 
   if (!O) return false;
   const host = O.pane ? $('[data-pd]', view) : view;
@@ -308,7 +321,68 @@ function toggle(view, rowEl) {
   const id = +rowEl.getAttribute('data-o');
   if (L.sel.has(id)) L.sel.delete(id); else L.sel.add(id);
   rowEl.classList.toggle('on', L.sel.has(id));
+  // Untick the last one and selection mode ends, as it always did.
+  if (!L.sel.size) L.mode = false;
   syncSel(view);
+}
+
+/* ------------------------------------------------------------ long-press */
+
+/*
+ * LONG-PRESS A ROW TO START SELECTING (Lane ORD). Pointer events, so one path
+ * serves a finger, a stylus and a mouse; no library, no timer left running.
+ *
+ *   held LP_MS without moving more than LP_SLOP px  -> selection mode, that
+ *                                                      row ticked, a buzz
+ *   moved further (a scroll, a swipe)               -> nothing
+ *   the browser takes the gesture (pointercancel)   -> nothing
+ *
+ * The click that follows the release is swallowed by ordersClick (LP.fired),
+ * so the row is not toggled straight back off or opened. The phone's own
+ * long-press menu ("Open in new tab") is held back on these rows only.
+ */
+export const LP_MS = 450;
+export const LP_SLOP = 10;
+const LP = { t: 0, x: 0, y: 0, row: null, fired: false };
+
+function lpStop() { clearTimeout(LP.t); LP.t = 0; LP.row = null; }
+
+function lpDown(e) {
+  LP.fired = false;
+  if (e.button > 0 || !fn('bulk')) return;
+  const rowEl = e.target.closest && e.target.closest('.list .row.ord');
+  if (!rowEl || e.target.closest('[data-act]')) return;
+  lpStop();
+  LP.row = rowEl; LP.x = e.clientX; LP.y = e.clientY;
+  LP.t = setTimeout(() => {
+    const r = LP.row;
+    lpStop();
+    if (!r || !r.isConnected) return;
+    const view = r.closest('.view');
+    if (!view) return;
+    LP.fired = true;
+    L.mode = true;
+    const id = +r.getAttribute('data-o');
+    if (!L.sel.has(id)) { L.sel.add(id); r.classList.add('on'); }
+    syncSel(view);
+    try { if (navigator.vibrate) navigator.vibrate(12); } catch (err) { /* no haptics here */ }
+  }, LP_MS);
+}
+
+function lpMove(e) {
+  if (!LP.t) return;
+  if (Math.abs(e.clientX - LP.x) > LP_SLOP || Math.abs(e.clientY - LP.y) > LP_SLOP) lpStop();
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('pointerdown', lpDown, { passive: true });
+  document.addEventListener('pointermove', lpMove, { passive: true });
+  document.addEventListener('pointerup', lpStop, { passive: true });
+  document.addEventListener('pointercancel', lpStop, { passive: true });
+  document.addEventListener('scroll', lpStop, { passive: true, capture: true });
+  document.addEventListener('contextmenu', (e) => {
+    if ((LP.t || LP.fired) && e.target.closest && e.target.closest('.list .row.ord')) e.preventDefault();
+  });
 }
 
 function statusSheet(title, cur, pick) {
@@ -333,26 +407,57 @@ async function setStatus(host, status) {
   if (was !== r.data.status) { L.counts[was] = Math.max(0, (L.counts[was] || 1) - 1); L.counts[r.data.status] = (L.counts[r.data.status] || 0) + 1; }
 }
 
-async function bulk(view, status, btn) {
+/*
+ * THE CONFIRMATION STEP (Lane ORD). Nothing is sent when a status is picked:
+ * a sheet says what Proceed will do -- how many orders, to what, and whether
+ * the customers are emailed -- and only Proceed sends the one request.
+ */
+function askBulk(view, status) {
+  const n = L.sel.size;
+  if (!n || SETTABLE.indexOf(status) === -1) return;
+  sheet('Confirm', '<p class="hint" data-confirm>Set <b>' + n + '</b> order' + (n === 1 ? '' : 's') + ' to <b>' + esc(stWord(status)) + '</b>?'
+    + (L.emails[status] ? ' Customers will be emailed.' : '') + ' A note is added to each order.</p>'
+    + '<div class="btns"><button class="btn sec" type="button" data-close>Cancel</button><button class="btn pri" type="button" data-proceed>Proceed</button></div>', (panel, close) => {
+    $('[data-proceed]', panel).addEventListener('click', async (e) => {
+      await busy(e.currentTarget, () => bulk(view, status));
+      close();
+    });
+  });
+}
+
+async function bulk(view, status) {
   const ids = Array.from(L.sel);
   if (!ids.length) return;
-  await busy(btn, async () => {
-    let r = await api('POST', 'orders-bulk-status', { ids, status });
-    const force = r.ok ? r.data.skipped.filter((s) => s.forceable) : [];
-    if (force.length) {
-      const ok = await confirmSheet(force.length + ' paid order' + (force.length === 1 ? '' : 's') + ' would leave the revenue figures', 'Change ' + (force.length === 1 ? 'it' : 'them') + ' to ' + stWord(status) + ' anyway?', 'Change anyway');
-      if (ok) {
-        const r2 = await api('POST', 'orders-bulk-status', { ids: force.map((s) => s.id), status, force: true });
-        if (r2.ok) r.data.changed += r2.data.changed;
-      }
+  const r = await api('POST', 'orders-bulk-status', { ids, status });
+  if (!r.ok) { toast(r.data.message || 'Not changed.', true); return; }
+  const moved = (r.data.changed_ids || []).slice();
+  const force = r.data.skipped.filter((s) => s.forceable);
+  if (force.length) {
+    const ok = await confirmSheet(force.length + ' paid order' + (force.length === 1 ? '' : 's') + ' would leave the revenue figures', 'Change ' + (force.length === 1 ? 'it' : 'them') + ' to ' + stWord(status) + ' anyway?', 'Change anyway');
+    if (ok) {
+      const r2 = await api('POST', 'orders-bulk-status', { ids: force.map((s) => s.id), status, force: true });
+      if (r2.ok) { r.data.changed += r2.data.changed; moved.push(...(r2.data.changed_ids || [])); r.data.skipped = r.data.skipped.filter((s) => !s.forceable); }
     }
-    if (!r.ok) { toast(r.data.message || 'Not changed.', true); return; }
-    const refused = r.data.skipped.filter((s) => !s.forceable);
-    toast(r.data.changed + ' order' + (r.data.changed === 1 ? '' : 's') + ' marked ' + stWord(status) + (refused.length ? ' · ' + refused.length + ' refused: ' + refused[0].reason : ''), refused.length > 0);
-    L.sel.clear();
-    await loadList(view);
-    if (O && ids.indexOf(O.id) !== -1) await fetchOrder(O.id, false, true);
+  }
+  // The rows move in place at once; the list's own request follows to bring
+  // the chip counts and the groups up to date.
+  moved.forEach((id) => {
+    const lr = L.rows.find((x) => x.id === id);
+    if (lr) lr.status = status;
+    const el = document.querySelector('.row.ord[data-o="' + id + '"] .pill');
+    if (el) { el.setAttribute('data-s', pillCode(status)); el.textContent = stWord(status); }
   });
+  const same = (r.data.unchanged_ids || []).length;
+  const left = r.data.skipped.filter((s) => s.forceable).length;
+  const refused = r.data.skipped.filter((s) => !s.forceable);
+  toast(r.data.changed + ' updated' + (same ? ', ' + same + ' skipped: already ' + stWord(status) : '') + (left ? ', ' + left + ' left alone' : '')
+    + (refused.length ? ', ' + refused.length + ' refused: ' + refused[0].reason : ''), refused.length > 0);
+  L.sel.clear();
+  L.mode = false;
+  $$('.row.ord.on', view).forEach((x) => x.classList.remove('on'));
+  syncSel(view);
+  await loadList(view);
+  if (O && ids.indexOf(O.id) !== -1) await fetchOrder(O.id, false, true);
 }
 
 function confirmSheet(title, text, yes) {
@@ -426,6 +531,6 @@ function paidSheet(host) {
 
 /** Refresh the list quietly (the live poll found changes). */
 export async function refreshOrdersList() {
-  if (L.sel.size || !onScreen('orders')) return;
+  if (selecting() || !onScreen('orders')) return;
   await fetchOrders(true);
 }

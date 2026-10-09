@@ -13977,7 +13977,19 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '.odlpager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;' +
         'padding:13px 4px 2px;font-size:12.5px;color:var(--ink-soft)}' +
       '.odlnum{font-variant-numeric:tabular-nums;white-space:nowrap}' +
-      '.odlwarn{border-color:#f0dcae;background:var(--amber-soft)}';
+      '.odlwarn{border-color:#f0dcae;background:var(--amber-soft)}' +
+      /* Lane ORD. The whole row opens the order: a pointer and a tint, both
+         paint-only, so nothing moves by a pixel. The order number is a real
+         link (Ctrl/Cmd-click, middle-click) that reads exactly as the text it
+         replaced. */
+      '.olrow{cursor:pointer}' +
+      '.olrow:hover td,.olrow:focus-visible td{background:rgba(127,127,127,.06)}' +
+      '.olrow:focus-visible{outline:2px solid var(--accent-ink);outline-offset:-2px}' +
+      '.ollink{color:inherit;text-decoration:none}' +
+      '.ollink:hover{text-decoration:underline}' +
+      '.olgo{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}' +
+      '.olgo-t{font-size:12.5px;color:var(--ink-2)}' +
+      '.olres{font-size:12.5px;color:var(--ink-2)}';
 
     document.head.appendChild(s);
   })();
@@ -13987,7 +13999,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     perPage: +(localStorage.getItem('kbb_ord_pp') || 50),
     search: '', filter: 'all', sort: 'newest',
     from: '', to: '', totalMin: '', totalMax: '', payment: '',
-    adv: false, colsOpen: false, cols: null, data: null, err: null, sel: {}, busy: false
+    adv: false, colsOpen: false, cols: null, data: null, err: null, sel: {}, busy: false,
+    /* Lane ORD: the status picked in "Set status to…" and waiting for Proceed,
+       the request in flight, and the one-line answer drawn where the bar was. */
+    pend: '', applying: false, result: null
   };
 
   var OL_COLDEF = [
@@ -14092,6 +14107,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
   async function olLoad(){
     if(OL.busy) return;
     OL.busy = true;
+    OL.result = null; OL.pend = '';
     try{
       OL.data = await api('/admin-api/orders-list?' + olParams(false));
       OL.perPage = OL.data.per_page;
@@ -14117,6 +14133,9 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 
   async function renderOrders(){
     OL.page = 1; OL.sel = {};
+    /* Back on the list, the address is the list's again (Lane ORD): an order
+       opened from `#orders/<id>` must not reopen on the next refresh. */
+    try{ if(/^#orders\//.test(location.hash)) history.replaceState(null, '', location.pathname + location.search + '#orders'); }catch(e){}
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>Orders</h2>' +
       '<p>Every order the store has taken, including guest and imported ones.</p></div>' +
@@ -14186,6 +14205,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     var cols = OL_COLDEF.filter(function(c){ return olCols()[c[0]]; });
     var selected = Object.keys(OL.sel).filter(function(k){ return OL.sel[k]; });
     var s = d.summary || {};
+    if(!selected.length) OL.pend = '';
 
     el.innerHTML =
       '<div class="wrap">' +
@@ -14221,7 +14241,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 
       '<div class="chips" style="margin-bottom:12px">' + olChips(d) + '</div>' +
 
-      (selected.length ? olSelectionBar(selected) : '') +
+      (selected.length ? olSelectionBar(selected) : olResultLine()) +
 
       '<div class="card">' +
         '<p class="odlhint">This table is wider than the screen — swipe it sideways to see every column, or hide the ones you do not need with Columns.</p>' +
@@ -14263,10 +14283,42 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
         ? '<button class="btn sm" id="olBulkRestore">Restore</button>'
         : '<select class="inp" id="olBulkStatus" style="width:auto;min-width:150px">' +
             '<option value="">Set status to…</option>' +
-            OL_SETTABLE.map(function(o){ return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
+            OL_SETTABLE.map(function(o){ return '<option value="' + o[0] + '"' + (OL.pend === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
           '</select>' +
+          (OL.pend ? olProceedGroup(selected.length) : '') +
           '<button class="btn sm" style="background:var(--red)" id="olBulkDelete">Move to trash…</button>') +
       '</div>';
+  }
+
+  /* Lane ORD. "Set status to…" no longer applies anything on its own: the
+     choice waits here, beside the select, until Proceed. The line says what
+     will happen in full -- how many, to what, and whether the customers get
+     an email -- because that sentence is the whole of the confirmation. */
+  function olStatusLabel(status){
+    return (OL_SETTABLE.filter(function(o){ return o[0] === status; })[0] || [status, olTitle(status)])[1];
+  }
+
+  function olEmails(status){
+    var m = OL.data && OL.data.status_emails;
+    return !!(m && m[status]);
+  }
+
+  function olProceedGroup(n){
+    return '<span class="olgo" role="group" aria-label="Confirm the status change">' +
+      '<span class="olgo-t" id="olProceedText">Set <b>' + n + '</b> order' + (n === 1 ? '' : 's') + ' to <b>' + sesc(olStatusLabel(OL.pend)) + '</b>' +
+        (olEmails(OL.pend) ? ' · customers will be emailed' : '') + '</span>' +
+      '<button class="btn sm" id="olProceed"' + (OL.applying ? ' disabled' : '') + '>' + (OL.applying ? 'Applying…' : 'Proceed') + '</button>' +
+      '<button class="btn ghost sm" id="olProceedNo">Cancel</button>' +
+    '</span>';
+  }
+
+  /* What the last Proceed did, where the bar was. Gone on the next filter,
+     page or selection, or with its own ✕. */
+  function olResultLine(){
+    if(!OL.result) return '';
+    return '<div class="card pad odlbar olres" role="status" id="olResult">' +
+      '<span>' + ic(I.check) + '</span><span style="flex:1">' + sesc(OL.result) + '</span>' +
+      '<button class="btn ghost sm" id="olResultX" aria-label="Dismiss">✕</button></div>';
   }
 
   function olColsPanel(){
@@ -14328,9 +14380,13 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '<th></th></tr></thead>';
 
     var body = '<tbody>' + d.orders.map(function(o){
-      return '<tr' + (o.trashed ? ' style="opacity:.62"' : '') + '>' +
+      /* Lane ORD: the row is the target. data-olrow carries the id for the one
+         delegated handler on the table, and tabindex makes the row the single
+         keyboard stop (Enter opens it); the link inside is the real address
+         for a new tab, and is skipped by Tab so a row is not two stops. */
+      return '<tr class="olrow" data-olrow="' + o.id + '" tabindex="0"' + (o.trashed ? ' style="opacity:.62"' : '') + '>' +
         '<td><span class="cbx' + (OL.sel[o.id] ? ' on' : '') + '" data-olsel="' + o.id + '">' + ic(I.check) + '</span></td>' +
-        '<td style="white-space:nowrap"><div class="pname">' + sesc(o.order_number) + '</div>' +
+        '<td style="white-space:nowrap"><div class="pname"><a class="ollink" href="' + sesc(olHref(o.id)) + '" data-olopen="' + o.id + '" tabindex="-1">' + sesc(o.order_number) + '</a></div>' +
           '<div class="pbrand">' +
             (o.wc_order_id ? 'Woo #' + o.wc_order_id : '#' + o.id) +
             (o.trashed ? ' · <span style="color:var(--red)">in the trash</span>' : '') +
@@ -14480,6 +14536,14 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     if(yes) yes.onclick = function(){ closeModal(); olPrintDocs(ids, 'invoice'); };
   }
 
+  /* ▲ THIS FUNCTION WAS MISSING (found by Lane ORD in Chromium). Every
+     control in the bulk bar -- Set status, Print, Move to trash, Restore --
+     calls it, and nothing defined it: the first pick threw "olSelectedIds is
+     not defined" and the bar did nothing at all. Lane V's original, restored. */
+  function olSelectedIds(){
+    return Object.keys(OL.sel).filter(function(k){ return OL.sel[k]; }).map(Number);
+  }
+
   function olBind(){
     var $$$ = function(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); };
     var byId = function(id){ return document.getElementById(id); };
@@ -14561,12 +14625,28 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     };
     var clearSel = byId('olClearSel'); if(clearSel) clearSel.onclick = function(){ OL.sel = {}; olPaint(); };
 
+    /* Lane ORD: picking a status ARMS it; only Proceed sends anything. */
     var bulkStatus = byId('olBulkStatus');
     if(bulkStatus) bulkStatus.onchange = function(e){
-      var status = e.target.value;
-      e.target.value = '';
-      if(status) olConfirmStatus(olSelectedIds(), status);
+      olConfirmStatus(olSelectedIds(), e.target.value);
     };
+    var proceed = byId('olProceed');
+    if(proceed) proceed.onclick = function(){
+      if(OL.pend) olRunStatus(olSelectedIds(), OL.pend, false);
+    };
+    var proceedNo = byId('olProceedNo');
+    if(proceedNo) proceedNo.onclick = function(){ OL.pend = ''; olPaint(); };
+    var resultX = byId('olResultX');
+    if(resultX) resultX.onclick = function(){ OL.result = null; olPaint(); };
+
+    /* THE WHOLE ROW OPENS THE ORDER (Lane ORD). One delegated listener per
+       paint, on the table, rather than one per row. */
+    var tbl = document.querySelector('#content .odlscroll table');
+    if(tbl){
+      tbl.onclick = olRowClick;
+      tbl.onauxclick = olRowClick;
+      tbl.onkeydown = olRowKey;
+    }
 
     var bulkPrint = byId('olBulkPrint');
     if(bulkPrint) bulkPrint.onchange = function(e){
@@ -14623,44 +14703,149 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     };
   }
 
+  /* -------- the row is the link (Lane ORD) -------- */
+
+  /* The address an order opens at: this console, deep-linked. A new tab boots
+     the console and LANE DA's replay hands `orders/<id>` to window.go, which
+     opens the order rather than the list. location.pathname, never the whole
+     href, so a stale ?go= cannot ride along into the new tab. */
+  function olHref(id){ return location.pathname + '#orders/' + (+id); }
+
+  /* Anything in a row that is a control of its own keeps its own click: the
+     tick box, a button (View, the sort headers), a select, an input. The
+     order-number link is the one exception, handled below. */
+  var OL_OWN_CLICK = 'button,select,input,textarea,label,.cbx,[data-olsel],a:not([data-olopen])';
+
+  function olRowClick(e){
+    var tr = e.target.closest && e.target.closest('tr[data-olrow]');
+    if(!tr) return;
+    if(e.target.closest(OL_OWN_CLICK)) return;
+
+    var id = +tr.dataset.olrow;
+    var link = e.target.closest('a[data-olopen]');
+    var newTab = e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
+
+    /* Only the primary and middle buttons. A right click is the context menu. */
+    if(e.button !== 0 && e.button !== 1) return;
+
+    /* On the link itself the browser already knows how to open a new tab --
+       Ctrl/Cmd-click, Shift-click, middle-click, "Open in new tab". */
+    if(link && newTab) return;
+
+    /* A drag that selected text is somebody copying a name or an email, not
+       asking to leave. The click that ends a drag-select arrives with the
+       selection still in place; a plain click has already collapsed it. */
+    var picked = window.getSelection ? String(window.getSelection()) : '';
+    if(picked && tr.contains(window.getSelection().anchorNode)) return;
+
+    e.preventDefault();
+    if(newTab){ window.open(olHref(id), '_blank', 'noopener'); return; }
+    olOpen(id);
+  }
+
+  function olRowKey(e){
+    if(e.key !== 'Enter' || !e.target.matches || !e.target.matches('tr[data-olrow]')) return;
+    e.preventDefault();
+    var id = +e.target.dataset.olrow;
+    if(e.ctrlKey || e.metaKey){ window.open(olHref(id), '_blank', 'noopener'); return; }
+    olOpen(id);
+  }
+
+  function olOpen(id){ renderOrderDetail(id); }
+
   /* -------- destructive actions: always a dialog, sometimes two -------- */
 
   /**
-   * Nothing changes on a click. The first dialog says what will happen; the
-   * server then refuses any order that counts as revenue and reports which
-   * ones and what they are worth, and only a second, explicit confirmation
-   * carrying force goes through.
+   * Nothing changes on a click. Choosing a status arms it beside the select
+   * with a Proceed button and a sentence saying what Proceed will do (Lane
+   * ORD -- the owner: "the statuses should ask me confirmation beside the
+   * statuses selection with a button 'Proceed'"). The server then refuses any
+   * order that counts as revenue and reports which ones and what they are
+   * worth, and only a second, explicit confirmation carrying force goes
+   * through.
    */
   function olConfirmStatus(ids, status){
-    if(!ids.length) return;
-    var label = (OL_SETTABLE.filter(function(o){ return o[0] === status; })[0] || [status, olTitle(status)])[1];
-
-    openModal('<div class="modal-h"><b>Change status</b><button class="x" onclick="closeModal()">✕</button></div>' +
-      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Set <b>' + ids.length + '</b> order' + (ids.length === 1 ? '' : 's') +
-      ' to <b>' + sesc(label) + '</b>?</p>' +
-      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">A note is added to each order recording the change. Orders that would stop counting as revenue are left alone unless you confirm them separately.</p>' +
-      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
-      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
-      '<button class="btn" id="olStatusYes">Set status</button></div></div>');
-
-    var yes = document.getElementById('olStatusYes');
-    if(yes) yes.onclick = function(){ olRunStatus(ids, status, false); };
+    OL.pend = ids.length && OL_SETTABLE.some(function(o){ return o[0] === status; }) ? status : '';
+    olPaint();
+    var go = document.getElementById('olProceed');
+    if(go) go.focus();
   }
 
+  /**
+   * One request for the whole selection; the server walks it in chunks
+   * through the per-order funnel. The rows are then redrawn IN PLACE from the
+   * answer -- no reload, no "Loading orders…", the scroll stays where it was
+   * -- and the chip counts and money tiles are refreshed behind it.
+   */
   async function olRunStatus(ids, status, force){
     closeModal();
+    if(!ids.length || OL.applying) return;
+    OL.applying = true;
+    var go = document.getElementById('olProceed');
+    if(go){ go.disabled = true; go.textContent = 'Applying…'; }
+
+    var out;
     try{
-      var out = await api('/admin-api/orders-bulk-status', {
+      out = await api('/admin-api/orders-bulk-status', {
         method: 'POST', body: JSON.stringify({ids: ids, status: status, force: !!force})
       });
-
-      if(out.skipped && out.skipped.length){ olConfirmSkipped(out, status, 'status'); return; }
-
-      toast(out.changed + ' order' + (out.changed === 1 ? '' : 's') + ' updated');
-      OL.sel = {}; olLoad();
     }catch(e){
-      toast('Could not complete that — nothing was changed', 'bad');
+      OL.applying = false;
+      if(go){ go.disabled = false; go.textContent = 'Proceed'; }
+      toast(e && e.status === 403 ? 'Your role cannot change order statuses' : 'Could not complete that — nothing was changed', 'bad');
+      return;
     }
+    OL.applying = false;
+
+    /* An older server answers without changed_ids: fall back to the reload
+       this screen always did, rather than guess which rows moved. */
+    if(!Array.isArray(out.changed_ids)){
+      OL.sel = {}; OL.pend = '';
+      await olLoad();
+      OL.result = olResultText(out, status, force);
+      olPaint();
+    } else {
+      var moved = {};
+      out.changed_ids.forEach(function(id){ moved[id] = true; });
+      ((OL.data && OL.data.orders) || []).forEach(function(o){
+        if(moved[o.id]){ o.status = status; o.counts_as_revenue = !!out.revenue; }
+      });
+      OL.sel = {}; OL.pend = ''; OL.result = olResultText(out, status, force);
+      olPaint();
+      olRefreshCounts();
+    }
+
+    if(out.skipped && out.skipped.length) olConfirmSkipped(out, status, 'status');
+  }
+
+  /* "12 updated, 1 skipped: already Completed". Every order the owner ticked
+     is accounted for in the one line. */
+  function olResultText(out, status, force){
+    var label = olStatusLabel(status);
+    var parts = [(out.changed || 0) + (force ? ' more' : '') + ' updated'];
+    var same = (out.unchanged_ids || []).length;
+    var skipped = out.skipped || [];
+    var revenue = skipped.filter(function(s){ return s.forceable !== false; }).length;
+    var refused = skipped.length - revenue;
+    if(same) parts.push(same + ' skipped: already ' + label);
+    if(revenue) parts.push(revenue + ' left alone: count' + (revenue === 1 ? 's' : '') + ' as revenue');
+    if(refused) parts.push(refused + ' refused: stock or coupon no longer available');
+    return parts.join(', ') + (out.changed && olEmails(status) ? '. Customers are being emailed.' : '');
+  }
+
+  /* The chips and the money tiles, after a change: the same request the
+     screen loads with, but only its counts and summary are taken, so the rows
+     just redrawn in place stay as the owner is looking at them. */
+  async function olRefreshCounts(){
+    var qs = olParams(false);
+    try{
+      var d = await api('/admin-api/orders-list?' + qs);
+      if(!OL.data || qs !== olParams(false) || !document.getElementById('olSearch')) return;
+      OL.data.counts = d.counts; OL.data.summary = d.summary; OL.data.statuses = d.statuses;
+      var a = document.activeElement;
+      if(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) && document.querySelector('#content').contains(a)) return;
+      olPaint();
+    }catch(e){ /* the rows are right; the counts catch up on the next load */ }
   }
 
   function olConfirmDelete(ids){
@@ -23785,8 +23970,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 
   /* ---------- Route interception: hydrate dash, render new screens ---------- */
   var _go = window.go;
-  window.go = function(id){
-    if(id==='orders'){ _go(id); return renderOrders(); }
+  window.go = function(id, sub){
+    /* `#orders/<id>` (Lane ORD) is an order's own address: a row opened in a
+       new tab lands on that order, not on the list. */
+    if(id==='orders'){ _go(id); return /^[0-9]{1,10}$/.test(String(sub || '')) ? renderOrderDetail(+sub) : renderOrders(); }
     if(id==='customers'){ _go(id); return renderCustomers(); }
     if(id==='quiz-leads'){ _go(id); return renderQuizLeads(); }
     if(id==='rev-all'){ _go(id); return renderReviews(); }
