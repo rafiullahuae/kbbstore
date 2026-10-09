@@ -36,7 +36,9 @@ use Illuminate\Support\Facades\DB;
 use Tests\Support\EnglishRenderWalk;
 
 /** The release this lane branched from: its views are "the page as it was". */
-const PBH_BASE = '213685ac';
+// 2.60.446 (838ac564), not .445: .446 moved the footer strip icon to the Support
+// headset, which every content page prints and this lane did not touch.
+const PBH_BASE = '838ac564';
 
 const PBH_PICS = ['own', 'banner'];
 
