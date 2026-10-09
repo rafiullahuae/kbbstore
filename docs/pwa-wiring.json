@@ -28,8 +28,8 @@
     "file": "resources/views/admin/app.blade.php",
     "count": 1,
     "what": "arm the deep-link replay (?go=siteapp on a cold load), before 'spotted' so MarketingEmailsScreenTest's tail stays whole (integrator: re-anchored after Lane NF's notfoundpage, 2.60.404)",
-    "anchor": "'emails-edit','spotted','mkt-email','notfoundpage']);",
-    "replacement": "'emails-edit','siteapp','spotted','mkt-email','notfoundpage']);"
+    "anchor": "'emails-edit','spotted','mkt-email','notfoundpage','inquiries']);",
+    "replacement": "'emails-edit','siteapp','spotted','mkt-email','notfoundpage','inquiries']);"
   },
   {
     "n": 6,
@@ -44,23 +44,23 @@
     "file": "docs/GS-ADMIN-APP-BLOCKS.md",
     "count": 2,
     "what": "keep this lane's handover record in step with block 5 (it quotes the whole LATE_RENDERED line) (integrator: re-anchored after Lane NF's notfoundpage, 2.60.404)",
-    "anchor": "'emails-edit','spotted','mkt-email','notfoundpage']);",
-    "replacement": "'emails-edit','siteapp','spotted','mkt-email','notfoundpage']);"
+    "anchor": "'emails-edit','spotted','mkt-email','notfoundpage','inquiries']);",
+    "replacement": "'emails-edit','siteapp','spotted','mkt-email','notfoundpage','inquiries']);"
   },
   {
     "n": 8,
     "file": "docs/BG-ADMIN-APP-BLOCKS.md",
     "count": 1,
     "what": "keep this lane's handover record in step with block 5 (it quotes the whole LATE_RENDERED line) (integrator: re-anchored after Lane NF's notfoundpage, 2.60.404)",
-    "anchor": "'emails-edit','spotted','mkt-email','notfoundpage']);",
-    "replacement": "'emails-edit','siteapp','spotted','mkt-email','notfoundpage']);"
+    "anchor": "'emails-edit','spotted','mkt-email','notfoundpage','inquiries']);",
+    "replacement": "'emails-edit','siteapp','spotted','mkt-email','notfoundpage','inquiries']);"
   },
   {
     "n": 9,
     "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
     "count": 1,
     "what": "keep this lane's handover record in step with block 5 (it quotes the whole LATE_RENDERED line) (integrator: re-anchored after Lane NF's notfoundpage, 2.60.404)",
-    "anchor": "'emails-edit','spotted','mkt-email','notfoundpage']);",
-    "replacement": "'emails-edit','siteapp','spotted','mkt-email','notfoundpage']);"
+    "anchor": "'emails-edit','spotted','mkt-email','notfoundpage','inquiries']);",
+    "replacement": "'emails-edit','siteapp','spotted','mkt-email','notfoundpage','inquiries']);"
   }
 ]
