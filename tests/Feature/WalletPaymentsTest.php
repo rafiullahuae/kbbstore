@@ -540,8 +540,9 @@ it('refuses a stored value far larger than Apple ever sends', function () {
 // public response body built from a settings row.
 
 it('prefers a real file on disk to the pasted value, because a server that has one meant it', function () {
-    $pasted = 'pasted-value-0123456789';
-    $onDisk = 'on-disk-value-9876543210';
+    // Both Apple-shaped (hex, long enough): since Lane WL nothing else is served.
+    $pasted = str_repeat('7b2270617374656422', 30);
+    $onDisk = str_repeat('7b226469736b22', 40);
 
     walStripe(extra: [AppleDomainController::CONFIG_KEY => $pasted]);
 
@@ -573,12 +574,12 @@ it('serves the association file without asking whether Apple Pay is switched on'
      * endpoint stays closed.
      */
     walStripe(apple: false, google: false, extra: [
-        AppleDomainController::CONFIG_KEY => 'still-served-while-apple-pay-is-off',
+        AppleDomainController::CONFIG_KEY => str_repeat('7B2273657276656422', 30),
     ]);
 
     $this->get('/.well-known/apple-developer-merchantid-domain-association')
         ->assertOk()
-        ->assertSee('still-served-while-apple-pay-is-off', escape: false);
+        ->assertSee(str_repeat('7B2273657276656422', 30), escape: false);
 });
 // MUTATION, run: add `if (! app(Wallets::class)->applePay()) abort(404);` to
 // __invoke(). RED — and in the world, a domain that can never be verified.

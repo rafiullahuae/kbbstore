@@ -23,6 +23,57 @@ Stripe account, and nothing draws a logo for a payment this shop cannot take.
 
 ---
 
+## 0a. "Apple Pay and Google Pay are not showing" — 9 October 2026 (Lane WL)
+
+The owner tested on an iPhone and an Android phone and saw neither button.
+
+**What the shop decides, and it said yes.** The checkout draws the wallet row
+only when all four of `Wallets`' gates pass (card gateway on, secret key,
+publishable key, the wallet's own switch). On kbeautybliss.com the footer and
+the product page both printed *Apple Pay* and *Google Pay*, and those marks go
+through the same `Wallets::offered()` — so both switches were on and every gate
+passed. (A `curl` of `/checkout/` cannot show the row: it answers a bare
+request with "We can't take orders from this connection" or forwards an empty
+basket to `/cart/`.)
+
+**What Stripe decides, and it said no.** The row is drawn hidden; Stripe's
+Express Checkout Element reveals it only when it reports a wallet it can offer
+on this browser and this domain, and otherwise the shop removes it with no
+message. Stripe offers a wallet only on a domain registered in **Settings →
+Payments → Payment method domains** for the key's mode, and Apple Pay only once
+Apple has verified that domain by fetching its file. The live
+`/.well-known/apple-developer-merchantid-domain-association` answered
+`pmd_1UNuE9LD8AK6OnidAz8Neu5t` — Stripe's ID for the domain row, pasted where
+Apple's file belongs. Apple cannot verify from it, so Apple Pay could not show.
+
+**In order:**
+
+1. **Store → Payments → Credit or debit card.** The new *Apple Pay and Google
+   Pay* box in the Stripe status block shows both switches, whether each is
+   actually offered, and whether Apple's file is right (red, with the reason,
+   while it is the `pmd_` ID).
+2. **Stripe dashboard → Settings → Payments → Payment method domains**, in the
+   same Test/Live mode as *Mode*: make sure `kbeautybliss.com` is listed and
+   enabled (add it, and `www.kbeautybliss.com`, if not). This is what Google
+   Pay needs too.
+3. Download Apple's file (step 3 below), and paste the WHOLE file into
+   **Store → Payments → Credit or debit card → How this shop uses it → Apple Pay
+   domain file**, replacing the `pmd_…` text. Save. `curl` the address in
+   step 5: a 200 with one long hex line.
+4. Back in Stripe, open `kbeautybliss.com` on Payment method domains and verify
+   Apple Pay again. It should read active.
+5. **Platform → Domain switch → Payments ready?** now reports, per domain, what
+   Stripe says about Apple Pay and about Google Pay separately, with Stripe's
+   own reason when one is not active.
+6. Test: **iPhone, Safari**, with a card in Apple Wallet (Settings → Wallet &
+   Apple Pay); **Android, Chrome**, with a card in Google Wallet. Add something
+   to the basket and open the checkout: the button sits above the payment
+   options. A phone with no card in its wallet, or another browser, shows no
+   row at all — that is by design, not a fault. In Test mode a test-mode
+   payment is made and no real money moves.
+
+---
+
 ## 0b. Before the six steps — apply the package and check it landed
 
 You have a shell on this server and it is the fastest way to be certain. If you
@@ -38,10 +89,13 @@ than assuming.
 | Web root (what a browser actually reaches) | `/home/1672906.cloudwaysapps.com/yjmakdgtjs/public_html` |
 
 `KBB_BASE_PATH` is **empty** on this server, so every URL in this document is
-`https://extrabeauty.ae/...` with nothing between the domain and the path. If
-you ever see `/kbb-upgrade/` in a URL here, the setting has been filled in by
-mistake — that prefix belongs to the old Hostinger box and nothing on
-extrabeauty.ae.
+`https://<your-domain>/...` with nothing between the domain and the path.
+`<your-domain>` is the shop's own address — **Platform → Site address**, else
+`APP_URL` (kbeautybliss.com since the domain switch; it was extrabeauty.ae
+before). The Stripe status block on **Store → Payments → Credit or debit card**
+prints the exact Apple file address for you. If you ever see `/kbb-upgrade/` in
+a URL here, the setting has been filled in by mistake — that prefix belongs to
+the old Hostinger box.
 
 **1. Apply the package** the ordinary way: **Store → Core Updates**, choose the
 zip, apply. Wait for it to report success.
@@ -87,8 +141,8 @@ php artisan view:clear
 machine — the answers are the same:
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' https://extrabeauty.ae/.well-known/apple-developer-merchantid-domain-association
-curl -s -o /dev/null -w '%{http_code}\n' -X POST https://extrabeauty.ae/checkout/wallet/amount
+curl -s -o /dev/null -w '%{http_code}\n' https://<your-domain>/.well-known/apple-developer-merchantid-domain-association
+curl -s -o /dev/null -w '%{http_code}\n' -X POST https://<your-domain>/checkout/wallet/amount
 ```
 
 How to read those two numbers:
@@ -140,17 +194,21 @@ off — they are the same money path.
 **Shop → Store → Payments → Credit or debit card → How this shop uses it →
 Google Pay → On**, then **Save**.
 
-Google Pay needs **no registration with anybody**. What it does need, and this
-is worth saying plainly rather than leaving you to discover it:
+**Correction, 9 October 2026 (Lane WL):** this step used to say Google Pay
+needs no registration. Through Stripe's Express Checkout Element it does: your
+domain must be registered in **Stripe → Settings → Payments → Payment method
+domains**, the same registration step 3 makes for Apple Pay. One registration
+covers both wallets. Do step 3's first two lines even if you only want Google
+Pay. What it also needs:
 
-- **HTTPS.** extrabeauty.ae is already served over HTTPS, so this is satisfied.
+- **HTTPS.** Your domain is already served over HTTPS, so this is satisfied.
   It will never appear on a plain `http://` address or on `localhost`.
 - **Live keys.** On a test key Google Pay shows only to accounts allow-listed in
   your own Google Pay console; on a live key it shows to any Chrome or Android
   shopper with a card saved to Google.
-- Nothing else. No domain file, no Google account, no review.
+- No domain FILE (that is Apple's alone), no Google account, no review.
 
-Open extrabeauty.ae/checkout in **Chrome, signed in to a Google account with a
+Open `https://<your-domain>/checkout` in **Chrome, signed in to a Google account with a
 card saved**. The Google Pay button appears above the payment options. On a
 browser with no Google Pay the row is not drawn at all — no empty box, no dead
 button.
@@ -161,12 +219,24 @@ In the **Stripe dashboard**:
 
 1. **Settings → Payments → Payment method domains** (in older dashboards:
    *Settings → Payment methods → Apple Pay → Web domains*).
-2. **Add a new domain** and type `extrabeauty.ae` exactly — no `https://`, no
-   `www.` unless that is the host shoppers actually reach.
+2. **Add a new domain** and type your domain exactly (`kbeautybliss.com`) — no
+   `https://`. Add `www.kbeautybliss.com` as a second domain as well. The shop
+   forwards www to the bare domain, so the checkout never runs on www and
+   Stripe may show Apple Pay there as unverified; that is harmless.
+   Register it in the mode the shop is in (Stripe's Test/Live toggle must match
+   **Mode** on Store → Payments → Credit or debit card).
 3. Stripe offers a file to **download**, named
-   `apple-developer-merchantid-domain-association` (no extension). Download it.
+   `apple-developer-merchantid-domain-association` (no extension). Download it
+   (Stripe's file is also at
+   `https://stripe.com/files/apple-pay/apple-developer-merchantid-domain-association`).
    **Do not rename it and do not open-and-resave it in a word processor** — it
    is compared byte for byte at Apple's end.
+
+   **The file, not the ID.** The domain's row in Stripe shows an ID like
+   `pmd_1UNuE9…`. That is NOT the file, and Apple cannot verify a domain from
+   it — the live shop served exactly that for a while and Apple Pay never
+   appeared. The file is one long line of digits and the letters A–F, several
+   thousand characters. The shop now refuses a `pmd_…` paste with a message.
 
 Leave the Stripe page open; you come back to it in step 5.
 
@@ -175,7 +245,7 @@ Leave the Stripe page open; you come back to it in step 5.
 Apple fetches exactly this address and nothing else:
 
 ```
-https://extrabeauty.ae/.well-known/apple-developer-merchantid-domain-association
+https://<your-domain>/.well-known/apple-developer-merchantid-domain-association
 ```
 
 **Either** of these two works. Do one, not both.
@@ -217,13 +287,13 @@ do both, the file is what Apple sees.
 ### Step 5 — tell Stripe to verify, and check it worked
 
 Back on the Stripe **Payment method domains** page, press **Verify** (or
-**Check again**) beside `extrabeauty.ae`. It should turn green within a few
+**Check again**) beside your domain. It should turn green within a few
 seconds.
 
 **Check it yourself first**, from anywhere:
 
 ```bash
-curl -i https://extrabeauty.ae/.well-known/apple-developer-merchantid-domain-association
+curl -i https://<your-domain>/.well-known/apple-developer-merchantid-domain-association
 ```
 
 What a working setup looks like:
@@ -240,7 +310,7 @@ What each failure means:
 | What you see | What it means | What to do |
 |---|---|---|
 | `HTTP/2 404` | Nothing is stored and no file is placed | Redo step 4. If you pasted, check you pressed Save |
-| `HTTP/2 404` after pasting | The pasted text contains `<` or `>`, or is over 8 KB | You pasted the wrong thing — re-download from Stripe and copy as **plain text** |
+| `HTTP/2 404` after pasting | What is stored is not Apple's file: a `pmd_…` ID, a fragment, or text with anything but 0-9 and A-F in it | The Stripe status block on Store → Payments → Credit or debit card says which, in red. Re-download from Stripe and paste the whole file |
 | `content-type: text/html` | A file is being served by something else, or you hit a redirect | Check for a redirect rule on `.well-known` |
 | 200 but Stripe still fails | The bytes differ — usually a smart-quote or a line break added by a word processor | Redo step 4 from a fresh download, in a plain-text editor |
 
@@ -251,7 +321,7 @@ Only once Stripe shows the domain **verified**:
 **Shop → Store → Payments → Credit or debit card → How this shop uses it →
 Apple Pay → On**, then **Save**.
 
-Then open extrabeauty.ae/checkout on **an iPhone or on Safari on a Mac with
+Then open `https://<your-domain>/checkout` on **an iPhone or on Safari on a Mac with
 Apple Pay set up**. The Apple Pay button appears above the payment options.
 
 ---
@@ -370,7 +440,7 @@ a payment.
 
 The fix is one line in `routes/web.php` and it is with the integrator. The check
 for it is the second `curl` in section 0b: run it against
-`https://extrabeauty.ae/checkout/card/abandon` and a `405` means the line has
+`https://<your-domain>/checkout/card/abandon` and a `405` means the line has
 not shipped yet, while anything else means it has.
 
 ---

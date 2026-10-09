@@ -39,8 +39,8 @@ use Illuminate\Support\Facades\Http;
  *
  * ── "THE MAIN ADDRESS" ───────────────────────────────────────────────────
  *
- * Providers are told the address the shop USES (APP_URL): today extrabeauty.ae,
- * after the switch kbeautybliss.com. The main address is the one the shop is
+ * Providers are told the address the shop USES (APP_URL): before a domain
+ * switch the old address, after it the new one. The main address is the one the shop is
  * moving to (Platform -> Site address). Before the switch the two differ and a
  * webhook on today's address is AMBER -- right for now, to be re-registered at
  * the payments step. After the switch they are the same, and "points at the main address"
@@ -231,30 +231,9 @@ final class PaymentsReadiness
             ? self::line(self::GREEN, 'Signing secret', 'Present, so the shop can prove a notice really came from Stripe.')
             : self::line(self::RED, 'Signing secret', 'Missing: every notice from Stripe would be refused.', ucfirst($button).'.');
 
-        // ── Apple Pay / Google Pay
-        if (app(Wallets::class)->any()) {
-            foreach (array_values(array_unique([$this->main, $this->serving])) as $host) {
-                if ($host === '') {
-                    continue;
-                }
-
-                $domains = $this->get(self::STRIPE_API.'/v1/payment_method_domains?'.http_build_query(['domain_name' => self::bare($host)]), $auth);
-                $row = $domains['ok'] ? ((array) ($domains['body']['data'] ?? []))[0] ?? null : null;
-                $active = is_array($row) && ($row['enabled'] ?? true) !== false && ($row['apple_pay']['status'] ?? 'active') === 'active';
-
-                $out[] = match (true) {
-                    $domains['status'] === null => self::line(self::AMBER, 'Apple Pay / Google Pay · '.self::bare($host), 'Stripe could not be reached just now.', 'Press the button again in a minute.'),
-                    $active => self::line(self::GREEN, 'Apple Pay / Google Pay · '.self::bare($host), self::bare($host).' is registered with Stripe for wallets.'),
-                    // Red where the shop takes payments now; amber for the address it is moving to.
-                    default => self::line($host === $this->serving ? self::RED : self::AMBER,
-                        'Apple Pay / Google Pay · '.self::bare($host),
-                        self::bare($host).' is not registered with Stripe for wallets, so the Apple Pay button will not show there.',
-                        'Stripe dashboard → Settings → Payment method domains → Add '.self::bare($host).'.'),
-                };
-            }
-        } else {
-            $out[] = self::line(self::GREEN, 'Apple Pay / Google Pay', 'Not offered, so there is no domain to register.');
-        }
+        // ── Apple Pay / Google Pay (Lane WL: the switches, Apple's file, and
+        //    what Stripe says about each wallet on each domain)
+        array_push($out, ...$this->wallets($config, $auth));
 
         // ── the statement text
         $gateway = app(GatewayRegistry::class)->find('stripe');
@@ -275,6 +254,96 @@ final class PaymentsReadiness
             ? self::line(self::AMBER, 'Last card payment', 'The last card payment that tried to open failed ('.(string) $failed['at'].'): '.mb_substr((string) $failed['message'], 0, 300),
                 'Read it in Store → Payments → Payment log. A test order that opens clears this.')
             : self::line(self::GREEN, 'Last card payment', $opened !== null ? 'The last card payment opened normally.' : 'No card payment has been tried yet.');
+
+        return $out;
+    }
+
+    /**
+     * Apple Pay and Google Pay. (Lane WL.)
+     *
+     * The owner, 9 October 2026: "why google pay and apple pay not showing on
+     * my checkout page? i have tested from iphone and android both." The shop
+     * offered both (the footer drew both marks) and Stripe's Express Checkout
+     * Element still drew neither, because the decision that remained was
+     * Stripe's: is THIS domain registered, and has Apple verified it. The old
+     * check folded both wallets into one line and never looked at Apple's file,
+     * which on the live shop was a `pmd_…` ID — so it could not say which.
+     *
+     * One GET per domain, the same one as before.
+     *
+     * @param  array<string, mixed>  $config
+     * @param  array<string, string>  $auth
+     * @return list<array<string, mixed>>
+     */
+    private function wallets(array $config, array $auth): array
+    {
+        $where = 'Store → Payments → Credit or debit card';
+        $on = static fn (string $key): bool => is_scalar($config[$key] ?? null) && trim((string) $config[$key]) === '1';
+        $apple = $on(Wallets::CONFIG_KEYS['apple_pay']);
+        $google = $on(Wallets::CONFIG_KEYS['google_pay']);
+        $out = [];
+
+        $out[] = self::line(self::GREEN, 'Apple Pay / Google Pay switches',
+            'Apple Pay '.($apple ? 'On' : 'Off').', Google Pay '.($google ? 'On' : 'Off').'. They are switched in '.$where.' → How this shop uses it.');
+
+        if ($apple) {
+            $file = AppleDomainFile::status((string) (is_scalar($config[AppleDomainFile::CONFIG_KEY] ?? null) ? $config[AppleDomainFile::CONFIG_KEY] : ''));
+
+            $out[] = $file['ok']
+                ? self::line(self::GREEN, 'Apple Pay domain file', 'Apple’s file is served at '.AppleDomainFile::url().'.')
+                : self::line(self::RED, 'Apple Pay domain file', (string) $file['problem'], 'Paste Apple’s file in '.$where.' → Apple Pay domain file.');
+        }
+
+        if (! app(Wallets::class)->any()) {
+            if ($apple || $google) {
+                $out[] = self::line(self::RED, 'Apple Pay / Google Pay', 'Switched on, but the checkout cannot offer them: card payment is off or a key is missing (see above).', 'Fix the card payment first; the wallets ride on it.');
+            }
+
+            return $out;
+        }
+
+        foreach (array_values(array_unique([$this->main, $this->serving])) as $host) {
+            if ($host === '') {
+                continue;
+            }
+
+            $name = self::bare($host);
+            $title = 'Apple Pay / Google Pay · '.$name;
+            $domains = $this->get(self::STRIPE_API.'/v1/payment_method_domains?'.http_build_query(['domain_name' => $name]), $auth);
+            $row = $domains['ok'] ? ((array) ($domains['body']['data'] ?? []))[0] ?? null : null;
+            // Red where the shop takes payments now; amber for the address it is moving to.
+            $bad = $host === $this->serving ? self::RED : self::AMBER;
+
+            if ($domains['status'] === null) {
+                $out[] = self::line(self::AMBER, $title, 'Stripe could not be reached just now.', 'Press the button again in a minute.');
+
+                continue;
+            }
+
+            if (! is_array($row) || ($row['enabled'] ?? true) === false) {
+                $out[] = self::line($bad, $title,
+                    $name.' is not registered with Stripe for wallets, so neither Apple Pay nor Google Pay will show there.',
+                    'Stripe dashboard → Settings → Payment method domains → Add '.$name.' (and www.'.$name.').');
+
+                continue;
+            }
+
+            $problems = [];
+
+            foreach (['apple_pay' => [$apple, 'Apple Pay'], 'google_pay' => [$google, 'Google Pay']] as $wallet => [$wanted, $label]) {
+                $status = (string) ($row[$wallet]['status'] ?? 'active');
+
+                if ($wanted && $status !== 'active') {
+                    $why = trim((string) ($row[$wallet]['status_details']['error_message'] ?? ''));
+                    $problems[] = $label.' is not active on '.$name.' at Stripe'.($why !== '' ? ': '.mb_substr($why, 0, 200) : '').'.';
+                }
+            }
+
+            $out[] = $problems === []
+                ? self::line(self::GREEN, $title, $name.' is registered with Stripe and the wallets switched on are active there.')
+                : self::line($bad, $title, implode(' ', $problems),
+                    'Put Apple’s file in place ('.$where.' → Apple Pay domain file), then Stripe dashboard → Settings → Payment method domains → '.$name.' → verify again.');
+        }
 
         return $out;
     }

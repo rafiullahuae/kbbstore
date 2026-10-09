@@ -107,6 +107,11 @@ function prFake(array $world): void
                     parse_str((string) parse_url($u, PHP_URL_QUERY), $q);
                     $name = (string) ($q['domain_name'] ?? '');
 
+                    // 'wallet_rows' (Lane WL): Stripe's own row for a domain, as given.
+                    if (isset($world['wallet_rows'][$name])) {
+                        return Http::response(['data' => [$world['wallet_rows'][$name]]]);
+                    }
+
                     return Http::response(['data' => in_array($name, $world['wallet_domains'] ?? [], true)
                         ? [['domain_name' => $name, 'enabled' => true, 'apple_pay' => ['status' => 'active']]] : []]);
                 })(),
@@ -273,6 +278,80 @@ it('checks Apple Pay domains only when wallets are offered: red where the shop t
     $c = prChecks(prRun('https://extrabeauty.ae'), 'stripe');
     expect($c['Apple Pay / Google Pay · kbeautybliss.com']['level'])->toBe('green');
 });
+
+it('says which wallet Stripe has not activated on the domain, with Stripe’s reason, and whether Apple’s file is right (Lane WL)', function () {
+    /*
+     * THE DEFECT. 9 October 2026: both wallets switched on and offered, the
+     * domain registered (the owner had its pmd_ ID), and neither button on an
+     * iPhone or an Android phone. The old check folded both wallets into one
+     * line, treated a missing google_pay status as fine, and never looked at
+     * the Apple file — which was the pmd_ ID. It could not say which part was
+     * broken, so it said nothing useful.
+     */
+    $row = PaymentProvider::find('stripe');
+    $row->config = array_merge($row->config, [
+        'wallet_apple_pay' => '1', 'wallet_google_pay' => '1',
+        \App\Services\Payments\AppleDomainFile::CONFIG_KEY => 'pmd_1UNuE9LD8AK6OnidAz8Neu5t',
+    ]);
+    $row->save();
+    app(\App\Services\Payments\GatewayCredentials::class)->forget();
+    app(Wallets::class)->forget();
+
+    prShop('kbeautybliss.com', 'kbeautybliss.com');
+    prFake(['wallet_rows' => ['kbeautybliss.com' => [
+        'id' => 'pmd_1UNuE9LD8AK6OnidAz8Neu5t', 'domain_name' => 'kbeautybliss.com', 'enabled' => true,
+        'apple_pay' => ['status' => 'inactive', 'status_details' => ['error_message' => 'The domain association file was not found or was invalid.']],
+        'google_pay' => ['status' => 'active'],
+    ]]]);
+
+    $c = prChecks(prRun(), 'stripe');
+
+    expect($c['Apple Pay / Google Pay switches']['detail'])->toContain('Apple Pay On, Google Pay On')
+        ->and($c['Apple Pay domain file']['level'])->toBe('red')
+        ->and($c['Apple Pay domain file']['detail'])->toContain('Stripe’s ID for your domain')
+        ->and($c['Apple Pay / Google Pay · kbeautybliss.com']['level'])->toBe('red')
+        ->and($c['Apple Pay / Google Pay · kbeautybliss.com']['detail'])->toContain('Apple Pay is not active on kbeautybliss.com')
+        ->and($c['Apple Pay / Google Pay · kbeautybliss.com']['detail'])->toContain('association file was not found')
+        ->and($c['Apple Pay / Google Pay · kbeautybliss.com']['detail'])->not->toContain('Google Pay is not active');
+
+    // Fixed: Apple's file in place, Stripe reports both active.
+    $row->config = array_merge($row->config, [\App\Services\Payments\AppleDomainFile::CONFIG_KEY => str_repeat('7B2270', 100)]);
+    $row->save();
+    app(\App\Services\Payments\GatewayCredentials::class)->forget();
+    prFake(['wallet_rows' => ['kbeautybliss.com' => [
+        'domain_name' => 'kbeautybliss.com', 'enabled' => true, 'apple_pay' => ['status' => 'active'], 'google_pay' => ['status' => 'active'],
+    ]]]);
+
+    $c = prChecks(prRun(), 'stripe');
+    expect($c['Apple Pay domain file']['level'])->toBe('green')
+        ->and($c['Apple Pay / Google Pay · kbeautybliss.com']['level'])->toBe('green');
+});
+// MUTATION, run: read only `apple_pay.status` again (drop the google_pay leg)
+// and give Google Pay an inactive status: green. Or drop the 'Apple Pay domain
+// file' line: RED on its first expectation.
+
+it('names the switches even when wallets are off, and red when switched on but cards cannot carry them (Lane WL)', function () {
+    $row = PaymentProvider::find('stripe');
+    prShop('kbeautybliss.com', 'kbeautybliss.com');
+    prFake([]);
+
+    $c = prChecks(prRun(), 'stripe');
+    expect($c['Apple Pay / Google Pay switches']['level'])->toBe('green')
+        ->and($c['Apple Pay / Google Pay switches']['detail'])->toContain('Apple Pay Off, Google Pay Off')
+        ->and($c['Apple Pay / Google Pay switches']['detail'])->toContain('Store → Payments → Credit or debit card → How this shop uses it');
+
+    // On, but the projection says not offered (e.g. a key went missing).
+    $row->config = array_merge($row->config, ['wallet_google_pay' => '1']);
+    $row->saveQuietly();
+    app(\App\Services\Payments\GatewayCredentials::class)->forget();
+    app(\App\Services\SettingsService::class)->set(Wallets::SETTING_KEY, '');
+    app(Wallets::class)->forget();
+
+    $c = prChecks(prRun(), 'stripe');
+    expect($c['Apple Pay / Google Pay']['level'])->toBe('red');
+});
+// MUTATION, run: return early in wallets() when Wallets::any() is false before
+// the switches line. RED on the first expectation.
 
 it('calls no provider until the button is pressed, and refuses anyone without payments.check', function () {
     prShop('kbeautybliss.com', 'kbeautybliss.com');

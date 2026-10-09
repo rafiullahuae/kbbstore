@@ -24,7 +24,17 @@ use Illuminate\Support\Facades\Route;
 | WHY IT IS NEEDED AT ALL. Apple Pay on the web will not draw a sheet on a
 | domain Apple has not verified, and verification is one GET of
 |
-|     https://extrabeauty.ae/.well-known/apple-developer-merchantid-domain-association
+|     https://<your domain>/.well-known/apple-developer-merchantid-domain-association
+|
+| where <your domain> is the shop's own address (Platform → Site address, else
+| APP_URL) — App\Services\Payments\AppleDomainFile::url() builds it, and the
+| Stripe status block on Store → Payments → Credit or debit card prints it.
+|
+| WHAT IT SERVES IS APPLE'S FILE OR NOTHING (Lane WL). The live shop once
+| answered here with `pmd_…`, the ID Stripe shows for a payment-method domain,
+| pasted into the box meant for the file; Apple cannot verify a domain from
+| that, and Apple Pay never appeared. AppleDomainFile::problem() now refuses
+| anything that is not one long line of hex, on save and here (a 404).
 |
 | Everything else about Apple Pay is built and testable from here. This file is
 | the only part that is not, because only the owner can add the domain in the
@@ -47,9 +57,9 @@ use Illuminate\Support\Facades\Route;
 | working and this being invisible. Apple fetches the file from the DOMAIN ROOT
 | and will not follow a prefix:
 |
-|     https://extrabeauty.ae/.well-known/apple-developer-merchantid-domain-association
+|     https://<your domain>/.well-known/apple-developer-merchantid-domain-association
 |
-| On extrabeauty.ae `KBB_BASE_PATH` is EMPTY (docs/CUTOVER-EXTRABEAUTY.md is the
+| On the live shop `KBB_BASE_PATH` is EMPTY (docs/CUTOVER-EXTRABEAUTY.md is the
 | authority, and CLAUDE.md records that believing otherwise has already cost
 | this project real time), so the route below sits exactly there. A deployment
 | that DOES serve the shop under a prefix has to place the real file in the web
