@@ -4812,7 +4812,7 @@
     if(!a){
       content.innerHTML = anStyle() +
         '<div class="wrap"><div class="an-wrap">'+
-        '<div class="page-head" style="margin:0"><h2>Analytics</h2>'+
+        '<div class="page-head" style="margin:0"><h2>Sales Report</h2>'+
         '<p>How the shop is trading, worked out from your real orders.</p></div>'+
         anFilterBar()+
         '<div class="an-card"><p class="an-empty">'+
@@ -4906,7 +4906,7 @@
     content.innerHTML = anStyle() +
       '<div class="wrap"><div class="an-wrap">'+
 
-      '<div class="page-head" style="margin:0"><h2>Analytics</h2>'+
+      '<div class="page-head" style="margin:0"><h2>Sales Report</h2>'+
       '<p>How the shop is trading, worked out from your real orders. Every figure below — '+
       'the money, the chart, where the orders are and the best sellers — covers '+
       '<b>'+sesc(period.range_label)+'</b> and nothing else. Revenue is net of refunds.</p></div>'+

@@ -165,7 +165,11 @@ it('has nothing that outlives a single request', function () {
     // 10 with Lane FW: `kbb:firewall data --auto`, hourly -- asks whether the
     // country database (monthly) or the bot address lists (weekly) are due,
     // downloads into storage/app/firewall/ when they are, exits.
-    expect(substr_count($console, 'Schedule::command('))->toBe(10, 'the set of scheduled commands has changed');
+    // 11 with Lane AN: `kbb:analytics-rollup`, every minute -- rebuilds
+    // today's analytics summaries from the raw hits (one MAX(id) and nothing
+    // more when there are none new), prunes hits older than 48 hours, exits.
+    // Nothing is held between runs.
+    expect(substr_count($console, 'Schedule::command('))->toBe(11, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {

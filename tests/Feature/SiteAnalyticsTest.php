@@ -91,7 +91,8 @@ it('writes exactly one INSERT and reads nothing from an_hits', function () {
     anBeacon(['p' => '/shop/', 't' => 'Shop', 'n' => '0', 'ss' => (string) intdiv(time(), 60)])->assertNoContent();
 
     $touch = array_values(array_filter($q, fn ($s) => str_contains($s, 'an_hits')));
-    expect($touch)->toHaveCount(1)->and($touch[0])->toStartWith('insert into "an_hits"');
+    // Both spellings: "an_hits" on SQLite, `an_hits` on MySQL.
+    expect($touch)->toHaveCount(1)->and(preg_match('/^insert into ["`]an_hits["`]/', $touch[0]))->toBe(1);
 });
 
 it('does not count bots, signed-in admins, prefetches, the owner\'s addresses, or anything when switched off', function () {

@@ -235,6 +235,8 @@ final class StaticMemos
             // Lane KW: the sync's step budget and chunk size, which a test
             // shrinks to force a run across many steps.
             \App\Services\Seo\Keywords\KeywordSync::class => static fn () => \App\Services\Seo\Keywords\KeywordSync::resetTuning(),
+            // Lane AN: the crawler pattern and the day's visitor salt.
+            \App\Services\Analytics\Tracker::class => static fn () => \App\Services\Analytics\Tracker::forget(),
         ];
     }
 

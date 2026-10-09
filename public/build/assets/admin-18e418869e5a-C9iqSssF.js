@@ -25,7 +25,13 @@
     });
     var j = null;
     try { j = await r.json(); } catch (e) { j = null; }
-    if (!r.ok) { var err = new Error((j && j.message) || ('HTTP ' + r.status)); err.status = r.status; throw err; }
+    if (!r.ok) {
+      var err = new Error((j && j.message) || ('HTTP ' + r.status));
+      err.status = r.status;
+      // A 404 whose body says nothing at all is the compiled route table.
+      err.blank = !(j && (j.message || j.error));
+      throw err;
+    }
     return j;
   }
   function fmt(n) { return Number(n || 0).toLocaleString('en-US'); }
@@ -243,7 +249,9 @@
       st.sum = j; st.sumAt = Date.now(); showErr('');
       paintSummary();
     } catch (e) {
-      if (st.active) showErr(e.status === 403 ? 'Your role does not include Analytics. Ask the owner to add it in Users & Roles.' : 'Analytics could not be loaded (' + e.message + ').');
+      if (st.active) showErr(e.status === 403 ? 'Your role does not include Analytics. Ask the owner to add it in Users & Roles.'
+        : e.status === 404 && e.blank ? 'This screen is not in the server’s compiled route table yet. Clear it from Platform → Cache, then reload.'
+        : 'Analytics could not be loaded (' + e.message + ').');
     }
   }
 

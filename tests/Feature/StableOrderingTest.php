@@ -517,6 +517,13 @@ it('leaves no query in app/ that slices a list it has not finished ordering', fu
         // ordering, into OwnerAppSales::top() (7 days | this month).
         ['Services/OwnerApp/OwnerAppSales.php', "orderBy('i.product_id')"],
         ['OwnerApp/OrdersController.php', "orderBy('payment_method')"],
+        // Lane AN (Analytics): three maps grouped by one column and ending on
+        // it -- an_dims by val, the live pages by path, the live sources by
+        // ch -- the GROUP BY key, one row per value, so total by construction;
+        // the real tie (the SUM or COUNT) is broken by it.
+        ['Services/Analytics/Report.php', "orderBy('val')"],
+        ['Services/Analytics/Report.php', "orderBy('path')"],
+        ['Services/Analytics/Report.php', "orderBy('ch')"],
     ];
 
     $root = app_path();

@@ -230,7 +230,7 @@ final class Report
             return ['connected' => false, 'rows' => []];
         }
 
-        $rows = DB::table('seo_keywords')->where('source', 'gsc')->orderByDesc('score')->limit(self::TOP)
+        $rows = DB::table('seo_keywords')->where('source', 'gsc')->orderByDesc('score')->orderBy('id')->limit(self::TOP)
             ->get(['term', 'metrics'])
             ->map(static function ($r): array {
                 $m = json_decode((string) $r->metrics, true);
@@ -288,7 +288,7 @@ final class Report
         // minutes ago still counts as Instagram.
         $src = DB::table('an_hits')->where('e', 1)->where('m', '>=', $now - 120)
             ->whereIn('s', DB::table('an_hits')->select('s')->where('m', '>=', $wFrom))
-            ->groupBy('ch')->selectRaw('ch, COUNT(DISTINCT s) n')->orderByDesc('n')->limit(8)->get()
+            ->groupBy('ch')->selectRaw('ch, COUNT(DISTINCT s) n')->orderByDesc('n')->orderBy('ch')->limit(8)->get()
             ->map(static fn ($r): array => ['key' => (string) $r->ch, 'label' => Channels::label($r->ch), 'n' => (int) $r->n])->all();
 
         $feed = DB::table('an_hits')->where('m', '>=', $now - 29)->where('id', '>', max(0, $since))

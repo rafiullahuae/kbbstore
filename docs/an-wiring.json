@@ -19,9 +19,9 @@
     "n": 3,
     "file": "resources/views/admin/app.blade.php",
     "count": 1,
-    "what": "replay a click that lands before the partial",
-    "anchor": "const LATE_RENDERED=new Set(['cartpanel',",
-    "replacement": "const LATE_RENDERED=new Set(['site-analytics','cartpanel',"
+    "what": "replay a click that lands before the partial (in the middle of the Set, where no other lane's record quotes it)",
+    "anchor": "'checkoutpage','routines'",
+    "replacement": "'checkoutpage','site-analytics','routines'"
   },
   {
     "n": 4,
@@ -35,17 +35,17 @@
     "n": 5,
     "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
     "count": 1,
-    "what": "keep the recorded block in step",
-    "anchor": "const LATE_RENDERED=new Set(['cartpanel',",
-    "replacement": "const LATE_RENDERED=new Set(['site-analytics','cartpanel',"
+    "what": "keep the recorded block in step (in the middle of the Set, where no other lane's record quotes it)",
+    "anchor": "'checkoutpage','routines'",
+    "replacement": "'checkoutpage','site-analytics','routines'"
   },
   {
     "n": 6,
     "file": "docs/BG-ADMIN-APP-BLOCKS.md",
     "count": 2,
-    "what": "keep the recorded block in step",
-    "anchor": "const LATE_RENDERED=new Set(['cartpanel',",
-    "replacement": "const LATE_RENDERED=new Set(['site-analytics','cartpanel',"
+    "what": "keep the recorded block in step (in the middle of the Set, where no other lane's record quotes it)",
+    "anchor": "'checkoutpage','routines'",
+    "replacement": "'checkoutpage','site-analytics','routines'"
   },
   {
     "n": 7,

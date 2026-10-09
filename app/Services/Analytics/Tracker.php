@@ -54,6 +54,19 @@ final class Tracker
     /** @var array<string, string> */
     private static array $salts = [];
 
+    /**
+     * Forget the process memos: the compiled crawler pattern and today's salt.
+     * Safe under PHP-FPM without calling it: the salt memo is keyed by the
+     * shop day and replaced the first time a new day asks, so a worker that
+     * lives past midnight reads the new day's file rather than reusing
+     * yesterday's; the pattern is built from constants.
+     */
+    public static function forget(): void
+    {
+        self::$botRe = null;
+        self::$salts = [];
+    }
+
     /** Record one hit for this beacon request. Never throws. */
     public static function record(Request $request, int $kind = 0): bool
     {
