@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Coupon;
+use App\Support\Locale;
+
 /**
  * The cart panel — Desktop and Mobile, and what each line shows.
  *
@@ -191,7 +194,49 @@ class CartPanel
         'accent'           => ['colour', 'Prices and the active tab', '#C13E63', ''],
         'checkout_bg'      => ['colour', 'Checkout button', '#C13E63', ''],
         'checkout_fg'      => ['colour', 'Checkout button text', '#FFFFFF', ''],
+
+        // ══ COUPON HINT ══ (Lane QK3) The owner, on a screenshot of this panel
+        //    with a red line above "Subtotal": "I also need a small text line,
+        //    Need Discount? Use coupon code {coupon-code} on checkout. can be
+        //    editable and coupon can be selectable by me on backend. keep this
+        //    in cart panel settings. also same for mobile."
+        //
+        //    ▲ SHIPS ON, which is his: CLAUDE.md's 30-September reversal. With
+        //    no coupon chosen it draws nothing, so "on" alone moves no byte of
+        //    the shop. The data migration 2027_10_15_170000 then chooses GLOW,
+        //    which he also asked for by name ("by default, coupon: glow should
+        //    be there"), when the shop has a coupon with that code.
+        //
+        //    `coupon_id` is a select whose stored value is a coupon id. Its
+        //    declared option is only "none": the real list is the shop's own
+        //    coupons, sent beside the tabs as `coupons` by the controller, and
+        //    save() refuses any id the coupons table does not hold. The panel
+        //    never reads the coupons table — see couponLine().
+        'coupon_on'        => ['bool',   'Coupon hint', true,
+                               'Ships on. The line appears above Subtotal on both devices as soon as a coupon is chosen below, and only while that coupon can actually be used.'],
+        'coupon_id'        => ['select', 'Coupon', '0',
+                               'Usable coupons first. An expired, not-yet-started or used-up coupon hides the line by itself until it can be used again.',
+                               ['0' => 'None — the line stays hidden']],
+        'txt_coupon'       => ['text',   'Text', self::COUPON_TEXT,
+                               'Use {coupon-code} where the code should appear; without it the code is added at the end. Up to 120 characters.'],
+        'txt_coupon_ar'    => ['text',   'Text — Arabic', self::COUPON_TEXT_AR,
+                               'Shown on the Arabic shop (/ar/). Leave empty to use the English text there too.'],
     ];
+
+    /** The coupon hint's shipped wording, the owner's own sentence. (Lane QK3) */
+    public const COUPON_TEXT = 'Need Discount? Use coupon code {coupon-code} on checkout';
+
+    public const COUPON_TEXT_AR = 'تحتاج خصمًا؟ استخدم كود الخصم {coupon-code} عند الدفع';
+
+    /** Where the code goes in the sentence. */
+    public const COUPON_TOKEN = '{coupon-code}';
+
+    /**
+     * The chosen coupon's dates and state, written whenever the choice or that
+     * coupon changes, so the panel — which is on every shop page — checks the
+     * clock and never the coupons table. NOT in SCHEMA: nobody edits it.
+     */
+    public const COUPON_SNAPSHOT = 'cartpanel_coupon_snapshot';
 
     /**
      * BY DEVICE, NOT BY CATEGORY — which is the change the owner asked for:
@@ -225,6 +270,10 @@ class CartPanel
                         'txt_empty', 'txt_empty_sub', 'txt_browsed_none']],
         'colour'   => ['Colour', 'Prices, tabs and the checkout button. The same on both devices.',
                        ['accent', 'checkout_bg', 'checkout_fg']],
+        // LAST, so every tab recorded before it keeps its index — the payload
+        // test compares tabs by position. (Lane QK3)
+        'coupon'   => ['Coupon hint', 'A small line just above Subtotal: “Need Discount? Use coupon code GLOW on checkout”. The code is tap-to-copy. The same on both devices.',
+                       ['coupon_on', 'coupon_id', 'txt_coupon', 'txt_coupon_ar']],
     ];
 
     public function __construct(private SettingsService $settings) {}
@@ -251,10 +300,129 @@ class CartPanel
     public function save(array $values): void
     {
         foreach ($values as $key => $value) {
-            if (isset(self::SCHEMA[$key])) {
-                $this->settings->set('cartpanel_' . $key, $this->cast($key, $value));
+            if (! isset(self::SCHEMA[$key])) {
+                continue;
             }
+
+            $value = $this->cast($key, $value);
+
+            // ONLY A COUPON THAT EXISTS. The select lists the shop's coupons,
+            // but a crafted POST can send any number; one that names no row
+            // is stored as "none", which the policy's `invalid => default`
+            // already says. One query, at save, never at render. (Lane QK3)
+            if ($key === 'coupon_id' && $value !== '0' && ! Coupon::query()->whereKey((int) $value)->exists()) {
+                $value = '0';
+            }
+
+            $this->settings->set('cartpanel_' . $key, $value);
         }
+
+        if (array_key_exists('coupon_id', $values)) {
+            $this->refreshCouponSnapshot();
+        }
+    }
+
+    /*
+     * ── THE COUPON HINT: A SNAPSHOT, SO THE PANEL COSTS NO QUERY ─────────────
+     *
+     * The panel is rendered on every shop page (partials/drawers.blade.php), and
+     * CLAUDE.md's speed freeze forbids a query per page for it. So the chosen
+     * coupon's code, dates and "used up" state are copied into a setting when
+     * they can change — this screen's save, any save or delete of that coupon
+     * (Coupon::booted()), and a redemption moving its count (CouponService) —
+     * and couponLine() checks only the clock against the copy. The settings map
+     * is already read once per request, so the copy rides in it for nothing.
+     */
+
+    /** Re-read the chosen coupon and store what couponLine() needs from it. */
+    public function refreshCouponSnapshot(): void
+    {
+        $id = (int) $this->get('coupon_id');
+        $coupon = $id > 0 ? Coupon::query()->find($id) : null;
+
+        $this->settings->set(self::COUPON_SNAPSHOT, $coupon === null ? '' : json_encode([
+            'id' => (int) $coupon->id,
+            'code' => (string) $coupon->code,
+            'starts_at' => $coupon->starts_at?->getTimestamp(),
+            'expires_at' => $coupon->expires_at?->getTimestamp(),
+            // The one condition that is not a date. CouponService::validate()
+            // refuses a code whose count has reached its limit, so it is not
+            // advertised either.
+            'active' => $coupon->usage_limit === null || (int) $coupon->usage_count < (int) $coupon->usage_limit,
+        ]));
+    }
+
+    /**
+     * Called when a coupon row changed. Re-snapshots only when it is the one
+     * the panel advertises, so editing any other coupon costs nothing extra.
+     */
+    public static function couponChanged(int $couponId): void
+    {
+        $panel = app(self::class);
+
+        if ($couponId > 0 && (int) $panel->get('coupon_id') === $couponId) {
+            $panel->refreshCouponSnapshot();
+        }
+    }
+
+    /**
+     * The line, as HTML, or '' when nothing should be advertised.
+     *
+     * Shown only while the switch is on, a coupon is chosen, the snapshot is of
+     * THAT coupon, and the coupon is usable now — started, not expired, not used
+     * up: the same three conditions CouponService::validate() checks first, so
+     * the panel never offers a code the checkout would refuse for those reasons.
+     *
+     * The wording is the owner's and is escaped; the code is escaped into the
+     * pill. Nothing printed unescaped comes from a setting.
+     */
+    public function couponLine(): string
+    {
+        $c = $this->all();
+
+        if (! $c['coupon_on'] || (int) $c['coupon_id'] <= 0) {
+            return '';
+        }
+
+        $snap = $this->settings->get(self::COUPON_SNAPSHOT);
+        $snap = is_string($snap) ? json_decode($snap, true) : $snap;
+
+        if (! is_array($snap) || (int) ($snap['id'] ?? 0) !== (int) $c['coupon_id']
+            || trim((string) ($snap['code'] ?? '')) === '' || empty($snap['active'])) {
+            return '';
+        }
+
+        $now = now()->getTimestamp();
+
+        if (($snap['starts_at'] ?? null) !== null && $now < (int) $snap['starts_at']) {
+            return '';
+        }
+
+        if (($snap['expires_at'] ?? null) !== null && $now > (int) $snap['expires_at']) {
+            return '';
+        }
+
+        $ar = ! Locale::isDefault() && Locale::current() === 'ar';
+        $text = trim((string) ($ar ? $c['txt_coupon_ar'] : ''));
+
+        if ($text === '') {
+            $text = trim((string) $c['txt_coupon']);
+        }
+
+        if ($text === '') {
+            $text = self::COUPON_TEXT;
+        }
+
+        $code = (string) $snap['code'];
+        // The pill is a real button, so a tap answers on the first try; cart.js
+        // copies data-kccopy and shows data-done above it without moving a
+        // pixel of the line (an absolutely placed ::after).
+        $pill = '<button type="button" class="kc-cc" data-kccopy="' . e($code) . '" data-done="'
+            . e((string) __('store.cart_drawer.code_copied')) . '">' . e($code) . '</button>';
+
+        return str_contains($text, self::COUPON_TOKEN)
+            ? str_replace(self::COUPON_TOKEN, $pill, e($text))
+            : e($text) . ' ' . $pill;
     }
 
     /**
@@ -291,6 +459,15 @@ class CartPanel
      */
     private function cast(string $key, mixed $value): mixed
     {
+        // A coupon id: digits or "none". Whether the row exists is save()'s
+        // question, asked once, so a render never touches the coupons table.
+        // (Lane QK3)
+        if ($key === 'coupon_id') {
+            $value = is_scalar($value) ? trim((string) $value) : '';
+
+            return preg_match('/^[1-9][0-9]{0,18}$/', $value) === 1 ? $value : '0';
+        }
+
         return ModuleSchema::cast(
             ModuleSchema::field($key, self::SCHEMA[$key], self::POLICY),
             $value,

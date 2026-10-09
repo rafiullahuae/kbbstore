@@ -818,6 +818,8 @@ final class InterfaceStrings
             'cart_drawer.browsed_sold_out' => 'Sold out',
             'cart_drawer.browsed_in_bag' => 'In your bag — add another',
             'cart_drawer.browsed_add' => 'Add to cart',
+            // The coupon hint's tap-to-copy confirmation. (Lane QK3)
+            'cart_drawer.code_copied' => 'Copied',
             /*
              * The Set row (Lane SET). Two keys, read by exactly one file --
              * resources/views/partials/set-row.blade.php, which is the single

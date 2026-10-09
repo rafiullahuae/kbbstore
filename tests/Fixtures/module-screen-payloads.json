@@ -799,6 +799,55 @@
             "value": "#FFFFFF"
           }
         ]
+      },
+      {
+        "key": "coupon",
+        "label": "Coupon hint",
+        "description": "A small line just above Subtotal: “Need Discount? Use coupon code GLOW on checkout”. The code is tap-to-copy. The same on both devices.",
+        "fields": [
+          {
+            "key": "coupon_on",
+            "name": "coupon_on",
+            "type": "bool",
+            "label": "Coupon hint",
+            "help": "Ships on. The line appears above Subtotal on both devices as soon as a coupon is chosen below, and only while that coupon can actually be used.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "coupon_id",
+            "name": "coupon_id",
+            "type": "select",
+            "label": "Coupon",
+            "help": "Usable coupons first. An expired, not-yet-started or used-up coupon hides the line by itself until it can be used again.",
+            "options": [
+              "None — the line stays hidden"
+            ],
+            "default": "0",
+            "value": "0"
+          },
+          {
+            "key": "txt_coupon",
+            "name": "txt_coupon",
+            "type": "text",
+            "label": "Text",
+            "help": "Use {coupon-code} where the code should appear; without it the code is added at the end. Up to 120 characters.",
+            "options": null,
+            "default": "Need Discount? Use coupon code {coupon-code} on checkout",
+            "value": "Need Discount? Use coupon code {coupon-code} on checkout"
+          },
+          {
+            "key": "txt_coupon_ar",
+            "name": "txt_coupon_ar",
+            "type": "text",
+            "label": "Text — Arabic",
+            "help": "Shown on the Arabic shop (/ar/). Leave empty to use the English text there too.",
+            "options": null,
+            "default": "تحتاج خصمًا؟ استخدم كود الخصم {coupon-code} عند الدفع",
+            "value": "تحتاج خصمًا؟ استخدم كود الخصم {coupon-code} عند الدفع"
+          }
+        ]
       }
     ],
     "touch": [

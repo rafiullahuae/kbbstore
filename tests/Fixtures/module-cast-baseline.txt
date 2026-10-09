@@ -1596,6 +1596,33 @@ cart_panel|checkout_fg|colour|""|'#FFFFFF'
 cart_panel|checkout_fg|colour|"zz"|'#FFFFFF'
 cart_panel|checkout_fg|colour|null|'#FFFFFF'
 cart_panel|checkout_fg|colour|"#e23a4e"|'#E23A4E'
+cart_panel|coupon_on|bool|true|true
+cart_panel|coupon_on|bool|false|false
+cart_panel|coupon_on|bool|"1"|true
+cart_panel|coupon_on|bool|"0"|false
+cart_panel|coupon_on|bool|""|false
+cart_panel|coupon_on|bool|"on"|true
+cart_panel|coupon_on|bool|"off"|true
+cart_panel|coupon_on|bool|"no"|true
+cart_panel|coupon_on|bool|1|true
+cart_panel|coupon_on|bool|0|false
+cart_panel|coupon_on|bool|null|false
+cart_panel|coupon_id|select|"0"|'0'
+cart_panel|coupon_id|select|"nope"|'0'
+cart_panel|coupon_id|select|""|'0'
+cart_panel|coupon_id|select|null|'0'
+cart_panel|txt_coupon|text|"abc"|'abc'
+cart_panel|txt_coupon|text|""|''
+cart_panel|txt_coupon|text|"  sp  "|'sp'
+cart_panel|txt_coupon|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+cart_panel|txt_coupon|text|null|''
+cart_panel|txt_coupon|text|"<b>x<\/b>"|'<b>x</b>'
+cart_panel|txt_coupon_ar|text|"abc"|'abc'
+cart_panel|txt_coupon_ar|text|""|''
+cart_panel|txt_coupon_ar|text|"  sp  "|'sp'
+cart_panel|txt_coupon_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+cart_panel|txt_coupon_ar|text|null|''
+cart_panel|txt_coupon_ar|text|"<b>x<\/b>"|'<b>x</b>'
 mobile_menu|open_from|select|"left"|'left'
 mobile_menu|open_from|select|"nope"|'left'
 mobile_menu|open_from|select|""|'left'
