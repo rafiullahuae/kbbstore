@@ -258,11 +258,29 @@ it('does not invent a correction for nonsense', function () {
 });
 
 it('does not over-correct short words: oil stays oil', function () {
-    srShop(); // has "Oily Skin ...", one edit from "oil"
+    srShop(); // has "Oily Skin ...", and "oil" is one edit away (prose, not an SQL needle)
 
     expect(SearchSpelling::correct('oil'))->toBeNull()
         ->and(SearchSpelling::correct('gel'))->toBeNull()
         ->and(srApi('oil')['corrected'])->toBeNull();
+});
+
+/*
+ * THE DEFECT (found at integration, 2.60.451): fold() drops punctuation, so
+ * '%Power%' "corrected" to "power" and the retry searched the bare word --
+ * /api/search?q=%Power% listed "Niacinamide 30% Power Serum", the exact
+ * wildcard-by-the-back-door StorefrontSqlShapeTest forbids. MUTATION: drop the
+ * hasLikeMeta() return in SearchSpelling::token() and this case is red.
+ */
+it('takes a typed LIKE wildcard as typed and never corrects it into a search', function () {
+    srShop();
+
+    expect(SearchSpelling::correct('%Medicob%'))->toBeNull()
+        ->and(SearchSpelling::correct('medicob_'))->toBeNull()
+        ->and(SearchSpelling::correct('%cos rx'))->toBeNull()
+        ->and(srApi('%medicube%')['corrected'])->toBeNull()
+        // The plain misspelling still corrects: only the metacharacter is refused.
+        ->and(SearchSpelling::correct('medicob'))->toBe('Medicube');
 });
 
 it('shows the correction on the results page, with the way back', function () {

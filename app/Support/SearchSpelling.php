@@ -77,6 +77,16 @@ final class SearchSpelling
     /** @var array{b: array<string, array<string, string>>, w: array<string, array<string, string>>}|null */
     private static ?array $dict = null;
 
+    /**
+     * The per-process half of flush() alone, without touching the cache.
+     * Tests\Support\StaticMemos calls it between tests: a dictionary built
+     * from one test's products must not answer the next test's search.
+     */
+    public static function forget(): void
+    {
+        self::$dict = null;
+    }
+
     public static function flush(): void
     {
         self::$dict = null;
@@ -137,6 +147,12 @@ final class SearchSpelling
                 }
 
                 $joined = implode(' ', array_slice($tokens, $i, $len));
+
+                // A LIKE metacharacter is part of what was typed; folding it
+                // away would search a wildcard by another route (see token()).
+                if (self::hasLikeMeta($joined)) {
+                    continue;
+                }
                 $hit = self::best($dict, self::fold($joined), self::limit(self::letters($joined)), ['b'], self::isArabic($joined), false);
 
                 if ($hit !== null) {
@@ -170,6 +186,17 @@ final class SearchSpelling
      */
     private static function token(string $raw, array $dict): array
     {
+        /*
+         * '%Power%' is not a misspelling of "power". The search escapes % and _
+         * so a typed wildcard is literal text (StorefrontSqlShapeTest); fold()
+         * drops punctuation, so "correcting" such a word would hand the search
+         * the bare word and turn the wildcard back into one by another route --
+         * '%Power%' found "Niacinamide 30% Power Serum". Taken as typed instead.
+         */
+        if (self::hasLikeMeta($raw)) {
+            return ['known' => true, 'short' => false, 'fix' => null];
+        }
+
         $letters = self::letters($raw);
         $fold = self::fold($raw);
         $arabic = self::isArabic($raw);
@@ -204,6 +231,12 @@ final class SearchSpelling
         // typed in English, and on Arabic words it guesses ("واقي", "sun
         // protection", read as the start of "water").
         return ['known' => false, 'short' => false, 'fix' => self::best($dict, $fold, self::limit($letters), ['b', 'w'], $arabic, ! $arabic)];
+    }
+
+    /** Holds a LIKE metacharacter (%, _ or the escape backslash). */
+    private static function hasLikeMeta(string $s): bool
+    {
+        return strpbrk($s, '%_\\') !== false;
     }
 
     /** Edits allowed for a word this many letters long. */

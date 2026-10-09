@@ -237,6 +237,10 @@ final class StaticMemos
             // Lane KW: the sync's step budget and chunk size, which a test
             // shrinks to force a run across many steps.
             \App\Services\Seo\Keywords\KeywordSync::class => static fn () => \App\Services\Seo\Keywords\KeywordSync::resetTuning(),
+            // Lane SR: the spelling dictionary built from the shop's brands,
+            // categories and product words. One test's catalogue must not
+            // correct the next test's search.
+            \App\Support\SearchSpelling::class => static fn () => \App\Support\SearchSpelling::forget(),
         ];
     }
 
