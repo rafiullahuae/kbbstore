@@ -695,6 +695,8 @@ final class ArabicInterfaceDrafts
             'store.shop.sub_search' => 'نتائج من المنتجات والماركات.',
             'store.shop.crumb_category' => 'الفئة',
             'store.shop.crumb_search' => 'البحث',
+            'store.shop.search_corrected' => 'عرض النتائج لـ',
+            'store.shop.search_instead' => 'البحث بدلًا من ذلك عن :term',
             'store.shop.header_more' => 'اقرأ المزيد',
             'store.shop.header_less' => 'اقرأ أقل',
 
@@ -1823,6 +1825,7 @@ final class ArabicInterfaceDrafts
             'store.js.already_helpful' => 'سبق أن اعتبرت هذا مفيدًا.',
             'store.js.review_failed' => 'تعذّر الإرسال — تحقق من اتصالك وحاول مرة أخرى.',
             'store.js.close_search' => 'إغلاق البحث',
+            'store.js.search_corrected' => 'عرض النتائج لـ',
             'store.js.read_less' => 'اقرأ أقل ↑',
             'store.js.hide_password' => 'إخفاء كلمة المرور',
             'store.js.password_common' => 'شائعة جدًا',

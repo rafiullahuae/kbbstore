@@ -119,7 +119,11 @@ class ShopController extends Controller
             \App\Support\ScopeOrder::inCategory($query, (int) $category->id, \App\Support\CategoryRollup::idsFor($category));
         }
 
-        $this->applyFacets($query, $active, (string) $request->query('s', ''));
+        $search = (string) $request->query('s', '');
+        // Kept, unsearched, for the spelling retry below -- a PHP clone, no SQL.
+        $unsearched = $search !== '' ? clone $query : null;
+
+        $this->applyFacets($query, $active, $search);
         $this->applySort($query, Facets::sort(), $category !== null);
 
         // Sold-out products as usual, last, or not at all (Lane SX): the
@@ -129,6 +133,31 @@ class ShopController extends Controller
         \App\Support\SoldOut::apply($query, \App\Support\SoldOut::for($category));
 
         $total = (clone $query)->count();
+
+        /*
+         * SPELLING MISTAKES (Lane SR; Store -> Site Search -> Spelling
+         * mistakes). Only a search that found NOTHING gets here, so every other
+         * listing runs exactly the statements it ran before. "medicob" is
+         * searched again as "Medicube"; when that finds products they are the
+         * page, and the heading says so with a way back to what was typed
+         * (?sfix=0 is that way back, and is never corrected).
+         */
+        $searchTyped = $search;
+        $searchCorrected = null;
+
+        if ($total === 0 && $unsearched !== null && $request->query('sfix') !== '0'
+            && app(\App\Services\HeaderSettings::class)->get('search_fuzzy_enabled')
+            && ($fixed = \App\Support\SearchSpelling::correct($search)) !== null) {
+            $retry = clone $unsearched;
+            $this->applyFacets($retry, $active, $fixed);
+            $this->applySort($retry, Facets::sort(), $category !== null);
+            \App\Support\SoldOut::apply($retry, \App\Support\SoldOut::for($category));
+            $found = (clone $retry)->count();
+
+            if ($found > 0) {
+                [$query, $total, $search, $searchCorrected] = [$retry, $found, $fixed, $fixed];
+            }
+        }
         $lastPage = max(1, (int) ceil($total / $perPage));
 
         /*
@@ -200,7 +229,7 @@ class ShopController extends Controller
             );
         }
 
-        [$title, $sub, $crumb] = $this->heading($category, (string) $request->query('s', ''));
+        [$title, $sub, $crumb] = $this->heading($category, $search);
         $crumbParents = $this->ancestorsOf($category);
         if ($crumbParents !== []) {
             // Under a parent the crumb names the category itself, the way
@@ -208,7 +237,7 @@ class ShopController extends Controller
             $crumb = $category->t('name');
         }
 
-        $banner = $this->banner($category, $active, (string) $request->query('s', ''), $title);
+        $banner = $this->banner($category, $active, $search, $title);
 
         /*
          * THE TITLE HEADER (Lanes PT and PY): a category's title and
@@ -452,7 +481,7 @@ class ShopController extends Controller
                     : null,
                 'description' => trim((string) ($catSeo['desc'] ?? '')) !== ''
                     ? $catSeo['desc']
-                    : $this->seoDescription($category, (string) $request->query('s', ''), $total),
+                    : $this->seoDescription($category, $search, $total),
                 /*
                  * The share image is the hero this page actually draws.
                  *
@@ -522,6 +551,9 @@ class ShopController extends Controller
                 'seo_entity' => $selfCanonical ? ($category ? 'category:' . $category->id : 'collection:shop') : null,
             ], static fn ($v) => $v !== null),
             'sub' => $sub,
+            // "Showing results for Medicube · Search instead for medicob" (Lane SR).
+            'searchCorrected' => $searchCorrected,
+            'searchTyped' => $searchTyped,
             'crumb' => $crumb,
             // The category's parents, root first, as links before the crumb
             // (Lane CH). Empty for a top-level category, which therefore

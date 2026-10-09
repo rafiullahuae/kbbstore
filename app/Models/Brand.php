@@ -40,6 +40,21 @@ class Brand extends Model
         return ['position' => 'int', 'seo' => 'array', 'banner' => 'array', 'header_layout' => 'array'];
     }
 
+    /**
+     * The search's spelling dictionary holds every brand name (Lane SR,
+     * App\Support\SearchSpelling): a brand added or renamed is a word the
+     * search must be able to correct to at once.
+     */
+    protected static function booted(): void
+    {
+        static::saved(static function (self $b): void {
+            if ($b->wasRecentlyCreated || $b->wasChanged('name')) {
+                \App\Support\SearchSpelling::flush();
+            }
+        });
+        static::deleted(static fn () => \App\Support\SearchSpelling::flush());
+    }
+
     public function products()
     {
         return $this->hasMany(Product::class);

@@ -697,7 +697,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // while the shop records it (store.order_received.fact_total_confirming),
     // seeded by 2027_10_11_100000_seed_card_confirming_arabic_draft.
     // 1479 -> 1480 (Lane IGE): "Show the post" on an Instagram embed set to load on tap.
-    expect($ui['drafts'])->toBe(1480, 'the shipped Arabic is not showing as drafts to review')
+    // 1480 -> 1483 (Lane SR): "Showing results for" (page and dropdown) and
+    // "Search instead for :term" over a misspelt search, corrected; seeded by
+    // 2027_10_15_150000_seed_search_spelling_arabic_drafts.
+    expect($ui['drafts'])->toBe(1483, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

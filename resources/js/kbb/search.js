@@ -156,7 +156,16 @@ export function initSearch() {
             ? data.groups.filter((g) => g.key !== 'brands')
             : data.groups;
 
-        paintLeft(groups.map((g) => `<div class="sgh">${escapeHtml(g.label)}</div>`
+        /* A misspelt search the server corrected (Lane SR): one line above
+           the results, "Showing results for Medicube". Same response, no
+           extra request; the corrected text is escaped like every label. */
+        const fixed = data.corrected
+            ? `<div class="sgh sgfix" style="text-transform:none;letter-spacing:0;font-size:12.5px;font-weight:500">`
+                + `${esc(t('store.js.search_corrected', 'Showing results for'))}`
+                + ` <b style="color:var(--sg-accent,#C6395F)">${escapeHtml(data.corrected)}</b></div>`
+            : '';
+
+        paintLeft(fixed + groups.map((g) => `<div class="sgh">${escapeHtml(g.label)}</div>`
             + g.items.map((it) => {
                 /* The image goes through cssUrl(), which may refuse it — and a
                    refused address must fall to the gradient rather than draw

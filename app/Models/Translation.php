@@ -47,6 +47,12 @@ class Translation extends Model
     {
         static::saved(static function (self $translation): void {
             \App\Services\Translation\TranslationStore::flush();
+
+            // A brand's or category's Arabic name is how "ميديكيوب" finds
+            // Medicube (Lane SR, App\Support\SearchSpelling).
+            if ($translation->field === 'name' && in_array($translation->group, ['brands', 'categories'], true)) {
+                \App\Support\SearchSpelling::flush();
+            }
         });
 
         static::deleted(static function (self $translation): void {

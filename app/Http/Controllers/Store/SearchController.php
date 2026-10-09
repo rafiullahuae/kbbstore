@@ -68,7 +68,7 @@ class SearchController extends Controller
         $min = max(1, (int) $this->header->get('search_min_chars'));
 
         if (mb_strlen($q) < $min) {
-            return response()->json(['query' => $q, 'groups' => [], 'total' => 0]);
+            return response()->json(['query' => $q, 'groups' => [], 'total' => 0, 'corrected' => null]);
         }
 
         // The same query returns the same suggestions for everyone, and the
@@ -80,7 +80,7 @@ class SearchController extends Controller
         $payload = Cache::remember(
             'kbb.search.' . md5(mb_strtolower($q)) . '.' . $this->limitKey() . '.' . $this->choicesKey() . '.s3',
             300,
-            fn () => $this->build($q) + $this->setCandidates($q)
+            fn () => $this->buildCorrecting($q)
         );
 
         // Picked per request, OUTSIDE the cache, so "a different one each
@@ -97,10 +97,58 @@ class SearchController extends Controller
         //   the shopper stops typing, presses Enter or picks a result. The
         //   answer is the same cached payload either way.
         if ($request->boolean('log')) {
-            $this->insights->record($q, (int) ($payload['total'] ?? 0));
+            // A corrected search is counted as what it is for the typed
+            // spelling -- nothing found (Lane SR). Growth -> Search Terms then
+            // lists the misspellings shoppers make, and "medicob" is never
+            // offered back as a popular term (SearchInsights::popular() keeps
+            // results > 0 only). No write is added: this is the existing one.
+            $this->insights->record($q, ($payload['corrected'] ?? null) !== null ? 0 : (int) ($payload['total'] ?? 0));
         }
 
         return response()->json($payload);
+    }
+
+    /**
+     * The ordinary search, and -- ONLY when it found nothing at all -- the
+     * same search again with the misspelt words corrected (Lane SR; Store ->
+     * Site Search -> Spelling mistakes). See App\Support\SearchSpelling.
+     *
+     * A search that finds something returns from the first line exactly as it
+     * did before this existed: the same statements, nothing read from the
+     * dictionary. The answer is cached with the rest of the payload, so a
+     * misspelling costs its correction once per five minutes, not per request.
+     *
+     * `corrected` is the one key this adds to /api/search: the corrected text
+     * (built from the shop's own brand, category and product words) or null.
+     * `query` and `all_url` stay what the shopper typed, so the results page
+     * makes the same correction and can offer "Search instead for …".
+     */
+    private function buildCorrecting(string $q): array
+    {
+        $payload = $this->build($q) + $this->setCandidates($q);
+
+        if (($payload['total'] ?? 0) > 0 || ($payload['sets'] ?? []) !== []
+            || ! $this->header->get('search_fuzzy_enabled')) {
+            return $payload + ['corrected' => null];
+        }
+
+        $fixed = \App\Support\SearchSpelling::correct($q);
+
+        if ($fixed === null) {
+            return $payload + ['corrected' => null];
+        }
+
+        $retry = $this->build($fixed) + $this->setCandidates($fixed);
+
+        if (($retry['total'] ?? 0) === 0 && ($retry['sets'] ?? []) === []) {
+            return $payload + ['corrected' => null];
+        }
+
+        $retry['query'] = $payload['query'];
+        $retry['all_url'] = $payload['all_url'];
+        $retry['corrected'] = $fixed;
+
+        return $retry;
     }
 
     /**
@@ -315,6 +363,9 @@ class SearchController extends Controller
             $this->header->get('search_extended_strict_brand') ? 's1' : 's0',
             $this->header->get('search_extended_partial_brand_match') ? 'p1' : 'p0',
             $this->header->get('search_extended_broaden_others') ? 'b1' : 'b0',
+            // Spelling mistakes on/off (Lane SR): a misspelt query's cached
+            // payload is the corrected one only while it is on.
+            $this->header->get('search_fuzzy_enabled') ? 'f1' : 'f0',
         ]);
     }
 
