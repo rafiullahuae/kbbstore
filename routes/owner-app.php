@@ -53,6 +53,7 @@ declare(strict_types=1);
 |     GET  /{app}/api/categories                          catalog.view
 |     GET  /{app}/api/customers                           customers.view
 |     GET  /{app}/api/customers/{id}                      customers.view
+|     GET  /{app}/api/carts                               carttracking.view (Lane QK10)
 |     GET  /{app}/api/changes                             (filtered per capability)
 |     GET  /{app}/api/notifications                       (filtered per capability)
 |     POST /{app}/api/push, /api/push/off, /api/push/test -
@@ -136,6 +137,9 @@ if ($ownerAppPath !== null) {
                 // must not keep an idle session unlocked.
                 Route::get('/analytics', [\App\Http\Controllers\OwnerApp\AnalyticsController::class, 'summary'])->name('analytics');
                 Route::get('/analytics/live', [\App\Http\Controllers\OwnerApp\AnalyticsController::class, 'live'])->defaults('oa_passive', true)->name('analytics.live');
+                // Cart tracking (Lane QK10): the console's Carts tab, read-only,
+                // for the phone. carttracking.view, checked in the controller.
+                Route::get('/carts', [\App\Http\Controllers\OwnerApp\CartsController::class, 'index'])->name('carts');
                 Route::post('/push', [LiveController::class, 'subscribe'])->name('push');
                 Route::post('/push/off', [LiveController::class, 'unsubscribe'])->name('push.off');
                 Route::post('/push/test', [LiveController::class, 'test'])->middleware('throttle:6,1,oa-push-test')->name('push.test');

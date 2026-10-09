@@ -45,6 +45,7 @@ import { renderProducts, renderProduct, productsClick, productClick, setProductF
 import { renderCustomers, renderCustomer, customersClick, fetchCustomers, fetchCustomer } from './customers.js';
 import { offerPush } from './ask.js';
 import { renderAnalytics, analyticsClick, stopAnalytics } from './analytics.js';
+import { renderCarts, cartsClick, fetchCarts } from './carts.js';
 
 /* The live check: 25 s unless Customise app sets 15–120 s, or switches it off (Lane OA4). */
 const pollMs = () => Math.max(15, Math.min(120, +(S.ui && S.ui.live_seconds) || 25)) * 1000;
@@ -147,6 +148,8 @@ function sync(manual, passive) {
   if (can.orders && scr('orders')) jobs.push(fetchOrders(quiet));
   if (can.products && scr('products')) jobs.push(fetchProducts(quiet));
   if (can.customers && scr('customers')) jobs.push(fetchCustomers(quiet));
+  // Cart tracking (Lane QK10): only while it is the screen open -- never in the background.
+  if (route.name === 'carts' && can.carts) jobs.push(fetchCarts(quiet, manual));
   if (id && route.name === 'orders' && can.orders && scr('orders')) jobs.push(fetchOrder(id, quiet));
   if (id && route.name === 'products' && can.products && scr('products')) jobs.push(fetchProduct(id, quiet));
   if (id && route.name === 'customers' && can.customers && scr('customers')) jobs.push(fetchCustomer(id, quiet));
@@ -250,7 +253,7 @@ async function show() {
   const prev = route.name;
   route = parse();
   if (offHere(route.name)) { const t = tabsOn()[0][0]; route = { name: t, id: 0, q: '' }; history.replaceState(null, '', '#/' + t); }
-  const tab = ['customers', 'notifications'].indexOf(route.name) !== -1 ? 'more' : route.name;
+  const tab = ['customers', 'notifications', 'carts'].indexOf(route.name) !== -1 ? 'more' : route.name;
   $$('[data-tab]', root).forEach((t) => {
     const on = t.getAttribute('data-tab') === tab;
     t.classList.toggle('on', on);
@@ -268,6 +271,7 @@ async function show() {
   else if (n === 'notifications') await renderNotifications(view);
   else if (n === 'more') await renderMore(view);
   else if (n === 'analytics') await renderAnalytics(view);
+  else if (n === 'carts') await renderCarts(view);
   else await renderDashboard(view);
   badges();
 }
@@ -288,6 +292,7 @@ root.addEventListener('click', async (e) => {
     if (n === 'notifications' && notificationsClick(e, view)) return;
     if (n === '' && dashboardClick(e, view)) return;
     if (n === 'analytics' && analyticsClick(e)) return;
+    if (n === 'carts' && await cartsClick(e, view)) return;
     if (n === 'more') await moreClick(e, view, gate);
   } catch (err) {
     if (!(err instanceof AuthError)) toast('That did not work. Try again.', true);

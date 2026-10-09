@@ -43,6 +43,7 @@
 <body data-base="{{ $base }}">
 <svg class="sprite" aria-hidden="true" focusable="false">
 <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 4v16h16M8 15l3.5-4 3 3L20 7"/></symbol>
+<symbol id="i-cart" viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12zM6 6 5 3H2M9 20.5a1 1 0 100-2 1 1 0 000 2zM18 20.5a1 1 0 100-2 1 1 0 000 2z"/></symbol>
 <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></symbol>
 <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></symbol>
 <symbol id="i-grid" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></symbol>

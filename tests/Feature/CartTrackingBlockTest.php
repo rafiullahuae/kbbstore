@@ -411,7 +411,9 @@ it('is wired exactly once: the routes in web.php and the screen in the console',
         ->and(substr_count($app, "@include('admin.partials.cart-tracking-screen')"))->toBe(1)
         // Lane AP: the sidebar is App\Support\AdminNav's (server-rendered), not a NAV literal.
         ->and(\App\Support\AdminNav::rows()['carttracking']['label'] ?? null)->toBe('Cart Tracking')
-        ->and(\App\Support\AdminNav::rows()['carttracking']['sec'])->toBe('Growth & Marketing');
+        // Lane QK10: a top-level row under Analytics now -- the owner, 9 October,
+        // "bring the Cart tracking page to the top third of the left panel menu".
+        ->and(\App\Support\AdminNav::rows()['carttracking']['sec'])->toBe('Overview');
 });
 
 it('costs the same number of queries with forty carts as with three, on every tab', function () {

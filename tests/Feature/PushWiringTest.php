@@ -65,8 +65,10 @@ it('includes the screen, its title and its deep link exactly once each', functio
     expect(substr_count($app, "@include('admin.partials.push-notifications-screen')"))->toBe(1)
         ->and(substr_count($app, "'push':['Growth & Marketing','Push Notifications']"))->toBe(1);
     // Lane GS's record quotes the TITLES line whole: it moves with it.
+    // Lane QK10 moved Cart Tracking to the top of the sidebar (Overview), so its
+    // TITLES entry -- and these quotes of it -- say Overview now.
     foreach (['docs/GS-ADMIN-APP-BLOCKS.md', 'docs/BG-ADMIN-APP-BLOCKS.md'] as $doc) {
-        expect(substr_count(pnWired()['files'][$doc], "'carttracking':['Growth & Marketing','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],"))->toBe(1, $doc);
+        expect(substr_count(pnWired()['files'][$doc], "'carttracking':['Overview','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],"))->toBe(1, $doc);
     }
 
     preg_match('/const LATE_RENDERED\s*=\s*new Set\(\[([^\]]*)\]\);/', $app, $m);
@@ -79,13 +81,15 @@ it('includes the screen, its title and its deep link exactly once each', functio
     }
 });
 
-it('has its sidebar row once, in Growth & Marketing after Cart Tracking, and wraps go() once', function () {
+it('has its sidebar row once, in Growth & Marketing after Search Terms, and wraps go() once', function () {
     $rows = \App\Support\AdminNav::rows();
     expect($rows['push']['sec'])->toBe('Growth & Marketing')
         ->and($rows['push']['label'])->toBe('Push Notifications')
         ->and(\App\Support\AdminNav::capability($rows['push']))->toBe('push.view');
     $ids = array_keys($rows);
-    expect(array_search('push', $ids, true))->toBe(array_search('carttracking', $ids, true) + 1);
+    // Cart Tracking, which push followed, moved to the top of the sidebar
+    // (Lane QK10, the owner's request); push now follows Search Terms.
+    expect(array_search('push', $ids, true))->toBe(array_search('searchterms', $ids, true) + 1);
 
     $src = (string) file_get_contents(resource_path('views/admin/partials/push-notifications-screen.blade.php'));
     expect(substr_count($src, 'window.go = function'))->toBe(1)

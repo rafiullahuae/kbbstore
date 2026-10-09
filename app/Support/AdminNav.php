@@ -115,6 +115,11 @@ final class AdminNav
             // Its own top-level row under Dashboard, as the owner asked; a
             // partial draws it (admin.partials.site-analytics-screen).
             ['id' => 'site-analytics', 'label' => 'Analytics', 'read' => 'admin-api/site-analytics', 'late' => true, 'icon' => '<path d="M3 12h4l3-8 4 16 3-8h4"/>'],
+            // Cart Tracking: moved here from Growth & Marketing (Lane QK10) -- the
+            // owner, 9 October: "bring the Cart tracking page to the top third of
+            // the left panel menu, so i can access it instantly". Third top-level
+            // row, under Analytics. Same id, read and capability as before.
+            ['id' => 'carttracking', 'label' => 'Cart Tracking', 'read' => 'admin-api/cart-tracking', 'late' => true, 'icon' => '<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M6 6 5 3H2"/><path d="m11 10 2 2 3-3"/>'],
         ]],
         ['sec' => 'Platform', 'rows' => [
             ['id' => 'theme', 'label' => 'K-Beauty Bliss Theme', 'cap' => 'store.settings', 'icon' => self::I['theme']],
@@ -240,7 +245,6 @@ final class AdminNav
             ['id' => 'merchantfeed', 'label' => 'Google Shopping feed', 'read' => 'admin-api/merchant-feed', 'late' => true, 'icon' => '<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M6 6 5 3H2"/><path d="M3 11h2M2 14h3"/>'],
             ['id' => 'pixels', 'label' => 'Marketing Pixels', 'read' => 'admin-api/marketing-pixels', 'icon' => '<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>'],
             ['id' => 'searchterms', 'label' => 'Search Terms', 'read' => 'admin-api/search-terms', 'late' => true, 'icon' => '<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/><path d="M8 11h6"/><path d="M11 8v6"/>'],
-            ['id' => 'carttracking', 'label' => 'Cart Tracking', 'read' => 'admin-api/cart-tracking', 'late' => true, 'icon' => '<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M6 6 5 3H2"/><path d="m11 10 2 2 3-3"/>'],
             ['id' => 'push', 'label' => 'Push Notifications', 'read' => 'admin-api/push', 'late' => true, 'tag' => 'new', 'icon' => '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>'],
         ]],
         ['sec' => 'Reviews', 'rows' => [

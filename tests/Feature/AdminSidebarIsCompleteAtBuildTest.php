@@ -366,7 +366,10 @@ it('renders the sidebar the console settled on, group by group and row by row', 
      */
     $settled = [
         // 'site-analytics' — Analytics (Lane AN), a top-level row under Dashboard.
-        '' => ['dash', 'site-analytics'],
+        // 'carttracking' — Cart Tracking, moved to the top by Lane QK10: the owner,
+        // 9 October, "bring the Cart tracking page to the top third of the left
+        // panel menu, so i can access it instantly". Third, under Analytics.
+        '' => ['dash', 'site-analytics', 'carttracking'],
         // 'domainswitch' — Platform → Domain switch (Lane DW), after Site address.
         'Platform' => ['theme', 'users', 'settings', 'siteaddr', 'domainswitch', 'cache'],
         // App: added after the capture, at the owner's request (5 October).
@@ -388,7 +391,7 @@ it('renders the sidebar the console settled on, group by group and row by row', 
             'header', 'mobilemenu', 'productpage', 'setap', 'bundles', 'layout', 'sitelayout', 'comingsoon'],
         'Pages' => ['pages-store', 'pages-user', 'pagebanners', 'pageheader'],
         // 'merchantfeed' — Growth & Marketing → Google Shopping feed (Lane SEO), after Meta & Facebook.
-        'Growth & Marketing' => ['mkt-email', 'newsletter', 'labels', 'meta', 'merchantfeed', 'pixels', 'searchterms', 'carttracking', 'push'],
+        'Growth & Marketing' => ['mkt-email', 'newsletter', 'labels', 'meta', 'merchantfeed', 'pixels', 'searchterms', 'push'],
         'Reviews' => ['rev-all', 'rev-add', 'rev-assign', 'rev-io', 'rev-badge', 'rev-settings'],
         '/flat' => ['shopfilters', 'updates'],
     ];
