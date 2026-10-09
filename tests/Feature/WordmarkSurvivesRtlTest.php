@@ -136,6 +136,15 @@ it('renders the wordmark in one piece on an arabic page', function () {
 
     $html = $this->get('/ar/')->assertOk()->getContent();
 
-    expect((bool) preg_match('/<a class="logo"[^>]*><bdi>/', $html))
+    // ▲ Lane LG2: the lotus lockup ships on, and its name is the same one
+    // isolating element -- `<bdi class="lgx-w">K-Beauty<em>Bliss</em></bdi>`
+    // inside the logo link -- so either shape passes and neither may lose it.
+    expect((bool) preg_match('/<a class="logo"[^>]*><bdi>|<a class="logo lgx"[^>]*>(?:(?!<\/a>).)*<bdi class="lgx-w">[^<]+<em>[^<]+<\/em><\/bdi>/s', $html))
         ->toBeTrue('the rendered Arabic header has no <bdi> around its wordmark');
+
+    // And Text only (as before) is still the old <bdi> wordmark.
+    app(\App\Services\HeaderSettings::class)->save(['logo_style' => 'text']);
+    \App\Services\SettingsService::forgetMemo();
+    $html = $this->get('/ar/')->assertOk()->getContent();
+    expect((bool) preg_match('/<a class="logo"[^>]*><bdi>/', $html))->toBeTrue();
 });

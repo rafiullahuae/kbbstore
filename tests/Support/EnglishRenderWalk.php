@@ -2314,6 +2314,35 @@ final class EnglishRenderWalk
                 'with' => str_replace(['\\', '$'], ['\\\\', '\\$'], \App\Services\SiteFooter::HELP_ICONS['support']),
                 'hits' => 29,
             ],
+            /*
+             * THE LOTUS LOCKUP, THE OWNER'S CHOICE (Lane LG2). "option D is
+             * fine, but make sure it's crisp clear." Appearance -> Header ->
+             * Logo -> Logo style ships "Lotus lockup" because he chose it;
+             * "Text only (as before)" is the old wordmark byte for byte, and
+             * with it this whole walk passes WITHOUT these three rules (run,
+             * 9 October). The diff was read: the wordmark element and nothing
+             * else, on three kinds of line --
+             *   the site header's link (6 spaces in), naming the artwork
+             *   the drawer's head (a <div>), pointing at it with <use>
+             *   the checkout's own header (8 spaces in), drawing it whole
+             * Literals, so a change to the lockup's markup is a change
+             * somebody approves here. LogoLockupTest pins the behaviour.
+             */
+            'the header logo: the lotus lockup (Lane LG2)' => [
+                'pattern' => '#(\n      )<a class="logo" href="([^"]*)"><bdi>K-Beauty<span>Bliss</span></bdi></a>#',
+                'with' => '$1'.self::laneLg2Lockup('header', '$2'),
+                'hits' => 31, // every page with the site header
+            ],
+            'the drawer logo: the lotus lockup (Lane LG2)' => [
+                'pattern' => '#<div class="logo"><bdi>K-Beauty<span>Bliss</span></bdi></div>#',
+                'with' => self::laneLg2Lockup('drawer', ''),
+                'hits' => 33, // every page: the drawer is in the layout, the bare checkout too
+            ],
+            'the checkout header logo: the lotus lockup (Lane LG2)' => [
+                'pattern' => '#(\n        )<a class="logo" href="([^"]*)"><bdi>K-Beauty<span>Bliss</span></bdi></a>#',
+                'with' => '$1'.self::laneLg2Lockup('checkout', '$2'),
+                'hits' => 2, // /checkout (with a basket) and /checkout/success
+            ],
         ];
     }
 
@@ -4513,6 +4542,29 @@ KBB_BH_CSS;
         }
 
         return $report;
+    }
+
+    /**
+     * The lotus lockup as the walk renders it at the shipped settings (Lane
+     * LG2): the header's, the drawer's and the checkout header's. A nowdoc
+     * each, so the bytes below are the bytes compared; HREF is replaced by the
+     * pattern's own captured link. Used by approvedStorefrontChanges().
+     */
+    private static function laneLg2Lockup(string $which, string $href): string
+    {
+        $html = match ($which) {
+            'header' => <<<'LG2'
+<a class="logo lgx" href="HREF" aria-label="K-Beauty Bliss, Korean Skincare &amp; Makeup"><i class="lgx-lt" aria-hidden="true"></i><svg class="lgx-i" viewBox="0 0 780 582" aria-hidden="true" focusable="false"><g id="lgx-art"><path class="lgx-f" d="M154 103Q399 122 439 424Q194 343 154 103ZM521 2Q407 136 471 389Q640 185 521 2ZM548 387Q642 239 778 249Q738 393 548 387ZM2 481Q190 313 434 475Q189 595 2 481ZM534 456Q707 461 737 544Q613 589 534 456Z"/><path class="lgx-o" d="M445 438Q149 329 131 156Q353 165 394 377M494 329Q598 173 457 17Q362 185 483 408M552 386Q565 243 721 215Q730 331 519 434M397 473Q197 351 27 532Q196 629 460 479M487 466Q643 545 720 478Q612 397 532 473"/></g></svg><b class="lgx-t"><bdi class="lgx-w">K-Beauty<em>Bliss</em></bdi><small class="lgx-g">Korean Skincare &amp; Makeup</small></b></a>
+LG2,
+            'drawer' => <<<'LG2'
+<div class="logo lgx"><svg class="lgx-i" viewBox="0 0 780 582" aria-hidden="true" focusable="false"><use href="#lgx-art"/></svg><b class="lgx-t"><bdi class="lgx-w">K-Beauty<em>Bliss</em></bdi><small class="lgx-g">Korean Skincare &amp; Makeup</small></b></div>
+LG2,
+            default => <<<'LG2'
+<a class="logo lgx" href="HREF" aria-label="K-Beauty Bliss, Korean Skincare &amp; Makeup"><i class="lgx-lt" aria-hidden="true"></i><svg class="lgx-i" viewBox="0 0 780 582" aria-hidden="true" focusable="false"><path class="lgx-f" d="M154 103Q399 122 439 424Q194 343 154 103ZM521 2Q407 136 471 389Q640 185 521 2ZM548 387Q642 239 778 249Q738 393 548 387ZM2 481Q190 313 434 475Q189 595 2 481ZM534 456Q707 461 737 544Q613 589 534 456Z"/><path class="lgx-o" d="M445 438Q149 329 131 156Q353 165 394 377M494 329Q598 173 457 17Q362 185 483 408M552 386Q565 243 721 215Q730 331 519 434M397 473Q197 351 27 532Q196 629 460 479M487 466Q643 545 720 478Q612 397 532 473"/></svg><b class="lgx-t"><bdi class="lgx-w">K-Beauty<em>Bliss</em></bdi><small class="lgx-g">Korean Skincare &amp; Makeup</small></b></a>
+LG2,
+        };
+
+        return str_replace('HREF', $href, str_replace(['\\', '$'], ['\\\\', '\\$'], $html));
     }
 
     /**

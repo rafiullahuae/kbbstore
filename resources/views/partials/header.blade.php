@@ -31,7 +31,11 @@
     <div class="hin">
       @include('partials.menu-icon')
 
+@if ($hd->logoLockup())
+      @include('partials.logo-lockup', ['href' => Url::to('/'), 'art' => 'def'])
+@else
       <a class="logo" href="{{ Url::to('/') }}"><bdi>{{ $h['logo_text'] }}<span>{{ $h['logo_accent'] }}</span></bdi></a>
+@endif
 
       @if ($h['search_show'])
         {{-- The script binds to `.search-in input[type=search]` and renders into

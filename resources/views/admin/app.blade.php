@@ -1647,6 +1647,14 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .hdpv-bar.bd{border-bottom:1px solid #F0E8EB}
 .hdpv-logo{font-size:var(--hd-logo,22px);font-weight:700;color:var(--hd-logo-c,#2A2228);flex:1;letter-spacing:-.02em}
 .hdpv-logo em{font-style:normal;color:var(--hd-logo-a,#E0567B)}
+/* Lane LG2: the lotus lockup in the preview, at the phone sizes the Logo tab sets. */
+.hdpv-lgx{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;font-family:Outfit,system-ui,sans-serif;white-space:nowrap}
+.hdpv-lgx svg{display:block;flex:none;width:auto}
+.hdpv-lgx .lgx-f{fill:var(--p)}.hdpv-lgx .lgx-o{fill:none;stroke:var(--l);stroke-width:20;stroke-linecap:round;stroke-linejoin:round}
+.hdpv-lgx b{display:flex;flex-direction:column;min-width:0}
+.hdpv-lgx b i{font-style:normal;font-weight:650;line-height:1;letter-spacing:.085em;text-transform:uppercase;color:var(--hd-logo-c,#2A2228)}
+.hdpv-lgx b i em{font-style:normal;color:var(--hd-logo-a,#C6395F);margin-inline-start:.24em}
+.hdpv-lgx small{margin-top:.3em;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--hd-logo-a,#C6395F);overflow:hidden;text-overflow:ellipsis}
 .hdpv-icons{display:flex;gap:8px}
 .hdpv-icons i{font-style:normal;font-size:calc(var(--hd-icon,21px) * .8);position:relative;
   display:inline-grid;place-items:center}
@@ -3026,6 +3034,8 @@ var KBB_COUNTRY_NAMES = @json(\App\Support\Countries::NAMES);
    and by hdPreview() (Appearance → Header), so neither preview can drift from
    the shop. */
 var KBB_HEADER_ICONS = @json(\App\Support\HeaderIcons::forPreview());
+/* Lane LG2: the lockup's icon, the same constant the shop prints. */
+var KBB_LOGO_ART = @json(\App\Support\LogoLockup::svg(false));
 
 /* The registered preset groups, from App\Support\CountryPresets. One key per
    per-country table in this console; only 'delivery' exists today. The Tax tab
@@ -7487,6 +7497,20 @@ function paintHeader(){
   hdHeightPreview();
 }
 
+/* Lane LG2: the logo in the preview -- the lotus lockup at its phone sizes,
+   or the text wordmark exactly as before. Numbers go through Number() and
+   colours come from colour inputs, so nothing typed reaches a style. */
+function hdLogoPreview(g){
+  if(g('logo_style')!=='lotus') return `<span class="hdpv-logo">${escHtml(g('logo_text'))}<em>${escHtml(g('logo_accent'))}</em></span>`;
+  const n=(k)=>Number(g(k))||0, hex=(k)=>/^#[0-9a-f]{6}$/i.test(String(g(k)))?g(k):'#C6395F';
+  const s=n('logo_name_m'), ih=n('logo_icon_m')||Math.round(s*1.72);
+  const tag=g('logo_tag_on')?String(g('logo_tag_text')||'').trim():'';
+  return `<span class="hdpv-lgx" style="--p:${hex('logo_petal')};--l:${hex('logo_line')};padding:${n('logo_pad_y_m')}px ${n('logo_pad_x_m')}px">`
+    +KBB_LOGO_ART.replace('<svg ',`<svg style="height:${ih}px;margin-inline-end:${n('logo_gap_m')}px" `)
+    +`<b><i style="font-size:${s}px">${escHtml(g('logo_text'))}<em>${escHtml(g('logo_accent'))}</em></i>`
+    +(tag?`<small style="font-size:${n('logo_tag_m')}px">${escHtml(tag)}</small>`:'')+`</b></span>`;
+}
+
 /* The preview uses the storefront's own classes, so it cannot drift. */
 function hdPreview(){
   const g=hdGet;
@@ -7520,7 +7544,7 @@ function hdPreview(){
     ${fbOn?`<div class="hdpv-fb">${g('fb_flags')?fbFlags.ae:''}<span class="t${g('fb_pill')?' pill':''}">${escHtml(fbText)}</span>${g('fb_flags')?fbFlags.kr:''}</div>`:''}
     <div class="hdpv-bar${g('bar_border')?' bd':''}">
       <span class="kbbmi kbbmi-${icon}">${inner}</span>
-      <span class="hdpv-logo">${escHtml(g('logo_text'))}<em>${escHtml(g('logo_accent'))}</em></span>
+      ${hdLogoPreview(g)}
       <span class="hdpv-icons">${g('icon_account')?`<i>${KBB_HEADER_ICONS.account}</i>`:''}${g('icon_wishlist')?`<i>${KBB_HEADER_ICONS.wishlist}</i>`:''}${g('icon_cart')?`<i class="bg">${KBB_HEADER_ICONS.cart}</i>`:''}</span>
     </div>
     ${g('search_show')?`<div class="hdpv-srch"><span>${escHtml(String(g('search_text')).replace('{n}','671'))}</span></div>`:''}
