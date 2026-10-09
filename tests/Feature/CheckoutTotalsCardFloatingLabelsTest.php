@@ -346,6 +346,11 @@ it('renders the checkout byte for byte as before this lane with both switches of
     // Lane PO's "Remember my details" ships ON too; OFF draws nothing
     // (CheckoutPlaceOrderOnceTest), so it is set here for the same reason.
     cdSet(['sum_totals' => false, 'float_labels' => false, 'pay_style' => 'plain', 'state_list' => false, 'remember_on' => false]);
+    // Lane LG2's lotus logo ships ON in the checkout's header and drawer;
+    // "Text only (as before)" is its byte-for-byte way back (LogoLockupTest),
+    // so it is set here for the same reason.
+    app(\App\Services\HeaderSettings::class)->save(['logo_style' => 'text']);
+    \App\Services\SettingsService::forgetMemo();
     $cart = cdCart();
 
     $current = config('view.paths');

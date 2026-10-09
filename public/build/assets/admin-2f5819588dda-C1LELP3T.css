@@ -1636,6 +1636,14 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .hdpv-bar.bd{border-bottom:1px solid #F0E8EB}
 .hdpv-logo{font-size:var(--hd-logo,22px);font-weight:700;color:var(--hd-logo-c,#2A2228);flex:1;letter-spacing:-.02em}
 .hdpv-logo em{font-style:normal;color:var(--hd-logo-a,#E0567B)}
+/* Lane LG2: the lotus lockup in the preview, at the phone sizes the Logo tab sets. */
+.hdpv-lgx{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;font-family:Outfit,system-ui,sans-serif;white-space:nowrap}
+.hdpv-lgx svg{display:block;flex:none;width:auto}
+.hdpv-lgx .lgx-f{fill:var(--p)}.hdpv-lgx .lgx-o{fill:none;stroke:var(--l);stroke-width:20;stroke-linecap:round;stroke-linejoin:round}
+.hdpv-lgx b{display:flex;flex-direction:column;min-width:0}
+.hdpv-lgx b i{font-style:normal;font-weight:650;line-height:1;letter-spacing:.085em;text-transform:uppercase;color:var(--hd-logo-c,#2A2228)}
+.hdpv-lgx b i em{font-style:normal;color:var(--hd-logo-a,#C6395F);margin-inline-start:.24em}
+.hdpv-lgx small{margin-top:.3em;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--hd-logo-a,#C6395F);overflow:hidden;text-overflow:ellipsis}
 .hdpv-icons{display:flex;gap:8px}
 .hdpv-icons i{font-style:normal;font-size:calc(var(--hd-icon,21px) * .8);position:relative;
   display:inline-grid;place-items:center}

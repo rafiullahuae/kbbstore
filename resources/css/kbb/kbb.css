@@ -5632,6 +5632,95 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
 }
 
 
+/* ==========================================================================
+   LOGO · THE LOTUS LOCKUP — option D "Pearl", the owner's choice (Lane LG2)
+   Appearance → Header → Logo. The reference he approved is
+   docs/logo-options/D-crisp-live.html.
+
+   Only `.lgx` is styled here, so "Text only (as before)" draws what it drew.
+   No <span> inside the lockup: `.logo span` / `header .logo span` colour and
+   size every span under a `.logo` in four stylesheets.
+
+   EVERY var() FALLBACK IS WHAT THE SHIPPED SETTINGS WORK OUT TO, which is why
+   a shop at the defaults prints no style attribute at all
+   (HeaderSettings::LOCKUP_CSS_DEFAULTS; LogoLockupTest holds the two together).
+
+   NO SCRIPT AND NOTHING MEASURED. On a phone the link is `flex:1` between the
+   menu button and the icons, so its width is exactly the room the row leaves
+   it; it becomes an inline-size container and everything inside is sized in
+   `cqi` through one length, --u, which is 1px when the lockup fits and less
+   when it does not (App\Support\LogoLockup works out the three numbers):
+     --lg-c1  one line: the lockup shrinks to the room
+     --lg-r   below this the one line would drop under 80% of its size, so
+              the name stacks (K-BEAUTY over BLISS) at the --lg-c2 scale
+     --lg-wf  the tagline is drawn from this much room up, at full size, and
+              is 0px (and its rules 0px tall) below it
+   Nothing inside has overflow:hidden except the shine's own layer, so no
+   glyph can be cut; if an estimate were ever short, the name and the tagline
+   wrap instead.
+
+   THE COST. The shine is a transform on a pseudo-element inside its own
+   clipped layer, so it runs on the compositor; at the default it crosses
+   once every 7s. The petal glow and colour drift repaint the logo on every
+   frame and ship OFF. All of it stops under prefers-reduced-motion.
+   ========================================================================== */
+.logo.lgx{position:relative;display:inline-flex;align-items:center;justify-content:flex-start;flex:none;direction:ltr;
+  padding:calc(var(--lg-yd,0) * 1px) calc(var(--lg-xd,0) * 1px);
+  font-family:Outfit,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:0;white-space:nowrap;text-decoration:none;
+  color:var(--lg-c,#2A2228);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:geometricPrecision;
+  --u:1px}
+/* Whole-pixel heights: the server prints integers and a phone rounds its fit. */
+.logo.lgx>.lgx-i{display:block;flex:none;width:auto;height:calc(var(--lg-id,38) * var(--u));
+  margin-inline-end:calc(var(--lg-gd,8) * var(--u));overflow:visible;shape-rendering:geometricPrecision}
+.lgx .lgx-f{fill:var(--lg-p,#D94A76)}
+.lgx .lgx-o,.lgx .lgx-o2{fill:none;stroke:var(--lg-l,#E5567E);stroke-width:20;stroke-linecap:round;stroke-linejoin:round}
+.lgx .lgx-t{display:flex;flex-direction:column;min-width:0;font-weight:650}
+/* 650 is the weight he approved. The self-hosted Outfit is one variable file
+   whose faces are declared at 400-800, so `font-weight:650` alone would draw
+   the 700 face; the variation setting asks the same file for true 650. */
+.lgx .lgx-w{display:flex;flex-wrap:wrap;column-gap:.24em;row-gap:.12em;font-size:calc(var(--lg-sd,22) * var(--u));
+  font-weight:650;font-variation-settings:"wght" 650;line-height:1;letter-spacing:.085em;text-transform:uppercase;color:var(--lg-c,#2A2228)}
+.lgx .lgx-w em{font-style:normal;color:var(--lg-a,#C6395F)}
+@supports ((-webkit-background-clip:text) or (background-clip:text)) and (color:color-mix(in srgb,red,red)){
+  .lgx .lgx-w em{background:linear-gradient(90deg,color-mix(in srgb,var(--lg-a,#C6395F),#000 11%),var(--lg-a,#C6395F) 25%,color-mix(in srgb,var(--lg-a,#C6395F),#FF6A9A 30%) 50%,var(--lg-a,#C6395F) 75%,color-mix(in srgb,var(--lg-a,#C6395F),#000 11%)) 0 0/200% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+}
+.lgx .lgx-g{display:flex;align-items:center;gap:.55em;margin-top:.3em;font-size:calc(var(--lg-td,10) * 1px);font-weight:600;
+  line-height:1.15;letter-spacing:.1em;text-transform:uppercase;color:var(--lg-a,#C6395F);white-space:normal}
+.lgx .lgx-g::before,.lgx .lgx-g::after{content:"";flex:1;min-width:.4em;height:min(1px,1em);background:currentColor;opacity:.45}
+/* The shine: its own clipped layer, so the letters are never clipped. */
+.lgx .lgx-lt{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.lgx .lgx-lt::after{content:"";position:absolute;top:-30%;bottom:-30%;inset-inline-start:0;width:34%;
+  background:linear-gradient(90deg,rgba(255,246,249,0),rgba(255,246,249,.55),rgba(255,246,249,0));
+  transform:translateX(-170%) skewX(-18deg);animation:lgx-sh calc(var(--lg-sh,7) * 1s) linear infinite}
+/* One crossing at a constant speed (the reference's 3.15s) at the END of each
+   period, wherever the period is set: it waits off to the left, then crosses. */
+@keyframes lgx-sh{from{transform:translateX(calc(420% - 187% * var(--lg-sh,7))) skewX(-18deg)}to{transform:translateX(420%) skewX(-18deg)}}
+.lgx-gl .lgx-o2{stroke:#F4A9BF;opacity:0;animation:lgx-o 5s ease-in-out infinite alternate}
+@keyframes lgx-o{to{opacity:.7}}
+.lgx-gl .lgx-w em{animation:lgx-dr 11s linear infinite}
+@keyframes lgx-dr{to{background-position:200% 0}}
+@media (prefers-reduced-motion:reduce){
+  .lgx .lgx-lt{display:none}
+  .lgx,.lgx *{animation:none!important}
+}
+@media (max-width:900px){
+  .logo.lgx{padding:calc(var(--lg-ym,0) * 1px) calc(var(--lg-xm,0) * 1px)}
+  .logo.lgx>.lgx-i{height:calc(var(--lg-im,24) * var(--u));height:round(nearest,calc(var(--lg-im,24) * var(--u)),1px);
+    margin-inline-end:calc(var(--lg-gm,5) * var(--u))}
+  .lgx .lgx-w{font-size:calc(var(--lg-sm,14) * var(--u))}
+  .lgx .lgx-g{font-size:calc(var(--lg-tm,8) * 1px);letter-spacing:.04em}
+  header .hin>.logo.lgx,.mnav-h>.logo.lgx{justify-content:center}
+  @supports (width:1cqi){
+    /* The three places a phone draws it in a row: the header, the drawer's
+       head and the checkout's own header. */
+    header .hin>.logo.lgx,.mnav-h>.logo.lgx,.co-head .in>.logo.lgx{flex:1 1 0%;min-width:0;container-type:inline-size;
+      --u:max(min(1px,calc(var(--lg-c1,.5855) * 1cqi)),min(1px,calc(var(--lg-c2,.8141) * 1cqi),calc((var(--lg-r,136.6) * 1px - 100cqi) * 1000)))}
+    header .hin>.logo.lgx .lgx-g,.mnav-h>.logo.lgx .lgx-g,.co-head .in>.logo.lgx .lgx-g{
+      font-size:clamp(0px,calc((100cqi - var(--lg-wf,184.1) * 1px) * 1000),calc(var(--lg-tm,8) * 1px))}
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    THE SHOWCASE FAMILY — four treatments of one card                Lane PG2
 

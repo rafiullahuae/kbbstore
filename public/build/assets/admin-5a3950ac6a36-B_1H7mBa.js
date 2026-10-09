@@ -4448,6 +4448,20 @@ function paintHeader(){
   hdHeightPreview();
 }
 
+/* Lane LG2: the logo in the preview -- the lotus lockup at its phone sizes,
+   or the text wordmark exactly as before. Numbers go through Number() and
+   colours come from colour inputs, so nothing typed reaches a style. */
+function hdLogoPreview(g){
+  if(g('logo_style')!=='lotus') return `<span class="hdpv-logo">${escHtml(g('logo_text'))}<em>${escHtml(g('logo_accent'))}</em></span>`;
+  const n=(k)=>Number(g(k))||0, hex=(k)=>/^#[0-9a-f]{6}$/i.test(String(g(k)))?g(k):'#C6395F';
+  const s=n('logo_name_m'), ih=n('logo_icon_m')||Math.round(s*1.72);
+  const tag=g('logo_tag_on')?String(g('logo_tag_text')||'').trim():'';
+  return `<span class="hdpv-lgx" style="--p:${hex('logo_petal')};--l:${hex('logo_line')};padding:${n('logo_pad_y_m')}px ${n('logo_pad_x_m')}px">`
+    +KBB_LOGO_ART.replace('<svg ',`<svg style="height:${ih}px;margin-inline-end:${n('logo_gap_m')}px" `)
+    +`<b><i style="font-size:${s}px">${escHtml(g('logo_text'))}<em>${escHtml(g('logo_accent'))}</em></i>`
+    +(tag?`<small style="font-size:${n('logo_tag_m')}px">${escHtml(tag)}</small>`:'')+`</b></span>`;
+}
+
 /* The preview uses the storefront's own classes, so it cannot drift. */
 function hdPreview(){
   const g=hdGet;
@@ -4481,7 +4495,7 @@ function hdPreview(){
     ${fbOn?`<div class="hdpv-fb">${g('fb_flags')?fbFlags.ae:''}<span class="t${g('fb_pill')?' pill':''}">${escHtml(fbText)}</span>${g('fb_flags')?fbFlags.kr:''}</div>`:''}
     <div class="hdpv-bar${g('bar_border')?' bd':''}">
       <span class="kbbmi kbbmi-${icon}">${inner}</span>
-      <span class="hdpv-logo">${escHtml(g('logo_text'))}<em>${escHtml(g('logo_accent'))}</em></span>
+      ${hdLogoPreview(g)}
       <span class="hdpv-icons">${g('icon_account')?`<i>${KBB_HEADER_ICONS.account}</i>`:''}${g('icon_wishlist')?`<i>${KBB_HEADER_ICONS.wishlist}</i>`:''}${g('icon_cart')?`<i class="bg">${KBB_HEADER_ICONS.cart}</i>`:''}</span>
     </div>
     ${g('search_show')?`<div class="hdpv-srch"><span>${escHtml(String(g('search_text')).replace('{n}','671'))}</span></div>`:''}

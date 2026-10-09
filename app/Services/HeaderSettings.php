@@ -55,9 +55,67 @@ class HeaderSettings
         // ── Logo ──
         'logo_text'       => ['text',   'Wordmark', 'K-Beauty', 'The first half, in ink.'],
         'logo_accent'     => ['text',   'Accent word', 'Bliss', 'The second half, in the accent colour.'],
-        'logo_size'       => ['range',  'Wordmark size', 22, '', ['min' => 16, 'max' => 34, 'step' => 1, 'unit' => 'px']],
+        'logo_size'       => ['range',  'Wordmark size', 22, 'The name on a computer, in both styles — and on a phone too in Text only, unless Appearance → Mobile Header sets its own.', ['min' => 16, 'max' => 34, 'step' => 1, 'unit' => 'px']],
         'logo_colour'     => ['colour', 'Wordmark colour', '#2A2228', ''],
         'logo_accent_col' => ['colour', 'Accent colour', '#C6395F', ''],
+
+        /*
+         * ── THE LOTUS LOCKUP (Lane LG2) ─────────────────────────────────────
+         *
+         * Logo option D, "Pearl", which the owner chose: "option D is fine,
+         * but make sure it's crisp clear". ▲ SHIPS ON, because he chose it
+         * (CLAUDE.md, the 30-September reversal); "Text only (as before)"
+         * prints the old wordmark byte for byte. The name and its two colours
+         * are the controls above, shared by both styles, and on a computer
+         * the name's size is "Wordmark size". Nothing below is read while the
+         * style is Text only.
+         *
+         * Phone sizes are CEILINGS: kbb.css fits the lockup into the room the
+         * phone row really leaves it (App\Support\LogoLockup), so a size that
+         * would not fit is reduced, never cut ("make sure no logo should cut in
+         * mobile header ... we can reduce the logo size, it's okay").
+         */
+        'logo_style'      => ['select', 'Logo style', 'lotus',
+                              'The lotus lockup is the logo you chose (option D). Text only puts back the wordmark exactly as it was.',
+                              ['lotus' => 'Lotus lockup', 'text' => 'Text only (as before)']],
+        'logo_name_m'     => ['range',  'Name size · phone', 14,
+                              'The largest the name is drawn on a phone. A narrower phone draws it smaller, and the narrowest stack the two words, so it is never cut. On a computer the name is "Wordmark size".',
+                              ['min' => 10, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'logo_icon_d'     => ['range',  'Icon size · computer', 0,
+                              '0 is auto: in proportion to the name (38px at a 22px name).',
+                              ['min' => 0, 'max' => 64, 'step' => 1, 'unit' => 'px']],
+        'logo_icon_m'     => ['range',  'Icon size · phone', 0,
+                              '0 is auto: in proportion to the phone name size.',
+                              ['min' => 0, 'max' => 44, 'step' => 1, 'unit' => 'px']],
+        'logo_tag_d'      => ['range',  'Tagline size · computer', 10, '',
+                              ['min' => 8, 'max' => 16, 'step' => 1, 'unit' => 'px']],
+        'logo_tag_m'      => ['range',  'Tagline size · phone', 8,
+                              'Drawn only on a phone with room for it at this size; on a narrower one it steps out and the name keeps its size.',
+                              ['min' => 8, 'max' => 14, 'step' => 1, 'unit' => 'px']],
+        'logo_gap_d'      => ['range',  'Space between icon and name · computer', 8, '',
+                              ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'logo_gap_m'      => ['range',  'Space between icon and name · phone', 5, '',
+                              ['min' => 0, 'max' => 16, 'step' => 1, 'unit' => 'px']],
+        'logo_pad_x_d'    => ['range',  'Outer space left and right · computer', 0, 'Around the whole logo.',
+                              ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'logo_pad_y_d'    => ['range',  'Outer space top and bottom · computer', 0, '',
+                              ['min' => 0, 'max' => 16, 'step' => 1, 'unit' => 'px']],
+        'logo_pad_x_m'    => ['range',  'Outer space left and right · phone', 0, 'Taken from the room the logo has; the logo fits inside what is left.',
+                              ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'logo_pad_y_m'    => ['range',  'Outer space top and bottom · phone', 0, '',
+                              ['min' => 0, 'max' => 12, 'step' => 1, 'unit' => 'px']],
+        'logo_tag_on'     => ['bool',   'Tagline', true, 'The small line under the name.'],
+        'logo_tag_text'   => ['text',   'Tagline text', 'Korean Skincare & Makeup', 'Up to 40 characters.'],
+        'logo_petal'      => ['colour', 'Petal colour', '#D94A76', 'The filled petals.'],
+        'logo_line'       => ['colour', 'Petal outline colour', '#E5567E', ''],
+        'logo_anim'       => ['select', 'Animation', 'on',
+                              'CSS only, no script. Always still for visitors whose device asks for less motion.',
+                              ['on' => 'On', 'off' => 'Off']],
+        'logo_shine'      => ['range',  'Shine every', 7, 'A soft light crossing the logo. 0 is off.',
+                              ['min' => 0, 'max' => 30, 'step' => 1, 'unit' => 's']],
+        'logo_glow'       => ['select', 'Petal glow and colour drift', 'off',
+                              'The outlines brighten and fade and the accent word drifts through the pinks. Off by default: unlike the shine, these repaint the logo on every frame.',
+                              ['on' => 'On', 'off' => 'Off']],
 
         // ── Search ──
         'search_show'     => ['bool',   'Search box', true, ''],
@@ -498,8 +556,13 @@ class HeaderSettings
         'bar'     => ['Bar', 'Size, colour and how it behaves on scroll.',
                       ['sticky', 'bar_height', 'bar_height_mobile', 'bar_pad_y', 'bar_pad_y_mobile', 'nav_height', 'nav_pad_y', 'field_height',
                        'field_height_mobile', 'bar_bg', 'bar_border', 'shadow_on_scroll', 'max_width']],
-        'logo'    => ['Logo', 'The wordmark and its colours.',
-                      ['logo_text', 'logo_accent', 'logo_size', 'logo_colour', 'logo_accent_col']],
+        // Lane LG2: the style first, then the name, tagline, sizes, spacing,
+        // colours and motion, phone beside computer.
+        'logo'    => ['Logo', 'The lotus lockup or the text wordmark, its sizes on a phone and a computer, the space around it, its colours and its motion.',
+                      ['logo_style', 'logo_text', 'logo_accent', 'logo_tag_on', 'logo_tag_text',
+                       'logo_size', 'logo_name_m', 'logo_icon_d', 'logo_icon_m', 'logo_tag_d', 'logo_tag_m',
+                       'logo_gap_d', 'logo_gap_m', 'logo_pad_x_d', 'logo_pad_y_d', 'logo_pad_x_m', 'logo_pad_y_m',
+                       'logo_colour', 'logo_accent_col', 'logo_petal', 'logo_line', 'logo_anim', 'logo_shine', 'logo_glow']],
         // 'search' tab moved to Store → Site Search. The fields themselves
         // stay in SCHEMA above — nothing here reads or writes them anymore,
         // but the merge in save() means any value already saved for them
@@ -617,11 +680,113 @@ class HeaderSettings
             return null;
         }
 
-        return ModuleSchema::cast(
+        $cast = ModuleSchema::cast(
             ModuleSchema::field($key, self::SCHEMA[$key], self::POLICY),
             $value,
         );
+
+        // The tagline's own cap (Lane LG2): a line under a 14px name, not a
+        // paragraph. The schema's policy cap is 120 for every text here.
+        return $key === 'logo_tag_text' ? mb_substr((string) $cast, 0, self::TAGLINE_MAX) : $cast;
     }
+
+    /** The longest tagline the lockup prints. */
+    public const TAGLINE_MAX = 40;
+
+    /** Whether the logo is the lotus lockup rather than the text wordmark. */
+    public function logoLockup(): bool
+    {
+        return $this->get('logo_style') === 'lotus';
+    }
+
+    /**
+     * Everything partials/logo-lockup prints, decided once.
+     *
+     * `style` is custom properties only, and only the ones that differ from
+     * the fallbacks kbb.css already carries — so a shop at the shipped values
+     * prints NO style attribute at all, and a changed one prints a few
+     * `--lg-*:<number>` pairs. Every value is an integer the schema clamped,
+     * a float this method computed, or a hex colour the strict policy passed:
+     * nothing typed by hand reaches the attribute. LOCKUP_CSS_DEFAULTS is the
+     * other half of that contract, and LogoLockupTest compares the two.
+     *
+     * @return array{class: string, style: string, name: string, accent: string, tag: string, label: string, shine: bool, glow: bool}
+     */
+    public function lockup(): array
+    {
+        $c = $this->all();
+
+        $tag = $c['logo_tag_on'] ? trim((string) $c['logo_tag_text']) : '';
+        $anim = $c['logo_anim'] === 'on';
+        $shine = $anim && (int) $c['logo_shine'] > 0;
+        $glow = $anim && $c['logo_glow'] === 'on';
+
+        $sizeD = (int) $c['logo_size'];
+        $sizeM = (int) $c['logo_name_m'];
+        $iconM = \App\Support\LogoLockup::iconPx((int) $c['logo_icon_m'], $sizeM);
+        $fit = \App\Support\LogoLockup::fit(
+            (string) $c['logo_text'], (string) $c['logo_accent'], $tag, $tag !== '',
+            $sizeM, $iconM, (int) $c['logo_gap_m'], (int) $c['logo_tag_m'],
+        );
+
+        $vars = [
+            '--lg-sd' => $sizeD,
+            '--lg-id' => \App\Support\LogoLockup::iconPx((int) $c['logo_icon_d'], $sizeD),
+            '--lg-gd' => (int) $c['logo_gap_d'],
+            '--lg-td' => (int) $c['logo_tag_d'],
+            '--lg-xd' => (int) $c['logo_pad_x_d'],
+            '--lg-yd' => (int) $c['logo_pad_y_d'],
+            '--lg-sm' => $sizeM,
+            '--lg-im' => $iconM,
+            '--lg-gm' => (int) $c['logo_gap_m'],
+            '--lg-tm' => (int) $c['logo_tag_m'],
+            '--lg-xm' => (int) $c['logo_pad_x_m'],
+            '--lg-ym' => (int) $c['logo_pad_y_m'],
+            '--lg-c1' => $fit['c1'],
+            '--lg-c2' => $fit['c2'],
+            '--lg-r' => $fit['r'],
+            '--lg-wf' => $fit['wf'],
+            '--lg-sh' => (int) $c['logo_shine'],
+            '--lg-c' => $c['logo_colour'],
+            '--lg-a' => $c['logo_accent_col'],
+            '--lg-p' => $c['logo_petal'],
+            '--lg-l' => $c['logo_line'],
+        ];
+
+        $style = [];
+
+        foreach ($vars as $name => $value) {
+            $value = is_float($value) ? rtrim(rtrim(sprintf('%.4F', $value), '0'), '.') : (string) $value;
+
+            if ($value !== (self::LOCKUP_CSS_DEFAULTS[$name] ?? null)) {
+                $style[] = $name.':'.$value;
+            }
+        }
+
+        return [
+            'class' => 'logo lgx'.($glow ? ' lgx-gl' : ''),
+            'style' => implode(';', $style),
+            'name' => (string) $c['logo_text'],
+            'accent' => (string) $c['logo_accent'],
+            'tag' => $tag,
+            'label' => trim($c['logo_text'].' '.$c['logo_accent']).($tag !== '' ? ', '.$tag : ''),
+            'shine' => $shine,
+            'glow' => $glow,
+        ];
+    }
+
+    /**
+     * The value each `--lg-*` property falls back to in kbb.css — what the
+     * shipped settings work out to. A property equal to its fallback is not
+     * printed. Change a default above and LogoLockupTest says which line here
+     * and which `var()` in kbb.css have to follow it.
+     */
+    public const LOCKUP_CSS_DEFAULTS = [
+        '--lg-sd' => '22', '--lg-id' => '38', '--lg-gd' => '8', '--lg-td' => '10', '--lg-xd' => '0', '--lg-yd' => '0',
+        '--lg-sm' => '14', '--lg-im' => '24', '--lg-gm' => '5', '--lg-tm' => '8', '--lg-xm' => '0', '--lg-ym' => '0',
+        '--lg-c1' => '0.5855', '--lg-c2' => '0.8141', '--lg-r' => '136.6', '--lg-wf' => '184.1', '--lg-sh' => '7',
+        '--lg-c' => '#2A2228', '--lg-a' => '#C6395F', '--lg-p' => '#D94A76', '--lg-l' => '#E5567E',
+    ];
 
     /** @return string[] */
     public function trendingWords(): array

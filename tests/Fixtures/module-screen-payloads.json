@@ -1364,8 +1364,20 @@
       {
         "key": "logo",
         "label": "Logo",
-        "description": "The wordmark and its colours.",
+        "description": "The lotus lockup or the text wordmark, its sizes on a phone and a computer, the space around it, its colours and its motion.",
         "fields": [
+          {
+            "key": "logo_style",
+            "type": "select",
+            "label": "Logo style",
+            "help": "The lotus lockup is the logo you chose (option D). Text only puts back the wordmark exactly as it was.",
+            "default": "lotus",
+            "value": "lotus",
+            "options": {
+              "lotus": "Lotus lockup",
+              "text": "Text only (as before)"
+            }
+          },
           {
             "key": "logo_text",
             "type": "text",
@@ -1385,15 +1397,187 @@
             "options": null
           },
           {
+            "key": "logo_tag_on",
+            "type": "bool",
+            "label": "Tagline",
+            "help": "The small line under the name.",
+            "default": true,
+            "value": true,
+            "options": null
+          },
+          {
+            "key": "logo_tag_text",
+            "type": "text",
+            "label": "Tagline text",
+            "help": "Up to 40 characters.",
+            "default": "Korean Skincare & Makeup",
+            "value": "Korean Skincare & Makeup",
+            "options": null
+          },
+          {
             "key": "logo_size",
             "type": "range",
             "label": "Wordmark size",
-            "help": "",
+            "help": "The name on a computer, in both styles — and on a phone too in Text only, unless Appearance → Mobile Header sets its own.",
             "default": 22,
             "value": 22,
             "options": {
               "min": 16,
               "max": 34,
+              "step": 1,
+              "unit": "px"
+            }
+          },
+          {
+            "key": "logo_name_m",
+            "type": "range",
+            "label": "Name size · phone",
+            "help": "The largest the name is drawn on a phone. A narrower phone draws it smaller, and the narrowest stack the two words, so it is never cut. On a computer the name is \"Wordmark size\".",
+            "default": 14,
+            "value": 14,
+            "options": {
+              "min": 10,
+              "max": 24,
+              "step": 1,
+              "unit": "px"
+            }
+          },
+          {
+            "key": "logo_icon_d",
+            "type": "range",
+            "label": "Icon size · computer",
+            "help": "0 is auto: in proportion to the name (38px at a 22px name).",
+            "default": 0,
+            "value": 0,
+            "options": {
+              "min": 0,
+              "max": 64,
+              "step": 1,
+              "unit": "px"
+            }
+          },
+          {
+            "key": "logo_icon_m",
+            "type": "range",
+            "label": "Icon size · phone",
+            "help": "0 is auto: in proportion to the phone name size.",
+            "default": 0,
+            "value": 0,
+            "options": {
+              "min": 0,
+              "max": 44,
+              "step": 1,
+              "unit": "px"
+            }
+          },
+          {
+            "key": "logo_tag_d",
+            "type": "range",
+            "label": "Tagline size · computer",
+            "help": "",
+            "default": 10,
+            "value": 10,
+            "options": {
+              "min": 8,
+              "max": 16,
+              "step": 1,
+              "unit": "px"
+            }
+          },
+          {
+            "key": "logo_tag_m",
+            "type": "range",
+            "label": "Tagline size · phone",
+            "help": "Drawn only on a phone with room for it at this size; on a narrower one it steps out and the name keeps its size.",
+            "default": 8,
+            "value": 8,
+            "options": {
+              "min": 8,
+              "max": 14,
+              "step": 1,
+              "unit": "px"
+            }
+          },
+          {
+            "key": "logo_gap_d",
+            "type": "range",
+            "label": "Space between icon and name · computer",
+            "help": "",
+            "default": 8,
+            "value": 8,
+            "options": {
+              "min": 0,
+              "max": 24,
+              "step": 1,
+              "unit": "px"
+            }
+          },
+          {
+            "key": "logo_gap_m",
+            "type": "range",
+            "label": "Space between icon and name · phone",
+            "help": "",
+            "default": 5,
+            "value": 5,
+            "options": {
+              "min": 0,
+              "max": 16,
+              "step": 1,
+              "unit": "px"
+            }
+          },
+          {
+            "key": "logo_pad_x_d",
+            "type": "range",
+            "label": "Outer space left and right · computer",
+            "help": "Around the whole logo.",
+            "default": 0,
+            "value": 0,
+            "options": {
+              "min": 0,
+              "max": 32,
+              "step": 1,
+              "unit": "px"
+            }
+          },
+          {
+            "key": "logo_pad_y_d",
+            "type": "range",
+            "label": "Outer space top and bottom · computer",
+            "help": "",
+            "default": 0,
+            "value": 0,
+            "options": {
+              "min": 0,
+              "max": 16,
+              "step": 1,
+              "unit": "px"
+            }
+          },
+          {
+            "key": "logo_pad_x_m",
+            "type": "range",
+            "label": "Outer space left and right · phone",
+            "help": "Taken from the room the logo has; the logo fits inside what is left.",
+            "default": 0,
+            "value": 0,
+            "options": {
+              "min": 0,
+              "max": 24,
+              "step": 1,
+              "unit": "px"
+            }
+          },
+          {
+            "key": "logo_pad_y_m",
+            "type": "range",
+            "label": "Outer space top and bottom · phone",
+            "help": "",
+            "default": 0,
+            "value": 0,
+            "options": {
+              "min": 0,
+              "max": 12,
               "step": 1,
               "unit": "px"
             }
@@ -1415,6 +1599,62 @@
             "default": "#C6395F",
             "value": "#C6395F",
             "options": null
+          },
+          {
+            "key": "logo_petal",
+            "type": "colour",
+            "label": "Petal colour",
+            "help": "The filled petals.",
+            "default": "#D94A76",
+            "value": "#D94A76",
+            "options": null
+          },
+          {
+            "key": "logo_line",
+            "type": "colour",
+            "label": "Petal outline colour",
+            "help": "",
+            "default": "#E5567E",
+            "value": "#E5567E",
+            "options": null
+          },
+          {
+            "key": "logo_anim",
+            "type": "select",
+            "label": "Animation",
+            "help": "CSS only, no script. Always still for visitors whose device asks for less motion.",
+            "default": "on",
+            "value": "on",
+            "options": {
+              "on": "On",
+              "off": "Off"
+            }
+          },
+          {
+            "key": "logo_shine",
+            "type": "range",
+            "label": "Shine every",
+            "help": "A soft light crossing the logo. 0 is off.",
+            "default": 7,
+            "value": 7,
+            "options": {
+              "min": 0,
+              "max": 30,
+              "step": 1,
+              "unit": "s"
+            }
+          },
+          {
+            "key": "logo_glow",
+            "type": "select",
+            "label": "Petal glow and colour drift",
+            "help": "The outlines brighten and fade and the accent word drifts through the pinks. Off by default: unlike the shine, these repaint the logo on every frame.",
+            "default": "off",
+            "value": "off",
+            "options": {
+              "on": "On",
+              "off": "Off"
+            }
           }
         ]
       },
