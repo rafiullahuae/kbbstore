@@ -5052,6 +5052,10 @@
         "label": "Instagram Profile"
       },
       {
+        "key": "igembeds",
+        "label": "Instagram embeds"
+      },
+      {
         "key": "trending",
         "label": "Trending"
       },

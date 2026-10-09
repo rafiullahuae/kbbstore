@@ -78,8 +78,32 @@ final class ScopeOrder
      *
      * @param  int|string  $category  the category's id, or its slug
      */
-    public static function inCategory(Builder $query, int|string $category): Builder
+    public static function inCategory(Builder $query, int|string $category, array $subtree = []): Builder
     {
+        /*
+         * A PARENT THAT ALSO LISTS ITS SUB-CATEGORIES (Lane SC): $subtree is
+         * the category and its descendants, from CategoryRollup. Still one
+         * join, still one row per product -- GROUP BY product_id collapses a
+         * product filed under the parent AND a child, or under two children,
+         * into one card -- and the parent's OWN order rides along: a product
+         * filed directly here keeps its position, one that is only in a child
+         * is NULL ("never ordered here") and goes after the ordered ones, as
+         * a newly added product always has. `category_id IN (...)` is a range
+         * on the pivot's primary key (category_id, product_id).
+         *
+         * With one id (no children, or "only its own products") nothing below
+         * changes: the SQL is byte-for-byte what it was.
+         */
+        if (is_int($category) && count($subtree) > 1) {
+            $rows = DB::table('category_product')
+                ->select('category_product.product_id as kso_pid')
+                ->selectRaw('MIN(CASE WHEN category_product.category_id = ? THEN category_product.'.self::CATEGORY_COLUMN.' END) as kso_pos', [$category])
+                ->whereIn('category_product.category_id', array_values(array_map('intval', $subtree)))
+                ->groupBy('category_product.product_id');
+
+            return $query->joinSub($rows, self::ALIAS, self::ALIAS.'.kso_pid', '=', 'products.id');
+        }
+
         $rows = DB::table('category_product')
             ->select(['category_product.product_id as kso_pid', 'category_product.'.self::CATEGORY_COLUMN.' as kso_pos']);
 

@@ -1,0 +1,42 @@
+[
+    {
+        "n": 1,
+        "what": "routes/web.php: require the Instagram embeds routes inside the guarded admin-api group, after Spotted (Lane IGE)",
+        "file": "routes/web.php",
+        "anchor": "        require __DIR__.'/spotted-admin.php';   // Appearance → #KBeautyBliss Spotted (Lane HB)\n",
+        "count": 1,
+        "replacement": "        require __DIR__.'/spotted-admin.php';   // Appearance → #KBeautyBliss Spotted (Lane HB)\n        require __DIR__.'/ig-embeds-admin.php';   // Content → Instagram embeds (Lane IGE), `igembeds.manage`\n"
+    },
+    {
+        "n": 2,
+        "what": "console TITLES: Content → Instagram embeds, so ?go=igembeds and #igembeds name the screen (Lane IGE)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "'instagram':['Content','Instagram'],",
+        "count": 1,
+        "replacement": "'instagram':['Content','Instagram'],'igembeds':['Content','Instagram embeds'],"
+    },
+    {
+        "n": 3,
+        "what": "console LATE_RENDERED: arm the deep-link replay for 'igembeds' -- its partial wraps window.go (Lane IGE)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "'ugcstyle','instagram','sets',",
+        "count": 1,
+        "replacement": "'ugcstyle','instagram','igembeds','sets',"
+    },
+    {
+        "n": 4,
+        "what": "console: include the Instagram embeds screen partial, after the Instagram screen (Lane IGE)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "@include('admin.partials.instagram-screen')\n",
+        "count": 1,
+        "replacement": "@include('admin.partials.instagram-screen')\n{{-- Content → Instagram embeds (Lane IGE): paste post and reel addresses, the shop\n     draws Instagram's own embed. Wraps window.go for 'igembeds'; its sidebar row is\n     App\\Support\\AdminNav's. Endpoints: routes/ig-embeds-admin.php, `igembeds.manage`. --}}\n@include('admin.partials.ig-embeds-screen')\n"
+    },
+    {
+        "n": 5,
+        "what": "keep docs/T1B-ADMIN-APP-BLOCKS.md's quoted LATE_RENDERED line in step with the console (TranslationConsoleTest)",
+        "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
+        "anchor": "'ugcstyle','instagram','sets',",
+        "count": 1,
+        "replacement": "'ugcstyle','instagram','igembeds','sets',"
+    }
+]

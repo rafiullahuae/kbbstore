@@ -67,6 +67,11 @@ use Tests\Support\KeyOrder;
  * category carries `header_layout` (null) -- the category banner's own layout,
  * Catalog -> Categories -> Edit -> Category header -> Banner layout -- the way
  * Lane SX's `sold_out_mode` was added. Spliced in, not re-recorded.
+ *
+ * ▲ Lane SC (sub-category products on a parent category) re-recorded it with
+ * KBB_S7_RECORD=1, and the diff was read: each category gains `listed_count`
+ * and `sub_products` (null), the categories body gains `sub_products_default`,
+ * and nothing else moved.
  */
 function s7PayloadUrls(): array
 {

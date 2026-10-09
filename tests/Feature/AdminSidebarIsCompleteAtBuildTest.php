@@ -370,7 +370,7 @@ it('renders the sidebar the console settled on, group by group and row by row', 
             'order-new', 'coupon-editor', 'payments', 'paygw', 'security', 'firewall', 'analytics', 'search', 'seo', 'seokeywords',
             'store-settings', 'customers', 'quiz-leads'],
         'Emails' => ['emails', 'emails-sending', 'emails-customer', 'emails-branding', 'emails-sent', 'mail'],
-        'Content' => ['posts', 'htmlblocks', 'media', 'ugcsections', 'instagram'],
+        'Content' => ['posts', 'htmlblocks', 'media', 'ugcsections', 'instagram', 'igembeds'],
         'Translation' => ['tr-settings', 'tr-progress', 'tr-strings', 'tr-machine'],
         // 'comingsoon' — Appearance → Coming Soon page (Lane CS), last, after Site layout.
         'Appearance' => ['homepage', 'hpcontent', 'spotted', 'banners', 'gridsections', 'prodstyles', 'mobilehdr',

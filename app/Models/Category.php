@@ -50,6 +50,10 @@ class Category extends Model
         // choice from a cached map, rebuilt after any category write. (Lane SX)
         static::saved(static fn () => \App\Support\SoldOut::flush());
         static::deleted(static fn () => \App\Support\SoldOut::flush());
+
+        // Lane SC: the tree a parent's page lists its sub-categories from.
+        static::saved(static fn () => \App\Support\CategoryRollup::flush());
+        static::deleted(static fn () => \App\Support\CategoryRollup::flush());
     }
 
     public function parent()

@@ -265,6 +265,11 @@ final class CategoryImporter extends EntityImporter
             }
         }
 
+        // Lane SC: the parent links above are query-builder writes, which no
+        // model hook sees, and a parent's page lists its children from the
+        // cached tree -- so the tree goes here, with the import that moved it.
+        \App\Support\CategoryRollup::flush();
+
         $stranded = array_diff(array_keys($nodes), array_keys($seen));
 
         if ($stranded !== []) {

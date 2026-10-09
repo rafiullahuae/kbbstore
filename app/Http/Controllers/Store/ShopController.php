@@ -114,7 +114,9 @@ class ShopController extends Controller
         if ($category) {
             // The category's products, with ITS OWN order beside them -- one
             // join on the pivot's key in place of the EXISTS this was. (Lane SO)
-            \App\Support\ScopeOrder::inCategory($query, (int) $category->id);
+            // And its sub-categories' products, once each, when it lists them
+            // (Lane SC): ids from the cached tree, no query of their own.
+            \App\Support\ScopeOrder::inCategory($query, (int) $category->id, \App\Support\CategoryRollup::idsFor($category));
         }
 
         $this->applyFacets($query, $active, (string) $request->query('s', ''));
@@ -545,19 +547,7 @@ class ShopController extends Controller
             // every row and nothing has ever written it, so until the owner
             // actually reorders something, every row ties at 0 and the size
             // ordering below decides exactly as before.
-            'cats' => ! $filters ? collect() : Cache::remember('kbb.shop.cats', 900, fn () => Category::query()
-                ->select('id', 'name', 'slug')
-                ->withCount(['products' => fn ($q) => $q->visible()])
-                ->groupBy('categories.id', 'categories.name', 'categories.slug', 'categories.position')
-                ->having('products_count', '>', 0)
-                ->orderBy('categories.position')
-                ->orderByDesc('products_count')
-                // And `categories.id`, because this is a LIMIT: a tie on the
-                // count at the thirtieth place decides which category the
-                // filter rail offers at all.
-                ->orderBy('categories.id')
-                ->limit(30)
-                ->get()),
+            'cats' => ! $filters ? collect() : $this->sidebarCats(),
             // Same reasoning as the categories above: `brands.position` has
             // existed since the original schema and nothing has ever read it,
             // so the brand reorder had nowhere to show up. Ties at 0 fall back
@@ -574,6 +564,45 @@ class ShopController extends Controller
                 ->limit(40)
                 ->get()),
         ]);
+    }
+
+    /**
+     * The filter rail's categories with their counts, cached 15 minutes.
+     *
+     * Lane SC: while any category with sub-categories lists their products,
+     * a parent's count is the number its own page lists -- each product once
+     * -- not just the products filed directly under it, and a parent whose
+     * products are all in its children is offered at all. Counted for the
+     * whole tree in ONE query (CategoryRollup::counts()), and the empty rows,
+     * the order and the 30-row cut done on those counts. With nothing rolling
+     * up, the original query, under the original key, unchanged.
+     */
+    private function sidebarCats(): \Illuminate\Support\Collection
+    {
+        if (\App\Support\CategoryRollup::hasRollups()) {
+            return Cache::remember(\App\Support\CategoryRollup::cacheKey(\App\Support\CategoryRollup::SIDEBAR_CACHE), 900, static fn () => \App\Support\CategoryRollup::applyCounts(
+                Category::query()->select('id', 'name', 'slug', 'position')
+                    ->withCount(['products' => fn ($q) => $q->visible()])
+                    ->get(),
+                static fn ($a, $b) => [(int) $a->position, -(int) $a->products_count, (int) $a->id]
+                    <=> [(int) $b->position, -(int) $b->products_count, (int) $b->id],
+                30,
+            ));
+        }
+
+        return Cache::remember('kbb.shop.cats', 900, fn () => Category::query()
+            ->select('id', 'name', 'slug')
+            ->withCount(['products' => fn ($q) => $q->visible()])
+            ->groupBy('categories.id', 'categories.name', 'categories.slug', 'categories.position')
+            ->having('products_count', '>', 0)
+            ->orderBy('categories.position')
+            ->orderByDesc('products_count')
+            // And `categories.id`, because this is a LIMIT: a tie on the
+            // count at the thirtieth place decides which category the
+            // filter rail offers at all.
+            ->orderBy('categories.id')
+            ->limit(30)
+            ->get());
     }
 
     /**
@@ -699,7 +728,19 @@ class ShopController extends Controller
         }
 
         if ($active['cat']) {
-            $query->whereHas('categories', fn ($q) => $q->whereIn('categories.slug', $active['cat']));
+            /*
+             * Lane SC: a parent in the filter rail is counted with its
+             * sub-categories' products (sidebarCats()), so ticking it narrows
+             * to the same set. Ids from the cached tree; when no ticked
+             * category has children that it lists, the SQL is as it was.
+             */
+            $ids = \App\Support\CategoryRollup::expandSlugs(array_values(array_map('strval', $active['cat'])));
+
+            if ($ids !== null) {
+                $query->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $ids));
+            } else {
+                $query->whereHas('categories', fn ($q) => $q->whereIn('categories.slug', $active['cat']));
+            }
         }
 
         if ($active['brand']) {
@@ -1094,6 +1135,7 @@ class ShopController extends Controller
     public static function flushSidebarCache(): void
     {
         Cache::forget('kbb.shop.cats');
+        \App\Support\CategoryRollup::forgetLists();
         Cache::forget('kbb.shop.brands');
     }
 }

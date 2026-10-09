@@ -55,8 +55,9 @@ it('puts back the shipped row-55 page when Signature is re-applied, not every se
     }
 
     // ▲ Lane HC: the two phones-only strips are visible sections too.
+    // ▲ Lane IGE: `igembeds` ships on, after Spotted; it renders nothing until a post is pasted.
     expect($shipped)->toBe(['topstrip', 'cards_banner', 'countries', 'hero', 'bundles', 'bestselling', 'brands', 'spotted',
-        'trending', 'blog', 'under54', 'feature', 'about']);
+        'igembeds', 'trending', 'blog', 'under54', 'feature', 'about']);
 });
 
 it('says on its card what it does', function () {

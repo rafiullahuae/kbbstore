@@ -367,6 +367,12 @@ it('sends every module screen the payload it sent before the shared schema', fun
      * untouched and SeoBackOfficePayloadTest's fixture needed no edit at all.
      */
     /*
+     * ── LANE IGE: ONE ROW ADDED TO dividers.sections[] ─────────────────────
+     *
+     * `igembeds` (Instagram embeds), written into the fixture by hand directly
+     * after `instagram`, where HomepageSections::REGISTRY now has it. No other
+     * leaf moved.
+     *
      * ── ROW 55 (Lane HA): FOUR ROWS ADDED TO dividers.sections[] ───────────
      *
      * The divider picker lists HomepageSections::REGISTRY, which gained the

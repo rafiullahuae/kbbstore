@@ -68,6 +68,8 @@ final class HomepageHub
         'spotted' => ['kind' => 'remote', 'get' => 'spotted', 'save' => 'spotted/settings', 'skip' => ['page'], 'also' => ['spotted', 'Appearance → #KBeautyBliss Spotted'], 'note' => 'Which posts appear is ticked per post on Appearance → #KBeautyBliss Spotted.'],
         'videos' => ['kind' => 'remote', 'get' => 'ugc-appearance', 'save' => 'ugc-appearance', 'tabs' => ['home'], 'also' => ['ugcstyle', 'Appearance → Video rail'], 'note' => 'The clips are uploaded and grouped under Content → Shoppable video.'],
         'instagram' => ['kind' => 'remote', 'get' => 'instagram', 'save' => 'instagram', 'tabs' => ['look', 'tile'], 'also' => ['instagram', 'Content → Instagram'], 'note' => 'Connecting the account is done on Content → Instagram.'],
+        // (Lane IGE) Its posts, card style and layout are one screen of their own.
+        'igembeds' => ['kind' => 'none', 'note' => 'The posts, the card style and the layout are set on Content → Instagram embeds.', 'also' => ['igembeds', 'Content → Instagram embeds']],
         'trending' => ['kind' => 'content', 'tab' => 'trending', 'source' => 'tr'],
         'bestsellers' => ['kind' => 'content', 'tab' => 'bestsellers', 'source' => 'bsl'],
         'flash' => ['kind' => 'content', 'tab' => 'flash', 'source' => 'fl'],

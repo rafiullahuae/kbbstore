@@ -516,6 +516,13 @@ final class AdminSearchIndex
             'Look' => [],
             'What a tile shows' => [],
         ],
+        // Content → Instagram embeds (Lane IGE): one screen, no tabs.
+        'igembeds' => [
+            '' => [
+                'Add posts and reels', 'Card style', 'Layout', 'Posts shown', 'When the post loads',
+                'Frame height', 'Show Instagram’s caption inside the post',
+            ],
+        ],
         'tr-settings' => [
             '' => [
                 'Arabic storefront', 'Right-to-left layout', 'Highlight untranslated text in the admin',

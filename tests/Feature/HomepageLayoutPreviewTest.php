@@ -166,7 +166,10 @@ it('counts the same sections it always did, and names the same ones off', functi
      */
     // ▲ Lane HC: +2 each — the Top strip and the Countries strip join every
     // preset, phones only, so each preset draws two more sections on a phone.
-    $expected = ['signature' => 13, 'conversion' => 22, 'editorial' => 22, 'boutique' => 14];
+    // ▲ Lane IGE: +1 for signature, conversion and editorial — the Instagram
+    // embeds row ships on (it draws nothing until a post is pasted); Boutique
+    // lists it OFF beside `instagram`, for that preset's own "calmer" argument.
+    $expected = ['signature' => 14, 'conversion' => 23, 'editorial' => 23, 'boutique' => 14];
 
     foreach (app(HomepageLayouts::class)->summaries() as $summary) {
         expect($summary['count'])->toBe($expected[$summary['key']], $summary['key'] . ' changed its section count');

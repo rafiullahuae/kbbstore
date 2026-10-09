@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Store\ShopController;
 use App\Models\Category;
 use App\Support\CategoryPath;
+use App\Support\CategoryRollup;
 use App\Support\SoldOut;
 use App\Support\TranslationInput;
 use Illuminate\Http\JsonResponse;
@@ -71,7 +72,7 @@ class CategoriesApiController extends Controller
      */
     public function index(): JsonResponse
     {
-        $read = static fn (bool $soldOut) => Category::query()
+        $read = static fn (bool $soldOut, bool $subProducts = false) => Category::query()
             ->select('categories.id', 'categories.slug', 'categories.name', 'categories.parent_id',
                 'categories.description', 'categories.image', 'categories.position',
                 'categories.depth', 'categories.path', 'categories.seo', 'categories.banner',
@@ -82,6 +83,8 @@ class CategoriesApiController extends Controller
             // Lane SX: the category's own "Sold-out products" choice -- see
             // the try below.
             ->when($soldOut, static fn ($q) => $q->addSelect('categories.'.SoldOut::COLUMN))
+            // Lane SC: the category's own "Sub-category products" choice.
+            ->when($subProducts, static fn ($q) => $q->addSelect('categories.'.CategoryRollup::COLUMN))
             // Lane CB: the category banner's own layout, once its column exists.
             ->when(\App\Support\BrandPanel::columnReady('categories'), static fn ($q) => $q->addSelect('categories.header_layout'))
             // The headline count, and it has to agree with the archive page.
@@ -143,9 +146,26 @@ class CategoriesApiController extends Controller
          * not run yet pays a second try, without the column.
          */
         try {
-            $categories = $read(true);
+            $categories = $read(true, true);
         } catch (\Illuminate\Database\QueryException) {
-            $categories = $read(false);
+            try {
+                // Lane SC's column not there yet: the screen as it was.
+                $categories = $read(true);
+            } catch (\Illuminate\Database\QueryException) {
+                $categories = $read(false);
+            }
+        }
+
+        /*
+         * Lane SC: how many products each category's PAGE lists -- with its
+         * sub-categories' when it includes them, each product once. Beside
+         * `products_count` (filed directly here), which stays what it was
+         * because the delete guard reads it. One cached map for the tree,
+         * no query per row.
+         */
+        $listed = CategoryRollup::counts();
+        foreach ($categories as $category) {
+            $category->setAttribute('listed_count', $listed[(int) $category->id] ?? (int) $category->products_count);
         }
 
         /*
@@ -178,6 +198,9 @@ class CategoriesApiController extends Controller
              * screen never holds a second copy of Category::$translatable.
              */
             'translatable' => (new Category)->translationsForEditor(),
+            // Lane SC: what "Use the shop setting" currently means, so the
+            // edit screen can say it. One of CategoryRollup::MODES.
+            'sub_products_default' => CategoryRollup::shopDefault(),
         ]);
     }
 
@@ -757,6 +780,12 @@ class CategoriesApiController extends Controller
              * leave the choice alone.
              */
             SoldOut::COLUMN => ['sometimes', 'nullable', 'string', Rule::in(SoldOut::MODES)],
+            /*
+             * Lane SC: "Sub-category products" -- '' is "Use the shop
+             * setting" and stores NULL; anything else must be one of the
+             * select's own options. Optional for the same reason as above.
+             */
+            CategoryRollup::COLUMN => ['sometimes', 'nullable', 'string', Rule::in(CategoryRollup::MODES)],
         ];
 
         /*
@@ -811,6 +840,14 @@ class CategoriesApiController extends Controller
                 $data[SoldOut::COLUMN] = SoldOut::clean($data[SoldOut::COLUMN]);
             } else {
                 unset($data[SoldOut::COLUMN]);
+            }
+        }
+
+        if (array_key_exists(CategoryRollup::COLUMN, $data)) {
+            if (CategoryRollup::columnReady()) {
+                $data[CategoryRollup::COLUMN] = CategoryRollup::clean($data[CategoryRollup::COLUMN]);
+            } else {
+                unset($data[CategoryRollup::COLUMN]);
             }
         }
 
