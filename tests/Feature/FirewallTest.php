@@ -364,6 +364,21 @@ it('looks countries up correctly at range edges, in gaps, for IPv4, IPv6 and map
         ->toThrow(RuntimeException::class);
 });
 
+it('builds the country database into a directory that does not exist yet', function () {
+    /*
+     * DEFECT (found by Lane FW2): `php artisan kbb:firewall data --file=` on a
+     * fresh server, where nothing has created storage/app/firewall yet,
+     * failed with "Failed to open stream" on its first temp file. MUTATION:
+     * drop the mkdir() at the top of CountryDb::build().
+     */
+    $fresh = $this->fwDir.'/fresh-'.uniqid().'/deeper/country.bin';
+    file_put_contents($this->fwDir.'/two.csv', "1.0.0.0,1.0.0.255,AU\n2.0.0.0,2.0.0.255,FR\n2001:db8::,2001:db8::ffff,CN\n2a00::,2a00::ffff,US\n");
+    expect(CountryDb::build([$this->fwDir.'/two.csv'], $fresh, 20261009)['ok'])->toBeTrue();
+    @unlink($fresh);
+    @rmdir(dirname($fresh));
+    @rmdir(dirname($fresh, 2));
+});
+
 it('Protect: refuses a bot that posts to the cart without loading a page, and lets a browser through unnoticed', function () {
     /*
      * DEFECT: a script posts add-to-cart / COD orders from fresh Chinese

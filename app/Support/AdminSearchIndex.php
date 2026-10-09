@@ -343,10 +343,13 @@ final class AdminSearchIndex
         ],
         // Lane FW: Store -> Security -> Firewall.
         'firewall' => [
-            '' => [
-                'Flood limits and bans', 'Countries', 'Search engines and link previews', 'Always allow',
-                'Block list and data', 'Download country database', 'Refresh bot lists', 'Active bans',
-            ],
+            'Overview' => ['Last 24 hours', 'Active bans'],
+            'Live activity' => ['By reason', 'Top countries', 'Top ranges', 'Top addresses'],
+            'Rules' => ['What a ban blocks', 'Flood limits', 'Ban length', 'Protect countries', 'Search-engine impostors'],
+            'Countries' => ['Country rules'],
+            'Good bots' => ['Search engines and link previews', 'Published address lists'],
+            'Allow & block lists' => ['Always allow', 'Block list'],
+            'Data' => ['Country database', 'Download country database', 'Bot address lists'],
         ],
         'analytics' => [],
         'search' => [

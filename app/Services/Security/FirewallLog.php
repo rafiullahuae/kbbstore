@@ -249,6 +249,38 @@ final class FirewallLog
         ];
     }
 
+    /**
+     * Just the two totals for the last 24 hours — the Overview tab's tiles.
+     * One grouped SUM over the written rows plus the bucket in progress from
+     * the cache; the per-address lists are report()'s, for the Live tab.
+     *
+     * @return array{refused:int, logged:int}
+     */
+    public static function summary(): array
+    {
+        self::flush();
+        $out = ['refused' => 0, 'logged' => 0];
+
+        try {
+            foreach (DB::table('firewall_log')->where('bucket_at', '>=', now()->subDay())
+                ->selectRaw('enforced, SUM(hits) AS n')->groupBy('enforced')->get() as $row) {
+                $out[(int) $row->enforced === 1 ? 'refused' : 'logged'] += (int) $row->n;
+            }
+        } catch (\Throwable) {
+        }
+
+        $now = intdiv(FirewallStore::now(), self::BUCKET);
+        $last = (int) (FirewallStore::get('fw:lf:last') ?? ($now - 1));
+
+        for ($b = max($last + 1, $now - 1); $b <= $now; $b++) {
+            foreach (self::bucketRows($b) as $r) {
+                $out[$r['enforced'] ? 'refused' : 'logged'] += (int) $r['hits'];
+            }
+        }
+
+        return $out;
+    }
+
     public static function reset(): void
     {
         self::$flushQueued = false;

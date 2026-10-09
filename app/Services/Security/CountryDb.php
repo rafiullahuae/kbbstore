@@ -298,6 +298,9 @@ final class CountryDb
      */
     public static function build(array $inputs, string $out, int $date): array
     {
+        // The directory may not exist yet: `kbb:firewall data --file=` on a
+        // fresh server builds here before anything has created it.
+        @mkdir(dirname($out), 0775, true);
         $tmp4 = $out.'.v4.tmp';
         $tmp6 = $out.'.v6.tmp';
         $codes = ['--' => 0];

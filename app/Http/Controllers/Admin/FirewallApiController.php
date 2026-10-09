@@ -60,7 +60,10 @@ final class FirewallApiController extends Controller
                 'bots' => GoodBots::about(),
                 'attribution' => ['text' => CountryDb::ATTRIBUTION, 'url' => CountryDb::ATTRIBUTION_URL],
             ],
-            'live' => $this->live(),
+            // The Overview tab's tiles and bans. The Live activity tab's
+            // lists (by reason, countries, addresses, ranges) are fetched from
+            // security/firewall/live only when that tab is opened.
+            'summary' => FirewallLog::summary() + ['bans' => Firewall::bans()],
         ]);
     }
 

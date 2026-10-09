@@ -1,0 +1,38 @@
+Lane FW2 — Store → Security → Firewall as tabs. Chromium, each tab opened by a fresh load of its own address
+(#firewall/<tab>), with the admin-api requests that open made (tools/fw2-tab-shots.cjs).
+
+== 390px   console errors: []   #firewall/data typed on the Dashboard opens: Data
+  overview   selected 'Overview'  scrollWidth [390, 390]  saves 0  sections ['Status', 'Last 24 hours', 'Active bans']
+             requests ['GET /security/firewall']
+  live       selected 'Live activity'  scrollWidth [390, 390]  saves 0  sections ['By reason', 'Top countries', 'Top ranges', 'Top addresses', 'Active bans']
+             requests ['GET /security/firewall', 'GET /security/firewall/live']
+  rules      selected 'Rules'  scrollWidth [390, 390]  saves 5  sections ['What a ban blocks', 'Flood limits', 'Ban length', 'Protect countries', 'Search-engine impostors']
+             requests ['GET /security/firewall']
+  countries  selected 'Countries'  scrollWidth [390, 390]  saves 1  sections ['Country rules']
+             requests ['GET /security/firewall']
+  bots       selected 'Good bots'  scrollWidth [390, 390]  saves 1  sections ['Search engines and link previews', 'Published address lists']
+             requests ['GET /security/firewall']
+  lists      selected 'Allow & block lists'  scrollWidth [390, 390]  saves 0  sections ['Always allow', 'Block list']
+             requests ['GET /security/firewall', 'GET /cart-tracking/blocks']
+  data       selected 'Data'  scrollWidth [390, 390]  saves 0  sections ['Country database', 'Bot address lists', 'Where counts are kept']
+             requests ['GET /security/firewall', 'GET /security/firewall']
+  click Countries + Protect chip: {'hash': '#firewall/countries', 'rows': 4, 'requests': []}
+== 1280px   console errors: ['Failed to load resource: the server responded with a status of 404 (Not Found)']   #firewall/data typed on the Dashboard opens: Data
+  overview   selected 'Overview'  scrollWidth [1280, 1280]  saves 0  sections ['Status', 'Last 24 hours', 'Active bans']
+             requests ['GET /security/firewall']
+  live       selected 'Live activity'  scrollWidth [1280, 1280]  saves 0  sections ['By reason', 'Top countries', 'Top ranges', 'Top addresses', 'Active bans']
+             requests ['GET /security/firewall', 'GET /security/firewall/live']
+  rules      selected 'Rules'  scrollWidth [1280, 1280]  saves 5  sections ['What a ban blocks', 'Flood limits', 'Ban length', 'Protect countries', 'Search-engine impostors']
+             requests ['GET /security/firewall']
+  countries  selected 'Countries'  scrollWidth [1280, 1280]  saves 1  sections ['Country rules']
+             requests ['GET /security/firewall']
+  bots       selected 'Good bots'  scrollWidth [1280, 1280]  saves 1  sections ['Search engines and link previews', 'Published address lists']
+             requests ['GET /security/firewall']
+  lists      selected 'Allow & block lists'  scrollWidth [1280, 1280]  saves 0  sections ['Always allow', 'Block list']
+             requests ['GET /security/firewall', 'GET /cart-tracking/blocks']
+  data       selected 'Data'  scrollWidth [1280, 1280]  saves 0  sections ['Country database', 'Bot address lists', 'Where counts are kept']
+             requests ['GET /security/firewall', 'GET /security/firewall']
+  click Countries + Protect chip: {'hash': '#firewall/countries', 'rows': 4, 'requests': []}
+
+The single 404 at 1280 is on the first console load in that browser, before the Firewall opens; it is not one of
+the page's responses (none answered >= 400).

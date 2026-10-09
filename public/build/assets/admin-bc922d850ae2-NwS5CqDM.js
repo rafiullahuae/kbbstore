@@ -1,79 +1,4 @@
-{{--
-    Store → Security → Firewall. (Lane FW; tabs Lane FW2)
 
-    The owner, on the first version: "the firewall layout at backend i don't
-    like, don't throw just classic room, i want proper tabs and sections etc."
-    So: seven tabs in the console's OWN tab strip (.subtabs / .subtab, the one
-    Catalog and SEO & Meta draw), and inside each tab the console's own parts —
-    .sec-title headings over .card.pad sections, .kpis tiles, .seg for the mode,
-    .chips and .search for the country filters, .pref/.tog switches, .btn. The
-    fields inside a section are the sx- fields Store → Security already draws
-    (the same as Appearance → Site layout's). Nothing here is a new style; the
-    few fwl- rules only lay those parts out.
-
-      Overview · Live activity · Rules · Countries · Good bots ·
-      Allow & block lists · Data
-
-    The tab is in the address: #firewall/<tab> (replaceState, as Payments does,
-    so the Back button leaves the screen instead of walking the tabs). A
-    #firewall/<tab> pasted into an open console moves to that tab.
-
-    Included ONCE, from the end of admin/partials/security-screen.blade.php.
-    Every data- attribute it listens for is fwl-prefixed, because app.blade.php
-    and security-screen bind delegated listeners on `document`.
-
-    LIGHT: one GET when the screen opens (settings, countries, bots, allow list,
-    data status, and the Overview's two totals and bans). The Live activity
-    lists are fetched only when that tab opens; the hand-made block list only
-    when Allow & block lists opens. No timer, no polling, no request per
-    keystroke — the country search filters rows already on the page. Everything
-    from the server goes through esc().
-
-    390px: the tab strip scrolls inside itself (the console's .subtabs does);
-    every list is a grid that becomes a stack, so the page never scrolls sideways.
---}}
-@verbatim
-<style>
-.fwl{min-width:0}
-.fwl > *{min-width:0}
-.fwl .card.pad{min-width:0}
-.fwl-lead{font-size:12.5px;color:var(--ink-soft,#6b7280);line-height:1.55;margin:0 0 12px;max-width:72ch}
-.fwl-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin:26px 0 12px;min-width:0}
-.fwl-head .sec-title{margin:0}
-.fwl [role=tabpanel] > .fwl-head:first-child{margin-top:0}
-.fwl-status{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;min-width:0}
-.fwl-cmd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--surface-2,#f6f7f9);
-         border:1px solid var(--border,#e6e6e6);border-radius:7px;padding:2px 7px;overflow-wrap:anywhere}
-.fwl-list{display:grid;min-width:0}
-.fwl-li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;
-        padding:10px 0;border-top:1px solid var(--border-2,#eef0f4);font-size:13px;min-width:0}
-.fwl-li:first-child{border-top:0;padding-top:2px}
-.fwl-li > *{min-width:0;overflow-wrap:anywhere}
-.fwl-li small{display:block;color:var(--ink-soft,#6b7280);font-size:11.5px;margin-top:2px}
-.fwl-n{font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
-.fwl-empty{padding:14px 2px;color:var(--ink-soft,#6b7280);font-size:13px}
-.fwl-cc{display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:10px;align-items:center;
-        padding:8px 0;border-top:1px solid var(--border-2,#eef0f4);font-size:13px;min-width:0}
-.fwl-cc:first-child{border-top:0}
-.fwl-cc > *{min-width:0}
-.fwl-cc select{width:100%}
-.fwl-ccs{max-height:520px;overflow:auto;min-width:0}
-.fwl-in{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;min-width:0}
-.fwl-in .inp{flex:1 1 180px;min-width:0}
-.fwl .toolbar{min-width:0}
-.fwl .search{min-width:0;flex:1 1 220px}
-.fwl .pref .pl{min-width:0;overflow-wrap:anywhere}
-.fwl .pref .pl small{display:block;margin-top:2px}
-.fwl .tog{cursor:pointer}
-.fwl-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;min-width:0}
-.fwl-attr{font-size:11.5px;color:var(--ink-soft,#6b7280);margin-top:12px}
-.fwl-attr a{color:inherit}
-.fwl .kpi .val{font-variant-numeric:tabular-nums}
-.fwl-warn{border:1px dashed #c2831a;color:#9a6512;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-top:12px}
-.fwl-err{border:1px solid #b4443c;color:#b4443c;border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:14px}
-</style>
-
-<script>
 (function () {
   'use strict';
 
@@ -588,5 +513,3 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addNavEntry);
   else addNavEntry();
 })();
-</script>
-@endverbatim
