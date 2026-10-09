@@ -1,0 +1,243 @@
+[
+ {
+  "L": "en",
+  "w": 320,
+  "reassure": null,
+  "reassureText": null,
+  "formbox": {
+   "top": 338.1,
+   "bottom": 1977,
+   "left": 20,
+   "right": 300,
+   "w": 280
+  },
+  "formboxStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 0px",
+   "radius": "13px 13px 0px 0px",
+   "shadow": "none"
+  },
+  "mobileOrder": {
+   "top": 1977,
+   "bottom": 2350.2,
+   "left": 20,
+   "right": 300,
+   "w": 280
+  },
+  "mobileOrderStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "0px 0px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.22) 0px 12px 36px -24"
+  },
+  "gapFormToOrder": 0,
+  "lastMethodBottom": 1959,
+  "placeTop": 2209.9,
+  "placeIn": "mobile-order",
+  "METHOD_TO_PLACE": 250.9,
+  "trust": "SSL secure\n100% authentic",
+  "scrollWidth": 320,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+   "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+ },
+ {
+  "L": "en",
+  "w": 390,
+  "reassure": null,
+  "reassureText": null,
+  "formbox": {
+   "top": 339.1,
+   "bottom": 1796.7,
+   "left": 20,
+   "right": 370,
+   "w": 350
+  },
+  "formboxStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 0px",
+   "radius": "13px 13px 0px 0px",
+   "shadow": "none"
+  },
+  "mobileOrder": {
+   "top": 1796.7,
+   "bottom": 2170,
+   "left": 20,
+   "right": 370,
+   "w": 350
+  },
+  "mobileOrderStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "0px 0px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.22) 0px 12px 36px -24"
+  },
+  "gapFormToOrder": 0,
+  "lastMethodBottom": 1778.7,
+  "placeTop": 2029.6,
+  "placeIn": "mobile-order",
+  "METHOD_TO_PLACE": 250.9,
+  "trust": "SSL secure\n100% authentic",
+  "scrollWidth": 390,
+  "errors": [
+   "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+ },
+ {
+  "L": "en",
+  "w": 1280,
+  "reassure": null,
+  "reassureText": null,
+  "formbox": {
+   "top": 282.5,
+   "bottom": 1566,
+   "left": 140,
+   "right": 734,
+   "w": 594
+  },
+  "formboxStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "13px 13px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.22) 0px 12px 36px -24"
+  },
+  "mobileOrder": null,
+  "mobileOrderStyle": {
+   "bg": "rgba(0, 0, 0, 0)",
+   "border": "0px rgb(42, 34, 40) / b 0px",
+   "radius": "0px 0px 0px 0px",
+   "shadow": "none"
+  },
+  "gapFormToOrder": null,
+  "lastMethodBottom": 1547,
+  "placeTop": 302,
+  "placeIn": "summary",
+  "METHOD_TO_PLACE": -1245,
+  "trust": "\n         SSL secure\n                     100% authentic\n            ",
+  "scrollWidth": 1280,
+  "errors": [
+   "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+ },
+ {
+  "L": "ar",
+  "w": 320,
+  "reassure": null,
+  "reassureText": null,
+  "formbox": {
+   "top": 339.1,
+   "bottom": 1995.4,
+   "left": 20,
+   "right": 300,
+   "w": 280
+  },
+  "formboxStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 0px",
+   "radius": "13px 13px 0px 0px",
+   "shadow": "none"
+  },
+  "mobileOrder": {
+   "top": 1995.4,
+   "bottom": 2378.6,
+   "left": 20,
+   "right": 300,
+   "w": 280
+  },
+  "mobileOrderStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "0px 0px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.22) 0px 12px 36px -24"
+  },
+  "gapFormToOrder": 0,
+  "lastMethodBottom": 1977.4,
+  "placeTop": 2228.3,
+  "placeIn": "mobile-order",
+  "METHOD_TO_PLACE": 250.9,
+  "trust": "محمي بـ SSL\n100% authentic",
+  "scrollWidth": 320,
+  "errors": [
+   "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+ },
+ {
+  "L": "ar",
+  "w": 390,
+  "reassure": null,
+  "reassureText": null,
+  "formbox": {
+   "top": 339.1,
+   "bottom": 1796.7,
+   "left": 20,
+   "right": 370,
+   "w": 350
+  },
+  "formboxStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 0px",
+   "radius": "13px 13px 0px 0px",
+   "shadow": "none"
+  },
+  "mobileOrder": {
+   "top": 1796.7,
+   "bottom": 2180,
+   "left": 20,
+   "right": 370,
+   "w": 350
+  },
+  "mobileOrderStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "0px 0px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.22) 0px 12px 36px -24"
+  },
+  "gapFormToOrder": 0,
+  "lastMethodBottom": 1778.7,
+  "placeTop": 2029.6,
+  "placeIn": "mobile-order",
+  "METHOD_TO_PLACE": 250.9,
+  "trust": "محمي بـ SSL\n100% authentic",
+  "scrollWidth": 390,
+  "errors": [
+   "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+ },
+ {
+  "L": "ar",
+  "w": 1280,
+  "reassure": null,
+  "reassureText": null,
+  "formbox": {
+   "top": 282.5,
+   "bottom": 1566,
+   "left": 546,
+   "right": 1140,
+   "w": 594
+  },
+  "formboxStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "13px 13px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.22) 0px 12px 36px -24"
+  },
+  "mobileOrder": null,
+  "mobileOrderStyle": {
+   "bg": "rgba(0, 0, 0, 0)",
+   "border": "0px rgb(42, 34, 40) / b 0px",
+   "radius": "0px 0px 0px 0px",
+   "shadow": "none"
+  },
+  "gapFormToOrder": null,
+  "lastMethodBottom": 1547,
+  "placeTop": 302,
+  "placeIn": "summary",
+  "METHOD_TO_PLACE": -1245,
+  "trust": "\n         محمي بـ SSL\n                     100% authentic\n            ",
+  "scrollWidth": 1280,
+  "errors": [
+   "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+ }
+]

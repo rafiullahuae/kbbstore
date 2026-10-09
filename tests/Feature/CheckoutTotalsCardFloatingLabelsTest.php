@@ -411,6 +411,11 @@ it('renders the checkout byte for byte as before this lane with both switches of
         // both sides; CheckoutQk8Test and CheckoutCouponLineTest pin it.
         $before = (string) preg_replace('#                <div class="co-titlebar">\n.*?\n                </div>\n\n#s', '', $before, 1);
         $after = (string) preg_replace('#            <div class="co-titlebar">\n.*?\n            </div>\n\n#s', '', $after, 1);
+        // Lane QK9 (later) takes the reviews & authenticity card off the
+        // checkout, as the owner asked ("remove the rating row"), behind
+        // Trust & reviews -> its first switch: set aside on the before side;
+        // CheckoutQk9Test pins it off by default and back when switched on.
+        $before = (string) preg_replace('#<div class="kbb-reassure">\n.*?\n    </div>\n#s', '', $before, 1);
         $overlay = '#<!--kbb-placing-->.*?<!--/kbb-placing-->#s';
         $before = (string) preg_replace($overlay, '', $before, 1);
         $after = (string) preg_replace($overlay, '', $after, 1);

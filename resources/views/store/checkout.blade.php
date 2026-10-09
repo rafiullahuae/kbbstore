@@ -313,7 +313,7 @@
                         <div id="payment" class="woocommerce-checkout-payment">@include('partials.checkout.payment-methods', ['selectedMethod' => old('payment_method')])</div>
                     </div>
 
-                    @include('partials.checkout.reassurance')                </div>
+                    {{-- Lane QK9: the reviews & authenticity card, OFF as the owner asked (Appearance -> Checkout page -> Trust & reviews -> first switch). --}}@if ($kbbCoPage->get('trust_card'))@include('partials.checkout.reassurance')@endif                </div>
             </div>
 
             <!-- RIGHT summary -->
