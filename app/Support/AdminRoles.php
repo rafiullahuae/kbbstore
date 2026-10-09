@@ -196,6 +196,7 @@ final class AdminRoles
             'footer.preview' => 'Footer previews',
             'spotted.manage' => '#KBeautyBliss Spotted',
             'spotted.instagram' => '#KBeautyBliss Spotted — pick posts from Instagram',
+            'igembeds.manage' => 'Instagram embeds — paste post and reel addresses',
             'sitelayout.manage' => 'Site width and columns',
             'pagewash.manage' => 'Page background',
             'wabutton.manage' => 'WhatsApp button',

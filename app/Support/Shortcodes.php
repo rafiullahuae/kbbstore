@@ -31,6 +31,7 @@ use Illuminate\Support\Facades\Cache;
  *   [kbb_videos section="glass-skin"]                  a shoppable video rail
  *   [kbb_instagram]                                    our own Instagram grid
  *   [kbb_instagram layout="rail" limit="6"]
+ *   [kbb_instagram_embeds]                             pasted Instagram posts (Lane IGE)
  *
  * Rendered server-side, so the output is crawlable and needs no JavaScript.
  */
@@ -129,11 +130,56 @@ final class Shortcodes
          * 'instagram.section' finds this file and a grep for 'section.blade.php'
          * finds nothing at all.
          */
-        return (string) preg_replace_callback(
+        $content = (string) preg_replace_callback(
             '/\[kbb_instagram\b([^\]]*)\]/',
             fn ($m) => self::instagram(self::attributes($m[1])),
             $content
         );
+
+        /*
+         * (Lane IGE) Pasted Instagram posts and reels, drawn with Instagram's
+         * own embed. `\b` after "instagram" in the arm above does NOT match
+         * before "_embeds" (an underscore is a word character), so that arm
+         * leaves this tag alone and the two cannot claim each other's text.
+         * Last, for the same reason as the arms above: a block may contain it,
+         * and its own content is settings, never operator markup.
+         */
+        return (string) preg_replace_callback(
+            '/\[kbb_instagram_embeds\b([^\]]*)\]/',
+            fn ($m) => self::instagramEmbeds(self::attributes($m[1])),
+            $content
+        );
+    }
+
+    /**
+     * [kbb_instagram_embeds] -- the owner's pasted Instagram posts.  (Lane IGE)
+     *
+     *   [kbb_instagram_embeds]
+     *   [kbb_instagram_embeds layout="slider" style="ring" max="4" title="Our reels"]
+     *
+     * Content → Instagram embeds holds the list and the look; an attribute
+     * overrides one option for this placement, and InstagramEmbeds::section()
+     * takes it only if it is one of that option's own keys. '' when the section
+     * is off or nothing is switched on, so an empty list leaves no wrapper.
+     *
+     * The stylesheet is printed by the FIRST section on a page only; see
+     * self::instagram() for why that is a container binding and not @once.
+     */
+    private static function instagramEmbeds(array $a): string
+    {
+        $section = app(\App\Services\InstagramEmbeds::class)->section(array_map('strval', $a));
+
+        if ($section === null) {
+            return '';
+        }
+
+        $first = ! app()->bound('kbb.igembed.assets');
+
+        if ($first) {
+            app()->instance('kbb.igembed.assets', true);
+        }
+
+        return view('igembed.section', ['s' => $section, 'withAssets' => $first])->render();
     }
 
     /**

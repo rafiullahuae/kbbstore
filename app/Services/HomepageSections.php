@@ -160,6 +160,15 @@ class HomepageSections
          */
         'videos'      => ['Video rail', 'A shoppable video rail. Pick which section in Content → Shoppable video → Appearance → Homepage; nothing shows until you do.', false, null],
         'instagram'   => ['Instagram Profile', 'Recent posts and reels from our own Instagram, with the profile box. Connect it in Content → Instagram; nothing shows until you do.', false, null],
+        /*
+         * (Lane IGE) Pasted Instagram posts and reels, drawn with Instagram's own
+         * embed — no API, no login. Directly after the API-based Instagram
+         * Profile row it replaces in the owner's plan, by the same insertion
+         * argument the two rows above make: a saved order keeps every other row
+         * where it is. It renders NO BYTES until a post is pasted and switched
+         * on, so the switch ships ON (the owner asked for the system).
+         */
+        'igembeds'    => ['Instagram embeds', 'Instagram posts and reels you paste by address, shown with Instagram’s own player. Add them in Content → Instagram embeds; nothing shows until you do.', false, null],
         'trending'    => ['Trending', 'What is moving this week: 8 on a laptop, 6 on a phone. Words, products and spacing: Homepage content → Trending.', false, null],
         'bestsellers' => ['Best sellers', 'Ranked by sales this month.', true, GridSkins::DEFAULT],
         'flash'       => ['Flash sale', 'Discounted, with stock remaining.', true, GridSkins::DEFAULT],

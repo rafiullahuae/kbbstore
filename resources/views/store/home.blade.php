@@ -827,6 +827,17 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
 <section class="sec {{ $sections->classFor('instagram') }}"><div class="wrap">{!! $igSection !!}</div></section>
 @endif
 @endunless
+{{-- INSTAGRAM EMBEDS — Lane IGE. Posts and reels the owner pasted by address,
+     drawn with Instagram's own embed (Content → Instagram embeds). The shape is
+     the Instagram Profile block's above, for its three reasons: the <section> is
+     inside the @if so an empty list emits not one byte, the @unless makes the
+     row's Desktop/Mobile switches work, and the directive is glued to the end of
+     this comment so no newline survives. --}}@unless ($sections->hidden('igembeds'))
+@php $igEmbeds = \App\Support\Shortcodes::render('[kbb_instagram_embeds]'); @endphp
+@if ($igEmbeds !== '')
+<section class="sec {{ $sections->classFor('igembeds') }}"><div class="wrap">{!! $igEmbeds !!}</div></section>
+@endif
+@endunless
 {{-- TRENDING, SECTION 5 OF ROW 55 (Lane HA). What "trending" counts is
      GridSections::trendingScores(); the controls are Appearance → Homepage
      content → Trending. --}}@unless ($sections->hidden('trending'))

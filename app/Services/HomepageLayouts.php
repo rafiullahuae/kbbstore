@@ -71,7 +71,7 @@ class HomepageLayouts
                  */
                 // Lane HC: the two phone-only strips, at their REGISTRY positions.
                 'topstrip', 'cards_banner', 'countries', 'hero', 'delivery', 'ticker', 'categories', 'bundles', 'bestselling', 'recommended',
-                'routine', 'quiz', 'brands', 'spotted', 'videos', 'instagram', 'trending', 'bestsellers', 'flash',
+                'routine', 'quiz', 'brands', 'spotted', 'videos', 'instagram', 'igembeds', 'trending', 'bestsellers', 'flash',
                 'blog', 'under54', 'feature', 'about', 'reviews', 'trust', 'newsletter',
                 // Row 55 (Lane HA): the four new sections, at their REGISTRY
                 // positions, for the reason above.
@@ -115,7 +115,7 @@ class HomepageLayouts
             'sections' => [
                 'hero', 'ticker', 'delivery', 'cards_banner', 'flash', 'under54', 'bundles', 'categories',
                 'bestselling', 'trending', 'recommended', 'quiz', 'reviews', 'trust',
-                'brands', 'routine', 'spotted', 'videos', 'instagram', 'newsletter', 'feature', 'about', 'blog',
+                'brands', 'routine', 'spotted', 'videos', 'instagram', 'igembeds', 'newsletter', 'feature', 'about', 'blog',
                 'bestsellers',
             ],
             'skins' => ['flash' => 'ribbon', 'bundles' => 'pricetag', 'bestsellers' => 'bold', 'recommended' => 'actions'],
@@ -127,7 +127,7 @@ class HomepageLayouts
             'suits' => 'Building trust with visitors who are researching rather than buying today.',
             'sections' => [
                 'hero', 'delivery', 'cards_banner', 'routine', 'quiz', 'categories', 'bestselling', 'trending',
-                'blog', 'brands', 'bundles', 'reviews', 'spotted', 'videos', 'instagram', 'feature', 'about',
+                'blog', 'brands', 'bundles', 'reviews', 'spotted', 'videos', 'instagram', 'igembeds', 'feature', 'about',
                 'recommended', 'flash', 'under54', 'trust', 'newsletter', 'ticker',
                 'bestsellers',
             ],
@@ -141,7 +141,7 @@ class HomepageLayouts
             'sections' => [
                 'hero', 'categories', 'bestselling', 'trending', 'routine', 'brands',
                 'reviews', 'feature', 'about', 'trust', 'newsletter',
-                'delivery', 'bundles', 'recommended', 'quiz', 'spotted', 'videos', 'instagram',
+                'delivery', 'bundles', 'recommended', 'quiz', 'spotted', 'videos', 'instagram', 'igembeds',
                 'flash', 'under54', 'blog', 'ticker', 'cards_banner',
                 'bestsellers',
             ],
@@ -170,7 +170,7 @@ class HomepageLayouts
              * the reason the note above gives — a section missing from a preset
              * is a section whose order that preset does not decide.
              */
-            'off' => ['ticker', 'flash', 'spotted', 'videos', 'instagram', 'bundles', 'recommended', 'cards_banner',
+            'off' => ['ticker', 'flash', 'spotted', 'videos', 'instagram', 'igembeds', 'bundles', 'recommended', 'cards_banner',
                 // Lane PF: see the note above Conversion.
                 'routine', 'quiz', 'bestsellers', 'under54'],
         ],

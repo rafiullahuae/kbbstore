@@ -1,0 +1,278 @@
+{
+ "measures": [
+  {
+   "label": "home+section near",
+   "url": "/",
+   "w": 390,
+   "atLoad": {
+    "requests": 18,
+    "instagram": 0
+   },
+   "lcp": 348,
+   "cls": 0,
+   "scrollW": 390,
+   "innerW": 390,
+   "sectionTop": 3590,
+   "docH": 12651,
+   "spec": 1,
+   "boxes": [
+    685,
+    877
+   ],
+   "afterScroll": {
+    "instagram": 4,
+    "cls": 0,
+    "boxesSame": true
+   },
+   "errors": []
+  },
+  {
+   "label": "home+section near",
+   "url": "/",
+   "w": 1280,
+   "atLoad": {
+    "requests": 19,
+    "instagram": 0
+   },
+   "lcp": 416,
+   "cls": 0,
+   "scrollW": 1280,
+   "innerW": 1280,
+   "sectionTop": 4000,
+   "docH": 9390,
+   "spec": 1,
+   "boxes": [
+    713,
+    917
+   ],
+   "afterScroll": {
+    "instagram": 6,
+    "cls": 0,
+    "boxesSame": true
+   },
+   "errors": []
+  },
+  {
+   "label": "home+section tap",
+   "url": "/",
+   "w": 390,
+   "atLoad": {
+    "requests": 18,
+    "instagram": 0
+   },
+   "lcp": 348,
+   "cls": 0,
+   "scrollW": 390,
+   "innerW": 390,
+   "sectionTop": 3590,
+   "docH": 12651,
+   "spec": 1,
+   "boxes": [
+    685,
+    877
+   ],
+   "afterScroll": {
+    "instagram": 0,
+    "cls": 0,
+    "boxesSame": true
+   },
+   "errors": []
+  },
+  {
+   "label": "home+section tap",
+   "url": "/",
+   "w": 1280,
+   "atLoad": {
+    "requests": 19,
+    "instagram": 0
+   },
+   "lcp": 512,
+   "cls": 0,
+   "scrollW": 1280,
+   "innerW": 1280,
+   "sectionTop": 4000,
+   "docH": 9390,
+   "spec": 1,
+   "boxes": [
+    713,
+    917
+   ],
+   "afterScroll": {
+    "instagram": 0,
+    "cls": 0,
+    "boxesSame": true
+   },
+   "errors": []
+  },
+  {
+   "label": "delivery page shortcode (near, near top)",
+   "url": "/delivery/",
+   "w": 390,
+   "atLoad": {
+    "requests": 12,
+    "instagram": 4
+   },
+   "lcp": 280,
+   "cls": 0,
+   "scrollW": 390,
+   "innerW": 390,
+   "sectionTop": 2177,
+   "docH": 4008,
+   "spec": 1,
+   "boxes": [
+    597,
+    752
+   ],
+   "afterScroll": {
+    "instagram": 4,
+    "cls": 0,
+    "boxesSame": true
+   },
+   "errors": []
+  },
+  {
+   "label": "delivery page shortcode (near, near top)",
+   "url": "/delivery/",
+   "w": 1280,
+   "atLoad": {
+    "requests": 12,
+    "instagram": 4
+   },
+   "lcp": 272,
+   "cls": 0,
+   "scrollW": 1280,
+   "innerW": 1280,
+   "sectionTop": 1483,
+   "docH": 2909,
+   "spec": 1,
+   "boxes": [
+    500,
+    614
+   ],
+   "afterScroll": {
+    "instagram": 4,
+    "cls": 0,
+    "boxesSame": true
+   },
+   "errors": []
+  },
+  {
+   "label": "home without section",
+   "url": "/",
+   "w": 390,
+   "atLoad": {
+    "requests": 18,
+    "instagram": 0
+   },
+   "lcp": 340,
+   "cls": 0,
+   "scrollW": 390,
+   "innerW": 390,
+   "sectionTop": null,
+   "docH": 7491,
+   "spec": 1,
+   "boxes": [],
+   "afterScroll": null,
+   "errors": []
+  },
+  {
+   "label": "home without section",
+   "url": "/",
+   "w": 1280,
+   "atLoad": {
+    "requests": 19,
+    "instagram": 0
+   },
+   "lcp": 388,
+   "cls": 0,
+   "scrollW": 1280,
+   "innerW": 1280,
+   "sectionTop": null,
+   "docH": 7234,
+   "spec": 1,
+   "boxes": [],
+   "afterScroll": null,
+   "errors": []
+  }
+ ],
+ "clicks": [
+  {
+   "w": 390,
+   "viewOnInstagramHit": [
+    true,
+    true,
+    true
+   ],
+   "popup": "chrome-error://chromewebdata/",
+   "productAfterSection": {
+    "href": "/product/heartleaf-77-soothing-toner-250ml/",
+    "hit": true
+   },
+   "navigatedTo": "/product/heartleaf-77-soothing-toner-250ml/"
+  },
+  {
+   "w": 1280,
+   "viewOnInstagramHit": [
+    true,
+    true,
+    true
+   ],
+   "popup": "chrome-error://chromewebdata/",
+   "productAfterSection": {
+    "href": "/product/heartleaf-77-soothing-toner-250ml/",
+    "hit": true
+   },
+   "navigatedTo": "/product/heartleaf-77-soothing-toner-250ml/"
+  }
+ ],
+ "admin1280": {
+  "nav": {
+   "rows": 1,
+   "label": "Instagram embeds",
+   "group": "Content"
+  },
+  "title": "Instagram embeds",
+  "crumb": "Content",
+  "scrollW": 1280,
+  "errors": []
+ },
+ "admin390": {
+  "nav": {
+   "rows": 1,
+   "label": "Instagram embeds",
+   "group": "Content"
+  },
+  "title": "Instagram embeds",
+  "crumb": "Content",
+  "scrollW": 390,
+  "errors": []
+ },
+ "lcpWith": {
+  "390": {
+   "median": 316,
+   "els": [
+    "A.sl"
+   ]
+  },
+  "1280": {
+   "median": 508,
+   "els": [
+    "A.sl"
+   ]
+  }
+ },
+ "lcpWithout": {
+  "390": {
+   "median": 376,
+   "els": [
+    "A.sl"
+   ]
+  },
+  "1280": {
+   "median": 512,
+   "els": [
+    "A.sl"
+   ]
+  }
+ }
+}

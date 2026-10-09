@@ -477,6 +477,12 @@ final class AdminCapabilities
         // so an editor can pick posts but cannot spend the Meta rate limit.
         'spotted.instagram' => ['owner', 'manager', 'editor'],
 
+        // Content → Instagram embeds (Lane IGE, routes/ig-embeds-admin.php):
+        // the pasted post and reel addresses drawn with Instagram's own embed,
+        // and the section's look. Storefront content, so the same three roles
+        // as Spotted; its own capability so narrowing it narrows nothing else.
+        'igembeds.manage' => ['owner', 'manager', 'editor'],
+
         // The site width, the side gutter and the product column count: one
         // screen, nine numbers, and every one of them printed into a stylesheet
         // on every page of the shop. Storefront appearance again, and its own
@@ -1782,6 +1788,10 @@ final class AdminCapabilities
         ['*', 'admin-api/spotted/instagram', 'spotted.instagram'],
         ['*', 'admin-api/spotted', 'spotted.manage'],
         ['*', 'admin-api/spotted/**', 'spotted.manage'],
+        // Content → Instagram embeds (Lane IGE). Both lines: '/**' does not
+        // match the bare path, and the screen's read IS the bare path.
+        ['*', 'admin-api/ig-embeds', 'igembeds.manage'],
+        ['*', 'admin-api/ig-embeds/**', 'igembeds.manage'],
         // One line and no '/**' sibling: this screen has no sub-endpoint.
         ['*', 'admin-api/site-layout', 'sitelayout.manage'],
         // One line and no '/**' sibling: this screen has no sub-endpoint either.

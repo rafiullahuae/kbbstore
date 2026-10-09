@@ -2156,6 +2156,9 @@ final class InterfaceStrings
             // The tile's own label, used when the caption is empty so the link is
             // never announced as just a URL.
             'instagram.open_post' => 'Open this post on Instagram',
+            // (Lane IGE) The button on an Instagram embed set to load on tap:
+            // the frame loads in place, it does not leave the shop.
+            'igembed.load' => 'Show the post',
         ];
     }
 

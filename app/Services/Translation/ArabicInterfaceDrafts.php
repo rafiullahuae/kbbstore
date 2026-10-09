@@ -1753,6 +1753,7 @@ final class ArabicInterfaceDrafts
             'store.instagram.follow' => 'متابعة',
             'store.instagram.post_alt' => 'منشور إنستغرام',
             'store.instagram.open_post' => 'افتح هذا المنشور على إنستغرام',
+            'store.igembed.load' => 'اعرض المنشور',
         ];
     }
 
