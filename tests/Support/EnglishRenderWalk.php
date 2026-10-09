@@ -3629,6 +3629,16 @@ KBB_BH_CSS;
              * social icons after the page's text. Each at most once; the
              * page's own words between them are still compared byte for byte.
              * ContactPageTest pins what each one draws.
+             *
+             * Lane CT2 changed what is INSIDE the first two and nothing
+             * around them, so these rules still match once each: the owner,
+             * 9 October, "i have added the instagram link, but not showing
+             * the third block. please add manually and give such blocks edits
+             * option directly in contact us page edits." The Instagram card
+             * now falls back to the shop's known profile, the cards follow
+             * the page editor's order and words, and the phone grid keys on
+             * the count instead of [data-ct=wa]. ContactCardsEditorTest pins
+             * those.
              */
             'the contact page stylesheet, inline in its head (Lane CT)' => [
                 'pattern' => '#<style>\n\.ctc\{.*?</style>\n#s',

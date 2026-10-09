@@ -7,6 +7,15 @@
     the WhatsApp tint is the header support chip's (#E8F7EE / #1F9D55). Grid
     and clamp(), nothing measured by script.
 
+    THE PHONE GRID, BY COUNT AND NOT BY CARD (Lane CT2). Two columns; when
+    the number of cards is odd the FIRST one spans the row (the
+    :first-child:nth-last-child(odd) selector — CSS, no script, no class).
+    Three cards in the shipped order is exactly the grid the owner approved
+    (WhatsApp across the top, Instagram and Email side by side); four or six
+    are pairs; five is one across and two pairs. Desktop stays three a row,
+    so four or more wrap into rows of three. It used to key on
+    [data-ct=wa], which stopped being right once the order became his.
+
     SHORT, because the owner asked: "it's very long, i need short page ... keep
     whatsapp section in one row, and down instagram and email in one row, two
     columns. for desktop keep in one row all three". Compact cards (phone:
@@ -52,17 +61,17 @@
 @media (max-width:599px){
 .ctc-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .ctc-card{padding:12px;gap:0 10px;grid-template-columns:34px minmax(0,1fr);border-radius:16px}
-.ctc-card[data-ct=wa]{grid-column:1/-1}
+.ctc-card:first-child:nth-last-child(odd){grid-column:1/-1}
 .ctc-ic{width:34px;height:34px;border-radius:10px;grid-row:1/3}
 .ctc-ic svg{width:19px;height:19px}
 .ctc-card h3{font-size:15px}
 .ctc-note{display:none}
-.ctc-card:not([data-ct=wa]) .ctc-ic{grid-row:1}
-.ctc-card:not([data-ct=wa]) h3{align-self:center}
-.ctc-card:not([data-ct=wa]) .ctc-val{grid-column:1/-1;margin-top:8px}
+.ctc-card:not(:first-child:nth-last-child(odd)) .ctc-ic{grid-row:1}
+.ctc-card:not(:first-child:nth-last-child(odd)) h3{align-self:center}
+.ctc-card:not(:first-child:nth-last-child(odd)) .ctc-val{grid-column:1/-1;margin-top:8px}
 .ctc-val{font-size:12.5px}
 .ctc-go{margin-top:10px;font-size:13.5px}
-.ctc-card:not([data-ct=wa]) .ctc-go::after{content:none}
+.ctc-card:not(:first-child:nth-last-child(odd)) .ctc-go::after{content:none}
 .policy>.ctc-top{margin-bottom:16px}
 }
 .kbb-home .policy-body{font-size:14.5px;line-height:1.6}
