@@ -955,7 +955,6 @@ final class InterfaceStrings
             'page.last_updated' => 'Last updated :date',
             // The contact page's cards, icons and inquiry form (Lane CT).
             'contact.reach_heading' => 'Get in touch',
-            'contact.reach_intro' => 'Choose the way that suits you best.',
             'contact.wa_title' => 'WhatsApp',
             'contact.wa_note' => 'The fastest way to reach us',
             'contact.wa_action' => 'Chat on WhatsApp',
@@ -978,8 +977,8 @@ final class InterfaceStrings
             'contact.label_phone' => 'WhatsApp number',
             'contact.optional' => 'optional',
             'contact.label_topic' => 'Topic',
-            'contact.topic_choose' => 'Choose a topic',
             'contact.label_message' => 'Message',
+            'contact.message_placeholder' => 'Tell us how we can help',
             'contact.submit' => 'Send message',
             'contact.privacy' => 'We use your details only to answer this message.',
             'contact.hp_label' => 'Leave this field empty',

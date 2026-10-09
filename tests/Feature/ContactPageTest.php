@@ -174,7 +174,7 @@ it('draws the footer’s own social profiles and icons, and none it has no addre
     ctSet('social_youtube', '');
     ctSet('social_tiktok', 'javascript:alert(1)');
     $html = ctContact();
-    preg_match('#<div class="ctc-soc">(.*?)</div>#s', $html, $m);
+    preg_match('#<div class="ctc-soc"[^>]*>(.*?)</div>#s', $html, $m);
 
     expect($m[1] ?? '')->toContain('aria-label="Instagram"')
         ->and($m[1])->toContain('aria-label="Facebook"')
@@ -194,7 +194,7 @@ it('shows the opening hours only when the business screen holds valid ones', fun
     expect(ctContact())->toContain('<li>Mon-Sat 10:00-22:00</li>');
 
     ctSet('store_hours', 'whenever we feel like it');
-    expect(ctContact())->not->toContain('<ul class="ctc-hours">');
+    expect(ctContact())->not->toContain('<ul class="ctc-hours"');
 });
 
 it('changes no other page: no card, no form, no style and no script', function () {
@@ -278,8 +278,9 @@ it('refuses each invalid field with its own message beside it, and stores nothin
     // Drawn: the first field in error carries autofocus and is described by its message.
     $html = (string) $this->followingRedirects()->post('/contact-us/send', ctPost(['email' => 'nope']))->getContent();
     expect($html)->toContain('id="ctc-email" name="email"')
-        ->and($html)->toMatch('#<input type="email" id="ctc-email"[^>]*aria-invalid="true" aria-describedby="ctc-email-err" autofocus>#')
-        ->and($html)->toContain('<p class="ctc-err" id="ctc-email-err">'.e(__('store.contact.err_email')).'</p>')
+        ->and($html)->toMatch('#<input type="email" class="input-text" id="ctc-email"[^>]*aria-invalid="true" aria-describedby="ctc-email-err" autofocus>#')
+        ->and($html)->toContain('<p class="form-row kbb-invalid"><span class="woocommerce-input-wrapper fld kbb-fl ico">')
+        ->and($html)->toContain('<span class="ctc-err" id="ctc-email-err">'.e(__('store.contact.err_email')).'</span>')
         ->and($html)->toContain('value="Aisha Rahman"');
 });
 
@@ -384,7 +385,7 @@ it('never prints a visitor’s text unescaped: not on the page, not in the email
     foreach (['contact-hub-cards', 'contact-hub-form'] as $view) {
         preg_match_all('/\{!!\s*(.*?)\s*!!\}/', (string) file_get_contents(resource_path("views/store/partials/{$view}.blade.php")), $m);
         foreach ($m[1] as $expr) {
-            expect($expr)->toBeIn(["\$ctcCard['icon']", "\$ctcSoc['icon']", "\$ctcAttrs('name')", "\$ctcAttrs('email')", "\$ctcAttrs('phone')", "\$ctcAttrs('topic')", "\$ctcAttrs('message')"]);
+            expect($expr)->toBeIn(["\$ctcCard['icon']", "\$ctcSoc['icon']", "\$hub['waIcon']", "\$ctcAttrs('name')", "\$ctcAttrs('email')", "\$ctcAttrs('phone')", "\$ctcAttrs('topic')", "\$ctcAttrs('message')"]);
         }
     }
     expect((string) file_get_contents(resource_path('views/admin/mail/contact-inquiry.blade.php')))->not->toContain('{!!');
@@ -566,4 +567,57 @@ it('replaces the seeded contact wording, keeps the old one as a hidden draft, an
     DB::table('pages')->where('slug', 'contact-us')->update(['content' => '<p>His own words.</p>']);
     $migration->down();
     expect($page()->content)->toBe('<p>His own words.</p>');
+});
+
+it('hides the floating WhatsApp button on the contact page only', function () {
+    /*
+     * The page's WhatsApp card makes the float redundant here, and at 390px
+     * its chip and bubble covered the centre of the card buttons and Send.
+     * MUTATION: delete `#kbbWa{display:none!important}` from
+     * contact-hub-head -> the first expectation is red; move it into kbb.css
+     * or the layout -> the home and product expectations are red.
+     */
+    $rule = '#kbbWa{display:none!important}';
+
+    expect(ctContact())->toContain($rule);
+    ArabicShop::on();
+    expect(ctContact('/ar/contact-us/'))->toContain($rule);
+
+    $brand = \App\Models\Brand::create(['slug' => 'ct-float-brand', 'name' => 'CT Float Brand']);
+    $category = \App\Models\Category::create(['slug' => 'ct-float-cat', 'name' => 'CT Float Cat', 'path' => 'ct-float-cat', 'depth' => 0]);
+    $product = \App\Models\Product::create([
+        'slug' => 'ct-float-product', 'name' => 'CT Float Product', 'sku' => 'CTFLOAT1',
+        'brand_id' => $brand->id, 'category_id' => $category->id, 'type' => 'simple',
+        'status' => 'publish', 'is_visible' => true, 'price' => 4000, 'stock_status' => 'instock',
+    ]);
+    $product->categories()->syncWithoutDetaching([$category->id]);
+
+    foreach (['/', '/product/'.$product->slug, '/privacy-policy/'] as $path) {
+        ctForget();
+        $r = $this->get($path);
+        expect($r->getStatusCode())->toBe(200, $path);
+        expect((string) $r->getContent())->not->toContain('#kbbWa{display:none');
+    }
+});
+
+it('draws the form with the checkout’s floating-label fields and no visible “Get in touch” heading', function () {
+    /*
+     * The owner: "do the same as we have on the checkout page. along with
+     * inner place holder" and "remove the get in touch heading". MUTATION: put
+     * a field's <label> before its control -> `:placeholder-shown ~ label` can
+     * no longer lift it, red; print the cards' h2 again -> red.
+     */
+    $html = ctContact();
+
+    expect(substr_count($html, '<span class="woocommerce-input-wrapper fld kbb-fl ico"><span class="lead" aria-hidden="true">'))->toBe(5);
+    foreach (['name' => 'input', 'email' => 'input', 'phone' => 'input', 'topic' => 'select', 'message' => 'textarea'] as $field => $tag) {
+        expect($html)->toMatch('#<'.$tag.' [^>]*class="input-text" id="ctc-'.$field.'"[^>]*>.*?<label for="ctc-'.$field.'">#s');
+    }
+    // The checkout's own hints, shown inside the box once the label lifts.
+    expect($html)->toContain('placeholder="'.e(__('store.checkout.field_full_name_placeholder')).'"')
+        ->and($html)->toContain('placeholder="'.e(__('store.checkout.field_email_placeholder')).'"')
+        ->and($html)->toContain('.ctc-form .fld.kbb-fl :is(input,textarea):not(:focus)::placeholder{color:transparent}');
+
+    expect($html)->not->toContain('id="ctc-reach"')
+        ->and($html)->toContain('<section class="ctc ctc-top" aria-label="'.e(__('store.contact.reach_heading')).'">');
 });

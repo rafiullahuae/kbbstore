@@ -813,7 +813,6 @@ final class ArabicInterfaceDrafts
 
             // The contact page (Lane CT).
             'store.contact.reach_heading' => 'تواصلي معنا',
-            'store.contact.reach_intro' => 'اختاري الطريقة الأنسب لك.',
             'store.contact.wa_title' => 'واتساب',
             'store.contact.wa_note' => 'أسرع طريقة للتواصل معنا',
             'store.contact.wa_action' => 'تحدثي عبر واتساب',
@@ -836,8 +835,8 @@ final class ArabicInterfaceDrafts
             'store.contact.label_phone' => 'رقم واتساب',
             'store.contact.optional' => 'اختياري',
             'store.contact.label_topic' => 'الموضوع',
-            'store.contact.topic_choose' => 'اختاري موضوعًا',
             'store.contact.label_message' => 'الرسالة',
+            'store.contact.message_placeholder' => 'أخبرينا كيف يمكننا مساعدتك',
             'store.contact.submit' => 'إرسال الرسالة',
             'store.contact.privacy' => 'نستخدم بياناتك فقط للرد على هذه الرسالة.',
             'store.contact.hp_label' => 'اتركي هذا الحقل فارغًا',

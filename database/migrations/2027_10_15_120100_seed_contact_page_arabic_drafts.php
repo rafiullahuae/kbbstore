@@ -26,7 +26,6 @@ return new class extends Migration
     /** The keys this migration is for, so it cannot drift into seeding the whole file. */
     private const KEYS = [
         'store.contact.reach_heading',
-        'store.contact.reach_intro',
         'store.contact.wa_title',
         'store.contact.wa_note',
         'store.contact.wa_action',
@@ -49,8 +48,8 @@ return new class extends Migration
         'store.contact.label_phone',
         'store.contact.optional',
         'store.contact.label_topic',
-        'store.contact.topic_choose',
         'store.contact.label_message',
+        'store.contact.message_placeholder',
         'store.contact.submit',
         'store.contact.privacy',
         'store.contact.hp_label',

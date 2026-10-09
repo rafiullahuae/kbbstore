@@ -1,13 +1,24 @@
 {{--
     The contact page's inquiry form, social icons and opening hours (Lane CT).
 
+    THE FIELDS ARE THE CHECKOUT'S. The owner: "i don't like the form fields, do
+    the same as we have on the checkout page. along with inner place holder etc."
+    So each field is the checkout's floating-label markup, written out the way
+    its coupon field is: a .form-row, a .woocommerce-input-wrapper.fld.kbb-fl
+    with the icon at its start (partials/icon-*, the checkout's own), the
+    .input-text control with the checkout's hint as its placeholder, and the
+    real <label> AFTER the control, so `:placeholder-shown ~ label` lifts it
+    with no script. kbb-checkout.css does not load on content pages, so the few
+    rules that draw it are copied, scoped under .ctc-form, in
+    contact-hub-head. The label stays a real, visible label: nothing is
+    placeholder-only.
+
     Works with no script at all: a plain POST to /contact-us/send that redirects
     back to the page with a flash (no #fragment: one would make the browser
-    skip autofocus). The outcome is drawn from that flash:
-    the thank-you, or the errors beside their fields with the FIRST field in
-    error carrying `autofocus` — the browser moves focus there on load, so a
-    screen reader announces the field and its message (aria-describedby) with
-    no JavaScript. Every value is escaped; old() refills what was typed.
+    skip autofocus). The thank-you, or the errors beside their fields with the
+    FIRST field in error carrying `autofocus`, so a screen reader announces the
+    field and its message (aria-describedby). Every value is escaped; old()
+    refills what was typed.
 --}}
 @php
     $ctcForm = $hub['form'];
@@ -25,6 +36,7 @@
 
         return ' aria-invalid="true" aria-describedby="ctc-'.$field.'-err"'.($ctcFirst === $field ? ' autofocus' : '');
     };
+    $ctcRow = static fn (string $field, string $extra = ''): string => 'form-row'.$extra.($errors->has($field) ? ' kbb-invalid' : '');
 @endphp
 @if ($ctcForm !== null || $ctcSide)
 <div class="ctc ctc-low{{ $ctcForm !== null ? ' has-form' : '' }}{{ $ctcSide ? ' has-side' : '' }}">
@@ -44,66 +56,47 @@
             <input type="hidden" name="ts" value="{{ $ctcForm['stamp'] }}">
             <div class="ctc-hp" aria-hidden="true"><label for="ctc-website">{{ __('store.contact.hp_label') }}</label><input type="text" id="ctc-website" name="website" tabindex="-1" autocomplete="off"></div>
             <div class="ctc-grid">
-                <div class="ctc-f{{ $errors->has('name') ? ' is-bad' : '' }}">
-                    <label for="ctc-name">{{ __('store.contact.label_name') }}</label>
-                    <input type="text" id="ctc-name" name="name" maxlength="{{ $ctcForm['max']['name'] }}" required autocomplete="name" value="{{ old('name') }}"{!! $ctcAttrs('name') !!}>
+                <p class="{{ $ctcRow('name') }}"><span class="woocommerce-input-wrapper fld kbb-fl ico"><span class="lead" aria-hidden="true">@include('partials.icon-user')</span><input type="text" class="input-text" id="ctc-name" name="name" maxlength="{{ $ctcForm['max']['name'] }}" required aria-required="true" autocomplete="name" placeholder="{{ __('store.checkout.field_full_name_placeholder') }}" value="{{ old('name') }}"{!! $ctcAttrs('name') !!}><label for="ctc-name">{{ __('store.contact.label_name') }}&nbsp;<span class="required" aria-hidden="true">*</span></label></span>
 @error('name')
-                    <p class="ctc-err" id="ctc-name-err">{{ $message }}</p>
+                    <span class="ctc-err" id="ctc-name-err">{{ $message }}</span>
 @enderror
-                </div>
-                <div class="ctc-f{{ $errors->has('email') ? ' is-bad' : '' }}">
-                    <label for="ctc-email">{{ __('store.contact.label_email') }}</label>
-                    <input type="email" id="ctc-email" name="email" maxlength="{{ $ctcForm['max']['email'] }}" required autocomplete="email" inputmode="email" dir="ltr" value="{{ old('email') }}"{!! $ctcAttrs('email') !!}>
+                </p>
+                <p class="{{ $ctcRow('email') }}"><span class="woocommerce-input-wrapper fld kbb-fl ico"><span class="lead" aria-hidden="true">@include('partials.icon-mail')</span><input type="email" class="input-text" id="ctc-email" name="email" maxlength="{{ $ctcForm['max']['email'] }}" required aria-required="true" autocomplete="email" inputmode="email" dir="ltr" placeholder="{{ __('store.checkout.field_email_placeholder') }}" value="{{ old('email') }}"{!! $ctcAttrs('email') !!}><label for="ctc-email">{{ __('store.contact.label_email') }}&nbsp;<span class="required" aria-hidden="true">*</span></label></span>
 @error('email')
-                    <p class="ctc-err" id="ctc-email-err">{{ $message }}</p>
+                    <span class="ctc-err" id="ctc-email-err">{{ $message }}</span>
 @enderror
-                </div>
-                <div class="ctc-f{{ $errors->has('phone') ? ' is-bad' : '' }}">
-                    <label for="ctc-phone">{{ __('store.contact.label_phone') }} <small>({{ __('store.contact.optional') }})</small></label>
-                    <input type="tel" id="ctc-phone" name="phone" maxlength="{{ $ctcForm['max']['phone'] }}" autocomplete="tel" inputmode="tel" dir="ltr" value="{{ old('phone') }}"{!! $ctcAttrs('phone') !!}>
+                </p>
+                <p class="{{ $ctcRow('phone') }}"><span class="woocommerce-input-wrapper fld kbb-fl ico"><span class="lead" aria-hidden="true">{!! $hub['waIcon'] !!}</span><input type="tel" class="input-text" id="ctc-phone" name="phone" maxlength="{{ $ctcForm['max']['phone'] }}" autocomplete="tel" inputmode="tel" dir="ltr" placeholder="{{ __('store.checkout.field_phone_placeholder') }}" value="{{ old('phone') }}"{!! $ctcAttrs('phone') !!}><label for="ctc-phone">{{ __('store.contact.label_phone') }}&nbsp;<span class="optional">({{ __('store.contact.optional') }})</span></label></span>
 @error('phone')
-                    <p class="ctc-err" id="ctc-phone-err">{{ $message }}</p>
+                    <span class="ctc-err" id="ctc-phone-err">{{ $message }}</span>
 @enderror
-                </div>
-                <div class="ctc-f{{ $errors->has('topic') ? ' is-bad' : '' }}">
-                    <label for="ctc-topic">{{ __('store.contact.label_topic') }}</label>
-                    <select id="ctc-topic" name="topic" required{!! $ctcAttrs('topic') !!}>
-                        <option value="">{{ __('store.contact.topic_choose') }}</option>
+                </p>
+                <p class="{{ $ctcRow('topic') }}"><span class="woocommerce-input-wrapper fld kbb-fl ico"><span class="lead" aria-hidden="true">@include('partials.icon-tag')</span><select class="input-text" id="ctc-topic" name="topic" required aria-required="true"{!! $ctcAttrs('topic') !!}><option value=""></option>
 @foreach ($ctcForm['topics'] as [$ctcValue, $ctcLabel])
-                        <option value="{{ $ctcValue }}"@selected((string) old('topic') === (string) $ctcValue)>{{ $ctcLabel }}</option>
+                    <option value="{{ $ctcValue }}"@selected((string) old('topic') === (string) $ctcValue)>{{ $ctcLabel }}</option>
 @endforeach
-                    </select>
+                </select><label for="ctc-topic">{{ __('store.contact.label_topic') }}&nbsp;<span class="required" aria-hidden="true">*</span></label></span>
 @error('topic')
-                    <p class="ctc-err" id="ctc-topic-err">{{ $message }}</p>
+                    <span class="ctc-err" id="ctc-topic-err">{{ $message }}</span>
 @enderror
-                </div>
-                <div class="ctc-f wide{{ $errors->has('message') ? ' is-bad' : '' }}">
-                    <label for="ctc-message">{{ __('store.contact.label_message') }}</label>
-                    <textarea id="ctc-message" name="message" rows="6" maxlength="{{ $ctcForm['max']['message'] }}" required{!! $ctcAttrs('message') !!}>{{ old('message') }}</textarea>
+                </p>
+                <p class="{{ $ctcRow('message', ' wide') }}"><span class="woocommerce-input-wrapper fld kbb-fl ico"><span class="lead" aria-hidden="true">@include('partials.icon-note')</span><textarea class="input-text" id="ctc-message" name="message" rows="4" maxlength="{{ $ctcForm['max']['message'] }}" required aria-required="true" placeholder="{{ __('store.contact.message_placeholder') }}"{!! $ctcAttrs('message') !!}>{{ old('message') }}</textarea><label for="ctc-message">{{ __('store.contact.label_message') }}&nbsp;<span class="required" aria-hidden="true">*</span></label></span>
 @error('message')
-                    <p class="ctc-err" id="ctc-message-err">{{ $message }}</p>
+                    <span class="ctc-err" id="ctc-message-err">{{ $message }}</span>
 @enderror
-                </div>
+                </p>
             </div>
-            <button type="submit" class="ctc-send">{{ __('store.contact.submit') }}</button>
-            <p class="ctc-priv">{{ __('store.contact.privacy') }}</p>
+            <div class="ctc-act"><button type="submit" class="ctc-send">{{ __('store.contact.submit') }}</button><span class="ctc-priv">{{ __('store.contact.privacy') }}</span></div>
         </form>
     </section>
 @endif
 @if ($ctcSide)
-    <aside class="ctc-side">
+    <aside class="ctc-panel ctc-side">
 @if ($hub['socials'] !== [])
-        <section class="ctc-panel" aria-labelledby="ctc-follow">
-            <h2 id="ctc-follow">{{ __('store.contact.follow_title') }}</h2>
-            <p>{{ __('store.contact.follow_note') }}</p>
-            <div class="ctc-soc">@foreach ($hub['socials'] as $ctcSoc)<a href="{{ $ctcSoc['href'] }}" aria-label="{{ $ctcSoc['name'] }}" target="_blank" rel="noopener">{!! $ctcSoc['icon'] !!}</a>@endforeach</div>
-        </section>
+        <div class="ctc-strip"><h2 id="ctc-follow">{{ __('store.contact.follow_title') }}</h2><div class="ctc-soc" aria-labelledby="ctc-follow">@foreach ($hub['socials'] as $ctcSoc)<a href="{{ $ctcSoc['href'] }}" aria-label="{{ $ctcSoc['name'] }}" target="_blank" rel="noopener">{!! $ctcSoc['icon'] !!}</a>@endforeach</div></div>
 @endif
 @if ($hub['hours'] !== [])
-        <section class="ctc-panel" aria-labelledby="ctc-hours">
-            <h2 id="ctc-hours">{{ __('store.contact.hours_title') }}</h2>
-            <ul class="ctc-hours">@foreach ($hub['hours'] as $ctcLine)<li>{{ $ctcLine }}</li>@endforeach</ul>
-        </section>
+        <div class="ctc-strip"><h2 id="ctc-hours">{{ __('store.contact.hours_title') }}</h2><ul class="ctc-hours" aria-labelledby="ctc-hours">@foreach ($hub['hours'] as $ctcLine)<li>{{ $ctcLine }}</li>@endforeach</ul></div>
 @endif
     </aside>
 @endif

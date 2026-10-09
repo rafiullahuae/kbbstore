@@ -3554,7 +3554,7 @@ KBB_BH_CSS;
                 'hits' => 1,
             ],
             'the contact page cards (Lane CT)' => [
-                'pattern' => '#<section class="ctc ctc-top" aria-labelledby="ctc-reach">.*?</section>\n#s',
+                'pattern' => '#<section class="ctc ctc-top" aria-label="[^"]*">.*?</section>\n#s',
                 'hits' => 1,
             ],
             'the contact page inquiry form and social icons (Lane CT)' => [

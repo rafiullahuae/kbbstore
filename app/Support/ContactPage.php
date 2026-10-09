@@ -321,7 +321,8 @@ final class ContactPage
             ];
         }
 
-        return ['cards' => $cards, 'socials' => $socials, 'hours' => $hours, 'form' => $form];
+        // The form's WhatsApp-number field wears the WhatsApp mark, not a handset.
+        return ['cards' => $cards, 'socials' => $socials, 'hours' => $hours, 'form' => $form, 'waIcon' => $icon('whatsapp')];
     }
 
     /** The Instagram card for this shop's footer profile, or null when it has none. */
