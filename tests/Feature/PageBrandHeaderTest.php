@@ -257,6 +257,16 @@ it('puts every page back exactly as it was under "Normal page banner", byte for 
      * whole: every other byte of all four pages is still compared.
      */
     app(\App\Services\HeaderSettings::class)->save(['logo_style' => 'text']);
+    /*
+     * ▲ 2.60.457 (Lane TS): the trust strip above the footer ships ON, as the
+     * owner asked, and the 838ac564 views have no such row. It is not part of
+     * the brand header this test is about, so it is switched off here and the
+     * rest of all four pages is still compared byte for byte; TrustStripTest
+     * owns where the strip appears.
+     */
+    app(\App\Services\SettingsService::class)->set('ts_foot', 'off');
+    \App\Models\Setting::flushMap();
+    \App\Services\SettingsService::forgetMemo();
 
     $current = config('view.paths');
     /*
