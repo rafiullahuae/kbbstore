@@ -653,7 +653,7 @@ final class AdminSearchIndex
             'Mobile · Header' => [],
             'Mobile · Text sizes' => [],
             'Mobile · Product rows' => [],
-            'Back to cart' => [],
+            'Back to shop & cart' => [],
             'Trust & reviews' => [],
             'Fields & attention' => [],
         ],

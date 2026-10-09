@@ -189,6 +189,7 @@ it('shows a gateway’s refusal sentence whole on the payments screen, not its f
 
     expect($start)->not->toBeFalse()
         ->and($body)->toContain('Array.isArray(v)?v[0]:v')
-        ->and($body)->not->toContain('return d.errors[k][0];');
+        // Negative over the WHOLE console, not a window in front of it.
+        ->and($console)->not->toContain('return d.errors[k][0];');
 });
 // MUTATION, run: put `return d.errors[k][0];` back in paySave(). RED.
