@@ -25,6 +25,17 @@ export function initOverlay() {
     document.addEventListener('click', (event) => {
         const opener = event.target.closest('[data-kbb-open]');
         if (opener) {
+            // ON THE CART PAGE THE BAG ICON IS A RELOAD, NOT A PANEL (Lane QK5).
+            // The owner: "the cart panel icon should not open the cart panel on
+            // cart page at all. it will just refresh the cart page." #cartPage
+            // is the cart view's own wrapper and is rendered nowhere else, so a
+            // link here is left to navigate to its own href (the cart URL) and
+            // anything that is not a link reloads. Every other page still opens
+            // the drawer below.
+            if (opener.dataset.kbbOpen === 'cart' && document.getElementById('cartPage')) {
+                if (!(opener instanceof HTMLAnchorElement && opener.href)) location.reload();
+                return;
+            }
             event.preventDefault();
             open(opener.dataset.kbbOpen);
             return;

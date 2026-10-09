@@ -1,0 +1,95 @@
+[
+ {
+  "tag": "390-product-header",
+  "hitTestOk": true,
+  "navigated": false,
+  "reloaded": false,
+  "drawerOpen": true,
+  "url": "/product/glow-serum/",
+  "scrollWidth": 390
+ },
+ {
+  "tag": "390-product-tabbar",
+  "hitTestOk": true,
+  "navigated": false,
+  "reloaded": false,
+  "drawerOpen": true,
+  "url": "/product/glow-serum/",
+  "scrollWidth": 390
+ },
+ {
+  "tag": "390-cart-header",
+  "hitTestOk": true,
+  "navigated": true,
+  "reloaded": true,
+  "drawerOpen": false,
+  "url": "/cart/",
+  "scrollWidth": 390
+ },
+ {
+  "tag": "390-cart-tabbar",
+  "hitTestOk": true,
+  "navigated": true,
+  "reloaded": true,
+  "drawerOpen": false,
+  "url": "/cart/",
+  "scrollWidth": 390
+ },
+ {
+  "checkout": 390,
+  "url": "/checkout/",
+  "openers": [
+   "<a href=\"/cart/\" data-kbb-open=\"cart\">\n        <svg viewBox=\"0 0 24 24\" fill=\"no"
+  ],
+  "visibleOpeners": [
+   true
+  ],
+  "backToCart": [
+   "/cart/"
+  ],
+  "clickResult": {
+   "drawerOpen": true,
+   "url": "/checkout/"
+  }
+ },
+ {
+  "width": 390,
+  "consoleErrors": []
+ },
+ {
+  "tag": "1280-product-header",
+  "hitTestOk": true,
+  "navigated": false,
+  "reloaded": false,
+  "drawerOpen": true,
+  "url": "/product/glow-serum/",
+  "scrollWidth": 1280
+ },
+ {
+  "tag": "1280-cart-header",
+  "hitTestOk": true,
+  "navigated": true,
+  "reloaded": true,
+  "drawerOpen": false,
+  "url": "/cart/",
+  "scrollWidth": 1280
+ },
+ {
+  "checkout": 1280,
+  "url": "/checkout/",
+  "openers": [
+   "<a href=\"/cart/\" data-kbb-open=\"cart\">\n        <svg viewBox=\"0 0 24 24\" fill=\"no"
+  ],
+  "visibleOpeners": [
+   false
+  ],
+  "backToCart": [
+   "/cart/"
+  ],
+  "clickResult": null
+ },
+ {
+  "width": 1280,
+  "consoleErrors": []
+ }
+]
