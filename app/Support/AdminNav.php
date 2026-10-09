@@ -183,7 +183,6 @@ final class AdminNav
             ['id' => 'htmlblocks', 'label' => 'HTML Blocks', 'read' => 'admin-api/blocks', 'icon' => '<path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>'],
             ['id' => 'media', 'label' => 'Media Library', 'read' => 'admin-api/media', 'icon' => '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L6 21"/>'],
             ['id' => 'ugcsections', 'label' => 'Shoppable video', 'read' => 'admin-api/ugc-sections', 'late' => true, 'icon' => '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="m9 14 4 2-4 2z"/>'],
-            ['id' => 'instagram', 'label' => 'Instagram', 'read' => 'admin-api/instagram', 'late' => true, 'icon' => '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/>'],
             ['id' => 'igembeds', 'label' => 'Instagram embeds', 'read' => 'admin-api/ig-embeds', 'late' => true, 'icon' => '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M9.5 21h5"/>'],
         ]],
         ['sec' => 'Translation', 'rows' => [

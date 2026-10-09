@@ -96,7 +96,7 @@ it('maps every row to a capability the route map knows, through a read that is a
     }
 
     expect($bad)->toBe([]);
-    expect(count(AdminNav::rows()))->toBe(103); // + Content → Instagram embeds (lane IGE); + Store → Security → Firewall (lane FW); + Safety → 404 page (lane NF, 2.60.404); + Growth & Marketing → Push Notifications (lane PN); + Platform → Domain switch (lane DW); + Growth & Marketing → Google Shopping feed (lane SEO); + Catalog → Image SEO (lane IR); + Appearance → Coming Soon page (lane CS)
+    expect(count(AdminNav::rows()))->toBe(102); // - Content → Instagram, the API module (lane IGR, the owner retired it); + Content → Instagram embeds (lane IGE); + Store → Security → Firewall (lane FW); + Safety → 404 page (lane NF, 2.60.404); + Growth & Marketing → Push Notifications (lane PN); + Platform → Domain switch (lane DW); + Growth & Marketing → Google Shopping feed (lane SEO); + Catalog → Image SEO (lane IR); + Appearance → Coming Soon page (lane CS)
 });
 
 it('fails closed: an unknown read, an unknown role and no account see nothing they cannot open', function () {

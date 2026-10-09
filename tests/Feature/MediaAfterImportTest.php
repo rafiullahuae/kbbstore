@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Models\InstagramPost;
 use App\Models\Media;
 use App\Models\Product;
 use App\Models\Review;
@@ -11,10 +10,6 @@ use App\Services\Import\ImportOptions;
 use App\Services\Import\ImportRunner;
 use App\Services\Import\MediaAudit;
 use App\Services\Import\MediaSideloader;
-use App\Services\Instagram\IgPath;
-use App\Services\Instagram\InstagramCredentials;
-use App\Services\Instagram\InstagramSync;
-use App\Services\InstagramSettings;
 use App\Services\SettingsService;
 use App\Support\MediaBackfill;
 use App\Support\MediaRegistrar;
@@ -141,7 +136,7 @@ function mbProduct(string $url, string $slug): Product
  */
 function mbClean(): void
 {
-    foreach (['wp-content', 'uploads/mb-scan', 'uploads/reviews', IgPath::ROOT] as $dir) {
+    foreach (['wp-content', 'uploads/mb-scan', 'uploads/reviews', 'uploads/instagram/'] as $dir) {
         $absolute = public_path(rtrim($dir, '/'));
 
         if (is_dir($absolute)) {
@@ -636,128 +631,11 @@ it("puts a shopper's review photograph in the library before anybody presses Res
     expect(MediaBackfill::run())->toBe(0);
 });
 
-it('puts an Instagram picture in the library before anybody presses Rescan', function () {
-    /*
-     * The same defect, the same shape, the other writer. uploads/instagram/ is
-     * under the walk too, so a Rescan has always found these — afterwards.
-     *
-     * MUTATION NOTE. Delete the `MediaRegistrar::record($stored);` line from
-     * InstagramSync::storeImage() and this is red at the `media` lookup: the
-     * post row and its file both exist and the library knows nothing. RUN: red.
-     */
-    mbConnected();
-    mbFakeGraph([[
-        'id' => 'mb1', 'media_type' => 'IMAGE', 'permalink' => 'https://www.instagram.com/p/MBBB1111/',
-        'timestamp' => '2026-09-01T10:00:00+0000', 'media_url' => 'https://scontent.cdninstagram.com/mb.jpg',
-        'like_count' => 7, 'comments_count' => 1,
-    ]], mbPng(200, 200));
-
-    app(InstagramSync::class)->run();
-
-    $local = (string) InstagramPost::query()->where('remote_id', 'mb1')->value('local_path');
-
-    expect($local)->not->toBe('');
-
-    $row = Media::query()->where('path', ltrim($local, '/'))->first();
-
-    expect($row)->not->toBeNull()
-        ->and($row->mime)->toBe('image/png')
-        ->and($row->width)->toBe(200)
-        ->and($row->height)->toBe(200);
-
-    expect(MediaBackfill::run())->toBe(0);
-});
-
-it('takes the library row away with the file when Instagram replaces or prunes a picture', function () {
-    /*
-     * ── THE HALF THAT WOULD HAVE MADE THIS WORSE THAN DOING NOTHING ─────────
-     *
-     * InstagramSync unlinks files in two places: storeImage() deletes the
-     * picture it is replacing, and prune() deletes the picture of every post
-     * that has dropped off the feed. Registering on write WITHOUT forgetting
-     * here would leave a `media` row pointing at nothing every single time
-     * either happens — a permanently broken tile in the library that no screen
-     * can clear, growing by one on every refresh, on a host where the owner
-     * cannot reach the table. prune() runs on EVERY refresh, so it would have
-     * leaked continuously.
-     *
-     * That is exactly the failure MediaRegistrar::forget() was written for, and
-     * its docblock settles the reasoning: the file is going regardless, so
-     * keeping the row would not save the image, it would only hide that it is
-     * gone.
-     *
-     * MUTATION NOTE. Delete `MediaRegistrar::forget((string) $post->local_path);`
-     * from InstagramSync::prune() and the second half is red — the file is
-     * unlinked, the post is deleted and the library row survives pointing at a
-     * 404. Delete the `MediaRegistrar::forget($replacing);` call from
-     * storeImage() and the FIRST half is red in the same way. RUN: red for each,
-     * separately.
-     */
-    mbConnected();
-
-    // One post, fetched twice, with a different picture the second time. The
-    // stored name is derived from the remote id, so the extension change is what
-    // makes the second file a different path from the first.
-    mbFakeGraph([[
-        'id' => 'mb2', 'media_type' => 'IMAGE', 'permalink' => 'https://www.instagram.com/p/MBBB2222/',
-        'timestamp' => '2026-09-02T10:00:00+0000', 'media_url' => 'https://scontent.cdninstagram.com/a.jpg',
-    ]], mbPng(120, 120));
-
-    app(InstagramSync::class)->run();
-
-    $first = ltrim((string) InstagramPost::query()->where('remote_id', 'mb2')->value('local_path'), '/');
-
-    expect(Media::query()->where('path', $first)->count())->toBe(1);
-
-    mbFakeGraph([[
-        'id' => 'mb2', 'media_type' => 'IMAGE', 'permalink' => 'https://www.instagram.com/p/MBBB2222/',
-        'timestamp' => '2026-09-02T10:00:00+0000', 'media_url' => 'https://scontent.cdninstagram.com/a.jpg',
-    ]], mbJpeg(120, 120));
-
-    app(InstagramSync::class)->run();
-
-    $second = ltrim((string) InstagramPost::query()->where('remote_id', 'mb2')->value('local_path'), '/');
-
-    expect($second)->not->toBe($first)
-        // The replaced file is gone from disk AND from the library. A row here
-        // would be a broken tile nothing could clear.
-        ->and(is_file(public_path($first)))->toBeFalse()
-        ->and(Media::query()->where('path', $first)->count())->toBe(0)
-        ->and(Media::query()->where('path', $second)->count())->toBe(1);
-
-    /* ── and the prune branch, which runs on every single refresh ────────── */
-
-    // A second, older post arrives so that prune() has something to drop: it
-    // only removes posts newer than the oldest one still in the feed.
-    mbFakeGraph([
-        [
-            'id' => 'mb2', 'media_type' => 'IMAGE', 'permalink' => 'https://www.instagram.com/p/MBBB2222/',
-            'timestamp' => '2026-09-02T10:00:00+0000', 'media_url' => 'https://scontent.cdninstagram.com/a.jpg',
-        ],
-        [
-            'id' => 'mb3', 'media_type' => 'IMAGE', 'permalink' => 'https://www.instagram.com/p/MBBB3333/',
-            'timestamp' => '2026-09-03T10:00:00+0000', 'media_url' => 'https://scontent.cdninstagram.com/b.jpg',
-        ],
-    ], mbJpeg(120, 120));
-
-    app(InstagramSync::class)->run();
-
-    $doomed = ltrim((string) InstagramPost::query()->where('remote_id', 'mb3')->value('local_path'), '/');
-
-    expect(Media::query()->where('path', $doomed)->count())->toBe(1);
-
-    // mb3 drops off the feed. Its file is unlinked; its row must go with it.
-    mbFakeGraph([[
-        'id' => 'mb2', 'media_type' => 'IMAGE', 'permalink' => 'https://www.instagram.com/p/MBBB2222/',
-        'timestamp' => '2026-09-02T10:00:00+0000', 'media_url' => 'https://scontent.cdninstagram.com/a.jpg',
-    ]], mbJpeg(120, 120));
-
-    app(InstagramSync::class)->run();
-
-    expect(InstagramPost::query()->where('remote_id', 'mb3')->count())->toBe(0)
-        ->and(is_file(public_path($doomed)))->toBeFalse()
-        ->and(Media::query()->where('path', $doomed)->count())->toBe(0);
-});
+/*
+ * (Lane IGR) Two cases stood here for the Instagram API module's sync writing
+ * its pictures into the library. The module was retired at the owner's request
+ * and nothing writes under uploads/instagram/ any more, so they went with it.
+ */
 
 /* ═══════════════════════════════════ C · what this lane did NOT close ════ */
 
@@ -800,71 +678,6 @@ it('records that the importer may write a type the library cannot catalogue', fu
 
     expect($missing)->toBe(['avif']);
 });
-
-/* ══════════════════════════════════════════════════ Instagram harness ════ */
-
-/** App id + secret saved, and a token with 60 days on it. */
-function mbConnected(): void
-{
-    $service = app(SettingsService::class);
-    $service->setModule(InstagramSettings::MODULE, true);
-    SettingsService::forgetMemo();
-    Setting::flushMap();
-    Cache::flush();
-
-    InstagramCredentials::saveApp('1234567890123456', 'abcdef0123456789abcdef0123456789');
-    InstagramCredentials::saveToken('a-very-long-lived-token', 60 * 86400, '17841400000000000');
-}
-
-/**
- * The Graph endpoints, plus every image download answering with real bytes.
- *
- * REAL ENCODED BYTES AND NOT A PLACEHOLDER, for the reason InstagramProfileTest
- * states in the same place: storeImage() decides what a file is from
- * `getimagesizefromstring()` on the BODY, so a fake returning 'x' would be
- * refused — correctly — and the case would be asserting the refusal path while
- * claiming to assert the happy one. Here the bytes also carry the DIMENSIONS
- * being asserted.
- *
- * @param  list<array<string, mixed>>  $media
- */
-function mbFakeGraph(array $media, string $image): void
-{
-    $type = str_starts_with($image, "\x89PNG") ? 'image/png' : 'image/jpeg';
-
-    /*
-     * BOTH LINES ARE NEEDED AND THE SECOND DOES THE WORK — InstagramProfileTest
-     * settled this and the reasoning is its, not a guess: the client factory is
-     * a container SINGLETON, so clearing the facade's own resolved instance
-     * hands back the very same factory with the very same stubs still on it.
-     * Forgetting the binding is what makes the next fake start from an empty
-     * list, and these cases re-fake between runs to change the picture.
-     */
-    app()->forgetInstance(\Illuminate\Http\Client\Factory::class);
-    Http::clearResolvedInstances();
-
-    Http::fake([
-        // `*/me`, not `me`: the client puts a Graph API VERSION segment in front
-        // of the path, so a pattern without the wildcard falls through to the
-        // image catch-all and the sync reports "the response was not JSON".
-        'graph.instagram.com/*/me/media*' => Http::response(['data' => $media]),
-        'graph.instagram.com/*/me*' => Http::response([
-            'id' => '17841400000000000', 'username' => 'kbeauty.bliss',
-            'name' => 'K-Beauty Bliss', 'account_type' => 'BUSINESS',
-            'followers_count' => 1234, 'media_count' => count($media),
-        ]),
-        'graph.instagram.com/access_token*' => Http::response([
-            'access_token' => 'long-token', 'expires_in' => 5184000,
-        ]),
-        'graph.instagram.com/refresh_access_token*' => Http::response([
-            'access_token' => 'fresher', 'expires_in' => 5184000,
-        ]),
-        'api.instagram.com/oauth/access_token' => Http::response([
-            'access_token' => 'short', 'user_id' => '17841400000000000',
-        ]),
-        '*' => Http::response($image, 200, ['Content-Type' => $type]),
-    ]);
-}
 
 /*
  * ═══════════════════════════════════════════════════════════════════════════

@@ -905,17 +905,8 @@ final class ArabicInterfaceDrafts
             'store.spotted.empty' => 'منشورات جديدة في الطريق — عودي قريبًا.',
             'store.spotted.grid_heading' => '#KBEAUTYBLISS من مجتمعنا',
             'store.spotted.grid_photo' => 'صورة :n من #KBeautyBliss',
-            'store.spotted.comments' => 'تعليقات',
-            'store.spotted.shares' => 'مشاركات',
-            'store.spotted.views' => 'مشاهدات',
             'store.spotted.reel' => 'ريل',
-            'store.spotted.album' => 'ألبوم',
-            'store.spotted.ig_alt' => 'منشور إنستغرام من @:handle',
-            'store.spotted.ig_alt_video' => 'ريل إنستغرام من @:handle',
-            'store.spotted.play' => 'شغّلي الفيديو هنا',
-            'store.spotted.close' => 'إغلاق',
             'store.spotted.view_on_ig' => 'عرض على إنستغرام',
-            'store.spotted.video_dialog' => 'فيديو إنستغرام',
             'store.home.bestsellers_heading' => 'الأكثر مبيعًا',
             'store.home.bestsellers_badge' => 'هذا الشهر',
             'store.home.bestsellers_subtitle' => 'المنتجات التي يعود إليها العملاء دائمًا.',
@@ -1748,11 +1739,7 @@ final class ArabicInterfaceDrafts
     private static function instagram(): array
     {
         return [
-            'store.instagram.followers' => 'لا متابعين|متابع واحد|متابعان|:formatted متابعين|:formatted متابعًا|:formatted متابع',
-            'store.instagram.posts' => 'لا منشورات|منشور واحد|منشوران|:formatted منشورات|:formatted منشورًا|:formatted منشور',
-            'store.instagram.follow' => 'متابعة',
             'store.instagram.post_alt' => 'منشور إنستغرام',
-            'store.instagram.open_post' => 'افتح هذا المنشور على إنستغرام',
             'store.igembed.load' => 'اعرض المنشور',
         ];
     }

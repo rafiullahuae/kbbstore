@@ -1083,19 +1083,10 @@ final class InterfaceStrings
             // until he types one.
             'spotted.grid_heading' => '#KBEAUTYBLISS Spotted',
             'spotted.grid_photo' => '#KBeautyBliss Spotted photo :n',
-            // (Lane SG) The Instagram cards on /kbeautybliss-spotted/: the
-            // counts' spoken names, the type badges, and the video player.
-            'spotted.comments' => 'comments',
-            'spotted.shares' => 'shares',
-            'spotted.views' => 'views',
+            // (Lane SG) The Instagram cards' words went with the API module
+            // (Lane IGR); `reel` and `view_on_ig` stay, Instagram embeds use them.
             'spotted.reel' => 'Reel',
-            'spotted.album' => 'Album',
-            'spotted.ig_alt' => 'Instagram post by @:handle',
-            'spotted.ig_alt_video' => 'Instagram reel by @:handle',
-            'spotted.play' => 'Play the video here',
-            'spotted.close' => 'Close',
             'spotted.view_on_ig' => 'View on Instagram',
-            'spotted.video_dialog' => 'Instagram video',
             'home.bestsellers_heading' => 'Best sellers',
             'home.bestsellers_badge' => 'This month',
             'home.bestsellers_subtitle' => 'The products customers keep coming back for.',
@@ -2147,15 +2138,9 @@ final class InterfaceStrings
     private static function storeInstagram(): array
     {
         return [
-            'instagram.followers' => ':formatted follower|:formatted followers',
-            'instagram.posts' => ':formatted post|:formatted posts',
-            'instagram.follow' => 'Follow',
             // The alt text on a tile whose caption is empty. A picture with no
             // caption still needs a name a screen reader can read.
             'instagram.post_alt' => 'Instagram post',
-            // The tile's own label, used when the caption is empty so the link is
-            // never announced as just a URL.
-            'instagram.open_post' => 'Open this post on Instagram',
             // (Lane IGE) The button on an Instagram embed set to load on tap:
             // the frame loads in place, it does not leave the shop.
             'igembed.load' => 'Show the post',

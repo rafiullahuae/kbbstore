@@ -221,7 +221,9 @@ it('names a real console location in every module row that names one at all', fu
     // 46 with Lane PD: `eblock_phone_columns` names 'Content → HTML Blocks',
     // where the blocks it lays out are edited; `desc_videos` names no screen.
     // Advanced for that, and $wrong is still empty.
-    expect($checked)->toBe(46);
+    // 45 with Lane IGR: `instagram_profile` (naming 'Content → Instagram')
+    // left the registry with the retired Instagram API module.
+    expect($checked)->toBe(45);
     expect($wrong)->toBe([]);
 });
 

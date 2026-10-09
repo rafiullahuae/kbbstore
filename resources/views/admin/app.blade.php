@@ -3385,7 +3385,7 @@ const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],dash:['Overv
    safe. Breadcrumbs match what each partial's own go() writes into #crumb and
    #ptitle, because two answers for one screen is how a heading ends up
    disagreeing with the page under it. */
-'ugcsections':['Content','Shoppable video'],'ugcvideo':['Content','All clips'],'ugcstyle':['Appearance','Video rail'],'instagram':['Content','Instagram'],'igembeds':['Content','Instagram embeds'],'sets':['Catalog','Sets'],'product-tabs':['Catalog','Product tabs'],'pagination':['Catalog','Pagination'],'ownerapp':['App','Owner App'],'banners':['Appearance','Banners'],'setap':['Appearance','Set'],
+'ugcsections':['Content','Shoppable video'],'ugcvideo':['Content','All clips'],'ugcstyle':['Appearance','Video rail'],'igembeds':['Content','Instagram embeds'],'sets':['Catalog','Sets'],'product-tabs':['Catalog','Product tabs'],'pagination':['Catalog','Pagination'],'ownerapp':['App','Owner App'],'banners':['Appearance','Banners'],'setap':['Appearance','Set'],
 /* And the seven the new guard found alongside them, every one with a sidebar row
    the owner clicks every day and no deep link at all: a link to any of these
    opened the dashboard. Same fix, same condition, and the strings are copied
@@ -8519,7 +8519,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','igembeds','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','routines','imageseo','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','notfoundpage']);
+const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','igembeds','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','routines','imageseo','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','notfoundpage']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -24356,25 +24356,9 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      every record editor (one fetch hook; App\Support\EditPresence is the guard). --}}
 @include('admin.partials.edit-presence')
 
-{{-- LANE IG · Content → Instagram.
-
-     The grid of our own recent posts, the profile box, five layouts, and the
-     "Configure now" handshake that reaches Instagram, takes permission and
-     writes the connection down.
-
-     SHIPS OFF: `instagram_profile` is false in ModuleRegistry and the homepage
-     section's content ships empty, so neither of the two new homepage rows emits
-     one byte until the owner configures it — the <section> element is INSIDE the
-     content check, not around it.
-
-     Thumbnails are downloaded to our own disk at fetch time rather than hotlinked:
-     Instagram's media_url is a signed, expiring CDN address, so a page pointing at
-     one is a page that breaks on somebody else's clock. Tapping a tile opens the
-     post on Instagram by default; the in-page player is opt-in and uses
-     Instagram's own embed iframe, which carries no token and nothing that expires.
-     That opt-in needs `frame-src` widened by one host — docs/IG-PROFILE.md §3 has
-     the exact line — and the setting ships at the value that needs nothing. --}}
-@include('admin.partials.instagram-screen')
+{{-- (Lane IGR) LANE IG's Content → Instagram screen (the API module and its
+     "Connect with Facebook" page) was retired at the owner's request; its
+     include is gone. Instagram is the Instagram embeds screen below. --}}
 {{-- Content → Instagram embeds (Lane IGE): paste post and reel addresses, the shop
      draws Instagram's own embed. Wraps window.go for 'igembeds'; its sidebar row is
      App\Support\AdminNav's. Endpoints: routes/ig-embeds-admin.php, `igembeds.manage`. --}}

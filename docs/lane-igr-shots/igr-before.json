@@ -1,0 +1,207 @@
+{
+ "phase": "before",
+ "shop": [
+  {
+   "url": "/kbeautybliss-spotted/",
+   "w": 390,
+   "status": 200,
+   "atLoad": {
+    "requests": 12,
+    "instagram": 0
+   },
+   "afterScroll": {
+    "requests": 12,
+    "instagram": 0
+   },
+   "cls": 0,
+   "scripts": 2,
+   "scrollW": 390,
+   "innerW": 390,
+   "docH": 1810,
+   "kie": 0,
+   "kieCards": 0,
+   "sigCards": 4,
+   "sptCards": 0,
+   "igp": 0,
+   "inlineScripts": 9,
+   "h1": "#KBeautyBliss Spotted",
+   "robots": "index, follow",
+   "errors": []
+  },
+  {
+   "url": "/",
+   "w": 390,
+   "status": 200,
+   "atLoad": {
+    "requests": 19,
+    "instagram": 0
+   },
+   "afterScroll": {
+    "requests": 38,
+    "instagram": 6
+   },
+   "cls": 0,
+   "scripts": 2,
+   "scrollW": 390,
+   "innerW": 390,
+   "docH": 13960,
+   "kie": 1,
+   "kieCards": 6,
+   "sigCards": 0,
+   "sptCards": 0,
+   "igp": 1,
+   "inlineScripts": 11,
+   "h1": "Age-R Booster Prowith a free gift set",
+   "robots": "index, follow",
+   "errors": []
+  },
+  {
+   "url": "/delivery/",
+   "w": 390,
+   "status": 200,
+   "atLoad": {
+    "requests": 8,
+    "instagram": 0
+   },
+   "afterScroll": {
+    "requests": 12,
+    "instagram": 0
+   },
+   "cls": 0,
+   "scripts": 2,
+   "scrollW": 390,
+   "innerW": 390,
+   "docH": 3439,
+   "kie": 0,
+   "kieCards": 0,
+   "sigCards": 0,
+   "sptCards": 0,
+   "igp": 1,
+   "inlineScripts": 8,
+   "h1": "Shipping & Delivery",
+   "robots": "index, follow",
+   "errors": []
+  },
+  {
+   "url": "/kbeautybliss-spotted/",
+   "w": 1280,
+   "status": 200,
+   "atLoad": {
+    "requests": 12,
+    "instagram": 0
+   },
+   "afterScroll": {
+    "requests": 12,
+    "instagram": 0
+   },
+   "cls": 0,
+   "scripts": 2,
+   "scrollW": 1280,
+   "innerW": 1280,
+   "docH": 1392,
+   "kie": 0,
+   "kieCards": 0,
+   "sigCards": 4,
+   "sptCards": 0,
+   "igp": 0,
+   "inlineScripts": 9,
+   "h1": "#KBeautyBliss Spotted",
+   "robots": "index, follow",
+   "errors": []
+  },
+  {
+   "url": "/",
+   "w": 1280,
+   "status": 200,
+   "atLoad": {
+    "requests": 22,
+    "instagram": 0
+   },
+   "afterScroll": {
+    "requests": 36,
+    "instagram": 6
+   },
+   "cls": 0,
+   "scripts": 2,
+   "scrollW": 1280,
+   "innerW": 1280,
+   "docH": 10872,
+   "kie": 1,
+   "kieCards": 6,
+   "sigCards": 0,
+   "sptCards": 0,
+   "igp": 1,
+   "inlineScripts": 11,
+   "h1": "Age-R Booster Prowith a free gift set",
+   "robots": "index, follow",
+   "errors": []
+  },
+  {
+   "url": "/delivery/",
+   "w": 1280,
+   "status": 200,
+   "atLoad": {
+    "requests": 12,
+    "instagram": 0
+   },
+   "afterScroll": {
+    "requests": 12,
+    "instagram": 0
+   },
+   "cls": 0,
+   "scripts": 2,
+   "scrollW": 1280,
+   "innerW": 1280,
+   "docH": 2453,
+   "kie": 0,
+   "kieCards": 0,
+   "sigCards": 0,
+   "sptCards": 0,
+   "igp": 1,
+   "inlineScripts": 8,
+   "h1": "Shipping & Delivery",
+   "robots": "index, follow",
+   "errors": []
+  }
+ ],
+ "admin1280": {
+  "nav": {
+   "instagramRows": [
+    "instagram:Instagram",
+    "igembeds:Instagram embeds"
+   ],
+   "contentRows": [
+    "posts",
+    "htmlblocks",
+    "media",
+    "ugcsections",
+    "instagram",
+    "igembeds"
+   ]
+  },
+  "goInstagramTitle": "Instagram",
+  "scrollW": 1280,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+ },
+ "admin390": {
+  "nav": {
+   "instagramRows": [
+    "instagram:Instagram",
+    "igembeds:Instagram embeds"
+   ],
+   "contentRows": [
+    "posts",
+    "htmlblocks",
+    "media",
+    "ugcsections",
+    "instagram",
+    "igembeds"
+   ]
+  },
+  "goInstagramTitle": "Instagram",
+  "scrollW": 390,
+  "errors": []
+ }
+}

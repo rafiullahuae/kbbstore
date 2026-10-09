@@ -256,8 +256,9 @@ it('names the legs a third party navigates at, which nothing here can ask about 
      * PINNED SO THE SET CANNOT GROW. A third provider added with the same shape
      * is a decision somebody makes on purpose.
      */
+    // (Lane IGR) 'admin-api/instagram/callback' left with the retired
+    // Instagram API module; Stripe's is the only third-party return leg.
     $unprobeable = [
-        'admin-api/instagram/callback',
         'admin-api/payments/stripe/connect/callback',
     ];
 

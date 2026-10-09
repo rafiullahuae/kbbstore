@@ -834,24 +834,9 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/ugc-admin.php';
 
-        /*
-         * Content → Instagram (Lane IG). Seven endpoints: the screen's read and
-         * save, the two halves of the OAuth handshake behind "Configure now", a
-         * manual refetch, and disconnect. Its own capabilities, instagram.view
-         * and instagram.manage, for the same reason the UGC block above has its
-         * own — and WRITES ABOVE READS inside the file, because two of the
-         * handshake steps arrive as GETs that write.
-         *
-         * The redirect URI this shop hands Instagram is built by the server on a
-         * fixed path and is deliberately NOT under the secret `admin_path`: it
-         * has to be typed into a Meta app by hand, and a callback address that
-         * moves with the admin path would have to be retyped every time it did.
-         *
-         * A `clear_caches_*` migration ships with it, and that one is not
-         * optional: without the route clear the OAuth callback 404s AFTER the
-         * owner has already granted access.
-         */
-        require __DIR__.'/instagram-admin.php';
+        // (Lane IGR) Content → Instagram, the API module and its "Connect with
+        // Facebook" handshake, was retired at the owner's request; its require
+        // of instagram-admin.php is gone. Instagram is Content → Instagram embeds.
         require __DIR__.'/spotted-admin.php';   // Appearance → #KBeautyBliss Spotted (Lane HB)
         require __DIR__.'/ig-embeds-admin.php';   // Content → Instagram embeds (Lane IGE), `igembeds.manage`
 

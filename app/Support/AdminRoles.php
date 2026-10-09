@@ -108,7 +108,7 @@ final class AdminRoles
             'marketing.view', 'marketing.manage', 'marketing.export',
             'marketing.email.view', 'marketing.email.manage', 'emails.view', 'emails.test',
             'banners.view', 'banners.manage', 'gridsections.view', 'gridsections.manage',
-            'spotted.manage', 'spotted.instagram', 'instagram.view', 'ugc.view', 'ugc.manage', 'wabutton.manage',
+            'spotted.manage', 'ugc.view', 'ugc.manage', 'wabutton.manage',
         ],
     ];
 
@@ -171,8 +171,6 @@ final class AdminRoles
             'pages.manage' => 'Edit content pages (terms, privacy, FAQ…)',
             'ugc.view' => 'See the shoppable-video library',
             'ugc.manage' => 'Upload and edit shoppable videos',
-            'instagram.view' => 'See the Instagram connection',
-            'instagram.manage' => 'Connect or disconnect Instagram',
         ]],
         ['seo', 'SEO', [
             'seo.audit' => 'SEO overview and audit',
@@ -195,7 +193,6 @@ final class AdminRoles
             'slimfooter.manage' => 'Footer bar',
             'footer.preview' => 'Footer previews',
             'spotted.manage' => '#KBeautyBliss Spotted',
-            'spotted.instagram' => '#KBeautyBliss Spotted — pick posts from Instagram',
             'igembeds.manage' => 'Instagram embeds — paste post and reel addresses',
             'sitelayout.manage' => 'Site width and columns',
             'pagewash.manage' => 'Page background',
