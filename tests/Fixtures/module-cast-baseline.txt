@@ -524,6 +524,17 @@ header_settings|search_extended_broaden_others|bool|"no"|true
 header_settings|search_extended_broaden_others|bool|1|true
 header_settings|search_extended_broaden_others|bool|0|false
 header_settings|search_extended_broaden_others|bool|null|false
+header_settings|search_fuzzy_enabled|bool|true|true
+header_settings|search_fuzzy_enabled|bool|false|false
+header_settings|search_fuzzy_enabled|bool|"1"|true
+header_settings|search_fuzzy_enabled|bool|"0"|false
+header_settings|search_fuzzy_enabled|bool|""|false
+header_settings|search_fuzzy_enabled|bool|"on"|true
+header_settings|search_fuzzy_enabled|bool|"off"|true
+header_settings|search_fuzzy_enabled|bool|"no"|true
+header_settings|search_fuzzy_enabled|bool|1|true
+header_settings|search_fuzzy_enabled|bool|0|false
+header_settings|search_fuzzy_enabled|bool|null|false
 header_settings|search_sets_first|bool|true|true
 header_settings|search_sets_first|bool|false|false
 header_settings|search_sets_first|bool|"1"|true
