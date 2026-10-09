@@ -1,0 +1,163 @@
+<title>K-Beauty Bliss Logo D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;650;700&display=swap">
+<style>
+/* Layout: one stage showing the logo large, then the same logo at real size in a phone header and a computer header. Single light look on purpose: the shop header is white. */
+:root{
+  --ink:#2A2228;      /* "K-BEAUTY" */
+  --rose:#C6395F;     /* "BLISS", tagline */
+  --petal:#D94A76;    /* filled petals */
+  --line:#E5567E;     /* petal outlines */
+  --muted:#7A6F77;
+  --paper:#FFFFFF;
+  --blush:#FBF3F6;
+  --rule:#EEE3E8;
+  --ui:Outfit,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+html,body{background:var(--blush);color:var(--ink)}
+body{font:15px/1.5 var(--ui);padding-inline:16px;padding-block:28px 48px}
+.wrap{max-width:1040px;margin-inline:auto;display:grid;gap:28px}
+h1{font-size:22px;font-weight:650;margin:0;text-wrap:balance}
+.lead{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.cap{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 10px}
+.panel{background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:28px 20px;min-width:0}
+.stage{display:grid;place-items:center;padding-block:56px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;justify-content:center}
+.controls button{font:600 13px/1 var(--ui);color:var(--ink);background:var(--blush);border:1px solid var(--rule);border-radius:999px;padding:10px 16px;cursor:pointer}
+.controls button[aria-pressed="true"]{background:var(--rose);border-color:var(--rose);color:#fff}
+.controls button:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+.row{display:grid;grid-template-columns:minmax(0,390px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.row{grid-template-columns:minmax(0,1fr)}}
+.phone{width:100%;max-width:390px;background:var(--paper);border:1px solid var(--rule);border-radius:14px;overflow:hidden}
+.ph-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:44px;border-bottom:1px solid var(--rule)}
+.ph-ic{display:flex;gap:6px;margin-inline-start:auto}
+.ic{width:36px;height:36px;display:grid;place-items:center;color:var(--ink)}
+.ic svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ph-search{margin:10px 12px 12px;height:38px;border-radius:999px;background:var(--blush);color:var(--muted);font-size:13px;display:flex;align-items:center;padding-inline:14px}
+.desk{overflow-x:auto;background:var(--paper);border:1px solid var(--rule);border-radius:14px}
+.dk-bar{min-width:1000px;display:flex;align-items:center;gap:32px;padding:14px 24px;border-bottom:1px solid var(--rule)}
+.dk-search{flex:1;max-width:520px;height:34px;border-radius:999px;background:var(--blush);color:var(--muted);font-size:13px;display:flex;align-items:center;padding-inline:16px}
+.dk-nav{min-width:1000px;display:flex;gap:28px;padding:12px 24px;font-weight:600;font-size:14px}
+.note{color:var(--muted);font-size:13px;margin:12px 0 0}
+.facts{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:13px;margin:0;padding:0;list-style:none}
+.facts b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ───────── Logo D "Pearl", crisp build ───────── */
+.lg{--s:22px;display:inline-flex;align-items:center;gap:calc(var(--s)*.36);position:relative;overflow:hidden;
+  font:650 var(--s)/1 var(--ui);color:var(--ink);text-decoration:none;white-space:nowrap;vertical-align:middle;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:geometricPrecision}
+.lg svg{display:block;flex:none;width:auto;height:var(--ih,38px);shape-rendering:geometricPrecision}
+.lg .f{fill:var(--petal)}
+.lg .o,.lg .o2{fill:none;stroke:var(--line);stroke-width:20;stroke-linecap:round;stroke-linejoin:round}
+.lg .t{display:flex;flex-direction:column;gap:calc(var(--s)*.24)}
+.lg .w{display:block;font-weight:inherit;text-transform:uppercase;letter-spacing:.085em}
+.lg .w i{font-style:normal;color:var(--rose);margin-inline-start:.24em}
+@supports (-webkit-background-clip:text) or (background-clip:text){
+  .lg .w i{background:linear-gradient(90deg,#B0325A,#C6395F 25%,#D84A79 50%,#C6395F 75%,#B0325A) 0 0/200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:lg-drift 11s linear infinite}
+}
+@keyframes lg-drift{to{background-position:200% 0}}
+.lg .tg{display:flex;align-items:center;gap:.55em;font-size:max(9.5px,calc(var(--s)*.45));line-height:1.15;font-weight:600;text-transform:uppercase;letter-spacing:calc(var(--s)*.1 - 1.2px);color:var(--rose)}
+.lg .tg::before,.lg .tg::after{content:"";flex:1;min-width:6px;height:1px;background:currentColor;opacity:.45}
+.lg .o2{stroke:#F4A9BF;opacity:0;animation:lg-o 5s ease-in-out infinite alternate}
+@keyframes lg-o{to{opacity:.7}}
+.lg::after{content:"";position:absolute;top:-30%;bottom:-30%;left:0;width:34%;pointer-events:none;
+  background:linear-gradient(90deg,rgba(255,246,249,0),rgba(255,246,249,.55),rgba(255,246,249,0));
+  mix-blend-mode:screen;transform:translateX(-170%) skewX(-18deg);animation:lg-s 7s cubic-bezier(.45,0,.25,1) infinite}
+@keyframes lg-s{0%,55%{transform:translateX(-170%) skewX(-18deg)}100%{transform:translateX(420%) skewX(-18deg)}}
+.lg.big{--s:56px;--ih:96px}
+.lg.ph{--s:min(14.5px,3.7vw);--ih:min(26px,6.6vw);flex:none}
+.ph-bar{gap:6px;padding-inline:8px}
+.ph-bar .ic{width:34px}
+.ph-ic{gap:2px}
+@media (max-width:520px){.lg.big{--s:30px;--ih:52px}}
+.still .lg *,.still .lg::after{animation:none!important}
+.still .lg::after{content:none}
+@media (prefers-reduced-motion:reduce){.lg *,.lg::after{animation:none!important}.lg::after{content:none}}
+</style>
+
+<div class="wrap" id="app">
+  <header>
+    <h1>Logo D, Pearl</h1>
+    <p class="lead">Moving exactly as it would on the shop. The petal outlines brighten and fade, "BLISS" drifts through the pinks, and a pearl shine crosses every 7 seconds.</p>
+  </header>
+
+  <section class="panel">
+    <p class="cap">Large</p>
+    <div class="stage">
+      <a class="lg big" href="#" aria-label="K-Beauty Bliss, Korean Skincare &amp; Makeup" id="logo-big"></a>
+    </div>
+    <div class="controls" role="group" aria-label="Animation">
+      <button type="button" id="btn-move" aria-pressed="true">Moving</button>
+      <button type="button" id="btn-still" aria-pressed="false">Still (reduced motion)</button>
+    </div>
+  </section>
+
+  <div class="row">
+    <section class="min0">
+      <p class="cap">Phone header · 390 px</p>
+      <div class="phone">
+        <div class="ph-bar">
+          <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+          <a class="lg ph" href="#" aria-label="K-Beauty Bliss" data-logo></a>
+          <span class="ph-ic" aria-hidden="true">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg></span>
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></span>
+          </span>
+        </div>
+        <div class="ph-search">Search K-beauty…</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <p class="cap">Sizes on the shop</p>
+      <ul class="facts">
+        <li>Phone name <b>14.5 px</b>, shrinks on narrower phones</li>
+        <li>Tagline <b>9.5 px</b></li>
+        <li>Icon <b>26 px</b> tall</li>
+        <li>Computer name <b>22 px</b></li>
+        <li>Icon <b>38 px</b> tall, fits the 40 px bar</li>
+      </ul>
+      <p class="note">Crisper than the first draft: letters one step bolder, tagline bolder and 9.5 px, icon drawn at whole-pixel heights, and a narrower shine that no longer washes out the letters.</p>
+    </section>
+  </div>
+
+  <section>
+    <p class="cap">Computer header · 1280 px</p>
+    <div class="desk">
+      <div class="dk-bar">
+        <a class="lg" href="#" aria-label="K-Beauty Bliss" data-logo></a>
+        <div class="dk-search">Search skincare, makeup, brands…</div>
+        <span class="ph-ic" aria-hidden="true">
+          <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>
+          <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg></span>
+          <span class="ic"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></span>
+        </span>
+      </div>
+      <nav class="dk-nav" aria-label="Example menu"><span>Skincare</span><span>Makeup</span><span>Brands</span><span>Sets &amp; Gifts</span><span>New in</span><span>Best sellers</span><span>Sale</span></nav>
+    </div>
+  </section>
+</div>
+
+<template id="logo-inner"><svg viewBox="0 0 780 582" aria-hidden="true"><path class="f" d="M154 103Q399 122 439 424Q194 343 154 103ZM521 2Q407 136 471 389Q640 185 521 2ZM548 387Q642 239 778 249Q738 393 548 387ZM2 481Q190 313 434 475Q189 595 2 481ZM534 456Q707 461 737 544Q613 589 534 456Z"/><path class="o" d="M445 438Q149 329 131 156Q353 165 394 377M494 329Q598 173 457 17Q362 185 483 408M552 386Q565 243 721 215Q730 331 519 434M397 473Q197 351 27 532Q196 629 460 479M487 466Q643 545 720 478Q612 397 532 473"/><path class="o2" d="M445 438Q149 329 131 156Q353 165 394 377M494 329Q598 173 457 17Q362 185 483 408M552 386Q565 243 721 215Q730 331 519 434M397 473Q197 351 27 532Q196 629 460 479M487 466Q643 545 720 478Q612 397 532 473"/></svg><span class="t"><b class="w"><span>K-Beauty</span><i>Bliss</i></b><small class="tg">Korean Skincare &amp; Makeup</small></span></template>
+
+<script>
+(function(){
+  var inner = document.getElementById('logo-inner').innerHTML;
+  document.querySelectorAll('#logo-big,[data-logo]').forEach(function(a){
+    a.innerHTML = inner;
+    a.addEventListener('click', function(e){ e.preventDefault(); });
+  });
+  var app = document.getElementById('app');
+  var mv = document.getElementById('btn-move'), st = document.getElementById('btn-still');
+  function set(still){
+    app.classList.toggle('still', still);
+    mv.setAttribute('aria-pressed', String(!still));
+    st.setAttribute('aria-pressed', String(still));
+  }
+  mv.addEventListener('click', function(){ set(false); });
+  st.addEventListener('click', function(){ set(true); });
+})();
+</script>
