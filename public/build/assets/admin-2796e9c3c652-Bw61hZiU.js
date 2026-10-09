@@ -857,9 +857,9 @@
         + '<div class="bns-row" style="margin-top:6px">' + sw('tb_inside_' + d, 'Keep the box inside the site width', s['tb_inside_' + d]) + '</div>'
         + '<div class="bns-help">On: the box lines up with the logo and the header, at every screen width. Off: it is measured from the edge of the picture.</div>'
         + '<div class="bns-grid" style="margin-top:8px">'
-        + pick('tb_vpos_' + d, 'Up and down', 'Style\u2019s own: A at the bottom; D in the middle on a computer, at the bottom on a phone. Custom uses the number beside it.' + (d === 'm' ? ' On a phone, anywhere but the bottom, the arrows step aside so they never cover the button; swiping and the bars still work.' : ''), s['tb_vpos_' + d], T.vpos)
-        + custom('v', d, 'Custom up and down', '% : 0 is the top, 50 the middle, 100 the bottom. px: the distance from the top. Either way the box never leaves the banner.')
-        + pick('tb_hpos_' + d, 'Across', 'Picture\u2019s side: the Start or End chosen on each picture (Words on this picture). Custom is measured in from that side.', s['tb_hpos_' + d], T.hpos)
+        + pick('tb_vpos_' + d, 'Up and down', 'Style\u2019s own: A at the bottom; D in the middle on a computer, at the bottom on a phone. Custom uses the number beside it; typing that number picks Custom.' + (d === 'm' ? ' On a phone, anywhere but the bottom, the arrows step aside so they never cover the button; swiping and the bars still work.' : ''), s['tb_vpos_' + d], T.vpos)
+        + custom('v', d, 'Custom up and down', '% : 0 is the top, 50 the middle, 100 the bottom \u2014 the box\u2019s bottom edge on the banner\u2019s, or just above the slide bars when they are on the picture. px: the distance from the top. Either way the box never leaves the banner.')
+        + pick('tb_hpos_' + d, 'Across', 'Picture\u2019s side: the Start or End chosen on each picture (Words on this picture). Custom is measured in from that side; typing that number picks Custom.', s['tb_hpos_' + d], T.hpos)
         + custom('h', d, 'Custom across', 'How far in from each picture\u2019s side, in px or % of the banner\u2019s width. It stops at the other side.')
         + '</div>';
     });
@@ -1361,6 +1361,19 @@
           document.querySelectorAll('[data-bns-set="' + key + '"]').forEach(function(o){ if (o !== el) o.checked = el.checked; });
         }
         if (out) out.textContent = el.dataset.bnsHeight ? heightText(el.value) : el.value;
+        /* Lane QK: "this 100% is not taking the box full bottom". He typed 100
+           beside Up and down = Bottom, and the number did nothing, because only
+           Custom reads it. Typing the number (or its unit) now picks Custom
+           beside it -- the same "switches on by itself when you type" the words
+           already do -- so a number on this screen always means something. */
+        var axis = /^tb_([vh])(?:val|unit)_([dm])$/.exec(key);
+        if (axis) {
+          var mode = 'tb_' + axis[1] + 'pos_' + axis[2];
+          if (draft.set[mode] !== 'custom') {
+            draft.set[mode] = 'custom';
+            document.querySelectorAll('[data-bns-set="' + mode + '"]').forEach(function(o){ o.value = 'custom'; });
+          }
+        }
         if (key === 'bg_mode') {
           document.querySelectorAll('[data-bns-when]').forEach(function(w){
             w.hidden = w.dataset.bnsWhen !== el.value;
