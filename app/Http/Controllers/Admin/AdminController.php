@@ -1684,6 +1684,21 @@ class AdminController extends Controller
         }
 
         /*
+         * The same trap, on SEO & Meta → Social profiles (the owner, 9 October:
+         * "we don't have any social profiles anywhere"). A social_* key with no
+         * row opened as an empty box while the footer printed its shipped
+         * default, so one Save of that tab wrote '' over every profile and took
+         * the footer icons and the Contact page's Instagram card off the shop.
+         * The boxes now open on the value the shop is using; a profile the
+         * owner really cleared keeps its row and arrives empty.
+         */
+        foreach (\App\Support\SocialProfiles::values(app(\App\Services\SettingsService::class)) as $socialKey => $socialValue) {
+            if (! array_key_exists($socialKey, $map)) {
+                $map[$socialKey] = $socialValue;
+            }
+        }
+
+        /*
          * Sent BESIDE `settings`, not inside it, because it is not a setting:
          * it is the screen's own explanation of one, resolved from the code
          * that implements it. Same shape as the `revenue_basis` the dashboard

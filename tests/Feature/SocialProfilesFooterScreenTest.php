@@ -71,8 +71,12 @@ it('saves an Instagram address from the Footer screen into the global key, and t
      * SlimFooterApiController::show() -> red on the payload; save to a
      * `sitefooter_social_instagram` copy instead -> red on the Contact page,
      * which reads the global key.
+     *
+     * Lane CT2 (the owner: "please add manually"): with the profile empty the
+     * Instagram card still shows, on the shop's known profile, so the check
+     * before saving is that it does not yet carry the address typed below.
      */
-    expect(qkContact())->not->toContain('data-ct="ig"');
+    expect(qkContact())->not->toContain('ig.me/m/my.shop');
 
     $owner = qkAdmin('owner');
     $this->actingAs($owner, 'admin');
@@ -124,7 +128,9 @@ it('refuses a javascript: address, and every other non-web one, writing nothing'
         expect(qkRow('social_instagram'))->toBe('', $bad)->and(qkRow('social_tiktok'))->toBe('', $bad);
     }
 
-    expect(qkContact())->not->toContain('data-ct="ig"');
+    // Nothing refused reached the page (the Instagram card itself always shows
+    // since Lane CT2, on the shop's known profile).
+    expect(qkContact())->not->toContain('javascript:alert')->not->toContain('ig.me/m/my.shop');
 
     // Empty still clears; an UNCHANGED legacy value posted back by the SEO tab
     // still passes (MUTATION: drop the $stored check in `profileurl` -> red).
@@ -188,4 +194,25 @@ it('draws the section on the Footer screen and points to it from the SEO and Con
         expect(AdminController::SETTING_RULES[$key][0])->toBe('profileurl')
             ->and($app)->toContain('social_'.substr($key, 7).':sval(');
     }
+});
+
+it('opens the SEO screen\'s Social profiles on the values the shop is using, so one Save cannot blank them', function () {
+    /*
+     * The defect on the live shop: a social_* key with no row reached
+     * SEO & Meta → Settings as an empty box while the footer printed its
+     * shipped default, and one Save of that tab wrote '' over every profile.
+     * MUTATION: drop the SocialProfiles::values() loop from
+     * AdminController::settings() -> the absent key arrives missing and this
+     * is red.
+     */
+    Setting::query()->where('key', 'social_instagram')->delete();
+    qkForget();
+
+    $this->actingAs(qkAdmin('owner'), 'admin');
+    $s = $this->getJson('/admin-api/settings')->assertOk()->json('settings');
+
+    expect($s['social_instagram'] ?? null)->toBe(SocialProfiles::values(app(SettingsService::class))['social_instagram'])
+        ->and($s['social_instagram'])->not->toBe('')
+        // A profile the owner really cleared keeps its empty row and arrives empty.
+        ->and($s['social_tiktok'] ?? null)->toBe('');
 });
