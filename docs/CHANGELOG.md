@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.461
+**Cart: order total straight after Your Bag on a phone; 50px under the cart panel buttons and under the cart page's checkout bar.** Apply after .460.
+Runs its migration. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "the order total should come immeditately after your bag section and the recommended for you should come below the order total" | Phone: Your Bag, Order total, Recommended for you. Desktop keeps its right-hand total column. Appearance -> Cart page -> Summary & trust -> "Phone: Order total straight after Your Bag" (On) |
+| "give space below the buttons, approx 50px" (cart panel) | 50px under Cart / Checkout on a phone. Appearance -> Cart panel -> Mobile -> "Space below the buttons" (50) |
+| "on cart floating Proceed to checkout row also give space below around 50px" | 50px under the bar; the page scrolls far enough that the last card stays clear of it. Appearance -> Cart page -> Docked rows -> "Space under the checkout row" (50) |
+
+Both gaps take the larger of the setting and the iPhone's home-bar space rather than adding them, so 50 means 50 on every phone.
+
 ## 2.60.460
 **Header and menu: no add-to-cart tick, Super Sale row plain with a flash, three-line menu icon.** Apply after .459.
 Runs its migration. Hard refresh the shop.
