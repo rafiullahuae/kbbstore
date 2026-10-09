@@ -85,7 +85,7 @@ final class SwitchInstaller
         'caches' => ['Clear caches', 'verify', null],
         'links' => ['Old links in content', 'verify', null],
         'payments' => ['Payments: Stripe webhook, Apple Pay domain, Tabby, Tamara', 'verify', null],
-        'callbacks' => ['Instagram and other callbacks', 'manual', null],
+        'callbacks' => ['Callbacks: Stripe Connect and the Meta pixel', 'manual', null],
         'tests' => ['Test orders', 'manual', null],
         'cs_off' => ['Coming Soon page OFF', 'verify', null],
         'forward' => ['Forward the old address', 'verify', null],

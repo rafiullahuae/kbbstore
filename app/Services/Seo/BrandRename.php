@@ -469,7 +469,6 @@ final class BrandRename
             static fn () => \App\Services\GridSections::flush(),
             static fn () => \App\Support\ProductTabs::flush(),
             static fn () => \App\Services\UgcRail::flush(),
-            static fn () => \App\Services\InstagramFeed::flush(),
             static fn () => \App\Services\BuyTogetherPairs::forget(),
             static fn () => \App\Services\ShippingService::flushZones(),
             static fn () => app(\App\Services\PageHeaders::class)->forget(),

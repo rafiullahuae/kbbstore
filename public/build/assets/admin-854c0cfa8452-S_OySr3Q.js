@@ -211,10 +211,10 @@
     },
     callbacks: function () {
       return what('The shop cannot read these dashboards, so press “Mark as done” when you have added the new addresses:')
-        + '<ul class="dwi-list"><li><span class="dwi-dot"></span><span>' + b('Meta for developers → your app → Instagram → Business login settings → OAuth redirect URIs') + ': add the Instagram address below. Keep the old one until a reconnect has worked.</span></li>'
+        + '<ul class="dwi-list">'
         + '<li><span class="dwi-dot"></span><span>Only if you use “Connect with Stripe”: the Connect settings’ redirect URIs: add the Stripe Connect address below.</span></li>'
         + '<li><span class="dwi-dot"></span><span>' + b('Meta Events Manager → your pixel → Settings → Traffic permissions') + ': if an allow list is on, add ' + esc(st.new) + '.</span></li></ul>'
-        + vals([val('Instagram', st.copy.instagram), val('Stripe Connect', 'https://' + st.target + '/admin-api/payments/stripe/connect/callback')]);
+        + vals([val('Stripe Connect', 'https://' + st.target + '/admin-api/payments/stripe/connect/callback')]);
     },
     tests: function () {
       var t = 'https://' + st.target, link = function (p) { return '<a href="' + esc(t + p) + '" target="_blank" rel="noopener">' + esc(t + p) + '</a>'; };

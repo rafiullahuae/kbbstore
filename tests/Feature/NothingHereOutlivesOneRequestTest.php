@@ -165,7 +165,9 @@ it('has nothing that outlives a single request', function () {
     // 10 with Lane FW: `kbb:firewall data --auto`, hourly -- asks whether the
     // country database (monthly) or the bot address lists (weekly) are due,
     // downloads into storage/app/firewall/ when they are, exits.
-    expect(substr_count($console, 'Schedule::command('))->toBe(10, 'the set of scheduled commands has changed');
+    // 9 with Lane IGR: `kbb:instagram-sync` (Lane SG's line above) removed with
+    // the retired Instagram API module, at the owner's request.
+    expect(substr_count($console, 'Schedule::command('))->toBe(9, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {

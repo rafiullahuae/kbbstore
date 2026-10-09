@@ -172,22 +172,11 @@ Schedule::command('kbb:cart-tracking-prune')
     ->withoutOverlapping(30);
 
 /*
-|--------------------------------------------------------------------------
-| Our Instagram posts, every day (Lane SG, 2.60.417)
-|--------------------------------------------------------------------------
-|
-| Every post and reel of the shop's own account, their pictures brought onto
-| this disk, and the shares of the posts ticked for /kbeautybliss-spotted/ —
-| the same InstagramSync::run() as Content → Instagram → Refresh posts, given
-| ten minutes rather than the button's twenty seconds. The shop never calls
-| Instagram; this and the admin buttons are the only things that do.
-| --unattended: not connected is a quiet no-op. Driven by the same single
-| cron line as everything above; no second crontab entry.
+| (Lane IGR) The daily `kbb:instagram-sync` (posts, pictures and the token
+| refresh of the Instagram API module) was removed with that module at the
+| owner's request. Instagram on the shop is Content → Instagram embeds, which
+| calls nothing on a schedule.
 */
-Schedule::command('kbb:instagram-sync --unattended')
-    ->dailyAt('04:41')
-    ->withoutOverlapping(60)
-    ->runInBackground();
 
 /*
 |--------------------------------------------------------------------------

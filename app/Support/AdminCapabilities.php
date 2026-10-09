@@ -306,36 +306,9 @@ final class AdminCapabilities
         'ugc.view' => ['owner', 'manager', 'editor'],
         'ugc.manage' => ['owner', 'manager', 'editor'],
 
-        /*
-         * ── Content → Instagram (Lane IG, routes/instagram-admin.php) ────────
-         *
-         * TWO, AND NEITHER REUSES ugc.* OR content.manage, which is the whole point
-         * of per-capability gating. `ugc.manage` is "may replace the file a video
-         * serves"; this one is "may connect this shop's identity to an Instagram
-         * account and hold a sixty-day access token for it". Those are not the same
-         * grant and the person you would hand the first to is not automatically the
-         * person you would hand the second to.
-         *
-         * SPLIT IN TWO, and the split is SHARPER here than it is for the video
-         * library. `instagram.view` reads a username, a follower count and how many
-         * days are left on the connection. `instagram.manage` starts an OAuth
-         * handshake, stores an encrypted app secret and a token, and can DISCONNECT
-         * the shop from the account — so the read half is genuinely something to
-         * give a support account and the write half genuinely is not.
-         *
-         * ▲ NEITHER CAPABILITY CAN READ A CREDENTIAL, and that is not enforced here
-         * — it is enforced by InstagramCredentials having no getter any controller
-         * calls. A capability answers "who may press this button"; what the button
-         * is able to return is a different question and one a permission map cannot
-         * answer. See that class's docblock, and App\Services\SecretStore's.
-         *
-         * `editor` is deliberately NOT on the manage half. An editor writes copy and
-         * curates content; connecting the shop's social accounts is an owner's or a
-         * manager's act, and this is the one place in this feature where the
-         * conservative answer costs nothing — an editor who needs it asks, once.
-         */
-        'instagram.view' => ['owner', 'manager', 'editor'],
-        'instagram.manage' => ['owner', 'manager'],
+        // (Lane IGR) `instagram.view` and `instagram.manage` (Content → Instagram,
+        // the API module and its "Connect with Facebook" page) were retired with
+        // that module at the owner's request, 9 October 2026.
 
         /*
          * ── Appearance → Banners → Cards banner (Lane BN, routes/banners-admin.php)
@@ -346,7 +319,7 @@ final class AdminCapabilities
          * capability that covers everything is one nobody can grant carefully.
          *
          * `editor` IS on the manage half here, where it is deliberately not on
-         * instagram.manage, and the difference is the point of splitting them at
+         * the retired instagram.manage, and the difference is the point of splitting them at
          * all: this grant is "may lay out the homepage's banner row", which is the
          * storefront work that role exists for. It holds no credential, reaches no
          * third party and can disconnect nothing.
@@ -469,13 +442,8 @@ final class AdminCapabilities
         // narrowing one never narrows the other.
         'spotted.manage' => ['owner', 'manager', 'editor'],
 
-        // Appearance → #KBeautyBliss Spotted → From Instagram (Lane SG): which of
-        // our synced Instagram posts the Spotted page draws, and in what order.
-        // Its own capability so it can be narrowed apart from the screen; the
-        // same three roles by default. "Refresh from Instagram" on that panel
-        // is the existing POST admin-api/instagram/refresh — instagram.manage —
-        // so an editor can pick posts but cannot spend the Meta rate limit.
-        'spotted.instagram' => ['owner', 'manager', 'editor'],
+        // (Lane IGR) `spotted.instagram` (Lane SG's synced-post picker) went with
+        // the Instagram API module; the Spotted page draws the Instagram embeds.
 
         // Content → Instagram embeds (Lane IGE, routes/ig-embeds-admin.php):
         // the pasted post and reel addresses drawn with Instagram's own embed,
@@ -1597,45 +1565,7 @@ final class AdminCapabilities
         ['POST', 'admin-api/ugc-appearance', 'ugc.manage'],
         ['GET', 'admin-api/ugc-appearance', 'ugc.view'],
 
-        /*
-         * ── Content → Instagram (Lane IG) ───────────────────────────────────
-         *
-         * THE WRITES ABOVE THE READS, because RULES is first-match-wins and this
-         * file's header names the shape of the mistake: a `GET admin-api/instagram/**`
-         * rule listed first would resolve **GET** admin-api/instagram/start — which
-         * begins an OAuth handshake and mints a state — to `instagram.view`. The same
-         * trap the quiz-leads and coupons/manage lines were written about, and the
-         * same one the ugc-sections block above avoids.
-         *
-         * ▲ AND TWO OF THESE ARE GETs THAT WRITE, WHICH IS WHY THEY ARE NAMED
-         * INDIVIDUALLY RATHER THAN LEFT TO A WILDCARD.
-         *
-         *   GET admin-api/instagram/start     mints a single-use state into the
-         *                                     session and redirects to Instagram.
-         *   GET admin-api/instagram/callback  exchanges a code, stores a token,
-         *                                     fetches the profile and the media, and
-         *                                     writes rows and files.
-         *
-         * Both are GETs because an OAuth redirect has to be — Instagram navigates the
-         * owner's browser to the callback, and a browser cannot be made to POST there.
-         * So they are mapped to `instagram.manage` by name, ABOVE the general GET
-         * rule, and the general GET rule exists only for the status read.
-         *
-         * The callback is CSRF-defended by the single-use `state` rather than by the
-         * VerifyCsrfToken middleware, which cannot apply to a GET arriving from a
-         * third party: see App\Services\Instagram\InstagramAuth::consume(), which
-         * pulls the state FIRST so every refusal has already spent it, and compares
-         * with hash_equals after checking both sides are non-empty — because
-         * hash_equals('', '') is true.
-         */
-        ['GET', 'admin-api/instagram/start', 'instagram.manage'],
-        ['GET', 'admin-api/instagram/callback', 'instagram.manage'],
-        ['POST', 'admin-api/instagram', 'instagram.manage'],
-        ['POST', 'admin-api/instagram/**', 'instagram.manage'],
-        ['DELETE', 'admin-api/instagram', 'instagram.manage'],
-        ['DELETE', 'admin-api/instagram/**', 'instagram.manage'],
-        ['GET', 'admin-api/instagram', 'instagram.view'],
-        ['GET', 'admin-api/instagram/**', 'instagram.view'],
+        // (Lane IGR) The eight admin-api/instagram rules went with the routes.
 
         /*
          * ── Appearance → Banners → Cards banner (Lane BN) ───────────────────
@@ -1809,9 +1739,6 @@ final class AdminCapabilities
         // read is the bare path and every write is under it, and a write left
         // off the map would be owner-only rather than open -- but the editor
         // the owner gave this screen to would be refused for no reason.
-        // (Lane SG) ABOVE the screen's own '/**' line: RULES is first-match-wins,
-        // so listed below it the picker would resolve to spotted.manage.
-        ['*', 'admin-api/spotted/instagram', 'spotted.instagram'],
         ['*', 'admin-api/spotted', 'spotted.manage'],
         ['*', 'admin-api/spotted/**', 'spotted.manage'],
         // Content → Instagram embeds (Lane IGE). Both lines: '/**' does not

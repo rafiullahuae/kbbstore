@@ -98,7 +98,7 @@ final class SectionType
      */
     private const BODY = ['delivery', 'ticker', 'categories', 'bundles', 'bestselling', 'recommended', 'routine', 'quiz',
         'brands', 'trending', 'bestsellers', 'flash', 'blog', 'under54', 'feature', 'about', 'reviews', 'trust',
-        'videos', 'instagram'];
+        'videos'];
 
     /**
      * The small line ABOVE a heading (the hs eyebrow, Spotted-era badges, the
@@ -110,10 +110,10 @@ final class SectionType
     private const EYEBROW_IN = ['recommended', 'routine', 'quiz', 'bestselling', 'brands', 'trending', 'bestsellers',
         'flash', 'blog', 'under54', 'about', 'newsletter'];
 
-    private const NO_SUB = ['about', 'routine', 'quiz', 'feature', 'instagram'];
+    private const NO_SUB = ['about', 'routine', 'quiz', 'feature'];
 
     /** Headed, but with no heading ROW for a gap to open under. */
-    private const NO_GAP = ['quiz', 'newsletter', 'instagram', 'feature'];
+    private const NO_GAP = ['quiz', 'newsletter', 'feature'];
 
     /**
      * Spacing a section already owns, under its own keys — the hub moves those

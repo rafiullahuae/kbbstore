@@ -11,32 +11,32 @@
         "n": 2,
         "what": "console TITLES: Content → Instagram embeds, so ?go=igembeds and #igembeds name the screen (Lane IGE)",
         "file": "resources/views/admin/app.blade.php",
-        "anchor": "'instagram':['Content','Instagram'],",
+        "anchor": "'ugcstyle':['Appearance','Video rail'],",
         "count": 1,
-        "replacement": "'instagram':['Content','Instagram'],'igembeds':['Content','Instagram embeds'],"
+        "replacement": "'ugcstyle':['Appearance','Video rail'],'igembeds':['Content','Instagram embeds'],"
     },
     {
         "n": 3,
         "what": "console LATE_RENDERED: arm the deep-link replay for 'igembeds' -- its partial wraps window.go (Lane IGE)",
         "file": "resources/views/admin/app.blade.php",
-        "anchor": "'ugcstyle','instagram','sets',",
+        "anchor": "'ugcstyle','sets',",
         "count": 1,
-        "replacement": "'ugcstyle','instagram','igembeds','sets',"
+        "replacement": "'ugcstyle','igembeds','sets',"
     },
     {
         "n": 4,
         "what": "console: include the Instagram embeds screen partial, after the Instagram screen (Lane IGE)",
         "file": "resources/views/admin/app.blade.php",
-        "anchor": "@include('admin.partials.instagram-screen')\n",
+        "anchor": "{{-- (Lane IGR) LANE IG's Content → Instagram screen (the API module and its\n",
         "count": 1,
-        "replacement": "@include('admin.partials.instagram-screen')\n{{-- Content → Instagram embeds (Lane IGE): paste post and reel addresses, the shop\n     draws Instagram's own embed. Wraps window.go for 'igembeds'; its sidebar row is\n     App\\Support\\AdminNav's. Endpoints: routes/ig-embeds-admin.php, `igembeds.manage`. --}}\n@include('admin.partials.ig-embeds-screen')\n"
+        "replacement": "{{-- Content → Instagram embeds (Lane IGE): paste post and reel addresses, the shop\n     draws Instagram's own embed. Wraps window.go for 'igembeds'; its sidebar row is\n     App\\Support\\AdminNav's. Endpoints: routes/ig-embeds-admin.php, `igembeds.manage`. --}}\n@include('admin.partials.ig-embeds-screen')\n"
     },
     {
         "n": 5,
         "what": "keep docs/T1B-ADMIN-APP-BLOCKS.md's quoted LATE_RENDERED line in step with the console (TranslationConsoleTest)",
         "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
-        "anchor": "'ugcstyle','instagram','sets',",
+        "anchor": "'ugcstyle','sets',",
         "count": 1,
-        "replacement": "'ugcstyle','instagram','igembeds','sets',"
+        "replacement": "'ugcstyle','igembeds','sets',"
     }
 ]

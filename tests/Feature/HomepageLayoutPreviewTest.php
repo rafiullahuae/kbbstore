@@ -169,7 +169,10 @@ it('counts the same sections it always did, and names the same ones off', functi
     // ▲ Lane IGE: +1 for signature, conversion and editorial — the Instagram
     // embeds row ships on (it draws nothing until a post is pasted); Boutique
     // lists it OFF beside `instagram`, for that preset's own "calmer" argument.
-    $expected = ['signature' => 14, 'conversion' => 23, 'editorial' => 23, 'boutique' => 14];
+    // ▲ Lane IGR: -1 for conversion and editorial — the `instagram` row (the
+    // retired Instagram API module) left the registry and every preset; it was
+    // ON in those two. Signature already had it off-by-default, Boutique off.
+    $expected = ['signature' => 14, 'conversion' => 22, 'editorial' => 22, 'boutique' => 14];
 
     foreach (app(HomepageLayouts::class)->summaries() as $summary) {
         expect($summary['count'])->toBe($expected[$summary['key']], $summary['key'] . ' changed its section count');

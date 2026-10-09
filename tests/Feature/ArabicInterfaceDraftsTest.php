@@ -699,7 +699,9 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 1479 -> 1480 (Lane IGE): "Show the post" on an Instagram embed set to load on tap.
     // +43 (Lane CT): the contact page's cards, icons and inquiry form
     // (store.contact.*), seeded by 2027_10_15_120100_seed_contact_page_arabic_drafts.
-    expect($ui['drafts'])->toBe(1523, 'the shipped Arabic is not showing as drafts to review')
+    // -13 (Lane IGR): the retired Instagram API module's shop strings
+    // (store.instagram.* profile section, store.spotted.* API cards and player).
+    expect($ui['drafts'])->toBe(1510, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });
@@ -1031,7 +1033,8 @@ it('never labels two controls on one screen with the same Arabic', function () {
         ['store.checkout.secure_badge', 'store.home.trust_payments_title'],
         ['store.collection.title_best_sellers', 'store.footer.link_best_sellers', 'store.home.bestsellers_grid_label', 'store.home.bestsellers_heading', 'store.product.recs_best_eyebrow', 'store.product_card.label_bestseller', 'store.shop.sort_popularity'],
         ['store.home.flash_link', 'store.product_grid.view_all'],
-        ['store.instagram.follow', 'store.quiz.js_continue'],
+        // (Lane IGR) ['store.instagram.follow', 'store.quiz.js_continue'] went
+        // with the Instagram API section's words.
         ['store.order_received.show_more', 'store.set.show_all'],
         ['store.order_status.on-hold', 'store.order_status.onhold'],
         ['store.orders.pager_newer', 'store.shop.sort_date'],

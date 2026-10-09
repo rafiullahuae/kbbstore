@@ -113,12 +113,12 @@ Stripe dashboard → Settings → **Payment method domains** → add
 `kbeautybliss.com` (Apple Pay / Google Pay). **Verify** runs the payments
 check. Still on sandbox keys? Skip it and come back when the live keys are in.
 
-## 12. Instagram and other callbacks
+## 12. Callbacks: Stripe Connect and the Meta pixel
 
 The shop cannot read these dashboards: press **Mark as done** when finished.
+(The Instagram redirect URI that stood here went with the Instagram API module,
+retired in October 2026; Instagram embeds need no Meta app.)
 
-- Meta for developers → your app → Instagram → Business login settings →
-  **OAuth redirect URIs** → add `https://kbeautybliss.com/admin-api/instagram/callback`.
 - Only if you use "Connect with Stripe": add
   `https://kbeautybliss.com/admin-api/payments/stripe/connect/callback` to the
   Connect redirect URIs.

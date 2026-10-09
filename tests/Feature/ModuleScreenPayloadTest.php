@@ -367,6 +367,12 @@ it('sends every module screen the payload it sent before the shared schema', fun
      * untouched and SeoBackOfficePayloadTest's fixture needed no edit at all.
      */
     /*
+     * ── LANE IGR: ONE ROW REMOVED FROM dividers.sections[] ─────────────────
+     *
+     * `instagram` (Instagram Profile), the retired Instagram API module's
+     * homepage row, deleted from the fixture by hand; `igembeds` now follows
+     * `videos`. No other leaf moved.
+     *
      * ── LANE IGE: ONE ROW ADDED TO dividers.sections[] ─────────────────────
      *
      * `igembeds` (Instagram embeds), written into the fixture by hand directly
