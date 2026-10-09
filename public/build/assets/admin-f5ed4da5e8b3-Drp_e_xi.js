@@ -98,7 +98,7 @@
       + '</div></div>'
       + '<div data-an-err></div>'
       + '<div class="board"><div class="night">'
-      + '<div class="sec-title"><span style="display:flex;gap:8px;align-items:center"><span class="dot" data-an-dot></span>Active visitors · last <span data-an-wlabel>' + st.win + '</span> minutes</span>'
+      + '<div class="sec-title" style="flex-wrap:wrap"><span style="display:flex;gap:8px;align-items:center"><span class="dot" data-an-dot></span><span>Active visitors · last <span data-an-wlabel>' + st.win + '</span> minutes</span></span>'
       + '<span class="seg dark" data-an-wins>' + WINDOWS.map(function (w) { return '<button type="button" data-an-win="' + w + '">' + w + '</button>'; }).join('') + '</span></div>'
       + '<div style="display:flex;align-items:end;gap:18px;flex-wrap:wrap"><div class="huge" data-an="active">–</div><div class="sub" style="padding-bottom:10px"><b data-an="views">–</b> page views<br><b data-an="carts">–</b> added to cart</div></div>'
       + '<svg class="bars" data-an="bars" viewBox="0 0 300 80" preserveAspectRatio="none" aria-label="Visitors per minute, last 30 minutes"></svg>'

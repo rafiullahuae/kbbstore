@@ -86,8 +86,8 @@ function sumHTML() {
   return '<div class="an-range">' + seg('data-anr', RANGES, st.range) + '</div>'
     + '<div class="an-strip">' + tile(fmt(t.visitors), 'Visitors') + tile(fmt(t.views), 'Page views') + tile(fmt(t.sessions), 'Sessions')
     + tile(bounce + '%', 'Bounce rate') + tile(fmt(t.orders), 'Orders') + tile(aed(t.revenue_fils), 'Revenue') + '</div>'
-    + '<section class="card"><h4 class="sh">Orders &amp; revenue by source</h4>' + rows((s.orders_by_channel || []).map((c) => [c.label, c.revenue_fils, c.orders + ' orders' + (c.rate != null ? ' · ' + c.rate + '% conv.' : '')]), true) + '</section>'
-    + '<section class="card"><h4 class="sh">Orders by campaign</h4>' + rows((s.orders_by_campaign || []).map((c) => [c.campaign, c.revenue_fils, c.channel + ' · ' + c.orders + ' orders']), true) + '</section>'
+    + '<section class="card"><h4 class="sh">Orders &amp; revenue by source</h4>' + rows((s.orders_by_channel || []).map((c) => [c.label, c.revenue_fils, c.orders + (c.orders === 1 ? ' order' : ' orders') + (c.rate != null ? ' · ' + c.rate + '% conv.' : '')]), true) + '</section>'
+    + '<section class="card"><h4 class="sh">Orders by campaign</h4>' + rows((s.orders_by_campaign || []).map((c) => [c.campaign, c.revenue_fils, c.channel + ' · ' + c.orders + (c.orders === 1 ? ' order' : ' orders')]), true) + '</section>'
     + '<section class="card"><h4 class="sh">Checkout funnel</h4><svg class="an-funnel" viewBox="0 0 320 136">' + funnel(t) + '</svg></section>'
     + '<section class="card"><h4 class="sh">Sources</h4>' + rows(dl(s.dims.channel, 'sessions')) + '</section>'
     + '<section class="card"><h4 class="sh">Top pages</h4>' + rows(dl(s.dims.page, 'views', (r) => r.label || dec(r.val))) + '</section>'

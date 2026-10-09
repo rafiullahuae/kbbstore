@@ -117,7 +117,7 @@
     "count": 1,
     "what": "Orders list: the Source chip cell",
     "anchor": "      case 'payment':\n        return '<td style=\"font-size:12px\">' + olDash(o.payment) +",
-    "replacement": "      case 'source':\n        /* Lane AN: \"Instagram Ads · eid_sale\"; Unknown for orders before analytics, imports and manual ones. */\n        return '<td style=\"font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\" title=\"' + sesc(o.source || 'Unknown') + '\">' +\n          '<span class=\"chip\" style=\"cursor:default;font-size:11.5px;padding:2px 8px' + (o.source_key ? '' : ';opacity:.6') + '\">' + sesc(o.source || 'Unknown') + '</span></td>';\n      case 'payment':\n        return '<td style=\"font-size:12px\">' + olDash(o.payment) +"
+    "replacement": "      case 'source':\n        /* Lane AN: \"Instagram Ads · eid_sale\"; Unknown for orders before analytics, imports and manual ones. */\n        return '<td style=\"font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\" title=\"' + sesc(o.source || 'Unknown') + '\">' +\n          '<span class=\"chip\" style=\"cursor:default;font-size:11.5px;padding:2px 8px;display:inline-block;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle' + (o.source_key ? '' : ';opacity:.6') + '\">' + sesc(o.source || 'Unknown') + '</span></td>';\n      case 'payment':\n        return '<td style=\"font-size:12px\">' + olDash(o.payment) +"
   },
   {
     "n": 16,
