@@ -74,8 +74,10 @@ final class FooterPages
         ['Colours & effects', 'The strip’s four colours, the footer’s colours and the slow drift.',
             ['site_c_from', 'site_c_2', 'site_c_3', 'site_c_to', 'site_c_bg', 'site_c_text', 'site_c_accent',
                 'site_motion', 'site_drift_speed']],
+        // (Lane QK4) "Space above the footer (every page)" leads the section:
+        // the gap between a page's last section and this footer, Auto as shipped.
         ['Spacing', 'Room above, between and below the columns.',
-            ['site_{dev}_pt', 'site_{dev}_gap', 'site_{dev}_pb']],
+            ['site_{dev}_above', 'site_{dev}_pt', 'site_{dev}_gap', 'site_{dev}_pb']],
     ];
 
     /** The cart & checkout bar on a laptop. */

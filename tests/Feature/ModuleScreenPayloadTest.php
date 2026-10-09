@@ -656,7 +656,12 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // petal colours, animation, shine, glow); the tab's description says so
     // and `logo_size` gained a help line. Spliced into the fixture's header
     // logo tab from the live payload; no other leaf moved.
-    expect($compared)->toBe(740, 'the number of controls drawn changed');
+    // 740 -> 742 (Lane QK4): Appearance -> Footer -> Site footer · Desktop /
+    // Mobile -> Spacing -> "Space above the footer (every page)", `site_d_above`
+    // and `site_m_above`, Auto ('') as shipped. Spliced into the slim-footer
+    // entry before `site_d_pt` / `site_m_pt`, where SiteFooter::TABS puts them;
+    // two objects inserted, nothing else touched.
+    expect($compared)->toBe(742, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

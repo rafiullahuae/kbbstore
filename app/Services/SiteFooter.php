@@ -94,6 +94,32 @@ final class SiteFooter
     /** App row · install help (Lane IN): the inline hint ships; the sheet is the old way. */
     public const APP_HELP = ['inline' => 'Inline hint in the row (new)', 'sheet' => 'Pop-up sheet (old)'];
 
+    /**
+     * "Space above the footer" (Lane QK4, the owner on 9 October: "I need the
+     * space controls above footer globally"). One gap, the same on every page
+     * that draws the site footer, per device.
+     *
+     * '' is Auto and is what ships: nothing is printed and every page keeps the
+     * space it has today (measured: product 34px, shop and category 60px, blog
+     * 56px, home 46px). A key is an exact gap in whole pixels, 0–160 in steps
+     * of 4. A SELECT and not a slider because a slider has no "unset": its
+     * empty box clamps to its minimum, and "Auto" would become 0px the first
+     * time he saved the tab. The keys carry `px` so the console lists them in
+     * this order (Object.keys sorts integer-like keys ahead of '').
+     */
+    public const ABOVE = [
+        '' => 'Auto — each page keeps its own spacing, as now',
+        '0px' => '0 px', '4px' => '4 px', '8px' => '8 px', '12px' => '12 px', '16px' => '16 px', '20px' => '20 px', '24px' => '24 px', '28px' => '28 px',
+        '32px' => '32 px', '36px' => '36 px', '40px' => '40 px', '44px' => '44 px', '48px' => '48 px', '52px' => '52 px', '56px' => '56 px', '60px' => '60 px',
+        '64px' => '64 px', '68px' => '68 px', '72px' => '72 px', '76px' => '76 px', '80px' => '80 px', '84px' => '84 px', '88px' => '88 px', '92px' => '92 px',
+        '96px' => '96 px', '100px' => '100 px', '104px' => '104 px', '108px' => '108 px', '112px' => '112 px', '116px' => '116 px', '120px' => '120 px', '124px' => '124 px',
+        '128px' => '128 px', '132px' => '132 px', '136px' => '136 px', '140px' => '140 px', '144px' => '144 px', '148px' => '148 px', '152px' => '152 px', '156px' => '156 px',
+        '160px' => '160 px',
+    ];
+
+    /** The largest gap a stored key may ask for, checked again where it is printed. */
+    public const ABOVE_MAX = 160;
+
     /** Start / centre, for the brand block and the help strip. */
     private const ALIGN = ['start' => 'Lined up at the start (left in English, right in Arabic)', 'center' => 'Centred'];
 
@@ -318,6 +344,8 @@ final class SiteFooter
         'site_d_pay' => ['type' => 'bool', 'label' => 'Show: The payment marks in the bottom bar', 'default' => true, 'help' => ''],
         'site_d_brand_align' => ['type' => 'select', 'label' => 'The logo, description and social icons line up', 'default' => 'start', 'options' => self::ALIGN, 'help' => ''],
         'site_d_help_align' => ['type' => 'select', 'label' => 'The help strip’s words line up', 'default' => 'start', 'options' => self::ALIGN, 'help' => ''],
+        'site_d_above' => ['type' => 'select', 'label' => 'Space above the footer (every page)', 'default' => '', 'options' => self::ABOVE,
+            'help' => 'The gap between the last section of a page and the footer, the same on every page that has the site footer. Auto keeps each page as it is today (product 34px, shop 60px). Cart and checkout draw the slim bar, which has its own “Space above the bar”.'],
         'site_d_pt' => ['type' => 'range', 'label' => 'Space above the columns', 'default' => 30, 'options' => self::PAD, 'help' => ''],
         'site_d_pb' => ['type' => 'range', 'label' => 'Space below the big name', 'default' => 0, 'options' => self::PAD, 'help' => ''],
         'site_d_gap' => ['type' => 'range', 'label' => 'Space between the columns', 'default' => 28, 'options' => self::GAP, 'help' => ''],
@@ -341,6 +369,8 @@ final class SiteFooter
         'site_m_pay' => ['type' => 'bool', 'label' => 'Show: The payment marks in the bottom bar', 'default' => true, 'help' => ''],
         'site_m_brand_align' => ['type' => 'select', 'label' => 'The logo, description and social icons line up', 'default' => 'center', 'options' => self::ALIGN, 'help' => 'Centred on phones, as the owner asked on 4 October.'],
         'site_m_help_align' => ['type' => 'select', 'label' => 'The help strip’s words line up', 'default' => 'center', 'options' => self::ALIGN, 'help' => 'Centred on phones, as the owner asked on 4 October.'],
+        'site_m_above' => ['type' => 'select', 'label' => 'Space above the footer (every page)', 'default' => '', 'options' => self::ABOVE,
+            'help' => 'The same gap on phones (900px and narrower). Auto keeps each page as it is today.'],
         'site_m_pt' => ['type' => 'range', 'label' => 'Space above the columns', 'default' => 20, 'options' => self::PAD, 'help' => ''],
         'site_m_pb' => ['type' => 'range', 'label' => 'Space below the big name', 'default' => 0, 'options' => self::PAD, 'help' => ''],
         'site_m_gap' => ['type' => 'range', 'label' => 'Space between the columns', 'default' => 12, 'options' => self::GAP, 'help' => ''],
@@ -372,13 +402,13 @@ final class SiteFooter
     private const DEVICE_KEYS_D = [
         'site_d_help', 'site_d_help_sub', 'site_d_logo', 'site_d_tag', 'site_d_soc', 'site_d_col1', 'site_d_col2', 'site_d_col3',
         'site_d_visit', 'site_d_news', 'site_d_name', 'site_d_bot', 'site_d_pay',
-        'site_d_brand_align', 'site_d_help_align', 'site_d_pt', 'site_d_pb', 'site_d_gap', 'site_d_fs_head', 'site_d_fs_link', 'site_d_fs_name',
+        'site_d_brand_align', 'site_d_help_align', 'site_d_above', 'site_d_pt', 'site_d_pb', 'site_d_gap', 'site_d_fs_head', 'site_d_fs_link', 'site_d_fs_name',
     ];
 
     private const DEVICE_KEYS_M = [
         'site_m_help', 'site_m_help_sub', 'site_m_logo', 'site_m_tag', 'site_m_soc', 'site_m_col1', 'site_m_col2', 'site_m_col3',
         'site_m_visit', 'site_m_news', 'site_m_name', 'site_m_bot', 'site_m_pay',
-        'site_m_brand_align', 'site_m_help_align', 'site_m_pt', 'site_m_pb', 'site_m_gap', 'site_m_fs_head', 'site_m_fs_link', 'site_m_fs_name',
+        'site_m_brand_align', 'site_m_help_align', 'site_m_above', 'site_m_pt', 'site_m_pb', 'site_m_gap', 'site_m_fs_head', 'site_m_fs_link', 'site_m_fs_name',
     ];
 
     public const POLICY = [
@@ -763,6 +793,47 @@ final class SiteFooter
     }
 
     /**
+     * "Space above the footer" for one device: null for Auto, otherwise whole
+     * pixels in [0, ABOVE_MAX]. Only a key of ABOVE is read, and the number in
+     * it is clamped again, so a value written around the console (`999px`,
+     * `24px;color:red`, `-8px`) is Auto and prints nothing.
+     */
+    public static function above(array $c, string $dev): ?int
+    {
+        $v = (string) ($c["site_{$dev}_above"] ?? '');
+
+        if ($v === '' || ! array_key_exists($v, self::ABOVE) || preg_match('/^(\d{1,3})px$/', $v, $m) !== 1) {
+            return null;
+        }
+
+        return max(0, min(self::ABOVE_MAX, (int) $m[1]));
+    }
+
+    /**
+     * The same gap for the PREVIOUS footer design (partials/footer-classic),
+     * which has no class or style of its own: '' until a number is picked, so
+     * that design stays byte for byte what it was; then ` class="kft-sa-d"
+     * style="--kft-sa-d:24px"` built from constants and clamped integers.
+     */
+    public function aboveAttr(): string
+    {
+        $c = $this->all();
+        $classes = [];
+        $style = [];
+
+        foreach (['d', 'm'] as $dev) {
+            $above = self::above($c, $dev);
+
+            if ($above !== null) {
+                $classes[] = "kft-sa-{$dev}";
+                $style[] = "--kft-sa-{$dev}:{$above}px";
+            }
+        }
+
+        return $classes === [] ? '' : ' class="'.implode(' ', $classes).'" style="'.implode(';', $style).'"';
+    }
+
+    /**
      * The <footer>'s classes and its custom properties. (Lane HF)
      *
      * EVERY BYTE IS A CONSTANT OR A CHECKED VALUE. Classes are literals chosen
@@ -824,6 +895,10 @@ final class SiteFooter
             if ($pick("site_{$dev}_help_align") === 'center') {
                 $classes[] = "kft-hc-{$dev}";
             }
+
+            if (self::above($c, $dev) !== null) {
+                $classes[] = "kft-sa-{$dev}";
+            }
         }
 
         [$drift, $driftName] = self::DRIFT[$pick('site_drift_speed')] ?? self::DRIFT['14'];
@@ -848,6 +923,16 @@ final class SiteFooter
             $style[] = "--kft-fh-{$dev}:".$int("site_{$dev}_fs_head").'px';
             $style[] = "--kft-fl-{$dev}:".$int("site_{$dev}_fs_link").'px';
             $style[] = "--kft-fn-{$dev}:".$int("site_{$dev}_fs_name");
+        }
+
+        // Space above the footer: printed only once he picks a number, so Auto
+        // leaves the attribute exactly as it was (StorefrontEnglishUnchangedTest).
+        foreach (['d', 'm'] as $dev) {
+            $above = self::above($c, $dev);
+
+            if ($above !== null) {
+                $style[] = "--kft-sa-{$dev}:{$above}px";
+            }
         }
 
         return ['classes' => implode(' ', $classes), 'style' => implode(';', $style), 'sheen' => $sheen];
