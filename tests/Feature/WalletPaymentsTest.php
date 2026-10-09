@@ -713,3 +713,26 @@ it('has both route files required exactly once from routes/web.php', function ()
         'routes/wallet-checkout.php must be required exactly once from routes/web.php — see its header.'
     );
 });
+
+it('asks Stripe for a wallet layout Stripe accepts', function () {
+    /*
+     * THE DEFECT ON THE LIVE SHOP (9 October). The Express Checkout Element was
+     * created with { maxColumns: 2, maxRows: 1, overflow: 'never' }, and
+     * Stripe.js throws on exactly that: "options.layout.overflow: 'never' is
+     * only supported when options.layout.maxRows is 0". The Element was never
+     * drawn, so neither Apple Pay nor Google Pay showed on any phone, however
+     * well the domain, the file and the wallets were set up. Measured with
+     * real Stripe.js on kbeautybliss.com; with maxRows 0 the error is gone.
+     *
+     * MUTATION: put `maxRows: 1` back beside `overflow: 'never'` -> red.
+     */
+    $view = (string) file_get_contents(resource_path('views/partials/checkout/express-wallets.blade.php'));
+    preg_match_all('/layout:\s*\{([^}]*)\}/', $view, $m);
+
+    expect($m[1])->not->toBeEmpty();
+    foreach ($m[1] as $layout) {
+        if (str_contains($layout, "overflow: 'never'")) {
+            expect($layout)->toMatch('/maxRows:\s*0\b/');
+        }
+    }
+});

@@ -405,10 +405,14 @@
         amazonPay: 'never'
       },
       buttonType: { applePay: 'buy', googlePay: 'buy' },
-      /* One row, both buttons, and no "more" chevron. `overflow: 'never'`
-         matters here: the row sits directly above the payment options, and a
-         collapsed overflow menu there reads as a third payment method. */
-      layout: { maxColumns: 2, maxRows: 1, overflow: 'never' }
+      /* Both buttons side by side, and no "more" chevron. Stripe REFUSES
+         `overflow: 'never'` together with `maxRows: 1` -- it throws "options.
+         layout.overflow: 'never' is only supported when options.layout.maxRows
+         is 0" -- and the Element was never drawn, on any phone, for either
+         wallet (measured on kbeautybliss.com with real Stripe.js, 9 October).
+         maxRows 0 is "as many rows as needed"; with only Apple Pay and Google
+         Pay ever offered and two columns, that is still one row. */
+      layout: { maxColumns: 2, maxRows: 0, overflow: 'never' }
     };
     if (DIAG) { DIAG.boot(PK, groupOptions, eceOptions); }
     var ece = elements.create('expressCheckout', eceOptions);
