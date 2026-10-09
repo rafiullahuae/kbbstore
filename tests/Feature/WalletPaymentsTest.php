@@ -384,8 +384,18 @@ it('draws the express row, hidden, once a wallet is switched on', function () {
      * button that cannot work, and the server cannot know which browser it is
      * talking to. This is the half of that promise the server can keep.
      */
-    expect($html)->toContain('data-kbb-express hidden');
+    expect($html)->toContain('data-kbb-express data-kbb-express-pending aria-hidden="true"');
     expect($html)->toContain('data-kbb-express-divider hidden');
+
+    /*
+     * INVISIBLE, NOT display:none (Lane WL). The row carried `hidden`, and
+     * `.kbb-checkout [hidden]{display:none!important}` beat its inline
+     * display:block, so Stripe's Express Checkout Element was mounted into a
+     * box with no layout and the owner saw no Google Pay on Android Chrome
+     * with the domain registered and a card in Google Wallet.
+     */
+    expect($html)->toMatch('/<div class="express" style="display:block;visibility:hidden;height:0;overflow:hidden;margin:0" data-kbb-express data-kbb-express-pending aria-hidden="true">/')
+        ->and($html)->not->toMatch('/<div class="express"[^>]*\shidden[\s>]/');
 
     // Switched off at the shop means 'never' at Stripe, not merely a missing
     // logo: the button is not offered even where the browser has the wallet.
@@ -393,8 +403,9 @@ it('draws the express row, hidden, once a wallet is switched on', function () {
         ->and($html)->toMatch('/var APPLE\s*=\s*true/')
         ->and($html)->toMatch('/var GOOGLE\s*=\s*false/');
 });
-// MUTATION, run: drop the `hidden` attribute from the .express div in the
-// partial. RED on the third expectation — and on the shop, an empty row that
+// MUTATION, run: put `hidden` back on the .express div (the pre-Lane-WL
+// markup): RED on the display:none expectation. Drop the visibility:hidden
+// from its style: RED on the same line — and on the shop, an empty row that
 // Stripe may never fill, which is the dead button this whole file exists to
 // prevent.
 

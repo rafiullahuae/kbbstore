@@ -129,10 +129,22 @@
     $kbbStripeLocale = \App\Support\StripeLocale::current();
 @endphp
 @if (($kbbApplePay || $kbbGooglePay) && $kbbWalletAmount > 0)
-{{-- HIDDEN UNTIL STRIPE SAYS A WALLET IS THERE. Both nodes carry the hook the
+{{-- INVISIBLE UNTIL STRIPE SAYS A WALLET IS THERE. Both nodes carry the hook the
      script removes them by, so a browser with no wallet is left with the
-     payment list exactly as it was before this round. --}}
-<div class="express" style="display:block" data-kbb-express hidden>
+     payment list exactly as it was before this round.
+
+     NOT `hidden`, AND THAT IS THE FIX (Lane WL, 9 October 2026). The owner had
+     both wallets on, the domain registered and green in Stripe, a card in
+     Google Wallet on Android Chrome — and no button. This row used to carry
+     `hidden`, and `.kbb-checkout [hidden]{display:none!important}` in
+     checkout.blade.php beats the inline display:block beside it, so Stripe's
+     Express Checkout Element was mounted into a display:none box. Stripe's own
+     pattern for "hide until ready" is visibility:hidden on a box that is laid
+     out; a display:none box has no width for the element to draw its buttons
+     in. So: laid out at full width, visibility:hidden, height 0 and clipped
+     (no gap, no layout shift for a shopper without a wallet, and nothing to
+     click or read — aria-hidden), and show() takes all of it off. --}}
+<div class="express" style="display:block;visibility:hidden;height:0;overflow:hidden;margin:0" data-kbb-express data-kbb-express-pending aria-hidden="true">
     <div data-kbb-express-mount></div>
     <p class="pay-note" data-kbb-express-error role="status" aria-live="polite" hidden></p>
 </div>
@@ -188,6 +200,11 @@
   }
 
   function show() {
+    /* Everything the pending state put on, taken off: the row is in the flow
+       at its natural height, visible and readable. (Lane WL.) */
+    ROW.removeAttribute('data-kbb-express-pending');
+    ROW.removeAttribute('aria-hidden');
+    ROW.style.cssText = 'display:block';
     ROW.hidden = false;
     if (DIVIDER) DIVIDER.hidden = false;
   }

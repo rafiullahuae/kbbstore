@@ -74,6 +74,23 @@ Apple's file belongs. Apple cannot verify from it, so Apple Pay could not show.
 
 ---
 
+### 0a, part two — "all green in Stripe, still no button" (Lane WL)
+
+- **The Apple file 404'd** because the old route refused anything over 8 KB, and
+  a real Stripe file is bigger. The cap is now 32 KB. If the real file is what
+  is stored, the address answers 200 once 2.60.453 is applied, with no new paste.
+- **The wallet row was mounted into a `display:none` box.** It carried
+  `hidden`, and `.kbb-checkout [hidden]{display:none!important}` beat its
+  inline `display:block`. Measured in Chromium: Stripe's element was handed a
+  container **0 px wide** (390 and 1280). It is now laid out at full width
+  (316 px / 560 px) and only `visibility:hidden`, which is Stripe's own pattern
+  for hiding the element until `ready`. That applies to Google Pay and Apple Pay
+  alike. Shots: `docs/lane-wl-shots/wl-ece-before-*.png` / `wl-ece-after-*.png`.
+- Not the shop's fault, so check these in Stripe: the publishable key on Store → Payments
+  is the same account (and mode) the domains are registered on; Settings →
+  Payments → Payment methods → Apple Pay and Google Pay **On**; in Test mode a
+  real card in the phone's wallet works and is not charged.
+
 ## 0b. Before the six steps — apply the package and check it landed
 
 You have a shell on this server and it is the fastest way to be certain. If you
