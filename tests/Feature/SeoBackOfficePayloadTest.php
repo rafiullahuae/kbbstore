@@ -99,6 +99,11 @@ use Tests\Support\KeyOrder;
  * and `header_settings` = {"menu_icon":"lines"}, the three rows migration
  * 2027_10_19_100000_qk12a_header_and_menu writes -- no add-to-cart tick, no red
  * Super Sale row, the three-line menu icon, as the owner asked. Nothing else moved.
+ *
+ * ▲ 2.60.461 (Lane QK12 chunk B) re-recorded, diff read: the settings body
+ * gains `cartpage_bar_pad` = "50", the row migration 2027_10_19_110000_qk12b_cart_spacing
+ * writes -- 50px under the cart page's checkout bar, as the owner asked.
+ * Nothing else moved.
  */
 function s7PayloadUrls(): array
 {

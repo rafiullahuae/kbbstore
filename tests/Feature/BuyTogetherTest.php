@@ -553,7 +553,17 @@ it('leaves the cart page\'s Recommended rail and the shared product card exactly
          *
          * MUTATION: add `bt-card` to the card's root class and this is red.
          */
-        if (str_ends_with($file, 'product-card.blade.php')) {
+        /*
+         * ▲ 2.60.461 (Lane QK12 chunk B): cart-squeeze.blade.php is the cart
+         * page's docked bar, and the owner asked for 50px under it ("on cart
+         * floating Proceed to checkout row also give space below around 50px"),
+         * which is a change to that file that has nothing to do with this
+         * section. Held whole, the pin could only go green by refusing him. What
+         * it promised about that file is the same as about the card -- this
+         * section put none of its markup there -- so that is what is pinned;
+         * Qk12CartLayoutTest holds the bar's new spacing.
+         */
+        if (str_ends_with($file, 'product-card.blade.php') || str_ends_with($file, 'cart-squeeze.blade.php')) {
             expect($now)->not->toMatch('/bt-(card|cb|tick|plus)/', "{$file} carries the buy-together section's markup");
 
             continue;

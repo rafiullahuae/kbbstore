@@ -25,6 +25,7 @@
             "cartpanel_add_feedback": "none",
             "mobile_menu": "{\"sale_fill\":false}",
             "header_settings": "{\"menu_icon\":\"lines\"}",
+            "cartpage_bar_pad": "50",
             "ga": "",
             "meta_pixel": "",
             "trust_authentic_title": "100% original",
