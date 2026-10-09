@@ -589,6 +589,9 @@ it('ships every setting at the value the page already had, except the ones the o
         // Lane SX: "Sold-out products" -- an option he asked for, not a
         // change, so it ships at the page he has: as usual.
         'sold_out' => 'show',
+        // Lane SC: "all the products of sub categories should also show in the
+        // main parent category too, automatically" -- ON, as he asked.
+        'sub_products' => 'include',
         // Lane FP: the Filters drawer on a phone, at the min(90vw, 300px) it
         // always had -- nothing moves until the owner drags one.
         'filter_w' => 90,
