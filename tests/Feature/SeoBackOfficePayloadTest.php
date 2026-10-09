@@ -81,6 +81,9 @@ use Tests\Support\KeyOrder;
  * ▲ 2.60.454 re-recorded it (KBB_S7_RECORD=1), diff read: the settings body gains
  * `checkoutpage_fs_bar_on` = "0", the row Lane QK7's migration writes to switch
  * the free-delivery bar off on the cart and checkout pages. Nothing else moved.
+ *
+ * ▲ 2.60.455: + `checkoutpage_*` rows Lane QK8's migration writes (the top coupon
+ * line off, and the other settings it ships); the diff was read, nothing else moved.
  */
 function s7PayloadUrls(): array
 {
