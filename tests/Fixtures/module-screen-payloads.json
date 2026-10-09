@@ -6835,7 +6835,55 @@
       "m_row_h",
       "m_pad_x",
       "m_gap"
-    ]
+    ],
+    "socials": {
+      "fields": [
+        {
+          "key": "social_instagram",
+          "label": "Instagram",
+          "placeholder": "https://instagram.com/kbeautybliss",
+          "hint": "",
+          "value": "https://www.instagram.com/kbeauty.bliss/"
+        },
+        {
+          "key": "social_tiktok",
+          "label": "TikTok",
+          "placeholder": "https://tiktok.com/@kbeautybliss",
+          "hint": "",
+          "value": "https://www.tiktok.com/@kbeauty.bliss"
+        },
+        {
+          "key": "social_facebook",
+          "label": "Facebook",
+          "placeholder": "https://facebook.com/kbeautybliss",
+          "hint": "",
+          "value": "https://www.facebook.com/kbeautyblissuae"
+        },
+        {
+          "key": "social_youtube",
+          "label": "YouTube",
+          "placeholder": "https://youtube.com/@kbeautybliss",
+          "hint": "",
+          "value": ""
+        },
+        {
+          "key": "social_pinterest",
+          "label": "Pinterest",
+          "placeholder": "https://pinterest.com/kbeautybliss",
+          "hint": "Google only: the footer draws no Pinterest icon.",
+          "value": ""
+        },
+        {
+          "key": "social_linkedin",
+          "label": "LinkedIn",
+          "placeholder": "https://linkedin.com/company/kbeautybliss",
+          "hint": "Google only: the footer draws no LinkedIn icon.",
+          "value": ""
+        }
+      ],
+      "editable": true,
+      "max": 500
+    }
   },
   "cart-page": {
     "tabs": [

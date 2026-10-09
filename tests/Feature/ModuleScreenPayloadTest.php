@@ -245,6 +245,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // ▲ Lane PO (8 October) added one field to checkout-page and changed
     // nothing else: `remember_on` ("Remember shopper details on this device")
     // on the Fields & attention tab after browsed_on.
+    // ▲ Lane QK2 (9 October) added `socials` to slim-footer beside its tabs
+    // and changed nothing else: the six global social_* addresses Appearance →
+    // Footer → Social profiles edits (saved through PUT admin-api/settings, not
+    // this endpoint), here at the shop's fallbacks, editable for the owner.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();

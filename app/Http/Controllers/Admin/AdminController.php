@@ -2073,13 +2073,17 @@ class AdminController extends Controller
          */
         'delivery_texts' => ['rows', 'Delivery lines by country'],
 
-        // Social profiles, feeding schema.org sameAs.
-        'social_facebook' => ['text', 'Facebook URL'],
-        'social_instagram' => ['text', 'Instagram URL'],
-        'social_tiktok' => ['text', 'TikTok URL'],
-        'social_pinterest' => ['text', 'Pinterest URL'],
-        'social_linkedin' => ['text', 'LinkedIn URL'],
-        'social_youtube' => ['text', 'YouTube URL'],
+        // Social profiles, feeding schema.org sameAs, the footer icons, the
+        // Contact page and the emails. Edited from Store → SEO & Meta AND from
+        // Appearance → Footer (Lane QK2), both through this endpoint; the rule
+        // is App\Support\SocialProfiles::check(). Was `text`, which stored
+        // `javascript:alert(1)` as happily as an Instagram address.
+        'social_facebook' => ['profileurl', 'Facebook URL'],
+        'social_instagram' => ['profileurl', 'Instagram URL'],
+        'social_tiktok' => ['profileurl', 'TikTok URL'],
+        'social_pinterest' => ['profileurl', 'Pinterest URL'],
+        'social_linkedin' => ['profileurl', 'LinkedIn URL'],
+        'social_youtube' => ['profileurl', 'YouTube URL'],
 
         'pinterest_site_verification' => ['text', 'Pinterest verification token'],
         'baidu_site_verification' => ['text', 'Baidu verification token'],
@@ -2955,6 +2959,21 @@ class AdminController extends Controller
                 return filter_var($value, FILTER_VALIDATE_EMAIL) !== false
                     ? $ok($value)
                     : $no("“{$label}” must be an email address, like info@example.com.");
+
+            case 'profileurl':
+                /*
+                 * A social profile: empty, or a full http/https address. An
+                 * UNCHANGED value passes — the SEO tab posts every field back,
+                 * and a legacy row in another shape must not block saving the
+                 * shop's title for ever (the $stored note above).
+                 */
+                if ($stored !== null && (string) $stored === $value) {
+                    return $ok($value);
+                }
+
+                $why = \App\Support\SocialProfiles::check($value, $label);
+
+                return $why === null ? $ok($value) : $no($why);
 
             case 'weburl':
                 /*
