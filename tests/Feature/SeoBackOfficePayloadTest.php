@@ -84,6 +84,9 @@ use Tests\Support\KeyOrder;
  *
  * ▲ 2.60.455: + `checkoutpage_*` rows Lane QK8's migration writes (the top coupon
  * line off, and the other settings it ships); the diff was read, nothing else moved.
+ *
+ * ▲ 2.60.456: + the `checkoutpage_*` rows Lane QK9 (one card, reviews card off)
+ * and the section-heading size (115%) migrations write. Diff read; nothing else.
  */
 function s7PayloadUrls(): array
 {
