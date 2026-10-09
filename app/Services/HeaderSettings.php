@@ -162,6 +162,15 @@ class HeaderSettings
         'search_extended_broaden_others' => ['bool', 'Widen brand + word searches to other brands', true,
                                       'For "Medicube Serum": the brand\'s own serums come first, then serums from other brands too. Off shows only that brand\'s.'],
 
+        // ── Search: spelling mistakes (9 October 2026, the owner: "if user
+        //    search anything with wrong spell, like Medicube > Medicob or
+        //    Medicobe, the system should auto detect the small miss-spellings
+        //    and display the results for the corrected ones").
+        //    ▲ SHIPS ON: he asked for it (CLAUDE.md, 30-September reversal).
+        //    App\Support\SearchSpelling; Lane SR.
+        'search_fuzzy_enabled' => ['bool', 'Fix spelling mistakes', true,
+                                   'When a search finds nothing, look for the brand, category or product word it was meant to be ("Medicob" → Medicube, "ميديكيوب" → Medicube) and show those results, with a "Showing results for" line. Searches that find something are never changed.'],
+
         // ── Search: sets first (1 October 2026, the owner: "the search is not
         //    showing set products at all ... if i write Anua, any set which has
         //    Anua in it should display #1; if multiple, random on every search").

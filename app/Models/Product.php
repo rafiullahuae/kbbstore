@@ -53,6 +53,16 @@ class Product extends Model
         // category, its picks -- drops that product's lists at once.
         static::saved(static fn (self $p) => \App\Services\ProductRecs::forget((int) $p->getKey()));
 
+        // The search's spelling dictionary holds the words of visible product
+        // names (Lane SR, App\Support\SearchSpelling). Only a save that can
+        // change those words drops it -- not a stock or sales write.
+        static::saved(static function (self $p): void {
+            if ($p->wasRecentlyCreated || $p->wasChanged(['name', 'status', 'is_visible'])) {
+                \App\Support\SearchSpelling::flush();
+            }
+        });
+        static::deleted(static fn () => \App\Support\SearchSpelling::flush());
+
         // A product moved to another brand has no place in that brand's order
         // yet: it joins the end of it rather than carrying the old brand's
         // number in. (Lane SO; App\Support\ScopeOrder.)

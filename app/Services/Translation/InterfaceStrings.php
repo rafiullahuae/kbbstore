@@ -408,6 +408,10 @@ final class InterfaceStrings
             'shop.sub_search' => 'Results across products and brands.',
             'shop.crumb_category' => 'Category',
             'shop.crumb_search' => 'Search',
+            // A misspelt search, corrected (Lane SR, App\Support\SearchSpelling):
+            // "Showing results for <b>Medicube</b> · Search instead for medicob".
+            'shop.search_corrected' => 'Showing results for',
+            'shop.search_instead' => 'Search instead for :term',
             // The imported category title header (Lane PT): the toggle under a
             // long category description. components/kbb-title-header.
             'shop.header_more' => 'Read more',
@@ -2333,6 +2337,8 @@ final class InterfaceStrings
             'js.already_helpful' => 'You already marked this helpful.',
             'js.review_failed' => 'Could not submit — please check your connection and try again.',
             'js.close_search' => 'Close search',
+            // The dropdown's line over a corrected search (Lane SR).
+            'js.search_corrected' => 'Showing results for',
             'js.read_less' => 'Read less ↑',
             'js.hide_password' => 'Hide password',
             'js.password_common' => 'Too common',

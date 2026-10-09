@@ -53,6 +53,13 @@ class Category extends Model
 
         // Lane SC: the tree a parent's page lists its sub-categories from.
         static::saved(static fn () => \App\Support\CategoryRollup::flush());
+        // Category names are in the search's spelling dictionary (Lane SR).
+        static::saved(static function (self $c): void {
+            if ($c->wasRecentlyCreated || $c->wasChanged('name')) {
+                \App\Support\SearchSpelling::flush();
+            }
+        });
+        static::deleted(static fn () => \App\Support\SearchSpelling::flush());
         static::deleted(static fn () => \App\Support\CategoryRollup::flush());
     }
 

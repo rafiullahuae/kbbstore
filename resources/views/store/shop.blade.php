@@ -157,6 +157,9 @@
      sit at column 0 so every other page renders byte for byte as before. --}}@if ($sub !== '')
         <p class="psub">{{ $sub }}</p>
 @endif
+{{-- Lane SR: a search that found nothing, corrected. Escaped like every other line here; at column 0 so an uncorrected page is byte for byte as before. --}}@if ($searchCorrected ?? null)
+        <p class="psub kbb-sfix">{{ __('store.shop.search_corrected') }} <b>{{ $searchCorrected }}</b> · <a href="{{ \App\Support\Url::to('/shop/') . '?s=' . urlencode((string) $searchTyped) . '&sfix=0' }}" rel="nofollow" style="text-decoration:underline">{{ __('store.shop.search_instead', ['term' => $searchTyped]) }}</a></p>
+@endif
     @endunless
 </div>
 

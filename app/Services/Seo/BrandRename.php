@@ -461,7 +461,7 @@ final class BrandRename
             static function (): void {
                 foreach (['kbb.settings.map', 'kbb.home.rails', 'kbb.home.routine', 'kbb.home.reviews', 'kbb.home.cats', 'kbb.home.brands',
                     'kbb.home.posts', 'kbb.shop.cats', 'kbb.shop.brands', 'kbb.search.starter.products', 'kbb.search.starter.brands',
-                    'kbb.search.brandnames', 'kbb.admin.cats', 'kbb.admin.brands', \App\Support\AdminSearchIndex::CACHE_KEY] as $key) {
+                    'kbb.search.brandnames', \App\Support\SearchSpelling::CACHE_KEY, 'kbb.admin.cats', 'kbb.admin.brands', \App\Support\AdminSearchIndex::CACHE_KEY] as $key) {
                     Cache::forget($key);
                 }
             },
