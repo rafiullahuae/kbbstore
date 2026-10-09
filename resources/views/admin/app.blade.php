@@ -24577,6 +24577,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 @include('admin.partials.banners-screen')
 {{-- Growth & Marketing -> Marketing Pixels (Lane PX): an eye button in front of each ID that opens its how-to guide with the official Meta / Google / TikTok links. Wraps window.paintPixels; static text, no request. --}}
 @include('admin.partials.marketing-pixels-guide')
+{{-- Marketing Pixels tabs: Meta / Google / TikTok Connect wizards, Custom code,
+     Last events, Guide (Lane MP). Wraps window.paintPixels after the guide does.
+     Endpoints: routes/marketing-pixels-connect-admin.php. --}}
+@include('admin.partials.marketing-pixels-connect')
 {{-- Appearance -> Set -> Desktop / Mobile (Lane SA). Late-rendered for the same
      reason the four above it are: it runs after this file's own script has
      defined window.go, window.kbbAddNavEntry and toast(), appending its sidebar

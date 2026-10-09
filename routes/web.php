@@ -46,6 +46,10 @@ Route::withoutMiddleware(SeoFilesController::STATELESS)->group(function () {
     // machine-read like the three files above. Growth & Marketing -> Google Shopping feed.
     require __DIR__.'/merchant-feed.php';
 
+    // Meta and TikTok catalog feeds (Lane MP): /feeds/meta-catalog.xml and
+    // /feeds/tiktok-catalog.xml, the Google feed's builder with the ids the pixels send.
+    require __DIR__.'/marketing-catalog-feeds.php';
+
     /*
      * The fourth document of the same kind (Lane WAL): Apple's domain
      * association file, machine-read, no session and no per-visitor content.
@@ -905,6 +909,9 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // Growth & Marketing → Marketing Pixels.
         Route::get('/marketing-pixels',  [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'show']);
         Route::post('/marketing-pixels', [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'save']);
+        // Connect wizards, checks, Last events, Connect with Facebook, Custom code (Lane MP).
+        // marketing.pixels.connect (owner, manager); custom code marketing.customcode (owner).
+        require __DIR__.'/marketing-pixels-connect-admin.php';
 
         // Catalogue → Product Labels.
         Route::get('/product-labels',  [\App\Http\Controllers\Admin\ProductLabelsApiController::class, 'show']);
