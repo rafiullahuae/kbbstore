@@ -11,6 +11,18 @@ class Coupon extends Model
 
     protected $guarded = [];
 
+    /**
+     * Appearance → Cart panel advertises one coupon from a snapshot of it, so
+     * the panel on every shop page never queries this table. Any save or
+     * delete of THAT coupon re-takes the snapshot; any other coupon costs one
+     * memoised settings lookup and nothing else. (Lane QK3)
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn (self $coupon) => \App\Services\CartPanel::couponChanged((int) $coupon->getKey()));
+        static::deleted(fn (self $coupon) => \App\Services\CartPanel::couponChanged((int) $coupon->getKey()));
+    }
+
     protected function casts(): array
     {
         return [

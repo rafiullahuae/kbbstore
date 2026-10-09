@@ -355,6 +355,7 @@ class CouponService
         // the instance the caller handed us. UPDATE ... usage_count + 1 is
         // atomic in its own right, and we hold the row lock besides.
         Coupon::whereKey($locked->id)->increment('usage_count');
+        $this->usageMoved((int) $locked->id);
 
         // Keep the in-memory copies in step, so a caller that reads
         // $coupon->usage_count after this does not see the pre-write value.
@@ -446,6 +447,7 @@ class CouponService
                 Coupon::whereKey($row->coupon_id)
                     ->where('usage_count', '>', 0)
                     ->decrement('usage_count');
+                $this->usageMoved((int) $row->coupon_id);
 
                 $released++;
             }
@@ -567,6 +569,7 @@ class CouponService
                 }
 
                 Coupon::whereKey($locked->getKey())->increment('usage_count');
+                $this->usageMoved((int) $locked->getKey());
 
                 $taken++;
             }
@@ -928,6 +931,30 @@ class CouponService
 
     /** Every `reason` validate() can answer with. */
     public const REASONS = ['invalid', 'not_started', 'expired', 'used_up', 'minimum', 'maximum', 'account', 'already_used', 'no_items'];
+
+    /**
+     * A count moved through the query builder, which fires no model event, so
+     * Appearance → Cart panel's snapshot of its advertised coupon is told here
+     * — "used up" is the one condition the snapshot cannot read off a date.
+     * (Lane QK3)
+     *
+     * AFTER COMMIT, AND IT CANNOT FAIL THE ORDER. These run inside the
+     * transaction that creates or releases an order; a hint is not worth a
+     * shopper's checkout, so a failed refresh is reported and the order stands.
+     * Nothing is left dirty by it: SettingsService::set() writes through a
+     * fresh model. Any coupon but the advertised one returns at a memoised
+     * settings lookup.
+     */
+    private function usageMoved(int $couponId): void
+    {
+        DB::afterCommit(static function () use ($couponId): void {
+            try {
+                \App\Services\CartPanel::couponChanged($couponId);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        });
+    }
 
     private function fail(string $message, string $reason): array
     {

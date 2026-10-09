@@ -182,7 +182,9 @@ it('sends the touch list and both breakpoints to the screen rather than repeatin
 
     // And the two tabs the owner asked for are the first two, in that order.
     expect(array_column($body['tabs'], 'key'))
-        ->toBe(['desktop', 'mobile', 'content', 'behaviour', 'wording', 'colour']);
+        // `coupon` appended LAST by Lane QK3 (the owner's coupon hint), so the
+        // first six keep their places.
+        ->toBe(['desktop', 'mobile', 'content', 'behaviour', 'wording', 'colour', 'coupon']);
 });
 
 /* ------------------------------------------------------------------------

@@ -338,6 +338,34 @@ export function initCart() {
             return;
         }
 
+        /* (Lane QK3) The cart panel's coupon hint: tap the code to copy it.
+           writeText() is called inside the click, before any await, so the
+           browser still counts it as the shopper's gesture. Where the
+           clipboard API is missing or refused (plain http, an old WebView) the
+           code's text is selected instead, which is what a long-press would
+           do. "Copied" is a CSS ::after above the pill, so nothing moves. */
+        const cc = event.target.closest('[data-kccopy]');
+        if (cc) {
+            event.preventDefault();
+            const done = () => {
+                cc.classList.add('is-done');
+                clearTimeout(cc.kbbDone);
+                cc.kbbDone = setTimeout(() => cc.classList.remove('is-done'), 1400);
+            };
+            try {
+                await navigator.clipboard.writeText(cc.dataset.kccopy);
+                done();
+            } catch {
+                const range = document.createRange();
+                range.selectNodeContents(cc);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                try { if (document.execCommand('copy')) done(); } catch { /* the text stays selected */ }
+            }
+            return;
+        }
+
         // Drawer tabs: Cart / Browsed.
         const tab = event.target.closest('[data-kctab]');
         if (tab) {

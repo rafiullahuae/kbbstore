@@ -363,6 +363,13 @@ function mAllowedRepairs(): array
  * recent_*, best_*. Re-recorded from this corpus; all 181 calls on keys that
  * survive answer exactly what they answered (compared row by row before the
  * section was replaced). Every line before also_like is untouched.
+ *
+ * Lane QK3 — Appearance → Cart panel → Coupon hint: 27 rows for its four new
+ * keys (coupon_on, coupon_id, txt_coupon, txt_coupon_ar), spliced in after
+ * cart_panel|checkout_fg because the walk visits SCHEMA in order. Added, not
+ * re-recorded: no existing row moved. `coupon_id` answers '0' for every
+ * corpus input — it stores digits or "none", and whether the id names a real
+ * coupon is CartPanel::save()'s check.
  */
 it('answers every recorded cast exactly as it did before the shared schema', function () {
     $recorded = file(base_path('tests/Fixtures/module-cast-baseline.txt'), FILE_IGNORE_NEW_LINES);

@@ -254,6 +254,8 @@
   width:var(--cpv-rmbox,auto);height:var(--cpv-rmbox,auto)}
 .cpv-pr{font-size:var(--cpv-prf,12.5px);font-weight:800;color:var(--cpv-acc,#C13E63)}
 .cpv-promo{padding:7px var(--cpv-pad,16px);background:#fff0f4;font-size:10px;color:#5e545a}
+.cpv-cch{font-size:10.5px;line-height:1.5;color:#756C74;margin-bottom:6px}
+.cpv-cc{font-weight:700;letter-spacing:.04em;color:#C13E63;background:#fff0f4;border:1px dashed #f0b9cf;border-radius:99px;padding:0 6px}
 .cpv-foot{border-top:1px solid #eef1f6;padding:10px var(--cpv-pad,16px);flex:none}
 .cpv-sum{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:8px}
 .cpv-btns{display:grid;grid-template-columns:1fr 1fr;gap:var(--cpv-btngap,8px)}
@@ -296,6 +298,7 @@
   var values = {};        // key -> current value, edited in place
   var touch = [];         // the keys that are tap targets
   var touchMin = 44;
+  var coupons = [];       // (Lane QK3) the shop's coupons, usable first
   var phoneMax = 680;     // where the phone's spacing takes effect
   var tapMax = 900;       // where the phone's tap targets take effect
   var open = null;        // which tab is showing
@@ -407,6 +410,7 @@
       touchMin = body.touchMin || 44;
       phoneMax = body.phoneMax || 680;
       tapMax = body.tapMax || 900;
+      coupons = body.coupons || [];
       values = {};
       tabs.forEach(function (t) {
         t.fields.forEach(function (f) { values[f.key] = f.value; });
@@ -512,6 +516,25 @@
      * the DOM element's type instead of the field's. This branches on the
      * field's own type and so does the input handler.
      */
+    /* (Lane QK3) THE COUPON SELECT IS THE SHOP'S OWN COUPONS, drawn from the
+       `coupons` LIST in the order the server sent it — usable first. An
+       object keyed by id would come back sorted by id, because the browser
+       orders integer keys ascending. The server stores only an id it holds. */
+    if (f.key === 'coupon_id') {
+      var cur = String(values[f.key]);
+      var copts = '<option value="0"' + (cur === '0' ? ' selected' : '') + '>'
+        + esc((f.options || {})['0'] || 'None') + '</option>'
+        + coupons.map(function (c) {
+          return '<option value="' + esc(c.id) + '"' + (cur === String(c.id) ? ' selected' : '') + '>'
+            + esc(c.label) + '</option>';
+        }).join('');
+
+      return '<div class="cpp-f"><div class="cpp-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
+        + '<select class="cpp-sel" id="' + id + '" data-cpp-key="' + esc(f.key) + '">' + copts + '</select>'
+        + (coupons.length ? '' : '<p class="cpp-help">This shop has no coupons yet — add one under Store → Coupons.</p>')
+        + help + '</div>';
+    }
+
     if (f.type === 'select') {
       var opts = Object.keys(f.options || {}).map(function (k) {
         return '<option value="' + esc(k) + '"' + (String(values[f.key]) === k ? ' selected' : '') + '>'
@@ -526,6 +549,9 @@
     if (f.type === 'text') {
       return '<div class="cpp-f"><div class="cpp-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
         + '<input class="cpp-text" type="text" id="' + id + '" data-cpp-key="' + esc(f.key) + '"'
+        /* (Lane QK3) The Arabic box reads right to left, so the token sits
+           where the sentence puts it rather than where LTR layout flips it. */
+        + (/_ar$/.test(f.key) ? ' dir="rtl"' : '')
         + ' value="' + esc(values[f.key] == null ? '' : values[f.key]) + '"'
         + ' placeholder="' + esc(f['default'] == null ? '' : f['default']) + '">'
         + help + '</div>';
@@ -568,6 +594,17 @@
         + 'px</b> and below. The four tap targets — the line ✕, the close button, the tab strip '
         + 'and the footer buttons — take effect at <b>' + tapMax + 'px</b> and below, which is where '
         + 'the panel raises them today. Both widths are the shop’s own; nothing here moved them.</div>';
+    }
+
+    if (open === 'coupon') {
+      var pick = couponFor(values.coupon_id);
+      return '<div class="cpp-note"><b>On by default</b> — it shows the moment a coupon is chosen, on a laptop '
+        + 'and on a phone. Right now: '
+        + (values.coupon_on === false ? 'switched <b>off</b>.'
+          : !pick ? '<b>hidden</b>, because no coupon is chosen.'
+          : !pick.usable ? '<b>hidden</b>, because ' + esc(pick.code) + ' cannot be used today.'
+          : '<b>showing</b> ' + esc(pick.code) + ' to every shopper with something in the bag.')
+        + '</div>';
     }
 
     return '<div class="cpp-note">The same on a laptop and on a phone. Nothing on this tab is '
@@ -722,6 +759,24 @@
     }).join('');
   }
 
+  /* (Lane QK3) The chosen coupon's row from the payload, or null. */
+  function couponFor(id) {
+    var out = null;
+    coupons.forEach(function (c) { if (String(c.id) === String(id)) out = c; });
+    return out;
+  }
+
+  /* The coupon hint as the shop draws it — escaped text, the code as a pill —
+     and nothing when the shop would draw nothing. */
+  function pvCoupon() {
+    var pick = couponFor(values.coupon_id);
+    if (values.coupon_on === false || !pick || !pick.usable) return '';
+    var text = String(values.txt_coupon || '').trim() || 'Need Discount? Use coupon code {coupon-code} on checkout';
+    var pill = '<span class="cpv-cc">' + esc(pick.code) + '</span>';
+    var html = text.indexOf('{coupon-code}') === -1 ? esc(text) + ' ' + pill : esc(text).split('{coupon-code}').join(pill);
+    return '<div class="cpv-cch">' + html + '</div>';
+  }
+
   /* The panel itself, drawn once and used by both mocks. `px` is the scaler the
      surface uses — 1:1 on the desktop mock, the phone frame's 320/390 on the
      other — and `k` decorates a key name with the surface's suffix, so ONE
@@ -755,6 +810,7 @@
       + '<div class="cpv-body">' + pvLines() + '</div>'
       + (pvOn('show_promo') ? '<div class="cpv-promo">🎁 Spend 199 for free delivery</div>' : '')
       + '<div class="cpv-foot">'
+      + pvCoupon()
       + '<div class="cpv-sum"><span>' + esc(String(values.txt_subtotal || 'Subtotal')) + '</span><span>841 د.إ</span></div>'
       /* The stacked arrangement is a MOBILE control, so only the phone mock
          draws it — `.cp-btnstack .kc-btns` is inside the shop's own phone block

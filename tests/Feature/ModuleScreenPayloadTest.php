@@ -640,7 +640,13 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // current page", its style and its colour.
     // 719 -> 720 (owner, 9 October): Appearance -> Footer -> Site footer ·
     // help strip -> Strip icon.
-    expect($compared)->toBe(720, 'the number of controls drawn changed');
+    // 720 -> 724 (Lane QK3, the owner's coupon hint): Appearance -> Cart
+    // panel gains a seventh tab, "Coupon hint" — coupon_on (ON, his),
+    // coupon_id, txt_coupon, txt_coupon_ar — APPENDED after Colour, so the six
+    // recorded tabs keep their positions and bytes. The coupon list itself is
+    // the payload's own `coupons` key, which depends on the shop's rows and is
+    // not recorded here.
+    expect($compared)->toBe(724, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

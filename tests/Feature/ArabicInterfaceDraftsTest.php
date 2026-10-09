@@ -701,7 +701,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // (store.contact.*), seeded by 2027_10_15_120100_seed_contact_page_arabic_drafts.
     // -13 (Lane IGR): the retired Instagram API module's shop strings
     // (store.instagram.* profile section, store.spotted.* API cards and player).
-    expect($ui['drafts'])->toBe(1510, 'the shipped Arabic is not showing as drafts to review')
+    // 1510 -> 1511 (Lane QK3): the cart panel coupon hint's "Copied" note
+    // (store.cart_drawer.code_copied), seeded by
+    // 2027_10_15_170100_seed_coupon_hint_arabic_draft.
+    expect($ui['drafts'])->toBe(1511, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

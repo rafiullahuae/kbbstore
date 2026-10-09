@@ -1,0 +1,132 @@
+{
+ "320": {
+  "line": {
+   "x": 84.6,
+   "y": 564.4,
+   "w": 224.4,
+   "h": 34.1
+  },
+  "lines": 2,
+  "scrollWidth": 320
+ },
+ "390": {
+  "size": 390,
+  "line": {
+   "x": 100.7,
+   "y": 725.5,
+   "w": 278.3,
+   "h": 17
+  },
+  "pill": {
+   "x": 264.9,
+   "y": 725.5,
+   "w": 46.9,
+   "h": 16.8
+  },
+  "subtotal": {
+   "x": 100.7,
+   "y": 752.5,
+   "w": 278.3,
+   "h": 25.5
+  },
+  "lineText": "Need Discount? Use coupon code GLOW on checkout",
+  "lineStyle": {
+   "fontSize": "11px",
+   "lineHeight": "17.05px",
+   "color": "rgb(117, 108, 116)"
+  },
+  "scrollWidth": 390,
+  "naturalWidth": 272.8,
+  "pillHit": true,
+  "checkoutHit": true,
+  "copiedClass": true,
+  "clipboard": "GLOW",
+  "lineAfterCopy": {
+   "x": 100.7,
+   "y": 725.5,
+   "w": 278.3,
+   "h": 17
+  },
+  "pillAfterCopy": {
+   "x": 264.9,
+   "y": 725.5,
+   "w": 46.9,
+   "h": 16.8
+  },
+  "lineAfterUpdate": {
+   "x": 100.7,
+   "y": 725.5,
+   "w": 278.3,
+   "h": 17
+  },
+  "checkoutNavigatedTo": "/checkout/",
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "adminOptions": [
+   "  None — the line stays hidden",
+   "* GLOW · 10% off · no expiry",
+   "  SPRING15 · 15% off · expired 2 Oct 2026",
+   "  VIP20 · AED 20 off · used up"
+  ]
+ },
+ "1280": {
+  "size": 1280,
+  "line": {
+   "x": 920,
+   "y": 732.4,
+   "w": 340,
+   "h": 17.8
+  },
+  "pill": {
+   "x": 1091.7,
+   "y": 732.4,
+   "w": 53.4,
+   "h": 17.5
+  },
+  "subtotal": {
+   "x": 920,
+   "y": 760.3,
+   "w": 340,
+   "h": 25.5
+  },
+  "lineText": "Need Discount? Use coupon code GLOW on checkout",
+  "lineStyle": {
+   "fontSize": "11.5px",
+   "lineHeight": "17.825px",
+   "color": "rgb(117, 108, 116)"
+  },
+  "scrollWidth": 1280,
+  "naturalWidth": 289.4,
+  "pillHit": true,
+  "checkoutHit": true,
+  "copiedClass": true,
+  "clipboard": "GLOW",
+  "lineAfterCopy": {
+   "x": 920,
+   "y": 732.4,
+   "w": 340,
+   "h": 17.8
+  },
+  "pillAfterCopy": {
+   "x": 1091.7,
+   "y": 732.4,
+   "w": 53.4,
+   "h": 17.5
+  },
+  "lineAfterUpdate": {
+   "x": 920,
+   "y": 732.4,
+   "w": 340,
+   "h": 17.8
+  },
+  "checkoutNavigatedTo": "/checkout/",
+  "consoleErrors": [],
+  "adminOptions": [
+   "  None — the line stays hidden",
+   "* GLOW · 10% off · no expiry",
+   "  SPRING15 · 15% off · expired 2 Oct 2026",
+   "  VIP20 · AED 20 off · used up"
+  ]
+ }
+}

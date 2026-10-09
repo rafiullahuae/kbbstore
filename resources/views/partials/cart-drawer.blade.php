@@ -59,6 +59,13 @@
     // add up to — after the bundle — with the bundle's own row above it.
     $kbbBundleOff = (int) ($totals['bundle_discount'] ?? 0);
     $kbbBundleLines = $totals['bundle']['lines'] ?? [];
+
+    // (Lane QK3) The coupon hint above Subtotal — Appearance → Cart panel →
+    // Coupon hint. '' unless it is on, a coupon is chosen and that coupon is
+    // usable now; read from a settings snapshot, so no query. couponLine()
+    // escapes the owner's wording and the code; the wrapper is a constant.
+    $kbbCcLine = $count ? $cpText->couponLine() : '';
+    $kbbCc = $kbbCcLine === '' ? '' : '<div class="kc-cch">' . $kbbCcLine . '</div>';
 @endphp
 
 <div class="kc-fragment">
@@ -159,7 +166,7 @@
             </div>
             <div class="dfoot">
                 @if ($promo)<div class="kc-coupon" style="color:#5e545a;background:#fff0f4;font-size:10px"><span class="ic">🎁</span><div>{!! $promo !!}</div></div>@endif
-                @includeWhen($kbbBundleOff > 0, 'partials.buy-together.total-row', ['cls' => 'sumrow kc-btrow', 'style' => 'color:#1F7A50;font-weight:600', 'label' => __('store.buy_together.bundle_row'), 'amount' => '&ndash; ' . \App\Support\Money::format($kbbBundleOff)])<div class="sumrow tot"><span>{{ $cpText->get("txt_subtotal") }}</span><span>{!! \App\Support\Money::format($sub - $kbbBundleOff) !!}</span></div>
+                {!! $kbbCc !!}@includeWhen($kbbBundleOff > 0, 'partials.buy-together.total-row', ['cls' => 'sumrow kc-btrow', 'style' => 'color:#1F7A50;font-weight:600', 'label' => __('store.buy_together.bundle_row'), 'amount' => '&ndash; ' . \App\Support\Money::format($kbbBundleOff)])<div class="sumrow tot"><span>{{ $cpText->get("txt_subtotal") }}</span><span>{!! \App\Support\Money::format($sub - $kbbBundleOff) !!}</span></div>
                 <div class="kc-btns">
                     <a class="btn-ghost" href="{{ Url::to('/cart/') }}">{{ $cpText->get("txt_btn_cart") }}</a>
                     <a class="cobtn" href="{{ Url::to('/checkout/') }}">{{ $cpText->get("txt_btn_checkout") }}</a>

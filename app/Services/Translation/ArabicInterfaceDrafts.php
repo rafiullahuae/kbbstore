@@ -789,6 +789,7 @@ final class ArabicInterfaceDrafts
             'store.cart_drawer.browsed_sold_out' => 'نفدت الكمية',
             'store.cart_drawer.browsed_in_bag' => 'في حقيبتك — أضف واحدًا آخر',
             'store.cart_drawer.browsed_add' => 'أضف إلى السلة',
+            'store.cart_drawer.code_copied' => 'تم النسخ',
 
             'store.set.contents' => 'في هذه المجموعة · لا منتجات|في هذه المجموعة · منتج واحد|في هذه المجموعة · منتجان|في هذه المجموعة · :count منتجات|في هذه المجموعة · :count منتجًا|في هذه المجموعة · :count منتج',
             'store.set.saving' => 'توفّر :amount',
