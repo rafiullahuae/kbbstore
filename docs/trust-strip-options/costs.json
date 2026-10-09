@@ -1,0 +1,65 @@
+[
+ {
+  "id": "H1",
+  "title": "Refined card",
+  "html": 1051,
+  "htmlGz": 474,
+  "css": 1476,
+  "cssGz": 711,
+  "bothGz": 1155
+ },
+ {
+  "id": "H2",
+  "title": "Pills",
+  "html": 1039,
+  "htmlGz": 468,
+  "css": 1360,
+  "cssGz": 667,
+  "bothGz": 1107
+ },
+ {
+  "id": "H3",
+  "title": "Bold pink band",
+  "html": 1023,
+  "htmlGz": 470,
+  "css": 1197,
+  "cssGz": 616,
+  "bothGz": 1052
+ },
+ {
+  "id": "H4",
+  "title": "Minimal grid",
+  "html": 1035,
+  "htmlGz": 472,
+  "css": 1499,
+  "cssGz": 629,
+  "bothGz": 1071
+ },
+ {
+  "id": "F1",
+  "title": "Big icons with a sub-line",
+  "html": 1205,
+  "htmlGz": 564,
+  "css": 1223,
+  "cssGz": 594,
+  "bothGz": 1124
+ },
+ {
+  "id": "F2",
+  "title": "Soft gradient, big type",
+  "html": 1061,
+  "htmlGz": 483,
+  "css": 1184,
+  "cssGz": 623,
+  "bothGz": 1069
+ },
+ {
+  "id": "F3",
+  "title": "Ink band, gold-pink accents",
+  "html": 1153,
+  "htmlGz": 555,
+  "css": 1351,
+  "cssGz": 641,
+  "bothGz": 1159
+ }
+]
