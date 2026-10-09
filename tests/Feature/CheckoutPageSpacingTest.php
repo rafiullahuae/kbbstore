@@ -293,6 +293,10 @@ it('offers spacing and nothing structural', function () {
             // Lane PY: whether the payment boxes draw logos, and which of them
             // wear their gateway's colours. Looks; the four boxes stay four.
             'pay_logos', 'pay_tabby', 'pay_tamara', 'pay_card', 'pay_cod',
+            // Lane QK6, each the owner's own request: the coupon line at the
+            // top, the two ways back (both off), the UAE delivery labels and
+            // the free-delivery line beside Delivery. None is a layout.
+            'cline_on', 'shop_link', 'cart_link', 'dl_on', 'dl_note_on',
         ]);
 });
 

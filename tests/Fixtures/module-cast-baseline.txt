@@ -5397,6 +5397,113 @@ checkout_page|pay_tamara_logo|select|"badge"|'badge'
 checkout_page|pay_tamara_logo|select|"nope"|'badge'
 checkout_page|pay_tamara_logo|select|""|'badge'
 checkout_page|pay_tamara_logo|select|null|'badge'
+checkout_page|cline_on|bool|true|true
+checkout_page|cline_on|bool|false|false
+checkout_page|cline_on|bool|"1"|true
+checkout_page|cline_on|bool|"0"|false
+checkout_page|cline_on|bool|""|false
+checkout_page|cline_on|bool|"on"|true
+checkout_page|cline_on|bool|"off"|true
+checkout_page|cline_on|bool|"no"|true
+checkout_page|cline_on|bool|1|true
+checkout_page|cline_on|bool|0|false
+checkout_page|cline_on|bool|null|false
+checkout_page|cline_coupon|select|"cart"|'cart'
+checkout_page|cline_coupon|select|"nope"|'cart'
+checkout_page|cline_coupon|select|""|'cart'
+checkout_page|cline_coupon|select|null|'cart'
+checkout_page|cline_text|text|"abc"|'abc'
+checkout_page|cline_text|text|""|'For Discount, Apply coupon {coupon-code}'
+checkout_page|cline_text|text|"  sp  "|'sp'
+checkout_page|cline_text|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|cline_text|text|null|'For Discount, Apply coupon {coupon-code}'
+checkout_page|cline_text|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|cline_text_ar|text|"abc"|'abc'
+checkout_page|cline_text_ar|text|""|'للحصول على خصم، طبّق القسيمة {coupon-code}'
+checkout_page|cline_text_ar|text|"  sp  "|'sp'
+checkout_page|cline_text_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|cline_text_ar|text|null|'للحصول على خصم، طبّق القسيمة {coupon-code}'
+checkout_page|cline_text_ar|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|shop_link|bool|true|true
+checkout_page|shop_link|bool|false|false
+checkout_page|shop_link|bool|"1"|true
+checkout_page|shop_link|bool|"0"|false
+checkout_page|shop_link|bool|""|false
+checkout_page|shop_link|bool|"on"|true
+checkout_page|shop_link|bool|"off"|true
+checkout_page|shop_link|bool|"no"|true
+checkout_page|shop_link|bool|1|true
+checkout_page|shop_link|bool|0|false
+checkout_page|shop_link|bool|null|false
+checkout_page|cart_link|bool|true|true
+checkout_page|cart_link|bool|false|false
+checkout_page|cart_link|bool|"1"|true
+checkout_page|cart_link|bool|"0"|false
+checkout_page|cart_link|bool|""|false
+checkout_page|cart_link|bool|"on"|true
+checkout_page|cart_link|bool|"off"|true
+checkout_page|cart_link|bool|"no"|true
+checkout_page|cart_link|bool|1|true
+checkout_page|cart_link|bool|0|false
+checkout_page|cart_link|bool|null|false
+checkout_page|dl_on|bool|true|true
+checkout_page|dl_on|bool|false|false
+checkout_page|dl_on|bool|"1"|true
+checkout_page|dl_on|bool|"0"|false
+checkout_page|dl_on|bool|""|false
+checkout_page|dl_on|bool|"on"|true
+checkout_page|dl_on|bool|"off"|true
+checkout_page|dl_on|bool|"no"|true
+checkout_page|dl_on|bool|1|true
+checkout_page|dl_on|bool|0|false
+checkout_page|dl_on|bool|null|false
+checkout_page|dl_paid|text|"abc"|'abc'
+checkout_page|dl_paid|text|""|'Express Delivery'
+checkout_page|dl_paid|text|"  sp  "|'sp'
+checkout_page|dl_paid|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|dl_paid|text|null|'Express Delivery'
+checkout_page|dl_paid|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|dl_paid_ar|text|"abc"|'abc'
+checkout_page|dl_paid_ar|text|""|'توصيل سريع'
+checkout_page|dl_paid_ar|text|"  sp  "|'sp'
+checkout_page|dl_paid_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|dl_paid_ar|text|null|'توصيل سريع'
+checkout_page|dl_paid_ar|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|dl_free|text|"abc"|'abc'
+checkout_page|dl_free|text|""|'Free Express Delivery'
+checkout_page|dl_free|text|"  sp  "|'sp'
+checkout_page|dl_free|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|dl_free|text|null|'Free Express Delivery'
+checkout_page|dl_free|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|dl_free_ar|text|"abc"|'abc'
+checkout_page|dl_free_ar|text|""|'توصيل سريع مجاني'
+checkout_page|dl_free_ar|text|"  sp  "|'sp'
+checkout_page|dl_free_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|dl_free_ar|text|null|'توصيل سريع مجاني'
+checkout_page|dl_free_ar|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|dl_note_on|bool|true|true
+checkout_page|dl_note_on|bool|false|false
+checkout_page|dl_note_on|bool|"1"|true
+checkout_page|dl_note_on|bool|"0"|false
+checkout_page|dl_note_on|bool|""|false
+checkout_page|dl_note_on|bool|"on"|true
+checkout_page|dl_note_on|bool|"off"|true
+checkout_page|dl_note_on|bool|"no"|true
+checkout_page|dl_note_on|bool|1|true
+checkout_page|dl_note_on|bool|0|false
+checkout_page|dl_note_on|bool|null|false
+checkout_page|dl_note|text|"abc"|'abc'
+checkout_page|dl_note|text|""|'Free delivery over {amount}'
+checkout_page|dl_note|text|"  sp  "|'sp'
+checkout_page|dl_note|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|dl_note|text|null|'Free delivery over {amount}'
+checkout_page|dl_note|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|dl_note_ar|text|"abc"|'abc'
+checkout_page|dl_note_ar|text|""|'توصيل مجاني للطلبات فوق {amount}'
+checkout_page|dl_note_ar|text|"  sp  "|'sp'
+checkout_page|dl_note_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|dl_note_ar|text|null|'توصيل مجاني للطلبات فوق {amount}'
+checkout_page|dl_note_ar|text|"<b>x<\/b>"|'<b>x</b>'
 mobile_header|match_page|bool|true|true
 mobile_header|match_page|bool|false|false
 mobile_header|match_page|bool|"1"|true

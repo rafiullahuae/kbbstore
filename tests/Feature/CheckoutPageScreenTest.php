@@ -103,6 +103,8 @@ it('hands the screen every field, grouped into the two tabs', function () {
         'trust', 'cues',
         // Lane PY: Tabby / Tamara / card / COD boxes, their logos and colours.
         'payments',
+        // Lane QK6, appended: the UAE delivery labels and line, and the coupon line.
+        'delivery', 'cline',
     ])
         ->and($body['mobileMax'])->toBe(CheckoutPage::MOBILE_MAX);
 

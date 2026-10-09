@@ -338,9 +338,19 @@ class CartPanel
     public function refreshCouponSnapshot(): void
     {
         $id = (int) $this->get('coupon_id');
-        $coupon = $id > 0 ? Coupon::query()->find($id) : null;
 
-        $this->settings->set(self::COUPON_SNAPSHOT, $coupon === null ? '' : json_encode([
+        $this->settings->set(self::COUPON_SNAPSHOT, self::snapshotOf($id > 0 ? Coupon::query()->find($id) : null));
+    }
+
+    /**
+     * The snapshot of one coupon, as stored: code, dates and "used up", or ''
+     * for no coupon. Public and static because Appearance → Checkout page's
+     * coupon line keeps a copy of ITS chosen coupon the same way, through this
+     * one writer, rather than a second one that could drift. (Lane QK6)
+     */
+    public static function snapshotOf(?Coupon $coupon): string
+    {
+        return $coupon === null ? '' : (string) json_encode([
             'id' => (int) $coupon->id,
             'code' => (string) $coupon->code,
             'starts_at' => $coupon->starts_at?->getTimestamp(),
@@ -349,7 +359,47 @@ class CartPanel
             // refuses a code whose count has reached its limit, so it is not
             // advertised either.
             'active' => $coupon->usage_limit === null || (int) $coupon->usage_count < (int) $coupon->usage_limit,
-        ]));
+        ]);
+    }
+
+    /**
+     * The code a stored snapshot advertises right now, or null.
+     *
+     * Null unless the snapshot is of coupon $id, carries a code, is not used
+     * up, has started and has not expired — the same three conditions
+     * CouponService::validate() checks first. Only the clock is read: no query.
+     * Shared with Appearance → Checkout page's coupon line. (Lane QK6)
+     */
+    public static function usableCode(mixed $snap, int $id): ?string
+    {
+        $snap = is_string($snap) ? json_decode($snap, true) : $snap;
+
+        if ($id <= 0 || ! is_array($snap) || (int) ($snap['id'] ?? 0) !== $id
+            || trim((string) ($snap['code'] ?? '')) === '' || empty($snap['active'])) {
+            return null;
+        }
+
+        $now = now()->getTimestamp();
+
+        if (($snap['starts_at'] ?? null) !== null && $now < (int) $snap['starts_at']) {
+            return null;
+        }
+
+        if (($snap['expires_at'] ?? null) !== null && $now > (int) $snap['expires_at']) {
+            return null;
+        }
+
+        return (string) $snap['code'];
+    }
+
+    /**
+     * The coupon this panel advertises now, as its code, or null — whether or
+     * not the panel's own line is switched on. Appearance → Checkout page's
+     * coupon line defaults to "Same as the cart panel" and asks here.
+     */
+    public function chosenUsableCode(): ?string
+    {
+        return self::usableCode($this->settings->get(self::COUPON_SNAPSHOT), (int) $this->get('coupon_id'));
     }
 
     /**
@@ -363,6 +413,10 @@ class CartPanel
         if ($couponId > 0 && (int) $panel->get('coupon_id') === $couponId) {
             $panel->refreshCouponSnapshot();
         }
+
+        // The checkout's coupon line may advertise a coupon of its own, kept
+        // the same way; every caller of this method is a moment it can change.
+        CheckoutPage::couponChanged($couponId);
     }
 
     /**
@@ -384,21 +438,9 @@ class CartPanel
             return '';
         }
 
-        $snap = $this->settings->get(self::COUPON_SNAPSHOT);
-        $snap = is_string($snap) ? json_decode($snap, true) : $snap;
+        $code = $this->chosenUsableCode();
 
-        if (! is_array($snap) || (int) ($snap['id'] ?? 0) !== (int) $c['coupon_id']
-            || trim((string) ($snap['code'] ?? '')) === '' || empty($snap['active'])) {
-            return '';
-        }
-
-        $now = now()->getTimestamp();
-
-        if (($snap['starts_at'] ?? null) !== null && $now < (int) $snap['starts_at']) {
-            return '';
-        }
-
-        if (($snap['expires_at'] ?? null) !== null && $now > (int) $snap['expires_at']) {
+        if ($code === null) {
             return '';
         }
 
@@ -413,7 +455,6 @@ class CartPanel
             $text = self::COUPON_TEXT;
         }
 
-        $code = (string) $snap['code'];
         // The pill is a real button, so a tap answers on the first try; cart.js
         // copies data-kccopy and shows data-done above it without moving a
         // pixel of the line (an absolutely placed ::after).

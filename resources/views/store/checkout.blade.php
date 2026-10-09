@@ -77,16 +77,26 @@
     <form name="checkout" method="post" class="checkout woocommerce-checkout" action="{{ Url::to('/checkout/place') }}" enctype="multipart/form-data" id="kbbCheckoutForm">
         @csrf
         <div class="co-grid">
+{{-- Lane QK6: Appearance -> Checkout page -> Coupon line, ON as the owner
+     asked. Column 0 and glued to the conditional, so a checkout with no line
+     to draw renders not one byte more. --}}@if (($kbbClCode = $kbbCoPage->couponLineCode()) !== null)@include('partials.checkout.coupon-top')@endif
 
             <!-- LEFT -->
             <div>
                 <div class="co-titlebar">
                     <div class="co-titlebar-main">
+{{-- Lane QK6: "turn off the back to shop link and back to cart button on
+     checkout completely!" Appearance -> Checkout page -> Back to shop & cart,
+     both OFF as asked. Directives at column 0, so OFF leaves no line and ON is
+     byte for byte what was here. --}}@if ($kbbCoPage->showShopLink())
                         <a class="backlink" href="{{ Url::to('/shop/') }}">{{ __('store.checkout.back_to_shop') }}</a>
+@endif
                         <h1 class="co-h">{{ __('store.checkout.heading') }}</h1>
                         <p class="co-lead">{{ __('store.checkout.lead') }}</p>
                     </div>
+@if ($kbbCoPage->showCartLink())
                     @include('partials.checkout.back-to-cart')
+@endif
                 </div>
 
                 <div class="coupon">
@@ -110,66 +120,21 @@
                     <!-- 1 · Contact -->
                     <div class="sec">
                         <h2><span class="n">1</span> {{ __('store.checkout.step_contact') }}@if ($kbbCoPage->get('remember_on'))<button type="button" class="kbb-rmb-clear" id="kbbRememberClear" aria-hidden="true" tabindex="-1">{{ __('store.checkout.remember_clear') }}</button>@endif</h2>
-{{-- NAME FIRST, then PHONE and EMAIL side by side, and all three required.
+{{-- CONTACT IS THE EMAIL ADDRESS (Lane QK6). The owner: "Change Shipping
+     address section heading to Shipping Details, remove the phone and Full
+     name fields from the contact section and bring these two fields to
+     Shipping Details section." Full name and Phone open section 2 now, in that
+     order; each field keeps its name, id, autocomplete, inputmode, validation,
+     required star, icon and floating label exactly as before, so the server,
+     "Remember my details", the account prefill and the pixels read the same
+     boxes. Email stands alone here, full width.
 
-     The three things this order needs to reach a human, in the order someone
-     says them. Phone leads the second row at the owner's instruction -- it is
-     the field a UAE courier actually calls, and the one a shopper types
-     fastest on a phone keyboard that is already numeric.
-
-     The name used to open the Shipping address section, which was right while
-     that section was fields the shopper typed. It is an address PICKER now,
-     and a saved address carries no name -- the popup asks for Area, Apartment,
-     City and Country and nothing else -- so a name field above a list of saved
-     addresses would read as naming the address rather than the person.
-
-     Phone is required on the server as well as here: see place()'s rules. A
-     field marked required in the markup and nullable in the controller is not
-     mandatory, it is a suggestion a script can skip, and the card door posts
-     to the same endpoint.
-
-     A MOVE, NOT A REWRITE. Both shapes of the name field, their validation
-     priorities and their autocomplete tokens are unchanged, and
-     `billing_first_name` is still what the form posts. --}}@if ($singleName ?? true)
-{{-- autocomplete="name", not "given-name". This one box holds the
-                                 whole name -- splitName() in the controller cuts it up -- and a
-                                 browser told "given-name" fills it with the first name alone,
-                                 leaving the surname to be typed by hand on a phone. --}}
-                            <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_full_name')" required icon="user"
-                                validate="validate-required" priority="10"
-                                :placeholder="__('store.checkout.field_full_name_placeholder')"
-                                autocomplete="section-billing billing name"
-                                :value="old('billing_first_name', $prefill['name'] ?? '')" />
-@else
-                            {{-- Store → Ecommerce → Checkout → Form fields, off. The single field
-                                 above is still what the backend sees when this is on — splitName()
-                                 in the controller has accepted this shape all along; only the form
-                                 itself never offered it. --}}
-                            <div class="row2">
-                                <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_first_name')" required icon="user"
-                                    rowClass="form-row-first" validate="validate-required" priority="10"
-                                    autocomplete="section-billing billing given-name"
-                                    :value="old('billing_first_name', $prefill['first_name'] ?? '')" />
-
-                                <x-checkout.field name="billing_last_name" :label="__('store.checkout.field_last_name')" required icon="user"
-                                    rowClass="form-row-last" validate="validate-required" priority="20"
-                                    autocomplete="section-billing billing family-name"
-                                    :value="old('billing_last_name', $prefill['last_name'] ?? '')" />
-                            </div>
-@endif
-                        <div class="row2">
-                            <x-checkout.field name="billing_phone" :label="__('store.checkout.field_phone')" type="tel" required icon="phone"
-                                validate="validate-required validate-phone" priority="100"
-                                :placeholder="__('store.checkout.field_phone_placeholder')" inputmode="tel"
-                                autocomplete="section-billing billing tel"
-                                :value="old('billing_phone', $prefill['phone'] ?? '')" />
-
-                            <x-checkout.field name="billing_email" :label="__('store.checkout.field_email')" type="email" required icon="mail"
-                                validate="validate-required validate-email" priority="1"
-                                :placeholder="__('store.checkout.field_email_placeholder')" inputmode="email"
-                                autocomplete="section-billing billing email"
-                                :value="old('billing_email', $prefill['email'] ?? '')" />
-                        </div>
+     Phone is required on the server as well as here: see place()'s rules. --}}
+                        <x-checkout.field name="billing_email" :label="__('store.checkout.field_email')" type="email" required icon="mail"
+                            validate="validate-required validate-email" priority="1"
+                            :placeholder="__('store.checkout.field_email_placeholder')" inputmode="email"
+                            autocomplete="section-billing billing email"
+                            :value="old('billing_email', $prefill['email'] ?? '')" />
 {{-- THE THREE COMPOUND ROWS ON THIS PAGE STAY HAND-WRITTEN, deliberately.
 
      This one, the gift row below and the WhatsApp opt-in are not fields with a
@@ -214,6 +179,41 @@
                     <!-- 2 · Shipping address -->
                     <div class="sec">
                         <h2><span class="n">2</span> {{ __('store.checkout.step_shipping') }}</h2>
+{{-- NAME FIRST, then PHONE, at the top of Shipping Details (Lane QK6), above
+     the address. A MOVE, NOT A REWRITE: both shapes of the name field, their
+     validation priorities and their autocomplete tokens are unchanged, and
+     `billing_first_name` is still what the form posts. --}}@if ($singleName ?? true)
+{{-- autocomplete="name", not "given-name". This one box holds the
+                                 whole name -- splitName() in the controller cuts it up -- and a
+                                 browser told "given-name" fills it with the first name alone,
+                                 leaving the surname to be typed by hand on a phone. --}}
+                            <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_full_name')" required icon="user"
+                                validate="validate-required" priority="10"
+                                :placeholder="__('store.checkout.field_full_name_placeholder')"
+                                autocomplete="section-billing billing name"
+                                :value="old('billing_first_name', $prefill['name'] ?? '')" />
+@else
+                            {{-- Store → Ecommerce → Checkout → Form fields, off. The single field
+                                 above is still what the backend sees when this is on — splitName()
+                                 in the controller has accepted this shape all along; only the form
+                                 itself never offered it. --}}
+                            <div class="row2">
+                                <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_first_name')" required icon="user"
+                                    rowClass="form-row-first" validate="validate-required" priority="10"
+                                    autocomplete="section-billing billing given-name"
+                                    :value="old('billing_first_name', $prefill['first_name'] ?? '')" />
+
+                                <x-checkout.field name="billing_last_name" :label="__('store.checkout.field_last_name')" required icon="user"
+                                    rowClass="form-row-last" validate="validate-required" priority="20"
+                                    autocomplete="section-billing billing family-name"
+                                    :value="old('billing_last_name', $prefill['last_name'] ?? '')" />
+                            </div>
+@endif
+                            <x-checkout.field name="billing_phone" :label="__('store.checkout.field_phone')" type="tel" required icon="phone"
+                                validate="validate-required validate-phone" priority="100"
+                                :placeholder="__('store.checkout.field_phone_placeholder')" inputmode="tel"
+                                autocomplete="section-billing billing tel"
+                                :value="old('billing_phone', $prefill['phone'] ?? '')" />
 {{-- The picker row, or the four typed fields it replaced. Appearance ->
      Checkout page -> Fields & attention -> "Address picker row on cart and
      checkout", OFF as the owner asked (Lane CK). Directives at column 0, so
@@ -232,12 +232,12 @@
 
                     <!-- 3 · Delivery -->
                     <div class="sec">
-                        <h2><span class="n">3</span> {{ __('store.checkout.step_delivery') }}</h2>
+                        <h2><span class="n">3</span> {{ __('store.checkout.step_delivery') }}@if ($kbbCoPage->get('dl_note_on') && is_string($kbbDn = $kbbCoPage->deliveryNoteHtml($defaultCountry ?? null, $totals['free_shipping_threshold'] ?? null)))<span class="co-dnote" id="kbbDeliveryNote"{!! $kbbDn === '' ? ' hidden' : '' !!}>{!! $kbbDn !!}</span>@endif</h2>
                         @if (!empty($unservedCountry))
                             <p class="xd-unserved">{{ __('store.checkout.unserved_country', ['country' => \App\Support\Countries::NAMES[$unservedCountry] ?? $unservedCountry]) }}</p>
                         @endif
                         <div id="kbbDeliverySlot" class="kbb-delivery">
-                            @include('partials.checkout.delivery-options')
+                            @include('partials.checkout.delivery-options', ['deliveryCountry' => $defaultCountry ?? null])
                         </div>
                             @if ($kbbCoPage->get('notes_on'))
                             {{-- Not rendered rather than hidden, so nothing posts

@@ -46,7 +46,7 @@ class CartPanelApiController extends Controller
             'touchMin' => 44,
             'phoneMax' => 680,
             'tapMax' => 900,
-            'coupons' => $this->coupons(),
+            'coupons' => self::couponList((int) $this->panel->get('coupon_id')),
         ]);
     }
 
@@ -62,13 +62,15 @@ class CartPanelApiController extends Controller
      * panel itself never reads the coupons table. The chosen coupon is always
      * in the list even past the cap, so the select can show what is stored.
      *
+     * Public and static since Lane QK6: Appearance → Checkout page → Coupon
+     * line draws its select from the same list, so the two cannot disagree.
+     *
      * @return list<array{id: string, code: string, label: string, usable: bool}>
      */
-    private function coupons(): array
+    public static function couponList(int $chosen): array
     {
         $cols = ['id', 'code', 'type', 'amount', 'starts_at', 'expires_at', 'usage_limit', 'usage_count'];
         $rows = Coupon::query()->orderBy('code')->orderBy('id')->limit(500)->get($cols);
-        $chosen = (int) $this->panel->get('coupon_id');
 
         if ($chosen > 0 && ! $rows->contains('id', $chosen)) {
             $rows->push(...Coupon::query()->whereKey($chosen)->get($cols));

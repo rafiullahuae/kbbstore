@@ -2610,7 +2610,13 @@ class CheckoutController extends Controller
                 'rates' => $rates,
                 'chosenRate' => $chosen,
                 'deliveryEta' => $this->deliveryEta($country),
+                'deliveryCountry' => $country,
             ])->render(),
+            // Lane QK6: the line beside "Delivery" -- "Free delivery over AED
+            // 199" for the UAE, '' (hidden) anywhere else. Rendered by the
+            // same method the page uses; wording escaped there.
+            'deliveryNote' => app(\App\Services\CheckoutPage::class)
+                ->deliveryNoteHtml($country, $totals['free_shipping_threshold'] ?? null),
             // The same partial the page renders, fed the freshly recomputed
             // totals — the free-shipping bar's threshold, percentage and
             // "unlocked" state are all per-country (Extended can set its own,
@@ -2994,7 +3000,7 @@ class CheckoutController extends Controller
 
         $state = $data['state'] ?? null;
 
-        [, , $totals] = $this->rateContext($cart, $country, $state);
+        [$rates, $chosen, $totals] = $this->rateContext($cart, $country, $state);
 
         $totalFils = (int) ($totals['total'] ?? 0);
         $gateways = $this->gateways($totalFils, $country);
@@ -3079,6 +3085,20 @@ class CheckoutController extends Controller
             ])->render(),
             'browsedHtml' => view('partials.checkout.browsed-list', ['browsed' => $browsed])->render(),
             'browsedCount' => $browsed->count(),
+            /*
+             * THE DELIVERY OPTIONS FOLLOW THE BASKET (Lane QK6). A quantity
+             * change can cross the free-delivery line, and the order block
+             * above already moved to "Free" while the option list kept
+             * "Delivery Charges: AED 20". Same partial, same rates the totals
+             * were computed from. (A coupon never crosses it: rates qualify on
+             * the pre-coupon subtotal, so the coupon answer does not carry it.)
+             */
+            'deliveryHtml' => view('partials.checkout.delivery-options', [
+                'rates' => $rates,
+                'chosenRate' => $chosen,
+                'deliveryEta' => $this->deliveryEta($country),
+                'deliveryCountry' => $country,
+            ])->render(),
             // For the optional sticky bar, which carries a .js-total of its own
             // outside every slot above. Formatted here like everything else —
             // including at the ledger's own width, so the bar cannot show a

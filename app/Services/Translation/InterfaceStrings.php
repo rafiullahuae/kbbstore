@@ -1419,6 +1419,8 @@ final class InterfaceStrings
             // keyed by CouponService::REASONS so Arabic can say them too.
             'checkout.coupon_applied' => 'Coupon :code applied — you save :amount',
             'checkout.coupon_applied_plain' => 'Coupon :code applied',
+            // The coupon line's tappable code, read aloud. (Lane QK6)
+            'checkout.cline_apply_label' => 'Apply coupon :code',
             'checkout.coupon_removed' => 'Coupon removed',
             'checkout.coupon_remove' => 'Remove',
             'checkout.coupon_err_invalid' => 'That code is not valid.',
@@ -1431,7 +1433,9 @@ final class InterfaceStrings
             'checkout.coupon_err_already_used' => 'You have already used that code.',
             'checkout.coupon_err_no_items' => 'That code does not apply to anything in your basket.',
             'checkout.step_contact' => 'Contact',
-            'checkout.step_shipping' => 'Shipping address',
+            // "Change Shipping address section heading to Shipping Details" — the
+            // owner (Lane QK6); Full name and Phone open this section now.
+            'checkout.step_shipping' => 'Shipping Details',
             'checkout.step_delivery' => 'Delivery',
             'checkout.step_payment' => 'Payment',
             'checkout.field_email' => 'Email address',

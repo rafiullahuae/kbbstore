@@ -1,0 +1,313 @@
+{
+ "320": {
+  "scrollWidth": 320,
+  "line": {
+   "x": 20,
+   "y": -816,
+   "w": 280,
+   "h": 42
+  },
+  "note": {
+   "x": 144.4,
+   "y": 265,
+   "w": 138.6,
+   "h": 16.7
+  },
+  "heading": {
+   "x": 144.4,
+   "y": 265,
+   "w": 138.6,
+   "h": 16.7
+  }
+ },
+ "390": {
+  "loadErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "scrollWidth": 390,
+  "line": {
+   "x": 20,
+   "y": 77,
+   "w": 350,
+   "h": 42
+  },
+  "pill": {
+   "x": 256.2,
+   "y": 83,
+   "w": 67.8,
+   "h": 30
+  },
+  "summaryRow": {
+   "x": 35,
+   "y": 134,
+   "w": 320,
+   "h": 50
+  },
+  "lineAboveSummary": true,
+  "lineText": "For Discount, Apply coupon GLOW",
+  "lineFont": "12.5px",
+  "pillHitFirstTry": true,
+  "totalBefore": "AED 139",
+  "backlinkPresent": false,
+  "logoHref": "/",
+  "titlebarFirstChild": "co-h",
+  "after": {
+   "navigations": 0,
+   "couponPosts": [
+    {
+     "code": "GLOW",
+     "remove": false
+    }
+   ],
+   "lineDone": "Coupon GLOW applied",
+   "lineBox": {
+    "x": 20,
+    "y": 77,
+    "w": 350,
+    "h": 42
+   },
+   "totalAfter": "AED 127",
+   "promoBox": "GLOW",
+   "promoLine": "Coupon GLOW applied — you save AED 12Remove",
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "scrollWidth": 390,
+   "lineHeightUnchanged": true,
+   "discountRow": [
+    "SubtotalAED 119",
+    "GLOW– AED 12",
+    "DeliveryAED 20",
+    "Gift wrappingAED 0",
+    "You're paying VAT (5%)AED 6.05",
+    "TotalAED 127",
+    "TotalAED 127",
+    "You're paying VAT (5%)AED 6.05"
+   ],
+   "reloadedDone": true,
+   "afterRemoveDone": false
+  },
+  "doubleTapPosts": 1,
+  "keyboardEnterApplied": true,
+  "keyboardPosts": 1,
+  "focusAfterApply": "co-cl-done",
+  "failure": {
+   "lineError": "That code has expired.",
+   "boxError": "That code has expired.",
+   "navigations": 0,
+   "stillInvites": true,
+   "pillBusyCleared": true
+  },
+  "delivery": {
+   "paidLabel": "Express DeliveryAED 20",
+   "note": "Free delivery over AED 199",
+   "noteVisible": true,
+   "heading": {
+    "x": 37,
+    "y": 1183.5,
+    "w": 316,
+    "h": 58
+   },
+   "freeLabelAfterQtyStep": "Free Express DeliveryFree",
+   "navigationsDuringStep": 0,
+   "oman": {
+    "label": "GCC Delivery: AED 50",
+    "noteVisible": false
+   },
+   "backToUae": {
+    "label": "Free Express DeliveryFree",
+    "note": "Free delivery over AED 199"
+   },
+   "errors": []
+  },
+  "form": [
+   {
+    "h": "1 ContactNot you? Clear details",
+    "fields": [
+     "billing_email",
+     "create_account",
+     "account_password",
+     "billing_kbb_whatsapp"
+    ]
+   },
+   {
+    "h": "2 Shipping Details",
+    "fields": [
+     "billing_first_name",
+     "billing_phone",
+     "billing_address_1",
+     "billing_address_2",
+     "billing_state",
+     "billing_country",
+     "kbb_remember"
+    ]
+   }
+  ],
+  "validation": {
+   "focused": "billing_phone",
+   "navigations": 0
+  },
+  "placed": {
+   "url": "/checkout/success",
+   "errors": []
+  },
+  "ar": {
+   "line": "للحصول على خصم، طبّق القسيمة GLOW",
+   "shipping": "2 تفاصيل الشحن",
+   "delivery": "توصيل سريعAED 20",
+   "note": "توصيل مجاني للطلبات فوق AED 199",
+   "scrollWidth": 390,
+   "errors": [],
+   "done": "تم تطبيق القسيمة GLOW",
+   "navigations": 0,
+   "placed": "/ar/checkout/success"
+  },
+  "adminCouponOptions": [
+   "* Same as the cart panel",
+   "  GLOW · 10% off · no expiry"
+  ]
+ },
+ "1280": {
+  "loadErrors": [],
+  "scrollWidth": 1280,
+  "line": {
+   "x": 140,
+   "y": 89,
+   "w": 278.1,
+   "h": 42
+  },
+  "pill": {
+   "x": 343.3,
+   "y": 95,
+   "w": 67.8,
+   "h": 30
+  },
+  "summaryRow": {
+   "x": 778,
+   "y": 144,
+   "w": 344,
+   "h": 50
+  },
+  "lineAboveSummary": true,
+  "lineText": "For Discount, Apply coupon GLOW",
+  "lineFont": "13px",
+  "pillHitFirstTry": true,
+  "totalBefore": "AED 139",
+  "backlinkPresent": false,
+  "logoHref": "/",
+  "titlebarFirstChild": "co-h",
+  "after": {
+   "navigations": 0,
+   "couponPosts": [
+    {
+     "code": "GLOW",
+     "remove": false
+    }
+   ],
+   "lineDone": "Coupon GLOW applied",
+   "lineBox": {
+    "x": 140,
+    "y": 89,
+    "w": 278.1,
+    "h": 42
+   },
+   "totalAfter": "AED 127",
+   "promoBox": "GLOW",
+   "promoLine": "Coupon GLOW applied — you save AED 12Remove",
+   "errors": [],
+   "scrollWidth": 1280,
+   "lineHeightUnchanged": true,
+   "discountRow": [
+    "SubtotalAED 119",
+    "GLOW– AED 12",
+    "DeliveryAED 20",
+    "Gift wrappingAED 0",
+    "You're paying VAT (5%)AED 6.05",
+    "TotalAED 127",
+    "TotalAED 127",
+    "You're paying VAT (5%)AED 6.05"
+   ],
+   "reloadedDone": true,
+   "afterRemoveDone": false
+  },
+  "doubleTapPosts": 1,
+  "keyboardEnterApplied": true,
+  "keyboardPosts": 1,
+  "focusAfterApply": "co-cl-done",
+  "failure": {
+   "lineError": "That code has expired.",
+   "boxError": "That code has expired.",
+   "navigations": 0,
+   "stillInvites": true,
+   "pillBusyCleared": true
+  },
+  "delivery": {
+   "paidLabel": "Express DeliveryAED 20",
+   "note": "Free delivery over AED 199",
+   "noteVisible": true,
+   "heading": {
+    "x": 157,
+    "y": 976.4,
+    "w": 560,
+    "h": 58
+   },
+   "freeLabelAfterQtyStep": "Free Express DeliveryFree",
+   "navigationsDuringStep": 0,
+   "oman": {
+    "label": "GCC Delivery: AED 50",
+    "noteVisible": false
+   },
+   "backToUae": {
+    "label": "Free Express DeliveryFree",
+    "note": "Free delivery over AED 199"
+   },
+   "errors": []
+  },
+  "form": [
+   {
+    "h": "1 ContactNot you? Clear details",
+    "fields": [
+     "billing_email",
+     "create_account",
+     "account_password",
+     "billing_kbb_whatsapp"
+    ]
+   },
+   {
+    "h": "2 Shipping Details",
+    "fields": [
+     "billing_first_name",
+     "billing_phone",
+     "billing_address_1",
+     "billing_address_2",
+     "billing_state",
+     "billing_country",
+     "kbb_remember"
+    ]
+   }
+  ],
+  "validation": {
+   "focused": "billing_phone",
+   "navigations": 0
+  },
+  "placed": {
+   "url": "/checkout/success",
+   "errors": []
+  },
+  "ar": {
+   "line": "للحصول على خصم، طبّق القسيمة GLOW",
+   "shipping": "2 تفاصيل الشحن",
+   "delivery": "توصيل سريعAED 20",
+   "note": "توصيل مجاني للطلبات فوق AED 199",
+   "scrollWidth": 1280,
+   "errors": [],
+   "done": "تم تطبيق القسيمة GLOW",
+   "navigations": 0,
+   "placed": "/ar/checkout/success"
+  },
+  "adminCouponOptions": [
+   "* Same as the cart panel",
+   "  GLOW · 10% off · no expiry"
+  ]
+ }
+}

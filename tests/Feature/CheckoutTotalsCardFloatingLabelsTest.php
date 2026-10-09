@@ -345,7 +345,11 @@ it('renders the checkout byte for byte as before this lane with both switches of
     // (AddressRegionsCheckoutTest), so it is set here for the same reason.
     // Lane PO's "Remember my details" ships ON too; OFF draws nothing
     // (CheckoutPlaceOrderOnceTest), so it is set here for the same reason.
-    cdSet(['sum_totals' => false, 'float_labels' => false, 'pay_style' => 'plain', 'state_list' => false, 'remember_on' => false]);
+    // Lane QK6's back links and delivery labels: the links are OFF and the
+    // labels ON since, as the owner asked; ON / OFF respectively are their
+    // byte-for-byte way back (CheckoutCouponLineTest, CheckoutDeliveryLabelsTest).
+    cdSet(['sum_totals' => false, 'float_labels' => false, 'pay_style' => 'plain', 'state_list' => false, 'remember_on' => false,
+        'shop_link' => true, 'cart_link' => true, 'dl_on' => false, 'dl_note_on' => false]);
     // Lane LG2's lotus logo ships ON in the checkout's header and drawer;
     // "Text only (as before)" is its byte-for-byte way back (LogoLockupTest),
     // so it is set here for the same reason.
@@ -392,6 +396,12 @@ it('renders the checkout byte for byte as before this lane with both switches of
         // block is the overlay's, not this lane's; CheckoutPlacingOverlayTest
         // and CheckoutPlaceOrderNeverSilentTest pin it, so it is set aside on
         // both sides rather than chased string by string.
+        // Lane QK6 (later) moves Full name and Phone from Contact to the top
+        // of Shipping Details, as the owner asked, with no switch: set aside
+        // on both sides; CheckoutCouponLineTest pins every attribute of both.
+        $before = (string) preg_replace('#<span class="n">1</span> Contact.*?</h2>\n\K.*?id="billing_email_field".*?</p>\n\s*</div>\n#s', '', $before, 1);
+        $after = (string) preg_replace('#<span class="n">1</span> Contact.*?</h2>\n\K.*?id="billing_email_field".*?</p>\n#s', '', $after, 1);
+        $after = (string) preg_replace('#<span class="n">2</span> Shipping Details</h2>\n\K.*?id="billing_phone_field".*?</p>\n#s', '', $after, 1);
         $overlay = '#<!--kbb-placing-->.*?<!--/kbb-placing-->#s';
         $before = (string) preg_replace($overlay, '', $before, 1);
         $after = (string) preg_replace($overlay, '', $after, 1);

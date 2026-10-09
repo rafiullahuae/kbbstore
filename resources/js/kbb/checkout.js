@@ -191,6 +191,16 @@ export function initCheckout() {
             return;
         }
 
+        // The coupon line at the top (Lane QK6): the same in-place apply as
+        // typing the code into the box and pressing Apply -- the code goes in
+        // the box too, so the box, the totals and the summary row all say it.
+        const cline = event.target.closest('[data-kbb-cline]');
+        if (cline) {
+            event.preventDefault();
+            await applyFromLine(cline);
+            return;
+        }
+
         const hint = event.target.closest('.hint [data-code]');
         if (hint) {
             event.preventDefault();
@@ -295,6 +305,17 @@ export function initCheckout() {
             }
 
             if (slot) slot.innerHTML = data.deliveryHtml;
+
+            // "Free delivery over AED 199" beside the heading: the UAE only,
+            // so it follows the country (Lane QK6). Server-rendered markup --
+            // the wording escaped there, the amount Money::format() output.
+            if (typeof data.deliveryNote === 'string') {
+                const note = document.getElementById('kbbDeliveryNote');
+                if (note) {
+                    note.innerHTML = data.deliveryNote;
+                    note.hidden = data.deliveryNote === '';
+                }
+            }
 
             // The free-shipping bar is per-country too — its threshold, its
             // percentage, and whether it reads as unlocked. Left alone here it
@@ -475,6 +496,12 @@ export function initCheckout() {
 
         const items = document.querySelector('#kbbSummary .co-items');
         if (items && data.itemsHtml) items.innerHTML = data.itemsHtml;
+
+        // The delivery options, re-quoted against the new basket: a quantity
+        // can cross the free-delivery line (Lane QK6). The server picks the
+        // first rate, which is the one the totals beside it were priced on.
+        const slot = document.getElementById('kbbDeliverySlot');
+        if (slot && typeof data.deliveryHtml === 'string') slot.innerHTML = data.deliveryHtml;
 
         // Both copies — the desktop summary and the mobile place-order box.
         // The order block opens with the free-delivery bar, so the bar, the
@@ -666,10 +693,66 @@ export function initCheckout() {
         await changeCoupon(code, false);
     }
 
+    /*
+     * The coupon line's pill (Lane QK6). A busy ring on the pill while the
+     * answer is on its way; then "Coupon GLOW applied" in the line, or the
+     * checkout's own reason under it. couponBusy refuses a second tap, and
+     * aria-disabled rather than `disabled` keeps a keyboard user's focus.
+     */
+    async function applyFromLine(pill) {
+        if (couponBusy) return;
+
+        const code = pill.dataset.kbbCline || '';
+        const line = document.getElementById('kbbCline');
+        const err = line?.querySelector('.co-cl-err');
+        const field = document.getElementById('kbb_coupon_code');
+
+        if (field) field.value = code;
+        if (err) { err.hidden = true; err.textContent = ''; }
+        pill.setAttribute('aria-busy', 'true');
+        pill.setAttribute('aria-disabled', 'true');
+
+        try {
+            const ok = await changeCoupon(code, false);
+            if (!ok && err) {
+                err.textContent = document.getElementById('kbbCouponMsg')?.textContent.trim() || '';
+                err.hidden = err.textContent === '';
+            }
+        } finally {
+            pill.removeAttribute('aria-busy');
+            pill.removeAttribute('aria-disabled');
+        }
+    }
+
+    /* The line follows the coupon on the order, whichever way it got there:
+       applied from the line or typed into the box, removed with Remove. */
+    const syncLine = (applied) => {
+        const line = document.getElementById('kbbCline');
+        const pill = line?.querySelector('[data-kbb-cline]');
+        if (!line || !pill) return;
+
+        const on = applied.toUpperCase() === (pill.dataset.kbbCline || '').toUpperCase();
+        line.classList.toggle('is-done', on);
+        if (on) {
+            const err = line.querySelector('.co-cl-err');
+            if (err) { err.hidden = true; err.textContent = ''; }
+            // Written again once visible, so a screen reader announces it.
+            const done = line.querySelector('.co-cl-donetxt');
+            if (done) done.textContent = done.textContent;
+            // Focus was on the pill, which is now hidden: keep the place.
+            const doneLine = line.querySelector('.co-cl-done');
+            if (doneLine && document.activeElement === pill) {
+                doneLine.setAttribute('tabindex', '-1');
+                doneLine.focus({ preventScroll: true });
+            }
+        }
+    };
+
     async function changeCoupon(code, remove) {
         // One request at a time: a double tap, Enter then Apply, or Apply
         // while Remove is on its way is one change, not two racing writes.
-        if (couponBusy) return;
+        // Answers whether the change was made (Lane QK6's line reads it).
+        if (couponBusy) return false;
 
         const field = document.getElementById('kbb_coupon_code');
         const btn = document.getElementById('kbb_apply_coupon');
@@ -718,7 +801,7 @@ export function initCheckout() {
                 // Only a refusal of the code itself marks the box; a dropped
                 // connection says nothing about what was typed.
                 if (said && field && !remove) field.setAttribute('aria-invalid', 'true');
-                return;
+                return false;
             }
 
             if (typeof data.orderHtml === 'string') applyFragments(data);
@@ -726,8 +809,11 @@ export function initCheckout() {
             field?.removeAttribute('aria-invalid');
             if (remove && field) field.value = '';
             sayCoupon('ok', data.message || '', data.couponHtml);
+            syncLine(remove ? '' : code);
+            return true;
         } catch {
             sayCoupon('err', t('store.js.coupon_failed', 'Could not apply that code — please try again.'));
+            return false;
         } finally {
             couponBusy = false;
             btn?.removeAttribute('aria-busy');

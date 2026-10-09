@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Coupon;
+
 /**
  * The checkout PAGE — its spacing, and nothing else.
  *
@@ -938,7 +940,102 @@ class CheckoutPage
                                   'badge'    => 'Badge — the pastel pill, as previewed',
                                   'wordmark' => 'Wordmark — the black logo alone',
                               ]],
+
+        /*
+         * ── THE COUPON LINE AT THE TOP (Lane QK6) ──────────────────────────
+         *
+         * The owner, on a phone screenshot of /checkout/: "on very top, above
+         * summary row, i want the nice coupon line: For Discount, Apply coupon
+         * {coupon-code} and upon click the coupon should auto apply on the
+         * order total without refreshing the page etc."
+         *
+         * ON because he asked for it (CLAUDE.md, 30 September). The coupon is
+         * "Same as the cart panel" unless one is picked: the cart panel's
+         * coupon hint already keeps a snapshot of ITS coupon (GLOW, Lane QK3),
+         * and the line reads that snapshot -- no query per page. A coupon
+         * picked here is snapshotted by the same writer, CartPanel::snapshotOf().
+         * The line shows only while that coupon is usable now; once it is on
+         * the order, the line says so instead of inviting.
+         */
+        'cline_on'      => ['bool', 'Coupon line', true,
+                            'On, as asked: a line at the very top of the checkout — "For Discount, Apply coupon GLOW" — and tapping the code applies it to the order total in place, with no reload. It shows only while the coupon below can actually be used; when the coupon is already on the order it says so instead.'],
+        'cline_coupon'  => ['select', 'Coupon', 'cart',
+                            'Same as the cart panel follows Appearance → Cart panel → Coupon hint → Coupon (GLOW unless you changed it). Or pick one of your coupons; an expired, not-yet-started or used-up coupon hides the line by itself.',
+                            ['cart' => 'Same as the cart panel']],
+        'cline_text'    => ['text', 'Text', self::CLINE_TEXT,
+                            'Use {coupon-code} where the tappable code should appear; without it the code is added at the end. Up to 120 characters.'],
+        'cline_text_ar' => ['text', 'Text — Arabic', self::CLINE_TEXT_AR,
+                            'The same line on the Arabic shop (/ar/). Cleared, it goes back to the shipped Arabic wording.'],
+
+        /*
+         * ── THE TWO WAYS BACK, OFF (Lane QK6) ──────────────────────────────
+         *
+         * The owner: "turn off the back to shop link and back to cart button
+         * on checkout completely!" Both OFF because he asked. The slim header's
+         * logo still links home. "Go back to cart" also still answers to its
+         * module switch on Store → Ecommerce; both must be on for it to draw.
+         */
+        'shop_link'     => ['bool', 'Show “Back to shop”', false,
+                            'Off, as asked: no "← Back to shop" link above the Checkout heading. The logo in the header still goes to the home page.'],
+        'cart_link'     => ['bool', 'Show “Go back to cart”', false,
+                            'Off, as asked: no "Go back to cart" button beside the Checkout heading. On brings it back in the look chosen on Store → Ecommerce → Checkout → Mobile layout.'],
+
+        /*
+         * ── DELIVERY LABELS AND THE FREE-DELIVERY LINE (Lane QK6) ──────────
+         *
+         * The owner, on the "3 Delivery" section ("◉ Delivery Charges: AED
+         * 20"): "i need Express Delivery or Free Express Delivery upon free
+         * delivery eligibility or with 20 aed charges. need to change the
+         * text. and beside the Delivery section heading, i need a small one
+         * line Free delivery over AED 199. This line will show only in UAE."
+         *
+         * "Delivery Charges" is the shipping method's stored TITLE (Store →
+         * Delivery & Shipping), which orders, emails and invoices also print,
+         * so it is not overwritten: these labels are what the CHECKOUT shows
+         * for UAE delivery instead of it. ON because he asked. The amount in
+         * the line is the UAE zone's own free-delivery threshold, never typed.
+         */
+        'dl_on'         => ['bool', 'Delivery labels for the UAE', true,
+                            'On, as asked: on a UAE checkout the delivery option reads "Express Delivery" with its price on the right, or "Free Express Delivery" with "Free" once the order qualifies — and it switches by itself as the basket crosses the line. Off shows the method\'s own title from Store → Delivery & Shipping, which orders and emails keep printing either way.'],
+        'dl_paid'       => ['text', 'Paid label', self::DL_PAID,
+                            'When delivery is charged. The price is shown on the right. Up to 120 characters.'],
+        'dl_paid_ar'    => ['text', 'Paid label — Arabic', self::DL_PAID_AR,
+                            'The same on the Arabic shop (/ar/).'],
+        'dl_free'       => ['text', 'Free label', self::DL_FREE,
+                            'When the order qualifies for free delivery. "Free" is shown on the right.'],
+        'dl_free_ar'    => ['text', 'Free label — Arabic', self::DL_FREE_AR,
+                            'The same on the Arabic shop (/ar/).'],
+        'dl_note_on'    => ['bool', 'Free-delivery line beside “Delivery”', true,
+                            'On, as asked: a small line beside the Delivery heading, only while the country chosen is the United Arab Emirates and the UAE has a free-delivery amount (Store → Delivery & Shipping → the zone\'s free delivery minimum).'],
+        'dl_note'       => ['text', 'Free-delivery line', self::DL_NOTE,
+                            'Use {amount} where the UAE free-delivery amount should appear; it is read from your shipping settings, so it follows them.'],
+        'dl_note_ar'    => ['text', 'Free-delivery line — Arabic', self::DL_NOTE_AR,
+                            'The same on the Arabic shop (/ar/).'],
     ];
+
+    /** Lane QK6: the delivery labels and the line beside the heading, his words. */
+    public const DL_PAID = 'Express Delivery';
+
+    public const DL_PAID_AR = 'توصيل سريع';
+
+    public const DL_FREE = 'Free Express Delivery';
+
+    public const DL_FREE_AR = 'توصيل سريع مجاني';
+
+    public const DL_NOTE = 'Free delivery over {amount}';
+
+    public const DL_NOTE_AR = 'توصيل مجاني للطلبات فوق {amount}';
+
+    /** The one country these two apply to, as the owner said. */
+    public const DL_COUNTRY = 'AE';
+
+    /** The coupon line's shipped wording, the owner's own sentence. (Lane QK6) */
+    public const CLINE_TEXT = 'For Discount, Apply coupon {coupon-code}';
+
+    public const CLINE_TEXT_AR = 'للحصول على خصم، طبّق القسيمة {coupon-code}';
+
+    /** Where the stored snapshot of a coupon picked on this screen lives. NOT in SCHEMA. */
+    public const CLINE_SNAPSHOT = 'checkoutpage_cline_snapshot';
 
     /**
      * Four tabs and not two, because layout and product rows are two jobs and
@@ -977,8 +1074,8 @@ class CheckoutPage
            at the foot of the two Layout tabs, under ten spacing sliders, and
            the report was "Back to Cart button controls i couldn't found".
            A control nobody can find is a control that does not exist. */
-        'tocart'       => ['Back to cart', 'The "Go back to cart" link at the top of the page — both surfaces on one tab. Which of the five LOOKS it wears is chosen on Store → Ecommerce → Checkout → Mobile layout; everything about its SIZE is here.',
-                           ['d_tocart_size', 'd_tocart_icon', 'd_tocart_r',
+        'tocart'       => ['Back to shop & cart', 'The "← Back to shop" link and the "Go back to cart" button at the top of the page — both off, as asked, and switched back on here. Which of the five LOOKS the cart button wears is chosen on Store → Ecommerce → Checkout → Mobile layout; everything about its SIZE is here.',
+                           ['shop_link', 'cart_link', 'd_tocart_size', 'd_tocart_icon', 'd_tocart_r',
                             'm_tocart_size', 'm_tocart_icon', 'm_tocart_r', 'm_tocart_min']],
         'trust'        => ['Trust & reviews', 'The stars and score above the order summary. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — "100% authentic" beside the pay button and "100% authentic K-beauty" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims. The two policy links under Place order are switched here too.',
                            ['rating_on', 'rating_text', 'rating_min', 'policy_links']],
@@ -991,6 +1088,11 @@ class CheckoutPage
         'payments'     => ['Payment boxes', 'The four boxes under "4 Payment" — Tabby, Tamara, card and cash on delivery. One set of values for both surfaces.',
                            ['pay_style', 'pay_logos', 'pay_logo_h', 'pay_tint', 'pay_border',
                             'pay_tabby', 'pay_tamara', 'pay_card', 'pay_cod', 'pay_tamara_logo']],
+        /* Lane QK6, appended so every other tab keeps its place. */
+        'delivery'     => ['Delivery labels', 'The "3 Delivery" section on a UAE checkout: what the delivery option is called, paid and free, and the small free-delivery line beside the heading. One set of values for both surfaces.',
+                           ['dl_on', 'dl_paid', 'dl_paid_ar', 'dl_free', 'dl_free_ar', 'dl_note_on', 'dl_note', 'dl_note_ar']],
+        'cline'        => ['Coupon line', 'The line at the very top of the checkout: "For Discount, Apply coupon GLOW". Tapping the code applies it to the order in place. One set of values for both surfaces.',
+                           ['cline_on', 'cline_coupon', 'cline_text', 'cline_text_ar']],
     ];
 
     /**
@@ -1361,9 +1463,159 @@ class CheckoutPage
     {
         foreach ($values as $key => $value) {
             if (isset(self::SCHEMA[$key])) {
-                $this->settings->set(self::PREFIX.$key, $this->cast($key, $value));
+                $value = $this->cast($key, $value);
+
+                // ONLY A COUPON THAT EXISTS, as on the cart panel: a crafted
+                // POST naming no row stores "Same as the cart panel". One
+                // query, at save, never at render. (Lane QK6)
+                if ($key === 'cline_coupon' && $value !== 'cart' && ! Coupon::query()->whereKey((int) $value)->exists()) {
+                    $value = 'cart';
+                }
+
+                $this->settings->set(self::PREFIX.$key, $value);
             }
         }
+
+        if (array_key_exists('cline_coupon', $values)) {
+            $this->refreshCouponSnapshot();
+        }
+    }
+
+    /*
+     * ── THE COUPON LINE (Lane QK6) ──────────────────────────────────────────
+     *
+     * Same snapshot discipline as the cart panel's hint, through the cart
+     * panel's own writer and reader: the checkout never reads the coupons
+     * table to decide whether to draw the line.
+     */
+
+    /** Re-take the snapshot of the coupon picked here, or clear it for "same as the cart panel". */
+    public function refreshCouponSnapshot(): void
+    {
+        $pick = (string) $this->get('cline_coupon');
+
+        $this->settings->set(self::CLINE_SNAPSHOT, $pick === 'cart' ? '' : CartPanel::snapshotOf(Coupon::query()->find((int) $pick)));
+    }
+
+    /** A coupon row changed: re-snapshot only when it is the one picked here. */
+    public static function couponChanged(int $couponId): void
+    {
+        $page = app(self::class);
+
+        if ($couponId > 0 && (string) $page->flagless('cline_coupon') === (string) $couponId) {
+            $page->refreshCouponSnapshot();
+        }
+    }
+
+    /**
+     * The coupon line's code, or null when no line should be drawn: switched
+     * off, or the coupon (the cart panel's, or the one picked here) is not
+     * usable right now. Settings reads only, from the memoised map.
+     */
+    public function couponLineCode(): ?string
+    {
+        if (! $this->flag('cline_on')) {
+            return null;
+        }
+
+        $pick = (string) $this->flagless('cline_coupon');
+
+        return $pick === 'cart'
+            ? app(CartPanel::class)->chosenUsableCode()
+            : CartPanel::usableCode($this->settings->get(self::CLINE_SNAPSHOT), (int) $pick);
+    }
+
+    /**
+     * The coupon line's wording for the current locale, escaped, with the
+     * {coupon-code} token replaced by $pill (markup the caller built and
+     * escaped). Nothing printed unescaped comes from a setting.
+     */
+    public function couponLineHtml(string $code, string $pill): string
+    {
+        $ar = ! \App\Support\Locale::isDefault() && \App\Support\Locale::current() === 'ar';
+        $text = $ar ? trim((string) $this->flagless('cline_text_ar')) : '';
+
+        if ($text === '') {
+            $text = trim((string) $this->flagless('cline_text'));
+        }
+
+        if ($text === '') {
+            $text = self::CLINE_TEXT;
+        }
+
+        return str_contains($text, CartPanel::COUPON_TOKEN)
+            ? str_replace(CartPanel::COUPON_TOKEN, $pill, e($text))
+            : e($text).' '.$pill;
+    }
+
+    /** Lane QK6: the two ways back, each one lookup in the memoised map. OFF as asked. */
+    public function showShopLink(): bool
+    {
+        return $this->flag('shop_link');
+    }
+
+    public function showCartLink(): bool
+    {
+        return $this->flag('cart_link');
+    }
+
+    /**
+     * What a UAE checkout calls one delivery rate, or null to print the
+     * method's own title as before: switched off, another country, or a rate
+     * that is not plain delivery (a pickup, an Extended rate). (Lane QK6)
+     *
+     * @param  array{type?: string, cost?: int}  $rate
+     * @return array{text: string, free: bool}|null
+     */
+    public function deliveryLabel(array $rate, ?string $country): ?array
+    {
+        if (! $this->flag('dl_on') || strtoupper((string) $country) !== self::DL_COUNTRY
+            || ! in_array($rate['type'] ?? '', ['flat_rate', 'free_shipping'], true)) {
+            return null;
+        }
+
+        $free = (int) ($rate['cost'] ?? 0) <= 0;
+
+        return ['text' => $this->localised($free ? 'dl_free' : 'dl_paid', $free ? self::DL_FREE : self::DL_PAID), 'free' => $free];
+    }
+
+    /**
+     * The line beside "Delivery" as HTML, or '' — on, the country is the UAE
+     * and the UAE has a free-delivery amount. The wording is escaped; {amount}
+     * becomes Money::format() of the threshold, markup built from an integer.
+     */
+    public function deliveryNoteHtml(?string $country, ?int $threshold): string
+    {
+        if (! $this->flag('dl_note_on') || strtoupper((string) $country) !== self::DL_COUNTRY
+            || $threshold === null || $threshold <= 0) {
+            return '';
+        }
+
+        $text = e($this->localised('dl_note', self::DL_NOTE));
+        $amount = \App\Support\Money::format($threshold);
+
+        return str_contains($text, '{amount}') ? str_replace('{amount}', $amount, $text) : $text.' '.$amount;
+    }
+
+    /** A wording key's text for the current locale: its `_ar` twin on /ar/, then English, then shipped. */
+    private function localised(string $key, string $shipped): string
+    {
+        $ar = ! \App\Support\Locale::isDefault() && \App\Support\Locale::current() === 'ar';
+        $text = $ar ? trim((string) $this->flagless($key.'_ar')) : '';
+
+        if ($text === '') {
+            $text = trim((string) $this->flagless($key));
+        }
+
+        return $text === '' ? $shipped : $text;
+    }
+
+    /** One stored value by key, cast, without walking the whole schema. */
+    private function flagless(string $key): mixed
+    {
+        $saved = $this->settings->get(self::PREFIX.$key, null);
+
+        return $saved === null ? self::SCHEMA[$key][2] : $this->cast($key, $saved);
     }
 
     /**
@@ -1433,6 +1685,14 @@ class CheckoutPage
      */
     private function cast(string $key, mixed $value): mixed
     {
+        // "Same as the cart panel", or a coupon id: digits only. Whether the
+        // row exists is save()'s question, so a render never asks. (Lane QK6)
+        if ($key === 'cline_coupon') {
+            $value = is_scalar($value) ? trim((string) $value) : '';
+
+            return preg_match('/^[1-9][0-9]{0,18}$/', $value) === 1 ? $value : 'cart';
+        }
+
         $field = self::fields()[$key] ?? null;
 
         // Unchanged: a key this schema does not know is handed back as it came.

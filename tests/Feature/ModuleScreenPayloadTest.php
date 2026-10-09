@@ -667,7 +667,15 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // and `site_m_above`, Auto ('') as shipped. Spliced into the slim-footer
     // entry before `site_d_pt` / `site_m_pt`, where SiteFooter::TABS puts them;
     // two objects inserted, nothing else touched.
-    expect($compared)->toBe(746, 'the number of controls drawn changed');
+    // 744 -> 758 (Lane QK6, three of the owner's checkout requests):
+    // Appearance -> Checkout page -> the "Back to cart" tab is now "Back to
+    // shop & cart" and opens with shop_link and cart_link (both OFF, his);
+    // two tabs APPENDED after Payment boxes -- "Delivery labels" (dl_on,
+    // dl_paid(_ar), dl_free(_ar), dl_note_on, dl_note(_ar)) and "Coupon line"
+    // (cline_on, cline_coupon, cline_text(_ar)). The tocart tab and the two new
+    // ones were dumped from the live payload; every other tab is untouched.
+    // The coupon list is the payload's own `coupons` key, not recorded.
+    expect($compared)->toBe(760, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)
