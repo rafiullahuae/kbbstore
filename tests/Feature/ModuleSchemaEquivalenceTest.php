@@ -105,8 +105,8 @@
  *   FOUR LINES INSERTED after `image_ratio`'s, 0 MODIFIED, 0 REMOVED; a
  *   value not on the list ("nope", "", null) answers the shipped 'shimmer'.
  *
- *   Lane LG2 added NINETEEN to HeaderSettings — Appearance → Header →
- *   Logo, the lotus lockup's controls — the same way: 153 LINES INSERTED
+ *   Lane LG2 added TWENTY to HeaderSettings — Appearance → Header →
+ *   Logo, the lotus lockup's controls — the same way: 157 LINES INSERTED
  *   after `logo_accent_col`'s, 0 MODIFIED, 0 REMOVED. `logo_tag_text` caps
  *   at 40 characters (HeaderSettings::TAGLINE_MAX), so its 300-character
  *   input answers forty x's.

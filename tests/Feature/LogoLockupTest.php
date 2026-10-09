@@ -270,38 +270,76 @@ it('keeps kbb.css\'s fallbacks and the server\'s defaults the same numbers', fun
     expect(app(HeaderSettings::class)->lockup()['style'])->toBe('');
 });
 
-it('fits the default lockup into the phone row the way Chromium measured it', function () {
+it('fits the default lockup on ONE line into the phone row the way Chromium measured it', function () {
     /*
-     * The arithmetic behind the no-clipping proof. Measured in Chromium with
-     * the default header (tools/lg2-header.cjs): the room the row leaves the
-     * logo is 98px at 320, 138 at 360, 153 at 375, 168 at 390 and 208 at 430.
-     * The lockup must be one line from 360 up, stack at 320, and carry its
-     * tagline only where it fits at full size (430).
+     * The owner, on a 320 shot of a two-line stack: "the logo must not come in
+     * two lines. it should come in one line always in any case." And the
+     * tagline beneath the logo on phones from 360 up, at 8px or more.
      *
-     * MUTATION: drop SAFETY to 1.0 or the stacking threshold to 0.5 and the
-     * widths below move out of their bands.
+     * The room the row leaves the logo, measured in Chromium with the default
+     * header (tools/lg2-header.cjs): 138px at 360, 153 at 375, 168 at 390,
+     * 208 at 430 -- and 128 at 320 and 108 at 300, after the row's own gaps
+     * close to 4px and its buttons to 40px at 340px and under.
+     *
+     * MUTATION: put `flex-wrap:wrap` back on .lgx-w, drop the 340px rule, or
+     * raise SAFETY so far that the tagline misses 360, and this is red.
      */
     $fit = LogoLockup::fit('K-Beauty', 'Bliss', 'Korean Skincare & Makeup', true, 14, 24, 5, 8);
-    $one = 100 / $fit['c1'];
 
-    foreach ([320 => 98, 360 => 138, 375 => 153, 390 => 168, 430 => 208] as $width => $room) {
-        $stacked = $room < $fit['r'];
-        $scale = min(1, $room * ($stacked ? $fit['c2'] : $fit['c1']) / 100);
+    foreach ([300 => 108, 320 => 128, 360 => 138, 375 => 153, 390 => 168, 430 => 208] as $width => $room) {
+        $name = 14 * min(1, $room * $fit['c1'] / 100);
         $tag = $room >= $fit['wf'];
 
-        expect($stacked)->toBe($width === 320, "{$width}px")
-            ->and($tag)->toBe($width === 430, "{$width}px")
-            ->and(min($room, $one * $scale))->toBeLessThanOrEqual($room);
+        expect($name)->toBeGreaterThanOrEqual($width >= 320 ? 10.5 : 9.0, "{$width}px: the name drew at {$name}px")
+            ->and($tag)->toBe($width >= 360, "{$width}px: tagline");
     }
 
+    $css = lgCss();
+    $flat = (string) preg_replace('#/\*.*?\*/#s', '', $css);
+
+    // One line, always: nowrap on the name and no wrapping rule anywhere.
+    expect($flat)->toContain('.lgx .lgx-w{display:flex;flex-wrap:nowrap;white-space:nowrap;')
+        ->and($flat)->not->toContain('flex-wrap:wrap')
+        ->and($flat)->not->toContain('--lg-c2');
+
+    // The tagline is drawn on a phone by default: beneath the whole lockup,
+    // from a threshold the 360px room clears, at the 8px setting.
+    expect($flat)->toContain('.lgx .lgx-g{grid-row:2;grid-column:1/-1;gap:.4em;font-size:calc(var(--lg-tm,8) * 1px)')
+        ->and($flat)->toContain('font-size:clamp(0px,calc((100cqi - var(--lg-wf,'.HeaderSettings::LOCKUP_CSS_DEFAULTS['--lg-wf'].') * 1px) * 1000),calc(var(--lg-tm,8) * 1px))')
+        ->and((float) HeaderSettings::LOCKUP_CSS_DEFAULTS['--lg-wf'])->toBeLessThanOrEqual(138.0);
+
+    // The room it takes back at 340px and under, and no tap target under 40px.
+    expect($flat)->toContain('@media (max-width:340px){')
+        ->and($flat)->toContain('header .hin:has(>.logo.lgx) .kbbmi{--mi-size:40px}')
+        ->and($flat)->toContain('header .hin:has(>.logo.lgx) .hact .ib{width:40px;height:40px}');
+
     // No glyph clipped means no overflow:hidden anywhere but the shine's layer.
-    $css = (string) preg_replace('#/\*.*?\*/#s', '', lgCss());
-    preg_match_all('/([^{}]+)\{[^{}]*overflow:hidden/', $css, $clips);
+    preg_match_all('/([^{}]+)\{[^{}]*overflow:hidden/', $flat, $clips);
     expect(array_map('trim', $clips[1]))->toBe(['.lgx .lgx-lt']);
 
     // And nothing inside the lockup is a <span>: `.logo span` would colour it.
     $partial = (string) file_get_contents(resource_path('views/partials/logo-lockup.blade.php'));
     expect(preg_replace('/\{\{--.*?--\}\}/s', '', $partial))->not->toContain('<span');
+});
+
+it('hides the tagline on phones only with "Tagline on phones: Hide"', function () {
+    /*
+     * MUTATION: drop the `lgx-nt` class from HeaderSettings::lockup(), or its
+     * rule from the phone block of kbb.css, and this is red.
+     */
+    expect(HeaderSettings::SCHEMA['logo_tag_m_on'][2])->toBe('show')
+        ->and(lgPage('/'))->toContain('<a class="logo lgx"');
+
+    lgSet(['logo_tag_m_on' => 'hide']);
+    $html = lgPage('/');
+
+    expect($html)->toContain('<a class="logo lgx lgx-nt"')
+        // Still in the page for a computer.
+        ->and($html)->toContain('<small class="lgx-g">Korean Skincare &amp; Makeup</small>')
+        ->and(preg_replace('#/\*.*?\*/#s', '', lgCss()))->toMatch('/@media \(max-width:900px\)\{[^@]*\.lgx-nt \.lgx-g\{display:none\}/');
+
+    lgSet(['logo_tag_m_on' => 'sometimes']);
+    expect(app(HeaderSettings::class)->get('logo_tag_m_on'))->toBe('show');
 });
 
 it('draws the icon at whole pixels on a computer', function () {

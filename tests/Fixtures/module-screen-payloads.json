@@ -1415,6 +1415,18 @@
             "options": null
           },
           {
+            "key": "logo_tag_m_on",
+            "type": "select",
+            "label": "Tagline on phones",
+            "help": "Show puts it under the logo on phones 360px wide and up. Hide keeps it for computers only.",
+            "default": "show",
+            "value": "show",
+            "options": {
+              "show": "Show",
+              "hide": "Hide"
+            }
+          },
+          {
             "key": "logo_size",
             "type": "range",
             "label": "Wordmark size",
@@ -1432,7 +1444,7 @@
             "key": "logo_name_m",
             "type": "range",
             "label": "Name size · phone",
-            "help": "The largest the name is drawn on a phone. A narrower phone draws it smaller, and the narrowest stack the two words, so it is never cut. On a computer the name is \"Wordmark size\".",
+            "help": "The largest the name is drawn on a phone. A narrower phone draws it smaller, always on one line, so it is never cut. On a computer the name is \"Wordmark size\".",
             "default": 14,
             "value": 14,
             "options": {
@@ -1488,7 +1500,7 @@
             "key": "logo_tag_m",
             "type": "range",
             "label": "Tagline size · phone",
-            "help": "Drawn only on a phone with room for it at this size; on a narrower one it steps out and the name keeps its size.",
+            "help": "Under the whole logo on a phone, from 360px wide up. On a narrower phone with no room for it at this size it steps out, so the name keeps its one line.",
             "default": 8,
             "value": 8,
             "options": {

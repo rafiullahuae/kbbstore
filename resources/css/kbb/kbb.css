@@ -5650,14 +5650,19 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
    it; it becomes an inline-size container and everything inside is sized in
    `cqi` through one length, --u, which is 1px when the lockup fits and less
    when it does not (App\Support\LogoLockup works out the three numbers):
-     --lg-c1  one line: the lockup shrinks to the room
-     --lg-r   below this the one line would drop under 80% of its size, so
-              the name stacks (K-BEAUTY over BLISS) at the --lg-c2 scale
-     --lg-wf  the tagline is drawn from this much room up, at full size, and
-              is 0px (and its rules 0px tall) below it
+     --lg-r   from this much room up: set sizes, full letter-spacing
+     --lg-c1  below it: letter-spacing .04em, and name, icon and gap shrink
+              together to the room
+     --lg-wf  the tagline (beneath the whole lockup on a phone) is drawn
+              from this much room up, at full size, and is 0px (and its
+              rules 0px tall) below it
+   THE NAME IS ALWAYS ONE LINE (the owner: "the logo must not come in two
+   lines. it should come in one line always in any case"): nowrap, no
+   stacking rule anywhere. On phones of 340px and less the row gives the
+   lockup a little more room -- 4px gaps, 40px menu and icon buttons, never
+   under the 40px tap target -- so the name stays legible at 320.
    Nothing inside has overflow:hidden except the shine's own layer, so no
-   glyph can be cut; if an estimate were ever short, the name and the tagline
-   wrap instead.
+   glyph can be cut.
 
    THE COST. The shine is a transform on a pseudo-element inside its own
    clipped layer, so it runs on the compositor; at the default it crosses
@@ -5678,7 +5683,7 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
 /* 650 is the weight he approved. The self-hosted Outfit is one variable file
    whose faces are declared at 400-800, so `font-weight:650` alone would draw
    the 700 face; the variation setting asks the same file for true 650. */
-.lgx .lgx-w{display:flex;flex-wrap:wrap;column-gap:.24em;row-gap:.12em;font-size:calc(var(--lg-sd,22) * var(--u));
+.lgx .lgx-w{display:flex;flex-wrap:nowrap;white-space:nowrap;column-gap:.24em;font-size:calc(var(--lg-sd,22) * var(--u));
   font-weight:650;font-variation-settings:"wght" 650;line-height:1;letter-spacing:.085em;text-transform:uppercase;color:var(--lg-c,#2A2228)}
 .lgx .lgx-w em{font-style:normal;color:var(--lg-a,#C6395F)}
 @supports ((-webkit-background-clip:text) or (background-clip:text)) and (color:color-mix(in srgb,red,red)){
@@ -5705,20 +5710,33 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
   .lgx,.lgx *{animation:none!important}
 }
 @media (max-width:900px){
-  .logo.lgx{padding:calc(var(--lg-ym,0) * 1px) calc(var(--lg-xm,0) * 1px)}
-  .logo.lgx>.lgx-i{height:calc(var(--lg-im,24) * var(--u));height:round(nearest,calc(var(--lg-im,24) * var(--u)),1px);
+  /* On a phone the tagline runs beneath the whole lockup -- icon and name on
+     the first row, the tagline across both -- so the name keeps its size. */
+  .logo.lgx{display:grid;grid-template-columns:auto auto;align-items:center;align-content:center;justify-content:start;
+    padding:calc(var(--lg-ym,0) * 1px) calc(var(--lg-xm,0) * 1px)}
+  .lgx .lgx-t{display:contents}
+  .logo.lgx>.lgx-i{grid-row:1;height:calc(var(--lg-im,24) * var(--u));height:round(nearest,calc(var(--lg-im,24) * var(--u)),1px);
     margin-inline-end:calc(var(--lg-gm,5) * var(--u))}
-  .lgx .lgx-w{font-size:calc(var(--lg-sm,14) * var(--u))}
-  .lgx .lgx-g{font-size:calc(var(--lg-tm,8) * 1px);letter-spacing:.04em}
+  .lgx .lgx-w{grid-row:1;grid-column:2;font-size:calc(var(--lg-sm,14) * var(--u))}
+  .lgx .lgx-g{grid-row:2;grid-column:1/-1;gap:.4em;font-size:calc(var(--lg-tm,8) * 1px);letter-spacing:.04em}
+  .lgx .lgx-g::before,.lgx .lgx-g::after{min-width:0}
+  .lgx-nt .lgx-g{display:none}
   header .hin>.logo.lgx,.mnav-h>.logo.lgx{justify-content:center}
   @supports (width:1cqi){
     /* The three places a phone draws it in a row: the header, the drawer's
        head and the checkout's own header. */
     header .hin>.logo.lgx,.mnav-h>.logo.lgx,.co-head .in>.logo.lgx{flex:1 1 0%;min-width:0;container-type:inline-size;
-      --u:max(min(1px,calc(var(--lg-c1,.5855) * 1cqi)),min(1px,calc(var(--lg-c2,.8141) * 1cqi),calc((var(--lg-r,136.6) * 1px - 100cqi) * 1000)))}
+      --u:min(1px,calc(var(--lg-c1,.6165) * 1cqi))}
+    header .hin>.logo.lgx .lgx-w,.mnav-h>.logo.lgx .lgx-w,.co-head .in>.logo.lgx .lgx-w{
+      letter-spacing:clamp(.04em,calc((100cqi - var(--lg-r,170.8) * 1px) * 1000),.085em)}
     header .hin>.logo.lgx .lgx-g,.mnav-h>.logo.lgx .lgx-g,.co-head .in>.logo.lgx .lgx-g{
-      font-size:clamp(0px,calc((100cqi - var(--lg-wf,184.1) * 1px) * 1000),calc(var(--lg-tm,8) * 1px))}
+      font-size:clamp(0px,calc((100cqi - var(--lg-wf,135.8) * 1px) * 1000),calc(var(--lg-tm,8) * 1px))}
   }
+}
+@media (max-width:340px){
+  header .hin:has(>.logo.lgx){column-gap:4px}
+  header .hin:has(>.logo.lgx) .kbbmi{--mi-size:40px}
+  header .hin:has(>.logo.lgx) .hact .ib{width:40px;height:40px}
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

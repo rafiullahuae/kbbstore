@@ -247,7 +247,7 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // on the Fields & attention tab after browsed_on.
     // ▲ Lane LG2 (9 October) rewrote header's Logo tab, deliberately: the
     // owner chose logo D ("Pearl"), so the tab leads with "Logo style" and
-    // carries the lockup's 19 controls around the five wordmark ones, in
+    // carries the lockup's 20 controls around the five wordmark ones, in
     // TABS order; its description names them, and `logo_size` ("Wordmark
     // size") gained help saying it is the computer name size in both styles.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
@@ -639,13 +639,14 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // current page", its style and its colour.
     // 719 -> 720 (owner, 9 October): Appearance -> Footer -> Site footer ·
     // help strip -> Strip icon.
-    // 720 -> 739 (Lane LG2): Appearance -> Header -> Logo gained the lotus
-    // lockup's 19 controls (style, tagline and its text, the phone name size,
+    // 720 -> 740 (Lane LG2): Appearance -> Header -> Logo gained the lotus
+    // lockup's 20 controls (style, tagline, its text and "Tagline on phones",
+    // the phone name size,
     // icon / tagline / gap sizes and outer spacing for phone and computer,
     // petal colours, animation, shine, glow); the tab's description says so
     // and `logo_size` gained a help line. Spliced into the fixture's header
     // logo tab from the live payload; no other leaf moved.
-    expect($compared)->toBe(739, 'the number of controls drawn changed');
+    expect($compared)->toBe(740, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

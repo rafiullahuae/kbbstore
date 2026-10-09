@@ -24,17 +24,18 @@ namespace App\Support;
  * container and sizes everything inside it in `cqi`, from three numbers this
  * class works out from the settings and the words:
  *
- *   c1  cqi per px for the lockup on ONE line      (name and icon shrink to fit)
- *   c2  cqi per px with the name STACKED in two    (K-BEAUTY over BLISS)
- *   r   below this many px of room the single line would drop under 80% of
- *       its set size, so the name stacks instead and stays legible
- *   wf  the tagline is drawn only from this many px of room up, at its full
- *       size; below that it steps out rather than shrink to nothing
+ *   r   from this many px of room up, the name is drawn at its set size with
+ *       its full letter-spacing (.085em)
+ *   c1  below r, the letter-spacing tightens to .04em and the name, icon and
+ *       gap shrink together at c1 cqi per px of their set size, so the name
+ *       stays on ONE line at any width (the owner: "the logo must not come in
+ *       two lines. it should come in one line always in any case")
+ *   wf  the tagline, which on a phone runs beneath the whole lockup, is
+ *       drawn from this many px of room up at its full size and steps out
+ *       below it; the one-line name always has priority
  *
  * The widths come from Outfit's own advances (ADVANCE, measured in Chromium
  * at 100px), so a name the owner retypes is fitted as well as the default one.
- * If an estimate were ever short, the name wraps and the tagline wraps — the
- * stylesheet lets both — so the failure mode is a line break, never a cut.
  */
 final class LogoLockup
 {
@@ -60,6 +61,9 @@ final class LogoLockup
     /** Letter-spacing, em: the name everywhere, the tagline on a computer and on a phone. */
     public const TRACK_NAME = .085;
 
+    /** The name's letter-spacing on a phone too narrow for the full one. */
+    public const TRACK_NAME_TIGHT = .04;
+
     public const TRACK_TAG = .1;
 
     public const TRACK_TAG_PHONE = .04;
@@ -67,8 +71,8 @@ final class LogoLockup
     /** The space between "K-BEAUTY" and "BLISS", em of the name. */
     public const WORD_GAP = .24;
 
-    /** The tagline's rules either side: a gap of .55em and at least .4em of line. */
-    private const TAG_RULES = 2 * (.55 + .4);
+    /** On a phone the tagline's rules may shrink to nothing; their .4em gaps stay. */
+    private const TAG_GAPS_PHONE = 2 * .4;
 
     /** The icon's viewBox, 780 x 582. */
     public const ICON_RATIO = 780 / 582;
@@ -78,9 +82,6 @@ final class LogoLockup
 
     /** Headroom on every fit: sub-pixel rounding and kerning never decide a line break. */
     private const SAFETY = 1.05;
-
-    /** The single line holds down to this share of its set size, then the name stacks. */
-    private const STACK_BELOW = .8;
 
     /**
      * The artwork. Constant: printed with {!! !!} in partials/logo-lockup, and
@@ -142,25 +143,20 @@ final class LogoLockup
      * The phone fit numbers (see the class note). Every input is an integer
      * the schema has already clamped; every output is a plain number.
      *
-     * @return array{c1: float, c2: float, r: float, wf: float}
+     * @return array{c1: float, r: float, wf: float}
      */
     public static function fit(string $name, string $accent, string $tagline, bool $tagOn, int $size, int $icon, int $gap, int $tag): array
     {
-        $iconW = $icon * self::ICON_RATIO;
-        $nameW = $size * (self::em($name, self::TRACK_NAME) + self::WORD_GAP + self::em($accent, self::TRACK_NAME));
-        $stackW = $size * max(self::em($name, self::TRACK_NAME), self::em($accent, self::TRACK_NAME));
-        $tagW = $tagOn && $tagline !== '' ? $tag * (self::em($tagline, self::TRACK_TAG_PHONE) + self::TAG_RULES) : 0.0;
-
-        $one = ($iconW + $gap + $nameW) * self::SAFETY;
-        $two = ($iconW + $gap + $stackW) * self::SAFETY;
-        $full = ($iconW + $gap + max($nameW, $tagW)) * self::SAFETY;
+        $line = static fn (float $track): float => ($icon * self::ICON_RATIO + $gap
+            + $size * (self::em($name, $track) + self::WORD_GAP + self::em($accent, $track))) * self::SAFETY;
+        $tagW = $tagOn && $tagline !== '' ? $tag * (self::em($tagline, self::TRACK_TAG_PHONE) + self::TAG_GAPS_PHONE) : 0.0;
 
         return [
-            'c1' => round(100 / $one, 4),
-            'c2' => round(100 / $two, 4),
-            'r' => round($one * self::STACK_BELOW, 1),
-            // No tagline: a threshold no phone reaches, so it is never drawn.
-            'wf' => $tagW > 0 ? round($full, 1) : 9999.0,
+            'c1' => round(100 / $line(self::TRACK_NAME_TIGHT), 4),
+            'r' => round($line(self::TRACK_NAME), 1),
+            // Beneath the whole lockup, so it needs only its own width. No
+            // tagline: a threshold no phone reaches, so it is never drawn.
+            'wf' => $tagW > 0 ? round($tagW * self::SAFETY, 1) : 9999.0,
         ];
     }
 }

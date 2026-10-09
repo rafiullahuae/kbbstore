@@ -79,7 +79,7 @@ class HeaderSettings
                               'The lotus lockup is the logo you chose (option D). Text only puts back the wordmark exactly as it was.',
                               ['lotus' => 'Lotus lockup', 'text' => 'Text only (as before)']],
         'logo_name_m'     => ['range',  'Name size · phone', 14,
-                              'The largest the name is drawn on a phone. A narrower phone draws it smaller, and the narrowest stack the two words, so it is never cut. On a computer the name is "Wordmark size".',
+                              'The largest the name is drawn on a phone. A narrower phone draws it smaller, always on one line, so it is never cut. On a computer the name is "Wordmark size".',
                               ['min' => 10, 'max' => 24, 'step' => 1, 'unit' => 'px']],
         'logo_icon_d'     => ['range',  'Icon size · computer', 0,
                               '0 is auto: in proportion to the name (38px at a 22px name).',
@@ -90,7 +90,7 @@ class HeaderSettings
         'logo_tag_d'      => ['range',  'Tagline size · computer', 10, '',
                               ['min' => 8, 'max' => 16, 'step' => 1, 'unit' => 'px']],
         'logo_tag_m'      => ['range',  'Tagline size · phone', 8,
-                              'Drawn only on a phone with room for it at this size; on a narrower one it steps out and the name keeps its size.',
+                              'Under the whole logo on a phone, from 360px wide up. On a narrower phone with no room for it at this size it steps out, so the name keeps its one line.',
                               ['min' => 8, 'max' => 14, 'step' => 1, 'unit' => 'px']],
         'logo_gap_d'      => ['range',  'Space between icon and name · computer', 8, '',
                               ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
@@ -106,6 +106,9 @@ class HeaderSettings
                               ['min' => 0, 'max' => 12, 'step' => 1, 'unit' => 'px']],
         'logo_tag_on'     => ['bool',   'Tagline', true, 'The small line under the name.'],
         'logo_tag_text'   => ['text',   'Tagline text', 'Korean Skincare & Makeup', 'Up to 40 characters.'],
+        'logo_tag_m_on'   => ['select', 'Tagline on phones', 'show',
+                              'Show puts it under the logo on phones 360px wide and up. Hide keeps it for computers only.',
+                              ['show' => 'Show', 'hide' => 'Hide']],
         'logo_petal'      => ['colour', 'Petal colour', '#D94A76', 'The filled petals.'],
         'logo_line'       => ['colour', 'Petal outline colour', '#E5567E', ''],
         'logo_anim'       => ['select', 'Animation', 'on',
@@ -559,7 +562,7 @@ class HeaderSettings
         // Lane LG2: the style first, then the name, tagline, sizes, spacing,
         // colours and motion, phone beside computer.
         'logo'    => ['Logo', 'The lotus lockup or the text wordmark, its sizes on a phone and a computer, the space around it, its colours and its motion.',
-                      ['logo_style', 'logo_text', 'logo_accent', 'logo_tag_on', 'logo_tag_text',
+                      ['logo_style', 'logo_text', 'logo_accent', 'logo_tag_on', 'logo_tag_text', 'logo_tag_m_on',
                        'logo_size', 'logo_name_m', 'logo_icon_d', 'logo_icon_m', 'logo_tag_d', 'logo_tag_m',
                        'logo_gap_d', 'logo_gap_m', 'logo_pad_x_d', 'logo_pad_y_d', 'logo_pad_x_m', 'logo_pad_y_m',
                        'logo_colour', 'logo_accent_col', 'logo_petal', 'logo_line', 'logo_anim', 'logo_shine', 'logo_glow']],
@@ -743,7 +746,6 @@ class HeaderSettings
             '--lg-xm' => (int) $c['logo_pad_x_m'],
             '--lg-ym' => (int) $c['logo_pad_y_m'],
             '--lg-c1' => $fit['c1'],
-            '--lg-c2' => $fit['c2'],
             '--lg-r' => $fit['r'],
             '--lg-wf' => $fit['wf'],
             '--lg-sh' => (int) $c['logo_shine'],
@@ -764,7 +766,7 @@ class HeaderSettings
         }
 
         return [
-            'class' => 'logo lgx'.($glow ? ' lgx-gl' : ''),
+            'class' => 'logo lgx'.($glow ? ' lgx-gl' : '').($tag !== '' && $c['logo_tag_m_on'] === 'hide' ? ' lgx-nt' : ''),
             'style' => implode(';', $style),
             'name' => (string) $c['logo_text'],
             'accent' => (string) $c['logo_accent'],
@@ -784,7 +786,7 @@ class HeaderSettings
     public const LOCKUP_CSS_DEFAULTS = [
         '--lg-sd' => '22', '--lg-id' => '38', '--lg-gd' => '8', '--lg-td' => '10', '--lg-xd' => '0', '--lg-yd' => '0',
         '--lg-sm' => '14', '--lg-im' => '24', '--lg-gm' => '5', '--lg-tm' => '8', '--lg-xm' => '0', '--lg-ym' => '0',
-        '--lg-c1' => '0.5855', '--lg-c2' => '0.8141', '--lg-r' => '136.6', '--lg-wf' => '184.1', '--lg-sh' => '7',
+        '--lg-c1' => '0.6165', '--lg-r' => '170.8', '--lg-wf' => '135.8', '--lg-sh' => '7',
         '--lg-c' => '#2A2228', '--lg-a' => '#C6395F', '--lg-p' => '#D94A76', '--lg-l' => '#E5567E',
     ];
 

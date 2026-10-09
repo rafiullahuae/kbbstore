@@ -87,7 +87,10 @@ const UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, 
         overlapMenu: +(menuR - L.left).toFixed(1), overlapIcons: +(L.right - iconsL).toFixed(1),
         svgH: svg ? +svg.getBoundingClientRect().height.toFixed(2) : null,
         nameSize: getComputedStyle(nameEl).fontSize, tagSize: logo.querySelector('.lgx-g') ? getComputedStyle(logo.querySelector('.lgx-g')).fontSize : null,
-        efp: hits + '/' + tries, lines: (() => { const w = logo.querySelector('.lgx-w'); if (!w) return 1; const tops = new Set([...w.childNodes].map((c) => { const rg = document.createRange(); rg.selectNodeContents(c); return Math.round(rg.getBoundingClientRect().top); })); return tops.size; })(), sw: document.documentElement.scrollWidth, cls: logo.className,
+        efp: hits + '/' + tries,
+        nameBox: (() => { const w = logo.querySelector('.lgx-w'); if (!w) return null; const b = w.getBoundingClientRect(); return { r: +b.right.toFixed(1), h: +b.height.toFixed(2), lh: +(parseFloat(getComputedStyle(w).fontSize) * (parseFloat(getComputedStyle(w).lineHeight) / parseFloat(getComputedStyle(w).fontSize) || 1)).toFixed(2), ls: getComputedStyle(w).letterSpacing }; })(),
+        tagR: (() => { const g = logo.querySelector('.lgx-g'); if (!g || !g.getBoundingClientRect().height) return null; const rg = document.createRange(); rg.selectNodeContents(g); return +rg.getBoundingClientRect().right.toFixed(1); })(),
+        taps: [menu, ...icons].map((e) => { const b = e.getBoundingClientRect(); return Math.round(b.width) + 'x' + Math.round(b.height); }).join(' '), lines: (() => { const w = logo.querySelector('.lgx-w'); if (!w) return 1; const tops = new Set([...w.childNodes].map((c) => { const rg = document.createRange(); rg.selectNodeContents(c); return Math.round(rg.getBoundingClientRect().top); })); return tops.size; })(), sw: document.documentElement.scrollWidth, cls: logo.className,
       };
     });
     const hdr = page.locator('header').first();
@@ -104,7 +107,7 @@ const UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, 
     await ctx.close();
   }
   for (const x of rows) {
-    console.log(`${x.w}: logo ${x.logo.l}-${x.logo.r} (w ${x.logo.w} h ${x.logo.h}) | room ${x.menuR}-${x.iconsL} (${(x.iconsL - x.menuR).toFixed(1)}) | last glyph ${x.lastGlyph} | worst clip ${x.worstClip}${x.worstCh ? ' ' + x.worstCh : ''} | overlap menu ${x.overlapMenu} icons ${x.overlapIcons} | svg ${x.svgH} | name ${x.nameSize} (${x.lines} line${x.lines > 1 ? 's' : ''}) tag ${x.tagSize} | efp ${x.efp} | click home ${x.home} | sw ${x.sw} | errs ${x.errs} | ${x.cls}`);
+    console.log(`${x.w}: logo ${x.logo.l}-${x.logo.r} (w ${x.logo.w} h ${x.logo.h}) | room ${x.menuR}-${x.iconsL} (${(x.iconsL - x.menuR).toFixed(1)}) | last glyph ${x.lastGlyph} | worst clip ${x.worstClip}${x.worstCh ? ' ' + x.worstCh : ''} | overlap menu ${x.overlapMenu} icons ${x.overlapIcons} | svg ${x.svgH} | name ${x.nameSize} (${x.lines} line${x.lines > 1 ? 's' : ''}) tag ${x.tagSize} | name box right ${x.nameBox && x.nameBox.r} h ${x.nameBox && x.nameBox.h} (1 line = ${x.nameBox && x.nameBox.lh}) ls ${x.nameBox && x.nameBox.ls} | tag right ${x.tagR} | taps ${x.taps} | efp ${x.efp} | click home ${x.home} | sw ${x.sw} | errs ${x.errs} | ${x.cls}`);
   }
   await browser.close();
 })();
