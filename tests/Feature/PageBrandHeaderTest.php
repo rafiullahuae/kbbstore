@@ -256,7 +256,15 @@ it('puts every page back exactly as it was under "Normal page banner", byte for 
      * EnglishRenderWalk pin that), so it is set here and the comparison stays
      * whole: every other byte of all four pages is still compared.
      */
-    app(\App\Services\HeaderSettings::class)->save(['logo_style' => 'text']);
+    /*
+     * ▲ 2.60.460 (Lane QK12): the phone menu icon's default moved to `lines`,
+     * as the owner asked, and the 838ac564 views have no such icon. The
+     * previous default, `tiles`, is set here so the button renders as those
+     * views drew it; Qk12HeaderAndMenuTest owns the new icon and the flash.
+     */
+    app(\App\Services\HeaderSettings::class)->save(['logo_style' => 'text', 'menu_icon' => 'tiles']);
+    // ▲ 2.60.460: and the flash beside Super Sale is new markup the same views never drew.
+    app(\App\Services\MobileMenu::class)->save(['sale_flash' => false]);
     /*
      * ▲ 2.60.457 (Lane TS): the trust strip above the footer ships ON, as the
      * owner asked, and the 838ac564 views have no such row. It is not part of

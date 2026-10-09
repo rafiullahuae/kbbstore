@@ -90,9 +90,15 @@ use Tests\Support\KeyOrder;
  *
  * ▲ Lane CO re-recorded it (KBB_S7_RECORD=1), diff read: the settings body
  * gains `slimfooter_links_pos` = "end", `slimfooter_pad_top` = "30" and
- * `slimfooter_m_pad_top` = "30", the three rows migration 2027_10_17_100000
+ * `slimfooter_m_pad_top` = "30", the three rows migration 2027_10_18_100000
  * writes -- the checkout footer's policy links as its last row and 30px above
  * the logo, as the owner asked. Nothing else moved.
+ *
+ * ▲ 2.60.460 (Lane QK12 chunk A) re-recorded, diff read: the settings body
+ * gains `cartpanel_add_feedback` = "none", `mobile_menu` = {"sale_fill":false}
+ * and `header_settings` = {"menu_icon":"lines"}, the three rows migration
+ * 2027_10_19_100000_qk12a_header_and_menu writes -- no add-to-cart tick, no red
+ * Super Sale row, the three-line menu icon, as the owner asked. Nothing else moved.
  */
 function s7PayloadUrls(): array
 {
