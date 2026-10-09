@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.448
+**Orders: click a row to open it, bulk status asks Proceed, long-press in the owner app;
+normal pages get the brand-style header; About us rewritten; banner 100% = bottom.**
+Apply after .447. Runs its migrations. Hard refresh the admin and the shop.
+
+| Your request | Now |
+|---|---|
+| "the whole row click should take me to the order details page ... the statuses should ask me confirmation ... with a button 'Proceed' ... in mobile owner app ... long press on rows will give bulk selection. or by checkbox" | Store -> Orders: click anywhere on a row to open the order (Ctrl/Cmd-click opens a new tab). "Set status to..." now shows "Set N orders to X" with Proceed / Cancel beside it; nothing changes until Proceed. Status emails go out after the screen answers, so 50 orders take a moment, not seconds. Owner app -> Orders: long-press a row (or tick its box) to select, then change status for all selected |
+| "the same header style, which we used for categories and brands page ... for normal pages too. except homepage ... control to display header or normal site banner" | About, Contact, Delivery, Returns, Terms, FAQ, Privacy and the Journal index open with the brand/category header. Shop-wide: Appearance -> Site layout -> Page header (brand design): Brand-page design / Normal page banner (as before). One page: Pages -> User pages -> Edit page -> Page header (shop setting / brand design / normal banner, picture, title, subtitle). Homepage, product, cart, checkout and account unchanged |
+| "input this text nicely in about us page" | About us carries your text word for word: "Our story", the heading, your paragraphs, the 1-3 day delivery and free shipping over 199 AED picked out, and a Shop now button. Your previous wording is kept as a hidden draft, Pages -> User pages -> "About Us - previous wording" |
+| "this 100% is not taking the box full bottom, 100% mean full bottom" | Custom 100% now sets the box right on top of the slider bars (it stopped about 60px higher). Typing a number now switches "Up and down" to Custom by itself. After applying: type 100 again (or pick Custom) and Save |
+
+Files: see the package's update.json.
+
 ## 2.60.447
 **Parent categories also list their sub-categories' products; Instagram posts and reels by
 pasting their address.** Apply after .446. Runs its migrations. Hard refresh the shop.
