@@ -70,6 +70,13 @@
          * and the 🎉 branch below, which is that state, did not run.
          */
         $leftDp = \App\Support\Money::decimalsToDistinguish($left, 0);
+
+        // Lane QK7: the cart page's two free-delivery bars (the band over the
+        // items and the one in the summary) obey the checkout's switch --
+        // Appearance -> Checkout page -> Delivery labels -> "Free-delivery bar
+        // on the cart and checkout pages", off as the owner asked. The cart
+        // panel's bar (partials/cart-drawer) does not read it.
+        $kbbFsBar = app(\App\Services\CheckoutPage::class)->freeDeliveryBar();
     @endphp
 @php
 /*
@@ -178,7 +185,7 @@ $kbbLineWas = static function ($kbbWasLine): int {
 @endphp
     <div class="grid">
         <div>
-            @if ($free && ! $kbbSq)
+            @if ($free && ! $kbbSq && $kbbFsBar)
             <div class="ship">
                 <div class="t">
                     @if ($left > 0)
@@ -554,7 +561,11 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
                  that says nothing at all about delivery is the thing all of
                  this exists to avoid. --}}
             @if (! $kbbCpg['sum_delivery_on'])
-                @if ($free)
+                @if ($free && ! $kbbFsBar)
+                {{-- Lane QK7: switched off, and NOT the fallback line below
+                     either -- that one is for a shop with no free-delivery
+                     amount, and this shop has one. Nothing is printed. --}}
+                @elseif ($free)
                 <div class="ship">
                     <div class="t">
                         @if ($left > 0)

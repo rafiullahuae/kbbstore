@@ -1011,6 +1011,18 @@ class CheckoutPage
                             'Use {amount} where the UAE free-delivery amount should appear; it is read from your shipping settings, so it follows them.'],
         'dl_note_ar'    => ['text', 'Free-delivery line — Arabic', self::DL_NOTE_AR,
                             'The same on the Arabic shop (/ar/).'],
+        /*
+         * Lane QK7. "the unlocked / free delivery green bar still showing in
+         * summary section and also above the place order button on checkout,
+         * turn off from the cart and checkout page. please." -- the owner,
+         * twice. ONE switch for every place either page drew the bar: the
+         * checkout's summary and its "Your bag" block (and the copy the
+         * country change re-renders in place), and the cart page's band and
+         * its summary. OFF, as asked; a data migration writes it off too. The
+         * cart PANEL's bar is not this one and is left exactly as it was.
+         */
+        'fs_bar_on'     => ['bool', 'Free-delivery bar on the cart and checkout pages', false,
+                            'Off, as asked: no progress bar and no "You\'ve unlocked free delivery" or "AED X away" line on the cart page or the checkout, before or after a coupon, quantity or country change. The Delivery row in the totals is not affected, and neither is the bar in the cart panel (the drawer). On puts the bar back in every place it was. Its colours are Store → Ecommerce → Cart → Free delivery → Bar style.'],
     ];
 
     /** Lane QK6: the delivery labels and the line beside the heading, his words. */
@@ -1089,8 +1101,8 @@ class CheckoutPage
                            ['pay_style', 'pay_logos', 'pay_logo_h', 'pay_tint', 'pay_border',
                             'pay_tabby', 'pay_tamara', 'pay_card', 'pay_cod', 'pay_tamara_logo']],
         /* Lane QK6, appended so every other tab keeps its place. */
-        'delivery'     => ['Delivery labels', 'The "3 Delivery" section on a UAE checkout: what the delivery option is called, paid and free, and the small free-delivery line beside the heading. One set of values for both surfaces.',
-                           ['dl_on', 'dl_paid', 'dl_paid_ar', 'dl_free', 'dl_free_ar', 'dl_note_on', 'dl_note', 'dl_note_ar']],
+        'delivery'     => ['Delivery labels', 'The "3 Delivery" section on a UAE checkout: what the delivery option is called, paid and free, and the small free-delivery line beside the heading. Last on the tab: the free-delivery bar on the cart page and the checkout. One set of values for both surfaces.',
+                           ['dl_on', 'dl_paid', 'dl_paid_ar', 'dl_free', 'dl_free_ar', 'dl_note_on', 'dl_note', 'dl_note_ar', 'fs_bar_on']],
         'cline'        => ['Coupon line', 'The line at the very top of the checkout: "For Discount, Apply coupon GLOW". Tapping the code applies it to the order in place. One set of values for both surfaces.',
                            ['cline_on', 'cline_coupon', 'cline_text', 'cline_text_ar']],
     ];
@@ -1435,6 +1447,18 @@ class CheckoutPage
     public function desktopTotals(): bool
     {
         return $this->flag('sum_totals');
+    }
+
+    /**
+     * Whether the cart page and the checkout draw the free-delivery bar and
+     * its "unlocked" / "AED X away" line (Lane QK7). The ONE switch both pages
+     * read -- partials/checkout/freeship-bar (the checkout's two order blocks
+     * and the country-change JSON) and store/cart-inner (band and summary) --
+     * so no render point can disagree. One lookup in the memoised map.
+     */
+    public function freeDeliveryBar(): bool
+    {
+        return $this->flag('fs_bar_on');
     }
 
     public function floatLabels(): bool
