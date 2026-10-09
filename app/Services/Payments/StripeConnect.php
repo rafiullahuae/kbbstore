@@ -1287,6 +1287,38 @@ final class StripeConnect
             'capture_later' => $gateway instanceof Gateways\StripeGateway && $gateway->captureLater(),
             'receipt_email' => $this->credentials->get(self::GATEWAY, 'receipt_email') === '1',
             'last_failure' => $this->lastFailure(),
+            'wallets' => $this->walletsStatus($config),
+        ];
+    }
+
+    /**
+     * Apple Pay and Google Pay, for the Stripe status block. (Lane WL.)
+     *
+     * The owner, 9 October 2026: "why google pay and apple pay not showing on
+     * my checkout page?" Every fact the shop holds about it, in one place: the
+     * two switches, whether the shop is offering them (Wallets — all four
+     * gates), whether Apple's file is the real one, and the domain to register
+     * in Stripe. No network: whether Stripe has verified the domain is the
+     * "Payments ready?" check's question (PaymentsReadiness), which calls out.
+     *
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
+     */
+    private function walletsStatus(array $config): array
+    {
+        $on = static fn (string $key): bool => is_scalar($config[$key] ?? null) && trim((string) $config[$key]) === '1';
+        $wallets = app(Wallets::class);
+        $wallets->forget();
+        $file = AppleDomainFile::status((string) (is_scalar($config[AppleDomainFile::CONFIG_KEY] ?? null) ? $config[AppleDomainFile::CONFIG_KEY] : ''));
+
+        return [
+            'apple_pay' => $on(Wallets::CONFIG_KEYS['apple_pay']),
+            'google_pay' => $on(Wallets::CONFIG_KEYS['google_pay']),
+            'offered' => ['apple_pay' => $wallets->applePay(), 'google_pay' => $wallets->googlePay()],
+            'file' => $file,
+            'file_url' => AppleDomainFile::url(),
+            'host' => AppleDomainFile::host(),
+            'register' => AppleDomainFile::domainsToRegister(),
         ];
     }
 

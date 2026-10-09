@@ -321,6 +321,26 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         }
 
         /*
+         * APPLE'S FILE, NOT STRIPE'S ID. (Lane WL.) The live shop served the
+         * `pmd_…` ID of its Stripe payment-method domain where Apple's file
+         * belongs; Apple could not verify the domain, and Apple Pay never
+         * appeared on an iPhone with nothing anywhere to say why. Refused here
+         * with what to paste instead. An empty box is fine: it is optional.
+         *
+         * Only a NEW value is judged. A bad value already stored (the live
+         * shop's pmd_…) is shown red on the Stripe status block instead, so it
+         * cannot hold up an unrelated save on the money path — switching Mode
+         * or turning cards off must never wait on an Apple Pay box.
+         */
+        $apple = $text(\App\Services\Payments\AppleDomainFile::CONFIG_KEY);
+
+        if ($apple !== null && $apple !== ''
+            && $apple !== trim($this->credentials->get($this->id(), \App\Services\Payments\AppleDomainFile::CONFIG_KEY))
+            && ($problem = \App\Services\Payments\AppleDomainFile::problem($apple)) !== null) {
+            $errors[\App\Services\Payments\AppleDomainFile::CONFIG_KEY] = $problem;
+        }
+
+        /*
          * A key in the box for the other mode. Stripe decides test or live from
          * the key alone, so a pk_live_ in the Test box would take real money
          * with the switch reading Sandbox. Refused with the fix in the message.
@@ -537,13 +557,13 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
              *
              * BOTH OFF BY DEFAULT, and for Apple Pay that is a fact about the
              * world rather than caution: Apple Pay on the web does not work
-             * until extrabeauty.ae is registered with Apple through the Stripe
+             * until the shop's domain is registered with Apple through the Stripe
              * dashboard and the domain-association file is being served. Only
              * the owner can do either. docs/WALLETS-APPLE-GOOGLE-PAY.md is the
              * numbered list.
              */
             'wallet_apple_pay' => ['bool', 'Apple Pay', 'Draws the Apple Pay button on the checkout for Safari and iOS shoppers, and the Apple Pay mark in the footer, the basket and the product page. Off until you have registered this domain with Apple in the Stripe dashboard and the association file is being served — see docs/WALLETS-APPLE-GOOGLE-PAY.md. It rides this same card account: same payment, same capture, same refund.', 'settings'],
-            'wallet_google_pay' => ['bool', 'Google Pay', 'Draws the Google Pay button on the checkout for Chrome and Android shoppers, and the Google Pay mark in the footer, the basket and the product page. Needs no registration anywhere — only HTTPS and these live keys. It rides this same card account: same payment, same capture, same refund.', 'settings'],
+            'wallet_google_pay' => ['bool', 'Google Pay', 'Draws the Google Pay button on the checkout for Chrome and Android shoppers, and the Google Pay mark in the footer, the basket and the product page. Needs your domain added in Stripe → Settings → Payments → Payment method domains (the same registration Apple Pay uses; no file), HTTPS, and a card in the shopper’s Google Wallet. It rides this same card account: same payment, same capture, same refund.', 'settings'],
             /*
              * THE ONE THING ONLY APPLE CAN BE SATISFIED BY, AND IT IS OPTIONAL.
              *
@@ -573,7 +593,7 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             'apple_domain_association' => [
                 'text',
                 'Apple Pay domain file',
-                'Only needed for Apple Pay. In Stripe: Settings → Payments → Payment method domains → add your shop’s domain (and its www form), then download the association file it offers and paste the whole contents here. This shop then serves it at /.well-known/apple-developer-merchantid-domain-association, which is where Apple looks. Full steps: docs/WALLETS-APPLE-GOOGLE-PAY.md.',
+                'Only needed for Apple Pay. In Stripe: Settings → Payments → Payment method domains → add your shop’s domain (and its www form), then download the Apple Pay domain association file it offers, open it in a text editor and paste ALL of it here — one long line of digits and the letters A–F. NOT the pmd_… ID Stripe shows for the domain: that is refused, because Apple cannot verify your domain from it. This shop then serves the file at /.well-known/apple-developer-merchantid-domain-association, which is where Apple looks; the status block above says whether it is right.',
                 'settings',
                 'optional',
             ],

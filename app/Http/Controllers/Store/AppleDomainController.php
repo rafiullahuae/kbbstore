@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
+use App\Services\Payments\AppleDomainFile;
 use App\Services\Payments\GatewayCredentials;
 use App\Services\Payments\Wallets;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,8 +21,9 @@ use Symfony\Component\HttpFoundation\Response;
  * verified. Verification is one HTTP GET: Apple (through Stripe, which does
  * the registration on the merchant's behalf) fetches
  *
- *     https://extrabeauty.ae/.well-known/apple-developer-merchantid-domain-association
+ *     https://<your domain>/.well-known/apple-developer-merchantid-domain-association
  *
+ * (your domain = Platform → Site address, else APP_URL; AppleDomainFile::url())
  * and expects back, byte for byte, the file the Stripe dashboard offers for
  * download at the moment the domain is added. No extension, no redirect, no
  * HTML wrapper, 200 and text.
@@ -72,9 +74,11 @@ use Symfony\Component\HttpFoundation\Response;
  *     authenticated admin with the payments screen can write. It is not in
  *     `settings`, so /api/settings cannot reach it however its allowlist
  *     changes;
- *   - `<`, `>` and every control character but tab, CR and LF are refused
- *     outright, so it cannot carry markup;
- *   - it is capped at 8 KB and must be non-empty;
+ *   - it must be Apple's file: one line of hexadecimal, 200 to 32,768
+ *     characters (AppleDomainFile::problem()). That refuses markup, control
+ *     characters and whitespace by construction — and, since Lane WL, the
+ *     `pmd_…` Stripe domain ID the live shop was serving in its place, which
+ *     Apple cannot verify a domain from;
  *   - it is served `text/plain` with `X-Content-Type-Options: nosniff`, so no
  *     browser may decide it is HTML;
  *   - `Content-Disposition: inline` and `X-Robots-Tag: noindex` because this
@@ -92,10 +96,10 @@ use Symfony\Component\HttpFoundation\Response;
 class AppleDomainController extends Controller
 {
     /** The gateway-config key the pasted blob is stored under. */
-    public const CONFIG_KEY = 'apple_domain_association';
+    public const CONFIG_KEY = AppleDomainFile::CONFIG_KEY;
 
     /**
-     * Where a file placed by hand is looked for, relative to the app root.
+     * Where a file placed by hand is looked for, relative to storage/.
      *
      * `storage/app/` and not `public/`, because on this host `public/` is not
      * served (see the class docblock) and `storage/` is inside the application
@@ -103,10 +107,10 @@ class AppleDomainController extends Controller
      * to a paste drops it here; one who prefers the web root drops it there
      * instead and never reaches this controller at all.
      */
-    public const FILE_PATH = 'app/apple-pay/domain-association';
+    public const FILE_PATH = AppleDomainFile::FILE_PATH;
 
-    /** Apple's file is ~1.8 KB. Eight is room to spare and still a bound. */
-    public const MAX_BYTES = 8192;
+    /** A bound on the response body. See AppleDomainFile::MAX_BYTES. */
+    public const MAX_BYTES = AppleDomainFile::MAX_BYTES;
 
     public function __invoke(GatewayCredentials $credentials): Response
     {
@@ -133,58 +137,17 @@ class AppleDomainController extends Controller
         ]);
     }
 
-    /** The file an owner with a shell put there, or null. */
+    /** The file an owner with a shell put there, if it is Apple's file. */
     private function fromFile(): ?string
     {
-        $path = storage_path(self::FILE_PATH);
+        $raw = AppleDomainFile::onDisk();
 
-        // is_file before is_readable: a directory at that path is not an
-        // unreadable file, it is a different mistake, and file_get_contents
-        // would warn rather than return false.
-        if (! is_file($path) || ! is_readable($path)) {
-            return null;
-        }
-
-        $raw = @file_get_contents($path);
-
-        return is_string($raw) ? $this->clean($raw) : null;
+        return $raw === null ? null : AppleDomainFile::clean($raw);
     }
 
-    /** The blob pasted into Store → Payments, or null. */
+    /** The blob pasted into Store → Payments, if it is Apple's file. */
     private function fromConfig(GatewayCredentials $credentials): ?string
     {
-        return $this->clean($credentials->get(Wallets::GATEWAY, self::CONFIG_KEY));
-    }
-
-    /**
-     * The value, if it can only be what Apple sends. Otherwise null.
-     *
-     * Returns the trimmed bytes rather than a sanitised version of them: this
-     * document is compared byte for byte at Apple's end, so anything that would
-     * need cleaning is a file we must refuse rather than repair. Trailing
-     * whitespace is the one exception, because a paste and an editor both add
-     * it and neither changes the token.
-     */
-    private function clean(string $raw): ?string
-    {
-        $value = trim($raw);
-
-        if ($value === '' || strlen($value) > self::MAX_BYTES) {
-            return null;
-        }
-
-        // No markup, and no control characters but the three a text file may
-        // legitimately carry. `[^\P{C}\t\r\n]` is "a control character that is
-        // not tab, CR or LF" — written this way because a plain \x00-\x1F range
-        // would also have to spell out the exceptions.
-        if (preg_match('/[<>]/', $value) === 1) {
-            return null;
-        }
-
-        if (preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $value) === 1) {
-            return null;
-        }
-
-        return $value;
+        return AppleDomainFile::clean($credentials->get(Wallets::GATEWAY, self::CONFIG_KEY));
     }
 }
