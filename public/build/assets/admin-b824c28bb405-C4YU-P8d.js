@@ -135,7 +135,7 @@
     var v = set.values, bad = problems();
     var shown = function (val) { return val ? 'Shows ' + val + '.' : 'No address set, so this card is hidden whatever this switch says.'; };
     return '<div class="ctx-set">'
-      + '<div class="ctx-card"><h4>Cards</h4><p class="ctx-help">The numbers and the address come from Settings → Business → How customers reach you — change them there and every page, these cards included, follows.</p>'
+      + '<div class="ctx-card"><h4>Cards</h4><p class="ctx-help">The numbers and the address come from Settings → Business → How customers reach you — change them there and every page, these cards included, follows. Each card’s words, link and order are edited at Pages → User pages → Contact Us → Edit → Contact cards; these switches are the same Show boxes.</p>'
       + sw('wa', 'WhatsApp card', shown(v.wa))
       + sw('ig', 'Instagram card', (v.ig ? 'Shows ' + v.ig + ' and opens a direct message. ' : 'No Instagram profile set, so this card is hidden whatever this switch says. ') + 'Shows when Instagram is filled in at Appearance → Footer → Social profiles.')
       + sw('email', 'Email card', shown(v.email))
