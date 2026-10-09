@@ -195,13 +195,16 @@ it('records nothing as viewed for a page fetched ahead, and records it when the 
     // the first assertion is red (that is what Chromium stored on hover).
     $spec = test()->withHeaders(['Sec-Purpose' => 'prefetch'])->get($url)->assertOk();
     expect(collect($spec->headers->getCookies())->map->getName()->all())->not->toContain('kbb_viewed')
-        ->and($spec->getContent())->toContain('data-u="/api/viewed"')
-        ->and($spec->getContent())->toContain('data-i="'.$product->id.'"');
+        // Lane AN: the id rides on the page's one beacon (hit.js), so the
+        // page carries it in a meta rather than a script of its own.
+        ->and($spec->getContent())->toContain('<meta name="kbb-vl" content="'.$product->id.'">')
+        ->and($spec->getContent())->not->toContain('data-u="/api/viewed"');
 
     // An ordinary open: the cookie as before, and no extra script.
     $open = test()->withHeaders(['Sec-Purpose' => ''])->get($url)->assertOk();
     expect(collect($open->headers->getCookies())->map->getName()->all())->toContain('kbb_viewed')
-        ->and($open->getContent())->not->toContain('/api/viewed');
+        ->and($open->getContent())->not->toContain('/api/viewed')
+        ->and($open->getContent())->not->toContain('kbb-vl');
 
     expect(InstantNav::isSpeculative(\Illuminate\Http\Request::create('/', 'GET', [], [], [], ['HTTP_SEC_PURPOSE' => 'prefetch;prerender'])))->toBeTrue()
         ->and(InstantNav::isSpeculative(\Illuminate\Http\Request::create('/', 'GET', [], [], [], ['HTTP_PURPOSE' => 'prefetch'])))->toBeTrue()

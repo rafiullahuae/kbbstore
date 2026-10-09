@@ -111,7 +111,9 @@ it('still wires the mobile menu, and in the same position', function () {
     // the product description's own toggle) LAST, so no step before it moved.
     // 27 since initWaAway (the floating WhatsApp button stepping aside from
     // the footer help strip, 9 October) went LAST, so no step before it moved.
-    expect($steps)->toHaveCount(27);
+    // 28 since Lane AN added initHit (the one beacon per opened page) LAST,
+    // after initWaAway, so no step before it moved.
+    expect($steps)->toHaveCount(28);
     expect($steps[0])->toBe('initOverlay');
     expect($steps[8])->toBe('initHome');   // wires the mobile menu
     expect($steps[16])->toBe('initListingLoad');

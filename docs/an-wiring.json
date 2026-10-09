@@ -1,0 +1,130 @@
+[
+  {
+    "n": 1,
+    "file": "routes/web.php",
+    "count": 1,
+    "what": "mount Analytics' admin routes inside the guarded admin-api group",
+    "anchor": "        require __DIR__.'/not-found-page-admin.php';  // Safety → 404 page (Lane NF)\n",
+    "replacement": "        require __DIR__.'/not-found-page-admin.php';  // Safety → 404 page (Lane NF)\n        require __DIR__.'/site-analytics-admin.php';  // Analytics (Lane AN)\n"
+  },
+  {
+    "n": 2,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "the screen's crumb and title",
+    "anchor": "orders:['Store','Orders'],",
+    "replacement": "'site-analytics':['Overview','Analytics'],orders:['Store','Orders'],"
+  },
+  {
+    "n": 3,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "replay a click that lands before the partial",
+    "anchor": "const LATE_RENDERED=new Set(['cartpanel',",
+    "replacement": "const LATE_RENDERED=new Set(['site-analytics','cartpanel',"
+  },
+  {
+    "n": 4,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "include the screen once, after the 404 page's",
+    "anchor": "@include('admin.partials.not-found-page-screen')\n",
+    "replacement": "@include('admin.partials.not-found-page-screen')\n{{-- Analytics (Lane AN): the realtime board (design B) -- live visitors, pages, sources, orders and revenue by source. It wraps window.go for 'site-analytics'; its sidebar row is AdminNav's, under Dashboard. --}}\n@include('admin.partials.site-analytics-screen')\n"
+  },
+  {
+    "n": 5,
+    "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
+    "count": 1,
+    "what": "keep the recorded block in step",
+    "anchor": "const LATE_RENDERED=new Set(['cartpanel',",
+    "replacement": "const LATE_RENDERED=new Set(['site-analytics','cartpanel',"
+  },
+  {
+    "n": 6,
+    "file": "docs/BG-ADMIN-APP-BLOCKS.md",
+    "count": 2,
+    "what": "keep the recorded block in step",
+    "anchor": "const LATE_RENDERED=new Set(['cartpanel',",
+    "replacement": "const LATE_RENDERED=new Set(['site-analytics','cartpanel',"
+  },
+  {
+    "n": 7,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "Orders list: Source filter state",
+    "anchor": "    from: '', to: '', totalMin: '', totalMax: '', payment: '',",
+    "replacement": "    from: '', to: '', totalMin: '', totalMax: '', payment: '', source: '',"
+  },
+  {
+    "n": 8,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "Orders list: send the Source filter",
+    "anchor": "    if(OL.payment) p.set('payment', OL.payment);\n",
+    "replacement": "    if(OL.payment) p.set('payment', OL.payment);\n    if(OL.source) p.set('source', OL.source);\n"
+  },
+  {
+    "n": 9,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "Orders list: count the Source filter",
+    "anchor": "    if(OL.payment) n++;\n",
+    "replacement": "    if(OL.payment) n++;\n    if(OL.source) n++;\n"
+  },
+  {
+    "n": 10,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "Orders list: the Source column",
+    "anchor": "    ['payment', 'Payment'], ['placed', 'Placed'], ['location', 'City'],",
+    "replacement": "    ['payment', 'Payment'], ['source', 'Source'], ['placed', 'Placed'], ['location', 'City'],"
+  },
+  {
+    "n": 11,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "Orders list: Source on by default",
+    "anchor": "    payment: true, placed: true, location: false, contact: false, wc: false",
+    "replacement": "    payment: true, source: true, placed: true, location: false, contact: false, wc: false"
+  },
+  {
+    "n": 12,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "Orders list: the Source select in Filters",
+    "anchor": "        '</select></div>' +\n      '</div>' +\n      '<div class=\"row\" style=\"margin-top:14px;gap:8px;flex-wrap:wrap\"><button class=\"btn sm\" id=\"olApply\">Apply filters</button>' +",
+    "replacement": "        '</select></div>' +\n        /* Source (Lane AN): where the order came from, from analytics. */\n        '<div class=\"fld\" style=\"margin:0\"><label>Source</label><select id=\"olSource\"><option value=\"\">Any source</option>' +\n          Object.keys(d.sources || {}).map(function(k){ return '<option value=\"' + sesc(k) + '\"' + (OL.source === k ? ' selected' : '') + '>' + sesc(d.sources[k]) + '</option>'; }).join('') +\n        '</select></div>' +\n      '</div>' +\n      '<div class=\"row\" style=\"margin-top:14px;gap:8px;flex-wrap:wrap\"><button class=\"btn sm\" id=\"olApply\">Apply filters</button>' +"
+  },
+  {
+    "n": 13,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "Orders list: apply the Source filter",
+    "anchor": "      OL.payment = (byId('olPayment') || {}).value || '';\n      OL.page = 1; olLoad();",
+    "replacement": "      OL.payment = (byId('olPayment') || {}).value || '';\n      OL.source = (byId('olSource') || {}).value || '';\n      OL.page = 1; olLoad();"
+  },
+  {
+    "n": 14,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "Orders list: Clear all clears Source",
+    "anchor": "      OL.payment = ''; OL.search = ''; OL.filter = 'all';",
+    "replacement": "      OL.payment = ''; OL.source = ''; OL.search = ''; OL.filter = 'all';"
+  },
+  {
+    "n": 15,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "Orders list: the Source chip cell",
+    "anchor": "      case 'payment':\n        return '<td style=\"font-size:12px\">' + olDash(o.payment) +",
+    "replacement": "      case 'source':\n        /* Lane AN: \"Instagram Ads · eid_sale\"; Unknown for orders before analytics, imports and manual ones. */\n        return '<td style=\"font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\" title=\"' + sesc(o.source || 'Unknown') + '\">' +\n          '<span class=\"chip\" style=\"cursor:default;font-size:11.5px;padding:2px 8px;display:inline-block;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle' + (o.source_key ? '' : ';opacity:.6') + '\">' + sesc(o.source || 'Unknown') + '</span></td>';\n      case 'payment':\n        return '<td style=\"font-size:12px\">' + olDash(o.payment) +"
+  },
+  {
+    "n": 16,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "Order detail: the Source panel (first and last touch, campaign, landing page, time to order)",
+    "anchor": "    var na = '<span style=\"color:var(--ink-faint)\">Not tracked yet</span>';\n    return '<div class=\"odcard\" style=\"margin-bottom:14px\" id=\"odAttr\">'+odCardHead('Order attribution')",
+    "replacement": "    var na = '<span style=\"color:var(--ink-faint)\">Not tracked yet</span>';\n    /* Lane AN: where the order came from, recorded by analytics at checkout. */\n    var sv = o.source||{};\n    if(sv.known){\n      var fld = function(l, v){ return '<div class=\"odfld\"><label style=\"font-weight:700;color:var(--ink-faint)\">'+l+'</label><div style=\"font-size:13px\">'+(v?sesc(v):'<span style=\"color:var(--ink-faint)\">—</span>')+'</div></div>'; };\n      var tch = function(t){ return t ? [t.channel, t.source && t.source !== t.channel.toLowerCase() ? t.source : '', t.medium, t.campaign, t.click].filter(Boolean).join(' · ') : ''; };\n      return '<div class=\"odcard\" style=\"margin-bottom:14px\" id=\"odAttr\">'+odCardHead('Source')+'<div class=\"pad\" style=\"padding:18px 20px\">'+\n        fld('SOURCE', sv.chip)+fld('LAST TOUCH', tch(sv.last))+fld('FIRST TOUCH', tch(sv.first))+\n        fld('LANDING PAGE', sv.first && sv.first.landing ? (function(p){ try{ return decodeURIComponent(p); }catch(x){ return p; } })(sv.first.landing) : '')+\n        '<div class=\"odfld\" style=\"margin-bottom:0\"><label style=\"font-weight:700;color:var(--ink-faint)\">TIME TO ORDER</label><div style=\"font-size:13px\">'+(sv.days==null?'—':sv.days===0?'Same day':sv.days+' day'+(sv.days===1?'':'s')+' after the first visit')+'</div></div>'+\n        '</div></div>';\n    }\n    return '<div class=\"odcard\" style=\"margin-bottom:14px\" id=\"odAttr\">'+odCardHead('Order attribution')"
+  }
+]

@@ -27,7 +27,8 @@ it('starts with the rest of the shop, last, from the one app bundle', function (
     $app = file_get_contents(resource_path('js/kbb/app.js'));
 
     expect($app)->toContain("import { initWaAway } from './wa-away.js';")
-        ->and($app)->toMatch('/initReadMore,\s*initWaAway,\s*\];/');
+        // Lane AN's initHit (the page-view beacon) runs after it, last.
+        ->and($app)->toMatch('/initReadMore,\s*initWaAway,\s*initHit,\s*\];/');
 });
 
 it('hides the button and its bubble at once while the class is on, in CSS', function () {

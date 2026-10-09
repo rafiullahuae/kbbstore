@@ -343,6 +343,11 @@ class AdminOrderController extends Controller
             // writes to it, not even on new checkout orders today). Shown as
             // null so the page can render "Not tracked yet" instead of a
             // fabricated number.
+            // Source (Lane AN): first and last touch, campaign, landing page
+            // and days to order, from the columns analytics stamps at checkout.
+            // Allowlisted by Attribution::panel(); "Unknown" when none.
+            'source' => \App\Services\Analytics\Attribution::panel($order->src_channel, $order->src_campaign, $order->src_attr),
+
             'attribution' => [
                 'origin' => $order->origin,
                 'device_type' => null,

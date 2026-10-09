@@ -66,6 +66,9 @@ import { initAdminLayer } from './admin-hint.js';
 // icon. Classes only; it returns at once when the owner chose Off. See press.js.
 import { initPress } from './press.js';
 import { initWaAway } from './wa-away.js';
+// Lane AN: the one beacon per opened page (Analytics, and the two product
+// counts that used to be requests of their own). Last in STEPS. See hit.js.
+import { initHit } from './hit.js';
 
 /* ── EVERY STEP RUNS, WHATEVER ANY OTHER STEP DOES. ─────────────────────────
  *
@@ -111,6 +114,7 @@ const STEPS = [
     initPress,
     initReadMore,
     initWaAway,
+    initHit,
 ];
 
 const boot = () => {
