@@ -125,6 +125,11 @@ final class AdminCapabilities
         // the order count on the dashboard is not.
         'analytics.view' => ['owner', 'manager'],
 
+        // Analytics (Lane AN): its two settings -- tracking on/off and the
+        // owner's own addresses to leave out. Reading the dashboard is
+        // analytics.view above.
+        'analytics.manage' => ['owner', 'manager'],
+
         // Growth & Marketing -> Search Terms: what shoppers typed, ranked. Its
         // own capability so it can be granted apart from revenue figures.
         'search_terms.view' => ['owner', 'manager'],
@@ -1966,6 +1971,12 @@ final class AdminCapabilities
 
         ['GET', 'admin-api/stats', 'dashboard.view'],
         ['GET', 'admin-api/analytics', 'analytics.view'],
+        // Analytics (Lane AN): the board, its live slice and its settings.
+        // Exact paths: nothing else under site-analytics/ is reachable.
+        ['GET', 'admin-api/site-analytics', 'analytics.view'],
+        ['GET', 'admin-api/site-analytics/live', 'analytics.view'],
+        ['GET', 'admin-api/site-analytics/settings', 'analytics.view'],
+        ['POST', 'admin-api/site-analytics/settings', 'analytics.manage'],
         ['GET', 'admin-api/search-terms', 'search_terms.view'],
 
         // (Lane CT) Cart Tracking. Every GET reads; every other verb writes.

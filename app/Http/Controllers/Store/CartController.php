@@ -147,6 +147,10 @@ class CartController extends Controller
         $cart = $this->carts->current($request);
         $this->carts->add($cart, $product, (int) ($data['quantity'] ?? 1), $variant);
 
+        // Analytics (Lane AN): one add to cart, for the board's funnel. One
+        // INSERT; never throws; refuses bots, admins and the owner's addresses.
+        \App\Services\Analytics\Tracker::record($request, 1);
+
         return $this->fragments($this->loadCart($request), $request, 'Added to bag', null, true);
     }
 

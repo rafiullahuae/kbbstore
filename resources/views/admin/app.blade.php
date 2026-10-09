@@ -3383,7 +3383,7 @@ const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],dash:['Overv
    to ask of one set of seven settings. The id stays routable for #rev-capsule
    and ?go=rev-capsule, and it names the screen it actually opens rather than a
    second one. */
-'rev-badge':['Reviews','Rating Badge'],'rev-capsule':['Reviews','Rating Badge'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],tax:['Store','Tax'],customers:['Store','Customers'],mail:['Emails','All mail settings'],'emails':['Emails','Overview'],'emails-sending':['Emails','Sending & delivery'],'emails-customer':['Emails','Customer emails'],'emails-edit':['Emails','Customer emails'],'emails-branding':['Emails','Design & branding'],'emails-sent':['Emails','Sent mail'],payments:['Store','Payments'],'firewall':['Store → Security','Firewall'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'inquiries':['Store','Inquiries'],'seo':['Store','SEO & Meta'],/* 'blog' has no sidebar row of its own any more — it
+'rev-badge':['Reviews','Rating Badge'],'rev-capsule':['Reviews','Rating Badge'],'rev-settings':['Reviews','Review Settings'],'site-analytics':['Overview','Analytics'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],tax:['Store','Tax'],customers:['Store','Customers'],mail:['Emails','All mail settings'],'emails':['Emails','Overview'],'emails-sending':['Emails','Sending & delivery'],'emails-customer':['Emails','Customer emails'],'emails-edit':['Emails','Customer emails'],'emails-branding':['Emails','Design & branding'],'emails-sent':['Emails','Sent mail'],payments:['Store','Payments'],'firewall':['Store → Security','Firewall'],analytics:['Store','Sales Report'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'inquiries':['Store','Inquiries'],'seo':['Store','SEO & Meta'],/* 'blog' has no sidebar row of its own any more — it
    and 'posts' open the same screen. The id stays routable for #blog and
    ?go=blog, and it names that screen honestly rather than a second one. */
 'blog':['Content','Blog Posts'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'hpcontent':['Appearance','Homepage content'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'pagebanners':['Pages','Page banners'],'pageheader':['Pages','Page header'],'siteapp':['App','Site App'],'posts':['Content','Blog Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library'],
@@ -8543,7 +8543,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','igembeds','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','routines','imageseo','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','notfoundpage','inquiries']);
+const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','igembeds','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','site-analytics','routines','imageseo','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','notfoundpage','inquiries']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -14022,7 +14022,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     page: 1,
     perPage: +(localStorage.getItem('kbb_ord_pp') || 50),
     search: '', filter: 'all', sort: 'newest',
-    from: '', to: '', totalMin: '', totalMax: '', payment: '',
+    from: '', to: '', totalMin: '', totalMax: '', payment: '', source: '',
     adv: false, colsOpen: false, cols: null, data: null, err: null, sel: {}, busy: false,
     /* Lane ORD: the status picked in "Set status to…" and waiting for Proceed,
        the request in flight, and the one-line answer drawn where the bar was. */
@@ -14031,7 +14031,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 
   var OL_COLDEF = [
     ['status', 'Status'], ['items', 'Items'], ['total', 'Total'], ['refunded', 'Refunded'],
-    ['payment', 'Payment'], ['placed', 'Placed'], ['location', 'City'],
+    ['payment', 'Payment'], ['source', 'Source'], ['placed', 'Placed'], ['location', 'City'],
     ['contact', 'Phone'], ['wc', 'Woo ID']
   ];
 
@@ -14041,7 +14041,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      every page load. */
   var OL_COLS_DEFAULT = {
     status: true, items: true, total: true, refunded: false,
-    payment: true, placed: true, location: false, contact: false, wc: false
+    payment: true, source: true, placed: true, location: false, contact: false, wc: false
   };
 
   /* Which sort each sortable header maps to, so the header caret and the Sort
@@ -14089,6 +14089,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     if(OL.totalMin !== '') p.set('total_min', OL.totalMin);
     if(OL.totalMax !== '') p.set('total_max', OL.totalMax);
     if(OL.payment) p.set('payment', OL.payment);
+    if(OL.source) p.set('source', OL.source);
     return p.toString();
   }
 
@@ -14188,6 +14189,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     if(OL.from || OL.to) n++;
     if(OL.totalMin !== '' || OL.totalMax !== '') n++;
     if(OL.payment) n++;
+    if(OL.source) n++;
     return n;
   }
 
@@ -14378,6 +14380,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
         '<div class="fld" style="margin:0"><label>Payment</label><select id="olPayment"><option value="">Any payment method</option>' +
           Object.keys(methods).sort().map(function(k){ return '<option value="' + sesc(k) + '"' + (OL.payment === k ? ' selected' : '') + '>' + sesc(methods[k]) + '</option>'; }).join('') +
         '</select></div>' +
+        /* Source (Lane AN): where the order came from, from analytics. */
+        '<div class="fld" style="margin:0"><label>Source</label><select id="olSource"><option value="">Any source</option>' +
+          Object.keys(d.sources || {}).map(function(k){ return '<option value="' + sesc(k) + '"' + (OL.source === k ? ' selected' : '') + '>' + sesc(d.sources[k]) + '</option>'; }).join('') +
+        '</select></div>' +
       '</div>' +
       '<div class="row" style="margin-top:14px;gap:8px;flex-wrap:wrap"><button class="btn sm" id="olApply">Apply filters</button>' +
       '<button class="btn ghost sm" id="olClearFilters">Clear all</button>' +
@@ -14455,6 +14461,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       case 'refunded':
         return '<td class="odlnum" style="text-align:right;color:' + (o.refunded_fils ? 'var(--red)' : 'var(--ink-faint)') + '">' +
           (o.refunded_fils ? sesc(o.refunded_display) : '—') + '</td>';
+      case 'source':
+        /* Lane AN: "Instagram Ads · eid_sale"; Unknown for orders before analytics, imports and manual ones. */
+        return '<td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + sesc(o.source || 'Unknown') + '">' +
+          '<span class="chip" style="cursor:default;font-size:11.5px;padding:2px 8px;display:inline-block;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle' + (o.source_key ? '' : ';opacity:.6') + '">' + sesc(o.source || 'Unknown') + '</span></td>';
       case 'payment':
         return '<td style="font-size:12px">' + olDash(o.payment) +
           (o.captured ? '<div class="pbrand">captured</div>' : '') + '</td>';
@@ -14617,12 +14627,13 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       OL.from = (byId('olFrom') || {}).value || '';
       OL.to = (byId('olTo') || {}).value || '';
       OL.payment = (byId('olPayment') || {}).value || '';
+      OL.source = (byId('olSource') || {}).value || '';
       OL.page = 1; olLoad();
     };
 
     var clearAll = function(){
       OL.totalMin = ''; OL.totalMax = ''; OL.from = ''; OL.to = '';
-      OL.payment = ''; OL.search = ''; OL.filter = 'all';
+      OL.payment = ''; OL.source = ''; OL.search = ''; OL.filter = 'all';
       OL.page = 1; olLoad();
     };
     var clearBtn = byId('olClearFilters'); if(clearBtn) clearBtn.onclick = clearAll;
@@ -15430,6 +15441,17 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
   function odAttributionCard(o){
     var a = o.attribution||{};
     var na = '<span style="color:var(--ink-faint)">Not tracked yet</span>';
+    /* Lane AN: where the order came from, recorded by analytics at checkout. */
+    var sv = o.source||{};
+    if(sv.known){
+      var fld = function(l, v){ return '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">'+l+'</label><div style="font-size:13px">'+(v?sesc(v):'<span style="color:var(--ink-faint)">—</span>')+'</div></div>'; };
+      var tch = function(t){ return t ? [t.channel, t.source && t.source !== t.channel.toLowerCase() ? t.source : '', t.medium, t.campaign, t.click].filter(Boolean).join(' · ') : ''; };
+      return '<div class="odcard" style="margin-bottom:14px" id="odAttr">'+odCardHead('Source')+'<div class="pad" style="padding:18px 20px">'+
+        fld('SOURCE', sv.chip)+fld('LAST TOUCH', tch(sv.last))+fld('FIRST TOUCH', tch(sv.first))+
+        fld('LANDING PAGE', sv.first && sv.first.landing ? (function(p){ try{ return decodeURIComponent(p); }catch(x){ return p; } })(sv.first.landing) : '')+
+        '<div class="odfld" style="margin-bottom:0"><label style="font-weight:700;color:var(--ink-faint)">TIME TO ORDER</label><div style="font-size:13px">'+(sv.days==null?'—':sv.days===0?'Same day':sv.days+' day'+(sv.days===1?'':'s')+' after the first visit')+'</div></div>'+
+        '</div></div>';
+    }
     return '<div class="odcard" style="margin-bottom:14px" id="odAttr">'+odCardHead('Order attribution')+'<div class="pad" style="padding:18px 20px">'+
       '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">SOURCE</label><div style="font-size:13px">'+(a.origin?sesc(a.origin):na)+'</div></div>'+
       '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">DEVICE TYPE</label><div style="font-size:13px">'+(a.device_type?sesc(a.device_type):na)+'</div></div>'+
@@ -18260,7 +18282,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     if(!a){
       content.innerHTML = anStyle() +
         '<div class="wrap"><div class="an-wrap">'+
-        '<div class="page-head" style="margin:0"><h2>Analytics</h2>'+
+        '<div class="page-head" style="margin:0"><h2>Sales Report</h2>'+
         '<p>How the shop is trading, worked out from your real orders.</p></div>'+
         anFilterBar()+
         '<div class="an-card"><p class="an-empty">'+
@@ -18354,7 +18376,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     content.innerHTML = anStyle() +
       '<div class="wrap"><div class="an-wrap">'+
 
-      '<div class="page-head" style="margin:0"><h2>Analytics</h2>'+
+      '<div class="page-head" style="margin:0"><h2>Sales Report</h2>'+
       '<p>How the shop is trading, worked out from your real orders. Every figure below — '+
       'the money, the chart, where the orders are and the best sellers — covers '+
       '<b>'+sesc(period.range_label)+'</b> and nothing else. Revenue is net of refunds.</p></div>'+
@@ -24584,6 +24606,8 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 @include('admin.partials.not-found-page-screen')
 {{-- Store -> Inquiries (Lane CT): the contact page's messages (list, read, mark read, delete) and its Contact page settings. It wraps window.go for 'inquiries'; its sidebar row is AdminNav's late entry. --}}
 @include('admin.partials.contact-inquiries-screen')
+{{-- Analytics (Lane AN): the realtime board (design B) -- live visitors, pages, sources, orders and revenue by source. It wraps window.go for 'site-analytics'; its sidebar row is AdminNav's, under Dashboard. --}}
+@include('admin.partials.site-analytics-screen')
 @include('admin.partials.banners-screen')
 {{-- Growth & Marketing -> Marketing Pixels (Lane PX): an eye button in front of each ID that opens its how-to guide with the official Meta / Google / TikTok links. Wraps window.paintPixels; static text, no request. --}}
 @include('admin.partials.marketing-pixels-guide')

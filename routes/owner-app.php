@@ -129,6 +129,13 @@ if ($ownerAppPath !== null) {
 
                 Route::get('/changes', [LiveController::class, 'changes'])->defaults('oa_passive', true)->name('changes');
                 Route::get('/notifications', [LiveController::class, 'notifications'])->name('notifications');
+
+                // Analytics (Lane AN): the console's board, for the phone.
+                // analytics.view, checked in the controller (fails closed).
+                // The live read is passive: polling it while the screen is open
+                // must not keep an idle session unlocked.
+                Route::get('/analytics', [\App\Http\Controllers\OwnerApp\AnalyticsController::class, 'summary'])->name('analytics');
+                Route::get('/analytics/live', [\App\Http\Controllers\OwnerApp\AnalyticsController::class, 'live'])->defaults('oa_passive', true)->name('analytics.live');
                 Route::post('/push', [LiveController::class, 'subscribe'])->name('push');
                 Route::post('/push/off', [LiveController::class, 'unsubscribe'])->name('push.off');
                 Route::post('/push/test', [LiveController::class, 'test'])->middleware('throttle:6,1,oa-push-test')->name('push.test');

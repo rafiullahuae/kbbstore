@@ -365,7 +365,8 @@ it('renders the sidebar the console settled on, group by group and row by row', 
      * and classes byte for byte.
      */
     $settled = [
-        '' => ['dash'],
+        // 'site-analytics' — Analytics (Lane AN), a top-level row under Dashboard.
+        '' => ['dash', 'site-analytics'],
         // 'domainswitch' — Platform → Domain switch (Lane DW), after Site address.
         'Platform' => ['theme', 'users', 'settings', 'siteaddr', 'domainswitch', 'cache'],
         // App: added after the capture, at the owner's request (5 October).
@@ -413,7 +414,10 @@ it('renders the sidebar the console settled on, group by group and row by row', 
 
             continue;
         }
-        $got[$flat++ === 0 ? '' : '/flat'][] = $el->getAttribute('data-go');
+        // Bare rows above the first group are the top ('' : Dashboard, and
+        // Analytics under it since Lane AN); bare rows after one are '/flat'.
+        $flat++;
+        $got[array_diff(array_keys($got), ['']) === [] ? '' : '/flat'][] = $el->getAttribute('data-go');
     }
 
     expect(array_keys($got))->toBe(array_keys($settled));

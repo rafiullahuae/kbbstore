@@ -241,6 +241,8 @@ final class StaticMemos
             // categories and product words. One test's catalogue must not
             // correct the next test's search.
             \App\Support\SearchSpelling::class => static fn () => \App\Support\SearchSpelling::forget(),
+            // Lane AN: the crawler pattern and the day's visitor salt.
+            \App\Services\Analytics\Tracker::class => static fn () => \App\Services\Analytics\Tracker::forget(),
         ];
     }
 

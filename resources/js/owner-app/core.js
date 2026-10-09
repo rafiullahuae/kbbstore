@@ -82,7 +82,7 @@ export const ic = (n, c) => '<svg class="i ' + (c || '') + '" aria-hidden="true"
    oa.tn: when the "reinstall for the new top" notice was last closed (fs.js).
    oa.ic: when "Not now" was tapped on the install card (install.js, Lane IN); it
    replaces oa.a2, which marked the old install pop-up as shown once. */
-const KEYS = ['oa.fs', 'oa.seen', 'oa.np', 'oa.tn', 'oa.ic'];
+const KEYS = ['oa.fs', 'oa.seen', 'oa.np', 'oa.tn', 'oa.ic', 'oa.an.win'];
 export const store = {
   get(k) { if (KEYS.indexOf(k) === -1) return null; try { return window.localStorage.getItem(k); } catch (e) { return null; } },
   set(k, v) { if (KEYS.indexOf(k) === -1) return; try { window.localStorage.setItem(k, String(v)); } catch (e) { /* private mode */ } },

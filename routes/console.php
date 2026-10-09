@@ -209,3 +209,17 @@ Schedule::command('kbb:firewall data --auto')
     ->hourlyAt(37)
     ->withoutOverlapping(30)
     ->runInBackground();
+
+/*
+| ── ANALYTICS: THE MINUTE ROLLUP (Lane AN) ─────────────────────────────────
+|
+| The only thing Analytics runs when nobody is looking: today's raw page views
+| (an_hits) rebuilt into the daily summaries the board reads, and hits older
+| than 48 hours deleted. A minute with no new hits costs one MAX(id). The
+| live panel is NOT kept warm here -- it is read from the last minutes of
+| an_hits only while the Analytics screen is open. Without cron, the board
+| rebuilds today itself when it opens and finds the summary stale.
+*/
+Schedule::command('kbb:analytics-rollup')
+    ->everyMinute()
+    ->withoutOverlapping(5);

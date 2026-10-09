@@ -109,6 +109,14 @@ final class AdminSearchIndex
      */
     public const CURATED = [
         'dash' => [],
+        // Analytics (Lane AN): the realtime board.
+        'site-analytics' => [
+            'Live' => ['Active visitors', 'Happening now', 'Pages being read now', 'Sources now', 'Countries now'],
+            'Range' => ['Visitors', 'Page views', 'Sessions', 'Bounce rate', 'Revenue', 'Orders & revenue by source',
+                'Orders by campaign', 'Campaigns (UTM)', 'Checkout funnel', 'Entry pages', 'Searched on the shop',
+                'Google search keywords', 'Devices', 'Browsers', 'Countries'],
+            'Settings' => ['Record visits', 'Leave out these addresses'],
+        ],
         'theme' => [
             '' => [
                 'Brand tokens', 'Rose', 'Mega Menu', 'Mobile Header', 'Product page', 'Cart panel',

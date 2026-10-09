@@ -3,6 +3,21 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.450
+**Analytics: a live Realtime board in the admin and the owner app, and every order shows
+where it came from.** Apply after .449. Runs its migrations. Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "another strong module for Analytics ... live visitors, live visits pages list, keywords and much more, MUST BE SUPER LIGHTENING" + "Realtime board is fine" | Admin -> Analytics (under Dashboard): active visitors with a 5 / 10 / 15 / 25 minute window (10 by default), visitors per minute for the last 30 minutes, "Happening now" (views, add to cart, orders), pages being read now, sources and countries now; Today / Yesterday / 7 / 30 days / custom: visitors, page views, top and landing pages, sources and campaigns, devices, English vs Arabic, shop search keywords, add to cart -> checkout -> order funnel, revenue by source. One small signal per opened page, no cookies, no IP stored |
+| "real time only when we visit that page ... sleep mode doesn't mean that it will not record" | Recording never stops. The board refreshes every 15 seconds only while it is open and visible, and fills in the minutes you missed in one go when you come back |
+| "make this module to the owner app too" | Owner app -> Live tab: the same board on your phone |
+| "orders should be monitored ... from which source the order came ... and also track the campaign if paid" | Store -> Orders: Source column and Source filter (Google Organic, Google Ads, Instagram, Instagram Ads, Facebook, Facebook Ads, TikTok, TikTok Ads, WhatsApp, Snapchat, Email, Referral, Direct). Each order: first and last source, campaign, landing page, days to order. Owner app orders show the source too. Orders before this package show "Unknown" |
+
+The older Store -> Analytics screen (revenue, refunds, best sellers) is now called **Sales Report**, so the two are not confused. Settings at the bottom of Analytics: "Record visits" (on) and "Leave out these addresses" (with an "Add mine" button). Cities and Google search keywords come later (need a city database and Search Console).
+
+Files: see the package's update.json.
+
 ## 2.60.449
 **Contact page rebuilt with an inquiry inbox; Marketing Pixels upgrade with server events,
 catalog feeds, Custom code and a full guide; Instagram embeds on #KBeautyBliss Spotted; the

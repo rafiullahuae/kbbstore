@@ -53,7 +53,8 @@ it('keeps four convenience keys in browser storage and nothing else, never the P
     // oa.tn (6 Oct): when the Android "install again for the new top" notice was closed.
     // oa.ic (Lane IN): when "Not now" was tapped on the install card; it
     // replaces oa.a2, the old install pop-up's shown-once mark, which nothing reads now.
-    expect(trim($m[1] ?? ''))->toBe("'oa.fs', 'oa.seen', 'oa.np', 'oa.tn', 'oa.ic'");
+    // oa.an.win (Lane AN): the Analytics screen's live window, 5/10/15/25 minutes.
+    expect(trim($m[1] ?? ''))->toBe("'oa.fs', 'oa.seen', 'oa.np', 'oa.tn', 'oa.ic', 'oa.an.win'");
 
     foreach (glob(resource_path('js/owner-app/*.js')) as $f) {
         $code = (string) preg_replace(['#/\*.*?\*/#s', '#(^|\s)//[^\n]*#'], ['', '$1'], (string) file_get_contents($f));

@@ -3,9 +3,9 @@
         "n": 1,
         "what": "console TITLES: Store → Security → Firewall, so ?go=firewall and #firewall name the screen. Anchored on Analytics, which no other lane's record quotes ('security' and 'paygw' sit inside GS and TM handover blocks) (Lane FW)",
         "file": "resources/views/admin/app.blade.php",
-        "anchor": "analytics:['Store','Analytics'],",
+        "anchor": "analytics:['Store','Sales Report'],",
         "count": 1,
-        "replacement": "'firewall':['Store → Security','Firewall'],analytics:['Store','Analytics'],"
+        "replacement": "'firewall':['Store → Security','Firewall'],analytics:['Store','Sales Report'],"
     },
     {
         "n": 2,

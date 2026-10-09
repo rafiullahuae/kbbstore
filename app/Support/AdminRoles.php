@@ -122,6 +122,7 @@ final class AdminRoles
             'admin.access' => 'Sign in to the admin console',
             'dashboard.view' => 'See the dashboard',
             'analytics.view' => 'See revenue and analytics',
+            'analytics.manage' => 'Switch visitor tracking on or off and set the addresses it leaves out (Analytics)',
             'search_terms.view' => 'See what shoppers searched for',
         ]],
         ['orders', 'Orders', [
