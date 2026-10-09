@@ -108,6 +108,24 @@ final class SiteFooter
      * headline, which phones have never drawn (it was `display:none` in the
      * phone rules until it became a switch). Everything else ships showing.
      */
+    /**
+     * The help strip's round icon (owner, 9 October: "we have whatsapp icon, we
+     * need support icon, give multiple icons controls on backend to choose
+     * from"). CONSTANTS, printed unescaped by footer-bliss: a setting only ever
+     * picks a key. 'whatsapp' is the exact markup the strip drew before, byte
+     * for byte. 24x24, white strokes, no fill colour of its own, ~250-450 bytes.
+     */
+    public const HELP_ICONS = [
+        'support' => '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14a2 2 0 0 1 2-2h1v6H6a2 2 0 0 1-2-2v-2Z"/><path d="M20 14a2 2 0 0 0-2-2h-1v6h1a2 2 0 0 0 2-2v-2Z"/><path d="M17 18v.5a2.5 2.5 0 0 1-2.5 2.5H12"/></svg>',
+        'whatsapp' => '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-1.9-1-1 .9a3.6 3.6 0 0 1-2.4-2.4l.9-1-1-1.9Z" fill="#fff" stroke="none"/></svg>',
+        'chat' => '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-8 8H4l1.6-2.4A8 8 0 1 1 20 12Z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01" stroke-width="2.6"/></svg>',
+        'phone' => '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h3.2l1.6 4-2 1.3a10.5 10.5 0 0 0 4.9 4.9l1.3-2 4 1.6V17a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg>',
+        'mail' => '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>',
+        'heart' => '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.6 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10Z"/></svg>',
+        'sparkle' => '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 13.9 10l6.6 2-6.6 2L12 20.5 10.1 14l-6.6-2 6.6-2L12 3.5Z"/><path d="M19 3.5v3M17.5 5h3"/></svg>',
+        'none' => '',
+    ];
+
     public const PARTS = ['help', 'help_sub', 'logo', 'tag', 'soc', 'col1', 'col2', 'col3', 'visit', 'news', 'name', 'bot', 'pay'];
 
     /**
@@ -148,6 +166,18 @@ final class SiteFooter
             'help' => 'Empty: “24/7 available”.'],
         'site_help_sub' => ['type' => 'text', 'label' => 'Line under the headline', 'default' => '',
             'help' => 'Empty: “Ask us anything about your skin, a product or your order — we reply on WhatsApp.” Shown on laptops; on phones only when “Site footer · layout mobile” says so.'],
+        'site_help_icon' => ['type' => 'select', 'label' => 'Strip icon', 'default' => 'support',
+            'options' => [
+                'support' => 'Support (headset)',
+                'whatsapp' => 'WhatsApp chat (as before)',
+                'chat' => 'Chat bubble',
+                'phone' => 'Phone',
+                'mail' => 'Email',
+                'heart' => 'Heart',
+                'sparkle' => 'Sparkle',
+                'none' => 'No icon',
+            ],
+            'help' => 'The round icon at the start of the strip. Drawn in white inside the strip, on every device.'],
         'site_track_on' => ['type' => 'bool', 'label' => '“Track my order” button in the strip', 'default' => true,
             'help' => 'Beside “Chat on WhatsApp”, which dials the WhatsApp number on Store → Settings.'],
         'site_addr_dubai' => ['type' => 'text', 'label' => 'Dubai address', 'default' => '',
@@ -309,7 +339,7 @@ final class SiteFooter
         'site' => ['Site footer · design', 'The footer at the bottom of every storefront page. The new design is on, as the owner asked; Previous puts the old footer back.',
             ['site_design']],
         'site_help' => ['Site footer · help strip', 'The pink strip across the top of the footer.',
-            ['site_help_on', 'site_help_title', 'site_help_chip', 'site_help_sub', 'site_track_on']],
+            ['site_help_on', 'site_help_icon', 'site_help_title', 'site_help_chip', 'site_help_sub', 'site_track_on']],
         'site_visit' => ['Site footer · Visit us & name', 'The addresses, the offers box and the big name. An empty address is not drawn — nothing is made up.',
             ['site_addr_dubai', 'site_addr_korea', 'site_news_on', 'site_name_on', 'site_name_text']],
         'site_cols' => ['Site footer · link columns', 'The three columns of links, on laptops and phones. Leave a box empty for the shipped titles and links, which the Arabic shop shows in Arabic.',
@@ -846,6 +876,9 @@ final class SiteFooter
             'style' => $look['style'],
             'logo' => [(string) $header->get('logo_text'), (string) $header->get('logo_accent')],
             'help_on' => (bool) ($c['site_help_on'] ?? true),
+            // A key of HELP_ICONS, never the stored text: the view prints the
+            // constant SVG for it unescaped. Anything else is the default.
+            'help_icon' => self::HELP_ICONS[(string) ($c['site_help_icon'] ?? '')] ?? self::HELP_ICONS[(string) self::SCHEMA['site_help_icon']['default']],
             'help_title' => $text('site_help_title') !== '' ? $text('site_help_title') : __('store.footer.help_headline'),
             'help_chip' => $text('site_help_chip') !== '' ? $text('site_help_chip') : __('store.footer.help_chip'),
             'help_sub' => $text('site_help_sub') !== '' ? $text('site_help_sub') : __('store.footer.help_sub'),

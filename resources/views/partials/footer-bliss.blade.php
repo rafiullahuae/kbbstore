@@ -61,7 +61,9 @@
 <footer class="{{ $kft['classes'] }}" style="{{ $kft['style'] }}">
 @if ($kft['help_on'])
   <div class="kft-help"><div class="kft-wrap kft-help-in">
-    <span class="kft-help-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-1.9-1-1 .9a3.6 3.6 0 0 1-2.4-2.4l.9-1-1-1.9Z" fill="#fff" stroke="none"/></svg></span>
+@if ($kft['help_icon'] !== '')
+    <span class="kft-help-ic" aria-hidden="true">{!! $kft['help_icon'] !!}</span>
+@endif
     <div class="kft-help-tx">
       <h2 class="kft-help-h">{{ $kft['help_title'] }} <span class="kft-avail">{{ $kft['help_chip'] }}</span></h2>
       <p class="kft-help-p">{{ $kft['help_sub'] }}</p>

@@ -5132,6 +5132,25 @@
             "value": true
           },
           {
+            "key": "site_help_icon",
+            "name": "site_help_icon",
+            "type": "select",
+            "label": "Strip icon",
+            "help": "The round icon at the start of the strip. Drawn in white inside the strip, on every device.",
+            "options": {
+              "support": "Support (headset)",
+              "whatsapp": "WhatsApp chat (as before)",
+              "chat": "Chat bubble",
+              "phone": "Phone",
+              "mail": "Email",
+              "heart": "Heart",
+              "sparkle": "Sparkle",
+              "none": "No icon"
+            },
+            "default": "support",
+            "value": "support"
+          },
+          {
             "key": "site_help_title",
             "name": "site_help_title",
             "type": "text",

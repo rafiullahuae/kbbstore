@@ -2298,6 +2298,19 @@ final class EnglishRenderWalk
                 'with' => '$1$2 &amp; ',
                 'hits' => 6, // two pages x <title>, og:title, twitter:title
             ],
+            /*
+             * THE FOOTER STRIP'S ICON (owner, 9 October): "in the main footer
+             * strip in start, we have whatsapp icon, we need support icon, give
+             * multiple icons controls on backend". Appearance -> Footer -> Site
+             * footer · help strip -> Strip icon, default moved to Support
+             * because he asked; "WhatsApp chat (as before)" is the old markup
+             * byte for byte. Only the <svg> inside .kft-help-ic changes.
+             */
+            'the footer strip icon: support headset (owner, 9 October)' => [
+                'pattern' => '#'.preg_quote(\App\Services\SiteFooter::HELP_ICONS['whatsapp'], '#').'#',
+                'with' => str_replace(['\\', '$'], ['\\\\', '\\$'], \App\Services\SiteFooter::HELP_ICONS['support']),
+                'hits' => 29,
+            ],
         ];
     }
 

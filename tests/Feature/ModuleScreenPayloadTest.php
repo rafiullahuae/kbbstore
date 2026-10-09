@@ -626,7 +626,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // -> "Remember shopper details on this device".
     // 716 -> 719 (Lane MN): Appearance -> Header -> Navigation -> "Show the
     // current page", its style and its colour.
-    expect($compared)->toBe(719, 'the number of controls drawn changed');
+    // 719 -> 720 (owner, 9 October): Appearance -> Footer -> Site footer ·
+    // help strip -> Strip icon.
+    expect($compared)->toBe(720, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

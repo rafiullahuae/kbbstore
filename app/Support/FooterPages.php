@@ -52,7 +52,7 @@ final class FooterPages
         ['Design', 'Which footer the shop draws. Everything below styles the new one.',
             ['site_design']],
         ['Help strip', 'The coloured strip across the top.',
-            ['site_help_on', 'site_{dev}_help', 'site_{dev}_help_sub', 'site_{dev}_help_align', 'site_{dev}_fs_head',
+            ['site_help_on', 'site_help_icon', 'site_{dev}_help', 'site_{dev}_help_sub', 'site_{dev}_help_align', 'site_{dev}_fs_head',
                 'site_help_title', 'site_help_chip', 'site_help_sub', 'site_track_on']],
         ['Logo & description', 'The wordmark, the line under it and the social icons.',
             ['site_{dev}_logo', 'site_{dev}_tag', 'site_{dev}_soc', 'site_{dev}_brand_align']],
