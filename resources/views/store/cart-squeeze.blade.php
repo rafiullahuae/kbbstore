@@ -445,9 +445,11 @@
    stops. A tinted strip under a white bar is what a shopper sees as the bar
    "not reaching the bottom".
 
-   env(safe-area-inset-bottom) is ADDED to it, not substituted for it: on a
-   phone with a home indicator the shop's setting is space it asked for on top
-   of the space the hardware already takes. It resolves to 0px everywhere else. */
+   ▲ env(safe-area-inset-bottom) is now max()'d with it, not ADDED (Lane QK12,
+   with the default moved to the owner's 50): the setting is the distance to
+   the bottom of the screen and the home indicator sits inside it. Added, one
+   setting meant 84px on an iPhone and 50 on an Android. At 0 the two rules
+   agree, and the indicator is still cleared whatever the slider says. */
 /*
  * z-index 96, AND THE NUMBER IS THE WHOLE FIX.
  *
@@ -475,7 +477,7 @@
  */
 .kbb-cartpage.cpg-squeeze .cpg-docked{position:fixed;inset-inline:0;bottom:0;z-index:96;
   background:#fff;
-  padding-bottom:calc(var(--cpg-bar-pad) + env(safe-area-inset-bottom, 0px));
+  padding-bottom:max(var(--cpg-bar-pad), env(safe-area-inset-bottom, 0px));
   box-shadow:0 -2px 14px -6px rgba(42,34,40,.35);
   /* THE SECOND `bottom`, AND IT IS THE WHOLE BUG FIX.
      "when i scroll back to up on the cart page, the screen gives weired white
@@ -745,6 +747,29 @@
    re-rendering it.
    ========================================================================== */
 .kbb-cartpage.cpg-squeeze .cpg-side{display:contents}
+
+{{-- Lane QK12 -- Summary & trust -> "Phone: Order total straight after Your
+   Bag". The owner: "the order total should come immeditately after your bag
+   section and the recommended for you should come below the order total".
+
+   The page's grid children are the basket column, the rail, the coupon box
+   when it is on, and .cpg-side -- which is display:contents here, so the
+   summary inside it is a grid item of its own. Sending the rail and the coupon
+   box (which sits directly under the rail by design) to order:1 leaves the
+   basket and the summary at 0, in that document order: Your Bag, Order
+   Total, Recommended for you. CSS order and not a markup move, so cart.js
+   repaints #cartInner exactly as before and nothing is measured.
+
+   UNDER THE EXACT COMPLEMENT of the desktop query below when the two-column
+   layout is on (.cpg-d), and not merely "below 1024": there that column holds
+   the total already, and order:1 on the left column's boxes would swap the
+   coupon box above the rail. With the layout off the page is one column at
+   every width, so the rule needs no query. Classes, not a Blade condition: the switch is
+   already on the element, and one more read of the breakpoint is the cost. --}}
+.kbb-cartpage.cpg-squeeze.cpg-sumfirst:not(.cpg-d) .grid > :is(.cpg-rec,.coupon){order:1}
+@media not all and (min-width: {{ (int) $kbbCartPage->get('d_min') }}px){
+  .kbb-cartpage.cpg-squeeze.cpg-sumfirst.cpg-d .grid > :is(.cpg-rec,.coupon){order:1}
+}
 
 @media (min-width: {{ (int) $kbbCartPage->get('d_min') }}px){
 

@@ -103,6 +103,9 @@
  *   refused inputs answer "lines", 3 modified), and cart_panel `add_feedback`
  *   defaulting to "none" (its three refused inputs, 3 modified) -- the
  *   defaults changed, not the cast.)
+ *   (Lane QK12, chunk B: cart_panel `foot_gap_m` and cart_page `sum_first`,
+ *   20 lines inserted; and cart_page `bar_pad` MOVED on purpose -- its max is
+ *   80 now (the owner's 50 had to fit), so 99999 clamps to 80, 1 modified.)
  *
  *   Take the new rows and nothing else: rebuild the corpus, then for every line
  *   whose identity (module|key|type|input) is already in the fixture, keep the

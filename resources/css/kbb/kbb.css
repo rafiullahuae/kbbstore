@@ -1025,7 +1025,10 @@
     .cp-btnstack .kc-btns{grid-template-columns:1fr}
     .kc-btns a{padding:var(--cp-btnpad-m,10px) 4px;font-size:calc(12px * var(--cp-btnf-m,1));
                border-radius:var(--cp-btnr-m,99px)}
-    .dfoot{padding:12px 11px}
+    /* Lane QK12: Mobile → "Space below the buttons" (50, as the owner asked:
+       "give space below the buttons, approx 50px"). max() with the home
+       indicator rather than + -- see CartPanel::SCHEMA['foot_gap_m']. */
+    .dfoot{padding:12px 11px max(var(--cp-footgap-m,12px),env(safe-area-inset-bottom,0px))}
     /* (Lane QK3) One line on a 390px phone: the 77vw panel leaves 278px for
        it and the sentence is 289px at 11.5px, so the phone takes 11px and a
        narrower pill (measured 390: one line; 320: two). */

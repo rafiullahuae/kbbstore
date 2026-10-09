@@ -1327,8 +1327,10 @@ it('paints the docked rows full white, to the bottom edge', function () {
      * So: the selector, and the two declarations this test is actually about.
      */
     expect($css)->toContain('.cpg-docked{position:fixed;inset-inline:0;bottom:0;')
+        // ▲ Lane QK12: max() with the home indicator, not + (the owner's 50
+        // is the distance to the screen's edge; Qk12CartLayoutTest).
         ->and($css)->toContain('background:#fff;
-  padding-bottom:calc(var(--cpg-bar-pad)');
+  padding-bottom:max(var(--cpg-bar-pad)');
 });
 // MUTATION: put background:var(--cream) back on .cpg-addrbar.
 
@@ -1396,9 +1398,10 @@ it('puts cpg-has on the row from the session, not only after a tap', function ()
 it('ships all three new sizes at the value that reproduces today\'s page', function () {
     $c = app(CartPage::class)->all();
 
-    // Zero space under the rows, and both multipliers at 1 — so applying this
-    // moves nothing until somebody drags something.
-    expect($c['bar_pad'])->toBe(0)
+    // Both multipliers at 1 — so applying this moves nothing until somebody
+    // drags something. ▲ Lane QK12: the space under the rows is 50, the
+    // owner's own ask ("give space below around 50px") and a moved default.
+    expect($c['bar_pad'])->toBe(50)
         ->and($c['addr_btn_font'])->toBe(100)
         ->and($c['trust_size'])->toBe(100);
 
@@ -1406,11 +1409,11 @@ it('ships all three new sizes at the value that reproduces today\'s page', funct
 
     $vars = app(CartPage::class)->cssVariables();
 
-    expect($vars)->toContain('--cpg-bar-pad:0px')
+    expect($vars)->toContain('--cpg-bar-pad:50px')
         ->and($vars)->toContain('--cpg-addrbtn-f:1.00')
         ->and($vars)->toContain('--cpg-trust-s:1.00');
 });
-// MUTATION: change bar_pad's default from 0 to 12.
+// MUTATION: change bar_pad's default from 50 to 12.
 
 it('carries the three new sizes onto the page and derives the sizes from them', function () {
     squeezeOn(['bar_pad' => 20, 'addr_btn_font' => 130, 'trust_size' => 140]);

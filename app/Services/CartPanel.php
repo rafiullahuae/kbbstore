@@ -229,6 +229,25 @@ class CartPanel
                                'Use {coupon-code} where the code should appear; without it the code is added at the end. Up to 120 characters.'],
         'txt_coupon_ar'    => ['text',   'Text — Arabic', self::COUPON_TEXT_AR,
                                'Shown on the Arabic shop (/ar/). Leave empty to use the English text there too.'],
+
+        /*
+         * Lane QK12 (chunk B). The owner, 9 October, on a phone screenshot of
+         * this panel with Cart / Checkout flush on the bottom edge: "give space
+         * below the buttons, approx 50px". 50, as asked -- a moved default and
+         * his. A PHONE value (680px and below, the panel's phone block): on a
+         * laptop the panel's foot keeps its 16px.
+         *
+         * max() WITH THE HOME INDICATOR, NOT +. This number is the distance
+         * from the buttons to the bottom of the screen, and on a phone with a
+         * home indicator (~34px) that strip sits INSIDE the 50, not under it;
+         * adding the two would put 84px under the buttons on an iPhone and 50
+         * on an Android for the same setting. max() gives 50 on both, and
+         * still clears the indicator if the slider is taken below it.
+         * Appended, so every key above keeps its recorded line.
+         */
+        'foot_gap_m'       => ['range',  'Space below the buttons', 50,
+                               'Between Cart / Checkout and the bottom of the screen. Never less than a phone’s own home-bar space.',
+                               ['min' => 0, 'max' => 120, 'step' => 2, 'unit' => 'px']],
     ];
 
     /** The coupon hint's shipped wording, the owner's own sentence. (Lane QK3) */
@@ -267,7 +286,9 @@ class CartPanel
         'mobile'   => ['Mobile', 'The panel on a phone. Width, padding, rows and type take effect at 680px and below; the four tap targets at 900px and below, which is where the panel raises them today.',
                        ['panel_width_m', 'list_pad_m', 'row_pad_m', 'thumb_size_m', 'name_size_m', 'name_lines_m',
                         'price_size_m', 'stepper_size_m', 'rm_size_m', 'rm_tap_m', 'x_size_m', 'x_glyph_m',
-                        'tab_h_m', 'btn_layout_m', 'btn_gap_m', 'btn_pad_m', 'btn_h_m', 'btn_radius_m', 'btn_size_m']],
+                        'tab_h_m', 'btn_layout_m', 'btn_gap_m', 'btn_pad_m', 'btn_h_m', 'btn_radius_m', 'btn_size_m',
+                        // Lane QK12, last so every field above keeps its place.
+                        'foot_gap_m']],
         'content'  => ['Content', 'What each line and the panel show. The same on both devices.',
                        ['show_thumb', 'show_qty', 'show_remove', 'show_price', 'show_ship_bar', 'show_promo', 'show_browsed']],
         'behaviour'=> ['Behaviour', 'What happens when something is added. The same on both devices.',
@@ -608,6 +629,10 @@ class CartPanel
             '--cp-accent:' . $c['accent'],
             '--cp-cta-bg:' . $c['checkout_bg'],
             '--cp-cta-fg:' . $c['checkout_fg'],
+
+            // Lane QK12: the space under the phone's buttons. Last, so the
+            // properties above print exactly as they did.
+            '--cp-footgap-m:' . $c['foot_gap_m'] . 'px',
         ]);
     }
 

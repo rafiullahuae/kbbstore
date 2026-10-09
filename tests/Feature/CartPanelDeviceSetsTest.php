@@ -390,6 +390,9 @@ it('renders the panel exactly as it does today on a shop with no settings at all
         '--cp-accent' => '#C13E63',
         '--cp-cta-bg' => '#C13E63',
         '--cp-cta-fg' => '#FFFFFF',
+        // ▲ Lane QK12: the phone's space under Cart / Checkout, 50 as the
+        // owner asked, appended last so every property above prints as before.
+        '--cp-footgap-m' => '50px',
     ]);
 
     // And no class at all, so the panel's class attribute is byte for byte what

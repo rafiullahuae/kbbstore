@@ -520,6 +520,21 @@
             },
             "default": 100,
             "value": 100
+          },
+          {
+            "key": "foot_gap_m",
+            "name": "foot_gap_m",
+            "type": "range",
+            "label": "Space below the buttons",
+            "help": "Between Cart / Checkout and the bottom of the screen. Never less than a phone’s own home-bar space.",
+            "options": {
+              "min": 0,
+              "max": 120,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 50,
+            "value": 50
           }
         ]
       },
@@ -8246,6 +8261,15 @@
             "default": true,
             "value": true,
             "options": null
+          },
+          {
+            "key": "sum_first",
+            "type": "bool",
+            "label": "Phone: Order total straight after Your Bag",
+            "help": "On a phone the Order Total card sits right under the basket, with Recommended for you below it. Off: the rail first, as before. Desktop keeps the total in its right-hand column either way.",
+            "default": true,
+            "value": true,
+            "options": null
           }
         ]
       },
@@ -8309,12 +8333,12 @@
             "key": "bar_pad",
             "type": "range",
             "label": "Space under the checkout row",
-            "help": "Extra white space below the docked rows. Zero is where they sit today, on the bottom edge. On a phone with a home indicator this is added to the space the hardware already reserves, not used instead of it.",
-            "default": 0,
-            "value": 0,
+            "help": "White space below the docked rows, to the bottom of the screen. The page keeps the same extra room at its end, so the last card is never hidden behind the bar. Never less than a phone’s own home-bar space.",
+            "default": 50,
+            "value": 50,
             "options": {
               "min": 0,
-              "max": 40,
+              "max": 80,
               "step": 2,
               "unit": "px"
             }

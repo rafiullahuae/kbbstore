@@ -456,10 +456,21 @@ class CartPage
          * It is also added into --cpg-bars, so asking for more space moves the
          * end of the page down with the bars instead of sliding them over the
          * last basket line.
+         *
+         * ▲ 50 SINCE LANE QK12 (chunk B), AND THAT IS THE OWNER'S: "on cart
+         *   floating Proceed to checkout row also give space below around
+         *   50px". A moved default and his; the migration
+         *   2027_10_19_110000_qk12b_cart_spacing stores it over a saved value.
+         *   The slider now reaches 80. And the home indicator is now max()'d
+         *   with it rather than ADDED to it: 50 is the distance to the bottom
+         *   of the screen he asked for, and the indicator (~34px) sits inside
+         *   it -- added, an iPhone got 84px and an Android 50 for one setting.
+         *   At 0 the two rules are the same, so a shop at 0 sees no change.
+         *   The panel's own "Space below the buttons" does the same.
          */
-        'bar_pad'         => ['range', 'Space under the checkout row', 0,
-                              'Extra white space below the docked rows. Zero is where they sit today, on the bottom edge. On a phone with a home indicator this is added to the space the hardware already reserves, not used instead of it.',
-                              ['min' => 0, 'max' => 40, 'step' => 2, 'unit' => 'px']],
+        'bar_pad'         => ['range', 'Space under the checkout row', 50,
+                              'White space below the docked rows, to the bottom of the screen. The page keeps the same extra room at its end, so the last card is never hidden behind the bar. Never less than a phone’s own home-bar space.',
+                              ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px']],
         /*
          * A MULTIPLIER ON TOP OF bar_font, never an override — the same rule
          * row_font follows against row_h. The two sliders cannot fight, and
@@ -766,6 +777,19 @@ class CartPage
          */
         'sheet_guest_note' => ['text', 'Under the list · not signed in', 'We keep your 3 most recent addresses on this device. Adding another replaces the oldest.',
                                'Only shown to a shopper who has not signed in and already has three. Signed-in addresses are saved to the account and are not capped.'],
+        /*
+         * Lane QK12. The owner, 9 October, on a phone screenshot of this page:
+         * "the order total should come immeditately after your bag section and
+         * the recommended for you should come below the order total". ON, as
+         * asked: a moved default and his. Off is the order as it was -- the
+         * rail, then the total. A phone's column only: the two-column desktop
+         * already holds the total in its right-hand column, and the rule is
+         * printed under the complement of that column's own media query, so it
+         * cannot move a desktop box. Appended, so every key above keeps its
+         * recorded line.
+         */
+        'sum_first'        => ['bool', 'Phone: Order total straight after Your Bag', true,
+                               'On a phone the Order Total card sits right under the basket, with Recommended for you below it. Off: the rail first, as before. Desktop keeps the total in its right-hand column either way.'],
     ];
 
     public const TABS = [
@@ -802,7 +826,9 @@ class CartPage
                        'sum_total_label',
                        'policy_links',
                        'trust_on', 'trust_text', 'trust_size',
-                       'pay_visa', 'pay_mc', 'pay_apple', 'pay_google', 'pay_tabby', 'pay_tamara']],
+                       'pay_visa', 'pay_mc', 'pay_apple', 'pay_google', 'pay_tabby', 'pay_tamara',
+                       // Lane QK12, last so every field above keeps its place.
+                       'sum_first']],
         'bars'    => ['Docked rows', 'The two rows that stay at the foot of the screen.',
                       ['addr_on', 'addr_h', 'co_h', 'bar_font', 'bar_pad',
                        'addr_font', 'addr_bold', 'addr_btn_font', 'addr_btn_bold', 'co_label',
@@ -1434,6 +1460,9 @@ class CartPage
             $c['d_on'] ? 'cpg-d' : '',
             ($c['d_on'] && $c['d_sticky']) ? 'cpg-dstick' : '',
             ($c['d_on'] && $c['d_arrows']) ? 'cpg-darr' : '',
+            // Lane QK12: Summary & trust -> "Phone: Order total straight after
+            // Your Bag". Last, so the classes above keep their order.
+            $c['sum_first'] ? 'cpg-sumfirst' : '',
         ]);
 
         return ' ' . implode(' ', $classes);

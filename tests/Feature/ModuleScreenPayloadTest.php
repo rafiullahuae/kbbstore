@@ -282,6 +282,11 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // at it, "tiles" relabelled "Four squares (previous)"; mobile-menu
     // sale_fill ships OFF and gains sale_flash ("Flash icon beside Super
     // Sale", ON) at the end of its fields and of the Style group.
+    // ▲ Lane QK12 chunk B, the owner's requests, spliced in: cart-panel's
+    // Mobile tab gains foot_gap_m ("Space below the buttons", 50) last;
+    // cart-page's Summary & trust gains sum_first ("Phone: Order total
+    // straight after Your Bag", ON) last; cart-page bar_pad ships 50 (was 0),
+    // its max is 80 (was 40) and its help says max() with the home bar.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
@@ -714,7 +719,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // 768 -> 776 (Lane CO): checkout-page gains d_sec_same, d_sec_gap,
     // m_sec_same, m_sec_gap, coupon_head, xc_head, xc_head_ar and signin_on,
     // each the owner's request.
-    expect($compared)->toBe(776, 'the number of controls drawn changed');
+    // 776 -> 778 (Lane QK12 chunk B): cart-panel foot_gap_m and cart-page
+    // sum_first, each the owner's request.
+    expect($compared)->toBe(778, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)
