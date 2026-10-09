@@ -3,6 +3,25 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.455
+**Checkout polish: plain payment boxes, "(<-) Checkout" heading on top, no WhatsApp button on
+cart and checkout, centred field labels, Privacy policy in the checkout footer.** Apply after
+.454. Runs its migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "payment methods boxes ... no background ... border grey ... on selection the colourful border" | No tint on any box; unselected grey border; the chosen box keeps its brand border. Appearance -> Checkout page -> Payment boxes |
+| "whatsapp floating button should be turn off on cart and checkout completely" | Not drawn at all on those two pages (the phone side tab too). Appearance -> WhatsApp button -> Design -> Show on the cart page / Show on checkout (Off) |
+| "the icon i want beside left side of Checkout heading" + "the summary section the checkout page heading" | "Checkout" and its line moved to the top, above Order summary, with a round back button (white, thin grey outline) to the cart. Appearance -> Checkout page -> Back to shop & cart -> "Back arrow beside the Checkout heading" |
+| "the top coupon line, turned off" | Off. Appearance -> Checkout page -> Coupon line. The cart panel coupon hint stays on |
+| "the fields placeholders are not 100% in middle. please fix in all" | Labels and icons sit exactly in the middle (were ~3 px high) on checkout, the Contact form, the cart coupon box and sign-in/register |
+| "remove the Returns information from the checkout footer ... keep the Privacy Policy" | Checkout/cart footer: Shipping & Delivery, Privacy policy |
+| "Remember my shipping details on this device" | Changed (Arabic too) |
+| "Free express delivery over AED 199 and give control" | Changed. Appearance -> Checkout page -> Delivery labels -> Note beside "Delivery" (UAE only) |
+| "control of spacing ... above the checkout title row" | Appearance -> Checkout page -> Mobile / Desktop · Layout -> "Space above the Checkout title" (0-80 px; 14 px minimum while the back arrow is on) |
+
+Files: see the package's update.json.
+
 ## 2.60.454
 **Apple Pay and Google Pay buttons can finally be drawn; the free-delivery bar is off on the
 cart and checkout pages; an on-phone wallet diagnostic.** Apply after .453. Runs its
