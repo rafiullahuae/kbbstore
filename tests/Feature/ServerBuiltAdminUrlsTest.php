@@ -133,6 +133,12 @@ it('names every admin-api address the server builds and hands out as data', func
         'InstagramController.php /admin-api/instagram/callback',
         'InstagramController.php /admin-api/instagram/start',
         'InvoiceController.php /admin-api/orders/',
+        // Lane MP (2.60.449): MetaConnect::redirectUri(), the address the
+        // owner pastes into his Meta app and Facebook returns him to. A
+        // provider return leg -- see "names the legs a third party navigates
+        // at" below. (The two Instagram files above are retired by Lane IGR
+        // but stay on disk, unrouted: packages cannot delete files.)
+        'MetaConnect.php /admin-api/marketing-pixels/meta/callback',
         'PageCost.php /admin-api/stats',
         // Lane PH: the storefront "Edit header" panel's three addresses.
         'PageHeaderApiController.php /admin-api/media',
@@ -257,8 +263,17 @@ it('names the legs a third party navigates at, which nothing here can ask about 
      * is a decision somebody makes on purpose.
      */
     // (Lane IGR) 'admin-api/instagram/callback' left with the retired
-    // Instagram API module; Stripe's is the only third-party return leg.
+    // Instagram API module.
+    //
+    // (Lane MP, 2.60.449) Marketing Pixels -> Meta -> Connect with Facebook
+    // returns here, decided on purpose. Its leg the owner presses is not a
+    // popup but an authenticated fetch() POST to /meta/start, so a dead
+    // session is a 401 and a toast BEFORE he is sent to Facebook -- the same
+    // "told before he goes" as Stripe's probe. The callback spends the
+    // single-use session state before it reads anything else, Facebook's own
+    // error included (MarketingPixelsMetaAppTest pins that order).
     $unprobeable = [
+        'admin-api/marketing-pixels/meta/callback',
         'admin-api/payments/stripe/connect/callback',
     ];
 

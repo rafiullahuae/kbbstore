@@ -73,6 +73,7 @@ final class PixelConnectApiController extends Controller
                 'source' => $meta->source(),
                 'redirect_uri' => MetaConnect::redirectUri(),
                 'pixels' => $meta->pending($request),
+                'message' => $meta->told($request),
             ],
             'events' => ServerEvents::recent(),
             'checked' => now()->toDateString(),
@@ -140,18 +141,19 @@ final class PixelConnectApiController extends Controller
 
     public function metaCallback(Request $request, MetaConnect $meta): RedirectResponse
     {
+        /*
+         * The state is checked before Facebook's error is read, and the
+         * sentence travels in the session rather than the address (integrator,
+         * 2.60.449). Both used to come straight off the query string, so a
+         * crafted link could show the owner any text as "Facebook: …".
+         */
         $error = (string) $request->query('error_description', $request->query('error', ''));
-
-        if ($error !== '') {
-            $request->session()->forget('kbb.pixels.meta.state');
-
-            return $this->back(['mp_meta' => 'error', 'mp_msg' => mb_substr('Facebook: ' . $error, 0, 200)]);
-        }
-
-        $answer = $meta->callback($request, (string) $request->query('state', ''), (string) $request->query('code', ''));
+        $answer = $meta->callback($request, (string) $request->query('state', ''), (string) $request->query('code', ''), $error);
 
         if (! $answer['ok']) {
-            return $this->back(['mp_meta' => 'error', 'mp_msg' => mb_substr((string) $answer['error'], 0, 200)]);
+            $meta->tell($request, (string) $answer['error']);
+
+            return $this->back(['mp_meta' => 'error']);
         }
 
         $count = count($answer['pixels'] ?? []);

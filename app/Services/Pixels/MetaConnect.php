@@ -48,6 +48,9 @@ final class MetaConnect
 
     private const PIXELS_KEY = 'kbb.pixels.meta.pixels';
 
+    /** The callback's one-line outcome, read once by the console's next GET (never carried in the address). */
+    private const MESSAGE_KEY = 'kbb.pixels.meta.message';
+
     private const TTL = 900;
 
     public const SCOPES = 'ads_read,business_management';
@@ -106,7 +109,7 @@ final class MetaConnect
     }
 
     /** @return array{ok: bool, pixels?: list<array{id: string, name: string}>, error?: string} */
-    public function callback(Request $request, string $state, string $code): array
+    public function callback(Request $request, string $state, string $code, string $error = ''): array
     {
         $stored = $request->session()->pull(self::STATE_KEY);
         $expected = is_array($stored) ? (string) ($stored['value'] ?? '') : '';
@@ -117,6 +120,16 @@ final class MetaConnect
 
         if (time() - (int) ($stored['at'] ?? 0) > self::TTL) {
             return ['ok' => false, 'error' => 'The Facebook window was open too long. Press Connect with Facebook again.'];
+        }
+
+        /*
+         * Facebook's own refusal is believed only AFTER the state has matched,
+         * the order StripeConnectController::callback() keeps (integrator,
+         * 2.60.449). Read first, any link to this GET could put a sentence of
+         * its choosing in the owner's console under "Facebook:".
+         */
+        if ($error !== '') {
+            return ['ok' => false, 'error' => 'Facebook: ' . $error];
         }
 
         if ($code === '' || strlen($code) > 2048) {
@@ -162,6 +175,20 @@ final class MetaConnect
         }
 
         return ['ok' => true, 'pixels' => $pixels];
+    }
+
+    /** Hold the callback's outcome for the console to read once. */
+    public function tell(Request $request, string $message): void
+    {
+        $request->session()->put(self::MESSAGE_KEY, mb_substr($message, 0, 200));
+    }
+
+    /** The held outcome, spent by being read. */
+    public function told(Request $request): ?string
+    {
+        $message = $request->session()->pull(self::MESSAGE_KEY);
+
+        return is_string($message) && $message !== '' ? $message : null;
     }
 
     /** @return list<array{id: string, name: string}> */

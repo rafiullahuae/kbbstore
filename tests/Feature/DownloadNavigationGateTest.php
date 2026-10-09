@@ -269,6 +269,21 @@ it('leaves no navigation in the console unaccounted for', function () {
         // happen inside the click. It is the one navigation in the console that
         // keeps a handle, so the dead window is closed rather than left up.
         "instagram-screen  win = window.open(url, 'kbb-instagram-oauth',",
+        // (Lane IGR, 2.60.449: instagram-screen is RETIRED and no longer
+        // included in the console -- RetiredInstagramApiTest pins that -- but
+        // packages cannot delete files, so the partial and these two lines stay
+        // on disk, unreachable. They leave this list when the file does.)
+        //
+        // Growth & Marketing -> Marketing Pixels -> Meta -> Connect with
+        // Facebook (Lane MP). LEAVES THE CONSOLE ON PURPOSE, to Facebook's OAuth
+        // dialog, AFTER ITS OWN POST: d.ok is only true when the authenticated
+        // POST /admin-api/marketing-pixels/meta/start succeeded, so a dead
+        // session toasts instead of navigating. The address is server-built
+        // (MetaConnect::start(): 'https://www.facebook.com/' . version ...) and
+        // checked again here against an anchored, dot-escaped
+        // ^https://www.facebook.com/ -- the trailing slash is what stops
+        // www.facebook.com.evil.example from passing.
+        'marketing-pixels-connect  if (d.ok && /^https:\/\/www\.facebook\.com\//.test(d.url)) location.href = d.url;',
         // ▲ THE TWELFTH, and the reason this case reads the partials at all:
         // Reviews -> Reviews.io -> Export replaced the whole console, and three
         // scans of admin/app.blade.php never saw it.

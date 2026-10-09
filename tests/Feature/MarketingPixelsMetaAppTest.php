@@ -126,3 +126,39 @@ it('references no Instagram class anywhere in Marketing Pixels', function () {
             ->toBe(0, basename($file).' still reaches into the retired Instagram module');
     }
 });
+
+it('believes Facebook\'s refusal only on a callback carrying the state it issued, and never prints it from the address', function () {
+    /*
+     * Integrator, 2.60.449. The callback read `error_description` BEFORE the
+     * state, and the console printed `mp_msg` straight from its own address,
+     * so any link -- to the callback or to the console itself -- could show the
+     * owner a sentence of the sender's choosing under "Facebook:", on his own
+     * domain ("re-enter your App Secret at …"). StripeConnectController checks
+     * the state first; this now does too, and the sentence travels in the
+     * session, read once by the next GET.
+     *
+     * MUTATION: put the early `if ($error !== '')` branch back in
+     * metaCallback() ahead of $meta->callback() -> red (the forged text is shown).
+     */
+    $owner = AdminUser::create(['name' => 'MAPP2', 'email' => 'mapp2-'.uniqid().'@example.test', 'password' => 'secret-secret', 'role' => 'owner']);
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/marketing-pixels/connect', ['values' => ['meta_app_id' => '555666777888', 'meta_app_secret' => MAPP_SECRET]])->assertOk();
+    mappFlush();
+
+    // Forged: no state at all, attacker's words in error_description.
+    $to = test()->actingAs($owner, 'admin')->get('/admin-api/marketing-pixels/meta/callback?error_description=Re-enter+your+App+Secret+at+evil.example')
+        ->assertRedirect()->headers->get('Location');
+    expect($to)->toContain('mp_meta=error')->not->toContain('evil')->not->toContain('mp_msg');
+    $told = test()->actingAs($owner, 'admin')->getJson('/admin-api/marketing-pixels/connect')->json('meta_oauth.message');
+    expect($told)->toContain('could not be matched')->not->toContain('evil');
+
+    // Genuine: the state it issued, and Facebook's own refusal is passed on once.
+    $start = test()->actingAs($owner, 'admin')->postJson('/admin-api/marketing-pixels/meta/start')->assertOk()->json('url');
+    parse_str((string) parse_url($start, PHP_URL_QUERY), $q);
+    test()->actingAs($owner, 'admin')->get('/admin-api/marketing-pixels/meta/callback?state='.$q['state'].'&error_description=Permissions+error')
+        ->assertRedirect()->assertRedirectContains('mp_meta=error');
+    expect(test()->actingAs($owner, 'admin')->getJson('/admin-api/marketing-pixels/connect')->json('meta_oauth.message'))->toBe('Facebook: Permissions error')
+        ->and(test()->actingAs($owner, 'admin')->getJson('/admin-api/marketing-pixels/connect')->json('meta_oauth.message'))->toBeNull();
+
+    // And the console no longer reads a message out of its own address.
+    expect((string) file_get_contents(resource_path('views/admin/partials/marketing-pixels-connect.blade.php')))->not->toContain("q.get('mp_msg')");
+});
