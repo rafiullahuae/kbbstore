@@ -51,6 +51,11 @@ beforeEach(function () {
     PaymentProvider::query()->delete();
     PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
 
+    // Lane QK8: the line ships OFF now ("and the top coupon line, turned
+    // off."). Everything below is how it behaves once he switches it back on,
+    // so it is switched on here; the shipped default has a test of its own.
+    app(CheckoutPage::class)->save(['cline_on' => true]);
+
     SettingsService::forgetMemo();
 });
 
@@ -118,13 +123,37 @@ function q6Set(array $values): void
 
 /* ══════════════════════════ 1. the coupon line ══════════════════════════ */
 
-it('ships on with his sentence, the code as a button, first in the grid so it sits above the summary row', function () {
+it('ships OFF, as asked, and the live shop is written off by the package (Lane QK8)', function () {
     /*
-     * MUTATION: drop the @include of coupon-top from checkout.blade.php, or
-     * ship `cline_on` false, and every expectation here is red.
+     * The owner: "and the top coupon line, turned off." Before this the line
+     * shipped on and QK6 left it on; the top of /checkout/ read the GLOW line
+     * above the Order summary.
+     *
+     * MUTATION: ship `cline_on` true again, or drop the cline_on write from
+     * the migration, and this is red.
      */
-    expect(CheckoutPage::SCHEMA['cline_on'][2])->toBeTrue()
-        ->and(CheckoutPage::SCHEMA['cline_coupon'][2])->toBe('cart');
+    expect(CheckoutPage::SCHEMA['cline_on'][2])->toBeFalse();
+
+    q6PanelChooses(q6Coupon());
+    DB::table('settings')->where('key', 'checkoutpage_cline_on')->delete();
+    SettingsService::forgetMemo();
+    expect(q6Checkout())->not->toContain('kbbCline')->and(q6Checkout())->not->toContain('co-cline');
+
+    // A shop that had it ON (QK6 shipped it so) is switched off by the package.
+    q6Set(['cline_on' => true]);
+    expect(q6Checkout())->toContain('id="kbbCline"');
+    (require base_path('database/migrations/2027_10_16_120000_checkout_plain_payment_boxes_back_arrow_no_whatsapp.php'))->up();
+    SettingsService::forgetMemo();
+    expect(app(CheckoutPage::class)->get('cline_on'))->toBeFalse()
+        ->and(q6Checkout())->not->toContain('kbbCline');
+});
+
+it('switched on, says his sentence, the code as a button, first in the grid so it sits above the summary row', function () {
+    /*
+     * MUTATION: drop the @include of coupon-top from checkout.blade.php and
+     * every expectation here is red.
+     */
+    expect(CheckoutPage::SCHEMA['cline_coupon'][2])->toBe('cart');
 
     q6PanelChooses(q6Coupon());
     $html = q6Checkout();
@@ -358,7 +387,8 @@ it('draws neither "Back to shop" nor "Go back to cart" by default, and leaves no
         ->and($html)->not->toContain('co-tocart')
         // The heading opens the title block; nothing empty is left before it
         // or after the lead.
-        ->and($html)->toMatch('#<div class="co-titlebar-main">\n\s*<h1 class="co-h">#')
+        // (Lane QK8: the round back arrow opens it now, then the heading.)
+        ->and($html)->toMatch('#<div class="co-titlebar-main">\n\s*<a class="co-back" [^>]*>.*?</a>\n\s*<h1 class="co-h">#')
         ->and($html)->toMatch('#<p class="co-lead">[^<]*</p>\n\s*</div>\n\s*</div>#')
         // The logo still goes home.
         ->and($html)->toMatch('#<header class="co-head">.*?href="[^"]*/"#s');
@@ -374,7 +404,8 @@ it('draws both again, as they were, when switched on', function () {
 
     // The tab that holds them.
     $tab = collect(\App\Services\ModuleSchema::tabs(CheckoutPage::SCHEMA, CheckoutPage::TABS, app(CheckoutPage::class)->all(), CheckoutPage::POLICY))->firstWhere('key', 'tocart');
-    expect(array_slice(array_column($tab['fields'], 'key'), 0, 2))->toBe(['shop_link', 'cart_link']);
+    // (Lane QK8: the heading's back arrow first.)
+    expect(array_slice(array_column($tab['fields'], 'key'), 0, 3))->toBe(['head_back', 'shop_link', 'cart_link']);
 });
 
 /* ═════════════════════ 3. Shipping Details ═════════════════════════════ */

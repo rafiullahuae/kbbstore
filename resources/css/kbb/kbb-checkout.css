@@ -155,6 +155,46 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 /* title row: heading left, "Go back to cart" right */
 .kbb-checkout .co-titlebar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .kbb-checkout .co-titlebar-main .co-lead{margin-bottom:var(--cop-block)}
+/* THE HEADING ON TOP (Lane QK8). The owner: "i want the summary section
+   the checkout page heading." .co-titlebar is a .co-grid item of its own:
+   on desktop the top of the main column (column 1, the summary spanning both
+   rows beside it, below the coupon line when that is on), on a phone the very
+   first thing (order:-3, above the coupon line's -2 and the summary's -1).
+   Its negative margin cancels the grid gap, so the space under the subline is
+   the --cop-block it always was and the old position leaves nothing behind. */
+.kbb-checkout .co-grid{grid-template-rows:auto 1fr}
+.kbb-checkout .co-grid:has(> .co-cline){grid-template-rows:auto auto 1fr}
+.kbb-checkout .co-grid > .co-titlebar{grid-column:1;margin-bottom:calc(var(--cop-d-gap,26px) * -1)}
+.kbb-checkout .co-grid > .co-titlebar + div{grid-column:1}
+.kbb-checkout .co-grid > .summary{grid-column:2;grid-row:1 / span 2}
+/* "Space above the Checkout title" (Appearance -> Checkout page -> Desktop /
+   Mobile · Layout): the gap from the header to the title row. Unset it IS the
+   page's top padding, so the margin is 0 and nothing moves; set, the title
+   alone moves to that distance. Only while the title is the first row. */
+.kbb-checkout .co-grid:not(:has(> .co-cline)) > .co-titlebar{margin-top:calc(var(--cop-titlept) - var(--cop-pady))}
+/* The 40px back arrow reaches ~6px above the heading's line (its -8px block
+   margins), so with the arrow on the row stops at 14px -- the button 8px under the header -- and a
+   slider at 0 can never tuck the button under the sticky header. */
+.kbb-checkout .co-grid:not(:has(> .co-cline)) > .co-titlebar:has(> .co-titlebar-main > .co-back){margin-top:calc(max(var(--cop-titlept), 14px) - var(--cop-pady))}
+.kbb-checkout .co-grid:has(> .co-cline) > .summary{grid-row:2 / span 2}
+/* THE BACK ARROW (Lane QK8). "the icon i want beside left side of Checkout
+   heading", drawn from the talabat header he sent: a 40px white circle, a 1px
+   light-grey ring, a thin dark arrow, light grey on hover and press. It sits
+   in its own column so the subline stays under the heading's text; the -8px
+   block margins let the 40px tap target centre on the heading's line without
+   making that line any taller. Mirrored in Arabic: the grid puts it on the
+   right and the arrow turns to point right. Appearance -> Checkout page ->
+   Back to shop & cart -> "Back arrow beside the Checkout heading". */
+.kbb-checkout .co-titlebar-main:has(> .co-back){display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:12px;align-items:center;min-width:0}
+.kbb-checkout .co-titlebar-main:has(> .co-back) > *{grid-column:2}
+.kbb-checkout .co-titlebar-main:has(> .co-back) > .backlink{grid-column:1 / -1;justify-self:start}
+.kbb-checkout .co-titlebar-main:has(> .co-back) > h1.co-h{margin-bottom:0}
+.kbb-checkout .co-titlebar-main:has(> .co-back) > .co-lead{margin-top:2px}
+.kbb-checkout .co-titlebar-main > .co-back{grid-column:1;display:flex;align-items:center;justify-content:center;inline-size:40px;block-size:40px;margin-block:-8px;box-sizing:border-box;border-radius:50%;background:#fff;border:1px solid #E3E3E6;color:#2A2A2E;transition:background-color .15s}
+.kbb-checkout .co-titlebar-main > .co-back:hover,.kbb-checkout .co-titlebar-main > .co-back:active{background:#F2F2F4}
+.kbb-checkout .co-titlebar-main > .co-back:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.kbb-checkout .co-titlebar-main > .co-back svg{display:block;inline-size:20px;block-size:20px}
+[dir="rtl"] .kbb-checkout .co-titlebar-main > .co-back svg{transform:scaleX(-1)}
 /* Sized from two shares rather than five sets of numbers: each look below
    carries the padding pair it was drawn with, multiplied by --cop-tocarts, so
    80% is THAT look smaller rather than a padding it was never drawn for. */
@@ -334,17 +374,26 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .fld.kbb-fl :is(input,select,textarea){border-radius:12px;
   padding-top:calc(19px + var(--fld-gap,3px));padding-bottom:7px;padding-inline-start:14px}
 .kbb-checkout .fld.kbb-fl.ico :is(input,select,textarea){padding-inline-start:42px}
-.kbb-checkout .fld.kbb-fl > label{position:absolute;inset-inline-start:15px;top:14px;margin:0;max-width:calc(100% - 30px);
+/* RESTING, THE LABEL IS CENTRED IN THE BOX (Lane QK8). The owner: "the fields
+   placeholders are not 100% in middle. please fix in all." It sat at a fixed
+   top:14px, which is the centre of no box: 2.8px high at 390 and 1.5px at
+   1280 (the box is 51.8 / 49.2px tall). Now it is centred by geometry --
+   top:50% and back by half its own height -- so it stays centred whatever the
+   text-size sliders make of the box. The LIFTED label puts back the exact
+   top:14px and transform it always had, so that state does not move a pixel;
+   a textarea's label rests on its first line, as before. */
+.kbb-checkout .fld.kbb-fl > label{position:absolute;inset-inline-start:15px;top:50%;transform:translateY(-50%);margin:0;max-width:calc(100% - 30px);
   font-size:calc(14px * var(--cop-tinput));line-height:1.3;font-weight:400;letter-spacing:0;color:var(--muted);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;
-  transition:transform .16s ease,font-size .16s ease,color .16s ease}
+  transition:top .16s ease,transform .16s ease,font-size .16s ease,color .16s ease}
+.kbb-checkout .fld.kbb-fl:has(> textarea) > label{top:14px;transform:none}
 .kbb-checkout .fld.kbb-fl.ico > label{inset-inline-start:43px;max-width:calc(100% - 58px)}
 .kbb-checkout .fld.kbb-fl :is(input,textarea):is(:focus,:not(:placeholder-shown),:-webkit-autofill,:autofill) ~ label,
 .kbb-checkout .fld.kbb-fl select ~ label{
-  transform:translateY(calc(-8px - var(--fld-gap,3px)));font-size:10.5px;letter-spacing:.04em;color:var(--pink-deep)}
+  top:14px;transform:translateY(calc(-8px - var(--fld-gap,3px)));font-size:10.5px;letter-spacing:.04em;color:var(--pink-deep)}
 /* A select with nothing chosen reads as empty, like a blank input. */
 .kbb-checkout .fld.kbb-fl select:has(option[value=""]:checked):not(:focus) ~ label{
-  transform:none;font-size:calc(14px * var(--cop-tinput));letter-spacing:0;color:var(--muted)}
+  top:50%;transform:translateY(-50%);font-size:calc(14px * var(--cop-tinput));letter-spacing:0;color:var(--muted)}
 /* A hint of the field's own ("+971 5x xxx xxxx") waits until the label has
    moved out of its way, so the two never print on top of each other. */
 .kbb-checkout .fld.kbb-fl :is(input,textarea):not(:focus)::placeholder{color:transparent}
@@ -564,6 +613,28 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    below needs the corner to be square. Every box, branded or not. */
 .kbb-checkout.cop-pay .wc_payment_methods li.wc_payment_method:has(input:checked){border-end-start-radius:12px;border-end-end-radius:12px}
 
+/* NO TINT, GREY UNTIL CHOSEN (Lane QK8). The owner: "turn off the background
+   color, and the border color should be grey, and when user select any
+   payment method, the border color should turn to colorful ... upon
+   selection also no background should come." So under `cop-pay` every box --
+   the four brands and any other gateway -- is the plain white card with the
+   input fields' grey border (var(--line)), and only the CHOSEN box takes its
+   colour, in exactly the border the brand rules above draw. The padding-box
+   layer of the gradient border stays, painted white, so the 1.6px edge is
+   the same edge as before. Appearance -> Checkout page -> Payment boxes ->
+   "Background tint" puts the wash back (`cop-pay-tint`); "Unselected border"
+   -> Coloured gives an unchosen brand box its solid brand edge
+   (`cop-pay-ucol`). Both default to the shipped look, and both are classes
+   CheckoutPage names, never stored strings. */
+.kbb-checkout.cop-pay:not(.cop-pay-tint) .wc_payment_methods li.wc_payment_method{--pt:linear-gradient(#fff,#fff)}
+.kbb-checkout.cop-pay:not(.cop-pay-tint) .wc_payment_methods li.wc_payment_method:not(.pay-brand),
+.kbb-checkout.cop-pay:not(.cop-pay-tint) .wc_payment_methods li.wc_payment_method:not(.pay-brand):hover{background:#fff}
+.kbb-checkout.cop-pay:not(.cop-pay-tint) .wc_payment_methods li.wc_payment_method:not(.pay-brand):not(:has(input:checked)):hover{border-color:var(--line)}
+.kbb-checkout.cop-pay:not(.cop-pay-tint) #payment .wc_payment_methods li.wc_payment_method div.payment_box{background:transparent!important}
+.kbb-checkout.cop-pay-ucol .wc_payment_methods li.wc_payment_method.pay-brand:not(:has(input:checked)){border-color:var(--ps)}
+/* the radio itself is a 1px invisible input, so the box shows keyboard focus */
+.kbb-checkout.cop-pay .wc_payment_methods li.wc_payment_method:has(> input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+
 /* the logo slot: a fixed box, so the row is the same height before and after
    the artwork paints, and 26px is the height every row already had. */
 .kbb-checkout.cop-pay .pay-logo{margin-inline-start:auto;flex:none;display:inline-flex;align-items:center;justify-content:flex-end;gap:5px;
@@ -647,6 +718,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout{
   --cop-padx:var(--cop-d-padx,20px);
   --cop-pady:var(--cop-d-pady,22px);
+  --cop-titlept:var(--cop-d-titlept,var(--cop-pady));
   --cop-block:var(--cop-d-block,16px);
   --cop-secpad:var(--cop-d-secpad,16px);
   --cop-asidepad:var(--cop-d-asidepad,17px);
@@ -1125,6 +1197,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout{
     --cop-padx:var(--cop-m-padx,20px);
     --cop-pady:var(--cop-m-pady,22px);
+    --cop-titlept:var(--cop-m-titlept,var(--cop-pady));
     --cop-block:var(--cop-m-block,16px);
     --cop-secpad:var(--cop-m-secpad,16px);
     --cop-asidepad:var(--cop-m-asidepad,14px);
@@ -1169,6 +1242,10 @@ body.woocommerce-checkout main#content>p:empty{display:none}
     --cop-ttrust:var(--cop-m-ttrust,1);
   }
   .kbb-checkout .co-grid{grid-template-columns:minmax(0,1fr);gap:var(--cop-m-gap,14px);padding-bottom:24px}
+  /* Lane QK8: one column, so every item back in its own row, heading first */
+  .kbb-checkout .co-grid,.kbb-checkout .co-grid:has(> .co-cline){grid-template-rows:none}
+  .kbb-checkout .co-grid > .co-titlebar,.kbb-checkout .co-grid > .co-titlebar + div,.kbb-checkout .co-grid > .summary,.kbb-checkout .co-grid:has(> .co-cline) > .summary{grid-column:auto;grid-row:auto}
+  .kbb-checkout .co-grid > .co-titlebar,.kbb-checkout .co-grid:not(:has(> .co-cline)) > .co-titlebar{order:-3;margin-top:calc(var(--cop-titlept) - var(--cop-pady));margin-bottom:calc(var(--cop-m-gap,14px) * -1)}
   /* summary to the TOP, collapsible */
   .kbb-checkout .summary{order:-1;position:static;box-shadow:none;padding:var(--cop-asidepad);border:1px solid var(--line-2);background:#fff;border-radius:var(--r)}
   .kbb-checkout .panels{position:relative;max-height:148px;overflow:hidden;transition:max-height .35s var(--ease)}

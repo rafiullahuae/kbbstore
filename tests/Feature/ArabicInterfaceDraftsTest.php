@@ -708,7 +708,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // +1 (Lane QK6): the checkout coupon line's "Apply coupon :code" read
     // aloud (store.checkout.cline_apply_label), seeded by
     // 2027_10_16_100000_checkout_shipping_details_and_coupon_line_arabic.
-    expect($ui['drafts'])->toBe(1515, 'the shipped Arabic is not showing as drafts to review')
+    // +1 (Lane QK8): the round back arrow beside the Checkout heading, read
+    // aloud as "Back to cart" (store.checkout.head_back), seeded by
+    // 2027_10_16_120100_checkout_back_arrow_and_remember_arabic.
+    expect($ui['drafts'])->toBe(1516, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

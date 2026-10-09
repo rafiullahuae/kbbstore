@@ -4085,6 +4085,16 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 .fs-generous .authcard{padding:32px}
 .fs-generous .go{padding:16px;border-radius:14px}
 
+/* RESTING LABEL CENTRED (Lane QK8: "the fields placeholders are not 100% in
+   middle. please fix in all."). The sign-in and create-account cards only --
+   `.authcard`, because a bare `.fld` is also the product sheet's. top:14px
+   (16px generous) was 0.7px low at 390 and 1.7px low at 1280; top:50% and back
+   by half its own height is the centre of any box. The lifted label gets its
+   old top back, so that state is exactly as it was. */
+.authcard .fld > label{top:50%;transform:translateY(-50%);transition:top .16s ease,transform .16s ease,font-size .16s ease,color .16s ease}
+.authcard .fld input:is(:focus,:not(:placeholder-shown),:-webkit-autofill) ~ label{top:14px}
+.fs-generous .authcard .fld input:is(:focus,:not(:placeholder-shown),:-webkit-autofill) ~ label{top:16px}
+
 /* icons off */
 .fs-noicons .lead{display:none}
 .fs-noicons .fld.ico input{padding-inline-start:14px}

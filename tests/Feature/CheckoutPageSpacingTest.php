@@ -292,11 +292,13 @@ it('offers spacing and nothing structural', function () {
             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'trust_tick',
             // Lane PY: whether the payment boxes draw logos, and which of them
             // wear their gateway's colours. Looks; the four boxes stay four.
-            'pay_logos', 'pay_tabby', 'pay_tamara', 'pay_card', 'pay_cod',
+            // Lane QK8: pay_bg, the boxes' background tint (OFF, he asked). A look.
+            'pay_logos', 'pay_bg', 'pay_tabby', 'pay_tamara', 'pay_card', 'pay_cod',
             // Lane QK6, each the owner's own request: the coupon line at the
             // top, the two ways back (both off), the UAE delivery labels and
             // the free-delivery line beside Delivery. None is a layout.
-            'cline_on', 'shop_link', 'cart_link', 'dl_on', 'dl_note_on',
+            // Lane QK8: head_back, the round back arrow beside the heading (ON, he asked).
+            'cline_on', 'shop_link', 'cart_link', 'head_back', 'dl_on', 'dl_note_on',
             // Lane QK7: the free-delivery bar on the cart and checkout pages (OFF, he asked).
             'fs_bar_on',
         ]);

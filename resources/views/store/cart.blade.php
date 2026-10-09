@@ -56,6 +56,7 @@
 
 @section('title', __('store.cart.page_title'))
 @section('kbb-wa-tab', '1')
+@section('kbb-wa-page', 'cart')
 
 @push('styles')
     {{-- THE COMMENT'S CLOSING BRACE TOUCHES @vite, AND @include TOUCHES ITS

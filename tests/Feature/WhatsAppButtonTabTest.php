@@ -114,11 +114,18 @@ function wsContrast(string $a, string $b): float
 
 beforeEach(function () {
     WhatsAppButtonRoutes::wire($this->app);
+
+    // Lane QK8: the button and its tab are OFF on the cart and the checkout
+    // now ("the whatsapp floating button should be turn off on cart and
+    // checkout completely"), and CheckoutQk8Test pins that. Every
+    // test here is about the tab those two pages draw once he switches them
+    // back on, so they are switched on here.
+    wsRaw(['show_cart' => '1', 'show_checkout' => '1']);
 });
 
 /* ═════════════════════════════════════════ where it is, and is not ═══ */
 
-it('ships ON on the cart and the checkout: the slim tab, its label, the phone switch-over', function () {
+it('draws, once switched back on, the slim tab on the cart and the checkout: its label, the phone switch-over', function () {
     /*
      * DEFECT this guards: the owner's phone cart with the round button on the
      * line items. Shipped ON because he asked for it (CLAUDE.md rule 1, 30

@@ -418,6 +418,7 @@
   function tabStageHTML() {
     var note = !values.enabled ? 'The WhatsApp button is switched off (Design), so the shop prints neither the button nor the tab.'
       : !values.show_phone ? 'Hidden on phones (Design → Show on phones), so the tab is not shown either.'
+      : !values.show_cart && !values.show_checkout ? 'Off on the cart and checkout (Design → Show on the cart page, Show on checkout): those two pages print no WhatsApp button and no tab at all.'
       : !values.tab_on ? 'The side tab is off: the cart and checkout show the round button on phones, as every other page does.' : '';
     var mirror = lang === 'ar' && values.ar_side === 'mirror' && !!(preview || {}).rtl;
     var rows = '';

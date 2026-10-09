@@ -282,7 +282,7 @@ it('puts the ten controls on their own tab, Appearance → Checkout page → Pay
     expect($tab)->not->toBeNull()
         ->and($tab['label'])->toBe('Payment boxes')
         ->and(collect($tab['fields'])->pluck('key')->all())->toBe([
-            'pay_style', 'pay_logos', 'pay_logo_h', 'pay_tint', 'pay_border',
+            'pay_style', 'pay_logos', 'pay_logo_h', 'pay_bg', 'pay_unsel', 'pay_tint', 'pay_border',
             'pay_tabby', 'pay_tamara', 'pay_card', 'pay_cod', 'pay_tamara_logo',
         ]);
 

@@ -106,10 +106,11 @@
 .ctc-form .fld.kbb-fl select{appearance:auto;-webkit-appearance:auto}
 .ctc-form .fld.kbb-fl textarea{resize:vertical;min-height:104px}
 .ctc-form .fld.kbb-fl :is(input,select,textarea):focus{border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-soft)}
-.ctc-form .fld.kbb-fl > label{position:absolute;inset-inline-start:43px;top:14px;margin:0;max-width:calc(100% - 58px);font-size:14px;line-height:1.3;font-weight:400;letter-spacing:0;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;transform-origin:left top;transition:transform .16s ease,font-size .16s ease,color .16s ease}
+.ctc-form .fld.kbb-fl > label{position:absolute;inset-inline-start:43px;top:50%;transform:translateY(-50%);margin:0;max-width:calc(100% - 58px);font-size:14px;line-height:1.3;font-weight:400;letter-spacing:0;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;transform-origin:left top;transition:top .16s ease,transform .16s ease,font-size .16s ease,color .16s ease}
+.ctc-form .fld.kbb-fl:has(> textarea) > label{top:14px;transform:none}
 .ctc-form .fld.kbb-fl :is(input,textarea):is(:focus,:not(:placeholder-shown),:-webkit-autofill,:autofill) ~ label,
-.ctc-form .fld.kbb-fl select ~ label{transform:translateY(calc(-8px - var(--fld-gap,3px)));font-size:10.5px;letter-spacing:.04em;color:var(--pink-deep)}
-.ctc-form .fld.kbb-fl select:has(option[value=""]:checked):not(:focus) ~ label{transform:none;font-size:14px;letter-spacing:0;color:var(--muted)}
+.ctc-form .fld.kbb-fl select ~ label{top:14px;transform:translateY(calc(-8px - var(--fld-gap,3px)));font-size:10.5px;letter-spacing:.04em;color:var(--pink-deep)}
+.ctc-form .fld.kbb-fl select:has(option[value=""]:checked):not(:focus) ~ label{top:50%;transform:translateY(-50%);font-size:14px;letter-spacing:0;color:var(--muted)}
 .ctc-form .fld.kbb-fl :is(input,textarea)::placeholder{color:var(--muted);opacity:1;font-size:1em}
 .ctc-form .fld.kbb-fl :is(input,textarea):not(:focus)::placeholder{color:transparent}
 .ctc-form .fld.kbb-fl .lead{position:absolute;inset-inline-start:14px;top:50%;transform:translateY(-50%);display:grid;place-items:center;color:var(--muted);pointer-events:none}

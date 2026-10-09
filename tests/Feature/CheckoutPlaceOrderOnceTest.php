@@ -364,7 +364,7 @@ it('draws the tick ticked, once, posting nothing, and the clear link hidden unti
     expect(substr_count($html, 'id="kbb_remember"'))->toBe(1)
         ->and(preg_match('#<input type="checkbox" id="kbb_remember" data-kbb-local checked>#', $html))->toBe(1)
         ->and(preg_match('#<input[^>]*id="kbb_remember"[^>]*name=#', $html))->toBe(0)
-        ->and($html)->toContain('Remember my details on this device')
+        ->and($html)->toContain('Remember my shipping details on this device')
         ->and(substr_count($html, 'id="kbbRememberClear"'))->toBe(1)
         ->and($html)->toContain('<button type="button" class="kbb-rmb-clear" id="kbbRememberClear" aria-hidden="true" tabindex="-1">Not you? Clear details</button>')
         ->and($html)->toContain('.kbb-checkout .sec > h2 .kbb-rmb-clear:not(.on){visibility:hidden}');
@@ -429,9 +429,12 @@ it('has the two sentences in English, and their Arabic as drafts with a seed', f
     $drafts = \App\Services\Translation\ArabicInterfaceDrafts::all();
     $seed = (string) file_get_contents(database_path('migrations/2027_10_08_140000_seed_checkout_remember_arabic_drafts.php'));
 
-    expect(__('store.checkout.remember_me'))->toBe('Remember my details on this device')
+    // Lane QK8: "Remember my details line, please replace to > Remember my
+    // shipping details on this device". The Arabic follows, through
+    // 2027_10_16_120100 where the shop still holds the shipped wording.
+    expect(__('store.checkout.remember_me'))->toBe('Remember my shipping details on this device')
         ->and(__('store.checkout.remember_clear'))->toBe('Not you? Clear details')
-        ->and($drafts['store.checkout.remember_me'])->toBe('تذكّر بياناتي على هذا الجهاز')
+        ->and($drafts['store.checkout.remember_me'])->toBe('تذكّر تفاصيل الشحن على هذا الجهاز')
         ->and($drafts['store.checkout.remember_clear'])->toBe('لست أنت؟ امسح البيانات')
         ->and($seed)->toContain("'store.checkout.remember_me',")
         ->and($seed)->toContain("'store.checkout.remember_clear',");

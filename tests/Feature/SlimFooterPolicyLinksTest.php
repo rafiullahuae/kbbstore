@@ -58,11 +58,14 @@ function sfplForget(): void
     App\Models\Setting::flushMap();
 }
 
-it('links the checkout footer to Shipping & Delivery and Returns Information, and drops the pair under Place order', function () {
+it('links the checkout footer to Shipping & Delivery and Privacy policy, and drops the pair under Place order', function () {
+    // Lane QK8: "remove the Returns information from the checkout footer, as
+    // we don't offer returns, keep the Privacy Policy there."
     $html = sfplCheckout();
 
     expect($html)->toContain('<a href="/delivery/">Shipping &amp; Delivery</a>')
-        ->and($html)->toContain('<a href="/refund_returns/">Returns Information</a>')
+        ->and($html)->toContain('<a href="/privacy-policy/">Privacy policy</a>')
+        ->and($html)->not->toContain('Returns Information')
         ->and($html)->not->toContain('/shipping-policy')
         ->and($html)->not->toContain('/terms-of-service')
         ->and($html)->not->toContain('class="kbb-pol"');

@@ -254,6 +254,14 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // and changed nothing else: the six global social_* addresses Appearance →
     // Footer → Social profiles edits (saved through PUT admin-api/settings, not
     // this endpoint), here at the shop's fallbacks, editable for the owner.
+    // ▲ Lane QK8 (9 October), each the owner's request, spliced in, not
+    // regenerated: checkout-page gains d_title_pt / m_title_pt ("Space above
+    // the Checkout title", after d_pad_y / m_pad_y), pay_bg / pay_unsel (the
+    // payment boxes' background tint and unselected border, after pay_logo_h)
+    // and head_back (first on Back to shop & cart, whose description names
+    // it); pay_tint's help, dl_note / dl_note_ar ("Free express delivery",
+    // relabelled "Note beside “Delivery” (UAE only)") and cline_on (now OFF)
+    // changed. slim-footer's second link is Privacy policy -> /privacy-policy/.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
@@ -679,7 +687,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // gains `fs_bar_on`, "Free-delivery bar on the cart and checkout pages",
     // OFF as the owner asked; appended last on the tab, whose description
     // says so. The cart page's sum_delivery_on help now names that switch.
-    expect($compared)->toBe(761, 'the number of controls drawn changed');
+    // 761 -> 766 (Lane QK8): checkout-page gains d_title_pt, m_title_pt,
+    // pay_bg, pay_unsel and head_back, each the owner's request.
+    expect($compared)->toBe(766, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

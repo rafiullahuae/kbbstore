@@ -358,8 +358,11 @@ class SlimFooter
                          'Empty removes the link.'],
         'l1_url'     => ['text', 'First link goes to', '/delivery/',
                          'A path on this shop, or a full https:// address.'],
-        'l2_text'    => ['text', 'Second link', 'Returns Information', 'Empty removes the link.'],
-        'l2_url'     => ['text', 'Second link goes to', '/refund_returns/',
+        /* Lane QK8. The owner: "remove the Returns information from the
+           checkout footer, as we don't offer returns, keep the Privacy Policy
+           there." */
+        'l2_text'    => ['text', 'Second link', 'Privacy policy', 'Empty removes the link.'],
+        'l2_url'     => ['text', 'Second link goes to', '/privacy-policy/',
                          'A path on this shop, or a full https:// address.'],
         'l3_text'    => ['text', 'Third link', '', 'Empty, so no third link is drawn. Returns and refunds is the usual one.'],
         'l3_url'     => ['text', 'Third link goes to', '',
@@ -495,6 +498,19 @@ class SlimFooter
             'colour'     => (string) $header->get('logo_colour'),
             'accent_col' => (string) $header->get('logo_accent_col'),
         ];
+    }
+
+    /**
+     * A link label exactly as shipped => the interface string that says it, so
+     * /ar/ reads it in Arabic once that string is approved (Lane QK8). Any
+     * other wording is the owner's and is printed as he typed it.
+     */
+    private const LABEL_KEYS = ['Privacy policy' => 'store.footer.link_privacy'];
+
+    /** The link label a shopper reads, in the page's language where it can be. */
+    public function label(string $text): string
+    {
+        return isset(self::LABEL_KEYS[$text]) ? (string) __(self::LABEL_KEYS[$text]) : $text;
     }
 
     /** @return array<string, mixed> */

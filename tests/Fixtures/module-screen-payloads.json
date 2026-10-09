@@ -7103,8 +7103,8 @@
             "type": "text",
             "label": "Second link",
             "help": "Empty removes the link.",
-            "default": "Returns Information",
-            "value": "Returns Information",
+            "default": "Privacy policy",
+            "value": "Privacy policy",
             "options": null
           },
           {
@@ -7112,8 +7112,8 @@
             "type": "text",
             "label": "Second link goes to",
             "help": "A path on this shop, or a full https:// address.",
-            "default": "/refund_returns/",
-            "value": "/refund_returns/",
+            "default": "/privacy-policy/",
+            "value": "/privacy-policy/",
             "options": null
           },
           {
@@ -9067,6 +9067,20 @@
             }
           },
           {
+            "key": "d_title_pt",
+            "type": "range",
+            "label": "Space above the Checkout title",
+            "help": "The gap between the bottom of the secure-checkout header and the \"← Checkout\" title row. 22px is how it is now. Only the title row moves; the order summary beside it keeps Page padding — top. With the back arrow on, it stops at 14px, which keeps the round button 8px clear of the header.",
+            "default": 22,
+            "value": 22,
+            "options": {
+              "min": 0,
+              "max": 80,
+              "step": 1,
+              "unit": "px"
+            }
+          },
+          {
             "key": "d_block_gap",
             "type": "range",
             "label": "Space between blocks",
@@ -9620,6 +9634,20 @@
             }
           },
           {
+            "key": "m_title_pt",
+            "type": "range",
+            "label": "Space above the Checkout title",
+            "help": "The gap between the bottom of the secure-checkout header and the \"← Checkout\" title row, which is the first thing on a phone. 22px is how it is now. With the back arrow on, it stops at 14px, which keeps the round button 8px clear of the header.",
+            "default": 22,
+            "value": 22,
+            "options": {
+              "min": 0,
+              "max": 80,
+              "step": 1,
+              "unit": "px"
+            }
+          },
+          {
             "key": "m_gap",
             "type": "range",
             "label": "Space between stacked blocks",
@@ -10127,8 +10155,17 @@
       {
         "key": "tocart",
         "label": "Back to shop & cart",
-        "description": "The \"← Back to shop\" link and the \"Go back to cart\" button at the top of the page — both off, as asked, and switched back on here. Which of the five LOOKS the cart button wears is chosen on Store → Ecommerce → Checkout → Mobile layout; everything about its SIZE is here.",
+        "description": "The round back arrow beside the Checkout heading (on, as asked), then the \"← Back to shop\" link and the \"Go back to cart\" button at the top of the page — both off, as asked, and switched back on here. Which of the five LOOKS the cart button wears is chosen on Store → Ecommerce → Checkout → Mobile layout; everything about its SIZE is here.",
         "fields": [
+          {
+            "key": "head_back",
+            "type": "bool",
+            "label": "Back arrow beside the Checkout heading",
+            "help": "On, as asked: a round back-arrow button just before the \"Checkout\" heading, which now sits at the very top of the page. It goes to the cart. Off takes it away.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
           {
             "key": "shop_link",
             "name": "shop_link",
@@ -10569,11 +10606,31 @@
             "value": 26
           },
           {
+            "key": "pay_bg",
+            "type": "bool",
+            "label": "Background tint",
+            "help": "Off, as asked: every box is plain white, chosen or not, and only the border of the chosen box takes its colour. On washes each box in its gateway's colour again, at the strength below.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
+            "key": "pay_unsel",
+            "type": "select",
+            "label": "Unselected border",
+            "help": "Grey, as asked: a box that is not chosen has the same grey edge as the address fields, and takes its colour when chosen.",
+            "options": {
+              "grey": "Grey",
+              "colour": "Coloured — each gateway's own colour"
+            },
+            "default": "grey",
+            "value": "grey"
+          },
+          {
             "key": "pay_tint",
-            "name": "pay_tint",
             "type": "select",
             "label": "Tint strength",
-            "help": "How much of each gateway's colour washes its box. Medium is the preview you chose.",
+            "help": "How much of each gateway's colour washes its box, when Background tint is on. Medium is the preview you chose.",
             "options": {
               "light": "Light",
               "medium": "Medium — as previewed",
@@ -10718,23 +10775,21 @@
           },
           {
             "key": "dl_note",
-            "name": "dl_note",
             "type": "text",
-            "label": "Free-delivery line",
-            "help": "Use {amount} where the UAE free-delivery amount should appear; it is read from your shipping settings, so it follows them.",
+            "label": "Note beside “Delivery” (UAE only)",
+            "help": "The small line beside the Delivery heading: \"Free express delivery over {amount}\", as asked. Type {amount} where the UAE free-delivery amount should appear (it prints as e.g. AED 199) — it is read from Store → Delivery & Shipping, so it follows that setting. Up to 120 characters.",
             "options": null,
-            "default": "Free delivery over {amount}",
-            "value": "Free delivery over {amount}"
+            "default": "Free express delivery over {amount}",
+            "value": "Free express delivery over {amount}"
           },
           {
             "key": "dl_note_ar",
-            "name": "dl_note_ar",
             "type": "text",
-            "label": "Free-delivery line — Arabic",
-            "help": "The same on the Arabic shop (/ar/).",
+            "label": "Note beside “Delivery” (UAE only) — Arabic",
+            "help": "The same line on the Arabic shop (/ar/), with the same {amount}.",
             "options": null,
-            "default": "توصيل مجاني للطلبات فوق {amount}",
-            "value": "توصيل مجاني للطلبات فوق {amount}"
+            "default": "توصيل سريع مجاني للطلبات فوق {amount}",
+            "value": "توصيل سريع مجاني للطلبات فوق {amount}"
           },
           {
             "key": "fs_bar_on",
@@ -10755,13 +10810,12 @@
         "fields": [
           {
             "key": "cline_on",
-            "name": "cline_on",
             "type": "bool",
             "label": "Coupon line",
-            "help": "On, as asked: a line at the very top of the checkout — \"For Discount, Apply coupon GLOW\" — and tapping the code applies it to the order total in place, with no reload. It shows only while the coupon below can actually be used; when the coupon is already on the order it says so instead.",
+            "help": "Off, as asked. On shows a line at the very top of the checkout — \"For Discount, Apply coupon GLOW\" — and tapping the code applies it to the order total in place, with no reload. It shows only while the coupon below can actually be used; when the coupon is already on the order it says so instead.",
             "options": null,
-            "default": true,
-            "value": true
+            "default": false,
+            "value": false
           },
           {
             "key": "cline_coupon",

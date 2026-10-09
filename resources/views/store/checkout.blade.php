@@ -12,6 +12,7 @@
 @section('bare', '1')
 @section('title', __('store.checkout.page_title'))
 @section('kbb-wa-tab', '1')
+@section('kbb-wa-page', 'checkout')
 
 @push('styles')
     @vite('resources/css/kbb/kbb-checkout.css')
@@ -81,24 +82,27 @@
      asked. Column 0 and glued to the conditional, so a checkout with no line
      to draw renders not one byte more. --}}@if (($kbbClCode = $kbbCoPage->couponLineCode()) !== null)@include('partials.checkout.coupon-top')@endif
 
-            <!-- LEFT -->
-            <div>
-                <div class="co-titlebar">
-                    <div class="co-titlebar-main">
+            <div class="co-titlebar">
+                <div class="co-titlebar-main">
 {{-- Lane QK6: "turn off the back to shop link and back to cart button on
      checkout completely!" Appearance -> Checkout page -> Back to shop & cart,
      both OFF as asked. Directives at column 0, so OFF leaves no line and ON is
      byte for byte what was here. --}}@if ($kbbCoPage->showShopLink())
-                        <a class="backlink" href="{{ Url::to('/shop/') }}">{{ __('store.checkout.back_to_shop') }}</a>
+                    <a class="backlink" href="{{ Url::to('/shop/') }}">{{ __('store.checkout.back_to_shop') }}</a>
 @endif
-                        <h1 class="co-h">{{ __('store.checkout.heading') }}</h1>
-                        <p class="co-lead">{{ __('store.checkout.lead') }}</p>
-                    </div>
-@if ($kbbCoPage->showCartLink())
-                    @include('partials.checkout.back-to-cart')
+@if ($kbbCoPage->showHeadBack())
+                    <a class="co-back" href="{{ Url::to('/cart/') }}" aria-label="{{ __('store.checkout.head_back') }}" title="{{ __('store.checkout.head_back') }}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></a>
 @endif
+                    <h1 class="co-h">{{ __('store.checkout.heading') }}</h1>
+                    <p class="co-lead">{{ __('store.checkout.lead') }}</p>
                 </div>
+@if ($kbbCoPage->showCartLink())
+                @include('partials.checkout.back-to-cart')
+@endif
+            </div>
 
+            <!-- LEFT -->
+            <div>
                 <div class="coupon">
                     <div class="ch"><span class="gift">🎁</span> {{ __('store.checkout.coupon_prompt') }}</div>
                     <div class="crow">

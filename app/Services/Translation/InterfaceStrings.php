@@ -1411,6 +1411,8 @@ final class InterfaceStrings
             'checkout.heading' => 'Checkout',
             'checkout.lead' => 'Almost glowing — just a few details.',
             'checkout.back_to_cart' => 'Go back to cart',
+            // Lane QK8: the round back arrow before the logo in the header.
+            'checkout.head_back' => 'Back to cart',
             'checkout.coupon_prompt' => 'Have a discount code?',
             'checkout.coupon_placeholder' => 'Enter promo code',
             'checkout.coupon_apply' => 'Apply',
@@ -1654,7 +1656,7 @@ final class InterfaceStrings
             'checkout.field_choose' => 'Please choose your :field.',
             'checkout.field_bad_value' => 'Please check this field.',
             // Lane PO: the details kept in this browser, and the way to forget them.
-            'checkout.remember_me' => 'Remember my details on this device',
+            'checkout.remember_me' => 'Remember my shipping details on this device',
             'checkout.remember_clear' => 'Not you? Clear details',
 
             /*

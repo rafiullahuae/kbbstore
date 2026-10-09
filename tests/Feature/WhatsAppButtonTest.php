@@ -601,6 +601,8 @@ it('saves and reads back every field it drew', function () {
         'tab_on' => false, 'tab_size' => 34, 'tab_y' => 30, 'tab_label' => 'Help', 'tab_label_ar' => 'مساعدة',
         'tab_palette' => 'custom', 'tab_c1' => '#FFF6C7', 'tab_c2' => '#DDF3FF', 'tab_anim' => false,
         'tab_space' => true,
+        // Lane QK8: the cart and the checkout, off by default; saved on here.
+        'show_cart' => true, 'show_checkout' => true,
     ];
 
     $this->postJson('/admin-api/whatsapp-button', ['settings' => $values])->assertOk()->assertJsonPath('saved', count($values));

@@ -128,6 +128,16 @@ class WhatsAppButton
     /** Section name the cart and checkout templates declare. */
     public const TAB_SECTION = 'kbb-wa-tab';
 
+    /**
+     * Section the cart and the checkout declare with their own name ('cart' /
+     * 'checkout'), so view() can answer null there (Lane QK8). Any other value,
+     * or none, is an ordinary page.
+     */
+    public const PAGE_SECTION = 'kbb-wa-page';
+
+    /** Page name => the switch that lets the button onto it. */
+    private const PAGE_SWITCH = ['cart' => 'show_cart', 'checkout' => 'show_checkout'];
+
     /** The tab's width, in px: the size bar's ends and its shipped value. */
     public const TAB_MIN = 22;
 
@@ -247,6 +257,15 @@ class WhatsAppButton
             'Screens 900px wide and narrower, the same width at which the shop switches to its phone menu.'],
         'show_desktop' => ['bool', 'Show on desktop', true,
             'Screens wider than 900px.'],
+        /* Lane QK8. The owner: "the whatsapp floating button should be turn
+           off on cart and checkout completely." Off is how both ship, because
+           he asked; off means the page prints NOTHING of this module -- no
+           button, no side tab, no stylesheet, no script. On puts back exactly
+           what that page printed before (the side tab on phones included). */
+        'show_cart' => ['bool', 'Show on the cart page', false,
+            'Off, as you asked: the cart page shows no WhatsApp button and no side tab, on any screen — not one byte of it is printed. On puts it back.'],
+        'show_checkout' => ['bool', 'Show on checkout', false,
+            'Off, as you asked: the checkout shows no WhatsApp button and no side tab, on any screen. On puts it back.'],
         'design' => ['select', 'Design', 'G',
             'G · Orbit team is the one you picked. The other six are the designs from the preview page, kept so you can switch at any time. Women, men, orbit speed and the capsule apply to G; the label of E uses the capsule’s first line.',
             self::DESIGNS],
@@ -340,7 +359,7 @@ class WhatsAppButton
     public const TABS = [
         'design' => ['Design',
             'Which of the seven designs, how big, and on which screens. The live preview moves as you change anything — nothing reaches the shop until you press Save.',
-            ['enabled', 'show_phone', 'show_desktop', 'design', 'size', 'women', 'men', 'speed']],
+            ['enabled', 'show_phone', 'show_desktop', 'show_cart', 'show_checkout', 'design', 'size', 'women', 'men', 'speed']],
         'position' => ['Position',
             'Space from each edge of the screen, in pixels, set separately for phones and for desktop. Leave a box empty for “auto”: Top and Left are normally empty, which keeps the button at the bottom right. If both Right and Left are filled, Right is used; if both Top and Bottom are filled, Bottom is used.',
             ['m_top', 'm_right', 'm_bottom', 'm_left', 'd_top', 'd_right', 'd_bottom', 'd_left', 'ar_side']],
@@ -1028,12 +1047,22 @@ class WhatsAppButton
      *
      * @return array<string, mixed>|null
      */
-    public function view(?array $c = null, ?bool $arabic = null, bool $tabPage = false): ?array
+    public function view(?array $c = null, ?bool $arabic = null, bool $tabPage = false, ?string $page = null): ?array
     {
         $c ??= $this->all();
         $arabic ??= self::arabic();
 
         if (! ($c['enabled'] ?? false) || (! ($c['show_phone'] ?? false) && ! ($c['show_desktop'] ?? false))) {
+            return null;
+        }
+
+        // The cart and the checkout, switched off (the shipped state): null,
+        // so the partial prints not one byte there. The page names itself
+        // through PAGE_SECTION; read here so the partial's call is unchanged.
+        $page ??= trim((string) app('view')->getSection(self::PAGE_SECTION, ''));
+        $switch = self::PAGE_SWITCH[$page] ?? null;
+
+        if ($switch !== null && ! ($c[$switch] ?? false)) {
             return null;
         }
 

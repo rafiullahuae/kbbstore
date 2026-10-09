@@ -4312,6 +4312,15 @@ checkout_page|d_pad_y|range|"abc"|0
 checkout_page|d_pad_y|range|""|0
 checkout_page|d_pad_y|range|null|0
 checkout_page|d_pad_y|range|"3.7"|3
+checkout_page|d_title_pt|range|5|5
+checkout_page|d_title_pt|range|"5"|5
+checkout_page|d_title_pt|range|0|0
+checkout_page|d_title_pt|range|-10|0
+checkout_page|d_title_pt|range|99999|80
+checkout_page|d_title_pt|range|"abc"|0
+checkout_page|d_title_pt|range|""|0
+checkout_page|d_title_pt|range|null|0
+checkout_page|d_title_pt|range|"3.7"|3
 checkout_page|d_block_gap|range|5|5
 checkout_page|d_block_gap|range|"5"|5
 checkout_page|d_block_gap|range|0|0
@@ -4426,6 +4435,15 @@ checkout_page|m_pad_y|range|"abc"|0
 checkout_page|m_pad_y|range|""|0
 checkout_page|m_pad_y|range|null|0
 checkout_page|m_pad_y|range|"3.7"|3
+checkout_page|m_title_pt|range|5|5
+checkout_page|m_title_pt|range|"5"|5
+checkout_page|m_title_pt|range|0|0
+checkout_page|m_title_pt|range|-10|0
+checkout_page|m_title_pt|range|99999|80
+checkout_page|m_title_pt|range|"abc"|0
+checkout_page|m_title_pt|range|""|0
+checkout_page|m_title_pt|range|null|0
+checkout_page|m_title_pt|range|"3.7"|3
 checkout_page|m_gap|range|5|5
 checkout_page|m_gap|range|"5"|5
 checkout_page|m_gap|range|0|0
@@ -5341,6 +5359,21 @@ checkout_page|pay_logo_h|range|"abc"|20
 checkout_page|pay_logo_h|range|""|20
 checkout_page|pay_logo_h|range|null|20
 checkout_page|pay_logo_h|range|"3.7"|20
+checkout_page|pay_bg|bool|true|true
+checkout_page|pay_bg|bool|false|false
+checkout_page|pay_bg|bool|"1"|true
+checkout_page|pay_bg|bool|"0"|false
+checkout_page|pay_bg|bool|""|false
+checkout_page|pay_bg|bool|"on"|true
+checkout_page|pay_bg|bool|"off"|true
+checkout_page|pay_bg|bool|"no"|true
+checkout_page|pay_bg|bool|1|true
+checkout_page|pay_bg|bool|0|false
+checkout_page|pay_bg|bool|null|false
+checkout_page|pay_unsel|select|"grey"|'grey'
+checkout_page|pay_unsel|select|"nope"|'grey'
+checkout_page|pay_unsel|select|""|'grey'
+checkout_page|pay_unsel|select|null|'grey'
 checkout_page|pay_tint|select|"light"|'light'
 checkout_page|pay_tint|select|"nope"|'medium'
 checkout_page|pay_tint|select|""|'medium'
@@ -5446,6 +5479,17 @@ checkout_page|cart_link|bool|"no"|true
 checkout_page|cart_link|bool|1|true
 checkout_page|cart_link|bool|0|false
 checkout_page|cart_link|bool|null|false
+checkout_page|head_back|bool|true|true
+checkout_page|head_back|bool|false|false
+checkout_page|head_back|bool|"1"|true
+checkout_page|head_back|bool|"0"|false
+checkout_page|head_back|bool|""|false
+checkout_page|head_back|bool|"on"|true
+checkout_page|head_back|bool|"off"|true
+checkout_page|head_back|bool|"no"|true
+checkout_page|head_back|bool|1|true
+checkout_page|head_back|bool|0|false
+checkout_page|head_back|bool|null|false
 checkout_page|dl_on|bool|true|true
 checkout_page|dl_on|bool|false|false
 checkout_page|dl_on|bool|"1"|true
@@ -5493,16 +5537,16 @@ checkout_page|dl_note_on|bool|1|true
 checkout_page|dl_note_on|bool|0|false
 checkout_page|dl_note_on|bool|null|false
 checkout_page|dl_note|text|"abc"|'abc'
-checkout_page|dl_note|text|""|'Free delivery over {amount}'
+checkout_page|dl_note|text|""|'Free express delivery over {amount}'
 checkout_page|dl_note|text|"  sp  "|'sp'
 checkout_page|dl_note|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-checkout_page|dl_note|text|null|'Free delivery over {amount}'
+checkout_page|dl_note|text|null|'Free express delivery over {amount}'
 checkout_page|dl_note|text|"<b>x<\/b>"|'<b>x</b>'
 checkout_page|dl_note_ar|text|"abc"|'abc'
-checkout_page|dl_note_ar|text|""|'توصيل مجاني للطلبات فوق {amount}'
+checkout_page|dl_note_ar|text|""|'توصيل سريع مجاني للطلبات فوق {amount}'
 checkout_page|dl_note_ar|text|"  sp  "|'sp'
 checkout_page|dl_note_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-checkout_page|dl_note_ar|text|null|'توصيل مجاني للطلبات فوق {amount}'
+checkout_page|dl_note_ar|text|null|'توصيل سريع مجاني للطلبات فوق {amount}'
 checkout_page|dl_note_ar|text|"<b>x<\/b>"|'<b>x</b>'
 checkout_page|fs_bar_on|bool|true|true
 checkout_page|fs_bar_on|bool|false|false

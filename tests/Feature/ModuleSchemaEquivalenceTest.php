@@ -82,6 +82,11 @@
  *
  *   (2.60.454: Lane QK7's `fs_bar_on` on checkout_page, 11 lines inserted,
  *   0 modified, 0 removed, by exactly this method.)
+ *   (Lane QK8: `d_title_pt`, `m_title_pt`, `pay_bg`, `pay_unsel` and
+ *   `head_back` on checkout_page, 44 lines inserted, 0 removed, the same
+ *   way; and 4 MODIFIED on purpose: an empty or null `dl_note` / `dl_note_ar`
+ *   answers the shipped wording, which the owner moved to "Free express
+ *   delivery over {amount}" -- the default changed, not the cast.)
  *
  *   Take the new rows and nothing else: rebuild the corpus, then for every line
  *   whose identity (module|key|type|input) is already in the fixture, keep the

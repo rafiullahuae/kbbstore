@@ -354,6 +354,9 @@ it('renders the checkout byte for byte as before this lane with both switches of
     // "Text only (as before)" is its byte-for-byte way back (LogoLockupTest),
     // so it is set here for the same reason.
     app(\App\Services\HeaderSettings::class)->save(['logo_style' => 'text']);
+    // Lane QK8's WhatsApp button is OFF on checkout, as asked; ON is its
+    // byte-for-byte way back (WhatsAppButtonTabTest), so it is set here too.
+    app(\App\Services\WhatsAppButton::class)->save(['show_checkout' => true]);
     \App\Services\SettingsService::forgetMemo();
     $cart = cdCart();
 
@@ -402,6 +405,12 @@ it('renders the checkout byte for byte as before this lane with both switches of
         $before = (string) preg_replace('#<span class="n">1</span> Contact.*?</h2>\n\K.*?id="billing_email_field".*?</p>\n\s*</div>\n#s', '', $before, 1);
         $after = (string) preg_replace('#<span class="n">1</span> Contact.*?</h2>\n\K.*?id="billing_email_field".*?</p>\n#s', '', $after, 1);
         $after = (string) preg_replace('#<span class="n">2</span> Shipping Details</h2>\n\K.*?id="billing_phone_field".*?</p>\n#s', '', $after, 1);
+        // Lane QK8 (later) moves the title block out of the left column to the
+        // top of the grid, as the owner asked ("i want the summary section
+        // the checkout page heading"), with the back arrow in it: set aside on
+        // both sides; CheckoutQk8Test and CheckoutCouponLineTest pin it.
+        $before = (string) preg_replace('#                <div class="co-titlebar">\n.*?\n                </div>\n\n#s', '', $before, 1);
+        $after = (string) preg_replace('#            <div class="co-titlebar">\n.*?\n            </div>\n\n#s', '', $after, 1);
         $overlay = '#<!--kbb-placing-->.*?<!--/kbb-placing-->#s';
         $before = (string) preg_replace($overlay, '', $before, 1);
         $after = (string) preg_replace($overlay, '', $after, 1);

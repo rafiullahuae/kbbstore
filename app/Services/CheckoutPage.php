@@ -88,6 +88,12 @@ class CheckoutPage
         'd_pad_y'     => ['range', 'Page padding — top', 22,
                           'The gap under the secure-checkout header.',
                           ['min' => 0, 'max' => 64, 'step' => 2, 'unit' => 'px']],
+        /* Lane QK8: "give control of spacing below checkout header, i mean
+           above the checkout title row". 22 is today's gap (the page padding
+           above), so the default prints nothing and moves nothing. */
+        'd_title_pt'  => ['range', 'Space above the Checkout title', 22,
+                          'The gap between the bottom of the secure-checkout header and the "← Checkout" title row. 22px is how it is now. Only the title row moves; the order summary beside it keeps Page padding — top. With the back arrow on, it stops at 14px, which keeps the round button 8px clear of the header.',
+                          ['min' => 0, 'max' => 80, 'step' => 1, 'unit' => 'px']],
         'd_block_gap' => ['range', 'Space between blocks', 16,
                           'Between the heading and the coupon box, and between the coupon box and the card that holds the four numbered sections.',
                           ['min' => 0, 'max' => 48, 'step' => 2, 'unit' => 'px']],
@@ -188,6 +194,9 @@ class CheckoutPage
         'm_pad_y'     => ['range', 'Page padding — top', 22,
                           'The gap under the secure-checkout header.',
                           ['min' => 0, 'max' => 48, 'step' => 1, 'unit' => 'px']],
+        'm_title_pt'  => ['range', 'Space above the Checkout title', 22,
+                          'The gap between the bottom of the secure-checkout header and the "← Checkout" title row, which is the first thing on a phone. 22px is how it is now. With the back arrow on, it stops at 14px, which keeps the round button 8px clear of the header.',
+                          ['min' => 0, 'max' => 80, 'step' => 1, 'unit' => 'px']],
         'm_gap'       => ['range', 'Space between stacked blocks', 14,
                           'The one column is a grid, and this is the gap between the summary at the top and the form below it.',
                           ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
@@ -915,8 +924,20 @@ class CheckoutPage
         'pay_logo_h'      => ['range', 'Logo height', 26,
                               '26px keeps every box the height it has always been. Taller logos make the boxes taller with them.',
                               ['min' => 20, 'max' => 32, 'step' => 2, 'unit' => 'px']],
+        /* Lane QK8. The owner: "please turn off the background color, and the
+           border color should be grey, and when user select any payment
+           method, the border color should turn to colorful ... upon selection
+           also no background should come." Both ship at what he asked for;
+           both are the way back. */
+        'pay_bg'          => ['bool', 'Background tint', false,
+                              'Off, as asked: every box is plain white, chosen or not, and only the border of the chosen box takes its colour. On washes each box in its gateway\'s colour again, at the strength below.'],
+        'pay_unsel'       => ['select', 'Unselected border', 'grey',
+                              'Grey, as asked: a box that is not chosen has the same grey edge as the address fields, and takes its colour when chosen.', [
+                                  'grey'   => 'Grey',
+                                  'colour' => 'Coloured — each gateway\'s own colour',
+                              ]],
         'pay_tint'        => ['select', 'Tint strength', 'medium',
-                              'How much of each gateway\'s colour washes its box. Medium is the preview you chose.', [
+                              'How much of each gateway\'s colour washes its box, when Background tint is on. Medium is the preview you chose.', [
                                   'light'  => 'Light',
                                   'medium' => 'Medium — as previewed',
                                   'strong' => 'Strong',
@@ -957,8 +978,10 @@ class CheckoutPage
          * The line shows only while that coupon is usable now; once it is on
          * the order, the line says so instead of inviting.
          */
-        'cline_on'      => ['bool', 'Coupon line', true,
-                            'On, as asked: a line at the very top of the checkout — "For Discount, Apply coupon GLOW" — and tapping the code applies it to the order total in place, with no reload. It shows only while the coupon below can actually be used; when the coupon is already on the order it says so instead.'],
+        /* Lane QK8: "and the top coupon line, turned off." Off by default,
+           and written off on the live shop by migration. */
+        'cline_on'      => ['bool', 'Coupon line', false,
+                            'Off, as asked. On shows a line at the very top of the checkout — "For Discount, Apply coupon GLOW" — and tapping the code applies it to the order total in place, with no reload. It shows only while the coupon below can actually be used; when the coupon is already on the order it says so instead.'],
         'cline_coupon'  => ['select', 'Coupon', 'cart',
                             'Same as the cart panel follows Appearance → Cart panel → Coupon hint → Coupon (GLOW unless you changed it). Or pick one of your coupons; an expired, not-yet-started or used-up coupon hides the line by itself.',
                             ['cart' => 'Same as the cart panel']],
@@ -979,6 +1002,12 @@ class CheckoutPage
                             'Off, as asked: no "← Back to shop" link above the Checkout heading. The logo in the header still goes to the home page.'],
         'cart_link'     => ['bool', 'Show “Go back to cart”', false,
                             'Off, as asked: no "Go back to cart" button beside the Checkout heading. On brings it back in the look chosen on Store → Ecommerce → Checkout → Mobile layout.'],
+        /* Lane QK8. The owner: "on the checkout header, beside left side of
+           the logo, there should be back arrow icon in a grey circle, which
+           will proceed to the back (cart page), make it nice." On is how it
+           ships, because he asked. */
+        'head_back'     => ['bool', 'Back arrow beside the Checkout heading', true,
+                            'On, as asked: a round back-arrow button just before the "Checkout" heading, which now sits at the very top of the page. It goes to the cart. Off takes it away.'],
 
         /*
          * ── DELIVERY LABELS AND THE FREE-DELIVERY LINE (Lane QK6) ──────────
@@ -1007,10 +1036,10 @@ class CheckoutPage
                             'The same on the Arabic shop (/ar/).'],
         'dl_note_on'    => ['bool', 'Free-delivery line beside “Delivery”', true,
                             'On, as asked: a small line beside the Delivery heading, only while the country chosen is the United Arab Emirates and the UAE has a free-delivery amount (Store → Delivery & Shipping → the zone\'s free delivery minimum).'],
-        'dl_note'       => ['text', 'Free-delivery line', self::DL_NOTE,
-                            'Use {amount} where the UAE free-delivery amount should appear; it is read from your shipping settings, so it follows them.'],
-        'dl_note_ar'    => ['text', 'Free-delivery line — Arabic', self::DL_NOTE_AR,
-                            'The same on the Arabic shop (/ar/).'],
+        'dl_note'       => ['text', 'Note beside “Delivery” (UAE only)', self::DL_NOTE,
+                            'The small line beside the Delivery heading: "Free express delivery over {amount}", as asked. Type {amount} where the UAE free-delivery amount should appear (it prints as e.g. AED 199) — it is read from Store → Delivery & Shipping, so it follows that setting. Up to 120 characters.'],
+        'dl_note_ar'    => ['text', 'Note beside “Delivery” (UAE only) — Arabic', self::DL_NOTE_AR,
+                            'The same line on the Arabic shop (/ar/), with the same {amount}.'],
         /*
          * Lane QK7. "the unlocked / free delivery green bar still showing in
          * summary section and also above the place order button on checkout,
@@ -1034,9 +1063,15 @@ class CheckoutPage
 
     public const DL_FREE_AR = 'توصيل سريع مجاني';
 
-    public const DL_NOTE = 'Free delivery over {amount}';
+    /** Lane QK8: "include Express word, so it will be Free express delivery over AED 199". */
+    public const DL_NOTE = 'Free express delivery over {amount}';
 
-    public const DL_NOTE_AR = 'توصيل مجاني للطلبات فوق {amount}';
+    public const DL_NOTE_AR = 'توصيل سريع مجاني للطلبات فوق {amount}';
+
+    /** What DL_NOTE / DL_NOTE_AR were before Lane QK8, for its migration. */
+    public const DL_NOTE_OLD = 'Free delivery over {amount}';
+
+    public const DL_NOTE_AR_OLD = 'توصيل مجاني للطلبات فوق {amount}';
 
     /** The one country these two apply to, as the owner said. */
     public const DL_COUNTRY = 'AE';
@@ -1058,7 +1093,7 @@ class CheckoutPage
     public const TABS = [
         'desktop'      => ['Desktop · Layout', 'The two-column checkout, from 901px up. Nothing on this tab can reach a phone.',
                            ['d_shell_pt', 'd_shell_pb',
-                            'd_max', 'd_aside', 'd_gap', 'd_pad_x', 'd_pad_y',
+                            'd_max', 'd_aside', 'd_gap', 'd_pad_x', 'd_pad_y', 'd_title_pt',
                             'd_block_gap', 'd_sec_pad', 'd_aside_pad',
                             'd_sticky', 'd_sticky_top']],
         'desktop_head' => ['Desktop · Header', 'The secure-checkout bar across the top. Its height is its padding plus the taller of the logo and the badge, so those are the controls rather than a "height" that would fight them.',
@@ -1071,7 +1106,7 @@ class CheckoutPage
                             'd_tab_min', 'd_tab_pad', 'd_tab_font', 'd_tab_gap']],
         'mobile'       => ['Mobile · Layout', 'The single-column checkout, at 900px and below. Nothing on this tab can reach a desktop.',
                            ['m_shell_pt', 'm_shell_pb',
-                            'm_pad_x', 'm_pad_y', 'm_gap', 'm_block_gap', 'm_sec_pad', 'm_aside_pad',
+                            'm_pad_x', 'm_pad_y', 'm_title_pt', 'm_gap', 'm_block_gap', 'm_sec_pad', 'm_aside_pad',
                             'm_float']],
         'mobile_head'  => ['Mobile · Header', 'The same bar on a phone. Worth a look at 360px: the badge is the first thing that crowds the logo.',
                            ['m_head_pad_y', 'm_head_pad_x', 'm_head_max', 'm_head_align', 'm_head_logo', 'm_head_badge', 'm_head_sticky']],
@@ -1086,8 +1121,8 @@ class CheckoutPage
            at the foot of the two Layout tabs, under ten spacing sliders, and
            the report was "Back to Cart button controls i couldn't found".
            A control nobody can find is a control that does not exist. */
-        'tocart'       => ['Back to shop & cart', 'The "← Back to shop" link and the "Go back to cart" button at the top of the page — both off, as asked, and switched back on here. Which of the five LOOKS the cart button wears is chosen on Store → Ecommerce → Checkout → Mobile layout; everything about its SIZE is here.',
-                           ['shop_link', 'cart_link', 'd_tocart_size', 'd_tocart_icon', 'd_tocart_r',
+        'tocart'       => ['Back to shop & cart', 'The round back arrow beside the Checkout heading (on, as asked), then the "← Back to shop" link and the "Go back to cart" button at the top of the page — both off, as asked, and switched back on here. Which of the five LOOKS the cart button wears is chosen on Store → Ecommerce → Checkout → Mobile layout; everything about its SIZE is here.',
+                           ['head_back', 'shop_link', 'cart_link', 'd_tocart_size', 'd_tocart_icon', 'd_tocart_r',
                             'm_tocart_size', 'm_tocart_icon', 'm_tocart_r', 'm_tocart_min']],
         'trust'        => ['Trust & reviews', 'The stars and score above the order summary. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — "100% authentic" beside the pay button and "100% authentic K-beauty" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims. The two policy links under Place order are switched here too.',
                            ['rating_on', 'rating_text', 'rating_min', 'policy_links']],
@@ -1098,7 +1133,7 @@ class CheckoutPage
                             'trust_tick', 'trust_tick_speed']],
         /* Lane PY. Its own tab, so the owner finds it where its name says. */
         'payments'     => ['Payment boxes', 'The four boxes under "4 Payment" — Tabby, Tamara, card and cash on delivery. One set of values for both surfaces.',
-                           ['pay_style', 'pay_logos', 'pay_logo_h', 'pay_tint', 'pay_border',
+                           ['pay_style', 'pay_logos', 'pay_logo_h', 'pay_bg', 'pay_unsel', 'pay_tint', 'pay_border',
                             'pay_tabby', 'pay_tamara', 'pay_card', 'pay_cod', 'pay_tamara_logo']],
         /* Lane QK6, appended so every other tab keeps its place. */
         'delivery'     => ['Delivery labels', 'The "3 Delivery" section on a UAE checkout: what the delivery option is called, paid and free, and the small free-delivery line beside the heading. Last on the tab: the free-delivery bar on the cart page and the checkout. One set of values for both surfaces.',
@@ -1202,6 +1237,7 @@ class CheckoutPage
         'd_gap'        => '--cop-d-gap',
         'd_pad_x'      => '--cop-d-padx',
         'd_pad_y'      => '--cop-d-pady',
+        'd_title_pt'   => '--cop-d-titlept',
         'd_block_gap'  => '--cop-d-block',
         'd_sec_pad'    => '--cop-d-secpad',
         'd_aside_pad'  => '--cop-d-asidepad',
@@ -1215,6 +1251,7 @@ class CheckoutPage
         'm_tocart_min' => '--cop-m-tocartmin',
         'm_pad_x'      => '--cop-m-padx',
         'm_pad_y'      => '--cop-m-pady',
+        'm_title_pt'   => '--cop-m-titlept',
         'm_gap'        => '--cop-m-gap',
         'm_block_gap'  => '--cop-m-block',
         'm_sec_pad'    => '--cop-m-secpad',
@@ -1392,6 +1429,8 @@ class CheckoutPage
     private const PAY_CLASSES = [
         'pay_tint'   => ['light' => 'cop-pay-light', 'medium' => '', 'strong' => 'cop-pay-strong'],
         'pay_border' => ['gradient' => '', 'solid' => 'cop-pay-bsolid', 'pink' => 'cop-pay-bpink'],
+        // Lane QK8: the shipped values (no tint, grey until chosen) add nothing.
+        'pay_unsel'  => ['grey' => '', 'colour' => 'cop-pay-ucol'],
     ];
 
     /** Gateway id => the switch that keeps its box in its brand colours. */
@@ -1581,6 +1620,12 @@ class CheckoutPage
     public function showCartLink(): bool
     {
         return $this->flag('cart_link');
+    }
+
+    /** The round back-to-cart arrow before the logo in the header (Lane QK8). */
+    public function showHeadBack(): bool
+    {
+        return $this->flag('head_back');
     }
 
     /**
@@ -1929,6 +1974,10 @@ class CheckoutPage
                 if ($class !== '') {
                     $classes[] = $class;
                 }
+            }
+
+            if ($c['pay_bg']) {
+                $classes[] = 'cop-pay-tint';
             }
         }
 

@@ -168,14 +168,14 @@ it('keeps Free when a coupon takes the total under the line — the rate qualifi
     expect(dlLabels((string) $q->json('deliveryHtml')))->toBe(['Free Express Delivery | Free']);
 });
 
-it('shows "Free delivery over AED 199" beside Delivery for the UAE only, and follows the country', function () {
+it('shows "Free express delivery over AED 199" beside Delivery for the UAE only, and follows the country', function () {
     /*
      * MUTATION: drop the DL_COUNTRY check in deliveryNoteHtml() and Oman's
      * re-quote carries the UAE line — red.
      */
     $cart = dlCart(10000);
     $html = dlPage($cart);
-    expect(dlNote($html))->toBe('Free delivery over AED 199')
+    expect(dlNote($html))->toBe('Free express delivery over AED 199')
         ->and($html)->toMatch('#<h2><span class="n">3</span> Delivery<span class="co-dnote" id="kbbDeliveryNote">#');
 
     $om = dlShopper($cart)->postJson('/api/checkout/rates', ['country' => 'OM']);
@@ -184,19 +184,48 @@ it('shows "Free delivery over AED 199" beside Delivery for the UAE only, and fol
         ->and(dlLabels((string) $om->json('deliveryHtml')))->toBe(['GCC Delivery: AED 50']);
 
     $ae = dlShopper($cart)->postJson('/api/checkout/rates', ['country' => 'AE']);
-    expect(trim(html_entity_decode(strip_tags((string) $ae->json('deliveryNote')))))->toBe('Free delivery over AED 199');
+    expect(trim(html_entity_decode(strip_tags((string) $ae->json('deliveryNote')))))->toBe('Free express delivery over AED 199');
 
     $js = file_get_contents(resource_path('js/kbb/checkout.js'));
     expect($js)->toContain("note.hidden = data.deliveryNote === '';");
 
     // Still said when the order already qualifies; the option says Free.
-    expect(dlNote(dlPage(dlCart(30000))))->toBe('Free delivery over AED 199');
+    expect(dlNote(dlPage(dlCart(30000))))->toBe('Free express delivery over AED 199');
+});
+
+it('says "express" by default, and the package moves only the old shipped wording, never his own (Lane QK8)', function () {
+    /*
+     * The owner: "in the Delivery heading, include Express word, so it will be
+     * Free express delivery over AED 199 and give control on backend too."
+     * Before, the line read "Free delivery over AED 199".
+     *
+     * MUTATION: put the old DL_NOTE back, or drop the dl_note move from the
+     * migration, and this is red; move a value that is NOT the old default
+     * and the last expectation is.
+     */
+    expect(CheckoutPage::DL_NOTE)->toBe('Free express delivery over {amount}')
+        ->and(CheckoutPage::SCHEMA['dl_note'][1])->toBe('Note beside “Delivery” (UAE only)')
+        ->and(CheckoutPage::SCHEMA['dl_note'][3])->toContain('{amount}');
+
+    $migration = base_path('database/migrations/2027_10_16_120000_checkout_plain_payment_boxes_back_arrow_no_whatsapp.php');
+
+    app(CheckoutPage::class)->save(['dl_note' => CheckoutPage::DL_NOTE_OLD, 'dl_note_ar' => CheckoutPage::DL_NOTE_AR_OLD]);
+    (require $migration)->up();
+    \App\Services\SettingsService::forgetMemo();
+    expect(app(CheckoutPage::class)->get('dl_note'))->toBe(CheckoutPage::DL_NOTE)
+        ->and(app(CheckoutPage::class)->get('dl_note_ar'))->toBe(CheckoutPage::DL_NOTE_AR)
+        ->and(dlNote(dlPage(dlCart(10000))))->toBe('Free express delivery over AED 199');
+
+    app(CheckoutPage::class)->save(['dl_note' => 'Free shipping above {amount}']);
+    (require $migration)->up();
+    \App\Services\SettingsService::forgetMemo();
+    expect(app(CheckoutPage::class)->get('dl_note'))->toBe('Free shipping above {amount}');
 });
 
 it('reads the amount from the UAE zone\'s free-delivery minimum, and draws nothing without one', function () {
     // MUTATION: type 199 into the wording instead of {amount} and this is red.
     $this->free->update(['min_amount' => 25000]);
-    expect(dlNote(dlPage(dlCart(10000))))->toBe('Free delivery over AED 250');
+    expect(dlNote(dlPage(dlCart(10000))))->toBe('Free express delivery over AED 250');
 
     $this->free->delete();
     expect(dlNote(dlPage(dlCart(10000))))->toBe('HIDDEN');
@@ -210,7 +239,7 @@ it('says both in Arabic on /ar/', function () {
     ArabicShop::on();
     $html = dlPage(dlCart(10000), '/ar/checkout');
     expect(dlLabels($html)[0])->toStartWith('توصيل سريع | ')
-        ->and(dlNote($html))->toStartWith('توصيل مجاني للطلبات فوق ');
+        ->and(dlNote($html))->toStartWith('توصيل سريع مجاني للطلبات فوق ');
 
     $free = dlPage(dlCart(30000), '/ar/checkout');
     expect($free)->toContain('<span class="co-dl-t">توصيل سريع مجاني</span>');

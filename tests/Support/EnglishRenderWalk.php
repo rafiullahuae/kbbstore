@@ -2467,6 +2467,22 @@ KBB_BH_CSS;
     {
         return [
             /*
+             * THE "← CHECKOUT" HEADING AT THE TOP. (Lane QK8) The owner: "i
+             * want the summary section the checkout page heading. and the icon
+             * i want beside left side of Checkout heading". The title block
+             * leaves the left column (its removal of the same name) and opens
+             * the grid, with the round back arrow to the cart before the h1
+             * (Appearance -> Checkout page -> Back to shop & cart -> "Back
+             * arrow beside the Checkout heading", ON as asked). Cut whole; the
+             * h1 and the lead inside it are the same bytes as before, and
+             * CheckoutQk8Test pins the block. Once, on the basket
+             * checkout.
+             */
+            'the checkout\'s heading block at the top of the grid, with its back arrow (Lane QK8)' => [
+                'pattern' => '#        <div class="co-grid">\n\n\K            <div class="co-titlebar">\n.*?\n            </div>\n\n#s',
+                'hits' => 1,
+            ],
+            /*
              * THE JOURNAL'S INDEX IN THE BRAND PAGE'S DESIGN.          (Lane PH)
              *
              * The owner, 9 October: "i want the same header style, which we
@@ -2690,7 +2706,12 @@ KBB_BH_CSS;
                 'pattern' => '~<div class="kbt-z" style="--q:1;--y:50;--c1:#FFE1EA;--c2:#FFF0D9;--c3:#E2F6EA">'
                     .'<a class="kbt" href="[^"]*" target="_blank" rel="noopener" aria-label="24/7 Support · Chat with us on WhatsApp">'
                     .'<span class="kbt-i"><svg class="kbw-i"[^>]*>.*?</svg></span><span class="kbt-l">24/7 Support</span></a></div>\n~s',
-                'hits' => 3,
+                // 3 -> 0 (Lane QK8): "the whatsapp floating button should be
+                // turn off on cart and checkout completely" -- those three
+                // pages now print nothing of the module, tab included.
+                // CheckoutQk8Test pins it; switched back on, the
+                // tab is exactly this (WhatsAppButtonTabTest).
+                'hits' => 0,
             ],
 
             /*
@@ -2721,7 +2742,9 @@ KBB_BH_CSS;
                 // 37: every storefront document the walk renders — the same
                 // set the Outfit faces reach (Lane PLC's 37): the 33 that draw
                 // the store layout and the four that carry their own <html>.
-                'hits' => 35, // 37 -> 35 (Lane BH): the journal and an article are on the layout now, and their chrome is cut whole by the first rule in this list.
+                // 35 -> 32 (Lane QK8): off on the cart (with a basket and empty)
+                // and the checkout, as the owner asked.
+                'hits' => 32, // 37 -> 35 (Lane BH): the journal and an article are on the layout now, and their chrome is cut whole by the first rule in this list.
             ],
 
             /*
@@ -3680,8 +3703,10 @@ KBB_BH_CSS;
              * the owner (Lane QK6). The walk's basket is a UAE one with a
              * free-delivery minimum, so the line is drawn, once.
              */
+            // Lane QK8: "include Express word, so it will be Free express
+            // delivery over AED 199" -- the shipped wording moved.
             'the checkout\'s "Free delivery over" line beside Delivery (Lane QK6)' => [
-                'pattern' => '#(?<= Delivery)<span class="co-dnote" id="kbbDeliveryNote">Free delivery over <span class="woocommerce-Price-amount amount" dir="ltr">.*?</span></span>(?=</h2>)#',
+                'pattern' => '#(?<= Delivery)<span class="co-dnote" id="kbbDeliveryNote">Free express delivery over <span class="woocommerce-Price-amount amount" dir="ltr">.*?</span></span>(?=</h2>)#',
                 'hits' => 1,
             ],
             'the checkout\'s Shipping Details: Full name, then Phone (Lane QK6)' => [
@@ -4281,6 +4306,15 @@ KBB_BH_CSS;
             'the checkout\'s free-delivery bar in both order blocks, off as asked (Lane QK7)' => [
                 'pattern' => '#(?<=<div class="kbb-freeship-slot">\n    )<div class="freebar [^"]*">\n.*?\n</div>\n(?=</div>)#s',
                 'hits' => 2,
+            ],
+            /*
+             * The checkout's title block, out of the left column: the pair of
+             * the insertion of the same name (Lane QK8). Once. LAST, so the
+             * two QK6 removals above (the back links inside it) have run.
+             */
+            'the checkout\'s heading block at the top of the grid, with its back arrow (Lane QK8)' => [
+                'pattern' => '#            <div>\n\K                <div class="co-titlebar">\n.*?\n                </div>\n\n#s',
+                'hits' => 1,
             ],
         ];
     }

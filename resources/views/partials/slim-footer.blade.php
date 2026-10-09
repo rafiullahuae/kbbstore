@@ -27,6 +27,9 @@
 @php
     $sf = app(\App\Services\SlimFooter::class);
     $sfC = $sf->all();
+    foreach (['l1_text', 'l2_text', 'l3_text'] as $sfK) {
+        $sfC[$sfK] = $sf->label($sfC[$sfK]);
+    }
 
     // Drawn once each, rather than asked for four times inside the markup.
     $sfPhoneUrl = $sfC['phone'] !== '' ? $sf->url($sfC['phone_url']) : null;
