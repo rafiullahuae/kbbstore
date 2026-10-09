@@ -712,7 +712,8 @@
   .kc-cch{font-size:11.5px;line-height:1.55;color:var(--muted);margin:0 0 8px}
   .kc-cc{position:relative;display:inline-block;font:inherit;font-weight:700;letter-spacing:.04em;line-height:1.35;color:var(--pink-deep);background:var(--pink-soft);border:1px dashed #f0b9cf;border-radius:99px;padding:0 7px;margin:0 1px;cursor:pointer;vertical-align:baseline}
   .kc-cc:hover{border-color:var(--pink-deep)}
-  .kc-cc.is-done::after{content:attr(data-done);position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:10.5px;font-weight:600;letter-spacing:0;padding:2px 8px;border-radius:6px;white-space:nowrap;pointer-events:none}
+  [dir="rtl"] .kc-cc.is-done::after{transform:translateX(50%)}
+  .kc-cc.is-done::after{content:attr(data-done);position:absolute;bottom:calc(100% + 5px);inset-inline-start:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:10.5px;font-weight:600;letter-spacing:0;padding:2px 8px;border-radius:6px;white-space:nowrap;pointer-events:none}
 
   /* ===== BANNERS MODULE — hero slider ===== */
   .heroslider{position:relative;overflow:hidden;background:var(--cream)}

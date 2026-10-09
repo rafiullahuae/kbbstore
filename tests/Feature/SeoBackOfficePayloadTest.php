@@ -72,6 +72,11 @@ use Tests\Support\KeyOrder;
  * KBB_S7_RECORD=1, and the diff was read: each category gains `listed_count`
  * and `sub_products` (null), the categories body gains `sub_products_default`,
  * and nothing else moved.
+ *
+ * ▲ 2.60.452 re-recorded it again (KBB_S7_RECORD=1) and the diff was read: the
+ * settings body gains the six social_* keys, resolved to the values the shop
+ * uses, so SEO & Meta -> Social profiles can no longer open blank and save
+ * '' over the live profiles. Nothing else moved.
  */
 function s7PayloadUrls(): array
 {

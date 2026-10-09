@@ -19,7 +19,13 @@
             "checkout_authentic_text": "100% authentic",
             "product_authentic_text": "100% authentic",
             "reassure_auth_text": "100% authentic K-beauty",
-            "anno_authentic_text": "100% authentic K-beauty"
+            "anno_authentic_text": "100% authentic K-beauty",
+            "social_instagram": "https://www.instagram.com/kbeauty.bliss/",
+            "social_tiktok": "https://www.tiktok.com/@kbeauty.bliss",
+            "social_facebook": "https://www.facebook.com/kbeautyblissuae",
+            "social_youtube": "",
+            "social_pinterest": "",
+            "social_linkedin": ""
         },
         "title_template_basis": {
             "label": "Title template",
