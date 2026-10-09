@@ -281,3 +281,22 @@ it('draws the homepage card on one device when asked, and nowhere when off', fun
     tsSet('ts_home', 'off');
     expect(tsShapes($this->get('/')->assertOk()->getContent()))->toBe([]);
 });
+
+/*
+ * 2.60.458. The homepage card shrank to the width of its words on the live
+ * shop (318px of a 390px phone, the four items crushed together) because the
+ * owner's homepage uses a custom section order, and HomepageSections::
+ * orderStyle() turns .kbb-home into a flex column: in a flex column the
+ * strip's `margin:0 auto` shrinks it to its content. The test shop kept the
+ * default order, a plain block, so every shot looked right. Measured in
+ * Chromium with the order style on: 318 -> 390 px at 390, 657 -> 1280 at 1280.
+ * Take `width:100%` out of the rule and this is red.
+ */
+it('keeps the strip full width when the homepage sections are reordered', function () {
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
+
+    expect(preg_match('/^\.ktr\{([^}]*)\}/m', $css, $m))->toBe(1)
+        ->and($m[1])->toContain('width:100%')
+        ->and($m[1])->toContain('box-sizing:border-box')
+        ->and($m[1])->toContain('margin:0 auto');
+});
