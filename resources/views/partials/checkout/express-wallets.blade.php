@@ -128,7 +128,14 @@
      */
     $kbbStripeLocale = \App\Support\StripeLocale::current();
 @endphp
-@if (($kbbApplePay || $kbbGooglePay) && $kbbWalletAmount > 0)
+{!! request()->query('kbbdiag') === '1' ? view('partials.checkout.wallet-diag', ['kbbWalletDiagServer' => [
+    'row_drawn' => ($kbbApplePay || $kbbGooglePay) && $kbbWalletAmount > 0,
+    'card_gateway_offered' => $kbbStripeOnOffer,
+    'apple_pay_offered' => $kbbApplePay,
+    'google_pay_offered' => $kbbGooglePay,
+    'amount_fils' => $kbbWalletAmount,
+    'currency' => 'aed',
+]])->render() : '' !!}@if (($kbbApplePay || $kbbGooglePay) && $kbbWalletAmount > 0)
 {{-- INVISIBLE UNTIL STRIPE SAYS A WALLET IS THERE. Both nodes carry the hook the
      script removes them by, so a browser with no wallet is left with the
      payment list exactly as it was before this round.
@@ -158,6 +165,9 @@
   var DIVIDER = document.querySelector('[data-kbb-express-divider]');
 
   if (!FORM || !ROW) return;
+
+  /* ?kbbdiag=1 only (partials/checkout/wallet-diag); null on every other load. */
+  var DIAG = window.kbbWalletDiag || null;
 
   var PK          = @json($kbbStripe->publishableKey());
   /* See stripe-elements for why this is set on the Stripe object as well as on
@@ -190,7 +200,8 @@
 
   /* ------------------------------------------------------------- the row */
 
-  function gone() {
+  function gone(why) {
+    if (DIAG) { DIAG.gone(ROW, DIVIDER, why || 'unknown'); return; }
     /* REMOVED, not hidden. A hidden row leaves a gap in the grid and a
        divider announcing a thing that is not there; and `hidden` can be
        overridden by a stylesheet, while a node that is not in the document
@@ -200,6 +211,7 @@
   }
 
   function show() {
+    if (DIAG) { DIAG.shown(); }
     /* Everything the pending state put on, taken off: the row is in the flow
        at its natural height, visible and readable. (Lane WL.) */
     ROW.removeAttribute('data-kbb-express-pending');
@@ -365,15 +377,16 @@
      * assumed automatic payment methods would disagree with it at confirm
      * time. If one of the two ever changes, both change.
      */
-    elements = stripe.elements({
+    var groupOptions = {
       mode: 'payment',
       amount: amount,
       currency: 'aed',
       paymentMethodTypes: ['card'],
       locale: LOCALE
-    });
+    };
+    elements = stripe.elements(groupOptions);
 
-    var ece = elements.create('expressCheckout', {
+    var eceOptions = {
       /*
        * 'never' is not the same as leaving one out. It tells Stripe not to
        * offer that wallet even where the browser has it, which is what makes
@@ -396,14 +409,17 @@
          matters here: the row sits directly above the payment options, and a
          collapsed overflow menu there reads as a third payment method. */
       layout: { maxColumns: 2, maxRows: 1, overflow: 'never' }
-    });
+    };
+    if (DIAG) { DIAG.boot(PK, groupOptions, eceOptions); }
+    var ece = elements.create('expressCheckout', eceOptions);
 
     ece.on('ready', function (event) {
+      if (DIAG) { DIAG.ready(event); }
       var available = event && event.availablePaymentMethods;
 
       /* THE GATE. No wallet on this browser, no row on this page. */
       if (!available || (!available.applePay && !available.googlePay)) {
-        gone();
+        gone('Stripe\'s ready event listed no Apple Pay or Google Pay');
         return;
       }
 
@@ -413,7 +429,10 @@
 
     /* Stripe could not draw it — a blocked domain, a wallet that disappeared,
        a network that went away. Same answer as no wallet at all. */
-    ece.on('loaderror', function () { gone(); });
+    ece.on('loaderror', function (event) {
+      if (DIAG) { DIAG.loadError(event); }
+      gone('Stripe reported loaderror');
+    });
 
     /*
      * PRESSED, BEFORE THE SHEET OPENS.
@@ -646,13 +665,16 @@
    * button is the one outcome this file exists to prevent, and "Stripe never
    * loaded" is simply another way to arrive at it.
    */
+  var waitStart = Date.now();
+
   function waitForStripe(attempts) {
     if (typeof window.Stripe === 'function') {
-      try { boot(); } catch (e) { gone(); }
+      if (DIAG) { DIAG.stripe(Date.now() - waitStart); }
+      try { boot(); } catch (e) { gone('boot threw: ' + (e && e.message)); }
       return;
     }
 
-    if (attempts <= 0) { gone(); return; }
+    if (attempts <= 0) { gone('Stripe.js never loaded'); return; }
 
     setTimeout(function () { waitForStripe(attempts - 1); }, 250);
   }
