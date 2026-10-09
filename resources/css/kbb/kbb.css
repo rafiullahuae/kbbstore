@@ -5120,6 +5120,36 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
    THE SHINE sweeps left → right; under [dir="rtl"] it runs its mirror-image
    keyframes, so the Arabic shop's sweeps right → left. No JavaScript. */
 footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;overflow:hidden;font-size:14px;line-height:1.5}
+/* ══ SPACE ABOVE THE FOOTER (Lane QK4) ══════════════════════════════════════
+   Appearance → Footer → Site footer · layout desktop / mobile → "Space above
+   the footer (every page)". The owner, 9 October: "I need the space controls
+   above footer globally".
+
+   Until he picks a number NOTHING HERE MATCHES: the class and the property are
+   printed only then (SiteFooter::presentation() for this design, aboveAttr()
+   for the previous one), so every page keeps the space it has today — and
+   those differ, which is why one control needs more than a margin. Measured
+   in Chromium: product 34px, shop / category / brand 60px, blog 56px, an
+   article 47px, home 46px, a policy page 69px, all of it the BOTTOM PADDING of
+   the page's own last wrapper, set by its own stylesheet.
+
+   With a number set, the footer's margin IS the gap: the trailing padding of
+   each page type's last unpainted wrapper below is taken out, and the footer
+   sits that many pixels under the last section. A last section with a ground
+   of its own (the account page, search, 404, a tinted home section) keeps its
+   padding, because that space is inside its colour, not above the footer.
+   Every path starts at `#content>` so it reaches only the page's own outer
+   wrapper (`.shop` alone also names the cards' hover button), and the id
+   out-specifies kbb-shop.css / kbb-product.css, which load after this file
+   (:is() takes its most specific argument's weight). `body:has(>footer…)` looks only at <body>'s own children. No script. */
+@media (min-width:901px){
+  body>footer.kft-sa-d{margin-top:var(--kft-sa-d)}
+  body:has(>footer.kft-sa-d) :is(#content>.shop,#content>.brw,#content>.pdp-page>:last-child,#content>.kbb-journal>.wrap:last-child,#content>.kbb-journal>.wrap:last-child>.grid:last-child,#content>.kbb-home>.sec:last-child:not([class*="hs-bg-"]:not(.hs-bg-none)),#content>.kbb-home>.sec:last-child:not([class*="hs-bg-"]:not(.hs-bg-none))>.wrap,#content>.kbb-home>.sec:last-child>.wrap>.policy:last-child){padding-bottom:0;margin-bottom:0}
+}
+@media (max-width:900px){
+  body>footer.kft-sa-m{margin-top:var(--kft-sa-m)}
+  body:has(>footer.kft-sa-m) :is(#content>.shop,#content>.brw,#content>.pdp-page>:last-child,#content>.kbb-journal>.wrap:last-child,#content>.kbb-journal>.wrap:last-child>.grid:last-child,#content>.kbb-home>.sec:last-child:not([class*="hs-bg-"]:not(.hs-bg-none)),#content>.kbb-home>.sec:last-child:not([class*="hs-bg-"]:not(.hs-bg-none))>.wrap,#content>.kbb-home>.sec:last-child>.wrap>.policy:last-child){padding-bottom:0;margin-bottom:0}
+}
 .kft a{text-decoration:none}
 .kft-wrap{max-width:var(--site-max,1320px);margin-inline:auto;padding-inline:var(--site-gutter,16px)}
 .kft-help{color:#fff;background:linear-gradient(110deg,var(--kft-from,#E0567B),var(--kft-c2,#C13E63),var(--kft-c3,#E23A4E),var(--kft-to,#D9603B),var(--kft-c3,#E23A4E),var(--kft-c2,#C13E63),var(--kft-from,#E0567B));

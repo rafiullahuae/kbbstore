@@ -662,7 +662,12 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // recorded tabs keep their positions and bytes. The coupon list itself is
     // the payload's own `coupons` key, which depends on the shop's rows and is
     // not recorded here.
-    expect($compared)->toBe(744, 'the number of controls drawn changed');
+    // 740 -> 742 (Lane QK4): Appearance -> Footer -> Site footer · Desktop /
+    // Mobile -> Spacing -> "Space above the footer (every page)", `site_d_above`
+    // and `site_m_above`, Auto ('') as shipped. Spliced into the slim-footer
+    // entry before `site_d_pt` / `site_m_pt`, where SiteFooter::TABS puts them;
+    // two objects inserted, nothing else touched.
+    expect($compared)->toBe(746, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

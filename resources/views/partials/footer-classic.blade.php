@@ -1,6 +1,6 @@
 @php use App\Support\Url; @endphp
 
-<footer><div class="wrap">
+<footer{!! app(\App\Services\SiteFooter::class)->aboveAttr() !!}><div class="wrap">
     <div class="fcols">
         <div class="fcol">
             <div class="logo" style="font-size:24px;margin-bottom:12px"><bdi>K-Beauty<span>Bliss</span></bdi></div>
