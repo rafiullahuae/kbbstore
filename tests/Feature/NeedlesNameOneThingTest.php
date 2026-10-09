@@ -326,7 +326,8 @@ it('keeps the repaired assertions naming the element they are about', function (
 const KBB_ELEMENT_ANCHORED_R6 = [
     'tests/Feature/PostUrlTest.php' => [
         ['<h1>Heartleaf extract: transforming K-beauty skincare</h1>', 2],
-        ['<div class="ey">The Glow Journal</div>', 1],
+        // Lane PH: the Journal index's h1 now sits in the brand-design page header.
+        ['id="brw-ph-title">Skincare tips &amp; the K-beauty edit</h1>', 1],
     ],
     'tests/Feature/ConcernCollectionsTest.php' => [
         ['<h1>Korean skincare for acne-prone skin <span class="cnt">', 2],
@@ -356,7 +357,8 @@ const KBB_ELEMENT_ANCHORED_R6 = [
     ],
     'tests/Feature/StorefrontReadsTranslationsTest.php' => [
         ['<h1 class="bb-title" id="bbTitle">', 4],
-        ['<h1>About Us</h1>', 1],
+        // Lane PH: the page's one h1 is the brand-design page header's.
+        ['id="brw-ph-title">About Us</h1>', 1],
         ['<span class="kbb-card-nm">', 1],
         ['bb-desc">', 1],
     ],
