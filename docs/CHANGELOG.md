@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.451
+**Logo D (lotus lockup) on every page, search that understands spelling mistakes, and
+social profiles editable from Appearance -> Footer.** Apply after .450. Runs its migrations.
+Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "option D is fine, but make sure it's crisp clear" + "no logo should cut in mobile header ... give control of size, outer spacing" + "must not come in two lines" + "i liked the icon big beside the title and text" | The lotus lockup: big icon beside K-BEAUTY BLISS (always one line) with "Korean Skincare & Makeup" under the name; on phones the same layout, tagline from 375px wide, name alone on the smallest phones. Gentle shine every 7 s, stops for reduced motion. Appearance -> Header -> Logo: style (Lotus lockup / Text only as before), sizes for phone and computer, icon size, gaps, outer spacing, tagline on/off and text, "Tagline on phones", petal colours, animation, shine timing |
+| "if user search anything with wrong spell, like Medicube > Medicob ... auto detect ... our mostly ladies are arabic" | Search corrects small mistakes and Arabic-letter brand names (Medicob -> Medicube, ميديكيوب -> Medicube, cosrex -> COSRX, somebymi -> Some By Mi) and says "Showing results for ...". Only runs when a search finds nothing, so normal searches are as fast as before. Store -> Site Search -> Spelling mistakes |
+| "we don't have any social profiles anywhere" | Appearance -> Footer -> Social profiles: Instagram, TikTok, Facebook, YouTube, Pinterest, LinkedIn - the same links as Store -> SEO & Meta, shown in the footer icons, the Contact page and emails. Only real web addresses are accepted |
+
+Files: see the package's update.json.
+
 ## 2.60.450
 **Analytics: a live Realtime board in the admin and the owner app, and every order shows
 where it came from.** Apply after .449. Runs its migrations. Hard refresh the admin.
