@@ -250,6 +250,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // carries the lockup's 20 controls around the five wordmark ones, in
     // TABS order; its description names them, and `logo_size` ("Wordmark
     // size") gained help saying it is the computer name size in both styles.
+    // ▲ Lane QK2 (9 October) added `socials` to slim-footer beside its tabs
+    // and changed nothing else: the six global social_* addresses Appearance →
+    // Footer → Social profiles edits (saved through PUT admin-api/settings, not
+    // this endpoint), here at the shop's fallbacks, editable for the owner.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();

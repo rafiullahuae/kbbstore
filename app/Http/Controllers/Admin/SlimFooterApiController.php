@@ -12,6 +12,11 @@ use App\Services\SettingsService;
 use App\Services\SlimFooter;
 use App\Support\FooterPages;
 use App\Support\FooterPreviewSettings;
+use App\Support\AdminCapabilities;
+use App\Support\AdminRoles;
+use App\Support\SocialProfiles;
+use App\Models\AdminUser;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -79,7 +84,41 @@ class SlimFooterApiController extends Controller
             'squeeze' => SlimFooter::SQUEEZE,
             'pages' => FooterPages::pages(),
             'shared' => FooterPages::shared(),
+            'socials' => $this->socials(),
         ]);
+    }
+
+    /**
+     * Social profiles (Lane QK2): the GLOBAL `social_*` keys, not footer
+     * copies, shown here because the footer is where their icons are drawn.
+     *
+     * Read only on this endpoint. The screen saves them through PUT
+     * admin-api/settings — the door Store → SEO & Meta already uses, under its
+     * own capability — so `editable` asks that exact route's capability rather
+     * than restating it. A role holding `slimfooter.manage` but not that one
+     * sees the addresses (they are printed on every shop page anyway) and gets
+     * read-only boxes; the save itself is refused by EnforceAdminCapability
+     * whatever the screen draws.
+     *
+     * @return array{fields: list<array{key:string,label:string,placeholder:string,hint:string,value:string}>, editable: bool, max: int}
+     */
+    private function socials(): array
+    {
+        $values = SocialProfiles::values(app(SettingsService::class));
+        $fields = [];
+
+        foreach (SocialProfiles::FIELDS as $key => [$label, $placeholder, $hint]) {
+            $fields[] = ['key' => $key, 'label' => $label, 'placeholder' => $placeholder, 'hint' => $hint, 'value' => $values[$key]];
+        }
+
+        $admin = Auth::guard('admin')->user();
+
+        return [
+            'fields' => $fields,
+            'editable' => $admin instanceof AdminUser
+                && AdminRoles::can($admin, AdminCapabilities::forPath('PUT', 'admin-api/settings')),
+            'max' => SocialProfiles::MAX,
+        ];
     }
 
     public function save(Request $request): JsonResponse
