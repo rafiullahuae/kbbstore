@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.459
+**Checkout: coupon box tidied, equal gaps between sections, footer links last, Express checkout under the coupon, "Sign in" window.** Apply after .458.
+Runs its migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "remove the icon + text Have a discount code? from the coupon box" | Gone; the coupon still applies. Appearance -> Checkout page -> Coupon, express & sign in -> Show "Have a discount code?" (Off) |
+| "spacing between the Delivery block and Payment block ... increase that as like space between others and give proper controls" | Every gap between sections now follows "Space between blocks" (at 28: 17 -> 29 px). Appearance -> Checkout page -> Desktop / Mobile · Layout -> "Gaps between sections follow Space between blocks" (On) |
+| "move the privacy etc row to the end after payments icon with a grey line seperator ... 30px space inside the top padding" | Policy links are the last row under a thin grey line; 30 px above the logo. Appearance -> Footer -> Shape & size -> "Where the policy links sit", "Padding inside the top"; Footer -> On a phone -> "Padding inside the top, on a phone" |
+| "bring the apple google pay row ... right after the coupon box ... Express checkout grey heading ... OR with a nice seperator" | Under the coupon box, with the heading and OR line shown only when the phone really offers Apple Pay or Google Pay. Heading text: Appearance -> Checkout page -> Coupon, express & sign in -> Express checkout heading (EN / AR) |
+| "Sign in text on the right side of the Contact block title ... popup with the quick login form ... forgot password ... green tick and close" | Guests see "Sign in" on the Contact bar; the window signs in with the shop's own login (lockouts kept), switches to Forgot password and back, fills name, email, phone and address, shows a green tick and closes. No create-account option. Appearance -> Checkout page -> Coupon, express & sign in -> "Sign in" beside the Contact heading (On) |
+
+Browser walk at 390 and 1280: 73 checks, all pass, including a real sign-in through the window followed by a cash-on-delivery order (no 419, no console errors). Checkout queries 10 -> 10.
+
 ## 2.60.458
 **Hotfix: the homepage trust strip full width again.** Apply after .457. No migrations.
 
