@@ -1,0 +1,26 @@
+[
+    {
+        "n": 1,
+        "what": "routes/web.php: the Meta and TikTok catalog feeds, inside the session-less crawl-file group, right after the Google feed (Lane MP)",
+        "file": "routes/web.php",
+        "anchor": "    require __DIR__.'/merchant-feed.php';\n",
+        "count": 1,
+        "replacement": "    require __DIR__.'/merchant-feed.php';\n\n    // Meta and TikTok catalog feeds (Lane MP): /feeds/meta-catalog.xml and\n    // /feeds/tiktok-catalog.xml, the Google feed's builder with the ids the pixels send.\n    require __DIR__.'/marketing-catalog-feeds.php';\n"
+    },
+    {
+        "n": 2,
+        "what": "routes/web.php: Marketing Pixels Connect, checks, Meta login and Custom code, inside the guarded admin-api group, after the module's own two routes (Lane MP)",
+        "file": "routes/web.php",
+        "anchor": "        Route::post('/marketing-pixels', [\\App\\Http\\Controllers\\Admin\\MarketingPixelsApiController::class, 'save']);\n",
+        "count": 1,
+        "replacement": "        Route::post('/marketing-pixels', [\\App\\Http\\Controllers\\Admin\\MarketingPixelsApiController::class, 'save']);\n        // Connect wizards, checks, Last events, Connect with Facebook, Custom code (Lane MP).\n        // marketing.pixels.connect (owner, manager); custom code marketing.customcode (owner).\n        require __DIR__.'/marketing-pixels-connect-admin.php';\n"
+    },
+    {
+        "n": 3,
+        "what": "console: include the Connect / Custom code / Last events / Guide tabs, after the eye-button guide it wraps around (Lane MP)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "@include('admin.partials.marketing-pixels-guide')\n",
+        "count": 1,
+        "replacement": "@include('admin.partials.marketing-pixels-guide')\n{{-- Marketing Pixels tabs: Meta / Google / TikTok Connect wizards, Custom code,\n     Last events, Guide (Lane MP). Wraps window.paintPixels after the guide does.\n     Endpoints: routes/marketing-pixels-connect-admin.php. --}}\n@include('admin.partials.marketing-pixels-connect')\n"
+    }
+]

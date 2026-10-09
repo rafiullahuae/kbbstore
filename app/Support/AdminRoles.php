@@ -219,6 +219,8 @@ final class AdminRoles
             'push.view' => 'See push notification campaigns, reports and subscriber analytics',
             'push.send' => 'Send, schedule and test push notifications, and change their automations and rules',
             'marketing.feed' => 'Google Shopping feed: see its address and switch it on or off',
+            'marketing.pixels.connect' => 'Marketing Pixels: connect Meta, Google and TikTok, paste their tokens and run the checks',
+            'marketing.customcode' => 'Marketing Pixels: custom head, body and footer code on the shop (Full Admin only by default)',
             'carttracking.view' => 'See Cart Tracking',
             'carttracking.block' => 'Block and unblock IP addresses',
         ]],

@@ -616,6 +616,23 @@ final class AdminCapabilities
          */
         'marketing.feed' => ['owner', 'manager'],
 
+        /*
+         * Growth & Marketing -> Marketing Pixels (Lane MP).
+         *
+         *   marketing.pixels.connect  the Meta / Google / TikTok Connect tabs:
+         *                             paste and replace platform tokens (shown
+         *                             back masked), run the Check buttons, the
+         *                             Connect-with-Facebook login, and read the
+         *                             Last events panel. Owner and manager, the
+         *                             same people who run the marketing.
+         *   marketing.customcode      the Custom code tab: raw script printed on
+         *                             every shop page. OWNER ONLY — the one place
+         *                             owner-supplied HTML reaches the shop, so no
+         *                             preset below Full Admin carries it.
+         */
+        'marketing.pixels.connect' => ['owner', 'manager'],
+        'marketing.customcode' => ['owner'],
+
         // Delivery rates and the pay/ship rules: a manager's job, not a
         // configuration change.
         'store.shipping' => ['owner', 'manager'],
@@ -1941,6 +1958,11 @@ final class AdminCapabilities
         ['GET', 'admin-api/outbound/**', 'marketing.view'],
         ['GET', 'admin-api/newsletter/export', 'marketing.export'],
         ['*', 'admin-api/newsletter', 'marketing.manage'],
+        // Marketing Pixels (Lane MP). Custom code FIRST: `/**` below would
+        // otherwise match it and hand raw shop script to a manager.
+        ['*', 'admin-api/marketing-pixels/custom-code', 'marketing.customcode'],
+        ['*', 'admin-api/marketing-pixels/custom-code/**', 'marketing.customcode'],
+        ['*', 'admin-api/marketing-pixels/**', 'marketing.pixels.connect'],
         ['*', 'admin-api/marketing-pixels', 'marketing.manage'],
         /*
          * Reading a coupon, its usage report and the product/category lookup
