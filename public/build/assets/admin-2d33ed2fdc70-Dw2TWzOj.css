@@ -54,6 +54,8 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
 .mke-layer .dz{position:absolute;left:0;right:0;height:50%;display:none;z-index:2}
 .mke-layer .dz.top{top:0}.mke-layer .dz.bot{top:50%}
 .mke-dragging .mke-layer .dz{display:block}
+.mke-plist .dz{position:absolute;left:0;right:0;height:50%;display:none;z-index:2}.mke-plist .dz.top{top:0}.mke-plist .dz.bot{top:50%}
+.mke-dragging .mke-plist .dz{display:block}
 .mke-layer.drop-before{box-shadow:0 -3px 0 #3f6fe0}
 .mke-layer.drop-after{box-shadow:0 3px 0 #3f6fe0}
 .mke-ghost{position:fixed;z-index:9999;pointer-events:none;background:#3f6fe0;color:#fff;font-size:12px;font-weight:700;padding:6px 10px;border-radius:8px;box-shadow:0 8px 20px rgba(16,24,40,.25);left:0;top:0}
@@ -94,6 +96,21 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
 .mke-toggle{display:flex;align-items:center;gap:10px;font-size:13px;margin:0 0 12px;cursor:pointer}
 .mke-toggle input{width:18px;height:18px}
 .mke-pp{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 0}
+/* Lane EC: the hand-picked products, in the order the email prints them. */
+.mke-plist{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}
+.mke-plist li{position:relative;display:flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:9px;padding:5px 6px;background:var(--surface);font-size:12.5px;min-width:0}
+.mke-plist li .n{flex:1;min-width:0;line-height:1.3;overflow-wrap:anywhere}
+.mke-plist li i{font-style:normal;min-width:18px;height:18px;border-radius:9px;background:var(--surface-3);font-size:10.5px;text-align:center;line-height:18px;color:var(--ink-2)}
+.mke-plist li button{border:0;background:var(--surface-3);border-radius:7px;min-width:26px;height:26px;cursor:pointer;font:inherit;color:var(--ink-2)}
+.mke-plist li button:disabled{opacity:.35;cursor:default}
+.mke-plist li .grip{cursor:grab;touch-action:none;background:transparent}
+.mke-plist li.drop-before{box-shadow:0 -2px 0 var(--accent)}.mke-plist li.drop-after{box-shadow:0 2px 0 var(--accent)}
+.mke-mode{display:grid;grid-template-columns:1fr 1fr;background:var(--surface-3);border-radius:11px;padding:3px;margin:0 0 12px}
+.mke-mode button{font:inherit;font-size:13px;font-weight:600;border:0;background:transparent;border-radius:9px;padding:8px 6px;color:var(--ink-soft);cursor:pointer}
+.mke-mode button small{display:block;font-weight:400;font-size:11px;color:var(--ink-faint)}
+.mke-mode button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+.mke-ideas{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px}
+.mke-ideas button{font:inherit;font-size:12px;border:1px dashed var(--border);background:var(--surface);border-radius:99px;padding:4px 10px;cursor:pointer;color:var(--ink-2);text-align:start}
 .mke-pp .p{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:99px;padding:4px 6px 4px 10px;font-size:12px;background:var(--surface)}
 .mke-pp .p button{border:0;background:var(--surface-3);border-radius:99px;width:20px;height:20px;cursor:pointer}
 .mke-res{display:grid;gap:4px;margin-top:6px;max-height:180px;overflow:auto}
