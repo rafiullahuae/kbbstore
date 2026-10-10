@@ -96,9 +96,16 @@ class CatalogProductsApiController extends Controller
 {
     use \App\Support\AggregatesQueries;
 
-    private const PER_PAGE_DEFAULT = 50;
-    private const PER_PAGE_MIN = 10;
-    private const PER_PAGE_MAX = 500;
+    /*
+     * (Lane QK13) THREE PAGE SIZES, BY ALLOWLIST. The owner, 10 October: "keep
+     * 100 by default and fix the 200 to display, and also add 300 selection
+     * too." The screen offers exactly these, and the server answers exactly
+     * these: anything else -- 50 left in a browser from the old picker, 10,
+     * 99999, "abc" -- is 100, so no caller can ask for a page the screen has no
+     * option for.
+     */
+    public const PER_PAGE_CHOICES = [100, 200, 300];
+    private const PER_PAGE_DEFAULT = 100;
 
     /** Hard ceiling on one CSV. A modest host is not a reporting server. */
     private const EXPORT_MAX = 50000;
@@ -2197,10 +2204,6 @@ class CatalogProductsApiController extends Controller
 
     private function clampPerPage(int $requested): int
     {
-        if ($requested <= 0) {
-            return self::PER_PAGE_DEFAULT;
-        }
-
-        return max(self::PER_PAGE_MIN, min(self::PER_PAGE_MAX, $requested));
+        return in_array($requested, self::PER_PAGE_CHOICES, true) ? $requested : self::PER_PAGE_DEFAULT;
     }
 }

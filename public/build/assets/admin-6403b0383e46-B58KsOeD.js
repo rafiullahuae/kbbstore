@@ -7873,7 +7873,14 @@
 
   var CP = {
     page: 1,
-    perPage: +(localStorage.getItem('kbb_cp_pp') || 50),
+    /* (Lane QK13) 100 / 200 / 300 and nothing else, default 100 -- the same
+       allowlist CatalogProductsApiController::PER_PAGE_CHOICES answers. A
+       remembered choice is kept only if it is still one of the three, so a 50
+       or 500 left here by the old picker reads as 100 rather than as a select
+       showing an option it no longer has. Read inside try: a browser with site
+       data blocked throws on localStorage, and the screen must still open. */
+    perPage: (function(){ var n = 0; try{ n = +localStorage.getItem('kbb_cp_pp'); }catch(e){} return [100, 200, 300].indexOf(n) >= 0 ? n : 100; })(),
+    seq: 0,
     search: '', filter: 'all', sort: 'newest',
     brandId: '', categoryId: '', priceMin: '', priceMax: '',
     adv: false, colsOpen: false, cols: null,
@@ -7931,7 +7938,7 @@
     ['featured', 'Featured'], ['set', 'Sets'], ['trashed', 'Trash']
   ];
 
-  var CP_PER_PAGE = [25, 50, 100, 200, 500];
+  var CP_PER_PAGE = [100, 200, 300];
 
   function cpCols(){
     if(CP.cols) return CP.cols;
@@ -8009,9 +8016,22 @@
 
     CP.err = null;
 
+    /* (Lane QK13) ONLY THE LATEST REQUEST MAY PAINT. Two lists can be in
+       flight at once: the owner's own Next or page-size change, and the
+       repaint loadCatalog() triggers when the whole-catalogue request it sent
+       at boot finally answers. Whichever answered LAST used to win, so a slower
+       page-1 answer could land after page 3 and put page 1 back, with the
+       page-size select reset to that answer's size. Each call takes a number;
+       an answer carrying an older one is dropped. */
+    var seq = ++CP.seq;
+    var answer;
+
     try{
-      CP.data = await api('/admin-api/catalog-products-list?' + cpParams(false));
+      answer = await api('/admin-api/catalog-products-list?' + cpParams(false));
+      if(seq !== CP.seq) return;
+      CP.data = answer;
     }catch(e){
+      if(seq !== CP.seq) return;
       /* SAY WHICH FAILURE IT WAS. (Lane SEC) This screen answered every
          refusal with "the routes may not be wired into routes/web.php yet",
          which for an EXPIRED SESSION sends the owner to Store -> Cache to
@@ -8044,9 +8064,11 @@
     if(!CP.facets){
       try{ CP.facets = await api('/admin-api/catalog-products-facets'); }
       catch(e){ CP.facets = {brands: [], categories: []}; }
+      if(seq !== CP.seq) return;
     }
 
     CP.perPage = CP.data.per_page;
+    CP.page = CP.data.page;
     cpPaint();
   }
 

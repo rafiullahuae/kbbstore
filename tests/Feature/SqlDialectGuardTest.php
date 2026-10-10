@@ -1341,6 +1341,16 @@ function catalogProductsGuardFixture(): void
         }
     }
 
+    // (Lane QK13) Enough plain rows that page two is real at the list's
+    // smallest page size, which is now 100 (100 / 200 / 300 by allowlist).
+    // Inserted in one statement: the shape under test is the list's OFFSET, not
+    // how these rows were made.
+    DB::table('products')->insert(array_map(fn ($n) => [
+        'name' => 'CPG Filler '.$n, 'slug' => 'cpg-filler-'.$n.'-'.uniqid(), 'status' => 'publish',
+        'is_visible' => 1, 'type' => 'simple', 'stock_status' => 'instock', 'price' => 1000,
+        'created_at' => now()->subDays(2), 'updated_at' => now(),
+    ], range(1, 100)));
+
     // A status the schema has no concept of, written by the importer this repo
     // replaced. The chips are built from the column, so it gets one.
     DB::table('products')->insert([
@@ -1400,7 +1410,7 @@ it('issues portable SQL on the rebuilt products screen for every sort and chip',
     'brand_id=1',
     'category_id=1',
     'price_min=10&price_max=100',
-    'page=2&per_page=10',
+    'page=2&per_page=100',
 ]);
 
 it('covers every chip the rebuilt products screen offers, not a list written by hand', function () {
@@ -1457,18 +1467,19 @@ it('reports the same counts and summary on every page of the rebuilt products li
     $admin = guardAdmin();
 
     $first = $this->actingAs($admin, 'admin')
-        ->getJson('/admin-api/catalog-products-list?per_page=10&page=1')->assertOk();
+        ->getJson('/admin-api/catalog-products-list?per_page=100&page=1')->assertOk();
 
     $second = $this->actingAs($admin, 'admin')
-        ->getJson('/admin-api/catalog-products-list?per_page=10&page=2')->assertOk();
+        ->getJson('/admin-api/catalog-products-list?per_page=100&page=2')->assertOk();
 
-    // An aggregate returns one row. Skip 10 and there is none, so every tile
+    // An aggregate returns one row. Skip 100 and there is none, so every tile
     // reads zero from page two on — on every driver, while the endpoint still
     // answers 200. That is the bug App\Support\AggregatesQueries exists for.
     expect($second->json('counts'))->toBe($first->json('counts'))
         ->and($second->json('summary'))->toBe($first->json('summary'))
         ->and($second->json('total'))->toBe($first->json('total'))
-        ->and($second->json('total'))->toBeGreaterThan(10)
+        ->and($second->json('total'))->toBeGreaterThan(100)
+        ->and($second->json('page'))->toBe(2)
         ->and($second->json('summary.inventory_fils'))->toBeGreaterThan(0);
 });
 
