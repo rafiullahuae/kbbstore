@@ -353,7 +353,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
       if (S.tab === 'campaigns' && !S.overview) { loading[key] = 1; S.overview = (await api('GET', '/overview')).data; delete loading[key]; paint(); }
       else if (S.tab === 'templates' && !S.templates) { loading[key] = 1; S.templates = (await api('GET', '/templates')).data.templates || []; delete loading[key]; paint(); }
       else if (S.tab === 'groups' && (!S.groups || !S.opts)) { loading[key] = 1; await loadOpts(); S.groups = (await api('GET', '/groups')).data; delete loading[key]; paint(); recount(); }
-      else if (S.tab === 'reports' && !S.reports && !S.report) { loading[key] = 1; S.reports = (await api('GET', '/reports')).data.campaigns || []; delete loading[key]; paint(); }
+      else if (S.tab === 'reports' && !S.reports && !S.report) { loading[key] = 1; var rd = (await api('GET', '/reports')).data; S.reports = rd.campaigns || []; S.reportsOpenTracking = rd.open_tracking; delete loading[key]; paint(); }
     } catch (e) { delete loading[key]; var p = document.getElementById('mkep_main'); if (p) p.innerHTML = '<div class="mke-note">' + esc(why(e)) + '</div>'; }
   }
 
@@ -588,6 +588,8 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
   }
 
   function reportsPanel() {
+    // Lane ER: the full report draws the list when its partial is on the page.
+    if (window.kbbMktReport) return window.kbbMktReport.list(S, { esc: esc, num: num, statusPill: statusPill, base: base() });
     var rows = S.reports.map(function (c) {
       return '<tr class="click" data-mke-r="' + c.id + '"><td><b>' + esc(c.name) + '</b><div class="sub">' + esc(c.subject || '') + '</div></td><td>' + statusPill(c) + '</td><td class="mke-hide-sm">' + esc(c.group || '—') + '</td><td>' + num(c.sent) + '</td><td class="mke-hide-sm">' + (c.orders ? num(c.orders) + ' · ' + esc(c.revenue) : '—') + '</td></tr>';
     }).join('');
@@ -597,6 +599,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
 
   function reportPanel() {
     var r = S.report;
+    if (window.kbbMktReport && r.insights) return window.kbbMktReport.panel(r, { esc: esc, num: num, base: base() });   // Lane ER
     var links = (r.links || []).map(function (l) { return '<tr><td>' + esc(l.label) + '<div class="sub">' + esc(l.url) + '</div></td><td>' + num(l.clicks) + '</td></tr>'; }).join('');
     var fails = (r.failures || []).map(function (f) { return '<tr><td>' + esc(f.email) + '</td><td>' + (f.status === 'failed' ? 'Refused' : 'Skipped') + '</td><td class="mke-hide-sm">' + esc(f.error) + '</td></tr>'; }).join('');
     return '<button type="button" class="mke-back" data-mke="reports">← All reports</button>'

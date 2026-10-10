@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
+use App\Services\Analytics\Tracker;
 use App\Services\Marketing\Blocks;
+use App\Services\Marketing\CampaignLinks;
 use App\Services\Marketing\UnsubscribeToken;
 use App\Support\Url;
 use Illuminate\Http\RedirectResponse;
@@ -84,7 +86,7 @@ final class MarketingEmailController extends Controller
      * all go to the shop's home page. The destination never comes from the
      * request, so no URL anybody types can make this an open redirect.
      */
-    public function click(string $token, string $n): RedirectResponse
+    public function click(Request $request, string $token, string $n): RedirectResponse
     {
         $home = Url::external('/');
         $token = preg_match('/^[0-9a-f]{40}$/', $token) === 1 ? $token : str_repeat('x', 40);
@@ -92,14 +94,18 @@ final class MarketingEmailController extends Controller
 
         $send = DB::table('mkt_sends')->where('token', $token)->first(['id', 'campaign_id', 'first_click_at']);
         $link = $send !== null && $n > 0
-            ? DB::table('mkt_links')->where('campaign_id', $send->campaign_id)->where('n', $n)->first(['id', 'url'])
+            ? DB::table('mkt_links as l')->join('mkt_campaigns as c', 'c.id', '=', 'l.campaign_id')
+                ->where('l.campaign_id', $send->campaign_id)->where('l.n', $n)->first(['l.id', 'l.url', 'c.name'])
             : null;
 
         if ($send === null || $link === null || Blocks::safeUrl((string) $link->url) === null) {
             return redirect()->away($home, 302)->header('Referrer-Policy', 'no-referrer');
         }
 
-        DB::table('mkt_clicks')->insert(['send_id' => $send->id, 'link_id' => $link->id, 'clicked_at' => now()]);
+        // Lane ER: the device of the click (never the user agent itself).
+        $ua = (string) $request->userAgent();
+        DB::table('mkt_clicks')->insert(['send_id' => $send->id, 'link_id' => $link->id, 'clicked_at' => now(),
+            'dev' => Tracker::isBot($ua) ? 'bot' : Tracker::device($ua)]);
 
         if ($send->first_click_at === null) {
             DB::table('mkt_sends')->where('id', $send->id)->whereNull('first_click_at')->update(['first_click_at' => now()]);
@@ -107,7 +113,10 @@ final class MarketingEmailController extends Controller
 
         DB::table('mkt_campaigns')->where('id', $send->campaign_id)->increment('clicks');
 
-        return redirect()->away((string) $link->url, 302)->header('Referrer-Policy', 'no-referrer');
+        // Lane ER: lands with utm_source=email&utm_medium=marketing&utm_campaign=mkt-<id>-…
+        // when the link is the shop's own and does not carry them already.
+        return redirect()->away(CampaignLinks::tag((string) $link->url, (int) $send->campaign_id, (string) $link->name), 302)
+            ->header('Referrer-Policy', 'no-referrer');
     }
 
     /** A picture that ships with the shop, from Blocks::ART only. */

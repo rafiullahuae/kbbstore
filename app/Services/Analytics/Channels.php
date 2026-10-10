@@ -14,7 +14,7 @@ namespace App\Services\Analytics;
  * referrer's domain, utm_source, utm_medium, and WHICH click id the address
  * had (gclid / fbclid / ttclid / msclkid -- the type only, never its value).
  *
- *   1. utm_medium says email           -> Email.
+ *   1. utm_medium or utm_source says email -> Email.
  *   2. The PLATFORM, first match wins: utm_source (SOURCES), then the
  *      referrer domain (HOSTS), then the click id (gclid = Google, ttclid =
  *      TikTok, msclkid = Bing, fbclid = Facebook unless the referrer said
@@ -100,7 +100,9 @@ final class Channels
      */
     public static function classify(string $host, string $source, string $medium, string $click): string
     {
-        if (preg_match('/^(e-?mail|newsletter)$/', $medium)) {
+        // utm_source=email too: the shop's own campaign links say
+        // source=email & medium=marketing (Lane ER, CampaignLinks).
+        if (preg_match('/^(e-?mail|newsletter)$/', $medium) || preg_match('/^(e-?mail|newsletter)$/', $source)) {
             return 'email';
         }
 

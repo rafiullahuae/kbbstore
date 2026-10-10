@@ -80,7 +80,9 @@ it('is the ONLY CSRF-exempt route Marketing Emails adds, listed by its exact pat
     $exempt = [];
 
     foreach (array_merge(MarketingEmailsRoutes::public(), MarketingEmailsRoutes::admin()) as $route) {
-        if (in_array(ValidateCsrfToken::class, $route->excludedMiddleware(), true)) {
+        // A GET is never CSRF-checked; Lane ER's open pixel (GET, no session)
+        // drops the middleware only because it would write a session cookie.
+        if (in_array(ValidateCsrfToken::class, $route->excludedMiddleware(), true) && array_diff($route->methods(), ['GET', 'HEAD']) !== []) {
             $exempt[] = implode('|', array_diff($route->methods(), ['HEAD'])) . ' ' . $route->uri();
         }
     }
@@ -150,14 +152,16 @@ it('redirects a click only to that campaign\'s own link n, and anything else to 
     $link = DB::table('mkt_links')->where('campaign_id', $id)->orderBy('n')->first();
     $home = \App\Support\Url::external('/');
 
-    $this->get("/email/c/{$send->token}/{$link->n}")->assertRedirect($link->url);
+    // Lane ER: a link to the shop lands with its UTM tags (CampaignLinks::tag()).
+    $tagged = \App\Services\Marketing\CampaignLinks::tag($link->url, $id, (string) DB::table('mkt_campaigns')->where('id', $id)->value('name'));
+    $this->get("/email/c/{$send->token}/{$link->n}")->assertRedirect($tagged);
     expect(DB::table('mkt_clicks')->count())->toBe(1)
         ->and(DB::table('mkt_sends')->where('id', $send->id)->value('first_click_at'))->not->toBeNull();
 
     $this->get("/email/c/{$send->token}/999")->assertRedirect($home);
     $this->get('/email/c/' . str_repeat('f', 40) . "/{$link->n}")->assertRedirect($home);
     $this->get('/email/c/not-a-token/1')->assertRedirect($home);
-    $this->get("/email/c/{$send->token}/1?url=https://evil.example/")->assertRedirect($link->url);
+    $this->get("/email/c/{$send->token}/1?url=https://evil.example/")->assertRedirect($tagged);
 
     // Another campaign's link number is not reachable with this token.
     $other = DB::table('mkt_campaigns')->insertGetId(['name' => 'x', 'blocks' => '[]', 'status' => 'sent', 'created_at' => now(), 'updated_at' => now()]);

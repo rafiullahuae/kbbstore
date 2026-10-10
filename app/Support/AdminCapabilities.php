@@ -1925,6 +1925,7 @@ final class AdminCapabilities
         ['POST', 'admin-api/email-marketing/campaigns/*/cancel', 'marketing.email.send'],
         ['POST', 'admin-api/email-marketing/limits', 'marketing.email.send'],
         ['GET', 'admin-api/email-marketing/groups/*/export', 'marketing.export'],
+        ['GET', 'admin-api/email-marketing/reports/*/export', 'marketing.export'],   // Lane ER: a campaign's recipients as CSV
         ['POST', 'admin-api/email-marketing/groups/count', 'marketing.email.view'],
         ['POST', 'admin-api/email-marketing/groups/people', 'marketing.email.view'],
         ['GET', 'admin-api/email-marketing/**', 'marketing.email.view'],
