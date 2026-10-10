@@ -659,6 +659,12 @@ details summary::-webkit-details-marker { display: none; }
 .em-s.sent { box-shadow: inset 0 0 0 1.5px var(--good); }
 .em-s.failed { box-shadow: inset 0 0 0 1.5px var(--warn); }
 
+/* (Lane OL) "Send order link" on a failed or unpaid order. */
+.pl-last { margin: -6px 2px 14px; font-size: 12.5px; }
+.pl-acts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.pl-acts .btn { min-width: 0; justify-content: center; text-decoration: none; }
+.pl-acts .pl-wa { background: #25D366; border-color: #25D366; color: #fff; }
+
 /* ---------------------------------------------- Customise app (Lane OA4)
  * Users & Roles → Owner app → Customise app. Every rule below hangs off a
  * class the app puts on <html> (core.js applyUi) — or, for the font, the

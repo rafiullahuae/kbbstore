@@ -1,0 +1,71 @@
+{
+ "admin-1280": {
+  "button": {
+   "w": 111,
+   "h": 28,
+   "hit": "odPayLinkGo"
+  },
+  "scrollWidth": {
+   "doc": 1280,
+   "view": 1280
+  }
+ },
+ "admin-390": {
+  "button": {
+   "w": 111,
+   "h": 28,
+   "hit": "odPayLinkGo"
+  },
+  "scrollWidth": {
+   "doc": 390,
+   "view": 390
+  }
+ },
+ "owner-390": {
+  "scrollWidth": {
+   "doc": 390,
+   "view": 390
+  }
+ },
+ "owner-1280": {
+  "scrollWidth": {
+   "doc": 1280,
+   "view": 1280
+  }
+ },
+ "pay-1280": {
+  "status": 200,
+  "serverMs": "75.6",
+  "queries": "16",
+  "loadMs": 943,
+  "scrollWidth": {
+   "doc": 1280,
+   "view": 1280
+  },
+  "methods": [
+   "stripe",
+   "cod",
+   "tabby",
+   "tamara"
+  ]
+ },
+ "pay-390": {
+  "status": 200,
+  "serverMs": "41.8",
+  "queries": "16",
+  "loadMs": 824,
+  "scrollWidth": {
+   "doc": 390,
+   "view": 390
+  },
+  "methods": [
+   "stripe",
+   "cod",
+   "tabby",
+   "tamara"
+  ]
+ },
+ "stock": {
+  "stock": 5
+ }
+}

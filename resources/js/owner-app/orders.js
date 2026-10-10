@@ -295,7 +295,8 @@ function paintDetail(host) {
     + '<div class="od-sum"><p class="nm">' + esc(o.customer.name || o.email) + '</p><div class="ln">'
     + (o.can.status ? '<button type="button" class="pill" data-s="' + esc(pillCode(o.status)) + '" data-act="status" aria-label="Change status, now ' + esc(stWord(o.status)) + '">' + esc(stWord(o.status)) + ' ' + ic('edit') + '</button>' : pill(o.status))
     + '<span>' + esc(when(o.created_at)) + '</span></div></div>'
-    + (primary ? '<div class="btns od-act">' + primary + '</div>' : '')
+    + (primary || payLinkOn(o) ? '<div class="btns od-act">' + primary + (payLinkOn(o) ? '<button type="button" class="btn ' + (primary ? 'sec' : 'pri') + '" data-act="paylink">' + ic('link', 's') + 'Send order link</button>' : '') + '</div>' : '')
+    + (payLinkOn(o) && o.pay_link.last ? '<p class="muted pl-last" data-pl-last>' + plLast(o.pay_link.last) + '</p>' : '')
     + '<section class="card"><h4 class="sh">Products <span class="muted">' + o.items.reduce((a, i) => a + i.qty, 0) + ' items</span></h4>'
     + o.items.map((i) => '<' + (i.product_id ? 'a href="#/products/' + i.product_id + '"' : 'div') + ' class="row">' + th(i.thumb) + '<div class="rm"><b class="cl2">' + esc(i.name) + '</b><small>' + (i.variant ? esc(i.variant) + ' · ' : '') + i.qty + ' × ' + esc(i.unit_display) + (i.sku ? ' · ' + esc(i.sku) : '') + '</small></div><div class="re"><b>' + esc(i.total_display) + '</b></div></' + (i.product_id ? 'a' : 'div') + '>').join('') + '</section>'
     + '<section class="card"><h4 class="sh">Payment</h4><div class="kv"><span>Products</span><span>' + esc(t.subtotal) + '</span></div>'
@@ -351,6 +352,7 @@ export async function ordersClick(e, view) {
   if (act === 'setst') { await busy(b, () => setStatus(host, b.getAttribute('data-v'))); return true; }
   if (act === 'note') { noteSheet(host); return true; }
   if (act === 'paid') { paidSheet(host); return true; }
+  if (act === 'paylink') { await busy(b, () => payLinkSheet(host)); return true; }
   return false;
 }
 
@@ -564,6 +566,56 @@ function paidSheet(host) {
       });
     });
   });
+}
+
+/* (Lane OL) "Send order link": a failed or unpaid order handed back to the
+   customer as one signed link, by WhatsApp, email or copy. The server mints it
+   (the same link all day) and writes the order note for each send. */
+const payLinkOn = (o) => !!(o.pay_link && o.pay_link.can && o.pay_link.offered);
+const plLast = (l) => (l ? 'Link last sent: ' + esc(l.label) + ' · ' + esc(l.at_label) + (l.by ? ' · by ' + esc(l.by) : '') : 'Not sent yet.');
+
+async function payLinkSheet(host) {
+  const id = O.id;
+  const r = await api('POST', 'orders/' + id + '/pay-link', { via: '' });
+  if (!r.ok) { toast(r.data.message || 'Could not make the link.', true); return; }
+  const j = r.data;
+  let sent = false;
+  sheet('Send order link', '<p class="hint">The customer opens order #' + esc(O.number) + ' exactly as placed, chooses how to pay and completes this same order. Works until ' + esc(j.expires_label) + '.</p>'
+    + (j.problems.length ? '<p class="alert">Payment is blocked until this is sorted: ' + j.problems.map(esc).join('; ') + '.</p>' : '')
+    + '<label class="fld"><span>Order link</span><span class="inp"><input readonly data-url value="' + esc(j.url) + '"></span></label>'
+    + '<div class="btns pl-acts"><button class="btn sec" type="button" data-pl="copy">' + ic('link', 's') + 'Copy</button>'
+    + '<a class="btn pri pl-wa" data-pl="whatsapp" href="' + esc(j.whatsapp_url) + '" target="_blank" rel="noopener noreferrer">' + ic('chat', 's') + 'WhatsApp</a>'
+    + '<button class="btn sec" type="button" data-pl="email"' + (j.email ? '' : ' disabled') + '>' + ic('mail', 's') + 'Email</button></div>'
+    + (j.has_phone ? '' : '<p class="muted">No number WhatsApp can dial on this order — pick the chat in WhatsApp.</p>')
+    + (j.email ? '<p class="muted">Email goes to ' + esc(j.email) + ' (order email, not marketing).</p>' : '')
+    + '<p class="muted" data-last>' + plLast(j.last) + '</p><p class="alert" data-err hidden></p>', (panel) => {
+    const err = $('[data-err]', panel);
+    const tell = async (via, el) => {
+      const res = await api('POST', 'orders/' + id + '/pay-link', { via });
+      if (!res.ok) { err.hidden = false; err.textContent = res.data.message || 'That did not go through.'; return; }
+      sent = true;
+      $('[data-last]', panel).innerHTML = plLast(res.data.last);
+      const line = $('[data-pl-last]', host);
+      if (line) line.innerHTML = plLast(res.data.last);
+      if (res.data.message) toast(res.data.message);
+      if (el) el.blur();
+    };
+    panel.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-pl]');
+      if (!b || b.disabled) return;
+      const via = b.getAttribute('data-pl');
+      if (via === 'copy') {
+        const done = () => tell('copy', b);
+        if (navigator.clipboard) navigator.clipboard.writeText(j.url).then(done, () => { $('[data-url]', panel).select(); done(); });
+        else { $('[data-url]', panel).select(); done(); }
+      } else if (via === 'whatsapp') {
+        tell('whatsapp', b); // the link itself opens WhatsApp
+      } else {
+        busy(b, () => tell('email', b));
+      }
+    });
+  }, 'pl');
+  return sent;
 }
 
 /** Refresh the list quietly (the live poll found changes). */

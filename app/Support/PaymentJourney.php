@@ -163,6 +163,9 @@ final class PaymentJourney
             } elseif (str_contains($text, 'came back without finishing the payment')) {
                 $steps[] = self::step($note->created_at, 'w', 'Shopper left ' . $name . ' without paying', 'Nothing was charged and the basket was given back.');
                 $verdict ??= ['tone' => 'w', 'text' => 'The shopper reached ' . $name . ' and came back without finishing. Nothing was charged.'];
+            } elseif (str_starts_with($text, \App\Services\Orders\OrderPayLink::NOTE_PREFIX)) {
+                // (Lane OL) "Send order link": the shop handed the order back to the customer to pay.
+                $steps[] = self::step($note->created_at, '', 'Order link sent to the customer', $text);
             } elseif (preg_match('/(\w+) reported the payment as ([\w ]+)\./', $text, $m)) {
                 $steps[] = self::step($note->created_at, 'w', (self::NAMES[strtolower($m[1])] ?? $m[1]) . ' said no', 'Reported the payment as ' . str_replace('_', ' ', $m[2]) . '.');
                 $verdict ??= ['tone' => 'w', 'text' => $name . ' reported the payment as ' . str_replace('_', ' ', $m[2]) . '. The shopper reached ' . $name . '; the decision was ' . $name . '\'s.'];

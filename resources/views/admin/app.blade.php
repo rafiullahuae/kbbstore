@@ -561,6 +561,13 @@ input.inp[type=file]{padding:6px 9px}
 .odpay-soft{font-weight:500;opacity:.8;font-size:11.5px}
 .odpay-urgent{color:#B42318;opacity:1;font-weight:700}
 .odpay-acts{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
+.odpl-last{margin:8px 0 0}
+.odpl-url{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.odpl-acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:4px 0 12px}
+.odpl-acts .btn{justify-content:center;text-align:center;text-decoration:none}
+.odpl-wa{background:#25D366;border-color:#25D366;color:#fff}
+.odpl-set{margin-top:14px;border-top:1px solid var(--border);padding-top:10px}
+.odpl-set summary{cursor:pointer;font-weight:700;font-size:12.5px}
 .odpj{margin-top:14px;border-top:1px solid rgba(0,0,0,.08);padding-top:12px}
 .odpj summary{cursor:pointer;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;opacity:.75}
 .odpj-v{margin:8px 0 10px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.7);color:var(--ink);font-weight:600;line-height:1.45;overflow-wrap:anywhere}
@@ -15426,6 +15433,14 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     if(p.can_record_cash && can.payment){
       actions += '<button type="button" class="btn sm odpay-act" id="odRecordCash">Record cash received</button>';
     }
+    /* (Lane OL) "Send order link": a failed order, or a pending one nobody
+       has paid, handed back to the customer as one signed link. */
+    var pl = o.pay_link;
+    var plLast = '';
+    if(pl && pl.offered && pl.can){
+      actions += '<button type="button" class="btn sm odpay-act" id="odPayLinkGo">Send order link</button>';
+      if(pl.last) plLast = '<p class="odpay-soft odpl-last" id="odPayLinkLast">Link last sent: '+sesc(pl.last.label)+' · '+sesc(pl.last.at_label)+(pl.last.by?' · by '+sesc(pl.last.by):'')+'</p>';
+    }
     if(p.capture && p.capture.offered && can.money){
       actions += '<button type="button" class="btn sm odpay-act" id="odCaptureGo" title="'+sesc(p.capture.window||'')+'">Capture AED '+sesc(String(o.total_aed))+'</button>'+
         (p.capture.days_left!=null ? '<span class="odpay-soft'+(p.capture.expiring?' odpay-urgent':'')+'">'+
@@ -15440,7 +15455,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '<div class="odpay-head"><span class="odpay-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">'+icon+'</svg></span>'+
         '<div><div class="odpay-h">'+sesc(p.headline)+'</div>'+(p.detail?'<div class="odpay-d">'+sesc(p.detail)+'</div>':'')+'</div></div>'+
       (rows.length?'<dl class="odpay-dl">'+rows.join('')+'</dl>':'')+
-      (actions?'<div class="odpay-acts">'+actions+'</div>':'')+
+      (actions?'<div class="odpay-acts">'+actions+'</div>':'')+plLast+
       odJourney(o.payment_journey)+
     '</section>';
   }
@@ -15667,6 +15682,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     document.querySelectorAll('#content [data-odcopy]').forEach(function(b){
       b.onclick = function(){ odCopy(b.dataset.odcopy, b); };
     });
+
+    // (Lane OL) "Send order link".
+    var payLinkGo = document.getElementById('odPayLinkGo');
+    if(payLinkGo) payLinkGo.onclick = function(){ odPayLinkModal(o); };
 
     // (Lane PU) Cash on delivery, amber: "Record cash received".
     var recordCash = document.getElementById('odRecordCash');
@@ -15994,6 +16013,92 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
         err.textContent = odErrText(e, 'Could not record that payment.');
       }
     };
+  }
+
+  /* ------------------------------------------------ (Lane OL) Send order link
+     Store → Orders → (a failed or unpaid order) → Payment → Send order link.
+     One POST mints the signed link (the same one all day); Copy, WhatsApp and
+     Email each tell the server how it went, which writes the order note the
+     "Link last sent" line and the Payment journey read. Nothing is measured,
+     nothing polls; every server word is escaped. */
+  function odPayLinkModal(o){
+    var can = o.pay_link || {};
+    var sent = false;
+    var m = odModal(
+      '<div class="modal-h"><b>Send order link · #'+sesc(o.order_number)+'</b><button class="x" data-odx aria-label="Close">✕</button></div>'+
+      '<div class="modal-b odmodal" id="odPlBody"><p class="odm-lead">Making the link…</p></div>',
+      function(){ if(sent) renderOrderDetail(o.id); });
+    var body = document.getElementById('odPlBody');
+    var post = function(via){ return api('/admin-api/orders/'+o.id+'/pay-link', {method:'POST', body:JSON.stringify({via:via||''})}); };
+    var lastLine = function(l){ return l ? 'Last sent: '+sesc(l.label)+' · '+sesc(l.at_label)+(l.by?' · by '+sesc(l.by):'') : 'Not sent yet.'; };
+
+    post('').then(function(j){
+      body.innerHTML =
+        '<p class="odm-lead">The customer opens order #'+sesc(o.order_number)+' with its items, delivery and total exactly as placed, chooses how to pay, and completes <b>this same order</b>. The link works until <b>'+sesc(j.expires_label)+'</b>.</p>'+
+        (j.problems && j.problems.length ? '<p class="odm-err" style="display:block">Payment is blocked until this is sorted: '+j.problems.map(sesc).join('; ')+'.</p>' : '')+
+        '<div class="odfld"><label for="odPlUrl">Order link</label><input class="odinp odpl-url" id="odPlUrl" readonly value="'+sesc(j.url)+'"></div>'+
+        '<div class="odpl-acts">'+
+          '<button type="button" class="btn" id="odPlCopy">Copy link</button>'+
+          '<a class="btn odpl-wa" id="odPlWa" href="'+sesc(j.whatsapp_url)+'" target="_blank" rel="noopener noreferrer">WhatsApp</a>'+
+          '<button type="button" class="btn" id="odPlMail"'+(j.email?'':' disabled')+'>Email</button>'+
+        '</div>'+
+        (j.has_phone ? '' : '<p class="odpay-soft">No phone number on this order that WhatsApp can dial — WhatsApp opens so you can pick the chat.</p>')+
+        (j.email ? '<p class="odpay-soft">Email goes to '+sesc(j.email)+' — the order email, not a marketing one.</p>' : '<p class="odpay-soft">This order has no email address.</p>')+
+        '<p class="odpay-soft" id="odPlLast">'+lastLine(j.last)+'</p>'+
+        '<p class="odm-err" id="odPlErr" role="alert"></p>'+
+        (can.can_settings ? '<details class="odpl-set" id="odPlSet"><summary>Link settings</summary><div id="odPlSetBody"><p class="odpay-soft">Loading…</p></div></details>' : '');
+
+      var err = document.getElementById('odPlErr');
+      var note = function(r){ sent = true; document.getElementById('odPlLast').innerHTML = lastLine(r.last); if(r.message) toast(r.message); };
+      var fail = function(e){ err.textContent = odErrText(e, 'That did not go through.'); };
+
+      document.getElementById('odPlCopy').onclick = function(){
+        odCopy(j.url, this);
+        post('copy').then(note, fail);
+      };
+      // The link opens WhatsApp itself (no popup blocker in the way); the
+      // record goes alongside it.
+      document.getElementById('odPlWa').onclick = function(){ post('whatsapp').then(note, fail); };
+      var mail = document.getElementById('odPlMail');
+      mail.onclick = function(){
+        mail.disabled = true; err.textContent = '';
+        post('email').then(function(r){ note(r); mail.disabled = false; }, function(e){ fail(e); mail.disabled = false; });
+      };
+
+      var set = document.getElementById('odPlSet');
+      if(set) set.addEventListener('toggle', function once(){
+        if(!set.open) return;
+        set.removeEventListener('toggle', once);
+        odPayLinkSettings(document.getElementById('odPlSetBody'));
+      });
+    }, function(e){
+      body.innerHTML = '<p class="odm-err" style="display:block">'+sesc(odErrText(e, 'Could not make the link.'))+'</p>';
+    });
+  }
+
+  function odPayLinkSettings(box){
+    api('/admin-api/order-pay-link-settings').then(function(j){
+      var s = j.settings || {};
+      box.innerHTML =
+        '<div class="odfld"><label for="odPlDays">Link works for (days)</label><input class="odinp" id="odPlDays" type="number" min="1" max="'+sesc(String(j.max_days||30))+'" value="'+sesc(String(s.days))+'"></div>'+
+        '<div class="odfld"><label for="odPlEn">WhatsApp message (English)</label><textarea class="odinp" id="odPlEn" rows="3" maxlength="600">'+sesc(s.whatsapp_en)+'</textarea></div>'+
+        '<div class="odfld"><label for="odPlAr">WhatsApp message (Arabic, added under the English for an order placed in Arabic)</label><textarea class="odinp" id="odPlAr" rows="3" maxlength="600" dir="rtl">'+sesc(s.whatsapp_ar)+'</textarea></div>'+
+        '<p class="odpay-soft">Placeholders: {name} {order} {link} {shop}. {link} must stay in.</p>'+
+        '<div class="odfld"><label for="odPlSubj">Email subject <span class="odm-opt">empty = “Your order #… is saved — complete it here”</span></label><input class="odinp" id="odPlSubj" maxlength="150" value="'+sesc(s.email_subject)+'" placeholder="{order} {shop} work here too"></div>'+
+        '<p class="odm-err" id="odPlSetErr" role="alert"></p>'+
+        '<div class="odm-acts"><button type="button" class="btn primary" id="odPlSave">Save link settings</button></div>';
+      var save = document.getElementById('odPlSave');
+      save.onclick = function(){
+        save.disabled = true;
+        api('/admin-api/order-pay-link-settings', {method:'PUT', body:JSON.stringify({
+          days: document.getElementById('odPlDays').value,
+          whatsapp_en: document.getElementById('odPlEn').value,
+          whatsapp_ar: document.getElementById('odPlAr').value,
+          email_subject: document.getElementById('odPlSubj').value
+        })}).then(function(){ save.disabled = false; document.getElementById('odPlSetErr').textContent = ''; toast('Link settings saved. New links use them.'); },
+          function(e){ save.disabled = false; document.getElementById('odPlSetErr').textContent = odErrText(e, 'Not saved.'); });
+      };
+    }, function(e){ box.innerHTML = '<p class="odm-err" style="display:block">'+sesc(odErrText(e, 'Could not load the settings.'))+'</p>'; });
   }
 
   /* ---------------------------------------------- Billing / Shipping edit */

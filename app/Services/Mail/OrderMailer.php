@@ -446,6 +446,46 @@ class OrderMailer
     }
 
     /**
+     * "Send order link" -> Email, pressed on the order screen (Lane OL).
+     *
+     * REPORTS, like resendConfirmation(): a person pressed it and is owed the
+     * truth. No module switch, for the reason emailInvoice() gives — this only
+     * happens because somebody asked, for one order, now. Through send(), so
+     * it is labelled in the delivery record ("Payment link") and lands in the
+     * order's Emails card, in the ORDER's language.
+     *
+     * @return array{ok: bool, message: string}
+     */
+    public function payLink(Order $order, string $url, string $subject = ''): array
+    {
+        if ($this->isSample($order)) {
+            return $this->sampleRefusal();
+        }
+
+        $to = trim((string) $order->email);
+
+        if ($to === '' || ! str_contains($to, '@')) {
+            return ['ok' => false, 'message' => 'This order has no email address on it.'];
+        }
+
+        $order->loadMissing('items');
+
+        // Not deferred: the answer is what the person pressing it reads.
+        $deferring = self::$deferring;
+        self::$deferring = false;
+
+        try {
+            $sent = $this->send(static fn () => new \App\Mail\OrderPayLink($order, $url, $subject), $to, $order, 'paylink');
+        } finally {
+            self::$deferring = $deferring;
+        }
+
+        return $sent
+            ? ['ok' => true, 'message' => 'Order link emailed to ' . $to . '.']
+            : ['ok' => false, 'message' => 'The email could not be sent. Store → Emails → Sent mail has the reason.'];
+    }
+
+    /**
      * "Send on-hold email", pressed on the order screen — Lane RL.
      *
      * The owner keeps the on-hold email OFF and sends it by hand, so this does

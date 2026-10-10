@@ -47,6 +47,7 @@ declare(strict_types=1);
 |     POST /{app}/api/orders/{id}/status                  orders.manage
 |     POST /{app}/api/orders/{id}/notes                   orders.manage
 |     POST /{app}/api/orders/{id}/mark-paid               orders.payment
+|     POST /{app}/api/orders/{id}/pay-link                orders.paylink (Lane OL)
 |     GET  /{app}/api/products                            catalog.view
 |     GET  /{app}/api/products/{id}                       catalog.view
 |     POST /{app}/api/products/{id}                       catalog.manage
@@ -119,6 +120,8 @@ if ($ownerAppPath !== null) {
                 Route::post('/orders/{id}/status', [OrdersController::class, 'status'])->whereNumber('id')->name('order.status');
                 Route::post('/orders/{id}/notes', [OrdersController::class, 'note'])->whereNumber('id')->name('order.note');
                 Route::post('/orders/{id}/mark-paid', [OrdersController::class, 'markPaid'])->whereNumber('id')->name('order.paid');
+                // (Lane OL) "Send order link": the admin's own OrderPayLinkController::share(), orders.paylink.
+                Route::post('/orders/{id}/pay-link', [OrdersController::class, 'payLink'])->whereNumber('id')->middleware('throttle:30,1,oa-paylink')->name('order.paylink');
 
                 Route::get('/products', [ProductsController::class, 'index'])->name('products');
                 Route::get('/categories', [ProductsController::class, 'categories'])->name('categories');

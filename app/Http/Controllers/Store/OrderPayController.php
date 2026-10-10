@@ -73,12 +73,16 @@ class OrderPayController extends Controller
         }
 
         if (! $this->payable($order)) {
-            return redirect()->away(OrderLinks::trackUrl($order));
+            return redirect()->away(self::statusUrl($order));
         }
 
         $request->session()->put('kbb_last_order', (string) $order->order_number);
 
         $order->loadMissing(['items' => fn ($q) => $q->orderBy('id')]);
+
+        // (Lane OL) A line that cannot be sold now is shown as such, and the
+        // order takes no payment until it is sorted out (start() refuses too).
+        $problems = \App\Services\Orders\OrderPayLink::problems($order);
 
         $methods = $this->methods($order);
         $stripe = collect($methods)->first(fn (array $m) => $m['id'] === 'stripe');
@@ -88,6 +92,7 @@ class OrderPayController extends Controller
             'order' => $order,
             'methods' => $methods,
             'token' => (string) $request->query('t', ''),
+            'problems' => $problems,
             'stripeKey' => $stripeGateway instanceof \App\Services\Payments\Gateways\StripeGateway
                 ? $stripeGateway->publishableKey()
                 : '',
@@ -103,7 +108,7 @@ class OrderPayController extends Controller
         }
 
         if (! $this->payable($order)) {
-            return $this->answer($request, ['ok' => true, 'action' => 'redirect', 'url' => OrderLinks::trackUrl($order)]);
+            return $this->answer($request, ['ok' => true, 'action' => 'redirect', 'url' => self::statusUrl($order)]);
         }
 
         $method = (string) $request->input('method', '');
@@ -112,6 +117,11 @@ class OrderPayController extends Controller
 
         if ($gateway === null) {
             return $this->refuse($request, __('store.order_pay.method_unavailable'));
+        }
+
+        // (Lane OL) Never charge for a line the shop cannot sell now.
+        if (\App\Services\Orders\OrderPayLink::problems($order) !== []) {
+            return $this->refuse($request, __('store.order_pay.lines_blocked'));
         }
 
         $request->session()->put('kbb_last_order', (string) $order->order_number);
@@ -135,7 +145,7 @@ class OrderPayController extends Controller
             // order (a late payment confirmation, an operator) between the
             // read above and the lock. Show its status rather than charge it.
             if ($reopened === null || (string) $order->status !== 'pending' || $order->paid_at !== null) {
-                return $this->answer($request, ['ok' => true, 'action' => 'redirect', 'url' => OrderLinks::trackUrl($order)]);
+                return $this->answer($request, ['ok' => true, 'action' => 'redirect', 'url' => self::statusUrl($order)]);
             }
         }
 
@@ -205,6 +215,17 @@ class OrderPayController extends Controller
             ->all();
     }
 
+    /**
+     * (Lane OL) Where a link for an order that can no longer be paid goes: its
+     * signed status page, told it came from a pay link, so that page can say
+     * "This order is already paid" or that it is closed. The page decides
+     * which from the order itself, never from the parameter.
+     */
+    public static function statusUrl(Order $order): string
+    {
+        return OrderLinks::trackUrl($order) . '&from=pay';
+    }
+
     private function resolve(Request $request): ?Order
     {
         return OrderLinks::resolve(
@@ -224,7 +245,7 @@ class OrderPayController extends Controller
 
     private function notFound(): Response
     {
-        return response()->view('store.order-pay', ['order' => null, 'methods' => [], 'token' => '', 'stripeKey' => ''], 404);
+        return response()->view('store.order-pay', ['order' => null, 'methods' => [], 'token' => '', 'problems' => [], 'stripeKey' => ''], 404);
     }
 
     private function refuse(Request $request, string $message): JsonResponse|RedirectResponse

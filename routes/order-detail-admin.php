@@ -41,3 +41,6 @@ Route::get('/orders/{id}/customer-orders', [OrderDetailController::class, 'custo
 Route::post('/orders/{id}/mark-paid', [OrderDetailController::class, 'markPaid'])->whereNumber('id');
 Route::put('/orders/{id}/customer', [OrderDetailController::class, 'updateCustomer'])->whereNumber('id');
 Route::get('/order-customer-search', [OrderDetailController::class, 'customerSearch']);
+
+// (Lane OL) "Send order link" on a failed or unpaid order, in this same group.
+require __DIR__.'/order-pay-link-admin.php';

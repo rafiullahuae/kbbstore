@@ -51,12 +51,27 @@ final class OrderLinks
         ]);
     }
 
-    public static function payUrl(Order $order): string
+    /**
+     * $ttl: seconds. The emails pass nothing and keep PAY_TTL; the "Send order
+     * link" button (Lane OL, App\Services\Orders\OrderPayLink) passes the
+     * owner's own setting. The expiry rides inside the MAC, so resolve() needs
+     * no TTL and a link of any term is verified the same way.
+     */
+    public static function payUrl(Order $order, ?int $ttl = null): string
     {
         return Url::external('/checkout/order-pay') . '?' . http_build_query([
             'order' => (string) $order->order_number,
-            't' => self::token(self::PAY, $order, self::PAY_TTL),
+            't' => self::token(self::PAY, $order, $ttl ?? self::PAY_TTL),
         ]);
+    }
+
+    /** When a pay token says it ends (its first segment), or null if it carries none. */
+    public static function expiresAt(string $url): ?int
+    {
+        parse_str((string) parse_url($url, PHP_URL_QUERY), $q);
+        $first = explode('.', (string) ($q['t'] ?? ''), 2)[0];
+
+        return ctype_digit($first) ? (int) $first : null;
     }
 
     public static function token(string $purpose, Order $order, int $ttl): string

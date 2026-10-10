@@ -183,6 +183,16 @@ final class AdminCapabilities
         'orders.customer' => ['owner', 'manager'],
         'orders.payment' => ['owner', 'manager'],
         /*
+         * (Lane OL) "Send order link" on a failed or unpaid order: mint the
+         * signed pay link and send it by WhatsApp, email or copy. Support
+         * keeps it -- it moves no money (the customer pays on the shop's own
+         * page, through the checkout's gateways) and answering a customer who
+         * could not pay IS support's job. Its settings (expiry, wording) are
+         * owner and manager only, like every other shop-wide setting.
+         */
+        'orders.paylink' => ['owner', 'manager', 'support'],
+        'orders.paylink.settings' => ['owner', 'manager'],
+        /*
          * Safety -> Demo Content -> Sample order. OWNER ALONE, and a line of
          * its own rather than a reuse of `data.import` beside the rest of Demo
          * Content, because this is the only endpoint in the back office that
@@ -1340,6 +1350,8 @@ final class AdminCapabilities
         // holds the same three roles today and can be narrowed on its own.
         ['PUT', 'admin-api/orders/*/address', 'orders.edit'],
         ['POST', 'admin-api/orders/*/mark-paid', 'orders.payment'],
+        ['POST', 'admin-api/orders/*/pay-link', 'orders.paylink'],
+        ['*', 'admin-api/order-pay-link-settings', 'orders.paylink.settings'],
         ['PUT', 'admin-api/orders/*/customer', 'orders.customer'],
         ['GET', 'admin-api/order-customer-search', 'orders.customer'],
         ['GET', 'admin-api/orders/*/customer-orders', 'orders.view'],

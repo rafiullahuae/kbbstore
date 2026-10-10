@@ -2069,6 +2069,17 @@ final class InterfaceStrings
             'order_pay.start_failed' => 'We could not start that payment. Please try again or choose another way to pay.',
             'order_pay.needs_javascript' => 'Paying by card needs JavaScript switched on in your browser. Please turn it on, or choose another way to pay.',
             'order_pay.generic_error' => 'Something went wrong. Please try again.',
+            // (Lane OL) the rows and states the "Send order link" link needs.
+            'order_pay.subtotal' => 'Products',
+            'order_pay.discount' => 'Discount',
+            'order_pay.delivery' => 'Delivery',
+            'order_pay.fees' => 'Fees',
+            'order_pay.deliver_to' => 'Delivering to',
+            'order_pay.line_unavailable' => 'No longer available',
+            'order_pay.line_out_of_stock' => 'Out of stock',
+            'order_pay.lines_blocked' => 'Some items in this order cannot be sold right now, so it cannot be paid here. Message us and we will help you finish it.',
+            'order_pay.already_paid' => 'This order is already paid. Thank you! Here is where it is now.',
+            'order_pay.closed' => 'This order is closed, so it can no longer be paid. Message us and we will gladly help.',
             'track.page_title' => 'Track my order · K-Beauty Bliss',
             'track.heading' => 'Track my order',
             'track.lead' => 'Your order number is in your confirmation email. We ask for the email as well, so only you can see where your parcel is.',
@@ -2582,6 +2593,11 @@ final class InterfaceStrings
             'feedback.button_note' => 'Each button opens that product\'s page at its reviews.',
             'feedback.closing' => 'Something not right? Reply to this email or WhatsApp us — a real person will sort it out.',
             'reminder.button_note' => 'Opens your saved order on any device. Prefer another way to pay? Message us on WhatsApp and we will help.',
+            // (Lane OL) "Send order link" -> Email: sent by hand from the order screen.
+            'paylink.subject' => 'Your order :number is saved — complete it here',
+            'paylink.heading' => 'Your order is saved for you 🛍️',
+            'paylink.body' => 'Order :number is waiting for you with everything still in it. Choose how you would like to pay and we will get it on its way.',
+            'paylink.closing' => 'Questions? Reply to this email or message us on WhatsApp — a real person will help.',
 
             /*
              * THE REST OF THE DISPATCH BODY. bodyFor() picks one of three by

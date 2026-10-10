@@ -199,7 +199,18 @@ class AccountController extends Controller
                 return response()->view('store.account.track', ['notFound' => true] + $data, 404);
             }
 
-            return view('store.account.track', ['order' => $signed] + $data);
+            /*
+             * (Lane OL) Arrived from a pay link for an order that can no
+             * longer be paid: say why, read off the ORDER — a hand-typed
+             * `from=pay` on an unpaid order says nothing.
+             */
+            $notice = null;
+            if ($request->query('from') === 'pay') {
+                $notice = \App\Services\Orders\OrderPayLink::paidState($signed) ? 'paid'
+                    : (in_array((string) $signed->status, ['cancelled', 'refunded', 'failed'], true) || $signed->trashed() ? 'closed' : null);
+            }
+
+            return view('store.account.track', ['order' => $signed, 'payNotice' => $notice] + $data);
         }
 
         if ($number === '' || $email === '') {

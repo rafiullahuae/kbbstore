@@ -326,6 +326,9 @@ final class OrdersController extends Controller
                     'note' => $this->may($request, 'orders.manage') && \App\Services\OwnerApp\OwnerAppUi::functionOn('order_notes'),
                     'paid' => $mayPay,
                 ],
+                // (Lane OL) "Send order link". Allowlisted by OrderPayLink::panel(): eligibility and
+                // the last send, never the link; the ability rides here because `can` is pinned whole.
+                'pay_link' => \App\Services\Orders\OrderPayLink::panel($order) + ['can' => $this->may($request, 'orders.paylink')],
                 'paid_methods' => $mayPay ? app(\App\Services\Orders\ManualPayment::class)->methodsFor($order) : [],
                 'settable' => self::SETTABLE,
             ],
@@ -421,6 +424,37 @@ final class OrdersController extends Controller
         $res = $this->delegate(fn () => app()->call([app(OrderDetailController::class), 'markPaid'], ['request' => $sub, 'id' => $id]));
 
         return $this->relay($res, fn ($d) => ['status' => (string) ($d['status'] ?? ''), 'message' => (string) ($d['message'] ?? '')]);
+    }
+
+    /**
+     * (Lane OL) "Send order link": the admin's own OrderPayLinkController::share(),
+     * after this member's capability. Only the fields the app draws go back.
+     */
+    public function payLink(Request $request, int $id): JsonResponse
+    {
+        if ($r = $this->refuse($request, 'orders.paylink')) {
+            return $r;
+        }
+
+        $via = (string) $request->input('via', '');
+        $sub = self::subRequest($request, ['via' => in_array($via, \App\Services\Orders\OrderPayLink::VIA, true) ? $via : '']);
+        $res = $this->delegate(fn () => app(\App\Http\Controllers\Admin\OrderPayLinkController::class)->share($sub, $id));
+
+        return $this->relay($res, fn ($d) => [
+            'url' => (string) ($d['url'] ?? ''),
+            'expires_label' => (string) ($d['expires_label'] ?? ''),
+            'whatsapp_url' => (string) ($d['whatsapp_url'] ?? ''),
+            'has_phone' => (bool) ($d['has_phone'] ?? false),
+            'email' => (string) ($d['email'] ?? ''),
+            'last' => isset($d['last']) && is_array($d['last']) ? [
+                'via' => (string) ($d['last']['via'] ?? ''),
+                'label' => (string) ($d['last']['label'] ?? ''),
+                'at_label' => (string) ($d['last']['at_label'] ?? ''),
+                'by' => (string) ($d['last']['by'] ?? ''),
+            ] : null,
+            'problems' => array_values(array_map('strval', (array) ($d['problems'] ?? []))),
+            'message' => (string) ($d['message'] ?? ''),
+        ]);
     }
 
     /* -------------------------------------------------------------- helpers */

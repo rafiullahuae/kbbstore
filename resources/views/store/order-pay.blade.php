@@ -43,6 +43,13 @@
 .kbbop-go[disabled]{opacity:.6;cursor:default}
 .kbbop-err{display:none;margin:0 0 14px;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.5;background:#FDECEF;border:1px solid #F6C9D2;color:#B3243F}
 .kbbop-err.is-on{display:block}
+.kbbop-to{padding:12px 16px;font-size:13.5px;color:var(--ink-2)}
+.kbbop-to b{display:block;color:var(--ink);font-weight:700}
+.kbbop-to small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.kbbop-sum{border-top:1px solid var(--line-2);padding:6px 0}
+.kbbop-sum div{display:flex;justify-content:space-between;gap:14px;padding:5px 16px;font-size:13px;color:var(--ink-2)}
+.kbbop-row.is-out b{color:var(--muted);text-decoration:line-through}
+.kbbop-out{display:inline-block;margin-top:4px;font-style:normal;font-size:11.5px;font-weight:800;color:#B3243F;background:#FDECEF;border-radius:99px;padding:2px 9px}
 .kbbop-note{font-size:12.5px;line-height:1.55;color:var(--muted);margin-top:12px;text-align:center}
 </style>
 @endpush
@@ -63,14 +70,47 @@
         <div class="kbbop-card">
             <div class="kbbop-head">{{ __('store.order_pay.your_items') }}</div>
             @foreach ($order->items as $item)
-                <div class="kbbop-row">
-                    <span><b>{{ $item->name }}</b><small>{{ __('store.order_pay.qty', ['qty' => (int) $item->quantity]) }}</small></span>
+                @php $problem = $problems[(int) $item->id] ?? null; @endphp
+                <div class="kbbop-row @if ($problem) is-out @endif">
+                    <span><b>{{ $item->name }}</b><small>{{ (int) $item->quantity }} × {!! Money::format((int) $item->unit_price, $width) !!}</small>
+                        @if ($problem)<em class="kbbop-out">{{ __($problem === 'out_of_stock' ? 'store.order_pay.line_out_of_stock' : 'store.order_pay.line_unavailable') }}</em>@endif</span>
                     <span>{!! Money::format((int) $item->total, $width) !!}</span>
                 </div>
             @endforeach
+            {{-- (Lane OL) The order's own stored figures, never re-priced. --}}
+            <div class="kbbop-sum">
+                <div><span>{{ __('store.order_pay.subtotal') }}</span><span>{!! Money::format((int) $order->subtotal, $width) !!}</span></div>
+                @if ((int) $order->discount_total > 0)
+                    <div><span>{{ __('store.order_pay.discount') }}@if (trim((string) $order->coupon_code) !== '') · {{ $order->coupon_code }}@endif</span><span>−{!! Money::format((int) $order->discount_total, $width) !!}</span></div>
+                @endif
+                <div><span>{{ __('store.order_pay.delivery') }}@if (trim((string) $order->shipping_method) !== '') · {{ $order->shipping_method }}@endif</span><span>{!! Money::format((int) $order->shipping_total, $width) !!}</span></div>
+                @if ((int) $order->fee_total > 0)
+                    <div><span>{{ __('store.order_pay.fees') }}</span><span>{!! Money::format((int) $order->fee_total, $width) !!}</span></div>
+                @endif
+            </div>
             <div class="kbbop-total"><span>{{ __('store.order_pay.total') }}</span><span>{!! Money::format((int) $order->total, $width) !!}</span></div>
         </div>
 
+        @php
+            // (Lane OL) Who and where, never the street, phone or email: a
+            // link can be forwarded, and the street is not needed to pay.
+            $to = is_array($order->shipping_address) && $order->shipping_address !== [] ? $order->shipping_address : (is_array($order->billing_address) ? $order->billing_address : []);
+            $toName = trim((string) ($to['first_name'] ?? '') . ' ' . (string) ($to['last_name'] ?? ''));
+            $toCountry = strtoupper(trim((string) ($to['country'] ?? '')));
+            $toPlace = implode(', ', array_filter([trim((string) ($to['city'] ?? '')), \App\Support\Countries::NAMES[$toCountry] ?? $toCountry]));
+        @endphp
+        @if ($toName !== '' || $toPlace !== '')
+            <div class="kbbop-card">
+                <div class="kbbop-head">{{ __('store.order_pay.deliver_to') }}</div>
+                <div class="kbbop-to"><b>{{ $toName }}</b>@if ($toPlace !== '')<small>{{ $toPlace }}</small>@endif</div>
+            </div>
+        @endif
+
+        @if ($problems !== [])
+            <div class="kbbop-err is-on" role="alert">{{ __('store.order_pay.lines_blocked') }}</div>
+        @endif
+
+        @if ($problems === [])
         <form method="post" action="{{ Url::to('/checkout/order-pay') }}" id="kbbopForm">
             @csrf
             <input type="hidden" name="order" value="{{ $order->order_number }}">
@@ -97,16 +137,17 @@
                 @endforelse
             </div>
 
-            @if ($methods !== [])
+            @if ($methods !== [] && $problems === [])
                 <button type="submit" class="kbbop-go" id="kbbopGo">{{ __('store.order_pay.pay_button') }}</button>
             @endif
         </form>
+        @endif
         <p class="kbbop-note">{{ __('email.reminder.button_note') }}</p>
     @endif
 </div>
 @endsection
 
-@if ($order !== null && $methods !== [])
+@if ($order !== null && $methods !== [] && $problems === [])
 @push('scripts')
 @if ($stripeKey !== '')
 <script src="https://js.stripe.com/v3"></script>
