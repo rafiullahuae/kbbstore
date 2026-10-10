@@ -266,6 +266,15 @@ it('puts every page back exactly as it was under "Normal page banner", byte for 
     // ▲ 2.60.460: and the flash beside Super Sale is new markup the same views never drew.
     app(\App\Services\MobileMenu::class)->save(['sale_flash' => false]);
     /*
+     * ▲ 2.60.466 (Lane AN): with the footer's colour drift on, the big name
+     * carries an empty `.kft-nm` copy the compositor moves, which the 838ac564
+     * views never drew. Drift off prints the name as those views did (and
+     * drops `kft-motion` from BOTH renders alike), so every other byte of all
+     * four pages is still compared; ShopAnimationsCompositorOnlyTest and
+     * SiteFooterTest own the copy.
+     */
+    app(\App\Services\SiteFooter::class)->save(['site_motion' => false]);
+    /*
      * ▲ 2.60.457 (Lane TS): the trust strip above the footer ships ON, as the
      * owner asked, and the 838ac564 views have no such row. It is not part of
      * the brand header this test is about, so it is switched off here and the

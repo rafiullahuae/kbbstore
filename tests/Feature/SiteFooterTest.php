@@ -128,11 +128,13 @@ it('is fed from the shop\'s own settings, and refuses a profile that is not a we
         ->toContain('aria-label="YouTube"')
         ->not->toContain('aria-label="TikTok"')
         ->not->toContain('javascript:')
-        ->toContain('<p class="kft-name" aria-hidden="true" style="--kft-n:14">K-Beauty Bliss</p>');
+        // ▲ 2.60.466 (Lane AN): the drift's empty copy of the name (.kft-nm,
+        // the compositor moves its colours) comes first inside the <p>.
+        ->toContain('<p class="kft-name" aria-hidden="true" style="--kft-n:14"><span class="kft-nm" data-kft-copy="K-Beauty Bliss"></span>K-Beauty Bliss</p>');
 
     kftSave(['site_name_text' => '<i>KBB</i>', 'site_help_title' => 'Need a hand?', 'site_track_on' => false, 'site_news_on' => false]);
     $footer = kftBlock($this->get('/')->getContent());
-    expect($footer)->toContain('style="--kft-n:8">KBB</p>')
+    expect($footer)->toContain('style="--kft-n:8"><span class="kft-nm" data-kft-copy="KBB"></span>KBB</p>')
         ->toContain('Need a hand? <span class="kft-avail">')
         ->not->toContain('kft-bt-o')
         ->not->toContain('kft-news')
@@ -147,7 +149,11 @@ it('moves with CSS only, and never for a visitor who asked for reduced motion', 
 
     expect($start)->not->toBeFalse()
         ->and($block)->toContain('@keyframes kft-drift{from{background-position:0% 50%}to{background-position:100% 50%}}')
-        ->and($block)->toContain("@media (prefers-reduced-motion:reduce){\n  .kft-motion .kft-help,.kft-motion .kft-name{animation:none}")
+        // ▲ 2.60.466 (Lane AN): the strip's drift moved to its ::before, which
+        // stops too; the name's compositor copy is drawn only under
+        // prefers-reduced-motion:no-preference.
+        ->and($block)->toContain("@media (prefers-reduced-motion:reduce){\n  .kft-motion .kft-help,.kft-motion .kft-help::before,.kft-motion .kft-name{animation:none}")
+        ->and($block)->toContain("@supports (mix-blend-mode:plus-lighter) and selector(:has(*)){\n  @media (prefers-reduced-motion:no-preference){")
         // The big name's size is its length, printed by the server: nothing measures it.
         // (Lane HF) times the owner's size slider, 100 = the size that fits.
         ->and($block)->toContain('font-size:calc(min(calc(173.6vw / var(--kft-n, 14)), calc(2324px / var(--kft-n, 14))) * var(--kft-fn-d, 100) / 100)')

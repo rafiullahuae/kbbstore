@@ -1212,11 +1212,15 @@ a{color:inherit;text-decoration:none}
    travelled, i.e. 180/280 of its own width. The section's overflow:hidden
    clips it to the same window. */
 .kbb-fbt.bt::before{
-    content:"";position:absolute;top:0;bottom:0;left:0;width:280%;z-index:0;
+    content:"";position:absolute;top:0;bottom:0;inset-inline-start:0;width:280%;z-index:0;
     background:linear-gradient(115deg,#FFEDF3,#FFF6EC,#EFF9F3,#F4EFFC,#FFEDF3) 0 50%/100% 280%;
     animation:btdrift 26s ease-in-out infinite;
 }
 @keyframes btdrift{0%,100%{transform:translateX(0)}50%{transform:translateX(-64.2857%)}}
+/* Arabic: anchored at the right; the old position was physical, so the same
+   picture is the mirrored path. */
+@keyframes btdrift-rtl{0%,100%{transform:translateX(64.2857%)}50%{transform:translateX(0)}}
+[dir="rtl"] .kbb-fbt.bt::before{transform:translateX(64.2857%);animation-name:btdrift-rtl}
 @media (prefers-reduced-motion:reduce){.kbb-fbt.bt::before{animation:none}}
 .kbb-fbt.bt > *{position:relative;z-index:1}
 .kbb-fbt.bt h2{font-size:14px;font-weight:600;letter-spacing:0;margin:0 0 10px;padding:0 14px}

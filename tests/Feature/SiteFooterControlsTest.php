@@ -192,10 +192,14 @@ it('uses the shop\'s own pinks, red and orange for the strip, drifting within th
     }
 
     expect($css)->toContain('.kft-help{color:#fff;background:linear-gradient(110deg,var(--kft-from,#E0567B),var(--kft-c2,#C13E63),var(--kft-c3,#E23A4E),var(--kft-to,#D9603B),var(--kft-c3,#E23A4E),var(--kft-c2,#C13E63),var(--kft-from,#E0567B));')
-        ->toContain('.kft-motion .kft-help{animation:kft-drift var(--kft-dr,14s) ease-in-out infinite alternate}')
+        // ▲ 2.60.466 (Lane AN): the drift is a 300% ::before moved by the
+        // compositor, not the strip's own background-position (which cost a
+        // style pass every frame) -- same gradient, same easing, same period.
+        ->toContain('.kft-motion .kft-help{position:relative;isolation:isolate;overflow:hidden}')
+        ->toContain('animation:kft-slide var(--kft-dr,14s) ease-in-out infinite alternate}')
         // The WhatsApp button is still a white pill, and its words are not white.
         ->toContain('.kft-bt-p{background:#fff;color:var(--kft-accent,#C13E63);')
-        ->and($css)->toContain("@media (prefers-reduced-motion:reduce){\n  .kft-motion .kft-help,.kft-motion .kft-name{animation:none}");
+        ->and($css)->toContain("@media (prefers-reduced-motion:reduce){\n  .kft-motion .kft-help,.kft-motion .kft-help::before,.kft-motion .kft-name{animation:none}");
 
     // Two of the four defaults are the shop's own tokens: --pink-deep, --sale.
     // ▲ Lane CT moved --pink to #C6395F for text contrast; the help strip's
@@ -326,7 +330,10 @@ it('sweeps a shine across the bottom bar, left to right in English and right to 
     hfSave(['site_sheen' => 'name', 'site_name_text' => 'K"Bliss & Co']);
     $footer = hfFooter($this);
     expect(hfClasses($footer))->toContain('kft-sheen-name')->not->toContain('kft-sheen-bar')
-        ->and($footer)->toContain('data-kft-text="K&quot;Bliss &amp; Co">K&quot;Bliss &amp; Co</p>');
+        // ▲ 2.60.466 (Lane AN): with the drift on, the drift's own empty copy
+        // (.kft-nm, escaped the same way, in its own data-kft-copy so that
+        // data-kft-text still means the shine) comes first inside the name.
+        ->and($footer)->toContain('data-kft-text="K&quot;Bliss &amp; Co"><span class="kft-nm" data-kft-copy="K&quot;Bliss &amp; Co"></span>K&quot;Bliss &amp; Co</p>');
 
     hfSave(['site_sheen' => 'off']);
     $footer = hfFooter($this);

@@ -27,6 +27,7 @@ async function shoot(browser, base, vp, spec, t) {
   const page = await ctx.newPage();
   await page.goto(base + '/product/co-glow-serum/', { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
+  if (process.env.ANM_RTL) await page.evaluate(() => { document.documentElement.dir = 'rtl'; });
   if (hide) await page.addStyleTag({ content: `${hide}{visibility:hidden!important}` });
   const el = page.locator(sel).first();
   await el.scrollIntoViewIfNeeded();
