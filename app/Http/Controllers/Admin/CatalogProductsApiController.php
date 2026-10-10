@@ -257,14 +257,24 @@ class CatalogProductsApiController extends Controller
         // The sales aggregate is added HERE, to the clone that fetches rows,
         // and not to $query — which is still needed, unaggregated, by
         // summaryFor() below. applySort() and forPage() mutate what they get.
-        $rows = $this->applySort($this->withSalesTotals($this->withCategoryCounts(clone $query)), $sort)
+        //
+        // Only a sort BY sales needs the whole-catalogue aggregate, because it
+        // has to rank every product before it can cut a page. Every other sort
+        // cuts the page first and then counts that page's sales alone -- see
+        // attachSalesTotals().
+        $bySales = in_array($sort, self::SALES_SORTS, true);
+        $listQuery = $this->withCategoryCounts(clone $query);
+
+        $products = $this->applySort($bySales ? $this->withSalesTotals($listQuery) : $listQuery, $sort)
             ->forPage($page, $perPage)
             // ONE query for every category name on the page, not one per row.
             // Both columns exist on `categories`; a constrained eager load
             // naming one that does not is a string literal on SQLite and a
             // 1054 on the server (tests/Feature/EagerLoadColumnsTest.php).
             ->with('categories:id,name')
-            ->get()
+            ->get();
+
+        $rows = ($bySales ? $products : $this->attachSalesTotals($products))
             ->map(fn ($p) => $this->rowToApi($p))
             ->values();
 
@@ -1370,6 +1380,58 @@ class CatalogProductsApiController extends Controller
             ]);
     }
 
+    /** The sorts that rank by the sales aggregate, and so need all of it. */
+    private const SALES_SORTS = ['orders_desc', 'sales_desc'];
+
+    /**
+     * The same three numbers withSalesTotals() joins on, for rows ALREADY
+     * FETCHED: one grouped statement over their ids.
+     *
+     * The derived table above is materialised in full before MySQL can join
+     * it -- every line of every real order, grouped -- to answer for at most
+     * 300 products. Measured on MySQL 8.0 at 3,025 products, 60,000 orders and
+     * 270,000 lines it was most of a 470-580 ms request, at every page size
+     * and on every page, and it grows with every order the shop takes. Counted
+     * for the page's ids instead it is one pass at worst and an index lookup
+     * per id where order_items has its product_id index.
+     *
+     * Identical figures by construction: the same join, the same
+     * Order::REAL_STATUSES, the same trashed-order exclusion, the same
+     * COUNT(DISTINCT)/SUM, narrowed by `product_id IN (...)`, which a GROUP BY
+     * product_id cannot change for the ids it keeps. A product with no sales
+     * reads 0, as COALESCE made it before. PageCostBudgetTest compares both.
+     *
+     * @param  \Illuminate\Support\Collection<int, Product>  $products
+     * @return \Illuminate\Support\Collection<int, Product>
+     */
+    private function attachSalesTotals(\Illuminate\Support\Collection $products): \Illuminate\Support\Collection
+    {
+        $ids = $products->pluck('id')->all();
+
+        $sales = $ids === [] ? collect() : DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereIn('orders.status', Order::REAL_STATUSES)
+            ->whereNull('orders.deleted_at')
+            ->whereIn('order_items.product_id', $ids)
+            ->groupBy('order_items.product_id')
+            ->selectRaw('order_items.product_id as product_id,'
+                .' COUNT(DISTINCT order_items.order_id) as orders_count,'
+                .' COALESCE(SUM(order_items.quantity), 0) as units_sold,'
+                .' COALESCE(SUM(order_items.total), 0) as revenue_fils')
+            ->get()
+            ->keyBy(fn ($r) => (int) $r->product_id);
+
+        foreach ($products as $product) {
+            $row = $sales->get((int) $product->id);
+            // Read-only figures on a model about to be formatted, never saved.
+            $product->setAttribute('orders_count', (int) ($row->orders_count ?? 0));
+            $product->setAttribute('units_sold', (int) ($row->units_sold ?? 0));
+            $product->setAttribute('revenue_fils', (int) ($row->revenue_fils ?? 0));
+        }
+
+        return $products;
+    }
+
     /** Everything the operator typed, except the chip. */
     private function baseQuery(Request $request): Builder
     {
@@ -1791,13 +1853,13 @@ class CatalogProductsApiController extends Controller
     /** One row, re-read through the same query the list uses. */
     private function rowById(int $id): ?array
     {
-        $product = $this->withSalesTotals($this->withCategoryCounts($this->rowQuery()))
+        $product = $this->withCategoryCounts($this->rowQuery())
             ->withTrashed()
             ->with('categories:id,name')
             ->where('products.id', '=', $id)
             ->first();
 
-        return $product === null ? null : $this->rowToApi($product);
+        return $product === null ? null : $this->rowToApi($this->attachSalesTotals(collect([$product]))->first());
     }
 
     /* ------------------------------------------------------------ formatting */

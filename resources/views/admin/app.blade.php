@@ -8838,7 +8838,7 @@ function catInventory(){
   $$('#catBody .invq').forEach(inp=>inp.oninput=()=>{const i=+inp.dataset.i;const v=inp.value===''?0:Math.max(0,parseInt(inp.value,10)||0);invDraft[i]=v;const tr=inp.closest('tr');tr.classList.toggle('invdirty',v!==CAT_PRODUCTS[i][6]);tr.querySelector('.invstat').innerHTML=stockPill(v);renderInvSaveBar();});
   renderInvSaveBar();
 }
-let reorderType='category',reorderScopes=null,reorderScopeId=null,reorderScopeName=null,reorderData=null,reorderPage=1,reorderSearch='',reorderLocal=null,reorderDirty=false,reorderPending=[],reorderSelected=new Set(),reorderBusy=false,reorderPerPage=+(localStorage.getItem('kbb_reorder_pp')||50),reorderPpCustomMode=false;
+let reorderType='category',reorderScopes=null,reorderScopeId=null,reorderScopeName=null,reorderData=null,reorderPage=1,reorderSearch='',reorderLocal=null,reorderDirty=false,reorderPending=[],reorderSelected=new Set(),reorderBusy=false,reorderPerPage=+(localStorage.getItem('kbb_reorder_pp')||50),reorderPpCustomMode=false,reorderSeq=0;
 function reorderApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/catalog/reorder'; }
 function reorderFmtMoney(n){ return n==null ? '' : 'AED '+(Math.round(n*100)/100).toLocaleString(); }
 
@@ -8888,11 +8888,30 @@ async function reorderLoadProducts(){
   const listArea=$('#reListArea');
   if(listArea) listArea.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Loading…</p>`;
   else body.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Loading products…</p>`;
+  /* ONLY THE LATEST REQUEST MAY PAINT, and EVERY ANSWER ENDS THE "Loading…".
+     A slow answer could land after a newer page-size change and paint the old
+     size back; and an error answer (a 500, a timeout page, an expired session)
+     was parsed as if it were a list, threw on .products outside the try, and
+     left "Loading…" on screen for good. Same shape as cpLoad()'s guard. */
+  const seq=++reorderSeq;
+  let d;
   try{
     const q=new URLSearchParams({page:reorderPage, search:reorderSearch, per_page:reorderPerPage});
     const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/products?'+q,{credentials:'same-origin',headers:{Accept:'application/json'}});
-    reorderData=await r.json();
-  }catch(e){ body.innerHTML=`<p style="padding:24px;color:var(--sale)">Could not load products — ${escHtml(e.message)}</p>`; return; }
+    if(seq!==reorderSeq) return;
+    d=await r.json().catch(()=>null);
+    if(seq!==reorderSeq) return;
+    if(!r.ok || !d || !Array.isArray(d.products)){
+      throw new Error(r.status===401||r.status===419 ? 'your session has ended — sign in again' : ((d&&d.message) || ('the server answered '+r.status)));
+    }
+  }catch(e){
+    if(seq!==reorderSeq) return;
+    const msg=`<p style="padding:24px;color:var(--sale)">Could not load products — ${escHtml(e.message)}</p>`;
+    const area=$('#reListArea');
+    if(area) area.innerHTML=msg; else body.innerHTML=msg;
+    return;
+  }
+  reorderData=d;
   reorderPerPage=reorderData.per_page;
   reorderLocal=reorderData.products.map(p=>({...p}));
   reorderDirty=false;
