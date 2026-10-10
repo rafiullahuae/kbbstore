@@ -3,6 +3,14 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.478
+**Product editor saves the brand again.** Apply after .477. Urgent fix on its own.
+Runs its migration (clears caches). Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "on product edit page, when select brand, and click save, then the brand resets to non-selection, on front-end also this product not showing in that brand. please fix urgently." | Catalog → Product editor → Brand: the brand you pick is saved, stays selected after Save and on reopening, and the product appears on that brand's page (joining the end of its order, as a newly branded product always has). "No brand" clears it. The editor checked the brand on every save but never wrote it, since it was built (15 September); nothing else in the save changes. **Products you set a brand on in the editor before this package need it picked once more** (or set from Catalog → Products, whose bulk edit always saved it) |
+
 ## 2.60.477
 **Analytics: a "Time on site & engagement" block in the space under Orders & revenue by source.** Apply after .476.
 Runs its migration (adds the time figures to the analytics day summaries, rebuilds today and yesterday, clears caches). Hard refresh the admin.
