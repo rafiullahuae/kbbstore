@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.470
+**Marketing emails: bounced list and safe Google Workspace sending; the "New look, less prices" design; a full report per campaign; "Returns" removed.** Apply after .469.
+Runs its migrations. Hard refresh the admin and the shop.
+
+| Your request | Now |
+|---|---|
+| "if email bounce back, i need a proper list ... auto removed from the list and sit as separate list, and i don't want to receive emails for bounce back ... google workspace ... must not be spamming" | Growth & Marketing -> Bounces & unsubscribes (Bounced with search, CSV, Restore; Unsubscribed; Spam complaints; Watching; Setup; Deliverability). A Gmail filter files bounce reports under "KBB Bounces" (steps on the Setup tab and in docs/EMAIL-BOUNCES-SETUP.md); every 5 minutes the shop reads only that label. Hard bounces leave every list at once; 3 soft bounces in 30 days count as hard; out-of-office never counts. Sending: one email every 8-12 s, 6 a minute, 1,500 a day (Google allows 2,000; order emails share it); Google's "slow down" or daily-limit answers pause sending instead of suppressing real customers (that was a bug). Every marketing email carries one-click unsubscribe (Gmail's bulk-sender rule). Deliverability tab: DKIM (google._domainkey) is missing, with the record to add |
+| "New Look, Less Prices" ... design C "finalized, but make sure for desktop and mobile both it works" | Marketing Emails -> Templates -> Ready templates -> "New look, less prices" (and Arabic) -> Use. Product grid: Block tab -> Automatic (rule + count) or Manual (search, pick, up/down or drag). Checked at 320/375/640, light and dark |
+| "remove the returns words completely, we don't offer returns" | Gone from the email footers, the shop footer's Help column, the classic footer and the cart/checkout policy links. The returns page itself is kept but no longer linked |
+| "full report like how many opened, how many clicked and came to the website" | Marketing Emails -> Reports: per campaign delivered, bounced, unique opens (estimated; Apple Mail auto-opens shown apart), clicks and click rate, top links and products, visits, add-to-carts, checkouts, orders and revenue; recipients list with CSV. Open tracking (on) has its switch there |
+
 ## 2.60.469
 **Tamara: the shop now knows when Tamara has already captured the money.** Apply after .468. No migrations.
 
