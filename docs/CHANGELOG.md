@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.472
+**Orders: "Send order link" on failed and unpaid orders (admin and Owner app).** Apply after .471.
+Runs its migrations. Hard refresh the admin and the Owner app.
+
+| Your request | Now |
+|---|---|
+| "if any order failed, i need a proper button (send order link) so the app will generate a link and the customer can continue with the same cart etc and select the payment to complete the order" | Store -> Orders -> (Failed, or Pending with no payment) -> Payment panel -> Send order link: Copy / WhatsApp (to the customer's number, message ready) / Email. Owner app -> Orders -> (order) -> Send order link. The link opens the same order (same items, prices, delivery, discount, total), lets the customer pick card / Apple Pay / Google Pay / Tabby / Tamara / cash on delivery, and completes the SAME order number: stock and coupon counted once. A paid link shows "This order is already paid"; links last 7 days. A product since removed from the shop, or an item on a failed order that has sold out, stops payment and says why. Link settings (days, WhatsApp text EN/AR, email subject) are in the same window. Each send is noted on the order |
+
+Also: the email report's route-cache hint now names itself only on a 404 (it already did; the guard now sits where the test can see it).
+
 ## 2.60.471
 **Admin: New Order laid out properly again; Catalog shows 100 / 200 / 300 products a page.** Apply after .470. No migrations. Hard refresh the admin.
 
