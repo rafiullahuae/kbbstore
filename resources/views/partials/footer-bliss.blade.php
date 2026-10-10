@@ -104,7 +104,7 @@
 @endif
     </div>
 @if ($kft['name'] !== '')
-    <p class="kft-name" aria-hidden="true" style="--kft-n:{{ max(8, mb_strlen($kft['name'])) }}"@if ($kft['name_sheen']) data-kft-text="{{ $kft['name'] }}"@endif>{{ $kft['name'] }}</p>
+    <p class="kft-name" aria-hidden="true" style="--kft-n:{{ max(8, mb_strlen($kft['name'])) }}"@if ($kft['name_sheen']) data-kft-text="{{ $kft['name'] }}"@endif>@if ($kft['name_drift'])<span class="kft-nm" data-kft-text="{{ $kft['name'] }}"></span>@endif{{ $kft['name'] }}</p>
 @endif
   </div></div>
 @if ($kft['app'])

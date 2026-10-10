@@ -4851,6 +4851,10 @@ LG2,
         // 4 October, "remove the effect from the very last row of the footer".
         // SiteFooter::SCHEMA['site_sheen'] ships 'off'. One class, one page
         // element, nothing else in this snapshot moved.
+        // (Lane AN) The big name carries an empty `.kft-nm` copy of itself,
+        // first inside the <p>: the compositor moves its colour drift
+        // (kbb.css), which was a style pass every frame. Same text, same look;
+        // the <p> itself and everything else in this snapshot are unchanged.
 
         return <<<'KBB_HB_FOOTER'
 <footer class="kft kft-motion kft-xm-help-sub kft-xm-logo kft-bc-m kft-hc-m" style="--kft-from:#E0567B;--kft-c2:#C13E63;--kft-c3:#E23A4E;--kft-to:#D9603B;--kft-bg:#FFFFFF;--kft-text:#5E545A;--kft-accent:#C13E63;--kft-dr:14s;--kft-drn:12s;--kft-sh:5s;--kft-pt-d:30px;--kft-pb-d:0px;--kft-gap-d:28px;--kft-fh-d:22px;--kft-fl-d:14px;--kft-fn-d:100;--kft-pt-m:20px;--kft-pb-m:0px;--kft-gap-m:12px;--kft-fh-m:17px;--kft-fl-m:13px;--kft-fn-m:100">
@@ -4896,7 +4900,7 @@ LG2,
         <form class="kft-news" method="post" action="/api/subscribe" data-kbb-subscribe><input type="hidden" name="_token" value="TOKEN" autocomplete="off"><input type="email" name="email" required placeholder="Your email for offers" aria-label="Your email" autocomplete="email"><button type="submit">Join</button></form>
       </div>
     </div>
-    <p class="kft-name" aria-hidden="true" style="--kft-n:14">K-Beauty Bliss</p>
+    <p class="kft-name" aria-hidden="true" style="--kft-n:14"><span class="kft-nm" data-kft-text="K-Beauty Bliss"></span>K-Beauty Bliss</p>
   </div></div>
   <div class="kft-bot"><div class="kft-wrap kft-bot-in">
     <span>© 2026 K-Beauty Bliss UAE</span>

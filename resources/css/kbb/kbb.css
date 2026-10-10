@@ -2274,8 +2274,18 @@ html::before,body::before,body::after{
 html::before{z-index:-4;background:var(--kbb-page-gradient)}
 body::before{z-index:-2;opacity:0;background:var(--kbb-page-gradient-b)}
 body::after{z-index:-1;opacity:0;background:var(--kbb-page-gradient-c)}
-@keyframes kbb-page-b{0%{opacity:0}33%{opacity:1}66%{opacity:0}100%{opacity:0}}
-@keyframes kbb-page-c{0%{opacity:0}33%{opacity:0}66%{opacity:1}100%{opacity:0}}
+/* ▲ THE WASH MOVES IN STEPS TOO SMALL TO SEE (Lane AN). The two layers above
+   are composited, so the main thread never sees them -- but a smoothly eased
+   opacity changes EVERY frame, and every frame the display compositor redrew
+   the whole screen for it: on the preview's product page, 1.4 s of compositor
+   time in 6 s at 390px against 0.8 s without the wash, 3.5 s against 1.7 s at
+   1280. The curve is the same ease-in-out (six knots of the 0.42/0.58 bezier,
+   within 0.015 of it), walked in steps of at most 0.02 opacity -- under half a
+   colour level between gradients this close -- so the screen is redrawn about
+   once a second instead of sixty times. Phones never draw these layers (the
+   touch rule below). */
+@keyframes kbb-page-b{0%{opacity:0;animation-timing-function:steps(3)}5.5%{opacity:.0561;animation-timing-function:steps(9)}11%{opacity:.2318;animation-timing-function:steps(14)}16.5%{opacity:.5;animation-timing-function:steps(14)}22%{opacity:.7682;animation-timing-function:steps(9)}27.5%{opacity:.9439;animation-timing-function:steps(3)}33%{opacity:1;animation-timing-function:steps(3)}38.5%{opacity:.9439;animation-timing-function:steps(9)}44%{opacity:.7682;animation-timing-function:steps(14)}49.5%{opacity:.5;animation-timing-function:steps(14)}55%{opacity:.2318;animation-timing-function:steps(9)}60.5%{opacity:.0561;animation-timing-function:steps(3)}66%{opacity:0}100%{opacity:0}}
+@keyframes kbb-page-c{0%{opacity:0}33%{opacity:0;animation-timing-function:steps(3)}38.5%{opacity:.0561;animation-timing-function:steps(9)}44%{opacity:.2318;animation-timing-function:steps(14)}49.5%{opacity:.5;animation-timing-function:steps(14)}55%{opacity:.7682;animation-timing-function:steps(9)}60.5%{opacity:.9439;animation-timing-function:steps(3)}66%{opacity:1;animation-timing-function:steps(3)}71.6667%{opacity:.9439;animation-timing-function:steps(9)}77.3333%{opacity:.7682;animation-timing-function:steps(14)}83%{opacity:.5;animation-timing-function:steps(14)}88.6667%{opacity:.2318;animation-timing-function:steps(9)}94.3333%{opacity:.0561;animation-timing-function:steps(3)}100%{opacity:0}}
 @media(prefers-reduced-motion:no-preference){
   body::before{animation:kbb-page-b 300s ease-in-out infinite}
   body::after{animation:kbb-page-c 300s ease-in-out infinite}
@@ -5270,9 +5280,45 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
 .kft-legal a:hover{color:var(--kft-accent,#C13E63)}
 .kft-pay{display:flex;gap:6px;flex-wrap:wrap}
 .kft-pay span{border:1px solid #EADDE2;border-radius:99px;padding:2px 10px;font-weight:700;font-size:11px;color:var(--ink);background:#fff}
-.kft-motion .kft-help{animation:kft-drift var(--kft-dr,14s) ease-in-out infinite alternate}
+/* ▲ THE DRIFT IS MOVED BY transform, NOT background-position (Lane AN).
+   Both used to animate background-position, which only the main thread can
+   run: measured on the product page at 390px (4x CPU), the two of them ALONE
+   cost 600 style recalcs and 2.1 s of main-thread task time in 10 idle
+   seconds -- a style pass every frame, for ever, with the footer not even on
+   screen. Same picture, run by the compositor:
+
+   - The help strip: its gradient is drawn once on a ::before as wide as the
+     old background-size (300%), and slides left by the 200% the old position
+     travelled -- 2/3 of its own width -- under the strip's own content
+     (isolation + z-index:-1), clipped by the strip. Same easing, same period.
+
+   - The big name: a gradient CLIPPED TO TEXT cannot be moved by a transform,
+     so it is rebuilt from two exact layers. The name itself is drawn in black,
+     which leaves the footer's own background with black letters cut in it:
+     (1 - c) * bg, c being each pixel's glyph coverage. Over it, .kft-nm (a
+     copy of the name, white on black) has the gradient MULTIPLIED onto it --
+     c * gradient, black everywhere else -- and is ADDED with plus-lighter:
+     (1 - c) * bg + c * gradient, which is what background-clip:text paints,
+     on any footer colour. Only the gradient layer moves. A browser without
+     plus-lighter or :has(), or one asking for less motion, keeps the old rule. */
+.kft-motion .kft-help{position:relative;isolation:isolate;overflow:hidden}
+.kft-motion .kft-help::before{content:"";position:absolute;top:0;bottom:0;left:0;width:300%;z-index:-1;pointer-events:none;
+  background:inherit;background-size:100% 100%;background-position:0 0;animation:kft-slide var(--kft-dr,14s) ease-in-out infinite alternate}
 .kft-motion .kft-name{animation:kft-drift var(--kft-drn,12s) linear infinite alternate}
 @keyframes kft-drift{from{background-position:0% 50%}to{background-position:100% 50%}}
+@keyframes kft-slide{to{transform:translateX(-66.6667%)}}
+.kft-nm{display:none}
+@supports (mix-blend-mode:plus-lighter) and selector(:has(*)){
+  @media (prefers-reduced-motion:no-preference){
+    .kft-motion .kft-name:has(>.kft-nm){position:relative;animation:none;background:none;color:#000}
+    .kft-motion .kft-nm{display:block;position:absolute;inset:0;padding-bottom:.06em;overflow:hidden;isolation:isolate;mix-blend-mode:plus-lighter;
+      background:#000;color:#fff;pointer-events:none}
+    .kft-nm::before{content:attr(data-kft-text)}
+    .kft-nm::after{content:"";position:absolute;top:0;bottom:0;left:0;width:300%;mix-blend-mode:multiply;
+      background:linear-gradient(90deg,#FFB3C8,#F7A1B5,#F59A9A,#FFC49B,#D9CFD3,#FFB3C8);animation:kft-slide var(--kft-drn,12s) linear infinite alternate}
+    .kft-name-pink .kft-nm::after{background-image:linear-gradient(90deg,#FFB3C8,#FCE0E8,#F7A8BF,#FFD3DF,#F4A0B8,#FFB3C8)}
+  }
+}
 /* The shine. A soft blush band behind the bottom bar's words (z-index -1 in
    the bar's own stacking context, so it never sits on the text) with a bright
    pink glint along its top edge; or, on the big name, a white glint laid over
@@ -5293,7 +5339,7 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
 [dir="rtl"] .kft-sheen-bar .kft-bot::before,[dir="rtl"] .kft-sheen-bar .kft-bot::after{animation-name:kft-sheen-rtl}
 [dir="rtl"] .kft-sheen-name .kft-name::after{animation-name:kft-sheen-text-rtl}
 @media (prefers-reduced-motion:reduce){
-  .kft-motion .kft-help,.kft-motion .kft-name{animation:none}
+  .kft-motion .kft-help,.kft-motion .kft-help::before,.kft-motion .kft-name{animation:none}
   .kft-help-bt a:hover{transform:none}
   .kft-sheen-bar .kft-bot::before,.kft-sheen-bar .kft-bot::after,.kft-sheen-name .kft-name::after{animation:none;display:none}
 }

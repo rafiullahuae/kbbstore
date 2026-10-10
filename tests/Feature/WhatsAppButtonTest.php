@@ -399,7 +399,7 @@ it('ships only the design in use, and the reduced-motion branch', function () {
     expect($html)->toContain('.kbw-G .kbw-o{')
         ->and($html)->not->toContain('.kbw-B ')
         ->and($html)->not->toContain('.kbw-D ')
-        ->and($html)->toContain('@media (prefers-reduced-motion:reduce){.kbw,.kbw *{animation:none!important;transition:none!important}}');
+        ->and($html)->toContain('@media (prefers-reduced-motion:reduce){.kbw,.kbw *,.kbw-d::before{animation:none!important;transition:none!important}}');
 
     foreach (array_keys(WhatsAppButton::DESIGNS) as $d) {
         expect(WhatsAppButton::css($d))->toContain('prefers-reduced-motion:reduce');
