@@ -634,6 +634,30 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
          * a 2xx JSON object carrying a checkout_url.
          */
         $attempt = $this->attempt('POST', '/checkout', $payload);
+
+        /*
+         * ▲ 2.60.468. THE RISK BLOCK IS OPTIONAL, SO IT MAY NEVER COST A SALE.
+         * risk_assessment only helps Tamara score the shopper; a checkout
+         * without it is valid. When Tamara refuses the request BECAUSE of it
+         * (a 400 naming risk_assessment, as live did on 10 Oct), the same
+         * checkout is sent once more without the block, and the order note
+         * says so. Any other refusal is left exactly as it was.
+         */
+        if (! $attempt['ok'] && $attempt['status'] === 400 && isset($payload['risk_assessment'])
+            && (stripos((string) $attempt['error'], 'risk_assessment') !== false
+                || stripos((string) $attempt['detail'], 'risk_assessment') !== false)) {
+            $this->log('risk details refused, retrying without them', '/checkout', 400, [
+                'reference' => $this->reference($order), 'error' => $attempt['error'],
+            ]);
+            unset($payload['risk_assessment']);
+            $order->notes()->create([
+                'author' => 'system',
+                'is_customer_note' => false,
+                'content' => 'Tamara refused the risk details (' . ($attempt['detail'] ?? 'no reason given') . '); the checkout was sent again without them.',
+            ]);
+            $attempt = $this->attempt('POST', '/checkout', $payload);
+        }
+
         $result = $attempt['ok'] ? $attempt['body'] : null;
 
         $url = is_array($result) ? ($result['checkout_url'] ?? null) : null;
@@ -2078,7 +2102,12 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         ];
 
         if ($firstAt !== null) {
-            $assessment['date_of_first_transaction'] = $firstAt->toAtomString();
+            // ▲ 2.60.468: DD-MM-YYYY, Tamara's risk_assessment date shape. The
+            // ISO-8601 instant sent before was refused on the live shop with
+            // "HTTP 400 — Invalid date format; risk_assessment_wrong_data_format",
+            // and that refusal stopped every Tamara checkout from a returning
+            // shopper or a signed-in account (owner's test order, 10 Oct 12:26).
+            $assessment['date_of_first_transaction'] = $firstAt->format('d-m-Y');
         }
 
         /*
@@ -2092,7 +2121,7 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
         if ($customer !== null) {
             if ($customer->created_at !== null) {
-                $assessment['account_creation_date'] = $customer->created_at->toAtomString();
+                $assessment['account_creation_date'] = $customer->created_at->format('d-m-Y');
             }
 
             $assessment['is_email_verified'] = $customer->email_verified_at !== null;
