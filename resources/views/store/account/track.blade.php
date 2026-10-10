@@ -84,6 +84,11 @@
                         default => '',
                     };
                 @endphp
+                @if (($payNotice ?? null) === 'paid')
+                    <div class="kbbtr-msg" role="status" style="background:#EEF8F1;border:1px solid #BFE0CD;color:#1F7D52">{{ __('store.order_pay.already_paid') }}</div>
+                @elseif (($payNotice ?? null) === 'closed')
+                    <div class="kbbtr-msg is-slow" role="status">{{ __('store.order_pay.closed') }}</div>
+                @endif
                 <div class="kbbtr-card">
                     <div class="kbbtr-top">
                         <b>{{ __('store.orders.order_number', ['number' => $order->order_number]) }}</b>

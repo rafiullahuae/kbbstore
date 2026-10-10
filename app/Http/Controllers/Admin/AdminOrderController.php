@@ -393,6 +393,12 @@ class AdminOrderController extends Controller
             // (Lane TM) Placed -> session opened or refused (and why) -> came
             // back -> provider's notice. See App\Support\PaymentJourney.
             'payment_journey' => \App\Support\PaymentJourney::for($order),
+            // (Lane OL) "Send order link": eligibility and the last send, off the notes already loaded.
+            // Its two abilities ride here, not in `can`, which is pinned whole.
+            'pay_link' => \App\Services\Orders\OrderPayLink::panel($order) + [
+                'can' => self::may('orders.paylink'),
+                'can_settings' => self::may('orders.paylink.settings'),
+            ],
             // (Lane TM) what the shopper did before paying, and every email sent
             // for the order. One query each; see the two classes.
             'customer_journey' => \App\Support\CustomerJourney::for($order),
@@ -422,6 +428,13 @@ class AdminOrderController extends Controller
     }
 
     /** @return array<string, bool> */
+    private static function may(string $capability): bool
+    {
+        $admin = auth('admin')->user();
+
+        return $admin instanceof \App\Models\AdminUser && \App\Support\AdminRoles::can($admin, $capability);
+    }
+
     private static function abilities(): array
     {
         $admin = auth('admin')->user();

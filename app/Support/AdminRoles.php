@@ -132,6 +132,8 @@ final class AdminRoles
             'orders.customer' => 'Move an order to another customer account',
             'orders.money' => 'Refund and void payments',
             'orders.payment' => 'Mark an order as paid',
+            'orders.paylink' => 'Send a failed or unpaid order\'s payment link (WhatsApp, email, copy)',
+            'orders.paylink.settings' => 'Change the order link\'s expiry and wording',
             'orders.delete' => 'Delete orders',
             'orders.export' => 'Export orders',
             'orders.sample' => 'Create a sample order (Demo content)',

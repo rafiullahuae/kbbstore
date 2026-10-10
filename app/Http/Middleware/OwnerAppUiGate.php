@@ -33,6 +33,7 @@ final class OwnerAppUiGate
         'orders.bulk' => ['orders', 'bulk'],
         'order.note' => ['orders', 'order_notes'],
         'order.paid' => ['orders', 'mark_paid'],
+        'order.paylink' => ['orders', null],
         'products' => ['products', null],
         'product' => ['products', null],
         'categories' => ['products', null],
