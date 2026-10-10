@@ -5302,19 +5302,23 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
      on any footer colour. Only the gradient layer moves. A browser without
      plus-lighter or :has(), or one asking for less motion, keeps the old rule. */
 .kft-motion .kft-help{position:relative;isolation:isolate;overflow:hidden}
-.kft-motion .kft-help::before{content:"";position:absolute;top:0;bottom:0;left:0;width:300%;z-index:-1;pointer-events:none;
+.kft-motion .kft-help::before{content:"";position:absolute;top:0;bottom:0;inset-inline-start:0;width:300%;z-index:-1;pointer-events:none;
   background:inherit;background-size:100% 100%;background-position:0 0;animation:kft-slide var(--kft-dr,14s) ease-in-out infinite alternate}
 .kft-motion .kft-name{animation:kft-drift var(--kft-drn,12s) linear infinite alternate}
 @keyframes kft-drift{from{background-position:0% 50%}to{background-position:100% 50%}}
 @keyframes kft-slide{to{transform:translateX(-66.6667%)}}
+/* Arabic: the layer is anchored at the right, and the old background-position
+   was physical, so the same picture is the mirrored path -- from +2/3 to 0. */
+@keyframes kft-slide-rtl{from{transform:translateX(66.6667%)}to{transform:none}}
+[dir="rtl"] .kft-motion .kft-help::before,[dir="rtl"] .kft-nm::after{transform:translateX(66.6667%);animation-name:kft-slide-rtl}
 .kft-nm{display:none}
 @supports (mix-blend-mode:plus-lighter) and selector(:has(*)){
   @media (prefers-reduced-motion:no-preference){
     .kft-motion .kft-name:has(>.kft-nm){position:relative;animation:none;background:none;color:#000}
     .kft-motion .kft-nm{display:block;position:absolute;inset:0;padding-bottom:.06em;overflow:hidden;isolation:isolate;mix-blend-mode:plus-lighter;
       background:#000;color:#fff;pointer-events:none}
-    .kft-nm::before{content:attr(data-kft-text)}
-    .kft-nm::after{content:"";position:absolute;top:0;bottom:0;left:0;width:300%;mix-blend-mode:multiply;
+    .kft-nm::before{content:attr(data-kft-copy)}
+    .kft-nm::after{content:"";position:absolute;top:0;bottom:0;inset-inline-start:0;width:300%;mix-blend-mode:multiply;
       background:linear-gradient(90deg,#FFB3C8,#F7A1B5,#F59A9A,#FFC49B,#D9CFD3,#FFB3C8);animation:kft-slide var(--kft-drn,12s) linear infinite alternate}
     .kft-name-pink .kft-nm::after{background-image:linear-gradient(90deg,#FFB3C8,#FCE0E8,#F7A8BF,#FFD3DF,#F4A0B8,#FFB3C8)}
   }

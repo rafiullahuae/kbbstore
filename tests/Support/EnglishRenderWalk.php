@@ -4900,7 +4900,7 @@ LG2,
         <form class="kft-news" method="post" action="/api/subscribe" data-kbb-subscribe><input type="hidden" name="_token" value="TOKEN" autocomplete="off"><input type="email" name="email" required placeholder="Your email for offers" aria-label="Your email" autocomplete="email"><button type="submit">Join</button></form>
       </div>
     </div>
-    <p class="kft-name" aria-hidden="true" style="--kft-n:14"><span class="kft-nm" data-kft-text="K-Beauty Bliss"></span>K-Beauty Bliss</p>
+    <p class="kft-name" aria-hidden="true" style="--kft-n:14"><span class="kft-nm" data-kft-copy="K-Beauty Bliss"></span>K-Beauty Bliss</p>
   </div></div>
   <div class="kft-bot"><div class="kft-wrap kft-bot-in">
     <span>© 2026 K-Beauty Bliss UAE</span>
