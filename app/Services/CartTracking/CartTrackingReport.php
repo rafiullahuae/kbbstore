@@ -341,6 +341,44 @@ final class CartTrackingReport
                 ->limit(12)
                 ->get();
 
+            /*
+             * (Lane OR) TOP BROWSERS AND DEVICES, for the same filter as the
+             * countries. ONE grouped statement over the user agents already on
+             * the carts, named in PHP: the browser is not a column, so it cannot
+             * be grouped in SQL, and distinct agent strings are far fewer than
+             * carts (a version string repeats). Capped so an "All time" over a
+             * huge history still costs one bounded read; the 60-second cache
+             * above covers both tiles.
+             */
+            $agents = (clone $base)
+                ->selectRaw('c.ct_ua AS ua, COUNT(*) AS n')
+                ->groupBy('c.ct_ua')
+                ->orderByDesc('n')
+                ->limit(5000)
+                ->get();
+
+            $browsers = [];
+            $devices = [];
+
+            foreach ($agents as $a) {
+                $label = \App\Support\UserAgentLabel::parse($a->ua);
+                $browsers[$label['browser']] = ($browsers[$label['browser']] ?? 0) + (int) $a->n;
+                $devices[$label['device']] = ($devices[$label['device']] ?? 0) + (int) $a->n;
+            }
+
+            // Most carts first, then by name, so ties never reorder between reloads.
+            $top = static function (array $counts): array {
+                $rows = [];
+
+                foreach ($counts as $name => $n) {
+                    $rows[] = ['name' => (string) $name, 'n' => $n];
+                }
+
+                usort($rows, static fn ($a, $b) => [$b['n'], $a['name']] <=> [$a['n'], $b['name']]);
+
+                return array_slice($rows, 0, 8);
+            };
+
             $carts = (int) ($t->carts ?? 0);
 
             return [
@@ -356,6 +394,8 @@ final class CartTrackingReport
                     'name' => $r->code === null ? 'Unknown' : (Countries::NAMES[$r->code] ?? $r->code),
                     'n' => (int) $r->n,
                 ])->all(),
+                'browsers' => $top($browsers),
+                'devices' => $top($devices),
             ];
         });
     }
@@ -451,6 +491,9 @@ final class CartTrackingReport
             'net' => $r->ct_net,
             'country' => $r->ct_country,
             'country_name' => $r->ct_country === null ? null : (Countries::NAMES[$r->ct_country] ?? $r->ct_country),
+            // (Lane OR) "Safari" / "iPhone" under the country, from the user
+            // agent already on the row -- no new column, no new query.
+            ...\App\Support\UserAgentLabel::parse($r->ct_ua),
             'bot' => (int) $r->ct_bot_score >= $threshold,
             'score' => (int) $r->ct_bot_score,
             'reasons' => BotSignals::reasons((int) $r->ct_bot_flags, $r->ct_ua, $r->ct_speed_ms !== null ? (int) $r->ct_speed_ms : null, $settings),
