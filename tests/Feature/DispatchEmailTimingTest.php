@@ -255,3 +255,43 @@ it('escapes the owner\'s sentence rather than rendering it as markup', function 
     expect(str_contains((string) (new OrderStatusChanged(dsOrder('AE'), 'shipped'))->render(), '<b>Next day</b>'))
         ->toBeFalse('an operator sentence is being rendered into the email as markup');
 });
+
+/* --------------------------------------------- a box that repeats the first line */
+
+it('prints the first sentence once when the timing box starts with it too', function () {
+    /*
+     * THE LIVE DEFECT, 10 October: the dispatch email read "Your order has left
+     * us and is with the courier. Your order has left us and is with the
+     * courier." -- in the editor's preview and in a customer's inbox -- and the
+     * delivery window was gone. The timing box held a note that began with the
+     * same sentence the email already opens with, and homeShippedBody() put
+     * the two side by side.
+     *
+     * MUTATION, RUN: return `$lead . ' ' . $note` without taking the lead off
+     * the front, and both cases are red.
+     */
+    $lead = 'Your order has left us and is with the courier.';
+
+    dsSave(['mail_shipped_timing_note' => $lead.' Most Dubai orders arrive the next working day.']);
+    $body = dsBody('AE');
+    expect(substr_count($body, $lead))->toBe(1)
+        ->and($body)->toBe($lead.' Most Dubai orders arrive the next working day.');
+
+    // A box holding ONLY that sentence adds nothing: the email says its own
+    // default, delivery window included, rather than one sentence short of it.
+    dsSave(['mail_shipped_timing_note' => '  your order has left us and is with the courier. ']);
+    expect(dsBody('AE'))->toBe(OrderStatusChanged::WORDING['shipped'][2]);
+});
+
+it('renders the dispatch sentence once in the email the customer receives, both parts', function () {
+    dsSave(['mail_shipped_timing_note' => 'Your order has left us and is with the courier.']);
+
+    $mail = new OrderStatusChanged(dsOrder('AE'), 'shipped');
+    $html = $mail->render();
+    $text = view($mail->content()->text, $mail->content()->with + $mail->buildViewData())->render();
+
+    foreach ([$html, $text] as $part) {
+        expect(substr_count($part, 'has left us and is with the courier'))->toBe(1);
+    }
+    expect($html)->toContain('one to three working days');
+});

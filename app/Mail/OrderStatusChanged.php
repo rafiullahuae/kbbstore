@@ -497,7 +497,36 @@ class OrderStatusChanged extends OrderMail
         // The NOTE is the owner's own sentence from Store → Mail and is not
         // translated — see the exclusion in InterfaceStrings' header. Only the
         // half this file says is.
-        return $note === '' ? $default : __('email.order_status.shipped_dispatched') . ' ' . $note;
+        if ($note === '') {
+            return $default;
+        }
+
+        $lead = __('email.order_status.shipped_dispatched');
+
+        /*
+         * THE BOX IS FOR WHAT COMES AFTER THE FIRST SENTENCE, and a box that
+         * already starts with it printed it twice. On the live shop, 10
+         * October: "Your order has left us and is with the courier. Your order
+         * has left us and is with the courier." in the editor's preview and in
+         * a customer's inbox, with the delivery window gone. The label says
+         * "printed after ...", but a sentence that reads naturally on its own
+         * is exactly what anybody types into a box. So the lead is taken off
+         * the front of the note when the note already carries it, and a note
+         * that is ONLY the lead adds nothing, so the email says its own
+         * default rather than one sentence short of it.
+         */
+        $squash = static fn (string $s): string => mb_strtolower(trim((string) preg_replace('/\s+/u', ' ', $s)));
+        $leadKey = $squash($lead);
+
+        if ($leadKey !== '' && str_starts_with($squash($note), $leadKey)) {
+            $note = trim(mb_substr(trim((string) preg_replace('/\s+/u', ' ', $note)), mb_strlen($leadKey)));
+
+            if ($note === '') {
+                return $default;
+            }
+        }
+
+        return $lead . ' ' . $note;
     }
 
     /** Is this a status a customer gets told about at all? */
