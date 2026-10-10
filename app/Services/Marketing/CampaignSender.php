@@ -327,9 +327,12 @@ final class CampaignSender
             ->whereIn('status', \App\Models\Order::REAL_STATUSES)->whereNull('deleted_at')
             ->distinct()->pluck('customer_id')->map(fn ($v) => (int) $v)->all());
 
+        $envelope = $this->envelopeExtras();
+        $stop = false;
+
         foreach ($rows as $row) {
-            if ((hrtime(true) - $started) / 1e9 > SendLimits::STEP_SECONDS) {
-                // Out of time: hand the rest back untouched.
+            if ($stop || (hrtime(true) - $started) / 1e9 > SendLimits::STEP_SECONDS) {
+                // Out of time, or Google said slow down: hand the rest back untouched.
                 DB::table('mkt_sends')->where('id', $row->id)->where('status', 'claimed')
                     ->update(['status' => 'pending', 'claimed_at' => null]);
 
@@ -346,14 +349,41 @@ final class CampaignSender
 
             $who = ($snap['audience'] ?? 'customers') === 'subscribers' ? 'subscribers'
                 : ($row->customer_id !== null && ! isset($buyers[(int) $row->customer_id]) ? 'account' : 'customers');
-            $this->sendOne($c, $row, $blocks, $snap + ['who' => $who], $links, $data);
+            $stop = ! $this->sendOne($c, $row, $blocks, $snap + ['who' => $who], $links, $data, $envelope);
         }
     }
 
     /**
+     * Per step, not per message (Lane EB): the From domain for Message-ID and
+     * the mailto: unsubscribe address, which exists only while the bounce
+     * mailbox is being read — a mailto nobody processes is an unsubscribe
+     * silently ignored, Lane MK's reason for leaving it out until now.
+     *
+     * @return array{domain:string, mailto:string}
+     */
+    private function envelopeExtras(): array
+    {
+        $domain = '';
+        $mailto = '';
+
+        try {
+            $from = app(\App\Services\Mail\MailSettings::class)->fromAddress();
+            $at = strrpos($from, '@');
+            $domain = $at === false ? '' : strtolower(substr($from, $at + 1));
+            $domain = preg_match('/^[a-z0-9.-]+\.[a-z]{2,}$/', $domain) === 1 ? $domain : '';
+            $mailto = app(Bounces\BounceMailbox::class)->unsubscribeAddress();
+        } catch (\Throwable) {
+        }
+
+        return ['domain' => $domain, 'mailto' => $mailto];
+    }
+
+    /**
+     * Returns false when Google told the shop to slow down: the step stops.
+     *
      * @param  array<string, int>  $links  url => n
      */
-    private function sendOne(object $c, object $row, array $blocks, array $snap, array $links, array $data): void
+    private function sendOne(object $c, object $row, array $blocks, array $snap, array $links, array $data, array $envelope = ['domain' => '', 'mailto' => '']): bool
     {
         $token = (string) $row->token;
         $unsubscribe = Url::external('/email/u/' . UnsubscribeToken::for((int) $row->id, (string) $row->email));
@@ -377,21 +407,76 @@ final class CampaignSender
                 $out['text'],
                 $unsubscribe,
                 $c->from_name,
+                $envelope['domain'] !== '' ? Bounces\BounceRef::messageId((int) $row->id, (string) $row->email, $envelope['domain']) : null,
+                $envelope['mailto'] !== '' ? 'mailto:' . $envelope['mailto'] . '?subject=' . rawurlencode('unsubscribe ' . UnsubscribeToken::for((int) $row->id, (string) $row->email)) : null,
+                (int) $c->id,
             );
 
             $this->log->labelNext(self::MAIL_KIND . '.' . $c->id);
             Mail::mailer(MailConfigurator::MAILER)->to((string) $row->email)->send($mailable);
         } catch (\Throwable $e) {
             $words = trim(class_basename($e) . ': ' . str_replace($token, '[token]', $e->getMessage()));
-            $hard = preg_match('/\b5\d\d\b|\b5\.\d\.\d+\b/', $e->getMessage()) === 1;
+
+            /*
+             * WHAT THE REFUSAL IS ABOUT (Lane EB, BounceCodes::atSend).
+             *
+             * Lane MK called every 5xx "HARD", and suppressed an address on its
+             * second one. Google's "550 5.4.5 Daily user sending limit
+             * exceeded" is a 5xx about the SHOP — so the day the limit was
+             * reached every remaining recipient was marked HARD, and the next
+             * campaign suppressed them all. Now:
+             *
+             *   sender  (rate limit, 421, 4.7.x, 5.4.5, a dropped connection)
+             *           the row goes back to pending, sending backs off
+             *           (SendBackoff) and this step stops.
+             *   hard    (5.1.1 user unknown …) failed, and suppressed AT ONCE
+             *           — the owner: "auto removed from the list".
+             *   soft    failed and counted; three in 30 days is hard.
+             *
+             * A failure that never reached a mail server (a rendering error,
+             * an address Symfony refuses) carries no code: it is failed, as
+             * before, and says nothing about the address or the sender.
+             */
+            $transport = $e instanceof \Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+            $verdict = Bounces\BounceCodes::atSend($e->getMessage());
+
+            if ($verdict['code'] === null && ! $transport) {
+                $verdict['class'] = 'other';
+            }
+
+            if ($verdict['class'] === Bounces\BounceCodes::SENDER) {
+                DB::table('mkt_sends')->where('id', $row->id)->update([
+                    'status' => 'pending', 'claimed_at' => null, 'error' => Str::limit('RETRY ' . $words, 290),
+                ]);
+
+                $state = SendBackoff::strike($e->getMessage(), $verdict['code']);
+
+                if ($state['strikes'] >= SendBackoff::STRIKES_PAUSE) {
+                    DB::table('mkt_campaigns')->where('status', 'sending')->update(['status' => 'paused', 'updated_at' => now()]);
+                }
+
+                Log::warning('Google asked the shop to slow down; campaign sending is backing off.', ['campaign' => $c->id, 'strikes' => $state['strikes'], 'code' => $verdict['code']]);
+
+                return false;
+            }
+
+            $prefix = match ($verdict['class']) {
+                Bounces\BounceCodes::HARD => 'HARD ',
+                Bounces\BounceCodes::SOFT => 'SOFT ',
+                default => '',
+            };
 
             DB::table('mkt_sends')->where('id', $row->id)->update([
                 'status' => 'failed', 'sent_at' => now(), 'claimed_at' => null,
-                'error' => Str::limit(($hard ? 'HARD ' : '') . $words, 290),
+                'error' => Str::limit($prefix . $words, 290),
             ]);
 
-            if ($hard) {
-                $this->maybeSuppressBounce((string) $row->email, (int) $c->id, (int) $row->id);
+            if ($prefix !== '') {
+                app(Bounces\BounceBook::class)->record([
+                    'email' => (string) $row->email, 'kind' => $verdict['class'], 'code' => $verdict['code'],
+                    'detail' => Str::limit($e->getMessage(), 240, ''), 'campaign_id' => (int) $c->id,
+                    'send_id' => (int) $row->id, 'source' => 'smtp',
+                ]);
             }
 
             try {
@@ -401,28 +486,13 @@ final class CampaignSender
 
             Log::warning('A campaign message could not be sent.', ['campaign' => $c->id, 'send' => $row->id, 'exception' => $e::class]);
 
-            return;
+            return true;
         }
 
-        DB::table('mkt_sends')->where('id', $row->id)->update(['status' => 'sent', 'sent_at' => now(), 'claimed_at' => null]);
-    }
+        SendBackoff::clear();
+        DB::table('mkt_sends')->where('id', $row->id)->update(['status' => 'sent', 'sent_at' => now(), 'claimed_at' => null, 'error' => null]);
 
-    /**
-     * A second hard (5xx) refusal for the same address writes a `bounce`
-     * suppression (plan §4, "Bounces"). One is not enough: a mailbox can be
-     * full for a day.
-     */
-    private function maybeSuppressBounce(string $email, int $campaignId, int $sendId): void
-    {
-        $email = mb_strtolower(trim($email));
-        $hard = DB::table('mkt_sends')->where('email', $email)->where('status', 'failed')
-            ->where('error', 'like', 'HARD %')->count();
-
-        if ($hard >= 2) {
-            DB::table('email_suppressions')->insertOrIgnore([
-                'email' => $email, 'reason' => 'bounce', 'source' => 'campaign:' . $campaignId, 'created_at' => now(),
-            ]);
-        }
+        return true;
     }
 
     /**

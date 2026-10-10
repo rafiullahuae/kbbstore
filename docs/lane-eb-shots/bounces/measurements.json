@@ -1,0 +1,119 @@
+[
+  {
+    "width": 1280,
+    "bounced": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "tabFont": "13.5px",
+      "navRow": "Bounces & unsubscribesnew",
+      "items": 6,
+      "title": "Bounces & unsubscribes"
+    },
+    "watching": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "tabFont": "13.5px",
+      "navRow": "Bounces & unsubscribesnew",
+      "items": 2,
+      "title": "Bounces & unsubscribes"
+    },
+    "unsubscribed": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "tabFont": "13.5px",
+      "navRow": "Bounces & unsubscribesnew",
+      "items": 4,
+      "title": "Bounces & unsubscribes"
+    },
+    "complaints": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "tabFont": "13.5px",
+      "navRow": "Bounces & unsubscribesnew",
+      "items": 1,
+      "title": "Bounces & unsubscribes"
+    },
+    "setup": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "tabFont": "13.5px",
+      "navRow": "Bounces & unsubscribesnew",
+      "items": 0,
+      "title": "Bounces & unsubscribes"
+    },
+    "dns": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "tabFont": "13.5px",
+      "navRow": "Bounces & unsubscribesnew",
+      "items": 3,
+      "title": "Bounces & unsubscribes"
+    },
+    "restoreBefore": {
+      "items": 6,
+      "count": "6"
+    },
+    "confirmText": "Put aisha.full@gmail.com back on the marketing list? It will be emailed again from the next campaign. Only do this if you know the address works now — mailing a dead address again hurts the shop's sending reputation.",
+    "restoreAfter": {
+      "items": 5,
+      "count": "5",
+      "message": "aisha.full@gmail.com is back on the list. It will be emailed again from the next campaign.",
+      "banner": null
+    },
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "width": 390,
+    "bounced": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "tabFont": "13.5px",
+      "navRow": "Bounces & unsubscribesnew",
+      "items": 5,
+      "title": "Bounces & unsubscribes"
+    },
+    "watching": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "tabFont": "13.5px",
+      "navRow": "Bounces & unsubscribesnew",
+      "items": 2,
+      "title": "Bounces & unsubscribes"
+    },
+    "unsubscribed": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "tabFont": "13.5px",
+      "navRow": "Bounces & unsubscribesnew",
+      "items": 4,
+      "title": "Bounces & unsubscribes"
+    },
+    "complaints": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "tabFont": "13.5px",
+      "navRow": "Bounces & unsubscribesnew",
+      "items": 1,
+      "title": "Bounces & unsubscribes"
+    },
+    "setup": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "tabFont": "13.5px",
+      "navRow": "Bounces & unsubscribesnew",
+      "items": 0,
+      "title": "Bounces & unsubscribes"
+    },
+    "dns": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "tabFont": "13.5px",
+      "navRow": "Bounces & unsubscribesnew",
+      "items": 3,
+      "title": "Bounces & unsubscribes"
+    },
+    "errors": []
+  }
+]

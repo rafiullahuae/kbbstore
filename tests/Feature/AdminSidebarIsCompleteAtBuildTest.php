@@ -391,7 +391,8 @@ it('renders the sidebar the console settled on, group by group and row by row', 
             'header', 'mobilemenu', 'productpage', 'setap', 'bundles', 'layout', 'sitelayout', 'comingsoon'],
         'Pages' => ['pages-store', 'pages-user', 'pagebanners', 'pageheader'],
         // 'merchantfeed' — Growth & Marketing → Google Shopping feed (Lane SEO), after Meta & Facebook.
-        'Growth & Marketing' => ['mkt-email', 'newsletter', 'labels', 'meta', 'merchantfeed', 'pixels', 'searchterms', 'push'],
+        // 'mkt-health' — Growth & Marketing → Bounces & unsubscribes (Lane EB), under Marketing Emails.
+        'Growth & Marketing' => ['mkt-email', 'mkt-health', 'newsletter', 'labels', 'meta', 'merchantfeed', 'pixels', 'searchterms', 'push'],
         'Reviews' => ['rev-all', 'rev-add', 'rev-assign', 'rev-io', 'rev-badge', 'rev-settings'],
         '/flat' => ['shopfilters', 'updates'],
     ];

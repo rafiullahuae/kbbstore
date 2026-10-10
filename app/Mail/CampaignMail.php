@@ -27,11 +27,25 @@ use Illuminate\Support\HtmlString;
  * /email/u/{token} is the one CSRF-exempt route in the shop, listed by exact
  * path, and it unsubscribes on the token alone.
  *
- * NO mailto: entry, although the plan's draft listed one. Nothing on this
- * host reads an unsubscribe@ mailbox, and a List-Unsubscribe address that
- * nobody processes is an unsubscribe request that is silently ignored —
- * exactly what the header exists to prevent. Gmail and Apple Mail use the
- * https one-click entry.
+ * THE mailto: ENTRY (Lane EB). Lane MK left it out because nothing read an
+ * unsubscribe mailbox, and a List-Unsubscribe address nobody processes is an
+ * unsubscribe silently ignored. Lane EB reads one: when Bounces &
+ * unsubscribes → Settings → "Read bounces" is on, the header also carries
+ *
+ *   <mailto:{account}+unsubscribe@{domain}?subject=unsubscribe%20{token}>
+ *
+ * which the same Gmail filter files under "KBB Bounces" and BounceReader
+ * honours by the token. Off, there is no mailto, exactly as before.
+ *
+ * Also (Lane EB):
+ *   Message-ID   <{BounceRef}@{From domain}> — signed per send, so a bounce
+ *                report that quotes it names the campaign and the address.
+ *   Feedback-ID  {campaign}:mkt:kbb — Gmail Postmaster Tools' spam-rate
+ *                breakdown per campaign (Google's bulk-sender guidance).
+ *
+ * The From is always the shop's one From address (MailSettings::fromAddress);
+ * a campaign may change the NAME only — a consistent From is one of Google's
+ * bulk-sender requirements.
  */
 class CampaignMail extends Mailable
 {
@@ -41,6 +55,9 @@ class CampaignMail extends Mailable
         private string $plain,
         private string $unsubscribeUrl,
         private ?string $fromName = null,
+        private ?string $messageId = null,
+        private ?string $mailto = null,
+        private ?int $campaignId = null,
     ) {}
 
     public function envelope(): Envelope
@@ -75,10 +92,17 @@ class CampaignMail extends Mailable
 
     public function headers(): Headers
     {
-        return new Headers(text: [
-            'List-Unsubscribe' => '<' . $this->unsubscribeUrl . '>',
+        $text = [
+            // https first: RFC 8058 one-click is what Gmail and Apple Mail use.
+            'List-Unsubscribe' => '<' . $this->unsubscribeUrl . '>' . ($this->mailto !== null ? ', <' . $this->mailto . '>' : ''),
             'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
             'Precedence' => 'bulk',
-        ]);
+        ];
+
+        if ($this->campaignId !== null) {
+            $text['Feedback-ID'] = $this->campaignId . ':mkt:kbb';
+        }
+
+        return new Headers(messageId: $this->messageId, text: $text);
     }
 }

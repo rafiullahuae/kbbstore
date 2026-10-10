@@ -1,0 +1,11 @@
+From: K Beauty Bliss <info@kbeautybliss.com>
+To: sara@example.com
+Subject: New arrivals this week, Sara
+Message-Id: <ya.dfa409a72d21ce67aab53ec437473a97@kbeautybliss.com>
+List-Unsubscribe: <https://extrabeauty.ae/email/u/ya-4a21ccc4e291fd7935beef205a82fd41>,
+ <mailto:info+unsubscribe@kbeautybliss.com?subject=unsubscribe%20ya-4a21ccc4e291fd7935beef205a82fd41>
+List-Unsubscribe-Post: List-Unsubscribe=One-Click
+Precedence: bulk
+Feedback-ID: 7:mkt:kbb
+
+[parts] text/plain, text/html

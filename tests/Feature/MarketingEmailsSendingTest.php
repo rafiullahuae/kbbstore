@@ -193,13 +193,19 @@ it('holds the daily cap across campaigns, and the per-minute rate', function () 
     expect(app(SendLimits::class)->room()['minute_left'])->toBe(0);
 });
 
-it('defaults the daily cap to 2,000 on Google Workspace and to a conservative 500 otherwise', function () {
+it('defaults the daily cap to 1,500 on Google Workspace (ceiling 2,000) and to a conservative 500 otherwise', function () {
+    /*
+     * ▲ Lane EB advanced this pin, at the owner's request ("adjust the bulk
+     * emails sending duration … it must not be spamming"): Google's 2,000 a
+     * day is the WHOLE account's allowance, order emails included, so the
+     * default leaves 500 of it; and 6 a minute matches the 10 s pace.
+     */
     expect(app(SendLimits::class)->perDay())->toBe(SendLimits::CAP_OTHER)->and(SendLimits::CAP_OTHER)->toBe(500);
 
     app(SettingsService::class)->set('mail_transport', 'gmail');
     SettingsService::forgetMemo();
-    expect(app(SendLimits::class)->perDay())->toBe(2000)
-        ->and(app(SendLimits::class)->perMinute())->toBe(60);
+    expect(app(SendLimits::class)->perDay())->toBe(1500)
+        ->and(app(SendLimits::class)->perMinute())->toBe(6);
 
     // Never above Google's own ceiling, whatever is stored.
     app(SettingsService::class)->set('mkt_daily_cap', 9000, false);
@@ -321,11 +327,14 @@ it('skips an address that unsubscribed after the list was written', function () 
     expect(DB::table('mkt_sends')->where('email', 'late1@example.com')->value('status'))->toBe('skipped');
 });
 
-it('writes a bounce suppression on the second hard refusal for the same address', function () {
+it('writes a bounce suppression on the FIRST hard refusal for an address', function () {
     /*
-     * Plan §4 "Bounces": a synchronous 5xx marks the send failed, and a second
-     * hard failure for that address suppresses it, so the third campaign does
-     * not knock on the same dead mailbox and spend the shop's reputation.
+     * Plan §4 "Bounces", as Lane EB changed it at the owner's request ("those
+     * emails will auto removed from the list"): a synchronous 5.1.1 is the
+     * address not existing, so the first one suppresses — the second campaign
+     * never knocks on the same dead mailbox. A full mailbox (5.2.2) is soft
+     * and counted instead (EmailBouncesTest), which is what the old
+     * "one is not enough" rule was protecting.
      */
     mkCustomers(1, 'dead');
     $sender = app(CampaignSender::class);
@@ -333,12 +342,10 @@ it('writes a bounce suppression on the second hard refusal for the same address'
     Mail::shouldReceive('to')->andReturnSelf();
     Mail::shouldReceive('send')->andThrow(new \RuntimeException('Expected response code 250 but got code "550", with message "550 5.1.1 User unknown"'));
 
-    foreach ([1, 2] as $round) {
-        $id = mkAllCustomersCampaign();
-        $sender->start($id);
-        mkRunToEnd($id);
-        expect(DB::table('mkt_sends')->where('campaign_id', $id)->value('status'))->toBe('failed');
-    }
+    $id = mkAllCustomersCampaign();
+    $sender->start($id);
+    mkRunToEnd($id);
+    expect(DB::table('mkt_sends')->where('campaign_id', $id)->value('status'))->toBe('failed');
 
     expect(DB::table('email_suppressions')->where('email', 'dead1@example.com')->value('reason'))->toBe('bounce');
 });

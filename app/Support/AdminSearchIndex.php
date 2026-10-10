@@ -799,6 +799,15 @@ final class AdminSearchIndex
             'Customer groups' => [],
             'Reports' => [],
         ],
+        // Growth & Marketing → Bounces & unsubscribes (Lane EB).
+        'mkt-health' => [
+            'Bounced' => [],
+            'Unsubscribed' => [],
+            'Spam complaints' => [],
+            'Watching' => [],
+            'Setup' => ['Read bounces from Gmail', 'Remove bounced addresses automatically', 'Gmail label', 'App password', 'Sending pace'],
+            'Deliverability' => ['SPF', 'DKIM', 'DMARC'],
+        ],
         'newsletter' => [
             'Content' => [],
             'Messages' => [],

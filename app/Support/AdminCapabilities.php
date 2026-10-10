@@ -584,6 +584,24 @@ final class AdminCapabilities
         'marketing.email.view' => ['owner', 'manager'],
         'marketing.email.manage' => ['owner', 'manager'],
         'marketing.email.send' => ['owner', 'manager'],
+        /*
+         * Growth & Marketing -> Bounces & unsubscribes (Lane EB):
+         *
+         *   marketing.bounces.view     the Bounced / Unsubscribed / Spam
+         *                              complaints / Watching lists, the
+         *                              mailbox's masked state, the DNS check.
+         *   marketing.bounces.restore  put a bounced address back on the list.
+         *   marketing.bounces.mailbox  the bounce mailbox: the account, its
+         *                              app password, Test connection, Read now.
+         *                              OWNER ONLY — a credential to the shop's
+         *                              Google mailbox, like emails.manage.
+         *
+         * The pace is marketing.email.send (it is a sending limit), the CSV is
+         * marketing.export (it is taking a list of addresses away).
+         */
+        'marketing.bounces.view' => ['owner', 'manager'],
+        'marketing.bounces.restore' => ['owner', 'manager'],
+        'marketing.bounces.mailbox' => ['owner'],
 
         /*
          * Growth & Marketing -> Push Notifications (Lane PN). Two, and the
@@ -1911,6 +1929,17 @@ final class AdminCapabilities
         ['POST', 'admin-api/email-marketing/groups/people', 'marketing.email.view'],
         ['GET', 'admin-api/email-marketing/**', 'marketing.email.view'],
         ['*', 'admin-api/email-marketing/**', 'marketing.email.manage'],
+        /*
+         * Bounces & unsubscribes (Lane EB), routes/email-health-admin.php.
+         * Narrow first; every write not listed falls to the owner-only
+         * mailbox capability, so a fourth POST added later fails CLOSED.
+         */
+        ['GET', 'admin-api/email-health/bounced/export', 'marketing.export'],
+        ['POST', 'admin-api/email-health/bounced/restore', 'marketing.bounces.restore'],
+        ['POST', 'admin-api/email-health/pace', 'marketing.email.send'],
+        ['POST', 'admin-api/email-health/deliverability/check', 'marketing.bounces.view'],
+        ['GET', 'admin-api/email-health/**', 'marketing.bounces.view'],
+        ['*', 'admin-api/email-health/**', 'marketing.bounces.mailbox'],
         ['POST', 'admin-api/outbound/sweep', 'marketing.manage'],
         ['GET', 'admin-api/outbound/**', 'marketing.view'],
         ['GET', 'admin-api/newsletter/export', 'marketing.export'],

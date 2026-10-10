@@ -1,0 +1,49 @@
+Delivered-To: info@kbeautybliss.com
+Return-Path: <>
+From: Mail Delivery Subsystem <mailer-daemon@googlemail.com>
+To: info@kbeautybliss.com
+Auto-Submitted: auto-replied
+Subject: Delivery Status Notification (Delay)
+Message-ID: <66f2c1a8.050a0220.delay441@mx.google.com>
+Date: Fri, 09 Oct 2026 12:15:02 -0700 (PDT)
+MIME-Version: 1.0
+Content-Type: multipart/report; boundary="00000000000044aa"; report-type=delivery-status
+
+--00000000000044aa
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+** Delivery incomplete **
+
+There was a temporary problem delivering your message to {{EMAIL}}. Gmail w=
+ill retry for 46 more hours. You'll be notified if the delivery fails perma=
+nently.
+
+The response was:
+
+The recipient server did not accept our requests to connect. [mx.example.ne=
+t. 203.0.113.9: timed out]
+
+--00000000000044aa
+Content-Type: message/delivery-status
+
+Reporting-MTA: dns; googlemail.com
+Arrival-Date: Fri, 09 Oct 2026 10:15:01 -0700 (PDT)
+X-Original-Message-ID: <{{REF}}@kbeautybliss.com>
+
+Final-Recipient: rfc822; {{EMAIL}}
+Action: delayed
+Status: 4.4.1
+Diagnostic-Code: smtp; The recipient server did not accept our requests to connect. [mx.example.net. 203.0.113.9: timed out]
+Last-Attempt-Date: Fri, 09 Oct 2026 12:15:02 -0700 (PDT)
+Will-Retry-Until: Sun, 11 Oct 2026 10:15:01 -0700 (PDT)
+
+--00000000000044aa
+Content-Type: text/rfc822-headers
+
+From: K Beauty Bliss <info@kbeautybliss.com>
+To: {{EMAIL}}
+Subject: New arrivals this week
+Message-ID: <{{REF}}@kbeautybliss.com>
+
+--00000000000044aa--

@@ -171,7 +171,11 @@ it('has nothing that outlives a single request', function () {
     // today's analytics summaries from the raw hits (one MAX(id) and nothing
     // more when there are none new), prunes hits older than 48 hours, exits.
     // Nothing is held between runs.
-    expect(substr_count($console, 'Schedule::command('))->toBe(10, 'the set of scheduled commands has changed');
+    // 11 with Lane EB: `kbb:bounces-read`, every five minutes -- reads the
+    // Gmail bounce label over IMAP, files each report and exits; while bounce
+    // reading is off it returns before opening a connection. Nothing is held
+    // between runs.
+    expect(substr_count($console, 'Schedule::command('))->toBe(11, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {
