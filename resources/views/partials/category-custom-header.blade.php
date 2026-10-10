@@ -13,6 +13,9 @@
     $chParts = [
         'home' => \App\Support\Url::to('/'),
         'crumb' => $ch['heading'],
+        // (Lane BC) A category's trail runs through the shop, as its
+        // BreadcrumbList does; Pages that share partials/page-header pass none.
+        'shop' => \App\Support\Url::to('/shop/'),
         'title' => $ch['heading'],
         'count' => trans_choice('store.collection.product_count', $chTotal, ['formatted' => number_format($chTotal)]),
         'intro' => $ch['intro'],

@@ -17,7 +17,7 @@
 --}}@php($phC = \App\Services\PageHeaders::compile($pageHeader['bag'], $pageHeader['kind'], ['intro' => ($ph['intro'] ?? '') !== '', 'image' => $pageHeader['img'] !== null, 'crumb' => \App\Services\PageHeaders::siteCrumb()]))
 <style id="kbb-ph-css">{!! \App\Services\PageHeaders::CSS !!}</style>
 <div class="{{ $phC['wrap'] }}" style="{{ $phC['style'] }}" data-kbb-ph="{{ $pageHeader['key'] }}">
-<nav class="{{ $phC['cls']['crumb'] }}"><a href="{{ $ph['home'] }}">{{ __('store.breadcrumb.home') }}</a> / <span>{{ $ph['crumb'] }}</span></nav>
+<nav class="{{ $phC['cls']['crumb'] }}"><a href="{{ $ph['home'] }}">{{ __('store.breadcrumb.home') }}</a> / @if (($ph['shop'] ?? null) !== null)<a href="{{ $ph['shop'] }}">{{ __('store.breadcrumb.shop') }}</a> / @endif<span>{{ $ph['crumb'] }}</span></nav>
 @if ($pageHeader['img'])
 <picture class="{{ $phC['cls']['image'] }}">@if ($pageHeader['img']['two'])<source media="(max-width: {{ \App\Services\PageHeaders::BREAKPOINT }}px)" srcset="{{ $pageHeader['img']['m'] }}">@endif<img src="{{ $pageHeader['img']['d'] }}" alt="{{ $pageHeader['img']['alt'] }}" decoding="async"></picture>
 @endif
