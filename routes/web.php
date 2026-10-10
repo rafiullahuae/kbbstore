@@ -744,6 +744,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/emails-admin.php';
         require __DIR__.'/emails-templates-admin.php';   // Emails → Customer emails + the template editor (Lane EK)
         require __DIR__.'/marketing-emails-admin.php';   // Growth & Marketing → Marketing Emails (Lane MK)
+        require __DIR__.'/marketing-report-admin.php';   // Marketing Emails → Reports: recipients, CSV, open tracking (Lane ER)
         require __DIR__.'/email-health-admin.php';   // Growth & Marketing → Bounces & unsubscribes (Lane EB)
 
         // Categories and attributes. Same guarded group: these write catalogue
@@ -1460,6 +1461,7 @@ require __DIR__.'/import-chain.php';
 // every group: both are opened from an inbox by someone not signed in.
 require __DIR__.'/mail-kit.php';
 require __DIR__.'/marketing-public.php';   // unsubscribe and click links in marketing emails (Lane MK)
+require __DIR__.'/marketing-open-public.php';   // the open pixel of marketing emails (Lane ER)
 
 /*
  * Required last, and that placement is load-bearing. The final route in this

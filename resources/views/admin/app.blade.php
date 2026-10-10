@@ -24570,6 +24570,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      declared in NAV under the Emails group. --}}
 @include('admin.partials.emails-screens')
 @include('admin.partials.marketing-emails-screens')
+@include('admin.partials.marketing-email-report')
 @include('admin.partials.email-health-screen')
 @include('admin.partials.emails-templates-screens')
 
