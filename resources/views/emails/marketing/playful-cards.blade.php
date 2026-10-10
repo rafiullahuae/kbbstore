@@ -7,9 +7,18 @@
                mapped (preview / click tracker), 'kind' the sticker word ('' =
                no sticker), 'short' the name without its brand, 'wasNum' the
                old price as a bare number, 'h138' the picture's height at 138.
-    $cols      3  fluid hybrid: 3 across at 600, 2 across on a phone (the .hy
-                  media query), 1 centred card where a client ignores <style>
-                  — never wider than the screen, with or without the query
+    $cols      3  fluid hybrid: never fewer than 2 across -- WITH OR WITHOUT a
+                  media query. Each card is width:50% capped at 178px: where
+                  the row is 534px or wider the cap wins and three fit; below
+                  that the half wins and two fit, always (measured, 320 / 375 /
+                  414 / 600, styled and with <style> stripped:
+                  docs/lane-sh-shots/grid). It was width:100%,
+                  which relied on the playful shell's .hy query; the standard
+                  shell (emails/kit/doc, parity-pinned) has no such rule, so on
+                  a phone every card took a row of its own -- the owner, 10
+                  October: "i don't want any one column in any screen size. it
+                  must be minimum 2 columns". A client that ignores <style>
+                  now gets two across as well, instead of one.
                2  a plain two-cell table: 2 across at every width, no query needed
                1  one centred card per row
     $tintClass true in the playful shell (t0…t5 turn each tint dark in dark
@@ -52,4 +61,4 @@
             . '</td></tr></table></td></tr></table>';
     };
 @endphp
-<tr><td align="center" class="px" style="padding:4px 24px 0;font-size:0;text-align:center;">@if ($pcCols === 3)<!--[if mso]><table role="presentation" width="534" cellpadding="0" cellspacing="0" border="0" align="center"><tr><![endif]-->@foreach ($products as $p)@if ($loop->index && $loop->index % 3 === 0)<!--[if mso]></tr><tr><![endif]-->@endif<!--[if mso]><td width="178" valign="top"><![endif]--><div class="hy" style="display:inline-block;vertical-align:top;width:100%;max-width:178px;">{!! $pcCard($p, $loop->index) !!}</div><!--[if mso]></td><![endif]-->@endforeach<!--[if mso]></tr></table><![endif]-->@else<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:{{ $pcCols === 2 ? 534 : 300 }}px;margin:0 auto;">@foreach (array_chunk($products, $pcCols) as $pcRow)<tr>@foreach ($pcRow as $p)<td width="{{ $pcCols === 2 ? '50%' : '100%' }}" valign="top" style="width:{{ $pcCols === 2 ? '50%' : '100%' }};font-size:14px;">{!! $pcCard($p, $loop->parent->index * $pcCols + $loop->index) !!}</td>@endforeach @if (count($pcRow) < $pcCols)<td width="50%" style="width:50%;"></td>@endif</tr>@endforeach</table>@endif</td></tr>
+<tr><td align="center" class="px" style="padding:4px 24px 0;font-size:0;text-align:center;">@if ($pcCols === 3)<!--[if mso]><table role="presentation" width="534" cellpadding="0" cellspacing="0" border="0" align="center"><tr><![endif]-->@foreach ($products as $p)@if ($loop->index && $loop->index % 3 === 0)<!--[if mso]></tr><tr><![endif]-->@endif<!--[if mso]><td width="178" valign="top"><![endif]--><div class="hy" style="display:inline-block;vertical-align:top;width:50%;max-width:178px;">{!! $pcCard($p, $loop->index) !!}</div><!--[if mso]></td><![endif]-->@endforeach<!--[if mso]></tr></table><![endif]-->@else<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:{{ $pcCols === 2 ? 534 : 300 }}px;margin:0 auto;">@foreach (array_chunk($products, $pcCols) as $pcRow)<tr>@foreach ($pcRow as $p)<td width="{{ $pcCols === 2 ? '50%' : '100%' }}" valign="top" style="width:{{ $pcCols === 2 ? '50%' : '100%' }};font-size:14px;">{!! $pcCard($p, $loop->parent->index * $pcCols + $loop->index) !!}</td>@endforeach @if (count($pcRow) < $pcCols)<td width="50%" style="width:50%;"></td>@endif</tr>@endforeach</table>@endif</td></tr>

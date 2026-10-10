@@ -279,7 +279,7 @@ it('holds a phone: nothing wider than 600, every picture sized, the grid laid ou
      * 2×3 / 3×2, card 130 / 158 / 177 / 178 px, nothing past the viewport.
      *
      * MUTATION: set the .hy cell's inline max-width to 600 or drop its
-     * width:100% fallback, or drop the <!--[if mso]> roundrect, and this is red.
+     * width:50% fallback, or drop the <!--[if mso]> roundrect, and this is red.
      */
     $html = ecRender(ecBlocks('new-look', ecCatalogue()))['html'];
 
@@ -299,10 +299,12 @@ it('holds a phone: nothing wider than 600, every picture sized, the grid laid ou
         expect($html)->toContain('src="' . e($src) . '"');
     }
 
-    // The grid without <style>: inline-block cells, each max 178px wide and
-    // width:100%, so 3 fit at 600 and a narrow screen takes one per row; the
-    // query only folds them to 2 on a phone; Outlook gets a 534px ghost table.
-    expect(substr_count($html, '<div class="hy" style="display:inline-block;vertical-align:top;width:100%;max-width:178px;">'))->toBe(6)
+    // The grid without <style>: inline-block cells, each width:50% capped at
+    // 178px, so 3 fit on a 534px row and EVERY narrower screen takes two --
+    // never one (owner, 10 October: "it must be minimum 2 columns"). The query
+    // still folds them to 2 on a phone; Outlook gets a 534px ghost table.
+    // This pin used to read width:100%, which was the one-per-row fallback.
+    expect(substr_count($html, '<div class="hy" style="display:inline-block;vertical-align:top;width:50%;max-width:178px;">'))->toBe(6)
         ->and($html)->toContain('.hy{max-width:50%!important}')
         ->and($html)->toContain('<!--[if mso]><table role="presentation" width="534"')
         ->and(substr_count($html, '<v:roundrect'))->toBe(2)
@@ -410,3 +412,21 @@ final class ProductFillCardsProbe
             ->map(fn ($p) => \App\Services\Mail\Kit\MailKit::image($p->image, 400))->filter()->values()->all();
     }
 }
+
+it('keeps the product cards at least two across on a phone in the STANDARD look too', function () {
+    /*
+     * THE DEFECT, owner's screenshot of 10 October ("2.60.472 standard look ·
+     * 375px"): the six cards one per row. The standard shell is the kit's
+     * doc, which carries no .hy rule, so the cards fell back to their own
+     * width:100% and each took a line. Measured in Chromium after the change
+     * (docs/lane-sh-shots/grid): 2 per row at 320, 375, 414 and 600, styled
+     * and with every <style> stripped.
+     *
+     * MUTATION, RUN: put width:100% back in playful-cards and this is red.
+     */
+    $html = ecRender(ecBlocks('new-look', ecCatalogue()), 'en', 'standard')['html'];
+
+    expect(substr_count($html, 'class="hy"'))->toBe(6)
+        ->and(substr_count($html, '<div class="hy" style="display:inline-block;vertical-align:top;width:50%;max-width:178px;">'))->toBe(6)
+        ->and($html)->not->toContain('width:100%;max-width:178px');
+});
