@@ -12,8 +12,8 @@
     "file": "resources/views/admin/app.blade.php",
     "count": 1,
     "what": "the screen's crumb and title",
-    "anchor": "orders:['Store','Orders'],",
-    "replacement": "'site-analytics':['Overview','Analytics'],orders:['Store','Orders'],"
+    "anchor": "orders:['Overview','Orders'],",
+    "replacement": "'site-analytics':['Overview','Analytics'],orders:['Overview','Orders'],"
   },
   {
     "n": 3,
