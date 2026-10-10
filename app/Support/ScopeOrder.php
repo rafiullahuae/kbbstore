@@ -63,6 +63,9 @@ final class ScopeOrder
 
     public const BRAND_COLUMN = 'brand_position';
 
+    /** A rolled-up parent's own page order (Lane RL; see inCategory()). */
+    public const ROLLUP_TABLE = 'category_rollup_positions';
+
     /** The derived table's alias, and the only two names it exposes. */
     public const ALIAS = 'kso';
 
@@ -95,9 +98,22 @@ final class ScopeOrder
          * changes: the SQL is byte-for-byte what it was.
          */
         if (is_int($category) && count($subtree) > 1) {
+            /*
+             * THE PARENT'S OWN PAGE ORDER FIRST (Lane RL). Catalog -> Reorder
+             * on a parent that lists its sub-categories writes every product's
+             * place on THIS page to category_rollup_positions, so a product
+             * filed only in a child can be ordered here without being filed
+             * in the parent, and without moving the child's own order. Until
+             * a parent is reordered there are no such rows and COALESCE falls
+             * through to exactly the expression this was before. One more
+             * LEFT JOIN, on that table's primary key (category_id, product_id).
+             */
             $rows = DB::table('category_product')
                 ->select('category_product.product_id as kso_pid')
-                ->selectRaw('MIN(CASE WHEN category_product.category_id = ? THEN category_product.'.self::CATEGORY_COLUMN.' END) as kso_pos', [$category])
+                ->leftJoin(self::ROLLUP_TABLE.' as krp', static fn ($j) => $j
+                    ->on('krp.product_id', '=', 'category_product.product_id')
+                    ->where('krp.category_id', '=', $category))
+                ->selectRaw('COALESCE(MIN(krp.position), MIN(CASE WHEN category_product.category_id = ? THEN category_product.'.self::CATEGORY_COLUMN.' END)) as kso_pos', [$category])
                 ->whereIn('category_product.category_id', array_values(array_map('intval', $subtree)))
                 ->groupBy('category_product.product_id');
 

@@ -110,8 +110,64 @@ class CatalogReorderApiController extends Controller
 
         abort_unless(Category::query()->whereKey($id)->exists(), 404);
 
-        return ScopeOrder::inCategory(Product::query()->visible(), $id)
+        // (Lane RL) The products THIS category's page lists: a parent that
+        // includes its sub-categories lists theirs too, exactly as
+        // ShopController builds it, so the screen and the shop agree.
+        return ScopeOrder::inCategory(Product::query()->visible(), $id, $this->rollupIds($id) ?? [])
             ->addSelect(ScopeOrder::ALIAS.'.kso_pos as scope_pos');
+    }
+
+    /**
+     * The category and its descendants when its page lists their products
+     * (CategoryRollup::idsFor(), the shop's own answer), or null when it lists
+     * only its own. Memoised per request: scopeQuery() and writeOrder() both ask.
+     *
+     * @return list<int>|null
+     */
+    private function rollupIds(int $id): ?array
+    {
+        if (! array_key_exists($id, $this->rollup)) {
+            $category = Category::query()->find($id);
+            $ids = $category === null ? [] : \App\Support\CategoryRollup::idsFor($category);
+            $this->rollup[$id] = count($ids) > 1 ? array_values(array_map('intval', $ids)) : null;
+        }
+
+        return $this->rollup[$id];
+    }
+
+    /** @var array<int, list<int>|null> */
+    private array $rollup = [];
+
+    /**
+     * (Lane RL) A parent that lists its sub-categories: its page order in its
+     * own rows, ScopeOrder::ROLLUP_TABLE, for EVERY product on the page -- not
+     * only the ones whose number changed, because before the first save the
+     * numbers read back are the products' places filed directly in the parent
+     * and a gap for everything else, and a page that half-depended on those
+     * would move whenever they did. Nothing is filed in the parent and no
+     * sub-category's own order is touched. One read of the rows already
+     * there, then one upsert of the rows that differ.
+     *
+     * @param  list<int>  $ids
+     */
+    private function writeRollupOrder(int $id, array $ids): int
+    {
+        $have = DB::table(ScopeOrder::ROLLUP_TABLE)->where('category_id', $id)
+            ->pluck('position', 'product_id')->map(fn ($v) => (int) $v)->all();
+
+        $rows = [];
+
+        foreach (array_values($ids) as $index => $productId) {
+            if (($have[(int) $productId] ?? null) !== $index) {
+                $rows[] = ['category_id' => $id, 'product_id' => (int) $productId, 'position' => $index];
+            }
+        }
+
+        foreach (array_chunk($rows, 500) as $chunk) {
+            DB::table(ScopeOrder::ROLLUP_TABLE)->upsert($chunk, ['category_id', 'product_id'], ['position']);
+        }
+
+        return count($rows);
     }
 
     /** The scope's order, exactly as its storefront page sorts it. */
@@ -156,6 +212,10 @@ class CatalogReorderApiController extends Controller
     private function writeOrder(string $type, int $id, array $ids, array $current): int
     {
         $written = 0;
+
+        if ($type === 'category' && $this->rollupIds($id) !== null) {
+            return $this->writeRollupOrder($id, $ids);
+        }
 
         DB::transaction(function () use ($type, $id, $ids, $current, &$written) {
             foreach (array_values($ids) as $index => $productId) {
