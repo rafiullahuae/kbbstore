@@ -493,6 +493,8 @@ function walkExpectations(array $seed): array
         'email/u/{token}'          => ['params' => ['token' => '1-' . str_repeat('0', 32)], 'status' => 200],
         'email/c/{token}/{n}'      => ['params' => ['token' => str_repeat('0', 40), 'n' => '1'], 'status' => 302],
         'email/art/{name}.jpg'     => ['params' => ['name' => 'autumn-glow'], 'status' => 200],
+        // Lane ER: the open pixel answers its GIF (200) for ANY token, never a 404 or a 500.
+        'email/o/{token}.gif'      => ['params' => ['token' => '1-' . str_repeat('0', 32)], 'status' => 200],
     ] : []) + (Route::has('site-app.manifest') ? [
         /*
          * The shop as a Home Screen app (Lane PW, routes/site-app.php), keyed

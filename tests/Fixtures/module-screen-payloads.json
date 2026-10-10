@@ -5616,7 +5616,7 @@
             "name": "site_col2_links",
             "type": "textarea",
             "label": "Second column · links",
-            "help": "Same format. Empty: the footer menu when one has been built, otherwise Shipping & Delivery, Returns Information, Order Tracking, FAQs, Privacy policy, Contact us — then About us.",
+            "help": "Same format. Empty: the footer menu when one has been built, otherwise Shipping & Delivery, Order Tracking, FAQs, Privacy policy, Contact us — then About us. A link to a returns page is left out: the shop does not offer returns.",
             "options": null,
             "default": "",
             "value": ""

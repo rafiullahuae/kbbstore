@@ -316,7 +316,7 @@ final class CampaignInsights
             ->where('l.campaign_id', $id)
             ->groupBy('l.id', 'l.n', 'l.label', 'l.url')
             ->selectRaw('l.n as n, l.label as label, l.url as url, COUNT(k.id) as clicks, COUNT(DISTINCT k.send_id) as people')
-            ->orderByDesc('clicks')->orderBy('l.n')->limit(300)->get();
+            ->orderByDesc('clicks')->orderBy('l.n')->orderBy('l.id')->limit(300)->get();
 
         $links = [];
         $bySlug = [];
@@ -428,21 +428,26 @@ final class CampaignInsights
 
         $from = date('Y-m-d H:i:s', (int) strtotime((string) $start));
         $to = date('Y-m-d H:i:s', (int) strtotime((string) $start) + self::TIMELINE_DAYS * 86400);
-        $hour = fn (string $col): string => DB::connection()->getDriverName() === 'sqlite'
-            // Whole seconds, then integer division: julianday() arithmetic is
-            // floating point and put an open at exactly +1:00 in hour 0.
-            ? "(CAST(strftime('%s', {$col}) AS INTEGER) - CAST(strftime('%s', ?) AS INTEGER)) / 3600"
-            : "TIMESTAMPDIFF(HOUR, ?, {$col})";
+        $zero = (int) strtotime(substr($from, 0, 13) . ':00:00');
 
+        /*
+         * Bucketed by the CLOCK HOUR, SUBSTR(timestamp, 1, 13) = 'Y-m-d H', the
+         * same on SQLite and MySQL (SqlDialectGuardTest refuses strftime()), and
+         * hour 0 is the clock hour the campaign started in. It used to be
+         * julianday() floats on SQLite, which put an open at exactly +1:00 in
+         * hour 0 (0.9999… cut down by CAST).
+         */
         $opens = DB::table('mkt_sends')->where('campaign_id', $id)->whereIn('open_class', OpenPixel::COUNTED)
             ->whereBetween('first_open_at', [$from, $to])
-            ->selectRaw($hour('first_open_at') . " as h, COUNT(*) as n, SUM(CASE WHEN open_class = 'apple' THEN 1 ELSE 0 END) as apple", [$from])
-            ->groupBy('h')->get();
+            ->selectRaw("SUBSTR(first_open_at, 1, 13) as hk, COUNT(*) as n, SUM(CASE WHEN open_class = 'apple' THEN 1 ELSE 0 END) as apple")
+            ->groupBy('hk')->get();
 
         $clicks = DB::table('mkt_clicks as k')->join('mkt_sends as s', 's.id', '=', 'k.send_id')->where('s.campaign_id', $id)
             ->whereBetween('k.clicked_at', [$from, $to])
-            ->selectRaw($hour('k.clicked_at') . ' as h, COUNT(*) as n', [$from])
-            ->groupBy('h')->get();
+            ->selectRaw('SUBSTR(k.clicked_at, 1, 13) as hk, COUNT(*) as n')
+            ->groupBy('hk')->get();
+
+        $hourOf = static fn ($r): int => intdiv((int) strtotime((string) $r->hk . ':00:00') - $zero, 3600);
 
         $hours = array_fill(0, 48, ['opens' => 0, 'apple' => 0, 'clicks' => 0]);
         $days = [];
@@ -461,12 +466,12 @@ final class CampaignInsights
         };
 
         foreach ($opens as $r) {
-            $put((int) $r->h, 'opens', (int) $r->n);
-            $put((int) $r->h, 'apple', (int) $r->apple);
+            $put($hourOf($r), 'opens', (int) $r->n);
+            $put($hourOf($r), 'apple', (int) $r->apple);
         }
 
         foreach ($clicks as $r) {
-            $put((int) $r->h, 'clicks', (int) $r->n);
+            $put($hourOf($r), 'clicks', (int) $r->n);
         }
 
         ksort($days);

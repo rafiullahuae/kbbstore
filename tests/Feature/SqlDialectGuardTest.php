@@ -1103,6 +1103,9 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'admin-api/email-marketing/campaigns/{id}/review' => '/admin-api/email-marketing/campaigns/' . $mktCampaign . '/review',
         'admin-api/email-marketing/campaigns/{id}/progress' => '/admin-api/email-marketing/campaigns/' . $mktCampaign . '/progress',
         'admin-api/email-marketing/reports/{id}' => '/admin-api/email-marketing/reports/' . $mktCampaign,
+        // Lane ER: a campaign's recipients (grouped clicks, the bounce join, LIKE search) and their CSV.
+        'admin-api/email-marketing/reports/{id}/recipients' => '/admin-api/email-marketing/reports/' . $mktCampaign . '/recipients?q=a&filter=opened',
+        'admin-api/email-marketing/reports/{id}/export' => '/admin-api/email-marketing/reports/' . $mktCampaign . '/export',
         'admin-api/email-marketing/templates/{id}' => '/admin-api/email-marketing/templates/' . $mktTemplate,
         'admin-api/email-marketing/templates/{id}/preview' => '/admin-api/email-marketing/templates/' . $mktTemplate . '/preview',
         'admin-api/email-marketing/groups/{id}/export' => '/admin-api/email-marketing/groups/' . $mktSegment . '/export',

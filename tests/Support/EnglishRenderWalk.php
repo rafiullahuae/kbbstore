@@ -1224,6 +1224,7 @@ final class EnglishRenderWalk
                 'email/u/{token}' => ['render' => false, 'why' => 'added after BASE_COMMIT (Lane MK): the campaign unsubscribe page; MarketingEmailsPublicTest pins it'],
                 'email/c/{token}/{n}' => ['render' => false, 'why' => 'a redirect (Lane MK): to that campaign\'s own link n, or the home page'],
                 'email/art/{name}.jpg' => ['render' => false, 'why' => 'a JPEG that ships with the shop (Lane MK), no interface strings'],
+                'email/o/{token}.gif' => ['render' => false, 'why' => 'the open pixel of a marketing email (Lane ER): a 42-byte GIF, no interface strings'],
             ] : []),
 
             /*

@@ -67,6 +67,10 @@
   var FILTERS = [['all', 'Everyone'], ['opened', 'Opened'], ['not_opened', 'Not opened'], ['clicked', 'Clicked'], ['ordered', 'Ordered'], ['bounced', 'Bounced'], ['unsubscribed', 'Unsubscribed']];
   var KIND = { human: 'Opened', proxy: 'Opened (Gmail)', apple: 'Apple Mail auto-open', scanner: 'Scanner only', click: 'Opened (clicked)' };
 
+  /* A 404 from a route this file calls is the compiled route table missing it
+     (the package's clear_caches migration not yet run), never a lost row. */
+  var ROUTES_404 = 'This part of the report is not in the server\'s compiled route table yet. Clear the route cache (Platform → Cache) and reload.';
+
   function pct(v) { return v === null || v === undefined ? '—' : String(v) + '%'; }
   function cookie(n) { var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)'); return m ? decodeURIComponent(m.pop()) : ''; }
   function kpi(h, label, big, line, small) {
@@ -196,6 +200,7 @@
   function peopleTable(h) {
     var d = R.rec;
     if (!d) return '<div class="mke-empty">Loading…</div>';
+    if (d.error) return '<div class="mke-empty">' + h.esc(d.error) + '</div>';
     var rows = (d.rows || []).map(function (p) {
       var open = p.opened ? (KIND[p.open_kind] || 'Opened') : (p.open_kind === 'scanner' ? 'Scanner only' : '—');
       return '<tr><td>' + h.esc(p.email) + (p.unsubscribed ? '<div class="sub">Unsubscribed</div>' : '') + '</td>'
@@ -218,7 +223,7 @@
     try {
       var url = h.base + '/reports/' + encodeURIComponent(R.id) + '/recipients?filter=' + encodeURIComponent(R.filter) + '&page=' + R.page + '&q=' + encodeURIComponent(R.q);
       var res = await fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
-      R.rec = res.ok ? await res.json() : { rows: [], total: 0, page: 1, pages: 1 };
+      R.rec = res.ok ? await res.json() : { rows: [], total: 0, page: 1, pages: 1, error: res.status === 404 ? ROUTES_404 : (res.status === 403 ? 'Your role cannot see the recipients.' : 'The list did not load. Try again in a moment.') };
     } catch (e) { R.rec = { rows: [], total: 0, page: 1, pages: 1 }; }
     R.busy = false;
     box = document.querySelector('[data-mkr-people]');
@@ -264,6 +269,7 @@
         headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN') },
         body: JSON.stringify({ on: on })
       });
+      if (res.status === 404) throw new Error(ROUTES_404);
       if (!res.ok) throw new Error(String(res.status));
       var d = await res.json();
       var card = t.closest('.mke-card');
@@ -271,7 +277,7 @@
       if (window.kbbMarketingEmails && window.kbbMarketingEmails.state) window.kbbMarketingEmails.state.reportsOpenTracking = d.open_tracking;
     } catch (err) {
       t.checked = !on; t.disabled = false;
-      try { if (typeof window.toast === 'function') window.toast(err && err.message === '403' ? 'Your role cannot change this.' : 'Could not save. Try again.'); } catch (x) {}
+      try { if (typeof window.toast === 'function') window.toast(err && err.message === '403' ? 'Your role cannot change this.' : (err && err.message === ROUTES_404 ? ROUTES_404 : 'Could not save. Try again.')); } catch (x) {}
     }
   });
 

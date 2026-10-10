@@ -29,7 +29,9 @@ it('maps every Marketing Emails route to a marketing capability, none falling to
     MarketingEmailsRoutes::wire(app());
     $routes = MarketingEmailsRoutes::admin();
 
-    expect(count($routes))->toBe(37);
+    // 37 of Lane MK's, plus Lane ER's three (routes/marketing-report-admin.php):
+    // a campaign's recipients, their CSV, and the Open tracking switch.
+    expect(count($routes))->toBe(40);
 
     $allowed = ['marketing.email.view', 'marketing.email.manage', 'marketing.email.send', 'marketing.export'];
 
@@ -52,7 +54,10 @@ it('maps every Marketing Emails route to a marketing capability, none falling to
         ->and($p('POST', 'admin-api/email-marketing/campaigns/{id}/step'))->toBe('marketing.email.send')
         ->and($p('POST', 'admin-api/email-marketing/campaigns/{id}/cancel'))->toBe('marketing.email.send')
         ->and($p('POST', 'admin-api/email-marketing/limits'))->toBe('marketing.email.send')
-        ->and($p('GET', 'admin-api/email-marketing/groups/{id}/export'))->toBe('marketing.export');
+        ->and($p('GET', 'admin-api/email-marketing/groups/{id}/export'))->toBe('marketing.export')
+        ->and($p('GET', 'admin-api/email-marketing/reports/{id}/recipients'))->toBe('marketing.email.view')
+        ->and($p('GET', 'admin-api/email-marketing/reports/{id}/export'))->toBe('marketing.export')
+        ->and($p('POST', 'admin-api/email-marketing/open-tracking'))->toBe('marketing.email.manage');
 });
 
 it('grants view, manage and send to owner and manager only (D11), never to support or editor', function () {
