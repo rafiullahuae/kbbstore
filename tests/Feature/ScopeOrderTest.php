@@ -350,7 +350,11 @@ it('sends no filter rail and no link off a category page, until a switch says so
         ->and($html)->not->toContain('class="mobi-filter"')
         ->and($html)->not->toContain('class="fscrim"')
         ->and($html)->not->toMatch('#href="[^"]*[?&](cat|brand|filter_brands|price|sale|instock)=#')
-        ->and($html)->not->toMatch('#href="[^"]*/shop/?"#')
+        // The breadcrumb's "Shop" step is the one link to the whole shop the
+        // owner asked for on a category page (Lane BC, 10 October: "the
+        // collection will take to the all products page"); nothing else may.
+        ->and(preg_replace('#<nav class="crumb".*?</nav>#s', '', $html))->not->toMatch('#href="[^"]*/shop/?"#')
+        ->and($html)->toContain('<a href="/shop/">Shop</a>')
         ->and($this->get('/collections/fl-cat/')->getContent())->toContain('filters-hidden');
 
     app(SettingsService::class)->set('layout_filters_d', '1');
