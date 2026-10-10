@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.483
+**Admin: every "Reset to default" asks "Are you sure?" (Yes / No) first, and says what will reset.** Apply after .482.
+Runs its migration (clears caches). Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "any reset to default buttons in our backend, must ask Are you sure (yes / no) in a popup to confirm" | All 47 reset controls across the admin (Appearance screens, Store → Security and Modules, the Orders / Customers / Products column pickers, Product tabs, the product editor, Categories, Pages, Emails, Users & Roles, Owner App, Analytics, Domain switch, Import, Marketing Pixels ...) open the admin's one confirmation box, which now names what will reset ("Reset the Checkout page settings to their defaults?"). **No** is the default: Escape, clicking outside or Enter on No change nothing. Seven resets that never asked now ask; six that asked twice (the box and then the browser's own pop-up) ask once; Modules' different box is now the same one |
+
+Not changed (they clear a filter, a selection or a form rather than restore a default): Clear filters, Clear selection, Discard, Undo, Start over.
+
 ## 2.60.482
 **Category pages: breadcrumb Home / Shop / Skincare sets.** Apply after .481.
 Runs its migration (clears caches).
