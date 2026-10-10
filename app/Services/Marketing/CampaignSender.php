@@ -116,7 +116,7 @@ final class CampaignSender
 
         $frozen = $this->renderer->materialize($blocks, $top['id'] ?? null);
         $data = $this->renderer->data($frozen);
-        $sample = $this->renderer->render($frozen, self::brandVars($top) + [
+        $sample = $this->renderer->render($frozen, self::brandVars($top) + CampaignRenderer::look($c) + [
             'data' => $data, 'audience' => $segment->audience, 'subject' => $c->subject, 'preheader' => $c->preheader,
             'unsubscribe' => Url::external('/email/u/' . str_repeat('z', 13) . '-' . str_repeat('0', 32)),
             'href' => fn (string $url) => Url::external('/email/c/' . str_repeat('0', 40) . '/99'),
@@ -149,7 +149,7 @@ final class CampaignSender
         DB::table('mkt_links')->where('campaign_id', $id)->delete();
         $rows = [];
 
-        foreach ($this->renderer->links($frozen, $data, (string) $segment->audience, self::brandVars($top)) as $n => $link) {
+        foreach ($this->renderer->links($frozen, $data, (string) $segment->audience, self::brandVars($top) + CampaignRenderer::look($c)) as $n => $link) {
             $rows[] = ['campaign_id' => $id, 'n' => $n + 1, 'url' => $link['url'], 'label' => $link['label']];
         }
 
@@ -389,7 +389,7 @@ final class CampaignSender
         $unsubscribe = Url::external('/email/u/' . UnsubscribeToken::for((int) $row->id, (string) $row->email));
 
         try {
-            $out = $this->renderer->render($blocks, self::brandVars($snap['top_brand'] ?? null) + [
+            $out = $this->renderer->render($blocks, self::brandVars($snap['top_brand'] ?? null) + CampaignRenderer::look($c) + [
                 'data' => $data,
                 'audience' => $snap['who'] ?? ($snap['audience'] ?? 'customers'),
                 'first_name' => (string) ($row->first_name ?? ''),
@@ -643,7 +643,7 @@ final class CampaignSender
 
         $frozen = $this->renderer->materialize($blocks, $top['id'] ?? null);
         $unsubscribe = Url::external('/email/u/0-' . str_repeat('0', 32));
-        $out = $this->renderer->render($frozen, self::brandVars($top) + [
+        $out = $this->renderer->render($frozen, self::brandVars($top) + CampaignRenderer::look($c) + [
             'audience' => $audience, 'first_name' => $firstName, 'subject' => $c->subject, 'preheader' => $c->preheader,
             'unsubscribe' => $unsubscribe,
         ]);

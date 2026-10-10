@@ -35,7 +35,14 @@ use App\Support\Url;
  * help strip's three lines, the two addresses, the big name, and the design
  * switch itself.
  *
- * ── "RETURN" IS BACK, BECAUSE HE ASKED FOR IT (Lane TP, 6 October) ─────────
+ * ── NO RETURNS LINK, AT HIS WORD (Lane EC, 10 October) ───────────────────
+ *
+ * "remove the returns words completely, we don't offer returns." The Help
+ * column no longer ships a Returns row, and isReturnsLink() drops one from the
+ * footer menu or a typed link list too — a footer link to a returns page
+ * promises returns. The page itself is left alone; nothing links to it.
+ *
+ * ── (HISTORY) "RETURN" WAS BACK, BECAUSE HE ASKED FOR IT (Lane TP, 6 October)
  *
  * This section used to be "NO WORD RETURN": helpLinks() and the owner's own
  * link lists dropped any row mentioning a return or a refund, after "we don't
@@ -240,7 +247,7 @@ final class SiteFooter
             'help' => 'Empty: “Help”.'],
         'site_col2_links' => ['type' => 'textarea', 'label' => 'Second column · links', 'default' => '',
             'rule' => [self::class, 'cleanLinks'],
-            'help' => 'Same format. Empty: the footer menu when one has been built, otherwise Shipping & Delivery, Returns Information, Order Tracking, FAQs, Privacy policy, Contact us — then About us.'],
+            'help' => 'Same format. Empty: the footer menu when one has been built, otherwise Shipping & Delivery, Order Tracking, FAQs, Privacy policy, Contact us — then About us. A link to a returns page is left out: the shop does not offer returns.'],
         'site_col3_title' => ['type' => 'text', 'label' => 'Third column · title', 'default' => '',
             'help' => 'Empty: “Account”.'],
         'site_col3_links' => ['type' => 'textarea', 'label' => 'Third column · links', 'default' => '',
@@ -496,7 +503,7 @@ final class SiteFooter
             $label = trim((string) ($link['label'] ?? ''));
             $url = (string) ($link['url'] ?? '/');
 
-            if ($label === '') {
+            if ($label === '' || self::isReturnsLink($label, $url)) {
                 continue;
             }
 
@@ -507,9 +514,9 @@ final class SiteFooter
             return $out;
         }
 
+        // No Returns row (Lane EC): the shop does not offer returns.
         return [
             ['label' => __('store.footer.link_delivery'), 'url' => Url::to('/delivery/')],
-            ['label' => __('store.footer.link_returns'), 'url' => Url::to('/refund_returns/')],
             ['label' => __('store.footer.link_order_tracking'), 'url' => Url::to('/my-account/orders/')],
             ['label' => __('store.footer.link_faqs'), 'url' => Url::to('/faqs/')],
             ['label' => __('store.footer.link_privacy'), 'url' => Url::to('/privacy-policy/')],
@@ -633,6 +640,22 @@ final class SiteFooter
         $on = $on === null ? true : (is_bool($on) ? $on : (filter_var($on, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true));
 
         return $on && $design !== 'classic';
+    }
+
+    /**
+     * Is this a link to a returns page? (Lane EC) The owner, 10 October: "remove
+     * the returns words completely, we don't offer returns." A label that says
+     * return(s) in English or Arabic, or an address of the old returns pages,
+     * and it is not drawn in the shop's footers. Refunds alone are not returns
+     * and stay.
+     */
+    public static function isReturnsLink(mixed $label, mixed $url): bool
+    {
+        $label = is_string($label) ? $label : '';
+        $url = is_string($url) ? $url : '';
+
+        return preg_match('/\breturns?\b|إرجاع|الإرجاع|ارجاع|استرجاع/iu', $label) === 1
+            || preg_match('#refund_returns|returns?-(information|policy)|/returns?/?(?:$|[?\#])#i', $url) === 1;
     }
 
     /** At most this many links in one column; the rest of a pasted list is dropped. */
@@ -784,6 +807,12 @@ final class SiteFooter
                 ['label' => __('store.footer.link_addresses'), 'url' => Url::to('/my-account/edit-address/')],
             ];
         }
+
+        // No returns link in any column, typed or shipped (Lane EC).
+        [$shop, $help, $account] = array_map(
+            static fn (array $links): array => array_values(array_filter($links, static fn ($l) => ! self::isReturnsLink($l['label'] ?? '', $l['url'] ?? ''))),
+            [$shop, $help, $account],
+        );
 
         return [
             ['id' => 'shop', 'part' => 'col1', 'title' => $title('site_col1_title', 'store.footer.shop_heading'), 'links' => $shop],

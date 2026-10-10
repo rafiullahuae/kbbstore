@@ -67,6 +67,8 @@ final class MailKit
         'heart' => '&#10084;', 'check' => '&#10003;', 'box' => '&#128230;', 'truck' => '&#128666;', 'gift' => '&#127873;',
         'pause' => '&#10074;&#10074;', 'cross' => '&#10005;', 'back' => '&#8634;', 'card' => '&#128179;', 'clock' => '&#9719;',
         'bell' => '&#128276;', 'bag' => '&#128717;', 'mail' => '&#9993;', 'key' => '&#128273;', 'spark' => '&#10024;', 'star' => '&#9733;',
+        // Lane EC: design C's section mark ("🌸 Fresh picks for less").
+        'blossom' => '&#127800;',
     ];
 
     /** TONES: [soft background, ink]. */

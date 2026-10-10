@@ -32,6 +32,8 @@ final class Blocks
         'mini_header', 'hero_image', 'heading', 'text', 'button',
         'product_row', 'product_grid', 'coupon', 'image',
         'columns', 'divider', 'spacer', 'social', 'footer',
+        // Lane EC: the four benefit chips of the "New look" email (design C).
+        'badges',
     ];
 
     /** What the palette calls each one (the m2 mock's words). */
@@ -41,6 +43,7 @@ final class Blocks
         'product_grid' => 'Product grid', 'coupon' => 'Coupon', 'image' => 'Image',
         'columns' => 'Columns 2 / 3', 'divider' => 'Divider', 'spacer' => 'Spacer',
         'social' => 'Social links', 'footer' => 'Footer + unsubscribe',
+        'badges' => 'Benefit chips',
     ];
 
     public const MAX_BLOCKS = 40;
@@ -72,6 +75,25 @@ final class Blocks
     /** Pictures that ship with the shop, served at /email/art/{key}.jpg. */
     public const ART = [
         'autumn-glow' => ['file' => 'autumn-glow.jpg', 'w' => 1200, 'h' => 640, 'alt' => 'Autumn Glow Edit — skin that glows back'],
+        // Lane EC: design C's still life, as the owner approved it (Lane ED).
+        'new-look-c' => ['file' => 'new-look-c.jpg', 'w' => 1200, 'h' => 640, 'alt' => 'numbuzin eye patches, Anua capsule mist, Anua TXA serum and Arencia Vitamin C shot on pastel circles'],
+    ];
+
+    /**
+     * A benefit chip's picture (Lane EC). Constants, printed raw: a chip
+     * stores one of these keys or the select's default, never an entity.
+     */
+    public const BADGE_ICONS = [
+        'truck' => '&#128666;', 'bolt' => '&#9889;', 'card' => '&#128179;', 'sparkles' => '&#10024;',
+        'gift' => '&#127873;', 'heart' => '&#128149;', 'star' => '&#11088;', 'box' => '&#128230;',
+    ];
+
+    /** The four chips of design C, as the owner approved them — no returns: the shop does not offer them. */
+    public const BADGE_DEFAULTS = [
+        ['icon' => 'truck', 'bold' => 'Free delivery', 'text' => 'over AED 199'],
+        ['icon' => 'bolt', 'bold' => '1–3 days', 'text' => 'across the UAE'],
+        ['icon' => 'card', 'bold' => 'Tabby, Tamara', 'text' => ', card or cash'],
+        ['icon' => 'sparkles', 'bold' => '100% authentic', 'text' => ', from Korea'],
     ];
 
     public const SOCIAL = ['instagram' => 'Instagram', 'facebook' => 'Facebook', 'tiktok' => 'TikTok', 'youtube' => 'YouTube', 'whatsapp' => 'WhatsApp'];
@@ -108,7 +130,9 @@ final class Blocks
         ];
 
         return [
-            'mini_header' => ['topbar' => ['bool', true], 'nav' => ['bool', true]],
+            // tagline: the playful look's small line above the card ("✿ glow-up
+            // alert ✿"). The standard look keeps its own topbar words.
+            'mini_header' => ['topbar' => ['bool', true], 'nav' => ['bool', true], 'tagline' => ['text', 80, '']],
             'hero_image' => [
                 'art' => ['enum', array_merge([''], array_keys(self::ART)), ''],
                 'src' => ['image', ''],
@@ -123,6 +147,8 @@ final class Blocks
                 'title' => ['marks', 160, ''],
                 'lead' => ['marks', 600, ''],
                 'align' => ['enum', ['center', 'left'], 'center'],
+                // A second line in a highlighter swipe ("less prices"). Plain.
+                'highlight' => ['text', 80, ''],
             ],
             'text' => [
                 'body' => ['marks', 3000, ''],
@@ -132,11 +158,13 @@ final class Blocks
             'button' => [
                 'label' => ['text', 60, 'Shop now'],
                 'href' => ['url', '/shop/'],
-                'style' => ['enum', ['solid', 'ghost'], 'solid'],
+                'style' => ['enum', ['solid', 'ghost', 'dark'], 'solid'],
                 'align' => ['enum', ['center', 'left'], 'center'],
             ],
             'product_row' => $product,
-            'product_grid' => $product + ['columns' => ['enum', ['1', '2'], '2']],
+            // layout: the card style. `playful` is design C's pastel cards
+            // with a type sticker; 3 columns fold to 2 on a phone.
+            'product_grid' => $product + ['columns' => ['enum', ['1', '2', '3'], '2'], 'layout' => ['enum', ['standard', 'playful'], 'standard']],
             'coupon' => [
                 'coupon_id' => ['coupon', null],
                 'line' => ['text', 160, ''],
@@ -163,7 +191,9 @@ final class Blocks
                 'youtube' => ['url', ''],
                 'whatsapp' => ['url', ''],
             ],
-            'footer' => ['why' => ['enum', ['auto', 'customers', 'subscribers'], 'auto']],
+            // note: a line above the footer ("Made with love … in Dubai").
+            'footer' => ['why' => ['enum', ['auto', 'customers', 'subscribers'], 'auto'], 'note' => ['text', 120, '']],
+            'badges' => ['items' => ['badges', 4]],
         ];
     }
 
@@ -342,6 +372,7 @@ final class Blocks
             'url', 'image' => $spec[1],
             'brand', 'category', 'coupon' => $spec[1],
             'products', 'items' => [],
+            'badges' => self::BADGE_DEFAULTS,
             default => null,
         };
     }
@@ -459,6 +490,24 @@ final class Blocks
                 }
 
                 return $items;
+
+            case 'badges':
+                $chips = [];
+
+                foreach (array_slice(is_array($value) ? array_values($value) : [], 0, $spec[1]) as $chip) {
+                    $chip = is_array($chip) ? $chip : [];
+                    $p1 = $p2 = null;
+                    $icon = is_scalar($chip['icon'] ?? null) ? (string) $chip['icon'] : '';
+                    $chips[] = [
+                        // A select stores one of its own options or the default.
+                        'icon' => isset(self::BADGE_ICONS[$icon]) ? $icon : 'sparkles',
+                        'bold' => self::cleanValue(['text', 40, ''], $chip['bold'] ?? '', $p1),
+                        'text' => self::cleanValue(['text', 60, ''], $chip['text'] ?? '', $p2),
+                    ];
+                    $problem ??= $p1 ?? $p2;
+                }
+
+                return $chips;
         }
 
         return null;

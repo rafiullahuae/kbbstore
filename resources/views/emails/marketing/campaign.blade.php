@@ -45,11 +45,15 @@
 @include('emails.kit.para', ['html' => $row['html'], 'pad' => $row['pad'], 'size' => $row['size'], 'center' => $row['center']])
 @break
 @case('button')
-@include('emails.kit.button', ['label' => $row['label'], 'href' => $row['href'], 'align' => $row['align'], 'ghost' => $row['ghost']])
+@include('emails.kit.button', ['label' => $row['label'], 'href' => $row['href'], 'align' => $row['align'], 'ghost' => $row['ghost'], 'dark' => $row['dark'] ?? false])
 @break
 @case('product_grid')
 @if ($row['title'] !== '')@include('emails.kit.section-title', ['text' => $row['title'], 'pad' => '26px 32px 0'])@endif
+@if (($row['layout'] ?? 'standard') === 'playful')
+@include('emails.marketing.playful-cards', ['products' => $row['products'], 'cols' => $row['cols'], 'tintClass' => false])
+@else
 @include('emails.kit.product-grid', ['products' => $row['products'], 'cols' => $row['cols'], 'cta' => $row['cta']])
+@endif
 @break
 @case('product_row')
 @if ($row['title'] !== '')@include('emails.kit.section-title', ['text' => $row['title'], 'pad' => '26px 32px 0'])@endif
@@ -69,6 +73,9 @@
 @break
 @case('spacer')
 @include('emails.kit.gap', ['h' => $row['h']])
+@break
+@case('badges')
+@include('emails.kit.promises', ['promises' => array_map(static fn (array $c) => [['bolt' => 'clock', 'sparkles' => 'spark'][$c['icon']] ?? $c['icon'], $c['bold'], (string) preg_replace('/^[\s,.;:،]+/u', '', $c['text'])], $row['items'])])
 @break
 @case('social')
 @include('emails.marketing.social', ['links' => $row['links']])

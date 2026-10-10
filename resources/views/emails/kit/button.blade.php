@@ -4,12 +4,14 @@
     still draws a button.
 
     $label  plain text;  $href  a URL the CALLING VIEW built or scheme-checked
-    (MailKit::url) — never a raw setting;  $align 'center' | 'left';  $ghost bool
+    (MailKit::url) — never a raw setting;  $align 'center' | 'left';  $ghost bool;
+    $dark bool (optional) — the text colour as the button's colour
 --}}
 @php
     $btnAlign = ($align ?? 'center') === 'left' ? 'left' : 'center';
     $btnGhost = (bool) ($ghost ?? false);
-    $btnBg = $btnGhost ? '#FFFFFF' : $k['button'];
+    // $dark (Lane EC): the ink-coloured button, "Shop the new prices".
+    $btnBg = $btnGhost ? '#FFFFFF' : (($dark ?? false) ? $k['text'] : $k['button']);
     $btnFg = $btnGhost ? $k['button'] : '#FFFFFF';
 @endphp
 <tr><td class="px" style="padding:26px 32px 0;font-family:{!! $k['sans'] !!};"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="{{ $btnAlign }}" style="margin:0 {{ $btnAlign === 'center' ? 'auto' : '0' }};">

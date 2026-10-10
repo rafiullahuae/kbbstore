@@ -73,9 +73,16 @@ function tpForget(): void
     App\Models\Setting::flushMap();
 }
 
-const TP_LINKS = '<p class="kbb-pol"><a href="/delivery/">Shipping &amp; Delivery</a><a href="/refund_returns/">Returns Information</a></p>';
+/*
+ * Lane EC, 10 October: the Returns Information link is gone from the pair —
+ * the owner: "remove the returns words completely, we don't offer returns."
+ * A shopper about to pay was being pointed at a returns policy the shop does
+ * not have. MUTATION: put the /refund_returns/ anchor back in
+ * partials/policy-links.blade.php → every case here is red.
+ */
+const TP_LINKS = '<p class="kbb-pol"><a href="/delivery/">Shipping &amp; Delivery</a></p>';
 
-it('puts Shipping & Delivery and Returns Information under the cart totals, on both layouts, and takes them away when switched off', function () {
+it('puts Shipping & Delivery (and no returns link) under the cart totals, on both layouts, and takes it away when switched off', function () {
     foreach (['squeeze', 'classic'] as $layout) {
         app(CartPage::class)->save(['layout' => $layout, 'policy_links' => true]);
         tpForget();

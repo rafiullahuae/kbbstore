@@ -13,7 +13,12 @@ declare(strict_types=1);
  * color". Controls: Appearance → Footer → the three "Site footer" tabs.
  *
  * The defects these pin, as each would look on the shop:
- *   · (Lane TP, 6 October — REVERSED by the owner.) This used to pin "no word
+ *   · (Lane EC, 10 October — REVERSED AGAIN by the owner: "remove the returns
+ *     words completely, we don't offer returns.") Case 1 now pins NO returns
+ *     link in the Help column, shipped or from a footer menu the owner built:
+ *     "Returns Information" under HELP promised returns the shop does not
+ *     offer. The page itself still answers; nothing links to it.
+ *   · (Lane TP, 6 October — since reversed, see above.) This used to pin "no word
  *     about returns": "Returns Information" absent from every footer. He has
  *     since asked for the old shop's policy links back — "Shipping & Delivery,
  *     Returns Information, Order Tracking, Feedback, FAQs, Privacy Policy …
@@ -26,8 +31,8 @@ declare(strict_types=1);
  *   · the colour drift running for a visitor who asked for reduced motion.
  *
  * MUTATION NOTES, RUN:
- *   · put the `/return|refund/i` filter back in SiteFooter::helpLinks()
- *     → RED (case 1: Returns Information missing, the menu's Returns row dropped).
+ *   · put the Returns Information row back in SiteFooter::helpLinks(), or
+ *     make isReturnsLink() answer false → RED (case 1).
  *   · point Order Tracking back at /track-my-order/ → RED (case 1).
  *   · draw the Korea line without its `@if ($kft['korea'] !== '')` → RED (case 2).
  *   · make footer.blade.php always include footer-bliss → RED (case 3).
@@ -52,7 +57,7 @@ function kftBlock(string $html): string
     return preg_match('#<footer class="kft[^"]*"[^>]*>.*?</footer>#s', $html, $m) ? $m[0] : '';
 }
 
-it('ships the new footer on every page, with the old shop\'s policy links in its Help column', function () {
+it('ships the new footer on every page, with the policy links in its Help column and no returns link', function () {
     $html = $this->get('/')->assertOk()->getContent();
     $footer = kftBlock($html);
 
@@ -65,7 +70,6 @@ it('ships the new footer on every page, with the old shop\'s policy links in its
 
     expect(array_map(fn ($l) => html_entity_decode($l[2]).' '.$l[1], $links))->toBe([
         'Shipping & Delivery /delivery/',
-        'Returns Information /refund_returns/',
         'Order Tracking /my-account/orders/',
         'FAQs /faqs/',
         'Privacy policy /privacy-policy/',
@@ -80,13 +84,22 @@ it('ships the new footer on every page, with the old shop\'s policy links in its
     }
     $this->get('/my-account/orders/')->assertRedirect();
     expect(session('url.intended'))->toContain('/my-account/orders');
+    expect($footer)->not->toMatch('/\breturns?\b/i')->not->toContain('refund_returns');
 
-    // A footer menu the owner built WITH a Returns row: drawn now, as asked.
+    // A footer menu the owner built WITH a Returns row: not drawn (Lane EC),
+    // whether it says so in the label or only in the address.
     $links = SiteFooter::helpLinks([
         ['label' => 'Returns & Refunds', 'url' => '/refund_returns/'],
+        ['label' => 'Our policy', 'url' => '/returns-information/'],
+        ['label' => 'معلومات الإرجاع', 'url' => '/ar/x/'],
         ['label' => 'Track my order', 'url' => '/track-my-order/'],
     ]);
-    expect(array_column($links, 'label'))->toBe(['Returns & Refunds', 'Track my order']);
+    expect(array_column($links, 'label'))->toBe(['Track my order']);
+
+    // …nor typed into the Help column's own link list.
+    kftSave(['site_col2_links' => "Returns | /refund_returns/\nFAQs | /faqs/"]);
+    $typed = kftBlock($this->get('/')->getContent());
+    expect($typed)->toContain('>FAQs</a>')->not->toContain('refund_returns');
 });
 
 it('draws an address only when one was typed, and the Visit us block only when there is one', function () {

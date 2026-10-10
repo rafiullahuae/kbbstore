@@ -32,7 +32,7 @@ final class MktTemplatesController extends Controller
     public function index(): JsonResponse
     {
         $rows = DB::table('mkt_templates')->orderByDesc('preset')->orderBy('sort')->orderByDesc('updated_at')->orderBy('id')
-            ->limit(300)->get(['id', 'key', 'name', 'category', 'description', 'subject', 'preset', 'blocks', 'updated_at']);
+            ->limit(300)->get(['id', 'key', 'name', 'category', 'description', 'subject', 'preset', 'blocks', 'theme', 'locale', 'updated_at']);
 
         return response()->json(['templates' => $rows->map(fn ($t) => $this->row($t))->all()]);
     }
@@ -50,6 +50,8 @@ final class MktTemplatesController extends Controller
             'description' => (string) ($t->description ?? ''),
             'subject' => (string) $t->subject,
             'preset' => (bool) $t->preset,
+            ...CampaignRenderer::look($t),
+            'subject_ideas' => \App\Services\Marketing\TemplateLibrary::subjectIdeas(is_string($t->key) ? $t->key : null),
             'blocks' => count($blocks),
             'fills' => array_values(array_unique(array_filter(array_map(fn ($b) => in_array($b['type'] ?? '', ['product_row', 'product_grid'], true) ? (Blocks::FILLS[$b['props']['fill'] ?? ''] ?? null) : null, $blocks)))),
             'updated_at' => StoreTime::iso($t->updated_at),
@@ -91,7 +93,7 @@ final class MktTemplatesController extends Controller
         $out = $this->renderer->render($frozen, [
             'audience' => 'customers', 'first_name' => 'Aisha', 'subject' => $t->subject, 'preheader' => $t->preheader,
             'unsubscribe' => \App\Support\Url::external('/email/u/0-' . str_repeat('0', 32)),
-        ]);
+        ] + CampaignRenderer::look($t));
 
         return response($out['html'], 200, [
             'Content-Type' => 'text/html; charset=UTF-8',
@@ -166,6 +168,7 @@ final class MktTemplatesController extends Controller
             'subject' => $t->subject,
             'preheader' => $t->preheader,
             'blocks' => $t->blocks,
+            ...CampaignRenderer::look($t),
             'preset' => false,
             'created_by' => $request->user('admin')?->id,
             'created_at' => now(),
@@ -185,11 +188,14 @@ final class MktTemplatesController extends Controller
             'subject' => ['sometimes', 'nullable', 'string', 'max:200', ...$line],
             'preheader' => ['sometimes', 'nullable', 'string', 'max:200', ...$line],
             'blocks' => [$creating ? 'required' : 'sometimes', 'array'],
+            // Lane EC: a select stores one of its own options.
+            'theme' => ['sometimes', 'string', 'in:' . implode(',', array_keys(\App\Services\Marketing\EmailTheme::THEMES))],
+            'locale' => ['sometimes', 'string', 'in:' . implode(',', array_keys(\App\Services\Marketing\EmailTheme::LOCALES))],
         ], ['regex' => 'Line breaks are not allowed here.']);
 
         $out = [];
 
-        foreach (['name', 'description', 'subject', 'preheader'] as $k) {
+        foreach (['name', 'description', 'subject', 'preheader', 'theme', 'locale'] as $k) {
             if (array_key_exists($k, $data)) {
                 $out[$k] = trim((string) $data[$k]);
             }

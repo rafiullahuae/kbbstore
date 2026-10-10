@@ -1,5 +1,6 @@
-{{-- Shipping & Delivery and Returns Information, small, under the totals of
-     the cart and the checkout. (Lane TP)
+{{-- Shipping & Delivery, small, under the totals of the cart and the
+     checkout. (Lane TP; its Returns Information link removed by Lane EC on the
+     owner's word, 10 October: "we don't offer returns.")
 
      The owner, 6 October: "also apply the links in the main footer and two
      links on cart / checkout pages". Neither page linked to any policy, so the
@@ -14,5 +15,5 @@
      Appearance → Cart page → Summary & trust, or Appearance → Checkout page →
      Trust & reviews. --}}
 @if ($on)
-<p class="kbb-pol"><a href="{{ \App\Support\Url::to('/delivery/') }}">{{ __('store.footer.link_delivery') }}</a><a href="{{ \App\Support\Url::to('/refund_returns/') }}">{{ __('store.footer.link_returns') }}</a></p>
+<p class="kbb-pol"><a href="{{ \App\Support\Url::to('/delivery/') }}">{{ __('store.footer.link_delivery') }}</a></p>
 @endif

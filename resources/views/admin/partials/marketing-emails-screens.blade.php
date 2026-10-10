@@ -98,6 +98,8 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
 .mke-layer .dz{position:absolute;left:0;right:0;height:50%;display:none;z-index:2}
 .mke-layer .dz.top{top:0}.mke-layer .dz.bot{top:50%}
 .mke-dragging .mke-layer .dz{display:block}
+.mke-plist .dz{position:absolute;left:0;right:0;height:50%;display:none;z-index:2}.mke-plist .dz.top{top:0}.mke-plist .dz.bot{top:50%}
+.mke-dragging .mke-plist .dz{display:block}
 .mke-layer.drop-before{box-shadow:0 -3px 0 #3f6fe0}
 .mke-layer.drop-after{box-shadow:0 3px 0 #3f6fe0}
 .mke-ghost{position:fixed;z-index:9999;pointer-events:none;background:#3f6fe0;color:#fff;font-size:12px;font-weight:700;padding:6px 10px;border-radius:8px;box-shadow:0 8px 20px rgba(16,24,40,.25);left:0;top:0}
@@ -138,6 +140,21 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
 .mke-toggle{display:flex;align-items:center;gap:10px;font-size:13px;margin:0 0 12px;cursor:pointer}
 .mke-toggle input{width:18px;height:18px}
 .mke-pp{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 0}
+/* Lane EC: the hand-picked products, in the order the email prints them. */
+.mke-plist{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}
+.mke-plist li{position:relative;display:flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:9px;padding:5px 6px;background:var(--surface);font-size:12.5px;min-width:0}
+.mke-plist li .n{flex:1;min-width:0;line-height:1.3;overflow-wrap:anywhere}
+.mke-plist li i{font-style:normal;min-width:18px;height:18px;border-radius:9px;background:var(--surface-3);font-size:10.5px;text-align:center;line-height:18px;color:var(--ink-2)}
+.mke-plist li button{border:0;background:var(--surface-3);border-radius:7px;min-width:26px;height:26px;cursor:pointer;font:inherit;color:var(--ink-2)}
+.mke-plist li button:disabled{opacity:.35;cursor:default}
+.mke-plist li .grip{cursor:grab;touch-action:none;background:transparent}
+.mke-plist li.drop-before{box-shadow:0 -2px 0 var(--accent)}.mke-plist li.drop-after{box-shadow:0 2px 0 var(--accent)}
+.mke-mode{display:grid;grid-template-columns:1fr 1fr;background:var(--surface-3);border-radius:11px;padding:3px;margin:0 0 12px}
+.mke-mode button{font:inherit;font-size:13px;font-weight:600;border:0;background:transparent;border-radius:9px;padding:8px 6px;color:var(--ink-soft);cursor:pointer}
+.mke-mode button small{display:block;font-weight:400;font-size:11px;color:var(--ink-faint)}
+.mke-mode button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+.mke-ideas{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 12px}
+.mke-ideas button{font:inherit;font-size:12px;border:1px dashed var(--border);background:var(--surface);border-radius:99px;padding:4px 10px;cursor:pointer;color:var(--ink-2);text-align:start}
 .mke-pp .p{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:99px;padding:4px 6px 4px 10px;font-size:12px;background:var(--surface)}
 .mke-pp .p button{border:0;background:var(--surface-3);border-radius:99px;width:20px;height:20px;cursor:pointer}
 .mke-res{display:grid;gap:4px;margin-top:6px;max-height:180px;overflow:auto}
@@ -185,7 +202,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     ['text', '¶', 'Text'], ['button', '⬭', 'Button'], ['product_row', '▤', 'Product row'],
     ['product_grid', '▦', 'Product grid'], ['coupon', '%', 'Coupon'], ['image', '🖼', 'Image'],
     ['columns', '▥', 'Columns 2 / 3'], ['divider', '—', 'Divider'], ['spacer', '↕', 'Spacer'],
-    ['social', '@', 'Social links'], ['footer', '▁', 'Footer + unsubscribe']
+    ['social', '@', 'Social links'], ['badges', '✦', 'Benefit chips'], ['footer', '▁', 'Footer + unsubscribe']
   ];
   var NAMES = {}; PALETTE.forEach(function (p) { NAMES[p[0]] = p[2]; });
 
@@ -193,29 +210,31 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
   var OUTLINE = {
     mini_header: 'Mini header', hero_image: 'Hero image', heading: 'Heading', text: 'Text', button: 'Button',
     product_row: 'Product row · auto-filled', product_grid: 'Product grid · auto-filled', coupon: 'Coupon',
-    image: 'Image', columns: 'Columns', divider: 'Divider', spacer: 'Spacer', social: 'Social links', footer: 'Footer · required'
+    image: 'Image', columns: 'Columns', divider: 'Divider', spacer: 'Spacer', social: 'Social links', badges: 'Benefit chips', footer: 'Footer · required'
   };
 
   /* Default props of a new block (Blocks::schema()'s defaults). */
   var DEFAULTS = {
-    mini_header: { topbar: true, nav: true },
+    mini_header: { topbar: true, nav: true, tagline: '' },
     hero_image: { art: '', src: '', alt: '', href: '' },
-    heading: { style: 'hero', icon: 'spark', tone: 'pink', eyebrow: 'Picked for you', title: 'Your headline', lead: '', align: 'center' },
+    heading: { style: 'hero', icon: 'spark', tone: 'pink', eyebrow: 'Picked for you', title: 'Your headline', lead: '', align: 'center', highlight: '' },
     text: { body: 'Write a sentence or two. **Bold**, *italic* and [a link](/shop/) work.', align: 'left', size: 15 },
     button: { label: 'Shop now', href: '/shop/', style: 'solid', align: 'center' },
     product_row: { title: '', fill: 'best_sellers', order: 'auto', count: 3, brand_id: null, category_id: null, max_price: 54, product_ids: [], cta: 'Shop now', show_sale: true },
-    product_grid: { title: '', fill: 'newest', order: 'auto', count: 4, columns: '2', brand_id: null, category_id: null, max_price: 54, product_ids: [], cta: 'Shop now', show_sale: true },
+    product_grid: { title: '', fill: 'newest', order: 'auto', count: 4, columns: '2', layout: 'standard', brand_id: null, category_id: null, max_price: 54, product_ids: [], cta: 'Shop now', show_sale: true },
     coupon: { coupon_id: null, line: '10% off your next order', expires: '' },
     image: { src: '', alt: '', href: '', width: 'inset' },
     columns: { count: '2', source: 'manual', items: [{ image: '', title: 'First', text: 'A line about it.', href: '/shop/' }, { image: '', title: 'Second', text: 'A line about it.', href: '/shop/' }], cta: 'Read more' },
     divider: {},
     spacer: { height: 24 },
     social: { instagram: '', facebook: '', tiktok: '', youtube: '', whatsapp: '' },
-    footer: { why: 'auto' }
+    badges: { items: [{ icon: 'truck', bold: 'Free delivery', text: 'over AED 199' }, { icon: 'bolt', bold: '1–3 days', text: 'across the UAE' }, { icon: 'card', bold: 'Tabby, Tamara', text: ', card or cash' }, { icon: 'sparkles', bold: '100% authentic', text: ', from Korea' }] },
+    footer: { why: 'auto', note: '' }
   };
+  var BADGE_GLYPH = { truck: '🚚', bolt: '⚡', card: '💳', sparkles: '✨', gift: '🎁', heart: '💕', star: '⭐', box: '📦' };
 
   /* Estimated rendered height of each block at 600 wide (no measuring). */
-  var EST = { mini_header: 150, hero_image: 330, heading: 230, text: 110, button: 90, coupon: 170, image: 300, columns: 330, divider: 30, social: 80, footer: 340 };
+  var EST = { mini_header: 150, hero_image: 330, heading: 230, text: 110, button: 90, coupon: 170, image: 300, columns: 330, divider: 30, social: 80, badges: 150, footer: 340 };
 
   var STATUS = {
     draft: ['grey', 'Draft'], scheduled: ['amber', 'Scheduled'], sending: ['blue', 'Sending'], paused: ['amber', 'Paused'],
@@ -424,7 +443,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
         + (t.preset ? '' : '<button type="button" class="btn ghost sm" data-mke="tedit" data-id="' + t.id + '">Edit</button><button type="button" class="btn ghost sm" data-mke="tdel" data-id="' + t.id + '">Delete</button>');
       return '<div class="mke-card mke-tpl"><div class="mke-thumb"><iframe loading="lazy" sandbox="" tabindex="-1" aria-hidden="true" title="" src="' + esc(base() + '/templates/' + t.id + '/preview') + '"></iframe></div>'
         + '<div><b style="font-size:14px">' + esc(t.name) + '</b><div class="mke-h" style="margin-top:2px">' + esc(t.description || '') + '</div></div>'
-        + '<div>' + (t.fills || []).map(function (f) { return '<span class="mke-chip">' + esc(f) + '</span>'; }).join('') + (t.preset ? '<span class="mke-chip">Ready · read-only</span>' : '') + '</div>'
+        + '<div>' + (t.fills || []).map(function (f) { return '<span class="mke-chip">' + esc(f) + '</span>'; }).join('') + (t.theme === 'playful' ? '<span class="mke-chip">Playful K-beauty look</span>' : '') + (t.locale === 'ar' ? '<span class="mke-chip">Arabic · right to left</span>' : '') + (t.preset ? '<span class="mke-chip">Ready · read-only</span>' : '') + '</div>'
         + '<div class="mke-acts">' + acts + '</div></div>';
     }).join('');
     if (S.tplTab === 'ready') {
@@ -634,6 +653,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
       if (!S.groups) S.groups = (await api('GET', '/groups')).data;
       S.b = {
         kind: kind, id: d.id, name: d.name, subject: d.subject || '', preheader: d.preheader || '', from_name: d.from_name || '', segment_id: d.segment_id || null,
+        theme: d.theme || 'standard', locale: d.locale || 'en', ideas: d.subject_ideas || [],
         blocks: kind === 'template' ? d.blocks_list : d.blocks, editable: kind === 'template' ? !d.preset : d.editable, preset: !!d.preset, status: d.status || 'draft',
         sel: 0, device: 'desktop', left: 'blocks', right: 'block', past: [], future: [], saved: d.updated_at, preview: null, dirty: false, warnings: d.warnings || []
       };
@@ -647,7 +667,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     var h = 60;
     blocks.forEach(function (b) {
       var p = b.props || {};
-      if (b.type === 'product_grid') h += (p.title ? 40 : 0) + Math.ceil((p.count || 4) / (parseInt(p.columns || 2, 10))) * (phone ? 360 : 340);
+      if (b.type === 'product_grid') h += (p.title ? 40 : 0) + Math.ceil((p.count || 4) / (phone ? Math.min(2, parseInt(p.columns || 2, 10)) : parseInt(p.columns || 2, 10))) * (phone ? 360 : 340);
       else if (b.type === 'product_row') h += (p.title ? 40 : 0) + (p.count || 3) * 130;
       else if (b.type === 'spacer') h += p.height || 24;
       else if (b.type === 'text') h += 40 + Math.ceil(String(p.body || '').length / (phone ? 40 : 70)) * 26;
@@ -715,27 +735,32 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     var b = S.b, bl = b.blocks[b.sel]; if (!bl) return '<div class="mke-empty">Select a block on the email.</div>';
     var p = bl.props || {}, o = S.opts || {}, t = bl.type, h = '<h3>' + esc(NAMES[t]) + '</h3>';
     var dis = b.editable ? '' : '<div class="mke-h">Read-only. ' + (b.preset ? 'Duplicate this template to change it.' : '') + '</div>';
-    if (t === 'mini_header') h += '<p class="d">The shop\'s logo or name, and Shop · Track order · My account.</p>' + fBool('topbar', 'Show the line above (“Authentic K-beauty, curated for you”)', p.topbar) + fBool('nav', 'Show Shop · Track order · My account', p.nav);
+    if (t === 'mini_header') h += '<p class="d">The shop\'s logo or name, and Shop · Track order · My account.</p>' + fBool('topbar', 'Show the line above (“Authentic K-beauty, curated for you”)', p.topbar) + fBool('nav', 'Show Shop · Track order · My account', p.nav)
+      + (b.theme === 'playful' ? fText('tagline', 'Line above the card (Playful look)', p.tagline, 'e.g. ✿ glow-up alert ✿ — shown when “Show the line above” is on.', false, 80) : '');
     if (t === 'hero_image') h += '<p class="d">A full-width picture under the header.</p>' + fSel('art', 'Picture', [['', 'From the media library']].concat((o.art || []).map(function (a) { return [a.key, a.alt]; })), p.art)
       + (p.art ? '' : fText('src', 'Picture address', p.src, 'Pick from the media library, or an https:// address.') + '<button type="button" class="btn ghost sm" data-mke="media" data-k="src" style="margin:-4px 0 12px">Choose from media library</button>')
       + fText('alt', 'Describe the picture', p.alt, 'Shown when pictures are off.') + fText('href', 'Link (optional)', p.href, 'https://… or /shop/');
     if (t === 'heading') h += fSel('style', 'Style', [['hero', 'Hero — icon, small line, headline'], ['title', 'Title — large serif line'], ['label', 'Label — small grey capitals']], p.style)
       + (p.style === 'hero' ? fSel('icon', 'Icon', [['none', 'None']].concat((o.icons || []).map(function (x) { return [x, x]; })), p.icon) + fSel('tone', 'Colour', (o.tones || []).map(function (x) { return [x, x]; }), p.tone) + fText('eyebrow', 'Small line above', p.eyebrow, '', false, 80) : '')
       + fText('title', p.style === 'label' ? 'Label' : 'Headline', p.title, '{first_name} and {top_brand} work here.', false, 160)
+      + (p.style !== 'label' ? fText('highlight', 'Highlighted line (optional)', p.highlight, 'Printed under the headline in a pink highlighter — “less prices”. In the Standard look it joins the headline.', false, 80) : '')
       + (p.style !== 'label' ? fText('lead', 'Sentence under it', p.lead, MARKS, true, 600) + fSel('align', 'Align', [['center', 'Centre'], ['left', 'Left']], p.align) : '');
     if (t === 'text') h += fText('body', 'Text', p.body, MARKS, true, 3000) + fSel('align', 'Align', [['left', 'Left'], ['center', 'Centre']], p.align) + fNum('size', 'Text size (px)', p.size, 13, 18);
-    if (t === 'button') h += fText('label', 'Button text', p.label, '', false, 60) + fText('href', 'Link', p.href, 'https://… or a page of the shop like /super-sale/. A javascript: or data: link is refused.') + fSel('style', 'Style', [['solid', 'Solid'], ['ghost', 'Outline']], p.style) + fSel('align', 'Align', [['center', 'Centre'], ['left', 'Left']], p.align);
+    if (t === 'button') h += fText('label', 'Button text', p.label, '', false, 60) + fText('href', 'Link', p.href, 'https://… or a page of the shop like /super-sale/. A javascript: or data: link is refused.') + fSel('style', 'Style', [['solid', 'Solid'], ['ghost', 'Outline'], ['dark', 'Dark']], p.style) + fSel('align', 'Align', [['center', 'Centre'], ['left', 'Left']], p.align);
     if (t === 'product_row' || t === 'product_grid') {
       var top = b.preview && b.preview.top_brand;
+      var manual = p.fill === 'hand_picked';
       h += '<p class="d">Pictures, prices and links come from the catalogue when each email is sent. Sold-out products are skipped.</p>'
-        + fSel('fill', 'Fill with', Object.keys(o.fills || {}).map(function (k) { return [k, o.fills[k]]; }), p.fill, p.fill === 'group_top_brand' ? 'For “Mostly bought Medicube” that is Medicube. Each group gets its own brand.' : '')
+        + '<div class="mke-mode" role="group" aria-label="How products are chosen"><button type="button" data-mke-fillmode="auto" aria-pressed="' + (!manual) + '">Automatic<small>a rule and a count</small></button><button type="button" data-mke-fillmode="manual" aria-pressed="' + manual + '">Manual<small>search, pick, order</small></button></div>'
+        + (manual ? '' : fSel('fill', 'Fill with', Object.keys(o.fills || {}).filter(function (k) { return k !== 'hand_picked'; }).map(function (k) { return [k, o.fills[k]]; }), p.fill, p.fill === 'group_top_brand' ? 'For “Mostly bought Medicube” that is Medicube. Each group gets its own brand.' : ''))
         + (p.fill === 'group_top_brand' ? '<div class="mke-count" style="padding:10px 12px;margin-bottom:12px"><b style="font-size:15px">' + esc(top ? top.name : 'Choose a group') + '</b><div class="mke-h">' + (top ? 'Top brand of the chosen group · ' + esc(p.count) + ' best-selling in-stock products' : 'Pick the group under Email → Group to see its top brand. Until then this shows best sellers.') + '</div></div>' : '')
         + (p.fill === 'brand' ? fSel('brand_id', 'Brand', [['', 'Choose…']].concat((o.brands || []).map(function (x) { return [x.id, x.name]; })), p.brand_id) : '')
         + (p.fill === 'category' ? fSel('category_id', 'Category', [['', 'Choose…']].concat((o.categories || []).map(function (x) { return [x.id, x.name]; })), p.category_id) : '')
         + (p.fill === 'under_price' ? fNum('max_price', 'Under (AED)', p.max_price, 1, 100000) : '')
         + (p.fill === 'hand_picked' ? pickedBox(p) : '')
-        + '<div class="mke-grid mke-g2" style="gap:10px">' + fSel('count', 'How many', [1, 2, 3, 4, 5, 6, 7, 8].map(function (n) { return [n, n]; }), p.count) + (t === 'product_grid' ? fSel('columns', 'Columns', [['1', '1'], ['2', '2']], p.columns) : '<span></span>') + '</div>'
-        + fSel('order', 'Order by', Object.keys(o.orders || {}).map(function (k) { return [k, o.orders[k]]; }), p.order)
+        + '<div class="mke-grid mke-g2" style="gap:10px">' + fSel('count', manual ? 'Show up to' : 'How many', [1, 2, 3, 4, 5, 6, 7, 8].map(function (n) { return [n, n]; }), p.count) + (t === 'product_grid' ? fSel('columns', 'Columns', [['1', '1'], ['2', '2'], ['3', '3 (2 on a phone)']], p.columns) : '<span></span>') + '</div>'
+        + (t === 'product_grid' ? fSel('layout', 'Card style', [['standard', 'Standard cards'], ['playful', 'Playful pastel cards with type stickers']], p.layout) : '')
+        + (manual ? '' : fSel('order', 'Order by', Object.keys(o.orders || {}).map(function (k) { return [k, o.orders[k]]; }), p.order))
         + fText('title', 'Small heading above (optional)', p.title, '', false, 100) + fText('cta', 'Button text', p.cta, '', false, 40) + fBool('show_sale', 'Show sale price', p.show_sale)
         + '<div class="mke-h">Other fills: picked by hand · a brand · a category · new in · best sellers · on sale · under a price · bundles &amp; sets.</div>';
     }
@@ -757,15 +782,66 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     if (t === 'divider') h += '<p class="d">A thin line between sections.</p>';
     if (t === 'spacer') h += fNum('height', 'Height (px)', p.height, 8, 64);
     if (t === 'social') h += '<p class="d">Leave a box empty to hide that link.</p>' + ['instagram', 'facebook', 'tiktok', 'youtube', 'whatsapp'].map(function (k) { return fText(k, k.charAt(0).toUpperCase() + k.slice(1), p[k], ''); }).join('');
-    if (t === 'footer') h += '<p class="d">Required, and always last: the Dubai and Korea addresses (Emails → Design &amp; branding), the policy pages, Unsubscribe · Email preferences, why this email arrived, and “View this email in your browser”.</p>' + fSel('why', 'Why they got it', [['auto', 'From the group (customers or subscribers)'], ['customers', 'You bought from us before'], ['subscribers', 'You subscribed to our emails']], p.why);
+    if (t === 'footer') h += '<p class="d">Required, and always last: the Dubai and Korea addresses (Emails → Design &amp; branding), the policy pages, Unsubscribe · Email preferences, why this email arrived, and “View this email in your browser”.</p>' + fSel('why', 'Why they got it', [['auto', 'From the group (customers or subscribers)'], ['customers', 'You bought from us before'], ['subscribers', 'You subscribed to our emails']], p.why)
+      + (b.theme === 'playful' ? fText('note', 'Line above the footer (Playful look)', p.note, 'e.g. Made with love (and a lot of serum) in Dubai ✿', false, 120) : '');
+    if (t === 'badges') {
+      h += '<p class="d">Up to four small chips: a picture, a bold start and the rest of the line. Write only what the shop really does.</p>';
+      var chips = p.items || [];
+      for (var bi = 0; bi < 4; bi++) {
+        var ch = chips[bi] || { icon: 'sparkles', bold: '', text: '' };
+        h += '<div class="sec-title" style="margin:10px 0 6px">Chip ' + (bi + 1) + '</div>'
+          + '<label class="mke-f"><span class="mke-l">Picture</span><select class="mke-in" data-mke-bi="' + bi + '" data-k="icon">' + Object.keys(BADGE_GLYPH).map(function (k) { return '<option value="' + k + '"' + (k === ch.icon ? ' selected' : '') + '>' + BADGE_GLYPH[k] + ' ' + k + '</option>'; }).join('') + '</select></label>'
+          + '<div class="mke-grid mke-g2" style="gap:10px"><label class="mke-f"><span class="mke-l">Bold</span><input class="mke-in" data-mke-bi="' + bi + '" data-k="bold" maxlength="40" value="' + esc(ch.bold || '') + '"></label>'
+          + '<label class="mke-f"><span class="mke-l">Then</span><input class="mke-in" data-mke-bi="' + bi + '" data-k="text" maxlength="60" value="' + esc(ch.text || '') + '"></label></div>';
+      }
+      h += '<div class="mke-h">Empty a chip\'s two boxes to leave it out.</div>';
+    }
     if (t !== 'footer' && b.editable) h += '<div class="mke-row" style="margin-top:6px"><button type="button" class="btn ghost sm" data-mke="bdup">Duplicate block</button><span class="mke-sp"></span><button type="button" class="btn ghost sm" data-mke="bdel">Remove block</button></div>';
     return dis + h;
   }
 
+  /*
+   * Manual: search and pick, then put them in order (Lane EC). The email
+   * prints product_ids in this order; ↑ ↓ and the ⠿ grip move one. Names of
+   * products picked in an earlier visit are fetched ONCE for the whole list
+   * (GET …/products?ids=), never per row and never per keystroke.
+   */
   function pickedBox(p) {
     var ids = p.product_ids || [];
-    return '<div class="mke-f"><span class="mke-l">Products (' + ids.length + ' of 12)</span><input class="mke-in" id="mkePsearch" placeholder="Search products…" aria-label="Search products">'
-      + '<div class="mke-res" id="mkePres"></div><div class="mke-pp" id="mkePicked">' + ids.map(function (id) { var n = (S.pnames || {})[id] || ('#' + id); return '<span class="p">' + esc(n) + '<button type="button" data-mke-unpick="' + id + '" aria-label="Remove">×</button></span>'; }).join('') + '</div></div>';
+    namesFor(ids);
+    var editable = S.b && S.b.editable;
+    // The search and its results survive a repaint, so several products can
+    // be picked from one search (each pick repaints the panel).
+    return '<div class="mke-f"><span class="mke-l">Products (' + ids.length + ' of 12)</span><input class="mke-in" id="mkePsearch" placeholder="Search products…" aria-label="Search products" value="' + esc(S.pq || '') + '">'
+      + '<div class="mke-res" id="mkePres">' + (S.presHtml || '') + '</div>'
+      + (ids.length ? '<ol class="mke-plist" id="mkePicked" aria-label="Picked products, in email order">' + ids.map(function (id, i) {
+        var n = (S.pnames || {})[id] || ('#' + id);
+        return '<li data-mke-pi="' + i + '"><span class="dz top"></span><span class="dz bot"></span><button type="button" class="grip" data-mke-pgrip="' + i + '" aria-label="Drag to move"' + (editable ? '' : ' disabled') + '>⠿</button><i>' + (i + 1) + '</i><span class="n">' + esc(n) + '</span>'
+          + '<button type="button" data-mke-pup="' + i + '" aria-label="Move up"' + (i === 0 || !editable ? ' disabled' : '') + '>↑</button>'
+          + '<button type="button" data-mke-pdown="' + i + '" aria-label="Move down"' + (i === ids.length - 1 || !editable ? ' disabled' : '') + '>↓</button>'
+          + '<button type="button" data-mke-unpick="' + id + '" aria-label="Remove"' + (editable ? '' : ' disabled') + '>×</button></li>';
+      }).join('') + '</ol><div class="mke-h">The email shows them in this order' + (ids.length > (p.count || 0) ? ' — the first ' + esc(p.count) + ' (Show up to).' : '.') + '</div>' : '<div class="mke-h">Search above and tap a product to add it.</div>')
+      + '</div>';
+  }
+  var nameAsked = {};
+  function namesFor(ids) {
+    S.pnames = S.pnames || {};
+    var want = ids.filter(function (id) { return !S.pnames[id] && !nameAsked[id]; });
+    if (!want.length) return;
+    want.forEach(function (id) { nameAsked[id] = true; });
+    api('GET', '/products?ids=' + want.join(',')).then(function (r) {
+      ((r.data && r.data.products) || []).forEach(function (x) { S.pnames[x.id] = (x.brand ? x.brand + ' · ' : '') + x.name; });
+      if (S.view === 'builder') paintBuilderKeepFocus();
+    }).catch(function () {});
+  }
+  function movePicked(from, to) {
+    change(function (b) {
+      var ids = (b.blocks[b.sel].props.product_ids || []).slice();
+      if (from < 0 || from >= ids.length) return;
+      to = Math.max(0, Math.min(ids.length - 1, to));
+      var x = ids.splice(from, 1)[0]; ids.splice(to, 0, x);
+      b.blocks[b.sel].props.product_ids = ids;
+    });
   }
 
   function emailForm() {
@@ -773,7 +849,11 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     var len = (b.subject || '').length;
     var dis = b.editable ? '' : ' disabled';
     var h = '<label class="mke-f"><span class="mke-l">Subject</span><input class="mke-in" data-mke-e="subject" maxlength="200" value="' + esc(b.subject) + '"' + dis + '><span class="mke-h">' + len + ' characters' + (len <= 45 ? ' · fits on a phone' : ' · a phone shows about 45') + '. {first_name} and {top_brand} work here.</span></label>'
-      + '<label class="mke-f"><span class="mke-l">Preview line</span><input class="mke-in" data-mke-e="preheader" maxlength="200" value="' + esc(b.preheader) + '"' + dis + '><span class="mke-h">The grey line an inbox shows after the subject.</span></label>';
+      + ((b.ideas || []).length && b.editable ? '<div class="mke-ideas" aria-label="Other subject lines">' + b.ideas.map(function (x, i) { return '<button type="button" data-mke-subj="' + i + '">' + esc(x) + '</button>'; }).join('') + '</div>' : '')
+      + '<label class="mke-f"><span class="mke-l">Preview line</span><input class="mke-in" data-mke-e="preheader" maxlength="200" value="' + esc(b.preheader) + '"' + dis + '><span class="mke-h">The grey line an inbox shows after the subject.</span></label>'
+      + '<div class="mke-grid mke-g2" style="gap:10px"><label class="mke-f"><span class="mke-l">Look</span>' + sel('theme', Object.keys((S.opts && S.opts.themes) || { standard: 'Standard' }).map(function (k) { return [k, S.opts.themes[k]]; }), b.theme, 'data-mke-e="theme"' + dis) + '</label>'
+      + '<label class="mke-f"><span class="mke-l">Language</span>' + sel('locale', Object.keys((S.opts && S.opts.locales) || { en: 'English' }).map(function (k) { return [k, S.opts.locales[k]]; }), b.locale, 'data-mke-e="locale"' + dis) + '</label></div>'
+      + '<div class="mke-h" style="margin:-4px 0 12px">Playful K-beauty is the “New look” design: pastel cards, highlighter headline, benefit chips. Arabic prints the email right to left; write the words in Arabic.</div>';
     if (b.kind === 'campaign') {
       h += '<label class="mke-f"><span class="mke-l">From name</span><input class="mke-in" data-mke-e="from_name" maxlength="120" value="' + esc(b.from_name) + '" placeholder="K Beauty Bliss"' + dis + '><span class="mke-h">The address is the shop\'s own (Emails → Sending &amp; delivery).</span></label>'
         + '<label class="mke-f"><span class="mke-l">Group</span>' + sel('g', [['', 'Choose on the next step…']].concat(gs.map(function (g) { return [g.id, g.name + ' · ' + (g.audience === 'subscribers' ? 'Subscribers' : 'Customers')]; })), b.segment_id, 'data-mke-e="segment_id"' + dis) + '<span class="mke-h">Fills “This group\'s top brand” and the footer\'s why-line in the preview.</span></label>'
@@ -812,7 +892,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
   var refresh = debounce(async function () {
     var b = S.b; if (!b || S.view !== 'builder') return;
     try {
-      var r = await api('POST', '/preview', { blocks: b.blocks, subject: b.subject, preheader: b.preheader, segment_id: b.segment_id });
+      var r = await api('POST', '/preview', { blocks: b.blocks, subject: b.subject, preheader: b.preheader, segment_id: b.segment_id, theme: b.theme, locale: b.locale });
       b.preview = r.data;
       if (b.preview && b.preview.top_brand === undefined) b.preview.top_brand = null;
     } catch (e) { toastMsg(why(e)); return; }
@@ -832,7 +912,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
 
   var save = debounce(async function () {
     var b = S.b; if (!b || !b.editable) return;
-    var body = { name: b.name, subject: b.subject, preheader: b.preheader, blocks: b.blocks };
+    var body = { name: b.name, subject: b.subject, preheader: b.preheader, blocks: b.blocks, theme: b.theme, locale: b.locale };
     if (b.kind === 'campaign') { body.from_name = b.from_name; body.segment_id = b.segment_id; }
     try {
       var r = await api('PUT', (b.kind === 'template' ? '/templates/' : '/campaigns/') + b.id, body);
@@ -893,6 +973,16 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     document.querySelectorAll('.drop-before,.drop-after,.drop-on').forEach(function (n) { n.classList.remove('drop-before', 'drop-after', 'drop-on'); });
     var t = e.target, zone = t.closest && t.closest('.dz'), row = t.closest && t.closest('[data-mke-i]'), canvas = t.closest && t.closest('#mkeCanvas');
     drag.target = null;
+    if (drag.kind === 'pmove') {
+      var li = t.closest && t.closest('[data-mke-pi]');
+      if (li) {
+        var at = parseInt(li.getAttribute('data-mke-pi'), 10);
+        var below = !!(zone && zone.classList.contains('bot'));
+        li.classList.add(below ? 'drop-after' : 'drop-before');
+        drag.target = { at: below ? at + 1 : at };
+      }
+      return;
+    }
     if (row) {
       var i = parseInt(row.getAttribute('data-mke-i'), 10), after = zone ? zone.classList.contains('bot') : true;
       row.classList.add(after ? 'drop-after' : 'drop-before');
@@ -909,7 +999,9 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     var w = document.querySelector('[data-mke]'); if (w) w.classList.remove('mke-dragging');
     document.querySelectorAll('.drop-before,.drop-after,.drop-on').forEach(function (n) { n.classList.remove('drop-before', 'drop-after', 'drop-on'); });
     if (!d.moved) { if (d.kind === 'new') addBlock(d.value); return; }
+    if (d.kind === 'pmove' && !d.target) return;
     if (!d.target) return;
+    if (d.kind === 'pmove') { movePicked(d.value, d.target.at > d.value ? d.target.at - 1 : d.target.at); return; }
     if (d.kind === 'new') addBlock(d.value, d.target.at);
     else { var to = d.target.at == null ? S.b.blocks.length - 2 : (d.target.at > d.value ? d.target.at - 1 : d.target.at); move(d.value, to); }
   }
@@ -1045,6 +1137,22 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     if (down) { var j = parseInt(down.getAttribute('data-mke-down'), 10); move(j, j + 1); return; }
     var rx = t.closest && t.closest('[data-mke-rx]');
     if (rx) { S.g.rules.splice(parseInt(rx.getAttribute('data-mke-rx'), 10), 1); paint(); recount(); return; }
+    var fm = t.closest && t.closest('[data-mke-fillmode]');
+    if (fm && S.b) {
+      var wantManual = fm.getAttribute('data-mke-fillmode') === 'manual';
+      change(function (b) {
+        var p = b.blocks[b.sel].props;
+        if (wantManual && p.fill !== 'hand_picked') { S.lastAuto = S.lastAuto || {}; S.lastAuto[b.sel] = p.fill; p.fill = 'hand_picked'; }
+        else if (!wantManual && p.fill === 'hand_picked') { p.fill = (S.lastAuto && S.lastAuto[b.sel]) || 'on_sale'; }
+      });
+      return;
+    }
+    var pup = t.closest && t.closest('[data-mke-pup]');
+    if (pup) { var pi = parseInt(pup.getAttribute('data-mke-pup'), 10); movePicked(pi, pi - 1); return; }
+    var pdown = t.closest && t.closest('[data-mke-pdown]');
+    if (pdown) { var pj = parseInt(pdown.getAttribute('data-mke-pdown'), 10); movePicked(pj, pj + 1); return; }
+    var subj = t.closest && t.closest('[data-mke-subj]');
+    if (subj && S.b && S.b.editable) { S.b.subject = S.b.ideas[parseInt(subj.getAttribute('data-mke-subj'), 10)] || S.b.subject; S.b.dirty = true; paintBuilderKeepFocus(); save(); refresh(); return; }
     var unpick = t.closest && t.closest('[data-mke-unpick]');
     if (unpick) { var pid = parseInt(unpick.getAttribute('data-mke-unpick'), 10); change(function (b) { var p = b.blocks[b.sel].props; p.product_ids = (p.product_ids || []).filter(function (x) { return x !== pid; }); }); return; }
     var pr = t.closest && t.closest('[data-mke-pr]');
@@ -1096,7 +1204,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
       else if (act === 'btest') { await flushSave(); openReview(S.b.id); }
       else if (act === 'asTpl') {
         var name = window.prompt('Name for your template', S.b.name); if (!name) return;
-        var r8 = await api('POST', '/templates', { name: name, subject: S.b.subject, preheader: S.b.preheader, blocks: S.b.blocks });
+        var r8 = await api('POST', '/templates', { name: name, subject: S.b.subject, preheader: S.b.preheader, blocks: S.b.blocks, theme: S.b.theme, locale: S.b.locale });
         toastMsg(r8.ok ? 'Saved under Templates → My templates.' : refusal(r8.data)); S.templates = null;
       }
       else if (act === 'test') {
@@ -1128,7 +1236,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
 
   async function flushSave() {
     var b = S.b; if (!b || !b.editable) return;
-    var body = { name: b.name, subject: b.subject, preheader: b.preheader, blocks: b.blocks };
+    var body = { name: b.name, subject: b.subject, preheader: b.preheader, blocks: b.blocks, theme: b.theme, locale: b.locale };
     if (b.kind === 'campaign') { body.from_name = b.from_name; body.segment_id = b.segment_id; }
     var r = await api('PUT', '/campaigns/' + b.id, body);
     if (!r.ok) toastMsg(refusal(r.data));
@@ -1162,6 +1270,11 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
       change(function (b) { b.blocks[b.sel].props[k] = v; }, false);
       return;
     }
+    if (t.hasAttribute('data-mke-bi') && S.b && t.tagName !== 'SELECT') {
+      var bi = parseInt(t.getAttribute('data-mke-bi'), 10), bk = t.getAttribute('data-k');
+      change(function (b) { var p = b.blocks[b.sel].props; p.items = p.items || []; while (p.items.length <= bi) p.items.push({ icon: 'sparkles', bold: '', text: '' }); p.items[bi][bk] = t.value; }, false);
+      return;
+    }
     if (t.hasAttribute('data-mke-ci') && S.b) {
       var ci = parseInt(t.getAttribute('data-mke-ci'), 10), ck = t.getAttribute('data-k');
       change(function (b) { var p = b.blocks[b.sel].props; p.items = p.items || []; while (p.items.length <= ci) p.items.push({ image: '', title: '', text: '', href: '' }); p.items[ci][ck] = t.value; }, false);
@@ -1181,7 +1294,8 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     try {
       var r = await api('GET', '/products?q=' + encodeURIComponent(q));
       var box = document.getElementById('mkePres'); if (!box) return;
-      box.innerHTML = (r.data.products || []).map(function (p) {
+      S.pq = q;
+      box.innerHTML = S.presHtml = (r.data.products || []).map(function (p) {
         return '<button type="button" data-mke-pr="' + p.id + '" data-name="' + esc(p.name) + '">' + (p.img ? '<img src="' + esc(p.img) + '" alt="">' : '') + '<span>' + esc(p.brand ? p.brand + ' · ' : '') + esc(p.name) + (p.live ? '' : ' <i>(not live)</i>') + '</span></button>';
       }).join('') || '<div class="mke-h">Nothing found.</div>';
     } catch (e) {}
@@ -1206,7 +1320,16 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
       change(function (b) { b.blocks[b.sel].props[key] = val; });
       return;
     }
-    if (t.hasAttribute('data-mke-e') && t.tagName === 'SELECT' && S.b) { S.b.segment_id = t.value ? parseInt(t.value, 10) : null; S.b.dirty = true; save(); refresh(); return; }
+    if (t.hasAttribute('data-mke-bi') && t.tagName === 'SELECT' && S.b) {
+      var bsi = parseInt(t.getAttribute('data-mke-bi'), 10);
+      change(function (b) { var p = b.blocks[b.sel].props; p.items = p.items || []; while (p.items.length <= bsi) p.items.push({ icon: 'sparkles', bold: '', text: '' }); p.items[bsi].icon = t.value; });
+      return;
+    }
+    if (t.hasAttribute('data-mke-e') && t.tagName === 'SELECT' && S.b) {
+      var ek = t.getAttribute('data-mke-e');
+      if (ek === 'theme' || ek === 'locale') S.b[ek] = t.value; else S.b.segment_id = t.value ? parseInt(t.value, 10) : null;
+      S.b.dirty = true; if (ek === 'theme') paintBuilderKeepFocus(); save(); refresh(); return;
+    }
     if (t.hasAttribute('data-mke-rs') && S.rv) {
       var field = t.getAttribute('data-mke-rs'), body = {};
       body[field] = field === 'segment_id' ? (t.value ? parseInt(t.value, 10) : null) : t.value;
@@ -1223,6 +1346,8 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     if (!S.b || S.view !== 'builder' || e.button > 0) return;
     var add = e.target.closest && e.target.closest('[data-mke-add]');
     if (add && !add.disabled) { startDrag(e, 'new', add.getAttribute('data-mke-add'), NAMES[add.getAttribute('data-mke-add')]); return; }
+    var pgrip = e.target.closest && e.target.closest('[data-mke-pgrip]');
+    if (pgrip && !pgrip.disabled) { var pg = parseInt(pgrip.getAttribute('data-mke-pgrip'), 10); startDrag(e, 'pmove', pg, (S.pnames || {})[S.b.blocks[S.b.sel].props.product_ids[pg]] || 'Product'); return; }
     var grip = e.target.closest && e.target.closest('[data-mke-grip]');
     if (grip && !grip.disabled) { var i = parseInt(grip.getAttribute('data-mke-grip'), 10); startDrag(e, 'move', i, blockLabel(S.b.blocks[i])); }
   });

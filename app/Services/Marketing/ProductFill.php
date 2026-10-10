@@ -154,6 +154,8 @@ final class ProductFill
                 'price' => MailKit::money($price),
                 'was' => $compare !== null && $compare > $price ? MailKit::money($compare) : null,
                 'href' => Url::external('/product/' . $p->slug . '/'),
+                // For the playful card's type sticker (Lane EC); already loaded.
+                'type' => (string) ($p->type ?? ''),
             ];
         }
 

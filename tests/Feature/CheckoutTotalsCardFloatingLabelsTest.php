@@ -391,7 +391,8 @@ it('renders the checkout byte for byte as before this lane with both switches of
         // Lane TP (also later) adds the two policy links under Place order in
         // each copy of the order block; StorefrontEnglishUnchangedTest and
         // PolicyLinksTest pin them.
-        $after = str_replace('    <p class="kbb-pol"><a href="/delivery/">Shipping &amp; Delivery</a><a href="/refund_returns/">Returns Information</a></p>'."\n", '', $after);
+        // (Lane EC then took its Returns Information link out: no returns.)
+        $after = str_replace('    <p class="kbb-pol"><a href="/delivery/">Shipping &amp; Delivery</a></p>'."\n", '', $after);
         // Lane CO (later) hands place()'s refusal to the sold-out dialog in
         // placing-overlay's script; CheckoutCardRetryTest pins it.
         $after = str_replace([
