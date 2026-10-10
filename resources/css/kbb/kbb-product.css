@@ -784,6 +784,10 @@ a{color:inherit;text-decoration:none}
    already has. CLAUDE.md rule 1 — nothing that already works changes.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* Lane AN: the Arabic path of the buy-together wash (.kbb-fbt.bt, further down).
+   Kept above the ledger block, whose one [dir] override is pinned; this rule
+   outranks the base one by specificity, so its place in the file changes nothing. */
+[dir="rtl"] .kbb-fbt.bt::before{transform:translateX(64.2857%);animation-name:btdrift-rtl}
 /* ═══════════════════════════════════════════════════════════════════════════
    LEDGER — THE PRODUCT PAGE THE OWNER PICKED.                     (Lane PDP2)
    ═══════════════════════════════════════════════════════════════════════════
@@ -1220,7 +1224,6 @@ a{color:inherit;text-decoration:none}
 /* Arabic: anchored at the right; the old position was physical, so the same
    picture is the mirrored path. */
 @keyframes btdrift-rtl{0%,100%{transform:translateX(64.2857%)}50%{transform:translateX(0)}}
-[dir="rtl"] .kbb-fbt.bt::before{transform:translateX(64.2857%);animation-name:btdrift-rtl}
 @media (prefers-reduced-motion:reduce){.kbb-fbt.bt::before{animation:none}}
 .kbb-fbt.bt > *{position:relative;z-index:1}
 .kbb-fbt.bt h2{font-size:14px;font-weight:600;letter-spacing:0;margin:0 0 10px;padding:0 14px}

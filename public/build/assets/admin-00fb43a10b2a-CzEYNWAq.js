@@ -13,7 +13,8 @@
     google_site_verification:['Site verification (tag or code)','text','<meta name="google-site-verification" …>'],
     consent_mode:['Consent Mode v2','select',[['off','Off (default)'],['eea','EEA, UK and Switzerland: denied by default']]],
     tiktok_token:['Events API access token','secret','Access token'], tiktok_test_code:['Test Events code','text','TEST12345'],
-    meta_app_id:['Meta App ID (digits only)','text','e.g. 1234567890123456'], meta_app_secret:['Meta App Secret','secret','App Secret']
+    meta_app_id:['Meta App ID (digits only)','text','e.g. 1234567890123456'], meta_app_secret:['Meta App Secret','secret','App Secret'],
+    load_scripts:['Load Meta, Google and TikTok','select',[['late','After the page loads (recommended, fastest)'],['now','Immediately (as before 2.60.463)']]]
   };
   function base(){ return mpBase(); }
   function api(path, body){
@@ -92,7 +93,8 @@
         + '<div class="mpx-f" style="max-width:none"><label>Code</label><textarea class="inp" data-ccc spellcheck="false" maxlength="' + CC.max_bytes + '"></textarea><small data-ccn></small></div></div>';
     }).join('');
     var hist = (CC.history || []).map(function (h, i) { return '<tr><td>' + e(h.created_at) + '</td><td>' + e(h.saved_by) + '</td><td>' + e(h.note) + '<div class="mpx-muted">' + e(h.summary) + '</div></td><td>' + (i === 0 ? '<span class="mpx-pill on">live</span>' : '<button class="btn small" data-cc-restore="' + h.id + '">Restore</button>') + '</td></tr>'; }).join('');
-    return '<div class="mpx-warn">Code here runs on your shop for every visitor. Paste only code from a vendor you trust. Off or empty prints nothing at all. Up to 20 KB per box.</div><div id="ccWarn"></div>' + box
+    var speed = S ? '<div class="mpx-card"><h3>Page speed</h3><p class="mpx-muted">The browser\u2019s loading bar waits for every script file. After the page loads, the shop\u2019s own photos come first and the bar finishes sooner; every event is still kept and sent when the file arrives.</p>' + field('load_scripts') + '<div class="mpx-row"><button class="btn primary" type="button" data-mpx-save>Save</button></div></div>' : '';
+    return speed + '<div class="mpx-warn">Code here runs on your shop for every visitor. Paste only code from a vendor you trust. Off or empty prints nothing at all. Up to 20 KB per box.</div><div id="ccWarn"></div>' + box
       + '<div class="mpx-row"><button class="btn primary" type="button" data-cc-save>Save custom code</button></div>'
       + '<div class="mpx-card"><h3>Versions</h3><p class="mpx-muted">Every save is kept, with who saved it. Restore puts a version back.</p>' + (hist ? '<table class="mpx-tbl"><tbody>' + hist + '</tbody></table>' : '<p>No versions yet.</p>') + '</div>';
   }

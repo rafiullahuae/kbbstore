@@ -4,6 +4,10 @@
     "name": "page-header-editor",
     "isDynamicEntry": true
   },
+  "admin-console/00fb43a10b2a8ae80ecec0bcab0919967bd75593.js": {
+    "file": "assets/admin-00fb43a10b2a-CzEYNWAq.js",
+    "src": "admin-console/00fb43a10b2a8ae80ecec0bcab0919967bd75593.js"
+  },
   "admin-console/05821c972b8225e56e9b4d29f336aa35356e3c65.css": {
     "file": "assets/admin-05821c972b82-BK0V4nx3.css",
     "src": "admin-console/05821c972b8225e56e9b4d29f336aa35356e3c65.css"
@@ -344,10 +348,6 @@
     "file": "assets/admin-b05eb30ba210-B_3jpnXs.js",
     "src": "admin-console/b05eb30ba2103be45936fdc474b20d01c4a74801.js"
   },
-  "admin-console/b1389fc0c229e5e075a6eaa4c6b2a347b72da1fa.js": {
-    "file": "assets/admin-b1389fc0c229-9tSLFSPH.js",
-    "src": "admin-console/b1389fc0c229e5e075a6eaa4c6b2a347b72da1fa.js"
-  },
   "admin-console/b6b35abe16763f99d1cd8ee098f02ece660d8ec0.js": {
     "file": "assets/admin-b6b35abe1676-DTTakBXR.js",
     "src": "admin-console/b6b35abe16763f99d1cd8ee098f02ece660d8ec0.js"
@@ -496,7 +496,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb-product.css": {
-    "file": "assets/kbb-product-DmJE8meX.css",
+    "file": "assets/kbb-product-Bv_y7Ttk.css",
     "src": "resources/css/kbb/kbb-product.css",
     "isEntry": true
   },
