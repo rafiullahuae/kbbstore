@@ -506,6 +506,11 @@ it('leaves no query in app/ that slices a list it has not finished ordering', fu
         // country, so total by construction; the real tie (COUNT(*), two
         // countries with the same number of carts) is broken by it.
         ['Services/CartTracking/CartTrackingReport.php', "orderBy('c.ct_country')"],
+        // Lane OR: the Top browsers / Top devices read, grouped by c.ct_ua and
+        // ending on it -- the GROUP BY key, one row per agent string, so total
+        // by construction; the real tie (COUNT(*)) under the 5,000-row cap is
+        // broken by it. Caught by the full suite at 2.60.477 integration.
+        ['Services/CartTracking/CartTrackingReport.php', "orderBy('c.ct_ua')"],
         // Lane MAC (the owner app): three maps grouped by (product_id, name,
         // image) and ending on name then product_id — the group key, image
         // being a function of product_id, so total by construction; the real

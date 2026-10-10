@@ -77,6 +77,9 @@
 .ctk-ip{font:600 12px var(--mono,ui-monospace,monospace);color:var(--ink-2,#3c465c);overflow-wrap:anywhere}
 .ctk-cc{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--ink-2,#3c465c);background:var(--surface-2,#f2f4fb);border-radius:6px;padding:1px 6px}
 .ctk-cc .fl{font-size:13px;line-height:1}
+.ctk-agent{display:block;margin-top:3px;font-size:11.5px;color:var(--ink-soft,#6b7385)}
+.ctk-tile.wide{grid-column:span 2}
+.ctk-chip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:650;background:var(--surface-2,#f2f4fb);border-radius:999px;padding:2px 8px;color:var(--ink-2,#3c465c)}
 .ctk-shield{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;border:1px solid var(--border,#e6e9f2);background:var(--surface,#fff);color:var(--ink-soft,#626c80);cursor:pointer;padding:0;flex:none}
 .ctk-shield:hover{color:var(--red,#e3493f);border-color:#f3c9c6;background:var(--red-soft,#fdeceb)}
 .ctk-shield.on{background:var(--red,#e3493f);border-color:var(--red,#e3493f);color:#fff}

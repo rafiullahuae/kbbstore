@@ -744,6 +744,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // Emails → Overview / Sending & delivery / Design & branding (Lane RK, E1).
         require __DIR__.'/emails-admin.php';
         require __DIR__.'/emails-templates-admin.php';   // Emails → Customer emails + the template editor (Lane EK)
+        require __DIR__.'/review-request-admin.php';   // Emails → Customer emails → Review request → Schedule & rules (Lane RV)
         require __DIR__.'/marketing-emails-admin.php';   // Growth & Marketing → Marketing Emails (Lane MK)
         require __DIR__.'/marketing-report-admin.php';   // Marketing Emails → Reports: recipients, CSV, open tracking (Lane ER)
         require __DIR__.'/email-health-admin.php';   // Growth & Marketing → Bounces & unsubscribes (Lane EB)
@@ -1463,6 +1464,7 @@ require __DIR__.'/import-chain.php';
 require __DIR__.'/mail-kit.php';
 require __DIR__.'/marketing-public.php';   // unsubscribe and click links in marketing emails (Lane MK)
 require __DIR__.'/marketing-open-public.php';   // the open pixel of marketing emails (Lane ER)
+require __DIR__.'/review-request-public.php';   // the review request email's page and its unsubscribe (Lane RV)
 
 /*
  * Required last, and that placement is load-bearing. The final route in this

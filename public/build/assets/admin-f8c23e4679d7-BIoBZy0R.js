@@ -34,6 +34,16 @@
     return m ? decodeURIComponent(m.pop()) : '';
   }
   function base() { return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, ''); }
+  function agentTile(title, list, colour) {
+    list = list || [];
+    var total = list.reduce(function (t, x) { return t + x.n; }, 0);
+    return '<div class="ctk-tile wide" style="--tile:' + colour + '"><span class="k">' + esc(title) + '</span>'
+      + '<div class="ctk-flags">' + (list.map(function (x) {
+          return '<span class="ctk-chip">' + esc(x.name) + ' <span style="color:var(--ink-soft)">' + num(x.n)
+            + (total ? ' · ' + Math.round(100 * x.n / total) + '%' : '') + '</span></span>';
+        }).join('') || '<span class="s">No carts yet</span>') + '</div></div>';
+  }
+
   function flag(cc) {
     if (!cc || !/^[A-Z]{2}$/.test(cc)) return '';
     return String.fromCodePoint(127397 + cc.charCodeAt(0), 127397 + cc.charCodeAt(1));
@@ -232,6 +242,11 @@
       + '<div class="ctk-flags">' + ((s.countries || []).slice(0, 6).map(function (c) {
           return '<button type="button" class="ctk-flagchip" data-ctk-country="' + esc(c.code || '--') + '" title="Show only ' + esc(c.name) + '">' + (c.code ? flag(c.code) + ' ' + esc(c.code) : 'Unknown') + ' <span style="color:var(--ink-soft)">' + num(c.n) + '</span></button>';
         }).join('') || '<span class="s">No carts yet</span>') + '</div></div>'
+      // (Lane OR) "which browser users use more": the same carts, by browser
+      // and by device, named on the server from the user agent each cart
+      // already carries. Two wide tiles on a row of their own.
+      + agentTile('Top browsers', s.browsers, '#0e9aa7')
+      + agentTile('Top devices', s.devices, '#d4881c')
       + '</div>';
 
     html += '<div class="ctk-card">'
@@ -325,7 +340,9 @@
       + (name ? '<div class="nm">' + esc(name) + '</div>' : '')
       + (sub ? '<span class="ctk-sub">' + esc(sub) + '</span>' : '')
       + '<div class="ctk-ipline">' + (r.country ? '<span class="ctk-cc" title="' + esc(r.country_name) + '"><span class="fl">' + flag(r.country) + '</span>' + esc(r.country) + '</span>' : '<span class="ctk-cc">??</span>')
-      + '<span class="ctk-ip">' + esc(r.ip || 'no address') + '</span>' + shield + '</div></div>';
+      + '<span class="ctk-ip">' + esc(r.ip || 'no address') + '</span>' + shield + '</div>'
+      + (r.browser ? '<span class="ctk-agent">' + esc(r.browser === r.device ? r.browser : r.browser + ' · ' + r.device) + '</span>' : '')
+      + '</div>';
   }
 
   function orderHtml(o) {

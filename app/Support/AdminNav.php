@@ -120,6 +120,11 @@ final class AdminNav
             // the left panel menu, so i can access it instantly". Third top-level
             // row, under Analytics. Same id, read and capability as before.
             ['id' => 'carttracking', 'label' => 'Cart Tracking', 'read' => 'admin-api/cart-tracking', 'late' => true, 'icon' => '<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M6 6 5 3H2"/><path d="m11 10 2 2 3-3"/>'],
+            // Orders: moved here from Store (Lane OR) -- the owner, 10 October:
+            // "bring the Orders to quick access on in the panel top, under Cart
+            // Tracking, i mean at no # 4 position". Fourth top-level row. Same
+            // id, read and capability as before; New Order stays under Store.
+            ['id' => 'orders', 'label' => 'Orders', 'read' => 'admin-api/orders-list', 'icon' => self::I['orders']],
         ]],
         ['sec' => 'Platform', 'rows' => [
             ['id' => 'theme', 'label' => 'K-Beauty Bliss Theme', 'cap' => 'store.settings', 'icon' => self::I['theme']],
@@ -164,7 +169,6 @@ final class AdminNav
             ['id' => 'payship', 'label' => 'Payment & Shipping Rules', 'read' => 'admin-api/pay-ship-rules', 'icon' => '<path d="M3 7h18v10H3z"/><path d="M3 11h18"/><circle cx="7.5" cy="14" r="1"/>'],
             ['id' => 'shipping', 'label' => 'Delivery & Shipping', 'read' => 'admin-api/shipping', 'icon' => '<path d="M2 6h11v9H2z"/><path d="M13 9h4.5l3.5 3.5V15h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'],
             ['id' => 'import', 'label' => 'Store Import / Export', 'read' => 'admin-api/import/status', 'icon' => self::I['sandbox']],
-            ['id' => 'orders', 'label' => 'Orders', 'read' => 'admin-api/orders-list', 'icon' => self::I['orders']],
             ['id' => 'order-new', 'label' => 'New Order', 'read' => 'admin-api/manual-orders/bootstrap', 'late' => true, 'icon' => '<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'],
             ['id' => 'coupon-editor', 'label' => 'Coupons', 'read' => 'admin-api/coupons/manage', 'late' => true, 'icon' => '<path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-6z"/><path d="M12 9v6"/><path d="M9 12h6"/>'],
             ['id' => 'payments', 'label' => 'Payments', 'read' => 'admin-api/payments', 'icon' => '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],

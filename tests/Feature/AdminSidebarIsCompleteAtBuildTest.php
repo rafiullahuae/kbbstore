@@ -369,7 +369,10 @@ it('renders the sidebar the console settled on, group by group and row by row', 
         // 'carttracking' — Cart Tracking, moved to the top by Lane QK10: the owner,
         // 9 October, "bring the Cart tracking page to the top third of the left
         // panel menu, so i can access it instantly". Third, under Analytics.
-        '' => ['dash', 'site-analytics', 'carttracking'],
+        // 'orders' — Orders, moved to the top by Lane OR: the owner, 10 October,
+        // "bring the Orders to quick access ... under Cart Tracking, i mean at
+        // no # 4 position". Fourth, under Cart Tracking; gone from Store.
+        '' => ['dash', 'site-analytics', 'carttracking', 'orders'],
         // 'domainswitch' — Platform → Domain switch (Lane DW), after Site address.
         'Platform' => ['theme', 'users', 'settings', 'siteaddr', 'domainswitch', 'cache'],
         // App: added after the capture, at the owner's request (5 October).
@@ -378,7 +381,7 @@ it('renders the sidebar the console settled on, group by group and row by row', 
         'Safety' => ['debug', 'sandbox', 'democontent', 'notfoundpage'],
         'Catalog' => ['catalog', 'product-tabs', 'sets', 'product-editor', 'imageseo', 'routines', 'category-tree', 'brands-manager', 'pagination'],
         // 'inquiries' — Store → Inquiries (Lane CT), after Quiz Leads.
-        'Store' => ['modules', 'megamenu', 'ecommerce', 'tax', 'payship', 'shipping', 'import', 'orders',
+        'Store' => ['modules', 'megamenu', 'ecommerce', 'tax', 'payship', 'shipping', 'import',
             'order-new', 'coupon-editor', 'payments', 'paygw', 'security', 'firewall', 'analytics', 'search', 'seo', 'seokeywords',
             'store-settings', 'customers', 'quiz-leads', 'inquiries'],
         'Emails' => ['emails', 'emails-sending', 'emails-customer', 'emails-branding', 'emails-sent', 'mail'],

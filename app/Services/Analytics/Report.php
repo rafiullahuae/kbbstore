@@ -107,13 +107,17 @@ final class Report
     public static function summary(string $from, string $to): array
     {
         $days = DB::table('an_days')->whereBetween('day', [$from, $to])->orderBy('day')
-            ->get(['day', 'views', 'visitors', 'sessions', 'bounces', 'carts', 'checkouts', 'rolled_at']);
+            ->get(['day', 'views', 'visitors', 'sessions', 'bounces', 'carts', 'checkouts', 'rolled_at', 'timed', 'secs', 'tvis', 'vsecs']);
 
         $span = (int) CarbonImmutable::parse($from)->diffInDays(CarbonImmutable::parse($to)) + 1;
         $pFrom = CarbonImmutable::parse($from)->subDays($span)->format('Y-m-d');
         $pTo = CarbonImmutable::parse($from)->subDay()->format('Y-m-d');
         $prev = DB::table('an_days')->whereBetween('day', [$pFrom, $pTo])
-            ->selectRaw('COALESCE(SUM(views),0) views, COALESCE(SUM(visitors),0) visitors, COALESCE(SUM(sessions),0) sessions, COALESCE(SUM(bounces),0) bounces')
+            ->selectRaw('COALESCE(SUM(views),0) views, COALESCE(SUM(visitors),0) visitors, COALESCE(SUM(sessions),0) sessions, COALESCE(SUM(bounces),0) bounces, '
+                .'COALESCE(SUM(timed),0) timed, COALESCE(SUM(secs),0) secs, COALESCE(SUM(tvis),0) tvis, COALESCE(SUM(vsecs),0) vsecs, '
+                // A day summarised before time on site was recorded (Lane AT):
+                // it had multi-page sessions and no timed ones.
+                .'COALESCE(SUM(CASE WHEN sessions > bounces AND timed = 0 THEN 1 ELSE 0 END),0) untimed')
             ->first();
 
         $sum = static fn (string $f): int => (int) $days->sum($f);
@@ -166,7 +170,144 @@ final class Report
             'orders_by_campaign' => $byCampaign,
             'search' => self::searches($from, $to),
             'google' => self::google(),
+            'engagement' => self::engagement($to, $days, $prev),
         ];
+    }
+
+    /**
+     * "Time on site & engagement" (Lane AT), from what the rollup banked.
+     * ONE query of its own: the time rows of an_dims, plus the channel and
+     * device rows with their timed/secs, over the TIMED part of the range.
+     * The rest comes from rows summary() already holds (the days and the
+     * previous period's sums).
+     *
+     * THE TIMED PART: days summarised before this feature carry sessions but
+     * no time. Every denominator here (visitors, sessions, a source's
+     * sessions) runs from the first timed day, so a week that is half
+     * pre-feature reads "measured for 430 of 860", not "430 of 6,511".
+     *
+     * WHAT IS MEASURED, AND WHAT IS NOT. A hit has a minute stamp and nothing
+     * else, so time is the sum of the gaps between someone's hits, each gap
+     * counted when it is 1 to Rollup::IDLE_MIN minutes. That means:
+     *   - one page and nothing after it has no second stamp: not measurable,
+     *     and counted as such (measured / of), never as zero;
+     *   - the minutes on the LAST page are never seen, so every figure here is
+     *     a floor of real time on site, the same way GA's old session time was;
+     *   - each gap is whole minutes, but the error is as often up as down, so
+     *     an average over many visitors is not biased by it.
+     * Visitors are per shop day (the salt rotates daily), so "per visitor" is
+     * per visitor per day, the same unit the Visitors tile counts.
+     *
+     * @param  \Illuminate\Support\Collection<int, object>  $days
+     * @return array<string, mixed>
+     */
+    private static function engagement(string $to, $days, ?object $prev): array
+    {
+        $avg = static fn (int $secs, int $n): ?int => $n > 0 ? (int) round($secs / $n) : null;
+
+        // Days in the range summarised before time was recorded: say so, and
+        // say from when the figures run, rather than average them in as zero.
+        $untimed = $days->filter(static fn ($d): bool => (int) $d->sessions > (int) $d->bounces && (int) $d->timed === 0);
+        $firstTimed = $days->first(static fn ($d): bool => (int) $d->timed > 0 || (int) $d->tvis > 0);
+        $since = $firstTimed !== null ? (string) $firstTimed->day : null;
+        $timedDays = $since === null ? collect() : $days->filter(static fn ($d): bool => (string) $d->day >= $since);
+
+        // Always the one query, timed days or none, so the board's cost is a
+        // fixed count; with no timed day there is nothing in it to keep.
+        $rows = DB::table('an_dims')
+            ->whereIn('dim', ['tseg', 't_vis', 't_cart', 'channel', 'device'])->whereBetween('day', [$since ?? $to, $since === null ? '0000-00-00' : $to])
+            ->groupBy('dim', 'val')->selectRaw('dim, val, SUM(visitors) visitors, SUM(sessions) sessions, SUM(timed) timed, SUM(secs) secs')
+            ->get();
+
+        $hist = ['t_vis' => [], 't_cart' => []];
+        $seg = [];
+        $per = ['channel' => [], 'device' => []];
+        foreach ($rows as $r) {
+            $dim = (string) $r->dim;
+            if ($dim === 'tseg') {
+                $seg[(string) $r->val] = $r;
+            } elseif (isset($per[$dim])) {
+                $per[$dim][] = ['val' => (string) $r->val, 'label' => self::labelFor($dim, (string) $r->val, ''),
+                    'sessions' => (int) $r->sessions, 'timed' => (int) $r->timed, 'secs' => (int) $r->secs];
+            } else {
+                $hist[$dim][(int) $r->val] = (int) $r->timed;
+            }
+        }
+        foreach ($per as &$list) {
+            usort($list, static fn (array $a, array $b): int => $b['sessions'] <=> $a['sessions'] ?: strcmp($a['val'], $b['val']));
+        }
+        unset($list);
+
+        $tvis = (int) $timedDays->sum('tvis');
+        $timed = (int) $timedDays->sum('timed');
+
+        $prevOk = $prev !== null && (int) ($prev->untimed ?? 1) === 0 && (int) ($prev->tvis ?? 0) > 0;
+
+        $labels = ['chk' => 'Reached checkout', 'cart' => 'Added to cart', 'browse' => 'Browsed only'];
+        $segments = [];
+        foreach (Rollup::SEGMENTS as $key) {
+            $r = $seg[$key] ?? null;
+            $segments[] = [
+                'key' => $key, 'label' => $labels[$key],
+                'visitors' => (int) ($r->visitors ?? 0), 'timed' => (int) ($r->timed ?? 0),
+                'avg_s' => $avg((int) ($r->secs ?? 0), (int) ($r->timed ?? 0)),
+            ];
+        }
+
+        $timeOf = static fn (array $list, int $max): array => array_values(array_map(static fn (array $r): array => [
+            'key' => $r['val'], 'label' => $r['label'], 'sessions' => $r['sessions'], 'timed' => $r['timed'],
+            'avg_s' => $avg($r['secs'], $r['timed']),
+            'engaged_pct' => $r['sessions'] > 0 ? (int) round($r['timed'] / $r['sessions'] * 100) : 0,
+        ], array_slice($list, 0, $max)));
+
+        return [
+            'visitors' => (int) $timedDays->sum('visitors'),
+            'visitors_timed' => $tvis,
+            'visitor_avg_s' => $avg((int) $timedDays->sum('vsecs'), $tvis),
+            'visitor_median_s' => self::median($hist['t_vis']),
+            'sessions' => (int) $timedDays->sum('sessions'),
+            'sessions_timed' => $timed,
+            'session_avg_s' => $avg((int) $timedDays->sum('secs'), $timed),
+            'previous' => $prevOk ? [
+                'visitor_avg_s' => $avg((int) $prev->vsecs, (int) $prev->tvis),
+                'session_avg_s' => $avg((int) $prev->secs, (int) $prev->timed),
+            ] : null,
+            'segments' => $segments,
+            'to_cart' => ['n' => array_sum($hist['t_cart']), 'median_s' => self::median($hist['t_cart'])],
+            'by_channel' => $timeOf($per['channel'], 5),
+            'by_device' => $timeOf($per['device'], 3),
+            'measured_from' => $untimed->isNotEmpty() ? $since : null,
+            'untimed_days' => $untimed->count(),
+            'idle_min' => Rollup::IDLE_MIN,
+            'over_s' => (Rollup::HIST_MAX + 1) * 60,
+        ];
+    }
+
+    /**
+     * The median of a whole-minute histogram (minute => count), in seconds,
+     * or null with nothing in it. The over bucket reads as HIST_MAX + 1
+     * minutes, which the board prints as "over 2 h".
+     *
+     * @param  array<int, int>  $hist
+     */
+    public static function median(array $hist): ?int
+    {
+        $n = array_sum($hist);
+        if ($n <= 0) {
+            return null;
+        }
+
+        ksort($hist);
+        $half = $n / 2;
+        $seen = 0;
+        foreach ($hist as $min => $c) {
+            $seen += $c;
+            if ($seen >= $half) {
+                return $min * 60;
+            }
+        }
+
+        return array_key_last($hist) * 60;
     }
 
     private static function labelFor(string $dim, string $val, string $label): string
