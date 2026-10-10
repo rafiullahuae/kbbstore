@@ -1550,7 +1550,7 @@
       '<div class="page-head" style="margin-bottom:4px"><h2>Order #'+sesc(o.order_number)+'</h2></div>'+
       '<p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:18px">'+paidLine+'</p>'+
       '<div class="odgrid">'+
-      '<div class="odmain">'+odOverviewAddressesCard(o)+odCustomerNoteCard(o)+odItemsCard(o)+odNotesCard(o)+'</div>'+
+      '<div class="odmain">'+odOverviewAddressesCard(o)+odCustomerNoteCard(o)+odItemsCard(o)+odJourneyCard(o)+odEmailsCard(o)+odNotesCard(o)+'</div>'+
       '<div class="odside">'+odAttributionCard(o)+odActionsCard(o)+odHistoryCard(o)+odInvoiceCard(o)+'</div>'+
       '</div></div>';
 
@@ -1953,7 +1953,52 @@
         '<div><div class="odpay-h">'+sesc(p.headline)+'</div>'+(p.detail?'<div class="odpay-d">'+sesc(p.detail)+'</div>':'')+'</div></div>'+
       (rows.length?'<dl class="odpay-dl">'+rows.join('')+'</dl>':'')+
       (actions?'<div class="odpay-acts">'+actions+'</div>':'')+
+      odJourney(o.payment_journey)+
     '</section>';
+  }
+
+  /*
+   * (Lane TM) PAYMENT JOURNEY, inside the payment panel: the server's verdict
+   * ("Never reached Tamara…", "came back without finishing", "Tamara reported
+   * the payment as declined") and each step it was read from. Built by
+   * App\Support\PaymentJourney; every word escaped here, nothing measured.
+   */
+  function odJourney(j){
+    if(!j || !j.steps) return '';
+    return '<details class="odpj" open><summary>Payment journey</summary>'+
+      '<p class="odpj-v odpj-'+sesc(j.verdict.tone||'n')+'">'+sesc(j.verdict.text)+'</p><ol class="odpj-l">'+
+      j.steps.map(function(s){
+        return '<li class="odpj-'+sesc(s.tone||'n')+'"><b>'+sesc(s.title)+'</b>'+(s.detail?'<span>'+sesc(s.detail)+'</span>':'')+'<small>'+sesc(s.at_label)+'</small></li>';
+      }).join('')+'</ol>'+
+      (j.cart?'<p class="odpay-soft">Basket #'+sesc(String(j.cart.id))+' is in Store → Cart Tracking (search this order number).</p>':'')+
+    '</details>';
+  }
+
+  /* (Lane TM) Customer journey -- landing source, basket, placed -- from
+     App\Support\CustomerJourney, and every email sent for the order from
+     App\Support\OrderEmails. Server-built, escaped here, nothing measured. */
+  function odJourneyCard(o){
+    var c = o.customer_journey;
+    if(!c) return '';
+    return '<div class="odcard" id="odJourney">'+odCardHead('Customer journey')+'<div class="pad"><ol class="odpj-l">'+
+      c.steps.map(function(s){
+        return '<li class="odpj-'+sesc(s.tone||'n')+'"><b>'+sesc(s.title)+'</b>'+(s.detail?'<span>'+sesc(s.detail)+'</span>':'')+'<small>'+sesc(s.at_label)+'</small></li>';
+      }).join('')+'</ol>'+
+      (c.cart_id?'<p class="odpay-soft" style="margin-top:10px">Basket #'+sesc(String(c.cart_id))+' is in Store → Cart Tracking (search this order number).</p>':'')+
+      '<p class="odpay-soft" style="margin-top:8px;color:var(--ink-soft)">'+sesc(c.not_tracked)+'</p></div></div>';
+  }
+
+  function odEmailsCard(o){
+    var m = o.emails;
+    if(!m) return '';
+    var rows = m.rows.map(function(r){
+      return '<div class="odem-r"><div><b>'+sesc(r.type)+'</b><span>'+sesc(r.to)+' · '+sesc(r.at_label)+'</span>'+
+        (r.subject?'<span>'+sesc(r.subject)+'</span>':'')+(r.error?'<span class="odem-err">'+sesc(r.error)+'</span>':'')+'</div>'+
+        '<span class="odem-s odem-'+sesc(r.status)+'">'+sesc(r.status)+'</span></div>';
+    }).join('');
+    return '<div class="odcard" id="odEmails">'+odCardHead('Emails ('+m.rows.length+')')+'<div class="pad">'+
+      (rows || '<p style="font-size:12.5px;color:var(--ink-soft)">No email has been sent for this order.</p>')+
+      '<p style="font-size:11.5px;color:var(--ink-soft);margin-top:10px">'+sesc(m.note)+'</p></div></div>';
   }
 
   function odNotesCard(o){

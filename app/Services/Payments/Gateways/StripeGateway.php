@@ -674,7 +674,11 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
     private function openIntent(Order $order, bool $saveCard): PaymentStart
     {
         if (! $this->configured()) {
-            return PaymentStart::failed('Card payment is not available right now.');
+            // (Lane TM) the owner's reason, for the order note and the journey.
+            $why = 'Stripe was not asked: the keys for the selected mode are not filled in (Store → Payments → Stripe).';
+            $this->journal('error', 'intent.failed', $why, ['order' => $this->reference($order), 'reason' => 'not_configured']);
+
+            return PaymentStart::failed('Card payment is not available right now.', $why);
         }
 
         $currency = strtolower((string) ($order->currency ?: 'AED'));
@@ -945,7 +949,17 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
                 'error_message' => $attempt['error_message'],
             ]);
 
-            return PaymentStart::failed('We could not reach our card processor. Please try another payment method.');
+            // (Lane TM) the same sentence the payment log carries, scrubbed the
+            // same way, for the order note: "The payment could not be started.
+            // Stripe refused the secret key for this Mode…".
+            // laravel.log too, at ERROR: the live .env keeps nothing below it.
+            rescue(fn () => \Illuminate\Support\Facades\Log::error('payments: checkout not started', [
+                'gateway' => $this->id(), 'order' => $this->reference($order), 'status' => $attempt['status'],
+                'reason' => $attempt['error'], 'detail' => PaymentLog::scrub($this->failureReason($attempt)),
+            ]), null, false);
+
+            return PaymentStart::failed('We could not reach our card processor. Please try another payment method.',
+                PaymentLog::scrub($this->failureReason($attempt)));
         }
 
         $order->forceFill(['transaction_id' => $intentId])->save();
@@ -1465,6 +1479,28 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         }
 
         $status = (string) ($read['body']['status'] ?? '');
+
+        /*
+         * (Lane TM) WHY THE CARD OR WALLET DID NOT GO THROUGH, for the order's
+         * Payment journey. Stripe.js shows the shopper the decline and this
+         * server never heard it; the intent it is about to close carries it.
+         * Codes only (card_declined, insufficient_funds, authentication_
+         * required…) — never the message, never the payment method.
+         */
+        $lpe = $read['body']['last_payment_error'] ?? null;
+
+        if (is_array($lpe)) {
+            $code = fn ($v) => is_string($v) ? substr(preg_replace('/[^A-Za-z0-9_]/', '', $v) ?? '', 0, 60) : '';
+            $this->journal('info', 'intent.last_error', 'Stripe\'s last answer on this payment: '
+                . (implode(' / ', array_filter([$code($lpe['code'] ?? null), $code($lpe['decline_code'] ?? null)])) ?: 'declined') . '.', [
+                'order' => $this->reference($order),
+                'payment_intent' => $intentId,
+                'error_code' => $code($lpe['code'] ?? null),
+                'decline_code' => $code($lpe['decline_code'] ?? null),
+                'error_type' => $code($lpe['type'] ?? null),
+                'status' => $status,
+            ]);
+        }
 
         if (in_array($status, ['succeeded', 'processing', 'requires_capture'], true)) {
             return self::INTENT_OPEN;

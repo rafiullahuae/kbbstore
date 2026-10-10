@@ -646,6 +646,19 @@ details summary::-webkit-details-marker { display: none; }
 .ct-rm { font-size: 12.5px; margin: 8px 0 0; }
 .ct-pc { font-size: 14px; font-weight: 500; }
 
+/* (Lane TM) Payment journey card and the phone line in the Customer card. */
+.pj-v { margin: 4px 0 10px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--surface2); font-size: 14px; line-height: 1.4; }
+.pj-v.w { box-shadow: inset 3px 0 0 var(--warn); }
+.pj-v.g { box-shadow: inset 3px 0 0 var(--good); }
+.cu-ph a { font-weight: 600; color: var(--acc); }
+.cj-n { font-size: 12px; margin: 8px 0 0; }
+.em-r { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line, rgba(0,0,0,.08)); min-width: 0; }
+.em-r > div { min-width: 0; overflow-wrap: anywhere; font-size: 13.5px; }
+.em-r small { display: block; color: var(--ink2); font-size: 12px; }
+.em-s { flex: none; font: 600 11.5px/1 var(--font); padding: 5px 8px; border-radius: 999px; background: var(--surface2); }
+.em-s.sent { box-shadow: inset 0 0 0 1.5px var(--good); }
+.em-s.failed { box-shadow: inset 0 0 0 1.5px var(--warn); }
+
 /* ---------------------------------------------- Customise app (Lane OA4)
  * Users & Roles → Owner app → Customise app. Every rule below hangs off a
  * class the app puts on <html> (core.js applyUi) — or, for the font, the

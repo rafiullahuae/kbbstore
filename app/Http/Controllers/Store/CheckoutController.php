@@ -1078,7 +1078,8 @@ class CheckoutController extends Controller
             app(\App\Services\Checkout\BasketRelease::class)->failAndRestore(
                 $order,
                 $cart,
-                'The payment could not be started.',
+                // (Lane TM) the gateway's sanitised reason, when it gave one.
+                trim('The payment could not be started. ' . ($start->detail ?? '')),
             );
             $this->carts->forget();
 
@@ -1795,6 +1796,12 @@ class CheckoutController extends Controller
 
         if ($order !== null && ! $this->mayView($request, $order)) {
             $order = null;
+        }
+
+        // (Lane TM) the Payment journey's "came back" step: only the order this
+        // session placed, and only for a hosted-page gateway (PaymentJourney).
+        if ($order !== null && hash_equals(trim((string) $request->session()->get('kbb_last_order', '')), $number)) {
+            \App\Support\PaymentJourney::returned($request, $order, 'success');
         }
 
         /*

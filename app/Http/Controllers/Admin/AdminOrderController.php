@@ -390,6 +390,14 @@ class AdminOrderController extends Controller
              */
             'payment' => \App\Support\OrderPaymentPanel::for($order, $refundedFils, $settlement),
 
+            // (Lane TM) Placed -> session opened or refused (and why) -> came
+            // back -> provider's notice. See App\Support\PaymentJourney.
+            'payment_journey' => \App\Support\PaymentJourney::for($order),
+            // (Lane TM) what the shopper did before paying, and every email sent
+            // for the order. One query each; see the two classes.
+            'customer_journey' => \App\Support\CustomerJourney::for($order),
+            'emails' => \App\Support\OrderEmails::for($order),
+
             /*
              * What the signed-in admin may do on this screen, so the console
              * draws only the controls the server will accept. The SERVER is
