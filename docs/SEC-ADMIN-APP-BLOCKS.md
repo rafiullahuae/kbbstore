@@ -601,10 +601,14 @@ both ways: they are the server half.
     }
 ```
 
+▲ 2.60.471 (Lane QK13): the first line inside the catch drops a late answer
+that a newer page or page-size request has already replaced.
+
 **Replacement:**
 
 ```
     }catch(e){
+      if(seq !== CP.seq) return;
       /* SAY WHICH FAILURE IT WAS. (Lane SEC) This screen answered every
          refusal with "the routes may not be wired into routes/web.php yet",
          which for an EXPIRED SESSION sends the owner to Store -> Cache to

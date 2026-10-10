@@ -621,6 +621,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // cannot collide however these requires are ordered.
         require __DIR__.'/orders-admin.php';
         require __DIR__.'/order-detail-admin.php';
+        require __DIR__.'/order-pay-link-admin.php';   // Store -> Orders -> (order) -> Send order link (Lane OL)
 
         // Store → New Order: creating an order on a customer's behalf for the
         // WhatsApp and Instagram orders that never touch the website. Paths are
