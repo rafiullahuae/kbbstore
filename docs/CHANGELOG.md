@@ -3,6 +3,14 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.465
+**iPhone pictures: product cards and the main product photo no longer download the full upload on 3x phones.** Apply after .464.
+No migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "on product page, the related products etc are loading thumbnails of 700x700 with this url .../wp-content/uploads/2026/03/Dr.-Althea-345-Relief-Cream-Mist-Spray-Set-kbeautybliss.webp ... get rid of that loading bar" | On a 3x phone (iPhone) cards take the 400w copy instead of the upload (that card: 46 KB -> 6 KB) and the main product photo the 800w copy (Gua Sha cream: 196 KB -> 9.5 KB, same look on a phone). Live product page at 390 / 3x: 557 KB -> 207 KB of pictures, full uploads 2 -> 0, nothing downloaded twice. 2x phones, Lighthouse and laptops pick exactly what they did |
+
 ## 2.60.464
 **Speed: Meta, Google and TikTok wait for the shopper's first tap or scroll (or 5 s), so the loading bar ends with the shop's own content.** Apply after .463.
 No migrations. Hard refresh the shop.
