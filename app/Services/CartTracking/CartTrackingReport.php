@@ -354,6 +354,9 @@ final class CartTrackingReport
                 ->selectRaw('c.ct_ua AS ua, COUNT(*) AS n')
                 ->groupBy('c.ct_ua')
                 ->orderByDesc('n')
+                // Grouped by the agent, so it is unique per row: the tie-break
+                // that keeps the capped slice the same on every read.
+                ->orderBy('c.ct_ua')
                 ->limit(5000)
                 ->get();
 

@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.477
+**Analytics: a "Time on site & engagement" block in the space under Orders & revenue by source.** Apply after .476.
+Runs its migration (adds the time figures to the analytics day summaries, rebuilds today and yesterday, clears caches). Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "i need a new block in my analytics page, for average time spend per customer and give some more features if u can and it should be valueable and place here as marked" | Overview → Analytics, left column under Orders & revenue by source: **time per visitor** (average and median), **time per session**, each with +/- against the previous period, and how many visitors could be measured. "More" opens: **time by source** (which ads bring visitors who stay, and what share stay for 2+ pages), **time for visitors who reached checkout / added to cart / only browsed**, **median time before the first add to cart**, and **mobile / desktop / tablet** |
+
+How it is measured, stated on the card: from the gaps between a visitor's page views (1–30 minutes; longer counts as a break). A one-page visit has no second time, so it is "not measured", never counted as zero; time on the last page is never seen, so every figure is a floor. Time is recorded from the day this package is applied (today and yesterday are rebuilt); the comparison appears once the previous period has been fully timed. Not possible with the data the shop keeps: time for customers who ordered (orders are not linked to a visit) and new vs returning visitors. Nothing new is tracked and nothing is added to the shop.
+
+Also: Cart Tracking's Top browsers / Top devices read has a tie-break, so its capped list is the same on every read (found by the full suite); a wiring document's copy of the admin titles line follows 2.60.476's move of Orders (test-only).
+
 ## 2.60.476
 **Admin: Orders fourth at the top of the menu; Cart Tracking shows each visitor's browser and device.** Apply after .475.
 Runs its migration (clears caches). Hard refresh the admin.
