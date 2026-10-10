@@ -118,10 +118,13 @@ final class MktCampaignsController extends Controller
             'per_minute' => $this->limits->perMinute(),
             'per_day' => $this->limits->perDay(),
             'default_cap' => $this->limits->defaultCap(),
-            'max_cap' => $gmail ? SendLimits::CAP_GOOGLE : SendLimits::CAP_MAX,
+            'max_cap' => $gmail ? SendLimits::CAP_GOOGLE_MAX : SendLimits::CAP_MAX,
             'google' => $gmail,
             'used_today' => $this->limits->usedToday(),
             'step_max' => SendLimits::STEP_MAX,
+            // Lane EB: seconds between messages, and what that makes a minute.
+            'gap' => $this->limits->gap(),
+            'effective_per_minute' => $this->limits->effectivePerMinute(),
         ];
     }
 
@@ -410,7 +413,8 @@ final class MktCampaignsController extends Controller
         $places = array_column(array_filter((array) ($brand['addresses'] ?? []), fn ($a) => ! empty(array_filter((array) ($a['lines'] ?? [])))), 'place');
 
         $emailable = $count['emailable'] ?? 0;
-        $perMinute = $this->limits->perMinute();
+        // The pace (Lane EB) can be slower than the per-minute cap.
+        $perMinute = $this->limits->effectivePerMinute();
 
         return response()->json([
             'campaign' => $this->detail($id),

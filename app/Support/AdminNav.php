@@ -238,6 +238,8 @@ final class AdminNav
         ]],
         ['sec' => 'Growth & Marketing', 'rows' => [
             ['id' => 'mkt-email', 'label' => 'Marketing Emails', 'read' => 'admin-api/email-marketing/overview', 'tag' => 'new', 'icon' => '<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/><path d="M17 3.5l1 1.8 2 .4-1.4 1.4.3 2-1.9-.9-1.9.9.3-2L14 5.7l2-.4z"/>'],
+            // Growth & Marketing -> Bounces & unsubscribes (Lane EB): the "Not sending to" list, the bounce mailbox, the pace.
+            ['id' => 'mkt-health', 'label' => 'Bounces & unsubscribes', 'read' => 'admin-api/email-health/overview', 'late' => true, 'tag' => 'new', 'icon' => '<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/><path d="M15 15l6 6"/><path d="M21 15l-6 6"/>'],
             ['id' => 'newsletter', 'label' => 'Newsletter', 'read' => 'admin-api/newsletter', 'icon' => '<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],
             ['id' => 'labels', 'label' => 'Product Labels', 'read' => 'admin-api/product-labels', 'icon' => '<path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/>'],
             ['id' => 'meta', 'label' => 'Meta & Facebook', 'cap' => 'marketing.view', 'tag' => 'lock', 'icon' => '<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>'],

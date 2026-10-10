@@ -134,6 +134,19 @@ Schedule::command('kbb:campaigns-step')
     ->withoutOverlapping(5);
 
 /*
+| ── BOUNCES (Lane EB) ───────────────────────────────────────────────────────
+|
+| Marketing Emails → Bounces & unsubscribes. Reads ONLY the Gmail label the
+| owner's filter fills ("KBB Bounces"), files each report, and moves it to
+| "KBB Bounces/Processed". Every five minutes; while "Read bounces" is off it
+| returns before opening any connection. withoutOverlapping(10): one slow IMAP
+| session must not be joined by a second reading the same messages.
+*/
+Schedule::command('kbb:bounces-read')
+    ->everyFiveMinutes()
+    ->withoutOverlapping(10);
+
+/*
 | ── PUSH NOTIFICATIONS (Lane PN) ────────────────────────────────────────────
 |
 | Growth & Marketing → Push Notifications. Starts due campaigns (once: a

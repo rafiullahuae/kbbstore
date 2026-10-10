@@ -1,0 +1,32 @@
+From: Yahoo! Mail AntiSpam Feedback <feedback@arf.mail.yahoo.com>
+To: info@kbeautybliss.com
+Subject: FW: New arrivals this week
+Message-ID: <arf-1@yahoo.com>
+MIME-Version: 1.0
+Content-Type: multipart/report; report-type=feedback-report; boundary="arf_boundary"
+
+--arf_boundary
+Content-Type: text/plain
+
+This is an email abuse report for an email message received from IP 209.85.220.41.
+
+--arf_boundary
+Content-Type: message/feedback-report
+
+Feedback-Type: abuse
+User-Agent: Yahoo!-Mail-Feedback/2.0
+Version: 1
+Original-Mail-From: <info@kbeautybliss.com>
+Original-Rcpt-To: <{{EMAIL}}>
+Arrival-Date: Fri, 09 Oct 2026 10:16:00 +0000
+
+--arf_boundary
+Content-Type: message/rfc822
+
+From: K Beauty Bliss <info@kbeautybliss.com>
+To: {{EMAIL}}
+Subject: New arrivals this week
+Message-ID: <{{REF}}@kbeautybliss.com>
+
+Hello
+--arf_boundary--

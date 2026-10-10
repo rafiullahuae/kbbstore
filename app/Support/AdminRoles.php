@@ -106,7 +106,7 @@ final class AdminRoles
         'marketing-manager' => [
             'admin.access', 'dashboard.view', 'presence.view', 'analytics.view', 'search_terms.view', 'catalog.view',
             'marketing.view', 'marketing.manage', 'marketing.export',
-            'marketing.email.view', 'marketing.email.manage', 'emails.view', 'emails.test',
+            'marketing.email.view', 'marketing.email.manage', 'marketing.bounces.view', 'emails.view', 'emails.test',
             'banners.view', 'banners.manage', 'gridsections.view', 'gridsections.manage',
             'spotted.manage', 'ugc.view', 'ugc.manage', 'wabutton.manage',
         ],
@@ -217,6 +217,9 @@ final class AdminRoles
             'marketing.email.view' => 'See marketing emails and reports',
             'marketing.email.manage' => 'Build marketing emails and send tests',
             'marketing.email.send' => 'Send and schedule campaigns',
+            'marketing.bounces.view' => 'See bounced and unsubscribed addresses',
+            'marketing.bounces.restore' => 'Restore a bounced address',
+            'marketing.bounces.mailbox' => 'Set up the bounce mailbox',
             'push.view' => 'See push notification campaigns, reports and subscriber analytics',
             'push.send' => 'Send, schedule and test push notifications, and change their automations and rules',
             'marketing.feed' => 'Google Shopping feed: see its address and switch it on or off',

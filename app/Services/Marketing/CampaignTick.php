@@ -34,7 +34,18 @@ final class CampaignTick
     /** No tick for this long and the screen says the cron line is missing. */
     public const STALE_AFTER = 600;
 
-    public function __construct(private CampaignSender $sender) {}
+    /** @var \Closure(int):void */
+    private \Closure $sleep;
+
+    /**
+     * $sleep is for the tests (they record the pauses instead of waiting).
+     */
+    public function __construct(private CampaignSender $sender, ?\Closure $sleep = null)
+    {
+        $this->sleep = $sleep ?? static function (int $seconds): void {
+            sleep($seconds);
+        };
+    }
 
     public static function markerPath(): string
     {
@@ -92,7 +103,29 @@ final class CampaignTick
                     || ($after['pending'] ?? 0) !== ($before['pending'] ?? 0)
                     || ($after['building'] ?? false);
 
-                if (($after['done'] ?? true) || ! $moved || ($after['status'] ?? '') !== 'sending') {
+                if (($after['done'] ?? true) || ($after['status'] ?? '') !== 'sending') {
+                    break;
+                }
+
+                /*
+                 * PACED (Lane EB): on Google Workspace one message goes every
+                 * 8–12 s, so a step sends one and the next must WAIT. This is
+                 * the CLI, never a web request, so it sleeps out the gap while
+                 * the run's budget allows and carries on — about five messages
+                 * a run, six a minute. A wait longer than the budget left (a
+                 * back-off from Google, the per-minute cap) ends the run; the
+                 * next minute's run picks it up.
+                 */
+                $wait = (int) ($after['room']['wait'] ?? 0);
+                $left = self::BUDGET - (hrtime(true) - $began) / 1e9;
+
+                if (! $moved && $wait > 0 && $wait < $left) {
+                    ($this->sleep)($wait);
+
+                    continue;
+                }
+
+                if (! $moved) {
                     break;
                 }
             }
