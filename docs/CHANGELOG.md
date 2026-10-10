@@ -3,6 +3,14 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.464
+**Speed: Meta, Google and TikTok wait for the shopper's first tap or scroll (or 5 s), so the loading bar ends with the shop's own content.** Apply after .463.
+No migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "I have installed the .463 patch, but the loading bar is same ... goes after 5-7 seconds on every page" / "check the html file i have sent from google, and fix all major causes" | His PageSpeed report: Facebook 234 KB + Google 196 KB = 4 of the 5 long tasks and most of the script time. In .463 they started the moment the page loaded, so the bar ran on while they arrived. Now nothing third-party is fetched until the first tap, key, scroll, wheel or mouse move after load, or 5 s with none. Measured: no pixel file in the 1.5 s after load; after a scroll both arrive at once; idle, at 5 s; PageView / ViewContent delivered every time, no console errors. Same switch: Growth & Marketing -> Marketing Pixels -> Custom code -> Page speed |
+
 ## 2.60.463
 **Speed: Meta, Google and TikTok load after the page, so the loading bar finishes and photos come first.** Apply after .462.
 No migrations. Hard refresh the shop.
