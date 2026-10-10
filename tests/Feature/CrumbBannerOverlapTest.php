@@ -135,7 +135,9 @@ it('keeps the category banner in its own box under the breadcrumb', function () 
         @rmdir(\dirname(public_path($rel)));
     }
 
-    expect($html)->toMatch('#<div class="crumb">.*?</div>\s*</div>\s*<div class="wrap kbb-cbw">\s*<div class="brw-phw"#s')
+    // A <nav> since Lane BC (the category trail Home / Shop / ...); still its
+    // own .wrap, closed before the banner's.
+    expect($html)->toMatch('#<nav class="crumb"[^>]*>.*?</nav>\s*</div>\s*<div class="wrap kbb-cbw">\s*<div class="brw-phw"#s')
         ->and(\App\Support\BrandPanel::CATEGORY_CSS)->toStartWith('.kbb-cbw{padding-top:22px}');
 });
 
