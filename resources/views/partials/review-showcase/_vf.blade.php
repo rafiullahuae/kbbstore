@@ -1,0 +1,1 @@
+<span class="rs-vf"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="currentColor"/><path d="M4.6 8.3l2.2 2.1 4.6-4.7" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>{{ \App\Support\ReviewShowcase::w('verified') }}</span>

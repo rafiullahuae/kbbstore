@@ -1,0 +1,1505 @@
+{
+  "results": {
+    "A-en-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 538,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 14,
+        "skipped": 5,
+        "fails": []
+      },
+      "imgs": 7,
+      "imgsLazy": 7,
+      "imgsWithSrcset": 7,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 11,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "scrollLeft": 1223,
+        "currentDot": 3,
+        "pageScrollX": 0
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 1280,
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-cosrx-snail.webp",
+        "/img-cache/200/uploads/rd/p-roundlab-toner.webp",
+        "/img-cache/200/uploads/rd/p-torriden-serum.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "B-en-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 620,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 11,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 5,
+      "imgsLazy": 5,
+      "imgsWithSrcset": 5,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 9,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "activeSlide": 1,
+        "stopped": true
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 1280,
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-cosrx-snail.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "C-en-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 306,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 2,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 26,
+      "imgsLazy": 26,
+      "imgsWithSrcset": 26,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 1,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "transformA": "matrix(1, 0, 0, 1, -162.214, 0)",
+        "transformB": "matrix(1, 0, 0, 1, -264.883, 0)"
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 1280,
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-medicube-mask.webp",
+        "/img-cache/200/uploads/rd/p-boj-serum.webp",
+        "/img-cache/200/uploads/rd/p-cosrx-snail.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "D-en-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 634,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 18,
+        "skipped": 5,
+        "fails": []
+      },
+      "imgs": 20,
+      "imgsLazy": 20,
+      "imgsWithSrcset": 20,
+      "imgCurrentSrc": [
+        "/img-cache/400/uploads/rd/ugc-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-anua-toner.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 12,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "scrollLeft": 1125,
+        "currentDot": 4,
+        "pageScrollX": 0
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 1280,
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/400/uploads/rd/ugc-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/400/uploads/rd/ugc-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/400/uploads/rd/ugc-skin1004-ampoule.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/img-cache/400/uploads/rd/ugc-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/400/uploads/rd/ugc-cosrx-snail.webp",
+        "/img-cache/200/uploads/rd/p-cosrx-snail.webp",
+        "/img-cache/400/uploads/rd/ugc-torriden-serum.webp",
+        "/img-cache/200/uploads/rd/p-torriden-serum.webp",
+        "/img-cache/400/uploads/rd/ugc-medicube-mask.webp",
+        "/img-cache/200/uploads/rd/p-medicube-mask.webp",
+        "/img-cache/400/uploads/rd/ugc-boj-serum.webp",
+        "/img-cache/200/uploads/rd/p-boj-serum.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "E-en-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 504,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 5,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 2,
+      "imgsLazy": 2,
+      "imgsWithSrcset": 2,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "F-en-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 1629,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 8,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 13,
+      "imgsLazy": 13,
+      "imgsWithSrcset": 13,
+      "imgCurrentSrc": [
+        "/img-cache/400/uploads/rd/ugc-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-anua-toner.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/400/uploads/rd/ugc-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/400/uploads/rd/ugc-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/400/uploads/rd/ugc-skin1004-ampoule.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/img-cache/400/uploads/rd/ugc-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/400/uploads/rd/ugc-cosrx-snail.webp",
+        "/img-cache/200/uploads/rd/p-cosrx-snail.webp",
+        "/img-cache/200/uploads/rd/p-roundlab-toner.webp",
+        "/img-cache/400/uploads/rd/ugc-torriden-serum.webp",
+        "/img-cache/200/uploads/rd/p-torriden-serum.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "G-en-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 642,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 2,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 1,
+      "imgsLazy": 1,
+      "imgsWithSrcset": 1,
+      "imgCurrentSrc": [
+        "/uploads/rd/p-anua-toner.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/uploads/rd/p-anua-toner.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "H-en-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 165,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 2,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 1,
+      "imgsLazy": 1,
+      "imgsWithSrcset": 1,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "A-en-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 535,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 12,
+        "skipped": 5,
+        "fails": []
+      },
+      "imgs": 7,
+      "imgsLazy": 7,
+      "imgsWithSrcset": 7,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 9,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "scrollLeft": 649,
+        "currentDot": 2,
+        "pageScrollX": 0
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 390,
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-cosrx-snail.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "B-en-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 532,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 8,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 5,
+      "imgsLazy": 5,
+      "imgsWithSrcset": 5,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 6,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "activeSlide": 1,
+        "stopped": true
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 390,
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-cosrx-snail.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "C-en-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 303,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 2,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 26,
+      "imgsLazy": 26,
+      "imgsWithSrcset": 26,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 1,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "transformA": "matrix(1, 0, 0, 1, -155.547, 0)",
+        "transformB": "matrix(1, 0, 0, 1, -254.827, 0)"
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 390,
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-medicube-mask.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "D-en-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 615,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 13,
+        "skipped": 8,
+        "fails": []
+      },
+      "imgs": 20,
+      "imgsLazy": 20,
+      "imgsWithSrcset": 20,
+      "imgCurrentSrc": [
+        "/img-cache/800/uploads/rd/ugc-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-anua-toner.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 10,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "scrollLeft": 526,
+        "currentDot": 2,
+        "pageScrollX": 0
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 390,
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/800/uploads/rd/ugc-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/800/uploads/rd/ugc-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/800/uploads/rd/ugc-skin1004-ampoule.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/img-cache/800/uploads/rd/ugc-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/800/uploads/rd/ugc-cosrx-snail.webp",
+        "/img-cache/200/uploads/rd/p-cosrx-snail.webp",
+        "/img-cache/800/uploads/rd/ugc-torriden-serum.webp",
+        "/img-cache/200/uploads/rd/p-torriden-serum.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "E-en-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 999,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 5,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 2,
+      "imgsLazy": 2,
+      "imgsWithSrcset": 2,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "F-en-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 2093,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 4,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 13,
+      "imgsLazy": 13,
+      "imgsWithSrcset": 13,
+      "imgCurrentSrc": [
+        "/img-cache/800/uploads/rd/ugc-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-anua-toner.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/800/uploads/rd/ugc-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/800/uploads/rd/ugc-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/800/uploads/rd/ugc-skin1004-ampoule.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "G-en-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 638,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 2,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 1,
+      "imgsLazy": 1,
+      "imgsWithSrcset": 1,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "H-en-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 191,
+      "dir": "ltr",
+      "font": "Outfit",
+      "links": {
+        "checked": 2,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 1,
+      "imgsLazy": 1,
+      "imgsWithSrcset": 1,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2"
+      ]
+    },
+    "A-ar-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 538,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 14,
+        "skipped": 5,
+        "fails": []
+      },
+      "imgs": 7,
+      "imgsLazy": 7,
+      "imgsWithSrcset": 7,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 11,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "scrollLeft": -1223,
+        "currentDot": 3,
+        "pageScrollX": 0
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 1280,
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "B-ar-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 620,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 11,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 5,
+      "imgsLazy": 5,
+      "imgsWithSrcset": 5,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 9,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "activeSlide": 1,
+        "stopped": true
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 1280,
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "C-ar-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 306,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 2,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 26,
+      "imgsLazy": 26,
+      "imgsWithSrcset": 26,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 1,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "transformA": "matrix(1, 0, 0, 1, 145.956, 0)",
+        "transformB": "matrix(1, 0, 0, 1, 238.726, 0)"
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 1280,
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/img-cache/200/uploads/rd/p-cosrx-snail.webp",
+        "/img-cache/200/uploads/rd/p-roundlab-toner.webp",
+        "/img-cache/200/uploads/rd/p-torriden-serum.webp",
+        "/img-cache/200/uploads/rd/p-boj-serum.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "D-ar-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 634,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 18,
+        "skipped": 5,
+        "fails": []
+      },
+      "imgs": 20,
+      "imgsLazy": 20,
+      "imgsWithSrcset": 20,
+      "imgCurrentSrc": [
+        "/img-cache/400/uploads/rd/ugc-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 12,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "scrollLeft": -1125,
+        "currentDot": 4,
+        "pageScrollX": 0
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 1280,
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/400/uploads/rd/ugc-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/400/uploads/rd/ugc-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/400/uploads/rd/ugc-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/400/uploads/rd/ugc-skin1004-ampoule.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/img-cache/400/uploads/rd/ugc-cosrx-snail.webp",
+        "/img-cache/200/uploads/rd/p-cosrx-snail.webp",
+        "/img-cache/400/uploads/rd/ugc-torriden-serum.webp",
+        "/img-cache/200/uploads/rd/p-torriden-serum.webp",
+        "/img-cache/400/uploads/rd/ugc-medicube-mask.webp",
+        "/img-cache/200/uploads/rd/p-medicube-mask.webp",
+        "/img-cache/400/uploads/rd/ugc-boj-serum.webp",
+        "/img-cache/200/uploads/rd/p-boj-serum.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "E-ar-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 504,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 5,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 2,
+      "imgsLazy": 2,
+      "imgsWithSrcset": 2,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "F-ar-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 1275,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 7,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 10,
+      "imgsLazy": 10,
+      "imgsWithSrcset": 10,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/400/uploads/rd/ugc-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/400/uploads/rd/ugc-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/400/uploads/rd/ugc-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/img-cache/400/uploads/rd/ugc-anua-toner.webp",
+        "/build/assets/cairo-latin-PfPtmrPZ.woff2",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "G-ar-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 642,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 2,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 1,
+      "imgsLazy": 1,
+      "imgsWithSrcset": 1,
+      "imgCurrentSrc": [
+        "/uploads/rd/p-anua-toner.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/uploads/rd/p-anua-toner.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "H-ar-1280": {
+      "vw": 1280,
+      "docScrollWidth": 1280,
+      "noHorizontalScroll": true,
+      "sectionH": 165,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 2,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 1,
+      "imgsLazy": 1,
+      "imgsWithSrcset": 1,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "A-ar-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 535,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 12,
+        "skipped": 5,
+        "fails": []
+      },
+      "imgs": 7,
+      "imgsLazy": 7,
+      "imgsWithSrcset": 7,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 9,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "scrollLeft": -649,
+        "currentDot": 2,
+        "pageScrollX": 0
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 390,
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "B-ar-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 505,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 8,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 5,
+      "imgsLazy": 5,
+      "imgsWithSrcset": 5,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 6,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "activeSlide": 1,
+        "stopped": true
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 390,
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "C-ar-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 303,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 2,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 26,
+      "imgsLazy": 26,
+      "imgsWithSrcset": 26,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 1,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "transformA": "matrix(1, 0, 0, 1, 147.193, 0)",
+        "transformB": "matrix(1, 0, 0, 1, 239.963, 0)"
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 390,
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-boj-serum.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "D-ar-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 615,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 13,
+        "skipped": 8,
+        "fails": []
+      },
+      "imgs": 20,
+      "imgsLazy": 20,
+      "imgsWithSrcset": 20,
+      "imgCurrentSrc": [
+        "/img-cache/800/uploads/rd/ugc-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "keyboard": {
+        "buttons": 10,
+        "allRealButtons": true
+      },
+      "move": {
+        "moved": true,
+        "scrollLeft": -526,
+        "currentDot": 2,
+        "pageScrollX": 0
+      },
+      "wrapScrollLeftAfter": [
+        0
+      ],
+      "docScrollWidthAfter": 390,
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/800/uploads/rd/ugc-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/800/uploads/rd/ugc-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/img-cache/800/uploads/rd/ugc-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/800/uploads/rd/ugc-skin1004-ampoule.webp",
+        "/img-cache/200/uploads/rd/p-skin1004-ampoule.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "E-ar-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 934,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 5,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 2,
+      "imgsLazy": 2,
+      "imgsWithSrcset": 2,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "F-ar-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 1740,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 4,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 10,
+      "imgsLazy": 10,
+      "imgsWithSrcset": 10,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/800/uploads/rd/ugc-medicube-pad.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/img-cache/800/uploads/rd/ugc-medicube-pad.webp",
+        "/img-cache/200/uploads/rd/p-medicube-pad.webp",
+        "/img-cache/800/uploads/rd/ugc-boj-sun.webp",
+        "/img-cache/200/uploads/rd/p-boj-sun.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "G-ar-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 580,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 2,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 1,
+      "imgsLazy": 1,
+      "imgsWithSrcset": 1,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    },
+    "H-ar-390": {
+      "vw": 390,
+      "docScrollWidth": 390,
+      "noHorizontalScroll": true,
+      "sectionH": 191,
+      "dir": "rtl",
+      "font": "Outfit",
+      "links": {
+        "checked": 2,
+        "skipped": 0,
+        "fails": []
+      },
+      "imgs": 1,
+      "imgsLazy": 1,
+      "imgsWithSrcset": 1,
+      "imgCurrentSrc": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp"
+      ],
+      "wrapScrollLeft": [
+        0
+      ],
+      "seeAllNavigates": "/ar/reviews/",
+      "consoleErrors": {
+        "before": [],
+        "after": []
+      },
+      "requestsAfterInject": [
+        "/img-cache/200/uploads/rd/p-anua-toner.webp",
+        "/api/online",
+        "/api/online",
+        "/site-app.js?v=77a49c5e03",
+        "/build/assets/outfit-latin-Bc-8i84L.woff2",
+        "/build/assets/cairo-arabic-CJWMIGCx.woff2"
+      ]
+    }
+  },
+  "behaviour": {
+    "spotlightAutoAdvances": 1,
+    "spotlightPausedOnHover": true,
+    "spotlightPauseButtonHolds": true,
+    "pauseButtonPressed": "true",
+    "spotlightEnterOnNext": 2,
+    "spotlightStoppedAfterPress": true,
+    "spotlightReducedMotionStill": true,
+    "marqueeReducedMotion": "none",
+    "marqueePausedOnHover": true,
+    "Akeyboard": {
+      "enterOnNextMoved": true,
+      "arrowKeyOnTrackMoved": true,
+      "s0": 2,
+      "s1": 1223,
+      "s2": 1630
+    },
+    "Dkeyboard": {
+      "enterOnNextMoved": true,
+      "arrowKeyOnTrackMoved": true,
+      "s0": 0,
+      "s1": 1125,
+      "s2": 1407
+    }
+  }
+}

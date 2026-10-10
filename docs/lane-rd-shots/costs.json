@@ -1,0 +1,114 @@
+{
+    "designs": {
+        "a": {
+            "name": "Card carousel",
+            "carousel": true,
+            "css_bytes": 1475,
+            "css_gzip": 644,
+            "html_bytes": 13309,
+            "html_gzip": 2554,
+            "render_ms": 5.3,
+            "render_queries": 0
+        },
+        "b": {
+            "name": "Spotlight quote",
+            "carousel": true,
+            "css_bytes": 2505,
+            "css_gzip": 989,
+            "html_bytes": 10208,
+            "html_gzip": 2122,
+            "render_ms": 2,
+            "render_queries": 0
+        },
+        "c": {
+            "name": "Marquee ticker",
+            "carousel": true,
+            "css_bytes": 2160,
+            "css_gzip": 850,
+            "html_bytes": 25985,
+            "html_gzip": 2073,
+            "render_ms": 2.1,
+            "render_queries": 0
+        },
+        "d": {
+            "name": "Photo reviews carousel",
+            "carousel": true,
+            "css_bytes": 1493,
+            "css_gzip": 695,
+            "html_bytes": 17366,
+            "html_gzip": 2059,
+            "render_ms": 2,
+            "render_queries": 0
+        },
+        "e": {
+            "name": "Score + featured",
+            "carousel": false,
+            "css_bytes": 2381,
+            "css_gzip": 833,
+            "html_bytes": 5169,
+            "html_gzip": 1482,
+            "render_ms": 1.4,
+            "render_queries": 0
+        },
+        "f": {
+            "name": "Masonry wall",
+            "carousel": false,
+            "css_bytes": 1562,
+            "css_gzip": 672,
+            "html_bytes": 11983,
+            "html_gzip": 2313,
+            "render_ms": 1.5,
+            "render_queries": 0
+        },
+        "g": {
+            "name": "Split hero quote",
+            "carousel": false,
+            "css_bytes": 1962,
+            "css_gzip": 778,
+            "html_bytes": 2187,
+            "html_gzip": 923,
+            "render_ms": 0.9,
+            "render_queries": 0
+        },
+        "h": {
+            "name": "Compact trust strip",
+            "carousel": false,
+            "css_bytes": 1583,
+            "css_gzip": 599,
+            "html_bytes": 1749,
+            "html_gzip": 754,
+            "render_ms": 0.9,
+            "render_queries": 0
+        }
+    },
+    "queries": {
+        "en": {
+            "data_queries": 4,
+            "data_ms": 3.7,
+            "approved_real": 40,
+            "cards": 16,
+            "photo_cards": 10
+        },
+        "ar": {
+            "data_queries": 4,
+            "data_ms": 5.2,
+            "approved_real": 40,
+            "cards": 16,
+            "photo_cards": 10
+        },
+        "flat": {
+            "before_total": 40,
+            "before_queries": 4,
+            "after_total": 80,
+            "after_queries": 4
+        }
+    },
+    "_base": {
+        "bytes": 3599,
+        "gzip": 1331
+    },
+    "_js": {
+        "bytes": 2828,
+        "gzip": 1094
+    }
+}
