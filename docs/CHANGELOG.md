@@ -3,6 +3,13 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.468
+**Hotfix: Tamara checkouts open again.** Apply after .467. No migrations.
+
+| Your request | Now |
+|---|---|
+| Owner's live test order (10 Oct, 12:26): "Tamara refused the checkout: HTTP 400 — Invalid date format; risk_assessment_wrong_data_format" (the reason 2.60.467 made visible) | The two dates in Tamara's risk details (first order, account created) were sent as ISO-8601 instants; they now go as DD-MM-YYYY. And because the risk details are optional, a refusal that names them sends the same checkout once more without them, so it can never again block a sale; the order note says so. Other refusals are not retried |
+
 ## 2.60.467
 **Orders: payment journey, customer journey and emails on every order (admin and Owner app); Tamara, Tabby and Stripe refusals now say why.** Apply after .466.
 No migrations. Hard refresh the admin and the Owner app.
