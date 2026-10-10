@@ -452,7 +452,8 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
     public function start(Order $order): PaymentStart
     {
         if (! $this->configured()) {
-            return PaymentStart::failed('Tabby is not available right now.');
+            return $this->notStarted($order, 'Tabby is not available right now.',
+                'Tabby was not asked: its keys or merchant code are not filled in (Store → Payments → Tabby).', 'not_configured');
         }
 
         $currency = strtoupper((string) ($order->currency ?: \App\Support\Money::DEFAULT_CURRENCY));
@@ -467,10 +468,13 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
          * unactionable.
          */
         if (! $this->supportsCurrency($currency)) {
-            return PaymentStart::failed('Tabby cannot be used for this currency. Please choose another payment method.');
+            return $this->notStarted($order, 'Tabby cannot be used for this currency. Please choose another payment method.',
+                'Tabby was not asked: it does not settle in ' . preg_replace('/[^A-Z]/', '', $currency) . '.', 'currency');
         }
 
-        $result = $this->call('POST', '/api/v2/checkout', [
+        // (Lane TM) attempt(), not call(), so a refusal keeps its status and
+        // Tabby's own reason. Same request, same success test as before.
+        $attempt = $this->attempt('POST', '/api/v2/checkout', [
             'payment' => $this->paymentObject($order, $currency),
             'lang' => $this->language(),
             'merchant_code' => $this->merchantCode(),
@@ -481,8 +485,23 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
             ],
         ]);
 
+        $result = $attempt['ok'] && is_array($attempt['body']) ? $attempt['body'] : null;
+
         if ($result === null || ($result['status'] ?? null) !== 'created') {
-            return PaymentStart::failed('We could not reach Tabby. Please try another payment method.');
+            $why = match (true) {
+                $attempt['status'] === null => 'Tabby could not be reached: ' . ($attempt['detail'] ?? 'network error') . '.',
+                ! $attempt['ok'] => 'Tabby refused the checkout: HTTP ' . $attempt['status']
+                    . ($attempt['detail'] !== null ? ' — ' . $attempt['detail'] : ' (no reason given)') . '.'
+                    . ($attempt['status'] === 401 ? ' The secret key was not accepted: check it is the key for the Live/Test mode selected.' : ''),
+                $result === null => 'Tabby answered HTTP ' . $attempt['status'] . ' with no readable body.',
+                // HTTP 200 with status "rejected": Tabby's pre-check said no to
+                // this shopper or basket before they ever saw Tabby's page.
+                default => 'Tabby declined at its pre-check: status ' . $this->word($result['status'] ?? 'missing')
+                    . (($r = $this->rejection($result)) !== '' ? ', reason ' . $r : '') . '.',
+            };
+
+            return $this->notStarted($order, 'We could not reach Tabby. Please try another payment method.',
+                $why, $attempt['ok'] ? 'rejected' : 'checkout_refused', $attempt['status'], $attempt['error']);
         }
 
         /*
@@ -499,7 +518,9 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
         $url = is_array($offers) ? ($offers[0]['web_url'] ?? null) : null;
 
         if (! is_string($url) || $url === '' || ! $this->isTabbyUrl($url)) {
-            return PaymentStart::failed('Tabby is not available for this order. Please choose another payment method.');
+            return $this->notStarted($order, 'Tabby is not available for this order. Please choose another payment method.',
+                'Tabby did not offer ' . self::PRODUCT . ' for this order'
+                    . (($r = $this->rejection($result)) !== '' ? ' (reason ' . $r . ')' : '') . '.', 'product_unavailable', $attempt['status']);
         }
 
         /*
@@ -523,7 +544,8 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
         $paymentId = trim((string) ($result['payment']['id'] ?? $result['id'] ?? ''));
 
         if ($paymentId === '') {
-            return PaymentStart::failed('Tabby did not return a payment reference. Please try another payment method.');
+            return $this->notStarted($order, 'Tabby did not return a payment reference. Please try another payment method.',
+                'Tabby opened a session but sent no payment id.', 'no_reference', $attempt['status']);
         }
 
         $order->forceFill(['transaction_id' => $paymentId])->save();
@@ -536,7 +558,29 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
             'id_source' => isset($result['payment']['id']) ? 'payment.id' : 'id',
         ]);
 
+        $this->started($order, $attempt['status'], $paymentId);
+
         return PaymentStart::redirect($url, $paymentId);
+    }
+
+    /** Tabby's rejection_reason(s), identifier characters only. (Lane TM.) */
+    private function rejection(array $result): string
+    {
+        $found = [];
+        $products = $result['configuration']['products'] ?? null;
+
+        foreach (is_array($products) ? $products : [] as $product) {
+            if (is_array($product) && is_scalar($product['rejection_reason'] ?? null)) {
+                $found[] = $this->word($product['rejection_reason']);
+            }
+        }
+
+        return implode(', ', array_unique(array_filter($found)));
+    }
+
+    private function word(mixed $v): string
+    {
+        return substr(preg_replace('/[^A-Za-z0-9_.\-]/', '', is_scalar($v) ? (string) $v : '') ?? '', 0, 40);
     }
 
     /**
@@ -660,6 +704,10 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
         if ($order === null) {
             return WebhookOutcome::refused('no order for that reference');
         }
+
+        // (Lane TM) the order's Payment journey. Read back from Tabby by id,
+        // so the status written is Tabby's, not the notification body's.
+        $this->journeyWebhook($order, 'payment', is_scalar($payment['status'] ?? null) ? (string) $payment['status'] : '', $paymentId);
 
         return $this->applyVerifiedPayment($order, $payment, $paymentId);
     }

@@ -494,7 +494,8 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
     public function start(Order $order): PaymentStart
     {
         if (! $this->configured()) {
-            return PaymentStart::failed('Tamara is not available right now.');
+            return $this->notStarted($order, 'Tamara is not available right now.',
+                'Tamara was not asked: the API token or notification token is empty (Store → Payments → Tamara → Keys).', 'not_configured');
         }
 
         $billing = is_array($order->billing_address) ? $order->billing_address : [];
@@ -524,9 +525,9 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         $phone = trim((string) ($order->phone ?: ($billing['phone'] ?? '')));
 
         if ($phone === '') {
-            return PaymentStart::failed(
-                'Tamara needs a mobile number to approve a payment. Please add a phone number and try again.'
-            );
+            return $this->notStarted($order,
+                'Tamara needs a mobile number to approve a payment. Please add a phone number and try again.',
+                'Tamara was not asked: the order has no phone number.', 'no_phone');
         }
 
         /*
@@ -551,9 +552,9 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
          * to Tamara, whatever the checkout drew.
          */
         if (! $this->basketAllowed($order)) {
-            return PaymentStart::failed(
-                'Tamara cannot be used for one of the items in this order. Please choose another payment method.'
-            );
+            return $this->notStarted($order,
+                'Tamara cannot be used for one of the items in this order. Please choose another payment method.',
+                'Tamara was not asked: an item is on "Products/Categories Tamara may not be used for" (Store → Payments → Tamara).', 'excluded_basket');
         }
 
         $amounts = $this->amounts($order, (int) $order->total, $currency);
@@ -623,15 +624,37 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             $payload['instalments'] = $instalments;
         }
 
-        $result = $this->call('POST', '/checkout', $payload);
+        /*
+         * attempt(), not call(): (Lane TM) call() turns every refusal into null,
+         * so Order #56187 failed with "The payment could not be started." and
+         * NOTHING anywhere said whether Tamara answered 400, 401 or not at all
+         * — and the one line call() does write is Log::info, which the live
+         * .env (LOG_LEVEL=error, written by public-web-root/install.php) drops.
+         * The success path is the same request and the same decision as before:
+         * a 2xx JSON object carrying a checkout_url.
+         */
+        $attempt = $this->attempt('POST', '/checkout', $payload);
+        $result = $attempt['ok'] ? $attempt['body'] : null;
 
-        $url = $result['checkout_url'] ?? null;
+        $url = is_array($result) ? ($result['checkout_url'] ?? null) : null;
 
         if ($result === null || ! is_string($url) || $url === '') {
-            return PaymentStart::failed('Tamara is not available for this order. Please choose another payment method.');
+            $why = match (true) {
+                $attempt['status'] === null => 'Tamara could not be reached: ' . ($attempt['detail'] ?? 'network error') . '.',
+                ! $attempt['ok'] => 'Tamara refused the checkout: HTTP ' . $attempt['status']
+                    . ($attempt['detail'] !== null ? ' — ' . $attempt['detail'] : ' (no reason given)') . '.'
+                    . ($attempt['status'] === 401 ? ' The API token was not accepted: check it is the token for the Live/Test mode selected.' : ''),
+                default => 'Tamara answered HTTP ' . $attempt['status'] . ' without a checkout link.',
+            };
+
+            return $this->notStarted($order,
+                'Tamara is not available for this order. Please choose another payment method.',
+                $why, 'checkout_refused', $attempt['status'], $attempt['error']);
         }
 
         $tamaraOrderId = (string) ($result['order_id'] ?? '');
+
+        $this->started($order, $attempt['status'], $tamaraOrderId);
 
         $order->forceFill(['transaction_id' => $tamaraOrderId])->save();
 
@@ -691,6 +714,10 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
         // The webhook shape: expiry and decline.
         $event = (string) ($body['event_type'] ?? '');
+
+        // (Lane TM) the order's Payment journey: signed, verified and matched,
+        // so nothing unauthenticated can write here.
+        $this->journeyWebhook($order, $event, is_scalar($body['order_status'] ?? null) ? (string) $body['order_status'] : '', $tamaraOrderId);
 
         if (in_array($event, ['order_expired', 'order_declined'], true)) {
             return $this->confirmer->fail($order, $this->id(), $tamaraOrderId, $event, $summary);

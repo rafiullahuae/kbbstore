@@ -245,6 +245,37 @@ function payBlock(o) {
   return '<div class="paid' + (p.paid ? '' : ' wait') + '">' + ic(p.paid ? 'card' : 'clock') + '<div><b>' + (p.paid ? 'Paid ' : 'Not paid · ') + esc(o.totals.total) + ' · ' + esc(p.title) + '</b>' + (p.paid_at ? esc(when(p.paid_at)) : (p.paid ? '' : 'Waiting for payment')) + '</div></div>';
 }
 
+/* (Lane TM) Payment journey: the server's verdict, then each step it read
+   from the order, payment log, provider events and notes. All text escaped. */
+function journeyCard(o) {
+  const j = o.payment_journey;
+  if (!j || !j.steps) return '';
+  return '<section class="card pj"><h4 class="sh">Payment journey</h4>'
+    + '<p class="pj-v ' + esc(j.verdict.tone) + '">' + esc(j.verdict.text) + '</p><ul class="tl">'
+    + j.steps.map(stepLi).join('')
+    + '</ul></section>';
+}
+
+/* (Lane TM) Customer journey (landing source, basket, placed) and the order's emails. */
+const stepLi = (s) => '<li class="' + esc(s.tone || '') + '"><b>' + esc(s.title) + '</b>' + (s.detail ? '<br>' + esc(s.detail) : '') + '<small>' + esc(s.at_label) + '</small></li>';
+function storyCards(o) {
+  const c = o.customer_journey, m = o.emails;
+  let out = '';
+  if (c) {
+    out += '<section class="card cj"><h4 class="sh">Customer journey</h4><ul class="tl">' + c.steps.map(stepLi).join('') + '</ul>'
+      + (c.cart_id ? '<a class="lnk" href="#/carts">' + ic('chev', 's') + 'Cart tracking · basket #' + esc(String(c.cart_id)) + '</a>' : '')
+      + '<p class="muted cj-n">' + esc(c.not_tracked) + '</p></section>';
+  }
+  if (m) {
+    out += '<section class="card em"><h4 class="sh">Emails <span class="muted">' + m.rows.length + '</span></h4>'
+      + (m.rows.length ? m.rows.map((r) => '<div class="em-r"><div><b>' + esc(r.type) + '</b><small>' + esc(r.to) + ' · ' + esc(r.at_label) + '</small>'
+        + (r.error ? '<small class="danger">' + esc(r.error) + '</small>' : '') + '</div><span class="em-s ' + esc(r.status) + '">' + esc(r.status) + '</span></div>').join('')
+        : '<p class="muted">No email has been sent for this order.</p>')
+      + '<p class="muted cj-n">' + esc(m.note) + '</p></section>';
+  }
+  return out;
+}
+
 function addr(a) {
   if (!a) return '<div class="addr"><span>None given</span></div>';
   return '<div class="addr"><b>' + esc(a.name) + '</b>' + [a.company, a.line1, a.line2, [a.city, a.state].filter(Boolean).join(', ')].filter(Boolean).map((x) => '<br>' + esc(x)).join('')
@@ -257,7 +288,9 @@ function paintDetail(host) {
     + '<a class="ib plain" href="' + (o.prev_id ? '#/orders/' + o.prev_id : '#/orders/' + o.id) + '" aria-label="Older order"' + (o.prev_id ? '' : ' aria-disabled="true"') + '>' + ic('down') + '</a>';
   const primary = o.can.paid ? '<button type="button" class="btn pri" data-act="paid">' + ic('card', 's') + 'Mark as paid</button>'
     : (o.can.status && ['processing', 'onhold', 'shipped'].indexOf(o.status) !== -1 ? '<button type="button" class="btn pri" data-act="setst" data-v="completed">' + ic('check', 's') + 'Mark complete</button>' : '');
-  const phone = o.phone || (o.shipping && o.shipping.phone) || '';
+  const phone = o.customer.phone || o.phone || (o.shipping && o.shipping.phone) || '';
+  // (Lane TM) tel: carries digits and a leading + only; the number is shown as stored.
+  const tel = phone.replace(/[^\d+]/g, '');
   screen(host, 'order', o.id, top('Order #' + esc(o.number), esc(day(o.created_at)) + ' · ' + esc(t.total), O.pane ? '' : back('#/orders', 'Back to orders'), right, O.pane ? 'nosync' : ''), ''
     + '<div class="od-sum"><p class="nm">' + esc(o.customer.name || o.email) + '</p><div class="ln">'
     + (o.can.status ? '<button type="button" class="pill" data-s="' + esc(pillCode(o.status)) + '" data-act="status" aria-label="Change status, now ' + esc(stWord(o.status)) + '">' + esc(stWord(o.status)) + ' ' + ic('edit') + '</button>' : pill(o.status))
@@ -272,12 +305,15 @@ function paintDetail(host) {
     + (t.tax ? '<div class="kv"><span>VAT</span><span>' + esc(t.tax) + '</span></div>' : '')
     + '<div class="kv tot"><span>Order total</span><span>' + esc(t.total) + '</span></div>'
     + (t.refunded ? '<div class="kv"><span>Refunded</span><span class="danger">−' + esc(t.refunded) + '</span></div>' : '') + payBlock(o) + '</section>'
+    + journeyCard(o)
     + '<section class="card"><h4 class="sh">Shipping</h4>' + addr(o.shipping || o.billing) + (o.shipping_method ? '<div class="kv"><span>Method</span><span>' + esc(o.shipping_method) + '</span></div>' : '')
     + '<details><summary class="lnk">' + ic('down', 's') + 'Show billing</summary>' + addr(o.billing) + '</details></section>'
     + '<section class="card"><h4 class="sh">Customer</h4><' + (o.customer.id ? 'a href="#/customers/' + o.customer.id + '"' : 'div') + ' class="row">' + av(o.customer.name || o.email) + '<div class="rm"><b>' + esc(o.customer.name || o.email) + '</b><small>' + o.customer.orders + ' order' + (o.customer.orders === 1 ? '' : 's') + ' · ' + esc(o.customer.spent_display) + ' lifetime</small></div>' + (o.customer.id ? ic('chev', 'chev s') : '') + '</' + (o.customer.id ? 'a' : 'div') + '>'
+    + (phone ? '<div class="kv cu-ph"><span>Phone</span><a href="tel:' + esc(tel) + '">' + esc(phone) + '</a></div>' : '')
     + '<div class="cu-act"><a href="mailto:' + esc(o.email) + '">' + ic('mail') + 'Email</a>'
-    + (phone ? '<a href="tel:' + esc(phone) + '">' + ic('phone') + 'Call</a><a href="https://wa.me/' + esc(phone.replace(/\D/g, '')) + '" target="_blank" rel="noopener noreferrer">' + ic('chat') + 'WhatsApp</a>' : '<span>' + ic('phone') + 'Call</span><span>' + ic('chat') + 'WhatsApp</span>') + '</div>'
+    + (phone ? '<a href="tel:' + esc(tel) + '">' + ic('phone') + 'Call</a><a href="https://wa.me/' + esc(phone.replace(/\D/g, '')) + '" target="_blank" rel="noopener noreferrer">' + ic('chat') + 'WhatsApp</a>' : '<span>' + ic('phone') + 'Call</span><span>' + ic('chat') + 'WhatsApp</span>') + '</div>'
     + (o.customer_note ? '<div class="kv"><span>Customer note</span><span>' + esc(o.customer_note) + '</span></div>' : '') + '</section>'
+    + storyCards(o)
     + (o.origin ? '<section class="card"><h4 class="sh">Attribution</h4><div class="kv"><span>Origin</span><span>' + esc(o.origin) + '</span></div></section>' : '')
     + '<section class="card"><h4 class="sh">Order notes' + (o.can.note ? ' <button type="button" class="tbtn" data-act="note">+ Add a note</button>' : '') + '</h4><ul class="tl" data-tl>'
     + o.notes.map(noteLi).join('') + '</ul></section>');

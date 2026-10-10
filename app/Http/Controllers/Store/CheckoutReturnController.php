@@ -99,6 +99,12 @@ class CheckoutReturnController extends Controller
     {
         $order = $this->orderThisSessionPlaced($request);
 
+        // (Lane TM) the Payment journey's "came back" step. This session's own
+        // order only, once per order; never stands in the shopper's way.
+        if ($order !== null) {
+            \App\Support\PaymentJourney::returned($request, $order, 'pending');
+        }
+
         // Paid after all. Where the success leg would have sent them.
         if ($order !== null && $this->placement->forOrder($order) === PlacementState::CONFIRMED) {
             return $this->toReceipt($request, $order);

@@ -1,0 +1,124 @@
+{
+ "admin-1280-56187": {
+  "verdict": "Never reached Tamara. The payment session was not created, so the shopper was not sent to Tamara, was not charged, and Tamara made no approve/decline decision. The reason was not recorded for this order.",
+  "steps": 7,
+  "panelWidth": 392,
+  "verdictFont": "12.5px",
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "id": "37"
+ },
+ "admin-1280-56187-cards": {
+  "journeySteps": 5,
+  "emails": 1,
+  "emailText": "Payment reminder (first)\nalia@example.com · 10 Oct 2026, 11:47 AM\nYour order #56187 is waiting\nSENT"
+ },
+ "admin-1280-56188": {
+  "verdict": "Never reached Tamara. The payment session was not created, so the shopper was not sent to Tamara, was not charged, and Tamara made no approve/decline decision. Reason: Tamara refused the checkout: HTTP 400 — Invalid request; consumer.phone_number: invalid_phone_number.",
+  "steps": 3,
+  "panelWidth": 392,
+  "verdictFont": "12.5px",
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "id": "38"
+ },
+ "admin-1280-56189": {
+  "verdict": "The shopper reached Tamara and came back without finishing. Nothing was charged.",
+  "steps": 5,
+  "panelWidth": 392,
+  "verdictFont": "12.5px",
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "id": "39"
+ },
+ "admin-1280-console-errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "owner-1280-56187": {
+  "phoneText": "0508883841",
+  "href": "tel:0508883841",
+  "hitIsLink": true,
+  "linkH": 20,
+  "font": "14px",
+  "verdict": "Never reached Tamara. The payment session was not created, so the shopper was not sent to Tamara, was not charged, and Tamara made no approve/decline decision. The reason was not recorded for this order.",
+  "steps": 2,
+  "journeySteps": 5,
+  "emails": 1,
+  "scrollWidth": 1280,
+  "innerWidth": 1280
+ },
+ "owner-1280-56189": {
+  "phoneText": "0508883841",
+  "href": "tel:0508883841",
+  "hitIsLink": true,
+  "linkH": 20,
+  "font": "14px",
+  "verdict": "The shopper reached Tamara and came back without finishing. Nothing was charged.",
+  "steps": 4,
+  "journeySteps": 1,
+  "emails": 1,
+  "scrollWidth": 1280,
+  "innerWidth": 1280
+ },
+ "owner-1280-console-errors": [],
+ "admin-390-56187": {
+  "verdict": "Never reached Tamara. The payment session was not created, so the shopper was not sent to Tamara, was not charged, and Tamara made no approve/decline decision. The reason was not recorded for this order.",
+  "steps": 7,
+  "panelWidth": 278,
+  "verdictFont": "12.5px",
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "id": "37"
+ },
+ "admin-390-56187-cards": {
+  "journeySteps": 5,
+  "emails": 1,
+  "emailText": "Payment reminder (first)\nalia@example.com · 10 Oct 2026, 11:47 AM\nYour order #56187 is waiting\nSENT"
+ },
+ "admin-390-56188": {
+  "verdict": "Never reached Tamara. The payment session was not created, so the shopper was not sent to Tamara, was not charged, and Tamara made no approve/decline decision. Reason: Tamara refused the checkout: HTTP 400 — Invalid request; consumer.phone_number: invalid_phone_number.",
+  "steps": 3,
+  "panelWidth": 278,
+  "verdictFont": "12.5px",
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "id": "38"
+ },
+ "admin-390-56189": {
+  "verdict": "The shopper reached Tamara and came back without finishing. Nothing was charged.",
+  "steps": 5,
+  "panelWidth": 278,
+  "verdictFont": "12.5px",
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "id": "39"
+ },
+ "admin-390-console-errors": [],
+ "owner-390-56187": {
+  "phoneText": "0508883841",
+  "href": "tel:0508883841",
+  "hitIsLink": true,
+  "linkH": 20,
+  "font": "14px",
+  "verdict": "Never reached Tamara. The payment session was not created, so the shopper was not sent to Tamara, was not charged, and Tamara made no approve/decline decision. The reason was not recorded for this order.",
+  "steps": 2,
+  "journeySteps": 5,
+  "emails": 1,
+  "scrollWidth": 390,
+  "innerWidth": 390
+ },
+ "owner-390-56189": {
+  "phoneText": "0508883841",
+  "href": "tel:0508883841",
+  "hitIsLink": true,
+  "linkH": 20,
+  "font": "14px",
+  "verdict": "The shopper reached Tamara and came back without finishing. Nothing was charged.",
+  "steps": 4,
+  "journeySteps": 1,
+  "emails": 1,
+  "scrollWidth": 390,
+  "innerWidth": 390
+ },
+ "owner-390-console-errors": []
+}

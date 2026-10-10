@@ -278,6 +278,10 @@ final class OrdersController extends Controller
                 'shipping' => self::address($order->shipping_address),
                 'shipping_method' => (string) ($order->shipping_method ?? ''),
                 'payment' => self::payment($order),
+                // (Lane TM) the Payment journey card. See App\Support\PaymentJourney.
+                'payment_journey' => \App\Support\PaymentJourney::for($order),
+                'customer_journey' => \App\Support\CustomerJourney::for($order),
+                'emails' => \App\Support\OrderEmails::for($order),
                 'items' => $order->items->map(fn ($i) => [
                     'name' => (string) $i->name,
                     'sku' => (string) ($i->sku ?? ''),
@@ -303,6 +307,14 @@ final class OrdersController extends Controller
                 'customer' => [
                     'id' => $order->customer?->id,
                     'name' => (string) ($order->customer?->name ?: trim(($order->billing_address['first_name'] ?? '').' '.($order->billing_address['last_name'] ?? ''))),
+                    /*
+                     * (Lane TM) The number to ring, shown as text under the
+                     * name. Exactly as stored on the order: shipping, then
+                     * billing, then the order's own column. Behind this
+                     * endpoint's `orders.view` gate only; no /api route
+                     * carries it.
+                     */
+                    'phone' => self::orderPhone($order),
                     'orders' => (int) ($history->n ?? 0),
                     'spent_display' => Money::plain((int) ($history->spent ?? 0)),
                 ],
@@ -537,6 +549,20 @@ final class OrdersController extends Controller
             'country' => \App\Support\Countries::NAMES[strtoupper($pick('country'))] ?? $pick('country'),
             'phone' => $pick('phone'),
         ];
+    }
+
+    /** The order's phone as stored: shipping, then billing, then orders.phone. */
+    private static function orderPhone(Order $order): string
+    {
+        foreach ([$order->shipping_address, $order->billing_address] as $addr) {
+            $p = is_array($addr) ? trim((string) ($addr['phone'] ?? '')) : '';
+
+            if ($p !== '') {
+                return $p;
+            }
+        }
+
+        return trim((string) ($order->phone ?? ''));
     }
 
     private static function variantText(mixed $attrs): string
