@@ -151,7 +151,7 @@
       + blk('srcnow', 1, '<div class="card pad"><div class="sec-title"><span>Sources</span><span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">last <span data-an-wlabel>' + st.win + '</span> min</span></div><ul class="bl" data-an="srcnow"></ul></div>')
       + blk('ccnow', 1, '<div class="card pad"><div class="sec-title"><span>Countries</span><span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">last <span data-an-wlabel>' + st.win + '</span> min · cities: coming later</span></div><ul class="bl" data-an="ccnow"></ul><div data-an="cchint"></div></div>')
       + blk('strip', 3, '<div class="strip" data-an="strip"></div>')
-      + REST.map(function (id) { return blk(id, 1, '<div data-an="b-' + id + '"></div>'); }).join('')
+      + REST.map(function (id) { return blk(id, 1, '<div data-an="b-' + id + '"></div>' + (id === 'revsrc' ? '<div data-an="b-engage"></div>' : '')); }).join('')
       + '</div>'
       + '<div class="card pad an-set" data-an="settings"></div>'
       + '</div>';
@@ -229,6 +229,75 @@
     el.innerHTML = c.alive ? '' : '<div class="an-hint" style="margin:0 0 12px">The scheduler is not running on this server, so today’s figures are rebuilt only while this board is open (every poll keeps them current). To keep them current all the time, add this cron job in ' + esc(c.where) + ':<br><code style="font-size:11.5px;word-break:break-all">' + esc(c.line) + '</code></div>';
   }
 
+  /* ── TIME ON SITE & ENGAGEMENT (Lane AT) ──────────────────────────────
+     The owner: "a new block in my analytics page, for average time spend per
+     customer". Painted once per summary from s.engagement (Report::
+     engagement): no request of its own, no timer, nothing measured -- the
+     card sits under "Orders & revenue by source" in the same grid cell and
+     CSS (flex:1) lets it take the rest of that row. Seconds in, words out. */
+  function dur(sec) {
+    if (sec == null) return '–';
+    sec = Math.max(0, Math.round(sec));
+    if (sec < 60) return sec + 's';
+    var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), x = sec % 60;
+    return h ? h + 'h ' + m + 'm' : m + 'm' + (m < 10 && x ? ' ' + x + 's' : '');
+  }
+  function mins(sec, over) {
+    if (sec == null) return '–';
+    if (over && sec >= over) return 'over ' + Math.round((over - 60) / 3600) + ' h';
+    return sec < 60 ? 'under 1 min' : Math.round(sec / 60) + ' min';
+  }
+  function tlist(rows) {
+    if (!rows.length) return '<li class="empty">Nothing measured in this range yet.</li>';
+    var max = 0;
+    rows.forEach(function (r) { max = Math.max(max, r[1] || 0); });
+    return rows.map(function (r) {
+      return '<li><i style="width:' + (max ? ((r[1] || 0) / max * 100).toFixed(1) : 0) + '%"></i><span class="l" title="' + esc(r[0]) + '">' + esc(r[0]) + (r[2] ? ' <span class="faint">' + esc(r[2]) + '</span>' : '') + '</span>'
+        + '<span class="v">' + dur(r[1]) + '</span><span class="p hide-s">' + esc(r[3] || '') + '</span></li>';
+    }).join('');
+  }
+  /* How many "time by source" rows fit in the row's spare height, worked out
+     from ROW COUNTS already in hand -- nothing on the page is measured. The
+     card's neighbours in the owner's row are Top pages and Sources (up to 10
+     list rows each, ~35px a row); "Orders & revenue by source" above it has
+     one row per channel with orders. The card's fixed part (tiles, measured
+     line, the "more" link) is ~190px, the list's heading ~24px and each of
+     its compact rows ~30px (measured once in Chromium, docs/lane-at-shots). Rows that do not fit are behind
+     "more", never dropped. */
+  function engageRows(neighbour, above) {
+    var spare = (neighbour - above) * 35 - 14 - 190 - 24;
+    return Math.max(0, Math.min(5, Math.floor(spare / 30)));
+  }
+  function engage(e, fit) {
+    if (!e) return '';
+    var p = e.previous, plural = function (n, w) { return fmt(n) + ' ' + w + (n === 1 ? '' : 's'); };
+    // Today repaints with every live poll: a <details> the owner opened stays open.
+    var was = q('[data-an="b-engage"] details'), open = was && was.open ? ' open' : '';
+    var tiles = [
+      [dur(e.visitor_avg_s), 'per visitor', p && e.visitor_avg_s != null ? delta(e.visitor_avg_s, p.visitor_avg_s) : ''],
+      [mins(e.visitor_median_s, e.over_s), 'median visitor', ''],
+      [dur(e.session_avg_s), 'per session', p && e.session_avg_s != null ? delta(e.session_avg_s, p.session_avg_s) : '']
+    ];
+    var seg = (e.segments || []).filter(function (r) { return r.visitors > 0; }).map(function (r) { return [r.label, r.avg_s, plural(r.visitors, 'visitor'), r.timed ? pct(r.timed, r.visitors) + '% timed' : '']; });
+    var src = (e.by_channel || []).filter(function (r) { return r.sessions > 0; }).slice(0, 5).map(function (r) { return [r.label, r.avg_s, '', r.engaged_pct + '% stay']; });
+    var shown = fit >= 1 ? src.slice(0, fit) : [], rest = src.slice(shown.length);
+    var srcHead = function (more) { return '<div class="an-h">Time by source' + (more ? ' (more)' : '') + ' · avg per session that stayed</div>'; };
+    var dev = (e.by_device || []).filter(function (r) { return r.avg_s != null; }).map(function (r) { return esc(r.label) + ' <b>' + dur(r.avg_s) + '</b>'; }).join(' · ');
+    var tc = e.to_cart || {};
+    return '<div class="card pad an-eng"><div class="sec-title"><span>Time on site &amp; engagement</span><span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">' + (p ? 'vs previous' : 'no earlier period') + '</span></div>'
+      + '<div class="an-et">' + tiles.map(function (t) { return '<div><b>' + t[0] + '</b><span>' + t[1] + t[2] + '</span></div>'; }).join('') + '</div>'
+      + '<div class="faint" style="margin-top:6px">Measured for ' + fmt(e.visitors_timed) + ' of ' + plural(e.visitors, 'visitor') + ' (' + pct(e.visitors_timed, e.visitors) + '%)' + (e.measured_from ? ' · since ' + esc(e.measured_from) : '') + '</div>'
+      + (shown.length ? srcHead(false) + '<ul class="bl">' + tlist(shown) + '</ul>' : '')
+      + '<details class="an-more"' + open + '><summary>' + (shown.length ? 'More' : 'By source') + ', buyers vs browsers &amp; method</summary>'
+      + (rest.length || !src.length ? srcHead(shown.length > 0) + '<ul class="bl">' + tlist(rest) + '</ul>' : '')
+      + '<div class="an-h">Avg time per visitor</div><ul class="bl">' + tlist(seg) + '</ul>'
+      + (tc.n ? '<div class="faint" style="margin-top:4px">First add to cart after a median of <b>' + mins(tc.median_s, e.over_s) + '</b> browsing · ' + plural(tc.n, 'visitor') + '</div>' : '')
+      + (dev ? '<div class="faint" style="margin-top:4px">' + dev + '</div>' : '')
+      + '<div class="an-fine">' + (e.measured_from ? 'Time is recorded from ' + esc(e.measured_from) + '; ' + plural(e.untimed_days, 'earlier day') + ' in this range ' + (e.untimed_days === 1 ? 'has' : 'have') + ' none, and ' + (e.untimed_days === 1 ? 'it is' : 'they are') + ' left out of every figure here. ' : '')
+      + 'Time is the minutes between the pages (and add-to-carts) someone opens, counting gaps of up to ' + esc(e.idle_min) + ' min; a longer gap is a break. “Stay” is the share of a source’s sessions that opened 2+ pages. One page alone has nothing to measure against, so it is shown as not measured, never as zero. The last page’s reading time is not seen, so real time on site is a little longer.</div>'
+      + '</details></div>';
+  }
+
   function paintSummary() {
     var s = st.sum;
     if (!s) return;
@@ -281,6 +350,7 @@
       var b = q('[data-blk="' + id + '"]');
       if (b) b.classList.toggle('an-empty', B[id] === '');
     });
+    set('b-engage', engage(s.engagement, engageRows(Math.max((d.page || []).length, (d.channel || []).length), Math.max(1, ch.length))));
     if (s.layout && !st.layout) { st.layout = s.layout; applyLayout(); }
   }
 
@@ -429,7 +499,7 @@
      debounced, after a drop; none while dragging. The order and hidden blocks
      are this admin's own (BoardLayout), shared with the owner app. */
   var NAMES = { live: 'Online now', feed: 'Happening now', pagesnow: 'Pages being read now', srcnow: 'Sources (live)', ccnow: 'Countries (live)', strip: 'Today’s figures',
-    daily: 'Visitors per day', pages: 'Top pages', sources: 'Sources', revsrc: 'Orders & revenue by source', campaigns: 'Orders by campaign', utm: 'Campaigns (UTM)',
+    daily: 'Visitors per day', pages: 'Top pages', sources: 'Sources', revsrc: 'Orders & revenue by source · Time on site', campaigns: 'Orders by campaign', utm: 'Campaigns (UTM)',
     funnel: 'Checkout funnel', entry: 'Entry pages', search: 'Searched on the shop', google: 'Google search keywords', referrers: 'Referrers · UTM source', devices: 'Devices · Browsers', langs: 'Language · Countries' };
   var REST = ['daily', 'pages', 'sources', 'revsrc', 'campaigns', 'utm', 'funnel', 'entry', 'search', 'google', 'referrers', 'devices', 'langs'];
   var drag = null, press = null, saveT = 0;

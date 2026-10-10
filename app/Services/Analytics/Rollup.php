@@ -35,6 +35,21 @@ final class Rollup
 
     public const KEEP_HOURS = 48;
 
+    /**
+     * TIME ON SITE (Lane AT). A gap longer than this between two hits of the
+     * same visitor (or session) is a break, not reading time: it adds nothing.
+     * Thirty minutes is the session timeout the browser already uses, and
+     * GA's. It is also what keeps a tab left open over lunch from reading as
+     * a two-hour visit.
+     */
+    public const IDLE_MIN = 30;
+
+    /** Time histograms are kept per whole minute up to here; longer is one "over" bucket. */
+    public const HIST_MAX = 120;
+
+    /** Visitor segments for time on site: reached checkout, added to cart, neither. */
+    public const SEGMENTS = ['chk', 'cart', 'browse'];
+
     /** Session-level dimensions: column on the session's first hit => dim. */
     public const SESSION_DIMS = [
         'path' => 'entry', 'ch' => 'channel', 'src' => 'source', 'med' => 'medium', 'cmp' => 'campaign',
@@ -126,14 +141,40 @@ final class Rollup
         $cartV = [];
         $checkV = [];
         $pages = [];      // path => [views, visitors set, title]
-        $sessions = [];   // s => [n, first row]
+        $sessions = [];   // s => [n, first row, last minute, active seconds]
+        $vis = [];        // v => [last minute, active seconds, hits, active seconds before the first add to cart|null]
 
         DB::table('an_hits')
             ->where('m', '>=', $from)->where('m', '<', $to)
-            ->select(['id', 'v', 's', 'k', 'path', 'title', 'ref', 'ch', 'src', 'med', 'cmp', 'dev', 'br', 'os', 'cc', 'lang'])
+            ->select(['id', 'm', 'v', 's', 'k', 'path', 'title', 'ref', 'ch', 'src', 'med', 'cmp', 'dev', 'br', 'os', 'cc', 'lang'])
             ->lazyById(5000)
-            ->each(function ($h) use (&$views, &$visitors, &$cartV, &$checkV, &$pages, &$sessions): void {
+            ->each(function ($h) use (&$views, &$visitors, &$cartV, &$checkV, &$pages, &$sessions, &$vis): void {
                 $k = (int) $h->k;
+                $m = (int) $h->m;
+
+                // Time on site, per visitor (Lane AT): every hit, pages and
+                // carts, in arrival order. The gap since their previous hit is
+                // reading time when it is a minute or more and at most IDLE_MIN.
+                // A hit stamped a minute behind the one before (two requests
+                // racing across a minute boundary) adds nothing and does not
+                // move the clock back.
+                if (isset($vis[$h->v])) {
+                    $x = &$vis[$h->v];
+                    $gap = $m - $x[0];
+                    if ($gap > 0 && $gap <= self::IDLE_MIN) {
+                        $x[1] += $gap * 60;
+                    }
+                    $x[0] = max($x[0], $m);
+                    $x[2]++;
+                    if ($k === 1 && $x[3] === null) {
+                        $x[3] = $x[1];
+                    }
+                    unset($x);
+                } else {
+                    // A cart as the day's first hit has no page before it to
+                    // time from: -1 marks it, so no later cart is timed either.
+                    $vis[$h->v] = [$m, 0, 1, $k === 1 ? -1 : null];
+                }
 
                 if ($k === 1) {
                     $cartV[$h->v] = true;
@@ -158,9 +199,16 @@ final class Rollup
                 unset($p);
 
                 if (isset($sessions[$h->s])) {
-                    $sessions[$h->s][0]++;
+                    $x = &$sessions[$h->s];
+                    $x[0]++;
+                    $gap = $m - $x[2];
+                    if ($gap > 0 && $gap <= self::IDLE_MIN) {
+                        $x[3] += $gap * 60;
+                    }
+                    $x[2] = max($x[2], $m);
+                    unset($x);
                 } else {
-                    $sessions[$h->s] = [1, $h];
+                    $sessions[$h->s] = [1, $h, $m, 0];
                 }
             });
 
@@ -172,10 +220,16 @@ final class Rollup
         $rows = array_merge($rows, self::cap('page', $pageRows, 'views'));
 
         $bounces = 0;
+        $timed = 0;
+        $secs = 0;
         $dims = [];
-        foreach ($sessions as [$n, $h]) {
+        foreach ($sessions as [$n, $h, , $sec]) {
             if ($n === 1) {
                 $bounces++;
+            } else {
+                // Two or more page views: the only sessions hits can time.
+                $timed++;
+                $secs += $sec;
             }
             foreach (self::SESSION_DIMS as $col => $dim) {
                 $val = (string) $h->{$col};
@@ -183,12 +237,26 @@ final class Rollup
                     continue;
                 }
                 $d = &$dims[$dim][$val];
-                $d ??= [0, 0, 0, []];
+                $d ??= [0, 0, 0, [], 0, 0];
                 $d[0] += $n;
                 $d[1]++;
                 $d[2] += $n === 1 ? 1 : 0;
                 $d[3][$h->v] = true;
+                if ($n > 1) {
+                    $d[4]++;
+                    $d[5] += $sec;
+                }
                 unset($d);
+            }
+        }
+
+        $rows = array_merge($rows, self::timeRows($vis, $cartV, $checkV));
+        $tvis = 0;
+        $vsecs = 0;
+        foreach ($vis as [, $sec, $hits]) {
+            if ($hits > 1) {
+                $tvis++;
+                $vsecs += $sec;
             }
         }
 
@@ -218,15 +286,17 @@ final class Rollup
 
         foreach ($dims as $dim => $vals) {
             $list = [];
-            foreach ($vals as $val => [$v, $s, $b, $vs]) {
-                $list[] = ['val' => (string) $val, 'label' => '', 'views' => $v, 'visitors' => count($vs), 'sessions' => $s, 'bounces' => $b];
+            foreach ($vals as $val => [$v, $s, $b, $vs, $tn, $ts]) {
+                $list[] = ['val' => (string) $val, 'label' => '', 'views' => $v, 'visitors' => count($vs), 'sessions' => $s, 'bounces' => $b, 'timed' => $tn, 'secs' => $ts];
             }
             $rows = array_merge($rows, self::cap($dim, $list, 'sessions'));
         }
 
         $stamp = now('UTC')->format('Y-m-d H:i:s');
 
-        DB::transaction(function () use ($day, $rows, $views, $visitors, $sessions, $bounces, $cartV, $checkV, $stamp): void {
+        $time = ['timed' => $timed, 'secs' => $secs, 'tvis' => $tvis, 'vsecs' => $vsecs];
+
+        DB::transaction(function () use ($day, $rows, $views, $visitors, $sessions, $bounces, $cartV, $checkV, $stamp, $time): void {
             DB::table('an_dims')->where('day', $day)->delete();
 
             foreach (array_chunk($rows, 500) as $chunk) {
@@ -236,8 +306,64 @@ final class Rollup
             DB::table('an_days')->upsert([[
                 'day' => $day, 'views' => $views, 'visitors' => count($visitors), 'sessions' => count($sessions),
                 'bounces' => $bounces, 'carts' => count($cartV), 'checkouts' => count($checkV), 'rolled_at' => $stamp,
-            ]], ['day'], ['views', 'visitors', 'sessions', 'bounces', 'carts', 'checkouts', 'rolled_at']);
+            ] + $time], ['day'], ['views', 'visitors', 'sessions', 'bounces', 'carts', 'checkouts', 'rolled_at', 'timed', 'secs', 'tvis', 'vsecs']);
         });
+    }
+
+    /**
+     * Time on site's own rows for the day (Lane AT), from the per-visitor
+     * clocks the pass kept. Aggregates only, like every other dim row:
+     *
+     *   tseg   one row per segment (SEGMENTS): visitors = everybody in it,
+     *          timed = those with two or more hits, secs = their seconds.
+     *          A visitor who reached checkout is "chk" whether or not they
+     *          also carted; "cart" is carted without checkout; "browse" neither.
+     *   t_vis  how many timed visitors spent each whole minute (val '000' to
+     *          HIST_MAX, then one over bucket), so a period's MEDIAN can be read
+     *          from summed counts -- a median cannot be added up from days.
+     *   t_cart the same histogram for the active time before a visitor's first
+     *          add to cart, for visitors who opened a page before it.
+     *
+     * @param  array<string, array{0: int, 1: int, 2: int, 3: int|null}>  $vis
+     * @param  array<string, true>  $cartV
+     * @param  array<string, true>  $checkV
+     * @return list<array<string, mixed>>
+     */
+    public static function timeRows(array $vis, array $cartV, array $checkV): array
+    {
+        $seg = array_fill_keys(self::SEGMENTS, [0, 0, 0]);
+        $hist = ['t_vis' => [], 't_cart' => []];
+        $bucket = static fn (int $sec): string => sprintf('%03d', min(intdiv($sec, 60), self::HIST_MAX + 1));
+
+        foreach ($vis as $v => [, $sec, $hits, $toCart]) {
+            $key = isset($checkV[$v]) ? 'chk' : (isset($cartV[$v]) ? 'cart' : 'browse');
+            $seg[$key][0]++;
+            if ($hits > 1) {
+                $seg[$key][1]++;
+                $seg[$key][2] += $sec;
+                $b = $bucket($sec);
+                $hist['t_vis'][$b] = ($hist['t_vis'][$b] ?? 0) + 1;
+            }
+            if ($toCart !== null && $toCart >= 0) {
+                $b = $bucket($toCart);
+                $hist['t_cart'][$b] = ($hist['t_cart'][$b] ?? 0) + 1;
+            }
+        }
+
+        $rows = [];
+        foreach ($seg as $val => [$all, $n, $sec]) {
+            if ($all > 0) {
+                $rows[] = ['dim' => 'tseg', 'val' => $val, 'label' => '', 'views' => 0, 'visitors' => $all, 'sessions' => 0, 'bounces' => 0, 'timed' => $n, 'secs' => $sec];
+            }
+        }
+        foreach ($hist as $dim => $counts) {
+            ksort($counts);
+            foreach ($counts as $val => $n) {
+                $rows[] = ['dim' => $dim, 'val' => (string) $val, 'label' => '', 'views' => 0, 'visitors' => $n, 'sessions' => 0, 'bounces' => 0, 'timed' => $n, 'secs' => 0];
+            }
+        }
+
+        return $rows;
     }
 
     /**
@@ -254,16 +380,18 @@ final class Rollup
         $rest = array_slice($list, self::CAP);
 
         if ($rest !== []) {
-            $o = ['val' => '(other)', 'label' => '', 'views' => 0, 'visitors' => 0, 'sessions' => 0, 'bounces' => 0];
+            $o = ['val' => '(other)', 'label' => '', 'views' => 0, 'visitors' => 0, 'sessions' => 0, 'bounces' => 0, 'timed' => 0, 'secs' => 0];
             foreach ($rest as $r) {
-                foreach (['views', 'visitors', 'sessions', 'bounces'] as $f) {
-                    $o[$f] += $r[$f];
+                foreach (['views', 'visitors', 'sessions', 'bounces', 'timed', 'secs'] as $f) {
+                    $o[$f] += $r[$f] ?? 0;
                 }
             }
             $keep[] = $o;
         }
 
         foreach ($keep as &$r) {
+            // Every row the same columns, so one multi-row INSERT holds them all.
+            $r += ['timed' => 0, 'secs' => 0];
             $r['dim'] = $dim;
             $r['val'] = mb_substr($r['val'], 0, 191);
             $r['label'] = mb_substr($r['label'], 0, 120);
