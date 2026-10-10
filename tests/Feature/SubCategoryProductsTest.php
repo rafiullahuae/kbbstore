@@ -464,3 +464,152 @@ it('does not loop on a parent cycle an old import left behind', function () {
         ->and(CategoryRollup::subtree($b->id))->toBe([$b->id, $a->id]);
 });
 
+
+/* ═══════════════════ Catalog → Reorder on a parent that lists its children (Lane RL) ═══ */
+
+/** What Catalog → Reorder lists for a category, ids in order. */
+function rlScreen($test, int $categoryId): array
+{
+    return collect($test->getJson("/admin-api/catalog/reorder/category/{$categoryId}/products?per_page=200")
+        ->assertOk()->json('products'))->pluck('id')->all();
+}
+
+it('lists on Catalog → Reorder every product the parent\'s page shows, in the page\'s own order', function () {
+    /*
+     * The owner, 10 October: "i have selected the skincare parent category,
+     * but i can see only 19 products which are actually added to the parent
+     * category ... i want to see all the products, even from the sub
+     * categories too ... same like i have on front-end".
+     *
+     * MUTATION, RUN: drop the subtree argument in CatalogReorderApiController::
+     * scopeQuery() and the screen lists [own, both] only -- red.
+     */
+    $t = scxTree();
+    $this->actingAs(scxAdmin(), 'admin');
+
+    $page = scxSlugs($this->get('/collections/scx-skincare/')->assertOk()->getContent());
+    $bySlug = collect($t['p'])->mapWithKeys(fn ($p) => [$p->slug => $p->id]);
+
+    $screen = rlScreen($this, $t['skin']->id);
+
+    expect($screen)->toHaveCount(6)
+        // Same order as the shop draws (the page may leave an out-of-stock
+        // product out of view; every product it does draw is in this order).
+        ->and(array_values(array_intersect($screen, $bySlug->only($page)->values()->all())))
+        ->toBe($bySlug->only($page)->sortBy(fn ($id, $slug) => array_search($slug, $page, true))->values()->all());
+});
+
+it('saves a parent\'s order for the parent\'s page only: nothing filed, no sub-category moved', function () {
+    /*
+     * "that re-order will only apply on parent category on front-end."
+     *
+     * MUTATION, RUN: write the parent's order to category_product instead of
+     * category_rollup_positions and the "nothing filed" and "Toners keeps its
+     * order" expectations are red.
+     */
+    $t = scxTree();
+    $this->actingAs(scxAdmin(), 'admin');
+
+    $tonersBefore = scxSlugs($this->get('/collections/scx-toners/')->getContent());
+    $pivotBefore = DB::table('category_product')->orderBy('category_id')->orderBy('product_id')->get()->map(fn ($r) => (array) $r)->all();
+
+    // The owner's order: the Toners-only product first, the mist second.
+    $want = [$t['p']['toner']->id, $t['p']['mist']->id];
+    $this->postJson("/admin-api/catalog/reorder/category/{$t['skin']->id}/apply", [
+        'moves' => [['product_id' => $want[0], 'to' => 0], ['product_id' => $want[1], 'to' => 1]],
+    ])->assertOk()->assertJson(['ok' => true]);
+
+    expect(array_slice(rlScreen($this, $t['skin']->id), 0, 2))->toBe($want)
+        ->and(array_slice(scxSlugs($this->get('/collections/scx-skincare/')->getContent()), 0, 2))->toBe(['scx-toner', 'scx-mist'])
+        // Nothing filed in Skincare, no sub-category position touched.
+        ->and(DB::table('category_product')->orderBy('category_id')->orderBy('product_id')->get()->map(fn ($r) => (array) $r)->all())->toBe($pivotBefore)
+        ->and(scxSlugs($this->get('/collections/scx-toners/')->getContent()))->toBe($tonersBefore)
+        // A row for every product on the parent's page, so it never half-depends on the old numbers.
+        ->and(DB::table('category_rollup_positions')->where('category_id', $t['skin']->id)->count())->toBe(6);
+
+    // Switched to "Only its own products", Skincare is exactly as it was: its own two, its own order.
+    $t['skin']->update([CategoryRollup::COLUMN => 'own']);
+    CategoryRollup::flush();
+    Cache::flush();
+    expect(scxSlugs($this->get('/collections/scx-skincare/')->getContent()))->toBe(['scx-own', 'scx-both']);
+});
+
+it('leaves a parent page that was never reordered exactly as it was', function () {
+    $t = scxTree();
+
+    // No rows written: the order is the one the page has always had.
+    expect(DB::table('category_rollup_positions')->count())->toBe(0)
+        ->and(array_slice(scxSlugs($this->get('/collections/scx-skincare/')->getContent()), 0, 2))->toBe(['scx-own', 'scx-both']);
+});
+
+it('puts every queued move exactly at its number in one save, and refuses a stale page without writing', function () {
+    /*
+     * "when i add multiple products re-order in que ... and when i click save,
+     * the system craches some times. and nothing re-ordered". Save posted each
+     * queued move separately; each later move shifted the earlier ones (in
+     * Chromium, a product sent to #120 landed at #119), and a failure part-way
+     * left half the queue applied.
+     *
+     * MUTATION, RUN: apply the moves in queue order without lifting them out
+     * first (the old sequence) and the exact ranks are red.
+     */
+    $this->actingAs(scxAdmin(), 'admin');
+    $cat = scxCategory('rl-many');
+    $ids = [];
+    foreach (range(1, 30) as $i) {
+        $p = scxProduct('rl-p'.$i);
+        scxFile($p, $cat, $i - 1);
+        $ids[] = $p->id;
+    }
+
+    $moves = [
+        ['product_id' => $ids[2], 'to' => 29],   // to the end
+        ['product_id' => $ids[5], 'to' => 29],   // to the end, after it
+        ['product_id' => $ids[8], 'to' => 19],   // #20
+        ['product_id' => $ids[11], 'to' => 24],  // #25
+        ['product_id' => $ids[14], 'to' => 12],  // #13
+    ];
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    $this->postJson("/admin-api/catalog/reorder/category/{$cat->id}/apply", ['moves' => $moves])->assertOk();
+    $writes = collect(DB::getQueryLog())->filter(fn ($q) => str_starts_with(strtolower($q['query']), 'update'))->count();
+    DB::disableQueryLog();
+
+    $order = rlScreen($this, $cat->id);
+    expect(array_search($ids[2], $order, true))->toBe(28)
+        ->and(array_search($ids[5], $order, true))->toBe(29)
+        ->and(array_search($ids[8], $order, true))->toBe(19)
+        ->and(array_search($ids[11], $order, true))->toBe(24)
+        ->and(array_search($ids[14], $order, true))->toBe(12)
+        // One batch statement for the whole change, not one per row.
+        ->and($writes)->toBe(1);
+
+    // A page that changed since it was loaded: refused, and nothing written.
+    $before = rlScreen($this, $cat->id);
+    $this->postJson("/admin-api/catalog/reorder/category/{$cat->id}/apply", [
+        'page' => 1, 'per_page' => 50, 'product_ids' => array_slice($before, 0, 29),
+        'moves' => [['product_id' => $before[0], 'to' => 10]],
+    ])->assertStatus(409);
+    expect(rlScreen($this, $cat->id))->toBe($before);
+
+    // A queued product that left the list: refused, nothing written.
+    $gone = scxProduct('rl-elsewhere');
+    $this->postJson("/admin-api/catalog/reorder/category/{$cat->id}/apply", [
+        'moves' => [['product_id' => $before[3], 'to' => 0], ['product_id' => $gone->id, 'to' => 1]],
+    ])->assertStatus(422);
+    expect(rlScreen($this, $cat->id))->toBe($before);
+});
+
+it('saves the page and the whole queue in one request', function () {
+    $src = file_get_contents(resource_path('views/admin/app.blade.php'));
+    $from = strpos($src, 'async function reorderSave(){');
+    $fn = substr($src, $from, strpos($src, "\nlet pdTab=", $from) - $from);
+
+    expect(substr_count($fn, "'/apply'"))->toBe(1)
+        ->and($fn)->not->toContain("'/move'")
+        ->and($fn)->not->toContain("'/save-page'")
+        ->and($fn)->not->toContain('while(reorderPending.length)')
+        // The queue is cleared only after the server says it is saved.
+        ->and(strpos($fn, 'reorderPending=[];'))->toBeGreaterThan(strpos($fn, 'if(!r.ok || !j || !j.ok)'));
+});
