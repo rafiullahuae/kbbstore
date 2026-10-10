@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.467
+**Orders: payment journey, customer journey and emails on every order (admin and Owner app); Tamara, Tabby and Stripe refusals now say why.** Apply after .466.
+No migrations. Hard refresh the admin and the Owner app.
+
+| Your request | Now |
+|---|---|
+| "we have just received an order with Tamara, but it's failed ... is this from our side issue or they didn't complete the tamara payment or tamara reject" (#56187) | Answer from the code: "The payment could not be started." is written only when the shop's request to open a Tamara checkout fails, so the shopper never reached Tamara (Tamara has no record, confirmed). The reason was never stored: the old code dropped Tamara's reply and logged at info level, which the live LOG_LEVEL=error discards. Now every refused start (Tamara, Tabby, Stripe) is saved with the HTTP status, error code and field on the order note, in the payment log and in laravel.log at ERROR. Phone/email masked, tokens never written |
+| "i can not see the user path with complete details" / "need the full journey for tabby also ... also full journey for stripe too" / "the emails and the customer journey on order details page" | Store -> Orders -> (order): Payment journey (with a one-line verdict), Customer journey (arrived from / first page / basket / added to bag / placed) and Emails (each email for the order with its result). Owner app -> Orders -> (order): the same cards. #56187 reads "Never reached Tamara ... reason not recorded" |
+| "the phone number should be visible in the owner app" | Owner app -> Orders -> (order) -> Customer: the order's phone as a tappable line |
+
+Not recorded per shopper (and said so on screen): products viewed, "checkout opened", copies of sent emails.
+
 ## 2.60.466
 **Speed: the always-on animations no longer keep a phone's processor busy. Same look.** Apply after .465.
 No migrations. Hard refresh the shop.
