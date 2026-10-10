@@ -1243,6 +1243,21 @@ class ProductEditorApiController extends Controller
             }
         }
 
+        /*
+         * THE BRAND. Validated since the editor was written (rules(): exists
+         * in brands) and then never written: the owner, 10 October, "when
+         * select brand, and click save, then the brand resets to non-selection,
+         * on front-end also this product not showing in that brand." The save
+         * answered 200 with the old brand_id and the select redrew from it.
+         * Present-and-null is "No brand"; absent is "leave it". A change of
+         * brand forgets the product's place in the old brand's order
+         * (Product::booted(), ScopeOrder::BRAND_COLUMN), so it joins the new
+         * brand's page at the end, as Catalog -> Reorder documents.
+         */
+        if (array_key_exists('brand_id', $data)) {
+            $product->brand_id = $data['brand_id'] === null ? null : (int) $data['brand_id'];
+        }
+
         foreach (['is_visible', 'featured', 'manage_stock'] as $field) {
             if (array_key_exists($field, $data)) {
                 $product->{$field} = (bool) $data[$field];
