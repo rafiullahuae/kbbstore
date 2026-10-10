@@ -433,3 +433,77 @@ it('prefixes every class and data attribute it owns', function () {
 
     expect($foreign)->toBe([], 'these data attributes are not data-kst- prefixed');
 });
+
+it('finds a product by two or three of its words in any order, by brand too, closest names first', function () {
+    /*
+     * The owner, 10 October: "in the set product editor, when i search the
+     * product, it takes litte more time, and not show accurate too upon
+     * writing the 2 or three words product name." The box was one pattern, so
+     * "anua toner" had to appear in the name exactly like that.
+     *
+     * MUTATION, RUN: search the whole term as one LIKE again and the
+     * multi-word, out-of-order and brand cases are red.
+     */
+    $this->actingAs(setAdmin('owner'), 'admin');
+
+    $anua = App\Models\Brand::create(['name' => 'Anua', 'slug' => 'anua-'.Str::random(5)]);
+    $toner = setMemberProduct('Anua - Heartleaf 77% Soothing Toner', 9000);
+    $oil = setMemberProduct('Anua - Heartleaf Pore Control Cleansing Oil', 9500);
+    $plain = setMemberProduct('Heartleaf Toner Pads', 6000);
+    $plain->forceFill(['brand_id' => $anua->id])->save();
+    setMemberProduct('Round Lab Dokdo Toner', 7000);
+
+    $ids = fn (string $q) => collect($this->getJson('/admin-api/sets/products?q='.rawurlencode($q))->assertOk()->json('products'))->pluck('id')->all();
+
+    // "Heartleaf Toner Pads" is an Anua product by its brand, so it is found too.
+    expect($ids('anua toner'))->toContain($toner->id)->toContain($plain->id)->not->toContain($oil->id)
+        ->and($ids('toner heartleaf'))->toContain($toner->id)->toContain($plain->id)->not->toContain($oil->id)
+        ->and($ids('heartleaf  oil'))->toBe([$oil->id])
+        // The brand's own name counts: "Heartleaf Toner Pads" does not say Anua.
+        ->and($ids('anua pads'))->toBe([$plain->id])
+        // A stray dash is not a word that must match.
+        ->and($ids('anua - oil'))->toBe([$oil->id]);
+
+    // Closest first: a name STARTING with what was typed leads.
+    expect($ids('heartleaf toner')[0])->toBe($plain->id);
+});
+
+it('answers the member search in the same number of statements for 3 products as for 40', function () {
+    /*
+     * Each row read its variants, and each variant its attribute values, one
+     * statement at a time -- the "takes a little more time". Now eager-loaded.
+     *
+     * MUTATION, RUN: go back to $p->variants()->...->get() per row and the
+     * 40-product count is higher.
+     */
+    $this->actingAs(setAdmin('owner'), 'admin');
+
+    $count = function (int $n): int {
+        Product::query()->where('name', 'like', 'Cnt %')->forceDelete();
+        foreach (range(1, $n) as $i) {
+            $p = setMemberProduct('Cnt Serum '.$i, 5000);
+            $p->variants()->create(['sku' => 'CNT-'.$i.'-A', 'price' => 5000, 'stock_status' => 'instock', 'position' => 0]);
+        }
+        Illuminate\Support\Facades\DB::flushQueryLog();
+        Illuminate\Support\Facades\DB::enableQueryLog();
+        $this->getJson('/admin-api/sets/products?q=cnt serum')->assertOk();
+        $c = count(Illuminate\Support\Facades\DB::getQueryLog());
+        Illuminate\Support\Facades\DB::disableQueryLog();
+
+        return $c;
+    };
+
+    $count(3);   // warm-up: settings and the session are read once per process
+
+    expect($count(40))->toBe($count(3));
+});
+
+it('lets only the newest member search paint its results', function () {
+    $src = file_get_contents(resource_path('views/admin/partials/product-editor-screen.blade.php'));
+    $from = strpos($src, 'async function setSearch(){');
+    $fn = substr($src, $from, strpos($src, 'setSearch.seq = 0;', $from) - $from);
+
+    expect($fn)->toContain('var seq = ++setSearch.seq;')
+        ->and(substr_count($fn, 'if (seq !== setSearch.seq) return;'))->toBe(2)
+        ->and($fn)->not->toContain('setFound = (body && body.products) || [];');
+});

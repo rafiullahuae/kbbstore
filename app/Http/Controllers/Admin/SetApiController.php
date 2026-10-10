@@ -177,25 +177,67 @@ class SetApiController extends Controller
     {
         $term = trim((string) $request->query('q', ''));
 
+        /*
+         * WORD BY WORD, AND IN THE BRAND TOO. (Lane SETQ) The owner, 10 October:
+         * "in the set product editor, when i search the product, it takes litte
+         * more time, and not show accurate too upon writing the 2 or three
+         * words product name." The whole box was ONE pattern, so "anua toner"
+         * had to appear in the name exactly like that -- and "Anua - Heartleaf
+         * 77% Soothing Toner" does not contain it. Now every word must match
+         * the name, the SKU or the brand's name, in any order, and the closest
+         * names lead: the name starting with what was typed, then containing
+         * it as typed, then the alphabet. Six words at most; a lone "-" or "+"
+         * is not a word.
+         */
+        $words = array_slice(array_values(array_filter(
+            preg_split('/\s+/u', $term) ?: [],
+            static fn (string $w) => preg_match('/[\p{L}\p{N}]/u', $w) === 1
+        )), 0, 6);
+
+        // Typed, but not one word in it ("%", "-"): searched as typed, as a
+        // literal, the way the box always treated it -- never "everything".
+        if ($words === [] && $term !== '') {
+            $words = [$term];
+        }
+
         $query = Product::query()
             ->where('type', '!=', 'set')
-            ->with('brand:id,name')
-            // `id` after `name` for the reason StableOrderingTest gives: this
-            // query is SLICED at 40, and two products can share a name — so a
-            // tie on the last key means the picker's second page is not
-            // reliably the rows the first one left out.
-            ->orderBy('name')
-            ->orderBy('id')
+            // Everything each row prints, in a fixed number of statements: the
+            // brand, the variants AND each variant's attribute values (its
+            // label). They were read per row and per variant -- over a hundred
+            // statements for a search that matched forty products.
+            ->with([
+                'brand:id,name',
+                'variants' => fn ($v) => $v->select(['id', 'product_id', 'sku', 'position']),
+                'variants.attributeValues',
+            ])
             ->limit(40);
 
-        if ($term !== '') {
-            $pattern = '%' . $this->escapeLike($term) . '%';
+        foreach ($words as $word) {
+            $pattern = '%' . $this->escapeLike($word) . '%';
 
             $query->where(function ($q) use ($pattern) {
-                $q->whereRaw('name LIKE ? ESCAPE ' . self::LIKE_ESCAPE_SQL, [$pattern])
-                    ->orWhereRaw('sku LIKE ? ESCAPE ' . self::LIKE_ESCAPE_SQL, [$pattern]);
+                $q->whereRaw('products.name LIKE ? ESCAPE ' . self::LIKE_ESCAPE_SQL, [$pattern])
+                    ->orWhereRaw('products.sku LIKE ? ESCAPE ' . self::LIKE_ESCAPE_SQL, [$pattern])
+                    ->orWhereIn('products.brand_id', static fn ($b) => $b->select('id')->from('brands')
+                        ->whereRaw('name LIKE ? ESCAPE ' . self::LIKE_ESCAPE_SQL, [$pattern]));
             });
         }
+
+        if ($words !== []) {
+            $phrase = $this->escapeLike($term);
+            $query->orderByRaw(
+                'CASE WHEN products.name LIKE ? ESCAPE ' . self::LIKE_ESCAPE_SQL . ' THEN 0'
+                . ' WHEN products.name LIKE ? ESCAPE ' . self::LIKE_ESCAPE_SQL . ' THEN 1 ELSE 2 END',
+                [$phrase . '%', '%' . $phrase . '%']
+            );
+        }
+
+        // `id` after `name` for the reason StableOrderingTest gives: this
+        // query is SLICED at 40, and two products can share a name -- so a tie
+        // on the last key means the picker's second page is not reliably the
+        // rows the first one left out.
+        $query->orderBy('products.name')->orderBy('products.id');
 
         return response()->json([
             'ok' => true,
@@ -207,7 +249,7 @@ class SetApiController extends Controller
                     'sku' => (string) ($p->sku ?? ''),
                     'image' => $p->image,
                     'price_aed' => $this->majorFromFils((int) $p->effectivePrice()),
-                    'variants' => $p->variants()->orderBy('position')->get(['id', 'sku'])
+                    'variants' => $p->variants
                         ->map(fn (ProductVariant $v) => [
                             'id' => $v->id,
                             'label' => $v->label() !== '' ? $v->label() : (string) ($v->sku ?? ('#' . $v->id)),

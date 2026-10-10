@@ -56,10 +56,6 @@
     "file": "assets/admin-1f753f317387-94CVMara.js",
     "src": "admin-console/1f753f3173872a35a330ec13b65d66172ea6918f.js"
   },
-  "admin-console/23d05860f26ec7af9515b77bf569b0656570364f.js": {
-    "file": "assets/admin-23d05860f26e-Cy9cpVMy.js",
-    "src": "admin-console/23d05860f26ec7af9515b77bf569b0656570364f.js"
-  },
   "admin-console/2796e9c3c6521622e25cb2f081c9748065405101.js": {
     "file": "assets/admin-2796e9c3c652-Bw61hZiU.js",
     "src": "admin-console/2796e9c3c6521622e25cb2f081c9748065405101.js"
@@ -95,6 +91,10 @@
   "admin-console/368ae6e0c1c5c1861856c5584073ec78e31e7a39.js": {
     "file": "assets/admin-368ae6e0c1c5-hI_bnffE.js",
     "src": "admin-console/368ae6e0c1c5c1861856c5584073ec78e31e7a39.js"
+  },
+  "admin-console/37e396f051692ec50e87ef5a9f62dbb1dd36fcb4.js": {
+    "file": "assets/admin-37e396f05169-Duh2scfd.js",
+    "src": "admin-console/37e396f051692ec50e87ef5a9f62dbb1dd36fcb4.js"
   },
   "admin-console/382c98d6134700fd5a9c509377322c54f989bda0.js": {
     "file": "assets/admin-382c98d61347-DEv7maWB.js",

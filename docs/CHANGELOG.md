@@ -3,6 +3,14 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.479
+**Set editor: the product search finds what you type, word by word, and answers at once.** Apply after .478.
+Runs its migration (clears caches). Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "in the set product editor, when i search the product, it takes litte more time, and not show accurate too upon writing the 2 or three words product name" | Catalog → Product editor → (a set) → What is in the box → search: every word you type must appear in the product's name, SKU or brand, in any order ("anua toner", "toner hydrating", "heartleaf oil" all work); names starting with what you typed come first. Measured on a 3,000-product shop: 122 database reads and 107 ms per search before, 4 reads and 15 ms after. Typing fast can no longer leave an older search's list under newer words |
+
 ## 2.60.478
 **Product editor saves the brand again.** Apply after .477. Urgent fix on its own.
 Runs its migration (clears caches). Hard refresh the admin.

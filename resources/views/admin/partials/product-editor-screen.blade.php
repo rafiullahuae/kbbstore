@@ -3962,16 +3962,30 @@ a.peo-btn{display:inline-block;text-decoration:none}
        both descriptions above it. Found by a screenshot, not by a reader. */
     collect();
 
+    /* ONLY THE LATEST SEARCH MAY PAINT (Lane SETQ). Typing "anua toner"
+       sends a search for "anua" and one for "anua toner"; whichever answered
+       last used to win, so a slow "anua" landing second put the wrong list
+       under the right words -- part of "not show accurate". Same shape as
+       cpLoad()'s guard. */
+    var seq = ++setSearch.seq;
+    var found;
+
     try {
       var body = await api('/sets/products?q=' + encodeURIComponent(setQuery));
-      setFound = (body && body.products) || [];
+      found = (body && body.products) || [];
     } catch (e) {
+      if (seq !== setSearch.seq) return;
       setFound = [];
       banner = { kind: 'bad', text: message(e, 'That search could not be run.') };
+      render();
+      return;
     }
 
+    if (seq !== setSearch.seq) return;
+    setFound = found;
     render();
   }
+  setSearch.seq = 0;
 
   /* MOVE, not swap: dropping row 1 onto row 4 puts it AT 4 and shuffles the
      rest up, which is what dragging a thing onto a place means. The arrows
