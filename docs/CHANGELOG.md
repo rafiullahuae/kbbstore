@@ -3,6 +3,13 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.469
+**Tamara: the shop now knows when Tamara has already captured the money.** Apply after .468. No migrations.
+
+| Your request | Now |
+|---|---|
+| "in the previous wordpress website, the tamara orders were capturing ... even now tamara captures the orders auto. i have checked in tamara also. it says fully captured" | Tamara captures by itself on this account, but the order screen kept offering "Capture AED 85 · 180 days left". Nothing was ever captured twice (the button reads Tamara first). Now, when Tamara reports the order captured at or right after approval, the shop records it at once: the order shows captured and the Capture button goes. No capture call is sent. Orders Tamara has NOT captured stay as they were |
+
 ## 2.60.468
 **Hotfix: Tamara checkouts open again.** Apply after .467. No migrations.
 
