@@ -226,6 +226,28 @@ final class TemplateLibrary
              */
             'new-look' => self::newLook('en'),
             'new-look-ar' => self::newLook('ar'),
+            /*
+             * THE SAME NEWS AS A LETTER (Lane EP), for the Primary tab: the
+             * personal letter style (PersonalLetter), two plain links, no
+             * picture, no prices printed. It asks for a reply and, once,
+             * to be moved to Primary — the reader's own action is the one
+             * Google documents as teaching Gmail where a sender belongs.
+             * Put your first name in "Your name" on the campaign and it
+             * arrives from "<name> from K-Beauty Bliss", signed by you.
+             */
+            'new-look-letter' => [
+                'name' => 'New look, less prices — personal letter',
+                'category' => 'Seasonal',
+                'description' => 'The New Look news as a short personal letter: "Hi {first name}," a few warm paragraphs, two plain links, no pictures or prices. The best chance for the Primary tab.',
+                'subject' => self::subjectIdeas('new-look-letter')[0],
+                'preheader' => 'A short note from us, and a few prices that came down.',
+                'theme' => 'letter',
+                'locale' => 'en',
+                'blocks' => [
+                    $b('text', ['body' => "I wanted to write to you myself, because something has changed at K-Beauty Bliss and you are one of the people I most wanted to tell.\n\nWe have given the shop a new look. It is lighter, easier to find your way around on your phone, and checking out takes a moment. While we were at it, we went through our prices too, and a lot of the Korean skincare you already know now costs less than it did.\n\nIf you have a minute, [come and have a look around](/). The products with new, lower prices are [all on one page](/super-sale/).\n\nOne small favour: if this letter landed in your Promotions tab, would you drag it into Primary? That way our notes will not get lost between the offers."]),
+                    $b('footer'),
+                ],
+            ],
         ];
     }
 
@@ -240,6 +262,9 @@ final class TemplateLibrary
         return match ($key) {
             'new-look' => ['We got a glow-up, and so did the prices 🌸', 'New look, less prices: fresh picks inside', 'Your favourite K-beauty shop just got prettier'],
             'new-look-ar' => ['جدّدنا إطلالتنا… وخفّضنا الأسعار 🌸', 'إطلالة جديدة وأسعار أقل: مختارات طازجة بانتظارك', 'متجرك الكوري المفضّل صار أجمل'],
+            // Lane EP: a letter's subject reads like a note, and the first one
+            // carries the recipient's name ({first_name|…} falls back when unknown).
+            'new-look-letter' => ['{first_name|Hello}, we have a new look', 'A quick note about our new look', 'Something I wanted to tell you'],
             default => [],
         };
     }

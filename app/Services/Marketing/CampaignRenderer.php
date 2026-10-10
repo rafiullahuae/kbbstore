@@ -187,6 +187,10 @@ final class CampaignRenderer
     private function renderIn(array $blocks, array $ctx, string $locale): array
     {
         $theme = EmailTheme::cleanTheme($ctx['theme'] ?? 'standard');
+
+        if (PersonalLetter::is($theme)) {
+            return $this->renderLetter($blocks, $ctx, $locale);
+        }
         $playful = $theme === 'playful';
         $href = $ctx['href'] ?? fn (string $url) => $url;
         $first = ['first_name' => (string) ($ctx['first_name'] ?? ''), 'top_brand' => (string) ($ctx['top_brand'] ?? '')];
@@ -472,6 +476,184 @@ final class CampaignRenderer
             . "\n\n— " . $k['storeName']
             . "\n\n" . $why
             . ($unsub ? "\n" . ($playful ? EmailTheme::word($locale, 'text_unsubscribe') : __('email.mkt.text_unsubscribe')) . "\n" . $unsub : '');
+
+        return ['html' => $html, 'text' => $plain, 'bytes' => strlen($html)];
+    }
+
+    /**
+     * The personal letter (Lane EP, PersonalLetter): the same blocks, printed
+     * as a letter. Only PersonalLetter::KEEPS print; a heading is a bold
+     * line, a button is a plain link in its own sentence, the first picture
+     * is small and unlinked and any other is left out, and only the first
+     * MAX_LINKS links in the body stay links — the rest print as their words.
+     * The text part is built from the same strings, so it says the same thing.
+     *
+     * $ctx also takes `signer` (PersonalLetter::signer()): the name the letter
+     * is signed with; blank signs it from the shop's team.
+     *
+     * @return array{html:string, text:string, bytes:int}
+     */
+    private function renderLetter(array $blocks, array $ctx, string $locale): array
+    {
+        $href = $ctx['href'] ?? fn (string $url) => $url;
+        $first = ['first_name' => (string) ($ctx['first_name'] ?? ''), 'top_brand' => (string) ($ctx['top_brand'] ?? '')];
+        $brand = EmailBranding::forMailable(true, CampaignMail::class);
+        $k = MailKit::for($brand);
+        $store = (string) $k['storeName'];
+        $signer = PersonalLetter::signer($ctx['signer'] ?? '');
+        $budget = PersonalLetter::MAX_LINKS;
+        $images = 0;
+        $rows = [];
+        $text = [];
+        $footer = null;
+        $audience = (string) ($ctx['audience'] ?? 'customers');
+        $linkRe = '/\[([^\]\n]{1,200})\]\(([^)\n]{1,500})\)/u';
+
+        // Links past the budget lose their address and keep their words.
+        $cap = function (string $s) use (&$budget, $linkRe): string {
+            return (string) preg_replace_callback($linkRe, function ($m) use (&$budget) {
+                if (Blocks::safeUrl($m[2]) === null) {
+                    return $m[0];
+                }
+
+                if ($budget > 0) {
+                    $budget--;
+
+                    return $m[0];
+                }
+
+                return $m[1];
+            }, $s);
+        };
+
+        $paragraphs = function (int $i, string $body) use (&$rows, &$text, $href, $first): void {
+            foreach (preg_split('/\n[ \t]*\n+/u', trim($body)) ?: [] as $para) {
+                if (trim($para) === '') {
+                    continue;
+                }
+
+                $rows[] = ['i' => $i, 'type' => 'p', 'html' => Blocks::marks(trim($para), $href, $first, PersonalLetter::LINK)];
+                $text[] = Blocks::plain(trim($para), $first, $href);
+            }
+        };
+
+        foreach ($blocks as $i => $b) {
+            $p = $b['props'];
+
+            switch ($b['type']) {
+                case 'heading':
+                    $title = trim((string) ($p['title'] ?? '') . ' ' . Blocks::mergeName((string) ($p['highlight'] ?? ''), $first));
+
+                    if (Blocks::plain($title, $first) !== '') {
+                        $title = $cap($title);
+                        $rows[] = ['i' => $i, 'type' => 'p', 'bold' => true, 'html' => Blocks::marks($title, $href, $first, PersonalLetter::LINK)];
+                        $text[] = Blocks::plain($title, $first, $href);
+                    }
+
+                    if (trim((string) ($p['lead'] ?? '')) !== '') {
+                        $paragraphs($i, $cap((string) $p['lead']));
+                    }
+                    break;
+
+                case 'text':
+                    if (trim((string) ($p['body'] ?? '')) !== '') {
+                        $paragraphs($i, $cap((string) $p['body']));
+                    }
+                    break;
+
+                case 'button':
+                    $link = $p['href'] === Blocks::TOP_BRAND_URL
+                        ? (string) ($ctx['top_brand_url'] ?? Url::external('/brands/'))
+                        : Blocks::safeUrl((string) $p['href']);
+                    $label = trim((string) preg_replace('/\s*[→←]\s*/u', ' ', Blocks::mergeName((string) $p['label'], $first)));
+
+                    if ($link === null || $label === '') {
+                        break;
+                    }
+
+                    if ($budget <= 0) {
+                        break;   // a button with no link left is a sentence with nothing to say
+                    }
+
+                    $budget--;
+                    $printed = $href($link, $label);
+                    $rows[] = ['i' => $i, 'type' => 'link', 'label' => $label, 'href' => $printed];
+                    $text[] = $label . ': ' . $printed;
+                    break;
+
+                case 'image':
+                case 'hero_image':
+                    $art = $b['type'] === 'hero_image' ? (Blocks::ART[$p['art'] ?? ''] ?? null) : null;
+                    $src = $art !== null ? Url::external('/email/art/' . $p['art'] . '.jpg') : Blocks::safeImage((string) ($p['src'] ?? ''));
+
+                    if ($src === null || $src === '' || $images >= PersonalLetter::MAX_IMAGES) {
+                        break;
+                    }
+
+                    $images++;
+                    $alt = (string) (($p['alt'] ?? '') !== '' ? $p['alt'] : ($art['alt'] ?? ''));
+                    $rows[] = [
+                        'i' => $i, 'type' => 'img', 'src' => $src, 'alt' => $alt, 'w' => PersonalLetter::IMAGE_WIDTH,
+                        'h' => $art !== null ? (int) round(PersonalLetter::IMAGE_WIDTH * $art['h'] / $art['w']) : null,
+                    ];
+                    break;
+
+                case 'footer':
+                    $footer = $i;
+                    $why = ($p['why'] ?? 'auto') === 'auto' ? $audience : (string) $p['why'];
+                    $audience = in_array($why, ['subscribers', 'account'], true) ? $why : 'customers';
+                    break;
+            }
+        }
+
+        $why = match ($audience) {
+            'subscribers' => __('email.mkt.why_subscribers', ['store' => $store]),
+            'account' => __('email.mkt.why_account', ['store' => $store]),
+            default => __('email.mkt.why_customers', ['store' => $store]),
+        };
+        $name = trim($first['first_name']);
+        $hi = $name !== '' ? PersonalLetter::word($locale, 'hi', ['name' => $name]) : PersonalLetter::word($locale, 'hi_blank');
+        $reply = PersonalLetter::word($locale, $signer !== '' ? 'reply' : 'reply_team');
+        $sign = PersonalLetter::word($locale, 'sign');
+        $by = $signer !== '' ? [$signer, $store] : [PersonalLetter::word($locale, 'team', ['store' => $store])];
+        $unsub = $ctx['unsubscribe'] ?? null;
+        $addresses = [];
+
+        foreach ((array) ($k['addresses'] ?? []) as $place) {
+            $lines = array_values(array_filter(array_map('trim', (array) ($place['lines'] ?? []))));
+
+            if ($lines !== []) {
+                $addresses[] = implode(', ', $lines);
+            }
+        }
+
+        $html = view('emails.marketing.letter', [
+            'locale' => $locale,
+            'dir' => EmailTheme::dir($locale),
+            'title' => Blocks::mergeName((string) ($ctx['subject'] ?? ''), $first),
+            'preheader' => Blocks::mergeName((string) ($ctx['preheader'] ?? ''), $first),
+            'hi' => $hi,
+            'rows' => $rows,
+            'reply' => $reply,
+            'sign' => $sign,
+            'by' => $by,
+            'footer' => $footer,
+            'why' => $why,
+            'addresses' => $addresses,
+            'unsubLead' => PersonalLetter::word($locale, 'unsub_lead'),
+            'unsubWord' => PersonalLetter::word($locale, 'unsub'),
+            'unsubscribe' => $unsub,
+            'link' => PersonalLetter::LINK,
+            'markers' => (bool) ($ctx['markers'] ?? false),
+        ])->render();
+
+        $plain = $hi . "\n\n"
+            . implode("\n\n", array_filter(array_map('trim', $text), fn ($t) => $t !== ''))
+            . "\n\n" . $reply
+            . "\n\n" . $sign . "\n" . implode("\n", $by)
+            . "\n\n--\n" . $why
+            . ($addresses !== [] ? "\n" . implode("\n", $addresses) : '')
+            . ($unsub ? "\n" . PersonalLetter::word($locale, 'unsub_lead') . ' ' . PersonalLetter::word($locale, 'unsub') . ': ' . $unsub : '');
 
         return ['html' => $html, 'text' => $plain, 'bytes' => strlen($html)];
     }

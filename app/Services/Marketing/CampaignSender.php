@@ -359,12 +359,22 @@ final class CampaignSender
      * mailbox is being read — a mailto nobody processes is an unsubscribe
      * silently ignored, Lane MK's reason for leaving it out until now.
      *
-     * @return array{domain:string, mailto:string}
+     * Also (Lane EP): the Reply-To a campaign sets itself
+     * (PersonalLetter::replyTo()) and the shop's name, for a letter's From.
+     *
+     * @return array{domain:string, mailto:string, reply:?string, store:string}
      */
     private function envelopeExtras(): array
     {
         $domain = '';
         $mailto = '';
+        $reply = PersonalLetter::replyTo();
+        $store = '';
+
+        try {
+            $store = (string) (\App\Services\Mail\EmailBranding::forMailable(true, CampaignMail::class)['storeName'] ?? '');
+        } catch (\Throwable) {
+        }
 
         try {
             $from = app(\App\Services\Mail\MailSettings::class)->fromAddress();
@@ -375,7 +385,7 @@ final class CampaignSender
         } catch (\Throwable) {
         }
 
-        return ['domain' => $domain, 'mailto' => $mailto];
+        return ['domain' => $domain, 'mailto' => $mailto, 'reply' => $reply, 'store' => $store];
     }
 
     /**
@@ -383,10 +393,30 @@ final class CampaignSender
      *
      * @param  array<string, int>  $links  url => n
      */
-    private function sendOne(object $c, object $row, array $blocks, array $snap, array $links, array $data, array $envelope = ['domain' => '', 'mailto' => '']): bool
+    private function sendOne(object $c, object $row, array $blocks, array $snap, array $links, array $data, array $envelope = ['domain' => '', 'mailto' => '', 'reply' => null, 'store' => '']): bool
     {
         $token = (string) $row->token;
         $unsubscribe = Url::external('/email/u/' . UnsubscribeToken::for((int) $row->id, (string) $row->email));
+        $letter = PersonalLetter::is($c->theme ?? null);
+
+        /*
+         * A LETTER'S LINKS GO STRAIGHT TO THE SHOP (Lane EP), with the UTM
+         * tags CampaignLinks::tag() gives a click at the redirect — the same
+         * utm_campaign=mkt-<id>-…, so the report's "Came to the website"
+         * (visits, add-to-carts, checkouts, and orders by src_campaign) counts
+         * them exactly as before. What a letter's report does NOT have: the
+         * per-person click (first_click_at), the per-link and per-device click
+         * table, and the "orders within 7 days of a click" figure that hangs
+         * off first_click_at. That is the trade: a letter's link is the shop's
+         * own address, the same thing a person would paste, rather than a
+         * /email/c/<40 hex> hop. Google documents neither as a tab signal; it
+         * is chosen because a letter should look like what it is.
+         */
+        $href = $letter
+            ? fn (string $url) => CampaignLinks::tag($url, (int) $c->id, (string) $c->name)
+            : fn (string $url) => isset($links[$url])
+                ? Url::external('/email/c/' . $token . '/' . $links[$url])
+                : $url;
 
         try {
             $out = $this->renderer->render($blocks, self::brandVars($snap['top_brand'] ?? null) + CampaignRenderer::look($c) + [
@@ -396,20 +426,23 @@ final class CampaignSender
                 'subject' => $c->subject,
                 'preheader' => $c->preheader,
                 'unsubscribe' => $unsubscribe,
-                'href' => fn (string $url) => isset($links[$url])
-                    ? Url::external('/email/c/' . $token . '/' . $links[$url])
-                    : $url,
+                'signer' => (string) ($c->letter_signer ?? ''),
+                'href' => $href,
             ]);
 
             $mailable = new CampaignMail(
                 Blocks::mergeName((string) $c->subject, (string) ($row->first_name ?? '')),
-                OpenPixel::inject($out['html'], (int) $row->id, $token),   // Lane ER: the open pixel, when tracking is on
+                // Lane ER: the open pixel, when tracking is on. Lane EP: a
+                // letter carries it only when the campaign asked (letter_opens),
+                // and its report then has no opens.
+                PersonalLetter::tracksOpens($c) ? OpenPixel::inject($out['html'], (int) $row->id, $token) : $out['html'],
                 $out['text'],
                 $unsubscribe,
-                $c->from_name,
+                PersonalLetter::fromName($c, (string) ($envelope['store'] ?? '')) ?? $c->from_name,
                 $envelope['domain'] !== '' ? Bounces\BounceRef::messageId((int) $row->id, (string) $row->email, $envelope['domain']) : null,
                 $envelope['mailto'] !== '' ? 'mailto:' . $envelope['mailto'] . '?subject=' . rawurlencode('unsubscribe ' . UnsubscribeToken::for((int) $row->id, (string) $row->email)) : null,
                 (int) $c->id,
+                $envelope['reply'] ?? null,
             );
 
             $this->log->labelNext(self::MAIL_KIND . '.' . $c->id);
@@ -645,14 +678,19 @@ final class CampaignSender
         $unsubscribe = Url::external('/email/u/0-' . str_repeat('0', 32));
         $out = $this->renderer->render($frozen, self::brandVars($top) + CampaignRenderer::look($c) + [
             'audience' => $audience, 'first_name' => $firstName, 'subject' => $c->subject, 'preheader' => $c->preheader,
-            'unsubscribe' => $unsubscribe,
+            'unsubscribe' => $unsubscribe, 'signer' => (string) ($c->letter_signer ?? ''),
         ]);
+        $envelope = $this->envelopeExtras();
 
         try {
             $this->log->labelNext(self::MAIL_KIND . '.test');
+            // The same From name and Reply-To the real send will carry (Lane
+            // EP), so the test shows the owner what a customer's inbox shows.
             Mail::mailer(MailConfigurator::MAILER)->to($to)->send(new CampaignMail(
                 '[Test] ' . Blocks::mergeName((string) $c->subject, $firstName),
-                $out['html'], $out['text'], $unsubscribe, $c->from_name,
+                $out['html'], $out['text'], $unsubscribe,
+                PersonalLetter::fromName($c, $envelope['store']) ?? $c->from_name,
+                null, null, null, $envelope['reply'],
             ));
         } catch (\Throwable $e) {
             return [false, 'The mail server refused it: ' . Str::limit(class_basename($e) . ': ' . $e->getMessage(), 200)];

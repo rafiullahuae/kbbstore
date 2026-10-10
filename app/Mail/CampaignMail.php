@@ -20,7 +20,23 @@ use Illuminate\Support\HtmlString;
  *
  *   List-Unsubscribe        <https://…/email/u/{token}>
  *   List-Unsubscribe-Post   List-Unsubscribe=One-Click   (RFC 8058)
- *   Precedence              bulk
+ *   Reply-To                a mailbox a person reads (Lane EP)
+ *
+ * NO `Precedence: bulk` ANY MORE (Lane EP). The owner, 10 October: "The
+ * marketing emails are going to promotion folder, we want to send to inbox".
+ * Precedence is not in any RFC's list of standard headers (RFC 2076 calls it
+ * non-standard; RFC 3834 uses it only to keep autoresponders quiet), no
+ * Google sender guideline asks for it, and Gmail does not need it to apply
+ * the bulk-sender rules. All it does is declare, in the sender's own words,
+ * "this is bulk mail" to every filter that reads it. So it goes.
+ *
+ * List-Unsubscribe and List-Unsubscribe-Post STAY, on purpose, although they
+ * are what puts Gmail's "Unsubscribe" link beside the sender's name. Google's
+ * email sender guidelines (support.google.com/a/answer/81126) REQUIRE one-click
+ * unsubscribe for marketing mail from anyone sending in bulk to Gmail, and a
+ * reader who cannot find an unsubscribe presses "Report spam" instead — which
+ * costs far more than a tab. Taking them out would trade Promotions for spam.
+ * tests/Feature/MarketingInboxPlacementTest.php pins both halves.
  *
  * The one-click POST is real here, unlike the newsletter and back-in-stock
  * mails (whose headers explain why THEY must not advertise it): POST
@@ -58,11 +74,24 @@ class CampaignMail extends Mailable
         private ?string $messageId = null,
         private ?string $mailto = null,
         private ?int $campaignId = null,
+        private ?string $replyAddress = null,
     ) {}
 
     public function envelope(): Envelope
     {
         $envelope = new Envelope(subject: $this->subjectLine);
+
+        /*
+         * WHERE A REPLY GOES (Lane EP). A customer who replies is the clearest
+         * sign Gmail gets that this sender belongs in Primary, so the reply
+         * has to reach a person. PersonalLetter::replyTo() hands this the
+         * shop's support mailbox when Store → Mail's own Reply-To is blank,
+         * and null when that one is set — the mailer adds it to every message
+         * already, and a second copy here would print the address twice.
+         */
+        if ($this->replyAddress !== null && filter_var($this->replyAddress, FILTER_VALIDATE_EMAIL) !== false) {
+            $envelope->replyTo(new \Illuminate\Mail\Mailables\Address($this->replyAddress));
+        }
 
         $name = trim((string) $this->fromName);
 
@@ -96,7 +125,7 @@ class CampaignMail extends Mailable
             // https first: RFC 8058 one-click is what Gmail and Apple Mail use.
             'List-Unsubscribe' => '<' . $this->unsubscribeUrl . '>' . ($this->mailto !== null ? ', <' . $this->mailto . '>' : ''),
             'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
-            'Precedence' => 'bulk',
+            // No Precedence: bulk — see the class comment (Lane EP).
         ];
 
         if ($this->campaignId !== null) {

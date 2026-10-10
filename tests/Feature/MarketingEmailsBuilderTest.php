@@ -170,7 +170,7 @@ it('fills new arrivals, on sale (biggest saving first), under a price, best sell
         ->and($only(ProductFill::ids(['fill' => 'sets', 'count' => 8])))->toBe([$set->id]);
 });
 
-it('ships fourteen ready templates, each a valid email under 95 KB with the unsubscribe footer', function () {
+it('ships fifteen ready templates, each a valid email under 95 KB with the unsubscribe footer', function () {
     $keys = array_keys(TemplateLibrary::templates());
 
     // Lane EC added the last two: design C, "New look, less prices", English and Arabic.
@@ -178,10 +178,12 @@ it('ships fourteen ready templates, each a valid email under 95 KB with the unsu
         'new-arrivals', 'weekly-special', 'best-sellers', 'under-54', 'super-sale', 'bundles-sets',
         'brand-spotlight', 'we-miss-you', 'brand-fans', 'autumn-glow', 'welcome', 'skincare-tips',
         'new-look', 'new-look-ar',
+        // Lane EP: the same news as a personal letter, for the Primary tab.
+        'new-look-letter',
     ]);
 
     // Seeded by the migrations as read-only presets, once.
-    expect(DB::table('mkt_templates')->where('preset', true)->whereIn('key', $keys)->count())->toBe(14);
+    expect(DB::table('mkt_templates')->where('preset', true)->whereIn('key', $keys)->count())->toBe(15);
 
     F::product('Glow serum', 70, ['total_sales' => 9]);
 
@@ -197,7 +199,8 @@ it('ships fourteen ready templates, each a valid email under 95 KB with the unsu
 
         expect($out['bytes'])->toBeLessThan(CampaignRenderer::MAX_BYTES, "{$key} is too big")
             ->and($out['html'])->toContain('/email/u/1-')
-            ->and($out['html'])->toContain(($t['theme'] ?? 'standard') === 'playful' ? '/privacy-policy/' : e(__('email.kit.footer_terms')))
+            // A personal letter's footer is plain text: why it came, the address and Unsubscribe.
+            ->and($out['html'])->toContain(match ($t['theme'] ?? 'standard') { 'playful' => '/privacy-policy/', 'letter' => 'Unsubscribe', default => e(__('email.kit.footer_terms')) })
             ->and($out['text'])->toContain('/email/u/1-');
     }
 });

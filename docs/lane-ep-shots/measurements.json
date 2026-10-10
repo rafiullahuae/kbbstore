@@ -1,0 +1,44 @@
+{
+  "after-new-look@375": {
+    "sw": 375,
+    "h": 1947,
+    "imgs": 2,
+    "links": 15,
+    "font": "16px"
+  },
+  "after-letter@375": {
+    "sw": 375,
+    "h": 814,
+    "imgs": 0,
+    "links": 3,
+    "font": "15px"
+  },
+  "before-2.60.472@375": {
+    "sw": 375,
+    "h": 2389,
+    "imgs": 2,
+    "links": 14,
+    "font": "16px"
+  },
+  "after-new-look@640": {
+    "sw": 640,
+    "h": 1813,
+    "imgs": 2,
+    "links": 15,
+    "font": "16px"
+  },
+  "after-letter@640": {
+    "sw": 640,
+    "h": 800,
+    "imgs": 0,
+    "links": 3,
+    "font": "15px"
+  },
+  "before-2.60.472@640": {
+    "sw": 640,
+    "h": 1775,
+    "imgs": 2,
+    "links": 14,
+    "font": "16px"
+  }
+}

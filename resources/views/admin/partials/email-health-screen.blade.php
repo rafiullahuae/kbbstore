@@ -363,8 +363,38 @@
       el('li', { text: 'One-click unsubscribe (List-Unsubscribe + List-Unsubscribe-Post, RFC 8058) — Gmail shows its own "Unsubscribe" button.' }),
       el('li', { text: 'An unsubscribe link and your postal address in the footer, and a plain-text copy.' }),
       el('li', { text: 'The same From address every time, and a Message-ID on your own domain.' }),
-      el('li', { text: 'A Feedback-ID, so Google Postmaster Tools (postmaster.google.com) can show your spam rate per campaign. Keep it under 0.1%; Google starts filtering at 0.3%.' })
+      el('li', { text: 'A Feedback-ID, so Google Postmaster Tools (postmaster.google.com) can show your spam rate per campaign. Keep it under 0.1%; Google starts filtering at 0.3%.' }),
+      el('li', { text: 'A Reply-To that reaches a mailbox you read, and no "Precedence: bulk" header (it only labels the email as bulk to filters; Google does not ask for it).' })
     ])]));
+    inboxView(wrap, d && d.domain ? d.domain : 'kbeautybliss.com');
+  }
+
+  /*
+   * INBOX PLACEMENT (Lane EP). The owner, 10 October: "The marketing emails
+   * are going to promotion folder, we want to send to inbox to our existing
+   * customers." Constant words only; the domain and the mailbox are set with
+   * textContent through el(), like everything else on this screen.
+   */
+  function inboxView(wrap, domain) {
+    var m = (st.ov && st.ov.mailbox) || {};
+    var box = m.mail_account || ('info@' + domain);
+    wrap.appendChild(card('Inbox placement: Primary tab or Promotions', 'The honest part first. Gmail picks the tab for each reader with its own classifier, and nothing a sender adds can force Primary. Promotions is still the inbox, not spam. What moves the odds is a domain Gmail can verify, mail that reads like a letter, and readers who reply or move it to Primary themselves. Do these in order:', [
+      el('ol', { class: 'ebh-steps' }, [
+        el('li', null, ['Turn on DKIM (it shows Missing above until this is done). Sign in at admin.google.com → Apps → Google Workspace → Gmail → Authenticate email → choose ' + domain + ' → Generate new record → DKIM key bit length 2048, prefix selector "google" → Generate. Google shows two boxes. At your DNS host (where ' + domain + ' is managed) add one TXT record:',
+          el('div', { class: 'ebh-why', text: 'Host / Name:' }), copyRow('google._domainkey'),
+          el('div', { class: 'ebh-why', text: 'Value: the whole "TXT record value" Google shows, one line, starting' }), copyRow('v=DKIM1; k=rsa; p='),
+          el('div', { class: 'ebh-why', text: 'Wait until it shows here as Pass (usually an hour, up to 48), then go back to Authenticate email and press Start authentication. If your DNS host refuses a 2048-bit value, generate a 1024-bit one instead.' })]),
+        el('li', null, ['Check SPF. The record on ' + domain + ' (Host "@") must include Google:', copyRow('v=spf1 include:_spf.google.com ~all'),
+          el('div', { class: 'ebh-why', text: 'If an SPF record already exists, add include:_spf.google.com to it rather than making a second one: two SPF records break both.' })]),
+        el('li', null, ['Add DMARC, in watch-only mode. One TXT record, Host / Name:', copyRow('_dmarc'), el('div', { class: 'ebh-why', text: 'Value:' }), copyRow('v=DMARC1; p=none; rua=mailto:' + box),
+          el('div', { class: 'ebh-why', text: 'p=none blocks nothing; it asks inboxes to send reports to ' + box + '. Leave it at none for a few weeks.' })]),
+        el('li', { text: 'In Marketing Emails, use the ready template "New look, less prices — personal letter" (Look: Personal letter style) and put your first name in "Your name", so it arrives from you, not from a shop.' }),
+        el('li', { text: 'Before sending to everyone: Review & send → type your own Gmail address → Send me a test → open Gmail and look at which tab it landed in.' }),
+        el('li', { text: 'Warm up: send first to your most engaged customers — in Marketing Emails make a group with the rule Last order · within the last … days · 90 and send the letter to them first, then to everyone else a few days later. Opens, replies and "move to Primary" from people who know you teach Gmail the fastest.' }),
+        el('li', { text: 'Ask for the reply. The letter already invites one and asks readers to drag it into Primary; Gmail then offers them "Do this for future messages", which is the one switch that really decides their tab.' }),
+        el('li', { text: 'Keep volume steady: a similar number of emails on a regular day each week, rather than a big send after weeks of silence. Keep the pace setting on, and watch Spam complaints here.' })
+      ])
+    ]));
   }
 
   /* The sidebar row is AdminNav's (server-drawn); this returns it, adding nothing. */

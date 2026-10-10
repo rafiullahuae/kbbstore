@@ -13,6 +13,9 @@ namespace App\Services\Marketing;
  *                     Lane ED's "New Look, Less Prices" previews on 10 October
  *                     — pastel cards with type stickers, the highlighter
  *                     headline, emoji benefit chips, the dark closing button.
+ *           letter    Lane EP's personal letter (PersonalLetter): "Hi {first
+ *                     name}," and a few paragraphs, the best chance a
+ *                     campaign has at Gmail's Primary tab.
  *   locale  en | ar   ar renders right to left with the theme's Arabic words.
  *
  * Both are a select: clean*() stores one of its own options or the default,
@@ -28,6 +31,8 @@ final class EmailTheme
     public const THEMES = [
         'standard' => 'Standard (the shop\'s email look)',
         'playful' => 'Playful K-beauty (New look)',
+        // Lane EP: a short letter from a person (PersonalLetter).
+        'letter' => 'Personal letter style (best chance for the Primary tab)',
     ];
 
     public const LOCALES = [

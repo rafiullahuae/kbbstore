@@ -13,6 +13,7 @@ use App\Services\Marketing\CampaignRenderer;
 use App\Services\Marketing\CampaignReport;
 use App\Services\Marketing\CampaignSender;
 use App\Services\Marketing\CampaignTick;
+use App\Services\Marketing\PersonalLetter;
 use App\Services\Marketing\SendLimits;
 use App\Services\SettingsService;
 use App\Support\Money;
@@ -227,6 +228,9 @@ final class MktCampaignsController extends Controller
             'subject' => (string) $c->subject,
             'preheader' => (string) $c->preheader,
             'from_name' => (string) ($c->from_name ?? ''),
+            // Lane EP: the personal letter's signer and whether it counts opens.
+            'letter_signer' => (string) ($c->letter_signer ?? ''),
+            'letter_opens' => (bool) ($c->letter_opens ?? false),
             'segment_id' => $c->segment_id === null ? null : (int) $c->segment_id,
             'template_id' => $c->template_id === null ? null : (int) $c->template_id,
             ...CampaignRenderer::look($c),
@@ -265,6 +269,9 @@ final class MktCampaignsController extends Controller
             // Lane EC: a select stores one of its own options.
             'theme' => ['sometimes', 'string', 'in:' . implode(',', array_keys(\App\Services\Marketing\EmailTheme::THEMES))],
             'locale' => ['sometimes', 'string', 'in:' . implode(',', array_keys(\App\Services\Marketing\EmailTheme::LOCALES))],
+            // Lane EP: the letter's signer (one line) and its open pixel.
+            'letter_signer' => ['sometimes', 'nullable', 'string', 'max:' . PersonalLetter::SIGNER_MAX, ...$line],
+            'letter_opens' => ['sometimes', 'boolean'],
         ], [
             'regex' => 'A subject, preview line or name is one line: line breaks are not allowed.',
         ]);
@@ -275,6 +282,14 @@ final class MktCampaignsController extends Controller
             if (array_key_exists($k, $data)) {
                 $row[$k] = trim((string) $data[$k]);
             }
+        }
+
+        if (array_key_exists('letter_signer', $data)) {
+            $row['letter_signer'] = PersonalLetter::signer((string) $data['letter_signer']);
+        }
+
+        if (array_key_exists('letter_opens', $data)) {
+            $row['letter_opens'] = (bool) $data['letter_opens'];
         }
 
         if (array_key_exists('segment_id', $data)) {
@@ -332,6 +347,8 @@ final class MktCampaignsController extends Controller
             'subject' => $c->subject,
             'preheader' => $c->preheader,
             'from_name' => $c->from_name,
+            'letter_signer' => $c->letter_signer ?? null,
+            'letter_opens' => (bool) ($c->letter_opens ?? false),
             'segment_id' => $c->segment_id,
             ...CampaignRenderer::look($c),
             'status' => 'draft',
@@ -376,6 +393,7 @@ final class MktCampaignsController extends Controller
             'preheader' => (string) $request->input('preheader', ''),
             'unsubscribe' => \App\Support\Url::external('/email/u/0-' . str_repeat('0', 32)),
             'markers' => true,
+            'signer' => (string) $request->input('letter_signer', ''),
         ] + CampaignRenderer::look((object) ['theme' => $request->input('theme'), 'locale' => $request->input('locale')]));
 
         return response()->json([
@@ -416,6 +434,7 @@ final class MktCampaignsController extends Controller
             'data' => $data, 'audience' => $audienceKey, 'first_name' => 'Aisha',
             'subject' => $c->subject, 'preheader' => $c->preheader,
             'unsubscribe' => \App\Support\Url::external('/email/u/0-' . str_repeat('0', 32)),
+            'signer' => (string) ($c->letter_signer ?? ''),
         ] + CampaignRenderer::look($c));
 
         $brand = EmailBranding::forMailable(true, \App\Mail\CampaignMail::class);
@@ -445,6 +464,19 @@ final class MktCampaignsController extends Controller
             'minutes' => $perMinute > 0 ? (int) ceil($emailable / $perMinute) : null,
             'limits' => $this->limitsState(),
             'cron' => $this->cronState(),
+            /*
+             * Lane EP: the inbox as the customer will see it — the From name
+             * the send will carry, where a reply lands, and for a letter what
+             * it left out and what its report will not have.
+             */
+            'inbox' => [
+                'from_name' => PersonalLetter::fromName($c, (string) ($brand['storeName'] ?? '')) ?? (string) ($c->from_name ?? ''),
+                'reply_to' => PersonalLetter::replyLandsAt(),
+                'letter' => PersonalLetter::is($c->theme ?? null),
+                'signer' => PersonalLetter::signer($c->letter_signer ?? ''),
+                'opens' => PersonalLetter::tracksOpens($c),
+                'left_out' => PersonalLetter::is($c->theme ?? null) ? PersonalLetter::leftOut($blocks) : [],
+            ],
             'can_send' => $this->canSend($request),
             'admin_email' => (string) ($request->user('admin')->email ?? ''),
         ]);

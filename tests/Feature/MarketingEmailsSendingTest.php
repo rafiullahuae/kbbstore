@@ -95,7 +95,8 @@ it('sends a whole campaign: one message per address, with the unsubscribe header
     $headers = $mail->headers()->text;
     expect($headers['List-Unsubscribe'])->toMatch('#^<https?://[^>]+/email/u/[0-9a-z]+-[0-9a-f]{32}>$#')
         ->and($headers['List-Unsubscribe-Post'])->toBe('List-Unsubscribe=One-Click')
-        ->and($headers['Precedence'])->toBe('bulk');
+        // Lane EP: no Precedence: bulk — MarketingInboxPlacementTest says why.
+        ->and($headers)->not->toHaveKey('Precedence');
 
     $html = $mail->render();
     expect($html)->toContain('/email/u/')

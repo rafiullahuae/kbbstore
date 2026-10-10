@@ -236,6 +236,9 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
   /* Estimated rendered height of each block at 600 wide (no measuring). */
   var EST = { mini_header: 150, hero_image: 330, heading: 230, text: 110, button: 90, coupon: 170, image: 300, columns: 330, divider: 30, social: 80, badges: 150, footer: 340 };
 
+  /* PersonalLetter::MAX_LINKS (Lane EP); MarketingInboxPlacementTest keeps the two equal. */
+  var LETTER_LINKS = 2;
+
   var STATUS = {
     draft: ['grey', 'Draft'], scheduled: ['amber', 'Scheduled'], sending: ['blue', 'Sending'], paused: ['amber', 'Paused'],
     sent: ['green', 'Sent'], cancelled: ['grey', 'Cancelled'], failed: ['red', 'Did not start']
@@ -443,7 +446,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
         + (t.preset ? '' : '<button type="button" class="btn ghost sm" data-mke="tedit" data-id="' + t.id + '">Edit</button><button type="button" class="btn ghost sm" data-mke="tdel" data-id="' + t.id + '">Delete</button>');
       return '<div class="mke-card mke-tpl"><div class="mke-thumb"><iframe loading="lazy" sandbox="" tabindex="-1" aria-hidden="true" title="" src="' + esc(base() + '/templates/' + t.id + '/preview') + '"></iframe></div>'
         + '<div><b style="font-size:14px">' + esc(t.name) + '</b><div class="mke-h" style="margin-top:2px">' + esc(t.description || '') + '</div></div>'
-        + '<div>' + (t.fills || []).map(function (f) { return '<span class="mke-chip">' + esc(f) + '</span>'; }).join('') + (t.theme === 'playful' ? '<span class="mke-chip">Playful K-beauty look</span>' : '') + (t.locale === 'ar' ? '<span class="mke-chip">Arabic · right to left</span>' : '') + (t.preset ? '<span class="mke-chip">Ready · read-only</span>' : '') + '</div>'
+        + '<div>' + (t.fills || []).map(function (f) { return '<span class="mke-chip">' + esc(f) + '</span>'; }).join('') + (t.theme === 'playful' ? '<span class="mke-chip">Playful K-beauty look</span>' : '') + (t.theme === 'letter' ? '<span class="mke-chip">Personal letter · Primary tab</span>' : '') + (t.locale === 'ar' ? '<span class="mke-chip">Arabic · right to left</span>' : '') + (t.preset ? '<span class="mke-chip">Ready · read-only</span>' : '') + '</div>'
         + '<div class="mke-acts">' + acts + '</div></div>';
     }).join('');
     if (S.tplTab === 'ready') {
@@ -656,6 +659,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
       if (!S.groups) S.groups = (await api('GET', '/groups')).data;
       S.b = {
         kind: kind, id: d.id, name: d.name, subject: d.subject || '', preheader: d.preheader || '', from_name: d.from_name || '', segment_id: d.segment_id || null,
+        letter_signer: d.letter_signer || '', letter_opens: !!d.letter_opens,
         theme: d.theme || 'standard', locale: d.locale || 'en', ideas: d.subject_ideas || [],
         blocks: kind === 'template' ? d.blocks_list : d.blocks, editable: kind === 'template' ? !d.preset : d.editable, preset: !!d.preset, status: d.status || 'draft',
         sel: 0, device: 'desktop', left: 'blocks', right: 'block', past: [], future: [], saved: d.updated_at, preview: null, dirty: false, warnings: d.warnings || []
@@ -856,7 +860,12 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
       + '<label class="mke-f"><span class="mke-l">Preview line</span><input class="mke-in" data-mke-e="preheader" maxlength="200" value="' + esc(b.preheader) + '"' + dis + '><span class="mke-h">The grey line an inbox shows after the subject.</span></label>'
       + '<div class="mke-grid mke-g2" style="gap:10px"><label class="mke-f"><span class="mke-l">Look</span>' + sel('theme', Object.keys((S.opts && S.opts.themes) || { standard: 'Standard' }).map(function (k) { return [k, S.opts.themes[k]]; }), b.theme, 'data-mke-e="theme"' + dis) + '</label>'
       + '<label class="mke-f"><span class="mke-l">Language</span>' + sel('locale', Object.keys((S.opts && S.opts.locales) || { en: 'English' }).map(function (k) { return [k, S.opts.locales[k]]; }), b.locale, 'data-mke-e="locale"' + dis) + '</label></div>'
-      + '<div class="mke-h" style="margin:-4px 0 12px">Playful K-beauty is the “New look” design: pastel cards, highlighter headline, benefit chips. Arabic prints the email right to left; write the words in Arabic.</div>';
+      + '<div class="mke-h" style="margin:-4px 0 12px">Playful K-beauty is the “New look” design: pastel cards, highlighter headline, benefit chips. Arabic prints the email right to left; write the words in Arabic.</div>'
+      + (b.theme === 'letter' ? '<div class="mke-note" style="margin:0 0 12px">✉️ <b>Personal letter style.</b> Prints “Hi {first name},”, your text, at most ' + LETTER_LINKS + ' plain links and one small picture, a line inviting a reply and your signature. Product grids, prices, coupons, buttons (they become a plain link), chips and banners are left out. Gmail decides the tab for each reader — nothing can force Primary — but this is the style people keep there.</div>' : '');
+    if (b.kind === 'campaign' && b.theme === 'letter') {
+      h += '<label class="mke-f"><span class="mke-l">Your name (letter style)</span><input class="mke-in" data-mke-e="letter_signer" maxlength="60" value="' + esc(b.letter_signer) + '" placeholder="e.g. Rafi"' + dis + '><span class="mke-h">Arrives from “' + esc((b.letter_signer || 'Your name') + ' from K-Beauty Bliss') + '” and is signed with it. Leave blank to send from the From name below.</span></label>'
+        + '<label class="mke-f" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" data-mke-e="letter_opens"' + (b.letter_opens ? ' checked' : '') + dis + ' style="margin-top:3px"><span><span class="mke-l" style="display:inline">Count opens</span><span class="mke-h" style="display:block">Off: no invisible picture in the letter, and its report shows no opens. Its links go straight to the shop with campaign tags, so visits and orders from them are still counted under Came to the website; per-person clicks are not.</span></span></label>';
+    }
     if (b.kind === 'campaign') {
       h += '<label class="mke-f"><span class="mke-l">From name</span><input class="mke-in" data-mke-e="from_name" maxlength="120" value="' + esc(b.from_name) + '" placeholder="K Beauty Bliss"' + dis + '><span class="mke-h">The address is the shop\'s own (Emails → Sending &amp; delivery).</span></label>'
         + '<label class="mke-f"><span class="mke-l">Group</span>' + sel('g', [['', 'Choose on the next step…']].concat(gs.map(function (g) { return [g.id, g.name + ' · ' + (g.audience === 'subscribers' ? 'Subscribers' : 'Customers')]; })), b.segment_id, 'data-mke-e="segment_id"' + dis) + '<span class="mke-h">Fills “This group\'s top brand” and the footer\'s why-line in the preview.</span></label>'
@@ -895,7 +904,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
   var refresh = debounce(async function () {
     var b = S.b; if (!b || S.view !== 'builder') return;
     try {
-      var r = await api('POST', '/preview', { blocks: b.blocks, subject: b.subject, preheader: b.preheader, segment_id: b.segment_id, theme: b.theme, locale: b.locale });
+      var r = await api('POST', '/preview', { blocks: b.blocks, subject: b.subject, preheader: b.preheader, segment_id: b.segment_id, theme: b.theme, locale: b.locale, letter_signer: b.letter_signer || '' });
       b.preview = r.data;
       if (b.preview && b.preview.top_brand === undefined) b.preview.top_brand = null;
     } catch (e) { toastMsg(why(e)); return; }
@@ -916,7 +925,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
   var save = debounce(async function () {
     var b = S.b; if (!b || !b.editable) return;
     var body = { name: b.name, subject: b.subject, preheader: b.preheader, blocks: b.blocks, theme: b.theme, locale: b.locale };
-    if (b.kind === 'campaign') { body.from_name = b.from_name; body.segment_id = b.segment_id; }
+    if (b.kind === 'campaign') { body.from_name = b.from_name; body.segment_id = b.segment_id; body.letter_signer = b.letter_signer; body.letter_opens = !!b.letter_opens; }
     try {
       var r = await api('PUT', (b.kind === 'template' ? '/templates/' : '/campaigns/') + b.id, body);
       if (!r.ok) { toastMsg(refusal(r.data)); b.dirty = false; return; }
@@ -1036,7 +1045,8 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     var steps = tabBar('steps', [['design', '1 · Design ✓'], ['customers', '2 · Customers' + (d.group ? ' ✓' : '')], ['send', '3 · Send']], 'send', 'Steps');
     var head = '<button type="button" class="mke-back" data-mke="home">← Campaigns</button><div class="page-head"><h2>Review &amp; send · ' + esc(c.name) + '</h2><p>Step 3 of 3 — design ✓ · customers ' + (d.group ? '✓' : '—') + ' · send</p></div>' + steps;
     var len = (c.subject || '').length;
-    var inbox = '<div class="mke-card"><h3>In the inbox</h3><div class="mke-inbox"><div class="from">' + esc(c.from_name || 'K Beauty Bliss') + '</div><div class="subj"><b>' + esc(c.subject || '(no subject yet)') + '</b></div><div class="pre">' + esc(c.preheader || '') + '</div></div><div style="height:12px"></div>'
+    var ib = d.inbox || {};
+    var inbox = '<div class="mke-card"><h3>In the inbox</h3><div class="mke-inbox"><div class="from">' + esc(ib.from_name || c.from_name || 'K Beauty Bliss') + '</div><div class="subj"><b>' + esc(c.subject || '(no subject yet)') + '</b></div><div class="pre">' + esc(c.preheader || '') + '</div></div><div style="height:12px"></div>'
       + '<label class="mke-f"><span class="mke-l">Subject</span><input class="mke-in" data-mke-rs="subject" maxlength="200" value="' + esc(c.subject) + '"' + (locked ? ' disabled' : '') + '><span class="mke-h">' + len + ' characters' + (len <= 45 ? ' · fits on a phone' : ' · a phone shows about 45') + '</span></label>'
       + '<label class="mke-f"><span class="mke-l">Preview line</span><input class="mke-in" data-mke-rs="preheader" maxlength="200" value="' + esc(c.preheader) + '"' + (locked ? ' disabled' : '') + '></label></div>';
     var reasons = n ? Object.keys(n.reasons || {}).filter(function (k) { return n.reasons[k]; }).map(function (k) { return num(n.reasons[k]) + ' ' + k; }) : [];
@@ -1056,6 +1066,11 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     var checks = [];
     checks.push((ck.unsubscribe ? '✅' : '❌') + ' Unsubscribe link and one-click unsubscribe');
     checks.push((ck.addresses.length === 2 ? '✅' : ck.addresses.length ? '⚠️' : '❌') + (ck.addresses.length === 2 ? ' Dubai and Korea addresses in the footer' : ' ' + (ck.addresses.length ? 'Only the ' + esc(ck.addresses.join(' and ')) + ' address' : 'No postal address — it cannot be sent until one is') + ' in the footer — fill both in Emails → Design &amp; branding'));
+    checks.push(ib.reply_to ? '✅ Replies go to ' + esc(ib.reply_to) : '⚠️ Replies reach nobody — set Emails → Sending &amp; delivery → Reply-To address (a reply is the best sign for Gmail\'s Primary tab)');
+    if (ib.letter) {
+      checks.push('✉️ Personal letter style · ' + (ib.signer ? 'from “' + esc(ib.from_name) + '”' : '⚠️ add your name in the builder so it arrives from a person') + ' · ' + (ib.opens ? 'counts opens' : 'no open pixel') + ' · links go straight to the shop');
+      if ((ib.left_out || []).length) checks.push('ℹ️ Left out in letter style: ' + esc(ib.left_out.join(', ')));
+    }
     checks.push(ck.test ? '✅ Test sent to ' + esc(ck.test.to) + ' at ' + esc(clock(ck.test.at)) : '⚠️ No test sent yet');
     (ck.fills || []).forEach(function (f) {
       if (f.kind === 'products') checks.push((f.count ? '✅' : '⚠️') + ' Products filled: ' + (d.top_brand && f.fill === 'group_top_brand' ? esc(d.top_brand.name) + ', ' : '') + num(f.count) + ' in stock' + (f.count < f.wanted ? ' (of ' + num(f.wanted) + ' wanted)' : ''));
@@ -1080,6 +1095,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
         + (progress.status === 'sent' || progress.status === 'cancelled' ? '<div class="mke-row" style="margin-top:10px"><span class="mke-sp"></span><button type="button" class="btn sm" data-mke="report" data-id="' + c.id + '">See the report</button></div>' : '');
     } else {
       sendArea = '<div class="mke-row" style="margin-top:12px"><input class="mke-in" id="mkeTestTo" style="width:auto;flex:1;min-width:160px" value="' + esc(R.testTo || '') + '" aria-label="Send the test to"><button type="button" class="btn ghost" data-mke="test">Send me a test</button></div>'
+        + '<div class="mke-h">Check the tab: send the test to a Gmail address of yours, open Gmail and see whether it landed in Primary or Promotions. Gmail decides per reader, so treat it as a guide, not a promise.</div>'
         + '<div class="mke-row" style="margin-top:12px"><span class="mke-sp"></span>' + (c.status === 'scheduled' && d.can_send ? '<button type="button" class="btn ghost" data-mke="unsched">Unschedule</button>' : '')
         + '<button type="button" class="btn" data-mke="go"' + (canGo ? '' : ' disabled') + '>' + esc(primary) + '</button></div>'
         + (R.typing ? '<div class="mke-typed"><label for="mkeConfirm" class="mke-l" style="margin:0">Type <b>' + num(n.emailable) + '</b> to confirm:</label><input class="mke-in" id="mkeConfirm" inputmode="numeric" autocomplete="off"><button type="button" class="btn" data-mke="confirm">' + (R.when === 'schedule' ? 'Schedule' : 'Send to ' + num(n.emailable)) + '</button></div>' : '')
@@ -1240,7 +1256,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
   async function flushSave() {
     var b = S.b; if (!b || !b.editable) return;
     var body = { name: b.name, subject: b.subject, preheader: b.preheader, blocks: b.blocks, theme: b.theme, locale: b.locale };
-    if (b.kind === 'campaign') { body.from_name = b.from_name; body.segment_id = b.segment_id; }
+    if (b.kind === 'campaign') { body.from_name = b.from_name; body.segment_id = b.segment_id; body.letter_signer = b.letter_signer; body.letter_opens = !!b.letter_opens; }
     var r = await api('PUT', '/campaigns/' + b.id, body);
     if (!r.ok) toastMsg(refusal(r.data));
   }
@@ -1283,6 +1299,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
       change(function (b) { var p = b.blocks[b.sel].props; p.items = p.items || []; while (p.items.length <= ci) p.items.push({ image: '', title: '', text: '', href: '' }); p.items[ci][ck] = t.value; }, false);
       return;
     }
+    if (t.hasAttribute('data-mke-e') && S.b && t.type === 'checkbox') { S.b[t.getAttribute('data-mke-e')] = t.checked; S.b.dirty = true; save(); refresh(); return; }
     if (t.hasAttribute('data-mke-e') && S.b && t.tagName !== 'SELECT') { S.b[t.getAttribute('data-mke-e')] = t.value; S.b.dirty = true; save(); refresh(); return; }
     if (t.hasAttribute('data-mke-rv')) {
       var ri = parseInt(t.getAttribute('data-mke-rv'), 10), rule = S.g.rules[ri], part = t.getAttribute('data-part');

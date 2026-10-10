@@ -256,7 +256,7 @@ it('sends every marketing email with one-click + mailto unsubscribe, a signed Me
     $lu = $h->get('List-Unsubscribe')->getBodyAsString();
     expect($lu)->toMatch('#^<https?://[^>]+/email/u/[0-9a-z]+-[0-9a-f]{32}>, <mailto:info\+unsubscribe@kbeautybliss\.com\?subject=unsubscribe%20[0-9a-z]+-[0-9a-f]{32}>$#')
         ->and($h->get('List-Unsubscribe-Post')->getBodyAsString())->toBe('List-Unsubscribe=One-Click')
-        ->and($h->get('Precedence')->getBodyAsString())->toBe('bulk')
+        ->and($h->has('Precedence'))->toBeFalse()   // Lane EP: MarketingInboxPlacementTest
         ->and($h->get('Feedback-ID')->getBodyAsString())->toMatch('/^\d+:mkt:kbb$/')
         ->and($h->get('Message-ID')->getBodyAsString())->toMatch('/^<[0-9a-z]+\.[0-9a-f]{32}@kbeautybliss\.com>$/')
         ->and($email->getFrom()[0]->getAddress())->toBe('info@kbeautybliss.com')
