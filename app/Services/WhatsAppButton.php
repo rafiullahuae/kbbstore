@@ -535,7 +535,7 @@ class WhatsAppButton
      * ONLY what a visitor who asked for less motion must not get: every
      * animation and transition stops, and the bubble is simply there.
      */
-    private const CSS_TAIL = '@media (prefers-reduced-motion:reduce){.kbw,.kbw *{animation:none!important;transition:none!important}}'
+    private const CSS_TAIL = '@media (prefers-reduced-motion:reduce){.kbw,.kbw *,.kbw-d::before{animation:none!important;transition:none!important}}'
         .'@media print{.kbw{display:none}}';
 
     /**
@@ -563,11 +563,22 @@ class WhatsAppButton
             .'.kbw-v:nth-child(6n+6) i{--g:#E3F0FB;--h:#5A3825;--s:#EBC0A0;--c:#F5A3B8}'
             .'.kbw-G .kbw-r{background:#25D366;opacity:.28;animation:kbwP 2.6s ease-out infinite}'
             .'.kbw-c{position:absolute;right:calc(100% + 26px);bottom:8px;display:flex;align-items:center;gap:9px;white-space:nowrap;background:#fff;border:1px solid #F1E3E8;border-radius:999px;padding-block:7px;padding-inline:12px 16px;box-shadow:0 8px 22px rgba(42,34,40,.13);animation:kbwN 3.6s ease-in-out infinite;color:#2A2228;text-align:start}'
-            .'.kbw-d{flex:none;width:9px;height:9px;border-radius:50%;background:#25D366;box-shadow:0 0 0 3px rgba(37,211,102,.22);animation:kbwK 1.6s ease-in-out infinite}'
+            .'.kbw-d{position:relative;flex:none;width:9px;height:9px}'
+            // The pulse is a ring that grows and fades -- on a ::before, by
+            // transform and opacity (Lane AN). It used to animate box-shadow,
+            // which only the main thread can run: measured on the product page
+            // at 390px (4x CPU), this 9px dot ALONE cost 600 style recalcs and
+            // 2.0 s of main-thread task time in 10 idle seconds. The ring is
+            // the old shadow's own disc (3px spread at .22, radius 7.5px) and
+            // goes to scale 1.4 / opacity 0, which is exactly the old 6px
+            // spread at alpha 0; the dot sits on top in ::after.
+            .'.kbw-d::before,.kbw-d::after{content:"";position:absolute;border-radius:50%}'
+            .'.kbw-d::before{inset:-3px;background:rgba(37,211,102,.22);animation:kbwK 1.6s ease-in-out infinite}'
+            .'.kbw-d::after{inset:0;background:#25D366}'
             .'.kbw-c b{display:block;font-size:13.5px;line-height:1.15;font-weight:700}'
             .'.kbw-c small{display:block;font-size:11.5px;color:#128C7E;font-weight:600;line-height:1.2}'
             .'.kbw-G .kbw-b{bottom:calc(100% + 10px)}'
-            .'@keyframes kbwK{50%{box-shadow:0 0 0 6px rgba(37,211,102,0)}}'
+            .'@keyframes kbwK{50%{transform:scale(1.4);opacity:0}}'
             .'@keyframes kbwN{0%,80%,100%{transform:none}88%{transform:translateX(var(--nx,-4px))}}',
     ];
 

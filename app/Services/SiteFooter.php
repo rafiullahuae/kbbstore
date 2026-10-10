@@ -988,6 +988,10 @@ final class SiteFooter
             // (kbb.css, .kft-sheen-name), so the text travels in an attribute —
             // escaped by Blade — only when that is where the shine is.
             'name_sheen' => $look['sheen'] === 'name' && $name !== '',
+            // The drifting colours on the big name are a second copy of it
+            // too (kbb.css, .kft-nm: the compositor moves the gradient, Lane
+            // AN), printed only while the drift is on.
+            'name_drift' => (bool) ($c['site_motion'] ?? true) && $name !== '',
             // The app row (Lane FB): null when it is not printed.
             'app' => $this->app($c),
         ];
