@@ -213,6 +213,106 @@ final class TemplateLibrary
                     $foot,
                 ],
             ],
+            /*
+             * DESIGN C, "PLAYFUL K-BEAUTY" (Lane EC). The owner picked it from
+             * Lane ED's "New Look, Less Prices" previews on 10 October — "this
+             * is finalized" — block for block: the tagline above the card, the
+             * highlighter headline and its intro, the still life, "Start
+             * shopping", "Fresh picks for less" over six pastel cards (3 across,
+             * 2 on a phone), the four benefit chips, the dark "Shop the new
+             * prices" and the footer. The cards fill themselves (Super Sale,
+             * biggest saving first); switch the block to Manual to pick them.
+             * No returns anywhere: the shop does not offer them.
+             */
+            'new-look' => self::newLook('en'),
+            'new-look-ar' => self::newLook('ar'),
+        ];
+    }
+
+    /**
+     * The other subject lines a ready template offers beside its own (the
+     * builder shows them as one-tap suggestions). Lane ED's three for C.
+     *
+     * @return list<string>
+     */
+    public static function subjectIdeas(?string $key): array
+    {
+        return match ($key) {
+            'new-look' => ['We got a glow-up, and so did the prices 🌸', 'New look, less prices: fresh picks inside', 'Your favourite K-beauty shop just got prettier'],
+            'new-look-ar' => ['جدّدنا إطلالتنا… وخفّضنا الأسعار 🌸', 'إطلالة جديدة وأسعار أقل: مختارات طازجة بانتظارك', 'متجرك الكوري المفضّل صار أجمل'],
+            default => [],
+        };
+    }
+
+    /** The look and language a ready template is made in (EmailTheme); standard English unless said. */
+    public static function lookOf(?string $key): array
+    {
+        $t = $key !== null ? (self::templates()[$key] ?? null) : null;
+
+        return ['theme' => (string) ($t['theme'] ?? 'standard'), 'locale' => (string) ($t['locale'] ?? 'en')];
+    }
+
+    /** @return array{name:string, category:string, description:string, subject:string, preheader:string, theme:string, locale:string, blocks:list<array{type:string, props:array<string,mixed>}>} */
+    private static function newLook(string $locale): array
+    {
+        $b = static fn (string $type, array $props = []) => Blocks::make($type, $props);
+        $ar = $locale === 'ar';
+        $w = $ar ? [
+            'name' => 'New look, less prices (Arabic)',
+            'description' => 'Design C in Arabic, right to left: the same blocks and products, the Arabic words.',
+            'subject' => self::subjectIdeas('new-look-ar')[0],
+            'preheader' => 'تجدّد متجرنا وانخفضت الأسعار. ست مختارات جديدة بانتظارك.',
+            'tagline' => '✿ متجرنا بحلّة جديدة ✿',
+            'title' => 'إطلالة جديدة،', 'highlight' => 'وأسعار أقل',
+            'lead' => "جدّدنا متجرنا بالكامل، وصارت منتجات العناية الكورية التي تحبينها ألطف على ميزانيتك. تعالي وألقي\u{00A0}نظرة\u{00A0}💕",
+            'alt' => 'لاصقات العيون من numbuzin وبخاخ Anua وسيروم Anua TXA وجرعة فيتامين C من Arencia على دوائر بألوان الباستيل',
+            'start' => 'ابدئي التسوّق ←',
+            'picks' => 'مختارات جديدة بأسعار أقل', 'picksLead' => 'ست لمسات فاخرة صغيرة، بأسعارها الجديدة',
+            'cta' => 'تسوّقي الآن',
+            'badges' => [
+                ['icon' => 'truck', 'bold' => 'توصيل مجاني', 'text' => 'للطلبات فوق AED 199'],
+                ['icon' => 'bolt', 'bold' => 'خلال 1–3 أيام', 'text' => 'في جميع أنحاء الإمارات'],
+                ['icon' => 'card', 'bold' => 'تابي، تمارا', 'text' => '، البطاقة أو الدفع نقدًا'],
+                ['icon' => 'sparkles', 'bold' => 'أصلية 100%', 'text' => '، من كوريا مباشرة'],
+            ],
+            'end' => 'تسوّقي الأسعار الجديدة',
+            'note' => 'صُنعت بحب (وكثير من السيروم) في دبي ✿',
+        ] : [
+            'name' => 'New look, less prices',
+            'description' => 'Design C · Playful K-beauty: highlighter headline, six pastel product cards, four benefit chips. Products fill themselves (Super Sale) or pick them by hand.',
+            'subject' => self::subjectIdeas('new-look')[0],
+            'preheader' => 'We got a glow-up, and so did the prices. Six fresh picks are waiting.',
+            'tagline' => '✿ glow-up alert ✿',
+            'title' => 'New look,', 'highlight' => 'less prices',
+            'lead' => "We gave our shop a glow-up, and your favourite K-beauty got friendlier on the wallet. Come and have a look\u{00A0}around\u{00A0}💕",
+            'alt' => Blocks::ART['new-look-c']['alt'],
+            'start' => 'Start shopping →',
+            'picks' => 'Fresh picks for less', 'picksLead' => 'Six little luxuries, newly priced',
+            'cta' => 'Shop now',
+            'badges' => Blocks::BADGE_DEFAULTS,
+            'end' => 'Shop the new prices',
+            'note' => 'Made with love (and a lot of serum) in Dubai ✿',
+        ];
+
+        return [
+            'name' => $w['name'],
+            'category' => 'Seasonal',
+            'description' => $w['description'],
+            'subject' => $w['subject'],
+            'preheader' => $w['preheader'],
+            'theme' => 'playful',
+            'locale' => $locale,
+            'blocks' => [
+                $b('mini_header', ['topbar' => true, 'nav' => false, 'tagline' => $w['tagline']]),
+                $b('heading', ['style' => 'hero', 'icon' => 'none', 'eyebrow' => '', 'title' => $w['title'], 'highlight' => $w['highlight'], 'lead' => $w['lead']]),
+                $b('hero_image', ['art' => 'new-look-c', 'alt' => $w['alt'], 'href' => '/super-sale/']),
+                $b('button', ['label' => $w['start'], 'href' => '/super-sale/']),
+                $b('heading', ['style' => 'title', 'icon' => 'blossom', 'title' => $w['picks'], 'lead' => $w['picksLead']]),
+                $b('product_grid', ['fill' => 'on_sale', 'order' => 'biggest_saving', 'count' => 6, 'columns' => '3', 'layout' => 'playful', 'cta' => $w['cta']]),
+                $b('badges', ['items' => $w['badges']]),
+                $b('button', ['label' => $w['end'], 'href' => '/super-sale/', 'style' => 'dark']),
+                $b('footer', ['note' => $w['note']]),
+            ],
         ];
     }
 

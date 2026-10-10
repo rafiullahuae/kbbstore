@@ -189,6 +189,8 @@ final class MktCampaignsController extends Controller
             'blocks' => json_encode($blocks),
             'subject' => (string) ($t->subject ?? ''),
             'preheader' => (string) ($t->preheader ?? ''),
+            // The template's look and language come with it (Lane EC).
+            ...($t !== null ? CampaignRenderer::look($t) : []),
             'status' => 'draft',
             'created_by' => $request->user('admin')?->id,
             'created_at' => now(),
@@ -217,6 +219,7 @@ final class MktCampaignsController extends Controller
         $warnings = [];
         $errors = [];
         $blocks = Blocks::clean(json_decode((string) $c->blocks, true), $errors, $warnings);
+        $key = $c->template_id !== null ? DB::table('mkt_templates')->where('id', $c->template_id)->value('key') : null;
 
         return [
             'id' => (int) $c->id,
@@ -226,6 +229,8 @@ final class MktCampaignsController extends Controller
             'from_name' => (string) ($c->from_name ?? ''),
             'segment_id' => $c->segment_id === null ? null : (int) $c->segment_id,
             'template_id' => $c->template_id === null ? null : (int) $c->template_id,
+            ...CampaignRenderer::look($c),
+            'subject_ideas' => \App\Services\Marketing\TemplateLibrary::subjectIdeas(is_string($key) ? $key : null),
             'status' => (string) $c->status,
             'blocks' => $blocks,
             'warnings' => array_merge($errors, $warnings),
@@ -257,13 +262,16 @@ final class MktCampaignsController extends Controller
             'from_name' => ['sometimes', 'nullable', 'string', 'max:120', ...$line],
             'segment_id' => ['sometimes', 'nullable', 'integer'],
             'blocks' => ['sometimes', 'array'],
+            // Lane EC: a select stores one of its own options.
+            'theme' => ['sometimes', 'string', 'in:' . implode(',', array_keys(\App\Services\Marketing\EmailTheme::THEMES))],
+            'locale' => ['sometimes', 'string', 'in:' . implode(',', array_keys(\App\Services\Marketing\EmailTheme::LOCALES))],
         ], [
             'regex' => 'A subject, preview line or name is one line: line breaks are not allowed.',
         ]);
 
         $row = ['updated_at' => now()];
 
-        foreach (['name', 'subject', 'preheader', 'from_name'] as $k) {
+        foreach (['name', 'subject', 'preheader', 'from_name', 'theme', 'locale'] as $k) {
             if (array_key_exists($k, $data)) {
                 $row[$k] = trim((string) $data[$k]);
             }
@@ -325,6 +333,7 @@ final class MktCampaignsController extends Controller
             'preheader' => $c->preheader,
             'from_name' => $c->from_name,
             'segment_id' => $c->segment_id,
+            ...CampaignRenderer::look($c),
             'status' => 'draft',
             'created_by' => $request->user('admin')?->id,
             'created_at' => now(),
@@ -367,7 +376,7 @@ final class MktCampaignsController extends Controller
             'preheader' => (string) $request->input('preheader', ''),
             'unsubscribe' => \App\Support\Url::external('/email/u/0-' . str_repeat('0', 32)),
             'markers' => true,
-        ]);
+        ] + CampaignRenderer::look((object) ['theme' => $request->input('theme'), 'locale' => $request->input('locale')]));
 
         return response()->json([
             'ok' => $errors === [],
@@ -407,7 +416,7 @@ final class MktCampaignsController extends Controller
             'data' => $data, 'audience' => $audienceKey, 'first_name' => 'Aisha',
             'subject' => $c->subject, 'preheader' => $c->preheader,
             'unsubscribe' => \App\Support\Url::external('/email/u/0-' . str_repeat('0', 32)),
-        ]);
+        ] + CampaignRenderer::look($c));
 
         $brand = EmailBranding::forMailable(true, \App\Mail\CampaignMail::class);
         $places = array_column(array_filter((array) ($brand['addresses'] ?? []), fn ($a) => ! empty(array_filter((array) ($a['lines'] ?? [])))), 'place');
@@ -615,6 +624,9 @@ final class MktCampaignsController extends Controller
             'fills' => Blocks::FILLS,
             'orders' => Blocks::ORDERS,
             'art' => array_map(fn ($a, $k) => ['key' => $k, 'alt' => $a['alt'], 'url' => \App\Support\Url::external('/email/art/' . $k . '.jpg')], Blocks::ART, array_keys(Blocks::ART)),
+            'themes' => \App\Services\Marketing\EmailTheme::THEMES,
+            'locales' => \App\Services\Marketing\EmailTheme::LOCALES,
+            'badge_icons' => array_keys(Blocks::BADGE_ICONS),
             'icons' => array_keys(\App\Services\Mail\Kit\MailKit::ICONS),
             'tones' => array_keys(\App\Services\Mail\Kit\MailKit::TONES),
             'brands' => DB::table('brands')->orderBy('name')->orderBy('id')->limit(1000)->get(['id', 'name'])->map(fn ($b) => ['id' => (int) $b->id, 'name' => (string) $b->name])->all(),

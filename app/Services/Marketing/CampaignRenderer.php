@@ -156,11 +156,38 @@ final class CampaignRenderer
      *   markers     true in the builder's preview (tbody per block)
      *   subject, preheader
      *   data        data() for these blocks (computed here when absent)
+     *   theme       standard | playful (EmailTheme), the campaign's look
+     *   locale      en | ar, the campaign's language: ar renders right to left
+     *
+     * THE LANGUAGE IS SET FOR THE RENDER AND PUT BACK AFTER, whatever happens:
+     * one Arabic campaign must not leave the next English one (or the request
+     * that previewed it) in Arabic.
      *
      * @return array{html:string, text:string, bytes:int}
      */
     public function render(array $blocks, array $ctx): array
     {
+        $locale = EmailTheme::cleanLocale($ctx['locale'] ?? 'en');
+        $was = \Illuminate\Support\Facades\App::getLocale();
+
+        if ($locale !== $was) {
+            \Illuminate\Support\Facades\App::setLocale($locale);
+        }
+
+        try {
+            return $this->renderIn($blocks, $ctx, $locale);
+        } finally {
+            if ($locale !== $was) {
+                \Illuminate\Support\Facades\App::setLocale($was);
+            }
+        }
+    }
+
+    /** @return array{html:string, text:string, bytes:int} */
+    private function renderIn(array $blocks, array $ctx, string $locale): array
+    {
+        $theme = EmailTheme::cleanTheme($ctx['theme'] ?? 'standard');
+        $playful = $theme === 'playful';
         $href = $ctx['href'] ?? fn (string $url) => $url;
         $first = ['first_name' => (string) ($ctx['first_name'] ?? ''), 'top_brand' => (string) ($ctx['top_brand'] ?? '')];
         $data = $ctx['data'] ?? $this->data($blocks);
@@ -172,6 +199,8 @@ final class CampaignRenderer
         $topbar = null;
         $footer = null;
         $why = '';
+        $whyKey = 'customers';
+        $note = '';
 
         foreach ($blocks as $i => $b) {
             $p = $b['props'];
@@ -181,7 +210,7 @@ final class CampaignRenderer
                     if (! empty($p['topbar'])) {
                         $topbar = $i;
                     }
-                    $rows[] = ['i' => $i, 'type' => 'mini_header', 'nav' => (bool) ($p['nav'] ?? true)];
+                    $rows[] = ['i' => $i, 'type' => 'mini_header', 'nav' => (bool) ($p['nav'] ?? true), 'tagline' => Blocks::mergeName((string) ($p['tagline'] ?? ''), $first)];
                     break;
 
                 case 'hero_image':
@@ -203,21 +232,26 @@ final class CampaignRenderer
                     break;
 
                 case 'heading':
-                    $plainTitle = Blocks::plain((string) $p['title'], $first);
+                    $highlight = Blocks::mergeName((string) ($p['highlight'] ?? ''), $first);
+                    // The standard look has no highlighter: the line joins the
+                    // title, so nothing the owner typed goes missing.
+                    $titleText = ! $playful && $highlight !== '' ? trim((string) $p['title'] . ' ' . $highlight) : (string) $p['title'];
+                    $plainTitle = Blocks::plain($titleText, $first);
                     $plainLead = Blocks::plain((string) $p['lead'], $first);
 
-                    if ($plainTitle === '' && $plainLead === '') {
+                    if ($plainTitle === '' && $plainLead === '' && $highlight === '') {
                         break;
                     }
 
                     $rows[] = [
                         'i' => $i, 'type' => 'heading', 'style' => $p['style'], 'icon' => $p['icon'], 'tone' => $p['tone'],
                         'align' => $p['align'], 'eyebrow' => Blocks::mergeName((string) $p['eyebrow'], $first),
-                        'title' => Blocks::marks((string) $p['title'], $href, $first),
+                        'title' => Blocks::marks($titleText, $href, $first),
                         'lead' => Blocks::marks((string) $p['lead'], $href, $first),
                         'plainTitle' => $plainTitle, 'plainLead' => $plainLead,
+                        'highlight' => $playful ? $highlight : '',
                     ];
-                    $text[] = trim(($p['eyebrow'] !== '' ? mb_strtoupper((string) $p['eyebrow']) . "\n" : '') . $plainTitle . ($plainLead !== '' ? "\n\n" . Blocks::plain((string) $p['lead'], $first, $href) : ''));
+                    $text[] = trim(($p['eyebrow'] !== '' ? mb_strtoupper((string) $p['eyebrow']) . "\n" : '') . $plainTitle . ($playful && $highlight !== '' ? "\n" . $highlight : '') . ($plainLead !== '' ? "\n\n" . Blocks::plain((string) $p['lead'], $first, $href) : ''));
                     break;
 
                 case 'text':
@@ -243,7 +277,7 @@ final class CampaignRenderer
                     }
 
                     $printed = $href($link, $label);
-                    $rows[] = ['i' => $i, 'type' => 'button', 'label' => $label, 'href' => $printed, 'align' => $p['align'], 'ghost' => $p['style'] === 'ghost'];
+                    $rows[] = ['i' => $i, 'type' => 'button', 'label' => $label, 'href' => $printed, 'align' => $p['align'], 'ghost' => $p['style'] === 'ghost', 'dark' => $p['style'] === 'dark'];
                     $text[] = $label . ': ' . $printed;
                     break;
 
@@ -263,6 +297,14 @@ final class CampaignRenderer
                         }
 
                         $card['href'] = $href($card['href'], $card['name']);
+                        // The playful card (Lane EC): a type sticker, the name
+                        // under its brand line without the brand again, the
+                        // old price as a bare number, and the picture's height
+                        // at the card's 138px.
+                        $card['kind'] = EmailTheme::kindWord(EmailTheme::kind($card['name'], (string) ($card['type'] ?? '')), $locale);
+                        $card['short'] = EmailTheme::shortName($card['name'], (string) $card['brand']);
+                        $card['wasNum'] = EmailTheme::bareAmount($card['was'] ?? null);
+                        $card['h138'] = max(1, (int) round(138 * ((int) ($card['h'] ?? 200)) / 200));
                         $cards[] = $card;
                     }
 
@@ -273,9 +315,10 @@ final class CampaignRenderer
                     $rows[] = [
                         'i' => $i, 'type' => $b['type'], 'title' => Blocks::mergeName((string) $p['title'], $first), 'products' => $cards,
                         'cols' => $b['type'] === 'product_grid' ? (int) ($p['columns'] ?? 2) : 1, 'cta' => Blocks::mergeName((string) $p['cta'], $first),
+                        'layout' => $b['type'] === 'product_grid' && ($p['layout'] ?? 'standard') === 'playful' ? 'playful' : 'standard',
                     ];
                     $text[] = ($p['title'] !== '' ? mb_strtoupper((string) $p['title']) . "\n" : '')
-                        . implode("\n", array_map(fn ($c) => '- ' . trim(($c['brand'] !== '' ? $c['brand'] . ' ' : '') . $c['name']) . ' — ' . $c['price'] . "\n  " . $c['href'], $cards));
+                        . implode("\n", array_map(fn ($c) => '- ' . trim(($c['brand'] !== '' ? $c['brand'] . ' ' : '') . ($playful ? $c['short'] : $c['name'])) . ' — ' . $c['price'] . "\n  " . $c['href'], $cards));
                     break;
 
                 case 'coupon':
@@ -361,8 +404,33 @@ final class CampaignRenderer
                     }
                     break;
 
+                case 'badges':
+                    $chips = [];
+
+                    foreach ((array) ($p['items'] ?? []) as $chip) {
+                        $bold = Blocks::mergeName((string) ($chip['bold'] ?? ''), $first);
+                        $line = Blocks::mergeName((string) ($chip['text'] ?? ''), $first);
+
+                        if (trim($bold . $line) === '') {
+                            continue;
+                        }
+
+                        // "Tabby, Tamara" + ", card or cash": no space before a comma.
+                        $sep = $bold !== '' && $line !== '' && preg_match('/^[,.;:،]/u', $line) !== 1 ? ' ' : '';
+                        $chips[] = ['icon' => (string) ($chip['icon'] ?? 'sparkles'), 'bold' => $bold, 'sep' => $sep, 'text' => $line];
+                    }
+
+                    if ($chips === []) {
+                        break;
+                    }
+
+                    $rows[] = ['i' => $i, 'type' => 'badges', 'items' => $chips];
+                    $text[] = implode("\n", array_map(fn ($c) => '* ' . trim($c['bold'] . $c['sep'] . $c['text']), $chips));
+                    break;
+
                 case 'footer':
                     $footer = $i;
+                    $note = Blocks::mergeName((string) ($p['note'] ?? ''), $first);
                     $audience = ($p['why'] ?? 'auto') === 'auto' ? (string) ($ctx['audience'] ?? 'customers') : (string) $p['why'];
                     /*
                      * Why this arrived, true for THIS recipient: a subscriber
@@ -371,19 +439,24 @@ final class CampaignRenderer
                      * group), has an account. CampaignSender passes 'account'
                      * per recipient.
                      */
-                    $why = match ($audience) {
-                        'subscribers' => __('email.mkt.why_subscribers', ['store' => $k['storeName']]),
-                        'account' => __('email.mkt.why_account', ['store' => $k['storeName']]),
-                        default => __('email.mkt.why_customers', ['store' => $k['storeName']]),
-                    };
+                    $whyKey = in_array($audience, ['subscribers', 'account'], true) ? $audience : 'customers';
+                    $why = $playful
+                        ? EmailTheme::word($locale, 'why_' . $whyKey, ['store' => $k['storeName']])
+                        : match ($audience) {
+                            'subscribers' => __('email.mkt.why_subscribers', ['store' => $k['storeName']]),
+                            'account' => __('email.mkt.why_account', ['store' => $k['storeName']]),
+                            default => __('email.mkt.why_customers', ['store' => $k['storeName']]),
+                        };
                     break;
             }
         }
 
         $preheader = Blocks::mergeName((string) ($ctx['preheader'] ?? ''), $first);
 
-        $html = view('emails.marketing.campaign', [
+        $html = view($playful ? 'emails.marketing.playful' : 'emails.marketing.campaign', [
             'k' => $k,
+            'locale' => $locale,
+            'note' => $note,
             'kitTitle' => Blocks::mergeName((string) ($ctx['subject'] ?? ''), $first),
             'kitPreheader' => $preheader,
             'rows' => $rows,
@@ -398,7 +471,7 @@ final class CampaignRenderer
         $plain = trim(implode("\n\n", array_filter(array_map('trim', $text), fn ($t) => $t !== '')))
             . "\n\n— " . $k['storeName']
             . "\n\n" . $why
-            . ($unsub ? "\n" . __('email.mkt.text_unsubscribe') . "\n" . $unsub : '');
+            . ($unsub ? "\n" . ($playful ? EmailTheme::word($locale, 'text_unsubscribe') : __('email.mkt.text_unsubscribe')) . "\n" . $unsub : '');
 
         return ['html' => $html, 'text' => $plain, 'bytes' => strlen($html)];
     }
@@ -450,6 +523,21 @@ final class CampaignRenderer
         }
 
         return $out;
+    }
+
+    /**
+     * A campaign's or template's look and language (Lane EC), cleaned: what
+     * every render of that row passes as ctx. A row from before the columns
+     * existed is standard English.
+     *
+     * @return array{theme:string, locale:string}
+     */
+    public static function look(?object $row): array
+    {
+        return [
+            'theme' => EmailTheme::cleanTheme($row->theme ?? null),
+            'locale' => EmailTheme::cleanLocale($row->locale ?? null),
+        ];
     }
 
     /** HtmlString passthrough for views that print a marks() result. */

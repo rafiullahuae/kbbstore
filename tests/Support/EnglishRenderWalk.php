@@ -4847,6 +4847,9 @@ LG2,
         // owner asked on 6 October: Shipping & Delivery, Returns Information,
         // Order Tracking (/my-account/orders/), FAQs, Privacy policy, then
         // Contact us and About us. Seven <li>, inside this column only.
+        // (Lane EC, 10 October) Returns Information is out again — the owner:
+        // "remove the returns words completely, we don't offer returns." Six
+        // <li>; that one row is the whole change.
         // (Lane FT) `kft-sheen-bar` is gone from the class list: the owner,
         // 4 October, "remove the effect from the very last row of the footer".
         // SiteFooter::SCHEMA['site_sheen'] ships 'off'. One class, one page
@@ -4883,7 +4886,6 @@ LG2,
       </ul></nav>
       <nav class="kft-col kft-col2" aria-labelledby="kft-help"><h2 id="kft-help" class="kft-ch">Help</h2><ul>
         <li><a href="/delivery/">Shipping &amp; Delivery</a></li>
-        <li><a href="/refund_returns/">Returns Information</a></li>
         <li><a href="/my-account/orders/">Order Tracking</a></li>
         <li><a href="/faqs/">FAQs</a></li>
         <li><a href="/privacy-policy/">Privacy policy</a></li>

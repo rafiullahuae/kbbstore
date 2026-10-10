@@ -61,12 +61,12 @@
 
         <div class="fcol"><h2>{{ __('store.footer.care_heading') }}</h2>
             @forelse ($kbbFooterNav as $link)
+                @continue(\App\Services\SiteFooter::isReturnsLink($link['label'] ?? '', $link['url'] ?? ''))
                 <a href="{{ Url::to($link['url'] ?? '/') }}">{{ $link['label'] }}</a>
             @empty
                 {{-- Real paths from the live site, so these are never dead links. --}}
                 <a href="{{ Url::to('/track-my-order/') }}">{{ __('store.footer.link_track_order') }}</a>
                 <a href="{{ Url::to('/delivery/') }}">{{ __('store.footer.link_delivery') }}</a>
-                <a href="{{ Url::to('/refund_returns/') }}">{{ __('store.footer.link_returns') }}</a>
                 <a href="{{ Url::to('/faqs/') }}">{{ __('store.footer.link_faqs') }}</a>
                 <a href="{{ Url::to('/contact-us/') }}">{{ __('store.footer.link_contact') }}</a>
             @endforelse
