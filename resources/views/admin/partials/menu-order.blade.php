@@ -23,7 +23,15 @@
 .mo-board{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;padding:2px 0 8px;scrollbar-width:none}
 .mo-board::-webkit-scrollbar{display:none}
 .mo-cols{display:flex;align-items:flex-start;gap:8px;width:max-content}
-.mo-col{flex:0 0 156px;width:156px;min-width:0;padding:6px;display:flex;flex-direction:column;gap:5px;background:#faf9fc;border:1px solid #f0e4e9;border-top:3px solid var(--mo-hl,#f0e4e9);border-radius:9px}
+/* (Lane QK13) CHILD OF THE BOARD, NOT ANY .mo-col. Store -> New Order
+   (manual-order-screen.blade.php) also names its two layout columns .mo-col,
+   and this partial is included first in the same document, so a bare .mo-col
+   here made BOTH of New Order's columns 156px boxes: Customer and Items
+   squeezed into a 156px strip wrapping word by word, Payment & source into
+   another with its selects one letter wide, and the middle of the page
+   empty. Every board column is a direct child of .mo-cols (columnHtml(),
+   boardHtml(), the append at the add-column path), so the board is unchanged. */
+.mo-cols>.mo-col{flex:0 0 156px;width:156px;min-width:0;padding:6px;display:flex;flex-direction:column;gap:5px;background:#faf9fc;border:1px solid #f0e4e9;border-top:3px solid var(--mo-hl,#f0e4e9);border-radius:9px}
 .mo-body{display:flex;flex-direction:column;gap:5px;min-height:4px}
 .mo-grp{background:#fff;border:1px solid #f0e4e9;border-radius:7px;padding:2px 3px 3px;display:flex;flex-direction:column;gap:2px;box-shadow:inset 2px 0 0 var(--mo-hl,transparent)}
 .mo-links{display:flex;flex-direction:column;gap:2px;min-height:2px}

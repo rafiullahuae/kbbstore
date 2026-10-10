@@ -613,12 +613,14 @@ it('narrows the chip counts to whatever the other filters already selected', fun
 it('reports the same counts, total and summary on every page', function () {
     asCatalogAdmin();
 
-    foreach (range(1, 24) as $i) {
+    // (Lane QK13) 124, because the smallest page is now 100: the list answers
+    // 100 / 200 / 300 by allowlist, so page two needs more than a hundred rows.
+    foreach (range(1, 124) as $i) {
         cpProduct(['price' => 1000 * $i, 'status' => $i % 4 === 0 ? 'draft' : 'publish']);
     }
 
-    $first = test()->getJson('/admin-api/catalog-products-list?per_page=10&page=1')->assertOk();
-    $second = test()->getJson('/admin-api/catalog-products-list?per_page=10&page=2')->assertOk();
+    $first = test()->getJson('/admin-api/catalog-products-list?per_page=100&page=1')->assertOk();
+    $second = test()->getJson('/admin-api/catalog-products-list?per_page=100&page=2')->assertOk();
 
     /*
      * This is the assertion nobody had written for the Customers screen, which
@@ -629,13 +631,13 @@ it('reports the same counts, total and summary on every page', function () {
     expect($second->json('counts'))->toBe($first->json('counts'))
         ->and($second->json('total'))->toBe($first->json('total'))
         ->and($second->json('summary'))->toBe($first->json('summary'))
-        ->and($second->json('total'))->toBeGreaterThan(10)
-        ->and($second->json('products'))->toHaveCount(10)
+        ->and($second->json('total'))->toBeGreaterThan(100)
+        ->and($second->json('products'))->toHaveCount(24)
         ->and($second->json('page'))->toBe(2);
 
     // And a page past the end clamps rather than returning an empty screen with
     // no way back.
-    $past = test()->getJson('/admin-api/catalog-products-list?per_page=10&page=99')->assertOk();
+    $past = test()->getJson('/admin-api/catalog-products-list?per_page=100&page=99')->assertOk();
 
     expect($past->json('page'))->toBe($past->json('last_page'))
         ->and($past->json('products'))->not->toBeEmpty();
@@ -767,16 +769,21 @@ it('sorts a priceless product to the bottom, not to the top as if it were free',
     expect(array_keys(cpRows('sort=price_desc')))->toBe([$priced->id, $priceless->id]);
 });
 
-it('clamps per_page instead of letting a caller ask for the whole table', function () {
+it('answers only the page sizes the screen offers, instead of letting a caller ask for the whole table', function () {
     asCatalogAdmin();
 
     foreach (range(1, 12) as $i) {
         cpProduct();
     }
 
-    expect(test()->getJson('/admin-api/catalog-products-list?per_page=1')->json('per_page'))->toBe(10)
-        ->and(test()->getJson('/admin-api/catalog-products-list?per_page=99999')->json('per_page'))->toBe(500)
-        ->and(test()->getJson('/admin-api/catalog-products-list?per_page=0')->json('per_page'))->toBe(50);
+    // (Lane QK13) Was a 10..500 clamp with 50 as the default. The owner asked
+    // for 100 by default with 200 and 300 beside it, so the list now answers
+    // exactly those and treats everything else as 100.
+    // tests/Feature/CatalogProductsPerPageTest.php carries the full set.
+    expect(test()->getJson('/admin-api/catalog-products-list?per_page=1')->json('per_page'))->toBe(100)
+        ->and(test()->getJson('/admin-api/catalog-products-list?per_page=99999')->json('per_page'))->toBe(100)
+        ->and(test()->getJson('/admin-api/catalog-products-list?per_page=0')->json('per_page'))->toBe(100)
+        ->and(test()->getJson('/admin-api/catalog-products-list?per_page=300')->json('per_page'))->toBe(300);
 });
 
 /* ---------------------------------------------------------- imported rows */
@@ -1627,20 +1634,21 @@ it('runs a bounded number of queries however many products there are', function 
     // One unmeasured request first. The currency settings row is read through a
     // cache on the first call in a process and memoised after it, so without
     // this the first measurement carries a warm-up query the second does not.
-    test()->getJson('/admin-api/catalog-products-list?per_page=50')->assertOk();
+    test()->getJson('/admin-api/catalog-products-list?per_page=100')->assertOk();
 
     DB::flushQueryLog();
     DB::enableQueryLog();
 
-    test()->getJson('/admin-api/catalog-products-list?per_page=50')->assertOk();
+    test()->getJson('/admin-api/catalog-products-list?per_page=100')->assertOk();
 
     $withFifty = count(DB::getQueryLog());
 
     DB::flushQueryLog();
 
-    // A tenth of the page size. A per-row query would shrink with it; a join
-    // and a single eager load do not.
-    test()->getJson('/admin-api/catalog-products-list?per_page=5')->assertOk();
+    // A fraction of the rows: one brand's. A per-row query would shrink with
+    // it; a join and a single eager load do not. (Lane QK13: was per_page=5,
+    // which the list no longer answers -- it offers 100 / 200 / 300 only.)
+    test()->getJson('/admin-api/catalog-products-list?per_page=100&brand_id='.$brands[0]->id)->assertOk();
 
     $withFive = count(DB::getQueryLog());
 
