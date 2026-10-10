@@ -108,6 +108,9 @@
 .ctk-ip{font:600 12px var(--mono,ui-monospace,monospace);color:var(--ink-2,#3c465c);overflow-wrap:anywhere}
 .ctk-cc{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--ink-2,#3c465c);background:var(--surface-2,#f2f4fb);border-radius:6px;padding:1px 6px}
 .ctk-cc .fl{font-size:13px;line-height:1}
+.ctk-agent{display:block;margin-top:3px;font-size:11.5px;color:var(--ink-soft,#6b7385)}
+.ctk-tile.wide{grid-column:span 2}
+.ctk-chip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:650;background:var(--surface-2,#f2f4fb);border-radius:999px;padding:2px 8px;color:var(--ink-2,#3c465c)}
 .ctk-shield{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;border:1px solid var(--border,#e6e9f2);background:var(--surface,#fff);color:var(--ink-soft,#626c80);cursor:pointer;padding:0;flex:none}
 .ctk-shield:hover{color:var(--red,#e3493f);border-color:#f3c9c6;background:var(--red-soft,#fdeceb)}
 .ctk-shield.on{background:var(--red,#e3493f);border-color:var(--red,#e3493f);color:#fff}
@@ -301,6 +304,16 @@
     return m ? decodeURIComponent(m.pop()) : '';
   }
   function base() { return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, ''); }
+  function agentTile(title, list, colour) {
+    list = list || [];
+    var total = list.reduce(function (t, x) { return t + x.n; }, 0);
+    return '<div class="ctk-tile wide" style="--tile:' + colour + '"><span class="k">' + esc(title) + '</span>'
+      + '<div class="ctk-flags">' + (list.map(function (x) {
+          return '<span class="ctk-chip">' + esc(x.name) + ' <span style="color:var(--ink-soft)">' + num(x.n)
+            + (total ? ' · ' + Math.round(100 * x.n / total) + '%' : '') + '</span></span>';
+        }).join('') || '<span class="s">No carts yet</span>') + '</div></div>';
+  }
+
   function flag(cc) {
     if (!cc || !/^[A-Z]{2}$/.test(cc)) return '';
     return String.fromCodePoint(127397 + cc.charCodeAt(0), 127397 + cc.charCodeAt(1));
@@ -499,6 +512,11 @@
       + '<div class="ctk-flags">' + ((s.countries || []).slice(0, 6).map(function (c) {
           return '<button type="button" class="ctk-flagchip" data-ctk-country="' + esc(c.code || '--') + '" title="Show only ' + esc(c.name) + '">' + (c.code ? flag(c.code) + ' ' + esc(c.code) : 'Unknown') + ' <span style="color:var(--ink-soft)">' + num(c.n) + '</span></button>';
         }).join('') || '<span class="s">No carts yet</span>') + '</div></div>'
+      // (Lane OR) "which browser users use more": the same carts, by browser
+      // and by device, named on the server from the user agent each cart
+      // already carries. Two wide tiles on a row of their own.
+      + agentTile('Top browsers', s.browsers, '#0e9aa7')
+      + agentTile('Top devices', s.devices, '#d4881c')
       + '</div>';
 
     html += '<div class="ctk-card">'
@@ -592,7 +610,9 @@
       + (name ? '<div class="nm">' + esc(name) + '</div>' : '')
       + (sub ? '<span class="ctk-sub">' + esc(sub) + '</span>' : '')
       + '<div class="ctk-ipline">' + (r.country ? '<span class="ctk-cc" title="' + esc(r.country_name) + '"><span class="fl">' + flag(r.country) + '</span>' + esc(r.country) + '</span>' : '<span class="ctk-cc">??</span>')
-      + '<span class="ctk-ip">' + esc(r.ip || 'no address') + '</span>' + shield + '</div></div>';
+      + '<span class="ctk-ip">' + esc(r.ip || 'no address') + '</span>' + shield + '</div>'
+      + (r.browser ? '<span class="ctk-agent">' + esc(r.browser === r.device ? r.browser : r.browser + ' · ' + r.device) + '</span>' : '')
+      + '</div>';
   }
 
   function orderHtml(o) {
