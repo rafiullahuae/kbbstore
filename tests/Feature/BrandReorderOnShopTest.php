@@ -79,7 +79,10 @@ it('waits for Save: a pinned save bar, and a number for another page queued, nev
     expect($jump[1] ?? '')->not->toContain("'/move'")->toContain('reorderPending=')
         ->and($app)->toContain('position:sticky;bottom:0')
         ->and($app)->toContain('id="reDiscard"')
-        ->and($app)->toContain("post('/move',{product_id:m.id, to:m.to})");
+        // Applied by Save -- since Lane RL in ONE request with the page's
+        // order (/apply), each move landing exactly at its number; it was a
+        // /move per queued product, which let later moves shift earlier ones.
+        ->and($app)->toContain("moves:reorderPending.map(m=>({product_id:m.id, to:m.to}))");
 });
 
 it('ships the migration that keeps brand pages on the brand and the curated order on', function () {
