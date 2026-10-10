@@ -305,7 +305,7 @@
       + '<span>' + esc(inst.done) + ' done · ' + esc(inst.skipped.length) + ' skipped</span></div>'
       + '<div class="dwi-track" role="progressbar" aria-valuemin="0" aria-valuemax="' + esc(inst.total) + '" aria-valuenow="' + esc(finished) + '"><div class="dwi-fill" style="width:' + Math.round(finished / inst.total * 100) + '%"></div></div></div>'
       + '<ol class="dwi-steps">' + inst.steps.map(stepHtml).join('') + '</ol>'
-      + '<div class="dwi-foot"><span>Progress is saved on the server, so it is the same on your phone.</span><button type="button" class="dwi-link" data-dwi-reset>Reset progress</button></div>';
+      + '<div class="dwi-foot"><span>Progress is saved on the server, so it is the same on your phone.</span><button type="button" class="dwi-link" data-dwi-reset data-kbb-asks>Reset progress</button></div>';
     if (window.kbbOldPictures) window.kbbOldPictures.mountAll(root);
     var input = root.querySelector('#dwi-domain');
     if (input && typed !== null) input.value = typed;
@@ -376,7 +376,7 @@
   async function step(key, doWhat) {
     var body = { step: key, 'do': doWhat };
     if (doWhat === 'reset') {
-      if (!window.confirm('Reset the progress of every step? Only the ticks on this page are forgotten; the shop itself is not changed.')) return;
+      if (!(await window.kbbConfirm('Reset the progress of every step? Only the ticks on this page are forgotten; the shop itself is not changed.'))) return;
       body = { 'do': 'reset', confirm: 'RESET' };
     }
     busy = doWhat + ':' + key; delete msgs[key]; render();

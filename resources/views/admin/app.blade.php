@@ -6315,8 +6315,9 @@ function bindModules(){
   /* Bulk actions.
      Page-level ones ask first: they rewrite all thirty-one rows at once and
      there is no undo short of reloading the screen and losing anything else
-     changed. Group-level ones act straight away — a handful of rows, and still
-     nothing written until Save changes. */
+     changed. Group-level All on / All off act straight away — a handful of
+     rows, and still nothing written until Save changes; both "Defaults"
+     buttons are resets and ask in reset-guard's box (Lane RC). */
   const apply=(fn,scope)=>{
     // Only the live ones: turning all on should not pretend to switch on
     // sixteen features that are not built.
@@ -6344,10 +6345,10 @@ function bindModules(){
   if(none) none.onclick=()=>askThen('Turn every module off',
     `The ${count} modules that are wired up will be switched off. The storefront still renders — that is what a module is — but the free-shipping bar, promo lines and reassurance blocks will all go.`,
     'Turn all off', ()=>apply(m=>{m.on=false;}));
+  /* Back to defaults asks in the admin's one "Are you sure?" box
+     (reset-guard), like every other reset, and runs only on Yes. */
   const def=$('[data-mddef]');
-  if(def) def.onclick=()=>askThen('Back to defaults',
-    'Every module returns to the state the plugin ships it in, and every device choice returns to Everywhere.',
-    'Restore defaults', ()=>apply(m=>{m.on=m.default;m.device='both';}));
+  if(def) def.onclick=()=>apply(m=>{m.on=m.default;m.device='both';});
 
   $$('[data-mdgall]').forEach(b=>b.onclick=()=>apply(m=>{m.on=true;}, b.dataset.mdgall));
   $$('[data-mdgnone]').forEach(b=>b.onclick=()=>apply(m=>{m.on=false;}, b.dataset.mdgnone));
@@ -9779,7 +9780,7 @@ function impRunCard(s){
     +'To have the server keep going with the tab closed, press “Keep importing in the background”.'
     +(busy?' <b>Working — about '+impNum(impRows)+' rows per piece.</b>':'')+'</div>'
     +(isLive?impResultTable(s,'Created','Updated','Unchanged','Refused'):'')
-    +'<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn ghost sm" id="impReset" style="color:#c0392b">Forget progress and start over</button></div>'
+    +'<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn ghost sm" id="impReset" data-kbb-asks style="color:#c0392b">Forget progress and start over</button></div>'
     +'</div>';
 }
 
@@ -10381,7 +10382,7 @@ function impWire(){
 
   const reset=$('#impReset');
   if(reset) reset.onclick=async()=>{
-    if(!confirm('Forget how far the import got, so the next run reads every file from its first row?\n\nNothing already imported is deleted — those rows will simply be re-presented and reported as unchanged.')) return;
+    if(!(await window.kbbConfirm('Forget how far the import got, so the next run reads every file from its first row? Nothing already imported is deleted — those rows will simply be re-presented and reported as unchanged.'))) return;
     impRunning=false;
     await impApi('/import/reset',{method:'POST'});
     await impRefresh(); impPaint();

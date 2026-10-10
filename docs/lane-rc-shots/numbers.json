@@ -1,0 +1,289 @@
+{
+  "checks": [
+    {
+      "name": "390 checkout: box opens with its own question",
+      "ok": true,
+      "detail": "Reset the Checkout page settings to their defaults? Your changes on this screen will be lost."
+    },
+    {
+      "name": "390 checkout: focus starts on No",
+      "ok": true,
+      "detail": "kbbSureNo"
+    },
+    {
+      "name": "390 checkout: no horizontal scroll",
+      "ok": true,
+      "detail": [
+        390,
+        390
+      ]
+    },
+    {
+      "name": "390 checkout: No leaves the moved slider alone",
+      "ok": true,
+      "detail": {
+        "before": "0",
+        "moved": "80",
+        "afterNo": "80"
+      }
+    },
+    {
+      "name": "390 checkout: Yes puts the default back",
+      "ok": true,
+      "detail": {
+        "before": "0",
+        "moved": "80",
+        "afterYes": "0"
+      }
+    },
+    {
+      "name": "390 header: box opens",
+      "ok": true,
+      "detail": "Reset the Header settings to their defaults? Your changes on this screen will be lost."
+    },
+    {
+      "name": "390 header: Escape answers No and focus returns to the button",
+      "ok": true
+    },
+    {
+      "name": "390 modules: group Defaults now asks, naming the group",
+      "ok": true,
+      "detail": "Put the modules in “Order emails” back to how the shop ships them? Nothing is stored until you press Save changes."
+    },
+    {
+      "name": "390 modules: backdrop answers No, the group stays as switched",
+      "ok": true,
+      "detail": {
+        "onBefore": "14 of 15 on",
+        "onAll": "15 of 15 on",
+        "onNo": "15 of 15 on"
+      }
+    },
+    {
+      "name": "390 modules: Yes puts the group back to its defaults",
+      "ok": true,
+      "detail": {
+        "onBefore": "14 of 15 on",
+        "onAll": "15 of 15 on",
+        "onYes": "14 of 15 on"
+      }
+    },
+    {
+      "name": "390 kbbConfirm: Yes -> true, custom label used once",
+      "ok": true,
+      "detail": {
+        "yesLabel": "Yes, reset",
+        "yes": true,
+        "yesLabelAfter": "Yes",
+        "enterNo": false,
+        "escape": false,
+        "tabTo": "kbbSureYes",
+        "tabBack": "kbbSureNo",
+        "tabAnswer": false
+      }
+    },
+    {
+      "name": "390 kbbConfirm: No, Escape -> false; Tab stays inside",
+      "ok": true,
+      "detail": {
+        "yesLabel": "Yes, reset",
+        "yes": true,
+        "yesLabelAfter": "Yes",
+        "enterNo": false,
+        "escape": false,
+        "tabTo": "kbbSureYes",
+        "tabBack": "kbbSureNo",
+        "tabAnswer": false
+      }
+    },
+    {
+      "name": "390 kbbConfirm: a real Enter on the focused No answers No",
+      "ok": true
+    },
+    {
+      "name": "1280 checkout: box opens with its own question",
+      "ok": true,
+      "detail": "Reset the Checkout page settings to their defaults? Your changes on this screen will be lost."
+    },
+    {
+      "name": "1280 checkout: focus starts on No",
+      "ok": true,
+      "detail": "kbbSureNo"
+    },
+    {
+      "name": "1280 checkout: no horizontal scroll",
+      "ok": true,
+      "detail": [
+        1280,
+        1280
+      ]
+    },
+    {
+      "name": "1280 checkout: No leaves the moved slider alone",
+      "ok": true,
+      "detail": {
+        "before": "0",
+        "moved": "80",
+        "afterNo": "80"
+      }
+    },
+    {
+      "name": "1280 checkout: Yes puts the default back",
+      "ok": true,
+      "detail": {
+        "before": "0",
+        "moved": "80",
+        "afterYes": "0"
+      }
+    },
+    {
+      "name": "1280 header: box opens",
+      "ok": true,
+      "detail": "Reset the Header settings to their defaults? Your changes on this screen will be lost."
+    },
+    {
+      "name": "1280 header: Escape answers No and focus returns to the button",
+      "ok": true
+    },
+    {
+      "name": "1280 modules: group Defaults now asks, naming the group",
+      "ok": true,
+      "detail": "Put the modules in “Order emails” back to how the shop ships them? Nothing is stored until you press Save changes."
+    },
+    {
+      "name": "1280 modules: backdrop answers No, the group stays as switched",
+      "ok": true,
+      "detail": {
+        "onBefore": "14 of 15 on",
+        "onAll": "15 of 15 on",
+        "onNo": "15 of 15 on"
+      }
+    },
+    {
+      "name": "1280 modules: Yes puts the group back to its defaults",
+      "ok": true,
+      "detail": {
+        "onBefore": "14 of 15 on",
+        "onAll": "15 of 15 on",
+        "onYes": "14 of 15 on"
+      }
+    },
+    {
+      "name": "1280 kbbConfirm: Yes -> true, custom label used once",
+      "ok": true,
+      "detail": {
+        "yesLabel": "Yes, reset",
+        "yes": true,
+        "yesLabelAfter": "Yes",
+        "enterNo": false,
+        "escape": false,
+        "tabTo": "kbbSureYes",
+        "tabBack": "kbbSureNo",
+        "tabAnswer": false
+      }
+    },
+    {
+      "name": "1280 kbbConfirm: No, Escape -> false; Tab stays inside",
+      "ok": true,
+      "detail": {
+        "yesLabel": "Yes, reset",
+        "yes": true,
+        "yesLabelAfter": "Yes",
+        "enterNo": false,
+        "escape": false,
+        "tabTo": "kbbSureYes",
+        "tabBack": "kbbSureNo",
+        "tabAnswer": false
+      }
+    },
+    {
+      "name": "1280 kbbConfirm: a real Enter on the focused No answers No",
+      "ok": true
+    },
+    {
+      "name": "no page errors and no native dialogs",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "numbers": {
+    "checkout-open-390": {
+      "open": true,
+      "text": "Reset the Checkout page settings to their defaults? Your changes on this screen will be lost.",
+      "focus": "kbbSureNo",
+      "card": {
+        "w": 358,
+        "h": 159,
+        "x": 16,
+        "y": 343
+      },
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "header-open-390": {
+      "open": true,
+      "text": "Reset the Header settings to their defaults? Your changes on this screen will be lost.",
+      "focus": "kbbSureNo",
+      "card": {
+        "w": 358,
+        "h": 159,
+        "x": 16,
+        "y": 343
+      },
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "modules-open-390": {
+      "open": true,
+      "text": "Put the modules in “Order emails” back to how the shop ships them? Nothing is stored until you press Save changes.",
+      "focus": "kbbSureNo",
+      "card": {
+        "w": 358,
+        "h": 178,
+        "x": 16,
+        "y": 333
+      },
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "checkout-open-1280": {
+      "open": true,
+      "text": "Reset the Checkout page settings to their defaults? Your changes on this screen will be lost.",
+      "focus": "kbbSureNo",
+      "card": {
+        "w": 360,
+        "h": 159,
+        "x": 460,
+        "y": 371
+      },
+      "scrollWidth": 1280,
+      "clientWidth": 1280
+    },
+    "header-open-1280": {
+      "open": true,
+      "text": "Reset the Header settings to their defaults? Your changes on this screen will be lost.",
+      "focus": "kbbSureNo",
+      "card": {
+        "w": 360,
+        "h": 159,
+        "x": 460,
+        "y": 371
+      },
+      "scrollWidth": 1280,
+      "clientWidth": 1280
+    },
+    "modules-open-1280": {
+      "open": true,
+      "text": "Put the modules in “Order emails” back to how the shop ships them? Nothing is stored until you press Save changes.",
+      "focus": "kbbSureNo",
+      "card": {
+        "w": 360,
+        "h": 178,
+        "x": 460,
+        "y": 361
+      },
+      "scrollWidth": 1280,
+      "clientWidth": 1280
+    }
+  }
+}

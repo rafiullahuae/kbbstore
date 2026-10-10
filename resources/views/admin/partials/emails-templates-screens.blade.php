@@ -333,7 +333,7 @@ button.tog.lock{cursor:not-allowed}
       + '<div' + P('ar') + '>' + wordsHtml('ar') + '</div>'
       + (rv ? '<div' + P('rules') + ' data-rv-rules>' + window.kbbRvRules.html() + '</div>' : '')
       + '<div' + P('preview') + '></div>'
-      + '<div class="ek-row" style="margin-top:14px"><button type="button" class="btn ghost" data-ek-reset>Reset to default</button><button type="button" class="btn ghost" data-ek-ready>Start from a ready template</button><span class="ek-sp"></span><button type="button" class="btn ghost" data-ek-mytest>Send test to me</button><button type="button" class="btn" data-ek-save>Save</button></div>'
+      + '<div class="ek-row" style="margin-top:14px"><button type="button" class="btn ghost" data-ek-reset data-kbb-asks>Reset to default</button><button type="button" class="btn ghost" data-ek-ready>Start from a ready template</button><span class="ek-sp"></span><button type="button" class="btn ghost" data-ek-mytest>Send test to me</button><button type="button" class="btn" data-ek-save>Save</button></div>'
       + '<div class="ek-foot" data-ek-dirty>' + (ed.dirty ? 'Unsaved changes — the preview shows them; customers get them only after Save.' : '') + '</div>'
       + '</div><div class="ek-prevcol"><div class="ek-row" style="margin-bottom:10px"><b style="font-size:13px">Live preview</b><span class="ek-sp"></span>'
       + '<span class="ek-dev" role="group" aria-label="Preview width"><button type="button" data-ek-dev="desktop" class="' + (state.device === 'desktop' ? 'on' : '') + '">Desktop</button><button type="button" data-ek-dev="phone" class="' + (state.device === 'phone' ? 'on' : '') + '">Phone</button></span></div>'
@@ -410,7 +410,7 @@ button.tog.lock{cursor:not-allowed}
   }
 
   async function reset(btn) {
-    if (!window.confirm('Put this email back to the approved design and the built-in words, in English and Arabic?')) return;
+    if (!(await window.kbbConfirm('Reset this email to its default? It goes back to the approved design and the built-in words, in English and Arabic, and your changes to it are lost.'))) return;
     btn.disabled = true;
     try { var r = await api('/emails/templates/' + encodeURIComponent(state.ed.template) + '/reset', {}); load(r.data); paintEditor(); toastMsg('Back to the approved design'); }
     catch (e) { toastMsg(why(e)); btn.disabled = false; }

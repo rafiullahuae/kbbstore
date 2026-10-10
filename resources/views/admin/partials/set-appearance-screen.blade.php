@@ -984,7 +984,7 @@
           + '</button>'
         : '')
       + (entry.moved
-        ? '<button type="button" class="sap-btn" data-sap-groupreset="' + esc(g.id) + '">Put this group back to shipped ('
+        ? '<button type="button" class="sap-btn" data-kbb-asks data-sap-groupreset="' + esc(g.id) + '">Put this group back to shipped ('
           + entry.moved + ')</button>'
         : '')
       + '</div><p class="sap-sub">' + esc(g.blurb) + '</p>';
@@ -1429,13 +1429,14 @@
       var keys = keysOfGroup(target).filter(function (k) { return !isShipped(k); });
       if (!keys.length) return;
 
-      if (!window.confirm('Put ' + keys.length + ' setting(s) in “' + target.label
-        + '” back to the value the page shipped with?\n\nNothing is saved until you press Save.')) return;
-
-      keys.forEach(function (k) { draft[k] = defaults[k]; });
-      renderControls();
-      pushOverlay();
-      if (keys.some(function (k) { return !isFast(k); })) schedulePreview();
+      window.kbbConfirm('Put ' + keys.length + ' setting(s) in “' + target.label
+        + '” back to the value the page shipped with? Nothing is saved until you press Save.').then(function (ok) {
+        if (!ok) return;
+        keys.forEach(function (k) { draft[k] = defaults[k]; });
+        renderControls();
+        pushOverlay();
+        if (keys.some(function (k) { return !isFast(k); })) schedulePreview();
+      });
       return;
     }
 

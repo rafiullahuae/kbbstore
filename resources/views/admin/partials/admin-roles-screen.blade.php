@@ -299,7 +299,7 @@
         (r.locked ? '' : '<div class="rl-tags">' + bySec.slice(0, 5).join('') + (bySec.length > 5 ? '<span class="rl-chip">+' + (bySec.length - 5) + ' more</span>' : '') + '</div>') +
         '<div class="rl-acts"><button type="button" class="btn ghost sm" data-rl="edit-role" data-id="' + r.id + '">' + (r.locked ? 'View' : 'Edit') + '</button>' +
         '<button type="button" class="btn ghost sm" data-rl="copy-role" data-id="' + r.id + '">Start a role from this</button>' +
-        (r.preset && r.edited ? '<button type="button" class="btn ghost sm" data-rl="restore-role" data-id="' + r.id + '">Restore default</button>' : '') +
+        (r.preset && r.edited ? '<button type="button" class="btn ghost sm" data-rl="restore-role" data-kbb-asks data-id="' + r.id + '">Restore default</button>' : '') +
         (!r.preset ? '<button type="button" class="btn ghost sm" data-rl="delete-role" data-id="' + r.id + '">Delete</button>' : '') + '</div></div>';
     }).join('') + '</div>';
   }
@@ -342,7 +342,7 @@
   async function roleAction(kind, id) {
     var r = role(id); if (!r) return;
     if (kind === 'delete' && !window.confirm('Delete the role “' + r.name + '”?')) return;
-    if (kind === 'restore' && !window.confirm('Put “' + r.name + '” back to its default name and permissions? Everyone on it is affected.')) return;
+    if (kind === 'restore' && !(await window.kbbConfirm('Put “' + r.name + '” back to its default name and permissions? Everyone on it is affected.'))) return;
     var res = await api(kind === 'delete' ? 'DELETE' : 'POST', '/' + id + (kind === 'restore' ? '/restore' : ''));
     if (!res.ok) { toastMsg(why(res), true); return; }
     S.flash = kind === 'delete' ? 'Role deleted.' : 'Restored to default.'; await load();

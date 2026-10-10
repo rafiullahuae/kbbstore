@@ -348,7 +348,7 @@ it('asks "Are you sure?" before Discard through the reset guard, and not before 
     expect($guard)->toContain('var RESET_LABEL = /^\s*(reset|restore|revert|back to defaults?)\b/i;')
         ->and($guard)->toContain("var asks = el.getAttribute('data-kbb-sure');")
         ->and($guard)->toContain('if (!asks && !RESET_LABEL.test(label)) return;')
-        ->and($guard)->toContain('text.textContent = asks');
+        ->and($guard)->toContain('window.kbbConfirm(asks');
 
     expect(substr_count($js, "x.setAttribute('data-kbb-sure',"))->toBe(1)
         ->and(substr_count($js, "BAR_B.setAttribute('data-kbb-sure',"))->toBe(1);

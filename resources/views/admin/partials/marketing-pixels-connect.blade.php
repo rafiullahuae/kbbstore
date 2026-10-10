@@ -190,7 +190,7 @@
         + '<div class="mpx-f"><label>Load</label><select class="inp" data-ccl>' + opt(CC.load, s.load) + '</select><small>“Immediately” runs as the page opens. The shop still adds async to script files and loads stylesheets without blocking, but heavy code there can slow the page.</small></div>'
         + '<div class="mpx-f" style="max-width:none"><label>Code</label><textarea class="inp" data-ccc spellcheck="false" maxlength="' + CC.max_bytes + '"></textarea><small data-ccn></small></div></div>';
     }).join('');
-    var hist = (CC.history || []).map(function (h, i) { return '<tr><td>' + e(h.created_at) + '</td><td>' + e(h.saved_by) + '</td><td>' + e(h.note) + '<div class="mpx-muted">' + e(h.summary) + '</div></td><td>' + (i === 0 ? '<span class="mpx-pill on">live</span>' : '<button class="btn small" data-cc-restore="' + h.id + '">Restore</button>') + '</td></tr>'; }).join('');
+    var hist = (CC.history || []).map(function (h, i) { return '<tr><td>' + e(h.created_at) + '</td><td>' + e(h.saved_by) + '</td><td>' + e(h.note) + '<div class="mpx-muted">' + e(h.summary) + '</div></td><td>' + (i === 0 ? '<span class="mpx-pill on">live</span>' : '<button class="btn small" data-kbb-asks data-cc-restore="' + h.id + '">Restore</button>') + '</td></tr>'; }).join('');
     var speed = S ? '<div class="mpx-card"><h3>Page speed</h3><p class="mpx-muted">The browser\u2019s loading bar waits for every script file. After the page loads, the shop\u2019s own photos come first and the bar finishes sooner; every event is still kept and sent when the file arrives.</p>' + field('load_scripts') + '<div class="mpx-row"><button class="btn primary" type="button" data-mpx-save>Save</button></div></div>' : '';
     return speed + '<div class="mpx-warn">Code here runs on your shop for every visitor. Paste only code from a vendor you trust. Off or empty prints nothing at all. Up to 20 KB per box.</div><div id="ccWarn"></div>' + box
       + '<div class="mpx-row"><button class="btn primary" type="button" data-cc-save>Save custom code</button></div>'
@@ -254,7 +254,7 @@
       t.disabled = true;
       return api('/custom-code', {slots: slots}).then(function (d) { t.disabled = false; if (!d.ok) return toast(fault(d) || d.error || ('Could not save: ' + d.__status), 'bad'); CC.slots = slots; CC.history = d.history; draw(); var w = Object.values(d.warnings || {}); document.getElementById('ccWarn').innerHTML = w.map(function (x) { return '<div class="mpx-warn">' + e(x) + '</div>'; }).join(''); toast('Custom code saved'); });
     }
-    if (t.hasAttribute('data-cc-restore')) { if (!confirm('Put this version back on the shop?')) return; return api('/custom-code/restore/' + t.getAttribute('data-cc-restore'), {}).then(function (d) { if (!d.ok) return toast(d.error, 'bad'); CC.slots = d.slots; CC.history = d.history; draw(); toast('Version restored'); }); }
+    if (t.hasAttribute('data-cc-restore')) { var ccId = t.getAttribute('data-cc-restore'); return window.kbbConfirm('Put this version of your custom code back on the shop? The code there now is replaced.').then(function (ok) { if (ok) return api('/custom-code/restore/' + ccId, {}).then(function (d) { if (!d.ok) return toast(d.error, 'bad'); CC.slots = d.slots; CC.history = d.history; draw(); toast('Version restored'); }); }); }
   });
   document.addEventListener('input', function (ev) { var b = ev.target.closest && ev.target.closest('#mpxPanel [data-cc]'); if (b) count(b); });
 
