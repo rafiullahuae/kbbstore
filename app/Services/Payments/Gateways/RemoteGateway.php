@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Services\Payments\GatewayCredentials;
 use App\Services\Payments\PaymentConfirmer;
 use App\Services\Payments\PaymentGateway;
+use App\Services\Payments\PaymentStart;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -161,7 +162,14 @@ abstract class RemoteGateway implements PaymentGateway
         } catch (\Throwable $e) {
             $this->log('transport error', $path, null, ['error' => $e->getMessage()]);
 
-            return ['ok' => false, 'status' => null, 'body' => null, 'error' => 'transport_error'];
+            return [
+                'ok' => false, 'status' => null, 'body' => null, 'error' => 'transport_error',
+                // A category, never the exception text: that can carry the URL
+                // and, on some transports, the request it was sending.
+                'detail' => stripos($e->getMessage(), 'timed out') !== false
+                    ? 'no answer within ' . self::TIMEOUT . ' seconds (timed out)'
+                    : 'could not connect (' . class_basename($e) . ')',
+            ];
         }
 
         $this->log('api call', $path, $response->status());
@@ -174,7 +182,96 @@ abstract class RemoteGateway implements PaymentGateway
             'status' => $response->status(),
             'body' => $response->successful() ? $decoded : null,
             'error' => $response->successful() ? null : $this->errorCode($decoded),
+            'detail' => $response->successful() ? null : $this->refusalDetail($decoded),
         ];
+    }
+
+    /**
+     * The provider's own reason for refusing a request, made safe to print.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * (Lane TM.) errorCode() keeps one identifier, which is right for an audit
+     * column and too little for an owner reading an order: "400" alone does
+     * not say WHICH field Tamara disliked. This keeps the provider's named
+     * error parts — `message`, `error_code`, and each entry of `errors` (a
+     * list of {error_code, message, field} or a map of field => messages) —
+     * and nothing else from the body.
+     *
+     * SANITISED, NOT TRUSTED. Every piece is stripped to letters, digits and
+     * plain punctuation; any run of five or more digits (a phone, a card, an
+     * id) becomes "[number]" and anything shaped like an email "[email]", so
+     * a provider that echoes the buyer's phone back in its message cannot put
+     * it into an order note. Capped at 300 characters. Printed escaped on
+     * every screen; it is data, never markup.
+     */
+    protected function refusalDetail(?array $body): ?string
+    {
+        if ($body === null) {
+            return null;
+        }
+
+        $parts = [];
+        $add = function (mixed $value, ?string $field = null) use (&$parts): void {
+            if (! is_scalar($value) || is_bool($value)) {
+                return;
+            }
+
+            $clean = self::safeText((string) $value);
+
+            if ($clean === '') {
+                return;
+            }
+
+            $field = $field !== null ? self::safeText($field) : '';
+            $parts[] = $field !== '' && ! str_contains($clean, $field) ? $field . ': ' . $clean : $clean;
+        };
+
+        $add($body['message'] ?? null);
+        $add(is_array($body['error'] ?? null) ? ($body['error']['message'] ?? null) : ($body['error'] ?? null));
+        $add($body['error_code'] ?? null);
+        $add($body['errorType'] ?? null);
+
+        $errors = $body['errors'] ?? null;
+
+        if (is_array($errors)) {
+            foreach (array_slice($errors, 0, 6, true) as $key => $entry) {
+                if (is_array($entry) && array_is_list($entry)) {
+                    // {"phone_number": ["is invalid"]}
+                    foreach (array_slice($entry, 0, 2) as $m) {
+                        $add($m, is_string($key) ? $key : null);
+                    }
+                } elseif (is_array($entry)) {
+                    // [{"error_code": "...", "message": "...", "field": "..."}]
+                    $field = $entry['field'] ?? $entry['property'] ?? $entry['path'] ?? (is_string($key) ? $key : null);
+                    $add($entry['error_code'] ?? $entry['code'] ?? null, is_string($field) ? $field : null);
+                    $add($entry['message'] ?? null, is_string($field) ? $field : null);
+                } else {
+                    $add($entry, is_string($key) ? $key : null);
+                }
+            }
+        }
+
+        $parts = array_values(array_unique($parts));
+
+        if ($parts === []) {
+            return null;
+        }
+
+        $out = implode('; ', $parts);
+
+        return mb_strlen($out) > 300 ? rtrim(mb_substr($out, 0, 299)) . '…' : $out;
+    }
+
+    /** One piece of provider text, reduced to what is safe to show anybody. */
+    private static function safeText(string $value): string
+    {
+        $value = preg_replace('/[^\s@]+@[^\s@]+/u', '[email]', $value) ?? '';
+        $value = preg_replace('/\+?\d[\d\s\-]{3,}\d/', '[number]', $value) ?? '';
+        $value = preg_replace('/(?:\[number\]|\d){5,}/', '[number]', $value) ?? '';
+        $value = preg_replace("/[^\p{L}\p{N}\s_.,:;'()\/\[\]\-]/u", '', $value) ?? '';
+        $value = trim(preg_replace('/\s+/', ' ', $value) ?? '');
+
+        return mb_substr($value, 0, 120);
     }
 
     /**
@@ -205,6 +302,72 @@ abstract class RemoteGateway implements PaymentGateway
         }
 
         return null;
+    }
+
+    /**
+     * A payment that did not start, written down where the owner can read it.
+     *
+     * (Lane TM; Tamara and Tabby.) Three places, each for a different reader:
+     *   - the returned `detail` goes into the order note the checkout writes
+     *     ("The payment could not be started. Tamara refused the checkout: HTTP
+     *     400 — …"), which both order screens already show;
+     *   - payment_logs, which the order's Payment journey reads;
+     *   - laravel.log at ERROR, the one level the live .env keeps, with the
+     *     order number on the line so `grep <number>` over SSH finds it.
+     * None of them carries a body, a header or a token: `$why` is built from
+     * the status and RemoteGateway::refusalDetail()'s sanitised text only.
+     */
+    protected function notStarted(Order $order, string $shopper, string $why, string $code, ?int $status = null, ?string $errorCode = null): PaymentStart
+    {
+        \App\Services\Payments\PaymentLog::record($this->id(), 'error', 'checkout_refused', $why, [
+            'order' => $this->reference($order),
+            'http_status' => $status,
+            'error_code' => $errorCode,
+            'reason' => $code,
+        ], $this->credentials->mode($this->id()));
+
+        try {
+            \Illuminate\Support\Facades\Log::error('payments: checkout not started', [
+                'gateway' => $this->id(),
+                'order' => $this->reference($order),
+                'status' => $status,
+                'reason' => $code,
+                'detail' => $why,
+            ]);
+        } catch (\Throwable) {
+            // A log that cannot be written must not turn a refused payment into a 500.
+        }
+
+        return PaymentStart::failed($shopper, $why);
+    }
+
+    /**
+     * The other half of the journey: the provider opened a session and the
+     * shopper is being sent to its page. (Lane TM.)
+     */
+    protected function started(Order $order, ?int $status, string $providerRef): void
+    {
+        \App\Services\Payments\PaymentLog::record($this->id(), 'info', 'checkout_created',
+            sprintf('%s accepted the checkout; the shopper was sent to %s\'s page.', $this->providerName(), $this->providerName()),
+            ['order' => $this->reference($order), 'http_status' => $status, 'reference' => $providerRef],
+            $this->credentials->mode($this->id()));
+    }
+
+    /** A verified notification from the provider, for the order's journey. (Lane TM.) */
+    protected function journeyWebhook(Order $order, string $event, string $status, string $providerRef): void
+    {
+        $word = fn (string $v) => substr(preg_replace('/[^A-Za-z0-9_.\-]/', '', $v) ?? '', 0, 40);
+
+        \App\Services\Payments\PaymentLog::record($this->id(), 'info', 'webhook',
+            $this->providerName() . ' notification: ' . ($word($event) ?: 'no event type')
+                . ($word($status) !== '' ? ' (' . $word($status) . ')' : '') . '.',
+            ['order' => (string) $order->order_number, 'event_type' => $word($event), 'status' => $word($status), 'reference' => $word($providerRef)],
+            $this->credentials->mode($this->id()));
+    }
+
+    protected function providerName(): string
+    {
+        return ucfirst($this->id());
     }
 
     /**

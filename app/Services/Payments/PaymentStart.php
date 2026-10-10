@@ -20,6 +20,18 @@ final class PaymentStart
         public readonly ?string $providerRef = null,
         public readonly ?string $message = null,
         public readonly ?string $clientSecret = null,
+        /*
+         * (Lane TM) WHY it failed, for the OWNER — never shown to the shopper.
+         *
+         * `message` is the shopper's sentence and deliberately says nothing
+         * about the provider. That left Order #56187 (10 Oct 2026) with one
+         * note, "The payment could not be started.", and no way to tell a
+         * refused request from a missing token from a basket rule. This is
+         * the sanitised operator line the checkout appends to that note: the
+         * HTTP status and the provider's own error code/field, never a body,
+         * a header or a token.
+         */
+        public readonly ?string $detail = null,
     ) {}
 
     public static function redirect(string $url, ?string $providerRef = null): self
@@ -62,9 +74,11 @@ final class PaymentStart
      * $message is shown to the shopper, so it must never carry an API error
      * body, a key, or anything else from the provider's response.
      */
-    public static function failed(string $message): self
+    public static function failed(string $message, ?string $detail = null): self
     {
-        return new self('failed', null, null, $message);
+        $detail = $detail !== null && trim($detail) !== '' ? trim($detail) : null;
+
+        return new self('failed', null, null, $message, null, $detail);
     }
 
     public function ok(): bool

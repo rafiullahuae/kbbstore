@@ -467,9 +467,17 @@ it('does not query per line, note or refund on the order detail screen', functio
      * And a ceiling, because a flat count can still be flat and wasteful. 8
      * rather than 7 so that a paid-but-uncaptured order — which legitimately
      * reads `payments` for its refund ceiling — passes the same bar.
+     *
+     * ▲ 10, RAISED DELIBERATELY BY LANE TM (10 Oct 2026), not to fit a slope:
+     * the owner asked for the customer journey and the order's emails on this
+     * screen, and each is ONE query whatever the order holds — the Cart
+     * Tracking basket with its events (App\Support\CustomerJourney) and the
+     * mail log (App\Support\OrderEmails). Measured 9 on this COD order, flat
+     * at 1..20 lines. PaymentJourneyTest pins both at 2 queries for 3 events
+     * and for 40, and a COD order's payment journey at zero.
      */
     expect($counts[20])->toBeLessThanOrEqual(
-        8,
+        10,
         "the order detail screen costs more than it should: {$report}"
     );
 })->group('budget');

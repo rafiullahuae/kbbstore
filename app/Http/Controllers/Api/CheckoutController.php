@@ -497,7 +497,7 @@ class CheckoutController extends Controller
                     $order,
                     'failed',
                     by: 'system',
-                    reason: 'The payment could not be started.',
+                    reason: trim('The payment could not be started. ' . ($start->detail ?? '')),
                 );
 
                 // The units go back on the shelf as well. That call stood

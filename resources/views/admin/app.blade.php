@@ -561,6 +561,21 @@ input.inp[type=file]{padding:6px 9px}
 .odpay-soft{font-weight:500;opacity:.8;font-size:11.5px}
 .odpay-urgent{color:#B42318;opacity:1;font-weight:700}
 .odpay-acts{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
+.odpj{margin-top:14px;border-top:1px solid rgba(0,0,0,.08);padding-top:12px}
+.odpj summary{cursor:pointer;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;opacity:.75}
+.odpj-v{margin:8px 0 10px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.7);color:var(--ink);font-weight:600;line-height:1.45;overflow-wrap:anywhere}
+.odpj-v.odpj-w{box-shadow:inset 3px 0 0 #D92D20}.odpj-v.odpj-g{box-shadow:inset 3px 0 0 #12B76A}
+.odpj-l{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid rgba(0,0,0,.1);display:grid;gap:9px}
+.odpj-l li{position:relative;color:var(--ink);line-height:1.45;overflow-wrap:anywhere}
+.odpj-l li::before{content:"";position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 2px #98A2B3}
+.odpj-l li.odpj-w::before{background:#D92D20;box-shadow:none}.odpj-l li.odpj-g::before{background:#12B76A;box-shadow:none}
+.odem-r{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12.5px;min-width:0}
+.odem-r>div{min-width:0;overflow-wrap:anywhere}.odem-r span{display:block;color:var(--ink-soft);font-size:11.5px;margin-top:2px}
+.odem-r .odem-err{color:#B42318}
+.odem-s{flex:none;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:999px;padding:3px 9px;background:#F5F6F8;color:#3C4253}
+.odem-sent{background:#ECFDF3;color:#05603A}.odem-failed{background:#FEF1F0;color:#9B231A}
+#odJourney .odpj-l{margin-left:6px}
+.odpj-l b{display:block;font-size:12.5px}.odpj-l span{display:block;font-weight:500;font-size:12px}.odpj-l small{display:block;opacity:.7;font-size:11px}
 .odlinkbtn{background:none;border:0;padding:0;font:inherit;font-size:11px;font-weight:600;color:#E08A1A;cursor:pointer;letter-spacing:0}
 .odlinkbtn:hover{text-decoration:underline}
 .odmodal .odm-lead{font-size:12.5px;line-height:1.55;color:var(--ink-2);margin:0 0 14px}
@@ -15023,7 +15038,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '<div class="page-head" style="margin-bottom:4px"><h2>Order #'+sesc(o.order_number)+'</h2></div>'+
       '<p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:18px">'+paidLine+'</p>'+
       '<div class="odgrid">'+
-      '<div class="odmain">'+odOverviewAddressesCard(o)+odCustomerNoteCard(o)+odItemsCard(o)+odNotesCard(o)+'</div>'+
+      '<div class="odmain">'+odOverviewAddressesCard(o)+odCustomerNoteCard(o)+odItemsCard(o)+odJourneyCard(o)+odEmailsCard(o)+odNotesCard(o)+'</div>'+
       '<div class="odside">'+odAttributionCard(o)+odActionsCard(o)+odHistoryCard(o)+odInvoiceCard(o)+'</div>'+
       '</div></div>';
 
@@ -15426,7 +15441,52 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
         '<div><div class="odpay-h">'+sesc(p.headline)+'</div>'+(p.detail?'<div class="odpay-d">'+sesc(p.detail)+'</div>':'')+'</div></div>'+
       (rows.length?'<dl class="odpay-dl">'+rows.join('')+'</dl>':'')+
       (actions?'<div class="odpay-acts">'+actions+'</div>':'')+
+      odJourney(o.payment_journey)+
     '</section>';
+  }
+
+  /*
+   * (Lane TM) PAYMENT JOURNEY, inside the payment panel: the server's verdict
+   * ("Never reached Tamara…", "came back without finishing", "Tamara reported
+   * the payment as declined") and each step it was read from. Built by
+   * App\Support\PaymentJourney; every word escaped here, nothing measured.
+   */
+  function odJourney(j){
+    if(!j || !j.steps) return '';
+    return '<details class="odpj" open><summary>Payment journey</summary>'+
+      '<p class="odpj-v odpj-'+sesc(j.verdict.tone||'n')+'">'+sesc(j.verdict.text)+'</p><ol class="odpj-l">'+
+      j.steps.map(function(s){
+        return '<li class="odpj-'+sesc(s.tone||'n')+'"><b>'+sesc(s.title)+'</b>'+(s.detail?'<span>'+sesc(s.detail)+'</span>':'')+'<small>'+sesc(s.at_label)+'</small></li>';
+      }).join('')+'</ol>'+
+      (j.cart?'<p class="odpay-soft">Basket #'+sesc(String(j.cart.id))+' is in Store → Cart Tracking (search this order number).</p>':'')+
+    '</details>';
+  }
+
+  /* (Lane TM) Customer journey -- landing source, basket, placed -- from
+     App\Support\CustomerJourney, and every email sent for the order from
+     App\Support\OrderEmails. Server-built, escaped here, nothing measured. */
+  function odJourneyCard(o){
+    var c = o.customer_journey;
+    if(!c) return '';
+    return '<div class="odcard" id="odJourney">'+odCardHead('Customer journey')+'<div class="pad"><ol class="odpj-l">'+
+      c.steps.map(function(s){
+        return '<li class="odpj-'+sesc(s.tone||'n')+'"><b>'+sesc(s.title)+'</b>'+(s.detail?'<span>'+sesc(s.detail)+'</span>':'')+'<small>'+sesc(s.at_label)+'</small></li>';
+      }).join('')+'</ol>'+
+      (c.cart_id?'<p class="odpay-soft" style="margin-top:10px">Basket #'+sesc(String(c.cart_id))+' is in Store → Cart Tracking (search this order number).</p>':'')+
+      '<p class="odpay-soft" style="margin-top:8px;color:var(--ink-soft)">'+sesc(c.not_tracked)+'</p></div></div>';
+  }
+
+  function odEmailsCard(o){
+    var m = o.emails;
+    if(!m) return '';
+    var rows = m.rows.map(function(r){
+      return '<div class="odem-r"><div><b>'+sesc(r.type)+'</b><span>'+sesc(r.to)+' · '+sesc(r.at_label)+'</span>'+
+        (r.subject?'<span>'+sesc(r.subject)+'</span>':'')+(r.error?'<span class="odem-err">'+sesc(r.error)+'</span>':'')+'</div>'+
+        '<span class="odem-s odem-'+sesc(r.status)+'">'+sesc(r.status)+'</span></div>';
+    }).join('');
+    return '<div class="odcard" id="odEmails">'+odCardHead('Emails ('+m.rows.length+')')+'<div class="pad">'+
+      (rows || '<p style="font-size:12.5px;color:var(--ink-soft)">No email has been sent for this order.</p>')+
+      '<p style="font-size:11.5px;color:var(--ink-soft);margin-top:10px">'+sesc(m.note)+'</p></div></div>';
   }
 
   function odNotesCard(o){
