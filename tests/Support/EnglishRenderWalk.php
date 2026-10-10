@@ -1649,6 +1649,19 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * "on desktop checkout, the back to top icon is showing down left,
+             * it should be on right bottom" -- the owner, 10 October (Lane SH).
+             * One CSS rule in the checkout footer's style block, printed only
+             * while the policy links are the last row; nothing else on the
+             * page moves. Measured in Chromium: arrow 140 -> 1110 px at 1280,
+             * unchanged at 390.
+             */
+            'the checkout footer\'s back-to-top arrow, far end of its row (Lane SH)' => [
+                'pattern' => '#(\.kbb-slimfoot\.sf-a-center \.sf-pay\{justify-content:center\}\n)#',
+                'with' => '$1.kbb-slimfoot.sf-up-on .sf-links-end ~ .sf-top{margin-inline-start:auto}'."\n",
+                'hits' => 1,
+            ],
+            /*
              * The checkout footer's policy links as its LAST ROW (Lane CO), as
              * the owner asked; the block was already last in this walk's bar,
              * so only its class moves. See the insertion of the same name.
