@@ -223,7 +223,9 @@ it('names a real console location in every module row that names one at all', fu
     // Advanced for that, and $wrong is still empty.
     // 45 with Lane IGR: `instagram_profile` (naming 'Content → Instagram')
     // left the registry with the retired Instagram API module.
-    expect($checked)->toBe(45);
+    // 46 with Lane RV: `email_review_request` names 'Emails → Customer emails
+    // → Review request' (no Open button: that editor is reached from the list).
+    expect($checked)->toBe(46);
     expect($wrong)->toBe([]);
 });
 

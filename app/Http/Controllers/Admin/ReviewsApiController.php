@@ -656,6 +656,9 @@ class ReviewsApiController extends Controller
                 $r->source === null ? null : (string) $r->source,
                 (int) $r->id,
             ),
+            // Lane RV: written on the review request email's page by the
+            // buyer of that order (verified by its link). The list marks it.
+            'from_request' => (string) ($r->source ?? '') === \App\Services\Reviews\ReviewRequests::SOURCE,
             'created_at' => optional($r->created_at)->toIso8601String(),
         ];
     }

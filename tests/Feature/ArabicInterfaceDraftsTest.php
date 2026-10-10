@@ -718,7 +718,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // +14 (Lane OL): "Send order link" -- the pay page's rows and states
     // (store.order_pay.*) and its email (email.paylink.*), seeded by
     // 2027_10_23_100100_seed_order_pay_link_arabic_drafts.
-    expect($ui['drafts'])->toBe(1559, 'the shipped Arabic is not showing as drafts to review')
+    // +56 (Lane RV): the review request email (email.review_request.*) and its
+    // page (store.review_request.*), seeded by
+    // 2027_10_27_700200_seed_review_request_arabic_drafts.
+    expect($ui['drafts'])->toBe(1615, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

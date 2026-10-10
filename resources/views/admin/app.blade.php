@@ -17914,7 +17914,9 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
                from every figure; this list is where the owner finds them to
                delete. The API sends is_demo per row; without this the marking
                exists and nobody can see it. */
-            (r.is_demo ? ' · <span style="color:var(--ink-faint)">demo</span>' : '') + '</div>' +
+            (r.is_demo ? ' · <span style="color:var(--ink-faint)">demo</span>' : '') +
+            /* LANE RV: written from the review request email's page. */
+            (r.from_request ? ' · <span class="pill blue" title="Written from the review request email">✉ From review email</span>' : '') + '</div>' +
         '</div>' +
         '<div class="rv-badges">' + rvStars(r.rating) + rvPill(r.status) +
           (r.verified ? '<span class="pill green" title="Bought this product">✓ Verified</span>' : '') +

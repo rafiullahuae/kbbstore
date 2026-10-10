@@ -137,6 +137,11 @@ class MailServiceProvider extends ServiceProvider
     {
         OrderMailObserver::register();
 
+        // The review request's clock (Lane RV): a row when an order turns
+        // Completed. Attaches a listener; reads nothing on a request that
+        // completes no order.
+        \App\Services\Reviews\ReviewRequests::register();
+
         /*
          * The template editor's sections (Lane EK). emails/kit/doc.blade.php
          * wraps every email in @kitsections … @endkitsections and each

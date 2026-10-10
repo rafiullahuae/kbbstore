@@ -839,6 +839,24 @@ class OrderMailer
     }
 
     /**
+     * "What did you think?" — the review request, N days after the order was
+     * completed (Lane RV). App\Services\Reviews\ReviewRequests decides it is
+     * due, claims it and chooses the products; this only sends, through the
+     * one choke point every order email takes (the order's language, the
+     * sample-order refusal, the delivery record as `order.review_request`).
+     *
+     * @param  callable(): \Illuminate\Mail\Mailable  $build
+     */
+    public function reviewRequest(Order $order, callable $build): bool
+    {
+        if ($this->isSample($order)) {
+            return false;
+        }
+
+        return $this->send($build, (string) $order->email, $order, 'review_request');
+    }
+
+    /**
      * Money has actually gone back.
      *
      * Driven by the refunds row settling, never by orders.status — see

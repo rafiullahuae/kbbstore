@@ -85,6 +85,10 @@ it('names every writer that puts a file in the media library', function () {
         // migration), so the same words on the screen cover it.
         'app/Services/Import/OldServerPictures.php' => ['store import'],
         'app/Http/Controllers/Store/ReviewController.php' => ['reviews'],
+        // Lane RV — the review request page writes the same kind of file (a
+        // customer's review photo), through App\Support\ReviewPhotos. The
+        // sentence that covers ReviewController covers it.
+        'app/Support/ReviewPhotos.php' => ['reviews'],
         'app/Services/Instagram/InstagramSync.php' => ['Instagram'],
         /*
          * THE SEVENTH WRITER, and this file is the reason it is named on the
@@ -149,6 +153,7 @@ it('goes red when a ninth writer starts filling the library', function () {
         'app/Services/Import/MediaSideloader.php',
         'app/Services/Import/OldServerPictures.php',   // Lane PX, see above
         'app/Http/Controllers/Store/ReviewController.php',
+        'app/Support/ReviewPhotos.php',   // Lane RV, see above
         'app/Services/Instagram/InstagramSync.php',
         // Lane BN — Appearance → Banners → Cards banner. See the row beside it
         // in the case above for what the sentence now has to carry for it.

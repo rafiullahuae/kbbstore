@@ -234,6 +234,7 @@ final class AdminRoles
             'emails.view' => 'See email settings and sent mail',
             'emails.test' => 'Send a test email to yourself',
             'emails.manage' => 'Change sending, branding and email templates',
+            'emails.review_requests' => 'Review request email: when it goes, which orders and products, and its report',
         ]],
         ['shipping', 'Shipping & payments', [
             'store.shipping' => 'Shipping rates and rules',

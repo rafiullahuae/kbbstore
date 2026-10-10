@@ -825,6 +825,13 @@ final class AdminCapabilities
         'emails.view' => ['owner', 'manager'],
         'emails.manage' => ['owner'],
         /*
+         * Lane RV: Emails → Customer emails → Review request → Schedule & rules
+         * (days after completion, which orders and products, star colour) and
+         * its report. Owner and manager, like reading and testing the emails:
+         * a manager runs the shop and moderates the reviews it brings in.
+         */
+        'emails.review_requests' => ['owner', 'manager'],
+        /*
          * Lane EK, docs/EMAILS-PLAN.md §6: test sends of any customer email
          * to the signed-in admin's own address (throttled). Owner and manager.
          */
@@ -1141,6 +1148,8 @@ final class AdminCapabilities
          * preview is Design & branding's endpoint and stays emails.manage.
          */
         ['GET', 'admin-api/emails/customer', 'emails.view'],
+        // Lane RV, above the wildcard: its own capability, both verbs.
+        ['*', 'admin-api/emails/review-requests', 'emails.review_requests'],
         ['POST', 'admin-api/emails/templates/*/test', 'emails.test'],
         ['GET', 'admin-api/emails/templates/*', 'emails.view'],
         ['*', 'admin-api/emails/customer/**', 'emails.manage'],

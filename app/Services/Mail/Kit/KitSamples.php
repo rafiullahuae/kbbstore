@@ -44,7 +44,7 @@ final class KitSamples
     /** The email as a Mailable, or null when the shop has nothing to fill it with (no order yet). */
     public static function mailable(string $template): ?Mailable
     {
-        $needsOrder = str_starts_with($template, 'order_') || $template === 'new_order_alert';
+        $needsOrder = str_starts_with($template, 'order_') || in_array($template, ['new_order_alert', 'review_request'], true);
         $order = $needsOrder ? Order::query()->with('items')->orderByDesc('id')->first() : null;
 
         if ($needsOrder && $order === null) {
@@ -62,6 +62,7 @@ final class KitSamples
             $template === 'order_refunded' => new OrderRefunded($order, $order->refunds()->latest('id')->first()
                 ?? new Refund(['amount' => max(1, intdiv((int) $order->total, 2)), 'status' => 'succeeded', 'provider_ref' => 'preview'])),
             $template === 'order_feedback' => new OrderFeedbackRequest($order),
+            $template === 'review_request' => new \App\Mail\ReviewRequestMail($order),
             $template === 'order_invoice' => new OrderInvoice($order),
             $template === 'new_order_alert' => new NewOrderAlert($order),
             $template === 'back_in_stock' => self::stock($url),

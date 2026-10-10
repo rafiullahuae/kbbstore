@@ -84,6 +84,14 @@ class OrderReminders
             if ($sent < $limit && $this->mailer->feedbackEnabled()) {
                 $sent += $this->feedbackStage($limit - $sent, $now);
             }
+
+            // The review request, N days after completion (Lane RV). Its own
+            // switch, rules and claim live in ReviewRequests; it rides this
+            // sweep so it has exactly the same two drivers (cron and the page
+            // heartbeat) and no third.
+            if ($sent < $limit) {
+                $sent += app(\App\Services\Reviews\ReviewRequests::class)->sweep($limit - $sent, $now);
+            }
         } catch (\Throwable $e) {
             Log::warning('order reminder sweep failed', ['exception' => class_basename($e), 'message' => $e->getMessage()]);
         }

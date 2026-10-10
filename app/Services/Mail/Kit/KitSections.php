@@ -283,6 +283,23 @@ final class KitSections
                 'body' => 'email.feedback.body',
             ],
         ],
+        // Lane RV: N days after the order is completed. The unsubscribe line
+        // is outside every section, so no saved layout can remove it.
+        'review_request' => [
+            'name' => 'Review request', 'header' => true,
+            'sections' => [
+                'hero' => ['Headline + greeting', true], 'products' => ['Products with tappable stars', true],
+                'button' => ['Button · Write a review', true], 'note' => ['How reviews are checked · link expiry', true],
+                'closing' => ['Closing line', true], 'signoff' => ['Signature', true],
+            ],
+            'words' => [
+                'subject' => 'email.review_request.subject_named',
+                'preheader' => 'email.review_request.preheader',
+                'heading' => 'email.review_request.heading',
+                'body' => 'email.review_request.body',
+            ],
+            'note' => 'When it goes, which orders and products, the star colour and the report are under the Schedule & rules tab.',
+        ],
         'order_invoice' => [
             'name' => 'Invoice', 'header' => true,
             'sections' => [

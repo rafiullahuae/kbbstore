@@ -1,0 +1,153 @@
+{
+  "email": {
+    "en-375": {
+      "scrollWidth": 375,
+      "clientWidth": 375,
+      "height": 1597,
+      "starLinks": 15,
+      "starBox": [
+        44,
+        44
+      ],
+      "starFont": "34px",
+      "dir": "ltr",
+      "headline": "Let us know what you think!",
+      "subject": "⭐ Rafi, what did you think of PDRN Pink Collagen Jelly Eye Mask?"
+    },
+    "en-600": {
+      "scrollWidth": 600,
+      "clientWidth": 600,
+      "height": 1536,
+      "starLinks": 15,
+      "starBox": [
+        44,
+        44
+      ],
+      "starFont": "34px",
+      "dir": "ltr",
+      "headline": "Let us know what you think!",
+      "subject": "⭐ Rafi, what did you think of PDRN Pink Collagen Jelly Eye Mask?"
+    },
+    "ar-375": {
+      "scrollWidth": 375,
+      "clientWidth": 375,
+      "height": 1579,
+      "starLinks": 15,
+      "starBox": [
+        44,
+        44
+      ],
+      "starFont": "34px",
+      "dir": "rtl",
+      "headline": "شاركينا رأيكِ!",
+      "subject": "⭐ Rafi، ما رأيكِ في PDRN Pink Collagen Jelly Eye Mask؟"
+    },
+    "ar-600": {
+      "scrollWidth": 600,
+      "clientWidth": 600,
+      "height": 1536,
+      "starLinks": 15,
+      "starBox": [
+        44,
+        44
+      ],
+      "starFont": "34px",
+      "dir": "rtl",
+      "headline": "شاركينا رأيكِ!",
+      "subject": "⭐ Rafi، ما رأيكِ في PDRN Pink Collagen Jelly Eye Mask؟"
+    }
+  },
+  "page": {
+    "firstProduct": "25",
+    "1280-before": {
+      "url": "/review-order?p=25&r=5",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "height": 2922,
+      "starTarget": [
+        44,
+        44
+      ],
+      "h1Size": "30px",
+      "inputFont": "16px",
+      "checked": [
+        "reviews[25][rating]=5"
+      ],
+      "robots": "noindex, nofollow",
+      "canonical": "http://127.0.0.1:10470/review-order/",
+      "scripts": 0,
+      "errors": [],
+      "thirdParty": []
+    },
+    "390-before": {
+      "url": "/review-order?p=25&r=5",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "height": 3156,
+      "starTarget": [
+        44,
+        44
+      ],
+      "h1Size": "24px",
+      "inputFont": "16px",
+      "checked": [
+        "reviews[25][rating]=5"
+      ],
+      "robots": "noindex, nofollow",
+      "canonical": "http://127.0.0.1:10470/review-order/",
+      "scripts": 0,
+      "errors": [],
+      "thirdParty": []
+    },
+    "secondStarTap": {
+      "hitIsStar": true,
+      "checked": true
+    },
+    "390-after": {
+      "url": "/review-order?thanks=1",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "height": 3503,
+      "starTarget": [
+        44,
+        44
+      ],
+      "h1Size": "24px",
+      "inputFont": "16px",
+      "checked": [
+        "reviews[25][rating]=5",
+        "reviews[26][rating]=4"
+      ],
+      "robots": "noindex, nofollow",
+      "canonical": "http://127.0.0.1:10470/review-order/",
+      "scripts": 0,
+      "errors": []
+    },
+    "1280-after": {
+      "url": "/review-order/?thanks=1",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "height": 3209,
+      "starTarget": [
+        44,
+        44
+      ],
+      "h1Size": "30px",
+      "inputFont": "16px",
+      "checked": [
+        "reviews[25][rating]=5",
+        "reviews[26][rating]=4"
+      ],
+      "robots": "noindex, nofollow",
+      "canonical": "http://127.0.0.1:10470/review-order/",
+      "scripts": 0,
+      "errors": []
+    }
+  },
+  "admin": {
+    "rulesTabFields": 8,
+    "daysAfterSave": "3",
+    "reviewsListFromEmail": 2,
+    "errors": []
+  }
+}

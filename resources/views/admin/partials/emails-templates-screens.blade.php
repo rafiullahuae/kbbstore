@@ -316,11 +316,13 @@ button.tog.lock{cursor:not-allowed}
 
   function paintEditor() {
     var h = host(), ed = state.ed; if (!h || !ed) return;
-    var ids = ['sections', 'en', 'ar', 'preview'];
+    // Lane RV: the Review request email has a fifth tab, its schedule and rules.
+    var rv = ed.template === 'review_request' && window.kbbRvRules;
+    var ids = rv ? ['sections', 'en', 'ar', 'rules', 'preview'] : ['sections', 'en', 'ar', 'preview'];
     var cur = tabs() ? tabs().pick('ek-editor', ids, 'sections') : 'sections';
     if (cur === 'preview' && window.matchMedia && !window.matchMedia('(max-width:880px)').matches) cur = 'sections';
     state.edTab = cur;
-    var bar = tabs() ? tabs().bar('ek-editor', [['sections', 'Sections'], ['en', 'Wording · English'], ['ar', 'Wording · العربية'], ['preview', 'Preview', null, 'ek-only-narrow']], cur, 'Edit this email') : '';
+    var bar = tabs() ? tabs().bar('ek-editor', [['sections', 'Sections'], ['en', 'Wording · English'], ['ar', 'Wording · العربية']].concat(rv ? [['rules', 'Schedule & rules']] : [], [['preview', 'Preview', null, 'ek-only-narrow']]), cur, 'Edit this email') : '';
     var P = function (id) { return tabs() ? tabs().panel('ek-editor', id, cur) : (id === cur ? '' : ' hidden'); };
     h.innerHTML = '<div class="wrap ek" data-ek="editor">'
       + '<div class="ek-row" style="margin-bottom:14px"><div class="page-head" style="margin:0"><h2>' + esc(ed.name) + '</h2><p>' + esc(ed.when ? 'Sent: ' + ed.when + '.' : '') + (ed.edited_at ? ' Last edited ' + esc(new Date(ed.edited_at).toLocaleString()) + '.' : '') + '</p></div><span class="ek-sp"></span><button type="button" class="btn ghost sm" data-ek-back>← All customer emails</button></div>'
@@ -329,6 +331,7 @@ button.tog.lock{cursor:not-allowed}
       + '<div' + P('sections') + ' data-ek-sections>' + sectionsHtml() + '</div>'
       + '<div' + P('en') + '>' + wordsHtml('en') + '</div>'
       + '<div' + P('ar') + '>' + wordsHtml('ar') + '</div>'
+      + (rv ? '<div' + P('rules') + ' data-rv-rules>' + window.kbbRvRules.html() + '</div>' : '')
       + '<div' + P('preview') + '></div>'
       + '<div class="ek-row" style="margin-top:14px"><button type="button" class="btn ghost" data-ek-reset>Reset to default</button><button type="button" class="btn ghost" data-ek-ready>Start from a ready template</button><span class="ek-sp"></span><button type="button" class="btn ghost" data-ek-mytest>Send test to me</button><button type="button" class="btn" data-ek-save>Save</button></div>'
       + '<div class="ek-foot" data-ek-dirty>' + (ed.dirty ? 'Unsaved changes — the preview shows them; customers get them only after Save.' : '') + '</div>'
@@ -337,6 +340,7 @@ button.tog.lock{cursor:not-allowed}
       + '<div class="' + (state.device === 'phone' ? 'ek-phone' : 'ek-desk') + '" data-ek-framebox><iframe class="ek-frame" title="Preview of ' + esc(ed.name) + '" sandbox="" data-ek-frame srcdoc="&lt;p style=&quot;font-family:sans-serif;color:#626c80;padding:24px&quot;&gt;Loading the preview…&lt;/p&gt;"></iframe></div>'
       + '</div></div></div>';
     preview(0);
+    if (rv && cur === 'rules') window.kbbRvRules.open();
   }
 
   function repaintSections() {
@@ -560,6 +564,7 @@ button.tog.lock{cursor:not-allowed}
     state.edTab = e.detail.id;
     var split = document.querySelector('.ek-split'); if (split) split.setAttribute('data-tab', e.detail.id);
     if (e.detail.id === 'ar' || e.detail.id === 'en') preview(0);
+    if (e.detail.id === 'rules' && window.kbbRvRules) window.kbbRvRules.open();
   });
   document.addEventListener('kbb:tab', function (e) {
     if (e.detail && e.detail.group === 'ek-customer') state.tab = e.detail.id;
@@ -601,3 +606,5 @@ button.tog.lock{cursor:not-allowed}
 })();
 </script>
 @endverbatim
+{{-- Lane RV: the Review request email's Schedule & rules tab (window.kbbRvRules). --}}
+@include('admin.partials.review-request-rules')
