@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.480
+**"How was your order?" review request email, its review page, and real reviews into your approval list.** Apply after .479.
+Runs its migrations (the review request log, its Arabic drafts, clears caches). Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "another email template, which will be sent after 2 days of order completion, as feedback ask ... suprb better design and functionality. give me full controls also, and make sure on front-end real reviews submitted from this feedback email and stored in the list to approve" | **The email** (ON): 2 days after an order turns Completed, one email per order: "⭐ {name}, what did you think of {product}?", a card per product (picture, brand, name, size) with five large stars where each star opens the review page with that rating chosen, a Write a review button, plain-text part, one-click unsubscribe from review requests only. **The page** (`/review-order/`): every product from that order, rating, title, review, optional photos (if Store → Reviews allows them), name prefilled; verified purchase. **Submitted reviews arrive as Pending** in Reviews, marked "✉ From review email"; approve or reject as usual. Only orders completed AFTER this package get one, so nothing goes to past orders |
+
+**Controls:** Emails → Customer emails → Review request: the switch on its row (ON). → Edit → Sections / Wording · English / Wording · العربية / Send test to me. → Edit → **Schedule & rules**: days after completion (2), most products per email (3), days the link works (60), skip customers asked within N days, skip refunded / no longer completed / already reviewed products, star colour; plus a report (sent, waiting, reviews received, answer rate, skipped and why, the latest 20).
+
+Good to know: your existing "Feedback request" email (3 hours after Delivered) is unchanged, so a customer now gets both; switch that one off under Emails → Customer emails if you want only this one. The Arabic email and page use English until you approve the drafts (Translation → Progress) or write your own on Wording · العربية. It sends on the same schedule as your other reminders; nothing to set up.
+
 ## 2.60.479
 **Set editor: the product search finds what you type, word by word, and answers at once.** Apply after .478.
 Runs its migration (clears caches). Hard refresh the admin.
