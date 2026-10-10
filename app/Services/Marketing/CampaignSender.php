@@ -403,7 +403,7 @@ final class CampaignSender
 
             $mailable = new CampaignMail(
                 Blocks::mergeName((string) $c->subject, (string) ($row->first_name ?? '')),
-                $out['html'],
+                OpenPixel::inject($out['html'], (int) $row->id, $token),   // Lane ER: the open pixel, when tracking is on
                 $out['text'],
                 $unsubscribe,
                 $c->from_name,

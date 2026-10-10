@@ -1,0 +1,115 @@
+[
+  {
+    "width": 1280,
+    "list": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "contentClientWidth": 1032,
+      "kpiFont": null,
+      "kpis": 0,
+      "bars": 0,
+      "rows": 3,
+      "title": "Marketing Emails · Reports"
+    },
+    "summary": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "contentClientWidth": 1032,
+      "kpiFont": "22px",
+      "kpis": 12,
+      "bars": 48,
+      "rows": 15,
+      "title": "Marketing Emails · Report"
+    },
+    "links": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "contentClientWidth": 1032,
+      "kpiFont": "22px",
+      "kpis": 12,
+      "bars": 48,
+      "rows": 15,
+      "title": "Marketing Emails · Report"
+    },
+    "people": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "contentClientWidth": 1032,
+      "kpiFont": "22px",
+      "kpis": 12,
+      "bars": 48,
+      "rows": 65,
+      "title": "Marketing Emails · Report"
+    },
+    "ordered": "3 people · page 1 of 1",
+    "csv": {
+      "name": "campaign-3-recipients-2026-10-10.csv",
+      "lines": 61,
+      "header": "email,status,bounced,\"opened (estimate)\",\"open kind\",\"first opened\",opens,clicked,clicks,\"first click\",\"orders within 7 days\",revenue,unsubscribed"
+    },
+    "switchBefore": {
+      "checked": true,
+      "text": "On: each email carries an invisible 1×1 picture, so the report can estimate opens."
+    },
+    "switchAfter": {
+      "checked": false,
+      "text": "Off: new emails carry no picture and opens are not counted. Clicks and orders are still exact."
+    },
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ {\"url\":\"http://127.0.0.1:10460/favicon.ico\",\"line\":0,\"column\":0,\"lineNumber\":0,\"columnNumber\":0}"
+    ]
+  },
+  {
+    "width": 390,
+    "list": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentScrollWidth": 390,
+      "contentClientWidth": 390,
+      "kpiFont": null,
+      "kpis": 0,
+      "bars": 0,
+      "rows": 3,
+      "title": "Marketing Emails · Reports"
+    },
+    "summary": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentScrollWidth": 390,
+      "contentClientWidth": 390,
+      "kpiFont": "19px",
+      "kpis": 12,
+      "bars": 48,
+      "rows": 15,
+      "title": "Marketing Emails · Report"
+    },
+    "links": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentScrollWidth": 390,
+      "contentClientWidth": 390,
+      "kpiFont": "19px",
+      "kpis": 12,
+      "bars": 48,
+      "rows": 15,
+      "title": "Marketing Emails · Report"
+    },
+    "people": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentScrollWidth": 390,
+      "contentClientWidth": 390,
+      "kpiFont": "19px",
+      "kpis": 12,
+      "bars": 48,
+      "rows": 65,
+      "title": "Marketing Emails · Report"
+    },
+    "ordered": "3 people · page 1 of 1",
+    "errors": []
+  }
+]

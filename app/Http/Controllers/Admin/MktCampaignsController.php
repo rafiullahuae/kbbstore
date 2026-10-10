@@ -601,12 +601,20 @@ final class MktCampaignsController extends Controller
     {
         $rows = array_values(array_filter($this->rows(), fn ($r) => in_array($r['status'], ['sent', 'sending', 'paused', 'cancelled'], true)));
 
-        return response()->json(['campaigns' => $rows]);
+        // Lane ER: open %, click %, visits, orders and revenue per row, in grouped queries.
+        $more = app(\App\Services\Marketing\CampaignInsights::class)->overview(array_column($rows, 'id'));
+        $rows = array_map(fn ($r) => $r + ['insights' => $more[$r['id']] ?? null], $rows);
+
+        return response()->json(['campaigns' => $rows, 'open_tracking' => \App\Services\Marketing\OpenPixel::enabled()]);
     }
 
     public function report(int $id): JsonResponse
     {
         $r = $this->report->campaign($id);
+
+        if ($r !== null) {
+            $r['insights'] = app(\App\Services\Marketing\CampaignInsights::class)->campaign($id, $r);   // Lane ER
+        }
 
         return $r === null ? response()->json(['error' => 'No such campaign.'], 404) : response()->json(['report' => $r]);
     }

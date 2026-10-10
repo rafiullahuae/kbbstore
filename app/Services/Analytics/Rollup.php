@@ -192,6 +192,30 @@ final class Rollup
             }
         }
 
+        /*
+         * Lane ER: a campaign's add-to-carts and checkouts started. A cart hit
+         * carries no page fields (Tracker::row kind 1), so it is tied to the
+         * campaign by its VISITOR: the visitors whose session arrived with this
+         * utm_campaign today, and of those, how many added to cart / reached the
+         * checkout today. Kept as two more dims, read by the campaign report.
+         */
+        $cmpV = [];
+        foreach ($sessions as [$n, $h]) {
+            if ((string) $h->cmp !== '') {
+                $cmpV[(string) $h->cmp][$h->v] = true;
+            }
+        }
+        foreach (['cmp_cart' => $cartV, 'cmp_chk' => $checkV] as $dim => $set) {
+            $list = [];
+            foreach ($cmpV as $val => $vs) {
+                $hit = count(array_intersect_key($vs, $set));
+                if ($hit > 0) {
+                    $list[] = ['val' => (string) $val, 'label' => '', 'views' => 0, 'visitors' => $hit, 'sessions' => $hit, 'bounces' => 0];
+                }
+            }
+            $rows = array_merge($rows, self::cap($dim, $list, 'sessions'));
+        }
+
         foreach ($dims as $dim => $vals) {
             $list = [];
             foreach ($vals as $val => [$v, $s, $b, $vs]) {
