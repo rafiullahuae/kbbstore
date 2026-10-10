@@ -249,8 +249,9 @@ class CatalogReorderApiController extends Controller
      * where the index exists.
      *
      * The definition is unchanged: COUNT(DISTINCT order_id) over lines whose
-     * order is in Order::REAL_STATUSES, through the same relation, so a
-     * trashed order is still excluded by the model's own scope.
+     * order is in Order::REAL_STATUSES and not trashed -- what the whereHas()
+     * it replaces asked, with the soft-delete scope written out because a
+     * DB::table() join does not know it.
      *
      * @param  list<int>  $ids
      * @return array<int, int>  product id => orders it appeared in
@@ -261,12 +262,15 @@ class CatalogReorderApiController extends Controller
             return [];
         }
 
-        return \App\Models\OrderItem::query()
-            ->whereIn('product_id', $ids)
-            ->whereHas('order', fn ($o) => $o->whereIn('status', \App\Models\Order::REAL_STATUSES))
-            ->groupBy('product_id')
-            ->selectRaw('product_id, COUNT(DISTINCT order_id) as orders_count')
-            ->toBase()
+        // JOIN_ORDER: see CatalogProductsApiController::attachSalesTotals().
+        return DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereIn('orders.status', \App\Models\Order::REAL_STATUSES)
+            ->whereNull('orders.deleted_at')
+            ->whereIn('order_items.product_id', $ids)
+            ->groupBy('order_items.product_id')
+            ->selectRaw('/*+ JOIN_ORDER(order_items, orders) */ order_items.product_id as product_id,'
+                .' COUNT(DISTINCT order_items.order_id) as orders_count')
             ->pluck('orders_count', 'product_id')
             ->map(fn ($n) => (int) $n)
             ->all();

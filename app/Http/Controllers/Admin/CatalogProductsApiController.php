@@ -1399,7 +1399,16 @@ class CatalogProductsApiController extends Controller
      * Order::REAL_STATUSES, the same trashed-order exclusion, the same
      * COUNT(DISTINCT)/SUM, narrowed by `product_id IN (...)`, which a GROUP BY
      * product_id cannot change for the ids it keeps. A product with no sales
-     * reads 0, as COALESCE made it before. PageCostBudgetTest compares both.
+     * reads 0, as COALESCE made it before.
+     *
+     * THE HINT. Past about a hundred ids MySQL 8.0's planner starts from
+     * `orders` -- a full scan of every order, then each one's lines -- because
+     * it underestimates the status filter. Measured at 300 ids: 290 ms that
+     * way, 87 ms starting from the page's own lines through the product_id
+     * index. `/*+ JOIN_ORDER(order_items, orders) *\/` asks for the second. It
+     * is an optimizer-hint COMMENT: MySQL 8 reads it, and SQLite, MariaDB and
+     * any MySQL that does not know it read a comment, so the statement and its
+     * answer are the same everywhere; only the plan moves.
      *
      * @param  \Illuminate\Support\Collection<int, Product>  $products
      * @return \Illuminate\Support\Collection<int, Product>
@@ -1414,7 +1423,7 @@ class CatalogProductsApiController extends Controller
             ->whereNull('orders.deleted_at')
             ->whereIn('order_items.product_id', $ids)
             ->groupBy('order_items.product_id')
-            ->selectRaw('order_items.product_id as product_id,'
+            ->selectRaw('/*+ JOIN_ORDER(order_items, orders) */ order_items.product_id as product_id,'
                 .' COUNT(DISTINCT order_items.order_id) as orders_count,'
                 .' COALESCE(SUM(order_items.quantity), 0) as units_sold,'
                 .' COALESCE(SUM(order_items.total), 0) as revenue_fils')
