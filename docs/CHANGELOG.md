@@ -3,6 +3,14 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.466
+**Speed: the always-on animations no longer keep a phone's processor busy. Same look.** Apply after .465.
+No migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "do whatever you want, but i need the fast loading without delays" (and his PageSpeed report: "Avoid non-composited animations" -- kft-drift x2, kbwK) | The buy-together wash, the footer help strip and big name (kft-drift) and the WhatsApp dot (kbwK) animated background-position / box-shadow, which redraws on the processor every frame; each alone cost ~2 s of every 10 s on a phone-speed CPU. Rebuilt as transform / opacity on their own layers, same period and easing, mirrored for Arabic. The 300 s page wash now changes in small steps. Idle 10 s at 390 (4x CPU): product 3.5 s -> 0.03 s, category/brand/super-sale/blog ~2.7 s -> 0.03 s, home 3.9 s -> 0.4 s; style recalcs 600 -> 0. Frames compared at equal times: same look (a few edge pixels). No new script or request; ~2 KB CSS |
+
 ## 2.60.465
 **iPhone pictures: product cards and the main product photo no longer download the full upload on 3x phones.** Apply after .464.
 No migrations. Hard refresh the shop.
