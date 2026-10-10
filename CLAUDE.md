@@ -300,6 +300,44 @@ or partial, header/footer/menu markup, any script — owes, before it reports:
   and brand; HTML and render-blocking CSS bytes; CLS. Worse in any of them
   without the owner's say-so is a revert.
 
+## Payments are frozen — the owner, 10 October
+
+> *"yes the tamara accepted, i placed a real order, everything went smooth ...
+> please lock these settings which we did to fix the major issues for payments
+> etc. so nothing can be able to touch."*
+
+Each of these was a live failure that cost real orders, found and fixed with the
+owner watching. **A lane does not touch them unless its brief is a payment
+fault, and then only with the gateway's own refusal text in hand and a real
+order placed afterwards.** The tests named are the lock: one going red is a
+payment regression, never a pin to advance.
+
+- **Tamara risk dates are DD-MM-YYYY** (`TamaraGateway::riskAssessment()`:
+  `date_of_first_transaction`, `account_creation_date`). ISO-8601 was refused
+  live with "HTTP 400 — Invalid date format; risk_assessment_wrong_data_format"
+  and blocked every returning shopper (orders #56187 and the owner's test,
+  2.60.468). And a 400 naming `risk_assessment` re-sends the checkout ONCE
+  without that optional block. `TamaraGatewayParityTest` ("DD-MM-YYYY",
+  "retries once without the risk details", "does not retry a refusal").
+- **Every refused payment start says why** (Tamara, Tabby, Stripe): HTTP status,
+  provider code and field on the order note, the payment log and laravel.log at
+  ERROR — live runs `LOG_LEVEL=error`, so an info line is a line nobody will
+  ever read. Tokens never written, phone/email masked. `PaymentJourneyTest`.
+- **Apple Pay / Google Pay** (Express Checkout Element): `layout: { maxColumns:
+  2, maxRows: 0, overflow: 'never' }` — `maxRows: 1` makes Stripe throw and no
+  wallet ever shows; the mount box hides with `visibility:hidden`, never
+  `display:none`; the Apple domain file route serves up to 32 KB.
+  `WalletPaymentsTest`, `AppleDomainFileTest`, `WalletMoneyPathTest`.
+- **A payment that never started gives the basket back** (`BasketRelease::
+  failAndRestore()`), or the retry says "Your bag is empty." `CheckoutCardRetryTest`.
+- The rest of the payment suite is the same lock: `Tamara*`, `Tabby*`,
+  `Stripe*`, `Wallet*`, `Checkout*`, `Order*`, `Payment*`.
+
+**Any lane whose diff touches** `app/Services/Payments/`, the checkout
+controllers, `partials/checkout/express-wallets.blade.php` or `checkout.js`
+runs that whole set before it reports, and says so. The integrator reverts a
+payment diff that arrives without it.
+
 ## Landmines, each one already paid for
 
 - **Packages 2.60.102–.106 were withdrawn** for being built against a stale
