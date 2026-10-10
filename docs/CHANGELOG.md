@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.482
+**Category pages: breadcrumb Home / Shop / Skincare sets.** Apply after .481.
+Runs its migration (clears caches).
+
+| Your request | Now |
+|---|---|
+| "on the categories pages, the breakcrums should say like Home > Collecton > Skincare sets ... the collection will take to the all products page ... research deep and advise" | Every category page: **Home / Shop / Skincare sets** (with the parent between where there is one: Home / Shop / Skincare / Toners). Home and Shop are links (Shop opens all products); the category's own name is last. It read "Home / Category". It now matches, step for step, the breadcrumb your pages already give Google (BreadcrumbList), which is what Google asks for. Labelled "Shop" because that is the name Google already has for the all-products page |
+
+Measured in Chromium: desktop unchanged in height (37 px), both links clickable; on a phone the trail is 25 px taller on a top-level category (its links get the finger-sized tap area every other trail link already has). /shop/, search and every other page are byte-identical.
+
 ## 2.60.481
 **Catalog → Reorder: a parent category shows and orders all its products, sub-categories included; Save applies every queued move exactly.** Apply after .480.
 Runs its migration (adds the parent page-order table, clears caches). Hard refresh the admin.
