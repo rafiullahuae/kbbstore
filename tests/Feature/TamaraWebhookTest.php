@@ -309,3 +309,55 @@ it('ignores a tamara event it does not act on', function () {
 
     expect($order->fresh()->status)->toBe('pending');
 });
+
+/*
+ * 2.60.469. Tamara captures by itself on the owner's account: his live order of
+ * 10 Oct (AED 85) read "fully captured" on Tamara while the shop's order screen
+ * still offered "Capture AED 85 · 180 days left to capture". The capture is now
+ * RECORDED when Tamara reports it, right after our authorise: captured_at and
+ * captured_total are written and no capture call is sent. MUTATION: delete the
+ * recording block in settleFromRemote() and captured_at stays null.
+ */
+it('records the capture tamara made by itself after the authorise, without capturing again', function () {
+    tamaraProvider();
+    $order = tamaraOrder(30000);
+
+    $remote = fn (string $status) => Http::response([
+        'order_id' => 'tam_auto', 'order_reference_id' => $order->order_number, 'status' => $status,
+        'total_amount' => ['amount' => 300.00, 'currency' => 'AED'],
+        'captured_amount' => ['amount' => 300.00, 'currency' => 'AED'],
+    ]);
+    Http::fake([
+        '*/authorise' => Http::response(['status' => 'authorised']),
+        '*/merchants/orders/*' => Http::sequence()->pushResponse($remote('approved'))->whenEmpty($remote('fully_captured')),
+        '*/payments/capture' => Http::response(['capture_id' => 'should-not-be-called'], 500),
+    ]);
+
+    $outcome = app(GatewayRegistry::class)->find('tamara')->handleWebhook(tamaraRequest(TAMARA_URL_SECRET, jwt(['sub' => 'notification'], TAMARA_NOTIFY_KEY), [
+        'order_id' => 'tam_auto', 'order_reference_id' => $order->order_number, 'order_status' => 'approved',
+    ]));
+
+    $order->refresh();
+    expect($outcome->accepted)->toBeTrue()
+        ->and($order->paid_at)->not->toBeNull()
+        ->and($order->captured_at)->not->toBeNull()
+        ->and((int) $order->captured_total)->toBe(30000)
+        ->and(collect(Http::recorded())->filter(fn ($r) => str_contains($r[0]->url(), '/payments/capture')))->toHaveCount(0);
+});
+
+it('leaves an approved order uncaptured when tamara has not captured it', function () {
+    tamaraProvider();
+    $order = tamaraOrder(30000);
+    Http::fake([
+        '*/authorise' => Http::response(['status' => 'authorised']),
+        '*/merchants/orders/*' => Http::response(['order_id' => 'tam_man', 'order_reference_id' => $order->order_number, 'status' => 'approved',
+            'total_amount' => ['amount' => 300.00, 'currency' => 'AED']]),
+    ]);
+
+    app(GatewayRegistry::class)->find('tamara')->handleWebhook(tamaraRequest(TAMARA_URL_SECRET, jwt(['sub' => 'notification'], TAMARA_NOTIFY_KEY), [
+        'order_id' => 'tam_man', 'order_reference_id' => $order->order_number, 'order_status' => 'approved',
+    ]));
+
+    expect($order->fresh()->paid_at)->not->toBeNull()
+        ->and($order->fresh()->captured_at)->toBeNull();
+});

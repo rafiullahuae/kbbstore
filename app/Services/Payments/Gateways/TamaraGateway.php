@@ -865,7 +865,7 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             }
         }
 
-        return $this->confirmer->confirm(
+        $outcome = $this->confirmer->confirm(
             $order,
             $this->id(),
             $tamaraOrderId,
@@ -873,6 +873,37 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             $currency,
             $summary,
         );
+
+        /*
+         * ▲ 2.60.469. TAMARA CAPTURES BY ITSELF ON THIS ACCOUNT. The owner, 10
+         * Oct: "even now tamara captures the orders auto. i have checked in
+         * tamara also. it says fully captured" -- while the order screen still
+         * offered "Capture AED 85 · 180 days left to capture". Nothing was
+         * captured twice (capture() reads Tamara's status first and answers
+         * already_captured), but the shop did not know until someone pressed
+         * the button. So when Tamara already reports the order captured, or
+         * reports it captured right after our authorise, the capture is
+         * RECORDED through the same PaymentCapturer path: it reads the status,
+         * moves no money, and writes captured_total. Recording can never
+         * fail the payment: the shopper's order is confirmed above either way.
+         */
+        $captured = in_array($status, ['fully_captured', 'partially_captured'], true);
+
+        if (! $captured && $status === 'approved' && $outcome->accepted) {
+            $after = $this->call('GET', '/merchants/orders/' . urlencode($tamaraOrderId));
+            $captured = is_array($after)
+                && in_array(strtolower((string) ($after['status'] ?? '')), ['fully_captured', 'partially_captured'], true);
+        }
+
+        if ($captured && $outcome->accepted) {
+            try {
+                app(\App\Services\Payments\PaymentCapturer::class)->capture($order->fresh(), 'Tamara (captured on Tamara\'s side)');
+            } catch (\Throwable $e) {
+                $this->log('recording tamara\'s own capture failed', '/merchants/orders', null, ['error' => class_basename($e)]);
+            }
+        }
+
+        return $outcome;
     }
 
     /**
