@@ -1,0 +1,4 @@
+idle   /                        load@423 files 1.5s after load: 0 | then: fb@5412 gtag@5414 {"fb":"init:1290719825500694,track:PageView","gt":2} errors: none
+idle   /product/co-glow-serum/  load@345 files 1.5s after load: 0 | then: fb@5339 gtag@5340 {"fb":"init:1290719825500694,track:PageView,track:ViewContent","gt":3} errors: none
+scroll /                        load@194 files 1.5s after load: 0 | then: fb@1749 gtag@1749 {"fb":"init:1290719825500694,track:PageView","gt":2} errors: none
+scroll /product/co-glow-serum/  load@241 files 1.5s after load: 0 | then: fb@1789 gtag@1789 {"fb":"init:1290719825500694,track:PageView,track:ViewContent","gt":3} errors: none

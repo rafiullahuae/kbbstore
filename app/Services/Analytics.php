@@ -237,13 +237,21 @@ final class Analytics
      *
      * So the network's own queue (fbq, dataLayer/gtag, ttq) is created at once
      * as before -- every event the page fires is kept and sent when the file
-     * arrives -- and only the FILE is fetched after the load event, in the
-     * first idle moment (3 s at most). A Purchase is also sent from the server
+     * arrives -- and only the FILE is fetched, after the load event.
+     *
+     * ▲ 2.60.464. "I have installed the .463 patch, but the loading bar is same,
+     * ... it goes after 5-7 seconds on every page." Fetched in the first idle
+     * moment after load, the three files (~430 KB, 4 of the 5 long tasks in his
+     * PageSpeed report) started the instant the bar should have ended, and a
+     * phone's bar runs on while they arrive. So they now wait for the shopper:
+     * the first tap, key, scroll, wheel or mouse move after the page has loaded
+     * (one before load counts, and fires at load), or 5 s after load if none
+     * comes. The bar ends with the shop's own content. A Purchase is also sent from the server
      * (ServerEvents), so a shopper who closes the tab that instant is still
      * counted. "now" puts the old tags back byte for byte: Growth & Marketing
      * -> Marketing Pixels -> Custom code -> Page speed.
      */
-    public const LATE = "function(f){function g(){window.requestIdleCallback?requestIdleCallback(f,{timeout:3000}):setTimeout(f,1)}document.readyState==='complete'?g():addEventListener('load',g,{once:true})}";
+    public const LATE = "function(f){var d=0,h=0,l=0,o={passive:true,capture:true},E=['pointerdown','touchstart','keydown','scroll','wheel','mousemove'];function go(){if(d)return;d=1;E.forEach(function(e){removeEventListener(e,on,o)});f()}function on(){h=1;if(l)go()}E.forEach(function(e){addEventListener(e,on,o)});function lo(){l=1;h?go():setTimeout(go,5000)}document.readyState==='complete'?lo():addEventListener('load',lo,{once:true})}";
 
     /** Are the tracking files fetched after the page has loaded (the default)? */
     public static function loadsLate(): bool

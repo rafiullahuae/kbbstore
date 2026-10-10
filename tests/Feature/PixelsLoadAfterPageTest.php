@@ -81,3 +81,18 @@ it('stores only its own two answers', function () {
         ->and(app(PixelConfig::class)->save(['load_scripts' => 'late']))->toBe([])
         ->and(Analytics::loadsLate())->toBeTrue();
 });
+
+/*
+ * ▲ 2.60.464. With .463 he still saw the bar run 5-7 s on every page: the
+ * files were fetched at the first idle moment after load, i.e. the instant
+ * the bar should have ended. They now wait for the shopper's first tap, key,
+ * scroll, wheel or mouse move after load, or 5 s. Pinned here as the loader's
+ * own words; the browser behaviour is in docs/lane-sp464-proof.txt.
+ * MUTATION: put requestIdleCallback back as the trigger and this is red.
+ */
+it('waits for the first interaction after load, or five seconds, before fetching any pixel file', function () {
+    expect(Analytics::LATE)->toContain("addEventListener('load',lo,{once:true})")
+        ->and(Analytics::LATE)->toContain('setTimeout(go,5000)')
+        ->and(Analytics::LATE)->toContain("['pointerdown','touchstart','keydown','scroll','wheel','mousemove']")
+        ->and(Analytics::LATE)->not->toContain('requestIdleCallback');
+});
