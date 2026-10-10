@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.473
+**Admin: Catalog → Reorder no longer sticks on "Loading…"; Catalog → Products pages faster.** Apply after .472.
+Runs its migration (adds the order-lines index only where the server lacks it; clears caches). Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "the products, specially in re-order tab, taking much more time to load and upon selection any quantity to show the products, it stucks and keep loading. fix it permanently without disturbing anything else" | **The live fault, from your laravel.log:** any product with no price (pre-order products) made the whole Reorder page fail ("Money::toAed(): Argument #1 must be of type int, null given", five times today), and the screen then stayed on "Loading…". Such a product now lists with its price blank. Separately, it also counted every product's orders one by one through the whole order history: 12.7–14.1 s per load at 60,000 orders, whatever page size was picked. It now counts the page's products in one go: 0.16–0.46 s. A failed or timed-out answer now says why ("Could not load products — …") instead of "Loading…" for good, and only the latest page-size change paints. Catalog → Products counts only the page it shows: 100/300 a page 0.98/0.36 s, was 1.7/0.9 s. Every number on both screens (orders, units, revenue, order, ranks) is byte-identical to before |
+
+Files: app/Http/Controllers/Admin/CatalogReorderApiController.php, app/Http/Controllers/Admin/CatalogProductsApiController.php, resources/views/admin/app.blade.php (reorderLoadProducts only), database/migrations/2027_10_24_100000_index_order_items_lookups_and_clear_caches.php.
+
 ## 2.60.472
 **Orders: "Send order link" on failed and unpaid orders (admin and Owner app).** Apply after .471.
 Runs its migrations. Hard refresh the admin and the Owner app.

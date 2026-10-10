@@ -203,22 +203,28 @@ class CatalogReorderApiController extends Controller
         $products = $this->ordered($type, $query
             ->addSelect('products.id', 'products.name', 'products.brand_id', 'products.sku',
                 'products.price', 'products.sale_price')
-            ->with('brand:id,name')
-            ->addSelect(['orders_count' => \App\Models\OrderItem::selectRaw('COUNT(DISTINCT order_id)')
-                ->whereColumn('product_id', 'products.id')
-                ->whereHas('order', fn ($o) => $o->whereIn('status', \App\Models\Order::REAL_STATUSES))]))
+            ->with('brand:id,name'))
             // ordered() ends in `id`: names are not unique, so this paged
             // screen needs a partition of the list rather than a sample of it.
             ->forPage($page, $perPage)
-            ->get()
+            ->get();
+
+        $orders = $this->ordersCountFor($products->pluck('id')->all());
+
+        $products = $products
             ->map(fn ($p, $i) => [
                 'id' => $p->id,
                 'name' => $p->name,
                 'brand' => $p->brand?->name,
                 'sku' => $p->sku,
-                'price' => \App\Support\Money::toAed($p->price),
+                // A product with NO price (pre-order lines often have none) is
+                // null, which the screen already prints as blank. toAed() takes
+                // an int, and one such product 500'd the whole page on the live
+                // shop -- "Money::toAed(): Argument #1 ($fils) must be of type
+                // int, null given", five times on 10 October.
+                'price' => $p->price === null ? null : \App\Support\Money::toAed((int) $p->price),
                 'sale_price' => $p->sale_price ? \App\Support\Money::toAed($p->sale_price) : null,
-                'orders_count' => (int) $p->orders_count,
+                'orders_count' => $orders[$p->id] ?? 0,
                 'rank' => ($page - 1) * $perPage + $i + 1,
             ]);
 
@@ -229,6 +235,50 @@ class CatalogReorderApiController extends Controller
             'last_page' => $lastPage,
             'per_page' => $perPage,
         ]);
+    }
+
+    /**
+     * How many genuine orders each product on THIS PAGE has appeared in: one
+     * grouped statement over the page's ids, never one per product.
+     *
+     * It was a correlated subquery in the select list, which MySQL evaluates
+     * for every product in the scope before it sorts and cuts the page, each
+     * one a search of `order_items` for that product. Where `order_items` has
+     * no index on product_id -- a table the 2026_09_15 repair rebuilt column by
+     * column has none -- every one of those searches reads the whole table.
+     * Measured on MySQL 8.0 at 60,000 orders and 270,000 lines, a 205-product
+     * category: 11.9 s at 50 a page and 12.3 s at 500, the same at any page
+     * size because the cost was the scope, not the page. That is the "stuck on
+     * Loading" this screen showed whenever the page size changed. This form is
+     * one pass over the lines whatever the scope, and an index lookup per id
+     * where the index exists.
+     *
+     * The definition is unchanged: COUNT(DISTINCT order_id) over lines whose
+     * order is in Order::REAL_STATUSES and not trashed -- what the whereHas()
+     * it replaces asked, with the soft-delete scope written out because a
+     * DB::table() join does not know it.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, int>  product id => orders it appeared in
+     */
+    private function ordersCountFor(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        // JOIN_ORDER: see CatalogProductsApiController::attachSalesTotals().
+        return DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereIn('orders.status', \App\Models\Order::REAL_STATUSES)
+            ->whereNull('orders.deleted_at')
+            ->whereIn('order_items.product_id', $ids)
+            ->groupBy('order_items.product_id')
+            ->selectRaw('/*+ JOIN_ORDER(order_items, orders) */ order_items.product_id as product_id,'
+                .' COUNT(DISTINCT order_items.order_id) as orders_count')
+            ->pluck('orders_count', 'product_id')
+            ->map(fn ($n) => (int) $n)
+            ->all();
     }
 
     /**
