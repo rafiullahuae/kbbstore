@@ -741,7 +741,11 @@ final class ImageVariants
      */
     public static function detailSizesAttribute(): string
     {
-        return '(max-width: 880px) calc(100vw - 40px), (max-width: 1180px) 52vw, 563px';
+        // ▲ 2.60.465: the same 2x cap on a 3x phone. calc(100vw - 40px) at 390px
+        // and 3x is 1050 device pixels, which took the 1000px original (191 KB
+        // on the shop's Gua Sha cream); two thirds of it takes the 800w copy.
+        // The product page's preload uses this same string, so they still agree.
+        return '(max-width: 880px) and (min-resolution: 2.5dppx) calc((100vw - 40px) * 0.67), (max-width: 880px) calc(100vw - 40px), (max-width: 1180px) 52vw, 563px';
     }
 
     /**
@@ -831,7 +835,16 @@ final class ImageVariants
      */
     public static function tileSizesAttribute(): string
     {
-        return '(max-width: 735px) 50vw, (max-width: 971px) 35vw, (max-width: 1207px) 26vw, 260px';
+        // ▲ 2.60.465 THREE-TIMES PHONES. "on product page, the related products
+        // etc are loading thumbnails of 700x700 ... wp-content/uploads/...webp"
+        // (the owner, 10 October, on an iPhone). 50vw of a 390px phone at 3x
+        // is 585 device pixels, the ladder stops at 400 below that, and an
+        // original under 800px wide is its own top rung -- so every card on an
+        // iPhone downloaded the full upload (700x700, ~40-100 KB) where the
+        // 400w copy (~10-20 KB) is twice the tile's CSS width. The first line
+        // caps phones at about 2x; 2x phones and Lighthouse's 1.75 never
+        // match it, so their choice is unchanged.
+        return '(max-width: 735px) and (min-resolution: 2.5dppx) 34vw, (max-width: 735px) 50vw, (max-width: 971px) 35vw, (max-width: 1207px) 26vw, 260px';
     }
 
     /**
