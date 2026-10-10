@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.474
+**Marketing emails: a Personal letter style for Gmail's Primary tab; no bulk label; replies reach you.** Apply after .473.
+Runs its migration (adds the letter template; clears caches). Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "The marketing emails are going to promotion folder ... we want to send to inbox to our existing customers" | Every campaign: the `Precedence: bulk` label is gone (nothing in Google's rules asks for it); one-click unsubscribe stays (Google requires it); Reply-To is your support mailbox when Store → Mail's Reply-To is blank, so a customer's reply reaches you. New look: Growth & Marketing → Marketing Emails → (campaign) → Look → **Personal letter style (best chance for the Primary tab)**: "Hi {first name},", short paragraphs, at most 2 plain links and 1 small picture, no grid, prices, buttons or banner, a signature, an identical plain-text part. Ready template "New look, less prices — personal letter". Review & send shows the real From name, where replies go, and reminds you to send the test to a Gmail address first. Growth & Marketing → Bounces & unsubscribes → Deliverability → **Inbox placement**: the steps that genuinely move the odds |
+
+Honest limit: Gmail chooses the tab for each reader; no setting can force Primary, and Promotions is still the inbox, not spam. A letter-style email with no open pixel reports visits, carts and orders but not opens (tick "Count opens" to get them back, at some cost to the odds).
+
+Also: the personal-letter migration is dated 2027_10_25 so it no longer shares a timestamp with 2.60.473's index migration.
+
 ## 2.60.473
 **Admin: Catalog → Reorder no longer sticks on "Loading…"; Catalog → Products pages faster.** Apply after .472.
 Runs its migration (adds the order-lines index only where the server lacks it; clears caches). Hard refresh the admin.
