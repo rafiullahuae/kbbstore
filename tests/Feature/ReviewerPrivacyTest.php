@@ -150,8 +150,10 @@ it('sweeps every public GET route that mentions reviews', function () {
 
     foreach ($routes as $route) {
         $uri = '/' . ltrim(str_replace(
-            ['{slug}', '{product}', '{review}', '{id}'],
-            [$product->slug, $product->slug, (string) $reviews[ReviewStatus::APPROVED]->id, (string) $reviews[ReviewStatus::APPROVED]->id],
+            // {token}: the review request email's link (Lane RV) -- an
+            // unknown one is a 404, which is all this sweep needs to reach.
+            ['{slug}', '{product}', '{review}', '{id}', '{token}'],
+            [$product->slug, $product->slug, (string) $reviews[ReviewStatus::APPROVED]->id, (string) $reviews[ReviewStatus::APPROVED]->id, str_repeat('a', 43)],
             $route->uri()
         ), '/');
 

@@ -387,7 +387,9 @@ it('maps every Emails endpoint to an owner-only capability, and refuses the othe
     foreach ($routes as $route) {
         $cap = AdminCapabilities::for($route);
 
-        expect($cap)->toBeIn(['emails.view', 'emails.manage', 'emails.test'], $route->uri() . ' has no Emails capability')
+        // emails.review_requests (Lane RV): the review request's Schedule &
+        // rules and report, its own capability as every new admin endpoint gets.
+        expect($cap)->toBeIn(['emails.view', 'emails.manage', 'emails.test', 'emails.review_requests'], $route->uri() . ' has no Emails capability')
             // Nothing in this file is under the unauthenticated /api/*.
             ->and(str_starts_with($route->uri(), 'admin-api/emails/'))->toBeTrue();
     }

@@ -1226,6 +1226,12 @@ final class EnglishRenderWalk
                 'email/art/{name}.jpg' => ['render' => false, 'why' => 'a JPEG that ships with the shop (Lane MK), no interface strings'],
                 'email/o/{token}.gif' => ['render' => false, 'why' => 'the open pixel of a marketing email (Lane ER): a 42-byte GIF, no interface strings'],
             ] : []),
+            ...(Route::has('review-request.open') ? [
+                'review-order/stop' => ['render' => false, 'why' => 'added after BASE_COMMIT (Lane RV): the review request unsubscribe form; ReviewRequestPageTest pins it, its strings are keyed (store.review_request.*)'],
+                'review-order/{token}' => ['render' => false, 'why' => 'added after BASE_COMMIT (Lane RV): a review link, moved into the session and redirected; an unknown one is a 404'],
+                'review-order' => ['render' => false, 'why' => 'added after BASE_COMMIT (Lane RV): the review page, reached only through a link; ReviewRequestPageTest pins it'],
+                'review-order/{token}/stop' => ['render' => false, 'why' => 'added after BASE_COMMIT (Lane RV): the one-click unsubscribe from review requests'],
+            ] : []),
 
             /*
              * The shop as a Home Screen app (Lane PW), listed exactly when the

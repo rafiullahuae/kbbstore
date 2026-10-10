@@ -495,6 +495,19 @@ function walkExpectations(array $seed): array
         'email/art/{name}.jpg'     => ['params' => ['name' => 'autumn-glow'], 'status' => 200],
         // Lane ER: the open pixel answers its GIF (200) for ANY token, never a 404 or a 500.
         'email/o/{token}.gif'      => ['params' => ['token' => '1-' . str_repeat('0', 32)], 'status' => 200],
+    ] : []) + (Route::has('review-request.open') ? [
+        /*
+         * The review request email's page (Lane RV, routes/review-request-
+         * public.php). An unknown link is the same 404 as a forged or expired
+         * one; the page itself is reached only through a link, so without one
+         * it is a 404 too; the unsubscribe form renders for anybody; an
+         * unknown link's unsubscribe goes to that form (303), never anywhere
+         * the URL names.
+         */
+        'review-order/stop'        => ['status' => 200],
+        'review-order/{token}'     => ['params' => ['token' => str_repeat('a', 43)], 'status' => 404],
+        'review-order'             => ['status' => 404],
+        'review-order/{token}/stop' => ['params' => ['token' => str_repeat('a', 43)], 'status' => 303],
     ] : []) + (Route::has('site-app.manifest') ? [
         /*
          * The shop as a Home Screen app (Lane PW, routes/site-app.php), keyed
