@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.475
+**Shipped email says its first line once; checkout's back-to-top arrow bottom-right on desktop; product cards in marketing emails never one column.** Apply after .474.
+Runs its migration (clears caches). No hard refresh needed for shoppers.
+
+| Your request | Now |
+|---|---|
+| "in the shipped email template, the line is repeating in the email ... in the customer email inbox too" | The dispatch email printed "Your order has left us and is with the courier." and then the delivery-time box from Store → Mail ("Dispatch email: how long delivery takes AFTER DISPATCH"), which on your shop starts with that same sentence. It is now printed once; a box holding only that sentence is ignored, so the email says its full default (with "one to three working days"). Preview and sent email both |
+| "on desktop checkout, the back to top icon is showing down left, it should be on right bottom" | Bottom-right, at the end of the footer's last row: 140 px → 1110 px from the left at 1280. Phone unchanged (it was already on the right). Arabic: its own far end |
+| "i don't want any one column in any screen size. it must be minimum 2 columns" | Growth & Marketing → Marketing Emails → product cards (3 across): at least 2 across on every phone, in the Standard look as well as the playful one, and even in email apps that ignore the email's styling (those used to get 1 per row). Desktop unchanged |
+
 ## 2.60.474
 **Marketing emails: a Personal letter style for Gmail's Primary tab; no bulk label; replies reach you.** Apply after .473.
 Runs its migration (adds the letter template; clears caches). Hard refresh the admin.
