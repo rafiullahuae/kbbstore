@@ -21,7 +21,7 @@
     "file": "resources/views/admin/app.blade.php",
     "anchor": "'spotted','mkt-email','inquiries']);",
     "count": 1,
-    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
+    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries']);"
   },
   {
     "n": 5,
@@ -45,7 +45,7 @@
     "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
     "anchor": "'spotted','mkt-email','inquiries']);",
     "count": 1,
-    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
+    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries']);"
   },
   {
     "n": 8,
@@ -53,7 +53,7 @@
     "file": "docs/BG-ADMIN-APP-BLOCKS.md",
     "anchor": "'spotted','mkt-email','inquiries']);",
     "count": 1,
-    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
+    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries']);"
   },
   {
     "n": 9,
@@ -61,6 +61,6 @@
     "file": "docs/GS-ADMIN-APP-BLOCKS.md",
     "anchor": "'spotted','mkt-email','inquiries']);",
     "count": 2,
-    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
+    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries']);"
   }
 ]

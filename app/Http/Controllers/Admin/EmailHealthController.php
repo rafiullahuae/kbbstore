@@ -102,7 +102,7 @@ final class EmailHealthController extends Controller
         };
 
         $total = (clone $query)->count();
-        $rows = $query->orderByDesc('at')->orderBy('email')->offset(($page - 1) * self::PAGE)->limit(self::PAGE)->get();
+        $rows = $query->orderByDesc('at')->orderBy('email')->orderBy('id')->offset(($page - 1) * self::PAGE)->limit(self::PAGE)->get();
 
         return response()->json([
             'tab' => $tab,
@@ -214,7 +214,7 @@ final class EmailHealthController extends Controller
     {
         return DB::table('email_suppressions')->where('reason', $reason)
             ->when($q !== '', fn ($b) => $b->where('email', 'like', '%' . self::like($q) . '%'))
-            ->select(['email', 'created_at as at', 'code', 'detail', 'campaign_id', 'source']);
+            ->select(['id', 'email', 'created_at as at', 'code', 'detail', 'campaign_id', 'source']);
     }
 
     /**
@@ -228,17 +228,17 @@ final class EmailHealthController extends Controller
 
         $a = DB::table('email_suppressions')->whereIn('reason', ['unsubscribe', 'manual'])
             ->when($like, fn ($b) => $b->where('email', 'like', $like))
-            ->selectRaw("email, created_at as at, source, 'marketing' as list");
+            ->selectRaw("id, email, created_at as at, source, 'marketing' as list");
 
         $b = DB::table('subscribers')->where('status', 'unsubscribed')
             ->whereNotIn('email', DB::table('email_suppressions')->select('email'))
             ->when($like, fn ($x) => $x->where('email', 'like', $like))
-            ->selectRaw("email, updated_at as at, source, 'newsletter' as list");
+            ->selectRaw("id, email, updated_at as at, source, 'newsletter' as list");
 
         $c = DB::table('outbound_optouts')
             ->whereNotIn('email', DB::table('email_suppressions')->select('email'))
             ->when($like, fn ($x) => $x->where('email', 'like', $like))
-            ->selectRaw("email, created_at as at, NULL as source, 'reminders' as list");
+            ->selectRaw("id, email, created_at as at, NULL as source, 'reminders' as list");
 
         return $a->unionAll($b)->unionAll($c);
     }
@@ -251,7 +251,7 @@ final class EmailHealthController extends Controller
             ->whereNotIn('email', DB::table('email_suppressions')->select('email'))
             ->when($q !== '', fn ($b) => $b->where('email', 'like', '%' . self::like($q) . '%'))
             ->groupBy('email')
-            ->selectRaw('email, MAX(created_at) as at, COUNT(*) as soft, MAX(code) as code');
+            ->selectRaw('MIN(id) as id, email, MAX(created_at) as at, COUNT(*) as soft, MAX(code) as code');
     }
 
     /**

@@ -128,7 +128,7 @@ it('keeps the three handover documents that quote LATE_RENDERED in step with the
     foreach (['docs/T1B-ADMIN-APP-BLOCKS.md', 'docs/BG-ADMIN-APP-BLOCKS.md', 'docs/GS-ADMIN-APP-BLOCKS.md'] as $doc) {
         // Lane CT (2.60.449) appended 'inquiries' after this lane's id, so the
         // tail every record quotes is now ...,'notfoundpage','inquiries']);
-        expect(str_contains($w[$doc], "'spotted','mkt-email','notfoundpage','inquiries']);"))->toBeTrue($doc);
+        expect(str_contains($w[$doc], "'spotted','mkt-email','mkt-health','notfoundpage','inquiries']);"))->toBeTrue($doc);
     }
 });
 

@@ -28,8 +28,8 @@
     "file": "resources/views/admin/app.blade.php",
     "count": 1,
     "what": "replay a click that lands before the partial",
-    "anchor": "'spotted','mkt-email','notfoundpage']);",
-    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
+    "anchor": "'spotted','mkt-email','mkt-health','notfoundpage']);",
+    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries']);"
   },
   {
     "n": 5,
@@ -44,23 +44,23 @@
     "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
     "count": 1,
     "what": "keep the recorded block in step",
-    "anchor": "'spotted','mkt-email','notfoundpage']);",
-    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
+    "anchor": "'spotted','mkt-email','mkt-health','notfoundpage']);",
+    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries']);"
   },
   {
     "n": 7,
     "file": "docs/BG-ADMIN-APP-BLOCKS.md",
     "count": 1,
     "what": "keep the recorded block in step",
-    "anchor": "'spotted','mkt-email','notfoundpage']);",
-    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
+    "anchor": "'spotted','mkt-email','mkt-health','notfoundpage']);",
+    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries']);"
   },
   {
     "n": 8,
     "file": "docs/GS-ADMIN-APP-BLOCKS.md",
     "count": 2,
     "what": "keep the recorded block in step",
-    "anchor": "'spotted','mkt-email','notfoundpage']);",
-    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
+    "anchor": "'spotted','mkt-email','mkt-health','notfoundpage']);",
+    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries']);"
   }
 ]
