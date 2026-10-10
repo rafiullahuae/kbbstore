@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.463
+**Speed: Meta, Google and TikTok load after the page, so the loading bar finishes and photos come first.** Apply after .462.
+No migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "The site loading is too slow, the loading bar is not finishing instantly, and due to that images don't load mostly ... find the root cause" | Root cause: fbevents.js and gtag.js were requested from every page's head; a browser's loading bar waits for them and they shared the phone's line with the shop's photos. Now the pixel queues are ready at once (no event lost) and the files are added right after the page loads. Live shop, Meta/Google answering 4 s late: load 5.5-6.7 s -> 3.45 s. Local, real code: 4.1 s -> 0.25 s, same events delivered. Growth & Marketing -> Marketing Pixels -> Custom code -> Page speed -> "Load Meta, Google and TikTok" (After the page loads; "Immediately" = as before) |
+
+Checked: 2.60.456 vs 2.60.462 request the same resources and take the same server time (30-57 ms); the live server answered steadily over 3 minutes.
+
 ## 2.60.462
 **Checkout: "5% VAT inclusive" without the amount, in both order summaries. VAT is calculated exactly as before.** Apply after .461.
 No migrations. Hard refresh the shop.
