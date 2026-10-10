@@ -149,7 +149,10 @@
 @include('partials.category-custom-header', ['ch' => $categoryHeader, 'chTotal' => $total])
 @else
 <div class="wrap">
-    <div class="crumb"><b>{{ __('store.breadcrumb.home') }}</b> / @foreach (($crumbParents ?? []) as $cp)<a href="{{ $cp['url'] }}">{{ $cp['name'] }}</a> / @endforeach{{ $crumb }}</div>
+    @if ($crumbShop ?? null){{-- (Lane BC) A category: Home / Shop / [parents /] this category, each step a link
+     but the last, which is this page -- the trail its BreadcrumbList gives Google.
+     /shop/ and search keep their trail. --}}<nav class="crumb" aria-label="{{ __('store.breadcrumb.label') }}"><a href="{{ \App\Support\Url::to('/') }}"><b>{{ __('store.breadcrumb.home') }}</b></a> / <a href="{{ $crumbShop }}">{{ __('store.breadcrumb.shop') }}</a> / @foreach (($crumbParents ?? []) as $cp)<a href="{{ $cp['url'] }}">{{ $cp['name'] }}</a> / @endforeach<span aria-current="page">{{ $crumb }}</span></nav>@else<div class="crumb"><b>{{ __('store.breadcrumb.home') }}</b> / @foreach (($crumbParents ?? []) as $cp)<a href="{{ $cp['url'] }}">{{ $cp['name'] }}</a> / @endforeach{{ $crumb }}</div>@endif
+
     @unless (($banner ?? null) || ($titleHeader ?? null) || ($catPanel ?? null))
         <div class="eyebrow">{{ __('store.shop.eyebrow') }}</div>
         <h1 class="ptitle">{{ $title }}</h1>

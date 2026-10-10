@@ -231,9 +231,17 @@ class ShopController extends Controller
 
         [$title, $sub, $crumb] = $this->heading($category, $search);
         $crumbParents = $this->ancestorsOf($category);
-        if ($crumbParents !== []) {
-            // Under a parent the crumb names the category itself, the way
-            // kbeautybliss.com reads: Home / Skincare / Toners.
+        if ($category !== null) {
+            /*
+             * A category page names ITSELF at the end of the trail (Lane BC).
+             * The owner, 10 October: "on the categories pages, the breakcrums
+             * should say like Home > Collecton > Skincare sets". A top-level
+             * category read "Home / Category" -- a placeholder word where its
+             * name belongs, and a trail that disagreed with the BreadcrumbList
+             * this page already gives Google (breadcrumbTrail(): Home -> Shop
+             * -> parents -> the category). The visible trail now matches it:
+             * Home / Shop / [parents /] the category.
+             */
             $crumb = $category->t('name');
         }
 
@@ -555,6 +563,10 @@ class ShopController extends Controller
             'searchCorrected' => $searchCorrected,
             'searchTyped' => $searchTyped,
             'crumb' => $crumb,
+            // (Lane BC) The "Shop" step on a category's trail, linking the
+            // whole-shop listing, as the BreadcrumbList already does. Null on
+            // /shop/ and search, whose trail is unchanged.
+            'crumbShop' => $category !== null ? \App\Support\Url::to('/shop/') : null,
             // The category's parents, root first, as links before the crumb
             // (Lane CH). Empty for a top-level category, which therefore
             // renders byte for byte as before.

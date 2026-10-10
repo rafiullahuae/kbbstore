@@ -1655,6 +1655,19 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * "on the categories pages, the breakcrums should say like Home >
+             * Collecton > Skincare sets ... the collection will take to the
+             * all products page" -- the owner, 10 October (Lane BC). Every
+             * category page: Home and Shop as links, the parents as before,
+             * this category last as the current page -- the trail its
+             * BreadcrumbList already gave Google. /shop/ and search unchanged.
+             */
+            'a category page\'s breadcrumb, Home / Shop / the category (Lane BC)' => [
+                'pattern' => '#<div class="crumb"><b>Home</b> / ((?:<a href="[^"]*">[^<]*</a> / )*)(?!(?:Shop|Search)</div>)([^<]+)</div>#',
+                'with' => '<nav class="crumb" aria-label="Breadcrumb"><a href="/"><b>Home</b></a> / <a href="/shop/">Shop</a> / $1<span aria-current="page">$2</span></nav>',
+                'hits' => 1,
+            ],
+            /*
              * "on desktop checkout, the back to top icon is showing down left,
              * it should be on right bottom" -- the owner, 10 October (Lane SH).
              * One CSS rule in the checkout footer's style block, printed only

@@ -181,7 +181,9 @@ it('shows the parents in the category page breadcrumb, and a top-level page is u
     ]);
 
     $flat = $this->get('/collections/ch-toners/')->assertOk()->getContent();
-    expect($flat)->toContain('<div class="crumb"><b>Home</b> / Category</div>');
+    // (Lane BC) A top-level category names itself after Home / Shop, as its
+    // BreadcrumbList does; it read "Home / Category" until 10 October.
+    expect($flat)->toContain('<nav class="crumb" aria-label="Breadcrumb"><a href="/"><b>Home</b></a> / <a href="/shop/">Shop</a> / <span aria-current="page">CH Toners</span></nav>');
 
     chhFakeSite();
     $this->actingAs(chhAdmin(), 'admin');
@@ -189,12 +191,12 @@ it('shows the parents in the category page breadcrumb, and a top-level page is u
     $this->postJson('/admin-api/categories/hierarchy/apply', ['token' => $token])->assertOk();
 
     $html = $this->get('/collections/ch-toners/')->assertOk()->getContent();
-    expect($html)->toMatch('#<div class="crumb"><b>Home</b> / <a href="[^"]*/collections/ch-skincare/">CH Skincare</a> / CH Toners</div>#')
+    expect($html)->toMatch('#<nav class="crumb"[^>]*><a href="/"><b>Home</b></a> / <a href="/shop/">Shop</a> / <a href="[^"]*/collections/ch-skincare/">CH Skincare</a> / <span aria-current="page">CH Toners</span></nav>#')
         // BreadcrumbList JSON-LD: Home, Shop, CH Skincare, CH Toners.
         ->and($html)->toMatch('#"position":\s*3,\s*"name":\s*"CH Skincare"#');
 
     // The parent itself is still top level: its crumb is byte-identical.
-    expect($this->get('/collections/ch-skincare/')->getContent())->toContain('<div class="crumb"><b>Home</b> / Category</div>');
+    expect($this->get('/collections/ch-skincare/')->getContent())->toContain('<nav class="crumb" aria-label="Breadcrumb"><a href="/"><b>Home</b></a> / <a href="/shop/">Shop</a> / <span aria-current="page">CH Skincare</span></nav>');
 });
 
 it('never touches products, slugs, positions or the per-category order (Lane SO)', function () {
