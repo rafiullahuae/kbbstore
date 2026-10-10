@@ -3,6 +3,14 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.471
+**Admin: New Order laid out properly again; Catalog shows 100 / 200 / 300 products a page.** Apply after .470. No migrations. Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "The new order page on backend looks like this: please fix" | Cause: Appearance -> Mega Menu's board had a bare `.mo-col{width:156px}` rule, and New Order's two columns use the same class in the same console page, so both were squeezed to 156 px. The rule is now scoped to the Mega Menu board (which measures the same). New Order: 734 + 489 px at 1530, one column on a phone; tested with a customer, a product and the total |
+| "pagination on the catalog page, page 2-3 is not working ... the number of products to show, it's not working at all. keep 100 by default and fix the 200 ... add 300" | Catalog -> Products: 100 (default) / 200 / 300 a page, each working, pages 2 and 3 load the right rows, same query count on every page and size. Paging could not be made to fail on a 682-product copy, so a late answer overwriting a newer one is now ignored as a safeguard. If it still fails on the live shop, the browser console or storage/logs/laravel.log at that moment will name it |
+
 ## 2.60.470
 **Marketing emails: bounced list and safe Google Workspace sending; the "New look, less prices" design; a full report per campaign; "Returns" removed.** Apply after .469.
 Runs its migrations. Hard refresh the admin and the shop.
