@@ -110,8 +110,106 @@ class CatalogReorderApiController extends Controller
 
         abort_unless(Category::query()->whereKey($id)->exists(), 404);
 
-        return ScopeOrder::inCategory(Product::query()->visible(), $id)
+        // (Lane RL) The products THIS category's page lists: a parent that
+        // includes its sub-categories lists theirs too, exactly as
+        // ShopController builds it, so the screen and the shop agree.
+        return ScopeOrder::inCategory(Product::query()->visible(), $id, $this->rollupIds($id) ?? [])
             ->addSelect(ScopeOrder::ALIAS.'.kso_pos as scope_pos');
+    }
+
+    /**
+     * The category and its descendants when its page lists their products
+     * (CategoryRollup::idsFor(), the shop's own answer), or null when it lists
+     * only its own. Memoised per request: scopeQuery() and writeOrder() both ask.
+     *
+     * @return list<int>|null
+     */
+    private function rollupIds(int $id): ?array
+    {
+        if (! array_key_exists($id, $this->rollup)) {
+            $category = Category::query()->find($id);
+            $ids = $category === null ? [] : \App\Support\CategoryRollup::idsFor($category);
+            $this->rollup[$id] = count($ids) > 1 ? array_values(array_map('intval', $ids)) : null;
+        }
+
+        return $this->rollup[$id];
+    }
+
+    /** @var array<int, list<int>|null> */
+    private array $rollup = [];
+
+    /**
+     * (Lane RL) A category's own order, only the rows whose number changes,
+     * in statements of up to 500 rows each rather than one per row: a first
+     * save of a 650-product category was 650 UPDATEs in one request. One
+     * CASE per chunk, every value bound, only this category's pivot rows.
+     *
+     * @param  list<int>  $ids
+     * @param  array<int, int|null>  $current
+     */
+    private function writeCategoryOrder(int $id, array $ids, array $current): int
+    {
+        $changed = [];
+
+        foreach (array_values($ids) as $index => $productId) {
+            if (! (array_key_exists($productId, $current) && $current[$productId] === $index)) {
+                $changed[(int) $productId] = $index;
+            }
+        }
+
+        $written = 0;
+
+        DB::transaction(function () use ($id, $changed, &$written) {
+            foreach (array_chunk($changed, 500, true) as $chunk) {
+                // Integers only, cast here, so the CASE is plain numbers; the
+                // query builder cannot bind inside an update's raw value.
+                $case = 'CASE product_id';
+                foreach ($chunk as $productId => $index) {
+                    $case .= ' WHEN '.(int) $productId.' THEN '.(int) $index;
+                }
+
+                $written += DB::table('category_product')
+                    ->where('category_id', $id)
+                    ->whereIn('product_id', array_keys($chunk))
+                    ->update(['category_position' => DB::raw($case.' END')]);   // ScopeOrder::CATEGORY_COLUMN
+            }
+        });
+
+        return $written;
+    }
+
+    /**
+     * (Lane RL) A parent that lists its sub-categories: its page order in its
+     * own rows, ScopeOrder::ROLLUP_TABLE, for EVERY product on the page -- not
+     * only the ones whose number changed, because before the first save the
+     * numbers read back are the products' places filed directly in the parent
+     * and a gap for everything else, and a page that half-depended on those
+     * would move whenever they did. Nothing is filed in the parent and no
+     * sub-category's own order is touched. One read of the rows already
+     * there, then one upsert of the rows that differ.
+     *
+     * @param  list<int>  $ids
+     */
+    private function writeRollupOrder(int $id, array $ids): int
+    {
+        $have = DB::table(ScopeOrder::ROLLUP_TABLE)->where('category_id', $id)
+            ->pluck('position', 'product_id')->map(fn ($v) => (int) $v)->all();
+
+        $rows = [];
+
+        foreach (array_values($ids) as $index => $productId) {
+            if (($have[(int) $productId] ?? null) !== $index) {
+                $rows[] = ['category_id' => $id, 'product_id' => (int) $productId, 'position' => $index];
+            }
+        }
+
+        DB::transaction(function () use ($rows) {
+            foreach (array_chunk($rows, 500) as $chunk) {
+                DB::table(ScopeOrder::ROLLUP_TABLE)->upsert($chunk, ['category_id', 'product_id'], ['position']);
+            }
+        });
+
+        return count($rows);
     }
 
     /** The scope's order, exactly as its storefront page sorts it. */
@@ -156,6 +254,14 @@ class CatalogReorderApiController extends Controller
     private function writeOrder(string $type, int $id, array $ids, array $current): int
     {
         $written = 0;
+
+        if ($type === 'category' && $this->rollupIds($id) !== null) {
+            return $this->writeRollupOrder($id, $ids);
+        }
+
+        if ($type === 'category') {
+            return $this->writeCategoryOrder($id, $ids, $current);
+        }
 
         DB::transaction(function () use ($type, $id, $ids, $current, &$written) {
             foreach (array_values($ids) as $index => $productId) {
@@ -341,6 +447,92 @@ class CatalogReorderApiController extends Controller
         $this->writeOrder($type, $id, $allIds, $current);
 
         return response()->json(['ok' => true, 'updated' => count($data['product_ids'])]);
+    }
+
+    /**
+     * EVERYTHING ONE SAVE CARRIES, IN ONE REQUEST AND ONE TRANSACTION. (Lane RL)
+     *
+     * The owner, 10 October: "when i add multiple products re-order in que in
+     * the bottom beautiful box. and when i click save, the system craches some
+     * times. and nothing re-ordered, but when i re-order 1 or 2 products
+     * together, it's working fine then."
+     *
+     * Save used to post the page, then each queued move as its own request,
+     * each re-reading and renumbering the whole scope. Measured in Chromium on
+     * a 654-product category: a product sent to #120 landed at #119, because
+     * the move after it lifted it out from under itself, and every further
+     * move drifted the earlier ones again; and a failure part-way left half of
+     * the queue applied. Now the page's own order is spliced in, the moved
+     * products are taken out and put back at exactly the ranks asked for --
+     * lowest rank first, so each lands where it was sent; two sent to the
+     * same rank keep the queue's order, the later one first -- and the whole
+     * result is written once. A stale page is refused before anything is
+     * written, as save-page always refused it.
+     */
+    public function apply(Request $request, string $type, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1'],
+            'product_ids' => ['nullable', 'array'],
+            'product_ids.*' => ['integer'],
+            'moves' => ['nullable', 'array', 'max:500'],
+            'moves.*.product_id' => ['required', 'integer'],
+            'moves.*.to' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $current = $this->currentOrder($type, $id);
+        $ids = array_keys($current);
+
+        $pageIds = array_map('intval', array_values($data['product_ids'] ?? []));
+
+        if ($pageIds !== []) {
+            $perPage = $this->clampPerPage((int) ($data['per_page'] ?? self::PER_PAGE_DEFAULT));
+            $offset = (int) ((max(1, (int) ($data['page'] ?? 1)) - 1) * $perPage);
+            $expected = array_slice($ids, $offset, $perPage);
+
+            $a = $pageIds;
+            sort($a);
+            $b = $expected;
+            sort($b);
+
+            if ($a !== $b) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'This page changed since it was loaded — reload and try again.',
+                ], 409);
+            }
+
+            array_splice($ids, $offset, count($expected), $pageIds);
+        }
+
+        // The last move asked for each product is the one that counts.
+        $moves = [];
+        foreach ((array) ($data['moves'] ?? []) as $n => $move) {
+            $pid = (int) $move['product_id'];
+            unset($moves[$pid]);
+            $moves[$pid] = ['to' => (int) $move['to'], 'n' => $n];
+        }
+
+        foreach (array_keys($moves) as $pid) {
+            if (! in_array($pid, $ids, true)) {
+                return response()->json(['ok' => false, 'message' => 'A product in the queue is no longer in this list — reload and try again.'], 422);
+            }
+        }
+
+        if ($moves !== []) {
+            $ids = array_values(array_filter($ids, static fn ($pid) => ! isset($moves[$pid])));
+
+            uasort($moves, static fn ($x, $y) => [$x['to'], $x['n']] <=> [$y['to'], $y['n']]);
+
+            foreach ($moves as $pid => $move) {
+                array_splice($ids, min($move['to'], count($ids)), 0, [$pid]);
+            }
+        }
+
+        $written = $this->writeOrder($type, $id, $ids, $current);
+
+        return response()->json(['ok' => true, 'written' => $written, 'moved' => count($moves)]);
     }
 
     /**

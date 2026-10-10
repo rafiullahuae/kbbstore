@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.481
+**Catalog → Reorder: a parent category shows and orders all its products, sub-categories included; Save applies every queued move exactly.** Apply after .480.
+Runs its migration (adds the parent page-order table, clears caches). Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "i have selected the skincare parent category, but i can see only 19 products which are actually added to the parent category ... i want to see all the products, even from the sub categories too ... same like i have on front-end ... that re-order will only apply on parent category on front-end" | Catalog → Reorder → (a parent such as Skincare): every product its shop page shows, sub-categories included, in the page's own order. Saving changes **only that parent's page**: no product gets filed under the parent, and every sub-category keeps its own order. A parent you never reorder stays exactly as it is now. A parent set to "Only its own products" works as before |
+| "when i add multiple products re-order in que in the bottom beautiful box. and when i click save, the system craches some times. and nothing re-ordered" | Save now sends the page and every queued move in **one request**, applied together: each product lands exactly at the number you gave it (before, later moves shifted earlier ones: a product sent to #120 landed at #119), and if anything fails nothing is changed and the box keeps your queue. The order is written in a few statements instead of one per product (a 654-product category: one request, a few batch writes) |
+
+Measured on a 3,000-product shop: category, sub-category, product and brand pages answer with the same queries and the same bytes as before; a parent reordered across 817 products saves in 51 ms.
+
 ## 2.60.480
 **"How was your order?" review request email, its review page, and real reviews into your approval list.** Apply after .479.
 Runs its migrations (the review request log, its Arabic drafts, clears caches). Hard refresh the admin.

@@ -9148,26 +9148,28 @@ async function reorderSave(){
   if(reorderBusy || (!reorderDirty && !reorderPending.length)) return;
   reorderBusy=true;
   const btn=$('#reSave'); if(btn){btn.disabled=true;btn.textContent='Saving…';}
-  const post=(path,body)=>fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+path,{method:'POST',credentials:'same-origin',
-      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
   try{
-    // This page's order first, then each move to another page, in the order he made them.
-    if(reorderDirty){
-      const j=await post('/save-page',{page:reorderData.page, per_page:reorderData.per_page, product_ids:reorderLocal.map(p=>p.id)});
-      if(!j.ok){ toast(j.message||'Could not save — reload and try again.', 'bad'); reorderBusy=false; reorderPaint(); return; }
-      reorderDirty=false;
+    /* ONE SAVE, ONE REQUEST (Lane RL). This page's order and every queued move
+       go together and the server places each moved product at exactly the
+       number it was given, in one transaction. They used to go one request at
+       a time: each later move shifted the earlier ones (#120 landed at #119),
+       and a failure part-way left half the queue applied. Nothing is cleared
+       here until the server says it is saved. */
+    const body={moves:reorderPending.map(m=>({product_id:m.id, to:m.to}))};
+    if(reorderDirty){ body.page=reorderData.page; body.per_page=reorderData.per_page; body.product_ids=reorderLocal.map(p=>p.id); }
+    const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/apply',{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>null);
+    if(!r.ok || !j || !j.ok){
+      toast((j&&j.message) || (r.status===401||r.status===419 ? 'Your session has ended — sign in again, then Save.' : 'Could not save (the server answered '+r.status+'). Nothing was changed.'), 'bad');
+      reorderBusy=false; reorderPaint(); return;
     }
-    while(reorderPending.length){
-      const m=reorderPending[0];
-      const j=await post('/move',{product_id:m.id, to:m.to});
-      if(!j.ok){ toast(j.message||('Could not move '+m.name+'.'), 'bad'); break; }
-      reorderPending.shift();
-    }
-    if(!reorderPending.length){ toast('Saved — the shop now shows this order'); if(window.kbbDrafts) kbbDrafts.saved('reorder'); }
+    reorderDirty=false; reorderPending=[];
+    toast('Saved — the shop now shows this order'); if(window.kbbDrafts) kbbDrafts.saved('reorder');
     reorderBusy=false;
     await reorderLoadProducts();
     return;
-  }catch(e){ toast('Could not save — check your connection.','bad'); }
+  }catch(e){ toast('Could not save — check your connection. Nothing was changed.','bad'); }
   reorderBusy=false;
   reorderPaint();
 }

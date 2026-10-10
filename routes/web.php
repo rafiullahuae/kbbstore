@@ -355,6 +355,8 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         Route::get('/catalog/reorder/{type}/{id}/products', [\App\Http\Controllers\Admin\CatalogReorderApiController::class, 'products'])->where('type', 'category|brand')->where('id', '[0-9]+');
         Route::post('/catalog/reorder/{type}/{id}/save-page', [\App\Http\Controllers\Admin\CatalogReorderApiController::class, 'savePage'])->where('type', 'category|brand')->where('id', '[0-9]+');
         Route::post('/catalog/reorder/{type}/{id}/move', [\App\Http\Controllers\Admin\CatalogReorderApiController::class, 'moveAbsolute'])->where('type', 'category|brand')->where('id', '[0-9]+');
+        // (Lane RL) One Save: the page's order and every queued move, one request, one transaction.
+        Route::post('/catalog/reorder/{type}/{id}/apply', [\App\Http\Controllers\Admin\CatalogReorderApiController::class, 'apply'])->where('type', 'category|brand')->where('id', '[0-9]+');
         Route::post('/catalog/reorder/{type}/{id}/auto-sort', [\App\Http\Controllers\Admin\CatalogReorderApiController::class, 'autoSort'])->where('type', 'category|brand')->where('id', '[0-9]+');
 
         // Pages, split by who owns them: the storefront's fixed routes versus
