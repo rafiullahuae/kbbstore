@@ -335,6 +335,19 @@
 .kbb-slimfoot.sf-a-center .sf-con,
 .kbb-slimfoot.sf-a-center .sf-links,
 .kbb-slimfoot.sf-a-center .sf-pay{justify-content:center}
+@if ($sfLinksAtEnd)
+/* THE ARROW ON A ROW OF ITS OWN GOES TO THE FAR END. The links-at-end row
+   takes a whole line, so the arrow after it always wraps onto the next one --
+   where the rule just above sets its margin to 0 for these alignments, and a
+   lone item on a line then sits at the START. On the live checkout that put
+   the arrow bottom-left under "Shipping & Delivery" (owner, 10 October: "it
+   should be on right bottom"). Alone on its line it cannot eat anybody's gap,
+   so the auto margin is safe here in every alignment. Same specificity as
+   the rule above and later in the file, so it wins; `inline` so an Arabic
+   page puts it at its own far end. Printed only with links at the end, so
+   every other footer renders byte for byte as before. */
+.kbb-slimfoot.sf-up-on .sf-links-end ~ .sf-top{margin-inline-start:auto}
+@endif
 
 /* ── THE SEPARATOR ─────────────────────────────────────────────────────────
    Drawn as an ::after on each block but the last, so it lands in the space

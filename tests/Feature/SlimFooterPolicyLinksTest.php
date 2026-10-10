@@ -88,3 +88,22 @@ it('moves a saved footer link only while it still holds the old default', functi
         ->and($footer['l2_text'])->toBe('Our terms')
         ->and($footer['l2_url'])->toBe('/terms-and-conditions/');
 });
+
+it('puts the checkout\'s back-to-top arrow at the far end of its own row, not the start', function () {
+    /*
+     * Owner, 10 October, desktop checkout: "the back to top icon is showing
+     * down left, it should be on right bottom". The links-at-end row takes a
+     * full line, so the arrow wraps onto one of its own, and under the default
+     * `between` alignment its margin was 0 -- a lone item at the START.
+     * Measured in Chromium at 1280 (docs/lane-sh-shots): left edge 140 before,
+     * 1110 after, 20px in from the content's right edge; 390 unchanged.
+     *
+     * MUTATION, RUN: delete the `.sf-links-end ~ .sf-top` rule and this is red.
+     */
+    $html = sfplCheckout();
+    $rule = '.kbb-slimfoot.sf-up-on .sf-links-end ~ .sf-top{margin-inline-start:auto}';
+
+    expect(substr_count($html, $rule))->toBe(1)
+        ->and(strpos($html, $rule))->toBeGreaterThan(strpos($html, '.kbb-slimfoot:is(.sf-a-center,.sf-a-end,.sf-a-between) .sf-top{margin-inline-start:0}'))
+        ->and($html)->toContain('class="sf-links sf-links-end"');
+});
