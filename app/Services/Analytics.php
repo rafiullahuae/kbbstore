@@ -225,6 +225,33 @@ final class Analytics
     }
 
     /**
+     * 2.60.463. THE LOADING BAR WAITED FOR FACEBOOK AND GOOGLE. The owner, 10
+     * October: "the loading bar is not finishing instantly, and due to that
+     * images don't load mostly". An async <script> still holds the page's load
+     * event, and the browser's loading bar is that event, so every page waited
+     * for fbevents.js and gtag.js to arrive from Meta's and Google's servers
+     * and shared the phone's connection with them while the shop's own photos
+     * queued. Measured on the live shop with those two answering 4 s late:
+     * load 5.5-6.7 s with the tags as they were, 3.45 s with them added after
+     * load, and the last product photo in ~0.5-1 s sooner.
+     *
+     * So the network's own queue (fbq, dataLayer/gtag, ttq) is created at once
+     * as before -- every event the page fires is kept and sent when the file
+     * arrives -- and only the FILE is fetched after the load event, in the
+     * first idle moment (3 s at most). A Purchase is also sent from the server
+     * (ServerEvents), so a shopper who closes the tab that instant is still
+     * counted. "now" puts the old tags back byte for byte: Growth & Marketing
+     * -> Marketing Pixels -> Custom code -> Page speed.
+     */
+    public const LATE = "function(f){function g(){window.requestIdleCallback?requestIdleCallback(f,{timeout:3000}):setTimeout(f,1)}document.readyState==='complete'?g():addEventListener('load',g,{once:true})}";
+
+    /** Are the tracking files fetched after the page has loaded (the default)? */
+    public static function loadsLate(): bool
+    {
+        return app(\App\Services\Pixels\PixelConfig::class)->get('load_scripts') !== 'now';
+    }
+
+    /**
      * Loader tags plus the page-view event, for every configured network —
      * ONCE per request, whoever asks and however many times.
      *
@@ -243,13 +270,16 @@ final class Analytics
         }
 
         $out = '';
+        $late = self::loadsLate();
         $meta = $this->validId('meta');
         $ga4 = $this->validId('ga4');
         $tiktok = $this->validId('tiktok');
 
         if ($meta !== null) {
             $id = json_encode($meta);
-            $out .= "<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init',{$id});fbq('track','PageView');</script>\n";
+            $insert = "t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)";
+            $insert = $late ? '(' . self::LATE . ')(function(){' . $insert . '})' : $insert;
+            $out .= "<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];{$insert}}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init',{$id});fbq('track','PageView');</script>\n";
         }
 
         /*
@@ -267,13 +297,23 @@ final class Analytics
         if ($tagId !== null) {
             $src = rawurlencode($tagId);
             $ga4Config = $ga4 !== null ? "gtag('config'," . json_encode($ga4) . ');' : '';
-            $out .= "<script async src=\"https://www.googletagmanager.com/gtag/js?id={$src}\"></script>\n";
-            $out .= "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}{$consent}gtag('js',new Date());{$ga4Config}{$adsConfig}</script>\n";
+            if ($late) {
+                // The queue first, exactly as before, so every gtag() call on
+                // the page is kept; gtag.js itself is added after the page's
+                // load event and reads the queue when it arrives. $src is
+                // rawurlencode()d from an ID validId() already shape-checked,
+                // so it cannot leave the quoted string.
+                $out .= "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}{$consent}gtag('js',new Date());{$ga4Config}{$adsConfig}(" . self::LATE . ")(function(){var s=document.createElement('script');s.async=!0;s.src='https://www.googletagmanager.com/gtag/js?id={$src}';document.head.appendChild(s)});</script>\n";
+            } else {
+                $out .= "<script async src=\"https://www.googletagmanager.com/gtag/js?id={$src}\"></script>\n";
+                $out .= "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}{$consent}gtag('js',new Date());{$ga4Config}{$adsConfig}</script>\n";
+            }
         }
 
         if ($tiktok !== null) {
             $id = json_encode($tiktok);
-            $out .= "<script>!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=['page','track','identify','instances','debug','on','off','once','ready','alias','group','enableCookie','disableCookie'];ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};ttq.load=function(e,n){var i='https://analytics.tiktok.com/i18n/pixel/events.js';ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=i;ttq._t=ttq._t||{};ttq._t[e]=+new Date;ttq._o=ttq._o||{};ttq._o[e]=n||{};var o=d.createElement('script');o.type='text/javascript';o.async=!0;o.src=i+'?sdkid='+e+'&lib='+t;var a=d.getElementsByTagName('script')[0];a.parentNode.insertBefore(o,a)};ttq.load({$id});ttq.page();}(window,document,'ttq');</script>\n";
+            $ttInsert = $late ? '(' . self::LATE . ')(function(){a.parentNode.insertBefore(o,a)})' : 'a.parentNode.insertBefore(o,a)';
+            $out .= "<script>!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=['page','track','identify','instances','debug','on','off','once','ready','alias','group','enableCookie','disableCookie'];ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};ttq.load=function(e,n){var i='https://analytics.tiktok.com/i18n/pixel/events.js';ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=i;ttq._t=ttq._t||{};ttq._t[e]=+new Date;ttq._o=ttq._o||{};ttq._o[e]=n||{};var o=d.createElement('script');o.type='text/javascript';o.async=!0;o.src=i+'?sdkid='+e+'&lib='+t;var a=d.getElementsByTagName('script')[0];{$ttInsert}};ttq.load({$id});ttq.page();}(window,document,'ttq');</script>\n";
         }
 
         // Claimed only once there is something to claim it FOR, so a shop with

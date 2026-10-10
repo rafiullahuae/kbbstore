@@ -42,10 +42,15 @@ const DP_TIKTOK = 'CDPLANE0000';
 
 /* ------------------------------------------------------------------ counts */
 
-/** Loader <script src=…gtag/js…>, counted as elements. */
+/**
+ * Loader <script src=…gtag/js…>, counted as elements -- or, since 2.60.463
+ * (Analytics::LATE, the default), as the one place the queue script adds that
+ * file after the page loads. Either way: one gtag.js per page, never two.
+ */
 function dpGaLoaders(string $html): int
 {
-    return preg_match_all('#<script[^>]+src="[^"]*googletagmanager\.com/gtag/js[^"]*"#i', $html);
+    return preg_match_all('#<script[^>]+src="[^"]*googletagmanager\.com/gtag/js[^"]*"#i', $html)
+        + preg_match_all("#s\.src='https://www\.googletagmanager\.com/gtag/js\?id=#", $html);
 }
 
 /** gtag('config', …) calls — one per measurement id per page, or GA counts twice. */

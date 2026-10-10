@@ -62,6 +62,8 @@ final class PixelConfig
         'tiktok_token' => ['/^[A-Za-z0-9_\-\.]{20,512}$/', 'TikTok Events API access token'],
         'tiktok_test_code' => ['/^TEST[A-Za-z0-9]{2,20}$/', 'TikTok test event code'],
         'tiktok_eapi' => ['/^[01]$/', 'Send TikTok server events'],
+        // 2.60.463: '' and 'late' fetch the pixel files after the page loads (Analytics::LATE); 'now' is the old head tags.
+        'load_scripts' => ['/^(late|now)$/', 'When the tracking scripts load'],
     ];
 
     /** Switches that read as ON when never set: a pasted token means "use it". */
