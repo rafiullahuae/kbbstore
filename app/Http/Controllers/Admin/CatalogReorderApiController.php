@@ -217,7 +217,12 @@ class CatalogReorderApiController extends Controller
                 'name' => $p->name,
                 'brand' => $p->brand?->name,
                 'sku' => $p->sku,
-                'price' => \App\Support\Money::toAed($p->price),
+                // A product with NO price (pre-order lines often have none) is
+                // null, which the screen already prints as blank. toAed() takes
+                // an int, and one such product 500'd the whole page on the live
+                // shop -- "Money::toAed(): Argument #1 ($fils) must be of type
+                // int, null given", five times on 10 October.
+                'price' => $p->price === null ? null : \App\Support\Money::toAed((int) $p->price),
                 'sale_price' => $p->sale_price ? \App\Support\Money::toAed($p->sale_price) : null,
                 'orders_count' => $orders[$p->id] ?? 0,
                 'rank' => ($page - 1) * $perPage + $i + 1,

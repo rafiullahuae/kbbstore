@@ -223,3 +223,29 @@ it('ends "Loading…" on every answer, and lets only the latest page-size change
         ->not->toContain('reorderData=await r.json();')
         ->and(substr_count($src, 'reorderSeq=0'))->toBe(1);
 });
+
+it('lists a product with no price on the Reorder screen instead of failing the page', function () {
+    /*
+     * THE LIVE FAULT, from the owner's laravel.log on 10 October, five times:
+     * "Money::toAed(): Argument #1 ($fils) must be of type int, null given,
+     * called in CatalogReorderApiController.php on line 219". One product
+     * without a price -- the pre-order category has them -- made the whole
+     * page a 500, and the screen sat on "Loading…".
+     *
+     * MUTATION, RUN: restore `'price' => Money::toAed($p->price)` and this is
+     * a 500.
+     */
+    $cat = Category::create(['name' => 'Pre-order', 'slug' => 'pre-order-np']);
+    $priced = rosProduct('np-priced');
+    $free = rosProduct('np-no-price');
+    DB::table('products')->where('id', $free->id)->update(['price' => null, 'sale_price' => null]);
+    $cat->products()->attach([$priced->id, $free->id]);
+
+    $rows = collect($this->actingAs(rosAdmin(), 'admin')
+        ->getJson("/admin-api/catalog/reorder/category/{$cat->id}/products?per_page=50")
+        ->assertOk()->json('products'))->keyBy('id');
+
+    expect($rows[$free->id]['price'])->toBeNull()
+        ->and($rows[$free->id]['sale_price'])->toBeNull()
+        ->and($rows[$priced->id]['price'])->toEqual(10);
+});
