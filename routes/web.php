@@ -744,6 +744,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/emails-admin.php';
         require __DIR__.'/emails-templates-admin.php';   // Emails → Customer emails + the template editor (Lane EK)
         require __DIR__.'/marketing-emails-admin.php';   // Growth & Marketing → Marketing Emails (Lane MK)
+        require __DIR__.'/email-health-admin.php';   // Growth & Marketing → Bounces & unsubscribes (Lane EB)
 
         // Categories and attributes. Same guarded group: these write catalogue
         // records and accept an uploaded image.
