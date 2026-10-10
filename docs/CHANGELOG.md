@@ -3,6 +3,15 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.476
+**Admin: Orders fourth at the top of the menu; Cart Tracking shows each visitor's browser and device.** Apply after .475.
+Runs its migration (clears caches). Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "bring the Orders to quick access on in the panel top, under Cart Tracking, i mean at no # 4 position" | Left menu: Dashboard, Analytics, Cart Tracking, **Orders**. Same screen, same permissions; it is no longer listed under Store (New Order stays there). Its heading reads Overview › Orders |
+| "i need to get the user browser etc information under the country, so i can be clear which browser users use more" | Cart Tracking → Carts: under each cart's country and address, e.g. "Instagram · iPhone", "Chrome · Android phone", "Safari · Mac". Two new tiles under the top four: **Top browsers** and **Top devices**, with counts and shares for the period you picked. In-app browsers (Instagram, Facebook, TikTok, Snapchat) are named as such; scripts and bots show as "Bot / script". From what each cart already records: nothing new tracked, nothing added to the shop |
+
 ## 2.60.475
 **Shipped email says its first line once; checkout's back-to-top arrow bottom-right on desktop; product cards in marketing emails never one column.** Apply after .474.
 Runs its migration (clears caches). No hard refresh needed for shoppers.
