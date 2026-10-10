@@ -1230,3 +1230,41 @@ it('sanitises the strings an attacker would actually send', function () {
             ->not->toContain('evil.test');
     }
 });
+
+it('saves the brand picked in the editor, clears it with No brand, and the brand page lists the product', function () {
+    /*
+     * THE LIVE DEFECT, the owner, 10 October: "on product edit page, when
+     * select brand, and click save, then the brand resets to non-selection, on
+     * front-end also this product not showing in that brand." The save
+     * validated brand_id and never wrote it, so the response carried the old
+     * (empty) brand and the select redrew as "No brand"; the brand's page,
+     * which lists products.brand_id, never saw the product.
+     *
+     * MUTATION, RUN: delete the brand_id block in apply() and every
+     * expectation below is red.
+     */
+    asPeAdmin();
+
+    $brand = peBrand();
+    $product = peProduct(['name' => 'Anua PDRN Glass Skin Set']);
+
+    $saved = test()->postJson('/admin-api/product-editor-save/'.$product->id, ['brand_id' => $brand->id])
+        ->assertOk()->json('product');
+
+    expect($saved['brand_id'])->toBe($brand->id)
+        ->and((int) $product->fresh()->brand_id)->toBe($brand->id)
+        // The page the shop draws for that brand now lists it.
+        ->and(test()->get('/brands/'.$brand->slug.'/')->assertOk()->getContent())->toContain('Anua PDRN Glass Skin Set');
+
+    // Loading the editor again shows the brand selected, not "No brand".
+    expect(test()->getJson('/admin-api/product-editor-load/'.$product->id)->assertOk()->json('product.brand_id'))->toBe($brand->id);
+
+    // "No brand" is an instruction too.
+    test()->postJson('/admin-api/product-editor-save/'.$product->id, ['brand_id' => null])->assertOk();
+    expect($product->fresh()->brand_id)->toBeNull();
+
+    // A save that does not mention the brand leaves it alone.
+    $product->forceFill(['brand_id' => $brand->id])->save();
+    test()->postJson('/admin-api/product-editor-save/'.$product->id, ['name' => 'Anua PDRN Glass Skin Set'])->assertOk();
+    expect((int) $product->fresh()->brand_id)->toBe($brand->id);
+});
