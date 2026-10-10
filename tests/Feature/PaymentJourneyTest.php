@@ -350,7 +350,7 @@ it('shows where the shopper came from and what went in the bag, from what the sh
     expect($text)->toContain('source instagram')->toContain('campaign oct-sets')->toContain('first page /collections/skincare-sets/')
         ->toContain('Basket started: Cart Tracking basket #' . $cart->id)
         ->toContain('Added to bag: Anua PDRN Glass Skin Set')
-        ->toContain('Order placed')
+        ->toContain('Order placed: ') // the step's own title, with its separator: the bare words are also the checkout tick's heading
         ->and($j['cart_id'])->toBe($cart->id)
         ->and($j['not_tracked'])->toContain('not recorded per shopper');
 });
