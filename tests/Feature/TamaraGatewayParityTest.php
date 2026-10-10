@@ -2200,3 +2200,59 @@ it('answers a replayed tamara notification 200 once the order is authorised', fu
      * comes back 503.
      */
 });
+
+/*
+ * 2.60.468. The owner's own test order on the live shop (10 Oct 2026, 12:26,
+ * a returning address) was refused by Tamara with "HTTP 400 — Invalid date
+ * format; risk_assessment_wrong_data_format": the risk block carried
+ * date_of_first_transaction as an ISO-8601 instant, and every Tamara checkout
+ * from a shopper with an earlier order died at the door. Tamara's risk dates
+ * are DD-MM-YYYY. MUTATION: put toAtomString() back and this is red.
+ */
+it('sends the risk dates in the DD-MM-YYYY shape tamara accepts', function () {
+    pg1Provider();
+    pg1FakeCheckout();
+    pg1Order(['email' => 'returning@example.com', 'status' => 'completed', 'created_at' => '2026-03-05 10:00:00']);
+    $order = pg1Order(['email' => 'returning@example.com']);
+
+    expect(pg1Gateway()->start($order)->ok())->toBeTrue();
+
+    $risk = pg1SentBody('/checkout')['risk_assessment'];
+    expect($risk['date_of_first_transaction'])->toBe('05-03-2026')
+        ->and($risk)->not->toHaveKey('account_creation_date');
+});
+
+/*
+ * And the block is optional, so it may never cost the sale: when Tamara refuses
+ * the request because of it, the same checkout goes once more without it and the
+ * shopper reaches Tamara; the order note says what happened. Any other refusal
+ * is not retried. MUTATION: delete the retry and the first case answers failed.
+ */
+it('retries once without the risk details when tamara refuses them, and only then', function () {
+    pg1Provider();
+    pg1Order(['email' => 'again@example.com', 'status' => 'completed']);
+    $order = pg1Order(['email' => 'again@example.com']);
+
+    Http::fakeSequence('*/checkout')
+        ->push(['message' => 'Invalid date format', 'errors' => [['error_code' => 'risk_assessment_wrong_data_format']]], 400)
+        ->push(['order_id' => 'tam_retry', 'checkout_url' => 'https://checkout.tamara.co/y']);
+
+    $start = pg1Gateway()->start($order);
+
+    $bodies = collect(Http::recorded())->filter(fn ($r) => str_contains($r[0]->url(), '/checkout'))->map(fn ($r) => $r[0]->data())->values();
+    expect($start->ok())->toBeTrue()
+        ->and($bodies)->toHaveCount(2)
+        ->and($bodies[0])->toHaveKey('risk_assessment')
+        ->and($bodies[1])->not->toHaveKey('risk_assessment')
+        ->and($order->fresh()->notes()->pluck('content')->implode(' | '))->toContain('the checkout was sent again without them');
+});
+
+it('does not retry a refusal that is not about the risk details', function () {
+    pg1Provider();
+    pg1Order(['email' => 'other@example.com', 'status' => 'completed']);
+    $order = pg1Order(['email' => 'other@example.com']);
+    Http::fake(['*/checkout' => Http::response(['message' => 'Invalid phone', 'errors' => [['error_code' => 'consumer_phone_invalid']]], 400)]);
+
+    expect(pg1Gateway()->start($order)->ok())->toBeFalse()
+        ->and(collect(Http::recorded())->filter(fn ($r) => str_contains($r[0]->url(), '/checkout')))->toHaveCount(1);
+});
