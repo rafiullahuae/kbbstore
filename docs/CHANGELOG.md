@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.485
+**Cart panel: the free-delivery bar shows when you open the bag, not only after adding something.** Apply after .484.
+Runs its migration (clears caches).
+
+| Your request | Now |
+|---|---|
+| "the delivery bar is not showing on the cart panel, i have enabled it, but not showing, even cleared the cache too" | Appearance → Cart panel → Content → Free-delivery progress bar was working only in the panel redrawn after an add. The panel that comes with every page was asked for its totals without the shop's country, so it found no delivery zone, no free-delivery amount and no bar. It now asks with the shop's country, exactly as the add path does: "AED X away from free delivery" with a part-filled bar, or "You've unlocked free delivery" with a full one. No extra database query (the delivery zones are cached) |
+
+Files: app/View/Composers/CartDrawerComposer.php, migration 2027_10_28_200000.
+
 ## 2.60.484
 **Marketing emails: every footer line is editable, and a locked email says so.** Apply after .483.
 Runs its migration (clears caches). Hard refresh the admin.

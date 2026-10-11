@@ -172,7 +172,16 @@ class CartDrawerComposer
 
         $view->with([
             'items' => $cart?->items ?? collect(),
-            'totals' => $cart ? $this->carts->totals($cart) : $empty,
+            /*
+             * THE SHOP'S COUNTRY, as CartController::payload() passes it.
+             * Without one, ShippingService::zoneFor(null) answers no zone, the
+             * free-delivery threshold is null and the panel drawn with the page
+             * had no free-delivery bar at all — while the same panel redrawn
+             * after an add, which does pass it, had one. The owner, 11 Oct:
+             * "the delivery bar is not showing on the cart panel, i have
+             * enabled it". The zones are cached, so this asks no query.
+             */
+            'totals' => $cart ? $this->carts->totals($cart, (string) $this->settings->get('store_country', 'AE')) : $empty,
             'promo' => $this->settings->moduleEnabled('minicart_promo', true)
                 ? (string) $this->settings->get('minicart_promo', '')
                 : '',
