@@ -210,7 +210,7 @@ u + #body a, #MessageViewBody a{color:inherit;text-decoration:none;font-size:inh
 @if ($note !== '')<tr><td align="center" class="muted" style="padding:22px 20px 0;font-family:{!! $F !!};font-size:12.5px;color:{{ $C['muted'] }};">{{ $note }}</td></tr>@endif
 <tr><td align="center" style="padding:30px 26px 12px;font-family:{!! $F !!};">
 <div class="ink" dir="ltr" style="font-family:{!! \App\Services\Marketing\EmailTheme::SANS !!};font-size:18px;font-weight:800;letter-spacing:-.02em;color:{{ $C['text'] }};">{{ $k['wordmark'][0] }}@if ($k['wordmark'][1] !== '') <span class="pink" style="color:{{ $C['deep'] }};">{{ $k['wordmark'][1] }}</span>@endif</div>
-<div class="muted" style="margin-top:4px;font-size:12px;color:{{ $C['muted'] }};">{{ $W('tagline') }}</div>
+<div class="muted" style="margin-top:4px;font-size:12px;color:{{ $C['muted'] }};">{{ $footWords['tagline'] ?? $W('tagline') }}</div>
 </td></tr>
 <tr><td style="padding:0 60px;"><div class="rule" style="height:1px;line-height:1px;font-size:0;background:{{ $C['rule'] }};">&nbsp;</div></td></tr>
 @if ($k['addresses'] !== [])
@@ -218,11 +218,11 @@ u + #body a, #MessageViewBody a{color:inherit;text-decoration:none;font-size:inh
 @endif
 <tr><td align="center" class="muted" style="padding:8px 22px 6px;font-family:{!! $F !!};font-size:12px;line-height:2;color:{{ $C['muted'] }};">
 {!! implode($ftDot, array_map(static fn (string $key, string $path) => $ftA(\App\Support\Url::external($path), $W($key)), array_keys(\App\Services\Marketing\EmailTheme::FOOTER_LINKS), \App\Services\Marketing\EmailTheme::FOOTER_LINKS)) !!}
-@if ($ftUnsub !== null)<br>{!! $ftA($ftUnsub, $W('unsubscribe'), true) !!}{!! $ftDot !!}{!! $ftA($ftUnsub, $W('preferences')) !!}@endif
+@if ($ftUnsub !== null)<br>{!! $ftA($ftUnsub, $footWords['unsub_label'] ?? $W('unsubscribe'), true) !!}{!! $ftDot !!}{!! $ftA($ftUnsub, $footWords['prefs_label'] ?? $W('preferences')) !!}@endif
 </td></tr>
-<tr><td align="center" class="muted" style="padding:6px 34px 4px;font-family:{!! $F !!};font-size:11.5px;line-height:1.65;color:{{ $C['muted'] }};">{{ $why }}<br>{{ $W('copyright', ['year' => $k['year'], 'store' => $k['storeName']]) }}</td></tr>
+<tr><td align="center" class="muted" style="padding:6px 34px 4px;font-family:{!! $F !!};font-size:11.5px;line-height:1.65;color:{{ $C['muted'] }};">{{ $why }}<br>{{ $footWords['copyright'] ?? $W('copyright', ['year' => $k['year'], 'store' => $k['storeName']]) }}</td></tr>
 @if ($ftWebCopy !== null)
-<tr><td align="center" style="padding:8px 24px 6px;font-family:{!! $F !!};font-size:12px;">{!! $ftA($ftWebCopy, $W('view'), true) !!}</td></tr>
+<tr><td align="center" style="padding:8px 24px 6px;font-family:{!! $F !!};font-size:12px;">{!! $ftA($ftWebCopy, $footWords['view_label'] ?? $W('view'), true) !!}</td></tr>
 @endif
 {!! $mkClose !!}
 @endif

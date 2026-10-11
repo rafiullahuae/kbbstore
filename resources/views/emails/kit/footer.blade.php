@@ -23,10 +23,12 @@
     $ftDot = '&nbsp;&nbsp;&middot;&nbsp;&nbsp;';
     $ftWebCopy = \App\Services\Mail\Kit\WebCopy::mint();
     $ftUnsub = \App\Services\Mail\Kit\MailKit::url($unsubscribeUrl ?? null);
+    // A marketing campaign's own footer words (CampaignRenderer::footerWords); absent everywhere else.
+    $ftW = $footWords ?? [];
 @endphp
 <tr><td align="center" style="padding:26px 26px 14px;font-family:{!! $k['sans'] !!};">
 <div style="font-size:17px;font-weight:800;letter-spacing:-.02em;color:{{ $k['text'] }};">{{ $k['wordmark'][0] }}<span style="color:#C13E63;">{{ $k['wordmark'][1] }}</span></div>
-<div class="muted" style="margin-top:3px;font-size:11.5px;color:#8C828A;">{{ __('email.kit.footer_tagline') }}</div>
+<div class="muted" style="margin-top:3px;font-size:11.5px;color:#8C828A;">{{ $ftW['tagline'] ?? __('email.kit.footer_tagline') }}</div>
 </td></tr>
 <tr><td style="padding:0 40px;"><div style="height:1px;line-height:1px;font-size:0;background:#FCE0E8;">&nbsp;</div></td></tr>
 @if ($k['addresses'] !== [])
@@ -39,10 +41,10 @@
 @endif
 <tr><td align="center" style="padding:14px 22px;font-family:{!! $k['sans'] !!};font-size:12px;line-height:1.9;color:#8C828A;" class="muted">
 {!! implode($ftDot, array_map(fn (array $l) => $ftA($l['url'], $l['label']), $k['links'])) !!}
-@if ($ftUnsub !== null)<br>{!! $ftA($ftUnsub, __('email.common.unsubscribe'), true) !!}{!! $ftDot !!}{!! $ftA($ftUnsub, __('email.kit.preferences')) !!}@endif
+@if ($ftUnsub !== null)<br>{!! $ftA($ftUnsub, $ftW['unsub_label'] ?? __('email.common.unsubscribe'), true) !!}{!! $ftDot !!}{!! $ftA($ftUnsub, $ftW['prefs_label'] ?? __('email.kit.preferences')) !!}@endif
 </td></tr>
 <tr><td style="padding:0 40px;"><div style="height:1px;line-height:1px;font-size:0;background:#FCE0E8;">&nbsp;</div></td></tr>
-<tr><td align="center" style="padding:14px 30px 4px;font-family:{!! $k['sans'] !!};font-size:11.5px;line-height:1.6;color:#8C828A;" class="muted">{{ $why }}<br>{{ __('email.kit.copyright', ['year' => $k['year'], 'store' => $k['storeName']]) }}</td></tr>
+<tr><td align="center" style="padding:14px 30px 4px;font-family:{!! $k['sans'] !!};font-size:11.5px;line-height:1.6;color:#8C828A;" class="muted">{{ $why }}<br>{{ $ftW['copyright'] ?? __('email.kit.copyright', ['year' => $k['year'], 'store' => $k['storeName']]) }}</td></tr>
 @if ($ftWebCopy !== null)
-<tr><td align="center" style="padding:10px 26px 8px;font-family:{!! $k['sans'] !!};font-size:12px;" class="muted">{!! $ftA($ftWebCopy, __('email.kit.view_in_browser'), true) !!}</td></tr>
+<tr><td align="center" style="padding:10px 26px 8px;font-family:{!! $k['sans'] !!};font-size:12px;" class="muted">{!! $ftA($ftWebCopy, $ftW['view_label'] ?? __('email.kit.view_in_browser'), true) !!}</td></tr>
 @endif

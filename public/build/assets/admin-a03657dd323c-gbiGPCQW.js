@@ -546,12 +546,53 @@
   function fSel(k, label, opts, v, help) { return '<label class="mke-f"><span class="mke-l">' + esc(label) + '</span>' + sel(k, opts, v, 'data-mke-p="' + k + '"') + (help ? '<span class="mke-h">' + help + '</span>' : '') + '</label>'; }
   function fBool(k, label, v) { return '<label class="mke-toggle"><input type="checkbox" data-mke-p="' + k + '"' + (v ? ' checked' : '') + '>' + esc(label) + '</label>'; }
   function fNum(k, label, v, min, max) { return '<label class="mke-f"><span class="mke-l">' + esc(label) + '</span><input class="mke-in" type="number" data-mke-p="' + k + '" min="' + min + '" max="' + max + '" value="' + esc(v) + '"></label>'; }
+  /* THE FOOTER'S OWN WORDS (Lane RO2). The owner, 11 Oct: "give me all footer
+     easy editor ... as i'm suppose to send the campaign". Each box left empty
+     keeps the built-in wording in the email's language, shown greyed inside
+     it; {store} and {year} fill in. An empty Unsubscribe label falls back, so
+     the link always has its words. The letter look prints only the why line. */
+  var FOOT_EN = {
+    standard: { tagline: 'Authentic Korean skincare, delivered across the UAE', copyright: '© {year} {store}' },
+    playful: { tagline: 'Authentic Korean beauty, delivered across the UAE', copyright: '© {year} {store}. All rights reserved.' }
+  };
+  function footWords(p, b) {
+    var en = b.locale !== 'ar', look = FOOT_EN[b.theme === 'playful' ? 'playful' : 'standard'];
+    var ph = function (v) { return en ? v : 'Built-in Arabic wording'; };
+    var box = function (k, label, v, max) {
+      return '<label class="mke-f"><span class="mke-l">' + esc(label) + '</span><input class="mke-in" data-mke-p="' + k + '" maxlength="' + max + '" value="' + esc(p[k] || '') + '" placeholder="' + esc(ph(v)) + '"></label>';
+    };
+    var why = box('why_text', 'Why they got it (your own words)', 'Empty = the line chosen above, e.g. “You are receiving this because you shopped with {store} before.”', 200);
+    if (b.theme === 'letter') return '<div class="mke-grp"><b class="mke-l">Footer words</b>' + why + '<span class="mke-h">{store} prints your shop name and {year} the year. Leave a box empty to keep the built-in words.</span></div>';
+    return '<details class="mke-grp" open><summary class="mke-l" style="cursor:pointer">Footer words (edit any line)</summary>'
+      + box('tagline', 'Line under the logo', look.tagline, 80)
+      + why
+      + box('copyright', 'Copyright line', look.copyright, 160)
+      + '<div class="mke-grid mke-g2" style="gap:10px">' + box('unsub_label', 'Unsubscribe link text', 'Unsubscribe', 40) + box('prefs_label', 'Preferences link text', 'Email preferences', 40) + '</div>'
+      + box('view_label', '“View in browser” link text', 'View this email in your browser', 60)
+      + '<span class="mke-h">{store} prints your shop name and {year} the year. Leave a box empty to keep the built-in words (shown in grey). The unsubscribe link always stays.</span></details>';
+  }
   var MARKS = 'Plain text with <b>**bold**</b>, <i>*italic*</i> and [a link](https://…). {first_name} prints the name.';
+
+  /* WHY THIS EMAIL CANNOT BE CHANGED, AND THE WAY TO A COPY THAT CAN (Lane RO2).
+     A campaign is locked once it has started -- its report must describe what
+     customers received -- and a ready template is the shop's own; both are
+     changed through a duplicate, so the button is right here. */
+  function lockedNote(b) {
+    var why = b.preset ? 'This is a ready-made template, so it stays as it is.'
+      : ({ sending: 'This campaign is being sent, so it can no longer be changed.',
+           paused: 'This campaign has started sending (it is paused), so it can no longer be changed.',
+           sent: 'This campaign has been sent, so it can no longer be changed.',
+           cancelled: 'This campaign was cancelled after it started, so it can no longer be changed.' }[b.status]
+         || 'This campaign can no longer be changed.');
+    return '<div class="mke-note mke-locked" role="status" style="margin:0 0 12px"><b>Locked.</b> ' + esc(why)
+      + ' Make an editable copy to change any of it.<div style="margin-top:8px"><button type="button" class="btn sm" data-mke="'
+      + (b.kind === 'template' ? 'tdup' : 'dup') + '" data-id="' + b.id + '">Duplicate to edit</button></div></div>';
+  }
 
   function blockForm() {
     var b = S.b, bl = b.blocks[b.sel]; if (!bl) return '<div class="mke-empty">Select a block on the email.</div>';
     var p = bl.props || {}, o = S.opts || {}, t = bl.type, h = '<h3>' + esc(NAMES[t]) + '</h3>';
-    var dis = b.editable ? '' : '<div class="mke-h">Read-only. ' + (b.preset ? 'Duplicate this template to change it.' : '') + '</div>';
+    var dis = b.editable ? '' : lockedNote(b);
     if (t === 'mini_header') h += '<p class="d">The shop\'s logo or name, and Shop · Track order · My account.</p>' + fBool('topbar', 'Show the line above (“Authentic K-beauty, curated for you”)', p.topbar) + fBool('nav', 'Show Shop · Track order · My account', p.nav)
       + (b.theme === 'playful' ? fText('tagline', 'Line above the card (Playful look)', p.tagline, 'e.g. ✿ glow-up alert ✿ — shown when “Show the line above” is on.', false, 80) : '');
     if (t === 'hero_image') h += '<p class="d">A full-width picture under the header.</p>' + fSel('art', 'Picture', [['', 'From the media library']].concat((o.art || []).map(function (a) { return [a.key, a.alt]; })), p.art)
@@ -600,7 +641,8 @@
     if (t === 'spacer') h += fNum('height', 'Height (px)', p.height, 8, 64);
     if (t === 'social') h += '<p class="d">Leave a box empty to hide that link.</p>' + ['instagram', 'facebook', 'tiktok', 'youtube', 'whatsapp'].map(function (k) { return fText(k, k.charAt(0).toUpperCase() + k.slice(1), p[k], ''); }).join('');
     if (t === 'footer') h += '<p class="d">Required, and always last: the Dubai and Korea addresses (Emails → Design &amp; branding), the policy pages, Unsubscribe · Email preferences, why this email arrived, and “View this email in your browser”.</p>' + fSel('why', 'Why they got it', [['auto', 'From the group (customers or subscribers)'], ['customers', 'You bought from us before'], ['subscribers', 'You subscribed to our emails']], p.why)
-      + (b.theme === 'playful' ? fText('note', 'Line above the footer (Playful look)', p.note, 'e.g. Made with love (and a lot of serum) in Dubai ✿', false, 120) : '');
+      + (b.theme === 'playful' ? fText('note', 'Line above the footer (Playful look)', p.note, 'e.g. Made with love (and a lot of serum) in Dubai ✿', false, 120) : '')
+      + footWords(p, b);
     if (t === 'badges') {
       h += '<p class="d">Up to four small chips: a picture, a bold start and the rest of the line. Write only what the shop really does.</p>';
       var chips = p.items || [];
@@ -614,7 +656,11 @@
       h += '<div class="mke-h">Empty a chip\'s two boxes to leave it out.</div>';
     }
     if (t !== 'footer' && b.editable) h += '<div class="mke-row" style="margin-top:6px"><button type="button" class="btn ghost sm" data-mke="bdup">Duplicate block</button><span class="mke-sp"></span><button type="button" class="btn ghost sm" data-mke="bdel">Remove block</button></div>';
-    return dis + h;
+    // (Lane RO2) A locked email's boxes are greyed out, not merely ignored:
+    // they used to take typing and quietly put the old words back. The owner,
+    // 11 October: "the made with love line, i can't edit, when i edit, it
+    // resets the same".
+    return b.editable ? h : dis + '<fieldset class="mke-ro" disabled>' + h + '</fieldset>';
   }
 
   /*
@@ -683,7 +729,7 @@
     } else {
       h += '<div class="mke-h">Changes to your template save as you type. Campaigns already made from it keep their own copy.</div>';
     }
-    return h;
+    return b.editable ? h : lockedNote(b) + '<fieldset class="mke-ro" disabled>' + h + '</fieldset>';
   }
 
   /* The preview: the server's render, written into a no-script frame. */

@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.484
+**Marketing emails: every footer line is editable, and a locked email says so.** Apply after .483.
+Runs its migration (clears caches). Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "give me all footer easy editor" | Growth & Marketing → Marketing Emails → (campaign or template) → click the **Footer + unsubscribe** block → **Footer words**: Line under the logo, Why they got it, Copyright line, Unsubscribe / Preferences / "View in browser" link text. `{store}` prints the shop name, `{year}` the year. An empty box keeps the built-in words (shown in grey inside it), so every email already written is unchanged. An empty Unsubscribe box falls back to "Unsubscribe": the link can never lose its words. Standard, Playful and Personal letter looks (the letter has only the why line) |
+| "the made with love line, i can't edit, when i edit, it resets" | That campaign had started sending, so it is locked (its report must match what customers got). The boxes now show greyed out under **Locked.** with the reason and a **Duplicate to edit** button, instead of accepting typing and throwing it away |
+
+Files: app/Services/Marketing/Blocks.php, app/Services/Marketing/CampaignRenderer.php, resources/views/emails/kit/footer.blade.php (unchanged for order emails), resources/views/emails/marketing/campaign.blade.php, playful.blade.php, resources/views/admin/partials/marketing-emails-screens.blade.php, public/build, migration 2027_10_28_100000.
+
 ## 2.60.483
 **Admin: every "Reset to default" asks "Are you sure?" (Yes / No) first, and says what will reset.** Apply after .482.
 Runs its migration (clears caches). Hard refresh the admin.

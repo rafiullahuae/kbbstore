@@ -85,5 +85,5 @@
 @endforeach
 @include('emails.kit.gap', ['h' => 30])
 @include('emails.kit.card-close')
-@if ($footer !== null){!! $mkOpen($footer) !!}@include('emails.kit.footer', ['why' => $why, 'unsubscribeUrl' => $unsubscribe]){!! $mkClose !!}@endif
+@if ($footer !== null){!! $mkOpen($footer) !!}@include('emails.kit.footer', ['why' => $why, 'unsubscribeUrl' => $unsubscribe, 'footWords' => $footWords ?? []]){!! $mkClose !!}@endif
 @endsection

@@ -202,6 +202,7 @@ final class CampaignRenderer
         $text = [];
         $topbar = null;
         $footer = null;
+        $footWords = [];
         $why = '';
         $whyKey = 'customers';
         $note = '';
@@ -451,6 +452,8 @@ final class CampaignRenderer
                             'account' => __('email.mkt.why_account', ['store' => $k['storeName']]),
                             default => __('email.mkt.why_customers', ['store' => $k['storeName']]),
                         };
+                    $footWords = self::footerWords($p, $first, $k['storeName'], (string) $k['year']);
+                    $why = $footWords['why_text'] ?? $why;
                     break;
             }
         }
@@ -459,6 +462,7 @@ final class CampaignRenderer
 
         $html = view($playful ? 'emails.marketing.playful' : 'emails.marketing.campaign', [
             'k' => $k,
+            'footWords' => $footWords,
             'locale' => $locale,
             'note' => $note,
             'kitTitle' => Blocks::mergeName((string) ($ctx['subject'] ?? ''), $first),
@@ -475,6 +479,7 @@ final class CampaignRenderer
         $plain = trim(implode("\n\n", array_filter(array_map('trim', $text), fn ($t) => $t !== '')))
             . "\n\n— " . $k['storeName']
             . "\n\n" . $why
+            . (isset($footWords['copyright']) ? "\n" . $footWords['copyright'] : '')
             . ($unsub ? "\n" . ($playful ? EmailTheme::word($locale, 'text_unsubscribe') : __('email.mkt.text_unsubscribe')) . "\n" . $unsub : '');
 
         return ['html' => $html, 'text' => $plain, 'bytes' => strlen($html)];
@@ -493,6 +498,30 @@ final class CampaignRenderer
      *
      * @return array{html:string, text:string, bytes:int}
      */
+    /**
+     * The footer words the owner typed on the footer block, ready to print:
+     * {store} and {year} filled in, {first_name} too. A box left empty is
+     * absent, so the view keeps its built-in wording in the campaign's
+     * language — an empty Unsubscribe label can never blank the link.
+     * Plain text: every view prints these escaped.
+     *
+     * @return array<string, string>
+     */
+    private static function footerWords(array $p, array $first, string $store, string $year): array
+    {
+        $out = [];
+
+        foreach (['tagline', 'why_text', 'copyright', 'unsub_label', 'prefs_label', 'view_label'] as $key) {
+            $v = trim(Blocks::mergeName(str_replace(['{store}', '{year}'], [$store, $year], (string) ($p[$key] ?? '')), $first));
+
+            if ($v !== '') {
+                $out[$key] = $v;
+            }
+        }
+
+        return $out;
+    }
+
     private function renderLetter(array $blocks, array $ctx, string $locale): array
     {
         $href = $ctx['href'] ?? fn (string $url) => $url;
@@ -506,6 +535,7 @@ final class CampaignRenderer
         $rows = [];
         $text = [];
         $footer = null;
+        $ownWhy = null;
         $audience = (string) ($ctx['audience'] ?? 'customers');
         $linkRe = '/\[([^\]\n]{1,200})\]\(([^)\n]{1,500})\)/u';
 
@@ -602,11 +632,12 @@ final class CampaignRenderer
                     $footer = $i;
                     $why = ($p['why'] ?? 'auto') === 'auto' ? $audience : (string) $p['why'];
                     $audience = in_array($why, ['subscribers', 'account'], true) ? $why : 'customers';
+                    $ownWhy = self::footerWords($p, $first, $store, (string) ($k['year'] ?? date('Y')))['why_text'] ?? null;
                     break;
             }
         }
 
-        $why = match ($audience) {
+        $why = $ownWhy ?? match ($audience) {
             'subscribers' => __('email.mkt.why_subscribers', ['store' => $store]),
             'account' => __('email.mkt.why_account', ['store' => $store]),
             default => __('email.mkt.why_customers', ['store' => $store]),

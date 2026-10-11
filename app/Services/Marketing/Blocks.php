@@ -192,7 +192,16 @@ final class Blocks
                 'whatsapp' => ['url', ''],
             ],
             // note: a line above the footer ("Made with love … in Dubai").
-            'footer' => ['why' => ['enum', ['auto', 'customers', 'subscribers'], 'auto'], 'note' => ['text', 120, '']],
+            // The rest are the footer's own words, owner-editable (Lane RO2,
+            // 11 Oct: "give me all footer easy editor"). Empty = the built-in
+            // wording in the campaign's language; {store} and {year} work.
+            // An empty Unsubscribe label falls back, so the link can never
+            // lose its words.
+            'footer' => [
+                'why' => ['enum', ['auto', 'customers', 'subscribers'], 'auto'], 'note' => ['text', 120, ''],
+                'tagline' => ['text', 80, ''], 'why_text' => ['text', 200, ''], 'copyright' => ['text', 160, ''],
+                'unsub_label' => ['text', 40, ''], 'prefs_label' => ['text', 40, ''], 'view_label' => ['text', 60, ''],
+            ],
             'badges' => ['items' => ['badges', 4]],
         ];
     }

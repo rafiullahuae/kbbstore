@@ -294,8 +294,10 @@ it('prints nothing a person typed raw: every {!! !!} in the kit is a constant or
         "\$ipBox(\$left[0], \$left[1])", "\$ipBox(\$left[2], \$left[3])",
         "\$ipBox(\$right[0], \$right[1])", "\$ipBox(\$right[2], \$right[3])",
         "implode(\$ftDot, array_map(fn (array \$l) => \$ftA(\$l['url'], \$l['label']), \$k['links']))",
-        "\$ftA(\$ftUnsub, __('email.common.unsubscribe'), true)", "\$ftA(\$ftUnsub, __('email.kit.preferences'))",
-        "\$ftA(\$ftWebCopy, __('email.kit.view_in_browser'), true)",
+        // The labels may be the owner's own footer words (Lane RO2): $ftA
+        // still e()s them, and MarketingFooterWordsTest proves it rendered.
+        "\$ftA(\$ftUnsub, \$ftW['unsub_label'] ?? __('email.common.unsubscribe'), true)", "\$ftA(\$ftUnsub, \$ftW['prefs_label'] ?? __('email.kit.preferences'))",
+        "\$ftA(\$ftWebCopy, \$ftW['view_label'] ?? __('email.kit.view_in_browser'), true)",
     ];
 
     $found = [];
