@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design E en</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap">
+<style>
+:root{--ink:#2A2228;--muted:#756C74;--line:rgba(42,34,40,.10);--pink:#C6395F;--pink-soft:#FFF0F4;--cream:#FFF8F5;--kbb-save:#1F7A50;--amber:#E2A13B;--sans:"Outfit",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:light}
+html,body{margin:0;background:linear-gradient(180deg,#FFF8F5 0%,#FDF0F3 100%);color:var(--ink);font-family:var(--sans);font-size:15px;-webkit-font-smoothing:antialiased}
+img{max-width:100%}
+.demo-wrap{max-width:1200px;margin:0 auto;padding:28px 16px 36px}
+</style>
+<style>
+.rsx{--rs-gold:var(--amber,#E2A13B);--rs-ink:var(--ink,#2A2228);--rs-mut:var(--muted,#756C74);--rs-line:var(--line,rgba(42,34,40,.1));--rs-pink:var(--pink,#C6395F);--rs-soft:var(--pink-soft,#FFF0F4);--rs-cream:var(--cream,#FFF8F5);--rs-ok:var(--kbb-save,#1F7A50);color:var(--rs-ink)}
+.rsx *{box-sizing:border-box}
+.rsx a{color:inherit;text-decoration:none}
+.rs-eb{margin:0 0 6px;font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--rs-pink)}
+.rs-vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.rs-st{position:relative;display:inline-block;vertical-align:middle;line-height:1;letter-spacing:.1em;color:#E8DFE3;white-space:nowrap;font-family:system-ui,sans-serif}
+.rs-st::before,.rs-st i::before{content:"★★★★★"}
+.rs-st i{position:absolute;inset-block-start:0;inset-inline-start:0;width:calc(var(--v) * 20%);overflow:hidden;color:var(--rs-gold);font-style:normal}
+.rs-vf{display:inline-flex;align-items:center;gap:4px;color:var(--rs-ok);font-size:11.5px;font-weight:600;white-space:nowrap}
+.rs-vf svg{width:13px;height:13px;flex:none}
+.rs-who{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12.5px;color:var(--rs-mut);min-width:0}
+.rs-who b{color:var(--rs-ink);font-weight:600}
+.rs-av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--rs-soft);color:var(--pink-ink,#A82F53);font-weight:700;font-size:13px;flex:none}
+.rs-pr{display:flex;align-items:center;gap:10px;min-width:0}
+.rs-pr img,.rs-pr .rs-ph0{width:44px;height:44px;border-radius:10px;object-fit:cover;background:#F6F1F3;flex:none}
+.rs-pr span{display:block;min-width:0}
+.rs-pr small{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--rs-mut)}
+.rs-pr em{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;font-style:normal;font-size:12.5px;font-weight:600;line-height:1.35}
+a.rs-pr:hover em{color:var(--rs-pink)}
+.rs-all{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13.5px;color:var(--rs-ink);border-bottom:1.5px solid currentColor;padding-block:2px;white-space:nowrap}
+.rs-all:hover{color:var(--rs-pink)}
+.rs-all svg,.rs-btn svg{width:16px;height:16px}
+[dir=rtl] .rs-all svg,[dir=rtl] .rs-btn svg{transform:scaleX(-1)}
+.rs-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--rs-line);background:#fff;color:var(--rs-ink);display:inline-grid;place-items:center;cursor:pointer;transition:border-color .2s,background .2s;padding:0;flex:none}
+.rs-btn:hover{border-color:var(--rs-ink)}
+.rs-btn:focus-visible,.rs-dots button:focus-visible,.rsx a:focus-visible,.rs-trk:focus-visible{outline:2px solid var(--rs-pink);outline-offset:2px}
+.rs-dots{display:flex;justify-content:center;gap:2px}
+.rs-dots button{width:22px;height:24px;border:0;background:none;padding:0;cursor:pointer;display:grid;place-items:center}
+.rs-dots button::before{content:"";width:7px;height:7px;border-radius:99px;background:#E3D8DD;transition:width .25s,background .25s}
+.rs-dots button.in::before{background:#C2B5BC}
+.rs-dots button[aria-current=true]::before{width:18px;background:var(--rs-ink)}
+.rs-trk{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
+.rs-trk::-webkit-scrollbar{display:none}
+.rs-trk>*{scroll-snap-align:start;flex:none}
+.rs-pp svg{width:14px;height:14px}
+.rs-pp .p1,.rs-pp[aria-pressed=true] .p0{display:none}
+.rs-pp[aria-pressed=true] .p1{display:block}
+@media (prefers-reduced-motion:reduce){.rs-trk{scroll-behavior:auto}.rs-pp{display:none}}
+</style>
+
+</head><body><div class="demo-wrap">
+<style>
+.rs-e-g{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:stretch}
+.rs-e-s{background:var(--rs-cream);border-radius:20px;padding:26px 24px;display:flex;flex-direction:column;gap:14px}
+.rs-e-s h2{margin:0;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--rs-pink)}
+.rs-e-n{display:flex;align-items:flex-end;gap:10px}
+.rs-e-n strong{font-size:56px;font-weight:700;line-height:.9;letter-spacing:-.02em}
+.rs-e-n span{font-size:13px;color:var(--rs-mut);padding-bottom:4px}
+.rs-e-s>.rs-st{font-size:19px}
+.rs-e-s p{margin:0;font-size:13px;color:var(--rs-mut)}
+.rs-e-s p b{color:var(--rs-ink)}
+.rs-e-b{display:flex;flex-direction:column;gap:5px;margin:2px 0}
+.rs-e-r{display:grid;grid-template-columns:30px 1fr 30px;align-items:center;gap:10px;font-size:12px;color:var(--rs-mut);padding:3px 4px;margin:0 -4px;border-radius:6px}
+a.rs-e-r:hover{background:#fff;color:var(--rs-ink)}
+.rs-e-r i{height:6px;border-radius:9px;background:#EFE6EA;overflow:hidden;display:block}
+.rs-e-r i::before{content:"";display:block;height:100%;width:var(--p);background:var(--rs-gold);border-radius:inherit}
+.rs-e-r span:last-child{text-align:end}
+.rs-e-s .rs-all{align-self:flex-start;margin-top:auto}
+.rs-e-c{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.rs-e-k{border:1px solid var(--rs-line);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:12px;background:#fff;min-width:0}
+.rs-e-hd{display:flex;align-items:center;gap:10px}
+.rs-e-hd .rs-who{flex-direction:column;align-items:flex-start;gap:2px}
+.rs-e-k .rs-st{font-size:14px}
+.rs-e-k h3{margin:0;font-size:15px;font-weight:600;line-height:1.35}
+.rs-e-k p{margin:0;font-size:13.5px;line-height:1.6;color:var(--ink-2,#5E545A);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.rs-e-k .rs-pr{margin-top:auto;padding:10px;background:#FBF8F9;border-radius:12px}
+.rs-e-k time{font-size:11.5px;color:var(--rs-mut)}
+@media (max-width:1023px){.rs-e-g{grid-template-columns:1fr}.rs-e-c{grid-template-columns:repeat(2,1fr)}.rs-e-k:nth-child(3){display:none}}
+@media (max-width:639px){.rs-e-s{display:grid;grid-template-columns:auto 1fr;gap:10px 18px;padding:20px}.rs-e-s h2,.rs-e-s .rs-all{grid-column:1/-1}.rs-e-b{grid-row:2/5;grid-column:2}.rs-e-n strong{font-size:46px}.rs-e-c{grid-template-columns:1fr}.rs-e-k{padding:18px}.rs-e-k:nth-child(3){display:none}}
+</style>
+<section class="sec rsx rs-e" aria-labelledby="rs-e-h"><div class="wrap"><div class="rs-e-g">
+  <div class="rs-e-s">
+    <h2 id="rs-e-h">Customer reviews</h2>
+        <div class="rs-e-n"><strong>4.6</strong><span>out of 5</span></div>
+    <span class="rs-st" role="img" aria-label="Rated 4.6 out of 5" style="--v:4.6"><i></i></span>
+    <p>40 reviews · <b>90%</b> 4–5 ★</p>
+    <div class="rs-e-b">
+                      <a class="rs-e-r" href="#" data-demo-link aria-label="5 stars: 29"><span>5 ★</span><i style="--p:73%"></i><span>29</span></a>
+                              <a class="rs-e-r" href="#" data-demo-link aria-label="4 stars: 7"><span>4 ★</span><i style="--p:18%"></i><span>7</span></a>
+                              <div class="rs-e-r"><span>3 ★</span><i style="--p:5%"></i><span>2</span></div>
+                              <div class="rs-e-r"><span>2 ★</span><i style="--p:3%"></i><span>1</span></div>
+                              <div class="rs-e-r"><span>1 ★</span><i style="--p:3%"></i><span>1</span></div>
+                  </div>
+        <a class="rs-all" href="#" data-demo-link>See all reviews<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</a>
+  </div>
+  <div class="rs-e-c">
+        <article class="rs-e-k">
+      <div class="rs-e-hd"><span class="rs-av">A</span><span class="rs-who"><b dir="auto">Aisha K.</b><span>Dubai</span> <span class="rs-vf"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="currentColor"/><path d="M4.6 8.3l2.2 2.1 4.6-4.7" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Verified buyer</span>
+ </span>
+</div>
+      <div><span class="rs-st" role="img" aria-label="Rated 5 out of 5" style="--v:5"><i></i></span>
+ <time datetime="2026-10-08">&nbsp;8 Oct 2026</time></div>
+      <h3 dir="auto">My skin finally calmed down</h3>      <p dir="auto">I have tried every toner for redness and this is the one. Two weeks in, the red patches around my nose are almost gone. Arrived next day in Dubai, perfectly sealed.</p>
+      <a class="rs-pr" href="#" data-demo-link><img src="../img/p-anua-toner.webp"  width="44" height="44" alt="" loading="lazy" decoding="async"><span><small>Reviewed</small><em dir="auto">Anua Heartleaf 77% Soothing Toner 250ml</em></span></a>
+    </article>
+        <article class="rs-e-k">
+      <div class="rs-e-hd"><span class="rs-av">M</span><span class="rs-who"><b dir="auto">Mariam M.</b><span>Abu Dhabi</span> <span class="rs-vf"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="currentColor"/><path d="M4.6 8.3l2.2 2.1 4.6-4.7" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Verified buyer</span>
+ </span>
+</div>
+      <div><span class="rs-st" role="img" aria-label="Rated 5 out of 5" style="--v:5"><i></i></span>
+ <time datetime="2026-10-06">&nbsp;6 Oct 2026</time></div>
+      <h3 dir="auto">Pores look smaller</h3>      <p dir="auto">One pad every night after cleansing. The texture on my cheeks is so much smoother and it does not sting at all. Already ordered my second jar.</p>
+      <a class="rs-pr" href="#" data-demo-link><img src="../img/p-medicube-pad.webp"  width="44" height="44" alt="" loading="lazy" decoding="async"><span><small>Reviewed</small><em dir="auto">Medicube Zero Pore Pad 2.0 (70 pads)</em></span></a>
+    </article>
+        <article class="rs-e-k">
+      <div class="rs-e-hd"><span class="rs-av">P</span><span class="rs-who"><b dir="auto">Priya N.</b><span>Sharjah</span> <span class="rs-vf"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="currentColor"/><path d="M4.6 8.3l2.2 2.1 4.6-4.7" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Verified buyer</span>
+ </span>
+</div>
+      <div><span class="rs-st" role="img" aria-label="Rated 5 out of 5" style="--v:5"><i></i></span>
+ <time datetime="2026-10-05">&nbsp;5 Oct 2026</time></div>
+      <h3 dir="auto">Genuine products, fast delivery</h3>      <p dir="auto">Ordered at 11pm and it was at my door the next afternoon. Everything had the authenticity stickers and the packaging was beautiful. My go-to K-beauty shop now.</p>
+      <span class="rs-pr"><span class="rs-ph0" style="display:grid;place-items:center;color:var(--rs-pink)"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9.5 5.5 4h13L20 9.5M4 9.5V20h16V9.5M4 9.5h16M9 20v-5h6v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span><span><small>Reviewed</small><em>Review of our store</em></span></span>
+    </article>
+      </div>
+</div></div></section>
+
+</div>
+<script>
+(function(){
+var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function each(s,f){[].forEach.call(document.querySelectorAll(s),f)}
+function out(root){new IntersectionObserver(function(e){root.classList.toggle('is-out',!e[e.length-1].isIntersecting)},{threshold:.2}).observe(root)}
+function pp(root,cb){var b=root.querySelector('[data-rs-pp]');if(!b)return;b.addEventListener('click',function(){var p=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',p);b.setAttribute('aria-label',p?b.dataset.play:b.dataset.pause);root.classList.toggle('is-paused',p);cb&&cb(p)})}
+each('[data-rs=car]:not([data-rs-on])',function(root){
+root.setAttribute('data-rs-on','');
+var t=root.querySelector('[data-rs-track]'),sl=[].slice.call(t.children),d=[].slice.call(root.querySelectorAll('[data-rs-dot]')),seen={},first=0;
+function vis(){return Object.keys(seen).map(Number).sort(function(a,b){return a-b})}
+var io=new IntersectionObserver(function(es){es.forEach(function(e){var i=sl.indexOf(e.target);if(e.isIntersecting)seen[i]=1;else delete seen[i]});var v=vis();if(v.length)first=v[0];d.forEach(function(b,i){b.setAttribute('aria-current',i===first?'true':'false');b.classList.toggle('in',!!seen[i])})},{root:t,threshold:.6});
+sl.forEach(function(s){io.observe(s)});
+root.addEventListener('click',function(e){var b=e.target.closest('[data-rs-go]');if(!b)return;var g=b.getAttribute('data-rs-go'),n=sl.length,v=vis(),step=Math.max(1,v.length),last=v.length?v[v.length-1]:first,i;
+if(g==='next')i=last>=n-1?0:Math.min(n-1,first+step);else if(g==='prev')i=first<=0?n-1:Math.max(0,first-step);else i=+g;
+sl[i].scrollIntoView({behavior:RM?'auto':'smooth',block:'nearest',inline:'start'})})});
+each('[data-rs=spot]:not([data-rs-on])',function(root){
+root.setAttribute('data-rs-on','');
+var sl=[].slice.call(root.querySelectorAll('[data-rs-slide]')),d=[].slice.call(root.querySelectorAll('[data-rs-dot]')),n=sl.length,cur=0,rounds=0;
+function stop(s){root.classList.toggle('is-stopped',s)}
+function show(i,user){cur=(i+n)%n;sl.forEach(function(s,k){var on=k===cur;s.classList.toggle('on',on);s.setAttribute('aria-hidden',on?'false':'true');s.inert=!on});d.forEach(function(b,k){b.setAttribute('aria-current',k===cur?'true':'false')});if(user)stop(true)}
+if(RM)stop(true);out(root);
+pp(root,function(p){if(!p)stop(false)});
+root.addEventListener('animationend',function(e){if(!e.target.hasAttribute('data-rs-bar')||root.classList.contains('is-stopped'))return;if(cur===n-1&&++rounds>=2){stop(true);return}show(cur+1)});
+root.addEventListener('click',function(e){var b=e.target.closest('[data-rs-go]');if(!b)return;var g=b.getAttribute('data-rs-go');show(g==='next'?cur+1:g==='prev'?cur-1:+g,true)})});
+each('[data-rs=mq]:not([data-rs-on])',function(root){root.setAttribute('data-rs-on','');out(root);pp(root)});
+})();
+</script>
+
+<script>
+document.addEventListener('click',function(e){var a=e.target.closest('[data-demo-link]');if(a)e.preventDefault();});
+function post(){try{parent.postMessage({rdH:document.documentElement.scrollHeight,id:location.pathname},'*')}catch(e){}}
+addEventListener('load',post);new ResizeObserver(post).observe(document.body);
+</script>
+</body></html>

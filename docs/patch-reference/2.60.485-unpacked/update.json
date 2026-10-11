@@ -1,0 +1,12 @@
+{
+    "name": "KBB Storefront",
+    "version": "2.60.485",
+    "requires_php": "8.2",
+    "notes": "",
+    "files": {
+        "app/View/Composers/CartDrawerComposer.php": "3badefca49d8ea61eacf8d8b131e5321ac388b80c7d5faa017a32b1eeca5ada9",
+        "database/migrations/2027_10_28_200000_clear_caches_cart_panel_ship_bar.php": "2d93fad2fd1b6c4d067182e30e99a083a33d9ed7b39802dc1bcb04c021a5f7cc"
+    },
+    "migrations": true,
+    "signature": ""
+}

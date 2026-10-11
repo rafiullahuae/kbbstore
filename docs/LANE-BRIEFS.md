@@ -24,9 +24,12 @@ red without it, and take the whole task.
 | | |
 |---|---|
 | Integration branch | `claude/kind-mayer-rpqesv` |
-| Built and waiting, **in this order** | **2.60.325** (thirteen lanes) → **2.60.326** (five fixes, no default moved) → **2.60.327** (one file, fixing a defect .326 shipped) |
-| Next package | Not blocked. The block that stood at .325 — nine navigated admin endpoints landing on a bare 404 — was cleared in .326 |
-| Lanes running | **SEC**, **PLC**, **BG** |
+| Last package built | **2.60.485** (11 October 2026). Every package to it has been handed to the owner; which are applied on the server is his to confirm (`docs/HANDOVER.md` §8) |
+| Next package | **2.60.486**, `--since=` the commit of the 2.60.485 release |
+| Lanes running | **None** — the project was handed over on 11 October 2026. Start with `docs/HANDOVER.md`; the next lanes are the two designs waiting on the owner's letter (§7.1 reviews section, §7.2 skin concerns) |
+
+> ▲ **Everything below this table is the round from late September**, kept for its
+> reasoning (the PLC needle method in particular). None of those lanes is running.
 
 ### The standing task all three lanes share
 

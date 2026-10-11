@@ -1,13 +1,14 @@
 # KBB Storefront — working notes
 
-Laravel 11 port of the kbeautybliss.com WooCommerce store. Read
+Laravel 11 port of the kbeautybliss.com WooCommerce store. **New here? Read
+`docs/HANDOVER.md` first** (written for the 11 October 2026 handover), then
 `KBB-Master-Plan.md` for project history and `docs/REPO-STATE.md` for what the
 repo does and does not track.
 
 ## How this ships
 
 **Not a git deploy.** Changes reach the server as zip packages applied through
-Store → Core Updates in the admin panel. This repo is the durable record of
+Platform → Core Updates in the admin panel (§3 of `docs/HANDOVER.md`; reference packages in `docs/patch-reference/`). This repo is the durable record of
 server state; the packages are how code actually moves.
 
 **The live shop is `extrabeauty.ae`, on Cloudways, and IT HAS A SHELL.** Both
@@ -20,6 +21,11 @@ both cost real time:
   on that layout; the `easywebsol.com/kbb-upgrade` paths still named further
   down this file are the OLD Hostinger box. Do not hand the owner a URL built
   from them.
+- **The scheduler cron is installed (11 October 2026)** — Cloudways → Application
+  → Cron Job Management → Advanced, `* * * * * cd <app root> && php artisan
+  schedule:run`. Before it, marketing campaigns only sent while their admin page
+  was open. "A campaign stopped" means check the cron first
+  (`docs/HANDOVER.md` §2).
 - Cloudways provides SSH (**Servers → Launch SSH Terminal**, or Master
   Credentials). `php artisan migrate --force`, `migrate:status`, `config:clear`
   and reading `storage/logs/laravel.log` are all available. Ask before

@@ -1,0 +1,121 @@
+<title>KBB Reviews Section Designs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: a picker bar (design letters, language, width) over one live frame that renders the real section. */
+:root{
+  --bg:#FBF6F4; --panel:#FFFFFF; --ink:#2A2228; --soft:#6F6670; --line:#EADFE2; --accent:#C6395F; --accent-ink:#FFFFFF; --chip:#F6ECEF;
+  --display:"Outfit",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --body:"Outfit",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1B1619;--panel:#251E22;--ink:#F4ECEF;--soft:#B9AEB4;--line:#3A2F35;--accent:#E7698C;--accent-ink:#1B1619;--chip:#30272C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1B1619;--panel:#251E22;--ink:#F4ECEF;--soft:#B9AEB4;--line:#3A2F35;--accent:#E7698C;--accent-ink:#1B1619;--chip:#30272C;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;padding-inline:16px;padding-block:24px 40px}
+.wrap{max-width:1280px;margin:0 auto;display:grid;gap:18px}
+header{display:grid;gap:6px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(22px,3vw,30px);letter-spacing:-.01em;margin:0;text-wrap:balance}
+.lead{margin:0;color:var(--soft);max-width:68ch;line-height:1.5}
+.bar{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px}
+.letters{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.letter{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:999px;padding:7px 12px 7px 7px;font:600 13px var(--body);cursor:pointer}
+.letter b{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--panel);font-weight:800}
+.letter small{font-weight:500;color:var(--soft);font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.letter[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.letter[aria-pressed="true"] b{background:var(--accent-ink);color:var(--accent)}
+.letter[aria-pressed="true"] small{color:var(--accent-ink);opacity:.85}
+.toggles{display:flex;gap:10px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--panel);color:var(--ink);font:600 13px var(--body);padding:8px 12px;cursor:pointer}
+.seg button+button{border-inline-start:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.info{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;color:var(--soft);font-size:13.5px}
+.info strong{color:var(--ink);font-size:16px;font-family:var(--display)}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;overflow-x:auto}
+.frame{display:block;margin:0 auto;border:0;width:100%;height:560px;background:#FFF8F5;border-radius:10px}
+.stage.phone .frame{width:390px;max-width:100%;border:8px solid var(--ink);border-radius:30px}
+.note{color:var(--soft);font-size:13px;line-height:1.5;margin:0}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Customer reviews section: designs A–H</h1>
+    <p class="lead">Live previews of the eight layouts, built from the real section code with sample K-beauty reviews. Carousels move, arrows and dots work, and the Pause buttons respond. Switch language and width to see the Arabic and phone versions. Nothing here is on the shop yet: pick a letter and it gets wired in.</p>
+  </header>
+
+  <div class="bar" role="group" aria-label="Preview controls">
+    <div class="letters" id="letters"></div>
+    <div class="toggles">
+      <div class="seg" role="group" aria-label="Language">
+        <button type="button" id="lang-en" aria-pressed="true">English</button>
+        <button type="button" id="lang-ar" aria-pressed="false">العربية</button>
+      </div>
+      <div class="seg" role="group" aria-label="Width">
+        <button type="button" id="w-desk" aria-pressed="true">Desktop</button>
+        <button type="button" id="w-phone" aria-pressed="false">Phone</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="info" id="info"></div>
+
+  <div class="stage" id="stage">
+    <iframe class="frame" id="frame" title="Design preview" src="designs/a.en.html"></iframe>
+  </div>
+
+  <p class="note">Links inside the previews do nothing here; on the shop they open the product and the reviews page. Sample reviews and photos are for the preview only.</p>
+</div>
+
+<script>
+(function(){
+  var D = [
+    ['a','Card carousel',true,'3 cards on a laptop, 1 plus a peek on a phone; arrows and dots.'],
+    ['b','Spotlight quote',true,'One large quote that cross-fades every 6 seconds; pauses on hover and with its Pause button.'],
+    ['c','Marquee ticker',true,'Two rows of review pills drifting in opposite directions under the score; Pause button.'],
+    ['d','Photo reviews carousel',true,'Customer photos with stars and a quote; the product underneath.'],
+    ['e','Score + featured',false,'Big score, 5→1 star bars and three featured reviews. No script.'],
+    ['f','Masonry wall',false,'Photo-topped review cards in 4 / 2 / 1 columns.'],
+    ['g','Split hero quote',false,'One large review beside the product photo and "Shop now".'],
+    ['h','Compact trust strip',false,'One slim band: score, newest 5★ review, "See all".']
+  ];
+  var st = { d: 'a', lang: 'en', phone: false };
+  try { var h = (location.hash || '').slice(1).toLowerCase(); if (/^[a-h]$/.test(h)) st.d = h; } catch (e) {}
+
+  var letters = document.getElementById('letters');
+  D.forEach(function (x) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'letter'; b.id = 'd-' + x[0];
+    b.innerHTML = '<b>' + x[0].toUpperCase() + '</b>' + x[1] + (x[2] ? ' <small>carousel</small>' : '');
+    b.addEventListener('click', function () { st.d = x[0]; render(); });
+    letters.appendChild(b);
+  });
+
+  var frame = document.getElementById('frame'), stage = document.getElementById('stage'), info = document.getElementById('info');
+  function set(id, on) { document.getElementById(id).setAttribute('aria-pressed', on ? 'true' : 'false'); }
+  document.getElementById('lang-en').onclick = function () { st.lang = 'en'; render(); };
+  document.getElementById('lang-ar').onclick = function () { st.lang = 'ar'; render(); };
+  document.getElementById('w-desk').onclick = function () { st.phone = false; render(); };
+  document.getElementById('w-phone').onclick = function () { st.phone = true; render(); };
+
+  function render() {
+    D.forEach(function (x) { set('d-' + x[0], x[0] === st.d); });
+    set('lang-en', st.lang === 'en'); set('lang-ar', st.lang === 'ar');
+    set('w-desk', !st.phone); set('w-phone', st.phone);
+    stage.classList.toggle('phone', st.phone);
+    var x = D.filter(function (y) { return y[0] === st.d; })[0];
+    info.innerHTML = '<strong>' + x[0].toUpperCase() + ' · ' + x[1] + '</strong><span>' + x[3] + '</span>';
+    var src = 'designs/' + st.d + '.' + st.lang + '.html';
+    if (frame.getAttribute('src') !== src) { frame.style.height = '560px'; frame.setAttribute('src', src); }
+  }
+
+  // Each preview reports its own height so the frame shows it whole.
+  addEventListener('message', function (e) {
+    if (e.data && typeof e.data.rdH === 'number' && e.source === frame.contentWindow) {
+      frame.style.height = Math.max(240, Math.min(4000, Math.ceil(e.data.rdH) + 4)) + 'px';
+    }
+  });
+
+  render();
+})();
+</script>

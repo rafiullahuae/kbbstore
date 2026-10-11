@@ -1,17 +1,25 @@
 # KBB Master Plan — live tracking
 
-**As at version 2.60.107.** Tick items as they ship; add the version that shipped them.
+**As at version 2.60.485 (11 October 2026).** Tick items as they ship; add the version that shipped them.
 
-**Mail provider is deferred, not pending.** Password reset, newsletter double opt-in, `abandoned_cart` and `back_in_stock` all wait on it. Nothing else depends on them, so that group is parked rather than blocking.
+> ## ▶ Handing over? Start with `docs/HANDOVER.md`
+>
+> Written 11 October 2026 for the move to a new account: the owner and how he
+> works, the Cloudways server and its paths, the cron line (installed 11 Oct),
+> how packages are built, verified (`tools/verify-package.sh`) and applied —
+> with two real packages kept as the reference in `docs/patch-reference/` —
+> the release checklist, the test and
+> preview environment, where every document is, **the open design decisions
+> with their previews (all committed in this repository)**, what shipped from
+> 2.60.400 to 2.60.485, the Site App / Owner App / Arabic in detail, every
+> payment incident and its fix, the complete dated history (with every release
+> in `docs/RELEASE-HISTORY.md`), and the first hour's checklist. `CLAUDE.md` holds the
+> binding rules; this file holds the history and the reasoning behind each
+> phase.
 
 **Visual progress dashboard**: `KBB-Progress-Dashboard.html`, alongside this file — a colored,
 per-phase progress view computed directly from the checkboxes below, not a separately maintained
 number. Regenerate it after any batch of updates to this file so the two never drift apart.
-
-> A full handover accompanies this update — see `KBB-Handover-Complete.md` for
-> the codebase snapshot, backups, gate tools, and complete build/recovery
-> procedure. This file remains the living plan; that one is the point-in-time
-> package around it.
 
 Legend: **[x]** done · **[~]** partly done · **[ ]** not started · **▲** blocked or risky
 
@@ -27,7 +35,7 @@ Legend: **[x]** done · **[~]** partly done · **[ ]** not started · **▲** bl
 |---|---|
 | Ledger completion at last count | **36%** (110 Fn ☑ / 94 Dsp ☑ of 305) |
 | **Counted now** | **91%** across 24 phases, 312 items — and that number is *counted*, not estimated: `tools/progress-dashboard/build.php` reads the checkboxes out of this file. A part-done item counts as half; an item struck as not-wanted is left out of the total entirely. Open `KBB-Progress-Dashboard.html` |
-| Releases shipped this stretch | 2.38.0 → **2.60.327**. ▲ **Three are built and waiting, and the order matters: .325, then .326, then .327.** .325 is thirteen lanes; .326 is five fixes and moves no shipped default; .327 is one file, fixing a defect .326 itself shipped |
+| Releases shipped this stretch | 2.38.0 → **2.60.485**. Every package from .400 to .485 is summarised in `docs/HANDOVER.md` §8 and detailed in `docs/CHANGELOG.md`. The last two handed over were **.484** (marketing footer words, locked-email note) and **.485** (cart panel free-delivery bar) — confirm on the live Core Updates history which are applied |
 | **Server drift, found 2026-09-10** | Rafi uploaded the real app directly from the server for a GitHub sync. Comparison showed the live server is genuinely at **2.60.36** — 2.60.37 through 2.60.41 (SEO description quality, the Core Updates escaping/session bugs, and the patch archive system) were built, packaged, and handed over, but never actually applied — almost certainly because the server got stuck exactly at 2.60.36, which is the version whose own release notes caused the Core Updates screen to break. GitHub now reflects the verified 2.60.36 state, not the assumed 2.60.41 one. **2.60.41 (a superset of everything since) still needs to be applied to catch the live site up** |
 | Modules identified | **31** — 29 from the plugin + 2 native to this app |
 | Modules registered in the framework | **31** — *2.44.0* |
@@ -97,78 +105,39 @@ This file's own direct visibility resumes at 2.60.22 — see the progress-table 
 
 ## In flight right now
 
-Kept here because this file records what is DONE and nothing recorded what was
-being worked on — the owner asked for both. The integrator maintains it; it is
-what `KBB-Progress-Dashboard.html` renders under "In flight". A lane that has
-landed is deleted from here and written into its phase below, so a stale entry
-is a bug in this section rather than a second opinion about the phase.
-
-
-
-- **Lane SEC — the Instagram pop-up's console half, and a cache that leaks
-  between runs.** The OAuth pop-up is the eleventh navigation; its server half
-  shipped in 2.60.326 and its console half was specified rather than written,
-  because the partial belongs to another lane. Nobody owns that lane, so a
-  specification that never becomes code is a defect with paperwork. ▲ And
-  `AdminPathService` memoises into a file cache **inside the worktree**, shared
-  with every pest run in it — a preview with no `admin_path` row still answered
-  the wrong path because the cache held another run's value. Pinning
-  `KBB_ADMIN_PATH` in one script is a workaround; the trap is still armed for
-  every lane
-- **Lane PLC — 157 assertions that may be true for the wrong reason.** The whole
-  suite was measured rather than sampled: **6,958** `toContain` assertions
-  instrumented at run time, **500** whose needle is prose occurring 2+ times in
-  its own haystack, **157** of those reading like a sentence a shopper is shown,
-  across **151 files**. It had to be run time — the needle is fine and the
-  haystack is fine, and the fault lives only in the relationship between them
-  while the test runs. The guard deliberately does **not** fail on the count: a
-  sentinel that reaches the page nine times is not a defect, so 500 is a screen
-  and each site needs a mutation to settle it
-- **Lane BG — the review block has been rendering in Georgia all along.**
-  `sorina-reviews.css` names Fraunces and Hanken Grotesk for the review block on
-  **every product page** and neither family is ever loaded. The fix is two more
-  families or a restyle in the shop's own type, and both change a page that
-  works — so the lane is building the owner a choice with the wire cost measured,
-  not making it for him
+**No lanes are running** at the handover (11 October 2026). Every lane's work is
+merged into `claude/kind-mayer-rpqesv` — including the two preview-only lanes
+below, which had lived only in local worktrees until then. The integrator keeps
+this section current: a lane that lands is deleted from here and written into
+its phase.
 
 ### Waiting on the owner, not on us
 
-- **▲ FOUR DESIGN DECISIONS, all built, photographed and switched off.** Nothing
-  ships on any of them until he picks a letter, and three lanes' next round is
-  shaped by the answers. One page carries all four with the shots at 390 and 1280
-  and the measured numbers under each:
-  - **The product page** — five whole designs (Ledger, Dossier, Counter, Deck,
-    Marquee). Catalog → Product page → Design previews
-  - **The product card** — A is live on the shop; B, C and D are one setting away
-    at Appearance → Product grids
-  - **The picture slider's look** — four, all the same markup. Appearance →
-    Banners → (the set) → Look
-  - **The site background** — four treatments, previewed on his own pages.
-    Appearance → Page background
-- **Apply .325, .326 and .327, in that order**, then the two server-side jobs no
-  package can do: cache headers and HSTS, and registering the domain with Apple
-  Pay in Stripe. `docs/PERF-PAGESPEED.md` §5 is the walkthrough
-- **▲ WHICH VERSION THE SERVER IS ACTUALLY RUNNING.** Recorded nowhere — see
-  `docs/REPO-STATE.md`. One command answers it now that the shop has a shell, and
-  until somebody runs it every package built "on top of" the live state is a guess
-- **The review block's fonts.** Every product page asks for two families this
-  shop has never loaded, so those titles render in Georgia and always have.
-  Fixing it means adding two families or restyling the block — both visible
-  changes to a working page
-- **Darkening the brand pink, or not.** Accessibility is stuck at 96 on 108
-  contrast failures, and `--muted` (3.14) and `--pink` (3.08) are already below AA
-  on the shop as it stands. That is the brand colour against a pale page; it is
-  his call and the Page background screen shows it beside the sliders
-- **Reconnect Stripe** — Store → Payments → Set up Stripe. Until then the
-  webhook is subscribed to the hosted-checkout events a card payment no longer
-  produces: the shop takes the money and never hears about it
-- **One real test-mode payment**, which is the only thing a sandbox cannot stand
-  in for
-- **Did the old site have brand archive pages, and at what base?** 93 redirect
-  rows hang on it, and inventing a base writes 93 redirects from an address that
-  may never have existed
-- **Three bulk-printing questions** — the cap of 100, whether a bulk invoice run
-  should skip cancelled orders, and whether the "Sheet 3 of 12" line should print
+- **▲ Customer reviews section — pick a letter A–H, and say whether to show the
+  reviewer's city.** Built, photographed, not wired. Live preview
+  `docs/review-showcase-live/index.html`; shots `docs/lane-rd-shots/`; partials
+  `resources/views/partials/review-showcase/`. Recommended: **E** on the homepage
+  plus **H** as a strip. Details and the wiring plan: `docs/HANDOVER.md` §7.1
+- **▲ Shop by skin concern — pick the section design A–E and the carousel
+  settings.** Already decided by him: pastel colours with icon Set 4 (duotone).
+  Playground `docs/skin-concerns-options/index.html` ("Copy settings" gives his
+  full choice as text); shots in `shots/` beside it. `docs/HANDOVER.md` §7.2
+- **Which release the server is running, and which domain is live**
+  (`extrabeauty.ae` or `kbeautybliss.com`). Record both in `docs/REPO-STATE.md`
+- **Older choices recorded open on 30 September** — product card B/C/D, slider
+  look, page background, review-block fonts, darker brand pink, brand archive
+  base for 93 redirects, three bulk-printing questions. Several were settled in
+  conversation since (the product page is the **Ledger** design he approved on
+  30 Sep); check each on the live admin before acting. `docs/HANDOVER.md` §7.3
+- **Left as they are by his decision:** Tabby's and Stripe's refusal wording on
+  expired / abandoned sessions
+
+### Settled on 11 October 2026
+
+- **Marketing campaigns now send in the background.** The server had no cron, so
+  a campaign moved only while its admin page was open. The owner added the
+  scheduler line in Cloudways → Application → Cron Job Management → Advanced.
+  Exact line and health check: `docs/HANDOVER.md` §2
 
 ## The plugin, inventoried — *v2.39.0, verified 2.44.0*
 
