@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Skin Concern Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Cairo:wght@500;600;700&display=swap">
+<style>
+/* Layout: a control column beside live shop frames (phone 390, laptop 1280), artwork sheet below.
+   Page chrome follows the viewer's theme; the shop frames always stay in shop colours. */
+:root{
+  --bg:#FBF7F8; --panel:#FFFFFF; --fg:#2A2228; --fg-2:#5E545A; --line:rgba(42,34,40,.12);
+  --accent:#C6395F; --accent-soft:#FCE0E8; --chip:#F4ECEF;
+  --sans:"Outfit",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --ar:"Cairo","Noto Sans Arabic",Tahoma,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1B1619; --panel:#251E22; --fg:#F3ECEF; --fg-2:#BDB1B7; --line:rgba(255,240,245,.14);
+  --accent:#F07A9B; --accent-soft:#4A2533; --chip:#33292E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1B1619; --panel:#251E22; --fg:#F3ECEF; --fg-2:#BDB1B7; --line:rgba(255,240,245,.14);
+  --accent:#F07A9B; --accent-soft:#4A2533; --chip:#33292E; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--sans);padding-inline:16px;padding-block:20px 48px;overflow-x:hidden}
+h1,h2,h3{text-wrap:balance;margin:0}
+.top{max-width:1640px;margin:0 auto 18px;display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px 24px}
+.top h1{font-size:clamp(22px,2.6vw,32px);font-weight:700;letter-spacing:-.01em}
+.top p{margin:4px 0 0;color:var(--fg-2);max-width:68ch}
+.app{max-width:1640px;margin:0 auto;display:grid;grid-template-columns:310px minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:979px){.app{grid-template-columns:minmax(0,1fr)}.ctl{order:2}.stage{order:1}}
+
+/* ── controls ── */
+.ctl{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:16px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+@media (max-width:979px){.ctl{position:static;max-height:none}}
+.grp{display:grid;gap:8px;min-width:0}
+.grp>label,.grp>.lbl{font-size:11.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-2);display:flex;justify-content:space-between;gap:8px}
+.grp output{font-family:var(--mono);font-size:12px;letter-spacing:0;text-transform:none;color:var(--fg)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:13px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--chip);color:var(--fg);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.seg button:focus-visible,.dz button:focus-visible,.btn:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ringrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ringrow input[type=color]{width:34px;height:28px;border:1px solid var(--line);border-radius:8px;background:none;padding:2px}
+.sw{width:22px;height:22px;border-radius:50%;border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+.hr{height:1px;background:var(--line)}
+.sec-t{font-size:13px;font-weight:700;color:var(--fg);padding-top:6px;border-top:1px solid var(--line)}
+.sec-t:first-child{border-top:0;padding-top:0}
+.pick{font-size:14px;font-weight:600;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pick em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 8px}
+.linkbtn{font:inherit;font-size:12.5px;color:var(--accent);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer}
+.more{border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.more summary{cursor:pointer;font-size:13px;color:var(--fg-2)}
+.more[open]{display:grid;gap:10px}
+.hint{margin:2px 0 0;font-size:12px;line-height:1.45;color:var(--fg-2)}
+.btn{font:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--fg);cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ── design picker ── */
+.dz{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:14px}
+.dz button{font:inherit;text-align:start;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;display:grid;gap:1px}
+.dz button b{font-size:14px}
+.dz button span{font-size:12px;color:var(--fg-2)}
+.dz button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--accent-soft)}
+.bar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-bottom:14px}
+.bar .grp{display:flex;align-items:center;gap:8px}
+
+/* ── frames ── */
+.stage{min-width:0}
+.frames{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+.frames.both.wide{grid-template-columns:auto minmax(0,1fr);align-items:start}
+@media (max-width:979px){.frames.phone-only{position:sticky;top:0;z-index:4;background:var(--bg);padding-bottom:8px}
+  .fr-m .mock-ban,.fr-m .mock-row{display:none}}
+.fr{min-width:0}
+.fr h3{font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-2);margin-bottom:8px;display:flex;gap:8px;justify-content:space-between}
+.fit{width:100%;overflow:hidden}
+.device{background:#1F1A1E;border-radius:34px;padding:10px;width:max-content;max-width:100%}
+.fr-d .device{border-radius:14px;padding:8px 8px 10px}
+.screen{background:#fff;border-radius:26px;overflow:hidden;color:#2A2228;font-family:"Outfit",system-ui,sans-serif}
+.fr-d .screen{border-radius:8px}
+.fr-m .screen{width:390px;zoom:var(--zm,1)}
+.fr-d .screen{width:1280px;zoom:var(--zd,1)}
+/* shop context around the section, so the section is judged on a page */
+.mock-hd{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid rgba(42,34,40,.08);font-weight:700;font-size:15px;color:#C6395F}
+.mock-hd i{display:flex;gap:10px}.mock-hd i b{width:20px;height:20px;border-radius:6px;background:#F3EAEE}
+.mock-ban{margin:12px 16px 0;height:120px;border-radius:16px;background:linear-gradient(115deg,#FFF1E4 0%,#FFFFFF 38%,#FDECF4 72%,#FCE7F1 100%);border:1px solid rgba(42,34,40,.06)}
+.fr-d .mock-hd{height:64px;padding:0 22px}
+.fr-d .mock-ban{margin:16px 22px 0;height:200px}
+.mock-row{display:flex;gap:12px;padding:6px 16px 22px}
+.mock-row b{flex:1;height:110px;border-radius:12px;background:#F8F3F5}
+.fr-d .mock-row{padding:6px 22px 30px;gap:16px}.fr-d .mock-row b{height:180px}
+
+/* ═══════════ THE SECTION — this block is what would ship (scoped .skc) ═══════════ */
+.skc{--pad:16px;--s:96px;--g:12px;--ts:13px;--r:50%;--rr:20px;--ring:#EFA8BF;padding:22px 0 18px;font-family:"Outfit",system-ui,sans-serif;color:#2A2228}
+.fr-d .skc{--pad:22px;padding:44px 0 34px}
+.skc[dir=rtl]{font-family:"Cairo","Outfit",system-ui,sans-serif}
+.skc.sb-blush{background:linear-gradient(180deg,#FFF5F8,#FCE9F0)}
+.skc.sb-cream{background:#FFF8F5}
+.skc-h{display:flex;align-items:end;justify-content:space-between;gap:8px 16px;padding-inline:var(--pad);margin-bottom:12px;flex-wrap:wrap}
+.fr-d .skc-h{margin-bottom:22px}
+.skc-h h2{font-size:18px;font-weight:700;line-height:1.2}
+.fr-d .skc-h h2{font-size:30px}
+.skc-h p{margin:3px 0 0;font-size:12.5px;color:#756C74}
+.fr-d .skc-h p{font-size:15px}
+.skc-eb{display:block;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#C6395F;margin-bottom:4px}
+.skc[dir=rtl] .skc-eb{letter-spacing:0}
+.skc-all{color:#C6395F;font-weight:600;font-size:13px;text-decoration:none;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.skc-all svg{width:15px;height:15px}
+.skc[dir=rtl] .skc-all svg,.skc[dir=rtl] .skc-arr svg{transform:scaleX(-1)}
+.skc.hd-center .skc-h{justify-content:center;text-align:center}
+.skc.hd-center .skc-h .skc-all{display:none}
+.skc-foot{display:none;justify-content:center;padding:10px var(--pad) 0}
+.skc.hd-center .skc-foot{display:flex}
+.skc-foot .skc-all{border:1.5px solid #E8B3C4;border-radius:999px;padding:8px 18px;background:#fff}
+.skc.hd-lead .skc-h .skc-all{border:1.5px solid #E8B3C4;border-radius:999px;padding:7px 14px}
+.skc-stage{position:relative;container-type:inline-size}
+.skc{--iw:var(--s)}
+.skc.pv{--iw:calc((100cqi - 2 * var(--pad) - (var(--pv) - 1) * var(--g)) / var(--pv))}
+.skc.pk-small{--iw:calc((100cqi - 2 * var(--pad) - 3 * var(--g)) / 3.3)}
+.skc.pk-half{--iw:calc((100cqi - 2 * var(--pad) - 2 * var(--g)) / 2.5)}
+.skc-track{display:flex;gap:var(--g);overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:var(--pad);padding:6px var(--pad) 8px;scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.skc-track::-webkit-scrollbar{display:none}
+.skc-i{flex:0 0 var(--iw);min-width:0;scroll-snap-align:start;text-decoration:none;color:inherit;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;-webkit-tap-highlight-color:transparent}
+.skc.sn-center .skc-i{scroll-snap-align:center}
+.skc-art{position:relative;display:block;width:100%;aspect-ratio:1;border-radius:var(--r);background:var(--bgc);overflow:hidden;transition:transform .3s cubic-bezier(.22,.61,.36,1),box-shadow .3s}
+.skc.sh-arch .skc-art{aspect-ratio:4/5;border-radius:999px 999px var(--rr) var(--rr)}
+.skc.ring .skc-art{box-shadow:0 0 0 2.5px #fff,0 0 0 4px var(--ring)}
+.skc.lift .skc-art{box-shadow:0 10px 24px -14px rgba(42,34,40,.45)}
+.skc.ring.lift .skc-art{box-shadow:0 0 0 2.5px #fff,0 0 0 4px var(--ring),0 10px 24px -14px rgba(42,34,40,.45)}
+.skc-art svg{position:absolute;left:calc((100% - var(--ic)) / 2);top:calc((100% - var(--ic)) / 2);width:var(--ic);height:var(--ic);overflow:visible}
+.skc.tp-overlay .skc-art svg,.skc.tp-band .skc-art svg{--icx:calc(var(--ic) * .8);left:calc((100% - var(--icx)) / 2);top:9%;width:var(--icx);height:var(--icx)}
+.skc.sh-arch.tp-overlay .skc-art svg,.skc.sh-arch.tp-band .skc-art svg{top:12%}
+.skc.tp-beside .skc-art svg{left:19%;top:19%;width:62%;height:62%}
+.skc-t{font-size:var(--ts);font-weight:500;line-height:1.25;text-wrap:balance;max-width:100%}
+.skc-tag{display:block;font-size:calc(var(--ts) - 2px);font-weight:400;color:#756C74;margin-top:2px}
+.skc-in{position:absolute;inset-inline:0;bottom:0;padding:0 17% 17%;font-size:var(--ts);font-weight:600;line-height:1.2;text-wrap:balance;color:#fff;display:flex;align-items:end;justify-content:center;min-height:46%;background:linear-gradient(to bottom,transparent,color-mix(in srgb,var(--dp) 94%,transparent) 88%)}
+.skc.sh-square .skc-in,.skc.sh-rounded .skc-in,.skc.sh-arch .skc-in{padding:0 9% 9%}
+.skc-band{position:absolute;inset-inline:0;bottom:0;padding:7px 10% 13%;font-size:var(--ts);font-weight:600;line-height:1.2;text-wrap:balance;color:var(--dp);background:rgba(255,255,255,.9);min-height:30%;display:flex;align-items:center;justify-content:center}
+.skc.sh-square .skc-band,.skc.sh-rounded .skc-band,.skc.sh-arch .skc-band{padding-bottom:8px}
+/* chips: art beside the name inside a pill */
+.skc.tp-beside .skc-i{flex:0 0 auto;flex-direction:row;gap:10px;padding:5px 18px 5px 5px;border-radius:999px;background:var(--bgc);text-align:start}
+.skc.tp-beside[dir=rtl] .skc-i{padding:5px 5px 5px 18px}
+.skc.tp-beside .skc-art{width:var(--s);flex:0 0 var(--s);background:#fff}
+.skc.tp-beside .skc-t{font-weight:600;white-space:nowrap;color:#3A2E35}
+.skc.tp-beside.bg-none .skc-i,.skc.tp-beside.bg-white .skc-i{border:1px solid rgba(42,34,40,.1);background:#fff}
+.skc.tp-beside.bg-none .skc-art{background:transparent}
+.skc.tp-beside.bg-white .skc-art{background:#FCF4F6}
+.skc-i:focus-visible{outline:2px solid #C6395F;outline-offset:4px;border-radius:12px}
+/* hover and entrance */
+.skc.hv-lift .skc-i:hover .skc-art{transform:translateY(-4px)}
+.skc.hv-glow .skc-i:hover .skc-art{box-shadow:0 0 0 3px #fff,0 0 0 5.5px var(--acc),0 12px 26px -14px rgba(42,34,40,.4)}
+.skc.hv-scale .skc-art svg{transition:transform .35s cubic-bezier(.22,.61,.36,1)}
+.skc.hv-scale .skc-i:hover .skc-art svg{transform:scale(1.12)}
+.skc.tp-beside.hv-lift .skc-i:hover .skc-art{transform:none}
+.skc.tp-beside.hv-lift .skc-i{transition:transform .3s cubic-bezier(.22,.61,.36,1)}
+.skc.tp-beside.hv-lift .skc-i:hover{transform:translateY(-3px)}
+.skc.en-fade .skc-i{animation:skc-in .55s cubic-bezier(.22,.61,.36,1) both;animation-delay:calc(var(--n) * 55ms)}
+@keyframes skc-in{from{opacity:0;transform:translateY(12px)}}
+/* drag with a mouse; touch swipes natively */
+@media (hover:hover){.skc-track{cursor:grab}}
+.skc-track.drag{scroll-snap-type:none;cursor:grabbing;scroll-behavior:auto}
+.skc-track.drag .skc-i{pointer-events:none}
+/* arrows */
+.skc{--as:40px;--ac:#C6395F}
+.skc-arr{display:none;place-items:center;flex:none;width:var(--as);height:var(--as);padding:0;border:0;border-radius:50%;cursor:pointer;z-index:2;transition:opacity .25s,transform .25s,background-color .25s,box-shadow .25s}
+.skc.arr-on .skc-arr{display:grid}
+.skc-arr svg{width:calc(var(--as) * .46);height:calc(var(--as) * .46)}
+.skc-arr:not([disabled]):hover{transform:scale(1.07)}
+.skc-arr:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
+.skc-arr[disabled]{opacity:.3;cursor:default;box-shadow:none}
+.skc-arr.side{position:absolute;top:calc(6px + var(--iw) * var(--ar,1) / 2 - var(--as) / 2);inset-inline-start:var(--ain,6px)}
+.skc-arr.side.nx{inset-inline-start:auto;inset-inline-end:var(--ain,6px)}
+.skc-arr.side[disabled]{opacity:0;pointer-events:none}
+.skc.tp-beside .skc-arr.side{top:calc(50% - var(--as) / 2)}
+.skc.ap-outside.arr-on .skc-stage{padding-inline:calc(var(--as) + 8px)}
+.skc.ap-outside .skc-arr.side{--ain:0px}
+.skc.ap-outside.arr-on .skc-track{-webkit-mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent)}
+.skc.ap-outside .skc-arr.side[disabled]{opacity:.3;pointer-events:none}
+.skc-hr{display:flex;align-items:center;gap:10px}
+.skc-nav{display:flex;gap:8px}
+.skc.as-white .skc-arr{background:#fff;color:var(--ac);box-shadow:0 1px 2px rgba(42,34,40,.08),0 8px 22px -8px rgba(42,34,40,.3)}
+.skc.as-pink .skc-arr{background:var(--ac);color:#fff;box-shadow:0 10px 22px -10px color-mix(in srgb,var(--ac) 85%,transparent)}
+.skc.as-ring .skc-arr{background:rgba(255,255,255,.92);color:var(--ac);box-shadow:inset 0 0 0 1.5px var(--ac)}
+.skc.as-square .skc-arr{border-radius:calc(var(--as) * .3);background:color-mix(in srgb,var(--ac) 9%,#fff);color:var(--ac);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 20%,transparent)}
+.skc.as-chev .skc-arr{background:transparent;color:var(--ac);box-shadow:none}
+.skc.as-chev .skc-arr svg{width:calc(var(--as) * .64);height:calc(var(--as) * .64)}
+.skc.as-pink .skc-arr[disabled],.skc.as-ring .skc-arr[disabled]{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ac) 40%,transparent);background:transparent;color:var(--ac)}
+/* pagination */
+.skc-below{display:flex;justify-content:center;align-items:center;gap:16px;padding:12px var(--pad) 0}
+.skc-below:empty{display:none}
+.skc-pag{display:flex;align-items:center;gap:6px}
+.skc.pg-dots .skc-pag button{width:7px;height:7px;padding:0;border:0;border-radius:99px;background:color-mix(in srgb,var(--ac) 22%,#fff);cursor:pointer;transition:width .3s,background-color .3s}
+.skc.pg-dots .skc-pag button[aria-current="true"]{width:22px;background:var(--ac)}
+.skc.pg-bar .skc-pag{display:block;width:min(220px,46cqi,46%);height:3px;border-radius:3px;background:color-mix(in srgb,var(--ac) 16%,#fff);overflow:hidden}
+.skc.pg-bar .skc-pag i{display:block;height:100%;width:var(--p,0%);background:var(--ac);border-radius:3px;transition:width .35s cubic-bezier(.22,.61,.36,1)}
+.skc.pg-count .skc-pag{gap:0;font-size:13px;font-variant-numeric:tabular-nums;color:#756C74;letter-spacing:.04em;min-width:44px;justify-content:center}
+.skc.pg-count .skc-pag b{color:#2A2228;font-weight:600}
+@media (prefers-reduced-motion:reduce){.skc-art,.skc-arr,.skc-art svg,.skc-pag *{transition:none}.skc-track{scroll-behavior:auto}.skc.en-fade .skc-i{animation:none}}
+/* presentation: rose line on pastel (default) · white line on a deeper tone · line with a ring only */
+.skc-art{color:var(--lc)}
+.skc.pr-d.bg-pastel .skc-art{background:var(--dp);color:#fff;--acc:rgba(255,255,255,.22)}
+.skc.pr-d:not(.bg-pastel) .skc-art{color:var(--dp)}
+.skc.pr-d.bg-pastel .skc-band{color:var(--dp)}
+.skc.pr-r .skc-art,.skc.pr-r.ring .skc-art,.skc.pr-r.lift .skc-art,.skc.pr-r.ring.lift .skc-art{background:transparent;box-shadow:inset 0 0 0 1.5px var(--lc)}
+.skc.pr-r .skc-in{background:linear-gradient(to bottom,transparent,color-mix(in srgb,var(--dp) 70%,transparent))}
+/* ═══════════ end of the shippable block ═══════════ */
+
+.readout{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.readout code{flex:1 1 320px;min-width:0;font-family:var(--mono);font-size:12.5px;line-height:1.6;white-space:normal;overflow-wrap:anywhere}
+.readout .ok{font-size:12px;color:var(--accent);min-width:60px}
+
+.sheet{max-width:1640px;margin:40px auto 0}
+.sheet>h2{font-size:22px;font-weight:700;margin-bottom:4px}
+.sheet>p{color:var(--fg-2);margin:0 0 16px;max-width:72ch}
+.cmp{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}
+.cmp-g{display:grid;grid-template-columns:150px repeat(4,minmax(170px,1fr));gap:14px 18px;align-items:center;min-width:900px}
+.cmp-h{font-size:13px;font-weight:600;line-height:1.3}
+.cmp-h small{display:block;font-weight:400;color:var(--fg-2);font-size:12px}
+.cmp-h code{font-family:var(--mono);font-size:11px;color:var(--fg-2)}
+.cmp-n{font-size:13px;font-weight:600;line-height:1.3}
+.pair{display:flex;align-items:center;gap:12px}
+.disc{position:relative;flex:none;border-radius:50%;background:var(--bgc);color:var(--lc)}
+.disc.b{width:96px;height:96px}.disc.s{width:56px;height:56px}
+.disc svg{position:absolute;left:22%;top:22%;width:56%;height:56%;overflow:visible}
+.sheet.pr-d .disc{background:var(--dp);color:#fff;--acc:rgba(255,255,255,.22)}
+.sheet.pr-r .disc{background:transparent;box-shadow:inset 0 0 0 1.5px var(--lc)}
+.notes{max-width:1640px;margin:28px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.notes section{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.notes h3{font-size:15px;margin-bottom:6px}
+.notes ul{margin:0;padding-inline-start:18px;color:var(--fg-2);font-size:13.5px;display:grid;gap:4px}
+.notes code{font-family:var(--mono);font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- ═══ ICON SPRITE: one inline SVG, every icon a <symbol>; the shop would print only the chosen set, once. ═══ -->
+<svg id="skc-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
+<!-- Line icons on a 48 grid. The tile's own <svg> carries fill="none" stroke="currentColor"
+     stroke-width="1.75" and round caps/joins, so every set inherits one weight and one colour. -->
+<!-- ───── SET 1 · OUTLINE ───── -->
+<symbol id="s1-pores" viewBox="0 0 48 48"><circle cx="21" cy="21" r="12"/><path d="M29.5 29.5 39 39"/><g fill="currentColor" stroke="none"><circle cx="17.2" cy="19" r="1.25"/><circle cx="24.2" cy="17.6" r="1.25"/><circle cx="21.4" cy="24.6" r="1.25"/></g></symbol>
+<symbol id="s1-spots" viewBox="0 0 48 48"><circle cx="21" cy="27" r="13"/><circle cx="17" cy="24.5" r="3"/><circle cx="37" cy="11" r="3"/><path d="M37 4.5V6M37 16v1.5M30.5 11H32M42 11h1.5M32.4 6.4l1 1M41.6 6.4l-1 1M41.6 15.6l-1-1"/><g fill="currentColor" stroke="none"><circle cx="23.6" cy="28.4" r="1.35"/><circle cx="26.8" cy="31.4" r="1"/><circle cx="29.3" cy="34" r=".7"/></g></symbol>
+<symbol id="s1-acne" viewBox="0 0 48 48"><circle cx="24" cy="24" r="14.5"/><circle cx="24" cy="24" r="9" stroke-dasharray="0 3.534"/><circle cx="24" cy="24" r="1.7" fill="currentColor" stroke="none"/></symbol>
+<symbol id="s1-aging" viewBox="0 0 48 48"><path d="M15.5 42V31.5c-3.3-2.8-5-6.6-5-11.5 0-7.5 5.5-13 12.5-13 6.5 0 10.5 4.5 10.5 10l3 5c.4.7.1 1.3-.6 1.5l-1.3.4.3 1.7-.9.8.6 1c.3.8-.2 1.5-1 1.6l-.2 1.5c-.2 1.5-1.4 2.5-3 2.5H28V42"/><path d="M26.6 18.6q1.6 1.1 3.2 0"/><path d="M41 5v6M38 8h6"/></symbol>
+<symbol id="s1-hydra" viewBox="0 0 48 48"><path d="M24 6s12 12.5 12 21.5a12 12 0 0 1-24 0C12 18.5 24 6 24 6z"/><path d="M18 28.5a6 6 0 0 0 4 5"/><path d="M39.5 7v6M36.5 10h6"/></symbol>
+<symbol id="s1-calm" viewBox="0 0 48 48"><path d="M24 31c-3.5 3-12 2-13-6.5C10 15.5 16 9.5 24 9.5s14 6 13 15c-1 8.5-9.5 9.5-13 6.5z"/><path d="M24 31V16M24 31l-7-11.5M24 31l7-11.5M24 31c0 5-1 8.5-3.5 11"/></symbol>
+<symbol id="s1-oily" viewBox="0 0 48 48"><path d="M13 9h20a3 3 0 0 1 3 3v19l-7 7H13a3 3 0 0 1-3-3V12a3 3 0 0 1 3-3z"/><path d="M36 31h-4a3 3 0 0 0-3 3v4"/><path d="M23 14.5s5.5 5.8 5.5 9.8a5.5 5.5 0 0 1-11 0c0-4 5.5-9.8 5.5-9.8z"/></symbol>
+
+<!-- ───── SET 2 · SYMBOLS: a different metaphor per concern ───── -->
+<symbol id="s2-pores" viewBox="0 0 48 48"><ellipse cx="24" cy="24.5" rx="12.5" ry="16"/><g fill="currentColor" stroke="none"><circle cx="18.5" cy="16" r="1.2"/><circle cx="24" cy="16" r="1.2"/><circle cx="29.5" cy="16" r="1.2"/><circle cx="24" cy="21.5" r="1.2"/><circle cx="24" cy="27" r="1.2"/></g></symbol>
+<symbol id="s2-spots" viewBox="0 0 48 48"><circle cx="24" cy="24" r="15"/><path d="M24 9a8 15 0 0 1 0 30"/><circle cx="16.5" cy="22" r="2.4" fill="currentColor" stroke="none"/><circle cx="19" cy="29.5" r="1.3" fill="currentColor" stroke="none"/></symbol>
+<symbol id="s2-acne" viewBox="0 0 48 48"><ellipse cx="21" cy="26" rx="11.5" ry="15"/><circle cx="25" cy="30" r="1.7" fill="currentColor" stroke="none"/><path d="M33.5 15c0-5.8 3.7-9 9-9.5 0 5.6-3.4 9.3-9 9.5zM33.5 15l5.5-6"/></symbol>
+<symbol id="s2-aging" viewBox="0 0 48 48"><path d="M13 6h22M13 42h22M16 6v4c0 5.5 8 8.5 8 14s-8 8.5-8 14v4M32 6v4c0 5.5-8 8.5-8 14s8 8.5 8 14v4"/><path d="M19.5 38.5c1.5-2.6 3-3.8 4.5-3.8s3 1.2 4.5 3.8"/></symbol>
+<symbol id="s2-hydra" viewBox="0 0 48 48"><circle cx="24" cy="24" r="16"/><path d="M24 13.5s7 7.3 7 12.3a7 7 0 0 1-14 0c0-5 7-12.3 7-12.3z"/><path d="M20.5 26.5a3.5 3.5 0 0 0 2.4 3"/></symbol>
+<symbol id="s2-calm" viewBox="0 0 48 48"><path d="M24 6l13 4.5V22c0 9-5.5 15.5-13 20-7.5-4.5-13-11-13-20V10.5z"/><path d="M18.5 29.5c0-7.5 4.5-12 11.5-12.5 0 7.5-4.5 12.5-11.5 12.5zM18.5 29.5l7.5-8"/></symbol>
+<symbol id="s2-oily" viewBox="0 0 48 48"><path d="M24 6s12 12.5 12 21.5a12 12 0 0 1-24 0C12 18.5 24 6 24 6z"/><path d="M19 28h10"/><path d="M8 42h32"/></symbol>
+
+<!-- ───── SET 3 · FACE: one fine-line woman's face, a concern detail on it ───── -->
+<g id="k-face3"><path d="M12 40c-2.5-10-2-21 3-27.5C17.5 9.5 20.5 8 24 8s6.5 1.5 9 4.5c5 6.5 5.5 17.5 3 27.5"/><path d="M15.5 19c0 11 3.8 17.5 8.5 17.5s8.5-6.5 8.5-17.5c0-2.4-.5-4.4-1.5-6"/><path d="M15.5 19c6.5 0 12-3 14-7.5"/></g>
+<symbol id="s3-pores" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/></g><g fill="currentColor" stroke="none"><circle cx="20.5" cy="22.5" r="1.25"/><circle cx="24" cy="22.5" r="1.25"/><circle cx="27.5" cy="22.5" r="1.25"/><circle cx="24" cy="26.3" r="1.25"/><circle cx="24" cy="30.1" r="1.25"/></g></symbol>
+<symbol id="s3-spots" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/><circle cx="28.5" cy="28" r="3.6" stroke-dasharray="0 2.83"/></g><circle cx="28.5" cy="28" r="1.5" fill="currentColor" stroke="none"/></symbol>
+<symbol id="s3-acne" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/><circle cx="19.5" cy="28.5" r="3.6"/></g><circle cx="19.5" cy="28.5" r="1.2" fill="currentColor" stroke="none"/></symbol>
+<symbol id="s3-aging" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/><path d="M17.5 30.5l1.8-1.8 1.8 1.8M26.9 30.5l1.8-1.8 1.8 1.8"/><path d="M41 5v5M38.5 7.5h5"/></g></symbol>
+<symbol id="s3-hydra" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/><path d="M28.5 23.5s3 3.2 3 5.2a3 3 0 0 1-6 0c0-2 3-5.2 3-5.2z"/></g></symbol>
+<symbol id="s3-calm" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/><path d="M17 29.5l2.4-2.4M19 31.5l2.4-2.4M26.6 29.5l2.4-2.4M28.6 31.5l2.4-2.4"/><path d="M38 12c0-4 2.5-6.3 6-6.5 0 3.8-2.4 6.3-6 6.5z"/></g></symbol>
+<symbol id="s3-oily" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/><path d="M21 21.5v4.4M18.8 23.7h4.4M27.5 26.6v3M26 28.1h3"/></g></symbol>
+
+<!-- ───── SET 4 · DUOTONE: set 1's line plus one soft accent shape ───── -->
+<symbol id="s4-pores" viewBox="0 0 48 48"><circle cx="22.5" cy="22.5" r="9" style="fill:var(--acc);stroke:none"/><use href="#s1-pores"/></symbol>
+<symbol id="s4-spots" viewBox="0 0 48 48"><circle cx="37" cy="11" r="3" style="fill:var(--acc);stroke:none"/><circle cx="23" cy="29" r="10" style="fill:var(--acc);stroke:none"/><use href="#s1-spots"/></symbol>
+<symbol id="s4-acne" viewBox="0 0 48 48"><circle cx="26" cy="26" r="11" style="fill:var(--acc);stroke:none"/><use href="#s1-acne"/></symbol>
+<symbol id="s4-aging" viewBox="0 0 48 48"><circle cx="21" cy="21" r="10" style="fill:var(--acc);stroke:none"/><use href="#s1-aging"/></symbol>
+<symbol id="s4-hydra" viewBox="0 0 48 48"><circle cx="26" cy="30" r="9" style="fill:var(--acc);stroke:none"/><use href="#s1-hydra"/></symbol>
+<symbol id="s4-calm" viewBox="0 0 48 48"><circle cx="26" cy="22" r="10" style="fill:var(--acc);stroke:none"/><use href="#s1-calm"/></symbol>
+<symbol id="s4-oily" viewBox="0 0 48 48"><path d="M25 18s4.5 4.8 4.5 8a4.5 4.5 0 0 1-9 0c0-3.2 4.5-8 4.5-8z" style="fill:var(--acc);stroke:none"/><use href="#s1-oily"/></symbol>
+</svg>
+
+<header class="top">
+  <div>
+    <h1>Skin Concern Options</h1>
+    <p>Shop by skin concern for the homepage: five section designs with the chosen duotone line icons on pastel, and a carousel that really scrolls, each shown live on a phone (390px) and a laptop (1280px). Change any setting, then press Copy settings and send that line back.</p>
+  </div>
+</header>
+
+<div class="app">
+  <aside class="ctl" aria-label="Settings">
+    <div class="sec-t">Icons</div>
+    <div class="grp"><span class="lbl">Chosen</span><div class="pick" id="pick"></div>
+      <details class="more" id="more-sets"><summary>Other icon sets and presentations</summary>
+        <div class="grp"><span class="lbl">Icon set</span><div class="seg" id="c-set"></div></div>
+        <div class="grp"><span class="lbl">Presentation</span><div class="seg" id="c-pres"></div></div>
+      </details>
+    </div>
+    <div class="grp"><span class="lbl">Line colour</span><div class="ringrow"><span id="lc-sw" class="ringrow"></span><input id="c-lc" type="color" aria-label="Line colour"></div></div>
+    <div class="grp"><label for="c-ic">Icon size in the tile <output id="o-ic"></output></label><input id="c-ic" type="range" min="36" max="76" step="1"></div>
+    <div class="grp"><span class="lbl">Language</span><div class="seg" id="c-lang"></div></div>
+
+    <div class="sec-t">Tiles</div>
+    <div class="grp"><span class="lbl">Shape</span><div class="seg" id="c-shape"></div></div>
+    <div class="grp" id="g-radius"><label for="c-radius">Corner radius <output id="o-radius"></output></label><input id="c-radius" type="range" min="0" max="60" step="1"></div>
+    <div class="grp"><span class="lbl">Title position</span><div class="seg" id="c-tp"></div></div>
+    <div class="row2">
+      <div class="grp"><label for="c-tsM">Title · phone <output id="o-tsM"></output></label><input id="c-tsM" type="range" min="10" max="18" step=".5"></div>
+      <div class="grp"><label for="c-tsD">Title · laptop <output id="o-tsD"></output></label><input id="c-tsD" type="range" min="11" max="22" step=".5"></div>
+    </div>
+    <div class="grp"><span class="lbl">Short line under the title</span><div class="seg" id="c-tag"></div></div>
+    <div class="row2">
+      <div class="grp"><label for="c-sizeM">Size · phone <output id="o-sizeM"></output></label><input id="c-sizeM" type="range" min="40" max="170" step="2"></div>
+      <div class="grp"><label for="c-sizeD">Size · laptop <output id="o-sizeD"></output></label><input id="c-sizeD" type="range" min="44" max="260" step="2"></div>
+    </div>
+    <div class="row2">
+      <div class="grp"><label for="c-gapM">Gap · phone <output id="o-gapM"></output></label><input id="c-gapM" type="range" min="4" max="32" step="1"></div>
+      <div class="grp"><label for="c-gapD">Gap · laptop <output id="o-gapD"></output></label><input id="c-gapD" type="range" min="6" max="48" step="1"></div>
+    </div>
+    <div class="grp"><span class="lbl">Items per screen · laptop</span><div class="seg" id="c-pv"></div></div>
+    <div class="grp"><span class="lbl">Ring</span>
+      <div class="ringrow"><div class="seg" id="c-ring"></div><input id="c-ringC" type="color" aria-label="Ring colour"><span id="ring-sw" class="ringrow"></span></div>
+    </div>
+    <div class="grp"><span class="lbl">Background per item</span><div class="seg" id="c-bg"></div></div>
+    <div class="grp"><span class="lbl">Section background</span><div class="seg" id="c-sb"></div></div>
+    <div class="grp"><span class="lbl">Heading</span><div class="seg" id="c-head"></div></div>
+    <div class="grp"><span class="lbl">Hover effect</span><div class="seg" id="c-hover"></div></div>
+    <div class="grp"><span class="lbl">Entrance</span><div class="seg" id="c-enter"></div></div>
+
+    <div class="sec-t">Carousel</div>
+    <div class="row2">
+      <div class="grp"><span class="lbl">Arrows · phone</span><div class="seg" id="c-arrM"></div></div>
+      <div class="grp"><span class="lbl">Arrows · laptop</span><div class="seg" id="c-arrD"></div></div>
+    </div>
+    <div class="grp"><span class="lbl">Arrow style</span><div class="seg" id="c-arrStyle"></div></div>
+    <div class="grp"><span class="lbl">Arrow position</span><div class="seg" id="c-arrPos"></div></div>
+    <div class="grp"><label for="c-arrSize">Arrow size <output id="o-arrSize"></output></label><input id="c-arrSize" type="range" min="28" max="56" step="2"></div>
+    <div class="grp"><span class="lbl">Arrow and dot colour</span><div class="ringrow"><span id="ac-sw" class="ringrow"></span><input id="c-arrC" type="color" aria-label="Arrow colour"></div></div>
+    <div class="grp"><span class="lbl">Pagination</span><div class="seg" id="c-pag"></div></div>
+    <div class="grp"><span class="lbl">Peek of the next item · phone</span><div class="seg" id="c-peek"></div></div>
+    <div class="grp"><span class="lbl">Snap</span><div class="seg" id="c-snap"></div></div>
+    <div class="grp"><span class="lbl">Each arrow press moves</span><div class="seg" id="c-step"></div></div>
+    <div class="grp"><span class="lbl">Loop</span><div class="seg" id="c-loop"></div></div>
+    <div class="grp"><span class="lbl">Autoplay</span><div class="seg" id="c-auto"></div>
+      <p class="hint">Off is the lightest: no timer runs at all. On, it pauses on hover, touch and keyboard focus, stops while the row is off screen or the tab is hidden, and never runs for visitors who ask their phone for reduced motion.</p></div>
+    <div class="hr"></div>
+    <button class="btn" id="reset" type="button">Reset this design's layout</button>
+  </aside>
+
+  <main class="stage">
+    <div class="dz" id="c-design" role="group" aria-label="Section design"></div>
+    <div class="bar"><div class="grp"><span class="lbl" style="font-size:11.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-2)">Show</span><div class="seg" id="c-view"></div></div></div>
+    <div class="frames" id="frames">
+      <div class="fr fr-m" id="fr-m"><h3><span>Phone · 390px</span><span>swipe</span></h3><div class="fit" id="fit-m"><div class="device"><div class="screen" id="scr-m"></div></div></div></div>
+      <div class="fr fr-d" id="fr-d"><h3><span>Laptop · 1280px</span><span>arrows or trackpad</span></h3><div class="fit" id="fit-d"><div class="device"><div class="screen" id="scr-d"></div></div></div></div>
+    </div>
+    <div class="readout"><code id="readout"></code><button class="btn pri" id="copy" type="button">Copy settings</button><span class="ok" id="copied" aria-live="polite"></span></div>
+  </main>
+</div>
+
+<section class="sheet" id="sheet">
+  <h2>The icons, set by set</h2>
+  <p>Four sets of simple line icons, one weight and one colour each, shown at 96px and at 56px (the smallest phone size). The presentation and line colour follow the settings above.</p>
+  <div class="cmp"><div class="cmp-g" id="sheet-rows"></div></div>
+</section>
+
+<div class="notes">
+  <section><h3>How it would ship</h3><ul>
+    <li>One inline SVG sprite of the chosen set (about 3 KB), printed once; each tile is <code>&lt;svg&gt;&lt;use href="#…"/&gt;&lt;/svg&gt;</code>. No image requests.</li>
+    <li>CSS scroll-snap does the swiping. Arrows and dots use an IntersectionObserver and <code>scrollIntoView</code>; mouse drag uses the pointer's own movement. Nothing measures the page.</li>
+    <li>Autoplay off means no timer at all. When on, it runs only while the row is on screen, the tab is visible and nobody is touching it.</li>
+    <li>The seven links are fixed addresses, so the section adds no database query.</li>
+  </ul></section>
+  <section><h3>Where each tile links</h3><ul id="links"></ul></section>
+  <section><h3>Arabic</h3><ul>
+    <li>Heading: تسوّقي حسب مشكلة البشرة (addressed to a woman).</li>
+    <li>Hydration &amp; Glow uses النضارة, the word Gulf beauty shops use for glow.</li>
+    <li>Ask an Arabic-speaking colleague to read the seven names once before launch.</li>
+  </ul></section>
+</div>
+
+<script>
+(() => {
+'use strict';
+const C = [
+  {k:'pores', en:'Pore Care', ar:'العناية بالمسام', tg:'Refine & tighten', tga:'تنقية وشدّ المسام', bg:'#FCE6EE', acc:'#F2AFC5', dp:'#CC5580', link:'/concern/pores/'},
+  {k:'spots', en:'Pigmentation & Dark Spots', ar:'التصبّغات والبقع الداكنة', tg:'Even, luminous tone', tga:'لون موحّد ومشرق', bg:'#FFEBDD', acc:'#F7BE9E', dp:'#D4826A', link:'/concern/dark-spots/'},
+  {k:'acne',  en:'Acne & Blemish Care', ar:'حبّ الشباب والشوائب', tg:'Calm & clear', tga:'تهدئة وصفاء', bg:'#E3F4EA', acc:'#A9D9BD', dp:'#5A9E80', link:'/concern/acne/'},
+  {k:'aging', en:'Anti-Aging', ar:'مكافحة الشيخوخة', tg:'Firm & smooth', tga:'شدّ ونعومة', bg:'#EFE6F8', acc:'#CDB8EC', dp:'#9277BF', link:'/concern/ageing/'},
+  {k:'hydra', en:'Hydration & Glow', ar:'الترطيب والنضارة', tg:'Dewy, plump skin', tga:'بشرة ندية ممتلئة', bg:'#E0F1FB', acc:'#A9D2F0', dp:'#5A9BCB', link:'/concern/hydration/'},
+  {k:'calm',  en:'Redness & Sensitive Skin', ar:'الاحمرار والبشرة الحسّاسة', tg:'Soothe & comfort', tga:'تهدئة وراحة', bg:'#EDF4E4', acc:'#BEDBA7', dp:'#6E9E62', link:'/concern/sensitivity/'},
+  {k:'oily',  en:'Oily Skin', ar:'البشرة الدهنية', tg:'Balance & mattify', tga:'توازن ولمسة مطفية', bg:'#FFF4D8', acc:'#F3D184', dp:'#C39540', link:'(no page yet)'}
+];
+const SETS = {4:{n:'Set 4 · Duotone', d:'The pick: Set 1 with one soft colour shape behind the line.'}, 1:{n:'Set 1 · Outline', d:'Objects: magnifier, sun and spot, patch, profile, drop, cica leaf, blotting sheet.'}, 2:{n:'Set 2 · Symbols', d:'Another idea for each: T-zone, half moon, face and leaf, hourglass, drop in a circle, shield, drop with a minus.'}, 3:{n:'Set 3 · Face', d:'One fine-line face, with a small concern detail on it.'}};
+const SET_ORDER = [4, 1, 2, 3];
+const PRES = [['p','Pastel light'],['d','White on deep tone'],['r','Line, ring only']];
+const LC = ['#B03A62','#C6395F','#7A3B63','#2A2228','concern'];
+const AC = ['#C6395F','#B03A62','#2A2228','#C9A26B'];
+const DESIGNS = {
+  A:{name:'Halo circles', blurb:'Circle, ring, name below', shape:'circle', radius:24, tp:'below', tsM:12.5, tsD:15, tag:false, sizeM:92, sizeD:172, gapM:12, gapD:28, pv:0, ring:true, ringC:'#EFA8BF', bg:'pastel', sb:'none', head:'split'},
+  B:{name:'Bloom overlay', blurb:'Big circle, name inside', shape:'circle', radius:24, tp:'overlay', tsM:12, tsD:15, tag:false, sizeM:132, sizeD:184, gapM:12, gapD:24, pv:0, ring:false, ringC:'#EFA8BF', bg:'pastel', sb:'blush', head:'center'},
+  C:{name:'Pastel tiles', blurb:'Rounded squares, name + line', shape:'rounded', radius:26, tp:'below', tsM:13, tsD:16, tag:true, sizeM:138, sizeD:200, gapM:12, gapD:20, pv:6, ring:false, ringC:'#EFA8BF', bg:'pastel', sb:'none', head:'lead'},
+  D:{name:'Arch windows', blurb:'Arched frames, name in a band', shape:'arch', radius:18, tp:'band', tsM:12, tsD:15, tag:false, sizeM:120, sizeD:176, gapM:12, gapD:22, pv:0, ring:true, ringC:'#E4C08F', bg:'pastel', sb:'cream', head:'center'},
+  E:{name:'Concern chips', blurb:'Compact pills, icon beside', shape:'circle', radius:24, tp:'beside', tsM:13, tsD:15, tag:false, sizeM:52, sizeD:60, gapM:8, gapD:12, pv:0, ring:false, ringC:'#EFA8BF', bg:'pastel', sb:'none', head:'split'}
+};
+/* The owner's pick and the carousel defaults. Carousel settings are not part of a design, so they survive switching designs. */
+const BASE = {design:'A', lang:'en', view:'both', set:4, pres:'p', lc:'#B03A62', ic:56,
+  hover:'lift', enter:'none', arrM:false, arrD:true, arrStyle:'white', arrPos:'sides', arrSize:44, arrC:'#C6395F',
+  pag:'dots', peek:'none', snap:'start', step:'page', loop:false, auto:0};
+const OPT = {
+  shape:[['circle','Circle'],['rounded','Rounded square'],['square','Square'],['arch','Arch']],
+  tp:[['below','Below'],['overlay','Inside · overlay'],['band','Inside · bottom band'],['beside','Beside (chip)']],
+  tag:[[false,'Off'],[true,'On']],
+  pv:[[0,'Use size'],[4,'4'],[5,'5'],[6,'6'],[7,'7']],
+  ring:[[true,'On'],[false,'Off']],
+  bg:[['pastel','Pastel per concern'],['white','White'],['none','None']],
+  sb:[['none','White'],['blush','Blush'],['cream','Cream']],
+  head:[['split','Title + View all'],['center','Centred + button'],['lead','Title, line + pill']],
+  hover:[['none','None'],['lift','Lift'],['glow','Ring glow'],['scale','Icon grows']],
+  enter:[['none','None'],['fade','Fade up']],
+  arrM:[[true,'On'],[false,'Off']], arrD:[[true,'On'],[false,'Off']],
+  arrStyle:[['white','Round white'],['pink','Round pink'],['ring','Outline ring'],['square','Square soft'],['chev','Chevron only']],
+  arrPos:[['sides','Sides, over the row'],['outside','Outside the row'],['top','Top, by the heading'],['bottom','Bottom centre']],
+  pag:[['none','None'],['dots','Dots'],['bar','Progress bar'],['count','1 / 7']],
+  peek:[['none','Use size'],['small','A sliver'],['half','Half an item']],
+  snap:[['start','Start'],['center','Centre']],
+  step:[['item','One item'],['page','One page']],
+  loop:[[false,'Off'],[true,'On']],
+  auto:[[0,'Off'],[3,'Every 3s'],[5,'Every 5s']],
+  lang:[['en','English'],['ar','العربية']],
+  view:[['both','Both'],['phone','Phone'],['desk','Laptop']]
+};
+const RING_SW = ['#EFA8BF','#C8396B','#E4C08F','#D9CCE8','#2A2228'];
+const T = {
+  en:{h:'Shop by skin concern', eb:'Find your routine', sub:'Seven concerns, each with its own edit', all:'View all', prev:'Previous', next:'Next', go:'Go to'},
+  ar:{h:'تسوّقي حسب مشكلة البشرة', eb:'اعثري على روتينك', sub:'سبع مشكلات، لكل منها مجموعتها', all:'عرض الكل', prev:'السابق', next:'التالي', go:'انتقلي إلى'}
+};
+const KEY = 'skc-opts3';
+let S = Object.assign({}, BASE, DESIGNS.A);
+try { const saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved && DESIGNS[saved.design]) S = Object.assign(S, saved); } catch (e) {}
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const svgPath = (d, w = 2.4) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+const icon = (set, k) => `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#s${set}-${k}"/></svg>`;
+const label = (k, v) => (OPT[k].find(o => o[0] === v) || [, v])[1];
+
+function seg(id, key, opts){
+  const el = $(id); el.innerHTML = '';
+  opts.forEach(([v, text]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = text;
+    b.setAttribute('aria-pressed', String(S[key] === v));
+    b.addEventListener('click', () => { S[key] = v; sync(); });
+    el.appendChild(b);
+  });
+}
+function swatches(id, key, list){
+  const el = $(id); el.innerHTML = '';
+  list.forEach(c => { const b = document.createElement('button'); b.type = 'button'; b.className = 'sw'; b.setAttribute('aria-pressed', String(S[key] === c)); b.style.background = c === 'concern' ? 'conic-gradient(#CC5580 0 14%,#D4826A 0 28%,#5A9E80 0 42%,#9277BF 0 57%,#5A9BCB 0 71%,#6E9E62 0 85%,#C39540 0)' : c; b.title = c === 'concern' ? 'Each concern its own colour' : c; b.setAttribute('aria-label', b.title); b.addEventListener('click', () => { S[key] = c; if (key === 'ringC') S.ring = true; sync(); }); el.appendChild(b); });
+}
+function range(key, unit){ $('c-' + key).value = S[key]; $('o-' + key).textContent = S[key] + unit; }
+['radius','tsM','tsD','sizeM','sizeD','gapM','gapD','ic','arrSize'].forEach(k => $('c-' + k).addEventListener('input', e => { S[k] = +e.target.value; sync(); }));
+$('c-lc').addEventListener('input', e => { S.lc = e.target.value.toUpperCase(); sync(); });
+$('c-arrC').addEventListener('input', e => { S.arrC = e.target.value.toUpperCase(); sync(); });
+$('c-ringC').addEventListener('input', e => { S.ringC = e.target.value.toUpperCase(); S.ring = true; sync(); });
+$('reset').addEventListener('click', () => { Object.assign(S, DESIGNS[S.design]); sync(); });
+
+function section(frame){
+  const t = T[S.lang], rtl = S.lang === 'ar', desk = frame === 'd';
+  const cls = ['skc', 'sh-' + S.shape, 'tp-' + S.tp, 'bg-' + S.bg, 'hd-' + S.head, 'pr-' + S.pres,
+    'hv-' + S.hover, 'en-' + S.enter, 'as-' + S.arrStyle, 'ap-' + S.arrPos, 'pg-' + S.pag, 'sn-' + S.snap];
+  if (S.sb !== 'none') cls.push('sb-' + S.sb);
+  if (S.ring && S.tp !== 'beside') cls.push('ring');
+  if (S.design === 'C' || S.design === 'D') cls.push('lift');
+  if (desk ? S.arrD : S.arrM) cls.push('arr-on');
+  if (S.tp !== 'beside') {
+    if (desk && S.pv) cls.push('pv');
+    if (!desk && S.peek !== 'none') cls.push('pk-' + S.peek);
+  }
+  const r = S.shape === 'circle' ? '50%' : S.shape === 'square' ? '0px' : S.radius + 'px';
+  const style = `--s:${desk ? S.sizeD : S.sizeM}px;--g:${desk ? S.gapD : S.gapM}px;--ts:${desk ? S.tsD : S.tsM}px;--r:${r};--rr:${S.radius}px;--ring:${S.ringC};--pv:${S.pv || 1};--ic:${S.ic}%;--lc:${S.lc === 'concern' ? '#B03A62' : S.lc};--as:${S.arrSize}px;--ac:${S.arrC};--ar:${S.shape === 'arch' ? 1.25 : 1}`;
+  const items = C.map((c, n) => {
+    const name = rtl ? c.ar : c.en, tag = rtl ? c.tga : c.tg;
+    const bgc = S.bg === 'pastel' ? c.bg : S.bg === 'white' ? '#FFFFFF' : 'transparent';
+    const inner = S.tp === 'overlay' ? `<span class="skc-in">${esc(name)}</span>` : S.tp === 'band' ? `<span class="skc-band">${esc(name)}</span>` : '';
+    const below = (S.tp === 'below' || S.tp === 'beside') ? `<span class="skc-t">${esc(name)}${S.tag && S.tp === 'below' ? `<span class="skc-tag">${esc(tag)}</span>` : ''}</span>` : (S.tag ? `<span class="skc-t skc-tag">${esc(tag)}</span>` : '');
+    return `<a class="skc-i" role="listitem" href="#" style="--n:${n};--bgc:${bgc};--dp:${c.dp};--acc:${c.acc}${S.lc === 'concern' ? ';--lc:' + c.dp : ''}"><span class="skc-art">${icon(S.set, c.k)}${inner}</span>${below}</a>`;
+  }).join('');
+  const side = S.arrPos === 'sides' || S.arrPos === 'outside';
+  const btn = (dir) => `<button type="button" class="skc-arr ${dir < 0 ? 'pv-btn' : 'nx'}${side ? ' side' : ''}" aria-label="${dir < 0 ? t.prev : t.next}">${svgPath(dir < 0 ? 'M14.5 5.5 8 12l6.5 6.5' : 'm9.5 5.5 6.5 6.5-6.5 6.5', 2)}</button>`;
+  const pag = S.pag === 'none' ? '' : `<div class="skc-pag" aria-hidden="${S.pag === 'dots' ? 'false' : 'true'}">${S.pag === 'dots' ? C.map((c, i) => `<button type="button" data-i="${i}" aria-label="${t.go} ${esc(rtl ? c.ar : c.en)}"></button>`).join('') : S.pag === 'bar' ? '<i></i>' : `<b>1</b>&nbsp;/&nbsp;${C.length}`}</div>`;
+  const sub = S.head === 'lead' ? `<p>${esc(t.sub)}</p>` : '';
+  const eb = S.head === 'center' ? `<span class="skc-eb">${esc(t.eb)}</span>` : '';
+  const all = `<a class="skc-all" href="#">${esc(t.all)}${svgPath('M5 12h14M13 6l6 6-6 6')}</a>`;
+  const navTop = S.arrPos === 'top' ? `<div class="skc-nav">${btn(-1)}${btn(1)}</div>` : '';
+  const below = S.arrPos === 'bottom' ? (desk ? S.arrD : S.arrM) || pag ? `${btn(-1)}${pag}${btn(1)}` : '' : pag;
+  return `<section class="${cls.join(' ')}" dir="${rtl ? 'rtl' : 'ltr'}" lang="${S.lang}" style="${style}" aria-label="${esc(t.h)}">
+    <div class="skc-h"><div>${eb}<h2>${esc(t.h)}</h2>${sub}</div><div class="skc-hr">${S.head === 'center' ? '' : all}${navTop}</div></div>
+    <div class="skc-stage">${side ? btn(-1) : ''}<div class="skc-track" role="list">${items}</div>${side ? btn(1) : ''}</div>
+    <div class="skc-below">${below}</div>
+    <div class="skc-foot">${all}</div>
+  </section>`;
+}
+
+/* ═══ THE CAROUSEL SCRIPT, AS IT WOULD SHIP ═══
+   No layout is ever read. An IntersectionObserver says which tiles are fully in
+   view; the arrows and dots scroll a chosen tile into place with scrollIntoView
+   (which knows RTL by itself); dragging uses the pointer's own movement. */
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)');
+function carousel(sec, o){
+  const track = sec.querySelector('.skc-track'), items = [...track.children], N = items.length;
+  const prev = sec.querySelector('.pv-btn'), next = sec.querySelector('.nx'), pag = sec.querySelector('.skc-pag');
+  const seen = new Set(); let vis = [0];
+  const stop = [];
+  const move = (el, inline) => el.scrollIntoView({behavior: REDUCED.matches ? 'auto' : 'smooth', block: 'nearest', inline, container: 'nearest'});
+  const update = () => {
+    vis = items.map((el, i) => seen.has(el) ? i : -1).filter(i => i >= 0);
+    if (!vis.length) return;
+    const first = vis[0], last = vis[vis.length - 1], atEnd = last === N - 1;
+    if (prev) prev.disabled = !o.loop && first === 0;
+    if (next) next.disabled = !o.loop && atEnd;
+    if (!pag) return;
+    const cur = atEnd ? N - 1 : o.snap === 'center' ? vis[vis.length >> 1] : first;
+    if (o.pag === 'dots') [...pag.children].forEach((d, i) => d.setAttribute('aria-current', String(i === cur)));
+    else if (o.pag === 'bar') pag.style.setProperty('--p', ((last + 1) / N * 100).toFixed(1) + '%');
+    else if (o.pag === 'count') pag.firstElementChild.textContent = cur + 1;
+  };
+  const go = dir => {
+    const first = vis[0], last = vis[vis.length - 1], mid = vis[vis.length >> 1];
+    const center = o.snap === 'center';
+    let to = o.step === 'item' ? (center ? mid : first) + dir : dir > 0 ? last + 1 : first - 1;
+    if (to > N - 1) { if (!o.loop) to = N - 1; else return move(items[0], 'start'); }
+    if (to < 0) { if (!o.loop) to = 0; else return move(items[N - 1], 'end'); }
+    move(items[to], center ? 'center' : dir < 0 && o.step === 'page' ? 'end' : 'start');
+  };
+  const io = new IntersectionObserver(es => { es.forEach(e => e.isIntersecting ? seen.add(e.target) : seen.delete(e.target)); update(); }, {root: track, threshold: .9});
+  items.forEach(i => io.observe(i));
+  stop.push(() => io.disconnect());
+  sec.querySelectorAll('.pv-btn').forEach(b => b.addEventListener('click', () => go(-1)));
+  sec.querySelectorAll('.nx').forEach(b => b.addEventListener('click', () => go(1)));
+  if (o.pag === 'dots' && pag) pag.addEventListener('click', e => { const i = e.target.dataset && e.target.dataset.i; if (i != null) move(items[+i], o.snap === 'center' ? 'center' : 'start'); });
+
+  // mouse drag: scroll by the pointer's own movement, snap again on release
+  let down = false, moved = 0;
+  track.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse' || e.button) return; down = true; moved = 0; });
+  track.addEventListener('pointermove', e => { if (!down) return; moved += Math.abs(e.movementX); if (moved > 4) { track.classList.add('drag'); track.scrollBy(-e.movementX, 0); } });
+  const up = () => { if (!down) return; down = false; requestAnimationFrame(() => track.classList.remove('drag')); };
+  track.addEventListener('pointerup', up); track.addEventListener('pointerleave', up);
+  track.addEventListener('click', e => { if (moved > 4) { e.preventDefault(); moved = 0; } }, true);
+  track.addEventListener('dragstart', e => e.preventDefault());
+
+  // autoplay: only while on screen, tab visible, not hovered/touched/focused, motion allowed
+  if (o.auto && !REDUCED.matches) {
+    let timer = 0, onScreen = false, hold = 0, touchT = 0;
+    const run = () => {
+      const want = onScreen && !document.hidden && !hold;
+      if (want && !timer) timer = setInterval(() => { if (vis[vis.length - 1] === N - 1) move(items[0], 'start'); else go(1); }, o.auto * 1000);
+      if (!want && timer) { clearInterval(timer); timer = 0; }
+    };
+    const vio = new IntersectionObserver(es => { onScreen = es[es.length - 1].isIntersecting; run(); }, {threshold: .35});
+    vio.observe(sec);
+    const pause = () => { hold++; run(); }, resume = () => { hold = Math.max(0, hold - 1); run(); };
+    sec.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') pause(); });
+    sec.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') resume(); });
+    sec.addEventListener('focusin', pause); sec.addEventListener('focusout', resume);
+    sec.addEventListener('touchstart', () => { clearTimeout(touchT); if (!touchT) pause(); touchT = 1; }, {passive: true});
+    sec.addEventListener('touchend', () => { clearTimeout(touchT); touchT = setTimeout(() => { touchT = 0; resume(); }, 4000); }, {passive: true});
+    document.addEventListener('visibilitychange', run);
+    stop.push(() => { clearInterval(timer); clearTimeout(touchT); vio.disconnect(); document.removeEventListener('visibilitychange', run); });
+  }
+  return () => stop.forEach(f => f());
+}
+
+/* ═══ playground only below ═══ */
+const mock = (frame, body) => `<div class="mock-hd">K-Beauty Bliss<i><b></b><b></b><b></b></i></div><div class="mock-ban"></div>${body}<div class="mock-row"><b></b><b></b>${frame === 'd' ? '<b></b><b></b><b></b>' : ''}</div>`;
+
+function readout(){
+  const d = DESIGNS[S.design];
+  const shape = label('shape', S.shape) + (S.shape === 'rounded' || S.shape === 'arch' ? ` ${S.radius}px` : '');
+  return [
+    `Design ${S.design} (${d.name})`, `Icons ${SETS[S.set].n}`, PRES.find(o => o[0] === S.pres)[1], `line ${S.lc === 'concern' ? 'per concern' : S.lc}`, `icon ${S.ic}%`, shape,
+    `Title ${label('tp', S.tp).toLowerCase()} ${S.tsM}/${S.tsD}px`, S.tag ? 'short line on' : 'short line off',
+    `Phone ${S.peek !== 'none' && S.tp !== 'beside' ? 'peek ' + label('peek', S.peek).toLowerCase() : S.sizeM + 'px'} gap ${S.gapM}`, `Laptop ${S.pv && S.tp !== 'beside' ? S.pv + ' per screen' : S.sizeD + 'px'} gap ${S.gapD}`,
+    S.ring && S.tp !== 'beside' ? `Ring ${S.ringC}` : 'No ring', `${label('bg', S.bg)} backgrounds`, `Section ${label('sb', S.sb).toLowerCase()}`, `Heading: ${label('head', S.head).toLowerCase()}`,
+    `Hover ${label('hover', S.hover).toLowerCase()}`, `Entrance ${label('enter', S.enter).toLowerCase()}`,
+    `Arrows phone ${S.arrM ? 'on' : 'off'} / laptop ${S.arrD ? 'on' : 'off'}`, `${label('arrStyle', S.arrStyle)} ${S.arrSize}px ${S.arrC}`, `position ${label('arrPos', S.arrPos).toLowerCase()}`,
+    `Pagination ${label('pag', S.pag).toLowerCase()}`, `Snap ${S.snap}`, `Step ${label('step', S.step).toLowerCase()}`, `Loop ${S.loop ? 'on' : 'off'}`, `Autoplay ${S.auto ? 'every ' + S.auto + 's' : 'off'}`,
+    S.lang === 'ar' ? 'Arabic' : 'English'
+  ].join(' · ');
+}
+
+let teardown = [];
+function sync(){
+  const dz = $('c-design'); dz.innerHTML = '';
+  Object.entries(DESIGNS).forEach(([k, d]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-pressed', String(S.design === k));
+    b.innerHTML = `<b>${k} · ${esc(d.name)}</b><span>${esc(d.blurb)}</span>`;
+    b.addEventListener('click', () => { Object.assign(S, DESIGNS[k], {design:k}); sync(); });
+    dz.appendChild(b);
+  });
+  $('pick').innerHTML = `${esc(SETS[S.set].n)} · ${esc(PRES.find(o => o[0] === S.pres)[1])}${S.set === 4 && S.pres === 'p' ? ' <em>the owner’s pick</em>' : ' <button type="button" class="linkbtn" id="back">Back to the pick</button>'}`;
+  const back = $('back'); if (back) back.addEventListener('click', () => { S.set = 4; S.pres = 'p'; sync(); });
+  seg('c-set', 'set', SET_ORDER.map(k => [k, SETS[k].n]));
+  seg('c-pres', 'pres', PRES);
+  range('ic','%'); range('arrSize','px');
+  $('c-lc').value = S.lc === 'concern' ? '#B03A62' : S.lc;
+  $('c-arrC').value = S.arrC;
+  swatches('lc-sw', 'lc', LC); swatches('ac-sw', 'arrC', AC); swatches('ring-sw', 'ringC', RING_SW);
+  renderSheet();
+  for (const k of ['shape','tp','tag','pv','ring','bg','sb','head','hover','enter','arrM','arrD','arrStyle','arrPos','pag','peek','snap','step','loop','auto','lang','view']) seg('c-' + k, k, OPT[k]);
+  range('radius','px'); range('tsM','px'); range('tsD','px'); range('sizeM','px'); range('sizeD','px'); range('gapM','px'); range('gapD','px');
+  $('g-radius').hidden = !(S.shape === 'rounded' || S.shape === 'arch');
+  $('c-ringC').value = S.ringC;
+  $('c-sizeD').disabled = !!(S.pv && S.tp !== 'beside');
+  $('c-sizeM').disabled = S.peek !== 'none' && S.tp !== 'beside';
+
+  teardown.splice(0).forEach(f => f());
+  $('scr-m').innerHTML = mock('m', section('m'));
+  $('scr-d').innerHTML = mock('d', section('d'));
+  for (const id of ['scr-m', 'scr-d']) teardown.push(carousel($(id).querySelector('.skc'), S));
+
+  const fr = $('frames');
+  fr.className = 'frames ' + (S.view === 'both' ? 'both' : S.view === 'phone' ? 'phone-only' : 'desk-only');
+  $('fr-m').hidden = S.view === 'desk'; $('fr-d').hidden = S.view === 'phone';
+  fit();
+  $('readout').textContent = readout();
+  $('copied').textContent = '';
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+}
+
+/* scale the 390 and 1280 screens to the space available */
+function fit(){
+  const fr = $('frames'), w = fr.clientWidth;
+  const wide = S.view === 'both' && w >= 1000;
+  fr.classList.toggle('wide', wide);
+  const mW = wide ? 410 : $('fit-m').clientWidth;
+  $('scr-m').style.setProperty('--zm', Math.min(1, (mW - 20) / 390));
+  const dW = wide ? w - 410 - 18 : $('fit-d').clientWidth;
+  $('scr-d').style.setProperty('--zd', Math.min(1, (dW - 16) / 1280));
+}
+new ResizeObserver(fit).observe($('frames'));
+let fresh = true; try { fresh = !localStorage.getItem(KEY); } catch (e) {}
+if (fresh && matchMedia('(max-width: 979px)').matches) S.view = 'phone';
+
+$('copy').addEventListener('click', () => {
+  const txt = $('readout').textContent;
+  const done = () => { $('copied').textContent = 'Copied'; };
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents($('readout')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $('copied').textContent = 'Selected — press Ctrl+C'; };
+  try { navigator.clipboard.writeText(txt).then(done, fallback); } catch (e) { fallback(); }
+});
+
+/* icon sheet: every set side by side, at 96px and 56px, with the size of each set */
+function bytes(set){
+  const seen = new Set(); let n = 0;
+  const walk = i => { if (seen.has(i)) return; seen.add(i); const el = document.getElementById(i); if (!el) return; const h = el.outerHTML; n += new Blob([h]).size; for (const m of h.matchAll(/href="#([\w-]+)"/g)) walk(m[1]); };
+  C.forEach(c => walk('s' + set + '-' + c.k)); return (n / 1024).toFixed(1) + ' KB for all 7';
+}
+const SIZES = {}; SET_ORDER.forEach(k => { SIZES[k] = bytes(k); });
+function renderSheet(){
+  $('sheet').className = 'sheet pr-' + S.pres;
+  const lc = c => S.lc === 'concern' ? c.dp : S.lc;
+  let h = '<div></div>' + SET_ORDER.map(k => `<div class="cmp-h">${esc(SETS[k].n)}<small>${esc(SETS[k].d)}</small><code>${SIZES[k]}</code></div>`).join('');
+  C.forEach(c => {
+    h += `<div class="cmp-n">${esc(c.en)}</div>` + SET_ORDER.map(k => `<div class="pair" style="--bgc:${c.bg};--dp:${c.dp};--acc:${c.acc};--lc:${lc(c)}"><span class="disc b">${icon(k, c.k)}</span><span class="disc s">${icon(k, c.k)}</span></div>`).join('');
+  });
+  $('sheet-rows').innerHTML = h;
+}
+$('links').innerHTML = C.map(c => `<li>${esc(c.en)} → <code>${esc(c.link)}</code></li>`).join('');
+
+sync();
+})();
+</script>
+</body>
+</html>
