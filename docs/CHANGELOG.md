@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.492
+**Urgent fix: the lotus logo no longer fills the screen on older phones and in-app browsers (Instagram, Facebook).** Apply after .491.
+Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge, so no saved copy of the old page is served.
+
+| Your request | Now |
+|---|---|
+| "while opening from different countries, the header is completely messed up. our icon is everywhere on the screen ... make sure it's sticked and in exact size, and cannot enlarge by code or browser" | Found and fixed at the root. The phone logo's height used a newer CSS feature (round()) that older Android phones and some in-app browsers do not have; because the rule also used a variable, those browsers dropped the height entirely and the lotus grew to the screen's width, pushing the header apart. Now: (1) round() is only used where the browser has it, the plain height everywhere else; (2) the logo carries its own size (35×26) in its markup, so it is right even before or without the stylesheet; (3) a hard ceiling no browser can drop: 64px tall on a computer, 44px on a phone (the admin's own maxima). Measured on an emulated older browser at 390px: icon 163×122 → 35×26, header 202 → 126px, exactly what an up-to-date phone shows. Up-to-date phones and computers: nothing changes |
+| (the same fault, found while sweeping) | The homepage Big savings bundles and #KBeautyBliss Spotted carousels, the brand page's initial letter and dark panel, and the banner washes used the same pattern; each now keeps a safe value on older browsers. A test now fails the build if any shop stylesheet uses these features unguarded again |
+
+Files: app/Support/LogoLockup.php, resources/css/kbb/kbb.css, resources/css/kbb/kbb-brand-header.css, resources/css/kbb/kbb-banner.css, public/build, migration 2027_10_28_900000.
+
 ## 2.60.491
 **Checkout: "Already a member? Sign in" beside "1 Contact", in the look you chose (option B).** Apply after .490.
 Runs its migrations (one Arabic draft, clears caches).

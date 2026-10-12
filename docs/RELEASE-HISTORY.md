@@ -5,10 +5,11 @@ entry for each version, with the owner's words, admin paths and files, is
 there). Versions before 2.60.72 are summarised in `KBB-Master-Plan.md` ("What
 shipped" tables and the phases) and in the timeline in `docs/HANDOVER.md` §13.
 
-**272 entries, 2.60.72 → 2.60.491.**
+**273 entries, 2.60.72 → 2.60.492.**
 
 | Version | What it did |
 |---|---|
+| 2.60.492 | Urgent fix: the lotus logo no longer fills the screen on older phones and in-app browsers (Instagram, Facebook). |
 | 2.60.491 | Checkout: "Already a member? Sign in" beside "1 Contact", in the look you chose (option B). |
 | 2.60.490 | Checkout Contact bar: the "Not you? Clear details" line is off, and "Sign in" has a small user icon. |
 | 2.60.489 | Cart panel: tap the product picture or name to open the product. |

@@ -96,7 +96,14 @@ final class LogoLockup
      * of the outlines the petal glow fades in and out; it is only printed while
      * that glow is on, so a shop without it pays nothing for it.
      */
-    public const SVG_OPEN = '<svg class="lgx-i" viewBox="0 0 780 582" aria-hidden="true" focusable="false">';
+    /*
+     * width/height are the phone's default size (26px tall, 780:582 wide), so
+     * the icon has a size of its own before and without the stylesheet. With no
+     * size an inline <svg> is as wide as its box: on browsers that threw away
+     * the height rule (2.60.492) the lotus filled the whole phone screen. The
+     * stylesheet still sets the real size; these only stop the worst case.
+     */
+    public const SVG_OPEN = '<svg class="lgx-i" viewBox="0 0 780 582" width="35" height="26" aria-hidden="true" focusable="false">';
 
     public const SVG_FILL = '<path class="lgx-f" d="M154 103Q399 122 439 424Q194 343 154 103ZM521 2Q407 136 471 389Q640 185 521 2ZM548 387Q642 239 778 249Q738 393 548 387ZM2 481Q190 313 434 475Q189 595 2 481ZM534 456Q707 461 737 544Q613 589 534 456Z"/>';
 

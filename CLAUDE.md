@@ -446,6 +446,15 @@ payment diff that arrives without it.
   or its own `[data-mke]`), because a wrapper installed later never calls an
   earlier one. Any polling or async repaint you add needs the same guard.
 
+- **A newer CSS function next to var() has NO fallback.** A declaration that
+  contains var() is accepted by every browser at parse time and only checked
+  when used, so `height:26px;height:round(nearest,calc(var(--x) * 1px),1px)`
+  is not "26px on old browsers": a browser without round() keeps the second
+  line, finds it invalid, and drops the height altogether. On 2.60.451–.491
+  that made the lotus logo fill the screen on older Android phones and in
+  Instagram's browser (2.60.492). Put round(), color-mix() and friends inside
+  `@supports (<prop>:<fn>(...plain values...))`; `LogoLockupTest` fails the
+  build otherwise. And give every inline <svg> width/height attributes.
 - **`Setting::map()` memoises in a process-level static** as well as the cache.
   Within one long-lived process it will not see writes made after the first
   call. Fine under PHP-FPM, a trap in tests and queue workers.

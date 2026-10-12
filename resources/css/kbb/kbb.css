@@ -5156,11 +5156,15 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 @media (max-width:900px){
   .kbb-home{--hs-peek-bleed:clamp(18px,2vw,28px)}
   .kbb-home .bndl.bndl-car-m.bndl-peek-m .bndl-track{margin-inline-end:calc(-1 * var(--hs-peek-bleed));padding-inline-end:var(--hs-peek-bleed);
-    grid-auto-columns:calc((100% + var(--hs-peek-bleed) - (var(--bndl-per-m) - 1) * var(--kbb-gap)) / var(--bndl-per-m));
-    grid-auto-columns:calc((100% + var(--hs-peek-bleed) - (round(up, var(--bndl-per-m), 1) - 1) * var(--kbb-gap)) / var(--bndl-per-m))}
+    grid-auto-columns:calc((100% + var(--hs-peek-bleed) - (var(--bndl-per-m) - 1) * var(--kbb-gap)) / var(--bndl-per-m))}
   .kbb-home .sec.spt.spt-peek-m .spt-track{margin-inline-end:calc(-1 * var(--hs-peek-bleed));padding-inline-end:calc(var(--hs-peek-bleed) + 6px);
-    grid-auto-columns:calc((100% + var(--hs-peek-bleed) + 6px - (var(--spt-per) - 1) * var(--spt-gap)) / var(--spt-per));
-    grid-auto-columns:calc((100% + var(--hs-peek-bleed) + 6px - (round(up, var(--spt-per), 1) - 1) * var(--spt-gap)) / var(--spt-per))}
+    grid-auto-columns:calc((100% + var(--hs-peek-bleed) + 6px - (var(--spt-per) - 1) * var(--spt-gap)) / var(--spt-per))}
+  /* 2.60.492: round() only where it exists (see the logo's note): with var()
+     inside, a browser without it threw the whole column width away. */
+  @supports (width:round(up,1px,1px)){
+    .kbb-home .bndl.bndl-car-m.bndl-peek-m .bndl-track{grid-auto-columns:calc((100% + var(--hs-peek-bleed) - (round(up, var(--bndl-per-m), 1) - 1) * var(--kbb-gap)) / var(--bndl-per-m))}
+    .kbb-home .sec.spt.spt-peek-m .spt-track{grid-auto-columns:calc((100% + var(--hs-peek-bleed) + 6px - (round(up, var(--spt-per), 1) - 1) * var(--spt-gap)) / var(--spt-per))}
+  }
   /* One card per swipe, however hard the flick. */
   .kbb-home .bndl.bndl-car-m .bndl-track>*,.kbb-home .sec.spt .spt-track>.spt-cell{scroll-snap-stop:always}
 }
@@ -5856,7 +5860,8 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
   --u:1px}
 /* Whole-pixel heights: the server prints integers and a phone rounds its fit. */
 .logo.lgx>.lgx-i{display:block;flex:none;width:auto;height:calc(var(--lg-id,38) * var(--u));
-  margin-inline-end:calc(var(--lg-gd,8) * var(--u));overflow:visible;shape-rendering:geometricPrecision}
+  margin-inline-end:calc(var(--lg-gd,8) * var(--u));overflow:visible;shape-rendering:geometricPrecision;
+  max-width:86px;max-height:64px}
 .lgx .lgx-f{fill:var(--lg-p,#D94A76)}
 .lgx .lgx-o,.lgx .lgx-o2{fill:none;stroke:var(--lg-l,#E5567E);stroke-width:20;stroke-linecap:round;stroke-linejoin:round}
 .lgx .lgx-t{display:flex;flex-direction:column;min-width:0;font-weight:650}
@@ -5891,8 +5896,7 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
 }
 @media (max-width:900px){
   .logo.lgx{padding:calc(var(--lg-ym,0) * 1px) calc(var(--lg-xm,0) * 1px)}
-  .logo.lgx>.lgx-i{height:calc(var(--lg-im,26) * var(--u));height:round(nearest,calc(var(--lg-im,26) * var(--u)),1px);
-    margin-inline-end:calc(var(--lg-gm,5) * var(--u))}
+  .logo.lgx>.lgx-i{height:calc(var(--lg-im,26) * var(--u));margin-inline-end:calc(var(--lg-gm,5) * var(--u));max-width:59px;max-height:44px}
   .lgx .lgx-w{font-size:calc(var(--lg-sm,14) * var(--u))}
   /* The tagline beneath the name, in the name's column, as on a computer;
      a phone has no room for its rules. */
@@ -5910,6 +5914,17 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
     header .hin>.logo.lgx .lgx-g,.mnav-h>.logo.lgx .lgx-g,.co-head .in>.logo.lgx .lgx-g{
       font-size:clamp(0px,calc((100cqi - var(--lg-wf,146.3) * 1px) * 1000),calc(var(--lg-tm,8) * 1px));
       letter-spacing:clamp(-.03em,calc((100cqi - var(--lg-r,173.6) * 1px) * 1000),.04em)}
+  }
+}
+/* 2.60.492: the phone icon's whole-pixel height, with round() ONLY inside
+   @supports. A declaration with var() in it is accepted by every browser and
+   checked later, so a browser without round() (Android before Chrome 125,
+   older in-app browsers) dropped the whole height and the lotus filled the
+   screen; the plain height in the 900px block above never got a chance. The
+   test here has no var(), so such a browser skips this block. */
+@supports (height:round(nearest,1px,1px)){
+  @media (max-width:900px){
+    .logo.lgx>.lgx-i{height:round(nearest,calc(var(--lg-im,26) * var(--u)),1px)}
   }
 }
 @media (max-width:340px){

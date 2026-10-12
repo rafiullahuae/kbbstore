@@ -1,6 +1,6 @@
 # KBB Master Plan — live tracking
 
-**As at version 2.60.491 (12 October 2026).** Tick items as they ship; add the version that shipped them.
+**As at version 2.60.492 (12 October 2026).** Tick items as they ship; add the version that shipped them.
 
 > ## ▶ Handing over? Start with `docs/HANDOVER.md`
 >
@@ -35,7 +35,7 @@ Legend: **[x]** done · **[~]** partly done · **[ ]** not started · **▲** bl
 |---|---|
 | Ledger completion at last count | **36%** (110 Fn ☑ / 94 Dsp ☑ of 305) |
 | **Counted now** | **91%** across 24 phases, 312 items — and that number is *counted*, not estimated: `tools/progress-dashboard/build.php` reads the checkboxes out of this file. A part-done item counts as half; an item struck as not-wanted is left out of the total entirely. Open `KBB-Progress-Dashboard.html` |
-| Releases shipped this stretch | 2.38.0 → **2.60.491**. Every package from .400 to .491 is summarised in `docs/HANDOVER.md` §8 and detailed in `docs/CHANGELOG.md`; one line per release in `docs/RELEASE-HISTORY.md`. Handed over 11–12 October: **.484** (marketing footer words, locked-email note), **.485** (cart panel free-delivery bar), **.486** (breadcrumb on one line + type controls), **.487** (payment methods per country, COD UAE only), **.488** (hotfix: campaign page no longer pulls the admin back), **.489** (cart panel product links), **.490** (checkout Contact bar: "Not you?" off, user icon before Sign in), **.491** ("Already a member? Sign in", option B). Confirm on the live Core Updates history which are applied |
+| Releases shipped this stretch | 2.38.0 → **2.60.492**. Every package from .400 to .492 is summarised in `docs/HANDOVER.md` §8 and detailed in `docs/CHANGELOG.md`; one line per release in `docs/RELEASE-HISTORY.md`. Handed over 11–12 October: **.484** (marketing footer words, locked-email note), **.485** (cart panel free-delivery bar), **.486** (breadcrumb on one line + type controls), **.487** (payment methods per country, COD UAE only), **.488** (hotfix: campaign page no longer pulls the admin back), **.489** (cart panel product links), **.490** (checkout Contact bar: "Not you?" off, user icon before Sign in), **.491** ("Already a member? Sign in", option B), **.492** (urgent: logo size on older phones and in-app browsers). Confirm on the live Core Updates history which are applied |
 | **Server drift, found 2026-09-10** | Rafi uploaded the real app directly from the server for a GitHub sync. Comparison showed the live server is genuinely at **2.60.36** — 2.60.37 through 2.60.41 (SEO description quality, the Core Updates escaping/session bugs, and the patch archive system) were built, packaged, and handed over, but never actually applied — almost certainly because the server got stuck exactly at 2.60.36, which is the version whose own release notes caused the Core Updates screen to break. GitHub now reflects the verified 2.60.36 state, not the assumed 2.60.41 one. **2.60.41 (a superset of everything since) still needs to be applied to catch the live site up** |
 | Modules identified | **31** — 29 from the plugin + 2 native to this app |
 | Modules registered in the framework | **31** — *2.44.0* |

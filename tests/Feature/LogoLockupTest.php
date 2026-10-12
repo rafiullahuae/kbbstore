@@ -370,3 +370,47 @@ it('draws the icon at whole pixels on a computer', function () {
     expect(app(HeaderSettings::class)->lockup()['style'])->toContain('--lg-id:40')
         ->and(lgCss())->toContain('round(nearest,calc(var(--lg-im,26) * var(--u)),1px)');
 });
+
+it('keeps the lotus its own size on a browser without CSS round(), and never lets any shop stylesheet use round() unguarded', function () {
+    /*
+     * 2.60.492. The owner, 12 October, on a phone screenshot opened from
+     * Instagram abroad: "the header is completely messed up. our icon is
+     * everywhere on the screen". DEFECT: `height:round(nearest,calc(var(...)
+     * ...),1px)` followed its plain fallback in the 900px block. A declaration
+     * holding var() is accepted by EVERY browser at parse time and only checked
+     * when used, so a browser without round() (Android WebView before Chrome
+     * 125, older in-app browsers) kept that line, found it invalid and dropped
+     * the height altogether -- and an <svg> with no size is as wide as its box.
+     * The bundles and Spotted carousels lost their column width the same way.
+     * MUTATION, run: put the round() line back next to its fallback -> red on
+     * the guard loop; drop width/height from SVG_OPEN -> red on the first
+     * expect; drop max-height:64px -> red on the cap line.
+     */
+    expect(LogoLockup::SVG_OPEN)->toContain(' width="35" height="26" ')
+        ->and(LogoLockup::svg(false))->toStartWith('<svg class="lgx-i" viewBox="0 0 780 582" width="35" height="26" ')
+        ->and(LogoLockup::svg(false, 'use'))->toContain('width="35" height="26"')
+        ->and(lgCss())->toContain('max-width:86px;max-height:64px}')
+        ->and(lgCss())->toContain('max-width:59px;max-height:44px}');
+
+    // No shop stylesheet uses round() or color-mix() together with var()
+    // outside an @supports block: walk every declaration, keeping the stack of
+    // blocks it sits in.
+    $found = [];
+    foreach (glob(resource_path('css/kbb/*.css')) as $file) {
+        $css = preg_replace('#/\*.*?\*/#s', '', (string) file_get_contents($file));
+        $stack = [];
+        preg_match_all('/([^{};]*)([{};])/', $css, $m, PREG_SET_ORDER);
+        foreach ($m as [, $pre, $tok]) {
+            if ($tok === '{') {
+                $stack[] = trim($pre);
+            } elseif ($tok === '}') {
+                array_pop($stack);
+            } elseif (str_contains($pre, 'var(') && preg_match('/\b(round|color-mix)\(/', $pre)
+                && ! str_starts_with(trim($pre), '--')
+                && ! array_filter($stack, fn ($b) => str_starts_with($b, '@supports'))) {
+                $found[] = basename($file).': '.trim($pre);
+            }
+        }
+    }
+    expect($found)->toBe([], 'round() or color-mix() with var() outside @supports -- an older browser drops the whole value');
+});

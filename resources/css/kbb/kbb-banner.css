@@ -200,17 +200,12 @@
   /* A wash of the brand colour rather than the colour flat: at full strength
      a saturated tint under text is harsh, and the operator picks the colour
      for the brand, not for its legibility. */
-  background:
-    linear-gradient(135deg,
-      color-mix(in srgb, var(--kbb-banner-tint) 92%, #120c10) 0%,
-      color-mix(in srgb, var(--kbb-banner-tint) 74%, #120c10) 100%);
+  /* A browser without color-mix() gets the colour flat (2.60.492). */
+  background:var(--kbb-banner-tint);
 }
 
 .kbb-banner--split.kbb-banner--dark .kbb-banner__panel{
-  background:
-    linear-gradient(135deg,
-      color-mix(in srgb, var(--kbb-banner-tint) 17%, #ffffff) 0%,
-      color-mix(in srgb, var(--kbb-banner-tint) 7%, #ffffff) 100%);
+  background:#fff;
 }
 
 /* --------------------------------------------------------------- 3. SOFT TINT
@@ -222,18 +217,8 @@
 
 .kbb-banner__wash{
   z-index:1;
-  background:
-    /* Two soft radial blooms over a flat base. Flat colour at this size reads
-       as an error state; the blooms give it somewhere to look. */
-    radial-gradient(120% 130% at 12% 8%,
-      color-mix(in srgb, var(--kbb-banner-tint) 62%, #ffffff) 0%,
-      rgba(255,255,255,0) 58%),
-    radial-gradient(90% 120% at 96% 96%,
-      color-mix(in srgb, var(--kbb-banner-tint) 46%, #120c10) 0%,
-      rgba(255,255,255,0) 62%),
-    linear-gradient(118deg,
-      color-mix(in srgb, var(--kbb-banner-tint) 88%, #120c10) 0%,
-      color-mix(in srgb, var(--kbb-banner-tint) 66%, #120c10) 100%);
+  /* Flat for a browser without color-mix(); the blooms are below (2.60.492). */
+  background:var(--kbb-banner-tint);
 }
 
 .kbb-banner--tint .kbb-banner__inner{
@@ -252,13 +237,7 @@
 .kbb-banner--tint .kbb-banner__heading{font-size:clamp(22px, 3.2vw, 38px)}
 
 .kbb-banner--tint.kbb-banner--dark .kbb-banner__wash{
-  background:
-    radial-gradient(120% 130% at 12% 8%, #ffffff 0%, rgba(255,255,255,0) 58%),
-    radial-gradient(90% 120% at 96% 96%,
-      color-mix(in srgb, var(--kbb-banner-tint) 26%, #ffffff) 0%, rgba(255,255,255,0) 62%),
-    linear-gradient(118deg,
-      color-mix(in srgb, var(--kbb-banner-tint) 20%, #ffffff) 0%,
-      color-mix(in srgb, var(--kbb-banner-tint) 9%, #ffffff) 100%);
+  background:#fff;
 }
 
 /* ------------------------------------------------------------------- colour
@@ -325,4 +304,47 @@
 @media (max-width:400px){
   .kbb-banner{width:calc(100% - 24px);--kbb-banner-radius:14px}
   .kbb-banner--flush{width:100%}
+}
+
+/* 2.60.492: the colour washes only where color-mix() exists. A declaration
+   with var() in it is accepted by every browser and checked later, so a
+   browser without color-mix() dropped the whole background and the panel went
+   see-through behind its text. The test carries no var(), so such a browser
+   skips this block and keeps the flat colours above. */
+@supports (color:color-mix(in srgb,red,red)){
+  .kbb-banner__panel{
+    background:
+      linear-gradient(135deg,
+        color-mix(in srgb, var(--kbb-banner-tint) 92%, #120c10) 0%,
+        color-mix(in srgb, var(--kbb-banner-tint) 74%, #120c10) 100%);
+  }
+  .kbb-banner--split.kbb-banner--dark .kbb-banner__panel{
+    background:
+      linear-gradient(135deg,
+        color-mix(in srgb, var(--kbb-banner-tint) 17%, #ffffff) 0%,
+        color-mix(in srgb, var(--kbb-banner-tint) 7%, #ffffff) 100%);
+  }
+  .kbb-banner__wash{
+    background:
+      /* Two soft radial blooms over a flat base. Flat colour at this size
+         reads as an error state; the blooms give it somewhere to look. */
+      radial-gradient(120% 130% at 12% 8%,
+        color-mix(in srgb, var(--kbb-banner-tint) 62%, #ffffff) 0%,
+        rgba(255,255,255,0) 58%),
+      radial-gradient(90% 120% at 96% 96%,
+        color-mix(in srgb, var(--kbb-banner-tint) 46%, #120c10) 0%,
+        rgba(255,255,255,0) 62%),
+      linear-gradient(118deg,
+        color-mix(in srgb, var(--kbb-banner-tint) 88%, #120c10) 0%,
+        color-mix(in srgb, var(--kbb-banner-tint) 66%, #120c10) 100%);
+  }
+  .kbb-banner--tint.kbb-banner--dark .kbb-banner__wash{
+    background:
+      radial-gradient(120% 130% at 12% 8%, #ffffff 0%, rgba(255,255,255,0) 58%),
+      radial-gradient(90% 120% at 96% 96%,
+        color-mix(in srgb, var(--kbb-banner-tint) 26%, #ffffff) 0%, rgba(255,255,255,0) 62%),
+      linear-gradient(118deg,
+        color-mix(in srgb, var(--kbb-banner-tint) 20%, #ffffff) 0%,
+        color-mix(in srgb, var(--kbb-banner-tint) 9%, #ffffff) 100%);
+  }
 }
