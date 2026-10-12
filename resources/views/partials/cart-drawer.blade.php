@@ -146,11 +146,21 @@
                         // only when a line is a set, so this costs no query.
                         $kbbSet = \App\Support\SetContents::fromProduct($p, (int) $item->unit_price);
                         $kbbDBt = $kbbBundleLines[$item->id] ?? null;
+                        // (Lane CPL) The picture and the name open the product, as the
+                        // Browsed tab's picture always has. The owner, 12 October: "on the
+                        // cart panel, the product is not clickable, neither product image.
+                        // it should be clickable and go to the product page". Plain <a>:
+                        // kbb.css's `a{color:inherit;text-decoration:none}` keeps both
+                        // looking as they did, and `.kc-th` styles the class, not the tag.
+                        // A line whose product no longer exists keeps the unlinked boxes.
+                        // url() is the slug the line already loaded: no query.
+                        $kbbLineUrl = $p ? $p->url() : null;
                     @endphp
                     <div class="kc-item">
-                        <div class="kc-th" style="{{ $thumb }}">{{ $imgCss !== '' ? '' : Gradient::initials($brand ?: ($name ?? '?')) }}</div>
+                        @if ($kbbLineUrl)<a class="kc-th" href="{{ $kbbLineUrl }}" style="{{ $thumb }}" aria-label="{{ $name }}">{{ $imgCss !== '' ? '' : Gradient::initials($brand ?: ($name ?? '?')) }}</a>@else<div class="kc-th" style="{{ $thumb }}">{{ $imgCss !== '' ? '' : Gradient::initials($brand ?: ($name ?? '?')) }}</div>@endif{{-- Blade eats the newline after a closing endif; this one keeps it. --}}
+
                         <div class="kc-mid">
-                            <div class="kc-nm">{{ $name }}</div>
+                            <div class="kc-nm">@if ($kbbLineUrl)<a href="{{ $kbbLineUrl }}">{{ $name }}</a>@else{{ $name }}@endif</div>
                             @includeWhen($kbbDBt, 'partials.buy-together.line-tag', ['cls' => 'kc-bt', 'percent' => $kbbDBt['percent'] ?? 0])@if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'drawer', 'key' => 'd' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="kc-qty">
                                 <button type="button" data-kcq="{{ $item->id }}" data-d="-1">−</button>
                                 <span>{{ $item->quantity }}</span>

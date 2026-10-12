@@ -1,6 +1,6 @@
 # KBB Master Plan — live tracking
 
-**As at version 2.60.488 (12 October 2026).** Tick items as they ship; add the version that shipped them.
+**As at version 2.60.489 (12 October 2026).** Tick items as they ship; add the version that shipped them.
 
 > ## ▶ Handing over? Start with `docs/HANDOVER.md`
 >

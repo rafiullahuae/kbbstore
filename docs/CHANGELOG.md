@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.489
+**Cart panel: tap the product picture or name to open the product.** Apply after .488.
+Runs its migration (clears caches).
+
+| Your request | Now |
+|---|---|
+| "on the cart panel, the product is not clickable, neither product image. it should be clickable and go to the product page ... this issue is only in the cart panel" | In the bag's panel, each product's picture and name now open its product page (phone and desktop, measured: both land on the product). They look exactly as before. Quantity, remove and price are unchanged, and nothing else on the shop moved |
+
+Files: resources/views/partials/cart-drawer.blade.php, migration 2027_10_28_600000.
+
 ## 2.60.488
 **Hotfix: while a campaign is sending, the admin no longer jumps back to the campaign page.** Apply after .487.
 Runs its migration (clears caches). Hard refresh the admin once.

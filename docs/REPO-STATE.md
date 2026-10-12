@@ -13,9 +13,9 @@ a session went into establishing which was which.
 
 | | |
 |---|---|
-| **Repo synced to** | **2.60.488** |
+| **Repo synced to** | **2.60.489** |
 | Date | 2026-10-12 |
-| Previous entry point | 2.60.487 |
+| Previous entry point | 2.60.488 |
 | Server version at sync | **NOT RECORDED.** Every package to 2.60.485 has been handed to the owner, who applies them in order; the last two handed over were .484 and .485 (11 Oct). Confirm on Platform → Core Updates → History or `php artisan migrate:status \| tail` and write the answer here. `docs/HANDOVER.md` is the handover entry point |
 | Verified how | The 2.60.325 package was built from `3b372db` with `php artisan kbb:package`, and all **155** files in it were compared byte-for-byte against that tree before it was handed over. `UpdatePackage::verify()` accepts it |
 

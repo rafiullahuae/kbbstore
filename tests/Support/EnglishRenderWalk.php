@@ -1655,6 +1655,27 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * "on the cart panel, the product is not clickable, neither product
+             * image. it should be clickable and go to the product page" -- the
+             * owner, 12 October (Lane CPL). Each basket line in the cart panel:
+             * the picture becomes the same <a class="kc-th"> the Browsed tab
+             * always used, and the name gets a plain <a> inside .kc-nm. Looks
+             * unchanged (kbb.css `a{color:inherit;text-decoration:none}`). One
+             * rule per walk-basket product, because the replacement needs its
+             * slug; the Browsed tab's lines start <a class="kc-th"> and are not
+             * matched. The panel is drawn on /cart and /checkout (with a basket).
+             */
+            'the cart panel line links to its product: Relief Sun (Lane CPL)' => [
+                'pattern' => '#<div class="kc-th" style="([^"]*)">([^<]*)</div>(\s*<div class="kc-mid">\s*)<div class="kc-nm">(Relief Sun Rice \+ Probiotics SPF50\+)</div>#',
+                'with' => '<a class="kc-th" href="/product/relief-sun-rice-probiotics-spf50/" style="$1" aria-label="$4">$2</a>$3<div class="kc-nm"><a href="/product/relief-sun-rice-probiotics-spf50/">$4</a></div>',
+                'hits' => 2,
+            ],
+            'the cart panel line links to its product: Glow Deep Serum (Lane CPL)' => [
+                'pattern' => '#<div class="kc-th" style="([^"]*)">([^<]*)</div>(\s*<div class="kc-mid">\s*)<div class="kc-nm">(Glow Deep Serum Rice \+ Alpha Arbutin)</div>#',
+                'with' => '<a class="kc-th" href="/product/glow-deep-serum-rice-alpha-arbutin/" style="$1" aria-label="$4">$2</a>$3<div class="kc-nm"><a href="/product/glow-deep-serum-rice-alpha-arbutin/">$4</a></div>',
+                'hits' => 2,
+            ],
+            /*
              * "on the categories pages, the breakcrums should say like Home >
              * Collecton > Skincare sets ... the collection will take to the
              * all products page" -- the owner, 10 October (Lane BC). Every

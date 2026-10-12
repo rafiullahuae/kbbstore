@@ -5,10 +5,11 @@ entry for each version, with the owner's words, admin paths and files, is
 there). Versions before 2.60.72 are summarised in `KBB-Master-Plan.md` ("What
 shipped" tables and the phases) and in the timeline in `docs/HANDOVER.md` §13.
 
-**269 entries, 2.60.72 → 2.60.488.**
+**270 entries, 2.60.72 → 2.60.489.**
 
 | Version | What it did |
 |---|---|
+| 2.60.489 | Cart panel: tap the product picture or name to open the product. |
 | 2.60.488 | Hotfix: while a campaign is sending, the admin no longer jumps back to the campaign page. |
 | 2.60.487 | Payments: choose the countries each payment method is offered in. Cash on delivery is UAE only. |
 | 2.60.486 | Breadcrumb: one line on every page (fades out at the end), no tall phone rows, and font size and line spacing controls. |
