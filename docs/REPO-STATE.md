@@ -13,9 +13,9 @@ a session went into establishing which was which.
 
 | | |
 |---|---|
-| **Repo synced to** | **2.60.490** |
+| **Repo synced to** | **2.60.491** |
 | Date | 2026-10-12 |
-| Previous entry point | 2.60.489 |
+| Previous entry point | 2.60.490 |
 | Server version at sync | **2.60.490** — confirmed by the owner on 12 Oct 2026 (Platform → Core Updates shows "Version 2.60.490"; History lists .486–.490 applied, newest first). Server and repo are level |
 | Verified how | The 2.60.325 package was built from `3b372db` with `php artisan kbb:package`, and all **155** files in it were compared byte-for-byte against that tree before it was handed over. `UpdatePackage::verify()` accepts it |
 

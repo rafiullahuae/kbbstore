@@ -301,6 +301,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // Fields & attention gains remember_clear ("“Not you? Clear details”
     // link", OFF) after remember_on, and Coupon, express & sign in gains
     // signin_icon ("Small user icon before “Sign in”", ON) last.
+    // ▲ Lane CSM (12 October), the owner's pick (option B), spliced in:
+    // Coupon, express & sign in gains signin_member ("“Already a member?”
+    // before “Sign in”", ON) last.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
@@ -741,7 +744,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // font size and line spacing, phone and desktop -- the owner's request.
     // 787 -> 789 (Lane CSI): checkout-page remember_clear and signin_icon,
     // the owner's request.
-    expect($compared)->toBe(789, 'the number of controls drawn changed');
+    // 789 -> 790 (Lane CSM): checkout-page signin_member, "Already a
+    // member?" before Sign in -- the owner's pick, option B.
+    expect($compared)->toBe(790, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

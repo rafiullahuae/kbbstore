@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.491
+**Checkout: "Already a member? Sign in" beside "1 Contact", in the look you chose (option B).** Apply after .490.
+Runs its migrations (one Arabic draft, clears caches).
+
+| Your request | Now |
+|---|---|
+| "Yes option B is fine" (of the four "Already a member? Sign in" previews) | Beside "1 Contact", a guest now sees "Already a member?" in light grey, then the user icon and "Sign in" in a darker grey with an underline — phone and desktop, on one line (measured: 4px between them, no sideways scroll, "Sign in" still opens the sign-in window on the first tap). Signed-in customers see none of it, as before. Switch: Appearance → Checkout page → Coupon, express & sign in → "“Already a member?” before “Sign in”" (on). The user icon stays on its own switch just above it |
+| Arabic | The Arabic words (لديك حساب بالفعل؟) arrive as a draft in Translation → Strings for you to approve, like every new sentence |
+
+Files: app/Services/CheckoutPage.php, app/Services/Translation/InterfaceStrings.php, app/Services/Translation/ArabicInterfaceDrafts.php, resources/views/store/checkout.blade.php, resources/css/kbb/kbb-checkout.css, public/build, migrations 2027_10_28_800000 and 2027_10_28_800100.
+
 ## 2.60.490
 **Checkout Contact bar: the "Not you? Clear details" line is off, and "Sign in" has a small user icon.** Apply after .489.
 Runs its migration (clears caches).

@@ -313,7 +313,7 @@ it('offers "Sign in" and its window to a guest, and to nobody signed in', functi
     $html = csoPage(csoCart());
     preg_match('#<h2><span class="n">1</span>.*?</h2>#s', $html, $h2);
 
-    expect($h2[0] ?? '')->toContain('<a class="co-signin has-ic" href="/my-account/" data-kbb-signin><svg ')
+    expect($h2[0] ?? '')->toContain('<a class="co-signin has-ic is-b" href="/my-account/" data-kbb-signin><svg ')
         ->and(substr_count($html, '<dialog class="co-si" id="kbbSignIn"'))->toBe(1)
         ->and(strpos($html, '<dialog class="co-si"'))->toBeGreaterThan(strpos($html, '</form>'));
 
@@ -518,14 +518,14 @@ it('puts a small user icon just left of "Sign in", and takes it away when switch
     $html = csoPage(csoCart());
     preg_match('#<h2><span class="n">1</span>.*?</h2>#s', $html, $h2);
 
-    expect($h2[0] ?? '')->toMatch('#<a class="co-signin has-ic" href="/my-account/" data-kbb-signin><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">.*?</svg>Sign in</a>#')
+    expect($h2[0] ?? '')->toMatch('#<a class="co-signin has-ic is-b" href="/my-account/" data-kbb-signin><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">.*?</svg>Sign in</a>#')
         ->and(CheckoutPage::TABS['express'][2])->toContain('signin_icon')
         ->and(file_get_contents(resource_path('css/kbb/kbb-checkout.css')))->toContain('.co-signin.has-ic svg{width:14px;height:14px;flex:none}');
 
     app(CheckoutPage::class)->save(['signin_icon' => false]);
     csoForget();
     preg_match('#<h2><span class="n">1</span>.*?</h2>#s', csoPage(csoCart()), $off);
-    expect($off[0] ?? '')->toContain('<a class="co-signin" href="/my-account/" data-kbb-signin>Sign in</a>');
+    expect($off[0] ?? '')->toContain('<a class="co-signin is-b" href="/my-account/" data-kbb-signin>Sign in</a>');
 
     // Last, because acting as the customer keeps them signed in for the rest
     // of the case: signed in, there is no line to put an icon on.
@@ -534,4 +534,40 @@ it('puts a small user icon just left of "Sign in", and takes it away when switch
     $customer = csoCustomer();
     $signedIn = (string) csoShopper(csoCart($customer->id))->actingAs($customer, 'customer')->get('/checkout')->assertOk()->getContent();
     expect($signedIn)->not->toContain('co-signin')->and($signedIn)->toContain('<span class="n">1</span>');
+});
+
+it('says "Already a member?" before "Sign in" in option B\'s greys, and takes it away when switched off', function () {
+    /*
+     * Lane CSM. The owner, 12 October, shown four looks for "Already a member?
+     * Sign in" on the checkout: "Yes option B is fine". DEFECT this guards:
+     * "Sign in" alone, the words after the link, the words drawn as part of the
+     * link, the words left for a customer who is already signed in, or the
+     * switch-off leaving the new grey on the plain link.
+     * MUTATION, run: ship `signin_member` false -> red on the first expect;
+     * move the <span> after the </a> in checkout.blade.php -> red on the same
+     * line; drop `.is-b` from the CSS selector -> red on the stylesheet line.
+     */
+    $html = csoPage(csoCart());
+    preg_match('#<h2><span class="n">1</span>.*?</h2>#s', $html, $h2);
+
+    expect($h2[0] ?? '')->toMatch('#<span class="co-signin-q">Already a member\?</span><a class="co-signin has-ic is-b" href="/my-account/" data-kbb-signin><svg [^>]*>.*?</svg>Sign in</a>#')
+        ->and(substr_count($html, 'co-signin-q'))->toBe(1)
+        ->and(CheckoutPage::TABS['express'][2])->toContain('signin_member')
+        ->and(file_get_contents(resource_path('css/kbb/kbb-checkout.css')))
+            ->toContain('.co-signin-q{margin-inline-start:auto;font-size:12.5px;font-weight:400;line-height:1.2;color:#B0B0B0;white-space:nowrap}')
+            ->toContain('.co-signin.is-b{font-weight:400;color:#7A7A7A;text-decoration-thickness:1px}');
+
+    // Off: the link exactly as 2.60.490 drew it, with no grey words before it.
+    app(CheckoutPage::class)->save(['signin_member' => false]);
+    csoForget();
+    preg_match('#<h2><span class="n">1</span>.*?</h2>#s', csoPage(csoCart()), $off);
+    expect($off[0] ?? '')->not->toContain('co-signin-q')
+        ->and($off[0] ?? '')->toMatch('#<a class="co-signin has-ic" href="/my-account/" data-kbb-signin><svg #');
+
+    // Signed in: neither the words nor the link.
+    app(CheckoutPage::class)->save(['signin_member' => true]);
+    csoForget();
+    $customer = csoCustomer();
+    $signedIn = (string) csoShopper(csoCart($customer->id))->actingAs($customer, 'customer')->get('/checkout')->assertOk()->getContent();
+    expect($signedIn)->not->toContain('co-signin-q')->and($signedIn)->not->toContain('Already a member?');
 });

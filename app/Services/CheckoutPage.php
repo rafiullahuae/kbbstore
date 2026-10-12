@@ -1120,6 +1120,14 @@ class CheckoutPage
         'signin_icon'   => ['bool', 'Small user icon before “Sign in”', true,
                             'On, as asked: a small person icon sits just left of "Sign in". Off shows the word alone, as before.'],
         /*
+         * Lane CSM. The owner, 12 October, choosing option B of four previews
+         * ("Already a member? Sign in"): "Yes option B is fine". Ships ON, his
+         * pick: a light grey "Already a member?" before a darker grey,
+         * underlined "Sign in".
+         */
+        'signin_member' => ['bool', '“Already a member?” before “Sign in”', true,
+                            'On, as chosen (option B): "Already a member?" in light grey, then "Sign in" in a darker grey with an underline. Off shows "Sign in" alone in the darker, bolder style it had before.'],
+        /*
          * Lane QK12. The owner, 9 October, on phone screenshots of the summary
          * over Place order and of the Order summary at the top of the phone
          * checkout ("VAT inclusive (5%)  AED 21.67"): "remove the vat price
@@ -1248,7 +1256,7 @@ class CheckoutPage
                            ['cline_on', 'cline_coupon', 'cline_text', 'cline_text_ar']],
         /* Lane CO, appended so every other tab keeps its place. */
         'express'      => ['Coupon, express & sign in', 'The coupon box, the Apple Pay / Google Pay row under it with its "Express checkout" heading and "OR" line, and the "Sign in" link beside "1 Contact" with its sign-in window. One set of values for both surfaces.',
-                           ['coupon_head', 'xc_head', 'xc_head_ar', 'signin_on', 'signin_icon']],
+                           ['coupon_head', 'xc_head', 'xc_head_ar', 'signin_on', 'signin_icon', 'signin_member']],
     ];
 
     /**

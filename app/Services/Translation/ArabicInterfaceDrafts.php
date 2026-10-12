@@ -1272,6 +1272,7 @@ final class ArabicInterfaceDrafts
             'store.checkout.or_pay_with' => 'أو ادفع عبر',
             'store.checkout.express_or' => 'أو',
             'store.checkout.signin_link' => 'تسجيل الدخول',
+            'store.checkout.signin_member' => 'لديك حساب بالفعل؟',
             'store.checkout.signin_title' => 'تسجيل الدخول',
             'store.checkout.signin_lead' => 'مرحبًا بعودتك. سنملأ بياناتك المحفوظة.',
             'store.checkout.signin_email' => 'البريد الإلكتروني',

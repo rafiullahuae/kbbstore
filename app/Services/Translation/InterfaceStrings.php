@@ -1550,6 +1550,8 @@ final class InterfaceStrings
             // under the coupon box now, and the sign-in window beside "1 Contact".
             'checkout.express_or' => 'OR',
             'checkout.signin_link' => 'Sign in',
+            // Lane CSM: the light grey words before "Sign in" (option B).
+            'checkout.signin_member' => 'Already a member?',
             'checkout.signin_title' => 'Sign in',
             'checkout.signin_lead' => 'Welcome back. We will fill in your saved details.',
             'checkout.signin_email' => 'Email address',

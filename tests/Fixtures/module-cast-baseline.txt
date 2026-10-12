@@ -5732,6 +5732,17 @@ checkout_page|signin_icon|bool|"no"|true
 checkout_page|signin_icon|bool|1|true
 checkout_page|signin_icon|bool|0|false
 checkout_page|signin_icon|bool|null|false
+checkout_page|signin_member|bool|true|true
+checkout_page|signin_member|bool|false|false
+checkout_page|signin_member|bool|"1"|true
+checkout_page|signin_member|bool|"0"|false
+checkout_page|signin_member|bool|""|false
+checkout_page|signin_member|bool|"on"|true
+checkout_page|signin_member|bool|"off"|true
+checkout_page|signin_member|bool|"no"|true
+checkout_page|signin_member|bool|1|true
+checkout_page|signin_member|bool|0|false
+checkout_page|signin_member|bool|null|false
 checkout_page|vat_amount|bool|true|true
 checkout_page|vat_amount|bool|false|false
 checkout_page|vat_amount|bool|"1"|true

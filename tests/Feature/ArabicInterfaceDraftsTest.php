@@ -721,7 +721,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // +56 (Lane RV): the review request email (email.review_request.*) and its
     // page (store.review_request.*), seeded by
     // 2027_10_27_700200_seed_review_request_arabic_drafts.
-    expect($ui['drafts'])->toBe(1615, 'the shipped Arabic is not showing as drafts to review')
+    // +1 (Lane CSM): "Already a member?" before the checkout's Sign in
+    // (store.checkout.signin_member), seeded by
+    // 2027_10_28_800000_seed_checkout_signin_member_arabic_draft.
+    expect($ui['drafts'])->toBe(1616, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

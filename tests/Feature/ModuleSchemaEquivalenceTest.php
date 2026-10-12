@@ -114,6 +114,8 @@
  *   (Lane CSI: checkout_page `remember_clear` and `signin_icon` -- the
  *   Contact bar's "Not you?" link, now off, and the user icon before "Sign
  *   in" -- 22 lines inserted, 0 modified, 0 removed.)
+ *   (Lane CSM: checkout_page `signin_member` -- "Already a member?" before
+ *   "Sign in", option B -- 11 lines inserted, 0 modified, 0 removed.)
  *
  *   Take the new rows and nothing else: rebuild the corpus, then for every line
  *   whose identity (module|key|type|input) is already in the fixture, keep the

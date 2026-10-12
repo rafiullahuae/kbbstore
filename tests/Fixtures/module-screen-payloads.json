@@ -11153,6 +11153,16 @@
             "options": null,
             "default": true,
             "value": true
+          },
+          {
+            "key": "signin_member",
+            "name": "signin_member",
+            "type": "bool",
+            "label": "“Already a member?” before “Sign in”",
+            "help": "On, as chosen (option B): \"Already a member?\" in light grey, then \"Sign in\" in a darker grey with an underline. Off shows \"Sign in\" alone in the darker, bolder style it had before.",
+            "options": null,
+            "default": true,
+            "value": true
           }
         ]
       }

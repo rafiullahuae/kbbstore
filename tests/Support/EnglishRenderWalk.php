@@ -2592,7 +2592,9 @@ KBB_BH_CSS;
             // icon" -- the link carries the header's account icon before its
             // word (Appearance -> Checkout page -> Coupon, express & sign in).
             'the "Sign in" link on the Contact bar (Lane CO)' => [
-                'pattern' => '#<a class="co-signin has-ic" href="/my-account/" data-kbb-signin><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">.*?</svg>Sign in</a>#',
+                // Lane CSM, 12 October: option B, "Already a member?" in light
+                // grey before the link, which takes .is-b.
+                'pattern' => '#<span class="co-signin-q">Already a member\?</span><a class="co-signin has-ic is-b" href="/my-account/" data-kbb-signin><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">.*?</svg>Sign in</a>#',
                 'hits' => 1,
             ],
             'the checkout\'s Sign in window, after the form (Lane CO)' => [

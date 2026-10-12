@@ -431,13 +431,14 @@ Confirm with him before acting on any of these:
 
 ---
 
-## 8. Recently shipped (2.60.400 → 2.60.490)
+## 8. Recently shipped (2.60.400 → 2.60.491)
 
 Packages handed to the owner in this stretch, newest first. Full detail and
 admin paths in `docs/CHANGELOG.md`.
 
 | Version | What |
 |---|---|
+| .491 | Checkout: "Already a member? Sign in" (option B, owner's pick) — Appearance → Checkout page → Coupon, express & sign in |
 | .490 | Checkout Contact bar: "Not you? Clear details" off (Checkout page → Fields & attention), small user icon before "Sign in" (Checkout page → Coupon, express & sign in) |
 | .489 | Cart panel: the product picture and name open the product page |
 | .488 | Hotfix: a sending campaign no longer pulls the admin back to Review & send after you open another screen |
