@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.488
+**Hotfix: while a campaign is sending, the admin no longer jumps back to the campaign page.** Apply after .487.
+Runs its migration (clears caches). Hard refresh the admin once.
+
+| Your request | Now |
+|---|---|
+| "when the email campaign running, and then when i go to any other page, it comes back again on the email campaign page after few seconds. i can not stay on any other page" | Leave Review & send for any screen and you stay there. The page's own send loop stops the moment you leave and can never draw over another screen; the server's scheduler (the cron) keeps sending. Open the campaign again to watch progress. Measured: before, Dashboard, Orders and Payments each turned back into the campaign page within 12 seconds; after, all three stay, with no requests from the left page |
+
+Files: resources/views/admin/partials/marketing-emails-screens.blade.php, public/build, migration 2027_10_28_500000.
+
 ## 2.60.487
 **Payments: choose the countries each payment method is offered in. Cash on delivery is UAE only.** Apply after .486.
 Runs its migration (clears caches). Hard refresh the admin.

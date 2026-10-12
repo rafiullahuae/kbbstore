@@ -196,6 +196,26 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
   'use strict';
 
   var SCREEN = 'mkt-email';
+  /* THE OWNER LEFT THIS SCREEN (12 October): "when the email campaign running,
+     and then when i go to any other page, it comes back again on the email
+     campaign page after few seconds. i can not stay on any other page."
+     driveA() kept stepping a sending campaign while S.view stayed 'review',
+     and every step repainted Review & send into #content -- over Dashboard or
+     whatever he had opened. Set by the window.go wrapper below the moment any
+     other screen is opened, cleared when this one is; driveA() stops on it and
+     shell() refuses to paint. The server's scheduler keeps sending.
+
+     ours() is the second lock, the one no navigation path can skip: other
+     screens wrap window.go too, and one installed after this file opens its
+     own screen without ever calling this wrapper. #content is ours only while
+     it is empty (this screen opening: the wrapper empties it) or holds this
+     screen's own [data-mke] wrapper; any other screen's markup means away. */
+  var away = false;
+  function ours() {
+    if (away) return false;
+    var h = host();
+    return !!h && (!h.firstElementChild || !!h.querySelector('[data-mke]'));
+  }
   var LABEL = 'Marketing Emails';
   var GROUP = 'Growth & Marketing';
 
@@ -332,10 +352,14 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
   /* ----------------------------------------------------------------- shell */
 
   function shell(inner) {
+    // Never paint over another admin screen: a request started on this one can
+    // answer after the owner has gone elsewhere (see `away` above).
+    if (!ours()) return;
     var h = host(); if (!h) return;
     h.innerHTML = '<div class="wrap mke" data-mke="1">' + inner + '</div>';
   }
   function setTitle(sub) {
+    if (!ours()) return;
     var crumb = document.querySelector('#crumb'), title = document.querySelector('#ptitle');
     if (crumb) crumb.textContent = GROUP;
     if (title) title.textContent = LABEL + (sub ? ' · ' + sub : '');
@@ -1162,8 +1186,9 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
   async function driveA() {
     if (driving) return; driving = true;
     try {
-      while (S.view === 'review' && S.rv && S.rv.progress && S.rv.progress.status === 'sending') {
+      while (ours() && S.view === 'review' && S.rv && S.rv.progress && S.rv.progress.status === 'sending') {
         var r = await api('POST', '/campaigns/' + S.rv.id + '/step');
+        if (!ours()) break;
         var p = r.data.progress || {};
         S.rv.progress = p;
         S.rv.wait = p.room && p.room.allowed === 0 ? (p.room.day_left === 0 ? 'Today\'s limit is reached — it carries on after midnight.' : 'Waiting for the per-minute limit…') : '';
@@ -1175,7 +1200,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     driving = false;
     if (S.view === 'review' && S.rv && S.rv.progress && S.rv.progress.done) { S.overview = null; S.reports = null; }
   }
-  function paintReviewProgress() { var a = document.activeElement; paintReview(); if (a && a.id) { var el = document.getElementById(a.id); if (el) el.focus(); } }
+  function paintReviewProgress() { if (!ours()) return; var a = document.activeElement; paintReview(); if (a && a.id) { var el = document.getElementById(a.id); if (el) el.focus(); } }
 
   /* ---------------------------------------------------------------- events */
 
@@ -1432,7 +1457,8 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
 
   var previousGo = window.go;
   window.go = function (id) {
-    if (id !== SCREEN) return previousGo.apply(this, arguments);
+    if (id !== SCREEN) { away = true; return previousGo.apply(this, arguments); }
+    away = false;
     try { cur = id; } catch (e) {}
     document.querySelectorAll('.side .nav-item').forEach(function (b) { b.classList.toggle('on', b.dataset.go === id); });
     var group = document.querySelector('#nav .nav-group[data-sec="' + GROUP + '"]'); if (group) group.classList.add('open');
