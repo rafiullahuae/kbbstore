@@ -336,6 +336,11 @@ payment regression, never a pin to advance.
   `WalletPaymentsTest`, `AppleDomainFileTest`, `WalletMoneyPathTest`.
 - **A payment that never started gives the basket back** (`BasketRelease::
   failAndRestore()`), or the retry says "Your bag is empty." `CheckoutCardRetryTest`.
+- **Each method's countries** (`GatewayCountries`, 2.60.487): one rule, asked in
+  `GatewayRegistry::availableFor()` and in `Api\CheckoutController`, so the
+  list, the country-change re-draw and every submit agree. Cash on delivery is
+  UAE-only by the owner's request; an empty list is every country; a damaged
+  one reads as none, never as all. `PaymentCountriesTest`.
 - The rest of the payment suite is the same lock: `Tamara*`, `Tabby*`,
   `Stripe*`, `Wallet*`, `Checkout*`, `Order*`, `Payment*`.
 

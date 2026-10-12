@@ -2394,6 +2394,9 @@ class CheckoutController extends Controller
         // no other gateway was enabled either, which defeats the switch.
         $codRowExists = PaymentProvider::whereKey('cod')->exists();
 
+        // Lane PCY: the safe floor respects the owner's countries too.
+        $codAllowed = $codAllowed && app(\App\Services\Payments\GatewayCountries::class)->allows('cod', $country);
+
         return (! $codRowExists && $codAllowed)
             ? [[
                 'id' => 'cod', 'title' => 'Cash on delivery',
@@ -2622,6 +2625,10 @@ class CheckoutController extends Controller
         $data = $request->validate([
             'country' => ['required', 'string', 'size:2'],
             'state' => ['nullable', 'string', 'max:60'],
+            // Lane PCY: which payment methods are on screen, and the one ticked.
+            'offered' => ['sometimes', 'array', 'max:12'],
+            'offered.*' => ['string', 'max:40'],
+            'payment_method' => ['nullable', 'string', 'max:40'],
         ]);
 
         $cart = $this->loadCart($request);
@@ -2652,7 +2659,48 @@ class CheckoutController extends Controller
 
         [$rates, $chosen, $totals] = $this->rateContext($cart, $country, $data['state'] ?? null);
 
-        return response()->json([
+        /*
+         * THE PAYMENT LIST FOLLOWS THE COUNTRY (Lane PCY). Until each method
+         * had countries, nothing on this list depended on the country, so this
+         * endpoint never re-drew it; with Cash on delivery offered in the UAE
+         * only, switching to Saudi Arabia left COD on screen until Place order
+         * refused it. Same partial and same rule as fragments(): redrawn only
+         * when the methods on screen are not the methods now offered, so a
+         * card being typed into is not torn down for nothing. A script that
+         * does not send `offered` gets exactly the old answer.
+         */
+        $payment = [];
+
+        if (array_key_exists('offered', $data)) {
+            $totalFils = (int) ($totals['total'] ?? 0);
+            $gateways = $this->gateways($totalFils, $country);
+            $offeredIds = array_column($gateways, 'id');
+            $shown = array_values(array_filter((array) $data['offered'], 'is_string'));
+
+            if ($shown !== $offeredIds) {
+                $posted = trim((string) ($data['payment_method'] ?? ''));
+                $dropped = $posted !== '' && ! in_array($posted, $offeredIds, true);
+                $payNotice = null;
+
+                if ($dropped) {
+                    // The country moved the list here, so the sentences name
+                    // the country rather than the order total.
+                    $payNotice = ($gateways === [])
+                        ? 'No payment method is available for delivery to this country.'
+                        : 'Your payment method is not available for this country — '
+                            . $gateways[0]['title'] . ' is selected instead.';
+                }
+
+                $payment = ['paymentHtml' => view('partials.checkout.payment-methods', [
+                    'gateways' => $gateways,
+                    'codHidden' => app(\App\Services\PayShipRules::class)->codHiddenReason($totalFils),
+                    'selectedMethod' => $dropped ? null : ($posted !== '' ? $posted : null),
+                    'payNotice' => $payNotice,
+                ])->render()];
+            }
+        }
+
+        return response()->json($payment + [
             'ok' => true,
             /*
              * THE ARRIVAL ESTIMATE MOVES WITH THE COUNTRY TOO.

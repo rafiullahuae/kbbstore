@@ -134,10 +134,17 @@ class PaymentsApiController extends Controller
                 // path, the /api prefix and the secret. Empty until a webhook
                 // secret exists, which saving once creates.
                 'webhook_url' => $this->webhookUrl($gateway),
+                // Lane PCY: the countries this method is offered in; [] = every country.
+                'countries' => app(\App\Services\Payments\GatewayCountries::class)->for($gateway->id()),
             ];
         })->values();
 
-        return response()->json(['gateways' => $gateways]);
+        return response()->json([
+            'gateways' => $gateways,
+            // Lane PCY: the countries the Countries box offers -- the ones this
+            // shop delivers to, plus any already chosen. code => name.
+            'country_options' => app(\App\Services\Payments\GatewayCountries::class)->options(),
+        ]);
     }
 
     public function save(Request $request): JsonResponse
@@ -151,6 +158,10 @@ class PaymentsApiController extends Controller
             'settings' => ['nullable', 'array'],
             'clear' => ['nullable', 'array', 'max:10'],
             'clear.*' => ['string', 'max:60'],
+            // Lane PCY. Absent = unchanged (a screen open from before this
+            // existed must not reset anything); [] = every country.
+            'countries' => ['sometimes', 'array', 'max:'.\App\Services\Payments\GatewayCountries::MAX],
+            'countries.*' => ['string', 'size:2', 'alpha'],
         ]);
 
         $gateway = $this->registry->find($data['id']);
@@ -229,6 +240,16 @@ class PaymentsApiController extends Controller
             }
         }
 
+        // Lane PCY: validated and refused BEFORE anything is written, so a bad
+        // country code never leaves a half-saved gateway behind.
+        if (array_key_exists('countries', $data)) {
+            $refused = app(\App\Services\Payments\GatewayCountries::class)->check((array) $data['countries']);
+
+            if ($refused !== null) {
+                return response()->json(['ok' => false, 'error' => $refused], 422);
+            }
+        }
+
         $row = PaymentProvider::firstOrNew(['id' => $gateway->id()]);
         $row->fill([
             'title' => $data['title'] ?? $row->title ?? $gateway->title(),
@@ -239,6 +260,10 @@ class PaymentsApiController extends Controller
         $row->save();
 
         $this->credentials->save($gateway->id(), $values, $secretKeys);
+
+        if (array_key_exists('countries', $data)) {
+            app(\App\Services\Payments\GatewayCountries::class)->save($gateway->id(), (array) $data['countries']);
+        }
 
         /*
          * A Stripe shop set up before there were two key sets keeps its test

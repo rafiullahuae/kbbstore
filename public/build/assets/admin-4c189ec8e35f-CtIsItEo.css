@@ -830,6 +830,8 @@ tr.invdirty{background:var(--accent-soft)}
 .ecopt.wide{display:block}
 .ecopt.wide .ecctl{margin-top:10px}
 .ecopt.wide .inp{width:100%;max-width:520px}
+.paycties{display:flex;flex-wrap:wrap;gap:8px 16px}
+.paycty{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;cursor:pointer}
 .ecunit{font-size:12px;color:#7b8697}
 .ecclr{width:52px;height:34px;padding:2px;border:1px solid #dde4ec;border-radius:8px;background:#fff;cursor:pointer}
 

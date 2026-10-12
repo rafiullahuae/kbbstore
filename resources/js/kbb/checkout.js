@@ -295,7 +295,14 @@ export function initCheckout() {
                     'X-CSRF-TOKEN': window.KBB.csrf,
                     Accept: 'application/json',
                 },
-                body: JSON.stringify({ country: countryField.value, state }),
+                body: JSON.stringify({
+                    country: countryField.value,
+                    state,
+                    // Lane PCY: payment methods are offered per country now, so
+                    // the server re-draws the list when this one is not it.
+                    offered: [...document.querySelectorAll('#payment input[name="payment_method"]')].map((r) => r.value),
+                    payment_method: document.querySelector('input[name="payment_method"]:checked')?.value || '',
+                }),
             });
             const data = await response.json();
 
@@ -305,6 +312,11 @@ export function initCheckout() {
             }
 
             if (slot) slot.innerHTML = data.deliveryHtml;
+
+            // Server-rendered (partials/checkout/payment-methods), the same
+            // markup and the same swap the coupon and quantity answers use.
+            const paymentSlot = document.getElementById('payment');
+            if (paymentSlot && data.paymentHtml) paymentSlot.innerHTML = data.paymentHtml;
 
             // "Free delivery over AED 199" beside the heading: the UAE only,
             // so it follows the country (Lane QK6). Server-rendered markup --

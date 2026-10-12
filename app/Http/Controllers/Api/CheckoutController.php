@@ -345,7 +345,11 @@ class CheckoutController extends Controller
             // credentials.
             $gateway = app(\App\Services\Payments\GatewayRegistry::class)->find($data['method']);
 
+            // Lane PCY: and the owner offers it in this country -- asked with
+            // $country, the country this order is recorded with, so the
+            // check and the order can never disagree.
             if ($gateway === null
+                || ! app(\App\Services\Payments\GatewayCountries::class)->allows($gateway->id(), $country)
                 || ! $gateway->configured()
                 || ! $gateway->availableFor($total, $data['customer']['country'] ?? null)) {
                 return response()->json([

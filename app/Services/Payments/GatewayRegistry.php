@@ -66,9 +66,10 @@ class GatewayRegistry
     /**
      * The gateways a shopper may choose for this basket.
      *
-     * Four gates, and all four have to pass:
+     * Five gates, and all five have to pass:
      *
      *   - the `payment_providers` row says enabled
+     *   - the owner offers it in this country (GatewayCountries, Lane PCY)
      *   - the gateway class says its credentials are present
      *   - the gateway class says the basket qualifies (the COD window, a BNPL
      *     minimum, a country restriction)
@@ -84,9 +85,15 @@ class GatewayRegistry
             ->get()
             ->keyBy('id');
 
+        // Lane PCY: the countries the owner offers each method in (Store →
+        // Payments → <method> → Countries). In front of the gateway's own
+        // availableFor(), never instead of it. No query: one settings read.
+        $countries = app(GatewayCountries::class);
+
         return $rows->keys()
             ->map(fn ($id) => $this->find((string) $id))
             ->filter()
+            ->filter(fn (PaymentGateway $g) => $countries->allows($g->id(), $country))
             ->filter(fn (PaymentGateway $g) => $g->configured())
             ->filter(fn (PaymentGateway $g) => $g->availableFor($totalFils, $country))
             ->values();

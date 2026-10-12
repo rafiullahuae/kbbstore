@@ -37,6 +37,12 @@ use App\Services\CartService;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
+    // Lane PCY (12 October): Cash on delivery is offered in the UAE only by
+    // default now, at the owner's request. This file tests delivery pricing,
+    // totals and tax on Gulf orders, not which countries COD is offered in,
+    // so it opens COD to every country and keeps testing what it was written
+    // for. PaymentCountriesTest owns the country rule.
+    app(\App\Services\SettingsService::class)->set(\App\Services\Payments\GatewayCountries::SETTING, json_encode(['cod' => []]));
     PaymentProvider::query()->delete();
     app(\App\Services\Payments\GatewayCredentials::class)->forget();
     PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);

@@ -8912,6 +8912,9 @@
      has to paste it into the provider, which is the whole point of showing
      it. It appears on this screen and nowhere else. */
   var PAYG=[];
+  /* Lane PCY: code => name, the countries the Countries box offers (the ones
+     this shop delivers to, plus any already chosen). */
+  var PAYCO={};
 
   /* ---------- one tab per gateway ----------
      The list is PAYG, straight off the endpoint, which is GatewayRegistry
@@ -9033,6 +9036,7 @@
       enabled:tog?tog.classList.contains('on'):false,
       title:t?t.value:'',
       mode:m?m.value:'',
+      countries:payCountryList(id).join(','),
       fields:{}
     };
     document.querySelectorAll('[data-payg="'+id+'"]').forEach(function(el){
@@ -9043,7 +9047,7 @@
 
   function paySameSnap(a,b){
     if(!a||!b) return true;
-    if(a.enabled!==b.enabled||a.title!==b.title||a.mode!==b.mode) return false;
+    if(a.enabled!==b.enabled||a.title!==b.title||a.mode!==b.mode||a.countries!==b.countries) return false;
     var ka=Object.keys(a.fields);
     if(ka.length!==Object.keys(b.fields).length) return false;
     for(var i=0;i<ka.length;i++){ if(a.fields[ka[i]]!==b.fields[ka[i]]) return false; }
@@ -9069,6 +9073,10 @@
       }
       var t=document.getElementById('pay_title_'+id); if(t) t.value=s.title;
       var m=document.getElementById('pay_mode_'+id); if(m&&s.mode) m.value=s.mode;
+      if(typeof s.countries==='string'){
+        var want={}; s.countries.split(',').forEach(function(c){ if(c) want[c]=1; });
+        document.querySelectorAll('[data-paycountry="'+id+'"]').forEach(function(el){ el.checked=!!want[el.value]; });
+      }
       document.querySelectorAll('[data-payg="'+id+'"]').forEach(function(el){
         if(Object.prototype.hasOwnProperty.call(s.fields,el.dataset.payf)){
           el.value=s.fields[el.dataset.payf];
@@ -9299,6 +9307,32 @@
       '<div class="ecctl"><span class="ectog'+(g.enabled?' on':'')+'" data-payen="'+sesc(g.id)+'" role="switch" aria-checked="'+(g.enabled?'true':'false')+'" tabindex="0"></span></div></div>';
   }
 
+  /* Lane PCY -- the owner, 12 October: "Cash on delivery we offer only in UAE
+     ... we will have full control, on which country to offer which payment
+     gateway." A tick list of the countries this shop delivers to. Nothing
+     ticked means every country, which is how every method worked before; the
+     server refuses anything that is not a real country code. Checked here and
+     enforced again on Place order, so it is a rule and not just a picture. */
+  function payCountryList(id){
+    return Array.prototype.map.call(
+      document.querySelectorAll('[data-paycountry="'+id+'"]:checked'),
+      function(el){ return el.value; }).sort();
+  }
+
+  function payCountriesRow(g){
+    var on={}; (g.countries||[]).forEach(function(c){ on[c]=1; });
+    var codes=Object.keys(PAYCO);
+    var now=(g.countries||[]).length
+      ? 'Now offered only in: '+(g.countries||[]).map(function(c){ return PAYCO[c]||c; }).join(', ')+'.'
+      : 'Now offered in every country you deliver to.';
+    var boxes=codes.map(function(c){
+      return '<label class="paycty"><input type="checkbox" data-paycountry="'+sesc(g.id)+'" value="'+sesc(c)+'"'+(on[c]?' checked':'')+'>'+sesc(PAYCO[c])+'</label>';
+    }).join('');
+    return '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label>Countries</label></div>'+
+      '<div class="echelp">Shown at checkout only when the shopper\'s delivery country is ticked. Tick none to offer it in every country. '+sesc(now)+'</div></div>'+
+      '<div class="ecctl paycties">'+(boxes||'<span class="echelp">Add a delivery zone first (Store → Delivery &amp; Shipping).</span>')+'</div></div>';
+  }
+
   function payTitleRow(g){
     return '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label for="pay_title_'+sesc(g.id)+'">Label shown to shoppers</label></div>'+
       '<div class="echelp">The wording on the checkout radio list.</div></div>'+
@@ -9345,7 +9379,7 @@
         '<div class="ecl"><label>Connect to Stripe</label></div>'+
         '<div class="echelp">Loading…</div></div></div>' : '');
 
-    var right=payEnabledRow(g)+payTitleRow(g)+
+    var right=payEnabledRow(g)+payTitleRow(g)+payCountriesRow(g)+
       settings.map(function(f){ return payField(g.id,f); }).join('');
 
     /* A gateway with no credentials at all (cash on delivery) gets ONE column
@@ -9699,6 +9733,7 @@
     try{
       var d=await api('/admin-api/payments');
       PAYG=d.gateways||[];
+      PAYCO=d.country_options||{};
     }catch(e){
       // 404 here means the admin route is not registered — on this host that
       // is the cache-clearing migration for the release not having run.
@@ -9745,6 +9780,9 @@
       mode:modeEl?modeEl.value:g.mode,
       settings:settings
     };
+    /* Lane PCY: sent only when the boxes are on the page, so a save from any
+       other path (the New webhook URL button) never resets the countries. */
+    if(document.querySelector('[data-paycountry="'+id+'"]')) payload.countries=payCountryList(id);
 
     var btn=document.querySelector('[data-paysave="'+id+'"]');
     if(btn) btn.disabled=true;
@@ -10545,7 +10583,7 @@
       var touch=function(e){
         var el=e.target;
         if(!el||!el.dataset) return;
-        var id=el.dataset.payg||el.dataset.paytitle||el.dataset.paymode;
+        var id=el.dataset.payg||el.dataset.paytitle||el.dataset.paymode||el.dataset.paycountry;
         if(id) payTouched(id);
       };
       wrap.addEventListener('input',touch);

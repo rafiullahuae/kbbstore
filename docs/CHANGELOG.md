@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.487
+**Payments: choose the countries each payment method is offered in. Cash on delivery is UAE only.** Apply after .486.
+Runs its migration (clears caches). Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "Cash on delivery we offer only in UAE" | Cash on delivery is offered only to a UAE delivery address, from the moment this is applied. A shopper who picks Saudi Arabia (or any other country) no longer sees it, and a Place order that sends it anyway is refused |
+| "on the payment method COD, we should have option to choose the country we offer for. The same we need for all other payment gateways" | **Store → Payments → (Cash on delivery / Tabby / Tamara / Card) → Countries**: tick the countries that method is offered in. Tick none = every country (how Tabby, Tamara and Card stay until you choose). The list is the countries you deliver to. Tabby and Tamara still apply their own country limits on top |
+| "full control ... super secure ... must not touch or disturb anything else" | One rule, checked wherever a method is listed or accepted: the checkout's list, the list re-drawn when the shopper changes country (it now re-draws; before, it only changed on Place order), Place order (Apple Pay and Google Pay included), the "Send order link" page and the public order endpoint. Only real country codes are accepted; a bad one saves nothing. No extra database query on the checkout. The payment test set passes |
+
+Files: app/Services/Payments/GatewayCountries.php (new), app/Services/Payments/GatewayRegistry.php, app/Http/Controllers/Admin/PaymentsApiController.php, app/Http/Controllers/Api/CheckoutController.php, app/Http/Controllers/Store/CheckoutController.php, resources/js/kbb/checkout.js, resources/views/admin/app.blade.php, public/build, migration 2027_10_28_400000.
+
 ## 2.60.486
 **Breadcrumb: one line on every page (fades out at the end), no tall phone rows, and font size and line spacing controls.** Apply after .485.
 Runs its migration (clears caches).
