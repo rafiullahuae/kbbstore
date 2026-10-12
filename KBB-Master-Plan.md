@@ -1,6 +1,6 @@
 # KBB Master Plan — live tracking
 
-**As at version 2.60.485 (11 October 2026).** Tick items as they ship; add the version that shipped them.
+**As at version 2.60.488 (12 October 2026).** Tick items as they ship; add the version that shipped them.
 
 > ## ▶ Handing over? Start with `docs/HANDOVER.md`
 >
@@ -11,7 +11,7 @@
 > the release checklist, the test and
 > preview environment, where every document is, **the open design decisions
 > with their previews (all committed in this repository)**, what shipped from
-> 2.60.400 to 2.60.485, the Site App / Owner App / Arabic in detail, every
+> 2.60.400 to 2.60.488, the Site App / Owner App / Arabic in detail, every
 > payment incident and its fix, the complete dated history (with every release
 > in `docs/RELEASE-HISTORY.md`), and the first hour's checklist. `CLAUDE.md` holds the
 > binding rules; this file holds the history and the reasoning behind each
@@ -35,7 +35,7 @@ Legend: **[x]** done · **[~]** partly done · **[ ]** not started · **▲** bl
 |---|---|
 | Ledger completion at last count | **36%** (110 Fn ☑ / 94 Dsp ☑ of 305) |
 | **Counted now** | **91%** across 24 phases, 312 items — and that number is *counted*, not estimated: `tools/progress-dashboard/build.php` reads the checkboxes out of this file. A part-done item counts as half; an item struck as not-wanted is left out of the total entirely. Open `KBB-Progress-Dashboard.html` |
-| Releases shipped this stretch | 2.38.0 → **2.60.485**. Every package from .400 to .485 is summarised in `docs/HANDOVER.md` §8 and detailed in `docs/CHANGELOG.md`. The last two handed over were **.484** (marketing footer words, locked-email note) and **.485** (cart panel free-delivery bar) — confirm on the live Core Updates history which are applied |
+| Releases shipped this stretch | 2.38.0 → **2.60.488**. Every package from .400 to .488 is summarised in `docs/HANDOVER.md` §8 and detailed in `docs/CHANGELOG.md`; one line per release in `docs/RELEASE-HISTORY.md`. Handed over 11–12 October: **.484** (marketing footer words, locked-email note), **.485** (cart panel free-delivery bar), **.486** (breadcrumb on one line + type controls), **.487** (payment methods per country, COD UAE only), **.488** (hotfix: campaign page no longer pulls the admin back). Confirm on the live Core Updates history which are applied |
 | **Server drift, found 2026-09-10** | Rafi uploaded the real app directly from the server for a GitHub sync. Comparison showed the live server is genuinely at **2.60.36** — 2.60.37 through 2.60.41 (SEO description quality, the Core Updates escaping/session bugs, and the patch archive system) were built, packaged, and handed over, but never actually applied — almost certainly because the server got stuck exactly at 2.60.36, which is the version whose own release notes caused the Core Updates screen to break. GitHub now reflects the verified 2.60.36 state, not the assumed 2.60.41 one. **2.60.41 (a superset of everything since) still needs to be applied to catch the live site up** |
 | Modules identified | **31** — 29 from the plugin + 2 native to this app |
 | Modules registered in the framework | **31** — *2.44.0* |
@@ -131,6 +131,23 @@ its phase.
   30 Sep); check each on the live admin before acting. `docs/HANDOVER.md` §7.3
 - **Left as they are by his decision:** Tabby's and Stripe's refusal wording on
   expired / abandoned sessions
+
+### Settled on 12 October 2026
+
+- **Breadcrumb on one line (2.60.486).** On phones the trail stood 44px a line
+  because of the tap-target rule on every link; it is now one line that fades
+  at the end (81 → 37px on a product page), with font size and line spacing
+  per device. Appearance → Header → Breadcrumbs
+- **Payment methods per country (2.60.487).** Each method has a Countries box
+  (Store → Payments → method → Countries); Cash on delivery ships UAE only at
+  the owner's request. One rule (`GatewayCountries`) for the checkout list,
+  the country-change re-draw (new — the list did not follow the country
+  before), Place order, the pay-link page and the public endpoint. Added to
+  the payments lock in `CLAUDE.md`
+- **Campaign page no longer pulls the admin back (2.60.488).** The Review &
+  send loop kept repainting itself over whatever screen the owner opened; it
+  now stops when he leaves and can never paint over another screen. The cron
+  keeps sending
 
 ### Settled on 11 October 2026
 

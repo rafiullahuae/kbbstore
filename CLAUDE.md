@@ -436,6 +436,16 @@ payment diff that arrives without it.
   second made the first unrecoverable, because the fix could only travel through
   the updater it had broken.
 
+- **An admin screen's late answer can paint over another screen.** The console
+  is one page: every screen writes into the same `#content`, and many wrap
+  `window.go`. A request started on one screen that answers after the owner has
+  moved on will repaint the old screen over the new one unless it checks it is
+  still on show. Marketing Emails' send loop did exactly that every 1–10 s while
+  a campaign was sending ("i can not stay on any other page", 2.60.488).
+  `marketing-emails-screens.blade.php` guards with `ours()` (empty `#content`
+  or its own `[data-mke]`), because a wrapper installed later never calls an
+  earlier one. Any polling or async repaint you add needs the same guard.
+
 - **`Setting::map()` memoises in a process-level static** as well as the cache.
   Within one long-lived process it will not see writes made after the first
   call. Fine under PHP-FPM, a trap in tests and queue workers.

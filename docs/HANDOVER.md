@@ -1,6 +1,6 @@
 # KBB Storefront — complete handover
 
-**Written 11 October 2026, at release 2.60.485**, for whoever picks this project
+**Written 11 October 2026 at release 2.60.485, brought up to 2.60.488 on 12 October**, for whoever picks this project
 up in a new account. Read this file first, then `CLAUDE.md` (the binding rules),
 then `docs/REPO-STATE.md` (what the repository does and does not hold). Nothing
 about this project lives anywhere except this repository and the live server:
@@ -18,11 +18,11 @@ travel, and everything that mattered from them has been committed (see §7).
 | **Storefront** | Home page of editable sections (banners/picture slider, product rows and grids, brand photos, trust strips, Instagram "Spotted", shoppable video), category, brand, shop, product, blog/journal, About, Contact (with inquiry inbox), policy pages, 404, Coming Soon. Mega menu and a phone menu (glass panel, V4 two-tone). Logo D (lotus lockup). Pages open on intent (prefetch) and inner pages render 3–6× faster than at the start of October |
 | **Catalogue** | Products with variations and attributes, sets/bundles ("Buy these together", quantity bundles), brands, category trees (parents list their sub-categories' products), Reorder per category/brand, product labels, recently viewed, wishlist, quick view, Build my routine (off), typo-tolerant site search with brand-aware extended results, image SEO, media library |
 | **Product page** | The **Ledger** design (owner-approved 30 Sep), gallery, price row with discount capsule, rating, bundles, delivery promise and dispatch cutoff, sticky add-to-cart, three related-product blocks, reviews with photos, sold-out popup, back-in-stock alerts |
-| **Cart & checkout** | Cart panel (drawer, 32 settings, Browsed tab, coupon hint, free-delivery bar), cart page, one-page checkout (floating labels, address book, Building / Area / Emirate fields, COD fee, inclusive VAT line, inline validation, express wallets). Payments: **Stripe** (cards, Apple Pay, Google Pay), **Tabby**, **Tamara**, **Cash on delivery** — all live; refusal reasons logged; payments are frozen (`CLAUDE.md`) |
+| **Cart & checkout** | Cart panel (drawer, 32 settings, Browsed tab, coupon hint, free-delivery bar), cart page, one-page checkout (payment methods offered per country — Cash on delivery UAE only, 2.60.487) (floating labels, address book, Building / Area / Emirate fields, COD fee, inclusive VAT line, inline validation, express wallets). Payments: **Stripe** (cards, Apple Pay, Google Pay), **Tabby**, **Tamara**, **Cash on delivery** — all live; refusal reasons logged; payments are frozen (`CLAUDE.md`) |
 | **Orders** | Order list and detail (payment journey, customer journey, every email sent), bulk status, invoices and bulk printing, refunds and notes, "Send order link" for unpaid orders, New Order (manual), Cart Tracking (live baskets with browser/device) |
 | **Customers & accounts** | Account area, address book, the WordPress customers and orders imported, newsletter subscribers |
 | **Emails** | Branded transactional emails for every order status (13 switches), review request after completion and feedback request after delivery, abandoned-cart and back-in-stock |
-| **Marketing** | Marketing Emails (drag-and-drop builder; Standard, Playful and Personal-letter looks; customer groups; scheduling; rate and daily caps; per-campaign reports; editable footer words; bounces & unsubscribes via a Gmail label), Push notifications, Marketing Pixels (Meta, GA4, TikTok, server events, catalogue feeds), Google Shopping feed, coupons, notification bar, mini-cart promo |
+| **Marketing** | Marketing Emails (drag-and-drop builder; Standard, Playful and Personal-letter looks; customer groups; scheduling; rate and daily caps; per-campaign reports; editable footer words; sends in the background via the cron, and leaving Review & send never pulls the admin back (2.60.488); bounces & unsubscribes via a Gmail label), Push notifications, Marketing Pixels (Meta, GA4, TikTok, server events, catalogue feeds), Google Shopping feed, coupons, notification bar, mini-cart promo |
 | **Analytics** | Realtime board, Online now, minute chart, live funnel, sources per order, time on site & engagement, movable blocks — in the admin and the owner app |
 | **SEO** | SEO engine (titles, descriptions, schema), image SEO, sitemaps incl. images, redirects from old WordPress links, IndexNow |
 | **Apps** | The shop installs as an app (Site App) with update prompts; the **Owner app** (design "Petal") at a secret address, PIN-locked, for the owner and chosen team members |
@@ -603,12 +603,24 @@ rule that keeps it safe.
   small batches within the per-minute rate and daily cap; the steps are driven by
   the open admin page **or** the scheduler (`kbb:campaigns-step`, every minute —
   needs the cron, §2). Never from a shopper's page load.
+- **Leaving Review & send (2.60.488):** the page's own send loop and every
+  repaint check `ours()` (the screen is still the one on show). Before this, a
+  sending campaign repainted itself over Dashboard every few seconds. Any new
+  async screen code must do the same — `MarketingSendLoopStaysPutTest`.
 - **Rules:** a campaign that has started is **locked** (its report must match what
   was sent) — duplicate it to edit. The footer (unsubscribe) block is required
   and always last; its words are editable (2.60.484) but the unsubscribe link can
   never be removed.
 
-### 11.6 Analytics, Cart Tracking, Instagram, WhatsApp
+### 11.6 Breadcrumbs
+
+- **Admin:** **Appearance → Header → Breadcrumbs** — on/off per device, space
+  above/below, inner padding, and (2.60.486) Long breadcrumb (one line that
+  fades at the end — shipped — or "…", or wrap), font size and line spacing per
+  device. Printed by `HeaderSettings::breadcrumbCss()` as one small style block;
+  `BreadcrumbControlsTest`, `BreadcrumbOneLineTest`.
+
+### 11.7 Analytics, Cart Tracking, Instagram, WhatsApp
 
 - **Analytics** (Dashboard → Analytics; also in the owner app): Realtime, Online
   now, funnel, sources, time on site. Day summaries are rolled up by the
