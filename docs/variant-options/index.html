@@ -1,0 +1,366 @@
+<title>Colour &amp; Size Pickers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a sticky chooser bar, then two numbered decisions (product card, product page),
+   each showing five lettered designs inside a phone- or laptop-width shop frame. */
+:root{
+  --bg:#F7F1EF; --surface:#FFFFFF; --ink:#2A2228; --muted:#756C74; --line:#EADFE3;
+  --pink:#C6395F; --pink-deep:#A3304F; --cream:#FFF8F5; --ok:#1F9D55; --shade:rgba(42,34,40,.08);
+  --f:"Outfit",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1B1619; --surface:#262024; --ink:#F4ECEF; --muted:#B4A8AE; --line:#3A3136;
+  --pink:#E8638A; --pink-deep:#F07FA0; --cream:#2E2529; --ok:#4CC783; --shade:rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1B1619; --surface:#262024; --ink:#F4ECEF; --muted:#B4A8AE; --line:#3A3136;
+  --pink:#E8638A; --pink-deep:#F07FA0; --cream:#2E2529; --ok:#4CC783; --shade:rgba(0,0,0,.35); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:0 60px}
+h1,h2,h3{text-wrap:balance;margin:0}
+button{font:inherit;color:inherit}
+button:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto}
+header.top{padding-block:28px 6px;display:grid;gap:6px}
+header.top h1{font-size:clamp(24px,4vw,34px);font-weight:700;letter-spacing:-.01em}
+header.top p{margin:0;color:var(--muted);max-width:68ch}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-block:12px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;border-bottom:1px solid var(--line)}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:3px}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:99px;cursor:pointer;font-weight:500;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.pick{margin-inline-start:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+.pick b{font-weight:600}
+.copy{border:0;background:var(--pink);color:#fff;padding:9px 16px;border-radius:99px;font-weight:600;cursor:pointer}
+.copied{color:var(--ok);font-size:13px}
+section.q{margin-top:34px;display:grid;gap:14px}
+.qh{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.qh .n{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--pink)}
+.qh h2{font-size:22px;font-weight:700}
+.qh p{flex-basis:100%;margin:0;color:var(--muted);max-width:75ch}
+.design{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:12px}
+.design.on{border-color:var(--pink);box-shadow:0 0 0 2px var(--pink)}
+.dh{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.letter{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--cream);color:var(--pink-deep);font-weight:700;font-size:16px;flex:none}
+.dh h3{font-size:17px;font-weight:600}
+.dh .why{color:var(--muted);font-size:14px;flex-basis:100%;margin:0;max-width:80ch}
+.choose{margin-inline-start:auto;border:1.5px solid var(--pink);background:none;color:var(--pink-deep);padding:7px 14px;border-radius:99px;font-weight:600;cursor:pointer;font-size:14px}
+.design.on .choose{background:var(--pink);color:#fff}
+/* The shop frame: phone = 390px, laptop = the full width available. */
+.frame{background:var(--cream);border-radius:14px;padding:14px;overflow:hidden;margin-inline:auto;width:100%}
+body.ph .frame{max-width:390px}
+.scroller{overflow-x:auto}
+
+/* ── Shared shop atoms ─────────────────────────────────────────── */
+.grid{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+body.lp .grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.card{background:var(--surface);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--line);position:relative}
+.ph-img{aspect-ratio:1/1;position:relative;display:grid;place-items:center;background:linear-gradient(160deg,var(--cream),var(--surface));transition:background .25s}
+.ph-img svg{width:62%;height:62%;transition:transform .25s}
+.ph-img .tag{position:absolute;top:8px;inset-inline-start:8px;background:var(--pink);color:#fff;font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px}
+.cb{padding:10px 10px 12px;display:grid;gap:6px;flex:1;align-content:start}
+.brand{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.nm{font-size:13.5px;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
+.price{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.price .now{font-weight:700;font-size:15px;color:var(--pink-deep)}
+.price .was{font-size:12px;color:var(--muted);text-decoration:line-through}
+.price .per{font-size:11px;color:var(--muted)}
+.add{margin-top:auto;border:0;background:var(--ink);color:var(--surface);border-radius:10px;padding:9px 10px;font-weight:600;font-size:13px;cursor:pointer;width:100%}
+.add[disabled]{background:var(--line);color:var(--muted);cursor:not-allowed}
+.sw{--c:#ccc;width:16px;height:16px;border-radius:50%;background:var(--c);border:0;padding:0;cursor:pointer;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);flex:none}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--ink)}
+.sw.out::after{content:"";position:absolute;inset:-1px;background:linear-gradient(to top right,transparent calc(50% - 1px),var(--surface) calc(50% - 1px),var(--surface) calc(50% + 1px),transparent calc(50% + 1px));border-radius:50%}
+.sw.out{opacity:.55}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:4px 10px;font-size:12px;cursor:pointer;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--surface)}
+.chip.out{color:var(--muted);text-decoration:line-through}
+.row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.more{font-size:12px;color:var(--muted)}
+.lbl{font-size:12px;color:var(--muted)}
+.lbl b{color:var(--ink);font-weight:600}
+
+/* Card B: bigger swatches with a quiet ring */
+.cB .sw{width:20px;height:20px}
+/* Card C: choices sit on the photo */
+.cC .ph-img .ov{position:absolute;inset-inline:8px;bottom:8px;display:flex;justify-content:space-between;gap:6px;align-items:center}
+.cC .glass{background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:99px;padding:5px 7px;display:flex;gap:6px;align-items:center}
+.cC .glass .chip{border:0;background:none;padding:2px 7px}
+.cC .glass .chip[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+/* Card D: Add opens a picker inside the card */
+.cD .qp{position:absolute;inset-inline:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 10px;display:grid;gap:9px;transform:translateY(100%);transition:transform .25s ease;box-shadow:0 -10px 24px -14px var(--shade)}
+.cD .qp.open{transform:none}
+.cD .qp .x{position:absolute;top:6px;inset-inline-end:8px;border:0;background:none;font-size:18px;cursor:pointer;color:var(--muted)}
+/* Card E: a shade strip along the photo's edge */
+.cE .strip{display:flex;height:10px;gap:2px;padding:0 10px;margin-top:-5px;position:relative;z-index:1}
+.cE .strip button{flex:1;border:0;border-radius:3px;background:var(--c);cursor:pointer;padding:0;transition:transform .15s}
+.cE .strip button[aria-pressed="true"]{transform:scaleY(1.7);box-shadow:0 0 0 1.5px var(--surface),0 0 0 3px var(--ink)}
+.cE .strip button.out{opacity:.35}
+
+/* ── Product page ─────────────────────────────────────────────── */
+.pdp{display:grid;gap:16px;background:var(--surface);border-radius:14px;padding:14px;border:1px solid var(--line);position:relative;overflow:hidden}
+body.lp .pdp{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;padding:24px}
+.pdp .ph-img{border-radius:12px}
+.pdp .info{display:grid;gap:14px;align-content:start;min-width:0}
+.pdp h4{margin:0;font-size:20px;font-weight:600;line-height:1.25}
+.pdp .price .now{font-size:22px}
+.opt{display:grid;gap:9px}
+.opt .lbl{font-size:13.5px}
+.pdp .sw{width:34px;height:34px}
+.pdp .add{padding:14px;font-size:15px;border-radius:12px}
+.stock{font-size:13px;color:var(--ok)}
+.stock.no{color:var(--pink-deep)}
+/* Page B: size cards */
+.scards{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.scard{border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:10px;text-align:start;cursor:pointer;display:grid;gap:2px;position:relative;font-variant-numeric:tabular-nums}
+.scard[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.scard b{font-size:15px}
+.scard small{color:var(--muted);font-size:11.5px}
+.scard .badge{position:absolute;top:-9px;inset-inline-end:8px;background:var(--pink);color:#fff;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:99px}
+.scard.out{opacity:.5;text-decoration:line-through}
+.sqs{display:flex;gap:8px;flex-wrap:wrap}
+.sq{display:grid;gap:4px;justify-items:center;border:0;background:none;cursor:pointer;padding:0;width:58px}
+.sq i{display:block;width:46px;height:46px;border-radius:10px;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)}
+.sq[aria-pressed="true"] i{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
+.sq span{font-size:11px;color:var(--muted);text-align:center;line-height:1.2}
+.sq.out i{opacity:.4}
+/* Page C: tall shade tiles + segmented size */
+.tiles{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x mandatory}
+.tile{flex:none;width:82px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);padding:6px;display:grid;gap:6px;cursor:pointer;scroll-snap-align:start;text-align:start}
+.tile i{display:block;height:58px;border-radius:8px;background:var(--c)}
+.tile span{font-size:11.5px;line-height:1.2}
+.tile small{font-size:10.5px;color:var(--pink-deep)}
+.tile[aria-pressed="true"]{border-color:var(--ink)}
+.tile.out{opacity:.55}
+.segw{display:flex;background:var(--cream);border-radius:12px;padding:4px;gap:4px}
+.segw button{flex:1;border:0;background:none;border-radius:9px;padding:9px 6px;cursor:pointer;font-weight:500;font-variant-numeric:tabular-nums;display:grid;gap:1px}
+.segw button small{font-size:11px;color:var(--muted)}
+.segw button[aria-pressed="true"]{background:var(--surface);box-shadow:0 2px 8px var(--shade)}
+.segw button.out{color:var(--muted);text-decoration:line-through}
+/* Page D: tidy dropdown rows */
+.dd{border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
+.dd>button{width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;border:0;background:var(--surface);cursor:pointer;text-align:start}
+.dd>button .k{color:var(--muted);font-size:13px;width:44px}
+.dd>button .v{flex:1;font-weight:600}
+.dd>button .car{transition:transform .2s}
+.dd.open>button .car{transform:rotate(180deg)}
+.dd ul{list-style:none;margin:0;padding:0;border-top:1px solid var(--line);display:none;max-height:220px;overflow:auto}
+.dd.open ul{display:block}
+.dd li button{width:100%;display:flex;gap:10px;align-items:center;padding:10px 14px;border:0;background:none;cursor:pointer;text-align:start;font-variant-numeric:tabular-nums}
+.dd li button:hover{background:var(--cream)}
+.dd li button[aria-pressed="true"]{font-weight:600}
+.dd li button .r{margin-inline-start:auto;color:var(--muted);font-size:13px}
+.dd li button.out{color:var(--muted)}
+.dd .dot{width:18px;height:18px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);flex:none}
+/* Page E: summary row + bottom sheet */
+.sumrow{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;background:var(--surface);width:100%;text-align:start}
+.sumrow .dot{width:30px;height:30px;border-radius:50%;background:var(--c);flex:none}
+.sumrow .t{flex:1;display:grid}
+.sumrow .t small{color:var(--muted);font-size:12px}
+.sumrow .ch{color:var(--pink-deep);font-weight:600;font-size:14px}
+.sheet-bg{position:absolute;inset:0;background:rgba(20,12,16,.38);opacity:0;pointer-events:none;transition:opacity .25s}
+.sheet{position:absolute;inset-inline:0;bottom:0;background:var(--surface);border-radius:18px 18px 0 0;padding:10px 16px 16px;display:grid;gap:14px;transform:translateY(102%);transition:transform .3s cubic-bezier(.2,.8,.2,1);max-height:88%;overflow:auto}
+.sheet .grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto}
+.pdp.sheeton .sheet{transform:none}
+.pdp.sheeton .sheet-bg{opacity:1;pointer-events:auto}
+body.lp .pdp .sheet{inset-inline-start:auto;width:420px;top:0;border-radius:18px 0 0 18px;max-height:none;transform:translateX(102%)}
+body.lp .pdp.sheeton .sheet{transform:none}
+.prodsw{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Colour &amp; size pickers for K-Beauty Bliss</h1>
+    <p>Two choices: how a product card in the grids lets shoppers pick a shade or a size, and how the product page does it. Every design is live. Tap colours and sizes, try a sold-out option, switch between phone and laptop, then press <b>Choose</b> on one design in each part.</p>
+  </header>
+
+  <div class="bar" role="toolbar" aria-label="Preview settings">
+    <div class="seg" aria-label="Screen">
+      <button id="vPh" aria-pressed="true">Phone</button>
+      <button id="vLp" aria-pressed="false">Laptop</button>
+    </div>
+    <div class="pick">
+      <span>Your choice: card <b id="pickCard">—</b> · product page <b id="pickPdp">—</b></span>
+      <button class="copy" id="copyBtn">Copy my choice</button>
+      <span class="copied" id="copied" hidden>Copied</span>
+    </div>
+  </div>
+
+  <section class="q" aria-labelledby="q1">
+    <div class="qh">
+      <span class="n">Part 1 of 2</span><h2 id="q1">Product card in the grids</h2>
+      <p>The same four products in every design: a lip tint in five shades (one sold out), a sun cream in three sizes, a cushion in four shades and two sizes, and a toner in two sizes. Price and photo change with the choice. Add to bag adds the exact shade and size.</p>
+    </div>
+    <div id="cards"></div>
+  </section>
+
+  <section class="q" aria-labelledby="q2">
+    <div class="qh">
+      <span class="n">Part 2 of 2</span><h2 id="q2">Product page</h2>
+      <p>Shown on the cushion, which has both shades and sizes. Switch to the tint or the sun cream to see a shade-only or size-only product.</p>
+    </div>
+    <div class="prodsw" id="prodsw"><span class="lbl">Show it on:</span></div>
+    <div id="pages"></div>
+  </section>
+</div>
+
+<script>
+(() => {
+'use strict';
+/* ── Example products (real K-beauty lines; prices are examples in AED) ── */
+const P = {
+  tint:{brand:'rom&nd',name:'Juicy Lasting Tint',kind:'tube',base:'#C44A5E',
+    colors:[{n:'06 Figfig',c:'#B4485A'},{n:'09 Litchi Coral',c:'#E27463'},{n:'12 Cherry Bomb',c:'#C21E3A'},{n:'20 Jujube',c:'#8E2F36',out:1},{n:'25 Bare Grape',c:'#9C5868'}],
+    sizes:[{n:'5.5 g',p:49,was:59}]},
+  sun:{brand:'Beauty of Joseon',name:'Relief Sun: Rice + Probiotics SPF50+',kind:'bottle',base:'#F2E3B6',
+    colors:null,sizes:[{n:'10 ml',ml:10,p:19},{n:'50 ml',ml:50,p:69,was:79},{n:'100 ml',ml:100,p:119,tag:'Best value'}]},
+  cushion:{brand:'CLIO',name:'Kill Cover The New Founwear Cushion',kind:'compact',base:'#E9C3A6',
+    colors:[{n:'02 Lingerie',c:'#F1D3BE'},{n:'03 Linen',c:'#E9C3A6'},{n:'04 Ginger',c:'#D7A983'},{n:'05 Sand',c:'#C99773',out:1}],
+    sizes:[{n:'15 g',p:129},{n:'15 g + refill',p:169,was:189,tag:'Refill inside'}]},
+  toner:{brand:'Anua',name:'Heartleaf 77% Soothing Toner',kind:'bottle',base:'#CFE6D2',
+    colors:null,sizes:[{n:'250 ml',ml:250,p:89},{n:'500 ml',ml:500,p:149,tag:'Best value',out:0}]}
+};
+const ORDER = ['tint','sun','cushion','toner'];
+
+/* Simple product drawings, filled with the chosen shade. */
+function art(kind, c){
+  if (kind === 'tube') return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="40" y="8" width="20" height="30" rx="4" fill="#2A2228"/><rect x="36" y="36" width="28" height="56" rx="8" fill="${c}"/><rect x="40" y="44" width="6" height="40" rx="3" fill="#fff" opacity=".28"/></svg>`;
+  if (kind === 'compact') return `<svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="62" rx="40" ry="16" fill="#2A2228"/><rect x="10" y="44" width="80" height="18" fill="#2A2228"/><ellipse cx="50" cy="44" rx="40" ry="16" fill="#3A3036"/><ellipse cx="50" cy="44" rx="31" ry="11" fill="${c}"/><ellipse cx="42" cy="40" rx="10" ry="3" fill="#fff" opacity=".3"/></svg>`;
+  return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="42" y="6" width="16" height="16" rx="3" fill="#2A2228"/><rect x="30" y="20" width="40" height="74" rx="10" fill="${c}"/><rect x="36" y="40" width="28" height="22" rx="3" fill="#fff" opacity=".75"/><rect x="36" y="28" width="5" height="58" rx="2.5" fill="#fff" opacity=".25"/></svg>`;
+}
+const aed = (n) => 'AED ' + n;
+const firstIn = (arr) => arr ? Math.max(0, arr.findIndex(o => !o.out)) : 0;
+const esc = (s) => String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+
+/* One state per (design, product): which colour and size are chosen. */
+const S = {};
+function st(key, id){ return S[key+id] || (S[key+id] = {c:firstIn(P[id].colors), s:firstIn(P[id].sizes)}); }
+function cur(key, id){ const p = P[id], s = st(key,id); return {p, s, col:p.colors ? p.colors[s.c] : null, size:p.sizes[s.s]}; }
+const colourOf = (id, col) => col ? col.c : P[id].base;
+const perMl = (size) => size.ml ? `AED ${(size.p / size.ml).toFixed(2)} / ml` : '';
+const soldOut = (col, size) => !!((col && col.out) || size.out);
+
+function priceHtml(size, withPer){
+  return `<div class="price"><span class="now">${aed(size.p)}</span>${size.was ? `<span class="was">${aed(size.was)}</span>` : ''}${withPer && size.ml ? `<span class="per">${perMl(size)}</span>` : ''}</div>`;
+}
+function swatches(key, id, max){
+  const p = P[id], s = st(key,id); if (!p.colors) return '';
+  const list = p.colors.slice(0, max || 99).map((o,i) => `<button class="sw${o.out?' out':''}" style="--c:${o.c}" data-k="${key}" data-id="${id}" data-c="${i}" aria-pressed="${i===s.c}" aria-label="${esc(o.n)}${o.out?' (sold out)':''}" title="${esc(o.n)}${o.out?' · sold out':''}"></button>`).join('');
+  const more = max && p.colors.length > max ? `<span class="more">+${p.colors.length - max}</span>` : '';
+  return `<div class="row">${list}${more}</div>`;
+}
+function chips(key, id){
+  const p = P[id], s = st(key,id); if (p.sizes.length < 2) return '';
+  return `<div class="row">${p.sizes.map((o,i) => `<button class="chip${o.out?' out':''}" data-k="${key}" data-id="${id}" data-s="${i}" aria-pressed="${i===s.s}">${esc(o.n)}</button>`).join('')}</div>`;
+}
+function addBtn(col, size){ return soldOut(col,size) ? `<button class="add" disabled>Sold out · Notify me</button>` : `<button class="add">Add to bag</button>`; }
+function img(id, col, extra){ return `<div class="ph-img" style="background:linear-gradient(160deg,var(--cream),color-mix(in srgb,${colourOf(id,col)} 22%,var(--surface)))">${art(P[id].kind, colourOf(id,col))}${extra||''}</div>`; }
+
+/* ── Five card designs ────────────────────────────────────────── */
+const CARDS = {
+  A:{t:'Dots and size chips', why:'Small shade dots under the name (four, then +N) and slim size chips. Quiet, familiar, and the card stays its usual height.',
+    card(id){ const k='cA', {p,col,size}=cur(k,id);
+      return `<article class="card">${img(id,col)}<div class="cb"><span class="brand">${esc(p.brand)}</span><span class="nm">${esc(p.name)}</span>${swatches(k,id,4)}${chips(k,id)}${priceHtml(size)}${addBtn(col,size)}</div></article>`; }},
+  B:{t:'Named choice, larger swatches', why:'Larger, easier-to-tap swatches with the chosen shade named under them, and the price per ml under the price so the bigger size shows its value.',
+    card(id){ const k='cB', {p,col,size}=cur(k,id);
+      return `<article class="card cB">${img(id,col, size.tag?`<span class="tag">${esc(size.tag)}</span>`:'')}<div class="cb"><span class="brand">${esc(p.brand)}</span><span class="nm">${esc(p.name)}</span>${swatches(k,id,5)}${col?`<span class="lbl">Shade: <b>${esc(col.n)}</b>${col.out?' · sold out':''}</span>`:''}${chips(k,id)}${priceHtml(size,true)}${addBtn(col,size)}</div></article>`; }},
+  C:{t:'Choices on the photo', why:'Shades and sizes sit on a frosted bar over the photo, and the photo changes as you tap. The text under the photo stays as it is today.',
+    card(id){ const k='cC', {p,col,size}=cur(k,id); const s=st(k,id);
+      const sw = p.colors ? `<div class="glass">${p.colors.slice(0,4).map((o,i)=>`<button class="sw${o.out?' out':''}" style="--c:${o.c}" data-k="${k}" data-id="${id}" data-c="${i}" aria-pressed="${i===s.c}" aria-label="${esc(o.n)}"></button>`).join('')}${p.colors.length>4?`<span class="more">+${p.colors.length-4}</span>`:''}</div>` : '<span></span>';
+      const sz = p.sizes.length>1 ? `<div class="glass">${p.sizes.map((o,i)=>`<button class="chip" data-k="${k}" data-id="${id}" data-s="${i}" aria-pressed="${i===s.s}">${esc(o.n.replace(' + refill','+R'))}</button>`).join('')}</div>` : '';
+      return `<article class="card cC">${img(id,col,`<div class="ov">${sw}${sz}</div>`)}<div class="cb"><span class="brand">${esc(p.brand)}</span><span class="nm">${esc(p.name)}</span>${priceHtml(size)}${addBtn(col,size)}</div></article>`; }},
+  D:{t:'Pick inside the card when adding', why:'The card looks exactly like today. Add to bag on a product with options slides up a small picker inside the card, so nothing is added in the wrong shade or size.',
+    card(id){ const k='cD', {p,col,size}=cur(k,id); const isVar = (p.colors && p.colors.length>1) || p.sizes.length>1; const open = !!st(k,id).open;
+      const label = p.colors ? `${p.colors.length} shades` : `${p.sizes.length} sizes`;
+      return `<article class="card cD">${img(id,col)}<div class="cb"><span class="brand">${esc(p.brand)}</span><span class="nm">${esc(p.name)}</span>${priceHtml(size)}${isVar?`<span class="lbl">${label}</span>`:''}${isVar?`<button class="add" data-open="${k}|${id}">Choose options</button>`:addBtn(col,size)}</div>
+      ${isVar?`<div class="qp${open?' open':''}"><button class="x" data-close="${k}|${id}" aria-label="Close">×</button>${col?`<span class="lbl">Shade: <b>${esc(col.n)}</b></span>`:''}${swatches(k,id)}${p.sizes.length>1?`<span class="lbl">Size</span>`:''}${chips(k,id)}${soldOut(col,size)?`<button class="add" disabled>Sold out · Notify me</button>`:`<button class="add">Add ${esc(size.n)} · ${aed(size.p)}</button>`}</div>`:''}</article>`; }},
+  E:{t:'Shade strip on the photo edge', why:'A thin strip of every shade along the bottom of the photo, like make-up brands use. Sizes show as "from" pricing and are chosen on the product page.',
+    card(id){ const k='cE', {p,col,size}=cur(k,id); const s=st(k,id);
+      const strip = p.colors ? `<div class="strip">${p.colors.map((o,i)=>`<button class="${o.out?'out':''}" style="--c:${o.c}" data-k="${k}" data-id="${id}" data-c="${i}" aria-pressed="${i===s.c}" aria-label="${esc(o.n)}"></button>`).join('')}</div>` : '';
+      const from = p.sizes.length>1 ? `<span class="lbl">${p.sizes.length} sizes · from <b>${aed(Math.min(...p.sizes.map(x=>x.p)))}</b></span>` : priceHtml(size);
+      return `<article class="card cE">${img(id,col)}${strip}<div class="cb"><span class="brand">${esc(p.brand)}</span><span class="nm">${esc(p.name)}</span>${col?`<span class="lbl"><b>${esc(col.n)}</b>${col.out?' · sold out':''}</span>`:''}${from}${p.sizes.length>1?`<button class="add">Choose size</button>`:addBtn(col,size)}</div></article>`; }}
+};
+
+/* ── Five product-page designs ───────────────────────────────── */
+let PID = 'cushion';
+function stockLine(col,size){ return soldOut(col,size) ? `<span class="stock no">This option is sold out. We can email you when it is back.</span>` : `<span class="stock">In stock · 1–3 days delivery in the UAE</span>`; }
+function head(p,size){ return `<span class="brand">${esc(p.brand)}</span><h4>${esc(p.name)}</h4>${priceHtml(size,true)}`; }
+const PAGES = {
+  A:{t:'Round swatches and size pills', why:'The classic: "Shade: 03 Linen" above round swatches, "Size" above pills. Clear and works for any number of shades.',
+    page(){ const k='pA', id=PID, {p,col,size}=cur(k,id);
+      return `<div class="pdp">${img(id,col)}<div class="info">${head(p,size)}${p.colors?`<div class="opt"><span class="lbl">Shade: <b>${esc(col.n)}</b></span>${swatches(k,id)}</div>`:''}${p.sizes.length>1?`<div class="opt"><span class="lbl">Size: <b>${esc(size.n)}</b></span>${chips(k,id)}</div>`:''}${stockLine(col,size)}${addBtn(col,size)}</div></div>`; }},
+  B:{t:'Size cards with value', why:'Each size is a small card with its price, price per ml and a "Best value" badge, which nudges shoppers to the bigger size. Shades are rounded squares with their names.',
+    page(){ const k='pB', id=PID, {p,col,size}=cur(k,id); const s=st(k,id);
+      const sq = p.colors ? `<div class="opt"><span class="lbl">Shade: <b>${esc(col.n)}</b></span><div class="sqs">${p.colors.map((o,i)=>`<button class="sq${o.out?' out':''}" style="--c:${o.c}" data-k="${k}" data-id="${id}" data-c="${i}" aria-pressed="${i===s.c}"><i></i><span>${esc(o.n)}</span></button>`).join('')}</div></div>` : '';
+      const sc = p.sizes.length>1 ? `<div class="opt"><span class="lbl">Size</span><div class="scards">${p.sizes.map((o,i)=>`<button class="scard${o.out?' out':''}" data-k="${k}" data-id="${id}" data-s="${i}" aria-pressed="${i===s.s}">${o.tag?`<span class="badge">${esc(o.tag)}</span>`:''}<b>${esc(o.n)}</b><span>${aed(o.p)}</span>${o.ml?`<small>${perMl(o)}</small>`:''}</button>`).join('')}</div></div>` : '';
+      return `<div class="pdp">${img(id,col)}<div class="info">${head(p,size)}${sq}${sc}${stockLine(col,size)}${addBtn(col,size)}</div></div>`; }},
+  C:{t:'Shade tiles and a size switch', why:'Tall shade tiles that scroll sideways (good for many shades), and one full-width switch for size. Big tap targets for phones.',
+    page(){ const k='pC', id=PID, {p,col,size}=cur(k,id); const s=st(k,id);
+      const tl = p.colors ? `<div class="opt"><span class="lbl">Shade: <b>${esc(col.n)}</b></span><div class="tiles">${p.colors.map((o,i)=>`<button class="tile${o.out?' out':''}" style="--c:${o.c}" data-k="${k}" data-id="${id}" data-c="${i}" aria-pressed="${i===s.c}"><i></i><span>${esc(o.n)}</span>${o.out?'<small>Sold out</small>':''}</button>`).join('')}</div></div>` : '';
+      const sg = p.sizes.length>1 ? `<div class="opt"><span class="lbl">Size</span><div class="segw">${p.sizes.map((o,i)=>`<button class="${o.out?'out':''}" data-k="${k}" data-id="${id}" data-s="${i}" aria-pressed="${i===s.s}">${esc(o.n)}<small>${aed(o.p)}</small></button>`).join('')}</div></div>` : '';
+      return `<div class="pdp">${img(id,col)}<div class="info">${head(p,size)}${tl}${sg}${stockLine(col,size)}${addBtn(col,size)}</div></div>`; }},
+  D:{t:'Two tidy dropdowns', why:'"Shade" and "Size" rows that open a list with swatch, price and stock. The most compact; best when a product has a long list of shades.',
+    page(){ const k='pD', id=PID, {p,col,size}=cur(k,id); const s=st(k,id);
+      const dd = (which, val, items) => `<div class="dd${s['o'+which]?' open':''}"><button data-dd="${k}|${id}|${which}"><span class="k">${which==='c'?'Shade':'Size'}</span>${which==='c'?`<span class="dot" style="--c:${col.c}"></span>`:''}<span class="v">${esc(val)}</span><span class="car">▾</span></button><ul>${items}</ul></div>`;
+      const cl = p.colors ? dd('c', col.n, p.colors.map((o,i)=>`<li><button class="${o.out?'out':''}" data-k="${k}" data-id="${id}" data-c="${i}" aria-pressed="${i===s.c}"><span class="dot" style="--c:${o.c}"></span>${esc(o.n)}<span class="r">${o.out?'Sold out':'In stock'}</span></button></li>`).join('')) : '';
+      const sl = p.sizes.length>1 ? dd('s', size.n, p.sizes.map((o,i)=>`<li><button class="${o.out?'out':''}" data-k="${k}" data-id="${id}" data-s="${i}" aria-pressed="${i===s.s}">${esc(o.n)}<span class="r">${aed(o.p)}</span></button></li>`).join('')) : '';
+      return `<div class="pdp">${img(id,col)}<div class="info">${head(p,size)}<div class="opt">${cl}${sl}</div>${stockLine(col,size)}${addBtn(col,size)}</div></div>`; }},
+  E:{t:'One summary row and a sheet', why:'The page shows one row with the current choice. Tapping it opens a sheet (from the bottom on phones, the side on laptops) with all shades and sizes and the Add button. Calm page, focused choosing.',
+    page(){ const k='pE', id=PID, {p,col,size}=cur(k,id); const s=st(k,id);
+      const label = [col && col.n, p.sizes.length>1 && size.n].filter(Boolean).join(' · ') || size.n;
+      return `<div class="pdp${s.sheet?' sheeton':''}">${img(id,col)}<div class="info">${head(p,size)}<button class="sumrow" data-sheet="${k}|${id}|1"><span class="dot" style="--c:${colourOf(id,col)}"></span><span class="t"><b>${esc(label)}</b><small>${p.colors?p.colors.length+' shades':''}${p.colors&&p.sizes.length>1?' · ':''}${p.sizes.length>1?p.sizes.length+' sizes':''}</small></span><span class="ch">Change</span></button>${stockLine(col,size)}${addBtn(col,size)}</div>
+      <div class="sheet-bg" data-sheet="${k}|${id}|0"></div><div class="sheet" role="dialog" aria-label="Choose options"><span class="grab"></span>${head(p,size)}${p.colors?`<div class="opt"><span class="lbl">Shade: <b>${esc(col.n)}</b></span>${swatches(k,id)}</div>`:''}${p.sizes.length>1?`<div class="opt"><span class="lbl">Size</span>${chips(k,id)}</div>`:''}${soldOut(col,size)?`<button class="add" disabled>Sold out · Notify me</button>`:`<button class="add" data-sheet="${k}|${id}|0">Add to bag · ${aed(size.p)}</button>`}</div></div>`; }}
+};
+
+/* ── Render ───────────────────────────────────────────────────── */
+let pick = {card:null, pdp:null};
+try { pick = JSON.parse(localStorage.getItem('kbb-var-pick')) || pick; } catch (e) {}
+function block(kind, L, d, inner){
+  const on = pick[kind] === L;
+  return `<div class="design${on?' on':''}" id="${kind}-${L}"><div class="dh"><span class="letter">${L}</span><h3>${esc(d.t)}</h3><button class="choose" data-choose="${kind}|${L}">${on?'Chosen':'Choose '+L}</button><p class="why">${esc(d.why)}</p></div><div class="frame">${inner}</div></div>`;
+}
+function render(){
+  document.getElementById('cards').innerHTML = Object.entries(CARDS).map(([L,d]) => block('card', L, d, `<div class="grid">${ORDER.map(id => d.card(id)).join('')}</div>`)).join('');
+  document.getElementById('pages').innerHTML = Object.entries(PAGES).map(([L,d]) => block('pdp', L, d, d.page())).join('');
+  document.getElementById('pickCard').textContent = pick.card || '—';
+  document.getElementById('pickPdp').textContent = pick.pdp || '—';
+}
+const ps = document.getElementById('prodsw');
+[['cushion','Cushion (shades + sizes)'],['tint','Lip tint (shades)'],['sun','Sun cream (sizes)']].forEach(([id,label]) => {
+  const b = document.createElement('button'); b.className = 'chip'; b.textContent = label; b.dataset.pid = id; b.setAttribute('aria-pressed', String(id === PID)); ps.appendChild(b);
+});
+ps.addEventListener('click', (e) => { const b = e.target.closest('[data-pid]'); if (!b) return; PID = b.dataset.pid; ps.querySelectorAll('[data-pid]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); render(); });
+
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('button,[data-sheet]'); if (!t) return;
+  const d = t.dataset;
+  if (d.k && (d.c !== undefined || d.s !== undefined)) {
+    const s = st(d.k, d.id);
+    if (d.c !== undefined) s.c = +d.c;
+    if (d.s !== undefined) s.s = +d.s;
+    s.oc = s.os = false; render(); return;
+  }
+  if (d.open) { const [k,id] = d.open.split('|'); st(k,id).open = true; render(); return; }
+  if (d.close) { const [k,id] = d.close.split('|'); st(k,id).open = false; render(); return; }
+  if (d.dd) { const [k,id,w] = d.dd.split('|'); const s = st(k,id); s['o'+w] = !s['o'+w]; render(); return; }
+  if (d.sheet) { const [k,id,v] = d.sheet.split('|'); st(k,id).sheet = v === '1'; render(); return; }
+  if (d.choose) { const [kind,L] = d.choose.split('|'); pick[kind] = L; try { localStorage.setItem('kbb-var-pick', JSON.stringify(pick)); } catch (err) {} render(); return; }
+});
+
+function setView(ph){
+  document.body.classList.toggle('ph', ph); document.body.classList.toggle('lp', !ph);
+  document.getElementById('vPh').setAttribute('aria-pressed', String(ph));
+  document.getElementById('vLp').setAttribute('aria-pressed', String(!ph));
+}
+document.getElementById('vPh').onclick = () => setView(true);
+document.getElementById('vLp').onclick = () => setView(false);
+setView(window.innerWidth < 900);
+
+document.getElementById('copyBtn').onclick = () => {
+  const txt = `Variable products: product card ${pick.card || '(not chosen)'}, product page ${pick.pdp || '(not chosen)'}.`;
+  const done = () => { const c = document.getElementById('copied'); c.hidden = false; setTimeout(() => c.hidden = true, 1800); };
+  const show = () => { const c = document.getElementById('copied'); c.textContent = txt; c.hidden = false; };
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done, show); else show();
+};
+render();
+})();
+</script>

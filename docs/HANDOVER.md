@@ -408,6 +408,26 @@ Redness & Sensitive Skin, Oily Skin, with artwork for each and live controls.
   arrows appear; white/pink arrows read best on pastel; Bloom's white names are
   lighter on the palest tiles.
 
+### 7.2b Variable products (colour and size) — card A–E, product page A–E  ▲ waiting
+
+His brief (12 October): "variable products functionality, by color and by
+size (ml), I want the selection on the product grid, and on the product page
+itself, show me some nice designs to choose from."
+
+- **Live preview:** `docs/variant-options/index.html` (also published as a
+  private page). Phone/laptop switch, every swatch and size live, sold-out
+  options, "Copy my choice". Shots: `docs/variant-options/overview-*.png`.
+- Card: A dots + size chips · B named shade, larger swatches, price per ml ·
+  C choices on the photo · D picker slides up inside the card on Add · E shade
+  strip on the photo edge. Page: A round swatches + size pills · B size cards
+  with per-ml value and Best value badge · C shade tiles + size switch · D two
+  dropdowns · E summary row + sheet.
+- Groundwork already in the shop: `product_variants` (price, sale price, stock,
+  image per option) and `attributes` / `attribute_values` /
+  `product_attribute_value`. What is missing is the shopper-facing picker (the
+  page today lists options as rows) and the variant-to-attribute link for
+  colour hex and size per option.
+
 ### 7.3 Older decisions — check their state on the live admin first
 
 Recorded as open on 30 September; several were settled afterwards in
