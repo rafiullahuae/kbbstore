@@ -83,8 +83,8 @@ A package also never **deletes** a file. Old compiled assets in
 ## Every cache-clearing migration looks like this
 
 Copy the newest `database/migrations/*_clear_caches_*.php`, give it the next
-timestamp (they run ahead of the calendar on purpose — after
-`2027_10_28_200000` comes `2027_10_28_3xxxxx` or later) and change only the
+timestamp after the newest one in `database/migrations/` (they run ahead of
+the calendar on purpose; at 2.60.486 the newest is `2027_10_28_300000`) and change only the
 comment. It deletes compiled views, the config/route/event caches and resets
 OPcache, so the shop never serves yesterday's compiled copy. Every package that
 changes code, a view or a route ships one.

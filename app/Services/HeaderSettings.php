@@ -570,6 +570,52 @@ class HeaderSettings
         'bc_pad_x'        => ['range',  'Inner padding · left and right · desktop', 0,
                               'Moves the trail in from the page\'s sides, on screens wider than 900px.',
                               ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        /*
+         * ── ONE LINE, ITS TYPE, AND THE PHONE'S TALL ROWS (Lane CRUMB) ─────
+         *
+         * The owner, 12 October, over a phone screenshot of a product page:
+         * "in mobile the breadcrum line height is too much ... font size,
+         * line height etc. also i want that the breadcrums must load in one
+         * line only, and if it's long, then it should cut faded from the
+         * right side, or put ..."
+         *
+         * The tall rows were never line height: kbb.css's phone tap-target
+         * block gives every `.crumb a` a 44px min-height, so a trail that
+         * wrapped stood 44px a line. breadcrumbCss() takes that back for the
+         * trail on every device where it is shown (the trail is a line of
+         * text, and links inside running text are the WCAG 2.5.8 inline
+         * exception), which is what "line height is too much" was about.
+         *
+         * `bc_line_*` ships `fade`, both devices -- the one thing he asked
+         * for, so it ships ON (CLAUDE.md, 30 September). Font size and line
+         * spacing ship `auto`: the pages draw the trail at 12, 12.5 and 13px
+         * today, and one number would move every page he did not mention;
+         * `auto` prints nothing and each page keeps its own.
+         *
+         * SELECTS, NOT RANGES, BECAUSE THE VALUES ARE PRINTED INTO <style>:
+         * a select stores one of its own keys or the default (rule 5), so the
+         * only things that can reach the stylesheet are `auto` and these
+         * digits. Sizes in tenths of a pixel, spacing in hundredths, the
+         * ProductLayout convention for a half-pixel the shop really uses.
+         */
+        'bc_line_mobile'  => ['select', 'Long breadcrumb · phone', 'fade',
+                              'One line only. A breadcrumb longer than the screen fades out at the end, or ends with “…”. “Wrap” lets it run onto a second line as before.',
+                              self::CRUMB_LINE],
+        'bc_line'         => ['select', 'Long breadcrumb · desktop', 'fade',
+                              'The same choice on screens wider than 900px.',
+                              self::CRUMB_LINE],
+        'bc_size_mobile'  => ['select', 'Font size · phone', 'auto',
+                              '“As the page draws it” keeps each page’s own size (12.5px on product pages).',
+                              self::CRUMB_SIZE],
+        'bc_size'         => ['select', 'Font size · desktop', 'auto',
+                              '“As the page draws it” keeps each page’s own size (12.5px on product pages).',
+                              self::CRUMB_SIZE],
+        'bc_lh_mobile'    => ['select', 'Line spacing · phone', 'auto',
+                              'The height of the line the words sit on. With “Wrap” it is also the gap between two lines.',
+                              self::CRUMB_LH],
+        'bc_lh'           => ['select', 'Line spacing · desktop', 'auto',
+                              'The height of the line the words sit on, on screens wider than 900px.',
+                              self::CRUMB_LH],
     ];
 
     /** tab key => [label, description, field keys] */
@@ -601,9 +647,10 @@ class HeaderSettings
         'flagbar' => ['Flag bar', 'The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. Off on phones and on desktop for now — switch either one on to bring it back, with the wording on phones only.',
                       ['fb_mobile', 'fb_desktop', 'fb_text', 'fb_text_desktop', 'fb_flags', 'fb_height', 'fb_size', 'fb_flag_h',
                        'fb_bg', 'fb_ink', 'fb_pill', 'fb_border']],
-        'crumbs'  => ['Breadcrumbs', 'The "Home / Category / Product" line under the header, on product, category, shop, brand, article, wishlist and content pages. Off on phones and desktop by default; each width has its own switch and its own spacing.',
+        'crumbs'  => ['Breadcrumbs', 'The "Home / Category / Product" line under the header, on product, category, shop, brand, article, wishlist and content pages. Each width has its own switch, spacing, font size and line spacing, and keeps the trail on one line (fading at the end, or ending with “…”) unless you choose Wrap.',
                       ['bc_mobile', 'bc_desktop', 'bc_above_mobile', 'bc_below_mobile', 'bc_pad_y_mobile', 'bc_pad_x_mobile',
-                       'bc_above', 'bc_below', 'bc_pad_y', 'bc_pad_x']],
+                       'bc_line_mobile', 'bc_size_mobile', 'bc_lh_mobile',
+                       'bc_above', 'bc_below', 'bc_pad_y', 'bc_pad_x', 'bc_line', 'bc_size', 'bc_lh']],
     ];
 
     public function __construct(
@@ -999,6 +1046,26 @@ class HeaderSettings
      */
     public const CRUMB_SELECTORS = ['.crumb', '.brw-crumb', '.rtn-crumb'];
 
+    /** Long breadcrumb (Lane CRUMB): one line that fades, one line with "…", or wrapping. */
+    public const CRUMB_LINE = [
+        'fade' => 'One line · fades out at the end',
+        'dots' => 'One line · ends with “…”',
+        'wrap' => 'Wrap onto more lines (as before)',
+    ];
+
+    /** Font size in tenths of a pixel; `auto` prints nothing. */
+    public const CRUMB_SIZE = [
+        'auto' => 'As the page draws it',
+        '110' => '11px', '115' => '11.5px', '120' => '12px', '125' => '12.5px', '130' => '13px',
+        '135' => '13.5px', '140' => '14px', '150' => '15px', '160' => '16px',
+    ];
+
+    /** Line spacing in hundredths; `auto` prints nothing. */
+    public const CRUMB_LH = [
+        'auto' => 'As the page draws it',
+        '120' => '1.2 · tight', '130' => '1.3', '140' => '1.4', '150' => '1.5', '160' => '1.6', '180' => '1.8', '200' => '2 · airy',
+    ];
+
     /**
      * The breadcrumb's switches and spacing, as one small stylesheet.
      *
@@ -1062,10 +1129,52 @@ class HeaderSettings
         $noRise = $noRise . '{margin-top:max(0px,calc(var(--brw-ph-st,22px) - 22px))}'
             . '@container (max-width:599px){' . $noRise . '{margin-top:max(0px,calc(var(--brw-ph-stm,22px) - 22px))}}';
 
-        $device = static function (string $query, bool $on, int $above, int $below, int $padY = 0, int $padX = 0) use ($sel, $noRise): string {
+        /*
+         * ONE LINE, ITS TYPE, AND NO 44px LINKS (Lane CRUMB). Appended to an
+         * ON device's rules only -- a hidden trail prints what it always did.
+         *
+         *   - the links are inline and lose the phone tap-target block's
+         *     44px min-height and 6px padding, so a line is as tall as its
+         *     line spacing says: that was the owner's "line height is too
+         *     much". (0,2,2) beats kbb.css's (0,1,1) `.crumb a`.
+         *   - `fade`: one line, clipped, and a mask that fades the last 36px
+         *     to transparent -- at the right, or the left in Arabic, where
+         *     the trail ends. On a trail that fits, those 36px are empty page,
+         *     so nothing visible fades. No script, nothing measured.
+         *   - `dots`: one line ending in "…" (text-overflow, which is why the
+         *     links must be inline rather than inline-block: an atomic box
+         *     cannot be cut, it would vanish whole).
+         *   - size / spacing: printed only when not `auto`, from a select's
+         *     own digits, so nothing but [0-9.] reaches this stylesheet.
+         */
+        $type = static function (string $line, string $size, string $lh) use ($sel): string {
+            $css = $sel . ' a{display:inline;min-height:0;padding-top:0;padding-bottom:0}';
+            $box = '';
+
+            if (ctype_digit($size) && isset(self::CRUMB_SIZE[$size])) {
+                $box .= 'font-size:' . rtrim(rtrim(number_format((int) $size / 10, 1, '.', ''), '0'), '.') . 'px;';
+            }
+
+            if (ctype_digit($lh) && isset(self::CRUMB_LH[$lh])) {
+                $box .= 'line-height:' . rtrim(rtrim(number_format((int) $lh / 100, 2, '.', ''), '0'), '.') . ';';
+            }
+
+            if ($line === 'fade') {
+                $mask = 'linear-gradient(90deg,#000 calc(100% - 36px),transparent)';
+                $box .= 'white-space:nowrap;overflow:hidden;-webkit-mask-image:' . $mask . ';mask-image:' . $mask . ';';
+                $rtl = 'linear-gradient(270deg,#000 calc(100% - 36px),transparent)';
+                $css .= ':root[dir=rtl] body :is(' . implode(',', self::CRUMB_SELECTORS) . '){-webkit-mask-image:' . $rtl . ';mask-image:' . $rtl . '}';
+            } elseif ($line === 'dots') {
+                $box .= 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+            }
+
+            return ($box === '' ? '' : $sel . '{' . rtrim($box, ';') . '}') . $css;
+        };
+
+        $device = static function (string $query, bool $on, int $above, int $below, int $padY = 0, int $padX = 0, string $type = '') use ($sel, $noRise): string {
             if ($on && $padY === 0 && $padX === 0) {
                 return '@media ' . $query . '{' . $sel . '{margin-top:0;margin-bottom:0;padding-top:'
-                    . $above . 'px;padding-bottom:' . $below . 'px}' . $noRise . '}';
+                    . $above . 'px;padding-bottom:' . $below . 'px}' . $noRise . $type . '}';
             }
 
             /*
@@ -1076,7 +1185,7 @@ class HeaderSettings
              */
             if ($on) {
                 return '@media ' . $query . '{' . $sel . '{margin-top:' . $above . 'px;margin-bottom:' . $below
-                    . 'px;padding:' . $padY . 'px ' . $padX . 'px}' . $noRise . '}';
+                    . 'px;padding:' . $padY . 'px ' . $padX . 'px}' . $noRise . $type . '}';
             }
 
             /*
@@ -1095,9 +1204,11 @@ class HeaderSettings
         };
 
         return $device('(max-width:900px)', (bool) $c['bc_mobile'], (int) $c['bc_above_mobile'], (int) $c['bc_below_mobile'],
-                (int) $c['bc_pad_y_mobile'], (int) $c['bc_pad_x_mobile'])
+                (int) $c['bc_pad_y_mobile'], (int) $c['bc_pad_x_mobile'],
+                $type((string) $c['bc_line_mobile'], (string) $c['bc_size_mobile'], (string) $c['bc_lh_mobile']))
              . $device('(min-width:901px)', (bool) $c['bc_desktop'], (int) $c['bc_above'], (int) $c['bc_below'],
-                (int) $c['bc_pad_y'], (int) $c['bc_pad_x']);
+                (int) $c['bc_pad_y'], (int) $c['bc_pad_x'],
+                $type((string) $c['bc_line'], (string) $c['bc_size'], (string) $c['bc_lh']));
     }
 
     /**

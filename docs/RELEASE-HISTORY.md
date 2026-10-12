@@ -5,10 +5,11 @@ entry for each version, with the owner's words, admin paths and files, is
 there). Versions before 2.60.72 are summarised in `KBB-Master-Plan.md` ("What
 shipped" tables and the phases) and in the timeline in `docs/HANDOVER.md` §13.
 
-**266 entries, 2.60.72 → 2.60.485.**
+**267 entries, 2.60.72 → 2.60.486.**
 
 | Version | What it did |
 |---|---|
+| 2.60.486 | Breadcrumb: one line on every page (fades out at the end), no tall phone rows, and font size and line spacing controls. |
 | 2.60.485 | Cart panel: the free-delivery bar shows when you open the bag, not only after adding something. |
 | 2.60.484 | Marketing emails: every footer line is editable, and a locked email says so. |
 | 2.60.483 | Admin: every "Reset to default" asks "Are you sure?" (Yes / No) first, and says what will reset. |

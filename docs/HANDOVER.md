@@ -168,7 +168,7 @@ before building your first package.
 | 1 | Branch off the integration branch in a fresh worktree | `git worktree add -b lane/<x> ../lane-<x> claude/kind-mayer-rpqesv`, then `git config user.email noreply@anthropic.com && git config user.name Claude` |
 | 2 | Make the change; write the test that fails without it | prove it: revert the fix, run the test (red), restore (green) |
 | 3 | Admin screen with inline script changed? Rebuild assets | `npx vite build`, then commit `public/build/` (manifest + new assets) |
-| 4 | Add the cache-clearing migration | copy the newest `database/migrations/*_clear_caches_*.php`, next timestamp (last: `2027_10_28_200000`) |
+| 4 | Add the cache-clearing migration | copy the newest `database/migrations/*_clear_caches_*.php`, next timestamp (last: `2027_10_28_300000`) |
 | 5 | Release notes | `docs/CHANGELOG.md` (new entry on top), `docs/REPO-STATE.md` ("Repo synced to" = new, "Previous entry point" = old), `VERSION` |
 | 6 | Run the full suite | `KBB_WP_DB=kbb_wp_<x> vendor/bin/pest --compact` (25–30 min). A shopper-visible change also runs the 7 Oct checks in `CLAUDE.md`; a payment change runs the payment set |
 | 7 | Screenshots at 390 and 1280 | `docs/lane-<x>-shots/`, with the measured numbers |
@@ -431,13 +431,14 @@ Confirm with him before acting on any of these:
 
 ---
 
-## 8. Recently shipped (2.60.400 → 2.60.485)
+## 8. Recently shipped (2.60.400 → 2.60.486)
 
 Packages handed to the owner in this stretch, newest first. Full detail and
 admin paths in `docs/CHANGELOG.md`.
 
 | Version | What |
 |---|---|
+| .486 | Breadcrumb on one line (fades at the end), no 44px phone rows (81 → 37px), font size and line spacing per device — Appearance → Header → Breadcrumbs. Also ships the inert reviews-section partials |
 | .485 | Cart panel: free-delivery bar shows when the bag is opened on any page (the page-load panel had no country) |
 | .484 | Marketing emails: every footer line editable (Footer + unsubscribe → Footer words); a started campaign says "Locked" and offers Duplicate to edit |
 | .483 | Every "Reset to default" asks Are you sure (Yes / No) |
@@ -465,7 +466,7 @@ Older history: `KBB-Master-Plan.md` phases and `docs/CHANGELOG.md`.
 ### Which of these are on the live server?
 
 The repository cannot know what the owner has applied. He applies packages
-promptly and in order; the last ones handed over were **.484 and .485**. Confirm
+promptly and in order; the last ones handed over were **.484, .485 and .486**. Confirm
 with him (Platform → Core Updates → History) or by SSH
 (`php artisan migrate:status | tail` — each release's `clear_caches_*` migration
 shows Ran or Pending) before building the next package, and record the answer in

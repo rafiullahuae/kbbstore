@@ -242,6 +242,13 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // control of spacing ... and also padding, for desktop and mobile both"),
     // bc_pad_y_mobile / bc_pad_x_mobile after bc_below_mobile and bc_pad_y /
     // bc_pad_x after bc_below, all 0-40px at 0. Spliced in, not regenerated.
+    // ▲ Lane CRUMB (12 October) added six fields to header's Breadcrumbs tab
+    // and rewrote that tab's description to name them: bc_line_mobile /
+    // bc_size_mobile / bc_lh_mobile after bc_pad_x_mobile and bc_line /
+    // bc_size / bc_lh after bc_pad_x (one line that fades, font size and line
+    // spacing -- the owner's "must load in one line only ... font size, line
+    // height"). Spliced in as text, 109 lines added and 1 changed (the
+    // description), not regenerated.
     // ▲ Lane PO (8 October) added one field to checkout-page and changed
     // nothing else: `remember_on` ("Remember shopper details on this device")
     // on the Fields & attention tab after browsed_on.
@@ -726,7 +733,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // sum_first, each the owner's request.
     // 778 -> 781 (Lane QK12 chunk C): checkout-page vat_amount, vat_text and
     // vat_text_ar, the owner's request.
-    expect($compared)->toBe(781, 'the number of controls drawn changed');
+    // 781 -> 787 (Lane CRUMB): header's six breadcrumb controls -- one line,
+    // font size and line spacing, phone and desktop -- the owner's request.
+    expect($compared)->toBe(787, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

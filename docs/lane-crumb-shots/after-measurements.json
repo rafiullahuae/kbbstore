@@ -1,0 +1,62 @@
+{
+ "390": {
+  "height": 37,
+  "top": 127,
+  "fontSize": "12.5px",
+  "lineHeight": "18.75px",
+  "paddingTop": "18px",
+  "paddingBottom": "0px",
+  "marginBottom": "0px",
+  "whiteSpace": "nowrap",
+  "overflowX": "hidden",
+  "scrollW": 405,
+  "clientW": 346,
+  "links": [
+   {
+    "text": "Home",
+    "h": 16,
+    "clickable": true
+   },
+   {
+    "text": "Sunscreen",
+    "h": 16,
+    "clickable": true
+   }
+  ],
+  "nextTop": 0,
+  "docScrollWidth": 390,
+  "status": 200,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+ },
+ "1280": {
+  "height": 37,
+  "top": 94,
+  "fontSize": "12.5px",
+  "lineHeight": "18.75px",
+  "paddingTop": "18px",
+  "paddingBottom": "0px",
+  "marginBottom": "0px",
+  "whiteSpace": "nowrap",
+  "overflowX": "hidden",
+  "scrollW": 1236,
+  "clientW": 1236,
+  "links": [
+   {
+    "text": "Home",
+    "h": 16,
+    "clickable": true
+   },
+   {
+    "text": "Sunscreen",
+    "h": 16,
+    "clickable": true
+   }
+  ],
+  "nextTop": 130,
+  "docScrollWidth": 1280,
+  "status": 200,
+  "errors": []
+ }
+}

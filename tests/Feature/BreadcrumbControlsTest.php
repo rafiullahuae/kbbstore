@@ -54,6 +54,16 @@ function bcSet(array $values): void
 const BC_NO_RISE = ':root body .brw-crumb+.brw-phw .brw-ph{margin-top:max(0px,calc(var(--brw-ph-st,22px) - 22px))}'
     .'@container (max-width:599px){:root body .brw-crumb+.brw-phw .brw-ph{margin-top:max(0px,calc(var(--brw-ph-stm,22px) - 22px))}}';
 
+/**
+ * Lane CRUMB: what an ON device also prints at the shipped defaults -- one line
+ * that fades at the end (at the left in Arabic) and links without the phone
+ * tap-target block's 44px rows. BreadcrumbOneLineTest owns the detail.
+ */
+const BC_ONE_LINE = ':root body :is(.crumb,.brw-crumb,.rtn-crumb){white-space:nowrap;overflow:hidden;'
+    .'-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent)}'
+    .':root body :is(.crumb,.brw-crumb,.rtn-crumb) a{display:inline;min-height:0;padding-top:0;padding-bottom:0}'
+    .':root[dir=rtl] body :is(.crumb,.brw-crumb,.rtn-crumb){-webkit-mask-image:linear-gradient(270deg,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(270deg,#000 calc(100% - 36px),transparent)}';
+
 /** One `<style id="kbb-crumbs">…</style>` from a document, or null. */
 function bcStyle(string $html): ?string
 {
@@ -220,13 +230,13 @@ it('switches phones and desktop independently, with each width its own spacing',
 
     expect($css)->toBe(
         '@media (max-width:900px){'.$sel.'{display:none}'.$sel.'+:is(.eyebrow,.sh){margin-top:6px}}'
-        .'@media (min-width:901px){'.$sel.'{margin-top:0;margin-bottom:0;padding-top:30px;padding-bottom:12px}'.$noRise.'}'
+        .'@media (min-width:901px){'.$sel.'{margin-top:0;margin-bottom:0;padding-top:30px;padding-bottom:12px}'.$noRise.BC_ONE_LINE.'}'
     );
 
     bcSet(['bc_mobile' => true, 'bc_desktop' => false]);
 
     expect(app(HeaderSettings::class)->breadcrumbCss())->toBe(
-        '@media (max-width:900px){'.$sel.'{margin-top:0;margin-bottom:0;padding-top:6px;padding-bottom:6px}'.$noRise.'}'
+        '@media (max-width:900px){'.$sel.'{margin-top:0;margin-bottom:0;padding-top:6px;padding-bottom:6px}'.$noRise.BC_ONE_LINE.'}'
         .'@media (min-width:901px){'.$sel.'{display:none}'.$sel.'+:is(.eyebrow,.sh){margin-top:30px}}'
     );
 
@@ -301,8 +311,10 @@ it('draws the six controls on Appearance → Header → Breadcrumbs', function (
     $fields = collect($tabs['crumbs']['fields'])->keyBy('key');
 
     // Ten since Lane CB: each device's inner padding, top/bottom and left/right.
+    // Sixteen since Lane CRUMB: each device's long-trail choice, size and spacing.
     expect($fields->keys()->all())->toBe(['bc_mobile', 'bc_desktop', 'bc_above_mobile', 'bc_below_mobile', 'bc_pad_y_mobile', 'bc_pad_x_mobile',
-        'bc_above', 'bc_below', 'bc_pad_y', 'bc_pad_x'])
+        'bc_line_mobile', 'bc_size_mobile', 'bc_lh_mobile',
+        'bc_above', 'bc_below', 'bc_pad_y', 'bc_pad_x', 'bc_line', 'bc_size', 'bc_lh'])
         ->and($fields['bc_mobile']['type'])->toBe('bool')
         ->and($fields['bc_mobile']['value'])->toBeFalse()
         ->and($fields['bc_desktop']['value'])->toBeFalse()

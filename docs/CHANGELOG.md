@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.486
+**Breadcrumb: one line on every page (fades out at the end), no tall phone rows, and font size and line spacing controls.** Apply after .485.
+Runs its migration (clears caches).
+
+| Your request | Now |
+|---|---|
+| "in mobile the breadcrum line height is too much" | The tall rows came from a phone tap-size rule that made every breadcrumb link 44px high, so a trail that wrapped stood 44px a line. Taken back for the breadcrumb: on a phone the product-page trail is **37px** instead of **81px** (measured at 390) |
+| "the breadcrums must load in one line only, and if it's long, then it should cut faded from the right side, or put ..." | One line on phones and desktop. A trail longer than the screen fades out at the end (at the left in Arabic, where it ends); the page never scrolls sideways and every link still clicks. **Appearance → Header → Breadcrumbs → Long breadcrumb · phone / · desktop**: fade (shipped), "…", or Wrap (as before) |
+| "above breadcrums and below breadcums spacing control, and also font size, line height" | Space above / below and inner padding were already on the same tab (phone and desktop). New beside them: **Font size · phone / · desktop** and **Line spacing · phone / · desktop**, each starting at "As the page draws it", so nothing else moves until you pick a number |
+
+Also in this package, and inert: the customer-reviews section designs A–H (`resources/views/partials/review-showcase/`, `app/Support/ReviewShowcase.php`), merged into the project at the handover. Nothing includes them yet, so no page changes; they ship now so the server matches the project when you pick a letter.
+
+Files: app/Services/HeaderSettings.php, the review-showcase files above, migration 2027_10_28_300000.
+
 ## 2.60.485
 **Cart panel: the free-delivery bar shows when you open the bag, not only after adding something.** Apply after .484.
 Runs its migration (clears caches).
