@@ -873,6 +873,13 @@ class CheckoutPage
          * neither, and the script erases any copy a browser already holds.
          * Nothing is sent to the server either way.
          */
+        /*
+         * Lane CSI. The owner, 12 October, crossing it out on that screenshot:
+         * "please turn off this not you etc line". OFF ships, his ask; the
+         * remembering itself (remember_on) is untouched.
+         */
+        'remember_clear' => ['bool', '“Not you? Clear details” link', false,
+                             'Off, as asked. On shows "Not you? Clear details" in the Contact bar when a remembered copy filled the form, so someone else on the same device can empty it. Needs "Remember shopper details on this device" on.'],
         'remember_on'    => ['bool', 'Remember shopper details on this device', true,
                              'On, as asked: name, phone, email, the address and the delivery choice are kept in the shopper\'s own browser and filled in on their next checkout, with no account. A ticked "Remember my details on this device" sits under the address -- unticking it erases the copy at once -- and "Not you? Clear details" appears when a remembered copy was used. Cards, coupons, passwords and the payment method are never kept. Off removes both and erases any copy a browser holds.'],
 
@@ -1107,6 +1114,12 @@ class CheckoutPage
         'signin_on'     => ['bool', '“Sign in” beside the Contact heading', true,
                             'On, as asked: a shopper who is not signed in sees "Sign in" on the right of "1 Contact". It opens a small sign-in window over the page (with "Forgot password?", no sign-up), fills in their saved name, email, phone and address, and closes itself. Never shown to a signed-in customer.'],
         /*
+         * Lane CSI. The owner, 12 October, on a phone screenshot of "1 Contact":
+         * "beside login left side, put user small icon". Ships ON, his ask.
+         */
+        'signin_icon'   => ['bool', 'Small user icon before “Sign in”', true,
+                            'On, as asked: a small person icon sits just left of "Sign in". Off shows the word alone, as before.'],
+        /*
          * Lane QK12. The owner, 9 October, on phone screenshots of the summary
          * over Place order and of the Order summary at the top of the phone
          * checkout ("VAT inclusive (5%)  AED 21.67"): "remove the vat price
@@ -1220,7 +1233,7 @@ class CheckoutPage
                             // Lane QK12, last so every field above keeps its place.
                             'vat_amount', 'vat_text', 'vat_text_ar']],
         'cues'         => ['Fields & attention', 'Which optional fields the page draws, and the two moving things on it: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces.',
-                           ['optin_on', 'optin_checked', 'notes_on', 'addr_picker', 'state_list', 'sum_row', 'sum_totals', 'float_labels', 'browsed_on', 'remember_on',
+                           ['optin_on', 'optin_checked', 'notes_on', 'addr_picker', 'state_list', 'sum_row', 'sum_totals', 'float_labels', 'browsed_on', 'remember_on', 'remember_clear',
                             'ph_weight', 'ph_tone', 'ph_italic',
                             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'addr_cue_speed', 'addr_cue_size',
                             'trust_tick', 'trust_tick_speed']],
@@ -1235,7 +1248,7 @@ class CheckoutPage
                            ['cline_on', 'cline_coupon', 'cline_text', 'cline_text_ar']],
         /* Lane CO, appended so every other tab keeps its place. */
         'express'      => ['Coupon, express & sign in', 'The coupon box, the Apple Pay / Google Pay row under it with its "Express checkout" heading and "OR" line, and the "Sign in" link beside "1 Contact" with its sign-in window. One set of values for both surfaces.',
-                           ['coupon_head', 'xc_head', 'xc_head_ar', 'signin_on']],
+                           ['coupon_head', 'xc_head', 'xc_head_ar', 'signin_on', 'signin_icon']],
     ];
 
     /**

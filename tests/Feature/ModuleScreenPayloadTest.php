@@ -297,6 +297,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // ▲ Lane QK12 chunk C, the owner's request, spliced in: checkout-page's
     // Trust & reviews gains vat_amount ("Show VAT amount to customers", OFF),
     // vat_text and vat_text_ar, last.
+    // ▲ Lane CSI (12 October), the owner's request, spliced in: checkout-page's
+    // Fields & attention gains remember_clear ("“Not you? Clear details”
+    // link", OFF) after remember_on, and Coupon, express & sign in gains
+    // signin_icon ("Small user icon before “Sign in”", ON) last.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
@@ -735,7 +739,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // vat_text_ar, the owner's request.
     // 781 -> 787 (Lane CRUMB): header's six breadcrumb controls -- one line,
     // font size and line spacing, phone and desktop -- the owner's request.
-    expect($compared)->toBe(787, 'the number of controls drawn changed');
+    // 787 -> 789 (Lane CSI): checkout-page remember_clear and signin_icon,
+    // the owner's request.
+    expect($compared)->toBe(789, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

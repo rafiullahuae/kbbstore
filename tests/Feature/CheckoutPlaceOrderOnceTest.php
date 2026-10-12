@@ -351,6 +351,11 @@ it('ships "Remember my details on this device" on, where the owner can switch it
 });
 
 it('draws the tick ticked, once, posting nothing, and the clear link hidden until used', function () {
+    // Lane CSI: the link itself ships off now (the owner, 12 October: "please
+    // turn off this not you etc line"); this case is about the link when on.
+    app(CheckoutPage::class)->save(['remember_clear' => true]);
+    SettingsService::forgetMemo();
+
     /*
      * No name attribute: the choice never reaches the server, so place() is
      * byte for byte what it was. The link is in the layout from the first paint
@@ -368,6 +373,26 @@ it('draws the tick ticked, once, posting nothing, and the clear link hidden unti
         ->and(substr_count($html, 'id="kbbRememberClear"'))->toBe(1)
         ->and($html)->toContain('<button type="button" class="kbb-rmb-clear" id="kbbRememberClear" aria-hidden="true" tabindex="-1">Not you? Clear details</button>')
         ->and($html)->toContain('.kbb-checkout .sec > h2 .kbb-rmb-clear:not(.on){visibility:hidden}');
+});
+
+it('leaves "Not you? Clear details" out of the Contact bar by default, and keeps remembering', function () {
+    /*
+     * Lane CSI. The owner, 12 October, circling it on a phone screenshot of
+     * "1 Contact": "please turn off this not you etc line". DEFECT this guards:
+     * the line still shown, or switching it off taking the remembering (the
+     * tick under the address, and the filled-in form) away with it.
+     * MUTATION, run: ship `remember_clear` true -> red on the first expect;
+     * drop `&& $kbbCoPage->get('remember_clear')` from checkout.blade.php ->
+     * red on the same line.
+     */
+    poCodOn();
+    $html = poShopper(poCart())->get('/checkout/')->assertOk()->getContent();
+
+    expect($html)->not->toContain('kbbRememberClear')
+        ->and($html)->not->toContain('Not you?')
+        ->and(substr_count($html, 'id="kbb_remember"'))->toBe(1)
+        ->and(CheckoutPage::SCHEMA['remember_clear'][2])->toBeFalse()
+        ->and(CheckoutPage::TABS['cues'][2])->toContain('remember_clear');
 });
 
 it('draws neither when the owner switches it off', function () {

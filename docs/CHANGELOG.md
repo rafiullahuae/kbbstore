@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.490
+**Checkout Contact bar: the "Not you? Clear details" line is off, and "Sign in" has a small user icon.** Apply after .489.
+Runs its migration (clears caches).
+
+| Your request | Now |
+|---|---|
+| "please turn off this not you etc line" | "Not you? Clear details" no longer shows beside "1 Contact". Remembering the shopper's details on their device still works exactly as before. Switch: Appearance → Checkout page → Fields & attention → "“Not you? Clear details” link" (off) |
+| "beside login left side, put user small icon" | A 14px user icon sits just left of "Sign in", phone and desktop (measured 5px gap, the link still answers the first tap). Switch: Appearance → Checkout page → Coupon, express & sign in → "Small user icon before “Sign in”" (on) |
+| "if the user already login ... it should be hide auto, the login line" | Already so, and now pinned by a test: a signed-in customer never sees "Sign in", and signing in through its window removes it at once |
+
+Files: app/Services/CheckoutPage.php, resources/views/store/checkout.blade.php, resources/css/kbb/kbb-checkout.css, public/build, migration 2027_10_28_700000.
+
 ## 2.60.489
 **Cart panel: tap the product picture or name to open the product.** Apply after .488.
 Runs its migration (clears caches).

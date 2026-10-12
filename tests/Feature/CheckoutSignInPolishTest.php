@@ -313,7 +313,7 @@ it('offers "Sign in" and its window to a guest, and to nobody signed in', functi
     $html = csoPage(csoCart());
     preg_match('#<h2><span class="n">1</span>.*?</h2>#s', $html, $h2);
 
-    expect($h2[0] ?? '')->toContain('<a class="co-signin" href="/my-account/" data-kbb-signin>Sign in</a>')
+    expect($h2[0] ?? '')->toContain('<a class="co-signin has-ic" href="/my-account/" data-kbb-signin><svg ')
         ->and(substr_count($html, '<dialog class="co-si" id="kbbSignIn"'))->toBe(1)
         ->and(strpos($html, '<dialog class="co-si"'))->toBeGreaterThan(strpos($html, '</form>'));
 
@@ -503,4 +503,35 @@ it('keeps the window\'s script inside the rules: no measuring, every token copy 
         ->and($partial)->toContain("value === ''")
         ->and($partial)->toContain('typeof D.showModal !== \'function\'')
         ->and($partial)->not->toContain('setInterval');
+});
+
+it('puts a small user icon just left of "Sign in", and takes it away when switched off', function () {
+    /*
+     * Lane CSI. The owner, 12 October, on a phone screenshot of "1 Contact":
+     * "beside login left side, put user small icon. and if the user already
+     * login ... it should be hide auto". DEFECT this guards: the word alone,
+     * the icon on the right, or an icon (or the link) left for a customer who
+     * is already signed in.
+     * MUTATION, run: ship `signin_icon` false -> red on the first expect; move
+     * the icon after the word in checkout.blade.php -> red on the same line.
+     */
+    $html = csoPage(csoCart());
+    preg_match('#<h2><span class="n">1</span>.*?</h2>#s', $html, $h2);
+
+    expect($h2[0] ?? '')->toMatch('#<a class="co-signin has-ic" href="/my-account/" data-kbb-signin><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">.*?</svg>Sign in</a>#')
+        ->and(CheckoutPage::TABS['express'][2])->toContain('signin_icon')
+        ->and(file_get_contents(resource_path('css/kbb/kbb-checkout.css')))->toContain('.co-signin.has-ic svg{width:14px;height:14px;flex:none}');
+
+    app(CheckoutPage::class)->save(['signin_icon' => false]);
+    csoForget();
+    preg_match('#<h2><span class="n">1</span>.*?</h2>#s', csoPage(csoCart()), $off);
+    expect($off[0] ?? '')->toContain('<a class="co-signin" href="/my-account/" data-kbb-signin>Sign in</a>');
+
+    // Last, because acting as the customer keeps them signed in for the rest
+    // of the case: signed in, there is no line to put an icon on.
+    app(CheckoutPage::class)->save(['signin_icon' => true]);
+    csoForget();
+    $customer = csoCustomer();
+    $signedIn = (string) csoShopper(csoCart($customer->id))->actingAs($customer, 'customer')->get('/checkout')->assertOk()->getContent();
+    expect($signedIn)->not->toContain('co-signin')->and($signedIn)->toContain('<span class="n">1</span>');
 });

@@ -294,8 +294,9 @@ it('offers spacing and nothing structural', function () {
             // boxes; nothing is added or removed.
             // remember_on (Lane PO) draws a tick under the address and a link in
             // the Contact bar, and keeps the typed details in the browser;
-            // every section stays.
-            'optin_on', 'optin_checked', 'notes_on', 'ph_italic', 'addr_picker', 'state_list', 'sum_row', 'browsed_on', 'remember_on', 'sum_totals', 'float_labels',
+            // every section stays. remember_clear (Lane CSI) is that link
+            // alone (OFF, he asked); a word in the Contact bar, no section.
+            'optin_on', 'optin_checked', 'notes_on', 'ph_italic', 'addr_picker', 'state_list', 'sum_row', 'browsed_on', 'remember_clear', 'remember_on', 'sum_totals', 'float_labels',
             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'trust_tick',
             // Lane PY: whether the payment boxes draw logos, and which of them
             // wear their gateway's colours. Looks; the four boxes stay four.
@@ -310,8 +311,9 @@ it('offers spacing and nothing structural', function () {
             'fs_bar_on',
             // Lane CO: "Have a discount code?" over the coupon box (OFF, he
             // asked) and "Sign in" beside 1 Contact (ON, he asked). Neither
-            // adds or removes a section.
-            'coupon_head', 'signin_on',
+            // adds or removes a section. Lane CSI: the small user icon before
+            // "Sign in" (ON, he asked). An icon; no section.
+            'coupon_head', 'signin_on', 'signin_icon',
             // Lane QK12: "Show VAT amount to customers" (OFF, he asked: "only
             // mention 5% VAT included"). The VAT note's wording; no section.
             'vat_amount',

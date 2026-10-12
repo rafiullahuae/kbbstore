@@ -430,6 +430,11 @@ it('renders the checkout byte for byte as before this lane with both switches of
         // Trust & reviews -> its first switch: set aside on the before side;
         // CheckoutQk9Test pins it off by default and back when switched on.
         $before = (string) preg_replace('#<div class="kbb-reassure">\n.*?\n    </div>\n#s', '', $before, 1);
+        // 2.60.489 (later) makes the cart panel's picture and name links to
+        // the product, as the owner asked; CartPanelLineLinksTest pins them.
+        // Set back on the after side.
+        $after = (string) preg_replace('#<a class="kc-th" href="[^"]*" style="([^"]*)" aria-label="[^"]*">(.*?)</a>#s', '<div class="kc-th" style="$1">$2</div>', $after);
+        $after = (string) preg_replace('#<div class="kc-nm"><a href="[^"]*">(.*?)</a></div>#', '<div class="kc-nm">$1</div>', $after);
         $overlay = '#<!--kbb-placing-->.*?<!--/kbb-placing-->#s';
         $before = (string) preg_replace($overlay, '', $before, 1);
         $after = (string) preg_replace($overlay, '', $after, 1);

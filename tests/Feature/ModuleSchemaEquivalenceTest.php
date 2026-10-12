@@ -111,6 +111,9 @@
  *   (Lane CRUMB: header `bc_line_mobile`, `bc_line`, `bc_size_mobile`,
  *   `bc_size`, `bc_lh_mobile` and `bc_lh` -- the breadcrumb's one line, size
  *   and spacing -- 24 lines inserted, 0 modified, 0 removed.)
+ *   (Lane CSI: checkout_page `remember_clear` and `signin_icon` -- the
+ *   Contact bar's "Not you?" link, now off, and the user icon before "Sign
+ *   in" -- 22 lines inserted, 0 modified, 0 removed.)
  *
  *   Take the new rows and nothing else: rebuild the corpus, then for every line
  *   whose identity (module|key|type|input) is already in the fixture, keep the

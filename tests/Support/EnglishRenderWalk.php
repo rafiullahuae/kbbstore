@@ -2588,8 +2588,11 @@ KBB_BH_CSS;
              * cutting both leaves the page byte for byte; off, neither renders
              * (CheckoutSignInPolishTest). Once each, on the basket checkout.
              */
+            // Lane CSI, 12 October: "beside login left side, put user small
+            // icon" -- the link carries the header's account icon before its
+            // word (Appearance -> Checkout page -> Coupon, express & sign in).
             'the "Sign in" link on the Contact bar (Lane CO)' => [
-                'pattern' => '#<a class="co-signin" href="/my-account/" data-kbb-signin>Sign in</a>#',
+                'pattern' => '#<a class="co-signin has-ic" href="/my-account/" data-kbb-signin><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">.*?</svg>Sign in</a>#',
                 'hits' => 1,
             ],
             'the checkout\'s Sign in window, after the form (Lane CO)' => [
@@ -3789,9 +3792,11 @@ KBB_BH_CSS;
                 'pattern' => "#<style>\n\.kbb-checkout \.sec > h2 \.kbb-rmb-clear\{.*?</style>\n#s",
                 'hits' => 1,
             ],
+            // Lane CSI, 12 October: "please turn off this not you etc line" --
+            // the link is off by default now, so it renders nowhere.
             'the checkout remember-me link in the Contact bar (Lane PO)' => [
                 'pattern' => '#<button type="button" class="kbb-rmb-clear" id="kbbRememberClear" aria-hidden="true" tabindex="-1">[^<]*</button>#',
-                'hits' => 1,
+                'hits' => 0,
             ],
             'the checkout remember-me tick under the address (Lane PO)' => [
                 'pattern' => '#\n?\s*<p class="form-row form-row-wide kbb-acct kbb-rmb" id="kbb_remember_field">.*?</p>(?=\n)#s',

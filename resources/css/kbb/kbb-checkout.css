@@ -324,6 +324,10 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .sec > h2 .co-signin{margin-inline-start:auto;position:relative;font-size:12.5px;font-weight:600;line-height:1.2;
   color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .kbb-checkout .sec > h2 .co-signin::after{content:"";position:absolute;inset:-8px -6px}
+/* Lane CSI: the small user icon before "Sign in" (Appearance -> Checkout page ->
+   Coupon, express & sign in). Only with .has-ic, so the plain link is unchanged. */
+.kbb-checkout .sec > h2 .co-signin.has-ic{display:inline-flex;align-items:center;gap:5px}
+.kbb-checkout .sec > h2 .co-signin.has-ic svg{width:14px;height:14px;flex:none}
 .kbb-checkout .sec > h2 .co-signin:hover{color:var(--pink-deep)}
 .kbb-checkout .sec > h2 .kbb-rmb-clear + .co-signin{margin-inline-start:14px}
 /* The window: a native <dialog> in the top layer, so it inherits this page's

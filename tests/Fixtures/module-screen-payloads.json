@@ -10676,6 +10676,15 @@
             "options": null
           },
           {
+            "key": "remember_clear",
+            "type": "bool",
+            "label": "“Not you? Clear details” link",
+            "help": "Off, as asked. On shows \"Not you? Clear details\" in the Contact bar when a remembered copy filled the form, so someone else on the same device can empty it. Needs \"Remember shopper details on this device\" on.",
+            "default": false,
+            "value": false,
+            "options": null
+          },
+          {
             "key": "ph_weight",
             "type": "select",
             "label": "Placeholder weight",
@@ -11131,6 +11140,16 @@
             "type": "bool",
             "label": "“Sign in” beside the Contact heading",
             "help": "On, as asked: a shopper who is not signed in sees \"Sign in\" on the right of \"1 Contact\". It opens a small sign-in window over the page (with \"Forgot password?\", no sign-up), fills in their saved name, email, phone and address, and closes itself. Never shown to a signed-in customer.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "signin_icon",
+            "name": "signin_icon",
+            "type": "bool",
+            "label": "Small user icon before “Sign in”",
+            "help": "On, as asked: a small person icon sits just left of \"Sign in\". Off shows the word alone, as before.",
             "options": null,
             "default": true,
             "value": true
