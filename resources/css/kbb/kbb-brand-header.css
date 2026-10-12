@@ -57,6 +57,15 @@
 .brw-ph__id{display:flex;align-items:center;justify-content:center;gap:16px;min-width:0;text-align:center}
 .brw-ph .brw-logo--lg{width:var(--brw-ph-lg,72px);height:var(--brw-ph-lg,72px);background:#fff;flex:none;grid-template:minmax(0,1fr)/minmax(0,1fr)}
 .brw-ph .brw-logo--lg .brw-initial{font-size:28px;font-size:calc(var(--brw-ph-lg,72px) * .39)}
+/* 2.60.492: newer CSS only where the browser has it. A declaration with var()
+   in it is accepted by every browser and checked later, so a browser without
+   round() or color-mix() kept it, found it invalid and dropped the value
+   altogether -- the plain line before it never applied. These tests carry no
+   var(), so an older browser skips them and keeps the plain values (a
+   whole-pixel initial; the brand colour solid). */
+@supports (font-size:round(1px,1px)){
+  .brw-ph .brw-logo--lg .brw-initial{font-size:round(calc(var(--brw-ph-lg,72px) * .39),1px)}
+}
 .brw-ph .brw-logo img{padding:6px}
 .brw-ph--logo-rect .brw-logo--lg{width:auto;aspect-ratio:2.3/1;border-radius:12px}
 .brw-ph__name{margin:0;font-size:var(--brw-ph-fn,clamp(24px,3cqi,34px));font-weight:700;line-height:1.1;letter-spacing:-.01em;color:inherit;min-width:0;overflow-wrap:anywhere}
@@ -84,6 +93,9 @@
 
 /* B · a dark shade of the brand's own colour, white text */
 .brw-ph--brand .brw-ph__panel{background:var(--brw-ph-dk,#3a1f2b);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.16);color:#fff}
+@supports (color:color-mix(in srgb,red,red)){
+  .brw-ph--brand .brw-ph__panel{background:color-mix(in srgb,var(--brw-ph-dk,#3a1f2b) 84%,transparent)}
+}
 .brw-ph--brand .brw-ph__desc{color:rgba(255,255,255,.92)}
 .brw-ph--brand .brw-ph__desc a{color:#fff}
 .brw-ph--brand .brw-ph__more{color:#fff}
@@ -130,21 +142,13 @@
 @container (max-width:599px){
   .brw-ph{--brw-ph-d:calc(22px - var(--brw-ph-sxm,22px));margin-top:calc(var(--brw-ph-stm,22px) - 22px)}
 }
-/* 2.60.492: the newer CSS only where the browser has it. A declaration with
-   var() in it is accepted by every browser and checked later, so a browser
-   without round() or color-mix() kept it, found it invalid and dropped the
-   value altogether -- the plain line before it never applied. These tests
-   carry no var(), so an older browser skips the block and keeps the plain
-   values above (a whole-pixel initial; the brand colour solid). */
-@supports (font-size:round(1px,1px)){
-  .brw-ph .brw-logo--lg .brw-initial{font-size:round(calc(var(--brw-ph-lg,72px) * .39),1px)}
-  @container (max-width:599px){
+/* 2.60.492: the phone's newer CSS only where the browser has it (the note
+   on the computer's block above says why). */
+@container (max-width:599px){
+  @supports (font-size:round(1px,1px)){
     .brw-ph .brw-logo--lg .brw-initial{font-size:round(calc(var(--brw-ph-lgm,52px) * .4),1px)}
   }
-}
-@supports (color:color-mix(in srgb,red,red)){
-  .brw-ph--brand .brw-ph__panel{background:color-mix(in srgb,var(--brw-ph-dk,#3a1f2b) 84%,transparent)}
-  @container (max-width:599px){
+  @supports (color:color-mix(in srgb,red,red)){
     .brw-ph--brand .brw-ph__id{background:color-mix(in srgb,var(--brw-ph-dk,#3a1f2b) 88%,transparent)}
   }
 }
