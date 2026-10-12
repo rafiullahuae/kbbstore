@@ -414,3 +414,19 @@ it('keeps the lotus its own size on a browser without CSS round(), and never let
     }
     expect($found)->toBe([], 'round() or color-mix() with var() outside @supports -- an older browser drops the whole value');
 });
+
+it('keeps the phone search field on its own row up to 900px, so the logo is never squeezed and the header cannot flicker', function () {
+    /*
+     * 2.60.493. The owner, 12 October: "still there on iphone 18 ... checked
+     * also in google chrome. same issue" and "when i change the resolution, the
+     * screen continue fluttering". DEFECT: the desktop's late `.sbox{flex:1 1
+     * auto}` beat the phone's flex-basis:100%, so from about 500px the field
+     * joined the first row and the lotus -- sized from its own room by
+     * container units -- shrank to 5x4px at 540; the two fed each other while
+     * resizing. MUTATION, run: drop `flex:0 0 100%` from `header .wrap .sbox`
+     * -> red here.
+     */
+    $css = preg_replace('#/\*.*?\*/#s', '', (string) file_get_contents(resource_path('css/kbb/kbb.css')));
+
+    expect($css)->toMatch('/header \.wrap \.sbox\{\s*margin:var\(--mh-gap,0\) 0 var\(--mh-sgap,10px\);\s*position:relative;\s*flex:0 0 100%;\s*\}/');
+});

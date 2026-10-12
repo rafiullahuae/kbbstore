@@ -3826,6 +3826,14 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
   header .wrap .sbox{
     margin:var(--mh-gap,0) 0 var(--mh-sgap,10px);
     position:relative;
+    /* 2.60.493: ALWAYS its own row up to 900px. The desktop's later
+       `.sbox{flex:1 1 auto}` won over the phone's flex-basis:100%, so from
+       about 500px (a big iPhone, a zoomed-out page, landscape, a tablet) the
+       field squeezed into the first row and the logo -- which sizes itself
+       from the room it is given (container units) -- shrank to a few pixels.
+       The two answers fed each other, so resizing made the header flicker.
+       A fixed basis takes the field out of that loop for good. */
+    flex:0 0 100%;
   }
 }
 

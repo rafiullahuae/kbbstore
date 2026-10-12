@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.493
+**Urgent fix: the phone header no longer squeezes the logo or flickers on big iPhones, zoomed-out pages, landscape and tablets.** Apply after .492.
+Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "it's still there on iphone 18 ... checked also in google chrome. same issue" and "when i change the resolution, the screen continue fluttering" | Root cause found on the live shop: from about 500px wide (a large iPhone, a page zoomed out with Safari's aA, landscape, a tablet) an older desktop rule let the search field join the first row, so the logo was left a few pixels (5×4 at 540px) and, because the logo sizes itself from its room, the two kept changing each other while the width changed — the flicker. The search field now always has its own row up to 900px, as on every phone. Measured every 20px from 320 to 900: logo 35×26 from 400px up, search on its own row everywhere, nothing changing between frames, no sideways scroll. Computers (901px and up) are untouched |
+
+Files: resources/css/kbb/kbb.css, public/build, migration 2027_10_28_910000.
+
 ## 2.60.492
 **Urgent fix: the lotus logo no longer fills the screen on older phones and in-app browsers (Instagram, Facebook).** Apply after .491.
 Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge, so no saved copy of the old page is served.

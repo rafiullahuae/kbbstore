@@ -431,13 +431,14 @@ Confirm with him before acting on any of these:
 
 ---
 
-## 8. Recently shipped (2.60.400 → 2.60.492)
+## 8. Recently shipped (2.60.400 → 2.60.493)
 
 Packages handed to the owner in this stretch, newest first. Full detail and
 admin paths in `docs/CHANGELOG.md`.
 
 | Version | What |
 |---|---|
+| .493 | Urgent: phone search field always its own row ≤900px (logo no longer squeezed, no flicker on resize) |
 | .492 | Urgent: lotus logo no longer fills the screen on older phones / in-app browsers (round() and color-mix() only inside @supports; SVG carries width/height; hard max size) |
 | .491 | Checkout: "Already a member? Sign in" (option B, owner's pick) — Appearance → Checkout page → Coupon, express & sign in |
 | .490 | Checkout Contact bar: "Not you? Clear details" off (Checkout page → Fields & attention), small user icon before "Sign in" (Checkout page → Coupon, express & sign in) |

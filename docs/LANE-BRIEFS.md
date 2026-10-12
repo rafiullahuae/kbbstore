@@ -24,8 +24,8 @@ red without it, and take the whole task.
 | | |
 |---|---|
 | Integration branch | `claude/kind-mayer-rpqesv` |
-| Last package built | **2.60.492** (12 October 2026). Every package to it has been handed to the owner; which are applied on the server is his to confirm (`docs/HANDOVER.md` §8) |
-| Next package | **2.60.493**, `--since=` the commit of the 2.60.492 release (`git log --oneline -1 --grep="Release 2.60.492"`) |
+| Last package built | **2.60.493** (12 October 2026). Every package to it has been handed to the owner; which are applied on the server is his to confirm (`docs/HANDOVER.md` §8) |
+| Next package | **2.60.494**, `--since=` the commit of the 2.60.493 release (`git log --oneline -1 --grep="Release 2.60.493"`) |
 | Lanes running | **None** — the project was handed over on 11 October 2026. Start with `docs/HANDOVER.md`; the next lanes are the two designs waiting on the owner's letter (§7.1 reviews section, §7.2 skin concerns) |
 
 > ▲ **Everything below this table is the round from late September**, kept for its
