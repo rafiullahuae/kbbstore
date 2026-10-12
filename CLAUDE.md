@@ -349,6 +349,59 @@ controllers, `partials/checkout/express-wallets.blade.php` or `checkout.js`
 runs that whole set before it reports, and says so. The integrator reverts a
 payment diff that arrives without it.
 
+## The header and logo are frozen — the owner, 12 October
+
+> *"it's fixed. lock the layout from such issues happening, so no patch will
+> disturbed such code / setting"*
+
+On 12 October the lotus logo filled the whole screen on older phones and in
+Instagram's browser (2.60.492), and on large or zoomed-out iPhones the search
+field squeezed into the first row, shrank the logo to a few pixels and made
+the header flicker while resizing (2.60.493). Both were live, both reached
+customers, both are fixed at the root. **A lane does not touch what follows
+unless its brief is the header or the logo, and then only with the checks
+below.** The tests named are the lock: one going red is a header regression,
+never a pin to advance.
+
+- **The logo carries its own size and a ceiling no browser can drop.**
+  `LogoLockup::SVG_OPEN` has `width="35" height="26"`; kbb.css caps
+  `.logo.lgx>.lgx-i` at `max-width:86px;max-height:64px` (computer) and
+  `max-width:59px;max-height:44px` (900px and under), in plain px with no
+  var(). Never remove them, never raise them past the admin's own maxima
+  (Icon size 64 / 44), and every other inline `<svg>` added to the header
+  gets width/height attributes too.
+- **No newer CSS function next to var() outside @supports.** round(),
+  color-mix() and anything newer go inside `@supports (<prop>:<fn>(plain
+  values))`, with the plain value outside (see the landmine below).
+- **Up to 900px the search field is its own row.** `header .wrap .sbox{...
+  flex:0 0 100%}` in the 900px block. Nothing may put the field, or anything
+  else, into the logo's row on a phone or tablet; the logo sizes itself from
+  its room (container units), so a squeezed row is a shrinking logo and a
+  flicker loop.
+- **No new rule anywhere may restyle the header.** An unscoped desktop
+  `.sbox{flex:1 1 auto}` far below the phone block is what broke 2.60.493;
+  rules for `.sbox`, `.logo`, `.hin`, `.hact`, `.lgx`, `header …` are pinned
+  where they are, in every shop stylesheet.
+- **The lock:** `HeaderLayoutLockTest` fingerprints every stylesheet rule that
+  touches the header or the logo (with its media/supports context) and the six
+  files that draw them and hold their defaults (`LogoLockup`, `HeaderSettings`,
+  `MobileHeader`, the header, logo-lockup and menu-icon partials) -- ANY change
+  is red. `LogoLockupTest` (own size, caps, the @supports sweep over every shop
+  stylesheet, the search row) and `StorefrontEnglishUnchangedTest` back it.
+  The owner's own values in Appearance → Header are his to change from the
+  admin; a package never rewrites them.
+
+**Any lane whose diff touches** `app/Support/LogoLockup.php`,
+`partials/logo-lockup.blade.php`, `partials/header.blade.php`,
+`HeaderSettings`, `MobileHeader`, or a header/logo rule in any stylesheet
+**must, before it reports:** sweep the homepage in Chromium every 20px from
+320 to 1024 and show the logo box and the search row at each width are the
+same as before, stable across 40 frames, with `scrollWidth` equal to the
+width; repeat the sweep with round() and color-mix() renamed out of the
+stylesheet (an older browser) and with the stylesheet blocked; and attach
+pictures at 390, 600 and 1280. `tools/lgo-shots.cjs` and the sweep in
+`docs/lane-lgo-shots/` are the harness.
+
 ## Landmines, each one already paid for
 
 - **Packages 2.60.102–.106 were withdrawn** for being built against a stale
