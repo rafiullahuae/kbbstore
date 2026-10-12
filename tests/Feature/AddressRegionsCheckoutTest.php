@@ -40,6 +40,12 @@ use Tests\Support\EnglishRenderWalk;
  * list", ON as asked. OFF is the typed box exactly as it was.
  */
 beforeEach(function () {
+    // Lane PCY (12 October): Cash on delivery is offered in the UAE only by
+    // default now, at the owner's request. This file tests address fields and
+    // delivery for other countries (Saudi Arabia, the UK), not which countries
+    // COD is offered in, so it opens COD to every country and keeps testing
+    // what it was written for. PaymentCountriesTest owns the country rule.
+    app(\App\Services\SettingsService::class)->set(\App\Services\Payments\GatewayCountries::SETTING, json_encode(['cod' => []]));
     PaymentProvider::query()->delete();
     PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
     app(SettingsService::class)->set('cod_fee', 0);
