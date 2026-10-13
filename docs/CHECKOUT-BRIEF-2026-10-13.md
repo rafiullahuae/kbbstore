@@ -296,3 +296,18 @@ preview of every item on the real cart and checkout, with the open points as
 choices, and friendly-UX suggestions marked as suggestions; he confirms each
 item before anything is built.
 
+## Build rule (his words, 13 Oct): nothing in the order or payment process may be disturbed
+*"also we must need to make sure to do not disturb the order process or payment
+process. and all functionality need to be adjusted and fixes wherever these
+fields called on the whole site, don't assume on anything."*
+
+Before building, for EVERY field, string, id, class or setting an item moves,
+renames or removes: grep the whole repository (app/, resources/, routes/,
+tests/, the owner app, emails, invoices, PDF/print views, the admin order
+screens, the account area and address book, the remembered-details script, the
+cart-journey codes, checkout.js and the placing overlay) and list each use in
+the plan with what happens to it. Nothing is assumed unused. Field `name`s that
+the server reads (billing_*, payment_method, coupon_code, create_account,
+shipping_method) are never renamed. Proof: the payment test set, the full
+suite, and real browser orders with every method on the preview shop.
+
