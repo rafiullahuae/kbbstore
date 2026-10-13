@@ -273,3 +273,26 @@ Plan notes (from the code, 13 Oct):
 - Payment test set + real browser orders with each method (COD shows
   "Complete Order"; card/Tabby/Tamara "Pay now"; the order still places).
 
+## 8. Checkout page — replace "SSL secure" in the trust line under the button  ☐
+Screenshot: `docs/checkout-brief/08-ssl-secure.png` ("🔒 SSL secure · ✓ 100%
+authentic" under Place order, above "1–3 days fast delivery all over UAE").
+
+His words: *"on the checkout page, i need to change the SSL secure to something
+else, suggest me few options for this text."*
+
+Options offered (13 Oct), shown live in the preview to pick from:
+- A "Secure payment"
+- B "Safe checkout"
+- C "Protected payment"
+- D "Encrypted & secure"
+- E "Your data is safe"
+(keeps the lock icon; "✓ 100% authentic" beside it unchanged)
+
+---
+
+**THE LIST IS COMPLETE (his words: "the changes list ended here, proceed to
+live preview as per the instructions and changes above").** Next: one live
+preview of every item on the real cart and checkout, with the open points as
+choices, and friendly-UX suggestions marked as suggestions; he confirms each
+item before anything is built.
+
