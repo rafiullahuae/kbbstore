@@ -11345,6 +11345,31 @@
             "value": "white"
           },
           {
+            "key": "lo_sec_even",
+            "name": "lo_sec_even",
+            "type": "bool",
+            "label": "Same space between every section (phone)",
+            "help": "On, as asked (14 October: \"keep all sections in between spacing same\"): one gap above Express checkout, under its OR line, above Delivery and above Payment, measured to the letters you see. Off: the spacing as before 2.60.498.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_sec_space",
+            "name": "lo_sec_space",
+            "type": "range",
+            "label": "Space between sections (phone)",
+            "help": "The one gap the switch above uses. 35, as chosen from the live preview.",
+            "options": {
+              "min": 12,
+              "max": 48,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 35,
+            "value": 35
+          },
+          {
             "key": "lo_coupon_in",
             "name": "lo_coupon_in",
             "type": "bool",

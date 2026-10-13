@@ -526,3 +526,32 @@ it('draws the owner\'s own Apple Pay logo in the payment list, inline', function
         ->and($logo)->toContain('alt=""')
         ->and(strlen($logo))->toBeLessThan(4000);
 });
+
+it('keeps one gap between every section on a phone, 35 by default, measured to the letters', function () {
+    /*
+     * The owner, 14 October: "keep all sections in between spacing same", then
+     * from the live preview "keep 35 by default". Measured in Chromium at 390
+     * on the preview shop, pixel to pixel: summary -> "Express checkout" 35,
+     * "OR" -> Delivery Information 35, "Create an account" -> Delivery 35.6,
+     * Delivery -> Payment 35 (it was 16 / 16 / 40 / 17). Computer: untouched.
+     * MUTATION: drop the 13px+4px compensation on the account row. RED.
+     */
+    $page = app(CheckoutPage::class);
+    expect($page->bodyClass())->toContain(' cop-eqgap')
+        ->and($page->cssVariables())->not->toContain('--cop-lo-sec');
+
+    $page->save(['lo_sec_space' => 28]);
+    expect($page->cssVariables())->toContain('--cop-lo-sec:28px');
+
+    $page->save(['lo_sec_even' => false]);
+    expect($page->bodyClass())->not->toContain('cop-eqgap');
+
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-checkout.css'));
+    $at = strrpos($css, '.kbb-checkout.cop-eqgap .co-grid');
+    $block = substr($css, (int) strrpos(substr($css, 0, (int) $at), '@media(max-width:900px){'));
+
+    expect($block)->toContain('.kbb-checkout.cop-eqgap .co-grid{gap:calc(var(--cop-lo-sec,35px) - 4px)}')
+        ->and($block)->toContain('.kbb-checkout.cop-eqgap .ordiv.co-xc-or{margin-bottom:calc(var(--cop-lo-sec,35px) - 5px)}')
+        ->and($block)->toContain('#customer_details>.sec:has(+ .sec){padding-bottom:calc(var(--cop-lo-sec,35px) - 1px)}')
+        ->and($block)->toContain('#customer_details>.sec:has(+ .sec):has(#create_account_field){padding-bottom:calc(var(--cop-lo-sec,35px) - 18px)}');
+});

@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.498
+**Checkout on a phone: the same 35px gap between every section, as you set in the live preview.** Apply after .497.
+Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "above express checkout, give little bit more space ... above delivery, reduce the space ... above payment section give little bit more space ... keep all sections in between spacing same" / "keep 35 by default" | One 35px gap on a phone, measured to the letters you see: Order summary → "Express checkout", "OR" → Delivery Information, "Create an account" → Delivery, Delivery → Payment. Measured on the preview shop at 390px: 35 / 35 / 35.6 / 35px (before: 16 / 16 / 40 / 17). Switch and number: Appearance → Checkout page → 13 October layout → "Same space between every section (phone)" and "Space between sections (phone)" (12–48px) |
+
+Nothing else changes: the computer layout, the fields, the payment options and the Express checkout section itself are exactly as before.
+
+Files: app/Services/CheckoutPage.php, CheckoutLayout.php, resources/css/kbb/kbb-checkout.css, public/build, migration 2027_10_31_300000.
+
 ## 2.60.497
 **Checkout touch-ups you chose from the live preview: the opened summary almost white with rounded bottom corners, a green heading row in the summary at the foot of the page, and your own Apple Pay logo in the payment list.** Apply after .496.
 Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.

@@ -431,6 +431,7 @@ function mAllowedRepairs(): array
  *
  * 2.60.496 — 15 rows for lo_state_lang and lo_detected, spliced in the same way.
  * 2.60.497 — the rows for lo_sum_open, spliced in the same way.
+ * 2.60.498 — the rows for lo_sec_even and lo_sec_space, spliced in the same way.
  */
 it('answers every recorded cast exactly as it did before the shared schema', function () {
     $recorded = file(base_path('tests/Fixtures/module-cast-baseline.txt'), FILE_IGNORE_NEW_LINES);

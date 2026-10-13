@@ -1774,3 +1774,19 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout.cop-totonly.cop-sow .kbb-mobile-order.co-open .co-osbox,.kbb-checkout.cop-totonly.cop-sog .kbb-mobile-order.co-open .co-osbox{margin-top:16px}
   .kbb-checkout.cop-sow .co-osh,.kbb-checkout.cop-sog .co-osh{background:#DCEFE3;padding:12px 14px;border-radius:10px;margin:0 0 10px}
 }
+
+/* 2.60.498, the owner (14 October): "keep all sections in between spacing
+   same", 35px chosen from the live preview. Phone only, one gap: above Express
+   checkout, under its OR line, above Delivery and above Payment -- measured to
+   the letters you see, not to their line boxes ("Express checkout" starts 4px
+   inside its line, "OR" ends 5px above its line's bottom, "Create an account"
+   ends 4px above its line's bottom and its 44px tap row has 13px more under
+   it; the section heading's border is 1px). Appearance -> Checkout page -> 13
+   October layout -> Same space between every section / Space between sections. */
+@media(max-width:900px){
+  .kbb-checkout.cop-eqgap .co-grid{gap:calc(var(--cop-lo-sec,35px) - 4px)}
+  .kbb-checkout.cop-eqgap .ordiv.co-xc-or{margin-bottom:calc(var(--cop-lo-sec,35px) - 5px)}
+  .kbb-checkout.cop-eqgap #customer_details>.sec:has(+ .sec){padding-bottom:calc(var(--cop-lo-sec,35px) - 1px)}
+  .kbb-checkout.cop-eqgap #create_account_field{margin-bottom:0}
+  .kbb-checkout.cop-eqgap #customer_details>.sec:has(+ .sec):has(#create_account_field){padding-bottom:calc(var(--cop-lo-sec,35px) - 18px)}
+}

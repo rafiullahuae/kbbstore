@@ -758,7 +758,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // payment list": the Express row is drawn as before beside it.
     // 830 -> 831 (2.60.497): checkout-page lo_sum_open, the opened summary's
     // background on a phone (almost white, the owner's pick of 14 October).
-    expect($compared)->toBe(831, 'the number of controls drawn changed');
+    // 831 -> 833 (2.60.498): checkout-page lo_sec_even and lo_sec_space, one
+    // gap between every section on a phone (35, the owner's pick).
+    expect($compared)->toBe(833, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

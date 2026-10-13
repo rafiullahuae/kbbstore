@@ -332,7 +332,7 @@ it('offers spacing and nothing structural', function () {
             // move sections -- that was the brief -- and every one of them is
             // put back at once by Appearance -> Checkout page -> 13 October
             // layout -> "Put back as before 2.60.495" (CheckoutLayout::restore()).
-            'lo_head_cart', 'lo_title', 'lo_sum_green', 'lo_coupon_in', 'lo_one_step',
+            'lo_head_cart', 'lo_title', 'lo_sum_green', 'lo_sec_even', 'lo_coupon_in', 'lo_one_step',
             'lo_email_hint_on', 'lo_uae_short', 'lo_detected', 'lo_remember_tick', 'lo_dl_note_free',
             'lo_pay_secure_on', 'lo_bag_pics', 'lo_total_only', 'lo_btn_words',
             'lo_trust_on', 'lo_apple_row',

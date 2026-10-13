@@ -1177,6 +1177,11 @@ class CheckoutPage
                                 'green'   => 'Very light green',
                                 'classic' => 'As 2.60.495 (the same green, square corners)',
                             ]],
+        'lo_sec_even'   => ['bool', 'Same space between every section (phone)', true,
+                            'On, as asked (14 October: "keep all sections in between spacing same"): one gap above Express checkout, under its OR line, above Delivery and above Payment, measured to the letters you see. Off: the spacing as before 2.60.498.'],
+        'lo_sec_space'  => ['range', 'Space between sections (phone)', 35,
+                            'The one gap the switch above uses. 35, as chosen from the live preview.',
+                            ['min' => 12, 'max' => 48, 'step' => 1, 'unit' => 'px']],
         'lo_coupon_in'  => ['bool', 'Coupon field inside the order summary', true,
                             'On, as asked: the pink coupon box is gone; the field and Apply sit inside the summary (top, and the one at the foot of the page when it is opened).'],
         'lo_coupon_look' => ['select', 'Applied coupon looks like', 'ticket',
@@ -1359,7 +1364,7 @@ class CheckoutPage
            buttons at the top of this tab (put back / use again) are drawn by
            the screen from CheckoutLayout, not from this list. */
         'layout13'     => ['13 October layout', 'Everything from the checkout and cart brief of 13 October, each switch at the value you chose in the live preview. The button at the top puts the cart and checkout back exactly as they were before 2.60.495, and the one beside it brings this layout back. One set of values for both surfaces.',
-                           ['lo_head_cart', 'lo_title', 'lo_sum_green', 'lo_sum_open', 'lo_coupon_in', 'lo_coupon_look',
+                           ['lo_head_cart', 'lo_title', 'lo_sum_green', 'lo_sum_open', 'lo_sec_even', 'lo_sec_space', 'lo_coupon_in', 'lo_coupon_look',
                             'lo_one_step', 'lo_email_hint_on', 'lo_email_hint', 'lo_email_hint_ar', 'lo_addr_rows', 'lo_uae_short', 'lo_state_lang', 'lo_detected',
                             'lo_remember_tick', 'lo_dl_note_free', 'lo_pay_secure_on', 'lo_pay_secure', 'lo_pay_secure_ar',
                             'lo_bag_pics', 'lo_total_only', 'lo_btn_words', 'lo_pay_now', 'lo_pay_now_ar', 'lo_complete', 'lo_complete_ar',
@@ -1473,6 +1478,8 @@ class CheckoutPage
         'm_shell_pb'   => '--cop-m-shellpb',
         'm_tocart_r'   => '--cop-m-tocartr',
         'm_tocart_min' => '--cop-m-tocartmin',
+        // 2.60.498: the one gap between sections on a phone (13 October layout).
+        'lo_sec_space' => '--cop-lo-sec',
         'm_pad_x'      => '--cop-m-padx',
         'm_pad_y'      => '--cop-m-pady',
         'm_title_pt'   => '--cop-m-titlept',
@@ -1601,6 +1608,7 @@ class CheckoutPage
         'lo_one_step'    => ['', 'cop-1step'],
         'lo_total_only'  => ['', 'cop-totonly'],
         'lo_apple_row'   => ['', 'cop-apay'],
+        'lo_sec_even'    => ['', 'cop-eqgap'],
     ];
 
     /**
