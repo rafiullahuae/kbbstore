@@ -122,6 +122,42 @@ its phase.
   settings.** Already decided by him: pastel colours with icon Set 4 (duotone).
   Playground `docs/skin-concerns-options/index.html` ("Copy settings" gives his
   full choice as text); shots in `shots/` beside it. `docs/HANDOVER.md` §7.2
+- **▲ Variable products (colour and size) — pick a card design A–E and a product
+  page design A–E** (12 Oct). Drawn on the live shop's own pages:
+  `docs/variant-options/live/sheet-*.png` (cushion search grid, Missha BB product
+  page); the interactive demo is `docs/variant-options/index.html`. Recommended
+  **B + B**. FOUND WHILE SHOOTING: the live product page hides its options block
+  (`.pm-bundles` is display:none), so a shopper cannot choose a shade on Missha,
+  TIRTIR, Heimish or House of Hur today; the chosen picker fixes it. No product
+  has ml sizes yet. `docs/HANDOVER.md` §7.2b
+- **▲ Site-app landing page — pick A (Glow), B (Plum premium, QR for laptops) or
+  C (App vs website)** (12 Oct). Drawn inside the live shop with real screens:
+  `docs/app-landing/option-*-small.png`; harness `tools/app-landing-*.cjs`.
+  Buttons say "Add to iPhone" / "Install on Android" (not the official store
+  badges: there is no store listing). Ship after site-app Patch 1 ("stays signed
+  in" is a claim on option C).
+- **▲ Site app and owner app — Patches 1–3, waiting on two answers** (12 Oct):
+  (1) owner app PIN only after the idle hours, or on every cold open; (2) go
+  ahead with Patch 1. Diagnosis, all read from the code: the owner app keeps its
+  X-OA-CSRF key in sessionStorage (`resources/js/owner-app/core.js`), which a
+  cold start wipes, so `/api/state` answers `pin` although the 12 h session is
+  valid; the shop remembers a customer only when "Stay signed in" is ticked (off
+  by default) and never from checkout sign-in, registration or invite; neither
+  service worker re-subscribes on `pushsubscriptionchange` (owner app's handler is
+  empty); owner-app push failures log at WARNING, which live (LOG_LEVEL=error)
+  discards. Patch 1 = stay unlocked/signed in, push self-heal, failures at ERROR
+  and a per-phone notification health line. Patch 2 = richer Android install
+  sheet (screenshots), in-app-browser "Open in Chrome/Safari", iPhone 2-step
+  guide, iPhone edge-to-edge (touches the frozen header: run its sweeps), a
+  Samsung/Xiaomi "never sleeping" tip. Patch 3 = icon shortcuts and badge
+  counts. Not fixable by code: iPhone cannot be installed by a site without the
+  Share sheet; Android OEM battery savers stop Chrome's push.
+- **Native App Store / Play Store apps (Capacitor-style wrapper)** — estimate
+  given 12 Oct: ~1.5–2 weeks build (native push via FCM/APNs, persistent sign-in,
+  deep links, a native tab bar and Apple Pay so Apple's 4.2 "minimum
+  functionality" review passes), company developer accounts (Apple needs a
+  D-U-N-S number, 1–2 weeks), store review 1–7 days: 3–5 weeks to live. Not
+  started; his call.
 - **Which release the server is running, and which domain is live**
   (`extrabeauty.ae` or `kbeautybliss.com`). Record both in `docs/REPO-STATE.md`
 - **Older choices recorded open on 30 September** — product card B/C/D, slider
