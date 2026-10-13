@@ -27,7 +27,7 @@
 @forelse ($rates as $i => $rate)
     <ul id="shipping_method" class="woocommerce-shipping-methods">
         <li>
-            <input type="radio" name="shipping_method" data-index="{{ $i }}" id="shipping_method_{{ $i }}" value="{{ $rate['id'] }}" class="shipping_method" @checked($rate['id'] === $chosenRate)>
+            <input type="radio" name="shipping_method" data-index="{{ $i }}" id="shipping_method_{{ $i }}" value="{{ $rate['id'] }}" class="shipping_method"{!! app(\App\Services\CheckoutPage::class)->lo('dl_note_free') ? ' data-kbb-cost="'.(int) $rate['cost'].'"' : '' !!} @checked($rate['id'] === $chosenRate)>
             <label for="shipping_method_{{ $i }}">@if ($kbbDl = app(\App\Services\CheckoutPage::class)->deliveryLabel($rate, $deliveryCountry ?? null))<span class="co-dl-t">{{ $kbbDl['text'] }}</span><span class="co-dl-p">{!! $kbbDl['free'] ? e(__('store.checkout.free')) : \App\Support\Money::format((int) $rate['cost']) !!}</span>@else{{ $rate['title'] }}{!! $rate['cost'] > 0 ? ': '.\App\Support\Money::format((int) $rate['cost']) : '' !!}@endif</label>
         </li>
     </ul>

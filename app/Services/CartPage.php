@@ -790,6 +790,38 @@ class CartPage
          */
         'sum_first'        => ['bool', 'Phone: Order total straight after Your Bag', true,
                                'On a phone the Order Total card sits right under the basket, with Recommended for you below it. Off: the rail first, as before. Desktop keeps the total in its right-hand column either way.'],
+
+        /* ── THE 13 OCTOBER LAYOUT (2.60.495) ─────────────────────────────────
+         * The cart half of the owner's checkout brief, confirmed in a live
+         * preview. Each at the value he chose; App\Services\CheckoutLayout
+         * knows the value each had before, for the one-press restore. The
+         * applied coupon's look is shared with the checkout (Appearance →
+         * Checkout page → 13 October layout). Squeezed layout only, like the
+         * rest of this summary. */
+        'lo_ov_box'     => ['bool', 'Order Value inside the green box (no separate Order Total row)', true,
+                            'On, as asked: one green box with the Order Value in it, and the grey line below.'],
+        'lo_ship_on'    => ['bool', 'Grey line under Order Value', true, 'On, as asked.'],
+        'lo_ship_line'  => ['text', 'Grey line under Order Value', 'Shipping calculated at checkout', 'Up to 120 characters.'],
+        'lo_ov_after'   => ['bool', 'With a coupon, Order Value shows the amount after it', true,
+                            'On, as asked: the green box and the docked row show the same figure.'],
+        'lo_coupon_x'   => ['bool', 'Small × on the applied coupon', true,
+                            'On, as asked: the shopper can take a coupon off on the cart page too.'],
+        'lo_btn_black'  => ['bool', 'Checkout button in dark black', true, 'On, as asked. Off is the green button.'],
+        'lo_btn_icon'   => ['select', 'Checkout button icon', 'lock', '', [
+                                'lock'  => 'Lock before the words (as chosen)',
+                                'arrow' => '› after the words',
+                                'none'  => 'No icon',
+                            ]],
+        'lo_btn_case'   => ['select', 'Checkout button letters', 'caps', 'The words themselves are “Checkout button wording” on Docked rows.', [
+                                'caps'   => 'CAPITALS (as chosen)',
+                                'normal' => 'As typed',
+                            ]],
+        'lo_btn_size'   => ['range', 'Checkout button text size', 14,
+                            '14px, as chosen. Docked rows → “Text in both rows” still scales it with the row.',
+                            ['min' => 12, 'max' => 18, 'step' => 1, 'unit' => 'px']],
+        'lo_cont'       => ['bool', 'Show “← Continue shopping” above Your Bag', false, 'Off, as asked.'],
+        'lo_cont_url'   => ['text', '“Continue shopping” goes to', '/',
+                            'An address on this shop: / is the homepage, /shop/ the shop page, /new-arrivals/ and so on. Anything else (another website, a script) is refused and the homepage used.'],
     ];
 
     public const TABS = [
@@ -844,6 +876,10 @@ class CartPage
                        'sheet_area_hint', 'sheet_apt_hint', 'sheet_city_hint',
                        'sheet_country', 'sheet_geo_mark', 'sheet_geo_note', 'sheet_mark', 'sheet_home', 'sheet_office',
                        'sheet_loading', 'sheet_failed', 'sheet_guest_note']],
+        /* 2.60.495, appended so every other tab keeps its place. */
+        'layout13' => ['13 October layout', 'The cart half of the checkout brief of 13 October, each at the value you chose in the live preview. The one-press “put back as before” is on Appearance → Checkout page → 13 October layout, and covers this page too.',
+                       ['lo_ov_box', 'lo_ship_on', 'lo_ship_line', 'lo_ov_after', 'lo_coupon_x',
+                        'lo_btn_black', 'lo_btn_icon', 'lo_btn_case', 'lo_btn_size', 'lo_cont', 'lo_cont_url']],
     ];
 
     /** How many products the rail will hold. A cap, not a paging window. */
@@ -1038,7 +1074,25 @@ class CartPage
             'sum_express' => ['rule' => [self::class, 'moneyFloor']],
             'sum_service' => ['rule' => [self::class, 'moneyFloor']],
             'rec_ids' => ['options' => ['cap' => self::MAX_REC]],
+            'lo_cont_url' => ['rule' => [self::class, 'shopPath']],
         ];
+    }
+
+    /**
+     * "Continue shopping" goes to an address ON THIS SHOP, or to the homepage.
+     *
+     * The value becomes an href, so it is checked here and not trusted at the
+     * view (CLAUDE.md rule 5): one leading slash and not two (`//evil.example`
+     * is another site), no scheme, no backslash, no space or quote, no control
+     * character, at most 200 characters. Anything else is the homepage rather
+     * than an error, because the page must always have somewhere to send a
+     * shopper. Url::to() adds the deployment's own prefix at render.
+     */
+    public static function shopPath(mixed $raw, array $field): string
+    {
+        $value = is_scalar($raw) ? trim((string) $raw) : '';
+
+        return preg_match('{\A/(?![/\\\\])[A-Za-z0-9\-._~/%?=&#+]{0,199}\z}', $value) === 1 ? $value : '/';
     }
 
     /**

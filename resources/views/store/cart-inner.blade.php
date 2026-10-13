@@ -479,9 +479,20 @@ foreach ($items as $kbbWasItem) {
 $kbbFee = $kbbCartPage->serviceFee((int) $totals['total']);
 $kbbGrand = (int) $totals['total'] + $kbbFee;
 @endphp
+@php
+/* 2.60.495: Appearance -> Cart page -> 13 October layout. "The order value
+   should come in the greenish box, and the order total row will be removed";
+   the applied coupon shows once, as a ticket inside the same box (its look is
+   the checkout's own setting). Off: the rows exactly as before. */
+$kbbLoBox = (bool) $kbbCpg['lo_ov_box'];
+$kbbLoLook = app(\App\Services\CheckoutPage::class)->couponLook();
+$kbbLoTicket = $kbbLoBox && $kbbLoLook !== 'classic';
+@endphp
+@if (! $kbbLoBox)
             <div class="srow"><span>{{ $kbbCpg['sum_value_label'] }} <span class="cpg-n">({{ trans_choice('store.cart.item_count', $totals['item_count']) }})</span></span><span>@if ($kbbWasTotal > $totals['subtotal'])<span class="cpg-was">{!! \App\Support\Money::format($kbbWasTotal, $kbbCartDp) !!}</span>@endif{!! \App\Support\Money::format($totals['subtotal'], $kbbCartDp) !!}</span></div>
 @endif
-            @includeWhen(($totals['bundle_discount'] ?? 0) > 0, 'partials.buy-together.total-row', ['cls' => 'srow disc cbt-row', 'label' => __('store.buy_together.bundle_row'), 'amount' => $kbbBtAmount])@if ($totals['discount'])
+@endif
+            @includeWhen(($totals['bundle_discount'] ?? 0) > 0, 'partials.buy-together.total-row', ['cls' => 'srow disc cbt-row', 'label' => __('store.buy_together.bundle_row'), 'amount' => $kbbBtAmount])@if ($totals['discount'] && ! ($kbbSq && $kbbLoTicket))
                 <div class="srow disc">
                     <span>{{ $totals['coupon_code'] }}</span>
                     <span>{!! \App\Support\Bidi::number('– ' . \App\Support\Money::format($totals['discount'], $kbbCartDp)) !!}</span>
@@ -588,10 +599,23 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
             @endif
                 {{-- No VAT note. It is inclusive, the checkout says so, and a
                      second place saying it is a second place to keep true. --}}
+@if ($kbbLoBox)
+                @php $kbbLoShown = ($totals['discount'] && $kbbCpg['lo_ov_after']) ? $kbbGrand : (int) $totals['subtotal']; @endphp
+                <div class="cpg-totband cpg-tb2">
+@if ($kbbLoTicket && $totals['discount'])
+                    <span class="co-tk co-tk-{{ $kbbLoLook }}">@include('partials.icon-tag')<b class="co-tk-code">{{ $totals['coupon_code'] }}</b><span class="co-tk-off">&minus;&nbsp;{!! \App\Support\Money::format($totals['discount'], $kbbCartDp) !!}</span>@if ($kbbCpg['lo_coupon_x'])<button type="button" class="co-tk-x" data-kcpremovecoupon="{{ $totals['coupon_code'] }}" aria-label="{{ __('store.checkout.coupon_remove_label', ['code' => $totals['coupon_code']]) }}">&times;</button>@endif</span>
+@endif
+                    <div class="cpg-ov"><span>{{ $kbbCpg['sum_value_label'] }} <span class="cpg-n">({{ trans_choice('store.cart.item_count', $totals['item_count']) }})</span></span><span class="tr">@if ($kbbWasTotal > $kbbLoShown)<span class="cpg-was">{!! \App\Support\Money::format($kbbWasTotal, $kbbCartDp) !!}</span>@endif<b>{!! \App\Support\Money::format($kbbLoShown, $kbbCartDp) !!}</b></span></div>
+@if ($kbbCpg['lo_ship_on'])
+                    <div class="cpg-ship">{{ $kbbCpg['lo_ship_line'] }}</div>
+@endif
+                </div>
+@else
                 <div class="cpg-totband">
                     <span>{{ $kbbCpg['sum_total_label'] }}</span>
                     <span class="tr"><b>{!! \App\Support\Money::format($kbbGrand, $kbbCartDp) !!}</b></span>
                 </div>
+@endif
             {{-- The secure badge, a rule, and the marks. One row, tiny, as
                  asked.
 
@@ -696,7 +720,7 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
                     <span>{{ trans_choice('store.cart.item_count', $totals['item_count']) }}</span>
                     <b>{!! \App\Support\Money::format($kbbGrand, $kbbCartDp) !!}</b>
                 </div>
-                <a class="cobtn" href="{{ Url::to('/checkout/') }}">{{ $kbbCpg['co_label'] }}</a>
+                <a class="cobtn{{ $kbbCpg['lo_btn_black'] ? ' cpg-cob2' : '' }}{{ $kbbCpg['lo_btn_case'] === 'caps' ? ' cpg-cobcaps' : '' }}" href="{{ Url::to('/checkout/') }}"@if ($kbbCpg['lo_btn_black']) style="--cpg-cob-f:{{ (int) $kbbCpg['lo_btn_size'] }}px"@endif>@if ($kbbCpg['lo_btn_icon'] === 'lock')<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>@endif{!! $kbbCpg['lo_btn_icon'] === 'none' ? '' : '<span>' !!}{{ $kbbCpg['co_label'] }}{!! $kbbCpg['lo_btn_icon'] === 'none' ? '' : '</span>' !!}@if ($kbbCpg['lo_btn_icon'] === 'arrow')<span aria-hidden="true">›</span>@endif</a>
             </div>
         </div>
 @endif

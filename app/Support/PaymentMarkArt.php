@@ -208,6 +208,9 @@ final class PaymentMarkArt
                 : ($arabic ? self::TAMARA_BADGE_AR : self::TAMARA_BADGE),
             'stripe' => self::silenced(self::MARKS['pay_visa']).self::silenced(self::MARKS['pay_mc']),
             'cod' => self::COD_ICON,
+            // 2.60.495: the Apple Pay row in the payment list; the stylesheet
+            // draws the outline round it, as in the owner's reference.
+            'applepay' => self::silenced(self::MARKS['pay_apple']),
             default => '',
         };
     }

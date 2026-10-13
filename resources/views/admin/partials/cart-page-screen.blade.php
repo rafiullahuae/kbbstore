@@ -979,6 +979,33 @@
       + (chosen.length ? '' : '<p class="cpv-note">Example products — pick real ones below.</p>');
   }
 
+  /* 2.60.495: the 13 October layout's green box and checkout button, drawn
+     from the values on screen. Every word is escaped; the colours are
+     constants, never a setting. */
+  function pvLayout13() {
+    var out = '<div class="cpv-sum">';
+    if (pvOn('lo_coupon_x')) {
+      out += '<div class="cpv-sr" style="justify-content:flex-start"><span style="border:1.5px dashed #2f7d4f;border-radius:6px;padding:3px 8px">GLOW · −AED 49 ×</span></div>';
+    }
+    if (pvOn('lo_ov_box')) {
+      out += '<div class="cpv-sr" style="background:#eaf5ee;border-radius:8px;padding:8px 10px"><span>Order Value</span><span><b>AED 443</b></span></div>';
+    }
+    if (pvOn('lo_ship_on')) {
+      out += '<p class="cpv-note" style="text-align:left;padding:4px 0 0;color:#777">' + esc(pvText('lo_ship_line', 'Shipping calculated at checkout')) + '</p>';
+    }
+    var label = pvText('co_label', 'Secure checkout');
+    if (String(values.lo_btn_case) === 'caps') label = label.toUpperCase();
+    var icon = String(values.lo_btn_icon) === 'lock' ? '🔒 ' : '';
+    var tail = String(values.lo_btn_icon) === 'arrow' ? ' →' : '';
+    out += '<div style="margin-top:10px;padding:12px;border-radius:8px;text-align:center;font-weight:700;font-size:'
+      + pvNum('lo_btn_size', 14) + 'px;' + (pvOn('lo_btn_black') ? 'background:#111;color:#fff' : 'background:#2f7d4f;color:#fff') + '">'
+      + icon + esc(label) + tail + '</div>';
+    if (pvOn('lo_cont')) {
+      out += '<p class="cpv-note" style="padding:6px 0 0">← Continue shopping</p>';
+    }
+    return out + '</div>';
+  }
+
   function pvSummary() {
     var money = function (f) { return 'AED ' + (Number(values[f] || 0) / 100).toFixed(2); };
     var out = '<div class="cpv-sum">'
@@ -1186,6 +1213,7 @@
     else if (open === 'summary'){ region = pvSummary(); label = 'Summary & trust'; }
     else if (open === 'bars')   { region = pvBars(); label = 'Docked rows'; }
     else if (open === 'popup')  { region = pvSheet('list') + pvSheet('form'); label = 'Address popup · list, then form'; }
+    else if (open === 'layout13'){ region = pvLayout13(); label = '13 October layout · the box and the button'; }
     else if (open === 'desktop'){ region = pvDesktop(); label = 'Desktop · ' + pvNum('d_min', 1024) + 'px and up'; }
     else                        { region = pvRows() + pvRail() + pvSummary() + pvBars(); label = 'The whole page'; }
 

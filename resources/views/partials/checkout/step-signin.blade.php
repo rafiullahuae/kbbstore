@@ -1,0 +1,8 @@
+{{-- The end of the first step's heading: the "Not you? Clear details" link and
+     "Already a member? Sign in" (guests only). Its own partial since 2.60.495:
+     the heading it ends is "1 Contact" as before, or "1 Delivery Information"
+     once Contact is folded into it, where the two words stack on the right
+     ($stack) so the heading keeps one line on a phone. Same ids, same
+     data-kbb-signin, so partials/checkout/sign-in finds the link either way. --}}
+@if ($kbbCoPage->get('remember_on') && $kbbCoPage->get('remember_clear'))<button type="button" class="kbb-rmb-clear" id="kbbRememberClear" aria-hidden="true" tabindex="-1">{{ __('store.checkout.remember_clear') }}</button>@endif
+{{-- Lane CO: "Sign in" on the right, guests only; Appearance -> Checkout page -> Coupon, express & sign in. A real link to the full sign-in page until partials/checkout/sign-in takes it over. Its own line, and PHP eats the newline after each closing tag, so with the link off the heading is byte for byte what it was. --}}@if ($kbbCoPage->signInLink() && ! auth('customer')->check()){!! empty($stack) ? '' : '<span class="co-si-stack">' !!}@if ($kbbCoPage->get('signin_member'))<span class="co-signin-q">{{ __('store.checkout.signin_member') }}</span>@endif<a class="co-signin{{ $kbbCoPage->get('signin_icon') ? ' has-ic' : '' }}{{ $kbbCoPage->get('signin_member') ? ' is-b' : '' }}" href="{{ \App\Support\Url::to('/my-account/') }}" data-kbb-signin>{!! $kbbCoPage->get('signin_icon') ? \App\Support\HeaderIcons::account() : '' !!}{{ __('store.checkout.signin_link') }}</a>{!! empty($stack) ? '' : '</span>' !!}@endif

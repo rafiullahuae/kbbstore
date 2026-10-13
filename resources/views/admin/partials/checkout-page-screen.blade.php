@@ -366,7 +366,8 @@
   var values = {};        // key -> current value, edited in place
   var mobileMax = 900;
   var squeezeKeys = [];  // which controls "Squeeze everything" drives to their minimum
-  var coupons = [];      // Coupon line -> Coupon: the shop's coupons, usable first (Lane QK6)
+  var coupons = [];
+  var layoutState = null; // 2.60.495: 'new' | 'old' | 'mixed' -- the 13 October layout      // Coupon line -> Coupon: the shop's coupons, usable first (Lane QK6)
   var open = null;        // which tab is showing
   var banner = null;
   var busy = false;
@@ -469,6 +470,7 @@
       mobileMax = body.mobileMax || 900;
       squeezeKeys = body.squeeze || [];
       coupons = body.coupons || [];
+      layoutState = body.layout || null;
       values = {};
       tabs.forEach(function (t) {
         t.fields.forEach(function (f) { values[f.key] = f.value; });
@@ -645,12 +647,13 @@
       + (side ? '<div class="chp-col">' : '')
       + (banner ? '<div class="chp-note" style="border-style:solid;border-color:#b4443c;color:#b4443c">'
           + esc(banner) + '</div>' : '')
-      + '<div class="chp-note">Spacing only. Nothing on this screen adds, removes or reorders a '
-      + 'section — the checkout has the same four numbered sections at every value of every '
-      + 'control below, and the words in them are translated copy that lives in the language files.</div>'
+      + '<div class="chp-note">How the checkout looks. Nothing on this screen changes what an order '
+      + 'carries: every field keeps its name whatever is moved, and every figure is the server\u2019s own. '
+      + 'The 13 October layout tab can put the whole page back as it was before 2.60.495 in one press.</div>'
       + '<div class="chp-card">'
       + '<div class="chp-tabs">' + strip + '</div>'
       + '<p class="chp-sub" style="margin-top:12px">' + esc(current.description) + '</p>'
+      + (current.key === 'layout13' ? layoutHTML() : '')
       + '<div class="chp-fields">' + current.fields.map(fieldHTML).join('') + '</div>'
       + '<div class="chp-actions">'
       + '<button class="chp-btn is-primary" data-chp-save' + (busy ? ' disabled' : '') + '>'
@@ -670,6 +673,39 @@
       + (side ? '</div>' : '')
       + previewHTML()
       + '</div>';
+  }
+
+  /* -------------------------------------------- the 13 October layout (2.60.495) */
+  /* The one-press restore he asked for: "map the old stuff in case we messed
+     something, so it can be recovered with one click from the backend". Both
+     presses write the cart page too, and are stored at once (not on Save). */
+  function layoutHTML() {
+    var says = layoutState === 'new' ? 'The 13 October layout is on.'
+      : layoutState === 'old' ? 'The cart and checkout are as they were before 2.60.495.'
+      : 'Some switches below have been changed by hand.';
+    return '<div class="chp-note" style="margin-top:10px"><b>' + esc(says) + '</b><br>'
+      + 'One press sets every switch on this tab and on Appearance \u2192 Cart page \u2192 13 October layout, and saves at once.</div>'
+      + '<div class="chp-actions" style="margin-top:8px">'
+      + '<button class="chp-btn" data-chp-layout="restore"' + (busy ? ' disabled' : '') + '>Put back as before 2.60.495</button>'
+      + '<button class="chp-btn is-primary" data-chp-layout="apply"' + (busy ? ' disabled' : '') + '>Use the 13 October layout</button>'
+      + '</div>';
+  }
+
+  async function layout(action) {
+    if (busy) return;
+    if (action === 'restore' && !window.confirm('Put the cart and checkout back exactly as they were before 2.60.495? You can bring the new layout back with the other button.')) return;
+    busy = true;
+    render();
+    try {
+      await api('/checkout-page/layout', { action: action });
+      busy = false;
+      await load();
+      banner = null;
+    } catch (e) {
+      busy = false;
+      banner = explain(e, 'That could not be saved.');
+      render();
+    }
   }
 
   /* --------------------------------------------------------------- presets */
@@ -1071,6 +1107,8 @@
     var tab = e.target.closest('[data-chp-tab]');
     if (tab) { open = tab.getAttribute('data-chp-tab'); render(); return; }
 
+    var lay = e.target.closest('[data-chp-layout]');
+    if (lay) { layout(lay.getAttribute('data-chp-layout')); return; }
     if (e.target.closest('[data-chp-squeeze]')) { preset('min'); return; }
     if (e.target.closest('[data-chp-defaults]')) { preset('default'); return; }
     if (e.target.closest('[data-chp-save]')) { save(); return; }

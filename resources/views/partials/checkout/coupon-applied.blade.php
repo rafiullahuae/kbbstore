@@ -19,6 +19,13 @@
         (int) $settings->get('gift_fee', '1500'),
     );
 @endphp
+@if (($kbbCpLook = app(\App\Services\CheckoutPage::class)->couponLook()) !== 'classic')
+{{-- 2.60.495: the ticket -- the code, the saving and a small x -- in the look
+     chosen on 13 October layout -> "Applied coupon looks like". The x is the
+     same [data-kbb-coupon-remove] checkout.js has always answered. --}}
+<span class="co-tk co-tk-{{ $kbbCpLook }}">@include('partials.icon-tag')<b class="co-tk-code">{{ $kbbCpCode }}</b>@if ($kbbCpSaved > 0)<span class="co-tk-off">&minus;&nbsp;{!! \App\Support\Money::format($kbbCpSaved, $kbbCpDp) !!}</span>@endif<button type="button" class="co-crm co-tk-x" data-kbb-coupon-remove aria-label="{{ __('store.checkout.coupon_remove_label', ['code' => $kbbCpCode]) }}">&times;</button></span>
+@else
 <span class="co-cmsg-t">{{ $kbbCpSaved > 0
     ? __('store.checkout.coupon_applied', ['code' => $kbbCpCode, 'amount' => str_replace(' ', "\u{00A0}", \App\Support\Money::plain($kbbCpSaved, $kbbCpDp))])
     : __('store.checkout.coupon_applied_plain', ['code' => $kbbCpCode]) }}</span><button type="button" class="co-crm" data-kbb-coupon-remove>{{ __('store.checkout.coupon_remove') }}</button>
+@endif

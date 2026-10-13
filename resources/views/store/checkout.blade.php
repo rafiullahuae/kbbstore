@@ -30,6 +30,15 @@
      * shop that has never opened the screen.
      */
     $kbbCoPage = app(\App\Services\CheckoutPage::class);
+    // 2.60.495: the method the payment list will open checked (its own rule:
+    // the asked-for one while offered, else the first), so the pay button's
+    // first paint already says "Pay now" or "Complete Order".
+    $kbbPayIds = array_column($gateways ?? [], 'id');
+    $kbbPayFirst = in_array(old('payment_method'), $kbbPayIds, true) ? old('payment_method') : ($kbbPayIds[0] ?? null);
+    // 2.60.495: Contact folded into Delivery Information -- the numbers move up one.
+    $kbbOneStep = $kbbCoPage->lo('one_step');
+    // The pay button's two sets of words, for the layout script (null = "Place order" as before).
+    $kbbLoWords = $kbbCoPage->lo('btn_words') ? ['pay' => $kbbCoPage->payButton('stripe'), 'cod' => $kbbCoPage->payButton('cod')] : null;
 @endphp
 <section class="kbb-checkout{{ $kbbCoPage->bodyClass() }}"{!! $kbbCoPage->styleAttr() !!}>{{-- Lane PO: the diagnostic panel, /checkout/?kbbdiag=1 only; an echo rather than @if, because @endif at a line's end eats its newline and every other checkout must render not one byte more. --}}{!! request()->query('kbbdiag') === '1' ? view('partials.checkout.diag')->render() : '' !!}
 
@@ -40,9 +49,17 @@
 @else
         <a class="logo" href="{{ Url::to('/') }}"><bdi>K-Beauty<span>Bliss</span></bdi></a>
 @endif
+@if ($kbbCoPage->lo('head_cart'))
+        {{-- 2.60.495: "remove the right side secure checkout green text beside
+             the logo, and place there cart icon, which will go to the cart
+             page". The shop's own bag icon, with its size written on the svg
+             (the header rule: every inline svg here carries width/height). --}}
+        <a class="co-cart" href="{{ Url::to('/cart/') }}" aria-label="{{ __('store.checkout.cart_icon_label') }}">{!! str_replace('<svg ', '<svg width="24" height="24" ', \App\Support\HeaderIcons::cart()) !!}</a>
+@else
         <span class="secure">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
             {{ __('store.checkout.secure_badge') }}        </span>
+@endif
     </div></header>
 
     {{-- ONLY WHEN THERE IS SOMETHING TO SAY.
@@ -82,6 +99,9 @@
      asked. Column 0 and glued to the conditional, so a checkout with no line
      to draw renders not one byte more. --}}@if (($kbbClCode = $kbbCoPage->couponLineCode()) !== null)@include('partials.checkout.coupon-top')@endif
 
+{{-- 2.60.495: "remove the checkout page title and description completely" --
+     13 October layout -> "Show the Checkout title", OFF as asked. The row is
+     still drawn for the two back links if either is switched on. --}}@if ($kbbCoPage->lo('title') || $kbbCoPage->showShopLink() || $kbbCoPage->showCartLink())
             <div class="co-titlebar">
                 <div class="co-titlebar-main">
 {{-- Lane QK6: "turn off the back to shop link and back to cart button on
@@ -90,38 +110,26 @@
      byte for byte what was here. --}}@if ($kbbCoPage->showShopLink())
                     <a class="backlink" href="{{ Url::to('/shop/') }}">{{ __('store.checkout.back_to_shop') }}</a>
 @endif
+@if ($kbbCoPage->lo('title'))
 @if ($kbbCoPage->showHeadBack())
                     <a class="co-back" href="{{ Url::to('/cart/') }}" aria-label="{{ __('store.checkout.head_back') }}" title="{{ __('store.checkout.head_back') }}"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></a>
 @endif
                     <h1 class="co-h">{{ __('store.checkout.heading') }}</h1>
                     <p class="co-lead">{{ __('store.checkout.lead') }}</p>
+@endif
                 </div>
 @if ($kbbCoPage->showCartLink())
                 @include('partials.checkout.back-to-cart')
 @endif
             </div>
+@endif
 
             <!-- LEFT -->
             <div>
-                <div class="coupon">
-{{-- Lane CO: "remove the icon + text Have a discount code? from the coupon
-     box" -- Appearance -> Checkout page -> Coupon, express & sign in -> first
-     switch, OFF as asked. ON is the line exactly as it was. --}}@if ($kbbCoPage->couponHead())
-                    <div class="ch"><span class="gift">🎁</span> {{ __('store.checkout.coupon_prompt') }}</div>
+@if (! $kbbCoPage->lo('coupon_in'))
+                @include('partials.checkout.coupon-box')
 @endif
-                    <div class="crow">
-{{-- FLOATING LABELS (Lane CD): Appearance -> Checkout page -> Fields &
-     attention -> "Floating labels on checkout fields", ON as asked. The
-     Create account form's .fld shape -- icon, control, then a real label the
-     CSS lifts once the box is focused or filled. Same name, id and
-     autocomplete either way; directives at column 0 so OFF is byte-identical. --}}@if ($kbbCoPage->floatLabels())
-                        <span class="fld kbb-fl kbb-fl-coupon ico"><span class="lead" aria-hidden="true">@include('partials.icon-tag')</span><input type="text" name="coupon_code" class="input-text" id="kbb_coupon_code" placeholder=" " autocomplete="off"><label for="kbb_coupon_code">{{ __('store.checkout.coupon_placeholder') }}</label></span>
-@else
-                        <input type="text" name="coupon_code" class="input-text" id="kbb_coupon_code" placeholder="{{ __('store.checkout.coupon_placeholder') }}" autocomplete="off">
-@endif
-                        <button type="button" class="apply" id="kbb_apply_coupon">{{ __('store.checkout.coupon_apply') }}</button>
-                    </div>
-@if (session()->has('kbb_coupon_notice') || (string) ($totals['coupon_code'] ?? '') !== '')@include('partials.checkout.coupon-line')@endif                    @include('partials.checkout.coupon-hint')                </div>{{--
+{{--
      APPLE PAY AND GOOGLE PAY, under the coupon box (Lane CO). Stripe's Express
      Checkout Element, drawn by the partial and revealed only once Stripe says
      this browser has a wallet: no wallet, no row, no heading, no OR line and
@@ -134,70 +142,31 @@
 
                 <div class="formbox" id="customer_details">
 
+{{-- 2.60.495, "the contact section i want to remove ... the email will go
+     above the name field, the sign in row will be in the heading row, rename
+     to Delivery Information ... bring the create account line here": 13
+     October layout -> "Email inside Delivery Information", ON as asked. The
+     fields MOVE; their names, ids and order of validation are unchanged, so
+     what is posted is exactly what it was. Off draws Contact as before. --}}@if (! $kbbOneStep)
                     <!-- 1 · Contact -->
                     <div class="sec">
-                        <h2><span class="n">1</span> {{ __('store.checkout.step_contact') }}@if ($kbbCoPage->get('remember_on') && $kbbCoPage->get('remember_clear'))<button type="button" class="kbb-rmb-clear" id="kbbRememberClear" aria-hidden="true" tabindex="-1">{{ __('store.checkout.remember_clear') }}</button>@endif
-{{-- Lane CO: "Sign in" on the right, guests only; Appearance -> Checkout page -> Coupon, express & sign in. A real link to the full sign-in page until partials/checkout/sign-in takes it over. Its own line, and PHP eats the newline after each closing tag, so with the link off the heading is byte for byte what it was. --}}@if ($kbbCoPage->signInLink() && ! auth('customer')->check())@if ($kbbCoPage->get('signin_member'))<span class="co-signin-q">{{ __('store.checkout.signin_member') }}</span>@endif<a class="co-signin{{ $kbbCoPage->get('signin_icon') ? ' has-ic' : '' }}{{ $kbbCoPage->get('signin_member') ? ' is-b' : '' }}" href="{{ Url::to('/my-account/') }}" data-kbb-signin>{!! $kbbCoPage->get('signin_icon') ? \App\Support\HeaderIcons::account() : '' !!}{{ __('store.checkout.signin_link') }}</a>@endif
+                        <h2><span class="n">1</span> {{ __('store.checkout.step_contact') }}@include('partials.checkout.step-signin')
 </h2>
-{{-- CONTACT IS THE EMAIL ADDRESS (Lane QK6). The owner: "Change Shipping
-     address section heading to Shipping Details, remove the phone and Full
-     name fields from the contact section and bring these two fields to
-     Shipping Details section." Full name and Phone open section 2 now, in that
-     order; each field keeps its name, id, autocomplete, inputmode, validation,
-     required star, icon and floating label exactly as before, so the server,
-     "Remember my details", the account prefill and the pixels read the same
-     boxes. Email stands alone here, full width.
+@include('partials.checkout.contact-email')
 
-     Phone is required on the server as well as here: see place()'s rules. --}}
-                        <x-checkout.field name="billing_email" :label="__('store.checkout.field_email')" type="email" required icon="mail"
-                            validate="validate-required validate-email" priority="1"
-                            :placeholder="__('store.checkout.field_email_placeholder')" inputmode="email"
-                            autocomplete="section-billing billing email"
-                            :value="old('billing_email', $prefill['email'] ?? '')" />
-{{-- THE THREE COMPOUND ROWS ON THIS PAGE STAY HAND-WRITTEN, deliberately.
-
-     This one, the gift row below and the WhatsApp opt-in are not fields with a
-     label above them: each is a tick that reveals or prices a second control,
-     with its own wrapper classes, its own hidden state and -- here -- the only
-     per-field error message on the checkout. Pushing them through
-     x-checkout.field would mean teaching that component three shapes it has one
-     caller each for, which is how a shared component becomes harder to read
-     than the nine copies it replaced. The nine plain rows are the ones that
-     were drifting, and they are the ones it renders. --}}
-@guest('customer')
-                            <p class="form-row form-row-wide kbb-acct" id="create_account_field">
-                                <label for="create_account" class="kbb-acct-opt">
-                                    <input type="checkbox" name="create_account" id="create_account" value="1" @checked(old('create_account'))>
-                                    <span>{{ __('store.checkout.create_account') }}</span>
-                                </label>
-@if ($kbbCoPage->floatLabels())
-                                <span class="woocommerce-input-wrapper kbb-acct-pw fld kbb-fl ico" id="account_password_wrap" hidden><span class="lead" aria-hidden="true">@include('partials.icon-lock')</span><input type="password" class="input-text" name="account_password" id="account_password"
-                                           placeholder=" " autocomplete="new-password" minlength="8"><label for="account_password">{{ __('store.checkout.password_placeholder') }}</label></span>
-@else
-                                <span class="woocommerce-input-wrapper kbb-acct-pw" id="account_password_wrap" hidden>
-                                    <input type="password" class="input-text" name="account_password" id="account_password"
-                                           placeholder="{{ __('store.checkout.password_placeholder') }}" autocomplete="new-password" minlength="8">
-                                </span>
-@endif
-                                @error('account_password')<span class="kbb-acct-err">{{ $message }}</span>@enderror
-                            </p>
-@endguest
-
-
-
-                        <div class="co-note ok" id="kbbReturning" style="display:none"></div>
-@if ($kbbCoPage->get('optin_on'))
-                            {{-- UNTICKED unless the owner says otherwise. It shipped
-                                 pre-ticked, so every order carried a consent nobody
-                                 actively gave. old() still wins on a rejected submission,
-                                 so a shopper who ticked it does not lose the tick. --}}
-                            <div class="kbb-wa"><p class="form-row form-row-wide" id="billing_kbb_whatsapp_field" data-priority="25"><span class="woocommerce-input-wrapper"><label class="checkbox " ><input type="checkbox" name="billing_kbb_whatsapp" id="billing_kbb_whatsapp" value="1" class="input-checkbox " @checked(old('billing_kbb_whatsapp', $kbbCoPage->get('optin_checked'))) /> {{ __('store.checkout.whatsapp_optin') }}&nbsp;<span class="optional">{{ __('store.checkout.optional_note') }}</span></label></span></p></div>
-@endif
+                            @include('partials.checkout.contact-account')
                     </div>
+@endif
 
                     <!-- 2 · Shipping address -->
-                    <div class="sec">
+                    <div class="sec{{ $kbbOneStep ? ' co-onestep' : '' }}">
+@if ($kbbOneStep)
+                        <h2><span class="n">1</span> <span class="co-h2t">{{ __('store.checkout.step_delivery_info') }}</span>@include('partials.checkout.step-signin', ['stack' => true])
+</h2>
+@include('partials.checkout.contact-email', ['hint' => true])
+@else
                         <h2><span class="n">2</span> {{ __('store.checkout.step_shipping') }}</h2>
+@endif
 {{-- NAME FIRST, then PHONE, at the top of Shipping Details (Lane QK6), above
      the address. A MOVE, NOT A REWRITE: both shapes of the name field, their
      validation priorities and their autocomplete tokens are unchanged, and
@@ -242,6 +211,9 @@
 @else
 @include('partials.checkout.address-fields')
 @endif
+@if ($kbbOneStep)
+                            @include('partials.checkout.contact-account')
+@endif
 {{-- Lane PO: "Remember my details on this device". Nothing at all while
      Appearance -> Checkout page -> Fields & attention -> "Remember shopper
      details on this device" is off. --}}@if ($kbbCoPage->get('remember_on'))
@@ -251,7 +223,7 @@
 
                     <!-- 3 · Delivery -->
                     <div class="sec">
-                        <h2><span class="n">3</span> {{ __('store.checkout.step_delivery') }}@if ($kbbCoPage->get('dl_note_on') && is_string($kbbDn = $kbbCoPage->deliveryNoteHtml($defaultCountry ?? null, $totals['free_shipping_threshold'] ?? null)))<span class="co-dnote" id="kbbDeliveryNote"{!! $kbbDn === '' ? ' hidden' : '' !!}>{!! $kbbDn !!}</span>@endif</h2>
+                        <h2><span class="n">{{ $kbbOneStep ? 2 : 3 }}</span> {{ __('store.checkout.step_delivery') }}@if ($kbbCoPage->get('dl_note_on') && is_string($kbbDn = $kbbCoPage->deliveryNoteHtml($defaultCountry ?? null, $totals['free_shipping_threshold'] ?? null)))<span class="co-dnote" id="kbbDeliveryNote"{!! ($kbbDn === '' || ($kbbCoPage->lo('dl_note_free') && (int) ($totals['shipping'] ?? 1) <= 0)) ? ' hidden' : '' !!}>{!! $kbbDn !!}</span>@endif</h2>
                         @if (!empty($unservedCountry))
                             <p class="xd-unserved">{{ __('store.checkout.unserved_country', ['country' => \App\Support\Countries::NAMES[$unservedCountry] ?? $unservedCountry]) }}</p>
                         @endif
@@ -297,7 +269,7 @@
 
                     <!-- 4 · Payment -->
                     <div class="sec pay">
-                        <h2><span class="n">4</span> {{ __('store.checkout.step_payment') }}</h2>
+                        <h2><span class="n">{{ $kbbOneStep ? 3 : 4 }}</span>@if (($kbbPaySecure = $kbbCoPage->paySecureLine()) !== '') <span class="co-h2t">{{ __('store.checkout.step_payment') }}<small class="co-psec"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>{{ $kbbPaySecure }}</small></span>@else {{ __('store.checkout.step_payment') }}@endif</h2>
 
                         {{-- Apple Pay and Google Pay moved up, under the coupon box (Lane CO). --}}
                         {{-- The list itself lives in its own partial: adding a
@@ -331,6 +303,9 @@
                     <div class="spanel on" data-spanel="summary">
                         <div class="co-items">
                             @include('partials.checkout.summary-items')                        </div>
+{{-- 2.60.495: the coupon field inside the order summary, under the items, as
+     asked -- the same partial, so the same ids, here instead of above the form.
+     Outside .co-items, which checkout.js re-renders on a quantity change. --}}@if ($kbbCoPage->lo('coupon_in'))<div class="co-sumcoupon">@include('partials.checkout.coupon-box')</div>@endif
 
                         {{-- A stable container round the order block, for the
                              same reason .kbb-freeship-slot inside it has one:
@@ -370,7 +345,14 @@
              still reading 80% while the summary says "Free" is worse than one
              that never moved at all. --}}
         <div class="kbb-mobile-order">
-            <div class="kbb-thumbs-slot">@include('partials.checkout.thumbs')</div><div class="kbb-order-slot">@include('partials.checkout.order-block', ['withActions' => true])</div>        </div>
+            <div class="kbb-thumbs-slot">@include('partials.checkout.thumbs')</div>{{--
+     2.60.495: the box at the foot of the page folds to Total only (13 October
+     layout -> "Box at the foot of the page"); the arrow beside the total opens
+     this: the heading, a copy of the summary's lines and the coupon field,
+     MOVED here from the top summary (never copied: checkout.js finds it by
+     id). It sits OUTSIDE .kbb-order-slot on purpose -- checkout.js replaces
+     that slot's contents on every coupon and quantity answer, and a coupon
+     field inside it would be thrown away by its own Apply. --}}@if ($kbbCoPage->lo('total_only'))<div class="co-osbox"><button type="button" class="co-osh" aria-expanded="true"><span>{{ __('store.checkout.tab_summary') }}</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="co-ositems"></div><div class="co-oscoupon"></div></div>@endif<div class="kbb-order-slot">@include('partials.checkout.order-block', ['withActions' => true])</div>        </div>
     </form>
 {{-- Lane CO: the "Sign in" window, OUTSIDE the checkout form (a form inside a form is not a form). Guests only, and only while the link above is drawn. --}}@if ($kbbCoPage->signInLink() && ! auth('customer')->check())
 @include('partials.checkout.sign-in')
@@ -391,7 +373,7 @@
          rather than one stuck across the bottom. --}}
     <div class="mpbar">
         <div><div class="ml">{{ __('store.checkout.total') }}</div><div class="mt js-total">{!! Money::format($totals['total']) !!}</div></div>
-        <button type="button" class="mb" data-place="1" autocomplete="off">{{ __('store.checkout.place_order') }}</button>
+        <button type="button" class="mb" data-place="1" autocomplete="off">{{ $kbbCoPage->payButton($kbbPayFirst) ?? __('store.checkout.place_order') }}</button>
     </div>
     @if ($kbbFloat === 'smart')
     @push('scripts')
@@ -557,6 +539,9 @@
      post the form, get `action: confirm` back for a confirmation it cannot
      perform, and refuse — while stripe-elements never saw the click at all. --}}
 @include('partials.checkout.placing-overlay')
+@if ($kbbLoWords !== null || $kbbCoPage->lo('total_only') || $kbbCoPage->lo('coupon_in') || $kbbCoPage->lo('dl_note_free'))
+@include('partials.checkout.layout-13')
+@endif
 @endpush
 
 @push('scripts')

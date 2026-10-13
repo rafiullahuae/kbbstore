@@ -46,7 +46,7 @@
         : 0;
     $kbbRowCot = app(\App\Services\CheckoutPage::class)->desktopTotals();
 @endphp
-<button type="button" class="cosr" id="kbbSumRow" aria-expanded="false" aria-controls="kbbPanels"><span class="cosr-ic">{!! \App\Support\HeaderIcons::cart() !!}</span><span class="cosr-tx">{{ __('store.checkout.tab_summary') }}</span><span class="cosr-tot"><span class="js-total">{!! \App\Support\Money::format($totals['total'] + $kbbRowGift, $kbbRowDp) !!}</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $kbbRowCod + $kbbRowGift, $kbbRowDp) !!}</span></span><span class="cosr-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
+<button type="button" class="cosr" id="kbbSumRow" aria-expanded="false" aria-controls="kbbPanels"><span class="cosr-ic">{!! \App\Support\HeaderIcons::cart() !!}</span><span class="cosr-tx">{{ __('store.checkout.tab_summary') }}</span><span class="cosr-tot">@if (($kbbRowDisc = (int) ($totals['discount'] ?? 0)) > 0 && app(\App\Services\CheckoutPage::class)->lo('sum_green'))<s class="co-was">{!! \App\Support\Money::format($totals['total'] + $kbbRowGift + $kbbRowDisc, $kbbRowDp) !!}</s><s class="co-was-fee">{!! \App\Support\Money::format($totals['total'] + $kbbRowCod + $kbbRowGift + $kbbRowDisc, $kbbRowDp) !!}</s>@elseif (app(\App\Services\CheckoutPage::class)->lo('sum_green'))<s class="co-was" hidden></s><s class="co-was-fee" hidden></s>@endif<span class="js-total">{!! \App\Support\Money::format($totals['total'] + $kbbRowGift, $kbbRowDp) !!}</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $kbbRowCod + $kbbRowGift, $kbbRowDp) !!}</span></span><span class="cosr-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
 <script>
 (function () {
   var box = document.getElementById('kbbSummary');
@@ -67,6 +67,16 @@
         var from = slot.querySelector('.' + c);
         var to = btn.querySelector('.' + c);
         if (from && to) { to.innerHTML = from.innerHTML; }
+      });
+      /* 2.60.495: the total before the coupon, small above the new one. The
+         order block prints it (hidden) only while a coupon is on; no figure
+         is worked out here. */
+      ['co-was', 'co-was-fee'].forEach(function (c) {
+        var from = slot.querySelector('.' + c);
+        var to = btn.querySelector('.' + c);
+        if (!to) { return; }
+        to.innerHTML = from ? from.innerHTML : '';
+        to.hidden = !from;
       });
     }).observe(slot, { childList: true });
   });

@@ -908,6 +908,33 @@
     opacity:.35;pointer-events:none}
 
 }
+
+/* ── THE 13 OCTOBER LAYOUT (2.60.495) ──────────────────────────────────────
+   Appearance -> Cart page -> 13 October layout. Every rule is scoped to the
+   class its switch prints, so with a switch off the page is as before. */
+.kbb-cartpage.cpg-squeeze .cpg-totband.cpg-tb2{display:block;padding:11px 12px 10px}
+.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ov{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:15px;font-weight:600}
+.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ov .tr{text-align:end;white-space:nowrap}
+.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ov .tr b{display:inline;font-weight:700}
+.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ov .cpg-was{display:inline;margin-inline-end:6px;font-size:13px;font-weight:500;color:#9A9298;text-decoration:line-through}
+.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ship{margin-top:3px;font-size:12px;font-weight:400;color:#8A8288}
+.kbb-cartpage .co-tk{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin-bottom:9px;font-size:12px;line-height:1.2;color:var(--ink,#2A2228)}
+.kbb-cartpage .co-tk svg{width:14px;height:14px;flex:none;color:#1F7D52}
+.kbb-cartpage .co-tk-code{font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.kbb-cartpage .co-tk-off{font-weight:700;color:#1F7D52;white-space:nowrap}
+.kbb-cartpage .co-tk .co-tk-x{flex:none;display:grid;place-items:center;width:22px;height:22px;margin:-2px -2px -2px 0;padding:0;border:0;border-radius:50%;
+  background:none;color:#8A8288;font-size:15px;line-height:1;cursor:pointer;position:relative}
+.kbb-cartpage .co-tk .co-tk-x::after{content:"";position:absolute;inset:-11px}
+.kbb-cartpage .co-tk-ticket{background:#fff;border:1.5px dashed #7CC4A0;border-radius:9px;padding:4px 6px 4px 10px}
+.kbb-cartpage .co-tk-tag{background:#fff;border:1px solid #CFE8DA;border-radius:99px;padding:4px 6px 4px 10px}
+.kbb-cartpage .co-tk-line{padding:2px 0}
+.kbb-cartpage .co-tk-line svg{color:#8A8288}
+.kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn.cpg-cob2{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#111;
+  font-size:calc(var(--cpg-cob-f,14px) * var(--cpg-bar-f))}
+.kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn.cpg-cob2:hover{background:#000}
+.kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn.cpg-cob2 > span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn.cpg-cob2 svg{flex:none}
+.kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn.cpg-cobcaps{text-transform:uppercase;letter-spacing:.08em}
 </style>
 @endpush
 

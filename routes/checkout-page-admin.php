@@ -45,3 +45,12 @@ Route::get('/checkout-page', [CheckoutPageApiController::class, 'show'])
 Route::post('/checkout-page', [CheckoutPageApiController::class, 'save'])
     ->middleware('throttle:60,1')
     ->name('admin.checkout-page.save');
+
+/*
+ * 2.60.495: Appearance -> Checkout page -> 13 October layout's two buttons --
+ * "Put back as before 2.60.495" and "Use the 13 October layout". Its own
+ * capability (checkoutlayout.restore), because one press rewrites both pages.
+ */
+Route::post('/checkout-page/layout', [CheckoutPageApiController::class, 'layout'])
+    ->middleware('throttle:20,1')
+    ->name('admin.checkout-page.layout');

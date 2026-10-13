@@ -155,6 +155,9 @@
         .kbb-checkout .kbb-card-bail[disabled]{opacity:.55;cursor:default}
     </style>
 
+{{-- 2.60.495: the line moves to the Payment heading while Appearance ->
+     Checkout page -> 13 October layout -> "Secure line under Payment" is on
+     (as asked). Only the words go; the card fields below are untouched. --}}@if (app(\App\Services\CheckoutPage::class)->paySecureLine() === '')
     <p class="kbb-card-secure">
         {{-- The padlock is drawn here rather than fetched: an <img> would be a
              second request for fourteen pixels and there is no icon font on
@@ -163,6 +166,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
         {{ __('store.checkout.card_secure_line') }}
     </p>
+@endif
 
     <div class="kbb-card-rows">
         <div>

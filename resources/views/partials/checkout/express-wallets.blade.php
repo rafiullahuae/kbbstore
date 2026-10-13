@@ -91,6 +91,19 @@
     $kbbGooglePay = $kbbStripeOnOffer && $kbbWallets->googlePay();
 
     /*
+     * 2.60.495, Appearance -> Checkout page -> 13 October layout -> "Apple Pay
+     * as the second payment method", ON as asked ("I need the APPLE PAY only
+     * ... not google pay"). Same Element, same PaymentIntent, same order: what
+     * changes is WHERE the button is (under the total, in place of the pay
+     * button, once the Apple Pay row is chosen) and that Google Pay is not
+     * offered. Off, everything below is exactly the Express row it was.
+     */
+    $kbbApRow = $kbbApplePay && app(\App\Services\CheckoutPage::class)->lo('apple_row');
+    if ($kbbApRow) {
+        $kbbGooglePay = false;
+    }
+
+    /*
      * The figure the sheet opens with, from the server, in integer fils.
      *
      * The same arithmetic place() uses to write `orders.total`: this basket's
@@ -158,12 +171,16 @@
      removes with the other two, so a shopper with no wallet sees none of them
      and the coupon box sits on the form exactly as before. Its words are
      Appearance -> Checkout page -> Coupon, express & sign in, escaped. --}}
+@if (! $kbbApRow)
 <p class="co-xc-h" data-kbb-express-head hidden>{{ app(\App\Services\CheckoutPage::class)->expressHeading() }}</p>
 <div class="express" style="display:block;visibility:hidden;height:0;overflow:hidden;margin:0" data-kbb-express data-kbb-express-pending aria-hidden="true">
     <div data-kbb-express-mount></div>
     <p class="pay-note" data-kbb-express-error role="status" aria-live="polite" hidden></p>
 </div>
 <div class="ordiv co-xc-or" data-kbb-express-divider hidden>{{ __('store.checkout.express_or') }}</div>
+@else
+<div class="express" style="display:none" data-kbb-express aria-hidden="true"><div data-kbb-express-mount></div><p class="pay-note" data-kbb-express-error hidden></p></div>
+@endif
 <script>
 (function () {
   'use strict';
@@ -187,6 +204,8 @@
   var LOCALE      = @json($kbbStripeLocale);
   var APPLE       = @json($kbbApplePay);
   var GOOGLE      = @json($kbbGooglePay);
+  /* 2.60.495: Apple Pay as a row of the payment list (see the @php above). */
+  var APAY        = @json($kbbApRow);
   var AMOUNT_URL  = @json(\App\Support\Url::to('/checkout/wallet/amount'));
   var PLACE_URL   = @json(\App\Support\Url::to('/checkout/place'));
   var PAID_URL    = @json(\App\Support\Url::to('/checkout/card/paid'));
@@ -233,6 +252,7 @@
   }
 
   function say(message) {
+    if (APAY) { apSay(message || TEXT.failed); return; }
     var box = ROW.querySelector('[data-kbb-express-error]');
     if (!box) return;
     box.textContent = message || TEXT.failed;
@@ -244,6 +264,59 @@
     if (!box) return;
     box.textContent = '';
     box.hidden = true;
+  }
+
+  /* ---------------------------------------- Apple Pay as a row (2.60.495) */
+
+  /* The slot under the total of the order block on show: the box at the foot
+     of the page on a phone, the summary column on a laptop. Asked each time,
+     because checkout.js replaces both blocks on every coupon and quantity
+     answer. */
+  function apSlot() {
+    var phone = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+    var scope = phone ? document.querySelector('.kbb-mobile-order') : document.getElementById('kbbSummary');
+    return scope ? scope.querySelector('[data-kbb-ap-slot]') : null;
+  }
+  function apSay(message) {
+    var slot = apSlot();
+    var box = slot ? slot.querySelector('[data-kbb-ap-err]') : null;
+    if (!box) return;
+    box.textContent = message || '';
+    box.hidden = !message;
+  }
+  /* The row: shown once Stripe says this device has Apple Pay, again after
+     the list is re-drawn, and the choice carried across a re-draw. Its radio
+     has no name, so choosing it un-chooses the gateways by hand and the
+     gateways un-choose it. */
+  var apReady = false;
+  var apPicked = false;
+  function apRow() {
+    var li = document.querySelector('[data-kbb-ap-li]');
+    if (li && apReady) li.hidden = false;
+    var pick = document.getElementById('payment_method_applepay');
+    if (pick && apPicked && !pick.checked) {
+      pick.checked = true;
+      FORM.querySelectorAll('input[name="payment_method"]').forEach(function (r) { r.checked = false; });
+    }
+  }
+  if (APAY) {
+    FORM.addEventListener('change', function (e) {
+      var t = e.target;
+      if (!t) return;
+      if (t.id === 'payment_method_applepay' && t.checked) {
+        apPicked = true;
+        FORM.querySelectorAll('input[name="payment_method"]').forEach(function (r) { r.checked = false; });
+        apSay('');
+      } else if (t.name === 'payment_method' && t.checked) {
+        apPicked = false;
+        var pick = document.getElementById('payment_method_applepay');
+        if (pick) pick.checked = false;
+      }
+    });
+    var payList = document.getElementById('payment');
+    if (payList && window.MutationObserver) {
+      new MutationObserver(function () { apRow(); }).observe(payList, { childList: true });
+    }
   }
 
   /* ---------------------------------------------------------- the plumbing */
@@ -431,6 +504,21 @@
     ece.on('ready', function (event) {
       if (DIAG) { DIAG.ready(event); }
       var available = event && event.availablePaymentMethods;
+
+      /* Row mode: Apple Pay or nothing. The row stays hidden on any device
+         Stripe does not offer Apple Pay on, and the pay button is untouched. */
+      if (APAY) {
+        if (!available || !available.applePay) {
+          gone('Stripe\'s ready event listed no Apple Pay');
+          return;
+        }
+        if (!apReady) {
+          apReady = true;
+          apRow();
+          wireRefresh();
+        }
+        return;
+      }
 
       /* THE GATE. No wallet on this browser, no row on this page. */
       if (!available || (!available.applePay && !available.googlePay)) {
@@ -640,7 +728,35 @@
       }
     });
 
-    ece.mount(ROW.querySelector('[data-kbb-express-mount]'));
+    if (!APAY) {
+      ece.mount(ROW.querySelector('[data-kbb-express-mount]'));
+      return;
+    }
+
+    /* Row mode: mounted in the slot under the total, and moved -- unmount,
+       mount -- when checkout.js replaces that block (a coupon, a quantity) or
+       the page crosses the phone width. Each move re-reads the amount, since
+       the block is replaced exactly when the total may have moved. */
+    var mountedIn = null;
+    function place() {
+      var slot = apSlot();
+      var target = slot ? slot.querySelector('[data-kbb-ap-mount]') : null;
+      if (!target || target === mountedIn) return;
+      if (mountedIn) { try { ece.unmount(); } catch (e) { /* already detached */ } }
+      ece.mount(target);
+      mountedIn = target;
+      if (apReady) refreshAmount();
+    }
+    place();
+    if (window.MutationObserver) {
+      document.querySelectorAll('.kbb-order-slot').forEach(function (slot) {
+        new MutationObserver(function () { place(); }).observe(slot, { childList: true });
+      });
+    }
+    if (window.matchMedia) {
+      var mq = window.matchMedia('(max-width: 900px)');
+      if (mq.addEventListener) mq.addEventListener('change', place);
+    }
   }
 
   /*

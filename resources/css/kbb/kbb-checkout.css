@@ -1617,3 +1617,132 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    asked about and they are not repeated thirteen times down a list.
    ========================================================================== */
 
+
+/* ══ THE 13 OCTOBER LAYOUT (2.60.495) ═══════════════════════════════════════
+   The owner's checkout brief, confirmed in a live preview of his own pages.
+   Every rule below is scoped to the class its switch puts on .kbb-checkout
+   (CheckoutPage::CLASS_VARS / ALIGN_CLASSES), so with a switch off the page
+   is drawn by the rules above exactly as before. Plain values only: no
+   newer CSS function anywhere in this block. */
+
+/* Header: the shop's bag icon where "Secure checkout" was (cop-hcart). */
+.kbb-checkout .co-head .co-cart{margin-inline-start:auto;display:grid;place-items:center;width:40px;height:40px;
+  margin-block:-8px;border-radius:50%;color:var(--ink)}
+.kbb-checkout .co-head .co-cart svg{width:24px;height:24px}
+.kbb-checkout .co-head .co-cart:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+
+/* The order summary as one green box (cop-sumg). */
+.kbb-checkout .cosr-tot s{display:none}
+.kbb-checkout.cop-sumg .summary{background:#EEF8F1;border-color:#D6EEDF;box-shadow:none}
+.kbb-checkout.cop-sumg .summary .cosr{border-bottom-color:#CFE8DA}
+.kbb-checkout.cop-sumg .summary.cosr-on:not(.cosr-open) .cosr{border-bottom-color:transparent}
+.kbb-checkout.cop-sumg .cosr-ic{background:#fff;color:#1F7D52}
+.kbb-checkout.cop-sumg .cosr-tx{font-size:15.5px;font-weight:700}
+.kbb-checkout.cop-sumg .cosr-tot{display:inline-flex;flex-direction:column;align-items:flex-end;font-size:17px;line-height:1.12}
+.kbb-checkout.cop-sumg .cosr-tot s{font-size:11px;font-weight:500;color:#9A9298;text-decoration:line-through}
+.kbb-checkout.cop-sumg .cosr-tot s.co-was{display:block}
+.kbb-checkout.cop-sumg:has(#payment_method_cod:checked) .cosr-tot s.co-was{display:none}
+.kbb-checkout.cop-sumg:has(#payment_method_cod:checked) .cosr-tot s.co-was-fee{display:block}
+.kbb-checkout.cop-sumg .summary .cotot{background:none;border-color:#CFE8DA}
+/* kbb.css's homepage .trust strip is white; inside the green box it would be a white band. */
+.kbb-checkout.cop-sumg .summary .trust{background:none;border-color:#CFE8DA}
+.kbb-checkout.cop-sumg .summary.cosr-open .cosr{background:#DCEFE3;border-radius:10px;padding-inline:10px;border-bottom-color:transparent}
+.kbb-checkout.cop-sumg .peekfade{background:linear-gradient(rgba(238,248,241,0),#EEF8F1)}
+@media(max-width:900px){
+  /* Edge to edge, no white around it; what is inside keeps the page's width. */
+  .kbb-checkout.cop-sumg .summary{position:relative;top:0;border:0;border-radius:0;
+    margin-inline:calc(var(--cop-padx) * -1);padding-inline:var(--cop-padx)}
+  .kbb-checkout.cop-sumg .summary.cosr-open .cosr{border-radius:0;
+    margin-inline:calc(var(--cop-padx) * -1);padding-inline:var(--cop-padx);width:calc(100% + 2 * var(--cop-padx))}
+  /* One even gap above and below it: "Space between stacked blocks". */
+  .kbb-checkout.cop-sumg .co-grid{padding-top:var(--cop-m-gap,16px);gap:var(--cop-m-gap,16px)}
+}
+
+/* The coupon field inside the summary (cop-cpin): no box of its own, the
+   field and Apply the same height, room under them. */
+.kbb-checkout .co-sumcoupon .coupon,.kbb-checkout .co-oscoupon .coupon{background:none;border:0;border-radius:0;padding:0;margin:12px 0 14px;overflow:visible}
+.kbb-checkout .co-sumcoupon .coupon::before,.kbb-checkout .co-sumcoupon .coupon::after,
+.kbb-checkout .co-oscoupon .coupon::before,.kbb-checkout .co-oscoupon .coupon::after{content:none}
+.kbb-checkout .co-sumcoupon .coupon .crow,.kbb-checkout .co-oscoupon .coupon .crow{align-items:stretch}
+.kbb-checkout .co-sumcoupon .coupon input,.kbb-checkout .co-oscoupon .coupon input{height:46px;box-sizing:border-box;background:#fff}
+.kbb-checkout .co-sumcoupon .coupon .fld.kbb-fl input,.kbb-checkout .co-oscoupon .coupon .fld.kbb-fl input{padding-top:17px;padding-bottom:5px}
+.kbb-checkout .co-sumcoupon .coupon .apply,.kbb-checkout .co-oscoupon .coupon .apply{height:46px;box-sizing:border-box;background:var(--ink);color:#fff}
+.kbb-checkout .co-sumcoupon .coupon .apply:hover,.kbb-checkout .co-oscoupon .coupon .apply:hover{background:#000}
+
+/* The applied coupon as a ticket (cop-tk): code, saving and x, as wide as its words. */
+.kbb-checkout.cop-tk .co-cmsg.is-ok::before{content:none}
+.co-tk{display:inline-flex;align-items:center;gap:6px;max-width:100%;font-size:12px;line-height:1.2;color:var(--ink,#2A2228)}
+.co-tk svg{width:14px;height:14px;flex:none;color:#1F7D52}
+.co-tk-code{font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.co-tk-off{font-weight:700;color:#1F7D52;white-space:nowrap}
+.co-tk .co-tk-x{flex:none;display:grid;place-items:center;width:22px;height:22px;margin:-2px -2px -2px 0;padding:0;border:0;border-radius:50%;
+  background:none;color:#8A8288;font-size:15px;line-height:1;cursor:pointer;text-decoration:none;position:relative}
+.co-tk .co-tk-x::after{content:"";position:absolute;inset:-11px}
+.co-tk-ticket{background:#fff;border:1.5px dashed #7CC4A0;border-radius:9px;padding:4px 6px 4px 10px}
+.co-tk-tag{background:#fff;border:1px solid #CFE8DA;border-radius:99px;padding:4px 6px 4px 10px}
+.co-tk-line{padding:2px 0}
+.co-tk-line svg{color:#8A8288}
+.kbb-checkout.cop-tk .sumrow.disc .co-dcode{font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink)}
+.kbb-checkout .co-save{display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:12px;font-weight:600;color:#8A8288}
+.kbb-checkout .co-save svg{width:13px;height:13px;flex:none}
+.kbb-checkout .co-save b{color:#8A8288}
+/* "5% VAT inclusive" and "Total savings" on one line under the total. */
+.kbb-checkout .cotot:has(> .co-save){display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;align-items:start}
+.kbb-checkout .cotot:has(> .co-save) > *{grid-column:1 / -1}
+.kbb-checkout .cotot:has(> .co-save) > .vat-note{grid-column:1}
+.kbb-checkout .cotot:has(> .co-save) > .co-save{grid-column:2;margin-bottom:7px}
+
+/* Contact folded into "Delivery Information" (cop-1step). */
+.kbb-checkout .sec > h2 .co-h2t{white-space:nowrap}
+.kbb-checkout .sec > h2 .co-si-stack{margin-inline-start:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px;line-height:1.2}
+.kbb-checkout .sec > h2 .co-si-stack .co-signin-q,
+.kbb-checkout .sec > h2 .co-si-stack .co-signin-q + .co-signin{margin:0}
+.kbb-checkout .sec > h2 .co-si-stack .co-signin-q{font-size:11.5px}
+.kbb-checkout .sec > h2 .kbb-rmb-clear + .co-si-stack{margin-inline-start:14px}
+.kbb-checkout .co-ehint{margin:-4px 0 10px;padding-inline-start:4px;font-size:11.5px;line-height:1.4;color:var(--muted)}
+/* The secure line under "Payment". */
+.kbb-checkout .sec > h2 .co-h2t:has(.co-psec){display:flex;flex-direction:column;gap:3px;line-height:1.15}
+.kbb-checkout .co-psec{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:500;letter-spacing:0;color:var(--ink-2)}
+.kbb-checkout .co-psec svg{flex:none;color:var(--green)}
+
+/* Emirate and Country (cop-rows): one 10px rhythm between every field. */
+.kbb-checkout.cop-rows #customer_details .row2.co-r2sc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0 0 10px}
+.kbb-checkout.cop-rows #customer_details .row2.co-r2sc > .form-row{margin:0}
+.kbb-checkout.cop-rows #billing_address_2_field,
+.kbb-checkout.cop-rows #billing_state_field,
+.kbb-checkout.cop-rows #billing_country_field{margin-bottom:10px}
+.kbb-checkout.cop-rows .row2.co-r2sc #billing_state_field,
+.kbb-checkout.cop-rows .row2.co-r2sc #billing_country_field{margin-bottom:0}
+
+/* The box at the foot of a phone checkout (cop-totonly). */
+.kbb-checkout .co-ta,.kbb-checkout .co-osbox{display:none}
+@media(max-width:900px){
+  .kbb-checkout.cop-totonly .kbb-mobile-order .co-ta{display:inline-grid;place-items:center;flex:none;width:24px;height:24px;margin-inline-start:6px;
+    padding:0;border:0;background:none;color:var(--ink);cursor:pointer;position:relative}
+  .kbb-checkout.cop-totonly .kbb-mobile-order .co-ta::after{content:"";position:absolute;inset:-10px}
+  .kbb-checkout.cop-totonly .kbb-mobile-order .sumrow.tot{align-items:center}
+  .kbb-checkout.cop-totonly .kbb-mobile-order .sumrow.tot > span + span{margin-inline-start:auto}
+  .kbb-checkout.cop-totonly .kbb-mobile-order:not(.co-open) .cotot > .kbb-freeship-slot,
+  .kbb-checkout.cop-totonly .kbb-mobile-order:not(.co-open) .cotot > .js-coupons,
+  .kbb-checkout.cop-totonly .kbb-mobile-order:not(.co-open) .cotot > .sumrow:not(.tot):not(.vat-note){display:none}
+  .kbb-checkout.cop-totonly .kbb-mobile-order:not(.co-open) .cotot > .sumrow.tot{border-top:0;margin-top:0;padding-top:0}
+  .kbb-checkout.cop-totonly .kbb-mobile-order.co-open .co-ta{display:none}
+  .kbb-checkout.cop-totonly .kbb-mobile-order.co-open .co-osbox{display:block;margin-bottom:12px}
+  .kbb-checkout .co-osh{display:flex;align-items:center;justify-content:space-between;width:100%;margin:0 0 6px;padding:0;border:0;
+    background:none;font-family:inherit;font-size:19px;font-weight:500;color:var(--ink);cursor:pointer;text-align:start}
+  .kbb-checkout .co-osh svg{transform:rotate(180deg)}
+  .kbb-checkout .co-ositems .co-items{margin:0}
+}
+
+/* Apple Pay as the second payment row (cop-apay). The slot under the total is
+   laid out and invisible until the row is chosen -- never display:none, which
+   Stripe's Express Checkout Element cannot draw into -- and the pay button
+   steps aside for Apple's own button while it is. */
+.kbb-checkout .co-apslot{visibility:hidden;height:0;overflow:hidden}
+.kbb-checkout:has(#payment_method_applepay:checked) .co-apslot{visibility:visible;height:auto;overflow:visible;margin-top:14px}
+.kbb-checkout:has(#payment_method_applepay:checked) [data-place]{display:none!important}
+.kbb-checkout .co-aperr{margin:10px 0 0}
+@media(max-width:900px){.kbb-checkout .summary .co-apslot{display:none}}
+.kbb-checkout .wc_payment_methods li.payment_method_applepay{--pt:linear-gradient(#F7F7F8,#F7F7F8);--pg:linear-gradient(90deg,#000,#000);--ps:#000;--pi:#000}
+.kbb-checkout .pay-logo.pay-logo-applepay{display:inline-flex;align-items:center;height:26px;padding:0 6px;border:1.3px solid #111;border-radius:5px;background:#fff;color:#000}
+.kbb-checkout .pay-logo.pay-logo-applepay svg{height:15px;width:auto;display:block}

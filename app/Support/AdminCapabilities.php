@@ -438,6 +438,11 @@ final class AdminCapabilities
         // narrowing one must not silently narrow the other.
         'checkoutpage.manage' => ['owner', 'manager', 'editor'],
 
+        // 2.60.495: the 13 October layout's one-press restore. Its own
+        // capability, and not the editor's: one press rewrites the cart and the
+        // checkout at once.
+        'checkoutlayout.restore' => ['owner', 'manager'],
+
         // The slim bar at the foot of the cart page and the checkout: its
         // words, its shape, and which of those two pages draws it. Storefront
         // appearance again, and its own capability for the same reason as the
@@ -1765,6 +1770,7 @@ final class AdminCapabilities
         ['*', 'admin-api/cart-page/**', 'cartpage.manage'],
         // One line and no '/**' sibling: this screen has no sub-endpoint.
         ['*', 'admin-api/checkout-page', 'checkoutpage.manage'],
+        ['*', 'admin-api/checkout-page/layout', 'checkoutlayout.restore'],
         /*
          * Appearance → Set. The '/**' sibling IS needed here: the preview is
          * 'admin-api/set-appearance/preview', which the exact line above it

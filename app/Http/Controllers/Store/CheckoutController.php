@@ -2729,7 +2729,7 @@ class CheckoutController extends Controller
             // 199" for the UAE, '' (hidden) anywhere else. Rendered by the
             // same method the page uses; wording escaped there.
             'deliveryNote' => app(\App\Services\CheckoutPage::class)
-                ->deliveryNoteHtml($country, $totals['free_shipping_threshold'] ?? null),
+                ->deliveryNoteHtml($country, $totals['free_shipping_threshold'] ?? null, isset($totals['shipping']) ? (int) $totals['shipping'] : null),
             // The same partial the page renders, fed the freshly recomputed
             // totals — the free-shipping bar's threshold, percentage and
             // "unlocked" state are all per-country (Extended can set its own,

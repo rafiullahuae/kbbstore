@@ -23,7 +23,11 @@
     shift), and its tap area is grown with a pseudo-element rather than a
     min-height that would make the bar taller.
 --}}
-                        <p class="form-row form-row-wide kbb-acct kbb-rmb" id="kbb_remember_field">
+{{-- 2.60.495: the tick is not SHOWN while 13 October layout -> "Show the
+     Remember tick" is off (as asked), but it stays in the page, ticked:
+     checkout.js forgets everything a browser kept when #kbb_remember is
+     missing, so removing it would switch remembering off, not make it silent. --}}
+                        <p class="form-row form-row-wide kbb-acct kbb-rmb" id="kbb_remember_field"@if (! app(\App\Services\CheckoutPage::class)->lo('remember_tick')) hidden @endif>
                             <label for="kbb_remember" class="kbb-acct-opt">
                                 <input type="checkbox" id="kbb_remember" data-kbb-local checked>
                                 <span>{{ __('store.checkout.remember_me') }}</span>

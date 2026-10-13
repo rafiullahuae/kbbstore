@@ -55,6 +55,8 @@ class CheckoutPageApiController extends Controller
             // list Appearance → Cart panel draws (Lane QK6). Ids and codes and
             // a label; nothing else of a coupon row crosses here.
             'coupons' => CartPanelApiController::couponList((int) $this->page->get('cline_coupon')),
+            // 2.60.495: which way the 13 October layout tab's buttons point.
+            'layout' => app(\App\Services\CheckoutLayout::class)->state(),
         ]);
     }
 
@@ -71,5 +73,20 @@ class CheckoutPageApiController extends Controller
         $this->page->save($data['settings']);
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * 2.60.495: put the cart and checkout back as they were before the 13
+     * October layout, or bring the layout back. One allowlisted word in; the
+     * settings it writes are CheckoutLayout's own list, never the request's.
+     */
+    public function layout(Request $request): JsonResponse
+    {
+        $data = $request->validate(['action' => ['required', 'string', 'in:restore,apply']]);
+        $layout = app(\App\Services\CheckoutLayout::class);
+
+        $data['action'] === 'restore' ? $layout->restore() : $layout->apply();
+
+        return response()->json(['ok' => true, 'layout' => $layout->state()]);
     }
 }

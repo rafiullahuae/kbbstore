@@ -20,7 +20,7 @@
      (The flag is assigned inside the conditional, not by an inline php
      directive: Blade pairs an inline one with the NEXT block-closing directive
      in the file and swallows everything between as PHP.) --}}
-@if ($kbbCot = app(\App\Services\CheckoutPage::class)->desktopTotals())<div class="cotot">@endif<div class="kbb-freeship-slot">
+@if ($kbbCot = ($kbbLo = app(\App\Services\CheckoutPage::class))->desktopTotals())<div class="cotot">@endif<div class="kbb-freeship-slot">
     @include('partials.checkout.freeship-bar')
 </div>
 
@@ -67,7 +67,7 @@
 
 <div class="js-coupons">
     @includeWhen(($totals['bundle_discount'] ?? 0) > 0, 'partials.buy-together.total-row', ['cls' => 'sumrow disc co-btrow', 'label' => __('store.buy_together.bundle_row'), 'amount' => '&ndash; ' . \App\Support\Money::format((int) ($totals['bundle_discount'] ?? 0), $kbbLedgerDp)])@if ($totals['discount'])
-        <div class="sumrow disc"><span>{{ $totals['coupon_code'] }}</span><span>&ndash; {!! \App\Support\Money::format($totals['discount'], $kbbLedgerDp) !!}</span></div>
+        <div class="sumrow disc">@if ($kbbLo->couponLook() !== 'classic')<span>{{ __('store.checkout.order_discount') }} <b class="co-dcode">{{ $totals['coupon_code'] }}</b></span>@else<span>{{ $totals['coupon_code'] }}</span>@endif<span>&ndash; {!! \App\Support\Money::format($totals['discount'], $kbbLedgerDp) !!}</span></div>
     @endif
 </div>
 
@@ -158,7 +158,7 @@
      the server, so this Blade change needs the rebuilt asset in the same
      package. CheckoutHiddenRowsTest pins both halves in source. --}}
 <div class="sumrow vat js-vat-row vat-add"@if (! ($totals['vat'] && $totals['vat']['added'])) hidden @endif><span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span></div>
-<div class="sumrow tot js-total-row"><span>{{ __('store.checkout.total') }}</span><span class="js-total">{!! \App\Support\Money::format($totals['total'] + $giftFeeFils, $kbbLedgerDp) !!}</span></div>
+<div class="sumrow tot js-total-row"><span>{{ __('store.checkout.total') }}</span><span class="js-total">{!! \App\Support\Money::format($totals['total'] + $giftFeeFils, $kbbLedgerDp) !!}</span>@if ($kbbLo->lo('total_only'))<button type="button" class="co-ta" aria-label="{{ __('store.checkout.summary_toggle') }}" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>@endif</div>
 {{-- THE COD TOTAL IS NOT CONDITIONAL ON THERE BEING A COD FEE.
 
      kbb-checkout.css hides `.js-total-row` and shows `.js-total-row-fee`
@@ -170,7 +170,7 @@
 
      With a fee of zero the two rows simply carry the same number, which is the
      truth, and exactly one of them is ever on screen. --}}
-<div class="sumrow tot js-total-row-fee"><span>{{ __('store.checkout.total') }}</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $codFeeFils + $giftFeeFils, $kbbLedgerDp) !!}</span></div>
+<div class="sumrow tot js-total-row-fee"><span>{{ __('store.checkout.total') }}</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $codFeeFils + $giftFeeFils, $kbbLedgerDp) !!}</span>@if ($kbbLo->lo('total_only'))<button type="button" class="co-ta" aria-label="{{ __('store.checkout.summary_toggle') }}" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>@endif</div>
 
 {{-- THE "OF WHICH" NOTE, under the Total and not part of it.
 
@@ -201,12 +201,24 @@
      ON THE ROW'S OWN LINE, glued to it: a directive on a line of its own
      leaves that line's newline in the page. --}}
 @php($kbbVatSay = app(\App\Services\CheckoutPage::class)->vatSentence((string) ($totals['vat']['rate'] ?? '')))<div class="sumrow vat js-vat-row vat-note"@if (! ($totals['vat'] && ! $totals['vat']['added'])) hidden @endif>@if ($kbbVatSay !== null)<span class="js-vat-short">{{ $totals['vat'] ? $kbbVatSay : '' }}</span>@else<span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span>@endif</div>
+{{-- 2.60.495: "Total savings" beside the VAT line, and the old totals the
+     summary row prints small above the new one (summary-row's observer copies
+     them across after every swap). Server figures only: the discount this
+     block's own coupon row shows, and the total before it. --}}@if ($kbbLo->couponLook() !== 'classic' && (int) ($totals['discount'] ?? 0) > 0)<div class="co-save">@include('partials.icon-tag')<span>{{ __('store.checkout.total_savings') }}</span> <b>{!! \App\Support\Money::format((int) $totals['discount'], $kbbLedgerDp) !!}</b></div><span class="co-was" hidden>{!! \App\Support\Money::format($totals['total'] + $giftFeeFils + (int) $totals['discount'], $kbbLedgerDp) !!}</span><span class="co-was-fee" hidden>{!! \App\Support\Money::format($totals['total'] + $codFeeFils + $giftFeeFils + (int) $totals['discount'], $kbbLedgerDp) !!}</span>@endif
 @if ($kbbCot)</div>
 @endif
 
 @if ($withActions ?? true)
     @include('partials.checkout.legal-notice')
-    <button type="button" class="place" data-place="1" autocomplete="off">{{ __('store.checkout.place_order') }}</button>
+    {{-- 2.60.495: "Pay now", or "Complete Order" for Cash on delivery (13
+         October layout -> "Pay now / Complete Order"). Printed as plain text
+         -- stripe-elements keeps the button's textContent while a card is
+         working and writes it back -- and kept in step with the chosen method
+         by the layout script outside the payment files. --}}<button type="button" class="place" data-place="1" autocomplete="off">{{ $kbbLo->payButton($kbbPayFirst ?? null) ?? __('store.checkout.place_order') }}</button>{{-- 2.60.495: where Stripe's own Apple Pay button is mounted once Apple Pay
+     is the chosen row (partials/checkout/express-wallets moves it here, and
+     back after checkout.js swaps this block). Laid out and visibility:hidden
+     until then -- never display:none, which Stripe cannot draw into. --}}@if ($kbbLo->lo('apple_row'))<div class="co-apslot" data-kbb-ap-slot><div data-kbb-ap-mount></div><p class="pay-note co-aperr" data-kbb-ap-err role="status" aria-live="polite" hidden></p></div>@endif
+
     {{-- "100% authentic" WAS A LITERAL HERE — Lane DR.
 
          The last sentence a shopper reads before pressing Place order, on the
@@ -223,7 +235,7 @@
          connection this page was served over, not a claim about the business. --}}
     @php($checkoutAuth = \App\Support\TrustClaims::text($settings, 'checkout_authentic_text'))
     <div class="trust">
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> {{ __('store.checkout.ssl_secure') }}</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> {{ $kbbLo->trustWords() ?? __('store.checkout.ssl_secure') }}</span>
         @if ($checkoutAuth !== null)
             <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg> {{ $checkoutAuth }}</span>
         @endif

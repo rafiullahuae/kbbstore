@@ -39,6 +39,7 @@
     // caught exactly that). Never write PHP's closing-tag characters in these
     // comments either: inside a // comment they still end PHP mode.
     $payBoxes = app(\App\Services\CheckoutPage::class)->paymentBoxes();
+    $kbbApRow = app(\App\Services\CheckoutPage::class)->applePayRow($gateways);
 @endphp
 @if (!empty($payNotice))<p class="pay-note pay-moved" role="status" aria-live="polite">{{ $payNotice }}</p>@endif
 @if ($gateways === [] && empty($payNotice))
@@ -94,5 +95,20 @@
         </div>
             @endif
     </li>
+@if ($g['id'] === 'stripe' && $kbbApRow)
+{{-- 2.60.495, his words: "I need the APPLE PAY only, with same icon ... payment
+     option inside the payment methods again, on no 2, under stripe card".
+     Drawn HIDDEN and shown by the wallet script only once Stripe says this
+     device can pay with Apple Pay. The radio has NO name: it is never posted,
+     and the list checkout.js reports to the server (payment_method radios
+     only) is exactly the list of gateways, so nothing on the server changes.
+     Apple Pay pays through the card gateway; partials/checkout/express-wallets
+     posts payment_method=stripe for it, as it always has. --}}
+            <li class="wc_payment_method payment_method_applepay{{ $payBoxes === null ? '' : ' pay-brand' }}" data-kbb-ap-li hidden>
+    <input id="payment_method_applepay" type="radio" class="input-radio" data-kbb-ap-pick autocomplete="off" />
+    <label for="payment_method_applepay">
+        {{ __('store.checkout.apple_pay') }}<span class="pay-logo pay-logo-applepay" aria-hidden="true">{!! \App\Support\PaymentMarkArt::checkoutLogo('applepay') !!}</span>    </label>
+            </li>
+@endif
             @endforeach
         </ul>

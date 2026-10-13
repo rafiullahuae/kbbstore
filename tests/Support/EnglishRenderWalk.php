@@ -1007,6 +1007,16 @@ final class EnglishRenderWalk
         // module on; QuickViewCentredTest pins the default-off page itself.
         app(\App\Services\SettingsService::class)->setModule('quick_view', true);
 
+        // 2.60.495: the 13 October checkout and cart layout ships ON, as the
+        // owner asked, and is one press away from the page as it was
+        // (Appearance -> Checkout page -> 13 October layout -> "Put back as
+        // before 2.60.495", CheckoutLayout::restore()). The walk compares with
+        // the layout put back: every page, the cart and the checkout included,
+        // must then render byte for byte as the base -- which proves that press
+        // is exact AND that nothing the owner did not ask about moved.
+        // CheckoutLayout13Test pins the layout itself.
+        app(\App\Services\CheckoutLayout::class)->restore();
+
         $post = Post::create([
             'slug' => 'walk-article',
             'title' => 'Walk Article',

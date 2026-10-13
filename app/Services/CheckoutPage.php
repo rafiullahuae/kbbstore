@@ -1152,7 +1152,92 @@ class CheckoutPage
                             'Shown while the amount is off. {rate} becomes the destination’s rate, e.g. 5.'],
         'vat_text_ar'   => ['text', 'VAT line wording — Arabic', self::VAT_TEXT_AR,
                             'The same on the Arabic shop (/ar/).'],
+
+        /* ── THE 13 OCTOBER LAYOUT (2.60.495) ─────────────────────────────────
+         *
+         * The owner's checkout brief (docs/CHECKOUT-BRIEF-2026-10-13.md),
+         * confirmed item by item in a live preview of his own pages. Every row
+         * ships at the value he chose, and App\Services\CheckoutLayout knows
+         * the value each one had before this package, so Appearance → Checkout
+         * page → 13 October layout can put the whole page back in one press.
+         *
+         * NONE OF THESE TOUCH WHAT IS POSTED. They move fields, draw labels and
+         * hide rows; every field keeps its name, id and validation, and every
+         * total is still the server's own.
+         */
+        'lo_head_cart'  => ['bool', 'Bag icon in the header (instead of “Secure checkout”)', true,
+                            'On, as asked: the green “Secure checkout” words beside the logo give way to the same bag icon as the rest of the shop, and it opens the cart page.'],
+        'lo_title'      => ['bool', 'Show the “Checkout” title and its subtitle', false,
+                            'Off, as asked: no “Checkout / Almost glowing” row and no round back arrow, so the order summary is the first thing under the header.'],
+        'lo_sum_green'  => ['bool', 'Order summary as one green box', true,
+                            'On, as asked: the summary is one light-green box, edge to edge on a phone, with the old total small above the new one when a coupon is on. Opened, its top row turns a shade darker.'],
+        'lo_coupon_in'  => ['bool', 'Coupon field inside the order summary', true,
+                            'On, as asked: the pink coupon box is gone; the field and Apply sit inside the summary (top, and the one at the foot of the page when it is opened).'],
+        'lo_coupon_look' => ['select', 'Applied coupon looks like', 'ticket',
+                            'How an applied coupon is drawn on the checkout AND the cart page: the code, the saving and a small × to take it off.', [
+                                'ticket'  => 'Dashed ticket (as chosen)',
+                                'tag'     => 'White tag',
+                                'line'    => 'Plain line',
+                                'classic' => 'As before 2.60.495 (a sentence and “Remove”)',
+                            ]],
+        'lo_one_step'   => ['bool', 'Email inside “Delivery Information” (no separate Contact step)', true,
+                            'On, as asked: Contact is gone; Email is the first field of Delivery Information, “Already a member? / Sign in” sits in its heading, and “Create an account” sits under Country. Every field keeps its name, so the order is posted exactly as before.'],
+        'lo_email_hint_on' => ['bool', 'Grey line under Email', true, 'On, as asked.'],
+        'lo_email_hint' => ['text', 'Grey line under Email', self::LO_EMAIL_HINT, 'Up to 120 characters.'],
+        'lo_email_hint_ar' => ['text', 'Grey line under Email — Arabic', self::LO_EMAIL_HINT_AR, 'The same on the Arabic shop (/ar/).'],
+        'lo_addr_rows'  => ['select', 'Emirate and Country', 'one',
+                            'Area / Street gets its own row in the first two.', [
+                                'one'     => 'One row, side by side (as chosen)',
+                                'two'     => 'Two rows, one under the other',
+                                'classic' => 'As before 2.60.495 (Area / Street beside Emirate)',
+                            ]],
+        'lo_uae_short'  => ['bool', 'Country shows “U.A.E”', true,
+                            'On, as asked: only the words in the box. The country posted, stored on the order and printed on emails, invoices and the admin is “United Arab Emirates” as before.'],
+        'lo_remember_tick' => ['bool', 'Show the “Remember my shipping details” tick', false,
+                            'Off, as asked: the tick is not shown and the details are still kept on the shopper’s own device, silently — Fields & attention → “Remember shopper details on this device” still decides whether anything is kept at all.'],
+        'lo_dl_note_free' => ['bool', 'Hide the free-delivery line when delivery is already free', true,
+                            'On, as asked: “Free express delivery over AED 199” shows only while the shopper is paying for delivery.'],
+        'lo_pay_secure_on' => ['bool', 'Secure line under “Payment” (instead of inside the card box)', true,
+                            'On, as asked: “100% secure & encrypted — Use any card” leaves the card box, and a green lock with the line below sits under the Payment heading.'],
+        'lo_pay_secure' => ['text', 'Secure line under “Payment”', self::LO_PAY_SECURE, 'Up to 120 characters.'],
+        'lo_pay_secure_ar' => ['text', 'Secure line under “Payment” — Arabic', self::LO_PAY_SECURE_AR, 'The same on the Arabic shop (/ar/).'],
+        'lo_bag_pics'   => ['bool', '“Your bag” pictures above the total', false,
+                            'Off, as asked.'],
+        'lo_total_only' => ['bool', 'Box at the foot of the page: Total only, with the summary behind an arrow', true,
+                            'On, as asked: Subtotal, coupon and Delivery rows fold away; the arrow beside the total opens the whole order summary (items, coupon field, rows) right there, under an “Order summary” heading.'],
+        'lo_btn_words'  => ['bool', '“Pay now” / “Complete Order” on the pay button', true,
+                            'On, as asked: Cash on delivery says the second, every other way to pay says the first. Off puts “Place order” back.'],
+        'lo_pay_now'    => ['text', 'Pay button — card, Tabby, Tamara', self::LO_PAY_NOW, ''],
+        'lo_pay_now_ar' => ['text', 'Pay button — card, Tabby, Tamara — Arabic', self::LO_PAY_NOW_AR, ''],
+        'lo_complete'   => ['text', 'Pay button — Cash on delivery', self::LO_COMPLETE, ''],
+        'lo_complete_ar' => ['text', 'Pay button — Cash on delivery — Arabic', self::LO_COMPLETE_AR, ''],
+        'lo_trust_on'   => ['bool', 'Your own words instead of “SSL secure”', true, 'On, as asked.'],
+        'lo_trust'      => ['text', 'Words beside the lock under the pay button', self::LO_TRUST, ''],
+        'lo_trust_ar'   => ['text', 'Words beside the lock — Arabic', self::LO_TRUST_AR, ''],
+        'lo_apple_row'  => ['bool', 'Apple Pay as the second payment method', true,
+                            'On, as asked: Apple Pay is offered in the payment list under the card (iPhone, iPad and Mac with Apple Pay only), and its own black button takes the place of the pay button once chosen. Google Pay and the “Express checkout” row above the form are not shown. It pays through the same Stripe card payment as before. Off puts the Express checkout row back as it was.'],
     ];
+
+    /** 2.60.495 wording, his words, with Arabic drafts. */
+    public const LO_EMAIL_HINT = 'We send your order confirmation here.';
+
+    public const LO_EMAIL_HINT_AR = 'سنرسل تأكيد طلبك إلى هذا البريد.';
+
+    public const LO_PAY_SECURE = 'All transactions are secure & encrypted';
+
+    public const LO_PAY_SECURE_AR = 'جميع المعاملات آمنة ومشفّرة';
+
+    public const LO_PAY_NOW = 'Pay now';
+
+    public const LO_PAY_NOW_AR = 'ادفع الآن';
+
+    public const LO_COMPLETE = 'Complete Order';
+
+    public const LO_COMPLETE_AR = 'إتمام الطلب';
+
+    public const LO_TRUST = 'Safe checkout';
+
+    public const LO_TRUST_AR = 'دفع آمن';
 
     /** Lane CO: the heading over the wallet buttons, his words. */
     public const XC_HEAD = 'Express checkout';
@@ -1257,6 +1342,15 @@ class CheckoutPage
         /* Lane CO, appended so every other tab keeps its place. */
         'express'      => ['Coupon, express & sign in', 'The coupon box, the Apple Pay / Google Pay row under it with its "Express checkout" heading and "OR" line, and the "Sign in" link beside "1 Contact" with its sign-in window. One set of values for both surfaces.',
                            ['coupon_head', 'xc_head', 'xc_head_ar', 'signin_on', 'signin_icon', 'signin_member']],
+        /* 2.60.495, appended so every other tab keeps its place. The two
+           buttons at the top of this tab (put back / use again) are drawn by
+           the screen from CheckoutLayout, not from this list. */
+        'layout13'     => ['13 October layout', 'Everything from the checkout and cart brief of 13 October, each switch at the value you chose in the live preview. The button at the top puts the cart and checkout back exactly as they were before 2.60.495, and the one beside it brings this layout back. One set of values for both surfaces.',
+                           ['lo_head_cart', 'lo_title', 'lo_sum_green', 'lo_coupon_in', 'lo_coupon_look',
+                            'lo_one_step', 'lo_email_hint_on', 'lo_email_hint', 'lo_email_hint_ar', 'lo_addr_rows', 'lo_uae_short',
+                            'lo_remember_tick', 'lo_dl_note_free', 'lo_pay_secure_on', 'lo_pay_secure', 'lo_pay_secure_ar',
+                            'lo_bag_pics', 'lo_total_only', 'lo_btn_words', 'lo_pay_now', 'lo_pay_now_ar', 'lo_complete', 'lo_complete_ar',
+                            'lo_trust_on', 'lo_trust', 'lo_trust_ar', 'lo_apple_row']],
     ];
 
     /**
@@ -1486,6 +1580,14 @@ class CheckoutPage
         /* Lane QK9: the merged card is the stylesheet's default (as asked),
            so OFF is the class that puts the separate bag card back. */
         'm_merge'        => ['cop-nomerge', ''],
+        /* 2.60.495, the 13 October layout: each ON state is a class the
+           stylesheet scopes its rules to, so OFF is the page as it was. */
+        'lo_head_cart'   => ['', 'cop-hcart'],
+        'lo_sum_green'   => ['', 'cop-sumg'],
+        'lo_coupon_in'   => ['', 'cop-cpin'],
+        'lo_one_step'    => ['', 'cop-1step'],
+        'lo_total_only'  => ['', 'cop-totonly'],
+        'lo_apple_row'   => ['', 'cop-apay'],
     ];
 
     /**
@@ -1525,6 +1627,9 @@ class CheckoutPage
     private const ALIGN_CLASSES = [
         'd_head_align' => ['center' => '', 'page' => 'cop-dhead-page'],
         'm_head_align' => ['page' => '', 'center' => 'cop-mhead-center'],
+        // 2.60.495: the applied coupon's look and the Emirate / Country rows.
+        'lo_coupon_look' => ['ticket' => 'cop-tk', 'tag' => 'cop-tk', 'line' => 'cop-tk', 'classic' => ''],
+        'lo_addr_rows'   => ['one' => 'cop-rows', 'two' => 'cop-rows', 'classic' => ''],
     ];
 
     /**
@@ -1821,10 +1926,19 @@ class CheckoutPage
      * and the UAE has a free-delivery amount. The wording is escaped; {amount}
      * becomes Money::format() of the threshold, markup built from an integer.
      */
-    public function deliveryNoteHtml(?string $country, ?int $threshold): string
+    public function deliveryNoteHtml(?string $country, ?int $threshold, ?int $shipping = null): string
     {
         if (! $this->flag('dl_note_on') || strtoupper((string) $country) !== self::DL_COUNTRY
             || $threshold === null || $threshold <= 0) {
+            return '';
+        }
+
+        // 2.60.495, his words: "if the user is getting free delivery, then this
+        // line should not show". The delivery the basket is priced on is the
+        // answer -- the same figure the "Free" beside the option comes from,
+        // so the two can never disagree. A caller that does not pass it (the
+        // page draws the words and hides them itself) gets the words.
+        if ($shipping !== null && $shipping <= 0 && $this->flag('lo_dl_note_free')) {
             return '';
         }
 
@@ -1832,6 +1946,85 @@ class CheckoutPage
         $amount = \App\Support\Money::format($threshold);
 
         return str_contains($text, '{amount}') ? str_replace('{amount}', $amount, $text) : $text.' '.$amount;
+    }
+
+    /*
+     * ── THE 13 OCTOBER LAYOUT (2.60.495) ────────────────────────────────────
+     *
+     * One lookup each in the memoised settings map, like floatLabels(): the
+     * views ask several times per render and all() walks the whole schema.
+     */
+
+    /** A 13 October switch, by its key without the `lo_` prefix. */
+    public function lo(string $key): bool
+    {
+        return $this->flag('lo_'.$key);
+    }
+
+    /** 'ticket' | 'tag' | 'line' | 'classic' -- cast() keeps it one of its own options. */
+    public function couponLook(): string
+    {
+        return (string) $this->flagless('lo_coupon_look');
+    }
+
+    /** 'one' | 'two' | 'classic'. */
+    public function addressRows(): string
+    {
+        return (string) $this->flagless('lo_addr_rows');
+    }
+
+    /** The grey line under Email, plain text, or '' while it is off. */
+    public function emailHint(): string
+    {
+        return $this->flag('lo_email_hint_on') ? $this->localised('lo_email_hint', self::LO_EMAIL_HINT) : '';
+    }
+
+    /** The secure line under "Payment", plain text, or '' while it is off. */
+    public function paySecureLine(): string
+    {
+        return $this->flag('lo_pay_secure_on') ? $this->localised('lo_pay_secure', self::LO_PAY_SECURE) : '';
+    }
+
+    /**
+     * The pay button's words for a payment method, plain text, or null for the
+     * page's own "Place order" (switched off). Cash on delivery has its own.
+     */
+    public function payButton(?string $method): ?string
+    {
+        if (! $this->flag('lo_btn_words')) {
+            return null;
+        }
+
+        return $method === 'cod'
+            ? $this->localised('lo_complete', self::LO_COMPLETE)
+            : $this->localised('lo_pay_now', self::LO_PAY_NOW);
+    }
+
+    /**
+     * Whether the payment list offers Apple Pay as its second row (2.60.495).
+     *
+     * The same three gates the Express row has always used -- the card gateway
+     * is in THIS basket's list of gateways, it is Stripe, and Store ->
+     * Payments has Apple Pay on -- plus the switch. Whether this DEVICE can pay
+     * with Apple Pay is Stripe's answer in the browser; the row is drawn
+     * hidden and shown only when Stripe says so.
+     *
+     * @param  list<array{id: string}>  $gateways
+     */
+    public function applePayRow(array $gateways): bool
+    {
+        if (! $this->flag('lo_apple_row') || ! in_array('stripe', array_column($gateways, 'id'), true)) {
+            return false;
+        }
+
+        return app(Payments\GatewayRegistry::class)->find('stripe') instanceof Payments\Gateways\StripeGateway
+            && app(Payments\Wallets::class)->applePay();
+    }
+
+    /** The words beside the lock under the pay button, or null for "SSL secure". */
+    public function trustWords(): ?string
+    {
+        return $this->flag('lo_trust_on') ? $this->localised('lo_trust', self::LO_TRUST) : null;
     }
 
     /** A wording key's text for the current locale: its `_ar` twin on /ar/, then English, then shipped. */

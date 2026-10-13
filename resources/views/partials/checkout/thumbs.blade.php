@@ -6,7 +6,11 @@
     use App\Support\Money;
 
     $style = (string) $settings->get('checkout_thumbs_style', 'badges');
-    $show  = $settings->moduleEnabled('checkout_thumbs', true) && $style !== 'off' && $items->isNotEmpty();
+    // 2.60.495: Appearance -> Checkout page -> 13 October layout -> "Your bag
+    // pictures above the total", OFF as asked. Asked here, so the page and the
+    // controller's thumbsHtml answer cannot disagree.
+    $show  = $settings->moduleEnabled('checkout_thumbs', true) && $style !== 'off' && $items->isNotEmpty()
+        && app(\App\Services\CheckoutPage::class)->lo('bag_pics');
     $count = (int) $items->sum('quantity');
     $countLbl = trans_choice('store.cart.item_count', $count);
 

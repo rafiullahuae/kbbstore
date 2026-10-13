@@ -1439,6 +1439,14 @@ final class InterfaceStrings
             'checkout.coupon_applied_plain' => 'Coupon :code applied',
             // The coupon line's tappable code, read aloud. (Lane QK6)
             'checkout.cline_apply_label' => 'Apply coupon :code',
+            // 2.60.495, the owner's checkout brief of 13 October.
+            'checkout.step_delivery_info' => 'Delivery Information',
+            'checkout.cart_icon_label' => 'Your bag',
+            'checkout.order_discount' => 'Order discount',
+            'checkout.total_savings' => 'Total savings',
+            'checkout.coupon_remove_label' => 'Remove coupon :code',
+            'checkout.summary_toggle' => 'Show or hide the order summary',
+            'checkout.apple_pay' => 'Apple Pay',
             'checkout.coupon_removed' => 'Coupon removed',
             'checkout.coupon_remove' => 'Remove',
             'checkout.coupon_err_invalid' => 'That code is not valid.',

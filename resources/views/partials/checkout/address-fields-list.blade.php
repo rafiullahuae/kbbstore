@@ -32,6 +32,14 @@
     $kbbStCountry = strtoupper((string) old('billing_country', $prefill['country'] ?? $defaultCountry));
     $kbbStHas = \App\Support\AddressRegions::has($kbbStCountry);
     $kbbStLabelText = __(\App\Support\AddressRegions::labelKey($kbbStCountry));
+    // 2.60.495, 13 October layout -> "Emirate and Country": 'one' (as asked)
+    // puts Area / Street on its own row and Emirate beside Country; 'two'
+    // gives each its own row; 'classic' is the page before 2.60.495. Only the
+    // rows move -- every field keeps its name, id and validation.
+    $kbbRows = app(\App\Services\CheckoutPage::class)->addressRows();
+    // "change only the display name United Arab Emirates to U.A.E": the words
+    // in the box on the English shop; the value posted is still AE.
+    $kbbUaeShort = app(\App\Services\CheckoutPage::class)->lo('uae_short') && \App\Support\Locale::isDefault();
 @endphp
                         <x-checkout.field name="billing_address_1" :label="__('store.checkout.field_building')" required icon="pin"
                             validate="validate-required" priority="50"
@@ -39,13 +47,18 @@
                             autocomplete="section-billing billing address-line1"
                             :value="old('billing_address_1', $prefill['building'] ?? '')" />
 
+@if ($kbbRows === 'classic')
                         <div class="row2">
+@endif
                             <x-checkout.field name="billing_address_2" :label="__('store.checkout.field_area_street')" required icon="city"
                                 validate="validate-required" priority="60"
                                 :placeholder="__('store.checkout.field_area_street_placeholder')"
                                 autocomplete="section-billing billing address-line2"
                                 :value="old('billing_address_2', $prefill['area'] ?? '')" />
 
+@if ($kbbRows === 'one')
+                        <div class="row2 co-r2sc">
+@endif
 @if ($kbbStHas)
                             <x-checkout.field name="billing_state" :label="$kbbStLabelText" type="select" required icon="map"
                                 validate="validate-required validate-state" priority="80"
@@ -58,15 +71,20 @@
                                 autocomplete="section-billing billing address-level2"
                                 :value="old('billing_state', $prefill['town'] ?? '')" />
 @endif
+@if ($kbbRows === 'classic')
                         </div>
+@endif
                         <x-checkout.field name="billing_country" :label="__('store.checkout.field_country')" type="select" required icon="globe"
                             validate="validate-required" priority="40"
                             autocomplete="section-billing billing country">
                             @if ($countryDetected ?? false)
                                 <x-slot:badge><span class="xd-detected">{{ __('store.checkout.country_detected') }}</span></x-slot:badge>
                             @endif
-                            @foreach ($countries as $code => $name)<option value="{{ $code }}" @selected(old('billing_country', $prefill['country'] ?? $defaultCountry) === $code)>{{ $name }}</option>@endforeach
+                            @foreach ($countries as $code => $name)<option value="{{ $code }}" @selected(old('billing_country', $prefill['country'] ?? $defaultCountry) === $code)>{{ $kbbUaeShort && $code === 'AE' ? 'U.A.E' : $name }}</option>@endforeach
                         </x-checkout.field>
+@if ($kbbRows === 'one')
+                        </div>
+@endif
 @include('partials.address-state-list', [
     'kbbStCountries' => array_keys($countries),
     'kbbStFor' => $kbbStCountry,
