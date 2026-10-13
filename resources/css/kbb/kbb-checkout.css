@@ -1790,3 +1790,21 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout.cop-eqgap #create_account_field{margin-bottom:0}
   .kbb-checkout.cop-eqgap #customer_details>.sec:has(+ .sec):has(#create_account_field){padding-bottom:calc(var(--cop-lo-sec,35px) - 18px)}
 }
+
+/* 2.60.499, the owner (14 October): the same order summary on a computer as on
+   a phone -- "the top summary row full width with dark background and the
+   summary inside content block lighter as normal width", and "increase the
+   summary heading row, little bit" (50 -> 58px). Computer widths only, and
+   only with Appearance -> Checkout page -> 13 October layout -> Opened summary
+   background set to almost white or very light green (its "as 2.60.495"
+   leaves the card as it was). The row bleeds over the card's own side padding
+   (--cop-asidepad) and follows its rounded top corners (13px card, 1px
+   border); everything under it keeps its place. */
+@media(min-width:901px){
+  .kbb-checkout.cop-sumg.cop-sow .summary{background:#FBFDFC}
+  .kbb-checkout.cop-sumg.cop-sog .summary{background:#F4FAF6}
+  .kbb-checkout.cop-sumg.cop-sow .summary .cosr,.kbb-checkout.cop-sumg.cop-sog .summary .cosr,
+  .kbb-checkout.cop-sumg.cop-sow .summary.cosr-open .cosr,.kbb-checkout.cop-sumg.cop-sog .summary.cosr-open .cosr{background:#DCEFE3;
+    width:calc(100% + 2 * var(--cop-asidepad));margin-inline:calc(var(--cop-asidepad) * -1);padding-inline:var(--cop-asidepad);
+    min-height:58px;border-radius:12px 12px 0 0;border-bottom-color:transparent}
+}

@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.499
+**Checkout on a computer: the order summary's title row runs the full width of the card in the darker green, a touch taller, with the content under it on the lighter background — the same look as the phone.** Apply after .498.
+Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "FOR DESKTOP ... the top summary row full width with dark background and the summary inside content block lighter as normal width" / "just increase the summary heading row, little bit" | On a computer, the "Order summary" row spans the whole card (378px, was 344) in #DCEFE3, 58px tall (was 50), following the card's rounded top corners. Under it, the card is almost white (#FBFDFC); items, coupon field, totals and Pay now keep their width and place. Measured at 1280px; the phone measures exactly as in .497. It follows Appearance → Checkout page → 13 October layout → "Opened summary background" (very light green there gives the lighter green here too; "as 2.60.495" leaves the card as it was) |
+
+Nothing else changes: the phone, the fields, the payment options and every button are exactly as before.
+
+Files: resources/css/kbb/kbb-checkout.css, public/build, migration 2027_10_31_400000.
+
 ## 2.60.498
 **Checkout on a phone: the same 35px gap between every section, as you set in the live preview.** Apply after .497.
 Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.

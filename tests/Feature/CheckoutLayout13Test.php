@@ -555,3 +555,26 @@ it('keeps one gap between every section on a phone, 35 by default, measured to t
         ->and($block)->toContain('#customer_details>.sec:has(+ .sec){padding-bottom:calc(var(--cop-lo-sec,35px) - 1px)}')
         ->and($block)->toContain('#customer_details>.sec:has(+ .sec):has(#create_account_field){padding-bottom:calc(var(--cop-lo-sec,35px) - 18px)}');
 });
+
+it('gives the computer the same summary: a full-width title row, a touch taller, the lighter content under it', function () {
+    /*
+     * The owner, 14 October: "FOR DESKTOP ... the top summary row full width
+     * with dark background and the summary inside content block lighter as
+     * normal width", then "just increase the summary heading row, little bit".
+     * Measured in Chromium at 1280: row 378 of the 380px card, 58px tall,
+     * #DCEFE3; card #FBFDFC; content 344px, 12px under the row -- as before.
+     * Computer widths only; the phone is 2.60.497's rules, untouched.
+     * MUTATION: drop the negative margin. RED (and the row is 344px again).
+     */
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-checkout.css'));
+    $at = strrpos($css, '@media(min-width:901px){'."\n".'  .kbb-checkout.cop-sumg.cop-sow .summary{background:#FBFDFC}');
+
+    expect($at)->toBeInt();
+    $block = substr($css, (int) $at);
+
+    expect($block)->toContain('.kbb-checkout.cop-sumg.cop-sog .summary{background:#F4FAF6}')
+        ->and($block)->toContain('width:calc(100% + 2 * var(--cop-asidepad));margin-inline:calc(var(--cop-asidepad) * -1);padding-inline:var(--cop-asidepad);')
+        ->and($block)->toContain('min-height:58px;border-radius:12px 12px 0 0;border-bottom-color:transparent}')
+        // Only while the opened-summary setting is on: "as 2.60.495" leaves the card alone.
+        ->and(substr_count($block, '.cop-sow') + substr_count($block, '.cop-sog'))->toBe(6);
+});
