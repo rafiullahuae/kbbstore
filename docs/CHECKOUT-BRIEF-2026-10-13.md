@@ -394,3 +394,6 @@ Confirmed: 2, 5, 6, 8. Not yet checked: 1, 3, 9.
   spacing between sections"): Appearance → Checkout page → Layout, "Space
   between boxes" 8–32px and "Space at the end of each step" 10–32px. A select
   or number stores only its own range (CLAUDE.md rule 5).
+- 7 (round 5): "Total | AED 648 ⌄" on one line; "5% VAT inclusive | 🏷 Total
+  savings AED 35" on ONE line right under it, aligned (savings sit directly
+  under the amount, 2px gap, no extra space above them).

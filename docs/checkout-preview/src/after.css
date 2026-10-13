@@ -158,3 +158,15 @@
 .kbb-checkout #customer_details>.sec.pv-sec>.kbb-acct:last-child,.kbb-checkout #customer_details>.sec.pv-sec>#kbbReturning:empty{margin-bottom:0!important}
 .kbb-checkout #customer_details>.sec.pv-sec>#kbbReturning:empty{display:none}
 .kbb-checkout #customer_details>.sec.pv-sec>.pv-last,.kbb-checkout .pv-flds.pv-sec>.form-row.pv-last{margin-bottom:0!important}
+/* 7: savings sit just under the amount */
+.kbb-checkout .pv-rc{margin-inline-start:auto;display:flex;flex-direction:column;align-items:flex-end}
+.kbb-checkout .pv-rl{display:flex;align-items:center}
+.kbb-checkout .pv-rl>span{margin-inline-start:0!important}
+.kbb-checkout .pv-rc .pv-savings{margin-top:2px;font-size:12px}
+/* 7: "Total | amount" on one line, "5% VAT inclusive | Total savings" on the line under it, aligned */
+.kbb-checkout .pv-only .sumrow.tot{align-items:flex-start!important}
+.kbb-checkout .pv-only .pv-tl{line-height:26px}
+.kbb-checkout .pv-only .pv-tl .pv-vat{display:block;margin-top:2px;font-size:12px;line-height:16px}
+.kbb-checkout .pv-only .pv-rl{height:26px}
+.kbb-checkout .pv-only .pv-rc .pv-savings{margin-top:2px;font-size:12px;line-height:16px;height:16px}
+.kbb-checkout .pv-only .pv-rc .pv-savings svg{width:13px;height:13px}

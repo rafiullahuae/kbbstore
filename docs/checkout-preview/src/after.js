@@ -223,11 +223,16 @@
   mt.insertBefore(h('<button type="button" class="pv-osh" aria-label="Show or hide the order summary"><span>Order summary</span>' + ICON.down + '</button>'), mt.firstChild);
   $$('.sumrow.tot', mt).forEach(function (r) {
     var v = r.children[1]; v.style.marginInlineStart = 'auto';
+    // Right column: the amount with its arrow, and the savings line right under the amount
+    var rc = h('<span class="pv-rc"><span class="pv-rl"></span></span>');
+    r.insertBefore(rc, v); rc.firstChild.appendChild(v);
     v.insertAdjacentHTML('afterend', '<button type="button" class="pv-arrow" aria-label="Show order summary">' + ICON.down + '</button>');
+    var sv = $('.cotot > .pv-savings', mob); if (sv) rc.appendChild(sv.cloneNode(true));
     // VAT line sits right under the word "Total"
     if (o.vat) r.firstElementChild.insertAdjacentHTML('beforeend', '<small class="pv-vat">5% VAT inclusive</small>');
     r.firstElementChild.classList.add('pv-tl');
   });
+  $$('.cotot > .pv-savings', mob).forEach(function (x) { x.remove(); });
   mob.classList.add('pv-novat');
   mk(mt, '7');
 
