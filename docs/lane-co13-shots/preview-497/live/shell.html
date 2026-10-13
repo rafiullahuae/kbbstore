@@ -1,0 +1,123 @@
+<title>Checkout Touch-ups 2.60.497</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the real phone checkout in a frame, with the three choices beside it (stacked on a phone). */
+:root{
+  --bg:#f6f1f3; --panel:#ffffff; --ink:#2a2228; --muted:#6c6267; --line:#e6dbe0;
+  --rose:#c13e63; --green:#1f7d52; --green-soft:#e3f2ea; --stage:#ebe3e6;
+  --f-head:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1b1719; --panel:#252023; --ink:#f3ecef; --muted:#b4a9ae; --line:#3a3236;
+  --rose:#ef6f92; --green:#5cc795; --green-soft:#1d3329; --stage:#141113; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1b1719; --panel:#252023; --ink:#f3ecef; --muted:#b4a9ae; --line:#3a3236;
+  --rose:#ef6f92; --green:#5cc795; --green-soft:#1d3329; --stage:#141113; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);padding-inline:16px;padding-block:14px 40px}
+h1,h2{font-family:var(--f-head);text-wrap:balance;margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+.top{max-width:1100px;margin:0 auto 14px;display:grid;gap:4px}
+.top h1{font-size:clamp(22px,4vw,30px);letter-spacing:-.01em}
+.top p{margin:0;color:var(--muted);font-size:14px;max-width:62ch}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+@media (max-width:899px){.side{order:-1}.card{padding:12px 14px;gap:8px}.note{font-size:12.5px}}
+@media (min-width:900px){.wrap{grid-template-columns:minmax(0,430px) minmax(0,1fr)}.stagecol{position:sticky;top:14px;align-self:start}}
+.stage{background:var(--stage);border-radius:18px;padding:12px;display:flex;justify-content:center}
+.screen{position:relative;width:100%;max-width:390px;height:min(78vh,780px);border-radius:26px;overflow:hidden;background:#fff;box-shadow:0 0 0 7px #2a2228,0 14px 40px -18px #0008}
+.screen iframe{position:absolute;top:0;left:0;width:390px;border:0;transform-origin:0 0;background:#fff}
+.side{display:grid;gap:14px;align-content:start;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:10px;min-width:0}
+.card h2{font-size:17px}
+.card p{margin:0;color:var(--muted);font-size:14px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--bg);padding:8px 13px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:8px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.chip{width:16px;height:16px;border-radius:5px;border:1px solid #0002;flex:none}
+.note{font-size:13px;color:var(--muted)}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);background:var(--green-soft);border-radius:6px;padding:2px 7px}
+</style>
+
+<header class="top">
+  <h1>Checkout touch-ups &middot; preview</h1>
+  <p>Your real checkout from the preview shop, GLOW applied, at iPhone width. Scroll inside the phone. Nothing here changes the live shop; pick a background and say if anything should move.</p>
+</header>
+
+<div class="wrap">
+  <div class="stagecol"><div class="stage"><div class="screen" id="screen"><iframe id="frame" title="Preview of the phone checkout"></iframe></div></div></div>
+  <div class="side">
+    <section class="card" aria-labelledby="h-view">
+      <h2 id="h-view">What to look at</h2>
+      <div class="seg" role="group" aria-label="Which part of the checkout">
+        <button type="button" id="v-top" data-k="view" data-v="top" aria-pressed="true">Top summary, opened</button>
+        <button type="button" id="v-bottom" data-k="view" data-v="bottom" aria-pressed="false">Bottom summary, opened</button>
+      </div>
+      <p class="note">The bottom summary opens from the arrow beside the total, as now.</p>
+    </section>
+    <section class="card" aria-labelledby="h-bg">
+      <h2 id="h-bg">Top summary background</h2>
+      <div class="seg" role="group" aria-label="Background of the opened top summary">
+        <button type="button" id="b-a" data-k="bg" data-v="A" aria-pressed="true"><span class="chip" style="background:#FBFDFC"></span>A &middot; almost white</button>
+        <button type="button" id="b-b" data-k="bg" data-v="B" aria-pressed="false"><span class="chip" style="background:#F4FAF6"></span>B &middot; very light green</button>
+        <button type="button" id="b-now" data-k="bg" data-v="now" aria-pressed="false"><span class="chip" style="background:#EEF8F1"></span>Today</button>
+      </div>
+      <p class="note">A and B: the title row keeps its darker green, the box gets 18px rounded bottom corners, and the bottom summary&rsquo;s heading row gets the same darker green with space above it. &ldquo;Today&rdquo; is the shop as it is now.</p>
+    </section>
+    <section class="card" aria-labelledby="h-ap">
+      <h2 id="h-ap">Apple Pay mark in the payment list</h2>
+      <div class="seg" role="group" aria-label="Apple Pay mark">
+        <button type="button" id="a-new" data-k="ap" data-v="new" aria-pressed="true">New</button>
+        <button type="button" id="a-now" data-k="ap" data-v="now" aria-pressed="false">Today</button>
+      </div>
+      <p class="note">New: the apple sits on the same line as &ldquo;Pay&rdquo;, as on Apple&rsquo;s own button, and is a touch smaller to match it. The letters stay as they are: capital P, small a, small y. Scroll to Payment to see it.</p>
+    </section>
+    <p class="note"><span class="tag">Preview only</span> Buttons and links inside the phone are not live here.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var CAP = /*CAPTURES*/null;
+  var APPLE = 'M7.3 4.6c.5-.6.8-1.4.7-2.2-.7 0-1.6.5-2.1 1.1-.5.5-.9 1.4-.7 2.2.8.1 1.6-.4 2.1-1.1Zm.7 1.2c-1.2-.1-2.2.7-2.7.7-.6 0-1.4-.6-2.3-.6-1.2 0-2.3.7-2.9 1.8-1.2 2.2-.3 5.4.9 7.1.6.9 1.3 1.8 2.2 1.8.9 0 1.2-.6 2.3-.6s1.4.6 2.3.6c1 0 1.6-.9 2.2-1.7.7-1 1-1.9 1-2-.1 0-1.9-.7-1.9-2.8 0-1.7 1.4-2.5 1.5-2.6-.8-1.2-2-1.4-2.6-1.5Z';
+  var PAY = 'M17.9 3.2h-4.4V13h1.9V9.6h2.5c2.1 0 3.6-1.3 3.6-3.2s-1.5-3.2-3.6-3.2Zm-2.5 1.6h2.1c1.2 0 2 .6 2 1.6s-.8 1.6-2 1.6h-2.1ZM27.6 13h1.8V8c0-1.6-1.3-2.7-3.3-2.7-1.9 0-3.2 1-3.4 2.5h1.7c.2-.7.8-1.1 1.6-1.1 1 0 1.6.5 1.6 1.3v.6l-2.4.1c-2 .1-3.1 1-3.1 2.4 0 1.5 1.2 2.4 2.8 2.4 1.1 0 2.1-.5 2.6-1.4h.1Zm-3.1-2c0-.6.5-1 1.5-1.1l2-.1v.6c0 1-.9 1.7-2 1.7-.9 0-1.5-.4-1.5-1.1ZM31.3 15.7c1.8 0 2.7-.7 3.4-2.8l3.3-9.2h-1.9l-2.2 7.1h-.1l-2.2-7.1h-2l3.2 8.8-.2.5c-.3.9-.8 1.2-1.6 1.2h-.6v1.4c.1 0 .7.1.9.1Z';
+  var BG = { A: '#FBFDFC', B: '#F4FAF6' };
+  function css(bg) {
+    return '@media(max-width:900px){'
+      + '.kbb-checkout.cop-sumg .summary.cosr-open{background:' + bg + ';border-end-start-radius:18px;border-end-end-radius:18px;border-bottom:1px solid #D6EEDF}'
+      + '.kbb-checkout.cop-sumg .summary.cosr-open .cotot,.kbb-checkout.cop-sumg .summary.cosr-open .trust{border-color:#E3F1E8}'
+      + '.kbb-checkout.cop-totonly .kbb-mobile-order.co-open .co-osbox{margin-top:16px}'
+      + '.kbb-checkout .co-osh{background:#DCEFE3;padding:12px 14px;border-radius:10px;margin:0 0 10px}}';
+  }
+  var state = { view: 'top', bg: 'A', ap: 'new' };
+  var frame = document.getElementById('frame'), screen = document.getElementById('screen');
+  function fit() {
+    var w = screen.clientWidth, k = Math.min(1, w / 390);
+    frame.style.transform = 'scale(' + k + ')';
+    frame.style.height = (screen.clientHeight / k) + 'px';
+  }
+  function draw() {
+    var html = CAP[state.view];
+    var inj = '<style>html{scrollbar-width:none}' + (state.bg === 'now' ? '' : css(BG[state.bg])) + '</style>'
+      + '<script>(function(){'
+      + (state.ap === 'new' ? 'var s=document.querySelector(".pay-logo-applepay svg");if(s){s.innerHTML=' + JSON.stringify('<path transform="translate(0.77 -0.69) scale(0.828)" d="' + APPLE + '"/><path d="' + PAY + '"/>') + ';}' : '')
+      + 'var y=+document.documentElement.getAttribute("data-scroll")||0;if(y){window.scrollTo(0,y);}'
+      + '})();<\/script>';
+    var i = html.lastIndexOf('</body>');
+    frame.srcdoc = i > -1 ? html.slice(0, i) + inj + html.slice(i) : html + inj;
+  }
+  document.querySelectorAll('[data-k]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.getAttribute('data-k');
+      state[k] = b.getAttribute('data-v');
+      document.querySelectorAll('[data-k="' + k + '"]').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+      draw();
+    });
+  });
+  window.addEventListener('resize', fit);
+  fit(); draw();
+})();
+</script>
