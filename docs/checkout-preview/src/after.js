@@ -76,7 +76,11 @@
     ovRow.remove(); if (disc) disc.remove();
     var ap = $('.appliedcoupon', sum); if (ap) ap.remove();
     btn.classList.add('pv-black');
-    btn.innerHTML = o.btn === 'A' ? ICON.lock(16) + '<span>SECURE CHECKOUT</span>' : o.btn === 'B' ? '<span>SECURE CHECKOUT</span><span aria-hidden="true">›</span>' : 'SECURE CHECKOUT';
+    var bt = o.btnCase === 'normal' ? 'Secure checkout' : 'SECURE CHECKOUT';
+    if (o.btnCase !== 'normal') btn.classList.add('pv-caps');
+    btn.style.fontSize = (+o.btnSize || 15) + 'px';
+    var ic = Math.round((+o.btnSize || 15) * 1.05);
+    btn.innerHTML = o.btn === 'A' ? ICON.lock(ic) + '<span>' + bt + '</span>' : o.btn === 'B' ? '<span>' + bt + '</span><span aria-hidden="true">›</span>' : bt;
     mk(band, '1'); mk(btn, '1c'); if (disc) mk($('.pv-chip', band), '2');
     return;
   }
@@ -85,6 +89,8 @@
   var sec = $$('#customer_details > .sec');
   var aside = $('#kbbSummary'), row = $('#kbbSumRow'), cbox = $('.kbb-checkout .coupon');
   var mob = $('.kbb-mobile-order');
+  var form = $('#customer_details');
+  if (form) form.insertAdjacentHTML('beforebegin', '<div class="pv-xc"><p class="co-xc-h">Express checkout</p><div class="pv-wallets"><span class="pv-w">Apple Pay</span><span class="pv-w">Google Pay</span></div><p class="pv-xnote">Apple Pay / Google Pay: as today, unchanged (shows only on phones that support it)</p><div class="ordiv co-xc-or">OR</div></div>');
   if (!S.after) {
     mk($('.co-head .secure'), '3a'); mk($('.co-titlebar'), '3b'); mk(row, '3c'); mk(cbox, '3d');
     mk(sec[0] && sec[0].firstElementChild, '4'); mk($('#kbb_remember_field'), '4e');
@@ -103,7 +109,7 @@
   var tbar = $('.co-titlebar');
   if (o.back) tbar.replaceWith(h('<a class="pv-back pv-cart-back" href="#">' + ICON.back + 'Back to bag</a>')); else tbar.remove();
   // 3c green summary row
-  row.classList.add('pv-green');
+  row.classList.add('pv-green'); aside.classList.add('pv-sg');
   // 3d coupon field into the summary, the box goes
   var crow = $('.crow', cbox), items = $('.co-items', aside);
   crow.className = 'pv-cfield';
@@ -116,7 +122,7 @@
   // 3e applied: struck old total on the row, discount row, total savings
   if (discRow) {
     var sub = amt($('.js-subtotal', aside));
-    $$('.cosr-tot > span', row).forEach(function (s) { s.insertAdjacentHTML('afterbegin', '<span class="pv-strike">' + sub + '</span>'); });
+    $$('.cosr-tot > span', row).forEach(function (s) { s.classList.add('pv-stack'); s.insertAdjacentHTML('afterbegin', '<span class="pv-strike">' + sub + '</span>'); });
     $$('.js-coupons .disc').forEach(function (r) {
       r.classList.add('pv-disc');
       r.firstElementChild.innerHTML = 'Order discount<span class="pv-dcode">' + code + '</span>';
@@ -138,7 +144,11 @@
     var line = h('<p class="pv-si"></p>');
     if (q) line.appendChild(q); if (si) line.appendChild(si);
     h2.insertAdjacentElement('afterend', line);
-  } else { if (q) h2.appendChild(q); if (si) h2.appendChild(si); }
+  } else {
+    var stack = h('<span class="pv-sistack"></span>');
+    if (q) stack.appendChild(q); if (si) stack.appendChild(si);
+    h2.appendChild(stack); h2.classList.add('pv-h2one');
+  }
   var email = $('#billing_email_field', contact), acct = $('#create_account_field', contact), ret = $('#kbbReturning', contact);
   ship.insertBefore(email, $('#billing_first_name_field', ship));
   if (o.hint) email.insertAdjacentElement('afterend', h('<p class="pv-hint">We send your order confirmation here.</p>'));
@@ -180,8 +190,12 @@
     r.lastElementChild.insertAdjacentHTML('afterend', '<button type="button" class="pv-arrow" aria-label="Show order summary">' + ICON.down + '</button>');
     r.style.alignItems = 'center';
     var v = r.children[1]; v.style.marginInlineStart = 'auto';
+    // VAT line sits right under the word "Total"
+    if (o.vat) r.firstElementChild.insertAdjacentHTML('beforeend', '<small class="pv-vat">5% VAT inclusive</small>');
+    r.firstElementChild.classList.add('pv-tl');
   });
-  mk(mt, '7');
+  mob.classList.add('pv-novat');
+  mk(mt, '7', 1);
 
   // 7f button wording by method; 8 trust wording
   var SSL = { A: 'Secure payment', B: 'Safe checkout', C: 'Protected payment', D: 'Encrypted & secure', E: 'Your data is safe' }[o.ssl];

@@ -311,3 +311,35 @@ the server reads (billing_*, payment_method, coupon_code, create_account,
 shipping_method) are never renamed. Proof: the payment test set, the full
 suite, and real browser orders with every method on the preview shop.
 
+
+---
+
+## His answers to the live preview (13 Oct) — round 2 preview built from these
+
+Preview: https://claude.ai/artifact/2Tq8LQW5brrpqgrdynu5Pz (sources in
+`docs/checkout-preview/`, rebuild with `node tools/cpv-build.cjs`).
+
+1. Button: lock icon + text. NEW: admin choice of text CAPITALS / Normal, and a
+   text-size control (preview slider 12–18px, default 15).
+2. Cart coupon: style B (dashed ticket, white inside), × to remove YES, Order
+   Value AFTER the coupon. NEW: saving sits next to the code on the left (not
+   pushed right), smaller text, tag only as wide as its words, left-aligned.
+3. Checkout summary: coupon style B; back arrow removed; item-count badge NO.
+   NEW: the whole summary is ONE green box, full width, no white around it; the
+   old price small ABOVE the total (not beside); bigger "Order summary" text and
+   total. Apple Pay / Google Pay must stay right after the summary box as
+   today — express-wallets.blade.php is in the payments-frozen set: do not touch
+   it, only what sits around it.
+4. Sign-in stays in the heading row, BUT "Delivery Information" must be on ONE
+   line: "Already a member?" stacked above "Sign in" at the right, heading row
+   taller. "Not you? Clear" NO. Grey line under Email "We send your order
+   confirmation here." YES.
+5. Rule confirmed: the line shows whenever the shopper is NOT getting free
+   delivery (bag under AED 199); hidden only when delivery is free. "We don't
+   offer free delivery with coupon" — the line follows the delivery options'
+   own rule, so it can never disagree with the price shown. "Delivery method"
+   rename NO.
+6. Secure line under Payment: smaller text.
+7. VAT line kept, placed directly under the word "Total" (left column). Amount
+   on the button NO.
+8. "SSL secure" → B "Safe checkout".

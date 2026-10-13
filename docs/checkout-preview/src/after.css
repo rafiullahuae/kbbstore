@@ -67,3 +67,44 @@
 .pv-mk.m{top:1px;inset-inline-start:3px;height:18px;min-width:18px;font-size:10.5px;line-height:18px;padding:0 5px}
 .pv-ov .cpg-was{display:inline!important;text-decoration:line-through;color:#9a9298;font-weight:500;font-size:13px}
 .pv-ov .tr b{display:inline!important}
+/* round 2 (his answers, 13 Oct) */
+.kbb-cartpage .cobtn.pv-black{letter-spacing:0}
+.kbb-cartpage .cobtn.pv-black.pv-caps{letter-spacing:.08em}
+.pv-chip{display:inline-flex!important;max-width:100%;font-size:12px;gap:6px}
+.pv-chip .pv-off{margin-inline-start:4px}
+.pv-chip.s-A{padding:4px 4px 4px 10px}
+.pv-chip.s-B{background:#fff;padding:4px 4px 4px 10px}
+.pv-chip .pv-x{width:20px;height:20px;font-size:14px}
+.pv-tb .pv-chip{margin-bottom:8px}
+.pv-cfield + .pv-chip{margin:8px 0 4px}
+/* the whole summary is one green box, no white */
+.kbb-checkout .summary.pv-sg{background:#EEF8F1!important;border:0!important;box-shadow:none!important;border-radius:14px}
+.kbb-checkout .summary.pv-sg .cosr.pv-green{background:transparent;padding:0 2px;min-height:58px}
+.kbb-checkout .summary.pv-sg .cosr-tx{font-size:16px;font-weight:700}
+.kbb-checkout .summary.pv-sg .cosr-tot{font-size:17.5px}
+.kbb-checkout .summary.pv-sg .peekfade{display:none}
+.kbb-checkout .summary.pv-sg .cotot .sumrow.tot{border-top-color:#cfe8da}
+.pv-stack{flex-direction:column;align-items:flex-end;line-height:1.1}
+.kbb-checkout .cosr .js-total.pv-stack{display:inline-flex}
+.kbb-checkout .cosr .js-total-fee.pv-stack{display:none}
+.kbb-checkout:has(#payment_method_cod:checked) .cosr .js-total.pv-stack{display:none}
+.kbb-checkout:has(#payment_method_cod:checked) .cosr .js-total-fee.pv-stack{display:inline-flex}
+.pv-stack .pv-strike{font-size:11px;margin:0 0 2px}
+/* wallets drawn where they are today */
+.pv-xc{margin:14px 0 0}
+.pv-wallets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pv-w{display:grid;place-items:center;height:44px;border-radius:8px;background:#000;color:#fff;font:600 15px/1 -apple-system,system-ui,sans-serif}
+.pv-xnote{margin:6px 0 10px;text-align:center;font-size:10.5px;color:#8a8288}
+/* 4 heading on one line, sign-in stacked on the right */
+.kbb-checkout .sec>h2.pv-h2one{white-space:nowrap;min-height:60px}
+.pv-sistack{margin-inline-start:auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.kbb-checkout .sec>h2 .pv-sistack .co-signin-q{margin:0!important;font-size:11.5px}
+.kbb-checkout .sec>h2 .pv-sistack .co-signin{margin:0!important}
+/* 6 smaller */
+.pv-h2t small{font-size:10.5px}
+.pv-h2t small svg{width:11px;height:11px}
+/* 7 VAT under the word Total */
+.pv-tl{display:flex;flex-direction:column;line-height:1.15}
+.pv-vat{font-size:11.5px;font-weight:600;color:#756C74;margin-top:3px}
+.pv-only .cotot>.sumrow.tot{align-items:flex-start!important}
+.pv-only .cotot>.sumrow.tot .pv-arrow{margin-top:-1px}

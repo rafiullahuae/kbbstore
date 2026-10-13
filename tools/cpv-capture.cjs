@@ -6,8 +6,8 @@
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const BASE = process.env.BASE, IDS = (process.env.IDS || '').split(',').map(Number);
-// COUPON=<code>: the same bag with that code applied, saved as cart-coupon.html / checkout-coupon.html.
-const COUPON = process.env.COUPON || '', SFX = COUPON ? '-coupon' : '';
+// TAG=<name>: save as cart-<name>.html (e.g. a small bag). COUPON=<code>: the same bag with that code applied, saved as cart-coupon.html / checkout-coupon.html.
+const COUPON = process.env.COUPON || '', SFX = process.env.TAG ? '-' + process.env.TAG : (COUPON ? '-coupon' : '');
 const OUT = path.resolve(__dirname, '../docs/checkout-preview/captured');
 fs.mkdirSync(OUT, { recursive: true });
 const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
@@ -65,7 +65,7 @@ async function snapshot(pg) {
   await pg.evaluate(async ([ids, code]) => {
     const x = decodeURIComponent((document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1] || '');
     for (const [i, id] of ids.entries()) {
-      await fetch('/api/cart/add', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-XSRF-TOKEN': x }, body: JSON.stringify({ product_id: id, quantity: i === 0 ? 2 : 1 }) });
+      await fetch('/api/cart/add', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-XSRF-TOKEN': x }, body: JSON.stringify({ product_id: id, quantity: i === 0 && ids.length > 1 ? 2 : 1 }) });
     }
     if (code) {
       const r = await fetch('/api/cart/coupon', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-XSRF-TOKEN': x }, body: JSON.stringify({ code }) });
