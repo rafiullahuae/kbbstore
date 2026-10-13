@@ -398,3 +398,7 @@ Confirmed: 2, 5, 6, 8. Not yet checked: 1, 3, 9.
   savings AED 35" on ONE line right under it, aligned (savings sit directly
   under the amount, 2px gap, no extra space above them). The SAME two lines in
   the top order summary (its separate "5% VAT inclusive" row goes).
+- 9 (round 5): Apple Pay row has NO description (no payment box at all), and
+  its own selected look like every other method: black radio dot, black
+  border, light grey card (`--pt #F7F7F8, --pg/--ps/--pi #000` on
+  `li.payment_method_applepay`).

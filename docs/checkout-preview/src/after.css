@@ -179,3 +179,5 @@
 .kbb-checkout .pv-tot2 .pv-rl{display:flex;align-items:center;height:26px}
 .kbb-checkout .pv-tot2 .pv-rc .pv-savings{margin-top:2px;font-size:12px;line-height:16px;height:16px}
 .kbb-checkout .pv-tot2 .pv-rc .pv-savings svg{width:13px;height:13px}
+/* 9: Apple Pay's own selected look (every method has one): black radio dot and border */
+.kbb-checkout .wc_payment_methods li.payment_method_applepay{--pt:linear-gradient(#F7F7F8,#F7F7F8);--pg:linear-gradient(90deg,#000,#000);--ps:#000;--pi:#000}

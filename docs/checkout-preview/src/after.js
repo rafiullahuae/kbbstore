@@ -201,7 +201,7 @@
   // 9 Apple Pay as payment method no. 2 (Google Pay not offered)
   var card = $('.payment_method_stripe');
   if (card) {
-    card.insertAdjacentHTML('afterend', '<li class="wc_payment_method payment_method_applepay pay-brand"><input id="payment_method_applepay" type="radio" class="input-radio" name="payment_method" value="applepay"><label for="payment_method_applepay"> Apple Pay <span class="pv-apm">' + ICON.apple + 'Pay</span></label><div class="payment_box payment_method_applepay"><p>Pay with Face ID or Touch ID. Shown only on iPhone, iPad and Mac with Apple Pay.</p></div></li>');
+    card.insertAdjacentHTML('afterend', '<li class="wc_payment_method payment_method_applepay pay-brand"><input id="payment_method_applepay" type="radio" class="input-radio" name="payment_method" value="applepay"><label for="payment_method_applepay"> Apple Pay <span class="pv-apm">' + ICON.apple + 'Pay</span></label></li>');
     mk($('.payment_method_applepay'), '9', 1);
   }
   $$('[data-place]').forEach(function (b) { b.insertAdjacentHTML('afterend', '<button type="button" class="pv-apbtn" aria-label="Pay with Apple Pay">' + ICON.apple.replace(/12/g, '18') + 'Pay</button>'); });
