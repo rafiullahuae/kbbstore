@@ -34,9 +34,8 @@ CHECKOUT and the button background will be dark black."*
 ---
 
 ## 2. Cart page — the applied coupon as a red chip, above Order Value  ☐
-Screenshot of the look he wants: `docs/checkout-brief/02-cart-applied-coupon-chip.png`
-(a red/coral rounded chip with a tag icon and the code in white capitals,
-"WEMISSYOU15", and beside it the saving "-AED 33").
+Screenshot of the CONTENT he wants (not the look): `docs/checkout-brief/02-cart-applied-coupon-chip.png`
+(the code "WEMISSYOU15" and the saving "-AED 33").
 
 His words: *"on the cart page, above the order value row, if user added coupon
 from the checkout page, and then come back on the cart page, then the cart page
@@ -44,6 +43,9 @@ will show the applied coupon with off value as attached. but no any coupon field
 will be by default, it should only display when user already added the coupon on
 the checkout page. please plan well."*
 
+- **STYLE: NOT the red box.** His follow-up: *"styling i need totally different,
+  i don't such red box etc."* The screenshot shows WHAT (code + saving), not the
+  look. Design to be previewed as options in the shop's own style with the plan.
 - 2a. Shown **only when a coupon is applied** to the basket (from the checkout,
   the bag panel, or a coupon link). No coupon applied = nothing at all.
 - 2b. Sits **above the Order Value row** (item 1: inside/at the top of the green
