@@ -10,5 +10,12 @@ let out = fs.readFileSync(`${D}/src/shell.html`, 'utf8');
 out = out.replace('/*CAPTURES*/null', () => js(cap))
   .replace("/*AFTER_JS*/''", () => js(fs.readFileSync(`${D}/src/after.js`, 'utf8')))
   .replace("/*AFTER_CSS*/''", () => js(fs.readFileSync(`${D}/src/after.css`, 'utf8')));
+// Pure ASCII out, so no viewer can mis-guess the encoding and garble "−", "…" or "✕":
+// inside <script> a \u escape, elsewhere an HTML character reference.
+out = out.split(/(<script\b[\s\S]*?<\/script>)/).map((part, i) => part.replace(/[^\x00-\x7f]/gu, (ch) => {
+  const cp = ch.codePointAt(0);
+  if (i % 2 === 0) return '&#x' + cp.toString(16) + ';';
+  return cp > 0xffff ? ch.split('').map((u) => '\\u' + u.charCodeAt(0).toString(16).padStart(4, '0')).join('') : '\\u' + cp.toString(16).padStart(4, '0');
+})).join('');
 fs.writeFileSync(`${D}/checkout-preview.html`, out);
 console.log((out.length / 1048576).toFixed(2) + ' MB');

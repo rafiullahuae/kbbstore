@@ -364,3 +364,19 @@ Confirmed: 2, 5, 6, 8 (Safe checkout). Item 1: lock, CAPITALS, 14px.
   (`WalletPaymentsTest`, `WalletMoneyPathTest`, `AppleDomainFileTest`) —
   same PaymentIntent, googlePay 'never', row hidden where Apple Pay is not
   available. Needs a real Apple Pay test on his iPhone before release.
+
+## Round 4 answers (13 Oct)
+
+Confirmed: 2, 5, 6, 8. Not yet checked: 1, 3, 9.
+- 3: the checkout's bag icon is the WEBSITE's own cart icon (`HeaderIcons::cart()`).
+  Opened, the top "Order summary" row alone is a shade darker green
+  (#DCEFE3) than the panel, full width on a phone.
+- 4: admin switch, Emirate + Country in ONE row or TWO rows (shipped: one).
+  Area / Street always its own row. One 10px gap between every field of the
+  section (today Area / Street touched the row under it).
+- 7: closed = NO heading; the arrow sits just after the total amount. Open =
+  "Order summary" heading appears at the top (weight 500, not bold) and the
+  arrow moves beside it; the arrow beside the total goes.
+- 10 (new): cart page "Continue shopping" OFF; admin switch + editable target
+  (default `/`, the homepage; today it points to /shop/). Appearance → Cart
+  page. Scheme-check the setting before it becomes an href (CLAUDE.md rule 5).

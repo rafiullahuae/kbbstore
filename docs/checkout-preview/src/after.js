@@ -10,7 +10,7 @@
   var ICON = {
     tag: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>',
     lock: function (s) { return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'; },
-    cart: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>',
+    cart: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.8 4h2.4l2.5 10.8a1.7 1.7 0 0 0 1.7 1.3h7.9a1.7 1.7 0 0 0 1.6-1.3L20.9 8H6"></path><circle cx="10" cy="20" r="1.4"></circle><circle cx="17.4" cy="20" r="1.4"></circle></svg>',
     down: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
     apple: '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>',
     back: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>'
@@ -57,7 +57,9 @@
   /* ---------------- CART ---------------- */
   if (S.page === 'cart') {
     var sum = $('.kbb-cartpage .sum'), band = $('.cpg-totband', sum), btn = $('a.cobtn');
+    var back = $('.kbb-cartpage .backlink');
     if (!S.after) {
+      mk(back, '10');
       mk(band, '1'); mk(btn, '1c');
       mk($('.appliedcoupon', sum) || $('.srow.disc', sum), '2');
       return;
@@ -82,6 +84,10 @@
     btn.style.fontSize = (+o.btnSize || 15) + 'px';
     var ic = Math.round((+o.btnSize || 15) * 1.05);
     btn.innerHTML = o.btn === 'A' ? ICON.lock(ic) + '<span>' + bt + '</span>' : o.btn === 'B' ? '<span>' + bt + '</span><span aria-hidden="true">›</span>' : bt;
+    if (back) {
+      if (o.cont === 'on') { back.setAttribute('title', 'Goes to ' + (o.contUrl || '/')); mk(back, '10'); }
+      else { var hh = $('.kbb-cartpage h1'); back.remove(); mk(hh, '10'); }
+    }
     mk(band, '1'); mk(btn, '1c'); if (disc) mk($('.pv-chip', band), '2');
     return;
   }
@@ -156,14 +162,20 @@
   var rem = $('#kbb_remember_field', ship);
   var country = $('#billing_country_field', ship);
   var r2 = $('.row2', ship), a2 = $('#billing_address_2_field', ship);
-  if (r2 && a2) { r2.parentNode.insertBefore(a2, r2); r2.appendChild(country); r2.classList.add('pv-r2'); }
+  if (r2 && a2) {
+    r2.parentNode.insertBefore(a2, r2);
+    var st8 = $('#billing_state_field', r2);
+    if (o.rows === 'two') { r2.parentNode.insertBefore(st8, r2); r2.parentNode.insertBefore(country, r2); r2.remove(); r2 = null; }
+    else { r2.appendChild(country); r2.classList.add('pv-r2'); }
+  }
+  ship.classList.add('pv-flds');
   var ae = $('#billing_country option[value="AE"]'); if (ae) ae.textContent = 'U.A.E';
   (r2 || country).insertAdjacentElement('afterend', acct);
   if (ret) acct.insertAdjacentElement('afterend', ret);
   if (rem) rem.remove();
   contact.remove();
   $$('#customer_details > .sec').forEach(function (s, i) { var n = $('h2 .n', s); if (n) n.textContent = i + 1; });
-  mk(h2, '4', 2); mk(email, '4b'); mk(r2 || country, '4g'); mk(acct, '4f');
+  mk(h2, '4', 2); mk(email, '4b'); mk(r2 || $('#billing_state_field', ship), '4g'); mk(acct, '4f');
 
   // 5 the free-delivery line hides when this bag already gets free delivery
   var dn = $('#kbbDeliveryNote');
@@ -208,6 +220,7 @@
   mt.insertBefore(h('<button type="button" class="pv-osh" aria-label="Show or hide the order summary"><span>Order summary</span>' + ICON.down + '</button>'), mt.firstChild);
   $$('.sumrow.tot', mt).forEach(function (r) {
     var v = r.children[1]; v.style.marginInlineStart = 'auto';
+    v.insertAdjacentHTML('afterend', '<button type="button" class="pv-arrow" aria-label="Show order summary">' + ICON.down + '</button>');
     // VAT line sits right under the word "Total"
     if (o.vat) r.firstElementChild.insertAdjacentHTML('beforeend', '<small class="pv-vat">5% VAT inclusive</small>');
     r.firstElementChild.classList.add('pv-tl');

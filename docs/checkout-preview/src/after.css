@@ -131,3 +131,18 @@
 .kbb-checkout:has(#payment_method_applepay:checked) .pv-apbtn{display:inline-flex}
 .kbb-checkout .row2.pv-r2{display:grid!important;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
 .kbb-checkout .row2.pv-r2>.form-row{margin-top:0;min-width:0;width:auto}
+/* round 4 */
+/* 4: one gap (10px) between every field of the section */
+.kbb-checkout .pv-flds .form-row{margin:0 0 10px!important}
+.kbb-checkout .pv-flds .row2.pv-r2{gap:10px!important;margin:0 0 10px!important}
+.kbb-checkout .pv-flds .row2.pv-r2>.form-row{margin:0!important}
+/* 7: heading shows only when open; closed, the arrow sits beside the total */
+.kbb-checkout .pv-osh{display:none;font-weight:500!important}
+.kbb-checkout .pv-open .pv-osh{display:flex}
+.kbb-checkout .pv-only .sumrow.tot .pv-arrow{background:none!important;color:#2A2228!important;width:22px;height:22px;margin-inline-start:6px;transform:none}
+.kbb-checkout .pv-only .cotot.pv-open .sumrow.tot .pv-arrow{display:none}
+/* 3: opened, the top row alone is a shade darker than the panel */
+.kbb-checkout .summary.pv-sg.cosr-open .cosr.pv-green{background:#DCEFE3!important;border-radius:10px;padding-inline:10px}
+@media (max-width:899px){
+ .kbb-checkout .summary.pv-sg.cosr-open .cosr.pv-green{width:100vw!important;max-width:none;margin-inline:calc(50% - 50vw) 0!important;padding-inline:calc(50vw - 50% + 2px)!important;border-radius:0;box-sizing:border-box}
+}

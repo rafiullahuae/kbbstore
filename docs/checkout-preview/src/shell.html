@@ -68,6 +68,7 @@ button{font:inherit;color:inherit}
 .done{background:var(--green-soft);border-radius:12px;padding:9px 12px;font-size:13.5px}
 .done .dl{display:block;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--green);margin-bottom:2px}
 .done ul{margin:0;padding-inline-start:18px;display:grid;gap:2px}
+.opt .tx{width:100%;max-width:320px;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:14px;background:var(--bg);color:var(--ink)}
 .opt input[type=range]{width:100%;max-width:320px;accent-color:var(--rose)}
 .ol b{color:var(--ink)}
 .acts{display:flex;flex-wrap:wrap;gap:8px}
@@ -132,13 +133,14 @@ var ITEMS = [
           {k:'ovAfter', l:'Order Value with a coupon', c:[[true,'After the coupon (same as the bottom bar)'],[false,'Before the coupon']]}] },
   { id:'3', page:'checkout', title:'Header, title and the order summary', coupon:1,
     said:'“Remove the secure checkout green text beside the logo and place there cart icon… remove the checkout page title and description… Order summary row… same greenish box… bring the coupon field inside order summary… reduce the height.”',
-    done:['The green background now runs the full width of the phone screen; opened, the items, field and rows keep the normal width', 'The coupon field and Apply are the same height (46px), with space under them', 'The Express checkout box is gone from here: Apple Pay is now payment method no. 2 (item 9)'],
+    done:['The bag icon at the top is now the same cart icon as on your website', 'Opened, only the top “Order summary” row turns a shade darker green than the panel under it', 'The green background now runs the full width of the phone screen; opened, the items, field and rows keep the normal width', 'The coupon field and Apply are the same height (46px), with space under them', 'The Express checkout box is gone from here: Apple Pay is now payment method no. 2 (item 9)'],
     changes:[['3a','“Secure checkout” goes; a bag icon goes to the cart page'],['3b','The “Checkout” title, “Almost glowing…” line and the round back arrow are removed'],['3c','The order summary is a light green box'],['3d','The pink coupon box is gone. The field and Apply sit inside the summary (tap the row to open it), a little shorter'],['3e','With a coupon: a ticket with ×, an “Order discount” row, the old total small above, and “Total savings”']],
     opts:[{k:'chip', l:'Coupon tag style (same as the cart page)', c:[['A','A · White tag'],['B','B · Dashed ticket'],['C','C · Plain line']]}] },
   { id:'4', page:'checkout', title:'Contact merged into Delivery Information',
     said:'“The contact section i want to remove. The email will go above the name field, the sign in row will be in the heading row, rename to Delivery Information, remove the Remember tick, it should work silently… bring the create account line here.”',
-    done:['Emirate and Country sit side by side in one row; Area / Street gets its own row', 'Country shows “U.A.E” on the page only. The order, emails, invoices and admin keep “United Arab Emirates”'],
-    changes:[['4','“1 Contact” is removed; sections renumber'],['4','Heading “Delivery Information”, with “Already a member? / Sign in” on the right'],['4b','Email address is the first field, with the grey line under it'],['4f','“Remember my shipping details” tick is removed; details still save on the shopper’s own phone, silently'],['4g','Emirate and Country in one row, Country reads “U.A.E”'],['4f','“Create an account for faster checkout next time” sits under that row']] },
+    done:['Your choice in the admin: Emirate and Country in ONE row, or in TWO rows (switch below)', 'Every field in this section now has the same 10px gap. Area / Street no longer touches the row under it', 'Country shows “U.A.E” on the page only. The order, emails, invoices and admin keep “United Arab Emirates”'],
+    opts:[{k:'rows', l:'Emirate and Country', c:[['one','One row, side by side'],['two','Two rows, one under the other']]}],
+    changes:[['4','“1 Contact” is removed; sections renumber'],['4','Heading “Delivery Information”, with “Already a member? / Sign in” on the right'],['4b','Email address is the first field, with the grey line under it'],['4f','“Remember my shipping details” tick is removed; details still save on the shopper’s own phone, silently'],['4g','Emirate and Country in one row or two, Country reads “U.A.E”'],['4f','“Create an account for faster checkout next time” sits under that row']] },
   { id:'5', page:'checkout', title:'Free-delivery line only when not free', small:1,
     said:'“If the user is getting free delivery, then this line should not show, it should only display if user order is below 199.” And: “we don’t offer free delivery with coupon.”',
     done:['Turn on “Bag under AED 199” at the top to see a real small bag (AED 135 + AED 20 delivery): the line shows', 'The line follows the same rule as the delivery price: whenever the shopper is NOT getting free delivery, it shows'],
@@ -149,8 +151,8 @@ var ITEMS = [
     changes:[['6','“100% secure & encrypted — Use any card” is removed from the card box'],['6','Under “Payment”: a green lock and “All transactions are secure & encrypted”']] },
   { id:'7', page:'checkout', title:'Bottom box: Total only, savings and the button', coupon:1,
     said:'“Turn off the pictures row completely, remove the sub total rows, only keep the Total row… coupon icon, Total saving… down arrow will open the order summary… Cash on Delivery: Complete Order… any other: Pay now.”',
-    done:['“Order summary” heading at the top of the box, with the arrow on its right (like your reference)', 'Tap it to open: the items, the coupon field, Subtotal / Delivery rows, then Total', 'The Total, VAT line and savings always show'],
-    changes:[['7','The “Your bag” pictures row is off'],['7','Subtotal, coupon and Delivery rows are gone; only Total stays'],['7','“Order summary ⌄” at the top opens the full summary right there'],['7','With a coupon: grey tag icon and “Total savings” under the amount'],['7f','Cash on delivery shows “Complete Order”; card, Tabby and Tamara show “Pay now” (tap a payment method in the preview)']],
+    done:['Closed: no heading. The arrow sits just after the total amount', 'Open (tap the arrow): the “Order summary” heading appears at the top, not bold, and the arrow moves up beside it', 'Open shows the items, the coupon field, Subtotal / Delivery rows, then Total'],
+    changes:[['7','The “Your bag” pictures row is off'],['7','Subtotal, coupon and Delivery rows are gone; only Total stays'],['7','The arrow beside the total opens the full summary right there'],['7','With a coupon: grey tag icon and “Total savings” under the amount'],['7f','Cash on delivery shows “Complete Order”; card, Tabby and Tamara show “Pay now” (tap a payment method in the preview)']],
     note:'On a laptop the order summary is always open on the right, so its rows stay there.' },
   { id:'8', page:'checkout', title:'New words for “SSL secure”',
     said:'“I need to change the SSL secure to something else, suggest me few options.”',
@@ -162,14 +164,20 @@ var ITEMS = [
     said:'“I need the APPLE PAY only, with same icon. Not google pay! … payment option inside the payment methods again, on no 2, under stripe card payment method.”',
     done:['New', 'Tap “Apple Pay” in the preview: the button becomes the black Apple Pay button'],
     changes:[['9','Apple Pay sits second, right under Credit / Debit Card, with the Apple Pay mark'],['9','Google Pay is not shown anywhere'],['9','The Express checkout box after the summary is removed'],['9','Shows only on iPhone, iPad and Mac with Apple Pay; other phones never see the row'],['9','Apple Pay still pays through the same Stripe card payment as today. The payment code is not rewritten']] }
+,
+  { id:'10', page:'cart', title:'“Continue shopping” on the cart page',
+    said:'“Turn off the Continue Shopping on the cart page. And it should go to homepage, and also give option to change the url in case we need later on.”',
+    done:['New'],
+    changes:[['10','“← Continue shopping” above “Your Bag” is off'],['10','If you turn it back on, it goes to the homepage (today it goes to the Shop page)'],['10','Admin: Appearance → Cart page. A switch, plus the address it goes to, which you can change any time']],
+    opts:[{k:'cont', l:'Continue shopping link', c:[['off','Off'],['on','On']]},{k:'contUrl', l:'Link goes to', text:1}] }
 ];
 
 // His answers of 13 October are the starting point.
-var DEF = { si:'right', btn:'A', btnCase:'caps', btnSize:14, chip:'B', chipX:true, ovAfter:true, back:false, badge:false, clear:false, hint:true, dname:false, vat:true, payAmt:false, ssl:'B' };
+var DEF = { rows:'one', cont:'off', contUrl:'/', si:'right', btn:'A', btnCase:'caps', btnSize:14, chip:'B', chipX:true, ovAfter:true, back:false, badge:false, clear:false, hint:true, dname:false, vat:true, payAmt:false, ssl:'B' };
 var DEFANS = { '2':{s:'ok'}, '5':{s:'ok'}, '6':{s:'ok'}, '8':{s:'ok'} };
 var st = { page:'cart', mode:'after', view:'phone', coupon:false, small:false, marks:true, pay:'', o:Object.assign({}, DEF), ans:JSON.parse(JSON.stringify(DEFANS)) };
-try { var saved = JSON.parse(localStorage.getItem('kbb-cpv3') || 'null'); if (saved) { st.o = Object.assign({}, DEF, saved.o || {}); st.ans = saved.ans || {}; } } catch (e) {}
-function save(){ try { localStorage.setItem('kbb-cpv3', JSON.stringify({ o:st.o, ans:st.ans })); } catch (e) {} }
+try { var saved = JSON.parse(localStorage.getItem('kbb-cpv4') || 'null'); if (saved) { st.o = Object.assign({}, DEF, saved.o || {}); st.ans = saved.ans || {}; } } catch (e) {}
+function save(){ try { localStorage.setItem('kbb-cpv4', JSON.stringify({ o:st.o, ans:st.ans })); } catch (e) {} }
 
 var frame = document.getElementById('frame'), screen = document.getElementById('screen'), wrap = document.getElementById('wrap');
 var pending = null, keepY = 0;
@@ -249,6 +257,7 @@ function draw(){
     it.changes.forEach(function(c){ h += '<li><button type="button" class="pt" data-pt="' + c[0] + '">' + c[0] + '</button> ' + esc(c[1]) + '</li>'; });
     h += '</ul>';
     (it.opts || []).forEach(function(op){
+      if (op.text) { h += '<div class="opt"><label class="ol" for="t-' + op.k + '">' + esc(op.l) + '</label><input type="text" class="tx" id="t-' + op.k + '" data-tk="' + op.k + '" value="' + esc(st.o[op.k]) + '" placeholder="/ (homepage)"><span class="note">Use / for the homepage, or a page such as /shop/ or /new-arrivals/.</span></div>'; return; }
       if (op.range) { h += '<div class="opt"><label class="ol" for="r-' + op.k + '">' + esc(op.l) + ': <b data-rv="' + op.k + '">' + st.o[op.k] + 'px</b></label><input type="range" id="r-' + op.k + '" data-rk="' + op.k + '" min="' + op.range[0] + '" max="' + op.range[1] + '" step="1" value="' + st.o[op.k] + '"></div>'; return; }
       h += '<div class="opt"><span class="ol">' + esc(op.l) + '</span><div class="chips">';
       op.c.forEach(function(c){ h += '<button type="button" data-k="' + op.k + '" data-v="' + c[0] + '" aria-pressed="' + (String(st.o[op.k]) === String(c[0])) + '">' + esc(c[1]) + (c[2] ? '<span class="rec">Recommended</span>' : '') + '</button>'; });
@@ -271,7 +280,7 @@ function draw(){
       if (t.dataset.a) { var cur = st.ans[it.id] || {}; cur.s = cur.s === t.dataset.a ? '' : t.dataset.a; st.ans[it.id] = cur; save(); draw(); }
     });
     el.addEventListener('input', function(e){ var k = e.target.dataset.rk; if (k) { var b = el.querySelector('[data-rv="' + k + '"]'); if (b) b.textContent = e.target.value + 'px'; } });
-    el.addEventListener('change', function(e){ var rk = e.target.dataset.rk; if (rk) { st.o[rk] = +e.target.value; save(); summary(); point(it, it.changes[it.changes.length - 1][0], true); return; } var k = e.target.dataset.sk; if (k) { st.o[k] = e.target.checked; save(); point(it, it.changes[0][0], true); summary(); } });
+    el.addEventListener('change', function(e){ var tk = e.target.dataset.tk; if (tk) { st.o[tk] = e.target.value.trim() || '/'; save(); summary(); point(it, '10', true); return; } var rk = e.target.dataset.rk; if (rk) { st.o[rk] = +e.target.value; save(); summary(); point(it, it.changes[it.changes.length - 1][0], true); return; } var k = e.target.dataset.sk; if (k) { st.o[k] = e.target.checked; save(); point(it, it.changes[0][0], true); summary(); } });
     el.addEventListener('input', function(e){ if (e.target.hasAttribute('data-n')) { (st.ans[it.id] = st.ans[it.id] || {}).n = e.target.value; save(); summary(); } });
     list.appendChild(el);
   });
@@ -286,7 +295,7 @@ function draw(){
 }
 function optText(it){
   var bits = [];
-  (it.opts || []).forEach(function(op){ if (op.range) { bits.push(op.l + ': ' + st.o[op.k] + 'px'); return; } var c = op.c.filter(function(c){ return String(c[0]) === String(st.o[op.k]); })[0]; if (c) bits.push(op.l + ': ' + c[1]); });
+  (it.opts || []).forEach(function(op){ if (op.text) { bits.push(op.l + ': ' + st.o[op.k]); return; } if (op.range) { bits.push(op.l + ': ' + st.o[op.k] + 'px'); return; } var c = op.c.filter(function(c){ return String(c[0]) === String(st.o[op.k]); })[0]; if (c) bits.push(op.l + ': ' + c[1]); });
   (it.sug || []).forEach(function(sg){ bits.push('Suggestion "' + sg.t.split(',')[0].slice(0, 48) + '": ' + (st.o[sg.k] ? 'YES' : 'no')); });
   return bits;
 }
