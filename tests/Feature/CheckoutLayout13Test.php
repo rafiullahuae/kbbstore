@@ -487,3 +487,42 @@ it('lines the open summary up with the form, and the Apple Pay mark with the oth
     expect($css)->toContain('.kbb-checkout.cop-sumg .summary > .panels{padding-inline:calc(var(--cop-secpad) + 1px)}')
         ->and($css)->toMatch('~\.kbb-checkout \.pay-logo\.pay-logo-applepay\{[^}]*inline-size:auto~');
 });
+
+it('opens the phone summary almost white with rounded bottom corners, and greens the foot summary heading', function () {
+    /*
+     * The owner, 14 October: "the content inside the top summary box ... more
+     * light towards almost white, but from downside ... the beautiful radius
+     * from left bottom and right bottom corners", and the foot summary's
+     * "heading row background only to the same little darker greenish ... and
+     * give little space below payments block". Measured in Chromium at 390:
+     * opened #FBFDFC with 18px corners, title row #DCEFE3; closed unchanged.
+     * MUTATION: default lo_sum_open to 'classic'. RED on the class.
+     */
+    expect(app(CheckoutPage::class)->bodyClass())->toContain(' cop-sow');
+
+    app(CheckoutPage::class)->save(['lo_sum_open' => 'green']);
+    expect(app(CheckoutPage::class)->bodyClass())->toContain(' cop-sog')->not->toContain('cop-sow');
+
+    app(CheckoutPage::class)->save(['lo_sum_open' => 'classic']);
+    expect(app(CheckoutPage::class)->bodyClass())->not->toContain('cop-sow')->not->toContain('cop-sog');
+
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-checkout.css'));
+    expect($css)->toContain('.kbb-checkout.cop-sumg.cop-sow .summary.cosr-open{background:#FBFDFC}')
+        ->and($css)->toContain('border-end-start-radius:18px;border-end-end-radius:18px')
+        ->and($css)->toContain('.kbb-checkout.cop-sow .co-osh,.kbb-checkout.cop-sog .co-osh{background:#DCEFE3;');
+});
+
+it('draws the owner\'s own Apple Pay logo in the payment list, inline', function () {
+    /*
+     * The owner: "the y is still incorrect, can u place just the logo image
+     * and make border" -- his own image of Apple's mark, where "a" and "y"
+     * share one top line. Inline (no request), sized, never from a setting.
+     * MUTATION: point 'applepay' back at the drawn SVG. RED.
+     */
+    $logo = App\Support\PaymentMarkArt::checkoutLogo('applepay');
+
+    expect($logo)->toStartWith('<img src="data:image/png;base64,')
+        ->and($logo)->toContain('width="34" height="14"')
+        ->and($logo)->toContain('alt=""')
+        ->and(strlen($logo))->toBeLessThan(4000);
+});

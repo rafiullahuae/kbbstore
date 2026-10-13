@@ -1171,6 +1171,12 @@ class CheckoutPage
                             'Off, as asked: no “Checkout / Almost glowing” row and no round back arrow, so the order summary is the first thing under the header.'],
         'lo_sum_green'  => ['bool', 'Order summary as one green box', true,
                             'On, as asked: the summary is one light-green box, edge to edge on a phone, with the old total small above the new one when a coupon is on. Opened, its top row turns a shade darker.'],
+        'lo_sum_open'   => ['select', 'Opened summary background (phone)', 'white',
+                            'The order summary on a phone once it is opened: the title row keeps its darker green, what opens under it gets this background and rounded bottom corners, and the heading row of the summary at the foot of the page takes the same darker green.', [
+                                'white'   => 'Almost white (as chosen, 14 October)',
+                                'green'   => 'Very light green',
+                                'classic' => 'As 2.60.495 (the same green, square corners)',
+                            ]],
         'lo_coupon_in'  => ['bool', 'Coupon field inside the order summary', true,
                             'On, as asked: the pink coupon box is gone; the field and Apply sit inside the summary (top, and the one at the foot of the page when it is opened).'],
         'lo_coupon_look' => ['select', 'Applied coupon looks like', 'ticket',
@@ -1353,7 +1359,7 @@ class CheckoutPage
            buttons at the top of this tab (put back / use again) are drawn by
            the screen from CheckoutLayout, not from this list. */
         'layout13'     => ['13 October layout', 'Everything from the checkout and cart brief of 13 October, each switch at the value you chose in the live preview. The button at the top puts the cart and checkout back exactly as they were before 2.60.495, and the one beside it brings this layout back. One set of values for both surfaces.',
-                           ['lo_head_cart', 'lo_title', 'lo_sum_green', 'lo_coupon_in', 'lo_coupon_look',
+                           ['lo_head_cart', 'lo_title', 'lo_sum_green', 'lo_sum_open', 'lo_coupon_in', 'lo_coupon_look',
                             'lo_one_step', 'lo_email_hint_on', 'lo_email_hint', 'lo_email_hint_ar', 'lo_addr_rows', 'lo_uae_short', 'lo_state_lang', 'lo_detected',
                             'lo_remember_tick', 'lo_dl_note_free', 'lo_pay_secure_on', 'lo_pay_secure', 'lo_pay_secure_ar',
                             'lo_bag_pics', 'lo_total_only', 'lo_btn_words', 'lo_pay_now', 'lo_pay_now_ar', 'lo_complete', 'lo_complete_ar',
@@ -1637,6 +1643,8 @@ class CheckoutPage
         // 2.60.495: the applied coupon's look and the Emirate / Country rows.
         'lo_coupon_look' => ['ticket' => 'cop-tk', 'tag' => 'cop-tk', 'line' => 'cop-tk', 'classic' => ''],
         'lo_addr_rows'   => ['one' => 'cop-rows', 'two' => 'cop-rows', 'classic' => ''],
+        // 2.60.497: the opened summary's background on a phone.
+        'lo_sum_open'    => ['white' => 'cop-sow', 'green' => 'cop-sog', 'classic' => ''],
     ];
 
     /**

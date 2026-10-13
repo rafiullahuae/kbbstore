@@ -1,0 +1,27 @@
+const { chromium } = require('playwright');
+(async () => {
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1' });
+  const pg = await ctx.newPage(); const errs = []; pg.on('pageerror', (e) => errs.push(e.message));
+  await pg.goto(process.env.BASE + '/shop/', { waitUntil: 'networkidle' });
+  await pg.evaluate(async () => { const x = decodeURIComponent((document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1] || ''); for (const id of [683,684,685]) await fetch('/api/cart/add', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-XSRF-TOKEN': x }, body: JSON.stringify({ product_id: id, quantity: 1 }) }); });
+  await pg.goto(process.env.BASE + '/checkout/', { waitUntil: 'networkidle' }); await pg.waitForTimeout(800);
+  const r = {};
+  r.cls = await pg.$eval('.kbb-checkout', (e) => e.className);
+  r.closed = await pg.$eval('#kbbSummary', (e) => [getComputedStyle(e).backgroundColor, getComputedStyle(e).borderBottomLeftRadius]);
+  await pg.click('#kbbSumRow'); await pg.waitForTimeout(500);
+  r.open = await pg.$eval('#kbbSummary', (e) => [getComputedStyle(e).backgroundColor, getComputedStyle(e).borderBottomLeftRadius, getComputedStyle(e.querySelector('.cosr')).backgroundColor]);
+  await pg.screenshot({ path: process.env.OUT + '/top-open-390.png' });
+  await pg.evaluate(() => { const li = document.querySelector('[data-kbb-ap-li]'); if (li) li.hidden = false; });
+  r.logo = await pg.$eval('[data-kbb-ap-li] .pay-logo-applepay', (g) => { const i = g.querySelector('img'), a = g.getBoundingClientRect(), b = i.getBoundingClientRect(); return { box: [Math.round(a.width), Math.round(a.height)], img: [Math.round(b.width), Math.round(b.height), i.complete && i.naturalWidth], centred: Math.round(b.top + b.height / 2 - a.top - a.height / 2) }; });
+  await pg.locator('.kbb-mobile-order').scrollIntoViewIfNeeded();
+  await pg.locator('.kbb-mobile-order .co-ta:visible').first().click(); await pg.waitForTimeout(500);
+  r.osh = await pg.$eval('.co-osh', (e) => [getComputedStyle(e).backgroundColor, getComputedStyle(e).paddingTop]);
+  r.gapAbove = await pg.evaluate(() => Math.round(document.querySelector('.co-osh').getBoundingClientRect().top - document.querySelector('#payment').getBoundingClientRect().bottom));
+  await pg.locator('#payment .wc_payment_methods').screenshot({ path: process.env.OUT + '/payment-list-390.png' });
+  const [pb, fb] = await pg.evaluate(() => [document.querySelector('#payment'), document.querySelector('.kbb-mobile-order')].map((e) => { const q = e.getBoundingClientRect(); return { y: q.top + scrollY, h: q.height }; }));
+  await pg.addStyleTag({ content: 'header{position:static!important}' });
+  await pg.screenshot({ path: process.env.OUT + '/bottom-open-390.png', fullPage: true, clip: { x: 0, y: pb.y + pb.h - 200, width: 390, height: Math.min(200 + fb.y + fb.h - pb.y - pb.h + 20, 1600) } });
+  r.scrollWidth = await pg.evaluate(() => document.documentElement.scrollWidth);
+  r.errors = errs; console.log(JSON.stringify(r)); await b.close();
+})();

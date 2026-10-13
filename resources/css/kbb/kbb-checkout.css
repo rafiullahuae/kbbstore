@@ -1756,3 +1756,21 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    border ran the slot's whole width and the mark sat off to one side. */
 .kbb-checkout .pay-logo.pay-logo-applepay{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;inline-size:auto;block-size:24px;height:24px;padding:0 7px;border:1.3px solid #111;border-radius:5px;background:#fff;color:#000}
 .kbb-checkout .pay-logo.pay-logo-applepay svg{block-size:14px;height:14px;inline-size:auto;width:auto;max-inline-size:none;display:block}
+.kbb-checkout .pay-logo.pay-logo-applepay img{display:block;inline-size:34px;block-size:14px;width:34px;height:14px;max-inline-size:none}
+
+/* 2.60.497, the owner (14 October): "the content inside the top summary box ...
+   more light towards almost white, but from downside ... the beautiful radius
+   from left bottom and right bottom corners", and the summary at the foot of
+   the page: "the heading row background only to the same little darker
+   greenish ... and give little space below payments block". Phone only, and
+   only while each is opened. Appearance -> Checkout page -> 13 October layout
+   -> Opened summary background. */
+@media(max-width:900px){
+  .kbb-checkout.cop-sumg.cop-sow .summary.cosr-open{background:#FBFDFC}
+  .kbb-checkout.cop-sumg.cop-sog .summary.cosr-open{background:#F4FAF6}
+  .kbb-checkout.cop-sumg.cop-sow .summary.cosr-open,.kbb-checkout.cop-sumg.cop-sog .summary.cosr-open{border-end-start-radius:18px;border-end-end-radius:18px;border-bottom:1px solid #D6EEDF}
+  .kbb-checkout.cop-sumg.cop-sow .summary.cosr-open .cotot,.kbb-checkout.cop-sumg.cop-sow .summary.cosr-open .trust,
+  .kbb-checkout.cop-sumg.cop-sog .summary.cosr-open .cotot,.kbb-checkout.cop-sumg.cop-sog .summary.cosr-open .trust{border-color:#E3F1E8}
+  .kbb-checkout.cop-totonly.cop-sow .kbb-mobile-order.co-open .co-osbox,.kbb-checkout.cop-totonly.cop-sog .kbb-mobile-order.co-open .co-osbox{margin-top:16px}
+  .kbb-checkout.cop-sow .co-osh,.kbb-checkout.cop-sog .co-osh{background:#DCEFE3;padding:12px 14px;border-radius:10px;margin:0 0 10px}
+}

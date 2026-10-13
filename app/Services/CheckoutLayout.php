@@ -30,6 +30,7 @@ class CheckoutLayout
         'lo_head_cart' => [false, true],
         'lo_title' => [true, false],
         'lo_sum_green' => [false, true],
+        'lo_sum_open' => ['classic', 'white'],
         'lo_coupon_in' => [false, true],
         'lo_coupon_look' => ['classic', 'ticket'],
         'lo_one_step' => [false, true],

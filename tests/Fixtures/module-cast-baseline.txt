@@ -5894,6 +5894,10 @@ checkout_page|lo_sum_green|bool|"no"|true
 checkout_page|lo_sum_green|bool|1|true
 checkout_page|lo_sum_green|bool|0|false
 checkout_page|lo_sum_green|bool|null|false
+checkout_page|lo_sum_open|select|"white"|'white'
+checkout_page|lo_sum_open|select|"nope"|'white'
+checkout_page|lo_sum_open|select|""|'white'
+checkout_page|lo_sum_open|select|null|'white'
 checkout_page|lo_coupon_in|bool|true|true
 checkout_page|lo_coupon_in|bool|false|false
 checkout_page|lo_coupon_in|bool|"1"|true

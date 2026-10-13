@@ -208,12 +208,21 @@ final class PaymentMarkArt
                 : ($arabic ? self::TAMARA_BADGE_AR : self::TAMARA_BADGE),
             'stripe' => self::silenced(self::MARKS['pay_visa']).self::silenced(self::MARKS['pay_mc']),
             'cod' => self::COD_ICON,
-            // 2.60.495: the Apple Pay row in the payment list; the stylesheet
-            // draws the outline round it, as in the owner's reference.
-            'applepay' => self::silenced(self::MARKS['pay_apple']),
+            // The Apple Pay row in the payment list; the stylesheet draws the
+            // outline round it. 2.60.497: the owner's own Apple Pay logo
+            // (the "a" and "y" share one top line, as in Apple's mark).
+            'applepay' => self::APPLEPAY_LOGO,
             default => '',
         };
     }
+
+    /**
+     * The Apple Pay logo for the payment list (2.60.497): the owner's own image
+     * of Apple's mark, trimmed, black on transparent, 102x42 for a sharp 34x14
+     * on a 3x phone screen. 2.4 KB, inline, so the row needs no request. A
+     * constant -- never built from a setting.
+     */
+    private const APPLEPAY_LOGO = '<img src="data:image/png;base64,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" alt="" width="34" height="14" decoding="async">';
 
     /** A trust-row mark, minus its inline size and its accessible name. */
     private static function silenced(string $svg): string

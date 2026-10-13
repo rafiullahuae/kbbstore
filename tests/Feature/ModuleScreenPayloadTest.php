@@ -756,7 +756,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // English only) and lo_detected (the Detected badge, off), the owner's
     // requests of 14 October. lo_apple_row reads "Apple Pay also in the
     // payment list": the Express row is drawn as before beside it.
-    expect($compared)->toBe(830, 'the number of controls drawn changed');
+    // 830 -> 831 (2.60.497): checkout-page lo_sum_open, the opened summary's
+    // background on a phone (almost white, the owner's pick of 14 October).
+    expect($compared)->toBe(831, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

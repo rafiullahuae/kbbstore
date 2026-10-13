@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.497
+**Checkout touch-ups you chose from the live preview: the opened summary almost white with rounded bottom corners, a green heading row in the summary at the foot of the page, and your own Apple Pay logo in the payment list.** Apply after .496.
+Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "the content inside the top summary box ... more light towards almost white ... the beautiful radius from left bottom and right bottom corners" / "i like the more lighter one" | On a phone, the opened Order summary is almost white (#FBFDFC) under its darker green title row, with 18px rounded bottom corners. Closed, it looks exactly as before. Switch: Appearance → Checkout page → 13 October layout → "Opened summary background (phone)" (almost white / very light green / as 2.60.495) |
+| "the downwards summary heading ... same little darker greenish ... give little space below payments block" | The "Order summary" heading in the box at the foot of the page has the same darker green row as the top, with space under the payment options. It still appears only after tapping the arrow beside the total |
+| "the y is still incorrect, can u place just the logo image and make border" | Your own Apple Pay logo (the image you sent: "a" and "y" share one top line) in the thin black border, sharp on an iPhone, centred in its row. Inline, so no extra download |
+
+Measured in Chromium at 390px: closed summary unchanged; opened #FBFDFC with 18px corners and a #DCEFE3 title row; foot heading #DCEFE3 with 12px padding; logo 34×14 centred in its 50×24 border; no sideways scroll; no console errors. Payment, checkout and cart tests (1,846) green.
+
+Files: app/Services/CheckoutPage.php, CheckoutLayout.php, app/Support/PaymentMarkArt.php, resources/css/kbb/kbb-checkout.css, public/build, migration 2027_10_31_200000.
+
 ## 2.60.496
 **Urgent: the Express checkout row (Apple Pay and Google Pay, under the summary) is back exactly as it was, and Apple Pay is also in the payment list. Plus the summary width, the Apple Pay mark, the Emirate list in English and no “Detected” badge.** Apply after .495.
 Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
