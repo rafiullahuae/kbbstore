@@ -646,11 +646,10 @@ details summary::-webkit-details-marker { display: none; }
 .ct-left.on i { background: #1F9D55; }
 .ct-fun { display: grid; gap: 7px; }
 .ct-fun div { display: grid; grid-template-columns: minmax(0, 1fr) 70px; gap: 8px; align-items: center; font-size: 12.5px; }
-.ct-fun span { position: relative; padding: 3px 0; }
-.ct-fun span::before { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--w, 0%); background: #F7E3EA; border-radius: 6px; z-index: -1; }
+.ct-fun span { padding: 3px 0; }
+.ct-fun-h { display: block; margin-top: 10px; }
 .tiles .card.wide { grid-column: 1 / -1; }
 .tiles .ct-fun b, .ct-fun b { font: 600 12.5px/1.3 var(--font); margin: 0; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.ct-fun span { z-index: 0; isolation: isolate; }
 .ct-jr { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
 .ct-jr li { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 9px; font-size: 13px; }
 .ct-jr li::before { content: ""; width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: #C9BFC4; }

@@ -416,9 +416,9 @@ final class CartTrackingReport
     private function exits(Builder $base): array
     {
         try {
+            // Not sliced: one row per distinct last page, ranked below in PHP.
             $rows = $base->whereNull('c.ct_order_id')->whereNotNull('c.ct_seen_path')
-                ->selectRaw('c.ct_seen_path AS p, COUNT(*) AS n')->groupBy('c.ct_seen_path')
-                ->orderByDesc('n')->orderBy('c.ct_seen_path')->limit(200)->get();
+                ->selectRaw('c.ct_seen_path AS p, COUNT(*) AS n')->groupBy('c.ct_seen_path')->get();
         } catch (\Throwable) {
             return [];
         }
@@ -432,7 +432,8 @@ final class CartTrackingReport
             $by[$label] = ($by[$label] ?? 0) + (int) $r->n;
         }
 
-        arsort($by);
+        // Most first, then by name, so ties never reorder between reloads.
+        uksort($by, static fn ($a, $b) => [$by[$b], $a] <=> [$by[$a], $b]);
         $out = [];
 
         foreach (array_slice($by, 0, 6, true) as $page => $n) {
@@ -450,14 +451,14 @@ final class CartTrackingReport
             'c.ct_removed', 'c.ct_first_at', 'c.ct_last_at', 'c.ct_order_id',
             // Lane CJ: the "Left at" line, from the cart row itself -- once its
             // migration has run (a package's files land seconds before it does).
-            ...(self::journeyReady() ? ['c.ct_stage', 'c.ct_seen_at', 'c.ct_seen_path', 'c.ct_left_at'] : [])];
+            ...($this->journeyReady() ? ['c.ct_stage', 'c.ct_seen_at', 'c.ct_seen_path', 'c.ct_left_at'] : [])];
     }
 
-    private static ?bool $journeyReady = null;
+    private ?bool $journeyReady = null;
 
-    private static function journeyReady(): bool
+    private function journeyReady(): bool
     {
-        return self::$journeyReady ??= \Illuminate\Support\Facades\Schema::hasColumn('carts', 'ct_left_at');
+        return $this->journeyReady ??= \Illuminate\Support\Facades\Schema::hasColumn('carts', 'ct_left_at');
     }
 
     /**

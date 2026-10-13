@@ -48,7 +48,8 @@ final class OwnerAppUiGate
     // 'analytics', 'analytics.live' (Lane AN): no Customise-app switch; the
     // controller refuses them without analytics.view.
     // 'carts' (Lane QK10): likewise; refused without carttracking.view.
-    public const ALWAYS = ['lock', 'forget', 'push', 'push.off', 'push.test', 'notify', 'analytics', 'analytics.live', 'carts'];
+    // 'carts.journey' (Lane CJ): the same screen's journey, the same refusal.
+    public const ALWAYS = ['lock', 'forget', 'push', 'push.off', 'push.test', 'notify', 'analytics', 'analytics.live', 'carts', 'carts.journey'];
 
     /** Product fields => the function that may change them (OwnerApp\ProductsController::EDITABLE). */
     public const PRODUCT_FIELDS = [

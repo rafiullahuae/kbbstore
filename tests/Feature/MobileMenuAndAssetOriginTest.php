@@ -113,7 +113,9 @@ it('still wires the mobile menu, and in the same position', function () {
     // the footer help strip, 9 October) went LAST, so no step before it moved.
     // 28 since Lane AN added initHit (the one beacon per opened page) LAST,
     // after initWaAway, so no step before it moved.
-    expect($steps)->toHaveCount(28);
+    // 29 since Lane CJ added initTrail (the cart journey taps) LAST, after
+    // initHit, so no step before it moved.
+    expect($steps)->toHaveCount(29);
     expect($steps[0])->toBe('initOverlay');
     expect($steps[8])->toBe('initHome');   // wires the mobile menu
     expect($steps[16])->toBe('initListingLoad');

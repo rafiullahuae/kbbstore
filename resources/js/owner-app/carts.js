@@ -100,8 +100,8 @@ function funnel(s) {
   const top = f[0].carts || 0;
   const pc = (n) => (top ? Math.round(100 * n / top) : 0);
   return '<div class="card wide"><small>Checkout steps: shoppers who did each</small><div class="ct-fun">'
-    + f.map((x) => '<div><span style="--w:' + pc(x.carts) + '%">' + esc(x.label) + '</span><b>' + fmt(x.carts) + ' · ' + pc(x.carts) + '%</b></div>').join('') + '</div>'
-    + ((s.exits || []).length ? '<small style="margin-top:10px;display:block">Where non-buyers left</small><div class="ct-fun">' + s.exits.map((x) => '<div><span>' + esc(x.page) + '</span><b>' + fmt(x.n) + '</b></div>').join('') + '</div>' : '')
+    + f.map((x) => '<div><span>' + esc(x.label) + '</span><b>' + fmt(x.carts) + ' · ' + pc(x.carts) + '%</b></div>').join('') + '</div>'
+    + ((s.exits || []).length ? '<small class="ct-fun-h">Where non-buyers left</small><div class="ct-fun">' + s.exits.map((x) => '<div><span>' + esc(x.page) + '</span><b>' + fmt(x.n) + '</b></div>').join('') + '</div>' : '')
     + '</div>';
 }
 
