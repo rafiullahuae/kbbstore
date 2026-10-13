@@ -70,3 +70,54 @@ Open points to confirm with the plan:
   pay, e.g. ~~935~~ 658) or before it (691)? Recommended: after, so the green box
   and the bottom bar show the same figure.
 
+## 3. Checkout page — header, title, order summary and the coupon inside it  ☐
+Screenshots: `docs/checkout-brief/03-6.png` (our checkout, phone, with his
+crosses), `03-7.png` and `03-8.png` (a reference site's order summary before and
+after a coupon — CONTENT reference only; he wants a different style).
+
+His words: *"on the checkout page, remove the right side secure checkout green
+text beside the logo, and place there cart icon. which will go to the cart page.
+AND remove the checkout page title and description completely. AND the Order
+summary row background style will become same greenish box as we have on the
+cart page order value box. AND bring the coupon field (only field, not full box
+and remove the coupon box) and display inside order summary block as attached
+from the reference site, reduce the height of coupon field little bit. and after
+coupon apply the order summary block will become like this as attached with
+coupon value row and coupon name added. ofcourse the styling of coupon row etc,
+i want different from them."*
+
+- 3a. Checkout's own header: remove the green **"🔒 Secure checkout"** text on
+  the right of the logo; put a **cart icon** there that opens the **cart page**.
+- 3b. Remove the **"Checkout" title and "Almost glowing — just a few details."**
+  completely (the round back arrow went with that title row — confirm: drop it
+  too, since the new cart icon goes back to the cart).
+- 3c. The **"Order summary · AED 691 ⌄"** row gets the **same light-green box**
+  as the cart page's Order Value box (item 1).
+- 3d. **Remove the coupon box** (the dashed green panel with "Enter promo code /
+  Apply"). Keep ONLY the field + Apply, and put them **inside the Order summary
+  block** (when opened, under the items — as in the reference), **a little less
+  tall** than today.
+- 3e. **After a coupon is applied**, the order summary shows:
+  - the applied code as a small tag with an × to remove it, under the field;
+  - a discount row: "Order discount" + the code + "– AED 32.70";
+  - the total with the old total struck through beside it (as the reference
+    shows "~~AED 227.27~~ AED 194.57" on the summary row);
+  - a "Total savings AED 32.70" line under the total.
+  **His own style, NOT the reference's** — options to preview.
+
+Plan notes (from the code, 13 Oct):
+- The coupon field and Apply keep their ids (`kbb_coupon_code`,
+  `kbb_apply_coupon`); `resources/js/kbb/checkout.js` handles them by id and
+  by delegation, so MOVING them needs no change to checkout.js, which is in the
+  payments-frozen set. To verify in the browser: apply, wrong code, remove,
+  Enter key, and that the totals and Place order still agree.
+- The checkout's own header (`.co-head`, with the logo) is covered by the
+  header lock (CLAUDE.md "The header and logo are frozen"; `.co-head .in>.logo.lgx`
+  in kbb.css). 3a touches it: run that rule's sweeps and re-pin
+  HeaderLayoutLockTest deliberately, with his ask quoted.
+- Existing switches to reuse where they fit: Appearance → Checkout page →
+  Coupon, express & sign in ("Have a discount code?" OFF), the coupon line
+  (`cline_*`), the summary row (`sum_row`), the back arrow (`head_back`).
+- Payments untouched: only markup and CSS move; every total still comes from
+  the server's own totals.
+
