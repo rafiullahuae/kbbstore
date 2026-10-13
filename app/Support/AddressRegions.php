@@ -161,16 +161,20 @@ final class AddressRegions
     }
 
     /**
-     * value => visible text, "Arabic — English", for one country.
+     * value => visible text, "Arabic — English", for one country -- or the
+     * English alone when $englishOnly (the checkout's "Emirate list language",
+     * 2.60.496). The VALUE is the same English name in both.
      *
      * @return array<string, string>
      */
-    public static function options(string $country): array
+    public static function options(string $country, bool $englishOnly = false): array
     {
         $out = [];
 
         foreach (self::LISTS[strtoupper($country)][1] ?? [] as $row) {
-            $out[$row[0]] = self::FSI.$row[1].self::PDI.' — '.($row[3] ?? $row[0]);
+            $out[$row[0]] = $englishOnly
+                ? ($row[3] ?? $row[0])
+                : self::FSI.$row[1].self::PDI.' — '.($row[3] ?? $row[0]);
         }
 
         return $out;

@@ -11420,6 +11420,29 @@
             "value": true
           },
           {
+            "key": "lo_state_lang",
+            "name": "lo_state_lang",
+            "type": "select",
+            "label": "Emirate list language",
+            "help": "The names in the Emirate / State list on the English shop. What is stored on the order is the English name either way, so orders, emails, invoices and delivery zones read the same. The Arabic shop (/ar/) keeps both languages.",
+            "options": {
+              "en": "English only (as asked, 14 October)",
+              "both": "Arabic — English, as before 2.60.496"
+            },
+            "default": "en",
+            "value": "en"
+          },
+          {
+            "key": "lo_detected",
+            "name": "lo_detected",
+            "type": "bool",
+            "label": "Show the “Detected” badge beside Country",
+            "help": "Off, as asked (14 October): the country is still detected and filled in for the shopper; only the small green word beside “Country” is gone.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
             "key": "lo_remember_tick",
             "name": "lo_remember_tick",
             "type": "bool",
@@ -11573,8 +11596,8 @@
             "key": "lo_apple_row",
             "name": "lo_apple_row",
             "type": "bool",
-            "label": "Apple Pay as the second payment method",
-            "help": "On, as asked: Apple Pay is offered in the payment list under the card (iPhone, iPad and Mac with Apple Pay only), and its own black button takes the place of the pay button once chosen. Google Pay and the “Express checkout” row above the form are not shown. It pays through the same Stripe card payment as before. Off puts the Express checkout row back as it was.",
+            "label": "Apple Pay also in the payment list",
+            "help": "On, as asked (14 October: \"express checkout will also show, and also the apple pay only in the list too\"): Apple Pay is offered as method no. 2 under the card, on devices with Apple Pay only, and its own black button takes the place of the pay button once chosen. The Express checkout row above (Apple Pay and Google Pay) is shown exactly as before either way. Same Stripe card payment as before.",
             "options": null,
             "default": true,
             "value": true

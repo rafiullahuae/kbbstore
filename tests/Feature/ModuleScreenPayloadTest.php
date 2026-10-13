@@ -752,7 +752,11 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // member?" before Sign in -- the owner's pick, option B.
     // 790 -> 828 (2.60.495): the 13 October layout tab -- 11 cart-page
     // controls and 27 checkout-page controls, the owner's confirmed design.
-    expect($compared)->toBe(828, 'the number of controls drawn changed');
+    // 828 -> 830 (2.60.496): checkout-page lo_state_lang (Emirate list in
+    // English only) and lo_detected (the Detected badge, off), the owner's
+    // requests of 14 October. lo_apple_row reads "Apple Pay also in the
+    // payment list": the Express row is drawn as before beside it.
+    expect($compared)->toBe(830, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

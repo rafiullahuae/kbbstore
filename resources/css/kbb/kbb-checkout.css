@@ -1656,6 +1656,13 @@ body.woocommerce-checkout main#content>p:empty{display:none}
     margin-inline:calc(var(--cop-padx) * -1);padding-inline:var(--cop-padx);width:calc(100% + 2 * var(--cop-padx))}
   /* One even gap above and below it: "Space between stacked blocks". */
   .kbb-checkout.cop-sumg .co-grid{padding-top:var(--cop-m-gap,16px);gap:var(--cop-m-gap,16px)}
+  /* 2.60.496, the owner: "just the title row i wanted the full width, rest
+     inner box will be normal width". What opens under the row lines up with
+     the form's fields and payment boxes: the page gutter, the section's own
+     padding and its 1px border -- the same variables, so it follows the
+     sliders. */
+  .kbb-checkout.cop-sumg .summary > .panels{padding-inline:calc(var(--cop-secpad) + 1px)}
+  .kbb-checkout.cop-sumg .summary > .sumtabs{margin-inline:calc(var(--cop-secpad) + 1px)}
 }
 
 /* The coupon field inside the summary (cop-cpin): no box of its own, the
@@ -1744,5 +1751,8 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .co-aperr{margin:10px 0 0}
 @media(max-width:900px){.kbb-checkout .summary .co-apslot{display:none}}
 .kbb-checkout .wc_payment_methods li.payment_method_applepay{--pt:linear-gradient(#F7F7F8,#F7F7F8);--pg:linear-gradient(90deg,#000,#000);--ps:#000;--pi:#000}
-.kbb-checkout .pay-logo.pay-logo-applepay{display:inline-flex;align-items:center;height:26px;padding:0 6px;border:1.3px solid #111;border-radius:5px;background:#fff;color:#000}
-.kbb-checkout .pay-logo.pay-logo-applepay svg{height:15px;width:auto;display:block}
+/* 2.60.496: the outlined mark hugs its artwork and sits at the row's end like
+   every other logo -- it was drawn on the shared 84px logo slot, so the
+   border ran the slot's whole width and the mark sat off to one side. */
+.kbb-checkout .pay-logo.pay-logo-applepay{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;inline-size:auto;block-size:24px;height:24px;padding:0 7px;border:1.3px solid #111;border-radius:5px;background:#fff;color:#000}
+.kbb-checkout .pay-logo.pay-logo-applepay svg{block-size:14px;height:14px;inline-size:auto;width:auto;max-inline-size:none;display:block}

@@ -36,6 +36,8 @@ class CheckoutLayout
         'lo_email_hint_on' => [false, true],
         'lo_addr_rows' => ['classic', 'one'],
         'lo_uae_short' => [false, true],
+        'lo_state_lang' => ['both', 'en'],
+        'lo_detected' => [true, false],
         'lo_remember_tick' => [true, false],
         'lo_dl_note_free' => [false, true],
         'lo_pay_secure_on' => [false, true],

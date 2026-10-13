@@ -46,7 +46,7 @@
                         <x-checkout.field name="billing_country" :label="__('store.checkout.field_country')" type="select" required icon="globe"
                             validate="validate-required" priority="40"
                             autocomplete="section-billing billing country">
-                            @if ($countryDetected ?? false)
+                            @if (($countryDetected ?? false) && app(\App\Services\CheckoutPage::class)->lo('detected'))
                                 <x-slot:badge><span class="xd-detected">{{ __('store.checkout.country_detected') }}</span></x-slot:badge>
                             @endif
                             @foreach ($countries as $code => $name)<option value="{{ $code }}" @selected(old('billing_country', $prefill['country'] ?? $defaultCountry) === $code)>{{ $name }}</option>@endforeach

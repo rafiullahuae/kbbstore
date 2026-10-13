@@ -63,7 +63,7 @@
                             <x-checkout.field name="billing_state" :label="$kbbStLabelText" type="select" required icon="map"
                                 validate="validate-required validate-state" priority="80"
                                 autocomplete="section-billing billing address-level1">
-                                <option value="" disabled @selected($statePick === null)>{{ __('store.checkout.field_state_select') }}</option>@foreach (\App\Support\AddressRegions::options($kbbStCountry) as $kbbStValue => $kbbStText)<option value="{{ $kbbStValue }}" @selected($statePick === $kbbStValue)>{{ $kbbStText }}</option>@endforeach
+                                <option value="" disabled @selected($statePick === null)>{{ __('store.checkout.field_state_select') }}</option>@foreach (\App\Support\AddressRegions::options($kbbStCountry, app(\App\Services\CheckoutPage::class)->stateNamesEnglish()) as $kbbStValue => $kbbStText)<option value="{{ $kbbStValue }}" @selected($statePick === $kbbStValue)>{{ $kbbStText }}</option>@endforeach
                             </x-checkout.field>
 @else
                             <x-checkout.field name="billing_state" :label="$kbbStLabelText" required icon="map"
@@ -77,7 +77,7 @@
                         <x-checkout.field name="billing_country" :label="__('store.checkout.field_country')" type="select" required icon="globe"
                             validate="validate-required" priority="40"
                             autocomplete="section-billing billing country">
-                            @if ($countryDetected ?? false)
+                            @if (($countryDetected ?? false) && app(\App\Services\CheckoutPage::class)->lo('detected'))
                                 <x-slot:badge><span class="xd-detected">{{ __('store.checkout.country_detected') }}</span></x-slot:badge>
                             @endif
                             @foreach ($countries as $code => $name)<option value="{{ $code }}" @selected(old('billing_country', $prefill['country'] ?? $defaultCountry) === $code)>{{ $kbbUaeShort && $code === 'AE' ? 'U.A.E' : $name }}</option>@endforeach
@@ -92,6 +92,26 @@
     'kbbStState' => 'billing_state',
     'kbbStLabel' => 'label[for="billing_state"]',
 ])
+@if (app(\App\Services\CheckoutPage::class)->stateNamesEnglish())
+<script>
+/* 2.60.496: "Emirate list language" -> English only. The shared switch above
+   rebuilds the list as "Arabic — English" when the country changes; this,
+   registered after it, keeps the English name alone. Text only: every value
+   (the English name the order stores) is untouched. */
+(function () {
+  var c = document.getElementById('billing_country');
+  if (!c) { return; }
+  c.addEventListener('change', function () {
+    var s = document.getElementById('billing_state');
+    if (!s || !s.options) { return; }
+    for (var i = 0; i < s.options.length; i++) {
+      var t = s.options[i].text, at = t.indexOf(' \u2014 ');
+      if (s.options[i].value !== '' && at > -1) { s.options[i].text = t.slice(at + 3); }
+    }
+  });
+})();
+</script>
+@endif
 <script>
 /* THE EMIRATE PRICES THE DELIVERY -- the same hand-off as the typed fields'
    (partials/checkout/address-fields): a change of emirate is passed to the

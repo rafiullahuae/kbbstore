@@ -64,7 +64,12 @@ use Illuminate\Support\Facades\Cache;
  * where the Apple Pay button label and the field placeholders come from. Both
  * partials need both, so the count is 2 objects x 2 partials.
  */
-const CX_STRIPE_LOCALE_SITES = 4;
+// 4 -> 6 (2.60.496): the Apple Pay row in the payment list is its own copy of
+// the wallet script (the owner: "express checkout will also show, and also the
+// apple pay only in the list too"), with its own Stripe object and group, and
+// both are told the shop's language like the Express row's. Every Stripe
+// object on the page is still told -- that is what this pins.
+const CX_STRIPE_LOCALE_SITES = 6;
 
 beforeEach(function () {
     PaymentProvider::query()->delete();
@@ -194,7 +199,8 @@ it('tells every Stripe object on the English checkout that this shop speaks Engl
     // BOTH partials, and the SAME value in each: a checkout whose card fields
     // speak one language and whose Apple Pay button speaks another is the
     // defect half-fixed. Two `var LOCALE` declarations, one per script.
-    expect(cxLocaleValues($html))->toBe(['"en"', '"en"']);
+    // (A third since 2.60.496: the payment list's own Apple Pay copy.)
+    expect(cxLocaleValues($html))->toBe(['"en"', '"en"', '"en"']);
 });
 
 it('tells every Stripe object on the Arabic checkout that this shop speaks Arabic', function () {
@@ -212,7 +218,7 @@ it('tells every Stripe object on the Arabic checkout that this shop speaks Arabi
     // THE ASSERTION THE DEFECT FAILED. Before this lane there was no `locale`
     // anywhere on this page, so Stripe drew "Buy with Apple Pay" and wrote
     // "Your card was declined" in whatever language the phone was set to.
-    expect(cxLocaleValues($html))->toBe(['"ar"', '"ar"']);
+    expect(cxLocaleValues($html))->toBe(['"ar"', '"ar"', '"ar"']);
 });
 
 it('leaves the English checkout byte-identical apart from the language it now states', function () {

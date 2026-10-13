@@ -383,16 +383,17 @@ it('takes a coupon from the new field and places a Cash on delivery order with e
         ->and($order->billing_address)->toMatchArray(['first_name' => 'Mariam', 'line1' => 'Villa 7', 'state' => 'Dubai', 'country' => 'AE']);
 });
 
-it('offers Apple Pay only, as payment method two, mounted where Stripe can draw it', function () {
+it('keeps the Express checkout row exactly as it was and adds Apple Pay to the list as its own button', function () {
     /*
-     * The owner: "I need the APPLE PAY only ... on no 2, under stripe card".
-     * Same Stripe Express Checkout Element, same amount, same order; Google
-     * Pay is told 'never' at Stripe, the row is drawn hidden until Stripe says
-     * this device has Apple Pay, and the mount box is invisible, never
-     * display:none (Lane WL: Stripe cannot draw into a box with no layout).
+     * The owner, 14 October, on the live shop after 2.60.495: "The Express
+     * Checkout section is completely gone ... i have told you that do not touch
+     * that", then: "express checkout will also show, and also the apple pay
+     * only in the list too". 2.60.495 had MOVED the one Element into the list.
      *
-     * MUTATION: drop `$kbbGooglePay = false` in express-wallets. RED on
-     * google_pay_offered. Give .co-apslot display:none. RED on the stylesheet.
+     * Now: the Express row with its heading, OR line, Apple Pay AND Google Pay,
+     * drawn and mounted as before; and a second copy of the script, Apple Pay
+     * only, for the list row. MUTATION: put `$kbbGooglePay = false` back for
+     * the row, or drop the second copy from $kbbEceModes. RED.
      */
     PaymentProvider::create(['id' => 'stripe', 'title' => 'Credit or debit card', 'enabled' => true, 'mode' => 'test', 'position' => 0,
         'config' => ['publishable_key' => 'pk_test_lo13', 'secret_key' => 'sk_test_lo13', 'webhook_signing_secret' => 'whsec_lo13',
@@ -401,24 +402,88 @@ it('offers Apple Pay only, as payment method two, mounted where Stripe can draw 
     app(App\Services\Payments\GatewayCredentials::class)->forget();
     app(App\Services\Payments\Wallets::class)->forget();
 
+    $src = (string) file_get_contents(resource_path('views/partials/checkout/express-wallets.blade.php'));
     $html = lo13Page('/checkout?kbbdiag=1');
 
-    // Card first, Apple Pay second, then the rest -- and Apple Pay is never posted.
+    // Rendered: the list row, card first, Apple Pay second, never posted.
     $card = strpos($html, 'id="payment_method_stripe"');
     $apple = strpos($html, 'id="payment_method_applepay"');
     $cod = strpos($html, 'id="payment_method_cod"');
-
     expect($card)->toBeInt()->and($apple)->toBeGreaterThan($card)->and($cod)->toBeGreaterThan($apple)
         ->and($html)->toMatch('~<li class="wc_payment_method payment_method_applepay[^"]*" data-kbb-ap-li hidden>~')
-        ->and($html)->toContain('"apple_pay_offered":true')
-        ->and($html)->toContain('"google_pay_offered":false')
-        // No Express row heading, no OR line.
-        ->and($html)->not->toContain('data-kbb-express-head hidden>')
-        ->and($html)->not->toContain('data-kbb-express-divider hidden>')
-        // The box Stripe's button is mounted into, under the total.
         ->and($html)->toContain('<div class="co-apslot" data-kbb-ap-slot><div data-kbb-ap-mount></div>');
+
+    // The Express row, as before 2.60.495 -- and both wallets offered there.
+    if (str_contains($html, 'data-kbb-express ')) {
+        expect($html)->toContain('<div class="express" style="display:block;visibility:hidden;height:0;overflow:hidden;margin:0" data-kbb-express data-kbb-express-pending aria-hidden="true">')
+            ->and($html)->toContain('data-kbb-express-head hidden>')
+            ->and($html)->toContain('data-kbb-express-divider hidden>')
+            ->and($html)->toContain('"google_pay_offered":true')
+            ->and(substr_count($html, 'var APAY        = '))->toBe(2)
+            ->and($html)->toContain('var GOOGLE      = true')
+            ->and($html)->toContain('var GOOGLE      = false');
+    }
+
+    // The template itself, whatever this test database draws: the Express row
+    // is no longer inside any Apple-row condition, Google Pay is never
+    // switched off for it, and the list row is a separate copy.
+    expect($src)->not->toContain('@if (! $kbbApRow)')
+        ->and($src)->not->toContain('$kbbGooglePay = false')
+        ->and($src)->toContain("\$kbbEceModes = \$kbbApRow ? [false, true] : [false];")
+        ->and($src)->toContain("var ROW = document.querySelector('[data-kbb-ap-row]');")
+        ->and($src)->toContain('var GOOGLE      = @json($kbbGooglePay && ! $kbbEceApay);');
 
     $css = (string) file_get_contents(resource_path('css/kbb/kbb-checkout.css'));
     expect($css)->toContain('.kbb-checkout .co-apslot{visibility:hidden;height:0;overflow:hidden}')
         ->and($css)->not->toMatch('~\.kbb-checkout \.co-apslot\{[^}]*display:none~');
+});
+
+/* ═══════════════════ 14 October: the owner's three follow-ups ═══════════════════ */
+
+it('lists the emirates in English only, still storing the English name, and keeps both languages on request', function () {
+    /*
+     * The owner, 14 October: "the countries list i would like in english only
+     * for now". What the order stores (the option's value) is the English name
+     * in both modes. MUTATION: drop the stateNamesEnglish() argument in
+     * address-fields-list. RED on the first expectation.
+     */
+    $html = lo13Page('/checkout');
+
+    expect($html)->toMatch('~<option value="Dubai"\s*>Dubai</option>~')
+        ->and($html)->toMatch('~<option value="Ras Al Khaimah"\s*>Ras al Khaimah</option>~')
+        ->and($html)->not->toContain("\u{2068}دبي\u{2069} — Dubai")
+        // After a country change the shared switch draws "Arabic — English";
+        // the follow-up keeps the English alone.
+        ->and($html)->toContain('"Emirate list language" -> English only');
+
+    app(CheckoutPage::class)->save(['lo_state_lang' => 'both']);
+
+    $both = lo13Page('/checkout');
+    expect($both)->toContain("\u{2068}دبي\u{2069} — Dubai</option>")
+        ->and($both)->not->toContain('"Emirate list language" -> English only');
+});
+
+it('drops the Detected badge beside Country but still detects the country', function () {
+    /*
+     * The owner, 14 October: "remove the detected badge for now. as the
+     * countrie is auto detecting the location, that's enough". MUTATION:
+     * remove the lo('detected') condition. RED on the first expectation.
+     */
+    $page = fn () => (string) lo13Shopper(lo13Cart())->withHeader('CF-IPCountry', 'AE')->get('/checkout')->assertOk()->getContent();
+
+    $html = $page();
+    expect($html)->not->toContain('class="xd-detected"')
+        ->and($html)->toMatch('~<option value="AE"\s+selected~');
+
+    app(CheckoutPage::class)->save(['lo_detected' => true]);
+    expect($page())->toContain('class="xd-detected"');
+});
+
+it('lines the open summary up with the form, and the Apple Pay mark with the other logos', function () {
+    // MUTATION: delete either rule. RED. (Measured in Chromium at 390: items,
+    // coupon and totals at 37-353px, the same as the fields and payment boxes.)
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-checkout.css'));
+
+    expect($css)->toContain('.kbb-checkout.cop-sumg .summary > .panels{padding-inline:calc(var(--cop-secpad) + 1px)}')
+        ->and($css)->toMatch('~\.kbb-checkout \.pay-logo\.pay-logo-applepay\{[^}]*inline-size:auto~');
 });

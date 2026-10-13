@@ -91,17 +91,21 @@
     $kbbGooglePay = $kbbStripeOnOffer && $kbbWallets->googlePay();
 
     /*
-     * 2.60.495, Appearance -> Checkout page -> 13 October layout -> "Apple Pay
-     * as the second payment method", ON as asked ("I need the APPLE PAY only
-     * ... not google pay"). Same Element, same PaymentIntent, same order: what
-     * changes is WHERE the button is (under the total, in place of the pay
-     * button, once the Apple Pay row is chosen) and that Google Pay is not
-     * offered. Off, everything below is exactly the Express row it was.
+     * Appearance -> Checkout page -> 13 October layout -> "Apple Pay as the
+     * second payment method".
+     *
+     * 2.60.496, the owner: "i wanted the apple pay also in the list, without
+     * the disturbance to the top express checkout ... express checkout will
+     * also show, and also the apple pay only in the list too." So the Express
+     * row is drawn and run EXACTLY as before, Apple Pay and Google Pay, and the
+     * list row is a SECOND, separate copy of the script below (its own Stripe
+     * object, its own deferred elements group, its own Element, Apple Pay
+     * only) mounted under the total. Same endpoints, same amount check, same
+     * release on failure. 2.60.495 had moved the one Element out of the top
+     * row instead, and the row was gone; that is what this undoes.
      */
     $kbbApRow = $kbbApplePay && app(\App\Services\CheckoutPage::class)->lo('apple_row');
-    if ($kbbApRow) {
-        $kbbGooglePay = false;
-    }
+    $kbbEceModes = $kbbApRow ? [false, true] : [false];
 
     /*
      * The figure the sheet opens with, from the server, in integer fils.
@@ -171,29 +175,40 @@
      removes with the other two, so a shopper with no wallet sees none of them
      and the coupon box sits on the form exactly as before. Its words are
      Appearance -> Checkout page -> Coupon, express & sign in, escaped. --}}
-@if (! $kbbApRow)
 <p class="co-xc-h" data-kbb-express-head hidden>{{ app(\App\Services\CheckoutPage::class)->expressHeading() }}</p>
 <div class="express" style="display:block;visibility:hidden;height:0;overflow:hidden;margin:0" data-kbb-express data-kbb-express-pending aria-hidden="true">
     <div data-kbb-express-mount></div>
     <p class="pay-note" data-kbb-express-error role="status" aria-live="polite" hidden></p>
 </div>
 <div class="ordiv co-xc-or" data-kbb-express-divider hidden>{{ __('store.checkout.express_or') }}</div>
-@else
-<div class="express" style="display:none" data-kbb-express aria-hidden="true"><div data-kbb-express-mount></div><p class="pay-note" data-kbb-express-error hidden></p></div>
+@if ($kbbApRow)
+<div class="express" style="display:none" data-kbb-ap-row aria-hidden="true"><div data-kbb-express-mount></div><p class="pay-note" data-kbb-express-error hidden></p></div>
 @endif
+@foreach ($kbbEceModes as $kbbEceApay)
 <script>
 (function () {
   'use strict';
 
   var FORM = document.getElementById('kbbCheckoutForm');
+@if ($kbbEceApay)
+  /* The list row's own copy (2.60.496): its own hidden holder, and never the
+     Express row's heading or OR line, which belong to the copy above. */
+  var ROW = document.querySelector('[data-kbb-ap-row]');
+  var DIVIDER = null;
+  var HEAD = null;
+@else
   var ROW = document.querySelector('[data-kbb-express]');
   var DIVIDER = document.querySelector('[data-kbb-express-divider]');
   var HEAD = document.querySelector('[data-kbb-express-head]');
+@endif
 
   if (!FORM || !ROW) return;
 
   /* ?kbbdiag=1 only (partials/checkout/wallet-diag); null on every other load. */
   var DIAG = window.kbbWalletDiag || null;
+@if ($kbbEceApay)
+  DIAG = null; // ?kbbdiag=1 reports the Express row's copy only
+@endif
 
   var PK          = @json($kbbStripe->publishableKey());
   /* See stripe-elements for why this is set on the Stripe object as well as on
@@ -203,9 +218,9 @@
      the "Buy with Apple Pay" / "Buy with Google Pay" label itself. */
   var LOCALE      = @json($kbbStripeLocale);
   var APPLE       = @json($kbbApplePay);
-  var GOOGLE      = @json($kbbGooglePay);
+  var GOOGLE      = @json($kbbGooglePay && ! $kbbEceApay);
   /* 2.60.495: Apple Pay as a row of the payment list (see the @php above). */
-  var APAY        = @json($kbbApRow);
+  var APAY        = @json($kbbEceApay);
   var AMOUNT_URL  = @json(\App\Support\Url::to('/checkout/wallet/amount'));
   var PLACE_URL   = @json(\App\Support\Url::to('/checkout/place'));
   var PAID_URL    = @json(\App\Support\Url::to('/checkout/card/paid'));
@@ -817,4 +832,5 @@
   }
 })();
 </script>
+@endforeach
 @endif

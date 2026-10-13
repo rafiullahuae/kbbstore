@@ -1193,6 +1193,13 @@ class CheckoutPage
                             ]],
         'lo_uae_short'  => ['bool', 'Country shows “U.A.E”', true,
                             'On, as asked: only the words in the box. The country posted, stored on the order and printed on emails, invoices and the admin is “United Arab Emirates” as before.'],
+        'lo_state_lang' => ['select', 'Emirate list language', 'en',
+                            'The names in the Emirate / State list on the English shop. What is stored on the order is the English name either way, so orders, emails, invoices and delivery zones read the same. The Arabic shop (/ar/) keeps both languages.', [
+                                'en'   => 'English only (as asked, 14 October)',
+                                'both' => 'Arabic — English, as before 2.60.496',
+                            ]],
+        'lo_detected'   => ['bool', 'Show the “Detected” badge beside Country', false,
+                            'Off, as asked (14 October): the country is still detected and filled in for the shopper; only the small green word beside “Country” is gone.'],
         'lo_remember_tick' => ['bool', 'Show the “Remember my shipping details” tick', false,
                             'Off, as asked: the tick is not shown and the details are still kept on the shopper’s own device, silently — Fields & attention → “Remember shopper details on this device” still decides whether anything is kept at all.'],
         'lo_dl_note_free' => ['bool', 'Hide the free-delivery line when delivery is already free', true,
@@ -1214,8 +1221,8 @@ class CheckoutPage
         'lo_trust_on'   => ['bool', 'Your own words instead of “SSL secure”', true, 'On, as asked.'],
         'lo_trust'      => ['text', 'Words beside the lock under the pay button', self::LO_TRUST, ''],
         'lo_trust_ar'   => ['text', 'Words beside the lock — Arabic', self::LO_TRUST_AR, ''],
-        'lo_apple_row'  => ['bool', 'Apple Pay as the second payment method', true,
-                            'On, as asked: Apple Pay is offered in the payment list under the card (iPhone, iPad and Mac with Apple Pay only), and its own black button takes the place of the pay button once chosen. Google Pay and the “Express checkout” row above the form are not shown. It pays through the same Stripe card payment as before. Off puts the Express checkout row back as it was.'],
+        'lo_apple_row'  => ['bool', 'Apple Pay also in the payment list', true,
+                            'On, as asked (14 October: "express checkout will also show, and also the apple pay only in the list too"): Apple Pay is offered as method no. 2 under the card, on devices with Apple Pay only, and its own black button takes the place of the pay button once chosen. The Express checkout row above (Apple Pay and Google Pay) is shown exactly as before either way. Same Stripe card payment as before.'],
     ];
 
     /** 2.60.495 wording, his words, with Arabic drafts. */
@@ -1347,7 +1354,7 @@ class CheckoutPage
            the screen from CheckoutLayout, not from this list. */
         'layout13'     => ['13 October layout', 'Everything from the checkout and cart brief of 13 October, each switch at the value you chose in the live preview. The button at the top puts the cart and checkout back exactly as they were before 2.60.495, and the one beside it brings this layout back. One set of values for both surfaces.',
                            ['lo_head_cart', 'lo_title', 'lo_sum_green', 'lo_coupon_in', 'lo_coupon_look',
-                            'lo_one_step', 'lo_email_hint_on', 'lo_email_hint', 'lo_email_hint_ar', 'lo_addr_rows', 'lo_uae_short',
+                            'lo_one_step', 'lo_email_hint_on', 'lo_email_hint', 'lo_email_hint_ar', 'lo_addr_rows', 'lo_uae_short', 'lo_state_lang', 'lo_detected',
                             'lo_remember_tick', 'lo_dl_note_free', 'lo_pay_secure_on', 'lo_pay_secure', 'lo_pay_secure_ar',
                             'lo_bag_pics', 'lo_total_only', 'lo_btn_words', 'lo_pay_now', 'lo_pay_now_ar', 'lo_complete', 'lo_complete_ar',
                             'lo_trust_on', 'lo_trust', 'lo_trust_ar', 'lo_apple_row']],
@@ -1971,6 +1978,16 @@ class CheckoutPage
     public function addressRows(): string
     {
         return (string) $this->flagless('lo_addr_rows');
+    }
+
+    /**
+     * The Emirate / State list in English only (2.60.496, the owner: "the
+     * countries list i would like in english only for now"). English shop
+     * only: the Arabic shop keeps "Arabic — English".
+     */
+    public function stateNamesEnglish(): bool
+    {
+        return $this->flagless('lo_state_lang') !== 'both' && \App\Support\Locale::isDefault();
     }
 
     /** The grey line under Email, plain text, or '' while it is off. */

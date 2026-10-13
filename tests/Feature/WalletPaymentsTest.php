@@ -741,3 +741,41 @@ it('asks Stripe for a wallet layout Stripe accepts', function () {
         }
     }
 });
+
+it('keeps the Express row, Apple Pay and Google Pay, when Apple Pay is also in the payment list', function () {
+    /*
+     * 2.60.496. The owner, after 2.60.495 moved the one Element into the list
+     * on the live shop: "The Express Checkout section is completely gone ... i
+     * have told you that do not touch that", and "express checkout will also
+     * show, and also the apple pay only in the list too". The 13 October layout
+     * (its default) must draw the Express row exactly as the old layout does,
+     * plus a separate Apple-Pay-only copy for the list. MUTATION: put
+     * `$kbbGooglePay = false` back for the row, or the `@if (! $kbbApRow)`
+     * around the Express markup. RED.
+     */
+    walStripe(apple: true, google: true);
+
+    $new = walShopper(walCart(20000))->get('/checkout')->assertOk()->getContent();
+
+    expect($new)->toContain('<div class="express" style="display:block;visibility:hidden;height:0;overflow:hidden;margin:0" data-kbb-express data-kbb-express-pending aria-hidden="true">')
+        ->and($new)->toContain('data-kbb-express-head hidden>')
+        ->and($new)->toContain('data-kbb-express-divider hidden>')
+        ->and(substr_count($new, "var APAY        = "))->toBe(2)
+        ->and(substr_count($new, 'var GOOGLE      = true'))->toBe(1)
+        ->and(substr_count($new, 'var GOOGLE      = false'))->toBe(1)
+        ->and($new)->toContain('data-kbb-ap-row aria-hidden="true"')
+        ->and($new)->toMatch('~data-kbb-ap-li hidden>~');
+
+    // The Express row's own copy is the same script, byte for byte, as the
+    // old layout draws.
+    $cut = function (string $h): string {
+        $a = strpos($h, '<script>', (int) strpos($h, 'data-kbb-express-divider hidden>'));
+        return substr($h, $a, strpos($h, '</script>', $a) - $a);
+    };
+    app(\App\Services\CheckoutLayout::class)->restore();
+    $old = walShopper(walCart(20000))->get('/checkout')->assertOk()->getContent();
+
+    expect($cut($new))->toBe($cut($old))
+        ->and(substr_count($old, "var APAY        = "))->toBe(1)
+        ->and($old)->not->toContain('data-kbb-ap-row');
+});
