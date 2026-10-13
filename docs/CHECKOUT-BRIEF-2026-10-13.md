@@ -210,6 +210,9 @@ per need."*
 - 6b. In the **Payment heading row**, under the word "Payment", a second line:
   **"All transactions are secure & encrypted"** (smaller, grey; Arabic draft).
 - 6c. The heading row may grow taller to fit the two lines.
+- 6d. A small **green lock icon** beside that line (before the words). His
+  words: *"and also add green lock icon beside the secure encrypted line"*.
+  Inline SVG with width/height attributes (CLAUDE.md), no new request.
 
 Plan notes (from the code, 13 Oct):
 - The card-box line is `partials/checkout/stripe-card.blade.php` (~line 164,
