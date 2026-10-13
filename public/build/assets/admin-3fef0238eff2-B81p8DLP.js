@@ -21,8 +21,8 @@
   var values = {};        // key -> current value, edited in place
   var mobileMax = 900;
   var squeezeKeys = [];  // which controls "Squeeze everything" drives to their minimum
-  var coupons = [];
-  var layoutState = null; // 2.60.495: 'new' | 'old' | 'mixed' -- the 13 October layout      // Coupon line -> Coupon: the shop's coupons, usable first (Lane QK6)
+  var coupons = [];      // Coupon line -> Coupon: the shop's coupons, usable first (Lane QK6)
+  var layoutState = null; // 2.60.495: 'new' | 'old' | 'mixed' -- the 13 October layout
   var open = null;        // which tab is showing
   var banner = null;
   var busy = false;
