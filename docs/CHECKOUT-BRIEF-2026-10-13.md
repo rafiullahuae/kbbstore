@@ -121,3 +121,48 @@ Plan notes (from the code, 13 Oct):
 - Payments untouched: only markup and CSS move; every total still comes from
   the server's own totals.
 
+## 4. Checkout page — Contact section merged into "Delivery Information"  ☐
+His screenshot (phone, our checkout; not saved to disk — described here): the
+"1 Contact" heading crossed out; an arrow from "Already a member? 👤 Sign in"
+to the "2 Shipping Details" heading; an arrow from "Create an account for faster
+checkout next time" down to where "Remember my shipping details on this device"
+sits (under Country), which is to go.
+
+His words: *"on the checkout page, the contact section i want to remove. the
+email will go above the name field, the sign in row will be in shipping address
+heading row, and also rename the Shipping Address > Delivery Information, AND
+remove the Remeber my shipping address, it should work silently at background
+auto by saving the fields data on the user browser. and bring the create account
+concent line here."*
+
+- 4a. Remove the **"1 Contact"** section and its heading.
+- 4b. **Email address** moves into the delivery section, **above Full name**
+  (first field).
+- 4c. **"Already a member? 👤 Sign in"** moves to the right of the delivery
+  section's heading row (guests only, as now).
+- 4d. Rename the heading **"Shipping Details" → "Delivery Information"** (and
+  the Arabic draft).
+- 4e. Remove the tick **"Remember my shipping details on this device"**.
+  Remembering keeps working **silently**: the details are saved in the
+  shopper's own browser and filled in next time (as `remember_on` already does
+  today — only the visible tick goes).
+- 4f. **"Create an account for faster checkout next time"** moves to where that
+  tick was: under Country, at the end of the delivery fields.
+- Sections renumber: Delivery Information becomes 1, the next ones follow.
+
+Plan notes (from the code, 13 Oct):
+- `store/checkout.blade.php`: Contact `<h2>` (line ~139), `create_account_field`
+  (~168), "step_shipping" heading (~200), `partials/checkout/remember-row` (~248).
+  Field `name`s and ids stay the same (`billing_email`, `create_account`, ...),
+  so the server's validation, the order, the remembered-details script and the
+  sign-in window keep working unchanged; only their place on the page moves.
+- Silent remembering: `remember_on` (Appearance → Checkout page → Fields &
+  attention) already saves name, phone, email, address and delivery choice in
+  the browser only — never cards, coupons, passwords or the payment method. With
+  the tick gone there is no way for a shopper to say no on a SHARED phone or
+  computer; "Not you? Clear details" was switched off at his request (2.60.490).
+  Raise with the plan: keep a quiet way to clear (e.g. in the sign-in row or the
+  account page), or accept as is.
+- The cart journey (2.60.494) codes "Entered their email" and "Completed the
+  address" read the same field names, so they keep working.
+
