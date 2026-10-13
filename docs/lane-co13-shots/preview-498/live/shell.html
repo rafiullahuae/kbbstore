@@ -1,0 +1,149 @@
+<title>Checkout Section Spacing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the real phone checkout in a frame, the spacing slider beside it (above it on a phone). */
+:root{
+  --bg:#f6f1f3; --panel:#ffffff; --ink:#2a2228; --muted:#6c6267; --line:#e6dbe0;
+  --rose:#c13e63; --green:#1f7d52; --green-soft:#e3f2ea; --stage:#ebe3e6;
+  --f-head:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1b1719; --panel:#252023; --ink:#f3ecef; --muted:#b4a9ae; --line:#3a3236;
+  --rose:#ef6f92; --green:#5cc795; --green-soft:#1d3329; --stage:#141113; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1b1719; --panel:#252023; --ink:#f3ecef; --muted:#b4a9ae; --line:#3a3236;
+  --rose:#ef6f92; --green:#5cc795; --green-soft:#1d3329; --stage:#141113; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);padding-inline:16px;padding-block:14px 40px}
+h1,h2{font-family:var(--f-head);text-wrap:balance;margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+.top{max-width:1100px;margin:0 auto 14px;display:grid;gap:4px}
+.top h1{font-size:clamp(22px,4vw,30px);letter-spacing:-.01em}
+.top p{margin:0;color:var(--muted);font-size:14px;max-width:62ch}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+@media (max-width:899px){.side{order:-1}.card{padding:12px 14px;gap:8px}.note{font-size:12.5px}}
+@media (min-width:900px){.wrap{grid-template-columns:minmax(0,430px) minmax(0,1fr)}.stagecol{position:sticky;top:14px;align-self:start}}
+.stage{background:var(--stage);border-radius:18px;padding:12px;display:flex;justify-content:center}
+.screen{position:relative;width:100%;max-width:390px;height:min(78vh,780px);border-radius:26px;overflow:hidden;background:#fff;box-shadow:0 0 0 7px #2a2228,0 14px 40px -18px #0008}
+.screen iframe{position:absolute;top:0;left:0;width:390px;border:0;transform-origin:0 0;background:#fff}
+.side{display:grid;gap:14px;align-content:start;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:10px;min-width:0}
+.card h2{font-size:17px}
+.card p{margin:0;color:var(--muted);font-size:14px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--bg);padding:8px 13px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:8px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.chip{width:16px;height:16px;border-radius:5px;border:1px solid #0002;flex:none}
+.note{font-size:13px;color:var(--muted)}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);background:var(--green-soft);border-radius:6px;padding:2px 7px}
+</style>
+<style>
+.slider{display:grid;gap:6px}
+.slider label{font-weight:600;font-size:14px;display:flex;justify-content:space-between;gap:10px}
+.slider output{font-variant-numeric:tabular-nums;color:var(--rose);font-weight:700}
+.slider input{width:100%;accent-color:var(--rose)}
+.gaps{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;font-size:13.5px;margin:0}
+.gaps dt{color:var(--muted)} .gaps dd{margin:0;font-variant-numeric:tabular-nums;font-weight:700;text-align:right}
+</style>
+<header class="top">
+  <h1>Section spacing &middot; preview</h1>
+  <p>Your phone checkout from the preview shop. Move the slider and the gaps between the sections change together, live. Nothing here changes the live shop.</p>
+</header>
+
+<div class="wrap">
+  <div class="stagecol"><div class="stage"><div class="screen" id="screen"><iframe id="frame" title="Preview of the phone checkout"></iframe></div></div></div>
+  <div class="side">
+    <section class="card" aria-labelledby="h-sp">
+      <h2 id="h-sp">Space between sections</h2>
+      <div class="seg" role="group" aria-label="New spacing or today's">
+        <button type="button" id="m-new" data-k="mode" data-v="new" aria-pressed="true">Equal spacing</button>
+        <button type="button" id="m-now" data-k="mode" data-v="now" aria-pressed="false">Today</button>
+      </div>
+      <div class="slider">
+        <label for="gap">One gap for every section <output id="gapout" for="gap">24px</output></label>
+        <input type="range" id="gap" min="12" max="48" step="1" value="24">
+      </div>
+      <p class="note">The same gap above Express checkout, under its OR line, above Delivery and above Payment. Phone only; the computer layout is not touched.</p>
+    </section>
+    <section class="card" aria-labelledby="h-me">
+      <h2 id="h-me">Measured in the page</h2>
+      <dl class="gaps" id="gaps"></dl>
+      <p class="note">From the last thing you can see in one block to the start of the next.</p>
+    </section>
+    <p class="note"><span class="tag">Preview only</span> The black bar stands in for Stripe&rsquo;s Google Pay / Apple Pay button (Stripe draws it on a real phone). Buttons inside the phone are not live here.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var PAGE = /*CAPTURES*/null;
+  var state = { mode: 'new', gap: 24 };
+  var frame = document.getElementById('frame'), screen = document.getElementById('screen');
+  var out = document.getElementById('gapout'), range = document.getElementById('gap'), list = document.getElementById('gaps');
+  /* Exactly the rules the patch will ship, with the slider's value. */
+  function css(g) {
+    var G = g + 'px';
+    return '@media(max-width:900px){'
+      + '.kbb-checkout .co-grid{gap:' + G + '!important}'
+      + '.kbb-checkout .ordiv.co-xc-or{margin-bottom:' + G + '}'
+      + '.kbb-checkout #customer_details>.sec:has(+ .sec){padding-bottom:calc(' + G + ' - 1px)}'
+      + '.kbb-checkout #create_account_field{margin-bottom:0}'
+      + '.kbb-checkout #customer_details>.sec:has(+ .sec):has(#create_account_field){padding-bottom:calc(' + G + ' - 14px)}}';
+  }
+  /* Preview only: the Express row as it shows on a phone, with a stand-in button. */
+  var SHOW = '<style>[data-kbb-express]{display:block!important;visibility:visible!important;height:auto!important;overflow:visible!important}'
+    + '[data-kbb-express-mount]{height:40px;border-radius:6px;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font:600 17px/1 system-ui,sans-serif}</style>';
+  function measure() {
+    var d = frame.contentDocument; if (!d) return;
+    var q = function (s) { return d.querySelector(s); };
+    var bot = function (e) { return e ? e.getBoundingClientRect().bottom : NaN; };
+    var top = function (e) { return e ? e.getBoundingClientRect().top : NaN; };
+    var secs = d.querySelectorAll('#customer_details > .sec');
+    var acct = q('#create_account_field .kbb-acct-opt span');
+    var rows = [
+      ['Order summary \u2192 Express checkout', top(q('.co-xc-h')) - bot(q('#kbbSummary'))],
+      ['Express checkout (OR) \u2192 Delivery Information', top(q('#customer_details')) - bot(q('.co-xc-or'))],
+      ['Create an account \u2192 Delivery', top(secs[1] && secs[1].querySelector('h2')) - bot(acct)],
+      ['Delivery \u2192 Payment', top(secs[2] && secs[2].querySelector('h2')) - bot(q('#kbbDeliverySlot'))]
+    ];
+    list.innerHTML = rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + (isFinite(r[1]) ? Math.round(r[1]) + 'px' : '\u2013') + '</dd>'; }).join('');
+  }
+  function fit() {
+    var w = screen.clientWidth, k = Math.min(1, w / 390);
+    frame.style.transform = 'scale(' + k + ')';
+    frame.style.height = (screen.clientHeight / k) + 'px';
+  }
+  var styleEl = null;
+  function apply() {
+    out.textContent = state.gap + 'px';
+    range.disabled = state.mode !== 'new';
+    var d = frame.contentDocument; if (!d || !d.head) return;
+    if (!styleEl || styleEl.ownerDocument !== d) { styleEl = d.createElement('style'); d.head.appendChild(styleEl); }
+    styleEl.textContent = state.mode === 'new' ? css(state.gap) : '';
+    requestAnimationFrame(measure);
+  }
+  frame.addEventListener('load', function () {
+    var d = frame.contentDocument;
+    d.querySelectorAll('.co-xc-h, .co-xc-or').forEach(function (n) { n.hidden = false; });
+    var m = d.querySelector('[data-kbb-express-mount]'); if (m) m.textContent = 'G Pay';
+    var h = d.querySelector('.co-xc-h'); if (h && h.textContent.trim() === '') h.textContent = 'Express checkout';
+    styleEl = null; apply();
+  });
+  var i = PAGE.lastIndexOf('</body>');
+  frame.srcdoc = i > -1 ? PAGE.slice(0, i) + SHOW + PAGE.slice(i) : PAGE + SHOW;
+  range.addEventListener('input', function () { state.gap = +range.value; apply(); });
+  document.querySelectorAll('[data-k]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      state.mode = b.getAttribute('data-v');
+      document.querySelectorAll('[data-k="mode"]').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+      apply();
+    });
+  });
+  window.addEventListener('resize', fit);
+  fit();
+})();
+</script>
