@@ -3,11 +3,11 @@
    coupon applied and removed from the field inside the summary, the box at
    the foot of the page opened, Cash on delivery chosen -- with pictures and
    the numbers that matter, and every console error and failed request.
-   BASE=http://127.0.0.1:PORT IDS=1,2,3,4,5,6 OUT=docs/lane-cpb-shots node tools/cpb-shots.cjs */
+   BASE=http://127.0.0.1:PORT IDS=1,2,3,4,5,6 OUT=docs/lane-co13-shots node tools/cpb-shots.cjs */
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const BASE = process.env.BASE, IDS = (process.env.IDS || '').split(',').map(Number);
-const OUT = path.resolve(__dirname, '..', process.env.OUT || 'docs/lane-cpb-shots');
+const OUT = path.resolve(__dirname, '..', process.env.OUT || 'docs/lane-co13-shots');
 fs.mkdirSync(OUT, { recursive: true });
 const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -21,7 +21,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const errs = [];
     pg.on('pageerror', (e) => errs.push('pageerror ' + e.message));
     pg.on('console', (m) => { if (m.type() === 'error') errs.push('console ' + m.text()); });
-    pg.on('requestfailed', (r) => { if (!/stripe|tabby|tamara|google|facebook|tiktok|snap/.test(r.url())) errs.push('failed ' + r.url()); });
+    pg.on('requestfailed', (r) => { if (!/stripe|tabby|tamara|google|facebook|tiktok|snap/.test(r.url())) errs.push('failed ' + r.url() + ' ' + ((r.failure() || {}).errorText || '')); });
+    pg.on('response', (r) => { if (r.status() >= 400) errs.push('http ' + r.status() + ' ' + r.url()); });
     await pg.goto(BASE + '/shop/', { waitUntil: 'networkidle' });
     await pg.evaluate(async (ids) => {
       const x = decodeURIComponent((document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1] || '');
@@ -78,7 +79,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       place: [...document.querySelectorAll('[data-place]')].map((x) => x.textContent.trim()),
     }));
 
-    if (label === '390') {
+    // The old layout (restored) has no arrow on the foot box: skip that part.
+    if (label === '390' && await pg.locator('.kbb-mobile-order .co-ta').count()) {
       // The box at the foot of the page: closed, opened, the field moved in.
       const foot = pg.locator('.kbb-mobile-order');
       await foot.scrollIntoViewIfNeeded(); await wait(300);

@@ -370,7 +370,7 @@ it('draws no express row at all when no wallet is switched on', function () {
 
 it('draws the express row, hidden, once a wallet is switched on', function () {
     // The Express row as it was before 2.60.495, one press away (Appearance ->
-    // Checkout page -> 13 October layout -> "Put the old layout back"). The
+    // Checkout page -> 13 October layout -> "Put back as before 2.60.495"). The
     // Apple Pay payment row that replaces it is pinned in CheckoutLayout13Test.
     app(\App\Services\CheckoutLayout::class)->restore();
 

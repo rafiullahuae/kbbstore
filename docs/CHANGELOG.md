@@ -3,6 +3,24 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.495
+**The new cart and checkout you confirmed on 13 October — on as soon as it is applied, with one button to put the old ones back.** Apply after .494.
+Runs its migrations (keeps your current cart button wording for the way back, adds the Arabic drafts, clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| Cart: Order Value in the green box, no Order Total, "Shipping calculated at checkout", coupon as a ticket, black SECURE CHECKOUT with a lock, no Continue shopping | As confirmed. Every part has its own switch: Appearance → Cart page → 13 October layout (button icon lock / arrow / none, capitals, size 12–18, Continue shopping on/off and where it goes — only an address on this shop is accepted) |
+| Checkout: bag icon instead of "Secure checkout", no title, one green summary box, coupon inside it, old total small above the new one, "Order discount GLOW" and "Total savings" | As confirmed. Appearance → Checkout page → 13 October layout |
+| Contact merged into "Delivery Information", email first with "We send your order confirmation here.", Emirate and Country in one row, Country shown as U.A.E, Create account under the row, Remember tick hidden | As confirmed. Every field keeps its name, so what reaches the server is exactly what it was: measured by placing a Cash on delivery order with a coupon end to end in the new layout (discount, total, email, phone, emirate and delivery all on the order). "Remember my details" still remembers, silently |
+| Free-delivery line hidden only when delivery is free; secure line under the Payment heading | As confirmed; the line comes back the moment delivery is no longer free |
+| Bottom box: total only, VAT and savings on one row, arrow opens "Order summary" with the items and the coupon field; bag pictures off; "Pay now", or "Complete Order" for Cash on delivery; "Safe checkout" | As confirmed. One coupon field, moved between the top and bottom summaries — never two |
+| Apple Pay only, as payment method no. 2 under the card, no Google Pay, Express row removed | As confirmed. Shown only on a device Stripe says has Apple Pay; Stripe draws its own button in place of Pay now; it pays through the card gateway exactly as before. Tabby, Tamara, Cash on delivery and the card are untouched. **Please try one Apple Pay order on your iPhone after applying** — no other device can show it |
+| "map the old stuff ... recovered with one click from the backend" | Appearance → Checkout page → 13 October layout → **Put back as before 2.60.495** (and **Use the 13 October layout** to return). Tested: with the old layout back, every shop page is byte-for-byte what it was before this patch, and your own cart button wording comes back |
+
+Speed: cart and checkout server time unchanged (~56 ms on the preview), same requests and stylesheets; checkout page +6 KB HTML and +1.5 KB compressed CSS (checkout only). No other page changes.
+
+Files: app/Services/CheckoutPage.php, CartPage.php, CheckoutLayout.php (new), app/Http/Controllers/Admin/CheckoutPageApiController.php, app/Http/Controllers/Store/CheckoutController.php (the delivery line's free check only), app/Support/AdminCapabilities.php, AdminRoles.php, PaymentMarkArt.php, app/Services/Translation/InterfaceStrings.php, ArabicInterfaceDrafts.php, routes/checkout-page-admin.php, resources/views/store/checkout.blade.php, cart.blade.php, cart-inner.blade.php, cart-squeeze.blade.php, resources/views/partials/checkout/* (coupon-box, step-signin, contact-email, contact-account, layout-13 new), resources/views/admin/partials/checkout-page-screen.blade.php, cart-page-screen.blade.php, resources/css/kbb/kbb-checkout.css, public/build, migrations 2027_10_30_100000 and 2027_10_30_100100.
+
 ## 2.60.494
 **Cart Tracking: where every shopper with a basket went, what they tapped on the bag, cart and checkout, how far they got, and the page they left from — in the admin and the owner app.** Apply after .493.
 Runs its migrations (one new table and four columns on carts; clears caches).

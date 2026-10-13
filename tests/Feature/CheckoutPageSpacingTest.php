@@ -28,7 +28,7 @@ function cop(): CheckoutPage
 /*
  * These tests pin the checkout's classes and variables as they were before
  * 2.60.495, which is one press away (Appearance -> Checkout page -> 13 October
- * layout -> "Put the old layout back"). The 13 October layout's own classes
+ * layout -> "Put back as before 2.60.495"). The 13 October layout's own classes
  * are pinned in CheckoutLayout13Test.
  */
 beforeEach(function () {
@@ -331,7 +331,7 @@ it('offers spacing and nothing structural', function () {
             // 2.60.495, the 13 October layout the owner confirmed. These DO
             // move sections -- that was the brief -- and every one of them is
             // put back at once by Appearance -> Checkout page -> 13 October
-            // layout -> "Put the old layout back" (CheckoutLayout::restore()).
+            // layout -> "Put back as before 2.60.495" (CheckoutLayout::restore()).
             'lo_head_cart', 'lo_title', 'lo_sum_green', 'lo_coupon_in', 'lo_one_step',
             'lo_email_hint_on', 'lo_uae_short', 'lo_remember_tick', 'lo_dl_note_free',
             'lo_pay_secure_on', 'lo_bag_pics', 'lo_total_only', 'lo_btn_words',
