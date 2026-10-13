@@ -99,6 +99,13 @@ function cartLayoutGet(Cart $cart)
  | 1. The heading count
  |------------------------------------------------------------------------*/
 
+beforeEach(function () {
+    // These pin the cart and checkout as they were before 2.60.495, which is
+    // one press away: Appearance -> Checkout page -> 13 October layout -> "Put
+    // the old layout back". The 13 October layout is CheckoutLayout13Test's.
+    app(\App\Services\CheckoutLayout::class)->restore();
+});
+
 it('renders the cart count with a class the form-field icon rule cannot claim', function () {
     $html = cartLayoutGet(cartLayoutCart())->assertOk()->getContent();
 
@@ -252,7 +259,9 @@ it('keeps a choice an install has already made', function () {
 it('leaves the checkout page its own discount box', function () {
     // The module gates the CART page only. The checkout's coupon box is a
     // different surface and is not part of this switch.
-    $checkout = (string) file_get_contents(base_path('resources/views/store/checkout.blade.php'));
+    // (Its own partial since 2.60.495, drawn above the form or in the summary.)
+    $checkout = (string) file_get_contents(base_path('resources/views/store/checkout.blade.php'))
+        .(string) file_get_contents(base_path('resources/views/partials/checkout/coupon-box.blade.php'));
 
     expect($checkout)->toContain('id="kbb_coupon_code"')
         ->and($checkout)->toContain('id="kbb_apply_coupon"')

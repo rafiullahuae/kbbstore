@@ -3340,6 +3340,101 @@ cart_page|sum_first|bool|"no"|true
 cart_page|sum_first|bool|1|true
 cart_page|sum_first|bool|0|false
 cart_page|sum_first|bool|null|false
+cart_page|lo_ov_box|bool|true|true
+cart_page|lo_ov_box|bool|false|false
+cart_page|lo_ov_box|bool|"1"|true
+cart_page|lo_ov_box|bool|"0"|false
+cart_page|lo_ov_box|bool|""|false
+cart_page|lo_ov_box|bool|"on"|true
+cart_page|lo_ov_box|bool|"off"|true
+cart_page|lo_ov_box|bool|"no"|true
+cart_page|lo_ov_box|bool|1|true
+cart_page|lo_ov_box|bool|0|false
+cart_page|lo_ov_box|bool|null|false
+cart_page|lo_ship_on|bool|true|true
+cart_page|lo_ship_on|bool|false|false
+cart_page|lo_ship_on|bool|"1"|true
+cart_page|lo_ship_on|bool|"0"|false
+cart_page|lo_ship_on|bool|""|false
+cart_page|lo_ship_on|bool|"on"|true
+cart_page|lo_ship_on|bool|"off"|true
+cart_page|lo_ship_on|bool|"no"|true
+cart_page|lo_ship_on|bool|1|true
+cart_page|lo_ship_on|bool|0|false
+cart_page|lo_ship_on|bool|null|false
+cart_page|lo_ship_line|text|"abc"|'abc'
+cart_page|lo_ship_line|text|""|''
+cart_page|lo_ship_line|text|"  sp  "|'sp'
+cart_page|lo_ship_line|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+cart_page|lo_ship_line|text|null|''
+cart_page|lo_ship_line|text|"<b>x<\/b>"|'<b>x</b>'
+cart_page|lo_ov_after|bool|true|true
+cart_page|lo_ov_after|bool|false|false
+cart_page|lo_ov_after|bool|"1"|true
+cart_page|lo_ov_after|bool|"0"|false
+cart_page|lo_ov_after|bool|""|false
+cart_page|lo_ov_after|bool|"on"|true
+cart_page|lo_ov_after|bool|"off"|true
+cart_page|lo_ov_after|bool|"no"|true
+cart_page|lo_ov_after|bool|1|true
+cart_page|lo_ov_after|bool|0|false
+cart_page|lo_ov_after|bool|null|false
+cart_page|lo_coupon_x|bool|true|true
+cart_page|lo_coupon_x|bool|false|false
+cart_page|lo_coupon_x|bool|"1"|true
+cart_page|lo_coupon_x|bool|"0"|false
+cart_page|lo_coupon_x|bool|""|false
+cart_page|lo_coupon_x|bool|"on"|true
+cart_page|lo_coupon_x|bool|"off"|true
+cart_page|lo_coupon_x|bool|"no"|true
+cart_page|lo_coupon_x|bool|1|true
+cart_page|lo_coupon_x|bool|0|false
+cart_page|lo_coupon_x|bool|null|false
+cart_page|lo_btn_black|bool|true|true
+cart_page|lo_btn_black|bool|false|false
+cart_page|lo_btn_black|bool|"1"|true
+cart_page|lo_btn_black|bool|"0"|false
+cart_page|lo_btn_black|bool|""|false
+cart_page|lo_btn_black|bool|"on"|true
+cart_page|lo_btn_black|bool|"off"|true
+cart_page|lo_btn_black|bool|"no"|true
+cart_page|lo_btn_black|bool|1|true
+cart_page|lo_btn_black|bool|0|false
+cart_page|lo_btn_black|bool|null|false
+cart_page|lo_btn_icon|select|"lock"|'lock'
+cart_page|lo_btn_icon|select|"nope"|'lock'
+cart_page|lo_btn_icon|select|""|'lock'
+cart_page|lo_btn_icon|select|null|'lock'
+cart_page|lo_btn_case|select|"caps"|'caps'
+cart_page|lo_btn_case|select|"nope"|'caps'
+cart_page|lo_btn_case|select|""|'caps'
+cart_page|lo_btn_case|select|null|'caps'
+cart_page|lo_btn_size|range|5|12
+cart_page|lo_btn_size|range|"5"|12
+cart_page|lo_btn_size|range|0|12
+cart_page|lo_btn_size|range|-10|12
+cart_page|lo_btn_size|range|99999|18
+cart_page|lo_btn_size|range|"abc"|12
+cart_page|lo_btn_size|range|""|12
+cart_page|lo_btn_size|range|null|12
+cart_page|lo_btn_size|range|"3.7"|12
+cart_page|lo_cont|bool|true|true
+cart_page|lo_cont|bool|false|false
+cart_page|lo_cont|bool|"1"|true
+cart_page|lo_cont|bool|"0"|false
+cart_page|lo_cont|bool|""|false
+cart_page|lo_cont|bool|"on"|true
+cart_page|lo_cont|bool|"off"|true
+cart_page|lo_cont|bool|"no"|true
+cart_page|lo_cont|bool|1|true
+cart_page|lo_cont|bool|0|false
+cart_page|lo_cont|bool|null|false
+cart_page|lo_cont_url|text|"abc"|'/'
+cart_page|lo_cont_url|text|""|'/'
+cart_page|lo_cont_url|text|"  sp  "|'/'
+cart_page|lo_cont_url|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'/'
+cart_page|lo_cont_url|text|null|'/'
+cart_page|lo_cont_url|text|"<b>x<\/b>"|'/'
 slim_footer|co_on|bool|true|true
 slim_footer|co_on|bool|false|false
 slim_footer|co_on|bool|"1"|true
@@ -5766,6 +5861,239 @@ checkout_page|vat_text_ar|text|"  sp  "|'sp'
 checkout_page|vat_text_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 checkout_page|vat_text_ar|text|null|'شامل ضريبة القيمة المضافة {rate}%'
 checkout_page|vat_text_ar|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|lo_head_cart|bool|true|true
+checkout_page|lo_head_cart|bool|false|false
+checkout_page|lo_head_cart|bool|"1"|true
+checkout_page|lo_head_cart|bool|"0"|false
+checkout_page|lo_head_cart|bool|""|false
+checkout_page|lo_head_cart|bool|"on"|true
+checkout_page|lo_head_cart|bool|"off"|true
+checkout_page|lo_head_cart|bool|"no"|true
+checkout_page|lo_head_cart|bool|1|true
+checkout_page|lo_head_cart|bool|0|false
+checkout_page|lo_head_cart|bool|null|false
+checkout_page|lo_title|bool|true|true
+checkout_page|lo_title|bool|false|false
+checkout_page|lo_title|bool|"1"|true
+checkout_page|lo_title|bool|"0"|false
+checkout_page|lo_title|bool|""|false
+checkout_page|lo_title|bool|"on"|true
+checkout_page|lo_title|bool|"off"|true
+checkout_page|lo_title|bool|"no"|true
+checkout_page|lo_title|bool|1|true
+checkout_page|lo_title|bool|0|false
+checkout_page|lo_title|bool|null|false
+checkout_page|lo_sum_green|bool|true|true
+checkout_page|lo_sum_green|bool|false|false
+checkout_page|lo_sum_green|bool|"1"|true
+checkout_page|lo_sum_green|bool|"0"|false
+checkout_page|lo_sum_green|bool|""|false
+checkout_page|lo_sum_green|bool|"on"|true
+checkout_page|lo_sum_green|bool|"off"|true
+checkout_page|lo_sum_green|bool|"no"|true
+checkout_page|lo_sum_green|bool|1|true
+checkout_page|lo_sum_green|bool|0|false
+checkout_page|lo_sum_green|bool|null|false
+checkout_page|lo_coupon_in|bool|true|true
+checkout_page|lo_coupon_in|bool|false|false
+checkout_page|lo_coupon_in|bool|"1"|true
+checkout_page|lo_coupon_in|bool|"0"|false
+checkout_page|lo_coupon_in|bool|""|false
+checkout_page|lo_coupon_in|bool|"on"|true
+checkout_page|lo_coupon_in|bool|"off"|true
+checkout_page|lo_coupon_in|bool|"no"|true
+checkout_page|lo_coupon_in|bool|1|true
+checkout_page|lo_coupon_in|bool|0|false
+checkout_page|lo_coupon_in|bool|null|false
+checkout_page|lo_coupon_look|select|"ticket"|'ticket'
+checkout_page|lo_coupon_look|select|"nope"|'ticket'
+checkout_page|lo_coupon_look|select|""|'ticket'
+checkout_page|lo_coupon_look|select|null|'ticket'
+checkout_page|lo_one_step|bool|true|true
+checkout_page|lo_one_step|bool|false|false
+checkout_page|lo_one_step|bool|"1"|true
+checkout_page|lo_one_step|bool|"0"|false
+checkout_page|lo_one_step|bool|""|false
+checkout_page|lo_one_step|bool|"on"|true
+checkout_page|lo_one_step|bool|"off"|true
+checkout_page|lo_one_step|bool|"no"|true
+checkout_page|lo_one_step|bool|1|true
+checkout_page|lo_one_step|bool|0|false
+checkout_page|lo_one_step|bool|null|false
+checkout_page|lo_email_hint_on|bool|true|true
+checkout_page|lo_email_hint_on|bool|false|false
+checkout_page|lo_email_hint_on|bool|"1"|true
+checkout_page|lo_email_hint_on|bool|"0"|false
+checkout_page|lo_email_hint_on|bool|""|false
+checkout_page|lo_email_hint_on|bool|"on"|true
+checkout_page|lo_email_hint_on|bool|"off"|true
+checkout_page|lo_email_hint_on|bool|"no"|true
+checkout_page|lo_email_hint_on|bool|1|true
+checkout_page|lo_email_hint_on|bool|0|false
+checkout_page|lo_email_hint_on|bool|null|false
+checkout_page|lo_email_hint|text|"abc"|'abc'
+checkout_page|lo_email_hint|text|""|'We send your order confirmation here.'
+checkout_page|lo_email_hint|text|"  sp  "|'sp'
+checkout_page|lo_email_hint|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|lo_email_hint|text|null|'We send your order confirmation here.'
+checkout_page|lo_email_hint|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|lo_email_hint_ar|text|"abc"|'abc'
+checkout_page|lo_email_hint_ar|text|""|'سنرسل تأكيد طلبك إلى هذا البريد.'
+checkout_page|lo_email_hint_ar|text|"  sp  "|'sp'
+checkout_page|lo_email_hint_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|lo_email_hint_ar|text|null|'سنرسل تأكيد طلبك إلى هذا البريد.'
+checkout_page|lo_email_hint_ar|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|lo_addr_rows|select|"one"|'one'
+checkout_page|lo_addr_rows|select|"nope"|'one'
+checkout_page|lo_addr_rows|select|""|'one'
+checkout_page|lo_addr_rows|select|null|'one'
+checkout_page|lo_uae_short|bool|true|true
+checkout_page|lo_uae_short|bool|false|false
+checkout_page|lo_uae_short|bool|"1"|true
+checkout_page|lo_uae_short|bool|"0"|false
+checkout_page|lo_uae_short|bool|""|false
+checkout_page|lo_uae_short|bool|"on"|true
+checkout_page|lo_uae_short|bool|"off"|true
+checkout_page|lo_uae_short|bool|"no"|true
+checkout_page|lo_uae_short|bool|1|true
+checkout_page|lo_uae_short|bool|0|false
+checkout_page|lo_uae_short|bool|null|false
+checkout_page|lo_remember_tick|bool|true|true
+checkout_page|lo_remember_tick|bool|false|false
+checkout_page|lo_remember_tick|bool|"1"|true
+checkout_page|lo_remember_tick|bool|"0"|false
+checkout_page|lo_remember_tick|bool|""|false
+checkout_page|lo_remember_tick|bool|"on"|true
+checkout_page|lo_remember_tick|bool|"off"|true
+checkout_page|lo_remember_tick|bool|"no"|true
+checkout_page|lo_remember_tick|bool|1|true
+checkout_page|lo_remember_tick|bool|0|false
+checkout_page|lo_remember_tick|bool|null|false
+checkout_page|lo_dl_note_free|bool|true|true
+checkout_page|lo_dl_note_free|bool|false|false
+checkout_page|lo_dl_note_free|bool|"1"|true
+checkout_page|lo_dl_note_free|bool|"0"|false
+checkout_page|lo_dl_note_free|bool|""|false
+checkout_page|lo_dl_note_free|bool|"on"|true
+checkout_page|lo_dl_note_free|bool|"off"|true
+checkout_page|lo_dl_note_free|bool|"no"|true
+checkout_page|lo_dl_note_free|bool|1|true
+checkout_page|lo_dl_note_free|bool|0|false
+checkout_page|lo_dl_note_free|bool|null|false
+checkout_page|lo_pay_secure_on|bool|true|true
+checkout_page|lo_pay_secure_on|bool|false|false
+checkout_page|lo_pay_secure_on|bool|"1"|true
+checkout_page|lo_pay_secure_on|bool|"0"|false
+checkout_page|lo_pay_secure_on|bool|""|false
+checkout_page|lo_pay_secure_on|bool|"on"|true
+checkout_page|lo_pay_secure_on|bool|"off"|true
+checkout_page|lo_pay_secure_on|bool|"no"|true
+checkout_page|lo_pay_secure_on|bool|1|true
+checkout_page|lo_pay_secure_on|bool|0|false
+checkout_page|lo_pay_secure_on|bool|null|false
+checkout_page|lo_pay_secure|text|"abc"|'abc'
+checkout_page|lo_pay_secure|text|""|'All transactions are secure & encrypted'
+checkout_page|lo_pay_secure|text|"  sp  "|'sp'
+checkout_page|lo_pay_secure|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|lo_pay_secure|text|null|'All transactions are secure & encrypted'
+checkout_page|lo_pay_secure|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|lo_pay_secure_ar|text|"abc"|'abc'
+checkout_page|lo_pay_secure_ar|text|""|'جميع المعاملات آمنة ومشفّرة'
+checkout_page|lo_pay_secure_ar|text|"  sp  "|'sp'
+checkout_page|lo_pay_secure_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|lo_pay_secure_ar|text|null|'جميع المعاملات آمنة ومشفّرة'
+checkout_page|lo_pay_secure_ar|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|lo_bag_pics|bool|true|true
+checkout_page|lo_bag_pics|bool|false|false
+checkout_page|lo_bag_pics|bool|"1"|true
+checkout_page|lo_bag_pics|bool|"0"|false
+checkout_page|lo_bag_pics|bool|""|false
+checkout_page|lo_bag_pics|bool|"on"|true
+checkout_page|lo_bag_pics|bool|"off"|true
+checkout_page|lo_bag_pics|bool|"no"|true
+checkout_page|lo_bag_pics|bool|1|true
+checkout_page|lo_bag_pics|bool|0|false
+checkout_page|lo_bag_pics|bool|null|false
+checkout_page|lo_total_only|bool|true|true
+checkout_page|lo_total_only|bool|false|false
+checkout_page|lo_total_only|bool|"1"|true
+checkout_page|lo_total_only|bool|"0"|false
+checkout_page|lo_total_only|bool|""|false
+checkout_page|lo_total_only|bool|"on"|true
+checkout_page|lo_total_only|bool|"off"|true
+checkout_page|lo_total_only|bool|"no"|true
+checkout_page|lo_total_only|bool|1|true
+checkout_page|lo_total_only|bool|0|false
+checkout_page|lo_total_only|bool|null|false
+checkout_page|lo_btn_words|bool|true|true
+checkout_page|lo_btn_words|bool|false|false
+checkout_page|lo_btn_words|bool|"1"|true
+checkout_page|lo_btn_words|bool|"0"|false
+checkout_page|lo_btn_words|bool|""|false
+checkout_page|lo_btn_words|bool|"on"|true
+checkout_page|lo_btn_words|bool|"off"|true
+checkout_page|lo_btn_words|bool|"no"|true
+checkout_page|lo_btn_words|bool|1|true
+checkout_page|lo_btn_words|bool|0|false
+checkout_page|lo_btn_words|bool|null|false
+checkout_page|lo_pay_now|text|"abc"|'abc'
+checkout_page|lo_pay_now|text|""|'Pay now'
+checkout_page|lo_pay_now|text|"  sp  "|'sp'
+checkout_page|lo_pay_now|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|lo_pay_now|text|null|'Pay now'
+checkout_page|lo_pay_now|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|lo_pay_now_ar|text|"abc"|'abc'
+checkout_page|lo_pay_now_ar|text|""|'ادفع الآن'
+checkout_page|lo_pay_now_ar|text|"  sp  "|'sp'
+checkout_page|lo_pay_now_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|lo_pay_now_ar|text|null|'ادفع الآن'
+checkout_page|lo_pay_now_ar|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|lo_complete|text|"abc"|'abc'
+checkout_page|lo_complete|text|""|'Complete Order'
+checkout_page|lo_complete|text|"  sp  "|'sp'
+checkout_page|lo_complete|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|lo_complete|text|null|'Complete Order'
+checkout_page|lo_complete|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|lo_complete_ar|text|"abc"|'abc'
+checkout_page|lo_complete_ar|text|""|'إتمام الطلب'
+checkout_page|lo_complete_ar|text|"  sp  "|'sp'
+checkout_page|lo_complete_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|lo_complete_ar|text|null|'إتمام الطلب'
+checkout_page|lo_complete_ar|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|lo_trust_on|bool|true|true
+checkout_page|lo_trust_on|bool|false|false
+checkout_page|lo_trust_on|bool|"1"|true
+checkout_page|lo_trust_on|bool|"0"|false
+checkout_page|lo_trust_on|bool|""|false
+checkout_page|lo_trust_on|bool|"on"|true
+checkout_page|lo_trust_on|bool|"off"|true
+checkout_page|lo_trust_on|bool|"no"|true
+checkout_page|lo_trust_on|bool|1|true
+checkout_page|lo_trust_on|bool|0|false
+checkout_page|lo_trust_on|bool|null|false
+checkout_page|lo_trust|text|"abc"|'abc'
+checkout_page|lo_trust|text|""|'Safe checkout'
+checkout_page|lo_trust|text|"  sp  "|'sp'
+checkout_page|lo_trust|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|lo_trust|text|null|'Safe checkout'
+checkout_page|lo_trust|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|lo_trust_ar|text|"abc"|'abc'
+checkout_page|lo_trust_ar|text|""|'دفع آمن'
+checkout_page|lo_trust_ar|text|"  sp  "|'sp'
+checkout_page|lo_trust_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|lo_trust_ar|text|null|'دفع آمن'
+checkout_page|lo_trust_ar|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|lo_apple_row|bool|true|true
+checkout_page|lo_apple_row|bool|false|false
+checkout_page|lo_apple_row|bool|"1"|true
+checkout_page|lo_apple_row|bool|"0"|false
+checkout_page|lo_apple_row|bool|""|false
+checkout_page|lo_apple_row|bool|"on"|true
+checkout_page|lo_apple_row|bool|"off"|true
+checkout_page|lo_apple_row|bool|"no"|true
+checkout_page|lo_apple_row|bool|1|true
+checkout_page|lo_apple_row|bool|0|false
+checkout_page|lo_apple_row|bool|null|false
 mobile_header|match_page|bool|true|true
 mobile_header|match_page|bool|false|false
 mobile_header|match_page|bool|"1"|true

@@ -30,6 +30,10 @@ use Illuminate\Support\Facades\DB;
  * Each switched back restores the old markup exactly.
  */
 beforeEach(function () {
+    // These pin the cart and checkout as they were before 2.60.495, which is
+    // one press away: Appearance -> Checkout page -> 13 October layout -> "Put
+    // the old layout back". The 13 October layout is CheckoutLayout13Test's.
+    app(\App\Services\CheckoutLayout::class)->restore();
     PaymentProvider::query()->delete();
     PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
     app(SettingsService::class)->set('cod_fee', 700);

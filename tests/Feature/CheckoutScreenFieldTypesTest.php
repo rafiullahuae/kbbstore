@@ -118,7 +118,10 @@ it('emits no class for either alignment default', function () {
     // The two point opposite ways -- centred is the desktop default, lined up
     // is the phone's -- and both defaults still have to render nothing. (The
     // one class left is the payment boxes' style, which the owner asked to
-    // have on -- Lane PY.)
+    // have on -- Lane PY.) Pinned on the layout before 2.60.495, one press
+    // away; the 13 October layout's classes are CheckoutLayout13Test's.
+    app(\App\Services\CheckoutLayout::class)->restore();
+
     expect(app(CheckoutPage::class)->bodyClass())->toBe(' cop-pay');
 
     app(CheckoutPage::class)->save(['m_head_align' => 'center']);

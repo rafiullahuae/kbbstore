@@ -8513,7 +8513,7 @@
             "label": "Checkout button wording",
             "help": "It shares the docked row with the item count and the total, so a longer word here is a narrower tally beside it. The button gives way first and ends in an ellipsis rather than pushing the figures off a 360px screen.",
             "default": "Proceed to Checkout",
-            "value": "Proceed to Checkout",
+            "value": "Secure checkout",
             "options": null
           },
           {
@@ -9098,6 +9098,135 @@
             "default": "We keep your 3 most recent addresses on this device. Adding another replaces the oldest.",
             "value": "We keep your 3 most recent addresses on this device. Adding another replaces the oldest.",
             "options": null
+          }
+        ]
+      },
+      {
+        "key": "layout13",
+        "label": "13 October layout",
+        "description": "The cart half of the checkout brief of 13 October, each at the value you chose in the live preview. The one-press “put back as before” is on Appearance → Checkout page → 13 October layout, and covers this page too.",
+        "fields": [
+          {
+            "key": "lo_ov_box",
+            "name": "lo_ov_box",
+            "type": "bool",
+            "label": "Order Value inside the green box (no separate Order Total row)",
+            "help": "On, as asked: one green box with the Order Value in it, and the grey line below.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_ship_on",
+            "name": "lo_ship_on",
+            "type": "bool",
+            "label": "Grey line under Order Value",
+            "help": "On, as asked.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_ship_line",
+            "name": "lo_ship_line",
+            "type": "text",
+            "label": "Grey line under Order Value",
+            "help": "Up to 120 characters.",
+            "options": null,
+            "default": "Shipping calculated at checkout",
+            "value": "Shipping calculated at checkout"
+          },
+          {
+            "key": "lo_ov_after",
+            "name": "lo_ov_after",
+            "type": "bool",
+            "label": "With a coupon, Order Value shows the amount after it",
+            "help": "On, as asked: the green box and the docked row show the same figure.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_coupon_x",
+            "name": "lo_coupon_x",
+            "type": "bool",
+            "label": "Small × on the applied coupon",
+            "help": "On, as asked: the shopper can take a coupon off on the cart page too.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_btn_black",
+            "name": "lo_btn_black",
+            "type": "bool",
+            "label": "Checkout button in dark black",
+            "help": "On, as asked. Off is the green button.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_btn_icon",
+            "name": "lo_btn_icon",
+            "type": "select",
+            "label": "Checkout button icon",
+            "help": "",
+            "options": {
+              "lock": "Lock before the words (as chosen)",
+              "arrow": "› after the words",
+              "none": "No icon"
+            },
+            "default": "lock",
+            "value": "lock"
+          },
+          {
+            "key": "lo_btn_case",
+            "name": "lo_btn_case",
+            "type": "select",
+            "label": "Checkout button letters",
+            "help": "The words themselves are “Checkout button wording” on Docked rows.",
+            "options": {
+              "caps": "CAPITALS (as chosen)",
+              "normal": "As typed"
+            },
+            "default": "caps",
+            "value": "caps"
+          },
+          {
+            "key": "lo_btn_size",
+            "name": "lo_btn_size",
+            "type": "range",
+            "label": "Checkout button text size",
+            "help": "14px, as chosen. Docked rows → “Text in both rows” still scales it with the row.",
+            "options": {
+              "min": 12,
+              "max": 18,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 14,
+            "value": 14
+          },
+          {
+            "key": "lo_cont",
+            "name": "lo_cont",
+            "type": "bool",
+            "label": "Show “← Continue shopping” above Your Bag",
+            "help": "Off, as asked.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
+            "key": "lo_cont_url",
+            "name": "lo_cont_url",
+            "type": "text",
+            "label": "“Continue shopping” goes to",
+            "help": "An address on this shop: / is the homepage, /shop/ the shop page, /new-arrivals/ and so on. Anything else (another website, a script) is refused and the homepage used.",
+            "options": null,
+            "default": "/",
+            "value": "/"
           }
         ]
       }
@@ -11160,6 +11289,292 @@
             "type": "bool",
             "label": "“Already a member?” before “Sign in”",
             "help": "On, as chosen (option B): \"Already a member?\" in light grey, then \"Sign in\" in a darker grey with an underline. Off shows \"Sign in\" alone in the darker, bolder style it had before.",
+            "options": null,
+            "default": true,
+            "value": true
+          }
+        ]
+      },
+      {
+        "key": "layout13",
+        "label": "13 October layout",
+        "description": "Everything from the checkout and cart brief of 13 October, each switch at the value you chose in the live preview. The button at the top puts the cart and checkout back exactly as they were before 2.60.495, and the one beside it brings this layout back. One set of values for both surfaces.",
+        "fields": [
+          {
+            "key": "lo_head_cart",
+            "name": "lo_head_cart",
+            "type": "bool",
+            "label": "Bag icon in the header (instead of “Secure checkout”)",
+            "help": "On, as asked: the green “Secure checkout” words beside the logo give way to the same bag icon as the rest of the shop, and it opens the cart page.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_title",
+            "name": "lo_title",
+            "type": "bool",
+            "label": "Show the “Checkout” title and its subtitle",
+            "help": "Off, as asked: no “Checkout / Almost glowing” row and no round back arrow, so the order summary is the first thing under the header.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
+            "key": "lo_sum_green",
+            "name": "lo_sum_green",
+            "type": "bool",
+            "label": "Order summary as one green box",
+            "help": "On, as asked: the summary is one light-green box, edge to edge on a phone, with the old total small above the new one when a coupon is on. Opened, its top row turns a shade darker.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_coupon_in",
+            "name": "lo_coupon_in",
+            "type": "bool",
+            "label": "Coupon field inside the order summary",
+            "help": "On, as asked: the pink coupon box is gone; the field and Apply sit inside the summary (top, and the one at the foot of the page when it is opened).",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_coupon_look",
+            "name": "lo_coupon_look",
+            "type": "select",
+            "label": "Applied coupon looks like",
+            "help": "How an applied coupon is drawn on the checkout AND the cart page: the code, the saving and a small × to take it off.",
+            "options": {
+              "ticket": "Dashed ticket (as chosen)",
+              "tag": "White tag",
+              "line": "Plain line",
+              "classic": "As before 2.60.495 (a sentence and “Remove”)"
+            },
+            "default": "ticket",
+            "value": "ticket"
+          },
+          {
+            "key": "lo_one_step",
+            "name": "lo_one_step",
+            "type": "bool",
+            "label": "Email inside “Delivery Information” (no separate Contact step)",
+            "help": "On, as asked: Contact is gone; Email is the first field of Delivery Information, “Already a member? / Sign in” sits in its heading, and “Create an account” sits under Country. Every field keeps its name, so the order is posted exactly as before.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_email_hint_on",
+            "name": "lo_email_hint_on",
+            "type": "bool",
+            "label": "Grey line under Email",
+            "help": "On, as asked.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_email_hint",
+            "name": "lo_email_hint",
+            "type": "text",
+            "label": "Grey line under Email",
+            "help": "Up to 120 characters.",
+            "options": null,
+            "default": "We send your order confirmation here.",
+            "value": "We send your order confirmation here."
+          },
+          {
+            "key": "lo_email_hint_ar",
+            "name": "lo_email_hint_ar",
+            "type": "text",
+            "label": "Grey line under Email — Arabic",
+            "help": "The same on the Arabic shop (/ar/).",
+            "options": null,
+            "default": "سنرسل تأكيد طلبك إلى هذا البريد.",
+            "value": "سنرسل تأكيد طلبك إلى هذا البريد."
+          },
+          {
+            "key": "lo_addr_rows",
+            "name": "lo_addr_rows",
+            "type": "select",
+            "label": "Emirate and Country",
+            "help": "Area / Street gets its own row in the first two.",
+            "options": {
+              "one": "One row, side by side (as chosen)",
+              "two": "Two rows, one under the other",
+              "classic": "As before 2.60.495 (Area / Street beside Emirate)"
+            },
+            "default": "one",
+            "value": "one"
+          },
+          {
+            "key": "lo_uae_short",
+            "name": "lo_uae_short",
+            "type": "bool",
+            "label": "Country shows “U.A.E”",
+            "help": "On, as asked: only the words in the box. The country posted, stored on the order and printed on emails, invoices and the admin is “United Arab Emirates” as before.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_remember_tick",
+            "name": "lo_remember_tick",
+            "type": "bool",
+            "label": "Show the “Remember my shipping details” tick",
+            "help": "Off, as asked: the tick is not shown and the details are still kept on the shopper’s own device, silently — Fields & attention → “Remember shopper details on this device” still decides whether anything is kept at all.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
+            "key": "lo_dl_note_free",
+            "name": "lo_dl_note_free",
+            "type": "bool",
+            "label": "Hide the free-delivery line when delivery is already free",
+            "help": "On, as asked: “Free express delivery over AED 199” shows only while the shopper is paying for delivery.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_pay_secure_on",
+            "name": "lo_pay_secure_on",
+            "type": "bool",
+            "label": "Secure line under “Payment” (instead of inside the card box)",
+            "help": "On, as asked: “100% secure & encrypted — Use any card” leaves the card box, and a green lock with the line below sits under the Payment heading.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_pay_secure",
+            "name": "lo_pay_secure",
+            "type": "text",
+            "label": "Secure line under “Payment”",
+            "help": "Up to 120 characters.",
+            "options": null,
+            "default": "All transactions are secure & encrypted",
+            "value": "All transactions are secure & encrypted"
+          },
+          {
+            "key": "lo_pay_secure_ar",
+            "name": "lo_pay_secure_ar",
+            "type": "text",
+            "label": "Secure line under “Payment” — Arabic",
+            "help": "The same on the Arabic shop (/ar/).",
+            "options": null,
+            "default": "جميع المعاملات آمنة ومشفّرة",
+            "value": "جميع المعاملات آمنة ومشفّرة"
+          },
+          {
+            "key": "lo_bag_pics",
+            "name": "lo_bag_pics",
+            "type": "bool",
+            "label": "“Your bag” pictures above the total",
+            "help": "Off, as asked.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
+            "key": "lo_total_only",
+            "name": "lo_total_only",
+            "type": "bool",
+            "label": "Box at the foot of the page: Total only, with the summary behind an arrow",
+            "help": "On, as asked: Subtotal, coupon and Delivery rows fold away; the arrow beside the total opens the whole order summary (items, coupon field, rows) right there, under an “Order summary” heading.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_btn_words",
+            "name": "lo_btn_words",
+            "type": "bool",
+            "label": "“Pay now” / “Complete Order” on the pay button",
+            "help": "On, as asked: Cash on delivery says the second, every other way to pay says the first. Off puts “Place order” back.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_pay_now",
+            "name": "lo_pay_now",
+            "type": "text",
+            "label": "Pay button — card, Tabby, Tamara",
+            "help": "",
+            "options": null,
+            "default": "Pay now",
+            "value": "Pay now"
+          },
+          {
+            "key": "lo_pay_now_ar",
+            "name": "lo_pay_now_ar",
+            "type": "text",
+            "label": "Pay button — card, Tabby, Tamara — Arabic",
+            "help": "",
+            "options": null,
+            "default": "ادفع الآن",
+            "value": "ادفع الآن"
+          },
+          {
+            "key": "lo_complete",
+            "name": "lo_complete",
+            "type": "text",
+            "label": "Pay button — Cash on delivery",
+            "help": "",
+            "options": null,
+            "default": "Complete Order",
+            "value": "Complete Order"
+          },
+          {
+            "key": "lo_complete_ar",
+            "name": "lo_complete_ar",
+            "type": "text",
+            "label": "Pay button — Cash on delivery — Arabic",
+            "help": "",
+            "options": null,
+            "default": "إتمام الطلب",
+            "value": "إتمام الطلب"
+          },
+          {
+            "key": "lo_trust_on",
+            "name": "lo_trust_on",
+            "type": "bool",
+            "label": "Your own words instead of “SSL secure”",
+            "help": "On, as asked.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "lo_trust",
+            "name": "lo_trust",
+            "type": "text",
+            "label": "Words beside the lock under the pay button",
+            "help": "",
+            "options": null,
+            "default": "Safe checkout",
+            "value": "Safe checkout"
+          },
+          {
+            "key": "lo_trust_ar",
+            "name": "lo_trust_ar",
+            "type": "text",
+            "label": "Words beside the lock — Arabic",
+            "help": "",
+            "options": null,
+            "default": "دفع آمن",
+            "value": "دفع آمن"
+          },
+          {
+            "key": "lo_apple_row",
+            "name": "lo_apple_row",
+            "type": "bool",
+            "label": "Apple Pay as the second payment method",
+            "help": "On, as asked: Apple Pay is offered in the payment list under the card (iPhone, iPad and Mac with Apple Pay only), and its own black button takes the place of the pay button once chosen. Google Pay and the “Express checkout” row above the form are not shown. It pays through the same Stripe card payment as before. Off puts the Express checkout row back as it was.",
             "options": null,
             "default": true,
             "value": true

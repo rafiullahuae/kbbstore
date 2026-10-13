@@ -78,6 +78,11 @@ it('is off without the parameter: no box, no console wrapping', function (string
 // every shopper's checkout would wrap console.error and show the box.
 
 it('is on with ?kbbdiag=1: the box, the server line, and every hook the script reports through', function () {
+    // Google Pay is offered on the Express row as it was before 2.60.495, one
+    // press away; the 13 October layout offers Apple Pay only, as the owner
+    // asked, and CheckoutLayout13Test pins that.
+    app(\App\Services\CheckoutLayout::class)->restore();
+
     $html = wdCheckout('?kbbdiag=1');
 
     expect(substr_count($html, 'id="kbbWalletDiag"'))->toBe(1)

@@ -40,6 +40,10 @@ use Tests\Support\EnglishRenderWalk;
  * list", ON as asked. OFF is the typed box exactly as it was.
  */
 beforeEach(function () {
+    // These pin the cart and checkout as they were before 2.60.495, which is
+    // one press away: Appearance -> Checkout page -> 13 October layout -> "Put
+    // the old layout back". The 13 October layout is CheckoutLayout13Test's.
+    app(\App\Services\CheckoutLayout::class)->restore();
     // Lane PCY (12 October): Cash on delivery is offered in the UAE only by
     // default now, at the owner's request. This file tests address fields and
     // delivery for other countries (Saudi Arabia, the UK), not which countries

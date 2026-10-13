@@ -429,7 +429,10 @@ function cfNear(string $haystack, string $anchor, string $needle, int $window = 
 
 it('applies a discount code when Enter is pressed at checkout', function () {
     $js = (string) file_get_contents(base_path('resources/js/kbb/checkout.js'));
-    $blade = (string) file_get_contents(base_path('resources/views/store/checkout.blade.php'));
+    // The field moved into its own partial in 2.60.495, so the 13 October
+    // layout can draw it in the summary or above the form; same id in both.
+    $blade = (string) file_get_contents(base_path('resources/views/store/checkout.blade.php'))
+        . (string) file_get_contents(base_path('resources/views/partials/checkout/coupon-box.blade.php'));
 
     expect(str_contains($blade, 'id="kbb_coupon_code"'))
         ->toBeTrue('The checkout coupon field is no longer #kbb_coupon_code — the handler has to move with it.');

@@ -108,6 +108,8 @@ it('hands the screen every field, grouped into the two tabs', function () {
         // Lane CO, appended: the coupon box's heading switch, the wallet row's
         // "Express checkout" heading (EN/AR) and the "Sign in" window.
         'express',
+        // 2.60.495: the 13 October layout, and its one-click way back.
+        'layout13',
     ])
         ->and($body['mobileMax'])->toBe(CheckoutPage::MOBILE_MAX);
 

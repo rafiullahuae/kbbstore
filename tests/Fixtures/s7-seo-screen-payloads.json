@@ -26,6 +26,8 @@
             "mobile_menu": "{\"sale_fill\":false}",
             "header_settings": "{\"menu_icon\":\"lines\"}",
             "cartpage_bar_pad": "50",
+            "checkout_layout_before_2_60_495": "{\"co_label\":null}",
+            "cartpage_co_label": "Secure checkout",
             "ga": "",
             "meta_pixel": "",
             "trust_authentic_title": "100% original",

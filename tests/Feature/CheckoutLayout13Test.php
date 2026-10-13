@@ -330,3 +330,95 @@ it('never offers the Apple Pay row as a posted payment method', function () {
     expect($src)->toMatch('~<input id="payment_method_applepay" type="radio" class="input-radio" data-kbb-ap-pick autocomplete="off" />~')
         ->and(substr_count($html, 'name="payment_method"'))->toBe(2);
 });
+
+/* ═══════════════ an order, end to end, in the 13 October layout ═══════════════ */
+
+it('takes a coupon from the new field and places a Cash on delivery order with every detail on it', function () {
+    /*
+     * The owner: "make sure each and every single element is working fine and
+     * data is transferring to the server too". The page is read in the new
+     * layout, the coupon goes through the endpoint the moved field calls, and
+     * the order is placed with the values the page itself carries (the chosen
+     * delivery, the country's posted code) -- then read back off the order.
+     *
+     * MUTATION: rename billing_state in address-fields-list. RED (no emirate on
+     * the order). Drop the coupon-box partial's id. RED at the first expect.
+     */
+    $cart = lo13Cart(25000);
+    Coupon::create(['code' => 'GLOW', 'type' => 'percent', 'amount' => 1000]);
+
+    $html = lo13Page('/checkout', $cart);
+    expect($html)->toContain('id="kbb_coupon_code"')
+        ->and(preg_match('~name="shipping_method"[^>]*value="([^"]+)"[^>]*checked|value="([^"]+)"[^>]*name="shipping_method"[^>]*checked~', $html, $ship))->toBe(1);
+    $shipping = $ship[1] !== '' ? $ship[1] : $ship[2];
+
+    $r = lo13Shopper($cart)->postJson('/checkout/coupon', ['code' => 'glow', 'country' => 'AE', 'payment_method' => 'cod']);
+    $r->assertOk();
+    expect((string) $r->json('couponHtml'))->toContain('GLOW')->toContain('co-tk');
+
+    $before = App\Models\Order::count();
+
+    lo13Shopper($cart->fresh())->post('/checkout/place', [
+        'billing_email' => 'lo13@example.com',
+        'billing_first_name' => 'Mariam Saeed',
+        'billing_phone' => '+971500000000',
+        'billing_address_1' => 'Villa 7',
+        'billing_address_2' => 'Al Barsha 1',
+        'billing_city' => 'Al Barsha',
+        'billing_state' => 'Dubai',
+        'billing_country' => 'AE',
+        'shipping_method' => $shipping,
+        'payment_method' => 'cod',
+        'coupon_code' => 'GLOW',
+    ])->assertSessionHasNoErrors()->assertRedirect();
+
+    expect(App\Models\Order::count())->toBe($before + 1);
+    $order = App\Models\Order::latest('id')->first();
+
+    expect($order->payment_method)->toBe('cod')
+        ->and((int) $order->discount_total)->toBe(2500)
+        ->and((int) $order->total)->toBe(22500)
+        ->and($order->email)->toBe('lo13@example.com')
+        ->and($order->phone)->toBe('+971500000000')
+        ->and($order->billing_address)->toMatchArray(['first_name' => 'Mariam', 'line1' => 'Villa 7', 'state' => 'Dubai', 'country' => 'AE']);
+});
+
+it('offers Apple Pay only, as payment method two, mounted where Stripe can draw it', function () {
+    /*
+     * The owner: "I need the APPLE PAY only ... on no 2, under stripe card".
+     * Same Stripe Express Checkout Element, same amount, same order; Google
+     * Pay is told 'never' at Stripe, the row is drawn hidden until Stripe says
+     * this device has Apple Pay, and the mount box is invisible, never
+     * display:none (Lane WL: Stripe cannot draw into a box with no layout).
+     *
+     * MUTATION: drop `$kbbGooglePay = false` in express-wallets. RED on
+     * google_pay_offered. Give .co-apslot display:none. RED on the stylesheet.
+     */
+    PaymentProvider::create(['id' => 'stripe', 'title' => 'Credit or debit card', 'enabled' => true, 'mode' => 'test', 'position' => 0,
+        'config' => ['publishable_key' => 'pk_test_lo13', 'secret_key' => 'sk_test_lo13', 'webhook_signing_secret' => 'whsec_lo13',
+            'webhook_secret' => 'whsec-url-lo13-0123456789ab', 'wallet_apple_pay' => '1', 'wallet_google_pay' => '1']]);
+    PaymentProvider::whereKey('cod')->update(['position' => 1]); // card first, as on the shop
+    app(App\Services\Payments\GatewayCredentials::class)->forget();
+    app(App\Services\Payments\Wallets::class)->forget();
+
+    $html = lo13Page('/checkout?kbbdiag=1');
+
+    // Card first, Apple Pay second, then the rest -- and Apple Pay is never posted.
+    $card = strpos($html, 'id="payment_method_stripe"');
+    $apple = strpos($html, 'id="payment_method_applepay"');
+    $cod = strpos($html, 'id="payment_method_cod"');
+
+    expect($card)->toBeInt()->and($apple)->toBeGreaterThan($card)->and($cod)->toBeGreaterThan($apple)
+        ->and($html)->toMatch('~<li class="wc_payment_method payment_method_applepay[^"]*" data-kbb-ap-li hidden>~')
+        ->and($html)->toContain('"apple_pay_offered":true')
+        ->and($html)->toContain('"google_pay_offered":false')
+        // No Express row heading, no OR line.
+        ->and($html)->not->toContain('data-kbb-express-head hidden>')
+        ->and($html)->not->toContain('data-kbb-express-divider hidden>')
+        // The box Stripe's button is mounted into, under the total.
+        ->and($html)->toContain('<div class="co-apslot" data-kbb-ap-slot><div data-kbb-ap-mount></div>');
+
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-checkout.css'));
+    expect($css)->toContain('.kbb-checkout .co-apslot{visibility:hidden;height:0;overflow:hidden}')
+        ->and($css)->not->toMatch('~\.kbb-checkout \.co-apslot\{[^}]*display:none~');
+});

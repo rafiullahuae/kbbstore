@@ -424,6 +424,10 @@ function mAllowedRepairs(): array
  * not re-recorded: no existing row moved. `cline_coupon` answers 'cart' for
  * every corpus input — it stores "cart" or digits, and whether the id names a
  * real coupon is CheckoutPage::save()'s check.
+ *
+ * 2.60.495 — the 13 October layout: 328 rows for the cart page's and the
+ * checkout page's new lo_* keys, spliced in where the walk visits them. Added,
+ * not re-recorded: no existing row moved.
  */
 it('answers every recorded cast exactly as it did before the shared schema', function () {
     $recorded = file(base_path('tests/Fixtures/module-cast-baseline.txt'), FILE_IGNORE_NEW_LINES);

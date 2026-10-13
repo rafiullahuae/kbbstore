@@ -68,6 +68,7 @@
         var to = btn.querySelector('.' + c);
         if (from && to) { to.innerHTML = from.innerHTML; }
       });
+@if (app(\App\Services\CheckoutPage::class)->lo('sum_green'))
       /* 2.60.495: the total before the coupon, small above the new one. The
          order block prints it (hidden) only while a coupon is on; no figure
          is worked out here. */
@@ -78,6 +79,7 @@
         to.innerHTML = from ? from.innerHTML : '';
         to.hidden = !from;
       });
+@endif
     }).observe(slot, { childList: true });
   });
 })();

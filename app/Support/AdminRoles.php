@@ -194,6 +194,7 @@ final class AdminRoles
             'homepagehub.type' => 'Change a homepage section’s fonts, sizes and spacing (Fonts & size tab)',
             'cartpage.manage' => 'Cart page appearance',
             'checkoutpage.manage' => 'Checkout page appearance',
+            'checkoutlayout.restore' => 'Put the cart and checkout back to their layout before 13 October 2026, or forward again',
             'setappearance.manage' => 'Set box appearance',
             'slimfooter.manage' => 'Footer bar',
             'footer.preview' => 'Footer previews',

@@ -38,6 +38,10 @@ use Tests\Support\EnglishRenderWalk;
 const FY_PK = 'pk_test_kbb_fy_key';
 
 beforeEach(function () {
+    // These pin the cart and checkout as they were before 2.60.495, which is
+    // one press away: Appearance -> Checkout page -> 13 October layout -> "Put
+    // the old layout back". The 13 October layout is CheckoutLayout13Test's.
+    app(\App\Services\CheckoutLayout::class)->restore();
     PaymentProvider::query()->delete();
     app(\App\Services\Payments\GatewayCredentials::class)->forget();
 

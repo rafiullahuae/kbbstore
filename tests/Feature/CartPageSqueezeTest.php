@@ -49,6 +49,10 @@ use Illuminate\Support\Str;
  * on cart and checkout" -- and CartCheckoutAddressRowOffTest pins the default.
  */
 beforeEach(function () {
+    // These pin the cart and checkout as they were before 2.60.495, which is
+    // one press away: Appearance -> Checkout page -> 13 October layout -> "Put
+    // the old layout back". The 13 October layout is CheckoutLayout13Test's.
+    app(\App\Services\CheckoutLayout::class)->restore();
     app(\App\Services\CheckoutPage::class)->save(['addr_picker' => true]);
 });
 

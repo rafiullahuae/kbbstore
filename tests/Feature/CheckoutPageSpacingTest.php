@@ -25,6 +25,16 @@ function cop(): CheckoutPage
     return app(CheckoutPage::class);
 }
 
+/*
+ * These tests pin the checkout's classes and variables as they were before
+ * 2.60.495, which is one press away (Appearance -> Checkout page -> 13 October
+ * layout -> "Put the old layout back"). The 13 October layout's own classes
+ * are pinned in CheckoutLayout13Test.
+ */
+beforeEach(function () {
+    app(\App\Services\CheckoutLayout::class)->restore();
+});
+
 function copCss(): string
 {
     return (string) file_get_contents(resource_path('css/kbb/kbb-checkout.css'));
@@ -318,6 +328,14 @@ it('offers spacing and nothing structural', function () {
             // Lane QK12: "Show VAT amount to customers" (OFF, he asked: "only
             // mention 5% VAT included"). The VAT note's wording; no section.
             'vat_amount',
+            // 2.60.495, the 13 October layout the owner confirmed. These DO
+            // move sections -- that was the brief -- and every one of them is
+            // put back at once by Appearance -> Checkout page -> 13 October
+            // layout -> "Put the old layout back" (CheckoutLayout::restore()).
+            'lo_head_cart', 'lo_title', 'lo_sum_green', 'lo_coupon_in', 'lo_one_step',
+            'lo_email_hint_on', 'lo_uae_short', 'lo_remember_tick', 'lo_dl_note_free',
+            'lo_pay_secure_on', 'lo_bag_pics', 'lo_total_only', 'lo_btn_words',
+            'lo_trust_on', 'lo_apple_row',
         ]);
 });
 
@@ -661,7 +679,10 @@ it('turns the two fields the owner asked to turn off, off', function () {
         // The opt-in ROW still shows; it is the tick that is off.
         ->and($c['optin_on'])->toBeTrue();
 
-    $blade = (string) file_get_contents(resource_path('views/store/checkout.blade.php'));
+    // The opt-in row moved, unchanged, into partials/checkout/contact-account
+    // in 2.60.495 so the 13 October layout can draw it under Country.
+    $blade = (string) file_get_contents(resource_path('views/store/checkout.blade.php'))
+        .(string) file_get_contents(resource_path('views/partials/checkout/contact-account.blade.php'));
 
     // Not rendered rather than hidden: nothing posts customer_note while the
     // box is off, so place() needs no branch for it.

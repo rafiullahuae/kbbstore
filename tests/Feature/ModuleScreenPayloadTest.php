@@ -304,6 +304,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // ▲ Lane CSM (12 October), the owner's pick (option B), spliced in:
     // Coupon, express & sign in gains signin_member ("“Already a member?”
     // before “Sign in”", ON) last.
+    // ▲ 2.60.495 (13 October), the owner's confirmed layout, spliced in: cart-page
+    // and checkout-page each gain a last tab, layout13, and the cart's
+    // co_label value is now "Secure checkout" -- the migration writes it, as
+    // he asked, and keeps his old value for the one-click "put back".
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
@@ -746,7 +750,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // the owner's request.
     // 789 -> 790 (Lane CSM): checkout-page signin_member, "Already a
     // member?" before Sign in -- the owner's pick, option B.
-    expect($compared)->toBe(790, 'the number of controls drawn changed');
+    // 790 -> 828 (2.60.495): the 13 October layout tab -- 11 cart-page
+    // controls and 27 checkout-page controls, the owner's confirmed design.
+    expect($compared)->toBe(828, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)
