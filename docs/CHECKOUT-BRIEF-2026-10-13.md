@@ -166,3 +166,32 @@ Plan notes (from the code, 13 Oct):
 - The cart journey (2.60.494) codes "Entered their email" and "Completed the
   address" read the same field names, so they keep working.
 
+## 5. Checkout page — "Free express delivery over AED 199" only when NOT free  ☐
+Screenshot: `docs/checkout-brief/05-delivery-free-line.png` (the grey line on
+the right of the "3 Delivery" heading, while the option below already reads
+"Free Express Delivery · Free").
+
+His words: *"on the checkout, if the user is getting free delivery, then this
+line should not show, it should only display if user order is below 199, i mean
+if user is not getting free delivery."*
+
+- 5a. Order qualifies for free delivery → the line is **hidden**.
+- 5b. Order below the free-delivery amount (not free) → the line **shows**, as
+  today ("Free express delivery over AED 199").
+- 5c. It must follow changes on the page: a coupon, a quantity change or a
+  country change that crosses AED 199 shows/hides it at once.
+
+Plan notes (from the code, 13 Oct):
+- The line is `CheckoutPage::deliveryNoteHtml()` (Appearance → Checkout page →
+  delivery tab: "Free-delivery line beside “Delivery”", `dl_note_on`, wording
+  `dl_note` / `dl_note_ar`), printed in `#kbbDeliveryNote`.
+- The page already re-draws it from the server's answer (`data.deliveryNote`;
+  `note.hidden = data.deliveryNote === ''` in checkout.js). So the fix is
+  server-side only: deliveryNoteHtml() also returns '' when the basket already
+  qualifies for free delivery, using the SAME rule the delivery options use
+  (so the line and the "Free" price can never disagree), and every answer that
+  can move the total across AED 199 (coupon, quantity, country) carries
+  deliveryNote. No change to checkout.js (payments-frozen set).
+- Tests: below 199 shows; at/above 199 hides; a coupon that drops the order
+  below 199 shows it again; Arabic.
+
