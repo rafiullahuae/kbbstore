@@ -1,0 +1,125 @@
+<title>Desktop Order Summary</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the real computer checkout in a wide frame, the choices above it. */
+:root{
+  --bg:#f6f1f3; --panel:#ffffff; --ink:#2a2228; --muted:#6c6267; --line:#e6dbe0;
+  --rose:#c13e63; --green:#1f7d52; --green-soft:#e3f2ea; --stage:#ebe3e6;
+  --f-head:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1b1719; --panel:#252023; --ink:#f3ecef; --muted:#b4a9ae; --line:#3a3236;
+  --rose:#ef6f92; --green:#5cc795; --green-soft:#1d3329; --stage:#141113; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1b1719; --panel:#252023; --ink:#f3ecef; --muted:#b4a9ae; --line:#3a3236;
+  --rose:#ef6f92; --green:#5cc795; --green-soft:#1d3329; --stage:#141113; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);padding-inline:16px;padding-block:14px 40px}
+h1,h2{font-family:var(--f-head);text-wrap:balance;margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+.top{max-width:1100px;margin:0 auto 14px;display:grid;gap:4px}
+.top h1{font-size:clamp(22px,4vw,30px);letter-spacing:-.01em}
+.top p{margin:0;color:var(--muted);font-size:14px;max-width:62ch}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+@media (max-width:899px){.side{order:-1}.card{padding:12px 14px;gap:8px}.note{font-size:12.5px}}
+@media (min-width:900px){.wrap{grid-template-columns:minmax(0,430px) minmax(0,1fr)}.stagecol{position:sticky;top:14px;align-self:start}}
+.stage{background:var(--stage);border-radius:18px;padding:12px;display:flex;justify-content:center}
+.screen{position:relative;width:100%;max-width:390px;height:min(78vh,780px);border-radius:26px;overflow:hidden;background:#fff;box-shadow:0 0 0 7px #2a2228,0 14px 40px -18px #0008}
+.screen iframe{position:absolute;top:0;left:0;width:390px;border:0;transform-origin:0 0;background:#fff}
+.side{display:grid;gap:14px;align-content:start;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:10px;min-width:0}
+.card h2{font-size:17px}
+.card p{margin:0;color:var(--muted);font-size:14px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--bg);padding:8px 13px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:8px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.chip{width:16px;height:16px;border-radius:5px;border:1px solid #0002;flex:none}
+.note{font-size:13px;color:var(--muted)}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);background:var(--green-soft);border-radius:6px;padding:2px 7px}
+</style>
+<style>
+.wrap{grid-template-columns:minmax(0,1fr)!important;max-width:1180px}
+.card{align-content:start}
+.side{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));display:grid}
+.screen{max-width:none;height:auto;aspect-ratio:1280/900;border-radius:12px;box-shadow:0 0 0 6px #2a2228,0 14px 40px -18px #0008}
+.screen iframe{width:1280px;height:900px}
+.facts{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;font-size:13.5px;margin:0}
+.facts dt{color:var(--muted)} .facts dd{margin:0;font-variant-numeric:tabular-nums;font-weight:700;text-align:right}
+</style>
+<header class="top">
+  <h1>Desktop order summary &middot; preview</h1>
+  <p>Your checkout on a computer (1280px wide), from the preview shop, GLOW applied. The same treatment as the phone: the title row full width in the darker green, everything under it on the lighter background at its normal width. Nothing here changes the live shop.</p>
+</header>
+
+<div class="wrap">
+  <div class="side">
+    <section class="card" aria-labelledby="h-v">
+      <h2 id="h-v">Summary</h2>
+      <div class="seg" role="group" aria-label="Summary closed or opened">
+        <button type="button" id="v-closed" data-k="view" data-v="closed" aria-pressed="true">As the page opens</button>
+        <button type="button" id="v-open" data-k="view" data-v="open" aria-pressed="false">Items shown</button>
+      </div>
+    </section>
+    <section class="card" aria-labelledby="h-m">
+      <h2 id="h-m">Look</h2>
+      <div class="seg" role="group" aria-label="New or today">
+        <button type="button" id="m-new" data-k="mode" data-v="new" aria-pressed="true">New</button>
+        <button type="button" id="m-now" data-k="mode" data-v="now" aria-pressed="false">Today</button>
+      </div>
+      <dl class="facts" id="facts"></dl>
+    </section>
+  </div>
+  <div class="stagecol"><div class="stage"><div class="screen" id="screen"><iframe id="frame" title="Preview of the computer checkout"></iframe></div></div></div>
+  <p class="note"><span class="tag">Preview only</span> Buttons and links inside the page are not live here. The phone checkout is not touched by this change.</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var CAP = /*CAPTURES*/null;
+  var state = { view: 'closed', mode: 'new' };
+  var frame = document.getElementById('frame'), screen = document.getElementById('screen'), facts = document.getElementById('facts');
+  /* Exactly the rules the patch will ship (computer widths only). */
+  var CSS = '@media(min-width:901px){'
+    + '.kbb-checkout.cop-sumg.cop-sow .summary{background:#FBFDFC}'
+    + '.kbb-checkout.cop-sumg.cop-sog .summary{background:#F4FAF6}'
+    + '.kbb-checkout.cop-sumg.cop-sow .summary .cosr,.kbb-checkout.cop-sumg.cop-sog .summary .cosr,'
+    + '.kbb-checkout.cop-sumg.cop-sow .summary.cosr-open .cosr,.kbb-checkout.cop-sumg.cop-sog .summary.cosr-open .cosr'
+    + '{background:#DCEFE3;width:calc(100% + 2 * var(--cop-asidepad));margin-inline:calc(var(--cop-asidepad) * -1);padding-inline:var(--cop-asidepad);border-radius:12px 12px 0 0;border-bottom-color:transparent}}';
+  function fit() {
+    var k = Math.min(1, screen.clientWidth / 1280);
+    frame.style.transform = 'scale(' + k + ')';
+    screen.style.height = Math.round(900 * k) + 'px';
+  }
+  function measure() {
+    var d = frame.contentDocument; if (!d) return;
+    var s = d.getElementById('kbbSummary'), r = s && s.querySelector('.cosr'); if (!s || !r) return;
+    var sb = s.getBoundingClientRect(), rb = r.getBoundingClientRect(), cs = d.defaultView.getComputedStyle;
+    var rows = [
+      ['Title row width', Math.round(rb.width) + ' of ' + Math.round(sb.width - 2) + 'px'],
+      ['Title row', cs(r).backgroundColor === 'rgba(0, 0, 0, 0)' ? 'card green' : cs(r).backgroundColor],
+      ['Under it', cs(s).backgroundColor]
+    ];
+    facts.innerHTML = rows.map(function (x) { return '<dt>' + x[0] + '</dt><dd>' + x[1] + '</dd>'; }).join('');
+  }
+  function draw() {
+    var html = CAP[state.view];
+    var inj = '<style>html{scrollbar-width:none}' + (state.mode === 'new' ? CSS : '') + '</style>';
+    var i = html.lastIndexOf('</body>');
+    frame.srcdoc = i > -1 ? html.slice(0, i) + inj + html.slice(i) : html + inj;
+  }
+  frame.addEventListener('load', function () { requestAnimationFrame(measure); });
+  document.querySelectorAll('[data-k]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.getAttribute('data-k'); state[k] = b.getAttribute('data-v');
+      document.querySelectorAll('[data-k="' + k + '"]').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+      draw();
+    });
+  });
+  window.addEventListener('resize', fit);
+  fit(); draw();
+})();
+</script>
