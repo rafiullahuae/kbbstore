@@ -195,3 +195,29 @@ Plan notes (from the code, 13 Oct):
 - Tests: below 199 shows; at/above 199 hides; a coupon that drops the order
   below 199 shows it again; Arabic.
 
+## 6. Checkout page — the "secure" line moves from the card box to the Payment heading  ☐
+Screenshot: `docs/checkout-brief/06-payment-secure-line.png` ("4 Payment"
+heading underlined; "🔒 100% secure & encrypted — Use any card" inside the
+Credit / Debit Card box crossed out).
+
+His words: *"on the checkout, remove the line from the stripe block, and add
+line in the Payment heading row, under Payment heading 'All transactions are
+secure & encrypted', you can increase the height of the Payment heading row as
+per need."*
+
+- 6a. Remove **"🔒 100% secure & encrypted — Use any card"** from inside the
+  Credit / Debit Card (Stripe) box.
+- 6b. In the **Payment heading row**, under the word "Payment", a second line:
+  **"All transactions are secure & encrypted"** (smaller, grey; Arabic draft).
+- 6c. The heading row may grow taller to fit the two lines.
+
+Plan notes (from the code, 13 Oct):
+- The card-box line is `partials/checkout/stripe-card.blade.php` (~line 164,
+  string `store.checkout.card_secure_line`). Only that text line is removed; the
+  card fields, Stripe's mount points and their ids are not touched. Payment
+  test set (`Stripe* Wallet* Checkout* Payment*`) runs, plus a real card form
+  in the browser (mounts, accepts input, test card goes through on the preview).
+- The heading line is new wording (`InterfaceStrings` + Arabic draft), editable
+  in Appearance → Checkout page; it shows whatever payment method is chosen.
+- Fits item 4's renumbering (Payment's number changes when Contact goes).
+
