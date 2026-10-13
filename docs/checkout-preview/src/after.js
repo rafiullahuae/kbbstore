@@ -204,7 +204,7 @@
     card.insertAdjacentHTML('afterend', '<li class="wc_payment_method payment_method_applepay pay-brand"><input id="payment_method_applepay" type="radio" class="input-radio" name="payment_method" value="applepay"><label for="payment_method_applepay"> Apple Pay <span class="pv-apm">' + ICON.apple + 'Pay</span></label></li>');
     mk($('.payment_method_applepay'), '9', 1);
   }
-  $$('[data-place]').forEach(function (b) { b.insertAdjacentHTML('afterend', '<button type="button" class="pv-apbtn" aria-label="Pay with Apple Pay">' + ICON.apple.replace(/12/g, '18') + 'Pay</button>'); });
+  $$('[data-place]').forEach(function (b) { b.insertAdjacentHTML('afterend', '<button type="button" class="pv-apbtn" aria-label="Pay with Apple Pay">' + ICON.apple.replace('width="12" height="12"', 'width="20" height="20"') + 'Pay</button>'); });
   if (S.pay === 'applepay') { var apr = d.getElementById('payment_method_applepay'); if (apr) apr.checked = true; }
 
   // 7 bottom block: no pictures, Total only + arrow + savings
