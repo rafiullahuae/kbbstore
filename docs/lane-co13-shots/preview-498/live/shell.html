@@ -71,7 +71,7 @@ button{font:inherit;color:inherit}
     <section class="card" aria-labelledby="h-me">
       <h2 id="h-me">Measured in the page</h2>
       <dl class="gaps" id="gaps"></dl>
-      <p class="note">From the last thing you can see in one block to the start of the next.</p>
+      <p class="note">From the last letters or edge you can see in one block to the first in the next.</p>
     </section>
     <p class="note"><span class="tag">Preview only</span> The black bar stands in for Stripe&rsquo;s Google Pay / Apple Pay button (Stripe draws it on a real phone). Buttons inside the phone are not live here.</p>
   </div>
@@ -88,11 +88,15 @@ button{font:inherit;color:inherit}
   function css(g) {
     var G = g + 'px';
     return '@media(max-width:900px){'
-      + '.kbb-checkout .co-grid{gap:' + G + '!important}'
-      + '.kbb-checkout .ordiv.co-xc-or{margin-bottom:' + G + '}'
+      /* Measured to the letters you see, not to their line boxes: "Express
+         checkout" starts 4px inside its line, "OR" ends 5px above its line's
+         bottom, "Create an account" ends 4px above its line's bottom and its
+         tap row has 13px more under it; the Delivery heading's border is 1px. */
+      + '.kbb-checkout .co-grid{gap:calc(' + G + ' - 4px)!important}'
+      + '.kbb-checkout .ordiv.co-xc-or{margin-bottom:calc(' + G + ' - 5px)}'
       + '.kbb-checkout #customer_details>.sec:has(+ .sec){padding-bottom:calc(' + G + ' - 1px)}'
       + '.kbb-checkout #create_account_field{margin-bottom:0}'
-      + '.kbb-checkout #customer_details>.sec:has(+ .sec):has(#create_account_field){padding-bottom:calc(' + G + ' - 14px)}}';
+      + '.kbb-checkout #customer_details>.sec:has(+ .sec):has(#create_account_field){padding-bottom:calc(' + G + ' - 18px)}}';
   }
   /* Preview only: the Express row as it shows on a phone, with a stand-in button. */
   var SHOW = '<style>[data-kbb-express]{display:block!important;visibility:visible!important;height:auto!important;overflow:visible!important}'
@@ -105,9 +109,9 @@ button{font:inherit;color:inherit}
     var secs = d.querySelectorAll('#customer_details > .sec');
     var acct = q('#create_account_field .kbb-acct-opt span');
     var rows = [
-      ['Order summary \u2192 Express checkout', top(q('.co-xc-h')) - bot(q('#kbbSummary'))],
-      ['Express checkout (OR) \u2192 Delivery Information', top(q('#customer_details')) - bot(q('.co-xc-or'))],
-      ['Create an account \u2192 Delivery', top(secs[1] && secs[1].querySelector('h2')) - bot(acct)],
+      ['Order summary \u2192 Express checkout', top(q('.co-xc-h')) + 4 - bot(q('#kbbSummary'))],
+      ['Express checkout (OR) \u2192 Delivery Information', top(q('#customer_details')) - (bot(q('.co-xc-or')) - 5)],
+      ['Create an account \u2192 Delivery', top(secs[1] && secs[1].querySelector('h2')) - (bot(acct) - 4)],
       ['Delivery \u2192 Payment', top(secs[2] && secs[2].querySelector('h2')) - bot(q('#kbbDeliverySlot'))]
     ];
     list.innerHTML = rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + (isFinite(r[1]) ? Math.round(r[1]) + 'px' : '\u2013') + '</dd>'; }).join('');
