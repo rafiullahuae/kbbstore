@@ -170,3 +170,12 @@
 .kbb-checkout .pv-only .pv-rl{height:26px}
 .kbb-checkout .pv-only .pv-rc .pv-savings{margin-top:2px;font-size:12px;line-height:16px;height:16px}
 .kbb-checkout .pv-only .pv-rc .pv-savings svg{width:13px;height:13px}
+/* 3: the same two lines in the top summary */
+.kbb-checkout .pv-tot2>.vat-note{display:none!important}
+.kbb-checkout .pv-tot2>.sumrow.tot{align-items:flex-start!important}
+.kbb-checkout .pv-tot2 .pv-tl{display:flex;flex-direction:column;line-height:26px}
+.kbb-checkout .pv-tot2 .pv-tl .pv-vat{display:block;margin-top:2px;font-size:12px;font-weight:600;line-height:16px;color:#756C74}
+.kbb-checkout .pv-tot2 .pv-rc{margin-inline-start:auto;display:flex;flex-direction:column;align-items:flex-end}
+.kbb-checkout .pv-tot2 .pv-rl{display:flex;align-items:center;height:26px}
+.kbb-checkout .pv-tot2 .pv-rc .pv-savings{margin-top:2px;font-size:12px;line-height:16px;height:16px}
+.kbb-checkout .pv-tot2 .pv-rc .pv-savings svg{width:13px;height:13px}

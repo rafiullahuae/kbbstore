@@ -396,4 +396,5 @@ Confirmed: 2, 5, 6, 8. Not yet checked: 1, 3, 9.
   or number stores only its own range (CLAUDE.md rule 5).
 - 7 (round 5): "Total | AED 648 ⌄" on one line; "5% VAT inclusive | 🏷 Total
   savings AED 35" on ONE line right under it, aligned (savings sit directly
-  under the amount, 2px gap, no extra space above them).
+  under the amount, 2px gap, no extra space above them). The SAME two lines in
+  the top order summary (its separate "5% VAT inclusive" row goes).

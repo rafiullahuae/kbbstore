@@ -221,18 +221,24 @@
   if (discRow) box.insertAdjacentHTML('beforeend', chip(code, off));
   mt.insertBefore(box, mt.firstChild);
   mt.insertBefore(h('<button type="button" class="pv-osh" aria-label="Show or hide the order summary"><span>Order summary</span>' + ICON.down + '</button>'), mt.firstChild);
-  $$('.sumrow.tot', mt).forEach(function (r) {
-    var v = r.children[1]; v.style.marginInlineStart = 'auto';
-    // Right column: the amount with its arrow, and the savings line right under the amount
-    var rc = h('<span class="pv-rc"><span class="pv-rl"></span></span>');
-    r.insertBefore(rc, v); rc.firstChild.appendChild(v);
-    v.insertAdjacentHTML('afterend', '<button type="button" class="pv-arrow" aria-label="Show order summary">' + ICON.down + '</button>');
-    var sv = $('.cotot > .pv-savings', mob); if (sv) rc.appendChild(sv.cloneNode(true));
-    // VAT line sits right under the word "Total"
-    if (o.vat) r.firstElementChild.insertAdjacentHTML('beforeend', '<small class="pv-vat">5% VAT inclusive</small>');
-    r.firstElementChild.classList.add('pv-tl');
-  });
-  $$('.cotot > .pv-savings', mob).forEach(function (x) { x.remove(); });
+  // Total rows, top summary and bottom box alike: "Total | amount", then
+  // "5% VAT inclusive | Total savings" on one line under it.
+  function totRows(t, arrow) {
+    var sv = $(':scope > .pv-savings', t);
+    $$('.sumrow.tot', t).forEach(function (r) {
+      var v = r.children[1]; v.style.marginInlineStart = 'auto';
+      var rc = h('<span class="pv-rc"><span class="pv-rl"></span></span>');
+      r.insertBefore(rc, v); rc.firstChild.appendChild(v);
+      if (arrow) v.insertAdjacentHTML('afterend', '<button type="button" class="pv-arrow" aria-label="Show order summary">' + ICON.down + '</button>');
+      if (sv) rc.appendChild(sv.cloneNode(true));
+      if (o.vat) r.firstElementChild.insertAdjacentHTML('beforeend', '<small class="pv-vat">5% VAT inclusive</small>');
+      r.firstElementChild.classList.add('pv-tl');
+    });
+    if (sv) sv.remove();
+    t.classList.add('pv-tot2');
+  }
+  totRows(mt, true);
+  $$('.cotot', aside).forEach(function (t) { totRows(t, false); });
   mob.classList.add('pv-novat');
   mk(mt, '7');
 
