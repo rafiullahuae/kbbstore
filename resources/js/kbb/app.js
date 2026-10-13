@@ -69,6 +69,8 @@ import { initWaAway } from './wa-away.js';
 // Lane AN: the one beacon per opened page (Analytics, and the two product
 // counts that used to be requests of their own). Last in STEPS. See hit.js.
 import { initHit } from './hit.js';
+// Lane CJ: taps on the bag, cart page and checkout, and where a shopper with a basket left.
+import { initTrail } from './trail.js';
 
 /* ── EVERY STEP RUNS, WHATEVER ANY OTHER STEP DOES. ─────────────────────────
  *
@@ -115,6 +117,7 @@ const STEPS = [
     initReadMore,
     initWaAway,
     initHit,
+    initTrail,
 ];
 
 const boot = () => {

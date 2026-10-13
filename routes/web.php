@@ -1361,6 +1361,7 @@ require __DIR__ . '/cart-address.php';
 // and the product-view beacon, both on the web stack with CSRF.
 require __DIR__.'/buy-together.php';
 require __DIR__.'/instant-nav.php';   // Appearance -> Site layout -> Page speed: "Recently viewed" written when a fetched-ahead page is really opened (Lane SP)
+require __DIR__.'/cart-trail.php';    // Cart Tracking -> each cart: where the shopper went and left (Lane CJ)
 
 /*
  * Newsletter confirmation and unsubscribe. Same group and the same reasoning as

@@ -13,7 +13,8 @@ class Cart extends Model
 
     protected function casts(): array
     {
-        return ['last_activity_at' => 'datetime', 'converted_at' => 'datetime'];
+        // ct_seen_at / ct_left_at: Lane CJ's "Left at" (App\Services\CartTracking\CartTrail).
+        return ['last_activity_at' => 'datetime', 'converted_at' => 'datetime', 'ct_seen_at' => 'datetime', 'ct_left_at' => 'datetime'];
     }
 
     public function items()

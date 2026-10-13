@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.494
+**Cart Tracking: where every shopper with a basket went, what they tapped on the bag, cart and checkout, how far they got, and the page they left from — in the admin and the owner app.** Apply after .493.
+Runs its migrations (one new table and four columns on carts; clears caches).
+
+| Your request | Now |
+|---|---|
+| "track ... from where customer left" | Every cart now shows **Left at** — the last page and when ("Left at Checkout · 12 min ago"), or a green "On Checkout now" while they are still there — under the visitor, with the furthest step as a tag. Cart Tracking → Carts (each row) and the owner app → More → Cart tracking |
+| "like he proceeded to checkout or not" | The furthest step on every cart: Added to bag → Viewed the bag → Opened checkout → Entered email → Completed address → Chose payment → Pressed Place order → Ordered. New tiles: **Checkout steps: shoppers who did each** (people, not bots — only steps really done are counted) and **Where shoppers who did not buy left** |
+| "where he clicked (for cart and checkout page) and more" | Open any cart (Cart Tracking → click the row; owner app → tap the cart): a **Journey** list of every page they opened (product names, Arabic pages marked) and every tap: opened/closed the bag, Checkout / View cart / remove / quantity / coupon in the bag, Proceed to checkout, Continue shopping, payment method chosen (COD, card, Tabby, Tamara), Sign in, back to cart, delivery change, Place order pressed — and **which fields stopped the order** (e.g. "Phone, Address") — then "Left Checkout" or "Came back" |
+| Privacy and speed | Only shoppers with something in the bag are recorded; nothing typed is ever recorded (only that the email was entered, never the email); never you while signed in to the admin; never bots. A visitor with an empty bag sends nothing extra (measured: 0 requests); a full shopping visit sent 2 small signals. Old journey rows follow Cart Tracking → Settings → "Keep cart events for". Switch: Cart Tracking → Settings → "Record where shoppers go and where they leave" (on) |
+| Not visible to any website | Taps inside Apple Pay / Google Pay (Stripe's own secure frame); those show as an order once paid |
+
+Files: app/Services/CartTracking/CartTrail.php (new), CartTrackingReport.php, CartTrackingSettings.php, CartTrackingPrune.php, app/Http/Controllers/Store/CartTrailController.php (new), ViewedController.php, OwnerApp/CartsController.php, app/Models/Cart.php, routes/cart-trail.php (new), routes/web.php, routes/owner-app.php, resources/js/kbb/trail.js (new), resources/js/kbb/app.js, resources/js/owner-app/carts.js, resources/css/owner-app/owner-app.css, resources/views/admin/partials/cart-tracking-screen.blade.php, public/build, migrations 2027_10_29_100000 and 2027_10_29_100100.
+
 ## 2.60.493
 **Urgent fix: the phone header no longer squeezes the logo or flickers on big iPhones, zoomed-out pages, landscape and tablets.** Apply after .492.
 Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.

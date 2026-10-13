@@ -399,8 +399,47 @@ final class CartTrackingReport
                 ])->all(),
                 'browsers' => $top($browsers),
                 'devices' => $top($devices),
+                // Lane CJ: how far people (not bots) got, and the pages the
+                // ones who did not buy were last on. Two grouped reads, cached
+                // with the rest of these tiles.
+                'funnel' => CartTrail::funnel((clone $base)->where('c.ct_bot_score', '<', $threshold)),
+                'exits' => $this->exits((clone $base)->where('c.ct_bot_score', '<', $threshold)),
             ];
         });
+    }
+
+    /**
+     * Lane CJ: where shoppers who did not buy were last seen, most first.
+     *
+     * @return list<array{page: string, n: int}>
+     */
+    private function exits(Builder $base): array
+    {
+        try {
+            $rows = $base->whereNull('c.ct_order_id')->whereNotNull('c.ct_seen_path')
+                ->selectRaw('c.ct_seen_path AS p, COUNT(*) AS n')->groupBy('c.ct_seen_path')
+                ->orderByDesc('n')->orderBy('c.ct_seen_path')->limit(200)->get();
+        } catch (\Throwable) {
+            return [];
+        }
+
+        // Grouped by what the owner reads, so two product URLs of one page add up.
+        $by = [];
+
+        foreach ($rows as $r) {
+            $label = CartTrail::pageLabel((string) $r->p, []);
+            $label = str_starts_with($label, 'Product: ') ? 'Product pages' : $label;
+            $by[$label] = ($by[$label] ?? 0) + (int) $r->n;
+        }
+
+        arsort($by);
+        $out = [];
+
+        foreach (array_slice($by, 0, 6, true) as $page => $n) {
+            $out[] = ['page' => (string) $page, 'n' => $n];
+        }
+
+        return $out;
     }
 
     /** @return list<string> */
@@ -408,7 +447,17 @@ final class CartTrackingReport
     {
         return ['c.id', 'c.status', 'c.customer_id', 'c.created_at', 'c.ct_ip', 'c.ct_net', 'c.ct_country',
             'c.ct_ua', 'c.ct_bot_flags', 'c.ct_bot_score', 'c.ct_speed_ms', 'c.ct_value', 'c.ct_added',
-            'c.ct_removed', 'c.ct_first_at', 'c.ct_last_at', 'c.ct_order_id'];
+            'c.ct_removed', 'c.ct_first_at', 'c.ct_last_at', 'c.ct_order_id',
+            // Lane CJ: the "Left at" line, from the cart row itself -- once its
+            // migration has run (a package's files land seconds before it does).
+            ...(self::journeyReady() ? ['c.ct_stage', 'c.ct_seen_at', 'c.ct_seen_path', 'c.ct_left_at'] : [])];
+    }
+
+    private static ?bool $journeyReady = null;
+
+    private static function journeyReady(): bool
+    {
+        return self::$journeyReady ??= \Illuminate\Support\Facades\Schema::hasColumn('carts', 'ct_left_at');
     }
 
     /**
@@ -505,6 +554,8 @@ final class CartTrackingReport
             'added' => (int) $r->ct_added,
             'removed_count' => (int) $r->ct_removed,
             'blocked' => $single === null ? null : ['id' => $single[0], 'cidr' => $single[1]],
+            // Lane CJ: furthest step, last page, and whether they left or are still here.
+            'journey' => CartTrail::summary($r, $r->ct_order_id !== null),
         ];
     }
 
@@ -609,6 +660,8 @@ final class CartTrackingReport
         $row['created'] = StoreTime::iso($r->created_at);
         $row['converted'] = StoreTime::iso($r->converted_at);
         $row['timeline'] = $timeline;
+        // Lane CJ: every page and tap, oldest first.
+        $row['trail'] = CartTrail::journey($id);
         $row['hosting'] = $r->ct_ip !== null && HostingNetworks::contains($r->ct_ip);
         $row['range_blocked'] = null;
 

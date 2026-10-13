@@ -37,6 +37,9 @@ final class CartTrackingSettings
     public const SCHEMA = [
         'track' => ['bool', 'Track carts', true,
             'Records every add, remove and quantity change with the time, product, price, address and country. Off, nothing new is written; what is already recorded stays.'],
+        // Lane CJ, the owner 13 Oct: "track ... from where customer left". Ships ON, his ask.
+        'journey' => ['bool', 'Record where shoppers go and where they leave', true,
+            'For shoppers with something in their bag: every page they open, the taps on the bag, the cart page and the checkout (never anything they type), the furthest checkout step and the page they left from. Shown on each cart and in the owner app. Off, nothing new is written.'],
         'bots_leave' => ['bool', 'Ask bots to leave', true,
             'Scripted clients (curl, python), headless browsers and scrapers are answered "403 Forbidden" on the cart and checkout. Google, Bing, Apple, Facebook and WhatsApp previews are never refused, and no page a shopper browses is affected.'],
         'block_scope' => ['select', 'What a blocked address cannot do', 'commerce',

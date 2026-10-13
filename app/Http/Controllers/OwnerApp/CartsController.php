@@ -67,12 +67,30 @@ final class CartsController extends Controller
                 'bots' => (int) $s['bots'],
                 'open_value' => (string) $s['open_value'],
                 'bought_value' => (string) $s['bought_value'],
+                // Lane CJ: how far people got, and where the ones who did not buy left.
+                'funnel' => array_map(fn (array $f) => ['label' => (string) $f['label'], 'carts' => (int) $f['carts']], $s['funnel'] ?? []),
+                'exits' => array_map(fn (array $x) => ['page' => (string) $x['page'], 'n' => (int) $x['n']], $s['exits'] ?? []),
             ],
         ]);
     }
 
     /** The allowlist: what a phone row shows, and nothing else. */
-    public const ROW_KEYS = ['id', 'first', 'last', 'value', 'value_label', 'items', 'removed', 'country', 'bot', 'customer', 'email', 'order'];
+    public const ROW_KEYS = ['id', 'first', 'last', 'value', 'value_label', 'items', 'removed', 'country', 'bot', 'customer', 'email', 'order', 'journey'];
+
+    /** GET /{app}/api/carts/{id}/journey -- one basket's pages and taps. (Lane CJ) */
+    public function journey(Request $request, int $id): JsonResponse
+    {
+        if ($no = $this->refuse($request, 'carttracking.view')) {
+            return $no;
+        }
+
+        $steps = array_map(fn (array $e) => [
+            'at' => $e['at'], 'kind' => (string) $e['kind'], 'title' => (string) $e['title'],
+            'detail' => $e['code'] === 40 ? $e['detail'] : null,
+        ], \App\Services\CartTracking\CartTrail::journey($id));
+
+        return response()->json(['ok' => true, 'steps' => $steps]);
+    }
 
     private static function row(array $r): array
     {
@@ -101,6 +119,15 @@ final class CartsController extends Controller
                 'status' => (string) $o['status'],
                 'total' => (string) $o['total'],
             ],
+            // Lane CJ: the "Left at" line and the furthest step, allowlisted.
+            'journey' => isset($r['journey']) ? [
+                'stage' => (int) $r['journey']['stage'],
+                'stage_label' => (string) $r['journey']['stage_label'],
+                'seen' => $r['journey']['seen'],
+                'seen_page' => $r['journey']['seen_page'],
+                'left' => $r['journey']['left'],
+                'online' => (bool) $r['journey']['online'],
+            ] : null,
         ];
     }
 }

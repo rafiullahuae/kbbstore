@@ -208,6 +208,19 @@
 .ctk-tl::before{content:'';position:absolute;left:13px;top:6px;bottom:6px;width:2px;background:var(--border,#e6e9f2)}
 .ctk-tl li{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:6px 0}
 .ctk-dot{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff;position:relative;z-index:1}
+.ctk-left{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;font-size:12.5px;color:var(--ink,#1f2433)}
+.ctk-left .lv{display:inline-flex;align-items:center;gap:5px}
+.ctk-left .lv i{width:7px;height:7px;border-radius:50%;background:#e3493f;display:inline-block}
+.ctk-left .lv.on i{background:#15a85a;box-shadow:0 0 0 3px rgba(21,168,90,.18)}
+.ctk-funnel{display:grid;gap:6px;margin-top:6px}
+.ctk-fstep{display:grid;grid-template-columns:150px minmax(0,1fr) 92px;gap:10px;align-items:center;font-size:12.5px}
+.ctk-fbar{height:9px;border-radius:9px;background:var(--surface-2,#f2f4fb);overflow:hidden}
+.ctk-fbar i{display:block;height:100%;border-radius:9px;background:var(--tile,#3f6fe0)}
+.ctk-fstep b{text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:640px){.ctk-fstep{grid-template-columns:110px minmax(0,1fr) 70px}}
+.ctk-dot.jp{background:var(--surface-2,#eef1f8);color:var(--ink-soft,#626c80);font-size:12px}
+.ctk-dot.jbag{background:#d4881c;font-size:12px}.ctk-dot.jcart{background:#0e9aa7;font-size:12px}
+.ctk-dot.jco{background:#7b6cf0;font-size:12px}.ctk-dot.jleft{background:#e3493f;font-size:12px}
 .ctk-dot.add{background:var(--green,#15a85a)}.ctk-dot.remove{background:var(--red,#e3493f)}.ctk-dot.qty{background:var(--blue,#3f6fe0)}.ctk-dot.order{background:var(--violet,#7b6cf0)}
 .ctk-tl .t{font-size:13px;line-height:1.4;min-width:0;overflow-wrap:anywhere}
 .ctk-tl .t a{color:var(--ink,#101729);font-weight:650;text-decoration:none;border-bottom:1px solid var(--border,#e6e9f2)}
@@ -517,6 +530,7 @@
       // already carries. Two wide tiles on a row of their own.
       + agentTile('Top browsers', s.browsers, '#0e9aa7')
       + agentTile('Top devices', s.devices, '#d4881c')
+      + funnelTile(s.funnel, s.exits)
       + '</div>';
 
     html += '<div class="ctk-card">'
@@ -612,7 +626,35 @@
       + '<div class="ctk-ipline">' + (r.country ? '<span class="ctk-cc" title="' + esc(r.country_name) + '"><span class="fl">' + flag(r.country) + '</span>' + esc(r.country) + '</span>' : '<span class="ctk-cc">??</span>')
       + '<span class="ctk-ip">' + esc(r.ip || 'no address') + '</span>' + shield + '</div>'
       + (r.browser ? '<span class="ctk-agent">' + esc(r.browser === r.device ? r.browser : r.browser + ' · ' + r.device) + '</span>' : '')
+      + leftHtml(r.journey)
       + '</div>';
+  }
+
+  /* (Lane CJ) "from where customer left": the last page and the furthest
+     checkout step, from columns on the cart row -- no extra request. */
+  function leftHtml(j) {
+    if (!j || (!j.seen && !j.stage)) return '';
+    var where = j.seen_page ? esc(j.seen_page) : 'the shop';
+    var state = j.stage === 8 ? ''
+      : (j.online ? '<span class="lv on"><i></i>On ' + where + ' now</span>'
+        : (j.seen ? '<span class="lv"><i></i>Left at <b>' + where + '</b> · ' + esc(ago(j.left || j.seen)) + '</span>' : ''));
+    return '<div class="ctk-left">' + state
+      + '<span class="ctk-pill ' + (j.stage === 8 ? 'no' : (j.stage >= 3 ? 'amber' : 'mute')) + '" title="The furthest step this shopper reached">' + esc(j.stage_label) + '</span></div>';
+  }
+
+  function funnelTile(f, exits) {
+    if (!f || !f.length) return '';
+    var top = f[0].carts || 0;
+    var steps = f;
+    return '<div class="ctk-tile wide" style="--tile:#7b6cf0"><span class="k">Checkout steps: shoppers who did each (people, not bots)</span>'
+      + '<div class="ctk-funnel">' + steps.map(function (x) {
+          var pc = top ? Math.round(100 * x.carts / top) : 0;
+          return '<div class="ctk-fstep"><span>' + esc(x.label) + '</span><span class="ctk-fbar"><i style="width:' + pc + '%"></i></span><b>' + num(x.carts) + ' · ' + pc + '%</b></div>';
+        }).join('') + '</div></div>'
+      + '<div class="ctk-tile wide" style="--tile:#e3493f"><span class="k">Where shoppers who did not buy left</span>'
+      + '<div class="ctk-flags">' + ((exits || []).map(function (x) {
+          return '<span class="ctk-chip">' + esc(x.page) + ' <span style="color:var(--ink-soft)">' + num(x.n) + '</span></span>';
+        }).join('') || '<span class="s">Nothing recorded yet. Pages are recorded from this update on.</span>') + '</div></div>';
   }
 
   function orderHtml(o) {
@@ -794,6 +836,21 @@
     closePop();
   }
 
+  /* (Lane CJ) Every page and tap of this basket, oldest first, and where it ended. */
+  function journeyHtml(c) {
+    var t = c.trail || [];
+    if (!t.length) return '<p class="ctk-note">No pages recorded for this cart. Pages and taps are recorded from 2.60.494 on, for shoppers with something in the bag.</p>';
+    var mark = { page: ['jp', '•'], left: ['jleft', '⏏'], bag: ['jbag', 'B'], cart: ['jcart', 'C'], checkout: ['jco', '✓'] };
+    var j = c.journey || {};
+    var head = j.stage === 8 ? '' : '<p class="ctk-note" style="margin-top:0">' + (j.online ? 'On the shop right now.' : 'Left at <b>' + esc(j.seen_page || 'the shop') + '</b>, ' + esc(ago(j.left || j.seen)) + '.') + ' Furthest step: <b>' + esc(j.stage_label || '') + '</b>.</p>';
+    return head + '<ul class="ctk-tl">' + t.map(function (e) {
+      var m = mark[e.kind] || mark.page;
+      var detail = e.code === 40 ? e.detail : (e.kind === 'page' || e.kind === 'left' ? '' : (e.detail || ''));
+      return '<li><span class="ctk-dot ' + m[0] + '">' + m[1] + '</span><div class="t">' + esc(e.title) + (detail ? ' <span class="ctk-more">' + esc(detail) + '</span>' : '')
+        + '<small>' + esc(when(e.at)) + (e.kind === 'page' && e.detail ? ' · ' + esc(e.detail) : '') + '</small></div></li>';
+    }).join('') + '</ul>';
+  }
+
   function paintDetail(c) {
     var body = document.getElementById('ctkPanelBody');
     var scoreColor = c.bot ? '#e3493f' : (c.score >= 25 ? '#e0922f' : '#15a85a');
@@ -842,6 +899,8 @@
 
       + '<div class="ctk-card ctk-sec"><h4>In the cart now</h4>' + (prodList(c.products) || '<p class="ctk-note">Empty.</p>')
       + (c.removed.length ? '<h4 style="margin-top:14px">Taken out</h4>' + prodList(c.removed, 'ctk-rem') : '') + '</div>'
+
+      + '<div class="ctk-card ctk-sec"><h4>Journey</h4>' + journeyHtml(c) + '</div>'
 
       + '<div class="ctk-card ctk-sec"><h4>History</h4>' + (tl.length ? '<ul class="ctk-tl">' + tl.join('') + '</ul>' : '<p class="ctk-note">No tracked changes.</p>') + '</div>'
 

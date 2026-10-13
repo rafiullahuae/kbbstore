@@ -5,10 +5,11 @@ entry for each version, with the owner's words, admin paths and files, is
 there). Versions before 2.60.72 are summarised in `KBB-Master-Plan.md` ("What
 shipped" tables and the phases) and in the timeline in `docs/HANDOVER.md` §13.
 
-**274 entries, 2.60.72 → 2.60.493.**
+**275 entries, 2.60.72 → 2.60.494.**
 
 | Version | What it did |
 |---|---|
+| 2.60.494 | Cart Tracking: where every shopper with a basket went, what they tapped on the bag, cart and checkout, how far they got, and the page they left from — in the admin and the owner app. |
 | 2.60.493 | Urgent fix: the phone header no longer squeezes the logo or flickers on big iPhones, zoomed-out pages, landscape and tablets. |
 | 2.60.492 | Urgent fix: the lotus logo no longer fills the screen on older phones and in-app browsers (Instagram, Facebook). |
 | 2.60.491 | Checkout: "Already a member? Sign in" beside "1 Contact", in the look you chose (option B). |

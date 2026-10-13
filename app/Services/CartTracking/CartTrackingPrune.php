@@ -69,6 +69,19 @@ final class CartTrackingPrune
             }
         }
 
+        // Lane CJ: the journey rows follow the same "Keep cart events for".
+        try {
+            for ($i = 0; $i < $batches; $i++) {
+                $n = DB::table('cart_trail')->where('created_at', '<', $cutoff)->orderBy('id')->limit(self::BATCH)->delete();
+
+                if ($n < self::BATCH) {
+                    break;
+                }
+            }
+        } catch (\Throwable) {
+            // Not migrated yet: nothing to prune.
+        }
+
         $blocks = IpBlock::query()->whereNotNull('expires_at')->where('expires_at', '<', now()->subDays(30))->delete();
 
         if ($blocks > 0) {

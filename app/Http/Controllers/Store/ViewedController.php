@@ -54,6 +54,9 @@ final class ViewedController extends Controller
 
         if ($request->has('p')) {
             Tracker::record($request);
+            // Lane CJ: the same page, on the shopper's basket (only a browser
+            // that has one pays anything; see CartTrail).
+            app(\App\Services\CartTracking\CartTrail::class)->page($request, (string) $request->input('p', ''));
 
             return response('', 204);
         }

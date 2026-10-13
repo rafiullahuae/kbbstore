@@ -640,6 +640,23 @@ details summary::-webkit-details-marker { display: none; }
 .ct-row { width: 100%; text-align: left; }
 .ct-st { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 7px; font-size: 12px; }
 .ct-open { background: #FDF0E1; color: #9A5B13; }
+/* Lane CJ: where the shopper left, the furthest step, and the journey. */
+.ct-left { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 12px; color: var(--ink2); }
+.ct-left i { width: 7px; height: 7px; border-radius: 50%; background: #E3493F; flex: none; }
+.ct-left.on i { background: #1F9D55; }
+.ct-fun { display: grid; gap: 7px; }
+.ct-fun div { display: grid; grid-template-columns: minmax(0, 1fr) 70px; gap: 8px; align-items: center; font-size: 12.5px; }
+.ct-fun span { position: relative; padding: 3px 0; }
+.ct-fun span::before { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--w, 0%); background: #F7E3EA; border-radius: 6px; z-index: -1; }
+.tiles .card.wide { grid-column: 1 / -1; }
+.tiles .ct-fun b, .ct-fun b { font: 600 12.5px/1.3 var(--font); margin: 0; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ct-fun span { z-index: 0; isolation: isolate; }
+.ct-jr { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.ct-jr li { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 9px; font-size: 13px; }
+.ct-jr li::before { content: ""; width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: #C9BFC4; }
+.ct-jr li.bag::before { background: #D4881C; } .ct-jr li.cart::before { background: #0E9AA7; }
+.ct-jr li.checkout::before { background: #7B6CF0; } .ct-jr li.left::before { background: #E3493F; }
+.ct-jr small { display: block; color: var(--ink2); font-size: 11.5px; }
 .ct-bot { background: #EEF0F4; color: #555D6E; }
 .ct-sheet .card { margin-bottom: 10px; }
 .ct-sheet .re { flex-direction: row; align-items: center; gap: 10px; }

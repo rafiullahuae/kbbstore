@@ -84,7 +84,7 @@ it('returns only the allowlisted keys: no IP address, network, bot score or reas
     $d = OA::get($this, 'carts?period=all', $c)->assertOk()->json();
 
     expect(array_keys($d))->toBe(['rows', 'total', 'page', 'pages', 'summary'])
-        ->and(array_keys($d['summary']))->toBe(['carts', 'bought', 'conversion', 'bots', 'open_value', 'bought_value'])
+        ->and(array_keys($d['summary']))->toBe(['carts', 'bought', 'conversion', 'bots', 'open_value', 'bought_value', 'funnel', 'exits'])
         ->and($d['total'])->toBe(3);
 
     foreach ($d['rows'] as $row) {

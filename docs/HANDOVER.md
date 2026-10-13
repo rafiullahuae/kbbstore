@@ -451,13 +451,14 @@ Confirm with him before acting on any of these:
 
 ---
 
-## 8. Recently shipped (2.60.400 → 2.60.493)
+## 8. Recently shipped (2.60.400 → 2.60.494)
 
 Packages handed to the owner in this stretch, newest first. Full detail and
 admin paths in `docs/CHANGELOG.md`.
 
 | Version | What |
 |---|---|
+| .494 | Cart journey: Left at, furthest step, journey per cart, checkout-steps and exit tiles; admin and owner app (Cart Tracking → Settings switch) |
 | .493 | Urgent: phone search field always its own row ≤900px (logo no longer squeezed, no flicker on resize) |
 | .492 | Urgent: lotus logo no longer fills the screen on older phones / in-app browsers (round() and color-mix() only inside @supports; SVG carries width/height; hard max size) |
 | .491 | Checkout: "Already a member? Sign in" (option B, owner's pick) — Appearance → Checkout page → Coupon, express & sign in |
