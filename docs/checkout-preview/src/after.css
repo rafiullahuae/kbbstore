@@ -1,0 +1,69 @@
+/* The "after" look, drawn over the real captured cart and checkout. Preview only. */
+.pv-mk{position:absolute;z-index:60;top:-9px;inset-inline-start:-6px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#6b2bd9;color:#fff;font:700 11.5px/22px system-ui,sans-serif;text-align:center;box-shadow:0 0 0 2px #fff,0 2px 6px #0004;pointer-events:none}
+.pv-flash{outline:3px solid #6b2bd9!important;outline-offset:3px;transition:outline-color .3s}
+/* 1 · cart: Order Value inside the green box */
+.kbb-cartpage .cpg-totband.pv-tb{display:block;padding:11px 12px 10px}
+.pv-ov{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:15px;font-weight:600}
+.pv-ov .tr{text-align:end;white-space:nowrap}.pv-ov .tr b{font-weight:700}
+.pv-ov .cpg-was{margin-inline-end:6px}
+.pv-ship{margin-top:3px;font-size:12px;font-weight:400;color:#8a8288}
+.kbb-cartpage .cobtn.pv-black{background:#111!important;color:#fff!important;letter-spacing:.08em;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.pv-black svg{flex:none}
+/* coupon chip, three styles, never red */
+.pv-chip{display:flex;align-items:center;gap:8px;font-size:13px;line-height:1.2;color:#2A2228}
+.pv-chip .pv-code{font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.pv-chip .pv-off{margin-inline-start:auto;font-weight:700;color:#1f7d52;white-space:nowrap}
+.pv-chip .pv-x{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;border:0;background:transparent;color:#8a8288;font-size:15px;line-height:1;cursor:pointer;padding:0}
+.pv-chip svg{flex:none;color:#1f7d52}
+.pv-chip.s-A{background:#fff;border:1px solid #CFE8DA;border-radius:99px;padding:6px 6px 6px 11px}
+.pv-chip.s-B{border:1.5px dashed #7cc4a0;border-radius:9px;padding:7px 8px 7px 11px;background:#ffffff80}
+.pv-chip.s-C{padding:2px 0}
+.pv-chip.s-C svg{color:#8a8288}
+.pv-tb .pv-chip{margin-bottom:9px}
+.pv-tb .pv-chip.s-C{margin-bottom:5px;padding-bottom:7px;border-bottom:1px dashed #cfe8da}
+/* 3 · checkout header cart icon */
+.kbb-checkout .co-head .pv-cart{margin-inline-start:auto;position:relative;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;color:#2A2228}
+.pv-cart .pv-badge{position:absolute;top:2px;inset-inline-end:0;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#C6395F;color:#fff;font:700 10px/17px system-ui,sans-serif;text-align:center}
+.pv-back{display:inline-flex;align-items:center;gap:6px;margin:0 0 8px;font-size:13px;font-weight:600;color:#5E545A}
+/* 3c · green summary row */
+.kbb-checkout .summary .cosr.pv-green{background:#EEF8F1;border-radius:9px;padding:0 12px;border-bottom-color:transparent!important;min-height:52px}
+.kbb-checkout .cosr.pv-green .cosr-ic{background:#fff;color:#1f7d52}
+.pv-strike{font-weight:500;color:#9a9298;text-decoration:line-through;margin-inline-end:6px;font-size:13px}
+/* 3d · coupon field inside the summary, a little shorter */
+.pv-cfield{display:flex;gap:8px;margin:12px 0 4px}
+.pv-cfield .fld{flex:1;min-width:0}
+.pv-cfield .fld input{padding-top:calc(15px + var(--fld-gap,3px));padding-bottom:5px;min-height:0;height:44px}
+.pv-cfield .apply{height:44px;background:#2A2228;color:#fff;border:0;border-radius:10px;padding:0 18px;font-weight:700;font-size:13px;cursor:pointer}
+.pv-cfield + .pv-chip{margin:8px 0 2px}
+.pv-savings{display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:4px;font-size:12.5px;font-weight:600;color:#8a8288}
+.pv-savings svg{color:#8a8288}
+.sumrow.disc.pv-disc{color:#1f7d52}
+.sumrow.disc.pv-disc .pv-dcode{font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#2A2228;margin-inline-start:4px}
+/* 4 · email first, account line under Country */
+.pv-hint{margin:-4px 0 10px 4px;font-size:11.5px;color:#8a8288}
+.pv-clear{margin-inline-start:12px;font-size:12px;font-weight:500;color:#8a8288;text-decoration:underline;white-space:nowrap}
+/* 6 · secure line under Payment */
+.pv-h2t{display:flex;flex-direction:column;gap:3px;line-height:1.15}
+.pv-h2t small{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:#5E545A;letter-spacing:0}
+.pv-h2t small svg{color:#2E9E6B;flex:none}
+/* 7 · bottom block: Total only, arrow, savings */
+.pv-only .cotot>.sumrow:not(.tot):not(.vat-note),.pv-only .cotot>.js-coupons{display:none!important}
+.pv-only .cotot.pv-open>.sumrow:not(.tot):not([hidden]):not(.js-fee-row):not(.vat-add),.pv-only .cotot.pv-open>.js-coupons{display:flex!important}
+.pv-only .cotot.pv-open>.js-coupons{display:block!important}
+.kbb-checkout:has(#payment_method_cod:checked) .pv-only .cotot.pv-open>.js-fee-row{display:flex!important}
+.pv-novat .cotot>.vat-note{display:none!important}
+.pv-only .cotot>.sumrow.tot{border-top:0;margin-top:0;padding-top:0}
+.pv-arrow{display:inline-grid;place-items:center;width:26px;height:26px;margin-inline-start:4px;border:0;border-radius:50%;background:#EEF8F1;color:#1f7d52;cursor:pointer;padding:0;vertical-align:middle;transition:transform .2s}
+.pv-open .pv-arrow{transform:rotate(180deg)}
+.pv-sumbox{display:none;margin-bottom:12px;padding-bottom:6px;border-bottom:1px dashed #e7dde2}
+.pv-open .pv-sumbox{display:block}
+.pv-mk.r{inset-inline-start:auto;inset-inline-end:-6px}
+.kbb-checkout .co-head .pv-cart svg{width:24px!important;height:24px!important}
+.kbb-cartpage .cobtn.pv-black{display:flex!important}
+.kbb-checkout .pv-arrow{background:#EEF8F1!important;color:#1f7d52!important}
+.kbb-checkout .pv-si{display:flex;align-items:center;gap:6px;margin:-2px 0 12px;font-size:12.5px;color:#8a8288}
+.kbb-checkout .pv-si .co-signin{display:inline-flex;align-items:center;gap:4px;font-weight:600;color:#2A2228;text-decoration:underline}
+.kbb-checkout .pv-si .co-signin svg{width:14px;height:14px}
+.pv-mk.m{top:1px;inset-inline-start:3px;height:18px;min-width:18px;font-size:10.5px;line-height:18px;padding:0 5px}
+.pv-ov .cpg-was{display:inline!important;text-decoration:line-through;color:#9a9298;font-weight:500;font-size:13px}
+.pv-ov .tr b{display:inline!important}
