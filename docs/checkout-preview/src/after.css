@@ -146,3 +146,15 @@
 @media (max-width:899px){
  .kbb-checkout .summary.pv-sg.cosr-open .cosr.pv-green{width:100vw!important;max-width:none;margin-inline:calc(50% - 50vw) 0!important;padding-inline:calc(50vw - 50% + 2px)!important;border-radius:0;box-sizing:border-box}
 }
+/* one even gap (16px) between the header, the summary box and Delivery Information */
+@media (max-width:899px){
+ .kbb-checkout .co-grid.pv-grid{row-gap:0!important;padding-top:var(--pv-gap,16px)!important}
+ .kbb-checkout .co-grid.pv-grid>*{margin-top:0!important}
+ .kbb-checkout .summary.pv-sg{margin-block:0 var(--pv-gap,16px)!important;top:0!important}
+}
+/* every step of the form ends with the same space before the next heading */
+.kbb-checkout #customer_details>.sec.pv-sec{padding-bottom:var(--pv-step,18px)!important}
+.kbb-checkout #customer_details>.sec.pv-sec>:last-child,.kbb-checkout #customer_details>.sec.pv-sec>:last-child>:last-child{margin-bottom:0!important}
+.kbb-checkout #customer_details>.sec.pv-sec>.kbb-acct:last-child,.kbb-checkout #customer_details>.sec.pv-sec>#kbbReturning:empty{margin-bottom:0!important}
+.kbb-checkout #customer_details>.sec.pv-sec>#kbbReturning:empty{display:none}
+.kbb-checkout #customer_details>.sec.pv-sec>.pv-last,.kbb-checkout .pv-flds.pv-sec>.form-row.pv-last{margin-bottom:0!important}

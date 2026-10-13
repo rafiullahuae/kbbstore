@@ -138,8 +138,10 @@ var ITEMS = [
     opts:[{k:'chip', l:'Coupon tag style (same as the cart page)', c:[['A','A · White tag'],['B','B · Dashed ticket'],['C','C · Plain line']]}] },
   { id:'4', page:'checkout', title:'Contact merged into Delivery Information',
     said:'“The contact section i want to remove. The email will go above the name field, the sign in row will be in the heading row, rename to Delivery Information, remove the Remember tick, it should work silently… bring the create account line here.”',
-    done:['Your choice in the admin: Emirate and Country in ONE row, or in TWO rows (switch below)', 'Every field in this section now has the same 10px gap. Area / Street no longer touches the row under it', 'Country shows “U.A.E” on the page only. The order, emails, invoices and admin keep “United Arab Emirates”'],
-    opts:[{k:'rows', l:'Emirate and Country', c:[['one','One row, side by side'],['two','Two rows, one under the other']]}],
+    done:['The space above Delivery Information is back, the same as above the order summary (16px)', 'Every step ends with the same space before the next heading', 'Two new sliders below to adjust these spaces; both will be in the admin', 'Your choice in the admin: Emirate and Country in ONE row, or in TWO rows (switch below)', 'Every field in this section now has the same 10px gap. Area / Street no longer touches the row under it', 'Country shows “U.A.E” on the page only. The order, emails, invoices and admin keep “United Arab Emirates”'],
+    opts:[{k:'gap', l:'Space between the boxes (top bar, order summary, Delivery Information)', range:[8, 32]},
+          {k:'step', l:'Space at the end of each step (before Delivery, before Payment)', range:[10, 32]},
+          {k:'rows', l:'Emirate and Country', c:[['one','One row, side by side'],['two','Two rows, one under the other']]}],
     changes:[['4','“1 Contact” is removed; sections renumber'],['4','Heading “Delivery Information”, with “Already a member? / Sign in” on the right'],['4b','Email address is the first field, with the grey line under it'],['4f','“Remember my shipping details” tick is removed; details still save on the shopper’s own phone, silently'],['4g','Emirate and Country in one row or two, Country reads “U.A.E”'],['4f','“Create an account for faster checkout next time” sits under that row']] },
   { id:'5', page:'checkout', title:'Free-delivery line only when not free', small:1,
     said:'“If the user is getting free delivery, then this line should not show, it should only display if user order is below 199.” And: “we don’t offer free delivery with coupon.”',
@@ -173,7 +175,7 @@ var ITEMS = [
 ];
 
 // His answers of 13 October are the starting point.
-var DEF = { rows:'one', cont:'off', contUrl:'/', si:'right', btn:'A', btnCase:'caps', btnSize:14, chip:'B', chipX:true, ovAfter:true, back:false, badge:false, clear:false, hint:true, dname:false, vat:true, payAmt:false, ssl:'B' };
+var DEF = { gap:16, step:18, rows:'one', cont:'off', contUrl:'/', si:'right', btn:'A', btnCase:'caps', btnSize:14, chip:'B', chipX:true, ovAfter:true, back:false, badge:false, clear:false, hint:true, dname:false, vat:true, payAmt:false, ssl:'B' };
 var DEFANS = { '2':{s:'ok'}, '5':{s:'ok'}, '6':{s:'ok'}, '8':{s:'ok'} };
 var st = { page:'cart', mode:'after', view:'phone', coupon:false, small:false, marks:true, pay:'', o:Object.assign({}, DEF), ans:JSON.parse(JSON.stringify(DEFANS)) };
 try { var saved = JSON.parse(localStorage.getItem('kbb-cpv4') || 'null'); if (saved) { st.o = Object.assign({}, DEF, saved.o || {}); st.ans = saved.ans || {}; } } catch (e) {}
@@ -280,7 +282,7 @@ function draw(){
       if (t.dataset.a) { var cur = st.ans[it.id] || {}; cur.s = cur.s === t.dataset.a ? '' : t.dataset.a; st.ans[it.id] = cur; save(); draw(); }
     });
     el.addEventListener('input', function(e){ var k = e.target.dataset.rk; if (k) { var b = el.querySelector('[data-rv="' + k + '"]'); if (b) b.textContent = e.target.value + 'px'; } });
-    el.addEventListener('change', function(e){ var tk = e.target.dataset.tk; if (tk) { st.o[tk] = e.target.value.trim() || '/'; save(); summary(); point(it, '10', true); return; } var rk = e.target.dataset.rk; if (rk) { st.o[rk] = +e.target.value; save(); summary(); point(it, it.changes[it.changes.length - 1][0], true); return; } var k = e.target.dataset.sk; if (k) { st.o[k] = e.target.checked; save(); point(it, it.changes[0][0], true); summary(); } });
+    el.addEventListener('change', function(e){ var tk = e.target.dataset.tk; if (tk) { st.o[tk] = e.target.value.trim() || '/'; save(); summary(); point(it, '10', true); return; } var rk = e.target.dataset.rk; if (rk) { st.o[rk] = +e.target.value; save(); summary(); point(it, it.id === '4' ? '4' : it.changes[it.changes.length - 1][0], true); return; } var k = e.target.dataset.sk; if (k) { st.o[k] = e.target.checked; save(); point(it, it.changes[0][0], true); summary(); } });
     el.addEventListener('input', function(e){ if (e.target.hasAttribute('data-n')) { (st.ans[it.id] = st.ans[it.id] || {}).n = e.target.value; save(); summary(); } });
     list.appendChild(el);
   });

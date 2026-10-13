@@ -380,3 +380,17 @@ Confirmed: 2, 5, 6, 8. Not yet checked: 1, 3, 9.
 - 10 (new): cart page "Continue shopping" OFF; admin switch + editable target
   (default `/`, the homepage; today it points to /shop/). Appearance → Cart
   page. Scheme-check the setting before it becomes an href (CLAUDE.md rule 5).
+
+## Round 5 (13 Oct): spacing
+
+- With the coupon box and the title gone, the summary box sat OVER Delivery
+  Information on a phone (-4px): `.kbb-checkout .summary` is `position:sticky;
+  top:18px`, which on a phone layout became an 18px push down. Build: top 0 on
+  the phone layout, and one even gap between header / summary / Delivery
+  Information (default 16px).
+- Each step of the form ends with the same space before the next heading
+  (default 18px; the account line used to add 10px more).
+- Both spaces are admin sliders (his words: "give option to adjust the
+  spacing between sections"): Appearance → Checkout page → Layout, "Space
+  between boxes" 8–32px and "Space at the end of each step" 10–32px. A select
+  or number stores only its own range (CLAUDE.md rule 5).

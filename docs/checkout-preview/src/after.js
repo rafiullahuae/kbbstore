@@ -116,7 +116,7 @@
   var tbar = $('.co-titlebar');
   if (o.back) tbar.replaceWith(h('<a class="pv-back pv-cart-back" href="#">' + ICON.back + 'Back to bag</a>')); else tbar.remove();
   // 3c green summary row
-  row.classList.add('pv-green'); aside.classList.add('pv-sg');
+  row.classList.add('pv-green'); aside.classList.add('pv-sg'); aside.parentElement.classList.add('pv-grid');
   // 3d coupon field into the summary, the box goes
   var crow = $('.crow', cbox), items = $('.co-items', aside);
   crow.className = 'pv-cfield';
@@ -175,6 +175,9 @@
   if (rem) rem.remove();
   contact.remove();
   $$('#customer_details > .sec').forEach(function (s, i) { var n = $('h2 .n', s); if (n) n.textContent = i + 1; });
+  $$('#customer_details > .sec').forEach(function (s) { s.classList.add('pv-sec'); var vis = Array.prototype.filter.call(s.children, function (k) { return !k.hidden && k.id !== 'kbbReturning'; }); if (vis.length) vis[vis.length - 1].classList.add('pv-last'); });
+  d.documentElement.style.setProperty('--pv-gap', (+o.gap || 16) + 'px');
+  d.documentElement.style.setProperty('--pv-step', (+o.step || 18) + 'px');
   mk(h2, '4', 2); mk(email, '4b'); mk(r2 || $('#billing_state_field', ship), '4g'); mk(acct, '4f');
 
   // 5 the free-delivery line hides when this bag already gets free delivery
