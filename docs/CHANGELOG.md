@@ -3,6 +3,22 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.496
+**Urgent: the Express checkout row (Apple Pay and Google Pay, under the summary) is back exactly as it was, and Apple Pay is also in the payment list. Plus the summary width, the Apple Pay mark, the Emirate list in English and no “Detected” badge.** Apply after .495.
+Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "The Express Checkout section is completely gone ... i have told you that do not touch that" / "express checkout will also show, and also the apple pay only in the list too" | The Express checkout row is drawn and works exactly as before 2.60.495 — heading, Apple Pay and Google Pay, the OR line (its code is byte for byte the old one, and a test pins that). Apple Pay is ALSO method no. 2 in the payment list, on Apple devices only, as its own separate Stripe button; choosing it puts the black Apple Pay button where Pay now was. Same Stripe card payment, same checks. Switch: Appearance → Checkout page → 13 October layout → "Apple Pay also in the payment list" |
+| "i don't want the summary inner content as full width, just the title row" | On a phone only the "Order summary" row runs edge to edge; the items, coupon field and totals line up with the form's fields and payment boxes (measured: both at 37–353px on a 390px phone) |
+| "the apple pay icon in the list not coming correct aligned, also the outer border going too wide" | The outlined Apple Pay mark now hugs its artwork (50×24px) and ends at the same right edge as the Tabby, Tamara and card logos, centred in its row |
+| "the countries list i would like in english only for now" | The Emirate / State list shows English names only ("Dubai", "Ras al Khaimah"), also after changing country. What is stored on the order is the same English name as before. Switch: Appearance → Checkout page → 13 October layout → "Emirate list language". The Arabic shop (/ar/) keeps both languages |
+| "remove the detected badge for now" | The small green "Detected" beside Country is gone; the country is still detected and filled in. Switch: Appearance → Checkout page → 13 October layout → "Show the “Detected” badge beside Country" |
+
+"Put back as before 2.60.495" also puts back both languages in the Emirate list and the Detected badge.
+
+Files: resources/views/partials/checkout/express-wallets.blade.php, address-fields-list.blade.php, address-fields.blade.php, app/Services/CheckoutPage.php, CheckoutLayout.php, app/Support/AddressRegions.php, resources/css/kbb/kbb-checkout.css, public/build, migration 2027_10_31_100000.
+
 ## 2.60.495
 **The new cart and checkout you confirmed on 13 October — on as soon as it is applied, with one button to put the old ones back.** Apply after .494.
 Runs its migrations (keeps your current cart button wording for the way back, adds the Arabic drafts, clears caches). Then Cloudways → Application Settings → Varnish → Purge.
