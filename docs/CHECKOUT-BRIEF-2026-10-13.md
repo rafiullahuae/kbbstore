@@ -343,3 +343,24 @@ Preview: https://claude.ai/artifact/2Tq8LQW5brrpqgrdynu5Pz (sources in
 7. VAT line kept, placed directly under the word "Total" (left column). Amount
    on the button NO.
 8. "SSL secure" → B "Safe checkout".
+
+## Round 3 answers (13 Oct) — final preview
+
+Confirmed: 2, 5, 6, 8 (Safe checkout). Item 1: lock, CAPITALS, 14px.
+- 3: green summary background runs the full phone width (edge to edge); its
+  content keeps the normal width when opened. Space under the coupon field;
+  field and Apply the same height (46px).
+- 4: Emirate and Country in ONE row (Area / Street gets its own row). Country
+  DISPLAYS "U.A.E" (option text only); value `AE` and the full name "United
+  Arab Emirates" stay everywhere else (orders, emails, invoices, admin). Grep
+  every place the country name is printed before building.
+- 7: "Order summary" heading at the top of the bottom box with the arrow on its
+  right (his reference: Shopify-style). Open = items, coupon field, Subtotal /
+  discount / Delivery rows, Total. Total + VAT + savings always visible.
+- 9 (new): Apple Pay ONLY (no Google Pay), as payment method no. 2 under
+  Credit / Debit Card, with the outlined Apple Pay mark (his reference). The
+  Express checkout box after the summary goes. Choosing it swaps Pay now for
+  the black Apple Pay button. PAYMENTS-FROZEN: express-wallets / Stripe ECE
+  (`WalletPaymentsTest`, `WalletMoneyPathTest`, `AppleDomainFileTest`) —
+  same PaymentIntent, googlePay 'never', row hidden where Apple Pay is not
+  available. Needs a real Apple Pay test on his iPhone before release.

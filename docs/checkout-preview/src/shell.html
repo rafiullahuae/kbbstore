@@ -90,7 +90,7 @@ textarea{width:100%;min-height:70px;border:1.5px solid var(--line);border-radius
 
 <header class="top">
   <h1>Your cart &amp; checkout, with your answers</h1>
-  <p>This is your real cart and checkout page with your products. This version has your answers in it: each item shows what I changed from your notes. Purple numbers show where each change sits. Tap a number to jump to it. Nothing on the live shop changes until you confirm.</p>
+  <p>This is your real cart and checkout page with your products. Final version with all your answers. Each item shows what I changed from your notes. Items you confirmed are already marked. Purple numbers show where each change sits. Tap a number to jump to it. Nothing on the live shop changes until you confirm.</p>
 </header>
 
 <div class="bar" role="toolbar" aria-label="Preview controls">
@@ -118,7 +118,7 @@ var AFTER_CSS = /*AFTER_CSS*/'';
 var ITEMS = [
   { id:'1', page:'cart', title:'Totals box and the checkout button',
     said:'“The order value should come in the greenish box, and the order total row will be removed. The Proceed to Checkout will become > SECURE CHECKOUT and the button background will be dark black.” And: “Shipping calculated at checkout” in grey under Order Value.',
-    done:['Button text: choose CAPITALS or Normal', 'Button text size: slider below'],
+    done:['Your picks: lock, CAPITALS, 14px'],
     changes:[['1','Order Value (7 items) moves into the light green box'],['1','The “Order Total” row is removed'],['1','New grey line under it: “Shipping calculated at checkout”'],['1c','The bottom button says Secure checkout, on dark black, with the lock']],
     opts:[{k:'btn', l:'Button look', c:[['A','🔒 with the lock'],['B','with › at the end'],['C','text only']]},
           {k:'btnCase', l:'Button text', c:[['caps','SECURE CHECKOUT'],['normal','Secure checkout']]},
@@ -132,13 +132,13 @@ var ITEMS = [
           {k:'ovAfter', l:'Order Value with a coupon', c:[[true,'After the coupon (same as the bottom bar)'],[false,'Before the coupon']]}] },
   { id:'3', page:'checkout', title:'Header, title and the order summary', coupon:1,
     said:'“Remove the secure checkout green text beside the logo and place there cart icon… remove the checkout page title and description… Order summary row… same greenish box… bring the coupon field inside order summary… reduce the height.”',
-    done:['The whole order summary is one green box, full width, with no white around it', 'The old price sits small ABOVE the total, not beside it', 'Bigger “Order summary” text and total', 'Apple Pay / Google Pay stay right after the summary box, as today (drawn here as black buttons; on the shop they are Stripe’s own and are not touched)'],
+    done:['The green background now runs the full width of the phone screen; opened, the items, field and rows keep the normal width', 'The coupon field and Apply are the same height (46px), with space under them', 'The Express checkout box is gone from here: Apple Pay is now payment method no. 2 (item 9)'],
     changes:[['3a','“Secure checkout” goes; a bag icon goes to the cart page'],['3b','The “Checkout” title, “Almost glowing…” line and the round back arrow are removed'],['3c','The order summary is a light green box'],['3d','The pink coupon box is gone. The field and Apply sit inside the summary (tap the row to open it), a little shorter'],['3e','With a coupon: a ticket with ×, an “Order discount” row, the old total small above, and “Total savings”']],
     opts:[{k:'chip', l:'Coupon tag style (same as the cart page)', c:[['A','A · White tag'],['B','B · Dashed ticket'],['C','C · Plain line']]}] },
   { id:'4', page:'checkout', title:'Contact merged into Delivery Information',
     said:'“The contact section i want to remove. The email will go above the name field, the sign in row will be in the heading row, rename to Delivery Information, remove the Remember tick, it should work silently… bring the create account line here.”',
-    done:['“Delivery Information” stays on ONE line', '“Already a member?” sits above “Sign in” on the right; the heading row is a little taller', 'Grey line under Email: “We send your order confirmation here.”'],
-    changes:[['4','“1 Contact” is removed; sections renumber'],['4','Heading “Delivery Information”, with “Already a member? / Sign in” on the right'],['4b','Email address is the first field, with the grey line under it'],['4f','“Remember my shipping details” tick is removed; details still save on the shopper’s own phone, silently'],['4f','“Create an account for faster checkout next time” sits under Country']] },
+    done:['Emirate and Country sit side by side in one row; Area / Street gets its own row', 'Country shows “U.A.E” on the page only. The order, emails, invoices and admin keep “United Arab Emirates”'],
+    changes:[['4','“1 Contact” is removed; sections renumber'],['4','Heading “Delivery Information”, with “Already a member? / Sign in” on the right'],['4b','Email address is the first field, with the grey line under it'],['4f','“Remember my shipping details” tick is removed; details still save on the shopper’s own phone, silently'],['4g','Emirate and Country in one row, Country reads “U.A.E”'],['4f','“Create an account for faster checkout next time” sits under that row']] },
   { id:'5', page:'checkout', title:'Free-delivery line only when not free', small:1,
     said:'“If the user is getting free delivery, then this line should not show, it should only display if user order is below 199.” And: “we don’t offer free delivery with coupon.”',
     done:['Turn on “Bag under AED 199” at the top to see a real small bag (AED 135 + AED 20 delivery): the line shows', 'The line follows the same rule as the delivery price: whenever the shopper is NOT getting free delivery, it shows'],
@@ -149,21 +149,27 @@ var ITEMS = [
     changes:[['6','“100% secure & encrypted — Use any card” is removed from the card box'],['6','Under “Payment”: a green lock and “All transactions are secure & encrypted”']] },
   { id:'7', page:'checkout', title:'Bottom box: Total only, savings and the button', coupon:1,
     said:'“Turn off the pictures row completely, remove the sub total rows, only keep the Total row… coupon icon, Total saving… down arrow will open the order summary… Cash on Delivery: Complete Order… any other: Pay now.”',
-    done:['“5% VAT inclusive” now sits right under the word “Total”'],
-    changes:[['7','The “Your bag” pictures row is off'],['7','Subtotal, coupon and Delivery rows are gone; only Total stays'],['7','A down arrow beside the total opens the full summary right there'],['7','With a coupon: grey tag icon and “Total savings” under the amount'],['7f','Cash on delivery shows “Complete Order”; card, Tabby and Tamara show “Pay now” (tap a payment method in the preview)']],
+    done:['“Order summary” heading at the top of the box, with the arrow on its right (like your reference)', 'Tap it to open: the items, the coupon field, Subtotal / Delivery rows, then Total', 'The Total, VAT line and savings always show'],
+    changes:[['7','The “Your bag” pictures row is off'],['7','Subtotal, coupon and Delivery rows are gone; only Total stays'],['7','“Order summary ⌄” at the top opens the full summary right there'],['7','With a coupon: grey tag icon and “Total savings” under the amount'],['7f','Cash on delivery shows “Complete Order”; card, Tabby and Tamara show “Pay now” (tap a payment method in the preview)']],
     note:'On a laptop the order summary is always open on the right, so its rows stay there.' },
   { id:'8', page:'checkout', title:'New words for “SSL secure”',
     said:'“I need to change the SSL secure to something else, suggest me few options.”',
     done:['Your pick: B · Safe checkout'],
     changes:[['8','The lock icon stays; “✓ 100% authentic” beside it stays']],
     opts:[{k:'ssl', l:'Pick the words', c:[['A','A · Secure payment'],['B','B · Safe checkout'],['C','C · Protected payment'],['D','D · Encrypted & secure'],['E','E · Your data is safe']]}] }
+,
+  { id:'9', page:'checkout', title:'Apple Pay as payment method no. 2',
+    said:'“I need the APPLE PAY only, with same icon. Not google pay! … payment option inside the payment methods again, on no 2, under stripe card payment method.”',
+    done:['New', 'Tap “Apple Pay” in the preview: the button becomes the black Apple Pay button'],
+    changes:[['9','Apple Pay sits second, right under Credit / Debit Card, with the Apple Pay mark'],['9','Google Pay is not shown anywhere'],['9','The Express checkout box after the summary is removed'],['9','Shows only on iPhone, iPad and Mac with Apple Pay; other phones never see the row'],['9','Apple Pay still pays through the same Stripe card payment as today. The payment code is not rewritten']] }
 ];
 
 // His answers of 13 October are the starting point.
-var DEF = { si:'right', btn:'A', btnCase:'caps', btnSize:15, chip:'B', chipX:true, ovAfter:true, back:false, badge:false, clear:false, hint:true, dname:false, vat:true, payAmt:false, ssl:'B' };
-var st = { page:'cart', mode:'after', view:'phone', coupon:false, small:false, marks:true, pay:'', o:Object.assign({}, DEF), ans:{} };
-try { var saved = JSON.parse(localStorage.getItem('kbb-cpv2') || 'null'); if (saved) { st.o = Object.assign({}, DEF, saved.o || {}); st.ans = saved.ans || {}; } } catch (e) {}
-function save(){ try { localStorage.setItem('kbb-cpv2', JSON.stringify({ o:st.o, ans:st.ans })); } catch (e) {} }
+var DEF = { si:'right', btn:'A', btnCase:'caps', btnSize:14, chip:'B', chipX:true, ovAfter:true, back:false, badge:false, clear:false, hint:true, dname:false, vat:true, payAmt:false, ssl:'B' };
+var DEFANS = { '2':{s:'ok'}, '5':{s:'ok'}, '6':{s:'ok'}, '8':{s:'ok'} };
+var st = { page:'cart', mode:'after', view:'phone', coupon:false, small:false, marks:true, pay:'', o:Object.assign({}, DEF), ans:JSON.parse(JSON.stringify(DEFANS)) };
+try { var saved = JSON.parse(localStorage.getItem('kbb-cpv3') || 'null'); if (saved) { st.o = Object.assign({}, DEF, saved.o || {}); st.ans = saved.ans || {}; } } catch (e) {}
+function save(){ try { localStorage.setItem('kbb-cpv3', JSON.stringify({ o:st.o, ans:st.ans })); } catch (e) {} }
 
 var frame = document.getElementById('frame'), screen = document.getElementById('screen'), wrap = document.getElementById('wrap');
 var pending = null, keepY = 0;

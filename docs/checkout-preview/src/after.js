@@ -12,6 +12,7 @@
     lock: function (s) { return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'; },
     cart: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>',
     down: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+    apple: '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>',
     back: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>'
   };
   var marks = [];
@@ -43,12 +44,12 @@
     var t = e.target.closest ? e.target : null;
     if (!t) return;
     if (t.closest('[data-pv-uncoupon]')) { e.preventDefault(); tell({ coupon: false }); return; }
-    if (t.closest('#kbb_apply_coupon')) { e.preventDefault(); tell({ coupon: true }); return; }
+    if (t.closest('#kbb_apply_coupon, [data-pv-apply]')) { e.preventDefault(); tell({ coupon: true }); return; }
     if (t.closest('.pv-cart')) { e.preventDefault(); tell({ go: 'cart' }); return; }
     if (t.closest('a.cobtn')) { e.preventDefault(); tell({ go: 'checkout' }); return; }
     var sum = t.closest('#kbbSumRow');
     if (sum) { var a = $('#kbbSummary'); a.classList.toggle('open'); a.classList.toggle('cosr-open'); return; }
-    var ar = t.closest('.pv-arrow');
+    var ar = t.closest('.pv-arrow, .pv-osh');
     if (ar) { ar.closest('.cotot').classList.toggle('pv-open'); return; }
     if (t.closest('a[href="#"]')) e.preventDefault();
   });
@@ -90,7 +91,7 @@
   var aside = $('#kbbSummary'), row = $('#kbbSumRow'), cbox = $('.kbb-checkout .coupon');
   var mob = $('.kbb-mobile-order');
   var form = $('#customer_details');
-  if (form) form.insertAdjacentHTML('beforebegin', '<div class="pv-xc"><p class="co-xc-h">Express checkout</p><div class="pv-wallets"><span class="pv-w">Apple Pay</span><span class="pv-w">Google Pay</span></div><p class="pv-xnote">Apple Pay / Google Pay: as today, unchanged (shows only on phones that support it)</p><div class="ordiv co-xc-or">OR</div></div>');
+  if (form && !S.after) form.insertAdjacentHTML('beforebegin', '<div class="pv-xc"><p class="co-xc-h">Express checkout</p><div class="pv-wallets"><span class="pv-w">Apple Pay</span><span class="pv-w">Google Pay</span></div><p class="pv-xnote">Apple Pay / Google Pay: as today, unchanged (shows only on phones that support it)</p><div class="ordiv co-xc-or">OR</div></div>');
   if (!S.after) {
     mk($('.co-head .secure'), '3a'); mk($('.co-titlebar'), '3b'); mk(row, '3c'); mk(cbox, '3d');
     mk(sec[0] && sec[0].firstElementChild, '4'); mk($('#kbb_remember_field'), '4e');
@@ -154,12 +155,15 @@
   if (o.hint) email.insertAdjacentElement('afterend', h('<p class="pv-hint">We send your order confirmation here.</p>'));
   var rem = $('#kbb_remember_field', ship);
   var country = $('#billing_country_field', ship);
-  country.insertAdjacentElement('afterend', acct);
+  var r2 = $('.row2', ship), a2 = $('#billing_address_2_field', ship);
+  if (r2 && a2) { r2.parentNode.insertBefore(a2, r2); r2.appendChild(country); r2.classList.add('pv-r2'); }
+  var ae = $('#billing_country option[value="AE"]'); if (ae) ae.textContent = 'U.A.E';
+  (r2 || country).insertAdjacentElement('afterend', acct);
   if (ret) acct.insertAdjacentElement('afterend', ret);
   if (rem) rem.remove();
   contact.remove();
   $$('#customer_details > .sec').forEach(function (s, i) { var n = $('h2 .n', s); if (n) n.textContent = i + 1; });
-  mk(h2, '4', 2); mk(email, '4b'); mk(acct, '4f');
+  mk(h2, '4', 2); mk(email, '4b'); mk(r2 || country, '4g'); mk(acct, '4f');
 
   // 5 the free-delivery line hides when this bag already gets free delivery
   var dn = $('#kbbDeliveryNote');
@@ -179,23 +183,37 @@
   });
   mk(ph, '6', 2);
 
+  // 9 Apple Pay as payment method no. 2 (Google Pay not offered)
+  var card = $('.payment_method_stripe');
+  if (card) {
+    card.insertAdjacentHTML('afterend', '<li class="wc_payment_method payment_method_applepay pay-brand"><input id="payment_method_applepay" type="radio" class="input-radio" name="payment_method" value="applepay"><label for="payment_method_applepay"> Apple Pay <span class="pv-apm">' + ICON.apple + 'Pay</span></label><div class="payment_box payment_method_applepay"><p>Pay with Face ID or Touch ID. Shown only on iPhone, iPad and Mac with Apple Pay.</p></div></li>');
+    mk($('.payment_method_applepay'), '9', 1);
+  }
+  $$('[data-place]').forEach(function (b) { b.insertAdjacentHTML('afterend', '<button type="button" class="pv-apbtn" aria-label="Pay with Apple Pay">' + ICON.apple.replace(/12/g, '18') + 'Pay</button>'); });
+  if (S.pay === 'applepay') { var apr = d.getElementById('payment_method_applepay'); if (apr) apr.checked = true; }
+
   // 7 bottom block: no pictures, Total only + arrow + savings
   var th = $('.kbb-thumbs-slot', mob); if (th) th.remove();
   var mt = $('.cotot', mob);
   mob.classList.add('pv-only'); if (!o.vat) mob.classList.add('pv-novat');
   var box = h('<div class="pv-sumbox"></div>');
   box.appendChild(items.cloneNode(true));
+  var cf = crow.cloneNode(true);
+  $$('[id]', cf).forEach(function (n) { n.removeAttribute('id'); });
+  $$('label[for]', cf).forEach(function (n) { n.removeAttribute('for'); });
+  var ab = $('.apply', cf); if (ab) ab.setAttribute('data-pv-apply', '');
+  box.appendChild(cf);
+  if (discRow) box.insertAdjacentHTML('beforeend', chip(code, off));
   mt.insertBefore(box, mt.firstChild);
+  mt.insertBefore(h('<button type="button" class="pv-osh" aria-label="Show or hide the order summary"><span>Order summary</span>' + ICON.down + '</button>'), mt.firstChild);
   $$('.sumrow.tot', mt).forEach(function (r) {
-    r.lastElementChild.insertAdjacentHTML('afterend', '<button type="button" class="pv-arrow" aria-label="Show order summary">' + ICON.down + '</button>');
-    r.style.alignItems = 'center';
     var v = r.children[1]; v.style.marginInlineStart = 'auto';
     // VAT line sits right under the word "Total"
     if (o.vat) r.firstElementChild.insertAdjacentHTML('beforeend', '<small class="pv-vat">5% VAT inclusive</small>');
     r.firstElementChild.classList.add('pv-tl');
   });
   mob.classList.add('pv-novat');
-  mk(mt, '7', 1);
+  mk(mt, '7');
 
   // 7f button wording by method; 8 trust wording
   var SSL = { A: 'Secure payment', B: 'Safe checkout', C: 'Protected payment', D: 'Encrypted & secure', E: 'Your data is safe' }[o.ssl];
