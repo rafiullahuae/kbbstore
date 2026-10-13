@@ -24,6 +24,10 @@ CHECKOUT and the button background will be dark black."*
   (Open point to confirm: he wrote "> SECURE CHECKOUT" — the ">" may mean "change
   to", or a lock/arrow icon. Ask with the plan.)
 - 1d. That button's background becomes **dark black** (today: green).
+- 1e. Under the Order Value row (inside the green box), one line of **grey text:
+  "Shipping calculated at checkout"**. His words: *"under order value row on
+  the cart page, add one line grey text. 'Shipping calculated at checkout'"*.
+  (Wording editable in the admin; Arabic draft to add.)
 - Where: Appearance → Cart page (controls to add). Unchanged: payment marks row,
   "Secure checkout" line, the 7 items / AED 691 on the left of the bottom bar.
 
