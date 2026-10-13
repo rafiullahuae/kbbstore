@@ -224,3 +224,52 @@ Plan notes (from the code, 13 Oct):
   in Appearance → Checkout page; it shows whatever payment method is chosen.
 - Fits item 4's renumbering (Payment's number changes when Contact goes).
 
+## 7. Checkout page — bottom order block: no pictures, Total only, savings, and the button wording  ☐
+Screenshot: `docs/checkout-brief/07-bottom-total-place-order.png` (the block
+under the payment methods: "Your bag · 7 items" pictures crossed out; Subtotal /
+glow – AED 35 / Delivery rows; "Total AED 656" underlined and ticked; Place
+order).
+
+His words: *"on the checkout page turned off the pictures row completely, remove
+the sub total rows. only keep the Total row, under the total value, add coupon
+icon, Total saving and saving value, in grey, same as attached. and if no coupon
+applied, then only total value with down arrow. The down arrow will open the
+order summary here again like the one we have on the checkout page top. AND if
+Cash on Delivery selected, the place order button text will become 'Complete
+Order' and upon any other payment methods, the place order will be permanently
+replaced to 'Pay now'"*
+
+- 7a. **"Your bag · 7 items" picture row: off** (completely).
+- 7b. **Remove the rows** above Total: Subtotal, the coupon row ("glow – AED
+  35"), Delivery. (VAT line "5% VAT inclusive": not mentioned — keep unless he
+  says; confirm with the plan.)
+- 7c. Keep only **Total — AED 656**.
+- 7d. **With a coupon:** under the total value, in grey: a **coupon icon +
+  "Total savings" + the saving** (as in the reference from item 3e, "TOTAL
+  SAVINGS AED 32.70" — his style).
+- 7e. **Without a coupon:** the total value **with a down arrow**; tapping it
+  **opens the order summary right there** (items, coupon field, rows — the same
+  content as the top "Order summary" of item 3), and up-arrow closes it.
+  (Confirm: with a coupon, does the arrow also show beside the total? Assumed
+  yes — the savings line sits under it.)
+- 7f. **Button wording by payment method:** Cash on delivery → **"Complete
+  Order"**; every other method (card, Tabby, Tamara, Apple/Google Pay) → **"Pay
+  now"**. "Place order" no longer appears. Applies to both buttons (this one and
+  the floating bar on phones). Arabic drafts for both.
+
+Plan notes (from the code, 13 Oct):
+- The block is `partials/checkout/order-block.blade.php` (rows ~line 66 on;
+  Place order button ~209, `data-place`) and the picture row
+  `partials/checkout/thumbs.blade.php` (in checkout.blade.php ~373). No switch
+  exists for the pictures yet: add one (ON = today), shipped OFF as he asked.
+- Totals stay the server's own; only which rows are drawn changes. The full
+  breakdown still exists in the opened summary (7e) and on the order emails.
+- Button wording: checkout.js and the placing overlay find the button by
+  `[data-place]` and never set its text (checked: placing-overlay only READS
+  it), so the label can change safely. The label is printed by the server for
+  the method selected on load and swapped on change by a few lines OUTSIDE
+  checkout.js (payments-frozen), also after the payment list is re-drawn on a
+  country change. Wording editable in Appearance → Checkout page.
+- Payment test set + real browser orders with each method (COD shows
+  "Complete Order"; card/Tabby/Tamara "Pay now"; the order still places).
+
