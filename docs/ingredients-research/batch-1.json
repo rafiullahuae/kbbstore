@@ -1,0 +1,954 @@
+[
+ {
+  "name": "CeraVe - Foaming Cleanser mini",
+  "url": "https://kbeautybliss.com/product/cerave-foaming-cleanser/",
+  "brand": "CeraVe",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "CeraVe - Moisturizing Cream Tube with Ceramides - 5ml",
+  "url": "https://kbeautybliss.com/product/cerave-moisturising-cream-tube-with-ceramides-for-dry-to-very-dry-skin/",
+  "brand": "CeraVe",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "d'Alba - White Truffle First Spray Serum 50ml",
+  "url": "https://kbeautybliss.com/product/dalba-white-truffle-first-spray-serum-mini/",
+  "brand": "d'Alba",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr. Ceuracle - Pro Balance Night Enzyme Wash",
+  "url": "https://kbeautybliss.com/product/dr-ceuracle-pro-balance-night-enzyme-wash/",
+  "brand": "Dr. Ceuracle",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Ceuracle -  Vegan Kombucha Tea Special Set",
+  "url": "https://kbeautybliss.com/product/dr-ceuracle-vegan-kombucha-tea-special-set/",
+  "brand": "Dr. Ceuracle",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Dr. Reju-All - Advanced LC-Ceramide Barrier Cream",
+  "url": "https://kbeautybliss.com/product/dr-reju-all-advanced-lc-ceramide-barrier-cream/",
+  "brand": "Dr.Reju-All",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr. Reju-All - Advanced PDRN Rejuvenating Cream 20ml",
+  "url": "https://kbeautybliss.com/product/dr-reju-all-advanced-pdrn-rejuvenating-cream-20ml/",
+  "brand": "Dr.Reju-All",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Reju-All - Advanced PDRN Rejuvenating Cream 20g",
+  "url": "https://kbeautybliss.com/product/dr-reju-all-advanced-pdrn-rejuvenating-cream-20g/",
+  "brand": "Dr.Reju-All",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Reju-All - Advanced PDRN Rejuvenating Lip Serum",
+  "url": "https://kbeautybliss.com/product/dr-reju-all-advanced-pdrn-rejuvenating-lip-serum/",
+  "brand": "Dr.Reju-All",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Esse Beauty - Gentle Exfoliating Face Scrub",
+  "url": "https://kbeautybliss.com/product/esse-beauty-gentle-exfoliating-face-scrub/",
+  "brand": "Esse Beauty",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "fwee\u00a0-\u00a0Lip&Cheek Blurry Pudding Pot\u00a0- Cherry",
+  "url": "https://kbeautybliss.com/product/fwee-lipcheek-blurry-pudding-pot-cherry/",
+  "brand": "fwee",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "fwee\u00a0-\u00a0Lip&Cheek Glowy Jelly Pot\u00a0- Compote",
+  "url": "https://kbeautybliss.com/product/fwee-lipcheek-glowy-jelly-pot-compote/",
+  "brand": "fwee",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "GOODAL Green Tangerine Vitamin C Moisturizing Eye Patch",
+  "url": "https://kbeautybliss.com/product/goodal-green-tangerine-vitamin-c-moisturizing-eye-patch/",
+  "brand": "Goodal",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "ilso - Deep Clean Master",
+  "url": "https://kbeautybliss.com/product/ilso-deep-clean-master/",
+  "brand": "ilso",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "ilso - Super Melting Sebum Softener",
+  "url": "https://kbeautybliss.com/product/ilso-super-melting-sebum-softener/",
+  "brand": "ilso",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "K-Beauty Bliss  Brightening Skincare Routine",
+  "url": "https://kbeautybliss.com/product/k-beauty-dark-spots-care-bundle/",
+  "brand": "K-Beauty Bliss  Brightening Skincare Routine",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Kose - Softymo Cleansing Oil",
+  "url": "https://kbeautybliss.com/product/kose-softymo-cleansing-oil/",
+  "brand": "Kose",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Laneige - Lip Glowy Balm - Blueberry",
+  "url": "https://kbeautybliss.com/product/laneige-lip-glowy-balm/",
+  "brand": "LANEIGE",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "LANEIGE - Lip Sleeping Mask - Berry",
+  "url": "https://kbeautybliss.com/product/laneige-lip-sleeping-mask-20g/",
+  "brand": "LANEIGE",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "LANEIGE - Lip Sleeping Mask EX Mini",
+  "url": "https://kbeautybliss.com/product/laneige-lip-sleeping-mask-ex-mini/",
+  "brand": "LANEIGE",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Laneige Lip Sleeping Mask - Grapefruit",
+  "url": "https://kbeautybliss.com/product/laneige-lip-sleeping-mask-grapefruit-20g/",
+  "brand": "LANEIGE",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Mary&May - Tranexamic Acid + Glutathione Eye Cream Mini",
+  "url": "https://kbeautybliss.com/product/marymay-tranexamic-acid-glutathione-eye-cream-mini/",
+  "brand": "Mary&May",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Mary&May - Vitamin B, C, E Cleansing Balm",
+  "url": "https://kbeautybliss.com/product/marymay-vitamin-b-c-e-cleansing-balm/",
+  "brand": "Mary&May",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - AGE-R Booster Pro - Pink Edition",
+  "url": "https://kbeautybliss.com/product/medicube-age-r-booster-pro-pink-edition/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - AGE-R Booster Pro Mini Pink",
+  "url": "https://kbeautybliss.com/product/medicube-age-r-booster-pro-mini-pink/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - AGE-R Booster Pro Mini Plus Pink",
+  "url": "https://kbeautybliss.com/product/medicube-age-r-booster-pro-mini-plus-pink/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - AGE-R Booster Pro Mini White",
+  "url": "https://kbeautybliss.com/product/medicube-age-r-booster-pro-mini-white/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - AGE-R Booster Pro X2 Pink",
+  "url": "https://kbeautybliss.com/product/medicube-age-r-booster-pro-x2-pink/",
+  "brand": "medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - AGE-R Booster Pro X2 Pink - Set (Pink)",
+  "url": "https://kbeautybliss.com/product/medicube-age-r-booster-pro-x2-pink-set/",
+  "brand": "medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Medicube - AGE-R Glutathione Glow Capsule Facial Cream",
+  "url": "https://kbeautybliss.com/product/medicube-age-r-glutathione-glow-capsule-facial-cream/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - AGE-R Glutathione Glow Toner",
+  "url": "https://kbeautybliss.com/product/medicube-age-r-glutathione-glow-toner/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - AGE-R PDRN Booster Gel",
+  "url": "https://kbeautybliss.com/product/medicube-age-r-pdrn-booster-gel/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - Collagen Booster Set",
+  "url": "https://kbeautybliss.com/product/medicube-collagen-booster-set/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Medicube - Collagen Booster Set - Pink Edition",
+  "url": "https://kbeautybliss.com/product/medicube-collagen-booster-set-pink-edition/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Medicube - Collagen Glow Booster Serum",
+  "url": "https://kbeautybliss.com/product/medicube-collagen-glow-booster-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - Collagen Glow Sunscreen",
+  "url": "https://kbeautybliss.com/product/medicube-collagen-glow-sunscreen/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Collagen Jelly Cream Mini",
+  "url": "https://kbeautybliss.com/product/medicube-collagen-jelly-cream-mini/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Collagen Lifting Mask",
+  "url": "https://kbeautybliss.com/product/medicube-collagen-lifting-mask/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Deep Lifting Peptide Eye Cream",
+  "url": "https://kbeautybliss.com/product/medicube-deep-lifting-peptide-eye-cream-for-face/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Deep Vita C Capsule Cream",
+  "url": "https://kbeautybliss.com/product/medicube-deep-vita-c-capsule-cream/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Deep Vita C Daily Quick Mask",
+  "url": "https://kbeautybliss.com/product/medicube-deep-vita-c-daily-quick-mask/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Deep Vita C Glutathione Brightening Mask",
+  "url": "https://kbeautybliss.com/product/medicube-deep-vita-c-glutathione-brightening-mask/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - EGF NAD Firming Gel Mask",
+  "url": "https://kbeautybliss.com/product/medicube-egf-nad-firming-gel-mask/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - EGF NAD Firming Serum",
+  "url": "https://kbeautybliss.com/product/medicube-egf-nad-firming-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Fresh Glow Travel Body Kit",
+  "url": "https://kbeautybliss.com/product/medicube-fresh-glow-travel-body-kit/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "medicube - Glutathione Glow Serum",
+  "url": "https://kbeautybliss.com/product/medicube-glutathione-glow-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Hyaluronic Moisturizing Capsule Cream",
+  "url": "https://kbeautybliss.com/product/medicube-hyaluronic-moisturizing-capsule-cream/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Hyaluronic Multi Peptide Serum",
+  "url": "https://kbeautybliss.com/product/medicube-hyaluronic-multi-peptide-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Hypochlorous Acid Daily Facial Spray",
+  "url": "https://kbeautybliss.com/product/medicube-hypochlorous-acid-daily-facial-spray/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - Jelly Gel Mask with Firming NAD EGF",
+  "url": "https://kbeautybliss.com/product/medicube-jelly-gel-mask-with-firming-nad-egf/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - Kojic Acid Glow Full Routine Set",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-glow-full-routine-set/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Medicube - Kojic Acid Turmeric Body Peel Shot",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-body-peel-shot/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - Kojic Acid Turmeric Booster Pro Set",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-booster-pro-set/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "medicube - Kojic Acid Turmeric Brightening Gel Mask",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-brightening-gel-mask/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Kojic Acid Turmeric Niacinamide Serum",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-niacinamide-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Kojic Acid Turmeric Night Wrapping Mask",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-night-wrapping-mask/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Kojic Acid Turmeric Pad",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-pad/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Kojic Acid Turmeric Resurfacing Toner",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-resurfacing-toner/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Kojic Acid Turmeric Toning Cleanser",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-toning-cleanser/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - Kojic Acid Turmeric Vita Brightening Body Wash",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-vita-brightening-body-wash/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Kojic Acid Turmeric Vita Capsule Cream",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-vita-capsule-cream/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Kojic Acid Turmeric Vita Eye Gel Serum",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-vita-eye-gel-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Kojic Acid Turmeric Vita Jelly Mist Serum",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-vita-jelly-mist-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - One Day Exosome Shot Pore Ampoule 7500",
+  "url": "https://kbeautybliss.com/product/medicube-one-day-exosome-shot-pore-ampoule-7500/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - PDRN Collagen Firm & Glow Set",
+  "url": "https://kbeautybliss.com/product/medicube-viral-pdrn-lift-and-firm-set/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Medicube - PDRN Collagen Gua Sha Neck Wrinkle Cream",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-collagen-gua-sha-neck-wrinkle-cream/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - PDRN Glow Booster Set (Black Edition)",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-glow-booster-set-black-edition/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Medicube - PDRN Glow Booster Set (Pink Edition)",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-glow-booster-set/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Medicube - PDRN Glow Booster Set - Mini",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-glow-booster-set-mini/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "medicube - PDRN Hydrating Gel Cleanser",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-hydrating-gel-cleanser/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - PDRN Hydrating UV Serum",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-hydrating-uv-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Lip Sleeping Mask",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-lip-sleeping-mask/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Caffeine Collagen Eye Patch",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-caffeine-collagen-eye-patch/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Caffeine Night Wrapping Mask",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-caffeine-night-wrapping-mask/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Cica Soothing Toner",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-cica-soothing-toner/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Collagen Bubble Serum",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-collagen-bubble-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Collagen Capsule Cream",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-collagen-capsule-cream/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Collagen Exosome Shot Serum 2000",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-collagen-exosome-shot-serum-2000/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Collagen Exosome Shot Serum 7500",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-collagen-exosome-shot-serum-7500/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - PDRN Pink Collagen Gel Mask",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-collagen-gel-mask/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Collagen Glow Jelly Mist Serum",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-collagen-glow-jelly-mist-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Collagen Jelly Eye Mask - 6 pairs",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-collagen-jelly-eye-mask-6-pairs/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Collagen Toning Gel Toner Pad",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-collagen-toning-gel-toner-pad/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - PDRN Pink Collagen Volume Multi Balm",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-collagen-volume-multi-balm/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Glutathione Serum Mist",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-glutathione-serum-mist/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Hyaluronic Moisturizing Cream",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-hyaluronic-moisturizing-cream/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Niacinamide Milky Toner",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-niacinamide-milky-toner/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Niacinamide Whip Cleanser",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-niacinamide-whip-cleanser/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink One Day Serum Set",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-one-day-serum-set/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "medicube - PDRN Pink Peptide Eye Cream",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-peptide-eye-cream/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - PDRN Pink Tension Up Mask Set ( 4 PCS )",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-tension-up-mask-set/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "medicube - PDRN Pink Tone Up Sun Cream",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-tone-up-sun-cream/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Red Acne Body Peeling Shot",
+  "url": "https://kbeautybliss.com/product/medicube-red-acne-body-peeling-shot/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Red Acne Body Wash",
+  "url": "https://kbeautybliss.com/product/medicube-red-acne-body-wash/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Red Acne Succinic Acid Peel",
+  "url": "https://kbeautybliss.com/product/medicube-red-acne-succinic-acid-peel/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - Red Succinic Acid Peeling Pad",
+  "url": "https://kbeautybliss.com/product/medicube-red-succinic-acid-peeling-pad/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - Rosemary PDRN Cooling Thickening Shampoo",
+  "url": "https://kbeautybliss.com/product/medicube-rosemary-pdrn-cooling-thickening-shampoo/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Rosemary PDRN Hair & Scalp Conditioner",
+  "url": "https://kbeautybliss.com/product/medicube-rosemary-pdrn-hair-scalp-conditioner/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - Rosemary PDRN Hair Recovery Set",
+  "url": "https://kbeautybliss.com/product/medicube-rosemary-pdrn-hair-recovery-set/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "medicube - Rosemary PDRN Scalp Serum",
+  "url": "https://kbeautybliss.com/product/medicube-rosemary-pdrn-scalp-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - Soymint Scaling Shampoo",
+  "url": "https://kbeautybliss.com/product/medicube-soymint-scaling-shampoo/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - TXA Niacinamide 15 Serum",
+  "url": "https://kbeautybliss.com/product/medicube-txa-niacinamide-15-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - TXA Niacinamide Capsule Cream",
+  "url": "https://kbeautybliss.com/product/medicube-txa-niacinamide-capsule-cream/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - Ultra Light PDRN Pink Peptide Serum",
+  "url": "https://kbeautybliss.com/product/medicube-ultra-light-pdrn-pink-peptide-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Vanilla & Pistachio Deodorant",
+  "url": "https://kbeautybliss.com/product/medicube-vanilla-pistachio-deodorant/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube - Vanilla Deodorant and Body Mist Duo",
+  "url": "https://kbeautybliss.com/product/medicube-vanilla-deodrant-and-body-mist-duo/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Medicube - Vanilla Hair Body Fragrance Mist",
+  "url": "https://kbeautybliss.com/product/medicube-vanilla-hair-body-fragrance-mist/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Zero Foam Cleanser",
+  "url": "https://kbeautybliss.com/product/medicube-zero-foam-cleanser/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube - Zero Pore Blackhead Cleansing Oil",
+  "url": "https://kbeautybliss.com/product/medicube-zero-pore-blackhead-cleansing-oil/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube Age-R Booster + Deep Vita C Set",
+  "url": "https://kbeautybliss.com/product/medicube-age-r-booster-deep-vita-c-set/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Medicube Age-R Booster Facial Cleanser Head - Pink",
+  "url": "https://kbeautybliss.com/product/medicube-age-r-booster-facial-cleanser-head-pink/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Medicube Kojic Acid Turmeric Resurfacing Complete Set",
+  "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-resurfacing-complete-set/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Medicube \u2013 AGE-R Vita C Pro Ampoule",
+  "url": "https://kbeautybliss.com/product/medicube-age-r-vita-c-pro-ampoule/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube \u2013 One Day Exosome Shot Pore Ampoule 2000",
+  "url": "https://kbeautybliss.com/product/medicube-one-day-exosome-shot-pore-ampoule-2000/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube \u2013 PDRN Pink Peptide Serum",
+  "url": "https://kbeautybliss.com/product/medicube-pdrn-pink-peptide-serum/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube \u2013 Triple Collagen Toner",
+  "url": "https://kbeautybliss.com/product/medicube-triple-collagen-toner/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "medicube \u2013 Zero Pore Blackhead Mud Mask",
+  "url": "https://kbeautybliss.com/product/medicube-zero-pore-blackhead-mud-mask/",
+  "brand": "Medicube",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Mixsoon - Bean Essence - 30ml",
+  "url": "https://kbeautybliss.com/product/mixsoon-bean-essence-mini/",
+  "brand": "mixsoon",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Mixsoon - Bean Essence - 50ml",
+  "url": "https://kbeautybliss.com/product/mixsoon-bean-essence-50ml/",
+  "brand": "mixsoon",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Mixsoon- Centella Asiatica Toner 300ml",
+  "url": "https://kbeautybliss.com/product/mixsoon-centella-asiatica-toner-300ml/",
+  "brand": "mixsoon",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "NINELESS - B-Boost 1% Kojic Acid Serum",
+  "url": "https://kbeautybliss.com/product/nineless-b-boost-1-kojic-acid-serum/",
+  "brand": "NINELESS",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Ongredients - Skin Barrier Calming Lotion",
+  "url": "https://kbeautybliss.com/product/ongredients-skin-barrier-calming-lotion/",
+  "brand": "Ongredients",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Purito SEOUL - Green Level Buffect Serum 60ml",
+  "url": "https://kbeautybliss.com/product/purito-seoul-green-level-buffect-serum-60ml/",
+  "brand": "Purito SEOUL",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Purito SEOUL - Hydro Wave Deep Sea Cream",
+  "url": "https://kbeautybliss.com/product/purito-seoul-hydro-wave-deep-sea-cream/",
+  "brand": "Purito SEOUL",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Purito SEOUL - Mighty Bamboo Panthenol Cream",
+  "url": "https://kbeautybliss.com/product/purito-seoul-mighty-bamboo-panthenol-cream/",
+  "brand": "Purito SEOUL",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Purito SEOUL \u2013 Wonder Releaf Centella Serum Unscented",
+  "url": "https://kbeautybliss.com/product/purito-seoul-wonder-releaf-centella-serum-unscented/",
+  "brand": "Purito SEOUL",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Scalp Oil Applicator Comb",
+  "url": "https://kbeautybliss.com/product/scalp-oil-applicator-comb/",
+  "brand": "Scalp Oil Applicator Comb",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "SKIN 1004 - Cleansing Duo",
+  "url": "https://kbeautybliss.com/product/skin-1004-cleansing-duo/",
+  "brand": "SKIN 1004",
+  "status": "key",
+  "type": "set"
+ },
+ {
+  "name": "SKIN 1004 - Madagascar Centella Light Cleansing Oil Mini - 30ml",
+  "url": "https://kbeautybliss.com/product/skin-1004-madagascar-centella-light-cleansing-oil-mini/",
+  "brand": "SKIN 1004",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "SKIN 1004 - Madagascar Centella Tone Brightening Capsule Ampoule Jumbo",
+  "url": "https://kbeautybliss.com/product/skin-1004-madagascar-centella-tone-brightening-capsule-ampoule-jumbo/",
+  "brand": "SKIN 1004",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "SKIN 1004 - Skin Relief Duo",
+  "url": "https://kbeautybliss.com/product/skin-1004-skin-relief-duo/",
+  "brand": "SKIN 1004",
+  "status": "key",
+  "type": "set"
+ },
+ {
+  "name": "SKIN1004 - Madagascar Centella Tea-Trica Relaxing Mask",
+  "url": "https://kbeautybliss.com/product/skin1004-madagascar-centella-tea-trica-relaxing-mask/",
+  "brand": "SKIN 1004",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "SOME BY MI - 30 Days Miracle Clear Spot Patch",
+  "url": "https://kbeautybliss.com/product/some-by-mi-30-days-miracle-clear-spot-patch/",
+  "brand": "SOME BY MI",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "SOME BY MI \u2013 AHA, BHA, PHA 30 Days Miracle AC SOS Kit",
+  "url": "https://kbeautybliss.com/product/some-by-mi-aha-bha-pha-30-days-miracle-ac-sos-kit/",
+  "brand": "SOME BY MI",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "TIA'M - B3 Niacin Sunscreen",
+  "url": "https://kbeautybliss.com/product/tiam-b3-niacin-sunscreen/",
+  "brand": "TIA'M",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Umberto Giannini - Curl Jelly Scrunching Jelly Mini",
+  "url": "https://kbeautybliss.com/product/umberto-giannini-curl-jelly-scrunching-jelly-mini/",
+  "brand": "Umberto Giannini",
+  "status": "missing",
+  "type": "skincare/beauty"
+ }
+]

@@ -1,0 +1,954 @@
+[
+ {
+  "name": "Arencia - Deep Water Surge Serum",
+  "url": "https://kbeautybliss.com/product/arencia-deep-water-surge-serum/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - Eraser Shot Glycolic Acid Booster",
+  "url": "https://kbeautybliss.com/product/arencia-eraser-shot-glycolic-acid-booster/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - Fresh Blue Hyssop Rice Mochi Cleanser",
+  "url": "https://kbeautybliss.com/product/arencia-fresh-blue-hyssop-rice-mochi-cleanser/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - Fresh Green Cleanser",
+  "url": "https://kbeautybliss.com/product/arencia-fresh-green-cleanser/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - Fresh Red Smoothie Serum 30",
+  "url": "https://kbeautybliss.com/product/arencia-fresh-red-smoothie-serum-30/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - Fresh Red Smoothie Serum 8",
+  "url": "https://kbeautybliss.com/product/arencia-fresh-red-smoothie-serum-8/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - Holy Hyssop Serum 30",
+  "url": "https://kbeautybliss.com/product/arencia-holy-hyssop-serum-30/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - NAD+ Booster Shot",
+  "url": "https://kbeautybliss.com/product/arencia-nad-booster-shot/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - PDRN Booster Shot",
+  "url": "https://kbeautybliss.com/product/arencia-pdrn-booster-shot/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - PDRN Hyaluronic Deep Hydration Pad",
+  "url": "https://kbeautybliss.com/product/arencia-pdrn-hyaluronic-deep-hydration-pad/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - Pore Melt Mochi Cleansing Oil",
+  "url": "https://kbeautybliss.com/product/arencia-pore-melt-mochi-cleansing-oil/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - Red Smoothie Lotion 5",
+  "url": "https://kbeautybliss.com/product/arencia-red-smoothie-lotion-5/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - Retinal Booster Shot",
+  "url": "https://kbeautybliss.com/product/arencia-retinal-booster-shot/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - Retinal Boosting Eye Mask",
+  "url": "https://kbeautybliss.com/product/arencia-retinal-boosting-eye-mask/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - TXA Booster Shot",
+  "url": "https://kbeautybliss.com/product/arencia-txa-booster-shot/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - Vitamin C Booster Shot",
+  "url": "https://kbeautybliss.com/product/arencia-vitamin-c-booster-shot/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - Vitamin C Booster Shot Mask",
+  "url": "https://kbeautybliss.com/product/arencia-vitamin-c-booster-shot-mask/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Arencia - Vitamin C Booster Shot Mask Set",
+  "url": "https://kbeautybliss.com/product/arencia-vitamin-c-booster-shot-mask-set/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Arencia - Vitamin C Booster Trio",
+  "url": "https://kbeautybliss.com/product/arencia-vitamin-c-booster-trio/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Arencia - Vitamin C Glutathione Skin Booster Mist",
+  "url": "https://kbeautybliss.com/product/arencia-vitamin-c-glutathione-skin-booster-mist/",
+  "brand": "Arencia",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "AXIS - Y - Quinoa One Step Balanced Gel Cleanser",
+  "url": "https://kbeautybliss.com/product/axis-y-quinoa-one-step-balanced-gel-cleanser/",
+  "brand": "Axis - Y",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "AXIS \u2013 Y \u2013 Dark Spot Correcting Glow Cream",
+  "url": "https://kbeautybliss.com/product/axis-y-dark-spot-correcting-glow-cream/",
+  "brand": "Axis - Y",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Beauty of Joseon - Glass Skin Set",
+  "url": "https://kbeautybliss.com/product/beauty-of-joseon-glass-skin-set/",
+  "brand": "Beauty of Joseon",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Beauty of Joseon - Glow Charging Rice Duo",
+  "url": "https://kbeautybliss.com/product/beauty-of-joseon-glow-charging-rice-duo/",
+  "brand": "Beauty of Joseon",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Beauty of Joseon - Jello Skin Massage Cream",
+  "url": "https://kbeautybliss.com/product/beauty-of-joseon-jello-skin-massage-cream/",
+  "brand": "Beauty of Joseon",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Beauty of Joseon - Light On Serum: Centella + Vita C 30ml",
+  "url": "https://kbeautybliss.com/product/beauty-of-joseon-light-on-serum-centella-vita-c-30ml/",
+  "brand": "Beauty of Joseon",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Beauty of Joseon - Red Bean Water Gel - 100ml",
+  "url": "https://kbeautybliss.com/product/beauty-of-joseon-red-bean-water-gel-100ml/",
+  "brand": "Beauty of Joseon",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Beauty Works - 10-in-1 Miracle Heat Protect Spray - 50ml",
+  "url": "https://kbeautybliss.com/product/beauty-works-10-in-1-miracle-heat-protect-spray-50ml/",
+  "brand": "Beauty Works",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Beauty Works - 10-in-One Miracle Heat Protect Spray 250ml",
+  "url": "https://kbeautybliss.com/product/beauty-works-10-in-one-miracle-heat-protect-spray-250ml/",
+  "brand": "Beauty Works",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Beauty Works - AERIS Multi-Styler",
+  "url": "https://kbeautybliss.com/product/beauty-works-aeris-multi-styler/",
+  "brand": "Beauty Works",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Beauty Works - Waver",
+  "url": "https://kbeautybliss.com/product/beauty-works-waver/",
+  "brand": "Beauty Works",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Biodance - Collagen Gel Toner Pads",
+  "url": "https://kbeautybliss.com/product/biodance-collagen-gel-toner-pads/",
+  "brand": "BIODANCE",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Biodance - Collagen Peptide Jelly Serum Mist",
+  "url": "https://kbeautybliss.com/product/biodance-collagen-peptide-jelly-serum-mist/",
+  "brand": "BIODANCE",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Biodance - Hydro Cera-nol Real Deep Mask Set",
+  "url": "https://kbeautybliss.com/product/biodance-hydro-cera-nol-real-deep-mask-set/",
+  "brand": "BIODANCE",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Biodance - Radiant Vita Niacinamide Real Deep Facial Sheet Mask - 1 Box ( 4PCS )",
+  "url": "https://kbeautybliss.com/product/biodance-radiant-vita-niacinamide-real-deep-facial-sheet-mask/",
+  "brand": "BIODANCE",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Biodance - Refreshing Sea Kelp Real Deep Mask Set",
+  "url": "https://kbeautybliss.com/product/biodance-refreshing-sea-kelp-real-deep-mask-set/",
+  "brand": "BIODANCE",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "BIOHEAL BOH - Probioderm Collagen Remodeling Serum Gel Mask (6 Pcs)",
+  "url": "https://kbeautybliss.com/product/bioheal-boh-probioderm-collagen-remodeling-serum-gel-mask/",
+  "brand": "BIOHEAL BOH",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Celimax - JIWOOGAE Cica BHA Blemish Toner Pad",
+  "url": "https://kbeautybliss.com/product/celimax-jiwoogae-cica-bha-blemish-toner-pad/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Celimax - Noni Ampoule Calming + Radiance",
+  "url": "https://kbeautybliss.com/product/celimax-noni-ampoule-calming-radiance/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "celimax - Oil Control Light Sunscreen",
+  "url": "https://kbeautybliss.com/product/celimax-oil-control-light-sunscreen/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "celimax - Oil Control Mattifying Sun Stick",
+  "url": "https://kbeautybliss.com/product/celimax-oil-control-mattifying-sun-stick/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "celimax - Pore + Dark Spot Brightening Pad",
+  "url": "https://kbeautybliss.com/product/celimax-pore-dark-spot-brightening-pad/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "celimax - Pore + Dark Spot Brightening Serum",
+  "url": "https://kbeautybliss.com/product/celimax-pore-dark-spot-brightening-serum/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "celimax - Pore+ Dark Spot Brightening Care Sunscreen",
+  "url": "https://kbeautybliss.com/product/celimax-pore-dark-spot-brightening-care-sunscreen/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "celimax - Pore+Dark Spot Brightening Cream",
+  "url": "https://kbeautybliss.com/product/celimax-poredark-spot-brightening-cream/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "celimax - The Real Noni Acne Bubble Cleanser",
+  "url": "https://kbeautybliss.com/product/celimax-the-real-noni-acne-bubble-cleanser/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "celimax - The Vita-A Retinal Shot Tightening Booster",
+  "url": "https://kbeautybliss.com/product/celimax-the-vita-a-retinal-shot-tightening-booster/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Celimax - The Vita-A Retinal Shot Tightening Dual Cream",
+  "url": "https://kbeautybliss.com/product/celimax-the-vita-a-retinal-shot-tightening-dual-cream/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "celimax - The Vita-A Retinol Shot Tightening Serum",
+  "url": "https://kbeautybliss.com/product/celimax-the-vita-a-retinol-shot-tightening-serum/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Celimax - TXA Body Clarifying Pad",
+  "url": "https://kbeautybliss.com/product/celimax-txa-body-clarifying-pad/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Celimax Pore+Dark Spot Complete Brightening Skincare Set",
+  "url": "https://kbeautybliss.com/product/celimax-poredark-spot-complete-brightening-skincare-set/",
+  "brand": "Celimax",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Centellian24 - 360\u00ba Shot PDRN Glowing Eye Patch",
+  "url": "https://kbeautybliss.com/product/centellian24-360o-shot-pdrn-glowing-eye-patch/",
+  "brand": "Centellian24",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Centellian24 - 360\u00ba Shot PDRN Lifting Eye Cream",
+  "url": "https://kbeautybliss.com/product/centellian24-360o-shot-pdrn-lifting-eye-cream/",
+  "brand": "Centellian24",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Centellian24 - Madeca Cream Time Reverse",
+  "url": "https://kbeautybliss.com/product/centellian24-madeca-cream-time-reverse/",
+  "brand": "Centellian24",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "She Glam - Color Bloom Liquid Blush Matte Finish - Love Cake",
+  "url": "https://kbeautybliss.com/product/color-bloom-liquid-blush-matte-finish-love-cake/",
+  "brand": "Color Bloom",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "She Glam - Color Bloom Liquid Blush Matte Finish - Risky Business",
+  "url": "https://kbeautybliss.com/product/color-bloom-liquid-blush-matte-finish-risky-business/",
+  "brand": "Color Bloom",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "COSRX - AHA 7 Whitehead Power Liquid 100ml",
+  "url": "https://kbeautybliss.com/product/cosrx-aha-7-whitehead-power-liquid-100ml/",
+  "brand": "COSRX",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "COSRX - All About Snail Kit",
+  "url": "https://kbeautybliss.com/product/cosrx-all-about-snail-kit/",
+  "brand": "COSRX",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "COSRX - Balancium Ceramide Lip Butter Sleeping Mask 20g",
+  "url": "https://kbeautybliss.com/product/cosrx-balancium-ceramide-lip-butter-sleeping-mask-20g/",
+  "brand": "COSRX",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "COSRX - Favorites Skincare Set",
+  "url": "https://kbeautybliss.com/product/cosrx-favorites-skincare-set/",
+  "brand": "COSRX",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "COSRX - The Niacinamide 15 Serum - 20ml",
+  "url": "https://kbeautybliss.com/product/cosrx-the-niacinamide-15-serum-20ml/",
+  "brand": "COSRX",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "COSRX - The Retinol 0.5 Oil",
+  "url": "https://kbeautybliss.com/product/cosrx-the-retinol-0-5-oil/",
+  "brand": "COSRX",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "COSRX - Two in One Poreless Power Liquid Toner - 100ml",
+  "url": "https://kbeautybliss.com/product/cosrx-two-in-one-poreless-power-liquid-toner-100ml/",
+  "brand": "COSRX",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Melaxin - Calcium Dark Spot Cover Eye Cream",
+  "url": "https://kbeautybliss.com/product/dr-melaxin-calcium-dark-spot-cover-eye-cream/",
+  "brand": "Dr.Melaxin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Melaxin - Calcium Volume Multi Balm",
+  "url": "https://kbeautybliss.com/product/dr-melaxin-calcium-volume-multi-balm/",
+  "brand": "Dr.Melaxin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Melaxin - Cemenrete Calcium Volume Eye Patch",
+  "url": "https://kbeautybliss.com/product/dr-melaxin-cemenrete-calcium-volume-eye-patch/",
+  "brand": "Dr.Melaxin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Melaxin - Cemenrete Cyano Pink Spicule Serum",
+  "url": "https://kbeautybliss.com/product/dr-melaxin-cemenrete-cyano-pink-spicule-serum/",
+  "brand": "Dr.Melaxin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Melaxin - Eyephalt Eyebag Cream",
+  "url": "https://kbeautybliss.com/product/dr-melaxin-eyephalt-eyebag-cream/",
+  "brand": "Dr.Melaxin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Melaxin - Melting Cleanser",
+  "url": "https://kbeautybliss.com/product/dr-melaxin-melting-cleanser/",
+  "brand": "Dr.Melaxin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Melaxin - Peel Shot Exfoliating Black Rice Ampoule",
+  "url": "https://kbeautybliss.com/product/dr-melaxin-peel-shot-exfoliating-black-rice-ampoule/",
+  "brand": "Dr.Melaxin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Melaxin - Peel Shot Exfoliating Kojic Acid Turmeric Spray",
+  "url": "https://kbeautybliss.com/product/dr-melaxin-peel-shot-exfoliating-kojic-acid-turmeric-spray/",
+  "brand": "Dr.Melaxin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Melaxin - Peel Shot Exfoliating White Rice Ampoule",
+  "url": "https://kbeautybliss.com/product/dr-melaxin-peel-shot-exfoliating-white-rice-ampoule/",
+  "brand": "Dr.Melaxin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Melaxin - Peel Shot Glow White Rice Toner",
+  "url": "https://kbeautybliss.com/product/dr-melaxin-peel-shot-glow-white-rice-toner/",
+  "brand": "Dr.Melaxin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr.Melaxin - TX Cream",
+  "url": "https://kbeautybliss.com/product/dr-melaxin-tx-cream/",
+  "brand": "Dr.Melaxin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Elizavecca - Milky Piggy CER-100 Collagen Ceramide Coating Protein Treatment",
+  "url": "https://kbeautybliss.com/product/elizavecca-milky-piggy-cer-100-collagen-ceramide-coating-protein-treatment/",
+  "brand": "Elizavecca",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "EQQUALBERRY - Aloe PDRN Calming Serum",
+  "url": "https://kbeautybliss.com/product/eqqualberry-aloe-pdrn-calming-serum/",
+  "brand": "EQQUALBERRY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "EQQUALBERRY - Aloe PDRN Calming Serum Mini",
+  "url": "https://kbeautybliss.com/product/eqqualberry-aloe-pdrn-calming-serum-mini/",
+  "brand": "EQQUALBERRY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "EQQUALBERRY - Bakuchiol Plumping Capsule Cream",
+  "url": "https://kbeautybliss.com/product/eqqualberry-bakuchiol-plumping-capsule-cream/",
+  "brand": "EQQUALBERRY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "EQQUALBERRY - Bakuchiol Plumping Serum",
+  "url": "https://kbeautybliss.com/product/eqqualberry-bakuchiol-plumping-serum/",
+  "brand": "EQQUALBERRY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "EQQUALBERRY - Glow Duo Serum Set",
+  "url": "https://kbeautybliss.com/product/eqqualberry-glow-duo-serum-set/",
+  "brand": "EQQUALBERRY",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "EQQUALBERRY - Hyaltoin Flooding Serum",
+  "url": "https://kbeautybliss.com/product/eqqualberry-hyaltoin-flooding-serum/",
+  "brand": "EQQUALBERRY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "EQQUALBERRY - NAD+ Peptide Boosting Serum",
+  "url": "https://kbeautybliss.com/product/eqqualberry-nad-peptide-boosting-serum/",
+  "brand": "EQQUALBERRY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "EQQUALBERRY - Purple PDRN Pore Minimizing Serum",
+  "url": "https://kbeautybliss.com/product/eqqualberry-purple-pdrn-pore-minimizing-serum/",
+  "brand": "EQQUALBERRY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "EQQUALBERRY - Swimming Pool Toner 155ml",
+  "url": "https://kbeautybliss.com/product/eqqualberry-swimming-pool-toner-155ml/",
+  "brand": "EQQUALBERRY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "EQQUALBERRY - Swimming Pool Toner Pads",
+  "url": "https://kbeautybliss.com/product/eqqualberry-swimming-pool-toner-pads/",
+  "brand": "EQQUALBERRY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "EQQUALBERRY - Vitamin Illuminating Cream",
+  "url": "https://kbeautybliss.com/product/eqqualberry-vitamin-illuminating-cream/",
+  "brand": "EQQUALBERRY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "EQQUALBERRY - Vitamin Illuminating Serum",
+  "url": "https://kbeautybliss.com/product/eqqualberry-vitamin-illuminating-serum/",
+  "brand": "EQQUALBERRY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "ETUDE - Dear Darling Water Tint - Cherry Ade",
+  "url": "https://kbeautybliss.com/product/etude-dear-darling-water-tint/",
+  "brand": "ETUDE",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "FULLY - Green Tomato Clay Mask Cleanser",
+  "url": "https://kbeautybliss.com/product/fully-green-tomato-clay-mask-cleanser/",
+  "brand": "FULLY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "FULLY - Green Tomato Cream",
+  "url": "https://kbeautybliss.com/product/fully-green-tomato-cream/",
+  "brand": "FULLY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "haruharu wonder - Black Bamboo Daily Soothing Sun Shield",
+  "url": "https://kbeautybliss.com/product/haruharu-wonder-black-bamboo-daily-soothing-sun-shield/",
+  "brand": "Haruharu Wonder",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "haruharu wonder - Black Rice 10 Hyaluronic Cream Unscented",
+  "url": "https://kbeautybliss.com/product/haruharu-wonder-black-rice-10-hyaluronic-cream-unscented/",
+  "brand": "Haruharu Wonder",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "haruharu wonder - Black Rice 5 Ceramide Barrier Moisturizing Cream",
+  "url": "https://kbeautybliss.com/product/haruharu-wonder-black-rice-5-ceramide-barrier-moisturizing-cream/",
+  "brand": "Haruharu Wonder",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "haruharu wonder - Black Rice Night Knight Retinol Serum",
+  "url": "https://kbeautybliss.com/product/haruharu-wonder-black-rice-night-knight-retinol-serum/",
+  "brand": "Haruharu Wonder",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Haruharu Wonder - Black Rice Probiotics Barrier Essence",
+  "url": "https://kbeautybliss.com/product/haruharu-wonder-black-rice-probiotics-barrier-essence/",
+  "brand": "Haruharu Wonder",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "haruharu wonder - Black Rice Probiotics Barrier Essence",
+  "url": "https://kbeautybliss.com/product/haruharu-wonder-black-rice-probiotics-barrier-essence-2/",
+  "brand": "Haruharu Wonder",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "heimish - RX Multi Vitamin Glow Serum",
+  "url": "https://kbeautybliss.com/product/heimish-rx-multi-vitamin-glow-serum/",
+  "brand": "Heimish",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "heimish \u2013 Artless Perfect Cushion Set \u2013 2 Colors",
+  "url": "https://kbeautybliss.com/product/heimish-artless-perfect-cushion-set-2-colors/",
+  "brand": "Heimish",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Heimish- RX Hyaluronic Acid 2% Hydrating Serum 35ml",
+  "url": "https://kbeautybliss.com/product/heimish-rx-hyaluronic-acid-2-hydrating-serum-35ml/",
+  "brand": "Heimish",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "I'm from - Rice Serum",
+  "url": "https://kbeautybliss.com/product/im-from-rice-serum/",
+  "brand": "I'm from",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "I'm from - Rice Toner Pad",
+  "url": "https://kbeautybliss.com/product/im-from-rice-toner-pad/",
+  "brand": "I'm from",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "innisfree - Cherry Blossom Glow Jelly Cream",
+  "url": "https://kbeautybliss.com/product/innisfree-cherry-blossom-glow-jelly-cream/",
+  "brand": "Innisfree",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Isntree - C-Niacin Toning Cream 50ml",
+  "url": "https://kbeautybliss.com/product/isntree-c-niacin-toning-cream-50ml/",
+  "brand": "Isntree",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Isntree - Hyaluronic Acid Moist Cream",
+  "url": "https://kbeautybliss.com/product/isntree-hyaluronic-acid-moist-cream/",
+  "brand": "Isntree",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Isntree - Onion Newpair Sunscreen",
+  "url": "https://kbeautybliss.com/product/isntree-onion-newpair-sunscreen/",
+  "brand": "Isntree",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "ISNTREE - Ultra-low Molecular Hyaluronic acid Serum - 50ml",
+  "url": "https://kbeautybliss.com/product/isntree-ultra-low-molecular-hyaluronic-acid-serum-50ml/",
+  "brand": "Isntree",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "KbeautyBliss Anti-aging Glow Skincare Routine",
+  "url": "https://kbeautybliss.com/product/kbeautybliss-anti-aging-glow-skincare-routine/",
+  "brand": "KbeautyBliss Anti-aging Glow Skincare Routine",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "La Roche-Posay Anthelios Invisible Fluid SPF 50+",
+  "url": "https://kbeautybliss.com/product/la-roche-posay-anthelios-invisible-fluid-spf-50/",
+  "brand": "La Roche-Posay",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "La Roche-Posay Hyalu B5 Mini Serum",
+  "url": "https://kbeautybliss.com/product/la-roche-posay-hyalu-b5-mini-serum/",
+  "brand": "La Roche-Posay",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Lirene - IR Complex (SPF 50) High Protection",
+  "url": "https://kbeautybliss.com/product/lirene-ir-complex-spf-50-high-protection/",
+  "brand": "Lirene",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "MOEV - Annurcatin Shampoo",
+  "url": "https://kbeautybliss.com/product/moev-annurcatin-shampoo/",
+  "brand": "MOEV",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "MOEV - Annurcatin Shampoo Jumbo",
+  "url": "https://kbeautybliss.com/product/moev-annurcatin-shampoo-jumbo/",
+  "brand": "MOEV",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "MOEV - Annurcatin Treatment",
+  "url": "https://kbeautybliss.com/product/moev-annurcatin-treatment/",
+  "brand": "MOEV",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "MOEV - Annurcatin Water Treatment",
+  "url": "https://kbeautybliss.com/product/moev-annurcatin-water-treatment/",
+  "brand": "MOEV",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Olaplex No. 10 Bond Shaper Curl Defining Gel 20ml Mini",
+  "url": "https://kbeautybliss.com/product/olaplex-no-10-bond-shaper-curl-defining-gel-20ml-mini/",
+  "brand": "Olaplex",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Plix - Pineapple De-Pigmentation Moisturizer with 2% Alpha Arbutin",
+  "url": "https://kbeautybliss.com/product/plix-pineapple-de-pigmentation-moisturizer-with-2-alpha-arbutin/",
+  "brand": "Plix",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "ROUND LAB - 1025 Dokdo Toner",
+  "url": "https://kbeautybliss.com/product/1025-dokdo-toner/",
+  "brand": "ROUND LAB",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Round Lab - Birch Moisturizing Cleanser - 150 ml",
+  "url": "https://kbeautybliss.com/product/birch-moisturizing-cleanser/",
+  "brand": "ROUND LAB",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Shiseido - Fino Premium Touch Conditioner",
+  "url": "https://kbeautybliss.com/product/shiseido-fino-premium-touch-conditioner/",
+  "brand": "Shiseido",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Shiseido - Fino Premium Touch Shampoo",
+  "url": "https://kbeautybliss.com/product/shiseido-fino-premium-touch-shampoo/",
+  "brand": "Shiseido",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Shiseido - Ma Cherie Hair Oil EX",
+  "url": "https://kbeautybliss.com/product/shiseido-ma-cherie-hair-oil-ex/",
+  "brand": "Shiseido",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Shiseido - Senka Perfect Whip Beauty Face Foam",
+  "url": "https://kbeautybliss.com/product/shiseido-senka-perfect-whip-beauty-face-foam/",
+  "brand": "Shiseido",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Shiseido - Tsubaki Premium Moist & Repair Conditioner",
+  "url": "https://kbeautybliss.com/product/shiseido-tsubaki-premium-moist-repair-conditioner/",
+  "brand": "Shiseido",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Shiseido - Tsubaki Premium Moist & Repair Shampoo",
+  "url": "https://kbeautybliss.com/product/shiseido-tsubaki-premium-moist-repair-shampoo/",
+  "brand": "Shiseido",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Shiseido - Tsubaki Premium Repair Mask Pink Camellia",
+  "url": "https://kbeautybliss.com/product/shiseido-tsubaki-premium-repair-mask-pink-camellia/",
+  "brand": "Shiseido",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Shiseido - Tsubaki Premium Volume & Repair Shampoo",
+  "url": "https://kbeautybliss.com/product/shiseido-tsubaki-premium-volume-repair-shampoo/",
+  "brand": "Shiseido",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "StylPro Smooth Finish",
+  "url": "https://kbeautybliss.com/product/stylpro-smooth-finish/",
+  "brand": "StylPro",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Torriden - CELLMAZING Pore Perfecting Ampoule",
+  "url": "https://kbeautybliss.com/product/torriden-cellmazing-pore-perfecting-ampoule/",
+  "brand": "Torriden",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "TOSOWOONG - Arbutin 7% + Tranexamic Acid 4% Cream",
+  "url": "https://kbeautybliss.com/product/tosowoong-arbutin-7-tranexamic-acid-4-cream/",
+  "brand": "TOSOWOONG",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "TOSOWOONG - Arbutin 7% Glutathione Cream",
+  "url": "https://kbeautybliss.com/product/tosowoong-arbutin-7-glutathione-cream/",
+  "brand": "TOSOWOONG",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "TOSOWOONG - Copper Peptide 12 Cream",
+  "url": "https://kbeautybliss.com/product/tosowoong-copper-peptide-12-cream/",
+  "brand": "TOSOWOONG",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "TOSOWOONG - Real Collagen Fit",
+  "url": "https://kbeautybliss.com/product/tosowoong-real-collagen-fit/",
+  "brand": "TOSOWOONG",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "TOSOWOONG - Real Kojic Acid Turmeric Fit",
+  "url": "https://kbeautybliss.com/product/tosowoong-real-kojic-acid-turmeric-fit/",
+  "brand": "TOSOWOONG",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "TOSOWOONG - Real Retinol 0.1% Night Cream",
+  "url": "https://kbeautybliss.com/product/tosowoong-real-retinol-0-1-night-cream/",
+  "brand": "TOSOWOONG",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "TOSOWOONG Pink Peptide 12 PDRN Serum",
+  "url": "https://kbeautybliss.com/product/tosowoong-pink-peptide-12-pdrn-serum/",
+  "brand": "TOSOWOONG",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Wella - Wellaflex Invisible Hold Hairspray Extra Strong Hold - 75 ml",
+  "url": "https://kbeautybliss.com/product/wella-wellaflex-invisible-hold-hairspray-extra-strong-hold-75-ml-4-5-hold/",
+  "brand": "Wella Koleston",
+  "status": "missing",
+  "type": "skincare/beauty"
+ }
+]

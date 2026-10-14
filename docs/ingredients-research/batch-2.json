@@ -1,0 +1,954 @@
+[
+ {
+  "name": "A'PIEU - Honey & Milk Lip Oil",
+  "url": "https://kbeautybliss.com/product/apieu-honey-milk-lip-oil/",
+  "brand": "A'PIEU",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "A'PIEU - Honey & Milk Lip Oil Light",
+  "url": "https://kbeautybliss.com/product/apieu-honey-milk-lip-oil-light/",
+  "brand": "A'PIEU",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "A'PIEU - Honey & Milk Lip Scrub",
+  "url": "https://kbeautybliss.com/product/apieu-honey-milk-lip-scrub/",
+  "brand": "A'PIEU",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "A'PIEU - Mint Scalp Hair Vinegar",
+  "url": "https://kbeautybliss.com/product/apieu-mint-scalp-hair-vinegar/",
+  "brand": "A'PIEU",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "A'PIEU - Raspberry Hair Vinegar",
+  "url": "https://kbeautybliss.com/product/apieu-raspberry-hair-vinegar/",
+  "brand": "A'PIEU",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "A'PIEU - Raspberry Vinegar Hair Mist",
+  "url": "https://kbeautybliss.com/product/apieu-raspberry-vinegar-hair-mist/",
+  "brand": "A'PIEU",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "A'PIEU - Raspberry Vinegar Hair Shampoo",
+  "url": "https://kbeautybliss.com/product/apieu-raspberry-vinegar-hair-shampoo/",
+  "brand": "A'PIEU",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Abib - Airy Sunstick Smoothing Bar",
+  "url": "https://kbeautybliss.com/product/abib-airy-sunstick-smoothing-bar/",
+  "brand": "Abib",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Abib - Collagen Eye Patch Jericho Rose Jelly",
+  "url": "https://kbeautybliss.com/product/abib-collagen-eye-patch-jericho-rose-jelly/",
+  "brand": "Abib",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Abib - Glutathiosome Dark Spot Pad Vita Touch",
+  "url": "https://kbeautybliss.com/product/abib-glutathiosome-dark-spot-pad-vita-touch/",
+  "brand": "Abib",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Abib - Glutathiosome Dark Spot Serum Vita Drop",
+  "url": "https://kbeautybliss.com/product/abib-glutathiosome-dark-spot-serum-vita-drop/",
+  "brand": "Abib",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Abib - PDRN Collagen Lip Mask Glazed Jelly",
+  "url": "https://kbeautybliss.com/product/abib-pdrn-collagen-lip-mask-glazed-jelly/",
+  "brand": "Abib",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Abib - PDRN Retinal Eye Patch Glow Jelly",
+  "url": "https://kbeautybliss.com/product/abib-pdrn-retinal-eye-patch-glow-jelly/",
+  "brand": "Abib",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "ANUA - All in 1 Glow Essentials : 5-Step Skincare Set",
+  "url": "https://kbeautybliss.com/product/anua-all-in-1-glow-essentials-5-step-skincare-set/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Anua - Azelaic Acid 10 Hyaluron Redness Soothing Serum",
+  "url": "https://kbeautybliss.com/product/anua-azelaic-acid-10-hyaluron-redness-soothing-serum/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Anua - Collagen Retinol Refining Gua Sha Cream",
+  "url": "https://kbeautybliss.com/product/anua-collagen-retinol-refining-gua-sha-cream/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Anua - Combination Skincare Set",
+  "url": "https://kbeautybliss.com/product/anua-combination-skin-set/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "ANUA - Heartleaf Intensive Soothing Set",
+  "url": "https://kbeautybliss.com/product/anua-heartleaf-intense-soothing-set/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Anua - Niacinamide 10% + TXA 4% Dark Spot Correcting Serum 30ml",
+  "url": "https://kbeautybliss.com/product/anua-niacinamide-10-txa-4-dark-spot-correcting-serum-30ml/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Anua - Niacinamide 5 TXA Brightening Pad",
+  "url": "https://kbeautybliss.com/product/anua-niacinamide-5-txa-brightening-pad/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Anua - PDRN + Hyaluron Ultimate Glass Skin Set",
+  "url": "https://kbeautybliss.com/product/anua-pdrn-hyaluron-ultimate-glass-skin-set/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Anua - PDRN 100 Hyaluronic Acid Glow Pad",
+  "url": "https://kbeautybliss.com/product/anua-pdrn-100-hyaluronic-acid-glow-pad/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Anua - PDRN Collagen Melting Patch For Glass Skin",
+  "url": "https://kbeautybliss.com/product/anua-pdrn-collagen-melting-patch-for-glass-skin/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Anua - PDRN Glass Skin Set",
+  "url": "https://kbeautybliss.com/product/anua-pdrn-glass-skin-set/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Anua - PDRN Hyaluronic Acid 100 Moisturizing Cream",
+  "url": "https://kbeautybliss.com/product/anua-pdrn-hyaluronic-acid-100-moisturizing-cream/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Anua - PDRN Hyaluronic Acid Capsule 100 Serum",
+  "url": "https://kbeautybliss.com/product/anua-pdrn-hyaluronic-acid-capsule-100-serum/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Anua - PDRN Hyaluronic Acid Hydrating Capsule Mist Mini",
+  "url": "https://kbeautybliss.com/product/anua-pdrn-hyaluronic-acid-hydrating-capsule-mist-mini/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Anua - PDRN Lip Serum",
+  "url": "https://kbeautybliss.com/product/anua-pdrn-lip-serum/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Anua - Retinol 0.1 Caffeine Revitalizing Eye Cream",
+  "url": "https://kbeautybliss.com/product/anua-retinol-0-1-caffeine-revitalizing-eye-cream/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Anua - Rice 70 Intensive Moisturizing Milk",
+  "url": "https://kbeautybliss.com/product/anua-rice-70-intensive-moisturizing-milk/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Anua - Zero-Cast Moisturizing Finish Sunscreen",
+  "url": "https://kbeautybliss.com/product/anua-zero-cast-moisturizing-finish-sunscreen/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "ANUA \u2013 Daily Glow Skincare Set",
+  "url": "https://kbeautybliss.com/product/anua-daily-glow-skincare-set/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "ANUA \u2013 Ultimate Oil Control Skincare Set",
+  "url": "https://kbeautybliss.com/product/anua-ultimate-oil-control-skincare-set/",
+  "brand": "Anua",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "APLB - Glutathione Niacinamide Ampoule Serum",
+  "url": "https://kbeautybliss.com/product/aplb-glutathione-niacinamide-ampoule-serum/",
+  "brand": "APLB",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "APLB - Glutathione Niacinamide Body Lotion",
+  "url": "https://kbeautybliss.com/product/aplb-glutathione-niacinamide-body-lotion/",
+  "brand": "APLB",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "APLB - Glutathione Niacinamide Facial Cream",
+  "url": "https://kbeautybliss.com/product/aplb-glutathione-niacinamide-facial-cream/",
+  "brand": "APLB",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "APLB - Retinol Vitamin C Vitamin E Facial Cream",
+  "url": "https://kbeautybliss.com/product/aplb-retinol-vitamin-c-vitamin-e-facial-cream/",
+  "brand": "APLB",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "APRILSKIN - Carrotene Clarifying Serum",
+  "url": "https://kbeautybliss.com/product/aprilskin-carrotene-clarifying-serum/",
+  "brand": "APRILSKIN",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "APRILSKIN - Carrotene IPMP Clearing Solution",
+  "url": "https://kbeautybliss.com/product/aprilskin-carrotene-ipmp-clearing-solution/",
+  "brand": "APRILSKIN",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "APRILSKIN - Carrotene IPMP Hydramelt Cleansing Balm",
+  "url": "https://kbeautybliss.com/product/aprilskin-carrotene-ipmp-hydramelt-cleansing-balm/",
+  "brand": "APRILSKIN",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "APRILSKIN - Carrotene Pore Clay Mask",
+  "url": "https://kbeautybliss.com/product/aprilskin-carrotene-pore-clay-mask/",
+  "brand": "APRILSKIN",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "APRILSKIN - Pink Aloe Pack Cleanser",
+  "url": "https://kbeautybliss.com/product/aprilskin-pink-aloe-pack-cleanser/",
+  "brand": "APRILSKIN",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "APRILSKIN - Real Calendula Peel Off Pack",
+  "url": "https://kbeautybliss.com/product/aprilskin-real-calendula-peel-off-pack/",
+  "brand": "APRILSKIN",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "APRILSKIN - Real Carrotene Acne Foam Cleanser",
+  "url": "https://kbeautybliss.com/product/aprilskin-real-carrotene-acne-foam-cleanser/",
+  "brand": "APRILSKIN",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "APRILSKIN - TXA Niacinamide 99 Deep Cleanser",
+  "url": "https://kbeautybliss.com/product/aprilskin-txa-niacinamide-99-deep-cleanser/",
+  "brand": "APRILSKIN",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "APRILSKIN - TXA Niacinamide 99 Milky Toner",
+  "url": "https://kbeautybliss.com/product/aprilskin-txa-niacinamide-99-milky-toner/",
+  "brand": "APRILSKIN",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "APRILSKIN - TXA Niacinamide Collagen 99 Capsule Gel Mask Set",
+  "url": "https://kbeautybliss.com/product/aprilskin-txa-niacinamide-collagen-99-capsule-gel-mask-set/",
+  "brand": "APRILSKIN",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "APRILSKIN - TXA Niacinamide Toning Shot 99 Serum",
+  "url": "https://kbeautybliss.com/product/aprilskin-txa-niacinamide-toning-shot-99-serum/",
+  "brand": "APRILSKIN",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Aquaphor Healing Ointment\u00ae (14oz.)",
+  "url": "https://kbeautybliss.com/product/aquaphor-healing-ointment-14oz/",
+  "brand": "Aquaphor",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Aquaphor Healing Ointment\u00ae - 50g",
+  "url": "https://kbeautybliss.com/product/healing-ointment-7oz/",
+  "brand": "Aquaphor",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Aquaphor Ointment Body Spray - 175g",
+  "url": "https://kbeautybliss.com/product/ointment-body-spray-6-2oz/",
+  "brand": "Aquaphor",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Aquaphor\u00ae Healing Balm Stick - 18.4g",
+  "url": "https://kbeautybliss.com/product/aquaphor-healing-balm-stick-0-65-oz/",
+  "brand": "Aquaphor",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Aquaphor\u00ae Lip Protectant + SPF 30",
+  "url": "https://kbeautybliss.com/product/aquaphor-lip-protectant-spf-30/",
+  "brand": "Aquaphor",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Aquaphor\u00ae Lip Repair - 10ml",
+  "url": "https://kbeautybliss.com/product/aquaphor-lip-repair-35oz/",
+  "brand": "Aquaphor",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Aquaphor\u00ae Lip Repair Stick (Dual Pack)",
+  "url": "https://kbeautybliss.com/product/aquaphor-lip-repair-stick-dual-pack/",
+  "brand": "Aquaphor",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "AROMATICA - Rosemary Scalp Scrub",
+  "url": "https://kbeautybliss.com/product/aromatica-rosemary-scalp-scrub/",
+  "brand": "AROMATICA",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "AROMATICA - Tea Tree Purifying Shampoo - 180ml",
+  "url": "https://kbeautybliss.com/product/aromatica-tea-tree-purifying-shampoo/",
+  "brand": "AROMATICA",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Aromatica \u2013 Rosemary Hair Thickening Conditioner \u2013 180ml",
+  "url": "https://kbeautybliss.com/product/aromatica-rosemary-hair-thickening-conditioner-mini/",
+  "brand": "AROMATICA",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "AROMATICA \u2013 Rosemary Root Enhancer 100ml",
+  "url": "https://kbeautybliss.com/product/aromatica-rosemary-root-enhancer-100ml/",
+  "brand": "AROMATICA",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "AROMATICA \u2013 Rosemary Scalp Scaling Shampoo \u2013 180ml",
+  "url": "https://kbeautybliss.com/product/aromatica-rosemary-scalp-scaling-shampoo/",
+  "brand": "AROMATICA",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "B_LAB - CICA Barrier 5.5 Cleansing Oil Balm 100ml",
+  "url": "https://kbeautybliss.com/product/b_lab-cica-barrier-5-5-cleansing-oil-balm-100ml/",
+  "brand": "B_LAB",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "B_LAB - Matcha Hydrating Foam Cleanser 120ml",
+  "url": "https://kbeautybliss.com/product/b_lab-matcha-hydrating-foam-cleanser-120ml/",
+  "brand": "B_LAB",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "B_LAB - Matcha Hydrating Real Sun Stick 21g",
+  "url": "https://kbeautybliss.com/product/b_lab-matcha-hydrating-real-sun-stick-21g/",
+  "brand": "B_LAB",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Benton - Fermentation Eye Cream",
+  "url": "https://kbeautybliss.com/product/benton-fermentation-eye-cream/",
+  "brand": "Benton",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "beplain - Mung Bean Cleansing Oil Jumbo",
+  "url": "https://kbeautybliss.com/product/beplain-mung-bean-cleansing-oil-jumbo/",
+  "brand": "beplain",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "beplain - Mung Bean Cooling Moisture Sunscreen",
+  "url": "https://kbeautybliss.com/product/beplain-mung-bean-cooling-moisture-sunscreen/",
+  "brand": "beplain",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "beplain - Mung Bean Ph-balanced Cleansing Foam Jumbo",
+  "url": "https://kbeautybliss.com/product/beplain-mung-bean-ph-balanced-cleansing-foam-jumbo/",
+  "brand": "beplain",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "beplain - Mung Bean Pore Clay Mask",
+  "url": "https://kbeautybliss.com/product/beplain-mung-bean-pore-clay-mask/",
+  "brand": "beplain",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "beplain - Mung Bean Pore Tight-up Serum",
+  "url": "https://kbeautybliss.com/product/beplain-mung-bean-pore-tight-up-serum/",
+  "brand": "beplain",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Bioderma - Atoderm Ultra Nourishing Anti irritation Shower Oil",
+  "url": "https://kbeautybliss.com/product/bioderma-atoderm-ultra-nourishing-anti-irritation-shower-oil/",
+  "brand": "Bioderma",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dear, Klairs - EGF Blue Youth Activating Drop",
+  "url": "https://kbeautybliss.com/product/dear-klairs-egf-blue-youth-activating-drop/",
+  "brand": "Dear, Klairs",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr. Althea - 0.1% Gentle Retinol Serum",
+  "url": "https://kbeautybliss.com/product/dr-althea-0-1-gentle-retinol-serum/",
+  "brand": "Dr.Althea",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr. Althea - 345 Relief Cream Mist Mini",
+  "url": "https://kbeautybliss.com/product/dr-althea-345-relief-cream-mist-mini/",
+  "brand": "Dr.Althea",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr. Althea - Aqua Marine Watery Cream",
+  "url": "https://kbeautybliss.com/product/dr-althea-aqua-marine-watery-cream/",
+  "brand": "Dr.Althea",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr. Althea - Lash Boost Serum",
+  "url": "https://kbeautybliss.com/product/dr-althea-lash-boost-serum/",
+  "brand": "Dr.Althea",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr. Althea - Melaclear Cream",
+  "url": "https://kbeautybliss.com/product/dr-althea-melaclear-cream/",
+  "brand": "Dr.Althea",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr. Althea - PDRN Reju 5000 Cream",
+  "url": "https://kbeautybliss.com/product/dr-althea-pdrn-reju-5000-cream/",
+  "brand": "Dr.Althea",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr. Althea - Soft Melting Lip Balm",
+  "url": "https://kbeautybliss.com/product/dr-althea-soft-melting-lip-balm/",
+  "brand": "Dr.Althea",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Dr. Althea 345 Relief Cream + Mist Spray Set",
+  "url": "https://kbeautybliss.com/product/dr-althea-345-relief-cream-mist-spray-set/",
+  "brand": "Dr.Althea",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Dr. Althea Restoration & Glow Trio",
+  "url": "https://kbeautybliss.com/product/dr-althea-restoration-glow-trio/",
+  "brand": "Dr.Althea",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Dr.Althea - Retinol Flat Iron Eye Roller",
+  "url": "https://kbeautybliss.com/product/dr-althea-retinol-flat-iron-eye-roller/",
+  "brand": "Dr.Althea",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "epii - Double Up Cream Ectoin & Panthenol",
+  "url": "https://kbeautybliss.com/product/epii-double-up-cream-ectoin-panthenol/",
+  "brand": "epii",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "epii - Double Up Cream NAD+ NMN & TXA",
+  "url": "https://kbeautybliss.com/product/epii-double-up-cream-nad-nmn-txa/",
+  "brand": "epii",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "epii - HPR Pro Shot",
+  "url": "https://kbeautybliss.com/product/epii-hpr-pro-shot/",
+  "brand": "epii",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Essence - WHAT A TINT! lip & cheek tint - 02 Coral Sunset",
+  "url": "https://kbeautybliss.com/product/essence-what-a-tint-lip-cheek-tint/",
+  "brand": "Essence",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Eucerin - Hydro Protect Ultra Light Fluid SPF 50+",
+  "url": "https://kbeautybliss.com/product/eucerin-hydro-protect-ultra-light-fluid-spf-50/",
+  "brand": "Eucerin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Eucerin - Sun Even Pigment Control (SPF50+)",
+  "url": "https://kbeautybliss.com/product/eucerin-sun-even-pigment-control-spf50/",
+  "brand": "Eucerin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "FOODOLOGY - Coleology Bowel Movement Jelly",
+  "url": "https://kbeautybliss.com/product/foodology-coleology-bowel-movement-jelly/",
+  "brand": "FOODOLOGY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "FOODOLOGY - Coleology Cutting Jelly",
+  "url": "https://kbeautybliss.com/product/foodology-coleology-cutting-jelly/",
+  "brand": "FOODOLOGY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "FOODOLOGY - Coleology Cutting Powder",
+  "url": "https://kbeautybliss.com/product/foodology-coleology-cutting-powder/",
+  "brand": "FOODOLOGY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "FOODOLOGY - Collagen Centella Jelly",
+  "url": "https://kbeautybliss.com/product/foodology-collagen-centella-jelly/",
+  "brand": "FOODOLOGY",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "House of Hur - Moist Ampoule Blusher - 6 Colors",
+  "url": "https://kbeautybliss.com/product/house-of-hur-moist-ampoule-blusher-6-colors/",
+  "brand": "House of Hur",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "House of Hur - Purifying Cleansing Balm",
+  "url": "https://kbeautybliss.com/product/house-of-hur-purifying-cleansing-balm/",
+  "brand": "House of Hur",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "ILLIYOON - Ceramide Ato Concentrate Cream",
+  "url": "https://kbeautybliss.com/product/illiyoon-ceramide-ato-concentrate-cream/",
+  "brand": "ILLIYOON",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Ishizawa-Lab - Keana Rice Mask ( 10 Pcs )",
+  "url": "https://kbeautybliss.com/product/ishizawa-lab-keana-rice-mask/",
+  "brand": "Ishizawa-Lab",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Ishizawa-Lab - Nadeshiko Keana Rice Pack",
+  "url": "https://kbeautybliss.com/product/ishizawa-lab-nadeshiko-keana-rice-pack/",
+  "brand": "Ishizawa-Lab",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Kao - Biore UV Aqua Rich Watery Essence Sunscreen SPF 50+ PA++++",
+  "url": "https://kbeautybliss.com/product/kao-biore-uv-aqua-rich-watery-essence-sunscreen-spf-50-pa/",
+  "brand": "Kao",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Lepique - Retinol Night Cream",
+  "url": "https://kbeautybliss.com/product/lepique-retinol-night-cream/",
+  "brand": "Lepique",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "lilyeve - Grow Turn Exosome 3D Volume Brush Shampoo",
+  "url": "https://kbeautybliss.com/product/lilyeve-grow-turn-exosome-3d-volume-brush-shampoo/",
+  "brand": "lilyeve",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "lilyeve - Grow Turn Exosome Brush Ampoule",
+  "url": "https://kbeautybliss.com/product/lilyeve-grow-turn-exosome-brush-ampoule/",
+  "brand": "lilyeve",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "lilyeve - Grow Turn Exosome Dual Lash Serum 2pcs Bundle Set",
+  "url": "https://kbeautybliss.com/product/lilyeve-grow-turn-exosome-dual-lash-serum-2pcs-bundle-set/",
+  "brand": "lilyeve",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "lilyeve - Scalp Turn Cica PDRN Brush Ampoule",
+  "url": "https://kbeautybliss.com/product/lilyeve-scalp-turn-cica-pdrn-brush-ampoule/",
+  "brand": "lilyeve",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "NIDA - Revive Eye Cream For Face And Neck",
+  "url": "https://kbeautybliss.com/product/nida-revive-eye-cream-for-face-and-neck/",
+  "brand": "NIDA",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "NIDA - Salmon PDRN Peptide Serum",
+  "url": "https://kbeautybliss.com/product/nida-salmon-pdrn-peptide-serum/",
+  "brand": "NIDA",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "NIDA - Youthful Formula Ultimate Moisturizing Cream",
+  "url": "https://kbeautybliss.com/product/nida-youthful-formula-ultimate-moisturizing-cream/",
+  "brand": "NIDA",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "NuFACE\u00ae Mini Starter Kit",
+  "url": "https://kbeautybliss.com/product/nuface-mini-starter-kit/",
+  "brand": "NuFACE",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Numbuzin - No.1 Pantothenic B5 Active Soothing Cream",
+  "url": "https://kbeautybliss.com/product/numbuzin-no-1-pantothenic-b5-active-soothing-cream/",
+  "brand": "numbuzin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "numbuzin - No.9 NAD Bio Lifting-sil Essence",
+  "url": "https://kbeautybliss.com/product/numbuzin-no-9-nad-bio-lifting-sil-essence/",
+  "brand": "numbuzin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "numbuzin - No.9 NAD Bio Lifting-sil Full Face Mask Set",
+  "url": "https://kbeautybliss.com/product/numbuzin-no-9-nad-bio-lifting-sil-full-face-mask-set/",
+  "brand": "numbuzin",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "numbuzin - No.9 NAD+ Collagen Under Eye Patches",
+  "url": "https://kbeautybliss.com/product/numbuzin-no-9-nad-collagen-under-eye-patches/",
+  "brand": "numbuzin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "numbuzin - No.9 NAD+ PDRN Glow Boosting Toner",
+  "url": "https://kbeautybliss.com/product/numbuzin-no-9-nad-pdrn-glow-boosting-toner/",
+  "brand": "numbuzin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "numbuzin - No.9 NAD+ Retinol Volumetox Eye Cream",
+  "url": "https://kbeautybliss.com/product/numbuzin-no-9-nad-retinol-volumetox-eye-cream/",
+  "brand": "numbuzin",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Numbuzin No. 9 NAD+ Bio Lifting-sil Timeless Set",
+  "url": "https://kbeautybliss.com/product/numbuzin-no-9-nad-bio-lifting-sil-timeless-set/",
+  "brand": "numbuzin",
+  "status": "missing",
+  "type": "set"
+ },
+ {
+  "name": "Orien - Mugwort Zero Film Cleansing Oil",
+  "url": "https://kbeautybliss.com/product/orien-mugwort-zero-film-cleansing-oil/",
+  "brand": "Orien",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Rohto Mentholatum - Melano CC Vitamin C Essence",
+  "url": "https://kbeautybliss.com/product/rohto-mentholatum-melano-cc-vitamin-c-essence/",
+  "brand": "Rohto Mentholatum",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Rohto Mentholatum - Melano CC Vitamin C Premium Essence",
+  "url": "https://kbeautybliss.com/product/rohto-mentholatum-melano-cc-vitamin-c-premium-essence/",
+  "brand": "Rohto Mentholatum",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "Seapuri - Scalpy Hair Serum",
+  "url": "https://kbeautybliss.com/product/seapuri-scalpy-hair-serum/",
+  "brand": "Seapuri",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "TOCOBO - Cica Calming Sun Serum",
+  "url": "https://kbeautybliss.com/product/tocobo-cica-calming-sun-serum/",
+  "brand": "TOCOBO",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "ViCREA - & Honey Deep Moist Shampoo 1.0",
+  "url": "https://kbeautybliss.com/product/vicrea-honey-deep-moist-shampoo-1-0/",
+  "brand": "ViCREA",
+  "status": "key",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - Cica Reti-A All In One 3 Step Mask",
+  "url": "https://kbeautybliss.com/product/vt-cica-reti-a-all-in-one-3-step-mask/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - Collagen Reedle Shot 100",
+  "url": "https://kbeautybliss.com/product/vt-collagen-reedle-shot-100/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - Hydrop Reedle Shot 100hL 2 Step Mask",
+  "url": "https://kbeautybliss.com/product/vt-hydrop-reedle-shot-100hl-2-step-mask/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - Mild Reedle Shot 50",
+  "url": "https://kbeautybliss.com/product/vt-mild-reedle-shot-50/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - PDRN Capsule Cream 100",
+  "url": "https://kbeautybliss.com/product/vt-pdrn-capsule-cream-100/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - PDRN Essence 100",
+  "url": "https://kbeautybliss.com/product/vt-pdrn-essence-100/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - PDRN Essence Stick Balm",
+  "url": "https://kbeautybliss.com/product/vt-pdrn-essence-stick-balm/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - PDRN Glow Ampoule",
+  "url": "https://kbeautybliss.com/product/vt-pdrn-glow-ampoule/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - Reedle Shot 100 2 Step Mask",
+  "url": "https://kbeautybliss.com/product/vt-reedle-shot-100-2-step-mask/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - Reedle Shot 100 Mini",
+  "url": "https://kbeautybliss.com/product/vt-reedle-shot-100-mini/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - Reedle Shot 300 2 Step Mask",
+  "url": "https://kbeautybliss.com/product/vt-reedle-shot-300-2-step-mask/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - Reedle Shot 700 2 Step Mask",
+  "url": "https://kbeautybliss.com/product/vt-reedle-shot-700-2-step-mask/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - Reedle Shot Lifting Serum",
+  "url": "https://kbeautybliss.com/product/vt-reedle-shot-lifting-serum/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - Reedle Shot Lip Plumper Beginner",
+  "url": "https://kbeautybliss.com/product/vt-reedle-shot-lip-plumper-beginner/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - Reti-A Reedle Shot 100 2Step Hydrogel Mask",
+  "url": "https://kbeautybliss.com/product/vt-reti-a-reedle-shot-100-2step-hydrogel-mask/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - Vita-Light All In One 3step Mask",
+  "url": "https://kbeautybliss.com/product/vt-vita-light-all-in-one-3step-mask/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ },
+ {
+  "name": "VT - Vita-light Reedle Shot 100 2Step Hydrogel Mask",
+  "url": "https://kbeautybliss.com/product/vt-vita-light-reedle-shot-100-2step-hydrogel-mask/",
+  "brand": "VT Cosmetics",
+  "status": "missing",
+  "type": "skincare/beauty"
+ }
+]
