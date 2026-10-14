@@ -727,7 +727,9 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 2027_10_28_800000_seed_checkout_signin_member_arabic_draft.
     // +7 (2.60.495): the 13 October layout's seven checkout strings, seeded by
     // 2027_10_30_100000_checkout_layout_13_october.
-    expect($ui['drafts'])->toBe(1623, 'the shipped Arabic is not showing as drafts to review')
+    // +1 (2.60.504): the phone menu account box's greeting (store.mobile_menu.welcome),
+    // seeded by 2027_10_31_900000_seed_mobile_menu_welcome_arabic_draft.
+    expect($ui['drafts'])->toBe(1624, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

@@ -127,6 +127,7 @@ class ProductLayout
         'tab_s' => '--pl-tab-s',
         'body_s' => '--pl-body-s',
         'body_lh' => '--pl-body-lh',
+        'body_blank' => '--pl-body-blank',
 
         /* Lane PV — the top of the page, per device, and the photo's badge. */
         'gal_top_m' => '--pl-gal-top-m',
@@ -401,6 +402,13 @@ class ProductLayout
         'body_lh' => ['range', 'Detail tab line spacing', 170,
             'How far apart the lines of that text sit.',
             ['min' => 110, 'max' => 240, 'step' => 2, 'unit' => '', 'scale' => 100]],
+        // 2.60.504, the owner: "proceed with double enter 18px space, rest 0 0".
+        // A description written with empty lines (Enter twice) draws each one
+        // this tall, and its single-Enter lines sit with no gap. A description
+        // with no empty line is untouched (kbb-product.css, RichText::markBlankLines()).
+        'body_blank' => ['range', 'Detail tab empty line (Enter twice)', 18,
+            'The space an empty line makes in a description. Pressing Enter once starts the next line with no gap.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
 
         /* ═══════════ PHOTO · the top of the page (Lane PV) ════════════════ */
 
@@ -478,7 +486,7 @@ class ProductLayout
                 'vat_s', 'rate_s', 'desc_s', 'desc_lh', 'trust_s']],
         'ty_sec' => ['Type · Sections & tabs',
             'The headings under the buy column, and the detail tabs.',
-            ['heading_s', 'heading_w', 'tab_s', 'body_s', 'body_lh']],
+            ['heading_s', 'heading_w', 'tab_s', 'body_s', 'body_lh', 'body_blank']],
     ];
 
     /**
@@ -720,6 +728,8 @@ class ProductLayout
             '--pl-tab-s:'.self::px($n('tab_s')),
             '--pl-body-s:'.self::px($n('body_s')),
             '--pl-body-lh:'.self::num($n('body_lh'), 100),
+            // 2.60.504: the empty line (Enter twice) in a description.
+            '--pl-body-blank:'.(int) ($c['body_blank'] ?? 18).'px',
 
             /* Lane PV — photo & badge, the per-device buy-column gaps, the brand */
             '--pl-gal-top-m:'.$n('gal_top_m').'px',

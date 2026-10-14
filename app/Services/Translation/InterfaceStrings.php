@@ -295,6 +295,7 @@ final class InterfaceStrings
             'mobile_menu.link_sign_in' => 'Sign in',
             'mobile_menu.link_register' => 'Create an account',
             'mobile_menu.link_wishlist' => 'Wishlist',
+            'mobile_menu.welcome' => 'Welcome, :name',
             'tabbar.label' => 'Quick navigation',
             'tabbar.home' => 'Home',
             'tabbar.shop' => 'Shop',

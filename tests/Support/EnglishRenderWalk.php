@@ -1667,6 +1667,56 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * "option E is good, but i don't want to display such big like other
+             * menu items, it should be small ... i want minimal" and then "Slim
+             * strip for non-login users and Two small buttons, then links for
+             * logged in users" -- the owner, 14 October (2.60.504). The phone
+             * menu's account rows become the small strip on every shop page this
+             * walk renders (signed out); "Create an account" now opens the
+             * register tab (?tab=register; ?action=register opened Sign in).
+             */
+            'the phone menu account box, slim strip for a visitor (2.60.504)' => [
+                'pattern' => <<<'MM504'
+#<div\ class="mm\-grp">Account</div>\n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <a\ class="mm\-it"\ href="/my\-account/">Sign\ in</a>\n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <a\ class="mm\-it"\ href="/my\-account/\?action=register">Create\ an\ account</a>\n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <a\ class="mm\-it"\ href="/my\-wishlist/">Wishlist</a>\n#
+MM504,
+                'with' => <<<'MM504'
+
+                            <div class="mm-acs">
+                    <a class="mm-acs-who" href="/my-account/"><span class="mm-acs-av"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>Sign in</a>
+                    <a class="mm-acs-b" href="/my-account/?tab=register" aria-label="Create an account" title="Create an account"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M2.5 21a7.5 7.5 0 0 1 13.4-4.6"/><path d="M19 14v6M16 17h6"/></svg></a>
+                    <a class="mm-acs-b" href="/my-wishlist/" aria-label="Wishlist" title="Wishlist"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4A5 5 0 0 1 12 6a5 5 0 0 1 9.2 5.1C19.5 15.9 12 20.5 12 20.5z"/></svg></a>
+                </div>
+            
+MM504,
+                'hits' => 29,
+            ],
+            /*
+             * The same account box for a SIGNED-IN shopper (2.60.504): E6, the
+             * owner's pick -- "Welcome, <first name>" in the border, then Orders,
+             * Addresses, My account, Wishlist and Sign out as small links. The
+             * walk's four signed-in account pages.
+             */
+            'the phone menu account box, signed in (2.60.504)' => [
+                'pattern' => <<<'MM504'
+#<div\ class="mm\-grp">Account</div>\n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <a\ class="mm\-it"\ href="/my\-account/">My\ account</a>\n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <a\ class="mm\-it"\ href="/my\-account/orders/">Orders</a>\n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <a\ class="mm\-it"\ href="/my\-wishlist/">Wishlist</a>\n#
+MM504,
+                'with' => <<<'MM504'
+
+                            
+                                <fieldset class="mm-acx">
+                    <legend>Welcome, Ada</legend>
+                    <div class="mm-acx-l">
+                        <a href="/my-account/orders/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5 12 4l8.5 4.5v7L12 20l-8.5-4.5z"/><path d="M3.5 8.5 12 13l8.5-4.5M12 13v7"/></svg>Orders</a>
+                        <a href="/my-account/edit-address/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Addresses</a>                        <a href="/my-account/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16a3.4 3.4 0 0 1 6.4 0M14.5 10h4M14.5 13.5h3"/></svg>My account</a>
+                        <a href="/my-wishlist/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4A5 5 0 0 1 12 6a5 5 0 0 1 9.2 5.1C19.5 15.9 12 20.5 12 20.5z"/></svg>Wishlist</a>
+                        <form method="post" action="/my-account/logout"><input type="hidden" name="_token" value="TOKEN" autocomplete="off"><button class="mm-acx-out" type="submit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h3"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</button></form>
+                    </div>
+                </fieldset>
+            
+MM504,
+                'hits' => 4,
+            ],
+            /*
              * "on the cart panel, the product is not clickable, neither product
              * image. it should be clickable and go to the product page" -- the
              * owner, 12 October (Lane CPL). Each basket line in the cart panel:

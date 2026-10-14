@@ -3,6 +3,21 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.504
+**Product descriptions: one Enter is the next line, two Enters is an 18px gap. And the phone menu's account box is small: a slim strip for visitors, small links when signed in.** Apply after .502. It includes everything in .503, so .503 can be skipped (applying both is fine too).
+Runs its migrations (clears caches; adds the Arabic draft of the new greeting). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "when i press single enter, it will just break the line without any spacing. and when i press enter two times, it should give spacing between paragraphs" / "proceed with double enter 18px space, rest 0 0" / "if the description is already correct. don't mess up further" | A description written with empty lines (Enter twice) now has no gap after a single Enter, none before a list, and exactly 18px at each empty line. Measured on the Anua Azelaic 10 description at your shop's 14px / 1.32: "Made in Korea" to "Hero Ingredients:" 39 → 18px, list to "How to Use:" 39 → 18px, "Key Benefits:" to its list 11 → 0px; the description 743 → 583px tall on computer, 1057 → 897px on phone. A description with no empty line in it is not touched at all. Nothing stored changes, so every product is fixed by itself. Control: Appearance → Product page → Layout → Type · Sections & tabs → Detail tab empty line (Enter twice), 18px |
+| "Slim strip for non-login users and Two small buttons, then links for logged in users" | Phone menu, under the menu items. Visitor: one 50px strip, Sign in with round Create account and Wishlist buttons. Signed in: a thin box, "Welcome, (first name)" in its border, then Orders, Addresses, My account, Wishlist and Sign out as small links (97px). Every link answers a tap first time (measured at 390 and 360). Control: Appearance → Mobile menu → Foot of the sheet → Account box (Small box / List rows as before) |
+
+Also fixed in the menu: a signed-in shopper was shown "Sign in" there (it asked the back-office login, not the shop's), and "Create an account" opened the Sign in tab; it now opens Create account.
+
+Nothing else changes: no checkout or payment code, the header untouched, no extra database queries.
+
+Files: app/Support/RichText.php, app/Http/Controllers/Store/ProductController.php, app/Services/ProductLayout.php, app/Services/MobileMenu.php, app/Services/Translation/InterfaceStrings.php, app/Services/Translation/ArabicInterfaceDrafts.php, resources/views/partials/mobile-chrome.blade.php, resources/css/kbb/kbb-product.css, resources/css/kbb/kbb.css (+ public/build), migrations 2027_10_31_800000, 2027_10_31_900000.
+
 ## 2.60.503
 **Product descriptions: a blank line (Enter on an empty line in the description editor) is now one line of space, not a big gap.** Apply after .502.
 Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.

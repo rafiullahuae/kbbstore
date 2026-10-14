@@ -7,8 +7,10 @@ use Illuminate\Database\Migrations\Migration;
 /*
  * 2.60.503: a blank line typed in a product description is one line of space
  * (RichText::markBlankLines(), ProductController::tabs(), kbb-product.css).
- * New PHP and a new stylesheet; the view, config and OPcache are cleared so
- * every product page picks them up at once. Nothing stored changes.
+ * 2.60.504 carries it too: the description's single/double Enter spacing and
+ * the phone menu's small account box (partials/mobile-chrome.blade.php).
+ * New PHP, a new view and stylesheet; the view, config and OPcache are cleared
+ * so every page picks them up at once. Nothing stored changes.
  */
 return new class extends Migration
 {

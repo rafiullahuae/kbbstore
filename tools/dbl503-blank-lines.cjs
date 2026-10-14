@@ -1,13 +1,15 @@
+// 2.60.504: description spacing before/after at the live shop's 14px / 1.32 (single Enter 0, double Enter 18px).
 const { chromium } = require('playwright');
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
-  const out = 'docs/lane-co13-shots/blank-line-503/';
+  const out = 'docs/lane-co13-shots/blank-line-504/';
   for (const w of [1280, 390]) {
     for (const mode of ['before', 'after']) {
       const p = await b.newPage({ viewport: { width: w, height: 900 } });
       const errs = []; p.on('console', m => m.type() === 'error' && errs.push(m.text())); p.on('pageerror', e => errs.push(String(e)));
       await p.goto('http://127.0.0.1:11900/product/relief-sun-rice-probiotics-spf50/', { waitUntil: 'networkidle' });
       const r = await p.evaluate(([mode, w]) => {
+        document.documentElement.style.setProperty('--pl-body-s', '14px'); document.documentElement.style.setProperty('--pl-body-lh', '1.32');
         if (mode === 'before') document.querySelectorAll('p.kbb-bl').forEach(e => { e.className = 'p2'; e.innerHTML = '<br>'; });
         const box = [...document.querySelectorAll('.details .dcontent')].find(e => e.offsetParent && e.textContent.includes('Made in Korea'));
         box.id = 'dblbox';

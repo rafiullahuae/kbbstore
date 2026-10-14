@@ -93,6 +93,9 @@ class MobileMenu
         'support_text'  => ['text',   'Support wording',   '24/7 support', ''],
         'show_account'  => ['bool',   'Account links',     true, 'Sign in, register and wishlist.'],
         'account_label' => ['text',   'Account heading',   'Account', ''],
+        // 2.60.504: the owner picked the small box ("i want minimal") -- it ships on.
+        'account_style' => ['select', 'Account box', 'box', 'Small box: a slim strip for visitors, two lines of small links when signed in. List: the old full rows.',
+                            ['box' => 'Small box', 'list' => 'List rows (as before)']],
 
         /*
          * ── V4 "TWO-TONE" (Lane M4, 6 October) ─────────────────────────────
@@ -246,7 +249,7 @@ class MobileMenu
         'open' => ['Open section', 'How an expanded parent is marked.',
                    ['card_style', 'rule_position', 'rule_width', 'rule_colour', 'card_bg', 'parent_bg', 'parent_colour']],
         'foot' => ['Foot of the sheet', 'Support and account links.',
-                   ['show_support', 'support_text', 'show_account', 'account_label']],
+                   ['show_support', 'support_text', 'show_account', 'account_label', 'account_style']],
         // Lane M4. After the five above, so their payload keeps its order.
         'style' => ['Style', 'V4 two-tone or the classic glass panel.',
                     ['menu_style', 'show_chips', 'sale_fill', 'sale_flash']],

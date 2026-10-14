@@ -56,16 +56,42 @@
             @include('partials.mobile-menu-item', ['item' => $item, 'depth' => 0])
         @endforeach
 
-        @if ($cfg['show_account'])
+        @if ($cfg['show_account'] && $cfg['account_style'] === 'list')
             <div class="mm-grp">{{ $cfg['account_label'] }}</div>
-            @auth
+            @auth('customer')
                 <a class="mm-it" href="{{ Url::to('/my-account/') }}">{{ __('store.mobile_menu.link_account') }}</a>
                 <a class="mm-it" href="{{ Url::to('/my-account/orders/') }}">{{ __('store.mobile_menu.link_orders') }}</a>
             @else
                 <a class="mm-it" href="{{ Url::to('/my-account/') }}">{{ __('store.mobile_menu.link_sign_in') }}</a>
-                <a class="mm-it" href="{{ Url::to('/my-account/?action=register') }}">{{ __('store.mobile_menu.link_register') }}</a>
+                <a class="mm-it" href="{{ Url::to('/my-account/') }}?tab=register">{{ __('store.mobile_menu.link_register') }}</a>
             @endauth
             <a class="mm-it" href="{{ Url::to('/my-wishlist/') }}">{{ __('store.mobile_menu.link_wishlist') }}</a>
+        @elseif ($cfg['show_account'])
+            {{-- 2.60.504, the owner's pick from docs/mobile-menu-account-options/minimal.html:
+                 E5 "slim strip" for a visitor, E6 "two small buttons, then links" signed in.
+                 Small, no full rows. Appearance → Mobile menu → Foot of the sheet → Account box. --}}
+            @auth('customer')
+                {{-- The CUSTOMER guard: shoppers sign in on it, and plain @auth asks `web`
+                     (the back office), which is why this menu said "Sign in" to a signed-in
+                     shopper before 2.60.504. First name only; never the e-mail address. --}}
+                @php $mmC = auth('customer')->user(); $mmWho = trim((string) ($mmC->first_name ?: strtok((string) $mmC->name, ' '))); @endphp
+                <fieldset class="mm-acx">
+                    <legend>@if ($mmWho !== ''){{ __('store.mobile_menu.welcome', ['name' => $mmWho]) }}@else{{ $cfg['account_label'] }}@endif</legend>
+                    <div class="mm-acx-l">
+                        <a href="{{ Url::to('/my-account/orders/') }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5 12 4l8.5 4.5v7L12 20l-8.5-4.5z"/><path d="M3.5 8.5 12 13l8.5-4.5M12 13v7"/></svg>{{ __('store.mobile_menu.link_orders') }}</a>
+                        @if (app(\App\Services\SettingsService::class)->moduleEnabled('address_book', true))<a href="{{ Url::to('/my-account/edit-address/') }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>{{ __('store.account.card_addresses') }}</a>@endif
+                        <a href="{{ Url::to('/my-account/') }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16a3.4 3.4 0 0 1 6.4 0M14.5 10h4M14.5 13.5h3"/></svg>{{ __('store.mobile_menu.link_account') }}</a>
+                        <a href="{{ Url::to('/my-wishlist/') }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4A5 5 0 0 1 12 6a5 5 0 0 1 9.2 5.1C19.5 15.9 12 20.5 12 20.5z"/></svg>{{ __('store.mobile_menu.link_wishlist') }}</a>
+                        <form method="post" action="{{ Url::to('/my-account/logout') }}">@csrf<button class="mm-acx-out" type="submit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h3"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>{{ __('store.account_panel.sign_out') }}</button></form>
+                    </div>
+                </fieldset>
+            @else
+                <div class="mm-acs">
+                    <a class="mm-acs-who" href="{{ Url::to('/my-account/') }}"><span class="mm-acs-av"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>{{ __('store.mobile_menu.link_sign_in') }}</a>
+                    <a class="mm-acs-b" href="{{ Url::to('/my-account/') }}?tab=register" aria-label="{{ __('store.mobile_menu.link_register') }}" title="{{ __('store.mobile_menu.link_register') }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M2.5 21a7.5 7.5 0 0 1 13.4-4.6"/><path d="M19 14v6M16 17h6"/></svg></a>
+                    <a class="mm-acs-b" href="{{ Url::to('/my-wishlist/') }}" aria-label="{{ __('store.mobile_menu.link_wishlist') }}" title="{{ __('store.mobile_menu.link_wishlist') }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4A5 5 0 0 1 12 6a5 5 0 0 1 9.2 5.1C19.5 15.9 12 20.5 12 20.5z"/></svg></a>
+                </div>
+            @endauth
         @endif
 
         <p class="mm-empty" id="mmEmpty" hidden>{{ __('store.mobile_menu.no_matches') }}</p>

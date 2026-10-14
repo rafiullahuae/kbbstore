@@ -645,6 +645,7 @@ final class ArabicInterfaceDrafts
             'store.mobile_menu.link_sign_in' => 'تسجيل الدخول',
             'store.mobile_menu.link_register' => 'إنشاء حساب',
             'store.mobile_menu.link_wishlist' => 'المفضلة',
+            'store.mobile_menu.welcome' => 'أهلاً، :name',
             'store.tabbar.label' => 'تنقل سريع',
             'store.tabbar.home' => 'الرئيسية',
             'store.tabbar.shop' => 'التسوق',

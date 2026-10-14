@@ -1488,11 +1488,20 @@ html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
 .details .dcontent :is(h2,h3,h4,h5,h6){margin-block:1em .4em;line-height:1.35}
 .details .dcontent > :first-child{margin-block-start:0}
 .details .dcontent > :last-child{margin-block-end:0}
-/* 2.60.503 -- a blank line typed between paragraphs ("it should be normal space
-   like one line"). RichText::markBlankLines() turns `<p><br></p>` / `<p>&nbsp;</p>`
-   into an empty p.kbb-bl; drawn as a line-box plus its margin it was ~48px, a
-   paragraph break is .75em. Here it adds .75em more: ~1.5em, one line of space. */
-.details .dcontent p.kbb-bl{margin-block-end:0;height:.75em}
+/* 2.60.504 -- the owner: "when i press single enter, it will just break the line
+   without any spacing. and when i press enter two times, it should give spacing
+   between paragraphs" ... "double enter 18px space, rest 0 0". The editor saves each
+   Enter as a new <p> and an empty line as `<p><br></p>`, which RichText::
+   markBlankLines() turns into p.kbb-bl. ONLY a description that has such an empty
+   line is laid out this way -- so it is copy written that way -- and its paragraphs
+   and lists close up (0) while each empty line is 18px (Appearance -> Product page
+   -> Layout -> Type · Sections & tabs -> Detail tab empty line). A description with
+   no empty line keeps exactly the spacing it had. Without :has() (older browsers)
+   the paragraphs keep their .75em and the empty line is 18px. */
+.details .dcontent p.kbb-bl{margin-block:0;height:var(--pl-body-blank,18px)}
+.details .dcontent:has(> p.kbb-bl) > :is(p,ul,ol){margin-block-end:0}
+.details .dcontent:has(> p.kbb-bl) > :is(ul,ol){margin-block-start:0}
+.details .dcontent:has(> p.kbb-bl) > :is(ul,ol) > li:last-child{margin-bottom:0}
 .pdp .bb-desc :is(p,div,ul,ol){margin-block-end:.6em}
 .pdp .bb-desc :is(ul,ol){margin-inline-start:18px}
 .pdp .bb-desc > :last-child{margin-block-end:0}

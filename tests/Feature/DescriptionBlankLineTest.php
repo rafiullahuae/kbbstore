@@ -55,8 +55,24 @@ it('draws the blank line on the product page as one line, and stores nothing', f
         ->and(Product::find($p->id)->description)->toBe($raw);
 });
 
-it('sizes the blank line in the product stylesheet without margins of its own', function () {
+it('closes up only a description written with empty lines, and draws each empty line 18px', function () {
+    // 2.60.504, the owner: "single enter ... without any spacing ... enter two
+    // times ... 18px space, rest 0 0" and "if the description is already
+    // correct. don't mess up further." Mutation: drop `:has(> p.kbb-bl)` and
+    // every description in the shop closes up -- the first expectation is red.
     $css = (string) file_get_contents(resource_path('css/kbb/kbb-product.css'));
 
-    expect(substr_count($css, '.details .dcontent p.kbb-bl{margin-block-end:0;height:.75em}'))->toBe(1);
+    expect(substr_count($css, '.details .dcontent:has(> p.kbb-bl) > :is(p,ul,ol){margin-block-end:0}'))->toBe(1)
+        ->and(substr_count($css, '.details .dcontent:has(> p.kbb-bl) > :is(ul,ol){margin-block-start:0}'))->toBe(1)
+        ->and(substr_count($css, '.details .dcontent:has(> p.kbb-bl) > :is(ul,ol) > li:last-child{margin-bottom:0}'))->toBe(1)
+        ->and(substr_count($css, '.details .dcontent p.kbb-bl{margin-block:0;height:var(--pl-body-blank,18px)}'))->toBe(1)
+        // The plain paragraph rule every other description uses is where it was.
+        ->and(substr_count($css, '.details .dcontent p{margin-block-end:.75em}'))->toBe(1);
+});
+
+it('carries the empty-line size from the admin to the page', function () {
+    $defaults = collect(\App\Services\ProductLayout::SCHEMA)->map(fn ($d) => $d[2])->all();
+
+    expect(\App\Services\ProductLayout::css($defaults))->toContain('--pl-body-blank:18px')
+        ->and(\App\Services\ProductLayout::css(['body_blank' => 24] + $defaults))->toContain('--pl-body-blank:24px');
 });

@@ -141,7 +141,7 @@ it('ships every value at the number the stylesheet already falls back to', funct
     // 30, and Lane PV's sixteen: the photo & badge five, ten laptop/phone
     // halves of the buy column's gaps, and the brand's size. Lane RG: the tab row's laptop gap, Tabby & Tamara's laptop gap. Lane RI: Buy these together's right-column gap.
     // Lane PX: + the brand capsule's three (on/off, tint, radius).
-    expect($emitted)->toHaveCount(52);
+    expect($emitted)->toHaveCount(53); // 2.60.504: + body_blank (the description's empty line)
 
     foreach ($emitted as $name => $value) {
         preg_match_all('/var\('.preg_quote($name, '/').'\s*,\s*([^)]+)\)/', $sheet, $m);
@@ -214,7 +214,7 @@ it('puts one style block on the page the moment a single value moves', function 
     expect($vars['--pl-title-m'])->toBe('24px');
     expect($vars['--pl-title-d'])->toBe('30px');
     expect($vars['--pl-sec-pad'])->toBe('34px');
-    expect($vars)->toHaveCount(52); // Lane RG: + tab_body_gap_d, paylater_gap_d; Lane RI: + bt_gap_d; Lane PX: + brand_cap, brand_bg, brand_r
+    expect($vars)->toHaveCount(53); // 2.60.504: + body_blank; Lane RG: + tab_body_gap_d, paylater_gap_d; Lane RI: + bt_gap_d; Lane PX: + brand_cap, brand_bg, brand_r
 });
 
 it('prints a half-pixel size as a decimal and never as its stored integer', function () {
@@ -253,7 +253,7 @@ it('answers both halves of the screen from the one endpoint', function () {
         'Spacing · Page' => 5,          // Lane RG: + the tab row's laptop gap
         'Spacing · Buy column' => 21,   // Lane RG: + space above Tabby & Tamara · laptop; Lane RI: + Buy these together · right column
         'Type · Buy column' => 16,      // Lane PX: + the brand capsule's on/off, tint and radius
-        'Type · Sections & tabs' => 5,
+        'Type · Sections & tabs' => 6, // 2.60.504: + Detail tab empty line
     ]);
 
     $photo = $body['layout'][0]['fields'];
