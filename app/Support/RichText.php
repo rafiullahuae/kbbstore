@@ -611,6 +611,10 @@ final class RichText
             return preg_replace('/' . self::BLANK . '+/u', '', $text) === '' ? '<div class="kbb-bl"></div>' : $m[0];
         }, $html);
 
+        // An empty bullet (`<li>\n</li>`) inside a list with words drew a 23px
+        // blank line with a dot (COSRX Centella Water toner).
+        $html = (string) preg_replace('#<li\b[^>]*>(?:\s|&nbsp;|&\#160;|<br\s*/?>)*</li>#i', '', $html);
+
         return (string) preg_replace_callback('#<(ul|ol)\b[^>]*>(.*?)</\1>#is', static function (array $m): string {
             if (preg_match('#<(ul|ol)\b#i', $m[2])) {
                 return $m[0];

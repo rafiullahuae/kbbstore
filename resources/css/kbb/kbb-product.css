@@ -1516,8 +1516,9 @@ html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
      where the gap is the empty line's. */
 .details .dcontent .kbb-bl + .kbb-bl{height:0}
 .details .dcontent section{padding:0;margin:0}
-.details .dcontent:not(:has(.kbb-bl)) :is(p,div):not(:first-child):has(> :is(strong,b):only-child){margin-block-start:.75em}
-.details .dcontent:not(:has(.kbb-bl)) > :is(strong,b):not(:first-child):has(+ :is(ul,ol)){display:block;margin-block-start:.75em}
+.details .dcontent:not(:has(.kbb-bl)) :is(p,div):not(:first-child):not(:is(h1,h2,h3,h4,h5,h6,b,strong) + *):has(> :is(strong,b):only-child){margin-block-start:.75em}
+.details .dcontent:not(:has(.kbb-bl)) :is(section,div,.dcontent) > :is(strong,b):not(:first-child):has(+ :is(ul,ol,p,div,section)){display:block;margin-block-start:.75em}
+.details .dcontent:not(:has(.kbb-bl)) section:not(:first-child){margin-block-start:.75em}
 .pdp .bb-desc :is(p,div,ul,ol){margin-block-end:.6em}
 .pdp .bb-desc :is(ul,ol){margin-inline-start:18px}
 .pdp .bb-desc > :last-child{margin-block-end:0}

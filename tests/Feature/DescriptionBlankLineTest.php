@@ -80,7 +80,7 @@ it('takes the old site\'s section padding, repeated empty lines and jammed headi
 
     expect(substr_count($css, '.details .dcontent section{padding:0;margin:0}'))->toBe(1)
         ->and(substr_count($css, '.details .dcontent .kbb-bl + .kbb-bl{height:0}'))->toBe(1)
-        ->and(substr_count($css, '.details .dcontent:not(:has(.kbb-bl)) :is(p,div):not(:first-child):has(> :is(strong,b):only-child){margin-block-start:.75em}'))->toBe(1);
+        ->and(substr_count($css, '.details .dcontent:not(:has(.kbb-bl)) section:not(:first-child){margin-block-start:.75em}'))->toBe(1);
 });
 
 it('marks a <div><br></div> blank line, drops an empty list, and leaves a truly empty div alone', function () {
@@ -91,7 +91,9 @@ it('marks a <div><br></div> blank line, drops an empty list, and leaves a truly 
         // `<div></div>` draws nothing today and stays nothing.
         ->and(RichText::markBlankLines('<p>a</p><div></div><p>b</p>'))->toBe('<p>a</p><div></div><p>b</p>')
         // A list with words, or with a picture, is a list.
-        ->and(RichText::markBlankLines('<ul><li>Soft</li></ul>'))->toBe('<ul><li>Soft</li></ul>');
+        ->and(RichText::markBlankLines('<ul><li>Soft</li></ul>'))->toBe('<ul><li>Soft</li></ul>')
+        // An empty bullet inside a real list goes; the list stays.
+        ->and(RichText::markBlankLines("<ul><li>Soft</li><li>\n</li></ul>"))->toBe('<ul><li>Soft</li></ul>');
 });
 
 it('does not let a blank line after the last word close up the whole description', function () {
