@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.502
+**Urgent fix: the checkout's Sign in window and its "Forgot password" no longer say "Something went wrong" when the checkout tab is older than your last sign-in.** Apply after .501.
+Runs its migration (clears caches, including the route cache for the one new address).
+
+| Your request | Now |
+|---|---|
+| "Something went wrong. Please try again, or use the full sign-in page. this is coming on the sign-in form and also same for forgot email form ... the actual sign-in page is working fine" / "it's only for my email" | Found and reproduced: signing in anywhere in the same browser (the admin included, which is why it was only you) renews the browser's security token, and a checkout tab opened before that still held the old one. The window's request was refused as "expired" and it showed "Something went wrong". Now, on that answer, the window fetches a fresh token once and sends the same request again — measured on the preview shop: refused, then signed in with the details filled in; and for Forgot password, refused, then "we have sent you a link". The rest of the checkout is handed the fresh token too |
+
+Nothing else changes: no other page, no payment code, no setting.
+
+Files: resources/views/partials/checkout/sign-in.blade.php, app/Http/Controllers/Store/CheckoutSignInController.php, routes/checkout-sign-in.php, migration 2027_10_31_700000.
+
 ## 2.60.501
 **New Arrivals opens with the newest products first. Every other category keeps the order you set by hand.** Apply after .500.
 Runs its migration (adds one column and sets New Arrivals; clears caches). Then Cloudways → Application Settings → Varnish → Purge.

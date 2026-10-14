@@ -75,6 +75,7 @@
   if (!D || !LINK || !FORM || typeof D.showModal !== 'function') return;
 
   var FAILED = @json(__('store.checkout.signin_failed'));
+  var TOKEN_URL = @json(\App\Support\Url::to('/checkout/sign-in/token'));
   var busy = false;
 
   function $(sel, root) { return (root || D).querySelector(sel); }
@@ -206,13 +207,31 @@
         if (country) body.append('country', country.value);
       }
       var fallback = false;
-      try {
-        var response = await fetch(form.getAttribute('action'), {
+      var send = function () {
+        return fetch(form.getAttribute('action'), {
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'X-CSRF-TOKEN': (window.KBB && window.KBB.csrf) || '', 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
           body: body
         });
+      };
+      try {
+        var response = await send();
+        {{-- 2.60.502: a page older than the browser's last sign-in or sign-out
+           (the admin included) holds a retired token, and the request is
+           refused 419. Fetch this session's token once, adopt it everywhere,
+           and send the same request again. --}}
+        if (response.status === 419) {
+          var fresh = null;
+          try {
+            var t = await fetch(TOKEN_URL, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } });
+            fresh = t.ok ? await t.json() : null;
+          } catch (e) { fresh = null; }
+          if (fresh && typeof fresh.csrf === 'string' && fresh.csrf !== '') {
+            adopt(fresh.csrf);
+            response = await send();
+          }
+        }
         var data = null;
         try { data = await response.json(); } catch (e) { data = null; }
         if (response.ok && data && data.ok) {
@@ -226,6 +245,8 @@
         var first = null;
         if (data && data.errors) { for (var k in data.errors) { if (data.errors[k] && data.errors[k][0]) { first = data.errors[k][0]; break; } } }
         if (!first && response.status === 429 && data && data.message) first = data.message;
+        {{-- The shop's own refusal (a blocked network) says what it is. --}}
+        if (!first && data && data.blocked && typeof data.error === 'string') first = data.error;
         fallback = !first;
         say(form, first || FAILED);
         if (kind === 'login') { $('#kbbSiPw').value = ''; $('#kbbSiPw').focus(); }

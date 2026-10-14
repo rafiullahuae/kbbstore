@@ -39,3 +39,16 @@ Route::post('/checkout/sign-in', [CheckoutSignInController::class, 'login'])
 Route::post('/checkout/sign-in/forgot', [CheckoutSignInController::class, 'forgot'])
     ->middleware('throttle:30,1')
     ->name('checkout.signin.forgot');
+
+/*
+ * 2.60.502: a fresh CSRF token for the Sign in window. The owner, on the live
+ * shop: "Something went wrong ... this is coming on the sign-in form and also
+ * same for forgot email form". A checkout tab opened before the browser signed
+ * in or out anywhere (the admin included) holds a token that sign-in retired,
+ * and the window's request was refused 419. On a 419 the window asks here
+ * once, adopts the token and sends the same request again. Same-origin JSON
+ * only (a page on another site cannot read it), never cached, throttled.
+ */
+Route::get('/checkout/sign-in/token', [CheckoutSignInController::class, 'token'])
+    ->middleware('throttle:30,1')
+    ->name('checkout.signin.token');

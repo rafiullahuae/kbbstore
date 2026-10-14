@@ -88,6 +88,17 @@ class CheckoutSignInController extends Controller
      *
      * @return list<string>
      */
+    /**
+     * GET /checkout/sign-in/token (2.60.502) -- this session's CSRF token, for
+     * a Sign in window whose page outlived it. Nothing else: no account data,
+     * and never stored by a proxy.
+     */
+    public function token(): JsonResponse
+    {
+        return response()->json(['ok' => true, 'csrf' => csrf_token()])
+            ->header('Cache-Control', 'no-store, private');
+    }
+
     private function lines(?Cart $cart): array
     {
         if ($cart === null) {
