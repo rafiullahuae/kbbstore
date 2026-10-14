@@ -299,7 +299,9 @@ it('is one row with arrows on a laptop by default, and drops the arrows when the
         ->and($sec)->toContain(' data-ymal>')
         ->and(substr_count($sec, 'data-ymal-prev'))->toBe(1)
         ->and(substr_count($sec, 'data-ymal-next'))->toBe(1)
-        ->and($sec)->toContain('<ul class="hs-cc-list" data-ymal-track>')
+        ->and($sec)->toContain('<ul class="hs-cc-list" data-ymal-track data-ymal-drag>')
+        // 2.60.510: the row stops where the shopper lets go -- no snapping by default.
+        ->and($sec)->toContain('hs-cc-snap-free')
         // Phone arrows are off by default: the phone swipes.
         ->and($sec)->toContain('hs-cc-noarr-m');
 
@@ -308,4 +310,26 @@ it('is one row with arrows on a laptop by default, and drops the arrows when the
     expect($wrap)->toContain('hs-cc-d-wrap')
         ->and($wrap)->not->toContain('data-ymal')
         ->and($wrap)->toContain('<ul class="hs-cc-list">');
+});
+
+it('scrolls freely by default and snaps only when asked, with a mouse drag that measures nothing', function () {
+    // 2.60.510, the owner: "freely move as per the user scroll ... not limits
+    // ... smooth, super calm." The row had scroll-snap (mandatory on a phone,
+    // proximity on a laptop), so it jumped to the nearest chip on release.
+    // MUTATION: put `scroll-snap-type:x mandatory` back on the phone row's
+    // base rule -- the first expectation is red.
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
+    preg_match_all('#\.kbb-home \.hs-cc-[md]-scroll \.hs-cc-list\{[^}]*\}#', $css, $base);
+
+    expect(implode('', $base[0]))->not->toContain('scroll-snap-type')
+        ->and($css)->toContain('.kbb-home .hs-cc-snap-chip.hs-cc-m-scroll .hs-cc-list{scroll-snap-type:x mandatory}');
+
+    $js = (string) file_get_contents(resource_path('js/kbb/ymal.js'));
+    expect($js)->toContain("if (track.hasAttribute('data-ymal-drag')) dragToScroll(track, reduce, () => stop());")
+        ->and(substr($js, (int) strpos($js, 'function dragToScroll')))->not->toMatch('/getBoundingClientRect|offset(Width|Height|Left)|scrollWidth|clientWidth|ResizeObserver/');
+
+    ccCatalogue();
+    ccCat('Pore Care', 'pore-care');
+    ccWrite(['home_cc_snap' => 'chip']);
+    expect(ccSection(ccHome()))->toContain('hs-cc-snap-chip');
 });

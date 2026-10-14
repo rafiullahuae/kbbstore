@@ -157,6 +157,9 @@ function setUp(root) {
     if (prev) prev.addEventListener('click', () => { stop(); move(-1); });
     if (next) next.addEventListener('click', () => { stop(); move(1); });
 
+    // (2.60.510) A row that asks for it can be dragged with a mouse.
+    if (track.hasAttribute('data-ymal-drag')) dragToScroll(track, reduce, () => stop());
+
     /* ── AUTOPLAY, OFF UNLESS THE OWNER SWITCHED IT ON ───────────────────────
        Never for a visitor who has asked for reduced motion. Paused while the
        pointer is over it or focus is inside it, and stopped for good the first
@@ -205,4 +208,81 @@ function setUp(root) {
             onScreen = true;
         }
     }
+}
+
+/* ── DRAG TO SCROLL, WITH A CALM GLIDE ─────────────────────────────── 2.60.510 ──
+   The owner, on the Shop by skin concern row: "freely move as per the user
+   scroll ... with full control where to stop ... smooth, super calm."
+   A phone and a trackpad already scroll a row natively, and stop wherever the
+   finger stops (the row no longer snaps). A MOUSE cannot scroll sideways, so
+   on a track carrying `data-ymal-drag` a mouse press-and-drag moves the row
+   1:1 under the pointer, and on release it glides on with the speed it had,
+   easing out gently, until it stops by itself or reaches an end (the browser
+   clamps scrollLeft, so the ends are never measured). Only scrollLeft is
+   written; nothing is measured. A drag longer than a few pixels swallows the
+   click that ends it, so dragging across a chip never opens it. Reduced
+   motion: no glide, the row stops where it was let go. Touch and pen are left
+   to the browser. */
+function dragToScroll(track, reduce, onStart) {
+    let down = false;
+    let moved = 0;
+    let lastX = 0;
+    let lastT = 0;
+    let v = 0;
+    let raf = 0;
+
+    const halt = () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } };
+
+    track.addEventListener('pointerdown', (e) => {
+        if (e.pointerType !== 'mouse' || e.button !== 0) return;
+        halt();
+        onStart();
+        down = true;
+        moved = 0;
+        v = 0;
+        lastX = e.clientX;
+        lastT = e.timeStamp;
+    });
+
+    track.addEventListener('pointermove', (e) => {
+        if (!down) return;
+        const dx = e.clientX - lastX;
+        const dt = Math.max(1, e.timeStamp - lastT);
+        if (Math.abs(dx) > 0) {
+            moved += Math.abs(dx);
+            if (moved > 4 && !track.hasPointerCapture(e.pointerId)) track.setPointerCapture(e.pointerId);
+            track.scrollLeft -= dx;
+            v = 0.8 * (-dx / dt) + 0.2 * v;
+        }
+        lastX = e.clientX;
+        lastT = e.timeStamp;
+    });
+
+    const release = (e) => {
+        if (!down) return;
+        down = false;
+        if (track.hasPointerCapture(e.pointerId)) track.releasePointerCapture(e.pointerId);
+        if (reduce || e.timeStamp - lastT > 80) return;
+        let speed = Math.max(-2.5, Math.min(2.5, v)); // px per ms, capped: calm, never flung
+        let prevT = 0;
+        const glide = (t) => {
+            const dt = prevT ? Math.min(32, t - prevT) : 16;
+            prevT = t;
+            const before = track.scrollLeft;
+            track.scrollLeft += speed * dt;
+            speed *= Math.pow(0.94, dt / 16); // soft ease-out, about a second to rest
+            if (Math.abs(speed) < 0.02 || track.scrollLeft === before) { raf = 0; return; }
+            raf = requestAnimationFrame(glide);
+        };
+        raf = requestAnimationFrame(glide);
+    };
+
+    track.addEventListener('pointerup', release);
+    track.addEventListener('pointercancel', release);
+    track.addEventListener('click', (e) => {
+        if (moved > 4) { e.preventDefault(); e.stopPropagation(); moved = 0; }
+    }, true);
+    track.addEventListener('dragstart', (e) => e.preventDefault());
+    track.addEventListener('wheel', halt, { passive: true });
+    track.addEventListener('touchstart', halt, { passive: true });
 }

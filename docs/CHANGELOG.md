@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.510
+**Shop by skin concern scrolls freely: it stops wherever the shopper lets go, and a mouse can drag it, gliding calmly to rest.** Apply after .509.
+Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "freely move as per the user scroll, freely scroll, not limits ... with full control where to stop ... smooth, super calm by default ... when user controls it, should move freely" | The row no longer snaps to a chip. Phone and trackpad: the browser's own smooth scroll, stopping where the finger stops. Laptop mouse: press and drag the row; let go slowly and it stays exactly there, flick it and it glides on, easing out over about a second. Measured in Chromium: a slow 150px drag stopped at 150px and stayed; a flick glided on to the end and rested. Dragging across a chip never opens it; a plain click still does. The arrows still slide it smoothly |
+
+Control: Appearance → Homepage content → Skin concerns → **Row stops**: Freely (new default, your request) / Chip by chip (the old snapping).
+No new script: added to the carousel code the page already loads, switched on only for this row; the other carousels are unchanged.
+
+Files: resources/js/kbb/ymal.js, app/Support/HomeConcerns.php, partials/home/hs-concerns.blade.php, kbb.css (+ public/build), migration 2027_11_01_500000.
+
 ## 2.60.509
 **Shop by skin concern is a one-row carousel on a laptop too, with round arrows.** Apply after .508.
 Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.

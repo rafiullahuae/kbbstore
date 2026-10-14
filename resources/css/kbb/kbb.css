@@ -1460,8 +1460,10 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-we
 @media (prefers-reduced-motion:reduce){.kbb-home .hs-cc-i{transition:none}}
 @media (min-width:901px){
   .kbb-home .hs-concerns{--cc-g:var(--cc-g-d,12px);--cc-ts:var(--cc-ts-d,15px)}
-  .kbb-home .hs-cc-d-scroll .hs-cc-list{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:thin;overscroll-behavior-x:contain}
-  .kbb-home .hs-cc-d-scroll .hs-cc-list>li{scroll-snap-align:start}
+  .kbb-home .hs-cc-d-scroll .hs-cc-list{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;overscroll-behavior-x:contain;cursor:grab}
+  .kbb-home .hs-cc-d-scroll .hs-cc-list:active{cursor:grabbing}
+  .kbb-home .hs-cc-snap-chip.hs-cc-d-scroll .hs-cc-list{scroll-snap-type:x proximity}
+  .kbb-home .hs-cc-snap-chip.hs-cc-d-scroll .hs-cc-list>li{scroll-snap-align:start}
   .kbb-home .hs-cc-ac.hs-cc-d-scroll .hs-cc-list{justify-content:flex-start}
   .kbb-home .hs-cc-ac.hs-cc-d-scroll .hs-cc-list>li:first-child{margin-inline-start:auto}
   .kbb-home .hs-cc-ac.hs-cc-d-scroll .hs-cc-list>li:last-child{margin-inline-end:auto}
@@ -1472,9 +1474,10 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-we
   .kbb-home .hs-concerns{--cc-g:var(--cc-g-m,8px);--cc-ts:var(--cc-ts-m,13px);--cc-bleed:clamp(18px,2vw,28px)}
   .kbb-home .hs-cc-i{--cc-ic:var(--cc-ic-m,52px);gap:8px;padding-inline:5px 16px}
   .kbb-home .hs-concerns.hs-cc-al .hs-head.hs-split{text-align:start}
-  .kbb-home .hs-cc-m-scroll .hs-cc-list{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:var(--cc-bleed);margin-inline:calc(-1 * var(--cc-bleed));padding-inline:var(--cc-bleed);scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+  .kbb-home .hs-cc-m-scroll .hs-cc-list{flex-wrap:nowrap;overflow-x:auto;scroll-padding-inline:var(--cc-bleed);margin-inline:calc(-1 * var(--cc-bleed));padding-inline:var(--cc-bleed);scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
   .kbb-home .hs-cc-m-scroll .hs-cc-list::-webkit-scrollbar{display:none}
-  .kbb-home .hs-cc-m-scroll .hs-cc-list>li{scroll-snap-align:start}
+  .kbb-home .hs-cc-snap-chip.hs-cc-m-scroll .hs-cc-list{scroll-snap-type:x mandatory}
+  .kbb-home .hs-cc-snap-chip.hs-cc-m-scroll .hs-cc-list>li{scroll-snap-align:start}
   .kbb-home .hs-cc-ac.hs-cc-m-scroll .hs-cc-list{justify-content:flex-start}
   .kbb-home .hs-cc-ac.hs-cc-m-scroll .hs-cc-list>li:first-child{margin-inline-start:auto}
   .kbb-home .hs-cc-ac.hs-cc-m-scroll .hs-cc-list>li:last-child{margin-inline-end:auto}
