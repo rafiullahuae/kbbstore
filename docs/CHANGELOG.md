@@ -3,6 +3,25 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.507
+**Product descriptions: the giant gaps and the squeezed ones fixed on every product, to your standard.** Apply after .506 (or after .505 — it does not depend on .506).
+Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "in some products specially in Anua brand and haru haru wonder, the product descriptions comes like with giant spacing ... and in some super congested ... go through every product ... fix it as per our standard 0 0 and 18px" / "okay continue to fix as per our standard" | Every one of the 754 product pages was measured before and after (docs/description-spacing). Before: 551 fine, 189 with giant gaps (52–218px), 14 squeezed. After: 749 fine, 0 giant, 5 with one heading close to the line above. Anua Peach 77: description 498 → 290px tall on computer. Anua BHA toner: 663 → 455px. Anua Niacinamide TXA pad: its sections are apart again (it was squeezed by .504) |
+
+What changed, all at display time — nothing saved in any description is altered:
+- The old site wrapped many descriptions in "section" boxes, and the shop gave each one 52px above and below. Inside a description that is now 0; each box after the first keeps the normal paragraph gap.
+- An empty line at the very end of a description is dropped. It added space under the text and, as the only empty line, squeezed the whole description (.504's mistake).
+- An empty line saved as an empty "div" counts as an empty line, exactly like the others: 18px. Several empty lines in a row are one 18px gap.
+- Empty bullet points and empty lists are removed.
+- A bold heading that sat right under the line above gets the normal paragraph gap.
+
+Also note: on 21 pages that looked fine, a bullet list now sits directly under its heading and the line after a list follows with no gap (Medicube, Haruharu Wonder, APRILSKIN, Dr.Althea, Goodology). That is your "single Enter = no gap" standard; their empty lines are still 18px. Still close (heading ~0px under the line above, fine otherwise): Biodance Radiant Vita sheet mask, COSRX Vitamin C 23 serum, Medicube AGE-R V roller head pink, TOCOBO Bifida Biome Essence, TOCOBO Vita Tone Up Sun Cream — an empty line typed above the heading in the editor fixes each.
+
+Files: app/Support/RichText.php, app/Http/Controllers/Store/ProductController.php, resources/css/kbb/kbb-product.css (+ public/build), migration 2027_11_01_200000.
+
 ## 2.60.506
 **Shop by Concern: the approved product lists go into the seven concern categories.** Apply after .505.
 Runs its migration (adds the products; creates the three concern categories the shop did not have). Then Cloudways → Application Settings → Varnish → Purge.
