@@ -5491,6 +5491,10 @@
         "label": "Trending"
       },
       {
+        "key": "concerns",
+        "label": "Skin concerns"
+      },
+      {
         "key": "bestsellers",
         "label": "Best sellers"
       },

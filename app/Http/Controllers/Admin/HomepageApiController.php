@@ -274,6 +274,8 @@ class HomepageApiController extends Controller
         'bestselling' => ['tab' => 'bestselling', 'key' => 'home_bs_title', 'label' => 'the heading, the products, the button and the spacing', 'whole_tab' => true],
         'brands' => ['tab' => 'brands', 'key' => 'home_br_title', 'label' => 'which brands, the heading and the button', 'whole_tab' => true],
         'trending' => ['tab' => 'trending', 'key' => 'home_tr_title', 'label' => 'the heading, the products and the spacing', 'whole_tab' => true],
+        // (Lane CX) Shop by skin concern owns its tab: the chips, heading, background and sizes.
+        'concerns' => ['tab' => 'concerns', 'key' => 'home_cc_title', 'label' => 'the chips, the heading, the background and the sizes', 'whole_tab' => true],
         'blog' => ['tab' => 'blog', 'key' => 'home_bl_title', 'label' => 'which articles and the heading', 'whole_tab' => true],
         'under54' => ['tab' => 'under54', 'key' => 'home_u54_title', 'label' => 'the price ceiling, the products and the heading', 'whole_tab' => true],
         'feature' => ['tab' => 'feature', 'key' => 'home_ft_l_title', 'label' => 'the two photos, titles, texts and links', 'whole_tab' => true],

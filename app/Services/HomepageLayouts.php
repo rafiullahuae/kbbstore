@@ -71,10 +71,12 @@ class HomepageLayouts
                  */
                 // Lane HC: the two phone-only strips, at their REGISTRY positions.
                 'topstrip', 'cards_banner', 'countries', 'hero', 'delivery', 'ticker', 'categories', 'bundles', 'bestselling', 'recommended',
-                'routine', 'quiz', 'brands', 'spotted', 'videos', 'igembeds', 'trending', 'bestsellers', 'flash',
+                'routine', 'quiz', 'brands', 'spotted', 'videos', 'igembeds', 'trending', 'concerns', 'bestsellers', 'flash',
                 'blog', 'under54', 'feature', 'about', 'reviews', 'trust', 'newsletter',
                 // Row 55 (Lane HA): the four new sections, at their REGISTRY
-                // positions, for the reason above.
+                // positions, for the reason above. (Lane CX) `concerns`, Shop by
+                // skin concern, under Trending in every preset — where the owner
+                // asked for it.
             ],
             'skins' => ['bundles' => 'classic', 'recommended' => 'soft', 'bestsellers' => 'luxe', 'flash' => 'ribbon'],
             'off' => HomepageSections::OFF_BY_DEFAULT,
@@ -114,7 +116,7 @@ class HomepageLayouts
             'suits' => 'Sale periods and paid traffic, where the visit has one job.',
             'sections' => [
                 'hero', 'ticker', 'delivery', 'cards_banner', 'flash', 'under54', 'bundles', 'categories',
-                'bestselling', 'trending', 'recommended', 'quiz', 'reviews', 'trust',
+                'bestselling', 'trending', 'concerns', 'recommended', 'quiz', 'reviews', 'trust',
                 'brands', 'routine', 'spotted', 'videos', 'igembeds', 'newsletter', 'feature', 'about', 'blog',
                 'bestsellers',
             ],
@@ -126,7 +128,7 @@ class HomepageLayouts
             'blurb' => 'Content leads. The journal and the brands early; products follow the story.',
             'suits' => 'Building trust with visitors who are researching rather than buying today.',
             'sections' => [
-                'hero', 'delivery', 'cards_banner', 'routine', 'quiz', 'categories', 'bestselling', 'trending',
+                'hero', 'delivery', 'cards_banner', 'routine', 'quiz', 'categories', 'bestselling', 'trending', 'concerns',
                 'blog', 'brands', 'bundles', 'reviews', 'spotted', 'videos', 'igembeds', 'feature', 'about',
                 'recommended', 'flash', 'under54', 'trust', 'newsletter', 'ticker',
                 'bestsellers',
@@ -139,7 +141,7 @@ class HomepageLayouts
             'blurb' => 'Fewer, calmer sections. Generous spacing, no ticker, no flash sale.',
             'suits' => 'A curated range where restraint reads as quality.',
             'sections' => [
-                'hero', 'categories', 'bestselling', 'trending', 'routine', 'brands',
+                'hero', 'categories', 'bestselling', 'trending', 'concerns', 'routine', 'brands',
                 'reviews', 'feature', 'about', 'trust', 'newsletter',
                 'delivery', 'bundles', 'recommended', 'quiz', 'spotted', 'videos', 'igembeds',
                 'flash', 'under54', 'blog', 'ticker', 'cards_banner',

@@ -801,6 +801,14 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
 @include('partials.home.hs-rail', ['onTop' => in_array('trending', $homeFirst, true), 'key' => 'trending', 'cls' => $sections->classFor('trending'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'trending'), 'items' => $home['trending']])
 @endif
 @endunless
+{{-- SHOP BY SKIN CONCERN (Lane CX): design E, the concern chips, directly
+     under Trending. Appearance → Homepage content → Skin concerns. Nothing is
+     printed when no chip's category exists. --}}@unless ($sections->hidden('concerns'))
+@php $hsConcerns = \App\Support\HomeConcerns::section($homeSettings, $home['concerns'] ?? []); @endphp
+@if ($hsConcerns !== null)
+@include('partials.home.hs-concerns', ['cls' => $sections->classFor('concerns'), 'cc' => $hsConcerns])
+@endif
+@endunless
 
 {{-- BEST SELLERS --}}
 @unless ($sections->hidden('bestsellers'))

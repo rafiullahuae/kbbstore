@@ -107,7 +107,7 @@ final class SectionType
      * one slider for both would move the eyebrow to the paragraph's size the
      * first time anybody touched it.
      */
-    private const EYEBROW_IN = ['recommended', 'routine', 'quiz', 'bestselling', 'brands', 'trending', 'bestsellers',
+    private const EYEBROW_IN = ['recommended', 'routine', 'quiz', 'bestselling', 'brands', 'trending', 'concerns', 'bestsellers',
         'flash', 'blog', 'under54', 'about', 'newsletter'];
 
     private const NO_SUB = ['about', 'routine', 'quiz', 'feature'];
@@ -124,6 +124,7 @@ final class SectionType
         'bestselling' => ['pt', 'pb', 'gap'],
         'brands' => ['pt', 'pb', 'gap'],
         'trending' => ['pt', 'pb', 'gap'],
+        'concerns' => ['pt', 'pb', 'gap'],
         'blog' => ['pt', 'pb', 'gap'],
         'under54' => ['pt', 'pb', 'gap'],
         'feature' => ['pt', 'pb'],
@@ -171,6 +172,7 @@ final class SectionType
         'brands' => ['h_d' => 34, 'h_m' => 24, 'eb_d' => 12, 'eb_m' => 11, 'sub_d' => 16, 'sub_m' => 16, 'body_d' => 14, 'body_m' => 14, 'pt_d' => 0, 'pt_m' => 0, 'pb_d' => 0, 'pb_m' => 0, 'gap_d' => 28, 'gap_m' => 16],
         'spotted' => ['h_d' => 34, 'h_m' => 24, 'pt_d' => 8, 'pt_m' => 8, 'pb_d' => 8, 'pb_m' => 8, 'gap_d' => 24, 'gap_m' => 16],
         'trending' => ['h_d' => 34, 'h_m' => 24, 'eb_d' => 12, 'eb_m' => 11, 'sub_d' => 16, 'sub_m' => 16, 'body_d' => 14, 'body_m' => 14, 'pt_d' => 0, 'pt_m' => 0, 'pb_d' => 0, 'pb_m' => 0, 'gap_d' => 28, 'gap_m' => 16],
+        'concerns' => ['h_d' => 34, 'h_m' => 24, 'eb_d' => 12, 'eb_m' => 11, 'sub_d' => 16, 'sub_m' => 16, 'pt_d' => 0, 'pt_m' => 0, 'pb_d' => 0, 'pb_m' => 0, 'gap_d' => 24, 'gap_m' => 16],
         'bestsellers' => ['h_d' => 30, 'h_m' => 18, 'eb_d' => 12, 'eb_m' => 11, 'sub_d' => 14, 'sub_m' => 14, 'body_d' => 14, 'body_m' => 14, 'pt_d' => 0, 'pt_m' => 0, 'pb_d' => 14, 'pb_m' => 6, 'gap_d' => 22, 'gap_m' => 12],
         'flash' => ['h_d' => 30, 'h_m' => 18, 'eb_d' => 12, 'eb_m' => 11, 'sub_d' => 14, 'sub_m' => 14, 'body_d' => 14, 'body_m' => 14, 'pt_d' => 0, 'pt_m' => 0, 'pb_d' => 14, 'pb_m' => 6, 'gap_d' => 22, 'gap_m' => 12],
         'blog' => ['h_d' => 34, 'h_m' => 24, 'eb_d' => 12, 'eb_m' => 11, 'sub_d' => 16, 'sub_m' => 16, 'body_d' => 19, 'body_m' => 17, 'pt_d' => 0, 'pt_m' => 0, 'pb_d' => 0, 'pb_m' => 0, 'gap_d' => 28, 'gap_m' => 16],
@@ -187,7 +189,7 @@ final class SectionType
         'pt_d' => 52, 'pt_m' => 18, 'pb_d' => 52, 'pb_m' => 18, 'gap_d' => 22, 'gap_m' => 12];
 
     /** Sections whose heading and subheading sizes come from HomeHeadings. */
-    private const FOLLOWS_HEADINGS = ['bundles', 'bestselling', 'brands', 'spotted', 'trending', 'blog', 'under54', 'about'];
+    private const FOLLOWS_HEADINGS = ['bundles', 'bestselling', 'brands', 'spotted', 'trending', 'concerns', 'blog', 'under54', 'about'];
 
     public static function applies(string $key): bool
     {
