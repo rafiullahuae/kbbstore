@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.503
+**Product descriptions: a blank line (Enter on an empty line in the description editor) is now one line of space, not a big gap.** Apply after .502.
+Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "when i press enter to break the line on the backend description product editor, then it comes too much space ... it should be normal space like one line that's it" | The editor saves each empty line as an empty paragraph, and the page drew it as a full line plus a paragraph gap on both sides: 43px between "Made in Korea" and "Hero Ingredients:" on Anua Azelaic 10. Now each empty line is 20px, about one line of the 13.5px text. Measured on the preview shop with that product's live description, at 1280 and 390: description 844 → 729px tall on computer, 1257 → 1142px on phone. Every product with blank lines gets it; nothing stored changes, so re-editing is not needed |
+
+Nothing else changes: paragraphs, lists and headings keep their spacing (10px heading-to-list, unchanged), descriptions with no blank lines are byte for byte the same, no extra database queries, no payment or checkout code.
+
+Files: app/Support/RichText.php, app/Http/Controllers/Store/ProductController.php, resources/css/kbb/kbb-product.css (+ public/build), migration 2027_10_31_800000.
+
 ## 2.60.502
 **Urgent fix: the checkout's Sign in window and its "Forgot password" no longer say "Something went wrong" when the checkout tab is older than your last sign-in.** Apply after .501.
 Runs its migration (clears caches, including the route cache for the one new address).

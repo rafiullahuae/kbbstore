@@ -1369,6 +1369,8 @@ final class EnglishRenderWalk
             'checkout' => $redirect,
             'checkout/success' => ['render' => true],
             'checkout/pending' => $redirect,
+            // 2.60.502: JSON for the sign-in pop-up's 419 retry; no Blade.
+            'checkout/sign-in/token' => $json,
             // 2.60.371, Lane RL: the page the reminder and payment-failed emails open. With no
             // signed ?order=&t= it is the same 404 a forged link gets, so there is no shop page to hold.
             'checkout/order-pay' => ['render' => false, 'why' => '404 without a signed order link; reached only from an email'],

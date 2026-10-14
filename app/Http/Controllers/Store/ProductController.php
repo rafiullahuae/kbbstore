@@ -802,6 +802,10 @@ class ProductController extends Controller
             // it held the space above "Benefits:" with the slider at 0px.
             $trimmed = \App\Support\RichText::trimLeadingBlank(\App\Support\RichText::dropMissingPictures($tab['body']));
 
+            // 2.60.503: a blank line typed between paragraphs is one line tall,
+            // not a line plus two paragraph margins (RichText::markBlankLines()).
+            $trimmed = \App\Support\RichText::markBlankLines($trimmed);
+
             if ($trimmed !== '') {
                 $tabs[$i]['body'] = $trimmed;
             }

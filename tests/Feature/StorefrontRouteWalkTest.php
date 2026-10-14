@@ -300,6 +300,8 @@ function walkExpectations(array $seed): array
         'checkout'                 => ['status' => 302],
         'checkout/success'         => ['status' => 200],
         'checkout/pending'         => ['status' => 302],
+        // 2.60.502: the sign-in pop-up's fresh CSRF token after a 419 (JSON, no-store).
+        'checkout/sign-in/token'   => ['status' => 200],
         // 2.60.371, Lane RL: no signed ?order=&t= is the same 404 as a forged one (OrderLinks).
         'checkout/order-pay'       => ['status' => 404],
         // #KBeautyBliss Spotted (Lane HB, 2.60.372): 200 with or without posts (noindex while empty).

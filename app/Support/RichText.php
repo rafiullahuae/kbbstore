@@ -543,6 +543,45 @@ final class RichText
         return self::trimBlank($html, false);
     }
 
+    /**
+     * A blank line the owner typed BETWEEN two paragraphs, drawn one line
+     * tall.                                                          (2.60.503)
+     *
+     * THE DEFECT, ON THE LIVE SHOP (14 October 2026). "when i press enter to
+     * break the line on the backend description product editor, then it comes
+     * too much space ... it should be normal space like one line." The editor
+     * saves an Enter on an empty line as an empty paragraph -- `<p><br></p>`,
+     * `<p><b></b><br></p>` (pasted copy), `<p>&nbsp;</p>` (imported copy) --
+     * and the tab body drew it as a line-box WITH a paragraph margin on both
+     * sides: ~48px between "Made in Korea" and "Hero Ingredients:" on Anua
+     * Azelaic 10, where a paragraph break is ~11px.
+     *
+     * Each such paragraph is replaced by `<p class="kbb-bl"></p>`, which
+     * kbb-product.css draws as one line. No selector can tell `<p>&nbsp;</p>`
+     * from a paragraph of words, so this is done here, at render time, for the
+     * tab bodies only; nothing stored changes. The input is already-clean HTML
+     * and this only takes content OUT of a paragraph, adding a constant class.
+     * A body with no blank paragraph comes back byte for byte.
+     */
+    public static function markBlankLines(string $html): string
+    {
+        if (stripos($html, '<p') === false) {
+            return $html;
+        }
+
+        return (string) preg_replace_callback('#<p\b[^>]*>(.*?)</p>#is', static function (array $m): string {
+            foreach (self::VISIBLE_EMPTY as $tag) {
+                if (stripos($m[1], '<' . $tag) !== false) {
+                    return $m[0];
+                }
+            }
+
+            $text = html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+            return preg_replace('/' . self::BLANK . '+/u', '', $text) === '' ? '<p class="kbb-bl"></p>' : $m[0];
+        }, $html);
+    }
+
     private static function trimBlank(string $html, bool $trailing): string
     {
         if (trim($html) === '') {
