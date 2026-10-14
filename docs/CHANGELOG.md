@@ -3,6 +3,34 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.511
+**Ingredients: the researched lists go into 339 products' Ingredients box, so their product pages gain an Ingredients tab.** Apply after .510.
+Runs its migration (fills the boxes, clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "after this, apply the ingredients in all found ones. give me the patch for that." | Every product the research found (docs/ingredients-research): 339 lists, each copied as written from the INCIDecoder page recorded beside it, put into Catalog → Products → the product → **Ingredients**. Sets whose every cosmetic item was found show each item under its bold name (devices in a set have no list). Three typos on the source corrected. All 339 products checked against the live shop's sitemap |
+
+Only an EMPTY box is filled — a product whose Ingredients box already holds anything is left exactly as it is. Nothing else changes. On the 21 products that already showed "Major Ingredients" (key highlights only), the page now has that tab and the full Ingredients tab.
+
+Held back — check these on the box and type them in, or tell me (12):
+- medicube - Fresh Glow Travel Body Kit — set with an item not found
+- Medicube - Kojic Acid Glow Full Routine Set — set with an item not found
+- Medicube - Vanilla Deodorant and Body Mist Duo — set with an item not found
+- Medicube Kojic Acid Turmeric Resurfacing Complete Set — set with an item not found
+- medicube – One Day Exosome Shot Pore Ampoule 2000 — doubt/clean-up
+- SOME BY MI – AHA, BHA, PHA 30 Days Miracle AC SOS Kit — set with an item not found
+- APRILSKIN - TXA Niacinamide Collagen 99 Capsule Gel Mask Set — set with an item not found
+- AROMATICA – Rosemary Scalp Scaling Shampoo – 180ml — doubt/clean-up
+- Dear, Klairs - EGF Blue Youth Activating Drop — older formula
+- Numbuzin No. 9 NAD+ Bio Lifting-sil Timeless Set — set with an item not found
+- celimax - Pore+Dark Spot Brightening Cream — doubt/clean-up
+- Centellian24 - Madeca Cream Time Reverse — doubt/clean-up
+
+Not found by the research (41) and not cosmetics (16) are unchanged; they are in docs/ingredients-research/ingredients-research.html.
+
+Files: migration 2027_11_01_600000_fill_researched_ingredients.
+
 ## 2.60.510
 **Shop by skin concern scrolls freely: it stops wherever the shopper lets go, and a mouse can drag it, gliding calmly to rest.** Apply after .509.
 Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
