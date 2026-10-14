@@ -3,6 +3,27 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.506
+**Shop by Concern: the approved product lists go into the seven concern categories.** Apply after .505.
+Runs its migration (adds the products; creates the three concern categories the shop did not have). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Concern | Products listed |
+|---|---|
+| Pore Care | 108 |
+| Pigmentation & Dark Spots | 157 |
+| Acne & Blemish Care | 56 |
+| Anti-Aging | 150 |
+| Hydration & Glow | 274 |
+| Redness & Sensitive Skin | 177 |
+| Oily Skin | 69 |
+
+- Only ADDS. A product already in a concern category stays, at its place; nothing is taken out of any category; no other category, product or setting is touched. Lip care left out, as you asked.
+- Your hand-made order is kept: new products go after the ones you have ordered (Catalog → Reorder can move them).
+- Pore Care, Pigmentation, Anti-Aging and Hydration & Glow already existed and are used. **Acne & Blemish Care, Redness & Sensitive Skin and Oily Skin did not exist on the shop** and are created at /collections/acne-blemish-care/, /collections/redness-sensitive-skin/ and /collections/oily-skin/. They are not in any menu yet: add them in Appearance → Menus where you want them.
+- All 619 products on the lists exist on the live shop (checked against its sitemap). Running it twice changes nothing more.
+
+Files: migration 2027_11_01_100000_shop_by_concern_products.
+
 ## 2.60.505
 **Urgent: the phone menu's account box and the description spacing show with their styling again.** Apply on top of whatever is on the shop now; one apply is enough.
 Runs its migrations (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
