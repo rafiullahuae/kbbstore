@@ -50,6 +50,8 @@
 @include('admin.partials.title-header-kit')
 {{-- Lane CB: the category banner's per-category controls (App\Support\BrandPanel::categoryFields), read by "Banner layout" below. Constants only: labels, option keys and bounds. --}}
 <script type="application/json" id="ct-cbl-fields">@json(\App\Support\BrandPanel::categoryFields())</script>
+{{-- "Visit" (2.60.500): the shop's own addresses for a category and a brand, with the site's base path -- App\Support\UrlScheme, the one place they are written down. Escaped attributes, read once by the screen's script below. --}}
+<div hidden data-kbb-shop-urls data-collection="{{ \App\Support\Url::to(\App\Support\UrlScheme::COLLECTION_BASE) }}" data-brand="{{ \App\Support\Url::to(\App\Support\UrlScheme::BRAND_BASE) }}"></div>
 @verbatim
 <style>
 /* ---------------------------------------------------------------------------
@@ -118,6 +120,7 @@
         border-radius:8px;padding:5px 9px;font:inherit;font-size:11.5px;cursor:pointer;
         color:var(--ink-2,#374151)}
 .ct-btn:hover{border-color:var(--ink,#111)}
+a.ct-btn{display:inline-flex;align-items:center;text-decoration:none}
 .ct-btn.is-danger{color:var(--danger,#d6455a)}
 .ct-btn.is-primary{background:var(--ink,#111);color:#fff;border-color:var(--ink,#111)}
 
@@ -206,6 +209,12 @@
 
   var SCREEN = 'category-tree';
   var BASE = window.location.pathname.replace(/\/+$/, '');
+  /* "Visit" (2.60.500): the shop's own addresses, printed by the server with
+     the site's base path (the hidden [data-kbb-shop-urls] above) -- so a link
+     here is the page a shopper lands on. */
+  var SHOP_URLS = document.querySelector('[data-kbb-shop-urls]');
+  var SHOP_COLLECTION = SHOP_URLS ? SHOP_URLS.getAttribute('data-collection') || '' : '';
+  var SHOP_BRAND = SHOP_URLS ? SHOP_URLS.getAttribute('data-brand') || '' : '';
 
   /* ---------------------------------------------------------------- state */
   var tab = 'categories';
@@ -268,6 +277,16 @@
   /* Every operator-supplied string -- a category name, a slug, a path, an
      error message that quotes one back -- goes through this before it reaches
      innerHTML. */
+  /* A shop link for one category or brand: each path segment encoded, opened
+     in a new tab, never dragged (the rows are). */
+  function visitLink(base, path, what){
+    var segs = String(path || '').split('/').filter(Boolean);
+    if (!base || !segs.length) return '';
+    var href = base + segs.map(encodeURIComponent).join('/') + '/';
+    return '<a class="ct-btn ct-visit" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer" draggable="false"'
+      + ' title="Open ' + esc(what) + ' on the shop">Visit</a>';
+  }
+
   function esc(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
@@ -446,6 +465,7 @@
             + '<span class="ct-path">/collections/' + esc(c.path || c.slug) + '/</span>'
           + '</div>'
           + '<div class="ct-acts">'
+            + visitLink(SHOP_COLLECTION, c.path || c.slug, c.name)
             + '<button class="ct-btn" data-edit="' + esc(c.id) + '">Edit</button>'
             + '<button class="ct-btn" data-merge="' + esc(c.id) + '">Merge</button>'
             + '<button class="ct-btn is-danger" data-del="' + esc(c.id) + '">Delete</button>'
@@ -482,9 +502,9 @@
           + '<div class="ct-main">'
             + '<span class="ct-name">' + esc(b.name) + '</span>'
             + countPill(b)
-            + '<span class="ct-path">/shop/?filter_brands=' + esc(b.slug) + '</span>'
+            + '<span class="ct-path">/brands/' + esc(b.slug) + '/</span>'
           + '</div>'
-          + '<div class="ct-acts"></div>'
+          + '<div class="ct-acts">' + visitLink(SHOP_BRAND, b.slug, b.name) + '</div>'
         + '</div>';
       }).join('') + '</div>';
     }
@@ -494,7 +514,7 @@
       + '<div class="ct-title">Brand order</div>'
       + '<div class="ct-sub">Drag to set the order they appear in the shop filter. '
       + 'Adding, renaming, banners and deleting are on the <button type="button" class="ct-link" id="ct-tobrands">Brands</button> screen. '
-      + 'Brand pages are /shop/?filter_brands=… — a query parameter, not a path (URL contract U-05).</div>'
+      + 'Brand pages are /brands/…/ — <b>Visit</b> opens one on the shop.</div>'
       + '</div></div>'
       + '<div style="margin-top:13px;min-width:0">' + body + '</div>'
       + '</div>';

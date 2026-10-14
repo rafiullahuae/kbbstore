@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.500
+**Admin: a Visit button on every category and brand, opening its page on the shop; brands listed at their real address.** Apply after .499.
+Runs its migration (clears caches).
+
+| Your request | Now |
+|---|---|
+| "i want Visit button, which will give me url to visit the category page on front-end ... Same thing i need for Brands on backend" | Catalog → Categories: every category (and sub-category) has **Visit** before Edit; its Brands tab has **Visit** on every brand; Catalog → Brands has **Visit** before Edit. Each opens the page in a new tab, at the shop's own address with the site's base path. Measured on the preview shop: 16 category and 28 brand links, every one opens a working page (200) |
+| "correct the urls also, we are using throughout the actual urls, not shop/?filter_brands=" | Brands now read **/brands/&lt;name&gt;/** on both lists and in their notes. The warnings about renaming or deleting a brand still name the shop filter link as well, because that link keeps working and is affected too |
+
+Nothing else changes: no shop page, no setting, no data. Admin only.
+
+Files: resources/views/admin/partials/category-tree-screen.blade.php, brands-editor-screen.blade.php, public/build (the admin console's bundled scripts), migration 2027_10_31_500000.
+
 ## 2.60.499
 **Checkout on a computer: the order summary's title row runs the full width of the card in the darker green, a touch taller, with the content under it on the lighter background — the same look as the phone.** Apply after .498.
 Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.

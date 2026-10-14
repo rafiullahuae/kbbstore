@@ -51,6 +51,8 @@
     closing one, so writing the word in prose swallows everything between them
     and the whole docblock is served to the browser as visible text.
 --}}
+{{-- "Visit" (2.60.500): the shop's own addresses for a category and a brand, with the site's base path -- App\Support\UrlScheme, the one place they are written down. Escaped attributes, read once by the screen's script below. --}}
+<div hidden data-kbb-shop-urls data-collection="{{ \App\Support\Url::to(\App\Support\UrlScheme::COLLECTION_BASE) }}" data-brand="{{ \App\Support\Url::to(\App\Support\UrlScheme::BRAND_BASE) }}"></div>
 @verbatim
 <style>
 /* ---------------------------------------------------------------------------
@@ -110,6 +112,7 @@
         border-radius:8px;padding:5px 9px;font:inherit;font-size:11.5px;cursor:pointer;
         color:var(--ink-2,#374151)}
 .bz-btn:hover{border-color:var(--ink,#111)}
+a.bz-btn{display:inline-flex;align-items:center;text-decoration:none}
 .bz-btn.is-danger{color:var(--danger,#d6455a)}
 .bz-btn.is-primary{background:var(--ink,#111);color:#fff;border-color:var(--ink,#111)}
 
@@ -207,6 +210,11 @@
 
   var SCREEN = 'brands-manager';
   var BASE = window.location.pathname.replace(/\/+$/, '');
+  /* "Visit" (2.60.500): the brand's page on the shop, built from the shop's own
+     address (the hidden [data-kbb-shop-urls] above: UrlScheme::BRAND_BASE with
+     the site's base path). */
+  var SHOP_URLS = document.querySelector('[data-kbb-shop-urls]');
+  var SHOP_BRAND = SHOP_URLS ? SHOP_URLS.getAttribute('data-brand') || '' : '';
 
   /* ---------------------------------------------------------------- state */
   var brands = [];
@@ -364,9 +372,11 @@
         + '<span class="bz-name">' + esc(b.name) + '</span>'
         + countPill(b)
         + bannerPill(b)
-        + '<span class="bz-path">/shop/?filter_brands=' + esc(b.slug) + '</span>'
+        + '<span class="bz-path">/brands/' + esc(b.slug) + '/</span>'
       + '</div>'
       + '<div class="bz-acts">'
+        + (b.slug && SHOP_BRAND ? '<a class="bz-btn bz-visit" href="' + esc(SHOP_BRAND + encodeURIComponent(String(b.slug)) + '/') + '" target="_blank" rel="noopener noreferrer"'
+            + ' title="Open ' + esc(b.name) + ' on the shop">Visit</a>' : '')
         + '<button class="bz-btn" data-bedit="' + esc(b.id) + '">Edit</button>'
         + '<button class="bz-btn" data-bbanner="' + esc(b.id) + '">Banner</button>'
         + '<button class="bz-btn is-danger" data-bdel="' + esc(b.id) + '">Delete</button>'
@@ -401,7 +411,7 @@
         + '<div class="bz-head"><div style="min-width:0">'
           + '<div class="bz-title">Brands</div>'
           + '<div class="bz-sub">Add, rename and delete brands, and switch on the banner that shows at the top of a brand’s page. '
-          + 'A brand’s product listing is <code>/shop/?filter_brands=…</code> — a query parameter, not a path.</div>'
+          + 'A brand’s page on the shop is <code>/brands/…/</code> — <b>Visit</b> opens it.</div>'
         + '</div>'
         + '<button class="bz-btn is-primary" id="bz-add">+ Add brand</button>'
         + '</div>'
@@ -817,8 +827,8 @@
         + '</div>'
       + '<div class="bz-fld"><label for="bz-slug">URL slug</label>'
         + '<input type="text" id="bz-slug" value="' + esc(brand.slug) + '" placeholder="left blank, made from the name">'
-        + '<p class="bz-note">Lower case, numbers and single hyphens. Used in '
-        + '<code>/shop/?filter_brands=…</code> and in the brand’s own page address.</p></div>'
+        + '<p class="bz-note">Lower case, numbers and single hyphens. Used in the brand’s page address '
+        + '<code>/brands/…/</code> and in the shop’s brand filter.</p></div>'
       + '<div class="bz-fld"><label for="bz-logo">Logo</label>'
         + libraryField('bz-logo-lib', 'bz-logo', 'bz-logo-thumb',
             'Shown beside the brand in the shop filter and on its page.')
