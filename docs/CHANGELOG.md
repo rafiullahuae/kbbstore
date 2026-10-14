@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.505
+**Urgent: the phone menu's account box and the description spacing show with their styling again.** Apply on top of whatever is on the shop now; one apply is enough.
+Runs its migrations (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "the menu login bar is coming messed up. fix it instantely" / "also double check for the logged-in users too" | .501 was applied after .504, and every package carries the list of the shop's stylesheets as it was the day it was built: .501's list pointed the shop back at the old stylesheet, which has no styling for the new account box (and none for the new description spacing). Checked on the live shop: the page asked for kbb-CMMqU43J.css (.501's) while .504's kbb-dFNMufe7.css was already on the server. This package is .501 + .502 + .503 + .504 in one, with today's list, so the order the earlier ones went in no longer matters. Visitor strip and signed-in box both measured on the preview shop at 390 and 360 |
+
+No code changes beyond .504: the same files, re-sent together.
+
 ## 2.60.504
 **Product descriptions: one Enter is the next line, two Enters is an 18px gap. And the phone menu's account box is small: a slim strip for visitors, small links when signed in.** Apply after .502. It includes everything in .503, so .503 can be skipped (applying both is fine too).
 Runs its migrations (clears caches; adds the Arabic draft of the new greeting). Then Cloudways → Application Settings → Varnish → Purge.
