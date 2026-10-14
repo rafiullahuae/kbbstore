@@ -194,6 +194,9 @@ final class HomeSections
         'home_tr_pb_m' => ['type' => 'select', 'label' => 'Space below · phone', 'default' => '28', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px', '56' => '56px', '64' => '64px', '72' => '72px', '80' => '80px', '96' => '96px'], 'help' => ''],
         'home_tr_hg_d' => ['type' => 'select', 'label' => 'Space under the heading · laptop', 'default' => '28', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px', '56' => '56px', '64' => '64px', '72' => '72px', '80' => '80px', '96' => '96px'], 'help' => ''],
         'home_tr_hg_m' => ['type' => 'select', 'label' => 'Space under the heading · phone', 'default' => '16', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px', '56' => '56px', '64' => '64px', '72' => '72px', '80' => '80px', '96' => '96px'], 'help' => ''],
+        // (Lane CX) Shop by skin concern, under Trending — in page order, as
+        // HomepageApiController::WORDS claims them.
+        ...HomeConcerns::SCHEMA,
         'home_bl_eyebrow' => ['type' => 'text', 'label' => 'Small line above the heading', 'default' => 'The journal', 'store' => 'setting', 'help' => 'Empty draws none.'],
         'home_bl_title' => ['type' => 'text', 'label' => 'Heading (H2)', 'default' => 'Korean Skincare Tips & Guides', 'store' => 'setting', 'help' => 'Written for search. Empty hides the heading — keep one: every section should carry an H2.'],
         'home_bl_sub' => ['type' => 'text', 'label' => 'Line under the heading', 'default' => 'Fresh articles from the K-Beauty Bliss journal to help you choose and use Korean skincare.', 'store' => 'setting', 'help' => 'Empty draws none.'],
@@ -267,6 +270,8 @@ final class HomeSections
         'bestselling' => ['Best Sellers', 'Section 2: the best-sellers grid — 8 on a laptop (4 × 2), 6 on a phone (2 × 3) — its heading, button, products, background and spacing. Show or hide it per device on Appearance → Homepage.', ['home_bs_eyebrow', 'home_bs_title', 'home_bs_sub', 'home_bs_source', 'home_bs_cat', 'home_bs_brand', 'home_bs_picks', 'home_bs_brands', 'home_bs_cats', 'home_bs_sort', 'home_bs_stock', 'home_bs_max', 'home_bs_count_d', 'home_bs_count_m', 'home_bs_cols_d', 'home_bs_cols_m', 'home_bs_btn', 'home_bs_url', 'home_bs_bg', 'home_bs_pt_d', 'home_bs_pt_m', 'home_bs_pb_d', 'home_bs_pb_m', 'home_bs_hg_d', 'home_bs_hg_m']],
         'brands' => ['Brands', 'Section 3: brand image cards with the name on a laptop; on a phone the names, the images, or the images with logos — ONE list of links, styled per device. Which brands, how many, and the Shop all brands button.', ['home_br_eyebrow', 'home_br_title', 'home_br_sub', 'home_br_picks', 'home_br_imgs', 'home_br_count_d', 'home_br_count_m', 'home_br_cols_d', 'home_br_cols_m', 'home_br_th_m', 'home_br_layout_d', 'home_br_layout_m', 'home_br_btn', 'home_br_url', 'home_br_bg', 'home_br_pt_d', 'home_br_pt_m', 'home_br_pb_d', 'home_br_pb_m', 'home_br_hg_d', 'home_br_hg_m']],
         'trending' => ['Trending', 'Section 5: what is moving this week — 8 on a laptop, 6 on a phone, no button.', ['home_tr_eyebrow', 'home_tr_title', 'home_tr_sub', 'home_tr_source', 'home_tr_cat', 'home_tr_brand', 'home_tr_picks', 'home_tr_brands', 'home_tr_cats', 'home_tr_sort', 'home_tr_stock', 'home_tr_max', 'home_tr_count_d', 'home_tr_count_m', 'home_tr_cols_d', 'home_tr_cols_m', 'home_tr_btn', 'home_tr_url', 'home_tr_bg', 'home_tr_pt_d', 'home_tr_pt_m', 'home_tr_pb_d', 'home_tr_pb_m', 'home_tr_hg_d', 'home_tr_hg_m']],
+        // (Lane CX) Shop by skin concern — directly under Trending, as the owner asked.
+        'concerns' => HomeConcerns::TAB,
         'blog' => ['Blog', 'Section 6: three articles side by side on a laptop, stacked on a phone.', ['home_bl_eyebrow', 'home_bl_title', 'home_bl_sub', 'home_bl_source', 'home_bl_picks', 'home_bl_count_m', 'home_bl_read', 'home_bl_tag', 'home_bl_more', 'home_bl_btn', 'home_bl_url', 'home_bl_bg', 'home_bl_pt_d', 'home_bl_pt_m', 'home_bl_pb_d', 'home_bl_pb_m', 'home_bl_hg_d', 'home_bl_hg_m']],
         'under54' => ['Under AED 54', 'Section 7: 10 on a laptop (5 per row), 6 on a phone (2 per row), at or under the price ceiling.', ['home_u54_eyebrow', 'home_u54_title', 'home_u54_sub', 'home_u54_source', 'home_u54_cat', 'home_u54_brand', 'home_u54_picks', 'home_u54_brands', 'home_u54_cats', 'home_u54_sort', 'home_u54_stock', 'home_u54_max', 'home_u54_count_d', 'home_u54_count_m', 'home_u54_cols_d', 'home_u54_cols_m', 'home_u54_btn', 'home_u54_url', 'home_u54_bg', 'home_u54_pt_d', 'home_u54_pt_m', 'home_u54_pb_d', 'home_u54_pb_m', 'home_u54_hg_d', 'home_u54_hg_m']],
         'feature' => ['Two-column feature', 'Section 8: two photo panels with a title, a thin rule, a line of text and SHOP NOW ▸ — Sunscreens on the left, best sellers on the right.', ['home_ft_l_img', 'home_ft_l_alt', 'home_ft_l_title', 'home_ft_l_text', 'home_ft_l_btn', 'home_ft_l_url', 'home_ft_r_img', 'home_ft_r_alt', 'home_ft_r_title', 'home_ft_r_text', 'home_ft_r_btn', 'home_ft_r_url', 'home_ft_bg', 'home_ft_pt_d', 'home_ft_pt_m', 'home_ft_pb_d', 'home_ft_pb_m']],
@@ -582,7 +587,7 @@ final class HomeSections
     /**
      * Everything the sections read from the database, in ONE cache entry.
      *
-     * @return array{bestselling: Collection, trending: Collection, under54: Collection, brands: Collection, posts: Collection, sunscreens: string}
+     * @return array{bestselling: Collection, trending: Collection, under54: Collection, brands: Collection, posts: Collection, concerns: Collection, sunscreens: string}
      */
     public static function data(?array $c = null): array
     {
@@ -604,6 +609,9 @@ final class HomeSections
             // journal row HomeController already reads and caches.
             $bl = self::blog($c);
             $out['posts'] = $bl['source'] === 'manual' && $bl['picks'] !== [] ? self::fetchPosts($bl['picks']) : collect();
+
+            // (Lane CX) Every concern chip's category, in ONE query.
+            $out['concerns'] = HomeConcerns::fetch($c);
 
             $sun = Category::query()->select('id', 'name', 'slug', 'path', 'parent_id')->where('slug', self::SUNSCREENS_SLUG)->first();
             $out['sunscreens'] = $sun !== null ? $sun->url() : Url::to(self::SUNSCREENS_FALLBACK);
@@ -708,7 +716,10 @@ final class HomeSections
             return [
                 'products' => $rows(\App\Models\Product::query()->visible()->select('id', 'name')->orderBy('name')->orderBy('id')->limit(5000)),
                 'brands' => $rows(Brand::query()->select('id', 'name')->orderBy('name')->orderBy('id')),
-                'categories' => $rows(Category::query()->select('id', 'name')->orderBy('name')->orderBy('id')),
+                // (Lane CX) With the slug: the Skin concerns editor matches its
+                // seven default chips (named by address) to a row of this list.
+                'categories' => Category::query()->select('id', 'name', 'slug')->orderBy('name')->orderBy('id')->get()
+                    ->map(fn ($r) => ['id' => (int) $r->id, 'name' => (string) $r->name, 'slug' => (string) $r->slug])->values()->all(),
                 'posts' => $rows(Post::query()->where('status', 'published')->select('id', 'title')->latest('published_at')->orderByDesc('id')->limit(500), 'title'),
             ];
         } catch (\Throwable) {
@@ -719,7 +730,7 @@ final class HomeSections
     /** The settings that change WHICH rows come back, and nothing else. */
     private static function cacheKey(array $c): string
     {
-        $keys = ['home_br_picks', 'home_br_count_d', 'home_br_count_m', 'home_bl_source', 'home_bl_picks'];
+        $keys = ['home_br_picks', 'home_br_count_d', 'home_br_count_m', 'home_bl_source', 'home_bl_picks', 'home_cc_items'];
 
         foreach (self::RAILS as $p) {
             foreach (['source', 'cat', 'brand', 'picks', 'max', 'count_d', 'count_m', 'brands', 'cats', 'sort', 'stock'] as $k) {

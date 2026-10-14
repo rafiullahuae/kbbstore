@@ -54,6 +54,8 @@
     The whole body is wrapped in one so that the braces inside JavaScript
     template literals are not read as Blade.
 --}}
+{{-- (Lane CX) The Skin concerns chip editor, shared with the All sections popup. --}}
+@include('admin.partials.concern-chips-editor')
 @verbatim
 <style>
 /* ---------------------------------------------------------------------------
@@ -401,6 +403,11 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
                 : '<span class="hpc-sub">' + cap + ' is the most this row shows.</span>')
             + '</div>';
       }
+    } else if (f.options && f.options.picker === 'concern-chips' && window.kbbCc) {
+      /* (Lane CX) Skin concerns: the chip rows, drawn by the shared editor in
+         admin/partials/concern-chips-editor around a hidden input that carries
+         this screen's own data-hpc-set, so setValue() stores it as usual. */
+      ctl = window.kbbCc.html(f, v, 'data-hpc-set="' + esc(onsetName) + '"', (data.picks && data.picks.categories) || []);
     } else if (f.options && f.options.picker === 'media') {
       /* A picture chosen from the Media Library (Row 55, Lane HA): the box
          holds its address, the button opens the shop's own picker, and the

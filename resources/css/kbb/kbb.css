@@ -1428,6 +1428,48 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-we
   .kbb-home .hs-mc-2 .hs-grid>*>:nth-child(n+3),.kbb-home .hs-mc-2 .hs-brandlist>:nth-child(n+3),.kbb-home .hs-mc-3 .hs-grid>*>:nth-child(n+4),.kbb-home .hs-mc-3 .hs-brandlist>:nth-child(n+4),.kbb-home .hs-mc-4 .hs-grid>*>:nth-child(n+5),.kbb-home .hs-mc-4 .hs-brandlist>:nth-child(n+5),.kbb-home .hs-mc-5 .hs-grid>*>:nth-child(n+6),.kbb-home .hs-mc-5 .hs-brandlist>:nth-child(n+6),.kbb-home .hs-mc-6 .hs-grid>*>:nth-child(n+7),.kbb-home .hs-mc-6 .hs-brandlist>:nth-child(n+7),.kbb-home .hs-mc-7 .hs-grid>*>:nth-child(n+8),.kbb-home .hs-mc-7 .hs-brandlist>:nth-child(n+8),.kbb-home .hs-mc-8 .hs-grid>*>:nth-child(n+9),.kbb-home .hs-mc-8 .hs-brandlist>:nth-child(n+9),.kbb-home .hs-mc-9 .hs-grid>*>:nth-child(n+10),.kbb-home .hs-mc-9 .hs-brandlist>:nth-child(n+10),.kbb-home .hs-mc-10 .hs-grid>*>:nth-child(n+11),.kbb-home .hs-mc-10 .hs-brandlist>:nth-child(n+11),.kbb-home .hs-mc-12 .hs-grid>*>:nth-child(n+13),.kbb-home .hs-mc-12 .hs-brandlist>:nth-child(n+13),.kbb-home .hs-mc-14 .hs-grid>*>:nth-child(n+15),.kbb-home .hs-mc-14 .hs-brandlist>:nth-child(n+15),.kbb-home .hs-mc-15 .hs-grid>*>:nth-child(n+16),.kbb-home .hs-mc-15 .hs-brandlist>:nth-child(n+16),.kbb-home .hs-mc-16 .hs-grid>*>:nth-child(n+17),.kbb-home .hs-mc-16 .hs-brandlist>:nth-child(n+17),.kbb-home .hs-mc-18 .hs-grid>*>:nth-child(n+19),.kbb-home .hs-mc-18 .hs-brandlist>:nth-child(n+19),.kbb-home .hs-mc-20 .hs-grid>*>:nth-child(n+21),.kbb-home .hs-mc-20 .hs-brandlist>:nth-child(n+21),.kbb-home .hs-mc-21 .hs-grid>*>:nth-child(n+22),.kbb-home .hs-mc-21 .hs-brandlist>:nth-child(n+22),.kbb-home .hs-mc-24 .hs-grid>*>:nth-child(n+25),.kbb-home .hs-mc-24 .hs-brandlist>:nth-child(n+25){display:none}
   .kbb-home .hs-blog.hs-mc-1 .hs-posts>:nth-child(n+2),.kbb-home .hs-blog.hs-mc-2 .hs-posts>:nth-child(n+3){display:none}
 }
+/* ── Shop by skin concern (Lane CX): design E, the concern chips ──────────
+   docs/skin-concerns-options, design E: a pill per concern on its own pastel,
+   the Set 4 duotone icon in a white circle, on a soft two-colour band. Every
+   --cc-* value is printed by App\Support\HomeConcerns from a select's own
+   option or a checked hex colour. The whole pill is the <a>. A phone's row
+   scrolls sideways with CSS scroll-snap (or wraps); nothing is measured. */
+.kbb-home .hs-cc-bg-gradient,.kbb-home .hs-cc-bg-solid{background:linear-gradient(var(--cc-ang,115deg),var(--cc-b1,#FFF6F0),var(--cc-b2,#FCEAF2))}
+.kbb-home .hs-cc-al .hs-head{text-align:start;margin-inline:0;max-width:none}
+.kbb-home .hs-cc-al .hs-head p{margin-inline:0}
+.kbb-home .hs-cc-list{list-style:none;margin:0;padding:6px 0 8px;display:flex;flex-wrap:wrap;gap:var(--cc-g,12px)}
+.kbb-home .hs-cc-list>li{display:flex;flex:0 0 auto;min-width:0;max-width:100%}
+.kbb-home .hs-cc-ac .hs-cc-list{justify-content:center}
+.kbb-home .hs-cc-i{--cc-ic:var(--cc-ic-d,60px);display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;max-width:100%;padding-block:5px;padding-inline:5px 18px;border-radius:999px;background:var(--cc-bg,#FCE6EE);color:#3A2E35;text-decoration:none;font-size:var(--cc-ts,15px);font-weight:600;line-height:1.2;-webkit-tap-highlight-color:transparent;transition:transform .3s cubic-bezier(.22,.61,.36,1),box-shadow .3s}
+.kbb-home .hs-cc-ic{position:relative;flex:0 0 var(--cc-ic);width:var(--cc-ic);height:var(--cc-ic);border-radius:50%;background:#fff;color:#B03A62}
+.kbb-home .hs-cc-ic svg{position:absolute;left:19%;top:19%;width:62%;height:62%;overflow:visible}
+.kbb-home .hs-cc-ic .hs-cc-a{fill:var(--cc-acc,#F2AFC5);stroke:none}
+.kbb-home .hs-cc-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.kbb-home .hs-cc-i:focus-visible{outline:2px solid #C6395F;outline-offset:3px}
+@media (hover:hover){.kbb-home .hs-cc-i:hover{transform:translateY(-3px);box-shadow:0 12px 22px -16px rgba(42,34,40,.45);color:#3A2E35}}
+@media (prefers-reduced-motion:reduce){.kbb-home .hs-cc-i{transition:none}}
+@media (min-width:901px){
+  .kbb-home .hs-concerns{--cc-g:var(--cc-g-d,12px);--cc-ts:var(--cc-ts-d,15px)}
+  .kbb-home .hs-cc-d-scroll .hs-cc-list{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:thin;overscroll-behavior-x:contain}
+  .kbb-home .hs-cc-d-scroll .hs-cc-list>li{scroll-snap-align:start}
+  .kbb-home .hs-cc-ac.hs-cc-d-scroll .hs-cc-list{justify-content:flex-start}
+  .kbb-home .hs-cc-ac.hs-cc-d-scroll .hs-cc-list>li:first-child{margin-inline-start:auto}
+  .kbb-home .hs-cc-ac.hs-cc-d-scroll .hs-cc-list>li:last-child{margin-inline-end:auto}
+}
+@media (max-width:900px){
+  /* --cc-bleed is the section card's own side padding (clamp(18px,2vw,28px),
+     12px at 680px and under), so a sideways row runs to the card's edge. */
+  .kbb-home .hs-concerns{--cc-g:var(--cc-g-m,8px);--cc-ts:var(--cc-ts-m,13px);--cc-bleed:clamp(18px,2vw,28px)}
+  .kbb-home .hs-cc-i{--cc-ic:var(--cc-ic-m,52px);gap:8px;padding-inline:5px 16px}
+  .kbb-home .hs-concerns.hs-cc-al .hs-head.hs-split{text-align:start}
+  .kbb-home .hs-cc-m-scroll .hs-cc-list{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:var(--cc-bleed);margin-inline:calc(-1 * var(--cc-bleed));padding-inline:var(--cc-bleed);scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+  .kbb-home .hs-cc-m-scroll .hs-cc-list::-webkit-scrollbar{display:none}
+  .kbb-home .hs-cc-m-scroll .hs-cc-list>li{scroll-snap-align:start}
+  .kbb-home .hs-cc-ac.hs-cc-m-scroll .hs-cc-list{justify-content:flex-start}
+  .kbb-home .hs-cc-ac.hs-cc-m-scroll .hs-cc-list>li:first-child{margin-inline-start:auto}
+  .kbb-home .hs-cc-ac.hs-cc-m-scroll .hs-cc-list>li:last-child{margin-inline-end:auto}
+}
+@media (max-width:680px){.kbb-home .hs-concerns{--cc-bleed:12px}}
 .kbb-home .util{background:var(--cream);border-bottom:1px solid var(--line)}
 .kbb-home .util .g{display:grid;grid-template-columns:repeat(4,1fr);gap:1px}
 .kbb-home .util .i{display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 12px;font-size:12px;color:var(--ink2)}

@@ -681,6 +681,10 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
       }).join('') + '</select>';
     } else if (f.type === 'colour') {
       ctl = '<div class="hph-col"><input type="color" id="' + id + '" value="' + esc(v) + '"' + data + '><code>' + esc(v) + '</code></div>';
+    } else if (f.options && f.options.picker === 'concern-chips' && window.kbbCc) {
+      // (Lane CX) Skin concerns: the shared chip editor around a hidden input
+      // carrying this screen's data-hph-k, so set() stores it as usual.
+      ctl = window.kbbCc.html(f, v, data.trim(), (S.data.vocab && S.data.vocab.categories) || []);
     } else if (f.type === 'textarea') {
       ctl = '<textarea class="hph-in" id="' + id + '"' + data + '>' + esc(v) + '</textarea>';
     } else if (f.type === 'ids' && f.options && f.options.of && f.options.of !== 'products') {

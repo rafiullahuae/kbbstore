@@ -175,6 +175,14 @@ class HomepageSections
          */
         'igembeds'    => ['Instagram embeds', 'Instagram posts and reels you paste by address, shown with Instagram’s own player. Add them in Content → Instagram embeds; nothing shows until you do.', false, null],
         'trending'    => ['Trending', 'What is moving this week: 8 on a laptop, 6 on a phone. Words, products and spacing: Homepage content → Trending.', false, null],
+        /*
+         * (Lane CX) Shop by skin concern — design E, the concern chips. The
+         * owner: "make the section ... under Trending K-Beauty This Week
+         * section". ON, as he asked. It draws nothing until one of its
+         * categories exists, and FOLLOWS keeps it under Trending on a shop
+         * whose saved order predates it.
+         */
+        'concerns'    => ['Skin concerns', 'Shop by skin concern: a pill per concern with its icon, each one a link to its collection. Chips, words, background and sizes: Homepage content → Skin concerns.', false, null],
         'bestsellers' => ['Best sellers', 'Ranked by sales this month.', true, GridSkins::DEFAULT],
         'flash'       => ['Flash sale', 'Discounted, with stock remaining.', true, GridSkins::DEFAULT],
         'blog'        => ['Skincare guide', 'Three journal articles. Words and which articles: Homepage content → Blog.', false, null],
@@ -689,7 +697,49 @@ class HomepageSections
 
         uasort($out, fn ($a, $b) => $a['order'] <=> $b['order']);
 
-        return self::settle($out);
+        return self::settle(self::follow($out, $saved));
+    }
+
+    /**
+     * A section added after a shop saved its order, and the section it belongs
+     * under (Lane CX). The owner asked for Skin concerns "under Trending"; a
+     * saved payload that never mentioned `concerns` would otherwise give it its
+     * registry index, which on a reordered shop can land anywhere.
+     */
+    public const FOLLOWS = ['concerns' => 'trending'];
+
+    /**
+     * Put each FOLLOWS key the saved payload has no position for directly
+     * after its host. A key the owner HAS placed keeps his place; every other
+     * row keeps its relative order. On an unsaved shop this changes nothing:
+     * the registry already writes it there.
+     *
+     * @param  array<string, array<string, mixed>>  $rows  sorted
+     * @return array<string, array<string, mixed>>
+     */
+    private static function follow(array $rows, array $saved): array
+    {
+        foreach (self::FOLLOWS as $key => $host) {
+            if (! isset($rows[$key], $rows[$host]) || isset($saved[$key]['order'])) {
+                continue;
+            }
+
+            $row = $rows[$key];
+            unset($rows[$key]);
+            $out = [];
+
+            foreach ($rows as $k => $r) {
+                $out[$k] = $r;
+
+                if ($k === $host) {
+                    $out[$key] = $row;
+                }
+            }
+
+            $rows = $out;
+        }
+
+        return $rows;
     }
 
     /**

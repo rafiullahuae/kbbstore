@@ -70,6 +70,8 @@ final class HomepageHub
         // (Lane IGE) Its posts, card style and layout are one screen of their own.
         'igembeds' => ['kind' => 'none', 'note' => 'The posts, the card style and the layout are set on Content → Instagram embeds.', 'also' => ['igembeds', 'Content → Instagram embeds']],
         'trending' => ['kind' => 'content', 'tab' => 'trending', 'source' => 'tr'],
+        // (Lane CX) Shop by skin concern: its own tab of Homepage content.
+        'concerns' => ['kind' => 'content', 'tab' => 'concerns'],
         'bestsellers' => ['kind' => 'content', 'tab' => 'bestsellers', 'source' => 'bsl'],
         'flash' => ['kind' => 'content', 'tab' => 'flash', 'source' => 'fl'],
         'blog' => ['kind' => 'content', 'tab' => 'blog'],
@@ -107,8 +109,8 @@ final class HomepageHub
             // section's OWN space-above / space-below / under-the-heading keys
             // move there instead of being offered twice (SectionType::OWNED).
             (bool) preg_match('/_(size|pt_[dm]|pb_[dm]|hg_[dm]|pad_[dm]|head_gap_[dm]|btn_gap_[dm])$/', $key) => 'type',
-            (bool) preg_match('/_(bg|ink|h)$/', $key) => 'style',
-            (bool) preg_match('/_(cols_[dm]|layout_[dm]|per_[dm]|arrows_[dm]|auto|align|btn_[dm]|th_m|clamp_[dm]|count)$/', $key) => 'layout',
+            (bool) preg_match('/_(bg|ink|h|bg_from|bg_to|bg_dir)$/', $key) => 'style',
+            (bool) preg_match('/_(cols_[dm]|layout_[dm]|per_[dm]|arrows_[dm]|auto|align|btn_[dm]|th_m|clamp_[dm]|count|ic_[dm]|txt_[dm]|gap_[dm])$/', $key) => 'layout',
             default => 'content',
         };
     }
@@ -275,7 +277,9 @@ final class HomepageHub
 
         return [
             'brands' => $rows(Brand::query()->select('id', 'name')->orderBy('name')->orderBy('id')),
-            'categories' => $rows(Category::query()->select('id', 'name')->orderBy('name')->orderBy('id')),
+            // (Lane CX) With the slug, for the Skin concerns chip editor's defaults.
+            'categories' => Category::query()->select('id', 'name', 'slug')->orderBy('name')->orderBy('id')->get()
+                ->map(fn ($r) => ['id' => (int) $r->id, 'name' => (string) $r->name, 'slug' => (string) $r->slug])->values()->all(),
             'posts' => $posts,
         ];
     }
