@@ -1,0 +1,1081 @@
+{
+ "generated": "2026-10-14",
+ "status": "List only - nothing applied",
+ "source": "Live https://kbeautybliss.com product pages (754 sitemap URLs); /collections/acne-patches/ lists 1 product (SOME BY MI Clear Spot Patch), already in Acne",
+ "acne": {
+  "current": 56,
+  "add_count": 63,
+  "after": 119,
+  "add": [
+   {
+    "name": "Anua - BHA 2% Gentle Exfoliating Toner - 150ml",
+    "slug": "anua-bha-2-gentle-exfoliating-toner-150ml",
+    "url": "https://kbeautybliss.com/product/anua-bha-2-gentle-exfoliating-toner-150ml/",
+    "why": "2% BHA toner that unclogs pores; tea tree calms (now in Oily)",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "Anua - Combination Skincare Set",
+    "slug": "anua-combination-skin-set",
+    "url": "https://kbeautybliss.com/product/anua-combination-skin-set/",
+    "why": "Set built on the salicylic-acid Quercetinol foam, 'recommended for acne-prone skin'",
+    "categories": [
+     "Skincare sets"
+    ]
+   },
+   {
+    "name": "Anua - Heartleaf 70% Soothing Cream - 100ml",
+    "slug": "anua-heartleaf-70-soothing-cream-100ml",
+    "url": "https://kbeautybliss.com/product/anua-heartleaf-70-soothing-cream-100ml/",
+    "why": "Heartleaf + madecassic/Asiatic acid gel cream 'to deeply care for troubled skin'",
+    "categories": [
+     "Moisturizers"
+    ]
+   },
+   {
+    "name": "ANUA - Heartleaf Intensive Soothing Set",
+    "slug": "anua-heartleaf-intense-soothing-set",
+    "url": "https://kbeautybliss.com/product/anua-heartleaf-intense-soothing-set/",
+    "why": "Heartleaf set for 'relief from irritation, acne and redness'",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "Anua - Heartleaf Pore Control Cleansing Oil - MILD",
+    "slug": "anua-heartleaf-pore-control-cleansing-oil-mild",
+    "url": "https://kbeautybliss.com/product/anua-heartleaf-pore-control-cleansing-oil-mild/",
+    "why": "Non-comedogenic heartleaf cleansing oil with rosemary oil for sebum control; same line as the acne-prone 200ml",
+    "categories": [
+     "Cleansing Oils"
+    ]
+   },
+   {
+    "name": "Anua - Heartleaf Pore Control Cleansing Oil 200ml",
+    "slug": "anua-heartleaf-pore-control-cleansing-oil-200ml",
+    "url": "https://kbeautybliss.com/product/anua-heartleaf-pore-control-cleansing-oil-200ml/",
+    "why": "Non-comedogenic heartleaf oil cleanser; page: 'ideal for acne-prone skin, won't clog pores or cause breakouts'",
+    "categories": [
+     "Face Cleansers"
+    ]
+   },
+   {
+    "name": "Anua - Heartleaf Pore Control Cleansing Oil Mini",
+    "slug": "anua-heartleaf-pore-control-cleansing-oil-mini",
+    "url": "https://kbeautybliss.com/product/anua-heartleaf-pore-control-cleansing-oil-mini/",
+    "why": "Mini of the non-comedogenic heartleaf cleansing oil; 'suitable for acne-prone skin'",
+    "categories": [
+     "Pore Care"
+    ]
+   },
+   {
+    "name": "Anua - Heartleaf Quercetinol Pore Deep Cleansing Foam - 150ml",
+    "slug": "anua-heartleaf-quercetinol-pore-deep-cleansing-foam-150ml",
+    "url": "https://kbeautybliss.com/product/anua-heartleaf-quercetinol-pore-deep-cleansing-foam-150ml/",
+    "why": "Salicylic-acid foam cleanser 'to provide pore care and anti-acne effects'",
+    "categories": [
+     "Face Cleansers"
+    ]
+   },
+   {
+    "name": "Anua - Niacinamide 10% + TXA 4% Dark Spot Correcting Serum 30ml",
+    "slug": "anua-niacinamide-10-txa-4-dark-spot-correcting-serum-30ml",
+    "url": "https://kbeautybliss.com/product/anua-niacinamide-10-txa-4-dark-spot-correcting-serum-30ml/",
+    "why": "10% niacinamide + TXA; fades 'post-acne scars and marks'",
+    "categories": [
+     "Face Serums"
+    ]
+   },
+   {
+    "name": "Anua - Rice Enzyme Brightening Cleansing Powder",
+    "slug": "anua-rice-enzyme-brightening-cleansing-powder",
+    "url": "https://kbeautybliss.com/product/anua-rice-enzyme-brightening-cleansing-powder/",
+    "why": "Enzyme powder wash with papain, 'ideal for blemish-prone skin'",
+    "categories": [
+     "Face Washes"
+    ]
+   },
+   {
+    "name": "ANUA – Ultimate Oil Control Skincare Set",
+    "slug": "anua-ultimate-oil-control-skincare-set",
+    "url": "https://kbeautybliss.com/product/anua-ultimate-oil-control-skincare-set/",
+    "why": "Oil-control set with the salicylic-acid foam; 'recommended for acne-prone skin'",
+    "categories": [
+     "Best Sellers"
+    ]
+   },
+   {
+    "name": "APRILSKIN - Carrotene IPMP Hydramelt Cleansing Balm",
+    "slug": "aprilskin-carrotene-ipmp-hydramelt-cleansing-balm",
+    "url": "https://kbeautybliss.com/product/aprilskin-carrotene-ipmp-hydramelt-cleansing-balm/",
+    "why": "Cleansing balm that melts sebum, blackheads and whiteheads and 'relieves acne'",
+    "categories": [
+     "Face Cleansers",
+     "Makeup Removers",
+     "Cleansing Balms"
+    ]
+   },
+   {
+    "name": "APRILSKIN - Carrotene Pore Clay Mask",
+    "slug": "aprilskin-carrotene-pore-clay-mask",
+    "url": "https://kbeautybliss.com/product/aprilskin-carrotene-pore-clay-mask/",
+    "why": "Five-clay wash-off mask; sebum and pore improvement 'even for acne-prone skin'",
+    "categories": [
+     "Face Masks"
+    ]
+   },
+   {
+    "name": "APRILSKIN - TXA Niacinamide 99 Deep Cleanser",
+    "slug": "aprilskin-txa-niacinamide-99-deep-cleanser",
+    "url": "https://kbeautybliss.com/product/aprilskin-txa-niacinamide-99-deep-cleanser/",
+    "why": "Salicylic acid + 2% niacinamide cleanser that lifts blackheads and excess oil",
+    "categories": [
+     "Face Washes"
+    ]
+   },
+   {
+    "name": "AXIS - Y - PHA Resurfacing Glow Peel",
+    "slug": "axis-y-pha-resurfacing-glow-peel",
+    "url": "https://kbeautybliss.com/product/axis-y-pha-resurfacing-glow-peel/",
+    "why": "10% PHA peel that unclogs pores and removes excess sebum",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "Beauty of Joseon - Glow Replenishing Rice Milk",
+    "slug": "beauty-of-joseon-glow-replenishing-rice-milk",
+    "url": "https://kbeautybliss.com/product/beauty-of-joseon-glow-replenishing-rice-milk/",
+    "why": "Sebum-control powder toner, 'especially for red and acne-prone skin'",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "Beauty of Joseon - Green Plum Refreshing Toner: AHA + BHA",
+    "slug": "beauty-of-joseon-green-plum-refreshing-toner-aha-bha",
+    "url": "https://kbeautybliss.com/product/beauty-of-joseon-green-plum-refreshing-toner-aha-bha/",
+    "why": "2% glycolic acid (AHA) + 0.5% salicylic acid (BHA) toner",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "Beauty of Joseon - Ground Rice and Honey Glow Mask",
+    "slug": "beauty-of-joseon-ground-rice-and-honey-glow-mask",
+    "url": "https://kbeautybliss.com/product/beauty-of-joseon-ground-rice-and-honey-glow-mask/",
+    "why": "Kaolin clay wash-off mask that absorbs sebum and purifies pores",
+    "categories": [
+     "Face Masks"
+    ]
+   },
+   {
+    "name": "Beauty of Joseon - Hanbang Serum Discovery Kit",
+    "slug": "beauty-of-joseon-hanbang-serum-discovery-kit",
+    "url": "https://kbeautybliss.com/product/beauty-of-joseon-hanbang-serum-discovery-kit/",
+    "why": "Includes the propolis + niacinamide Glow Serum, marketed 'for acne treatment'",
+    "categories": [
+     "Face Serums"
+    ]
+   },
+   {
+    "name": "BEAUTY OF JOSEON Red Bean Refreshing Pore Mask - 140ml",
+    "slug": "beauty-of-joseon-red-bean-refreshing-pore-mask-140ml",
+    "url": "https://kbeautybliss.com/product/beauty-of-joseon-red-bean-refreshing-pore-mask-140ml/",
+    "why": "Clay mask that controls sebum and minimises pores",
+    "categories": [
+     "Face Masks"
+    ]
+   },
+   {
+    "name": "beplain - Mung Bean Pore Clay Mask",
+    "slug": "beplain-mung-bean-pore-clay-mask",
+    "url": "https://kbeautybliss.com/product/beplain-mung-bean-pore-clay-mask/",
+    "why": "Clay mask clinically shown to reduce blackheads and whiteheads",
+    "categories": [
+     "Face Masks"
+    ]
+   },
+   {
+    "name": "celimax - Oil Control Mattifying Sun Stick",
+    "slug": "celimax-oil-control-mattifying-sun-stick",
+    "url": "https://kbeautybliss.com/product/celimax-oil-control-mattifying-sun-stick/",
+    "why": "Non-comedogenic cica sun stick 'suitable for acne-prone skin'",
+    "categories": [
+     "Sunscreens"
+    ]
+   },
+   {
+    "name": "celimax - Pore + Dark Spot Brightening Pad",
+    "slug": "celimax-pore-dark-spot-brightening-pad",
+    "url": "https://kbeautybliss.com/product/celimax-pore-dark-spot-brightening-pad/",
+    "why": "AHA/BHA/PHA + niacinamide pads for blemishes and pores",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "Celimax Pore+Dark Spot Complete Brightening Skincare Set",
+    "slug": "celimax-poredark-spot-complete-brightening-skincare-set",
+    "url": "https://kbeautybliss.com/product/celimax-poredark-spot-complete-brightening-skincare-set/",
+    "why": "Routine marketed for 'post-acne marks' (niacinamide + TXA)",
+    "categories": [
+     "Skincare sets"
+    ]
+   },
+   {
+    "name": "COSRX - AHA 7 Whitehead Power Liquid 100ml",
+    "slug": "cosrx-aha-7-whitehead-power-liquid-100ml",
+    "url": "https://kbeautybliss.com/product/cosrx-aha-7-whitehead-power-liquid-100ml/",
+    "why": "Glycolic acid (AHA) exfoliant that dissolves whiteheads and blackheads",
+    "categories": [
+     "Face Creams"
+    ]
+   },
+   {
+    "name": "Cosrx - BHA Blackhead Power Liquid - 100ml",
+    "slug": "corsx-bha-blackhead-power-liquid-100ml",
+    "url": "https://kbeautybliss.com/product/corsx-bha-blackhead-power-liquid-100ml/",
+    "why": "BHA (betaine salicylate) exfoliant for blackheads and clogged pores",
+    "categories": [
+     "Face Serums"
+    ]
+   },
+   {
+    "name": "COSRX - Centella Water Alcohol-Free Toner - 150ml",
+    "slug": "cosrx-centella-water-alcohol-free-toner-150ml",
+    "url": "https://kbeautybliss.com/product/cosrx-centella-water-alcohol-free-toner-150ml/",
+    "why": "Centella toner 'helping deal with blemishes and breakouts'",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "COSRX - Low pH Good Morning Gel Cleanser for Sensitive Skin - 150ml",
+    "slug": "cosrx-low-ph-good-morning-gel-cleanser-for-sensitive-skin-150ml",
+    "url": "https://kbeautybliss.com/product/cosrx-low-ph-good-morning-gel-cleanser-for-sensitive-skin-150ml/",
+    "why": "Low-pH gel cleanser with tea tree oil and natural BHA",
+    "categories": [
+     "Face Cleansers"
+    ]
+   },
+   {
+    "name": "Cosrx - Oil-Free Ultra-Moisturizing Lotion with Birch Sap - 100ml",
+    "slug": "cosrx-oil-free-ultra-moisturizing-lotion-with-birch-sap-100ml",
+    "url": "https://kbeautybliss.com/product/cosrx-oil-free-ultra-moisturizing-lotion-with-birch-sap-100ml/",
+    "why": "Oil-free lotion 'recommended for sensitive, oily or acne-prone skin'; helps prevent breakouts",
+    "categories": [
+     "Moisturizers"
+    ]
+   },
+   {
+    "name": "COSRX - Refresh AHA BHA Vitamin C Daily Toner 150ml",
+    "slug": "cosrx-refresh-aha-bha-vitamin-c-daily-toner-150ml",
+    "url": "https://kbeautybliss.com/product/cosrx-refresh-aha-bha-vitamin-c-daily-toner-150ml/",
+    "why": "Daily AHA + BHA exfoliating toner (borderline: brightening-led)",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "COSRX - Two in One Poreless Power Liquid Toner - 100ml",
+    "slug": "cosrx-two-in-one-poreless-power-liquid-toner-100ml",
+    "url": "https://kbeautybliss.com/product/cosrx-two-in-one-poreless-power-liquid-toner-100ml/",
+    "why": "Willow bark water + betaine salicylate (BHA) pore toner",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "Dear, Klairs - EGF Blue Youth Activating Drop",
+    "slug": "dear-klairs-egf-blue-youth-activating-drop",
+    "url": "https://kbeautybliss.com/product/dear-klairs-egf-blue-youth-activating-drop/",
+    "why": "Non-comedogenic serum that 'helps soothe redness and acne', fades blemish marks",
+    "categories": [
+     "Face Serums"
+    ]
+   },
+   {
+    "name": "Dear, Klairs - Midnight Blue Calming Cream",
+    "slug": "dear-klairs-midnight-blue-calming-cream",
+    "url": "https://kbeautybliss.com/product/dear-klairs-midnight-blue-calming-cream/",
+    "why": "Calming cream; page: 'suitable for oily acne-prone and sensitive skin'",
+    "categories": [
+     "Moisturizers",
+     "Face Creams"
+    ]
+   },
+   {
+    "name": "Dr. Althea - 345 Relief Cream Mask Set",
+    "slug": "dr-althea-345-relief-cream-mask-set",
+    "url": "https://kbeautybliss.com/product/dr-althea-345-relief-cream-mask-set/",
+    "why": "Tea tree + centella + niacinamide masks for 'blemish-related discomfort'",
+    "categories": [
+     "Face Masks"
+    ]
+   },
+   {
+    "name": "Dr. Althea - Amino Acid Gentle Bubble Cleanser - 140ml",
+    "slug": "dr-althea-amino-acid-gentle-bubble-cleanser-140ml",
+    "url": "https://kbeautybliss.com/product/dr-althea-amino-acid-gentle-bubble-cleanser-140ml/",
+    "why": "Gentle foam that unclogs pores; 'alleviate acne'",
+    "categories": [
+     "Face Washes"
+    ]
+   },
+   {
+    "name": "Dr. Ceuracle - Pro Balance Night Enzyme Wash",
+    "slug": "dr-ceuracle-pro-balance-night-enzyme-wash",
+    "url": "https://kbeautybliss.com/product/dr-ceuracle-pro-balance-night-enzyme-wash/",
+    "why": "Enzyme powder wash with charcoal for excess sebum and pore-clogging impurities",
+    "categories": [
+     "New Arrivals"
+    ]
+   },
+   {
+    "name": "Dr.Melaxin - Peel Shot Exfoliating Black Rice Ampoule",
+    "slug": "dr-melaxin-peel-shot-exfoliating-black-rice-ampoule",
+    "url": "https://kbeautybliss.com/product/dr-melaxin-peel-shot-exfoliating-black-rice-ampoule/",
+    "why": "Ampoule that removes blackheads, unclogs pores and regulates sebum",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "Dr.Melaxin - Peel Shot Exfoliating White Rice Ampoule",
+    "slug": "dr-melaxin-peel-shot-exfoliating-white-rice-ampoule",
+    "url": "https://kbeautybliss.com/product/dr-melaxin-peel-shot-exfoliating-white-rice-ampoule/",
+    "why": "AHA/BHA/PHA ampoule that removes whiteheads",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "Esse Beauty - Gentle Exfoliating Face Scrub",
+    "slug": "esse-beauty-gentle-exfoliating-face-scrub",
+    "url": "https://kbeautybliss.com/product/esse-beauty-gentle-exfoliating-face-scrub/",
+    "why": "Scrub for 'oily, acne-prone and combination skin'; prevents breakouts",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "FULLY - Green Tomato Clay Mask Cleanser",
+    "slug": "fully-green-tomato-clay-mask-cleanser",
+    "url": "https://kbeautybliss.com/product/fully-green-tomato-clay-mask-cleanser/",
+    "why": "Clay mask-cleanser for pores and excess sebum",
+    "categories": [
+     "Face Washes"
+    ]
+   },
+   {
+    "name": "Heimish - All Clean Green Foam, Cleanser, 150 g",
+    "slug": "heimish-all-clean-green-foam-cleanser-150-g",
+    "url": "https://kbeautybliss.com/product/heimish-all-clean-green-foam-cleanser-150-g/",
+    "why": "Cica + witch hazel gel cleanser 'beneficial for preventing unwanted breakouts'",
+    "categories": [
+     "Face Cleansers"
+    ]
+   },
+   {
+    "name": "ilso - Super Melting Sebum Softener",
+    "slug": "ilso-super-melting-sebum-softener",
+    "url": "https://kbeautybliss.com/product/ilso-super-melting-sebum-softener/",
+    "why": "Softens and melts sebum plugs and blackheads (comedones)",
+    "categories": [
+     "Face Cleansers"
+    ]
+   },
+   {
+    "name": "Innisfree - Super Volcanic Pore Clay Mask",
+    "slug": "innisfree-super-volcanic-pore-clay-mask",
+    "url": "https://kbeautybliss.com/product/innisfree-super-volcanic-pore-clay-mask/",
+    "why": "Volcanic clay + AHA mask for blackheads/whiteheads; page: usable as a spot treatment",
+    "categories": [
+     "Face Masks"
+    ]
+   },
+   {
+    "name": "Innisfree - Volcanic BHA Pore Cleansing Foam - 150 g",
+    "slug": "innisfree-volcanic-bha-pore-cleansing-foam-150-g",
+    "url": "https://kbeautybliss.com/product/innisfree-volcanic-bha-pore-cleansing-foam-150-g/",
+    "why": "BHA + volcanic clay foam that absorbs sebum and clears clogged pores",
+    "categories": [
+     "Face Cleansers"
+    ]
+   },
+   {
+    "name": "Isntree - Mugwort Calming Clay Mask",
+    "slug": "isntree-mugwort-calming-clay-mask",
+    "url": "https://kbeautybliss.com/product/isntree-mugwort-calming-clay-mask/",
+    "why": "Six-clay + mugwort wash-off mask for excess oil and pores",
+    "categories": [
+     "Face Masks"
+    ]
+   },
+   {
+    "name": "iUNIK - Centella Calming Gel Cream 60ml",
+    "slug": "iunik-centella-calming-gel-cream-60ml",
+    "url": "https://kbeautybliss.com/product/iunik-centella-calming-gel-cream-60ml/",
+    "why": "Gel cream with 10% tea tree leaf water + 72% centella; targets blemishes",
+    "categories": [
+     "Face Creams"
+    ]
+   },
+   {
+    "name": "La Roche-Posay Anthelios Invisible Fluid SPF 50+",
+    "slug": "la-roche-posay-anthelios-invisible-fluid-spf-50",
+    "url": "https://kbeautybliss.com/product/la-roche-posay-anthelios-invisible-fluid-spf-50/",
+    "why": "Non-comedogenic fluid sunscreen 'suitable for sensitive and acne-prone skin'",
+    "categories": [
+     "Sunscreens"
+    ]
+   },
+   {
+    "name": "medicube - Kojic Acid Turmeric Pad",
+    "slug": "medicube-kojic-acid-turmeric-pad",
+    "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-pad/",
+    "why": "AHA (glycolic) + BHA (salicylic) pads, 'soothing care for troubled skin'",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "medicube - TXA Niacinamide Capsule Cream",
+    "slug": "medicube-txa-niacinamide-capsule-cream",
+    "url": "https://kbeautybliss.com/product/medicube-txa-niacinamide-capsule-cream/",
+    "why": "Non-comedogenic niacinamide cream 'especially for blemish-prone skin'",
+    "categories": [
+     "Moisturizers",
+     "Face Creams"
+    ]
+   },
+   {
+    "name": "Medicube - Zero Pore Pad 2.0",
+    "slug": "medicube-zero-pore-pad-2-0",
+    "url": "https://kbeautybliss.com/product/medicube-zero-pore-pad-2-0/",
+    "why": "AHA/BHA toner pads to 'achieve blemish-free skin'",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "medicube – Zero Pore Blackhead Mud Mask",
+    "slug": "medicube-zero-pore-blackhead-mud-mask",
+    "url": "https://kbeautybliss.com/product/medicube-zero-pore-blackhead-mud-mask/",
+    "why": "AHA/BHA/PHA mud mask for blackheads and sebum",
+    "categories": [
+     "Face Masks"
+    ]
+   },
+   {
+    "name": "Mixsoon- Centella Asiatica Toner 300ml",
+    "slug": "mixsoon-centella-asiatica-toner-300ml",
+    "url": "https://kbeautybliss.com/product/mixsoon-centella-asiatica-toner-300ml/",
+    "why": "Centella toner 'recommended for inflamed skin and acne'",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "numbuzin - No. 4 Pore Zero Peeled Egg Toner Pad 190ml",
+    "slug": "numbuzin-no-4-pore-zero-peeled-egg-toner-pad-190ml",
+    "url": "https://kbeautybliss.com/product/numbuzin-no-4-pore-zero-peeled-egg-toner-pad-190ml/",
+    "why": "Salicylic acid + LHA/PHA exfoliating toner pads",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "Numbuzin - No.1 Pantothenic B5 Active Soothing Cream",
+    "slug": "numbuzin-no-1-pantothenic-b5-active-soothing-cream",
+    "url": "https://kbeautybliss.com/product/numbuzin-no-1-pantothenic-b5-active-soothing-cream/",
+    "why": "Niacinamide + zinc PCA 'to combat acne', regulates sebum",
+    "categories": [
+     "Face Creams"
+    ]
+   },
+   {
+    "name": "Orien - Mugwort Zero Film Cleansing Oil",
+    "slug": "orien-mugwort-zero-film-cleansing-oil",
+    "url": "https://kbeautybliss.com/product/orien-mugwort-zero-film-cleansing-oil/",
+    "why": "Cleansing oil 'specially formulated for acne-prone and sensitive skin'",
+    "categories": [
+     "Cleansing Oils"
+    ]
+   },
+   {
+    "name": "Rohto Mentholatum - Melano CC Vitamin C Premium Essence",
+    "slug": "rohto-mentholatum-melano-cc-vitamin-c-premium-essence",
+    "url": "https://kbeautybliss.com/product/rohto-mentholatum-melano-cc-vitamin-c-premium-essence/",
+    "why": "Vitamin C essence with anti-inflammatory allantoin to 'prevent troublesome acne'; sister of the listed Melano CC",
+    "categories": [
+     "Face Serums"
+    ]
+   },
+   {
+    "name": "SKIN 1004 - Madagascar Centella Poremizing Clear Toner - 210ml",
+    "slug": "skin-1004-madagascar-centella-poremizing-clear-toner-210ml",
+    "url": "https://kbeautybliss.com/product/skin-1004-madagascar-centella-poremizing-clear-toner-210ml/",
+    "why": "4-HA (AHA/BHA/PHA/LHA) exfoliating centella toner",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "SKIN 1004 - Madagascar Centella Poremizing Quick Clay Stick Mask",
+    "slug": "skin-1004-madagascar-centella-poremizing-quick-clay-stick-mask",
+    "url": "https://kbeautybliss.com/product/skin-1004-madagascar-centella-poremizing-quick-clay-stick-mask/",
+    "why": "Clay stick mask, pore-cleansing and sebum-absorbing",
+    "categories": [
+     "Face Masks"
+    ]
+   },
+   {
+    "name": "SKIN 1004 - Madagascar Centella Quick Calming Toner Pad - 70 pads",
+    "slug": "skin-1004-madagascar-centella-quick-calming-toner-pad-70-pads",
+    "url": "https://kbeautybliss.com/product/skin-1004-madagascar-centella-quick-calming-toner-pad-70-pads/",
+    "why": "Centella pads for 'breakouts' and 'troubled skin'",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "SKINFOOD - Shine Muscat BHA 2% Toner Mini",
+    "slug": "skinfood-shine-muscat-bha-2-toner-mini",
+    "url": "https://kbeautybliss.com/product/skinfood-shine-muscat-bha-2-toner-mini/",
+    "why": "2% BHA (salicylic acid) exfoliating toner",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "SOME BY MI - Bye Bye Blackhead 30 Days Miracle Green Tea Tox Bubble Cleanser",
+    "slug": "some-by-mi-bye-bye-blackhead-30-days-miracle-green-tea-tox-bubble-cleanser",
+    "url": "https://kbeautybliss.com/product/some-by-mi-bye-bye-blackhead-30-days-miracle-green-tea-tox-bubble-cleanser/",
+    "why": "AHA/BHA/PHA + tea tree bubble cleanser for blackheads",
+    "categories": [
+     "Face Washes"
+    ]
+   },
+   {
+    "name": "SOME BY MI - Super Matcha Pore Clean Clay Mask 100g",
+    "slug": "some-by-mi-super-matcha-pore-clean-clay-mask-100g",
+    "url": "https://kbeautybliss.com/product/some-by-mi-super-matcha-pore-clean-clay-mask-100g/",
+    "why": "BHA + clay mask for blackheads/whiteheads and sebum",
+    "categories": [
+     "Face Masks"
+    ]
+   },
+   {
+    "name": "SOME BY MI - Yuja Niacin 30 Days Miracle Brightening Toner",
+    "slug": "some-by-mi-yuja-niacin-30-days-miracle-brightening-toner",
+    "url": "https://kbeautybliss.com/product/some-by-mi-yuja-niacin-30-days-miracle-brightening-toner/",
+    "why": "5% niacinamide toner that 'eliminates traces of post-acne' (PIH)",
+    "categories": [
+     "Toners"
+    ]
+   }
+  ]
+ },
+ "oily": {
+  "current": 69,
+  "add_count": 54,
+  "after": 123,
+  "add": [
+   {
+    "name": "Anua - Azelaic 10 Hyaluron Redness Soothing Pad",
+    "slug": "anua-azelaic-10-hyaluron-redness-soothing-pad",
+    "url": "https://kbeautybliss.com/product/anua-azelaic-10-hyaluron-redness-soothing-pad/",
+    "why": "Azelaic acid pads; page: for 'oily or blemish-prone skin concerned with excess sebum'",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "Anua - Heartleaf 70% Soothing Cream - 100ml",
+    "slug": "anua-heartleaf-70-soothing-cream-100ml",
+    "url": "https://kbeautybliss.com/product/anua-heartleaf-70-soothing-cream-100ml/",
+    "why": "Lightweight gel-cream, 'refreshing, non-greasy finish'",
+    "categories": [
+     "Moisturizers"
+    ]
+   },
+   {
+    "name": "Anua - Heartleaf 77 Clear Toner Pad",
+    "slug": "anua-heartleaf-77-clear-pad",
+    "url": "https://kbeautybliss.com/product/anua-heartleaf-77-clear-pad/",
+    "why": "Heartleaf pads with extracts 'to control sebum production and tighten enlarged pores'",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "Anua - Heartleaf Pore Control Cleansing Oil - MILD",
+    "slug": "anua-heartleaf-pore-control-cleansing-oil-mild",
+    "url": "https://kbeautybliss.com/product/anua-heartleaf-pore-control-cleansing-oil-mild/",
+    "why": "Non-comedogenic oil cleanser with rosemary oil 'to help with sebum control'",
+    "categories": [
+     "Cleansing Oils"
+    ]
+   },
+   {
+    "name": "Anua - Heartleaf Silky Moisture Sun Cream",
+    "slug": "anua-heartleaf-silky-moisture-sun-cream",
+    "url": "https://kbeautybliss.com/product/anua-heartleaf-silky-moisture-sun-cream/",
+    "why": "Sunscreen 'boasting a sebum-control effect'",
+    "categories": [
+     "Sunscreens"
+    ]
+   },
+   {
+    "name": "APRILSKIN - Carrotene Clarifying Serum",
+    "slug": "aprilskin-carrotene-clarifying-serum",
+    "url": "https://kbeautybliss.com/product/aprilskin-carrotene-clarifying-serum/",
+    "why": "Non-comedogenic serum that 'reduces excess sebum production'",
+    "categories": [
+     "Face Serums"
+    ]
+   },
+   {
+    "name": "APRILSKIN - Carrotene IPMP Clearing Solution",
+    "slug": "aprilskin-carrotene-ipmp-clearing-solution",
+    "url": "https://kbeautybliss.com/product/aprilskin-carrotene-ipmp-clearing-solution/",
+    "why": "BHA/PHA + charcoal clearing solution for sebum and pores",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "APRILSKIN - Pink Aloe Pack Cleanser",
+    "slug": "aprilskin-pink-aloe-pack-cleanser",
+    "url": "https://kbeautybliss.com/product/aprilskin-pink-aloe-pack-cleanser/",
+    "why": "Charcoal pack-cleanser that dissolves excess sebum",
+    "categories": [
+     "Face Cleansers"
+    ]
+   },
+   {
+    "name": "APRILSKIN - TXA Niacinamide 99 Deep Cleanser",
+    "slug": "aprilskin-txa-niacinamide-99-deep-cleanser",
+    "url": "https://kbeautybliss.com/product/aprilskin-txa-niacinamide-99-deep-cleanser/",
+    "why": "Salicylic acid + niacinamide cleanser that removes excess oil and blackheads",
+    "categories": [
+     "Face Washes"
+    ]
+   },
+   {
+    "name": "Arencia - Eraser Shot Glycolic Acid Booster",
+    "slug": "arencia-eraser-shot-glycolic-acid-booster",
+    "url": "https://kbeautybliss.com/product/arencia-eraser-shot-glycolic-acid-booster/",
+    "why": "AHA/BHA/PHA booster that unclogs pores and balances sebum",
+    "categories": [
+     "Face Serums"
+    ]
+   },
+   {
+    "name": "AXIS - Y - Mugwort Pore Clarifying Wash Off Pack",
+    "slug": "axis-y-mugwort-pore-clarifying-wash-off-pack",
+    "url": "https://kbeautybliss.com/product/axis-y-mugwort-pore-clarifying-wash-off-pack/",
+    "why": "Mugwort + kaolin pack that draws out excess sebum",
+    "categories": [
+     "Face Masks"
+    ]
+   },
+   {
+    "name": "AXIS - Y - PHA Resurfacing Glow Peel",
+    "slug": "axis-y-pha-resurfacing-glow-peel",
+    "url": "https://kbeautybliss.com/product/axis-y-pha-resurfacing-glow-peel/",
+    "why": "10% PHA gel peel that removes excess sebum from pores",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "AXIS - Y - Spot The Difference Blemish Treatment",
+    "slug": "axis-y-spot-the-difference-blemish-treatment",
+    "url": "https://kbeautybliss.com/product/axis-y-spot-the-difference-blemish-treatment/",
+    "why": "AHA + BHA 'to regulate excess sebum production'",
+    "categories": [
+     "Face Serums"
+    ]
+   },
+   {
+    "name": "AXIS-Y - Complete No Stress Physical Sunscreen",
+    "slug": "axis-y-complete-no-stress-physical-sunscreen",
+    "url": "https://kbeautybliss.com/product/axis-y-complete-no-stress-physical-sunscreen/",
+    "why": "Mineral (zinc oxide) sunscreen that 'leaves a matte finish'",
+    "categories": [
+     "Sunscreens"
+    ]
+   },
+   {
+    "name": "Beauty of Joseon - Glow Replenishing Rice Milk",
+    "slug": "beauty-of-joseon-glow-replenishing-rice-milk",
+    "url": "https://kbeautybliss.com/product/beauty-of-joseon-glow-replenishing-rice-milk/",
+    "why": "Two-layer toner with 'sebum-controlling powder that absorbs excess oil'",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "Beauty of Joseon - Green Plum Refreshing Toner: AHA + BHA",
+    "slug": "beauty-of-joseon-green-plum-refreshing-toner-aha-bha",
+    "url": "https://kbeautybliss.com/product/beauty-of-joseon-green-plum-refreshing-toner-aha-bha/",
+    "why": "AHA + BHA toner to 'control sebum secretion and tighten pores'",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "Beauty of Joseon - Ground Rice and Honey Glow Mask",
+    "slug": "beauty-of-joseon-ground-rice-and-honey-glow-mask",
+    "url": "https://kbeautybliss.com/product/beauty-of-joseon-ground-rice-and-honey-glow-mask/",
+    "why": "Kaolin mask with 'sebum-absorbing and pore-purifying powers'",
+    "categories": [
+     "Face Masks"
+    ]
+   },
+   {
+    "name": "beplain - Mung Bean Cooling Moisture Sunscreen",
+    "slug": "beplain-mung-bean-cooling-moisture-sunscreen",
+    "url": "https://kbeautybliss.com/product/beplain-mung-bean-cooling-moisture-sunscreen/",
+    "why": "Non-comedogenic, non-greasy sunscreen; 'no pore clogging'",
+    "categories": [
+     "Sunscreens"
+    ]
+   },
+   {
+    "name": "Biodance - Refreshing Sea Kelp Real Deep Mask Set",
+    "slug": "biodance-refreshing-sea-kelp-real-deep-mask-set",
+    "url": "https://kbeautybliss.com/product/biodance-refreshing-sea-kelp-real-deep-mask-set/",
+    "why": "Hydrogel mask that regulates sebum and balances moisture-oil",
+    "categories": [
+     "Face Masks",
+     "Sheet Masks"
+    ]
+   },
+   {
+    "name": "Celimax - JIWOOGAE Cica BHA Blemish Toner Pad",
+    "slug": "celimax-jiwoogae-cica-bha-blemish-toner-pad",
+    "url": "https://kbeautybliss.com/product/celimax-jiwoogae-cica-bha-blemish-toner-pad/",
+    "why": "BHA/LHA/PHA pads that remove 'excessive sebum'",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "COSRX - AC Collection Lightweight Soothing Moisturizer",
+    "slug": "cosrx-ac-collection-lightweight-soothing-moisturizer",
+    "url": "https://kbeautybliss.com/product/cosrx-ac-collection-lightweight-soothing-moisturizer/",
+    "why": "Lightweight, non-greasy moisturiser for oily/acne-prone skin",
+    "categories": [
+     "Moisturizers"
+    ]
+   },
+   {
+    "name": "COSRX - One Step Original Clear Pad",
+    "slug": "cosrx-one-step-original-clear-pad",
+    "url": "https://kbeautybliss.com/product/cosrx-one-step-original-clear-pad/",
+    "why": "BHA pads that 'prevent sebum build-up'",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "COSRX - Vitamin E Vitalizing Sunscreen",
+    "slug": "cosrx-vitamin-e-vitalizing-sunscreen",
+    "url": "https://kbeautybliss.com/product/cosrx-vitamin-e-vitalizing-sunscreen/",
+    "why": "Silica sunscreen that 'regulates excess sebum for a matte finish'",
+    "categories": [
+     "Sunscreens"
+    ]
+   },
+   {
+    "name": "COSRX Salicylic Acid Daily Gentle Cleanser 150ml",
+    "slug": "cosrx-salicylic-acid-daily-gentle-cleanser-150ml",
+    "url": "https://kbeautybliss.com/product/cosrx-salicylic-acid-daily-gentle-cleanser-150ml/",
+    "why": "0.5% salicylic acid + tea tree BHA cleanser",
+    "categories": [
+     "Face Cleansers",
+     "Makeup Removers"
+    ]
+   },
+   {
+    "name": "Dear, Klairs - Midnight Blue Calming Cream",
+    "slug": "dear-klairs-midnight-blue-calming-cream",
+    "url": "https://kbeautybliss.com/product/dear-klairs-midnight-blue-calming-cream/",
+    "why": "Page: 'suitable for oily acne-prone and sensitive skin'",
+    "categories": [
+     "Moisturizers",
+     "Face Creams"
+    ]
+   },
+   {
+    "name": "Dr. Althea - Rapid Hypochlorous Acid Rescue Mist - 60ml",
+    "slug": "dr-althea-rapid-hypochlorous-acid-rescue-mist-60ml",
+    "url": "https://kbeautybliss.com/product/dr-althea-rapid-hypochlorous-acid-rescue-mist-60ml/",
+    "why": "Mist for skin that 'feels irritated, oily or prone to breakouts'",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "Dr. Althea 345 Relief Cream + Mist Spray Set",
+    "slug": "dr-althea-345-relief-cream-mist-spray-set",
+    "url": "https://kbeautybliss.com/product/dr-althea-345-relief-cream-mist-spray-set/",
+    "why": "Lightweight 345 gel-cream + mist, non-greasy finish",
+    "categories": [
+     "Super Sale"
+    ]
+   },
+   {
+    "name": "Dr. Ceuracle - Cica Regen Vegan Sun",
+    "slug": "dr-ceuracle-cica-regen-vegan-sun",
+    "url": "https://kbeautybliss.com/product/dr-ceuracle-cica-regen-vegan-sun/",
+    "why": "Lightweight sunscreen with a 'natural matte finish'",
+    "categories": [
+     "Sunscreens"
+    ]
+   },
+   {
+    "name": "Dr.Althea - 345 Relief Cream",
+    "slug": "dr-althea-345-relief-cream",
+    "url": "https://kbeautybliss.com/product/dr-althea-345-relief-cream/",
+    "why": "Lightweight gel-cream; Dr. Althea suggests it 'for daytime or oily areas'",
+    "categories": [
+     "Moisturizers"
+    ]
+   },
+   {
+    "name": "Dr.G - R.E.D Blemish Clear Soothing Cream 70ml",
+    "slug": "dr-g-r-e-d-blemish-clear-soothing-cream-70ml",
+    "url": "https://kbeautybliss.com/product/dr-g-r-e-d-blemish-clear-soothing-cream-70ml/",
+    "why": "Quick-absorbing gel-texture cream, no stickiness",
+    "categories": [
+     "Moisturizers"
+    ]
+   },
+   {
+    "name": "Dr.Melaxin - Peel Shot Exfoliating White Rice Ampoule",
+    "slug": "dr-melaxin-peel-shot-exfoliating-white-rice-ampoule",
+    "url": "https://kbeautybliss.com/product/dr-melaxin-peel-shot-exfoliating-white-rice-ampoule/",
+    "why": "AHA/BHA/PHA ampoule that clears dead skin and excess sebum",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "EQQUALBERRY - Purple PDRN Pore Minimizing Serum",
+    "slug": "eqqualberry-purple-pdrn-pore-minimizing-serum",
+    "url": "https://kbeautybliss.com/product/eqqualberry-purple-pdrn-pore-minimizing-serum/",
+    "why": "Non-comedogenic serum; LHA 'to control oil production'",
+    "categories": [
+     "Face Serums"
+    ]
+   },
+   {
+    "name": "EQQUALBERRY - Swimming Pool Toner Pads",
+    "slug": "eqqualberry-swimming-pool-toner-pads",
+    "url": "https://kbeautybliss.com/product/eqqualberry-swimming-pool-toner-pads/",
+    "why": "Exfoliating pads with 'anti-sebum ingredients'",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "Esse Beauty - Gentle Exfoliating Face Scrub",
+    "slug": "esse-beauty-gentle-exfoliating-face-scrub",
+    "url": "https://kbeautybliss.com/product/esse-beauty-gentle-exfoliating-face-scrub/",
+    "why": "Scrub 'perfect for oily, acne-prone and combination skin'",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "Eucerin - Hydro Protect Ultra Light Fluid SPF 50+",
+    "slug": "eucerin-hydro-protect-ultra-light-fluid-spf-50",
+    "url": "https://kbeautybliss.com/product/eucerin-hydro-protect-ultra-light-fluid-spf-50/",
+    "why": "'Ultra-light, non-greasy' fluid sunscreen",
+    "categories": [
+     "Sunscreens"
+    ]
+   },
+   {
+    "name": "haruharu wonder - Black Bamboo Daily Soothing Sun Shield",
+    "slug": "haruharu-wonder-black-bamboo-daily-soothing-sun-shield",
+    "url": "https://kbeautybliss.com/product/haruharu-wonder-black-bamboo-daily-soothing-sun-shield/",
+    "why": "Sun stick with 'semi-matte finish, perfect for oily skin types'",
+    "categories": [
+     "Skincare",
+     "Sunscreens"
+    ]
+   },
+   {
+    "name": "Heimish - Matcha Biome Amino Acne Cleansing Foam 150ml",
+    "slug": "heimish-matcha-biome-amino-acne-cleansing-foam-150ml",
+    "url": "https://kbeautybliss.com/product/heimish-matcha-biome-amino-acne-cleansing-foam-150ml/",
+    "why": "0.5% salicylic acid cleanser that removes sebum in pores",
+    "categories": [
+     "Face Cleansers"
+    ]
+   },
+   {
+    "name": "Isntree - Hyaluronic Acid Aqua Gel Cream",
+    "slug": "isntree-hyaluronic-acid-aqua-gel-cream",
+    "url": "https://kbeautybliss.com/product/isntree-hyaluronic-acid-aqua-gel-cream/",
+    "why": "Gel cream 'suitable for oily and combination skin'",
+    "categories": [
+     "Moisturizers",
+     "Face Creams"
+    ]
+   },
+   {
+    "name": "JUMISO - All Day Vitamin Clean & Mild Facial Cleanser",
+    "slug": "jumiso-all-day-vitamin-clean-mild-facial-cleanser",
+    "url": "https://kbeautybliss.com/product/jumiso-all-day-vitamin-clean-mild-facial-cleanser/",
+    "why": "Low-pH salicylic acid cleanser to 'control sebum production'",
+    "categories": [
+     "Face Washes"
+    ]
+   },
+   {
+    "name": "KAINE - Rosemary Relief Gel Cleanser 150ml",
+    "slug": "kaine-rosemary-relief-gel-cleanser-150ml",
+    "url": "https://kbeautybliss.com/product/kaine-rosemary-relief-gel-cleanser-150ml/",
+    "why": "0.45% BHA gel cleanser",
+    "categories": [
+     "New Arrivals"
+    ]
+   },
+   {
+    "name": "Kao - Biore UV Aqua Rich Watery Essence Sunscreen SPF 50+ PA++++",
+    "slug": "kao-biore-uv-aqua-rich-watery-essence-sunscreen-spf-50-pa",
+    "url": "https://kbeautybliss.com/product/kao-biore-uv-aqua-rich-watery-essence-sunscreen-spf-50-pa/",
+    "why": "Weightless watery sunscreen, 'zero greasiness', non-comedogenic",
+    "categories": [
+     "Sunscreens"
+    ]
+   },
+   {
+    "name": "medicube - Kojic Acid Turmeric Pad",
+    "slug": "medicube-kojic-acid-turmeric-pad",
+    "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-pad/",
+    "why": "AHA/BHA pads; clinically less 'excess sebum' in 2 weeks",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "Medicube - Red Succinic Acid Peeling Pad",
+    "slug": "medicube-red-succinic-acid-peeling-pad",
+    "url": "https://kbeautybliss.com/product/medicube-red-succinic-acid-peeling-pad/",
+    "why": "Salicylic acid pads that erase 'acne spots and sebum'",
+    "categories": [
+     "Exfoliators"
+    ]
+   },
+   {
+    "name": "SKIN1004 - Madagascar Centella Hyalu-Cica Silky-Fit Sun Stick - 20g",
+    "slug": "skin1004-madagascar-centella-hyalu-cica-silky-fit-sun-stick-20g",
+    "url": "https://kbeautybliss.com/product/skin1004-madagascar-centella-hyalu-cica-silky-fit-sun-stick-20g/",
+    "why": "Sun stick with 'oil controlling properties', for oily skin",
+    "categories": [
+     "Sunscreens"
+    ]
+   },
+   {
+    "name": "SKIN1004 - Madagascar Centella Poremizing Deep Cleansing Foam 125ml",
+    "slug": "skin1004-madagascar-centella-poremizing-deep-cleansing-foam-125ml",
+    "url": "https://kbeautybliss.com/product/skin1004-madagascar-centella-poremizing-deep-cleansing-foam-125ml/",
+    "why": "Kaolin + pink salt foam that purifies pores",
+    "categories": [
+     "Face Washes"
+    ]
+   },
+   {
+    "name": "SKIN1004 - Tea-Trica Relief Ampoule 100ml",
+    "slug": "skin1004-tea-trica-relief-ampoule-100ml",
+    "url": "https://kbeautybliss.com/product/skin1004-tea-trica-relief-ampoule-100ml/",
+    "why": "Ampoule with ANTI-SEBUM P(HD) 'to control sebum production'",
+    "categories": [
+     "Face Serums"
+    ]
+   },
+   {
+    "name": "SOME BY MI - AHA PHA BHA 30 Days Miracle SERUM - 50ml",
+    "slug": "some-by-mi-aha-pha-bha-30-days-miracle-serum-50ml",
+    "url": "https://kbeautybliss.com/product/some-by-mi-aha-pha-bha-30-days-miracle-serum-50ml/",
+    "why": "AHA/BHA/PHA serum; BHA 'removes impurities and sebum inside pores'",
+    "categories": [
+     "Face Serums"
+    ]
+   },
+   {
+    "name": "SOME BY MI - AHA, BHA, PHA 30 Days Miracle Cream",
+    "slug": "some-by-mi-aha-bha-pha-30-days-miracle-cream",
+    "url": "https://kbeautybliss.com/product/some-by-mi-aha-bha-pha-30-days-miracle-cream/",
+    "why": "AHA/BHA/PHA light cream that removes sebum inside pores",
+    "categories": [
+     "Face Creams"
+    ]
+   },
+   {
+    "name": "SOME BY MI - AHA, BHA, PHA 30 Days Miracle Toner 150ml",
+    "slug": "some-by-mi-aha-bha-pha-30-days-miracle-toner-150ml",
+    "url": "https://kbeautybliss.com/product/some-by-mi-aha-bha-pha-30-days-miracle-toner-150ml/",
+    "why": "AHA/BHA/PHA toner; 'BHA to remove excess sebum'",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "SOME BY MI - Aha-Bha-Pha 30 Days Miracle Truecica Clear Pad, 70 Pieces",
+    "slug": "some-by-mi-aha-bha-pha-30-days-miracle-truecica-clear-pad-70-pieces",
+    "url": "https://kbeautybliss.com/product/some-by-mi-aha-bha-pha-30-days-miracle-truecica-clear-pad-70-pieces/",
+    "why": "AHA/BHA/PHA pads that 'reduce excess sebum'",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "SOME BY MI - AHA.BHA.PHA 30 Days Miracle Starter Kit, Green, 4 Count",
+    "slug": "some-by-mi-aha-bha-pha-30-days-miracle-starter-kit-green-4-count",
+    "url": "https://kbeautybliss.com/product/some-by-mi-aha-bha-pha-30-days-miracle-starter-kit-green-4-count/",
+    "why": "AHA/BHA/PHA travel kit (foam, toner, serum, cream) for sebum and pores",
+    "categories": [
+     "Super Sale"
+    ]
+   },
+   {
+    "name": "SOME BY MI – AHA, BHA, PHA 30 Days Miracle AC SOS Kit",
+    "slug": "some-by-mi-aha-bha-pha-30-days-miracle-ac-sos-kit",
+    "url": "https://kbeautybliss.com/product/some-by-mi-aha-bha-pha-30-days-miracle-ac-sos-kit/",
+    "why": "Acne clear foam 'removes excess sebum from pores' + BHA toner",
+    "categories": [
+     "Toners"
+    ]
+   },
+   {
+    "name": "TOCOBO - Cotton Soft Sun Stick",
+    "slug": "tocobo-cotton-soft-sun-stick",
+    "url": "https://kbeautybliss.com/product/tocobo-cotton-soft-sun-stick/",
+    "why": "Sun stick that 'controls excess sebum' with a soft matte finish",
+    "categories": [
+     "Sunscreens"
+    ]
+   },
+   {
+    "name": "Torriden - DIVE-IN Low Molecular Hyaluronic Acid Soothing Cream - 100ml",
+    "slug": "torriden-dive-in-low-molecular-hyaluronic-acid-soothing-cream-100ml",
+    "url": "https://kbeautybliss.com/product/torriden-dive-in-low-molecular-hyaluronic-acid-soothing-cream-100ml/",
+    "why": "Watery gel cream; 'Dive-In line is ideal for oily and dehydrated skin'",
+    "categories": [
+     "Moisturizers"
+    ]
+   }
+  ]
+ }
+}
