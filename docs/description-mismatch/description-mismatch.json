@@ -1,0 +1,127 @@
+{
+  "generated": "2026-10-14",
+  "source": "https://kbeautybliss.com/sitemap.xml",
+  "products_checked": 754,
+  "pages_failed": 0,
+  "mismatches_count": 8,
+  "mismatches_high_confidence": 4,
+  "empty_count": 9,
+  "notes": [
+    "Anua Azelaic 10 Hyaluron Redness Soothing Pad: live page now shows correct pad text in both places (no lash-serum text found) - appears already fixed.",
+    "No product has an empty Description tab; the empty list is short descriptions only.",
+    "\"medium\" = the text is for the right product line but names the wrong product type, or only its first sentence is borrowed."
+  ],
+  "mismatches": [
+    {
+      "name": "ROUND LAB - 1025 Dokdo Toner",
+      "url": "https://kbeautybliss.com/product/1025-dokdo-toner/",
+      "wrong_part": "Short description",
+      "confidence": "high",
+      "shows_instead": "Cleansing-foam blurb (the 1025 Dokdo Cleanser's short description)",
+      "snippet": "Amp up your cleansing routine with this gentle yet powerful cleansing foam that thoroughly removes makeup residue and i…"
+    },
+    {
+      "name": "ANUA Peach 77 Niacin Enriched Cream - 50ml",
+      "url": "https://kbeautybliss.com/product/anua-peach-77-niacin-enriched-cream-50ml/",
+      "wrong_part": "Description tab",
+      "confidence": "high",
+      "shows_instead": "Heartleaf 70 Intense Calming Cream text (70% Heartleaf extract)",
+      "snippet": "A nourishing cream formulated with 70% Heartleaf Extract that helps remove skin impurities and soothe sensitive skin. F…"
+    },
+    {
+      "name": "Purito SEOUL - Green Level Buffect Serum 60ml",
+      "url": "https://kbeautybliss.com/product/purito-seoul-green-level-buffect-serum-60ml/",
+      "wrong_part": "Description tab",
+      "confidence": "high",
+      "shows_instead": "Oil cleanser text: plant oils that melt makeup, add water and rinse",
+      "snippet": "Formulated to sweep away impurities without stripping natural moisture. Only ten ingredients were added, five of which…"
+    },
+    {
+      "name": "Haruharu WONDER - Black Rice Facial Oil 30ml",
+      "url": "https://kbeautybliss.com/product/haruharu-wonder-black-rice-facial-oil-30ml/",
+      "wrong_part": "Short description",
+      "confidence": "high",
+      "shows_instead": "Black Rice Hyaluronic Toner blurb (\"A powerful toner...\")",
+      "snippet": "A powerful toner that repairs and firms up aging skin. Formulated with 95% naturally-derived ingredients, including 2,0…"
+    },
+    {
+      "name": "Round Lab - Birch Moisturizing Cleanser - 150 ml",
+      "url": "https://kbeautybliss.com/product/birch-moisturizing-cleanser/",
+      "wrong_part": "Description tab",
+      "confidence": "medium",
+      "shows_instead": "Opening sentence is Round Lab toner text (\"This outstanding toner exfoliates...\"); rest is the cleanser",
+      "snippet": "This outstanding toner exfoliates dead skin cells and replenishes skin with long-lasting moisture. Contains Silver Birc…"
+    },
+    {
+      "name": "SKIN 1004 - Madagascar Centella Tone Brightening Capsule Ampoule Jumbo",
+      "url": "https://kbeautybliss.com/product/skin-1004-madagascar-centella-tone-brightening-capsule-ampoule-jumbo/",
+      "wrong_part": "Both",
+      "confidence": "medium",
+      "shows_instead": "Calls the ampoule a toner in both places (copy of the Tone Brightening Boosting Toner wording)",
+      "snippet": "Improve dull and tired skin with this lightweight yet po… / A dual-functional toner that provides deep hydration and im…"
+    },
+    {
+      "name": "SKIN 1004 - Madagascar Centella Tone Brightening Capsule Ampoule - 50ml",
+      "url": "https://kbeautybliss.com/product/skin-1004-madagascar-centella-tone-brightening-capsule-ampoule/",
+      "wrong_part": "Both",
+      "confidence": "medium",
+      "shows_instead": "Calls the ampoule a toner in both places (copy of the Tone Brightening Boosting Toner wording)",
+      "snippet": "Improve dull and tired skin with this lightweight yet po… / A dual-functional toner that provides deep hydration and im…"
+    },
+    {
+      "name": "Anua - Rice 70 Intensive Moisturizing Milk",
+      "url": "https://kbeautybliss.com/product/anua-rice-70-intensive-moisturizing-milk/",
+      "wrong_part": "Short description",
+      "confidence": "medium",
+      "shows_instead": "Short blurb calls this moisturizing milk (lotion) \"this toner\"",
+      "snippet": "Enriched with 70% ANUA Rice Water+™ , niacinamide and ceramide, this toner brightens, smoothens and nourishes skin to h…"
+    }
+  ],
+  "empty": [
+    {
+      "name": "Beauty Works - 10-in-One Miracle Heat Protect Spray 250ml",
+      "url": "https://kbeautybliss.com/product/beauty-works-10-in-one-miracle-heat-protect-spray-250ml/",
+      "empty_part": "Short description"
+    },
+    {
+      "name": "Beauty Works - XXL Volume Hot Brush",
+      "url": "https://kbeautybliss.com/product/beauty-works-xxl-volume-hot-brush/",
+      "empty_part": "Short description"
+    },
+    {
+      "name": "Dr.Reju-All - Advanced PDRN Rejuvenating Cream 20g",
+      "url": "https://kbeautybliss.com/product/dr-reju-all-advanced-pdrn-rejuvenating-cream-20g/",
+      "empty_part": "Short description"
+    },
+    {
+      "name": "La Roche-Posay Hyalu B5 Mini Serum",
+      "url": "https://kbeautybliss.com/product/la-roche-posay-hyalu-b5-mini-serum/",
+      "empty_part": "Short description"
+    },
+    {
+      "name": "medicube - AGE-R Booster Pro X2 Pink",
+      "url": "https://kbeautybliss.com/product/medicube-age-r-booster-pro-x2-pink/",
+      "empty_part": "Short description"
+    },
+    {
+      "name": "Medicube - Kojic Acid Turmeric Booster Pro Set",
+      "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-booster-pro-set/",
+      "empty_part": "Short description"
+    },
+    {
+      "name": "medicube - PDRN Lip Sleeping Mask",
+      "url": "https://kbeautybliss.com/product/medicube-pdrn-lip-sleeping-mask/",
+      "empty_part": "Short description"
+    },
+    {
+      "name": "She Glam - Color Bloom Liquid Blush Matte Finish - Risky Business",
+      "url": "https://kbeautybliss.com/product/color-bloom-liquid-blush-matte-finish-risky-business/",
+      "empty_part": "Short description"
+    },
+    {
+      "name": "VT - Hydrop Reedle Shot 100hL 2 Step Mask",
+      "url": "https://kbeautybliss.com/product/vt-hydrop-reedle-shot-100hl-2-step-mask/",
+      "empty_part": "Short description"
+    }
+  ]
+}
