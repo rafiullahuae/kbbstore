@@ -1,0 +1,285 @@
+{
+ "title": "Product description drafts for review",
+ "generated": "2026-10-14",
+ "note": "Drafts only — nothing has been changed on the shop.",
+ "input": "docs/description-mismatch/description-mismatch.json",
+ "counts": {
+  "wrong": 8,
+  "empty": 9,
+  "total": 17
+ },
+ "products": [
+  {
+   "section": "wrong",
+   "url": "https://kbeautybliss.com/product/1025-dokdo-toner/",
+   "replace": "Short description",
+   "short": "A light, watery toner that gently sweeps away dead skin cells and leaves skin hydrated and refreshed. Mineral-rich deep sea water from Ulleungdo and Dokdo, with hyaluronic acid, panthenol, allantoin and betaine, calms tired skin and absorbs quickly without a sticky finish.",
+   "sources": [
+    "https://www.sayweee.com/en/product/Round-Lab-1025-Dokdo-Toner-100ml/2063650",
+    "https://peachesandcremeshop.com/products/1025-dokdo-toner",
+    "https://watsons.vn/en/1025-dokdo-toner-200ml/p/BP_216518"
+   ],
+   "note": "The Description tab is already the toner's own text and is left as it is.",
+   "name": "ROUND LAB - 1025 Dokdo Toner",
+   "current_short": "Amp up your cleansing routine with this gentle yet powerful cleansing foam that thoroughly removes makeup residue and impurities. The formula is chock-full of deep sea water and three types of hyaluronic acid to keep skin hydrated post-wash. Panthenol, allantoin and ceramide NP form a protective barrier over skin to seal in moisture.",
+   "current_desc": "Benefits:\nSIMPLE YET EXCEPTIONAL : This outstanding toner exfoliates dead skin cells and replenishes skin with long-lasting moisture.\nWATER-LIKE TEXTURE : It absorbs instantly into the skin with no sticky finish.\nKEEP YOUR SKIN HYDRATED : Panthenol, Allantoin, and Betaine provide soothing care for tired and irritated skin.\nMade in Korea\nHow to use:\nAfter cleansing, soak cotton pad with toner and gently swipe all over your face.\nIf using the leave-on method, soak cotton pads with toner and leave on face for 5 to 10 minutes.\nAbout brand: ROUND LAB\nInspired by the Korean Peninsula’s abundance of natural resources, ROUND LAB uses natural ingredients in skin care products that purify and revitalize skin. The Korean brand constantly searches for top-notch ingredients across Korea to use in its products. The brand’s bestselling 1025 Dokdo line, for instance, is formulated with mineral-rich sea water sourced from the Ulleungdo and Dokdo islands. There’s also the moisturizing Birch Juice line enriched with silver birch sap from Inje county. ROUND LAB also offers skin-soothing products made with mugwort from Geomundo, like the Mugwort Calming Cleanser and Toner and Mugwort Calming Mask. All products are 100% made in Korea.",
+   "short_words": 42
+  },
+  {
+   "section": "wrong",
+   "url": "https://kbeautybliss.com/product/anua-peach-77-niacin-enriched-cream-50ml/",
+   "replace": "Description tab",
+   "desc_html": "<p><b>Benefits:</b></p>\n<ul><li>A glow-boosting cream formulated with 77% Peach Fruit Extract and Niacinamide that helps brighten a dull-looking complexion.</li><li>Features Ceramide NP and Panthenol that help strengthen the skin barrier and keep the skin hydrated.</li><li>Contains Soluble Collagen for bouncy, supple-feeling skin with improved elasticity.</li><li>A light, gel-like texture that absorbs quickly without leaving a sticky after-feel.</li></ul>\n<p><br></p>\n<p>Made in Korea</p>\n<p><br></p>\n<p><b>How to use:</b></p>\n<ul><li>As the last step of your skincare routine, apply a moderate amount evenly over the face and pat lightly for better absorption.</li></ul>\n<p><br></p>\n<p><b>Size:</b></p>\n<p>50ml</p>\n<p><br></p>\n<p><strong>About brand: Anua</strong></p>\n<p>Anua believes that healthy skin does not depend solely on skin care products but also on having a relaxed mind and regulated lifestyle. The brand focuses on choosing pure, organic ingredients to maximize effectiveness and minimize harmful effects on skin. Its environmentally friendly, sustainable products are 100% made in Korea and designed with simple packaging. Bestsellers include Heartleaf 77% Soothing Toner, Heartleaf 80% Soothing Ampoule and 5-Zero Mild Sun Cream.</p>",
+   "sources": [
+    "https://www.adorebeauty.com.au/p/anua/anua-peach-77-niacin-enriched-cream.html",
+    "https://www.watsons.sa/products/anua-peach-77-niacin-enriched-cream-50ml",
+    "https://skinsort.com/products/anua/peach-77-niacin-enriched-cream"
+   ],
+   "note": "Niacinamide percentage left out on purpose: retailers disagree (2% vs 5%). About-brand paragraph copied exactly from this page.",
+   "name": "ANUA Peach 77 Niacin Enriched Cream - 50ml",
+   "current_short": "Enriched with 77% peach extract, ceramide, collagen and panthenol, this cream restores moisture levels while boosting skin elasticity and firmness. The bouncy gel-like texture glides on swiftly without leaving a sticky after-feel. Suitable for all skin types.",
+   "current_desc": "Benefits:\nA nourishing cream formulated with 70% Heartleaf Extract that helps remove skin impurities and soothe sensitive skin.\nFeatures Ceramide and Panthenol that help strengthen the skin barrier and keep the skin hydrated.\nContains Adenosine that helps reduce the appearance of wrinkles.\nMade in Korea\nHow to use:\nApply a moderate amount evenly over the face and pat lightly for better absorption.\nAbout brand: Anua\nAnua believes that healthy skin does not depend solely on skin care products but also on having a relaxed mind and regulated lifestyle. The brand focuses on choosing pure, organic ingredients to maximize effectiveness and minimize harmful effects on skin. Its environmentally friendly, sustainable products are 100% made in Korea and designed with simple packaging. Bestsellers include Heartleaf 77% Soothing Toner, Heartleaf 80% Soothing Ampoule and 5-Zero Mild Sun Cream."
+  },
+  {
+   "section": "wrong",
+   "url": "https://kbeautybliss.com/product/purito-seoul-green-level-buffect-serum-60ml/",
+   "replace": "Description tab",
+   "desc_html": "<p><b>Benefits:</b></p>\n<ul><li>An all-in-one serum built on 49% Centella Asiatica Extract that helps calm and soothe stressed skin.</li><li>Features Niacinamide that helps even out the look of skin tone for a brighter complexion.</li><li>Contains Peptides, Panthenol and Adenosine that help care for the look of fine lines.</li><li>Enriched with Sodium Hyaluronate and Ceramide NP to keep the skin hydrated and support the skin barrier.</li></ul>\n<p><br></p>\n<p>Made in Korea</p>\n<p><br></p>\n<p><b>How to use:</b></p>\n<ul><li>After toner, apply 2–3 drops to the face and pat gently until absorbed.</li><li>Follow with moisturiser.</li></ul>\n<p><br></p>\n<p><b>Size:</b></p>\n<p>60ml</p>\n<p><br></p>\n<p><strong>About brand: Purito SEOUL</strong></p>\n<p>Korean skin care brand Purito SEOUL draws inspiration from Korean ingredients and culture to create effective skin care solutions for all, including those with sensitive skin. Its products seamlessly blend natural ingredients with clinically proven actives to treat various skin concerns. Purito SEOUL&#x27;s Wonder Releaf Centella Line features centella asiatica from Korea as the key ingredient for quick relief of skin redness and irritation. A popular holy grail product from the collection is the Wonder Releaf Centella Serum Unscented, a water-gel serum infused with cica extract and peptides for skin-revitalizing and soothing benefits. All Purito SEOUL products are vegan and cruelty-free. All products are 100% made in Korea.</p>",
+   "sources": [
+    "https://www.wcosmetics.com.au/collections/purito/products/purito-centella-green-level-buff-serum",
+    "https://skinsort.com/products/purito/centella-green-level-buffet-serum",
+    "https://incidecoder.com/products/purito-centella-green-level-buffet-serum-2"
+   ],
+   "note": "Retailers list bergamot and lavender oils in the formula; worth knowing for fragrance-sensitive shoppers. INCIdecoder says the original version was reformulated, so check the box in stock. The current short description ('Let your skin to take...') is clumsy but correct in substance and is not in this brief.",
+   "name": "Purito SEOUL - Green Level Buffect Serum 60ml",
+   "current_short": "PURITO Centella Green Level Buffet Serum 60ml. Let your skin to 'take' in all the ingredients it needs at once, like a Buffet",
+   "current_desc": "Benefits\nFormulated to sweep away impurities without stripping natural moisture.\nOnly ten ingredients were added, five of which are crowd-favorite, naturally-derived oils.\nBlended with oils extracted from olive, sweet almond, grape seed, sunflower seed, and jojoba seed.\nSkin irritation test completed.\nMade in Korea\nHow to use:\nApply a moderate amount to the dry face with fingertips and gently massage.\nAdd water, continuing to massage to melt the makeup and impurities.\nRinse thoroughly with lukewarm water\nAbout brand: Purito SEOUL\nKorean skin care brand Purito SEOUL draws inspiration from Korean ingredients and culture to create effective skin care solutions for all, including those with sensitive skin. Its products seamlessly blend natural ingredients with clinically proven actives to treat various skin concerns. Purito SEOUL's Wonder Releaf Centella Line features centella asiatica from Korea as the key ingredient for quick relief of skin redness and irritation. A popular holy grail product from the collection is the Wonder Releaf Centella Serum Unscented, a water-gel serum infused with cica extract and peptides for skin-revitalizing and soothing benefits. All Purito SEOUL products are vegan and cruelty-free. All products are 100% made in Korea."
+  },
+  {
+   "section": "wrong",
+   "url": "https://kbeautybliss.com/product/haruharu-wonder-black-rice-facial-oil-30ml/",
+   "replace": "Short description",
+   "short": "A lightweight facial oil that nourishes dry, dull skin and leaves a healthy glow. Made with 45% rice bran oil and blended with sunflower, jojoba and sweet almond oils that help strengthen the skin barrier. Use a few drops on their own, or mix with your cream.",
+   "sources": [
+    "https://farma2go.com/en/products/haruharu-wonder-black-rice-facial-oil-10ml",
+    "https://saranghae.ch/products/haruharu-wonder-black-rice-facial-oil-mini-10ml",
+    "https://www.peachandlily.com/products/haruharu-black-rice-oil"
+   ],
+   "note": "Natural-origin share (95% vs 99%) left out: sources disagree.",
+   "name": "Haruharu WONDER - Black Rice Facial Oil 30ml",
+   "current_short": "A powerful toner that repairs and firms up aging skin. Formulated with 95% naturally-derived ingredients, including 2,000ppm Korean black rice extract. Also infused with hyaluronic acid and beta-glucan to provide intense hydration while promoting skin cell regeneration, leaving a taut and plumped-up finish.",
+   "current_desc": "Benefits:\nA lightweight facial oil formulated with 99% naturally-derived ingredients delivers rich nourishment to the skin for healthy and glowing skin.\nFeatures 45% Oryza Sativa(Rice) Bran Oil 100% from Korea that helps enhance skin elasiticity and delivers strong antioxidant effect to the skin.\nContains Sunflower Oil, Jojoba Oil, Sweet Almond Oil and Lavender Oil that protect the skin by strengthening the skin barrier.\nMade in Korea\nHow to use:\nTake a moderate amount or mix with facial cream and apply evenly over the face.\nPat lightly for better absorption.\nAbout brand: Haruharu WONDER\nWith a name that means “every day” in Korean, it’s no wonder that skin care brand wishes to be involved in every step of a customer’s daily life – whether that means enhancing their natural beauty, supporting their healthy lifestyles or helping them maintain youthful, radiant skin. The brand’s solutions are made from carefully selected, EWG-verified ingredients, of which a minimum of 95% are naturally derived.",
+   "short_words": 47
+  },
+  {
+   "section": "wrong",
+   "url": "https://kbeautybliss.com/product/birch-moisturizing-cleanser/",
+   "replace": "Sentence in Description tab",
+   "sentence_old": "This outstanding toner exfoliates dead skin cells and replenishes skin with long-lasting moisture.",
+   "sentence_new": "A gentle, mildly acidic gel cleanser that washes away dirt and excess sebum while keeping skin moisturised.",
+   "desc_html": "<p><b>Benefits:</b></p>\n<ul><li>A gentle, mildly acidic gel cleanser that washes away dirt and excess sebum while keeping skin moisturised.</li><li>Contains Silver Birch Sap which is rich in Amino Acid and Vita Hyaluronic Acid ingredient to deliver long-lasting rich hydration to skin.</li><li>Water gel texture with low pH value that forms rich lather and leave a refreshing finish.</li><li>It absorbs instantly into the skin with no sticky finish.</li><li>Panthenol, Allantoin, and Betaine provide soothing care for tired and irritated skin.</li></ul>\n<p><br></p>\n<p>Made in Korea</p>\n<p><br></p>\n<p><b>How to use:</b></p>\n<ul><li>Dispense a sufficient amount on your palm and create bubbles and foams by gently massaging unto face. Cleanse and rinse thoroughly with lukewarm water.</li></ul>\n<p><br></p>\n<p><strong>About brand: ROUND LAB</strong></p>\n<p>Inspired by the Korean Peninsula’s abundance of natural resources, ROUND LAB uses natural ingredients in skin care products that purify and revitalize skin. The Korean brand constantly searches for top-notch ingredients across Korea to use in its products. The brand’s bestselling 1025 Dokdo line, for instance, is formulated with mineral-rich sea water sourced from the Ulleungdo and Dokdo islands. There’s also the moisturizing Birch Juice line enriched with silver birch sap from Inje county. ROUND LAB also offers skin-soothing products made with mugwort from Geomundo, like the Mugwort Calming Cleanser and Toner and Mugwort Calming Mask. All products are 100% made in Korea.</p>",
+   "sources": [
+    "https://saranghae.ch/products/roundlab-birch-juice-cleanser-150ml",
+    "https://chemistdirect.co.uk/round-lab-birch-juice-moisturising-cleanser/prd-0155149",
+    "https://kbeautyhouse.de/en/round-lab-birch-juice-moisturizing-cleanser/"
+   ],
+   "note": "Also worth deleting bullet 4, 'It absorbs instantly into the skin with no sticky finish.' – it is toner copy too and does not describe a rinse-off cleanser. Bullet 5 (Panthenol, Allantoin, Betaine) is the Dokdo Toner's wording and could not be confirmed for this cleanser; consider removing it. Not changed in the draft below except where marked.",
+   "name": "Round Lab - Birch Moisturizing Cleanser - 150 ml",
+   "current_short": "This cleanser gently washes away dirt and excess sebum while replenishing moisture in skin with silver birch sap and hyaluronic acid. The mildly acidic formula refreshes skin and restores its natural balance.",
+   "current_desc": "Benefits:\nThis outstanding toner exfoliates dead skin cells and replenishes skin with long-lasting moisture.\nContains Silver Birch Sap which is rich in Amino Acid and Vita Hyaluronic Acid ingredient to deliver long-lasting rich hydration to skin.\nWater gel texture with low pH value that forms rich lather and leave a refreshing finish.\nIt absorbs instantly into the skin with no sticky finish.\nPanthenol, Allantoin, and Betaine provide soothing care for tired and irritated skin.\nMade in Korea\nHow to use:\nDispense a sufficient amount on your palm and create bubbles and foams by gently massaging unto face. Cleanse and rinse thoroughly with lukewarm water.\nAbout brand: ROUND LAB\nInspired by the Korean Peninsula’s abundance of natural resources, ROUND LAB uses natural ingredients in skin care products that purify and revitalize skin. The Korean brand constantly searches for top-notch ingredients across Korea to use in its products. The brand’s bestselling 1025 Dokdo line, for instance, is formulated with mineral-rich sea water sourced from the Ulleungdo and Dokdo islands. There’s also the moisturizing Birch Juice line enriched with silver birch sap from Inje county. ROUND LAB also offers skin-soothing products made with mugwort from Geomundo, like the Mugwort Calming Cleanser and Toner and Mugwort Calming Mask. All products are 100% made in Korea."
+  },
+  {
+   "section": "wrong",
+   "url": "https://kbeautybliss.com/product/skin-1004-madagascar-centella-tone-brightening-capsule-ampoule-jumbo/",
+   "replace": "Both (short description and Description tab)",
+   "short": "A lightweight ampoule that helps brighten dull skin and even out the look of skin tone. Brightening capsules made with MadeWhite™, a blend of Madagascar centella and niacinamide, melt into a soothing centella base as you apply, leaving skin hydrated, smooth and radiant.",
+   "desc_html": "<p><b>Benefits:</b></p>\n<ul><li>A brightening ampoule that helps improve dullness and the look of uneven skin tone.</li><li>Features capsules of patented MadeWhite™, which consists of Madagascan Centella Asiatica Extract and Niacinamide, for skin-soothing and brightening benefits.</li><li>The capsules melt into the skin as you apply, delivering hydration without a sticky finish.</li><li>Leaves your skin supple, balanced and brightened.</li></ul>\n<p><br></p>\n<p>Made in Korea</p>\n<p><br></p>\n<p><b>How to use:</b></p>\n<ul><li>After cleansing and toning, apply a few drops to the face and pat gently to help absorption.</li><li>Follow with moisturiser, and sunscreen during the day.</li></ul>\n<p><br></p>\n<p><b>Size:</b></p>\n<p>100ml</p>\n<p><br></p>\n<p><strong>About brand: SKIN 1004</strong></p>\n<p>SKIN 1004&#x27;s 100% Korea-made products target problems like acne, skin hypersensitivity, enlarged pores and redness using the best sources for ingredients. The brand&#x27;s most popular offerings are the Zombie Pack enriched with albumin and aloe vera, and the Madagascar Centella Asiatica 100 Ampoule containing extracts from Madagascan centella.</p>",
+   "sources": [
+    "https://www.ozhairandbeauty.com/products/skin1004-madagascar-centella-tone-brightening-capsule-ampoule-100ml",
+    "https://www.spacenk.com/au/skincare/treatment/serums/tone-brightening-capsule-ampoule-MUK200066440.html",
+    "https://asung.ca/products/skin1004-madagascar-centella-tone-brightening-capsule-ampoule-100ml"
+   ],
+   "note": "Papaya/apple exfoliation (from the toner copy) and tranexamic acid (one retailer only) left out as unconfirmed for this ampoule. About-brand paragraph copied exactly from the 50ml page (the Jumbo page is missing the apostrophe in \"SKIN 1004's\").",
+   "name": "SKIN 1004 - Madagascar Centella Tone Brightening Capsule Ampoule Jumbo",
+   "current_short": "Improve dull and tired skin with this lightweight yet powerful toner infused with MadeWhite™, an ingredient made of Madagascan cica extracts and niacinamide for brightening, hydration and skin-soothing benefits. Additional ingredients of papaya and apple extracts provide gentle exfoliation to reveal smooth, supple and even-toned skin.",
+   "current_desc": "Benefits:\nA dual-functional toner that provides deep hydration and improves skin tone.\nFeatures patented ingredient MadeWhite™, which consists of Madagascan centella asiatica extract on top of niacinamide for skin-soothing and brightening benefits.\nContains papaya and apple extracts for gently removing dead skin cells.\nLeaves your skin supple, balanced and brightened.\nMade in Korea\nHow to use:\nMassage into skin after cleansing and toning.\nSize:\n100ml\nAbout brand: SKIN 1004\nSKIN 1004 100% Korea-made products target problems like acne, skin hypersensitivity, enlarged pores and redness using the best sources for ingredients. The brand's most popular offerings are the Zombie Pack enriched with albumin and aloe vera, and the Madagascar Centella Asiatica 100 Ampoule containing extracts from Madagascan centella.",
+   "short_words": 43
+  },
+  {
+   "section": "wrong",
+   "url": "https://kbeautybliss.com/product/skin-1004-madagascar-centella-tone-brightening-capsule-ampoule/",
+   "replace": "Both (short description and Description tab)",
+   "short": "A lightweight ampoule that helps brighten dull skin and even out the look of skin tone. Brightening capsules made with MadeWhite™, a blend of Madagascar centella and niacinamide, melt into a soothing centella base as you apply, leaving skin hydrated, smooth and radiant.",
+   "desc_html": "<p><b>Benefits:</b></p>\n<ul><li>A brightening ampoule that helps improve dullness and the look of uneven skin tone.</li><li>Features capsules of patented MadeWhite™, which consists of Madagascan Centella Asiatica Extract and Niacinamide, for skin-soothing and brightening benefits.</li><li>The capsules melt into the skin as you apply, delivering hydration without a sticky finish.</li><li>Leaves your skin supple, balanced and brightened.</li></ul>\n<p><br></p>\n<p>Made in Korea</p>\n<p><br></p>\n<p><b>How to use:</b></p>\n<ul><li>After cleansing and toning, apply a few drops to the face and pat gently to help absorption.</li><li>Follow with moisturiser, and sunscreen during the day.</li></ul>\n<p><br></p>\n<p><b>Size:</b></p>\n<p>50ml</p>\n<p><br></p>\n<p><strong>About brand: SKIN 1004</strong></p>\n<p>SKIN 1004&#x27;s 100% Korea-made products target problems like acne, skin hypersensitivity, enlarged pores and redness using the best sources for ingredients. The brand&#x27;s most popular offerings are the Zombie Pack enriched with albumin and aloe vera, and the Madagascar Centella Asiatica 100 Ampoule containing extracts from Madagascan centella.</p>",
+   "sources": [
+    "https://www.ozhairandbeauty.com/products/skin1004-madagascar-centella-tone-brightening-capsule-ampoule-100ml",
+    "https://www.spacenk.com/au/skincare/treatment/serums/tone-brightening-capsule-ampoule-MUK200066440.html",
+    "https://asung.ca/products/skin1004-madagascar-centella-tone-brightening-capsule-ampoule-100ml"
+   ],
+   "note": "Papaya/apple exfoliation (from the toner copy) and tranexamic acid (one retailer only) left out as unconfirmed for this ampoule. About-brand paragraph copied exactly from the 50ml page (the Jumbo page is missing the apostrophe in \"SKIN 1004's\").",
+   "name": "SKIN 1004 - Madagascar Centella Tone Brightening Capsule Ampoule - 50ml",
+   "current_short": "Improve dull and tired skin with this lightweight yet powerful toner infused with MadeWhite™, an ingredient made of Madagascan cica extracts and niacinamide for brightening, hydration and skin-soothing benefits. Additional ingredients of papaya and apple extracts provide gentle exfoliation to reveal smooth, supple and even-toned skin.",
+   "current_desc": "Benefits:\nA dual-functional toner that provides deep hydration and improves skin tone.\nFeatures patented ingredient MadeWhite™, which consists of Madagascan centella asiatica extract on top of niacinamide for skin-soothing and brightening benefits.\nContains papaya and apple extracts for gently removing dead skin cells.\nLeaves your skin supple, balanced and brightened.\nMade in Korea\nHow to use:\nMassage into skin after cleansing and toning.\nSize\n: 50ml\nAbout brand: SKIN 1004\nSKIN 1004's 100% Korea-made products target problems like acne, skin hypersensitivity, enlarged pores and redness using the best sources for ingredients. The brand's most popular offerings are the Zombie Pack enriched with albumin and aloe vera, and the Madagascar Centella Asiatica 100 Ampoule containing extracts from Madagascan centella.",
+   "short_words": 43
+  },
+  {
+   "section": "wrong",
+   "url": "https://kbeautybliss.com/product/anua-rice-70-intensive-moisturizing-milk/",
+   "replace": "Short description",
+   "short": "A lightweight moisturising milk with 70% rice water, niacinamide and ceramides that brightens, smooths and nourishes skin for a glass-like glow. Squalane and meadowfoam seed oil help keep moisture in, and the milky texture absorbs quickly without leaving a sticky residue.",
+   "sources": [
+    "https://www.lookfantastic.com/p/16675000/",
+    "https://www.cultbeauty.co.uk/p/anua-rice-70-intensive-moisturising-milk-150ml/16675000/",
+    "https://beyondrx.ca/products/anua-rice-70-intensive-moisturizing-milk-150-ml"
+   ],
+   "note": "Only 'this toner' was wrong; the rest keeps the current wording where it was accurate.",
+   "name": "Anua - Rice 70 Intensive Moisturizing Milk",
+   "current_short": "Enriched with 70% ANUA Rice Water+™ , niacinamide and ceramide, this toner brightens, smoothens and nourishes skin to help you achieve that glass-like glow. The lightweight milky formula absorbs swiftly into skin without leaving any sticky residue.",
+   "current_desc": "Benefits:\nA lightweight moisturizing lotion formulated with Rice Bran Water and Niacinamide to help enhance skin clarity and balance, while brightening dull complexion.\nEnriched with Ceramides and Squalane to swiftly hydrate and nourish skin with abundent moisture, promoting a glowy complexion.\nContain Meadowfoam Seed Oil and Rice Extract to soothe skin and prevent moisture loss.\nA low irritating and quick absorbing texture that instantly hydrates skin upon application.\nSuitable for normal skin.\nMade in Korea\nHow to use:\nAfter toning, apply a moderate amount on skin and gently pat to aid absorption.\nCan be used both AM and PM.\nSize:\n150ml\nAbout brand: Anua\nAnua believes that healthy skin does not depend solely on skin care products but also on having a relaxed mind and regulated lifestyle. The brand focuses on choosing pure, organic ingredients to maximize effectiveness and minimize harmful effects on skin. Its environmentally friendly, sustainable products are 100% made in Korea and designed with simple packaging.",
+   "short_words": 41
+  },
+  {
+   "section": "empty",
+   "url": "https://kbeautybliss.com/product/beauty-works-10-in-one-miracle-heat-protect-spray-250ml/",
+   "replace": "Short description (empty)",
+   "short": "A multi-tasking leave-in spray that protects hair during heat styling and delivers ten benefits in one step. Argan and macadamia oils replenish lost oils, tame frizz, detangle and restore shine, and it can be used on hair extensions before styling to keep them looking their best.",
+   "sources": [
+    "https://www.sephora.co.uk/p/Beauty-Works-10-in-1-Miracle-Spray-250ml",
+    "https://www.ragdalehall.co.uk/shop/shop-beauty-products-ragdale-hall-spa/haircare/beauty-works-10-in1-miracle-spray-250ml/"
+   ],
+   "note": "Beauty Works is a UK brand; the page correctly makes no 'Made in Korea' claim. A '230°C' heat-protection figure appears on one marketplace only and is left out.",
+   "name": "Beauty Works - 10-in-One Miracle Heat Protect Spray 250ml",
+   "current_short": "",
+   "current_desc": "Treat your hair to\nBeauty Works Ten-in-One Miracle Spray\n, a multi-tasking hair treatment that works to nourish, repair and protect your locks during heat styling.\nFortified with argan and macadamia, the innovative formula replenishes lost oils in the hair and helps to eliminate frizz, restore mirror-like shine and prevent split ends.\nEnhancing your hair's natural body, the conditioning 10-in-1 spray will leave your hair repaired, nourished and full of life. Perfect to use on hair extensions before styling to keep them looking their best. - K.N.\n10 Benefits:\nEliminates frizz.\nRestores shine.\nNourishes.\nReplenishes oils.\nProtects from heat.\nDetangles.\nConditions.\nPrevents split ends.\nEnhances natural body.\nRepairs dry, damaged hair.",
+   "short_words": 46
+  },
+  {
+   "section": "empty",
+   "url": "https://kbeautybliss.com/product/beauty-works-xxl-volume-hot-brush/",
+   "replace": "Short description (empty)",
+   "short": "A volumising hot brush with an extra-long 38mm barrel that lifts flat roots and smooths the lengths for a blow-dry finish in a few passes. Adjustable heat from 80°C to 220°C suits all hair types, and ionic technology helps reduce frizz and flyaways.",
+   "sources": [
+    "https://beautyworks.com/blog/introducing-the-xxl-volume-hot-brush",
+    "https://lookfantastic.com/p/beauty-works-xxl-volume-hot-brush/15433415"
+   ],
+   "note": "UK brand; no origin claim on the page, none added. Number of heat settings left out (retailers disagree).",
+   "name": "Beauty Works - XXL Volume Hot Brush",
+   "current_short": "",
+   "current_desc": "Delivering envious visible lift and body, the Beauty Works XXL Volume Hot Brush smooths through the strands to encourage a silky blown-out style.\nEquipped with an extra-long 38mm barrel, intelligent heat technology and flexible bristles, the tool promotes fast, effortless usage with voluminous results. Suitable for all hair types and textures, the hot brush features customisable heat settings from 80˚C-220˚C, alongside ion technology to provide a flyaway-free finish. Use to revive flat roots, curl and wave the lengths or brush through the hair to reveal a high-shine, sleek style in just a few passes.",
+   "short_words": 43
+  },
+  {
+   "section": "empty",
+   "url": "https://kbeautybliss.com/product/dr-reju-all-advanced-pdrn-rejuvenating-cream-20g/",
+   "replace": "Short description (empty)",
+   "short": "A gel cream with 1,200ppm salmon-derived PDRN, collagen, niacinamide and panthenol that hydrates, supports the skin barrier and leaves skin looking firmer and more radiant. The non-sticky texture absorbs quickly, making it a comfortable final step in your evening routine.",
+   "sources": [
+    "https://www.ulta.com/p/advanced-pdrn-rejuvenating-cream-pimprod2059288",
+    "https://www.boozyshop.com/products/advanced-pdrn-rejuvenating-cream",
+    "https://glowtheory.com/products/dr-reju-all-advanced-pdrn-rejuvenating-cream"
+   ],
+   "note": "The Description tab has no 'About brand' section; the shop's existing Dr.Reju-All paragraph (on the PDRN Lip Serum page) could be added if wanted.",
+   "name": "Dr.Reju-All - Advanced PDRN Rejuvenating Cream 20g",
+   "current_short": "",
+   "current_desc": "Benefits\nDr. Reju-All Advanced PDRN Rejuvenating Cream is a premium skincare product featuring 1,200 ppm of Salmon-derived PDRN (DNA fragments) with 99% purity, designed to stimulate deep skin regeneration and revitalize the complexion.\nFormulated with hydrolyzed hyaluronic acid, 2% niacinamide, 1% panthenol (pro-vitamin B5), and a potent 20,000 ppm of low molecular weight (approximately 300 Da) collagen, delivering intense hydration, brightness, and skin barrier reinforcement.\nThe synergy of these active ingredients promotes improved skin tone, enhanced firmness, and a resilient, glowing complexion.\nThe texture is described as a non-sticky gel cream, allowing quick absorption and deep penetration without leaving a greasy residue.\nSuitable for all skin types, including sensitive skin, thanks to its gentle yet potent formula.\nIdeal for nightly use, simply apply an appropriate amount at the end of your skincare routine to allow the creamy formula to work overnight for maximum rejuvenation.\nMade in Korea\nHow To Use\nApply an appropriate amount at the end of your skincare routine.\nSize:\n20g",
+   "short_words": 40
+  },
+  {
+   "section": "empty",
+   "url": "https://kbeautybliss.com/product/la-roche-posay-hyalu-b5-mini-serum/",
+   "replace": "Short description (empty)",
+   "short": "A travel-size hydrating serum with two types of hyaluronic acid, vitamin B5 and madecassoside that helps replump skin and smooth the look of fine lines. The fresh, lightweight texture absorbs easily and is tested on sensitive skin. Apply morning and/or evening before moisturiser.",
+   "sources": [
+    "https://www.healthylife.com.au/products/la-roche-posay-hyalu-b5-hyaluronic-serum-30ml",
+    "https://pharmaforce.fr/produit/hyalu-b5-serum-30ml",
+    "https://dermstore.com/product_Hyalu+B5+Pure+Hyaluronic+Acid+Serum_82497.htm"
+   ],
+   "note": "CORRECTION NEEDED in the Description tab: it says 'Made in Korea'. La Roche-Posay is a French brand and retailer labels read 'Made in France'. See the sentence fix below.",
+   "extra_fix": {
+    "sentence_old": "Made in Korea",
+    "sentence_new": "Made in France"
+   },
+   "name": "La Roche-Posay Hyalu B5 Mini Serum",
+   "current_short": "",
+   "current_desc": "The 1st La Roche-Posay dermatological correction to repair, and immediately replumb and significantly reduce wrinkles. A unique hydrating, re-plumping formula enriched with two pure hyaluronic acids and vitamin B5. Tested on sensitive skin, even after procedures.\nMade in Korea\nHow to use\nApply to the face in the morning and/or evening.\nSize:\n10ml",
+   "short_words": 43
+  },
+  {
+   "section": "empty",
+   "url": "https://kbeautybliss.com/product/medicube-age-r-booster-pro-x2-pink/",
+   "replace": "Short description (empty)",
+   "short": "An at-home skincare device with six modes in one, from Booster X2 for better absorption of your skincare to microcurrent, EMS, sheet-mask and Air Shot pore care. Dual Mode combines two modes at once, and the larger head covers the face and neck more easily.",
+   "sources": [
+    "https://wcosmetics.com.au/products/medicube-age-r-booster-pro-x2",
+    "https://www.boozyshop.com/products/medicube-age-r-booster-pro-x2-pink",
+    "https://saranghae.ch/products/medicube-age-r-booster-pro-x2-white"
+   ],
+   "note": "Absorption figures (1,332%, 9x) are manufacturer claims; kept out of the short description.",
+   "name": "medicube - AGE-R Booster Pro X2 Pink",
+   "current_short": "",
+   "current_desc": "Benefits:\nThis device is designed for various skin needs, delivering efficient and elevated care in a single use.\nWith 6 modes and LED indication, you can create your own routine for a more complete care experience.\nMaximized absorption up to 1,332% for a plump, radiant glow skin.\nComprehensive volume and line improvement for the forehead, frown lines, neck, eye areas, and smile lines.\n1.3x larger head for wider and easier use.\n2X more powerful EMS for precise muscle stimulation.\nCustomizable Dual Care to combine two preferred modes for targeting different skin concerns simultaneously.\nBoosts sheet mask essence absorption by 9 times.\nBattery:\n3.7V / 2,600mAh rechargeable\nThis\nAGE-R Booster Pro X2 Pink\ncomes with:\nAGE-R Booster Pro X2 Pink 1 pc\nEnglish User Manual 1 pc\nUSB Charging Cable 1 pc\nModes Available:\nRed LED: Glow boosting Booster X2 Mode\nGreen LED: MC X2 Mode for plump-looking skin\nOrange LED: Derma Shot X2 Mode for skin definition care\nYellow LED: Dual Mode that uses two modes simultaneously\nPurple LED: A mode designed to be used with a sheet mask to promote absorption\nBlue LED: Pore and exfoliation care Air Shot X2 Mode\nHow to use:\nBefore first-time use, fully charge the device.\nApply a sufficient amount of skincare product to the treatment area.\nPress and hold the power button for 2-3 seconds to turn on the device.\nPress the Mode Button once to select the desired mode. Each press changes the mode, which is shown on the LCD Screen along with a voice guide and the mode-specific LED color on the Central LED Indicator. *Modes change in the following order: Booster X2 Mode - MC X2 Mode - Derma Shot X2 Mode - Dual Mode - Mask Mode - Air Shot X2 Mode.\nAfter selecting the mode, briefly press the Level Button once to adjust the level. Each press increases the level by one, and the changed level is displayed on the LCD Screen each time the level increases.\nFor the first time use, start at level 1 intensity and gradually increase the level after an adjustment period.\nPress and hold the Power Button and the Mode Button together for more than 3 seconds to change the voice guide language. English, Korean, Japanese, and Chinese are available.\nAfter the care, pat the remaining skincare product into the skin for better absorption.\nRemove any residue of skincare products with a clean cloth and store it in a well-ventilated and cool place.*Avoid using the device around the eyes and the Adam’s apple area. *Keep the device away from any magnetic object such as a credit card, TV, or monitor.\n*Do not use if you are a patient with wearable electronic devices, electrical life-support equipment, or mounted electrical medical equipment.\nAbout brand: medicube\nmedicube\noffers solutions for sensitive and acne-prone skin through its different product lines targeting skin concerns like dryness, dullness and pore care. All made in Korea,\nmedicube\n's products ensure effective treatment at every step of your skin care regimen.",
+   "short_words": 45
+  },
+  {
+   "section": "empty",
+   "url": "https://kbeautybliss.com/product/medicube-kojic-acid-turmeric-booster-pro-set/",
+   "replace": "Short description (empty)",
+   "short": "A brightening routine in one set: medicube's AGE-R Booster Pro with the Kojic Acid Turmeric Pad, Niacinamide Serum and Night Wrapping Mask. Kojic acid, turmeric and niacinamide target dullness and uneven-looking tone, while the device helps your serum absorb for a brighter, more even complexion.",
+   "sources": [
+    "https://wcosmetics.com.au/products/medicube-kojic-acid-turmeric-pad-70-pads",
+    "https://olivekollection.com/collections/medicube/products/medicube-kojic-acid-turmeric-niacinamide-serum",
+    "https://www.spacenk.com/au/skincare/toner/toners/kojic-acid-turmeric-pad-UK200066797.html"
+   ],
+   "note": "Could not find this exact bundle sold elsewhere; contents taken from the shop's own Description tab and each item checked separately.",
+   "name": "Medicube - Kojic Acid Turmeric Booster Pro Set",
+   "current_short": "",
+   "current_desc": "Elevate your skincare ritual with this powerhouse collection designed to target stubborn hyperpigmentation, uneven skin tone, and dullness. By combining Medicube’s cutting-edge device technology with the brightening synergy of Kojic Acid, Turmeric, and Niacinamide, this set offers a professional-grade facial experience from the comfort of home.\nMade in Korea\nWhat’s included in the Set?\nMedicube – AGE-R Booster Pro (Yellow Edition)\nExperience spa-like beauty treatments at home with medicube’s AGE-R Booster Pro. It features four easy-to-use modes: Booster mode for delivering skin care deep into skin, MC mode for face-lifting using microcurrents, Derma Shot mode for muscle-relaxing using electromagnetic stimulation (EMS), and Air Shot mode for pore care effects. Each mode is supplemented by customizable sonic vibrations, and different colored LED indicator lights for easy switching between functions. The device can also be connected via Bluetooth to the AGE-R Booster Pro mobile app for remote control and other functions.\nmedicube – Kojic Acid Turmeric Pad\nOne swipe express to glass-skin? Yes please! With kojic acid and turmeric root extract as star ingredients, medicube’s Kojic Acid Turmeric Pad is a whiz at fading dark spots, brightening the complexion and protecting skin from external aggressors. Infused with chemical exfoliants like AHA (glycolic acid) and BHA (salicylic acid), the toner pads make rough skin feel baby-smooth again!\nmedicube – Kojic Acid Turmeric Niacinamide Serum\nYour dark spots don’t stand a chance against medicube’s triple-threat serum that combines kojic acid, turmeric and niacinamide. This do-it-all brightening serum evens skin tone, soothes irritation and refines skin texture for a more radiant complexion. It’s also infused with snowflake-like capsules containing squalane and thioctic acid, boosting absorption and hydrating skin.\nmedicube – Kojic Acid Turmeric Night Wrapping Mask\nRestore skin’s youthful glow overnight with this sleeping mask. It’s packed with kojic acid, turmeric root extract and collagen for brightening and anti-aging benefits. The clinically tested formula is suitable for sensitive skin. Apply a moderate amount on the entire face and allow it to dry completely before going to bed. In the morning, gently peel it off and then rinse off with lukewarm water.\nHow to Use the Set\nPrep: Swipe a Kojic Acid Pad over a clean, dry face to exfoliate and prep the skin.\nTreat: Apply a generous amount of the Kojic Acid Turmeric Niacinamide Serum.\nBoost: Use the Medicube Booster Pro on your preferred setting (Booster Mode is recommended for serum absorption) for 5–10 minutes.\nSeal: Finish by applying the Night Wrapping Mask. Allow it to dry completely before heading to bed, then peel or rinse it off in the morning to reveal a luminous glow.\nAbout brand: medicube\nmedicube offers solutions for sensitive and acne-prone skin through its different product lines targeting skin concerns like dryness, dullness and pore care. All made in Korea, medicube‘s products ensure effective treatment at every step of your skin care regimen.",
+   "short_words": 45
+  },
+  {
+   "section": "empty",
+   "url": "https://kbeautybliss.com/product/medicube-pdrn-lip-sleeping-mask/",
+   "replace": "Short description (empty)",
+   "short": "An overnight lip mask with salmon-derived PDRN, collagen and shea butter that softens, smooths and plumps dry lips. The rich, non-sticky balm forms a moisture-locking layer while you sleep and leaves a subtle candy-like glow. Apply daily and before bed.",
+   "sources": [
+    "https://saranghae.ch/products/medicube-pdrn-lip-sleeping-mask-10g",
+    "https://www.lifepharmacy.com/product/medicube-pdrn-lip-sleeping-mask-10g-0455-0455"
+   ],
+   "note": "",
+   "name": "medicube - PDRN Lip Sleeping Mask",
+   "current_short": "",
+   "current_desc": "Benefits:\nA lip sleeping mask contains PDRN and delivers candy glow and lasting moisture for plump lips.\nSalmon DNA PDRN offers volume care for plump, bouncy lips, Collagen boost firmness for supple lips, and Shea Butter deeply nourishes and hydrates for soft, smooth lips.\nMade in Korea\nHow to use:\nApply a moderate amount daily and overnight.\nSize:\n10g\nAbout brand: medicube\nmedicube offers solutions for sensitive and acne-prone skin through its different product lines targeting skin concerns like dryness, dullness and pore care. All made in Korea, medicube's products ensure effective treatment at every step of your skin care regimen.",
+   "short_words": 40
+  },
+  {
+   "section": "empty",
+   "url": "https://kbeautybliss.com/product/color-bloom-liquid-blush-matte-finish-risky-business/",
+   "replace": "Short description (empty)",
+   "short": "A lightweight gel-cream liquid blush with a soft matte finish and long-wearing, buildable colour. The sponge-tip applicator places highly pigmented colour exactly where you want it; tap and blend for a natural-looking flush. Shade: Risky Business.",
+   "sources": [
+    "https://www.watsons.sa/products/sheglam-color-bloom-liquid-blush-matte-finish",
+    "https://kiwla.com/products/Color-Bloom-Liquid-Blush-Matte-Finish-Risky-Business"
+   ],
+   "note": "SHEGLAM is not a Korean brand: retailer listings give China as place of origin (brand linked to SHEIN). The page makes no origin claim, so nothing to correct; the shop files it under brand 'Color Bloom' (the product line), not SHEGLAM. Shade colour not described: no reliable source.",
+   "name": "She Glam - Color Bloom Liquid Blush Matte Finish - Risky Business",
+   "current_short": "",
+   "current_desc": "Get flushed with our Color Bloom Liquid Blush,featuring nourishing ingredients and a long-wearing,lightweight gel-cream formula that loves your skin. A sponge tip applicator applies highly pigmented,matte color like a dream and leaves your cheeks pretty'n plump!",
+   "short_words": 36
+  },
+  {
+   "section": "empty",
+   "url": "https://kbeautybliss.com/product/vt-hydrop-reedle-shot-100hl-2-step-mask/",
+   "replace": "Short description (empty)",
+   "short": "A two-step mask for deep, non-sticky hydration. Step 1, the Hydrop Reedle Shot 100hL essence, uses micro-sized Cica Reedles to help moisture absorb; Step 2, a close-fitting mask with hyaluronic acid and ectoin, seals it in for a refreshed, dewy finish.",
+   "sources": [
+    "https://www.yesstyle.com/en/vt-hydrop-reedle-shot/info.html/pid.1137928598",
+    "https://songofskin.com/en-qa/products/vt-hydrop-reedle-shot-100hl-2step-hydrogel-mask"
+   ],
+   "note": "Wear time left out: the page says 10–20 minutes, retailers say 20–40. Retailers call Step 2 a hydrogel mask; the shop's Description tab calls it a cellulose fabric mask – worth checking against the box in stock.",
+   "name": "VT - Hydrop Reedle Shot 100hL 2 Step Mask",
+   "current_short": "",
+   "current_desc": "Benefits:\nThis 2-step mask with Hydrop Reedle Shot formula fills the skin with moisture from the inside.\nThe delicate design of the micro-sized Cica Reedle facilitates skin absorption and awakens the skin condition to restore healthy skin.\nStep 1: The Hydrop Reedle Shot 100hL penetrates the 20 layers of the skin, providing refreshing and moist moisture without stickiness.\nStep 2: The watery mask adheres tightly to the skin so that the essence filled in the cellulose fabric can be absorbed thoroughly.\nMade in Korea\nHow to use:\nAfter cleansing, apply an appropriate amount of STEP 1 to your bare face and spread it evenly.\nAfter absorbing the STEP 1 Hydrop Riddle Shot, open the STEP 2 and attach it to your skin.\nAfter 10 to 20 minutes, remove the mask sheet and gently pat any remaining essence on the skin to help absorption.\nSize:\n1.5g + 27g\nAbout brand: VT\nKorean beauty brand VT was originally founded in 2010 by Gonsen Inc. as an oral care brand. Since then, VT has expanded into skin care and makeup products. The brand embraces simplicity while emphasizing natural ingredients, and dermatological research and development.",
+   "short_words": 41
+  }
+ ]
+}
