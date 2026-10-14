@@ -144,7 +144,10 @@ final class HomeConcerns
         'home_cc_bg_dir' => ['type' => 'select', 'label' => 'Gradient direction', 'default' => '115', 'store' => 'setting', 'options' => ['90' => 'Side to side', '115' => 'Diagonal', '180' => 'Top to bottom'], 'help' => ''],
         'home_cc_align' => ['type' => 'select', 'label' => 'Alignment', 'default' => 'left', 'store' => 'setting', 'options' => ['left' => 'Start — heading and chips from the left (design E)', 'center' => 'Centre'], 'help' => 'On /ar “Start” is the right-hand side.'],
         'home_cc_layout_m' => ['type' => 'select', 'label' => 'Chips · phone', 'default' => 'scroll', 'store' => 'setting', 'options' => ['scroll' => 'One row that scrolls sideways', 'wrap' => 'Wrap onto more rows'], 'help' => '900px and narrower. The row snaps chip by chip; the next chip peeking shows there is more.'],
-        'home_cc_layout_d' => ['type' => 'select', 'label' => 'Chips · laptop', 'default' => 'wrap', 'store' => 'setting', 'options' => ['wrap' => 'Wrap onto more rows', 'scroll' => 'One row that scrolls sideways'], 'help' => 'Wrap shows every chip without scrolling, which a mouse cannot easily do.'],
+        // 2.60.509, the owner: "this will be carousel, one row." -- moved default.
+        'home_cc_layout_d' => ['type' => 'select', 'label' => 'Chips · laptop', 'default' => 'scroll', 'store' => 'setting', 'options' => ['scroll' => 'One row, a carousel with arrows', 'wrap' => 'Wrap onto more rows'], 'help' => 'One row scrolls sideways with the arrows below; Wrap shows every chip at once.'],
+        'home_cc_arrows_d' => ['type' => 'bool', 'label' => 'Arrows · laptop', 'default' => true, 'store' => 'setting', 'help' => 'The round previous / next buttons, as on the product carousels. Only when the laptop row is one row.'],
+        'home_cc_arrows_m' => ['type' => 'bool', 'label' => 'Arrows · phone', 'default' => false, 'store' => 'setting', 'help' => 'A phone swipes; arrows are optional. Only when the phone row is one row.'],
         'home_cc_ic_d' => ['type' => 'select', 'label' => 'Icon circle · laptop', 'default' => '60', 'store' => 'setting', 'options' => self::CIRCLE, 'help' => 'The white circle the icon sits in; the chip is this plus 10px tall.'],
         'home_cc_ic_m' => ['type' => 'select', 'label' => 'Icon circle · phone', 'default' => '52', 'store' => 'setting', 'options' => self::CIRCLE, 'help' => ''],
         'home_cc_txt_d' => ['type' => 'select', 'label' => 'Chip text size · laptop', 'default' => '15', 'store' => 'setting', 'options' => self::TEXT, 'help' => ''],
@@ -163,7 +166,7 @@ final class HomeConcerns
     public const TAB = ['Skin concerns', 'Shop by skin concern, directly under Trending: a pill per concern with its icon, each one a link to its collection. The chips, the heading, the background and the sizes — laptop and phone.', [
         'home_cc_eyebrow', 'home_cc_eyebrow_ar', 'home_cc_title', 'home_cc_title_ar', 'home_cc_sub', 'home_cc_sub_ar', 'home_cc_items',
         'home_cc_btn', 'home_cc_btn_ar', 'home_cc_url', 'home_cc_bg', 'home_cc_bg_from', 'home_cc_bg_to', 'home_cc_bg_dir',
-        'home_cc_align', 'home_cc_layout_m', 'home_cc_layout_d', 'home_cc_ic_d', 'home_cc_ic_m', 'home_cc_txt_d', 'home_cc_txt_m',
+        'home_cc_align', 'home_cc_layout_m', 'home_cc_layout_d', 'home_cc_arrows_d', 'home_cc_arrows_m', 'home_cc_ic_d', 'home_cc_ic_m', 'home_cc_txt_d', 'home_cc_txt_m',
         'home_cc_gap_d', 'home_cc_gap_m', 'home_cc_pt_d', 'home_cc_pt_m', 'home_cc_pb_d', 'home_cc_pb_m', 'home_cc_hg_d', 'home_cc_hg_m',
     ]];
 
@@ -372,6 +375,11 @@ final class HomeConcerns
 
         $align = HomeSections::pick($c, 'home_cc_align');
 
+        // The arrows ride resources/js/kbb/ymal.js -- the product carousels' own
+        // module, already on the page -- so this section ships no script.
+        $arrD = HomeSections::pick($c, 'home_cc_layout_d') === 'scroll' && (bool) ($c['home_cc_arrows_d'] ?? true);
+        $arrM = HomeSections::pick($c, 'home_cc_layout_m') === 'scroll' && (bool) ($c['home_cc_arrows_m'] ?? false);
+
         return [
             'classes' => 'hs hs-concerns hs-cc-bg-'.$bg.' hs-cc-'.($align === 'center' ? 'ac' : 'al')
                 .' hs-cc-m-'.HomeSections::pick($c, 'home_cc_layout_m').' hs-cc-d-'.HomeSections::pick($c, 'home_cc_layout_d'),
@@ -384,6 +392,9 @@ final class HomeConcerns
             'place' => 'top',
             'center' => $align === 'center',
             'chips' => $chips,
+            'arrows' => $arrD || $arrM,
+            'arrows_d' => $arrD,
+            'arrows_m' => $arrM,
         ];
     }
 

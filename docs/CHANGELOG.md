@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.509
+**Shop by skin concern is a one-row carousel on a laptop too, with round arrows.** Apply after .508.
+Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "this will be carrouse, one row." | Laptop: the seven chips in one row that slides, with the product carousels' round previous / next arrows (the "previous" one appears once you have moved). Measured at 1280: next scrolls the row 324px to the end and greys out, previous brings it back; same in Arabic, mirrored. Phone: unchanged, one row you swipe. Section height 227px on a laptop (was 309px on two rows), 176px on a phone |
+
+Controls: Appearance → Homepage content → Skin concerns → **Chips · laptop** (One row, a carousel with arrows / Wrap onto more rows), **Arrows · laptop** (on), **Arrows · phone** (off).
+No new script: the arrows use the product carousels' own code, already on the page.
+
+Files: app/Support/HomeConcerns.php, partials/home/hs-concerns.blade.php, kbb.css (+ public/build), migration 2027_11_01_400000.
+
 ## 2.60.508
 **Homepage: "Shop by skin concern" — the concern chips (design E) under Trending K-Beauty This Week, each whole capsule a link to its collection.** Apply after .507.
 Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.

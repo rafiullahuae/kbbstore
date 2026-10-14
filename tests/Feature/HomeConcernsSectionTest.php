@@ -283,3 +283,29 @@ it('ships every icon with its own width and height, and none outside the set', f
     }
     expect(HomeConcerns::svg('<x>'))->toBe(HomeConcerns::svg('pores'));
 });
+
+it('is one row with arrows on a laptop by default, and drops the arrows when the row wraps', function () {
+    // 2.60.509, the owner: "this will be carousel, one row." Before it the
+    // laptop wrapped onto two rows with no arrows. The arrows are the product
+    // carousels' own (data-ymal, driven by ymal.js already on the page).
+    // MUTATION: put home_cc_layout_d's default back to 'wrap' -- the first
+    // half is red.
+    ccCatalogue();
+    ccCat('Pore Care', 'pore-care');
+    ccCat('Oily Skin', 'oily-skin');
+
+    $sec = ccSection(ccHome());
+    expect($sec)->toContain('hs-cc-d-scroll')
+        ->and($sec)->toContain(' data-ymal>')
+        ->and(substr_count($sec, 'data-ymal-prev'))->toBe(1)
+        ->and(substr_count($sec, 'data-ymal-next'))->toBe(1)
+        ->and($sec)->toContain('<ul class="hs-cc-list" data-ymal-track>')
+        // Phone arrows are off by default: the phone swipes.
+        ->and($sec)->toContain('hs-cc-noarr-m');
+
+    ccWrite(['home_cc_layout_d' => 'wrap']);
+    $wrap = ccSection(ccHome());
+    expect($wrap)->toContain('hs-cc-d-wrap')
+        ->and($wrap)->not->toContain('data-ymal')
+        ->and($wrap)->toContain('<ul class="hs-cc-list">');
+});

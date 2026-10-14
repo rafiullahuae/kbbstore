@@ -1440,6 +1440,16 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-we
 .kbb-home .hs-cc-list{list-style:none;margin:0;padding:6px 0 8px;display:flex;flex-wrap:wrap;gap:var(--cc-g,12px)}
 .kbb-home .hs-cc-list>li{display:flex;flex:0 0 auto;min-width:0;max-width:100%}
 .kbb-home .hs-cc-ac .hs-cc-list{justify-content:center}
+/* 2.60.509 -- "this will be carousel, one row": the arrows, the product carousels'
+   look (GridSections' .gs-arr), driven by ymal.js; hidden per device by class. */
+.kbb-home .hs-cc-stage{position:relative}
+.kbb-home .hs-cc-arr{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-2,#EFE3E8);background:#fff;color:#2A2228;box-shadow:0 6px 18px rgba(42,34,40,.14);display:grid;place-items:center;cursor:pointer;padding:0}
+.kbb-home .hs-cc-arr:disabled{opacity:0;pointer-events:none}
+.kbb-home .hs-cc-prev{inset-inline-start:-12px}
+.kbb-home .hs-cc-next{inset-inline-end:-12px}
+.kbb-home .hs-cc-noarr-d .hs-cc-arr{display:none}
+@media (min-width:901px){.kbb-home .hs-cc-stage:not(.hs-cc-noarr-d) .hs-cc-list{scrollbar-width:none}.kbb-home .hs-cc-stage:not(.hs-cc-noarr-d) .hs-cc-list::-webkit-scrollbar{display:none}}
+@media (max-width:900px){.kbb-home .hs-cc-noarr-d .hs-cc-arr{display:grid}.kbb-home .hs-cc-noarr-m .hs-cc-arr{display:none}.kbb-home .hs-cc-arr{width:34px;height:34px}.kbb-home .hs-cc-prev{inset-inline-start:2px}.kbb-home .hs-cc-next{inset-inline-end:2px}}
 .kbb-home .hs-cc-i{--cc-ic:var(--cc-ic-d,60px);display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;max-width:100%;padding-block:5px;padding-inline:5px 18px;border-radius:999px;background:var(--cc-bg,#FCE6EE);color:#3A2E35;text-decoration:none;font-size:var(--cc-ts,15px);font-weight:600;line-height:1.2;-webkit-tap-highlight-color:transparent;transition:transform .3s cubic-bezier(.22,.61,.36,1),box-shadow .3s}
 .kbb-home .hs-cc-ic{position:relative;flex:0 0 var(--cc-ic);width:var(--cc-ic);height:var(--cc-ic);border-radius:50%;background:#fff;color:#B03A62}
 .kbb-home .hs-cc-ic svg{position:absolute;inset-inline-start:19%;top:19%;width:62%;height:62%;overflow:visible}
