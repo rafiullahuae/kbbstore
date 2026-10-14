@@ -121,8 +121,13 @@
       if (rows.length >= V.cap) return;
       rows.push({c: 0, s: [], l: '', la: '', i: 'pores', t: ''});
     } else {
-      box.querySelector('input[type=hidden]').value = '';
-      rows = parse('');
+      /* A reset asks first, in the admin's own box (reset-guard), as every
+         reset-to-default control does. Nothing is saved until Save. */
+      var put = function(){ write(box, parse('')); draw(box); };
+      if (window.kbbConfirm) {
+        window.kbbConfirm('Put the seven concern chips back? Your own chips and labels here will be replaced (nothing is saved until you press Save).').then(function(ok){ if (ok) put(); });
+      } else { put(); }
+      return;
     }
     write(box, rows);
     draw(box);
@@ -148,7 +153,7 @@
       var box = '<div class="kcc"><input type="hidden" ' + attr + ' value="' + esc(v == null ? '' : v) + '">'
         + '<ol class="kcc-list">' + listHTML(rows) + '</ol>'
         + '<div class="kcc-foot"><button type="button" class="kcc-btn" data-kcc-add' + (rows.length >= V.cap ? ' disabled' : '') + '>+ Add a chip</button>'
-        + '<button type="button" class="kcc-btn" data-kcc-reset>Restore the seven concerns</button>'
+        + '<button type="button" class="kcc-btn" data-kcc-reset data-kbb-asks>Restore the seven concerns</button>'
         + '<span class="kcc-note">At most ' + (+V.cap) + '. Each whole chip links to its category.</span></div></div>';
       return box;
     }

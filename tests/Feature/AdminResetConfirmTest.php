@@ -141,7 +141,9 @@ it('routes every reset-to-default control in the admin through the dialog', func
     // Pinned, so a new reset is a decision and not an accident: add it to
     // KNOWN in reset-guard (or mark it data-kbb-asks and call kbbConfirm), then
     // move this number.
-    expect(count($controls))->toBe(54);
+    // ▲ Lane CX: +1, "Restore the seven concerns" in the Skin concerns chip
+    // editor, which asks for itself (data-kbb-asks + window.kbbConfirm).
+    expect(count($controls))->toBe(55);
 });
 
 it('names a control that still exists for every row of the list', function () {
@@ -168,6 +170,7 @@ it('asks once, in the admin box, where a screen asks for itself', function () {
         'partials/marketing-pixels-connect.blade.php' => 'data-kbb-asks data-cc-restore',
         'partials/set-appearance-screen.blade.php' => 'data-kbb-asks data-sap-groupreset',
         'app.blade.php' => 'id="impReset" data-kbb-asks',
+        'partials/concern-chips-editor.blade.php' => 'data-kcc-reset data-kbb-asks',
     ];
 
     $marked = 0;

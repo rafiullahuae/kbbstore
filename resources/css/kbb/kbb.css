@@ -1442,7 +1442,7 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-we
 .kbb-home .hs-cc-ac .hs-cc-list{justify-content:center}
 .kbb-home .hs-cc-i{--cc-ic:var(--cc-ic-d,60px);display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;max-width:100%;padding-block:5px;padding-inline:5px 18px;border-radius:999px;background:var(--cc-bg,#FCE6EE);color:#3A2E35;text-decoration:none;font-size:var(--cc-ts,15px);font-weight:600;line-height:1.2;-webkit-tap-highlight-color:transparent;transition:transform .3s cubic-bezier(.22,.61,.36,1),box-shadow .3s}
 .kbb-home .hs-cc-ic{position:relative;flex:0 0 var(--cc-ic);width:var(--cc-ic);height:var(--cc-ic);border-radius:50%;background:#fff;color:#B03A62}
-.kbb-home .hs-cc-ic svg{position:absolute;left:19%;top:19%;width:62%;height:62%;overflow:visible}
+.kbb-home .hs-cc-ic svg{position:absolute;inset-inline-start:19%;top:19%;width:62%;height:62%;overflow:visible}
 .kbb-home .hs-cc-ic .hs-cc-a{fill:var(--cc-acc,#F2AFC5);stroke:none}
 .kbb-home .hs-cc-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .kbb-home .hs-cc-i:focus-visible{outline:2px solid #C6395F;outline-offset:3px}

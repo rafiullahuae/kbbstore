@@ -308,6 +308,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // and checkout-page each gain a last tab, layout13, and the cart's
     // co_label value is now "Secure checkout" -- the migration writes it, as
     // he asked, and keeps his old value for the one-click "put back".
+    // ▲ Lane CX (14 October), the owner's request, spliced in, not
+    // regenerated: Section dividers' section list gains `concerns` ("Skin
+    // concerns") after Trending, from HomepageSections::REGISTRY -- the Shop
+    // by skin concern chips he asked for under Trending. Four lines.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
