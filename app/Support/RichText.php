@@ -421,6 +421,149 @@ final class RichText
      * removes nodes or trims characters out of a text node -- it cannot add
      * anything, so the result is as safe to print as what came in.
      */
+    /**
+     * The "How to use" section of a description, lifted out for its own tab.
+     *                                                                (2.60.508)
+     *
+     * The owner: "We have this 'How to use?' section in our every product long
+     * description. We need to move that section to a specific tab ... and shift
+     * the content there." Done at render time, like every other step here: the
+     * stored description is not touched, so nothing is lost and switching it
+     * off puts every page back.
+     *
+     * The heading is a block whose whole text is "How to use", "How to use:",
+     * "How to use?" or "How to Use" (any case) -- a <p>, <div>, heading or a bare
+     * <b>/<strong> line. Its section is everything after it, at the same level,
+     * up to the next heading-like line ("Size:", "About brand: ...", any short
+     * bold line ending in ":") or the end. A heading with the steps on the same
+     * line ("<b>How to use:</b> Apply evenly.") keeps that text.
+     *
+     * Returns [description without the section, the section's body]; the body
+     * is '' (and the description comes back byte for byte) when there is no such
+     * heading. Input is already-clean HTML; this only moves nodes.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function splitHowToUse(string $html): array
+    {
+        if (! preg_match('/how\s*to\s*use/i', $html)) {
+            return [$html, ''];
+        }
+
+        $document = new DOMDocument('1.0', 'UTF-8');
+        $previous = libxml_use_internal_errors(true);
+        $document->loadHTML('<?xml encoding="UTF-8"><div id="kbb-richtext-root">' . $html . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $root = $document->getElementById('kbb-richtext-root');
+
+        if (! $root instanceof DOMElement) {
+            return [$html, ''];
+        }
+
+        $isHeading = static function (\DOMNode $n): bool {
+            if (! $n instanceof DOMElement) {
+                return false;
+            }
+            $text = trim(preg_replace('/' . self::BLANK . '+/u', ' ', (string) $n->textContent));
+
+            return (bool) preg_match('/^how\s*to\s*use\s*[:?]*\s*:?$/i', $text);
+        };
+
+        // The heading node: the first element whose own text is exactly the heading.
+        $heading = null;
+        $xpath = new \DOMXPath($document);
+
+        foreach ($xpath->query('.//*', $root) as $el) {
+            if ($isHeading($el)) {
+                $heading = $el;
+                break;
+            }
+        }
+
+        if ($heading === null) {
+            return [$html, ''];
+        }
+
+        $nextIsHeading = static function (\DOMNode $n): bool {
+            if (! $n instanceof DOMElement) {
+                return false;
+            }
+            $text = trim(preg_replace('/' . self::BLANK . '+/u', ' ', (string) $n->textContent));
+            if ($text === '' || mb_strlen($text) > 60) {
+                return false;
+            }
+            if (preg_match('/^(size|about\s*brand|ingredients?|key\s*ingredients|caution|warning|precautions?|benefits?|key\s*benefits|who\s*is\s*(it|this)\s*for|made\s*in|volume|net\s*(wt|weight|vol))\b/i', $text)) {
+                return true;
+            }
+            $bold = $n->getElementsByTagName('b')->length + $n->getElementsByTagName('strong')->length > 0
+                || in_array(strtolower($n->nodeName), ['b', 'strong', 'h2', 'h3', 'h4', 'h5', 'h6'], true);
+
+            return $bold && str_ends_with($text, ':');
+        };
+
+        $body = '';
+        $node = $heading;
+
+        // Climb while the heading is the only content of its parent (e.g. <p><b>How to use</b></p>).
+        while ($node->parentNode instanceof DOMElement && $node->parentNode !== $root
+            && trim((string) $node->parentNode->textContent) === trim((string) $node->textContent)) {
+            $node = $node->parentNode;
+        }
+
+        // "<p><b>How to use:</b> Apply evenly.</p>": the rest of that line is the first of the steps.
+        if (in_array(strtolower($node->nodeName), ['b', 'strong', 'span', 'em', 'u'], true)
+            && $node->parentNode instanceof DOMElement && $node->parentNode !== $root
+            && in_array(strtolower($node->parentNode->nodeName), ['p', 'div', 'li'], true)) {
+            $rest = '';
+            for ($s = $node->nextSibling; $s !== null; $s = $s->nextSibling) {
+                $rest .= $document->saveHTML($s);
+            }
+            $rest = trim((string) preg_replace('/^(\s|&nbsp;|<br\s*\/?>)*[:\-–]?\s*/u', '', $rest));
+            if (trim(strip_tags($rest)) !== '') {
+                $body .= '<p>' . $rest . '</p>';
+            }
+            $node = $node->parentNode;
+        }
+
+        $remove = [$node];
+
+        for ($s = $node->nextSibling; $s !== null; $s = $s->nextSibling) {
+            if ($nextIsHeading($s)) {
+                break;
+            }
+            $body .= $document->saveHTML($s);
+            $remove[] = $s;
+        }
+
+        $parent = $node->parentNode;
+
+        foreach ($remove as $r) {
+            $r->parentNode?->removeChild($r);
+        }
+
+        // A wrapper the section leaves empty (the old site's <section>) goes with it.
+        while ($parent instanceof DOMElement && $parent !== $root && self::isBlankElement($parent)) {
+            $up = $parent->parentNode;
+            $up?->removeChild($parent);
+            $parent = $up;
+        }
+
+        $out = '';
+        foreach (iterator_to_array($root->childNodes) as $child) {
+            $out .= $document->saveHTML($child);
+        }
+
+        $body = self::trimBlankEdges(trim($body));
+
+        if (trim(strip_tags($body)) === '') {
+            return [$html, ''];
+        }
+
+        return [self::trimBlankEdges(trim($out)), $body];
+    }
+
     public static function trimBlankEdges(string $html): string
     {
         return self::trimBlank($html, true);
