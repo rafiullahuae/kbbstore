@@ -300,7 +300,9 @@ it('puts every page back exactly as it was under "Normal page banner", byte for 
         $out = [];
         foreach ($paths as $path) {
             test()->flushSession();
-            $out[$path] = EnglishRenderWalk::mask(pbhHtml($path));
+            // 2.60.504 (later) draws the phone menu's account rows as the small
+            // box the owner picked (MobileMenuAccountBoxTest pins it): set aside.
+            $out[$path] = (string) preg_replace('#\\s*(<div class="mm-grp">Account</div>.*?Wishlist</a>|<div class="mm-acs">.*?</div>|<fieldset class="mm-acx">.*?</fieldset>)\\s*(?=<p class="mm-empty")#s', '', EnglishRenderWalk::mask(pbhHtml($path)), 1);
         }
 
         return $out;

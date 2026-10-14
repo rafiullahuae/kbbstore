@@ -3366,6 +3366,18 @@
         "options": null
       },
       {
+        "key": "account_style",
+        "type": "select",
+        "label": "Account box",
+        "help": "Small box: a slim strip for visitors, two lines of small links when signed in. List: the old full rows.",
+        "default": "box",
+        "value": "box",
+        "options": {
+          "box": "Small box",
+          "list": "List rows (as before)"
+        }
+      },
+      {
         "key": "menu_style",
         "type": "select",
         "label": "Menu style",
@@ -3771,7 +3783,8 @@
           "show_support",
           "support_text",
           "show_account",
-          "account_label"
+          "account_label",
+          "account_style"
         ]
       },
       {

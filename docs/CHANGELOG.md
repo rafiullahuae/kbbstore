@@ -3,6 +3,23 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.508
+**Homepage: "Shop by skin concern" — the concern chips (design E) under Trending K-Beauty This Week, each whole capsule a link to its collection.** Apply after .507.
+Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "E · Concern chips is fine. make the section, and give full control on backend in homepage sections page, under Trending K-Beauty This Week section, with beautiful light background. also link the collections pages to whole each capsule" | The seven concerns as chips — your duotone icon on a pastel circle and the name — on a soft cream-to-blush background, directly under Trending. The whole capsule is the link: Pore Care, Pigmentation & Dark Spots, Acne & Blemish Care, Anti-Aging, Hydration & Glow, Redness & Sensitive Skin, Oily Skin, each to its /collections/ page. Laptop: two rows; phone: one row you swipe. Measured: section 309px tall at 1280 and 176px at 390, chips 70px / 62px, every chip answers a tap first time, nothing wider than the screen, Arabic mirrored |
+
+Controls — **Appearance → Homepage content → Skin concerns** (also in **All sections**, right under Trending, with the Laptop / Phone switches):
+heading, line under it, small line above it, optional button — each with Arabic; **Concern chips, in order**: add, remove, reorder (up to 12), each chip's collection, label, Arabic label, icon and colour, and "restore the seven"; background (gradient / solid / none), its two colours and direction; alignment; phone layout (swipe row / wrap) and laptop layout; circle size, text size, gap and spacing per device.
+
+Cost: the homepage's warm page still 1 query; a cold build one more (all chips' collections in one query, inside the homepage cache). +5 KB HTML, +0.6 KB gzipped CSS, no new script, no new request, CLS 0. A collection that does not exist is not drawn.
+
+Also: four checks that compare pages before/after now know the phone menu's small account box from .504 (no shop change).
+
+Files: app/Support/HomeConcerns.php (new), HomeSections, HomepageSections, HomepageHub, HomepageLayouts, SectionType, HomepageApiController, store/home.blade.php, partials/home/hs-concerns.blade.php (new), admin homepage screens + concern-chips-editor (new), kbb.css (+ public/build), migration 2027_11_01_300000.
+
 ## 2.60.507
 **Product descriptions: the giant gaps and the squeezed ones fixed on every product, to your standard.** Apply after .506 (or after .505 — it does not depend on .506).
 Runs its migration (clears caches). Then Cloudways → Application Settings → Varnish → Purge.

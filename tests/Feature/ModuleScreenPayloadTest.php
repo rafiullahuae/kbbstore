@@ -312,6 +312,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // regenerated: Section dividers' section list gains `concerns` ("Skin
     // concerns") after Trending, from HomepageSections::REGISTRY -- the Shop
     // by skin concern chips he asked for under Trending. Four lines.
+    // ▲ 2.60.504 (14 October), the owner's pick, spliced in, not regenerated:
+    // mobile-menu gains `account_style` ("Account box", Small box / List rows,
+    // default box) after account_label, and the "Foot of the sheet" group
+    // lists it. 14 lines in, 1 changed (the group's last comma).
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();

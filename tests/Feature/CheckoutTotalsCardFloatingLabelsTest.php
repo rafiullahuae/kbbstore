@@ -439,6 +439,12 @@ it('renders the checkout byte for byte as before this lane with both switches of
         // Set back on the after side.
         $after = (string) preg_replace('#<a class="kc-th" href="[^"]*" style="([^"]*)" aria-label="[^"]*">(.*?)</a>#s', '<div class="kc-th" style="$1">$2</div>', $after);
         $after = (string) preg_replace('#<div class="kc-nm"><a href="[^"]*">(.*?)</a></div>#', '<div class="kc-nm">$1</div>', $after);
+        // 2.60.504 (later) draws the phone menu's account rows as the small box
+        // the owner picked (MobileMenuAccountBoxTest pins it). Set aside on
+        // both sides: the rows before, the box after.
+        $kbbAcct = '#\\s*(<div class="mm-grp">Account</div>.*?Wishlist</a>|<div class="mm-acs">.*?</div>|<fieldset class="mm-acx">.*?</fieldset>)\\s*(?=<p class="mm-empty")#s';
+        $before = (string) preg_replace($kbbAcct, '', $before, 1);
+        $after = (string) preg_replace($kbbAcct, '', $after, 1);
         $overlay = '#<!--kbb-placing-->.*?<!--/kbb-placing-->#s';
         $before = (string) preg_replace($overlay, '', $before, 1);
         $after = (string) preg_replace($overlay, '', $after, 1);
