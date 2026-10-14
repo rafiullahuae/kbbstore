@@ -157,6 +157,20 @@ class CategoriesApiController extends Controller
         }
 
         /*
+         * 2.60.501: each category's own starting order, for its Edit dialog.
+         * One query for the few categories that have one, and only once the
+         * column exists -- the rest are NULL, the shop default.
+         */
+        if (\App\Support\CategoryOrder::columnReady()) {
+            $orders = Category::query()->whereNotNull(\App\Support\CategoryOrder::COLUMN)
+                ->pluck(\App\Support\CategoryOrder::COLUMN, 'id');
+
+            foreach ($categories as $c) {
+                $c->setAttribute(\App\Support\CategoryOrder::COLUMN, $orders[$c->id] ?? null);
+            }
+        }
+
+        /*
          * Lane SC: how many products each category's PAGE lists -- with its
          * sub-categories' when it includes them, each product once. Beside
          * `products_count` (filed directly here), which stays what it was
@@ -780,6 +794,8 @@ class CategoriesApiController extends Controller
              * leave the choice alone.
              */
             SoldOut::COLUMN => ['sometimes', 'nullable', 'string', Rule::in(SoldOut::MODES)],
+            // 2.60.501: the category's own starting order ('' = shop default).
+            \App\Support\CategoryOrder::COLUMN => ['sometimes', 'nullable', 'string', Rule::in(\App\Support\CategoryOrder::MODES)],
             /*
              * Lane SC: "Sub-category products" -- '' is "Use the shop
              * setting" and stores NULL; anything else must be one of the
@@ -832,6 +848,14 @@ class CategoriesApiController extends Controller
             // already refused a layout that would have been lost.
             if (\App\Support\BrandPanel::columnReady('categories')) {
                 $data['header_layout'] = $layout;
+            }
+        }
+
+        if (array_key_exists(\App\Support\CategoryOrder::COLUMN, $data)) {
+            if (\App\Support\CategoryOrder::columnReady()) {
+                $data[\App\Support\CategoryOrder::COLUMN] = \App\Support\CategoryOrder::clean($data[\App\Support\CategoryOrder::COLUMN]);
+            } else {
+                unset($data[\App\Support\CategoryOrder::COLUMN]);
             }
         }
 

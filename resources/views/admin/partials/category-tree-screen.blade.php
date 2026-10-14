@@ -1429,6 +1429,15 @@ a.ct-btn{display:inline-flex;align-items:center;text-decoration:none}
         + '<span><b>Ask Google not to list this category page</b>'
         + '<span class="ct-note" style="display:block;margin-top:3px;font-weight:400">Removes the archive from search results AND from the sitemap. '
         + 'The products stay listed \u2014 this hides the category page only.</span></span></label></div>'
+      /* 2.60.501 — the order this category's page opens on. '' is the shop
+         default (your Reorder, then featured); "date" is newest first. A
+         shopper's own Sort by still wins. */
+      + '<div class="ct-fld"><label for="ct-order">Product order</label>'
+        + '<select id="ct-order">'
+          + '<option value=""' + (cat.default_sort === 'date' ? '' : ' selected') + '>Your order (Catalog \u2192 Reorder), as now</option>'
+          + '<option value="date"' + (cat.default_sort === 'date' ? ' selected' : '') + '>Newest first</option>'
+        + '</select>'
+        + '<p class="ct-note">How this category\u2019s page opens. Newest first puts the latest added products at the top, as for New Arrivals. Shoppers can still pick another order in Sort by.</p></div>'
       /* LANE SX — "Sold-out products" for this category's own page. '' is
          "Use the shop default" (Appearance → Site layout → Product grid). */
       + '<div class="ct-fld"><label for="ct-soldout">Sold-out products</label>'
@@ -1533,6 +1542,7 @@ a.ct-btn{display:inline-flex;align-items:center;text-decoration:none}
         image: val('ct-image'),
         position: parseInt(val('ct-pos'), 10) || 0,
         sold_out_mode: val('ct-soldout'),
+        default_sort: val('ct-order'),
         sub_products: val('ct-subprod'),
         /* Every box on every save, including an unchecked checkbox as an
            explicit false. The server treats a key it RECEIVES as authoritative

@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.501
+**New Arrivals opens with the newest products first. Every other category keeps the order you set by hand.** Apply after .500.
+Runs its migration (adds one column and sets New Arrivals; clears caches). Then Cloudways → Application Settings → Varnish → Purge.
+
+| Your request | Now |
+|---|---|
+| "in this category i need to view the new added products first" / "keep the new added by default, only for this category ... don't touch the existing sorting" | /collections/new-arrivals/ opens newest first and its Sort by reads "Newest"; a shopper can still pick another order. Only New Arrivals is changed: no other category is written, and no saved order is touched — your Reorder positions stay exactly as they are (New Arrivals' own hand-made order is kept too, and comes back if you switch it to "Your order") |
+| "you can give options on backend" | Catalog → Categories → Edit (any category) → **Product order**: "Your order (Catalog → Reorder), as now" or "Newest first" |
+
+Measured on the preview shop: New Arrivals lists six products newest to oldest; Cleansers still opens on Featured, its own order.
+
+Files: app/Support/CategoryOrder.php (new), app/Support/Facets.php, app/Http/Controllers/Store/ShopController.php, app/Http/Controllers/Admin/CategoriesApiController.php, resources/views/admin/partials/category-tree-screen.blade.php, public/build (the admin console's bundled scripts), migration 2027_10_31_600000.
+
 ## 2.60.500
 **Admin: a Visit button on every category and brand, opening its page on the shop; brands listed at their real address.** Apply after .499.
 Runs its migration (clears caches).

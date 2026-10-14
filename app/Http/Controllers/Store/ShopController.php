@@ -124,7 +124,10 @@ class ShopController extends Controller
         $unsearched = $search !== '' ? clone $query : null;
 
         $this->applyFacets($query, $active, $search);
-        $this->applySort($query, Facets::sort(), $category !== null);
+        // A category may open newest first (Catalog -> Categories -> Edit ->
+        // Product order; 2.60.501). Read off the row already held: no query.
+        $sortDefault = \App\Support\CategoryOrder::defaultFor($category);
+        $this->applySort($query, Facets::sort($sortDefault), $category !== null);
 
         // Sold-out products as usual, last, or not at all (Lane SX): the
         // category's own choice, else the shop's -- /shop/ and search follow
@@ -150,7 +153,7 @@ class ShopController extends Controller
             && ($fixed = \App\Support\SearchSpelling::correct($search)) !== null) {
             $retry = clone $unsearched;
             $this->applyFacets($retry, $active, $fixed);
-            $this->applySort($retry, Facets::sort(), $category !== null);
+            $this->applySort($retry, Facets::sort($sortDefault), $category !== null);
             \App\Support\SoldOut::apply($retry, \App\Support\SoldOut::for($category));
             $found = (clone $retry)->count();
 
@@ -445,7 +448,7 @@ class ShopController extends Controller
             'lastPage' => $lastPage,
             'cols' => Facets::columns(),
             'sorts' => Facets::sortLabels(),
-            'curorder' => Facets::sort(),
+            'curorder' => Facets::sort($sortDefault),
             'buckets' => Facets::buckets(),
             'title' => $title,
             'seoCtx' => array_filter([

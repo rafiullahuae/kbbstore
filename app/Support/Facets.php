@@ -197,12 +197,15 @@ final class Facets
         return in_array($value, (array) (self::active()[$key] ?? []), true);
     }
 
-    public static function sort(): string
+    public static function sort(string $fallback = 'featured'): string
     {
-        $v = (string) Request::query('orderby', 'featured');
+        // $fallback: the order the page opens on when the shopper has not
+        // picked one -- a category's own (App\Support\CategoryOrder, 2.60.501).
+        $fallback = array_key_exists($fallback, self::SORTS) ? $fallback : 'featured';
+        $v = (string) Request::query('orderby', $fallback);
         $v = self::SORT_ALIASES[$v] ?? $v;
 
-        return array_key_exists($v, self::SORTS) ? $v : 'featured';
+        return array_key_exists($v, self::SORTS) ? $v : $fallback;
     }
 
     /**
