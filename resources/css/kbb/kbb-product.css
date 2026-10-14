@@ -1498,10 +1498,26 @@ html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
    -> Layout -> Type · Sections & tabs -> Detail tab empty line). A description with
    no empty line keeps exactly the spacing it had. Without :has() (older browsers)
    the paragraphs keep their .75em and the empty line is 18px. */
-.details .dcontent p.kbb-bl{margin-block:0;height:var(--pl-body-blank,18px)}
-.details .dcontent:has(> p.kbb-bl) > :is(p,ul,ol){margin-block-end:0}
-.details .dcontent:has(> p.kbb-bl) > :is(ul,ol){margin-block-start:0}
-.details .dcontent:has(> p.kbb-bl) > :is(ul,ol) > li:last-child{margin-bottom:0}
+.details .dcontent .kbb-bl{display:block;margin-block:0;padding:0;height:var(--pl-body-blank,18px)}
+.details .dcontent:has(.kbb-bl) :is(p,ul,ol){margin-block-end:0}
+.details .dcontent:has(.kbb-bl) :is(ul,ol){margin-block-start:0}
+.details .dcontent:has(.kbb-bl) :is(ul,ol) > li:last-child{margin-bottom:0}
+/* 2.60.507 -- "fix as per our standard" after the spacing check of every product
+   (docs/description-spacing: 189 with giant gaps, 14 jammed, 551 fine).
+   - Several empty lines in a row are ONE 18px gap, not 18px each.
+   - The old site's copy wraps itself in <section>, and the shop's own
+     `section{padding:52px 0}` (kbb.css) is for page bands: inside a
+     description it drew 52-218px of nothing (175 products).
+   - A bold heading alone on its line ("How to use", "About brand: ...") that
+     followed bare text sat 0px under it while the page's other sections were
+     .75em apart (7 products). A top margin equal to the paragraph gap: next to
+     a paragraph or list it collapses into the margin already there, so the
+     551 fine pages do not move. Not in a description written with empty lines,
+     where the gap is the empty line's. */
+.details .dcontent .kbb-bl + .kbb-bl{height:0}
+.details .dcontent section{padding:0;margin:0}
+.details .dcontent:not(:has(.kbb-bl)) :is(p,div):not(:first-child):has(> :is(strong,b):only-child){margin-block-start:.75em}
+.details .dcontent:not(:has(.kbb-bl)) > :is(strong,b):not(:first-child):has(+ :is(ul,ol)){display:block;margin-block-start:.75em}
 .pdp .bb-desc :is(p,div,ul,ol){margin-block-end:.6em}
 .pdp .bb-desc :is(ul,ol){margin-inline-start:18px}
 .pdp .bb-desc > :last-child{margin-block-end:0}

@@ -565,11 +565,11 @@ final class RichText
      */
     public static function markBlankLines(string $html): string
     {
-        if (stripos($html, '<p') === false) {
+        if (! preg_match('#<(p|div|ul|ol)\\b#i', $html)) {
             return $html;
         }
 
-        return (string) preg_replace_callback('#<p\b[^>]*>(.*?)</p>#is', static function (array $m): string {
+        $html = (string) preg_replace_callback('#<p\b[^>]*>(.*?)</p>#is', static function (array $m): string {
             foreach (self::VISIBLE_EMPTY as $tag) {
                 if (stripos($m[1], '<' . $tag) !== false) {
                     return $m[0];
@@ -579,6 +579,52 @@ final class RichText
             $text = html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
             return preg_replace('/' . self::BLANK . '+/u', '', $text) === '' ? '<p class="kbb-bl"></p>' : $m[0];
+        }, $html);
+
+        /*
+         * 2.60.507 (the owner: "fix as per our standard"). Two more shapes the
+         * spacing check measured on the live shop (docs/description-spacing):
+         *
+         *  - A blank line saved as `<div><br></div>` (what most editors write
+         *    for Enter on an empty line, and what the old site's copy carries
+         *    inside its <section> wrappers) is the same blank line as
+         *    `<p><br></p>` and is marked the same way. Only the INNERMOST div
+         *    (no <div> inside it), and only one holding a <br> or a non-breaking
+         *    space: a truly empty `<div></div>` draws nothing today and is left
+         *    as it is rather than turned into 18px.
+         *  - A list with nothing in it (`<ul></ul>`, `<ul><li></li></ul>`) drew a
+         *    35px band of nothing; it is taken out.
+         */
+        $html = (string) preg_replace_callback('#<div\b[^>]*>((?:(?!<div\b|</div>).)*)</div>#is', static function (array $m): string {
+            if (! preg_match('#<br\b|&nbsp;|&\#160;|\x{00A0}#iu', $m[1])) {
+                return $m[0];
+            }
+
+            foreach (self::VISIBLE_EMPTY as $tag) {
+                if (stripos($m[1], '<' . $tag) !== false) {
+                    return $m[0];
+                }
+            }
+
+            $text = html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+            return preg_replace('/' . self::BLANK . '+/u', '', $text) === '' ? '<div class="kbb-bl"></div>' : $m[0];
+        }, $html);
+
+        return (string) preg_replace_callback('#<(ul|ol)\b[^>]*>(.*?)</\1>#is', static function (array $m): string {
+            if (preg_match('#<(ul|ol)\b#i', $m[2])) {
+                return $m[0];
+            }
+
+            foreach (self::VISIBLE_EMPTY as $tag) {
+                if (stripos($m[2], '<' . $tag) !== false) {
+                    return $m[0];
+                }
+            }
+
+            $text = html_entity_decode(strip_tags($m[2]), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+            return preg_replace('/' . self::BLANK . '+/u', '', $text) === '' ? '' : $m[0];
         }, $html);
     }
 

@@ -800,7 +800,11 @@ class ProductController extends Controller
             // 2.60.364: a picture that cannot be shown (its file never
             // copied across) goes first, with the paragraph it leaves empty --
             // it held the space above "Benefits:" with the slider at 0px.
-            $trimmed = \App\Support\RichText::trimLeadingBlank(\App\Support\RichText::dropMissingPictures($tab['body']));
+            // 2.60.507: the trailing edge too. A blank line after the last word
+            // drew space under the copy, and -- as the only blank line in the
+            // body -- switched on the close-up layout below and jammed every
+            // section together (Anua Niacinamide TXA pad, 14 October).
+            $trimmed = \App\Support\RichText::trimBlankEdges(\App\Support\RichText::dropMissingPictures($tab['body']));
 
             // 2.60.503: a blank line typed between paragraphs is one line tall,
             // not a line plus two paragraph margins (RichText::markBlankLines()).
