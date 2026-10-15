@@ -232,10 +232,16 @@ final class CheckoutEmailCapture
         }
     }
 
-    /** The columns exist (a package's files land seconds before its migration runs). */
+    /**
+     * The columns exist (a package's files land seconds before its migration
+     * runs). Read from the flag the migration writes once its columns are in,
+     * through the settings map the request already holds: zero queries. It
+     * used to ask Schema::hasColumn twice per request, which cost the admin
+     * customer page two queries over its budget (AdminCustomersTest).
+     */
     public static function ready(): bool
     {
-        return self::$ready ??= Schema::hasColumn('carts', 'ct_email_customer_id') && Schema::hasColumn('customers', 'origin');
+        return self::$ready ??= (string) app(\App\Services\SettingsService::class)->get('checkout_email_capture_schema', '') === '1';
     }
 
     /** For the tests, which migrate between cases. */

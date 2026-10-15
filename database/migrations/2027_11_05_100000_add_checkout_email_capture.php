@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /*
@@ -53,6 +54,16 @@ return new class extends Migration
             Schema::table('customers', function (Blueprint $t) {
                 $t->string('origin', 20)->nullable();
             });
+        }
+
+        // The columns are there: say so ONCE, in a setting, so the code asks
+        // the settings map it already holds instead of the schema on every
+        // request (two Schema::hasColumn calls cost the customer page two
+        // queries -- AdminCustomersTest's budget of 8 caught it). Literal key.
+        if (Schema::hasTable('settings')
+            && Schema::hasColumn('carts', 'ct_email_customer_id') && Schema::hasColumn('customers', 'origin')) {
+            DB::table('settings')->updateOrInsert(['key' => 'checkout_email_capture_schema'], ['value' => '1', 'autoload' => true]);
+            \Illuminate\Support\Facades\Cache::forget('kbb.settings');
         }
     }
 
