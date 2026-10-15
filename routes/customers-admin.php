@@ -106,3 +106,36 @@ Route::get('/customers/{id}', [CustomersApiController::class, 'show'])->whereNum
 Route::post('/customers/{id}/note', [CustomersApiController::class, 'saveNote'])->whereNumber('id');
 Route::post('/customers/{id}/restore', [CustomersApiController::class, 'restore'])->whereNumber('id');
 Route::delete('/customers/{id}', [CustomersApiController::class, 'destroy'])->whereNumber('id');
+
+/*
+|------------------------------------------------------------------------------
+| Edit email / phone, and re-send a confirmation (Lane CE)
+|------------------------------------------------------------------------------
+|
+| Store -> Customers -> (a customer) -> Edit email / phone, and the order
+| screen's Customer -> "Edit email / phone". Added to THIS file, as Lane PQ's
+| invites were, so it inherits the mount inside the admin-api group (auth:admin,
+| NoStoreAdminApi, the web group's CSRF) and routes/web.php does not change:
+| these rewrite a customer's sign-in address and send mail.
+|
+|     GET  /admin-api/customers/{id}/contact              the dialog's data
+|     POST /admin-api/customers/{id}/contact              save the correction
+|     POST /admin-api/customers/{id}/resend-confirmation  re-send one receipt
+|
+| All three are `customers.edit` in AdminCapabilities::RULES (owner, manager).
+|
+| EACH WRITE HAS ITS OWN NAMED LIMITER. An unnamed `throttle:N,1` shares one
+| counter with every other unnamed throttle on the same signature, so a busy
+| screen elsewhere would eat this one's allowance (routes/checkout-line.php,
+| 'checkout-coupon', is where that was paid for). The resend is the tighter of
+| the two: it sends mail to a customer.
+|
+*/
+Route::get('/customers/{id}/contact', [\App\Http\Controllers\Admin\CustomerContactController::class, 'show'])
+    ->whereNumber('id');
+Route::post('/customers/{id}/contact', [\App\Http\Controllers\Admin\CustomerContactController::class, 'update'])
+    ->whereNumber('id')
+    ->middleware('throttle:30,1,customer-contact');
+Route::post('/customers/{id}/resend-confirmation', [\App\Http\Controllers\Admin\CustomerContactController::class, 'resend'])
+    ->whereNumber('id')
+    ->middleware('throttle:6,1,customer-resend');

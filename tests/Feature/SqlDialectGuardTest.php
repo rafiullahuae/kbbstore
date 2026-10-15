@@ -907,6 +907,9 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          */
         'admin-api/orders/{id}/void' => '/admin-api/orders/' . $order->id . '/void',
         'admin-api/customers/{id}' => '/admin-api/customers/' . $customer->id,
+        // Edit email / phone (Lane CE): LOWER(email) and an OR across
+        // customer_id / NULL customer_id on orders, plus its own audit table.
+        'admin-api/customers/{id}/contact' => '/admin-api/customers/' . $customer->id . '/contact',
         // Send account invite (Lane PQ): progress, a GROUP BY status and a
         // LEFT JOIN onto customers for the failure reasons.
         'admin-api/customers/invites/runs/{run}' => '/admin-api/customers/invites/runs/' . $inviteRun,
