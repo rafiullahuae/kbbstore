@@ -1,0 +1,118 @@
+<title>Coupon Line Designs</title>
+<style>
+:root{--bg:#f6f1f3;--card:#fff;--ink:#2A2228;--mut:#756C74;--line:rgba(42,34,40,.1);--pink:#C13E63;--pink-d:#A82F53;--soft:#FFF0F4;--mint:#E9F6EE;--mint-ink:#1A7F45;--page:#FFF9FA}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1719}}
+:root[data-theme="dark"]{--bg:#1b1719}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font:15px/1.5 Outfit,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);padding:16px}
+[lang=ar] body,body.ar{font-family:Cairo,Outfit,system-ui,sans-serif}
+.top{max-width:1100px;margin:0 auto 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.top h1{font-size:20px;margin:0;color:var(--ink)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .top h1,:root:not([data-theme="light"]) .opt>h2,:root:not([data-theme="light"]) .opt>p{color:#f3eef1}}
+.seg{display:flex;gap:6px}.seg button{font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}.seg button.on{background:var(--pink);border-color:var(--pink);color:#fff}
+.opt{max-width:1100px;margin:0 auto 26px}
+.opt>h2{font-size:17px;margin:0 0 2px}.opt>p{margin:0 0 10px;color:var(--mut);font-size:13.5px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.ctx{background:var(--page);border-radius:16px;padding:14px;border:1px solid var(--line);min-width:0}
+.ctx .lab{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
+.bag-h{display:flex;align-items:baseline;gap:8px;margin:2px 0 10px}.bag-h b{font-size:24px}.bag-h span{color:var(--mut);font-size:14px}
+.line-item{background:#fff;border-radius:14px;padding:12px;display:flex;gap:10px;align-items:center;border:1px solid var(--line);margin-top:10px}
+.thumb{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#ffe3eb,#f7c9d6);flex:none}
+.li-t{flex:1;font-size:13px;font-weight:600}.li-p{font-weight:700;font-size:14px}
+.panel{background:#fff;border-radius:14px;border:1px solid var(--line);padding:12px}
+.sub{display:flex;justify-content:space-between;font-weight:700;margin-top:10px;font-size:15px}
+.btn{margin-top:10px;background:#111;color:#fff;border-radius:10px;padding:11px;text-align:center;font-weight:700;font-size:13px;letter-spacing:.06em}
+/* the code chip, shared behaviour */
+.cc{font:inherit;cursor:pointer;position:relative;white-space:nowrap}
+.cc .done{display:none}.cc.is-done .val{visibility:hidden}.cc.is-done .done{display:inline;position:absolute;inset:0;display:grid;place-items:center}
+svg.i{width:14px;height:14px;flex:none;vertical-align:-2px}
+/* A — dashed ticket card */
+.A{display:flex;align-items:center;gap:10px;background:var(--soft);border:1.5px dashed #ecaec4;border-radius:14px;padding:10px 12px;font-size:13.5px;color:#5e545a}
+.A .ic{width:30px;height:30px;border-radius:50%;background:#fff;display:grid;place-items:center;color:var(--pink);flex:none}
+.A .cc{display:inline-flex;align-items:center;gap:5px;font-weight:800;letter-spacing:.08em;color:var(--pink-d);background:#fff;border:1px solid #f3c3d4;border-radius:8px;padding:2px 8px;margin:0 2px}
+/* B — minimal line */
+.B{font-size:13px;color:var(--mut);padding:2px 0}
+.B .cc{display:inline-flex;align-items:center;gap:4px;font-weight:800;letter-spacing:.06em;color:var(--pink-d);background:none;border:0;border-bottom:1.5px dashed var(--pink);padding:0 1px;margin:0 2px}
+/* C — blush gradient strip */
+.C{display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(115deg,#FFF6F0,#FCEAF2);border-radius:12px;padding:10px 12px;font-size:13px;color:#5e545a}
+.C .cc{display:inline-flex;align-items:center;gap:6px;font-weight:800;letter-spacing:.08em;color:#fff;background:linear-gradient(135deg,#D2466C,#A82F53);border:0;border-radius:999px;padding:6px 12px;box-shadow:0 4px 12px rgba(168,47,83,.25)}
+/* D — coupon stub with notches */
+.D{position:relative;display:flex;align-items:stretch;background:#fff;border:1.5px solid #f1c6d5;border-radius:12px;overflow:hidden;font-size:13px}
+.D .t{flex:1;padding:10px 12px;color:#5e545a}
+.D .t b{display:block;color:var(--ink);font-size:13.5px}
+.D .cc{border:0;border-inline-start:1.5px dashed #f1c6d5;background:var(--soft);padding:8px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--pink-d);font-weight:800;letter-spacing:.08em;min-width:96px}
+.D .cc small{font-weight:600;letter-spacing:0;font-size:10.5px;color:var(--mut)}
+.D::before,.D::after{content:"";position:absolute;width:14px;height:14px;border-radius:50%;background:var(--page);border:1.5px solid #f1c6d5;inset-inline-end:89px}
+.D::before{top:-8px}.D::after{bottom:-8px}
+/* E — mint, matching the Order Value card */
+.E{display:flex;align-items:center;gap:8px;background:var(--mint);border-radius:12px;padding:10px 12px;font-size:13px;color:#2f4f3c}
+.E .ic{color:var(--mint-ink)}
+.E .cc{display:inline-flex;align-items:center;gap:5px;font-weight:800;letter-spacing:.08em;color:var(--mint-ink);background:#fff;border:1px dashed #9fd3b2;border-radius:8px;padding:2px 8px;margin:0 2px}
+/* F — cream & gold, premium */
+.F{background:#FFFBF3;border:1.5px dashed #D9B76A;border-radius:14px;padding:10px 12px;font-size:13px;color:#5b4a2e}
+.F .eb{display:block;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#B08A3E;margin-bottom:2px}
+.F .cc{display:inline-flex;align-items:center;gap:5px;font-weight:800;letter-spacing:.1em;color:#8A6A24;background:#FFF3D6;border:1px solid #E8CF8E;border-radius:8px;padding:2px 9px;margin:0 2px}
+/* G — the whole line is the button, scissors */
+.G{white-space:normal;min-width:0;display:flex;align-items:center;gap:10px;width:100%;text-align:start;background:#fff;border:1.5px dashed var(--pink);border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;color:#5e545a;cursor:pointer}
+.G .sc{color:var(--pink);font-size:16px;line-height:1}
+.G b{color:var(--pink-d);letter-spacing:.08em}
+.G .val{flex:1;min-width:0}.G .go{flex:none;font-size:11px;font-weight:700;color:var(--pink-d);white-space:nowrap}
+.G.is-done{border-style:solid;background:var(--soft)}
+/* H — dark, elegant */
+.H{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#2A2228;color:#f3e9ee;border-radius:12px;padding:10px 12px;font-size:13px}
+.H .cc{display:inline-flex;align-items:center;gap:6px;font-weight:800;letter-spacing:.1em;color:#fff;background:transparent;border:1.5px dashed #F08BAA;border-radius:8px;padding:5px 10px}
+/* I — % badge, then a full-width copy button */
+.I{background:#fff;border:1px solid #f1d3de;border-radius:14px;padding:10px 12px}
+.I .hd{display:flex;align-items:center;gap:10px;font-size:13px;color:#5e545a}
+.I .pc{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#D2466C,#A82F53);color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px;flex:none}
+.I .cc{margin-top:8px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--soft);border:1.5px dashed #ecaec4;border-radius:10px;padding:7px;font-weight:800;letter-spacing:.12em;color:var(--pink-d)}
+.I .cc small{font-weight:600;letter-spacing:0;color:var(--mut)}
+/* J — confetti banner, big code */
+.J{position:relative;overflow:hidden;border-radius:14px;padding:12px;font-size:12.5px;color:#5e545a;text-align:center;
+ background:radial-gradient(circle at 12% 30%,#ffd6e2 0 3px,transparent 4px),radial-gradient(circle at 85% 20%,#ffe2c9 0 3px,transparent 4px),radial-gradient(circle at 70% 80%,#e2d6ff 0 3px,transparent 4px),radial-gradient(circle at 25% 85%,#d6f0e2 0 3px,transparent 4px),linear-gradient(115deg,#FFF6F0,#FCEAF2)}
+.J .cc{display:inline-flex;align-items:center;gap:8px;margin:4px 0;font-weight:900;font-size:18px;letter-spacing:.16em;color:var(--pink-d);background:#fff;border:2px dashed var(--pink);border-radius:12px;padding:4px 14px}
+.J .cc small{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--mut)}
+.cc:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2A2228;color:#fff;padding:8px 14px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+</style>
+<div class="top"><h1 data-en="Coupon line — choose a design" data-ar="سطر الكوبون — اختاري التصميم">Coupon line — choose a design</h1>
+<div class="seg"><button type="button" class="on" data-l="en">English</button><button type="button" data-l="ar">العربية</button></div></div>
+<div id="opts"></div>
+<div class="toast" id="toast"></div>
+<svg width="0" height="0" style="position:absolute"><symbol id="copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+<symbol id="tag" viewBox="0 0 24 24"><path d="M3 12V4.5A1.5 1.5 0 0 1 4.5 3H12l9 9-9 9-9-9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor"/></symbol>
+<symbol id="gift" viewBox="0 0 24 24"><path d="M4 11h16v10H4zM3 7h18v4H3zM12 7v14M12 7S10 3 7.5 3.5 7 7 12 7zm0 0s2-4 4.5-3.5S17 7 12 7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+<symbol id="ok" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol></svg>
+<script>
+(function(){
+var CODE='GLOW10';
+var T={en:{use:'Use coupon code:',on:'on checkout page.',copied:'Copied',copiedT:'Code copied — paste it at checkout',tap:'Tap to copy',ex:'Exclusive code',bag:'Your Bag',items:'(2 items)',cart:'Cart page',panel:'Cart panel',sub:'Subtotal',btn:'SECURE CHECKOUT',p1:'Honey & Milk Lip Oil',p2:'EGF NAD Firming Gel Mask'},
+ar:{use:'استخدمي كود الخصم:',on:'في صفحة إتمام الطلب.',copied:'تم النسخ',copiedT:'تم نسخ الكود — الصقيه عند إتمام الطلب',tap:'اضغطي للنسخ',ex:'كود حصري',bag:'سلتكِ',items:'(منتجان)',cart:'صفحة السلة',panel:'لوحة السلة',sub:'المجموع الفرعي',btn:'إتمام الطلب بأمان',p1:'زيت الشفاه بالعسل والحليب',p2:'قناع جل الشد إي جي إف ناد'}};
+var O=[
+['A','A · Dashed ticket card','Soft pink card with a dashed edge and a tag icon; the code sits in a white chip with a copy icon.',function(t){return '<div class="A"><span class="ic"><svg class="i"><use href="#tag"/></svg></span><span>'+t.use+' '+chip(t,'<svg class="i"><use href="#copy"/></svg>')+' '+t.on+'</span></div>'}],
+['B','B · Minimal line','One quiet line, like today\'s, with the code underlined by a dashed pink line and a small copy icon.',function(t){return '<div class="B">'+t.use+' '+chip(t,'<svg class="i"><use href="#copy"/></svg>')+' '+t.on+'</div>'}],
+['C','C · Blush strip with a button','The homepage\'s cream-to-blush background; the code is a bold pink button on the other side.',function(t){return '<div class="C"><span><svg class="i" style="color:#C13E63"><use href="#gift"/></svg> '+t.use+'<br><span style="opacity:.8">'+t.on+'</span></span>'+chip(t,'<svg class="i"><use href="#copy"/></svg>')+'</div>'}],
+['D','D · Coupon stub','Looks like a real coupon: the message on one side, the code on a tear-off stub with "Tap to copy".',function(t){return '<div class="D"><div class="t"><b>'+t.use+'</b>'+t.on+'</div>'+chip(t,'',true)+'</div>'}],
+['E','E · Mint, like Order Value','The same mint as the Order Value box, so it reads as a saving; dashed white chip for the code.',function(t){return '<div class="E"><svg class="i ic"><use href="#ok"/></svg><span>'+t.use+' '+chip(t,'<svg class="i"><use href="#copy"/></svg>')+' '+t.on+'</span></div>'}],
+['F','F · Cream & gold, premium','A warm cream card with a gold dashed edge and a small "Exclusive" label above — a gift-card feel.',function(t){return '<div class="F"><span class="eb">'+t.ex+'</span>'+t.use+' '+chip(t,'<svg class="i"><use href="#copy"/></svg>')+' '+t.on+'</div>'}],
+['G','G · The whole line is the button','A dashed pill with scissors: tap anywhere on it to copy. Simple and very easy to hit on a phone.',function(t){return '<button type="button" class="G cc" data-code="'+CODE+'" aria-label="'+t.tap+' '+CODE+'"><span class="sc">✂</span><span class="val">'+t.use+' <b>'+CODE+'</b> '+t.on+'</span><span class="done">'+t.copied+' ✓</span><span class="go">'+t.tap+'</span></button>'}],
+['H','H · Dark & elegant','A dark strip that stands out from the white cards; the code in a pink dashed outline.',function(t){return '<div class="H"><span>'+t.use+'<br><span style="opacity:.75">'+t.on+'</span></span>'+chip(t,'<svg class="i"><use href="#copy"/></svg>')+'</div>'}],
+['I','I · % badge and a copy button','A round % badge with the message, then a full-width dashed button with the code and "Tap to copy".',function(t){return '<div class="I"><div class="hd"><span class="pc">%</span><span>'+t.use+' '+t.on+'</span></div>'+chip(t,'',false,true)+'</div>'}],
+['J','J · Festive banner, big code','Cream-to-blush with soft confetti dots; the code large and centred — the most eye-catching.',function(t){return '<div class="J">'+t.use+'<br>'+chip(t,'',false,true)+'<br>'+t.on+'</div>'}]];
+function chip(t,icon,stub,wide){return '<button type="button" class="cc" data-code="'+CODE+'" aria-label="'+t.tap+' '+CODE+'"><span class="val">'+(stub?CODE+'<small>'+t.tap+'</small>':wide?CODE+' <small>· '+t.tap+'</small>':CODE+' '+icon)+'</span><span class="done">'+t.copied+' ✓</span></button>';}
+function render(l){var t=T[l];document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr';document.body.classList.toggle('ar',l==='ar');
+var h=document.querySelector('.top h1');h.textContent=h.getAttribute('data-'+l);
+document.getElementById('opts').innerHTML=O.map(function(o){var line=o[3](t);
+return '<section class="opt"><h2>'+o[1]+'</h2><p>'+o[2]+'</p><div class="row">'+
+'<div class="ctx"><div class="lab">'+t.cart+'</div><div class="bag-h"><b>'+t.bag+'</b><span>'+t.items+'</span></div>'+line+
+'<div class="line-item"><span class="thumb"></span><span class="li-t">'+t.p1+'</span><span class="li-p">'+(l==='ar'?'د.إ 18':'AED 18')+'</span></div></div>'+
+'<div class="ctx"><div class="lab">'+t.panel+'</div><div class="panel">'+line+'<div class="sub"><span>'+t.sub+'</span><span>'+(l==='ar'?'د.إ 40':'AED 40')+'</span></div><div class="btn">'+t.btn+'</div></div></div>'+
+'</div></section>';}).join('');}
+var toast=document.getElementById('toast'),lang='en',tm;
+document.addEventListener('click',function(e){var b=e.target.closest('.cc');if(b){var code=b.getAttribute('data-code');
+var done=function(){b.classList.add('is-done');toast.textContent=T[lang].copiedT;toast.classList.add('on');clearTimeout(tm);tm=setTimeout(function(){toast.classList.remove('on');document.querySelectorAll('.cc.is-done').forEach(function(x){x.classList.remove('is-done')});},1600);};
+if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(done,done);}else{done();}return;}
+var s=e.target.closest('.seg button');if(s){lang=s.getAttribute('data-l');document.querySelectorAll('.seg button').forEach(function(x){x.classList.toggle('on',x===s)});render(lang);}});
+render('en');})();
+</script>
