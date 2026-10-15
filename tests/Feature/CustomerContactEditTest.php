@@ -186,6 +186,8 @@ it('normalises exactly as the checkout and the order editor do', function () {
     }
     ceSave($c->id, ['email' => 'jovana8b@yahoo.com', 'phone' => 'call me'])->assertStatus(422)->assertJsonValidationErrors('phone');
     ceSave($c->id, ['email' => 'jovana8b@yahoo.com', 'phone' => str_repeat('5', 41)])->assertStatus(422);
+    // A crafted body is a refusal, not a 500 from casting an array to a string.
+    ceSave($c->id, ['email' => ['a@b.com'], 'phone' => ['1']])->assertStatus(422);
 
     expect($c->fresh()->email)->toBe('Jovana8B@yahoo.com');
 });

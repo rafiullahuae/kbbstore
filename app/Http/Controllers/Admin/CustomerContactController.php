@@ -96,10 +96,15 @@ class CustomerContactController extends Controller
             return response()->json(['ok' => false, 'message' => 'Customer not found.'], 404);
         }
 
-        $request->merge([
-            'email' => CustomerContact::normaliseEmail($request->input('email')),
-            'phone' => CustomerContact::normalisePhone($request->input('phone')),
-        ]);
+        // Normalised only when they are strings: an array or object is left
+        // as sent, for the validator to refuse with a 422 rather than a cast
+        // to throw a 500.
+        if (is_string($request->input('email'))) {
+            $request->merge(['email' => CustomerContact::normaliseEmail($request->input('email'))]);
+        }
+        if ($request->input('phone') === null || is_string($request->input('phone'))) {
+            $request->merge(['phone' => CustomerContact::normalisePhone($request->input('phone'))]);
+        }
 
         $data = $request->validate([
             'email' => ['required', 'string', 'max:' . CustomerContact::EMAIL_MAX, new StorefrontEmail()],
