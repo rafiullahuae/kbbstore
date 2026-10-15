@@ -1999,7 +1999,20 @@ class CheckoutController extends Controller
      * `orders.customer_id` points at something real, the order is filed, and
      * the checkout completes — which is all the shopper needed.
      */
-    private static function customerForGuestOrder(
+    /*
+     * PUBLIC SINCE LANE CAP, and for one caller: App\Support\CheckoutEmailCapture
+     * files the address a shopper types at checkout under THIS lookup, so the
+     * order they place later finds the same row rather than making a second
+     * one. One path for "the customer row for this address", never two.
+     *
+     * AND ONE ADDITION FOR THE ROW THAT CAPTURE MADE. It was made from an email
+     * alone, so it has no name and no phone. When the order comes, the blanks
+     * on such a row (origin 'checkout_email', no password) are filled from the
+     * order -- exactly what this method would have written had it made the row
+     * now. A row with a name, a phone, a password or any other origin is
+     * returned untouched, as before.
+     */
+    public static function customerForGuestOrder(
         string $email,
         string $first,
         string $last,
@@ -2016,6 +2029,20 @@ class CheckoutController extends Controller
             ->first();
 
         if ($existing = $find()) {
+            if ($existing->getAttribute('origin') === 'checkout_email'
+                && $existing->password === null && $existing->legacy_password === null) {
+                $fill = array_filter([
+                    'name' => trim($first . ' ' . $last),
+                    'first_name' => $first,
+                    'last_name' => $last,
+                    'phone' => $phone,
+                ], fn ($v, $k) => $v !== null && $v !== '' && trim((string) $existing->getAttribute($k)) === '', ARRAY_FILTER_USE_BOTH);
+
+                if ($fill !== []) {
+                    $existing->forceFill($fill)->save();
+                }
+            }
+
             return $existing;
         }
 

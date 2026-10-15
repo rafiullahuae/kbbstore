@@ -567,7 +567,12 @@ class CustomersApiController extends Controller
      */
     private function rowQuery(?Builder $from = null): Builder
     {
-        return CustomerAggregates::query($from);
+        $query = CustomerAggregates::query($from);
+
+        // Lane CAP: how the row came to exist, for "From checkout, no order yet".
+        return class_exists(\App\Support\CheckoutEmailCapture::class) && \App\Support\CheckoutEmailCapture::ready()
+            ? $query->addSelect('customers.origin')
+            : $query;
     }
 
     /** The later of "last paid order" and "last cart activity". */
@@ -1009,6 +1014,9 @@ class CustomersApiController extends Controller
              * which answers from `demo_seed_log` rather than a column.
              */
             'is_demo' => isset($demo[(int) $c->id]),
+            // Lane CAP: filed from the email typed at checkout, and no order
+            // since. The label goes the moment an order is placed.
+            'from_checkout' => ($c->origin ?? null) === 'checkout_email' && (int) $c->all_orders === 0,
         ];
     }
 

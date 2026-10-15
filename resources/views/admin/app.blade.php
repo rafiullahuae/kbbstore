@@ -16606,6 +16606,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     await cuLoad();
   };
 
+  /* (Lane CAP) Cart Tracking opens the customer a typed checkout email was
+     filed under: the same record the list's View button opens. */
+  window.kbbCustomerOpen = function(id){ cuDetail(id); };
+
   /* Turn the HTTP status into the thing to actually go and check. */
   function cuWhy(){
     var st = CU.err ? CU.err.status : 0;
@@ -16798,7 +16802,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
                so the row would otherwise read AED 0 with nothing saying why.
                Same badge, same wording and same place as the Orders table. */
             (c.is_demo ? ' · <span style="color:var(--ink-faint)">demo</span>' : '') +
-          '</div></div></div></td>' +
+          '</div>' +
+          /* (Lane CAP) Filed from the email typed at checkout; goes once they order. */
+          (c.from_checkout ? '<div style="font-size:11px;color:var(--ink-faint);margin-top:1px;white-space:nowrap">From checkout, no order yet</div>' : '') +
+          '</div></div></td>' +
         cols.map(function(col){ return cuCell(col[0], c); }).join('') +
         '<td style="white-space:nowrap">' + (c.trashed
           ? '<button class="btn ghost sm" data-curestore="' + c.id + '">Restore</button>'
@@ -17084,6 +17091,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
               (window.kbbCustomerContact ? ' <button type="button" class="btn ghost sm" id="cuEditContact" style="margin-left:6px;padding:2px 9px;font-size:11.5px">Edit</button>' : '') + '</div>' +
             '<div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">' + cuTypePill(c) +
               (c.whatsapp_optin ? ' <span class="pill green">WhatsApp opt-in</span>' : '') +
+              (c.from_checkout ? ' <span class="pill grey">From checkout, no order yet</span>' : '') +
               (c.wp_user_id ? ' <span class="pill grey">Woo user #' + c.wp_user_id + '</span>' : '') +
               (c.trashed ? ' <span class="pill red">In the trash</span>' : '') +
             '</div>' +

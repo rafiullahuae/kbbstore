@@ -76,7 +76,9 @@ final class CustomersController extends Controller
 
         $rows = $q->when($before > 0, fn (Builder $w) => $w->where('c.id', '<', $before))
             ->orderByDesc('c.id')->limit(self::PER_PAGE + 1)
-            ->get(['c.id', 'c.name', 'c.first_name', 'c.last_name', 'c.email', 'c.phone', 'c.created_at']);
+            ->get(['c.id', 'c.name', 'c.first_name', 'c.last_name', 'c.email', 'c.phone', 'c.created_at',
+                // Lane CAP: how the row came to exist ("From checkout, no order yet").
+                ...(\App\Support\CheckoutEmailCapture::ready() ? ['c.origin'] : [])]);
 
         $more = $rows->count() > self::PER_PAGE;
         $rows = $rows->take(self::PER_PAGE);
@@ -201,6 +203,7 @@ final class CustomersController extends Controller
             'paid_orders' => (int) ($agg->paid ?? 0),
             'spent_display' => Money::plain((int) ($agg->spent ?? 0)),
             'last_order_at' => StoreTime::iso($agg->last_at ?? null),
+            'from_checkout' => ($c->origin ?? null) === 'checkout_email' && (int) ($agg->all_n ?? 0) === 0,
         ];
     }
 }

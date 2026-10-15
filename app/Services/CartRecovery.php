@@ -48,6 +48,19 @@ use Illuminate\Support\Facades\DB;
  * orders; they have not asked to be chased about a basket, and the two are not
  * the same permission. This is the single most important sentence in the file.
  *
+ * ▲ ONE EXCEPTION, THE OWNER'S, 15 OCTOBER 2026 (Lane CAP): "only the left cart
+ *   email should go auto. nothing else." An address typed into the checkout's
+ *   email field and recorded by App\Support\CheckoutEmailCapture gets THIS
+ *   reminder -- the same message, the same unsubscribe link, the same sweep --
+ *   ONCE, after the first delay of the owner's schedule. captureTyped() is the
+ *   only way in, behind its own switch (Cart Tracking → Settings → "Send the
+ *   left-cart reminder to emails typed at checkout") as well as every gate
+ *   above. Its rows are source 'checkout_email' and due() holds them to more
+ *   than an opt-in row: stage 0 only, never a bot-scored cart, never an address
+ *   on email_suppressions or with an uncleared bounce, and only while it is
+ *   still the address on the cart (a typo the shopper corrected is never sent).
+ *   The sentence above stays true of everything else.
+ *
  * HOW THEY GET OUT: three ways, all of which work without signing in.
  *   1. Every message carries an unsubscribe link (Support\OutboundOptOut). It
  *      cancels this sequence AND writes the address to `outbound_optouts`, so a
@@ -322,6 +335,84 @@ class CartRecovery
         return $written > 0 ? self::OUTCOME_STORED : self::OUTCOME_DUPLICATE;
     }
 
+    /** cart_recoveries.source for an address typed at checkout (Lane CAP). */
+    public const SOURCE_TYPED = 'checkout_email';
+
+    /** A typed address gets at most one reminder in this many days, however many baskets it left. */
+    public const TYPED_ONCE_PER_DAYS = 7;
+
+    /**
+     * The owner's exception (see the header): a reminder for the address a
+     * shopper TYPED at checkout. Called only by CheckoutEmailCapture, behind
+     * its switch. The same one-row-per-cart index as capture():
+     *
+     *   - no row yet: one is written, source 'checkout_email', its clock
+     *     starting now;
+     *   - the shopper's OWN opt-in row (source cart/checkout): untouched, ever;
+     *   - a typed row that has not been sent and is not cancelled: it MOVES to
+     *     the new address, so the typo before a tapped fix is never emailed;
+     *   - a typed row already sent, or cancelled: untouched. Never a second.
+     */
+    public function captureTyped(int $cartId, string $email): string
+    {
+        if (! $this->enabled()) {
+            return self::OUTCOME_UNAVAILABLE;
+        }
+
+        $email = OutboundOptOut::normalise($email);
+
+        if ($email === '') {
+            return self::OUTCOME_UNAVAILABLE;
+        }
+
+        $suppressed = OutboundOptOut::suppressed($email);
+        $now = now();
+
+        try {
+            $row = DB::table('cart_recoveries')->where('cart_id', $cartId)
+                ->first(['id', 'source', 'email', 'stage', 'cancelled_at']);
+
+            if ($row === null) {
+                if ($suppressed) {
+                    return self::OUTCOME_SUPPRESSED;
+                }
+
+                $written = DB::table('cart_recoveries')->insertOrIgnore([
+                    'cart_id' => $cartId,
+                    'email' => $email,
+                    'source' => self::SOURCE_TYPED,
+                    'stage' => 0,
+                    'consented_at' => $now,
+                    'last_sent_at' => null,
+                    'cancelled_at' => null,
+                    'cancel_reason' => null,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+
+                return $written > 0 ? self::OUTCOME_STORED : self::OUTCOME_DUPLICATE;
+            }
+
+            if ($row->source !== self::SOURCE_TYPED || $row->email === $email
+                || (int) $row->stage > 0 || $row->cancelled_at !== null) {
+                return self::OUTCOME_DUPLICATE;
+            }
+
+            DB::table('cart_recoveries')
+                ->where('id', $row->id)
+                ->where('source', self::SOURCE_TYPED)
+                ->where('stage', 0)
+                ->whereNull('cancelled_at')
+                ->update($suppressed
+                    ? ['email' => $email, 'cancelled_at' => $now, 'cancel_reason' => 'optout', 'updated_at' => $now]
+                    : ['email' => $email, 'updated_at' => $now]);
+        } catch (\Throwable) {
+            return self::OUTCOME_UNAVAILABLE;
+        }
+
+        return $suppressed ? self::OUTCOME_SUPPRESSED : self::OUTCOME_STORED;
+    }
+
     /* ------------------------------------------------------- the cancellation */
 
     /**
@@ -407,6 +498,8 @@ class CartRecovery
                         ->from('outbound_optouts')
                         ->whereColumn('outbound_optouts.email', 'cart_recoveries.email');
                 })
+                // Lane CAP: an address typed at checkout, held to more. See the header.
+                ->where(fn ($w) => $this->typedRule($w))
                 ->orderBy('cart_recoveries.id')
                 // Read more than the budget, because some will not be due yet
                 // once the interval is applied below; without the headroom a
@@ -418,6 +511,7 @@ class CartRecovery
                     'cart_recoveries.email',
                     'cart_recoveries.stage',
                     'cart_recoveries.consented_at',
+                    'cart_recoveries.source',
                 ])
                 ->all();
         } catch (\Throwable) {
@@ -426,6 +520,7 @@ class CartRecovery
 
         $now = now();
         $out = [];
+        $typed = [];
 
         foreach ($rows as $row) {
             $stage = (int) $row->stage;
@@ -444,6 +539,15 @@ class CartRecovery
                 continue;
             }
 
+            // Lane CAP: and within one sweep, one typed reminder per address.
+            if (($row->source ?? null) === self::SOURCE_TYPED) {
+                if (isset($typed[$row->email])) {
+                    continue;
+                }
+
+                $typed[$row->email] = true;
+            }
+
             $out[] = $row;
 
             if (count($out) >= $limit) {
@@ -452,6 +556,55 @@ class CartRecovery
         }
 
         return $out;
+    }
+
+    /**
+     * Every row that is not typed at checkout passes, exactly as before. A
+     * typed row passes only with both switches on, at stage 0 (once), on a
+     * cart that is not bot-scored, while it is still the cart's address, and
+     * for an address with no suppression and no uncleared bounce. A table it
+     * needs that is missing fails the typed rows CLOSED, never the others.
+     */
+    private function typedRule(\Illuminate\Database\Query\Builder $w): void
+    {
+        $w->where('cart_recoveries.source', '!=', self::SOURCE_TYPED);
+
+        try {
+            $ct = app(\App\Services\CartTracking\CartTrackingSettings::class);
+            $on = (bool) $ct->get('capture_email') && (bool) $ct->get('capture_reminder');
+            $threshold = (int) $ct->get('bot_threshold');
+            $ready = $on && \Illuminate\Support\Facades\Schema::hasColumn('carts', 'ct_email')
+                && \Illuminate\Support\Facades\Schema::hasTable('email_suppressions')
+                && \Illuminate\Support\Facades\Schema::hasTable('email_bounces');
+        } catch (\Throwable) {
+            $ready = false;
+        }
+
+        if (! $ready) {
+            return;
+        }
+
+        $w->orWhere(function ($t) use ($threshold) {
+            $t->where('cart_recoveries.source', self::SOURCE_TYPED)
+                ->where('cart_recoveries.stage', 0)
+                ->whereRaw('COALESCE(carts.ct_bot_score, 0) < ?', [$threshold])
+                ->whereColumn('carts.ct_email', 'cart_recoveries.email')
+                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('email_suppressions as es')
+                    ->whereRaw('LOWER(es.email) = cart_recoveries.email'))
+                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('email_bounces as eb')
+                    ->whereNull('eb.cleared_at')
+                    ->whereRaw('LOWER(eb.email) = cart_recoveries.email'))
+                // One reminder per ADDRESS, not one per basket: three baskets
+                // left from three visits are one shopper and one email. Never
+                // when this address was reminded in the last week, nor for a
+                // basket left BEFORE a reminder that address already had.
+                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('cart_recoveries as cr2')
+                    ->whereColumn('cr2.email', 'cart_recoveries.email')
+                    ->whereColumn('cr2.id', '!=', 'cart_recoveries.id')
+                    ->whereNotNull('cr2.last_sent_at')
+                    ->where(fn ($w) => $w->where('cr2.last_sent_at', '>', now()->subDays(self::TYPED_ONCE_PER_DAYS))
+                        ->orWhereColumn('cr2.last_sent_at', '>=', 'cart_recoveries.consented_at')));
+        });
     }
 
     /**

@@ -73,7 +73,7 @@ function paintList(view) {
   if (sub && C.total !== null) sub.textContent = C.total.toLocaleString('en-US') + ' customers · ' + C.fresh + ' new this month';
   paint($('[data-chips]', view), FILTERS.map(([k, l]) => '<button type="button" data-cf="' + k + '"' + (C.filter === k ? ' class="on"' : '') + '>' + l + '</button>').join(''));
   paint(list, (C.rows.length ? '<div class="list">' + C.rows.map((c) => '<a class="row" href="#/customers/' + c.id + '">' + av(c.name)
-    + '<div class="rm"><b>' + esc(c.name) + '</b><small>' + esc(c.email) + '</small></div><div class="re"><b>' + esc(c.spent_display) + '</b><small class="muted">' + c.orders + ' order' + (c.orders === 1 ? '' : 's') + '</small></div></a>').join('') + '</div>'
+    + '<div class="rm"><b>' + esc(c.name) + '</b><small>' + esc(c.email) + (c.from_checkout ? ' · From checkout, no order yet' : '') + '</small></div><div class="re"><b>' + esc(c.spent_display) + '</b><small class="muted">' + c.orders + ' order' + (c.orders === 1 ? '' : 's') + '</small></div></a>').join('') + '</div>'
     : '<div class="card empty">No customers match.</div>') + (C.next ? '<button type="button" class="btn sec wide" data-more>Show more</button>' : ''));
 }
 

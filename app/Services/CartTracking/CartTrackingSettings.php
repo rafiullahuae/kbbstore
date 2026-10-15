@@ -40,6 +40,15 @@ final class CartTrackingSettings
         // Lane CJ, the owner 13 Oct: "track ... from where customer left". Ships ON, his ask.
         'journey' => ['bool', 'Record where shoppers go and where they leave', true,
             'For shoppers with something in their bag: every page they open, the taps on the bag, the cart page and the checkout (never anything they type), the furthest checkout step and the page they left from. Shown on each cart and in the owner app. Off, nothing new is written.'],
+        // Lane CAP, the owner 15 Oct: "when user enter their email, i want to
+        // record that email in our system ... even user don't create account or
+        // place the order." Ships ON, his ask. App\Support\CheckoutEmailCapture.
+        'capture_email' => ['bool', 'Record the email typed at checkout (before the order)', true,
+            'When a shopper types their email at checkout and leaves the field, it is saved on their cart and a guest customer is filed for it (no password, no email sent, not added to marketing). Shown here and in Customers as "From checkout, no order yet". Off, nothing new is recorded.'],
+        // Lane CAP, the owner 15 Oct: "only the left cart email should go auto.
+        // nothing else." Ships ON, his ask. Needs the Abandoned cart module on.
+        'capture_reminder' => ['bool', 'Send the left-cart reminder to emails typed at checkout', true,
+            'The abandoned-cart reminder (Modules → Abandoned Cart Recovery, worded under Store → Ecommerce → Cart: its message and its first delay) also goes, once, to an email recorded above, when the bag is left with items in it and no order. Never to a bot, an unsubscribed or bounced address, or an address the shopper corrected. Off, or with the switch above off, only shoppers who ask on the cart page get it.'],
         'bots_leave' => ['bool', 'Ask bots to leave', true,
             'Scripted clients (curl, python), headless browsers and scrapers are answered "403 Forbidden" on the cart and checkout. Google, Bing, Apple, Facebook and WhatsApp previews are never refused, and no page a shopper browses is affected.'],
         'block_scope' => ['select', 'What a blocked address cannot do', 'commerce',

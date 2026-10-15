@@ -479,6 +479,18 @@ final class Audience
     {
         $agg = CustomerAggregates::query()->addSelect(DB::raw('oa.paid_first_at as paid_first_at'));
 
+        /*
+         * Lane CAP: a row filed from the email typed at checkout, with no order
+         * yet, is NOT a customer for a campaign -- that shopper gave an address
+         * for one checkout and agreed to nothing else ("no marketing opt-in").
+         * It joins this list the moment an order is placed under it.
+         */
+        if (class_exists(\App\Support\CheckoutEmailCapture::class) && \App\Support\CheckoutEmailCapture::ready()) {
+            $agg->where(fn ($w) => $w->whereNull('customers.origin')
+                ->orWhere('customers.origin', '!=', \App\Support\CheckoutEmailCapture::ORIGIN)
+                ->orWhereRaw('COALESCE(oa.all_orders, 0) > 0'));
+        }
+
         $q = DB::query()->fromSub($agg, 'c')->select([
             'c.id', 'c.email', 'c.first_name', 'c.last_name', 'c.name', 'c.paid_orders', 'c.spend_fils',
             'c.paid_last_at', 'c.paid_first_at', 'c.created_at',

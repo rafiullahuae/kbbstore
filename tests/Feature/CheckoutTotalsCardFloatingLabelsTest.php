@@ -448,6 +448,10 @@ it('renders the checkout byte for byte as before this lane with both switches of
         $overlay = '#<!--kbb-placing-->.*?<!--/kbb-placing-->#s';
         $before = (string) preg_replace($overlay, '', $before, 1);
         $after = (string) preg_replace($overlay, '', $after, 1);
+        // Lane CAP (later) publishes the checkout's email-capture endpoint
+        // (Cart Tracking -> Settings -> "Record the email typed at checkout",
+        // ON as the owner asked). CheckoutEmailCaptureTest pins it. Set aside.
+        $after = (string) preg_replace('#window\.KBB\.routes\.checkoutEmail = "[^"\n]*";\n#', '', $after, 1);
     } finally {
         EnglishRenderWalk::useViewPath($current[0]);
     }
