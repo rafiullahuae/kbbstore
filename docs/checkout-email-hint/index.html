@@ -1,0 +1,94 @@
+<title>Checkout Email Hint</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: phone frames of the real checkout email field (390 / 360 / 320), each design shown while typing and after leaving the field. */
+:root{
+  --bg:#f6f1f3; --card:#ffffff; --ink:#2a2228; --muted:#756c74; --line:#eadfe3; --pink:#c13e63;
+  --sans:"Outfit",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17131a;--card:#221c24;--ink:#f3edf0;--muted:#b3a8ad;--line:#3a2f3c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17131a;--card:#221c24;--ink:#f3edf0;--muted:#b3a8ad;--line:#3a2f3c;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:26px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:22px}
+h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
+.lead{color:var(--muted);margin:6px 0 0;max-width:72ch}
+.lead b{color:var(--ink)}
+.opt{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:12px;min-width:0}
+.opt header{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.tag{font-weight:800;color:var(--pink);font-size:13px;letter-spacing:.08em}
+.opt h2{margin:0;font-size:16.5px;font-weight:700}
+.opt p{margin:0;color:var(--muted);font-size:13.5px}
+.row{display:flex;gap:14px;overflow-x:auto;padding-bottom:6px;max-width:100%}
+.ph{flex:none;display:grid;gap:6px}
+.ph small{font-size:11px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+
+/* the phone: the checkout's Delivery Information card, as on the shop */
+.screen{background:#fdf7f8;border:1px solid #eee3e7;border-radius:22px;padding:14px 12px;box-sizing:border-box;color:#2a2228}
+.w390{width:390px}.w360{width:360px}.w320{width:320px}
+.cardt{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin:0 2px 10px}
+.cardt i{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#c13e63;color:#fff;font-style:normal;font-size:12px}
+.f{position:relative;display:flex;align-items:center;gap:10px;height:50px;border:1.5px solid #e6dfe2;border-radius:14px;background:#fff;padding:0 14px;box-sizing:border-box}
+.f.focus{border-color:#c13e63;box-shadow:0 0 0 3px rgba(193,62,99,.12)}
+.f svg{flex:none;color:#8c8288}
+.f .v{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f .lab{position:absolute;top:-8px;inset-inline-start:12px;background:#fff;padding:0 5px;font-size:11px;color:#8c8288}
+.caret{display:inline-block;width:1.5px;height:17px;background:#c13e63;vertical-align:-3px;margin-inline-start:1px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.caret{animation:none}}
+.help{font-size:12px;color:#8c8288;margin:6px 4px 0;min-height:18px}
+.next{margin-top:14px;height:50px;border:1.5px solid #e6dfe2;border-radius:14px;background:#fff;display:flex;align-items:center;padding:0 14px;color:#9a9196;font-size:15px;gap:10px}
+
+/* A · the helper line becomes the hint, one tap on the domain */
+.hA{font-size:12px;color:#5e545a;margin:6px 4px 0;min-height:18px}
+.hA button{font:inherit;color:#c13e63;font-weight:700;background:none;border:0;padding:0;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+/* B · a tiny pill inside the field, right side */
+.pB{flex:none;margin-inline-start:auto;font:inherit;font-size:11.5px;font-weight:700;color:#a82f53;background:#fff0f4;border:1px solid #f3c3d4;border-radius:99px;padding:3px 9px;white-space:nowrap;cursor:pointer}
+/* C · a soft one-line chip under the field with Fix */
+.cC{display:flex;align-items:center;gap:6px;margin:6px 2px 0;font-size:12px;color:#5e545a;white-space:nowrap;overflow:hidden}
+.cC b{font-weight:700;color:#2a2228;overflow:hidden;text-overflow:ellipsis}
+.cC button{flex:none;font:inherit;font-size:11.5px;font-weight:700;color:#fff;background:#c13e63;border:0;border-radius:99px;padding:3px 10px;cursor:pointer}
+.cC .x{background:none;color:#9a9196;font-weight:500;padding:3px 4px}
+.note{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:14px;color:var(--muted)}
+.note b{color:var(--ink)}
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Checkout email hint, on a phone</h1>
+    <p class="lead">While the shopper types, <b>nothing appears</b>. Only when they leave the email field (tap the next field or Done) does the shop check the address. If it is a clear slip such as <b>yahoo.co</b>, one small line offers the fix. One tap accepts it; ignoring it changes nothing and never blocks the order. A correct address never shows anything. Three styles, each on an iPhone (390), a typical Android (360) and a small phone (320).</p>
+  </div>
+  <div id="opts" style="display:grid;gap:18px"></div>
+  <div class="note"><b>The rules behind it.</b> Only the part after @ is checked. It suggests only a known provider (gmail.com, yahoo.com, hotmail.com, outlook.com, icloud.com and the like), and real addresses like yahoo.co.uk, hotmail.fr or company domains never get a hint. It gives one suggestion or none, and it never edits the field by itself. It runs in the shopper’s browser: no request, no added server load. On/off: Emails → Settings.</div>
+</div>
+
+<script>
+(function(){
+  var MAIL='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>';
+  var USER='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>';
+  var EMAIL='jovana8b@yahoo.co';
+  function field(focus,typing,inner){
+    return '<div class="f'+(focus?' focus':'')+'"><span class="lab">Email address *</span>'+MAIL+'<span class="v">'+EMAIL+(typing?'<span class="caret"></span>':'')+'</span>'+(inner||'')+'</div>';
+  }
+  function screen(w,body){
+    return '<div class="screen w'+w+'"><div class="cardt"><i>1</i>Delivery Information</div>'+body+'<div class="next">'+USER+'Full name *</div></div>';
+  }
+  var HELP='<div class="help">We send your order confirmation here.</div>';
+  var D=[
+    {k:'A',n:'The helper line becomes the hint',d:'Under the field, the usual grey line “We send your order confirmation here.” is replaced by “Did you mean …@yahoo.com?” with the suggestion underlined. Tap it to fix. The quietest option: no box, nothing new on screen.',
+     after:function(){return field(false,false)+'<div class="hA">Did you mean jovana8b@<button type="button">yahoo.com</button>?</div>';}},
+    {k:'B',n:'A tiny pill inside the field',d:'A small “yahoo.com?” pill sits at the right end of the field itself. Tap it to fix. Nothing below the field moves.',
+     after:function(){return field(false,false,'<button class="pB" type="button">yahoo.com?</button>')+HELP;}},
+    {k:'C',n:'A soft line with Fix and ×',d:'One line under the field: “Did you mean …@yahoo.com?” with a small Fix button and × to dismiss. The most explicit of the three.',
+     after:function(){return field(false,false)+'<div class="cC"><span>Did you mean</span><b>jovana8b@yahoo.com</b><span>?</span><button type="button">Fix</button><button type="button" class="x" aria-label="Dismiss">×</button></div>';}}
+  ];
+  document.getElementById('opts').innerHTML=D.map(function(o){
+    return '<section class="opt"><header><span class="tag">'+o.k+'</span><h2>'+o.n+'</h2></header><p>'+o.d+'</p>'+
+      '<div class="row">'+
+        '<div class="ph"><small>While typing · 390</small>'+screen(390,field(true,true)+HELP)+'</div>'+
+        [390,360,320].map(function(w){return '<div class="ph"><small>After leaving the field · '+w+'</small>'+screen(w,o.after())+'</div>';}).join('')+
+      '</div></section>';
+  }).join('');
+})();
+</script>
