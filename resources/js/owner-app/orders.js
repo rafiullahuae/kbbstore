@@ -13,9 +13,9 @@
 import { S, fn, esc, api, $, $$, ic, av, th, pill, stWord, top, back, toast, sheet, busy, debounce, paint, errorBox, day, time, when, year, isTablet,
   screen, onScreen, mark, once, landed, isFresh, onReset, merge, ln, blk, times, skChips, skNote } from './core.js';
 
-const L = { q: '', status: '', from: '', to: '', payment: '', rows: [], next: null, counts: {}, payments: [], emails: {}, today: '', yesterday: '', sel: new Set(), mode: false, loaded: false, at: null, paged: false, lastQ: '', cur: 0 };
+const L = { q: '', status: '', emirate: '', emirates: null, from: '', to: '', payment: '', rows: [], next: null, counts: {}, payments: [], emails: {}, today: '', yesterday: '', sel: new Set(), mode: false, loaded: false, at: null, paged: false, lastQ: '', cur: 0 };
 let O = null;
-onReset(() => { Object.assign(L, { rows: [], next: null, counts: {}, payments: [], emails: {}, mode: false, loaded: false, at: null, paged: false, lastQ: '', cur: 0 }); L.sel.clear(); O = null; });
+onReset(() => { Object.assign(L, { rows: [], next: null, counts: {}, emirates: null, payments: [], emails: {}, mode: false, loaded: false, at: null, paged: false, lastQ: '', cur: 0 }); L.sel.clear(); O = null; });
 
 /* Selection mode (Lane ORD): on while anything is ticked, and also straight
    after "Select" with nothing ticked yet. */
@@ -27,7 +27,7 @@ export const ordersState = () => L;
 
 function query(extra) {
   const p = new URLSearchParams();
-  [['q', L.q], ['status', L.status], ['from', L.from], ['to', L.to], ['payment', L.payment]].forEach(([k, v]) => { if (v) p.set(k, v); });
+  [['q', L.q], ['status', L.status], ['emirate', L.emirate], ['from', L.from], ['to', L.to], ['payment', L.payment]].forEach(([k, v]) => { if (v) p.set(k, v); });
   if (extra) Object.keys(extra).forEach((k) => p.set(k, extra[k]));
   const s = p.toString();
   return 'orders' + (s ? '?' + s : '');
@@ -96,7 +96,8 @@ const selBtn = () => '<button class="tbtn" type="button" data-act="selmode">Sele
 function listShell(held) {
   return selHdr() + top('Orders', '<span data-sub>' + (held ? '' : 'Syncing…') + '</span>', '', selBtn(), 'norm')
     + '<div class="body"><label class="search">' + ic('search', 's') + '<input type="search" data-search placeholder="Search orders, names, products" aria-label="Search orders" value="' + esc(L.q) + '" enterkeyhint="search"><kbd>/</kbd></label>'
-    + '<div class="chips" role="group" aria-label="Filter by status" data-chips>' + (held ? '' : skChips(5)) + '</div><div data-list>' + (held ? '' : listSkel()) + '</div></div>' + bulkBar();
+    + '<div class="chips" role="group" aria-label="Filter by status" data-chips>' + (held ? '' : skChips(5)) + '</div>'
+    + '<div class="chips" role="group" aria-label="Orders by emirate" data-emchips hidden></div><div data-list>' + (held ? '' : listSkel()) + '</div></div>' + bulkBar();
 }
 
 /* Grey bars shaped like the list: a day heading and order rows (initials,
@@ -137,7 +138,7 @@ export function fetchOrders(passive, force) {
     L.rows = merge(r.data.orders, L.rows, keep);
     if (!keep) { L.next = r.data.next; L.paged = false; }
     L.lastQ = q;
-    if (r.data.counts) { L.counts = r.data.counts; L.payments = r.data.payments || []; L.emails = r.data.emails || {}; }
+    if (r.data.counts) { L.counts = r.data.counts; L.payments = r.data.payments || []; L.emails = r.data.emails || {}; L.emirates = r.data.emirates || null; }
     L.today = r.data.today || L.today; L.yesterday = r.data.yesterday || L.yesterday;
     L.loaded = true;
     L.at = new Date().toISOString();
@@ -167,6 +168,7 @@ function paintList(view) {
   const filtered = L.from || L.to || L.payment;
   paint($('[data-chips]', view), chips.map(([k, l, n]) => '<button type="button" data-chip="' + k + '"' + (L.status === k ? ' class="on"' : '') + '>' + l + '<span>' + (k ? (L.counts[k] || 0) : n) + '</span></button>').join('')
     + '<button type="button" data-act="filters"' + (filtered ? ' class="on"' : '') + '>' + ic('filter', 's') + ' Filters</button>');
+  paintEmirates(view);
 
   const groups = [];
   L.rows.forEach((o) => {
@@ -175,14 +177,32 @@ function paintList(view) {
     groups[groups.length - 1][1].push(o);
   });
   paint($('[data-list]', view), (groups.length ? groups.map(([g, rows], i) => '<div class="og"><div class="gh"><span>' + g + '</span>' + (i === 0 ? '<button type="button" data-act="selall">Select all</button>' : '') + '</div><div class="list">' + rows.map(row).join('') + '</div></div>').join('')
-    : '<div class="card empty">' + (L.q || L.status || filtered ? 'No orders match.' : 'No orders yet.') + '</div>')
+    : '<div class="card empty">' + (L.q || L.status || L.emirate || filtered ? 'No orders match.' : 'No orders yet.') + '</div>')
     + (L.next ? '<button type="button" class="btn sec wide" data-act="more">Show more</button>' : ''));
   syncSel(view);
 }
 
+/*
+ * Orders by emirate (Lane EM): DXB 12 · AUH 4 · ALAIN 2 … Other, for the list's
+ * search, filters and status chip, counted by the server in the statement that
+ * counts the status chips. A tap shows that emirate's orders; tapping it again
+ * shows them all. The emirates with orders, busiest first; an empty one only
+ * while it is the one picked.
+ */
+function paintEmirates(view) {
+  const host = $('[data-emchips]', view);
+  if (!host) return;
+  const em = L.emirates;
+  if (!em) { host.hidden = true; return; }
+  const chips = (em.rows || []).map((r) => [r.key, r.code, r.orders, r.key]).concat([['other', 'Other', em.other || 0, 'Outside the UAE, or no emirate on the address']])
+    .filter(([k, , n]) => n || L.emirate === k);
+  host.hidden = !chips.length;
+  paint(host, chips.length ? chips.map(([k, c, n, t]) => '<button type="button" data-em="' + esc(k) + '" title="' + esc(t) + '"' + (L.emirate === k ? ' class="on"' : '') + '>' + esc(c) + '<span>' + n.toLocaleString('en-US') + '</span></button>').join('') : '');
+}
+
 export function row(o) {
   return '<div class="row ord' + (L.sel.has(o.id) ? ' on' : '') + (o.id === L.cur ? ' cur' : '') + '" data-o="' + o.id + '"><button type="button" class="sel" data-act="sel" aria-label="Select order ' + esc(o.number) + '">' + av(o.name) + ic('check') + '</button>'
-    + '<a class="rm" href="#/orders/' + o.id + '"><b>#' + esc(o.number) + ' <span>' + esc(o.name) + '</span></b><small>' + esc(day(o.created_at)) + ' · ' + esc(time(o.created_at))
+    + '<a class="rm" href="#/orders/' + o.id + '"><b>#' + esc(o.number) + ' <span>' + esc(o.name) + '</span></b><small>' + (o.emirate_code ? '<span class="em">' + esc(o.emirate_code) + '</span> · ' : '') + esc(day(o.created_at)) + ' · ' + esc(time(o.created_at))
     + (o.items !== null && o.items !== undefined ? ' · ' + o.items + ' item' + (o.items === 1 ? '' : 's') : '') + '</small>'
     + (o.source ? '<small class="src">' + esc(o.source) + '</small>' : '') + '</a>'
     + '<a class="re" href="#/orders/' + o.id + '" tabindex="-1"><b>' + esc(o.total_display) + '</b>' + pill(o.status) + '</a></div>';
@@ -307,7 +327,7 @@ function paintDetail(host) {
     + '<div class="kv tot"><span>Order total</span><span>' + esc(t.total) + '</span></div>'
     + (t.refunded ? '<div class="kv"><span>Refunded</span><span class="danger">−' + esc(t.refunded) + '</span></div>' : '') + payBlock(o) + '</section>'
     + journeyCard(o)
-    + '<section class="card"><h4 class="sh">Shipping</h4>' + addr(o.shipping || o.billing) + (o.shipping_method ? '<div class="kv"><span>Method</span><span>' + esc(o.shipping_method) + '</span></div>' : '')
+    + '<section class="card"><h4 class="sh">Shipping' + (o.emirate_code ? ' <span class="tag" title="' + esc(o.emirate) + '">' + esc(o.emirate_code) + '</span>' : '') + '</h4>' + addr(o.shipping || o.billing) + (o.shipping_method ? '<div class="kv"><span>Method</span><span>' + esc(o.shipping_method) + '</span></div>' : '')
     + '<details><summary class="lnk">' + ic('down', 's') + 'Show billing</summary>' + addr(o.billing) + '</details></section>'
     + '<section class="card"><h4 class="sh">Customer</h4><' + (o.customer.id ? 'a href="#/customers/' + o.customer.id + '"' : 'div') + ' class="row">' + av(o.customer.name || o.email) + '<div class="rm"><b>' + esc(o.customer.name || o.email) + '</b><small>' + o.customer.orders + ' order' + (o.customer.orders === 1 ? '' : 's') + ' · ' + esc(o.customer.spent_display) + ' lifetime</small></div>' + (o.customer.id ? ic('chev', 'chev s') : '') + '</' + (o.customer.id ? 'a' : 'div') + '>'
     + (phone ? '<div class="kv cu-ph"><span>Phone</span><a href="tel:' + esc(tel) + '">' + esc(phone) + '</a></div>' : '')
@@ -326,11 +346,12 @@ const pillCode = (s) => ({ pending: 'pend', processing: 'proc', onhold: 'hold', 
 /* ---------------------------------------------------------------- clicks */
 
 export async function ordersClick(e, view) {
-  const b = e.target.closest('[data-act],[data-chip]');
+  const b = e.target.closest('[data-act],[data-chip],[data-em]');
   const act = b ? b.getAttribute('data-act') : null;
   const rowEl = e.target.closest('.row.ord');
 
   if (b && b.hasAttribute('data-chip')) { L.status = b.getAttribute('data-chip'); await loadList(view); return true; }
+  if (b && b.hasAttribute('data-em')) { const k = b.getAttribute('data-em'); L.emirate = L.emirate === k ? '' : k; await loadList(view); return true; }
   // Bulk status change switched off (Customise app, Lane OA4): no selecting at all; the server refuses it too.
   if (!fn('bulk') && ['sel', 'selall', 'selnone', 'bulk', 'bulk-more'].indexOf(act) !== -1) return true;
   if (!fn('bulk') && act === 'selmode') return true;

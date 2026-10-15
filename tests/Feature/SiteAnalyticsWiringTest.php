@@ -136,6 +136,12 @@ it('shows each order\'s source on the list, filters by it, and costs the list no
     for ($i = 0; $i < 9; $i++) {
         anwOrder($i % 2 ? 'tiktok_ads' : null, 'c'.$i);
     }
+    // Lane EM: the FIRST look after new orders arrive reads their emirates
+    // once (orders.ship_emirate; the checkout does not write it) -- one SELECT,
+    // one UPDATE per distinct emirate, one recount of the chips. A constant per
+    // batch, not per row: nine new orders here, all without an address, cost 3.
+    [$first] = $count();
+    expect($first)->toBe($small + 3);
     [$large] = $count();
     // The number itself, so a lane that adds a query has to say so here.
     expect($large)->toBe($small)->and($small)->toBe(8);

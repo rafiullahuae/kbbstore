@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Services\Payments\PaymentRefunder;
 use App\Support\DemoSeed;
 use App\Support\Money;
+use App\Support\OrderEmirate;
 use App\Support\StoreTime;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -153,6 +154,15 @@ class OrdersApiController extends Controller
         try {
             return $this->listing($request);
         } catch (\Illuminate\Database\QueryException $e) {
+            // New code against the old schema, for the seconds an update
+            // takes: the list is drawn without the emirate rather than not at
+            // all. Every other database error is reported as before.
+            if (OrderEmirate::ready() && OrderEmirate::isMissingColumn($e)) {
+                OrderEmirate::markMissing();
+
+                return $this->listing($request);
+            }
+
             report($e);
 
             return response()->json([
@@ -173,7 +183,26 @@ class OrdersApiController extends Controller
         // describe the list the other filters have already narrowed to.
         $base = $this->baseQuery($request);
 
-        $counts = $this->statusCounts($base, $request);
+        // Lane EM: the chip counts and the "Orders by emirate" strip come from
+        // ONE grouped statement over the view WITHOUT the emirate filter -- the
+        // strip has to show every emirate while one is picked, the way the
+        // status chips show every status while one is picked.
+        $emirate = $this->emirateFilter($request);
+        $counts = $this->statusCounts($this->baseQuery($request, false), $request, $emirate, $filter);
+
+        /*
+         * An order nobody has read the emirate of yet (placed since the last
+         * look; the checkout does not write the column) shows up in that same
+         * statement as a NULL group. Only then are the newest such orders read
+         * and the counts taken again, BEFORE the rows and the filter use them.
+         * So a list with nothing new costs no query for this at all -- the
+         * page stays inside the budget AdminOrdersTest holds it to -- and an
+         * order placed a second ago is counted under its emirate on the first
+         * look. fillMissing() never throws.
+         */
+        if ($counts['unread'] > 0 && OrderEmirate::fillMissing() > 0) {
+            $counts = $this->statusCounts($this->baseQuery($request, false), $request, $emirate, $filter, $counts['counts']['trashed']);
+        }
 
         $query = $this->applyFilter(clone $base, $filter);
 
@@ -207,6 +236,10 @@ class OrdersApiController extends Controller
             // The Source filter's choices (Lane AN): a constant, no query.
             'sources' => ['unknown' => 'Unknown'] + \App\Services\Analytics\Channels::MAP,
             'revenue_statuses' => Order::REAL_STATUSES,
+            // Lane EM: orders by emirate in this view (null in the trash, or
+            // while the column is not there yet) and the emirate picked.
+            'emirates' => $counts['emirates'],
+            'emirate' => $emirate === null ? null : ($emirate === '' ? OrderEmirate::OTHER : $emirate),
             // Lane ORD: for the bulk bar's confirmation line.
             'status_emails' => self::emailingStatuses(),
             /*
@@ -276,12 +309,13 @@ class OrdersApiController extends Controller
          * counting rows written and stopping the walk. Returning false from the
          * chunk callback is how chunk() is told to stop.
          */
-        $query = $this->applySort(
+        $build = fn () => $this->applySort(
             $this->withLineAndRefundTotals(
                 $this->applyFilter($this->baseQuery($request), $filter)
             ),
             $sort
         );
+        $query = $build();
 
         $filename = 'orders-' . now()->format('Y-m-d') . '.csv';
 
@@ -292,7 +326,7 @@ class OrdersApiController extends Controller
             'X-Content-Type-Options' => 'nosniff',
         ];
 
-        return response()->stream(function () use ($query) {
+        return response()->stream(function () use ($query, $build) {
             $out = fopen('php://output', 'w');
 
             // UTF-8 BOM: without it Excel on Windows reads an Arabic or accented
@@ -325,13 +359,19 @@ class OrdersApiController extends Controller
                  * tells the truth.
                  */
                 'is_demo',
+                /*
+                 * Lane EM: the emirate the order went to (Dubai, Al Ain ...),
+                 * blank abroad or unreadable. APPENDED LAST for the reason
+                 * is_demo is: every column before it keeps its position.
+                 */
+                'emirate',
             ]);
 
             $currency = Money::currency();
 
             $written = 0;
 
-            $query->chunk(self::EXPORT_CHUNK, function ($chunk) use ($out, $currency, &$written) {
+            $walk = function ($chunk) use ($out, $currency, &$written) {
                 foreach ($chunk as $order) {
                     if ($written >= self::EXPORT_MAX) {
                         return false;
@@ -368,9 +408,25 @@ class OrdersApiController extends Controller
                         $row['trashed'] ? 'yes' : 'no',
                         $currency,
                         $row['is_demo'] ? 'yes' : 'no',
+                        $row['emirate'] ?? '',
                     ]));
                 }
-            });
+            };
+
+            try {
+                $query->chunk(self::EXPORT_CHUNK, $walk);
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Lane EM: new code against the old schema for the seconds an
+                // update takes -- the file is written without the stored
+                // emirate (rowToApi() reads it from the addresses) rather than
+                // cut off after its header.
+                if ($written !== 0 || ! OrderEmirate::ready() || ! OrderEmirate::isMissingColumn($e)) {
+                    throw $e;
+                }
+
+                OrderEmirate::markMissing();
+                $build()->chunk(self::EXPORT_CHUNK, $walk);
+            }
 
             fclose($out);
         }, 200, $headers);
@@ -729,7 +785,7 @@ class OrdersApiController extends Controller
      */
     private function rowQuery(?Builder $from = null): Builder
     {
-        return ($from ?? Order::query())
+        $query = ($from ?? Order::query())
             ->leftJoin('customers as c', 'c.id', '=', 'orders.customer_id')
             ->select([
                 // An explicit allowlist. `orders` also carries ip_address and
@@ -767,6 +823,10 @@ class OrdersApiController extends Controller
                 DB::raw('c.first_name as account_first_name'),
                 DB::raw('c.last_name as account_last_name'),
             ]);
+
+        // Lane EM: the stored emirate, when the column is there. Without it
+        // (mid-update) rowToApi() reads the addresses it already has.
+        return OrderEmirate::ready() ? $query->addSelect('orders.ship_emirate') : $query;
     }
 
     /**
@@ -817,8 +877,11 @@ class OrdersApiController extends Controller
             ->addSelect([DB::raw('COALESCE(ra.refunded_fils, 0) as refunded_fils')]);
     }
 
-    /** Everything the operator typed, except the chip. */
-    private function baseQuery(Request $request): Builder
+    /**
+     * Everything the operator typed, except the chip -- and, with $emirate
+     * false, except the emirate too (the strip's own view).
+     */
+    private function baseQuery(Request $request, bool $emirate = true): Builder
     {
         $query = $this->rowQuery();
 
@@ -922,7 +985,24 @@ class OrdersApiController extends Controller
             $query->where('orders.src_channel', '=', $source);
         }
 
+        // Emirate (Lane EM): a name, the owner's code (DXB, ALAIN ...) or
+        // "other"; anything else is ignored, as Source ignores it.
+        $picked = $emirate ? $this->emirateFilter($request) : null;
+
+        if ($picked !== null) {
+            $query->where('orders.ship_emirate', '=', $picked);
+        }
+
         return $query;
+    }
+
+    /**
+     * The emirate picked, as the stored value it selects ('' for Other), or
+     * null for none, for junk, and while the column is not there yet.
+     */
+    private function emirateFilter(Request $request): ?string
+    {
+        return OrderEmirate::ready() ? OrderEmirate::filterValue($request->query('emirate')) : null;
     }
 
     /**
@@ -986,19 +1066,59 @@ class OrdersApiController extends Controller
      *
      * @return array{counts: array<string,int>, statuses: list<string>}
      */
-    private function statusCounts(Builder $base, Request $request): array
+    private function statusCounts(Builder $base, Request $request, ?string $emirate = null, string $filter = 'all', ?int $trashed = null): array
     {
-        $rows = $this->aggregateQuery($base, 'orders.status as s, COUNT(*) as c')
-            ->groupBy('orders.status')
-            ->get();
+        /*
+         * Lane EM: grouped by emirate as well, in the SAME statement, so the
+         * "Orders by emirate" strip costs no query of its own. $base carries no
+         * emirate filter; the status chips take the rows of the emirate picked,
+         * the strip takes the rows of the chip picked.
+         */
+        $byEmirate = OrderEmirate::ready();
+
+        $rows = $byEmirate
+            ? $this->aggregateQuery($base, 'orders.status as s, orders.ship_emirate as e, COUNT(*) as c')
+                ->groupBy('orders.status', 'orders.ship_emirate')
+                ->get()
+            : $this->aggregateQuery($base, 'orders.status as s, COUNT(*) as c')
+                ->groupBy('orders.status')
+                ->get();
 
         $counts = [];
         $all = 0;
         $paid = 0;
+        $places = array_fill_keys(array_keys(OrderEmirate::CODES), 0);
+        $other = 0;
+        $unread = 0;
+        $anyUnread = 0;
 
         foreach ($rows as $row) {
             $status = (string) ($row->s ?? '');
             $n = (int) $row->c;
+
+            if ($byEmirate) {
+                $e = $row->e === null ? null : (string) $row->e;
+                $known = $e !== null && isset($places[$e]);
+
+                if ($e === null) {
+                    $anyUnread += $n;
+                }
+
+                if ($this->chipTakes($filter, $status)) {
+                    if ($e === null) {
+                        $unread += $n;
+                    } elseif ($known) {
+                        $places[$e] += $n;
+                    } else {
+                        $other += $n;
+                    }
+                }
+
+                // The status chips describe the emirate picked.
+                if ($emirate !== null && $e !== $emirate) {
+                    continue;
+                }
+            }
 
             $counts[$status] = ($counts[$status] ?? 0) + $n;
             $all += $n;
@@ -1008,7 +1128,9 @@ class OrdersApiController extends Controller
             }
         }
 
-        $trashed = (int) $this->applyFilter($this->baseQuery($request), 'trashed')
+        // Lane EM: a recount after reading new orders' emirates keeps the
+        // trash figure it already has -- reading an emirate trashes nothing.
+        $trashed ??= (int) $this->applyFilter($this->baseQuery($request), 'trashed')
             ->toBase()
             ->getCountForPagination();
 
@@ -1025,7 +1147,34 @@ class OrdersApiController extends Controller
         $counts['paid'] = $paid;
         $counts['trashed'] = $trashed;
 
-        return ['counts' => $counts, 'statuses' => $statuses];
+        $strip = null;
+
+        if ($byEmirate && $filter !== 'trashed') {
+            arsort($places);
+            $strip = [
+                'rows' => array_map(
+                    fn (string $name, int $n) => ['key' => $name, 'code' => OrderEmirate::CODES[$name], 'orders' => $n],
+                    array_keys($places),
+                    array_values($places)
+                ),
+                'other' => $other,
+                'unread' => $unread,
+                'total' => array_sum($places) + $other + $unread,
+            ];
+        }
+
+        return ['counts' => $counts, 'statuses' => $statuses, 'emirates' => $strip, 'unread' => $anyUnread];
+    }
+
+    /** Whether a row of this status is in the view the chip $filter picks. */
+    private function chipTakes(string $filter, string $status): bool
+    {
+        return match ($filter) {
+            'all', '' => true,
+            'paid' => in_array($status, Order::REAL_STATUSES, true),
+            'trashed' => false,
+            default => $status === $filter,
+        };
     }
 
     /**
@@ -1187,6 +1336,11 @@ class OrdersApiController extends Controller
         $billing = $this->address($o->billing_address);
         $shipping = $this->address($o->shipping_address);
 
+        $emirate = $o->ship_emirate ?? null;
+        if (! is_string($emirate)) {
+            $emirate = OrderEmirate::read($shipping, $billing);
+        }
+
         $name = trim((string) ($o->account_name ?? ''));
 
         if ($name === '') {
@@ -1219,6 +1373,12 @@ class OrdersApiController extends Controller
             'phone' => $this->blankToNull($o->phone),
             'city' => $this->blankToNull($shipping['city'] ?? $billing['city'] ?? null),
             'country' => $this->blankToNull($shipping['country'] ?? $billing['country'] ?? null),
+            // Lane EM: the emirate the order went to ('Dubai' ... 'Al Ain') and
+            // the owner's short code (DXB ... ALAIN); null abroad or unread.
+            // Stored on the row; read from the two addresses already in hand
+            // while it is not (a row the fill has not reached, or mid-update).
+            'emirate' => $emirate === '' ? null : $emirate,
+            'emirate_code' => OrderEmirate::code($emirate),
             'units' => (int) $o->units,
             'lines' => (int) $o->lines_count,
             'total_fils' => $total,

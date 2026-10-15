@@ -1,0 +1,20 @@
+admin 1280: scrollWidth 1280 / clientWidth 1280; rows 50; headers ["","Order","Customer","Emirate","Status","Items","Total","Payment","Placed ▾","City",""]
+admin 1280: strip ["DXB 73 55%","AUH 15 11%","SHJ 15 11%","ALAIN 9 7%","AJM 7 5%","RAK 5 4%","UMQ 2 2%","FUJ 2 2%","Other 5 4%"]
+admin 1280: first pill {"text":"DXB","title":"Dubai","font":"11px"}  (layout saved before the column existed: Emirate still shown = true)
+admin 1280: strip chips answering elementFromPoint 9/9
+admin 1280: after DXB click (939 ms): codes in list ["DXB"]; chip on "DXB 73 55%"; tile "73"; pager "1–50 of 73"
+admin 1280: clicked again: a chip still on = false; pager "1–50 of 133"
+admin 1280: ALAIN filter shows ["ALAIN/Al Ain","ALAIN/العين"]
+admin 1280: errors ["console Failed to load resource: the server responded with a status of 404 (Not Found)"]
+admin 390: scrollWidth 390 / clientWidth 390; rows 50; headers ["","Order","Customer","Emirate","Status","Items","Total","Payment","Placed ▾","City",""]
+admin 390: strip ["DXB 73 55%","AUH 15 11%","SHJ 15 11%","ALAIN 9 7%","AJM 7 5%","RAK 5 4%","UMQ 2 2%","FUJ 2 2%","Other 5 4%"]
+admin 390: first pill {"text":"DXB","title":"Dubai","font":"11px"}  (layout saved before the column existed: Emirate still shown = true)
+admin 390: strip chips answering elementFromPoint 9/9
+admin 390: after DXB click (795 ms): codes in list ["DXB"]; chip on "DXB 73 55%"; tile "73"; pager "1–50 of 73"
+admin 390: clicked again: a chip still on = false; pager "1–50 of 133"
+admin 390: ALAIN filter shows ["ALAIN/Al Ain","ALAIN/العين"]
+admin 390: errors []
+owner app 390: scrollWidth 390; emirate chips ["DXB73","AUH15","SHJ15","ALAIN9","AJM7","RAK5","UMQ2","FUJ2","Other5"]; first rows' codes ["AUH","DXB","DXB","DXB","AJM","SHJ"]
+owner app 390: after ALAIN tap: rows 9, codes ["ALAIN"], chip on "ALAIN9"
+owner app 390: order screen Shipping heading "Shipping ALAIN"
+owner app 390: errors []

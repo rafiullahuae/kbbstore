@@ -13,6 +13,7 @@ use App\Models\Order;
 use App\Services\OwnerApp\OwnerAppEvents;
 use App\Support\ImageVariants;
 use App\Support\Money;
+use App\Support\OrderEmirate;
 use App\Support\OrderPaymentPanel;
 use App\Support\StoreTime;
 use Carbon\CarbonImmutable;
@@ -67,22 +68,62 @@ final class OrdersController extends Controller
             return $r;
         }
 
+        try {
+            return $this->listing($request);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Lane EM: new code against the old schema for the seconds an
+            // update takes -- the list without emirates rather than a 500.
+            if (! OrderEmirate::ready() || ! OrderEmirate::isMissingColumn($e)) {
+                throw $e;
+            }
+
+            OrderEmirate::markMissing();
+
+            return $this->listing($request);
+        }
+    }
+
+    private function listing(Request $request): JsonResponse
+    {
+        $byEmirate = OrderEmirate::ready();
+
         $base = $this->filtered($request);
         $status = (string) $request->query('status', '');
         $before = max(0, (int) $request->query('before', 0));
+        $emirate = $byEmirate ? OrderEmirate::filterValue($request->query('emirate')) : null;
+
+        /*
+         * Lane EM: with the first page, the chip counts are grouped by emirate
+         * too, in the SAME statement. An order whose emirate nobody has read
+         * yet (the checkout does not write the column) is a NULL group there;
+         * only then are the newest such orders read and the counts taken again,
+         * BEFORE the rows and the emirate filter use them. Nothing new costs
+         * nothing.
+         */
+        $grouped = null;
+        if ($before === 0 && $byEmirate) {
+            $group = fn () => (clone $base)->groupBy('o.status', 'o.ship_emirate')
+                ->selectRaw('o.status as s, o.ship_emirate as e, COUNT(*) as n')->get();
+            $grouped = $group();
+
+            if ($grouped->contains(fn ($g) => $g->e === null) && OrderEmirate::fillMissing() > 0) {
+                $grouped = $group();
+            }
+        }
 
         $rows = (clone $base)
             ->when(in_array($status, self::STATUSES, true), fn (Builder $q) => $q->where('o.status', $status))
+            ->when($emirate !== null, fn (Builder $q) => $q->where('o.ship_emirate', $emirate))
             ->when($before > 0, fn (Builder $q) => $q->where('o.id', '<', $before))
             ->leftJoin('customers as c', 'c.id', '=', 'o.customer_id')
             ->orderByDesc('o.id')
             ->limit(self::PER_PAGE + 1)
-            ->get([
+            ->get(array_merge([
                 'o.id', 'o.order_number', 'o.status', 'o.total', 'o.created_at', 'o.payment_method',
                 'o.payment_method_title', 'o.billing_address', 'c.name as c_name',
                 'o.src_channel', 'o.src_campaign',
                 DB::raw('(SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) as items_n'),
-            ]);
+            ], $byEmirate ? ['o.ship_emirate'] : []));
 
         $more = $rows->count() > self::PER_PAGE;
         $rows = $rows->take(self::PER_PAGE);
@@ -97,7 +138,19 @@ final class OrdersController extends Controller
 
         // The chip counts only with the first page: one GROUP BY over the same
         // filters, not one per status and not one per page.
-        if ($before === 0) {
+        if ($grouped !== null) {
+            // Lane EM: the status chips count the emirate picked; "By emirate"
+            // counts the status picked -- each shows every choice while the
+            // other is set.
+            [$out['counts'], $out['emirates']] = self::countsByEmirate(
+                $grouped,
+                in_array($status, self::STATUSES, true) ? $status : null,
+                $emirate,
+            );
+            $out['emirate'] = $emirate === null ? null : ($emirate === '' ? OrderEmirate::OTHER : $emirate);
+            $out['payments'] = self::paymentMethods();
+            $out['emails'] = OrdersApiController::emailingStatuses();
+        } elseif ($before === 0) {
             $out['counts'] = (clone $base)->groupBy('o.status')->selectRaw('o.status as s, COUNT(*) as n')
                 ->pluck('n', 's')->map(fn ($n) => (int) $n);
             $out['payments'] = self::paymentMethods();
@@ -107,6 +160,50 @@ final class OrdersController extends Controller
         }
 
         return response()->json($out);
+    }
+
+    /**
+     * Lane EM: the status chips and the "By emirate" chips from one grouped
+     * result of (status, emirate, n). Every emirate is listed, busiest first,
+     * then Other ('' -- abroad or unreadable) and the rows not read yet.
+     *
+     * @param  iterable<object>  $rows
+     * @return array{0: array<string,int>, 1: array{rows: list<array{key:string,code:string,orders:int}>, other:int, unread:int}}
+     */
+    private static function countsByEmirate(iterable $rows, ?string $status, ?string $emirate): array
+    {
+        $counts = [];
+        $places = array_fill_keys(array_keys(OrderEmirate::CODES), 0);
+        $other = 0;
+        $unread = 0;
+
+        foreach ($rows as $r) {
+            $s = (string) $r->s;
+            $e = $r->e === null ? null : (string) $r->e;
+            $n = (int) $r->n;
+
+            if ($emirate === null || $e === $emirate) {
+                $counts[$s] = ($counts[$s] ?? 0) + $n;
+            }
+
+            if ($status === null || $s === $status) {
+                if ($e === null) {
+                    $unread += $n;
+                } elseif (isset($places[$e])) {
+                    $places[$e] += $n;
+                } else {
+                    $other += $n;
+                }
+            }
+        }
+
+        arsort($places);
+
+        return [$counts, [
+            'rows' => array_map(fn (string $k, int $n) => ['key' => $k, 'code' => OrderEmirate::CODES[$k], 'orders' => $n], array_keys($places), array_values($places)),
+            'other' => $other,
+            'unread' => $unread,
+        ]];
     }
 
     /** The list's filters, shared by the rows and the counts. */
@@ -201,6 +298,9 @@ final class OrdersController extends Controller
             // Lane AN: the Source chip; null where the row carried no column
             // (customer history, dashboard), so nothing is shown there.
             'source' => property_exists($o, 'src_channel') ? \App\Services\Analytics\Attribution::chip($o->src_channel, $o->src_campaign ?? null) : null,
+            // Lane EM: the owner's short code (DXB, AUH, ALAIN ...); null abroad,
+            // unread, or where the row carried no column (history, dashboard).
+            'emirate_code' => property_exists($o, 'ship_emirate') ? OrderEmirate::code($o->ship_emirate) : null,
         ];
     }
 
@@ -262,6 +362,10 @@ final class OrdersController extends Controller
         $mayPay = $this->may($request, 'orders.payment') && \App\Services\OwnerApp\OwnerAppUi::functionOn('mark_paid')
             && in_array((string) $order->status, OrderPaymentPanel::UNPAID_STATUSES, true);
 
+        // Lane EM: the stored emirate, or read from the addresses while it is
+        // not stored yet (or the column is not there yet). No query.
+        $emirate = is_string($order->ship_emirate) ? $order->ship_emirate : OrderEmirate::read($order->shipping_address, $order->billing_address);
+
         return response()->json([
             'ok' => true,
             'order' => [
@@ -276,6 +380,9 @@ final class OrdersController extends Controller
                 'phone' => (string) ($order->phone ?? ''),
                 'billing' => self::address($order->billing_address),
                 'shipping' => self::address($order->shipping_address),
+                // Lane EM: stored, or read from the addresses while it is not.
+                'emirate' => $emirate === '' ? null : $emirate,
+                'emirate_code' => OrderEmirate::code($emirate),
                 'shipping_method' => (string) ($order->shipping_method ?? ''),
                 'payment' => self::payment($order),
                 // (Lane TM) the Payment journey card. See App\Support\PaymentJourney.

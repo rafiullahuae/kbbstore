@@ -14072,13 +14072,20 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     perPage: +(localStorage.getItem('kbb_ord_pp') || 50),
     search: '', filter: 'all', sort: 'newest',
     from: '', to: '', totalMin: '', totalMax: '', payment: '', source: '',
+    /* Lane EM: the emirate picked on the "Orders by emirate" strip -- the
+       stored name ('Dubai', 'Al Ain') or 'other'; '' for every emirate. */
+    emirate: '',
     adv: false, colsOpen: false, cols: null, data: null, err: null, sel: {}, busy: false,
     /* Lane ORD: the status picked in "Set status to…" and waiting for Proceed,
        the request in flight, and the one-line answer drawn where the bar was. */
     pend: '', applying: false, result: null
   };
 
+  /* Emirate (Lane EM) is FIRST so it draws straight after Customer, where the
+     owner drew it. A new key, so a layout saved before it existed still shows
+     it: olCols() lays the saved choices over these defaults. */
   var OL_COLDEF = [
+    ['emirate', 'Emirate'],
     ['status', 'Status'], ['items', 'Items'], ['total', 'Total'], ['refunded', 'Refunded'],
     ['payment', 'Payment'], ['source', 'Source'], ['placed', 'Placed'], ['location', 'City'],
     ['contact', 'Phone'], ['wc', 'Woo ID']
@@ -14089,6 +14096,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      fill a 1032px content area; Woo's own screen shows more and pays for it on
      every page load. */
   var OL_COLS_DEFAULT = {
+    emirate: true,
     status: true, items: true, total: true, refunded: false,
     payment: true, source: true, placed: true, location: false, contact: false, wc: false
   };
@@ -14139,7 +14147,32 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     if(OL.totalMax !== '') p.set('total_max', OL.totalMax);
     if(OL.payment) p.set('payment', OL.payment);
     if(OL.source) p.set('source', OL.source);
+    if(OL.emirate) p.set('emirate', OL.emirate);
     return p.toString();
+  }
+
+  /* Lane EM. "Orders by emirate" for the view on screen: the same search,
+     status chip and Filters as the money tiles, counted by the server in the
+     statement that already counts the chips. Every emirate, busiest first,
+     then Other (abroad or no emirate on the address). A chip filters the list
+     to that emirate; the picked one clears it. Not in the trash. */
+  function olEmirates(d){
+    var em = d.emirates;
+    if(!em || !em.total) return '';
+    var pct = function(n){ return em.total ? Math.round(n * 100 / em.total) : 0; };
+    var chip = function(key, code, name, n){
+      var on = OL.emirate === key;
+      return '<button class="chip' + (on ? ' on' : '') + '" data-ole="' + sesc(key) + '" title="' + sesc(name) + ' · ' + n.toLocaleString() + ' order' + (n === 1 ? '' : 's') + (on ? ' · click again to show every emirate' : '') + '"' +
+        (n || on ? '' : ' style="opacity:.55"') + '><b>' + sesc(code) + '</b> ' + n.toLocaleString() +
+        (n ? ' <span style="opacity:.6">' + pct(n) + '%</span>' : '') + '</button>';
+    };
+    return '<div class="olem" style="margin:-4px 0 12px">' +
+      '<div style="font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Orders by emirate</div>' +
+      '<div class="chips">' +
+        (em.rows || []).map(function(r){ return chip(r.key, r.code, r.key, r.orders); }).join('') +
+        chip('other', 'Other', 'Outside the UAE, or no emirate on the address', em.other || 0) +
+        (em.unread ? '<span class="chip" style="cursor:default;opacity:.6" title="Orders whose emirate is being read; they are counted on the next refresh">Reading ' + em.unread.toLocaleString() + '</span>' : '') +
+      '</div></div>';
   }
 
   function olDash(v){ return (v === null || v === undefined || v === '') ? '<span style="color:var(--ink-faint)">—</span>' : sesc(v); }
@@ -14316,6 +14349,8 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 
       '<div class="chips" style="margin-bottom:12px">' + olChips(d) + '</div>' +
 
+      olEmirates(d) +
+
       (selected.length ? olSelectionBar(selected) : olResultLine()) +
 
       '<div class="card">' +
@@ -14442,7 +14477,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
   function olTable(d, cols){
     if(!d.orders.length){
       return '<p style="padding:34px;text-align:center;color:var(--ink-soft);font-size:13px">No orders match this view.' +
-        (olAdvCount() || OL.search || OL.filter !== 'all' ? ' <button class="btn ghost sm" id="olEmptyClear" style="margin-left:8px">Clear filters</button>' : '') + '</p>';
+        (olAdvCount() || OL.search || OL.filter !== 'all' || OL.emirate ? ' <button class="btn ghost sm" id="olEmptyClear" style="margin-left:8px">Clear filters</button>' : '') + '</p>';
     }
 
     var allOnPage = d.orders.every(function(o){ return OL.sel[o.id]; });
@@ -14520,6 +14555,18 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       case 'placed':
         return '<td style="white-space:nowrap;font-size:12px">' + olDate(o.placed_at) +
           (o.placed_at ? '<div class="pbrand">' + sesc(olAgo(o.placed_at)) + '</div>' : '') + '</td>';
+      case 'emirate':
+        /* Lane EM: the owner's short code as a pill (the full name on hover),
+           and under it the area or city typed on the address -- or the
+           emirate's full name when the address says nothing more. Abroad: the
+           country. Nothing on record: the dash every other cell uses. */
+        if(o.emirate_code){
+          var em_under = (o.city && String(o.city).toLowerCase() !== String(o.emirate).toLowerCase()) ? o.city : o.emirate;
+          return '<td style="white-space:nowrap;font-size:12px"><span class="pill grey" title="' + sesc(o.emirate) + '" style="font-family:var(--mono);letter-spacing:.02em">' + sesc(o.emirate_code) + '</span>' +
+            '<div class="pbrand" style="max-width:150px;overflow:hidden;text-overflow:ellipsis" title="' + sesc(em_under) + '">' + sesc(em_under) + '</div></td>';
+        }
+        return '<td style="white-space:nowrap;font-size:12px">' + olDash(o.country) +
+          (o.country && o.city ? '<div class="pbrand" style="max-width:150px;overflow:hidden;text-overflow:ellipsis">' + sesc(o.city) + '</div>' : '') + '</td>';
       case 'location':
         return '<td style="white-space:nowrap;font-size:12px">' + olDash(o.city) +
           (o.country ? '<div class="pbrand">' + sesc(o.country) + '</div>' : '') + '</td>';
@@ -14650,6 +14697,11 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       b.onclick = function(){ OL.filter = b.dataset.olf; OL.page = 1; OL.sel = {}; olLoad(); };
     });
 
+    /* Lane EM: an emirate chip filters the list to it; the picked one clears. */
+    $$$('#content .chip[data-ole]').forEach(function(b){
+      b.onclick = function(){ OL.emirate = OL.emirate === b.dataset.ole ? '' : b.dataset.ole; OL.page = 1; OL.sel = {}; olLoad(); };
+    });
+
     var adv = byId('olAdv');
     if(adv) adv.onclick = function(){ OL.adv = !OL.adv; olPaint(); };
 
@@ -14682,7 +14734,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 
     var clearAll = function(){
       OL.totalMin = ''; OL.totalMax = ''; OL.from = ''; OL.to = '';
-      OL.payment = ''; OL.source = ''; OL.search = ''; OL.filter = 'all';
+      OL.payment = ''; OL.source = ''; OL.search = ''; OL.filter = 'all'; OL.emirate = '';
       OL.page = 1; olLoad();
     };
     var clearBtn = byId('olClearFilters'); if(clearBtn) clearBtn.onclick = clearAll;
@@ -14925,7 +14977,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     try{
       var d = await api('/admin-api/orders-list?' + qs);
       if(!OL.data || qs !== olParams(false) || !document.getElementById('olSearch')) return;
-      OL.data.counts = d.counts; OL.data.summary = d.summary; OL.data.statuses = d.statuses;
+      OL.data.counts = d.counts; OL.data.summary = d.summary; OL.data.statuses = d.statuses; OL.data.emirates = d.emirates;
       var a = document.activeElement;
       if(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) && document.querySelector('#content').contains(a)) return;
       olPaint();

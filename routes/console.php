@@ -236,3 +236,16 @@ Schedule::command('kbb:firewall data --auto')
 Schedule::command('kbb:analytics-rollup')
     ->everyMinute()
     ->withoutOverlapping(5);
+
+/*
+| ── ORDERS BY EMIRATE (Lane EM) ────────────────────────────────────────────
+|
+| Store -> Orders counts and filters by `orders.ship_emirate`. The checkout does
+| not write it (the payment path is locked), so this reads the emirate of any
+| order that has none yet. The admin list and the owner app do the same when
+| opened; this keeps the figures right while nobody is looking. One indexed
+| `IS NULL` query a minute when there is nothing to do.
+*/
+Schedule::command('kbb:order-emirates')
+    ->everyMinute()
+    ->withoutOverlapping(5);

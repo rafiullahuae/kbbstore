@@ -634,6 +634,16 @@ class AdminOrderController extends Controller
             return response()->json(['ok' => true, 'changed' => 0, 'message' => 'Nothing changed.']);
         }
 
+        // Lane EM: the emirate Store -> Orders counts by, read again from the
+        // edited address. Only when the row carries the column (find() selects
+        // every column), so the edit still saves on the old schema.
+        if (array_key_exists('ship_emirate', $order->getAttributes())) {
+            $write['ship_emirate'] = \App\Support\OrderEmirate::read(
+                $column === 'shipping_address' ? $new : $order->shipping_address,
+                $column === 'billing_address' ? $new : $order->billing_address,
+            );
+        }
+
         $order->forceFill($write)->save();
 
         $by = auth('admin')->user()?->name ?? 'Admin';

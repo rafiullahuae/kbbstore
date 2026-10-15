@@ -175,7 +175,10 @@ it('has nothing that outlives a single request', function () {
     // Gmail bounce label over IMAP, files each report and exits; while bounce
     // reading is off it returns before opening a connection. Nothing is held
     // between runs.
-    expect(substr_count($console, 'Schedule::command('))->toBe(11, 'the set of scheduled commands has changed');
+    // 12 with Lane EM: `kbb:order-emirates`, every minute -- stores the
+    // emirate of orders that carry none yet (one indexed IS NULL query when
+    // there are none), exits. Nothing is held between runs.
+    expect(substr_count($console, 'Schedule::command('))->toBe(12, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {

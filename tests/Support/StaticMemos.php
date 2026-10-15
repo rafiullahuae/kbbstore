@@ -86,6 +86,10 @@ final class StaticMemos
             InstalledVersion::class => static fn () => InstalledVersion::forget(),
             Facets::class => static fn () => Facets::reset(),
             // Lane BH: whether brands.logo_color / ring_color exist yet.
+            /* Lane EM: "the ship_emirate column is not there yet", set by the
+               test that drops it; carried over, every later test's list would
+               be drawn without emirates. */
+            \App\Support\OrderEmirate::class => static fn () => \App\Support\OrderEmirate::reset(),
             \App\Support\BrandLogo::class => static fn () => \App\Support\BrandLogo::forgetColumns(),
             // Lane BR2: whether brands.header_layout exists yet.
             \App\Support\BrandPanel::class => static fn () => \App\Support\BrandPanel::forgetColumn(),
