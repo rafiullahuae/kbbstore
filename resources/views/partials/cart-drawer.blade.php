@@ -65,7 +65,10 @@
     // usable now; read from a settings snapshot, so no query. couponLine()
     // escapes the owner's wording and the code; the wrapper is a constant.
     // 2.60.512: design A, the dashed ticket (CartPanel::couponHint()).
-    $kbbCc = $count ? $cpText->couponHint() : '';
+    // method_exists: while an update is landing, PHP's opcode cache can still
+    // hand this new view the OLD CartPanel for a few seconds; the panel then
+    // draws no ticket instead of failing (2.60.513).
+    $kbbCc = $count && method_exists($cpText, 'couponHint') ? $cpText->couponHint() : '';
 @endphp
 
 <div class="kc-fragment">

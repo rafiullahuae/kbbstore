@@ -395,3 +395,39 @@ it('moves the old shipped wording to the new sentence and leaves the owner\'s ow
     SettingsService::forgetMemo();
     expect(app(CartPanel::class)->all()['txt_coupon'])->toBe('My own {coupon-code} words');
 });
+
+it('lands even when the server still runs the old classes: the migrations use literals only (2.60.513)', function () {
+    /*
+     * What happened on the shop: the updater runs migrations in the request
+     * that copied the files, and PHP's opcode cache can still serve the OLD
+     * CartPanel there. 2.60.512's migration read CartPanel::COUPON_TEXT_OLD,
+     * which the old class answers with "Undefined constant", so the update
+     * was not kept: the panel kept "Need Discount? Use coupon code glow on
+     * checkout", the cart page and checkout drew no coupon row.
+     *
+     * MUTATION: put `CartPanel::COUPON_TEXT` back into either migration and
+     * this is red.
+     */
+    foreach (['2027_11_01_700000_coupon_ticket_design_a.php', '2027_11_01_800000_coupon_ticket_wording_and_fresh_code.php'] as $file) {
+        // The code only: comments may tell the story.
+        $src = implode('', array_map(
+            fn ($t) => is_array($t) ? (in_array($t[0], [T_COMMENT, T_DOC_COMMENT], true) ? '' : $t[1]) : $t,
+            token_get_all((string) file_get_contents(database_path('migrations/'.$file)))
+        ));
+        expect($src)->not->toContain('CartPanel::')->not->toContain('CheckoutPage::')->not->toContain('Services\\CartPanel;')->not->toContain('Services\\CheckoutPage;');
+    }
+
+    // And the new wording is what the shop shows, whatever was stored before.
+    app(CartPanel::class)->save(['txt_coupon' => 'Need Discount? Use coupon code {coupon-code} on checkout', 'txt_coupon_ar' => 'something else {coupon-code}']);
+    app(\App\Services\CheckoutPage::class)->save(['cline_on' => false]);
+    (require database_path('migrations/2027_11_01_800000_coupon_ticket_wording_and_fresh_code.php'))->up();
+    SettingsService::forgetMemo();
+
+    expect(app(CartPanel::class)->all()['txt_coupon'])->toBe(CartPanel::COUPON_TEXT)
+        ->and(app(CartPanel::class)->all()['txt_coupon_ar'])->toBe(CartPanel::COUPON_TEXT_AR)
+        ->and(app(\App\Services\CheckoutPage::class)->get('cline_on'))->toBeTrue();
+
+    qkChoose(qkCoupon(['code' => 'glow']));
+    expect(qkPage(qkCart()))->toContain('<span class="kc-cch-t">Use coupon code: <button type="button" class="kc-cc" data-kccopy="GLOW"');
+});
+

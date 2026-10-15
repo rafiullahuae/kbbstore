@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Services\CartPanel;
-use App\Services\CheckoutPage;
 use App\Services\SettingsService;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
@@ -24,16 +22,24 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // ▲ LITERALS AND THE SETTINGS WRITER ONLY -- never a constant or method
+        // this package adds. The updater runs migrations in the request that
+        // copied the files, where PHP's opcode cache can still hold the OLD
+        // CartPanel; the first version of this file read
+        // CartPanel::COUPON_TEXT_OLD, which that old class does not have
+        // ("Undefined constant"), and the update rolled back (2.60.512).
+        $settings = app(SettingsService::class);
+
         foreach ([
-            'txt_coupon' => [CartPanel::COUPON_TEXT_OLD, CartPanel::COUPON_TEXT],
-            'txt_coupon_ar' => [CartPanel::COUPON_TEXT_AR_OLD, CartPanel::COUPON_TEXT_AR],
+            'cartpanel_txt_coupon' => ['Need Discount? Use coupon code {coupon-code} on checkout', 'Use coupon code: {coupon-code} on checkout page.'],
+            'cartpanel_txt_coupon_ar' => ['تحتاج خصمًا؟ استخدم كود الخصم {coupon-code} عند الدفع', 'استخدمي كود الخصم: {coupon-code} في صفحة الدفع.'],
         ] as $key => [$old, $new]) {
-            if (DB::table('settings')->where('key', 'cartpanel_'.$key)->value('value') === $old) {
-                app(CartPanel::class)->save([$key => $new]);
+            if (DB::table('settings')->where('key', $key)->value('value') === $old) {
+                $settings->set($key, $new);
             }
         }
 
-        app(CheckoutPage::class)->save(['cline_on' => true]);
+        $settings->set('checkoutpage_cline_on', true);
         SettingsService::forgetMemo();
 
         $cleared = 0;

@@ -711,7 +711,7 @@
      sentence never wraps and its size follows the width (calc, no script).
      Copying shows "Copied" inside the row's end for a moment, laid over it
      (absolute), so copying moves nothing; the green tick is the checkout's. */
-  .kc-cch{position:relative;display:flex;align-items:center;gap:8px;box-sizing:border-box;max-width:100%;margin:0 0 8px;padding:7px 10px;background:#FFF0F4;border:1.5px dashed #ecaec4;border-radius:12px;color:#5e545a;font-size:12.5px;line-height:1.4;white-space:nowrap}
+  .kc-cch{position:relative;display:flex;align-items:center;gap:8px;box-sizing:border-box;max-width:100%;overflow:hidden;margin:0 0 8px;padding:7px 10px;background:#FFF0F4;border:1.5px dashed #ecaec4;border-radius:12px;color:#5e545a;font-size:12.5px;line-height:1.4;white-space:nowrap}
   .kc-cch-ic{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#fff;color:#C13E63}
   .kc-cch-ic svg{width:15px;height:15px}
   .kc-cch-t{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
@@ -724,7 +724,16 @@
   .kc-cc-cp{flex:none;width:11px;height:11px}
   .kbb-cartpage .kc-cch{width:fit-content;margin:0 0 14px}
   #kcCart .kc-cch{font-size:12px}
-  @media(max-width:359px){#kcCart .kc-cch-ic{display:none}#kcCart .kc-cch.kc-cch{font-size:2.85vw}}
+  /* 2.60.513, the owner: "the line must not go outside the panel, the row
+     itself should adjust the overall size, and must show in one line". The
+     panel's width is the owner's setting, so the sentence sizes from the ROW'S
+     OWN width (container units, measured by the browser once in CSS, no
+     script): the sentence is ~23em, so its type is the room beside the tag
+     divided by 23. A browser without container units drops these lines and
+     keeps the vw size above; overflow:hidden on the row is the last guard. */
+  #kcCart .kc-cch{container-type:inline-size}
+  #kcCart .kc-cch-t{font-size:clamp(7px,calc((100cqi - 36px) / 23.5),12.5px)}
+  @media(max-width:359px){#kcCart .kc-cch-ic{display:none}#kcCart .kc-cch.kc-cch{font-size:2.85vw}#kcCart .kc-cch-t.kc-cch-t{font-size:clamp(7px,calc(100cqi / 23.5),12px)}}
 
   /* ===== BANNERS MODULE — hero slider ===== */
   .heroslider{position:relative;overflow:hidden;background:var(--cream)}
@@ -1054,6 +1063,7 @@
     .kc-cc{padding:1px 4px;gap:2px;letter-spacing:.03em}
     .kc-cc-cp{width:9px;height:9px}
     #kcCart .kc-cch{gap:4px;padding:5px 6px;font-size:2.75vw}
+    #kcCart .kc-cch-t{font-size:clamp(7px,calc((100cqi - 22px) / 23.5),12.5px)}
     #kcCart .kc-cc{padding:1px 3px}
     #kcCart .kc-cch-ic{width:auto;height:auto;background:none}
     .search-wrap{display:none}

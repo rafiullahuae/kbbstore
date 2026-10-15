@@ -56,7 +56,7 @@
         <a class="cobtn" style="max-width:260px;margin:0 auto" href="{{ Url::to('/shop/') }}">{{ __('store.cart.empty_cta') }}</a>
     </div>
 @else
-{{-- The coupon ticket under "Your Bag" (2.60.512, design A): the cart panel's own line, tap to copy -- Appearance -> Cart panel -> Coupon hint. Zero bytes while it is off or its coupon is not usable now. Inside #cartInner, so emptying the bag takes it away. --}}{!! app(\App\Services\CartPanel::class)->couponHint() !!}
+{{-- The coupon ticket under "Your Bag" (2.60.512, design A): the cart panel's own line, tap to copy -- Appearance -> Cart panel -> Coupon hint. Zero bytes while it is off or its coupon is not usable now. Inside #cartInner, so emptying the bag takes it away. method_exists: mid-update the opcode cache can still hold the OLD CartPanel, and this page then simply draws no ticket instead of failing (2.60.513). --}}@if (method_exists(\App\Services\CartPanel::class, 'couponHint')){!! app(\App\Services\CartPanel::class)->couponHint() !!}@endif
     @php
         $free = $totals['free_shipping_threshold'];
         $left = $totals['free_shipping_remaining'] ?? 0;
