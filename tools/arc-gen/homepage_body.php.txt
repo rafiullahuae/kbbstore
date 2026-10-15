@@ -1,0 +1,179 @@
+    /**
+     * The homepage wording fields that have an Arabic twin, `<key>_ar`
+     * (Appearance → Homepage → Homepage content → Arabic wording, and the
+     * Spotted section's own). Literal: no class of this shop is named here.
+     */
+    private const SETTING_KEYS = [
+        'home_ab_eyebrow', 'home_ab_title',
+        'home_bs_eyebrow', 'home_bs_title', 'home_bs_sub', 'home_bs_btn',
+        'home_br_eyebrow', 'home_br_title', 'home_br_sub', 'home_br_btn',
+        'home_tr_eyebrow', 'home_tr_title', 'home_tr_sub', 'home_tr_btn',
+        'home_cc_eyebrow', 'home_cc_title', 'home_cc_sub', 'home_cc_btn',
+        'home_bl_eyebrow', 'home_bl_title', 'home_bl_sub', 'home_bl_more', 'home_bl_btn',
+        'home_u54_eyebrow', 'home_u54_title', 'home_u54_sub', 'home_u54_btn',
+        'home_ft_l_title', 'home_ft_l_text', 'home_ft_l_btn', 'home_ft_l_alt',
+        'home_ft_r_title', 'home_ft_r_text', 'home_ft_r_btn', 'home_ft_r_alt',
+        'home_hb_title', 'home_hb_sub', 'home_hb_btn_text',
+        'spotted_home_title', 'spotted_home_sub', 'spotted_btn_text',
+    ];
+
+    /** The cards banner's words that have an `_ar` column (Appearance → Banners). */
+    private const CARD_FIELDS = ['eyebrow', 'heading', 'body', 'button_label'];
+
+    public function up(): void
+    {
+        $data = json_decode(self::DATA, true);
+
+        if (! is_array($data) || ! $this->isLiveCatalogue($data)) {
+            return;
+        }
+
+        $phrases = $this->phrases($data);
+        $now = now();
+        $written = 0;
+
+        if (Schema::hasTable('settings')) {
+            $twins = array_map(static fn (string $k): string => $k.'_ar', self::SETTING_KEYS);
+            $stored = DB::table('settings')->whereIn('key', array_merge(self::SETTING_KEYS, $twins))->pluck('value', 'key')->all();
+
+            foreach (self::SETTING_KEYS as $key) {
+                // Only the owner's OWN English (a row), only a sentence this file
+                // translated, and never over an Arabic twin he already has.
+                if (! array_key_exists($key, $stored) || array_key_exists($key.'_ar', $stored)) {
+                    continue;
+                }
+
+                $arabic = $phrases[$this->norm((string) $stored[$key])] ?? null;
+
+                if ($arabic === null) {
+                    continue;
+                }
+
+                DB::table('settings')->insert([
+                    'key' => $key.'_ar', 'value' => $arabic, 'autoload' => true,
+                    'created_at' => $now, 'updated_at' => $now,
+                ]);
+                $written++;
+            }
+        }
+
+        if (Schema::hasTable('banner_cards') && Schema::hasColumn('banner_cards', 'heading_ar')) {
+            $columns = array_merge(['id'], self::CARD_FIELDS, array_map(static fn (string $f): string => $f.'_ar', self::CARD_FIELDS));
+
+            foreach (DB::table('banner_cards')->get($columns) as $card) {
+                $set = [];
+
+                foreach (self::CARD_FIELDS as $field) {
+                    if (trim((string) $card->{$field.'_ar'}) !== '') {
+                        continue;
+                    }
+
+                    $arabic = $phrases[$this->norm((string) $card->{$field})] ?? null;
+
+                    if ($arabic !== null) {
+                        $set[$field.'_ar'] = $arabic;
+                    }
+                }
+
+                if ($set !== []) {
+                    DB::table('banner_cards')->where('id', $card->id)->update($set);
+                    $written += count($set);
+                }
+            }
+        }
+
+        $this->forgetCaches();
+
+        if (app()->runningInConsole() && ! app()->runningUnitTests()) {
+            echo "Arabic homepage wording: {$written} fields written.\n";
+        }
+    }
+
+    public function down(): void
+    {
+        $data = json_decode(self::DATA, true);
+
+        if (! is_array($data)) {
+            return;
+        }
+
+        $values = array_values($this->phrases($data));
+
+        if (Schema::hasTable('settings')) {
+            DB::table('settings')
+                ->whereIn('key', array_map(static fn (string $k): string => $k.'_ar', self::SETTING_KEYS))
+                ->whereIn('value', $values)
+                ->delete();
+        }
+
+        if (Schema::hasTable('banner_cards') && Schema::hasColumn('banner_cards', 'heading_ar')) {
+            foreach (self::CARD_FIELDS as $field) {
+                DB::table('banner_cards')->whereIn($field.'_ar', $values)->update([$field.'_ar' => '']);
+            }
+        }
+
+        $this->forgetCaches();
+    }
+
+    /**
+     * English sentence => Arabic, compared as plain text: tags gone, entities
+     * decoded, curly apostrophes straightened, whitespace collapsed.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, string>
+     */
+    private function phrases(array $data): array
+    {
+        $out = [];
+
+        foreach ((array) ($data['phrases'] ?? []) as $english => $arabic) {
+            if (is_string($english) && is_string($arabic) && trim($arabic) !== '') {
+                $out[$this->norm($english)] = trim($arabic);
+            }
+        }
+
+        return $out;
+    }
+
+    private function norm(string $s): string
+    {
+        $s = html_entity_decode(strip_tags($s), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $s = str_replace(['’', '‘', '“', '”'], ["'", "'", '"', '"'], $s);
+
+        return mb_strtolower(trim((string) preg_replace('/\s+/u', ' ', $s)));
+    }
+
+    /** Same guard as 2027_11_03_100000: the live catalogue only. */
+    private function isLiveCatalogue(array $data): bool
+    {
+        if (! Schema::hasTable('products')) {
+            return false;
+        }
+
+        $slugs = array_values(array_filter((array) ($data['guard'] ?? []), 'is_string'));
+
+        if ($slugs === []) {
+            return false;
+        }
+
+        $present = 0;
+
+        foreach (array_chunk($slugs, 300) as $chunk) {
+            $present += DB::table('products')->whereIn('slug', $chunk)->count();
+        }
+
+        return $present * 2 >= count($slugs);
+    }
+
+    /** The settings maps, by their literal keys. */
+    private function forgetCaches(): void
+    {
+        try {
+            foreach (['kbb.settings', 'kbb.settings.map', 'kbb.modules', 'kbb.module_settings'] as $key) {
+                Cache::forget($key);
+            }
+        } catch (\Throwable) {
+            // A cache that cannot forget expires on its own.
+        }
+    }
+};

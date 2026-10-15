@@ -1,0 +1,212 @@
+    /*
+     * Which table each group's rows live in and the column a row is found by.
+     * Literal: a migration names no class of this shop (the 2.60.512 rule).
+     */
+    private const TABLES = [
+        'products' => ['products', 'slug'],
+        'brands' => ['brands', 'slug'],
+        'categories' => ['categories', 'slug'],
+        'pages' => ['pages', 'slug'],
+        'posts' => ['posts', 'slug'],
+        'menu_items' => ['menu_items', 'label'],
+    ];
+
+    public function up(): void
+    {
+        $data = json_decode(self::DATA, true);
+
+        if (! is_array($data) || ! $this->isLiveCatalogue($data)) {
+            return;
+        }
+
+        $now = now();
+        $written = 0;
+        $names = [];
+
+        foreach ($data['groups'] ?? [] as $group => $fields) {
+            [$table, $column] = self::TABLES[$group] ?? [null, null];
+
+            if ($table === null || ! Schema::hasTable($table) || ! is_array($fields)) {
+                continue;
+            }
+
+            foreach ($fields as $field => $byKey) {
+                if (! is_array($byKey) || $byKey === [] || ! Schema::hasColumn($table, $field)) {
+                    continue;
+                }
+
+                foreach (array_chunk(array_keys($byKey), 300) as $keys) {
+                    $rows = DB::table($table)->whereIn($column, $keys)->get(['id', $column, $field]);
+
+                    if ($rows->isEmpty()) {
+                        continue;
+                    }
+
+                    // NEVER OVER A ROW THAT EXISTS: published, draft, the owner's
+                    // or a machine's. Only a field with no Arabic row at all gets one.
+                    $taken = array_flip(DB::table('translations')
+                        ->where('locale', 'ar')
+                        ->where('group', $group)
+                        ->where('field', $field)
+                        ->whereIn('item_id', $rows->pluck('id')->all())
+                        ->pluck('item_id')
+                        ->map(static fn ($id): int => (int) $id)
+                        ->all());
+
+                    $insert = [];
+
+                    foreach ($rows as $row) {
+                        $id = (int) $row->id;
+                        $value = trim((string) ($byKey[(string) $row->{$column}] ?? ''));
+
+                        if ($value === '' || isset($taken[$id])) {
+                            continue;
+                        }
+
+                        $taken[$id] = true;
+                        $insert[] = [
+                            'locale' => 'ar',
+                            'group' => $group,
+                            'item_id' => $id,
+                            'field' => $field,
+                            'value' => $value,
+                            'status' => 'published',
+                            'source' => 'manual',
+                            'source_hash' => sha1((string) $row->{$field}),
+                            'reviewed_at' => $now,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+
+                        if ($group === 'products' && $field === 'name') {
+                            $names[$id] = $value;
+                        }
+                    }
+
+                    foreach (array_chunk($insert, 200) as $chunk) {
+                        DB::table('translations')->insert($chunk);
+                        $written += count($chunk);
+                    }
+                }
+            }
+        }
+
+        $this->indexSearch($names);
+        $this->forgetCaches();
+
+        if (app()->runningInConsole() && ! app()->runningUnitTests()) {
+            echo "Arabic content: {$written} translations written.\n";
+        }
+    }
+
+    public function down(): void
+    {
+        $data = json_decode(self::DATA, true);
+
+        if (! is_array($data) || ! Schema::hasTable('translations')) {
+            return;
+        }
+
+        // Only rows still holding exactly what this migration wrote: anything
+        // the owner has since edited is his, and stays.
+        foreach ($data['groups'] ?? [] as $group => $fields) {
+            [$table, $column] = self::TABLES[$group] ?? [null, null];
+
+            if ($table === null || ! Schema::hasTable($table) || ! is_array($fields)) {
+                continue;
+            }
+
+            foreach ($fields as $field => $byKey) {
+                foreach (array_chunk(array_keys((array) $byKey), 300) as $keys) {
+                    foreach (DB::table($table)->whereIn($column, $keys)->get(['id', $column]) as $row) {
+                        DB::table('translations')
+                            ->where('locale', 'ar')
+                            ->where('group', $group)
+                            ->where('item_id', (int) $row->id)
+                            ->where('field', $field)
+                            ->where('source', 'manual')
+                            ->where('value', trim((string) ($byKey[(string) $row->{$column}] ?? '')))
+                            ->delete();
+                    }
+                }
+            }
+        }
+
+        $this->forgetCaches();
+    }
+
+    /**
+     * THE LIVE-CATALOGUE GUARD. Acts only when at least half of the listed
+     * live product slugs are present, so a fresh install, a preview fixture
+     * and the test database are left exactly as they are.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function isLiveCatalogue(array $data): bool
+    {
+        if (! Schema::hasTable('translations') || ! Schema::hasTable('products')) {
+            return false;
+        }
+
+        $slugs = array_values(array_filter((array) ($data['guard'] ?? []), 'is_string'));
+
+        if ($slugs === []) {
+            return false;
+        }
+
+        $present = 0;
+
+        foreach (array_chunk($slugs, 300) as $chunk) {
+            $present += DB::table('products')->whereIn('slug', $chunk)->count();
+        }
+
+        return $present * 2 >= count($slugs);
+    }
+
+    /**
+     * The Arabic search's own copy of each new product name (search_texts_ar),
+     * normalised exactly as 2027_11_02_100300 does. A raw insert fires no
+     * model hook, so without this an Arabic name would show and not be found.
+     *
+     * @param  array<int, string>  $names
+     */
+    private function indexSearch(array $names): void
+    {
+        if ($names === [] || ! Schema::hasTable('search_texts_ar')) {
+            return;
+        }
+
+        $norm = static function (string $s): string {
+            $s = (string) preg_replace('/[\x{064B}-\x{065F}\x{0670}\x{0640}]/u', '', $s);
+            $s = strtr($s, [
+                'أ' => 'ا', 'إ' => 'ا', 'آ' => 'ا', 'ٱ' => 'ا', 'ة' => 'ه', 'ى' => 'ي', 'ؤ' => 'و', 'ئ' => 'ي',
+                '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4', '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9',
+                '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4', '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9',
+            ]);
+            $s = mb_strtolower($s);
+            $s = (string) preg_replace('/[^\p{L}\p{N}]+/u', ' ', $s);
+
+            return trim((string) preg_replace('/\s+/u', ' ', $s));
+        };
+
+        foreach ($names as $id => $name) {
+            $text = $norm($name);
+
+            if ($text !== '') {
+                DB::table('search_texts_ar')->updateOrInsert(['product_id' => $id], ['text' => $text]);
+            }
+        }
+    }
+
+    /** TranslationStore's maps and the Arabic search, by their literal keys. */
+    private function forgetCaches(): void
+    {
+        try {
+            foreach (['kbb.translations.ar', 'kbb.translations.en', 'kbb.search.ar.v1', 'kbb.search.ar.ready'] as $key) {
+                Cache::forget($key);
+            }
+        } catch (\Throwable) {
+            // A cache that cannot forget expires on its own in five minutes.
+        }
+    }
+};

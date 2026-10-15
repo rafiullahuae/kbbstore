@@ -157,6 +157,11 @@
     // own words where there is not. Never an empty aria-label, which is a
     // labelled region with no label.
     $bsLabel = trim((string) $set->name) !== '' ? $set->name : __('store.home.banner_slider_label');
+    // (Lane ARC) The set's name is an English admin label; on /ar the region
+    // is named in the shop's own (translated) words instead.
+    if (\App\Support\Locale::current() === 'ar') {
+        $bsLabel = __('store.home.banner_slider_label');
+    }
 
     /*
      * ── THE PICTURES ARE DELIVERED AT THE SIZE THE FRAME ASKS FOR ───────────
@@ -879,6 +884,12 @@
                stop when the box's button already is one for the same place. */
             $hbNoTab = $hbWords[$bsI] !== null && $hbWords[$bsI]['button'] !== '' && $bsHref !== '' ? ' tabindex="-1"' : '';
             $bsAlt = trim((string) $bsCard->alt) !== '' ? $bsCard->alt : '';
+            /* (Lane ARC) On /ar the picture's description is its Arabic
+               heading when the card has one: there is no Arabic alt column,
+               and an English sentence read aloud on the Arabic shop is wrong. */
+            if ($hbAr && $bsAlt !== '' && trim((string) $bsCard->heading_ar) !== '') {
+                $bsAlt = trim((string) $bsCard->heading_ar);
+            }
             $bsSrcset = $bsSrcsetFor((string) $bsCard->image);
             $bsDeskSizes = $bsImgSizesFor($bsCard);
             $bsPhone = $bsPhoneFor($bsCard);

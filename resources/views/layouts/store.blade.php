@@ -278,7 +278,7 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
 <style id="kbb-arabic-face">
 html[lang="ar"],html[lang="ar"] .kbb-checkout{--sans:"Outfit","Cairo",system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 html[lang="ar"] body{font-family:"Outfit","Cairo",system-ui,sans-serif}
-html[lang="ar"] .kbb-card .cn,html[lang="ar"] .kbb-badge,html[lang="ar"] .kbb-card-cart{font-family:'Outfit','Cairo',sans-serif}
+html[lang="ar"] .kbb-card .cn,html[lang="ar"] .kbb-badge,html[lang="ar"] .kbb-card-cart,html[lang="ar"] .kbb-tile .kbb-soldout{font-family:'Outfit','Cairo',sans-serif}
 html[lang="ar"] .sr{font-family:"Hanken Grotesk","Cairo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
 html[lang="ar"] .sr-title,html[lang="ar"] .sr-avg,html[lang="ar"] .sr-stitle{font-family:Fraunces,"Cairo",Georgia,serif}
 html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-family:"Outfit","Cairo",sans-serif}

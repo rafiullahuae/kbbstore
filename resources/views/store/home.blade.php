@@ -270,7 +270,7 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
      nothing and leaves the newline after it, so a comment on its own lines adds
      a blank line to every rendered page. Caught here by diffing two fetches —
      89,288 bytes against 89,289, one `>` at line 322. --}}@unless ($heroCarriesH1)
-  <h1 class="kbb-h1-quiet">{{ $settings->get('site_title') ?: 'K-Beauty Bliss — authentic Korean skincare in the UAE' }}</h1>
+  <h1 class="kbb-h1-quiet">{{ method_exists(\App\Support\HomeArabic::class, 'quietH1') && class_exists(\App\Support\HomeArabic::class) ? \App\Support\HomeArabic::quietH1($settings->get('site_title')) : ($settings->get('site_title') ?: 'K-Beauty Bliss — authentic Korean skincare in the UAE') }}</h1>
 @endunless
 
 {{-- HERO.
