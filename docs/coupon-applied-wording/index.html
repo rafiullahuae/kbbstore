@@ -1,0 +1,85 @@
+<title>Coupon Applied Line</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Cairo:wght@500;700&display=swap">
+<style>
+/* Layout: the live checkout coupon row, twice per option (before and after the tap), at the phone width and the laptop column width. */
+:root{
+  --bg:#fbf6f8; --card:#ffffff; --ink:#2a2228; --muted:#756c74; --line:#f1e3e8; --pink:#c13e63;
+  --sans:"Outfit",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --ar:"Cairo","Outfit",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17131a;--card:#221c24;--ink:#f3edf0;--muted:#b3a8ad;--line:#3a2f3c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17131a;--card:#221c24;--ink:#f3edf0;--muted:#b3a8ad;--line:#3a2f3c;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:22px}
+h1{font-size:28px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
+.lead{color:var(--muted);margin:6px 0 0;max-width:70ch}
+.lead b{color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,520px),1fr));gap:18px}
+.opt{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:12px;min-width:0}
+.opt header{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.tag{font-weight:800;color:var(--pink);font-size:13px;letter-spacing:.08em}
+.opt h2{margin:0;font-size:16.5px;font-weight:700}
+.ar{font-family:var(--ar);direction:rtl;unicode-bidi:isolate;font-size:13.5px;color:var(--muted);margin:0}
+.states{display:grid;gap:10px}
+.state{display:grid;gap:5px;min-width:0}
+.state small{font-size:11.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.widths{display:flex;gap:12px;overflow-x:auto;max-width:100%}
+.widths>.page{flex:none}
+
+/* the live row (kbb-checkout.css .co-cline), on its page background */
+.page{background:#fdf7f8;border-radius:12px;padding:10px;box-sizing:border-box}
+.page.ph{width:358px;max-width:100%}.page.lt{width:380px;max-width:100%}
+.cl{display:flex;align-items:center;gap:8px;min-height:42px;box-sizing:border-box;padding:6px 10px;background:#FFF0F4;border:1.5px dashed #ecaec4;border-radius:12px;color:#5e545a;font-weight:500;line-height:1.35;white-space:nowrap;overflow:hidden;font-size:13.5px}
+.ph .cl{font-size:12.8px;padding:6px 8px;gap:6px}
+.cl .ic{display:grid;place-items:center;flex:none;width:26px;height:26px;border-radius:50%;background:#fff;color:#C13E63}
+.ph .cl .ic{width:22px;height:22px}
+.cl .t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.cl .code{display:inline-flex;align-items:center;min-height:24px;margin:0 2px;padding:0 8px;background:#fff;border:1px solid #f3c3d4;border-radius:7px;color:#A82F53;font-weight:800;letter-spacing:.06em}
+.cl .ok{display:grid;place-items:center;flex:none;width:18px;height:18px;margin-inline-start:auto;border-radius:50%;background:#2E9E6B;color:#fff}
+.cl.done{background:#EEF8F1;border-color:#9fd6b8;color:#1f7d52}
+.cl.done .ic{color:#2E9E6B}
+.cl.done .t b{font-weight:800}
+.cl.done .code{color:#1f7d52;border-color:#bfe0cd}
+.note{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:14px;color:var(--muted)}
+.note b{color:var(--ink)}
+.fit{font-size:11.5px;color:#2e9e6b}
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Checkout coupon line: after the coupon is applied</h1>
+    <p class="lead">Today the line keeps saying <b>“For Discount, Apply coupon GLOW”</b> after the coupon is on the order. With this change it says something new once applied, and goes back to the original sentence if the coupon is removed or not applied yet. Each option below shows the line <b>before</b> the tap (unchanged) and <b>after</b>, at phone width and on a laptop. Every one is a single line. Option B carries the live saving, which updates when the bag changes.</p>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="note"><b>Two looks for “applied”.</b> Options A–D keep the pink ticket and add the green tick. Options E–F also turn the ticket mint green once applied, so it reads as done at a glance. Any wording can go with either look. Every option has Arabic wording for /ar.</div>
+</div>
+
+<script>
+(function(){
+  var TAG='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3a1 1 0 0 1 0 1.4l-7.3 7.3a1 1 0 0 1-1.4 0z"/><circle cx="8" cy="8" r="1.4"/></svg>';
+  var POP='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l5.5-13.5L17 14z" fill="currentColor" fill-opacity=".18"/><path d="M4 20l5.5-13.5L17 14z"/><path d="M14 5.5l1-2.5M18.5 9.5l2.5-1M17 3.5l.5.5M20.5 6l.5.5M12 3l.3 1.2M21 12l-1.2.3"/></svg>';
+  var OK='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var C='<span class="code">GLOW</span>';
+  var OPTS=[
+    {k:'A',t:'Enjoy! Coupon '+C+' applied',ar:'استمتعي! تم تطبيق كود GLOW',ic:POP},
+    {k:'B',t:'Yay! '+C+' applied, you save <b>AED 35</b>',ar:'رائع! تم تطبيق GLOW، وفّرتِ 35 د.إ',ic:POP},
+    {k:'C',t:'Sweet! '+C+' is on your order',ar:'جميل! كود GLOW مُطبّق على طلبكِ',ic:POP},
+    {k:'D',t:'Enjoy your discount, '+C+' applied',ar:'استمتعي بالخصم، تم تطبيق GLOW',ic:POP},
+    {k:'E',t:'Done! '+C+' applied, enjoy',ar:'تم! كود GLOW مُطبّق، استمتعي',ic:POP,done:1},
+    {k:'F',t:'Enjoy! You’re saving with '+C,ar:'استمتعي! أنتِ توفّرين مع GLOW',ic:POP,done:1}
+  ];
+  function row(o,applied,w){
+    var t=applied?o.t:'For Discount, Apply coupon '+C;
+    return '<div class="page '+w+'"><div class="cl'+(applied&&o.done?' done':'')+'"><span class="ic">'+(applied?o.ic:TAG)+'</span><span class="t">'+t+'</span>'+(applied?'<span class="ok">'+OK+'</span>':'')+'</div></div>';
+  }
+  document.getElementById('grid').innerHTML=OPTS.map(function(o){
+    return '<section class="opt"><header><span class="tag">'+o.k+'</span><h2>'+o.t.replace(/<[^>]+>/g,'')+'</h2></header>'+
+      '<p class="ar">'+o.ar+'</p><div class="states">'+
+      '<div class="state"><small>Before the tap (as today)</small><div class="widths">'+row(o,0,'ph')+'</div></div>'+
+      '<div class="state"><small>After: coupon applied · phone 358px</small><div class="widths">'+row(o,1,'ph')+'</div></div>'+
+      '<div class="state"><small>After: coupon applied · laptop column 380px</small><div class="widths">'+row(o,1,'lt')+'</div></div>'+
+      '</div></section>';
+  }).join('');
+})();
+</script>
