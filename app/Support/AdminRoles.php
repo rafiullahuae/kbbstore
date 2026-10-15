@@ -144,6 +144,7 @@ final class AdminRoles
             'customers.manage' => 'Edit customers',
             'customers.export' => 'Export the customer list',
             'customers.invite' => 'Email guests an account invite',
+            'customers.edit' => 'Correct a customer\'s email and phone, and re-send their order confirmation',
             'inquiries.view' => 'Read the contact page’s inquiries and mark them read (Store → Inquiries)',
             'inquiries.manage' => 'Delete inquiries and change the contact page’s cards, form and recipient',
         ]],

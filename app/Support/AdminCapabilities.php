@@ -216,6 +216,11 @@ final class AdminCapabilities
         // guest the shop has in the shop's own name, so it is not something a
         // support account can do just because it can read the list.
         'customers.invite' => ['owner', 'manager'],
+        // Store -> Customers -> (a customer) -> Edit email / phone (Lane CE).
+        // Rewrites a REGISTERED customer's sign-in address and re-sends order
+        // mail, so it is not support's, although support can read the record
+        // and can correct one order's email under orders.edit.
+        'customers.edit' => ['owner', 'manager'],
 
         // Catalogue and storefront content.
         'catalog.view' => ['owner', 'manager', 'editor'],
@@ -1390,6 +1395,11 @@ final class AdminCapabilities
         // `admin-api/customers/**` read rule would, and must not hand a
         // support account the send.
         ['*', 'admin-api/customers/invites/**', 'customers.invite'],
+        // Edit email / phone (Lane CE). Above every customer rule so the GET
+        // of the dialog's data is never read as the `customers.view` detail.
+        ['GET', 'admin-api/customers/*/contact', 'customers.edit'],
+        ['POST', 'admin-api/customers/*/contact', 'customers.edit'],
+        ['POST', 'admin-api/customers/*/resend-confirmation', 'customers.edit'],
         ['POST', 'admin-api/customers/bulk-delete', 'customers.manage'],
         ['POST', 'admin-api/customers/*/note', 'customers.manage'],
         ['POST', 'admin-api/customers/*/restore', 'customers.manage'],

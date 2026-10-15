@@ -15322,6 +15322,8 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
         odNotifyFieldHTML(o)+
         '<div class="odfld" style="margin-bottom:0"><label>Customer'+histLink+'</label>'+
         (c.id ? '<div class="odcustchip"><span>'+sesc(c.name||c.email)+'</span>'+changeLink+'</div>' : '<div class="odcustchip"><span style="color:var(--ink-faint)">Guest checkout</span>'+changeLink+'</div>')+
+        /* (Lane CE) the customer record's own Edit email / phone dialog. */
+        ((c.id && window.kbbCustomerContact) ? '<button type="button" class="odlinkbtn" id="odCustContact" style="margin-top:6px">Edit email / phone</button>' : '')+
         '</div>'+
       '</div>'+
       '<div class="odcolcell odcolmid">'+
@@ -15747,6 +15749,12 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 
     var custChange = document.getElementById('odCustChange');
     if(custChange) custChange.onclick = function(e){ e.preventDefault(); odCustomerModal(o); };
+
+    var custContact = document.getElementById('odCustContact');
+    if(custContact) custContact.onclick = function(e){
+      e.preventDefault();
+      window.kbbCustomerContact.open({id: (o.customer||{}).id, onDone: function(){ renderOrderDetail(id); }});
+    };
 
     /* (Lane PU) Billing / Shipping -> Edit: a real form in a modal. Billing's
        "Edit" had no handler at all; Shipping's opened a raw JSON textarea. */
@@ -17072,7 +17080,8 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
           '<span class="pthumb" style="background:' + sesc(tcol(cuLabel(c))) + ';width:52px;height:52px;font-size:15px">' + sesc(initials(cuLabel(c))) + '</span>' +
           '<div style="min-width:0;flex:1">' +
             '<div style="font-size:18px;font-weight:700">' + (c.name ? sesc(c.name) : 'No name on record') + '</div>' +
-            '<div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px">' + sesc(c.email) + (c.phone ? ' · ' + sesc(c.phone) : '') + '</div>' +
+            '<div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px">' + sesc(c.email) + (c.phone ? ' · ' + sesc(c.phone) : '') +
+              (window.kbbCustomerContact ? ' <button type="button" class="btn ghost sm" id="cuEditContact" style="margin-left:6px;padding:2px 9px;font-size:11.5px">Edit</button>' : '') + '</div>' +
             '<div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">' + cuTypePill(c) +
               (c.whatsapp_optin ? ' <span class="pill green">WhatsApp opt-in</span>' : '') +
               (c.wp_user_id ? ' <span class="pill grey">Woo user #' + c.wp_user_id + '</span>' : '') +
@@ -17151,6 +17160,12 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 
     var trash = document.getElementById('cuTrash');
     if(trash) trash.onclick = function(){ cuConfirmDelete([c.id], cuLabel(c)); };
+
+    /* Edit email / phone (Lane CE): the dialog in partials/customer-contact-edit. */
+    var editContact = document.getElementById('cuEditContact');
+    if(editContact) editContact.onclick = function(){
+      window.kbbCustomerContact.open({id: c.id, onDone: function(){ cuDetail(c.id); }});
+    };
 
     var inviteOne = document.getElementById('cuInviteOne');
     if(inviteOne) inviteOne.onclick = function(){
@@ -24460,6 +24475,12 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      the real email, and the batched send with Resume. Adds no screen and no
      sidebar entry; the Customers code above calls window.kbbCustomerInvite. --}}
 @include('admin.partials.customer-invites')
+
+{{-- Store → Customers → (a customer) → Edit email / phone (Lane CE). The
+     dialog the customer's page and the order screen's Customer field open:
+     correct the address, let their orders follow, re-send a confirmation.
+     Adds no screen and no sidebar entry; it is window.kbbCustomerContact. --}}
+@include('admin.partials.customer-contact-edit')
 
 {{-- Store -> Coupons. Same arrangement and for the same reason as the screen
      above: its own file, its own sidebar entry appended to the rendered nav,

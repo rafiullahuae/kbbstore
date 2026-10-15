@@ -106,3 +106,15 @@ Route::get('/customers/{id}', [CustomersApiController::class, 'show'])->whereNum
 Route::post('/customers/{id}/note', [CustomersApiController::class, 'saveNote'])->whereNumber('id');
 Route::post('/customers/{id}/restore', [CustomersApiController::class, 'restore'])->whereNumber('id');
 Route::delete('/customers/{id}', [CustomersApiController::class, 'destroy'])->whereNumber('id');
+
+/*
+|------------------------------------------------------------------------------
+| Edit email / phone, and re-send a confirmation (Lane CE)
+|------------------------------------------------------------------------------
+|
+| Required from HERE, once, so it inherits this file's mount inside the
+| admin-api group and no line in routes/web.php has to change. See the header
+| of routes/customer-contact-admin.php.
+|
+*/
+require __DIR__.'/customer-contact-admin.php';
