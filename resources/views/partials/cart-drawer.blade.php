@@ -64,8 +64,8 @@
     // Coupon hint. '' unless it is on, a coupon is chosen and that coupon is
     // usable now; read from a settings snapshot, so no query. couponLine()
     // escapes the owner's wording and the code; the wrapper is a constant.
-    $kbbCcLine = $count ? $cpText->couponLine() : '';
-    $kbbCc = $kbbCcLine === '' ? '' : '<div class="kc-cch">' . $kbbCcLine . '</div>';
+    // 2.60.512: design A, the dashed ticket (CartPanel::couponHint()).
+    $kbbCc = $count ? $cpText->couponHint() : '';
 @endphp
 
 <div class="kc-fragment">

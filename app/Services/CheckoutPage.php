@@ -1022,10 +1022,12 @@ class CheckoutPage
          * The line shows only while that coupon is usable now; once it is on
          * the order, the line says so instead of inviting.
          */
-        /* Lane QK8: "and the top coupon line, turned off." Off by default,
-           and written off on the live shop by migration. */
-        'cline_on'      => ['bool', 'Coupon line', false,
-                            'Off, as asked. On shows a line at the very top of the checkout — "For Discount, Apply coupon GLOW" — and tapping the code applies it to the order total in place, with no reload. It shows only while the coupon below can actually be used; when the coupon is already on the order it says so instead.'],
+        /* Lane QK8: "and the top coupon line, turned off." 2.60.512, back ON
+           as asked: "also on checkout page i need above the summary row, but
+           on the checkout if clicked on the row, the coupon will actually
+           applied, not copy." Written on on the live shop by migration. */
+        'cline_on'      => ['bool', 'Coupon line', true,
+                            'On, as asked. On shows a line at the very top of the checkout — "For Discount, Apply coupon GLOW" — and tapping the code applies it to the order total in place, with no reload. It shows only while the coupon below can actually be used; when the coupon is already on the order it says so instead.'],
         'cline_coupon'  => ['select', 'Coupon', 'cart',
                             'Same as the cart panel follows Appearance → Cart panel → Coupon hint → Coupon (GLOW unless you changed it). Or pick one of your coupons; an expired, not-yet-started or used-up coupon hides the line by itself.',
                             ['cart' => 'Same as the cart panel']],

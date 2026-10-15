@@ -250,10 +250,18 @@ class CartPanel
                                ['min' => 0, 'max' => 120, 'step' => 2, 'unit' => 'px']],
     ];
 
-    /** The coupon hint's shipped wording, the owner's own sentence. (Lane QK3) */
-    public const COUPON_TEXT = 'Need Discount? Use coupon code {coupon-code} on checkout';
+    /**
+     * The coupon hint's shipped wording, the owner's own sentence. (Lane QK3;
+     * 2.60.512: "Use coupon code: {coupon-code in caps} on checkout page.")
+     */
+    public const COUPON_TEXT = 'Use coupon code: {coupon-code} on checkout page.';
 
-    public const COUPON_TEXT_AR = 'تحتاج خصمًا؟ استخدم كود الخصم {coupon-code} عند الدفع';
+    public const COUPON_TEXT_AR = 'استخدمي كود الخصم: {coupon-code} في صفحة الدفع.';
+
+    /** The wording before 2.60.512, so a migration moves only an untouched box. */
+    public const COUPON_TEXT_OLD = 'Need Discount? Use coupon code {coupon-code} on checkout';
+
+    public const COUPON_TEXT_AR_OLD = 'تحتاج خصمًا؟ استخدم كود الخصم {coupon-code} عند الدفع';
 
     /** Where the code goes in the sentence. */
     public const COUPON_TOKEN = '{coupon-code}';
@@ -301,7 +309,7 @@ class CartPanel
                        ['accent', 'checkout_bg', 'checkout_fg']],
         // LAST, so every tab recorded before it keeps its index — the payload
         // test compares tabs by position. (Lane QK3)
-        'coupon'   => ['Coupon hint', 'A small line just above Subtotal: “Need Discount? Use coupon code GLOW on checkout”. The code is tap-to-copy. The same on both devices.',
+        'coupon'   => ['Coupon hint', 'A dashed coupon ticket just above Subtotal, and under “Your Bag” on the cart page: “Use coupon code: GLOW on checkout page.” One line; the code is tap-to-copy and a green tick shows once copied. The same on both devices.',
                        ['coupon_on', 'coupon_id', 'txt_coupon', 'txt_coupon_ar']],
     ];
 
@@ -487,12 +495,40 @@ class CartPanel
         // The pill is a real button, so a tap answers on the first try; cart.js
         // copies data-kccopy and shows data-done above it without moving a
         // pixel of the line (an absolutely placed ::after).
+        // In caps, as asked ("{coupon-code in caps}"): the checkout matches a
+        // code case-insensitively (Coupon::scopeCode), so the copy still applies.
+        $code = mb_strtoupper($code);
         $pill = '<button type="button" class="kc-cc" data-kccopy="' . e($code) . '" data-done="'
-            . e((string) __('store.cart_drawer.code_copied')) . '">' . e($code) . '</button>';
+            . e((string) __('store.cart_drawer.code_copied')) . '">' . e($code) . self::COPY_ICON . '</button>';
 
         return str_contains($text, self::COUPON_TOKEN)
             ? str_replace(self::COUPON_TOKEN, $pill, e($text))
             : e($text) . ' ' . $pill;
+    }
+
+    /** A constant, never a setting: the pill's copy glyph (design A, 2.60.512). */
+    private const COPY_ICON = '<svg class="kc-cc-cp" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>';
+
+    /** A constant, never a setting: the ticket's tag glyph. */
+    private const TAG_ICON = '<span class="kc-cch-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 12V4.5A1.5 1.5 0 0 1 4.5 3H12l9 9-9 9-9-9z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor"/></svg></span>';
+
+    /**
+     * The whole coupon ticket (design A, the owner's pick, 2.60.512): the
+     * dashed card with its tag, the sentence and the tap-to-copy code, on one
+     * line on every screen. Drawn in the cart panel above Subtotal and on the
+     * cart page under "Your Bag". Empty when couponLine() is. A tap copies
+     * the code and "Copied" shows inside the row for a moment, then hides
+     * (data-done, cart.js); the green tick is the checkout's alone, where a
+     * tap applies the coupon.
+     */
+    public function couponHint(): string
+    {
+        $line = $this->couponLine();
+
+        return $line === ''
+            ? ''
+            : '<div class="kc-cch" data-done="' . e((string) __('store.cart_drawer.code_copied')) . '">' . self::TAG_ICON
+                . '<span class="kc-cch-t">' . $line . '</span></div>';
     }
 
     /**

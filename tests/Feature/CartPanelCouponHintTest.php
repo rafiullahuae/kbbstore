@@ -86,7 +86,7 @@ it('ships on, with his sentence, and with no coupon chosen draws nothing', funct
 
     expect($c['coupon_on'])->toBeTrue()
         ->and($c['coupon_id'])->toBe('0')
-        ->and($c['txt_coupon'])->toBe('Need Discount? Use coupon code {coupon-code} on checkout');
+        ->and($c['txt_coupon'])->toBe('Use coupon code: {coupon-code} on checkout page.');
 
     qkCoupon(); // exists, but nobody chose it
 
@@ -99,7 +99,12 @@ it('prints the line above Subtotal with the code as a tap-to-copy pill', functio
 
     $html = qkPage(qkCart());
 
-    expect($html)->toContain('<div class="kc-cch">Need Discount? Use coupon code <button type="button" class="kc-cc" data-kccopy="GLOW" data-done="Copied">GLOW</button> on checkout</div>');
+    // 2.60.512, design A: the dashed ticket -- tag, sentence, the code with a
+    // copy glyph; "Copied" comes from the row's data-done. No tick here: the
+    // tick is the checkout's, where a tap applies the coupon.
+    expect($html)->toContain('<div class="kc-cch" data-done="Copied"><span class="kc-cch-ic" aria-hidden="true"><svg width="15" height="15"')
+        ->and($html)->toContain('<span class="kc-cch-t">Use coupon code: <button type="button" class="kc-cc" data-kccopy="GLOW" data-done="Copied">GLOW<svg class="kc-cc-cp" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button> on checkout page.</span></div>')
+        ->and($html)->not->toContain('kc-cch-ok');
 
     // In the footer, immediately before the Subtotal row — the spot he marked.
     $line = strpos($html, 'class="kc-cch"');
@@ -189,7 +194,7 @@ it('replaces the token and escapes both the wording and the code', function () {
 
     expect($html)->not->toContain('<script>alert(1)</script>')
         ->and($html)->not->toContain('<b>Hi</b>')
-        ->and($html)->toContain('&lt;b&gt;Hi&lt;/b&gt; <button type="button" class="kc-cc" data-kccopy="X&lt;script&gt;alert(1)&lt;/script&gt;"');
+        ->and($html)->toContain('&lt;b&gt;Hi&lt;/b&gt; <button type="button" class="kc-cc" data-kccopy="X&lt;SCRIPT&gt;ALERT(1)&lt;/SCRIPT&gt;"');
 });
 
 it('appends the code when the wording has no token, and caps the wording at 120 characters', function () {
@@ -198,7 +203,7 @@ it('appends the code when the wording has no token, and caps the wording at 120 
     qkChoose(qkCoupon());
     app(CartPanel::class)->save(['txt_coupon' => 'Save today with']);
 
-    expect(qkPage(qkCart()))->toContain('<div class="kc-cch">Save today with <button type="button" class="kc-cc" data-kccopy="GLOW"');
+    expect(qkPage(qkCart()))->toContain('<span class="kc-cch-t">Save today with <button type="button" class="kc-cc" data-kccopy="GLOW"');
 
     app(CartPanel::class)->save(['txt_coupon' => str_repeat('a', 300)]);
     SettingsService::forgetMemo();
@@ -213,12 +218,12 @@ it('says it in Arabic on /ar/', function () {
 
     $html = qkPage(qkCart(), '/ar/');
 
-    expect($html)->toContain('<div class="kc-cch">تحتاج خصمًا؟ استخدم كود الخصم <button type="button" class="kc-cc" data-kccopy="GLOW"')
-        ->and($html)->not->toContain('Need Discount?');
+    expect($html)->toContain('<span class="kc-cch-t">استخدمي كود الخصم: <button type="button" class="kc-cc" data-kccopy="GLOW"')
+        ->and($html)->not->toContain('Use coupon code:');
 
     // An emptied Arabic box falls back to the English wording.
     app(CartPanel::class)->save(['txt_coupon_ar' => '']);
-    expect(qkPage(qkCart(), '/ar/'))->toContain('Need Discount? Use coupon code <button');
+    expect(qkPage(qkCart(), '/ar/'))->toContain('Use coupon code: <button');
 });
 
 it('stores only a real coupon id, and lists the shop coupons usable first', function () {
@@ -315,7 +320,7 @@ it('chooses GLOW by default when the shop has one, matched case-insensitively', 
     SettingsService::forgetMemo();
 
     expect(app(CartPanel::class)->all()['coupon_id'])->toBe((string) $glow->id)
-        ->and(qkPage(qkCart()))->toContain('Use coupon code <button type="button" class="kc-cc" data-kccopy="glow" data-done="Copied">glow</button> on checkout');
+        ->and(qkPage(qkCart()))->toContain('Use coupon code: <button type="button" class="kc-cc" data-kccopy="GLOW" data-done="Copied">GLOW'.'<svg class="kc-cc-cp" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>'.'</button> on checkout page.');
 
     // A choice already made — including "none" — is left alone on a re-run.
     app(CartPanel::class)->save(['coupon_id' => '0']);
@@ -343,6 +348,50 @@ it('copies in cart.js inside the click, with a selection fallback and no layout 
         ->and($js)->not->toContain('getBoundingClientRect');
 
     $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
-    // The "Copied" note is positioned out of flow, so copying moves nothing.
-    expect($css)->toContain('.kc-cc.is-done::after{content:attr(data-done);position:absolute;');
+    // 2.60.512: "Copied" shows inside the row for a moment and hides again
+    // (the owner: "copied text will come and hide"), laid over the row's end
+    // so copying moves nothing. MUTATION: drop the timeout and it never hides.
+    expect($js)->toContain("row?.classList.add('is-done')")
+        ->and($js)->toContain("row?.classList.remove('is-done')")
+        ->and($css)->toContain('.kc-cch.is-done::after{content:attr(data-done);position:absolute;')
+        ->and($css)->toContain('@keyframes kbbCcCopied{0%{opacity:0}12%,78%{opacity:1}100%{opacity:0}}');
+});
+
+it('draws the same ticket on the cart page under "Your Bag", once, and not on an empty bag (2.60.512)', function () {
+    /*
+     * The owner: "on the cart page, i need the coupon line: Use coupon code:
+     * {coupon-code in caps} on checkout page. and upon click on the coupon
+     * code, will become copied." Design A, one line.
+     *
+     * MUTATION: drop the couponHint() line from store/cart-inner and this is red.
+     */
+    $cart = qkCart();
+    qkChoose(qkCoupon(['code' => 'glow']));
+
+    $html = qkPage($cart, '/cart/');
+
+    // First thing in the cart body, straight under the "Your Bag" heading,
+    // and the code in caps although the coupon is stored lower-case.
+    expect(preg_match('#<div id="cartInner">\s*<div class="kc-cch" data-done="Copied">#', $html))->toBe(1)
+        ->and(strpos($html, 'id="cartLead"'))->toBeLessThan(strpos($html, '<div id="cartInner">'))
+        ->and($html)->toContain('<span class="kc-cch-t">Use coupon code: <button type="button" class="kc-cc" data-kccopy="GLOW"');
+
+    // An empty bag draws no ticket on the page.
+    $cart->items()->delete();
+    expect(preg_match('#<div id="cartInner">\s*<div class="kc-cch" data-done="Copied">#', qkPage($cart, '/cart/')))->toBe(0);
+});
+
+it('moves the old shipped wording to the new sentence and leaves the owner\'s own alone (2.60.512)', function () {
+    $migration = database_path('migrations/2027_11_01_700000_coupon_ticket_design_a.php');
+
+    app(CartPanel::class)->save(['txt_coupon' => CartPanel::COUPON_TEXT_OLD, 'txt_coupon_ar' => CartPanel::COUPON_TEXT_AR_OLD]);
+    (require $migration)->up();
+    SettingsService::forgetMemo();
+    expect(app(CartPanel::class)->all()['txt_coupon'])->toBe('Use coupon code: {coupon-code} on checkout page.')
+        ->and(app(CartPanel::class)->all()['txt_coupon_ar'])->toBe('استخدمي كود الخصم: {coupon-code} في صفحة الدفع.');
+
+    app(CartPanel::class)->save(['txt_coupon' => 'My own {coupon-code} words']);
+    (require $migration)->up();
+    SettingsService::forgetMemo();
+    expect(app(CartPanel::class)->all()['txt_coupon'])->toBe('My own {coupon-code} words');
 });

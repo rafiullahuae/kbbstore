@@ -343,14 +343,21 @@ export function initCart() {
            browser still counts it as the shopper's gesture. Where the
            clipboard API is missing or refused (plain http, an old WebView) the
            code's text is selected instead, which is what a long-press would
-           do. "Copied" is a CSS ::after above the pill, so nothing moves. */
+           do. "Copied" is placed over the row's end, so nothing moves. */
         const cc = event.target.closest('[data-kccopy]');
         if (cc) {
             event.preventDefault();
+            // 2.60.512: "Copied" shows inside the ticket's row for a moment
+            // and hides again (CSS, from the row's data-done).
             const done = () => {
+                const row = cc.closest('.kc-cch');
                 cc.classList.add('is-done');
+                row?.classList.add('is-done');
                 clearTimeout(cc.kbbDone);
-                cc.kbbDone = setTimeout(() => cc.classList.remove('is-done'), 1400);
+                cc.kbbDone = setTimeout(() => {
+                    cc.classList.remove('is-done');
+                    row?.classList.remove('is-done');
+                }, 1600);
             };
             try {
                 await navigator.clipboard.writeText(cc.dataset.kccopy);

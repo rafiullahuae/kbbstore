@@ -127,29 +127,57 @@ function q6Set(array $values): void
 
 /* ══════════════════════════ 1. the coupon line ══════════════════════════ */
 
-it('ships OFF, as asked, and the live shop is written off by the package (Lane QK8)', function () {
+it('ships ON again, as asked, and the live shop is written on by the package (2.60.512)', function () {
     /*
-     * The owner: "and the top coupon line, turned off." Before this the line
-     * shipped on and QK6 left it on; the top of /checkout/ read the GLOW line
-     * above the Order summary.
+     * Lane QK8 switched it off ("and the top coupon line, turned off."). On
+     * 15 October the owner asked for it back: "also on checkout page i need
+     * above the summary row, but on the checkout if clicked on the row, the
+     * coupon will actually applied, not copy."
      *
-     * MUTATION: ship `cline_on` true again, or drop the cline_on write from
-     * the migration, and this is red.
+     * MUTATION: ship `cline_on` false again, or drop the cline_on write from
+     * the 2.60.512 migration, and this is red.
      */
-    expect(CheckoutPage::SCHEMA['cline_on'][2])->toBeFalse();
+    expect(CheckoutPage::SCHEMA['cline_on'][2])->toBeTrue();
 
     q6PanelChooses(q6Coupon());
     DB::table('settings')->where('key', 'checkoutpage_cline_on')->delete();
     SettingsService::forgetMemo();
-    expect(q6Checkout())->not->toContain('kbbCline')->and(q6Checkout())->not->toContain('co-cline');
-
-    // A shop that had it ON (QK6 shipped it so) is switched off by the package.
-    q6Set(['cline_on' => true]);
     expect(q6Checkout())->toContain('id="kbbCline"');
-    (require base_path('database/migrations/2027_10_16_120000_checkout_plain_payment_boxes_back_arrow_no_whatsapp.php'))->up();
+
+    // A shop QK8 wrote OFF is switched back on by the package.
+    q6Set(['cline_on' => false]);
+    expect(q6Checkout())->not->toContain('kbbCline');
+    (require base_path('database/migrations/2027_11_01_700000_coupon_ticket_design_a.php'))->up();
     SettingsService::forgetMemo();
-    expect(app(CheckoutPage::class)->get('cline_on'))->toBeFalse()
-        ->and(q6Checkout())->not->toContain('kbbCline');
+    expect(app(CheckoutPage::class)->get('cline_on'))->toBeTrue()
+        ->and(q6Checkout())->toContain('id="kbbCline"');
+});
+
+it('is the one-line pink ticket with a green tick at the end of the row once applied (2.60.512)', function () {
+    /*
+     * Design A, the owner's pick, and "will become a tick check icon on the
+     * right side of the coupon row inside ... green color tick icon". The
+     * row stays one line; the tick's room is kept from the start, so applying
+     * moves nothing. The code still APPLIES here (data-kbb-cline), never copies.
+     *
+     * MUTATION: drop the co-cl-ok span, or let the line wrap, and this is red.
+     */
+    q6PanelChooses(q6Coupon());
+    $html = q6Checkout();
+
+    expect($html)->toContain('<span class="co-cl-t">')
+        ->and($html)->toContain('<span class="co-cl-ok" aria-hidden="true"><svg width="11" height="11"')
+        ->and($html)->toContain('data-kbb-cline="GLOW"');
+
+    // The checkout's own line applies; the copy pill is the cart panel's only.
+    $line = substr($html, (int) strpos($html, 'id="kbbCline"'));
+    $line = substr($line, 0, (int) strpos($line, 'co-cl-err'));
+    expect($line)->not->toContain('data-kccopy');
+
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-checkout.css'));
+    expect($css)->toContain('border:1.5px dashed #ecaec4;border-radius:12px;color:#5e545a;font-size:13.5px;font-weight:500;line-height:1.35;white-space:nowrap}')
+        ->and($css)->toContain('.kbb-checkout .co-cline.is-done .co-cl-ok{visibility:visible}')
+        ->and($css)->toContain('background:#2E9E6B;color:#fff;visibility:hidden}');
 });
 
 it('switched on, says his sentence, the code as a button, first in the grid so it sits above the summary row', function () {

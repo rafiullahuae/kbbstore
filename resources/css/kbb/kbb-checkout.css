@@ -278,28 +278,47 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    turning into "Coupon GLOW applied" moves nothing (min-height on top). The
    refusal is a second row, drawn only after a tap. Sized with calc(), no
    script measures anything. Logical properties, so /ar/ mirrors itself. */
-.kbb-checkout .co-cline{grid-column:1/-1;justify-self:start;display:grid;align-items:center;min-height:42px;max-width:100%;box-sizing:border-box;margin-bottom:calc(12px - var(--cop-d-gap,26px));padding:5px 0;padding-inline:12px 6px;background:linear-gradient(135deg,#EEF8F1,#fff);border:1.4px dashed #BFE0CD;border-radius:12px;color:#1F7D52;font-size:13px;font-weight:600;line-height:1.35}
-.kbb-checkout .co-cline>.co-cl-ask,.kbb-checkout .co-cline>.co-cl-done{grid-area:1/1;display:flex;align-items:center;gap:8px;margin:0;min-width:0}
-.kbb-checkout .co-cline>.co-cl-done{visibility:hidden;padding-inline-end:6px}
-.kbb-checkout .co-cline.is-done>.co-cl-ask{visibility:hidden}
-.kbb-checkout .co-cline.is-done>.co-cl-done{visibility:visible}
-.kbb-checkout .co-cl-ic{display:inline-flex;flex:0 0 auto;color:#2E9E6B}
-.kbb-checkout .co-cl-ic svg{width:16px;height:16px}
+.kbb-checkout .co-cline{grid-column:1/-1;justify-self:start;display:grid;align-items:center;min-height:42px;max-width:100%;box-sizing:border-box;margin-bottom:calc(12px - var(--cop-d-gap,26px));padding:6px 10px;background:#FFF0F4;border:1.5px dashed #ecaec4;border-radius:12px;color:#5e545a;font-size:13.5px;font-weight:500;line-height:1.35;white-space:nowrap}
+/* 2.60.512: ONE line (design A). Applied, the sentence stays and a green tick
+   shows at the end of the row; "Coupon GLOW applied" is kept for screen
+   readers only (role=status), out of the layout, so nothing moves. */
+.kbb-checkout .co-cline>.co-cl-ask{grid-area:1/1;display:flex;align-items:center;gap:8px;margin:0;min-width:0}
+.kbb-checkout .co-cline>.co-cl-done{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.kbb-checkout .co-cl-ic{display:grid;place-items:center;flex:none;width:26px;height:26px;border-radius:50%;background:#fff;color:#C13E63}
+.kbb-checkout .co-cl-ic svg{width:15px;height:15px}
+.kbb-checkout .co-cl-t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.kbb-checkout .co-cl-ok{display:grid;place-items:center;flex:none;width:18px;height:18px;margin-inline-start:auto;border-radius:50%;background:#2E9E6B;color:#fff;visibility:hidden}
+.kbb-checkout .co-cl-ok svg{width:11px;height:11px}
+.kbb-checkout .co-cline.is-done .co-cl-ok{visibility:visible}
 .kbb-checkout .co-cl-tick{display:inline-grid;place-items:center;flex:0 0 18px;width:18px;height:18px;border-radius:50%;background:#2E9E6B;color:#fff}
 .kbb-checkout .co-cl-tick svg{width:11px;height:11px}
-.kbb-checkout .co-cl-code{position:relative;display:inline-flex;align-items:center;min-height:30px;margin-inline-start:4px;padding:0 11px;background:#fff;border:1.4px dashed #2E9E6B;border-radius:8px;color:#1F7D52;font-weight:800;font-size:13px;letter-spacing:.06em;cursor:pointer;vertical-align:middle;transition:background .15s,border-color .15s}
+.kbb-checkout .co-cl-code{position:relative;display:inline-flex;align-items:center;min-height:24px;margin:0 2px;padding:0 8px;background:#fff;border:1px solid #f3c3d4;border-radius:7px;color:#A82F53;font:inherit;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;vertical-align:middle;transition:background .15s,border-color .15s}
 /* 44px to a finger without a 44px pill: the hit area grows, the pill does not. */
-.kbb-checkout .co-cl-code::before{content:"";position:absolute;inset:-7px -4px}
-.kbb-checkout .co-cl-code:hover{background:#EEF8F1;border-style:solid}
-.kbb-checkout .co-cl-code:focus-visible{outline:2px solid #2E9E6B;outline-offset:2px}
+.kbb-checkout .co-cl-code::before{content:"";position:absolute;inset:-9px -4px}
+.kbb-checkout .co-cl-code:hover{border-color:#C13E63}
+.kbb-checkout .co-cl-code:focus-visible{outline:2px solid #C13E63;outline-offset:2px}
 .kbb-checkout .co-cl-code[aria-busy=true]{color:transparent;cursor:progress}
-.kbb-checkout .co-cl-code[aria-busy=true]::after{content:"";position:absolute;inset:0;margin:auto;width:14px;height:14px;border:2px solid #2E9E6B;border-top-color:transparent;border-radius:50%;animation:kbbCpSpin .7s linear infinite}
+.kbb-checkout .co-cl-code[aria-busy=true]::after{content:"";position:absolute;inset:0;margin:auto;width:13px;height:13px;border:2px solid #C13E63;border-top-color:transparent;border-radius:50%;animation:kbbCpSpin .7s linear infinite}
 @media(prefers-reduced-motion:reduce){.kbb-checkout .co-cl-code[aria-busy=true]::after{animation:none}}
-.kbb-checkout .co-cl-err{grid-area:2/1;margin:4px 0 2px;font-size:12px;color:var(--pink-ink)}
+.kbb-checkout .co-cl-err{grid-area:2/1;margin:4px 0 2px;font-size:12px;color:var(--pink-ink);white-space:normal}
 .kbb-checkout .co-cl-err[hidden]{display:none}
+/* 2.60.512, the owner: "on the desktop, keep this coupon row on the right
+   column above summary row, nicely and with little spacing in between". The
+   line is the right column's first row, as wide as the summary and 12px above
+   it (its margin takes back all but 12px of the grid gap); the form spans the
+   left column from the top. A phone is unchanged (below). */
+@media(min-width:901px){
+  .kbb-checkout .co-grid > .co-cline{grid-column:2;grid-row:1;justify-self:stretch}
+  .kbb-checkout .co-grid:has(> .co-cline) > .co-titlebar{grid-row:1}
+  .kbb-checkout .co-grid:has(> .co-cline) > .co-titlebar + div{grid-row:2 / span 2}
+  .kbb-checkout .co-grid > .co-cline + div{grid-column:1;grid-row:1 / span 3}
+}
 @media(max-width:900px){
-  .kbb-checkout .co-cline{order:-2;justify-self:stretch;margin-bottom:0;font-size:12.5px}
-  .kbb-checkout .co-cline>.co-cl-ask,.kbb-checkout .co-cline>.co-cl-done{justify-content:center;text-align:center}
+  .kbb-checkout .co-cline{order:-2;justify-self:stretch;margin-bottom:0;padding:6px 8px;font-size:clamp(10px,3.3vw,13px)}
+  .kbb-checkout .co-cline>.co-cl-ask{gap:6px}
+  .kbb-checkout .co-cl-ic{width:22px;height:22px}
+  .kbb-checkout .co-cl-ic svg{width:13px;height:13px}
+  .kbb-checkout .co-cl-code{padding:0 6px;letter-spacing:.04em}
 }
 
 /* unified form box + numbered sections */

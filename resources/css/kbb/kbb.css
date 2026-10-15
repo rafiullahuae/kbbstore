@@ -705,15 +705,26 @@
   .kc-coupon{display:flex;align-items:center;gap:10px;background:var(--pink-soft);border:1px dashed #f0b9cf;border-radius:12px;padding:10px 13px;font-size:11.5px;line-height:1.45;color:var(--ink-2);margin-bottom:12px}
   .kc-coupon .ic{font-size:16px;flex:none}
   .kc-coupon b{color:var(--pink-deep);letter-spacing:.03em}
-  /* (Lane QK3) The coupon hint above Subtotal — Appearance → Cart panel →
-     Coupon hint. The panel's muted type, one line on a laptop and two at most
-     at 320px. The "Copied" note is an absolutely placed ::after, so copying
-     moves nothing; the pill keeps its own size in both states. */
-  .kc-cch{font-size:11.5px;line-height:1.55;color:var(--muted);margin:0 0 8px}
-  .kc-cc{position:relative;display:inline-block;font:inherit;font-weight:700;letter-spacing:.04em;line-height:1.35;color:var(--pink-deep);background:var(--pink-soft);border:1px dashed #f0b9cf;border-radius:99px;padding:0 7px;margin:0 1px;cursor:pointer;vertical-align:baseline}
-  .kc-cc:hover{border-color:var(--pink-deep)}
-  [dir="rtl"] .kc-cc.is-done::after{transform:translateX(50%)}
-  .kc-cc.is-done::after{content:attr(data-done);position:absolute;bottom:calc(100% + 5px);inset-inline-start:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:10.5px;font-weight:600;letter-spacing:0;padding:2px 8px;border-radius:6px;white-space:nowrap;pointer-events:none}
+  /* (Lane QK3; 2.60.512 design A, the owner's pick) The coupon ticket — in
+     the cart panel above Subtotal and on the cart page under "Your Bag";
+     Appearance → Cart panel → Coupon hint. ONE LINE on every screen: the
+     sentence never wraps and its size follows the width (calc, no script).
+     Copying shows "Copied" inside the row's end for a moment, laid over it
+     (absolute), so copying moves nothing; the green tick is the checkout's. */
+  .kc-cch{position:relative;display:flex;align-items:center;gap:8px;box-sizing:border-box;max-width:100%;margin:0 0 8px;padding:7px 10px;background:#FFF0F4;border:1.5px dashed #ecaec4;border-radius:12px;color:#5e545a;font-size:12.5px;line-height:1.4;white-space:nowrap}
+  .kc-cch-ic{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#fff;color:#C13E63}
+  .kc-cch-ic svg{width:15px;height:15px}
+  .kc-cch-t{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .kc-cch.is-done::after{content:attr(data-done);position:absolute;top:50%;inset-inline-end:6px;transform:translateY(-50%);background:var(--ink);color:#fff;font-size:11px;font-weight:600;line-height:1.5;letter-spacing:0;padding:2px 9px;border-radius:99px;white-space:nowrap;pointer-events:none;animation:kbbCcCopied 1.6s ease both}
+  @keyframes kbbCcCopied{0%{opacity:0}12%,78%{opacity:1}100%{opacity:0}}
+  @media(prefers-reduced-motion:reduce){.kc-cch.is-done::after{animation:none}}
+  .kc-cc{position:relative;display:inline-flex;align-items:center;gap:4px;font:inherit;font-weight:800;letter-spacing:.06em;line-height:1.35;color:#A82F53;background:#fff;border:1px solid #f3c3d4;border-radius:7px;padding:1px 6px;margin:0 1px;cursor:pointer;vertical-align:baseline;white-space:nowrap}
+  .kc-cc::before{content:"";position:absolute;inset:-8px -3px}
+  .kc-cc:hover{border-color:#C13E63}
+  .kc-cc-cp{flex:none;width:11px;height:11px}
+  .kbb-cartpage .kc-cch{width:fit-content;margin:0 0 14px}
+  #kcCart .kc-cch{font-size:12px}
+  @media(max-width:359px){#kcCart .kc-cch-ic{display:none}#kcCart .kc-cch.kc-cch{font-size:2.85vw}}
 
   /* ===== BANNERS MODULE — hero slider ===== */
   .heroslider{position:relative;overflow:hidden;background:var(--cream)}
@@ -1032,8 +1043,19 @@
     /* (Lane QK3) One line on a 390px phone: the 77vw panel leaves 278px for
        it and the sentence is 289px at 11.5px, so the phone takes 11px and a
        narrower pill (measured 390: one line; 320: two). */
-    .kc-cch{font-size:11px}
-    .kc-cc{padding:0 5px;letter-spacing:.02em}
+    /* 2.60.512: one line on a phone. The page has the width for the round
+       tag; the panel is 77vw, so there the tag is the bare glyph and the
+       type follows the panel (measured: "Use coupon code: GLOW on checkout
+       page." is 21.6em, and the panel's sentence box is 62vw beside the
+       tag). Under 360px the glyph goes too. */
+    .kc-cch{gap:5px;padding:5px 7px;font-size:clamp(9.5px,3vw,12.5px)}
+    .kc-cch-ic{width:22px;height:22px}
+    .kc-cch-ic svg{width:13px;height:13px}
+    .kc-cc{padding:1px 4px;gap:2px;letter-spacing:.03em}
+    .kc-cc-cp{width:9px;height:9px}
+    #kcCart .kc-cch{gap:4px;padding:5px 6px;font-size:2.75vw}
+    #kcCart .kc-cc{padding:1px 3px}
+    #kcCart .kc-cch-ic{width:auto;height:auto;background:none}
     .search-wrap{display:none}
     .slide-txt h1{font-size:32px}.sec-head h2{font-size:24px}.slides{height:400px}
     .brandgrid,.ugc{grid-template-columns:repeat(3,1fr)}

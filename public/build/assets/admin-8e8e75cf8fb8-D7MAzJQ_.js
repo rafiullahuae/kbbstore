@@ -494,8 +494,8 @@
   function pvCoupon() {
     var pick = couponFor(values.coupon_id);
     if (values.coupon_on === false || !pick || !pick.usable) return '';
-    var text = String(values.txt_coupon || '').trim() || 'Need Discount? Use coupon code {coupon-code} on checkout';
-    var pill = '<span class="cpv-cc">' + esc(pick.code) + '</span>';
+    var text = String(values.txt_coupon || '').trim() || 'Use coupon code: {coupon-code} on checkout page.';
+    var pill = '<span class="cpv-cc">' + esc(String(pick.code).toUpperCase()) + '</span>';
     var html = text.indexOf('{coupon-code}') === -1 ? esc(text) + ' ' + pill : esc(text).split('{coupon-code}').join(pill);
     return '<div class="cpv-cch">' + html + '</div>';
   }

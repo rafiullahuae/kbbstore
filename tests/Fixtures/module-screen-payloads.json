@@ -818,7 +818,7 @@
       {
         "key": "coupon",
         "label": "Coupon hint",
-        "description": "A small line just above Subtotal: “Need Discount? Use coupon code GLOW on checkout”. The code is tap-to-copy. The same on both devices.",
+        "description": "A dashed coupon ticket just above Subtotal, and under “Your Bag” on the cart page: “Use coupon code: GLOW on checkout page.” One line; the code is tap-to-copy and a green tick shows once copied. The same on both devices.",
         "fields": [
           {
             "key": "coupon_on",
@@ -849,8 +849,8 @@
             "label": "Text",
             "help": "Use {coupon-code} where the code should appear; without it the code is added at the end. Up to 120 characters.",
             "options": null,
-            "default": "Need Discount? Use coupon code {coupon-code} on checkout",
-            "value": "Need Discount? Use coupon code {coupon-code} on checkout"
+            "default": "Use coupon code: {coupon-code} on checkout page.",
+            "value": "Use coupon code: {coupon-code} on checkout page."
           },
           {
             "key": "txt_coupon_ar",
@@ -859,8 +859,8 @@
             "label": "Text — Arabic",
             "help": "Shown on the Arabic shop (/ar/). Leave empty to use the English text there too.",
             "options": null,
-            "default": "تحتاج خصمًا؟ استخدم كود الخصم {coupon-code} عند الدفع",
-            "value": "تحتاج خصمًا؟ استخدم كود الخصم {coupon-code} عند الدفع"
+            "default": "استخدمي كود الخصم: {coupon-code} في صفحة الدفع.",
+            "value": "استخدمي كود الخصم: {coupon-code} في صفحة الدفع."
           }
         ]
       }
@@ -11206,10 +11206,10 @@
             "key": "cline_on",
             "type": "bool",
             "label": "Coupon line",
-            "help": "Off, as asked. On shows a line at the very top of the checkout — \"For Discount, Apply coupon GLOW\" — and tapping the code applies it to the order total in place, with no reload. It shows only while the coupon below can actually be used; when the coupon is already on the order it says so instead.",
+            "help": "On, as asked. On shows a line at the very top of the checkout — \"For Discount, Apply coupon GLOW\" — and tapping the code applies it to the order total in place, with no reload. It shows only while the coupon below can actually be used; when the coupon is already on the order it says so instead.",
             "options": null,
-            "default": false,
-            "value": false
+            "default": true,
+            "value": true
           },
           {
             "key": "cline_coupon",

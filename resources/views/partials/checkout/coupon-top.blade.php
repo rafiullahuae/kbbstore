@@ -15,6 +15,12 @@
     is as tall as the taller of the two before any tap and changing state moves
     nothing. `.is-done` (the coupon is on the order) shows the second.
 
+    2.60.512 (design A, the owner's pick): the same pink dashed ticket as the
+    cart panel and the cart page, on ONE line, and once the coupon is on the
+    order a green tick shows at the end of the row (the owner: "will become a
+    tick check icon on the right side of the coupon row inside ... green").
+    The "applied" sentence stays in the page for screen readers only.
+
     The code is a real button: checkout.js hands it to the same in-place apply
     the "Have a discount code?" box uses (POST /checkout/coupon), so the totals,
     the summary row, the discount line and the box all move exactly as if the
@@ -28,7 +34,7 @@
         . e(__('store.checkout.cline_apply_label', ['code' => $kbbClCode])) . '">' . e($kbbClCode) . '</button>';
 @endphp
 <div class="co-cline{{ $kbbClApplied ? ' is-done' : '' }}" id="kbbCline">
-    <p class="co-cl-ask"><span class="co-cl-ic" aria-hidden="true">@include('partials.icon-tag')</span><span>{!! $kbbCoPage->couponLineHtml($kbbClCode, $kbbClPill) !!}</span></p>
+    <p class="co-cl-ask"><span class="co-cl-ic" aria-hidden="true">@include('partials.icon-tag')</span><span class="co-cl-t">{!! $kbbCoPage->couponLineHtml($kbbClCode, $kbbClPill) !!}</span><span class="co-cl-ok" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></p>
     <p class="co-cl-done" role="status" aria-live="polite"><span class="co-cl-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="co-cl-donetxt">{{ __('store.checkout.coupon_applied_plain', ['code' => $kbbClCode]) }}</span></p>
     <p class="co-cl-err" role="alert" hidden></p>
 </div>
