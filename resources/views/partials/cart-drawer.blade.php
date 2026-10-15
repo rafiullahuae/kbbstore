@@ -17,6 +17,30 @@
     $left  = $totals['free_shipping_remaining'] ?? 0;
 
     /*
+     * WHOSE FREE DELIVERY (2.60.518). The owner: "this should work as per the
+     * user geo location ... in uae we offer free delivery on 199 but in rest
+     * of the countries the free delivery criteria is different."
+     *
+     * The totals above are measured for the shop's own country, for everyone,
+     * so a shopper in Saudi Arabia with AED 250 read "You've unlocked free
+     * delivery!" on the UAE's AED 199. The panel now measures the shopper's
+     * own country -- the one chosen at checkout, else the one remembered, else
+     * where they are browsing from (ShopperCountry) -- against that country's
+     * own amount (Store -> Shipping, or Extended delivery). DISPLAY ONLY: the
+     * charge is still decided at checkout, from the address. A shopper in the
+     * shop's own country gets exactly the figures above, byte for byte.
+     */
+    $kbbShopCountry = strtoupper((string) app(\App\Services\SettingsService::class)->get('store_country', 'AE'));
+    $kbbHere = $count && class_exists(\App\Support\ShopperCountry::class)
+        ? strtoupper((string) \App\Support\ShopperCountry::for(request())->code)
+        : $kbbShopCountry;
+    $kbbGeoFree = $kbbHere !== '' && $kbbHere !== $kbbShopCountry;
+    if ($kbbGeoFree) {
+        $free = app(\App\Services\ShippingService::class)->freeShippingThreshold($kbbHere);
+        $left = $free === null ? 0 : max(0, $free - $sub);
+    }
+
+    /*
      * THE BAR'S FILL COMES FROM THE SERVICE, not from a second division here.
      *
      * CartService::totals() computes `free_shipping_percent` and its comment
@@ -32,7 +56,7 @@
     // basket 30 fils short cannot round its own bar up to full. Without that,
     // a caller that omits the key gets back the very bug the service no longer
     // has. See CartService::totals().
-    $pct   = $totals['free_shipping_percent']
+    $pct   = (! $kbbGeoFree ? $totals['free_shipping_percent'] ?? null : null)
         ?? ($free ? ($left > 0 ? min(99, (int) round($sub / $free * 100)) : 100) : 100);
 
     /*
@@ -73,7 +97,7 @@
     // only once the bag has reached the free-delivery amount -- the test the
     // bar at the top uses ($free set, nothing $left). method_exists, so a
     // mid-update request with the old class draws nothing instead of failing.
-    $kbbFd = $count && $free && $left <= 0 && method_exists($cpText, 'freeDeliveryLine') ? $cpText->freeDeliveryLine(true) : '';
+    $kbbFd = $count && $free && $left <= 0 && method_exists($cpText, 'freeDeliveryLine') ? $cpText->freeDeliveryLine(true, $kbbHere) : '';
 @endphp
 
 <div class="kc-fragment">

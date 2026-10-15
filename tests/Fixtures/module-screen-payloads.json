@@ -898,6 +898,16 @@
             "options": null,
             "default": "مبروك! حصلتِ على توصيل مجاني",
             "value": "مبروك! حصلتِ على توصيل مجاني"
+          },
+          {
+            "key": "fd_countries",
+            "name": "fd_countries",
+            "type": "text",
+            "label": "Countries",
+            "help": "Where the line may show: country codes or names, comma separated, e.g. AE, SA, Oman. Empty: every country. Each country is measured against its own free-delivery amount (Store → Shipping), for the shopper’s own country: the one chosen at checkout, else where they are browsing from.",
+            "options": null,
+            "default": "",
+            "value": ""
           }
         ]
       }

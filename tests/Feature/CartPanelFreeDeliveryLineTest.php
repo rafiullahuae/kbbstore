@@ -98,3 +98,71 @@ it('stays on one line and inside the panel: no wrap, sized from its own width (C
         ->and($css)->toContain('.kc-fdl-ok{flex:none;width:16px;height:16px;margin-inline-start:auto;color:#2e9e6b}');
 });
 
+
+/* ─── 2.60.518: the shopper's own country, and the owner's country list ─── */
+
+function fdlSaudi(): void
+{
+    // Saudi Arabia: free delivery from AED 500, its own zone.
+    $sa = ShippingZone::create(['name' => 'Saudi Arabia', 'position' => 1]);
+    ShippingZoneLocation::create(['shipping_zone_id' => $sa->id, 'type' => 'country', 'code' => 'SA']);
+    ShippingMethod::create(['shipping_zone_id' => $sa->id, 'type' => 'flat_rate', 'title' => 'GCC', 'cost' => 5000, 'enabled' => true, 'position' => 0]);
+    ShippingMethod::create(['shipping_zone_id' => $sa->id, 'type' => 'free_shipping', 'title' => 'Free', 'cost' => 0, 'min_amount' => 50000, 'enabled' => true, 'position' => 1]);
+}
+
+function fdlPageFrom(Cart $cart, string $country): string
+{
+    SettingsService::forgetMemo();
+
+    return (string) test()
+        ->withCredentials()
+        ->withoutMiddleware(Illuminate\Cookie\Middleware\EncryptCookies::class)
+        ->withUnencryptedCookie(CartService::COOKIE, $cart->token)
+        ->withHeader('CF-IPCountry', $country)
+        ->get('/')->assertOk()->getContent();
+}
+
+it('measures a shopper abroad against THEIR country: AED 250 from Saudi Arabia is not free delivery (500 there)', function () {
+    /*
+     * The owner: "this should work as per the user geo location ... in uae we
+     * offer free delivery on 199 but in rest of the countries the free
+     * delivery criteria is different." Before: the panel measured everyone
+     * against the UAE's AED 199, so this shopper read "You've unlocked free
+     * delivery!" and "Congrats!" on a bag that pays AED 50 delivery.
+     * MUTATION: drop the $kbbGeoFree override in the drawer and this is red.
+     */
+    fdlSaudi();
+    $html = fdlPageFrom(fdlCart(25000), 'SA');
+
+    expect($html)->not->toContain('class="kc-fdl"')
+        ->and($html)->not->toContain('class="t done"')
+        ->and($html)->toContain('AED</span> 250');
+});
+
+it('congratulates a shopper abroad once THEIR amount is reached', function () {
+    fdlSaudi();
+
+    expect(fdlPageFrom(fdlCart(60000), 'SA'))->toContain('<span class="kc-fdl-t">Congrats! You’ve got free delivery</span>');
+});
+
+it('leaves a shopper in the shop\'s own country exactly as before', function () {
+    fdlSaudi();
+
+    expect(fdlPageFrom(fdlCart(25000), 'AE'))->toContain('class="kc-fdl"');
+});
+
+it('shows only in the countries the owner lists, by code or by name', function () {
+    fdlSaudi();
+    app(CartPanel::class)->save(['fd_countries' => 'AE']);
+
+    expect(fdlPageFrom(fdlCart(60000), 'SA'))->not->toContain('class="kc-fdl"');
+});
+
+it('reads the country list forgivingly: codes, names, spaces; an empty or unreadable list is every country', function () {
+    expect(CartPanel::countryListed('AE, SA', 'sa'))->toBeTrue()
+        ->and(CartPanel::countryListed('United Arab Emirates; Oman', 'OM'))->toBeTrue()
+        ->and(CartPanel::countryListed('AE', 'SA'))->toBeFalse()
+        ->and(CartPanel::countryListed('', 'SA'))->toBeTrue()
+        ->and(CartPanel::countryListed('nowhere, ???', 'SA'))->toBeTrue()
+        ->and(CartPanel::countryListed('AE', null))->toBeTrue();
+});

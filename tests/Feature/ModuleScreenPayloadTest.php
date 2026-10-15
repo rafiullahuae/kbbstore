@@ -770,7 +770,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // gap between every section on a phone (35, the owner's pick).
     // 833 -> 836 (2.60.517): cart-panel fd_on, txt_fd and txt_fd_ar, the free
     // delivery line ("Congrats! You’ve got free delivery", the owner's pick).
-    expect($compared)->toBe(836, 'the number of controls drawn changed');
+    // 836 -> 837 (2.60.518): cart-panel fd_countries, where the free delivery
+    // line may show ("allow us to choose the country").
+    expect($compared)->toBe(837, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

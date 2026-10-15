@@ -264,6 +264,10 @@ class CartPanel
                                'One line on every phone. Up to 120 characters.'],
         'txt_fd_ar'        => ['text',   'Text — Arabic', self::FD_TEXT_AR,
                                'Shown on the Arabic shop (/ar/). Leave empty to use the English text there too.'],
+        // 2.60.518, the owner: "this should work as per the user geo location.
+        // and allow us to choose the country on which we want to display this".
+        'fd_countries'     => ['text',   'Countries', '',
+                               'Where the line may show: country codes or names, comma separated, e.g. AE, SA, Oman. Empty: every country. Each country is measured against its own free-delivery amount (Store → Shipping), for the shopper’s own country: the one chosen at checkout, else where they are browsing from.'],
     ];
 
     /**
@@ -334,7 +338,9 @@ class CartPanel
                        ['coupon_on', 'coupon_id', 'txt_coupon', 'txt_coupon_ar']],
         // After the coupon tab, so every tab before it keeps its index. (2.60.517)
         'fdline'   => ['Free delivery line', 'A plain line above the coupon row — a celebration icon, “Congrats! You’ve got free delivery”, a green tick — shown only once the bag reaches the free-delivery amount. The same on both devices.',
-                       ['fd_on', 'txt_fd', 'txt_fd_ar']],
+                       ['fd_on', 'txt_fd', 'txt_fd_ar',
+                        // 2.60.518, last so every field above keeps its place.
+                        'fd_countries']],
     ];
 
     public function __construct(private SettingsService $settings) {}
@@ -544,11 +550,11 @@ class CartPanel
      * spend), the one the bar at the top uses. The wording is escaped; the
      * icons are constants.
      */
-    public function freeDeliveryLine(bool $earned): string
+    public function freeDeliveryLine(bool $earned, ?string $country = null): string
     {
         $c = $this->all();
 
-        if (! $earned || ! $c['fd_on']) {
+        if (! $earned || ! $c['fd_on'] || ! self::countryListed((string) $c['fd_countries'], $country)) {
             return '';
         }
 
@@ -564,6 +570,46 @@ class CartPanel
         }
 
         return '<div class="kc-fdl">' . self::FD_ICON . '<span class="kc-fdl-t">' . e($text) . '</span>' . self::FD_TICK . '</div>';
+    }
+
+    /**
+     * Whether $country is on the owner's list (codes or names, comma
+     * separated). An empty list is every country. A list the shop cannot read
+     * a single country from also reads as every country, never as none, so a
+     * typo cannot silently hide the line everywhere. No country known: shown.
+     */
+    public static function countryListed(string $list, ?string $country): bool
+    {
+        $codes = [];
+
+        foreach (preg_split('/[,;\n]+/', $list) ?: [] as $token) {
+            $token = trim($token);
+
+            if ($token === '') {
+                continue;
+            }
+
+            $upper = strtoupper($token);
+
+            if (isset(\App\Support\Countries::NAMES[$upper])) {
+                $codes[$upper] = true;
+
+                continue;
+            }
+
+            foreach (\App\Support\Countries::NAMES as $code => $name) {
+                if (strcasecmp($name, $token) === 0) {
+                    $codes[$code] = true;
+                    break;
+                }
+            }
+        }
+
+        if ($codes === [] || $country === null || $country === '') {
+            return true;
+        }
+
+        return isset($codes[strtoupper($country)]);
     }
 
     /** Constants, never settings: the party popper and the green tick. */
