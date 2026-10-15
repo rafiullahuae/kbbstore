@@ -218,6 +218,7 @@ final class CartTrackingReport
 
             $q->where(function (Builder $w) use ($like) {
                 $w->whereIn('c.customer_id', DB::table('customers')->select('id')->where('email', 'like', $like))
+                    ->when($this->captureReady(), fn ($x) => $x->orWhere('c.ct_email', 'like', $like))
                     ->orWhereIn('c.ct_order_id', DB::table('orders')->select('id')->where('email', 'like', $like))
                     ->orWhereIn('c.id', DB::table('cart_recoveries')->select('cart_id')->where('email', 'like', $like));
             });
@@ -451,7 +452,16 @@ final class CartTrackingReport
             'c.ct_removed', 'c.ct_first_at', 'c.ct_last_at', 'c.ct_order_id',
             // Lane CJ: the "Left at" line, from the cart row itself -- once its
             // migration has run (a package's files land seconds before it does).
-            ...($this->journeyReady() ? ['c.ct_stage', 'c.ct_seen_at', 'c.ct_seen_path', 'c.ct_left_at'] : [])];
+            ...($this->journeyReady() ? ['c.ct_stage', 'c.ct_seen_at', 'c.ct_seen_path', 'c.ct_left_at'] : []),
+            // Lane CAP: the email typed at checkout, and the customer row it was filed under.
+            ...($this->captureReady() ? ['c.ct_email', 'c.ct_email_customer_id'] : [])];
+    }
+
+    private ?bool $captureReady = null;
+
+    private function captureReady(): bool
+    {
+        return $this->captureReady ??= \Illuminate\Support\Facades\Schema::hasColumn('carts', 'ct_email_customer_id');
     }
 
     private ?bool $journeyReady = null;
@@ -498,7 +508,11 @@ final class CartTrackingReport
 
         $products = $this->productNames(array_keys($productIds));
 
-        $customerIds = array_values(array_unique(array_filter(array_map(fn ($r) => $r->customer_id, $rows))));
+        // Lane CAP: the row a typed address was filed under joins the same one batched read.
+        $customerIds = array_values(array_unique(array_filter(array_merge(
+            array_map(fn ($r) => $r->customer_id, $rows),
+            array_map(fn ($r) => $r->ct_email_customer_id ?? null, $rows),
+        ))));
         $customers = $customerIds === [] ? collect() : DB::table('customers')->whereIn('id', $customerIds)
             ->get(['id', 'name', 'first_name', 'last_name', 'email'])->keyBy('id');
 
@@ -515,14 +529,21 @@ final class CartTrackingReport
             $id = (int) $r->id;
             $customer = $r->customer_id !== null ? $customers->get($r->customer_id) : null;
             $order = $r->ct_order_id !== null ? $orders->get($r->ct_order_id) : null;
+            // Lane CAP: a guest's typed address, and its customer row, when the cart has no account of its own.
+            $typed = $customer === null && ($r->ct_email ?? null) !== null;
+
+            if ($typed && ($r->ct_email_customer_id ?? null) !== null) {
+                $customer = $customers->get($r->ct_email_customer_id);
+            }
 
             $out[] = $this->cartRow($r, $threshold, $settings)
                 + [
                     'products' => $this->lineList($lines->get($id) ?? collect(), $products, 'quantity'),
                     'removed' => $this->lineList($removed->get($id) ?? collect(), $products, 'qty', true),
                     'customer' => $customer === null ? null : $this->customerRow($customer),
-                    'email' => $customer?->email ?? $order?->email ?? $emails->get($id),
+                    'email' => $customer?->email ?? $order?->email ?? ($r->ct_email ?? null) ?? $emails->get($id),
                     'order' => $order === null ? null : $this->orderRow($order),
+                    'typed' => $typed,
                 ];
         }
 

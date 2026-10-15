@@ -2680,6 +2680,19 @@ KBB_BH_CSS;
                 'hits' => 1,
             ],
             /*
+             * THE CHECKOUT'S EMAIL-CAPTURE ENDPOINT. (Lane CAP) The owner: "when
+             * user enter their email, i want to record that email in our
+             * system ... even user don't create account or place the order."
+             * Cart Tracking -> Settings -> "Record the email typed at checkout",
+             * ON as asked; guests only. One line in the checkout's own route
+             * script, which checkout.js reads to load the capture; off, it is
+             * not printed (CheckoutEmailCaptureTest). Once, on the basket checkout.
+             */
+            'the checkout\'s email-capture endpoint (Lane CAP)' => [
+                'pattern' => '#(?<=window\.KBB\.routes\.checkoutCoupon = "\\\\/checkout\\\\/coupon";\n)window\.KBB\.routes\.checkoutEmail = "\\\\/api\\\\/checkout-contact";\n#',
+                'hits' => 1,
+            ],
+            /*
              * THE CHECKOUT FOOTER'S POLICY LINKS AS ITS LAST ROW. (Lane CO) "move
              * the privacy etc row to the end after payments icon with a grey line
              * seperator". The footer's own inline style gains the three rules

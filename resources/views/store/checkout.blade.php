@@ -620,6 +620,9 @@
    belongs to every page on the site and not just this one. */
 window.KBB.routes.checkoutLine = @json(Url::to('/checkout/line'));
 window.KBB.routes.checkoutCoupon = @json(Url::to('/checkout/coupon'));
+@if (class_exists(\App\Support\CheckoutEmailCapture::class) && \App\Support\CheckoutEmailCapture::onForPage())
+window.KBB.routes.checkoutEmail = @json(Url::to('/api/checkout-contact'));
+@endif
 
 (function () {
   var box = document.getElementById('create_account');

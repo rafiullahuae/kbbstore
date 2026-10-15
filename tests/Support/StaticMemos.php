@@ -90,6 +90,8 @@ final class StaticMemos
                test that drops it; carried over, every later test's list would
                be drawn without emirates. */
             \App\Support\OrderEmirate::class => static fn () => \App\Support\OrderEmirate::reset(),
+            // Lane CAP: whether carts.ct_email_customer_id / customers.origin exist yet.
+            \App\Support\CheckoutEmailCapture::class => static fn () => \App\Support\CheckoutEmailCapture::forgetReady(),
             \App\Support\BrandLogo::class => static fn () => \App\Support\BrandLogo::forgetColumns(),
             // Lane BR2: whether brands.header_layout exists yet.
             \App\Support\BrandPanel::class => static fn () => \App\Support\BrandPanel::forgetColumn(),

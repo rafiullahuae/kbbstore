@@ -40,6 +40,17 @@ export function initCheckout() {
             .catch((error) => console.error('[kbb] the email hint could not start; checkout is unaffected.', error));
     }
 
+    /* Lane CAP: the email is recorded once the field is left. The page
+       publishes the endpoint only while Cart Tracking → Settings → "Record the
+       email typed at checkout" is on and nobody is signed in; otherwise this
+       chunk is never fetched. */
+    const captureUrl = window.KBB?.routes?.checkoutEmail;
+    if (captureUrl) {
+        import('./email-capture.js')
+            .then((m) => m.startEmailCapture(captureUrl))
+            .catch((error) => console.error('[kbb] the email capture could not start; checkout is unaffected.', error));
+    }
+
     // Summary / Browsed pill tabs.
     document.addEventListener('click', async (event) => {
         const tab = event.target.closest('[data-stab]');

@@ -334,11 +334,14 @@
   function whoHtml(r) {
     var name = r.customer ? (r.customer.name || r.customer.email) : (r.email || '');
     var sub = r.customer && r.customer.name ? r.customer.email : (r.customer ? '' : (r.email ? 'Guest' : 'Guest, no email'));
+    /* (Lane CAP) The email the shopper typed at checkout, before any order:
+       said in words, and the name opens their customer record. */
+    if (r.typed) sub = (sub ? sub + ' · ' : '') + 'Typed at checkout';
     var shield = r.ip
       ? '<button type="button" class="ctk-shield' + (r.blocked ? ' on' : '') + '" data-ctk-shield="' + r.id + '" data-stop title="' + (r.blocked ? 'Blocked (' + esc(r.blocked.cidr) + ') — click to unblock' : 'Block this address or its range') + '" aria-label="' + (r.blocked ? 'Unblock' : 'Block') + '">' + icon(r.blocked ? I.lock : I.ban, 15) + '</button>'
       : '';
     return '<div class="ctk-who">'
-      + (name ? '<div class="nm">' + esc(name) + '</div>' : '')
+      + (name ? '<div class="nm">' + (r.typed && r.customer && window.kbbCustomerOpen ? '<a href="#" data-ctk-cust="' + r.customer.id + '" data-stop title="Open this customer" style="color:inherit;text-decoration:underline;text-underline-offset:2px">' + esc(name) + '</a>' : esc(name)) + '</div>' : '')
       + (sub ? '<span class="ctk-sub">' + esc(sub) + '</span>' : '')
       + '<div class="ctk-ipline">' + (r.country ? '<span class="ctk-cc" title="' + esc(r.country_name) + '"><span class="fl">' + flag(r.country) + '</span>' + esc(r.country) + '</span>' : '<span class="ctk-cc">??</span>')
       + '<span class="ctk-ip">' + esc(r.ip || 'no address') + '</span>' + shield + '</div>'
@@ -789,7 +792,9 @@
     if (s.err) { p.innerHTML = '<div class="ctk-card"><div class="ctk-empty"><b>Something went wrong</b>' + esc(s.err) + '</div></div>'; return; }
     var groups = [
       ['Tracking & bots', ['track', 'bots_leave', 'block_scope', 'keep_days']],
-      ['When a cart is called a bot', ['bot_threshold', 'speed_ms', 'burst_minutes', 'burst_ip', 'burst_net']]
+      ['When a cart is called a bot', ['bot_threshold', 'speed_ms', 'burst_minutes', 'burst_ip', 'burst_net']],
+      // Lane CAP: the email typed at checkout, before the order.
+      ['Emails typed at checkout', ['capture_email', 'capture_reminder']]
     ];
     var byKey = {};
     s.fields.forEach(function (f) { byKey[f.key] = f; });
@@ -834,7 +839,7 @@
       if (document.getElementById('ctkPop') && document.getElementById('ctkPop').classList.contains('on') && !(e.target.closest && e.target.closest('[data-ctk-shield]'))) closePop();
       return;
     }
-    var t = e.target.closest('[data-ctk-period],[data-ctk-pp],[data-ctk-sort],[data-ctk-page],[data-ctk-country],[data-ctk-selall],[data-ctk-sel],[data-ctk-allmatch],[data-ctk-bulk],[data-ctk-shield],[data-ctk-unblock],[data-ctk-doblock],[data-ctk-popclose],[data-ctk-close],[data-ctk-add],[data-ctk-save],[data-ctk-csv],[data-ctk-open-cart],#ctkScrim,[data-ctk-open]');
+    var t = e.target.closest('[data-ctk-period],[data-ctk-pp],[data-ctk-sort],[data-ctk-page],[data-ctk-country],[data-ctk-selall],[data-ctk-sel],[data-ctk-allmatch],[data-ctk-bulk],[data-ctk-shield],[data-ctk-unblock],[data-ctk-doblock],[data-ctk-popclose],[data-ctk-close],[data-ctk-add],[data-ctk-save],[data-ctk-csv],[data-ctk-open-cart],[data-ctk-cust],#ctkScrim,[data-ctk-open]');
     if (!t) return;
     if (t.disabled) return;
 
@@ -855,6 +860,7 @@
     if (t.hasAttribute('data-ctk-add')) { addBlock(t); return; }
     if (t.hasAttribute('data-ctk-save')) { saveSettings(t); return; }
     if (t.hasAttribute('data-ctk-csv')) { exportCsv(qs(Object.assign({}, st.q, { page: '' }))); return; }
+    if (t.hasAttribute('data-ctk-cust')) { e.preventDefault(); closeCart(); if (window.kbbCustomerOpen) window.kbbCustomerOpen(Number(t.getAttribute('data-ctk-cust'))); return; }
     if (t.hasAttribute('data-ctk-open-cart')) { openCart(Number(t.getAttribute('data-ctk-open-cart'))); return; }
     if (t.hasAttribute('data-ctk-open')) {
       if (e.target.closest('a,button,input,[data-stop],[data-ctk-stop],.ctk-bot')) return;

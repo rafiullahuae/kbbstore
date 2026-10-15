@@ -12,10 +12,6 @@
     "file": "assets/admin-088fb93ca5f1-DkLWY0Qr.js",
     "src": "admin-console/088fb93ca5f190f6624c1ac6631ef88f70c80451.js"
   },
-  "admin-console/0a4bf33ae9814ac30fbefd11ac32fb3292a02bbe.js": {
-    "file": "assets/admin-0a4bf33ae981-BfcDcHlO.js",
-    "src": "admin-console/0a4bf33ae9814ac30fbefd11ac32fb3292a02bbe.js"
-  },
   "admin-console/0f12b9b64329694321ecd53b836db0b872b10454.js": {
     "file": "assets/admin-0f12b9b64329-DoQmqgRA.js",
     "src": "admin-console/0f12b9b64329694321ecd53b836db0b872b10454.js"
@@ -95,6 +91,10 @@
   "admin-console/32134f44e55b3a56a83c78a1f201bc7724b19377.js": {
     "file": "assets/admin-32134f44e55b-BBLppXsJ.js",
     "src": "admin-console/32134f44e55b3a56a83c78a1f201bc7724b19377.js"
+  },
+  "admin-console/32e3ae105401ec22cf6233ac7e26faea097cf912.js": {
+    "file": "assets/admin-32e3ae105401-BYZZdDJe.js",
+    "src": "admin-console/32e3ae105401ec22cf6233ac7e26faea097cf912.js"
   },
   "admin-console/34052a02e5d6fb2ed39a5ec1ec873fb9f5c609f4.js": {
     "file": "assets/admin-34052a02e5d6-D2-q1sTn.js",
@@ -292,6 +292,10 @@
     "file": "assets/admin-91d529aff529-CAfQTCe4.js",
     "src": "admin-console/91d529aff529bbb3c2952b9d3bba0d216dc66b32.js"
   },
+  "admin-console/93d9aea7a5e7d40e5e9569d2efc2e8229400cbf1.js": {
+    "file": "assets/admin-93d9aea7a5e7-Bl3ChVA6.js",
+    "src": "admin-console/93d9aea7a5e7d40e5e9569d2efc2e8229400cbf1.js"
+  },
   "admin-console/95d8c9ab8b4ce2fdc603de2df0dc1dd04707114e.js": {
     "file": "assets/admin-95d8c9ab8b4c-CCxupEVS.js",
     "src": "admin-console/95d8c9ab8b4ce2fdc603de2df0dc1dd04707114e.js"
@@ -459,10 +463,6 @@
   "admin-console/f3b98b61937c3b6973f8aa29cd624d0588522046.js": {
     "file": "assets/admin-f3b98b61937c-DwB58uQj.js",
     "src": "admin-console/f3b98b61937c3b6973f8aa29cd624d0588522046.js"
-  },
-  "admin-console/f80eb2cd2ec99bc6e0a10bf4e2a37184a8cf4d0d.js": {
-    "file": "assets/admin-f80eb2cd2ec9-ByAtIfvC.js",
-    "src": "admin-console/f80eb2cd2ec99bc6e0a10bf4e2a37184a8cf4d0d.js"
   },
   "admin-console/fd41487420036ea47c8253a7d7c1c094a30db47c.js": {
     "file": "assets/admin-fd4148742003-BuEo3cjC.js",
@@ -740,7 +740,7 @@
     ]
   },
   "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-D6NZN63a.js",
+    "file": "assets/storefront-admin-CnT_w6In.js",
     "name": "storefront-admin",
     "src": "resources/js/kbb/admin/storefront-admin.js",
     "isDynamicEntry": true,
@@ -753,13 +753,23 @@
     ]
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app--B9ylsde.js",
+    "file": "assets/app-DskV5yRA.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,
     "dynamicImports": [
       "resources/js/kbb/email-fix.js",
+      "resources/js/kbb/email-capture.js",
       "resources/js/kbb/admin/storefront-admin.js"
+    ]
+  },
+  "resources/js/kbb/email-capture.js": {
+    "file": "assets/email-capture-DwswtaGq.js",
+    "name": "email-capture",
+    "src": "resources/js/kbb/email-capture.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/kbb/app.js"
     ]
   },
   "resources/js/kbb/email-fix.js": {
@@ -775,7 +785,7 @@
     "isEntry": true
   },
   "resources/js/owner-app/owner-app.js": {
-    "file": "assets/owner-app-DL1zvATQ.js",
+    "file": "assets/owner-app-KBD_1Mgl.js",
     "name": "owner-app",
     "src": "resources/js/owner-app/owner-app.js",
     "isEntry": true
