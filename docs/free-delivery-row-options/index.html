@@ -1,0 +1,153 @@
+<title>Free Delivery Row</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Cairo:wght@500;700&display=swap">
+<style>
+/* Layout: a gallery of the real cart-panel footer, each option shown at the phone panel width (278px) and the laptop panel width (340px). */
+:root{
+  --bg:#fbf6f8; --card:#ffffff; --ink:#2a2228; --muted:#756c74; --line:#f1e3e8;
+  --pink:#c13e63; --pink-deep:#a82f53; --pink-soft:#fff0f4;
+  --green:#2e9e6b; --green-ink:#1f7d52; --green-soft:#eaf7f0;
+  --gold:#b7791f; --gold-soft:#fff6e2;
+  --panel-shadow:0 10px 30px -18px rgba(42,34,40,.35);
+  --sans:"Outfit",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --ar:"Cairo","Outfit",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#17131a; --card:#221c24; --ink:#f3edf0; --muted:#b3a8ad; --line:#3a2f3c;
+  --panel-shadow:0 10px 30px -18px rgba(0,0,0,.7); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17131a; --card:#221c24; --ink:#f3edf0; --muted:#b3a8ad; --line:#3a2f3c;
+  --panel-shadow:0 10px 30px -18px rgba(0,0,0,.7); color-scheme:dark}
+
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:26px}
+h1{font-size:28px;line-height:1.2;margin:0;text-wrap:balance;font-weight:800;letter-spacing:-.01em}
+.lead{color:var(--muted);margin:6px 0 0;max-width:68ch}
+.lead b{color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,500px),1fr));gap:18px}
+.opt{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:12px;min-width:0}
+.opt header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tag{font-weight:800;color:var(--pink);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.opt h2{margin:0;font-size:17px;font-weight:700}
+.words{font-size:13.5px;color:var(--muted);margin:0}
+.words q{color:var(--ink);font-weight:600;quotes:"“" "”"}
+.words .arq{font-family:var(--ar);direction:rtl;unicode-bidi:isolate;color:var(--ink);font-weight:600}
+.pair{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.pair figure{margin:0;display:grid;gap:6px;min-width:0}
+.pair figcaption{font-size:11.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+
+/* the panel footer, as on the shop */
+.panel{background:#fff;color:#2a2228;border-radius:12px;box-shadow:var(--panel-shadow);padding:12px 12px 14px;display:grid;gap:8px;box-sizing:border-box}
+.panel.ph{width:278px}.panel.lt{width:340px}
+.panel .tick-ticket{display:flex;align-items:center;gap:6px;background:#FFF0F4;border:1.5px dashed #ecaec4;border-radius:12px;padding:5px 8px;font-size:10.7px;color:#5e545a;white-space:nowrap;overflow:hidden}
+.panel.lt .tick-ticket{font-size:12px}
+.panel .tick-ticket b{color:#A82F53;background:#fff;border:1px solid #f3c3d4;border-radius:7px;padding:0 5px;letter-spacing:.04em}
+.panel .sub{display:flex;justify-content:space-between;font-weight:800;font-size:17px;padding-top:2px}
+.panel .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.panel .btns span{display:grid;place-items:center;height:38px;border-radius:99px;font-weight:600;font-size:13.5px;border:1px solid #e7dfe3}
+.panel .btns span+span{background:#c13e63;border-color:#c13e63;color:#fff}
+
+/* every option: one line, sized from the row's own width, never outside */
+.fd{container-type:inline-size;display:flex;align-items:center;gap:7px;box-sizing:border-box;max-width:100%;overflow:hidden;white-space:nowrap;border-radius:12px;padding:6px 9px;min-height:34px}
+.fd .t{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:clamp(9px,calc((100cqi - 60px) / 15.5),14px);font-weight:600}
+.fd svg{flex:none;display:block}
+.ic{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%}
+.ok{flex:none;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;margin-inline-start:auto}
+
+@keyframes pop{0%{transform:scale(.6) rotate(-18deg)}60%{transform:scale(1.15) rotate(6deg)}100%{transform:none}}
+@keyframes tick{from{stroke-dashoffset:24}to{stroke-dashoffset:0}}
+@keyframes shine{from{background-position:-160% 0}to{background-position:260% 0}}
+.anim .ic svg{animation:pop .7s cubic-bezier(.2,.9,.3,1.3) both}
+.anim .ok path{stroke-dasharray:24;animation:tick .5s .35s ease-out both}
+@media (prefers-reduced-motion:reduce){.anim .ic svg,.anim .ok path,.F{animation:none!important}}
+
+/* A · Mint ticket */
+.A{background:#eaf7f0;border:1.5px dashed #a9dcc1;color:#1f7d52}
+.A .ic{background:#fff;color:#2e9e6b}.A .ok{background:#2e9e6b;color:#fff}
+/* B · Pink ticket (matches the coupon row) */
+.B{background:#FFF0F4;border:1.5px dashed #ecaec4;color:#5e545a}
+.B .t b{color:#a82f53}.B .ic{background:#fff;color:#c13e63}.B .ok{background:#2e9e6b;color:#fff}
+/* C · Plain line, no box */
+.C{padding:2px 0;min-height:0;color:#1f7d52}
+.C .t{font-weight:700}.C .ic{width:auto;height:auto;color:#c13e63}.C .ok{background:none;color:#2e9e6b;width:auto;height:auto}
+/* D · Gold celebration */
+.D{background:linear-gradient(90deg,#fff6e2,#fffaf0);border:1px solid #f1d9a6;color:#7a4e0e}
+.D .ic{background:#fff;color:#b7791f}.D .ok{background:#2e9e6b;color:#fff}
+/* E · Confetti ribbon */
+.E{color:#fff;background:#c13e63 radial-gradient(circle at 12% 30%,rgba(255,255,255,.35) 0 1.5px,transparent 2px) 0 0/22px 18px;position:relative}
+.E .ic{background:rgba(255,255,255,.2);color:#fff}.E .ok{background:#fff;color:#2e9e6b}
+/* F · Shimmer green pill */
+.F{border-radius:99px;color:#fff;background:linear-gradient(100deg,#2e9e6b 0%,#2e9e6b 40%,#5cc493 50%,#2e9e6b 60%,#2e9e6b 100%) 0 0/250% 100%;animation:shine 2.6s ease-in-out .4s 1 both}
+.F .ic{background:rgba(255,255,255,.22);color:#fff}.F .ok{background:#fff;color:#2e9e6b}
+/* G · Outline with truck */
+.G{background:#fff;border:1.5px solid #bfe0cd;color:#2a2228}
+.G .ic{background:#eaf7f0;color:#2e9e6b}.G .t b{color:#1f7d52}.G .ok{background:#2e9e6b;color:#fff}
+/* H · Soft gradient, pink to peach */
+.H{background:linear-gradient(90deg,#ffe3ec,#ffe9dc);color:#8a2b47}
+.H .ic{background:#fff;color:#e2637f}.H .ok{background:#2e9e6b;color:#fff}
+
+.note{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:14px;color:var(--muted)}
+.note b{color:var(--ink)}
+.replay{justify-self:start;font:inherit;font-weight:600;font-size:13px;color:var(--pink);background:none;border:1px solid var(--line);border-radius:99px;padding:6px 14px;cursor:pointer}
+.replay:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Free delivery row for the cart panel</h1>
+    <p class="lead">Shows only when the bag total reaches the free-delivery amount, above the coupon row and Subtotal. Every option stays on <b>one line</b> at the phone panel width (278px) and the laptop panel width (340px): the text sizes itself to the row, like the coupon row. Each opens with a celebration icon and ends with a green tick. Pick a letter, or mix a design with another option's wording.</p>
+  </div>
+  <button class="replay" id="replay" type="button">Replay the icon animation</button>
+  <div class="grid" id="grid"></div>
+  <div class="note"><b>Placement.</b> The panel already says “You’ve unlocked free delivery!” in the progress bar at the top. This row repeats the good news at the bottom, beside Checkout, where the shopper is about to decide. It never shows below the free-delivery amount, and it uses the same amount as the bar, so the two can never disagree. Each option comes with Arabic wording for /ar.</div>
+</div>
+
+<script>
+(function(){
+  var POP='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l5.5-13.5L17 14z" fill="currentColor" fill-opacity=".18"/><path d="M4 20l5.5-13.5L17 14z"/><path d="M14 5.5l1-2.5M18.5 9.5l2.5-1M17 3.5l.5.5M20.5 6l.5.5M12 3l.3 1.2M21 12l-1.2.3"/></svg>';
+  var SPARK='<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8z"/><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9z"/><path d="M5 15l.7 1.5L7 17l-1.3.6L5 19l-.7-1.4L3 17l1.3-.5z"/></svg>';
+  var GIFT='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8h14v-8M12 8v12M12 8S10.5 3.5 8 4.5 9 8 12 8zM12 8s1.5-4.5 4-3.5S15 8 12 8z"/></svg>';
+  var TRUCK='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>';
+  var STAR='<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>';
+  var HEART='<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20s-7-4.4-9-8.6C1.7 8.5 3.4 5 6.8 5c2 0 3.4 1.1 5.2 3 1.8-1.9 3.2-3 5.2-3 3.4 0 5.1 3.5 3.8 6.4-2 4.2-9 8.6-9 8.6z"/></svg>';
+  var OK='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var OKLG='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  var OPTS=[
+    {k:'A',name:'Mint ticket',ic:POP,en:'Congrats! You’ve got <b>free delivery</b>',enq:'Congrats! You’ve got free delivery',ar:'مبروك! حصلتِ على توصيل مجاني'},
+    {k:'B',name:'Pink ticket, matches the coupon row',ic:POP,en:'Yay! <b>Free delivery</b> is yours',enq:'Yay! Free delivery is yours',ar:'رائع! التوصيل المجاني لكِ'},
+    {k:'C',name:'Plain line, no box',ic:SPARK,en:'Woohoo! Your delivery is on us',enq:'Woohoo! Your delivery is on us',ar:'رائع! التوصيل علينا'},
+    {k:'D',name:'Gold celebration',ic:STAR,en:'Free delivery unlocked!',enq:'Free delivery unlocked!',ar:'تم فتح التوصيل المجاني!'},
+    {k:'E',name:'Confetti ribbon',ic:POP,en:'Lucky you! Delivery is free',enq:'Lucky you! Delivery is free',ar:'محظوظة! التوصيل مجاني'},
+    {k:'F',name:'Green pill with a one-time shine',ic:GIFT,en:'You’ve earned free delivery',enq:'You’ve earned free delivery',ar:'لقد ربحتِ التوصيل المجاني'},
+    {k:'G',name:'Clean outline with a truck',ic:TRUCK,en:'Good news! Your order ships <b>free</b>',enq:'Good news! Your order ships free',ar:'خبر سار! طلبكِ يُشحن مجانًا'},
+    {k:'H',name:'Soft pink to peach',ic:HEART,en:'Treat yourself, delivery’s on us',enq:'Treat yourself, delivery’s on us',ar:'دلّلي نفسكِ، التوصيل علينا'}
+  ];
+
+  function row(o){
+    var ok=o.k==='C'?OKLG:OK;
+    return '<div class="fd '+o.k+' anim"><span class="ic" aria-hidden="true">'+o.ic+'</span><span class="t">'+o.en+'</span><span class="ok" aria-hidden="true">'+ok+'</span></div>';
+  }
+  function panel(o,cls){
+    return '<div class="panel '+cls+'">'+row(o)+
+      '<div class="tick-ticket">Use coupon code: <b>GLOW</b> on checkout page.</div>'+
+      '<div class="sub"><span>Subtotal</span><span>AED 311</span></div>'+
+      '<div class="btns"><span>Cart</span><span>Checkout</span></div></div>';
+  }
+  var g=document.getElementById('grid');
+  g.innerHTML=OPTS.map(function(o){
+    return '<section class="opt"><header><span class="tag">'+o.k+'</span><h2>'+o.name+'</h2></header>'+
+      '<p class="words">Wording: <q>'+o.enq+'</q> · Arabic: <span class="arq">'+o.ar+'</span></p>'+
+      '<div class="pair"><figure>'+panel(o,'ph')+'<figcaption>Phone panel · 278px</figcaption></figure>'+
+      '<figure>'+panel(o,'lt')+'<figcaption>Laptop panel · 340px</figcaption></figure></div></section>';
+  }).join('');
+
+  document.getElementById('replay').addEventListener('click',function(){
+    var rows=g.querySelectorAll('.fd');
+    rows.forEach(function(r){r.classList.remove('anim');if(r.classList.contains('F'))r.style.animation='none';});
+    void g.offsetWidth;
+    rows.forEach(function(r){r.classList.add('anim');if(r.classList.contains('F'))r.style.animation='';});
+  });
+})();
+</script>
