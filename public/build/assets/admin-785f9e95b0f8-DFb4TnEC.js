@@ -261,6 +261,14 @@
         + '<div class="mlf-grid">' + field(v, 'mail_reply_to', 'Replies go to', '', 'email') + field(v, 'mail_merchant_address', 'New-order alerts to', '', 'email') + '</div>'
         + saveRow('emlSaveSending2') + '</div>'],
       ['test', 'Send a test', testCard],
+      /* Lane EH: the owner, "give this option to turn on/off on the backend
+         under Emails > settings somewhere ... keep turned off by default".
+         Saved by the same Save as the rest of this screen, through POST
+         /emails/sending, whose allowlist carries this one extra key. */
+      ['checkout', 'At checkout', '<div class="eml-card"><div><h3 class="eml-h">At checkout</h3><p class="eml-d">Helps the order emails reach the right inbox.</p></div>'
+        + '<label class="eml-tick" for="eml_checkout_email_fix"><input type="checkbox" id="eml_checkout_email_fix" data-eml-key="checkout_email_fix"' + (d.checkout_email_fix ? ' checked' : '') + '>'
+        + '<span>Checkout: suggest a fix for a mistyped email<small>After a shopper leaves the email field at checkout, a short line offers a fix for a clear typo (e.g. yahoo.co → yahoo.com). Nothing shows while typing; it never changes the address on its own.</small></span></label>'
+        + saveRow('emlSaveSending3') + '</div>'],
       ['dns', 'Domain check', '<div class="eml-card"><div><h3 class="eml-h">Will inboxes trust the domain?</h3><p class="eml-d">A read-only DNS check for the From domain. It never changes anything.</p></div><div id="emlDnsBox">' + dnsRows(d.dns) + '</div></div>']
     ], 'method', 'Sending & delivery');
     host().innerHTML = shell('Sending & delivery',
@@ -282,12 +290,12 @@
       var el = document.getElementById('eml_' + k);
       if (!el) return;
       if (el.type === 'password' && el.value === '') return;   // blank = keep the stored one
-      out[k] = el.value;
+      out[k] = el.type === 'checkbox' ? el.checked : el.value;
     });
     return out;
   }
 
-  var SENDING_KEYS = ['mail_from_name', 'mail_from_address', 'mail_reply_to', 'mail_merchant_address', 'mail_gmail_username', 'mail_gmail_password'];
+  var SENDING_KEYS = ['mail_from_name', 'mail_from_address', 'mail_reply_to', 'mail_merchant_address', 'mail_gmail_username', 'mail_gmail_password', 'checkout_email_fix'];
 
   async function saveSending(btn, quiet) {
     var picked = document.querySelector('input[name="emlTransport"]:checked');
@@ -534,7 +542,7 @@
       var f = document.querySelector('.eml-frame'); if (f) f.className = 'eml-frame ' + state.device;
       return;
     }
-    if (t.id === 'emlSaveSending' || t.id === 'emlSaveSending2') return saveSending(t);
+    if (t.id === 'emlSaveSending' || t.id === 'emlSaveSending2' || t.id === 'emlSaveSending3') return saveSending(t);
     if (t.id === 'emlTest') return testFromSending(t);
     if (t.id === 'emlDns') return checkDns(t);
     if (t.id === 'emlSaveBranding') return saveBranding(t);
@@ -568,7 +576,10 @@
       state.pick = t.value;
       // Keep what was typed: copy the boxes back before repainting the form.
       var typed = collect(SENDING_KEYS.filter(function (k) { return k !== 'mail_gmail_password'; }));
-      Object.keys(typed).forEach(function (k) { state.sending.values[k] = typed[k]; });
+      Object.keys(typed).forEach(function (k) {
+        if (k === 'checkout_email_fix') state.sending.checkout_email_fix = typed[k];   // Lane EH: a top-level flag
+        else state.sending.values[k] = typed[k];
+      });
       state.to = ((document.getElementById('emlTo') || {}).value || '').trim();
       state.which = (document.getElementById('emlWhich') || {}).value || state.which;
       state.dirty = true;

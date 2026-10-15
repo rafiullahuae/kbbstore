@@ -726,7 +726,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // seeded by 2027_10_31_900000_seed_mobile_menu_welcome_arabic_draft.
     // + Lane AR round 2: the shipped English of settings as interface strings
     // (store.wording.*), seeded by 2027_11_02_100000_seed_lane_ar2_wording_arabic_drafts.
-    expect($ui['drafts'])->toBe(1624 + count(\App\Support\ArabicWording::ENGLISH), 'the shipped Arabic is not showing as drafts to review')
+    // +1 (Lane EH): checkout's "Did you mean :email?" (store.checkout.email_fix),
+    // seeded by 2027_11_04_100000_seed_checkout_email_fix_arabic_draft -- the
+    // owner's request for a mistyped-email hint at checkout.
+    expect($ui['drafts'])->toBe(1625 + count(\App\Support\ArabicWording::ENGLISH), 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

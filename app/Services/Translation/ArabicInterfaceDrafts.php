@@ -1403,6 +1403,7 @@ final class ArabicInterfaceDrafts
             'store.checkout.field_bad_value' => 'يرجى التحقق من هذا الحقل.',
             'store.checkout.remember_me' => 'تذكّر تفاصيل الشحن على هذا الجهاز',
             'store.checkout.remember_clear' => 'لست أنت؟ امسح البيانات',
+            'store.checkout.email_fix' => 'هل تقصدين :email؟',
             'store.checkout.placing_failed' => 'تعذّر تنفيذ طلبك. من فضلك حاول مرة أخرى.',
             'store.checkout.placing_offline' => 'تعذّر الوصول إلى المتجر. تحقّق من اتصالك وحاول مرة أخرى.',
             'store.checkout.placing_expired' => 'هذه الصفحة مفتوحة منذ وقت طويل. من فضلك حدّثها وحاول مرة أخرى — لم يُخصم أي مبلغ.',

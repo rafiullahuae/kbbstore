@@ -210,14 +210,20 @@
       '</div>' +
       '<div class="kxe-row"><label class="kxe-lbl" for="kxePhone">Phone</label>' +
         '<input type="tel" id="kxePhone" maxlength="40" autocomplete="off" value="' + esc(S.phone) + '"></div>' +
-      '<div id="kxeChecks">' + checksHTML() + '</div>' +
+      '<div id="kxeChecks">' + (S.checksWas = checksHTML()) + '</div>' +
       (S.error ? '<p class="kxe-err" id="kxeErr">' + esc(S.error) + '</p>' : '') +
       history() +
       '</div><div class="kxe-f"><button class="btn ghost" data-kxe="close">Cancel</button><button class="btn" data-kxe="save" id="kxeSave">Save</button></div>';
     wire();
   }
 
+  /* THE HINT WAITS FOR THE FIELD TO BE LEFT. The owner: "the dialogue box
+     should appear only once user left the email field. during write no any
+     disturbance." So nothing appears while typing; leaving the field (blur)
+     checks what was typed and shows the hint only then. Typing again hides
+     it until the field is left again. */
   function hintHTML() {
+    if (!S.hintReady) return '';
     var typed = S.email.trim();
     var hint = kxeSuggest(typed);
     if (!hint || hint === S.keep) return '';
@@ -253,8 +259,12 @@
      being typed in, so the caret and an IME composition are left alone. */
   function refresh() {
     var h = document.getElementById('kxeHintSlot'), k = document.getElementById('kxeChecks');
-    if (h) h.innerHTML = hintHTML();
-    if (k) k.innerHTML = checksHTML();
+    // Only what changed is redrawn: leaving the email field just as the
+    // pointer goes down on a checkbox must not replace that checkbox under
+    // it, or the click is lost.
+    var hh = hintHTML(), kk = checksHTML();
+    if (h && h.innerHTML !== hh) h.innerHTML = hh;
+    if (k && S.checksWas !== kk) { k.innerHTML = kk; S.checksWas = kk; }
   }
 
   function history() {
@@ -301,11 +311,28 @@
     b.onchange = function (ev) {
       if (ev.target.id === 'kxeFollow' || ev.target.id === 'kxeResend' || ev.target.id === 'kxeOrder') { grab(); refresh(); }
     };
-    /* The hint and the count follow the typing: local work only, no request. */
+    /* While typing nothing is redrawn: a hint already showing is taken away
+       (it described the old text), and that is all. */
     b.oninput = function (ev) {
       if (ev.target.id !== 'kxeEmail' && ev.target.id !== 'kxePhone') return;
-      grab(); refresh();
+      grab();
+      if (S.hintReady && ev.target.id === 'kxeEmail') {
+        S.hintReady = false;
+        var h = document.getElementById('kxeHintSlot');
+        if (h) h.innerHTML = '';
+      }
     };
+    /* Leaving a field: check what was typed, show the hint if any, and bring
+       the order count and checkboxes up to date. Local work, no request. */
+    // wire() runs on every repaint: attach this one listener once per box.
+    if (b.kxeLeaveWired) return;
+    b.kxeLeaveWired = true;
+    b.addEventListener('focusout', function (ev) {
+      if (ev.target.id !== 'kxeEmail' && ev.target.id !== 'kxePhone') return;
+      grab();
+      if (ev.target.id === 'kxeEmail') S.hintReady = true;
+      refresh();
+    });
   }
 
   function focusEmail() { var el = document.getElementById('kxeEmail'); if (el) el.focus(); }

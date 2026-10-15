@@ -29,6 +29,17 @@ export function initCheckout() {
 
     rememberDetails(form);
 
+    /* Lane EH: "Did you mean …@yahoo.com?" once the email field is left.
+       The server prints [data-efix] only while Emails → Sending & delivery →
+       At checkout is on; off, there is no marker and this chunk is never
+       fetched. */
+    const emailFix = form.querySelector('[data-efix]');
+    if (emailFix) {
+        import('./email-fix.js')
+            .then((m) => m.startEmailFix(emailFix))
+            .catch((error) => console.error('[kbb] the email hint could not start; checkout is unaffected.', error));
+    }
+
     // Summary / Browsed pill tabs.
     document.addEventListener('click', async (event) => {
         const tab = event.target.closest('[data-stab]');

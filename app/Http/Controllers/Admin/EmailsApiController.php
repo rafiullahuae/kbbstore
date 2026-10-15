@@ -15,6 +15,7 @@ use App\Services\Mail\MailSettings;
 use App\Services\Mail\MailTester;
 use App\Services\Mail\OrderMailer;
 use App\Services\SettingsService;
+use App\Support\CheckoutEmailFix;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -61,6 +62,9 @@ class EmailsApiController extends Controller
         'mail_merchant_address',
         'mail_gmail_username',
         'mail_gmail_password',
+        // Lane EH: Sending & delivery → At checkout. Not a MailSettings key:
+        // saved on its own through SettingsService, see saveSending().
+        CheckoutEmailFix::KEY,
     ];
 
     /** The keys Emails → Design & branding → Contact details may write. */
@@ -209,6 +213,28 @@ class EmailsApiController extends Controller
             ], 422);
         }
 
+        /*
+         * Lane EH: "Checkout: suggest a fix for a mistyped email" is an on/off,
+         * stored as its own setting rather than a mail key. A tick box sends
+         * true or false; anything else is refused before a single value is
+         * written, so a bad request changes nothing at all.
+         */
+        $emailFix = null;
+
+        if (array_key_exists(CheckoutEmailFix::KEY, $values)) {
+            $emailFix = $values[CheckoutEmailFix::KEY];
+            unset($values[CheckoutEmailFix::KEY]);
+
+            if (! in_array($emailFix, [true, false, 1, 0, '1', '0'], true)) {
+                return response()->json([
+                    'ok' => false,
+                    'error' => 'The checkout email hint is either on or off.',
+                ], 422);
+            }
+
+            $emailFix = (bool) $emailFix;
+        }
+
         $rules = [];
         $checks = [
             'mail_from_name' => ['string', 'max:120'],
@@ -234,6 +260,10 @@ class EmailsApiController extends Controller
 
         if ($rules !== []) {
             $request->validate($rules);
+        }
+
+        if ($emailFix !== null) {
+            app(SettingsService::class)->set(CheckoutEmailFix::KEY, $emailFix ? '1' : '0');
         }
 
         $rejected = $this->settings->save(['mail_transport' => $data['transport']] + $values);
@@ -383,6 +413,8 @@ class EmailsApiController extends Controller
                 'mail_merchant_address' => (string) $values['mail_merchant_address'],
                 'mail_gmail_username' => (string) $values['mail_gmail_username'],
             ],
+            // Lane EH: Sending & delivery → At checkout, off unless turned on.
+            CheckoutEmailFix::KEY => CheckoutEmailFix::enabled(),
             // Write-only: whether one is stored, never what it is.
             'gmail_password' => ['has_value' => $this->settings->hasGmailPassword()],
             'configured' => $this->settings->configured(),
