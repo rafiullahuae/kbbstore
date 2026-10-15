@@ -19,6 +19,10 @@
 .eml-card p{font-size:12.5px;line-height:1.55;margin:0;color:var(--ink-soft,#626c80)}
 .eml-card p b{color:var(--ink-2,#3c465c)}
 .eml-card .btn{justify-self:start;margin-top:4px}
+/* Lane EH: Sending & delivery → At checkout, one tick box with its line. */
+.eml-tick{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;font-weight:600;color:var(--ink,#101729);cursor:pointer}
+.eml-tick input{width:18px;height:18px;margin:1px 0 0;flex:none;accent-color:var(--accent,#15a85a)}
+.eml-tick small{display:block;font-size:12.5px;font-weight:400;line-height:1.55;color:var(--ink-soft,#626c80);margin-top:3px}
 .eml-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
 .eml-two > *{min-width:0}
 .eml-two.wide-right{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}

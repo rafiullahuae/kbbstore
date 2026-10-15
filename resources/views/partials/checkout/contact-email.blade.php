@@ -17,6 +17,17 @@
                             :placeholder="__('store.checkout.field_email_placeholder')" inputmode="email"
                             autocomplete="section-billing billing email"
                             :value="old('billing_email', $prefill['email'] ?? '')" />
-@if (! empty($hint) && ($kbbEmailHint = $kbbCoPage->emailHint()) !== '')
+{{-- "Did you mean …@yahoo.com?" (Lane EH): Emails -> Sending & delivery -> At
+     checkout, OFF by default. Off prints exactly what it printed before. On,
+     the grey line carries the translated sentence as `data-efix` and becomes
+     the hint once the field is left; with no grey line, an empty hidden line
+     in its place does. checkout.js loads the hint only when it finds that
+     marker. --}}@if (! empty($hint) && ($kbbEmailHint = $kbbCoPage->emailHint()) !== '')
+@if (\App\Support\CheckoutEmailFix::enabled())
+                        <p class="co-ehint" data-efix="{{ \App\Support\CheckoutEmailFix::wording() }}">{{ $kbbEmailHint }}</p>
+@else
                         <p class="co-ehint">{{ $kbbEmailHint }}</p>
+@endif
+@elseif (\App\Support\CheckoutEmailFix::enabled())
+                        <p class="co-ehint" data-efix="{{ \App\Support\CheckoutEmailFix::wording() }}" hidden></p>
 @endif

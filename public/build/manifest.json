@@ -40,6 +40,10 @@
     "file": "assets/admin-15e8731578e7-BpLkVf8G.js",
     "src": "admin-console/15e8731578e78e7562509ecbdf53621f41f08059.js"
   },
+  "admin-console/18c16d8bcbe77203863d5d03bb9830579e190b9b.css": {
+    "file": "assets/admin-18c16d8bcbe7-Bjdzrp6q.css",
+    "src": "admin-console/18c16d8bcbe77203863d5d03bb9830579e190b9b.css"
+  },
   "admin-console/1bdeacc66bc5c56841c4b80563894dc656c11fe6.js": {
     "file": "assets/admin-1bdeacc66bc5-XXgLILox.js",
     "src": "admin-console/1bdeacc66bc5c56841c4b80563894dc656c11fe6.js"
@@ -67,6 +71,10 @@
   "admin-console/2e529e90b38d484edf0f43f6ec538986a6fc3ff4.js": {
     "file": "assets/admin-2e529e90b38d-lCD92dNB.js",
     "src": "admin-console/2e529e90b38d484edf0f43f6ec538986a6fc3ff4.js"
+  },
+  "admin-console/2ed314fb9a2df9d58376aab852039e819784ca38.js": {
+    "file": "assets/admin-2ed314fb9a2d-vyQ3e37F.js",
+    "src": "admin-console/2ed314fb9a2df9d58376aab852039e819784ca38.js"
   },
   "admin-console/2ee8ce407242de64e0da922939091d62e2114ee9.css": {
     "file": "assets/admin-2ee8ce407242-DkMrlKEj.css",
@@ -216,6 +224,10 @@
     "file": "assets/admin-767dc641d15c-B_bjZ20R.js",
     "src": "admin-console/767dc641d15c76e128abf9e7a17da7fb988573d9.js"
   },
+  "admin-console/785f9e95b0f840e1b1550e1c5d1c07f84d7cffde.js": {
+    "file": "assets/admin-785f9e95b0f8-DFb4TnEC.js",
+    "src": "admin-console/785f9e95b0f840e1b1550e1c5d1c07f84d7cffde.js"
+  },
   "admin-console/7aadd4e00bfc3a07ac2b0bb7664708980894bb93.css": {
     "file": "assets/admin-7aadd4e00bfc-BHmuj1fs.css",
     "src": "admin-console/7aadd4e00bfc3a07ac2b0bb7664708980894bb93.css"
@@ -267,10 +279,6 @@
   "admin-console/8b1d8e50f3c8cd97d02f377ec4b768ebfe30a73c.js": {
     "file": "assets/admin-8b1d8e50f3c8-BhxfBBOq.js",
     "src": "admin-console/8b1d8e50f3c8cd97d02f377ec4b768ebfe30a73c.js"
-  },
-  "admin-console/8bd28ba40a1adc1c755f12d2c178771b7949319e.css": {
-    "file": "assets/admin-8bd28ba40a1a-BqCELM2h.css",
-    "src": "admin-console/8bd28ba40a1adc1c755f12d2c178771b7949319e.css"
   },
   "admin-console/8e8e75cf8fb8780d3b23b8c88f803c082fee2dd5.js": {
     "file": "assets/admin-8e8e75cf8fb8-D7MAzJQ_.js",
@@ -328,10 +336,6 @@
     "file": "assets/admin-a594717a90f2-B1-U_lcn.js",
     "src": "admin-console/a594717a90f209867b604e5071355a9105387776.js"
   },
-  "admin-console/a662fc6cc92c0594a973c188d768663479fbde87.js": {
-    "file": "assets/admin-a662fc6cc92c-sta15N6N.js",
-    "src": "admin-console/a662fc6cc92c0594a973c188d768663479fbde87.js"
-  },
   "admin-console/a69710d9ed6604ce92a1ce8f3c98b831b43f5831.js": {
     "file": "assets/admin-a69710d9ed66-Dr52bLyk.js",
     "src": "admin-console/a69710d9ed6604ce92a1ce8f3c98b831b43f5831.js"
@@ -363,10 +367,6 @@
   "admin-console/b05eb30ba2103be45936fdc474b20d01c4a74801.js": {
     "file": "assets/admin-b05eb30ba210-B_3jpnXs.js",
     "src": "admin-console/b05eb30ba2103be45936fdc474b20d01c4a74801.js"
-  },
-  "admin-console/b5d6c65cba12e8822ba4a54f02c6d585a8de2b84.js": {
-    "file": "assets/admin-b5d6c65cba12-oAjp6kBu.js",
-    "src": "admin-console/b5d6c65cba12e8822ba4a54f02c6d585a8de2b84.js"
   },
   "admin-console/b7ea2b12ae2c45d001653b25ecb3b99027737751.js": {
     "file": "assets/admin-b7ea2b12ae2c-D4S58Hk2.js",
@@ -740,7 +740,7 @@
     ]
   },
   "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-7ENWyVXR.js",
+    "file": "assets/storefront-admin-D6NZN63a.js",
     "name": "storefront-admin",
     "src": "resources/js/kbb/admin/storefront-admin.js",
     "isDynamicEntry": true,
@@ -753,13 +753,20 @@
     ]
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-C_g0aXJj.js",
+    "file": "assets/app--B9ylsde.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,
     "dynamicImports": [
+      "resources/js/kbb/email-fix.js",
       "resources/js/kbb/admin/storefront-admin.js"
     ]
+  },
+  "resources/js/kbb/email-fix.js": {
+    "file": "assets/email-fix-de_OlYO_.js",
+    "name": "email-fix",
+    "src": "resources/js/kbb/email-fix.js",
+    "isDynamicEntry": true
   },
   "resources/js/kbb/pdp-trust.js": {
     "file": "assets/pdp-trust-CLra4tho.js",

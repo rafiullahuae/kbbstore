@@ -450,6 +450,10 @@ final class AdminSearchIndex
             'Send a test' => [
                 'Send a test to', 'Which email',
             ],
+            // Lane EH: the shopper checkout's "Did you mean …?" switch.
+            'At checkout' => [
+                'Checkout: suggest a fix for a mistyped email',
+            ],
             'Domain check' => [
                 'Will inboxes trust the domain?', 'DKIM', 'DMARC',
             ],

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Symfony\Component\Process\Process;
+use Tests\Support\EmailTypoCases;
 
 /**
  * Store -> Customers -> (a customer) -> Edit email / phone: the "Did you mean
@@ -53,80 +54,9 @@ it('suggests exactly the right provider for a real typo, and leaves every real o
     // drop the `pSuffix !== suffix` guard and yahoo.co.in -> yahoo.co.uk; drop
     // the `pName.length < 5` guard and liv.com / mse.com start guessing; let
     // rule 1 fire for any name and company.co -> company.com. Each is a row below.
-    $cases = [
-        // ---- true fixes (the domain only; the local part is kept exactly)
-        'jovana8b@yahoo.co' => 'jovana8b@yahoo.com',
-        'Jovana8B@Yahoo.Co' => 'Jovana8B@yahoo.com',
-        'a@gmial.com' => 'a@gmail.com',
-        'a@gmal.com' => 'a@gmail.com',
-        'a@gamil.com' => 'a@gmail.com',
-        'a@gmail.con' => 'a@gmail.com',
-        'a@gmail.cmo' => 'a@gmail.com',
-        'a@gmail.comm' => 'a@gmail.com',
-        'a@gmail.om' => 'a@gmail.com',
-        'a@gmail.co' => 'a@gmail.com',
-        'a@hotmial.com' => 'a@hotmail.com',
-        'a@hotmal.com' => 'a@hotmail.com',
-        'a@hotmail.con' => 'a@hotmail.com',
-        'a@outlok.com' => 'a@outlook.com',
-        'a@outlook.co' => 'a@outlook.com',
-        'a@icloud.co' => 'a@icloud.com',
-        'a@iclod.com' => 'a@icloud.com',
-        'a@yaho.com' => 'a@yahoo.com',
-        'a@yahooo.com' => 'a@yahoo.com',
-        'a@yahoo.con' => 'a@yahoo.com',
-        'a@hotmial.co.uk' => 'a@hotmail.co.uk',
-        'a@rocketmial.com' => 'a@rocketmail.com',
-        'a@protonmal.com' => 'a@protonmail.com',
-        '  a@gmial.com  ' => 'a@gmail.com',
-
-        // ---- must not touch: real providers and their country variants
-        'a@yahoo.co.uk' => null,
-        'a@yahoo.co.in' => null,
-        'a@yahoo.co.jp' => null,
-        'a@hotmail.fr' => null,
-        'a@hotmail.co.uk' => null,
-        'a@live.co.uk' => null,
-        'a@outlook.sa' => null,
-        'a@gmail.com' => null,
-        'a@yahoo.com' => null,
-        'a@live.com' => null,
-        'a@me.com' => null,
-        'a@emirates.net.ae' => null,
-        'a@eim.ae' => null,
-        'a@ymail.com' => null,
-        'a@mail.com' => null,
-        'a@email.com' => null,
-        'a@googlemail.com' => null,
-        'a@gmx.de' => null,
-        'a@wahoo.com' => null,
-
-        // ---- must not touch: company / custom / anything not near the list
-        'a@company.co' => null,
-        'a@company.con' => null,
-        'a@kbeautybliss.com' => null,
-        'a@extrabeauty.ae' => null,
-        'a@adnoc.ae' => null,
-        'a@emiratesnbd.com' => null,
-        'a@du.ae' => null,
-
-        // ---- short names: too many real neighbours for one edit to mean a typo
-        'a@liv.com' => null,
-        'a@msm.com' => null,
-        'a@aoll.com' => null,
-
-        // ---- ambiguous: two providers equally close -> nothing
-        'a@xmail.com' => null,
-
-        // ---- not an address we can judge
-        'a@بريد.امارات' => null,
-        'a@' => null,
-        'a' => null,
-        '' => null,
-        '@gmial.com' => null,
-        'a@gmial' => null,
-        'a@gmial..com' => null,
-    ];
+    // The table lives in Tests\Support\EmailTypoCases since Lane EH, shared
+    // with the checkout's copy of this function (CheckoutEmailTypoHintTest).
+    $cases = EmailTypoCases::all();
 
     expect(count($cases))->toBeGreaterThanOrEqual(40);
 

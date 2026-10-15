@@ -1705,6 +1705,10 @@ final class InterfaceStrings
             // Lane PO: the details kept in this browser, and the way to forget them.
             'checkout.remember_me' => 'Remember my shipping details on this device',
             'checkout.remember_clear' => 'Not you? Clear details',
+            // Lane EH: under the email field once it is left, when Emails ->
+            // Sending & delivery -> At checkout is on. `:email` is filled in
+            // the browser (the domain is a button), never on the server.
+            'checkout.email_fix' => 'Did you mean :email?',
 
             /*
              * THE RETURN FROM AN INSTALMENT PROVIDER WITHOUT A PAYMENT.
