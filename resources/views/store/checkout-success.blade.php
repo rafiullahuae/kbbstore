@@ -107,7 +107,7 @@
                     // code itself is kept when it is one we have no name for,
                     // rather than dropping the line altogether.
                     ($c = $shipping['country'] ?? null)
-                        ? \App\Support\ArabicWording::of(\App\Support\Countries::NAMES[strtoupper((string) $c)] ?? $c)
+                        ? (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of(\App\Support\Countries::NAMES[strtoupper((string) $c)] ?? $c) : (string) (\App\Support\Countries::NAMES[strtoupper((string) $c)] ?? $c))
                         : null,
                     // (Lane AR round 2) the number kept left-to-right inside an Arabic line.
                     isset($shipping['phone']) ? \App\Support\Bidi::number((string) $shipping['phone']) : null,
@@ -140,7 +140,7 @@
                              And the labels are keyed, so an Arabic reader gets them in
                              Arabic. --}}
                         <div class="co-fact"><dt>{{ $order->paid_at ? __('store.order_received.fact_total_paid') : (($confirmingPayment ?? false) ? __('store.order_received.fact_total_confirming') : __('store.order_received.fact_total_to_pay')) }}</dt><dd>{!! Money::format((int) $order->total, \App\Services\Mail\OrderEmailPresenter::ledgerWidth($order)) !!}</dd></div>
-                        <div class="co-fact"><dt>{{ __('store.order_received.fact_payment') }}</dt><dd>{{ \App\Support\ArabicWording::of($order->paymentLabel()) }}</dd></div>
+                        <div class="co-fact"><dt>{{ __('store.order_received.fact_payment') }}</dt><dd>{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($order->paymentLabel()) : (string) ($order->paymentLabel())) }}</dd></div>
                         {{-- The rate name answered "what did I pay for", never
                              "when does it come" — which is the question a
                              shopper actually has on this screen. The window is
@@ -148,7 +148,7 @@
                              `delivery_texts` and shown under Place order, for
                              this order's own destination, so a country with no
                              line recorded still gets none. --}}
-                        <div class="co-fact"><dt>{{ __('store.order_received.fact_delivery') }}</dt><dd>{{ \App\Support\ArabicWording::of($order->shipping_method) }}@if (trim((string) ($deliveryText ?? '')) !== '')<span class="co-when">{{ $deliveryText }}</span>@endif</dd></div>
+                        <div class="co-fact"><dt>{{ __('store.order_received.fact_delivery') }}</dt><dd>{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($order->shipping_method) : (string) ($order->shipping_method)) }}@if (trim((string) ($deliveryText ?? '')) !== '')<span class="co-when">{{ $deliveryText }}</span>@endif</dd></div>
                     </dl>
                 </div>
 

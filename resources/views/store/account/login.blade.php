@@ -88,7 +88,7 @@
 
                     @if ($hc)
                         <div class="sum">
-                            <span class="q">{{ \App\Support\ArabicWording::of($panel['sum_label']) }} <b>{{ $hc['question'] }}</b>?</span>
+                            <span class="q">{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($panel['sum_label']) : (string) ($panel['sum_label'])) }} <b>{{ $hc['question'] }}</b>?</span>
                             <input type="hidden" name="hc_token" value="{{ $hc['token'] }}">
                             <div class="fld tiny">
                                 <input type="text" name="hc_answer" id="f-hc" placeholder=" "

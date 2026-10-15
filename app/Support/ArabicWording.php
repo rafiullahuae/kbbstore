@@ -210,6 +210,21 @@ final class ArabicWording
         'wording.cpage_35' => 'That could not be saved. Please try again.',
         'wording.cpage_36' => 'We keep your 3 most recent addresses on this device. Adding another replaces the oldest.',
         'wording.cpage_37' => 'Shipping calculated at checkout',
+        // Lane AR round 3: the search box and its panel (placeholder, group headings, the
+        // panel's own words, read by search.js through store.js.*).
+        'wording.search_placeholder' => 'Search skincare, brands…',
+        'wording.search_products' => 'Products',
+        'wording.search_categories' => 'Categories',
+        'wording.search_brands' => 'Brands',
+        'wording.search_count' => ':count products',
+        'js.search_no_matches' => 'No matches',
+        'js.search_anyway' => 'Search anyway for',
+        'js.search_view_all' => 'View all results',
+        'js.search_found' => 'found',
+        'js.search_trending' => 'Trending',
+        'js.search_brands' => 'Popular Brands',
+        'js.search_recent' => 'Most searched this week',
+        'js.search_popular' => 'Popular right now',
     ];
 
     /** The Arabic drafts, spread into ArabicInterfaceDrafts (as `store.` keys). */
@@ -383,6 +398,20 @@ final class ArabicWording
         'wording.cpage_35' => 'تعذّر الحفظ. يُرجى المحاولة مجددًا.',
         'wording.cpage_36' => 'نحفظ آخر 3 عناوين لكِ على هذا الجهاز. إضافة عنوان جديد تحلّ محل الأقدم.',
         'wording.cpage_37' => 'يُحتسب الشحن عند إتمام الطلب',
+        // Lane AR round 3: the search box and its panel.
+        'wording.search_placeholder' => 'ابحثي عن منتجات العناية والعلامات…',
+        'wording.search_products' => 'منتجات',
+        'wording.search_categories' => 'الفئات',
+        'wording.search_brands' => 'العلامات',
+        'wording.search_count' => 'المنتجات: :count',
+        'js.search_no_matches' => 'لا توجد نتائج مطابقة',
+        'js.search_anyway' => 'ابحثي على أي حال عن',
+        'js.search_view_all' => 'عرض كل النتائج',
+        'js.search_found' => 'نتيجة',
+        'js.search_trending' => 'الأكثر رواجًا',
+        'js.search_brands' => 'علامات رائجة',
+        'js.search_recent' => 'الأكثر بحثًا هذا الأسبوع',
+        'js.search_popular' => 'الأكثر طلبًا الآن',
     ];
 
     public static function on(): bool

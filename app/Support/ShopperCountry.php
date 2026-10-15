@@ -223,7 +223,7 @@ final class ShopperCountry
     /** The country's name, falling back to its code when it is not on the list. */
     public function name(): string
     {
-        return Countries::label($this->code);
+        return CountryNames::label($this->code);
     }
 
     /**

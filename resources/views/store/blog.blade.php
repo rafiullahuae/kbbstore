@@ -127,10 +127,10 @@
       @else
         {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$p->tag] ?? '✨' }}
       @endif
-      @if($p->tag)<span class="ptag">{{ \App\Support\ArabicWording::of($p->tag) }}</span>@endif
+      @if($p->tag)<span class="ptag">{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($p->tag) : (string) ($p->tag)) }}</span>@endif
     </div>
     <div class="pbody">
-      <div class="pdate">{{ \App\Support\LocalDate::format($p->published_at, 'j F Y') }}</div>
+      <div class="pdate">{{ (class_exists(\App\Support\LocalDate::class) ? \App\Support\LocalDate::format($p->published_at, 'j F Y') : (($kbbD = $p->published_at) ? $kbbD->format('j F Y') : '')) }}</div>
       <div class="ptitle">{{ $p->t('title') }}</div>
       <div class="pex">{{ $p->t('excerpt') }}</div>
       <div class="pmore">{{ __('store.journal.read_more') }}</div>

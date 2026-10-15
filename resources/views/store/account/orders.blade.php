@@ -74,7 +74,7 @@
           <a class="kbbol-row" href="{{ Url::to('/my-account/orders/' . $order->id) }}">
             <span class="kbbol-id">
               <b>{{ __('store.orders.order_number', ['number' => $order->order_number]) }}</b>
-              <span>{{ \App\Support\LocalDate::format($order->created_at, 'j M Y') }}@if (isset($order->items_count)) · {{ trans_choice('store.cart.item_count', (int) $order->items_count) }}@endif</span>
+              <span>{{ (class_exists(\App\Support\LocalDate::class) ? \App\Support\LocalDate::format($order->created_at, 'j M Y') : (($kbbD = $order->created_at) ? $kbbD->format('j M Y') : '')) }}@if (isset($order->items_count)) · {{ trans_choice('store.cart.item_count', (int) $order->items_count) }}@endif</span>
             </span>
             {{-- Both halves of this row changed in the same round and both are kept.
                  Receipt precision: the same order's total is printed at full precision

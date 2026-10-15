@@ -95,12 +95,12 @@
                         <span class="kbbtr-pill {{ $statusClass }}">{{ \App\Support\OrderStatusLabel::for($status) }}</span>
                     </div>
                     <div class="kbbtr-rows">
-                        <div class="kbbtr-row"><span>{{ __('store.track.row_placed') }}</span><span>{{ \App\Support\LocalDate::format($order->created_at, 'j F Y', '—') }}</span></div>
+                        <div class="kbbtr-row"><span>{{ __('store.track.row_placed') }}</span><span>{{ (class_exists(\App\Support\LocalDate::class) ? \App\Support\LocalDate::format($order->created_at, 'j F Y', '—') : (($kbbD = $order->created_at) ? $kbbD->format('j F Y') : '—')) }}</span></div>
                         @if ($order->shipping_method)
                             <div class="kbbtr-row"><span>{{ __('store.checkout.delivery') }}</span><span>{{ $order->shipping_method }}</span></div>
                         @endif
                         @if ($order->completed_at)
-                            <div class="kbbtr-row"><span>{{ __('store.track.row_completed') }}</span><span>{{ \App\Support\LocalDate::format($order->completed_at, 'j F Y') }}</span></div>
+                            <div class="kbbtr-row"><span>{{ __('store.track.row_completed') }}</span><span>{{ (class_exists(\App\Support\LocalDate::class) ? \App\Support\LocalDate::format($order->completed_at, 'j F Y') : (($kbbD = $order->completed_at) ? $kbbD->format('j F Y') : '')) }}</span></div>
                         @endif
                         {{-- Both halves kept. Receipt precision, as on the order-detail page
                              and in the emailed receipt — this screen is reached by order number

@@ -28,7 +28,7 @@
     <ul id="shipping_method" class="woocommerce-shipping-methods">
         <li>
             <input type="radio" name="shipping_method" data-index="{{ $i }}" id="shipping_method_{{ $i }}" value="{{ $rate['id'] }}" class="shipping_method"{!! app(\App\Services\CheckoutPage::class)->lo('dl_note_free') ? ' data-kbb-cost="'.(int) $rate['cost'].'"' : '' !!} @checked($rate['id'] === $chosenRate)>
-            <label for="shipping_method_{{ $i }}">@if ($kbbDl = app(\App\Services\CheckoutPage::class)->deliveryLabel($rate, $deliveryCountry ?? null))<span class="co-dl-t">{{ $kbbDl['text'] }}</span><span class="co-dl-p">{!! $kbbDl['free'] ? e(__('store.checkout.free')) : \App\Support\Money::format((int) $rate['cost']) !!}</span>@else{{ \App\Support\ArabicWording::of($rate['title']) }}{!! $rate['cost'] > 0 ? ': '.\App\Support\Money::format((int) $rate['cost']) : '' !!}@endif</label>
+            <label for="shipping_method_{{ $i }}">@if ($kbbDl = app(\App\Services\CheckoutPage::class)->deliveryLabel($rate, $deliveryCountry ?? null))<span class="co-dl-t">{{ $kbbDl['text'] }}</span><span class="co-dl-p">{!! $kbbDl['free'] ? e(__('store.checkout.free')) : \App\Support\Money::format((int) $rate['cost']) !!}</span>@else{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($rate['title']) : (string) ($rate['title'])) }}{!! $rate['cost'] > 0 ? ': '.\App\Support\Money::format((int) $rate['cost']) : '' !!}@endif</label>
         </li>
     </ul>
 @empty

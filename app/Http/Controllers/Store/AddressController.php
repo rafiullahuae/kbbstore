@@ -126,7 +126,7 @@ class AddressController extends Controller
             'editing' => $editing,
             'types' => self::TYPES,
             // Arabic on /ar (Lane AR stage 2); the same English list otherwise.
-            'countries' => array_map(static fn (string $c): string => Countries::label($c), array_combine(array_keys(Countries::NAMES), array_keys(Countries::NAMES))),
+            'countries' => array_map(static fn (string $c): string => \App\Support\CountryNames::label($c), array_combine(array_keys(Countries::NAMES), array_keys(Countries::NAMES))),
             'stateList' => app(\App\Services\CheckoutPage::class)->stateList(),
         ]);
     }

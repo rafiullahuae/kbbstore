@@ -75,7 +75,7 @@ final class ProductTitle
     public static function head(?string $brand, ?string $name): string
     {
         // (Lane AR round 2) the shop's name in Arabic on /ar; English unchanged.
-        return self::full($brand, $name) . ' · ' . (ArabicWording::on() ? BrandName::NAME_AR : 'K-Beauty Bliss');
+        return self::full($brand, $name) . ' · ' . (ArabicWording::on() ? 'كي بيوتي بليس' : 'K-Beauty Bliss');
     }
 
     /** Whether the name's opening words already are the brand. */

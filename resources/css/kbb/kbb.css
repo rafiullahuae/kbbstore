@@ -5443,6 +5443,23 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
       grid sections (.gs-arr) and the cart page's rail (.cpg-arr), the same
       flip the bundles and you-may-also-like arrows already carry. */
 [dir="rtl"] .hs-cc-arr svg,[dir="rtl"] .gs-arr svg,[dir="rtl"] .cpg-arr svg{transform:scaleX(-1)}
+/* 4. THE LOTUS ON THE RIGHT IN ARABIC (round 3, the owner: "the logo icon
+      should be on the right side for arabic version"). The lockup is pinned
+      `direction:ltr` (below, with the header lock), so on /ar the lotus stayed
+      on the left of the Arabic name. A mirrored page lays it out right to left
+      instead: the lotus first at the reading start, the gap on its inner side
+      through margin-inline-end. The shine keeps its own left-to-right sweep.
+      .lgx-ar (only ever printed on /ar, HeaderSettings::lockup()) gives the
+      Arabic name its Arabic face and drops the Latin letter-spacing, which
+      would pull Arabic letters apart; it out-ranks the phone fit's own
+      letter-spacing rule by one class. Not a size, not a width, not a var():
+      the logo box and its caps are the header lock's and are untouched.
+      HeaderLayoutLockTest records these five rules by name. */
+[dir="rtl"] .logo.lgx{direction:rtl}
+[dir="rtl"] .lgx .lgx-lt{direction:ltr}
+.logo.lgx.lgx-ar{font-family:Outfit,"Cairo","Geeza Pro","Noto Sans Arabic",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.logo.lgx.lgx-ar .lgx-w,.logo.lgx.lgx-ar .lgx-g{letter-spacing:0}
+header .hin>.logo.lgx.lgx-ar .lgx-w,.mnav-h>.logo.lgx.lgx-ar .lgx-w,.co-head .in>.logo.lgx.lgx-ar .lgx-w,header .hin>.logo.lgx.lgx-ar .lgx-g,.mnav-h>.logo.lgx.lgx-ar .lgx-g,.co-head .in>.logo.lgx.lgx-ar .lgx-g{letter-spacing:0}
 @media (prefers-reduced-motion:reduce){
   .kft-motion .kft-help,.kft-motion .kft-help::before,.kft-motion .kft-name{animation:none}
   .kft-help-bt a:hover{transform:none}

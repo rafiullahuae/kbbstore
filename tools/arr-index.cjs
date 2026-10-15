@@ -96,7 +96,7 @@ button{font:inherit;border:1px solid var(--line);background:var(--card);color:va
 <div class="top"><div><h1>Arabic RTL — first draft previews</h1>
 <p class="lead">Every page of the shop in Arabic, right to left, next to its English twin. Each file is the page exactly as the shop renders it, saved with its styles, fonts, pictures and scripts inside, so it opens offline: tabs, accordions, carousels and arrows, the mobile menu, the cart panel, Read more. Nothing here talks to the shop — buttons that need the server (add to bag, place order) do nothing.</p></div>
 <button type="button" id="t" aria-label="Switch light or dark">◐</button></div>
-<p class="note"><b>Seen at 390px and 1280px.</b> Open any file and narrow the window to phone width. The Arabic files show the logo in Arabic (كي بيوتي <i>بليس</i>) as a preview only — the real header change waits for the header lock's checks. Screenshots and measurements: <code>docs/lane-ar-shots/round2/</code>.</p>
+<p class="note"><b>Seen at 390px and 1280px.</b> Open any file and narrow the window to phone width. Round 3: the Arabic header is the real one now — the Arabic name with the lotus on its right, the search box, its suggestions and results in Arabic (hybrid search: Arabic or English words both find products). Screenshots and measurements: <code>docs/lane-ar-shots/round2/</code>.</p>
 ${rows}
 </div>
 <script>

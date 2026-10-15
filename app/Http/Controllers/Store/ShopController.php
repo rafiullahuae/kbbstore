@@ -716,9 +716,55 @@ class ShopController extends Controller
         return \App\Support\PageBanner::forModel($brand, $brand?->t('name') ?? $title);
     }
 
+    /**
+     * The Arabic plan for a search, read once per request (index() applies the
+     * facets more than once). Null when there is nothing to plan, or when the
+     * plan cannot be built at all -- the English path then runs as before.
+     */
+    private function arabicPlan(string $search): ?array
+    {
+        $attrs = request()->attributes;
+        $key = 'kbb.ar_plan.' . md5($search);
+
+        if (! $attrs->has($key)) {
+            try {
+                $plan = \App\Support\ArabicSearch::plan($search);
+            } catch (\Throwable) {
+                $plan = [];
+            }
+            $attrs->set($key, $plan === [] ? null : $plan);
+        }
+
+        return $attrs->get($key);
+    }
+
     private function applyFacets($query, array $active, string $search): void
     {
-        if ($search !== '') {
+        /*
+         * (Lane AR round 3) An Arabic search, read in Arabic: the same plan the
+         * header box uses (App\Support\ArabicSearch), as sub-selects of this
+         * same statement. Only a query with Arabic letters takes this branch, so
+         * every English search below runs exactly as it did. A plan that finds
+         * nothing leaves the page at 0, and index() goes on to the spelling fix
+         * exactly as before (it calls this again with the corrected English).
+         */
+        $arabicPlan = $search !== '' && \App\Support\ArabicSearch::isArabic($search) ? $this->arabicPlan($search) : null;
+
+        // A query that is nothing but a brand ("أنوا") is searched as the brand's
+        // English name, below -- the very rows and order the English page gives
+        // for "Anua", as the header box does (SearchController::buildArabic()).
+        if ($arabicPlan !== null && ($brandId = \App\Support\ArabicSearch::brandOnly($arabicPlan)) !== null) {
+            $brand = \Illuminate\Support\Facades\Cache::remember('kbb.search.brandnames', 900,
+                fn () => \App\Models\Brand::query()->select('id', 'name', 'slug')->get())->firstWhere('id', $brandId);
+
+            if ($brand !== null) {
+                [$arabicPlan, $search] = [null, (string) $brand->name];
+            }
+        }
+
+        if ($arabicPlan !== null) {
+            $query->where(fn ($w) => \App\Support\ArabicSearch::apply($w, $arabicPlan, \App\Support\ArabicSearch::ready()));
+        } elseif ($search !== '') {
             // Expanded before matching: "moisturiser" has to reach a product
             // labelled "Moisturizer", and "sun cream" has to reach "sunscreen".
             // Matching the raw string returns nothing and the shopper concludes

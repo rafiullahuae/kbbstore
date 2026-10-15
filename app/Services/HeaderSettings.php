@@ -724,6 +724,14 @@ class HeaderSettings
             $out[$key] = array_key_exists($key, $saved) ? $this->cast($key, $saved[$key]) : $def[2];
         }
 
+        // (Lane AR round 3, the owner: "the inside search box should be in
+        // arabic") The box's placeholder on /ar, while it is still the shipped
+        // English; a placeholder he typed is his. English: untouched.
+        if (\App\Support\Locale::current() === 'ar' && $out['search_text'] === self::SCHEMA['search_text'][2]
+            && class_exists(\App\Support\ArabicWording::class)) {
+            $out['search_text'] = \App\Support\ArabicWording::of($out['search_text']);
+        }
+
         return $out;
     }
 
@@ -832,13 +840,34 @@ class HeaderSettings
             }
         }
 
+        $class = 'logo lgx'.($glow ? ' lgx-gl' : '').($tag !== '' && $c['logo_tag_m_on'] === 'hide' ? ' lgx-nt' : '');
+        $name = (string) $c['logo_text'];
+        $accent = (string) $c['logo_accent'];
+
+        /*
+         * THE ARABIC WORDMARK, ON /ar ONLY (Lane AR round 3 -- the owner: "the
+         * logo icon should be on the right side for arabic version", on the
+         * Arabic name he approved in the previews). Only while the wordmark and
+         * tagline are still the shipped ones: a name he types himself is his, in
+         * every language. `lgx-ar` is what kbb.css keys the Arabic face and the
+         * letter-spacing on; the lotus moving to the right is [dir=rtl] alone.
+         * The fit numbers above stay the English ones: the Arabic name is the
+         * narrower of the two at every size (measured, round 2), so they can
+         * only leave it room. English returns exactly what it returned.
+         */
+        if ($name === 'K-Beauty' && $accent === 'Bliss' && \App\Support\Locale::current() === 'ar') {
+            [$name, $accent] = ['كي بيوتي', 'بليس'];
+            $tag = $tag === 'Korean Skincare & Makeup' ? 'العناية الكورية والمكياج' : $tag;
+            $class .= ' lgx-ar';
+        }
+
         return [
-            'class' => 'logo lgx'.($glow ? ' lgx-gl' : '').($tag !== '' && $c['logo_tag_m_on'] === 'hide' ? ' lgx-nt' : ''),
+            'class' => $class,
             'style' => implode(';', $style),
-            'name' => (string) $c['logo_text'],
-            'accent' => (string) $c['logo_accent'],
+            'name' => $name,
+            'accent' => $accent,
             'tag' => $tag,
-            'label' => trim($c['logo_text'].' '.$c['logo_accent']).($tag !== '' ? ', '.$tag : ''),
+            'label' => trim($name.' '.$accent).($tag !== '' ? ', '.$tag : ''),
             'shine' => $shine,
             'glow' => $glow,
         ];
@@ -861,8 +890,22 @@ class HeaderSettings
     public function trendingWords(): array
     {
         $words = array_filter(array_map('trim', explode(',', (string) $this->get('trending_words'))));
+        $words = array_slice(array_values($words), 0, (int) $this->get('trending_limit'));
 
-        return array_slice(array_values($words), 0, (int) $this->get('trending_limit'));
+        // (Lane AR round 3, the owner: "the default searched terms etc, must
+        // remain same but in arabic") On /ar the same words in Arabic -- a
+        // brand's or category's Arabic name, or the shop word -- each one a
+        // search the hybrid search reads back; a word with no Arabic stays as
+        // typed. This feeds the panel's seed (header) and its starter alike.
+        if (\App\Support\Locale::current() === 'ar' && class_exists(\App\Support\ArabicSearch::class)) {
+            try {
+                $words = array_map(static fn (string $w): string => \App\Support\ArabicSearch::arabicFor($w) ?? $w, $words);
+            } catch (\Throwable) {
+                // The words as typed, rather than no panel.
+            }
+        }
+
+        return $words;
     }
 
     public function save(array $values): void

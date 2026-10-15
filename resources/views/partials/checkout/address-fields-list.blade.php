@@ -80,7 +80,7 @@
                             @if (($countryDetected ?? false) && app(\App\Services\CheckoutPage::class)->lo('detected'))
                                 <x-slot:badge><span class="xd-detected">{{ __('store.checkout.country_detected') }}</span></x-slot:badge>
                             @endif
-                            @foreach ($countries as $code => $name)<option value="{{ $code }}" @selected(old('billing_country', $prefill['country'] ?? $defaultCountry) === $code)>{{ $kbbUaeShort && $code === 'AE' ? 'U.A.E' : (\App\Support\ArabicWording::on() && $code === 'AE' ? 'الإمارات' : \App\Support\Countries::label($code, $name)) }}</option>@endforeach
+                            @foreach ($countries as $code => $name)<option value="{{ $code }}" @selected(old('billing_country', $prefill['country'] ?? $defaultCountry) === $code)>{{ $kbbUaeShort && $code === 'AE' ? 'U.A.E' : ((class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::on() : false) && $code === 'AE' ? 'الإمارات' : (class_exists(\App\Support\CountryNames::class) ? \App\Support\CountryNames::label($code, $name) : (string) ($name))) }}</option>@endforeach
                         </x-checkout.field>
 @if ($kbbRows === 'one')
                         </div>

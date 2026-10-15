@@ -523,7 +523,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb.css": {
-    "file": "assets/kbb-Bd8ef9bK.css",
+    "file": "assets/kbb-CJpFqAee.css",
     "src": "resources/css/kbb/kbb.css",
     "isEntry": true
   },
@@ -736,7 +736,7 @@
     ]
   },
   "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-DEUQNUy7.js",
+    "file": "assets/storefront-admin-Bi3ewkXH.js",
     "name": "storefront-admin",
     "src": "resources/js/kbb/admin/storefront-admin.js",
     "isDynamicEntry": true,
@@ -749,7 +749,7 @@
     ]
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-YIcaC-Hy.js",
+    "file": "assets/app-RW4z9_W-.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,

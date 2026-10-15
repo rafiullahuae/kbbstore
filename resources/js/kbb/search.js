@@ -59,8 +59,8 @@ function ensureRightColumn(panel) {
         const wantBrands = panel.dataset.brandsPhone === '1';
         const showBrands = brands.length && (!mobile || wantBrands);
 
-        setRight(panel, `<div class="sgh">Trending</div>${chipRow(trending)}`
-            + (showBrands ? `<div class="sgh">Popular Brands</div>${chipRow(brands)}` : ''));
+        setRight(panel, `<div class="sgh">${esc(t('store.js.search_trending', 'Trending'))}</div>${chipRow(trending)}`
+            + (showBrands ? `<div class="sgh">${esc(t('store.js.search_brands', 'Popular Brands'))}</div>${chipRow(brands)}` : ''));
 
         // The phone is one column throughout; this only ever splits the
         // panel on a screen wide enough to hold both halves side by side.
@@ -141,8 +141,8 @@ export function initSearch() {
         ensureRightColumn(panel);
 
         if (!data.total) {
-            paintLeft(`<div class="sgh">No matches</div>`
-                + `<a data-sg-row href="${safeHref(data.all_url)}"><span class="sn">Search anyway for “${escapeHtml(data.query)}”</span></a>`);
+            paintLeft(`<div class="sgh">${esc(t('store.js.search_no_matches', 'No matches'))}</div>`
+                + `<a data-sg-row href="${safeHref(data.all_url)}"><span class="sn">${esc(t('store.js.search_anyway', 'Search anyway for'))} “${escapeHtml(data.query)}”</span></a>`);
             panel.classList.add('on');
             index = -1;
             return;
@@ -184,7 +184,7 @@ export function initSearch() {
                 + (it.price ? `<span class="sp">${escapeHtml(it.price)}</span>` : '')
                 + `</a>`;
             }).join('')).join('')
-            + `<a class="viewall" data-sg-row href="${safeHref(data.all_url)}">View all results <b>(${escapeHtml(data.total)} found)</b> <i>${onward()}</i></a>`);
+            + `<a class="viewall" data-sg-row href="${safeHref(data.all_url)}">${esc(t('store.js.search_view_all', 'View all results'))} <b>(${escapeHtml(data.total)} ${esc(t('store.js.search_found', 'found'))})</b> <i>${onward()}</i></a>`);
 
         panel.classList.add('on');
         index = -1;
@@ -297,7 +297,13 @@ export function initSearch() {
  */
 const STARTER_TTL = 5 * 60 * 1000;
 const starterMobile = () => window.matchMedia('(max-width: 900px)').matches;
-const starterKey = () => `kbb.starter.v1.${starterMobile() ? 'm' : 'd'}`;
+/* The panel's words are in the page's language (Lane AR round 3), so a page
+   that is not English keeps its own copy; an English page keeps its key. */
+const starterLang = () => {
+    const l = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
+    return l === 'en' || l.startsWith('en-') ? '' : `.${l}`;
+};
+const starterKey = () => `kbb.starter.v1.${starterMobile() ? 'm' : 'd'}${starterLang()}`;
 let starterCache = {};
 let starterInflight = {};
 
@@ -383,15 +389,15 @@ function renderStarter(panel, data) {
     const showBrands = brands.length && (!mobile || wantBrands);
 
     const right =
-        `<div class="sgh">Trending</div>${chipRow(trending)}` +
-        (showBrands ? `<div class="sgh">Popular Brands</div>${chipRow(brands)}` : '');
+        `<div class="sgh">${esc(t('store.js.search_trending', 'Trending'))}</div>${chipRow(trending)}` +
+        (showBrands ? `<div class="sgh">${esc(t('store.js.search_brands', 'Popular Brands'))}</div>${chipRow(brands)}` : '');
 
     const left =
         (data.layout === 'recent-left' && recent.length
-            ? `<div class="sgh">Most searched this week</div>` +
+            ? `<div class="sgh">${esc(t('store.js.search_recent', 'Most searched this week'))}</div>` +
               recent.map((t) => `<a class="sgi rec" data-sg-term="${escapeHtml(t)}"><em>${escapeHtml(t)}</em></a>`).join('')
             : '') +
-        (popular.length ? `<div class="sgh">Popular right now</div>${popular.map(productRow).join('')}` : '');
+        (popular.length ? `<div class="sgh">${esc(t('store.js.search_popular', 'Popular right now'))}</div>${popular.map(productRow).join('')}` : '');
 
     setRight(panel, right);
 

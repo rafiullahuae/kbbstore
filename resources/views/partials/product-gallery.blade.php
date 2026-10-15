@@ -77,7 +77,7 @@
 
         {{-- Always present, hidden while a photograph is showing, so that
              swapping to a placeholder shot can reveal it again. --}}
-        <span class="cap" id="gcap" data-brand="{{ $brandName }}" @if ($mainImage) hidden @endif>{{ $brandName }}<br>{{ \App\Support\ArabicWording::of($mainShot['label'] ?? 'Front') }}</span>
+        <span class="cap" id="gcap" data-brand="{{ $brandName }}" @if ($mainImage) hidden @endif>{{ $brandName }}<br>{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($mainShot['label'] ?? 'Front') : (string) ($mainShot['label'] ?? 'Front')) }}</span>
 
         @php $kbbLabel = app(\App\Services\ProductLabels::class)->for($product); @endphp
         @if (! $modules->hidden('badge') && $kbbLabel)
@@ -173,7 +173,7 @@
                      data-image="{{ $shotImage ?? '' }}"
                      data-srcset="{{ $shotMainSrcset }}"
                      data-sizes="{{ $shotMainSrcset === '' ? '' : ImageVariants::detailSizesAttribute() }}"
-                     data-label="{{ \App\Support\ArabicWording::of($shot['label'] ?? '') }}"
+                     data-label="{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($shot['label'] ?? '') : (string) ($shot['label'] ?? '')) }}"
                      data-alt="{{ $shotAlt }}"
                      style="background:{{ $shotImage ? '#fff' : Gradient::for($product->name . $i) }}">
                     @if ($shotImage)
@@ -193,7 +193,7 @@
                              @endif
                              width="66" height="66" loading="eager" fetchpriority="low" decoding="async">
                     @else
-                        {{ \App\Support\ArabicWording::of($shot['label'] ?? '') }}
+                        {{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($shot['label'] ?? '') : (string) ($shot['label'] ?? '')) }}
                     @endif
                 </div>
             @endforeach

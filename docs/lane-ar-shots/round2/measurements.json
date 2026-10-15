@@ -133,11 +133,7 @@
   "offenders": [],
   "h1": 1,
   "consoleErrors": [
-   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap",
-   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/c1493d35-7fe0-41ac-8dfa-bd4eca1ea4df",
-   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/18933eaf-d976-4506-95cc-004335d00e7b",
-   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/a866764b-370b-4a33-8a0c-64b1dab686f4",
-   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/031ae9e4-73f0-4ff1-9bec-0e82d4be4bdd"
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
   ],
   "failedRequests": [
    "/api/cart-trail net::ERR_ABORTED"
@@ -886,11 +882,7 @@
   "offenders": [],
   "h1": 1,
   "consoleErrors": [
-   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap",
-   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/472850ee-6458-45e6-ac6d-d96e61ec718f",
-   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/1af6ebc5-14eb-45d1-b6e7-99becae02482",
-   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/920fdd63-6dbc-47c3-9868-3dec7080c693",
-   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/e8abd012-5bee-4810-ba3d-2f5e90df9e2d"
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
   ],
   "failedRequests": [
    "/api/cart-trail net::ERR_ABORTED"
@@ -910,11 +902,7 @@
   "offenders": [],
   "h1": 1,
   "consoleErrors": [
-   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap",
-   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/36274440-5c66-4835-aafc-5f2425a97d2c",
-   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/b897ac7e-1550-4f01-bae7-b2215bd8cb86",
-   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/194dd8ea-60e1-4554-b362-d69bb58c5472",
-   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/638a29f7-f71e-4782-9f72-dad27a30fd27"
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
   ],
   "failedRequests": [
    "/api/cart-trail net::ERR_ABORTED"

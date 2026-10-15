@@ -196,8 +196,11 @@ it('finds a brand by the Arabic name the shop stores for it', function () {
     expect(SearchSpelling::correct('دكتور ألثيا'))->toBe('Dr.Althea')
         ->and(SearchSpelling::correct('دكتور الثيا'))->toBe('Dr.Althea');
 
+    // Lane AR round 3: an Arabic brand name is now READ in Arabic (the hybrid
+    // search, App\Support\ArabicSearch) -- the same brand's products, as what
+    // she typed, so there is nothing to "correct" and no "Showing results for".
     $json = srApi('دكتور الثيا');
-    expect($json['corrected'])->toBe('Dr.Althea')
+    expect($json['corrected'])->toBeNull()
         ->and(srLabels($json))->toContain('345 Relief Cream');
 });
 
@@ -213,8 +216,9 @@ it('corrects a misspelt brand in the dropdown, in the same response', function (
         // "View all" carries what was typed, so the page offers the way back.
         ->and($json['all_url'])->toContain('s=medicob');
 
+    // Lane AR round 3: read in Arabic by the hybrid search, not corrected.
     $ar = srApi('ميديكيوب');
-    expect($ar['corrected'])->toBe('Medicube')->and(srLabels($ar))->toContain('Age-R Booster Pro Device');
+    expect($ar['corrected'])->toBeNull()->and(srLabels($ar))->toContain('Age-R Booster Pro Device');
 });
 
 it('keeps /api/search to its allowlist plus `corrected`', function () {

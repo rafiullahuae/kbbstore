@@ -33,7 +33,7 @@
     // (Lane AR round 2) on /ar the shipped words in Arabic and the phone held
     // left-to-right; an English page gets every value back untouched.
     foreach (['brand', 'byline', 'help_title', 'help_sub', 'l1_text', 'l2_text', 'l3_text', 'top_label'] as $sfK) {
-        $sfC[$sfK] = \App\Support\ArabicWording::of($sfC[$sfK]);
+        $sfC[$sfK] = (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($sfC[$sfK]) : (string) ($sfC[$sfK]));
     }
     $sfC['phone'] = \App\Support\Bidi::number($sfC['phone']);
 

@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Services\SettingsService;
 use App\Support\ArabicWording;
 use App\Support\Countries;
+use App\Support\CountryNames;
 use Illuminate\Support\Facades\Validator;
 
 /*
@@ -73,17 +74,17 @@ it('routes every shopper-facing controller sentence through a key, English uncha
 /*
  * 3. THE ADDRESS FORM LISTED NINETY COUNTRIES IN ENGLISH on /ar. Shipped as
  *    data (no intl extension needed on the server). Mutation: return the
- *    English from Countries::label() on /ar and this is red.
+ *    English from CountryNames::label() on /ar and this is red.
  */
 it('names countries in Arabic on /ar and in the shop English otherwise', function () {
-    expect(Countries::label('KR'))->toBe('South Korea')
-        ->and(array_keys(Countries::ARABIC))->toBe(array_keys(Countries::NAMES));
+    expect(CountryNames::label('KR'))->toBe('South Korea')
+        ->and(array_keys(CountryNames::ARABIC))->toBe(array_keys(Countries::NAMES));
 
     app()->setLocale('ar');
-    expect(Countries::label('KR'))->toBe('كوريا الجنوبية')
-        ->and(Countries::label('SA'))->not->toMatch('/[A-Za-z]/')
-        ->and(Countries::label('ZZ', 'Atlantis'))->toBe('Atlantis');
-    foreach (Countries::ARABIC as $code => $name) {
+    expect(CountryNames::label('KR'))->toBe('كوريا الجنوبية')
+        ->and(CountryNames::label('SA'))->not->toMatch('/[A-Za-z]/')
+        ->and(CountryNames::label('ZZ', 'Atlantis'))->toBe('Atlantis');
+    foreach (CountryNames::ARABIC as $code => $name) {
         expect($name)->not->toMatch('/[A-Za-z]{2,}/', $code);
     }
 });

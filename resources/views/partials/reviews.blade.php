@@ -34,7 +34,7 @@
     $cols      = $sr['sr_grid_cols'];
     $allowPhotos = $sr['sr_allow_photos'];
     $maxPhotos = $sr['sr_max_photos'];
-    $emptyText = \App\Support\ArabicWording::of($sr['sr_empty_text']);
+    $emptyText = (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($sr['sr_empty_text']) : (string) ($sr['sr_empty_text']));
 
     $star = fn (int $n) => implode('', array_map(
         fn ($i) => '<span class="' . ($i <= $n ? 'f' : '') . '">★</span>',
@@ -107,7 +107,7 @@
                     : [];
                 $nph  = count($imgs);
                 $ini  = mb_strtoupper(mb_substr((string) $r->author_name, 0, 1));
-                $date = ($showDate && $r->created_at) ? \App\Support\LocalDate::format($r->created_at, 'd M Y') : '';
+                $date = ($showDate && $r->created_at) ? (class_exists(\App\Support\LocalDate::class) ? \App\Support\LocalDate::format($r->created_at, 'd M Y') : (($kbbD = $r->created_at) ? $kbbD->format('d M Y') : '')) : '';
             @endphp
             <article class="sr-card{{ $r->verified ? ' sr-isvf' : '' }}" data-rating="{{ (int) $r->rating }}" data-photos="{{ $nph ? '1' : '0' }}">
                 <div class="sr-ct">

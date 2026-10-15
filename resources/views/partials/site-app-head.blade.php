@@ -21,7 +21,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" media="(display-mode: standalone)" content="{{ $kbbSiteApp['theme'] }}">
-<meta name="apple-mobile-web-app-title" content="{{ \App\Support\ArabicWording::of($kbbSiteApp['name']) }}">
+<meta name="apple-mobile-web-app-title" content="{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($kbbSiteApp['name']) : (string) ($kbbSiteApp['name'])) }}">
 <script src="{{ $kbbSiteApp['js'] }}" data-sw="{{ $kbbSiteApp['sw'] }}" data-scope="{{ $kbbSiteApp['scope'] }}" defer></script>
 @if (app(\App\Services\SiteFooter::class)->appRowOn())<script>addEventListener('beforeinstallprompt',function(e){if(document.querySelector('.kfa[data-kfa]')){e.preventDefault();window.__kbbBip=e}})</script>
 @endif

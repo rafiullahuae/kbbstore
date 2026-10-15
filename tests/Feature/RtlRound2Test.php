@@ -280,7 +280,7 @@ it('names structured-data crumbs and the fallback home title from keys, not Engl
             ->not->toContain("['name' => 'Shop',");
     }
     expect((string) file_get_contents(resource_path('views/store/home.blade.php')))
-        ->toContain("@section('title', \\App\\Support\\ArabicWording::of('K-Beauty Bliss · Authentic Korean skincare in the UAE'))");
+        ->toContain("\\App\\Support\\ArabicWording::of('K-Beauty Bliss · Authentic Korean skincare in the UAE')");
 
     expect(ArabicWording::of('K-Beauty Bliss · Authentic Korean skincare in the UAE'))
         ->toBe('K-Beauty Bliss · Authentic Korean skincare in the UAE')

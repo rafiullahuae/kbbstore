@@ -1,0 +1,306 @@
+[
+ {
+  "page": "en home",
+  "ms": [
+   67.7,
+   68
+  ],
+  "queries": [
+   9,
+   6
+  ],
+  "settings_reads": [
+   4,
+   4
+  ],
+  "html_bytes": [
+   152830,
+   152830
+  ]
+ },
+ {
+  "page": "en category",
+  "ms": [
+   32,
+   31.5
+  ],
+  "queries": [
+   13,
+   10
+  ],
+  "settings_reads": [
+   5,
+   5
+  ],
+  "html_bytes": [
+   91032,
+   91032
+  ]
+ },
+ {
+  "page": "en product",
+  "ms": [
+   39.7,
+   42.2
+  ],
+  "queries": [
+   19,
+   16
+  ],
+  "settings_reads": [
+   6,
+   6
+  ],
+  "html_bytes": [
+   184200,
+   184200
+  ]
+ },
+ {
+  "page": "en brand",
+  "ms": [
+   30.4,
+   33.3
+  ],
+  "queries": [
+   13,
+   10
+  ],
+  "settings_reads": [
+   6,
+   6
+  ],
+  "html_bytes": [
+   92368,
+   92368
+  ]
+ },
+ {
+  "page": "en search",
+  "ms": [
+   34,
+   30.2
+  ],
+  "queries": [
+   12,
+   9
+  ],
+  "settings_reads": [
+   5,
+   5
+  ],
+  "html_bytes": [
+   87127,
+   87127
+  ]
+ },
+ {
+  "page": "en search_ar",
+  "ms": [
+   32.9,
+   36.7
+  ],
+  "queries": [
+   13,
+   9
+  ],
+  "settings_reads": [
+   5,
+   5
+  ],
+  "html_bytes": [
+   90212,
+   98452
+  ]
+ },
+ {
+  "page": "en suggest",
+  "ms": [
+   3,
+   2.8
+  ],
+  "queries": [
+   4,
+   1
+  ],
+  "settings_reads": [
+   2,
+   2
+  ],
+  "html_bytes": [
+   1843,
+   1843
+  ]
+ },
+ {
+  "page": "en suggest_ar",
+  "ms": [
+   3,
+   3.5
+  ],
+  "queries": [
+   4,
+   1
+  ],
+  "settings_reads": [
+   2,
+   2
+  ],
+  "html_bytes": [
+   1977,
+   1866
+  ]
+ },
+ {
+  "page": "ar home",
+  "ms": [
+   74.3,
+   78
+  ],
+  "queries": [
+   10,
+   7
+  ],
+  "settings_reads": [
+   5,
+   5
+  ],
+  "html_bytes": [
+   180093,
+   181244
+  ]
+ },
+ {
+  "page": "ar category",
+  "ms": [
+   38.9,
+   40.1
+  ],
+  "queries": [
+   14,
+   11
+  ],
+  "settings_reads": [
+   6,
+   6
+  ],
+  "html_bytes": [
+   110933,
+   112084
+  ]
+ },
+ {
+  "page": "ar product",
+  "ms": [
+   50.4,
+   52.5
+  ],
+  "queries": [
+   20,
+   17
+  ],
+  "settings_reads": [
+   7,
+   7
+  ],
+  "html_bytes": [
+   211780,
+   212931
+  ]
+ },
+ {
+  "page": "ar brand",
+  "ms": [
+   34.9,
+   37
+  ],
+  "queries": [
+   14,
+   11
+  ],
+  "settings_reads": [
+   7,
+   7
+  ],
+  "html_bytes": [
+   112679,
+   113830
+  ]
+ },
+ {
+  "page": "ar search",
+  "ms": [
+   36.6,
+   35.2
+  ],
+  "queries": [
+   12,
+   9
+  ],
+  "settings_reads": [
+   6,
+   6
+  ],
+  "html_bytes": [
+   106759,
+   107910
+  ]
+ },
+ {
+  "page": "ar search_ar",
+  "ms": [
+   37.3,
+   40.6
+  ],
+  "queries": [
+   13,
+   9
+  ],
+  "settings_reads": [
+   6,
+   6
+  ],
+  "html_bytes": [
+   109968,
+   120049
+  ]
+ },
+ {
+  "page": "ar suggest",
+  "ms": [
+   3.1,
+   3.4
+  ],
+  "queries": [
+   4,
+   1
+  ],
+  "settings_reads": [
+   2,
+   2
+  ],
+  "html_bytes": [
+   1843,
+   3186
+  ]
+ },
+ {
+  "page": "ar suggest_ar",
+  "ms": [
+   3.1,
+   3
+  ],
+  "queries": [
+   4,
+   1
+  ],
+  "settings_reads": [
+   2,
+   2
+  ],
+  "html_bytes": [
+   1977,
+   3142
+  ]
+ }
+]

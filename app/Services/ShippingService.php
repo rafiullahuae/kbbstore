@@ -98,7 +98,7 @@ class ShippingService
             ->pluck('code')
             ->unique()
             ->map(fn ($c) => strtoupper($c))
-            ->mapWithKeys(fn ($code) => [$code => \App\Support\Countries::label($code)])
+            ->mapWithKeys(fn ($code) => [$code => \App\Support\CountryNames::label($code)])
             ->all();
     }
 

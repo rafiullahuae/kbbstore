@@ -33,6 +33,9 @@ $cookie = Crypt::encrypt(CookieValuePrefix::create(\App\Services\CartService::CO
 $pages = [
     'home' => '/', 'category' => '/collections/toners/', 'product' => '/product/'.$ids['hero'].'/',
     'brand' => '/brands/anua/', 'cart' => '/cart/', 'checkout' => '/checkout/',
+    // Lane AR round 3: the search page and the header box, English and Arabic words.
+    'search' => '/shop/?s=anua', 'search_ar' => '/shop/?s=' . rawurlencode('سيروم'),
+    'suggest' => '/api/search?q=anua', 'suggest_ar' => '/api/search?q=' . rawurlencode('سيروم'),
 ];
 
 $queries = 0;
@@ -56,6 +59,8 @@ foreach (['en' => '', 'ar' => '/ar'] as $lang => $pre) {
             app()->forgetScopedInstances();
             $queries = 0;
             $reads = 0;
+            // The box caches its answer for five minutes per query; measured WARM
+            // (iteration 0 is the warm-up), the same in both trees.
             $req = Request::create('http://127.0.0.1'.$pre.$path, 'GET', [], [\App\Services\CartService::COOKIE => $cookie], [], [
                 'HTTP_USER_AGENT' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
                 'HTTP_ACCEPT' => 'text/html', 'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.9',

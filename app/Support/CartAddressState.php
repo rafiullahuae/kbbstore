@@ -360,13 +360,13 @@ final class CartAddressState
 
         foreach ($codes as $code) {
             if (isset(Countries::NAMES[$code])) {
-                $out[] = ['code' => $code, 'name' => Countries::label($code)];
+                $out[] = ['code' => $code, 'name' => CountryNames::label($code)];
             }
         }
 
         if ($out === []) {
             foreach (Countries::NAMES as $code => $name) {
-                $out[] = ['code' => (string) $code, 'name' => Countries::label((string) $code, (string) $name)];
+                $out[] = ['code' => (string) $code, 'name' => CountryNames::label((string) $code, (string) $name)];
             }
         }
 
@@ -392,7 +392,7 @@ final class CartAddressState
             trim((string) $address->line1),
             trim((string) $address->line2),
             trim((string) $address->city),
-            isset(Countries::NAMES[strtoupper((string) $address->country)]) ? Countries::label((string) $address->country) : '',
+            isset(Countries::NAMES[strtoupper((string) $address->country)]) ? CountryNames::label((string) $address->country) : '',
         ], static fn (string $p) => $p !== '');
 
         $tag = strtolower((string) $address->label);

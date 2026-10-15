@@ -36,7 +36,7 @@
             @foreach ($orders as $order)
                 <a class="acw-order" href="{{ Url::to('/my-account/orders/' . $order->id) }}">
                     <b>#{{ $order->order_number }}</b>
-                    <span>{{ \App\Support\LocalDate::format($order->created_at, 'j M Y') }}</span>
+                    <span>{{ (class_exists(\App\Support\LocalDate::class) ? \App\Support\LocalDate::format($order->created_at, 'j M Y') : (($kbbD = $order->created_at) ? $kbbD->format('j M Y') : '')) }}</span>
                     <span>{!! Money::format((int) $order->total) !!}</span>
                     <span class="acw-status">{{ \App\Support\OrderStatusLabel::for((string) ($order->status ?: 'pending')) }}</span>
                 </a>

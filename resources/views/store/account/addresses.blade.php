@@ -25,7 +25,7 @@
         @foreach ($addresses as $a)
           <div class="ab-card{{ $a->is_default ? ' is-def' : '' }}">
             <div class="ab-head">
-              <span class="ab-type">{{ \App\Support\ArabicWording::of(ucfirst($a->type)) }}</span>
+              <span class="ab-type">{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of(ucfirst($a->type)) : (string) (ucfirst($a->type))) }}</span>
               @if ($a->is_default)<span class="ab-badge">{{ __('store.addresses.badge_default') }}</span>@endif
             </div>
             <div class="ab-body">
@@ -34,7 +34,7 @@
               <span>{{ $a->line1 }}</span>
               @if ($a->line2)<span>{{ $a->line2 }}</span>@endif
               <span>{{ trim($a->city . ($a->state ? ', ' . $a->state : '')) }} {{ $a->postcode }}</span>
-              <span>{{ \App\Support\ArabicWording::of($countries[$a->country] ?? $a->country) }}</span>
+              <span>{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($countries[$a->country] ?? $a->country) : (string) ($countries[$a->country] ?? $a->country)) }}</span>
               @if ($a->phone)<span>{{ \App\Support\Bidi::number((string) $a->phone) }}</span>@endif
             </div>
             <div class="ab-acts">
@@ -64,7 +64,7 @@
         <span>{{ __('store.addresses.field_type') }}</span>
         <select name="type">
           @foreach ($types as $t)
-            <option value="{{ $t }}" @selected(old('type', $editing->type ?? 'shipping') === $t)>{{ \App\Support\ArabicWording::of(ucfirst($t)) }}</option>
+            <option value="{{ $t }}" @selected(old('type', $editing->type ?? 'shipping') === $t)>{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of(ucfirst($t)) : (string) (ucfirst($t))) }}</option>
           @endforeach
         </select>
       </label>
@@ -111,7 +111,7 @@
       <label class="ab-f"><span>{{ __('store.addresses.field_country') }}</span>
         <select name="country" id="ab-country">
           @foreach ($countries as $code => $label)
-            <option value="{{ $code }}" @selected(old('country', $editing->country ?? 'AE') === $code)>{{ \App\Support\ArabicWording::of($label) }}</option>
+            <option value="{{ $code }}" @selected(old('country', $editing->country ?? 'AE') === $code)>{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($label) : (string) ($label)) }}</option>
           @endforeach
         </select>
       </label>
@@ -136,7 +136,7 @@
       <label class="ab-f"><span>{{ __('store.addresses.field_country') }}</span>
         <select name="country">
           @foreach ($countries as $code => $label)
-            <option value="{{ $code }}" @selected(old('country', $editing->country ?? 'AE') === $code)>{{ \App\Support\ArabicWording::of($label) }}</option>
+            <option value="{{ $code }}" @selected(old('country', $editing->country ?? 'AE') === $code)>{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($label) : (string) ($label)) }}</option>
           @endforeach
         </select>
       </label>
