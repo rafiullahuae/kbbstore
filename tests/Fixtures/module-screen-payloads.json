@@ -863,6 +863,43 @@
             "value": "استخدمي كود الخصم: {coupon-code} في صفحة الدفع."
           }
         ]
+      },
+      {
+        "key": "fdline",
+        "label": "Free delivery line",
+        "description": "A plain line above the coupon row — a celebration icon, “Congrats! You’ve got free delivery”, a green tick — shown only once the bag reaches the free-delivery amount. The same on both devices.",
+        "fields": [
+          {
+            "key": "fd_on",
+            "name": "fd_on",
+            "type": "bool",
+            "label": "Free delivery line",
+            "help": "Ships on. A one-line “Congrats! You’ve got free delivery” above the coupon row, shown only once the bag reaches the free-delivery amount.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "txt_fd",
+            "name": "txt_fd",
+            "type": "text",
+            "label": "Text",
+            "help": "One line on every phone. Up to 120 characters.",
+            "options": null,
+            "default": "Congrats! You’ve got free delivery",
+            "value": "Congrats! You’ve got free delivery"
+          },
+          {
+            "key": "txt_fd_ar",
+            "name": "txt_fd_ar",
+            "type": "text",
+            "label": "Text — Arabic",
+            "help": "Shown on the Arabic shop (/ar/). Leave empty to use the English text there too.",
+            "options": null,
+            "default": "مبروك! حصلتِ على توصيل مجاني",
+            "value": "مبروك! حصلتِ على توصيل مجاني"
+          }
+        ]
       }
     ],
     "touch": [

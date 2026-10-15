@@ -1656,6 +1656,29 @@ cart_panel|foot_gap_m|range|"abc"|0
 cart_panel|foot_gap_m|range|""|0
 cart_panel|foot_gap_m|range|null|0
 cart_panel|foot_gap_m|range|"3.7"|3
+cart_panel|fd_on|bool|true|true
+cart_panel|fd_on|bool|false|false
+cart_panel|fd_on|bool|"1"|true
+cart_panel|fd_on|bool|"0"|false
+cart_panel|fd_on|bool|""|false
+cart_panel|fd_on|bool|"on"|true
+cart_panel|fd_on|bool|"off"|true
+cart_panel|fd_on|bool|"no"|true
+cart_panel|fd_on|bool|1|true
+cart_panel|fd_on|bool|0|false
+cart_panel|fd_on|bool|null|false
+cart_panel|txt_fd|text|"abc"|'abc'
+cart_panel|txt_fd|text|""|''
+cart_panel|txt_fd|text|"  sp  "|'sp'
+cart_panel|txt_fd|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+cart_panel|txt_fd|text|null|''
+cart_panel|txt_fd|text|"<b>x<\/b>"|'<b>x</b>'
+cart_panel|txt_fd_ar|text|"abc"|'abc'
+cart_panel|txt_fd_ar|text|""|''
+cart_panel|txt_fd_ar|text|"  sp  "|'sp'
+cart_panel|txt_fd_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+cart_panel|txt_fd_ar|text|null|''
+cart_panel|txt_fd_ar|text|"<b>x<\/b>"|'<b>x</b>'
 mobile_menu|open_from|select|"left"|'left'
 mobile_menu|open_from|select|"nope"|'left'
 mobile_menu|open_from|select|""|'left'

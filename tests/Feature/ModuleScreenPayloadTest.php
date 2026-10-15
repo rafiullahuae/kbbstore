@@ -768,7 +768,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // background on a phone (almost white, the owner's pick of 14 October).
     // 831 -> 833 (2.60.498): checkout-page lo_sec_even and lo_sec_space, one
     // gap between every section on a phone (35, the owner's pick).
-    expect($compared)->toBe(833, 'the number of controls drawn changed');
+    // 833 -> 836 (2.60.517): cart-panel fd_on, txt_fd and txt_fd_ar, the free
+    // delivery line ("Congrats! You’ve got free delivery", the owner's pick).
+    expect($compared)->toBe(836, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

@@ -1667,6 +1667,22 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * "on cart pane, i want another text row, only will show if user got
+             * free delivery as per their cart total" -- the owner, 15 October;
+             * his pick, design C, "Congrats! You’ve got free delivery"
+             * (2.60.517). The walk's basket has reached the free-delivery amount,
+             * so the cart panel on /cart and /checkout draws the line above
+             * Subtotal. A basket below the amount draws nothing.
+             */
+            'the free delivery line in the cart panel (2.60.517)' => [
+                'pattern' => '#class="dfoot">\n {32}(?=<div class="sumrow tot">)#',
+                'with' => <<<'FD517'
+class="dfoot">
+                                <div class="kc-fdl"><svg class="kc-fdl-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l5.5-13.5L17 14z" fill="currentColor" fill-opacity=".18"/><path d="M4 20l5.5-13.5L17 14z"/><path d="M14 5.5l1-2.5M18.5 9.5l2.5-1M17 3.5l.5.5M20.5 6l.5.5M12 3l.3 1.2M21 12l-1.2.3"/></svg><span class="kc-fdl-t">Congrats! You’ve got free delivery</span><svg class="kc-fdl-ok" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+FD517,
+                'hits' => 2,
+            ],
+            /*
              * "option E is good, but i don't want to display such big like other
              * menu items, it should be small ... i want minimal" and then "Slim
              * strip for non-login users and Two small buttons, then links for

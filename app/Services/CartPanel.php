@@ -248,6 +248,22 @@ class CartPanel
         'foot_gap_m'       => ['range',  'Space below the buttons', 50,
                                'Between Cart / Checkout and the bottom of the screen. Never less than a phone’s own home-bar space.',
                                ['min' => 0, 'max' => 120, 'step' => 2, 'unit' => 'px']],
+
+        /*
+         * 2.60.517, the owner: "another text row, only will show if user got
+         * free delivery as per their cart total" -- design C, a plain line
+         * with no box, a celebration icon before and a green tick after:
+         * "Congrats! You’ve got free delivery". Ships ON, as asked. Shown
+         * above the coupon row only once the bag has reached the free-delivery
+         * amount (the same figure the bar at the top uses, so the two never
+         * disagree). Appended, so every key above keeps its recorded line.
+         */
+        'fd_on'            => ['bool',   'Free delivery line', true,
+                               'Ships on. A one-line “Congrats! You’ve got free delivery” above the coupon row, shown only once the bag reaches the free-delivery amount.'],
+        'txt_fd'           => ['text',   'Text', self::FD_TEXT,
+                               'One line on every phone. Up to 120 characters.'],
+        'txt_fd_ar'        => ['text',   'Text — Arabic', self::FD_TEXT_AR,
+                               'Shown on the Arabic shop (/ar/). Leave empty to use the English text there too.'],
     ];
 
     /**
@@ -257,6 +273,11 @@ class CartPanel
     public const COUPON_TEXT = 'Use coupon code: {coupon-code} on checkout page.';
 
     public const COUPON_TEXT_AR = 'استخدمي كود الخصم: {coupon-code} في صفحة الدفع.';
+
+    /** The free delivery line's shipped wording, the owner's pick (2.60.517). */
+    public const FD_TEXT = 'Congrats! You’ve got free delivery';
+
+    public const FD_TEXT_AR = 'مبروك! حصلتِ على توصيل مجاني';
 
     /** The wording before 2.60.512, so a migration moves only an untouched box. */
     public const COUPON_TEXT_OLD = 'Need Discount? Use coupon code {coupon-code} on checkout';
@@ -311,6 +332,9 @@ class CartPanel
         // test compares tabs by position. (Lane QK3)
         'coupon'   => ['Coupon hint', 'A dashed coupon ticket just above Subtotal, and under “Your Bag” on the cart page: “Use coupon code: GLOW on checkout page.” One line; the code is tap-to-copy and a green tick shows once copied. The same on both devices.',
                        ['coupon_on', 'coupon_id', 'txt_coupon', 'txt_coupon_ar']],
+        // After the coupon tab, so every tab before it keeps its index. (2.60.517)
+        'fdline'   => ['Free delivery line', 'A plain line above the coupon row — a celebration icon, “Congrats! You’ve got free delivery”, a green tick — shown only once the bag reaches the free-delivery amount. The same on both devices.',
+                       ['fd_on', 'txt_fd', 'txt_fd_ar']],
     ];
 
     public function __construct(private SettingsService $settings) {}
@@ -511,6 +535,41 @@ class CartPanel
 
     /** A constant, never a setting: the ticket's tag glyph. */
     private const TAG_ICON = '<span class="kc-cch-ic" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 12V4.5A1.5 1.5 0 0 1 4.5 3H12l9 9-9 9-9-9z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor"/></svg></span>';
+
+    /**
+     * The free delivery line (2.60.517, design C): a plain line, no box -- a
+     * celebration icon, the owner's sentence, a green tick -- or '' when it
+     * is switched off or the bag has not reached the free-delivery amount.
+     * $earned is the panel's own test (a threshold set and nothing left to
+     * spend), the one the bar at the top uses. The wording is escaped; the
+     * icons are constants.
+     */
+    public function freeDeliveryLine(bool $earned): string
+    {
+        $c = $this->all();
+
+        if (! $earned || ! $c['fd_on']) {
+            return '';
+        }
+
+        $ar = ! Locale::isDefault() && Locale::current() === 'ar';
+        $text = trim((string) ($ar ? $c['txt_fd_ar'] : ''));
+
+        if ($text === '') {
+            $text = trim((string) $c['txt_fd']);
+        }
+
+        if ($text === '') {
+            $text = self::FD_TEXT;
+        }
+
+        return '<div class="kc-fdl">' . self::FD_ICON . '<span class="kc-fdl-t">' . e($text) . '</span>' . self::FD_TICK . '</div>';
+    }
+
+    /** Constants, never settings: the party popper and the green tick. */
+    private const FD_ICON = '<svg class="kc-fdl-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l5.5-13.5L17 14z" fill="currentColor" fill-opacity=".18"/><path d="M4 20l5.5-13.5L17 14z"/><path d="M14 5.5l1-2.5M18.5 9.5l2.5-1M17 3.5l.5.5M20.5 6l.5.5M12 3l.3 1.2M21 12l-1.2.3"/></svg>';
+
+    private const FD_TICK = '<svg class="kc-fdl-ok" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
     /**
      * The whole coupon ticket (design A, the owner's pick, 2.60.512): the

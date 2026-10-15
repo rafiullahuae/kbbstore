@@ -69,6 +69,11 @@
     // hand this new view the OLD CartPanel for a few seconds; the panel then
     // draws no ticket instead of failing (2.60.513).
     $kbbCc = $count && method_exists($cpText, 'couponHint') ? $cpText->couponHint() : '';
+    // 2.60.517: "Congrats! You’ve got free delivery", above the coupon row,
+    // only once the bag has reached the free-delivery amount -- the test the
+    // bar at the top uses ($free set, nothing $left). method_exists, so a
+    // mid-update request with the old class draws nothing instead of failing.
+    $kbbFd = $count && $free && $left <= 0 && method_exists($cpText, 'freeDeliveryLine') ? $cpText->freeDeliveryLine(true) : '';
 @endphp
 
 <div class="kc-fragment">
@@ -179,7 +184,7 @@
             </div>
             <div class="dfoot">
                 @if ($promo)<div class="kc-coupon" style="color:#5e545a;background:#fff0f4;font-size:10px"><span class="ic">🎁</span><div>{!! $promo !!}</div></div>@endif
-                {!! $kbbCc !!}@includeWhen($kbbBundleOff > 0, 'partials.buy-together.total-row', ['cls' => 'sumrow kc-btrow', 'style' => 'color:#1F7A50;font-weight:600', 'label' => __('store.buy_together.bundle_row'), 'amount' => '&ndash; ' . \App\Support\Money::format($kbbBundleOff)])<div class="sumrow tot"><span>{{ $cpText->get("txt_subtotal") }}</span><span>{!! \App\Support\Money::format($sub - $kbbBundleOff) !!}</span></div>
+                {!! $kbbFd !!}{!! $kbbCc !!}@includeWhen($kbbBundleOff > 0, 'partials.buy-together.total-row', ['cls' => 'sumrow kc-btrow', 'style' => 'color:#1F7A50;font-weight:600', 'label' => __('store.buy_together.bundle_row'), 'amount' => '&ndash; ' . \App\Support\Money::format($kbbBundleOff)])<div class="sumrow tot"><span>{{ $cpText->get("txt_subtotal") }}</span><span>{!! \App\Support\Money::format($sub - $kbbBundleOff) !!}</span></div>
                 <div class="kc-btns">
                     <a class="btn-ghost" href="{{ Url::to('/cart/') }}">{{ $cpText->get("txt_btn_cart") }}</a>
                     <a class="cobtn" href="{{ Url::to('/checkout/') }}">{{ $cpText->get("txt_btn_checkout") }}</a>

@@ -722,6 +722,13 @@
   .kc-cc::before{content:"";position:absolute;inset:-8px -3px}
   .kc-cc:hover{border-color:#C13E63}
   .kc-cc-cp{flex:none;width:11px;height:11px}
+  /* 2.60.517 -- the free delivery line, design C: a plain line, no box, a
+     celebration icon and a green tick; one line, sized from its own width
+     like the coupon row, never outside the panel. */
+  .kc-fdl{container-type:inline-size;display:flex;align-items:center;gap:6px;max-width:100%;overflow:hidden;white-space:nowrap;margin:0 0 6px;color:#1f7d52}
+  .kc-fdl-ic{flex:none;width:15px;height:15px;color:#c13e63}
+  .kc-fdl-t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:13px;font-size:clamp(9px,calc((100cqi - 44px) / 15.5),13.5px)}
+  .kc-fdl-ok{flex:none;width:16px;height:16px;margin-inline-start:auto;color:#2e9e6b}
   .kbb-cartpage .kc-cch{width:fit-content;margin:0 0 14px}
   #kcCart .kc-cch{font-size:12px}
   /* 2.60.513, the owner: "the line must not go outside the panel, the row
