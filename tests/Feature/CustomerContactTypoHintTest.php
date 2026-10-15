@@ -161,13 +161,13 @@ it('draws with class names no other console screen uses', function () {
         if (str_ends_with($file, 'customer-contact-edit.blade.php')) {
             continue;
         }
-        expect((string) file_get_contents($file))->not->toContain('kxe-', $file);
+        expect(str_contains((string) file_get_contents($file), 'kxe-'))->toBeFalse($file);
     }
     foreach (glob(resource_path('views/admin/partials/*.blade.php')) ?: [] as $file) {
         if (str_ends_with($file, 'customer-contact-edit.blade.php')) {
             continue;
         }
-        expect((string) file_get_contents($file))->not->toContain('kxe-', $file);
+        expect(str_contains((string) file_get_contents($file), 'kxe-'))->toBeFalse($file);
     }
     expect((string) file_get_contents(resource_path('views/admin/app.blade.php')))->not->toContain('.kxe-');
 });

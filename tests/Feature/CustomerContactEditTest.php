@@ -310,7 +310,7 @@ it('refuses the resend without confirmation, for another customer\'s order, for 
 
 it('throttles the resend on a limiter of its own', function () {
     // MUTATION: drop ->middleware('throttle:6,1,customer-resend') from
-    // routes/customer-contact-admin.php -- the seventh send goes out. Remove
+    // routes/customers-admin.php -- the seventh send goes out. Remove
     // the 'customer-resend' prefix and the source pin is red.
     Mail::fake();
     test()->actingAs(ceAdmin(), 'admin');
@@ -323,7 +323,7 @@ it('throttles the resend on a limiter of its own', function () {
     test()->postJson('/admin-api/customers/' . $c->id . '/resend-confirmation', ['order_id' => $o, 'confirm' => true])->assertStatus(429);
 
     Mail::assertSent(OrderConfirmation::class, 6);
-    expect((string) file_get_contents(base_path('routes/customer-contact-admin.php')))
+    expect((string) file_get_contents(base_path('routes/customers-admin.php')))
         ->toContain("'throttle:6,1,customer-resend'")
         ->toContain("'throttle:30,1,customer-contact'");
 });
@@ -392,9 +392,10 @@ it('is mounted once, inside the customers file that sits in the admin-api group,
     $web = (string) file_get_contents(base_path('routes/web.php'));
     $app = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
 
-    expect(substr_count($customers, "require __DIR__.'/customer-contact-admin.php';"))->toBe(1)
+    expect(substr_count($customers, "Route::post('/customers/{id}/resend-confirmation'"))->toBe(1)
+        ->and(substr_count($customers, "Route::post('/customers/{id}/contact'"))->toBe(1)
+        ->and(substr_count($customers, "Route::get('/customers/{id}/contact'"))->toBe(1)
         ->and(substr_count($web, "require __DIR__.'/customers-admin.php';"))->toBe(1)
-        ->and(substr_count($web, 'customer-contact-admin.php'))->toBe(0)
         ->and(substr_count($app, "@include('admin.partials.customer-contact-edit')"))->toBe(1)
         ->and(substr_count($app, 'id="cuEditContact"'))->toBe(1)
         ->and(substr_count($app, 'id="odCustContact"'))->toBe(1);

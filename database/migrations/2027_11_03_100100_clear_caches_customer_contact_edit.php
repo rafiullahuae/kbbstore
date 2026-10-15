@@ -41,7 +41,6 @@ return new class extends Migration
                 'app/Support/AdminCapabilities.php',
                 'app/Support/AdminRoles.php',
                 'routes/customers-admin.php',
-                'routes/customer-contact-admin.php',
             ] as $relative) {
                 @opcache_invalidate(base_path($relative), true);
             }

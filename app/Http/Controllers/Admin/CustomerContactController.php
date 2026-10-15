@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Log;
  * me facility to edit the customer's email / phone, and will have option to
  * send order details again to customer upon checkbox confirmation."
  *
- * Three routes (routes/customer-contact-admin.php), all `customers.edit`
+ * Three routes (routes/customers-admin.php, end of file), all `customers.edit`
  * (owner, manager), all inside the admin-api group (auth:admin, CSRF):
  *
  *   GET  /admin-api/customers/{id}/contact               what the dialog needs
