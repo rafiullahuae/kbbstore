@@ -949,7 +949,7 @@ KBBARC;
 
         if (Schema::hasTable('banner_cards') && Schema::hasColumn('banner_cards', 'heading_ar')) {
             foreach (self::CARD_FIELDS as $field) {
-                DB::table('banner_cards')->whereIn($field.'_ar', $values)->update([$field.'_ar' => null]);
+                DB::table('banner_cards')->whereIn($field.'_ar', $values)->update([$field.'_ar' => '']);
             }
         }
 

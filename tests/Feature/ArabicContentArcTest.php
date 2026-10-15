@@ -299,6 +299,22 @@ it('writes an Arabic twin only for the owner\'s own English it knows, and never 
         ->and($card->button_label_ar)->toBe('تسوّقي الآن')
         ->and($card->body_ar)->toBe('نصّي')
         ->and($v('home_br_title_ar'))->toBe('علاماتي');
+
+    /*
+     * And it rolls back. The *_ar card columns are NOT NULL DEFAULT '', and
+     * down() used to write null into them: "NOT NULL constraint failed:
+     * banner_cards.heading_ar" on the preview, so the rollback threw half way.
+     *
+     * MUTATION: put `=> null` back in down() and this is red.
+     */
+    arcMigration(ARC_MIGRATIONS[1])->down();
+    $card->refresh();
+
+    expect($card->heading_ar)->toBe('')
+        ->and($card->button_label_ar)->toBe('')
+        ->and($card->body_ar)->toBe('نصّي')
+        ->and($v('home_bs_title_ar'))->toBeNull()
+        ->and($v('home_br_title_ar'))->toBe('علاماتي');
 });
 
 it('prints the bundles row and the Spotted line in Arabic on /ar, and nothing new in English', function () {
@@ -398,4 +414,25 @@ it('costs the same queries on an Arabic brand page with 3 products or 40, every 
     $big = count(DB::getQueryLog());
 
     expect($big)->toBe($small);
+});
+
+it('sets the sold-out badge in Cairo on /ar, and leaves the English page without it', function () {
+    /*
+     * On the preview's /ar/brands/anua/ the "نفدت الكمية" badge over a
+     * sold-out card photo was painted in DejaVu Sans (Chromium's own report
+     * of the font per text node): kbb.css gives `.kbb-tile .kbb-soldout`
+     * `font:700 10px 'Outfit',sans-serif`, Outfit has no Arabic, and the
+     * Arabic face block in layouts/store restated every hard-coded card stack
+     * except this one.
+     *
+     * MUTATION: drop `html[lang="ar"] .kbb-tile .kbb-soldout` from the
+     * #kbb-arabic-face block and the first expectation is red.
+     */
+    ArabicShop::on();
+    $ar = $this->get('/ar/')->assertOk()->getContent();
+    expect($ar)->toMatch('#html\[lang="ar"\] \.kbb-tile \.kbb-soldout[^{]*\{font-family:\'Outfit\',\'Cairo\',sans-serif\}#');
+
+    app()->setLocale('en');
+    $en = $this->get('/')->assertOk()->getContent();
+    expect($en)->not->toContain('kbb-arabic-face');
 });
