@@ -5499,6 +5499,15 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
 .logo.lgx.lgx-ar{font-family:Outfit,"Cairo","Geeza Pro","Noto Sans Arabic",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .logo.lgx.lgx-ar .lgx-w,.logo.lgx.lgx-ar .lgx-g{letter-spacing:0}
 header .hin>.logo.lgx.lgx-ar .lgx-w,.mnav-h>.logo.lgx.lgx-ar .lgx-w,.co-head .in>.logo.lgx.lgx-ar .lgx-w,header .hin>.logo.lgx.lgx-ar .lgx-g,.mnav-h>.logo.lgx.lgx-ar .lgx-g,.co-head .in>.logo.lgx.lgx-ar .lgx-g{letter-spacing:0}
+/* 5. THE END OF «بليس» (Lane ARF, the owner: "also in the header logo, the end
+      is cut little bit"). The pink word is painted with background-clip:text,
+      which paints only inside the em's own box -- and the Arabic س sweeps past
+      its advance at the reading END (the left) and below the baseline, so its
+      tail was simply not drawn. Room on every side for the gradient to reach
+      the ink, given back by an equal negative margin: the word's margin box,
+      and so the logo box, its size and every cap, are exactly what they were.
+      /ar only (.lgx-ar); no var(), no newer function. */
+.logo.lgx.lgx-ar .lgx-w em{padding:.25em;margin:-.25em}
 @media (prefers-reduced-motion:reduce){
   .kft-motion .kft-help,.kft-motion .kft-help::before,.kft-motion .kft-name{animation:none}
   .kft-help-bt a:hover{transform:none}

@@ -43,7 +43,7 @@ ORDER NOTE
 Please ring the doorbell twice — the buzzer is broken.
 
 VIEW YOUR ORDER
-http://localhost/track-my-order/?order=KBB-10427&t=1794096000.0788076ac5625eb38d28074a285752e214375ce8a0df1aa45f2c4631650ab8ae
+http://localhost/track-my-order/?order=KBB-10427&t=1794700800.04570a4c1ab742fd2ae4c577ea689da1571cf2170e0ff783ad10ff6b0c20dea6
 
 Opens on any phone or computer — no sign-in needed. The page always
 shows the latest status.

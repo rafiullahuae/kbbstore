@@ -89,6 +89,19 @@ const HLL_AR_RULES = [
     'kbb.css||.logo.lgx.lgx-ar{font-family:Outfit,"Cairo","Geeza Pro","Noto Sans Arabic",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}',
     'kbb.css||.logo.lgx.lgx-ar .lgx-w,.logo.lgx.lgx-ar .lgx-g{letter-spacing:0}',
     'kbb.css||header .hin>.logo.lgx.lgx-ar .lgx-w,.mnav-h>.logo.lgx.lgx-ar .lgx-w,.co-head .in>.logo.lgx.lgx-ar .lgx-w,header .hin>.logo.lgx.lgx-ar .lgx-g,.mnav-h>.logo.lgx.lgx-ar .lgx-g,.co-head .in>.logo.lgx.lgx-ar .lgx-g{letter-spacing:0}',
+    /*
+     * ▲ Lane ARF (the owner, 15 October: "also in the header logo, the end is
+     *   cut little bit"). The pink «بليس» is painted with background-clip:text,
+     *   which paints only inside the em's box, and the Arabic س runs past it to
+     *   the left and below: its tail was not drawn. Room for the paint, given
+     *   back by an equal negative margin, so the margin box -- the word, the
+     *   logo box and every cap -- is unchanged. /ar only (.lgx-ar). The sweep
+     *   (tools/arr-header-sweep.cjs, English and /ar, modern / old / blocked,
+     *   320-1024 and 1280) reads the logo, lotus and word boxes identical
+     *   before and after at every width; tools/arf-logo.cjs reads 0 px of ink
+     *   lost after, against 18-217 before.
+     */
+    'kbb.css||.logo.lgx.lgx-ar .lgx-w em{padding:.25em;margin:-.25em}',
 ];
 
 /** The pinned fingerprints (sha256). Change only as the header's comment says. */
@@ -99,7 +112,11 @@ const HLL_PINS = [
     // wordmark is the shipped one), all() the Arabic placeholder and
     // trendingWords() the same trending words in Arabic, on /ar.
     // English returns exactly what it returned (StorefrontEnglishUnchangedTest).
-    'app/Services/HeaderSettings.php' => '8752af241919ca382a00bd76ebeaea43845f4bb62292d626535965e8df43b969',
+    // Lane ARF (the owner: "i need the full translation by default"): all() also
+    // gives the WhatsApp label its Arabic on /ar while it is still the shipped
+    // "24/7 support" -- the placeholder's rule, one more key. Nothing else in
+    // the file moved; English is byte-identical.
+    'app/Services/HeaderSettings.php' => '472c0932abc8c4ded78f70d362ee8c3712069c77a8816185408e0a9fde480090',
     'app/Services/MobileHeader.php' => 'b2caa3c7afdd24ad1080b2488c4804b9174a0785cd950de7837e21465aa13a6d',
     'resources/views/partials/header.blade.php' => 'cb7479ececf96c453fcc4ede51e8f3757267b540f280dfc764026313bf371224',
     'resources/views/partials/logo-lockup.blade.php' => 'cb0b59b02911aa1862ec8108a68920203e0ec152c4f37edecf67712d8af9f2fb',
@@ -140,7 +157,7 @@ it('still sees the rules it is guarding (the lock cannot pass by matching nothin
 });
 
 /*
- * The opening is exactly the five rules above, each present once, each scoped
+ * The opening is exactly the rules above (five from Lane AR, one from Lane ARF), each present once, each scoped
  * to the Arabic page. Mutation: drop [dir="rtl"] from the first rule (the lotus
  * would move on English too) and this is red; add any other header rule and
  * the fingerprint case is.

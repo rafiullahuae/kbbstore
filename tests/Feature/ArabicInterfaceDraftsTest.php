@@ -10,6 +10,12 @@ use App\Services\Translation\TranslationStore;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\ArabicShop;
 
+// Lane ARF: these cases prove the draft/approve machinery and the English
+// fallback, which need the Arabic as 2.60.519-522 shipped it (drafts, nothing
+// approved). The migrated suite database now has it published by default
+// (2027_11_06_100000); see Tests\Support\ArabicDraftsAsShipped.
+beforeEach(fn () => \Tests\Support\ArabicDraftsAsShipped::restore());
+
 /**
  * THE ARABIC THIS LANE WROTE, AND THE THREE WAYS IT COULD HAVE BEEN WRONG.
  *
@@ -319,8 +325,9 @@ it('writes actual Arabic, not English left in an Arabic-shaped slot', function (
         'store.cart_reminder.email_placeholder => you@example.com',
         'store.checkout.apple_pay => Apple Pay', // a brand name, as Apple writes it (2.60.495)
         'store.checkout.field_email_placeholder => you@email.com',
-        'store.checkout.field_phone_placeholder => +971 5x xxx xxxx',
-        'email.common.sign_off => — K Beauty Bliss',
+        // Lane ARF (ArabicDraftCorrections::ROUND3): the x's are digits now, still
+        // no Arabic letter in them; the sign-off is «— كي بيوتي بليس».
+        'store.checkout.field_phone_placeholder => +971 50 123 4567',
         'email.items.sku => SKU :sku',
         'email.invoice.trn => TRN :trn',
         'invoice.packing.col_sku => SKU',
@@ -729,7 +736,9 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // +1 (Lane EH): checkout's "Did you mean :email?" (store.checkout.email_fix),
     // seeded by 2027_11_04_100000_seed_checkout_email_fix_arabic_draft -- the
     // owner's request for a mistyped-email hint at checkout.
-    expect($ui['drafts'])->toBe(1625 + count(\App\Support\ArabicWording::ENGLISH), 'the shipped Arabic is not showing as drafts to review')
+    // -1 (Lane ARF): wording.site_name_uae was never a draft; 2027_11_06_100000
+    // writes it published (and ArabicDraftsAsShipped takes it away here).
+    expect($ui['drafts'])->toBe(1625 + count(\App\Support\ArabicWording::ENGLISH) - 1, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

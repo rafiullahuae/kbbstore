@@ -732,6 +732,14 @@ class HeaderSettings
             $out['search_text'] = \App\Support\ArabicWording::of($out['search_text']);
         }
 
+        // (Lane ARF, the owner: "i need the full translation by default") The
+        // WhatsApp label beside the number, on /ar, while it is still the
+        // shipped "24/7 support" -- the same rule as the placeholder above.
+        if (\App\Support\Locale::current() === 'ar' && $out['support_label'] === self::SCHEMA['support_label'][2]
+            && class_exists(\App\Support\ArabicWording::class)) {
+            $out['support_label'] = \App\Support\ArabicWording::of($out['support_label']);
+        }
+
         return $out;
     }
 

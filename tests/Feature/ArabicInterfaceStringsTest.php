@@ -9,6 +9,12 @@ use App\Services\Translation\FrontEndStrings;
 use App\Services\Translation\TranslationStore;
 use App\Support\Locale;
 
+// Lane ARF: these cases prove the draft/approve machinery and the English
+// fallback, which need the Arabic as 2.60.519-522 shipped it (drafts, nothing
+// approved). The migrated suite database now has it published by default
+// (2027_11_06_100000); see Tests\Support\ArabicDraftsAsShipped.
+beforeEach(fn () => \Tests\Support\ArabicDraftsAsShipped::restore());
+
 /**
  * The other half of the conversion, and the half the byte-identity tests
  * cannot see: that a translated string actually reaches an Arabic shopper.

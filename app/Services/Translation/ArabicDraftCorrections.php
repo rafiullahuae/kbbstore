@@ -157,6 +157,48 @@ final class ArabicDraftCorrections
     ];
 
     /**
+     * Lane ARF — the owner, 15 October: "i need the full translation by
+     * default ... without such weird arrow brackets", and of the cart and
+     * checkout, "i don't need anything in english in arabic version". The
+     * drafts still carrying a Latin word a shopper reads: the shop's name
+     * (as the header's Arabic lockup writes it), WhatsApp (واتساب, as
+     * ROUND2 already writes it), "A–Z", the T-zone and the SSL line; the
+     * phone placeholder's x's become digits. One masculine imperative is
+     * made feminine. Left Latin on purpose: e-mail address examples, browser
+     * and file-format names, SKU / TRN, payment brands, "English" on the
+     * language switch, and the merchant's own alert emails.
+     *
+     * Same shape and same rule as ROUND2. 2027_11_06_100000 rewrites an
+     * existing row only while it is still a draft holding the shipped words.
+     *
+     * @var array<string, array{0: string, 1: string}>
+     */
+    public const ROUND3 = [
+        'store.shop.sort_name' => ['الاسم A–Z', 'الاسم أبجديًا'],
+        'store.cart.page_title' => ['السلة · K-Beauty Bliss', 'السلة · كي بيوتي بليس'],
+        'store.wishlist.page_title' => ['المفضلة · K-Beauty Bliss', 'المفضلة · كي بيوتي بليس'],
+        'store.home.quiz_option_combo' => ['منطقة T دهنية والخدود جافة', 'الجبهة والأنف دهنيان والخدود جافة'],
+        'store.spotted.seo_desc' => ['روتينات حقيقية للعناية الكورية بالبشرة وفتح علب ونتائج يشاركها عملاء K-Beauty Bliss في الإمارات. شاهدي منشوراتهم وتسوقي المنتجات التي يحبونها.', 'روتينات حقيقية للعناية الكورية بالبشرة وفتح علب ونتائج يشاركها عملاء كي بيوتي بليس في الإمارات. شاهدي منشوراتهم وتسوقي المنتجات التي يحبونها.'],
+        'store.home.about_heading' => ['عن K-Beauty Bliss', 'عن كي بيوتي بليس'],
+        'store.reviews.reply_from' => ['رد من K-Beauty Bliss', 'رد من كي بيوتي بليس'],
+        'store.checkout.page_title' => ['إتمام الطلب · K-Beauty Bliss', 'إتمام الطلب · كي بيوتي بليس'],
+        'store.checkout.field_phone_placeholder' => ['+971 5x xxx xxxx', '+971 50 123 4567'],
+        'store.checkout.whatsapp_optin' => ['أرسلوا لي تحديثات الطلب والعروض الجديدة — عبر WhatsApp والبريد الإلكتروني.', 'أرسلوا لي تحديثات الطلب والعروض الجديدة — عبر واتساب والبريد الإلكتروني.'],
+        'store.checkout.ssl_secure' => ['محمي بـ SSL', 'اتصال آمن ومشفّر'],
+        'store.order_received.page_title' => ['تم استلام الطلب · K-Beauty Bliss', 'تم استلام الطلب · كي بيوتي بليس'],
+        'store.journal.footer_line' => ['© K-Beauty Bliss · جمال كوري أصلي في الإمارات', '© كي بيوتي بليس · جمال كوري أصلي في الإمارات'],
+        'store.orders.page_title' => ['الطلبات · K-Beauty Bliss', 'الطلبات · كي بيوتي بليس'],
+        'store.orders.detail_title' => ['الطلب رقم :number · K-Beauty Bliss', 'الطلب رقم :number · كي بيوتي بليس'],
+        'store.account.reset_legacy_note' => ['ملاحظة: ستتوقف كلمة مرورك الأصلية في K Beauty Bliss عن العمل بمجرد حفظ هذه.', 'ملاحظة: ستتوقف كلمة مروركِ الأصلية في كي بيوتي بليس عن العمل بمجرد حفظ هذه.'],
+        'store.track.page_title' => ['تتبع طلبي · K-Beauty Bliss', 'تتبع طلبي · كي بيوتي بليس'],
+        'store.quiz.js_expert_body' => ['أرسل إجاباتك إلى خبيرة بشرة في K-Beauty Bliss — سنراجع روتينك ونراسلك عبر WhatsApp.', 'أرسلي إجاباتكِ إلى خبيرة بشرة في كي بيوتي بليس — سنراجع روتينكِ ونراسلكِ عبر واتساب.'],
+        'store.quiz.js_label_phone' => ['الهاتف (WhatsApp)', 'الهاتف (واتساب)'],
+        'email.common.sign_off' => ['— K Beauty Bliss', '— كي بيوتي بليس'],
+        'email.reset.lead' => ['طلب أحدهم إعادة تعيين كلمة المرور على حسابك في K Beauty Bliss. إن كنت أنت فافتح الرابط أدناه واختر كلمة مرور جديدة.', 'طلب أحدهم إعادة تعيين كلمة المرور على حسابكِ في كي بيوتي بليس. إن كنتِ أنتِ فافتحي الرابط أدناه واختاري كلمة مرور جديدة.'],
+        'store.push.order_processing_body' => ['نقوم بتجهيز طلبك من K-Beauty Bliss.', 'نقوم بتجهيز طلبكِ من كي بيوتي بليس.'],
+    ];
+
+    /**
      * The drafts with their corrections applied.
      *
      * @param  array<string, string>  $drafts
@@ -164,7 +206,7 @@ final class ArabicDraftCorrections
      */
     public static function apply(array $drafts): array
     {
-        foreach (self::ROUND2 as $key => [$old, $new]) {
+        foreach ([...self::ROUND2, ...self::ROUND3] as $key => [$old, $new]) {
             if (($drafts[$key] ?? null) === $old) {
                 $drafts[$key] = $new;
             }
