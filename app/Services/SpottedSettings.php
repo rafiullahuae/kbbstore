@@ -89,6 +89,11 @@ final class SpottedSettings
             'help' => 'Empty: “#KBeautyBliss — Seen on Instagram”.'],
         'home_sub' => ['type' => 'text', 'label' => 'Line under the heading', 'default' => '',
             'help' => 'Empty: “Real unboxings, shelfies and glow-ups from our community across the UAE — tag @kbeauty.bliss to be featured.”'],
+        // (Lane ARC) The owner's own words on the Arabic shop. Empty: the English.
+        'home_title_ar' => ['type' => 'text', 'label' => 'Heading · Arabic', 'default' => '',
+            'help' => 'Shown on /ar/. Empty: the English heading.'],
+        'home_sub_ar' => ['type' => 'text', 'label' => 'Line under the heading · Arabic', 'default' => '',
+            'help' => 'Shown on /ar/. Empty: the English line.'],
         'home_max' => ['type' => 'select', 'label' => 'Posts in the carousel', 'default' => '12',
             'options' => ['4' => '4', '6' => '6', '8' => '8', '10' => '10', '12' => '12', '16' => '16', '20' => '20', '24' => '24'],
             'help' => 'The first ones in the list above that are ticked “Homepage”.'],
@@ -166,6 +171,8 @@ final class SpottedSettings
             'help' => 'On a phone it sits under the pictures.'],
         'btn_text' => ['type' => 'text', 'label' => 'Button text', 'default' => '',
             'help' => 'Empty: “See every #KBeautyBliss look”.'],
+        'btn_text_ar' => ['type' => 'text', 'label' => 'Button text · Arabic', 'default' => '',
+            'help' => 'Shown on /ar/. Empty: the English wording.'],
 
         /* ── Spacing ──────────────────────────────────────────────────────── */
         'pad_top_d' => ['type' => 'select', 'label' => 'Space above the section · laptop', 'default' => '8', 'options' => self::PX, 'help' => ''],
@@ -205,13 +212,13 @@ final class SpottedSettings
 
     public const TABS = [
         'home' => ['Homepage section', 'The section between Brands and Trending Now: a static grid of six pictures, or the carousel — which draws nothing at all while no post is ticked “Homepage”.',
-            ['home_on', 'home_layout', 'home_title', 'home_sub', 'home_max', 'bg']],
+            ['home_on', 'home_layout', 'home_title', 'home_sub', 'home_title_ar', 'home_sub_ar', 'home_max', 'bg']],
         'grid' => ['Homepage grid', 'The six pictures of the static grid, in order — each opens its link. Use ↑ ↓ to reorder, then Save settings.',
             ['grid_cols_d', 'grid_1_img', 'grid_1_url', 'grid_1_alt', 'grid_2_img', 'grid_2_url', 'grid_2_alt', 'grid_3_img', 'grid_3_url', 'grid_3_alt', 'grid_4_img', 'grid_4_url', 'grid_4_alt', 'grid_5_img', 'grid_5_url', 'grid_5_alt', 'grid_6_img', 'grid_6_url', 'grid_6_alt']],
         'carousel' => ['Carousel', 'Cards in view, arrows and autoplay — separately for a laptop and a phone (900px and narrower).',
             ['per_d', 'per_m', 'arrows_d', 'arrows_m', 'auto', 'tilt']],
         'button' => ['Button', 'The button that opens the Spotted page: under the carousel, and on the 6-picture grid beside the heading or under the pictures.',
-            ['btn_on', 'btn_text', 'btn_pos_d']],
+            ['btn_on', 'btn_text', 'btn_text_ar', 'btn_pos_d']],
         'spacing' => ['Spacing', 'Each per device.',
             ['pad_top_d', 'pad_top_m', 'pad_bot_d', 'pad_bot_m', 'head_gap_d', 'head_gap_m', 'btn_gap_d', 'btn_gap_m']],
         'page' => ['Spotted page', 'The page at /kbeautybliss-spotted/: its heading, introduction, grid and what Google shows.',
@@ -323,10 +330,10 @@ final class SpottedSettings
             'classes' => implode(' ', array_filter($classes)),
             'style' => $style,
             'auto' => (int) self::pick($c, 'auto', ['0', '3', '5', '7', '10'], '0'),
-            'title' => self::text($c, 'home_title'),
-            'sub' => self::text($c, 'home_sub'),
+            'title' => self::words($c, 'home_title'),
+            'sub' => self::words($c, 'home_sub'),
             'button' => (bool) ($c['btn_on'] ?? true),
-            'label' => self::text($c, 'btn_text'),
+            'label' => self::words($c, 'btn_text'),
             // (2.60.385) The 6-picture grid's button: right of the heading on
             // a laptop, or under the pictures. A phone always has it under.
             'btn_top' => self::pick($c, 'btn_pos_d', ['top', 'bottom'], 'top') === 'top',
@@ -517,5 +524,23 @@ final class SpottedSettings
     private static function text(array $c, string $key): string
     {
         return trim(RichText::toText((string) ($c[$key] ?? '')));
+    }
+
+    /**
+     * (Lane ARC) A homepage wording field: on /ar its `_ar` twin when that is
+     * set and the English is not empty (an emptied English hides the line in
+     * both languages), the English otherwise. English pages never look.
+     */
+    private static function words(array $c, string $key): string
+    {
+        $english = self::text($c, $key);
+
+        if ($english === '' || Locale::current() !== 'ar') {
+            return $english;
+        }
+
+        $arabic = self::text($c, $key.'_ar');
+
+        return $arabic !== '' ? $arabic : $english;
     }
 }

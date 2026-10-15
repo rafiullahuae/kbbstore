@@ -89,6 +89,12 @@ final class HomeBundles
 
         $text = static fn (string $key): string => trim(RichText::toText((string) ($c[$key] ?? '')));
 
+        // (Lane ARC) On /ar only: the owner's words in Arabic (HomeArabic::twin).
+        if (HomeArabic::on()) {
+            $english = $text;
+            $text = static fn (string $key): string => HomeArabic::twin($c, $key, $english($key));
+        }
+
         return [
             'classes' => implode(' ', array_filter($classes)),
             'style' => $style,

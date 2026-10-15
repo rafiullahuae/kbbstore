@@ -519,6 +519,26 @@
         @foreach ($cards as $bnI => $bnCard)
           @php
             /*
+             * (Lane ARC) ON /ar ONLY, the card's own Arabic: `heading_ar`,
+             * `body_ar` and `button_label_ar` were stored (Appearance → Banners)
+             * and read by the picture slider, never by this row, so /ar printed
+             * the English words. A field takes its Arabic only when both are
+             * set, so an emptied English line stays hidden; the picture's
+             * description follows the Arabic heading. English never enters.
+             */
+            if ($bnCopy === 0 && \App\Support\Locale::current() === 'ar') {
+                $bnArHead = trim((string) $bnCard->getAttribute('heading_ar'));
+                foreach (['heading', 'body', 'button_label'] as $bnF) {
+                    $bnOwn = trim((string) $bnCard->getAttribute($bnF.'_ar'));
+                    if ($bnOwn !== '' && trim((string) $bnCard->getAttribute($bnF)) !== '') {
+                        $bnCard->setAttribute($bnF, $bnOwn);
+                    }
+                }
+                if ($bnArHead !== '') {
+                    $bnCard->setAttribute('alt', $bnArHead);
+                }
+            }
+            /*
              * ONE <a> PER CARD, AND IT IS ALWAYS A REAL ONE.
              *
              * A card wrapped in a link that also contains a link is invalid

@@ -133,6 +133,14 @@ final class HomeArabic
         'home_ft_r_text_ar' => ['type' => 'textarea', 'label' => 'Two features · right text · Arabic', 'default' => self::TEXT['home_ft_r_text'], 'store' => 'setting', 'help' => 'Shown on /ar/. Empty: the English text.'],
         'home_ft_r_btn_ar' => ['type' => 'text', 'label' => 'Two features · right link text · Arabic', 'default' => self::TEXT['home_ft_r_btn'], 'store' => 'setting', 'help' => 'Shown on /ar/. Empty: the English wording.'],
         'home_ft_r_alt_ar' => ['type' => 'text', 'label' => 'Two features · right photo description · Arabic', 'default' => '', 'store' => 'setting', 'help' => 'Shown on /ar/. Empty: the English description.'],
+        /*
+         * (Lane ARC) Big savings bundles had no Arabic twin, so the owner's own
+         * heading, line and button printed in English on /ar. HomeBundles reads
+         * these on /ar only; empty, or with the English emptied, nothing moves.
+         */
+        'home_hb_title_ar' => ['type' => 'text', 'label' => 'Big savings bundles · heading · Arabic', 'default' => '', 'store' => 'setting', 'help' => 'Shown on /ar/. Empty: the English heading.'],
+        'home_hb_sub_ar' => ['type' => 'text', 'label' => 'Big savings bundles · line under the heading · Arabic', 'default' => '', 'store' => 'setting', 'help' => 'Shown on /ar/. Empty: the English line.'],
+        'home_hb_btn_text_ar' => ['type' => 'text', 'label' => 'Big savings bundles · button · Arabic', 'default' => '', 'store' => 'setting', 'help' => 'Shown on /ar/. Empty: the English wording.'],
     ];
 
     /** Appearance → Homepage → Homepage content → Arabic wording. Spread into HomepageContent::TABS. */
@@ -148,6 +156,7 @@ final class HomeArabic
             'home_u54_eyebrow_ar', 'home_u54_title_ar', 'home_u54_sub_ar', 'home_u54_btn_ar',
             'home_ft_l_title_ar', 'home_ft_l_text_ar', 'home_ft_l_btn_ar', 'home_ft_l_alt_ar',
             'home_ft_r_title_ar', 'home_ft_r_text_ar', 'home_ft_r_btn_ar', 'home_ft_r_alt_ar',
+            'home_hb_title_ar', 'home_hb_sub_ar', 'home_hb_btn_text_ar',
         ]],
     ];
 
@@ -177,6 +186,44 @@ final class HomeArabic
         }
 
         return $arabic;
+    }
+
+    /**
+     * (Lane ARC) A homepage field whose Arabic twin ships EMPTY: its `_ar`
+     * when the owner (or a package) wrote one and the English is not empty,
+     * the English otherwise. No shipped Arabic, so no honesty rule to apply.
+     * Called on /ar only; plain text, escaped by the template.
+     *
+     * @param  array<string, mixed>  $c  the homepage settings map the page already holds
+     */
+    public static function twin(array $c, string $key, string $english): string
+    {
+        if ($english === '') {
+            return '';
+        }
+
+        $arabic = trim(RichText::toText((string) ($c[$key.'_ar'] ?? '')));
+
+        return $arabic !== '' ? $arabic : $english;
+    }
+
+    /** The homepage's quiet <h1> when the owner has written none (store/home.blade.php). */
+    public const QUIET_H1 = 'K-Beauty Bliss — authentic Korean skincare in the UAE';
+
+    /** Its Arabic, printed on /ar while the English is the shipped sentence. */
+    public const QUIET_H1_AR = 'كي بيوتي بليس — عناية كورية أصلية بالبشرة في الإمارات';
+
+    /**
+     * (Lane ARC) The homepage's quiet <h1>. English pages print exactly what
+     * they printed before: the owner's site title, or the shipped sentence. On
+     * /ar the shipped sentence is printed in Arabic; a title he wrote himself is
+     * his and stays as he wrote it.
+     */
+    public static function quietH1(mixed $siteTitle): string
+    {
+        $english = (string) ($siteTitle ?: self::QUIET_H1);
+
+        return self::on() && trim($english) === self::QUIET_H1 ? self::QUIET_H1_AR : $english;
     }
 
     /** The About us paragraphs on /ar, by the same rule. */
