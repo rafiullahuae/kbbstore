@@ -65,6 +65,9 @@ it('carries exactly the drafts and corrections the classes hold', function () {
     foreach (\App\Support\ArabicWording::ENGLISH as $key => $english) {
         $want['store.'.strtolower($key)] = [$english, \App\Support\ArabicWording::ARABIC[$key]];
     }
+    // Lane ARF added wording.site_name_uae later; 2027_11_06_100000 carries it
+    // (published) and ArabicByDefaultTest pins that copy.
+    unset($want['store.wording.site_name_uae']);
     expect($rows)->toBe($want);
 
     $fixes = shipConst(base_path('database/migrations/2027_11_02_100100_correct_lane_ar2_arabic_drafts.php'), 'FIXES');
@@ -94,7 +97,10 @@ it('guards every view call to a class this lane added', function () {
             $seen++;
             $before = substr($src, max(0, $at - 80), min(80, $at));
             if (! preg_match('/class_exists\(\\\\App\\\\Support\\\\'.preg_quote($m[1][0][0] ?? '', '/').'::class\) \?\s*$/', $before)
-                && ! preg_match('/class_exists\(\\\\App\\\\Support\\\\\w+::class\) \?\s*$/', $before)) {
+                && ! preg_match('/class_exists\(\\\\App\\\\Support\\\\\w+::class\) \?\s*$/', $before)
+                // Lane ARF: method_exists(Class::class, 'm') is the stricter guard
+                // (false while either the class or the new method is missing).
+                && ! preg_match('/method_exists\(\\\\App\\\\Support\\\\\w+::class, \'\w+\'\) \?\s*$/', $before)) {
                 $bad[] = str_replace(resource_path('views').'/', '', $f->getPathname()).': '.$hit;
             }
         }

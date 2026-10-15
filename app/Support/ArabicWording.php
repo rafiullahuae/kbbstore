@@ -69,6 +69,9 @@ final class ArabicWording
         'wording.pay_tamara_default' => 'Pay later with Tamara',
         'wording.pay_tamara_desc' => 'Split in up to 4 payments, or pay in 30 days. No interest.',
         'wording.site_name' => 'K-Beauty Bliss',
+        // Lane ARF: the store name as the live shop has it (Store -> General), for
+        // the footer's copyright line and every <title> on /ar.
+        'wording.site_name_uae' => 'K-Beauty Bliss UAE',
         'wording.home_title' => 'K-Beauty Bliss · Authentic Korean skincare in the UAE',
         'wording.instagram' => 'Instagram',
         'wording.tiktok' => 'TikTok',
@@ -259,6 +262,7 @@ final class ArabicWording
         'wording.pay_tamara_default' => 'الدفع لاحقًا مع تمارا',
         'wording.pay_tamara_desc' => 'قسّمي المبلغ على 4 دفعات أو ادفعي خلال 30 يومًا، بلا فوائد.',
         'wording.site_name' => 'كي بيوتي بليس',
+        'wording.site_name_uae' => 'كي بيوتي بليس الإمارات',
         'wording.home_title' => 'كي بيوتي بليس · العناية الكورية الأصلية في الإمارات',
         'wording.instagram' => 'إنستغرام',
         'wording.tiktok' => 'تيك توك',
@@ -417,6 +421,33 @@ final class ArabicWording
     public static function on(): bool
     {
         return Locale::current() === 'ar';
+    }
+
+    /**
+     * The header's Arabic wordmark, for the other places that draw the shop's
+     * name in two parts (the footer's logo, Lane ARF). The same two words
+     * HeaderSettings::lockup() prints on /ar.
+     */
+    public const LOCKUP_AR = ['كي بيوتي', 'بليس'];
+
+    /**
+     * The store name inside the footer's copyright line (Lane ARF).
+     *
+     * English: of() exactly, which is the text untouched. On /ar the line
+     * itself already ends in «الإمارات» (store.footer.copyright), so a store
+     * name whose Arabic ends in the country too would print it twice --
+     * "© 2026 كي بيوتي بليس الإمارات الإمارات". Only a name this class
+     * translated is trimmed; a name the owner typed in Arabic is his.
+     */
+    public static function copyrightStore(?string $store): string
+    {
+        $out = self::of($store);
+
+        if (self::on() && $out !== (string) $store && str_ends_with($out, ' الإمارات')) {
+            return mb_substr($out, 0, mb_strlen($out) - mb_strlen(' الإمارات'));
+        }
+
+        return $out;
     }
 
     /**

@@ -995,10 +995,28 @@ final class SiteFooter
         // (Lane AR round 2) the big name in Arabic on /ar when it is the shipped one.
         $name = (bool) ($c['site_name_on'] ?? true) ? \App\Support\ArabicWording::of($text('site_name_text')) : '';
 
+        /*
+         * (Lane ARF, the owner: "also the logo need to write in arabic too in
+         * the footer") The small wordmark at the head of the brand column, on
+         * /ar, in the header's own Arabic -- the same two words and the same
+         * rule as HeaderSettings::lockup(): only while it is still the shipped
+         * "K-Beauty" + "Bliss". A name he typed is his, in every language, and
+         * English returns exactly what it returned.
+         */
+        $logo = [(string) $header->get('logo_text'), (string) $header->get('logo_accent')];
+
+        if ($logo === ['K-Beauty', 'Bliss'] && \App\Support\Locale::current() === 'ar') {
+            // Two Arabic words need the space the English pair does without.
+            // Guarded: a package copies file by file, so for a moment this file
+            // can be on disk before the ArabicWording that defines the constant.
+            $ar = \defined(\App\Support\ArabicWording::class.'::LOCKUP_AR') ? \App\Support\ArabicWording::LOCKUP_AR : ['كي بيوتي', 'بليس'];
+            $logo = [$ar[0].' ', $ar[1]];
+        }
+
         return [
             'classes' => $look['classes'],
             'style' => $look['style'],
-            'logo' => [(string) $header->get('logo_text'), (string) $header->get('logo_accent')],
+            'logo' => $logo,
             'help_on' => (bool) ($c['site_help_on'] ?? true),
             // A key of HELP_ICONS, never the stored text: the view prints the
             // constant SVG for it unescaped. Anything else is the default.
@@ -1014,6 +1032,13 @@ final class SiteFooter
             'korea' => $text('site_addr_korea'),
             'news' => (bool) ($c['site_news_on'] ?? true),
             'name' => $name,
+            // The big name is sized from its length (--kft-n, kbb.css .kft-name)
+            // so it fits one line without a script measuring it. Arabic letters
+            // in the shop's face run wider than Latin ones: "كي بيوتي بليس" at
+            // 13 overflowed its line by 12.7% at every width (Lane ARF,
+            // measured 320-1600). A name with Arabic in it counts 1.15 per
+            // letter; a Latin name counts exactly what it always did.
+            'name_n' => max(8, (int) ceil(mb_strlen($name) * (preg_match('/\p{Arabic}/u', $name) === 1 ? 1.15 : 1))),
             // The shine on the big name is a copy of the name laid over it
             // (kbb.css, .kft-sheen-name), so the text travels in an attribute —
             // escaped by Blade — only when that is where the shine is.

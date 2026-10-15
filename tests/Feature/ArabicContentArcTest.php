@@ -31,6 +31,12 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\ArabicShop;
 
+// Lane ARF: these cases prove the draft/approve machinery and the English
+// fallback, which need the Arabic as 2.60.519-522 shipped it (drafts, nothing
+// approved). The migrated suite database now has it published by default
+// (2027_11_06_100000); see Tests\Support\ArabicDraftsAsShipped.
+beforeEach(fn () => \Tests\Support\ArabicDraftsAsShipped::restore());
+
 const ARC_MIGRATIONS = [
     '2027_11_03_100000_arabic_content_catalogue',
     '2027_11_03_100100_arabic_content_homepage_wording',

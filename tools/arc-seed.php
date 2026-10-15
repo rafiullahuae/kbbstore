@@ -213,7 +213,9 @@ $sv->setModule('cards_banner', true);
 $sv->setModuleSetting('cards_banner', 'set', (string) $set->id);
 
 /* ── THE OWNER'S "APPROVE ALL" (Translation → Progress) ── */
-require __DIR__.'/ar-publish-drafts.php';
+if (getenv('KBB_ARF_LIVE') !== '1') { // Lane ARF: the live shop has NOT pressed it
+    require __DIR__.'/ar-publish-drafts.php';
+}
 
 $sv->flush();
 \App\Models\Setting::flushMap();

@@ -39,6 +39,12 @@ use App\Support\Locale;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
+// Lane ARF: these cases prove the draft/approve machinery and the English
+// fallback, which need the Arabic as 2.60.519-522 shipped it (drafts, nothing
+// approved). The migrated suite database now has it published by default
+// (2027_11_06_100000); see Tests\Support\ArabicDraftsAsShipped.
+beforeEach(fn () => \Tests\Support\ArabicDraftsAsShipped::restore());
+
 function fnArabicOn(): void
 {
     Setting::query()->updateOrCreate(['key' => Locale::SETTING_ENABLED], ['value' => '1', 'autoload' => true]);

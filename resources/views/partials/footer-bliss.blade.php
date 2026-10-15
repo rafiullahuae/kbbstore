@@ -104,7 +104,7 @@
 @endif
     </div>
 @if ($kft['name'] !== '')
-    <p class="kft-name" aria-hidden="true" style="--kft-n:{{ max(8, mb_strlen($kft['name'])) }}"@if ($kft['name_sheen']) data-kft-text="{{ $kft['name'] }}"@endif>@if ($kft['name_drift'])<span class="kft-nm" data-kft-copy="{{ $kft['name'] }}"></span>@endif{{ $kft['name'] }}</p>
+    <p class="kft-name" aria-hidden="true" style="--kft-n:{{ $kft['name_n'] ?? max(8, mb_strlen($kft['name'])) }}"@if ($kft['name_sheen']) data-kft-text="{{ $kft['name'] }}"@endif>@if ($kft['name_drift'])<span class="kft-nm" data-kft-copy="{{ $kft['name'] }}"></span>@endif{{ $kft['name'] }}</p>
 @endif
   </div></div>
 @if ($kft['app'])
@@ -123,7 +123,7 @@
   </template></section>
 @endif
   <div class="kft-bot"><div class="kft-wrap kft-bot-in">
-    <span>{{ __('store.footer.copyright', ['year' => date('Y'), 'store' => (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($kbbSettings->get('store_name', 'K-Beauty Bliss')) : (string) ($kbbSettings->get('store_name', 'K-Beauty Bliss')))]) }}</span>
+    <span>{{ __('store.footer.copyright', ['year' => date('Y'), 'store' => (method_exists(\App\Support\ArabicWording::class, 'copyrightStore') ? \App\Support\ArabicWording::copyrightStore($kbbSettings->get('store_name', 'K-Beauty Bliss')) : (string) ($kbbSettings->get('store_name', 'K-Beauty Bliss')))]) }}</span>
     <nav class="kft-legal"><a href="{{ Url::to('/privacy-policy/') }}">{{ __('store.footer.link_privacy') }}</a><a href="{{ Url::to('/terms-and-conditions/') }}">{{ __('store.footer.link_terms') }}</a></nav>
     <div class="kft-pay">@foreach (\App\Support\PaymentChips::row('footer') as $kftChip)<span>{{ $kftChip }}</span>@endforeach<span>{{ __('store.footer.pay_cod') }}</span></div>
   </div></div>

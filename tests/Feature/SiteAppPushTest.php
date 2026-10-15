@@ -86,6 +86,8 @@ function ntSaLogin(Customer $c): array
 
 beforeEach(function () {
     SiteAppPushRoutes::wire($this->app);
+    // Lane ARF: the drafts as shipped, for "drafts are not served" (Tests\Support\ArabicDraftsAsShipped).
+    \Tests\Support\ArabicDraftsAsShipped::restore();
 });
 
 /* ------------------------------------------------------------- the endpoint */

@@ -13,6 +13,12 @@ use Illuminate\Support\Facades\Mail;
 use Tests\Support\ArabicShop;
 use Tests\Support\EnglishRenderWalk;
 
+// Lane ARF: these cases prove the draft/approve machinery and the English
+// fallback, which need the Arabic as 2.60.519-522 shipped it (drafts, nothing
+// approved). The migrated suite database now has it published by default
+// (2027_11_06_100000); see Tests\Support\ArabicDraftsAsShipped.
+beforeEach(fn () => \Tests\Support\ArabicDraftsAsShipped::restore());
+
 /**
  * Lane FB — the money rows on a receipt, the dispatch and cancellation wording,
  * and the half of the bilingual email machinery that had never been connected.

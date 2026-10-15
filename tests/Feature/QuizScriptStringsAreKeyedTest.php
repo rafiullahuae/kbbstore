@@ -10,6 +10,12 @@ use App\Services\Translation\InterfaceStrings;
 use App\Services\Translation\TranslationStore;
 use App\Support\Locale;
 
+// Lane ARF: these cases prove the draft/approve machinery and the English
+// fallback, which need the Arabic as 2.60.519-522 shipped it (drafts, nothing
+// approved). The migrated suite database now has it published by default
+// (2027_11_06_100000); see Tests\Support\ArabicDraftsAsShipped.
+beforeEach(fn () => \Tests\Support\ArabicDraftsAsShipped::restore());
+
 /**
  * Lane FB — the skin quiz's inline script, and the half of it that must stay
  * English on purpose.
