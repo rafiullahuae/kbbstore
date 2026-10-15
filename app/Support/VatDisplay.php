@@ -399,14 +399,14 @@ final class VatDisplay
         // exclusive rule charges nobody anything, and promising a surcharge
         // that never arrives is its own untruth.
         if ($this->live() && $rule->addsToTotal()) {
-            return '+' . $rate . '% VAT added at checkout';
+            return (string) __('store.wording.vat_added', ['rate' => $rate]);
         }
 
         if ($rule->basis === TaxRule::INCLUSIVE) {
-            return 'Inclusive of ' . $rate . '% VAT';
+            return (string) __('store.wording.vat_inclusive', ['rate' => $rate]);
         }
 
-        return $rate . '% VAT shown at checkout';
+        return (string) __('store.wording.vat_shown', ['rate' => $rate]);
     }
 
     /**
@@ -419,7 +419,8 @@ final class VatDisplay
      */
     public function label(?string $country = null): string
     {
-        $label = (string) $this->settings->get('vat_label', "You're paying VAT ({rate}%)");
+        // (Lane AR round 2) the shipped label in Arabic on /ar; English untouched.
+        $label = ArabicWording::of((string) $this->settings->get('vat_label', "You're paying VAT ({rate}%)"));
 
         return str_replace('{rate}', $this->printableRate($this->rate($country)), $label);
     }

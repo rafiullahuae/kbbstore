@@ -362,7 +362,7 @@ class PageController extends Controller
                 'description' => 'Answer a few questions and get a K-beauty routine matched to your skin type, concerns and the UAE climate.',
                 'url' => $base . '/skin-quiz/',
                 'breadcrumb' => [
-                    ['name' => 'Home', 'url' => $base . '/'],
+                    ['name' => __('store.breadcrumb.home'), 'url' => $base . '/'],
                     ['name' => 'Skin Quiz', 'url' => $base . '/skin-quiz/'],
                 ],
             ]),
@@ -413,7 +413,7 @@ class PageController extends Controller
                     : 'This shop has not been reviewed yet. Reviews appear here once customers leave them.',
                 'url' => $base . '/reviews/',
                 'breadcrumb' => [
-                    ['name' => 'Home', 'url' => $base . '/'],
+                    ['name' => __('store.breadcrumb.home'), 'url' => $base . '/'],
                     ['name' => 'Reviews', 'url' => $base . '/reviews/'],
                 ],
             ]),
@@ -575,13 +575,14 @@ class PageController extends Controller
          */
         $seoCtx = [
             'type' => 'collection',
-            'collection' => ['name' => 'The Glow Journal'],
-            'title' => 'The Glow Journal',
-            'description' => 'Skincare tips and the K-beauty edit — honest guides on routines, ingredients and sun care, written for the UAE.',
+            // (Lane AR round 2) interface strings: Arabic on /ar, English unchanged.
+            'collection' => ['name' => (string) __('store.wording.journal_title')],
+            'title' => (string) __('store.wording.journal_title'),
+            'description' => (string) __('store.wording.journal_desc'),
             'url' => $base . UrlScheme::blogIndex(),
             'breadcrumb' => [
-                ['name' => 'Home', 'url' => $base . '/'],
-                ['name' => 'Journal', 'url' => $base . UrlScheme::blogIndex()],
+                ['name' => (string) __('store.wording.home'), 'url' => $base . '/'],
+                ['name' => (string) __('store.wording.journal'), 'url' => $base . UrlScheme::blogIndex()],
             ],
         ];
 

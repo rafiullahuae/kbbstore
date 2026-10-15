@@ -277,6 +277,7 @@ final class TranslationConsole
             'machine_run' => self::can($admin, 'POST', 'admin-api/translations/machine/run'),
             'strings' => self::can($admin, 'POST', 'admin-api/translations'),
             'machine_field' => self::can($admin, 'POST', 'admin-api/translations/machine/field'),
+            'preview' => self::can($admin, 'POST', 'admin-api/translations/preview-link'),
         ];
     }
 

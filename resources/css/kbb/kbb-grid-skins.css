@@ -581,6 +581,11 @@ body:not(.pc-norate) .kbb-pgrid:not([data-skin="horizontal"]):not([data-skin="ov
    switched on.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* Lane AR round 2: the same rule as kbb.css (GridSkinCopiesTest keeps the two
+   copies of the card in step) -- a Latin name in an Arabic card keeps its own
+   direction, so "345 Relief Cream" is not painted "Relief Cream 345". */
+[dir="rtl"] .kbb-card-nm{unicode-bidi:plaintext}
+
 .kbb-pgrid[data-skin^="showcase"]{
     --sc-border:rgba(42,34,40,.10);
     --sc-photo-bg:#FBF5F3;

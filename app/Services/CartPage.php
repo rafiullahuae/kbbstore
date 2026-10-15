@@ -994,6 +994,17 @@ class CartPage
             $out['rec_price_bold'] = $out['rec_bold'];
         }
 
+        // (Lane AR stage 2) On /ar, wording that is still exactly as shipped
+        // reads in Arabic (App\Support\ArabicWording); the owner's own words and
+        // every English page are returned untouched.
+        if (\App\Support\ArabicWording::on()) {
+            foreach (self::SCHEMA as $key => $def) {
+                if (($def[0] ?? '') === 'text' && is_string($out[$key] ?? null)) {
+                    $out[$key] = \App\Support\ArabicWording::of($out[$key]);
+                }
+            }
+        }
+
         return $out;
     }
 

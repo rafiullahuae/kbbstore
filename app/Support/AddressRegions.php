@@ -170,11 +170,15 @@ final class AddressRegions
     public static function options(string $country, bool $englishOnly = false): array
     {
         $out = [];
+        // (Lane AR round 2) the Arabic shop names each emirate in Arabic alone:
+        // "nothing should be in english" -- the owner, 15 October. English
+        // pages keep "Arabic — English" (or English alone) exactly as before.
+        $arabic = Locale::current() === 'ar';
 
         foreach (self::LISTS[strtoupper($country)][1] ?? [] as $row) {
-            $out[$row[0]] = $englishOnly
+            $out[$row[0]] = $arabic ? $row[1] : ($englishOnly
                 ? ($row[3] ?? $row[0])
-                : self::FSI.$row[1].self::PDI.' — '.($row[3] ?? $row[0]);
+                : self::FSI.$row[1].self::PDI.' — '.($row[3] ?? $row[0]));
         }
 
         return $out;

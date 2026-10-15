@@ -1,0 +1,3014 @@
+[
+ {
+  "lang": "ar",
+  "key": "home",
+  "width": 390,
+  "url": "/ar/",
+  "status": 200,
+  "file": "ar-home-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": []
+ },
+ {
+  "lang": "ar",
+  "key": "shop",
+  "width": 390,
+  "url": "/ar/shop/",
+  "status": 200,
+  "file": "ar-shop-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED",
+   "/img-cache/400/uploads/products/dalba-white-truffle-vital-spray-serum.webp net::ERR_ABORTED",
+   "/img-cache/400/uploads/products/dr-althea-rapid-hypochlorous-acid-rescue-mist-mini.webp net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "category",
+  "width": 390,
+  "url": "/ar/product-category/toners/",
+  "status": 200,
+  "file": "ar-category-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "brands",
+  "width": 390,
+  "url": "/ar/brands/",
+  "status": 200,
+  "file": "ar-brands-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "brand",
+  "width": 390,
+  "url": "/ar/brands/anua/",
+  "status": 200,
+  "file": "ar-brand-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "product",
+  "width": 390,
+  "url": "/ar/product/azelaic-10-hyaluron-redness-soothing-pad/",
+  "status": 200,
+  "file": "ar-product-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "product-cream",
+  "width": 390,
+  "url": "/ar/product/black-rice-5-ceramide-barrier-moisturizing-cream/",
+  "status": 200,
+  "file": "ar-product-cream-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap",
+   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/c1493d35-7fe0-41ac-8dfa-bd4eca1ea4df",
+   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/18933eaf-d976-4506-95cc-004335d00e7b",
+   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/a866764b-370b-4a33-8a0c-64b1dab686f4",
+   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/031ae9e4-73f0-4ff1-9bec-0e82d4be4bdd"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "product-sun",
+  "width": 390,
+  "url": "/ar/product/madagascar-centella-hyalu-cica-water-fit-sun-serum-spf50-pa-50ml/",
+  "status": 200,
+  "file": "ar-product-sun-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "set",
+  "width": 390,
+  "url": "/ar/product/lanear-glow-starter-set/",
+  "status": 200,
+  "file": "ar-set-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "search",
+  "width": 390,
+  "url": "/ar/shop/?s=%D8%A3%D9%86%D9%88%D8%A7",
+  "status": 200,
+  "file": "ar-search-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "sale",
+  "width": 390,
+  "url": "/ar/super-sale/",
+  "status": 200,
+  "file": "ar-sale-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "cart",
+  "width": 390,
+  "url": "/ar/cart/",
+  "status": 200,
+  "file": "ar-cart-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "cart-panel",
+  "width": 390,
+  "url": "/ar/",
+  "status": 200,
+  "file": "ar-cart-panel-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "checkout",
+  "width": 390,
+  "url": "/ar/checkout/",
+  "status": 200,
+  "file": "ar-checkout-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "checkout-signin",
+  "width": 390,
+  "url": "/ar/checkout/",
+  "status": 200,
+  "file": "ar-checkout-signin-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [],
+  "failedRequests": []
+ },
+ {
+  "lang": "ar",
+  "key": "order-received",
+  "width": 390,
+  "url": "/ar/checkout/success/?order=10512",
+  "status": 200,
+  "file": "ar-order-received-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "login",
+  "width": 390,
+  "url": "/ar/my-account/",
+  "status": 200,
+  "file": "ar-login-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "register",
+  "width": 390,
+  "url": "/ar/my-account/?tab=register",
+  "status": 200,
+  "file": "ar-register-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "forgot",
+  "width": 390,
+  "url": "/ar/my-account/forgot/",
+  "status": 200,
+  "file": "ar-forgot-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "account",
+  "width": 390,
+  "url": "/ar/my-account/",
+  "status": 200,
+  "file": "ar-account-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "orders",
+  "width": 390,
+  "url": "/ar/my-account/orders/",
+  "status": 200,
+  "file": "ar-orders-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "order-detail",
+  "width": 390,
+  "url": "/ar/my-account/orders/1/",
+  "status": 200,
+  "file": "ar-order-detail-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "addresses",
+  "width": 390,
+  "url": "/ar/my-account/edit-address/",
+  "status": 200,
+  "file": "ar-addresses-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "address-edit",
+  "width": 390,
+  "url": "/ar/my-account/edit-address/1/",
+  "status": 200,
+  "file": "ar-address-edit-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "wishlist",
+  "width": 390,
+  "url": "/ar/my-wishlist/",
+  "status": 200,
+  "file": "ar-wishlist-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "track",
+  "width": 390,
+  "url": "/ar/track-my-order/",
+  "status": 200,
+  "file": "ar-track-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "about",
+  "width": 390,
+  "url": "/ar/about/",
+  "status": 200,
+  "file": "ar-about-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "faqs",
+  "width": 390,
+  "url": "/ar/faqs/",
+  "status": 200,
+  "file": "ar-faqs-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "delivery",
+  "width": 390,
+  "url": "/ar/delivery/",
+  "status": 200,
+  "file": "ar-delivery-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "returns",
+  "width": 390,
+  "url": "/ar/refund_returns/",
+  "status": 200,
+  "file": "ar-returns-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "privacy",
+  "width": 390,
+  "url": "/ar/privacy-policy/",
+  "status": 200,
+  "file": "ar-privacy-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "terms",
+  "width": 390,
+  "url": "/ar/terms-and-conditions/",
+  "status": 200,
+  "file": "ar-terms-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "contact",
+  "width": 390,
+  "url": "/ar/contact-us/",
+  "status": 200,
+  "file": "ar-contact-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "blog",
+  "width": 390,
+  "url": "/ar/blog/",
+  "status": 200,
+  "file": "ar-blog-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "post",
+  "width": 390,
+  "url": "/ar/blog/korean-skincare-routine-for-uae-summer/",
+  "status": 200,
+  "file": "ar-post-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "not-found",
+  "width": 390,
+  "url": "/ar/zz-no-such-page/",
+  "status": 404,
+  "file": "ar-not-found-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found) @ /ar/zz-no-such-page/",
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "mobile-menu",
+  "width": 390,
+  "url": "/ar/",
+  "status": 200,
+  "file": "ar-mobile-menu-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "mega-menu",
+  "width": 390,
+  "url": "/ar/",
+  "status": 200,
+  "file": "ar-mega-menu-390.jpg",
+  "dir": "rtl",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "home",
+  "width": 1280,
+  "url": "/ar/",
+  "status": 200,
+  "file": "ar-home-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": []
+ },
+ {
+  "lang": "ar",
+  "key": "shop",
+  "width": 1280,
+  "url": "/ar/shop/",
+  "status": 200,
+  "file": "ar-shop-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "category",
+  "width": 1280,
+  "url": "/ar/product-category/toners/",
+  "status": 200,
+  "file": "ar-category-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "brands",
+  "width": 1280,
+  "url": "/ar/brands/",
+  "status": 200,
+  "file": "ar-brands-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "brand",
+  "width": 1280,
+  "url": "/ar/brands/anua/",
+  "status": 200,
+  "file": "ar-brand-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "product",
+  "width": 1280,
+  "url": "/ar/product/azelaic-10-hyaluron-redness-soothing-pad/",
+  "status": 200,
+  "file": "ar-product-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "product-cream",
+  "width": 1280,
+  "url": "/ar/product/black-rice-5-ceramide-barrier-moisturizing-cream/",
+  "status": 200,
+  "file": "ar-product-cream-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap",
+   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/472850ee-6458-45e6-ac6d-d96e61ec718f",
+   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/1af6ebc5-14eb-45d1-b6e7-99becae02482",
+   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/920fdd63-6dbc-47c3-9868-3dec7080c693",
+   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/e8abd012-5bee-4810-ba3d-2f5e90df9e2d"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "product-sun",
+  "width": 1280,
+  "url": "/ar/product/madagascar-centella-hyalu-cica-water-fit-sun-serum-spf50-pa-50ml/",
+  "status": 200,
+  "file": "ar-product-sun-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap",
+   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/36274440-5c66-4835-aafc-5f2425a97d2c",
+   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/b897ac7e-1550-4f01-bae7-b2215bd8cb86",
+   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/194dd8ea-60e1-4554-b362-d69bb58c5472",
+   "Failed to load resource: net::ERR_FILE_NOT_FOUND @ blob:/638a29f7-f71e-4782-9f72-dad27a30fd27"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "set",
+  "width": 1280,
+  "url": "/ar/product/lanear-glow-starter-set/",
+  "status": 200,
+  "file": "ar-set-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "search",
+  "width": 1280,
+  "url": "/ar/shop/?s=%D8%A3%D9%86%D9%88%D8%A7",
+  "status": 200,
+  "file": "ar-search-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "sale",
+  "width": 1280,
+  "url": "/ar/super-sale/",
+  "status": 200,
+  "file": "ar-sale-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "cart",
+  "width": 1280,
+  "url": "/ar/cart/",
+  "status": 200,
+  "file": "ar-cart-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "cart-panel",
+  "width": 1280,
+  "url": "/ar/",
+  "status": 200,
+  "file": "ar-cart-panel-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "checkout",
+  "width": 1280,
+  "url": "/ar/checkout/",
+  "status": 200,
+  "file": "ar-checkout-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "checkout-signin",
+  "width": 1280,
+  "url": "/ar/checkout/",
+  "status": 200,
+  "file": "ar-checkout-signin-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [],
+  "failedRequests": []
+ },
+ {
+  "lang": "ar",
+  "key": "order-received",
+  "width": 1280,
+  "url": "/ar/checkout/success/?order=10512",
+  "status": 200,
+  "file": "ar-order-received-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "login",
+  "width": 1280,
+  "url": "/ar/my-account/",
+  "status": 200,
+  "file": "ar-login-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "register",
+  "width": 1280,
+  "url": "/ar/my-account/?tab=register",
+  "status": 200,
+  "file": "ar-register-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "forgot",
+  "width": 1280,
+  "url": "/ar/my-account/forgot/",
+  "status": 200,
+  "file": "ar-forgot-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "account",
+  "width": 1280,
+  "url": "/ar/my-account/",
+  "status": 200,
+  "file": "ar-account-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "orders",
+  "width": 1280,
+  "url": "/ar/my-account/orders/",
+  "status": 200,
+  "file": "ar-orders-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "order-detail",
+  "width": 1280,
+  "url": "/ar/my-account/orders/1/",
+  "status": 200,
+  "file": "ar-order-detail-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "addresses",
+  "width": 1280,
+  "url": "/ar/my-account/edit-address/",
+  "status": 200,
+  "file": "ar-addresses-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "address-edit",
+  "width": 1280,
+  "url": "/ar/my-account/edit-address/1/",
+  "status": 200,
+  "file": "ar-address-edit-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "wishlist",
+  "width": 1280,
+  "url": "/ar/my-wishlist/",
+  "status": 200,
+  "file": "ar-wishlist-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "track",
+  "width": 1280,
+  "url": "/ar/track-my-order/",
+  "status": 200,
+  "file": "ar-track-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "about",
+  "width": 1280,
+  "url": "/ar/about/",
+  "status": 200,
+  "file": "ar-about-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "faqs",
+  "width": 1280,
+  "url": "/ar/faqs/",
+  "status": 200,
+  "file": "ar-faqs-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "delivery",
+  "width": 1280,
+  "url": "/ar/delivery/",
+  "status": 200,
+  "file": "ar-delivery-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "returns",
+  "width": 1280,
+  "url": "/ar/refund_returns/",
+  "status": 200,
+  "file": "ar-returns-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "privacy",
+  "width": 1280,
+  "url": "/ar/privacy-policy/",
+  "status": 200,
+  "file": "ar-privacy-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "terms",
+  "width": 1280,
+  "url": "/ar/terms-and-conditions/",
+  "status": 200,
+  "file": "ar-terms-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "contact",
+  "width": 1280,
+  "url": "/ar/contact-us/",
+  "status": 200,
+  "file": "ar-contact-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "blog",
+  "width": 1280,
+  "url": "/ar/blog/",
+  "status": 200,
+  "file": "ar-blog-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "post",
+  "width": 1280,
+  "url": "/ar/blog/korean-skincare-routine-for-uae-summer/",
+  "status": 200,
+  "file": "ar-post-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "not-found",
+  "width": 1280,
+  "url": "/ar/zz-no-such-page/",
+  "status": 404,
+  "file": "ar-not-found-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found) @ /ar/zz-no-such-page/",
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "mobile-menu",
+  "width": 1280,
+  "url": "/ar/",
+  "status": 200,
+  "file": "ar-mobile-menu-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "key": "mega-menu",
+  "width": 1280,
+  "url": "/ar/",
+  "status": 200,
+  "file": "ar-mega-menu-1280.jpg",
+  "dir": "rtl",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "home",
+  "width": 390,
+  "url": "/",
+  "status": 200,
+  "file": "en-home-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": []
+ },
+ {
+  "lang": "en",
+  "key": "shop",
+  "width": 390,
+  "url": "/shop/",
+  "status": 200,
+  "file": "en-shop-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED",
+   "/img-cache/400/uploads/products/dalba-white-truffle-vital-spray-serum.webp net::ERR_ABORTED",
+   "/img-cache/400/uploads/products/dr-althea-rapid-hypochlorous-acid-rescue-mist-mini.webp net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "category",
+  "width": 390,
+  "url": "/product-category/toners/",
+  "status": 200,
+  "file": "en-category-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "brands",
+  "width": 390,
+  "url": "/brands/",
+  "status": 200,
+  "file": "en-brands-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "brand",
+  "width": 390,
+  "url": "/brands/anua/",
+  "status": 200,
+  "file": "en-brand-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "product",
+  "width": 390,
+  "url": "/product/azelaic-10-hyaluron-redness-soothing-pad/",
+  "status": 200,
+  "file": "en-product-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "product-cream",
+  "width": 390,
+  "url": "/product/black-rice-5-ceramide-barrier-moisturizing-cream/",
+  "status": 200,
+  "file": "en-product-cream-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "product-sun",
+  "width": 390,
+  "url": "/product/madagascar-centella-hyalu-cica-water-fit-sun-serum-spf50-pa-50ml/",
+  "status": 200,
+  "file": "en-product-sun-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "set",
+  "width": 390,
+  "url": "/product/lanear-glow-starter-set/",
+  "status": 200,
+  "file": "en-set-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "search",
+  "width": 390,
+  "url": "/shop/?s=anua",
+  "status": 200,
+  "file": "en-search-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "sale",
+  "width": 390,
+  "url": "/super-sale/",
+  "status": 200,
+  "file": "en-sale-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "cart",
+  "width": 390,
+  "url": "/cart/",
+  "status": 200,
+  "file": "en-cart-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "cart-panel",
+  "width": 390,
+  "url": "/",
+  "status": 200,
+  "file": "en-cart-panel-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "checkout",
+  "width": 390,
+  "url": "/checkout/",
+  "status": 200,
+  "file": "en-checkout-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "checkout-signin",
+  "width": 390,
+  "url": "/checkout/",
+  "status": 200,
+  "file": "en-checkout-signin-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [],
+  "failedRequests": []
+ },
+ {
+  "lang": "en",
+  "key": "order-received",
+  "width": 390,
+  "url": "/checkout/success/?order=10512",
+  "status": 200,
+  "file": "en-order-received-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "login",
+  "width": 390,
+  "url": "/my-account/",
+  "status": 200,
+  "file": "en-login-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "register",
+  "width": 390,
+  "url": "/my-account/?tab=register",
+  "status": 200,
+  "file": "en-register-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "forgot",
+  "width": 390,
+  "url": "/my-account/forgot/",
+  "status": 200,
+  "file": "en-forgot-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "account",
+  "width": 390,
+  "url": "/my-account/",
+  "status": 200,
+  "file": "en-account-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "orders",
+  "width": 390,
+  "url": "/my-account/orders/",
+  "status": 200,
+  "file": "en-orders-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "order-detail",
+  "width": 390,
+  "url": "/my-account/orders/1/",
+  "status": 200,
+  "file": "en-order-detail-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "addresses",
+  "width": 390,
+  "url": "/my-account/edit-address/",
+  "status": 200,
+  "file": "en-addresses-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "address-edit",
+  "width": 390,
+  "url": "/my-account/edit-address/1/",
+  "status": 200,
+  "file": "en-address-edit-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "wishlist",
+  "width": 390,
+  "url": "/my-wishlist/",
+  "status": 200,
+  "file": "en-wishlist-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "track",
+  "width": 390,
+  "url": "/track-my-order/",
+  "status": 200,
+  "file": "en-track-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "about",
+  "width": 390,
+  "url": "/about/",
+  "status": 200,
+  "file": "en-about-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "faqs",
+  "width": 390,
+  "url": "/faqs/",
+  "status": 200,
+  "file": "en-faqs-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "delivery",
+  "width": 390,
+  "url": "/delivery/",
+  "status": 200,
+  "file": "en-delivery-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "returns",
+  "width": 390,
+  "url": "/refund_returns/",
+  "status": 200,
+  "file": "en-returns-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "privacy",
+  "width": 390,
+  "url": "/privacy-policy/",
+  "status": 200,
+  "file": "en-privacy-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "terms",
+  "width": 390,
+  "url": "/terms-and-conditions/",
+  "status": 200,
+  "file": "en-terms-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "contact",
+  "width": 390,
+  "url": "/contact-us/",
+  "status": 200,
+  "file": "en-contact-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "blog",
+  "width": 390,
+  "url": "/blog/",
+  "status": 200,
+  "file": "en-blog-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "post",
+  "width": 390,
+  "url": "/blog/korean-skincare-routine-for-uae-summer/",
+  "status": 200,
+  "file": "en-post-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "not-found",
+  "width": 390,
+  "url": "/zz-no-such-page/",
+  "status": 404,
+  "file": "en-not-found-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found) @ /zz-no-such-page/",
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "mobile-menu",
+  "width": 390,
+  "url": "/",
+  "status": 200,
+  "file": "en-mobile-menu-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "mega-menu",
+  "width": 390,
+  "url": "/",
+  "status": 200,
+  "file": "en-mega-menu-390.jpg",
+  "dir": "ltr",
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "home",
+  "width": 1280,
+  "url": "/",
+  "status": 200,
+  "file": "en-home-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": []
+ },
+ {
+  "lang": "en",
+  "key": "shop",
+  "width": 1280,
+  "url": "/shop/",
+  "status": 200,
+  "file": "en-shop-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "category",
+  "width": 1280,
+  "url": "/product-category/toners/",
+  "status": 200,
+  "file": "en-category-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "brands",
+  "width": 1280,
+  "url": "/brands/",
+  "status": 200,
+  "file": "en-brands-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "brand",
+  "width": 1280,
+  "url": "/brands/anua/",
+  "status": 200,
+  "file": "en-brand-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "product",
+  "width": 1280,
+  "url": "/product/azelaic-10-hyaluron-redness-soothing-pad/",
+  "status": 200,
+  "file": "en-product-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "product-cream",
+  "width": 1280,
+  "url": "/product/black-rice-5-ceramide-barrier-moisturizing-cream/",
+  "status": 200,
+  "file": "en-product-cream-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "product-sun",
+  "width": 1280,
+  "url": "/product/madagascar-centella-hyalu-cica-water-fit-sun-serum-spf50-pa-50ml/",
+  "status": 200,
+  "file": "en-product-sun-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "set",
+  "width": 1280,
+  "url": "/product/lanear-glow-starter-set/",
+  "status": 200,
+  "file": "en-set-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "search",
+  "width": 1280,
+  "url": "/shop/?s=anua",
+  "status": 200,
+  "file": "en-search-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "sale",
+  "width": 1280,
+  "url": "/super-sale/",
+  "status": 200,
+  "file": "en-sale-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "cart",
+  "width": 1280,
+  "url": "/cart/",
+  "status": 200,
+  "file": "en-cart-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "cart-panel",
+  "width": 1280,
+  "url": "/",
+  "status": 200,
+  "file": "en-cart-panel-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "checkout",
+  "width": 1280,
+  "url": "/checkout/",
+  "status": 200,
+  "file": "en-checkout-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "checkout-signin",
+  "width": 1280,
+  "url": "/checkout/",
+  "status": 200,
+  "file": "en-checkout-signin-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [],
+  "failedRequests": []
+ },
+ {
+  "lang": "en",
+  "key": "order-received",
+  "width": 1280,
+  "url": "/checkout/success/?order=10512",
+  "status": 200,
+  "file": "en-order-received-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "login",
+  "width": 1280,
+  "url": "/my-account/",
+  "status": 200,
+  "file": "en-login-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "register",
+  "width": 1280,
+  "url": "/my-account/?tab=register",
+  "status": 200,
+  "file": "en-register-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "forgot",
+  "width": 1280,
+  "url": "/my-account/forgot/",
+  "status": 200,
+  "file": "en-forgot-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "account",
+  "width": 1280,
+  "url": "/my-account/",
+  "status": 200,
+  "file": "en-account-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "orders",
+  "width": 1280,
+  "url": "/my-account/orders/",
+  "status": 200,
+  "file": "en-orders-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "order-detail",
+  "width": 1280,
+  "url": "/my-account/orders/1/",
+  "status": 200,
+  "file": "en-order-detail-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "addresses",
+  "width": 1280,
+  "url": "/my-account/edit-address/",
+  "status": 200,
+  "file": "en-addresses-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "address-edit",
+  "width": 1280,
+  "url": "/my-account/edit-address/1/",
+  "status": 200,
+  "file": "en-address-edit-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "wishlist",
+  "width": 1280,
+  "url": "/my-wishlist/",
+  "status": 200,
+  "file": "en-wishlist-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 0,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "track",
+  "width": 1280,
+  "url": "/track-my-order/",
+  "status": 200,
+  "file": "en-track-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "about",
+  "width": 1280,
+  "url": "/about/",
+  "status": 200,
+  "file": "en-about-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "faqs",
+  "width": 1280,
+  "url": "/faqs/",
+  "status": 200,
+  "file": "en-faqs-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "delivery",
+  "width": 1280,
+  "url": "/delivery/",
+  "status": 200,
+  "file": "en-delivery-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "returns",
+  "width": 1280,
+  "url": "/refund_returns/",
+  "status": 200,
+  "file": "en-returns-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "privacy",
+  "width": 1280,
+  "url": "/privacy-policy/",
+  "status": 200,
+  "file": "en-privacy-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "terms",
+  "width": 1280,
+  "url": "/terms-and-conditions/",
+  "status": 200,
+  "file": "en-terms-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "contact",
+  "width": 1280,
+  "url": "/contact-us/",
+  "status": 200,
+  "file": "en-contact-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "blog",
+  "width": 1280,
+  "url": "/blog/",
+  "status": 200,
+  "file": "en-blog-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "post",
+  "width": 1280,
+  "url": "/blog/korean-skincare-routine-for-uae-summer/",
+  "status": 200,
+  "file": "en-post-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "not-found",
+  "width": 1280,
+  "url": "/zz-no-such-page/",
+  "status": 404,
+  "file": "en-not-found-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found) @ /zz-no-such-page/",
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "mobile-menu",
+  "width": 1280,
+  "url": "/",
+  "status": 200,
+  "file": "en-mobile-menu-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ },
+ {
+  "lang": "en",
+  "key": "mega-menu",
+  "width": 1280,
+  "url": "/",
+  "status": 200,
+  "file": "en-mega-menu-1280.jpg",
+  "dir": "ltr",
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "overflow": 0,
+  "offenders": [],
+  "h1": 1,
+  "consoleErrors": [
+   "Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+  ],
+  "failedRequests": [
+   "/api/cart-trail net::ERR_ABORTED"
+  ]
+ }
+]

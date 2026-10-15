@@ -153,6 +153,12 @@ final class Locale
             return true;
         }
 
+        // A holder of the private preview link (Lane AR stage 2) sees every
+        // language the code knows, for this request only. Off for everyone else.
+        if (\App\Support\ArabicPreview::active()) {
+            return true;
+        }
+
         return self::setting(self::SETTING_ENABLED);
     }
 
@@ -227,7 +233,9 @@ final class Locale
             return 'ltr';
         }
 
-        return self::setting(self::SETTING_RTL) ? 'rtl' : 'ltr';
+        // The preview link shows the mirrored layout too: it is the finished
+        // shop the owner is looking at, whatever the live switch says.
+        return self::rtlEnabled() ? 'rtl' : 'ltr';
     }
 
     /** Is the mirrored layout switched on AND is this a right-to-left language? */
@@ -239,7 +247,7 @@ final class Locale
     /** Is the mirrored layout switched on at all, whatever page we are on? */
     public static function rtlEnabled(): bool
     {
-        return self::setting(self::SETTING_RTL);
+        return \App\Support\ArabicPreview::active() || self::setting(self::SETTING_RTL);
     }
 
     /** What belongs in <html lang>. */

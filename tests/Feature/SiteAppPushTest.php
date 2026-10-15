@@ -121,7 +121,8 @@ it('answers in Arabic once the Arabic is approved, and in English until then', f
 
     expect($this->getJson('/api/site-app/push?lang=ar')->json('t'))->toBe([
         'title' => 'تفعيل الإشعارات؟',
-        'body' => 'اسمح بالإشعارات لتصلك أخبار K-Beauty Bliss على هذا الهاتف. يمكنك إيقافها في أي وقت من إعدادات هاتفك.',
+        // Lane AR round 2: addressed to her, and the shop's name in Arabic letters.
+        'body' => 'اسمحي بالإشعارات لتصلكِ أخبار كي بيوتي بليس على هذا الهاتف. يمكنكِ إيقافها في أي وقت من إعدادات هاتفكِ.',
         'allow' => 'السماح بالإشعارات',
         'later' => 'ليس الآن',
     ])->and($this->getJson('/api/site-app/push?lang=xx')->json('t.later'))->toBe('Not now');   // unknown code: the default

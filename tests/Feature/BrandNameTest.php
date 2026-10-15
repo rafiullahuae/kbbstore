@@ -266,7 +266,8 @@ it('leads the home title with the brand and names it once in the description, in
 
     app()->setLocale('ar');
     $ar = Seo::render(['type' => 'home', 'title' => 'x']);
-    expect($ar)->toContain('<title>K-Beauty Bliss — متجر العناية بالبشرة الكورية وكي بيوتي في الإمارات</title>')
+    // Lane AR round 2: the owner asked for the name in Arabic too on /ar.
+    expect($ar)->toContain('<title>كي بيوتي بليس — متجر العناية بالبشرة الكورية والجمال الكوري في الإمارات</title>')
         ->toContain('متجر إلكتروني للعناية بالبشرة الكورية');
     app()->setLocale('en');
 

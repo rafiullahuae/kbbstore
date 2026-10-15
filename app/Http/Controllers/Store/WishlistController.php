@@ -94,7 +94,7 @@ class WishlistController extends Controller
         $id = (int) $request->input('product_id');
 
         if ($id <= 0 || ! Product::query()->whereKey($id)->exists()) {
-            return response()->json(['ok' => false, 'error' => 'Unknown product.'], 422);
+            return response()->json(['ok' => false, 'error' => __('store.wording.msg_unknown_product')], 422);
         }
 
         $ids = $this->idList($request);

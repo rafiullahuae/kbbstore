@@ -67,7 +67,7 @@ class StockAlertController extends Controller
                 'email' => ['required', 'string', 'max:160', new \App\Rules\StorefrontEmail],
             ]);
         } catch (ValidationException) {
-            return $this->fail($request, 'Please check that email address and try again.');
+            return $this->fail($request, __('store.wording.msg_check_email'));
         }
 
         $product = Product::query()->visible()->whereKey((int) $data['product_id'])->first();
@@ -110,8 +110,8 @@ class StockAlertController extends Controller
     private function done(Request $request): JsonResponse|RedirectResponse
     {
         return $request->expectsJson()
-            ? response()->json(['ok' => true, 'message' => StockAlerts::CONFIRM_MESSAGE])
-            : back()->with('kbb_stock_alert', StockAlerts::CONFIRM_MESSAGE);
+            ? response()->json(['ok' => true, 'message' => \App\Support\ArabicWording::of(StockAlerts::CONFIRM_MESSAGE)])
+            : back()->with('kbb_stock_alert', \App\Support\ArabicWording::of(StockAlerts::CONFIRM_MESSAGE));
     }
 
     private function fail(Request $request, string $message): JsonResponse|RedirectResponse

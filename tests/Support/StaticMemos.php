@@ -255,6 +255,8 @@ final class StaticMemos
      * @var array<class-string, string>
      */
     public const EXEMPT = [
+        \App\Support\ArabicWording::class => 'keyFor()\'s flip is array_flip(ENGLISH), a class constant: '
+            . 'the same in every test and every process, so there is nothing to reset (Lane AR round 2).',
         \App\Support\AddressRegions::class => 'index is the alias lookup built from the class\'s own LISTS '
             .'constant -- no database, no settings, no request -- so it holds the same bytes in every test; a '
             .'cache of a constant, not state.',

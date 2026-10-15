@@ -352,7 +352,7 @@
                 </div>
               @endif
               <div class="sr-cf">
-                <span>{{ $review->created_at?->format('j M Y') }}</span>
+                <span>{{ \App\Support\LocalDate::format($review->created_at, 'j M Y') }}</span>
                 @if ((int) $review->helpful > 0)
                   <span>{{ trans_choice('store.review_wall.found_helpful', (int) $review->helpful, ['formatted' => number_format((int) $review->helpful)]) }}</span>
                 @endif

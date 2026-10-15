@@ -434,6 +434,9 @@ function mAllowedRepairs(): array
  * 2.60.498 — the rows for lo_sec_even and lo_sec_space, spliced in the same way.
  * 2.60.504 — 4 rows for mobile_menu account_style (the phone menu's small
  *   account box), spliced in the same way: 4 inserted, 0 modified, 0 removed.
+ * Lane AR round 2 — 60 rows for the cart panel's ten Arabic wording twins
+ *   (txt_*_ar, Appearance → Cart panel → Arabic wording), spliced in the same
+ *   way: 60 inserted, 0 modified, 0 removed.
  */
 it('answers every recorded cast exactly as it did before the shared schema', function () {
     $recorded = file(base_path('tests/Fixtures/module-cast-baseline.txt'), FILE_IGNORE_NEW_LINES);

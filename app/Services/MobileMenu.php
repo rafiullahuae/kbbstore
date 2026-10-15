@@ -211,7 +211,7 @@ class MobileMenu
         ['label' => 'Super Sale', 'label_ar' => 'تخفيضات كبرى', 'url' => '/super-sale/', 'accent' => 'sale', 'on' => true],
         ['label' => 'New In', 'label_ar' => 'وصل حديثًا', 'url' => '/new-in/', 'accent' => '', 'on' => true],
         ['label' => 'Best Sellers', 'label_ar' => 'الأكثر مبيعًا', 'url' => '/best-sellers/', 'accent' => '', 'on' => true],
-        ['label' => 'Under 54 AED', 'label_ar' => 'أقل من AED 54', 'url' => '/everything-under-54-aed/', 'accent' => '', 'on' => true],
+        ['label' => 'Under 54 AED', 'label_ar' => 'أقل من 54 د.إ', 'url' => '/everything-under-54-aed/', 'accent' => '', 'on' => true],
         ['label' => 'Brands A–Z', 'label_ar' => 'الماركات أ–ي', 'url' => '/brands/', 'accent' => '', 'on' => true],
     ];
 

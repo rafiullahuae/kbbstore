@@ -1,0 +1,3942 @@
+[
+ {
+  "file": "ar-about.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-account.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-address-edit.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-addresses.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-blog.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-brand.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-brands.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-cart-panel.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": true,
+  "drawerLines": 8,
+  "act": {
+   "arrow": "scrolled -335"
+  }
+ },
+ {
+  "file": "ar-cart.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-category.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-checkout.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    296,
+    26
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-contact.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-delivery.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-faqs.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-forgot.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-home.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {
+   "arrow": "scrolled -335"
+  }
+ },
+ {
+  "file": "ar-login.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-not-found.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-order-detail.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-order-received.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    236,
+    26
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-orders.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-post.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-privacy.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-product-cream.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-product-sun.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-product.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-register.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-returns.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-sale.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-search.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-set.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-shop.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-terms.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-track.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-wishlist.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    86,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-about.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-account.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-address-edit.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-addresses.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-blog.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-brand.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-brands.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-cart-panel.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": true,
+  "drawerLines": 8,
+  "act": {
+   "arrow": "scrolled 335"
+  }
+ },
+ {
+  "file": "en-cart.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-category.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-checkout.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    296,
+    26
+   ],
+   "word": [
+    125,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-contact.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-delivery.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-faqs.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-forgot.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-home.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {
+   "arrow": "scrolled 335"
+  }
+ },
+ {
+  "file": "en-login.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-not-found.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-order-detail.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-order-received.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    233,
+    26
+   ],
+   "word": [
+    125,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-orders.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-post.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-privacy.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-product-cream.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-product-sun.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-product.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-register.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-returns.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-sale.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-search.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-set.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-shop.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-terms.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-track.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-wishlist.html",
+  "w": 390,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 390,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    168,
+    44
+   ],
+   "word": [
+    117,
+    14
+   ],
+   "lines": 1,
+   "icon": [
+    35,
+    26
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-about.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-account.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-address-edit.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-addresses.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-blog.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-brand.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-brands.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-cart-panel.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": true,
+  "drawerLines": 8,
+  "act": {
+   "arrow": "scrolled -354"
+  }
+ },
+ {
+  "file": "ar-cart.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {
+   "arrow": "no scroll"
+  }
+ },
+ {
+  "file": "ar-category.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-checkout.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-contact.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-delivery.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-faqs.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-forgot.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-home.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {
+   "arrow": "scrolled -354"
+  }
+ },
+ {
+  "file": "ar-login.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-not-found.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-order-detail.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-order-received.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-orders.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-post.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-privacy.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-product-cream.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-product-sun.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-product.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-register.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-returns.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-sale.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-search.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-set.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-shop.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "ar-terms.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-track.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "ar-wishlist.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "كي بيوتي بليس",
+   "box": [
+    194,
+    38
+   ],
+   "word": [
+    135,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-about.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-account.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-address-edit.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-addresses.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-blog.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-brand.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-brands.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-cart-panel.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": true,
+  "drawerLines": 8,
+  "act": {
+   "arrow": "scrolled 215"
+  }
+ },
+ {
+  "file": "en-cart.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {
+   "arrow": "no scroll"
+  }
+ },
+ {
+  "file": "en-category.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-checkout.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-contact.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-delivery.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-faqs.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-forgot.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-home.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {
+   "arrow": "scrolled 215"
+  }
+ },
+ {
+  "file": "en-login.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-not-found.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-order-detail.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-order-received.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-orders.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-post.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-privacy.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-product-cream.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-product-sun.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-product.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-register.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-returns.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-sale.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-search.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-set.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-shop.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 7,
+  "act": {}
+ },
+ {
+  "file": "en-terms.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-track.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ },
+ {
+  "file": "en-wishlist.html",
+  "w": 1280,
+  "leaving": 0,
+  "leavingSample": [],
+  "errors": [],
+  "sw": 1280,
+  "logo": {
+   "text": "K-BeautyBliss",
+   "box": [
+    256,
+    38
+   ],
+   "word": [
+    197,
+    22
+   ],
+   "lines": 1,
+   "icon": [
+    51,
+    38
+   ],
+   "overflows": false
+  },
+  "drawerOpen": false,
+  "drawerLines": 8,
+  "act": {}
+ }
+]

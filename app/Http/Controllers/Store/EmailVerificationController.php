@@ -100,7 +100,7 @@ class EmailVerificationController extends Controller
         if (! $ok) {
             return view('store.account.verify-result', [
                 'ok' => false,
-                'message' => self::FAILED_MESSAGE,
+                'message' => \App\Support\ArabicWording::of(self::FAILED_MESSAGE),
             ]);
         }
 
@@ -110,7 +110,7 @@ class EmailVerificationController extends Controller
 
         return view('store.account.verify-result', [
             'ok' => true,
-            'message' => 'Thank you — your email address is confirmed.',
+            'message' => __('store.wording.msg_email_confirmed'),
         ]);
     }
 
@@ -146,8 +146,7 @@ class EmailVerificationController extends Controller
         foreach ($keys as $key => $max) {
             if (RateLimiter::tooManyAttempts($key, $max)) {
                 throw ValidationException::withMessages([
-                    'email' => 'We have already sent a confirmation link. Try again in '
-                        . RateLimiter::availableIn($key) . ' seconds.',
+                    'email' => __('store.wording.msg_link_sent_wait', ['seconds' => RateLimiter::availableIn($key)]),
                 ]);
             }
         }

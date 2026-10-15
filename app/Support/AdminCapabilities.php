@@ -698,6 +698,10 @@ final class AdminCapabilities
         //                       hand them the button as well. It reads files
         //                       and writes rows; it restores nothing.
         'store.settings' => ['owner'],
+        // Translation → Settings → Private Arabic preview link (Lane AR stage
+        // 2): makes or kills a link that shows the unpublished Arabic shop to
+        // whoever holds it. The owner's alone, like the master switch beside it.
+        'translations.preview' => ['owner'],
         /*
          * Writing APP_URL into .env, which repoints every link this shop sends
          * out of band -- password resets, order emails, the sitemap, and the
@@ -1896,6 +1900,9 @@ final class AdminCapabilities
          * these would match POST /translations/machine/run and hand an editor
          * the owner's Google bill.
          */
+        // The private Arabic preview link (Lane AR stage 2), its own capability.
+        ['POST', 'admin-api/translations/preview-link/revoke', 'translations.preview'],
+        ['POST', 'admin-api/translations/preview-link', 'translations.preview'],
         ['POST', 'admin-api/translations/settings', 'store.settings'],
         ['POST', 'admin-api/translations/machine/run', 'store.settings'],
         ['POST', 'admin-api/translations/machine/field', 'content.manage'],

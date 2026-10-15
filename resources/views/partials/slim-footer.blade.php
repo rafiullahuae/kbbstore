@@ -30,6 +30,12 @@
     foreach (['l1_text', 'l2_text', 'l3_text'] as $sfK) {
         $sfC[$sfK] = $sf->label($sfC[$sfK]);
     }
+    // (Lane AR round 2) on /ar the shipped words in Arabic and the phone held
+    // left-to-right; an English page gets every value back untouched.
+    foreach (['brand', 'byline', 'help_title', 'help_sub', 'l1_text', 'l2_text', 'l3_text', 'top_label'] as $sfK) {
+        $sfC[$sfK] = \App\Support\ArabicWording::of($sfC[$sfK]);
+    }
+    $sfC['phone'] = \App\Support\Bidi::number($sfC['phone']);
 
     // Drawn once each, rather than asked for four times inside the markup.
     $sfPhoneUrl = $sfC['phone'] !== '' ? $sf->url($sfC['phone_url']) : null;

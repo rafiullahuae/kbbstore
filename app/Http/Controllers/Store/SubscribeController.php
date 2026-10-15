@@ -114,8 +114,8 @@ class SubscribeController extends Controller
          * oracle, and it is true in all four cases.
          */
         return $request->expectsJson()
-            ? response()->json(['ok' => true, 'message' => self::CONFIRM_MESSAGE])
-            : back()->with('kbb_subscribed', self::CONFIRM_MESSAGE);
+            ? response()->json(['ok' => true, 'message' => \App\Support\ArabicWording::of(self::CONFIRM_MESSAGE)])
+            : back()->with('kbb_subscribed', \App\Support\ArabicWording::of(self::CONFIRM_MESSAGE));
     }
 
     /**

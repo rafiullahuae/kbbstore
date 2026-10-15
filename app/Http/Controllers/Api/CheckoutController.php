@@ -240,7 +240,7 @@ class CheckoutController extends Controller
             if (! $rates) {
                 return response()->json([
                     'ok' => false,
-                    'error' => 'We do not deliver to that country yet.',
+                    'error' => __('store.wording.msg_no_country'),
                 ], 422);
             }
 
@@ -328,7 +328,7 @@ class CheckoutController extends Controller
 
                 if (! \App\Models\PaymentProvider::find('cod')?->enabled
                         && \App\Models\PaymentProvider::whereKey('cod')->exists()) {
-                    return response()->json(['ok' => false, 'error' => 'Cash on delivery is not available.'], 422);
+                    return response()->json(['ok' => false, 'error' => __('store.wording.msg_cod_na')], 422);
                 }
             }
 
@@ -354,7 +354,7 @@ class CheckoutController extends Controller
                 || ! $gateway->availableFor($total, $data['customer']['country'] ?? null)) {
                 return response()->json([
                     'ok' => false,
-                    'error' => 'That payment method is not available.',
+                    'error' => __('store.wording.msg_method_na'),
                 ], 422);
             }
 

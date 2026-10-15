@@ -76,7 +76,7 @@ class ReviewController extends Controller
         if (! ReviewSettings::get($this->settings, 'sr_allow_submit')) {
             return response()->json([
                 'ok' => false,
-                'error' => 'Reviews are not being accepted at the moment.',
+                'error' => __('store.wording.msg_reviews_closed'),
             ], 403);
         }
 
@@ -92,7 +92,7 @@ class ReviewController extends Controller
         if (RateLimiter::tooManyAttempts($key, $perHour)) {
             return response()->json([
                 'ok' => false,
-                'error' => 'Too many reviews submitted — please try again later.',
+                'error' => __('store.wording.msg_reviews_many'),
             ], 429);
         }
 
@@ -105,7 +105,7 @@ class ReviewController extends Controller
         if ((string) $request->input('sr_website', '') !== '') {
             RateLimiter::hit($key, 3600);
 
-            return response()->json(['ok' => true, 'message' => 'Thank you for your review!']);
+            return response()->json(['ok' => true, 'message' => __('store.wording.msg_review_thanks')]);
         }
 
         $captchaError = $this->verifyCaptcha($request);
@@ -249,7 +249,7 @@ class ReviewController extends Controller
 
         return response()->json([
             'ok' => true,
-            'message' => 'Thank you! Your review is awaiting approval.',
+            'message' => __('store.wording.msg_review_pending'),
             'id' => $review->id,
         ]);
     }
@@ -284,7 +284,7 @@ class ReviewController extends Controller
         if (RateLimiter::tooManyAttempts($key, self::MAX_VOTES_PER_HOUR)) {
             return response()->json([
                 'ok' => false,
-                'error' => 'Too many votes — please try again later.',
+                'error' => __('store.wording.msg_votes_many'),
             ], 429);
         }
 
@@ -320,21 +320,21 @@ class ReviewController extends Controller
         $answer = (string) $request->input('captcha', '');
 
         if ($token === '' || $answer === '') {
-            return 'Please answer the quick check.';
+            return __('store.wording.msg_check_answer');
         }
 
         try {
             $payload = Crypt::decrypt($token);
         } catch (\Throwable) {
-            return 'That check expired — please try again.';
+            return __('store.wording.msg_check_expired');
         }
 
         if (! is_array($payload) || ($payload['expires'] ?? 0) < now()->timestamp) {
-            return 'That check expired — please try again.';
+            return __('store.wording.msg_check_expired');
         }
 
         if ((int) $answer !== (int) ($payload['answer'] ?? null)) {
-            return 'That answer doesn\'t look right — please try again.';
+            return __('store.wording.msg_check_wrong');
         }
 
         return null;

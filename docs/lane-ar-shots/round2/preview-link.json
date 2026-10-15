@@ -1,0 +1,47 @@
+{
+ "visitor /ar 390": 404,
+ "link 390": {
+  "redirected": true,
+  "redirect_status": 302,
+  "final_url": "/ar/",
+  "status": 200,
+  "x_robots": "noindex, nofollow",
+  "cache": "max-age=0, no-store, private",
+  "lang": "ar/rtl",
+  "robots_meta": "noindex, nofollow",
+  "cookie": {
+   "httpOnly": true,
+   "sameSite": "Lax"
+  },
+  "sw": 390
+ },
+ "cookie /ar/shop 390": 200,
+ "other visitor / 390": {
+  "status": 200,
+  "x_robots": null,
+  "hreflang_ar": false
+ },
+ "visitor /ar 1280": 404,
+ "link 1280": {
+  "redirected": true,
+  "redirect_status": 302,
+  "final_url": "/ar/",
+  "status": 200,
+  "x_robots": "noindex, nofollow",
+  "cache": "max-age=0, no-store, private",
+  "lang": "ar/rtl",
+  "robots_meta": "noindex, nofollow",
+  "cookie": {
+   "httpOnly": true,
+   "sameSite": "Lax"
+  },
+  "sw": 1280
+ },
+ "cookie /ar/shop 1280": 200,
+ "other visitor / 1280": {
+  "status": 200,
+  "x_robots": null,
+  "hreflang_ar": false
+ },
+ "admin_card": true
+}

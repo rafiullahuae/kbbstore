@@ -167,7 +167,8 @@ final class TrustClaims
 
         $value = trim((string) $settings->get($key, self::CLAIMS[$key]));
 
-        return $value === '' ? null : $value;
+        // (Lane AR round 2) On /ar a shipped claim prints in Arabic; English untouched.
+        return $value === '' ? null : ArabicWording::of($value);
     }
 
     /**

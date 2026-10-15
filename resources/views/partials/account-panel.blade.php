@@ -82,7 +82,7 @@
             @if ($hc)
                 {{-- The answer lives in the session against this token, never in the page. --}}
                 <input type="hidden" name="hc_token" value="{{ $hc['token'] }}" data-hc-token>
-                <label class="acct-sum">{{ $a['sum_label'] }} <b data-hc-q>{{ $hc['question'] }}</b>?
+                <label class="acct-sum">{{ \App\Support\ArabicWording::of($a['sum_label']) }} <b data-hc-q>{{ $hc['question'] }}</b>?
                     <input type="text" name="hc_answer" inputmode="numeric" autocomplete="off" required>
                 </label>
             @endif

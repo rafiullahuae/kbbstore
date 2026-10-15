@@ -992,7 +992,8 @@ final class SiteFooter
         $socials = self::socials($s);
 
         $look = $this->presentation($c);
-        $name = (bool) ($c['site_name_on'] ?? true) ? $text('site_name_text') : '';
+        // (Lane AR round 2) the big name in Arabic on /ar when it is the shipped one.
+        $name = (bool) ($c['site_name_on'] ?? true) ? \App\Support\ArabicWording::of($text('site_name_text')) : '';
 
         return [
             'classes' => $look['classes'],

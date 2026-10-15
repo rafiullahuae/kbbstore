@@ -1077,19 +1077,21 @@ class ShopController extends Controller
      */
     private function seoDescription(?Category $category, string $search, int $total): string
     {
+        // (Lane AR round 2) Interface strings, so /ar gets an Arabic description;
+        // the English is the same sentence word for word (InterfaceStrings).
         if ($category) {
-            $count = $total ? "{$total} authentic Korean skincare picks" : 'authentic Korean skincare';
+            $count = $total
+                ? (string) __('store.wording.seo_category_count', ['total' => $total])
+                : (string) __('store.wording.seo_category_none');
 
-            return "Shop {$category->name} at K-Beauty Bliss — {$count}.";
+            return (string) __('store.wording.seo_category', ['name' => (string) $category->t('name'), 'count' => $count]);
         }
 
         if ($search !== '') {
-            $result = $total === 1 ? 'result' : 'results';
-
-            return "\"{$search}\" — {$total} {$result} at K-Beauty Bliss, authentic Korean skincare.";
+            return (string) __($total === 1 ? 'store.wording.seo_search_one' : 'store.wording.seo_search_many', ['search' => $search, 'total' => $total]);
         }
 
-        return "Browse every K-Beauty Bliss product — {$total} authentic Korean skincare picks, from serums to beauty devices.";
+        return (string) __('store.wording.seo_shop', ['total' => $total]);
     }
 
     private function heading(?Category $category, string $search): array

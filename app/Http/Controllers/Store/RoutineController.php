@@ -81,7 +81,7 @@ class RoutineController extends Controller
                     ? 'Korean skincare routines built from what this shop stocks.'
                     : 'Pick the concern you want to work on and get a step-by-step Korean skincare routine, built from what this shop actually has in stock.',
                 'breadcrumb' => [
-                    ['name' => 'Home', 'url' => Url::to('/')],
+                    ['name' => __('store.breadcrumb.home'), 'url' => Url::to('/')],
                     ['name' => 'Build my routine', 'url' => Url::to('/routines/')],
                 ],
             ],
@@ -121,7 +121,7 @@ class RoutineController extends Controller
                     .mb_strtolower(RoutineConcerns::adminLabel($concern))
                     .', built from products this shop has in stock.',
                 'breadcrumb' => [
-                    ['name' => 'Home', 'url' => Url::to('/')],
+                    ['name' => __('store.breadcrumb.home'), 'url' => Url::to('/')],
                     ['name' => 'Build my routine', 'url' => Url::to('/routines/')],
                     ['name' => $title, 'url' => Url::to('/routines/'.$concern.'/')],
                 ],

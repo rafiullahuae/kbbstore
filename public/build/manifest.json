@@ -376,6 +376,10 @@
     "file": "assets/admin-ba6349e71b2f-45nDZhc7.css",
     "src": "admin-console/ba6349e71b2f5ec592b371e8c933e62f95f30e9b.css"
   },
+  "admin-console/bbfb48933e8b2048159fc3dcc1c036d816526251.js": {
+    "file": "assets/admin-bbfb48933e8b-C7s4xghK.js",
+    "src": "admin-console/bbfb48933e8b2048159fc3dcc1c036d816526251.js"
+  },
   "admin-console/bc922d850ae22059881ab78b970fb70db76d4fa1.js": {
     "file": "assets/admin-bc922d850ae2-NwS5CqDM.js",
     "src": "admin-console/bc922d850ae22059881ab78b970fb70db76d4fa1.js"
@@ -415,10 +419,6 @@
   "admin-console/d56a3567ba251f268019e90254c1f335276af6eb.js": {
     "file": "assets/admin-d56a3567ba25-C3YuvTcc.js",
     "src": "admin-console/d56a3567ba251f268019e90254c1f335276af6eb.js"
-  },
-  "admin-console/e09d7242c555adeca257c14c7e71a1bd69465025.js": {
-    "file": "assets/admin-e09d7242c555-C_Q7wZ0u.js",
-    "src": "admin-console/e09d7242c555adeca257c14c7e71a1bd69465025.js"
   },
   "admin-console/e2edf080c2fcfd21f99525532933d24b18c13304.js": {
     "file": "assets/admin-e2edf080c2fc-BizWUS4u.js",
@@ -498,7 +498,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb-grid-skins.css": {
-    "file": "assets/kbb-grid-skins-B0xC7GaF.css",
+    "file": "assets/kbb-grid-skins-B9-dphS6.css",
     "src": "resources/css/kbb/kbb-grid-skins.css",
     "isEntry": true
   },
@@ -508,7 +508,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb-product.css": {
-    "file": "assets/kbb-product-CbkAdozY.css",
+    "file": "assets/kbb-product-BQ6zvZsO.css",
     "src": "resources/css/kbb/kbb-product.css",
     "isEntry": true
   },
@@ -523,12 +523,12 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb.css": {
-    "file": "assets/kbb-B_U91t2P.css",
+    "file": "assets/kbb-Bd8ef9bK.css",
     "src": "resources/css/kbb/kbb.css",
     "isEntry": true
   },
   "resources/css/kbb/sorina-reviews.css": {
-    "file": "assets/sorina-reviews-k0f3U-D8.css",
+    "file": "assets/sorina-reviews-DFwNXWwH.css",
     "src": "resources/css/kbb/sorina-reviews.css",
     "isEntry": true
   },
@@ -736,7 +736,7 @@
     ]
   },
   "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-DZhdaiua.js",
+    "file": "assets/storefront-admin-DEUQNUy7.js",
     "name": "storefront-admin",
     "src": "resources/js/kbb/admin/storefront-admin.js",
     "isDynamicEntry": true,
@@ -749,7 +749,7 @@
     ]
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-CIO9cMPh.js",
+    "file": "assets/app-YIcaC-Hy.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,

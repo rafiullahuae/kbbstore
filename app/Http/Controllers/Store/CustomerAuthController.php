@@ -64,7 +64,7 @@ class CustomerAuthController extends Controller
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
             throw ValidationException::withMessages([
-                'email' => 'Too many attempts. Try again in ' . RateLimiter::availableIn($key) . ' seconds.',
+                'email' => __('store.wording.msg_too_many', ['seconds' => RateLimiter::availableIn($key)]),
             ]);
         }
 
@@ -73,7 +73,7 @@ class CustomerAuthController extends Controller
         if (! $customer || ! $this->verify($customer, $data['password'])) {
             RateLimiter::hit($key, 300);
 
-            throw ValidationException::withMessages(['email' => 'Those details did not match our records.']);
+            throw ValidationException::withMessages(['email' => __('store.wording.msg_login_failed')]);
         }
 
         RateLimiter::clear($key);
@@ -102,7 +102,7 @@ class CustomerAuthController extends Controller
                 $request->input('hc_token'), $request->input('hc_answer'))) {
             return back()
                 ->withInput($request->except(['password', 'hc_answer']))
-                ->withErrors(['hc_answer' => 'That sum was not right. Please try the new one.']);
+                ->withErrors(['hc_answer' => __('store.wording.msg_hc_wrong')]);
         }
 
         $data = $request->validate([

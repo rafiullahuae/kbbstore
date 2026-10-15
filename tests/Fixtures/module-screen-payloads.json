@@ -863,6 +863,113 @@
             "value": "تحتاج خصمًا؟ استخدم كود الخصم {coupon-code} عند الدفع"
           }
         ]
+      },
+      {
+        "key": "wording_ar",
+        "label": "Arabic wording",
+        "description": "Every word the panel prints, on the Arabic shop (/ar/). Ships in Arabic. Change an English line without changing its Arabic and /ar/ shows your English until you write the Arabic.",
+        "fields": [
+          {
+            "key": "txt_tab_cart_ar",
+            "name": "txt_tab_cart_ar",
+            "type": "text",
+            "label": "Cart tab · Arabic",
+            "help": "Shown on the Arabic shop (/ar/). Empty: the English wording.",
+            "options": null,
+            "default": "السلة",
+            "value": "السلة"
+          },
+          {
+            "key": "txt_tab_browsed_ar",
+            "name": "txt_tab_browsed_ar",
+            "type": "text",
+            "label": "Browsed tab · Arabic",
+            "help": "Shown on /ar/. Empty: the English wording.",
+            "options": null,
+            "default": "تصفّحتِها",
+            "value": "تصفّحتِها"
+          },
+          {
+            "key": "txt_ship_away_ar",
+            "name": "txt_ship_away_ar",
+            "type": "text",
+            "label": "Free delivery · still to go · Arabic",
+            "help": "Shown on /ar/. Use {amount} where the figure should appear.",
+            "options": null,
+            "default": "يفصلكِ {amount} عن التوصيل المجاني",
+            "value": "يفصلكِ {amount} عن التوصيل المجاني"
+          },
+          {
+            "key": "txt_ship_done_ar",
+            "name": "txt_ship_done_ar",
+            "type": "text",
+            "label": "Free delivery · reached · Arabic",
+            "help": "Shown on /ar/. Empty: the English wording.",
+            "options": null,
+            "default": "🎉 حصلتِ على التوصيل المجاني!",
+            "value": "🎉 حصلتِ على التوصيل المجاني!"
+          },
+          {
+            "key": "txt_subtotal_ar",
+            "name": "txt_subtotal_ar",
+            "type": "text",
+            "label": "Subtotal label · Arabic",
+            "help": "Shown on /ar/. Empty: the English wording.",
+            "options": null,
+            "default": "المجموع الفرعي",
+            "value": "المجموع الفرعي"
+          },
+          {
+            "key": "txt_btn_cart_ar",
+            "name": "txt_btn_cart_ar",
+            "type": "text",
+            "label": "Left button · Arabic",
+            "help": "Shown on /ar/. Empty: the English wording.",
+            "options": null,
+            "default": "السلة",
+            "value": "السلة"
+          },
+          {
+            "key": "txt_btn_checkout_ar",
+            "name": "txt_btn_checkout_ar",
+            "type": "text",
+            "label": "Right button · Arabic",
+            "help": "Shown on /ar/. Empty: the English wording.",
+            "options": null,
+            "default": "إتمام الطلب",
+            "value": "إتمام الطلب"
+          },
+          {
+            "key": "txt_empty_ar",
+            "name": "txt_empty_ar",
+            "type": "text",
+            "label": "Empty bag · line one · Arabic",
+            "help": "Shown on /ar/. Empty: the English wording.",
+            "options": null,
+            "default": "حقيبتكِ فارغة.",
+            "value": "حقيبتكِ فارغة."
+          },
+          {
+            "key": "txt_empty_sub_ar",
+            "name": "txt_empty_sub_ar",
+            "type": "text",
+            "label": "Empty bag · line two · Arabic",
+            "help": "Shown on /ar/. Empty: the English wording.",
+            "options": null,
+            "default": "أضيفي شيئًا يمنحكِ الإشراقة ✨",
+            "value": "أضيفي شيئًا يمنحكِ الإشراقة ✨"
+          },
+          {
+            "key": "txt_browsed_none_ar",
+            "name": "txt_browsed_none_ar",
+            "type": "text",
+            "label": "Nothing browsed yet · Arabic",
+            "help": "Shown on /ar/. Empty: the English wording.",
+            "options": null,
+            "default": "لم تتصفّحي أي منتج بعد.",
+            "value": "لم تتصفّحي أي منتج بعد."
+          }
+        ]
       }
     ],
     "touch": [

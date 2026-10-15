@@ -2576,7 +2576,7 @@ body::after{z-index:-1;opacity:0;background:var(--kbb-page-gradient-c)}
 
 .dcontent.clamp::after{content:"";position:absolute;inset-inline-start:0;inset-inline-end:0;bottom:0;height:56px;background:linear-gradient(transparent,#fff)}
 
-.dcontent ul{margin:6px 0 0 18px}
+.dcontent ul{margin:6px 0 0;margin-inline-start:18px}
 .dcontent li{margin-bottom:5px}
 
 .readmore{margin-top:11px;color:var(--pink-deep);font-weight:600;font-size:13px}
@@ -4246,7 +4246,7 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 /* the reasons panel */
 .authside{background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px}
 .authside h2{margin:0 0 12px;font-size:14px;font-weight:700}
-.authside ul{margin:0;padding:0 0 0 17px;font-size:12.5px;color:var(--ink-2);line-height:1.95}
+.authside ul{margin:0;padding:0;padding-inline-start:17px;font-size:12.5px;color:var(--ink-2);line-height:1.95}
 .authside-note{margin:14px 0 0;background:var(--pink-soft,#FFF1F5);border-radius:9px;padding:9px 12px;
     font-size:11.5px;color:var(--pink-deep)}
 @media (max-width: 760px){
@@ -5423,6 +5423,26 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
 @keyframes kft-sheen-text-rtl{0%{background-position:0% 50%}60%,100%{background-position:100% 50%}}
 [dir="rtl"] .kft-sheen-bar .kft-bot::before,[dir="rtl"] .kft-sheen-bar .kft-bot::after{animation-name:kft-sheen-rtl}
 [dir="rtl"] .kft-sheen-name .kft-name::after{animation-name:kft-sheen-text-rtl}
+/* ── Lane AR round 2: right-to-left, measured on /ar ─────────────────────────
+   Every rule below is scoped to the Arabic document ([dir="rtl"] or :lang(ar))
+   so no English page matches one of them. RtlRound2Test pins each.
+   1. A Latin line inside an Arabic card (an untranslated product name, an
+      English review) takes its OWN direction: "345 Relief Cream Mist Spray"
+      painted as "Relief Cream Mist 345 Spray", and a clamped name's "…" landed
+      at its start ("…Ultimate Glass"). plaintext gives each line the direction
+      of its first letter; an Arabic name is unaffected.
+   2. The trust strip's words are nowrap with a <br>; its Arabic second lines
+      are longer than the English ones and ran into the next column at 390px
+      ("بطاقة، دفع عند الاستلامعلى مدار الساعة"). They wrap in Arabic. */
+[dir="rtl"] .kbb-card-nm{unicode-bidi:plaintext}
+[dir="rtl"] .sr-nm,[dir="rtl"] .sr-title,[dir="rtl"] .sr-tx,[dir="rtl"] .sr-reply{unicode-bidi:plaintext}
+:lang(ar) .ktr b{white-space:normal}
+/* 3. Three carousels kept the English chevrons: the arrows MOVED to the mirrored
+      side (logical insets) but still pointed the English way -- "next" sat on
+      the left pointing right. Shop by skin concern (.hs-cc-arr), the homepage
+      grid sections (.gs-arr) and the cart page's rail (.cpg-arr), the same
+      flip the bundles and you-may-also-like arrows already carry. */
+[dir="rtl"] .hs-cc-arr svg,[dir="rtl"] .gs-arr svg,[dir="rtl"] .cpg-arr svg{transform:scaleX(-1)}
 @media (prefers-reduced-motion:reduce){
   .kft-motion .kft-help,.kft-motion .kft-help::before,.kft-motion .kft-name{animation:none}
   .kft-help-bt a:hover{transform:none}

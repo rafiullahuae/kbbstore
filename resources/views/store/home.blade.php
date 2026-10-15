@@ -21,7 +21,7 @@ $homeFirst = $sections->firstOnScreen();
 @section('no-trust-strip', '1')
 @php use App\Support\Money; use App\Support\Url; use App\Support\Gradient; @endphp
 
-@section('title', 'K-Beauty Bliss · Authentic Korean skincare in the UAE')
+@section('title', \App\Support\ArabicWording::of('K-Beauty Bliss · Authentic Korean skincare in the UAE'))
 
 @push('styles')
 {{-- SECTION ORDER — Lane FR.

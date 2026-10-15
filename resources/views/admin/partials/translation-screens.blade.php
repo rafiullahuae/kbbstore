@@ -302,6 +302,7 @@
   var shown = PAGE_SIZE;    // how many of `rows` are drawn
   var filters = { group: 'ui', missing: false, q: '', limit: 200 };
   var apiKeyDraft = '';
+  var previewLink = null;   // Lane AR stage 2: the last link made on this screen, {url, expires_at}
   var confirming = null;    // the run the owner has been shown and not yet authorised
   var runResult = null;
   var banner = null;        // {kind, text}
@@ -557,7 +558,29 @@
       + setupGuideHTML(s)
       + '</div>';
 
-    return '<div class="tr-wrap">' + bannerHTML() + capabilityHTML() + switches + addresses + key + '</div>';
+    /* PRIVATE ARABIC PREVIEW LINK (Lane AR stage 2). Owner only (translations.preview).
+       The link shows /ar in the browser that opens it, even with Arabic off; never
+       indexed, never cached, and "Turn off every link" kills all of them at once. */
+    var preview = !can('preview') ? '' : '<div class="tr-card">'
+      + '<p class="tr-h">Private Arabic preview link</p>'
+      + '<p class="tr-sub">See the whole Arabic shop, right to left, on the real site before it is switched on. '
+      + 'Only a browser that opens this link sees /ar; search engines and other visitors never do, and every '
+      + 'page it shows is marked noindex and not cached.</p>'
+      + '<div class="tr-acts">'
+      + '<label class="tr-field" style="margin:0"><span>Works for</span><select id="tr-arp-days">'
+      + [1, 3, 7, 14, 30].map(function(d){ return '<option value="' + d + '"' + (d === 7 ? ' selected' : '') + '>' + d + (d === 1 ? ' day' : ' days') + '</option>'; }).join('')
+      + '</select></label>'
+      + '<button type="button" class="tr-btn is-primary" data-tr-act="arp-make"' + (busy() ? ' disabled' : '') + '>Make a preview link</button>'
+      + '<button type="button" class="tr-btn is-danger" data-tr-act="arp-revoke"' + (busy() ? ' disabled' : '') + '>Turn off every link</button>'
+      + '</div>'
+      + (previewLink
+          ? '<label class="tr-field" style="margin-top:10px"><span>Link (works until ' + esc(previewLink.expires_at.replace('T', ' ').replace('Z', ' UTC')) + ')</span>'
+            + '<input type="text" id="tr-arp-url" readonly value="' + esc(previewLink.url) + '"></label>'
+            + '<div class="tr-acts"><button type="button" class="tr-btn" data-tr-act="arp-copy">Copy link</button></div>'
+          : '')
+      + '</div>';
+
+    return '<div class="tr-wrap">' + bannerHTML() + capabilityHTML() + switches + preview + addresses + key + '</div>';
   }
 
   /* =============================== screen 2: progress =============================== */
@@ -1035,6 +1058,42 @@
     }
   }
 
+  async function previewMake(){
+    if (!can('preview')) return;
+    var sel = document.getElementById('tr-arp-days');
+    inflight++; render();
+    try {
+      previewLink = await api('/translations/preview-link', 'POST', {days: parseInt(sel ? sel.value : '7', 10) || 7});
+      banner = null;
+      say('Preview link made. Open it in any browser to see the Arabic shop.');
+    } catch (e) {
+      banner = {kind:'bad', text: explain(e, 'The preview link could not be made.')};
+    } finally {
+      inflight--; render();
+    }
+  }
+
+  async function previewRevoke(){
+    if (!can('preview')) return;
+    inflight++; render();
+    try {
+      await api('/translations/preview-link/revoke', 'POST', {});
+      previewLink = null;
+      say('Every preview link is off.');
+    } catch (e) {
+      banner = {kind:'bad', text: explain(e, 'The preview links could not be turned off.')};
+    } finally {
+      inflight--; render();
+    }
+  }
+
+  function previewCopy(){
+    var el = document.getElementById('tr-arp-url');
+    if (!el) return;
+    el.select();
+    try { navigator.clipboard.writeText(el.value).then(function(){ say('Link copied.'); }); } catch (e) { say('Select the link and copy it.'); }
+  }
+
   async function saveKey(clear){
     if (!can('settings')) return;
 
@@ -1182,6 +1241,9 @@
   }
 
   function act(what, i){
+    if (what === 'arp-make') return previewMake();
+    if (what === 'arp-revoke') return previewRevoke();
+    if (what === 'arp-copy') return previewCopy();
     if (what === 'save-key') return saveKey(false);
     if (what === 'clear-key') return saveKey(true);
     if (what === 'save-row') return saveRow(parseInt(i, 10));

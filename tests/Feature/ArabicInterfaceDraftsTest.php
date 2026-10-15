@@ -305,26 +305,21 @@ it('writes actual Arabic, not English left in an Arabic-shaped slot', function (
     //
     // It is a pinned LIST and not a count, so adding a twenty-third means
     // writing down which one and why rather than moving a number.
+    // Lane AR round 2: the owner, 15 October -- "nothing should be in english"
+    // on the Arabic shop -- so COD, the shop's name in titles, the AED price
+    // bands, "WhatsApp" and the "k" abbreviation now have Arabic drafts
+    // (App\Services\Translation\ArabicDraftCorrections) and left this list.
     expect($identical)->toBe([
-        'store.footer.pay_cod => COD',
         'store.language.english => English',
-        'store.shop.page_title => :title · K-Beauty Bliss',
-        'store.shop.price_54_150 => AED 54 – 150',
-        'store.shop.price_150_300 => AED 150 – 300',
-        'store.shop.price_300p => AED 300+',
-        'store.collection.page_title => :title · K-Beauty Bliss',
         'store.product_card.count_thousands => :countk',
         'store.product_card.price_range => :low – :high',
-        'store.page.page_title => :title · K-Beauty Bliss',
         'store.home.count_thousands_plus => :countk+',
-        'store.home.trust_support_text => WhatsApp :phone',
         'store.reviews.field_email_placeholder => you@email.com',
         'store.notify_me.email_placeholder => you@example.com',
         'store.cart_reminder.email_placeholder => you@example.com',
         'store.checkout.apple_pay => Apple Pay', // a brand name, as Apple writes it (2.60.495)
         'store.checkout.field_email_placeholder => you@email.com',
         'store.checkout.field_phone_placeholder => +971 5x xxx xxxx',
-        'store.quiz.brand_heading => K-Beauty Bliss :suffix',
         'email.common.sign_off => — K Beauty Bliss',
         'email.items.sku => SKU :sku',
         'email.invoice.trn => TRN :trn',
@@ -729,7 +724,9 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 2027_10_30_100000_checkout_layout_13_october.
     // +1 (2.60.504): the phone menu account box's greeting (store.mobile_menu.welcome),
     // seeded by 2027_10_31_900000_seed_mobile_menu_welcome_arabic_draft.
-    expect($ui['drafts'])->toBe(1624, 'the shipped Arabic is not showing as drafts to review')
+    // + Lane AR round 2: the shipped English of settings as interface strings
+    // (store.wording.*), seeded by 2027_11_02_100000_seed_lane_ar2_wording_arabic_drafts.
+    expect($ui['drafts'])->toBe(1624 + count(\App\Support\ArabicWording::ENGLISH), 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });
@@ -1058,7 +1055,14 @@ it('never labels two controls on one screen with the same Arabic', function () {
         ['store.account_panel.field_email', 'store.checkout.field_email', 'store.checkout.signin_email', 'store.contact.label_email', 'store.quiz.js_label_email', 'store.reviews.field_email'],
         ['store.addresses.add_address', 'store.addresses.form_heading_add'],
         ['store.brands.card_count', 'store.cart.item_count', 'store.home.category_product_count', 'store.set.count_note'],
+        // Lane AR round 2: "Read less" / "Show fewer" are the same act -- collapse what
+        // was opened -- on three different screens (brand page, shop header, set).
+        ['store.brands.read_less', 'store.set.show_fewer', 'store.shop.header_less'],
         ['store.checkout.field_address', 'store.reviews.field_title'],
+        // Lane AR stage 2: the cart page's address popup (Appearance → Cart page) and
+        // the checkout name the same fields -- one shopper, two screens, one word.
+        ['store.checkout.field_state_other', 'store.wording.cpage_26'],
+        ['store.checkout.field_state_region', 'store.wording.cpage_22'],
         ['store.checkout.secure_badge', 'store.home.trust_payments_title'],
         ['store.collection.title_best_sellers', 'store.footer.link_best_sellers', 'store.home.bestsellers_grid_label', 'store.home.bestsellers_heading', 'store.product.recs_best_eyebrow', 'store.product_card.label_bestseller', 'store.shop.sort_popularity'],
         ['store.home.flash_link', 'store.product_grid.view_all'],

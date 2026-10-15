@@ -496,10 +496,19 @@ class SlimFooter
     public function headerLogo(): array
     {
         $header = app(HeaderSettings::class);
+        $text = (string) $header->get('logo_text');
+        $accent = (string) $header->get('logo_accent');
+
+        // (Lane AR round 2) The shipped wordmark, on /ar, in Arabic letters --
+        // the footer's copy only; the header's own lockup is locked and waits
+        // for its own sweep. A wordmark the owner typed is his and stays.
+        if ($text === 'K-Beauty' && $accent === 'Bliss' && \App\Support\ArabicWording::on()) {
+            [$text, $accent] = ['كي بيوتي ', 'بليس']; // the space: Arabic letters would join across the span
+        }
 
         return [
-            'text'       => (string) $header->get('logo_text'),
-            'accent'     => (string) $header->get('logo_accent'),
+            'text'       => $text,
+            'accent'     => $accent,
             'colour'     => (string) $header->get('logo_colour'),
             'accent_col' => (string) $header->get('logo_accent_col'),
         ];

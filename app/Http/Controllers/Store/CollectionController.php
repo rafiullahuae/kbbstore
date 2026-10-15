@@ -511,9 +511,10 @@ class CollectionController extends Controller
          * records. Nothing replaces the clause: what is left is a count of real
          * rows.
          */
-        $description = $total > 0
-            ? ltrim("{$intro} {$total}") . " authentic Korean skincare products at K-Beauty Bliss."
-            : ltrim("{$intro} Authentic") . " Korean skincare at K-Beauty Bliss.";
+        // (Lane AR round 2) Interface strings; English word for word as before.
+        $description = ltrim($total > 0
+            ? (string) __('store.wording.seo_collection', ['intro' => $intro, 'total' => $total])
+            : (string) __('store.wording.seo_collection_none', ['intro' => $intro]));
 
         // SeoSettings, not Setting::map(): the latter memoises in a
         // process-level static as well as the cache, and a page rendered
@@ -559,8 +560,9 @@ class CollectionController extends Controller
             // path are the same document, and only one of them should be it.
             'url' => $page > 1 ? $base . $path . '?page=' . $page : $base . $path,
             'breadcrumb' => [
-                ['name' => 'Home', 'url' => $base . '/'],
-                ['name' => 'Shop', 'url' => $base . '/shop/'],
+                // (Lane AR round 2) the keys the visible crumb prints; English 'Home' / 'Shop'.
+                ['name' => __('store.breadcrumb.home'), 'url' => $base . '/'],
+                ['name' => __('store.breadcrumb.shop'), 'url' => $base . '/shop/'],
                 ['name' => $title, 'url' => $base . $path],
             ],
         ];

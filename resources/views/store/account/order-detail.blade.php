@@ -167,8 +167,9 @@
         $ship['line1'] ?? null,
         $ship['line2'] ?? null,
         trim(implode(', ', array_filter([$ship['city'] ?? null, $ship['state'] ?? null, $ship['postcode'] ?? null]))),
-        Countries::NAMES[strtoupper((string) ($ship['country'] ?? ''))] ?? ($ship['country'] ?? null),
-        $ship['phone'] ?? null,
+        \App\Support\ArabicWording::of(Countries::NAMES[strtoupper((string) ($ship['country'] ?? ''))] ?? ($ship['country'] ?? null)),
+        // (Lane AR round 2) the number kept left-to-right inside an Arabic line.
+        isset($ship['phone']) ? \App\Support\Bidi::number((string) $ship['phone']) : null,
     ], fn ($line) => trim((string) $line) !== ''));
 
     // fee_total carries the gateway surcharge AND the gift fee together (see
@@ -207,7 +208,7 @@
       <div style="flex:1 1 auto;min-width:0">
         <h1>{{ __('store.orders.order_number', ['number' => $order->order_number]) }}</h1>
         <p class="kbbod-when">
-          {{ __('store.orders.placed_on', ['date' => $order->created_at?->format('j F Y') ?? '']) }}
+          {{ __('store.orders.placed_on', ['date' => \App\Support\LocalDate::format($order->created_at, 'j F Y')]) }}
           @if ($items->count()) · {{ trans_choice('store.cart.item_count', $items->count()) }} @endif
         </p>
       </div>
@@ -239,7 +240,7 @@
           <div class="kbbod-line">
             <div class="kbbod-thumb" style="{{ $thumb }}"><span class="kbbod-qty">{{ (int) $item->quantity }}</span></div>
             <div class="kbbod-name">
-              @if ($item->brand)<div class="kbbod-brand">{{ $item->brand }}</div>@endif
+              @if ($item->brand)<div class="kbbod-brand">{{ (\App\Support\ArabicWording::on() && $item->product?->relationLoaded('brand') && $item->product->brand ? $item->product->brand->t('name') : $item->brand) }}</div>@endif
               <b>{{ $item->name_localised ?: $item->name }}</b>{{-- The customer's own order page, so the customer's own language: the snapshot OrderLocale::listen() took at checkout, falling back to the English one, which is what every row holds while this shop serves one language. The Gradient seed above stays $item->name deliberately -- the tile colour is a hash of the string it is given, so translating the seed would repaint a shopper's order history between languages for a value nobody reads. ONE LINE, and at the END of this one: Blade removes a comment but leaves the newline it sat on, so a comment on its own line here adds a blank line per order line and turns StorefrontEnglishUnchangedTest red. --}}
               <span class="kbbod-meta">{{ (int) $item->quantity }} × {!! $receiptMoney((int) $item->unit_price) !!}@if ($variant !== '') · {{ $variant }}@endif</span>
             </div>
@@ -265,14 +266,14 @@
           <div class="kbbod-row"><span>{{ $order->coupon_code ?: __('store.checkout.discount') }}</span><span>&ndash; {!! $receiptMoney((int) $order->discount_total - (int) $order->bundle_discount) !!}</span></div>
         @endif
         <div class="kbbod-row">
-          <span>{{ __('store.checkout.delivery') }}{{ $order->shipping_method ? ' · ' . $order->shipping_method : '' }}</span>
+          <span>{{ __('store.checkout.delivery') }}{{ $order->shipping_method ? ' · ' . \App\Support\ArabicWording::of($order->shipping_method) : '' }}</span>
           <span>@if ((int) $order->shipping_total > 0){!! $receiptMoney((int) $order->shipping_total) !!}@else<span class="kbbod-free">{{ __('store.checkout.free') }}</span>@endif</span>
         </div>
         @if ((int) $order->gift_fee > 0)
           <div class="kbbod-row"><span>{{ __('store.checkout.gift_wrapping') }}</span><span>{!! $receiptMoney((int) $order->gift_fee) !!}</span></div>
         @endif
         @if ($paymentFee > 0)
-          <div class="kbbod-row"><span>{{ __('store.checkout.payment_fee', ['method' => $order->paymentLabel()]) }}</span><span>{!! $receiptMoney($paymentFee) !!}</span></div>
+          <div class="kbbod-row"><span>{{ __('store.checkout.payment_fee', ['method' => \App\Support\ArabicWording::of($order->paymentLabel())]) }}</span><span>{!! $receiptMoney($paymentFee) !!}</span></div>
         @endif
         {{--
             VAT, ONLY WHERE IT WAS ADDED TO THE FIGURES ABOVE IT.
@@ -319,7 +320,7 @@
         <div class="kbbod-fact">
           <dt>{{ __('store.order_received.fact_payment') }}</dt>
           <dd>
-            {{ $order->paymentLabel() }}
+            {{ \App\Support\ArabicWording::of($order->paymentLabel()) }}
             @if ($order->email)<br>{{ $order->email }}@endif
           </dd>
         </div>

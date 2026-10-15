@@ -78,9 +78,9 @@
 <article id="article">
   
   <div class="crumb"><a href="{{ \App\Support\Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ \App\Support\Url::to(\App\Support\UrlScheme::blogIndex()) }}">{{ __('store.journal.nav_journal') }}</a></div>
-  @if($post->tag)<span class="atag">{{ $post->tag }}</span>@endif
+  @if($post->tag)<span class="atag">{{ \App\Support\ArabicWording::of($post->tag) }}</span>@endif
   <h1>{{ $post->t('title') }}</h1>
-  <div class="ameta"><span>{{ $post->author ?: 'K-Beauty Bliss' }}</span> · <span>{{ optional($post->published_at)->format('j F Y') }}</span></div>
+  <div class="ameta"><span>{{ \App\Support\ArabicWording::of($post->author ?: 'K-Beauty Bliss') }}</span> · <span>{{ \App\Support\LocalDate::format($post->published_at, 'j F Y') }}</span></div>
   {{-- The hero photograph is a real <img>, not a CSS background.
        PageController::post() hands this same column to Seo::render as the
        article's `image`, so the page publishes it as og:image and as the

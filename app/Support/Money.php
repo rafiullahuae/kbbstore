@@ -157,8 +157,23 @@ final class Money
     /** The display symbol: the configured override, else the currency's default. */
     public static function symbol(): string
     {
-        return self::config()['symbol'];
+        $symbol = self::config()['symbol'];
+
+        // (Lane AR round 2) The owner: "nothing should be in english" on the
+        // Arabic shop, "AED" -> "د.إ" by name. Only the code-shaped default
+        // is swapped, only for the dirham, and only on /ar: an owner who typed
+        // his own symbol keeps it, and an English page never reaches this.
+        if ($symbol === self::AR_FROM && self::config()['code'] === 'AED' && Locale::current() === 'ar') {
+            return self::AR_SYMBOL;
+        }
+
+        return $symbol;
     }
+
+    /** The symbol the Arabic shop prints for the dirham, and the default it replaces. */
+    public const AR_SYMBOL = 'د.إ';
+
+    private const AR_FROM = 'AED';
 
     /** One of self::POSITIONS. */
     public static function position(): string

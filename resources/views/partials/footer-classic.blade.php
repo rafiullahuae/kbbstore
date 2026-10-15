@@ -80,7 +80,7 @@
     </div>
 
     <div class="fbot">
-        <div>{{ __('store.footer.copyright', ['year' => date('Y'), 'store' => $kbbSettings->get('store_name', 'K-Beauty Bliss')]) }}</div>
+        <div>{{ __('store.footer.copyright', ['year' => date('Y'), 'store' => \App\Support\ArabicWording::of($kbbSettings->get('store_name', 'K-Beauty Bliss'))]) }}</div>
         {{-- THE CHIPS ARE A CLAIM, SO THEY ARE ASKED RATHER THAN TYPED.
 
              This row printed "Apple Pay" on a shop that had no Apple Pay: no

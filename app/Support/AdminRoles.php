@@ -245,6 +245,7 @@ final class AdminRoles
         ]],
         ['settings', 'Settings & platform', [
             'store.settings' => 'Store settings, modules, mail and the admin address',
+            'translations.preview' => 'Make or turn off the private Arabic preview link (Translation → Settings)',
             'platform.site_url' => 'Change the site address',
             'platform.domain_switch' => 'Move the shop to a new domain (Platform → Domain switch; Full Admin only)',
             'payments.check' => 'Run the read-only payments check (Platform → Domain switch → Payments ready?)',
