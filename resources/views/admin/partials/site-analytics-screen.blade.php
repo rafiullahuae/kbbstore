@@ -87,6 +87,8 @@
 .anb .mini span{font-size:11px;color:var(--night-soft)}
 .anb .feed{list-style:none;margin:0;padding:0;max-height:360px;overflow:auto}
 .anb .feed li{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border-2,#eef0f6);font-size:13px}
+.anb .feed a.feed-a{color:inherit;text-decoration:none}
+.anb .feed a.feed-a:hover,.anb .feed a.feed-a:focus-visible{color:var(--accent,#C13E63);text-decoration:underline}
 .anb .feed time{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink-faint,#97a0b2)}
 .anb .ev{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:#eaf0fd;color:#3f6fe0}
 .anb .ev.cart{background:#fdf2e2;color:#a0620e}
@@ -356,11 +358,24 @@
       .sort(function (a, b) { return b.at - a.at || (b.id > a.id ? 1 : -1); }).slice(0, 40);
   }
 
+  /* A viewed page opens the shop page itself, in a new tab (the owner:
+     "these should also be linked to the original pages, so i can click on
+     them and see what page it is"). The path is what a VISITOR's browser
+     reported, so it is never trusted as a URL: only a same-site path
+     (one leading "/", not "//" or "/\\", no control characters) becomes an
+     href, on this site's own origin, escaped; anything else stays plain
+     text. noopener, so the shop tab cannot reach back into the console. */
+  function pageLink(p, label) {
+    p = String(p || '');
+    if (!/^\/(?![\/\\])/.test(p) || /[\u0000-\u001f\u007f\s]/.test(p)) return label;
+    return '<a class="feed-a" href="' + esc(location.origin + p) + '" target="_blank" rel="noopener noreferrer" title="Open this page">' + label + '</a>';
+  }
+
   function paintFeed() {
     set('feed', st.feed.length ? st.feed.map(function (f) {
       var lab = f.type === 'order' ? 'order' : f.type === 'cart' ? 'cart' : 'view';
       var main = f.type === 'order' ? 'Order <b>AED ' + esc(fmt(f.aed)) + '</b> · ' + esc(f.source)
-        : f.type === 'cart' ? 'Added to cart' : esc(f.title || path(f.path));
+        : f.type === 'cart' ? 'Added to cart' : pageLink(f.path, esc(f.title || path(f.path)));
       var meta = f.type === 'order' ? '' : [CC[f.cc] || f.cc, f.dev, f.source].filter(Boolean).map(esc).join(' · ');
       return '<li><time>' + hhmm(f.at) + '</time><span style="min-width:0"><span class="ttl" style="font-weight:500">' + main + '</span><span class="faint">' + meta + '</span></span><span class="ev ' + lab + '">' + lab + '</span></li>';
     }).join('') : '<li class="empty">Quiet for the last 30 minutes.</li>');
