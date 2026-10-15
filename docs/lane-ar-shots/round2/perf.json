@@ -1,0 +1,560 @@
+{
+ "rows": [
+  {
+   "page": "en home",
+   "ms": [
+    67.4,
+    64.3
+   ],
+   "queries": [
+    6,
+    6
+   ],
+   "settings_reads": [
+    5,
+    4
+   ],
+   "html_gzip": [
+    24114,
+    24321
+   ],
+   "css_raw": [
+    300351,
+    300681
+   ],
+   "css_gzip": [
+    53562,
+    53677
+   ],
+   "scripts": [
+    12,
+    12
+   ],
+   "cls": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "page": "en category",
+   "ms": [
+    31.1,
+    34.5
+   ],
+   "queries": [
+    10,
+    10
+   ],
+   "settings_reads": [
+    6,
+    5
+   ],
+   "html_gzip": [
+    18014,
+    18012
+   ],
+   "css_raw": [
+    306022,
+    306306
+   ],
+   "css_gzip": [
+    56199,
+    56287
+   ],
+   "scripts": [
+    10,
+    10
+   ],
+   "cls": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "page": "en product",
+   "ms": [
+    41.5,
+    42.8
+   ],
+   "queries": [
+    16,
+    16
+   ],
+   "settings_reads": [
+    7,
+    6
+   ],
+   "html_gzip": [
+    35650,
+    35773
+   ],
+   "css_raw": [
+    341980,
+    342304
+   ],
+   "css_gzip": [
+    63204,
+    63294
+   ],
+   "scripts": [
+    15,
+    15
+   ],
+   "cls": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "page": "en brand",
+   "ms": [
+    32.3,
+    32
+   ],
+   "queries": [
+    10,
+    10
+   ],
+   "settings_reads": [
+    7,
+    6
+   ],
+   "html_gzip": [
+    18805,
+    18806
+   ],
+   "css_raw": [
+    279344,
+    279628
+   ],
+   "css_gzip": [
+    50169,
+    50257
+   ],
+   "scripts": [
+    10,
+    10
+   ],
+   "cls": [
+    [
+     "-",
+     "-"
+    ],
+    [
+     "-",
+     "-"
+    ]
+   ]
+  },
+  {
+   "page": "en cart",
+   "ms": [
+    29.3,
+    28.3
+   ],
+   "queries": [
+    11,
+    11
+   ],
+   "settings_reads": [
+    5,
+    4
+   ],
+   "html_gzip": [
+    45949,
+    45947
+   ],
+   "css_raw": [
+    280128,
+    280412
+   ],
+   "css_gzip": [
+    50263,
+    50351
+   ],
+   "scripts": [
+    8,
+    8
+   ],
+   "cls": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "page": "en checkout",
+   "ms": [
+    33.5,
+    33.7
+   ],
+   "queries": [
+    14,
+    14
+   ],
+   "settings_reads": [
+    5,
+    4
+   ],
+   "html_gzip": [
+    46529,
+    46532
+   ],
+   "css_raw": [
+    350656,
+    350940
+   ],
+   "css_gzip": [
+    63195,
+    63283
+   ],
+   "scripts": [
+    18,
+    18
+   ],
+   "cls": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "page": "ar home",
+   "ms": [
+    75.5,
+    70.1
+   ],
+   "queries": [
+    7,
+    7
+   ],
+   "settings_reads": [
+    232,
+    5
+   ],
+   "html_gzip": [
+    28014,
+    28533
+   ],
+   "css_raw": [
+    300351,
+    300681
+   ],
+   "css_gzip": [
+    53562,
+    53677
+   ],
+   "scripts": [
+    13,
+    13
+   ],
+   "cls": [
+    [
+     0,
+     0.0001
+    ],
+    [
+     0,
+     0.0001
+    ]
+   ]
+  },
+  {
+   "page": "ar category",
+   "ms": [
+    40.6,
+    34.5
+   ],
+   "queries": [
+    11,
+    11
+   ],
+   "settings_reads": [
+    171,
+    6
+   ],
+   "html_gzip": [
+    21426,
+    21480
+   ],
+   "css_raw": [
+    306022,
+    306306
+   ],
+   "css_gzip": [
+    56199,
+    56287
+   ],
+   "scripts": [
+    11,
+    11
+   ],
+   "cls": [
+    [
+     0,
+     0.0001
+    ],
+    [
+     0,
+     0.0001
+    ]
+   ]
+  },
+  {
+   "page": "ar product",
+   "ms": [
+    51.1,
+    50.3
+   ],
+   "queries": [
+    17,
+    17
+   ],
+   "settings_reads": [
+    169,
+    7
+   ],
+   "html_gzip": [
+    39582,
+    39837
+   ],
+   "css_raw": [
+    341980,
+    342304
+   ],
+   "css_gzip": [
+    63204,
+    63294
+   ],
+   "scripts": [
+    16,
+    16
+   ],
+   "cls": [
+    [
+     0,
+     0.0001
+    ],
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "page": "ar brand",
+   "ms": [
+    39.9,
+    34.7
+   ],
+   "queries": [
+    11,
+    11
+   ],
+   "settings_reads": [
+    172,
+    7
+   ],
+   "html_gzip": [
+    22269,
+    22323
+   ],
+   "css_raw": [
+    279344,
+    279628
+   ],
+   "css_gzip": [
+    50169,
+    50257
+   ],
+   "scripts": [
+    11,
+    11
+   ],
+   "cls": [
+    [
+     "-",
+     "-"
+    ],
+    [
+     "-",
+     "-"
+    ]
+   ]
+  },
+  {
+   "page": "ar cart",
+   "ms": [
+    33.9,
+    34.3
+   ],
+   "queries": [
+    11,
+    11
+   ],
+   "settings_reads": [
+    144,
+    5
+   ],
+   "html_gzip": [
+    48944,
+    49426
+   ],
+   "css_raw": [
+    280128,
+    280412
+   ],
+   "css_gzip": [
+    50263,
+    50351
+   ],
+   "scripts": [
+    9,
+    10
+   ],
+   "cls": [
+    [
+     0,
+     0.0001
+    ],
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "page": "ar checkout",
+   "ms": [
+    37.4,
+    39.2
+   ],
+   "queries": [
+    14,
+    14
+   ],
+   "settings_reads": [
+    94,
+    5
+   ],
+   "html_gzip": [
+    49798,
+    49927
+   ],
+   "css_raw": [
+    350656,
+    350940
+   ],
+   "css_gzip": [
+    63195,
+    63283
+   ],
+   "scripts": [
+    18,
+    18
+   ],
+   "cls": [
+    [
+     0,
+     0.0001
+    ],
+    [
+     0,
+     0.0001
+    ]
+   ]
+  }
+ ],
+ "prefetch_before": {
+  "en product": {
+   "href": "/product/black-rice-probiotics-barrier-essence/",
+   "deliveryType": "navigational-prefetch",
+   "used": true
+  },
+  "en category": {
+   "href": "/collections/toners/",
+   "deliveryType": "navigational-prefetch",
+   "used": true
+  },
+  "en brand": {
+   "href": "/brands/aplb/",
+   "deliveryType": "navigational-prefetch",
+   "used": true
+  },
+  "ar product": {
+   "href": "/ar/product/black-rice-probiotics-barrier-essence/",
+   "deliveryType": "navigational-prefetch",
+   "used": true
+  },
+  "ar category": {
+   "href": "/ar/collections/toners/",
+   "deliveryType": "navigational-prefetch",
+   "used": true
+  },
+  "ar brand": {
+   "href": "/ar/brands/aplb/",
+   "deliveryType": "navigational-prefetch",
+   "used": true
+  }
+ },
+ "prefetch_after": {
+  "en product": {
+   "href": "/product/black-rice-probiotics-barrier-essence/",
+   "deliveryType": "navigational-prefetch",
+   "used": true
+  },
+  "en category": {
+   "href": "/collections/toners/",
+   "deliveryType": "navigational-prefetch",
+   "used": true
+  },
+  "en brand": {
+   "href": "/brands/aplb/",
+   "deliveryType": "navigational-prefetch",
+   "used": true
+  },
+  "ar product": {
+   "href": "/ar/product/black-rice-probiotics-barrier-essence/",
+   "deliveryType": "navigational-prefetch",
+   "used": true
+  },
+  "ar category": {
+   "href": "/ar/collections/toners/",
+   "deliveryType": "navigational-prefetch",
+   "used": true
+  },
+  "ar brand": {
+   "href": "/ar/brands/aplb/",
+   "deliveryType": "navigational-prefetch",
+   "used": true
+  }
+ }
+}

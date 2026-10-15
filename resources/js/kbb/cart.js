@@ -182,7 +182,8 @@ const apply = (data) => {
     // Same wording and brackets as the Blade, or the heading changes shape the
     // first time a quantity is touched.
     const lead = document.getElementById('cartLead');
-    if (lead) lead.textContent = `(${data.count} ${data.count === 1 ? 'item' : 'items'})`;
+    // `lead` arrives only on a page that is not English (Lane AR stage 2).
+    if (lead) lead.textContent = typeof data.lead === 'string' ? data.lead : `(${data.count} ${data.count === 1 ? 'item' : 'items'})`;
 
     /* THE DEFECT: `data.error` was interpolated into this template string raw,
        and the result set as innerHTML. It is the ONLY value in this file that

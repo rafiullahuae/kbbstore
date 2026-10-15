@@ -168,12 +168,12 @@ class Seo
         }
 
         $s = SeoSettings::map();
-        $siteName = SeoSettings::firstFilled(
+        $siteName = \App\Support\ArabicWording::of(SeoSettings::firstFilled(
             $s['seo_site_name'] ?? null,
             $s['store_name'] ?? null,
             \App\Support\BrandName::appName(),
             'K-Beauty Bliss'
-        );
+        ));
         $sep      = SeoSettings::from($s, 'seo_separator');
         $base     = rtrim(SeoSettings::firstFilled($s['site_url'] ?? null, (string) config('app.url')), '/');
 
@@ -226,6 +226,10 @@ class Seo
         $ctx['_seo_keywords'] = $kbbKeywords;
         if ($kbbKeywords !== [] && \App\Services\Seo\Keywords\KeywordConfig::metaOn($s)) {
             $out[] = '<meta name="keywords" content="' . $e(implode(', ', array_slice($kbbKeywords, 0, 10))) . '">';
+        }
+        if (\App\Support\ArabicPreview::active()) {
+            // Lane AR stage 2: a page shown through the private preview link is never indexed.
+            $robots = 'noindex, nofollow';
         }
         $out[] = '<meta name="robots" content="' . $e($robots) . '">';
         if ($url)   $out[] = '<link rel="canonical" href="' . $e($url) . '">';
@@ -455,12 +459,12 @@ class Seo
     public static function titleFor(array $ctx): string
     {
         $s = SeoSettings::map();
-        $siteName = SeoSettings::firstFilled(
+        $siteName = \App\Support\ArabicWording::of(SeoSettings::firstFilled(
             $s['seo_site_name'] ?? null,
             $s['store_name'] ?? null,
             \App\Support\BrandName::appName(),
             'K-Beauty Bliss'
-        );
+        ));
         $sep = SeoSettings::from($s, 'seo_separator');
 
         return self::titleOf($ctx, $s, $siteName, $sep, self::tokens($ctx, $sep, $siteName));
@@ -625,12 +629,12 @@ class Seo
         $s = SeoSettings::map();
         $sep ??= SeoSettings::from($s, 'seo_separator');
 
-        $tokens ??= self::tokens($ctx, $sep, SeoSettings::firstFilled(
+        $tokens ??= self::tokens($ctx, $sep, \App\Support\ArabicWording::of(SeoSettings::firstFilled(
             $s['seo_site_name'] ?? null,
             $s['store_name'] ?? null,
             \App\Support\BrandName::appName(),
             'K-Beauty Bliss'
-        ));
+        )));
 
         /*
          * The home page's own sentence naming the brand once, when the owner
@@ -645,7 +649,8 @@ class Seo
         }
         $desc = $ctx['description']
             ?? ((($ctx['type'] ?? null) === 'home') ? ($s['seo_home_description'] ?? $brandHome) : null)
-            ?? ($s['seo_default_description'] ?? null)
+            // (Lane AR round 2) the shipped sitewide description in Arabic on /ar.
+            ?? (isset($s['seo_default_description']) ? \App\Support\ArabicWording::of((string) $s['seo_default_description']) : null)
             ?? '';
         $desc = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) $desc)));
         // Placeholders reach the description too — the same fields accept them
@@ -1099,12 +1104,12 @@ class Seo
     public static function inspect(array $ctx): array
     {
         $s = SeoSettings::map();
-        $siteName = SeoSettings::firstFilled(
+        $siteName = \App\Support\ArabicWording::of(SeoSettings::firstFilled(
             $s['seo_site_name'] ?? null,
             $s['store_name'] ?? null,
             \App\Support\BrandName::appName(),
             'K-Beauty Bliss'
-        );
+        ));
         $base = rtrim(SeoSettings::firstFilled($s['site_url'] ?? null, (string) config('app.url')), '/');
         $title = trim((string) ($ctx['title'] ?? '')) ?: $siteName;
         $desc = trim(preg_replace('/\s+/', ' ', strip_tags((string) ($ctx['description'] ?? ''))));

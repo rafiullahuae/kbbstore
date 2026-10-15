@@ -130,7 +130,9 @@ class AccountController extends Controller
 
         /** @var Order $order */
         $order = $customer->orders()
-            ->with(['items' => fn ($q) => $q->orderBy('id'), 'items.product'])
+            // (Lane AR round 2) the brands too on /ar only, for their Arabic names -- one
+            // query, and none on an English page.
+            ->with(['items' => fn ($q) => $q->orderBy('id'), \App\Support\ArabicWording::on() ? 'items.product.brand' : 'items.product'])
             ->findOrFail($id);
 
         return view('store.account.order-detail', [

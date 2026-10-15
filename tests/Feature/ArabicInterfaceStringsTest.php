@@ -67,14 +67,14 @@ it('serves a typed Arabic interface string on an Arabic page', function () {
         ->and($html)->not->toContain('<b>Your bag is empty</b>');
 
     /*
-     * "Your bag is empty" is still on this page, once, and that is correct: the
-     * mini-cart drawer's wording is an ADMIN SETTING (Appearance → Cart panel,
-     * `txt_empty`), not an interface string, and this lane deliberately left
-     * every settings-backed string alone — a second English source for a value
-     * the owner types would be one of the two silently wrong. It reaches Arabic
-     * through the catalogue half of the translation module, not through here.
+     * The mini-cart drawer's wording is an ADMIN SETTING (Appearance → Cart
+     * panel, `txt_empty`), not an interface string. Lane AR round 2 gave each
+     * of its words an Arabic twin on the same screen (Cart panel → Arabic
+     * wording), so on /ar the drawer says it in Arabic too and the English
+     * line is gone from the page entirely.
      */
-    expect(substr_count($html, 'Your bag is empty'))->toBe(1);
+    expect(substr_count($html, 'Your bag is empty'))->toBe(0)
+        ->and($html)->toContain('حقيبتكِ فارغة.');
 });
 
 it('falls back to English for a key nobody has translated yet', function () {

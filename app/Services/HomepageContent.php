@@ -171,6 +171,8 @@ final class HomepageContent
             'default' => '',
             'help' => 'Empty hides the button. The whole slide is still a link.',
         ],
+        /* Lane AR round 2: each word field's Arabic twin, shown on /ar only. */
+        ...\App\Support\HomeArabic::SLIDE_SCHEMA,
         'url' => [
             'type' => 'text',
             'label' => 'Where the slide links',
@@ -269,6 +271,8 @@ final class HomepageContent
         /* ── (Lane TS) The trust strip: homepage, Super Sale and above the
            footer. Page-wide like the headings, so after them — PAGE_TABS. ── */
         ...\App\Support\TrustStrip::SCHEMA,
+        /* Lane AR round 2: the Arabic twins, one tab (HomeArabic::TABS). */
+        ...\App\Support\HomeArabic::SCHEMA,
     ];
 
     /**
@@ -278,7 +282,7 @@ final class HomepageContent
      * claim it, so it is named here instead and HomepageLiveEditTest counts it
      * as claimed by the page.
      */
-    public const PAGE_TABS = ['headings', 'truststrip'];
+    public const PAGE_TABS = ['headings', 'truststrip', 'arabic'];  // Lane AR round 2: the Arabic twins of every section's words
 
     /**
      * tab => [label, description, keys] — the shape ModuleSchema::tabs() reads.
@@ -319,6 +323,8 @@ final class HomepageContent
         ...\App\Support\HomeStrips::TABS,
         /* Lane TS: the trust strip, on the homepage and beyond it. */
         ...\App\Support\TrustStrip::TABS,
+        /* Lane AR round 2: every heading, line and button above, in Arabic. */
+        ...\App\Support\HomeArabic::TABS,
     ];
 
     /**
@@ -350,6 +356,7 @@ final class HomepageContent
             'heading' => "Age-R Booster Pro\nwith a free gift set",
             'text' => 'The device everyone is asking about, bundled with the PDRN glow set.',
             'button' => 'Shop Medicube',
+            ...\App\Support\HomeArabic::SLIDES[0],
             'url' => '/shop/',
             'bg_from' => '#F7C6D4', 'bg_mid' => '#E0567B', 'bg_to' => '#A82F53',
             'card_from' => '#FFE6EE', 'card_to' => '#EFA8BE',
@@ -359,6 +366,7 @@ final class HomepageContent
             'heading' => "The authentic\nK-beauty store",
             'text' => 'Every product original, every order checked. Freebies with every parcel.',
             'button' => 'Shop all brands',
+            ...\App\Support\HomeArabic::SLIDES[1],
             'url' => '/brands/',
             'bg_from' => '#CDE6DA', 'bg_mid' => '#3E8F6E', 'bg_to' => '#2A6A50',
             'card_from' => '#E4F3EC', 'card_to' => '#9FCBB6',
@@ -368,6 +376,7 @@ final class HomepageContent
             'heading' => "Pay later,\ndelivered in 1–3 days",
             'text' => "Split any order into four.\nFree delivery across the UAE over {free_from}.",
             'button' => 'Shop the Super Sale',
+            ...\App\Support\HomeArabic::SLIDES[2],
             'url' => '/shop/?on_sale=1',
             'bg_from' => '#FFE1A8', 'bg_mid' => '#E8A33D', 'bg_to' => '#C07F1E',
             'card_from' => '#FFF2D9', 'card_to' => '#EFCE8A',
@@ -391,7 +400,9 @@ final class HomepageContent
     {
         $figures = $this->figures();
 
-        return array_map(fn (array $s) => $this->fill($this->render($s), $figures), $this->editable());
+        $arabic = \App\Support\HomeArabic::on();
+
+        return array_map(fn (array $s) => $this->fill($this->render($arabic ? \App\Support\HomeArabic::slide($s) : $s), $figures), $this->editable());
     }
 
     /**
@@ -607,6 +618,8 @@ final class HomepageContent
 
             $slide['heading'] = $this->normaliseLines($slide['heading']);
             $slide['text'] = $this->normaliseLines($slide['text']);
+            $slide['heading_ar'] = $this->normaliseLines($slide['heading_ar']);
+            $slide['text_ar'] = $this->normaliseLines($slide['text_ar']);
 
             $path = self::path($slide['url']);
 
@@ -771,6 +784,8 @@ final class HomepageContent
 
         $out['heading'] = $this->normaliseLines($out['heading']);
         $out['text'] = $this->normaliseLines($out['text']);
+        $out['heading_ar'] = $this->normaliseLines($out['heading_ar']);
+        $out['text_ar'] = $this->normaliseLines($out['text_ar']);
         $out['url'] = self::path($out['url']) ?? (string) self::SLIDE_SCHEMA['url']['default'];
 
         return $out;

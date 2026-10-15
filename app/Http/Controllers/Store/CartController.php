@@ -100,7 +100,7 @@ class CartController extends Controller
         $product = Product::query()->select(self::LINE_COLUMNS)->visible()->find($data['product_id']);
 
         if (! $product) {
-            return response()->json(['ok' => false, 'error' => 'That product is not available.'], 404);
+            return response()->json(['ok' => false, 'error' => __('store.wording.msg_product_na')], 404);
         }
 
         $variant = null;
@@ -108,7 +108,7 @@ class CartController extends Controller
             $variant = ProductVariant::where('product_id', $product->id)->find($data['variant_id']);
 
             if (! $variant) {
-                return response()->json(['ok' => false, 'error' => 'That option is not available.'], 404);
+                return response()->json(['ok' => false, 'error' => __('store.wording.msg_option_na')], 404);
             }
         }
 
@@ -136,12 +136,12 @@ class CartController extends Controller
         if (! $variant && $product->requiresVariant()) {
             return response()->json([
                 'ok' => false,
-                'error' => 'Choose an option before adding this product to your bag.',
+                'error' => __('store.wording.msg_choose_option'),
             ], 422);
         }
 
         if (($variant?->stock_status ?? $product->stock_status) !== 'instock') {
-            return response()->json(['ok' => false, 'error' => 'That product is sold out.'], 422);
+            return response()->json(['ok' => false, 'error' => __('store.wording.msg_sold_out')], 422);
         }
 
         $cart = $this->carts->current($request);
@@ -791,6 +791,11 @@ class CartController extends Controller
             'page' => $wantsPage ? view('store.cart-inner', $payload)->render() : null,
             'subtotal' => Money::format($payload['totals']['subtotal']),
             'total' => Money::format($payload['totals']['total']),
-        ]);
+        ] + (\App\Support\Locale::isDefault() ? [] : [
+            // (Lane AR stage 2) The page heading's "(n items)", in the page's own
+            // language and plural rules; cart.js used to build it in English.
+            // Absent in English, so an English answer is the one it always was.
+            'lead' => '(' . trans_choice('store.cart.item_count', $payload['totals']['item_count']) . ')',
+        ]));
     }
 }

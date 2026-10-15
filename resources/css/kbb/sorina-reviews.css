@@ -229,3 +229,8 @@
   .sr-fld input[type=email],
   .sr-fld textarea{font-size:16px}
 }
+
+/* Lane AR round 2: the rating bars fill from the right in Arabic, so the
+   gradient runs the other way too -- its dark end stays at the bar's leading
+   edge, as in English. RtlRound2Test pins it. */
+[dir="rtl"] .sr-bf{background:linear-gradient(270deg,var(--sr-accent-soft),var(--sr-accent))}

@@ -35,6 +35,9 @@ final class BrandName
 {
     public const NAME = 'K-Beauty Bliss';
 
+    /** The name as the Arabic shop writes it (Lane AR round 2; the owner's glossary spelling). */
+    public const NAME_AR = 'كي بيوتي بليس';
+
     /** WebSite/Organization alternateName, exactly as the owner's brief lists them. */
     public const ALTERNATES = ['KBeauty Bliss', 'K Beauty Bliss', 'Kbeautybliss', 'K-Beauty Bliss UAE'];
 
@@ -147,7 +150,8 @@ final class BrandName
     {
         $fold = static fn (string $s): string => (string) preg_replace('/[^a-z]/', '', mb_strtolower($s));
 
-        return $fold($name) === $fold(self::NAME);
+        // (Lane AR round 2) the Arabic shop names itself in Arabic -- the same shop.
+        return $fold($name) === $fold(self::NAME) || trim($name) === self::NAME_AR;
     }
 
     /**
@@ -179,7 +183,8 @@ final class BrandName
     public static function homeTitle(string $locale): string
     {
         return $locale === 'ar'
-            ? self::NAME.' — متجر العناية بالبشرة الكورية وكي بيوتي في الإمارات'
+            // (Lane AR round 2) the owner: nothing in Latin letters on /ar -- the name too.
+            ? self::NAME_AR.' — متجر العناية بالبشرة الكورية والجمال الكوري في الإمارات'
             : self::NAME.' — Korean Skincare & K-Beauty Store in UAE';
     }
 
@@ -187,7 +192,7 @@ final class BrandName
     public static function homeDescription(string $locale): string
     {
         return $locale === 'ar'
-            ? self::NAME.' متجر إلكتروني للعناية بالبشرة الكورية في الإمارات: منتجات كي بيوتي أصلية من أشهر العلامات الكورية — سيروم، تونر، واقي شمس والمزيد، مع التوصيل داخل الإمارات.'
+            ? self::NAME_AR.' متجر إلكتروني للعناية بالبشرة الكورية في الإمارات: منتجات جمال كوري أصلية من أشهر العلامات الكورية — سيروم وتونر وواقي شمس والمزيد، مع التوصيل داخل الإمارات.'
             : self::NAME.' is the UAE online store for authentic Korean skincare: original K-beauty serums, toners, sunscreens and more from the top Korean brands, delivered across the Emirates.';
     }
 }

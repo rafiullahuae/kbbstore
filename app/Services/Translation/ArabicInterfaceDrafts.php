@@ -131,7 +131,8 @@ final class ArabicInterfaceDrafts
      */
     public static function all(): array
     {
-        return array_merge(
+        // Lane AR round 2: grammar and wording corrections, applied over the drafts.
+        return ArabicDraftCorrections::apply(array_merge(
             self::chrome(),
             self::accountPanel(),
             self::catalogue(),
@@ -163,7 +164,25 @@ final class ArabicInterfaceDrafts
             self::laneCtBlocked(),
             self::laneNtSiteAppPush(),
             self::lanePnPushMessages(),
-        );
+            self::laneAr2Wording(),
+        ));
+    }
+
+    /**
+     * Lane AR round 2 — the shipped English of settings (App\Support\ArabicWording),
+     * as `store.wording.*` drafts. Reviewed under Translation → Strings.
+     *
+     * @return array<string, string>
+     */
+    private static function laneAr2Wording(): array
+    {
+        $out = [];
+
+        foreach (\App\Support\ArabicWording::ARABIC as $key => $arabic) {
+            $out['store.'.$key] = $arabic;
+        }
+
+        return $out;
     }
 
     /**

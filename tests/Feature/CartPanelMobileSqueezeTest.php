@@ -184,8 +184,9 @@ it('sends the touch list and both breakpoints to the screen rather than repeatin
     expect(array_column($body['tabs'], 'key'))
         // `coupon` appended LAST by Lane QK3 (the owner's coupon hint), so the
         // first six keep their places. `fdline` after it (2.60.517, the free
-        // delivery line the owner asked for), so every tab before keeps its.
-        ->toBe(['desktop', 'mobile', 'content', 'behaviour', 'wording', 'colour', 'coupon', 'fdline']);
+        // delivery line the owner asked for), then `wording_ar` (Lane AR round
+        // 2), so every tab before each keeps its index.
+        ->toBe(['desktop', 'mobile', 'content', 'behaviour', 'wording', 'colour', 'coupon', 'fdline', 'wording_ar']);
 });
 
 /* ------------------------------------------------------------------------

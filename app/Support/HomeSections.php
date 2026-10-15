@@ -315,8 +315,10 @@ final class HomeSections
     public static function text(array $c, string $key): string
     {
         $default = (string) (HomepageContent::SCHEMA[$key]['default'] ?? '');
+        $text = trim(RichText::toText((string) ($c[$key] ?? $default)));
 
-        return trim(RichText::toText((string) ($c[$key] ?? $default)));
+        // (Lane AR round 2) On /ar only: the field's Arabic twin. See HomeArabic.
+        return HomeArabic::on() ? HomeArabic::pick($c, $key, $text, $default) : $text;
     }
 
     /**
@@ -562,6 +564,11 @@ final class HomeSections
     public static function about(array $c, string $body): array
     {
         $frame = self::frame($c, 'ab', false);
+
+        // (Lane AR round 2) On /ar only: the Arabic paragraphs. See HomeArabic.
+        if (HomeArabic::on()) {
+            $body = HomeArabic::about($c, $body);
+        }
 
         $paragraphs = array_values(array_filter(
             array_map('trim', preg_split('/\R\s*\R/u', str_replace("\r\n", "\n", $body)) ?: []),

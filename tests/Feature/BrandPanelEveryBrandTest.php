@@ -308,8 +308,10 @@ it('says Read more / Read less in both languages', function () {
 
     expect($en['store.brands.read_more'] ?? null)->toBe('Read more')
         ->and($en['store.brands.read_less'] ?? null)->toBe('Read less')
-        ->and($ar['store.brands.read_more'] ?? null)->toBe('اقرأ المزيد')
-        ->and($ar['store.brands.read_less'] ?? null)->toBe('اقرأ أقل');
+        // Lane AR round 2 (the owner: "as per the Arabic grammar"): addressed
+        // to her, and "Read less" as the shop's own "show less".
+        ->and($ar['store.brands.read_more'] ?? null)->toBe('اقرئي المزيد')
+        ->and($ar['store.brands.read_less'] ?? null)->toBe('عرض أقل');
 });
 
 /* ========================================================== migration */

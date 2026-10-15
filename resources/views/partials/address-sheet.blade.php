@@ -1059,4 +1059,7 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
   });
 })();
 </script>
+@if (\App\Support\Locale::isRtl())
+@include('partials.rtl-cart-rail')
+@endif
 @endpush

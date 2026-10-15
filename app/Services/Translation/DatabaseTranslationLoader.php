@@ -91,6 +91,13 @@ final class DatabaseTranslationLoader implements Loader
         // stays genuinely empty and Laravel's own fallback runs.
         $code = $locale === Locale::DEFAULT ? $english : [];
 
+        // (Lane AR stage 2) The framework's validation messages have no Arabic
+        // of their own; the shop ships them (App\Support\ArabicValidation).
+        // A published row still wins, and English is not touched.
+        if ($locale === 'ar' && $group === 'validation') {
+            $code = \App\Support\ArabicValidation::LINES;
+        }
+
         $database = $this->fromDatabase($locale, $group);
 
         $merged = array_replace($base, $code, $database);
@@ -145,11 +152,32 @@ final class DatabaseTranslationLoader implements Loader
 
         foreach (TranslationStore::uiMap($locale) as $key => $value) {
             if (str_starts_with($key, $prefix)) {
-                $out[substr($key, strlen($prefix))] = $value;
+                $out[substr($key, strlen($prefix))] = self::isolateHashtags($value);
             }
         }
 
         return $out;
+    }
+
+    /**
+     * A Latin hashtag inside a translated line, held left-to-right (Lane AR
+     * round 2).
+     *
+     * "لحظات #KBeautyBliss" painted as "KBeautyBliss# لحظات": in a right-to-
+     * left line the bidi algorithm gives the `#` (a neutral) to the Arabic
+     * side and the word to the Latin side, so the sign lands at the far end of
+     * the word. An LRI … PDI isolate around the whole tag keeps `#` and word
+     * together, in reading order, whatever surrounds them. Only translated rows
+     * reach this method -- English is served from InterfaceStrings -- and the
+     * strpos() gate keeps the cost to the handful of lines that carry a `#`.
+     */
+    private static function isolateHashtags(string $value): string
+    {
+        if (! str_contains($value, '#')) {
+            return $value;
+        }
+
+        return (string) preg_replace('/(?<![\w\x{2066}])#[A-Za-z][A-Za-z0-9_]*/u', "\u{2066}\$0\u{2069}", $value);
     }
 
     /**

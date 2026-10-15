@@ -75,6 +75,30 @@ class SetLocaleFromPath
 {
     public function handle(Request $request, Closure $next): Response
     {
+        /*
+         * THE PRIVATE ARABIC PREVIEW LINK (Lane AR, stage 2), decided before
+         * the locale is, because it is what lets /ar exist for one browser
+         * while Arabic is off. See App\Support\ArabicPreview. A visitor with
+         * no preview cookie and no link pays one array lookup here.
+         */
+        // class_exists: this runs on EVERY request, so a request that meets
+        // this file before ArabicPreview.php has landed (or an opcode cache
+        // still holding the old class map) serves the shop as before instead
+        // of failing every page. Autoloads once; a constant-time check after.
+        $preview = class_exists(\App\Support\ArabicPreview::class);
+
+        $early = $preview ? \App\Support\ArabicPreview::begin($request, $request->getPathInfo() ?: '/') : null;
+        if ($early !== null) {
+            return $early;
+        }
+
+        $response = $this->resolve($request, $next);
+
+        return $preview && \App\Support\ArabicPreview::active() ? \App\Support\ArabicPreview::decorate($response) : $response;
+    }
+
+    private function resolve(Request $request, Closure $next): Response
+    {
         $path = $request->getPathInfo() ?: '/';
 
         [$locale, $rest] = Locale::splitPath($path);

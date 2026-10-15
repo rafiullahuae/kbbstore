@@ -93,7 +93,7 @@
 @if ($ctcSide)
     <aside class="ctc-panel ctc-side">
 @if ($hub['socials'] !== [])
-        <div class="ctc-strip"><h2 id="ctc-follow">{{ __('store.contact.follow_title') }}</h2><div class="ctc-soc" aria-labelledby="ctc-follow">@foreach ($hub['socials'] as $ctcSoc)<a href="{{ $ctcSoc['href'] }}" aria-label="{{ $ctcSoc['name'] }}" target="_blank" rel="noopener">{!! $ctcSoc['icon'] !!}</a>@endforeach</div></div>
+        <div class="ctc-strip"><h2 id="ctc-follow">{{ __('store.contact.follow_title') }}</h2><div class="ctc-soc" aria-labelledby="ctc-follow">@foreach ($hub['socials'] as $ctcSoc)<a href="{{ $ctcSoc['href'] }}" aria-label="{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($ctcSoc['name']) : (string) ($ctcSoc['name'])) }}" target="_blank" rel="noopener">{!! $ctcSoc['icon'] !!}</a>@endforeach</div></div>
 @endif
 @if ($hub['hours'] !== [])
         <div class="ctc-strip"><h2 id="ctc-hours">{{ __('store.contact.hours_title') }}</h2><ul class="ctc-hours" aria-labelledby="ctc-hours">@foreach ($hub['hours'] as $ctcLine)<li>{{ $ctcLine }}</li>@endforeach</ul></div>

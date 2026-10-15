@@ -59,8 +59,9 @@ class BundleService
             $clean[$qty] = [
                 'qty' => $qty,
                 'discount' => $discount,
-                'label' => (string) ($t['label'] ?? ($qty . ' units')),
-                'tag' => (string) ($t['tag'] ?? ''),
+                // (Lane AR round 2) a shipped tier's words in Arabic on /ar; English untouched.
+                'label' => \App\Support\ArabicWording::of((string) ($t['label'] ?? ($qty . ' units'))),
+                'tag' => \App\Support\ArabicWording::of((string) ($t['tag'] ?? '')),
             ];
         }
 

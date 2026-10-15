@@ -64,7 +64,7 @@
     <input id="payment_method_{{ $g['id'] }}" type="radio" class="input-radio" name="payment_method" value="{{ $g['id'] }}" @checked($g['id'] === $payChecked) data-order_button_text="" />
 
     <label for="payment_method_{{ $g['id'] }}">
-        {{ $g['title'] }}
+        {{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($g['title']) : (string) ($g['title'])) }}
         {{-- The fee, right on the option — not only in the paragraph below,
              which is easy to miss until after it has already been chosen. --}}
         @if (!empty($g['fee_html']))<span class="codfee">{!! $g['fee_html'] !!}</span>@endif{!! empty($payBoxes['logos'][$g['id']]) ? '' : '<span class="pay-logo pay-logo-'.e($g['id']).'" aria-hidden="true">'.$payBoxes['logos'][$g['id']].'</span>' !!}    </label>
@@ -83,7 +83,7 @@
                  card fields away with the words, which is a checkout that
                  cannot take a card. --}}
             <div class="payment_box payment_method_{{ $g['id'] }}">
-            @if ($g['description'])<p>{!! $g['description'] !!}</p>@endif
+            @if ($g['description'])<p>{!! (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::payLine($g['description']) : (string) ($g['description'])) !!}</p>@endif
             {{-- The card fields, for the one gateway that has any. Inside the
                  same .payment_box as its description, so the existing
                  `:has(input:checked)` rule in kbb-checkout.css reveals them

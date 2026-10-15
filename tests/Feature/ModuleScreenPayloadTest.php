@@ -316,6 +316,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // mobile-menu gains `account_style` ("Account box", Small box / List rows,
     // default box) after account_label, and the "Foot of the sheet" group
     // lists it. 14 lines in, 1 changed (the group's last comma).
+    // ▲ Lane AR round 2, spliced in, not regenerated: cart-panel gains a last
+    // tab, wording_ar ("Arabic wording"), the ten txt_*_ar twins of the
+    // Wording tab. Every earlier tab and field is byte-identical.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
@@ -772,7 +775,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // delivery line ("Congrats! You’ve got free delivery", the owner's pick).
     // 836 -> 837 (2.60.518): cart-panel fd_countries, where the free delivery
     // line may show ("allow us to choose the country").
-    expect($compared)->toBe(837, 'the number of controls drawn changed');
+    // 837 -> 847 (Lane AR round 2, merged after 2.60.518): cart-panel's Arabic
+    // wording tab, the ten txt_*_ar twins of the Wording tab.
+    expect($compared)->toBe(847, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

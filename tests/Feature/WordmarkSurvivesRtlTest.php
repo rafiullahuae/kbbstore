@@ -139,7 +139,9 @@ it('renders the wordmark in one piece on an arabic page', function () {
     // ▲ Lane LG2: the lotus lockup ships on, and its name is the same one
     // isolating element -- `<bdi class="lgx-w">K-Beauty<em>Bliss</em></bdi>`
     // inside the logo link -- so either shape passes and neither may lose it.
-    expect((bool) preg_match('/<a class="logo"[^>]*><bdi>|<a class="logo lgx"[^>]*>(?:(?!<\/a>).)*<bdi class="lgx-w">[^<]+<em>[^<]+<\/em><\/bdi>/s', $html))
+    // (Lane AR round 3: the lockup's class may carry more after `lgx` --
+    // `lgx-ar` on /ar, which draws the Arabic name -- in the same one <bdi>.)
+    expect((bool) preg_match('/<a class="logo"[^>]*><bdi>|<a class="logo lgx[^"]*"[^>]*>(?:(?!<\/a>).)*<bdi class="lgx-w">[^<]+<em>[^<]+<\/em><\/bdi>/s', $html))
         ->toBeTrue('the rendered Arabic header has no <bdi> around its wordmark');
 
     // And Text only (as before) is still the old <bdi> wordmark.

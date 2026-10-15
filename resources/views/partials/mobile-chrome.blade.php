@@ -44,7 +44,7 @@
     @if ($cfg['show_search'])
         <div class="mm-srch">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
-            <input type="search" id="mmFilter" placeholder="{{ $cfg['search_text'] }}" autocomplete="off">
+            <input type="search" id="mmFilter" placeholder="{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($cfg['search_text']) : (string) ($cfg['search_text'])) }}" autocomplete="off">
         </div>
     @endif
 @if ($mmChips = $mm->chipsForRender())
@@ -108,7 +108,7 @@
         <div class="mm-foot">
             <a class="mm-wa" href="https://wa.me/{{ \App\Support\SupportContact::whatsappDigits() }}">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.8.7.8-2.8-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1l-.7.9c-.1.2-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.1-.2 0-.4.1-.5l.4-.5c.1-.1.1-.3 0-.4l-.7-1.7c-.2-.4-.4-.4-.5-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3 1 2.6 1.1 2.8.1.2 1.9 3 4.7 4.1 1.7.6 2.3.7 3.1.6.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1 0-.1-.2-.2-.4-.3Z"/></svg>
-                {{ $cfg['support_text'] }} · {{ $phone }}
+                {{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($cfg['support_text']) : (string) ($cfg['support_text'])) }} · {{ $phone }}
             </a>
         </div>
     @endif

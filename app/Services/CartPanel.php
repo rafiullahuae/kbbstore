@@ -198,6 +198,21 @@ class CartPanel
         'txt_empty_sub'    => ['text', 'Empty bag · line two', 'Add something glowy ✨', ''],
         'txt_browsed_none' => ['text', 'Nothing browsed yet', 'Nothing browsed yet.', ''],
 
+        // ── Wording · Arabic (Lane AR round 2) ──
+        // What /ar prints. Ships with the Arabic of the English defaults above;
+        // text() shows the English instead when the English has been rewritten
+        // and its Arabic has not, and an empty Arabic field means "the English".
+        'txt_tab_cart_ar'     => ['text', 'Cart tab · Arabic', 'السلة', 'Shown on the Arabic shop (/ar/). Empty: the English wording.'],
+        'txt_tab_browsed_ar'  => ['text', 'Browsed tab · Arabic', 'تصفّحتِها', 'Shown on /ar/. Empty: the English wording.'],
+        'txt_ship_away_ar'    => ['text', 'Free delivery · still to go · Arabic', 'يفصلكِ {amount} عن التوصيل المجاني', 'Shown on /ar/. Use {amount} where the figure should appear.'],
+        'txt_ship_done_ar'    => ['text', 'Free delivery · reached · Arabic', '🎉 حصلتِ على التوصيل المجاني!', 'Shown on /ar/. Empty: the English wording.'],
+        'txt_subtotal_ar'     => ['text', 'Subtotal label · Arabic', 'المجموع الفرعي', 'Shown on /ar/. Empty: the English wording.'],
+        'txt_btn_cart_ar'     => ['text', 'Left button · Arabic', 'السلة', 'Shown on /ar/. Empty: the English wording.'],
+        'txt_btn_checkout_ar' => ['text', 'Right button · Arabic', 'إتمام الطلب', 'Shown on /ar/. Empty: the English wording.'],
+        'txt_empty_ar'        => ['text', 'Empty bag · line one · Arabic', 'حقيبتكِ فارغة.', 'Shown on /ar/. Empty: the English wording.'],
+        'txt_empty_sub_ar'    => ['text', 'Empty bag · line two · Arabic', 'أضيفي شيئًا يمنحكِ الإشراقة ✨', 'Shown on /ar/. Empty: the English wording.'],
+        'txt_browsed_none_ar' => ['text', 'Nothing browsed yet · Arabic', 'لم تتصفّحي أي منتج بعد.', 'Shown on /ar/. Empty: the English wording.'],
+
         // ── Colour ──
         'accent'           => ['colour', 'Prices and the active tab', '#C13E63', ''],
         'checkout_bg'      => ['colour', 'Checkout button', '#C13E63', ''],
@@ -341,6 +356,11 @@ class CartPanel
                        ['fd_on', 'txt_fd', 'txt_fd_ar',
                         // 2.60.518, last so every field above keeps its place.
                         'fd_countries']],
+        // Lane AR round 2. After `coupon`, so every earlier tab keeps its index.
+        'wording_ar' => ['Arabic wording', 'Every word the panel prints, on the Arabic shop (/ar/). Ships in Arabic. Change an English line without changing its Arabic and /ar/ shows your English until you write the Arabic.',
+                       ['txt_tab_cart_ar', 'txt_tab_browsed_ar', 'txt_ship_away_ar', 'txt_ship_done_ar',
+                        'txt_subtotal_ar', 'txt_btn_cart_ar', 'txt_btn_checkout_ar',
+                        'txt_empty_ar', 'txt_empty_sub_ar', 'txt_browsed_none_ar']],
     ];
 
     public function __construct(private SettingsService $settings) {}
@@ -360,7 +380,44 @@ class CartPanel
 
     public function get(string $key): mixed
     {
+        // (Lane AR round 2) a wording key on /ar answers in Arabic -- the drawer
+        // asks get() for its words, so the Arabic needs no change to the view.
+        // The coupon line keeps its own Arabic rule (couponLine()), so it is left out.
+        if (str_starts_with($key, 'txt_') && $key !== 'txt_coupon' && isset(self::SCHEMA[$key.'_ar']) && \App\Support\Locale::current() === 'ar') {
+            return $this->text($key);
+        }
+
         return $this->all()[$key] ?? null;
+    }
+
+    /** all(), once per instance -- the drawer asks for ten words in one render. */
+    private ?array $wordsMemo = null;
+
+    /**
+     * One of the panel's words, in the page's language (Lane AR round 2).
+     *
+     * English: exactly get(). /ar: the `<key>_ar` twin when it is set, unless
+     * it is still the shipped Arabic of an English line the owner has since
+     * rewritten -- then his English, because the shipped Arabic no longer says
+     * what his English says.
+     */
+    public function text(string $key): string
+    {
+        $c = $this->wordsMemo ??= $this->all();
+        $english = (string) ($c[$key] ?? '');
+
+        if (\App\Support\Locale::current() !== 'ar' || ! isset(self::SCHEMA[$key.'_ar'])) {
+            return $english;
+        }
+
+        $shipped = (string) self::SCHEMA[$key.'_ar'][2];
+        $arabic = trim((string) ($c[$key.'_ar'] ?? ''));
+
+        if ($arabic === '' || ($arabic === $shipped && trim($english) !== trim((string) self::SCHEMA[$key][2]))) {
+            return $english;
+        }
+
+        return $arabic;
     }
 
     /** @param array<string, mixed> $values */

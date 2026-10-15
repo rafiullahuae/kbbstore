@@ -298,6 +298,8 @@ it('tells the screen which levers this admin may actually move', function () {
 
     expect($owner['can'])->toBe([
         'settings' => true, 'machine_run' => true, 'strings' => true, 'machine_field' => true,
+        // Lane AR stage 2: the private Arabic preview link, owner only.
+        'preview' => true,
     ])->and($owner['capability_note'])->toBeNull();
 
     $editor = test()->actingAs(fcAdmin('editor'), 'admin')
@@ -307,6 +309,7 @@ it('tells the screen which levers this admin may actually move', function () {
     // restated: two owner-only levers, the rest editor-and-up.
     expect($editor['can'])->toBe([
         'settings' => false, 'machine_run' => false, 'strings' => true, 'machine_field' => true,
+        'preview' => false,
     ]);
 
     expect($editor['capability_note'])->toBeString()

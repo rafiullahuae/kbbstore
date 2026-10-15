@@ -108,7 +108,7 @@ class AddressController extends Controller
     {
         $this->promote($this->find($id));
 
-        return $this->back('Default address updated.');
+        return $this->back(__('store.wording.msg_default_address'));
     }
 
     /* ---------------------------------------------------------------- */
@@ -125,7 +125,8 @@ class AddressController extends Controller
                 ->get(),
             'editing' => $editing,
             'types' => self::TYPES,
-            'countries' => Countries::NAMES,
+            // Arabic on /ar (Lane AR stage 2); the same English list otherwise.
+            'countries' => array_map(static fn (string $c): string => \App\Support\CountryNames::label($c), array_combine(array_keys(Countries::NAMES), array_keys(Countries::NAMES))),
             'stateList' => app(\App\Services\CheckoutPage::class)->stateList(),
         ]);
     }

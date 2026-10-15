@@ -181,7 +181,7 @@ class CartAddressController extends Controller
         if ($area === '' && $apartment === '') {
             return response()->json([
                 'ok' => false,
-                'error' => 'Fill in the area or the building.',
+                'error' => __('store.wording.msg_area_building'),
             ], 422);
         }
 

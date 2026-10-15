@@ -54,7 +54,7 @@
         <div class="policy-body">{!! \App\Support\BodyHeadings::demoteH1(\App\Support\Shortcodes::render($page->t('content'))) !!}</div>
 
         @if ($page->updated_at)
-            <p class="policy-date">{{ __('store.page.last_updated', ['date' => $page->updated_at->format('j F Y')]) }}</p>
+            <p class="policy-date">{{ __('store.page.last_updated', ['date' => (class_exists(\App\Support\LocalDate::class) ? \App\Support\LocalDate::format($page->updated_at, 'j F Y') : (($kbbD = $page->updated_at) ? $kbbD->format('j F Y') : ''))]) }}</p>
         @endif
     </article>
 {{-- The inquiry form, the social icons and the opening hours (Lane CT). --}}@if (! empty($contactHub))

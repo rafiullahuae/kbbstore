@@ -78,7 +78,12 @@ class SearchController extends Controller
         // map, no query), so choosing a set for Anua takes effect on the next
         // search rather than after the five minutes a cached payload lives.
         $payload = Cache::remember(
-            'kbb.search.' . md5(mb_strtolower($q)) . '.' . $this->limitKey() . '.' . $this->choicesKey() . '.s3',
+            // (Lane AR round 3) The language is part of the key for any page that
+            // is not English: the rows carry names and addresses in the page's own
+            // language, and one key for both served /ar's answer to the English
+            // box (and the reverse) for five minutes. English keeps its key.
+            'kbb.search.' . md5(mb_strtolower($q)) . '.' . $this->limitKey() . '.' . $this->choicesKey() . '.s3'
+                . (\App\Support\Locale::isDefault() ? '' : '.' . \App\Support\Locale::current()),
             300,
             fn () => $this->buildCorrecting($q)
         );
@@ -125,6 +130,15 @@ class SearchController extends Controller
      */
     private function buildCorrecting(string $q): array
     {
+        // (Lane AR round 3) An Arabic query is read in Arabic first (hybrid
+        // search, App\Support\ArabicSearch). When that finds nothing, it goes on
+        // down the path it always took -- the ordinary search, then the spelling
+        // fix that reads Arabic letters into the shop's English names. A query
+        // in Latin letters never enters this branch.
+        if (\App\Support\ArabicSearch::isArabic($q) && ($hybrid = $this->buildArabic($q)) !== null) {
+            return $hybrid + ['corrected' => null];
+        }
+
         $payload = $this->build($q) + $this->setCandidates($q);
 
         if (($payload['total'] ?? 0) > 0 || ($payload['sets'] ?? []) !== []
@@ -308,7 +322,7 @@ class SearchController extends Controller
         }
 
         if ($at === null) {
-            array_unshift($groups, ['key' => 'products', 'label' => 'Products', 'items' => []]);
+            array_unshift($groups, ['key' => 'products', 'label' => self::label('Products'), 'items' => []]);
             $at = 0;
         }
 
@@ -533,7 +547,7 @@ class SearchController extends Controller
 
                 $groups[] = [
                     'key' => 'products',
-                    'label' => 'Products',
+                    'label' => self::label('Products'),
                     'items' => $products->map(fn ($p) => [
                         // t(), not the column: the suggest dropdown is read by
                         // a shopper. The `colour` seed below stays on the
@@ -560,10 +574,10 @@ class SearchController extends Controller
             if ($cats->isNotEmpty()) {
                 $groups[] = [
                     'key' => 'categories',
-                    'label' => 'Categories',
+                    'label' => self::label('Categories'),
                     'items' => $cats->map(fn ($c) => [
                         'label' => $c->t('name'),
-                        'meta' => $c->products_count . ' products',
+                        'meta' => self::count((int) $c->products_count),
                         'colour' => \App\Support\Gradient::for($c->name),
                         'initials' => \App\Support\Gradient::initials($c->t('name')),
                         'url' => $c->url(),
@@ -711,7 +725,7 @@ class SearchController extends Controller
 
                 $groups[] = [
                     'key' => 'products',
-                    'label' => 'Products',
+                    'label' => self::label('Products'),
                     'items' => $products->map(fn ($p) => [
                         // t(), not the column: the suggest dropdown is read by
                         // a shopper. The `colour` seed below stays on the
@@ -739,10 +753,10 @@ class SearchController extends Controller
             if ($cats->isNotEmpty()) {
                 $groups[] = [
                     'key' => 'categories',
-                    'label' => 'Categories',
+                    'label' => self::label('Categories'),
                     'items' => $cats->map(fn ($c) => [
                         'label' => $c->t('name'),
-                        'meta' => $c->products_count . ' products',
+                        'meta' => self::count((int) $c->products_count),
                         'colour' => \App\Support\Gradient::for($c->name),
                         'initials' => \App\Support\Gradient::initials($c->t('name')),
                         'url' => $c->url(),
@@ -766,10 +780,10 @@ class SearchController extends Controller
             if ($brands->isNotEmpty()) {
                 $groups[] = [
                     'key' => 'brands',
-                    'label' => 'Brands',
+                    'label' => self::label('Brands'),
                     'items' => $brands->map(fn ($b) => [
                         'label' => $b->t('name'),
-                        'meta' => $b->products_count . ' products',
+                        'meta' => self::count((int) $b->products_count),
                         'colour' => \App\Support\Gradient::for($b->name),
                         'initials' => \App\Support\Gradient::initials($b->t('name')),
                         'url' => $b->url(),
@@ -801,7 +815,13 @@ class SearchController extends Controller
         $words = $header->trendingWords();
         $words = array_slice($words, 0, (int) $header->get($mobile ? 'trending_limit_mobile' : 'trending_limit'));
 
-        $popular = Cache::remember('kbb.search.starter.products', 900,
+        // (Lane AR round 3) trendingWords() gives /ar its words in Arabic. The
+        // cached lists below carry names in the page's language, so a page that
+        // is not English has keys of its own; English keeps its keys.
+        $ar = ! \App\Support\Locale::isDefault();
+        $suffix = $ar ? '.' . \App\Support\Locale::current() : '';
+
+        $popular = Cache::remember('kbb.search.starter.products' . $suffix, 900,
             fn () => Product::query()
                 /*
                  * `type` AND THE THREE SET COLUMNS. (Lane SG) This list had
@@ -849,10 +869,154 @@ class SearchController extends Controller
             'trending' => array_values($words),
             'recent' => $this->insights->popular((int) $header->get('search_recent_count')),
             'popular' => $popular,
-            'brands' => Cache::remember('kbb.search.starter.brands', 900,
-                fn () => Brand::query()->orderByDesc('id')->limit(6)->pluck('name')->all()),
+            'brands' => Cache::remember('kbb.search.starter.brands' . $suffix, 900,
+                fn () => $ar
+                    ? Brand::query()->select('id', 'name')->orderByDesc('id')->limit(6)->get()->map(fn ($b) => (string) $b->t('name'))->all()
+                    : Brand::query()->orderByDesc('id')->limit(6)->pluck('name')->all()),
             'layout' => $header->get('search_panel'),
         ]);
+    }
+
+    /**
+     * A group heading as the page's language says it. English: the literal it
+     * always was. (Lane AR round 3)
+     */
+    private static function label(string $english): string
+    {
+        return \App\Support\Locale::isDefault() ? $english : \App\Support\ArabicWording::of($english);
+    }
+
+    /** "12 products" under a category or a brand, in the page's language. */
+    private static function count(int $n): string
+    {
+        return \App\Support\Locale::isDefault()
+            ? $n . ' products'
+            : (string) __('store.wording.search_count', ['count' => $n]);
+    }
+
+    /**
+     * An Arabic query, read in Arabic (Lane AR round 3; App\Support\ArabicSearch).
+     *
+     * A query that is nothing but a brand ("أنوا") is answered exactly as the
+     * brand's English name is -- the same build() the English box runs, so the
+     * same rows in the same order. Anything else is matched word by word on the
+     * Arabic names, the brands and categories the words name, and their English
+     * shop terms, in the shapes buildGeneral() prints. Null when it finds
+     * nothing, so the caller goes on down the old path (spelling included);
+     * null too if anything at all goes wrong, for the same reason.
+     */
+    private function buildArabic(string $q): ?array
+    {
+        try {
+            $plan = \App\Support\ArabicSearch::plan($q);
+
+            if ($plan === []) {
+                return null;
+            }
+
+            $brandId = \App\Support\ArabicSearch::brandOnly($plan);
+            $brand = $brandId !== null
+                ? Cache::remember('kbb.search.brandnames', 900, fn () => Brand::query()->select('id', 'name', 'slug')->get())->firstWhere('id', $brandId)
+                : null;
+
+            if ($brand !== null) {
+                $payload = $this->build((string) $brand->name) + $this->setCandidates((string) $brand->name);
+            } else {
+                $payload = $this->buildPlan($plan) + ['sets' => [], 'sets_brand' => null];
+            }
+
+            if (($payload['total'] ?? 0) === 0 && ($payload['sets'] ?? []) === []) {
+                return null;
+            }
+
+            $payload['query'] = $q;
+            $payload['all_url'] = Url::to('/shop/') . '?s=' . urlencode($q);
+
+            return $payload;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /** buildGeneral()'s three groups for an Arabic plan. */
+    private function buildPlan(array $plan): array
+    {
+        $groups = [];
+        $withText = \App\Support\ArabicSearch::ready();
+
+        if ($n = (int) $this->header->get('search_results_max')) {
+            $products = Product::query()
+                ->select(self::CARD_COLUMNS)
+                ->visible()
+                ->with('brand:id,name,slug')
+                ->where(fn ($w) => \App\Support\ArabicSearch::apply($w, $plan, $withText))
+                ->orderByDesc('total_sales')
+                ->orderByDesc('id')
+                ->limit($n)
+                ->get();
+
+            if ($products->isNotEmpty()) {
+                \App\Support\SetPricing::prime($products);
+
+                $groups[] = [
+                    'key' => 'products',
+                    'label' => self::label('Products'),
+                    'items' => $products->map(fn ($p) => $this->productRow($p))->all(),
+                ];
+            }
+        }
+
+        $catIds = array_values(array_unique(array_merge([], ...array_map(fn ($g) => $g['c'], $plan))));
+
+        if ($catIds !== [] && ($n = (int) $this->header->get('search_limit_categories'))) {
+            $cats = $this->suggestCategories(Category::query()->select('id', 'name', 'slug')->whereIn('categories.id', $catIds), $n);
+
+            if ($cats->isNotEmpty()) {
+                $groups[] = [
+                    'key' => 'categories',
+                    'label' => self::label('Categories'),
+                    'items' => $cats->map(fn ($c) => [
+                        'label' => $c->t('name'),
+                        'meta' => self::count((int) $c->products_count),
+                        'colour' => \App\Support\Gradient::for($c->name),
+                        'initials' => \App\Support\Gradient::initials($c->t('name')),
+                        'url' => $c->url(),
+                    ])->all(),
+                ];
+            }
+        }
+
+        $brandIds = array_values(array_unique(array_merge([], ...array_map(fn ($g) => $g['b'], $plan))));
+
+        if ($brandIds !== [] && ($n = (int) $this->header->get('search_limit_brands'))) {
+            $brands = Brand::query()->select('id', 'name', 'slug')->whereIn('brands.id', $brandIds)
+                ->withCount(['products' => fn ($w) => $w->visible()])
+                ->groupBy('brands.id', 'brands.name', 'brands.slug')
+                ->having('products_count', '>', 0)
+                ->orderByDesc('products_count')
+                ->orderByDesc('brands.id')
+                ->limit($n)
+                ->get();
+
+            if ($brands->isNotEmpty()) {
+                $groups[] = [
+                    'key' => 'brands',
+                    'label' => self::label('Brands'),
+                    'items' => $brands->map(fn ($b) => [
+                        'label' => $b->t('name'),
+                        'meta' => self::count((int) $b->products_count),
+                        'colour' => \App\Support\Gradient::for($b->name),
+                        'initials' => \App\Support\Gradient::initials($b->t('name')),
+                        'url' => $b->url(),
+                    ])->all(),
+                ];
+            }
+        }
+
+        return [
+            'groups' => $groups,
+            'total' => array_sum(array_map(fn ($g) => count($g['items']), $groups)),
+        ];
     }
 
     /** Full results page — a real URL, so a search can be shared and indexed. */

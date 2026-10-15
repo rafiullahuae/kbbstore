@@ -749,9 +749,13 @@ class ProductController extends Controller
         $mins = (int) max(0, $now->diffInMinutes($next));
 
         return [
-            'remaining' => intdiv($mins, 60) . 'h ' . ($mins % 60) . 'm',
-            'ship' => $ship->format('D, j M'),
-            'date' => $eta?->format('D, j M'),
+            // (Lane AR round 2) "8h 13m" in English, "8 س 13 د" on /ar.
+            // (Lane AR round 2) through the translator on /ar only: English stays the literal it always was.
+            'remaining' => \App\Support\ArabicWording::on()
+                ? (string) __('store.wording.hours_minutes', ['h' => intdiv($mins, 60), 'm' => $mins % 60])
+                : intdiv($mins, 60) . 'h ' . ($mins % 60) . 'm',
+            'ship' => \App\Support\LocalDate::format($ship, 'D, j M'),
+            'date' => $eta === null ? null : \App\Support\LocalDate::format($eta, 'D, j M'),
         ];
     }
 

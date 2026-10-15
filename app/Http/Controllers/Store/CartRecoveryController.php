@@ -102,8 +102,8 @@ class CartRecoveryController extends Controller
     private function done(Request $request): JsonResponse|RedirectResponse
     {
         return $request->expectsJson()
-            ? response()->json(['ok' => true, 'message' => CartRecovery::CONFIRM_MESSAGE])
-            : back()->with('kbb_cart_reminder', CartRecovery::CONFIRM_MESSAGE);
+            ? response()->json(['ok' => true, 'message' => \App\Support\ArabicWording::of(CartRecovery::CONFIRM_MESSAGE)])
+            : back()->with('kbb_cart_reminder', \App\Support\ArabicWording::of(CartRecovery::CONFIRM_MESSAGE));
     }
 
     private function fail(Request $request, string $message): JsonResponse|RedirectResponse

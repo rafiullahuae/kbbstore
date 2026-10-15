@@ -80,7 +80,7 @@ class CheckoutSignInController extends Controller
         $reset->sendLink($request);
 
         // One answer, whether or not the address has an account.
-        return response()->json(['ok' => true, 'message' => PasswordResetController::SENT_MESSAGE]);
+        return response()->json(['ok' => true, 'message' => \App\Support\ArabicWording::of(PasswordResetController::SENT_MESSAGE)]);
     }
 
     /**

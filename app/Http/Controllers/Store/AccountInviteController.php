@@ -82,7 +82,7 @@ class AccountInviteController extends Controller
 
         if (RateLimiter::tooManyAttempts($key, self::ATTEMPTS)) {
             throw ValidationException::withMessages([
-                'password' => 'Too many attempts. Try again in ' . RateLimiter::availableIn($key) . ' seconds.',
+                'password' => __('store.wording.msg_too_many', ['seconds' => RateLimiter::availableIn($key)]),
             ]);
         }
 

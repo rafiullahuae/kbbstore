@@ -74,7 +74,7 @@
         <a class="kft-logo" href="{{ Url::to('/') }}"><bdi>{{ $kft['logo'][0] }}<b>{{ $kft['logo'][1] }}</b></bdi></a>
         <p class="kft-tag">{{ __('store.footer.tagline') }}</p>
 @if ($kft['socials'] !== [])
-        <div class="kft-soc" aria-label="{{ __('store.footer.follow_label') }}">@foreach ($kft['socials'] as [$kftKey, $kftName, $kftUrl])<a href="{{ $kftUrl }}" aria-label="{{ $kftName }}" target="_blank" rel="noopener">{!! $kftIcons[$kftKey] !!}</a>@endforeach</div>
+        <div class="kft-soc" aria-label="{{ __('store.footer.follow_label') }}">@foreach ($kft['socials'] as [$kftKey, $kftName, $kftUrl])<a href="{{ $kftUrl }}" aria-label="{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($kftName) : (string) ($kftName)) }}" target="_blank" rel="noopener">{!! $kftIcons[$kftKey] !!}</a>@endforeach</div>
 @endif
       </div>
 @foreach ($kft['columns'] as $kftCol)
@@ -123,7 +123,7 @@
   </template></section>
 @endif
   <div class="kft-bot"><div class="kft-wrap kft-bot-in">
-    <span>{{ __('store.footer.copyright', ['year' => date('Y'), 'store' => $kbbSettings->get('store_name', 'K-Beauty Bliss')]) }}</span>
+    <span>{{ __('store.footer.copyright', ['year' => date('Y'), 'store' => (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($kbbSettings->get('store_name', 'K-Beauty Bliss')) : (string) ($kbbSettings->get('store_name', 'K-Beauty Bliss')))]) }}</span>
     <nav class="kft-legal"><a href="{{ Url::to('/privacy-policy/') }}">{{ __('store.footer.link_privacy') }}</a><a href="{{ Url::to('/terms-and-conditions/') }}">{{ __('store.footer.link_terms') }}</a></nav>
     <div class="kft-pay">@foreach (\App\Support\PaymentChips::row('footer') as $kftChip)<span>{{ $kftChip }}</span>@endforeach<span>{{ __('store.footer.pay_cod') }}</span></div>
   </div></div>

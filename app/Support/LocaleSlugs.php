@@ -108,10 +108,31 @@ final class LocaleSlugs
      */
     public static function policy(): string
     {
-        $value = SeoSettings::get(self::SETTING, self::SHARED);
+        /*
+         * (Lane AR round 2) Read ONCE per request. SeoSettings::get() re-reads
+         * and re-cleans the whole `kbb.settings.map` cache entry on every call,
+         * and this runs once per link on an Arabic page: 162 reads of the full
+         * map on one /ar category page, the shape the speed lock forbids. The
+         * answer is kept on the REQUEST (its attributes), so it cannot outlive
+         * the request in a long-lived process, and flush() -- which every
+         * writer of the policy already calls -- drops it. Same value source as
+         * before, so a write the settings cache has not seen is still read.
+         */
+        $request = app()->bound('request') ? app('request') : null;
+        if ($request !== null && is_string($memo = $request->attributes->get(self::MEMO_ATTR))) {
+            return $memo;
+        }
 
-        return in_array($value, self::POLICIES, true) ? $value : self::SHARED;
+        $value = SeoSettings::get(self::SETTING, self::SHARED);
+        $value = in_array($value, self::POLICIES, true) ? $value : self::SHARED;
+        $request?->attributes->set(self::MEMO_ATTR, $value);
+
+        return $value;
     }
+
+    /** Where policy() keeps its once-per-request answer. */
+    private const MEMO_ATTR = 'kbb.locale_slug_policy';
+
 
     public static function translating(): bool
     {
@@ -314,6 +335,10 @@ final class LocaleSlugs
 
     public static function flush(): void
     {
+        if (app()->bound('request')) {
+            app('request')->attributes->remove(self::MEMO_ATTR);
+        }
+
         try {
             \Illuminate\Support\Facades\Cache::forget(self::CACHE_KEY);
         } catch (\Throwable) {

@@ -480,6 +480,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
      * renders to every shopper, so unauthenticated it is a way to put arbitrary
      * words on this shop's product pages.
      */
+    require __DIR__.'/ar-preview-admin.php';   // Translation -> Settings -> Private Arabic preview link (Lane AR); before translations-admin.php so its static segments come first
     require __DIR__.'/translations-admin.php';
 
         // The storefront health check behind Dashboard → Check now and Safety →

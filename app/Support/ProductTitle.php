@@ -74,7 +74,8 @@ final class ProductTitle
      */
     public static function head(?string $brand, ?string $name): string
     {
-        return self::full($brand, $name) . ' · K-Beauty Bliss';
+        // (Lane AR round 2) the shop's name in Arabic on /ar; English unchanged.
+        return self::full($brand, $name) . ' · ' . (ArabicWording::on() ? 'كي بيوتي بليس' : 'K-Beauty Bliss');
     }
 
     /** Whether the name's opening words already are the brand. */
@@ -109,7 +110,12 @@ final class ProductTitle
             return $base;
         }
 
-        return $base . ', view ' . ($index + 1) . ' of ' . $total;
+        // (Lane AR round 2) an interface string on /ar, so it reads Arabic. English
+        // stays the literal: no translation lookup on the admin's image pages,
+        // whose query count is flat by test (ImageSeoTest).
+        return ArabicWording::on()
+            ? (string) __('store.wording.view_of', ['base' => $base, 'n' => $index + 1, 'total' => $total])
+            : $base . ', view ' . ($index + 1) . ' of ' . $total;
     }
 
     /**

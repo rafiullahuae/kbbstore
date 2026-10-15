@@ -105,7 +105,7 @@ class PasswordResetController extends Controller
     {
         $this->sendLink($request);
 
-        return redirect(Url::redirect('/my-account/forgot'))->with('status', self::SENT_MESSAGE);
+        return redirect(Url::redirect('/my-account/forgot'))->with('status', \App\Support\ArabicWording::of(self::SENT_MESSAGE));
     }
 
     /**
@@ -211,7 +211,7 @@ class PasswordResetController extends Controller
             // Shown only on a valid form, and only so the outcome is not a
             // surprise: the WordPress password stops working at this point.
             'retiresLegacy' => $valid && $customer?->legacy_password !== null,
-            'message' => $valid ? null : self::INVALID_MESSAGE,
+            'message' => $valid ? null : \App\Support\ArabicWording::of(self::INVALID_MESSAGE),
         ]);
     }
 
@@ -237,7 +237,7 @@ class PasswordResetController extends Controller
 
         if (RateLimiter::tooManyAttempts($key, self::RESET_ATTEMPTS)) {
             throw ValidationException::withMessages([
-                'password' => 'Too many attempts. Try again in ' . RateLimiter::availableIn($key) . ' seconds.',
+                'password' => __('store.wording.msg_too_many', ['seconds' => RateLimiter::availableIn($key)]),
             ]);
         }
 
@@ -247,7 +247,7 @@ class PasswordResetController extends Controller
 
         if ($customer === null) {
             // Same sentence a wrong or spent token gets.
-            return back()->withErrors(['token' => self::INVALID_MESSAGE]);
+            return back()->withErrors(['token' => \App\Support\ArabicWording::of(self::INVALID_MESSAGE)]);
         }
 
         $status = Password::broker('customers')->reset(
@@ -285,7 +285,7 @@ class PasswordResetController extends Controller
         );
 
         if ($status !== Password::PASSWORD_RESET) {
-            return back()->withErrors(['token' => self::INVALID_MESSAGE]);
+            return back()->withErrors(['token' => \App\Support\ArabicWording::of(self::INVALID_MESSAGE)]);
         }
 
         RateLimiter::clear($key);
@@ -326,7 +326,7 @@ class PasswordResetController extends Controller
         foreach ($keys as $key => [$max, $decay]) {
             if (RateLimiter::tooManyAttempts($key, $max)) {
                 throw ValidationException::withMessages([
-                    'email' => 'Too many requests. Try again in ' . RateLimiter::availableIn($key) . ' seconds.',
+                    'email' => __('store.wording.msg_too_many_req', ['seconds' => RateLimiter::availableIn($key)]),
                 ]);
             }
         }

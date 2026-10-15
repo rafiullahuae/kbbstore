@@ -53,10 +53,23 @@ class Translation extends Model
             if ($translation->field === 'name' && in_array($translation->group, ['brands', 'categories'], true)) {
                 \App\Support\SearchSpelling::flush();
             }
+
+            // (Lane AR round 3) A product's Arabic name is what an Arabic search
+            // matches; its normalised copy is kept beside it. Published only.
+            if ($translation->field === 'name' && $translation->group === 'products' && $translation->locale === 'ar') {
+                \App\Support\ArabicSearch::index(
+                    (int) $translation->item_id,
+                    $translation->status === self::STATUS_PUBLISHED ? (string) $translation->value : null,
+                );
+            }
         });
 
         static::deleted(static function (self $translation): void {
             \App\Services\Translation\TranslationStore::flush();
+
+            if ($translation->field === 'name' && $translation->group === 'products' && $translation->locale === 'ar') {
+                \App\Support\ArabicSearch::index((int) $translation->item_id, null);
+            }
         });
     }
 

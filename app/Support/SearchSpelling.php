@@ -89,6 +89,10 @@ final class SearchSpelling
 
     public static function flush(): void
     {
+        // (Lane AR round 3) The hybrid search's phrase map goes with the dictionary:
+        // both are built from the same brand, category and Arabic names.
+        \App\Support\ArabicSearch::flush();
+
         self::$dict = null;
 
         try {

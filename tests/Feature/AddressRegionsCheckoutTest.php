@@ -204,7 +204,8 @@ it('has the Arabic labels he gave, as drafts for the owner to approve', function
     expect($drafts['store.checkout.field_building'])->toBe('المبنى / الشقة أو الفيلا')
         ->and($drafts['store.checkout.field_area_street'])->toBe('المنطقة / الشارع')
         ->and($drafts['store.checkout.field_state'])->toBe('الإمارة')
-        ->and($drafts['store.checkout.field_state_select'])->toBe('اختر');
+        // Lane AR round 2: the feminine imperative, as every other prompt to the shopper.
+        ->and($drafts['store.checkout.field_state_select'])->toBe('اختاري');
 });
 
 /* ------------------------------------------------------------------------

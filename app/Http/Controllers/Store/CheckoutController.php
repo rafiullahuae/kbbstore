@@ -569,7 +569,7 @@ class CheckoutController extends Controller
             $this->netSubtotal($cart), (bool) $this->settings->get('hide_paid_when_free', true));
 
         if (! $rates) {
-            return $this->refused($request, 'We do not deliver to that country yet.');
+            return $this->refused($request, __('store.wording.msg_no_country'));
         }
 
         // Only a rate actually offered for this destination is accepted.
@@ -607,7 +607,7 @@ class CheckoutController extends Controller
         // id this build has no code for are all the same answer — it was not
         // on offer, so it is not accepted.
         if (! collect($offered)->contains('id', $data['payment_method'])) {
-            return $this->refused($request, 'That payment method is not available.');
+            return $this->refused($request, __('store.wording.msg_method_na'));
         }
 
         // The wording the shopper actually saw on the checkout page. It is
@@ -622,7 +622,7 @@ class CheckoutController extends Controller
         $gateway = app(\App\Services\Payments\GatewayRegistry::class)->find($data['payment_method']);
 
         if ($gateway === null) {
-            return $this->refused($request, 'That payment method is not available.');
+            return $this->refused($request, __('store.wording.msg_method_na'));
         }
 
         // Gift fee is read from settings, never from the request. The form
@@ -1630,7 +1630,7 @@ class CheckoutController extends Controller
         // A paid order is not abandonable. Whatever the browser thinks it saw,
         // money that has moved is a refund and a decision for the merchant.
         if ($order->paid_at !== null) {
-            return response()->json(['ok' => false, 'error' => 'That payment has already gone through.'], 409);
+            return response()->json(['ok' => false, 'error' => __('store.wording.msg_paid_already')], 409);
         }
 
         $gateway = app(\App\Services\Payments\GatewayRegistry::class)->find('stripe');
@@ -1642,7 +1642,7 @@ class CheckoutController extends Controller
         if (! $gateway->abandonIntent($order)) {
             return response()->json([
                 'ok' => false,
-                'error' => 'We could not cancel that payment. Please refresh the page before trying again.',
+                'error' => __('store.wording.msg_cancel_failed'),
             ], 409);
         }
 
@@ -1689,7 +1689,7 @@ class CheckoutController extends Controller
          * read above tells anyone whose money has already moved.
          */
         if (! $released) {
-            return response()->json(['ok' => false, 'error' => 'That payment has already gone through.'], 409);
+            return response()->json(['ok' => false, 'error' => __('store.wording.msg_paid_already')], 409);
         }
 
         $request->session()->forget('kbb_last_order');
@@ -2438,7 +2438,7 @@ class CheckoutController extends Controller
         $request->validate(['is_gift' => ['nullable', 'boolean']]);
 
         if (! $this->settings->get('gift_enabled', '1')) {
-            return response()->json(['ok' => false, 'error' => 'Gift wrapping is not available.'], 422);
+            return response()->json(['ok' => false, 'error' => __('store.wording.msg_gift_na')], 422);
         }
 
         $on = $request->boolean('is_gift');
@@ -2447,7 +2447,7 @@ class CheckoutController extends Controller
         $cart = $this->loadCart($request);
 
         if (! $cart || $cart->items->isEmpty()) {
-            return response()->json(['ok' => false, 'error' => 'Your bag is empty.'], 422);
+            return response()->json(['ok' => false, 'error' => __('store.wording.msg_bag_empty')], 422);
         }
 
         $country = (string) ($request->input('country') ?: 'AE');
@@ -2531,7 +2531,7 @@ class CheckoutController extends Controller
         $cart = $this->loadCart($request);
 
         if (! $cart || $cart->items->isEmpty()) {
-            return response()->json(['ok' => false, 'error' => 'Your bag is empty.'], 422);
+            return response()->json(['ok' => false, 'error' => __('store.wording.msg_bag_empty')], 422);
         }
 
         // Only a country this shop's own selector offers, the same narrowing
@@ -2634,13 +2634,13 @@ class CheckoutController extends Controller
         $cart = $this->loadCart($request);
 
         if (! $cart || $cart->items->isEmpty()) {
-            return response()->json(['ok' => false, 'error' => 'Your bag is empty.'], 422);
+            return response()->json(['ok' => false, 'error' => __('store.wording.msg_bag_empty')], 422);
         }
 
         $country = strtoupper($data['country']);
 
         if (! isset($this->countries()[$country])) {
-            return response()->json(['ok' => false, 'error' => 'We do not deliver there yet.'], 422);
+            return response()->json(['ok' => false, 'error' => __('store.wording.msg_no_deliver')], 422);
         }
 
         /*
@@ -2838,18 +2838,18 @@ class CheckoutController extends Controller
         if (! $cart || $cart->items->isEmpty()) {
             return response()->json([
                 'ok' => false,
-                'error' => 'Your bag is empty — please start again from the cart.',
+                'error' => __('store.wording.msg_bag_restart'),
             ], 422);
         }
 
         $product = Product::query()->select(self::LINE_COLUMNS)->visible()->find($data['product_id']);
 
         if (! $product) {
-            return response()->json(['ok' => false, 'error' => 'That product is no longer available.'], 404);
+            return response()->json(['ok' => false, 'error' => __('store.wording.msg_product_gone')], 404);
         }
 
         if ($product->stock_status !== 'instock') {
-            return response()->json(['ok' => false, 'error' => 'That product is sold out.'], 422);
+            return response()->json(['ok' => false, 'error' => __('store.wording.msg_sold_out')], 422);
         }
 
         /*
@@ -2879,7 +2879,7 @@ class CheckoutController extends Controller
         if ($product->requiresVariant()) {
             return response()->json([
                 'ok' => false,
-                'error' => 'That product comes in options — please choose one on its own page.',
+                'error' => __('store.wording.msg_has_options'),
             ], 422);
         }
 
@@ -2929,7 +2929,7 @@ class CheckoutController extends Controller
         if (! $cart || $cart->items->isEmpty()) {
             return response()->json([
                 'ok' => false,
-                'error' => 'Your bag is empty — please start again from the cart.',
+                'error' => __('store.wording.msg_bag_restart'),
             ], 422);
         }
 
@@ -2943,7 +2943,7 @@ class CheckoutController extends Controller
          * happened.
          */
         if (! $cart->items->contains('id', (int) $data['item_id'])) {
-            return response()->json(['ok' => false, 'error' => 'That item is no longer in your bag.'], 404);
+            return response()->json(['ok' => false, 'error' => __('store.wording.msg_item_gone')], 404);
         }
 
         $this->carts->updateQuantity($cart, (int) $data['item_id'], (int) $data['quantity']);
@@ -3010,7 +3010,7 @@ class CheckoutController extends Controller
         if (! $cart || $cart->items->isEmpty()) {
             return $this->couponAnswer($request, [
                 'ok' => false,
-                'error' => 'Your bag is empty — please start again from the cart.',
+                'error' => __('store.wording.msg_bag_restart'),
             ], 422);
         }
 

@@ -106,7 +106,8 @@ final class DeliveryLine
         }
 
         return CountryTemplate::fill(
-            (string) $this->settings->get('delivery_default_text', '1–3 days fast delivery all over UAE'),
+            // (Lane AR round 2) the shipped line in Arabic on /ar; English untouched.
+            ArabicWording::of((string) $this->settings->get('delivery_default_text', '1–3 days fast delivery all over UAE')),
             $country,
         );
     }

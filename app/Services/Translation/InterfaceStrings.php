@@ -117,6 +117,8 @@ final class InterfaceStrings
                 self::storeSiteAppPush(),
                 self::storePushMessages(),
                 self::storeJs(),
+                // Lane AR round 2: the shipped English of settings, for /ar.
+                \App\Support\ArabicWording::ENGLISH,
             ),
             'email' => array_merge(
                 self::emailMessages(),

@@ -168,7 +168,7 @@
     @endif
 
     <div class="sumrow">
-        <span>{{ __('email.totals.delivery') }}{{ $order->shipping_method ? ' · ' . $order->shipping_method : '' }}</span>
+        <span>{{ __('email.totals.delivery') }}{{ $order->shipping_method ? ' · ' . (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($order->shipping_method) : (string) ($order->shipping_method)) : '' }}</span>
         <span>@if ((int) $order->shipping_total > 0){!! Money::format((int) $order->shipping_total) !!}@else<span style="color:var(--green);font-weight:700">{{ __('store.checkout.free') }}</span>@endif</span>
     </div>
 
@@ -177,7 +177,7 @@
     @endif
 
     @if ($paymentFee > 0)
-        <div class="sumrow"><span>{{ __('email.totals.payment_fee', ['method' => $order->paymentLabel()]) }}</span><span>{!! Money::format($paymentFee) !!}</span></div>
+        <div class="sumrow"><span>{{ __('email.totals.payment_fee', ['method' => (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($order->paymentLabel()) : (string) ($order->paymentLabel()))]) }}</span><span>{!! Money::format($paymentFee) !!}</span></div>
     @endif
 
     @if ($vatRow !== null)

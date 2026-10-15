@@ -109,7 +109,7 @@ final class ProductShare
 
             $out[] = [
                 'key' => $key,
-                'name' => $name,
+                'name' => ArabicWording::of($name), // (Lane AR round 2) Arabic app names on /ar
                 'href' => $href,
                 'app' => self::appHref($key, $url),
                 'colour' => $colour,
