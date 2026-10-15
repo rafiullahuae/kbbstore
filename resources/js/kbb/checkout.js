@@ -725,6 +725,9 @@ export function initCheckout() {
 
         const code = pill.dataset.kbbCline || '';
         const line = document.getElementById('kbbCline');
+        // Already on the order (the green tick): nothing to send, so a second
+        // tap can never come back as an error under an applied coupon (2.60.514).
+        if (line?.classList.contains('is-done')) return;
         const err = line?.querySelector('.co-cl-err');
         const field = document.getElementById('kbb_coupon_code');
 

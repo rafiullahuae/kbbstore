@@ -442,8 +442,8 @@ it('rate-limits the endpoints that answer differently for things that exist', fu
     // CouponService distinguishes "no such code" from "not active yet",
     // "expired" and "fully redeemed" — unthrottled that enumerates the coupon
     // namespace, future promotions included.
-    ['api/cart/coupon', 'throttle:20,1'],
-    ['checkout/coupon', 'throttle:20,1'],
+    ['api/cart/coupon', 'throttle:20,1,cart-coupon'],
+    ['checkout/coupon', 'throttle:20,1,checkout-coupon'],
     // unique:customers,email makes registration a yes/no on whether an address
     // shops here.
     ['my-account/register', 'throttle:10,1'],

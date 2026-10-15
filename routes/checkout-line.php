@@ -47,6 +47,12 @@ Route::post('/checkout/line', [CheckoutController::class, 'lineUpdate'])
  * away every field the shopper had already filled in. Same group, same
  * middleware: a shopper posts it, so it needs the session and CSRF.
  */
+// ▲ ITS OWN COUNTER (2.60.514). An unnamed throttle keys on the address
+// alone, so every unnamed throttle on the site shares ONE counter per IP:
+// the pings every page sends (/online, /api/viewed, the cart trail) used
+// up the coupon's 20 and a shopper's first tap answered "Too many tries"
+// (live, on the checkout, with the coupon applied). The prefix gives the
+// coupon a counter of its own; 20 a minute still stops enumeration.
 Route::post('/checkout/coupon', [CheckoutController::class, 'couponUpdate'])
-    ->middleware('throttle:20,1')
+    ->middleware('throttle:20,1,checkout-coupon')
     ->name('checkout.couponUpdate');

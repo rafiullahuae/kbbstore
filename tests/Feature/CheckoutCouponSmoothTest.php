@@ -351,7 +351,7 @@ it('is rate limited: twenty tries a minute, then 429', function () {
     /*
      * CouponService answers differently for a code that does not exist, is not
      * active yet, has expired or is used up -- an enumeration oracle without a
-     * limit. MUTATION: drop ->middleware('throttle:20,1') from
+     * limit. MUTATION: drop ->middleware('throttle:20,1,checkout-coupon') from
      * routes/checkout-line.php -- the 21st is a 200 and this is red.
      */
     $cart = cpCart();
@@ -363,4 +363,23 @@ it('is rate limited: twenty tries a minute, then 429', function () {
 
     expect(array_slice($codes, 0, 20))->each->toBe(200)
         ->and($codes[20])->toBe(429);
+});
+
+it('keeps a counter of its own: the pings every page sends never use up the coupon\'s tries (2.60.514)', function () {
+    /*
+     * Live, on the checkout: GLOW was on the order and the box said "Too many
+     * tries — please wait a minute and try again." An unnamed throttle keys on
+     * the address alone, so /api/viewed, /online and the cart trail -- sent by
+     * every page a shopper opens -- were spending the coupon's 20 a minute.
+     * MUTATION: put the coupon route back on plain 'throttle:20,1' and the
+     * first try below is a 429.
+     */
+    $cart = cpCart();
+
+    for ($i = 0; $i < 25; $i++) {
+        cpShopper($cart)->postJson('/api/viewed', []);
+    }
+
+    expect(cpShopper($cart)->postJson('/checkout/coupon', ['code' => 'GUESS'])->getStatusCode())->not->toBe(429)
+        ->and(cpShopper($cart)->postJson('/api/cart/coupon', ['code' => 'GUESS'])->getStatusCode())->not->toBe(429);
 });

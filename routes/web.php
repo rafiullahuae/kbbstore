@@ -189,8 +189,14 @@ Route::prefix('api/cart')->group(function () {
     // coupon namespace at line speed — including discovering promotions that
     // have not launched. 20/minute is far above any real shopper and far below
     // a useful enumeration rate. Found by Lane Z.
+    // ▲ ITS OWN COUNTER (2.60.514). An unnamed throttle keys on the address
+    // alone, so every unnamed throttle on the site shares ONE counter per IP:
+    // the pings every page sends (/online, /api/viewed, the cart trail) used
+    // up the coupon's 20 and a shopper's first tap answered "Too many tries"
+    // (live, on the checkout, with the coupon applied). The prefix gives the
+    // coupon a counter of its own; 20 a minute still stops enumeration.
     Route::post('/coupon', [\App\Http\Controllers\Store\CartController::class, 'coupon'])
-        ->middleware('throttle:20,1');
+        ->middleware('throttle:20,1,cart-coupon');
 });
 
 // Checkout — ported page, server-side totals, order placement.
