@@ -1,0 +1,362 @@
+[
+ {
+  "page": "ar-1280",
+  "cart": {
+   "w": 361,
+   "h": 42,
+   "font": "12.5px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible",
+   "clipboard": "GLOW"
+  },
+  "panel": {
+   "w": 340,
+   "h": 42,
+   "font": "11.5px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible"
+  },
+  "checkout": {
+   "w": 335,
+   "h": 42,
+   "font": "13.5px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnApply": true,
+   "applied": {
+    "done": true,
+    "tick": "visible",
+    "discountLine": true
+   }
+  },
+  "scrollWidth": 1280
+ },
+ {
+  "page": "ar-320",
+  "cart": {
+   "w": 276,
+   "h": 34,
+   "font": "9.6px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible",
+   "clipboard": "GLOW"
+  },
+  "panel": {
+   "w": 224,
+   "h": 28,
+   "font": "8.576px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible"
+  },
+  "checkout": {
+   "w": 280,
+   "h": 42,
+   "font": "10.56px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnApply": true,
+   "applied": {
+    "done": true,
+    "tick": "visible",
+    "discountLine": true
+   }
+  },
+  "scrollWidth": 320
+ },
+ {
+  "page": "ar-360",
+  "cart": {
+   "w": 300,
+   "h": 34,
+   "font": "10.8px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible",
+   "clipboard": "GLOW"
+  },
+  "panel": {
+   "w": 255,
+   "h": 29,
+   "font": "9.36px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible"
+  },
+  "checkout": {
+   "w": 320,
+   "h": 42,
+   "font": "11.88px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnApply": true,
+   "applied": {
+    "done": true,
+    "tick": "visible",
+    "discountLine": true
+   }
+  },
+  "scrollWidth": 360
+ },
+ {
+  "page": "ar-390",
+  "cart": {
+   "w": 317,
+   "h": 34,
+   "font": "11.7px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible",
+   "clipboard": "GLOW"
+  },
+  "panel": {
+   "w": 278,
+   "h": 30,
+   "font": "10.14px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible"
+  },
+  "checkout": {
+   "w": 350,
+   "h": 42,
+   "font": "12.87px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnApply": true,
+   "applied": {
+    "done": true,
+    "tick": "visible",
+    "discountLine": true
+   }
+  },
+  "scrollWidth": 390
+ },
+ {
+  "page": "ar-414",
+  "cart": {
+   "w": 331,
+   "h": 34,
+   "font": "12.42px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible",
+   "clipboard": "GLOW"
+  },
+  "panel": {
+   "w": 297,
+   "h": 31,
+   "font": "10.764px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible"
+  },
+  "checkout": {
+   "w": 374,
+   "h": 42,
+   "font": "13px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnApply": false,
+   "applied": {
+    "done": false,
+    "tick": "hidden",
+    "discountLine": false
+   }
+  },
+  "scrollWidth": 414
+ },
+ {
+  "page": "en-1280",
+  "cart": {
+   "w": 358,
+   "h": 42,
+   "font": "12.5px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible",
+   "clipboard": "GLOW"
+  },
+  "panel": {
+   "w": 340,
+   "h": 42,
+   "font": "11.5px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible"
+  },
+  "checkout": {
+   "w": 315,
+   "h": 42,
+   "font": "13.5px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnApply": false,
+   "applied": {
+    "done": false,
+    "tick": "hidden",
+    "discountLine": false
+   }
+  },
+  "scrollWidth": 1280
+ },
+ {
+  "page": "en-320",
+  "cart": {
+   "w": 274,
+   "h": 34,
+   "font": "9.6px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible",
+   "clipboard": "GLOW"
+  },
+  "panel": {
+   "w": 224,
+   "h": 28,
+   "font": "8.576px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible"
+  },
+  "checkout": {
+   "w": 280,
+   "h": 42,
+   "font": "10.56px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnApply": true,
+   "applied": {
+    "done": true,
+    "tick": "visible",
+    "discountLine": true
+   }
+  },
+  "scrollWidth": 320
+ },
+ {
+  "page": "en-360",
+  "cart": {
+   "w": 298,
+   "h": 34,
+   "font": "10.8px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible",
+   "clipboard": "GLOW"
+  },
+  "panel": {
+   "w": 255,
+   "h": 29,
+   "font": "9.36px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible"
+  },
+  "checkout": {
+   "w": 320,
+   "h": 42,
+   "font": "11.88px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnApply": false,
+   "applied": {
+    "done": false,
+    "tick": "hidden",
+    "discountLine": false
+   }
+  },
+  "scrollWidth": 360
+ },
+ {
+  "page": "en-390",
+  "cart": {
+   "w": 315,
+   "h": 34,
+   "font": "11.7px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible",
+   "clipboard": "GLOW"
+  },
+  "panel": {
+   "w": 278,
+   "h": 30,
+   "font": "10.14px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible"
+  },
+  "checkout": {
+   "w": 350,
+   "h": 42,
+   "font": "12.87px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnApply": true,
+   "applied": {
+    "done": true,
+    "tick": "visible",
+    "discountLine": true
+   }
+  },
+  "scrollWidth": 390
+ },
+ {
+  "page": "en-414",
+  "cart": {
+   "w": 329,
+   "h": 34,
+   "font": "12.42px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible",
+   "clipboard": "GLOW"
+  },
+  "panel": {
+   "w": 297,
+   "h": 31,
+   "font": "10.764px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnCopy": true,
+   "tick": "visible"
+  },
+  "checkout": {
+   "w": 374,
+   "h": 42,
+   "font": "13px",
+   "oneLine": true,
+   "pillClickable": true,
+   "unmovedOnApply": false,
+   "applied": {
+    "done": false,
+    "tick": "hidden",
+    "discountLine": false
+   }
+  },
+  "scrollWidth": 414
+ }
+]
