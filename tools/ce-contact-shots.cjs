@@ -75,6 +75,10 @@ const sw = (page) => page.evaluate(() => ({ scrollWidth: document.documentElemen
     });
     await page.click('#cuEditContact');
     await page.waitForSelector('#kxeEmail', { timeout: 15000 });
+    // Nothing until the email field is left (the owner's rule): no hint on open.
+    m.hintOnOpen = await page.locator('#kxeHint').count();
+    await page.click('#kxeEmail');
+    await page.click('#kxePhone');
     await page.waitForSelector('#kxeHint');
     m.hint = await page.textContent('#kxeHint');
     await shot(WHO === 'jovana' ? '02-hint' : '08-account', '#kxe');
@@ -85,6 +89,9 @@ const sw = (page) => page.evaluate(() => ({ scrollWidth: document.documentElemen
         const before = requests.length;
         await page.fill('#kxeEmail', '');
         await page.type('#kxeEmail', 'sara.khan@hotmial.com', { delay: 15 });
+        m.hintWhileTyping = await page.locator('#kxeHint').count();
+        await page.click('#kxePhone');
+        await page.waitForSelector('#kxeHint');
         m.typedHint = await page.textContent('#kxeHint');
         m.requestsWhileTyping = requests.length - before;
         await page.click('[data-kxe="keep"]');

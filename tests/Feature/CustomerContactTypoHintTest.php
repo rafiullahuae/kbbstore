@@ -146,8 +146,15 @@ it('is only a hint: it never writes the field, and "Keep as typed" hides it for 
         ->and($src)->toContain("if (!hint || hint === S.keep) return '';")
         ->and($src)->toContain('data-kxe="keep"')
         ->and($src)->toContain("if (act === 'use') { S.email = t.getAttribute('data-v');")
-        // No request per keystroke: the input handler only redraws.
-        ->and($src)->toContain("b.oninput = function (ev) {\n      if (ev.target.id !== 'kxeEmail' && ev.target.id !== 'kxePhone') return;\n      grab(); refresh();\n    };")
+        // Nothing while typing (the owner: "the dialogue box should appear only
+        // once user left the email field. during write no any disturbance"):
+        // the input handler only takes a showing hint away and never redraws;
+        // the hint is armed on focusout. MUTATION: call refresh() from
+        // oninput, or arm S.hintReady anywhere but focusout -- red.
+        ->and($src)->toContain("if (!S.hintReady) return '';")
+        ->and(substr_count($src, 'S.hintReady = true'))->toBe(1)
+        ->and($src)->toContain("if (ev.target.id === 'kxeEmail') S.hintReady = true;")
+        ->and(preg_match('/b\.oninput = function \(ev\) \{(?:(?!\n    \};).)*refresh\(\)/s', $src))->toBe(0)
         // No layout measuring (CLAUDE.md rule 4).
         ->and($src)->not->toContain('getBoundingClientRect')->not->toContain('offsetHeight')->not->toContain('offsetWidth');
 });
