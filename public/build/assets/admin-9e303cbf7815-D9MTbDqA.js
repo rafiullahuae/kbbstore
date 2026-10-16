@@ -2969,7 +2969,7 @@
     ['all', 'All'], ['ordered', 'Has ordered'], ['never', 'Never ordered'],
     ['repeat', 'Repeat buyers'], ['account', 'Has an account'], ['guest', 'Guest checkout'],
     ['invited', 'Invited, not activated'],
-    ['verified', 'Email verified'], ['unverified', 'Not verified'], ['trashed', 'Trash']
+    ['verified', 'Email verified'], ['unverified', 'Not verified'], ['arabic', 'Arabic customers'], ['trashed', 'Trash']
   ];
   /* Bands in whole dirhams; the server converts with Money::fromMajor, so the
      comparison happens in fils and nothing here ever holds a money float. */
@@ -3286,6 +3286,7 @@
           '</div>' +
           /* (Lane CAP) Filed from the email typed at checkout; goes once they order. */
           (c.from_checkout ? '<div style="font-size:11px;color:var(--ink-faint);margin-top:1px;white-space:nowrap">From checkout, no order yet</div>' : '') +
+          (window.kbbCustomerLanguage ? window.kbbCustomerLanguage.tags(c) : '') +
           '</div></div></td>' +
         cols.map(function(col){ return cuCell(col[0], c); }).join('') +
         '<td style="white-space:nowrap">' + (c.trashed
@@ -3601,6 +3602,7 @@
               : (c.account_type === 'account' ? '<span style="color:var(--ink-faint)">Not needed — already has a password</span>' : '<span style="color:var(--ink-faint)">Never sent</span>')) +
           cuField('WooCommerce user ID', c.wp_user_id ? String(c.wp_user_id) : '<span style="color:var(--ink-faint)">Not imported — created on this store</span>') +
           cuField('Customer ID', String(c.id)) +
+          (window.kbbCustomerLanguage ? window.kbbCustomerLanguage.field(c) : '') +
         '</div>' +
       '</div>' +
 
@@ -3652,6 +3654,7 @@
 
     /* Edit email / phone (Lane CE): the dialog in partials/customer-contact-edit. */
     var editContact = document.getElementById('cuEditContact');
+    if(window.kbbCustomerLanguage) window.kbbCustomerLanguage.bind(c, function(){ cuDetail(c.id); });
     if(editContact) editContact.onclick = function(){
       window.kbbCustomerContact.open({id: c.id, onDone: function(){ cuDetail(c.id); }});
     };
