@@ -140,7 +140,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
       <p class="lab">Phone's internet</p>
       <div class="seg" role="group" aria-label="Connection">
         <button type="button" data-c="normal" id="cNormal">Normal<small>same as today</small></button>
-        <button type="button" data-c="slow" id="cSlow">Slow<small>9 s per tap</small></button>
+        <button type="button" data-c="slow" id="cSlow">Slow<small>yellow note, no grey bars</small></button>
         <button type="button" data-c="offline" id="cOff">Offline<small>no signal</small></button>
       </div>
       <p class="lab">Try these</p>
@@ -242,6 +242,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
   }
   function act(op, pid, qty) {
     var o = { id: rid(), op: op, pid: pid, qty: qty, st: 'waiting' };
+    if (S.conn === 'slow' && !S.slow) { S.slow = true; log('save', 'Slow connection known → no grey bars: the product goes straight into the list with the yellow note.'); }
     S.pend.push(o);
     if (S.conn === 'offline') { save(o); render(); return; }
     enqueue(o); render();
@@ -257,7 +258,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
     var slow = S.conn === 'slow', total = slow ? 9000 : 450;
     o.st = 'sending'; render();
     log('net', 'Phone → shop: ' + desc(o) + ' (#' + o.id + ')');
-    var st = slow ? later(function () { if (o.st === 'sending') { S.slow = true; S.skel = false; log('save', '4 s and no answer → slow confirmed: the grey bars give way to the product and a short note'); render(); } }, 4000) : null;
+    var st = slow ? later(function () { if (o.st === 'sending' && !S.slow) { S.slow = true; S.skel = false; log('save', '4 s and no answer → slow confirmed: the grey bars give way to the product and a short note'); render(); } }, 4000) : null;
     var reached = await wait(total * 0.4);
     if (!reached) { clearTimeout(st); S.slow = false; save(o); render(); return; }
     var res = serverHandle(o);
@@ -413,7 +414,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
   document.getElementById('phone').addEventListener('click', function (ev) {
     var b = ev.target.closest('button,[data-a]'); if (!b) return;
     var a = b.getAttribute('data-a');
-    if (b.hasAttribute('data-add')) { S.open = true; if (S.conn !== 'offline') S.skel = true; act('add', +b.getAttribute('data-add'), 1); return; }
+    if (b.hasAttribute('data-add')) { S.open = true; if (S.conn === 'normal') S.skel = true; act('add', +b.getAttribute('data-add'), 1); return; }
     if (b.hasAttribute('data-go')) { go(+b.getAttribute('data-go')); return; }
     if (b.hasAttribute('data-inc')) { var k = +b.getAttribute('data-inc'); act('set', k, (viewCart().v[k] || 0) + 1); return; }
     if (b.hasAttribute('data-dec')) { var d = +b.getAttribute('data-dec'), cur = viewCart().v[d] || 0; if (cur <= 1) act('remove', d, 0); else act('set', d, cur - 1); return; }
