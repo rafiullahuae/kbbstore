@@ -52,6 +52,11 @@
   .kbb-journal .abody h3{font-size:20px;font-weight:600;margin:28px 0 10px;letter-spacing:-.01em}
   .kbb-journal .abody b{font-weight:600}
   .kbb-journal .abody i{color:var(--ink-2)}
+  /* Lists: the bullets hung outside the text column, to the left of every
+     paragraph (16 October 2026, the PDRN post). An indent on the start side
+     puts them inside it, in Arabic too. */
+  .kbb-journal .abody :is(ul,ol){padding-inline-start:1.4em;margin:0 0 18px}
+  .kbb-journal .abody li{margin:0 0 4px}
   /* A body photograph scales into the column. Without it one plain <img> took
      this page's scrollWidth to 1220 at 390px and 1500 at 1280. `height:auto`
      is half the rule: WordPress writes width= and height= attributes, and

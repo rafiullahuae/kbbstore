@@ -1516,6 +1516,11 @@ html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
      where the gap is the empty line's. */
 .details .dcontent .kbb-bl + .kbb-bl{height:0}
 .details .dcontent section{padding:0;margin:0}
+/* The short description under the price, the same rule. A description pasted
+   from another shop arrived wrapped in <div ...><section>, and kbb.css's
+   page-band `section{padding:52px 0}` put 52px above and below it (VT Reedle
+   Shot masks, 16 October 2026). */
+.pdp .bb-desc section{padding:0;margin:0}
 .details .dcontent:not(:has(.kbb-bl)) :is(p,div):not(:first-child):not(:is(h1,h2,h3,h4,h5,h6,b,strong) + *):has(> :is(strong,b):only-child){margin-block-start:.75em}
 .details .dcontent:not(:has(.kbb-bl)) :is(section,div,.dcontent) > :is(strong,b):not(:first-child):has(+ :is(ul,ol,p,div,section)){display:block;margin-block-start:.75em}
 .details .dcontent:not(:has(.kbb-bl)) section:not(:first-child){margin-block-start:.75em}
