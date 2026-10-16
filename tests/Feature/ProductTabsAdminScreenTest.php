@@ -143,11 +143,13 @@ it('prefixes every class and data attribute it owns', function () {
      * find the sidebar row and the nav group. `data-ph` is the placeholder
      * attribute the rich pane's own CSS rule reads, scoped to .kpt-rte-area.
      * `data-kbbar-*` belongs to admin/partials/arabic-boxes.blade.php and is
-     * read, never written, by this screen.
+     * read, never written, by this screen. `data-rte-media` marks the toolbar's
+     * Media button for the ONE shared gallery script, admin/partials/rte-media
+     * (16 October 2026), so it is deliberately not kpt- prefixed.
      */
     $foreign = array_values(array_unique(array_filter(
         $attrs[1] ?? [],
-        fn (string $a) => ! str_starts_with($a, 'kpt-') && ! in_array($a, ['sec', 'go', 'ph'], true)
+        fn (string $a) => ! str_starts_with($a, 'kpt-') && ! in_array($a, ['sec', 'go', 'ph', 'rte-media'], true)
     )));
 
     expect($foreign)->toBe([], 'these data attributes are not data-kpt- prefixed');
@@ -508,7 +510,7 @@ it('still prefixes every class and data attribute it owns', function () {
 
     $foreign = array_values(array_unique(array_filter(
         $attrs[1] ?? [],
-        fn (string $a) => ! str_starts_with($a, 'kpt-') && ! in_array($a, ['sec', 'go', 'ph'], true)
+        fn (string $a) => ! str_starts_with($a, 'kpt-') && ! in_array($a, ['sec', 'go', 'ph', 'rte-media'], true)   // rte-media: see the first prefix test
     )));
 
     expect($foreign)->toBe([]);

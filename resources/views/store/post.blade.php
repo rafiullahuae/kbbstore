@@ -55,7 +55,7 @@
   /* Lists: the bullets hung outside the text column, to the left of every
      paragraph (16 October 2026, the PDRN post). An indent on the start side
      puts them inside it, in Arabic too. */
-  .kbb-journal .abody :is(ul,ol){padding-inline-start:1.4em;margin:0 0 18px}
+  .kbb-journal .abody ul,.kbb-journal .abody ol{padding-inline-start:1.4em;margin:0 0 18px}
   .kbb-journal .abody li{margin:0 0 4px}
   /* A body photograph scales into the column. Without it one plain <img> took
      this page's scrollWidth to 1220 at 390px and 1500 at 1280. `height:auto`
@@ -117,7 +117,7 @@
        t(), not the column. `body` is one of TranslationStore::LONG_FIELDS:
        not in the map that every Arabic page loads, fetched by the one page
        that prints it. One article, one row, one query. --}}
-  <div class="abody">{!! \App\Support\BodyHeadings::demoteH1(\App\Support\Shortcodes::render($post->t('body') ?: '<p>' . e($post->t('excerpt')) . '</p>')) !!}</div>
+  <div class="abody">{!! \App\Support\DescriptionGallery::expand(\App\Support\BodyHeadings::demoteH1(\App\Support\Shortcodes::render($post->t('body') ?: '<p>' . e($post->t('excerpt')) . '</p>'))) !!}</div>
   @verbatim
 </article>
 @endverbatim

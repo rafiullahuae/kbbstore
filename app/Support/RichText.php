@@ -373,7 +373,8 @@ final class RichText
     public static function forStorefront(?string $html): string
     {
         // ...and a video address on a line of its own drawn as a player (Lane PD).
-        return DescriptionVideos::expand(GlobalSections::expand(self::forDisplay($html)));
+        // ...and a picture gallery's photos offered their resized copies (DescriptionGallery).
+        return DescriptionGallery::expand(DescriptionVideos::expand(GlobalSections::expand(self::forDisplay($html))));
     }
 
     /**

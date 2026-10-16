@@ -24463,6 +24463,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 @include('admin.partials.arabic-boxes')
 
 @include('admin.partials.media-picker')
+@include('admin.partials.rte-media')
 
 {{-- Appearance -> Mega Menu: the column board (Lane MO). Defines window.KBBMenuOrder; paintMegaMenu() mounts it in #mgmTree. --}}
 @include('admin.partials.menu-order')

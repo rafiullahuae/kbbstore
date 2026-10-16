@@ -481,7 +481,15 @@
     build();
     if (squash(input.value)) draw(input.value);
   });
-  input.addEventListener('input', soon);
+  /* A browser's password manager fills this box by itself: a screen with a
+     secret field (Translation → Language settings, its API key) made Chrome
+     put the saved login's email here and the search ran on it, every visit
+     (16 October 2026). A person types with the box focused; autofill does
+     not focus it. So text that arrives unfocused is cleared, not searched. */
+  input.addEventListener('input', function () {
+    if (document.activeElement !== input) { input.value = ''; return; }
+    soon();
+  });
   input.addEventListener('keydown', function (e) {
     if (e.isComposing || e.keyCode === 229) return;   // an IME (Arabic, CJK) is still composing
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {

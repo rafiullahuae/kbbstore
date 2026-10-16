@@ -343,7 +343,7 @@
       + '<p class="igs-help">App settings → Basic → App ID (a number, usually 15 or 16 digits).</p></div>'
 
       + '<div class="igs-f"><div class="igs-fh"><label for="igs-fbsecret">App secret</label></div>'
-      + '<input id="igs-fbsecret" type="password" autocomplete="off" spellcheck="false"'
+      + '<input id="igs-fbsecret" type="password" autocomplete="new-password" data-1p-ignore data-lpignore="true" data-bwignore spellcheck="false"'
       + ' placeholder="' + (f.secret_saved ? 'A secret is stored — leave empty to keep it' : 'Required the first time') + '"'
       + ' data-igs-fbsecret>'
       + '<p class="igs-help">App settings → Basic → App secret → Show. Stored encrypted and never shown again.</p></div>'
@@ -450,7 +450,7 @@
          and autocomplete off so no browser offers to remember it. Drawn EMPTY
          whether or not one is stored: asterisks the length of the value disclose
          the length, and an empty box already means "unchanged". */
-      + '<input id="igs-secret" type="password" autocomplete="off" spellcheck="false"'
+      + '<input id="igs-secret" type="password" autocomplete="new-password" data-1p-ignore data-lpignore="true" data-bwignore spellcheck="false"'
       + ' placeholder="' + (c.secret_saved ? 'A secret is stored — leave empty to keep it' : 'Required the first time') + '"'
       + ' data-igs-secret>'
       + '<p class="igs-help">Stored encrypted and never shown again, not even here. Leaving this empty '

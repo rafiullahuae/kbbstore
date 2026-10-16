@@ -1411,6 +1411,8 @@
        shared picker and inserts what comes back, 'code' swaps which of the two
        panes is showing. */
     ['image', '🖼', 'Insert an image from the Media Library'],
+    /* Several pictures as a 1-4 column gallery: admin/partials/rte-media. */
+    ['kbbMedia', '▦ Gallery', 'Insert several pictures as a gallery'],
     ['code', '&lt;/&gt;', 'Edit the HTML directly']
   ];
 
@@ -1443,7 +1445,7 @@
       /* b[1] is markup for the code button (&lt;/&gt;) and plain text for the
          rest. It is authored in this file, never operator input, so it is the
          one place here that is written through rather than escaped. */
-      return '<button type="button" data-cmd="' + esc(b[0]) + '" title="' + esc(b[2]) + '">'
+      return '<button type="button" data-cmd="' + esc(b[0]) + '"' + (b[0] === 'kbbMedia' ? ' data-rte-media' : '') + ' title="' + esc(b[2]) + '">'
            + b[1] + '</button>';
     }).join('');
   }

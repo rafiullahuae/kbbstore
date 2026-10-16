@@ -51,7 +51,7 @@
              t(), not the column. `content` is one of
              TranslationStore::LONG_FIELDS — deliberately not in the map every
              Arabic page loads, and read by the one page that prints it. --}}
-        <div class="policy-body">{!! \App\Support\BodyHeadings::demoteH1(\App\Support\Shortcodes::render($page->t('content'))) !!}</div>
+        <div class="policy-body">{!! \App\Support\DescriptionGallery::expand(\App\Support\BodyHeadings::demoteH1(\App\Support\Shortcodes::render($page->t('content')))) !!}</div>
 
         @if ($page->updated_at)
             <p class="policy-date">{{ __('store.page.last_updated', ['date' => (class_exists(\App\Support\LocalDate::class) ? \App\Support\LocalDate::format($page->updated_at, 'j F Y') : (($kbbD = $page->updated_at) ? $kbbD->format('j F Y') : ''))]) }}</p>

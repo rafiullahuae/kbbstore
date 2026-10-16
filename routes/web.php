@@ -832,6 +832,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // Content → Media Library: the grid of every image uploaded through the
         // admin, its search, and what each image is used by before deleting it.
         require __DIR__.'/media-library-admin.php';
+        require __DIR__.'/rte-media-admin.php';
 
         /*
          * Content -> Shoppable video (Lane V2). Beside the Media Library

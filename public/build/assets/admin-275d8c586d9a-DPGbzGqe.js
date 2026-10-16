@@ -38,7 +38,7 @@
     if (f[1] === 'select') return h + '<select class="inp" id="' + id + '" data-mpxk="' + k + '">' + f[2].map(function (o) { return '<option value="' + a(o[0]) + '"' + (val(k) === o[0] ? ' selected' : '') + '>' + e(o[1]) + '</option>'; }).join('') + '</select></div>';
     if (f[1] === 'secret') {
       var m = S.masked[k] || '';
-      return h + '<input type="password" autocomplete="off" class="inp" id="' + id + '" data-mpxk="' + k + '" placeholder="' + a(m ? 'Saved ' + m + ' — paste a new one to replace' : f[2]) + '">'
+      return h + '<input type="password" autocomplete="new-password" data-1p-ignore data-lpignore="true" data-bwignore class="inp" id="' + id + '" data-mpxk="' + k + '" placeholder="' + a(m ? 'Saved ' + m + ' — paste a new one to replace' : f[2]) + '">'
         + (m ? '<small>Stored encrypted. Only the last four characters are ever shown. <a href="#" data-mpx-clear="' + k + '">Remove</a></small>' : '') + '</div>';
     }
     return h + '<input type="text" class="inp" id="' + id + '" data-mpxk="' + k + '" value="' + a(val(k)) + '" placeholder="' + a(f[2]) + '" maxlength="300"></div>';
