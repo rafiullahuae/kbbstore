@@ -5416,6 +5416,11 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
 .kft-bot{border-top:1px solid #F1E3E8;font-size:12.5px;color:var(--muted);background:var(--kft-bg,#fff)}
 .kft-bot-in{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
 .kft-legal{display:flex;gap:14px}
+/* The language switcher (partials/lang-switch): printed only while Arabic is on. */
+.kbb-lang{display:inline-flex;align-items:center;gap:10px}
+.kbb-lang span[aria-current]{font-weight:600}
+.kbb-lang a{text-decoration:underline;text-underline-offset:2px}
+.fbot .kbb-lang{margin-inline-start:14px}
 .kft-legal a:hover{color:var(--kft-accent,#C13E63)}
 .kft-pay{display:flex;gap:6px;flex-wrap:wrap}
 .kft-pay span{border:1px solid #EADDE2;border-radius:99px;padding:2px 10px;font-weight:700;font-size:11px;color:var(--ink);background:#fff}
