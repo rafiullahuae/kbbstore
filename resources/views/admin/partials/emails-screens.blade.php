@@ -554,6 +554,7 @@
       + '<div class="mlf-grid">' + input('mail_support_whatsapp', 'WhatsApp', '') + input('mail_support_email', 'Email', '', 'email') + '</div>'
       + input('mail_support_instagram', 'Instagram', '')
       + input('mail_signature', 'Signature', '')
+      + input('mail_signature_ar', 'Signature — Arabic', 'For customers who shop in Arabic. Type a | where you want a new line. Blank prints «مع حبّنا، | فريق كي بيوتي بليس».')
       + '</div>';
     // One Save for all four tabs: it saves every field, as it always has.
     var saveRow = '<div class="eml-save"><span class="eml-dirty" data-eml-dirty style="visibility:' + (state.dirty ? 'visible' : 'hidden') + '">Unsaved changes</span>'
@@ -581,7 +582,7 @@
     if (state.screen === 'emails-branding') paintBranding();
   }
 
-  var BRANDING_KEYS = ['mail_support_email', 'mail_support_whatsapp', 'mail_address_dubai', 'mail_address_korea', 'mail_support_instagram', 'mail_signature',
+  var BRANDING_KEYS = ['mail_support_email', 'mail_support_whatsapp', 'mail_address_dubai', 'mail_address_korea', 'mail_support_instagram', 'mail_signature', 'mail_signature_ar',
     'email_font_heading', 'email_font_body', 'email_accent', 'email_button', 'email_background', 'email_text', 'email_logo'];
 
   async function saveBranding(btn) {

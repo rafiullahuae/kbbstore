@@ -221,6 +221,8 @@ final class AdminCapabilities
         // mail, so it is not support's, although support can read the record
         // and can correct one order's email under orders.edit.
         'customers.edit' => ['owner', 'manager'],
+        // Lane AE: Store -> Customers -> a customer -> Language.
+        'customers.language' => ['owner', 'manager'],
 
         // Catalogue and storefront content.
         'catalog.view' => ['owner', 'manager', 'editor'],
@@ -1407,6 +1409,7 @@ final class AdminCapabilities
         ['POST', 'admin-api/customers/*/contact', 'customers.edit'],
         ['POST', 'admin-api/customers/*/resend-confirmation', 'customers.edit'],
         ['POST', 'admin-api/customers/bulk-delete', 'customers.manage'],
+        ['POST', 'admin-api/customers/*/language', 'customers.language'],
         ['POST', 'admin-api/customers/*/note', 'customers.manage'],
         ['POST', 'admin-api/customers/*/restore', 'customers.manage'],
         ['DELETE', 'admin-api/customers/*', 'customers.manage'],

@@ -84,6 +84,9 @@ class MailSettings
         'mail_support_email' => ['text', 'Support email address', 'Where a customer should write for help. Ships as info@kbeautybliss.com, which the owner asked for. Clear it and the Reply-To or From address is used instead.'],
         'mail_support_instagram' => ['text', 'Instagram', 'Your handle (@kbeauty.bliss) or the full profile link. Blank uses the one saved under Store → Business Details.'],
         'mail_signature' => ['text', 'Signature', 'Signed at the foot of every order email, e.g. "With love, the K Beauty Bliss team". Type a | where you want a new line. Blank prints the store name.'],
+        // Lane AE: the Arabic twin, for an order placed on /ar. Blank prints the
+        // built-in Arabic sign-off («مع حبّنا، | فريق كي بيوتي بليس»), never the English line.
+        'mail_signature_ar' => ['text', 'Signature — Arabic', 'Signed at the foot of every email to a customer who shops in Arabic. Type a | where you want a new line. Blank prints «مع حبّنا، | فريق كي بيوتي بليس».'],
 
         /*
          * ── What a customer is told about money when an order is cancelled ──
@@ -302,6 +305,7 @@ class MailSettings
      */
     public const MAX_LENGTHS = [
         'mail_signature' => 500,
+        'mail_signature_ar' => 500,
         'mail_support_whatsapp' => 60,
         'mail_support_email' => 255,
         'mail_support_instagram' => 200,
@@ -402,7 +406,7 @@ class MailSettings
                    ['mail_from_address', 'mail_from_name', 'mail_merchant_address']],
         'foot' => ['What customers see at the foot',
                    'Printed under every order email. Leave any of them blank and the storefront’s own details are used instead.',
-                   ['mail_support_email', 'mail_support_whatsapp', 'mail_support_instagram', 'mail_signature', 'mail_address_dubai', 'mail_address_korea']],
+                   ['mail_support_email', 'mail_support_whatsapp', 'mail_support_instagram', 'mail_signature', 'mail_signature_ar', 'mail_address_dubai', 'mail_address_korea']],
         'other' => ['Other settings',
                     'Added to this store after this screen was laid out. They save exactly like the rest.',
                     ['mail_cancelled_refund_note', 'mail_shipped_timing_note', 'mail_reply_to']],

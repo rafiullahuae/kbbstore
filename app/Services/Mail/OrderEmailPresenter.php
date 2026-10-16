@@ -104,9 +104,11 @@ class OrderEmailPresenter
             'totalHtml' => self::html((int) $order->total, $w),
             'totalPlain' => self::plain((int) $order->total, $w),
             'address' => $this->address($order->shipping_address ?: $order->billing_address),
-            'deliveryMethod' => trim((string) $order->shipping_method) ?: 'Standard delivery',
+            // ArabicWording::of() (Lane AE): a shipped English default in the
+            // email's language. English, and anything the owner typed, untouched.
+            'deliveryMethod' => \App\Support\ArabicWording::of(trim((string) $order->shipping_method) ?: 'Standard delivery'),
             'destinationCountry' => $this->destinationCountry($order),
-            'paymentLabel' => $order->paymentLabel(),
+            'paymentLabel' => \App\Support\ArabicWording::of($order->paymentLabel()),
             'giftNote' => $order->is_gift ? trim((string) $order->gift_note) : '',
             'customerNote' => trim((string) $order->customer_note),
             'email' => (string) $order->email,
@@ -280,7 +282,7 @@ class OrderEmailPresenter
             // paymentLabel() is the gateway's own name — "Cash on delivery",
             // "Card" — and is the owner's wording, not this file's. Only the
             // word "fee" beside it is translated.
-            $rows[] = [__('email.totals.payment_fee', ['method' => $order->paymentLabel()]), $otherFees, false];
+            $rows[] = [__('email.totals.payment_fee', ['method' => \App\Support\ArabicWording::of($order->paymentLabel())]), $otherFees, false];
         }
 
         /*
@@ -445,7 +447,11 @@ class OrderEmailPresenter
             trim(((string) ($address['first_name'] ?? '')) . ' ' . ((string) ($address['last_name'] ?? ''))),
             (string) ($address['line1'] ?? ''),
             (string) ($address['line2'] ?? ''),
-            self::cityLine((string) ($address['city'] ?? ''), (string) ($address['state'] ?? '')),
+            // The emirate in the email's language (Lane AE); English untouched.
+            self::cityLine(
+                \App\Support\AddressRegions::localName((string) ($address['country'] ?? ''), trim((string) ($address['city'] ?? ''))),
+                \App\Support\AddressRegions::localName((string) ($address['country'] ?? ''), trim((string) ($address['state'] ?? ''))),
+            ),
             self::countryName((string) ($address['country'] ?? '')),
             (string) ($address['phone'] ?? ''),
         ];
@@ -490,7 +496,14 @@ class OrderEmailPresenter
         $country = trim($country);
         $code = strtoupper($country);
 
-        return \App\Support\Countries::NAMES[$code] ?? $country;
+        /*
+         * In the email's language (Lane AE): an Arabic order's address ended
+         * "United Arab Emirates" on every receipt. CountryNames::label() is the
+         * storefront's own rule -- English byte for byte, Arabic on /ar.
+         */
+        return isset(\App\Support\Countries::NAMES[$code])
+            ? \App\Support\CountryNames::label($code, \App\Support\Countries::NAMES[$code])
+            : $country;
     }
 
     /**

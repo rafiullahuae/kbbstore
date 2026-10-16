@@ -93,6 +93,10 @@ final class Audience
         'has_account' => ['Has an account', 'customers', ['yes' => 'none', 'no' => 'none']],
         'newsletter' => ['Newsletter', 'customers', ['yes' => 'none', 'no' => 'none']],
         'customer_since' => ['Customer since', 'customers', ['within_days' => 'days', 'before' => 'date', 'after' => 'date']],
+        // Lane AE: chose Arabic, ordered in Arabic, or Arabic in the name or an
+        // address -- App\Support\ArabicCustomers, the same definition as
+        // Store -> Customers -> "Arabic customers".
+        'arabic' => ['Arabic customers', 'customers', ['yes' => 'none', 'no' => 'none']],
 
         'signed_up' => ['Signed up', 'subscribers', ['in_month' => 'month', 'in_year' => 'year', 'between' => 'range', 'within_days' => 'days']],
         'is_customer' => ['Also a customer', 'subscribers', ['yes' => 'none', 'no' => 'none']],
@@ -642,6 +646,13 @@ final class Audience
                 $login = DB::table('customers as ca')->whereColumn('ca.id', 'c.id')
                     ->where(fn ($p) => $p->whereNotNull('ca.password')->orWhereNotNull('ca.legacy_password'))->selectRaw('1');
                 $op === 'yes' ? $w->whereExists($login) : $w->whereNotExists($login);
+                break;
+
+            case 'arabic':
+                \App\Support\ArabicCustomers::registerSqlite();
+                [$sql, $bindings] = \App\Support\ArabicCustomers::predicate('ca');
+                $arabic = DB::table('customers as ca')->whereColumn('ca.id', 'c.id')->whereRaw($sql, $bindings)->selectRaw('1');
+                $op === 'yes' ? $w->whereExists($arabic) : $w->whereNotExists($arabic);
                 break;
 
             case 'newsletter':

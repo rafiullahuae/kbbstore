@@ -92,6 +92,8 @@ final class StaticMemos
             \App\Support\OrderEmirate::class => static fn () => \App\Support\OrderEmirate::reset(),
             // Lane CAP: whether carts.ct_email_customer_id / customers.origin exist yet.
             \App\Support\CheckoutEmailCapture::class => static fn () => \App\Support\CheckoutEmailCapture::forgetReady(),
+            // Lane AE: the customer-language schema flag, read once per process.
+            \App\Support\CustomerLocale::class => static fn () => \App\Support\CustomerLocale::forgetReady(),
             \App\Support\BrandLogo::class => static fn () => \App\Support\BrandLogo::forgetColumns(),
             // Lane BR2: whether brands.header_layout exists yet.
             \App\Support\BrandPanel::class => static fn () => \App\Support\BrandPanel::forgetColumn(),

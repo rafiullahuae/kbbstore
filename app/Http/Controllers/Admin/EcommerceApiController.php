@@ -97,7 +97,7 @@ class EcommerceApiController extends Controller
                      * empty box stops.
                      */
                     'reminders' => ['Basket reminders', 'The opt-in box on the cart page, the email it leads to, and when it is sent. Leave these empty and no box appears and nothing is sent, whatever the switch on Store → Modules says.', 'bag',
-                        ['cart_recovery_optin_label', 'cart_recovery_subject', 'cart_recovery_body', 'cart_recovery_schedule']],
+                        ['cart_recovery_optin_label', 'cart_recovery_optin_label_ar', 'cart_recovery_subject', 'cart_recovery_subject_ar', 'cart_recovery_body', 'cart_recovery_body_ar', 'cart_recovery_schedule']],
                 ],
                 'fields' => [
                     /*
@@ -125,6 +125,15 @@ class EcommerceApiController extends Controller
                     'cart_recovery_optin_label' => ['textarea', 'Opt-in text', '', 'The line beside the tick box on the cart page, e.g. “Email me a reminder about this basket.” Empty means no box, and no addresses collected.'],
                     'cart_recovery_subject'     => ['text', 'Reminder subject line', '', 'Used exactly as written, for every message in the sequence. Empty means nothing is ever sent.'],
                     'cart_recovery_body'        => ['textarea', 'Reminder message', '', 'Your own words. The basket contents, a link back to it, the reason the email arrived and the unsubscribe link are added for you. Empty means nothing is ever sent.'],
+                    /*
+                     * Lane AE: the Arabic twins, for a shopper on /ar. Shipped
+                     * with Arabic wording, and still OFF until the English box
+                     * beside each is filled (App\Support\ArabicTwin). Emptied,
+                     * an Arabic shopper gets the English.
+                     */
+                    'cart_recovery_optin_label_ar' => ['textarea', 'Opt-in text — Arabic', \App\Services\CartRecovery::AR_OPTIN_LABEL, 'Shown instead on the Arabic cart page. Only appears once the English opt-in text is filled. Empty: the English is shown.'],
+                    'cart_recovery_subject_ar'     => ['text', 'Reminder subject line — Arabic', \App\Services\CartRecovery::AR_SUBJECT, 'Sent to shoppers who use the shop in Arabic. Only sent once the English subject is filled. Empty: the English is sent.'],
+                    'cart_recovery_body_ar'        => ['textarea', 'Reminder message — Arabic', \App\Services\CartRecovery::AR_BODY, 'Sent to shoppers who use the shop in Arabic; the basket, the link and the unsubscribe line are added in Arabic for you. Empty: the English is sent.'],
                     'cart_recovery_schedule'    => ['text', 'When to send', '', 'Hours after the shopper ticks the box, separated by commas — “4, 24” sends two reminders, one at four hours and one at twenty-four. Each is measured from the tick, not from the previous message. Empty means nothing is ever sent.'],
                     'freeship_bar_style'  => ['select', 'Bar style', 'mint', '', ['mint' => 'Mint', 'candy' => 'Candy', 'gold' => 'Gold', 'mono' => 'Mono', 'rider' => 'Rider']],
                     'minicart_promo'      => ['textarea', 'Mini-cart promo line', '', 'Appears above the subtotal in the drawer. HTML allowed.'],
@@ -346,7 +355,7 @@ class EcommerceApiController extends Controller
                      * halves are needed and why neither has a default.
                      */
                     'stockalert' => ['Back-in-stock alerts', 'The notify-me form on sold-out products, and the email it leads to. Leave these empty and nothing appears and nothing is sent, whatever the switch on Store → Modules says.', 'box',
-                        ['stock_alert_form_label', 'stock_alert_subject', 'stock_alert_body']],
+                        ['stock_alert_form_label', 'stock_alert_form_label_ar', 'stock_alert_subject', 'stock_alert_subject_ar', 'stock_alert_body', 'stock_alert_body_ar']],
                     /*
                      * 'fbt' — Frequently bought together's switch, title and
                      * count — WENT IN LANE RB with the block itself. "Buy these
@@ -439,6 +448,10 @@ class EcommerceApiController extends Controller
                     'stock_alert_form_label' => ['textarea', 'Notify-me form text', '', 'The line above the form on a sold-out product, e.g. “Sold out — we will email you the moment it is back.” Empty means no form at all.'],
                     'stock_alert_subject'    => ['text', 'Alert subject line', '', 'Used exactly as written. Do not put the product name in it — a subject shows on a locked phone screen and in every mail server’s log. Empty means nothing is ever sent.'],
                     'stock_alert_body'       => ['textarea', 'Alert message', '', 'Your own words. The product name, a link to it, the reason the email arrived and the unsubscribe link are added for you. Empty means nothing is ever sent.'],
+                    // Lane AE: the Arabic twins (see the cart reminder's above).
+                    'stock_alert_form_label_ar' => ['textarea', 'Notify-me form text — Arabic', \App\Services\StockAlerts::AR_FORM_LABEL, 'Shown instead on Arabic product pages. Only appears once the English form text is filled. Empty: the English is shown.'],
+                    'stock_alert_subject_ar'    => ['text', 'Alert subject line — Arabic', \App\Services\StockAlerts::AR_SUBJECT, 'Sent to shoppers who asked on an Arabic page, or whose account is in Arabic. Only sent once the English subject is filled. Empty: the English is sent.'],
+                    'stock_alert_body_ar'       => ['textarea', 'Alert message — Arabic', \App\Services\StockAlerts::AR_BODY, 'The product name and link are added in Arabic for you. Empty: the English is sent.'],
                     'bundles_enabled'       => ['bool', 'Quantity bundles', true, 'Tiers are configured in Appearance → Quantity bundles.'],
                     'review_capsule_style'  => ['select', 'Rating display', 'capsule', 'Two badges at once is usually one too many.', ['capsule' => 'Capsule only', 'inline' => 'Inline only', 'both' => 'Capsule and inline', 'off' => 'Hidden']],
                     'review_badge_heart'    => ['bool', 'Heart icon on the capsule', true, ''],

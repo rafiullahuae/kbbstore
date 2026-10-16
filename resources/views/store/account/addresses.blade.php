@@ -33,7 +33,12 @@
               @if ($a->company)<span>{{ $a->company }}</span>@endif
               <span>{{ $a->line1 }}</span>
               @if ($a->line2)<span>{{ $a->line2 }}</span>@endif
-              <span>{{ trim($a->city . ($a->state ? ', ' . $a->state : '')) }} {{ $a->postcode }}</span>
+@php
+                  // Lane AE: the emirate in Arabic on /ar (the checkout stores its English name).
+                  $abCity = (method_exists(\App\Support\AddressRegions::class, 'localName') ? \App\Support\AddressRegions::localName((string) ($a->country), (string) ($a->city)) : ($a->city));
+                  $abState = (method_exists(\App\Support\AddressRegions::class, 'localName') ? \App\Support\AddressRegions::localName((string) ($a->country), (string) ($a->state)) : ($a->state));
+@endphp
+              <span>{{ trim($abCity . ($abState ? ', ' . $abState : '')) }} {{ $a->postcode }}</span>
               <span>{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($countries[$a->country] ?? $a->country) : (string) ($countries[$a->country] ?? $a->country)) }}</span>
               @if ($a->phone)<span>{{ \App\Support\Bidi::number((string) $a->phone) }}</span>@endif
             </div>

@@ -38,7 +38,9 @@ class CustomerAuthController extends Controller
         // Shown once inside the account panel, then gone.
         session()->flash('kbb.greet', ['kind' => 'back', 'name' => $this->firstName($customer)]);
 
-        return redirect()->intended('/my-account/');
+        // Locale::withSegment (Lane AE): signing in on /ar landed on the
+        // ENGLISH account page. English: '/my-account/', as before.
+        return redirect()->intended(\App\Support\Locale::withSegment('/my-account/'));
     }
 
     /**
@@ -88,6 +90,9 @@ class CustomerAuthController extends Controller
             $this->carts->mergeGuestCart($guestCart, $customer->id);
         }
 
+        // Lane AE: the language they signed in on is the one we write to them in.
+        \App\Support\CustomerLocale::remember($customer);
+
         return $customer;
     }
 
@@ -119,6 +124,9 @@ class CustomerAuthController extends Controller
             'phone' => $data['phone'] ?? null,
         ]);
 
+        // Lane AE: registered on /ar, written to in Arabic.
+        \App\Support\CustomerLocale::remember($customer);
+
         $guestCart = $this->carts->current($request, create: false);
 
         Auth::guard('customer')->login($customer);
@@ -131,7 +139,7 @@ class CustomerAuthController extends Controller
         // Shown once inside the account panel, then gone.
         session()->flash('kbb.greet', ['kind' => 'new', 'name' => $this->firstName($customer)]);
 
-        return redirect('/my-account/');
+        return redirect(\App\Support\Locale::withSegment('/my-account/'));
     }
 
     public function logout(Request $request): RedirectResponse
@@ -140,7 +148,7 @@ class CustomerAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect(\App\Support\Locale::withSegment('/'));
     }
 
     /**

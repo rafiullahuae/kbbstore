@@ -171,7 +171,9 @@ class OrderRefunded extends OrderMail
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Refund sent for your ' . $this->brandName() . ' order ' . $this->orderNumber(),
+            // Keyed (Lane AE): an Arabic order's refund email had an Arabic
+            // body under this English subject. The English is unchanged.
+            subject: (string) __('email.refund.subject', ['store' => $this->brandName(), 'number' => $this->orderNumber()]),
         );
     }
 

@@ -166,7 +166,8 @@
         $ship['company'] ?? null,
         $ship['line1'] ?? null,
         $ship['line2'] ?? null,
-        trim(implode(', ', array_filter([$ship['city'] ?? null, $ship['state'] ?? null, $ship['postcode'] ?? null]))),
+        // Lane AE: the emirate in Arabic on /ar (the checkout stores its English name).
+        trim(implode(', ', array_filter([(method_exists(\App\Support\AddressRegions::class, 'localName') ? \App\Support\AddressRegions::localName((string) ($ship['country'] ?? ''), (string) ($ship['city'] ?? '')) : ($ship['city'] ?? '')), (method_exists(\App\Support\AddressRegions::class, 'localName') ? \App\Support\AddressRegions::localName((string) ($ship['country'] ?? ''), (string) ($ship['state'] ?? '')) : ($ship['state'] ?? '')), $ship['postcode'] ?? null]))),
         (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of(Countries::NAMES[strtoupper((string) ($ship['country'] ?? ''))] ?? ($ship['country'] ?? null)) : (string) (Countries::NAMES[strtoupper((string) ($ship['country'] ?? ''))] ?? ($ship['country'] ?? null))),
         // (Lane AR round 2) the number kept left-to-right inside an Arabic line.
         isset($ship['phone']) ? \App\Support\Bidi::number((string) $ship['phone']) : null,

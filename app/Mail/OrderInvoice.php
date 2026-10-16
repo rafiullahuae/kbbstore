@@ -73,9 +73,10 @@ class OrderInvoice extends Mailable
         $store = $this->brandName();
 
         return new Envelope(
+            // Keyed (Lane AE), the English word for word what it was.
             subject: $reference !== ''
-                ? 'Invoice ' . $reference . ' for your ' . $store . ' order ' . $this->doc['orderNumber']
-                : 'Invoice for your ' . $store . ' order ' . $this->doc['orderNumber'],
+                ? (string) __('email.invoice.subject_ref', ['reference' => $reference, 'store' => $store, 'number' => (string) $this->doc['orderNumber']])
+                : (string) __('email.invoice.subject', ['store' => $store, 'number' => (string) $this->doc['orderNumber']]),
         );
     }
 

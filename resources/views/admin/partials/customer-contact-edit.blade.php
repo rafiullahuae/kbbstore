@@ -435,3 +435,5 @@
   window.kbbCustomerContact = { open: open, suggest: kxeSuggest };
 })();
 </script>
+{{-- Lane AE: the Customers screen's Language field and Arabic-list tags ride with this dialog's mount. --}}
+@include('admin.partials.customer-language')

@@ -407,23 +407,34 @@ final class CustomerInviter
                 : 'Invited less than ' . self::RECENT_MINUTES . ' minutes ago — skipped.'];
         }
 
-        $link = self::link($token);
-
         try {
-            $values = $this->template->values($customer, $link, $expires);
+            /*
+             * IN THE CUSTOMER'S LANGUAGE (Lane AE). A customer who shops in
+             * Arabic gets the kit, the link (/ar/my-account/welcome/…) and --
+             * while the owner has kept the built-in wording -- the built-in
+             * Arabic wording. Wording the owner wrote himself is his and is
+             * sent as written. Everyone else: exactly as before.
+             */
+            $locale = \App\Support\CustomerLocale::of($customer);
 
-            $mailable = new CustomerAccountInvite(
-                InviteTemplate::subject((string) $run->subject, $values),
-                InviteTemplate::segments((string) $run->body, $values),
-                InviteTemplate::text((string) $run->body, $values),
-                $link,
-                $values['shop_name'],
-            );
+            \App\Support\CustomerLocale::render($locale, function () use ($run, $customer, $token, $expires, $locale): void {
+                $link = self::link($token);
+                $values = $this->template->values($customer, $link, $expires);
+                [$subject, $body] = InviteTemplate::forLocale((string) $run->subject, (string) $run->body, $locale);
 
-            $this->log->labelNext(self::MAIL_KIND);
+                $mailable = new CustomerAccountInvite(
+                    InviteTemplate::subject($subject, $values),
+                    InviteTemplate::segments($body, $values),
+                    InviteTemplate::text($body, $values),
+                    $link,
+                    $values['shop_name'],
+                );
 
-            // The address from the database row, never from the request.
-            Mail::mailer(MailConfigurator::MAILER)->to(trim((string) $customer->email))->send($mailable);
+                $this->log->labelNext(self::MAIL_KIND);
+
+                // The address from the database row, never from the request.
+                Mail::mailer(MailConfigurator::MAILER)->to(trim((string) $customer->email))->send($mailable);
+            });
         } catch (\Throwable $e) {
             // Back exactly as it was: the link that failed to go out must not
             // be live, and the previous invite (if any) is still the one in

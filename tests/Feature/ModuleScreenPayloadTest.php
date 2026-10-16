@@ -477,6 +477,13 @@ it('sends every module screen the payload it sent before the shared schema', fun
      *   + 4 fields                 mail_gmail_username, mail_gmail_password
      *                              (secret, never a value), mail_address_dubai,
      *                              mail_address_korea.
+     *
+     * ── LANE AE: ONE FIELD ADDED TO mail.fields ─────────────────────────────
+     *
+     *   + mail_signature_ar        "Signature — Arabic", written into the
+     *                              fixture by hand directly after
+     *                              mail_signature, where MailSettings::SCHEMA
+     *                              has it. No other leaf moved.
      */
     expect($moved)->toBe([], "These module screens would now draw something different:\n".implode("\n", $moved));
 

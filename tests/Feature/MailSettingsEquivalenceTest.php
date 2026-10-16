@@ -187,7 +187,11 @@ it('answers every recorded mail call exactly as it did before the shared schema'
     // the fixture was merged by payload, not re-recorded — so the comparison
     // above still measures the old keys against their original answers, and
     // the exempted count is still 20.
-    expect(count($recorded))->toBe(284, 'the recorded corpus changed size');
+    //
+    // 298 since Lane AE: mail_signature_ar (the Arabic signature) ADDED 14
+    // lines, merged the same way -- inserted after mail_signature's, every
+    // existing line kept verbatim, so the exempted count is still 20.
+    expect(count($recorded))->toBe(298, 'the recorded corpus changed size');
 });
 
 /** One `name=value` part of a recorded line. */
