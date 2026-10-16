@@ -299,6 +299,12 @@ final class AdminCapabilities
         // Owner and manager, like the WebP run it is built beside.
         'media.image_seo' => ['owner', 'manager'],
 
+        // Catalog -> Shop by Concern sync (Lane SC). Its own capability and NOT
+        // catalog.manage: a Sync sends product text to the Claude API on the
+        // owner's key (it spends his money), and Apply adds products to seven
+        // storefront collections at once. Owner and manager.
+        'concerns.sync' => ['owner', 'manager'],
+
         /*
          * Content -> Shoppable video (Lane V2, Phase 20). The UGC library: the
          * clips, who made them, whether they said yes, and which products are
@@ -1694,6 +1700,9 @@ final class AdminCapabilities
         // is still this capability, never wider.
         ['*', 'admin-api/image-seo', 'media.image_seo'],
         ['*', 'admin-api/image-seo/**', 'media.image_seo'],
+        // Lane SC. Every path under the prefix, reads and writes alike.
+        ['*', 'admin-api/concern-sync', 'concerns.sync'],
+        ['*', 'admin-api/concern-sync/**', 'concerns.sync'],
         ['*', 'admin-api/media', 'content.manage'],
         ['*', 'admin-api/media/**', 'content.manage'],
         ['*', 'admin-api/blocks', 'content.manage'],

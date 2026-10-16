@@ -1,0 +1,21 @@
+[
+  {
+    "width": 390,
+    "footerBeforeApply": "72 memberships ticked across 30 products",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "cards": 2,
+    "message": "Added 72 memberships to 30 products. Nothing was removed.",
+    "keyType": "password",
+    "keyAutocomplete": "new-password",
+    "chipFont": "12px",
+    "requests": [
+      "GET /admin-api/concern-sync",
+      "POST /admin-api/concern-sync/scan",
+      "POST /admin-api/concern-sync/apply"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  }
+]
