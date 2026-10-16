@@ -24703,6 +24703,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      Wraps window.go for 'imageseo'; its sidebar row is App\Support\AdminNav's.
      Endpoints: routes/image-seo-admin.php, `media.image_seo`. --}}
 @include('admin.partials.image-seo-screen')
+@include('admin.partials.concern-sync-screen')
 
 {{-- Platform → Cache (Lane: cache-control). What the shop's caching is
      actually doing, the switches behind it, and the buttons that drop the

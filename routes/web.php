@@ -874,6 +874,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // Catalog → Image SEO (Lane IR): rename product pictures to the product
         // name and bulk alt text; `media.image_seo`, owner and manager.
         require __DIR__.'/image-seo-admin.php';
+        require __DIR__.'/concern-sync-admin.php';
 
         // Content → HTML Blocks: reusable snippets placed into pages and posts
         // with [kbb_block slug="…"].
