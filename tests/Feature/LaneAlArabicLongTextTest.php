@@ -315,7 +315,8 @@ it('is Arabic: Latin only for units, ratings, INCI and technical acronyms', func
 });
 
 const LANE_AL_LATIN_OK = <<<'TXT'
-A AC ACE AHA AP Acetyle B BB BHA BP C D E EGF EMS EU EWG EX F HA HEVIS Hexapeptide IP K LED LHA MAC
-MC MCT NAD NC NMF NP O Oligopeptide P PA PCA PDRN PEG PHA PIH PPM Polypeptide Q SH SPF SSL T TECA TX
-TXA U USB UV UVA UVB V X cm com g gm info kbeautybliss kg mAh mL mg ml mm pH ppm sh
+A ABC AC ACE AHA AP Acetyl Acetyle B BB BHA BP BSASM C D E EGF EMS EU EWG EX F HA HD HEVIS
+Hexapeptide IP IPMP K KH L LCD LED LHA LJH MAC MC MCT MF N NAD NC NMF NP O Oligopeptide P PA PC PCA
+PCR PDRN PEG PF PHA PIH PPM Polypeptide Q SH SLES SLS SPF SSL T TECA TX TXA U USB UV UVA UVB V WH X
+cm com g gm info kbeautybliss kg mAh mL mg ml mm pH ppm sh
 TXT;
