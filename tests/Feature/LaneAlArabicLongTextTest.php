@@ -77,7 +77,7 @@ function alAr(string $group, int $id, string $field): ?object
 }
 
 it('ships its parts, each small enough for the updater', function () {
-    expect(count(alParts()))->toBeGreaterThanOrEqual(1);
+    expect(count(alParts()))->toBeGreaterThanOrEqual(2);
 
     foreach (alParts() as $file) {
         expect(filesize($file))->toBeLessThan(3 * 1024 * 1024, basename($file));
@@ -278,6 +278,7 @@ it('is Arabic: Latin only for units, ratings, INCI and technical acronyms', func
 });
 
 const LANE_AL_LATIN_OK = <<<'TXT'
-A AHA AP Acetyle B BHA C D E EGF EMS EU EWG EX F Hexapeptide K LED LHA MC MCT NAD NP Oligopeptide PA
-PCA PDRN PEG PHA PPM Polypeptide Q SH SPF T TECA TXA U UV UVA UVB V cm g gm kg mL mg ml mm pH ppm sh
+A AC ACE AHA AP Acetyle B BB BHA BP C D E EGF EMS EU EWG EX F HA HEVIS Hexapeptide K LED LHA MC MCT
+NAD NC NMF NP O Oligopeptide P PA PCA PDRN PEG PHA PPM Polypeptide Q SH SPF T TECA TX TXA U USB UV
+UVA UVB V X cm g gm kg mAh mL mg ml mm pH ppm sh
 TXT;
