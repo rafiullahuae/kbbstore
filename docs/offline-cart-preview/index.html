@@ -99,6 +99,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
 .ln .nm{font-size:12.5px;line-height:1.3;font-weight:600}
 .ln .pr{font-size:12.5px;color:var(--s-muted);margin-top:2px}
 .ln .tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;margin-top:4px;border-radius:99px;padding:1px 8px}
+.tag.l{color:var(--s-muted);padding:0;margin:0;margin-inline-start:6px;vertical-align:middle}
 .tag.s{background:var(--s-warnbg);color:var(--s-warn)}
 .tag.q{background:var(--s-offbg);color:var(--s-off)}
 .spin{width:10px;height:10px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:sp .8s linear infinite}
@@ -132,7 +133,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
 <div class="wrap">
   <div>
     <h1>The bag, on a bad connection</h1>
-    <p class="lead">A working copy of the shop on a phone. On Normal it behaves exactly as the shop does today. Only when the phone is offline, or a slow connection is confirmed (no answer after 4 seconds), does anything new appear. Switch the connection, then tap Add to cart, change quantities and open other pages. The list on the right says in plain words what the phone and the shop do at each step. Nothing here talks to the real shop.</p>
+    <p class="lead">A working copy of the shop on a phone. On Normal it behaves exactly as the shop does today. On Slow and Offline the product is added at once: “Added”, the product in the list with a small loading circle, and no waiting and no extra messages. Switch the connection, then tap Add to cart, change quantities and open other pages. The list on the right says in plain words what the phone and the shop do at each step. Nothing here talks to the real shop.</p>
   </div>
 
   <div class="grid">
@@ -140,8 +141,8 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
       <p class="lab">Phone's internet</p>
       <div class="seg" role="group" aria-label="Connection">
         <button type="button" data-c="normal" id="cNormal">Normal<small>same as today</small></button>
-        <button type="button" data-c="slow" id="cSlow">Slow<small>yellow note, no grey bars</small></button>
-        <button type="button" data-c="offline" id="cOff">Offline<small>no signal</small></button>
+        <button type="button" data-c="slow" id="cSlow">Slow<small>added at once</small></button>
+        <button type="button" data-c="offline" id="cOff">Offline<small>added at once</small></button>
       </div>
       <p class="lab">Try these</p>
       <div class="row">
@@ -184,7 +185,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
       slow: 'Your connection is slow. We’re still adding it.', sync: 'Back online. Adding your saved items…',
       back: 'You’re back online. Your bag is up to date.', sold: '{n} sold out while you were away, so we removed it.',
       cooff: 'You’re offline. Checkout needs internet to take payment. Your bag is saved.',
-      codemo: 'On the shop, this opens the checkout.', wait: 'One moment, your bag is still updating.',
+      codemo: 'On the shop, this opens the checkout.', added: 'Added to your bag', wait: 'One moment, your bag is still updating.',
       nav: ['Bestsellers', 'Skincare', 'Suncare'], brand: 'K-Beauty Bliss', last: 'Last one', price: function (n) { return 'AED ' + n; } },
     ar: { add: 'أضيفي إلى السلة', cart: 'السلة', empty: 'حقيبتك فارغة.', adding: 'جارٍ الإضافة…', saved: 'محفوظ · يُضاف عند عودة الاتصال',
       sub: 'المجموع الفرعي', est: 'تقديري حتى عودة الاتصال', co: 'إتمام الطلب',
@@ -192,7 +193,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
       slow: 'اتصالك بطيء. ما زلنا نضيف المنتج.', sync: 'عاد الاتصال. نضيف المنتجات المحفوظة…',
       back: 'عاد الاتصال. حقيبتك محدّثة.', sold: 'نفد {n} أثناء غيابك، فأزلناه من حقيبتك.',
       cooff: 'أنتِ غير متصلة. يحتاج الدفع إلى الإنترنت، وحقيبتك محفوظة.',
-      codemo: 'في المتجر، يفتح هذا صفحة الدفع.', wait: 'لحظة، ما زالت حقيبتك تتحدّث.',
+      codemo: 'في المتجر، يفتح هذا صفحة الدفع.', added: 'أُضيف إلى حقيبتك', wait: 'لحظة، ما زالت حقيبتك تتحدّث.',
       nav: ['الأكثر مبيعاً', 'العناية بالبشرة', 'الحماية من الشمس'], brand: 'كي بيوتي بليس', last: 'آخر قطعة', price: function (n) { return n + ' د.إ'; } }
   };
 
@@ -242,7 +243,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
   }
   function act(op, pid, qty) {
     var o = { id: rid(), op: op, pid: pid, qty: qty, st: 'waiting' };
-    if (S.conn === 'slow' && !S.slow) { S.slow = true; log('save', 'Slow connection known → no grey bars: the product goes straight into the list with the yellow note.'); }
+    if (S.conn === 'slow' && !S.slow) { S.slow = true; log('save', 'Slow connection known → no grey bars, no waiting: “Added” at once, a small loading circle until the shop confirms.'); }
     S.pend.push(o);
     if (S.conn === 'offline') { save(o); render(); return; }
     enqueue(o); render();
@@ -285,7 +286,6 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
     });
     if (S.syncing && !S.pend.length) {
       S.syncing = false;
-      if (!res.gone.length) flash('ok', t().back, 3500);
       log('ok', 'All saved changes are in. Phone and shop agree.');
     }
     render();
@@ -355,8 +355,6 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
   function banner() {
     var L = t();
     if (S.flash) return '<div class="note ' + S.flash.k + '" role="status">' + ICON[S.flash.k] + '<span>' + S.flash.text + '</span></div>';
-    if (S.conn === 'offline') return '<div class="note off" role="status">' + ICON.off + '<span>' + L.off + '</span></div>';
-    if (S.slow) return '<div class="note slow" role="status">' + ICON.slow + '<span>' + L.slow + '</span></div>';
     return '';
   }
   function render() {
@@ -386,13 +384,13 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
     var pending = Object.keys(vc.st).length > 0, sub = 0, lines = '';
     Object.keys(v).forEach(function (k) {
       var x = byId[k], q = v[k]; sub += x.p * q;
-      var tag = vc.st[k] === 'q' ? '<span class="tag q">' + L.saved + '</span>' : vc.st[k] === 's' ? '<span class="tag s"><span class="spin"></span>' + L.adding + '</span>' : '';
-      lines += '<div class="ln"><div class="th">' + thumb(x.c) + '</div><div><div class="nm" dir="ltr">' + x.s + '</div><div class="pr">' + L.price(x.p) + '</div>' + tag + '</div>' +
+      var tag = vc.st[k] ? '<span class="tag l" role="img" aria-label="' + L.adding + '"><span class="spin"></span></span>' : '';
+      lines += '<div class="ln"><div class="th">' + thumb(x.c) + '</div><div><div class="nm" dir="ltr">' + x.s + '</div><div class="pr">' + L.price(x.p) + tag + '</div>' + '</div>' +
         '<div class="qty"><button type="button" data-dec="' + k + '" aria-label="−">−</button><span>' + q + '</span><button type="button" data-inc="' + k + '" aria-label="+">+</button></div></div>';
     });
     h += '<div class="shade" data-a="close"></div><aside class="drawer" aria-label="' + L.cart + '"><div class="dh"><strong>' + L.cart + ' (' + n + ')</strong><button type="button" data-a="close" aria-label="Close">✕</button></div>' +
       banner() + '<div class="lines">' + (S.skel ? '<div class="sk"><i></i><div><b></b><b></b></div></div>'.repeat(2) : (lines || '<div class="empty">' + L.empty + '</div>')) + '</div>' +
-      (n && !S.skel ? '<div class="df"><div class="tot"><span>' + L.sub + (pending ? '<small>' + L.est + '</small>' : '') + '</span><span>' + L.price(sub) + '</span></div><button type="button" class="co" data-a="co">' + L.co + '</button></div>' : '') + '</aside>';
+      (n && !S.skel ? '<div class="df"><div class="tot"><span>' + L.sub + '' + '</span><span>' + L.price(sub) + '</span></div><button type="button" class="co" data-a="co">' + L.co + '</button></div>' : '') + '</aside>';
     ph.innerHTML = h;
     paintSide();
   }
@@ -414,7 +412,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
   document.getElementById('phone').addEventListener('click', function (ev) {
     var b = ev.target.closest('button,[data-a]'); if (!b) return;
     var a = b.getAttribute('data-a');
-    if (b.hasAttribute('data-add')) { S.open = true; if (S.conn === 'normal') S.skel = true; act('add', +b.getAttribute('data-add'), 1); return; }
+    if (b.hasAttribute('data-add')) { S.open = true; if (S.conn === 'normal') S.skel = true; else flash('ok', t().added, 1400); act('add', +b.getAttribute('data-add'), 1); return; }
     if (b.hasAttribute('data-go')) { go(+b.getAttribute('data-go')); return; }
     if (b.hasAttribute('data-inc')) { var k = +b.getAttribute('data-inc'); act('set', k, (viewCart().v[k] || 0) + 1); return; }
     if (b.hasAttribute('data-dec')) { var d = +b.getAttribute('data-dec'), cur = viewCart().v[d] || 0; if (cur <= 1) act('remove', d, 0); else act('set', d, cur - 1); return; }
