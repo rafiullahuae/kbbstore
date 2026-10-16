@@ -159,6 +159,7 @@ final class AdminRoles
             'pagination.manage' => 'Turn pagination on or off for the shop, a category, a brand or a listing page',
             'notfoundpage.manage' => 'Choose and edit the shop’s 404 page (Safety → 404 page)',
             'shareimages.make' => 'Make link-preview pictures',
+            'concerns.sync' => 'Find products in no skin-concern collection, get suggestions (Claude API or built-in rules) and add them (Catalog → Shop by Concern)',
         ]],
         ['inventory', 'Inventory', [
             'sets.stock' => 'Decide whether selling a set takes stock from its items',

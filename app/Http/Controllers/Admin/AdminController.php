@@ -1717,7 +1717,9 @@ class AdminController extends Controller
          * so they are never sent from here.
          */
         foreach (array_keys($map) as $settingKey) {
-            if (str_starts_with((string) $settingKey, 'owner_app_')) {
+            // (Lane SC) and the Claude API key of Catalog -> Shop by Concern,
+            // encrypted, but no screen but its own needs even the ciphertext.
+            if (str_starts_with((string) $settingKey, 'owner_app_') || $settingKey === 'concern_sync_api_key') {
                 unset($map[$settingKey]);
             }
         }
