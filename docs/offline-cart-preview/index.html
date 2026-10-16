@@ -107,6 +107,11 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
 .qty{display:flex;align-items:center;border:1px solid var(--s-line);border-radius:99px;overflow:hidden}
 .qty button{border:0;background:none;width:28px;height:28px;color:var(--s-ink);font-size:15px}
 .qty span{min-width:18px;text-align:center;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.sk{display:grid;grid-template-columns:54px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--s-line)}
+.sk i,.sk b{display:block;background:var(--s-line);border-radius:8px}
+.sk i{width:54px;height:54px}
+.sk b{height:10px;margin-top:10px}
+.sk b+b{width:55%}
 .empty{color:var(--s-muted);text-align:center;padding:40px 0;font-size:14px}
 .df{border-top:1px solid var(--s-line);padding:12px 14px 16px;display:grid;gap:8px}
 .tot{display:flex;justify-content:space-between;font-weight:700;font-size:15px}
@@ -127,14 +132,14 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
 <div class="wrap">
   <div>
     <h1>The bag, on a bad connection</h1>
-    <p class="lead">A working copy of the shop on a phone. Switch the connection, then tap Add to cart, change quantities and open other pages. The list on the right says in plain words what the phone and the shop do at each step. Nothing here talks to the real shop.</p>
+    <p class="lead">A working copy of the shop on a phone. On Normal it behaves exactly as the shop does today. Only when the phone is offline, or a slow connection is confirmed (no answer after 4 seconds), does anything new appear. Switch the connection, then tap Add to cart, change quantities and open other pages. The list on the right says in plain words what the phone and the shop do at each step. Nothing here talks to the real shop.</p>
   </div>
 
   <div class="grid">
     <section class="panel ctl" aria-label="Controls">
       <p class="lab">Phone's internet</p>
       <div class="seg" role="group" aria-label="Connection">
-        <button type="button" data-c="normal" id="cNormal">Normal<small>answers at once</small></button>
+        <button type="button" data-c="normal" id="cNormal">Normal<small>same as today</small></button>
         <button type="button" data-c="slow" id="cSlow">Slow<small>9 s per tap</small></button>
         <button type="button" data-c="offline" id="cOff">Offline<small>no signal</small></button>
       </div>
@@ -197,7 +202,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
     timers = []; aborts = []; chain = Promise.resolve(); idn = 0;
     S = { conn: 'normal', lang: S ? S.lang : 'en', page: 0, prev: 0, open: false,
       server: { cart: {}, stock: { 1: 20, 2: 20, 3: 20, 4: 1 }, seen: {} },
-      confirmed: {}, pend: [], slow: false, flash: null, syncing: false, log: [], t0: Date.now() };
+      confirmed: {}, pend: [], slow: false, skel: false, flash: null, syncing: false, log: [], t0: Date.now() };
   }
   function later(fn, ms) { var t = setTimeout(fn, ms); timers.push(t); return t; }
   function t() { return T[S.lang]; }
@@ -243,7 +248,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
   }
   function enqueue(o) { o.st = 'waiting'; chain = chain.then(function () { return run(o); }).catch(function () {}); }
   function save(o) {
-    o.st = 'queued';
+    o.st = 'queued'; S.skel = false;
     log('save', 'No connection → saved in this phone: ' + desc(o) + ' (#' + o.id + ')');
   }
   async function run(o) {
@@ -252,7 +257,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
     var slow = S.conn === 'slow', total = slow ? 9000 : 450;
     o.st = 'sending'; render();
     log('net', 'Phone → shop: ' + desc(o) + ' (#' + o.id + ')');
-    var st = slow ? later(function () { if (o.st === 'sending') { S.slow = true; log('save', '4 s and no answer → the panel says the connection is slow'); render(); } }, 4000) : null;
+    var st = slow ? later(function () { if (o.st === 'sending') { S.slow = true; S.skel = false; log('save', '4 s and no answer → slow confirmed: the grey bars give way to the product and a short note'); render(); } }, 4000) : null;
     var reached = await wait(total * 0.4);
     if (!reached) { clearTimeout(st); S.slow = false; save(o); render(); return; }
     var res = serverHandle(o);
@@ -269,6 +274,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
   function receive(o, res) {
     S.pend = S.pend.filter(function (x) { return x !== o; });
     S.confirmed = res.cart;
+    if (!S.pend.some(function (x) { return x.st !== 'queued'; })) S.skel = false;
     if (!S.pend.some(function (x) { return x.st === 'sending'; })) S.slow = false;
     if (res.dup) log('dup', 'Shop: #' + o.id + ' was already done, so it is ignored. Nothing is added twice.');
     else log('ok', 'Phone got the answer. Bag now has ' + count(res.cart) + ' item' + (count(res.cart) === 1 ? '' : 's') + '.');
@@ -337,6 +343,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
   function viewCart() {
     var v = Object.assign({}, S.confirmed), st = {};
     S.pend.forEach(function (o) {
+      if (o.st !== 'queued' && !S.slow) return;   // Normal: exactly today's behaviour
       var cur = v[o.pid] || 0;
       var q = o.op === 'add' ? cur + o.qty : o.op === 'set' ? o.qty : 0;
       if (q > 0) v[o.pid] = q; else delete v[o.pid];
@@ -348,7 +355,6 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
     var L = t();
     if (S.flash) return '<div class="note ' + S.flash.k + '" role="status">' + ICON[S.flash.k] + '<span>' + S.flash.text + '</span></div>';
     if (S.conn === 'offline') return '<div class="note off" role="status">' + ICON.off + '<span>' + L.off + '</span></div>';
-    if (S.syncing) return '<div class="note slow" role="status">' + ICON.slow + '<span>' + L.sync + '</span></div>';
     if (S.slow) return '<div class="note slow" role="status">' + ICON.slow + '<span>' + L.slow + '</span></div>';
     return '';
   }
@@ -376,7 +382,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
       return '<div class="pc"><div class="im">' + thumb(x.c) + '</div><div class="tx" dir="ltr">' + x.s + '<s>' + L.price(x.p) + '</s>' + (x.last ? '<em>' + L.last + '</em>' : '') + '</div><button type="button" class="add" data-add="' + x.id + '">' + L.add + '</button></div>';
     }).join('') + '</div></div>';
 
-    var pending = S.pend.length > 0, sub = 0, lines = '';
+    var pending = Object.keys(vc.st).length > 0, sub = 0, lines = '';
     Object.keys(v).forEach(function (k) {
       var x = byId[k], q = v[k]; sub += x.p * q;
       var tag = vc.st[k] === 'q' ? '<span class="tag q">' + L.saved + '</span>' : vc.st[k] === 's' ? '<span class="tag s"><span class="spin"></span>' + L.adding + '</span>' : '';
@@ -384,8 +390,8 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
         '<div class="qty"><button type="button" data-dec="' + k + '" aria-label="−">−</button><span>' + q + '</span><button type="button" data-inc="' + k + '" aria-label="+">+</button></div></div>';
     });
     h += '<div class="shade" data-a="close"></div><aside class="drawer" aria-label="' + L.cart + '"><div class="dh"><strong>' + L.cart + ' (' + n + ')</strong><button type="button" data-a="close" aria-label="Close">✕</button></div>' +
-      banner() + '<div class="lines">' + (lines || '<div class="empty">' + L.empty + '</div>') + '</div>' +
-      (n ? '<div class="df"><div class="tot"><span>' + L.sub + (pending ? '<small>' + L.est + '</small>' : '') + '</span><span>' + L.price(sub) + '</span></div><button type="button" class="co" data-a="co">' + L.co + '</button></div>' : '') + '</aside>';
+      banner() + '<div class="lines">' + (S.skel ? '<div class="sk"><i></i><div><b></b><b></b></div></div>'.repeat(2) : (lines || '<div class="empty">' + L.empty + '</div>')) + '</div>' +
+      (n && !S.skel ? '<div class="df"><div class="tot"><span>' + L.sub + (pending ? '<small>' + L.est + '</small>' : '') + '</span><span>' + L.price(sub) + '</span></div><button type="button" class="co" data-a="co">' + L.co + '</button></div>' : '') + '</aside>';
     ph.innerHTML = h;
     paintSide();
   }
@@ -407,7 +413,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
   document.getElementById('phone').addEventListener('click', function (ev) {
     var b = ev.target.closest('button,[data-a]'); if (!b) return;
     var a = b.getAttribute('data-a');
-    if (b.hasAttribute('data-add')) { S.open = true; act('add', +b.getAttribute('data-add'), 1); return; }
+    if (b.hasAttribute('data-add')) { S.open = true; if (S.conn !== 'offline') S.skel = true; act('add', +b.getAttribute('data-add'), 1); return; }
     if (b.hasAttribute('data-go')) { go(+b.getAttribute('data-go')); return; }
     if (b.hasAttribute('data-inc')) { var k = +b.getAttribute('data-inc'); act('set', k, (viewCart().v[k] || 0) + 1); return; }
     if (b.hasAttribute('data-dec')) { var d = +b.getAttribute('data-dec'), cur = viewCart().v[d] || 0; if (cur <= 1) act('remove', d, 0); else act('set', d, cur - 1); return; }
