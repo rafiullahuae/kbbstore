@@ -303,9 +303,38 @@
     if (/^https?:\/\/[^\s"<>]+$/i.test(v)) return v;
     return null;
   }
+  function nameFor(v) {
+    v = String(v || '').trim();
+    if (!targets || v === '') return '';
+    var path = '';
+    if (/^\/(?!\/)/.test(v)) path = v;
+    else {
+      try {
+        var u = new URL(v), h = function (x) { return x.replace(/^www\./, ''); };
+        if (h(u.host) !== h(window.location.host)) return fromAddress(v);   // another site: its own words
+        path = u.pathname;
+      } catch (e) { return ''; }
+    }
+    path = path.split(/[?#]/)[0].replace(/^\/ar(?=\/)/, '');
+    if (path.slice(-1) !== '/') path += '/';
+    for (var i = 0; i < targets.length; i++) if (targets[i][2] === path) return String(targets[i][1]);
+    return fromAddress(v);
+  }
+  /* Any other address: its own words. /product/anua-heartleaf-intense-calming-
+     cream/ -> "Anua Heartleaf Intense Calming Cream"; a bare site -> its name.
+     Built here from the address alone: nothing is fetched from another site. */
+  function fromAddress(v) {
+    var host = '', path = v;
+    try { var u = new URL(v, window.location.origin); host = u.host.replace(/^www\./, ''); path = u.pathname; } catch (e) {}
+    var segs = path.split('/').filter(function (x) { return x !== '' && x !== 'ar'; });
+    var last = segs.length ? decodeURIComponent(segs[segs.length - 1]).replace(/\.[a-z0-9]{2,5}$/i, '') : '';
+    var words = last.replace(/[-_+]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!words || /^\d+$/.test(words)) words = host;
+    return words.slice(0, 160).replace(/(^|\s)(\S)/g, function (m, s, c) { return s + c.toUpperCase(); });
+  }
   function own(v) {
     if (/^\/(?!\/)/.test(v)) return true;
-    try { return new URL(v).host === window.location.host; } catch (e) { return false; }
+    try { return new URL(v).host.replace(/^www\./, '') === window.location.host.replace(/^www\./, ''); } catch (e) { return false; }
   }
   function openPicture(img, area) {
     if (!dlg) {
@@ -316,12 +345,12 @@
         + '<h3 id="rgpT">This picture</h3>'
         + '<div style="display:flex;gap:12px;align-items:flex-start"><img id="rgpImg" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:8px;flex:none">'
         + '<div style="display:grid;gap:10px;flex:1;min-width:0">'
-        + '<label style="display:grid;gap:4px;font-size:13px;font-weight:600">Link (optional)<input id="rgpLink" type="text" autocomplete="off" data-1p-ignore data-lpignore="true" placeholder="Type a product, category, brand or article — or paste an address" style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font:inherit;font-weight:400"></label>'
+        + '<label style="display:grid;gap:4px;font-size:13px;font-weight:600">Link (optional)<input id="rgpLink" type="text" autocomplete="off" data-1p-ignore data-lpignore="true" placeholder="Type a product, category, brand, page or article — or paste any address" style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font:inherit;font-weight:400"></label>'
         + '<div id="rgpSug" role="listbox" style="display:grid;gap:2px;max-height:180px;overflow:auto"></div>'
         + '<p id="rgpBad" style="color:#b42318" hidden>Use an address starting with / or https://</p>'
         + '<p id="rgpNote" style="color:#8a5a00" hidden></p>'
         + '<label style="display:grid;gap:4px;font-size:13px;font-weight:600">Alt text (for Google and screen readers)<input id="rgpAlt" type="text" maxlength="160" autocomplete="off" placeholder="What the picture shows" style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font:inherit;font-weight:400"></label>'
-        + '<p>Describe the picture in a few words, with the product name. Choosing a product above fills this in for you.</p>'
+        + '<p>Filled in for you from the link — a product, page or any address — and yours to edit. A few words with the product name are best.</p>'
         + '</div></div>'
         + '<div class="rgm-acts" style="justify-content:space-between;flex-wrap:wrap"><span style="display:flex;gap:6px"><button type="button" class="rgm-btn" data-mv="-1" title="Move earlier">&larr;</button><button type="button" class="rgm-btn" data-mv="1" title="Move later">&rarr;</button><button type="button" class="rgm-btn" data-del style="color:#b42318">Remove picture</button></span>'
         + '<span style="display:flex;gap:6px"><button type="button" class="rgm-btn" data-x>Cancel</button><button type="button" class="rgm-btn pri" data-ok>Save</button></span></div></div>';
@@ -352,9 +381,19 @@
     }
     var note = dlg.querySelector('#rgpNote');
     note.hidden = true;
+    /* The alt text from a pasted or typed address too, not only from a picked
+       suggestion (the owner pasted https://kbeautybliss.com/product/… and the
+       alt stayed empty, 16 October 2026). Only ever fills an EMPTY alt, or one
+       this panel filled itself; his own words are never replaced. */
+    function fillFromLink() {
+      var name = nameFor(link.value);
+      if (name && (alt.value.trim() === '' || alt.value === autoAlt.get(img))) { alt.value = name; autoAlt.set(img, name); }
+    }
+    // A picture linked before its alt was filled: fill it now, from the link.
+    loadTargets().then(fillFromLink);
     link.oninput = function () {
       bad.hidden = true;
-      loadTargets().then(function () { note.textContent = targetsNote; note.hidden = targetsNote === ''; suggest(); });
+      loadTargets().then(function () { note.textContent = targetsNote; note.hidden = targetsNote === ''; suggest(); fillFromLink(); });
     };
     sug.onclick = function (ev) {
       var b = ev.target.closest('[data-t]'); if (!b) return;
@@ -380,6 +419,9 @@
         dlg.hidden = true; changed(area); return;
       }
       if (!t.closest('[data-ok]')) return;
+      loadTargets().then(function () { fillFromLink(); save(); });
+    };
+    function save() {
       var href = cleanLink(link.value);
       if (href === null) { bad.hidden = false; link.focus(); return; }
       img.setAttribute('alt', alt.value.trim().slice(0, 160));
@@ -393,7 +435,7 @@
       }
       dlg.hidden = true;
       changed(area);
-    };
+    }
   }
 })();
 </script>

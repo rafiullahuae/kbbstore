@@ -151,3 +151,45 @@ it('wires the toolbar into every rich-text editor and the script into the admin 
     expect($js)->not->toContain('getBoundingClientRect')->not->toContain('offsetTop')->not->toContain('offsetHeight')
         ->not->toContain('setInterval')->not->toContain('setTimeout');
 });
+
+it('fills a picture\'s alt text from a pasted or typed address of this shop, not only from a picked suggestion', function () {
+    /*
+     * What it looked like in the admin (16 October 2026): the owner pasted
+     * https://kbeautybliss.com/product/anua-heartleaf-… into a picture's Link,
+     * pressed Save, reopened it, and the alt text was empty -- it was only ever
+     * filled from a clicked suggestion. Measured on a preview
+     * (tools/rgm-paste.cjs): a pasted full address and an immediate Save give
+     * alt "Barrier Repair Cream"; reopening shows it; a picture linked earlier
+     * with no alt fills on open; his own words are kept.
+     *
+     * MUTATION: drop fillFromLink() from Save, from the link's input, or from
+     * opening the panel -- each is a line below.
+     */
+    $js = (string) file_get_contents(resource_path('views/admin/partials/rte-media.blade.php'));
+
+    expect($js)->toContain('function nameFor(v)')
+        ->toContain("loadTargets().then(function () { fillFromLink(); save(); });")
+        ->toContain('suggest(); fillFromLink(); });')
+        ->toContain('loadTargets().then(fillFromLink);')
+        // Only an empty alt, or one the panel filled itself.
+        ->toContain("if (name && (alt.value.trim() === '' || alt.value === autoAlt.get(img)))")
+        // "custom url and pick the product also, in both case the alt field
+        // should be filled off by itself": an address the shop does not know,
+        // or another site, still gives words of its own, built from the address
+        // alone (nothing fetched). Measured: another site's product page ->
+        // "Anua Heartleaf 77 Soothing Toner", instagram.com -> "Instagram.com",
+        // /delivery/ -> "Shipping & Delivery" (a content page, from the list).
+        ->toContain('function fromAddress(v)')
+        ->toContain('return fromAddress(v);   // another site: its own words');
+});
+
+it('offers the shop\'s published, routed content pages as link targets, with their real titles', function () {
+    \App\Models\Page::query()->updateOrCreate(['slug' => 'delivery'], ['title' => 'Shipping &amp; Delivery', 'status' => 'published', 'content' => '<p>x</p>']);
+    \App\Models\Page::query()->updateOrCreate(['slug' => 'dg-unrouted-draft'], ['title' => 'Draft Page', 'status' => 'draft', 'content' => '<p>x</p>']);
+
+    $items = test()->actingAs(dgAdmin('owner'), 'admin')->getJson('/admin-api/media/link-targets')->assertOk()->json('items');
+    $pages = array_values(array_filter($items, fn ($i) => $i[0] === 'page'));
+
+    expect($pages)->toContain(['page', 'Shipping & Delivery', '/delivery/'])
+        ->and(array_column($pages, 1))->not->toContain('Draft Page');
+});

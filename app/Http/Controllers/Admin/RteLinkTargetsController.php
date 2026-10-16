@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * GET /admin-api/media/link-targets — what a gallery picture can link to.
+ * GET /admin-api/media/link-targets — what a gallery picture can link to:
+ * products, categories, brands, content pages and articles.
  *
  * The owner, 16 October 2026: "each image should have a separate custom link
  * ... and the alt text ... when i enter the link, the alt text should be copied
@@ -19,7 +20,7 @@ use Illuminate\Support\Facades\Schema;
  * (admin/partials/rte-media) asks for this ONCE per admin visit and filters in
  * the browser as the owner types: no request per keystroke.
  *
- * Four queries, each selecting only name + slug (+ the category's path), live
+ * Five queries, each selecting only name + slug (+ the category's path), live
  * rows only, so the cost is flat in the number of screens and linear only in
  * the catalogue's size, which is the answer itself. Under admin-api/media/**,
  * so EnforceAdminCapability asks content.manage of it, like the Media Library.
@@ -53,6 +54,19 @@ final class RteLinkTargetsController extends Controller
             foreach (DB::table('brands')->orderBy('name')->get(['name', 'slug']) as $b) {
                 if ($b->slug !== null && $b->slug !== '') {
                     $out[] = ['brand', (string) $b->name, UrlScheme::brand((string) $b->slug)];
+                }
+            }
+        }
+
+        // Content pages (Delivery, Privacy, FAQ…): only the published ones a
+        // route actually serves, at the address that route serves them on --
+        // RoutedPages reads the route table in memory, no query.
+        if (Schema::hasTable('pages')) {
+            $routed = \App\Support\RoutedPages::paths();
+            if ($routed !== []) {
+                foreach (DB::table('pages')->where('status', 'published')->whereIn('slug', array_keys($routed))
+                    ->orderBy('title')->get(['title', 'slug']) as $pg) {
+                    $out[] = ['page', \App\Support\PageTitle::decoded((string) $pg->title), $routed[$pg->slug]];
                 }
             }
         }
