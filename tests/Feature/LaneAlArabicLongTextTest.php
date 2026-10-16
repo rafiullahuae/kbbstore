@@ -196,6 +196,37 @@ it('gives back only what it wrote when rolled back', function () {
         ->and(alAr('products', $b->id, 'description')->value)->toBe('<p>عدّلها المالك</p>');
 });
 
+it('writes the content pages and blog posts, and /ar prints them', function () {
+    /*
+     * The defect: /ar/delivery and every /ar/blog post printed English under
+     * an Arabic title. MUTATION: drop 'pages' or 'posts' from TABLES and the
+     * English stays on both pages.
+     */
+    $file = database_path('migrations/2027_11_08_100000_lane_al_arabic_long_text_part0.php');
+    $data = alData($file);
+
+    expect(array_keys($data['pages']['content'] ?? []))->toContain('delivery', 'privacy-policy', 'terms-and-conditions', 'refund_returns', 'faqs', 'about', 'contact-us')
+        ->and($data['posts']['body'] ?? [])->toHaveCount(11);
+
+    // The test database seeds the shop's own pages; this one is made to say something checkable.
+    $page = App\Models\Page::updateOrCreate(['slug' => 'delivery'], ['title' => 'Shipping & Delivery', 'content' => '<p>We deliver.</p>', 'status' => 'published']);
+    DB::table('translations')->where('group', 'pages')->where('item_id', $page->id)->where('field', 'content')->delete();
+    $postSlug = 'pdrn-skincare-what-is-it-does-it-actually-work';
+    $post = App\Models\Post::create(['title' => 'PDRN', 'slug' => $postSlug, 'body' => '<p>PDRN words.</p>', 'status' => 'published', 'published_at' => now()->subDay()]);
+
+    alMigration($file)->up();
+
+    expect(alAr('pages', $page->id, 'content')->value)->toBe(trim($data['pages']['content']['delivery']))
+        ->and(alAr('posts', $post->id, 'body')->value)->toBe(trim($data['posts']['body'][$postSlug]));
+
+    ArabicShop::on();
+    $html = $this->get('/ar/delivery')->assertOk()->getContent();
+    expect($html)->toContain('التوصيل المحلي:')->and($html)->not->toContain('We deliver.');
+
+    $html = $this->get('/ar/blog/'.$postSlug.'/')->assertOk()->getContent();
+    expect($html)->toContain('PDRN اختصار للبولي ديوكسي ريبونوكليوتيد.')->and($html)->not->toContain('PDRN words.');
+});
+
 it('keeps the English markup tag for tag, every tag allowed and closed', function () {
     /*
      * These rows bypass TranslationStore's RichText::clean(), so the data is
@@ -264,7 +295,13 @@ it('is Arabic: Latin only for units, ratings, INCI and technical acronyms', func
         foreach (alData($file) as $group => $fields) {
             foreach ($fields as $field => $bySlug) {
                 foreach ($bySlug as $slug => $value) {
-                    preg_match_all('/[A-Za-z]+/', html_entity_decode(strip_tags($value)), $m);
+                    // A full INCI list (a run of Latin with many commas, one text
+                    // node) stays as the box prints it -- the one Latin paragraph allowed.
+                    $text = implode(' ', array_filter(
+                        preg_split('/<[^>]+>/', $value) ?: [],
+                        static fn (string $node): bool => ! (substr_count($node, ',') >= 8 && ! preg_match('/\p{Arabic}/u', $node)),
+                    ));
+                    preg_match_all('/[A-Za-z]+/', html_entity_decode($text), $m);
 
                     foreach ($m[0] as $word) {
                         expect(isset($latinOk[$word]))->toBeTrue("{$group}/{$field}/{$slug}: Latin \"{$word}\"");
@@ -278,7 +315,7 @@ it('is Arabic: Latin only for units, ratings, INCI and technical acronyms', func
 });
 
 const LANE_AL_LATIN_OK = <<<'TXT'
-A AC ACE AHA AP Acetyle B BB BHA BP C D E EGF EMS EU EWG EX F HA HEVIS Hexapeptide K LED LHA MC MCT
-NAD NC NMF NP O Oligopeptide P PA PCA PDRN PEG PHA PPM Polypeptide Q SH SPF T TECA TX TXA U USB UV
-UVA UVB V X cm g gm kg mAh mL mg ml mm pH ppm sh
+A AC ACE AHA AP Acetyle B BB BHA BP C D E EGF EMS EU EWG EX F HA HEVIS Hexapeptide IP K LED LHA MAC
+MC MCT NAD NC NMF NP O Oligopeptide P PA PCA PDRN PEG PHA PIH PPM Polypeptide Q SH SPF SSL T TECA TX
+TXA U USB UV UVA UVB V X cm com g gm info kbeautybliss kg mAh mL mg ml mm pH ppm sh
 TXT;
