@@ -124,8 +124,17 @@ final class Url
         if ($path === '' || $path === '/') {
             $path = '/';
         } elseif (preg_match('#^([a-z][a-z0-9+.-]*:|//)#i', $path)) {
-            // Absolute URLs and mailto/tel links pass through untouched.
-            return $path;
+            // Absolute URLs and mailto/tel links pass through untouched --
+            // except, on a page that is not English, a full address of THIS
+            // shop. A menu item saved as https://kbeautybliss.com/collections/
+            // body-care/ took every Arabic shopper back to English (16 October
+            // 2026); its neighbours, saved as /collections/hair-care/, did not.
+            // English never reaches ownPath(), so it pays nothing.
+            if (Locale::segment() === '' || ($own = self::ownPath($path)) === null) {
+                return $path;
+            }
+
+            $path = $own;
         }
 
         /*
@@ -165,6 +174,56 @@ final class Url
         }
 
         return self::raw($path);
+    }
+
+    /**
+     * The path (with query and fragment) of a full http(s) address on the host
+     * this request was served from -- www. or not -- or null for anything
+     * else: another site, mailto:, tel:, a host that merely ends in ours.
+     * The base path, where there is one, is taken off: raw() puts it back.
+     */
+    private static function ownPath(string $url): ?string
+    {
+        $parts = parse_url($url);
+
+        if (! is_array($parts) || ! isset($parts['host'])
+            || (isset($parts['scheme']) && ! in_array(strtolower($parts['scheme']), ['http', 'https'], true))
+            || isset($parts['user']) || isset($parts['pass'])) {
+            return null;
+        }
+
+        try {
+            $here = strtolower((string) request()->getHost());
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $strip = static fn (string $h): string => str_starts_with($h, 'www.') ? substr($h, 4) : $h;
+
+        if ($here === '' || $strip(strtolower($parts['host'])) !== $strip($here)) {
+            return null;
+        }
+
+        $path = '/' . ltrim($parts['path'] ?? '/', '/');
+        $base = self::base();
+
+        if ($base !== '') {
+            if ($path !== $base && ! str_starts_with($path, $base . '/')) {
+                return null;
+            }
+            $path = substr($path, strlen($base)) ?: '/';
+        }
+
+        // A file, the sitemap, the back office: no language, so the address
+        // stays exactly as it was written.
+        [, $rest] = Locale::splitPath($path);
+        if (! Locale::localisable($rest)) {
+            return null;
+        }
+
+        return $path
+            . (isset($parts['query']) ? '?' . $parts['query'] : '')
+            . (isset($parts['fragment']) ? '#' . $parts['fragment'] : '');
     }
 
     /**

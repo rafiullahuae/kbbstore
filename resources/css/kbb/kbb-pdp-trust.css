@@ -49,6 +49,14 @@
     color:var(--pts-ink,#2A2228)}
 .pts-del-logo{flex:0 0 auto;display:block;inline-size:var(--pts-logo-m,90px);line-height:0}
 .pts-del-logo img,.pts-del-logo svg{display:block;inline-size:100%;block-size:auto;max-block-size:72px;object-fit:contain}
+/* Arabic: the drawn FAST DELIVERY mark (TrustShareIcons::TRUCK, never an
+   uploaded picture). Its <text> inherited direction:rtl, so each word grew
+   LEFT from its x and ran over the truck (16 October 2026). direction:ltr
+   puts the words back where they were drawn; the mark is then mirrored so the
+   truck and arrow face the way Arabic reads, and each word is turned back
+   round on its own box so it still reads FAST / DELIVERY. English unchanged. */
+[dir="rtl"] .pts-del-logo .pts-truck{direction:ltr;transform:scaleX(-1)}
+[dir="rtl"] .pts-del-logo .pts-truck text{transform-box:fill-box;transform-origin:center;transform:scaleX(-1)}
 .pts-del-text{display:flex;flex-direction:column;justify-content:center;gap:3px;min-inline-size:0;
     font-size:var(--pts-text,13.5px);line-height:1.4;overflow-wrap:anywhere}
 @media (min-width:881px){
