@@ -5393,6 +5393,11 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
   font-size:calc(min(calc(173.6vw / var(--kft-n, 14)), calc(2324px / var(--kft-n, 14))) * var(--kft-fn-d, 100) / 100);padding-bottom:.06em;
   background:linear-gradient(90deg,#FFB3C8,#F7A1B5,#F59A9A,#FFC49B,#D9CFD3,#FFB3C8);background-size:300% 100%;background-position:0% 50%;
   -webkit-background-clip:text;background-clip:text;color:transparent}
+/* Arabic letters (ي, س, ...) reach about .35em below the line, and the gradient
+   above paints only inside this box, so with .06em under it the Arabic name lost
+   its bottom third ("the logo is cutting from downside", 16 October 2026).
+   English keeps its own .06em. tools/kfn-clip.cjs measures it. */
+[dir="rtl"] .kft-name{padding-bottom:.46em}
 .kft-name-pink .kft-name{background-image:linear-gradient(90deg,#FFB3C8,#FCE0E8,#F7A8BF,#FFD3DF,#F4A0B8,#FFB3C8)}
 .kft-bot{border-top:1px solid #F1E3E8;font-size:12.5px;color:var(--muted);background:var(--kft-bg,#fff)}
 .kft-bot-in{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
