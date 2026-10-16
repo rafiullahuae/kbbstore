@@ -242,7 +242,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
     });
   }
   function act(op, pid, qty) {
-    var o = { id: rid(), op: op, pid: pid, qty: qty, st: 'waiting' };
+    var o = { id: rid(), op: op, pid: pid, qty: qty, st: 'waiting', local: S.conn !== 'normal' };
     if (S.conn === 'slow' && !S.slow) { S.slow = true; log('save', 'Slow connection → kept in this phone first and shown in the bag at once, exactly as if the shop had answered. It goes to the shop in the background.'); }
     S.pend.push(o);
     if (S.conn === 'offline') { save(o); render(); return; }
@@ -259,7 +259,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
     var slow = S.conn === 'slow', total = slow ? 9000 : 450;
     o.st = 'sending'; render();
     log('net', 'Phone → shop: ' + desc(o) + ' (#' + o.id + ')');
-    var st = slow ? later(function () { if (o.st === 'sending' && !S.slow) { S.slow = true; S.skel = false; log('save', '4 s and no answer → slow confirmed: the grey bars give way to the product and a short note'); render(); } }, 4000) : null;
+    var st = slow ? later(function () { if (o.st === 'sending' && !o.local) { o.local = true; S.slow = true; S.skel = false; log('save', '4 s and no answer → slow confirmed: the grey bars give way to the product and a short note'); render(); } }, 4000) : null;
     var reached = await wait(total * 0.4);
     if (!reached) { clearTimeout(st); S.slow = false; save(o); render(); return; }
     var res = serverHandle(o);
@@ -344,7 +344,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
   function viewCart() {
     var v = Object.assign({}, S.confirmed), st = {};
     S.pend.forEach(function (o) {
-      if (o.st !== 'queued' && !S.slow) return;   // Normal: exactly today's behaviour
+      if (!o.local && o.st !== 'queued') return;   // Normal: exactly today's behaviour
       var cur = v[o.pid] || 0;
       var q = o.op === 'add' ? cur + o.qty : o.op === 'set' ? o.qty : 0;
       if (q > 0) v[o.pid] = q; else delete v[o.pid];
