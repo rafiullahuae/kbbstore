@@ -115,6 +115,10 @@ function markDemo(string $type, string $model, int $id): void
 }
 
 beforeEach(function () {
+    // The fixture orders are dated 16 September 2026 and the stats read the
+    // last 30 days. On 16 October 2026 they fell out of that window and every
+    // revenue figure read 0: the clock is fixed so the date cannot rot again.
+    $this->travelTo(\Carbon\CarbonImmutable::parse('2026-09-20 12:00:00', 'UTC'));
     Cache::flush();
     \App\Services\SettingsService::forgetMemo();
 });

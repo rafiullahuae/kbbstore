@@ -37,8 +37,8 @@ it('names both languages, each in its own script, linking this page in the other
     lsArabic(true);
 
     test()->get('/')->assertOk()
-        ->assertSee('<nav class="kbb-lang" aria-label="Language"><span lang="en" aria-current="true">English</span><a href="/ar/" lang="ar" hreflang="ar">العربية</a></nav>', false);
+        ->assertSee('<nav class="kbb-lang"><span lang="en" aria-current="true">English</span><a href="/ar/" lang="ar" hreflang="ar">العربية</a></nav>', false);
 
     test()->get('/ar/')->assertOk()
-        ->assertSee('<nav class="kbb-lang" aria-label="Language"><a href="/" lang="en" hreflang="en">English</a><span lang="ar" aria-current="true">العربية</span></nav>', false);
+        ->assertSee('<nav class="kbb-lang"><a href="/" lang="en" hreflang="en">English</a><span lang="ar" aria-current="true">العربية</span></nav>', false);
 });

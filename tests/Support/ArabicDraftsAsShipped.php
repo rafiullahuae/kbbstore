@@ -45,6 +45,15 @@ final class ArabicDraftsAsShipped
             ->whereIn('field', self::ARF_ROWS)
             ->delete();
 
+        // Lane AL (2027_11_08_1000xx) publishes Arabic descriptions by slug, and
+        // the demo product 1025-dokdo-toner shares a live slug, so the test
+        // database carries one published products row these tests never made;
+        // its seven content pages match the test database's pages by slug too.
+        DB::table('translations')
+            ->where('locale', 'ar')->whereIn('group', ['products', 'pages', 'posts'])
+            ->where('source', 'manual')->where('status', 'published')
+            ->delete();
+
         TranslationStore::flush();
     }
 }

@@ -26,4 +26,4 @@
                 : '<a href="' . e(\App\Support\Url::raw($kbbLsAlt)) . '" lang="' . e($kbbLsCode) . '" hreflang="' . e($kbbLsCode) . '">' . e($kbbLsNames[$kbbLsCode]) . '</a>';
         }
     }
-@endphp{{-- every piece above is e()-escaped; the names are constants --}}@if ($kbbLsHtml !== '')<nav class="kbb-lang" aria-label="Language">{!! $kbbLsHtml !!}</nav>@endif
+@endphp{{-- every piece above is e()-escaped; the names are constants --}}@if ($kbbLsHtml !== '')<nav class="kbb-lang">{!! $kbbLsHtml !!}</nav>@endif

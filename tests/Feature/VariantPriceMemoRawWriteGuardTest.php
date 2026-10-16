@@ -123,6 +123,13 @@ const ALLOWED = [
         .'there is no snapshot in that process to go stale; and the rows it '
         .'removes are gone from the next process\'s snapshot by definition.',
     ],
+    [
+        'app/Services/ImageSeo/ImageSeoJobs.php',
+        'Product::LOCAL_ALTS_FIELD)->get()->each->delete()',
+        'Deletes a TRANSLATIONS row (the Arabic picture alt texts, Lane AS); '
+        .'Product is named only for its field constant. No products or '
+        .'product_variants row is written, so no price snapshot can go stale.',
+    ],
 ];
 
 /**

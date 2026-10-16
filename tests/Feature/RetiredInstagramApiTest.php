@@ -254,7 +254,8 @@ it('rewrites every stored [kbb_instagram] to [kbb_instagram_embeds], keeping a t
     $said = (string) ob_get_clean();
 
     $new = '<p>Intro</p>[kbb_instagram_embeds title="Our feed"]<p>and</p>[kbb_instagram_embeds][kbb_instagram_embeds max="3"]';
-    $tr = DB::table('translations')->where('item_id', $page->id)->first();
+    // Scoped to the page row: Lane AL's published product descriptions share item ids.
+    $tr = DB::table('translations')->where('group', 'page')->where('field', 'content')->where('item_id', $page->id)->first();
 
     expect((string) $page->fresh()->content)->toBe($new)
         ->and($tr->value)->toBe('[kbb_instagram_embeds]')
