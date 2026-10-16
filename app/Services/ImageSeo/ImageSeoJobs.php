@@ -794,16 +794,37 @@ final class ImageSeoJobs
             }
         }
 
-        if ($after === $before) {
+        [$arBefore, $arAfter] = self::arabicAlts($product, $item, $urls, $after, $before);
+
+        if ($after === $before && $arAfter === $arBefore) {
             return [['p' => (int) $product->id, 'name' => (string) $product->name, 'rel' => '', 'to' => null, 'status' => 'skipped', 'reason' => 'nothing to change', 'refs' => 0, 'files' => 0]];
         }
 
-        $product->image_alts = $after;
-        $product->save();
+        if ($after !== $before) {
+            $product->image_alts = $after;
+            $product->save();
+        }
+
+        if ($arAfter !== $arBefore) {
+            self::saveArabicAlts((int) $product->id, $arAfter);
+        }
 
         $changed = array_diff_assoc($after, $before);
         $removed = array_diff_key($before, $after);
         $was = array_intersect_key($before, $changed + $removed);
+        $nEnglish = count($changed + $removed);
+
+        // The Arabic half rides in the same ledger row under "ar:" + URL. A
+        // URL never starts with "ar:", and the English restore loop ignores
+        // these keys because no English alt is ever stored under one.
+        $arChanged = array_diff_assoc($arAfter, $arBefore);
+        $arRemoved = array_diff_key($arBefore, $arAfter);
+        foreach ($arChanged as $url => $alt) {
+            $changed[self::AR_KEY.$url] = $alt;
+        }
+        foreach (array_intersect_key($arBefore, $arChanged + $arRemoved) as $url => $alt) {
+            $was[self::AR_KEY.$url] = $alt;
+        }
 
         // The ledger Undo reads: written with the change, never capped.
         if ($jobId > 0 && ImageFiles::hasTable('image_alt_changes')) {
@@ -812,11 +833,125 @@ final class ImageSeoJobs
                 'after' => json_encode($changed, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 'created_at' => now()]);
         }
 
-        $n = count($changed + $removed);
+        $n = $nEnglish;
+        $nArabic = count($arChanged + $arRemoved);
 
         return [['p' => (int) $product->id, 'name' => (string) $product->name, 'rel' => '', 'to' => null, 'status' => 'alt',
-            'reason' => $n.' alt text(s) '.(isset($item['restore']) ? 'restored' : 'written'), 'refs' => 0, 'files' => 0, 'n' => $n,
+            'reason' => $n.' alt text(s) '.(isset($item['restore']) ? 'restored' : 'written').($nArabic > 0 ? ', '.$nArabic.' in Arabic' : ''),
+            'refs' => 0, 'files' => 0, 'n' => $n, 'n_ar' => $nArabic,
             'before' => $was, 'after' => $changed]];
+    }
+
+    /** Ledger key prefix for an Arabic alt (see altOne()). */
+    public const AR_KEY = 'ar:';
+
+    /** The second language the tool writes alt text for. */
+    public const AR_LOCALE = 'ar';
+
+    /**
+     * The product's Arabic alt map before and after this item (Lane AS).
+     *
+     * Writing: every picture whose English alt this run wrote gets the Arabic
+     * sentence for the same position, and every picture with no Arabic alt yet
+     * gets one -- so one run covers both languages. Built from the product's
+     * PUBLISHED Arabic name only (AltText::proposeArabic); a product with no
+     * Arabic name gets nothing and its /ar page is unchanged.
+     *
+     * Undoing: an "ar:" entry is restored only where the Arabic alt is still
+     * what the run wrote, the same rule as the English.
+     *
+     * @param  list<string>  $urls
+     * @return array{0: array<string, string>, 1: array<string, string>}
+     */
+    private static function arabicAlts(Product $product, array $item, array $urls, array $after, array $before): array
+    {
+        $arBefore = $product->localAlts(self::AR_LOCALE);
+        $arAfter = $arBefore;
+
+        if (isset($item['restore'])) {
+            $restore = (array) $item['restore'];
+
+            foreach ((array) ($item['expect'] ?? []) as $key => $alt) {
+                $key = (string) $key;
+
+                if (! str_starts_with($key, self::AR_KEY)) {
+                    continue;
+                }
+
+                $url = substr($key, strlen(self::AR_KEY));
+
+                if (($arAfter[$url] ?? null) === $alt) {
+                    if (array_key_exists($key, $restore)) {
+                        $arAfter[$url] = (string) $restore[$key];
+                    } else {
+                        unset($arAfter[$url]);
+                    }
+                }
+            }
+
+            return [$arBefore, $arAfter];
+        }
+
+        if (! $product->hasTranslation('name', self::AR_LOCALE)) {
+            return [$arBefore, $arAfter];
+        }
+
+        $proposed = self::arabicProposals($product, count($urls));
+        $written = array_keys(array_diff_assoc($after, $before));
+
+        foreach ($urls as $i => $url) {
+            $alt = (string) ($proposed[$i] ?? '');
+
+            if (! AltText::acceptable($alt)) {
+                continue;
+            }
+
+            if (in_array($url, $written, true) || trim((string) ($arAfter[$url] ?? '')) === '') {
+                $arAfter[$url] = $alt;
+            }
+        }
+
+        return [$arBefore, $arAfter];
+    }
+
+    /**
+     * The Arabic alt for each of $count pictures, or [] when the product has
+     * no published Arabic name. Names come from the cached translation map, so
+     * this adds no query for a product whose brand and category are loaded.
+     *
+     * @return list<string>
+     */
+    public static function arabicProposals(Product $product, int $count): array
+    {
+        if ($count < 1 || ! $product->hasTranslation('name', self::AR_LOCALE)) {
+            return [];
+        }
+
+        $brand = $product->brand;
+        $category = $product->category;
+
+        return AltText::proposeArabic(
+            $brand !== null && $brand->hasTranslation('name', self::AR_LOCALE) ? (string) $brand->t('name', self::AR_LOCALE) : null,
+            (string) $product->t('name', self::AR_LOCALE),
+            $category !== null && $category->hasTranslation('name', self::AR_LOCALE) ? (string) $category->t('name', self::AR_LOCALE) : null,
+            $count,
+        );
+    }
+
+    /** One published translations row, or none when the map is empty. */
+    private static function saveArabicAlts(int $productId, array $map): void
+    {
+        if ($map === []) {
+            // Through the model, so its deleted() hook evicts the cached map.
+            \App\Models\Translation::query()->where('locale', self::AR_LOCALE)->where('group', 'products')
+                ->where('item_id', $productId)->where('field', Product::LOCAL_ALTS_FIELD)->get()->each->delete();
+
+            return;
+        }
+
+        \App\Services\Translation\TranslationStore::put(self::AR_LOCALE, 'products', $productId, Product::LOCAL_ALTS_FIELD,
+            (string) json_encode($map, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+            \App\Models\Translation::STATUS_PUBLISHED, \App\Models\Translation::SOURCE_MACHINE);
     }
 
     /**

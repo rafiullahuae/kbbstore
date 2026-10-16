@@ -1,0 +1,366 @@
+[
+ {
+  "page": "home",
+  "lang": "en",
+  "url": "/",
+  "status": 200,
+  "title": "K-Beauty Bliss — Korean Skincare & K-Beauty Store in UAE",
+  "title_chars": 56,
+  "description": "K-Beauty Bliss is the UAE online store for authentic Korean skincare: original K-beauty serums, toners, sunscreens and more from the top Korean brands, delivered across the Emirates.",
+  "description_chars": 182,
+  "canonical": [
+   "http://localhost/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "home",
+  "lang": "ar",
+  "url": "/ar/",
+  "status": 200,
+  "title": "كي بيوتي بليس — متجر العناية بالبشرة الكورية والجمال الكوري في الإمارات",
+  "title_chars": 71,
+  "description": "كي بيوتي بليس متجر إلكتروني للعناية بالبشرة الكورية في الإمارات: منتجات جمال كوري أصلية من أشهر العلامات الكورية — سيروم وتونر وواقي شمس والمزيد، مع التوصيل داخل الإمارات.",
+  "description_chars": 171,
+  "canonical": [
+   "http://localhost/ar/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "category",
+  "lang": "en",
+  "url": "/product-category/cleansers/",
+  "status": 200,
+  "title": "Cleansers · K-Beauty Bliss",
+  "title_chars": 26,
+  "description": "Shop Cleansers at K-Beauty Bliss — 6 authentic Korean skincare picks.",
+  "description_chars": 69,
+  "canonical": [
+   "http://localhost/collections/cleansers/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "category",
+  "lang": "ar",
+  "url": "/ar/product-category/cleansers/",
+  "status": 200,
+  "title": "منظفات · كي بيوتي بليس",
+  "title_chars": 22,
+  "description": "تسوّقي منظفات من كي بيوتي بليس — 6 من منتجات العناية الكورية الأصلية.",
+  "description_chars": 69,
+  "canonical": [
+   "http://localhost/ar/collections/cleansers/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "brand",
+  "lang": "en",
+  "url": "/brands/anua/",
+  "status": 200,
+  "title": "Anua | K-Beauty Bliss",
+  "title_chars": 21,
+  "description": "Calm, clean formulas built around heartleaf and PDRN — the Seoul brand behind the toner everyone restocks.",
+  "description_chars": 106,
+  "canonical": [
+   "http://localhost/brands/anua/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "brand",
+  "lang": "ar",
+  "url": "/ar/brands/anua/",
+  "status": 200,
+  "title": "أنوا | كي بيوتي بليس",
+  "title_chars": 20,
+  "description": "تركيبات هادئة ونقية تعتمد على عشبة القلب وتقنية بي دي آر إن — العلامة الكورية من سيول التي يقف خلفها التونر الذي تعيد الجميع شراءه.",
+  "description_chars": 131,
+  "canonical": [
+   "http://localhost/ar/brands/anua/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "product",
+  "lang": "en",
+  "url": "/product/azelaic-10-hyaluron-redness-soothing-pad/",
+  "status": 200,
+  "title": "Anua Azelaic 10 Hyaluron Redness Soothing Pad · K-Beauty Bliss",
+  "title_chars": 62,
+  "description": "Soft, double-sided toner pads with 10% azelaic acid and hyaluronic acid that calm visible redness and smooth texture in one swipe.",
+  "description_chars": 130,
+  "canonical": [
+   "http://localhost/product/azelaic-10-hyaluron-redness-soothing-pad/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "product",
+  "lang": "ar",
+  "url": "/ar/product/azelaic-10-hyaluron-redness-soothing-pad/",
+  "status": 200,
+  "title": "أنوا قطن تونر أزيليك 10 هيالورون المهدّئ للاحمرار · كي بيوتي بليس",
+  "title_chars": 65,
+  "description": "وسادات تونر ناعمة بوجهين، بحمض الأزيليك 10% والهيالورونيك، تهدّئ الاحمرار الظاهر وتنعّم ملمس البشرة بمسحة واحدة.",
+  "description_chars": 112,
+  "canonical": [
+   "http://localhost/ar/product/azelaic-10-hyaluron-redness-soothing-pad/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "blog index",
+  "lang": "en",
+  "url": "/blog/",
+  "status": 200,
+  "title": "The Glow Journal | K-Beauty Bliss",
+  "title_chars": 33,
+  "description": "Skincare tips and the K-beauty edit — honest guides on routines, ingredients and sun care, written for the UAE.",
+  "description_chars": 111,
+  "canonical": [
+   "http://localhost/blog/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "blog index",
+  "lang": "ar",
+  "url": "/ar/blog/",
+  "status": 200,
+  "title": "مدوّنة الإشراقة | كي بيوتي بليس",
+  "title_chars": 31,
+  "description": "نصائح العناية بالبشرة وأفضل ما في الجمال الكوري — أدلة صادقة عن الروتين والمكوّنات والحماية من الشمس، مكتوبة للإمارات.",
+  "description_chars": 118,
+  "canonical": [
+   "http://localhost/ar/blog/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "blog post",
+  "lang": "en",
+  "url": "/blog/how-to-layer-toner-pads/",
+  "status": 200,
+  "title": "How to use toner pads the Korean way | K-Beauty Bliss",
+  "title_chars": 53,
+  "description": "Swipe, press, mask: three ways to get more from every pad.",
+  "description_chars": 58,
+  "canonical": [
+   "http://localhost/blog/how-to-layer-toner-pads/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "blog post",
+  "lang": "ar",
+  "url": "/ar/blog/how-to-layer-toner-pads/",
+  "status": 200,
+  "title": "كيف تستخدمين وسادات التونر على الطريقة الكورية | كي بيوتي بليس",
+  "title_chars": 62,
+  "description": "امسحي، اضغطي، واستخدميها كماسك: ثلاث طرق لتستفيدي أكثر من كل وسادة.",
+  "description_chars": 67,
+  "canonical": [
+   "http://localhost/ar/blog/how-to-layer-toner-pads/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "content page",
+  "lang": "en",
+  "url": "/about/",
+  "status": 200,
+  "title": "About Us · K-Beauty Bliss",
+  "title_chars": 25,
+  "description": "Shop Korean skincare in the UAE — serums, creams, moisturisers and beauty devices from Korean beauty brands.",
+  "description_chars": 108,
+  "canonical": [
+   "http://localhost/about/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "content page",
+  "lang": "ar",
+  "url": "/ar/about/",
+  "status": 200,
+  "title": "من نحن · كي بيوتي بليس",
+  "title_chars": 22,
+  "description": "تسوّقي العناية الكورية بالبشرة في الإمارات — سيروم وكريمات ومرطبات وأجهزة تجميل من أشهر العلامات الكورية.",
+  "description_chars": 105,
+  "canonical": [
+   "http://localhost/ar/about/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "search",
+  "lang": "en",
+  "url": "/shop/?s=toner",
+  "status": 200,
+  "title": "Search: toner · K-Beauty Bliss",
+  "title_chars": 30,
+  "description": "\"toner\" — 0 results at K-Beauty Bliss, authentic Korean skincare.",
+  "description_chars": 65,
+  "canonical": [
+   "http://localhost/shop/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "search",
+  "lang": "ar",
+  "url": "/ar/shop/?s=toner",
+  "status": 200,
+  "title": "البحث: toner · كي بيوتي بليس",
+  "title_chars": 28,
+  "description": "«toner» — 0 نتائج في كي بيوتي بليس، للعناية الكورية الأصلية.",
+  "description_chars": 60,
+  "canonical": [
+   "http://localhost/ar/shop/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "shop",
+  "lang": "en",
+  "url": "/shop/",
+  "status": 200,
+  "title": "Shop all · K-Beauty Bliss",
+  "title_chars": 25,
+  "description": "Browse every K-Beauty Bliss product — 33 authentic Korean skincare picks, from serums to beauty devices.",
+  "description_chars": 104,
+  "canonical": [
+   "http://localhost/shop/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "shop",
+  "lang": "ar",
+  "url": "/ar/shop/",
+  "status": 200,
+  "title": "تسوّقي الكل · كي بيوتي بليس",
+  "title_chars": 27,
+  "description": "تصفّحي كل منتجات كي بيوتي بليس — 33 من منتجات العناية الكورية الأصلية، من السيروم إلى أجهزة التجميل.",
+  "description_chars": 100,
+  "canonical": [
+   "http://localhost/ar/shop/"
+  ],
+  "robots": "index, follow"
+ },
+ {
+  "page": "cart",
+  "lang": "en",
+  "url": "/cart/",
+  "status": 200,
+  "title": "Cart · K-Beauty Bliss",
+  "title_chars": 21,
+  "description": "Shop Korean skincare in the UAE — serums, creams, moisturisers and beauty devices from Korean beauty brands.",
+  "description_chars": 108,
+  "canonical": [
+   "http://localhost/cart/"
+  ],
+  "robots": "noindex, nofollow"
+ },
+ {
+  "page": "cart",
+  "lang": "ar",
+  "url": "/ar/cart/",
+  "status": 200,
+  "title": "السلة · كي بيوتي بليس",
+  "title_chars": 21,
+  "description": "تسوّقي العناية الكورية بالبشرة في الإمارات — سيروم وكريمات ومرطبات وأجهزة تجميل من أشهر العلامات الكورية.",
+  "description_chars": 105,
+  "canonical": [
+   "http://localhost/ar/cart/"
+  ],
+  "robots": "noindex, nofollow"
+ },
+ {
+  "page": "checkout",
+  "lang": "en",
+  "url": "/checkout/",
+  "status": 200,
+  "title": "Cart · K-Beauty Bliss",
+  "title_chars": 21,
+  "description": "Shop Korean skincare in the UAE — serums, creams, moisturisers and beauty devices from Korean beauty brands.",
+  "description_chars": 108,
+  "canonical": [
+   "http://localhost/cart/"
+  ],
+  "robots": "noindex, nofollow"
+ },
+ {
+  "page": "checkout",
+  "lang": "ar",
+  "url": "/ar/checkout/",
+  "status": 200,
+  "title": "السلة · كي بيوتي بليس",
+  "title_chars": 21,
+  "description": "تسوّقي العناية الكورية بالبشرة في الإمارات — سيروم وكريمات ومرطبات وأجهزة تجميل من أشهر العلامات الكورية.",
+  "description_chars": 105,
+  "canonical": [
+   "http://localhost/ar/cart/"
+  ],
+  "robots": "noindex, nofollow"
+ },
+ {
+  "page": "account",
+  "lang": "en",
+  "url": "/my-account/",
+  "status": 200,
+  "title": "Sign in | K-Beauty Bliss",
+  "title_chars": 24,
+  "description": "Shop Korean skincare in the UAE — serums, creams, moisturisers and beauty devices from Korean beauty brands.",
+  "description_chars": 108,
+  "canonical": [
+   "http://localhost/my-account/"
+  ],
+  "robots": "noindex, nofollow"
+ },
+ {
+  "page": "account",
+  "lang": "ar",
+  "url": "/ar/my-account/",
+  "status": 200,
+  "title": "تسجيل الدخول | كي بيوتي بليس",
+  "title_chars": 28,
+  "description": "تسوّقي العناية الكورية بالبشرة في الإمارات — سيروم وكريمات ومرطبات وأجهزة تجميل من أشهر العلامات الكورية.",
+  "description_chars": 105,
+  "canonical": [
+   "http://localhost/ar/my-account/"
+  ],
+  "robots": "noindex, nofollow"
+ },
+ {
+  "page": "404",
+  "lang": "en",
+  "url": "/no-such-page-as/",
+  "status": 404,
+  "title": "Page not found | K-Beauty Bliss",
+  "title_chars": 31,
+  "description": "Shop Korean skincare in the UAE — serums, creams, moisturisers and beauty devices from Korean beauty brands.",
+  "description_chars": 108,
+  "canonical": [
+   "http://localhost/no-such-page-as/"
+  ],
+  "robots": "noindex, nofollow"
+ },
+ {
+  "page": "404",
+  "lang": "ar",
+  "url": "/ar/no-such-page-as/",
+  "status": 404,
+  "title": "الصفحة غير موجودة | كي بيوتي بليس",
+  "title_chars": 33,
+  "description": "تسوّقي العناية الكورية بالبشرة في الإمارات — سيروم وكريمات ومرطبات وأجهزة تجميل من أشهر العلامات الكورية.",
+  "description_chars": 105,
+  "canonical": [
+   "http://localhost/ar/no-such-page-as/"
+  ],
+  "robots": "noindex, nofollow"
+ }
+]

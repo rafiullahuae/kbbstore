@@ -71,6 +71,8 @@ import { initWaAway } from './wa-away.js';
 import { initHit } from './hit.js';
 // Lane CJ: taps on the bag, cart page and checkout, and where a shopper with a basket left.
 import { initTrail } from './trail.js';
+// Lane AS: an Arabic page the browser translates hands over to the English one.
+import { initTranslateAway } from './translate-away.js';
 
 /* ── EVERY STEP RUNS, WHATEVER ANY OTHER STEP DOES. ─────────────────────────
  *
@@ -118,6 +120,7 @@ const STEPS = [
     initWaAway,
     initHit,
     initTrail,
+    initTranslateAway,
 ];
 
 const boot = () => {

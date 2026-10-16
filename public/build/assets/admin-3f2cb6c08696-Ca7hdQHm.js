@@ -590,7 +590,7 @@
       + '<label><input type="checkbox" data-isx="keep"' + (alt.keep ? ' checked' : '') + '><span>Keep alt text somebody already wrote</span></label></div>';
     var head = '<div class="isx-card"><b>ALT text</b><p class="isx-sub">' + (none ? 'Select products on the Find tab first.' : '<span data-isx-selcount>' + plural(selInfo.products, 'product', 'products') + ' selected.</span>')
       + ' Alt text is what Google Images reads and what a screen reader says. 5–125 characters, describes the picture, not the same on every picture. You can edit every line before applying.'
-      + ' <b>English only:</b> this shop stores one alt per picture, and it is shown on the Arabic shop too; a picture with no alt written keeps its automatic Arabic one there.</p>' + opts
+      + ' <b>Arabic too:</b> the same run writes each picture\'s Arabic alt for the Arabic shop, from the product\'s Arabic name (shown under each line). A product with no Arabic name yet gets English only.</p>' + opts
       + '<div class="isx-row" style="margin-top:10px"><button type="button" class="isx-btn is-quiet" data-isx="alt-preview"' + (none || busy || jobBusy ? ' disabled' : '') + '>' + (busy === 'alt-preview' ? 'Preparing… ' + num(alt.at) + ' of ' + num(alt.total) : 'Preview alt text') + '</button>'
       + '<button type="button" class="isx-btn" data-isx="alt-apply"' + (!alt.items || jobBusy || busy ? ' disabled' : '') + '>Apply alt text</button></div>'
       + altWhy() + '</div>';
@@ -622,6 +622,7 @@
           return '<div class="isx-alt"><img src="' + esc(i.thumb) + '" alt="" loading="lazy" decoding="async" width="56" height="56"><div class="isx-body" style="display:grid;gap:4px;min-width:0">'
             + '<div class="isx-url">' + scoreBadge(i.ten, i.reasons) + '<span class="isx-why">now: ' + esc(i.alt) + (i.alt_written ? '' : ' (automatic)') + '</span></div>'
             + '<input class="isx-in" maxlength="125" aria-label="Alt text for ' + esc(i.filename) + '" data-isx-alt="' + esc(k) + '" value="' + esc(v) + '"' + (i.keep ? ' disabled' : '') + '>'
+            + (i.proposed_ar ? '<span class="isx-why" dir="rtl" lang="ar" data-isx-ar>' + esc(i.proposed_ar) + '</span>' : '')
             + '<span class="isx-count">' + (i.keep ? 'kept as written' : esc(v.length) + '/125 · ' + esc(i.ten_after) + '/10 after' + (i.reasons_after ? ' · ' + esc(i.reasons_after) : '')) + '</span>'
             + '</div></div>';
         }).join('') + '</div>';

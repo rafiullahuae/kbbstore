@@ -1,0 +1,67 @@
+[
+ {
+  "name": "chrome-translate opens English",
+  "ok": true,
+  "detail": {
+   "flag": 1,
+   "url": "/product/azelaic-10-hyaluron-redness-soothing-pad/",
+   "cookie": "en",
+   "errors": []
+  }
+ },
+ {
+  "name": "edge-translate (lang only) opens English",
+  "ok": true,
+  "detail": {
+   "url": "/product/azelaic-10-hyaluron-redness-soothing-pad/"
+  }
+ },
+ {
+  "name": "english page never moves",
+  "ok": true,
+  "detail": {
+   "url": "/product/azelaic-10-hyaluron-redness-soothing-pad/",
+   "cookie": null,
+   "errors": []
+  }
+ },
+ {
+  "name": "remembered choice opens English on landing",
+  "ok": true,
+  "detail": {
+   "url": "/product/azelaic-10-hyaluron-redness-soothing-pad/"
+  }
+ },
+ {
+  "name": "choosing Arabic wins (stays, cookie cleared)",
+  "ok": true,
+  "detail": {
+   "url": "/ar/product/azelaic-10-hyaluron-redness-soothing-pad/",
+   "cookie": null
+  }
+ },
+ {
+  "name": "crawler never redirected",
+  "ok": true,
+  "detail": {
+   "url": "/ar/product/azelaic-10-hyaluron-redness-soothing-pad/",
+   "cookie": null
+  }
+ },
+ {
+  "name": "screenshot 390",
+  "ok": true,
+  "detail": {
+   "scrollWidth": 390,
+   "errors": []
+  }
+ },
+ {
+  "name": "screenshot 1280",
+  "ok": true,
+  "detail": {
+   "scrollWidth": 1280,
+   "errors": []
+  }
+ }
+]

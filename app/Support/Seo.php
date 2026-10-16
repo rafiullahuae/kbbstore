@@ -259,6 +259,17 @@ class Seo
         // Open Graph
         $out[] = '<meta property="og:type" content="' . ($type === 'product' ? 'product' : ($type === 'article' ? 'article' : 'website')) . '">';
         $out[] = '<meta property="og:site_name" content="' . $e($siteName) . '">';
+        /*
+         * og:locale, ON A NON-DEFAULT-LANGUAGE PAGE ONLY (Lane AS). Without it
+         * Facebook, WhatsApp and LinkedIn read every page as en_US, so an
+         * Arabic link card was announced as English text. The English page
+         * prints nothing here, exactly as before: en_US is what an absent tag
+         * already means to every reader of it, and the owner's English <head>
+         * stays byte-identical. Constants from self::OG_LOCALE, never input.
+         */
+        foreach (self::ogLocaleTags() as $prop => $value) {
+            $out[] = '<meta property="' . $prop . '" content="' . $e($value) . '">';
+        }
         $out[] = '<meta property="og:title" content="' . $e($ogTitle) . '">';
         if ($ogDesc)  $out[] = '<meta property="og:description" content="' . $e($ogDesc) . '">';
         if ($url)   $out[] = '<meta property="og:url" content="' . $e($url) . '">';
@@ -354,6 +365,37 @@ class Seo
          */
         return "\n" . implode("\n", $out) . "\n";
     }
+
+    /**
+     * og:locale and its alternates for the page being rendered, or nothing on
+     * the default language. `ar` is `ar_AE` (the shop sells in the Emirates);
+     * every other enabled language is named as an alternate.
+     *
+     * @return array<string, string>
+     */
+    public static function ogLocaleTags(): array
+    {
+        $current = Locale::current();
+
+        if ($current === Locale::DEFAULT || ! isset(self::OG_LOCALE[$current])) {
+            return [];
+        }
+
+        $out = ['og:locale' => self::OG_LOCALE[$current]];
+
+        foreach (Locale::enabledCodes() as $code) {
+            if ($code !== $current && isset(self::OG_LOCALE[$code])) {
+                // One alternate per language; og:locale:alternate may repeat,
+                // but this shop has two languages, so a map is enough.
+                $out['og:locale:alternate'] = self::OG_LOCALE[$code];
+            }
+        }
+
+        return $out;
+    }
+
+    /** Open Graph's language_TERRITORY for each storefront language. */
+    public const OG_LOCALE = ['en' => 'en_AE', 'ar' => 'ar_AE'];
 
     /**
      * JSON-LD, encoded so it cannot close the block it sits in.
