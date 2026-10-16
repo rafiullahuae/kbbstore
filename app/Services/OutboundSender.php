@@ -75,6 +75,9 @@ class OutboundSender
      */
     public function sendStockAlerts(int $budget): int
     {
+        // The English wording is still the switch (ArabicTwin rule 1): asked
+        // once, before anything is claimed. Each row's own language is asked
+        // per row below.
         $wording = $this->alerts->messageWording();
 
         if ($wording === null || $budget < 1) {
@@ -91,19 +94,31 @@ class OutboundSender
             }
 
             try {
-                $mailable = new BackInStockAlert(
-                    $wording['subject'],
-                    $wording['body'],
-                    (string) $row->product_name,
-                    Url::external('/product/' . (string) $row->product_slug . '/'),
-                    OutboundOptOut::link('stock', (int) $row->id, (string) $row->email),
-                );
+                /*
+                 * IN THE SHOPPER'S LANGUAGE (Lane AE): the customer's own when
+                 * the address is an account's, else the page's when they asked.
+                 * The mailable is built AND sent inside the switch, so the kit's
+                 * furniture, the product link (/ar/…) and the wording agree.
+                 */
+                $locale = self::rowLocale($row);
 
-                $this->log->labelNext('stock.back');
+                \App\Support\CustomerLocale::render($locale, function () use ($row, $wording, $locale): void {
+                    $words = $locale === null ? $wording : ($this->alerts->messageWording($locale) ?? $wording);
 
-                Mail::mailer(MailConfigurator::MAILER)
-                    ->to((string) $row->email)
-                    ->send($mailable);
+                    $mailable = new BackInStockAlert(
+                        $words['subject'],
+                        $words['body'],
+                        \App\Support\CustomerLocale::productName($row->product_id ?? null, (string) $row->product_name),
+                        Url::external('/product/' . (string) $row->product_slug . '/'),
+                        OutboundOptOut::link('stock', (int) $row->id, (string) $row->email),
+                    );
+
+                    $this->log->labelNext('stock.back');
+
+                    Mail::mailer(MailConfigurator::MAILER)
+                        ->to((string) $row->email)
+                        ->send($mailable);
+                });
 
                 $sent++;
             } catch (\Throwable $e) {
@@ -135,36 +150,49 @@ class OutboundSender
             }
 
             try {
-                /*
-                 * Built BEFORE the last look, so that the gap between the check
-                 * and the handoff is as small as it can be made. Rendering a
-                 * mailable reads the cart, the settings and the branding; doing
-                 * that after the check would put every one of those queries
-                 * inside the window this check exists to shrink.
-                 */
-                $mailable = new CartRecoveryReminder(
-                    $wording['subject'],
-                    $wording['body'],
-                    $this->recovery->basket((int) $row->cart_id),
-                    Url::external('/cart'),
-                    OutboundOptOut::link('cart', $id, (string) $row->email),
-                );
+                // Lane AE: the shopper's language -- see sendStockAlerts().
+                $locale = self::rowLocale($row);
 
-                /*
-                 * THE LAST LOOK. Barrier 3 in CartRecovery's header: did they
-                 * place the order while this message was being prepared? The
-                 * claim is not given back — the row is cancelled and a
-                 * cancelled row can never claim again.
-                 */
-                if (! $this->recovery->sendable($id)) {
+                $went = \App\Support\CustomerLocale::render($locale, function () use ($row, $wording, $locale, $id): bool {
+                    $words = $locale === null ? $wording : ($this->recovery->messageWording($locale) ?? $wording);
+
+                    /*
+                     * Built BEFORE the last look, so that the gap between the check
+                     * and the handoff is as small as it can be made. Rendering a
+                     * mailable reads the cart, the settings and the branding; doing
+                     * that after the check would put every one of those queries
+                     * inside the window this check exists to shrink.
+                     */
+                    $mailable = new CartRecoveryReminder(
+                        $words['subject'],
+                        $words['body'],
+                        $this->recovery->basket((int) $row->cart_id),
+                        Url::external('/cart'),
+                        OutboundOptOut::link('cart', $id, (string) $row->email),
+                    );
+
+                    /*
+                     * THE LAST LOOK. Barrier 3 in CartRecovery's header: did they
+                     * place the order while this message was being prepared? The
+                     * claim is not given back — the row is cancelled and a
+                     * cancelled row can never claim again.
+                     */
+                    if (! $this->recovery->sendable($id)) {
+                        return false;
+                    }
+
+                    $this->log->labelNext('cart.recovery');
+
+                    Mail::mailer(MailConfigurator::MAILER)
+                        ->to((string) $row->email)
+                        ->send($mailable);
+
+                    return true;
+                });
+
+                if (! $went) {
                     continue;
                 }
-
-                $this->log->labelNext('cart.recovery');
-
-                Mail::mailer(MailConfigurator::MAILER)
-                    ->to((string) $row->email)
-                    ->send($mailable);
 
                 $sent++;
             } catch (\Throwable $e) {
@@ -173,6 +201,18 @@ class OutboundSender
         }
 
         return $sent;
+    }
+
+    /**
+     * The language a due row is written in (Lane AE): the customer's choice
+     * first, then the page the address was given on. Null -- a row written
+     * before the migration, or a language this shop no longer serves -- means
+     * the process's own, which is English: byte for byte what was sent before.
+     */
+    private static function rowLocale(object $row): ?string
+    {
+        return \App\Support\CustomerLocale::usable($row->customer_locale ?? null)
+            ?? \App\Support\CustomerLocale::usable($row->row_locale ?? null);
     }
 
     /**

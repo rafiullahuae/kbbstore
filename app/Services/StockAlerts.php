@@ -117,6 +117,13 @@ class StockAlerts
 
     public const KEY_BODY = 'stock_alert_body';
 
+    /** The Arabic boxes' defaults (Lane AE). See App\Support\ArabicTwin. */
+    public const AR_FORM_LABEL = 'نفد من المخزون — سنراسلكِ فور عودته.';
+
+    public const AR_SUBJECT = 'عاد إلى المخزون ✨';
+
+    public const AR_BODY = 'المنتج الذي طلبتِ أن نخبركِ عنه متوفر الآن. الكمية محدودة، فاطلبيه قبل أن ينفد مجددًا.';
+
     /**
      * The one answer a request ever gets.
      *
@@ -173,7 +180,7 @@ class StockAlerts
             return null;
         }
 
-        $text = trim((string) $this->settings->get(self::KEY_FORM_LABEL, ''));
+        $text = \App\Support\ArabicTwin::pick(self::KEY_FORM_LABEL, self::AR_FORM_LABEL);
 
         return $text === '' ? null : $text;
     }
@@ -187,14 +194,15 @@ class StockAlerts
      *
      * @return array{subject: string, body: string}|null
      */
-    public function messageWording(): ?array
+    public function messageWording(?string $locale = null): ?array
     {
         if (! $this->enabled()) {
             return null;
         }
 
-        $subject = trim((string) $this->settings->get(self::KEY_SUBJECT, ''));
-        $body = trim((string) $this->settings->get(self::KEY_BODY, ''));
+        // Lane AE: in the shopper's language; English reads what it always read.
+        $subject = \App\Support\ArabicTwin::pick(self::KEY_SUBJECT, self::AR_SUBJECT, $locale);
+        $body = \App\Support\ArabicTwin::pick(self::KEY_BODY, self::AR_BODY, $locale);
 
         if ($subject === '' || $body === '') {
             return null;
@@ -253,7 +261,7 @@ class StockAlerts
                 'notified_at' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ]);
+            ] + (\App\Support\CustomerLocale::ready() ? ['locale' => \App\Support\Locale::current()] : []));
         } catch (\Throwable) {
             /*
              * The table is not there — this package landed without its
@@ -327,7 +335,16 @@ class StockAlerts
                 })
                 ->orderBy('stock_alerts.id')
                 ->limit($limit)
-                ->get([
+                ->when(\App\Support\CustomerLocale::ready(), fn ($q) => $q
+                    // Lane AE: the page's language when the request was made, and
+                    // the customer's own when the address is an account's. A
+                    // correlated lookup, not a join, so one address on two
+                    // customer rows cannot send the alert twice.
+                    ->addSelect('stock_alerts.locale as row_locale')
+                    ->selectSub(fn ($c) => $c->from('customers as lc')
+                        ->whereColumn('lc.email', 'stock_alerts.email')->whereNull('lc.deleted_at')
+                        ->whereNotNull('lc.locale')->orderByDesc('lc.id')->limit(1)->select('lc.locale'), 'customer_locale'))
+                ->addSelect([
                     'stock_alerts.id',
                     'stock_alerts.email',
                     'stock_alerts.product_id',
@@ -335,6 +352,7 @@ class StockAlerts
                     'products.name as product_name',
                     'products.slug as product_slug',
                 ])
+                ->get()
                 ->all();
         } catch (\Throwable) {
             // No table, or no column: nothing is due, and the backlog panel

@@ -12471,6 +12471,15 @@
         "options": null
       },
       {
+        "key": "mail_signature_ar",
+        "type": "text",
+        "label": "Signature — Arabic",
+        "help": "Signed at the foot of every email to a customer who shops in Arabic. Type a | where you want a new line. Blank prints «مع حبّنا، | فريق كي بيوتي بليس».",
+        "value": "",
+        "has_value": false,
+        "options": null
+      },
+      {
         "key": "mail_cancelled_refund_note",
         "type": "text",
         "label": "Cancelled orders: what you tell a paid customer about their money",

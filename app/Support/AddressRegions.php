@@ -185,6 +185,29 @@ final class AddressRegions
     }
 
     /**
+     * A stored region name as the current language prints it (Lane AE).
+     *
+     * The checkout stores the English name of the emirate even on /ar (the
+     * VALUE is English in both lists, see options()), so an Arabic order's
+     * receipt printed "Abu Dhabi". English, and anything that is not exactly
+     * one of the list's own English names, comes back untouched.
+     */
+    public static function localName(?string $country, string $value): string
+    {
+        if ($value === '' || Locale::current() !== 'ar') {
+            return $value;
+        }
+
+        foreach (self::LISTS[strtoupper((string) ($country ?: 'AE'))][1] ?? [] as $row) {
+            if ($row[0] === $value || ($row[3] ?? null) === $value) {
+                return $row[1];
+            }
+        }
+
+        return $value;
+    }
+
+    /**
      * The list's own value for whatever was typed or imported, or null.
      *
      * "dubai", "DXB", "AE-DU", "DU" and "دبي" are all Dubai. Null for a

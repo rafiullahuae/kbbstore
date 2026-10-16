@@ -168,7 +168,9 @@ class InvoiceDocument
             'totalPlain' => self::moneyPlain((int) $order->total, $w),
             'vatNote' => $this->vatNote($order, $w),
 
-            'paymentLabel' => $order->paymentLabel(),
+            // ArabicWording::of (Lane AE): "Cash on delivery" was the English on
+            // an Arabic invoice. English, and the owner's own titles, untouched.
+            'paymentLabel' => \App\Support\ArabicWording::of($order->paymentLabel()),
 
             /*
              * WAS THIS ORDER'S MONEY COLLECTED? — not "did a provider confirm
@@ -222,7 +224,7 @@ class InvoiceDocument
              */
             'paid' => self::moneyCollected($order),
             'codToCollect' => $this->codToCollect($order, $w),
-            'deliveryMethod' => trim((string) $order->shipping_method) ?: 'Standard delivery',
+            'deliveryMethod' => \App\Support\ArabicWording::of(trim((string) $order->shipping_method) ?: 'Standard delivery'),
             'couponCode' => trim((string) $order->coupon_code),
             'isGift' => (bool) $order->is_gift,
             'giftNote' => $order->is_gift ? trim((string) $order->gift_note) : '',
@@ -330,9 +332,12 @@ class InvoiceDocument
             return $chosen;
         }
 
+        // Keyed (Lane AE): the customer's invoice renders in the order's
+        // language, and this heading was the one English word left on an
+        // Arabic one. English: 'Tax Invoice' / 'Invoice', as before.
         return $this->statesChargedTax($order) && $this->setting('invoice_trn') !== ''
-            ? 'Tax Invoice'
-            : 'Invoice';
+            ? (string) __('invoice.doctype_tax')
+            : (string) __('invoice.doctype_invoice');
     }
 
     /**
@@ -492,7 +497,7 @@ class InvoiceDocument
         }
 
         if ($otherFees > 0) {
-            $rows[] = [__('email.totals.payment_fee', ['method' => $order->paymentLabel()]), $otherFees, false];
+            $rows[] = [__('email.totals.payment_fee', ['method' => \App\Support\ArabicWording::of($order->paymentLabel())]), $otherFees, false];
         }
 
         /*
@@ -756,8 +761,11 @@ class InvoiceDocument
             return [];
         }
 
-        $city = trim((string) ($address['city'] ?? ''));
-        $state = trim((string) ($address['state'] ?? ''));
+        // AddressRegions::localName (Lane AE): the emirate in Arabic on an
+        // Arabic document; a no-op in English.
+        $country = (string) ($address['country'] ?? '');
+        $city = \App\Support\AddressRegions::localName($country, trim((string) ($address['city'] ?? '')));
+        $state = \App\Support\AddressRegions::localName($country, trim((string) ($address['state'] ?? '')));
 
         $lines = [
             trim(((string) ($address['first_name'] ?? '')) . ' ' . ((string) ($address['last_name'] ?? ''))),
@@ -811,7 +819,12 @@ class InvoiceDocument
             return '';
         }
 
-        return \App\Support\Countries::NAMES[$code] ?? $code;
+        // In the document's language (Lane AE): the customer's invoice and
+        // delivery note render inside OrderLocale::render(); the operator's
+        // packing slip and label do not, and stay English byte for byte.
+        return isset(\App\Support\Countries::NAMES[$code])
+            ? \App\Support\CountryNames::label($code, \App\Support\Countries::NAMES[$code])
+            : $code;
     }
 
     /**

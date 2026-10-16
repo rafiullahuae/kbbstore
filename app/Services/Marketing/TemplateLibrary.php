@@ -355,6 +355,8 @@ final class TemplateLibrary
             'vip' => ['name' => 'VIP (spent AED 1,000+)', 'audience' => 'customers', 'match' => 'all', 'rules' => [['field' => 'spent', 'op' => 'gte', 'value' => 1000]]],
             'lapsed-90' => ['name' => 'Lapsed 90 days', 'audience' => 'customers', 'match' => 'all', 'rules' => [['field' => 'last_order', 'op' => 'more_than_days', 'value' => 90]]],
             'all-customers' => ['name' => 'All customers', 'audience' => 'customers', 'match' => 'all', 'rules' => []],
+            // Lane AE. Seeded by 2027_11_08_100000_lane_ae_customer_language (literal there).
+            'arabic-customers' => ['name' => 'Arabic customers', 'audience' => 'customers', 'match' => 'all', 'rules' => [['field' => 'arabic', 'op' => 'yes', 'value' => null]]],
             'newsletter-subscribers' => ['name' => 'All confirmed subscribers', 'audience' => 'subscribers', 'match' => 'all', 'rules' => []],
         ];
     }

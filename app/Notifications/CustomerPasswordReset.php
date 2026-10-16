@@ -65,7 +65,7 @@ class CustomerPasswordReset extends Notification
 
         return (new MailMessage)
             ->mailer(MailConfigurator::MAILER)
-            ->subject('Reset your K Beauty Bliss password')
+            ->subject((string) __('email.reset.subject'))
             ->view(['store.account.mail.password-reset', 'store.account.mail.password-reset-text'], [
                 'name' => method_exists($notifiable, 'displayName') ? $notifiable->displayName() : '',
                 'url' => $this->url($notifiable),

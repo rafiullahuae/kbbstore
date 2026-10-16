@@ -110,8 +110,15 @@ it('has text boxes on the Ecommerce screen and most of them ship empty', functio
      * these together" replaced it and keeps its heading on Appearance →
      * Product page → Buy these together, so the box here would save a value
      * nothing reads. The Cart tab's count below is untouched.
+     *
+     * 22 in Lane AE: six Arabic twins (cart_recovery_optin_label_ar, _subject_ar,
+     * _body_ar on the Cart tab; stock_alert_form_label_ar, _subject_ar, _body_ar).
+     * They ship with Arabic wording, NOT empty -- and stay off until the English
+     * box beside each is filled (App\Support\ArabicTwin) -- so the Cart tab's
+     * blank-by-default count below is unchanged. They are text boxes, so the two
+     * tests below now also prove each of them can be saved empty.
      */
-    expect($fields)->toHaveCount(16);
+    expect($fields)->toHaveCount(22);
 
     $blankByDefault = array_filter(
         ecommerceSchema()['cart']['fields'],

@@ -368,7 +368,8 @@ class EmailBranding
         if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) !== false) {
             $out[] = [
                 'kind' => 'email',
-                'label' => 'Email us',
+                // Keyed (Lane AE): the one English label in an Arabic help box.
+                'label' => (string) __('email.kit.help_email_label'),
                 'value' => $email,
                 'url' => 'mailto:' . $email,
             ];
@@ -516,12 +517,39 @@ class EmailBranding
 
     public function signature(): array
     {
+        /*
+         * IN THE EMAIL'S LANGUAGE (Lane AE). An Arabic order's email signed off
+         * "With love, / the K-Beauty Bliss UAE team" under an Arabic body.
+         * Arabic reads the owner's Arabic box (Emails -> Design & branding ->
+         * Footer of every email -> Signature — Arabic) and, when that is blank,
+         * the built-in Arabic sign-off -- never his English one, which is the
+         * line this fixes. English is untouched, byte for byte.
+         */
+        if (\App\Support\Locale::current() !== \App\Support\Locale::DEFAULT) {
+            $raw = trim($this->mail->get('mail_signature_ar'));
+
+            if ($raw === '') {
+                return [
+                    (string) __('email.kit.signoff_love'),
+                    (string) __('email.kit.signoff_team', ['store' => \App\Support\ArabicWording::of($this->storeName())]),
+                ];
+            }
+
+            return $this->signatureLines($raw);
+        }
+
         $raw = trim($this->mail->get('mail_signature'));
 
         if ($raw === '') {
             return ['With love,', 'the ' . $this->storeName() . ' team'];
         }
 
+        return $this->signatureLines($raw);
+    }
+
+    /** @return list<string> */
+    private function signatureLines(string $raw): array
+    {
         $lines = preg_split('/\s*[|\r\n]+\s*/', $raw) ?: [];
 
         $lines = array_values(array_filter(

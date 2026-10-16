@@ -75,7 +75,7 @@ Nothing else is read.
         </div>
         <div class="fact">
             <div class="label">{{ __('invoice.packing.label_status') }}</div>
-            <div class="v">{{ $doc['orderStatus'] }}</div>
+            <div class="v">{{ \App\Support\Locale::current() === \App\Support\Locale::DEFAULT ? $doc['orderStatus'] : match ($doc['orderStatus']) { 'pending' => __('store.order_status.pending'), 'processing' => __('store.order_status.processing'), 'paid' => __('store.order_status.paid'), 'onhold' => __('store.order_status.onhold'), 'on-hold' => __('store.order_status.on-hold'), 'completed' => __('store.order_status.completed'), 'shipped' => __('store.order_status.shipped'), 'cancelled' => __('store.order_status.cancelled'), 'refunded' => __('store.order_status.refunded'), 'failed' => __('store.order_status.failed'), default => $doc['orderStatus'] } }}</div>
         </div>
     </div>
 

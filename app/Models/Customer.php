@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
-class Customer extends Authenticatable
+class Customer extends Authenticatable implements \Illuminate\Contracts\Translation\HasLocalePreference
 {
 
     use Notifiable;
@@ -197,6 +197,17 @@ class Customer extends Authenticatable
      * KBB_BASE_PATH prefix. Ours is built with Support\Url like every other
      * internal link on the site.
      */
+    /**
+     * The language Laravel renders this customer's notifications in -- the
+     * password reset and the email confirmation (Lane AE). Null, which is
+     * "no preference", leaves the language of the page that asked: a reset
+     * requested on /ar by a shopper we know nothing about is still Arabic.
+     */
+    public function preferredLocale(): ?string
+    {
+        return \App\Support\CustomerLocale::of($this);
+    }
+
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new CustomerPasswordReset((string) $token));

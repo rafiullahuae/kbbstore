@@ -102,7 +102,7 @@ class CustomersApiController extends Controller
      * cannot drift apart — a filter meaning one thing on screen and another in
      * the download is how somebody emails the wrong customer list.
      */
-    private const SEGMENTS = ['all', 'ordered', 'never', 'repeat', 'account', 'guest', 'invited', 'verified', 'unverified', 'trashed'];
+    private const SEGMENTS = ['all', 'ordered', 'never', 'repeat', 'account', 'guest', 'invited', 'verified', 'unverified', 'arabic', 'trashed'];
 
     /**
      * Sentinel for "no activity ever".
@@ -173,7 +173,7 @@ class CustomersApiController extends Controller
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = min($page, $lastPage);
 
-        $rows = $this->applySort($query, $sort)
+        $rows = $this->applySort($this->withArabicReasons($query, $segment), $sort)
             ->forPage($page, $perPage)
             ->get()
             ->map(fn ($c) => $this->rowToApi($c))
@@ -332,9 +332,12 @@ class CustomersApiController extends Controller
          * chunk callback is how chunk() is told to stop.
          */
         $query = $this->applySort(
-            $this->applySegment($this->baseQuery($request), $segment),
+            $this->withArabicReasons($this->applySegment($this->baseQuery($request), $segment), $segment),
             $sort
         );
+
+        // Lane AE: the Arabic list's download says why each row is on it.
+        $arabic = $segment === 'arabic';
 
         $filename = 'customers-' . now()->format('Y-m-d') . '.csv';
 
@@ -345,25 +348,25 @@ class CustomersApiController extends Controller
             'X-Content-Type-Options' => 'nosniff',
         ];
 
-        return response()->stream(function () use ($query) {
+        return response()->stream(function () use ($query, $arabic) {
             $out = fopen('php://output', 'w');
 
             // UTF-8 BOM: without it Excel on Windows reads an Arabic or
             // accented name as mojibake, and this customer list has both.
             fwrite($out, "\xEF\xBB\xBF");
 
-            fputcsv($out, [
+            fputcsv($out, array_merge([
                 'id', 'wp_user_id', 'name', 'first_name', 'last_name', 'email', 'phone',
                 'account_type', 'email_verified', 'registered_at', 'orders', 'orders_all',
                 'total_spent_fils', 'total_spent', 'aov_fils', 'aov',
                 'last_order_at', 'last_active_at', 'city', 'state', 'country', 'currency',
-            ]);
+            ], $arabic ? ['language', 'arabic_reasons'] : []));
 
             $currency = Money::currency();
 
             $written = 0;
 
-            $query->chunk(self::EXPORT_CHUNK, function ($chunk) use ($out, $currency, &$written) {
+            $query->chunk(self::EXPORT_CHUNK, function ($chunk) use ($out, $currency, &$written, $arabic) {
                 foreach ($chunk as $c) {
                     if ($written >= self::EXPORT_MAX) {
                         return false;
@@ -373,7 +376,7 @@ class CustomersApiController extends Controller
 
                     $row = $this->rowToApi($c);
 
-                    fputcsv($out, array_map($this->csvCell(...), [
+                    fputcsv($out, array_map($this->csvCell(...), array_merge([
                         $row['id'],
                         $row['wp_user_id'] ?? '',
                         $row['name'] ?? '',
@@ -396,7 +399,7 @@ class CustomersApiController extends Controller
                         $row['state'] ?? '',
                         $row['country'] ?? '',
                         $currency,
-                    ]));
+                    ], $arabic ? [(string) ($row['locale'] ?? ''), implode(' ', $row['arabic_reasons'] ?? [])] : [])));
                 }
             });
 
@@ -568,6 +571,11 @@ class CustomersApiController extends Controller
     private function rowQuery(?Builder $from = null): Builder
     {
         $query = CustomerAggregates::query($from);
+
+        // Lane AE: the customer's language, and whether the owner fixed it.
+        if (\App\Support\CustomerLocale::ready()) {
+            $query->addSelect(['customers.locale', 'customers.locale_admin']);
+        }
 
         // Lane CAP: how the row came to exist, for "From checkout, no order yet".
         return class_exists(\App\Support\CheckoutEmailCapture::class) && \App\Support\CheckoutEmailCapture::ready()
@@ -750,9 +758,40 @@ class CustomersApiController extends Controller
                 ->whereNull('customers.password')->whereNull('customers.legacy_password'),
             'verified' => $query->whereNotNull('customers.email_verified_at'),
             'unverified' => $query->whereNull('customers.email_verified_at'),
+            // Lane AE: chose Arabic, ordered in Arabic, or Arabic script in the
+            // name or an address. App\Support\ArabicCustomers is the one
+            // definition, shared with Marketing Emails' ready group.
+            'arabic' => $this->whereArabic($query),
             'trashed' => $query->onlyTrashed(),
             default => $query,
         };
+    }
+
+    private function whereArabic(Builder $query): Builder
+    {
+        \App\Support\ArabicCustomers::registerSqlite();
+
+        [$sql, $bindings] = \App\Support\ArabicCustomers::predicate('customers');
+
+        return $query->whereRaw($sql, $bindings);
+    }
+
+    /**
+     * On the Arabic list only, each row's reasons as four 0/1 columns of the
+     * SAME statement (Lane AE) -- no query per row. Every other list is left
+     * exactly as it was.
+     */
+    private function withArabicReasons(Builder $query, string $segment): Builder
+    {
+        if ($segment !== 'arabic') {
+            return $query;
+        }
+
+        foreach (\App\Support\ArabicCustomers::reasons('customers') as $reason => [$sql, $bindings]) {
+            $query->selectRaw('CASE WHEN ' . $sql . ' THEN 1 ELSE 0 END as ar_' . $reason, $bindings);
+        }
+
+        return $query;
     }
 
     /**
@@ -765,6 +804,10 @@ class CustomersApiController extends Controller
 
     private function segmentCounts(Builder $base, Request $request): array
     {
+        // Lane AE: "Arabic customers" is counted in the same statement.
+        \App\Support\ArabicCustomers::registerSqlite();
+        [$arabicSql, $arabicBindings] = \App\Support\ArabicCustomers::predicate('customers');
+
         $row = $this->aggregate(
             $base,
             'COUNT(*) as c_all,
@@ -776,7 +819,9 @@ class CustomersApiController extends Controller
              SUM(CASE WHEN customers.invited_at IS NOT NULL AND customers.invite_accepted_at IS NULL
                        AND customers.password IS NULL AND customers.legacy_password IS NULL THEN 1 ELSE 0 END) as c_invited,
              SUM(CASE WHEN customers.email_verified_at IS NOT NULL THEN 1 ELSE 0 END) as c_verified,
-             SUM(CASE WHEN customers.email_verified_at IS NULL THEN 1 ELSE 0 END) as c_unverified'
+             SUM(CASE WHEN customers.email_verified_at IS NULL THEN 1 ELSE 0 END) as c_unverified,
+             SUM(CASE WHEN ' . $arabicSql . ' THEN 1 ELSE 0 END) as c_arabic',
+            $arabicBindings
         );
 
         $trashed = $this->applySegment($this->baseQuery($request), 'trashed')
@@ -793,6 +838,7 @@ class CustomersApiController extends Controller
             'invited' => (int) ($row->c_invited ?? 0),
             'verified' => (int) ($row->c_verified ?? 0),
             'unverified' => (int) ($row->c_unverified ?? 0),
+            'arabic' => (int) ($row->c_arabic ?? 0),
             'trashed' => (int) $trashed,
         ];
     }
@@ -1017,6 +1063,11 @@ class CustomersApiController extends Controller
             // Lane CAP: filed from the email typed at checkout, and no order
             // since. The label goes the moment an order is placed.
             'from_checkout' => ($c->origin ?? null) === 'checkout_email' && (int) $c->all_orders === 0,
+            // Lane AE: 'ar' / 'en' / null (not known yet), and whether the
+            // owner set it by hand. On the Arabic list, why the row is there.
+            'locale' => $this->blankToNull($c->locale ?? null),
+            'locale_admin' => (int) ($c->locale_admin ?? 0) === 1,
+            'arabic_reasons' => isset($c->ar_chose) ? \App\Support\ArabicCustomers::reasonsOf($c) : null,
         ];
     }
 

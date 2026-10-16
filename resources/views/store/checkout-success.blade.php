@@ -101,7 +101,7 @@
                 $addressLines = array_values(array_filter([
                     trim(($shipping['first_name'] ?? '') . ' ' . ($shipping['last_name'] ?? '')),
                     $shipping['line1'] ?? null,
-                    trim(implode(', ', array_filter([$shipping['city'] ?? null, $shipping['state'] ?? null]))),
+                    trim(implode(', ', array_filter([(method_exists(\App\Support\AddressRegions::class, 'localName') ? \App\Support\AddressRegions::localName((string) ($shipping['country'] ?? ''), (string) ($shipping['city'] ?? '')) : ($shipping['city'] ?? '')), (method_exists(\App\Support\AddressRegions::class, 'localName') ? \App\Support\AddressRegions::localName((string) ($shipping['country'] ?? ''), (string) ($shipping['state'] ?? '')) : ($shipping['state'] ?? ''))]))),
                     // The column stores a two-letter code, which is a database
                     // value and not the last line of anybody's address. The
                     // code itself is kept when it is one we have no name for,

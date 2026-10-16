@@ -54,7 +54,7 @@ class CustomerEmailVerification extends Notification
 
         return (new MailMessage)
             ->mailer(MailConfigurator::MAILER)
-            ->subject('Confirm your email address')
+            ->subject((string) __('email.verify.subject'))
             ->view(['store.account.mail.verify-email', 'store.account.mail.verify-email-text'], [
                 'name' => $this->customer->displayName(),
                 'url' => self::linkFor($this->customer),

@@ -83,10 +83,47 @@ This link is just for you and works once. It expires on {link_expires}. After th
 If you did not shop with us, you can ignore this email. Nothing happens unless the link is used.
 TXT;
 
+    /** Lane AE: the built-in wording in Arabic, for a customer who shops in Arabic. */
+    public const DEFAULT_SUBJECT_AR = 'حسابكِ في {shop_name} جاهز';
+
+    public const DEFAULT_BODY_AR = <<<'TXT'
+مرحبًا {first_name}،
+
+شكرًا لتسوّقكِ من {shop_name}. انتقل متجرنا إلى موقع جديد، وقد أنشأنا لكِ حسابًا بهذا البريد الإلكتروني ({email})، لتتابعي طلباتكِ وتُتمّي طلبكِ القادم أسرع.
+
+حسابكِ جاهز، وكل ما عليكِ هو اختيار كلمة مرور:
+
+{set_password_link}
+
+هذا الرابط لكِ وحدكِ ويعمل مرة واحدة، وتنتهي صلاحيته في {link_expires}. بعد ذلك يمكنكِ دائمًا استخدام «نسيت كلمة المرور» في صفحة تسجيل الدخول.
+
+إن لم تتسوّقي معنا، فتجاهلي هذه الرسالة؛ لن يحدث شيء ما لم يُستخدم الرابط.
+TXT;
+
     public function __construct(
         private SettingsService $settings,
         private EmailBranding $branding,
     ) {}
+
+    /**
+     * The words to send, in a language (Lane AE): the built-in Arabic for an
+     * Arabic customer while the run carries the built-in English, otherwise
+     * exactly the run's words. Subject and body are decided separately, so an
+     * owner who rewrote only the subject keeps his subject.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function forLocale(string $subject, string $body, ?string $locale): array
+    {
+        if ($locale !== 'ar') {
+            return [$subject, $body];
+        }
+
+        return [
+            trim($subject) === self::DEFAULT_SUBJECT ? self::DEFAULT_SUBJECT_AR : $subject,
+            trim($body) === trim(self::DEFAULT_BODY) ? self::DEFAULT_BODY_AR : $body,
+        ];
+    }
 
     /** @return array{subject: string, body: string, expiry_days: int} */
     public function current(): array
@@ -201,12 +238,13 @@ TXT;
         $email = (string) $customer->email;
 
         return [
-            'first_name' => $first !== '' ? $first : 'there',
+            'first_name' => $first !== '' ? $first : (\App\Support\Locale::current() === 'ar' ? 'عزيزتي' : 'there'),
             'name' => $name !== '' ? $name : $email,
             'email' => $email,
             'shop_name' => $this->branding->storeName(),
             'set_password_link' => $link,
-            'link_expires' => $expires->copy()->setTimezone(StoreTime::timezone())->format('j F Y'),
+            // LocalDate (Lane AE): Arabic month names on an Arabic invite; English ->format() exactly.
+            'link_expires' => \App\Support\LocalDate::format($expires->copy()->setTimezone(StoreTime::timezone()), 'j F Y'),
         ];
     }
 

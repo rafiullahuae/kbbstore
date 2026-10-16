@@ -104,6 +104,11 @@ Route::post('/customers/invites/runs/{run}/cancel', [CustomerInvitesController::
 
 Route::get('/customers/{id}', [CustomersApiController::class, 'show'])->whereNumber('id');
 Route::post('/customers/{id}/note', [CustomersApiController::class, 'saveNote'])->whereNumber('id');
+// Lane AE: the customer's language (Arabic / English / Automatic). Its own
+// capability, customers.language, in AdminCapabilities.
+Route::post('/customers/{id}/language', [\App\Http\Controllers\Admin\CustomerLanguageController::class, 'update'])
+    ->whereNumber('id')
+    ->middleware('throttle:30,1,customer-language');
 Route::post('/customers/{id}/restore', [CustomersApiController::class, 'restore'])->whereNumber('id');
 Route::delete('/customers/{id}', [CustomersApiController::class, 'destroy'])->whereNumber('id');
 

@@ -165,7 +165,31 @@ final class ArabicInterfaceDrafts
             self::laneNtSiteAppPush(),
             self::lanePnPushMessages(),
             self::laneAr2Wording(),
+            self::laneAeCustomerLanguage(),
         ));
+    }
+
+    /**
+     * Lane AE -- see InterfaceStrings::emailLaneAe() and invoiceLaneAe().
+     * Shipped PUBLISHED by 2027_11_08_100000_lane_ae_customer_language (the
+     * Arabic shop is Arabic by default); the same words, pinned equal there.
+     *
+     * @return array<string, string>
+     */
+    private static function laneAeCustomerLanguage(): array
+    {
+        return [
+            'email.refund.subject' => 'تم إرسال المبلغ المسترد لطلبك :number من :store',
+            'email.invoice.subject_ref' => 'الفاتورة :reference لطلبك :number من :store',
+            'email.invoice.subject' => 'فاتورة طلبك :number من :store',
+            'email.reset.subject' => 'إعادة تعيين كلمة المرور في كي بيوتي بليس',
+            'email.verify.subject' => 'أكّدي عنوان بريدكِ الإلكتروني',
+            'email.kit.help_email_label' => 'راسلينا',
+            'email.kit.signoff_love' => 'مع حبّنا،',
+            'email.kit.signoff_team' => 'فريق :store',
+            'invoice.doctype_invoice' => 'فاتورة',
+            'invoice.doctype_tax' => 'فاتورة ضريبية',
+        ];
     }
 
     /**

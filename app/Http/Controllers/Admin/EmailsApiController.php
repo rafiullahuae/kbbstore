@@ -75,6 +75,7 @@ class EmailsApiController extends Controller
         'mail_address_korea',
         'mail_support_instagram',
         'mail_signature',
+        'mail_signature_ar',
     ];
 
     /** The two pre-2.60.376 keys, still accepted, mapped to the kit's own names. */
@@ -491,6 +492,7 @@ class EmailsApiController extends Controller
             'mail_address_korea' => ['string', 'max:300'],
             'mail_support_instagram' => ['string', 'max:200'],
             'mail_signature' => ['string', 'max:500'],
+            'mail_signature_ar' => ['string', 'max:500'],
         ];
 
         $rules = [];
@@ -548,6 +550,7 @@ class EmailsApiController extends Controller
                 'mail_address_korea' => (string) $values['mail_address_korea'],
                 'mail_support_instagram' => (string) $values['mail_support_instagram'],
                 'mail_signature' => (string) $values['mail_signature'],
+                'mail_signature_ar' => (string) ($values['mail_signature_ar'] ?? ''),
             ],
             // Where Design & branding's "Send test" sends: the last address
             // a test went to from Sending & delivery.

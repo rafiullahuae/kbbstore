@@ -142,6 +142,16 @@ class CartRecovery
     public const KEY_SCHEDULE = 'cart_recovery_schedule';
 
     /**
+     * The Arabic boxes' defaults (Lane AE) -- `<key>_ar`, read only for an
+     * Arabic shopper and only once the English box is filled. See ArabicTwin.
+     */
+    public const AR_OPTIN_LABEL = 'ذكّروني بهذه السلة عبر البريد الإلكتروني.';
+
+    public const AR_SUBJECT = 'سلّتكِ بانتظاركِ 🛍️';
+
+    public const AR_BODY = 'لاحظنا أنكِ تركتِ بعض المنتجات في سلّتكِ، فاحتفظنا بها لكِ. أكملي طلبكِ متى شئتِ — وإن كان لديكِ أي سؤال، ردّي على هذه الرسالة.';
+
+    /**
      * The most messages a sequence may ever contain, whatever the owner types.
      *
      * Not a tuning knob — a ceiling. The schedule box is free text, and
@@ -188,7 +198,7 @@ class CartRecovery
             return null;
         }
 
-        $text = trim((string) $this->settings->get(self::KEY_OPTIN_LABEL, ''));
+        $text = \App\Support\ArabicTwin::pick(self::KEY_OPTIN_LABEL, self::AR_OPTIN_LABEL);
 
         return $text === '' ? null : $text;
     }
@@ -199,20 +209,33 @@ class CartRecovery
      *
      * @return array{subject: string, body: string}|null
      */
-    public function messageWording(): ?array
+    public function messageWording(?string $locale = null): ?array
     {
         if (! $this->enabled()) {
             return null;
         }
 
-        $subject = trim((string) $this->settings->get(self::KEY_SUBJECT, ''));
-        $body = trim((string) $this->settings->get(self::KEY_BODY, ''));
+        // Lane AE: the shopper's language. English (and a null locale on an
+        // English process) reads exactly the two keys it always read.
+        $subject = \App\Support\ArabicTwin::pick(self::KEY_SUBJECT, self::AR_SUBJECT, $locale);
+        $body = \App\Support\ArabicTwin::pick(self::KEY_BODY, self::AR_BODY, $locale);
 
         if ($subject === '' || $body === '') {
             return null;
         }
 
         return ['subject' => $subject, 'body' => $body];
+    }
+
+    /**
+     * `['locale' => …]` for a row being written, or [] before the migration
+     * has added the column (Lane AE).
+     *
+     * @return array<string, string>
+     */
+    private static function pageLocale(): array
+    {
+        return \App\Support\CustomerLocale::ready() ? ['locale' => \App\Support\Locale::current()] : [];
     }
 
     /**
@@ -327,7 +350,7 @@ class CartRecovery
                 'cancel_reason' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ]);
+            ] + self::pageLocale());
         } catch (\Throwable) {
             return self::OUTCOME_UNAVAILABLE;
         }
@@ -388,7 +411,7 @@ class CartRecovery
                     'cancel_reason' => null,
                     'created_at' => $now,
                     'updated_at' => $now,
-                ]);
+                ] + self::pageLocale());
 
                 return $written > 0 ? self::OUTCOME_STORED : self::OUTCOME_DUPLICATE;
             }
@@ -505,7 +528,15 @@ class CartRecovery
                 // once the interval is applied below; without the headroom a
                 // single not-yet-due row at the front would starve the rest.
                 ->limit(max($limit * 4, 20))
-                ->get([
+                ->when(\App\Support\CustomerLocale::ready(), fn ($q) => $q
+                    // Lane AE: the language to write in -- the customer's own
+                    // when the basket belongs to one, else the page's when the
+                    // address was given. Only once the columns exist (ready()),
+                    // because this method answers [] on any error and a missing
+                    // column would silently stop every reminder.
+                    ->leftJoin('customers as lc', 'lc.id', '=', 'carts.customer_id')
+                    ->addSelect(['cart_recoveries.locale as row_locale', 'lc.locale as customer_locale']))
+                ->addSelect([
                     'cart_recoveries.id',
                     'cart_recoveries.cart_id',
                     'cart_recoveries.email',
@@ -513,6 +544,7 @@ class CartRecovery
                     'cart_recoveries.consented_at',
                     'cart_recoveries.source',
                 ])
+                ->get()
                 ->all();
         } catch (\Throwable) {
             return [];
@@ -739,7 +771,9 @@ class CartRecovery
 
             return $rows
                 ->map(fn ($row) => [
-                    'name' => (string) ($row->name ?? 'Item'),
+                    // Lane AE: the product's Arabic name for an Arabic reminder,
+                    // from the translation map already in memory (no query).
+                    'name' => \App\Support\CustomerLocale::productName($row->product_id ?? null, (string) ($row->name ?? 'Item')),
                     'slug' => (string) ($row->slug ?? ''),
                     'quantity' => (int) $row->quantity,
                     'unit_price' => (int) $row->unit_price,

@@ -125,9 +125,11 @@ final class InterfaceStrings
                 self::emailText(),
                 self::emailKit(),
                 self::emailMarketing(),
+                self::emailLaneAe(),
             ),
             'invoice' => array_merge(
                 self::invoiceDocuments(),
+                self::invoiceLaneAe(),
             ),
         ];
     }
@@ -3200,6 +3202,43 @@ final class InterfaceStrings
      *
      * @return array<string, string>
      */
+    /**
+     * Lane AE -- the last English an Arabic order's paperwork carried: two
+     * subjects that were concatenated in code (refund, invoice), the account
+     * notifications' subjects, the help box's "Email us" and the built-in
+     * signature. The English is exactly what the code printed before, so an
+     * English email is byte-identical.
+     *
+     * @return array<string, string>
+     */
+    private static function emailLaneAe(): array
+    {
+        return [
+            'refund.subject' => 'Refund sent for your :store order :number',
+            'invoice.subject_ref' => 'Invoice :reference for your :store order :number',
+            'invoice.subject' => 'Invoice for your :store order :number',
+            'reset.subject' => 'Reset your K Beauty Bliss password',
+            'verify.subject' => 'Confirm your email address',
+            'kit.help_email_label' => 'Email us',
+            'kit.signoff_love' => 'With love,',
+            'kit.signoff_team' => 'the :store team',
+        ];
+    }
+
+    /**
+     * Lane AE -- the invoice's own heading when the owner has not typed one
+     * (InvoiceDocument::docType()).
+     *
+     * @return array<string, string>
+     */
+    private static function invoiceLaneAe(): array
+    {
+        return [
+            'doctype_invoice' => 'Invoice',
+            'doctype_tax' => 'Tax Invoice',
+        ];
+    }
+
     private static function emailMarketing(): array
     {
         return [

@@ -738,7 +738,12 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // owner's request for a mistyped-email hint at checkout.
     // -1 (Lane ARF): wording.site_name_uae was never a draft; 2027_11_06_100000
     // writes it published (and ArabicDraftsAsShipped takes it away here).
-    expect($ui['drafts'])->toBe(1625 + count(\App\Support\ArabicWording::ENGLISH) - 1, 'the shipped Arabic is not showing as drafts to review')
+    // +10 (Lane AE): the refund and invoice subjects, the reset/verify subjects,
+    // "Email us", the built-in signature and the invoice heading (email.*,
+    // invoice.*). Live gets them PUBLISHED from
+    // 2027_11_08_100000_lane_ae_customer_language; a fresh install seeds them
+    // with the rest of ArabicInterfaceDrafts, so they count here as drafts.
+    expect($ui['drafts'])->toBe(1625 + count(\App\Support\ArabicWording::ENGLISH) - 1 + 10, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

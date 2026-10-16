@@ -210,7 +210,21 @@ final class StoreTime
      */
     public static function formatDate(DateTimeInterface|string|null $at, string $format = 'j F Y'): string
     {
-        return self::display($at)?->format($format) ?? '';
+        $display = self::display($at);
+
+        if ($display === null) {
+            return '';
+        }
+
+        /*
+         * IN THE PAGE'S LANGUAGE (Lane AE). An Arabic order's emails and
+         * invoice render inside OrderLocale::render(), and every date on them
+         * still read "17 October 2026" -- the one Latin word on an Arabic
+         * receipt. LocalDate is the storefront's own Arabic date rule
+         * ("17 أكتوبر 2026"); in English it is ->format() exactly, so an
+         * English document, and every admin screen, is byte-identical.
+         */
+        return Locale::current() === Locale::DEFAULT ? $display->format($format) : LocalDate::format($display, $format);
     }
 
     /**

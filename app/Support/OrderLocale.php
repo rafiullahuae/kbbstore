@@ -61,6 +61,23 @@ final class OrderLocale
         });
 
         /*
+         * AND THE CUSTOMER'S LANGUAGE (Lane AE), from the same hook for the same
+         * reason: five places create orders, and the rule "an order placed on /ar
+         * makes this customer an Arabic customer" is only a rule if all five
+         * obey it. The ORDER's locale, so a phone order the admin keyed in as
+         * Arabic counts too. CustomerLocale::remember() never overwrites a
+         * language the owner set by hand, and returns before any query while
+         * the shop has one language -- how it ships.
+         */
+        Order::created(static function (Order $order): void {
+            // Not an imported WooCommerce order: that is history, not a choice
+            // made today, and a re-import must not flip anybody's language.
+            if ($order->customer_id !== null && $order->getAttribute('wc_order_id') === null) {
+                CustomerLocale::remember((int) $order->customer_id, (string) ($order->locale ?? Locale::DEFAULT));
+            }
+        });
+
+        /*
          * AND THE LINE NAMES, for the same reason and in the same place.
          *
          * `order_items.name` is a snapshot of the ENGLISH product name, always,
