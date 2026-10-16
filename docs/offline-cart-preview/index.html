@@ -133,7 +133,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
 <div class="wrap">
   <div>
     <h1>The bag, on a bad connection</h1>
-    <p class="lead">A working copy of the shop on a phone. On Normal it behaves exactly as the shop does today. On Slow and Offline the product is added at once: “Added”, the product in the list with a small loading circle, and no waiting and no extra messages. Switch the connection, then tap Add to cart, change quantities and open other pages. The list on the right says in plain words what the phone and the shop do at each step. Nothing here talks to the real shop.</p>
+    <p class="lead">A working copy of the shop on a phone. On Normal it behaves exactly as the shop does today. On Slow the product goes into the bag at once and nothing else shows: the phone keeps it and sends it to the shop in the background. On Offline it goes into the bag the same way, and the bag says you’re offline, with a small circle on what is waiting. Switch the connection, then tap Add to cart, change quantities and open other pages. The list on the right says in plain words what the phone and the shop do at each step. Nothing here talks to the real shop.</p>
   </div>
 
   <div class="grid">
@@ -141,8 +141,8 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
       <p class="lab">Phone's internet</p>
       <div class="seg" role="group" aria-label="Connection">
         <button type="button" data-c="normal" id="cNormal">Normal<small>same as today</small></button>
-        <button type="button" data-c="slow" id="cSlow">Slow<small>added at once</small></button>
-        <button type="button" data-c="offline" id="cOff">Offline<small>added at once</small></button>
+        <button type="button" data-c="slow" id="cSlow">Slow<small>looks like Normal</small></button>
+        <button type="button" data-c="offline" id="cOff">Offline<small>says offline</small></button>
       </div>
       <p class="lab">Try these</p>
       <div class="row">
@@ -152,7 +152,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
         <button type="button" class="btn" id="sReset">Start again</button>
       </div>
       <p class="hint" id="hint">Start with Offline, add two products, then switch back to Normal.</p>
-      <p class="lab">Saved in this phone, waiting for internet</p>
+      <p class="lab">Kept in this phone until the shop confirms</p>
       <div class="saved" id="saved"></div>
     </section>
 
@@ -243,7 +243,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
   }
   function act(op, pid, qty) {
     var o = { id: rid(), op: op, pid: pid, qty: qty, st: 'waiting' };
-    if (S.conn === 'slow' && !S.slow) { S.slow = true; log('save', 'Slow connection known → no grey bars, no waiting: “Added” at once, a small loading circle until the shop confirms.'); }
+    if (S.conn === 'slow' && !S.slow) { S.slow = true; log('save', 'Slow connection → kept in this phone first and shown in the bag at once, exactly as if the shop had answered. It goes to the shop in the background.'); }
     S.pend.push(o);
     if (S.conn === 'offline') { save(o); render(); return; }
     enqueue(o); render();
@@ -355,6 +355,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
   function banner() {
     var L = t();
     if (S.flash) return '<div class="note ' + S.flash.k + '" role="status">' + ICON[S.flash.k] + '<span>' + S.flash.text + '</span></div>';
+    if (S.conn === 'offline') return '<div class="note off" role="status">' + ICON.off + '<span>' + L.off + '</span></div>';
     return '';
   }
   function render() {
@@ -384,7 +385,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
     var pending = Object.keys(vc.st).length > 0, sub = 0, lines = '';
     Object.keys(v).forEach(function (k) {
       var x = byId[k], q = v[k]; sub += x.p * q;
-      var tag = vc.st[k] ? '<span class="tag l" role="img" aria-label="' + L.adding + '"><span class="spin"></span></span>' : '';
+      var tag = vc.st[k] && S.conn === 'offline' ? '<span class="tag l" role="img" aria-label="' + L.adding + '"><span class="spin"></span></span>' : '';
       lines += '<div class="ln"><div class="th">' + thumb(x.c) + '</div><div><div class="nm" dir="ltr">' + x.s + '</div><div class="pr">' + L.price(x.p) + tag + '</div>' + '</div>' +
         '<div class="qty"><button type="button" data-dec="' + k + '" aria-label="−">−</button><span>' + q + '</span><button type="button" data-inc="' + k + '" aria-label="+">+</button></div></div>';
     });
@@ -398,9 +399,9 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
     ['normal', 'slow', 'offline'].forEach(function (c) {
       document.querySelector('[data-c="' + c + '"]').setAttribute('aria-pressed', String(S.conn === c));
     });
-    var q = S.pend.filter(function (x) { return x.st === 'queued'; });
+    var q = S.pend;
     document.getElementById('saved').textContent = q.length
-      ? q.map(function (o) { return '#' + o.id + '  ' + o.op + '  product ' + o.pid + (o.op === 'remove' ? '' : '  qty ' + o.qty); }).join('\n')
+      ? q.map(function (o) { return '#' + o.id + '  ' + o.op + '  product ' + o.pid + (o.op === 'remove' ? '' : '  qty ' + o.qty) + '   ' + (o.st === 'queued' ? 'waiting for internet' : 'sending in background'); }).join('\n')
       : '(nothing waiting)';
     document.getElementById('log').innerHTML = S.log.slice(0, 60).map(function (e) {
       return '<li class="k-' + e.k + '"><time>+' + e.at.toFixed(1) + 's</time><span>' + e.msg + '</span></li>';
@@ -412,7 +413,7 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
   document.getElementById('phone').addEventListener('click', function (ev) {
     var b = ev.target.closest('button,[data-a]'); if (!b) return;
     var a = b.getAttribute('data-a');
-    if (b.hasAttribute('data-add')) { S.open = true; if (S.conn === 'normal') S.skel = true; else flash('ok', t().added, 1400); act('add', +b.getAttribute('data-add'), 1); return; }
+    if (b.hasAttribute('data-add')) { S.open = true; if (S.conn === 'normal') S.skel = true; act('add', +b.getAttribute('data-add'), 1); return; }
     if (b.hasAttribute('data-go')) { go(+b.getAttribute('data-go')); return; }
     if (b.hasAttribute('data-inc')) { var k = +b.getAttribute('data-inc'); act('set', k, (viewCart().v[k] || 0) + 1); return; }
     if (b.hasAttribute('data-dec')) { var d = +b.getAttribute('data-dec'), cur = viewCart().v[d] || 0; if (cur <= 1) act('remove', d, 0); else act('set', d, cur - 1); return; }
