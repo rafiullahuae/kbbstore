@@ -16,10 +16,11 @@ use Illuminate\Support\Str;
  * Patches by Medicube", "Medicube PDRN Eye Patches – Eye Care" — and describe a
  * picture's content only when the owner types it himself on the row.
  *
- * ENGLISH ONLY, AND SAID SO ON THE SCREEN: products.image_alts is one map of
- * URL → alt with no language in it (it is not in Product::$translatable), and
- * Product::altFor() prints a stored alt on /ar as well. An Arabic page with no
- * stored alt keeps its automatic Arabic one.
+ * AND ARABIC BESIDE IT (Lane AS). products.image_alts is the English map of
+ * URL → alt. The Arabic twin is proposeArabic(), stored by ImageSeoJobs as one
+ * translations row per product (Product::LOCAL_ALTS_FIELD), and
+ * Product::altFor() prints it on /ar -- never the English one, which /ar used
+ * to print as soon as the tool had run.
  */
 final class AltText
 {
@@ -75,6 +76,58 @@ final class AltText
             // Never the same sentence twice on one product.
             if ($alt === '' || in_array(mb_strtolower($alt), array_map('mb_strtolower', $out), true)) {
                 $alt = self::clean(self::fit($full, ' – view '.$n));
+            }
+
+            $out[] = $alt;
+        }
+
+        return $out;
+    }
+
+    /**
+     * The same pictures described in Arabic, for /ar (Lane AS). One run of the
+     * tool writes both languages: these go to the translations table beside
+     * the English column (Product::LOCAL_ALTS_FIELD), so the Arabic page's
+     * photographs carry Arabic alt text in Google Images instead of the
+     * English sentence. Built ONLY from the product's published Arabic name
+     * (and its brand's and category's Arabic names when they have one) -- a
+     * product with no Arabic name gets none, and its /ar page keeps the
+     * English one it has always printed.
+     *
+     * The wording is fixed Arabic, varied the way the English is: "{brand}
+     * {name}", "{name} من {brand}", "{brand} {name} – {category}", then
+     * "– صورة n". The English template the owner picked does not apply: a
+     * custom English sentence typed on the screen has no Arabic twin.
+     *
+     * @return list<string>
+     */
+    public static function proposeArabic(?string $brand, string $name, ?string $category, int $count): array
+    {
+        $brand = self::tidy((string) $brand);
+        $name = self::tidy($name);
+
+        if ($name === '' || preg_match('/\p{Arabic}/u', $name) !== 1) {
+            return [];
+        }
+
+        $full = \App\Support\ProductTitle::full($brand !== '' ? $brand : null, $name);
+        $category = self::tidy((string) $category);
+        $out = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $n = $i + 1;
+
+            $alt = match (true) {
+                $i === 0 => self::fit($full),
+                $i === 1 && $brand !== '' && ! str_contains($name, $brand) => self::fit($name, ' من '.$brand),
+                $i === 2 && $category !== '' => self::fit($full, ' – '.$category),
+                default => self::fit($full, ' – صورة '.$n),
+            };
+
+            $alt = self::clean($alt);
+
+            if ($alt === '' || in_array($alt, $out, true)) {
+                $alt = self::clean(self::fit($full, ' – صورة '.$n));
             }
 
             $out[] = $alt;

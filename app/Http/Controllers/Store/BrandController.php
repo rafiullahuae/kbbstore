@@ -763,8 +763,11 @@ class BrandController extends Controller
          * plan item 34: reachable, machine-readable, and not what the visitor
          * can see.
          */
+        // t('name') (Lane AS): /ar/brands/anua/ named its CollectionPage "Anua"
+        // while its title, h1 and breadcrumb said "أنوا". On English t() IS
+        // the column, so the English node is unchanged.
         $collection = $canonical === ''
-            ? \App\Support\CollectionSchema::from($products, $base, ($page - 1) * $perPage) + ['name' => $brand->name]
+            ? \App\Support\CollectionSchema::from($products, $base, ($page - 1) * $perPage) + ['name' => $brand->t('name')]
             : null;
 
         $ctx = array_filter([

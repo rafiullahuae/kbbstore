@@ -453,6 +453,10 @@ final class TranslationEstimate
             ->where('status', $status)
             ->whereNotNull('value')
             ->where('value', '!=', '')
+            // Lane AS: a product's Arabic picture alts (one JSON row written
+            // by Catalog -> Image SEO) are not one of the fields this counts
+            // against, and counted here would read as a translated field.
+            ->where('field', '!=', \App\Models\Product::LOCAL_ALTS_FIELD)
             ->select('group')
             ->selectRaw('COUNT(*) as c')
             ->groupBy('group')

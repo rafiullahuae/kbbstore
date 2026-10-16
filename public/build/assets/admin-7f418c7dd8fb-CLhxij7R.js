@@ -291,6 +291,11 @@
       + rowHTML('Highlight untranslated text in the admin',
           'Marks strings with no Arabic yet while you work. Changes nothing a shopper sees.',
           togHTML('highlight_missing', s.highlight_missing, editable))
+      + rowHTML('Open English when the browser translates the page',
+          'When a shopper\'s browser (Chrome, Edge) translates an Arabic page into another language, open the '
+          + 'real English page instead of a machine translation, and keep showing English to that browser until '
+          + 'Arabic is chosen again. Search engines are never redirected.',
+          togHTML('translate_opens_english', s.translate_opens_english !== false, editable))
       + '</div>'
       /* THE AWKWARD COMBINATION, PRINTED AND NOT PREVENTED. The endpoint decides
          whether there is one and what it says; this only decides where it goes.

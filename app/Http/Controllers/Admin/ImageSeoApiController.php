@@ -294,6 +294,8 @@ final class ImageSeoApiController extends Controller
             $product = $products->firstWhere('id', $plan['id']);
             $count = count($plan['images']);
             $proposed = AltText::propose($plan['brand'], $plan['name'], $plan['category'], $count, $template, (string) ($data['first'] ?? ''), (string) ($data['rest'] ?? ''));
+            // Lane AS: what the same run writes for /ar, shown read-only beside each line.
+            $arabic = $product !== null ? \App\Services\ImageSeo\ImageSeoJobs::arabicProposals($product, $count) : [];
             $images = [];
 
             foreach ($plan['images'] as $i => $image) {
@@ -312,6 +314,7 @@ final class ImageSeoApiController extends Controller
                     'ten' => $image['ten'],
                     'reasons' => $image['reasons'],
                     'proposed' => $alt,
+                    'proposed_ar' => $arabic[$i] ?? '',
                     'keep' => $onlyMissing && $image['alt_written'],
                     'score_after' => $after['score'],
                     'ten_after' => $after['ten'],

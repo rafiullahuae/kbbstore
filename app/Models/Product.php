@@ -484,6 +484,37 @@ class Product extends Model
         $map = is_array($this->image_alts) ? $this->image_alts : [];
         $stored = trim((string) ($map[(string) $url] ?? ''));
 
+        /*
+         * ON /ar, THE STORED ALT IS ENGLISH, AND IT WAS PRINTED ANYWAY (Lane AS).
+         * image_alts holds what the owner -- or Catalog → Image SEO -- wrote,
+         * and that is English. So the moment the tool had run, an Arabic product
+         * page with an Arabic name, h1 and title described its own photographs
+         * as "Anua Azelaic 10 Hyaluron Redness Soothing Pad by Anua": English
+         * in Google Images for the Arabic page, and an English sentence read
+         * aloud to an Arabic screen-reader user.
+         *
+         * Now, on a non-default language: the Arabic alt for THIS picture
+         * (translations, group products, field image_alts -- a URL => alt map
+         * the Image SEO tool writes beside the English one) first; else, when
+         * the product has an Arabic name, the automatic Arabic sentence; and
+         * only when it has no Arabic name at all the stored English, as before,
+         * because then the whole card is English anyway. The English page never
+         * enters this block.
+         */
+        $locale = \App\Support\Locale::current();
+
+        if ($locale !== \App\Support\Locale::DEFAULT) {
+            $own = trim((string) ($this->localAlts($locale)[(string) $url] ?? ''));
+
+            if ($own !== '') {
+                return $own;
+            }
+
+            if ($stored === '' || $this->hasTranslation('name', $locale)) {
+                return \App\Support\ProductTitle::alt($this->brand?->t('name'), $this->t('name'), $index, $total);
+            }
+        }
+
         if ($stored !== '') {
             return $stored;
         }
@@ -492,6 +523,34 @@ class Product extends Model
         // by a search engine, so it is content and not an identifier. On
         // English t() IS the column, so nothing about the English page moves.
         return \App\Support\ProductTitle::alt($this->brand?->t('name'), $this->t('name'), $index, $total);
+    }
+
+    /**
+     * The translations field holding this product's per-picture alt text in a
+     * second language: a JSON map of image URL => alt, the same shape as the
+     * image_alts column. Not in $translatable on purpose -- it is not a text
+     * the translation console or a machine translator should ever see as one
+     * string -- and short, so it lives in the cached translation map and costs
+     * a product page or a grid of cards no query at all.
+     */
+    public const LOCAL_ALTS_FIELD = 'image_alts';
+
+    /**
+     * This product's alt text in $locale, keyed by image URL. Empty on the
+     * default language (the column is that language) and when none is stored.
+     *
+     * @return array<string, string>
+     */
+    public function localAlts(string $locale): array
+    {
+        if ($locale === \App\Support\Locale::DEFAULT || $this->getKey() === null) {
+            return [];
+        }
+
+        $raw = \App\Services\Translation\TranslationStore::get($locale, $this->getTable(), (int) $this->getKey(), self::LOCAL_ALTS_FIELD);
+        $map = is_string($raw) && $raw !== '' ? json_decode($raw, true) : null;
+
+        return is_array($map) ? array_filter($map, static fn ($v, $k): bool => is_string($k) && is_string($v), ARRAY_FILTER_USE_BOTH) : [];
     }
 
     /**

@@ -56,6 +56,8 @@ class TranslationsApiController extends Controller
             'arabic_enabled' => (bool) $this->settings->get(Locale::SETTING_ENABLED, false),
             'rtl_enabled' => (bool) $this->settings->get(Locale::SETTING_RTL, false),
             'highlight_missing' => (bool) $this->settings->get('translation_highlight_missing', false),
+            // Lane AS: ON by default -- the owner asked for it. See Locale::opensEnglishOnTranslate().
+            'translate_opens_english' => Locale::opensEnglishOnTranslate(),
             'provider' => $provider->name(),
             'provider_available' => $provider->available(),
             'has_api_key' => TranslationCredentials::hasKey(),
@@ -141,6 +143,7 @@ class TranslationsApiController extends Controller
             'arabic_enabled' => ['sometimes', 'boolean'],
             'rtl_enabled' => ['sometimes', 'boolean'],
             'highlight_missing' => ['sometimes', 'boolean'],
+            'translate_opens_english' => ['sometimes', 'boolean'],
             'api_key' => ['sometimes', 'nullable', 'string', 'max:500'],
         ]);
 
@@ -148,6 +151,7 @@ class TranslationsApiController extends Controller
             'arabic_enabled' => Locale::SETTING_ENABLED,
             'rtl_enabled' => Locale::SETTING_RTL,
             'highlight_missing' => 'translation_highlight_missing',
+            'translate_opens_english' => Locale::SETTING_TRANSLATE_OPENS_ENGLISH,
         ] as $field => $key) {
             if (array_key_exists($field, $data)) {
                 Setting::query()->updateOrCreate(['key' => $key], [

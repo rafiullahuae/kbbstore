@@ -559,6 +559,14 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
         ],
         'csrf' => csrf_token(),
     ];
+    /*
+     * Lane AS: on an Arabic page whose owner has "Open English when the browser
+     * translates the page" on, tell resources/js/kbb/translate-away.js it may
+     * act. Absent on English, so the English page is byte-identical.
+     */
+    if ($kbbLocale !== \App\Support\Locale::DEFAULT && \App\Support\Locale::opensEnglishOnTranslate()) {
+        $kbbJs['trEn'] = 1;
+    }
 @endphp
 <script>window.KBB = @json($kbbJs);</script>
 @include('partials.js-strings')

@@ -90,6 +90,19 @@ final class Locale
     /** The mirrored layout, switchable on its own. See self::isRtl(). */
     public const SETTING_RTL = 'language_rtl_enabled';
 
+    /**
+     * Translation → Language settings → "Open English when the browser
+     * translates the page" (Lane AS). ON when never saved: the owner asked for
+     * it. See resources/js/kbb/translate-away.js for what it does.
+     */
+    public const SETTING_TRANSLATE_OPENS_ENGLISH = 'translation_translate_opens_english';
+
+    /** Is the browser-translation hand-off to the English page switched on? */
+    public static function opensEnglishOnTranslate(): bool
+    {
+        return (bool) app(\App\Services\SettingsService::class)->get(self::SETTING_TRANSLATE_OPENS_ENGLISH, true);
+    }
+
     /** Every language the code knows about, live or not. */
     /** @return list<string> */
     public static function codes(): array
