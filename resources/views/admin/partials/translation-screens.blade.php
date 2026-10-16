@@ -540,7 +540,7 @@
       + '<p class="tr-sub">' + esc(s.provider_note) + '</p>'
       + (editable
           ? '<label class="tr-field"><span>' + (s.has_api_key ? 'Replace the saved key' : 'API key') + '</span>'
-            + '<input type="password" id="tr-key" autocomplete="off" spellcheck="false"'
+            + '<input type="password" id="tr-key" autocomplete="new-password" data-1p-ignore data-lpignore="true" data-bwignore spellcheck="false"'
             + ' placeholder="' + (s.has_api_key ? 'A key is saved. Leave blank to keep it.' : 'Paste your own key') + '"'
             + ' value="' + esc(apiKeyDraft) + '"></label>'
             + '<p class="tr-sub" style="margin-top:7px">The key is stored encrypted and is never sent back to this '

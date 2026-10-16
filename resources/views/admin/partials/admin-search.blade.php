@@ -127,7 +127,7 @@
   <div class="ksr-field">
     <svg class="ksr-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     <input id="ksrIn" class="ksr-in" type="text" inputmode="search" enterkeyhint="go" placeholder="Search settings, pages…"
-           autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80"
+           autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80" data-1p-ignore data-lpignore="true" data-bwignore
            role="combobox" aria-expanded="false" aria-controls="ksrList" aria-autocomplete="list" aria-label="Search the admin">
     <kbd class="ksr-kbd" id="ksrKbd" aria-hidden="true">Ctrl K</kbd>
     <button class="ksr-x" id="ksrX" type="button" aria-label="Clear search" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -622,7 +622,15 @@
     build();
     if (squash(input.value)) draw(input.value);
   });
-  input.addEventListener('input', soon);
+  /* A browser's password manager fills this box by itself: a screen with a
+     secret field (Translation → Language settings, its API key) made Chrome
+     put the saved login's email here and the search ran on it, every visit
+     (16 October 2026). A person types with the box focused; autofill does
+     not focus it. So text that arrives unfocused is cleared, not searched. */
+  input.addEventListener('input', function () {
+    if (document.activeElement !== input) { input.value = ''; return; }
+    soon();
+  });
   input.addEventListener('keydown', function (e) {
     if (e.isComposing || e.keyCode === 229) return;   // an IME (Arabic, CJK) is still composing
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
