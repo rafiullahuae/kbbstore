@@ -22,6 +22,8 @@ const { chromium } = require('playwright');
   await p.click('#pj-body .kbb-gal img >> nth=1'); await p.waitForSelector('#rgpLink');
   await p.fill('#rgpAlt', '');
   await p.evaluate(v => { const l = document.getElementById('rgpLink'); l.value = v; l.dispatchEvent(new Event('input', { bubbles: true })); }, `${B}${prod[2]}`);
+  await p.waitForTimeout(300);
+  if (process.argv[4]) await p.locator('.rgm-shade:not([hidden]) .rgm-dlg').screenshot({ path: process.argv[4] });
   await p.click('.rgm-shade:not([hidden]) [data-ok]'); await p.waitForTimeout(300);
   const after = await p.evaluate(() => { const i = document.querySelectorAll('#pj-body .kbb-gal img')[1]; return { alt: i.getAttribute('alt'), href: i.parentElement.tagName === 'A' ? i.parentElement.getAttribute('href') : null, target: i.parentElement.getAttribute('target') }; });
   // 2) reopen it: the field shows the saved alt
