@@ -96,15 +96,17 @@ it('writes the Arabic of a matching product as published rows, and the product p
             ->and($row->source_hash)->toBe(sha1((string) $p->getRawOriginal($field)));
     }
 
-    expect(DB::table('search_texts_ar')->where('product_id', $p->id)->value('text'))->not->toBeEmpty()
+    // The Arabic search finds it by its Arabic name, as it finds ARC's.
+    expect(DB::table('search_texts_ar')->where('product_id', $p->id)->value('text'))
+        ->toBe('بيوريتو سيول سيروم حمض الازيليك 10 بالكوجيك وشجره الشاي')
         ->and(Cache::has('kbb.translations.ar'))->toBeFalse();
 
     ArabicShop::on();
     $html = $this->get('/ar/product/'.AT_SLUG.'/')->assertOk()->getContent();
 
-    expect($html)->toContain('سيروم Azelaic Acid 10 Kojic Tea Tree')
+    expect($html)->toContain('بيوريتو سيول - سيروم حمض الأزيليك 10 بالكوجيك وشجرة الشاي')
         ->and($html)->toContain('الفوائد الرئيسية')
-        ->and($html)->toContain('يجمع Azelaic Acid 10 Kojic Tea Tree Serum من Purito SEOUL');
+        ->and($html)->toContain('يجمع سيروم حمض الأزيليك 10 بالكوجيك وشجرة الشاي من بيوريتو سيول');
 });
 
 it('never overwrites an Arabic row that exists, the owner\'s or a draft', function () {
@@ -193,8 +195,38 @@ it('ships the eight products as markup the product page may print raw, with the 
         }
     }
 
-    // Sizes, ratings and brand names stay exactly as the English writes them.
+    // Sizes and ratings stay exactly as the English writes them.
     expect($products['sungboon-editor-silk-peptide-egf-intensive-gold-mask-set']['description'])->toContain('37 g × 4')
-        ->and($products[AT_SLUG]['description'])->toContain('SPF 30')->toContain('30 ml')->toContain('PURITO SEOUL')
+        ->and($products[AT_SLUG]['description'])->toContain('SPF 30')->toContain('30 ml')
         ->and($products['sungboon-editor-deep-collagen-retinol-power-boosting-capsule-cream']['description'])->toContain('50 ml');
+});
+
+it('spells brands and product lines in Arabic, as ARC does, and keeps only INCI, units and ratings in Latin', function () {
+    /*
+     * The owner, on /ar: "i don't need anything in english in arabic
+     * version". ARC writes every brand in Arabic script (بيوريتو سيول,
+     * ليلييف); a Latin "Purito SEOUL - ..." sat among them and an Arabic
+     * search for the brand could not find it.
+     *
+     * MUTATION: put "Purito SEOUL" back at the front of any name and this is red.
+     */
+    $products = atData()['products'];
+    $brands = ['lilyeve' => 'ليلييف', 'purito-seoul' => 'بيوريتو سيول', 'sungboon-editor' => 'سونغبون إديتور'];
+    $latinOk = ['Ceramide', 'NP', 'Volufiline', 'Da', 'K', 'DC', 'V', 'mAh', 'mm', 'ml', 'g', 'ppm', 'SPF', 'NAD+', 'TXA', 'EGF'];
+
+    foreach ($products as $slug => $fields) {
+        $brand = (string) collect($brands)->keys()->first(fn ($b) => str_starts_with($slug, $b));
+        expect($fields['name'])->toStartWith($brands[$brand].' - ');
+
+        foreach ($fields as $field => $value) {
+            preg_match_all('/[A-Za-z][A-Za-z0-9+\-]*/', strip_tags($value), $m);
+
+            foreach ($m[0] as $word) {
+                expect($word)->toBeIn($latinOk, "{$slug} {$field}: Latin \"{$word}\"");
+            }
+        }
+    }
+
+    preg_match_all('/[A-Za-z]+/', atData()['brands']['sungboon-editor']['description'], $m);
+    expect($m[0])->toBe([]);
 });
