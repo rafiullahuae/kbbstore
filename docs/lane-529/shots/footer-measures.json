@@ -1,0 +1,52 @@
+[
+ {
+  "page": "/",
+  "width": 390,
+  "switcher": {
+   "w": 85,
+   "h": 19
+  },
+  "hitTest": "/ar/",
+  "clickWentTo": "/ar/",
+  "scrollWidth": 390,
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+ },
+ {
+  "page": "/",
+  "width": 1280,
+  "switcher": {
+   "w": 85,
+   "h": 19
+  },
+  "hitTest": "/ar/",
+  "clickWentTo": "/ar/",
+  "scrollWidth": 1280,
+  "consoleErrors": []
+ },
+ {
+  "page": "/ar/",
+  "width": 390,
+  "switcher": {
+   "w": 83,
+   "h": 19
+  },
+  "hitTest": "/",
+  "clickWentTo": "/",
+  "scrollWidth": 390,
+  "consoleErrors": []
+ },
+ {
+  "page": "/ar/",
+  "width": 1280,
+  "switcher": {
+   "w": 83,
+   "h": 19
+  },
+  "hitTest": "/",
+  "clickWentTo": "/",
+  "scrollWidth": 1280,
+  "consoleErrors": []
+ }
+]
