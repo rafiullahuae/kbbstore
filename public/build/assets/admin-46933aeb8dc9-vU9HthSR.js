@@ -214,7 +214,7 @@
      he types) or pasted: a same-site path, or an https:// address, which opens
      in a new tab. Choosing a product fills the alt text with its name unless
      he has written his own; he can always edit it. */
-  var targets = null, loading = null, dlg = null, autoAlt = new WeakMap();
+  var targets = null, loading = null, dlg = null, autoAlt = new WeakMap(), targetsNote = '';
   function apiBase() {
     return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '') + '/admin-api';
   }
@@ -222,7 +222,16 @@
     if (targets) return Promise.resolve(targets);
     if (loading) return loading;
     loading = fetch(apiBase() + '/media/link-targets', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
-      .then(function (r) { return r.ok ? r.json() : { items: [] }; })
+      .then(function (r) {
+        if (r.ok) return r.json();
+        /* A 404 with no message is this server's compiled route table not
+           knowing the path yet (a package shipped without its clear_caches
+           migration), not a missing product. Say which one click fixes it. */
+        targetsNote = r.status === 404
+          ? 'Suggestions are not available: this server\'s compiled route table does not know them yet. Clear the route cache (Platform \u2192 Cache) and reload. You can still paste an address.'
+          : 'Suggestions could not be loaded. You can still paste an address.';
+        return { items: [] };
+      })
       .then(function (j) { targets = Array.isArray(j && j.items) ? j.items : []; return targets; })
       .catch(function () { loading = null; return []; });
     return loading;
@@ -251,6 +260,7 @@
         + '<label style="display:grid;gap:4px;font-size:13px;font-weight:600">Link (optional)<input id="rgpLink" type="text" autocomplete="off" data-1p-ignore data-lpignore="true" placeholder="Type a product, category, brand or article — or paste an address" style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font:inherit;font-weight:400"></label>'
         + '<div id="rgpSug" role="listbox" style="display:grid;gap:2px;max-height:180px;overflow:auto"></div>'
         + '<p id="rgpBad" style="color:#b42318" hidden>Use an address starting with / or https://</p>'
+        + '<p id="rgpNote" style="color:#8a5a00" hidden></p>'
         + '<label style="display:grid;gap:4px;font-size:13px;font-weight:600">Alt text (for Google and screen readers)<input id="rgpAlt" type="text" maxlength="160" autocomplete="off" placeholder="What the picture shows" style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font:inherit;font-weight:400"></label>'
         + '<p>Describe the picture in a few words, with the product name. Choosing a product above fills this in for you.</p>'
         + '</div></div>'
@@ -281,7 +291,12 @@
         return '<button type="button" role="option" data-t="' + i + '" style="text-align:left;border:0;background:#f7f8fa;border-radius:7px;padding:6px 8px;font:inherit;font-size:13px;cursor:pointer"><span style="color:#6b7280;font-size:11px;text-transform:uppercase;margin-right:6px">' + esc(t[0]) + '</span>' + esc(t[1]) + '</button>';
       }).join('');
     }
-    link.oninput = function () { bad.hidden = true; loadTargets().then(suggest); };
+    var note = dlg.querySelector('#rgpNote');
+    note.hidden = true;
+    link.oninput = function () {
+      bad.hidden = true;
+      loadTargets().then(function () { note.textContent = targetsNote; note.hidden = targetsNote === ''; suggest(); });
+    };
     sug.onclick = function (ev) {
       var b = ev.target.closest('[data-t]'); if (!b) return;
       var t = targets[Number(b.getAttribute('data-t'))];

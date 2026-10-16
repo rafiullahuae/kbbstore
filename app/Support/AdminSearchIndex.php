@@ -199,6 +199,10 @@ final class AdminSearchIndex
             'ALT text' => ['Natural variations', 'Keep alt text somebody already wrote'],
             'History' => [],
         ],
+        // Catalog → Shop by Concern (Lane SC): Sync, suggestions, Apply, the Claude key.
+        'concernsync' => [
+            '' => ['Sync', 'Apply', 'Claude API key & model', 'Show older products'],
+        ],
         'sets' => [],
         'product-editor' => [],
         'routines' => [

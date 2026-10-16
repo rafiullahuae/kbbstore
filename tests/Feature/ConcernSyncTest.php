@@ -303,7 +303,7 @@ it('ships the screen as its own partial, wired once, with the late-answer guard 
 
     expect($partial)->toContain('function ours()')
         ->toContain('autocomplete="new-password"')
-        ->toContain("label: LABEL")
+        ->toContain("label: 'Shop by Concern'")   // a literal: AdminNavAndIdsTest reads the sidebar label from source
         ->not->toContain('setInterval')
         ->not->toContain('getBoundingClientRect');
 

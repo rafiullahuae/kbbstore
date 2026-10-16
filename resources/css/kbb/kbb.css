@@ -3039,6 +3039,20 @@ header{border-bottom:1px solid var(--line-2)}
 .kbb-home .policy-body li::marker{color:var(--pink-deep)}
 .kbb-home .policy-body li > p{margin:0}
 .kbb-home .policy-body img{max-width:100%;height:auto}
+/* ── PICTURE GALLERIES IN A DESCRIPTION, ARTICLE, PAGE OR TAB (16 October 2026) ──
+   Inserted from the admin editors' "Media" button (admin/partials/rte-media):
+   <div class="kbb-gal kbb-gal-N"> holding <img>s, N = 1..4 columns, a class
+   because RichText strips inline styles. At most 2 a row on a phone, so 3 or 4
+   never become thumbnails; one column keeps the picture's own shape. Pictures
+   get their resized copies at render (App\Support\DescriptionGallery). */
+.kbb-gal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 1em}
+.kbb-gal.kbb-gal-1{grid-template-columns:minmax(0,1fr)}
+.kbb-gal.kbb-gal-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.kbb-gal.kbb-gal-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.kbb-gal.kbb-gal img{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:10px;margin:0}
+.kbb-gal.kbb-gal-1 img{aspect-ratio:auto;object-fit:contain}
+.kbb-gal.kbb-gal a{display:block;border-radius:10px;overflow:hidden}
+@media (max-width:600px){.kbb-gal.kbb-gal-3,.kbb-gal.kbb-gal-4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .kbb-home .policy-body table{border-collapse:collapse;margin:0 0 16px;font-size:14px}
 .kbb-home .policy-body th,.kbb-home .policy-body td{border:1px solid var(--line-2);padding:8px 12px;text-align:start;vertical-align:top}
 .kbb-home .policy-body th{color:var(--ink);font-weight:700}
@@ -6714,18 +6728,3 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
     .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cart{
         grid-row:6;grid-column:1;margin-top:var(--sc-gap);padding:0 10px}
 }
-
-/* ── PICTURE GALLERIES IN A DESCRIPTION, ARTICLE, PAGE OR TAB (16 October 2026) ──
-   Inserted from the admin editors' "Media" button (admin/partials/rte-media):
-   <div class="kbb-gal kbb-gal-N"> holding <img>s, N = 1..4 columns, a class
-   because RichText strips inline styles. At most 2 a row on a phone, so 3 or 4
-   never become thumbnails; one column keeps the picture's own shape. Pictures
-   get their resized copies at render (App\Support\DescriptionGallery). */
-.kbb-gal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 1em}
-.kbb-gal.kbb-gal-1{grid-template-columns:minmax(0,1fr)}
-.kbb-gal.kbb-gal-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.kbb-gal.kbb-gal-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-.kbb-gal.kbb-gal img{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:10px;margin:0}
-.kbb-gal.kbb-gal-1 img{aspect-ratio:auto;object-fit:contain}
-.kbb-gal.kbb-gal a{display:block;border-radius:10px;overflow:hidden}
-@media (max-width:600px){.kbb-gal.kbb-gal-3,.kbb-gal.kbb-gal-4{grid-template-columns:repeat(2,minmax(0,1fr))}}

@@ -3425,7 +3425,7 @@ const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],'mkt-health'
    opened the dashboard. Same fix, same condition, and the strings are copied
    from what each partial's own go() writes so the heading cannot depend on how
    the screen was reached. */
-'spotted':['Appearance','#KBeautyBliss Spotted'],'wabutton':['Appearance','WhatsApp button'],'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'imageseo':['Catalog','Image SEO'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'comingsoon':['Appearance','Coming Soon page'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background'],'searchterms':['Growth & Marketing','Search Terms'],'carttracking':['Overview','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],'seokeywords':['Store','SEO Keywords']};
+'spotted':['Appearance','#KBeautyBliss Spotted'],'wabutton':['Appearance','WhatsApp button'],'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'imageseo':['Catalog','Image SEO'],'concernsync':['Catalog','Shop by Concern'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'comingsoon':['Appearance','Coming Soon page'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background'],'searchterms':['Growth & Marketing','Search Terms'],'carttracking':['Overview','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],'seokeywords':['Store','SEO Keywords']};
 let cur='dash';
 /* `sub` is an optional sub-tab within the screen — only Catalog has them, and
    only the Modules screen passes one (product_sorting links to the Reorder
@@ -8571,7 +8571,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','igembeds','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','site-analytics','routines','imageseo','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries']);
+const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','igembeds','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','site-analytics','routines','imageseo','concernsync','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -24463,10 +24463,11 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 @include('admin.partials.arabic-boxes')
 
 @include('admin.partials.media-picker')
-@include('admin.partials.rte-media')
 
 {{-- Appearance -> Mega Menu: the column board (Lane MO). Defines window.KBBMenuOrder; paintMegaMenu() mounts it in #mgmTree. --}}
 @include('admin.partials.menu-order')
+{{-- Picture galleries, Underline: the shared rich-text Media button (16 October 2026). --}}
+@include('admin.partials.rte-media')
 
 {{-- The shared product type-ahead, used by New Order below and by "add a
      product to this order" on the order detail screen above. Included here,

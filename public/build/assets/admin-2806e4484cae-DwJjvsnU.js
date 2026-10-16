@@ -227,10 +227,10 @@
     if (!window.kbbAddNavEntry) return;
     window.kbbAddNavEntry({
       screen: SCREEN,
-      label: LABEL,
+      label: 'Shop by Concern',
       icon: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/>',
-      group: GROUP,
-      after: ['imageseo', 'product-editor']
+      group: 'Catalog',
+      after: ['product-editor', 'catalog']
     });
   }
 
