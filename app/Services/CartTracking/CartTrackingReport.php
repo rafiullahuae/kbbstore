@@ -158,8 +158,9 @@ final class CartTrackingReport
         };
 
         match ($p['bought'] ?? '') {
-            'yes' => $q->whereNotNull('c.ct_order_id'),
-            'no' => $q->whereNull('c.ct_order_id'),
+            // A REAL order (CartTrail::boughtSql()), so the chip agrees with the tiles.
+            'yes' => $q->whereRaw(CartTrail::boughtSql()),
+            'no' => $q->whereRaw('NOT '.CartTrail::boughtSql()),
             default => null,
         };
 
@@ -326,11 +327,18 @@ final class CartTrackingReport
         return Cache::remember($key, 60, function () use ($p, $threshold) {
             $base = $this->filtered(['period' => $p['period'] ?? '7d', 'from' => $p['from'] ?? null, 'to' => $p['to'] ?? null], $threshold);
 
+            // Bought = a REAL order (CartTrail::boughtSql()), never merely an
+            // order row: an unpaid Tamara order is not a sale. "Left in carts"
+            // stays what it was -- a basket still live (status active) that
+            // did not become a real order -- so a failed payment whose basket
+            // BasketRelease gave back counts there, and a pending one whose
+            // basket is still held (converted) counts in neither.
+            $bought = CartTrail::boughtSql();
             $t = (clone $base)->selectRaw(
-                'COUNT(*) AS carts, SUM(CASE WHEN c.ct_order_id IS NOT NULL THEN 1 ELSE 0 END) AS bought,'
+                'COUNT(*) AS carts, SUM(CASE WHEN '.$bought.' THEN 1 ELSE 0 END) AS bought,'
                 .' SUM(CASE WHEN c.ct_bot_score >= ? THEN 1 ELSE 0 END) AS bots,'
-                .' SUM(CASE WHEN c.ct_order_id IS NOT NULL THEN c.ct_value ELSE 0 END) AS bought_value,'
-                .' SUM(CASE WHEN c.ct_order_id IS NULL AND c.status = ? THEN c.ct_value ELSE 0 END) AS open_value',
+                .' SUM(CASE WHEN '.$bought.' THEN c.ct_value ELSE 0 END) AS bought_value,'
+                .' SUM(CASE WHEN NOT '.$bought.' AND c.status = ? THEN c.ct_value ELSE 0 END) AS open_value',
                 [$threshold, 'active']
             )->first();
 
@@ -418,7 +426,7 @@ final class CartTrackingReport
     {
         try {
             // Not sliced: one row per distinct last page, ranked below in PHP.
-            $rows = $base->whereNull('c.ct_order_id')->whereNotNull('c.ct_seen_path')
+            $rows = $base->whereRaw('NOT '.CartTrail::boughtSql())->whereNotNull('c.ct_seen_path')
                 ->selectRaw('c.ct_seen_path AS p, COUNT(*) AS n')->groupBy('c.ct_seen_path')->get();
         } catch (\Throwable) {
             return [];
@@ -450,6 +458,8 @@ final class CartTrackingReport
         return ['c.id', 'c.status', 'c.customer_id', 'c.created_at', 'c.ct_ip', 'c.ct_net', 'c.ct_country',
             'c.ct_ua', 'c.ct_bot_flags', 'c.ct_bot_score', 'c.ct_speed_ms', 'c.ct_value', 'c.ct_added',
             'c.ct_removed', 'c.ct_first_at', 'c.ct_last_at', 'c.ct_order_id',
+            // Lane CT: whether that order is a REAL one, in the same statement.
+            DB::raw(CartTrail::boughtSql().' AS ct_bought'),
             // Lane CJ: the "Left at" line, from the cart row itself -- once its
             // migration has run (a package's files land seconds before it does).
             ...($this->journeyReady() ? ['c.ct_stage', 'c.ct_seen_at', 'c.ct_seen_path', 'c.ct_left_at'] : []),
@@ -577,7 +587,7 @@ final class CartTrackingReport
             'removed_count' => (int) $r->ct_removed,
             'blocked' => $single === null ? null : ['id' => $single[0], 'cidr' => $single[1]],
             // Lane CJ: furthest step, last page, and whether they left or are still here.
-            'journey' => CartTrail::summary($r, $r->ct_order_id !== null),
+            'journey' => CartTrail::summary($r, (bool) ($r->ct_bought ?? false)),
         ];
     }
 
@@ -719,7 +729,7 @@ final class CartTrackingReport
             ->orderByDesc('c.ct_last_at')
             ->orderByDesc('c.id')
             ->limit(20)
-            ->get(['c.id', 'c.customer_id', 'c.ct_ip', 'c.ct_value', 'c.ct_last_at', 'c.ct_order_id', 'c.ct_bot_score', 'c.status']);
+            ->get(['c.id', 'c.customer_id', 'c.ct_ip', 'c.ct_value', 'c.ct_last_at', 'c.ct_order_id', 'c.ct_bot_score', 'c.status', DB::raw(CartTrail::boughtSql().' AS ct_bought')]);
 
         $orders = DB::table('orders')
             ->whereNull('deleted_at')
@@ -756,7 +766,7 @@ final class CartTrackingReport
                 'id' => (int) $c->id,
                 'last' => StoreTime::iso($c->ct_last_at),
                 'value' => Money::plain((int) $c->ct_value),
-                'bought' => $c->ct_order_id !== null,
+                'bought' => (bool) $c->ct_bought,
                 'bot' => (int) $c->ct_bot_score >= $threshold,
                 'status' => (string) $c->status,
                 'why' => $r->customer_id !== null && (int) $c->customer_id === (int) $r->customer_id ? 'account' : 'address',
@@ -852,7 +862,7 @@ final class CartTrackingReport
                     ->join('carts as c', 'c.id', '=', 'e.cart_id')
                     ->where('e.type', CartTracker::ADD)
                     ->whereIn('e.product_id', array_keys($top))
-                    ->whereNotNull('c.ct_order_id');
+                    ->whereRaw(CartTrail::boughtSql());
 
                 if ($from !== null) {
                     $oq->where('e.created_at', '>=', $from);
