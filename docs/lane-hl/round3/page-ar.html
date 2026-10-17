@@ -27,6 +27,9 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
   /* the thin capsule: as tall as the user and cart glyphs (21px), set apart */
   /* the switch IS an icon box (.ib), so it takes the heart's exact size at every width and the logo cannot move */
   .hl3-m.ib{display:grid;place-items:center;overflow:visible;color:inherit;text-decoration:none}
+  /* user and cart 8px closer; the 8px goes between the logo and the switch, so the row's width -- and the logo -- stay the same */
+  .hl3-m.ib{margin-inline-start:8px}
+  header .hact .ib-acct{margin-inline-end:-8px}
   .hl3-m>span{display:flex;align-items:center;justify-content:center;height:21px;box-sizing:border-box;padding:0 6px;border:1.5px solid currentColor;border-radius:999px;font-weight:700;font-size:10px;line-height:1;white-space:nowrap}
   .hl3-m .hl3-svg{display:block;width:auto;height:9px}
 }
@@ -354,7 +357,7 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
         <li><a href="#">العناوين</a></li>
       </ul></nav>
       <div class="kft-contact">
-        <form class="kft-news" method="post" action="/ar/api/subscribe" data-kbb-subscribe=""><input type="hidden" name="_token" value="NnwFn1JXjtMTuF4DlYKnPZf7ladOhbBr1atfYOdy" autocomplete="off"><input type="email" name="email" required="" placeholder="بريدك الإلكتروني للعروض" aria-label="بريدك الإلكتروني لتلقي العروض" autocomplete="email"><button type="submit">اشتركي</button></form>
+        <form class="kft-news" method="post" action="/ar/api/subscribe" data-kbb-subscribe=""><input type="hidden" name="_token" value="UcH3pWlfT6GlL2y0rOyFE6FtSyl7yZ5Hc2o7gXnr" autocomplete="off"><input type="email" name="email" required="" placeholder="بريدك الإلكتروني للعروض" aria-label="بريدك الإلكتروني لتلقي العروض" autocomplete="email"><button type="submit">اشتركي</button></form>
       </div>
     </div>
     <p class="kft-name" aria-hidden="true" style="--kft-n:15"><span class="kft-nm" data-kft-copy="كي بيوتي بليس"></span>كي بيوتي بليس</p>

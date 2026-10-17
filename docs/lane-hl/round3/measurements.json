@@ -3,6 +3,9 @@
   "here": "en",
   "w": 320,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     56,
     8,
@@ -41,6 +44,9 @@
    "sw": 320
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": 12,
    "logo": [
     56,
     8,
@@ -70,7 +76,7 @@
    "hit": true,
    "icons": [
     [
-     238,
+     246,
      21
     ],
     [
@@ -85,6 +91,9 @@
   "here": "en",
   "w": 360,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     68,
     9,
@@ -123,6 +132,9 @@
    "sw": 360
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": 19.5,
    "logo": [
     68,
     9,
@@ -152,7 +164,7 @@
    "hit": true,
    "icons": [
     [
-     272,
+     280,
      21
     ],
     [
@@ -167,6 +179,9 @@
   "here": "en",
   "w": 390,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     68,
     9,
@@ -205,6 +220,9 @@
    "sw": 390
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": 19.5,
    "logo": [
     68,
     9,
@@ -234,7 +252,7 @@
    "hit": true,
    "icons": [
     [
-     302,
+     310,
      21
     ],
     [
@@ -249,6 +267,9 @@
   "here": "en",
   "w": 430,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     68,
     9,
@@ -287,6 +308,9 @@
    "sw": 430
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": 19.5,
    "logo": [
     68,
     9,
@@ -316,7 +340,7 @@
    "hit": true,
    "icons": [
     [
-     342,
+     350,
      21
     ],
     [
@@ -331,6 +355,9 @@
   "here": "en",
   "w": 768,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     68,
     9,
@@ -369,6 +396,9 @@
    "sw": 768
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": 19.5,
    "logo": [
     68,
     9,
@@ -398,7 +428,7 @@
    "hit": true,
    "icons": [
     [
-     680,
+     688,
      21
     ],
     [
@@ -413,6 +443,9 @@
   "here": "en",
   "w": 900,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     68,
     9,
@@ -451,6 +484,9 @@
    "sw": 900
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": 19.5,
    "logo": [
     68,
     9,
@@ -480,7 +516,7 @@
    "hit": true,
    "icons": [
     [
-     812,
+     820,
      21
     ],
     [
@@ -495,6 +531,9 @@
   "here": "en",
   "w": 1024,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     22,
     4,
@@ -533,6 +572,9 @@
    "sw": 1024
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     22,
     4,
@@ -581,6 +623,9 @@
   "here": "en",
   "w": 1280,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     22,
     4,
@@ -619,6 +664,9 @@
    "sw": 1280
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     22,
     4,
@@ -667,6 +715,9 @@
   "here": "ar",
   "w": 320,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     136,
     8,
@@ -705,6 +756,9 @@
    "sw": 320
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": 12,
    "logo": [
     136,
     8,
@@ -734,7 +788,7 @@
    "hit": true,
    "icons": [
     [
-     62,
+     54,
      21
     ],
     [
@@ -749,6 +803,9 @@
   "here": "ar",
   "w": 360,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     154,
     9,
@@ -787,6 +844,9 @@
    "sw": 360
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": 18,
    "logo": [
     154,
     9,
@@ -816,7 +876,7 @@
    "hit": true,
    "icons": [
     [
-     68,
+     60,
      21
     ],
     [
@@ -831,6 +891,9 @@
   "here": "ar",
   "w": 390,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     154,
     9,
@@ -869,6 +932,9 @@
    "sw": 390
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": 18,
    "logo": [
     154,
     9,
@@ -898,7 +964,7 @@
    "hit": true,
    "icons": [
     [
-     68,
+     60,
      21
     ],
     [
@@ -913,6 +979,9 @@
   "here": "ar",
   "w": 430,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     154,
     9,
@@ -951,6 +1020,9 @@
    "sw": 430
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": 18,
    "logo": [
     154,
     9,
@@ -980,7 +1052,7 @@
    "hit": true,
    "icons": [
     [
-     68,
+     60,
      21
     ],
     [
@@ -995,6 +1067,9 @@
   "here": "ar",
   "w": 768,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     154,
     9,
@@ -1033,6 +1108,9 @@
    "sw": 768
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": 18,
    "logo": [
     154,
     9,
@@ -1062,7 +1140,7 @@
    "hit": true,
    "icons": [
     [
-     68,
+     60,
      21
     ],
     [
@@ -1077,6 +1155,9 @@
   "here": "ar",
   "w": 900,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     154,
     9,
@@ -1115,6 +1196,9 @@
    "sw": 900
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": 18,
    "logo": [
     154,
     9,
@@ -1144,7 +1228,7 @@
    "hit": true,
    "icons": [
     [
-     68,
+     60,
      21
     ],
     [
@@ -1159,6 +1243,9 @@
   "here": "ar",
   "w": 1024,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     792.9,
     4,
@@ -1197,6 +1284,9 @@
    "sw": 1024
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     792.9,
     4,
@@ -1245,6 +1335,9 @@
   "here": "ar",
   "w": 1280,
   "before": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     1048.9,
     4,
@@ -1283,6 +1376,9 @@
    "sw": 1280
   },
   "after": {
+   "acctHit": true,
+   "cartHit": true,
+   "logoToSwitch": null,
    "logo": [
     1048.9,
     4,

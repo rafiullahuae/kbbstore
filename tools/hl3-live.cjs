@@ -40,6 +40,9 @@ const CSS = `
   /* the thin capsule: as tall as the user and cart glyphs (21px), set apart */
   /* the switch IS an icon box (.ib), so it takes the heart's exact size at every width and the logo cannot move */
   .hl3-m.ib{display:grid;place-items:center;overflow:visible;color:inherit;text-decoration:none}
+  /* user and cart 8px closer; the 8px goes between the logo and the switch, so the row's width -- and the logo -- stay the same */
+  .hl3-m.ib{margin-inline-start:8px}
+  header .hact .ib-acct{margin-inline-end:-8px}
   .hl3-m>span{display:flex;align-items:center;justify-content:center;height:21px;box-sizing:border-box;padding:0 6px;border:1.5px solid currentColor;border-radius:999px;font-weight:700;font-size:10px;line-height:1;white-space:nowrap}
   .hl3-m .hl3-svg{display:block;width:auto;height:9px}
 }`;
@@ -78,7 +81,9 @@ async function measure(b, here, w, withSwitch) {
       const ps = sw.matches('.hl3-m') ? sw.firstElementChild.getBoundingClientRect() : sw.getBoundingClientRect(); pill = [Math.round(ps.width * 10) / 10, Math.round(ps.height * 10) / 10];
     }
     const icons = [...document.querySelectorAll('header .hact > *')].filter((e) => getComputedStyle(e).display !== 'none' && !e.classList.contains('hl3')).map((e) => { const s = (e.querySelector('svg') || e).getBoundingClientRect(); return [Math.round(s.left), Math.round(s.width)]; });
-    return { logo: box('header .logo'), lotus: box('header .logo .lgx-i'), search: box('header .sbox'), pill, tap, hit, icons, sw: document.documentElement.scrollWidth };
+    const hitIcon = (s) => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); const h = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return !!(h && e.contains(h)); };
+    const logoToSwitch = sw && sw.matches('.hl3-m') ? Math.round(Math.abs((document.documentElement.dir === 'rtl' ? document.querySelector('header .logo').getBoundingClientRect().left - sw.firstElementChild.getBoundingClientRect().right : sw.firstElementChild.getBoundingClientRect().left - document.querySelector('header .logo').getBoundingClientRect().right)) * 10) / 10 : null;
+    return { acctHit: hitIcon('header .hact .ib-acct'), cartHit: hitIcon('header .hact a[href*="cart"]'), logoToSwitch, logo: box('header .logo'), lotus: box('header .logo .lgx-i'), search: box('header .sbox'), pill, tap, hit, icons, sw: document.documentElement.scrollWidth };
   });
   await p.close();
   return r;
@@ -137,6 +142,6 @@ async function freeze(b, here) {
   await b.close();
   for (const r of rows) {
     const s = (x) => x ? x.join('x') : '-';
-    console.log(r.here, r.w, 'logo', s(r.before.logo?.slice(2)), '->', s(r.after.logo?.slice(2)), '| lotus', s(r.before.lotus?.slice(2)), '->', s(r.after.lotus?.slice(2)), '| search w', r.before.search?.[2], '->', r.after.search?.[2], 'top', r.before.search?.[1], '->', r.after.search?.[1], '| pill', s(r.after.pill), 'tap', s(r.after.tap), 'hit', r.after.hit, '| sw', r.after.sw, '| icons', JSON.stringify(r.after.icons));
+    console.log(r.here, r.w, 'logo', s(r.before.logo?.slice(2)), '->', s(r.after.logo?.slice(2)), '| lotus', s(r.before.lotus?.slice(2)), '->', s(r.after.lotus?.slice(2)), '| search w', r.before.search?.[2], '->', r.after.search?.[2], 'top', r.before.search?.[1], '->', r.after.search?.[1], '| pill', s(r.after.pill), 'tap', s(r.after.tap), 'hit', r.after.hit, 'acct/cart hit', r.after.acctHit, r.after.cartHit, 'logo->switch', r.before.logoToSwitch, r.after.logoToSwitch, '| sw', r.after.sw, '| icons', JSON.stringify(r.after.icons));
   }
 })();

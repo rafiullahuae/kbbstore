@@ -18,6 +18,9 @@
   /* the thin capsule: as tall as the user and cart glyphs (21px), set apart */
   /* the switch IS an icon box (.ib), so it takes the heart's exact size at every width and the logo cannot move */
   .hl3-m.ib{display:grid;place-items:center;overflow:visible;color:inherit;text-decoration:none}
+  /* user and cart 8px closer; the 8px goes between the logo and the switch, so the row's width -- and the logo -- stay the same */
+  .hl3-m.ib{margin-inline-start:8px}
+  header .hact .ib-acct{margin-inline-end:-8px}
   .hl3-m>span{display:flex;align-items:center;justify-content:center;height:21px;box-sizing:border-box;padding:0 6px;border:1.5px solid currentColor;border-radius:999px;font-weight:700;font-size:10px;line-height:1;white-space:nowrap}
   .hl3-m .hl3-svg{display:block;width:auto;height:9px}
 }
@@ -339,7 +342,7 @@
         <li><a href="#">Addresses</a></li>
       </ul></nav>
       <div class="kft-contact">
-        <form class="kft-news" method="post" action="/api/subscribe" data-kbb-subscribe=""><input type="hidden" name="_token" value="ZKEbNa6Eyr84HFEILFmBMgBqAiVl6zSTvxGKQrOB" autocomplete="off"><input type="email" name="email" required="" placeholder="Your email for offers" aria-label="Your email" autocomplete="email"><button type="submit">Join</button></form>
+        <form class="kft-news" method="post" action="/api/subscribe" data-kbb-subscribe=""><input type="hidden" name="_token" value="UDttCxBjDzkuFYtbviAv1S8xL8RcsODDlnWMpYKm" autocomplete="off"><input type="email" name="email" required="" placeholder="Your email for offers" aria-label="Your email" autocomplete="email"><button type="submit">Join</button></form>
       </div>
     </div>
     <p class="kft-name" aria-hidden="true" style="--kft-n:14"><span class="kft-nm" data-kft-copy="K-Beauty Bliss"></span>K-Beauty Bliss</p>
