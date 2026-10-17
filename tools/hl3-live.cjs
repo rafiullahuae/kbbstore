@@ -29,11 +29,15 @@ const CSS = `
 .hl3{display:none}
 @media (min-width:901px){
   /* D, the half-and-half pill he chose in round 1, a little wider. */
-  .hl3-d{display:flex;align-items:center;height:30px;margin-inline-start:8px;border:1px solid #e9dfe3;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700;white-space:nowrap;flex:none}
+  /* inside the icon group, not its own header item: no extra 24px row gap */
+  .hl3-d{display:flex;align-items:center;align-self:center;height:30px;margin-inline-end:10px;border:1px solid #e9dfe3;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700;white-space:nowrap;flex:none}
   .hl3-d>*{display:flex;align-items:center;justify-content:center;height:100%;min-width:44px;padding:0 14px;color:inherit;text-decoration:none}
   .hl3-d>span{background:var(--pink,#e0567b);color:#fff}
   .hl3-d>a:hover{background:#fbeff3}
   .hl3-d .hl3-svg{display:block;width:auto;height:13px}
+  /* everything nearer the support block, so the search keeps more of its width */
+  header .hin>.sbox{margin-inline-end:0}
+  header .hin>.hinfo{margin-inline-start:-10px}
 }
 @media (max-width:900px){
   header .hact a.ib[href*="my-wishlist"],header .hact .hl3-wish{display:none}
@@ -57,11 +61,10 @@ async function prepare(p, here) {
       return c === here ? `<span lang="${c}" aria-current="true">${t}</span>` : `<a data-go="${c}" href="${href}" lang="${c}" hreflang="${c}" aria-label="${c === 'en' ? 'English' : 'العربية'}">${t}</a>`;
     }).join('');
     const d = document.createElement('nav'); d.className = 'hl3 hl3-d'; d.setAttribute('aria-label', here === 'ar' ? 'اللغة' : 'Language'); d.innerHTML = pair;
-    document.querySelector('header .sbox').after(d);
     const m = document.createElement('a'); m.className = 'ib hl3 hl3-m'; m.href = href; m.dataset.go = there; m.lang = there; m.hreflang = there;
     m.setAttribute('aria-label', there === 'ar' ? 'العربية' : 'English');
     m.innerHTML = `<span>${there === 'ar' ? arWord : 'English'}</span>`;
-    const hact = document.querySelector('header .hact'); hact.insertBefore(m, hact.firstElementChild);
+    const hact = document.querySelector('header .hact'); hact.insertBefore(m, hact.firstElementChild); hact.insertBefore(d, m);
     // Arabic: the three-lines menu icon drawn from the right (the short middle
     // line ends on the inline-start side), as its own path -- no transform.
     if (here === 'ar') { const ln = document.querySelector('#burger svg.ln path'); if (ln && ln.getAttribute('d') === 'M3.5 6.5h17M3.5 12h11M3.5 17.5h17') ln.setAttribute('d', 'M20.5 6.5h-17M20.5 12h-11M20.5 17.5h-17'); }

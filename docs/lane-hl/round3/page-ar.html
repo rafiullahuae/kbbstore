@@ -16,11 +16,15 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
 .hl3{display:none}
 @media (min-width:901px){
   /* D, the half-and-half pill he chose in round 1, a little wider. */
-  .hl3-d{display:flex;align-items:center;height:30px;margin-inline-start:8px;border:1px solid #e9dfe3;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700;white-space:nowrap;flex:none}
+  /* inside the icon group, not its own header item: no extra 24px row gap */
+  .hl3-d{display:flex;align-items:center;align-self:center;height:30px;margin-inline-end:10px;border:1px solid #e9dfe3;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700;white-space:nowrap;flex:none}
   .hl3-d>*{display:flex;align-items:center;justify-content:center;height:100%;min-width:44px;padding:0 14px;color:inherit;text-decoration:none}
   .hl3-d>span{background:var(--pink,#e0567b);color:#fff}
   .hl3-d>a:hover{background:#fbeff3}
   .hl3-d .hl3-svg{display:block;width:auto;height:13px}
+  /* everything nearer the support block, so the search keeps more of its width */
+  header .hin>.sbox{margin-inline-end:0}
+  header .hin>.hinfo{margin-inline-start:-10px}
 }
 @media (max-width:900px){
   header .hact a.ib[href*="my-wishlist"],header .hact .hl3-wish{display:none}
@@ -106,10 +110,10 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
             <input type="search" name="s" autocomplete="off" aria-label="بحث" value="" placeholder="ابحثي عن منتجات العناية والعلامات…">
           </div>
           <div class="sugg" id="kbbSuggest" role="listbox" aria-label="اقتراحات" data-brands-phone="0" data-max="5" data-starter="{&quot;trending&quot;:[&quot;ماديكا&quot;,&quot;بي دي آر إن&quot;,&quot;ريتينول&quot;,&quot;البقع الداكنة&quot;,&quot;Age-R Booster Pro&quot;,&quot;كريم كبسولات&quot;,&quot;ميديكيوب&quot;,&quot;أنوا&quot;,&quot;بيوتي أوف جوسون&quot;,&quot;كوسركس&quot;,&quot;سكين 1004&quot;,&quot;حب الشباب&quot;],&quot;mobile&quot;:8,&quot;layout&quot;:&quot;recent-left&quot;}"></div>
-        </form><nav class="hl3 hl3-d" aria-label="اللغة"><a data-go="en" href="/" lang="en" hreflang="en" aria-label="English">EN</a><span lang="ar" aria-current="true"><b style="font-weight:700">ع</b></span></nav>
+        </form>
       
       <div class="hact">
-                            <a class="ib hl3 hl3-m" href="/" data-go="en" lang="en" hreflang="en" aria-label="English"><span>English</span></a><span class="ib-acct">
+                            <nav class="hl3 hl3-d" aria-label="اللغة"><a data-go="en" href="/" lang="en" hreflang="en" aria-label="English">EN</a><span lang="ar" aria-current="true"><b style="font-weight:700">ع</b></span></nav><a class="ib hl3 hl3-m" href="/" data-go="en" lang="en" hreflang="en" aria-label="English"><span>English</span></a><span class="ib-acct">
             <a class="ib" href="#" aria-label="حسابي">
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12.4a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4Z"></path><path d="M3.8 20.6c0-3.7 3.7-6.2 8.2-6.2s8.2 2.5 8.2 6.2a1.1 1.1 0 0 1-1.1 1.1H4.9a1.1 1.1 0 0 1-1.1-1.1Z"></path></svg>
             </a>
@@ -357,7 +361,7 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
         <li><a href="#">العناوين</a></li>
       </ul></nav>
       <div class="kft-contact">
-        <form class="kft-news" method="post" action="/ar/api/subscribe" data-kbb-subscribe=""><input type="hidden" name="_token" value="yD0GkXZzsjmMtGagJIQy3iDE8uULlcLzDuDozJPt" autocomplete="off"><input type="email" name="email" required="" placeholder="بريدك الإلكتروني للعروض" aria-label="بريدك الإلكتروني لتلقي العروض" autocomplete="email"><button type="submit">اشتركي</button></form>
+        <form class="kft-news" method="post" action="/ar/api/subscribe" data-kbb-subscribe=""><input type="hidden" name="_token" value="dlqLdbvxl2ADTNKeusn170vYRVifvubqixZoPNBr" autocomplete="off"><input type="email" name="email" required="" placeholder="بريدك الإلكتروني للعروض" aria-label="بريدك الإلكتروني لتلقي العروض" autocomplete="email"><button type="submit">اشتركي</button></form>
       </div>
     </div>
     <p class="kft-name" aria-hidden="true" style="--kft-n:15"><span class="kft-nm" data-kft-copy="كي بيوتي بليس"></span>كي بيوتي بليس</p>
