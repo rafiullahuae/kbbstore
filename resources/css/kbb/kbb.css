@@ -5461,6 +5461,17 @@ html[lang="ar"] .sl-t .k,html[lang="ar"] .bndl-all,html[lang="ar"] .kbb-card-car
 html[lang="ar"] .kbb-badge,html[lang="ar"] .hs-eyebrow,html[lang="ar"] .hs-go,html[lang="ar"] .kft-avail,
 html[lang="ar"] .kft-ch,html[lang="ar"] .eyebrow,html[lang="ar"] .sr-eyebrow,html[lang="ar"] .gmain .cap,
 html[lang="ar"] .bt-label,html[lang="ar"] .sh .lnk,html[lang="ar"] .policy-body h2{letter-spacing:0 !important}
+/* A phone number on /ar: the browser keeps a tel box left-to-right (digits and
+   "+971" read that way), and left-to-right starts on the LEFT -- so on the
+   Arabic checkout the number sat on the far side of its own label and icon
+   (the owner, 17 October 2026). It stays left-to-right; it now sits on the
+   right, with the rest of the form. */
+[dir="rtl"] input[type="tel"]{text-align:right}
+/* ...and a left-to-right box reads `padding-inline-start` as its LEFT, while
+   on /ar the field's icon is drawn on the RIGHT: the icon's room moves with it
+   (the same 42px), or the number runs under the icon. The box is always
+   left-to-right, so its inline END is the right, on every page. */
+[dir="rtl"] .fld.ico input[type="tel"]{padding-inline-start:14px;padding-inline-end:42px}
 .kft-legal{display:flex;gap:14px}
 /* The language switcher (partials/lang-switch): printed only while Arabic is on.
    A capsule, the current language filled (the owner's pick, P1, 17 October

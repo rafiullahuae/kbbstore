@@ -472,6 +472,12 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .fld.kbb-fl :is(input,select,textarea){border-radius:12px;
   padding-top:calc(19px + var(--fld-gap,3px));padding-bottom:7px;padding-inline-start:14px}
 .kbb-checkout .fld.kbb-fl.ico :is(input,select,textarea){padding-inline-start:42px}
+/* The phone box on /ar (17 October 2026): browsers keep a tel box left-to-
+   right, so its inline start is its LEFT and its inline end its right -- but
+   the icon is on the right.
+   The icon's 42px moves to the right with it and the number sits there too
+   (kbb.css: [dir="rtl"] input[type="tel"]{text-align:right}). */
+[dir="rtl"] .kbb-checkout .fld.kbb-fl.ico input[type="tel"]{padding-inline-start:13px;padding-inline-end:42px}
 /* RESTING, THE LABEL IS CENTRED IN THE BOX (Lane QK8). The owner: "the fields
    placeholders are not 100% in middle. please fix in all." It sat at a fixed
    top:14px, which is the centre of no box: 2.8px high at 390 and 1.5px at

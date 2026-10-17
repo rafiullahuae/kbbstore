@@ -155,6 +155,14 @@ const KBB_ONLY_IN_GRID_SKINS = [
  */
 const KBB_ONLY_IN_KBB_CSS = [
     /*
+     * 17 October 2026 — Arabic letters join, so the tracked labels take no
+     * letter spacing on /ar (three of them on the card: Add to cart, sold out,
+     * the badge). In kbb.css ONLY, deliberately: it is on every page, and at
+     * !important it reaches the card on the three pages that also load
+     * kbb-grid-skins.css. ArabicLetterSpacingTest pins the rule itself.
+     */
+    '|html[lang="ar"] .bndl-all,html[lang="ar"] .bt-label,html[lang="ar"] .eyebrow,html[lang="ar"] .gmain .cap,html[lang="ar"] .hs-eyebrow,html[lang="ar"] .hs-go,html[lang="ar"] .kbb-badge,html[lang="ar"] .kbb-card-cart,html[lang="ar"] .kbb-soldout,html[lang="ar"] .kft-avail,html[lang="ar"] .kft-ch,html[lang="ar"] .policy-body h2,html[lang="ar"] .sh .lnk,html[lang="ar"] .sl-t .k,html[lang="ar"] .sr-eyebrow',
+    /*
      * Lane PG2 — the grey loading box behind every card photo ("i would love
      * to display the loading grey bars", "same thing for product image too").
      * In kbb.css ONLY, deliberately: every page with a product card loads it,

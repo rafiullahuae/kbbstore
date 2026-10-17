@@ -1,0 +1,66 @@
+[
+ {
+  "lang": "ar",
+  "touch": true,
+  "tel": {
+   "dir": "ltr",
+   "align": "right",
+   "padL": "13px",
+   "padR": "42px",
+   "iconLeft": 321,
+   "iconRight": 339,
+   "textRightEdge": 311,
+   "textLeftEdge": 50
+  },
+  "focusAfterOpen": "h2#kbbSiT1.co-si-h",
+  "errs": []
+ },
+ {
+  "lang": "ar",
+  "touch": false,
+  "tel": {
+   "dir": "ltr",
+   "align": "right",
+   "padL": "13px",
+   "padR": "42px",
+   "iconLeft": 1091,
+   "iconRight": 1109,
+   "textRightEdge": 1081,
+   "textLeftEdge": 576
+  },
+  "focusAfterOpen": "input#kbbSiPw.input-text",
+  "errs": []
+ },
+ {
+  "lang": "en",
+  "touch": true,
+  "tel": {
+   "dir": "ltr",
+   "align": "start",
+   "padL": "42px",
+   "padR": "13px",
+   "iconLeft": 51,
+   "iconRight": 69,
+   "textRightEdge": 340,
+   "textLeftEdge": 79
+  },
+  "focusAfterOpen": "h2#kbbSiT1.co-si-h",
+  "errs": []
+ },
+ {
+  "lang": "en",
+  "touch": false,
+  "tel": {
+   "dir": "ltr",
+   "align": "start",
+   "padL": "42px",
+   "padR": "13px",
+   "iconLeft": 171,
+   "iconRight": 189,
+   "textRightEdge": 704,
+   "textLeftEdge": 199
+  },
+  "focusAfterOpen": "input#kbbSiPw.input-text",
+  "errs": []
+ }
+]

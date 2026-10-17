@@ -80,6 +80,13 @@
 
   function $(sel, root) { return (root || D).querySelector(sel); }
 
+  {{-- A touch screen (17 October 2026): putting the cursor in a box on open
+     brought up the keyboard -- and, with a saved password, Chrome's dark
+     "Use saved password?" sheet over the page, in English and Arabic alike.
+     On a phone the dialog opens with nothing focused; the shopper taps a box
+     and the browser offers the password there. Computers are unchanged. --}}
+  var TOUCH = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+
   function pane(name) {
     D.querySelectorAll('[data-si-pane]').forEach(function (p) {
       p.hidden = p.getAttribute('data-si-pane') !== name;
@@ -88,7 +95,7 @@
     if (title) D.setAttribute('aria-labelledby', title.id);
     $('[data-si-full]').hidden = true;
     var first = $('[data-si-pane="' + name + '"] input');
-    if (first && !first.closest('[hidden]')) { first.focus(); return; }
+    if (!TOUCH && first && !first.closest('[hidden]')) { first.focus(); return; }
     {{-- No box to type in (the tick): focus stays inside the dialog. --}}
     if (title) { title.tabIndex = -1; title.focus(); }
   }
@@ -116,7 +123,7 @@
     if (typed && typed.value && !$('#kbbSiEmail').value) $('#kbbSiEmail').value = typed.value;
     D.showModal();
     pane('login');
-    if ($('#kbbSiEmail').value) $('#kbbSiPw').focus();
+    if (!TOUCH && $('#kbbSiEmail').value) $('#kbbSiPw').focus();
   });
 
   {{-- Esc: the same animated close instead of the instant one. --}}

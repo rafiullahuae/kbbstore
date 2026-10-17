@@ -64,6 +64,9 @@ final class ArabicWording
         'wording.pay_card_default' => 'Credit or debit card',
         'wording.pay_tabby_title' => 'Tabby: Pay in 4 Installments',
         'wording.pay_tabby_default' => 'Pay in 4 with Tabby',
+        // The live shop's own Tabby title (Payments -> Tabby), which matched no
+        // row above, so /ar showed it in English (the owner, 17 October 2026).
+        'wording.pay_tabby_installments' => 'Tabby Installments',
         'wording.pay_tabby_desc' => 'Split into 4 interest-free payments. No fees, no interest.',
         'wording.pay_tamara_title' => 'Pay Later with Tamara',
         'wording.pay_tamara_default' => 'Pay later with Tamara',
@@ -257,6 +260,7 @@ final class ArabicWording
         'wording.pay_card_default' => 'بطاقة ائتمان أو خصم مباشر',
         'wording.pay_tabby_title' => 'تابي: ادفعي على 4 أقساط',
         'wording.pay_tabby_default' => 'قسّميها على 4 دفعات مع تابي',
+        'wording.pay_tabby_installments' => 'تقسيط مع تابي',
         'wording.pay_tabby_desc' => 'قسّمي المبلغ على 4 دفعات بلا فوائد، ومن دون أي رسوم.',
         'wording.pay_tamara_title' => 'ادفعي لاحقًا مع تمارا',
         'wording.pay_tamara_default' => 'الدفع لاحقًا مع تمارا',
