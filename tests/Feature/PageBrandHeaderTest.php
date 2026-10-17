@@ -274,6 +274,10 @@ it('puts every page back exactly as it was under "Normal page banner", byte for 
      * SiteFooterTest own the copy.
      */
     app(\App\Services\SiteFooter::class)->save(['site_motion' => false]);
+    // Lane HLB: the cart panel's heart tab (phones) ships ON, as asked, and the
+    // 838ac564 views have no such tab; OFF prints the panel as before
+    // (HeaderLangSwitchTest), so it is switched off here like the rows above.
+    app(\App\Services\CartPanel::class)->save(['wish_tab_m' => false]);
     /*
      * ▲ 2.60.457 (Lane TS): the trust strip above the footer ships ON, as the
      * owner asked, and the 838ac564 views have no such row. It is not part of

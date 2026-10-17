@@ -3973,6 +3973,28 @@ KBB_BH_CSS;
                 'pattern' => '#<span class="n">2</span> Shipping Details</h2>\n\K.*?id="billing_phone_field".*?</p>\n#s',
                 'hits' => 1,
             ],
+            /*
+             * THE WISHLIST MOVES INTO THE CART PANEL ON PHONES. (Lane HLB) The
+             * owner, 17 October: "in mobile the wishlist will be move to the
+             * cart panel beside browsed tab", "only the heart icon ... at the
+             * end of the cart panel, same for arabic". Appearance -> Cart panel
+             * -> Content -> Wishlist tab (phones), ON as asked. Two pieces,
+             * each cut whole so everything around them is still compared:
+             * the heart tab after Browsed (outlined: the walk's visitors have
+             * saved nothing) and its pane after #kcBrowsed. Off, neither
+             * prints (HeaderLangSwitchTest). The header is untouched here: the
+             * language switch, and the heart leaving the phone header for the
+             * switch to take its slot, both print only with Arabic on, which
+             * this walk never is.
+             */
+            'the cart panel\'s heart tab (Lane HLB)' => [
+                'pattern' => '#\n        <button class="kc-tab kc-wt" type="button" data-kctab="wish" aria-label="Wishlist"><svg class="kc-wh"[^>]*>.*?</svg></button>(?=\n        <button class="kc-x")#',
+                'hits' => 33, // every page: the panel is in the layout
+            ],
+            'the cart panel\'s heart pane (Lane HLB)' => [
+                'pattern' => '#(?<=\n)    <div id="kcWish" style="display:none">\n.*?\n    </div>\n(?=</div>)#s',
+                'hits' => 33, // every page
+            ],
         ];
     }
 

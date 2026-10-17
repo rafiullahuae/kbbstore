@@ -29,7 +29,7 @@ class CartDrawerComposer
      */
     public const SUPPLIED = 'drawerSupplied';
 
-    private const LINE_COLUMNS = [
+    public const LINE_COLUMNS = [
         'id', 'wc_id', 'slug', 'name', 'brand_id', 'price', 'sale_price',
         'sale_starts_at', 'sale_ends_at', 'stock_status', 'image', 'type',
         /*
@@ -125,11 +125,15 @@ class CartDrawerComposer
              * a crawler — which carry no cookies at all — still run no query.
              * The cart path below is untouched: nothing here resolves a cart.
              */
+            [$browsed, $wish] = $this->lists(null);
+
             $view->with([
                 'items' => collect(),
                 'totals' => $empty,
                 'promo' => '',
-                'browsed' => $this->browsed(null),
+                'browsed' => $browsed,
+                'wish' => $wish,
+                'wishTotal' => $this->wishTotal(),
             ]);
 
             return;
@@ -170,6 +174,8 @@ class CartDrawerComposer
             \App\Support\SetEagerLoad::on($cart->items->pluck('product'));
         }
 
+        [$browsed, $wish] = $this->lists($cart);
+
         $view->with([
             'items' => $cart?->items ?? collect(),
             /*
@@ -185,33 +191,35 @@ class CartDrawerComposer
             'promo' => $this->settings->moduleEnabled('minicart_promo', true)
                 ? (string) $this->settings->get('minicart_promo', '')
                 : '',
-            'browsed' => $this->browsed($cart),
+            'browsed' => $browsed,
+            'wish' => $wish,
+            'wishTotal' => $this->wishTotal(),
         ]);
     }
 
-    private function browsed($cart)
+    /** How many products the wishlist holds, for the heart tab's "see all". */
+    private function wishTotal(): int
+    {
+        return \App\Support\CartPanelLists::wishCount($this->request);
+    }
+
+    /**
+     * The Browsed list and the heart tab's list (Lane HLB), from ONE query --
+     * App\Support\CartPanelLists::fetch(). Browsed is what it always was: the
+     * `kbb_viewed` cookie, less what is in the bag, the newest six. With
+     * neither cookie, no query runs (Rule 27).
+     *
+     * @return array{0: \Illuminate\Support\Collection, 1: \Illuminate\Support\Collection}
+     */
+    private function lists($cart): array
     {
         $ids = array_filter(array_map('intval', explode(',', (string) $this->request->cookie('kbb_viewed', ''))));
 
-        if ($ids === []) {
-            return collect();
+        if ($ids !== []) {
+            $inCart = $cart ? $cart->items->pluck('product_id')->all() : [];
+            $ids = array_slice(array_values(array_diff($ids, $inCart)), 0, 6);
         }
 
-        $inCart = $cart ? $cart->items->pluck('product_id')->all() : [];
-        $ids = array_slice(array_values(array_diff($ids, $inCart)), 0, 6);
-
-        if ($ids === []) {
-            return collect();
-        }
-
-        $browsed = Product::query()->select(self::LINE_COLUMNS)->visible()
-            ->whereIn('id', $ids)->with('brand:id,name,slug')->get()
-            ->sortBy(fn ($p) => array_search($p->id, $ids, true))->values();
-
-        // A browsed SET draws its contents too, and costs nothing when none of
-        // the six is one. (Lane SET)
-        \App\Support\SetEagerLoad::on($browsed);
-
-        return $browsed;
+        return \App\Support\CartPanelLists::fetch($ids, \App\Support\CartPanelLists::wishIds($this->request), self::LINE_COLUMNS);
     }
 }

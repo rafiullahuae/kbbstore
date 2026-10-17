@@ -198,6 +198,18 @@ class HeaderSettings
         'icon_cart'       => ['bool',   'Cart', true, ''],
         'icon_size'       => ['range',  'Icon size', 21, '', ['min' => 16, 'max' => 28, 'step' => 1, 'unit' => 'px']],
         'badge_bg'        => ['colour', 'Count badge', '#C6395F', ''],
+        /*
+         * Lane HLB, 17 October 2026. The owner approved the round-3 live preview
+         * ("ok proceed to the patch, but with super care without distubing
+         * anything else"): an EN | ع pill on a computer and a thin "switch to"
+         * capsule on a phone, both before the account icon.
+         * ▲ SHIPS AT `both`, which is his (CLAUDE.md, 30-September reversal).
+         * Prints NOTHING while Arabic is off, whatever this says: the switch
+         * is App\Support\LangSwitch, and it has no second language to offer.
+         */
+        'lang_switch'     => ['select', 'Language switch', 'both',
+                              'English | العربية in the header, before the account icon: a two-half pill on a computer, a small "switch to" capsule on a phone. Shows only while the Arabic shop is on.',
+                              ['off' => 'Off', 'phone' => 'Phone', 'computer' => 'Computer', 'both' => 'Both']],
 
         // ── Menu icon ──
         /*
@@ -634,8 +646,10 @@ class HeaderSettings
         // stay in SCHEMA above — nothing here reads or writes them anymore,
         // but the merge in save() means any value already saved for them
         // stays exactly as it was.
-        'icons'   => ['Icons', 'Account, wishlist and cart.',
-                      ['icon_account', 'account_menu', 'account_dot', 'account_dot_col', 'account_check', 'icon_wishlist', 'icon_cart', 'icon_size', 'badge_bg']],
+        'icons'   => ['Icons', 'Account, wishlist and cart, and the language switch.',
+                      ['icon_account', 'account_menu', 'account_dot', 'account_dot_col', 'account_check', 'icon_wishlist', 'icon_cart', 'icon_size', 'badge_bg',
+                       // Lane HLB, last so every field above keeps its place.
+                       'lang_switch']],
         'menu'    => ['Menu icon', 'The control that opens the mobile menu.',
                       ['menu_icon', 'menu_icon_speed', 'menu_icon_size', 'menu_icon_c1', 'menu_icon_c2', 'menu_icon_c3']],
         'nav'     => ['Navigation', 'The category bar.',

@@ -98,13 +98,19 @@
     // bar at the top uses ($free set, nothing $left). method_exists, so a
     // mid-update request with the old class draws nothing instead of failing.
     $kbbFd = $count && $free && $left <= 0 && method_exists($cpText, 'freeDeliveryLine') ? $cpText->freeDeliveryLine(true, $kbbHere) : '';
+    // (Lane HLB) The heart tab, last: Cart · Browsed · ♥. Phones only (kbb.css
+    // hides it above 900px). Off, or drawn by a caller that supplies no $wish,
+    // and this panel is byte for byte what it was. method_exists: a mid-update
+    // request with the old CartPanel draws no tab instead of failing.
+    $kbbWt = isset($wish) && method_exists($cpText, 'wishTab') && $cpText->wishTab();
 @endphp
 
 <div class="kc-fragment">
     <div class="kc-tabs">
         <button class="kc-tab on" type="button" data-kctab="cart">{{ $cpText->get("txt_tab_cart") }} <span class="n">{{ $count }}</span></button>
         <button class="kc-tab" type="button" data-kctab="browsed">{{ $cpText->get("txt_tab_browsed") }}</button>
-        <button class="kc-x" type="button" data-kbb-close>✕</button>
+        @if ($kbbWt)<button class="kc-tab kc-wt" type="button" data-kctab="wish" aria-label="{{ $cpText->get('txt_tab_wish') }}">{!! $wish->isNotEmpty() ? \App\Support\CartPanelLists::HEART_FULL : \App\Support\CartPanelLists::HEART_EMPTY !!}</button>
+        @endif<button class="kc-x" type="button" data-kbb-close>✕</button>
     </div>
     <div id="kcCart">
         @if ($count)
@@ -269,4 +275,6 @@
             <div class="dbody"><div class="empty-d" style="padding:30px 20px">{{ $cpText->get("txt_browsed_none") }}</div></div>
         @endif
     </div>
-</div>
+@if ($kbbWt)    <div id="kcWish" style="display:none">
+@include('partials.cart-wish-pane')    </div>
+@endif</div>

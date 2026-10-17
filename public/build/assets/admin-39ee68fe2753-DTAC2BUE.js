@@ -523,6 +523,8 @@
       + esc(String(values.accent || '#C13E63')) + '">' + esc(String(values.txt_tab_cart || 'Cart'))
       + '<em>4</em></b>'
       + (pvOn('show_browsed') ? '<i>' + esc(String(values.txt_tab_browsed || 'Browsed')) + '</i>' : '')
+      /* Lane HLB: the heart tab, last -- phones only, as on the shop. */
+      + (isPhone && pvOn('wish_tab_m') ? '<i aria-label="' + esc(String(values.txt_tab_wish || 'Wishlist')) + '">♥</i>' : '')
       + '<span class="cpv-x">✕</span>'
       + '</div>'
       + (pvOn('show_ship_bar')

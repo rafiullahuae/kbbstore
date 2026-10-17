@@ -151,6 +151,20 @@ class CartPanel
         'show_ship_bar'    => ['bool',   'Free-delivery progress bar', true, ''],
         'show_promo'       => ['bool',   'Promotion line', true, ''],
         'show_browsed'     => ['bool',   'Browsed tab', true, 'Recently viewed products, with one-tap add.'],
+        /*
+         * Lane HLB, 17 October 2026. The owner: "in mobile the wishlist will be
+         * move to the cart panel beside browsed tab", then "only the heart
+         * icon ... at the end of the cart panel, same for arabic".
+         * ▲ SHIPS ON, which is his (CLAUDE.md, 30-September reversal). While it
+         * is on, the panel carries the list on phones (900px and under), and
+         * wherever the header prints the phone language switch -- which takes
+         * the heart's slot in the approved design -- the heart leaves the phone
+         * header. With no switch (Arabic off) the heart stays in the header:
+         * its slot would otherwise go to the logo, which would grow at
+         * 320-360px, and the header is frozen. The computer keeps its heart
+         * and never sees the tab. Off puts everything back exactly as it was.
+         */
+        'wish_tab_m'       => ['bool',   'Wishlist tab (phones)', true, 'A heart tab after Browsed, on phones and tablets (900px and narrower), listing the saved products with one-tap add and remove. Where the header shows the phone language switch, the switch takes the heart\'s place and the heart lives here; the computer header keeps its heart. Needs Appearance → Header → Icons → Wishlist on.'],
 
         // ── Behaviour ──
         'open_on_add'      => ['bool',   'Open the panel when something is added', true, ''],
@@ -197,6 +211,11 @@ class CartPanel
         'txt_empty'        => ['text', 'Empty bag · line one', 'Your bag is empty.', ''],
         'txt_empty_sub'    => ['text', 'Empty bag · line two', 'Add something glowy ✨', ''],
         'txt_browsed_none' => ['text', 'Nothing browsed yet', 'Nothing browsed yet.', ''],
+        // Lane HLB: the heart tab's spoken name (the tab itself is only a heart) and its empty state.
+        'txt_tab_wish'     => ['text', 'Wishlist tab · spoken name', 'Wishlist', 'The tab shows only a heart; screen readers read this.'],
+        'txt_wish_none'    => ['text', 'Empty wishlist · line one', 'Your wishlist is empty.', ''],
+        'txt_wish_none_sub'=> ['text', 'Empty wishlist · line two', 'Tap ♥ on any product to save it here.', ''],
+        'txt_wish_remove'  => ['text', 'Wishlist · remove button, spoken', 'Remove from wishlist', 'The filled heart on each row; screen readers read this.'],
 
         // ── Wording · Arabic (Lane AR round 2) ──
         // What /ar prints. Ships with the Arabic of the English defaults above;
@@ -212,6 +231,10 @@ class CartPanel
         'txt_empty_ar'        => ['text', 'Empty bag · line one · Arabic', 'حقيبتكِ فارغة.', 'Shown on /ar/. Empty: the English wording.'],
         'txt_empty_sub_ar'    => ['text', 'Empty bag · line two · Arabic', 'أضيفي شيئًا يمنحكِ الإشراقة ✨', 'Shown on /ar/. Empty: the English wording.'],
         'txt_browsed_none_ar' => ['text', 'Nothing browsed yet · Arabic', 'لم تتصفّحي أي منتج بعد.', 'Shown on /ar/. Empty: the English wording.'],
+        'txt_tab_wish_ar'     => ['text', 'Wishlist tab · spoken name · Arabic', 'المفضلة', 'Shown on /ar/. Empty: the English wording.'],
+        'txt_wish_none_ar'    => ['text', 'Empty wishlist · line one · Arabic', 'قائمة المفضلة فارغة.', 'Shown on /ar/. Empty: the English wording.'],
+        'txt_wish_none_sub_ar'=> ['text', 'Empty wishlist · line two · Arabic', 'اضغطي ♥ على أي منتج لحفظه هنا.', 'Shown on /ar/. Empty: the English wording.'],
+        'txt_wish_remove_ar'  => ['text', 'Wishlist · remove button, spoken · Arabic', 'إزالة من المفضلة', 'Shown on /ar/. Empty: the English wording.'],
 
         // ── Colour ──
         'accent'           => ['colour', 'Prices and the active tab', '#C13E63', ''],
@@ -338,13 +361,17 @@ class CartPanel
                         // Lane QK12, last so every field above keeps its place.
                         'foot_gap_m']],
         'content'  => ['Content', 'What each line and the panel show. The same on both devices.',
-                       ['show_thumb', 'show_qty', 'show_remove', 'show_price', 'show_ship_bar', 'show_promo', 'show_browsed']],
+                       ['show_thumb', 'show_qty', 'show_remove', 'show_price', 'show_ship_bar', 'show_promo', 'show_browsed',
+                        // Lane HLB, last so every field above keeps its place.
+                        'wish_tab_m']],
         'behaviour'=> ['Behaviour', 'What happens when something is added. The same on both devices.',
                        ['open_on_add', 'add_feedback', 'added_note', 'note_ms']],
         'wording'  => ['Wording', 'Every word the panel prints. The same on both devices.',
                        ['txt_tab_cart', 'txt_tab_browsed', 'txt_ship_away', 'txt_ship_done',
                         'txt_subtotal', 'txt_btn_cart', 'txt_btn_checkout',
-                        'txt_empty', 'txt_empty_sub', 'txt_browsed_none']],
+                        'txt_empty', 'txt_empty_sub', 'txt_browsed_none',
+                        // Lane HLB, last.
+                        'txt_tab_wish', 'txt_wish_none', 'txt_wish_none_sub', 'txt_wish_remove']],
         'colour'   => ['Colour', 'Prices, tabs and the checkout button. The same on both devices.',
                        ['accent', 'checkout_bg', 'checkout_fg']],
         // LAST, so every tab recorded before it keeps its index — the payload
@@ -360,7 +387,9 @@ class CartPanel
         'wording_ar' => ['Arabic wording', 'Every word the panel prints, on the Arabic shop (/ar/). Ships in Arabic. Change an English line without changing its Arabic and /ar/ shows your English until you write the Arabic.',
                        ['txt_tab_cart_ar', 'txt_tab_browsed_ar', 'txt_ship_away_ar', 'txt_ship_done_ar',
                         'txt_subtotal_ar', 'txt_btn_cart_ar', 'txt_btn_checkout_ar',
-                        'txt_empty_ar', 'txt_empty_sub_ar', 'txt_browsed_none_ar']],
+                        'txt_empty_ar', 'txt_empty_sub_ar', 'txt_browsed_none_ar',
+                        // Lane HLB, last.
+                        'txt_tab_wish_ar', 'txt_wish_none_ar', 'txt_wish_none_sub_ar', 'txt_wish_remove_ar']],
     ];
 
     public function __construct(private SettingsService $settings) {}
@@ -860,6 +889,20 @@ class CartPanel
             $c['show_promo'] ? '' : 'cp-nopromo',
             $c['show_browsed'] ? '' : 'cp-nobrowsed',
         ])));
+    }
+
+    /**
+     * Whether the cart panel carries the heart tab (Lane HLB), and so whether
+     * the phone header MAY drop its heart -- it does where the phone language
+     * switch takes the heart's slot (partials/header). A heart gone with no tab
+     * to find it in is the half-done shape, so the header asks this. The
+     * header's own Wishlist switch is part of it -- a shop that has turned the
+     * heart off has nothing to move.
+     */
+    public function wishTab(): bool
+    {
+        return (bool) $this->all()['wish_tab_m']
+            && (bool) app(HeaderSettings::class)->get('icon_wishlist');
     }
 
     /** The handful of values the front-end script needs. */

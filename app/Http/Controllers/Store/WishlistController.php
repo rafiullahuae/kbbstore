@@ -108,10 +108,40 @@ class WishlistController extends Controller
         // watch. Nothing at all without that phone's kbb_push cookie.
         \App\Services\Push\PushAutomations::wished($id, ! $saved);
 
+        $reply = ['ok' => true, 'saved' => ! $saved, 'count' => count($ids)];
+
+        // Lane HLB: the cart panel's heart tab, redrawn in the reply to the
+        // request a heart already makes, so the list follows every heart on the
+        // page with no request of its own. Only when the page has that tab
+        // (wishlist.js asks with pane=1) and the switch is on.
+        if ($request->boolean('pane') && app(\App\Services\CartPanel::class)->wishTab()) {
+            $reply['pane'] = $this->pane($request, $ids);
+        }
+
         return response()
-            ->json(['ok' => true, 'saved' => ! $saved, 'count' => count($ids)])
+            ->json($reply)
             // A year, so a wishlist is not lost between visits.
             ->cookie(self::COOKIE, implode(',', $ids), 60 * 24 * 365);
+    }
+
+    /**
+     * The heart tab's contents for the list as it now stands: the newest
+     * CartPanelLists::WISH_MAX, one product query, and which of them are in the
+     * bag so the + shows its tick.
+     *
+     * @param  int[]  $ids
+     */
+    private function pane(Request $request, array $ids): string
+    {
+        [, $wish] = \App\Support\CartPanelLists::fetch([], array_slice($ids, 0, \App\Support\CartPanelLists::WISH_MAX), \App\View\Composers\CartDrawerComposer::LINE_COLUMNS);
+
+        $cart = app(\App\Services\CartService::class)->current($request, create: false);
+
+        return view('partials.cart-wish-pane', [
+            'wish' => $wish,
+            'wishTotal' => count($ids),
+            'inCart' => $cart ? $cart->items->pluck('product_id')->unique()->values()->all() : [],
+        ])->render();
     }
 
     /** @return int[] */

@@ -1,0 +1,29 @@
+{
+    "/product/lanear-glow-starter-set/": {
+        "status": 200,
+        "ms": 36.3,
+        "queries": 14,
+        "settings_queries": 0,
+        "settings_map_reads": 1,
+        "html_bytes": 172290,
+        "markers": 0
+    },
+    "/collections/acne-care/": {
+        "status": 200,
+        "ms": 18.9,
+        "queries": 4,
+        "settings_queries": 0,
+        "settings_map_reads": 1,
+        "html_bytes": 82684,
+        "markers": 0
+    },
+    "/brands/medicube/": {
+        "status": 200,
+        "ms": 13.2,
+        "queries": 4,
+        "settings_queries": 0,
+        "settings_map_reads": 1,
+        "html_bytes": 79053,
+        "markers": 0
+    }
+}

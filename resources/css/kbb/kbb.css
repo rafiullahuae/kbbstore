@@ -1135,6 +1135,27 @@
    button rather than stack a price and a remove control. */
 #kcBrowsed .kc-right{display:flex;align-items:center;justify-content:flex-end}
 
+/* The heart tab (Lane HLB, 17 October 2026). The owner: "in mobile the
+   wishlist will be move to the cart panel beside browsed tab", "only the heart
+   icon ... at the end of the cart panel, same for arabic". Cart · Browsed · ♥,
+   the heart outlined while the list is empty and filled once it is not, no
+   count. PHONES AND TABLETS ONLY: above 900px the computer header keeps its
+   heart and the panel is exactly as it was. Printed only while Appearance →
+   Cart panel → Content → Wishlist tab (phones) is on. */
+.kc-tab.kc-wt{flex:0 0 auto;min-width:52px;padding-inline:12px}
+.kc-tab.kc-wt svg{display:block}
+.kc-tab.kc-wt:not(.on){color:var(--muted)}
+#kcWish .kc-right{display:flex;flex-direction:row;align-items:center;gap:6px}
+#kcWish .kc-wempty{padding:30px 20px}
+#kcWish .kc-wempty svg{display:block;margin:0 auto 10px;color:var(--cp-accent,var(--pink))}
+.kc-wrm{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;padding:0;border:1px solid #f1d5de;border-radius:50%;background:#fff;color:var(--cp-accent,var(--pink));cursor:pointer}
+.kc-wrm svg{width:16px;height:16px}
+.kc-wrm:disabled{opacity:.5;cursor:default}
+.kc-wall{display:block;text-align:center;padding:12px 0 4px;font-size:12.5px;font-weight:700;color:var(--cp-accent,var(--pink-deep))}
+@media (min-width:901px){
+    .kc-tab.kc-wt,#kcWish{display:none !important}
+}
+
 @media (prefers-reduced-motion:reduce){
     .kc-badd{transition:none}
     .kc-badd:hover,.kc-badd:active{transform:none}
@@ -6125,6 +6146,41 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
   header .hin:has(>.logo.lgx){column-gap:4px}
   header .hin:has(>.logo.lgx) .kbbmi{--mi-size:40px}
   header .hin:has(>.logo.lgx) .hact .ib{width:40px;height:40px}
+}
+
+/* ═══ The header language switch ═══                                Lane HLB
+   The design the owner approved in the round-3 live preview (tools/hl3-live.cjs,
+   docs/lane-hl/round3): "ok proceed to the patch, but with super care without
+   distubing anything else". Every selector below names a class the header
+   prints ONLY with the feature on -- .lsw (the switch, printed only while
+   Arabic is on), .has-lswd (the computer pill is printed), .ib-wcp (the heart
+   has moved to the cart panel) -- so a shop with neither renders exactly what
+   it did. HeaderLayoutLockTest pins these rules word for word.
+
+   Computer: "EN | ع", the current half filled pink, INSIDE the icon group
+   before the account icon (no extra 24px row gap), and the icons 10px nearer
+   the support block so the search keeps more of its width.
+   Phone: the capsule naming the language you switch TO, as tall as the user and
+   cart glyphs (21px). It IS an icon box (.ib), so it takes the heart's exact
+   size at every width and the logo cannot move; user and cart 8px closer, the
+   8px given to the capsule's inline-start, so the row's width stays the same.
+   The switch never sits between the account and cart icons. */
+header .hact .lsw{display:none}
+@media (min-width:901px){
+  header .hact .lsw-d{display:flex;align-items:center;align-self:center;height:30px;margin-inline-end:10px;border:1px solid #e9dfe3;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700;white-space:nowrap;flex:none}
+  header .hact .lsw-d>*{display:flex;align-items:center;justify-content:center;height:100%;min-width:44px;padding:0 14px;color:inherit;text-decoration:none}
+  header .hact .lsw-d>span{background:var(--pink,#e0567b);color:#fff}
+  header .hact .lsw-d>a:hover{background:#fbeff3}
+  header .hact .lsw-d .lsw-g{display:block;width:auto;height:13px}
+  header .hin.has-lswd>.sbox{margin-inline-end:0}
+  header .hin.has-lswd>.hinfo{margin-inline-start:-10px}
+}
+@media (max-width:900px){
+  header .hact .ib-wcp{display:none}
+  header .hact .lsw-m.ib{display:grid;place-items:center;overflow:visible;color:inherit;text-decoration:none;margin-inline-start:8px}
+  header .hact .lsw-m~.ib-acct{margin-inline-end:-8px}
+  header .hact .lsw-m>span{display:flex;align-items:center;justify-content:center;height:21px;box-sizing:border-box;padding:0 6px;border:1.5px solid currentColor;border-radius:999px;font-weight:700;font-size:10px;line-height:1;white-space:nowrap}
+  header .hact .lsw-m .lsw-g{display:block;width:auto;height:9px}
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
