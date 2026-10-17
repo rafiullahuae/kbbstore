@@ -270,6 +270,7 @@
     saved = null;
     draft = null;
     results = null;
+    openTabs = {0: true};
     render();
 
     try {
@@ -487,17 +488,10 @@
 
     var html = '<div class="gss-card"><div class="gss-title">Editing “' + esc(saved.section.name) + '”</div>'
       + '<p class="gss-sub">Every control below belongs to THIS grid. Build another one and it has its own.</p>'
-      + '<div id="gss-draftbar"></div>';
+      + '<div id="gss-draftbar"></div>'
+      + stepsView();
 
-    (saved.tabs || []).forEach(function(t){
-      html += '<div style="margin-top:14px"><div class="gss-title">' + esc(t.label || t.key) + '</div>';
-      if (t.description) html += '<p class="gss-sub">' + esc(t.description) + '</p>';
-      html += '<div class="gss-grid">' + (t.fields || []).map(fieldHTML).join('') + '</div></div>';
-
-      if (t.key === 'products') html += (draft.ptabs ? '<p class="gss-note">This section is showing as Product tabs, so each tab chooses its own products below; the two “How many” numbers apply to every tab.</p>' : manualView()) + tabsView();
-    });
-
-    html += '<div style="margin-top:16px"><div class="gss-title">How it will look</div>'
+    html += '<div class="gss-step"><div class="gss-title">How it will look</div>'
       + '<p class="gss-sub">The shop\'s own template, drawn from what you have typed — not from what is saved.</p>'
       + '<div class="gss-widths">'
       + [[390, 'Phone'], [768, 'Tablet'], [1280, 'Desktop']].map(function(w){
@@ -518,6 +512,188 @@
       + '</div></div>';
 
     return html;
+  }
+
+  /* ═══════════════════════ Lane HTE — the editor as steps ════════════════
+     The owner, on this editor with tabs on: "the backend layout is very
+     scattered, can i get the nice and easy to understand and managed layout."
+
+     ONLY THE ARRANGEMENT CHANGED. Every control below is the same control it
+     was — same data-gss-key / data-gss-t / data-gss-tr, writing the same
+     draft — so the saved payload, the API and the shop are untouched. Fields
+     still come from the payload (fieldOf); this function only decides WHERE
+     each one sits. A schema field it does not place is drawn at the end of
+     "Look" (`placed` below), so adding one to GridSections::SCHEMA still makes
+     it appear here without touching this file.
+
+     Controls that do nothing in the current mode — the grid's own "Which
+     products" while tabs are on, the brand box while the source is not a
+     brand — are not drawn. Not drawn is not cleared: their values stay in
+     the draft exactly as loaded and are saved exactly as they were. */
+  var openTabs = {0: true};   /* which tab cards are expanded; the first, by default */
+
+  function stepHTML(n, id, title, sub, body, extra){
+    return '<section class="gss-step' + (extra ? ' ' + extra : '') + '" data-gss-step="' + id + '">'
+      + '<div class="gss-sh"><span class="gss-num">' + n + '</span><div class="gss-shx">'
+      + '<div class="gss-title">' + esc(title) + '</div>'
+      + (sub ? '<p class="gss-sub">' + esc(sub) + '</p>' : '') + '</div></div>'
+      + '<div class="gss-sb">' + body + '</div></section>';
+  }
+
+  function stepsView(){
+    var placed = {};
+    var on = !!draft.ptabs;
+    var put = function(k){ placed[k] = 1; var f = fieldOf(k); return f ? fieldHTML(f) : ''; };
+    var src = draft.values.source;
+    var html = '';
+
+    /* 1 · Basics */
+    html += stepHTML(1, 'basics', 'Basics', 'What you call this section, and whether it is live.',
+      '<div class="gss-two">' + put('name') + put('status') + '</div>');
+
+    /* 3 and 4 are built before 2 so that 2's catch-all knows what they placed. */
+    var heading = headingStep(on, placed);
+
+    var products;
+    if (on) {
+      ['source', 'source_brand_id', 'source_category_id', 'include_children'].forEach(function(k){ placed[k] = 1; });
+      products = '<p class="gss-note gss-info">Each tab chooses its own products in step 5, so “Which products” is not used while this section shows as tabs.</p>'
+        + '<div class="gss-two">' + put('count') + put('mobile_count') + '</div>'
+        + '<p class="gss-help" style="margin:-6px 0 0">These two numbers apply to every tab.</p>';
+    } else {
+      var which = put('source');
+      var pick = '';
+      ['source_brand_id', 'source_category_id', 'include_children'].forEach(function(k){ placed[k] = 1; });
+      if (src === 'brand') pick = put('source_brand_id');
+      if (src === 'category') pick = put('source_category_id');
+      products = '<div class="gss-two">' + which + pick + '</div>'
+        + (src === 'category' ? put('include_children') : '')
+        + '<div class="gss-two">' + put('count') + put('mobile_count') + '</div>'
+        + manualView();
+    }
+
+    /* 2 · Look */
+    var look = '<label class="gss-sw gss-big"><input type="checkbox" data-gss-tabson' + (on ? ' checked' : '') + '>'
+      + '<span><b>Show this section as tabs</b><span class="gss-help">Best Sellers, Trending, New Arrivals… one section, '
+      + 'each tab with its own products and its own order.</span></span></label>';
+
+    if (on) look += '<div class="gss-two">' + styleChoiceHTML() + alignHTML() + '</div>';
+
+    look += '<div class="gss-two">'
+      + '<div class="gss-col"><div class="gss-cap">On a laptop</div>' + put('desktop_layout') + put('desktop_cols') + put('per_d') + put('arrows_d') + '</div>'
+      + '<div class="gss-col"><div class="gss-cap">On a phone</div>' + put('mobile_layout') + put('mobile_cols') + put('per_m') + put('arrows_m') + '</div>'
+      + '</div>'
+      + '<div class="gss-two">' + put('skin') + put('card_label') + '</div>'
+      + put('show_rank');
+
+    var rest = fieldKeys().filter(function(k){ return !placed[k]; });
+    if (rest.length) look += '<div class="gss-two">' + rest.map(put).join('') + '</div>';
+
+    if (on) look += '<p class="gss-help" style="margin:0">Layout, columns and cards apply to every tab.</p>';
+
+    html += stepHTML(2, 'look', 'Look', on
+      ? 'Tabs are on. Choose how the tab row looks, and how the products sit on a laptop and on a phone.'
+      : 'One grid of products, or tabs. And how the products sit on a laptop and on a phone.', look);
+
+    html += stepHTML(3, 'heading', 'Heading', on
+      ? 'The words above the section, English beside Arabic. An empty Arabic box shows the English on the Arabic shop.'
+      : 'The words above the grid, and the “View all” button under it.', heading);
+
+    html += stepHTML(4, 'products', 'Products', on
+      ? 'How many products each tab shows.'
+      : 'Where this grid’s products come from, and how many.', products);
+
+    if (on) html += stepHTML(5, 'tabs', 'Tabs', 'Each tab has its own title, its own products and its own order. Open a tab with its arrow.',
+      tabsView(), 'gss-tabs');
+
+    return html;
+  }
+
+  /* The English box of a pair: the schema field itself, without its label
+     (the row carries the label), same id and same data-gss-key as before. */
+  function enField(key, placed, withHelp){
+    placed[key] = 1;
+    var f = fieldOf(key);
+    if (!f) return '';
+    return '<input class="gss-in" type="text" id="gss-f-' + esc(key) + '" data-gss-key="' + esc(key) + '"'
+      + ' value="' + esc(draft.values[key]) + '">'
+      + (withHelp && f.help ? '<p class="gss-help">' + esc(f.help) + '</p>' : '');
+  }
+
+  function pairRow(label, forId, en, ar){
+    return '<div class="gss-pr"><div class="gss-pl">' + (forId ? '<label for="' + forId + '">' + esc(label) + '</label>' : esc(label)) + '</div>'
+      + '<div class="gss-pc" data-lang="English">' + en + '</div>'
+      + (ar === null ? '' : '<div class="gss-pc" data-lang="Arabic">' + ar + '</div>') + '</div>';
+  }
+
+  function headingStep(on, placed){
+    var html = '';
+    var f = fieldOf('show_heading');
+    placed.show_heading = 1;
+    if (f) html += fieldHTML(f);
+
+    var t = draft.ptabs;
+    html += '<div class="gss-pairs' + (on ? '' : ' is-en') + '">'
+      + '<div class="gss-pr gss-ph"><span></span><span>English</span>' + (on ? '<span>العربية · Arabic</span>' : '') + '</div>';
+
+    if (on) {
+      html += pairRow('Small line above', '',
+        '<input class="gss-in" data-gss-t="eyebrow" maxlength="190" value="' + esc(t.eyebrow || '') + '">',
+        arabicBox('eyebrow_ar', t.eyebrow_ar, 190));
+    }
+    html += pairRow('Heading', 'gss-f-heading', enField('heading', placed, !on), on ? arabicBox('heading_ar', t.heading_ar, 190) : null)
+      + pairRow('Sub-heading', 'gss-f-subheading', enField('subheading', placed, false), on ? arabicBox('sub_ar', t.sub_ar, 255) : null)
+      + pairRow('“View all” text', 'gss-f-view_all_label', enField('view_all_label', placed, true), on ? arabicBox('view_all_ar', t.view_all_ar, 120) : null)
+      + '</div>';
+
+    placed.show_view_all = 1;
+    placed.view_all_url = 1;
+
+    if (on) {
+      html += '<p class="gss-help" style="margin:0">With tabs, each tab has its own “View all” link (step 5). A tab with no link shows no button.</p>';
+    } else {
+      var sw = fieldOf('show_view_all');
+      var url = fieldOf('view_all_url');
+      html += '<div class="gss-two">' + (sw ? fieldHTML(sw) : '') + (url ? fieldHTML(url) : '') + '</div>'
+        + '<p class="gss-help" style="margin:0">Arabic boxes for these words appear here when the section is shown as tabs (step 2).</p>';
+    }
+
+    return html;
+  }
+
+  /* Tab style as two choice cards, each with a tiny drawn sample. The radios
+     carry data-gss-t="@style", the attribute the old <select> carried, so the
+     same handler writes draft.tab_style. Keys and fallback names come from
+     the payload's tab_options. */
+  function styleChoiceHTML(){
+    var o = tabsOpt();
+    var names = {a: 'A · Underlined words', b: 'B · Rounded buttons'};
+    var html = '<div class="gss-fld"><span class="gss-lab">Tab style</span><div class="gss-cards" role="radiogroup" aria-label="Tab style">';
+    Object.keys(o.styles || {}).forEach(function(k){
+      var on = String(draft.tab_style) === String(k);
+      var sample = k === 'b' ? 'gss-smp gss-smp-b' : 'gss-smp gss-smp-a';
+      html += '<label class="gss-choice' + (on ? ' is-on' : '') + '">'
+        + '<input type="radio" name="gss-tstyle" value="' + esc(k) + '" data-gss-t="@style"' + (on ? ' checked' : '') + '>'
+        + '<span class="' + sample + '" aria-hidden="true"><i class="on">Best Sellers</i><i>Trending</i><i>New</i></span>'
+        + '<span class="gss-cn">' + esc(names[k] || o.styles[k]) + '</span></label>';
+    });
+    return html + '</div></div>';
+  }
+
+  function alignHTML(){
+    var o = tabsOpt();
+    var opts = o.align || {};
+    var names = {left: 'Left', center: 'Centre'};
+    var keys = Object.keys(opts).sort(function(a, b){ return (a === 'left' ? 0 : 1) - (b === 'left' ? 0 : 1); });
+    var html = '<div class="gss-fld"><span class="gss-lab">Alignment — heading and tabs</span>'
+      + '<div class="gss-seg" role="radiogroup" aria-label="Alignment">';
+    keys.forEach(function(k){
+      var on = String(draft.ptabs.align) === String(k);
+      html += '<label class="gss-sg' + (on ? ' is-on' : '') + '">'
+        + '<input type="radio" name="gss-talign" value="' + esc(k) + '" data-gss-t="align"' + (on ? ' checked' : '') + '>'
+        + '<span>' + esc(names[k] || opts[k]) + '</span></label>';
+    });
+    return html + '</div><p class="gss-help">“Left” starts at the right-hand side on the Arabic shop, as Arabic reads.</p></div>';
   }
 
   function manualView(){
@@ -638,15 +814,21 @@
 
   /* An Arabic box with its Translate button. */
   function arabicHTML(path, label, value, max){
+    return '<div class="gss-fld"><label class="gss-lab">' + esc(label) + '</label>' + arabicBox(path, value, max) + '</div>';
+  }
+
+  /* The Arabic box itself, its Translate button inline at the box's end and
+     the note under it (Lane HTE: shared by the tab titles and the heading
+     table, so every Arabic box behaves and looks the same). */
+  function arabicBox(path, value, max){
     var on = !!saved.machine_translate;
-    return '<div class="gss-fld"><label class="gss-lab">' + esc(label) + '</label>'
-      + '<div class="gss-row" style="gap:6px">'
+    return '<div class="gss-arx">'
       + '<input class="gss-in" dir="rtl" lang="ar" data-gss-t="' + esc(path) + '" maxlength="' + max + '" value="' + esc(value || '') + '"'
-      + ' placeholder="Empty: the English is shown" style="flex:1 1 170px">'
+      + ' placeholder="Empty: the English is shown">'
       + '<button type="button" class="gss-tiny gss-tr" data-gss-tr="' + esc(path) + '"'
       + (on ? '' : ' title="No translation service is connected — Translation → Language settings"') + '>'
       + (on ? 'Translate' : 'Translate · not set up') + '</button></div>'
-      + '<p class="gss-help" data-gss-trnote="' + esc(path) + '"></p></div>';
+      + '<p class="gss-help" data-gss-trnote="' + esc(path) + '"></p>';
   }
 
   function multiHTML(path, opts, picked){
@@ -662,44 +844,63 @@
     var o = tabsOpt();
     var p = 'list.' + i;
     var sorts = (o.sorts || {})[t.source] || {};
-    var html = '<div class="gss-tab">'
-      + '<div class="gss-row" style="margin-bottom:8px"><b class="gss-nm" style="flex:1 1 auto">Tab ' + (i + 1)
-      + (t.title ? ' · ' + esc(t.title) : '') + '</b>'
+    var open = !!openTabs[i];
+    var srcName = String((o.sources || {})[t.source] || t.source).split(' — ')[0];
+
+    /* Header: the arrow opens and closes the card (no re-render, no request),
+       the name follows what is typed in the English title. */
+    var html = '<div class="gss-tab' + (open ? ' is-open' : '') + '" data-gss-tcard="' + i + '">'
+      + '<div class="gss-thd">'
+      + '<button type="button" class="gss-fold" data-gss-tfold="' + i + '" aria-expanded="' + (open ? 'true' : 'false') + '"'
+      + ' aria-label="Open or close tab ' + (i + 1) + '"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor"'
+      + ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>'
+      + '<span class="gss-tnm"><b>Tab ' + (i + 1) + '<span data-gss-tname="' + i + '">' + (t.title ? ' · ' + esc(t.title) : '') + '</span></b>'
+      + '<span class="gss-tmeta">' + esc(srcName) + (t.title_ar ? ' · Arabic title set' : ' · no Arabic title yet') + '</span></span>'
       + '<button type="button" class="gss-tiny" data-gss-tup="' + i + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Move tab up">↑</button>'
       + '<button type="button" class="gss-tiny" data-gss-tdown="' + i + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="Move tab down">↓</button>'
       + '<button type="button" class="gss-tiny gss-btn is-danger" data-gss-tdel="' + i + '"' + (n === 1 ? ' disabled' : '') + '>Remove</button></div>'
-      + '<div class="gss-grid">'
-      + textHTML(p + '.title', 'Tab title (English)', t.title, o.title_max, 'A tab with no English title is not saved.')
-      + arabicHTML(p + '.title_ar', 'Tab title (Arabic)', t.title_ar, o.title_max)
-      + '<div class="gss-fld"><label class="gss-lab">Products from</label>' + selectHTML(p + '.source', o.sources || {}, t.source) + '</div>';
+      + '<div class="gss-tb">';
+
+    /* Row 1: the title, English beside Arabic. */
+    html += '<div class="gss-two">'
+      + textHTML(p + '.title', 'Title · English', t.title, o.title_max, 'A tab with no English title is not saved.')
+      + arabicHTML(p + '.title_ar', 'Title · Arabic', t.title_ar, o.title_max)
+      + '</div>';
+
+    /* Row 2: where the products come from, what narrows it, and the order. */
+    var cells = ['<div class="gss-fld"><label class="gss-lab">Products from</label>' + selectHTML(p + '.source', o.sources || {}, t.source) + '</div>'];
 
     if (t.source === 'brand') {
-      html += '<div class="gss-fld"><label class="gss-lab">Brand</label>' + selectHTML(p + '.brand_id', saved.brands || {}, t.brand_id || '') + '</div>';
+      cells.push('<div class="gss-fld"><label class="gss-lab">Brand</label>' + selectHTML(p + '.brand_id', saved.brands || {}, t.brand_id || '') + '</div>');
     }
     if (t.source === 'category') {
-      html += '<div class="gss-fld"><label class="gss-lab">Category</label>' + selectHTML(p + '.category_id', saved.categories || {}, t.category_id || '') + '</div>';
+      cells.push('<div class="gss-fld"><label class="gss-lab">Category</label>' + selectHTML(p + '.category_id', saved.categories || {}, t.category_id || '')
+        + '<label class="gss-sw"><input type="checkbox" data-gss-tb="' + p + '.children"' + (t.children ? ' checked' : '') + '><span>Include sub-categories</span></label></div>');
     }
-    if (t.source === 'category' || t.source === 'query') {
-      html += '<div class="gss-fld"><label class="gss-sw"><input type="checkbox" data-gss-tb="' + p + '.children"' + (t.children ? ' checked' : '') + '><span>Include sub-categories</span></label></div>';
+    if (Object.keys(sorts).length) {
+      cells.push('<div class="gss-fld"><label class="gss-lab">Sort inside this tab</label>' + selectHTML(p + '.sort', sorts, t.sort || Object.keys(sorts)[0]) + '</div>');
+    } else {
+      cells.push('<div class="gss-fld"><label class="gss-lab">Sort inside this tab</label><p class="gss-help">“' + esc(srcName) + '” is its own order.</p></div>');
     }
+    html += '<div class="' + (cells.length === 3 ? 'gss-three' : 'gss-two') + '">' + cells.join('') + '</div>';
+
     if (t.source === 'query') {
-      html += '<div class="gss-fld"><label class="gss-lab">Brands (any of)</label>' + multiHTML(p + '.query.brands', saved.brands || {}, t.query.brands || [])
+      html += '<div class="gss-two">'
+        + '<div class="gss-fld"><label class="gss-lab">Brands (any of)</label>' + multiHTML(p + '.query.brands', saved.brands || {}, t.query.brands || [])
         + '<p class="gss-help">Ctrl/⌘-click to pick several, up to 20.</p></div>'
         + '<div class="gss-fld"><label class="gss-lab">Categories (any of)</label>' + multiHTML(p + '.query.cats', saved.categories || {}, t.query.cats || [])
         + '<p class="gss-help">Both chosen: a product must be in one of the brands AND one of the categories.</p></div>'
-        + '<div class="gss-fld"><label class="gss-sw"><input type="checkbox" data-gss-tb="' + p + '.query.stock"' + (t.query.stock ? ' checked' : '') + '><span>In stock only</span></label></div>';
+        + '</div><div class="gss-row">'
+        + '<label class="gss-sw"><input type="checkbox" data-gss-tb="' + p + '.children"' + (t.children ? ' checked' : '') + '><span>Include sub-categories</span></label>'
+        + '<label class="gss-sw"><input type="checkbox" data-gss-tb="' + p + '.query.stock"' + (t.query.stock ? ' checked' : '') + '><span>In stock only</span></label></div>';
     }
-    if (Object.keys(sorts).length) {
-      html += '<div class="gss-fld"><label class="gss-lab">Sort inside this tab</label>' + selectHTML(p + '.sort', sorts, t.sort || Object.keys(sorts)[0]) + '</div>';
-    } else {
-      html += '<div class="gss-fld"><label class="gss-lab">Sort inside this tab</label><p class="gss-help">“' + esc((o.sources || {})[t.source] || t.source) + '” is its own order.</p></div>';
-    }
-    html += textHTML(p + '.url', '“View all” link for this tab', t.url, 500, 'Empty: no button. /best-sellers or a full https:// address; the Arabic shop gets /ar automatically.')
-      + '</div>';
 
     if (t.source === 'manual') html += tabPickerHTML(t, i);
 
-    return html + '</div>';
+    /* Row 3: the button under this tab. */
+    html += textHTML(p + '.url', '“View all” link for this tab', t.url, 500, 'Empty: no button. /best-sellers or a full https:// address; the Arabic shop gets /ar automatically.');
+
+    return html + '</div></div>';
   }
 
   function tabPickerHTML(t, i){
@@ -739,32 +940,18 @@
 
   function tabsView(){
     var o = tabsOpt();
-    var on = !!draft.ptabs;
-    var html = '<div class="gss-tabs" style="margin-top:14px"><div class="gss-title">Product tabs</div>'
-      + '<p class="gss-sub">Show this section as tabs — Best Sellers, Trending, New Arrivals… — each tab with its own products '
-      + 'and its own order. Laptop and phone layout (grid or carousel), columns and how many come from Layout below and apply to every tab.</p>'
-      + '<label class="gss-sw"><input type="checkbox" data-gss-tabson' + (on ? ' checked' : '') + '><span>Show this section as tabs</span></label>';
-
-    if (!on) return html + '</div>';
-
     var t = draft.ptabs;
-    html += '<div class="gss-grid" style="margin-top:12px">'
-      + '<div class="gss-fld"><label class="gss-lab">Tab style</label>' + selectHTML('@style', o.styles || {}, draft.tab_style)
-      + '<p class="gss-help">A: words with a line under the open tab. B: rounded buttons, the open one filled.</p></div>'
-      + '<div class="gss-fld"><label class="gss-lab">Alignment — heading and tabs</label>' + selectHTML('align', o.align || {}, t.align)
-      + '<p class="gss-help">“Left” starts at the right-hand side on the Arabic shop, as Arabic reads.</p></div>'
-      + textHTML('eyebrow', 'Small line above the heading (English)', t.eyebrow, 190)
-      + arabicHTML('eyebrow_ar', 'Small line above the heading (Arabic)', t.eyebrow_ar, 190)
-      + arabicHTML('heading_ar', 'Heading (Arabic) — the English is under Heading above', t.heading_ar, 190)
-      + arabicHTML('sub_ar', 'Sub-heading (Arabic)', t.sub_ar, 255)
-      + arabicHTML('view_all_ar', '“View all” text (Arabic) — the English is under “View all” button', t.view_all_ar, 120)
-      + '</div><div class="gss-list" style="margin-top:12px">';
+    var html = '<div class="gss-list">';
 
     t.list.forEach(function(tab, i){ html += tabHTML(tab, i, t.list.length); });
 
-    html += '</div><div class="gss-row" style="margin-top:10px">'
-      + '<button type="button" class="gss-btn" data-gss-tadd' + (t.list.length >= o.max ? ' disabled' : '') + '>+ Add a tab</button>'
-      + '<span class="gss-help">' + t.list.length + ' of ' + o.max + ' tabs. Empty Arabic shows the English on the Arabic shop — never a blank tab.</span></div></div>';
+    var full = t.list.length >= o.max;
+    html += '</div><div class="gss-row">'
+      + '<button type="button" class="gss-btn" data-gss-tadd' + (full ? ' disabled' : '') + '>+ Add tab</button>'
+      + '<span class="gss-help">' + (full
+          ? o.max + ' of ' + o.max + ' tabs — the most one section can hold. Remove one to add another.'
+          : t.list.length + ' of ' + o.max + ' tabs.')
+      + ' Empty Arabic shows the English on the Arabic shop — never a blank tab.</span></div>';
 
     return html;
   }
@@ -775,6 +962,7 @@
       if (on.checked) {
         draft.ptabs = draft.ptabs || (saved.product_tabs ? JSON.parse(JSON.stringify(saved.product_tabs)) : null)
           || {eyebrow: '', eyebrow_ar: '', heading_ar: '', sub_ar: '', view_all_ar: '', align: 'center', list: [blankTab()]};
+        openTabs = {0: true};
       } else {
         draft.ptabs = null;
       }
@@ -794,6 +982,18 @@
         }
         paintDraftBar();
         refreshPreview();
+        /* Lane HTE: a choice card or segment lights up without a re-render, and
+           a tab's header follows its English title as it is typed. */
+        if (el.type === 'radio') {
+          document.querySelectorAll('input[name="' + el.name + '"]').forEach(function(r){
+            if (r.parentNode && r.parentNode.classList) r.parentNode.classList.toggle('is-on', r.checked);
+          });
+        }
+        var named = /^list\.(\d+)\.title$/.exec(path);
+        if (named) {
+          var tn = document.querySelector('[data-gss-tname="' + named[1] + '"]');
+          if (tn) tn.textContent = el.value ? ' · ' + el.value : '';
+        }
         if (/\.source$/.test(path)) {
           var tab = tget(path.replace(/\.source$/, ''));
           var sorts = (tabsOpt().sorts || {})[tab.source] || {};
@@ -817,16 +1017,33 @@
       };
     });
 
+    /* Open / close a tab card: a class on the card, nothing else. */
+    document.querySelectorAll('[data-gss-tfold]').forEach(function(b){
+      b.onclick = function(){
+        var i = Number(b.dataset.gssTfold);
+        var card = document.querySelector('[data-gss-tcard="' + i + '"]');
+        openTabs[i] = !openTabs[i];
+        if (card) card.classList.toggle('is-open', openTabs[i]);
+        b.setAttribute('aria-expanded', openTabs[i] ? 'true' : 'false');
+      };
+    });
+
     var add = document.querySelector('[data-gss-tadd]');
     if (add) add.onclick = function(){
       if (draft.ptabs.list.length >= tabsOpt().max) return;
-      draft.ptabs.list.push(blankTab()); tabResults = {}; render(); refreshPreview();
+      draft.ptabs.list.push(blankTab()); openTabs[draft.ptabs.list.length - 1] = true;
+      tabResults = {}; render(); refreshPreview();
     };
 
     document.querySelectorAll('[data-gss-tdel]').forEach(function(b){
       b.onclick = function(){
         if (draft.ptabs.list.length < 2) return;
-        draft.ptabs.list.splice(Number(b.dataset.gssTdel), 1); tabResults = {}; render(); refreshPreview();
+        var gone = Number(b.dataset.gssTdel);
+        draft.ptabs.list.splice(gone, 1);
+        var kept = {};
+        Object.keys(openTabs).forEach(function(k){ k = Number(k); if (k !== gone && openTabs[k]) kept[k > gone ? k - 1 : k] = true; });
+        openTabs = kept;
+        tabResults = {}; render(); refreshPreview();
       };
     });
 
@@ -836,7 +1053,9 @@
         var j = b.dataset.gssTup ? i - 1 : i + 1;
         var l = draft.ptabs.list;
         if (j < 0 || j >= l.length) return;
-        var x = l[i]; l[i] = l[j]; l[j] = x; tabResults = {}; render(); refreshPreview();
+        var x = l[i]; l[i] = l[j]; l[j] = x;
+        var oi = !!openTabs[i]; openTabs[i] = !!openTabs[j]; openTabs[j] = oi;
+        tabResults = {}; render(); refreshPreview();
       };
     });
 
