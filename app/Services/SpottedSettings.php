@@ -541,6 +541,6 @@ final class SpottedSettings
 
         $arabic = self::text($c, $key.'_ar');
 
-        return $arabic !== '' ? $arabic : $english;
+        return $arabic !== '' ? $arabic : \App\Support\ArabicWording::of($english);
     }
 }

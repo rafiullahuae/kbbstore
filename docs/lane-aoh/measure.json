@@ -1,0 +1,36 @@
+{
+  "ar-390": {
+    "found": 1,
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "scrollWidth": 390,
+    "heading": "مقترحة لكِ",
+    "sub": "من المنتجات الرائجة إلى منتجكِ المفضّل الذي لا غنى عنه.",
+    "englishLeftOnPage": false
+  },
+  "ar-1280": {
+    "found": 1,
+    "errors": [],
+    "scrollWidth": 1280,
+    "heading": "مقترحة لكِ",
+    "sub": "من المنتجات الرائجة إلى منتجكِ المفضّل الذي لا غنى عنه.",
+    "englishLeftOnPage": false
+  },
+  "en-390": {
+    "found": 1,
+    "errors": [],
+    "scrollWidth": 390,
+    "heading": "Recommended for you",
+    "sub": "From viral finds to your next holy grail.",
+    "englishLeftOnPage": true
+  },
+  "en-1280": {
+    "found": 1,
+    "errors": [],
+    "scrollWidth": 1280,
+    "heading": "Recommended for you",
+    "sub": "From viral finds to your next holy grail.",
+    "englishLeftOnPage": true
+  }
+}

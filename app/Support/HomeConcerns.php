@@ -358,7 +358,7 @@ final class HomeConcerns
 
             $ar = HomeSections::text($c, $key.'_ar');
 
-            return $ar !== '' ? $ar : $en;
+            return $ar !== '' ? $ar : ArabicWording::of($en);
         };
 
         $frame = HomeSections::frame($c, 'cc');

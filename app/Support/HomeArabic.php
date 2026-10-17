@@ -32,6 +32,13 @@ namespace App\Support;
  * wins. And an English field he emptied ("Empty hides the heading") stays
  * empty on /ar too: hiding a heading is a layout decision, not a wording one.
  *
+ * 17 October 2026: and where neither applies -- the owner typed his own
+ * English heading and no Arabic for it -- an English sentence the shop
+ * already translates (ArabicWording, e.g. "Recommended for you" → "مقترحة
+ * لكِ") prints in Arabic rather than English. His live homepage showed
+ * "Recommended for you" in English on /ar under an Arabic line. Any Arabic
+ * he types still wins.
+ *
  * No query, no settings read of its own: every value arrives in the `$c` map
  * the page already read once (SettingsRequestMemo).
  */
@@ -182,7 +189,7 @@ final class HomeArabic
         $arabic = trim(RichText::toText((string) ($c[$key.'_ar'] ?? $shipped)));
 
         if ($arabic === '' || ($arabic === $shipped && trim($english) !== trim(RichText::toText($englishDefault)))) {
-            return $english;
+            return ArabicWording::of($english);
         }
 
         return $arabic;
@@ -204,7 +211,7 @@ final class HomeArabic
 
         $arabic = trim(RichText::toText((string) ($c[$key.'_ar'] ?? '')));
 
-        return $arabic !== '' ? $arabic : $english;
+        return $arabic !== '' ? $arabic : ArabicWording::of($english);
     }
 
     /** The homepage's quiet <h1> when the owner has written none (store/home.blade.php). */
