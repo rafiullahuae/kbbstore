@@ -3441,6 +3441,15 @@
         "options": null
       },
       {
+        "key": "show_search_ar",
+        "type": "bool",
+        "label": "Search field on Arabic pages",
+        "help": "The Arabic menu without its search; English keeps it. Needs the Search field on.",
+        "default": false,
+        "value": false,
+        "options": null
+      },
+      {
         "key": "search_text",
         "type": "text",
         "label": "Search placeholder",
@@ -4004,6 +4013,7 @@
         "description": "What sits above the menu itself.",
         "fields": [
           "show_search",
+          "show_search_ar",
           "search_text",
           "show_heading",
           "heading_text"

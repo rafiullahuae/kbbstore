@@ -41,7 +41,7 @@
         <div class="mm-head"><b>{{ $cfg['heading_text'] }}</b></div>
     @endif
 
-    @if ($cfg['show_search'])
+    @include('partials.mm-lang-switch')@if ($cfg['show_search'] && (\App\Support\Locale::current() !== 'ar' || ! empty($cfg['show_search_ar'])))
         <div class="mm-srch">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
             <input type="search" id="mmFilter" placeholder="{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($cfg['search_text']) : (string) ($cfg['search_text'])) }}" autocomplete="off">

@@ -69,6 +69,9 @@ class MobileMenu
 
         // --- header of the sheet ---
         'show_search'   => ['bool',   'Search field',      true, 'Sits where a heading would be.'],
+        // The owner, 17 October 2026: "in Menu panel, in arabic language, turn
+        // off the search. only in arabic version". Ships OFF because he asked.
+        'show_search_ar' => ['bool',  'Search field on Arabic pages', false, 'The Arabic menu without its search; English keeps it. Needs the Search field on.'],
         'search_text'   => ['text',   'Search placeholder', 'Search the menu…', ''],
         'show_heading'  => ['bool',   'Heading row',      false, 'Off by default — the handle and close already do that job.'],
         'heading_text'  => ['text',   'Heading',          'Menu', ''],
@@ -243,7 +246,7 @@ class MobileMenu
         'panel' => ['Panel', 'Size and motion of the sheet.',
                     ['open_from', 'height', 'radius', 'slide_speed', 'scrim', 'show_grab', 'show_close']],
         'top' => ['Top of the sheet', 'What sits above the menu itself.',
-                  ['show_search', 'search_text', 'show_heading', 'heading_text']],
+                  ['show_search', 'show_search_ar', 'search_text', 'show_heading', 'heading_text']],
         'rows' => ['Rows', 'Density and layout of the items.',
                    ['density', 'child_columns', 'show_counts', 'single_open']],
         'open' => ['Open section', 'How an expanded parent is marked.',

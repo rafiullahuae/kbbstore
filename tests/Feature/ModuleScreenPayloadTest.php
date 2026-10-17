@@ -325,6 +325,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // four words last; header's Icons gains lang_switch ("Language switch",
     // Both) last and its description names the switch. 10 fields in, 1
     // description changed, nothing else moved.
+    // ▲ 17 October, the owner's ask ("in arabic language, turn off the
+    // search"), spliced in, not regenerated: mobile-menu's Top of the sheet
+    // gains show_search_ar ("Search field on Arabic pages", OFF) after
+    // show_search. 1 field in, nothing else moved.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();

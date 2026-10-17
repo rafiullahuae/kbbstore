@@ -1,0 +1,6 @@
+[{"sw":[201,48],"tap":[94,40],"swHit":true,"xHit":true,"overlapX":false,"sw2":320,"wentTo":"/ar/","tag":"en","w":320,"errs":[]},
+{"sw":[262,48],"tap":[125,40],"swHit":true,"xHit":true,"overlapX":false,"sw2":390,"wentTo":"/ar/","tag":"en","w":390,"errs":[]},
+{"sw":[297,48],"tap":[143,40],"swHit":true,"xHit":true,"overlapX":false,"sw2":430,"wentTo":"/ar/","tag":"en","w":430,"errs":[]},
+{"sw":[201,48],"tap":[94,40],"swHit":true,"xHit":true,"overlapX":false,"sw2":320,"wentTo":"/","tag":"ar","w":320,"errs":[]},
+{"sw":[262,48],"tap":[125,40],"swHit":true,"xHit":true,"overlapX":false,"sw2":390,"wentTo":"/","tag":"ar","w":390,"errs":[]},
+{"sw":[297,48],"tap":[143,40],"swHit":true,"xHit":true,"overlapX":false,"sw2":430,"wentTo":"/","tag":"ar","w":430,"errs":[]}]

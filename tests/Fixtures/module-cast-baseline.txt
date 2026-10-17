@@ -1881,6 +1881,17 @@ mobile_menu|show_search|bool|"no"|true
 mobile_menu|show_search|bool|1|true
 mobile_menu|show_search|bool|0|false
 mobile_menu|show_search|bool|null|false
+mobile_menu|show_search_ar|bool|true|true
+mobile_menu|show_search_ar|bool|false|false
+mobile_menu|show_search_ar|bool|"1"|true
+mobile_menu|show_search_ar|bool|"0"|false
+mobile_menu|show_search_ar|bool|""|false
+mobile_menu|show_search_ar|bool|"on"|true
+mobile_menu|show_search_ar|bool|"off"|true
+mobile_menu|show_search_ar|bool|"no"|true
+mobile_menu|show_search_ar|bool|1|true
+mobile_menu|show_search_ar|bool|0|false
+mobile_menu|show_search_ar|bool|null|false
 mobile_menu|search_text|text|"abc"|'abc'
 mobile_menu|search_text|text|""|'Search the menu…'
 mobile_menu|search_text|text|"  sp  "|'sp'

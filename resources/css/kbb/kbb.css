@@ -3187,6 +3187,12 @@ p.kbb-pol a:hover{color:var(--pink-deep,#C13E63)}
 .mm-grab{width:38px;height:4px;border-radius:99px;background:var(--line-2);margin:9px auto 4px;flex:none;cursor:pointer}
 
 .mm-head{padding:10px 14px;border-bottom:1px solid var(--line-2);flex:none}
+/* The language switch at the top of the phone menu (partials/mm-lang-switch,
+   the owner's round-1 option G): one soft capsule beside the ×, the current
+   language raised in white. Printed only while the Arabic shop is on. */
+.mm-lang{display:flex;gap:4px;margin-block:14px 8px;margin-inline:16px 64px;padding:4px;border-radius:999px;background:#f6f1f3;font-size:14px;font-weight:600;flex:none}
+.mm-lang>*{flex:1;display:flex;align-items:center;justify-content:center;min-height:40px;border-radius:999px;color:inherit;text-decoration:none}
+.mm-lang>span{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1);font-weight:700}
 .mm-head b{font-size:13.5px}
 
 .mm-srch{position:relative;padding:2px 12px 8px;flex:none}
