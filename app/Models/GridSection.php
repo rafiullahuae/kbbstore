@@ -96,6 +96,8 @@ class GridSection extends Model
         'desktop_layout', 'desktop_cols', 'mobile_layout', 'mobile_cols',
         'skin', 'card_label', 'show_rank',
         'show_view_all', 'view_all_label', 'view_all_url',
+        // Lane HTB: Product tabs. NULL = the ordinary grid. App\Support\GridTabs.
+        'tabs', 'tab_style',
     ];
 
     protected $casts = [
@@ -105,6 +107,7 @@ class GridSection extends Model
         'show_rank' => 'boolean',
         'manual_ids' => 'array',
         'source_query' => 'array',
+        'tabs' => 'array',
         'arrows_m' => 'boolean',
         'arrows_d' => 'boolean',
         'position' => 'integer',

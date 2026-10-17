@@ -129,6 +129,9 @@
     $gsLabel = trim((string) $section->view_all_label);
     $gsCardLabel = trim((string) $section->card_label);
 @endphp
+@if (\App\Support\GridTabs::of($section) !== null)
+@include('partials.home.grid-tabs')
+@else
 <section class="sec kbb-gsec {{ $sections->classFor($gsKey) }}" style="padding-top:0"{!! $gsArrows ? ' data-ymal' : '' !!}><div class="wrap">
   @if ($gsShowHead)
   <div class="gs-head"><div>
@@ -154,3 +157,4 @@
   <div class="gs-foot"><a class="gs-all" href="{{ $gsHref }}">{{ $gsLabel !== '' ? $gsLabel : __('store.product_grid.view_all') }}</a></div>
   @endif
 </div></section>
+@endif
