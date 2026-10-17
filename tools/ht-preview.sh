@@ -9,7 +9,22 @@
 # route at boot. routes/web.php is not touched; nothing here ships.
 set -e
 APP=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-PORT=${1:-9751}
+# Asks for a free port from the one given rather than typing one, and proves
+# the server answering is its own before printing a URL (the rules in
+# PreviewScriptsCannotShootTheWrongShopTest; the same block as arf-preview.sh).
+PORT=$(python3 - "${1:-9751}" <<'KBBPORTPY'
+import socket, sys
+start = int(sys.argv[1])
+for p in range(start, start + 400):
+    s = socket.socket()
+    try:
+        s.bind(('127.0.0.1', p)); s.close(); print(p); break
+    except OSError:
+        s.close()
+else:
+    raise SystemExit('no free port')
+KBBPORTPY
+)
 DIR=$APP/storage/framework/testing/arf-preview
 ROOT=$DIR/webroot
 export KBB_ARF_LIVE=1 KBB_PUBLIC_PATH="$ROOT" APP_ENV=local APP_DEBUG=false \
@@ -21,7 +36,14 @@ export KBB_ARF_LIVE=1 KBB_PUBLIC_PATH="$ROOT" APP_ENV=local APP_DEBUG=false \
   APP_EVENTS_CACHE="$DIR/compiled/events.php" \
   APP_SERVICES_CACHE="$DIR/compiled/services.php" \
   APP_PACKAGES_CACHE="$DIR/compiled/packages.php"
-if [ -f "$DIR/ht-server.pid" ]; then kill "$(cat "$DIR/ht-server.pid")" 2>/dev/null || true; fi
+if [ -f "$DIR/server.pid" ]; then kill "$(cat "$DIR/server.pid")" 2>/dev/null || true; fi
 php -S 127.0.0.1:"$PORT" -t "$ROOT" "$APP/tools/ht-router.php" >"$DIR/ht-server.log" 2>&1 &
-echo $! > "$DIR/ht-server.pid"
-echo "ht-preview on http://127.0.0.1:$PORT/ht-preview/a  pid $(cat "$DIR/ht-server.pid")"
+echo $! > "$DIR/server.pid"
+sleep 2
+kbbnonce=$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')
+printf '%s' "$kbbnonce" > "$ROOT/kbb-preview-id.txt"
+if [ "$(curl -s "http://127.0.0.1:$PORT/kbb-preview-id.txt" || true)" != "$kbbnonce" ]; then
+  echo "REFUSING: 127.0.0.1:$PORT is not this preview" >&2
+  kill "$(cat "$DIR/server.pid")" 2>/dev/null || true; exit 4
+fi
+echo "ht-preview on http://127.0.0.1:$PORT/ht-preview/a  pid $(cat "$DIR/server.pid")"
