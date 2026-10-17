@@ -682,6 +682,10 @@ header_settings|badge_bg|colour|""|'#C6395F'
 header_settings|badge_bg|colour|"zz"|'#C6395F'
 header_settings|badge_bg|colour|null|'#C6395F'
 header_settings|badge_bg|colour|"#e23a4e"|'#e23a4e'
+header_settings|lang_switch|select|"off"|'off'
+header_settings|lang_switch|select|"nope"|'both'
+header_settings|lang_switch|select|""|'both'
+header_settings|lang_switch|select|null|'both'
 header_settings|menu_icon|select|"lines"|'lines'
 header_settings|menu_icon|select|"nope"|'lines'
 header_settings|menu_icon|select|""|'lines'
@@ -1501,6 +1505,17 @@ cart_panel|show_browsed|bool|"no"|true
 cart_panel|show_browsed|bool|1|true
 cart_panel|show_browsed|bool|0|false
 cart_panel|show_browsed|bool|null|false
+cart_panel|wish_tab_m|bool|true|true
+cart_panel|wish_tab_m|bool|false|false
+cart_panel|wish_tab_m|bool|"1"|true
+cart_panel|wish_tab_m|bool|"0"|false
+cart_panel|wish_tab_m|bool|""|false
+cart_panel|wish_tab_m|bool|"on"|true
+cart_panel|wish_tab_m|bool|"off"|true
+cart_panel|wish_tab_m|bool|"no"|true
+cart_panel|wish_tab_m|bool|1|true
+cart_panel|wish_tab_m|bool|0|false
+cart_panel|wish_tab_m|bool|null|false
 cart_panel|open_on_add|bool|true|true
 cart_panel|open_on_add|bool|false|false
 cart_panel|open_on_add|bool|"1"|true
@@ -1596,6 +1611,30 @@ cart_panel|txt_browsed_none|text|"  sp  "|'sp'
 cart_panel|txt_browsed_none|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 cart_panel|txt_browsed_none|text|null|''
 cart_panel|txt_browsed_none|text|"<b>x<\/b>"|'<b>x</b>'
+cart_panel|txt_tab_wish|text|"abc"|'abc'
+cart_panel|txt_tab_wish|text|""|''
+cart_panel|txt_tab_wish|text|"  sp  "|'sp'
+cart_panel|txt_tab_wish|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+cart_panel|txt_tab_wish|text|null|''
+cart_panel|txt_tab_wish|text|"<b>x<\/b>"|'<b>x</b>'
+cart_panel|txt_wish_none|text|"abc"|'abc'
+cart_panel|txt_wish_none|text|""|''
+cart_panel|txt_wish_none|text|"  sp  "|'sp'
+cart_panel|txt_wish_none|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+cart_panel|txt_wish_none|text|null|''
+cart_panel|txt_wish_none|text|"<b>x<\/b>"|'<b>x</b>'
+cart_panel|txt_wish_none_sub|text|"abc"|'abc'
+cart_panel|txt_wish_none_sub|text|""|''
+cart_panel|txt_wish_none_sub|text|"  sp  "|'sp'
+cart_panel|txt_wish_none_sub|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+cart_panel|txt_wish_none_sub|text|null|''
+cart_panel|txt_wish_none_sub|text|"<b>x<\/b>"|'<b>x</b>'
+cart_panel|txt_wish_remove|text|"abc"|'abc'
+cart_panel|txt_wish_remove|text|""|''
+cart_panel|txt_wish_remove|text|"  sp  "|'sp'
+cart_panel|txt_wish_remove|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+cart_panel|txt_wish_remove|text|null|''
+cart_panel|txt_wish_remove|text|"<b>x<\/b>"|'<b>x</b>'
 cart_panel|txt_tab_cart_ar|text|"abc"|'abc'
 cart_panel|txt_tab_cart_ar|text|""|''
 cart_panel|txt_tab_cart_ar|text|"  sp  "|'sp'
@@ -1656,6 +1695,30 @@ cart_panel|txt_browsed_none_ar|text|"  sp  "|'sp'
 cart_panel|txt_browsed_none_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 cart_panel|txt_browsed_none_ar|text|null|''
 cart_panel|txt_browsed_none_ar|text|"<b>x<\/b>"|'<b>x</b>'
+cart_panel|txt_tab_wish_ar|text|"abc"|'abc'
+cart_panel|txt_tab_wish_ar|text|""|''
+cart_panel|txt_tab_wish_ar|text|"  sp  "|'sp'
+cart_panel|txt_tab_wish_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+cart_panel|txt_tab_wish_ar|text|null|''
+cart_panel|txt_tab_wish_ar|text|"<b>x<\/b>"|'<b>x</b>'
+cart_panel|txt_wish_none_ar|text|"abc"|'abc'
+cart_panel|txt_wish_none_ar|text|""|''
+cart_panel|txt_wish_none_ar|text|"  sp  "|'sp'
+cart_panel|txt_wish_none_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+cart_panel|txt_wish_none_ar|text|null|''
+cart_panel|txt_wish_none_ar|text|"<b>x<\/b>"|'<b>x</b>'
+cart_panel|txt_wish_none_sub_ar|text|"abc"|'abc'
+cart_panel|txt_wish_none_sub_ar|text|""|''
+cart_panel|txt_wish_none_sub_ar|text|"  sp  "|'sp'
+cart_panel|txt_wish_none_sub_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+cart_panel|txt_wish_none_sub_ar|text|null|''
+cart_panel|txt_wish_none_sub_ar|text|"<b>x<\/b>"|'<b>x</b>'
+cart_panel|txt_wish_remove_ar|text|"abc"|'abc'
+cart_panel|txt_wish_remove_ar|text|""|''
+cart_panel|txt_wish_remove_ar|text|"  sp  "|'sp'
+cart_panel|txt_wish_remove_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+cart_panel|txt_wish_remove_ar|text|null|''
+cart_panel|txt_wish_remove_ar|text|"<b>x<\/b>"|'<b>x</b>'
 cart_panel|accent|colour|"#E23A4E"|'#E23A4E'
 cart_panel|accent|colour|"e23a4e"|'E23A4E'
 cart_panel|accent|colour|"#abc"|'#ABC'

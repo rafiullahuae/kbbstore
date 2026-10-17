@@ -319,6 +319,12 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // ▲ Lane AR round 2, spliced in, not regenerated: cart-panel gains a last
     // tab, wording_ar ("Arabic wording"), the ten txt_*_ar twins of the
     // Wording tab. Every earlier tab and field is byte-identical.
+    // ▲ Lane HLB (17 October), the owner's approved design, spliced in, not
+    // regenerated: cart-panel's Content gains wish_tab_m ("Wishlist tab
+    // (phones)", ON) last, Wording and Arabic wording each gain the heart tab's
+    // four words last; header's Icons gains lang_switch ("Language switch",
+    // Both) last and its description names the switch. 10 fields in, 1
+    // description changed, nothing else moved.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
@@ -784,7 +790,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // line may show ("allow us to choose the country").
     // 837 -> 847 (Lane AR round 2, merged after 2.60.518): cart-panel's Arabic
     // wording tab, the ten txt_*_ar twins of the Wording tab.
-    expect($compared)->toBe(847, 'the number of controls drawn changed');
+    // 847 -> 857 (Lane HLB): header lang_switch, cart-panel wish_tab_m and the
+    // heart tab's four words in English and Arabic -- the owner's approved design.
+    expect($compared)->toBe(857, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

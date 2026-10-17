@@ -70,6 +70,9 @@ const HLL_FILES = [
     'resources/views/partials/header.blade.php',
     'resources/views/partials/logo-lockup.blade.php',
     'resources/views/partials/menu-icon.blade.php',
+    // Lane HLB: the header language switch's markup and its drawn Arabic words.
+    'app/Support/LangSwitch.php',
+    'app/Support/LangSwitchGlyphs.php',
 ];
 
 /*
@@ -104,6 +107,38 @@ const HLL_AR_RULES = [
     'kbb.css||.logo.lgx.lgx-ar .lgx-w em{padding:.25em;margin:-.25em}',
 ];
 
+/*
+ * ▲ THE SECOND OPENING, Lane HLB (17 October 2026). The owner approved the
+ *   header language switch in the round-3 live preview -- "ok proceed to the
+ *   patch, but with super care without distubing anything else" -- and moved
+ *   the phone's wishlist heart into the cart panel ("in mobile the wishlist
+ *   will be move to the cart panel beside browsed tab"). These thirteen rules,
+ *   and nothing else, are new. Like the Arabic opening above they are taken OUT
+ *   of the fingerprint, which therefore stays the 12 October pin byte for byte
+ *   -- the proof that no existing header or logo rule moved -- and are pinned
+ *   word for word by their own case below, which also requires every selector
+ *   to name a class the header prints ONLY with the feature on: .lsw (the
+ *   switch; printed only while Arabic is on), .has-lswd (the computer pill is
+ *   printed) or .ib-wcp (the heart has moved to the cart panel). A shop with
+ *   neither matches none of them. The sweeps CLAUDE.md names were run
+ *   (tools/hlb-sweep.cjs, docs/lane-hlb/sweep.json).
+ */
+const HLL_HLB_RULES = [
+    'kbb.css||header .hact .lsw{display:none}',
+    'kbb.css|@media (min-width:901px)|header .hact .lsw-d{display:flex;align-items:center;align-self:center;height:30px;margin-inline-end:10px;border:1px solid #e9dfe3;border-radius:999px;overflow:hidden;font-size:12px;font-weight:700;white-space:nowrap;flex:none}',
+    'kbb.css|@media (min-width:901px)|header .hact .lsw-d>*{display:flex;align-items:center;justify-content:center;height:100%;min-width:44px;padding:0 14px;color:inherit;text-decoration:none}',
+    'kbb.css|@media (min-width:901px)|header .hact .lsw-d>span{background:var(--pink,#e0567b);color:#fff}',
+    'kbb.css|@media (min-width:901px)|header .hact .lsw-d>a:hover{background:#fbeff3}',
+    'kbb.css|@media (min-width:901px)|header .hact .lsw-d .lsw-g{display:block;width:auto;height:13px}',
+    'kbb.css|@media (min-width:901px)|header .hin.has-lswd>.sbox{margin-inline-end:0}',
+    'kbb.css|@media (min-width:901px)|header .hin.has-lswd>.hinfo{margin-inline-start:-10px}',
+    'kbb.css|@media (max-width:900px)|header .hact .ib-wcp{display:none}',
+    'kbb.css|@media (max-width:900px)|header .hact .lsw-m.ib{display:grid;place-items:center;overflow:visible;color:inherit;text-decoration:none;margin-inline-start:8px}',
+    'kbb.css|@media (max-width:900px)|header .hact .lsw-m~.ib-acct{margin-inline-end:-8px}',
+    'kbb.css|@media (max-width:900px)|header .hact .lsw-m>span{display:flex;align-items:center;justify-content:center;height:21px;box-sizing:border-box;padding:0 6px;border:1.5px solid currentColor;border-radius:999px;font-weight:700;font-size:10px;line-height:1;white-space:nowrap}',
+    'kbb.css|@media (max-width:900px)|header .hact .lsw-m .lsw-g{display:block;width:auto;height:9px}',
+];
+
 /** The pinned fingerprints (sha256). Change only as the header's comment says. */
 const HLL_PINS = [
     'css' => 'ac36cf2d7f924bc64241794c7a61f9bc129744c555b7c46631992513a1076329',
@@ -116,16 +151,27 @@ const HLL_PINS = [
     // gives the WhatsApp label its Arabic on /ar while it is still the shipped
     // "24/7 support" -- the placeholder's rule, one more key. Nothing else in
     // the file moved; English is byte-identical.
-    'app/Services/HeaderSettings.php' => '472c0932abc8c4ded78f70d362ee8c3712069c77a8816185408e0a9fde480090',
+    // Lane HLB: one key, `lang_switch` (Icons tab, last; Off/Phone/Computer/Both,
+    // ships `both` -- the owner's). Nothing else in the file moved.
+    'app/Services/HeaderSettings.php' => '4d051c5e3991e240a08d67157b719dcab5fb6f413e06935f26e263b50210604f',
     'app/Services/MobileHeader.php' => 'b2caa3c7afdd24ad1080b2488c4804b9174a0785cd950de7837e21465aa13a6d',
-    'resources/views/partials/header.blade.php' => 'cb7479ececf96c453fcc4ede51e8f3757267b540f280dfc764026313bf371224',
+    // Lane HLB: the switch printed at the start of .hact (before the account
+    // icon), `has-lswd` on .hin while the computer pill is printed, `ib-wcp` on
+    // the heart while the phone capsule takes its slot and the cart panel has
+    // the heart tab. All three print nothing
+    // with the feature off.
+    'resources/views/partials/header.blade.php' => '77ee35c96403f3b1bd70123d7b2acdd058c2361107ac146a570728ebfca51bed',
     'resources/views/partials/logo-lockup.blade.php' => 'cb0b59b02911aa1862ec8108a68920203e0ec152c4f37edecf67712d8af9f2fb',
-    'resources/views/partials/menu-icon.blade.php' => '0fdf319d6ab2b4aefffae57d25398df3ab999bfd80a198cd78fb02859402c32e',
+    // Lane HLB: `lines` drawn from the right on a mirrored page, its own path.
+    // English prints the same path as before.
+    'resources/views/partials/menu-icon.blade.php' => '394cf53811814392826b11a134f71eafdfb4ef459a5b52f8070b7041fe4ac629',
+    'app/Support/LangSwitch.php' => '27f3f6ef96d11d009a684c89d9b505cf0af25a11f57b03ab854a05e48de4380d',
+    'app/Support/LangSwitchGlyphs.php' => '4eb5f5497a006823428bcd22c6dc64c6f57b91ea4c18daba586bfb37eea044f5',
 ];
 
 function hllActual(): array
 {
-    $lines = array_values(array_filter(explode("\n", hllCssRules()), static fn (string $l): bool => ! in_array($l, HLL_AR_RULES, true)));
+    $lines = array_values(array_filter(explode("\n", hllCssRules()), static fn (string $l): bool => ! in_array($l, HLL_AR_RULES, true) && ! in_array($l, HLL_HLB_RULES, true)));
     $now = ['css' => hash('sha256', implode("\n", $lines))];
     foreach (HLL_FILES as $f) {
         $now[$f] = hash_file('sha256', base_path($f));
@@ -174,4 +220,30 @@ it('opens the lock for the Arabic logo side only, with rules no English page can
             expect(str_contains($sel, '[dir="rtl"]') || str_contains($sel, '.lgx-ar'))->toBeTrue("not Arabic-scoped: {$sel}");
         }
     }
+});
+
+/*
+ * Lane HLB's opening is exactly the thirteen rules above, each present once,
+ * each scoped to a class only the feature prints. Mutation: write the phone
+ * rule as `header .hact .ib-acct{margin-inline-end:-8px}` (the preview's
+ * spelling, which pulls the account icon on EVERY shop, with or without
+ * Arabic) and this is red -- the rule is missing from the list and the
+ * fingerprint case goes red with it.
+ */
+it('opens the lock for the language switch and the moved heart only, with rules a shop without them cannot match', function () {
+    $lines = explode("\n", hllCssRules());
+    $feature = '/\.(lsw|lsw-d|lsw-m|has-lswd|ib-wcp)(?![\w-])/';
+
+    foreach (HLL_HLB_RULES as $rule) {
+        expect(count(array_keys($lines, $rule, true)))->toBe(1, "missing or doubled: {$rule}");
+
+        [, , $css] = explode('|', $rule, 3);
+        foreach (explode(',', substr($css, 0, (int) strpos($css, '{'))) as $sel) {
+            expect((bool) preg_match($feature, $sel))->toBeTrue("not scoped to the feature: {$sel}");
+        }
+    }
+
+    // And no rule outside the list names the feature's classes.
+    $ours = array_filter($lines, static fn (string $l): bool => (bool) preg_match($feature, $l));
+    expect(array_values(array_diff($ours, HLL_HLB_RULES)))->toBe([]);
 });

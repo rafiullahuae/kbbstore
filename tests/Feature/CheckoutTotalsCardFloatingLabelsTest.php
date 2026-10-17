@@ -369,6 +369,9 @@ it('renders the checkout byte for byte as before this lane with both switches of
     // Lane QK8's WhatsApp button is OFF on checkout, as asked; ON is its
     // byte-for-byte way back (WhatsAppButtonTabTest), so it is set here too.
     app(\App\Services\WhatsAppButton::class)->save(['show_checkout' => true]);
+    // Lane HLB: the cart panel's heart tab (phones) ships ON, as asked; OFF
+    // prints the panel as before (HeaderLangSwitchTest), so it is set here too.
+    app(\App\Services\CartPanel::class)->save(['wish_tab_m' => false]);
     // Lane QK12: the phone menu's flash icon beside Super Sale ships ON, as
     // asked; OFF prints the row as before (Qk12HeaderAndMenuTest), so it is
     // set here for the same reason. Only that key: the rest stay as stored.

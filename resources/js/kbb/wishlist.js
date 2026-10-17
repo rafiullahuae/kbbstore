@@ -45,6 +45,22 @@ function setBadge(count) {
     });
 }
 
+/* The cart panel's heart tab (Lane HLB): the list, and the tab's heart --
+   outlined while the wishlist is empty, filled once it is not.
+
+   SAFE: `data.pane` is a whole Blade view the server rendered
+   (partials/cart-wish-pane), every value in it already through `{{ }}` -- the
+   same contract as the drawer fragments cart.js swaps in. */
+function setPane(data) {
+    const pane = document.getElementById('kcWish');
+    if (pane && typeof data.pane === 'string') pane.innerHTML = data.pane;
+
+    document.querySelectorAll('.kc-wt .kc-wh').forEach((svg) => {
+        svg.classList.toggle('on', data.count > 0);
+        svg.setAttribute('fill', data.count > 0 ? 'currentColor' : 'none');
+    });
+}
+
 export function initWishlist() {
     markSaved();
 
@@ -68,7 +84,10 @@ export function initWishlist() {
                     'X-CSRF-TOKEN': window.KBB.csrf,
                     Accept: 'application/json',
                 },
-                body: `product_id=${encodeURIComponent(id)}`,
+                // (Lane HLB) With the cart panel's heart tab on the page, the
+                // reply to THIS request carries the tab's new list too -- no
+                // request of its own.
+                body: `product_id=${encodeURIComponent(id)}${document.getElementById('kcWish') ? '&pane=1' : ''}`,
             });
             const data = await response.json();
 
@@ -90,6 +109,7 @@ export function initWishlist() {
             }
 
             setBadge(data.count);
+            setPane(data);
             window.kbbToast?.(data.saved
                 ? t('store.js.wishlist_saved', 'Saved to your wishlist')
                 : t('store.js.wishlist_removed', 'Removed from your wishlist'));

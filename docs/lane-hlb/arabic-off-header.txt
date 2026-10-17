@@ -1,0 +1,12 @@
+before 320 {"logo":"56,8,128,44","lotus":"59.2,20,26.9,20","search":"12,68,296,46","sw":320,"switch":false,"heart":true}
+before 360 {"logo":"68,9,138,44","lotus":"71.2,20,29.6,22","search":"12,70,336,46","sw":360,"switch":false,"heart":true}
+before 390 {"logo":"68,9,168,44","lotus":"73.4,18,35,26","search":"12,70,366,46","sw":390,"switch":false,"heart":true}
+before 430 {"logo":"68,9,208,44","lotus":"89.3,18,35,26","search":"12,70,406,46","sw":430,"switch":false,"heart":true}
+before 768 {"logo":"68,9,546,44","lotus":"258.3,18,35,26","search":"12,70,744,46","sw":768,"switch":false,"heart":true}
+before 1280 {"logo":"22,4,256.3,38","lotus":"22,4,51.1,38","search":"310.3,8,593.2,30","sw":1280,"switch":false,"heart":true}
+after 320 {"logo":"56,8,128,44","lotus":"59.2,20,26.9,20","search":"12,68,296,46","sw":320,"switch":false,"heart":true}
+after 360 {"logo":"68,9,138,44","lotus":"71.2,20,29.6,22","search":"12,70,336,46","sw":360,"switch":false,"heart":true}
+after 390 {"logo":"68,9,168,44","lotus":"73.4,18,35,26","search":"12,70,366,46","sw":390,"switch":false,"heart":true}
+after 430 {"logo":"68,9,208,44","lotus":"89.3,18,35,26","search":"12,70,406,46","sw":430,"switch":false,"heart":true}
+after 768 {"logo":"68,9,546,44","lotus":"258.3,18,35,26","search":"12,70,744,46","sw":768,"switch":false,"heart":true}
+after 1280 {"logo":"22,4,256.3,38","lotus":"22,4,51.1,38","search":"310.3,8,593.2,30","sw":1280,"switch":false,"heart":true}

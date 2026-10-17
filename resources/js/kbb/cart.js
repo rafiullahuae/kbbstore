@@ -124,20 +124,28 @@ const config = () => {
 let openTab = 'cart';
 
 const showTab = () => {
+    // (Lane HLB) The heart tab is a third pane. A panel drawn without it (the
+    // switch off) falls back to Cart rather than to nothing.
+    const wish = document.getElementById('kcWish');
+    const tab = openTab === 'wish' && !wish ? 'cart' : openTab;
+
     document.querySelectorAll('[data-kctab]').forEach(
-        (t) => t.classList.toggle('on', t.dataset.kctab === openTab));
+        (t) => t.classList.toggle('on', t.dataset.kctab === tab));
 
     const cart = document.getElementById('kcCart');
     const browsed = document.getElementById('kcBrowsed');
-    if (cart) cart.style.display = openTab === 'browsed' ? 'none' : '';
-    if (browsed) browsed.style.display = openTab === 'browsed' ? '' : 'none';
+    if (cart) cart.style.display = tab === 'cart' ? '' : 'none';
+    if (browsed) browsed.style.display = tab === 'browsed' ? '' : 'none';
+    if (wish) wish.style.display = tab === 'wish' ? '' : 'none';
 };
 
 /* "Added" beside the product name for a moment. Applied after the swap, because
    the swap replaces the row and would take the note with it. Removed outright
    rather than faded — a note on its way out reads as part of the row. */
 const noteAdded = (productId) => {
-    const name = document.querySelector(`#kcBrowsed [data-brow="${productId}"] .kc-nm`);
+    const name = openTab === 'wish'
+        ? document.querySelector(`#kcWish [data-wrow="${productId}"] .kc-nm`)
+        : document.querySelector(`#kcBrowsed [data-brow="${productId}"] .kc-nm`);
     if (!name) return;
 
     name.querySelector('.kc-added')?.remove();
@@ -374,7 +382,7 @@ export function initCart() {
             return;
         }
 
-        // Drawer tabs: Cart / Browsed.
+        // Drawer tabs: Cart / Browsed / the heart (Lane HLB).
         const tab = event.target.closest('[data-kctab]');
         if (tab) {
             event.preventDefault();

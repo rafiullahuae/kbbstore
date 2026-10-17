@@ -8,6 +8,11 @@
     `lines` (Lane QK12, the default): the owner's "simple three lines but
     beautiful" -- one inline SVG, a constant. `tiles` is the four squares it
     replaced, still one choice away and rendered exactly as before.
+
+    On a mirrored (RTL) page `lines` is drawn from the right -- the short middle
+    line ends on the inline-start side -- as its own path, not a CSS transform
+    (Lane HLB; the owner approved it in the round-3 preview). English: the same
+    path as always.
 --}}
 @php
     $hd = app(\App\Services\HeaderSettings::class);
@@ -21,7 +26,7 @@
         aria-label="{{ __('store.mobile_menu.open_label') }}" aria-controls="mmenu" aria-expanded="false">
     @switch ($family)
         @case ('lines')
-            <svg class="ln" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 6.5h17M3.5 12h11M3.5 17.5h17"/></svg>
+            <svg class="ln" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="{{ \App\Support\Locale::isRtl() ? 'M20.5 6.5h-17M20.5 12h-11M20.5 17.5h-17' : 'M3.5 6.5h17M3.5 12h11M3.5 17.5h17' }}"/></svg>
             @break
         @case ('tiles')
             <span class="s"></span><span class="s"></span><span class="s"></span><span class="s"></span>

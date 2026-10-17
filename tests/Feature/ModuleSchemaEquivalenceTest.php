@@ -437,6 +437,9 @@ function mAllowedRepairs(): array
  * Lane AR round 2 — 60 rows for the cart panel's ten Arabic wording twins
  *   (txt_*_ar, Appearance → Cart panel → Arabic wording), spliced in the same
  *   way: 60 inserted, 0 modified, 0 removed.
+ * Lane HLB — 63 rows: header_settings lang_switch (the header language
+ *   switch) and the cart panel's wish_tab_m and eight heart-tab words,
+ *   spliced in the same way: 63 inserted, 0 modified, 0 removed.
  */
 it('answers every recorded cast exactly as it did before the shared schema', function () {
     $recorded = file(base_path('tests/Fixtures/module-cast-baseline.txt'), FILE_IGNORE_NEW_LINES);

@@ -612,6 +612,16 @@
             "options": null,
             "default": true,
             "value": true
+          },
+          {
+            "key": "wish_tab_m",
+            "name": "wish_tab_m",
+            "type": "bool",
+            "label": "Wishlist tab (phones)",
+            "help": "A heart tab after Browsed, on phones and tablets (900px and narrower), listing the saved products with one-tap add and remove. Where the header shows the phone language switch, the switch takes the heart's place and the heart lives here; the computer header keeps its heart. Needs Appearance → Header → Icons → Wishlist on.",
+            "options": null,
+            "default": true,
+            "value": true
           }
         ]
       },
@@ -775,6 +785,46 @@
             "options": null,
             "default": "Nothing browsed yet.",
             "value": "Nothing browsed yet."
+          },
+          {
+            "key": "txt_tab_wish",
+            "name": "txt_tab_wish",
+            "type": "text",
+            "label": "Wishlist tab · spoken name",
+            "help": "The tab shows only a heart; screen readers read this.",
+            "options": null,
+            "default": "Wishlist",
+            "value": "Wishlist"
+          },
+          {
+            "key": "txt_wish_none",
+            "name": "txt_wish_none",
+            "type": "text",
+            "label": "Empty wishlist · line one",
+            "help": "",
+            "options": null,
+            "default": "Your wishlist is empty.",
+            "value": "Your wishlist is empty."
+          },
+          {
+            "key": "txt_wish_none_sub",
+            "name": "txt_wish_none_sub",
+            "type": "text",
+            "label": "Empty wishlist · line two",
+            "help": "",
+            "options": null,
+            "default": "Tap ♥ on any product to save it here.",
+            "value": "Tap ♥ on any product to save it here."
+          },
+          {
+            "key": "txt_wish_remove",
+            "name": "txt_wish_remove",
+            "type": "text",
+            "label": "Wishlist · remove button, spoken",
+            "help": "The filled heart on each row; screen readers read this.",
+            "options": null,
+            "default": "Remove from wishlist",
+            "value": "Remove from wishlist"
           }
         ]
       },
@@ -1015,6 +1065,46 @@
             "options": null,
             "default": "لم تتصفّحي أي منتج بعد.",
             "value": "لم تتصفّحي أي منتج بعد."
+          },
+          {
+            "key": "txt_tab_wish_ar",
+            "name": "txt_tab_wish_ar",
+            "type": "text",
+            "label": "Wishlist tab · spoken name · Arabic",
+            "help": "Shown on /ar/. Empty: the English wording.",
+            "options": null,
+            "default": "المفضلة",
+            "value": "المفضلة"
+          },
+          {
+            "key": "txt_wish_none_ar",
+            "name": "txt_wish_none_ar",
+            "type": "text",
+            "label": "Empty wishlist · line one · Arabic",
+            "help": "Shown on /ar/. Empty: the English wording.",
+            "options": null,
+            "default": "قائمة المفضلة فارغة.",
+            "value": "قائمة المفضلة فارغة."
+          },
+          {
+            "key": "txt_wish_none_sub_ar",
+            "name": "txt_wish_none_sub_ar",
+            "type": "text",
+            "label": "Empty wishlist · line two · Arabic",
+            "help": "Shown on /ar/. Empty: the English wording.",
+            "options": null,
+            "default": "اضغطي ♥ على أي منتج لحفظه هنا.",
+            "value": "اضغطي ♥ على أي منتج لحفظه هنا."
+          },
+          {
+            "key": "txt_wish_remove_ar",
+            "name": "txt_wish_remove_ar",
+            "type": "text",
+            "label": "Wishlist · remove button, spoken · Arabic",
+            "help": "Shown on /ar/. Empty: the English wording.",
+            "options": null,
+            "default": "إزالة من المفضلة",
+            "value": "إزالة من المفضلة"
           }
         ]
       }
@@ -1891,7 +1981,7 @@
       {
         "key": "icons",
         "label": "Icons",
-        "description": "Account, wishlist and cart.",
+        "description": "Account, wishlist and cart, and the language switch.",
         "fields": [
           {
             "key": "icon_account",
@@ -1978,6 +2068,21 @@
             "default": "#C6395F",
             "value": "#C6395F",
             "options": null
+          },
+          {
+            "key": "lang_switch",
+            "name": "lang_switch",
+            "type": "select",
+            "label": "Language switch",
+            "help": "English | العربية in the header, before the account icon: a two-half pill on a computer, a small \"switch to\" capsule on a phone. Shows only while the Arabic shop is on.",
+            "options": {
+              "off": "Off",
+              "phone": "Phone",
+              "computer": "Computer",
+              "both": "Both"
+            },
+            "default": "both",
+            "value": "both"
           }
         ]
       },

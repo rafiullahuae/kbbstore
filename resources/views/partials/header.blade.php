@@ -17,6 +17,24 @@
      */
     $whatsapp = \App\Support\SupportContact::phone();
     $whatsappDigits = \App\Support\SupportContact::whatsappDigits();
+
+    /*
+     * Lane HLB, 17 October 2026 -- the design the owner approved in the round-3
+     * live preview ("ok proceed to the patch, but with super care without
+     * distubing anything else"). Appearance → Header → Icons → Language switch.
+     * App\Support\LangSwitch prints '' while Arabic is off, so a shop without
+     * it gets no byte from this. Every byte it prints is a constant or e().
+     *
+     * $kbbWcp: the phone capsule takes the heart's slot (the approved design),
+     * so while it is printed AND Appearance → Cart panel → Content → Wishlist
+     * tab (phones) is on, the heart hides at 900px and under (kbb.css,
+     * `.ib-wcp`) and lives in the cart panel; the computer keeps it. With no
+     * capsule (Arabic off) the heart stays where it is: the empty slot would
+     * otherwise go to the logo, which grows at 320-360px, and the header is
+     * frozen ("logo previous size").
+     */
+    $kbbLsw = \App\Support\LangSwitch::header((string) $h['lang_switch']);
+    $kbbWcp = $kbbLsw['phone'] && app(\App\Services\CartPanel::class)->wishTab();
 @endphp
 
 @php
@@ -28,7 +46,7 @@
 <header class="{{ $hd->bodyClass() }}{{ $h['search_group_rule'] ? ' sg-rule' : '' }}{{ $h['search_row_rule'] ? ' sg-rowrule' : '' }}{{ 'compact' === $h['search_row_size'] ? ' sg-compact' : '' }} {{ $mhd->bodyClass() }}"
         style="{{ $hd->cssVariables() }};{{ $mhd->cssVariables() }}">
   <div class="wrap">
-    <div class="hin">
+    <div class="hin{{ $kbbLsw['computer'] ? ' has-lswd' : '' }}">
       @include('partials.menu-icon')
 
 @if ($hd->logoLockup())
@@ -61,7 +79,7 @@
         </form>
       @endif
 
-      <div class="hact">
+      <div class="hact">{!! $kbbLsw['html'] !!}
         @if ($h['icon_account'])
           @php
               // A panel needs someone to show it to. Guests go to the sign-in
@@ -118,7 +136,7 @@
         @endif
 
         @if ($h['icon_wishlist'])
-          <a class="ib" href="{{ Url::to('/my-wishlist/') }}" aria-label="{{ __('store.header.wishlist_label') }}">{!! \App\Support\HeaderIcons::wishlist() !!}<i id="kbbWishCt" style="display:{{ ($kbbWishlistCount ?? 0) > 0 ? '' : 'none' }}">{{ $kbbWishlistCount ?? 0 }}</i></a>
+          <a class="ib{{ $kbbWcp ? ' ib-wcp' : '' }}" href="{{ Url::to('/my-wishlist/') }}" aria-label="{{ __('store.header.wishlist_label') }}">{!! \App\Support\HeaderIcons::wishlist() !!}<i id="kbbWishCt" style="display:{{ ($kbbWishlistCount ?? 0) > 0 ? '' : 'none' }}">{{ $kbbWishlistCount ?? 0 }}</i></a>
         @endif
 
         @if ($h['icon_cart'])

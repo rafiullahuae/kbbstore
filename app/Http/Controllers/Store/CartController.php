@@ -600,6 +600,12 @@ class CartController extends Controller
     {
         $country = (string) $this->settings->get('store_country', 'AE');
 
+        // Browsed and the heart tab (Lane HLB), one query between them; neither
+        // is wanted when the drawer is not being drawn for display.
+        [$browsed, $wish] = $request->boolean('skip_browsed')
+            ? [collect(), collect()]
+            : $this->lists($request);
+
         $empty = [
             'item_count' => 0, 'subtotal' => 0, 'discount' => 0, 'coupon_code' => null,
             'shipping' => 0, 'total' => 0, 'free_shipping_threshold' => null,
@@ -684,7 +690,9 @@ class CartController extends Controller
                 )
                 : '',
             // Only fetched when the drawer is being rendered for display.
-            'browsed' => $request->boolean('skip_browsed') ? collect() : $this->browsed($request, $cart),
+            'browsed' => $browsed,
+            'wish' => $wish,
+            'wishTotal' => \App\Support\CartPanelLists::wishCount($request),
             // Which browsed products are already in the bag, so the add control
             // can show a tick instead of a plus. Products are not removed from
             // the list any more, so the list itself no longer carries that fact.
@@ -693,45 +701,26 @@ class CartController extends Controller
     }
 
     /**
-     * The drawer's Browsed tab, from the cookie the product page writes.
+     * The drawer's Browsed tab, from the cookie the product page writes, and
+     * its heart tab, from the wishlist cookie (Lane HLB) -- ONE query for both,
+     * App\Support\CartPanelLists::fetch().
      *
-     * Rule 27: no query at all when the cookie is empty, which is every first
-     * visit and every crawler.
+     * Rule 27: no query at all when both cookies are empty, which is every
+     * first visit and every crawler.
+     *
+     * Browsed items stay listed after they are added. Removing them was why
+     * the add button appeared to work exactly once: the product left the
+     * list the moment it entered the bag, so there was nothing left to press
+     * a second time. Adding again increments the line, which is what a
+     * shopper reaching for + expects.
+     *
+     * @return array{0: \Illuminate\Support\Collection, 1: \Illuminate\Support\Collection}
      */
-    private function browsed(Request $request, $cart)
+    private function lists(Request $request): array
     {
-        $ids = array_filter(array_map('intval', explode(',', (string) $request->cookie('kbb_viewed', ''))));
+        $ids = array_slice(array_filter(array_map('intval', explode(',', (string) $request->cookie('kbb_viewed', '')))), 0, 6);
 
-        if ($ids === []) {
-            return collect();
-        }
-
-        // Browsed items stay listed after they are added. Removing them was why
-        // the add button appeared to work exactly once: the product left the
-        // list the moment it entered the bag, so there was nothing left to press
-        // a second time. Adding again increments the line, which is what a
-        // shopper reaching for + expects.
-        $ids = array_slice($ids, 0, 6);
-
-        if ($ids === []) {
-            return collect();
-        }
-
-        $browsed = Product::query()
-            ->select(self::LINE_COLUMNS)
-            ->visible()
-            ->whereIn('id', $ids)
-            ->with('brand:id,name,slug')
-            ->get()
-            // Preserve most-recently-viewed order, which the SQL IN() does not.
-            ->sortBy(fn ($p) => array_search($p->id, $ids, true))
-            ->values();
-
-        // A browsed SET draws its contents too. No query when none of the six
-        // is a set, which is every browsed list in this shop today. (Lane SET)
-        \App\Support\SetEagerLoad::on($browsed);
-
-        return $browsed;
+        return \App\Support\CartPanelLists::fetch($ids, \App\Support\CartPanelLists::wishIds($request), self::LINE_COLUMNS);
     }
 
     private function fragments($cart, Request $request, ?string $toast = null, ?string $error = null, bool $added = false): JsonResponse
