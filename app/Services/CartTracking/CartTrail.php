@@ -50,7 +50,30 @@ final class CartTrail
     public const LEFT = 2;
     public const BACK = 3;
 
-    /** Furthest step reached, as stored in carts.ct_stage. 8 (Ordered) is read from ct_order_id. */
+    /**
+     * "This cart became a REAL order" as SQL over a `carts as c` row (Lane CT).
+     *
+     * ct_order_id is stamped the moment checkout CREATES the order — before
+     * Tamara, Tabby or a card has taken a dirham. So "ct_order_id IS NOT NULL"
+     * counted an unpaid Tamara order (pending, AED 563, #56251) as "Became
+     * orders" and its value in "Bought value" (owner, 17 October: "today paid
+     * i have received 6, but u can see it's showing 7"). Became-an-order is
+     * now the reporting rule, Order::REAL_STATUSES — the one /admin-api/stats
+     * revenue reads — on an order that is not in the bin. pending, failed,
+     * cancelled, refunded, draft and trashed orders are not bought.
+     *
+     * One correlated primary-key probe per cart inside the same statement:
+     * no extra query, no per-row PHP. The statuses are constants, never input.
+     */
+    public static function boughtSql(): string
+    {
+        $in = implode(', ', array_map(fn (string $s) => "'".$s."'", \App\Models\Order::REAL_STATUSES));
+
+        return '(c.ct_order_id IS NOT NULL AND EXISTS (SELECT 1 FROM orders ct_o WHERE ct_o.id = c.ct_order_id'
+            .' AND ct_o.status IN ('.$in.') AND ct_o.deleted_at IS NULL))';
+    }
+
+    /** Furthest step reached, as stored in carts.ct_stage. 8 (Ordered) is read from ct_order_id (a REAL order, see boughtSql()). */
     public const STAGES = [
         0 => 'Added to bag',
         2 => 'Viewed the bag',
@@ -307,7 +330,7 @@ final class CartTrail
     public static function funnel(\Illuminate\Database\Query\Builder $carts): array
     {
         try {
-            $t = (clone $carts)->selectRaw('COUNT(*) AS n, SUM(CASE WHEN c.ct_order_id IS NOT NULL THEN 1 ELSE 0 END) AS o')->first();
+            $t = (clone $carts)->selectRaw('COUNT(*) AS n, SUM(CASE WHEN '.self::boughtSql().' THEN 1 ELSE 0 END) AS o')->first();
             $ids = (clone $carts)->select('c.id');
 
             $step = 'CASE'

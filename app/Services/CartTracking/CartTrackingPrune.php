@@ -103,7 +103,7 @@ final class CartTrackingPrune
                 'e.product_id,'
                 .' SUM(CASE WHEN e.type = 1 THEN 1 ELSE 0 END) AS added,'
                 .' COUNT(DISTINCT CASE WHEN e.type = 1 THEN e.cart_id END) AS added_carts,'
-                .' COUNT(DISTINCT CASE WHEN e.type = 1 AND c.ct_order_id IS NOT NULL THEN e.cart_id END) AS ordered_carts,'
+                .' COUNT(DISTINCT CASE WHEN e.type = 1 AND '.CartTrail::boughtSql().' THEN e.cart_id END) AS ordered_carts,'
                 .' SUM(CASE WHEN e.type = 2 THEN 1 ELSE 0 END) AS removed,'
                 .' COUNT(DISTINCT CASE WHEN e.type = 2 THEN e.cart_id END) AS removed_carts'
             )
