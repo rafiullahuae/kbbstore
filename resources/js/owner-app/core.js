@@ -81,8 +81,9 @@ export const ic = (n, c) => '<svg class="i ' + (c || '') + '" aria-hidden="true"
 /* The conveniences, and only these keys, ever. oa.np: when "Not now" was tapped on the notifications sheet (Lane NT).
    oa.tn: when the "reinstall for the new top" notice was last closed (fs.js).
    oa.ic: when "Not now" was tapped on the install card (install.js, Lane IN); it
-   replaces oa.a2, which marked the old install pop-up as shown once. */
-const KEYS = ['oa.fs', 'oa.seen', 'oa.np', 'oa.tn', 'oa.ic', 'oa.an.win'];
+   replaces oa.a2, which marked the old install pop-up as shown once.
+   oa.bio / oa.bo: Face ID / fingerprint on here, and when its offer was shown (passkey.js, Lane BIO). */
+const KEYS = ['oa.fs', 'oa.seen', 'oa.np', 'oa.tn', 'oa.ic', 'oa.an.win', 'oa.bio', 'oa.bo'];
 export const store = {
   get(k) { if (KEYS.indexOf(k) === -1) return null; try { return window.localStorage.getItem(k); } catch (e) { return null; } },
   set(k, v) { if (KEYS.indexOf(k) === -1) return; try { window.localStorage.setItem(k, String(v)); } catch (e) { /* private mode */ } },
@@ -94,7 +95,7 @@ export class AuthError extends Error { constructor(code) { super(code); this.cod
 let onAuth = () => {};
 export function onAuthLost(fn) { onAuth = fn; }
 
-const NO_KEY = ['enrol', 'unlock'];
+const NO_KEY = ['enrol', 'unlock', 'passkey/start', 'passkey/unlock'];
 
 /**
  * `passive` marks a GET nobody asked for — the 25 s changes poll and the

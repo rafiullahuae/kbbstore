@@ -44,6 +44,7 @@ import { renderOrders, ordersClick, ordersState, clearSelection, refreshOrdersLi
 import { renderProducts, renderProduct, productsClick, productClick, setProductFilter, refreshProductsList, fetchProducts, fetchProduct } from './products.js';
 import { renderCustomers, renderCustomer, customersClick, fetchCustomers, fetchCustomer } from './customers.js';
 import { offerPush } from './ask.js';
+import { offerBio } from './passkey.js';
 import { renderAnalytics, analyticsClick, stopAnalytics } from './analytics.js';
 import { renderCarts, cartsClick, fetchCarts } from './carts.js';
 
@@ -199,7 +200,13 @@ function onIn(data) {
   opened();
   syncPush();
   // Installed, permission undecided, setting on: offer "Allow notifications" (ask.js, Lane NT).
-  offerPush(syncPush);
+  // FIRST, once ever on this phone, "Unlock with Face ID / fingerprint?" (passkey.js, Lane BIO;
+  // the owner asked for it after the first login). Never on a phone without it. The dashboard is
+  // already loading behind it (opened() above). The notifications sheet waits for a later unlock.
+  offerBio().then((shown) => {
+    if (shown) return;
+    offerPush(syncPush);
+  });
 }
 
 function unlocked(d) {

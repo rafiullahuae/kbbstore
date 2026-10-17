@@ -222,8 +222,71 @@ final class OwnerAppAuth
         OwnerAppThrottle::release($ipKey);
         self::cleared((int) $member->id, self::UNLOCK);
         DB::table('owner_app_devices')->where('id', $device->id)->update(['failed_count' => 0]);
+
+        return self::opened($request, $device, 'unlock');
+    }
+
+    /** The one answer a passkey refusal gets, whatever the reason: no oracle. */
+    public const PASSKEY_REFUSED = ['ok' => false, 'code' => 'passkey', 'message' => 'Face ID / fingerprint did not unlock the app. Use your PIN.'];
+
+    public const PASSKEY_IP_MAX = 30;
+
+    /**
+     * Face ID / fingerprint on an enrolled phone (Lane BIO): the phone's own
+     * platform authenticator signs the server's challenge. On success, the
+     * SAME session a good PIN opens (opened() below). Refused for a revoked or
+     * disabled device and for a member locked out of the PIN pad: a lock a
+     * Full Admin set is not something a fingerprint gets round. Every refusal
+     * is one answer (PASSKEY_REFUSED); the reason goes to the login log only.
+     *
+     * @param array{id:string,clientDataJSON:string,authenticatorData:string,signature:string} $assertion
+     * @return array{status:int, body:array<string,mixed>, session?:string}
+     */
+    public static function passkeyUnlock(Request $request, OwnerAppDevice $device, array $assertion): array
+    {
+        $refused = ['status' => 422, 'body' => self::PASSKEY_REFUSED];
+        $ipKey = OwnerAppThrottle::bucket('passkey', $request->ip());
+
+        if (! OwnerAppThrottle::reserve($ipKey, self::PASSKEY_IP_MAX, self::LOCK_MINUTES * 60)) {
+            self::log($request, 'passkey', false, 'ip_limited', $device->member_id, $device->id);
+
+            return $refused;
+        }
+
+        if (($why = self::barred($device)) !== null) {
+            self::log($request, 'passkey', false, $why, $device->member_id, $device->id);
+
+            return $refused;
+        }
+
+        $row = DB::table('owner_app_members')->where('id', $device->member_id)->first(['failed_count', 'locked_until', 'lock_level']);
+        if ($row === null || self::isLocked($row, self::UNLOCK)) {
+            self::log($request, 'passkey', false, 'locked', $device->member_id, $device->id);
+
+            return $refused;
+        }
+
+        if (($why = Passkeys::verify($request, $device, $assertion)) !== null) {
+            self::log($request, 'passkey', false, $why, $device->member_id, $device->id);
+
+            return $refused;
+        }
+
+        OwnerAppThrottle::release($ipKey);
+
+        return self::opened($request, $device, 'passkey');
+    }
+
+    /**
+     * A good PIN or a good Face ID / fingerprint: a fresh session, logged, and
+     * the CSRF value in the body. The one path both take.
+     *
+     * @return array{status:int, body:array<string,mixed>, session:string}
+     */
+    private static function opened(Request $request, OwnerAppDevice $device, string $kind): array
+    {
         $session = self::startSession($request, $device);
-        self::log($request, 'unlock', true, 'ok', $member->id, $device->id);
+        self::log($request, $kind, true, 'ok', (int) $device->member_id, $device->id);
 
         return ['status' => 200, 'body' => ['ok' => true, 'csrf' => self::csrfFor($session)], 'session' => $session];
     }
@@ -350,6 +413,8 @@ final class OwnerAppAuth
             'session_hash' => null, 'session_seen_at' => null, 'updated_at' => now(),
         ]);
         DB::table('owner_app_push_subscriptions')->where('device_id', $deviceId)->delete();
+        // Its Face ID / fingerprint credential goes with it (Lane BIO).
+        Passkeys::forget($deviceId);
     }
 
     /** Every session a member holds ends (a new PIN, access switched off). */

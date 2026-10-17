@@ -35,11 +35,14 @@ declare(strict_types=1);
 |     GET  /{app}/api/state               not enrolled / PIN / unlocked
 |     POST /{app}/api/enrol               email + PIN, first use on a device
 |     POST /{app}/api/unlock              PIN on an enrolled device
+|     POST /{app}/api/passkey/start       Face ID / fingerprint challenge (Lane BIO)
+|     POST /{app}/api/passkey/unlock      Face ID / fingerprint answer -> session
 |   behind the PIN (OwnerAppSession), then the Customise-app switches
 |   (OwnerAppUiGate: a screen or function switched off is 403 `off`, Lane OA4),
 |   then the capability per action:
 |     POST /{app}/api/lock                                -
 |     POST /{app}/api/forget                              -
+|     POST /{app}/api/passkey/new, /save, /off            - (Lane BIO, this device only)
 |     GET  /{app}/api/dashboard                           orders.view (+ analytics.view for money)
 |     GET  /{app}/api/orders                              orders.view
 |     GET  /{app}/api/orders/{id}                         orders.view
@@ -108,10 +111,18 @@ if ($ownerAppPath !== null) {
             Route::get('/api/state', [AppController::class, 'state'])->middleware('throttle:120,1,oa-state')->name('state');
             Route::post('/api/enrol', [AppController::class, 'enrol'])->middleware('throttle:20,1,oa-enrol')->name('enrol');
             Route::post('/api/unlock', [AppController::class, 'unlock'])->middleware('throttle:30,1,oa-unlock')->name('unlock');
+            // Face ID / fingerprint (Lane BIO): a challenge for this device's
+            // credential, then the signed answer -> the PIN's own session.
+            Route::post('/api/passkey/start', [AppController::class, 'passkeyStart'])->middleware('throttle:30,1,oa-pk-start')->name('passkey.start');
+            Route::post('/api/passkey/unlock', [AppController::class, 'passkeyUnlock'])->middleware('throttle:30,1,oa-pk-unlock')->name('passkey.unlock');
 
             Route::prefix('api')->middleware([OwnerAppSession::class, \App\Http\Middleware\OwnerAppUiGate::class, 'throttle:300,1,oa-api'])->group(function () {
                 Route::post('/lock', [AppController::class, 'lock'])->name('lock');
                 Route::post('/forget', [AppController::class, 'forget'])->name('forget');
+                // Face ID / fingerprint on this device (Lane BIO): only an unlocked session makes or removes it.
+                Route::post('/passkey/new', [AppController::class, 'passkeyNew'])->middleware('throttle:20,1,oa-pk-new')->name('passkey.new');
+                Route::post('/passkey/save', [AppController::class, 'passkeySave'])->middleware('throttle:20,1,oa-pk-save')->name('passkey.save');
+                Route::post('/passkey/off', [AppController::class, 'passkeyOff'])->name('passkey.off');
 
                 Route::get('/dashboard', DashboardController::class)->name('dashboard');
 

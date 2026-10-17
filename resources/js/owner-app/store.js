@@ -6,6 +6,7 @@ import { S, esc, api, $, $$, ic, logo, top, back, toast, sheet, busy, tgl, ago, 
   scr, fn, vars, syncBtn, screen, onScreen, once, landed, isFresh, onReset, ln, blk, times, skChips, skNote } from './core.js';
 import { ordersState } from './orders.js';
 import { card as installCard, cardClick, takeBip } from './install.js';
+import { bioAvailable, bioOn, bioEnable, bioDisable, bioClear, bioPrepareNew } from './passkey.js';
 
 /* ---------------------------------------------------------- my store */
 
@@ -340,6 +341,7 @@ export async function renderMore(view) {
   const me = S.me;
   let on = false;
   try { on = !!(await currentSub()) && Notification.permission === 'granted'; } catch (e) { on = false; }
+  const bioCan = await bioAvailable();   // Face ID / fingerprint (Lane BIO): asked once per launch
   const r = (icon, t, right, sub, attrs) => '<' + (attrs && attrs.indexOf('href') === 0 ? 'a ' + attrs : 'div') + ' class="row"><span class="ico">' + ic(icon) + '</span><div class="rm"><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>' + right + '</' + (attrs && attrs.indexOf('href') === 0 ? 'a' : 'div') + '>';
   const ch = ic('chev', 'chev s');
   // Screens switched off under Customise app (Lane OA4) leave More's list.
@@ -356,6 +358,7 @@ export async function renderMore(view) {
     + '<div class="gh"><span>App</span></div><section class="card set plain-list">'
     + r('homeadd', 'Add to home screen', standalone() ? '<span class="muted">Installed</span>' : '<button type="button" class="tbtn" data-a2>Install</button>', standalone() ? 'Opens full screen from your home screen' : 'Not installed on this phone')
     + r('lock', 'Unlock with PIN', '<span class="muted">Always</span>', 'Locks after ' + S.idle + ' hours away')
+    + r('finger', 'Face ID / fingerprint', tgl(bioCan && bioOn(), 'Face ID / fingerprint on this phone', 'data-bio' + (bioCan ? '' : ' disabled')), !bioCan ? 'Not available on this phone' : bioOn() ? 'On · no PIN needed here' : 'Off · unlock without the PIN')
     + r('refresh', 'Sync on open', '<span class="muted">Silent</span>', 'Loading bars after ' + esc(Math.round(S.staleMs / 60000)) + ' min away') + '</section>'
     + '<div class="gh"><span>Notifications</span>' + (on ? '<button type="button" data-test>Send a test</button>' : '') + '</div><section class="card set plain-list">'
     + r('device', 'On this phone', tgl(on, 'Notifications on this phone', 'data-push'), pushable() ? (isIOS && !standalone() ? 'On iPhone, add the app to your home screen first' : '') : 'This browser cannot receive notifications')
@@ -365,6 +368,9 @@ export async function renderMore(view) {
     + '<button type="button" class="row" data-lock><span class="ico">' + ic('lock') + '</span><div class="rm"><b>Lock now</b></div></button>'
     + '<button type="button" class="row" data-forget><span class="ico">' + ic('logout') + '</span><div class="rm"><b class="danger">Log out of this phone</b></div></button></section>'
     + '<p class="ver">Owner app 1.0 · ' + esc(location.hostname) + '</p>');
+  // A finger on the Face ID switch fetches its options, so the tap goes straight to the prompt (passkey.js).
+  const bt = $('[data-bio]', view);
+  if (bt && !bt.disabled && bt.getAttribute('aria-checked') !== 'true') bt.addEventListener('pointerdown', bioPrepareNew, { once: true, passive: true });
 }
 
 export async function moreClick(e, view, gate) {
@@ -390,6 +396,16 @@ export async function moreClick(e, view, gate) {
     renderMore(view);
     return;
   }
+  const bio = t.closest('[data-bio]');
+  if (bio && !bio.disabled) {
+    await busy(bio, async () => {
+      if (bio.getAttribute('aria-checked') === 'true') { await bioDisable(); toast('Face ID / fingerprint off on this phone'); return; }
+      const ok = await bioEnable();
+      toast(ok ? 'Face ID / fingerprint on for this phone' : 'Could not turn it on. Your PIN still works.', !ok);
+    });
+    renderMore(view);
+    return;
+  }
   const grp = t.closest('[data-group]');
   if (grp && !grp.disabled) {
     grp.setAttribute('aria-checked', grp.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
@@ -407,6 +423,7 @@ export async function moreClick(e, view, gate) {
         const sub = await currentSub().catch(() => null);
         if (sub) await sub.unsubscribe().catch(() => {});
         await api('POST', 'forget', {});
+        bioClear();   // the server dropped this phone's credential with it
         gate('enrol');
       });
     });

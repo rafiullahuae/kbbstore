@@ -17,7 +17,7 @@ class OwnerAppDevice extends Model
 
     protected $guarded = ['id'];
 
-    protected $hidden = ['token_hash', 'session_hash'];
+    protected $hidden = ['token_hash', 'session_hash', 'passkey_challenge'];
 
     protected function casts(): array
     {

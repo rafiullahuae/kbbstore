@@ -1,0 +1,49 @@
+== 390px, virtual authenticator (ctap2, internal, UV)
+  offer after PIN shown: yes
+  shot offer-after-pin-390.png
+  settings before: aria-checked=false · Off · unlock without the PIN
+  shot settings-before-390.png
+  settings after: aria-checked=true · On · no PIN needed here
+  credentials on the virtual authenticator: 1 (resident 1)
+  shot settings-after-390.png
+  fresh launch -> auto prompt -> app
+  lock now -> pin, button visible
+  shot lock-screen-390.png
+  tap "Use Face ID / fingerprint" -> app
+  not verified -> pin · message "Or enter your PIN"
+  shot lock-fallback-390.png
+  then the PIN -> app
+  switched off in Settings: aria-checked=false
+  lock after off -> button hidden: true
+  scrollWidth 390 at 390
+  passkey requests: GET state 200 | POST enrol 200 | GET state 200 | POST passkey/new 200 | POST passkey/save 200 | GET state 200 | POST passkey/start 200 | POST passkey/unlock 200 | GET state 200 | POST lock 200 | GET state 200 | POST passkey/start 200 | POST passkey/unlock 200 | GET state 200 | POST lock 200 | GET state 200 | POST passkey/start 200 | POST unlock 200 | GET state 200 | POST passkey/off 200 | POST lock 200 | GET state 200
+  console/page errors: none
+== 1280px, virtual authenticator (ctap2, internal, UV)
+  offer after PIN shown: yes
+  shot offer-after-pin-1280.png
+  settings before: aria-checked=false · Off · unlock without the PIN
+  shot settings-before-1280.png
+  settings after: aria-checked=true · On · no PIN needed here
+  credentials on the virtual authenticator: 1 (resident 1)
+  shot settings-after-1280.png
+  fresh launch -> auto prompt -> app
+  lock now -> pin, button visible
+  shot lock-screen-1280.png
+  tap "Use Face ID / fingerprint" -> app
+  not verified -> pin · message "Or enter your PIN"
+  then the PIN -> app
+  switched off in Settings: aria-checked=false
+  lock after off -> button hidden: true
+  scrollWidth 1280 at 1280
+  passkey requests: GET state 200 | POST enrol 200 | GET state 200 | POST passkey/new 200 | POST passkey/save 200 | GET state 200 | POST passkey/start 200 | POST passkey/unlock 200 | GET state 200 | POST lock 200 | GET state 200 | POST passkey/start 200 | POST passkey/unlock 200 | GET state 200 | POST lock 200 | GET state 200 | POST passkey/start 200 | POST unlock 200 | GET state 200 | POST passkey/off 200 | POST lock 200 | GET state 200
+  console/page errors: none
+== 390px, first login -> popup -> Enable
+  enabled from the popup; credentials: 1
+  next launch -> app by Face ID; popup again: no
+  passkey requests: GET state 200 | POST enrol 200 | GET state 200 | POST passkey/new 200 | POST passkey/save 200 | GET state 200 | POST passkey/start 200 | POST passkey/unlock 200 | GET state 200
+  console/page errors: none
+== 390px, a phone with no Face ID / fingerprint (no authenticator)
+  offer shown: no
+  settings: disabled=true · Not available on this phone
+  shot settings-unavailable-390.png
+  console/page errors: none

@@ -248,7 +248,17 @@ final class AppController extends Controller
             return response()->json(['ok' => false, 'code' => 'no_device', 'message' => 'Sign in with your email and PIN.'], 401);
         }
 
-        $r = OwnerAppAuth::unlock($request, $device, mb_substr((string) $request->input('pin', ''), 0, 16));
+        return self::unlockAnswer($request, $device, OwnerAppAuth::unlock($request, $device, mb_substr((string) $request->input('pin', ''), 0, 16)));
+    }
+
+    /**
+     * The answer to an unlock, by PIN or by Face ID / fingerprint (Lane BIO):
+     * one shape, one cookie, one place.
+     *
+     * @param array{status:int, body:array<string,mixed>, session?:string} $r
+     */
+    private static function unlockAnswer(Request $request, \App\Models\OwnerAppDevice $device, array $r): JsonResponse
+    {
         $response = response()->json($r['body'] + (isset($r['session']) ? self::me($request, $device->fresh(['member.admin'])) : []), $r['status']);
 
         if (isset($r['session'])) {
@@ -258,6 +268,69 @@ final class AppController extends Controller
         }
 
         return $response;
+    }
+
+    /* ------------------------------------- Face ID / fingerprint (Lane BIO) */
+
+    /**
+     * Before the lock: a challenge for THIS device's credential. No device, a
+     * barred one, or one without a credential: the one refusal, nothing else.
+     */
+    public function passkeyStart(Request $request): JsonResponse
+    {
+        $device = OwnerAppAuth::device($request);
+        $options = ($device !== null && OwnerAppAuth::barred($device) === null) ? \App\Services\OwnerApp\Passkeys::unlockOptions($request, $device) : null;
+
+        return $options === null
+            ? response()->json(OwnerAppAuth::PASSKEY_REFUSED, 422)
+            : response()->json(['ok' => true, 'publicKey' => $options]);
+    }
+
+    /** The signed challenge back: the PIN's own session on success. */
+    public function passkeyUnlock(Request $request): JsonResponse
+    {
+        $device = OwnerAppAuth::device($request);
+
+        if ($device === null) {
+            OwnerAppAuth::log($request, 'passkey', false, 'no_device', null, null);
+
+            return response()->json(OwnerAppAuth::PASSKEY_REFUSED, 422);
+        }
+
+        $field = static fn (string $k) => is_string($v = $request->input($k)) ? $v : '';
+
+        return self::unlockAnswer($request, $device, OwnerAppAuth::passkeyUnlock($request, $device, [
+            'id' => $field('id'), 'clientDataJSON' => $field('clientDataJSON'),
+            'authenticatorData' => $field('authenticatorData'), 'signature' => $field('signature'),
+        ]));
+    }
+
+    /** Behind the PIN: options to make this device's credential. */
+    public function passkeyNew(Request $request): JsonResponse
+    {
+        return response()->json(['ok' => true, 'publicKey' => \App\Services\OwnerApp\Passkeys::registrationOptions($request, $request->attributes->get('oa.device'))]);
+    }
+
+    /** Behind the PIN: keep the credential the phone just made (replaces any earlier one). */
+    public function passkeySave(Request $request): JsonResponse
+    {
+        $device = $request->attributes->get('oa.device');
+        $why = \App\Services\OwnerApp\Passkeys::register($request, $device,
+            is_string($v = $request->input('clientDataJSON')) ? $v : '',
+            is_string($v = $request->input('attestationObject')) ? $v : '');
+        OwnerAppAuth::log($request, 'passkey_add', $why === null, $why ?? 'ok', (int) $device->member_id, (int) $device->id);
+
+        return $why === null
+            ? response()->json(['ok' => true])
+            : response()->json(['ok' => false, 'code' => 'passkey', 'message' => 'Face ID / fingerprint could not be set up on this phone. Your PIN still works.'], 422);
+    }
+
+    /** Behind the PIN: Face ID / fingerprint off on this device. */
+    public function passkeyOff(Request $request): JsonResponse
+    {
+        \App\Services\OwnerApp\Passkeys::forget((int) $request->attributes->get('oa.device')->id);
+
+        return response()->json(['ok' => true]);
     }
 
     /** Lock now: the PIN is needed again; the device stays enrolled. */
