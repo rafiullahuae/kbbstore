@@ -1,0 +1,8 @@
+{'tag': 'en', 'w': 360, 'tap': [62, 32], 'capsuleOwnRow': True, 'hit': '/ar/', 'sw': 360, 'errs': []}
+{'tag': 'en', 'w': 390, 'tap': [62, 32], 'capsuleOwnRow': True, 'hit': '/ar/', 'sw': 390, 'errs': []}
+{'tag': 'en', 'w': 1024, 'tap': [62, 24], 'capsuleOwnRow': False, 'hit': '/ar/', 'sw': 1024, 'errs': []}
+{'tag': 'en', 'w': 1280, 'tap': [62, 24], 'capsuleOwnRow': False, 'hit': '/ar/', 'sw': 1280, 'errs': []}
+{'tag': 'ar', 'w': 360, 'tap': [67, 32], 'capsuleOwnRow': True, 'hit': '/', 'sw': 360, 'errs': []}
+{'tag': 'ar', 'w': 390, 'tap': [67, 32], 'capsuleOwnRow': True, 'hit': '/', 'sw': 390, 'errs': []}
+{'tag': 'ar', 'w': 1024, 'tap': [67, 24], 'capsuleOwnRow': False, 'hit': '/', 'sw': 1024, 'errs': []}
+{'tag': 'ar', 'w': 1280, 'tap': [67, 24], 'capsuleOwnRow': False, 'hit': '/', 'sw': 1280, 'errs': []}

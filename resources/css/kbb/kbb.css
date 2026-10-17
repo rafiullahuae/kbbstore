@@ -5416,10 +5416,15 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
 .kft-bot{border-top:1px solid #F1E3E8;font-size:12.5px;color:var(--muted);background:var(--kft-bg,#fff)}
 .kft-bot-in{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
 .kft-legal{display:flex;gap:14px}
-/* The language switcher (partials/lang-switch): printed only while Arabic is on. */
-.kbb-lang{display:inline-flex;align-items:center;gap:10px}
-.kbb-lang span[aria-current]{font-weight:600}
-.kbb-lang a{text-decoration:underline;text-underline-offset:2px}
+/* The language switcher (partials/lang-switch): printed only while Arabic is on.
+   A capsule, the current language filled (the owner's pick, P1, 17 October
+   2026: "the capsule designs is final for the desktop and mobile footer");
+   on a phone it is its own centred row, apart from Privacy and Terms. */
+.kbb-lang{display:flex;justify-content:center}
+.kbb-lang-c{display:inline-flex;align-items:center;border:1px solid #EADDE2;border-radius:99px;padding:3px;background:#fff}
+.kbb-lang-c>*{display:inline-flex;align-items:center;min-block-size:24px;padding:2px 14px;border-radius:99px;line-height:1.2;color:inherit;text-decoration:none}
+.kbb-lang-c>[aria-current]{background:#C13E63;color:#fff;font-weight:700}
+.kbb-lang-c>a:hover{color:#C13E63}
 .fbot .kbb-lang{margin-inline-start:14px}
 .kft-legal a:hover{color:var(--kft-accent,#C13E63)}
 .kft-pay{display:flex;gap:6px;flex-wrap:wrap}
@@ -5576,6 +5581,9 @@ header .hin>.logo.lgx.lgx-ar .lgx-w,.mnav-h>.logo.lgx.lgx-ar .lgx-w,.co-head .in
   .kft-news{max-width:none;margin-top:12px}
   .kft-name{margin-top:14px;font-size:calc(min(calc(173.6vw / var(--kft-n, 14)), calc(2324px / var(--kft-n, 14))) * var(--kft-fn-m, 100) / 100)}
   .kft-bot-in{justify-content:center;text-align:center;padding-block:10px;gap:8px}
+  /* The language capsule: its own row, and a larger tap target on a phone. */
+  .kft-bot .kbb-lang{flex:0 0 100%}
+  .kbb-lang-c>*{min-block-size:32px}
   /* Centred (the owner, 4 October: "center the social media icons, and
      description text … also center the support text"). The brand block
      stacks — description, then the icons — and the strip puts its icon above
