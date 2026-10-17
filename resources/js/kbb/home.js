@@ -121,7 +121,20 @@ function initMobileChrome() {
     const side = menu.classList.contains('mm-left');
     if (side) menu.tabIndex = -1;
 
-    const open = () => {
+    /*
+     * KEYBOARD OR TOUCH (17 October 2026). The owner: "the mobile menu icon,
+     * when we click, it left one weird outer blue border". Moving focus by
+     * script after a TAP -- into the panel on open, back to ☰ on close -- lets
+     * a phone's Chrome draw its blue focus ring round the icon. So focus moves
+     * only when the menu was opened or shut from the keyboard (Enter/Space on
+     * a button arrives as a CLICK with detail 0 -- a swipe's pointerup has
+     * detail 0 too, so the type is checked; Escape is a key), where it is
+     * what keeps a keyboard user's place. A tap moves nothing, and a button
+     * left focused inside the shut panel is let go. No header CSS changes.
+     */
+    const byKeys = (event) => !!event && (event.type === 'keydown' || (event.type === 'click' && event.detail === 0));
+
+    const open = (event) => {
         menu.classList.add('on');
         scrim.classList.add('on');
         document.body.classList.add('menu-open');
@@ -129,9 +142,9 @@ function initMobileChrome() {
         burger?.setAttribute('aria-expanded', 'true');
         // Into the panel, on the close button rather than the search field,
         // so a phone's keyboard does not jump up over the menu.
-        if (side) (document.getElementById('mmx') || menu).focus({ preventScroll: true });
+        if (side && byKeys(event)) (document.getElementById('mmx') || menu).focus({ preventScroll: true });
     };
-    const shut = () => {
+    const shut = (event) => {
         const was = menu.classList.contains('on');
         menu.classList.remove('on');
         scrim.classList.remove('on');
@@ -140,16 +153,17 @@ function initMobileChrome() {
         burger?.setAttribute('aria-expanded', 'false');
         // Back to the burger that opened it -- only when it really was open,
         // because Escape anywhere on the page calls this too.
-        if (side && was) burger?.focus({ preventScroll: true });
+        if (side && was && byKeys(event)) burger?.focus({ preventScroll: true });
+        else if (was && menu.contains(document.activeElement)) document.activeElement.blur();
     };
 
-    burger?.addEventListener('click', () => (menu.classList.contains('on') ? shut() : open()));
+    burger?.addEventListener('click', (event) => (menu.classList.contains('on') ? shut(event) : open(event)));
     document.getElementById('mmx')?.addEventListener('click', shut);
     scrim.addEventListener('click', shut);
-    document.addEventListener('keydown', (e) => e.key === 'Escape' && shut());
+    document.addEventListener('keydown', (e) => e.key === 'Escape' && shut(e));
 
     menu.addEventListener('click', (event) => {
-        if (event.target.closest('[data-mm-close]')) { shut(); return; }
+        if (event.target.closest('[data-mm-close]')) { shut(event); return; }
 
         const parent = event.target.closest('.mm-par');
         if (parent) {
@@ -169,7 +183,7 @@ function initMobileChrome() {
         }
 
         // Following a link should close the sheet, or it is still open on return.
-        if (event.target.closest('a')) shut();
+        if (event.target.closest('a')) shut(event);
     });
 
     if (side) initSidePanel(menu, shut);
@@ -228,7 +242,7 @@ function initSidePanel(menu, shut) {
         setTimeout(() => { dragged = false; }, 60);
         menu.classList.remove('mm-drag');
         menu.style.transform = '';
-        if (dx < -60 || dx / Math.max(1, e.timeStamp - t0) < -0.45) shut();
+        if (dx < -60 || dx / Math.max(1, e.timeStamp - t0) < -0.45) shut(e);
     };
     menu.addEventListener('pointerup', end);
     menu.addEventListener('pointercancel', end);

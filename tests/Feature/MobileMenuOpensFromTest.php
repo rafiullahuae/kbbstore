@@ -232,12 +232,14 @@ it('takes focus in, keeps Tab inside, closes on Esc, the backdrop or a swipe, an
 
     // Side-only behaviour is gated on the class, so Bottom runs as it did.
     expect($js)->toContain("const side = menu.classList.contains('mm-left');")
-        ->and($js)->toContain("if (side) (document.getElementById('mmx') || menu).focus({ preventScroll: true });")
-        ->and($js)->toContain('if (side && was) burger?.focus({ preventScroll: true });')
+        // 17 October 2026: in and back for the KEYBOARD only -- after a tap the
+        // phone's Chrome drew a blue ring round ☰ (MenuIconFocusRingTest).
+        ->and($js)->toContain("if (side && byKeys(event)) (document.getElementById('mmx') || menu).focus({ preventScroll: true });")
+        ->and($js)->toContain('if (side && was && byKeys(event)) burger?.focus({ preventScroll: true });')
         ->and($js)->toContain('if (side) initSidePanel(menu, shut);');
 
     // Esc and the backdrop: the handlers the sheet already had, still there.
-    expect($js)->toContain("document.addEventListener('keydown', (e) => e.key === 'Escape' && shut());")
+    expect($js)->toContain("document.addEventListener('keydown', (e) => e.key === 'Escape' && shut(e));")
         ->and($js)->toContain("scrim.addEventListener('click', shut);")
         ->and($js)->toContain("document.getElementById('mmx')?.addEventListener('click', shut);");
 
@@ -246,7 +248,7 @@ it('takes focus in, keeps Tab inside, closes on Esc, the backdrop or a swipe, an
         ->and($js)->toContain("menu.addEventListener('pointerdown'")
         ->and($js)->toContain("menu.addEventListener('pointercancel', end);")
         ->and($js)->toContain('(rtl() ? -1 : 1)')
-        ->and($js)->toContain('if (dx < -60 || dx / Math.max(1, e.timeStamp - t0) < -0.45) shut();');
+        ->and($js)->toContain('if (dx < -60 || dx / Math.max(1, e.timeStamp - t0) < -0.45) shut(e);');
 
     // Body scroll is locked while it is open, as the sheet always did.
     expect($js)->toContain("document.body.style.overflow = 'hidden';");
