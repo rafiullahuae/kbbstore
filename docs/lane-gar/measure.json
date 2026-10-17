@@ -1,0 +1,66 @@
+{
+  "en/390": {
+    "found": true,
+    "h2": "Recommended for you",
+    "sub": "Handpicked K-beauty for your routine",
+    "all": "View all",
+    "h2px": "19px",
+    "scrollWidth": 390,
+    "width": 390,
+    "consoleErrors": []
+  },
+  "en/1280": {
+    "found": true,
+    "h2": "Recommended for you",
+    "sub": "Handpicked K-beauty for your routine",
+    "all": "View all",
+    "h2px": "26px",
+    "scrollWidth": 1280,
+    "width": 1280,
+    "consoleErrors": []
+  },
+  "ar/390": {
+    "found": true,
+    "h2": "مقترحة لكِ",
+    "sub": "Handpicked K-beauty for your routine",
+    "all": "عرض الكل",
+    "h2px": "19px",
+    "scrollWidth": 390,
+    "width": 390,
+    "consoleErrors": []
+  },
+  "ar/1280": {
+    "found": true,
+    "h2": "مقترحة لكِ",
+    "sub": "Handpicked K-beauty for your routine",
+    "all": "عرض الكل",
+    "h2px": "26px",
+    "scrollWidth": 1280,
+    "width": 1280,
+    "consoleErrors": []
+  },
+  "editor-1280": {
+    "tabsStep": false,
+    "arabicBoxes": [
+      "eyebrow_ar",
+      "heading_ar",
+      "sub_ar",
+      "view_all_ar"
+    ],
+    "translateButtons": 4,
+    "scrollWidth": 1280,
+    "width": 1280
+  },
+  "editor-390": {
+    "tabsStep": false,
+    "arabicBoxes": [
+      "eyebrow_ar",
+      "heading_ar",
+      "sub_ar",
+      "view_all_ar"
+    ],
+    "translateButtons": 4,
+    "scrollWidth": 390,
+    "width": 390
+  }
+}

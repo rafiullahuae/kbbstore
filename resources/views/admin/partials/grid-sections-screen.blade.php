@@ -212,7 +212,6 @@
 .gss-sg.is-on span{background:var(--accent,#E8919F);color:#fff}
 .gss-pairs{display:grid;gap:10px;min-width:0}
 .gss-pr{display:grid;gap:8px 14px;grid-template-columns:140px minmax(0,1fr) minmax(0,1fr);align-items:start;min-width:0}
-.gss-pairs.is-en .gss-pr{grid-template-columns:140px minmax(0,1fr)}
 .gss-ph{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft,#6b7280)}
 .gss-pl{font-size:12.5px;font-weight:600;padding-top:8px}
 .gss-pc{display:grid;gap:4px;min-width:0}
@@ -236,7 +235,7 @@
   .gss-foot{margin:13px -13px -13px;padding:10px 13px}
   .gss-sb{padding-left:0}
   .gss-two,.gss-three,.gss-cards{grid-template-columns:minmax(0,1fr)}
-  .gss-pr,.gss-pairs.is-en .gss-pr{grid-template-columns:minmax(0,1fr);gap:6px}
+  .gss-pr{grid-template-columns:minmax(0,1fr);gap:6px}
   .gss-pr + .gss-pr{border-top:1px solid var(--border,#e6e6e6);padding-top:10px}
   .gss-ph{display:none}
   .gss-pl{padding-top:0}
@@ -362,6 +361,9 @@
     draft = {values: {}, manual_ids: (saved.section.manual_ids || []).slice(),
       /* Lane HTB: the product tabs, a deep copy so typing never reaches `saved`. */
       ptabs: saved.product_tabs ? JSON.parse(JSON.stringify(saved.product_tabs)) : null,
+      /* Lane GAR: the heading's Arabic twins while tabs are OFF (with tabs on
+         they live in ptabs, as before). Same five keys, same column. */
+      words: wordsOf(saved.product_tabs || saved.section_words),
       tab_style: saved.tab_style || 'a'};
     fieldKeys().forEach(function(k){
       var f = fieldOf(k);
@@ -394,12 +396,35 @@
 
   function dirty(){ return changed().length > 0; }
 
-  /* Lane HTB: the tabs and their style, compared as a whole. */
+  /* Lane HTB: the tabs and their style, compared as a whole. Lane GAR: with
+     tabs off, the heading's Arabic words are what the column holds. */
   function tabsChanged(){
     if (!draft || !saved) return false;
-    return JSON.stringify(draft.ptabs || null) !== JSON.stringify(saved.product_tabs || null)
+    return JSON.stringify(outTabs()) !== JSON.stringify(saved.product_tabs || wordsOnly(wordsOf(saved.section_words)))
       || (draft.ptabs && String(draft.tab_style) !== String(saved.tab_style || 'a'));
   }
+
+  var WORD_KEYS = ['eyebrow', 'eyebrow_ar', 'heading_ar', 'sub_ar', 'view_all_ar'];
+
+  /* The five section words of a stored tabs object (or blanks), in the order the server sends them. */
+  function wordsOf(src){
+    var w = {};
+    WORD_KEYS.forEach(function(k){ w[k] = src && src[k] != null ? String(src[k]) : ''; });
+    return w;
+  }
+
+  /* What the column holds for an ordinary grid: its words with no tab, or null when there are none. */
+  function wordsOnly(w){
+    var any = WORD_KEYS.some(function(k){ return String(w[k] || '').trim() !== ''; });
+    if (!any) return null;
+    var out = wordsOf(w);
+    out.align = 'center';
+    out.list = [];
+    return out;
+  }
+
+  /* What Save (and the preview) sends as product_tabs. */
+  function outTabs(){ return draft.ptabs || wordsOnly(draft.words); }
 
   /* LEAVING KEEPS THE DRAFT, AND ASKS NOTHING. (Lane PM)
      This used to be window.confirm("You have N unsaved change(s). Leave them?")
@@ -425,6 +450,7 @@
       fieldKeys().forEach(function(k){ out['v.' + k] = draft.values[k]; });
       out.manual_ids = draft.manual_ids.join(',');
       out.ptabs = JSON.stringify(draft.ptabs || null);
+      out.words = JSON.stringify(draft.words);
       out.tab_style = draft.tab_style;
       return out;
     },
@@ -434,6 +460,7 @@
         return;
       }
       if (k === 'ptabs') { try { draft.ptabs = JSON.parse(v); } catch (e) {} return; }
+      if (k === 'words') { try { draft.words = wordsOf(JSON.parse(v)); } catch (e) {} return; }
       if (k === 'tab_style') { draft.tab_style = v === 'b' ? 'b' : 'a'; return; }
       if (k.indexOf('v.') === 0 && fieldKeys().indexOf(k.slice(2)) !== -1) draft.values[k.slice(2)] = v;
     },
@@ -553,7 +580,7 @@
       var body = await api('/grid-sections/' + encodeURIComponent(openId) + '/preview', 'POST', {
         values: draft.values,
         manual_ids: draft.manual_ids,
-        product_tabs: draft.ptabs,
+        product_tabs: outTabs(),
         tab_style: draft.tab_style,
         lang: previewLang
       });
@@ -844,7 +871,7 @@
 
     html += stepHTML(3, 'heading', 'Heading', on
       ? 'The words above the section, English beside Arabic. An empty Arabic box shows the English on the Arabic shop.'
-      : 'The words above the grid, and the “View all” button under it.', heading);
+      : 'The words above the grid, English beside Arabic, and the “View all” button under it. An empty Arabic box shows the English on the Arabic shop.', heading);
 
     html += stepHTML(4, 'products', 'Products', on
       ? 'How many products each tab shows.'
@@ -879,18 +906,19 @@
     placed.show_heading = 1;
     if (f) html += fieldHTML(f);
 
-    var t = draft.ptabs;
-    html += '<div class="gss-pairs' + (on ? '' : ' is-en') + '">'
-      + '<div class="gss-pr gss-ph"><span></span><span>English</span>' + (on ? '<span>العربية · Arabic</span>' : '') + '</div>';
+    /* Lane GAR: English | Arabic in BOTH modes ("this heading on the homepage
+       is not translated, please do"). Tabs on, the words are in ptabs; off,
+       in draft.words — the same keys, saved into the same column. */
+    var t = draft.ptabs || draft.words;
+    html += '<div class="gss-pairs">'
+      + '<div class="gss-pr gss-ph"><span></span><span>English</span><span>العربية · Arabic</span></div>';
 
-    if (on) {
-      html += pairRow('Small line above', '',
+    html += pairRow('Small line above', '',
         '<input class="gss-in" data-gss-t="eyebrow" maxlength="190" value="' + esc(t.eyebrow || '') + '">',
-        arabicBox('eyebrow_ar', t.eyebrow_ar, 190));
-    }
-    html += pairRow('Heading', 'gss-f-heading', enField('heading', placed, !on), on ? arabicBox('heading_ar', t.heading_ar, 190) : null)
-      + pairRow('Sub-heading', 'gss-f-subheading', enField('subheading', placed, false), on ? arabicBox('sub_ar', t.sub_ar, 255) : null)
-      + pairRow('“View all” text', 'gss-f-view_all_label', enField('view_all_label', placed, true), on ? arabicBox('view_all_ar', t.view_all_ar, 120) : null)
+        arabicBox('eyebrow_ar', t.eyebrow_ar, 190))
+      + pairRow('Heading', 'gss-f-heading', enField('heading', placed, !on), arabicBox('heading_ar', t.heading_ar, 190))
+      + pairRow('Sub-heading', 'gss-f-subheading', enField('subheading', placed, false), arabicBox('sub_ar', t.sub_ar, 255))
+      + pairRow('“View all” text', 'gss-f-view_all_label', enField('view_all_label', placed, true), arabicBox('view_all_ar', t.view_all_ar, 120))
       + '</div>';
 
     placed.show_view_all = 1;
@@ -901,8 +929,7 @@
     } else {
       var sw = fieldOf('show_view_all');
       var url = fieldOf('view_all_url');
-      html += '<div class="gss-two">' + (sw ? fieldHTML(sw) : '') + (url ? fieldHTML(url) : '') + '</div>'
-        + '<p class="gss-help" style="margin:0">Arabic boxes for these words appear here when the section is shown as tabs (step 2).</p>';
+      html += '<div class="gss-two">' + (sw ? fieldHTML(sw) : '') + (url ? fieldHTML(url) : '') + '</div>';
     }
 
     return html;
@@ -1024,14 +1051,14 @@
 
   /* The value at a dotted path inside draft.ptabs ("list.2.title_ar"). */
   function tget(path){
-    var o = draft.ptabs;
+    var o = draft.ptabs || draft.words;
     path.split('.').forEach(function(k){ o = (o == null) ? undefined : o[k]; });
     return o;
   }
 
   function tset(path, v){
     var keys = path.split('.');
-    var o = draft.ptabs;
+    var o = draft.ptabs || draft.words;
     for (var i = 0; i < keys.length - 1; i++) o = o[keys[i]];
     o[keys[keys.length - 1]] = v;
   }
@@ -1041,7 +1068,7 @@
     if (path === 'heading_ar') return draft.values.heading || '';
     if (path === 'sub_ar') return draft.values.subheading || '';
     if (path === 'view_all_ar') return draft.values.view_all_label || '';
-    if (path === 'eyebrow_ar') return draft.ptabs.eyebrow || '';
+    if (path === 'eyebrow_ar') return (draft.ptabs || draft.words).eyebrow || '';
     return tget(path.replace(/_ar$/, '')) || '';
   }
 
@@ -1209,8 +1236,12 @@
       if (on.checked) {
         draft.ptabs = draft.ptabs || (saved.product_tabs ? JSON.parse(JSON.stringify(saved.product_tabs)) : null)
           || {eyebrow: '', eyebrow_ar: '', heading_ar: '', sub_ar: '', view_all_ar: '', align: 'center', list: [blankTab()]};
+        /* Lane GAR: the words typed with tabs off come along. */
+        WORD_KEYS.forEach(function(k){ draft.ptabs[k] = draft.words[k]; });
         openTabs = {0: true};
       } else {
+        /* ...and go back with them: switching tabs off keeps the Arabic. */
+        draft.words = wordsOf(draft.ptabs);
         draft.ptabs = null;
       }
       render(); refreshPreview();
@@ -1575,7 +1606,11 @@
         /* Only when they changed: an ordinary grid's save never names the
            tabs columns, so it cannot be refused on a server whose migration
            has not run yet. */
-        if (tabsChanged()) { payload.product_tabs = draft.ptabs; payload.tab_style = draft.tab_style; }
+        if (tabsChanged()) {
+          payload.product_tabs = outTabs();
+          /* Lane GAR: an ordinary grid's words never move its tab style. */
+          if (draft.ptabs) payload.tab_style = draft.tab_style;
+        }
         var body = await api('/grid-sections/' + encodeURIComponent(openId), 'PUT', payload);
         saved = Object.assign({}, saved, body);
         startDraft();

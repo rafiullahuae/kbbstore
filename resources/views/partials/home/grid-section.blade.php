@@ -84,6 +84,11 @@
     duplicated. ArabicInterfaceDraftsTest refuses a second key carrying the same
     Arabic, and it is right to: two keys for one sentence is two things for a
     translator to keep in step.
+
+    Lane GAR: on /ar those same words come from his Arabic twins (the `tabs`
+    column, tabs on or off), else ArabicWording::of() for a phrase the shop
+    ships in Arabic, else his English -- GridTabs::say(), below. English pages
+    print exactly what they printed before.
 --}}
 @php
     $gsKey = $section->sectionKey();
@@ -128,15 +133,35 @@
 
     $gsLabel = trim((string) $section->view_all_label);
     $gsCardLabel = trim((string) $section->card_label);
+
+    /*
+     * Lane GAR — the owner, with a screenshot of /ar: "this heading on the
+     * homepage is not translated, please do". The section's words as the page
+     * prints them, ONE answer for both modes (grid-tabs.blade.php reads these
+     * same four): English page, as typed; /ar, his Arabic twin, else the
+     * shop's own Arabic for a shipped phrase, else his English
+     * (GridTabs::say). The twins sit in the `tabs` column this row already
+     * holds -- no query. An empty English heading or sub-heading stays hidden
+     * whatever its twin says, as it always has.
+     */
+    $gsWords = \App\Support\GridTabs::words($section);
+    $gsEyebrow = \App\Support\GridTabs::say($gsWords['eyebrow'], $gsWords['eyebrow_ar']);
+    $gsHeadingSay = $gsHeading !== '' ? \App\Support\GridTabs::say($gsHeading, $gsWords['heading_ar']) : '';
+    $gsSubSay = $gsSub !== '' ? \App\Support\GridTabs::say($gsSub, $gsWords['sub_ar']) : '';
+    $gsAll = $gsLabel !== '' ? \App\Support\GridTabs::say($gsLabel, $gsWords['view_all_ar']) : __('store.product_grid.view_all');
+    $gsShowHead = $gsShowHead || ($section->show_heading && $gsEyebrow !== '');
+    // Built and echoed like $gsOpen, so a section with no small line prints
+    // exactly the bytes it printed before; the words go through e().
+    $gsEb = $gsEyebrow !== '' ? '<span class="hs-eyebrow">'.e($gsEyebrow).'</span>' : '';
 @endphp
 @if (\App\Support\GridTabs::of($section) !== null)
 @include('partials.home.grid-tabs')
 @else
 <section class="sec kbb-gsec {{ $sections->classFor($gsKey) }}" style="padding-top:0"{!! $gsArrows ? ' data-ymal' : '' !!}><div class="wrap">
   @if ($gsShowHead)
-  <div class="gs-head"><div>
-    @if ($gsHeading !== '')<h2>{{ $gsHeading }}</h2>@endif
-    @if ($gsSub !== '')<p>{{ $gsSub }}</p>@endif
+  <div class="gs-head"><div>{!! $gsEb !!}
+    @if ($gsHeading !== '')<h2>{{ $gsHeadingSay }}</h2>@endif
+    @if ($gsSub !== '')<p>{{ $gsSubSay }}</p>@endif
   </div></div>
   @endif
   {{-- `--gs-d` and `--gs-m` are the only per-instance numbers that reach CSS,
@@ -154,7 +179,7 @@
        will follow. A refused address draws NO BUTTON rather than a button
        pointing at `#`: rule 5, and the same distinction SafeUrl's own header
        draws between a link and a picture. --}}
-  <div class="gs-foot"><a class="gs-all" href="{{ $gsHref }}">{{ $gsLabel !== '' ? $gsLabel : __('store.product_grid.view_all') }}</a></div>
+  <div class="gs-foot"><a class="gs-all" href="{{ $gsHref }}">{{ $gsAll }}</a></div>
   @endif
 </div></section>
 @endif

@@ -478,13 +478,16 @@ class GridSectionApiController extends Controller
         // .hs-head`, and its tab row is tabsCss() — the page's @pushOnce has no
         // stack to land in here, so the preview carries it beside css().
         $tabs = \App\Support\GridTabs::of($built['section']) !== null;
+        // Lane GAR: an ordinary grid's small line is the same `.kbb-home
+        // .hs-eyebrow` the shop page wraps it in.
+        $home = $tabs || \App\Support\GridTabs::words($built['section'])['eyebrow'] !== '';
 
         return response()->json([
             'ok' => true,
             'empty' => false,
             'css' => GridSections::css().($tabs ? GridSections::tabsCss() : ''),
             'stylesheets' => self::builtStylesheets(),
-            'html' => $tabs ? '<div class="kbb-home">'.$html.'</div>' : $html,
+            'html' => $home ? '<div class="kbb-home">'.$html.'</div>' : $html,
             'dir' => \App\Support\Locale::isRtl() ? 'rtl' : 'ltr',
         ]);
     }
@@ -739,7 +742,9 @@ class GridSectionApiController extends Controller
     private static function applyTabs(GridSection $grid, array $data): void
     {
         if (array_key_exists('product_tabs', $data)) {
-            $grid->tabs = \App\Support\GridTabs::clean($data['product_tabs'], true);
+            // Lane GAR: stored(), not clean() -- a section with no tab keeps
+            // the Arabic of its heading (an empty list, still the ordinary grid).
+            $grid->tabs = \App\Support\GridTabs::stored($data['product_tabs'], true);
         }
 
         if (array_key_exists('tab_style', $data)) {
@@ -791,6 +796,9 @@ class GridSectionApiController extends Controller
 
         return [
             'product_tabs' => $tabs,
+            // Lane GAR: the heading's Arabic twins, tabs on or off -- the editor
+            // shows the English | Arabic table in both modes.
+            'section_words' => \App\Support\GridTabs::words($grid),
             'tab_style' => \App\Support\GridTabs::style($grid->tab_style),
             'tab_options' => [
                 'max' => \App\Support\GridTabs::MAX,

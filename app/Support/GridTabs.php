@@ -125,15 +125,64 @@ final class GridTabs
 
         $align = (string) ($raw['align'] ?? '');
 
+        return self::cleanWords($raw) + [
+            'align' => isset(self::ALIGN[$align]) ? $align : 'center',
+            'list' => $list,
+        ];
+    }
+
+    /**
+     * Lane GAR — the section's own words, tabs ON OR OFF.
+     *
+     * The owner, with a screenshot of the Arabic homepage: "this heading on the
+     * homepage is not translated, please do". The section was an ordinary grid
+     * (tabs off), and the Arabic twins of its heading lived only inside tabs
+     * mode: clean() answers null for a section with no tab, so the words went
+     * with it. They are the same five keys in the same column either way;
+     * this reads them without asking for a tab.
+     *
+     * @return array{eyebrow: string, eyebrow_ar: string, heading_ar: string, sub_ar: string, view_all_ar: string}
+     */
+    public static function cleanWords(mixed $raw): array
+    {
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+
+        $raw = is_array($raw) ? $raw : [];
+
         return [
             'eyebrow' => self::text($raw['eyebrow'] ?? '', self::TEXT_MAX),
             'eyebrow_ar' => self::text($raw['eyebrow_ar'] ?? '', self::TEXT_MAX),
             'heading_ar' => self::text($raw['heading_ar'] ?? '', self::TEXT_MAX),
             'sub_ar' => self::text($raw['sub_ar'] ?? '', 255),
             'view_all_ar' => self::text($raw['view_all_ar'] ?? '', 120),
-            'align' => isset(self::ALIGN[$align]) ? $align : 'center',
-            'list' => $list,
         ];
+    }
+
+    /** The section's words as the shop reads them: cleaned, no query, tabs or not. */
+    public static function words(GridSection $section): array
+    {
+        return self::cleanWords($section->getAttribute('tabs'));
+    }
+
+    /**
+     * What the `tabs` column stores on a write. A section with tabs stores
+     * clean(). One with NO tab but words typed stores the words with an EMPTY
+     * list -- which of() still reads as "not a tabs section", so the ordinary
+     * grid stays the ordinary grid and keeps its Arabic. Nothing at all is NULL.
+     */
+    public static function stored(mixed $raw, bool $check = false): ?array
+    {
+        $tabs = self::clean($raw, $check);
+
+        if ($tabs !== null) {
+            return $tabs;
+        }
+
+        $words = self::cleanWords($raw);
+
+        return implode('', $words) === '' ? null : $words + ['align' => 'center', 'list' => []];
     }
 
     /** One of STYLES, or the default. */
@@ -234,6 +283,22 @@ final class GridTabs
     public static function pick(string $english, string $arabic): string
     {
         return $arabic !== '' && Locale::current() === 'ar' ? $arabic : $english;
+    }
+
+    /**
+     * A SECTION word (eyebrow, heading, sub-heading, "View all") as the page
+     * prints it, the same in both modes. English page: the English, untouched.
+     * /ar: the owner's Arabic twin when he typed one, else the shop's own
+     * Arabic for a shipped English phrase (ArabicWording::of -- "Recommended
+     * for you" is wording.cpage_00), else his English as typed.
+     */
+    public static function say(string $english, string $arabic): string
+    {
+        if (Locale::current() !== 'ar') {
+            return $english;
+        }
+
+        return $arabic !== '' ? $arabic : ArabicWording::of($english);
     }
 
     /**

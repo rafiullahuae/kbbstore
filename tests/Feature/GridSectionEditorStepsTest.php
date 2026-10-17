@@ -212,13 +212,21 @@ it('shows the editor as five steps, pairs every English line with its Arabic twi
         expect(substr_count($html, 'data-gss-key="'.$key.'"'))->toBe(1, "{$key} drawn the wrong number of times");
     }
 
-    // Tabs off: the grid's own source controls come back, with the brand it was set to, and no Arabic column.
+    // Tabs off: the grid's own source controls come back, with the brand it was set to.
+    // Lane GAR (deliberately moved from "no Arabic column"): the owner, on an ordinary
+    // grid's English heading on /ar -- "this heading on the homepage is not translated,
+    // please do" -- so the English | Arabic table stays, each box with its Translate.
     $off = hteNode($payload, "return await run([['off', t => t.set('ptabs', 'null')]]);")['html']['off'];
     expect($off)->toContain('data-gss-key="source"')
         ->and($off)->toContain('data-gss-key="source_brand_id"')
         ->and($off)->toContain('data-gss-key="view_all_url"')
-        ->and($off)->not->toContain('data-gss-t="heading_ar"')
         ->and($off)->not->toContain('data-gss-step="tabs"');
+    foreach (['data-gss-key="heading"' => 'heading_ar', 'data-gss-key="subheading"' => 'sub_ar', 'data-gss-key="view_all_label"' => 'view_all_ar', 'data-gss-t="eyebrow"' => 'eyebrow_ar'] as $english => $arabic) {
+        $row = hteRow($off, $english);
+        expect($row)->toContain('data-gss-t="'.$arabic.'"')
+            ->and($row)->toContain('data-gss-tr="'.$arabic.'"')
+            ->and($row)->toContain('data-lang="Arabic"');
+    }
 });
 
 it('hiding the per-grid source controls is presentation only: the saved payload is the same for the same typing', function () {
@@ -259,4 +267,61 @@ JS);
         ->and($fresh->source)->toBe('brand')
         ->and((int) $fresh->source_brand_id)->toBe((int) $section->source_brand_id)
         ->and($fresh->tabs)->toBe($section->tabs);
+});
+
+it('gives an ordinary grid (tabs off) the English | Arabic heading table, and saves its Arabic without turning tabs on', function () {
+    /*
+     * Lane GAR. The owner, on an ordinary grid's English heading on /ar: "this
+     * heading on the homepage is not translated, please do". With tabs off the
+     * editor had no Arabic box at all ("With tabs off it is English only").
+     *
+     * MUTATION: draw headingStep()'s Arabic boxes only `on` again and the
+     * heading_ar row is red; send `draft.ptabs` (null) as product_tabs and the
+     * PUT carries no words — red; send tab_style with it and the "no
+     * tab_style" line is red; let the server keep clean() and the stored words
+     * are null — red.
+     */
+    $admin = hteAdmin();
+    $brand = Brand::firstOrCreate(['slug' => 'hte-brand'], ['name' => 'HTE Brand']);
+    $section = GridSection::create([
+        'name' => 'GAR grid', 'slug' => 'gar-grid-'.uniqid(), 'status' => 'draft', 'position' => 1,
+        'show_heading' => true, 'heading' => 'Recommended for you', 'subheading' => 'Picked for your skin',
+        'source' => 'brand', 'source_brand_id' => $brand->id, 'include_children' => false, 'count' => 4, 'mobile_count' => 4,
+        'desktop_layout' => 'grid', 'desktop_cols' => 4, 'mobile_layout' => 'grid', 'mobile_cols' => 2,
+        'skin' => '', 'card_label' => '', 'show_rank' => false,
+        'show_view_all' => false, 'view_all_label' => '', 'view_all_url' => '', 'tab_style' => 'b',
+    ]);
+    $payload = test()->actingAs($admin, 'admin')->getJson('/admin-api/grid-sections/'.$section->id)->assertOk()->json();
+    expect($payload['product_tabs'])->toBeNull();
+
+    $out = hteNode($payload, "return await run([['typed', t => t.set('words', JSON.stringify({heading_ar: 'مقترحة لكِ'}))]]);");
+    $html = $out['html']['typed'];
+
+    expect($html)->not->toContain('data-gss-step="tabs"');
+    foreach (['data-gss-key="heading"' => 'heading_ar', 'data-gss-key="subheading"' => 'sub_ar', 'data-gss-key="view_all_label"' => 'view_all_ar', 'data-gss-t="eyebrow"' => 'eyebrow_ar'] as $english => $arabic) {
+        $row = hteRow($html, $english);
+        expect($row)->toContain('data-gss-t="'.$arabic.'"')
+            ->and($row)->toContain('data-gss-tr="'.$arabic.'"');
+    }
+    expect(hteRow($html, 'data-gss-key="heading"'))->toContain('value="مقترحة لكِ"');
+
+    expect($out['puts'])->toHaveCount(1);
+    $put = $out['puts'][0];
+    expect($put['product_tabs'])->toBe([
+        'eyebrow' => '', 'eyebrow_ar' => '', 'heading_ar' => 'مقترحة لكِ', 'sub_ar' => '', 'view_all_ar' => '',
+        'align' => 'center', 'list' => [],
+    ])->and($put)->not->toHaveKey('tab_style');
+
+    test()->actingAs($admin, 'admin')->putJson('/admin-api/grid-sections/'.$section->id, $put)->assertOk();
+    $fresh = $section->fresh();
+    expect($fresh->tabs['heading_ar'])->toBe('مقترحة لكِ')
+        ->and(\App\Support\GridTabs::of($fresh))->toBeNull()
+        ->and($fresh->tab_style)->toBe('b')
+        ->and($fresh->source)->toBe('brand');
+
+    // Reopened: the Arabic is in its box, and an untouched editor has nothing to save.
+    $again = test()->actingAs($admin, 'admin')->getJson('/admin-api/grid-sections/'.$section->id)->assertOk()->json();
+    $out = hteNode($again, "return await run([['open', null]]);");
+    expect(hteRow($out['html']['open'], 'data-gss-key="heading"'))->toContain('value="مقترحة لكِ"')
+        ->and($out['puts'])->toBe([]);
 });

@@ -325,7 +325,7 @@ class GridSections
 
         'show_heading' => ['type' => 'bool', 'label' => 'Show the heading', 'default' => true],
         'heading' => ['type' => 'text', 'label' => 'Heading', 'default' => '', 'max' => 190,
-            'help' => 'The words above the grid. Translate it under Content → Translations like every other shop string.'],
+            'help' => 'The words above the grid. Its Arabic goes in the box beside it; left empty, the Arabic shop shows its own Arabic for a phrase it knows, else this English.'],
         'subheading' => ['type' => 'text', 'label' => 'Sub-heading', 'default' => '', 'max' => 255],
 
         'source' => ['type' => 'select', 'label' => 'Which products', 'default' => 'bestsellers',

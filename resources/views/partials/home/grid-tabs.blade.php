@@ -30,11 +30,13 @@
     $gtStyle = \App\Support\GridTabs::style($section->tab_style);
     $gtId = (int) $section->id;
     $gtPanels = $section->relationLoaded('tabPanels') ? $section->getRelation('tabPanels') : collect();
-    $gtEyebrow = \App\Support\GridTabs::pick((string) $gtCfg['eyebrow'], (string) $gtCfg['eyebrow_ar']);
-    $gtHeading = $gsHeading !== '' ? \App\Support\GridTabs::pick($gsHeading, (string) $gtCfg['heading_ar']) : '';
-    $gtSub = $gsSub !== '' ? \App\Support\GridTabs::pick($gsSub, (string) $gtCfg['sub_ar']) : '';
+    // Lane GAR: the section's words are grid-section.blade.php's, resolved
+    // once there (GridTabs::say) so the two modes cannot disagree.
+    $gtEyebrow = $gsEyebrow;
+    $gtHeading = $gsHeadingSay;
+    $gtSub = $gsSubSay;
     $gtShowHead = $section->show_heading && ($gtHeading !== '' || $gtSub !== '' || $gtEyebrow !== '');
-    $gtAll = $gsLabel !== '' ? \App\Support\GridTabs::pick($gsLabel, (string) $gtCfg['view_all_ar']) : __('store.product_grid.view_all');
+    $gtAll = $gsAll;
     $gtList = '';
     foreach ($gtPanels as $gtI => $gtP) {
         $gtList .= '<button type="button" class="gs-t" role="tab" id="gs-'.$gtId.'-t'.$gtI.'" aria-controls="gs-'.$gtId.'-p'.$gtI.'" aria-selected="'.($gtI === 0 ? 'true' : 'false').'"'.($gtI > 0 ? ' tabindex="-1"' : '').' data-rp-tab>'.e(\App\Support\GridTabs::pick((string) $gtP['title'], (string) $gtP['title_ar'])).'</button>';
