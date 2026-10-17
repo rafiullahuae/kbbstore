@@ -11,9 +11,12 @@
  */
 import { S, esc, api, $, $$, ic, logo, toast } from './core.js';
 import { fsButton } from './fs.js';
+import { bioOn, bioAvailable, bioPrepare, bioUnlock, bioClear } from './passkey.js';
 
 const MIN_PIN = 6;
 const LET = ['', 'ABC', 'DEF', 'GHI', 'JKL', 'MNO', 'PQRS', 'TUV', 'WXYZ'];
+/* Face ID / fingerprint asks by itself once per launch (Lane BIO); after that, only from its button. */
+let bioAsked = false;
 
 export function renderPin(root, info, done, toEnrol) {
   // The member's own length when the server says (a PIN set before the
@@ -31,6 +34,7 @@ export function renderPin(root, info, done, toEnrol) {
     + '<button type="button" class="nk" data-help>Help</button><button type="button" data-k="0">0<small></small></button>'
     + '<button type="button" class="nk" data-k="del" aria-label="Delete digit">' + ic('del') + '</button></div>'
     + (auto ? '' : '<button type="button" class="btn pri" data-go>Unlock</button>')
+    + '<button type="button" class="link bio" data-bio hidden>' + ic('finger') + 'Use Face ID / fingerprint</button>'
     + '<button type="button" class="link" data-email>Use email instead</button></div>';
 
   const dots = $('[data-dots]', root), msg = $('[data-msg]', root);
@@ -39,6 +43,8 @@ export function renderPin(root, info, done, toEnrol) {
   async function submit() {
     if (sending || pin.length < (auto ? len : MIN_PIN)) return;
     sending = true;
+    // Typing the PIN wins: the phone's own prompt is withdrawn.
+    if (bioBusy && bioBusy.abort) bioBusy.abort();
     const p = pin;
     const r = await api('POST', 'unlock', { pin: p });
     sending = false;
@@ -74,6 +80,30 @@ export function renderPin(root, info, done, toEnrol) {
     else if (e.key === 'Enter') submit();
   };
   document.addEventListener('keydown', onKey);
+
+  // Face ID / fingerprint (Lane BIO): only on a phone that has it switched on.
+  // Any failure or cancel is the PIN pad, as it was.
+  const bio = $('[data-bio]', root);
+  let bioBusy = null;
+  async function viaBio() {
+    if (bioBusy || sending) return;
+    bioBusy = window.AbortController ? new AbortController() : {};
+    const r = await bioUnlock(bioBusy.signal);
+    bioBusy = null;
+    if (!root.contains(bio)) return;
+    if (r) { dots.classList.add('ok'); msg.textContent = 'Unlocked'; msg.classList.remove('bad'); done(r.data); return; }
+    if (!bioOn()) bio.hidden = true;
+    msg.textContent = 'Or enter your PIN';
+    msg.classList.remove('bad');
+  }
+  if (bioOn()) {
+    bioAvailable().then((ok) => {
+      if (!ok || !root.contains(bio)) return;
+      bio.hidden = false;
+      bio.addEventListener('click', viaBio);
+      if (!bioAsked) { bioAsked = true; viaBio(); } else bioPrepare();
+    });
+  }
 }
 
 export function renderEnrol(root, done, note) {
@@ -98,7 +128,8 @@ export function renderEnrol(root, done, note) {
     f.pin.value = '';
     const r = await api('POST', 'enrol', body);
     btn.classList.remove('busy');
-    if (r.ok) { done(r.data); return; }
+    // A new sign-in is a new device: Face ID / fingerprint is off until switched on here.
+    if (r.ok) { bioClear(); done(r.data); return; }
     err.hidden = false;
     err.textContent = r.data.message || 'That did not work.';
   });

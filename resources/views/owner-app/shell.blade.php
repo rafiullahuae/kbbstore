@@ -90,6 +90,7 @@
 <symbol id="i-clock" viewBox="0 0 24 24"><path d="M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2"/></symbol>
 <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6-7-12a7 7 0 0114 0c0 6-7 12-7 12zM12 11a2 2 0 100-4 2 2 0 000 4z"/></symbol>
 <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 100-6 3 3 0 000 6z"/></symbol>
+<symbol id="i-finger" viewBox="0 0 24 24"><path d="M5 9.5a7.5 7.5 0 0114 0M7.5 18a14 14 0 001-5.5V11a3.5 3.5 0 017 0v1.5a17 17 0 01-1 5.5M12 11v1.5a12 12 0 01-1.5 6.5M17.8 15.5a20 20 0 00.7-4M3.5 13.5c.3-1 .5-1.7.5-2.5"/></symbol>
 </svg>
 <div id="oa-app" class="app pinapp"><div class="pin"><i class="logo" aria-hidden="true">KB</i><p class="kick">K-Beauty Bliss · Owner</p></div></div>
 <noscript><p class="pin-msg">This app needs JavaScript.</p></noscript>

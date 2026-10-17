@@ -49,7 +49,7 @@ final class OwnerAppUiGate
     // controller refuses them without analytics.view.
     // 'carts' (Lane QK10): likewise; refused without carttracking.view.
     // 'carts.journey' (Lane CJ): the same screen's journey, the same refusal.
-    public const ALWAYS = ['lock', 'forget', 'push', 'push.off', 'push.test', 'notify', 'analytics', 'analytics.live', 'carts', 'carts.journey'];
+    public const ALWAYS = ['lock', 'forget', 'push', 'push.off', 'push.test', 'notify', 'analytics', 'analytics.live', 'carts', 'carts.journey', 'passkey.new', 'passkey.save', 'passkey.off'];
 
     /** Product fields => the function that may change them (OwnerApp\ProductsController::EDITABLE). */
     public const PRODUCT_FIELDS = [

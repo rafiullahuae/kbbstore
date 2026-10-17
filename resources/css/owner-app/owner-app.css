@@ -305,6 +305,10 @@ textarea.ta { width: 100%; min-height: 120px; resize: none; border: 0; border-ra
 .pad button small { font: 600 9px/1 var(--font); letter-spacing: .18em; color: var(--ink3); margin-top: 4px; min-height: 9px; }
 .pad button.nk { background: none; box-shadow: none; font-size: 14px; font-weight: 600; color: var(--ink2); }
 .pin .link { font: 600 14px/1 var(--font); color: var(--acc); padding: 8px; }
+/* Face ID / fingerprint on the lock screen (Lane BIO): a link-weight button with its icon, above "Use email instead". */
+.pin .bio { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 4px; }
+.pin .bio[hidden] { display: none; }
+.pin .bio .i { width: 22px; height: 22px; }
 .enrol { width: 100%; max-width: 380px; margin-top: 18px; }
 .enrol .btn { margin-top: 6px; }
 .enrol .fld input { font-size: 16px; font-weight: 500; }
