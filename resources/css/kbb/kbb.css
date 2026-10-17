@@ -1145,6 +1145,12 @@
 .kc-tab.kc-wt{flex:0 0 auto;min-width:52px;padding-inline:12px}
 .kc-tab.kc-wt svg{display:block}
 .kc-tab.kc-wt:not(.on){color:var(--muted)}
+/* The heart itself: a grey outline while the wishlist is empty -- even on the
+   open tab -- and filled in the hearts' own red once anything is saved (the
+   owner, 17 October 2026: "should be empty, not colored ... then it should
+   become red, in both languages"). */
+.kc-tab.kc-wt .kc-wh{color:var(--muted)}
+.kc-tab.kc-wt .kc-wh.on{color:var(--pink)}
 #kcWish .kc-right{display:flex;flex-direction:row;align-items:center;gap:6px}
 #kcWish .kc-wempty{padding:30px 20px}
 #kcWish .kc-wempty svg{display:block;margin:0 auto 10px;color:var(--cp-accent,var(--pink))}

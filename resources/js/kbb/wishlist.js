@@ -46,20 +46,44 @@ function setBadge(count) {
 }
 
 /* The cart panel's heart tab (Lane HLB): the list, and the tab's heart --
-   outlined while the wishlist is empty, filled once it is not.
+   outlined in grey while the wishlist is empty, filled red once it is not
+   (kbb.css, `.kc-wt .kc-wh`).
 
    SAFE: `data.pane` is a whole Blade view the server rendered
    (partials/cart-wish-pane), every value in it already through `{{ }}` -- the
    same contract as the drawer fragments cart.js swaps in. */
+function setTabHeart(filled) {
+    document.querySelectorAll('.kc-wt .kc-wh').forEach((svg) => {
+        svg.classList.toggle('on', filled);
+        svg.setAttribute('fill', filled ? 'currentColor' : 'none');
+    });
+}
+
 function setPane(data) {
     const pane = document.getElementById('kcWish');
     if (pane && typeof data.pane === 'string') pane.innerHTML = data.pane;
-
-    document.querySelectorAll('.kc-wt .kc-wh').forEach((svg) => {
-        svg.classList.toggle('on', data.count > 0);
-        svg.setAttribute('fill', data.count > 0 ? 'currentColor' : 'none');
-    });
+    setTabHeart(data.count > 0);
 }
+
+/* Every heart for this product, not just the one clicked -- the same item's
+   heart can appear twice on one page (a grid card and a "you may also like"
+   strip), and both need to agree. */
+function paint(id, saved) {
+    document.querySelectorAll(`[data-kbb-wish="${id}"]`).forEach((el) => {
+        el.classList.toggle('on', saved);
+    });
+
+    if (wishIds) {
+        if (saved) wishIds.add(Number(id));
+        else wishIds.delete(Number(id));
+        setBadge(wishIds.size);
+        setTabHeart(wishIds.size > 0);
+    }
+}
+
+/* Products whose toggle is on its way to the server. A second tap on the same
+   heart before the answer would race the first; it waits instead. */
+const inFlight = new Set();
 
 export function initWishlist() {
     markSaved();
@@ -70,10 +94,18 @@ export function initWishlist() {
 
         event.preventDefault();
 
-        if (btn.disabled) return;
-        btn.disabled = true;
-
         const id = btn.dataset.kbbWish;
+        if (inFlight.has(id)) return;
+        inFlight.add(id);
+
+        /* INSTANT (17 October 2026). The owner: "wishlist function gives
+           delay, it's not adding instantly". The heart used to wait for the
+           server's answer -- and, with the cart panel's heart tab, for the
+           server to redraw that tab's list too. It now turns at the tap; the
+           request follows, the server's answer is still the truth, and a
+           refusal or a failed request puts the heart back as it was. */
+        const was = btn.classList.contains('on');
+        paint(id, !was);
 
         try {
             const response = await fetch(window.KBB.routes.wishlistToggle, {
@@ -92,31 +124,22 @@ export function initWishlist() {
             const data = await response.json();
 
             if (!data.ok) {
+                paint(id, was);
                 window.kbbToast?.(data.error || t('store.js.wishlist_failed', 'Could not update your wishlist.'));
                 return;
             }
 
-            // Every heart for this product, not just the one clicked — the
-            // same item's heart can appear twice on one page (a grid card and
-            // a "you may also like" strip), and both need to agree.
-            document.querySelectorAll(`[data-kbb-wish="${id}"]`).forEach((el) => {
-                el.classList.toggle('on', data.saved);
-            });
-
-            if (wishIds) {
-                if (data.saved) wishIds.add(Number(id));
-                else wishIds.delete(Number(id));
-            }
-
+            paint(id, data.saved);
             setBadge(data.count);
             setPane(data);
             window.kbbToast?.(data.saved
                 ? t('store.js.wishlist_saved', 'Saved to your wishlist')
                 : t('store.js.wishlist_removed', 'Removed from your wishlist'));
         } catch {
+            paint(id, was);
             window.kbbToast?.(t('store.js.wishlist_retry', 'Could not update your wishlist — please try again.'));
         } finally {
-            btn.disabled = false;
+            inFlight.delete(id);
         }
     });
 }

@@ -1,0 +1,50 @@
+[
+ {
+  "tag": "en",
+  "tabBefore": {
+   "on": false,
+   "color": "rgb(117, 108, 116)",
+   "fill": "none"
+  },
+  "onAfterTapMs": 0,
+  "clickToOnMs": 106,
+  "tabRightAfterTap": {
+   "on": true,
+   "color": "rgb(198, 57, 95)",
+   "fill": "currentColor"
+  },
+  "onAfterServer": true,
+  "tabAfterServer": {
+   "on": true,
+   "color": "rgb(198, 57, 95)",
+   "fill": "currentColor"
+  },
+  "offAtTapInFailMode": true,
+  "restoredAfterFail": true,
+  "errs": []
+ },
+ {
+  "tag": "ar",
+  "tabBefore": {
+   "on": false,
+   "color": "rgb(117, 108, 116)",
+   "fill": "none"
+  },
+  "onAfterTapMs": 0,
+  "clickToOnMs": 98,
+  "tabRightAfterTap": {
+   "on": true,
+   "color": "rgb(198, 57, 95)",
+   "fill": "currentColor"
+  },
+  "onAfterServer": true,
+  "tabAfterServer": {
+   "on": true,
+   "color": "rgb(198, 57, 95)",
+   "fill": "currentColor"
+  },
+  "offAtTapInFailMode": true,
+  "restoredAfterFail": true,
+  "errs": []
+ }
+]
