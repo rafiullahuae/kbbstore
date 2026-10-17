@@ -160,6 +160,106 @@ class Seo
             . ($links === [] ? '' : implode("\n", $links) . "\n");
     }
 
+    /**
+     * The shop's name as this page states it: the {sitename} of every title,
+     * og:site_name, and the WebSite / Organization name in the JSON-LD.
+     *
+     * (Lane ASEO) The owner, 17 October 2026: "the default title of the arabic
+     * version is not there, it's still showing the english title etc on the
+     * arabic homepage. it should arabic title, give me proper backend option to
+     * change it also". ArabicWording::of() only translates the SHIPPED
+     * spellings, so a site name typed any other way ("KBeauty Bliss") ended
+     * every /ar title in Latin. On /ar: Store → SEO & Meta → Search appearance →
+     * "Site name · Arabic" when typed; else the shipped Arabic for a shipped
+     * spelling; else, for any spelling of this brand, كي بيوتي بليس; else (a
+     * shop renamed to something with no Arabic) the name as typed. Off /ar it
+     * is exactly what it always was: ArabicWording::of() returns English text
+     * unchanged there, so the English <head> stays byte-identical.
+     *
+     * Reads the map the caller already holds -- no settings read of its own.
+     *
+     * @param  array<string, mixed>  $s
+     */
+    private static function siteNameOf(array $s): string
+    {
+        $name = self::englishSiteName($s);
+
+        if (Locale::current() !== 'ar') {
+            return \App\Support\ArabicWording::of($name);
+        }
+
+        $typed = SeoSettings::from($s, 'seo_site_name_ar', '');
+        if ($typed !== '') {
+            return $typed;
+        }
+
+        $arabic = \App\Support\ArabicWording::of($name);
+
+        return ($arabic === $name && \App\Support\BrandName::isOurs($name))
+            ? \App\Support\BrandName::NAME_AR
+            : $arabic;
+    }
+
+    /** @param array<string, mixed> $s */
+    private static function englishSiteName(array $s): string
+    {
+        return SeoSettings::firstFilled(
+            $s['seo_site_name'] ?? null,
+            $s['store_name'] ?? null,
+            \App\Support\BrandName::appName(),
+            'K-Beauty Bliss'
+        );
+    }
+
+    /**
+     * True when the page's name is this brand -- in the page's language, or as
+     * typed in English. The second half matters on /ar only, where an Arabic
+     * name the owner typed himself ("كي بيوتي بليس الإمارات") is still K-Beauty
+     * Bliss; on an English page $siteName IS the English name, so it adds
+     * nothing there.
+     *
+     * @param  array<string, mixed>  $s
+     */
+    private static function isOurSite(array $s, string $siteName): bool
+    {
+        return \App\Support\BrandName::isOurs($siteName)
+            || \App\Support\BrandName::isOurs(self::englishSiteName($s));
+    }
+
+    /**
+     * The keywords a page publishes (<meta name="keywords"> and schema.org
+     * `keywords`).
+     *
+     * Everywhere: SEO → Keywords' synced set for the page, as before. On the
+     * Arabic homepage only (Lane ASEO), Store → SEO & Meta → Search appearance →
+     * "Homepage keywords · Arabic" wins when filled: the owner asked for the
+     * site's meta keywords in Arabic, and a shop that never ran an Arabic sync
+     * published none there. Commas, Arabic commas (،) and new lines all
+     * separate; blanks and repeats are dropped; at most twenty terms of at most
+     * eighty characters. Plain text -- every printer escapes it.
+     *
+     * @param  array<string, mixed>  $ctx
+     * @param  array<string, mixed>  $s
+     * @return list<string>
+     */
+    private static function pageKeywords(array $ctx, array $s): array
+    {
+        if (($ctx['type'] ?? '') === 'home' && Locale::current() === 'ar') {
+            $typed = [];
+            foreach (preg_split('/[,،\n]+/u', SeoSettings::from($s, 'seo_home_keywords_ar', '')) ?: [] as $term) {
+                $term = trim((string) preg_replace('/\s+/u', ' ', strip_tags($term)));
+                if ($term !== '' && mb_strlen($term) <= 80 && ! in_array($term, $typed, true)) {
+                    $typed[] = $term;
+                }
+            }
+            if ($typed !== []) {
+                return array_slice($typed, 0, 20);
+            }
+        }
+
+        return \App\Services\Seo\Keywords\PageKeywords::for(\App\Services\Seo\Keywords\PageKeywords::entityOf($ctx), $s)['k'];
+    }
+
     /** @param array $ctx type,title,description,image,url,noindex,product,article,breadcrumb */
     public static function render(array $ctx = []): string
     {
@@ -168,12 +268,7 @@ class Seo
         }
 
         $s = SeoSettings::map();
-        $siteName = \App\Support\ArabicWording::of(SeoSettings::firstFilled(
-            $s['seo_site_name'] ?? null,
-            $s['store_name'] ?? null,
-            \App\Support\BrandName::appName(),
-            'K-Beauty Bliss'
-        ));
+        $siteName = self::siteNameOf($s);
         $sep      = SeoSettings::from($s, 'seo_separator');
         $base     = rtrim(SeoSettings::firstFilled($s['site_url'] ?? null, (string) config('app.url')), '/');
 
@@ -222,7 +317,7 @@ class Seo
          * JSON-LD below. Never as text in the page body — hidden text is the
          * one thing Google's spam policy names outright.
          */
-        $kbbKeywords = \App\Services\Seo\Keywords\PageKeywords::for(\App\Services\Seo\Keywords\PageKeywords::entityOf($ctx), $s)['k'];
+        $kbbKeywords = self::pageKeywords($ctx, $s);
         $ctx['_seo_keywords'] = $kbbKeywords;
         if ($kbbKeywords !== [] && \App\Services\Seo\Keywords\KeywordConfig::metaOn($s)) {
             $out[] = '<meta name="keywords" content="' . $e(implode(', ', array_slice($kbbKeywords, 0, 10))) . '">';
@@ -501,12 +596,7 @@ class Seo
     public static function titleFor(array $ctx): string
     {
         $s = SeoSettings::map();
-        $siteName = \App\Support\ArabicWording::of(SeoSettings::firstFilled(
-            $s['seo_site_name'] ?? null,
-            $s['store_name'] ?? null,
-            \App\Support\BrandName::appName(),
-            'K-Beauty Bliss'
-        ));
+        $siteName = self::siteNameOf($s);
         $sep = SeoSettings::from($s, 'seo_separator');
 
         return self::titleOf($ctx, $s, $siteName, $sep, self::tokens($ctx, $sep, $siteName));
@@ -540,9 +630,16 @@ class Seo
              * deliberately still means "no title", which falls through to the
              * same place it always did.
              */
+            /*
+             * (Lane ASEO) ON /ar, THE ARABIC BOX, NEVER THE ENGLISH ONE. A typed
+             * English seo_home_title was printed as the Arabic homepage's
+             * <title>, og:title and twitter:title. /ar reads Store → SEO & Meta
+             * → Search appearance → "Homepage title · Arabic"; left blank, it
+             * falls through to the Arabic default below, not to the English.
+             */
             $homeTitle = array_key_exists('home_title', $ctx)
                 ? trim((string) $ctx['home_title'])
-                : SeoSettings::from($s, 'seo_home_title', '');
+                : SeoSettings::from($s, Locale::current() === 'ar' ? 'seo_home_title_ar' : 'seo_home_title', '');
             /*
              * THE BRAND FIRST, WHEN THE OWNER HAS TYPED NO HOME TITLE (Lane BR).
              * "K-Beauty Bliss — Korean Skincare & K-Beauty Store in UAE": the
@@ -553,7 +650,7 @@ class Seo
              * before. A typed seo_home_title always wins.
              */
             if ($homeTitle === '' && \App\Support\BrandName::on($s, \App\Support\BrandName::TITLES)
-                && \App\Support\BrandName::isOurs($siteName)) {
+                && self::isOurSite($s, $siteName)) {
                 $homeTitle = \App\Support\BrandName::homeTitle(Locale::current());
             }
             $title = TitleTemplate::render(
@@ -671,12 +768,7 @@ class Seo
         $s = SeoSettings::map();
         $sep ??= SeoSettings::from($s, 'seo_separator');
 
-        $tokens ??= self::tokens($ctx, $sep, \App\Support\ArabicWording::of(SeoSettings::firstFilled(
-            $s['seo_site_name'] ?? null,
-            $s['store_name'] ?? null,
-            \App\Support\BrandName::appName(),
-            'K-Beauty Bliss'
-        )));
+        $tokens ??= self::tokens($ctx, $sep, self::siteNameOf($s));
 
         /*
          * The home page's own sentence naming the brand once, when the owner
@@ -684,15 +776,22 @@ class Seo
          * It outranks the sitewide default description on the home page only:
          * that one is written for every page, this one is the brand's.
          */
+        $arabic = Locale::current() === 'ar';
         $brandHome = null;
         if (($ctx['type'] ?? null) === 'home' && \App\Support\BrandName::on($s, \App\Support\BrandName::TITLES)
-            && \App\Support\BrandName::isOurs((string) ($tokens['sitename'] ?? ''))) {
+            && ($arabic
+                ? self::isOurSite($s, (string) ($tokens['sitename'] ?? ''))
+                : \App\Support\BrandName::isOurs((string) ($tokens['sitename'] ?? '')))) {
             $brandHome = \App\Support\BrandName::homeDescription(Locale::current());
         }
         $desc = $ctx['description']
-            ?? ((($ctx['type'] ?? null) === 'home') ? ($s['seo_home_description'] ?? $brandHome) : null)
-            // (Lane AR round 2) the shipped sitewide description in Arabic on /ar.
-            ?? (isset($s['seo_default_description']) ? \App\Support\ArabicWording::of((string) $s['seo_default_description']) : null)
+            ?? ((($ctx['type'] ?? null) === 'home')
+                ? ($arabic ? self::arabicHomeDescription($s, $brandHome) : ($s['seo_home_description'] ?? $brandHome))
+                : null)
+            ?? ($arabic
+                ? self::arabicDefaultDescription($s)
+                // English: the sitewide description exactly as typed.
+                : (isset($s['seo_default_description']) ? \App\Support\ArabicWording::of((string) $s['seo_default_description']) : null))
             ?? '';
         $desc = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) $desc)));
         // Placeholders reach the description too — the same fields accept them
@@ -704,6 +803,48 @@ class Seo
         }
 
         return $desc;
+    }
+
+    /**
+     * (Lane ASEO) The Arabic homepage's description: Store → SEO & Meta →
+     * Search appearance → "Homepage meta description · Arabic" when typed,
+     * else the brand's own Arabic sentence (BrandName::homeDescription('ar')),
+     * else null so the sitewide Arabic default answers. Never the English
+     * seo_home_description, which /ar printed as it was until this lane.
+     *
+     * @param  array<string, mixed>  $s
+     */
+    private static function arabicHomeDescription(array $s, ?string $brandHome): ?string
+    {
+        $typed = SeoSettings::from($s, 'seo_home_description_ar', '');
+
+        return $typed !== '' ? $typed : $brandHome;
+    }
+
+    /**
+     * (Lane ASEO) The sitewide description on an Arabic page that has written
+     * none of its own: "Default meta description · Arabic" when typed; else the
+     * shipped English default's Arabic (ArabicWording, Lane AR round 2); else,
+     * when the owner customised the English one, the shop's Arabic default
+     * sentence rather than his English; else none, as on the English page.
+     *
+     * @param  array<string, mixed>  $s
+     */
+    private static function arabicDefaultDescription(array $s): ?string
+    {
+        $typed = SeoSettings::from($s, 'seo_default_description_ar', '');
+        if ($typed !== '') {
+            return $typed;
+        }
+
+        $english = SeoSettings::from($s, 'seo_default_description', '');
+        if ($english === '') {
+            return isset($s['seo_default_description']) ? '' : null;
+        }
+
+        $arabic = \App\Support\ArabicWording::of($english);
+
+        return $arabic !== $english ? $arabic : (string) __('store.wording.seo_default');
     }
 
     /**
@@ -1146,12 +1287,7 @@ class Seo
     public static function inspect(array $ctx): array
     {
         $s = SeoSettings::map();
-        $siteName = \App\Support\ArabicWording::of(SeoSettings::firstFilled(
-            $s['seo_site_name'] ?? null,
-            $s['store_name'] ?? null,
-            \App\Support\BrandName::appName(),
-            'K-Beauty Bliss'
-        ));
+        $siteName = self::siteNameOf($s);
         $base = rtrim(SeoSettings::firstFilled($s['site_url'] ?? null, (string) config('app.url')), '/');
         $title = trim((string) ($ctx['title'] ?? '')) ?: $siteName;
         $desc = trim(preg_replace('/\s+/', ' ', strip_tags((string) ($ctx['description'] ?? ''))));
@@ -1314,13 +1450,38 @@ class Seo
         return rtrim($base, '/') . '/' . ltrim($path, '/');
     }
 
+    /**
+     * BrandName::alternatesFor(), and on /ar the Latin name the shop goes by
+     * first: the Arabic node is the same business Google knows as "K-Beauty
+     * Bliss", and saying so is what ties the two names to one entity. The
+     * English page's list is unchanged.
+     *
+     * @param  array<string, mixed>  $s
+     * @return list<string>
+     */
+    private static function alternatesOf(array $s, string $name): array
+    {
+        $alt = \App\Support\BrandName::alternatesFor($name);
+
+        if ($alt !== [] && Locale::current() === 'ar') {
+            $latin = self::englishSiteName($s);
+            $alt = array_values(array_unique(array_merge(
+                $latin !== $name ? [$latin] : [],
+                [\App\Support\BrandName::NAME],
+                $alt
+            )));
+        }
+
+        return $alt;
+    }
+
     private static function jsonLd(array $ctx, array $s, string $siteName, string $base, string $title, string $desc, ?string $url, ?string $image): array
     {
         $nodes = [];
         // SEO → Keywords: render() has already looked them up; inspect() has not.
         $kbbKw = is_array($ctx['_seo_keywords'] ?? null)
             ? $ctx['_seo_keywords']
-            : \App\Services\Seo\Keywords\PageKeywords::for(\App\Services\Seo\Keywords\PageKeywords::entityOf($ctx), $s)['k'];
+            : self::pageKeywords($ctx, $s);
         $kbbKwString = $kbbKw !== [] ? implode(', ', $kbbKw) : null;
 
         // Organization + WebSite (sitewide)
@@ -1329,6 +1490,14 @@ class Seo
             '@type' => SeoSettings::from($s, 'org_type'),
             'name' => SeoSettings::from($s, 'org_name', $siteName),
         ];
+        /*
+         * (Lane ASEO) On /ar an Organization named for THIS brand is named in
+         * Arabic, like the page around it; a company name the owner typed that
+         * is something else (a legal entity) is a proper noun and stays as typed.
+         */
+        if (Locale::current() === 'ar' && \App\Support\BrandName::isOurs((string) $org['name'])) {
+            $org['name'] = $siteName;
+        }
         /*
          * alternateName — the spellings a shopper types for THIS shop
          * ("kbeauty bliss", "k beauty bliss", "kbeautybliss"). Google's site
@@ -1339,7 +1508,7 @@ class Seo
          * "Brand alternate names". Lane BR.
          */
         $kbbAlt = \App\Support\BrandName::on($s, \App\Support\BrandName::ALTERNATES_KEY);
-        if ($kbbAlt && ($alt = \App\Support\BrandName::alternatesFor((string) $org['name'])) !== []) {
+        if ($kbbAlt && ($alt = self::alternatesOf($s, (string) $org['name'])) !== []) {
             $org['alternateName'] = $alt;
         }
         if ($base) $org['url'] = $base;
@@ -1407,7 +1576,7 @@ class Seo
             $nodes[] = [
                 '@context' => 'https://schema.org', '@type' => 'WebSite',
                 'name' => $siteName,
-            ] + ($kbbAlt && ($alt = \App\Support\BrandName::alternatesFor($siteName)) !== [] ? ['alternateName' => $alt] : []) + [
+            ] + ($kbbAlt && ($alt = self::alternatesOf($s, $siteName)) !== [] ? ['alternateName' => $alt] : []) + [
                 'url' => $base,
                 /*
                  * THE SITELINKS SEARCHBOX HAS TO SEARCH THIS SHOP.

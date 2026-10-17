@@ -20309,6 +20309,36 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
             'Whether link credit passes to the pages you link to.')+
         '</div>')+
 
+      /* LANE ASEO — the Arabic twins of the boxes above, read by the /ar pages
+         only (App\Support\Seo). The English boxes are untouched and still
+         decide the English pages byte for byte. A blank Arabic box means "the
+         shop's own Arabic", never the English text: the placeholders are those
+         defaults. Values in by sesc() (inputs) and .value (textareas); the
+         shop escapes every one of them on the way out. */
+      smSec('Arabic search appearance (/ar)',
+        'What Google, WhatsApp and Instagram show for the Arabic pages. Leave a box empty to use the shop’s own Arabic — never the English text above.',
+        '<div class="sm-grid">'+
+          smField('seo_sitename_ar','Site name · Arabic',
+            '<input id="seo_sitename_ar" dir="rtl" lang="ar" value="'+sesc(S.seo_site_name_ar)+'" placeholder="كي بيوتي بليس">',
+            'What {sitename} becomes on the Arabic pages: the end of every Arabic title and the shop’s name in link previews.')+
+          smField('seo_home_t_ar','Homepage title · Arabic',
+            '<input id="seo_home_t_ar" dir="rtl" lang="ar" value="'+sesc(S.seo_home_title_ar)+'">',
+            'The Arabic homepage’s title in Google and in shared links. Around 60 characters.')+
+        '</div>'+
+        '<div class="sm-grid">'+
+          smField('seo_home_d_ar','Homepage meta description · Arabic',
+            '<textarea id="seo_home_d_ar" class="inp" dir="rtl" lang="ar"></textarea>',
+            'The sentence under the Arabic homepage result. Around 155 characters.')+
+          smField('seo_def_d_ar','Default meta description · Arabic',
+            '<textarea id="seo_def_d_ar" class="inp" dir="rtl" lang="ar"></textarea>',
+            'Used on any Arabic page that has written none of its own.')+
+        '</div>'+
+        '<div class="sm-grid">'+
+          smField('seo_home_kw_ar','Homepage keywords · Arabic',
+            '<textarea id="seo_home_kw_ar" class="inp" dir="rtl" lang="ar"></textarea>',
+            'Search terms for the Arabic homepage, separated by commas. Published in the page’s keywords tag (the first ten) and its structured data; never shown to shoppers.')+
+        '</div>')+
+
       smSec('Sharing a link',
         'What appears when somebody pastes a link to this shop into a chat or a post. Facebook, LinkedIn, WhatsApp, Pinterest and iMessage all read the same Open Graph tags; Twitter/X alone uses its own card, which is why it has a field of its own.',
         '<div class="sm-grid">'+
@@ -20503,6 +20533,9 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
        cannot be got wrong by anyone editing this later. */
     document.getElementById('seo_home_d').value = S.seo_home_description || '';
     document.getElementById('seo_def_d').value = S.seo_default_description || '';
+    document.getElementById('seo_home_d_ar').value = S.seo_home_description_ar || '';
+    document.getElementById('seo_def_d_ar').value = S.seo_default_description_ar || '';
+    document.getElementById('seo_home_kw_ar').value = S.seo_home_keywords_ar || '';
     document.getElementById('seo_robots_txt').value = S.robots_txt || '';
 
     /* LANE S7 — wire the homepage preview, AFTER the two textareas have had
@@ -20529,6 +20562,8 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       var payload={
         site_url:sval('seo_site_url'), seo_site_name:sval('seo_sitename'), seo_separator:sval('seo_sep'), seo_title_template:sval('seo_tpl'),
         seo_home_title:sval('seo_home_t'), seo_home_description:sval('seo_home_d'), seo_default_description:sval('seo_def_d'),
+        seo_site_name_ar:sval('seo_sitename_ar'), seo_home_title_ar:sval('seo_home_t_ar'),
+        seo_home_description_ar:sval('seo_home_d_ar'), seo_default_description_ar:sval('seo_def_d_ar'), seo_home_keywords_ar:sval('seo_home_kw_ar'),
         robots_index:sval('seo_robots_i'), robots_follow:sval('seo_robots_f'),
         og_default_image:sval('seo_og_img'), twitter_handle:sval('seo_tw'),
         social_facebook:sval('seo_soc_fb'), social_instagram:sval('seo_soc_ig'), social_tiktok:sval('seo_soc_tt'),

@@ -1,0 +1,532 @@
+Lane ASEO -- the <head> a crawler reads, on the aseo-preview shop (tools/aseo-preview.sh), with the
+live shape: typed ENGLISH Site name 'KBeauty Bliss', Home title, Home description and Default
+description (tools/aseo-seed.php). Extracted by tools/aseo-head.py (og:image / twitter:image omitted).
+The English pages are identical before and after: the diff below touches /ar pages only, and the full
+English homepage HTML before/after differs only in the per-request CSRF token (141,102 bytes both).
+<html lang="ar" dir="rtl">, og:locale ar_AE and the hreflang pairs are unchanged on every /ar page.
+
+################ BEFORE (parent 860b5b26)
+== /
+  <html lang="en" dir="ltr" data-press="c">
+  <title> K-Beauty Bliss | Authentic Korean Skincare in UAE
+  description = Shop 100% authentic Korean skincare and K-beauty in the UAE. Fast delivery across Dubai, Abu Dhabi and all Emirates.
+  og:type = website
+  og:site_name = KBeauty Bliss
+  og:title = K-Beauty Bliss | Authentic Korean Skincare in UAE
+  og:description = Shop 100% authentic Korean skincare and K-beauty in the UAE. Fast delivery across Dubai, Abu Dhabi and all Emirates.
+  og:url = http://localhost/
+  twitter:card = summary
+  twitter:title = K-Beauty Bliss | Authentic Korean Skincare in UAE
+  twitter:description = Shop 100% authentic Korean skincare and K-beauty in the UAE. Fast delivery across Dubai, Abu Dhabi and all Emirates.
+  hreflang en http://localhost/
+  hreflang ar http://localhost/ar/
+  hreflang x-default http://localhost/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "ItemList", "name": "Best-Selling Korean Skincare in the UAE"}
+  ld {"@type": "ItemList", "name": "Trending K-Beauty This Week"}
+  ld {"@type": "ItemList", "name": "Korean Skincare Tips & Guides"}
+  ld {"@type": "ItemList", "name": "K-Beauty Under AED 54"}
+== /ar/
+  <html lang="ar" dir="rtl" data-press="c">
+  <title> K-Beauty Bliss | Authentic Korean Skincare in UAE
+  description = Shop 100% authentic Korean skincare and K-beauty in the UAE. Fast delivery across Dubai, Abu Dhabi and all Emirates.
+  og:type = website
+  og:site_name = KBeauty Bliss
+  og:locale = ar_AE
+  og:locale:alternate = en_AE
+  og:title = K-Beauty Bliss | Authentic Korean Skincare in UAE
+  og:description = Shop 100% authentic Korean skincare and K-beauty in the UAE. Fast delivery across Dubai, Abu Dhabi and all Emirates.
+  og:url = http://localhost/ar/
+  twitter:card = summary
+  twitter:title = K-Beauty Bliss | Authentic Korean Skincare in UAE
+  twitter:description = Shop 100% authentic Korean skincare and K-beauty in the UAE. Fast delivery across Dubai, Abu Dhabi and all Emirates.
+  hreflang en http://localhost/
+  hreflang ar http://localhost/ar/
+  hreflang x-default http://localhost/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "ItemList", "name": "العناية الكورية الأكثر مبيعًا في الإمارات"}
+  ld {"@type": "ItemList", "name": "الأكثر رواجًا في الجمال الكوري هذا الأسبوع"}
+  ld {"@type": "ItemList", "name": "نصائح وأدلة العناية الكورية بالبشرة"}
+  ld {"@type": "ItemList", "name": "جمال كوري بأقل من 54 درهمًا"}
+== /ar/product/345-relief-cream-mask-set/
+  <html lang="ar" dir="rtl" data-press="c">
+  <title> الدكتورة ألثيا مجموعة أقنعة كريم 345 ريليف · كي بيوتي بليس | KBeauty Bliss
+  description = ماسكات كريمية مهدّئة من مجموعة 345 ريليف لبشرة مرتاحة ومرطّبة.
+  og:type = product
+  og:site_name = KBeauty Bliss
+  og:locale = ar_AE
+  og:locale:alternate = en_AE
+  og:title = مجموعة أقنعة كريم 345 ريليف
+  og:description = 🚚 توصيل سريع إلى جميع أنحاء الإمارات والخليج · ✅ منتجات أصلية 100% من العلامة التجارية · 💳 الدفع عبر تابي وتمارا
+  og:url = http://localhost/ar/product/345-relief-cream-mask-set/
+  twitter:card = summary_large_image
+  twitter:title = مجموعة أقنعة كريم 345 ريليف
+  twitter:description = 🚚 توصيل سريع إلى جميع أنحاء الإمارات والخليج · ✅ منتجات أصلية 100% من العلامة التجارية · 💳 الدفع عبر تابي وتمارا
+  hreflang en http://localhost/product/345-relief-cream-mask-set/
+  hreflang ar http://localhost/ar/product/345-relief-cream-mask-set/
+  hreflang x-default http://localhost/product/345-relief-cream-mask-set/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "Product", "name": "مجموعة أقنعة كريم 345 ريليف", "description": "ماسكات كريمية مهدّئة من مجموعة 345 ريليف لبشرة مرتاحة ومرطّبة."}
+  ld {"@type": "BreadcrumbList"}
+== /ar/collections/acne-care/
+  <html lang="ar" dir="rtl" data-press="c">
+  <title> حب الشباب · كي بيوتي بليس | KBeauty Bliss
+  description = تسوّقي حب الشباب من كي بيوتي بليس — 4 من منتجات العناية الكورية الأصلية.
+  og:type = website
+  og:site_name = KBeauty Bliss
+  og:locale = ar_AE
+  og:locale:alternate = en_AE
+  og:title = حب الشباب · كي بيوتي بليس | KBeauty Bliss
+  og:description = تسوّقي حب الشباب من كي بيوتي بليس — 4 من منتجات العناية الكورية الأصلية.
+  og:url = http://localhost/ar/collections/acne-care/
+  twitter:card = summary
+  twitter:title = حب الشباب · كي بيوتي بليس | KBeauty Bliss
+  twitter:description = تسوّقي حب الشباب من كي بيوتي بليس — 4 من منتجات العناية الكورية الأصلية.
+  hreflang en http://localhost/collections/acne-care/
+  hreflang ar http://localhost/ar/collections/acne-care/
+  hreflang x-default http://localhost/collections/acne-care/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "CollectionPage", "name": "حب الشباب", "description": "تسوّقي حب الشباب من كي بيوتي بليس — 4 من منتجات العناية الكورية الأصلية.", "inLanguage": "ar"}
+  ld {"@type": "BreadcrumbList"}
+== /ar/brands/anua/
+  <html lang="ar" dir="rtl" data-press="c">
+  <title> أنوا | KBeauty Bliss
+  description = تركيبات هادئة ونقية تعتمد على عشبة القلب وتقنية بي دي آر إن — العلامة الكورية من سيول التي يقف خلفها التونر الذي تعيد الجميع شراءه.
+  og:type = website
+  og:site_name = KBeauty Bliss
+  og:locale = ar_AE
+  og:locale:alternate = en_AE
+  og:title = أنوا | KBeauty Bliss
+  og:description = تركيبات هادئة ونقية تعتمد على عشبة القلب وتقنية بي دي آر إن — العلامة الكورية من سيول التي يقف خلفها التونر الذي تعيد الجميع شراءه.
+  og:url = http://localhost/ar/brands/anua/
+  twitter:card = summary
+  twitter:title = أنوا | KBeauty Bliss
+  twitter:description = تركيبات هادئة ونقية تعتمد على عشبة القلب وتقنية بي دي آر إن — العلامة الكورية من سيول التي يقف خلفها التونر الذي تعيد الجميع شراءه.
+  hreflang en http://localhost/brands/anua/
+  hreflang ar http://localhost/ar/brands/anua/
+  hreflang x-default http://localhost/brands/anua/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "CollectionPage", "name": "أنوا", "description": "تركيبات هادئة ونقية تعتمد على عشبة القلب وتقنية بي دي آر إن — العلامة الكورية من سيول التي يقف خلفها التونر الذي تعيد الجميع شراءه.", "inLanguage": "ar"}
+  ld {"@type": "BreadcrumbList"}
+== /ar/blog/how-to-layer-toner-pads/
+  <html lang="ar" dir="rtl" data-press="c">
+  <title> كيف تستخدمين وسادات التونر على الطريقة الكورية | KBeauty Bliss
+  description = امسحي، اضغطي، واستخدميها كماسك: ثلاث طرق لتستفيدي أكثر من كل وسادة.
+  og:type = article
+  og:site_name = KBeauty Bliss
+  og:locale = ar_AE
+  og:locale:alternate = en_AE
+  og:title = كيف تستخدمين وسادات التونر على الطريقة الكورية | KBeauty Bliss
+  og:description = امسحي، اضغطي، واستخدميها كماسك: ثلاث طرق لتستفيدي أكثر من كل وسادة.
+  og:url = http://localhost/ar/blog/how-to-layer-toner-pads/
+  twitter:card = summary_large_image
+  twitter:title = كيف تستخدمين وسادات التونر على الطريقة الكورية | KBeauty Bliss
+  twitter:description = امسحي، اضغطي، واستخدميها كماسك: ثلاث طرق لتستفيدي أكثر من كل وسادة.
+  hreflang en http://localhost/blog/how-to-layer-toner-pads/
+  hreflang ar http://localhost/ar/blog/how-to-layer-toner-pads/
+  hreflang x-default http://localhost/blog/how-to-layer-toner-pads/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "Article", "inLanguage": "ar"}
+  ld {"@type": "BreadcrumbList"}
+== /product/345-relief-cream-mask-set/
+  <html lang="en" dir="ltr" data-press="c">
+  <title> Dr. Althea 345 Relief Cream Mask Set · K-Beauty Bliss | KBeauty Bliss
+  description = 345 Relief Cream Mask Set — a K-Beauty Bliss favourite, 100% authentic and shipped from the UAE.
+  og:type = product
+  og:site_name = KBeauty Bliss
+  og:title = 345 Relief Cream Mask Set
+  og:description = 🚚 Express delivery all over UAE &amp; Gulf · ✅ 100% original products from the brand · 💳 Accepts Tabby &amp; Tamara
+  og:url = http://localhost/product/345-relief-cream-mask-set/
+  twitter:card = summary_large_image
+  twitter:title = 345 Relief Cream Mask Set
+  twitter:description = 🚚 Express delivery all over UAE &amp; Gulf · ✅ 100% original products from the brand · 💳 Accepts Tabby &amp; Tamara
+  hreflang en http://localhost/product/345-relief-cream-mask-set/
+  hreflang ar http://localhost/ar/product/345-relief-cream-mask-set/
+  hreflang x-default http://localhost/product/345-relief-cream-mask-set/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "Product", "name": "345 Relief Cream Mask Set", "description": "345 Relief Cream Mask Set — a K-Beauty Bliss favourite, 100% authentic and shipped from the UAE."}
+  ld {"@type": "BreadcrumbList"}
+== /collections/acne-care/
+  <html lang="en" dir="ltr" data-press="c">
+  <title> Acne &amp; Blemish Care · K-Beauty Bliss | KBeauty Bliss
+  description = Shop Acne &amp; Blemish Care at K-Beauty Bliss — 4 authentic Korean skincare picks.
+  og:type = website
+  og:site_name = KBeauty Bliss
+  og:title = Acne &amp; Blemish Care · K-Beauty Bliss | KBeauty Bliss
+  og:description = Shop Acne &amp; Blemish Care at K-Beauty Bliss — 4 authentic Korean skincare picks.
+  og:url = http://localhost/collections/acne-care/
+  twitter:card = summary
+  twitter:title = Acne &amp; Blemish Care · K-Beauty Bliss | KBeauty Bliss
+  twitter:description = Shop Acne &amp; Blemish Care at K-Beauty Bliss — 4 authentic Korean skincare picks.
+  hreflang en http://localhost/collections/acne-care/
+  hreflang ar http://localhost/ar/collections/acne-care/
+  hreflang x-default http://localhost/collections/acne-care/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "CollectionPage", "name": "Acne & Blemish Care", "description": "Shop Acne & Blemish Care at K-Beauty Bliss — 4 authentic Korean skincare picks.", "inLanguage": "en"}
+  ld {"@type": "BreadcrumbList"}
+== /brands/anua/
+  <html lang="en" dir="ltr" data-press="c">
+  <title> Anua | KBeauty Bliss
+  description = Calm, clean formulas built around heartleaf and PDRN — the Seoul brand behind the toner everyone restocks.
+  og:type = website
+  og:site_name = KBeauty Bliss
+  og:title = Anua | KBeauty Bliss
+  og:description = Calm, clean formulas built around heartleaf and PDRN — the Seoul brand behind the toner everyone restocks.
+  og:url = http://localhost/brands/anua/
+  twitter:card = summary
+  twitter:title = Anua | KBeauty Bliss
+  twitter:description = Calm, clean formulas built around heartleaf and PDRN — the Seoul brand behind the toner everyone restocks.
+  hreflang en http://localhost/brands/anua/
+  hreflang ar http://localhost/ar/brands/anua/
+  hreflang x-default http://localhost/brands/anua/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "CollectionPage", "name": "Anua", "description": "Calm, clean formulas built around heartleaf and PDRN — the Seoul brand behind the toner everyone restocks.", "inLanguage": "en"}
+  ld {"@type": "BreadcrumbList"}
+== /blog/how-to-layer-toner-pads/
+  <html lang="en" dir="ltr" data-press="c">
+  <title> How to use toner pads the Korean way | KBeauty Bliss
+  description = Swipe, press, mask: three ways to get more from every pad.
+  og:type = article
+  og:site_name = KBeauty Bliss
+  og:title = How to use toner pads the Korean way | KBeauty Bliss
+  og:description = Swipe, press, mask: three ways to get more from every pad.
+  og:url = http://localhost/blog/how-to-layer-toner-pads/
+  twitter:card = summary_large_image
+  twitter:title = How to use toner pads the Korean way | KBeauty Bliss
+  twitter:description = Swipe, press, mask: three ways to get more from every pad.
+  hreflang en http://localhost/blog/how-to-layer-toner-pads/
+  hreflang ar http://localhost/ar/blog/how-to-layer-toner-pads/
+  hreflang x-default http://localhost/blog/how-to-layer-toner-pads/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "Article", "inLanguage": "en"}
+  ld {"@type": "BreadcrumbList"}
+
+################ AFTER (this lane, migration applied)
+== /
+  <html lang="en" dir="ltr" data-press="c">
+  <title> K-Beauty Bliss | Authentic Korean Skincare in UAE
+  description = Shop 100% authentic Korean skincare and K-beauty in the UAE. Fast delivery across Dubai, Abu Dhabi and all Emirates.
+  og:type = website
+  og:site_name = KBeauty Bliss
+  og:title = K-Beauty Bliss | Authentic Korean Skincare in UAE
+  og:description = Shop 100% authentic Korean skincare and K-beauty in the UAE. Fast delivery across Dubai, Abu Dhabi and all Emirates.
+  og:url = http://localhost/
+  twitter:card = summary
+  twitter:title = K-Beauty Bliss | Authentic Korean Skincare in UAE
+  twitter:description = Shop 100% authentic Korean skincare and K-beauty in the UAE. Fast delivery across Dubai, Abu Dhabi and all Emirates.
+  hreflang en http://localhost/
+  hreflang ar http://localhost/ar/
+  hreflang x-default http://localhost/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "ItemList", "name": "Best-Selling Korean Skincare in the UAE"}
+  ld {"@type": "ItemList", "name": "Trending K-Beauty This Week"}
+  ld {"@type": "ItemList", "name": "Korean Skincare Tips & Guides"}
+  ld {"@type": "ItemList", "name": "K-Beauty Under AED 54"}
+== /ar/
+  <html lang="ar" dir="rtl" data-press="c">
+  <title> كي بيوتي بليس — منتجات العناية الكورية الأصلية في الإمارات
+  description = تسوّقي العناية الكورية بالبشرة الأصلية 100% في الإمارات من كي بيوتي بليس: سيروم وتونر وواقي شمس من أشهر العلامات الكورية، مع توصيل سريع لكل الإمارات.
+  keywords = العناية الكورية بالبشرة, منتجات كورية أصلية, الجمال الكوري, كي بيوتي, كي بيوتي بليس, مستحضرات تجميل كورية, روتين العناية الكوري, سيروم كوري, تونر كوري, واقي شمس كوري
+  og:type = website
+  og:site_name = كي بيوتي بليس
+  og:locale = ar_AE
+  og:locale:alternate = en_AE
+  og:title = كي بيوتي بليس — منتجات العناية الكورية الأصلية في الإمارات
+  og:description = تسوّقي العناية الكورية بالبشرة الأصلية 100% في الإمارات من كي بيوتي بليس: سيروم وتونر وواقي شمس من أشهر العلامات الكورية، مع توصيل سريع لكل الإمارات.
+  og:url = http://localhost/ar/
+  twitter:card = summary
+  twitter:title = كي بيوتي بليس — منتجات العناية الكورية الأصلية في الإمارات
+  twitter:description = تسوّقي العناية الكورية بالبشرة الأصلية 100% في الإمارات من كي بيوتي بليس: سيروم وتونر وواقي شمس من أشهر العلامات الكورية، مع توصيل سريع لكل الإمارات.
+  hreflang en http://localhost/
+  hreflang ar http://localhost/ar/
+  hreflang x-default http://localhost/
+  ld {"@type": "OnlineStore", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "WebPage", "name": "كي بيوتي بليس — منتجات العناية الكورية الأصلية في الإمارات", "keywords": "العناية الكورية بالبشرة, منتجات كورية أصلية, الجمال الكوري, كي بيوتي, كي بيوتي بليس, مستحضرات تجميل كورية, روتين العناية الكوري, سيروم كوري, تونر كوري, واقي شمس كوري, منتجات كورية في الإمارات, منتجات كورية في دبي, متجر منتجات كورية أونلاين", "inLanguage": "ar"}
+  ld {"@type": "ItemList", "name": "العناية الكورية الأكثر مبيعًا في الإمارات"}
+  ld {"@type": "ItemList", "name": "الأكثر رواجًا في الجمال الكوري هذا الأسبوع"}
+  ld {"@type": "ItemList", "name": "نصائح وأدلة العناية الكورية بالبشرة"}
+  ld {"@type": "ItemList", "name": "جمال كوري بأقل من 54 درهمًا"}
+== /ar/product/345-relief-cream-mask-set/
+  <html lang="ar" dir="rtl" data-press="c">
+  <title> الدكتورة ألثيا مجموعة أقنعة كريم 345 ريليف · كي بيوتي بليس
+  description = ماسكات كريمية مهدّئة من مجموعة 345 ريليف لبشرة مرتاحة ومرطّبة.
+  og:type = product
+  og:site_name = كي بيوتي بليس
+  og:locale = ar_AE
+  og:locale:alternate = en_AE
+  og:title = مجموعة أقنعة كريم 345 ريليف
+  og:description = 🚚 توصيل سريع إلى جميع أنحاء الإمارات والخليج · ✅ منتجات أصلية 100% من العلامة التجارية · 💳 الدفع عبر تابي وتمارا
+  og:url = http://localhost/ar/product/345-relief-cream-mask-set/
+  twitter:card = summary_large_image
+  twitter:title = مجموعة أقنعة كريم 345 ريليف
+  twitter:description = 🚚 توصيل سريع إلى جميع أنحاء الإمارات والخليج · ✅ منتجات أصلية 100% من العلامة التجارية · 💳 الدفع عبر تابي وتمارا
+  hreflang en http://localhost/product/345-relief-cream-mask-set/
+  hreflang ar http://localhost/ar/product/345-relief-cream-mask-set/
+  hreflang x-default http://localhost/product/345-relief-cream-mask-set/
+  ld {"@type": "OnlineStore", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "Product", "name": "مجموعة أقنعة كريم 345 ريليف", "description": "ماسكات كريمية مهدّئة من مجموعة 345 ريليف لبشرة مرتاحة ومرطّبة."}
+  ld {"@type": "BreadcrumbList"}
+== /ar/collections/acne-care/
+  <html lang="ar" dir="rtl" data-press="c">
+  <title> حب الشباب · كي بيوتي بليس
+  description = تسوّقي حب الشباب من كي بيوتي بليس — 4 من منتجات العناية الكورية الأصلية.
+  og:type = website
+  og:site_name = كي بيوتي بليس
+  og:locale = ar_AE
+  og:locale:alternate = en_AE
+  og:title = حب الشباب · كي بيوتي بليس
+  og:description = تسوّقي حب الشباب من كي بيوتي بليس — 4 من منتجات العناية الكورية الأصلية.
+  og:url = http://localhost/ar/collections/acne-care/
+  twitter:card = summary
+  twitter:title = حب الشباب · كي بيوتي بليس
+  twitter:description = تسوّقي حب الشباب من كي بيوتي بليس — 4 من منتجات العناية الكورية الأصلية.
+  hreflang en http://localhost/collections/acne-care/
+  hreflang ar http://localhost/ar/collections/acne-care/
+  hreflang x-default http://localhost/collections/acne-care/
+  ld {"@type": "OnlineStore", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "CollectionPage", "name": "حب الشباب", "description": "تسوّقي حب الشباب من كي بيوتي بليس — 4 من منتجات العناية الكورية الأصلية.", "inLanguage": "ar"}
+  ld {"@type": "BreadcrumbList"}
+== /ar/brands/anua/
+  <html lang="ar" dir="rtl" data-press="c">
+  <title> أنوا | كي بيوتي بليس
+  description = تركيبات هادئة ونقية تعتمد على عشبة القلب وتقنية بي دي آر إن — العلامة الكورية من سيول التي يقف خلفها التونر الذي تعيد الجميع شراءه.
+  og:type = website
+  og:site_name = كي بيوتي بليس
+  og:locale = ar_AE
+  og:locale:alternate = en_AE
+  og:title = أنوا | كي بيوتي بليس
+  og:description = تركيبات هادئة ونقية تعتمد على عشبة القلب وتقنية بي دي آر إن — العلامة الكورية من سيول التي يقف خلفها التونر الذي تعيد الجميع شراءه.
+  og:url = http://localhost/ar/brands/anua/
+  twitter:card = summary
+  twitter:title = أنوا | كي بيوتي بليس
+  twitter:description = تركيبات هادئة ونقية تعتمد على عشبة القلب وتقنية بي دي آر إن — العلامة الكورية من سيول التي يقف خلفها التونر الذي تعيد الجميع شراءه.
+  hreflang en http://localhost/brands/anua/
+  hreflang ar http://localhost/ar/brands/anua/
+  hreflang x-default http://localhost/brands/anua/
+  ld {"@type": "OnlineStore", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "CollectionPage", "name": "أنوا", "description": "تركيبات هادئة ونقية تعتمد على عشبة القلب وتقنية بي دي آر إن — العلامة الكورية من سيول التي يقف خلفها التونر الذي تعيد الجميع شراءه.", "inLanguage": "ar"}
+  ld {"@type": "BreadcrumbList"}
+== /ar/blog/how-to-layer-toner-pads/
+  <html lang="ar" dir="rtl" data-press="c">
+  <title> كيف تستخدمين وسادات التونر على الطريقة الكورية | كي بيوتي بليس
+  description = امسحي، اضغطي، واستخدميها كماسك: ثلاث طرق لتستفيدي أكثر من كل وسادة.
+  og:type = article
+  og:site_name = كي بيوتي بليس
+  og:locale = ar_AE
+  og:locale:alternate = en_AE
+  og:title = كيف تستخدمين وسادات التونر على الطريقة الكورية | كي بيوتي بليس
+  og:description = امسحي، اضغطي، واستخدميها كماسك: ثلاث طرق لتستفيدي أكثر من كل وسادة.
+  og:url = http://localhost/ar/blog/how-to-layer-toner-pads/
+  twitter:card = summary_large_image
+  twitter:title = كيف تستخدمين وسادات التونر على الطريقة الكورية | كي بيوتي بليس
+  twitter:description = امسحي، اضغطي، واستخدميها كماسك: ثلاث طرق لتستفيدي أكثر من كل وسادة.
+  hreflang en http://localhost/blog/how-to-layer-toner-pads/
+  hreflang ar http://localhost/ar/blog/how-to-layer-toner-pads/
+  hreflang x-default http://localhost/blog/how-to-layer-toner-pads/
+  ld {"@type": "OnlineStore", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "Article", "inLanguage": "ar"}
+  ld {"@type": "BreadcrumbList"}
+== /product/345-relief-cream-mask-set/
+  <html lang="en" dir="ltr" data-press="c">
+  <title> Dr. Althea 345 Relief Cream Mask Set · K-Beauty Bliss | KBeauty Bliss
+  description = 345 Relief Cream Mask Set — a K-Beauty Bliss favourite, 100% authentic and shipped from the UAE.
+  og:type = product
+  og:site_name = KBeauty Bliss
+  og:title = 345 Relief Cream Mask Set
+  og:description = 🚚 Express delivery all over UAE &amp; Gulf · ✅ 100% original products from the brand · 💳 Accepts Tabby &amp; Tamara
+  og:url = http://localhost/product/345-relief-cream-mask-set/
+  twitter:card = summary_large_image
+  twitter:title = 345 Relief Cream Mask Set
+  twitter:description = 🚚 Express delivery all over UAE &amp; Gulf · ✅ 100% original products from the brand · 💳 Accepts Tabby &amp; Tamara
+  hreflang en http://localhost/product/345-relief-cream-mask-set/
+  hreflang ar http://localhost/ar/product/345-relief-cream-mask-set/
+  hreflang x-default http://localhost/product/345-relief-cream-mask-set/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "Product", "name": "345 Relief Cream Mask Set", "description": "345 Relief Cream Mask Set — a K-Beauty Bliss favourite, 100% authentic and shipped from the UAE."}
+  ld {"@type": "BreadcrumbList"}
+== /collections/acne-care/
+  <html lang="en" dir="ltr" data-press="c">
+  <title> Acne &amp; Blemish Care · K-Beauty Bliss | KBeauty Bliss
+  description = Shop Acne &amp; Blemish Care at K-Beauty Bliss — 4 authentic Korean skincare picks.
+  og:type = website
+  og:site_name = KBeauty Bliss
+  og:title = Acne &amp; Blemish Care · K-Beauty Bliss | KBeauty Bliss
+  og:description = Shop Acne &amp; Blemish Care at K-Beauty Bliss — 4 authentic Korean skincare picks.
+  og:url = http://localhost/collections/acne-care/
+  twitter:card = summary
+  twitter:title = Acne &amp; Blemish Care · K-Beauty Bliss | KBeauty Bliss
+  twitter:description = Shop Acne &amp; Blemish Care at K-Beauty Bliss — 4 authentic Korean skincare picks.
+  hreflang en http://localhost/collections/acne-care/
+  hreflang ar http://localhost/ar/collections/acne-care/
+  hreflang x-default http://localhost/collections/acne-care/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "CollectionPage", "name": "Acne & Blemish Care", "description": "Shop Acne & Blemish Care at K-Beauty Bliss — 4 authentic Korean skincare picks.", "inLanguage": "en"}
+  ld {"@type": "BreadcrumbList"}
+== /brands/anua/
+  <html lang="en" dir="ltr" data-press="c">
+  <title> Anua | KBeauty Bliss
+  description = Calm, clean formulas built around heartleaf and PDRN — the Seoul brand behind the toner everyone restocks.
+  og:type = website
+  og:site_name = KBeauty Bliss
+  og:title = Anua | KBeauty Bliss
+  og:description = Calm, clean formulas built around heartleaf and PDRN — the Seoul brand behind the toner everyone restocks.
+  og:url = http://localhost/brands/anua/
+  twitter:card = summary
+  twitter:title = Anua | KBeauty Bliss
+  twitter:description = Calm, clean formulas built around heartleaf and PDRN — the Seoul brand behind the toner everyone restocks.
+  hreflang en http://localhost/brands/anua/
+  hreflang ar http://localhost/ar/brands/anua/
+  hreflang x-default http://localhost/brands/anua/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "CollectionPage", "name": "Anua", "description": "Calm, clean formulas built around heartleaf and PDRN — the Seoul brand behind the toner everyone restocks.", "inLanguage": "en"}
+  ld {"@type": "BreadcrumbList"}
+== /blog/how-to-layer-toner-pads/
+  <html lang="en" dir="ltr" data-press="c">
+  <title> How to use toner pads the Korean way | KBeauty Bliss
+  description = Swipe, press, mask: three ways to get more from every pad.
+  og:type = article
+  og:site_name = KBeauty Bliss
+  og:title = How to use toner pads the Korean way | KBeauty Bliss
+  og:description = Swipe, press, mask: three ways to get more from every pad.
+  og:url = http://localhost/blog/how-to-layer-toner-pads/
+  twitter:card = summary_large_image
+  twitter:title = How to use toner pads the Korean way | KBeauty Bliss
+  twitter:description = Swipe, press, mask: three ways to get more from every pad.
+  hreflang en http://localhost/blog/how-to-layer-toner-pads/
+  hreflang ar http://localhost/ar/blog/how-to-layer-toner-pads/
+  hreflang x-default http://localhost/blog/how-to-layer-toner-pads/
+  ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+  ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+  ld {"@type": "Article", "inLanguage": "en"}
+  ld {"@type": "BreadcrumbList"}
+
+################ DIFF
+24,25c24,26
+<   <title> K-Beauty Bliss | Authentic Korean Skincare in UAE
+<   description = Shop 100% authentic Korean skincare and K-beauty in the UAE. Fast delivery across Dubai, Abu Dhabi and all Emirates.
+---
+>   <title> كي بيوتي بليس — منتجات العناية الكورية الأصلية في الإمارات
+>   description = تسوّقي العناية الكورية بالبشرة الأصلية 100% في الإمارات من كي بيوتي بليس: سيروم وتونر وواقي شمس من أشهر العلامات الكورية، مع توصيل سريع لكل الإمارات.
+>   keywords = العناية الكورية بالبشرة, منتجات كورية أصلية, الجمال الكوري, كي بيوتي, كي بيوتي بليس, مستحضرات تجميل كورية, روتين العناية الكوري, سيروم كوري, تونر كوري, واقي شمس كوري
+27c28
+<   og:site_name = KBeauty Bliss
+---
+>   og:site_name = كي بيوتي بليس
+30,31c31,32
+<   og:title = K-Beauty Bliss | Authentic Korean Skincare in UAE
+<   og:description = Shop 100% authentic Korean skincare and K-beauty in the UAE. Fast delivery across Dubai, Abu Dhabi and all Emirates.
+---
+>   og:title = كي بيوتي بليس — منتجات العناية الكورية الأصلية في الإمارات
+>   og:description = تسوّقي العناية الكورية بالبشرة الأصلية 100% في الإمارات من كي بيوتي بليس: سيروم وتونر وواقي شمس من أشهر العلامات الكورية، مع توصيل سريع لكل الإمارات.
+34,35c35,36
+<   twitter:title = K-Beauty Bliss | Authentic Korean Skincare in UAE
+<   twitter:description = Shop 100% authentic Korean skincare and K-beauty in the UAE. Fast delivery across Dubai, Abu Dhabi and all Emirates.
+---
+>   twitter:title = كي بيوتي بليس — منتجات العناية الكورية الأصلية في الإمارات
+>   twitter:description = تسوّقي العناية الكورية بالبشرة الأصلية 100% في الإمارات من كي بيوتي بليس: سيروم وتونر وواقي شمس من أشهر العلامات الكورية، مع توصيل سريع لكل الإمارات.
+39,40c40,42
+<   ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+<   ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+---
+>   ld {"@type": "OnlineStore", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+>   ld {"@type": "WebSite", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+>   ld {"@type": "WebPage", "name": "كي بيوتي بليس — منتجات العناية الكورية الأصلية في الإمارات", "keywords": "العناية الكورية بالبشرة, منتجات كورية أصلية, الجمال الكوري, كي بيوتي, كي بيوتي بليس, مستحضرات تجميل كورية, روتين العناية الكوري, سيروم كوري, تونر كوري, واقي شمس كوري, منتجات كورية في الإمارات, منتجات كورية في دبي, متجر منتجات كورية أونلاين", "inLanguage": "ar"}
+47c49
+<   <title> الدكتورة ألثيا مجموعة أقنعة كريم 345 ريليف · كي بيوتي بليس | KBeauty Bliss
+---
+>   <title> الدكتورة ألثيا مجموعة أقنعة كريم 345 ريليف · كي بيوتي بليس
+50c52
+<   og:site_name = KBeauty Bliss
+---
+>   og:site_name = كي بيوتي بليس
+62,63c64,65
+<   ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+<   ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+---
+>   ld {"@type": "OnlineStore", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+>   ld {"@type": "WebSite", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+68c70
+<   <title> حب الشباب · كي بيوتي بليس | KBeauty Bliss
+---
+>   <title> حب الشباب · كي بيوتي بليس
+71c73
+<   og:site_name = KBeauty Bliss
+---
+>   og:site_name = كي بيوتي بليس
+74c76
+<   og:title = حب الشباب · كي بيوتي بليس | KBeauty Bliss
+---
+>   og:title = حب الشباب · كي بيوتي بليس
+78c80
+<   twitter:title = حب الشباب · كي بيوتي بليس | KBeauty Bliss
+---
+>   twitter:title = حب الشباب · كي بيوتي بليس
+83,84c85,86
+<   ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+<   ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+---
+>   ld {"@type": "OnlineStore", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+>   ld {"@type": "WebSite", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+89c91
+<   <title> أنوا | KBeauty Bliss
+---
+>   <title> أنوا | كي بيوتي بليس
+92c94
+<   og:site_name = KBeauty Bliss
+---
+>   og:site_name = كي بيوتي بليس
+95c97
+<   og:title = أنوا | KBeauty Bliss
+---
+>   og:title = أنوا | كي بيوتي بليس
+99c101
+<   twitter:title = أنوا | KBeauty Bliss
+---
+>   twitter:title = أنوا | كي بيوتي بليس
+104,105c106,107
+<   ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+<   ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+---
+>   ld {"@type": "OnlineStore", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+>   ld {"@type": "WebSite", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+110c112
+<   <title> كيف تستخدمين وسادات التونر على الطريقة الكورية | KBeauty Bliss
+---
+>   <title> كيف تستخدمين وسادات التونر على الطريقة الكورية | كي بيوتي بليس
+113c115
+<   og:site_name = KBeauty Bliss
+---
+>   og:site_name = كي بيوتي بليس
+116c118
+<   og:title = كيف تستخدمين وسادات التونر على الطريقة الكورية | KBeauty Bliss
+---
+>   og:title = كيف تستخدمين وسادات التونر على الطريقة الكورية | كي بيوتي بليس
+120c122
+<   twitter:title = كيف تستخدمين وسادات التونر على الطريقة الكورية | KBeauty Bliss
+---
+>   twitter:title = كيف تستخدمين وسادات التونر على الطريقة الكورية | كي بيوتي بليس
+125,126c127,128
+<   ld {"@type": "OnlineStore", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+<   ld {"@type": "WebSite", "name": "KBeauty Bliss", "alternateName": ["K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}
+---
+>   ld {"@type": "OnlineStore", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"]}
+>   ld {"@type": "WebSite", "name": "كي بيوتي بليس", "alternateName": ["KBeauty Bliss", "K-Beauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE"], "inLanguage": ["en", "ar"]}

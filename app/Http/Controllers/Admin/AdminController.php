@@ -2013,6 +2013,13 @@ class AdminController extends Controller
         'seo_home_title' => ['text', 'Home title'],
         'seo_home_description' => ['text', 'Home description'],
         'seo_default_description' => ['text', 'Default description'],
+        // (Lane ASEO) The Arabic twins, read on /ar only (App\Support\Seo):
+        // same type and limits as the English beside them; every printer escapes.
+        'seo_site_name_ar' => ['text', 'Site name · Arabic'],
+        'seo_home_title_ar' => ['text', 'Homepage title · Arabic'],
+        'seo_home_description_ar' => ['text', 'Homepage meta description · Arabic'],
+        'seo_default_description_ar' => ['text', 'Default meta description · Arabic'],
+        'seo_home_keywords_ar' => ['text', 'Homepage keywords · Arabic'],
 
         // Emitted straight into <meta name="robots">, so the vocabulary is the
         // one the tag actually defines rather than a boolean.

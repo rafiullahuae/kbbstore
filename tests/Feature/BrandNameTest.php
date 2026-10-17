@@ -264,6 +264,10 @@ it('leads the home title with the brand and names it once in the description, in
         ->and(substr_count($d[1], 'K-Beauty Bliss'))->toBe(1)
         ->and(substr_count(html_entity_decode((string) strstr($html, '<meta name="description"', true)), 'K-Beauty Bliss'))->toBe(1);
 
+    // The brand's own Arabic is the default under BLANK Arabic boxes: Lane
+    // ASEO's migration fills Store -> SEO & Meta -> "Arabic search appearance
+    // (/ar)", and a filled box wins (ArabicSeoTwinsTest pins both halves).
+    brHomeSettings(['seo_home_title_ar' => '', 'seo_home_description_ar' => '']);
     app()->setLocale('ar');
     $ar = Seo::render(['type' => 'home', 'title' => 'x']);
     // Lane AR round 2: the owner asked for the name in Arabic too on /ar.

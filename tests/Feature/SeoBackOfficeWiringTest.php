@@ -116,17 +116,25 @@ it('leaves the SEO settings tab posting exactly the keys it posted before', func
          * exactly once. Every other id here is unchanged. Generated from the
          * handler and sorted, so the order is the one sort() produces rather
          * than one a human guessed.
+         *
+         * ▲ Lane ASEO advanced it by exactly the five Arabic twins (the owner,
+         * 17 October 2026: "give me proper backend option to change it also"):
+         * seo_sitename_ar, seo_home_t_ar, seo_home_d_ar, seo_def_d_ar and
+         * seo_home_kw_ar, the "Arabic search appearance (/ar)" band, each drawn
+         * once and posted once (ArabicSeoTwinsTest). Every other id unchanged.
          */
-        'seo_baidu', 'seo_bing', 'seo_def_d', 'seo_faq_schema',
-        'seo_ga', 'seo_gsv', 'seo_home_d', 'seo_home_t',
+        'seo_baidu', 'seo_bing', 'seo_def_d', 'seo_def_d_ar',
+        'seo_faq_schema', 'seo_ga', 'seo_gsv', 'seo_home_d',
+        'seo_home_d_ar', 'seo_home_kw_ar', 'seo_home_t', 'seo_home_t_ar',
         'seo_merch_cond', 'seo_merch_cost', 'seo_merch_country', 'seo_merch_freeover',
         'seo_merch_returndays', 'seo_merch_returns', 'seo_og_img', 'seo_org_logo',
         'seo_org_name', 'seo_org_type', 'seo_pin', 'seo_pixel',
         'seo_robots_f', 'seo_robots_i', 'seo_robots_txt', 'seo_sep',
         'seo_site_url', 'seo_sitemap', 'seo_sitemap_images', 'seo_sitename',
-        'seo_soc_fb', 'seo_soc_ig', 'seo_soc_li', 'seo_soc_pin',
-        'seo_soc_tt', 'seo_soc_yt', 'seo_tpl', 'seo_tw',
-    ], 'the SEO settings tab reads a different set of controls than it did before this lane');
+        'seo_sitename_ar', 'seo_soc_fb', 'seo_soc_ig', 'seo_soc_li',
+        'seo_soc_pin', 'seo_soc_tt', 'seo_soc_yt', 'seo_tpl',
+        'seo_tw',
+    ],'the SEO settings tab reads a different set of controls than it did before this lane');
 
     /*
      * AND THE PREVIEW'S MOUNT IS NOT ONE OF THEM. `seo_home_prev` is a div; if
