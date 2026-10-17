@@ -5448,6 +5448,19 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
 .kft-name-pink .kft-name{background-image:linear-gradient(90deg,#FFB3C8,#FCE0E8,#F7A8BF,#FFD3DF,#F4A0B8,#FFB3C8)}
 .kft-bot{border-top:1px solid #F1E3E8;font-size:12.5px;color:var(--muted);background:var(--kft-bg,#fff)}
 .kft-bot-in{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
+/* ARABIC LETTERS JOIN, so they take no letter spacing. The small uppercase
+   labels are tracked out for English capitals (.12em-.2em); on /ar the same
+   tracking pulled every Arabic word apart -- "منتجات مشابهة", "شوهدت مؤخرًا",
+   the footer's column headings (the owner, 17 October 2026, with pictures).
+   Each selector here is one that Chromium measured carrying positive spacing
+   on Arabic text across home, shop, collections, brand, product, cart, blog,
+   FAQ, account and the menu (tools/als-scan.cjs). Only /ar is touched; the
+   large titles' slight negative tracking does not separate letters and the
+   footer wordmark is sized by its tracking, so both are left as they are. */
+html[lang="ar"] .sl-t .k,html[lang="ar"] .bndl-all,html[lang="ar"] .kbb-card-cart,html[lang="ar"] .kbb-soldout,
+html[lang="ar"] .kbb-badge,html[lang="ar"] .hs-eyebrow,html[lang="ar"] .hs-go,html[lang="ar"] .kft-avail,
+html[lang="ar"] .kft-ch,html[lang="ar"] .eyebrow,html[lang="ar"] .sr-eyebrow,html[lang="ar"] .gmain .cap,
+html[lang="ar"] .bt-label,html[lang="ar"] .sh .lnk,html[lang="ar"] .policy-body h2{letter-spacing:0 !important}
 .kft-legal{display:flex;gap:14px}
 /* The language switcher (partials/lang-switch): printed only while Arabic is on.
    A capsule, the current language filled (the owner's pick, P1, 17 October
