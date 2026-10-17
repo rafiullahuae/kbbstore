@@ -68,6 +68,10 @@ it('carries exactly the drafts and corrections the classes hold', function () {
     // Lane ARF added wording.site_name_uae later; 2027_11_06_100000 carries it
     // (published) and ArabicByDefaultTest pins that copy.
     unset($want['store.wording.site_name_uae']);
+    // And wording.pay_tabby_installments (17 October 2026, the live shop's own
+    // Tabby title): 2027_11_09_200000 carries it, and ArabicCheckoutPolishTest
+    // pins that copy to this class.
+    unset($want['store.wording.pay_tabby_installments']);
     expect($rows)->toBe($want);
 
     $fixes = shipConst(base_path('database/migrations/2027_11_02_100100_correct_lane_ar2_arabic_drafts.php'), 'FIXES');

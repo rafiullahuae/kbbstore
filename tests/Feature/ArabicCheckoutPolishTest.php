@@ -29,6 +29,12 @@ it('publishes that Arabic once on a shop that has no row for it, literals only, 
     $file = database_path('migrations/2027_11_09_200000_arabic_tabby_installments_title.php');
     expect((string) file_get_contents($file))->not->toContain('use App\\')->not->toMatch('/\\\\App\\\\/');
 
+    // The migration's literals ARE the class's pair (ArabicShippableTest leaves
+    // this key to this copy).
+    $m = require $file;
+    expect((new ReflectionClassConstant($m, 'ENGLISH'))->getValue())->toBe(ArabicWording::ENGLISH['wording.pay_tabby_installments'])
+        ->and((new ReflectionClassConstant($m, 'ARABIC'))->getValue())->toBe(ArabicWording::ARABIC['wording.pay_tabby_installments']);
+
     $field = 'store.wording.pay_tabby_installments';
     $row = fn () => DB::table('translations')->where('locale', 'ar')->where('group', 'ui')->where('item_id', 0)->where('field', $field);
 
@@ -48,7 +54,7 @@ it('publishes that Arabic once on a shop that has no row for it, literals only, 
 it('puts a phone number on the right on Arabic pages, still left-to-right', function () {
     $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
 
-    expect($css)->toContain('[dir="rtl"] input[type="tel"]{text-align:right}')
+    expect($css)->toContain('[dir="rtl"] input[type="tel"]{text-align:end}')
         // ...with the icon's 42px on the right, where /ar draws the icon -- or
         // the number runs under it (measured: 10px clear, the mirror of English).
         ->toContain('[dir="rtl"] .fld.ico input[type="tel"]{padding-inline-start:14px;padding-inline-end:42px}');

@@ -476,7 +476,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    right, so its inline start is its LEFT and its inline end its right -- but
    the icon is on the right.
    The icon's 42px moves to the right with it and the number sits there too
-   (kbb.css: [dir="rtl"] input[type="tel"]{text-align:right}). */
+   (kbb.css: [dir="rtl"] input[type="tel"]{text-align:end}). */
 [dir="rtl"] .kbb-checkout .fld.kbb-fl.ico input[type="tel"]{padding-inline-start:13px;padding-inline-end:42px}
 /* RESTING, THE LABEL IS CENTRED IN THE BOX (Lane QK8). The owner: "the fields
    placeholders are not 100% in middle. please fix in all." It sat at a fixed

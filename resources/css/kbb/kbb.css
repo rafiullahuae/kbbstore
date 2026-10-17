@@ -5465,8 +5465,9 @@ html[lang="ar"] .bt-label,html[lang="ar"] .sh .lnk,html[lang="ar"] .policy-body 
    "+971" read that way), and left-to-right starts on the LEFT -- so on the
    Arabic checkout the number sat on the far side of its own label and icon
    (the owner, 17 October 2026). It stays left-to-right; it now sits on the
-   right, with the rest of the form. */
-[dir="rtl"] input[type="tel"]{text-align:right}
+   right, with the rest of the form: `end` of a left-to-right box is its
+   right. */
+[dir="rtl"] input[type="tel"]{text-align:end}
 /* ...and a left-to-right box reads `padding-inline-start` as its LEFT, while
    on /ar the field's icon is drawn on the RIGHT: the icon's room moves with it
    (the same 42px), or the number runs under the icon. The box is always

@@ -4,7 +4,7 @@
   "touch": true,
   "tel": {
    "dir": "ltr",
-   "align": "right",
+   "align": "end",
    "padL": "13px",
    "padR": "42px",
    "iconLeft": 321,
@@ -20,7 +20,7 @@
   "touch": false,
   "tel": {
    "dir": "ltr",
-   "align": "right",
+   "align": "end",
    "padL": "13px",
    "padR": "42px",
    "iconLeft": 1091,
