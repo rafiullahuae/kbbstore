@@ -143,7 +143,8 @@ it('ships with an empty table, so the owner’s two rows are content and not def
     expect(GridSection::query()->count())->toBe(0)
         // And the presets that WOULD create them exist, so the owner is one
         // button from each rather than being told to build them by hand.
-        ->and(array_keys(GridSections::PRESETS))->toBe(['bundles', 'bestsellers']);
+        // Lane HTB adds the "Product tabs" preset — still a button, never a row.
+        ->and(array_keys(GridSections::PRESETS))->toBe(['bundles', 'bestsellers', 'tabs']);
 });
 
 it('draws not one byte with nothing built', function () {

@@ -93,7 +93,7 @@ class GridSectionApiController extends Controller
             'tabs' => GridSections::tabsFor($grid),
             'manual' => self::manualProducts($grid),
             'source_query' => ProductSource::clean($grid->source_query ?? []),
-        ] + self::optionSets());
+        ] + self::tabsPayload($grid) + self::optionSets());
     }
 
     /**
@@ -187,6 +187,15 @@ class GridSectionApiController extends Controller
         $section->status = 'draft';
         $section->position = (int) (GridSection::query()->max('position') ?? 0) + 1;
 
+        // Lane HTB: the "Product tabs" preset carries its tabs; created OFF
+        // (a draft) like every preset.
+        if (isset(GridSections::PRESETS[$preset]['product_tabs']) && self::tabsInstalled()) {
+            self::applyTabs($section, [
+                'product_tabs' => GridSections::PRESETS[$preset]['product_tabs'],
+                'tab_style' => GridSections::PRESETS[$preset]['tab_style'] ?? 'a',
+            ]);
+        }
+
         $section->save();
         GridSections::flush();
 
@@ -210,6 +219,9 @@ class GridSectionApiController extends Controller
             'manual_ids.*' => ['integer'],
             // Lane HC: "Brands and categories, mixed" — see applyQuery().
             'source_query' => ['sometimes', 'array'],
+            // Lane HTB: Product tabs — see applyTabs().
+            'product_tabs' => ['sometimes', 'nullable', 'array'],
+            'tab_style' => ['sometimes', 'nullable', 'string', 'max:8'],
         ]);
 
         $values = (array) ($data['values'] ?? []);
@@ -226,6 +238,14 @@ class GridSectionApiController extends Controller
 
         self::applyQuery($grid, $data);
 
+        if (array_key_exists('product_tabs', $data) || array_key_exists('tab_style', $data)) {
+            if (! self::tabsInstalled()) {
+                return response()->json(['ok' => false, 'error' => 'Product tabs need this package\'s database update. Run the migrations (Platform → Core Updates applies them), then save again.'], 409);
+            }
+
+            self::applyTabs($grid, $data);
+        }
+
         $grid->save();
         GridSections::flush();
 
@@ -235,7 +255,7 @@ class GridSectionApiController extends Controller
             'tabs' => GridSections::tabsFor($grid),
             'manual' => self::manualProducts($grid),
             'source_query' => ProductSource::clean($grid->source_query ?? []),
-        ] + self::optionSets());
+        ] + self::tabsPayload($grid) + self::optionSets());
     }
 
     /**
@@ -345,6 +365,9 @@ class GridSectionApiController extends Controller
             'manual_ids.*' => ['integer'],
             // Lane HC: "Brands and categories, mixed" — see applyQuery().
             'source_query' => ['sometimes', 'array'],
+            // Lane HTB: Product tabs — see applyTabs().
+            'product_tabs' => ['sometimes', 'nullable', 'array'],
+            'tab_style' => ['sometimes', 'nullable', 'string', 'max:8'],
         ]);
 
         self::apply($grid, (array) ($data['values'] ?? []));
@@ -354,6 +377,14 @@ class GridSectionApiController extends Controller
         }
 
         self::applyQuery($grid, $data);
+        // Never saved, so it needs no column: the preview is drawn from the model.
+        self::applyTabs($grid, $data);
+
+        // Lane HTB: the preview's English / Arabic switch. Only for this
+        // render; nothing is stored and `lang` is compared, never echoed.
+        if ($request->input('lang') === 'ar' && \App\Support\Locale::isSupported('ar')) {
+            app()->setLocale('ar');
+        }
 
         return self::draw($grid);
     }
@@ -437,16 +468,24 @@ class GridSectionApiController extends Controller
             return response()->json(['ok' => true, 'empty' => true, 'html' => '', 'css' => GridSections::css()]);
         }
 
+        $html = view('partials.home.grid-section', [
+            'section' => $built['section'],
+            'items' => $built['items'],
+            'sections' => app(HomepageSections::class),
+        ])->render();
+
+        // Lane HTB: a tabs section's heading is the homepage's own `.kbb-home
+        // .hs-head`, and its tab row is tabsCss() — the page's @pushOnce has no
+        // stack to land in here, so the preview carries it beside css().
+        $tabs = \App\Support\GridTabs::of($built['section']) !== null;
+
         return response()->json([
             'ok' => true,
             'empty' => false,
-            'css' => GridSections::css(),
+            'css' => GridSections::css().($tabs ? GridSections::tabsCss() : ''),
             'stylesheets' => self::builtStylesheets(),
-            'html' => view('partials.home.grid-section', [
-                'section' => $built['section'],
-                'items' => $built['items'],
-                'sections' => app(HomepageSections::class),
-            ])->render(),
+            'html' => $tabs ? '<div class="kbb-home">'.$html.'</div>' : $html,
+            'dir' => \App\Support\Locale::isRtl() ? 'rtl' : 'ltr',
         ]);
     }
 
@@ -689,6 +728,83 @@ class GridSectionApiController extends Controller
      *
      * @return array<string, mixed>
      */
+    /**
+     * Lane HTB — the Product tabs write. ONE way in, through GridTabs::clean()
+     * with the ids checked: an unknown source, sort, style or alignment stores
+     * the default, a seventh tab is dropped, an id that names no row is
+     * dropped, and a link that is not a scheme this shop follows is stored
+     * empty, which draws no button. `null` (or no tab with a title) turns the
+     * section back into the ordinary grid.
+     */
+    private static function applyTabs(GridSection $grid, array $data): void
+    {
+        if (array_key_exists('product_tabs', $data)) {
+            $grid->tabs = \App\Support\GridTabs::clean($data['product_tabs'], true);
+        }
+
+        if (array_key_exists('tab_style', $data)) {
+            $grid->tab_style = \App\Support\GridTabs::style($data['tab_style']);
+        }
+    }
+
+    /** Did the column migration run? Asked only on a tabs write. */
+    private static function tabsInstalled(): bool
+    {
+        return \Illuminate\Support\Facades\Schema::hasColumn('grid_sections', 'tabs');
+    }
+
+    /**
+     * What the editor's Product tabs card reads: the stored tabs, the option
+     * sets (the same constants clean() checks against), the picked products'
+     * names for manual tabs (one query for all of them), and whether the
+     * shop's machine-translation provider is connected — asked, never assumed,
+     * so the Translate button can say so.
+     */
+    private static function tabsPayload(GridSection $grid): array
+    {
+        $tabs = \App\Support\GridTabs::of($grid);
+        $ids = [];
+
+        foreach ($tabs['list'] ?? [] as $t) {
+            $ids = array_merge($ids, $t['manual_ids']);
+        }
+
+        $names = [];
+
+        if ($ids !== []) {
+            foreach (Product::query()->select(['id', 'name', 'image'])->whereIn('id', array_values(array_unique($ids)))->get() as $p) {
+                $names[(string) $p->id] = ['id' => (int) $p->id, 'name' => (string) $p->name, 'image' => (string) ($p->image ?? '')];
+            }
+        }
+
+        $sorts = [];
+
+        foreach (array_keys(\App\Support\GridTabs::SOURCES) as $src) {
+            $sorts[$src] = \App\Support\GridTabs::sortsFor($src);
+        }
+
+        try {
+            $machine = app(\App\Services\Translation\TranslationProvider::class)->available();
+        } catch (\Throwable) {
+            $machine = false;
+        }
+
+        return [
+            'product_tabs' => $tabs,
+            'tab_style' => \App\Support\GridTabs::style($grid->tab_style),
+            'tab_options' => [
+                'max' => \App\Support\GridTabs::MAX,
+                'title_max' => \App\Support\GridTabs::TITLE_MAX,
+                'styles' => \App\Support\GridTabs::STYLES,
+                'align' => \App\Support\GridTabs::ALIGN,
+                'sources' => \App\Support\GridTabs::SOURCES,
+                'sorts' => $sorts,
+            ],
+            'tab_products' => (object) $names,
+            'machine_translate' => $machine,
+        ];
+    }
+
     private static function summary(GridSection $section): array
     {
         return [
@@ -700,6 +816,8 @@ class GridSectionApiController extends Controller
             'section_key' => $section->sectionKey(),
             'values' => GridSections::valuesOf($section),
             'manual_ids' => array_map('intval', (array) ($section->manual_ids ?? [])),
+            // Lane HTB: how many product tabs, 0 for an ordinary grid.
+            'tab_count' => count(\App\Support\GridTabs::of($section)['list'] ?? []),
         ];
     }
 

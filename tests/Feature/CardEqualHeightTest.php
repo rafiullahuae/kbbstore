@@ -753,6 +753,9 @@ it('knows every template that draws a product tile, including the grid nobody wa
         // other than the grid row. Measured on a published section from the
         // owner's own BEST SELLERS preset: one height at 320, 390 and 1280.
         'resources/views/partials/home/grid-section.blade.php',
+        // (Lane HTB) The same grid section drawn as Product tabs: the same
+        // `.gs-cell` wrapper and the same grid classes, one grid per tab.
+        'resources/views/partials/home/grid-tabs.blade.php',
         'resources/views/partials/home/grid.blade.php',
         // ▲ NOT A SEVENTH GRID. (Lane PI-B) "Load more on scroll" fetches the
         // next page's tiles as a batch and appends them to a grid that is

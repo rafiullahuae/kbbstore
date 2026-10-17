@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\GridSection;
 use App\Models\Product;
 use App\Support\GridSkins;
+use App\Support\GridTabs;
 use App\Support\ProductSource;
 use App\Support\SafeUrl;
 use Illuminate\Support\Collection;
@@ -178,6 +179,9 @@ class GridSections
      */
     private const MEMO = 'kbb.gridsections.registry.memo';
 
+    /** @var array<int, list<int>>|null category parent => children, for categoryAndDescendants() */
+    private ?array $byParent = null;
+
     /**
      * The two instances the owner named, as one-click presets.
      *
@@ -246,6 +250,50 @@ class GridSections
                 'show_view_all' => true,
                 'view_all_label' => 'View all',
                 'view_all_url' => '/shop/?orderby=popularity',
+            ],
+        ],
+        /*
+         * Lane HTB — "i need Tabs section on homepage like different tabs in
+         * one section, like Best Sellers, Trending K-Beauty, New Arrivals etc."
+         * Created as a DRAFT like every preset, so nothing reaches the shop
+         * until he publishes it. Option A (his pick), centred, carousel on
+         * both devices as in preview A. The Arabic titles are the shop's own
+         * existing translations: الأكثر مبيعًا (store.home.bestsellers_heading),
+         * وصل حديثًا (store.collection.title_new_in), and the homepage
+         * Trending heading's (HomeArabic home_tr_title) without "this week";
+         * the heading pair is HomeArabic's home_bs_eyebrow.
+         */
+        'tabs' => [
+            'label' => 'Product tabs — Best Sellers · Trending K-Beauty · New Arrivals',
+            'values' => [
+                'name' => 'Product tabs',
+                'heading' => 'Loved most',
+                'subheading' => '',
+                'show_heading' => true,
+                'source' => 'bestsellers',
+                'count' => 8,
+                'mobile_count' => 8,
+                'desktop_layout' => 'carousel',
+                'desktop_cols' => 5,
+                'per_d' => '5.5',
+                'arrows_d' => true,
+                'mobile_layout' => 'carousel',
+                'mobile_cols' => 2,
+                'per_m' => '2.3',
+                'arrows_m' => false,
+                'show_view_all' => false,
+                'view_all_label' => '',
+                'view_all_url' => '',
+            ],
+            'tab_style' => 'a',
+            'product_tabs' => [
+                'heading_ar' => 'الأكثر حبًا',
+                'align' => 'center',
+                'list' => [
+                    ['title' => 'Best Sellers', 'title_ar' => 'الأكثر مبيعًا', 'source' => 'bestsellers', 'url' => '/best-sellers'],
+                    ['title' => 'Trending K-Beauty', 'title_ar' => 'الأكثر رواجًا في الجمال الكوري', 'source' => 'trending', 'url' => ''],
+                    ['title' => 'New Arrivals', 'title_ar' => 'وصل حديثًا', 'source' => 'newest', 'url' => '/new-in'],
+                ],
             ],
         ],
     ];
@@ -534,8 +582,14 @@ class GridSections
             $wanted = [];
 
             foreach ($sections as $section) {
-                $spec = self::specKey($section);
-                $wanted[$spec] = max($wanted[$spec] ?? 0, $section->fetchCount());
+                /* Lane HTB: a tabs section asks for one pool per tab, in the
+                   SAME de-duplicated map — a tab and a grid with the same
+                   selection, or two tabs, cost one query between them. */
+                $tabs = GridTabs::of($section);
+
+                foreach ($tabs === null ? [self::specKey($section)] : array_map([GridTabs::class, 'spec'], $tabs['list']) as $spec) {
+                    $wanted[$spec] = max($wanted[$spec] ?? 0, $section->fetchCount());
+                }
             }
 
             $pools = [];
@@ -547,7 +601,9 @@ class GridSections
             $out = [];
 
             foreach ($sections as $section) {
-                $items = ($pools[self::specKey($section)] ?? collect())->take($section->fetchCount())->values();
+                $items = GridTabs::of($section) !== null
+                    ? self::withPanels($section, $pools)
+                    : ($pools[self::specKey($section)] ?? collect())->take($section->fetchCount())->values();
 
                 if ($items->isEmpty()) {
                     continue;
@@ -575,11 +631,50 @@ class GridSections
      */
     public function forPreview(GridSection $section): ?array
     {
+        $tabs = GridTabs::of($section);
+
+        if ($tabs !== null) {
+            $pools = [];
+
+            foreach ($tabs['list'] as $tab) {
+                $spec = GridTabs::spec($tab);
+                $pools[$spec] ??= $this->fetchPool($spec, $section->fetchCount());
+            }
+
+            return ['section' => $section, 'items' => self::withPanels($section, $pools)];
+        }
+
         $items = $this->fetchPool(self::specKey($section), $section->fetchCount())
             ->take($section->fetchCount())
             ->values();
 
         return ['section' => $section, 'items' => $items];
+    }
+
+    /**
+     * Lane HTB: a tabs section's panels, put on the model as the `tabPanels`
+     * relation (cached with it), and the FIRST panel's products returned as
+     * the section's items — so "a section with nothing to show is dropped"
+     * holds for tabs exactly as for a grid. A tab whose selection came back
+     * empty is left out rather than drawn as an empty panel.
+     *
+     * Each panel: title, title_ar, url (stored, scheme-checked), items.
+     */
+    private static function withPanels(GridSection $section, array $pools): Collection
+    {
+        $panels = [];
+
+        foreach ((GridTabs::of($section)['list'] ?? []) as $tab) {
+            $items = ($pools[GridTabs::spec($tab)] ?? collect())->take($section->fetchCount())->values();
+
+            if ($items->isNotEmpty()) {
+                $panels[] = ['title' => $tab['title'], 'title_ar' => $tab['title_ar'], 'url' => $tab['url'], 'items' => $items];
+            }
+        }
+
+        $section->setRelation('tabPanels', collect($panels));
+
+        return $panels === [] ? collect() : $panels[0]['items'];
     }
 
     /**
@@ -720,11 +815,19 @@ class GridSections
              * March. That is also the re-check the migration header promises:
              * a deleted id simply returns no row.
              */
-            'manual' => (function () use ($base, $manual, $limit, $soldOut) {
+            'manual' => (function () use ($base, $manual, $limit, $soldOut, $query) {
                 $ids = array_values(array_filter(array_map('intval', $manual === '' ? [] : explode(',', $manual))));
 
                 if ($ids === []) {
                     return collect();
+                }
+
+                /* Lane HTB: a hand-picked list with a sort of its own (a
+                   Product tabs tab) carries a sixth spec part; it is one
+                   query in that order over the picked ids. Without it, the
+                   five-part spec every manual grid uses, unchanged. */
+                if ($query !== '') {
+                    return $this->applyQuery($base->whereIn('id', array_slice($ids, 0, 48)), ProductSource::parse($query), false)->limit($limit)->get();
                 }
 
                 $rows = $base->whereIn('id', array_slice($ids, 0, 48))->get()->keyBy('id');
@@ -944,13 +1047,17 @@ class GridSections
      */
     private function categoryAndDescendants(int $id): array
     {
-        $all = Category::query()->select('id', 'parent_id')->get();
+        /* Read once per instance (Lane HTB): six "include sub-categories"
+           tabs in one cold build cost one read of the tree, not six. */
+        if ($this->byParent === null) {
+            $this->byParent = [];
 
-        $byParent = [];
-
-        foreach ($all as $row) {
-            $byParent[(int) $row->parent_id][] = (int) $row->id;
+            foreach (Category::query()->select('id', 'parent_id')->get() as $row) {
+                $this->byParent[(int) $row->parent_id][] = (int) $row->id;
+            }
         }
+
+        $byParent = $this->byParent;
 
         $out = [$id];
         $frontier = [$id];
@@ -1178,6 +1285,51 @@ class GridSections
              * banner both follow.
              */
             .'@media (prefers-reduced-motion:reduce){.kbb-gsec .gs-grid{scroll-behavior:auto}}'
+            .'</style>';
+    }
+
+    /**
+     * Lane HTB — the tab row of a "Product tabs" section, options A and B and
+     * the alignment. Pushed ONCE (@pushOnce) by partials/home/grid-tabs.blade.php,
+     * so a homepage with no tabs section carries not one byte of it, and inline
+     * for the reason css() gives: no new file, nothing render-blocking added.
+     *
+     * Every byte a constant (rule 5). Logical properties only and no [dir]
+     * selector, so /ar mirrors with no second rule: "left" is inline-START.
+     * The centred row is centred two ways on purpose: on a laptop the row is
+     * as wide as its tabs and auto margins centre it; on a phone the row bleeds
+     * to the screen edges and scrolls, and auto margins on the first and last
+     * tab centre it while it fits and fall to 0 when it overflows — so a long
+     * row is never clipped at its start, which `justify-content:center` on a
+     * scroller does.
+     */
+    public static function tabsCss(): string
+    {
+        return '<style>'
+            .'.kbb-gsec.gs-tabs .gs-tl{display:flex;gap:28px;overflow-x:auto;scrollbar-width:none;max-width:max-content;margin-bottom:18px}'
+            .'.kbb-gsec.gs-tabs .gs-tl::-webkit-scrollbar{display:none}'
+            .'.kbb-gsec.gs-tabs .gs-t{flex:none;font:inherit;cursor:pointer;background:none;border:0;padding:0;color:var(--ink-2,#5E5560);white-space:nowrap}'
+            .'.kbb-gsec.gs-tabs .gs-t:focus-visible{outline:2px solid var(--pink-deep,#C13E63);outline-offset:3px;border-radius:6px}'
+            /* A — underlined words */
+            .'.kbb-gsec.gs-tabs-a .gs-tl{border-bottom:1px solid var(--line,#EFE3E8)}'
+            .'.kbb-gsec.gs-tabs-a .gs-t{font-size:15px;font-weight:500;padding:10px 2px 12px;border-bottom:2px solid transparent;margin-bottom:-1px}'
+            .'.kbb-gsec.gs-tabs-a .gs-t[aria-selected="true"]{color:var(--ink,#2A2228);font-weight:700;border-bottom-color:var(--pink-deep,#C13E63)}'
+            /* B — pill buttons */
+            .'.kbb-gsec.gs-tabs-b .gs-tl{gap:8px}'
+            .'.kbb-gsec.gs-tabs-b .gs-t{min-height:38px;padding:0 18px;border-radius:99px;border:1px solid var(--line,#EFE3E8);background:#fff;font-size:14px;font-weight:600;color:var(--ink,#2A2228)}'
+            .'.kbb-gsec.gs-tabs-b .gs-t:hover{border-color:var(--ink,#2A2228)}'
+            .'.kbb-gsec.gs-tabs-b .gs-t[aria-selected="true"]{background:var(--ink,#2A2228);border-color:var(--ink,#2A2228);color:#fff}'
+            /* Alignment: the heading and the tab row together. */
+            .'.kbb-gsec.gs-al-left .hs-head{text-align:start;margin-inline:0;max-width:none}'
+            .'.kbb-gsec.gs-al-left .hs-head p{margin-inline:0}'
+            .'@media (min-width:901px){.kbb-gsec.gs-al-center .gs-tl{margin-inline:auto}}'
+            .'@media (max-width:900px){'
+                .'.kbb-gsec.gs-tabs .gs-tl{max-width:none;margin-inline:calc(var(--site-gutter,18px) * -1);padding-inline:var(--site-gutter,18px)}'
+                .'.kbb-gsec.gs-al-center .gs-t:first-child{margin-inline-start:auto}'
+                .'.kbb-gsec.gs-al-center .gs-t:last-child{margin-inline-end:auto}'
+                .'.kbb-gsec.gs-tabs-a .gs-tl{gap:22px}.kbb-gsec.gs-tabs-a .gs-t{font-size:14px}'
+                .'.kbb-gsec.gs-tabs-b .gs-t{min-height:36px;padding:0 15px;font-size:13.5px}'
+            .'}'
             .'</style>';
     }
 

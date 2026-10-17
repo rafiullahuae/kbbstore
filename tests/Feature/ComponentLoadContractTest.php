@@ -178,6 +178,14 @@ const CLC_COVERED = [
      */
     'resources/views/partials/home/grid-section.blade.php' => 'the homepage, rendered cold, with an instance built',
     /*
+     * Lane HTB. A grid section shown as Product tabs draws its tiles from
+     * this partial (included by grid-section.blade.php), from the same
+     * GridSections::fetchPool() rows and their `with('brand:id,name,slug')`.
+     * GridSectionTabsTest renders the homepage cold with a tabs section under
+     * Model::preventLazyLoading(), which is the check this row records.
+     */
+    'resources/views/partials/home/grid-tabs.blade.php' => 'the homepage, rendered cold, with a tabs section built (GridSectionTabsTest)',
+    /*
      * Row 55 (Lane HA). The homepage's three new product rails — Best Sellers,
      * Trending, Under AED 54 — include partials/home/grid from here. Covered
      * by the same cold homepage render, which holds GridSections::fetchPool()

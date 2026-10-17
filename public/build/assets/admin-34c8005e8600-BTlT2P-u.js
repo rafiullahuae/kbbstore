@@ -11,6 +11,8 @@
   var saved = null;       /* the server's answer: {section, tabs, manual, …} */
   var draft = null;       /* {values:{}, manual_ids:[]} — what has been typed */
   var results = null;     /* the manual picker's last search */
+  var tabResults = {};    /* Lane HTB: each product tab's picker search, by tab index */
+  var previewLang = 'en'; /* Lane HTB: the preview in English or Arabic */
   var previewWidth = 1280;
   var banner = null;
   var busy = false;
@@ -110,7 +112,10 @@
     draft = null;
     if (!saved) return;
 
-    draft = {values: {}, manual_ids: (saved.section.manual_ids || []).slice()};
+    draft = {values: {}, manual_ids: (saved.section.manual_ids || []).slice(),
+      /* Lane HTB: the product tabs, a deep copy so typing never reaches `saved`. */
+      ptabs: saved.product_tabs ? JSON.parse(JSON.stringify(saved.product_tabs)) : null,
+      tab_style: saved.tab_style || 'a'};
     fieldKeys().forEach(function(k){
       var f = fieldOf(k);
       draft.values[k] = f ? f.value : null;
@@ -135,10 +140,19 @@
       out.push('manual_ids');
     }
 
+    if (tabsChanged()) out.push('product_tabs');
+
     return out;
   }
 
   function dirty(){ return changed().length > 0; }
+
+  /* Lane HTB: the tabs and their style, compared as a whole. */
+  function tabsChanged(){
+    if (!draft || !saved) return false;
+    return JSON.stringify(draft.ptabs || null) !== JSON.stringify(saved.product_tabs || null)
+      || (draft.ptabs && String(draft.tab_style) !== String(saved.tab_style || 'a'));
+  }
 
   /* LEAVING KEEPS THE DRAFT, AND ASKS NOTHING. (Lane PM)
      This used to be window.confirm("You have N unsaved change(s). Leave them?")
@@ -163,6 +177,8 @@
       var out = {};
       fieldKeys().forEach(function(k){ out['v.' + k] = draft.values[k]; });
       out.manual_ids = draft.manual_ids.join(',');
+      out.ptabs = JSON.stringify(draft.ptabs || null);
+      out.tab_style = draft.tab_style;
       return out;
     },
     set: function(k, v){
@@ -170,6 +186,8 @@
         draft.manual_ids = String(v || '').split(',').filter(Boolean).map(Number);
         return;
       }
+      if (k === 'ptabs') { try { draft.ptabs = JSON.parse(v); } catch (e) {} return; }
+      if (k === 'tab_style') { draft.tab_style = v === 'b' ? 'b' : 'a'; return; }
       if (k.indexOf('v.') === 0 && fieldKeys().indexOf(k.slice(2)) !== -1) draft.values[k.slice(2)] = v;
     },
     count: function(){ return changed().length; },
@@ -286,7 +304,10 @@
     try {
       var body = await api('/grid-sections/' + encodeURIComponent(openId) + '/preview', 'POST', {
         values: draft.values,
-        manual_ids: draft.manual_ids
+        manual_ids: draft.manual_ids,
+        product_tabs: draft.ptabs,
+        tab_style: draft.tab_style,
+        lang: previewLang
       });
       if (mine !== pvSeq) return;
       paintPreview(stage, body);
@@ -313,7 +334,7 @@
       return '<link rel="stylesheet" href="' + esc(href) + '">';
     }).join('');
 
-    var doc = '<!doctype html><html><head><meta charset="utf-8">'
+    var doc = '<!doctype html><html' + (body.dir === 'rtl' ? ' dir="rtl" lang="ar"' : '') + '><head><meta charset="utf-8">'
       + '<meta name="viewport" content="width=device-width,initial-scale=1">'
       + links
       + '<style>html,body{margin:0;padding:0;background:#fff}body{padding:14px 0}'
@@ -408,6 +429,8 @@
       ? ('carousel, ' + v.mobile_cols + ' in view')
       : (v.mobile_cols + ' columns');
 
+    if (s.tab_count) source = 'Product tabs (' + s.tab_count + ' tab' + (s.tab_count === 1 ? '' : 's') + ')';
+
     return source + ' · ' + v.count + ' on desktop (' + desk + ') · '
       + v.mobile_count + ' on mobile (' + mob + ')';
   }
@@ -471,7 +494,7 @@
       if (t.description) html += '<p class="gss-sub">' + esc(t.description) + '</p>';
       html += '<div class="gss-grid">' + (t.fields || []).map(fieldHTML).join('') + '</div></div>';
 
-      if (t.key === 'products') html += manualView();
+      if (t.key === 'products') html += (draft.ptabs ? '<p class="gss-note">This section is showing as Product tabs, so each tab chooses its own products below; the two “How many” numbers apply to every tab.</p>' : manualView()) + tabsView();
     });
 
     html += '<div style="margin-top:16px"><div class="gss-title">How it will look</div>'
@@ -480,6 +503,10 @@
       + [[390, 'Phone'], [768, 'Tablet'], [1280, 'Desktop']].map(function(w){
           return '<button type="button" class="gss-tiny' + (previewWidth === w[0] ? ' is-on' : '') + '"'
             + ' data-gss-w="' + w[0] + '">' + w[1] + ' · ' + w[0] + 'px</button>';
+        }).join('')
+      + [['en', 'English'], ['ar', 'العربية · Arabic']].map(function(l){
+          return '<button type="button" class="gss-tiny' + (previewLang === l[0] ? ' is-on' : '') + '"'
+            + ' data-gss-lang="' + l[0] + '">' + l[1] + '</button>';
         }).join('')
       + '</div><div class="gss-stage" id="gss-stage"><div class="gss-empty">Drawing…</div></div></div>';
 
@@ -546,6 +573,341 @@
     }
 
     return html + '</div>';
+  }
+
+  /* ═══════════════════════ Lane HTB — Product tabs ═══════════════════════
+     The owner: "i need Tabs section on homepage like different tabs in one
+     section, like Best Sellers, Trending K-Beauty, New Arrivals etc. ... add
+     new tabs with title and products selection query via categories, brands
+     etc and also manual section, and also the sorting inside that section." —
+     "Options A and B are final. give us also the align on left or center." —
+     "need also for arabic too with proper translation option available while
+     creating".
+
+     Every option set below comes from the payload's `tab_options`, which the
+     server builds from App\Support\GridTabs — the same constants its clean()
+     checks every save against, so the screen cannot offer what the server
+     refuses. The Arabic box sits beside its English one; Translate fills it
+     through the shop's existing per-field endpoint
+     (POST /admin-api/translations/machine/field — its own capability, the
+     provider configured under Translation → Language settings), only when
+     pressed, and stores nothing: Save does. */
+  function blankTab(){
+    return {title: '', title_ar: '', source: 'bestsellers', brand_id: 0, category_id: 0, children: false,
+      query: {brands: [], cats: [], stock: false}, manual_ids: [], sort: '', url: ''};
+  }
+
+  function tabsOpt(){ return saved.tab_options || {max: 6, title_max: 40, styles: {}, align: {}, sources: {}, sorts: {}}; }
+
+  /* The value at a dotted path inside draft.ptabs ("list.2.title_ar"). */
+  function tget(path){
+    var o = draft.ptabs;
+    path.split('.').forEach(function(k){ o = (o == null) ? undefined : o[k]; });
+    return o;
+  }
+
+  function tset(path, v){
+    var keys = path.split('.');
+    var o = draft.ptabs;
+    for (var i = 0; i < keys.length - 1; i++) o = o[keys[i]];
+    o[keys[keys.length - 1]] = v;
+  }
+
+  /* The English an Arabic box translates. */
+  function englishFor(path){
+    if (path === 'heading_ar') return draft.values.heading || '';
+    if (path === 'sub_ar') return draft.values.subheading || '';
+    if (path === 'view_all_ar') return draft.values.view_all_label || '';
+    if (path === 'eyebrow_ar') return draft.ptabs.eyebrow || '';
+    return tget(path.replace(/_ar$/, '')) || '';
+  }
+
+  function selectHTML(path, opts, value){
+    var body = '';
+    Object.keys(opts).forEach(function(k){
+      body += '<option value="' + esc(k) + '"' + (String(k) === String(value) ? ' selected' : '') + '>' + esc(opts[k]) + '</option>';
+    });
+    return '<select class="gss-sel" data-gss-t="' + esc(path) + '">' + body + '</select>';
+  }
+
+  function textHTML(path, label, value, max, help){
+    return '<div class="gss-fld"><label class="gss-lab">' + esc(label) + '</label>'
+      + '<input class="gss-in" data-gss-t="' + esc(path) + '" maxlength="' + max + '" value="' + esc(value || '') + '">'
+      + (help ? '<p class="gss-help">' + esc(help) + '</p>' : '') + '</div>';
+  }
+
+  /* An Arabic box with its Translate button. */
+  function arabicHTML(path, label, value, max){
+    var on = !!saved.machine_translate;
+    return '<div class="gss-fld"><label class="gss-lab">' + esc(label) + '</label>'
+      + '<div class="gss-row" style="gap:6px">'
+      + '<input class="gss-in" dir="rtl" lang="ar" data-gss-t="' + esc(path) + '" maxlength="' + max + '" value="' + esc(value || '') + '"'
+      + ' placeholder="Empty: the English is shown" style="flex:1 1 170px">'
+      + '<button type="button" class="gss-tiny gss-tr" data-gss-tr="' + esc(path) + '"'
+      + (on ? '' : ' title="No translation service is connected — Translation → Language settings"') + '>'
+      + (on ? 'Translate' : 'Translate · not set up') + '</button></div>'
+      + '<p class="gss-help" data-gss-trnote="' + esc(path) + '"></p></div>';
+  }
+
+  function multiHTML(path, opts, picked){
+    var body = '';
+    Object.keys(opts).forEach(function(k){
+      if (k === '') return;
+      body += '<option value="' + esc(k) + '"' + (picked.indexOf(Number(k)) !== -1 ? ' selected' : '') + '>' + esc(opts[k]) + '</option>';
+    });
+    return '<select class="gss-sel" multiple size="6" data-gss-tm="' + esc(path) + '">' + body + '</select>';
+  }
+
+  function tabHTML(t, i, n){
+    var o = tabsOpt();
+    var p = 'list.' + i;
+    var sorts = (o.sorts || {})[t.source] || {};
+    var html = '<div class="gss-tab">'
+      + '<div class="gss-row" style="margin-bottom:8px"><b class="gss-nm" style="flex:1 1 auto">Tab ' + (i + 1)
+      + (t.title ? ' · ' + esc(t.title) : '') + '</b>'
+      + '<button type="button" class="gss-tiny" data-gss-tup="' + i + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Move tab up">↑</button>'
+      + '<button type="button" class="gss-tiny" data-gss-tdown="' + i + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="Move tab down">↓</button>'
+      + '<button type="button" class="gss-tiny gss-btn is-danger" data-gss-tdel="' + i + '"' + (n === 1 ? ' disabled' : '') + '>Remove</button></div>'
+      + '<div class="gss-grid">'
+      + textHTML(p + '.title', 'Tab title (English)', t.title, o.title_max, 'A tab with no English title is not saved.')
+      + arabicHTML(p + '.title_ar', 'Tab title (Arabic)', t.title_ar, o.title_max)
+      + '<div class="gss-fld"><label class="gss-lab">Products from</label>' + selectHTML(p + '.source', o.sources || {}, t.source) + '</div>';
+
+    if (t.source === 'brand') {
+      html += '<div class="gss-fld"><label class="gss-lab">Brand</label>' + selectHTML(p + '.brand_id', saved.brands || {}, t.brand_id || '') + '</div>';
+    }
+    if (t.source === 'category') {
+      html += '<div class="gss-fld"><label class="gss-lab">Category</label>' + selectHTML(p + '.category_id', saved.categories || {}, t.category_id || '') + '</div>';
+    }
+    if (t.source === 'category' || t.source === 'query') {
+      html += '<div class="gss-fld"><label class="gss-sw"><input type="checkbox" data-gss-tb="' + p + '.children"' + (t.children ? ' checked' : '') + '><span>Include sub-categories</span></label></div>';
+    }
+    if (t.source === 'query') {
+      html += '<div class="gss-fld"><label class="gss-lab">Brands (any of)</label>' + multiHTML(p + '.query.brands', saved.brands || {}, t.query.brands || [])
+        + '<p class="gss-help">Ctrl/⌘-click to pick several, up to 20.</p></div>'
+        + '<div class="gss-fld"><label class="gss-lab">Categories (any of)</label>' + multiHTML(p + '.query.cats', saved.categories || {}, t.query.cats || [])
+        + '<p class="gss-help">Both chosen: a product must be in one of the brands AND one of the categories.</p></div>'
+        + '<div class="gss-fld"><label class="gss-sw"><input type="checkbox" data-gss-tb="' + p + '.query.stock"' + (t.query.stock ? ' checked' : '') + '><span>In stock only</span></label></div>';
+    }
+    if (Object.keys(sorts).length) {
+      html += '<div class="gss-fld"><label class="gss-lab">Sort inside this tab</label>' + selectHTML(p + '.sort', sorts, t.sort || Object.keys(sorts)[0]) + '</div>';
+    } else {
+      html += '<div class="gss-fld"><label class="gss-lab">Sort inside this tab</label><p class="gss-help">“' + esc((o.sources || {})[t.source] || t.source) + '” is its own order.</p></div>';
+    }
+    html += textHTML(p + '.url', '“View all” link for this tab', t.url, 500, 'Empty: no button. /best-sellers or a full https:// address; the Arabic shop gets /ar automatically.')
+      + '</div>';
+
+    if (t.source === 'manual') html += tabPickerHTML(t, i);
+
+    return html + '</div>';
+  }
+
+  function tabPickerHTML(t, i){
+    var names = saved.tab_products || {};
+    var res = tabResults[i] || null;
+    var byId = {};
+    Object.keys(names).forEach(function(k){ byId[k] = names[k]; });
+    (res || []).forEach(function(p){ byId[p.id] = p; });
+
+    var html = '<div style="margin-top:10px"><div class="gss-lab">This tab’s products (up to 24)</div><div class="gss-picked">';
+    if (!t.manual_ids.length) html += '<div class="gss-empty">Nothing picked yet. Search below.</div>';
+    t.manual_ids.forEach(function(id, j){
+      var p = byId[id];
+      html += '<div class="gss-prow"><span class="gss-th">' + (p && p.image ? '<img src="' + esc(p.image) + '" alt="">' : '') + '</span>'
+        + '<span class="gss-pn">' + esc(p ? p.name : ('#' + id)) + '</span>'
+        + '<button type="button" class="gss-tiny" data-gss-tpm="' + i + ':' + j + ':-1"' + (j === 0 ? ' disabled' : '') + '>↑</button>'
+        + '<button type="button" class="gss-tiny" data-gss-tpm="' + i + ':' + j + ':1"' + (j === t.manual_ids.length - 1 ? ' disabled' : '') + '>↓</button>'
+        + '<button type="button" class="gss-tiny" data-gss-tpm="' + i + ':' + j + ':x">Remove</button></div>';
+    });
+    html += '</div><div class="gss-row" style="margin-top:9px">'
+      + '<input class="gss-in" id="gss-tsearch-' + i + '" placeholder="Search the catalogue by name" style="flex:1 1 200px">'
+      + '<button type="button" class="gss-btn" data-gss-tsearch="' + i + '">Search</button></div>';
+    if (res !== null) {
+      html += '<div class="gss-results">';
+      if (!res.length) html += '<div class="gss-empty">Nothing matched.</div>';
+      res.forEach(function(p){
+        var already = t.manual_ids.indexOf(p.id) !== -1;
+        html += '<div class="gss-prow"><span class="gss-th">' + (p.image ? '<img src="' + esc(p.image) + '" alt="">' : '') + '</span>'
+          + '<span class="gss-pn">' + esc(p.name) + '</span>'
+          + '<button type="button" class="gss-tiny" data-gss-tpa="' + i + ':' + p.id + '"' + (already || t.manual_ids.length >= 24 ? ' disabled' : '') + '>'
+          + (already ? 'Added' : 'Add') + '</button></div>';
+      });
+      html += '</div>';
+    }
+    return html + '</div>';
+  }
+
+  function tabsView(){
+    var o = tabsOpt();
+    var on = !!draft.ptabs;
+    var html = '<div class="gss-tabs" style="margin-top:14px"><div class="gss-title">Product tabs</div>'
+      + '<p class="gss-sub">Show this section as tabs — Best Sellers, Trending, New Arrivals… — each tab with its own products '
+      + 'and its own order. Laptop and phone layout (grid or carousel), columns and how many come from Layout below and apply to every tab.</p>'
+      + '<label class="gss-sw"><input type="checkbox" data-gss-tabson' + (on ? ' checked' : '') + '><span>Show this section as tabs</span></label>';
+
+    if (!on) return html + '</div>';
+
+    var t = draft.ptabs;
+    html += '<div class="gss-grid" style="margin-top:12px">'
+      + '<div class="gss-fld"><label class="gss-lab">Tab style</label>' + selectHTML('@style', o.styles || {}, draft.tab_style)
+      + '<p class="gss-help">A: words with a line under the open tab. B: rounded buttons, the open one filled.</p></div>'
+      + '<div class="gss-fld"><label class="gss-lab">Alignment — heading and tabs</label>' + selectHTML('align', o.align || {}, t.align)
+      + '<p class="gss-help">“Left” starts at the right-hand side on the Arabic shop, as Arabic reads.</p></div>'
+      + textHTML('eyebrow', 'Small line above the heading (English)', t.eyebrow, 190)
+      + arabicHTML('eyebrow_ar', 'Small line above the heading (Arabic)', t.eyebrow_ar, 190)
+      + arabicHTML('heading_ar', 'Heading (Arabic) — the English is under Heading above', t.heading_ar, 190)
+      + arabicHTML('sub_ar', 'Sub-heading (Arabic)', t.sub_ar, 255)
+      + arabicHTML('view_all_ar', '“View all” text (Arabic) — the English is under “View all” button', t.view_all_ar, 120)
+      + '</div><div class="gss-list" style="margin-top:12px">';
+
+    t.list.forEach(function(tab, i){ html += tabHTML(tab, i, t.list.length); });
+
+    html += '</div><div class="gss-row" style="margin-top:10px">'
+      + '<button type="button" class="gss-btn" data-gss-tadd' + (t.list.length >= o.max ? ' disabled' : '') + '>+ Add a tab</button>'
+      + '<span class="gss-help">' + t.list.length + ' of ' + o.max + ' tabs. Empty Arabic shows the English on the Arabic shop — never a blank tab.</span></div></div>';
+
+    return html;
+  }
+
+  function bindTabs(){
+    var on = document.querySelector('[data-gss-tabson]');
+    if (on) on.onchange = function(){
+      if (on.checked) {
+        draft.ptabs = draft.ptabs || (saved.product_tabs ? JSON.parse(JSON.stringify(saved.product_tabs)) : null)
+          || {eyebrow: '', eyebrow_ar: '', heading_ar: '', sub_ar: '', view_all_ar: '', align: 'center', list: [blankTab()]};
+      } else {
+        draft.ptabs = null;
+      }
+      render(); refreshPreview();
+    };
+
+    /* Typing writes the draft and nothing else (no re-render under the caret);
+       a select that changes what is on screen re-renders. */
+    document.querySelectorAll('[data-gss-t]').forEach(function(el){
+      var path = el.dataset.gssT;
+      var apply = function(){
+        if (path === '@style') { draft.tab_style = el.value; }
+        else {
+          var v = el.value;
+          if (/\.(brand_id|category_id)$/.test(path)) v = Number(v) || 0;
+          tset(path, v);
+        }
+        paintDraftBar();
+        refreshPreview();
+        if (/\.source$/.test(path)) {
+          var tab = tget(path.replace(/\.source$/, ''));
+          var sorts = (tabsOpt().sorts || {})[tab.source] || {};
+          tab.sort = Object.keys(sorts)[0] || '';
+          render();
+        }
+      };
+      el.oninput = apply;
+      el.onchange = apply;
+    });
+
+    document.querySelectorAll('[data-gss-tb]').forEach(function(el){
+      el.onchange = function(){ tset(el.dataset.gssTb, el.checked); paintDraftBar(); refreshPreview(); };
+    });
+
+    document.querySelectorAll('[data-gss-tm]').forEach(function(el){
+      el.onchange = function(){
+        var ids = Array.prototype.filter.call(el.options, function(op){ return op.selected; })
+          .map(function(op){ return Number(op.value); }).slice(0, 20);
+        tset(el.dataset.gssTm, ids); paintDraftBar(); refreshPreview();
+      };
+    });
+
+    var add = document.querySelector('[data-gss-tadd]');
+    if (add) add.onclick = function(){
+      if (draft.ptabs.list.length >= tabsOpt().max) return;
+      draft.ptabs.list.push(blankTab()); tabResults = {}; render(); refreshPreview();
+    };
+
+    document.querySelectorAll('[data-gss-tdel]').forEach(function(b){
+      b.onclick = function(){
+        if (draft.ptabs.list.length < 2) return;
+        draft.ptabs.list.splice(Number(b.dataset.gssTdel), 1); tabResults = {}; render(); refreshPreview();
+      };
+    });
+
+    document.querySelectorAll('[data-gss-tup],[data-gss-tdown]').forEach(function(b){
+      b.onclick = function(){
+        var i = Number(b.dataset.gssTup || b.dataset.gssTdown);
+        var j = b.dataset.gssTup ? i - 1 : i + 1;
+        var l = draft.ptabs.list;
+        if (j < 0 || j >= l.length) return;
+        var x = l[i]; l[i] = l[j]; l[j] = x; tabResults = {}; render(); refreshPreview();
+      };
+    });
+
+    document.querySelectorAll('[data-gss-tsearch]').forEach(function(b){
+      b.onclick = async function(){
+        var i = Number(b.dataset.gssTsearch);
+        var box = document.querySelector('#gss-tsearch-' + i);
+        try {
+          var body = await api('/grid-sections/products?q=' + encodeURIComponent(box ? box.value : ''));
+          tabResults[i] = body.products || [];
+          render();
+        } catch (e) { say(explain(e, 'Could not search the catalogue.')); }
+      };
+    });
+
+    document.querySelectorAll('[data-gss-tpa]').forEach(function(b){
+      b.onclick = function(){
+        var parts = b.dataset.gssTpa.split(':');
+        var tab = draft.ptabs.list[Number(parts[0])];
+        var id = Number(parts[1]);
+        var hit = (tabResults[Number(parts[0])] || []).filter(function(p){ return p.id === id; })[0];
+        if (hit) { saved.tab_products = saved.tab_products || {}; saved.tab_products[id] = hit; }
+        if (tab.manual_ids.indexOf(id) === -1 && tab.manual_ids.length < 24) tab.manual_ids.push(id);
+        render(); refreshPreview();
+      };
+    });
+
+    document.querySelectorAll('[data-gss-tpm]').forEach(function(b){
+      b.onclick = function(){
+        var parts = b.dataset.gssTpm.split(':');
+        var ids = draft.ptabs.list[Number(parts[0])].manual_ids;
+        var j = Number(parts[1]);
+        if (parts[2] === 'x') ids.splice(j, 1);
+        else {
+          var k = j + Number(parts[2]);
+          if (k < 0 || k >= ids.length) return;
+          var x = ids[j]; ids[j] = ids[k]; ids[k] = x;
+        }
+        render(); refreshPreview();
+      };
+    });
+
+    /* Translate: ONLY on a press, one short string, filled into the box and
+       not stored — Save stores it. The server's own words come back when no
+       provider is connected (409), so the button says why. */
+    document.querySelectorAll('[data-gss-tr]').forEach(function(b){
+      b.onclick = async function(){
+        var path = b.dataset.gssTr;
+        var box = document.querySelector('[data-gss-t="' + path + '"]');
+        var note = document.querySelector('[data-gss-trnote="' + path + '"]');
+        var english = String(englishFor(path)).trim();
+        var tell = function(m){ if (note) note.textContent = m; };
+        if (!english) { tell('Write the English first.'); return; }
+        var was = b.textContent;
+        b.disabled = true; b.textContent = 'Translating…';
+        try {
+          var d = await api('/translations/machine/field', 'POST', {text: english, locale: 'ar'});
+          if (!d || !d.translation) { tell('Nothing came back for that.'); return; }
+          var v = String(d.translation).slice(0, (box && box.maxLength > 0) ? box.maxLength : 255);
+          tset(path, v);
+          if (box) box.value = v;
+          tell('Machine translation — read it before you save.');
+          paintDraftBar(); refreshPreview();
+        } catch (e) {
+          tell(e && e.body && (e.body.message || e.body.error) ? (e.body.message || e.body.error)
+            : (e && e.status === 403 ? 'Your account cannot use the translation service.' : 'Could not translate that.'));
+        } finally {
+          b.disabled = false; b.textContent = was;
+        }
+      };
+    });
   }
 
   function paintDraftBar(){
@@ -656,6 +1018,16 @@
       };
     });
 
+    bindTabs();
+
+    document.querySelectorAll('[data-gss-lang]').forEach(function(b){
+      b.onclick = function(){
+        previewLang = b.dataset.gssLang === 'ar' ? 'ar' : 'en';
+        document.querySelectorAll('[data-gss-lang]').forEach(function(x){ x.classList.toggle('is-on', x === b); });
+        drawPreview();
+      };
+    });
+
     document.querySelectorAll('[data-gss-w]').forEach(function(b){
       b.onclick = function(){
         previewWidth = Number(b.dataset.gssW);
@@ -733,10 +1105,12 @@
       state('Saving…');
 
       try {
-        var body = await api('/grid-sections/' + encodeURIComponent(openId), 'PUT', {
-          values: draft.values,
-          manual_ids: draft.manual_ids
-        });
+        var payload = {values: draft.values, manual_ids: draft.manual_ids};
+        /* Only when they changed: an ordinary grid's save never names the
+           tabs columns, so it cannot be refused on a server whose migration
+           has not run yet. */
+        if (tabsChanged()) { payload.product_tabs = draft.ptabs; payload.tab_style = draft.tab_style; }
+        var body = await api('/grid-sections/' + encodeURIComponent(openId), 'PUT', payload);
         saved = Object.assign({}, saved, body);
         startDraft();
         if (window.kbbDrafts) window.kbbDrafts.saved('gridsections');
