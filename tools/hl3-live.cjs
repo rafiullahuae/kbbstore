@@ -62,6 +62,9 @@ async function prepare(p, here) {
     m.setAttribute('aria-label', there === 'ar' ? 'العربية' : 'English');
     m.innerHTML = `<span>${there === 'ar' ? arWord : 'English'}</span>`;
     const hact = document.querySelector('header .hact'); hact.insertBefore(m, hact.firstElementChild);
+    // Arabic: the three-lines menu icon drawn from the right (the short middle
+    // line ends on the inline-start side), as its own path -- no transform.
+    if (here === 'ar') { const ln = document.querySelector('#burger svg.ln path'); if (ln && ln.getAttribute('d') === 'M3.5 6.5h17M3.5 12h11M3.5 17.5h17') ln.setAttribute('d', 'M20.5 6.5h-17M20.5 12h-11M20.5 17.5h-17'); }
   }, { here, there, href, arWord: svgWord('العربية', 9), arGlyph: svgWord('ع', 13) });
 }
 
