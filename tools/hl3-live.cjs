@@ -36,9 +36,10 @@ const CSS = `
   .hl3-d .hl3-svg{display:block;width:auto;height:13px}
 }
 @media (max-width:900px){
-  header .hact a.ib[href*="my-wishlist"]{display:none}
+  header .hact a.ib[href*="my-wishlist"],header .hact .hl3-wish{display:none}
   /* the thin capsule: as tall as the user and cart glyphs (21px), set apart */
-  .hl3-m{display:flex;align-items:center;flex:none;margin-inline-end:2px;padding-block:9px;color:inherit;text-decoration:none}
+  /* the switch IS an icon box (.ib), so it takes the heart's exact size at every width and the logo cannot move */
+  .hl3-m.ib{display:grid;place-items:center;overflow:visible;color:inherit;text-decoration:none}
   .hl3-m>span{display:flex;align-items:center;justify-content:center;height:21px;box-sizing:border-box;padding:0 6px;border:1.5px solid currentColor;border-radius:999px;font-weight:700;font-size:10px;line-height:1;white-space:nowrap}
   .hl3-m .hl3-svg{display:block;width:auto;height:9px}
 }`;
@@ -54,7 +55,7 @@ async function prepare(p, here) {
     }).join('');
     const d = document.createElement('nav'); d.className = 'hl3 hl3-d'; d.setAttribute('aria-label', here === 'ar' ? 'اللغة' : 'Language'); d.innerHTML = pair;
     document.querySelector('header .sbox').after(d);
-    const m = document.createElement('a'); m.className = 'hl3 hl3-m'; m.href = href; m.dataset.go = there; m.lang = there; m.hreflang = there;
+    const m = document.createElement('a'); m.className = 'ib hl3 hl3-m'; m.href = href; m.dataset.go = there; m.lang = there; m.hreflang = there;
     m.setAttribute('aria-label', there === 'ar' ? 'العربية' : 'English');
     m.innerHTML = `<span>${there === 'ar' ? arWord : 'English'}</span>`;
     const hact = document.querySelector('header .hact'); hact.insertBefore(m, hact.firstElementChild);
@@ -88,16 +89,26 @@ async function freeze(b, here) {
   await p.goto(BASE + (here === 'ar' ? '/ar/' : '/'), { waitUntil: 'networkidle' });
   await prepare(p, here);
   const { html, fonts } = await p.evaluate(async () => {
+    // The sheets' own text, in order: re-serialising cssRules drops any shorthand
+    // that carries var() (Chrome writes "background-image: ;"), which blanked the
+    // footer's pink strip in the first build of this preview.
     let css = '';
-    for (const sh of document.styleSheets) { try { for (const r of sh.cssRules) css += r.cssText + '\n'; } catch (e) { /* cross-origin */ } }
+    for (const sh of document.styleSheets) {
+      if (sh.href) {
+        const t = await (await fetch(sh.href)).text();
+        css += t.replace(/url\((['"]?)(?!data:|https?:|\/)([^'")]+)\1\)/g, (m, q, u) => 'url(' + new URL(u, sh.href).pathname + ')') + '\n';
+      } else if (sh.ownerNode) css += sh.ownerNode.textContent + '\n';
+    }
     // Only the header, the strips under it and the footer: the rest is not under review.
     const main = document.querySelector('main') || document.querySelector('#main');
     if (main) main.innerHTML = '<div style="padding:60px 16px;text-align:center;color:#8C828A;font:600 14px/1.5 Outfit,system-ui,sans-serif">The page content is left out of this preview. Only the header and the footer are being reviewed.</div>';
-    document.querySelectorAll('script,noscript,link[rel=stylesheet],link[rel=preload],link[rel=modulepreload],link[rel=prefetch],style,iframe,[class*="kwa"],[class*="wa-float"],[class*="wa-bub"],.kbb-wa').forEach((e) => e.remove());
+    document.querySelectorAll('script,noscript,link[rel=stylesheet],link[rel=preload],link[rel=modulepreload],link[rel=prefetch],style,iframe,[class*="kwa"],[class*="wa-float"],[class*="wa-bub"],.kbb-wa,[class^="kbw"],#kbbWaB').forEach((e) => e.remove());
     for (const img of document.querySelectorAll('img')) {
       img.removeAttribute('srcset'); img.removeAttribute('sizes'); img.loading = 'eager';
       try { const r = await fetch(img.currentSrc || img.src); const bl = await r.blob(); if (bl.size < 60000) { img.src = await new Promise((ok) => { const f = new FileReader(); f.onload = () => ok(f.result); f.readAsDataURL(bl); }); } else img.remove(); } catch (e) { img.remove(); }
     }
+    // Mark the wishlist heart BEFORE the addresses go: the phone rule finds it by its address.
+    document.querySelectorAll('header .hact a[href*="my-wishlist"]').forEach((a) => a.classList.add('hl3-wish'));
     document.querySelectorAll('a[href]').forEach((a) => { if (!a.dataset.go) a.setAttribute('href', '#'); });
     document.querySelectorAll('.kbb-lang a').forEach((a) => { a.dataset.go = a.getAttribute('lang'); });
     const fonts = [...css.matchAll(/url\(["']?(\/build\/[^"')]+\.woff2)["']?\)/g)].map((m) => m[1]);
