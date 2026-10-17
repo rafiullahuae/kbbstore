@@ -124,7 +124,7 @@
 @endif
   <div class="kft-bot"><div class="kft-wrap kft-bot-in">
     <span>{{ __('store.footer.copyright', ['year' => date('Y'), 'store' => (method_exists(\App\Support\ArabicWording::class, 'copyrightStore') ? \App\Support\ArabicWording::copyrightStore($kbbSettings->get('store_name', 'K-Beauty Bliss')) : (string) ($kbbSettings->get('store_name', 'K-Beauty Bliss')))]) }}</span>
-    <nav class="kft-legal"><a href="{{ Url::to('/privacy-policy/') }}">{{ __('store.footer.link_privacy') }}</a><a href="{{ Url::to('/terms-and-conditions/') }}">{{ __('store.footer.link_terms') }}</a>@include('partials.lang-switch')</nav>
-    <div class="kft-pay">@foreach (\App\Support\PaymentChips::row('footer') as $kftChip)<span>{{ $kftChip }}</span>@endforeach<span>{{ __('store.footer.pay_cod') }}</span></div>
+    <nav class="kft-legal"><a href="{{ Url::to('/privacy-policy/') }}">{{ __('store.footer.link_privacy') }}</a><a href="{{ Url::to('/terms-and-conditions/') }}">{{ __('store.footer.link_terms') }}</a></nav>
+    @include('partials.lang-switch')<div class="kft-pay">@foreach (\App\Support\PaymentChips::row('footer') as $kftChip)<span>{{ $kftChip }}</span>@endforeach<span>{{ __('store.footer.pay_cod') }}</span></div>
   </div></div>
 </footer>

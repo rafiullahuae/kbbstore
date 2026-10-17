@@ -42,3 +42,16 @@ it('names both languages, each in its own script, linking this page in the other
     test()->get('/ar/')->assertOk()
         ->assertSee('<nav class="kbb-lang"><a href="/" lang="en" hreflang="en">English</a><span lang="ar" aria-current="true">العربية</span></nav>', false);
 });
+
+it('keeps the language switch apart from the Privacy and Terms links in the footer', function () {
+    // The owner, 17 October 2026, on the desktop footer: "keep the language
+    // switch seperate from the privacy etc links". It sat inside
+    // <nav class="kft-legal"> as a third and fourth link; it is now its own
+    // item in the bottom bar. MUTATION: move the include back before </nav>.
+    $view = (string) file_get_contents(resource_path('views/partials/footer-bliss.blade.php'));
+
+    // At the start of the next line, so with Arabic off the page is byte for
+    // byte what it was (a directive at a line's end swallows its newline).
+    expect($view)->toContain("{{ __('store.footer.link_terms') }}</a></nav>\n    @include('partials.lang-switch')<div class=\"kft-pay\">")
+        ->and(substr_count($view, "@include('partials.lang-switch')"))->toBe(1);
+});
