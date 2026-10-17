@@ -49,14 +49,9 @@
     color:var(--pts-ink,#2A2228)}
 .pts-del-logo{flex:0 0 auto;display:block;inline-size:var(--pts-logo-m,90px);line-height:0}
 .pts-del-logo img,.pts-del-logo svg{display:block;inline-size:100%;block-size:auto;max-block-size:72px;object-fit:contain}
-/* Arabic: the drawn FAST DELIVERY mark (TrustShareIcons::TRUCK, never an
-   uploaded picture). Its <text> inherited direction:rtl, so each word grew
-   LEFT from its x and ran over the truck (16 October 2026). direction:ltr
-   puts the words back where they were drawn; the mark is then mirrored so the
-   truck and arrow face the way Arabic reads, and each word is turned back
-   round on its own box so it still reads FAST / DELIVERY. English unchanged. */
-[dir="rtl"] .pts-del-logo .pts-truck{direction:ltr;transform:scaleX(-1)}
-[dir="rtl"] .pts-del-logo .pts-truck text{transform-box:fill-box;transform-origin:center;transform:scaleX(-1)}
+/* Arabic: the drawn mark is TrustShareIcons::TRUCK_RTL, already mirrored in
+   its own SVG, so no CSS transform here (2.60.529's scaleX on the <text>
+   lost the words on iPhone, 17 October 2026). */
 .pts-del-text{display:flex;flex-direction:column;justify-content:center;gap:3px;min-inline-size:0;
     font-size:var(--pts-text,13.5px);line-height:1.4;overflow-wrap:anywhere}
 @media (min-width:881px){
@@ -100,16 +95,18 @@
 /* The close circle, CENTRED ON THE CARD'S TOP-END CORNER -- half outside the
    box, on its edge (the owner, 2 October: "the box cross should be half
    outside the box on right color edge ... keep only circle, remove out border
-   from the cross icon circle"). A solid reddish disc with a white ×, no ring:
-   inside the text it read as a "not provided" mark next to the claim. */
+   from the cross icon circle"). A solid disc with a white ×, no ring:
+   inside the text it read as a "not provided" mark next to the claim. GREY
+   since 17 October 2026 (the owner: "make the red cross icon and background
+   grey bg with white cross icon"), the shop's own muted grey. */
 .pts-auth-x{position:absolute;inset-block-start:-12px;inset-inline-end:-12px;
     inline-size:24px;block-size:24px;padding:0;display:grid;place-items:center;
-    border-radius:50%;border:0;background:#E5484D;color:#fff;cursor:pointer;
+    border-radius:50%;border:0;background:#8C828A;color:#fff;cursor:pointer;
     box-shadow:0 2px 6px rgba(42,34,40,.18);
     transition:background .15s,transform .15s}
 .pts-auth-x svg{inline-size:12px;block-size:12px}
-.pts-auth-x:hover{background:#D33A40}
-.pts-auth-x:focus-visible{outline:2px solid #D64545;outline-offset:2px}
+.pts-auth-x:hover{background:#6E656C}
+.pts-auth-x:focus-visible{outline:2px solid #6E656C;outline-offset:2px}
 
 /* ── 3. the share sheet (Lane QB) ────────────────────────────────────────── */
 /* "upon click it will open popup from bottom side same as attached fro mamazon

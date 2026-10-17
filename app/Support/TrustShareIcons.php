@@ -42,6 +42,35 @@ final class TrustShareIcons
         .'<path d="M105.5 35.2 117.5 37.6 109.4 46.4z" fill="#F7941D"/>'
         .'</svg>';
 
+    /**
+     * The same mark for Arabic pages, already facing the way Arabic reads.
+     *
+     * 2.60.529 mirrored TRUCK with CSS (scaleX(-1) on the <svg>, then on each
+     * <text> with transform-box:fill-box to turn the words back). Chromium drew
+     * it; the owner's iPhone did not -- the delivery box showed the truck and
+     * the arrow with no "FAST DELIVERY" at all (17 October 2026). This draws
+     * the shapes mirrored with an SVG transform ATTRIBUTE, which every browser
+     * has supported for decades, and writes the two words at their mirrored
+     * places with no transform at all. direction="ltr" keeps each word growing
+     * rightwards from its x on a dir="rtl" page. Geometry is TRUCK's, x' = 124 - x.
+     */
+    public const TRUCK_RTL = '<svg class="pts-truck" viewBox="0 0 124 52" direction="ltr" aria-hidden="true" focusable="false">'
+        .'<g transform="matrix(-1 0 0 1 124 0)">'
+        .'<g fill="#1B1F5E">'
+        .'<rect x="1" y="12" width="11" height="2.6" rx="1.3"/><rect x="4" y="18" width="9" height="2.6" rx="1.3"/><rect x="1" y="24" width="12" height="2.6" rx="1.3"/>'
+        .'<rect x="16" y="7" width="30" height="22" rx="2.5"/>'
+        .'<path d="M47.5 12.5h8.2c.9 0 1.7.4 2.2 1.1l4.4 6.2c.4.5.6 1.2.6 1.8V29h-15.4z"/>'
+        .'</g>'
+        .'<path d="M50.5 15.5h5l3.4 5h-8.4z" fill="#CFE3FF"/>'
+        .'<g fill="#1B1F5E" stroke="#fff" stroke-width="1.6"><circle cx="25" cy="30" r="4.6"/><circle cx="54.5" cy="30" r="4.6"/></g>'
+        .'<g fill="#fff"><circle cx="25" cy="30" r="1.5"/><circle cx="54.5" cy="30" r="1.5"/></g>'
+        .'<path d="M5 45.5C38 50.5 78 49 112 39.5" fill="none" stroke="#F7941D" stroke-width="3.2" stroke-linecap="round"/>'
+        .'<path d="M105.5 35.2 117.5 37.6 109.4 46.4z" fill="#F7941D"/>'
+        .'</g>'
+        .'<text x="18" y="19" direction="ltr" fill="#F7941D" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="800" font-style="italic" textLength="40" lengthAdjust="spacingAndGlyphs">FAST</text>'
+        .'<text x="2" y="32" direction="ltr" fill="#1B1F5E" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="800" font-style="italic" textLength="56" lengthAdjust="spacingAndGlyphs">DELIVERY</text>'
+        .'</svg>';
+
     /** The green outlined check-square before "Authenticity Guaranteed". */
     public const CHECK_SQUARE = '<svg class="pts-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8 12.5 2.8 2.8L16.5 9.5"/></svg>';
 
@@ -51,7 +80,7 @@ final class TrustShareIcons
     /** The green "yes" tick inside the opened panel. */
     public const YES = '<svg class="pts-yes" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="m7 12.4 3.3 3.3L17.2 8.8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-    /** The × in the small reddish circle that closes the panel. */
+    /** The × in the small grey circle that closes the panel. */
     public const CLOSE = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M7.5 7.5l9 9M16.5 7.5l-9 9"/></svg>';
 
     /**

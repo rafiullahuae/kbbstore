@@ -1,0 +1,66 @@
+[
+    {
+        "tag": "en",
+        "w": 390,
+        "status": 200,
+        "hasDel": 1,
+        "errs": [
+            "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "words": [
+            [
+                "FAST",
+                30,
+                13
+            ],
+            [
+                "DELIVERY",
+                41,
+                9
+            ]
+        ],
+        "closeBg": "rgb(140, 130, 138)",
+        "scrollWidth": 390
+    },
+    {
+        "tag": "en",
+        "w": 1280,
+        "status": 200,
+        "hasDel": 1,
+        "errs": [],
+        "words": [
+            [
+                "FAST",
+                37,
+                16
+            ],
+            [
+                "DELIVERY",
+                51,
+                11
+            ]
+        ],
+        "closeBg": "rgb(140, 130, 138)",
+        "scrollWidth": 1280
+    },
+    {
+        "tag": "ar",
+        "w": 390,
+        "status": 200,
+        "hasDel": 1,
+        "errs": [],
+        "words": [
+            [
+                "FAST",
+                30,
+                13
+            ],
+            [
+                "DELIVERY",
+                41,
+                9
+            ]
+        ],
+        "closeBg": "rgb(140, 130, 138)",
+        "scrollWidth": 390
+    

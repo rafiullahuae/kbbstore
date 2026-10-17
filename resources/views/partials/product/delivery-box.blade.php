@@ -35,5 +35,5 @@
     $kbbPtsImg = $kbbPts->deliveryImage();
     $kbbPtsLine2 = $kbbPts->deliveryLine2();
 @endphp
-<div class="pts-del" data-pts="del" style="{{ $kbbPts->vars('del') }}"><span class="pts-del-logo">@if ($kbbPtsImg !== '')<img src="{{ $kbbPtsImg }}" alt="" loading="lazy" decoding="async">@else{!! \App\Support\TrustShareIcons::TRUCK !!}@endif</span><span class="pts-del-text"><span>{{ $kbbPts->text('del_line1') }}</span>@if ($kbbPtsLine2 !== '')<span>{{ $kbbPtsLine2 }}</span>@endif</span></div><!--/pts-del-->
+<div class="pts-del" data-pts="del" style="{{ $kbbPts->vars('del') }}"><span class="pts-del-logo">@if ($kbbPtsImg !== '')<img src="{{ $kbbPtsImg }}" alt="" loading="lazy" decoding="async">@else{!! \App\Support\Locale::isRtl() ? \App\Support\TrustShareIcons::TRUCK_RTL : \App\Support\TrustShareIcons::TRUCK !!}@endif</span><span class="pts-del-text"><span>{{ $kbbPts->text('del_line1') }}</span>@if ($kbbPtsLine2 !== '')<span>{{ $kbbPtsLine2 }}</span>@endif</span></div><!--/pts-del-->
 @endif
