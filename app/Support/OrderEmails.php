@@ -114,6 +114,7 @@ final class OrderEmails
         return match (true) {
             $k === 'confirmation' => 'Order confirmation',
             $k === 'merchant_alert' => 'New-order alert (to the shop)',
+            $k === 'merchant_unpaid' => 'Payment-not-received alert (to the shop)',
             $k === 'refund' => 'Refund',
             $k === 'status_onhold' => 'On-hold email',
             $k === 'paylink' => 'Order link (sent from the order screen)',

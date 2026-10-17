@@ -81,6 +81,15 @@ class OrderReminders
                 $sent += $this->stage(1, $limit - $sent, $now);
             }
 
+            // "Payment not received" to the shop, on the first reminder's
+            // rules and clock but its own switch and claim, so it goes whether
+            // or not the customer's reminder is on (17 October 2026). Its own
+            // cap of $limit, and not in the count this returns, which is the
+            // customer emails ("Sent N reminder(s)").
+            if ($this->mailer->unpaidAlertEnabled()) {
+                $this->unpaidAlertStage($limit, $now);
+            }
+
             if ($sent < $limit && $this->mailer->feedbackEnabled()) {
                 $sent += $this->feedbackStage($limit - $sent, $now);
             }
@@ -100,7 +109,7 @@ class OrderReminders
     }
 
     /** The orders due for $stage right now, oldest first. */
-    public function due(int $stage, int $limit, ?Carbon $now = null): \Illuminate\Support\Collection
+    public function due(int $stage, int $limit, ?Carbon $now = null, ?string $kind = null): \Illuminate\Support\Collection
     {
         $now ??= now();
 
@@ -108,7 +117,7 @@ class OrderReminders
             ? [$now->copy()->subHours(self::SECOND_AFTER_HOURS), $now->copy()->subMinutes(self::FIRST_AFTER_MINUTES)]
             : [$now->copy()->subHours(self::GIVE_UP_AFTER_HOURS), $now->copy()->subHours(self::SECOND_AFTER_HOURS)];
 
-        $kind = 'reminder_' . $stage;
+        $kind ??= 'reminder_' . $stage;
 
         return $this->unfinished()
             ->where('orders.created_at', '>', $from)
@@ -252,4 +261,37 @@ class OrderReminders
 
         return $sent;
     }
+
+    /** "Payment not received" to the shop: the orders stage 1 would remind, claimed as merchant_unpaid. */
+    private function unpaidAlertStage(int $limit, Carbon $now): int
+    {
+        if ($limit <= 0) {
+            return 0;
+        }
+
+        $sent = 0;
+
+        foreach ($this->due(1, $limit, $now, 'merchant_unpaid') as $order) {
+            if (! $this->log->claim($order, 'merchant_unpaid')) {
+                continue;
+            }
+
+            if ($this->mailer->unpaidAlert($order)) {
+                try {
+                    $order->notes()->create([
+                        'author' => 'system',
+                        'is_customer_note' => false,
+                        'content' => 'Emailed the shop "Payment not received": still unpaid 30 minutes after it was placed.',
+                    ]);
+                } catch (\Throwable) {
+                    // The note is a courtesy for the order screen; the send stands.
+                }
+            }
+
+            $sent++;
+        }
+
+        return $sent;
+    }
+
 }

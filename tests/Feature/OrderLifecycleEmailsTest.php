@@ -374,7 +374,9 @@ it('sends reminder 1 at 30 minutes and reminder 2 at 24 hours, each once', funct
     Mail::assertSent(OrderPaymentReminder::class, fn ($m) => $m->stage === 1 && $m->hasTo('buyer@example.com'));
     Mail::assertSent(OrderPaymentReminder::class, fn ($m) => $m->stage === 2);
     expect(DB::table('order_emails')->where('order_id', $order->id)->pluck('kind')->sort()->values()->all())
-        ->toBe(['reminder_1', 'reminder_2']);
+        // + merchant_unpaid (17 October 2026): the shop's "Payment not received",
+        // on reminder 1's clock -- UnpaidOrderAlertTest.
+        ->toBe(['merchant_unpaid', 'reminder_1', 'reminder_2']);
     expect($order->notes()->where('content', 'like', '%Complete your order%')->count())->toBe(2);
 });
 

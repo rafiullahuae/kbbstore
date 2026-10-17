@@ -743,7 +743,11 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // invoice.*). Live gets them PUBLISHED from
     // 2027_11_08_100000_lane_ae_customer_language; a fresh install seeds them
     // with the rest of ArabicInterfaceDrafts, so they count here as drafts.
-    expect($ui['drafts'])->toBe(1625 + count(\App\Support\ArabicWording::ENGLISH) - 1 + 10, 'the shipped Arabic is not showing as drafts to review')
+    // +2 (17 October 2026): the shop's "Payment not received" alert
+    // (email.kit.eyebrow_unpaid, email.alert.unpaid_note). It is sent in the
+    // shop's language, like the new-order alert, so no migration publishes
+    // them; a fresh install seeds them as drafts with the rest.
+    expect($ui['drafts'])->toBe(1625 + count(\App\Support\ArabicWording::ENGLISH) - 1 + 10 + 2, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

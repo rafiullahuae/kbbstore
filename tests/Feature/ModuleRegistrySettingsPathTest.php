@@ -225,7 +225,9 @@ it('names a real console location in every module row that names one at all', fu
     // left the registry with the retired Instagram API module.
     // 46 with Lane RV: `email_review_request` names 'Emails → Customer emails
     // → Review request' (no Open button: that editor is reached from the list).
-    expect($checked)->toBe(46);
+    // 47 (17 October 2026): `email_merchant_unpaid`, the shop's "Payment not
+    // received" alert, names 'Emails → All mail settings' like its neighbours.
+    expect($checked)->toBe(47);
     expect($wrong)->toBe([]);
 });
 

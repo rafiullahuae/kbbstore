@@ -382,6 +382,7 @@ final class ArabicInterfaceDrafts
             'email.kit.eyebrow_reminder_second' => 'تذكير أخير',
             'email.kit.eyebrow_refund_sent' => 'تم إرسال المبلغ المسترد',
             'email.kit.eyebrow_alert' => 'طلب جديد',
+            'email.kit.eyebrow_unpaid' => 'لم يصل الدفع',
             'email.kit.eyebrow_feedback' => 'رأيك يهمنا',
             'email.kit.eyebrow_stock' => 'عاد إلى المخزون',
             'email.kit.eyebrow_basket' => 'ما زلت تفكر؟',
@@ -2124,6 +2125,7 @@ final class ArabicInterfaceDrafts
             'email.alert.heading' => 'وصل طلب جديد.',
             'email.alert.items_heading' => 'المنتجات المطلوب تجهيزها',
             'email.alert.next_step' => 'افتح Orders في لوحة متجرك وابحث عن :number لتجهيزه وتغليفه ووضع علامة الشحن عليه.',
+            'email.alert.unpaid_note' => 'لم يُدفع بعد مرور :minutes دقيقة على تقديمه (:method). لا تجهّزه حتى يظهر الطلب :number مدفوعًا في Orders.',
 
             'email.back_in_stock.why' => 'طلبت أن نخبرك عند عودة هذا المنتج للتوفر. وهذه هي تلك الرسالة الوحيدة — ولن نراسلك بشأنه مجددًا ما لم تطلب ذلك.',
             'email.back_in_stock.why_text' => 'طلبت أن نخبرك عند عودة هذا المنتج للتوفر. وهذه هي تلك الرسالة الوحيدة - ولن نراسلك بشأنه مجددًا ما لم تطلب ذلك.',

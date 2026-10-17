@@ -43,6 +43,7 @@ final class CustomerEmails
         'email_order_feedback' => true,
         'email_review_request' => true,
         'email_merchant_new_order' => true,
+        'email_merchant_unpaid' => true,
         'back_in_stock' => false,
         'abandoned_cart' => false,
     ];
@@ -70,6 +71,7 @@ final class CustomerEmails
         ['Orders — to the customer', 'order_status_failed', 'Payment failed', 'NEW · status <code>failed</code>', 'Status → Failed', 'switch', 'email_order_failed', ['order.status_failed']],
         ['Orders — to the customer', 'order_invoice', 'Invoice', 'The invoice is the email itself', '“Email invoice” button on the order', 'manual', null, ['order.invoice']],
         ['To you', 'new_order_alert', 'New order alert', '', 'Order paid, or placed with cash on delivery', 'switch', 'email_merchant_new_order', ['order.merchant_alert']],
+        ['To you', 'new_order_alert', 'Payment not received', '', 'Order still unpaid 30 minutes after it was placed (card, Tabby, Tamara)', 'switch', 'email_merchant_unpaid', ['order.merchant_unpaid']],
         ['Account & sign-up', 'password_reset', 'Password reset', 'Always on — security', 'Customer asks for one', 'always', null, ['account.password_reset']],
         ['Account & sign-up', 'verify_email', 'Confirm email address', 'Always on — it is how an account proves its address', 'Account created', 'always', null, ['account.verify_email']],
         ['Account & sign-up', 'customer_invite', 'Account invite', '', 'You send one from Customers', 'manual', null, ['customer.invite']],

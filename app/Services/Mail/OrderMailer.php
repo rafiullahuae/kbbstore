@@ -160,6 +160,12 @@ class OrderMailer
         return $this->settings->moduleEnabled('email_merchant_new_order', true);
     }
 
+    /** "Payment not received" to the shop, 30 minutes after an unpaid order. */
+    public function unpaidAlertEnabled(): bool
+    {
+        return $this->settings->moduleEnabled('email_merchant_unpaid', true);
+    }
+
     public function shippedEnabled(): bool
     {
         return $this->settings->moduleEnabled('email_order_shipped', true);
@@ -443,6 +449,24 @@ class OrderMailer
             $order,
             'reminder_' . $stage,
         );
+    }
+
+    /**
+     * "Payment not received", to the shop (17 October 2026).
+     *
+     * Called by OrderReminders, which has already decided the order is still
+     * unpaid 30 minutes on and claimed the send. In the shop's language, like
+     * the new-order alert. Swallows like every automatic send here.
+     */
+    public function unpaidAlert(Order $order): bool
+    {
+        if ($this->isSample($order)) {
+            return false;
+        }
+
+        $order->loadMissing('items');
+
+        return $this->send(static fn () => new \App\Mail\UnpaidOrderAlert($order), $this->merchantAddress(), $order, 'merchant_unpaid', false);
     }
 
     /**

@@ -14,6 +14,8 @@
 @php
     $k = \App\Services\Mail\Kit\MailKit::for($brand ?? []);
     $kitTitle = $kitTitle ?? __('email.alert.heading');
+    // UnpaidOrderAlert: the same email, headed "Payment not received" (17 October 2026).
+    $kitUnpaid = (bool) ($kitUnpaid ?? false);
     $kitPreheader = __('email.kit.pre_alert', ['number' => $order['number'], 'total' => $order['totalPlain']]);
     $kitCount = array_sum(array_map(static fn (array $i) => (int) ($i['quantity'] ?? 0), $order['items']));
     $kitWho = implode(' · ', array_values(array_filter([
@@ -29,10 +31,10 @@
 @section('kit')
 @include('emails.kit.card-open')
 @kitsec('alert')
-<tr><td class="px" style="padding:26px 32px 0;font-family:{!! $k['sans'] !!};"><div style="font-family:{!! $k['sans'] !!};"><div style="font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:#2E9E6B;font-weight:800;">&#9679; {{ __('email.kit.eyebrow_alert') }}</div><div class="ink" style="margin-top:6px;font-size:26px;font-weight:800;color:{{ $k['text'] }};">{{ $order['number'] }} &middot; {{ $order['totalPlain'] }}</div><div class="ink2" style="margin-top:4px;font-size:14px;color:#5E545A;">{{ $kitWho }}</div></div></td></tr>
+<tr><td class="px" style="padding:26px 32px 0;font-family:{!! $k['sans'] !!};"><div style="font-family:{!! $k['sans'] !!};"><div style="font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:{{ $kitUnpaid ? '#C0392B' : '#2E9E6B' }};font-weight:800;">&#9679; {{ $kitUnpaid ? __('email.kit.eyebrow_unpaid') : __('email.kit.eyebrow_alert') }}</div><div class="ink" style="margin-top:6px;font-size:26px;font-weight:800;color:{{ $k['text'] }};">{{ $order['number'] }} &middot; {{ $order['totalPlain'] }}</div><div class="ink2" style="margin-top:4px;font-size:14px;color:#5E545A;">{{ $kitWho }}</div></div></td></tr>
 @endkitsec
 @kitsec('next')
-@include('emails.kit.para', ['html' => __('email.alert.next_step', ['number' => $order['number']]), 'pad' => '18px 32px 0', 'size' => 14])
+@include('emails.kit.para', ['html' => $kitUnpaid ? __('email.alert.unpaid_note', ['minutes' => \App\Services\Mail\OrderReminders::FIRST_AFTER_MINUTES, 'method' => $order['paymentLabel'], 'number' => $order['number']]) : __('email.alert.next_step', ['number' => $order['number']]), 'pad' => '18px 32px 0', 'size' => 14])
 @endkitsec
 @kitsec('items')
 @include('emails.kit.section-title', ['text' => __('email.alert.items_heading')])
