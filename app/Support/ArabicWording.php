@@ -438,6 +438,12 @@ final class ArabicWording
      * name whose Arabic ends in the country too would print it twice --
      * "© 2026 كي بيوتي بليس الإمارات الإمارات". Only a name this class
      * translated is trimmed; a name the owner typed in Arabic is his.
+     *
+     * The same twice-over in English (17 October 2026): the live store name is
+     * "K-Beauty Bliss UAE" and store.footer.copyright is "© :year :store UAE",
+     * so the footer read "© 2026 K-Beauty Bliss UAE UAE". The name's own
+     * " UAE" is dropped only while the line itself ends ":store UAE" -- if the
+     * line is ever reworded without the country, the name prints whole.
      */
     public static function copyrightStore(?string $store): string
     {
@@ -445,6 +451,10 @@ final class ArabicWording
 
         if (self::on() && $out !== (string) $store && str_ends_with($out, ' الإمارات')) {
             return mb_substr($out, 0, mb_strlen($out) - mb_strlen(' الإمارات'));
+        }
+
+        if (preg_match('/ UAE$/i', $out) === 1 && str_ends_with((string) __('store.footer.copyright'), ':store UAE')) {
+            return substr($out, 0, -4);
         }
 
         return $out;

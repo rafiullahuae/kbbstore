@@ -257,7 +257,13 @@ it('prints the header support label, the copyright and the title site name in Ar
 
     app()->setLocale('en');
     $en = $this->get('/shop/')->assertOk()->getContent();
-    expect($en)->toContain('<b>24/7 support</b>')->toContain('K-Beauty Bliss UAE UAE')->toContain('K-Beauty Bliss UAE</title>');
+    // English: one "UAE" since 17 October 2026 (the owner: "okay do it", on
+    // "© 2026 K-Beauty Bliss UAE UAE"). The title keeps the name whole.
+    // MUTATION: drop the ' UAE' branch in copyrightStore() -- "UAE UAE" again.
+    expect($en)->toContain('<b>24/7 support</b>')->toContain('© '.date('Y').' K-Beauty Bliss UAE<')
+        ->not->toContain('K-Beauty Bliss UAE UAE')->toContain('K-Beauty Bliss UAE</title>');
+    expect(ArabicWording::copyrightStore('Glow House'))->toBe('Glow House')
+        ->and(ArabicWording::copyrightStore('Glow House uae'))->toBe('Glow House');
 });
 
 /*
