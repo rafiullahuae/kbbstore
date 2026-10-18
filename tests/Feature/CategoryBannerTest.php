@@ -164,7 +164,10 @@ it('draws the brand page banner on a category with a picture: srcset, reserved h
             // ▲ Lane SPD: a 3x phone is asked for a 2x picture (the first
             // branch), as the product photograph is since 2.60.465 -- without
             // it every 3x phone took the original. Ratio 2 and below unchanged.
-            ->and($section)->toMatch('#<img class="brw-ph__img" src="/'.preg_quote($rel, '#').'" srcset="/img-cache/200/'.preg_quote($rel, '#').' 200w, [^"]+ 1920w" sizes="\(max-width: 599px\) and \(min-resolution: 2\.5dppx\) calc\(max\(100vw, 528px\) \* 0\.67\), \(max-width: 599px\) max\(100vw, 528px\), min\(max\(100vw, 864px\), 2400px\)"#')
+            ->and($section)->toMatch('#<img class="brw-ph__img" src="/'.preg_quote($rel, '#').'" srcset="/img-cache/200/'.preg_quote($rel, '#').' 200w, [^"]+ 1920w" sizes="\(max-width: 599px\) and \(min-resolution: 2\.5dppx\) calc\(max\(100vw, 528px\) \* 0\.67\), \(max-width: 599px\) max\(100vw, 528px\), min\(max\(100vw, 864px\), 1680px\)"#')
+            // 18 October 2026: the computer's ceiling is the Site width (1680
+            // as shipped), not 2400 -- the banner is drawn inside the page, and
+            // a 1920 screen asking for 1920 took the 1.9 MB original.
             // The description, under the name, through the title header's own rules.
             ->and($section)->toContain('Gentle cleansers for every skin type.')
             // The brand page's own sheet, in the head; the title header's is not loaded.

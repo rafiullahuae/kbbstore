@@ -219,3 +219,39 @@ it('throws the wide copies away with their original', function () {
         expect(is_file(public_path(ImageVariants::DIR.'/'.$w.'/'.$this->wbsRel)))->toBeFalse();
     }
 });
+
+it('stops offering a banner\'s heavy original once a copy 1920 or wider exists, so no screen downloads it', function () {
+    /*
+     * 18 October 2026, the owner on /collections/skincare-sets/: "it has 1.9MB
+     * image, and it's loading by default" -- on every computer. The banner was
+     * a 2500px original (1,919,088 bytes; its 1600w copy 83,048), and a 1920
+     * screen or a 1440 MacBook at ratio 2 wants more than 1600 pixels, so the
+     * original was the only candidate big enough. Now the tier reaches 1920
+     * and 2400 (never upscaled) and, with a copy of 1920 or more on disk, the
+     * original is not listed: 2400w is the widest any screen can ask for.
+     *
+     * MUTATION, run: drop BANNER_ORIGINAL_DROPPED_FROM from bannerSrcsetFor()'s
+     * call and the 2500w original is back at the end of the list (red); take
+     * 1920/2400 out of WIDE_WIDTHS and only five copies are made (red).
+     */
+    wbsPicture($this->wbsRel, 2500, 780);
+    ImageVariants::generate('/'.$this->wbsRel);
+    $made = ImageVariants::generateWide('/'.$this->wbsRel);
+
+    expect($made['made'])->toBe(5);
+
+    $srcset = ImageVariants::bannerSrcsetFor('/'.$this->wbsRel);
+    $widths = array_map(fn ($c) => (int) rtrim(preg_split('/\s+/', trim($c))[1], 'w'), explode(',', $srcset));
+
+    expect($widths)->toBe([200, 400, 800, 1280, 1440, 1600, 1920, 2400])
+        ->and($srcset)->not->toContain('/'.$this->wbsRel.' 2500w')
+        ->and(getimagesize(public_path(ImageVariants::DIR.'/2400/'.$this->wbsRel))[0])->toBe(2400);
+
+    // A 1920 original keeps the list it always had: no copy as wide as it.
+    wbsPicture($this->wbsRel, 1920, 800);
+    ImageVariants::forget('/'.$this->wbsRel);
+    ImageVariants::generate('/'.$this->wbsRel);
+    ImageVariants::generateWide('/'.$this->wbsRel);
+    $widths = array_map(fn ($c) => (int) rtrim(preg_split('/\s+/', trim($c))[1], 'w'), explode(',', ImageVariants::bannerSrcsetFor('/'.$this->wbsRel)));
+    expect($widths)->toBe([200, 400, 800, 1280, 1440, 1600, 1920]);
+});

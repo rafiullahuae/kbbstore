@@ -856,7 +856,25 @@ final class BrandPanel
          */
         $phoneWidth = min(2400, $phone);
 
-        return '(max-width: 599px) and (min-resolution: 2.5dppx) calc(max(100vw, '.$phoneWidth.'px) * 0.67), (max-width: 599px) max(100vw, '.$phoneWidth.'px), min(max(100vw, '.min(2400, $laptop).'px), 2400px)';
+        /*
+         * (18 October 2026) THE COMPUTER'S CEILING IS THE SITE WIDTH, NOT 2400.
+         * The banner sits inside the page (Appearance -> Site layout -> Page
+         * width -> Site width), so on a 1920 screen it is drawn 1,336 px wide
+         * on the live shop -- measured in Chromium -- while `sizes` said 1920,
+         * and with no copy that wide the browser took the 1.9 MB original of
+         * /collections/skincare-sets/. Never below the cover floor ($laptop),
+         * so a short wide banner still gets a picture that fills it.
+         */
+        $siteMax = 0;
+
+        try {
+            $siteMax = (int) app(\App\Services\SiteLayout::class)->get('max');
+        } catch (\Throwable) {
+        }
+
+        $ceiling = $siteMax > 0 ? min(2400, max($siteMax, $laptop)) : 2400;
+
+        return '(max-width: 599px) and (min-resolution: 2.5dppx) calc(max(100vw, '.$phoneWidth.'px) * 0.67), (max-width: 599px) max(100vw, '.$phoneWidth.'px), min(max(100vw, '.min($ceiling, $laptop).'px), '.$ceiling.'px)';
     }
 
     /**

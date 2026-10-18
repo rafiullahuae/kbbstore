@@ -211,7 +211,21 @@ final class ImageVariants
      * isComplete() does NOT look at these, on purpose — see bannerSrcsetFor()
      * for how they come to exist without anybody pressing anything.
      */
-    public const WIDE_WIDTHS = [1280, 1440, 1600];
+    public const WIDE_WIDTHS = [1280, 1440, 1600, 1920, 2400];
+
+    /**
+     * (18 October 2026) From this copy up, a banner's ORIGINAL is no longer
+     * offered. The owner on /collections/skincare-sets/: "it has 1.9MB image,
+     * and it's loading by default" -- on every computer. Its banner is a 2500px
+     * original saved at almost no compression (1,919,088 bytes; the 1600w copy
+     * of the same picture is 83,048). A 1920 screen, or a 1440 MacBook at
+     * ratio 2, asks for more pixels than 1600, and the only candidate that big
+     * was the original. So the tier now goes to 1920 and 2400 (copies are
+     * still never upscaled), and once a copy at least 1920 wide is on disk the
+     * original's few hundred extra pixels are not worth its megabytes: it is
+     * left out, and the 2400 copy is the widest any screen can ask for.
+     */
+    public const BANNER_ORIGINAL_DROPPED_FROM = 1920;
 
     /** The web-root directory the copies live under. */
     public const DIR = 'img-cache';
@@ -711,7 +725,7 @@ final class ImageVariants
     public static function bannerSrcsetFor(string $image): string
     {
         $originalWidth = 0;
-        $srcset = self::srcsetWithOriginal($image, array_merge(self::WIDTHS, self::WIDE_WIDTHS), $originalWidth, $present);
+        $srcset = self::srcsetWithOriginal($image, array_merge(self::WIDTHS, self::WIDE_WIDTHS), $originalWidth, $present, self::BANNER_ORIGINAL_DROPPED_FROM);
 
         if ($srcset === '' || $originalWidth < 1) {
             return $srcset;
@@ -793,7 +807,7 @@ final class ImageVariants
      * @param  int  $originalWidth  set to the original's width when it was read
      * @param  list<int>|null  $present  set to the widths found on disk
      */
-    private static function srcsetWithOriginal(string $image, array $widths, int &$originalWidth = 0, ?array &$present = null): string
+    private static function srcsetWithOriginal(string $image, array $widths, int &$originalWidth = 0, ?array &$present = null, ?int $dropOriginalFrom = null): string
     {
         $present = [];
         $parts = self::split($image);
@@ -846,6 +860,12 @@ final class ImageVariants
         // to prefer the smaller one. generate() never upscales, so this is the
         // ordinary case for an original that is exactly 800 wide.
         if ($originalWidth <= $widest) {
+            return implode(', ', $candidates);
+        }
+
+        // A banner with a copy at least this wide does not offer its original
+        // (bannerSrcsetFor(), BANNER_ORIGINAL_DROPPED_FROM).
+        if ($dropOriginalFrom !== null && $widest >= $dropOriginalFrom) {
             return implode(', ', $candidates);
         }
 
