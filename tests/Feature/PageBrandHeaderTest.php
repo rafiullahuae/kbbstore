@@ -310,6 +310,18 @@ it('puts every page back exactly as it was under "Normal page banner", byte for 
             // Lane BT (later): the large-text guard, one inline script first in
             // <body> (BigTextGuardTest pins it): set aside.
             $out[$path] = (string) preg_replace('#<script style="font-size:16px">.*?</script>\n#s', '', $out[$path], 1);
+            // 18 October 2026: the blog chips take their label from the card
+            // (Arabic tags on /ar; BlogTagsArabicTest pins it). Its two script
+            // edits are put back to the old lines, in their exact shape.
+            $out[$path] = str_replace(
+                ["    var tags = [];\n    /* (18 October 2026) The chip's LABEL: the card's data-tag-label, which the\n       server prints only on a page where the tag reads differently (the Arabic\n       shop, BlogTags::label); the tag itself stays the filter value. */\n    var labels = {};\n",
+                 "if (tag && tags.indexOf(tag) === -1) { tags.push(tag); labels[tag] = a.dataset.tagLabel || tag; }",
+                 "chips.appendChild(chip(labels[t], t));"],
+                ["    var tags = [];\n",
+                 "if (tag && tags.indexOf(tag) === -1) tags.push(tag);",
+                 "chips.appendChild(chip(t, t));"],
+                $out[$path]
+            );
         }
 
         return $out;

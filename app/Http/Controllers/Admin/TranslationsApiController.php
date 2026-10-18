@@ -684,8 +684,10 @@ class TranslationsApiController extends Controller
 
         return \App\Models\Post::query()
             ->whereNotNull('tag')->where('tag', '!=', '')
-            ->distinct()->orderBy('tag')->limit(200)
-            ->pluck('tag')
+            ->distinct()->pluck('tag')
+            // Sorted and capped here, not in SQL: distinct tags are few, and an
+            // ORDER BY on a column that can tie is what StableOrderingTest forbids.
+            ->sort(SORT_NATURAL | SORT_FLAG_CASE)->take(200)
             ->map(fn ($tag): array => [
                 'en' => (string) $tag,
                 'ar' => $own[mb_strtolower(trim((string) preg_replace('/\s+/u', ' ', (string) $tag)))] ?? '',
