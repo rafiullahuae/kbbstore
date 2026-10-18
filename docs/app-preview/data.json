@@ -1,0 +1,3176 @@
+{
+ "generated": "2026-10-18T20:10:19.947Z",
+ "source": "https://kbeautybliss.com",
+ "note": "Prices are AED (the API answers in fils). name_ar null = no Arabic name on the live site yet; the preview shows the English name and marks it.",
+ "settings": {
+  "currency": "AED",
+  "vat": 5,
+  "cod_fee": 10,
+  "ship_uae": 20,
+  "free_over_uae": 199
+ },
+ "banners": [
+  {
+   "mobile": "https://kbeautybliss.com/img-cache/800/uploads/banners/anua-pdrn-collagen-glow-facial-serum-spray-100ml-066287-2.webp",
+   "desktop": "https://kbeautybliss.com/img-cache/1280/uploads/banners/anua-pdrn-glow-skincare.webp",
+   "alt": "Anua’s PDRN mist and serum for plumper, smoother, radiant-looking skin",
+   "alt_ar": "إشراقة أينما ذهبتِ!"
+  },
+  {
+   "mobile": "https://kbeautybliss.com/img-cache/800/uploads/banners/medicube-fresh-that-last-vanilla-deodrant.webp",
+   "desktop": "https://kbeautybliss.com/img-cache/1280/uploads/banners/medicube-fresh-that-last-deodrant-and-mist.webp",
+   "alt": "",
+   "alt_ar": null
+  },
+  {
+   "mobile": "https://kbeautybliss.com/uploads/banners/arencia-vitamin-c-products.webp",
+   "desktop": "https://kbeautybliss.com/img-cache/1280/uploads/banners/arenica-vitamin-c-booster-skincare.webp",
+   "alt": "",
+   "alt_ar": null
+  }
+ ],
+ "trust": [
+  {
+   "en": [
+    "100%",
+    "Authentic"
+   ],
+   "ar": [
+    "منتجات أصلية",
+    "100% مضمونة"
+   ]
+  },
+  {
+   "en": [
+    "Express UAE",
+    "Delivery"
+   ],
+   "ar": [
+    "توصيل إكسبريس",
+    "في الإمارات"
+   ]
+  },
+  {
+   "en": [
+    "Tabby, Tamara",
+    "Card, COD"
+   ],
+   "ar": [
+    "تابي، تمارا",
+    "بطاقة، دفع عند الاستلام"
+   ]
+  },
+  {
+   "en": [
+    "24/7",
+    "Support"
+   ],
+   "ar": [
+    "دعم العملاء",
+    "على مدار الساعة"
+   ]
+  }
+ ],
+ "categories": [
+  {
+   "k": "cleansers",
+   "en": "Cleansers",
+   "ar": "منظفات",
+   "n": 5
+  },
+  {
+   "k": "toners",
+   "en": "Toners & Pads",
+   "ar": "تونر وأقراص",
+   "n": 7
+  },
+  {
+   "k": "serums",
+   "en": "Serums & Ampoules",
+   "ar": "سيروم وأمبول",
+   "n": 22
+  },
+  {
+   "k": "moisturisers",
+   "en": "Moisturisers",
+   "ar": "مرطبات",
+   "n": 13
+  },
+  {
+   "k": "sun",
+   "en": "Sun Care",
+   "ar": "واقي الشمس",
+   "n": 4
+  },
+  {
+   "k": "masks",
+   "en": "Masks & Patches",
+   "ar": "أقنعة ولصقات",
+   "n": 3
+  },
+  {
+   "k": "eyes-lips",
+   "en": "Eyes & Lips",
+   "ar": "العيون والشفاه",
+   "n": 2
+  },
+  {
+   "k": "body-hair",
+   "en": "Body & Hair",
+   "ar": "الجسم والشعر",
+   "n": 1
+  },
+  {
+   "k": "sets",
+   "en": "Sets & Kits",
+   "ar": "مجموعات",
+   "n": 2
+  }
+ ],
+ "concerns": [
+  {
+   "k": "acne",
+   "en": "Acne & Blemishes",
+   "ar": "حب الشباب والشوائب",
+   "short": "Acne",
+   "short_ar": "حب الشباب",
+   "tip": "Think salicylic acid (BHA) and centella: clears pores, calms breakouts.",
+   "tip_ar": "الخيار الأمثل: حمض الساليسيليك والسنتيلا لتنقية المسام وتهدئة البثور.",
+   "sub": "BHA · Centella · Tea tree",
+   "sub_ar": "BHA · سنتيلا · شجرة الشاي",
+   "items": [
+    "medicube-red-acne-body-peeling-shot",
+    "dr-g-r-e-d-blemish-clear-soothing-cream-70ml",
+    "cosrx-acne-pimple-patch",
+    "medicube-red-acne-succinic-acid-peel",
+    "celimax-jiwoogae-cica-bha-blemish-toner-pad",
+    "cosrx-salicylic-acid-daily-gentle-cleanser-150ml"
+   ]
+  },
+  {
+   "k": "hydration",
+   "en": "Dryness & Hydration",
+   "ar": "الجفاف والترطيب",
+   "short": "Hydration",
+   "short_ar": "الترطيب",
+   "tip": "Layer hyaluronic acid under a ceramide cream to lock moisture in.",
+   "tip_ar": "طبّقي حمض الهيالورونيك تحت كريم السيراميد لحبس الترطيب.",
+   "sub": "Hyaluronic acid · Ceramide",
+   "sub_ar": "هيالورونيك · سيراميد",
+   "items": [
+    "anua-pdrn-hyaluronic-acid-hydrating-capsule-mist-mini",
+    "anua-pdrn-hyaluronic-acid-hydrating-capsule-mist",
+    "round-lab-birch-juice-moisturizing-sunscreen-50ml",
+    "medicube-pdrn-hydrating-uv-serum",
+    "isntree-hyaluronic-acid-watery-sun-gel",
+    "haruharu-wonder-black-rice-moisture-airyfit-sunscreen"
+   ]
+  },
+  {
+   "k": "spots",
+   "en": "Dark Spots",
+   "ar": "البقع الداكنة",
+   "short": "Dark Spots",
+   "short_ar": "البقع الداكنة",
+   "tip": "Niacinamide + tranexamic acid fade spots; finish with SPF every day.",
+   "tip_ar": "النياسيناميد مع حمض الترانيكساميك يخففان البقع، مع واقي شمس يوميًا.",
+   "sub": "Niacinamide · TXA · Vitamin C",
+   "sub_ar": "نياسيناميد · TXA · فيتامين سي",
+   "items": [
+    "anua-niacinamide-10-txa-4-dark-spot-correcting-serum-30ml",
+    "axis-y-dark-spot-correcting-glow-serum",
+    "celimax-poredark-spot-brightening-cream",
+    "goodal-green-tangerine-vita-c-dark-spot-care-serum",
+    "tosowoong-arbutin-7-tranexamic-acid-4-cream",
+    "celimax-txa-body-clarifying-pad"
+   ]
+  },
+  {
+   "k": "ageing",
+   "en": "Fine Lines & Ageing",
+   "ar": "الخطوط الدقيقة والتقدّم في السن",
+   "short": "Anti-Ageing",
+   "short_ar": "مكافحة الشيخوخة",
+   "tip": "Start retinol slowly at night; peptides and PDRN support firmness.",
+   "tip_ar": "ابدئي بالريتينول ليلًا بالتدريج؛ الببتيدات وPDRN تدعم الشد.",
+   "sub": "Retinol · Peptides · PDRN",
+   "sub_ar": "ريتينول · ببتيدات · PDRN",
+   "items": [
+    "some-by-mi-retinol-intense-advanced-triple-action-eye-cream",
+    "some-by-mi-retinol-intense-reactivating-serum",
+    "anua-collagen-retinol-refining-gua-sha-cream",
+    "numbuzin-no-9-nad-retinol-volumetox-eye-cream",
+    "celimax-the-vita-a-retinal-shot-tightening-booster",
+    "medicube-pdrn-collagen-gua-sha-neck-wrinkle-cream"
+   ]
+  },
+  {
+   "k": "sensitive",
+   "en": "Redness & Sensitivity",
+   "ar": "الاحمرار والحساسية",
+   "short": "Redness",
+   "short_ar": "الاحمرار",
+   "tip": "Centella, heartleaf and panthenol soothe; keep the routine short.",
+   "tip_ar": "السنتيلا وعشبة هارتليف والبانثينول للتهدئة؛ روتين قصير وبسيط.",
+   "sub": "Centella · Heartleaf · Panthenol",
+   "sub_ar": "سنتيلا · هارتليف · بانثينول",
+   "items": [
+    "skin-1004-madagascar-centella-hyalu-cica-water-fit-sun-serum-50ml",
+    "dr-althea-345-relief-cream-mist",
+    "dr-althea-345-relief-cream",
+    "anua-heartleaf-pore-control-cleansing-oil-200ml",
+    "beauty-of-joseon-relief-sun-rice-probiotics-spf50-pa-50ml"
+   ]
+  },
+  {
+   "k": "pores",
+   "en": "Pores & Oil Control",
+   "ar": "المسام والدهون",
+   "short": "Pores",
+   "short_ar": "المسام",
+   "tip": "A gentle BHA toner and clay mask keep pores clear without stripping.",
+   "tip_ar": "تونر BHA لطيف وقناع طين يحافظان على المسام نظيفة دون جفاف.",
+   "sub": "BHA · Clay · Pads",
+   "sub_ar": "BHA · طين · وسادات",
+   "items": [
+    "anua-heartleaf-quercetinol-pore-deep-cleansing-foam-150ml",
+    "medicube-zero-pore-pad-2-0",
+    "anua-heartleaf-pore-control-cleansing-oil-200ml",
+    "celimax-poredark-spot-brightening-cream",
+    "torriden-cellmazing-pore-perfecting-ampoule",
+    "beauty-of-joseon-red-bean-refreshing-pore-mask-140ml"
+   ]
+  },
+  {
+   "k": "dull",
+   "en": "Dullness & Glow",
+   "ar": "البهتان والإشراقة",
+   "short": "Glow",
+   "short_ar": "الإشراقة",
+   "tip": "Vitamin C in the morning, a mild exfoliant twice a week.",
+   "tip_ar": "فيتامين سي صباحًا، ومقشّر لطيف مرتين أسبوعيًا.",
+   "sub": "Vitamin C · Rice · AHA",
+   "sub_ar": "فيتامين سي · أرز · AHA",
+   "items": [
+    "dr-althea-vitamin-c-boosting-serum",
+    "numbuzin-no-5-vitamin-niacinamide-concentrated-toner-pad",
+    "numbuzin-no-5-vitamin-concentrated-serum",
+    "jumiso-all-day-vitamin-brightening-balancing-facial-serum",
+    "celimax-the-vita-a-retinal-shot-tightening-booster",
+    "goodal-green-tangerine-vita-c-dark-spot-care-serum"
+   ]
+  },
+  {
+   "k": "sun",
+   "en": "Sun Protection",
+   "ar": "الحماية من الشمس",
+   "short": "Sun Care",
+   "short_ar": "الحماية من الشمس",
+   "tip": "SPF 50+ every morning, reapplied every two hours outdoors.",
+   "tip_ar": "واقي شمس SPF 50+ كل صباح، وإعادة وضعه كل ساعتين في الخارج.",
+   "sub": "SPF 50+ · PA++++",
+   "sub_ar": "SPF 50+ · PA++++",
+   "items": [
+    "round-lab-birch-juice-moisturizing-sunscreen-50ml",
+    "anua-heartleaf-silky-moisture-sun-cream",
+    "cosrx-aloe-soothing-spf-50-sun-cream-50ml",
+    "tocobo-bio-watery-sun-cream-spf50-pa",
+    "medicube-collagen-glow-sunscreen",
+    "beauty-of-joseon-relief-sun-rice-probiotics-spf50-pa-50ml"
+   ]
+  }
+ ],
+ "brands": [
+  {
+   "name": "Medicube",
+   "name_ar": "ميديكوب",
+   "count": 106,
+   "colour": "linear-gradient(135deg,#d9ccff,#b39cff)",
+   "initials": "M",
+   "slug": "medicube"
+  },
+  {
+   "name": "Anua",
+   "name_ar": "أنوا",
+   "count": 43,
+   "colour": "linear-gradient(135deg,#cfe6ff,#8fc0f0)",
+   "initials": "A",
+   "slug": "anua"
+  },
+  {
+   "name": "COSRX",
+   "name_ar": "كوسركس",
+   "count": 42,
+   "colour": "linear-gradient(135deg,#ffe9a8,#f3c969)",
+   "initials": "C",
+   "slug": "cosrx"
+  },
+  {
+   "name": "SKIN 1004",
+   "name_ar": "سكين 1004",
+   "count": 34,
+   "colour": "linear-gradient(135deg,#ffd9c9,#ff9f80)",
+   "initials": "S1",
+   "slug": "skin-1004"
+  },
+  {
+   "name": "Beauty of Joseon",
+   "name_ar": "بيوتي أوف جوسون",
+   "count": 26,
+   "colour": "linear-gradient(135deg,#ffd9c9,#ff9f80)",
+   "initials": "BO",
+   "slug": "beauty-of-joseon"
+  },
+  {
+   "name": "SOME BY MI",
+   "name_ar": "سوم باي مي",
+   "count": 21,
+   "colour": "linear-gradient(135deg,#ffe9a8,#f3c969)",
+   "initials": "SB",
+   "slug": "some-by-mi"
+  },
+  {
+   "name": "Dr.Althea",
+   "name_ar": "الدكتورة ألثيا",
+   "count": 21,
+   "colour": "linear-gradient(135deg,#ffd1e2,#ff9fc1)",
+   "initials": "D",
+   "slug": "dr-althea"
+  },
+  {
+   "name": "Arencia",
+   "name_ar": "أرينسيا",
+   "count": 20,
+   "colour": "linear-gradient(135deg,#d9ccff,#b39cff)",
+   "initials": "A",
+   "slug": "arencia"
+  },
+  {
+   "name": "numbuzin",
+   "name_ar": "نومبوزين",
+   "count": 19,
+   "colour": "linear-gradient(135deg,#ffd9c9,#ff9f80)",
+   "initials": "N",
+   "slug": "numbuzin"
+  },
+  {
+   "name": "Haruharu Wonder",
+   "name_ar": "هاروهارو وندر",
+   "count": 16,
+   "colour": "linear-gradient(135deg,#ffd9c9,#ff9f80)",
+   "initials": "HW",
+   "slug": "haruharu-wonder"
+  },
+  {
+   "name": "Axis - Y",
+   "name_ar": "أكسيس-واي",
+   "count": 15,
+   "colour": "linear-gradient(135deg,#bfe9d2,#7fd3a9)",
+   "initials": "A-",
+   "slug": "axis-y"
+  },
+  {
+   "name": "Celimax",
+   "name_ar": "سيليماكس",
+   "count": 14,
+   "colour": "linear-gradient(135deg,#ffd1e2,#ff9fc1)",
+   "initials": "C",
+   "slug": "celimax"
+  },
+  {
+   "name": "TOCOBO",
+   "name_ar": "توكوبو",
+   "count": 12,
+   "colour": "linear-gradient(135deg,#ffd9c9,#ff9f80)",
+   "initials": "T",
+   "slug": "tocobo"
+  },
+  {
+   "name": "Isntree",
+   "name_ar": "إيزنتري",
+   "count": 11,
+   "colour": "linear-gradient(135deg,#d9ccff,#b39cff)",
+   "initials": "I",
+   "slug": "isntree"
+  },
+  {
+   "name": "JUMISO",
+   "name_ar": "جوميسو",
+   "count": 9,
+   "colour": "linear-gradient(135deg,#cfe6ff,#8fc0f0)",
+   "initials": "J",
+   "slug": "jumiso"
+  },
+  {
+   "name": "TOSOWOONG",
+   "name_ar": "توسوونغ",
+   "count": 7,
+   "colour": "linear-gradient(135deg,#cfe6ff,#8fc0f0)",
+   "initials": "T",
+   "slug": "tosowoong"
+  },
+  {
+   "name": "mixsoon",
+   "name_ar": "ميكسون",
+   "count": 7,
+   "colour": "linear-gradient(135deg,#cfe6ff,#8fc0f0)",
+   "initials": "M",
+   "slug": "mixsoon"
+  },
+  {
+   "name": "A'PIEU",
+   "name_ar": "أبيو",
+   "count": 7,
+   "colour": "linear-gradient(135deg,#ffd9c9,#ff9f80)",
+   "initials": "A",
+   "slug": "apieu"
+  },
+  {
+   "name": "Torriden",
+   "name_ar": "توريدن",
+   "count": 6,
+   "colour": "linear-gradient(135deg,#ffe9a8,#f3c969)",
+   "initials": "T",
+   "slug": "torriden"
+  },
+  {
+   "name": "ROUND LAB",
+   "name_ar": "راوند لاب",
+   "count": 5,
+   "colour": "linear-gradient(135deg,#ffd9c9,#ff9f80)",
+   "initials": "RL",
+   "slug": "round-lab"
+  },
+  {
+   "name": "Goodal",
+   "name_ar": "جودال",
+   "count": 5,
+   "colour": "linear-gradient(135deg,#ffd1e2,#ff9fc1)",
+   "initials": "G",
+   "slug": "goodal"
+  },
+  {
+   "name": "lilyeve",
+   "name_ar": "ليلييف",
+   "count": 5,
+   "colour": "linear-gradient(135deg,#ffd1e2,#ff9fc1)",
+   "initials": "L",
+   "slug": "lilyeve"
+  },
+  {
+   "name": "fwee",
+   "name_ar": "فوي",
+   "count": 2,
+   "colour": "linear-gradient(135deg,#d9ccff,#b39cff)",
+   "initials": "F",
+   "slug": "fwee"
+  },
+  {
+   "name": "Dr.G",
+   "name_ar": "دكتور جي",
+   "count": 1,
+   "colour": "linear-gradient(135deg,#ffd1e2,#ff9fc1)",
+   "initials": "D",
+   "slug": "dr-g"
+  }
+ ],
+ "products": [
+  {
+   "slug": "medicube-red-acne-body-peeling-shot",
+   "name": "medicube - Red Acne Body Peeling Shot",
+   "name_ar": "ميديكوب - مقشّر الجسم للحبوب ريد بيلينغ شوت",
+   "brand": "Medicube",
+   "brand_ar": "ميديكوب",
+   "price": 110,
+   "sale": 86,
+   "was": 110,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2025/09/medicube-Red-Acne-Body-Peeling-Shot.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/09/medicube-Red-Acne-Body-Peeling-Shot.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/09/medicube-Red-Acne-Body-Peeling-Shot.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/09/medicube-Red-Acne-Body-Peeling-Shot.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/09/11_5a44615d-f88f-4036-ba4c-f63609944a50_960x.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/09/11_5a44615d-f88f-4036-ba4c-f63609944a50_960x.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/09/medicube-red-acne-body-peeling-shot-110g-5_960x.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/09/medicube-red-acne-body-peeling-shot-110g-5_960x.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/09/medicube-red-acne-body-peeling-shot-110g-3_960x.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/09/medicube-red-acne-body-peeling-shot-110g-3_960x.webp"
+    }
+   ],
+   "desc": "Banish bacne with this body serum infused with AHA, BHA, PHA and LHA for gentle exfoliation and succinic acid for sebum control and pore care. Other active ingredients such as tea tree, allantoin and panthenol tamp down inflammation and boost skin hydration. Suitable for sensitive and acne-prone skin. Use on the body only.",
+   "cat": "body-hair",
+   "tags": [
+    "concern:acne"
+   ]
+  },
+  {
+   "slug": "dr-g-r-e-d-blemish-clear-soothing-cream-70ml",
+   "name": "Dr.G - R.E.D Blemish Clear Soothing Cream 70ml",
+   "name_ar": "دكتور جي - الكريم المهدّئ لتنقية الحبوب آر.إي.دي - 70 مل",
+   "brand": "Dr.G",
+   "brand_ar": "دكتور جي",
+   "price": 189,
+   "sale": null,
+   "was": null,
+   "rating": 5,
+   "reviews": 3,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Dr.G-R.E.D-Blemish-Clear-Soothing-Cream-70ml.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.G-R.E.D-Blemish-Clear-Soothing-Cream-70ml.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Dr.G-R.E.D-Blemish-Clear-Soothing-Cream-70ml.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.G-R.E.D-Blemish-Clear-Soothing-Cream-70ml.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Dr.G-R.E.D-Blemish-Clear-Soothing-Cream-70ml-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.G-R.E.D-Blemish-Clear-Soothing-Cream-70ml-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Dr.G-R.E.D-Blemish-Clear-Soothing-Cream-70ml1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.G-R.E.D-Blemish-Clear-Soothing-Cream-70ml1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/EYE-SERUM2-1-2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/EYE-SERUM2-1-2.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/DR_G_RED_Blemish_Clear_Soothing_Cream-_70ml-2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/DR_G_RED_Blemish_Clear_Soothing_Cream-_70ml-2.webp"
+    }
+   ],
+   "desc": "This recovery cream comes in a quick-absorbing gel-like texture. Formulated with madecassoside and asiatic acid from centella, not only does it provide moisture to soothe sensitive skin, but also boasts complexion-brightening qualities.",
+   "cat": "moisturisers",
+   "tags": [
+    "concern:acne"
+   ]
+  },
+  {
+   "slug": "cosrx-acne-pimple-patch",
+   "name": "COSRX - Acne Pimple Patch",
+   "name_ar": "كوسركس - لصقات الحبوب",
+   "brand": "COSRX",
+   "brand_ar": "كوسركس",
+   "price": 62,
+   "sale": 28,
+   "was": 62,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/COSRX-Acne-Pimple-Patch-K-Beauty-Bliss.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/COSRX-Acne-Pimple-Patch-K-Beauty-Bliss.webp",
+   "gallery": [],
+   "desc": "COSRX Acne Pimple Master Patch provides immediate care for stubborn pimples with uniquely formulated Hydrocolloid Patch. This instantly covers acne to protect it from harsh elements that may cause for irritation. Suitable for all skin types including sensitive skin.",
+   "cat": "masks",
+   "tags": [
+    "concern:acne"
+   ]
+  },
+  {
+   "slug": "medicube-red-acne-succinic-acid-peel",
+   "name": "medicube - Red Acne Succinic Acid Peel",
+   "name_ar": "ميديكوب - مقشّر الحبوب بحمض السكسينيك ريد",
+   "brand": "Medicube",
+   "brand_ar": "ميديكوب",
+   "price": 99,
+   "sale": null,
+   "was": null,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2025/04/medicube-Red-Acne-Succinic-Acid-Peel.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/04/medicube-Red-Acne-Succinic-Acid-Peel.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/04/medicube-Red-Acne-Succinic-Acid-Peel.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/04/medicube-Red-Acne-Succinic-Acid-Peel.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/04/medicube-Red-Acne-Succinic-Acid-Peel-3.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/04/medicube-Red-Acne-Succinic-Acid-Peel-3.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/04/medicube-Red-Acne-Succinic-Acid-Peel-4.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/04/medicube-Red-Acne-Succinic-Acid-Peel-4.webp"
+    }
+   ],
+   "desc": "This serum infused with succinic acid combats acne breakouts and gently exfoliates away dead skin cells and excess sebum on skin. Enriched with a blend of 21% AHA and BHA, the formula clears blackheads other gunk in pores. Centella asiatica leaf extract in the mix provides soothing care. Suitable for various skin types including sensitive and acne-prone skin.",
+   "cat": "other",
+   "tags": [
+    "concern:acne"
+   ]
+  },
+  {
+   "slug": "celimax-jiwoogae-cica-bha-blemish-toner-pad",
+   "name": "Celimax - JIWOOGAE Cica BHA Blemish Toner Pad",
+   "name_ar": "سيليماكس - قطن تونر جيووجاي سيكا بحمض بي إتش إيه للحبوب",
+   "brand": "Celimax",
+   "brand_ar": "سيليماكس",
+   "price": 137,
+   "sale": 123,
+   "was": 137,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/12/Celimax-JIWOOGAE-Cica-BHA-Blemish-Toner-Pad.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/12/Celimax-JIWOOGAE-Cica-BHA-Blemish-Toner-Pad.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/12/Celimax-JIWOOGAE-Cica-BHA-Blemish-Toner-Pad.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/12/Celimax-JIWOOGAE-Cica-BHA-Blemish-Toner-Pad.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/12/sg-11134207-7rd4f-lvvdu61kfc0a67.jpeg",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/12/sg-11134207-7rd4f-lvvdu61kfc0a67.jpeg"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/01/standard_resolution.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/01/standard_resolution.webp"
+    }
+   ],
+   "desc": "This anti-acne Cica BHA Blemish Toner Pad helps to remove dead skin cells and excess sebum for clear skin. It exfoliates rough skin with BHA, PHA and LHA for a smooth finish. Infused with seven kinds of plant extract (like camellia flower extract) to tighten pores and calm irritation. Gentle formulation is suitable for all skin types including sensitive and acne-prone skin.",
+   "cat": "toners",
+   "tags": [
+    "concern:acne"
+   ]
+  },
+  {
+   "slug": "cosrx-salicylic-acid-daily-gentle-cleanser-150ml",
+   "name": "COSRX Salicylic Acid Daily Gentle Cleanser 150ml",
+   "name_ar": "كوسركس - المنظّف اليومي اللطيف بحمض الساليسيليك - 150 مل",
+   "brand": "COSRX",
+   "brand_ar": "كوسركس",
+   "price": 190,
+   "sale": 53,
+   "was": 190,
+   "rating": 5,
+   "reviews": 3,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/COSRX-Salicylic-Acid-Daily-Gentle-Cleanser-150ml-kbeauty-bliss.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/COSRX-Salicylic-Acid-Daily-Gentle-Cleanser-150ml-kbeauty-bliss.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/COSRX-Salicylic-Acid-Daily-Gentle-Cleanser-150ml-kbeauty-bliss.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/COSRX-Salicylic-Acid-Daily-Gentle-Cleanser-150ml-kbeauty-bliss.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/cosrx-salicylic-acid-daily-gentle-cleanser-150ml-570283.jpg",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/cosrx-salicylic-acid-daily-gentle-cleanser-150ml-570283.jpg"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/4-1__15069.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/4-1__15069.webp"
+    }
+   ],
+   "desc": "<div class=\"group w-full text-gray-800 dark:text-gray-100 border-b border-black/10 dark:border-gray-900/50 bg-gray-50 dark:bg-[#444654]\"> <div class=\"text-base gap-4 md:gap-6 md:max-w-2xl lg:max-w-xl xl:max-w-3xl p-4 md:py-6 flex lg:px-0 m-auto\"> <div class=\"relative flex w-[calc(100%-50px)] flex-col gap-1 md:gap-3 lg:w-[calc(100%-115px)]\"> <div class=\"flex flex-grow flex-col gap-3\"> <div class=\"min-h-[20px] flex flex-col items-start gap-4 whitespace-pre-wrap break-words\"> <div class=\"markdown prose w-full break-words dark:prose-invert light\"> <div class=\"group w-full text-gray-800 dark:text-gray-100 border-b border-black/10 dark:border-gray-900/50 bg-gray-50 dark:bg-[#444654]\"> <div class=\"",
+   "cat": "cleansers",
+   "tags": [
+    "concern:acne",
+    "under54"
+   ]
+  },
+  {
+   "slug": "anua-pdrn-hyaluronic-acid-hydrating-capsule-mist-mini",
+   "name": "Anua - PDRN Hyaluronic Acid Hydrating Capsule Mist Mini",
+   "name_ar": "أنوا - رذاذ الكبسولات المرطّب بي دي آر إن وحمض الهيالورونيك - حجم صغير",
+   "brand": "Anua",
+   "brand_ar": "أنوا",
+   "price": 120,
+   "sale": 85,
+   "was": 120,
+   "rating": 4.89,
+   "reviews": 9,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Anua-PDRN-Hyaluronic-Acid-Hydrating-Capsule-Mist-Mini.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Anua-PDRN-Hyaluronic-Acid-Hydrating-Capsule-Mist-Mini.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/Anua-PDRN-Hyaluronic-Acid-Hydrating-Capsule-Mist-Mini.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Anua-PDRN-Hyaluronic-Acid-Hydrating-Capsule-Mist-Mini.webp"
+    }
+   ],
+   "desc": "Getting that glass skin glow comes easy with Anua’s PDRN Hyaluronic Acid Hydrating Capsule Mist! Formulated with hyaluronic acid and hydrolyzed collagen the face mist amp up skin’s moisture levels and firmness. It also contains emerald-hued PDRN capsules that absorb effortlessly to revitalize skin with a dewy and radiant finish.",
+   "cat": "toners",
+   "tags": [
+    "concern:hydration",
+    "trending"
+   ]
+  },
+  {
+   "slug": "anua-pdrn-hyaluronic-acid-hydrating-capsule-mist",
+   "name": "Anua - PDRN + Hyaluronic Acid Hydrating Capsule Mist",
+   "name_ar": "أنوا - رذاذ الكبسولات المرطّب بي دي آر إن + حمض الهيالورونيك",
+   "brand": "Anua",
+   "brand_ar": "أنوا",
+   "price": 170,
+   "sale": 135,
+   "was": 170,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Anua-PDRN-Hyaluronic-Acid-Hydrating-Capsule-Mist-100ml.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Anua-PDRN-Hyaluronic-Acid-Hydrating-Capsule-Mist-100ml.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/Anua-PDRN-Hyaluronic-Acid-Hydrating-Capsule-Mist-100ml.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Anua-PDRN-Hyaluronic-Acid-Hydrating-Capsule-Mist-100ml.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/anua-us-ampoule-serum-pdrn-collagen-glow-facial-serum-spray-1243123187.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/anua-us-ampoule-serum-pdrn-collagen-glow-facial-serum-spray-1243123187.webp"
+    }
+   ],
+   "desc": "Anua PDRN Plus Hyaluronic Acid Hydrating Capsule Mist is a refreshing facial mist designed to instantly hydrate, revive, and brighten the skin with a lightweight oil essence texture. It is made for all skin types, especially dry, dull, tired, dehydrated, or less radiant skin that needs quick moisture, glow, and a refreshing boost anytime during the day. The formula contains 2,000 ppm PDRN to support skin vitality, firmness, and radiance, while hyaluronic acid helps attract and retain moisture for long lasting hydration.",
+   "cat": "toners",
+   "tags": [
+    "concern:hydration"
+   ]
+  },
+  {
+   "slug": "round-lab-birch-juice-moisturizing-sunscreen-50ml",
+   "name": "ROUND LAB - Birch Juice Moisturizing Sunscreen 50ml",
+   "name_ar": "راوند لاب - واقي الشمس المرطّب بعصارة البتولا - 50 مل",
+   "brand": "ROUND LAB",
+   "brand_ar": "راوند لاب",
+   "price": 150,
+   "sale": 107,
+   "was": 150,
+   "rating": 5,
+   "reviews": 3,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/ROUND-LAB-Birch-Juice-Moisturizing-Sunscreen-50ml.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/ROUND-LAB-Birch-Juice-Moisturizing-Sunscreen-50ml.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/ROUND-LAB-Birch-Juice-Moisturizing-Sunscreen-50ml.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/ROUND-LAB-Birch-Juice-Moisturizing-Sunscreen-50ml.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Hikoco_RoundLab_BirchJuiceMoisturisingSunscreen_02.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Hikoco_RoundLab_BirchJuiceMoisturisingSunscreen_02.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/RoundLabBirchJuiceMoisturizingSunscreen5.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/RoundLabBirchJuiceMoisturizingSunscreen5.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/ROUND-LAB-16-04.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/ROUND-LAB-16-04.webp"
+    }
+   ],
+   "desc": "Fitted with SPF50+ PA++++, this chemical sunscreen shields skin from UV rays while offering various skin care benefits. It’s enriched with 1,425ppm of birch juice and hyaluronic acid to keep skin moisturized, alongside niacinamide to leave skin glowing. Other ingredients like adenosine offer anti-aging care. Organic sunscreen with a soft cream texture leaves a white cast-free finish without a sticky after-feel.",
+   "cat": "sun",
+   "tags": [
+    "concern:hydration",
+    "concern:sun"
+   ]
+  },
+  {
+   "slug": "medicube-pdrn-hydrating-uv-serum",
+   "name": "Medicube - PDRN Hydrating UV Serum",
+   "name_ar": "ميديكوب - سيروم الحماية من الأشعة فوق البنفسجية المرطّب بي دي آر إن",
+   "brand": "Medicube",
+   "brand_ar": "ميديكوب",
+   "price": 156,
+   "sale": 135,
+   "was": 156,
+   "rating": 4.67,
+   "reviews": 6,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Medicube-PDRN-Hydrating-UV-Serum.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Medicube-PDRN-Hydrating-UV-Serum.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/Medicube-PDRN-Hydrating-UV-Serum.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Medicube-PDRN-Hydrating-UV-Serum.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/no_cast_just_dew_serum_4.jpg",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/no_cast_just_dew_serum_4.jpg"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/no_cast_just_dew_serum_2.jpg",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/no_cast_just_dew_serum_2.jpg"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/no_cast_just_dew_serum_3.jpg",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/no_cast_just_dew_serum_3.jpg"
+    }
+   ],
+   "desc": "If you love medicube’s PDRN Pink range like its PDRN Pink Peptide Serum, get ready to love the K-Beauty brand’s dewy PDRN-infused sunscreen! It uses chemical filters to offer SPF 50+ PA++++ protection, while giving you the light, dewy feel of a PDRN serum. It’s formulated with salmon PDRN, panthenol, niacinamide and centella asiatica extract for soothing, hydrating and barrier-strengthening benefits. The glow-boosting sun serum is great for those with dry and combination skin.",
+   "cat": "serums",
+   "tags": [
+    "concern:hydration"
+   ]
+  },
+  {
+   "slug": "isntree-hyaluronic-acid-watery-sun-gel",
+   "name": "Isntree - Hyaluronic Acid Watery Sun Gel",
+   "name_ar": "إيزنتري - جل الشمس المائي بحمض الهيالورونيك",
+   "brand": "Isntree",
+   "brand_ar": "إيزنتري",
+   "price": 98,
+   "sale": 60,
+   "was": 98,
+   "rating": 5,
+   "reviews": 3,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Isntree-Hyaluronic-Acid-Watery-Sun-Gel-1.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Isntree-Hyaluronic-Acid-Watery-Sun-Gel-1.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Isntree-Hyaluronic-Acid-Watery-Sun-Gel-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Isntree-Hyaluronic-Acid-Watery-Sun-Gel-1.webp"
+    }
+   ],
+   "desc": "Keep harmful UV rays at bay with this watery sun gel that contains eight types of hyaluronic acid in different molecular weights to replenish moisture. The chemical sunscreen is further enriched with astaxanthin to improve skin elasticity, ceramide to strengthen skin barrier, and centella asiatica extract to soothe skin. Non-sticky and lightweight formula spreads easily and leaves no residue on skin. The organic sunscreen is suitable for various skin types including sensitive skin.",
+   "cat": "moisturisers",
+   "tags": [
+    "concern:hydration"
+   ]
+  },
+  {
+   "slug": "haruharu-wonder-black-rice-moisture-airyfit-sunscreen",
+   "name": "Haruharu WONDER - Black Rice Moisture Airyfit Sunscreen",
+   "name_ar": "هاروهارو وندر - واقي الشمس الخفيف المرطّب بالأرز الأسود إيري فيت",
+   "brand": "Haruharu Wonder",
+   "brand_ar": "هاروهارو وندر",
+   "price": 165,
+   "sale": 85,
+   "was": 165,
+   "rating": 4.5,
+   "reviews": 2,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Haruharu-WONDER-Black-Rice-Moisture-Airyfit-Sunscreen.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Haruharu-WONDER-Black-Rice-Moisture-Airyfit-Sunscreen.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Haruharu-WONDER-Black-Rice-Moisture-Airyfit-Sunscreen.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Haruharu-WONDER-Black-Rice-Moisture-Airyfit-Sunscreen.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/haruharu-wonder-black-rice-moisture-airyfit-daily-sunscreen-spf-50-pa-50-ml-3326-118-0050_2-1365x2048-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/haruharu-wonder-black-rice-moisture-airyfit-daily-sunscreen-spf-50-pa-50-ml-3326-118-0050_2-1365x2048-1.webp"
+    }
+   ],
+   "desc": "Seeking a gentle yet powerful sun care solution? Look no further than Haruharu WONDER’s chemical sunscreen fitted with SPF50+ PA++++ to fend off UV rays. The lightweight formula is infused with black rice extract for extra hydration. Organic sunscreen in a cream texture blends out easily without leaving any sticky residue.",
+   "cat": "sun",
+   "tags": [
+    "concern:hydration"
+   ]
+  },
+  {
+   "slug": "anua-niacinamide-10-txa-4-dark-spot-correcting-serum-30ml",
+   "name": "Anua - Niacinamide 10% + TXA 4% Dark Spot Correcting Serum 30ml",
+   "name_ar": "أنوا - سيروم تصحيح البقع الداكنة بالنياسيناميد 10% وحمض الترانيكساميك 4% - 30 مل",
+   "brand": "Anua",
+   "brand_ar": "أنوا",
+   "price": 95,
+   "sale": 80,
+   "was": 95,
+   "rating": 4.67,
+   "reviews": 3,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/11/anua-txa-niacinaminde-serum-kbeautybliss.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/11/anua-txa-niacinaminde-serum-kbeautybliss.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/11/anua-txa-niacinaminde-serum-kbeautybliss.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/11/anua-txa-niacinaminde-serum-kbeautybliss.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/txa-updated-version.jpeg",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/txa-updated-version.jpeg"
+    }
+   ],
+   "desc": "Tackle hyperpigmentation with this serum formulated with 10% niacinamide and 4% tranexamic acid to fade dark spots and acne scars. It contains alpha-arbutin to brighten and even skin tone, as well as hyaluronic acid and botanical oils to moisturize and soothe skin. Fade and target stubborn dark spots, hyperpigmentation, post-acne scars and marks, sun spots and other forms of discoloration effectively, whilst also preventing new ones from forming. Containing 10% Niacinamide, 4% Tranexamic Acid and 2% Arbutin, a powerful trio of active ingredients to target dull skin, uneven skin tone and enlarged pores",
+   "cat": "serums",
+   "tags": [
+    "concern:spots"
+   ]
+  },
+  {
+   "slug": "axis-y-dark-spot-correcting-glow-serum",
+   "name": "AXIS - Y - Dark Spot Correcting Glow Serum",
+   "name_ar": "أكسيس-واي - سيروم الإشراقة لتصحيح البقع الداكنة",
+   "brand": "Axis - Y",
+   "brand_ar": "أكسيس-واي",
+   "price": 99,
+   "sale": 58,
+   "was": 99,
+   "rating": 5,
+   "reviews": 4,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/AXIS-Y-Dark-Spot-Correcting-Glow-Serum.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/AXIS-Y-Dark-Spot-Correcting-Glow-Serum.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/AXIS-Y-Dark-Spot-Correcting-Glow-Serum.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/AXIS-Y-Dark-Spot-Correcting-Glow-Serum.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Screenshot-2024-05-01-122237.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Screenshot-2024-05-01-122237.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Screenshot-2024-05-01-122254-1024x1021-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Screenshot-2024-05-01-122254-1024x1021-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/81MBk1KsuNL._AC_SL1500_.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/81MBk1KsuNL._AC_SL1500_.webp"
+    }
+   ],
+   "desc": "<div class=\"group w-full text-gray-800 dark:text-gray-100 border-b border-black/10 dark:border-gray-900/50 bg-gray-50 dark:bg-[#444654]\"> <div class=\"text-base gap-4 md:gap-6 md:max-w-2xl lg:max-w-xl xl:max-w-3xl p-4 md:py-6 flex lg:px-0 m-auto\"> <div class=\"relative flex w-[calc(100%-50px)] flex-col gap-1 md:gap-3 lg:w-[calc(100%-115px)]\"> <div class=\"flex flex-grow flex-col gap-3\"> <div class=\"min-h-[20px] flex flex-col items-start gap-4 whitespace-pre-wrap break-words\"> <div class=\"markdown prose w-full break-words dark:prose-invert light\"> <div class=\"group w-full text-gray-800 dark:text-gray-100 border-b border-black/10 dark:border-gray-900/50 bg-gray-50 dark:bg-[#444654]\"> <div class=\"",
+   "cat": "serums",
+   "tags": [
+    "concern:spots"
+   ]
+  },
+  {
+   "slug": "celimax-poredark-spot-brightening-cream",
+   "name": "celimax - Pore+Dark Spot Brightening Cream",
+   "name_ar": "سيليماكس - كريم التفتيح للمسام والبقع الداكنة",
+   "brand": "Celimax",
+   "brand_ar": "سيليماكس",
+   "price": 109,
+   "sale": 88,
+   "was": 109,
+   "rating": 4.6,
+   "reviews": 20,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/04/celimax-PoreDark-Spot-Brightening-Cream-kbeautybliss.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/04/celimax-PoreDark-Spot-Brightening-Cream-kbeautybliss.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/04/celimax-PoreDark-Spot-Brightening-Cream-kbeautybliss.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/04/celimax-PoreDark-Spot-Brightening-Cream-kbeautybliss.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/04/celimax-poredark-spot-brightening-cream-2_1800x1800.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/04/celimax-poredark-spot-brightening-cream-2_1800x1800.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/04/celimax-pore-dark-spot-brightening-cream-3_1200x1200.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/04/celimax-pore-dark-spot-brightening-cream-3_1200x1200.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/04/celimax_dark_spot_cream_5.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/04/celimax_dark_spot_cream_5.webp"
+    }
+   ],
+   "desc": "Boasting brightening ingredients such as tranexamic acid, niacinamide and Melazero V2, this cream inhibits melanin production to minimize dark spots and even out skin tone. Ceramide NP and hydrolyzed hyaluronic acid in the mix provide deep skin hydration.",
+   "cat": "moisturisers",
+   "tags": [
+    "concern:spots",
+    "concern:pores"
+   ]
+  },
+  {
+   "slug": "goodal-green-tangerine-vita-c-dark-spot-care-serum",
+   "name": "Goodal - Green Tangerine Vita C Dark Spot Care Serum",
+   "name_ar": "جودال - سيروم العناية بالبقع الداكنة باليوسفي الأخضر وفيتامين سي",
+   "brand": "Goodal",
+   "brand_ar": "جودال",
+   "price": 140,
+   "sale": 116,
+   "was": 140,
+   "rating": 4.5,
+   "reviews": 2,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Goodal-%E2%80%93-Green-Tangerine-Vita-C-Dark-Spot-Care-Serum.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Goodal-%E2%80%93-Green-Tangerine-Vita-C-Dark-Spot-Care-Serum.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Goodal-%E2%80%93-Green-Tangerine-Vita-C-Dark-Spot-Care-Serum.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Goodal-%E2%80%93-Green-Tangerine-Vita-C-Dark-Spot-Care-Serum.webp"
+    }
+   ],
+   "desc": "Hypoallergenic serum packed with 70% Vitamin C from green tangerine extract minimizes the appearance of blemishes and dark spots. Its gel-like texture leaves a refreshing feeling without stickiness. Use serum after cleansing. Suitable for sensitive skin.",
+   "cat": "serums",
+   "tags": [
+    "concern:spots",
+    "concern:dull"
+   ]
+  },
+  {
+   "slug": "tosowoong-arbutin-7-tranexamic-acid-4-cream",
+   "name": "TOSOWOONG - Arbutin 7% + Tranexamic Acid 4% Cream",
+   "name_ar": "توسوونغ - كريم الأربوتين 7% وحمض الترانيكساميك 4%",
+   "brand": "TOSOWOONG",
+   "brand_ar": "توسوونغ",
+   "price": 339,
+   "sale": 240,
+   "was": 339,
+   "rating": 4.73,
+   "reviews": 37,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2025/11/Tosowoong-Arbutus-7-Tranexamic-Acid-4-Cream.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/11/Tosowoong-Arbutus-7-Tranexamic-Acid-4-Cream.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/11/Tosowoong-Arbutus-7-Tranexamic-Acid-4-Cream.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/11/Tosowoong-Arbutus-7-Tranexamic-Acid-4-Cream.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/11/s-l1200-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/11/s-l1200-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/11/71m64lZxnOL._SL1500.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/11/71m64lZxnOL._SL1500.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/11/61uU3yvKU6L._SL1500.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/11/61uU3yvKU6L._SL1500.webp"
+    }
+   ],
+   "desc": "A high-concentration cream containing 7% arbutin and three key ingredients, effectively addressing post-inflammatory hyperpigmentation and various pigmentation concerns. This powerful formula helps fade discoloration, even out skin tone, and improve skin clarity for a more radiant and even complexion.",
+   "cat": "moisturisers",
+   "tags": [
+    "concern:spots",
+    "best"
+   ]
+  },
+  {
+   "slug": "celimax-txa-body-clarifying-pad",
+   "name": "Celimax - TXA Body Clarifying Pad",
+   "name_ar": "سيليماكس - قطن الجسم المنقّي بحمض الترانيكساميك",
+   "brand": "Celimax",
+   "brand_ar": "سيليماكس",
+   "price": 189,
+   "sale": 140,
+   "was": 189,
+   "rating": 4.81,
+   "reviews": 31,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/08/Celimax-TXA-Body-Clarifying-Pad-kbeautybliss.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/08/Celimax-TXA-Body-Clarifying-Pad-kbeautybliss.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/08/Celimax-TXA-Body-Clarifying-Pad-kbeautybliss.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/08/Celimax-TXA-Body-Clarifying-Pad-kbeautybliss.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/08/633f4d57d742.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/08/633f4d57d742.webp"
+    }
+   ],
+   "desc": "<p>Struggling with rough texture, body bumps or uneven skin tone? The celimax TXA Body Clarifying Pad helps smooth and refresh your skin with an easy two-sided design. Each oversized 80mm pad features an embossed side to exfoliate dead skin cells and remove excess sebum, alongside a softer side for a gentle finish. A blend of AHA, BHA and PHA helps refine skin texture, while niacinamide and tranexamic acid target the appearance of blemishes and discolouration. Allantoin and multiple forms of hyaluronic acid help soothe and hydrate, leaving your skin feeling smoother, softer and more balanced.</p>",
+   "cat": "toners",
+   "tags": [
+    "concern:spots",
+    "best"
+   ]
+  },
+  {
+   "slug": "some-by-mi-retinol-intense-advanced-triple-action-eye-cream",
+   "name": "SOME BY MI - Retinol Intense Advanced Triple Action Eye Cream",
+   "name_ar": "سوم باي مي - كريم العين بالريتينول إنتنس ثلاثي المفعول",
+   "brand": "SOME BY MI",
+   "brand_ar": "سوم باي مي",
+   "price": 125,
+   "sale": 99,
+   "was": 125,
+   "rating": 4.5,
+   "reviews": 2,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/61hSd8kPTL-1.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/61hSd8kPTL-1.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/61hSd8kPTL-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/61hSd8kPTL-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/SomeBYMi-retinol-intense-eye-cream-kbeautybliss-4-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/SomeBYMi-retinol-intense-eye-cream-kbeautybliss-4-1.webp"
+    }
+   ],
+   "desc": "Soften fine lines, remove dark circles and reduce signs of aging with this powerful eye cream infused with retinol to promote skin cell turnover, niacinamide for brightening benefits as well as hyaluronic acid and panthenol for deep hydration. For optimal effects, apply onto the inner corners of eyes before spreading outwards.",
+   "cat": "moisturisers",
+   "tags": [
+    "concern:ageing"
+   ]
+  },
+  {
+   "slug": "some-by-mi-retinol-intense-reactivating-serum",
+   "name": "SOME BY MI - Retinol Intense Reactivating Serum",
+   "name_ar": "سوم باي مي - السيروم المجدّد بالريتينول إنتنس",
+   "brand": "SOME BY MI",
+   "brand_ar": "سوم باي مي",
+   "price": 126,
+   "sale": 99,
+   "was": 126,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/61hdLCmKBnL-1.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/61hdLCmKBnL-1.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/61hdLCmKBnL-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/61hdLCmKBnL-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/some-by-me-018798wy-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/some-by-me-018798wy-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/some-by-me-018798wy-3.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/some-by-me-018798wy-3.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/some-by-miretinol-intense-reactivating-serum-30mlmood-arabia-900158-1024x1024-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/some-by-miretinol-intense-reactivating-serum-30mlmood-arabia-900158-1024x1024-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/some-by-me-018798wy-2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/some-by-me-018798wy-2.webp"
+    }
+   ],
+   "desc": "This serum is infused with retinol, retinal and bakuchiol to boost skin elasticity and reduce signs of aging. It's created with patented elastic-liposome technology to deliver active ingredients deep into skin. The gentle formula gives a non-sticky, moisturizing finish without any irritation. Recommended for sensitive skin.",
+   "cat": "serums",
+   "tags": [
+    "concern:ageing"
+   ]
+  },
+  {
+   "slug": "anua-collagen-retinol-refining-gua-sha-cream",
+   "name": "Anua - Collagen Retinol Refining Gua Sha Cream",
+   "name_ar": "أنوا - كريم غوا شا بالكولاجين والريتينول لتنقية البشرة",
+   "brand": "Anua",
+   "brand_ar": "أنوا",
+   "price": 158,
+   "sale": 125,
+   "was": 158,
+   "rating": 4.93,
+   "reviews": 14,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Anua-Collagen-Retinol-Refining-Gua-Sha-Cream.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Anua-Collagen-Retinol-Refining-Gua-Sha-Cream.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/Anua-Collagen-Retinol-Refining-Gua-Sha-Cream.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Anua-Collagen-Retinol-Refining-Gua-Sha-Cream.webp"
+    }
+   ],
+   "desc": "Skip the in-clinic treatment and enjoy a spa-like experience at home with this gua sha cream! Featuring the anti-aging trio of retinol, collagen and peptides, the gentle formula is housed in an innovative container with a U-shaped, metal-lined head that dispenses and applies product effortlessly. The built-in gua sha is ergonomically designed to massage your jawline and neck.",
+   "cat": "moisturisers",
+   "tags": [
+    "concern:ageing"
+   ]
+  },
+  {
+   "slug": "numbuzin-no-9-nad-retinol-volumetox-eye-cream",
+   "name": "numbuzin - No.9 NAD+ Retinol Volumetox Eye Cream",
+   "name_ar": "نومبوزين - كريم العين للامتلاء بـ إن إيه دي+ والريتينول رقم 9",
+   "brand": "numbuzin",
+   "brand_ar": "نومبوزين",
+   "price": 130,
+   "sale": 78,
+   "was": 130,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2025/11/numbuzin-No.9-NAD-Retinol-Volumetox-Eye-Cream.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/11/numbuzin-No.9-NAD-Retinol-Volumetox-Eye-Cream.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/11/numbuzin-No.9-NAD-Retinol-Volumetox-Eye-Cream.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/11/numbuzin-No.9-NAD-Retinol-Volumetox-Eye-Cream.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/11/250610________-_-9_b73cd5eb-a317-4bef-bae6-a031bb7f2f62.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/11/250610________-_-9_b73cd5eb-a317-4bef-bae6-a031bb7f2f62.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/11/numbuzin-no9-nad-retinol-volumetox-eye-cream-10ml-krym-alaayn-nombozyn-rkm-9-nad-rytynol-folyomtoks-9625515.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/11/numbuzin-no9-nad-retinol-volumetox-eye-cream-10ml-krym-alaayn-nombozyn-rkm-9-nad-rytynol-folyomtoks-9625515.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/11/numbuzin-no-9-nad-retinol-volumetox-eye-cream-10ml.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/11/numbuzin-no-9-nad-retinol-volumetox-eye-cream-10ml.webp"
+    }
+   ],
+   "desc": "Plump up dull, sagging eyes with this firming eye cream. It’s formulated with niacinamide and ceramide to brighten dark under-eyes, along with retinol and 50 peptides to firm up sagging areas. NAD+ in the formula also provides hydrating care.",
+   "cat": "moisturisers",
+   "tags": [
+    "concern:ageing"
+   ]
+  },
+  {
+   "slug": "celimax-the-vita-a-retinal-shot-tightening-booster",
+   "name": "celimax - The Vita-A Retinal Shot Tightening Booster",
+   "name_ar": "سيليماكس - معزّز الشدّ بالريتينال ذا فيتا-إيه شوت",
+   "brand": "Celimax",
+   "brand_ar": "سيليماكس",
+   "price": 130,
+   "sale": 89,
+   "was": 130,
+   "rating": 4.55,
+   "reviews": 20,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2025/08/celimax-The-Vita-A-Retinal-Shot-Tightening-Booster.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/08/celimax-The-Vita-A-Retinal-Shot-Tightening-Booster.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/08/celimax-The-Vita-A-Retinal-Shot-Tightening-Booster.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/08/celimax-The-Vita-A-Retinal-Shot-Tightening-Booster.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/08/celimax-The-Vita-A-Retinal-Shot-Tightening-Booster-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/08/celimax-The-Vita-A-Retinal-Shot-Tightening-Booster-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/08/celimax-The-Vita-A-Retinal-Shot-Tightening-Booster-3.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/08/celimax-The-Vita-A-Retinal-Shot-Tightening-Booster-3.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/08/celimax-The-Vita-A-Retinal-Shot-Tightening-Booster-4.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/08/celimax-The-Vita-A-Retinal-Shot-Tightening-Booster-4.webp"
+    }
+   ],
+   "desc": "Revitalize skin with this anti-aging treatment featuring 0.1% pure retinol and 3% MATRIXYL® 3000 to enhance skin elasticity and improve skin texture. It’s infused with A-Shot™ featuring micro-sized particles to aid absorption of active ingredients deep within skin for a bright and hydrated finish.",
+   "cat": "serums",
+   "tags": [
+    "concern:ageing",
+    "concern:dull",
+    "trending"
+   ]
+  },
+  {
+   "slug": "medicube-pdrn-collagen-gua-sha-neck-wrinkle-cream",
+   "name": "Medicube - PDRN Collagen Gua Sha Neck Wrinkle Cream",
+   "name_ar": "ميديكوب - كريم غوا شا للرقبة ضد التجاعيد بي دي آر إن والكولاجين",
+   "brand": "Medicube",
+   "brand_ar": "ميديكوب",
+   "price": 160,
+   "sale": 135,
+   "was": 160,
+   "rating": 4.76,
+   "reviews": 17,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/medicube-PDRN-Collagen-Gua-Sha-Neck-Wrinkle-Cream.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube-PDRN-Collagen-Gua-Sha-Neck-Wrinkle-Cream.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/medicube-PDRN-Collagen-Gua-Sha-Neck-Wrinkle-Cream.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube-PDRN-Collagen-Gua-Sha-Neck-Wrinkle-Cream.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/medicube_gua_sha_cream_6.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube_gua_sha_cream_6.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/medicube_gua_sha_cream_4.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube_gua_sha_cream_4.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/medicube_gua_sha_cream_2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube_gua_sha_cream_2.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/medicube_gua_sha_cream_7.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube_gua_sha_cream_7.webp"
+    }
+   ],
+   "desc": "Powered by PDRN, 5% Volufiline®, and collagen, this intensive formula helps replenish moisture, improve skin firmness, and restore a smoother, more youthful-looking neck and décolleté. The lightweight cream absorbs quickly without stickiness, making it ideal for both morning and evening use.",
+   "cat": "moisturisers",
+   "tags": [
+    "concern:ageing"
+   ]
+  },
+  {
+   "slug": "skin-1004-madagascar-centella-hyalu-cica-water-fit-sun-serum-50ml",
+   "name": "SKIN 1004 - Madagascar Centella Hyalu - Cica Water - Fit Sun Serum 50ml",
+   "name_ar": "سكين 1004 - سيروم الشمس المائي سنتيلا مدغشقر هيالو-سيكا - 50 مل",
+   "brand": "SKIN 1004",
+   "brand_ar": "سكين 1004",
+   "price": 147,
+   "sale": 68,
+   "was": 147,
+   "rating": 5,
+   "reviews": 2,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/SKIN-1004-Madagascar-Centella-Hyalu-Cica-Water-Fit-Sun-Serum-50ml.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/SKIN-1004-Madagascar-Centella-Hyalu-Cica-Water-Fit-Sun-Serum-50ml.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/SKIN-1004-Madagascar-Centella-Hyalu-Cica-Water-Fit-Sun-Serum-50ml.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/SKIN-1004-Madagascar-Centella-Hyalu-Cica-Water-Fit-Sun-Serum-50ml.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/skin1004-sun-50ml-hyalu-cica-water-fit-sun-serum-spf50-pa-38409244737782_1800x1800-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/skin1004-sun-50ml-hyalu-cica-water-fit-sun-serum-spf50-pa-38409244737782_1800x1800-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/skin1004-sun-hyalu-cica-water-fit-sun-serum-spf50-pa-37102207860982_1000x1000-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/skin1004-sun-hyalu-cica-water-fit-sun-serum-spf50-pa-37102207860982_1000x1000-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/skin1004-sun-hyalu-cica-water-fit-sun-serum-spf50-pa-39366328811766_1440x1800-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/skin1004-sun-hyalu-cica-water-fit-sun-serum-spf50-pa-39366328811766_1440x1800-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/skin1004-sun-hyalu-cica-water-fit-sun-serum-spf50-pa-39366328910070_1440x1800-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/skin1004-sun-hyalu-cica-water-fit-sun-serum-spf50-pa-39366328910070_1440x1800-1.webp"
+    }
+   ],
+   "desc": "A non-nano chemical sunscreen that blocks UV rays, while simultaneously hydrating the skin. This sunscreen leaves skin with a moisturized, dewy finish. Fitted with SPF50+ PA++++, this organic sunscreen is made with a golden ratio of hyaluronic acid and centella asiatica extract to soothe and hydrate skin without leaving a white cast. Additional ingredients of arugula leaf, green tea and broccoli extracts provide antioxidant benefits and help to improve underlying skin conditions. Fast-absorbing formula in a cream-like texture leaves your skin plump and glowing.",
+   "cat": "serums",
+   "tags": [
+    "concern:sensitive",
+    "trending"
+   ]
+  },
+  {
+   "slug": "dr-althea-345-relief-cream-mist",
+   "name": "Dr.Althea - 345 Relief Cream Mist Spray",
+   "name_ar": "الدكتورة ألثيا - رذاذ كريم 345 ريليف",
+   "brand": "Dr.Althea",
+   "brand_ar": "الدكتورة ألثيا",
+   "price": 125,
+   "sale": 99,
+   "was": 125,
+   "rating": 4.65,
+   "reviews": 20,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/03/Dr.Althea-345-Relief-Cream-Mist-kbeautybliss.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/03/Dr.Althea-345-Relief-Cream-Mist-kbeautybliss.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/03/Dr.Althea-345-Relief-Cream-Mist-kbeautybliss.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/03/Dr.Althea-345-Relief-Cream-Mist-kbeautybliss.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/03/rn-image_picker_lib_temp_5a5b4901-605c-4205-8040-5a3e6f63085e_1080x.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/03/rn-image_picker_lib_temp_5a5b4901-605c-4205-8040-5a3e6f63085e_1080x.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/03/rn-image_picker_lib_temp_3490e7e6-705c-4049-87bf-d56faa4e2640_1080x.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/03/rn-image_picker_lib_temp_3490e7e6-705c-4049-87bf-d56faa4e2640_1080x.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/03/rn-image_picker_lib_temp_61bfabed-9e28-4915-bb8c-4c140d779d5c_1080x.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/03/rn-image_picker_lib_temp_61bfabed-9e28-4915-bb8c-4c140d779d5c_1080x.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/03/rn-image_picker_lib_temp_c9c4dfa9-60ea-4422-be32-a361bbd10f3a_1080x.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/03/rn-image_picker_lib_temp_c9c4dfa9-60ea-4422-be32-a361bbd10f3a_1080x.webp"
+    }
+   ],
+   "desc": "The Dr. Althea 345 Relief Cream Mist features a dual-layer formula: a creamy layer packed with nourishing Rice Bran Water, Hyaluronic Acid, and Panthenol, and a water-based essence layer enriched with soothing Madecassoside, Aloe Vera Leaf Water, and Centella Asiatica Extract. Simply shake to mix the two layers, then spray the fine mist for a quick refresh.",
+   "cat": "toners",
+   "tags": [
+    "concern:sensitive",
+    "trending"
+   ]
+  },
+  {
+   "slug": "dr-althea-345-relief-cream",
+   "name": "Dr.Althea - 345 Relief Cream",
+   "name_ar": "الدكتورة ألثيا - كريم 345 ريليف",
+   "brand": "Dr.Althea",
+   "brand_ar": "الدكتورة ألثيا",
+   "price": 155,
+   "sale": 99,
+   "was": 155,
+   "rating": 4.65,
+   "reviews": 20,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream-K-Beauty-Bliss-2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream-K-Beauty-Bliss-2.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream-K-Beauty-Bliss-7.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream-K-Beauty-Bliss-7.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream-K-Beauty-Bliss-6.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream-K-Beauty-Bliss-6.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream-K-Beauty-Bliss-5.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream-K-Beauty-Bliss-5.webp"
+    }
+   ],
+   "desc": "345 Relief Cream is a regenerating ointment gel cream rich in nutrients that skillfully combines ingredients to address blemishes, nourish the skin, and provide soothing care, resulting in a well-rounded skincare solution. This lightweight post-acne cream effectively tends to acne aftermath without a heavy feel. Its multi-layered cream structure offers a through and lasting skincare by catering to various skin needs, ensuring continuous hydration and nourishment.",
+   "cat": "moisturisers",
+   "tags": [
+    "concern:sensitive"
+   ]
+  },
+  {
+   "slug": "anua-heartleaf-pore-control-cleansing-oil-200ml",
+   "name": "Anua - Heartleaf Pore Control Cleansing Oil 200ml",
+   "name_ar": "أنوا - زيت التنظيف بعشبة القلب للتحكم بالمسام - 200 مل",
+   "brand": "Anua",
+   "brand_ar": "أنوا",
+   "price": 110,
+   "sale": 95,
+   "was": 110,
+   "rating": 4.75,
+   "reviews": 4,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Anua-%E2%80%93-Heartleaf-Pore-Control-Cleansing-Oil-200ml-1.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Anua-%E2%80%93-Heartleaf-Pore-Control-Cleansing-Oil-200ml-1.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Anua-%E2%80%93-Heartleaf-Pore-Control-Cleansing-Oil-200ml-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Anua-%E2%80%93-Heartleaf-Pore-Control-Cleansing-Oil-200ml-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/anua-cleanser-200ml-heartleaf-pore-control-cleansing-oil-44011784732950.jpg",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/anua-cleanser-200ml-heartleaf-pore-control-cleansing-oil-44011784732950.jpg"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/anua-cleanser-200-ml-heartleaf-pore-control-cleansing-oil-44291738140950.jpg",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/anua-cleanser-200-ml-heartleaf-pore-control-cleansing-oil-44291738140950.jpg"
+    }
+   ],
+   "desc": "<p><span>This non-comedogenic cleansing oil features a powerful blend of plant-based oils, including jojoba, olive fruit, and grape seed oils, which gently yet effectively dissolve makeup, excess sebum, and pore-clogging impurities. Infused with heartleaf extract, this soothing formula is perfect for acne-prone and sensitive skin, helping to alleviate redness and irritation while promoting a healthy, glowing complexion. </span><span>Crafted in Korea, this lightweight cleansing oil leaves your skin hydrated without any greasy residue, making it an important addition to your skincare routine.</span></p>",
+   "cat": "cleansers",
+   "tags": [
+    "concern:sensitive",
+    "concern:pores"
+   ]
+  },
+  {
+   "slug": "beauty-of-joseon-relief-sun-rice-probiotics-spf50-pa-50ml",
+   "name": "Beauty of Joseon Relief Sun: Rice + Probiotics SPF50 PA++++ 50ml",
+   "name_ar": "بيوتي أوف جوسون - واقي الشمس ريليف صن: أرز وبروبيوتيك بعامل حماية 50 حماية ++++ - 50 مل",
+   "brand": "Beauty of Joseon",
+   "brand_ar": "بيوتي أوف جوسون",
+   "price": 125,
+   "sale": 85,
+   "was": 125,
+   "rating": 5,
+   "reviews": 4,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Beauty-of-Joseon-Relief-Sun_-Rice-Probiotics-SPF50-PA-50ml-1.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Beauty-of-Joseon-Relief-Sun_-Rice-Probiotics-SPF50-PA-50ml-1.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Beauty-of-Joseon-Relief-Sun_-Rice-Probiotics-SPF50-PA-50ml-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Beauty-of-Joseon-Relief-Sun_-Rice-Probiotics-SPF50-PA-50ml-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/4_0cfc5fae-1442-44ba-967e-5f77d6f6fe4c_png_720x@2x.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/4_0cfc5fae-1442-44ba-967e-5f77d6f6fe4c_png_720x@2x.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/1_68187420-bdfc-48b0-b606-e94d88d6225a_png_720x@2x.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/1_68187420-bdfc-48b0-b606-e94d88d6225a_png_720x@2x.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/bestseller_34_900x-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/bestseller_34_900x-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/3_0346b3ff-887c-464f-a224-8e8fe30ace61_png_720x@2x.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/3_0346b3ff-887c-464f-a224-8e8fe30ace61_png_720x@2x.webp"
+    }
+   ],
+   "desc": "This organic sunscreen features broad-spectrum SPF 50+ PA++++ to provide protection against UVA and UVB rays. Its lightweight cream texture allows for quick absorption without leaving any white cast. Along with chemical sunscreen, niacinamide is included to promote glowing skin. The sunscreen also contains rice extract and grain-derived probiotics to help maintain skin hydration and suppleness. The Relief Sun formula is suitable for sensitive skin and does not contain oxybenzone, octinoxate, or animal-derived ingredients.",
+   "cat": "sun",
+   "tags": [
+    "concern:sensitive",
+    "concern:sun"
+   ]
+  },
+  {
+   "slug": "anua-heartleaf-quercetinol-pore-deep-cleansing-foam-150ml",
+   "name": "Anua - Heartleaf Quercetinol Pore Deep Cleansing Foam - 150ml",
+   "name_ar": "أنوا - رغوة التنظيف العميق للمسام بعشبة القلب والكيرسيتينول - 150 مل",
+   "brand": "Anua",
+   "brand_ar": "أنوا",
+   "price": 98,
+   "sale": 65,
+   "was": 98,
+   "rating": 4.67,
+   "reviews": 3,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Anua-%E2%80%93-Heartleaf-Quercetinol-Pore-Deep.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Anua-%E2%80%93-Heartleaf-Quercetinol-Pore-Deep.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Anua-%E2%80%93-Heartleaf-Quercetinol-Pore-Deep.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Anua-%E2%80%93-Heartleaf-Quercetinol-Pore-Deep.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/anua-cleanser-150ml-heartleaf-quercetinol-pore-deep-cleansing-foam-44110356611350-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/anua-cleanser-150ml-heartleaf-quercetinol-pore-deep-cleansing-foam-44110356611350-1.webp"
+    }
+   ],
+   "desc": "Cleanse your skin with this cleansing foam enriched with houttuynia cordata powder to remove dead skin cells and purify pores. The grainy formula is infused with glycerin to moisturize skin, and salicylic acid to provide pore care and anti-acne effects. Recommended for acne-prone skin.",
+   "cat": "cleansers",
+   "tags": [
+    "concern:pores"
+   ]
+  },
+  {
+   "slug": "medicube-zero-pore-pad-2-0",
+   "name": "Medicube - Zero Pore Pad 2.0",
+   "name_ar": "ميديكوب - قطن زيرو بور 2.0",
+   "brand": "Medicube",
+   "brand_ar": "ميديكوب",
+   "price": 115,
+   "sale": 85,
+   "was": 115,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0-2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0-2.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0-3-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0-3-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0-4.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0-4.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0-3.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0-3.webp"
+    }
+   ],
+   "desc": "Achieve blemish-free skin with these toner pads formulated with AHA and BHA to gently slough away dead skin cells and purify pores for a smooth finish. Chock-full of plant extracts and natural oils, the formula offers gentle exfoliation while keeping skin moisturized and soothed.",
+   "cat": "toners",
+   "tags": [
+    "concern:pores"
+   ]
+  },
+  {
+   "slug": "torriden-cellmazing-pore-perfecting-ampoule",
+   "name": "Torriden - CELLMAZING Pore Perfecting Ampoule",
+   "name_ar": "توريدن - أمبولة سيلمايزنغ لإتقان المسام",
+   "brand": "Torriden",
+   "brand_ar": "توريدن",
+   "price": 115,
+   "sale": 78,
+   "was": 115,
+   "rating": 4.7,
+   "reviews": 54,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/06/Torriden-CELLMAZING-Pore-Perfecting-Ampoule-kbeautybliss.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/06/Torriden-CELLMAZING-Pore-Perfecting-Ampoule-kbeautybliss.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/06/Torriden-CELLMAZING-Pore-Perfecting-Ampoule-kbeautybliss.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/06/Torriden-CELLMAZING-Pore-Perfecting-Ampoule-kbeautybliss.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/06/cellmazing_ampoule_5.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/06/cellmazing_ampoule_5.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/06/cellmazing_ampoule_4.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/06/cellmazing_ampoule_4.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/06/cellmazing_ampoule_2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/06/cellmazing_ampoule_2.webp"
+    }
+   ],
+   "desc": "Redefine your skin texture with the Torriden Cellmazing Pore Perfecting Ampoule. Specifically designed to target 8 major pore concerns, this ampoule goes beyond basic surface care. It features a revolutionary 5D Collagen Complex, blending five different molecular weights of collagen to penetrate deep into the dermis.",
+   "cat": "serums",
+   "tags": [
+    "concern:pores",
+    "best"
+   ]
+  },
+  {
+   "slug": "beauty-of-joseon-red-bean-refreshing-pore-mask-140ml",
+   "name": "BEAUTY OF JOSEON Red Bean Refreshing Pore Mask - 140ml",
+   "name_ar": "بيوتي أوف جوسون - قناع الفاصولياء الحمراء المنعش للمسام - 140 مل",
+   "brand": "Beauty of Joseon",
+   "brand_ar": "بيوتي أوف جوسون",
+   "price": 108,
+   "sale": 78,
+   "was": 108,
+   "rating": 5,
+   "reviews": 1,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Beauty_of_Joseon_Red_Bean_Refreshing_Pore_Mask_Korean_wash-off_mask__01941.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Beauty_of_Joseon_Red_Bean_Refreshing_Pore_Mask_Korean_wash-off_mask__01941.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Beauty_of_Joseon_Red_Bean_Refreshing_Pore_Mask_Korean_wash-off_mask__01941.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Beauty_of_Joseon_Red_Bean_Refreshing_Pore_Mask_Korean_wash-off_mask__01941.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/0008183_beauty-of-joseon-red-bean-refreshing-pore-mask.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/0008183_beauty-of-joseon-red-bean-refreshing-pore-mask.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/4_ba807530-b35a-4e4c-bfb0-1faa957f6181_2000x-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/4_ba807530-b35a-4e4c-bfb0-1faa957f6181_2000x-1.webp"
+    }
+   ],
+   "desc": "Achieve clear and refined skin with this cruelty-free clay mask that helps minimize enlarged pores and control sebum production. Its key ingredients, kaolin clay and red bean extract, gently remove dead skin cells and impurities from pores, while antioxidant-rich pear and strawberry fruit extracts protect skin from free radical damage. The soft clay texture effectively absorbs oil without drying out the skin. Formulated without artificial fragrances and essential oils, this mask is gentle on the skin.",
+   "cat": "masks",
+   "tags": [
+    "concern:pores"
+   ]
+  },
+  {
+   "slug": "dr-althea-vitamin-c-boosting-serum",
+   "name": "Dr. Althea - Vitamin C Boosting Serum - Renewed",
+   "name_ar": "الدكتورة ألثيا - سيروم فيتامين سي المعزّز - الإصدار الجديد",
+   "brand": "Dr.Althea",
+   "brand_ar": "الدكتورة ألثيا",
+   "price": 224,
+   "sale": 132,
+   "was": 224,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/11/Dr.-Althea-Vitamin-C-Boosting-Serum-RENEWED-1.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/11/Dr.-Althea-Vitamin-C-Boosting-Serum-RENEWED-1.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/11/Dr.-Althea-Vitamin-C-Boosting-Serum-RENEWED-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/11/Dr.-Althea-Vitamin-C-Boosting-Serum-RENEWED-1.webp"
+    }
+   ],
+   "desc": "Dr. Althea’s Vitamin C Boosting Serum is a must-have in your skincare routine, boasting a powerful fusion of key ingredients.Crafted without any artificial colors or scents, it ensures a skin-friendly, gentle experience, free from any synthetic additives.",
+   "cat": "serums",
+   "tags": [
+    "concern:dull"
+   ]
+  },
+  {
+   "slug": "numbuzin-no-5-vitamin-niacinamide-concentrated-toner-pad",
+   "name": "numbuzin - No.5 Vitamin-Niacinamide Concentrated Toner Pad",
+   "name_ar": "نومبوزين - قطن التونر المركّز بالفيتامينات والنياسيناميد رقم 5",
+   "brand": "numbuzin",
+   "brand_ar": "نومبوزين",
+   "price": 160,
+   "sale": 113,
+   "was": 160,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/numbuzin-%E2%80%93-No.5-Vitamin-Niacinamide-Concentrated-Toner-Pad.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/numbuzin-%E2%80%93-No.5-Vitamin-Niacinamide-Concentrated-Toner-Pad.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/numbuzin-%E2%80%93-No.5-Vitamin-Niacinamide-Concentrated-Toner-Pad.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/numbuzin-%E2%80%93-No.5-Vitamin-Niacinamide-Concentrated-Toner-Pad.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/numbuzinniacinamidepad-min_1080x1080.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/numbuzinniacinamidepad-min_1080x1080.webp"
+    }
+   ],
+   "desc": "Restore luster in tired skin with these toner pads infused with potent brightening agents including niacinamide, glutathione and antioxidant-rich Vitamin C to even skin tone and fade dark spots. Panthenol and mushroom extract provide moisturizing and elasticity care. Additional ingredients like PHA and LHA exfoliate away dead skin cells.",
+   "cat": "toners",
+   "tags": [
+    "concern:dull"
+   ]
+  },
+  {
+   "slug": "numbuzin-no-5-vitamin-concentrated-serum",
+   "name": "numbuzin - No.5 Vitamin Concentrated Serum",
+   "name_ar": "نومبوزين - السيروم المركّز بالفيتامينات رقم 5",
+   "brand": "numbuzin",
+   "brand_ar": "نومبوزين",
+   "price": 179,
+   "sale": 122,
+   "was": 179,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Product-page-sizes_a1e4b5d3-e817-4688-9885-3213a47e9a27-1.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Product-page-sizes_a1e4b5d3-e817-4688-9885-3213a47e9a27-1.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Product-page-sizes_a1e4b5d3-e817-4688-9885-3213a47e9a27-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Product-page-sizes_a1e4b5d3-e817-4688-9885-3213a47e9a27-1.webp"
+    }
+   ],
+   "desc": "Revitalize dull skin with this serum packed with antioxidant-rich vitamins to help restore skin’s natural glow. Additional brightening agents including glutathione, niacinamide and alpha-arbutin offer a major radiance boost. Plant extracts from sugarcane, turmeric root and mushroom minimize irritation.",
+   "cat": "serums",
+   "tags": [
+    "concern:dull"
+   ]
+  },
+  {
+   "slug": "jumiso-all-day-vitamin-brightening-balancing-facial-serum",
+   "name": "JUMISO - All Day Vitamin Brightening & Balancing Facial Serum",
+   "name_ar": "جوميسو - سيروم الوجه للتفتيح والتوازن بالفيتامينات أول داي",
+   "brand": "JUMISO",
+   "brand_ar": "جوميسو",
+   "price": 195,
+   "sale": 115,
+   "was": 195,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/JUMISO_ALL_DAY_VITAMIN_BRIGHTENING_BALANCING_FACIAL_SERUM_1_f261bf66-3e65-4a16-afd3-87309de47fde.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/JUMISO_ALL_DAY_VITAMIN_BRIGHTENING_BALANCING_FACIAL_SERUM_1_f261bf66-3e65-4a16-afd3-87309de47fde.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/JUMISO_ALL_DAY_VITAMIN_BRIGHTENING_BALANCING_FACIAL_SERUM_1_f261bf66-3e65-4a16-afd3-87309de47fde.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/JUMISO_ALL_DAY_VITAMIN_BRIGHTENING_BALANCING_FACIAL_SERUM_1_f261bf66-3e65-4a16-afd3-87309de47fde.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/JUMISO_ALL_DAY_VITAMIN_BRIGHTENING_BALANCING_FACIAL_SERUM_2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/JUMISO_ALL_DAY_VITAMIN_BRIGHTENING_BALANCING_FACIAL_SERUM_2.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/JUMISO_ALL_DAY_VITAMIN_BRIGHTENING_BALANCING_FACIAL_SERUM_3.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/JUMISO_ALL_DAY_VITAMIN_BRIGHTENING_BALANCING_FACIAL_SERUM_3.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/JUMISO_ALL_DAY_VITAMIN_BRIGHTENING_BALANCING_FACIAL_SERUM_4.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/JUMISO_ALL_DAY_VITAMIN_BRIGHTENING_BALANCING_FACIAL_SERUM_4.webp"
+    }
+   ],
+   "desc": "An upgraded formula of the much-loved Drop The Vita C Facial Serum, this version boasts a lightweight and non-sticky texture that permeates quickly into skin. Enriched with extracts from vitamin tree and cica to soothe skin, hyaluronic acid to moisturize, and chamomile extract to control sebum production. Suitable for all skin types.",
+   "cat": "serums",
+   "tags": [
+    "concern:dull"
+   ]
+  },
+  {
+   "slug": "anua-heartleaf-silky-moisture-sun-cream",
+   "name": "Anua - Heartleaf Silky Moisture Sun Cream",
+   "name_ar": "أنوا - كريم الحماية من الشمس الحريري المرطّب بعشبة القلب",
+   "brand": "Anua",
+   "brand_ar": "أنوا",
+   "price": 110,
+   "sale": 90,
+   "was": 110,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Anua-Heartleaf-Silky-Moisture-Sun-Cream.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Anua-Heartleaf-Silky-Moisture-Sun-Cream.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Anua-Heartleaf-Silky-Moisture-Sun-Cream.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Anua-Heartleaf-Silky-Moisture-Sun-Cream.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Anua-Heartleaf-Silky-Moisture-Sun-Cream-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Anua-Heartleaf-Silky-Moisture-Sun-Cream-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Anua-Heartleaf-Silky-Moisture-Sun-Cream-2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Anua-Heartleaf-Silky-Moisture-Sun-Cream-2.webp"
+    }
+   ],
+   "desc": "<p>This sun cream uses chemical filters to offer broad-spectrum sun protection of SPF 50+ PA++++. Organic sunscreen provides soothing and hydrating skin benefits with ingredients like houttuynia cordata extract and panthenol. Boasting a sebum-control effect, the formula sits well under foundation and prolongs makeup wear.</p>",
+   "cat": "moisturisers",
+   "tags": [
+    "concern:sun"
+   ]
+  },
+  {
+   "slug": "cosrx-aloe-soothing-spf-50-sun-cream-50ml",
+   "name": "COSRX Aloe Soothing SPF 50+ Sun Cream - 50ml",
+   "name_ar": "كوسركس - كريم الشمس المهدّئ بالألوة بعامل حماية 50+ - 50 مل",
+   "brand": "COSRX",
+   "brand_ar": "كوسركس",
+   "price": 75,
+   "sale": null,
+   "was": null,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/COSRX-Aloe-Soothing-SPF-50-Sun-Cream-%E2%80%93-50ml.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/COSRX-Aloe-Soothing-SPF-50-Sun-Cream-%E2%80%93-50ml.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/COSRX-Aloe-Soothing-SPF-50-Sun-Cream-%E2%80%93-50ml.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/COSRX-Aloe-Soothing-SPF-50-Sun-Cream-%E2%80%93-50ml.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/1669802-04-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/1669802-04-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Cosrx-Aloe-Soothing-Sun-Cream-SPF50-PA_8809416470191-2500x2500_2000x.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Cosrx-Aloe-Soothing-Sun-Cream-SPF50-PA_8809416470191-2500x2500_2000x.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/1669802-02-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/1669802-02-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/1669802-03-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/1669802-03-1.webp"
+    }
+   ],
+   "desc": "This sunscreen provides a combination of chemical and physical protection against harmful sun rays, offering SPF50+ PA+++ coverage while simultaneously hydrating and soothing the skin. Aloe leaf extract and glycerin are key ingredients in the formula, which has a lightweight cream texture that absorbs quickly and doesn't leave a greasy or white cast finish on the skin. It is suitable for use on both the face and body.",
+   "cat": "moisturisers",
+   "tags": [
+    "concern:sun"
+   ]
+  },
+  {
+   "slug": "tocobo-bio-watery-sun-cream-spf50-pa",
+   "name": "TOCOBO - Bio Watery Sun Cream SPF50 PA++++",
+   "name_ar": "توكوبو - كريم الشمس المائي بايو بعامل حماية 50 حماية ++++",
+   "brand": "TOCOBO",
+   "brand_ar": "توكوبو",
+   "price": 126,
+   "sale": 109,
+   "was": 126,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/TOCOBO-Bio-Watery-Sun-Cream-SPF50-PA.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/TOCOBO-Bio-Watery-Sun-Cream-SPF50-PA.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/TOCOBO-Bio-Watery-Sun-Cream-SPF50-PA.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/TOCOBO-Bio-Watery-Sun-Cream-SPF50-PA.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Bio-Watery-Sun-Cream-SPF50-PA8.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Bio-Watery-Sun-Cream-SPF50-PA8.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Bio-Watery-Sun-Cream-SPF50-PA-2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Bio-Watery-Sun-Cream-SPF50-PA-2.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Bio-Watery-Sun-Cream-SPF50-PA3.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Bio-Watery-Sun-Cream-SPF50-PA3.webp"
+    }
+   ],
+   "desc": "The TOCOBO Bio Watery Sun Cream SPF50+ PA++++ is a moisturizing and quick absorbing sunscreen that provides strong UV protection. Double stabilized in an oil and water layer to provide optimal protection and product stability. EWG green grade, mild naturally derived formula applies comfortably without any stickiness or white cast. Formulated with hyaluronic acid and beta glucan for added hydration and moisture. <ul> <li>Cruelty FREE &amp; VEGAN certification : Mild formula using naturally derived ingredients makes skin comfortable</li> <li>Bio Watery Sun Cream : If you are looking for a sunscreen that absorbs moisture into your skin without white cast.</li> </ul>",
+   "cat": "moisturisers",
+   "tags": [
+    "concern:sun"
+   ]
+  },
+  {
+   "slug": "medicube-collagen-glow-sunscreen",
+   "name": "Medicube - Collagen Glow Sunscreen",
+   "name_ar": "ميديكوب - واقي الشمس بالكولاجين للإشراقة",
+   "brand": "Medicube",
+   "brand_ar": "ميديكوب",
+   "price": 155,
+   "sale": 130,
+   "was": 155,
+   "rating": 4.85,
+   "reviews": 13,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Medicube-Collagen-Glow-Sunscreen.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Medicube-Collagen-Glow-Sunscreen.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/Medicube-Collagen-Glow-Sunscreen.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Medicube-Collagen-Glow-Sunscreen.webp"
+    }
+   ],
+   "desc": "Daily sun protection meets skincare with the Medicube Collagen Glow Sunscreen SPF 50, a lightweight formula that protects against UVA and UVB rays while leaving skin hydrated and luminous. Collagen, niacinamide, Centella Asiatica and hyaluronic acid help condition the skin, maintain moisture and promote a smoother-looking complexion. Its non-sticky texture blends without a visible white cast, making it suitable for everyday wear and as a hydrating base under makeup.",
+   "cat": "sun",
+   "tags": [
+    "concern:sun"
+   ]
+  },
+  {
+   "slug": "medicube-full-facial-device-set-pink-version",
+   "name": "Medicube - Full Facial Device Set Pink Version",
+   "name_ar": "ميديكوب - مجموعة أجهزة الوجه الكاملة - الإصدار الوردي",
+   "brand": "Medicube",
+   "brand_ar": "ميديكوب",
+   "price": 1950,
+   "sale": 1580,
+   "was": 1950,
+   "rating": 4.83,
+   "reviews": 53,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Medicube-Full-Facial-Device-Set-Pink-Version.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Medicube-Full-Facial-Device-Set-Pink-Version.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/Medicube-Full-Facial-Device-Set-Pink-Version.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Medicube-Full-Facial-Device-Set-Pink-Version.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/L_g0224415815_003.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/L_g0224415815_003.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/L_g0224415815_002.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/L_g0224415815_002.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/L_g0224415815_001.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/L_g0224415815_001.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/L_g0224415815_000.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/L_g0224415815_000.webp"
+    }
+   ],
+   "desc": "This Full Facial Device Set Pink Version contains: <ul> <li>AGE-R Booster Pro Mini Plus Pink</li> <li>AGE-R Booster Facial Cleansing Device Head Pink</li> <li>AGE-R V Roller Pink</li> </ul> <b>Battery:</b> 3.7V / 700mAh rechargeable",
+   "cat": "sets",
+   "tags": [
+    "best"
+   ]
+  },
+  {
+   "slug": "medicube-age-r-booster-pro-x2-pink-set",
+   "name": "medicube - AGE-R Booster Pro X2 Pink - Set (Pink)",
+   "name_ar": "ميديكوب - جهاز إيج-آر بوستر برو إكس 2 - مجموعة (وردي)",
+   "brand": "Medicube",
+   "brand_ar": null,
+   "price": 1399,
+   "sale": 1179,
+   "was": 1399,
+   "rating": 4.88,
+   "reviews": 43,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/medicube-booster-pro-x2-set-kbeautybliss.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube-booster-pro-x2-set-kbeautybliss.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/medicube-booster-pro-x2-set-kbeautybliss.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube-booster-pro-x2-set-kbeautybliss.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/06/d8b9d21c-972c-446e-b04d-90eb623fda20.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/06/d8b9d21c-972c-446e-b04d-90eb623fda20.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/06/efe8850d-07d8-45a5-8784-c28b2f79c0ab.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/06/efe8850d-07d8-45a5-8784-c28b2f79c0ab.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/medicube-PDRN-Pink-Collagen-Capsule-Cream-3-1024x1024-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube-PDRN-Pink-Collagen-Capsule-Cream-3-1024x1024-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/medicube-PDRN-Pink-Collagen-Capsule-Cream-1-1024x980-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube-PDRN-Pink-Collagen-Capsule-Cream-1-1024x980-1.webp"
+    }
+   ],
+   "desc": "<strong>Your Complete At-Home PDRN Skincare Routine</strong> <p class=\"isSelectedEnd\">Discover a complete skincare experience designed to help you achieve <strong>hydrated, plump-looking, smooth, and radiant skin</strong>. The MEDICUBE PDRN Glow &amp; Boosting Set combines the <strong>AGE-R Booster Pro X2</strong> with PDRN Pink Peptide Serum, PDRN pink collagen capsule cream, and PDRN Pink Collagen Gel Mask, creating a multi-step routine that pairs advanced beauty-device care with intensive skincare</p>",
+   "cat": "serums",
+   "tags": [
+    "best"
+   ]
+  },
+  {
+   "slug": "medicube-age-r-booster-pro-x2-pink",
+   "name": "medicube - AGE-R Booster Pro X2 Pink",
+   "name_ar": "ميديكوب - جهاز إيج-آر بوستر برو إكس 2 - وردي",
+   "brand": "Medicube",
+   "brand_ar": null,
+   "price": 1650,
+   "sale": 1120,
+   "was": 1650,
+   "rating": 4.88,
+   "reviews": 43,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/06/medicube-AGE-R-Booster-Pro-X2-Pink.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/06/medicube-AGE-R-Booster-Pro-X2-Pink.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/06/medicube-AGE-R-Booster-Pro-X2-Pink.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/06/medicube-AGE-R-Booster-Pro-X2-Pink.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/06/d8b9d21c-972c-446e-b04d-90eb623fda20.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/06/d8b9d21c-972c-446e-b04d-90eb623fda20.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/06/efe8850d-07d8-45a5-8784-c28b2f79c0ab.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/06/efe8850d-07d8-45a5-8784-c28b2f79c0ab.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/06/L_g0224998761_004.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/06/L_g0224998761_004.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/06/L_g0224998758_004.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/06/L_g0224998758_004.webp"
+    }
+   ],
+   "desc": "",
+   "cat": "serums",
+   "tags": [
+    "best"
+   ]
+  },
+  {
+   "slug": "medicube-age-r-booster-pro-mini-white",
+   "name": "Medicube - AGE-R Booster Pro Mini White",
+   "name_ar": "ميديكوب - جهاز إيج-آر بوستر برو ميني - أبيض",
+   "brand": "Medicube",
+   "brand_ar": "ميديكوب",
+   "price": 750,
+   "sale": null,
+   "was": null,
+   "rating": 4.79,
+   "reviews": 38,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/medicube-AGE-R-Booster-Pro-Mini-White.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube-AGE-R-Booster-Pro-Mini-White.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/medicube-AGE-R-Booster-Pro-Mini-White.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube-AGE-R-Booster-Pro-Mini-White.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/MEDICUBE-AGE-R-Booster-Pro-Mini-White-BelluBeauty-71887794864454.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/MEDICUBE-AGE-R-Booster-Pro-Mini-White-BelluBeauty-71887794864454.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/71gbQxzWgAL.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/71gbQxzWgAL.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/images-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/images-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/images.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/images.webp"
+    }
+   ],
+   "desc": "What’s better than a medicube Booster Pro? A medicube Booster Pro Mini! This portable and easy-to-use beauty device boosts your skin care results with various functions including improving absorption of products, LED care and more. It features two LED modes with different vibration patterns to effectively treat different skin concerns – Red LED to brighten dullness and Blue LED to soothe troubled skin.",
+   "cat": "serums",
+   "tags": [
+    "best"
+   ]
+  },
+  {
+   "slug": "medicube-age-r-booster-pro-mini-plus-pink",
+   "name": "Medicube - AGE-R Booster Pro Mini Plus Pink",
+   "name_ar": "ميديكوب - جهاز إيج-آر بوستر برو ميني بلس - وردي",
+   "brand": "Medicube",
+   "brand_ar": "ميديكوب",
+   "price": 699,
+   "sale": null,
+   "was": null,
+   "rating": 4.7,
+   "reviews": 37,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Medicube-AGE-R-Booster-Pro-Mini-Plus-Pink.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Medicube-AGE-R-Booster-Pro-Mini-Plus-Pink.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/Medicube-AGE-R-Booster-Pro-Mini-Plus-Pink.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Medicube-AGE-R-Booster-Pro-Mini-Plus-Pink.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/3DeviceSet_01.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/3DeviceSet_01.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/imgi_285_71b1QvWfKPL._AC_SL1500_3668cb88-c0d5-4feb-9fa8-c1800458a831.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/imgi_285_71b1QvWfKPL._AC_SL1500_3668cb88-c0d5-4feb-9fa8-c1800458a831.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/rn-image_picker_lib_temp_4aac2daf-6d60-4253-859d-8b5ecf97ae78.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/rn-image_picker_lib_temp_4aac2daf-6d60-4253-859d-8b5ecf97ae78.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/3DeviceSet_02.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/3DeviceSet_02.webp"
+    }
+   ],
+   "desc": "What’s better than a medicube Booster Pro? A medicube Booster Pro Mini! This portable and easy-to-use beauty device boosts your skin care results with various functions including improving absorption of products, LED care and more. It features two LED modes with different vibration patterns to effectively treat different skin concerns – Red LED to brighten dullness and Blue LED to soothe troubled skin.",
+   "cat": "serums",
+   "tags": [
+    "best"
+   ]
+  },
+  {
+   "slug": "medicube-cleansing-device-set-pink-version",
+   "name": "Medicube - Cleansing Device Set Pink Version",
+   "name_ar": "ميديكوب - مجموعة جهاز التنظيف - الإصدار الوردي",
+   "brand": "Medicube",
+   "brand_ar": "ميديكوب",
+   "price": 1250,
+   "sale": 1099,
+   "was": 1250,
+   "rating": 4.77,
+   "reviews": 35,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Medicube-Cleansing-Device-Set-Pink-Version.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Medicube-Cleansing-Device-Set-Pink-Version.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/Medicube-Cleansing-Device-Set-Pink-Version.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Medicube-Cleansing-Device-Set-Pink-Version.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/L_g0224415815_003.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/L_g0224415815_003.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/L_g0224415815_002.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/L_g0224415815_002.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/L_g0224415815_001.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/L_g0224415815_001.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/L_g0224415815_000.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/L_g0224415815_000.webp"
+    }
+   ],
+   "desc": "This Cleansing Device Set Pink Version contains: <ul> <li>AGE-R Booster Pro Mini Plus Pink</li> <li>AGE-R Booster Facial Cleansing Device Head Pink</li> </ul> <b>Battery:</b> 3.7V / 700mAh rechargeable",
+   "cat": "cleansers",
+   "tags": [
+    "best"
+   ]
+  },
+  {
+   "slug": "tosowoong-arbutin-7-glutathione-cream",
+   "name": "TOSOWOONG - Arbutin 7% Glutathione Cream",
+   "name_ar": "توسوونغ - كريم الأربوتين 7% بالجلوتاثيون",
+   "brand": "TOSOWOONG",
+   "brand_ar": "توسوونغ",
+   "price": 265,
+   "sale": 239,
+   "was": 265,
+   "rating": 4.7,
+   "reviews": 30,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/04/TOSOWOONG-Arbutin-7-Glutathione-Cream.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/04/TOSOWOONG-Arbutin-7-Glutathione-Cream.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/04/TOSOWOONG-Arbutin-7-Glutathione-Cream.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/04/TOSOWOONG-Arbutin-7-Glutathione-Cream.webp"
+    }
+   ],
+   "desc": "A high-concentration cream containing 7% arbutin and three key ingredients, effectively addressing post-inflammatory hyperpigmentation and various pigmentation concerns. This powerful formula helps fade discoloration, even out skin tone, and improve skin clarity for a more radiant and even complexion.",
+   "cat": "moisturisers",
+   "tags": [
+    "best"
+   ]
+  },
+  {
+   "slug": "medicube-pdrn-glow-booster-set",
+   "name": "Medicube - PDRN Glow Booster Set (Pink Edition)",
+   "name_ar": "ميديكوب - مجموعة معزّز الإشراقة بي دي آر إن (الإصدار الوردي)",
+   "brand": "Medicube",
+   "brand_ar": "ميديكوب",
+   "price": 1399,
+   "sale": 850,
+   "was": 1399,
+   "rating": 4.68,
+   "reviews": 25,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2025/07/PDRN-Glow-booster-set.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/07/PDRN-Glow-booster-set.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/07/PDRN-Glow-booster-set.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/07/PDRN-Glow-booster-set.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/11/Medicube-AGE-R-Booster-Pro-Pink-Edition.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/11/Medicube-AGE-R-Booster-Pro-Pink-Edition.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/11/US_amazon_booster-pro_th01_2000x.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/11/US_amazon_booster-pro_th01_2000x.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/05/medicube-PDRN-Pink-Collagen-Capsule-Cream-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/05/medicube-PDRN-Pink-Collagen-Capsule-Cream-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/05/medicube-PDRN-Pink-Collagen-Capsule-Cream-3.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/05/medicube-PDRN-Pink-Collagen-Capsule-Cream-3.webp"
+    }
+   ],
+   "desc": "Unlock the secret to firm, glowing, and youthful skin with the ultimate 4-step Medicube - PDRN Glow Booster Set. This all-in-one solution combines advanced skincare technology with clinically proven ingredients to target the root causes of aging — from loss of elasticity and dullness to fine lines and dryness. <div>This set is ideal for anyone looking to simplify their routine while achieving professional-level results at home. With consistent use, expect smoother texture, brighter tone, and a visibly lifted appearance — without harsh ingredients or invasive treatments.</div>",
+   "cat": "serums",
+   "tags": [
+    "best"
+   ]
+  },
+  {
+   "slug": "medicube-face-roller-set-pink-version",
+   "name": "Medicube - Face Roller Set Pink Version",
+   "name_ar": "ميديكوب - مجموعة رولر الوجه - الإصدار الوردي",
+   "brand": "Medicube",
+   "brand_ar": "ميديكوب",
+   "price": 1400,
+   "sale": 1099,
+   "was": 1400,
+   "rating": 4.92,
+   "reviews": 25,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Medicube-Face-Roller-Set-Pink-Version.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Medicube-Face-Roller-Set-Pink-Version.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/Medicube-Face-Roller-Set-Pink-Version.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Medicube-Face-Roller-Set-Pink-Version.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/rn-image_picker_lib_temp_4aac2daf-6d60-4253-859d-8b5ecf97ae78.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/rn-image_picker_lib_temp_4aac2daf-6d60-4253-859d-8b5ecf97ae78.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/medicube-age-r-v-roller-pink-1pc-medicube-kiokii-and-1684412.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube-age-r-v-roller-pink-1pc-medicube-kiokii-and-1684412.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/4b333d0c-69a7-4459-9b34-89b87e3c8336.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/4b333d0c-69a7-4459-9b34-89b87e3c8336.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/imgi_285_71b1QvWfKPL._AC_SL1500_3668cb88-c0d5-4feb-9fa8-c1800458a831.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/imgi_285_71b1QvWfKPL._AC_SL1500_3668cb88-c0d5-4feb-9fa8-c1800458a831.webp"
+    }
+   ],
+   "desc": "The AGE-R Booster Pro Mini Plus Pink does not include a USB charging cable or a cover head case. This Face Roller Set Pink Version contains: <ul> <li>AGE-R Booster Pro Mini Plus Pink</li> <li>AGE-R V Roller Pink</li> </ul>",
+   "cat": "sets",
+   "tags": [
+    "best"
+   ]
+  },
+  {
+   "slug": "arencia-vitamin-c-booster-shot",
+   "name": "Arencia - Vitamin C Booster Shot",
+   "name_ar": "أرينسيا - جرعة فيتامين سي المعزّزة",
+   "brand": "Arencia",
+   "brand_ar": "أرينسيا",
+   "price": 105,
+   "sale": 86,
+   "was": 105,
+   "rating": 4.86,
+   "reviews": 14,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/04/Arencia-Vitamin-C-Booster-Shot.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/04/Arencia-Vitamin-C-Booster-Shot.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/04/Arencia-Vitamin-C-Booster-Shot.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/04/Arencia-Vitamin-C-Booster-Shot.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/04/Arencia_Vitamin_C_Booster_Shot_30ml_2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/04/Arencia_Vitamin_C_Booster_Shot_30ml_2.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/04/arencia-vitamin-c-booster-shot-30ml-1_1024x1024.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/04/arencia-vitamin-c-booster-shot-30ml-1_1024x1024.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/04/arencia-vitamin-c-booster-shot-30ml-3_1200x1200.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/04/arencia-vitamin-c-booster-shot-30ml-3_1200x1200.webp"
+    }
+   ],
+   "desc": "Say goodbye to dark spots, hyperpigmentation and dull skin with Arencia’s Vitamin C Booster Shot packed with cult-favorite brightening ingredients like Vitamin C, glutathione and niacinamide. It’s also added with barrier-loving ingredients like panthenol and allantoin to keep hydration levels high and irritation at a minimum.",
+   "cat": "serums",
+   "tags": [
+    "trending"
+   ]
+  },
+  {
+   "slug": "lilyeve-grow-turn-exosome-brush-ampoule",
+   "name": "lilyeve - Grow Turn Exosome Brush Ampoule",
+   "name_ar": "ليلييف - أمبولة الإكسوسومات بالفرشاة غرو تيرن",
+   "brand": "lilyeve",
+   "brand_ar": "ليلييف",
+   "price": 145,
+   "sale": 109,
+   "was": 145,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/lilyeve-Grow-Turn-Exosome-Brush-Ampoule.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/lilyeve-Grow-Turn-Exosome-Brush-Ampoule.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/lilyeve-Grow-Turn-Exosome-Brush-Ampoule.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/lilyeve-Grow-Turn-Exosome-Brush-Ampoule.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/lilyeve_hair_serum_orange_4.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/lilyeve_hair_serum_orange_4.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/527f3433-d838-49f8-81c8-4f3109aaeb26.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/527f3433-d838-49f8-81c8-4f3109aaeb26.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/lilyeve-grow-turn-exosome-brush-ampoule-100ml-2_1200x1200.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/lilyeve-grow-turn-exosome-brush-ampoule-100ml-2_1200x1200.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/4.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/4.webp"
+    }
+   ],
+   "desc": "Combat thinning hair and irritated scalp with the lilyeve Grow Turn Exosome Brush Ampoule! Formulated with Nano-Exosome 3X derived from heartleaf, lactobacillus ferment and Chinese knotweed extract, the ampoule delivers nutrients into scalp and offers thorough, soothing relief. Powered by caffeine, biotin and peptides, it helps support hair growth for stronger, healthier strands. The brush applicator makes it easy to evenly coat all of your roots, down to hard-to-reach parts across the scalp.",
+   "cat": "serums",
+   "tags": [
+    "trending"
+   ]
+  },
+  {
+   "slug": "medicube-pdrn-pink-collagen-jelly-eye-mask-6-pairs",
+   "name": "medicube - PDRN Pink Collagen Jelly Eye Mask - 6 pairs",
+   "name_ar": "ميديكوب - قناع العين الجيلي بالكولاجين بي دي آر إن الوردي - 6 أزواج",
+   "brand": "Medicube",
+   "brand_ar": "ميديكوب",
+   "price": 60,
+   "sale": 45,
+   "was": 60,
+   "rating": 4.75,
+   "reviews": 8,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/medicube-PDRN-Pink-Collagen-Jelly-Eye-Mask-6-pairs.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube-PDRN-Pink-Collagen-Jelly-Eye-Mask-6-pairs.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/medicube-PDRN-Pink-Collagen-Jelly-Eye-Mask-6-pairs.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/medicube-PDRN-Pink-Collagen-Jelly-Eye-Mask-6-pairs.webp"
+    }
+   ],
+   "desc": "<p class=\"desc\">Infused with PDRN, collagen, and NAD+, these pink hydrogel jelly eye masks help visibly depuff and firm tired-looking under eyes for a smoother, radiant-looking glow. Helps improve the appearance of puffiness, dark circles, dryness, uneven tone, and fine lines for refreshed, healthier-looking skin. Designed for multi-area smoothing care — use on smile lines, forehead, neck, or any area. Individually packed hydrogel patches make it easy to enjoy fresh, hygienic glow care anytime, anywhere. Paraben-free, alcohol-free, gentle enough for daily AM &amp; PM glow care routines.</p>",
+   "cat": "masks",
+   "tags": [
+    "trending",
+    "under54"
+   ]
+  },
+  {
+   "slug": "mixsoon-bean-essence-50ml",
+   "name": "Mixsoon - Bean Essence - 50ml",
+   "name_ar": "ميكسون - إيسنس الفول - 50 مل",
+   "brand": "mixsoon",
+   "brand_ar": "ميكسون",
+   "price": 89,
+   "sale": 53,
+   "was": 89,
+   "rating": 5,
+   "reviews": 3,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Mixsoon-%E2%80%93-Bean-Essence-%E2%80%93-50ml-1.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Mixsoon-%E2%80%93-Bean-Essence-%E2%80%93-50ml-1.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Mixsoon-%E2%80%93-Bean-Essence-%E2%80%93-50ml-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Mixsoon-%E2%80%93-Bean-Essence-%E2%80%93-50ml-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/MIXSOONBEANESSENCE2_1200x-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/MIXSOONBEANESSENCE2_1200x-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/MIXSOONBEANESSENCE3_1200x-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/MIXSOONBEANESSENCE3_1200x-1.webp"
+    }
+   ],
+   "desc": "This refreshing essence contains fermented soybean extract to moisturize skin and control sebum production. It also contains fermented pomegranate extract to smooth skin texture, vitamin-rich barley seed ferment filtrate to revitalize skin and pear juice ferment filtrate to deliver antioxidants to skin.",
+   "cat": "serums",
+   "tags": [
+    "under54"
+   ]
+  },
+  {
+   "slug": "beauty-of-joseon-glow-deep-serum-rice-alpha-arbutin-30ml",
+   "name": "Beauty Of Joseon - Glow Deep Serum Rice + Alpha-Arbutin",
+   "name_ar": "بيوتي أوف جوسون - سيروم الإشراقة العميق بالأرز وألفا أربوتين",
+   "brand": "Beauty of Joseon",
+   "brand_ar": "بيوتي أوف جوسون",
+   "price": 115,
+   "sale": 53,
+   "was": 115,
+   "rating": 4.5,
+   "reviews": 2,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/1-2-1.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/1-2-1.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/1-2-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/1-2-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/bestseller_31_900x-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/bestseller_31_900x-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/beauty-of-joseon-glow-deep-serum-rice-and-alpha-arbutin2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/beauty-of-joseon-glow-deep-serum-rice-and-alpha-arbutin2.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/beauty-of-joseon-glow-deep-serum-rice-and-alpha-arbutin4.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/beauty-of-joseon-glow-deep-serum-rice-and-alpha-arbutin4.webp"
+    }
+   ],
+   "desc": "This brightening serum can help restore a natural glow to tired-looking skin with its potent combination of 68.6% rice bran water to clarify the skin and 2% arbutin to fade hyperpigmentation. Its lightweight and quick-absorbing texture easily penetrates deep into the skin, delivering long-lasting brightening and hydrating effects. Free from mineral oils, essential oils, parabens, sulfates, and PEG, this product is suitable for even those with sensitive skin.",
+   "cat": "serums",
+   "tags": [
+    "under54"
+   ]
+  },
+  {
+   "slug": "cosrx-low-ph-good-morning-gel-cleanser-for-sensitive-skin-150ml",
+   "name": "COSRX - Low pH Good Morning Gel Cleanser for Sensitive Skin - 150ml",
+   "name_ar": "كوسركس - جل التنظيف الصباحي منخفض الحموضة للبشرة الحساسة - 150 مل",
+   "brand": "COSRX",
+   "brand_ar": "كوسركس",
+   "price": 153,
+   "sale": 53,
+   "was": 153,
+   "rating": 5,
+   "reviews": 2,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/COSRX-%E2%80%93-Low-pH-Good-Morning-Gel-Cleanser-for-Sensitive-Skin-%E2%80%93-150ml.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/COSRX-%E2%80%93-Low-pH-Good-Morning-Gel-Cleanser-for-Sensitive-Skin-%E2%80%93-150ml.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/COSRX-%E2%80%93-Low-pH-Good-Morning-Gel-Cleanser-for-Sensitive-Skin-%E2%80%93-150ml.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/COSRX-%E2%80%93-Low-pH-Good-Morning-Gel-Cleanser-for-Sensitive-Skin-%E2%80%93-150ml.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/productpageimages_6_091ebdc2-8ca1-4fcb-82d6-b6fca4872853-scaled-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/productpageimages_6_091ebdc2-8ca1-4fcb-82d6-b6fca4872853-scaled-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/productpageimages_3_aed63d84-79fc-48f6-bfc4-f80d4b2eccd1-scaled-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/productpageimages_3_aed63d84-79fc-48f6-bfc4-f80d4b2eccd1-scaled-1.webp"
+    }
+   ],
+   "desc": "<div class=\"group w-full text-gray-800 dark:text-gray-100 border-b border-black/10 dark:border-gray-900/50 bg-gray-50 dark:bg-[#444654]\"> <div class=\"text-base gap-4 md:gap-6 md:max-w-2xl lg:max-w-xl xl:max-w-3xl p-4 md:py-6 flex lg:px-0 m-auto\"> <div class=\"relative flex w-[calc(100%-50px)] flex-col gap-1 md:gap-3 lg:w-[calc(100%-115px)]\"> <div class=\"flex flex-grow flex-col gap-3\"> <div class=\"min-h-[20px] flex flex-col items-start gap-4 whitespace-pre-wrap break-words\"> <div class=\"markdown prose w-full break-words dark:prose-invert light\"> The Low pH Good Morning Gel Cleanser is a revitalizing morning cleanser that awakens the skin. Its gentle yet potent formula refines the skin’s textur",
+   "cat": "cleansers",
+   "tags": [
+    "under54"
+   ]
+  },
+  {
+   "slug": "arencia-vitamin-c-booster-shot-mask",
+   "name": "Arencia - Vitamin C Booster Shot Mask",
+   "name_ar": "أرينسيا - قناع جرعة فيتامين سي المعزّزة",
+   "brand": "Arencia",
+   "brand_ar": "أرينسيا",
+   "price": 28,
+   "sale": 21,
+   "was": 28,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Arencia-Vitamin-C-Booster-Shot-Mask.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Arencia-Vitamin-C-Booster-Shot-Mask.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/Arencia-Vitamin-C-Booster-Shot-Mask.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/Arencia-Vitamin-C-Booster-Shot-Mask.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/arencia_booster_mask_4.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/arencia_booster_mask_4.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/arencia_booster_mask_2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/arencia_booster_mask_2.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/arencia_booster_mask_7.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/arencia_booster_mask_7.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/09/04_c0f4aae2-0340-4ef9-9afc-46ae4376bd8b.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/09/04_c0f4aae2-0340-4ef9-9afc-46ae4376bd8b.webp"
+    }
+   ],
+   "desc": "Arencia’s TikTok-viral Vitamin C Booster Shot now comes in sheet mask form, bringing you one step closer to your radiant skin goals. This golden-hued sheet mask is chock-full of powerful antioxidants and skin-brighteners, including niacinamide, glutathione and Vitamin C, to banish skin dullness and hyperpigmentation. Panthenol and ceramide NP deliver hydrating and barrier-supporting effects. Apply on cleansed face and peel off after 10 to 20 minutes to reveal skin brighter than ever before!",
+   "cat": "serums",
+   "tags": [
+    "under54"
+   ]
+  },
+  {
+   "slug": "apieu-honey-milk-lip-oil-light",
+   "name": "A'PIEU - Honey & Milk Lip Oil Light",
+   "name_ar": "أبيو - زيت الشفاه الخفيف بالعسل والحليب",
+   "brand": "A'PIEU",
+   "brand_ar": "أبيو",
+   "price": 40,
+   "sale": 18,
+   "was": 40,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2025/12/APIEU-Honey-Milk-Lip-Oil-Light.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/12/APIEU-Honey-Milk-Lip-Oil-Light.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/12/APIEU-Honey-Milk-Lip-Oil-Light.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/12/APIEU-Honey-Milk-Lip-Oil-Light.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2025/12/apieu-honey-milk-lip-oil-5gapieukiokii-and-997667.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2025/12/apieu-honey-milk-lip-oil-5gapieukiokii-and-997667.webp"
+    }
+   ],
+   "desc": "Keep your smacker nourished and hydrated with this lip oil containing honey and milk protein extract. A blend of jojoba seed, olive and meadowfoam seed oils forms a hydrating veil on lips to seal in moisture without feeling sticky. After applying lip makeup, layer on the lip oil to add extra shine and plumpness. Choose between mint and peach scents.",
+   "cat": "eyes-lips",
+   "tags": [
+    "under54"
+   ]
+  },
+  {
+   "slug": "dr-althea-skin-relief-essence-250ml",
+   "name": "Dr. Althea - Skin Relief Essence 250ml",
+   "name_ar": "الدكتورة ألثيا - إيسنس سكين ريليف - 250 مل",
+   "brand": "Dr.Althea",
+   "brand_ar": "الدكتورة ألثيا",
+   "price": 136,
+   "sale": 53,
+   "was": 136,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Dr.-Althea-Skin-Relief-Essence-250ml.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.-Althea-Skin-Relief-Essence-250ml.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Dr.-Althea-Skin-Relief-Essence-250ml.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.-Althea-Skin-Relief-Essence-250ml.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Dr.-Althea-Skin-Relief-Essence-250ml-1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.-Althea-Skin-Relief-Essence-250ml-1.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Dr.-Althea-Skin-Relief-Essence-250ml-6.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.-Althea-Skin-Relief-Essence-250ml-6.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Dr.-Althea-Skin-Relief-Essence-250ml-5.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2024/10/Dr.-Althea-Skin-Relief-Essence-250ml-5.webp"
+    }
+   ],
+   "desc": "This ampoule-like essence is packed with 85% centella asiatica extract to alleviate redness and irritation. It also contains six types of hyaluronic acid, panthenol and squalane to promote plump, hydrated and smooth skin.",
+   "cat": "serums",
+   "tags": [
+    "under54"
+   ]
+  },
+  {
+   "slug": "fwee-lipcheek-glowy-jelly-pot-compote",
+   "name": "fwee - Lip&Cheek Glowy Jelly Pot - Compote",
+   "name_ar": "فوي - علبة جيلي الشفاه والخدود جلوي - كومبوت",
+   "brand": "fwee",
+   "brand_ar": "فوي",
+   "price": 108,
+   "sale": 48,
+   "was": 108,
+   "rating": 0,
+   "reviews": 0,
+   "stock": "instock",
+   "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/03/Lip_CheekGlowyJellyPot2.webp",
+   "img200": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/03/Lip_CheekGlowyJellyPot2.webp",
+   "gallery": [
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/03/Lip_CheekGlowyJellyPot2.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/03/Lip_CheekGlowyJellyPot2.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/03/fwee-lip-cheek-glowy-jelly-pot-keyring-set-jm01-compote-4gm_01.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/03/fwee-lip-cheek-glowy-jelly-pot-keyring-set-jm01-compote-4gm_01.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/03/Lip_CheekGlowyJellyPot3.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/03/Lip_CheekGlowyJellyPot3.webp"
+    },
+    {
+     "src": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2026/03/jelly-pot-e1.webp",
+     "thumb": "https://kbeautybliss.com/img-cache/200/wp-content/uploads/2026/03/jelly-pot-e1.webp"
+    }
+   ],
+   "desc": "To all the gloss-obsessed girlies – this one’s for you! fwee’s Jelly Pot comes in a bouncy, jelly-like texture that delivers vibrant color and a glassy finish without stickiness. The multifunctional product can be used on the lips and cheeks to create a monochrome makeup look.",
+   "cat": "eyes-lips",
+   "tags": [
+    "under54"
+   ]
+  }
+ ],
+ "reviews": {
+  "torriden-cellmazing-pore-perfecting-ampoule": [
+   {
+    "name": "Brandy S.",
+    "rating": 4,
+    "text": "One of my favorite collagen ampoules on the market! Even got one for my friend to try.",
+    "verified": true,
+    "date": "2026-03-18"
+   },
+   {
+    "name": "Nawal A.",
+    "rating": 5,
+    "text": "قوامه أكثر كثافة، وقد لاحظت تحسناً في البقع الداكنة. سأستمر في استخدامه لأرى المزيد من النتائج.",
+    "verified": true,
+    "date": "2026-04-30"
+   },
+   {
+    "name": "Mallory D.",
+    "rating": 4,
+    "text": "Feels really nice on the skin. Torriden’s essence never disappoints ^^ also good for sensitive skin.",
+    "verified": true,
+    "date": "2026-05-29"
+   },
+   {
+    "name": "Shelby G.",
+    "rating": 5,
+    "text": "Absorbs quickly and doesn’t feel sticky at all.",
+    "verified": true,
+    "date": "2026-06-04"
+   },
+   {
+    "name": "Kristen H.",
+    "rating": 5,
+    "text": "So far I like it, works really well before applying foundation.",
+    "verified": true,
+    "date": "2026-04-11"
+   },
+   {
+    "name": "Alexis H.",
+    "rating": 4,
+    "text": "Been using it for about a week now but still haven’t noticed big changes. I’ll keep using it to see results.",
+    "verified": true,
+    "date": "2026-03-10"
+   },
+   {
+    "name": "Sahar S.",
+    "rating": 5,
+    "text": "Product is good overall, I’d recommend it. Really nice experience.",
+    "verified": true,
+    "date": "2026-02-17"
+   },
+   {
+    "name": "Nicole U.",
+    "rating": 5,
+    "text": "Moisturizing like crazy and absorbs really well into the skin.",
+    "verified": true,
+    "date": "2026-02-25"
+   }
+  ],
+  "medicube-full-facial-device-set-pink-version": [
+   {
+    "name": "Mawiya.W",
+    "rating": 5,
+    "text": "أجهزة روعة والتصميم الوردِي يفتح النفس. أستخدمها يومياً مع السيروم 💖",
+    "verified": true,
+    "date": "2026-03-28"
+   },
+   {
+    "name": "Emma D.",
+    "rating": 4,
+    "text": "pretty light and convenient to take while traveling. solid 4 stars!",
+    "verified": true,
+    "date": "2026-03-27"
+   },
+   {
+    "name": "أميرة ز.",
+    "rating": 5,
+    "text": "صراحة تستاهل كل ريال. الروتين صار ممتع والنتائج واضحة للبشرة.",
+    "verified": true,
+    "date": "2026-07-16"
+   },
+   {
+    "name": "Aaliyah K.",
+    "rating": 5,
+    "text": "red led mode is my absolute fav. skin feels so plump after using it",
+    "verified": true,
+    "date": "2026-05-26"
+   },
+   {
+    "name": "Grace C.",
+    "rating": 5,
+    "text": "all three devices are so handy! super lightweight too.",
+    "verified": true,
+    "date": "2026-02-18"
+   },
+   {
+    "name": "Maleeha.K",
+    "rating": 4,
+    "text": "التوصيل كان سريع والأجهزة شغالين تمام. عجبني جهاز المساج الوردي جداً.",
+    "verified": true,
+    "date": "2026-06-24"
+   },
+   {
+    "name": "Sofia N.",
+    "rating": 5,
+    "text": "my serums absorb way better now. noticed a visible glow after 1 week.",
+    "verified": true,
+    "date": "2026-06-02"
+   },
+   {
+    "name": "Hannah J.",
+    "rating": 5,
+    "text": "obsessed with the roller attachment, so relaxing after a long day!",
+    "verified": true,
+    "date": "2026-06-17"
+   }
+  ],
+  "medicube-age-r-booster-pro-x2-pink-set": [
+   {
+    "name": "Grace W.",
+    "rating": 5,
+    "text": "Love the LCD display and the color-coded LED modes. Makes it so foolproof to use!",
+    "verified": true,
+    "date": "2026-02-02"
+   },
+   {
+    "name": "Amina K.",
+    "rating": 5,
+    "text": "الجهاز رائع جداً والنتيجة تظهر من أول استخدام!",
+    "verified": true,
+    "date": "2026-02-03"
+   },
+   {
+    "name": "Mona S.",
+    "rating": 5,
+    "text": "الجهاز جداً ممتاز، صرت أستخدم نمط Air Shot للمسام ونمط Booster للترطيب، يفرق كثير بامتصاص المنتجات لدرجة تحس البشرة شربت السيروم صح.",
+    "verified": true,
+    "date": "2026-02-06"
+   },
+   {
+    "name": "Olivia S.",
+    "rating": 4,
+    "text": "I was skeptical at first, but after using the dual modes regularly, my smile lines look much softer and my face feels firmer every morning.",
+    "verified": true,
+    "date": "2026-02-06"
+   },
+   {
+    "name": "Salma K.",
+    "rating": 5,
+    "text": "ممتاز جداً وشاشته الـ LCD سهلة في التحكم والتنقل بين الأوضاع.",
+    "verified": true,
+    "date": "2026-02-10"
+   },
+   {
+    "name": "Reem B.",
+    "rating": 5,
+    "text": "ناعم على البشرة وسهل الاستخدام اليومي.",
+    "verified": true,
+    "date": "2026-02-11"
+   },
+   {
+    "name": "Noura K.",
+    "rating": 5,
+    "text": "ممتاز جداً وخفيف في اليد، يعطي نضارة فورية للبشرة!",
+    "verified": true,
+    "date": "2026-02-15"
+   },
+   {
+    "name": "Nour H.",
+    "rating": 4,
+    "text": "بصراحة كان يستاهل كل درهم! بطلت أروح عيادات تجميل بسبب نمط Booster X2 و Air Shot. يضيّق المسام ويخلي البشرة مرنة ومشدودة بشكل ملحوظ بعد أسبوعين من الاستخدام المنتظم.",
+    "verified": true,
+    "date": "2026-02-17"
+   }
+  ],
+  "medicube-age-r-booster-pro-x2-pink": [
+   {
+    "name": "Samantha K.",
+    "rating": 5,
+    "text": "Great for tightening and getting rid of morning puffiness. Truly a staple in my routine now.",
+    "verified": true,
+    "date": "2026-05-31"
+   },
+   {
+    "name": "Rachel V.",
+    "rating": 5,
+    "text": "I noticed a huge difference in how well my skincare products absorb now. The LED modes are super easy to cycle through, and the pink design is so pretty on my vanity!",
+    "verified": true,
+    "date": "2026-04-12"
+   },
+   {
+    "name": "Ashley G.",
+    "rating": 5,
+    "text": "Obsessed with this device! My skin literally glows right after using the Booster mode.",
+    "verified": true,
+    "date": "2026-04-01"
+   },
+   {
+    "name": "Samira A.",
+    "rating": 5,
+    "text": "شحن بطاريته ممتاز والتوصيل كان سريع جداً.",
+    "verified": true,
+    "date": "2026-06-05"
+   },
+   {
+    "name": "Farida M.",
+    "rating": 5,
+    "text": "جربت أنماط كثيرة بس هذا الجهاز صدمتي بفاعليته! نمط Air Shot خفف لي شكل المسام ونمط الشد فرق معي في منطقة الفك والرقبة. أنصح كل وحدة تهتم ببشرتها تقتنيه.",
+    "verified": true,
+    "date": "2026-06-17"
+   },
+   {
+    "name": "Layla B.",
+    "rating": 5,
+    "text": "أستخدمه مع سيروم الهيالورونيك أسيد والنتيجة خرافية، الوجه يصير مرطب ومشدود بشكل واضح.",
+    "verified": true,
+    "date": "2026-03-15"
+   },
+   {
+    "name": "Noura K.",
+    "rating": 5,
+    "text": "ممتاز جداً وخفيف في اليد، يعطي نضارة فورية للبشرة!",
+    "verified": true,
+    "date": "2026-02-15"
+   },
+   {
+    "name": "Emma D.",
+    "rating": 5,
+    "text": "Takes home skincare to a professional clinic level. Extremely satisfied!",
+    "verified": true,
+    "date": "2026-05-16"
+   }
+  ],
+  "medicube-age-r-booster-pro-mini-white": [
+   {
+    "name": "Yara H.",
+    "rating": 5,
+    "text": "جهاز رائع وسهل الاستخدام. يساعد على امتصاص منتجات العناية بشكل أفضل، والبشرة تشعر بالانتعاش بعد كل استخدام. أحببت التصميم والوزن الخفيف جدًا 💕",
+    "verified": true,
+    "date": "2026-06-04"
+   },
+   {
+    "name": "لارا M.",
+    "rating": 4,
+    "text": "جهاز عملي ومفيد، أستخدمه يوميًا مع السيروم وألاحظ فرقًا في نضارة البشرة. حجمه مناسب وسهل أخذه معي أثناء السفر.",
+    "verified": true,
+    "date": "2026-02-21"
+   },
+   {
+    "name": "Amara S.",
+    "rating": 5,
+    "text": "this device is a game changer for my skincare routine. my skin feels smoother, looks brighter and the red light is so relaxing. definitely recommend!",
+    "verified": true,
+    "date": "2026-06-10"
+   },
+   {
+    "name": "شهد R.",
+    "rating": 4,
+    "text": "المنتج لطيف جدًا ومريح على البشرة. استخدمته مع السيروم وأشعر أن بشرتي أصبحت أنعم مع الاستمرار. تجربة جميلة إلى الآن.",
+    "verified": true,
+    "date": "2026-02-21"
+   },
+   {
+    "name": "Elena P.",
+    "rating": 5,
+    "text": "so glad i bought this! it's lightweight, simple to use and really helps my skincare routine feel more complete. my skin feels softer afterwards ✨",
+    "verified": true,
+    "date": "2026-04-26"
+   },
+   {
+    "name": "رزان L.",
+    "rating": 5,
+    "text": "أحببت هذا الجهاز كثيرًا، سهل الاستخدام ويعطي إحساسًا لطيفًا على البشرة. التصميم أنيق جدًا ويستحق التجربة.",
+    "verified": true,
+    "date": "2026-02-25"
+   },
+   {
+    "name": "Zara F.",
+    "rating": 5,
+    "text": "the device is nice and feels good on the skin. red and blue light options are a plus, just wish it came with a small travel pouch.",
+    "verified": true,
+    "date": "2026-03-31"
+   },
+   {
+    "name": "لمى J.",
+    "rating": 5,
+    "text": "جهاز أنيق ومفيد للبشرة، استخدمته مع السيروم والنتيجة كانت جميلة. حجمه مناسب جدًا وسهل الاحتفاظ به في روتين العناية اليومي.",
+    "verified": true,
+    "date": "2026-06-16"
+   }
+  ],
+  "tosowoong-arbutin-7-tranexamic-acid-4-cream": [
+   {
+    "name": "Patricia N.",
+    "rating": 5,
+    "text": "my order arrived quickly from Kbeauty Bliss and the product was clearly authentic. ive noticed a visible improvement in my dark spots too",
+    "verified": true,
+    "date": "2026-05-07"
+   },
+   {
+    "name": "Heather C.",
+    "rating": 4,
+    "text": "really impressed with how gentle this cream is, my skin feels smoother every week",
+    "verified": true,
+    "date": "2026-04-22"
+   },
+   {
+    "name": "Abeer M.",
+    "rating": 5,
+    "text": "بشرتي حساسة جدا ومع ذلك لم يسبب أي احمرار أو تهيج. وأعجبني أن منتجات Kbeauty Bliss أصلية 100٪",
+    "verified": true,
+    "date": "2026-06-06"
+   },
+   {
+    "name": "Jumana R.",
+    "rating": 5,
+    "text": "النتائج ليست فورية لكنها واضحة مع الاستمرار. لون بشرتي أصبح أكثر توحدا",
+    "verified": true,
+    "date": "2026-06-04"
+   },
+   {
+    "name": "Salma H.",
+    "rating": 4,
+    "text": "قوامه خفيف جدا ولا يترك أي إحساس دهني على البشرة",
+    "verified": true,
+    "date": "2026-06-06"
+   },
+   {
+    "name": "Mona K.",
+    "rating": 5,
+    "text": "استخدمه كل مساء قبل النوم. آثار الحبوب بدأت تتلاشى تدريجيا والبشرة تبدو أنعم",
+    "verified": true,
+    "date": "2026-06-10"
+   },
+   {
+    "name": "Rim A.",
+    "rating": 5,
+    "text": "احببت هذا الكريم كثيرا. كما أن التوصيل من Kbeauty Bliss كان سريعا جدا ووصل الطلب بحالة ممتازة",
+    "verified": true,
+    "date": "2026-03-09"
+   },
+   {
+    "name": "Kendra B.",
+    "rating": 4,
+    "text": "a great addition to my skincare routine. brightening, hydrating and very easy to use every day",
+    "verified": true,
+    "date": "2026-04-29"
+   }
+  ],
+  "medicube-age-r-booster-pro-mini-plus-pink": [
+   {
+    "name": "بسمة ن.",
+    "rating": 5,
+    "text": "تجربة جميلة جدًا من أول استخدام. الجهاز سهل وبسيط ولا يحتاج خطوات كثيرة. أحببت اللون والتصميم وحجمه مناسب جدًا، خصوصًا إذا كنتِ لا تحبين الأجهزة الكبيرة. بالتأكيد سأستمر في استخدامه ضمن روتين العناية بالبشرة.",
+    "verified": true,
+    "date": "2026-04-06"
+   },
+   {
+    "name": "ملك ر.",
+    "rating": 5,
+    "text": "جهاز رائع 😍 استخدمه مع منتجات العناية بالبشرة وأحببت طريقة عمله. الاهتزاز مريح والجهاز شكله أنيق جدًا.",
+    "verified": true,
+    "date": "2026-06-02"
+   },
+   {
+    "name": "آية س.",
+    "rating": 4,
+    "text": "حلو جدًا وسهل الاستخدام، وأفضل شيء عندي أنه صغير ويمكن أخذه في السفر بدون أي مشكلة.",
+    "verified": true,
+    "date": "2026-02-25"
+   },
+   {
+    "name": "فرح ل.",
+    "rating": 5,
+    "text": "استخدمته في روتين المساء وأصبح شيء لا أستغني عنه الآن. الجهاز خفيف جدًا وسهل الإمساك به، والإضاءة المختلفة إضافة جميلة. أحببته أكثر مما توقعت 💗",
+    "verified": true,
+    "date": "2026-02-09"
+   },
+   {
+    "name": "شهد ع.",
+    "rating": 5,
+    "text": "بشرتي تشعر بالنعومة بعد الاستخدام ✨ تجربة جميلة جدًا.",
+    "verified": true,
+    "date": "2026-03-27"
+   },
+   {
+    "name": "سلمى ي.",
+    "rating": 4,
+    "text": "جهاز جميل وعملي، وأحببت إمكانية تغيير مستوى الاهتزاز حسب الحاجة.",
+    "verified": true,
+    "date": "2026-04-08"
+   },
+   {
+    "name": "جنى م.",
+    "rating": 5,
+    "text": "أحببته جدًا 🥰 مناسب للاستخدام اليومي وحجمه صغير ولا يأخذ مساحة.",
+    "verified": true,
+    "date": "2026-03-13"
+   },
+   {
+    "name": "هبة ن.",
+    "rating": 5,
+    "text": "بصراحة توقعت أن يكون استخدامه أصعب، لكنه بسيط جدًا. فقط أضع منتج العناية على البشرة وأبدأ باستخدام الجهاز. لا يحتاج وقت طويل وهذا أكثر شيء أعجبني فيه.",
+    "verified": true,
+    "date": "2026-03-12"
+   }
+  ],
+  "medicube-cleansing-device-set-pink-version": [
+   {
+    "name": "Sadeem W.",
+    "rating": 5,
+    "text": "أجهزة روعة والتصميم الوردِي يفتح النفس. أستخدمها يومياً",
+    "verified": true,
+    "date": "2026-04-20"
+   },
+   {
+    "name": "Emma D.",
+    "rating": 4,
+    "text": "pretty light and convenient to take while traveling. solid 4 stars!",
+    "verified": true,
+    "date": "2026-06-20"
+   },
+   {
+    "name": "Amira Z.",
+    "rating": 5,
+    "text": "صراحة تستاهل كل ريال. الروتين صار ممتع والنتائج واضحة للبشرة.",
+    "verified": true,
+    "date": "2026-06-07"
+   },
+   {
+    "name": "Aaliyah K.",
+    "rating": 5,
+    "text": "red led mode is my absolute fav. skin feels so plump after using it ❤️",
+    "verified": true,
+    "date": "2026-03-31"
+   },
+   {
+    "name": "Grace C.",
+    "rating": 5,
+    "text": "both cleansing & booster heads are so handy! super lightweight too.",
+    "verified": true,
+    "date": "2026-07-16"
+   },
+   {
+    "name": "Dana Q.",
+    "rating": 5,
+    "text": "التوصيل كان سريع والأجهزة شغالين تمام. عجبني تصميم البوستر جداً.",
+    "verified": true,
+    "date": "2026-07-04"
+   },
+   {
+    "name": "Sofia N.",
+    "rating": 5,
+    "text": "my serums absorb way better now. noticed a visible glow after 1 week.",
+    "verified": true,
+    "date": "2026-04-08"
+   },
+   {
+    "name": "Hannah J.",
+    "rating": 5,
+    "text": "obsessed with the cleansing attachment, so refreshing after a long day!",
+    "verified": true,
+    "date": "2026-07-27"
+   }
+  ]
+ },
+ "posts": [
+  {
+   "slug": "pdrn-skincare-what-is-it-does-it-actually-work",
+   "title": "PDRN Skincare: What Is It & Does It Actually Work?",
+   "title_ar": null,
+   "excerpt": "If you've been looking at Korean skincare lately, you've probably noticed one ingredient showing up everywhere: PDRN. Pink creams. Glass-skin serums. Collagen masks. PDRN ampoules. Even PDRN lip products.",
+   "excerpt_ar": null,
+   "cover": "https://kbeautybliss.com/img-cache/800/uploads/products/pdrn-skincare-what-is-it-does-it-actually-work.webp",
+   "date": "2026-10-15",
+   "author": "K-Beauty Bliss"
+  },
+  {
+   "slug": "best-korean-skincare-for-dark-spots-hyperpigmentation-what-actually-works",
+   "title": "Best Korean Skincare for Dark Spots & Hyperpigmentation: What Actually Works",
+   "title_ar": null,
+   "excerpt": "A good pigmentation routine is about choosing the right ingredients, protecting your skin from the sun, avoiding unnecessary irritation and staying consistent.",
+   "excerpt_ar": null,
+   "cover": "https://kbeautybliss.com/img-cache/800/uploads/products/korean-skincare-for-hyperpigmentation-and-dark-spots.webp",
+   "date": "2026-09-27",
+   "author": "K-Beauty Bliss"
+  },
+  {
+   "slug": "k-beauty-face-masks-the-ultimate-guide-to-relaxing-and-rejuvenating-at-home",
+   "title": "K-Beauty Face Masks: The Ultimate Guide to Relaxing and Rejuvenating at Home",
+   "title_ar": null,
+   "excerpt": "Imagine coming home after a long day in Dubai or Sharjah and indulging in a soothing, skin-rejuvenating treatment right in the comfort of your own space...",
+   "excerpt_ar": null,
+   "cover": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/IMG_7341-scaled.webp",
+   "date": "2024-10-10",
+   "author": "K Beauty Bliss"
+  },
+  {
+   "slug": "k-beauty-bliss-morning-magic-a-perfect-start-to-your-skincare-journey",
+   "title": "K-Beauty Bliss Morning Magic | A Perfect Start to Your Skincare Journey",
+   "title_ar": null,
+   "excerpt": "Korean skincare is becoming highly popular in the beauty industry. It is renowned for its innovative formulations and transformative results...",
+   "excerpt_ar": null,
+   "cover": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2024/10/Private_-K-Beauty-Bliss-Morning-Magic-_-A-Perfect-Start-to-Your-Skincare-Journey-scaled.webp",
+   "date": "2024-04-15",
+   "author": "K Beauty Bliss"
+  },
+  {
+   "slug": "honest-review-of-the-viral-axis-y-dark-spot-correcting-glow-serum",
+   "title": "Honest Review of the Viral AXIS-Y Dark Spot Correcting Glow Serum",
+   "title_ar": null,
+   "excerpt": "",
+   "excerpt_ar": null,
+   "cover": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2023/04/AXIS-Y-glow-serum-review-kbeautybliss.png",
+   "date": "2023-04-16",
+   "author": "K Beauty Bliss"
+  },
+  {
+   "slug": "the-importance-of-spf-in-your-daily-skincare-routine",
+   "title": "The Importance of SPF in Your Daily Skincare Routine | K-Beauty Bliss",
+   "title_ar": null,
+   "excerpt": "",
+   "excerpt_ar": null,
+   "cover": "https://kbeautybliss.com/img-cache/800/wp-content/uploads/2023/04/The-importance-of-SPF-in-your-daily-skincare-routine.webp",
+   "date": "2023-04-16",
+   "author": "K Beauty Bliss"
+  }
+ ],
+ "article": {
+  "slug": "pdrn-skincare-what-is-it-does-it-actually-work",
+  "paras": [
+   "If you've been looking at Korean skincare lately, you've probably noticed one ingredient showing up everywhere: PDRN.Pink creams. Glass-skin serums. Collagen masks. PDRN ampoules. Even PDRN lip products. And if you've been wondering 'Is PDRN actually worth the hype, or is it just another trending skincare ingredient?', you're not the only one. So let's look at what PDRN actually is, what it can realistically do, and which type of PDRN product makes sense for different skin concerns.What Is PDRN?",
+   "PDRN stands for polydeoxyribonucleotide.",
+   "Simply put, it's a DNA-derived ingredient made up of DNA fragments. PDRN used in skincare is commonly associated with salmon-derived DNA, although the source and formulation can vary between products.It became well known because of its use in regenerative medicine and research into tissue repair and wound healing. That's where much of the interest in using PDRN for skin comes from.",
+   "But there's an important distinction: PDRN used in a medical treatment is not the same as PDRN in a skincare serum or cream. A topical product has to deal with the challenge of getting an ingredient through the skin, and the formulation and molecular characteristics matter.",
+   "You'll see PDRN products marketed for everything from glow and hydration to firmness and skin recovery.",
+   "It's useful to separate the potential role of PDRN itself from the benefits of the entire formula.Many PDRN products also contain ingredients such as:Hyaluronic acid",
+   "So if your skin looks immediately plumper after applying a PDRN serum, that visible effect may come partly from the formula's hydrating ingredients too.And that's perfectly fine. A good skincare formula doesn't need one ingredient to do everything.Who Is PDRN Best For?",
+   "PDRN is particularly interesting if your skincare goals are around hydration, plumpness, skin texture and overall skin quality.- My skin looks dull and"
+  ]
+ },
+ "counts": {
+  "catalogue": 769,
+  "products": 60,
+  "arabic_names": 60,
+  "brands": 24
+ }
+}
