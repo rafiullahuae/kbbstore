@@ -591,7 +591,24 @@
           : '')
       + '</div>';
 
-    return '<div class="tr-wrap">' + bannerHTML() + capabilityHTML() + switches + preview + addresses + key + '</div>';
+    /* BLOG TAGS IN ARABIC (18 October 2026). The label on each Journal post's
+       picture and the filter buttons on /ar/blog/. A blank box: the shipped
+       Arabic (shown greyed as the placeholder), else the English tag. */
+    var bt = s.blog_tags || [];
+    var tags = !bt.length ? '' : '<div class="tr-card">'
+      + '<p class="tr-h">Blog tags in Arabic</p>'
+      + '<p class="tr-sub">The small label on each blog post\'s picture and the filter buttons above the posts, on the Arabic blog (/ar/blog/). '
+      + 'Leave a box empty to use the Arabic shown in grey.</p>'
+      + bt.map(function(t, i){
+          return '<label class="tr-field"><span>' + esc(t.en) + '</span>'
+            + '<input id="tr-bt-' + i + '" dir="rtl" lang="ar" maxlength="60" value="' + esc(t.ar) + '"'
+            + ' placeholder="' + esc(t.shipped || t.en) + '"' + (editable ? '' : ' disabled') + '></label>';
+        }).join('')
+      + (editable ? '<div class="tr-acts"><button type="button" class="tr-btn is-primary" data-tr-act="save-tags"'
+          + (busy() ? ' disabled' : '') + '>Save tags</button></div>' : '')
+      + '</div>';
+
+    return '<div class="tr-wrap">' + bannerHTML() + capabilityHTML() + switches + tags + preview + addresses + key + '</div>';
   }
 
   /* =============================== screen 2: progress =============================== */
@@ -1105,6 +1122,28 @@
     try { navigator.clipboard.writeText(el.value).then(function(){ say('Link copied.'); }); } catch (e) { say('Select the link and copy it.'); }
   }
 
+  async function saveTags(){
+    if (!can('settings') || !settings || !settings.blog_tags) return;
+
+    var map = {};
+    settings.blog_tags.forEach(function(t, i){
+      var el = document.getElementById('tr-bt-' + i);
+      map[t.en] = el ? el.value.trim() : t.ar;
+    });
+
+    inflight++; render();
+
+    try {
+      settings = await api('/translations/settings', 'POST', {blog_tags_ar: map});
+      banner = null;
+      say('Blog tags saved.');
+    } catch (e) {
+      banner = {kind:'bad', text: explain(e, 'The blog tags could not be saved.')};
+    } finally {
+      inflight--; render();
+    }
+  }
+
   async function saveKey(clear){
     if (!can('settings')) return;
 
@@ -1256,6 +1295,7 @@
     if (what === 'arp-revoke') return previewRevoke();
     if (what === 'arp-copy') return previewCopy();
     if (what === 'save-key') return saveKey(false);
+    if (what === 'save-tags') return saveTags();
     if (what === 'clear-key') return saveKey(true);
     if (what === 'save-row') return saveRow(parseInt(i, 10));
     if (what === 'tr-row') return translateRow(parseInt(i, 10));

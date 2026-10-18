@@ -60,6 +60,9 @@ class TranslationsApiController extends Controller
             'translate_opens_english' => Locale::opensEnglishOnTranslate(),
             // 18 October 2026: ON by default -- the owner asked for it. See Locale::keepsArabic().
             'keep_arabic' => Locale::keepsArabic(),
+            // 18 October 2026: every tag the Journal's posts use, with its Arabic
+            // (BlogTags). The owner's own, else '' with the shipped one as a hint.
+            'blog_tags' => $this->blogTags(),
             'provider' => $provider->name(),
             'provider_available' => $provider->available(),
             'has_api_key' => TranslationCredentials::hasKey(),
@@ -147,6 +150,8 @@ class TranslationsApiController extends Controller
             'highlight_missing' => ['sometimes', 'boolean'],
             'translate_opens_english' => ['sometimes', 'boolean'],
             'keep_arabic' => ['sometimes', 'boolean'],
+            'blog_tags_ar' => ['sometimes', 'array', 'max:200'],
+            'blog_tags_ar.*' => ['nullable', 'string', 'max:'.\App\Support\BlogTags::MAX],
             'api_key' => ['sometimes', 'nullable', 'string', 'max:500'],
         ]);
 
@@ -163,6 +168,15 @@ class TranslationsApiController extends Controller
                     'autoload' => true,
                 ]);
             }
+        }
+
+        if (array_key_exists('blog_tags_ar', $data)) {
+            // Only short, plain string pairs survive (BlogTags::clean); an emptied
+            // box drops its row, so the shipped Arabic applies again.
+            Setting::query()->updateOrCreate(['key' => \App\Support\BlogTags::SETTING], [
+                'value' => json_encode(\App\Support\BlogTags::clean((array) $data['blog_tags_ar']), JSON_UNESCAPED_UNICODE),
+                'autoload' => true,
+            ]);
         }
 
         if (array_key_exists('api_key', $data)) {
@@ -656,5 +670,26 @@ class TranslationsApiController extends Controller
         $english = $model?->getAttribute($field);
 
         return is_string($english) && trim($english) !== '' ? $english : null;
+    }
+
+    /**
+     * The Journal's tags for "Blog tags in Arabic": each distinct tag a post
+     * carries, the owner's Arabic for it ('' when none) and the shipped Arabic.
+     *
+     * @return list<array{en: string, ar: string, shipped: string}>
+     */
+    private function blogTags(): array
+    {
+        $own = \App\Support\BlogTags::owner();
+
+        return \App\Models\Post::query()
+            ->whereNotNull('tag')->where('tag', '!=', '')
+            ->distinct()->orderBy('tag')->limit(200)
+            ->pluck('tag')
+            ->map(fn ($tag): array => [
+                'en' => (string) $tag,
+                'ar' => $own[mb_strtolower(trim((string) preg_replace('/\s+/u', ' ', (string) $tag)))] ?? '',
+                'shipped' => \App\Support\BlogTags::shipped((string) $tag),
+            ])->values()->all();
     }
 }

@@ -106,7 +106,7 @@
 @forelse($posts as $p)
   {{-- Posts live at the site root, one slug per post — the Phase 9 decision.
        The /skincare-guide/{slug}/ form and the site-root form are both 301s. --}}
-  <a class="post" data-tag="{{ $p->tag }}" href="{{ \App\Support\Url::to(\App\Support\UrlScheme::article($p->slug)) }}">
+  <a class="post" data-tag="{{ $p->tag }}"@if(($kbbTagLabel = \App\Support\BlogTags::label($p->tag)) !== (string) $p->tag) data-tag-label="{{ $kbbTagLabel }}"@endif href="{{ \App\Support\Url::to(\App\Support\UrlScheme::article($p->slug)) }}">
     {{-- A real <img> so the cover photographs are indexable, with the emoji
          placeholder kept for the posts that have no photograph. The <img>
          comes before .ptag in the DOM on purpose: both are absolutely
@@ -127,7 +127,7 @@
       @else
         {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$p->tag] ?? '✨' }}
       @endif
-      @if($p->tag)<span class="ptag">{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($p->tag) : (string) ($p->tag)) }}</span>@endif
+      @if($p->tag)<span class="ptag">{{ $kbbTagLabel }}</span>@endif
     </div>
     <div class="pbody">
       <div class="pdate">{{ (class_exists(\App\Support\LocalDate::class) ? \App\Support\LocalDate::format($p->published_at, 'j F Y') : (($kbbD = $p->published_at) ? $kbbD->format('j F Y') : '')) }}</div>
@@ -226,10 +226,14 @@
     var chips = document.getElementById('chips');
     var posts = [].slice.call(document.querySelectorAll('#grid .post'));
     var tags = [];
+    /* (18 October 2026) The chip's LABEL: the card's data-tag-label, which the
+       server prints only on a page where the tag reads differently (the Arabic
+       shop, BlogTags::label); the tag itself stays the filter value. */
+    var labels = {};
 
     posts.forEach(function(a){
       var tag = a.dataset.tag;
-      if (tag && tags.indexOf(tag) === -1) tags.push(tag);
+      if (tag && tags.indexOf(tag) === -1) { tags.push(tag); labels[tag] = a.dataset.tagLabel || tag; }
     });
 
     function chip(label, value){
@@ -251,7 +255,7 @@
     allChip.classList.add('on');
     chips.appendChild(allChip);
 
-    tags.forEach(function(t){ chips.appendChild(chip(t, t)); });
+    tags.forEach(function(t){ chips.appendChild(chip(labels[t], t)); });
   })();
 </script>
 @endverbatim
