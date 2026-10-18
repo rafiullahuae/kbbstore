@@ -56,6 +56,8 @@
 --}}
 {{-- (Lane CX) The Skin concerns chip editor, shared with the All sections popup. --}}
 @include('admin.partials.concern-chips-editor')
+{{-- (Lane SBC) The Shop by Concern tab editor, shared with the All sections popup. --}}
+@include('admin.partials.sbc-tabs-editor')
 @verbatim
 <style>
 /* ---------------------------------------------------------------------------
@@ -408,6 +410,12 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
          admin/partials/concern-chips-editor around a hidden input that carries
          this screen's own data-hpc-set, so setValue() stores it as usual. */
       ctl = window.kbbCc.html(f, v, 'data-hpc-set="' + esc(onsetName) + '"', (data.picks && data.picks.categories) || []);
+    } else if (f.options && f.options.picker === 'sbc-tabs' && window.kbbSbc) {
+      /* (Lane SBC) Shop by Concern: the tab rows, drawn by the shared editor
+         in admin/partials/sbc-tabs-editor around a hidden input carrying this
+         screen's own data-hpc-set, so setValue() stores it as usual. */
+      var sbcP = data.picks || {};
+      ctl = window.kbbSbc.html(f, v, 'data-hpc-set="' + esc(onsetName) + '"', {cats: sbcP.categories, brands: sbcP.brands, products: sbcP.products});
     } else if (f.options && f.options.picker === 'media') {
       /* A picture chosen from the Media Library (Row 55, Lane HA): the box
          holds its address, the button opens the shop's own picker, and the

@@ -183,6 +183,18 @@ class HomepageSections
          * whose saved order predates it.
          */
         'concerns'    => ['Skin concerns', 'Shop by skin concern: a pill per concern with its icon, each one a link to its collection. Chips, words, background and sizes: Homepage content → Skin concerns.', false, null],
+        /*
+         * (Lane SBC) Shop by Concern — "Content 1" of the v3 previews: concern
+         * tabs, a tip panel (a photo per tab, or the concern's gradient) and
+         * six products each. The brief asked for it directly under Trending,
+         * ON — but that place is Skin concerns', which the owner asked for
+         * there (Lane CX, pinned by HomeConcernsSectionTest), and taking it
+         * would move his section. So, as the brief says for that case, it
+         * ships OFF (OFF_BY_DEFAULT) and sits directly under Skin concerns,
+         * i.e. the Trending block; FOLLOWS keeps it there on a saved order.
+         * It also draws nothing until one tab has a product to show.
+         */
+        'sbc'         => ['Shop by Concern', 'Concern tabs with a tip panel and products, each tab its own collection. Tabs, tips, photos, products and colours: Homepage content → Shop by Concern.', false, null],
         'bestsellers' => ['Best sellers', 'Ranked by sales this month.', true, GridSkins::DEFAULT],
         'flash'       => ['Flash sale', 'Discounted, with stock remaining.', true, GridSkins::DEFAULT],
         'blog'        => ['Skincare guide', 'Three journal articles. Words and which articles: Homepage content → Blog.', false, null],
@@ -428,6 +440,9 @@ class HomepageSections
     public const OFF_BY_DEFAULT = [
         'delivery', 'ticker', 'categories', 'recommended', 'routine', 'quiz',
         'videos', 'bestsellers', 'flash', 'reviews', 'trust', 'newsletter',
+        // (Lane SBC) Shop by Concern: OFF until the owner switches it on — its
+        // asked-for place under Trending is Skin concerns'. See REGISTRY.
+        'sbc',
     ];
 
     /**
@@ -706,7 +721,9 @@ class HomepageSections
      * saved payload that never mentioned `concerns` would otherwise give it its
      * registry index, which on a reordered shop can land anywhere.
      */
-    public const FOLLOWS = ['concerns' => 'trending'];
+    // (Lane SBC) `sbc` under `concerns`, after it in this list so the host
+    // is already placed: Trending, Skin concerns, Shop by Concern.
+    public const FOLLOWS = ['concerns' => 'trending', 'sbc' => 'concerns'];
 
     /**
      * Put each FOLLOWS key the saved payload has no position for directly

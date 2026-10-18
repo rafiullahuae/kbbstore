@@ -1,0 +1,47 @@
+{
+    "/": {
+        "status": 200,
+        "ms": 56.2,
+        "queries": 3,
+        "settings_queries": 1,
+        "settings_map_reads": 1,
+        "html_bytes": 142865,
+        "markers": 0
+    },
+    "/ar/": {
+        "status": 200,
+        "ms": 61.9,
+        "queries": 3,
+        "settings_queries": 1,
+        "settings_map_reads": 1,
+        "html_bytes": 160934,
+        "markers": 0
+    },
+    "/product/1025-dokdo-toner/": {
+        "status": 200,
+        "ms": 32.9,
+        "queries": 13,
+        "settings_queries": 1,
+        "settings_map_reads": 1,
+        "html_bytes": 171367,
+        "markers": 0
+    },
+    "/collections/toners/": {
+        "status": 200,
+        "ms": 23.9,
+        "queries": 7,
+        "settings_queries": 1,
+        "settings_map_reads": 1,
+        "html_bytes": 87430,
+        "markers": 0
+    },
+    "/brands/anua/": {
+        "status": 200,
+        "ms": 21.7,
+        "queries": 7,
+        "settings_queries": 1,
+        "settings_map_reads": 1,
+        "html_bytes": 86676,
+        "markers": 0
+    }
+}

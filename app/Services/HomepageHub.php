@@ -72,6 +72,8 @@ final class HomepageHub
         'trending' => ['kind' => 'content', 'tab' => 'trending', 'source' => 'tr'],
         // (Lane CX) Shop by skin concern: its own tab of Homepage content.
         'concerns' => ['kind' => 'content', 'tab' => 'concerns'],
+        // (Lane SBC) Shop by Concern: its own tab of Homepage content.
+        'sbc' => ['kind' => 'content', 'tab' => 'sbc'],
         'bestsellers' => ['kind' => 'content', 'tab' => 'bestsellers', 'source' => 'bsl'],
         'flash' => ['kind' => 'content', 'tab' => 'flash', 'source' => 'fl'],
         'blog' => ['kind' => 'content', 'tab' => 'blog'],
@@ -142,6 +144,11 @@ final class HomepageHub
 
         foreach ($grids as $g) {
             array_push($productIds, ...array_map('intval', (array) ($g->manual_ids ?? [])));
+        }
+
+        // (Lane SBC) Shop by Concern's hand-picked products, named in its tab editor.
+        foreach (\App\Support\ShopByConcern::rows($flat['home_sbc_tabs'] ?? '') as $sbcRow) {
+            array_push($productIds, ...$sbcRow['picks']);
         }
 
         $out = [];
