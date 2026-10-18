@@ -157,7 +157,9 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // where the category header was -- every category page uses it now.
     // ▲ Lane PH: `pagebanner` ("Page header (brand design)"), the same Panel
     // controls for the content pages and the Journal; not CSS on :root.
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catbanner', 'catheader', 'catheadersize', 'pagebanner', 'brandpage', 'press', 'fonts', 'speed']);
+    // ▲ `bigtext` (Lane BT): "Large phone text", what a phone set to large
+    // text sees; not CSS on :root. BigTextGuardTest covers the tab's effect.
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catbanner', 'catheader', 'catheadersize', 'pagebanner', 'brandpage', 'press', 'fonts', 'speed', 'bigtext']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
@@ -204,7 +206,8 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // 202 with Lane PH: the Page header (brand design) tab -- its switch, the
     // Journal's, and the twenty-nine Panel controls a page has (no logo).
     // 203 with both.
-    expect($keys)->toHaveCount(203);
+    // 204 with Lane BT: "Phones set to large text" on Large phone text.
+    expect($keys)->toHaveCount(204);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

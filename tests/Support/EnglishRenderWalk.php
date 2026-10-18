@@ -1667,6 +1667,32 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * Lane BT, 17 October: "can we restrict our site to not zoom and
+             * open the normal site which we have in actual" ... "keep that
+             * fully separate and the site should auto detect" -- the owner,
+             * after a customer's Instagram screenshot with every word huge on
+             * a phone set to large text. One inline script on its own line,
+             * first in <body>, on every page the layout draws; it returns at
+             * once unless the phone is enlarging text, so a normal visitor's
+             * pixels do not move (docs/lane-bt). Its bytes are the partial's,
+             * read here, because BigTextGuardTest pins them; this rule only
+             * excuses WHERE they sit, and that it is the only difference.
+             */
+            'phones set to large text see the normal shop (Lane BT)' => [
+                // The layout's own <body class=... style=...>, not the review
+                // wall's or the skin quiz's, which are their own documents.
+                'pattern' => '#<body class="[^"]*"\n {6}style="[^"]*">\n\K#',
+                'with' => str_replace(['\\', '$'], ['\\\\', '\\$'], str_replace(
+                    "{{ \\Illuminate\\Support\\Facades\\Vite::asset('resources/js/kbb/big-text.js') }}",
+                    e(\Illuminate\Support\Facades\Vite::asset('resources/js/kbb/big-text.js')),
+                    substr(
+                        $bt = (string) file_get_contents(resource_path('views/partials/big-text-guard.blade.php')),
+                        (int) strpos($bt, '<script style="font-size:16px">'),
+                    ),
+                )),
+                'hits' => 33,
+            ],
+            /*
              * "on cart pane, i want another text row, only will show if user got
              * free delivery as per their cart total" -- the owner, 15 October;
              * his pick, design C, "Congrats! You’ve got free delivery"

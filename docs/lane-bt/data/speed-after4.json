@@ -1,0 +1,94 @@
+{
+    "en": {
+        "home": {
+            "status": 200,
+            "median_ms": 64.6,
+            "queries": 1,
+            "settings_reads": 4,
+            "html_bytes": 141637,
+            "html_gzip": 24853,
+            "blocking_css_files": 2,
+            "blocking_css_bytes": 307459,
+            "scripts": 13
+        },
+        "product": {
+            "status": 200,
+            "median_ms": 36.3,
+            "queries": 11,
+            "settings_reads": 6,
+            "html_bytes": 173621,
+            "html_gzip": 36470,
+            "blocking_css_files": 3,
+            "blocking_css_bytes": 349123,
+            "scripts": 16
+        },
+        "category": {
+            "status": 200,
+            "median_ms": 28.2,
+            "queries": 5,
+            "settings_reads": 5,
+            "html_bytes": 88989,
+            "html_gzip": 19178,
+            "blocking_css_files": 3,
+            "blocking_css_bytes": 313084,
+            "scripts": 11
+        },
+        "brand": {
+            "status": 200,
+            "median_ms": 23.4,
+            "queries": 5,
+            "settings_reads": 6,
+            "html_bytes": 90333,
+            "html_gzip": 20020,
+            "blocking_css_files": 2,
+            "blocking_css_bytes": 286406,
+            "scripts": 11
+        }
+    },
+    "ar": {
+        "home": {
+            "status": 200,
+            "median_ms": 66.3,
+            "queries": 2,
+            "settings_reads": 5,
+            "html_bytes": 167149,
+            "html_gzip": 27386,
+            "blocking_css_files": 2,
+            "blocking_css_bytes": 307459,
+            "scripts": 15
+        },
+        "product": {
+            "status": 200,
+            "median_ms": 42.9,
+            "queries": 12,
+            "settings_reads": 7,
+            "html_bytes": 198727,
+            "html_gzip": 39181,
+            "blocking_css_files": 3,
+            "blocking_css_bytes": 349123,
+            "scripts": 17
+        },
+        "category": {
+            "status": 200,
+            "median_ms": 32,
+            "queries": 6,
+            "settings_reads": 6,
+            "html_bytes": 106330,
+            "html_gzip": 21068,
+            "blocking_css_files": 3,
+            "blocking_css_bytes": 313084,
+            "scripts": 12
+        },
+        "brand": {
+            "status": 200,
+            "median_ms": 32.3,
+            "queries": 6,
+            "settings_reads": 7,
+            "html_bytes": 108079,
+            "html_gzip": 21885,
+            "blocking_css_files": 2,
+            "blocking_css_bytes": 286406,
+            "scripts": 12
+        }
+    }
+}

@@ -455,6 +455,10 @@ it('renders the checkout byte for byte as before this lane with both switches of
         // (Cart Tracking -> Settings -> "Record the email typed at checkout",
         // ON as the owner asked). CheckoutEmailCaptureTest pins it. Set aside.
         $after = (string) preg_replace('#window\.KBB\.routes\.checkoutEmail = "[^"\n]*";\n#', '', $after, 1);
+        // Lane BT (later): phones set to large text see the normal shop -- one
+        // inline script first in <body>, as the owner asked (Appearance -> Site
+        // layout -> Large phone text). BigTextGuardTest pins it. Set aside.
+        $after = (string) preg_replace('#<script style="font-size:16px">.*?</script>\n#s', '', $after, 1);
     } finally {
         EnglishRenderWalk::useViewPath($current[0]);
     }

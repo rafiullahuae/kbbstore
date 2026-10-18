@@ -1,0 +1,124 @@
+{
+ "sweep-normal": {
+  "A normal visitor modern|en": {
+   "widths": 37,
+   "logoSame": 37,
+   "lotusSame": 37,
+   "searchSame": 37,
+   "stable": 37,
+   "swOk": 37,
+   "diffs": []
+  },
+  "A normal visitor modern|ar": {
+   "widths": 37,
+   "logoSame": 37,
+   "lotusSame": 37,
+   "searchSame": 37,
+   "stable": 37,
+   "swOk": 37,
+   "diffs": []
+  },
+  "A normal visitor old|en": {
+   "widths": 37,
+   "logoSame": 37,
+   "lotusSame": 37,
+   "searchSame": 37,
+   "stable": 37,
+   "swOk": 37,
+   "diffs": []
+  },
+  "A normal visitor old|ar": {
+   "widths": 37,
+   "logoSame": 37,
+   "lotusSame": 37,
+   "searchSame": 37,
+   "stable": 37,
+   "swOk": 37,
+   "diffs": []
+  },
+  "A normal visitor blocked|en": {
+   "widths": 37,
+   "logoSame": 37,
+   "lotusSame": 37,
+   "searchSame": 37,
+   "stable": 37,
+   "swOk": 20,
+   "diffs": []
+  },
+  "A normal visitor blocked|ar": {
+   "widths": 37,
+   "logoSame": 37,
+   "lotusSame": 37,
+   "searchSame": 37,
+   "stable": 37,
+   "swOk": 20,
+   "diffs": []
+  }
+ },
+ "sweep-z1.3": {
+  "B text zoom 1.3 vs normal phone, modern|en": {
+   "widths": 37,
+   "logoSame": 37,
+   "lotusSame": 37,
+   "searchSame": 37,
+   "stable": 37,
+   "swOk": 37,
+   "diffs": [],
+   "kbbBtClass": true
+  },
+  "B text zoom 1.3 vs normal phone, modern|ar": {
+   "widths": 37,
+   "logoSame": 37,
+   "lotusSame": 37,
+   "searchSame": 37,
+   "stable": 37,
+   "swOk": 37,
+   "diffs": [],
+   "kbbBtClass": true
+  }
+ },
+ "sweep-z1.6": {
+  "B text zoom 1.6 vs normal phone, modern|en": {
+   "widths": 37,
+   "logoSame": 37,
+   "lotusSame": 37,
+   "searchSame": 37,
+   "stable": 37,
+   "swOk": 37,
+   "diffs": [],
+   "kbbBtClass": true
+  },
+  "B text zoom 1.6 vs normal phone, modern|ar": {
+   "widths": 37,
+   "logoSame": 37,
+   "lotusSame": 37,
+   "searchSame": 37,
+   "stable": 37,
+   "swOk": 37,
+   "diffs": [],
+   "kbbBtClass": true
+  }
+ },
+ "sweep-z2": {
+  "B text zoom 2 vs normal phone, modern|en": {
+   "widths": 37,
+   "logoSame": 37,
+   "lotusSame": 37,
+   "searchSame": 37,
+   "stable": 37,
+   "swOk": 37,
+   "diffs": [],
+   "kbbBtClass": true
+  },
+  "B text zoom 2 vs normal phone, modern|ar": {
+   "widths": 37,
+   "logoSame": 37,
+   "lotusSame": 37,
+   "searchSame": 37,
+   "stable": 37,
+   "swOk": 37,
+   "diffs": [],
+   "kbbBtClass": true
+  }
+ }
+}

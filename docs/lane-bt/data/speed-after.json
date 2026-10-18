@@ -1,0 +1,94 @@
+{
+    "en": {
+        "home": {
+            "status": 200,
+            "median_ms": 66.1,
+            "queries": 1,
+            "settings_reads": 4,
+            "html_bytes": 141637,
+            "html_gzip": 24851,
+            "blocking_css_files": 2,
+            "blocking_css_bytes": 307459,
+            "scripts": 13
+        },
+        "product": {
+            "status": 200,
+            "median_ms": 42.8,
+            "queries": 11,
+            "settings_reads": 6,
+            "html_bytes": 173621,
+            "html_gzip": 36465,
+            "blocking_css_files": 3,
+            "blocking_css_bytes": 349123,
+            "scripts": 16
+        },
+        "category": {
+            "status": 200,
+            "median_ms": 28,
+            "queries": 5,
+            "settings_reads": 5,
+            "html_bytes": 88989,
+            "html_gzip": 19175,
+            "blocking_css_files": 3,
+            "blocking_css_bytes": 313084,
+            "scripts": 11
+        },
+        "brand": {
+            "status": 200,
+            "median_ms": 28.6,
+            "queries": 5,
+            "settings_reads": 6,
+            "html_bytes": 90333,
+            "html_gzip": 20017,
+            "blocking_css_files": 2,
+            "blocking_css_bytes": 286406,
+            "scripts": 11
+        }
+    },
+    "ar": {
+        "home": {
+            "status": 200,
+            "median_ms": 73.8,
+            "queries": 2,
+            "settings_reads": 5,
+            "html_bytes": 167149,
+            "html_gzip": 27384,
+            "blocking_css_files": 2,
+            "blocking_css_bytes": 307459,
+            "scripts": 15
+        },
+        "product": {
+            "status": 200,
+            "median_ms": 44.7,
+            "queries": 12,
+            "settings_reads": 7,
+            "html_bytes": 198727,
+            "html_gzip": 39180,
+            "blocking_css_files": 3,
+            "blocking_css_bytes": 349123,
+            "scripts": 17
+        },
+        "category": {
+            "status": 200,
+            "median_ms": 31.8,
+            "queries": 6,
+            "settings_reads": 6,
+            "html_bytes": 106330,
+            "html_gzip": 21064,
+            "blocking_css_files": 3,
+            "blocking_css_bytes": 313084,
+            "scripts": 12
+        },
+        "brand": {
+            "status": 200,
+            "median_ms": 34.4,
+            "queries": 6,
+            "settings_reads": 7,
+            "html_bytes": 108079,
+            "html_gzip": 21883,
+            "blocking_css_files": 2,
+            "blocking_css_bytes": 286406,
+            "scripts": 12
+        }
+    }
+}

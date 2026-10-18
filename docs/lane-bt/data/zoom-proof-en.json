@@ -1,0 +1,572 @@
+{
+ "z1.3/article-en-360.png": {
+  "differing": 0,
+  "of": 706680
+ },
+ "z1.3/article-en-390.png": {
+  "differing": 0,
+  "of": 783900
+ },
+ "z1.3/article-en-412.png": {
+  "differing": 0,
+  "of": 831416
+ },
+ "z1.3/blog-en-360.png": {
+  "differing": 11,
+  "of": 817560,
+  "bbox": [
+   23,
+   390,
+   336,
+   505
+  ]
+ },
+ "z1.3/blog-en-390.png": {
+  "differing": 12,
+  "of": 896610,
+  "bbox": [
+   23,
+   390,
+   366,
+   505
+  ]
+ },
+ "z1.3/blog-en-412.png": {
+  "differing": 11,
+  "of": 943480,
+  "bbox": [
+   23,
+   390,
+   388,
+   505
+  ]
+ },
+ "z1.3/brand-en-360.png": {
+  "differing": 8,
+  "of": 883440,
+  "bbox": [
+   23,
+   419,
+   25,
+   458
+  ]
+ },
+ "z1.3/brand-en-390.png": {
+  "differing": 8,
+  "of": 979680,
+  "bbox": [
+   23,
+   419,
+   25,
+   458
+  ]
+ },
+ "z1.3/brand-en-412.png": {
+  "differing": 18,
+  "of": 1041536,
+  "bbox": [
+   23,
+   419,
+   388,
+   458
+  ]
+ },
+ "z1.3/cart-en-360.png": {
+  "differing": 282,
+  "of": 339120,
+  "bbox": [
+   23,
+   724,
+   338,
+   731
+  ]
+ },
+ "z1.3/cart-en-390.png": {
+  "differing": 0,
+  "of": 362310
+ },
+ "z1.3/cart-en-412.png": {
+  "differing": 0,
+  "of": 385632
+ },
+ "z1.3/category-en-360.png": {
+  "differing": 9,
+  "of": 904320,
+  "bbox": [
+   17,
+   446,
+   18,
+   499
+  ]
+ },
+ "z1.3/category-en-390.png": {
+  "differing": 0,
+  "of": 1001910
+ },
+ "z1.3/category-en-412.png": {
+  "differing": 9,
+  "of": 1065020,
+  "bbox": [
+   17,
+   446,
+   18,
+   499
+  ]
+ },
+ "z1.3/checkout-en-360.png": {
+  "differing": 0,
+  "of": 599040
+ },
+ "z1.3/checkout-en-390.png": {
+  "differing": 0,
+  "of": 634920
+ },
+ "z1.3/checkout-en-412.png": {
+  "differing": 0,
+  "of": 670736
+ },
+ "z1.3/home-en-360.png": {
+  "differing": 0,
+  "of": 3201120
+ },
+ "z1.3/home-en-390.png": {
+  "differing": 3,
+  "of": 3538470,
+  "bbox": [
+   13,
+   875,
+   14,
+   877
+  ]
+ },
+ "z1.3/home-en-412.png": {
+  "differing": 3,
+  "of": 3789988,
+  "bbox": [
+   13,
+   850,
+   14,
+   852
+  ]
+ },
+ "z1.3/product-en-360.png": {
+  "differing": 47,
+  "of": 1703520,
+  "bbox": [
+   77,
+   23,
+   234,
+   34
+  ]
+ },
+ "z1.3/product-en-390.png": {
+  "differing": 6,
+  "of": 1854840,
+  "bbox": [
+   14,
+   144,
+   59,
+   145
+  ]
+ },
+ "z1.3/product-en-412.png": {
+  "differing": 6,
+  "of": 1959060,
+  "bbox": [
+   14,
+   144,
+   59,
+   145
+  ]
+ },
+ "z1.3/shop-en-360.png": {
+  "differing": 7,
+  "of": 1219680,
+  "bbox": [
+   17,
+   258,
+   18,
+   305
+  ]
+ },
+ "z1.3/shop-en-390.png": {
+  "differing": 0,
+  "of": 1361490
+ },
+ "z1.3/shop-en-412.png": {
+  "differing": 7,
+  "of": 1458480,
+  "bbox": [
+   17,
+   258,
+   18,
+   305
+  ]
+ },
+ "z1.6/article-en-360.png": {
+  "differing": 0,
+  "of": 706680
+ },
+ "z1.6/article-en-390.png": {
+  "differing": 0,
+  "of": 783900
+ },
+ "z1.6/article-en-412.png": {
+  "differing": 0,
+  "of": 831416
+ },
+ "z1.6/blog-en-360.png": {
+  "differing": 11,
+  "of": 817560,
+  "bbox": [
+   23,
+   390,
+   336,
+   505
+  ]
+ },
+ "z1.6/blog-en-390.png": {
+  "differing": 0,
+  "of": 896610
+ },
+ "z1.6/blog-en-412.png": {
+  "differing": 0,
+  "of": 943480
+ },
+ "z1.6/brand-en-360.png": {
+  "differing": 8,
+  "of": 883440,
+  "bbox": [
+   23,
+   419,
+   25,
+   458
+  ]
+ },
+ "z1.6/brand-en-390.png": {
+  "differing": 8,
+  "of": 979680,
+  "bbox": [
+   23,
+   419,
+   25,
+   458
+  ]
+ },
+ "z1.6/brand-en-412.png": {
+  "differing": 18,
+  "of": 1041536,
+  "bbox": [
+   23,
+   419,
+   388,
+   458
+  ]
+ },
+ "z1.6/cart-en-360.png": {
+  "differing": 282,
+  "of": 339120,
+  "bbox": [
+   23,
+   724,
+   338,
+   731
+  ]
+ },
+ "z1.6/cart-en-390.png": {
+  "differing": 0,
+  "of": 362310
+ },
+ "z1.6/cart-en-412.png": {
+  "differing": 0,
+  "of": 385632
+ },
+ "z1.6/category-en-360.png": {
+  "differing": 9,
+  "of": 904320,
+  "bbox": [
+   17,
+   446,
+   18,
+   499
+  ]
+ },
+ "z1.6/category-en-390.png": {
+  "differing": 9,
+  "of": 1001910,
+  "bbox": [
+   17,
+   446,
+   18,
+   499
+  ]
+ },
+ "z1.6/category-en-412.png": {
+  "differing": 0,
+  "of": 1065020
+ },
+ "z1.6/checkout-en-360.png": {
+  "differing": 0,
+  "of": 599040
+ },
+ "z1.6/checkout-en-390.png": {
+  "differing": 0,
+  "of": 634920
+ },
+ "z1.6/checkout-en-412.png": {
+  "differing": 0,
+  "of": 670736
+ },
+ "z1.6/home-en-360.png": {
+  "differing": 3,
+  "of": 3201120,
+  "bbox": [
+   13,
+   885,
+   14,
+   887
+  ]
+ },
+ "z1.6/home-en-390.png": {
+  "differing": 0,
+  "of": 3538470
+ },
+ "z1.6/home-en-412.png": {
+  "differing": 6,
+  "of": 3789988,
+  "bbox": [
+   368,
+   844,
+   377,
+   847
+  ]
+ },
+ "z1.6/product-en-360.png": {
+  "differing": 47,
+  "of": 1703520,
+  "bbox": [
+   77,
+   23,
+   234,
+   34
+  ]
+ },
+ "z1.6/product-en-390.png": {
+  "differing": 6,
+  "of": 1854840,
+  "bbox": [
+   14,
+   144,
+   59,
+   145
+  ]
+ },
+ "z1.6/product-en-412.png": {
+  "differing": 6,
+  "of": 1959060,
+  "bbox": [
+   14,
+   144,
+   59,
+   145
+  ]
+ },
+ "z1.6/shop-en-360.png": {
+  "differing": 0,
+  "of": 1219680
+ },
+ "z1.6/shop-en-390.png": {
+  "differing": 7,
+  "of": 1361490,
+  "bbox": [
+   17,
+   258,
+   18,
+   305
+  ]
+ },
+ "z1.6/shop-en-412.png": {
+  "differing": 0,
+  "of": 1458480
+ },
+ "z2/article-en-360.png": {
+  "differing": 0,
+  "of": 706680
+ },
+ "z2/article-en-390.png": {
+  "differing": 0,
+  "of": 783900
+ },
+ "z2/article-en-412.png": {
+  "differing": 0,
+  "of": 831416
+ },
+ "z2/blog-en-360.png": {
+  "differing": 11,
+  "of": 817560,
+  "bbox": [
+   23,
+   390,
+   336,
+   505
+  ]
+ },
+ "z2/blog-en-390.png": {
+  "differing": 0,
+  "of": 896610
+ },
+ "z2/blog-en-412.png": {
+  "differing": 11,
+  "of": 943480,
+  "bbox": [
+   23,
+   390,
+   388,
+   505
+  ]
+ },
+ "z2/brand-en-360.png": {
+  "differing": 8,
+  "of": 883440,
+  "bbox": [
+   23,
+   419,
+   25,
+   458
+  ]
+ },
+ "z2/brand-en-390.png": {
+  "differing": 8,
+  "of": 979680,
+  "bbox": [
+   23,
+   419,
+   25,
+   458
+  ]
+ },
+ "z2/brand-en-412.png": {
+  "differing": 18,
+  "of": 1041536,
+  "bbox": [
+   23,
+   419,
+   388,
+   458
+  ]
+ },
+ "z2/cart-en-360.png": {
+  "differing": 282,
+  "of": 339120,
+  "bbox": [
+   23,
+   724,
+   338,
+   731
+  ]
+ },
+ "z2/cart-en-390.png": {
+  "differing": 0,
+  "of": 362310
+ },
+ "z2/cart-en-412.png": {
+  "differing": 0,
+  "of": 385632
+ },
+ "z2/category-en-360.png": {
+  "differing": 9,
+  "of": 904320,
+  "bbox": [
+   17,
+   446,
+   18,
+   499
+  ]
+ },
+ "z2/category-en-390.png": {
+  "differing": 9,
+  "of": 1001910,
+  "bbox": [
+   17,
+   446,
+   18,
+   499
+  ]
+ },
+ "z2/category-en-412.png": {
+  "differing": 0,
+  "of": 1065020
+ },
+ "z2/checkout-en-360.png": {
+  "differing": 0,
+  "of": 599040
+ },
+ "z2/checkout-en-390.png": {
+  "differing": 0,
+  "of": 634920
+ },
+ "z2/checkout-en-412.png": {
+  "differing": 0,
+  "of": 670736
+ },
+ "z2/home-en-360.png": {
+  "differing": 0,
+  "of": 3201120
+ },
+ "z2/home-en-390.png": {
+  "differing": 0,
+  "of": 3538470
+ },
+ "z2/home-en-412.png": {
+  "differing": 6,
+  "of": 3789988,
+  "bbox": [
+   368,
+   844,
+   377,
+   847
+  ]
+ },
+ "z2/product-en-360.png": {
+  "differing": 0,
+  "of": 1703520
+ },
+ "z2/product-en-390.png": {
+  "differing": 6,
+  "of": 1854840,
+  "bbox": [
+   14,
+   144,
+   59,
+   145
+  ]
+ },
+ "z2/product-en-412.png": {
+  "differing": 6,
+  "of": 1959060,
+  "bbox": [
+   14,
+   144,
+   59,
+   145
+  ]
+ },
+ "z2/shop-en-360.png": {
+  "differing": 0,
+  "of": 1219680
+ },
+ "z2/shop-en-390.png": {
+  "differing": 7,
+  "of": 1361490,
+  "bbox": [
+   17,
+   258,
+   18,
+   305
+  ]
+ },
+ "z2/shop-en-412.png": {
+  "differing": 0,
+  "of": 1458480
+ }
+}
