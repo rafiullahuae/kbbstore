@@ -1,0 +1,12 @@
+{
+  "/ar/": {
+    "translate": "no",
+    "meta": true,
+    "trEn": false
+  },
+  "/": {
+    "translate": null,
+    "meta": false,
+    "trEn": false
+  }
+}
