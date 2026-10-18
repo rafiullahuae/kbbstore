@@ -205,9 +205,25 @@ it('reproduces the owner’s 500 on a PHP that cannot start a program, and does 
     file_put_contents($dir.'/public/'.UgcMedia::DIR.'/'.$clip, u5Mp4());
 
     $script = $dir.'/probe.php';
+    // The child loads Composer's class map and every autoload file EXCEPT the
+    // test runner's: nunomaduro/collision's autoload file asks PHPUnit for its
+    // version, which shells out to git through proc_open -- so in a child with
+    // proc_open disabled the plain vendor/autoload.php died before one line of
+    // the shop ran ("Call to undefined function proc_open()" in
+    // sebastian/version), and this test was red on every machine with dev
+    // packages installed. The shop's own code and Symfony load exactly as before.
     file_put_contents($script, <<<'CHILD'
         <?php
-        require $argv[1];
+        $v = dirname($argv[1]);
+        require $v.'/composer/ClassLoader.php';
+        $loader = new Composer\Autoload\ClassLoader($v);
+        foreach (require $v.'/composer/autoload_namespaces.php' as $ns => $path) { $loader->set($ns, $path); }
+        foreach (require $v.'/composer/autoload_psr4.php' as $ns => $path) { $loader->setPsr4($ns, $path); }
+        $loader->addClassMap(require $v.'/composer/autoload_classmap.php');
+        $loader->register(true);
+        foreach (require $v.'/composer/autoload_files.php' as $file) {
+            if (! preg_match('~/(nunomaduro|pestphp|phpunit|sebastian)/~', $file)) { require_once $file; }
+        }
         putenv('KBB_FFMPEG='.$argv[2]);
 
         $t = new App\Services\UgcTranscoder();
