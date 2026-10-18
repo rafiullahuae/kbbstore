@@ -284,6 +284,9 @@ final class StaticMemos
         MailConfigurator::class => 'registered is a WeakMap keyed on the mailer instance. Entries '
             .'disappear with the mailer they describe, which is what it was changed to a WeakMap FOR '
             .'-- keyed on spl_object_id it leaked between tests, because PHP reuses object ids.',
+        \App\Services\GridSections::class => 'trendingMemo (Lane SBC) is set at the top of idsForMany() and put back to '
+            .'null in its finally, so it is null again however the call ends, exception included: a value scoped '
+            .'to one call, like Shortcodes\' stack, not a memo that can cross a test.',
         \App\Support\AdminSearchIndex::class => 'built is derived from class constants only (CURATED and '
             .'the SCHEMA/TABS of the SCHEMA_SCREENS classes) -- no database, no settings, no request -- so '
             .'no test can make it differ from what a fresh process would build.',

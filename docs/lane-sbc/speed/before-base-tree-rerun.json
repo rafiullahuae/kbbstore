@@ -1,0 +1,20 @@
+{
+    "/": {
+        "status": 200,
+        "ms": 55.6,
+        "queries": 0,
+        "settings_queries": 0,
+        "settings_map_reads": 1,
+        "html_bytes": 142865,
+        "markers": 0
+    },
+    "/product/1025-dokdo-toner/": {
+        "status": 200,
+        "ms": 28.5,
+        "queries": 10,
+        "settings_queries": 0,
+        "settings_map_reads": 1,
+        "html_bytes": 171367,
+        "markers": 0
+    }
+}

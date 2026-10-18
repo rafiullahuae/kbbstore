@@ -1,0 +1,156 @@
+{
+  "en-1280-photo": {
+    "prev": "",
+    "next": "",
+    "tabs": 8,
+    "tabRows": 1,
+    "tabsScrollW": 1205,
+    "tabsClientW": 1205,
+    "section": [
+      1280,
+      709
+    ],
+    "hero": [
+      447,
+      420
+    ],
+    "card": [
+      367,
+      124
+    ],
+    "cards": 6,
+    "heroPhoto": true,
+    "heroImg": "http://127.0.0.1:9620/img-cache/800/uploads/sbc/acne.jpg",
+    "h2": "Shop by Concern",
+    "h2Size": "30px",
+    "sub": false,
+    "headIcon": false,
+    "tip": "Cleanse gently, twice a day. Use a 2% BHA (salicylic acid) t",
+    "dots": 3,
+    "docScrollW": 1280,
+    "innerW": 1280,
+    "dir": "ltr",
+    "hits": {
+      "tabs": "true (8)",
+      "viewAll": true,
+      "cart": "true (6 on screen)"
+    },
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  "en-390-photo": {
+    "prev": "",
+    "next": "",
+    "tabs": 8,
+    "tabRows": 1,
+    "tabsScrollW": 917,
+    "tabsClientW": 390,
+    "section": [
+      390,
+      650
+    ],
+    "hero": [
+      366,
+      220
+    ],
+    "card": [
+      300,
+      104
+    ],
+    "cards": 6,
+    "heroPhoto": true,
+    "heroImg": "http://127.0.0.1:9620/img-cache/800/uploads/sbc/acne.jpg",
+    "h2": "Shop by Concern",
+    "h2Size": "23px",
+    "sub": false,
+    "headIcon": false,
+    "tip": "Cleanse gently, twice a day. Use a 2% BHA (salicylic acid) t",
+    "dots": 3,
+    "docScrollW": 390,
+    "innerW": 390,
+    "dir": "ltr",
+    "hits": {
+      "tabs": "true (8)",
+      "viewAll": true,
+      "cart": "true (2 on screen)"
+    },
+    "consoleErrors": []
+  },
+  "ar-1280-photo": {
+    "prev": "",
+    "next": "",
+    "tabs": 8,
+    "tabRows": 1,
+    "tabsScrollW": 1205,
+    "tabsClientW": 1205,
+    "section": [
+      1280,
+      709
+    ],
+    "hero": [
+      447,
+      420
+    ],
+    "card": [
+      367,
+      124
+    ],
+    "cards": 6,
+    "heroPhoto": true,
+    "heroImg": "http://127.0.0.1:9620/img-cache/800/uploads/sbc/acne.jpg",
+    "h2": "تسوّقي حسب مشكلة البشرة",
+    "h2Size": "30px",
+    "sub": false,
+    "headIcon": false,
+    "tip": "نظّفي بشرتكِ بلطف مرتين يوميًا. استخدمي BHA (حمض الساليسيليك",
+    "dots": 3,
+    "docScrollW": 1280,
+    "innerW": 1280,
+    "dir": "rtl",
+    "hits": {
+      "tabs": "true (8)",
+      "viewAll": true,
+      "cart": "true (6 on screen)"
+    },
+    "consoleErrors": []
+  },
+  "ar-390-photo": {
+    "prev": "",
+    "next": "",
+    "tabs": 8,
+    "tabRows": 1,
+    "tabsScrollW": 1028,
+    "tabsClientW": 390,
+    "section": [
+      390,
+      650
+    ],
+    "hero": [
+      366,
+      220
+    ],
+    "card": [
+      300,
+      104
+    ],
+    "cards": 6,
+    "heroPhoto": true,
+    "heroImg": "http://127.0.0.1:9620/img-cache/800/uploads/sbc/acne.jpg",
+    "h2": "تسوّقي حسب مشكلة البشرة",
+    "h2Size": "23px",
+    "sub": false,
+    "headIcon": false,
+    "tip": "نظّفي بشرتكِ بلطف مرتين يوميًا. استخدمي BHA (حمض الساليسيليك",
+    "dots": 3,
+    "docScrollW": 390,
+    "innerW": 390,
+    "dir": "rtl",
+    "hits": {
+      "tabs": "true (8)",
+      "viewAll": true,
+      "cart": "true (2 on screen)"
+    },
+    "consoleErrors": []
+  }
+}

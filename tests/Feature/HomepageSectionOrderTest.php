@@ -279,7 +279,10 @@ it('pairs the class on the section with the rule in the style, for the whole ord
     // 18 → 19 (Lane HS, merged after HC): Spotted ships as the static grid, which draws on
     // this fixture, and now carries its row's order class like every other
     // section (it carried none before — the defect Lane HC found).
-    expect($paired)->toBe(19);
+    // ▲ Lane SBC: 19 → 20 — Shop by Concern ships off, so LegacyHomeSections
+    // switches it on with the other OFF_BY_DEFAULT rows, and it draws on this
+    // fixture (its collections have products) carrying its order class.
+    expect($paired)->toBe(20);
 });
 
 it('gives the hero a later position than the newsletter once it has been moved down', function () {

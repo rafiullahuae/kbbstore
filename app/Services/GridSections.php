@@ -898,10 +898,90 @@ class GridSections
         };
     }
 
+    /**
+     * (Lane SBC) Trending's scores for the length of one idsForMany() call, so
+     * eight tabs sorted by Trending ask for them once. Null everywhere else:
+     * every other caller reads them fresh exactly as before.
+     */
+    private static ?array $trendingMemo = null;
+
+    /**
+     * SEVERAL SELECTIONS' PRODUCT IDS IN ONE ROUND TRIP.                (Lane SBC)
+     *
+     * Shop by Concern draws up to twelve tabs, each with its own source, sort
+     * and count. One pool() per tab would make the homepage's query count grow
+     * with the tabs; this builds each tab's query EXACTLY as fetchPool() and
+     * applyQuery() build a `query` or `manual` pool — visible(), the same
+     * filters, the same orders and tie-breaks — always in stock, selects only
+     * the id, and sends them as ONE `UNION ALL` (each part keeps its own ORDER
+     * BY and LIMIT: the grammar wraps every part). A hand-picked list comes
+     * back in the owner's order, restored here.
+     *
+     * @param  array<int, array{query: array, picks: list<int>, limit: int}>  $parts  key => selection
+     * @return array<int, list<int>>  key => product ids, in order
+     */
+    public function idsForMany(array $parts): array
+    {
+        if ($parts === []) {
+            return [];
+        }
+
+        $keys = array_keys($parts);
+        $union = null;
+
+        try {
+            foreach ($parts as $q) {
+                if (($q['query']['sort'] ?? '') === 'trending' && ($q['picks'] ?? []) === []) {
+                    self::$trendingMemo ??= self::trendingScores();
+                }
+            }
+
+            foreach ($keys as $n => $key) {
+                $q = $parts[$key];
+                $base = Product::query()->select('products.id')->selectRaw((int) $n.' as kbb_part')->visible()->inStock();
+                $picks = array_slice(array_values(array_filter(array_map('intval', $q['picks'] ?? []))), 0, 48);
+
+                if ($picks !== []) {
+                    $base->whereIn('products.id', $picks)->limit(48);
+                } else {
+                    $this->applyQuery($base, ProductSource::clean($q['query'] ?? []), false)->limit(max(1, min(48, (int) $q['limit'])));
+                }
+
+                $union === null ? $union = $base->toBase() : $union->unionAll($base->toBase());
+            }
+
+            $rows = $union->get();
+        } finally {
+            self::$trendingMemo = null;
+        }
+
+        $found = [];
+
+        foreach ($rows as $row) {
+            $found[$keys[(int) $row->kbb_part]][] = (int) $row->id;
+        }
+
+        $out = [];
+
+        foreach ($keys as $key) {
+            $ids = $found[$key] ?? [];
+            $picks = array_values(array_filter(array_map('intval', $parts[$key]['picks'] ?? [])));
+
+            if ($picks !== []) {
+                $ids = array_values(array_intersect($picks, $ids));
+                $ids = array_slice($ids, 0, max(1, (int) $parts[$key]['limit']));
+            }
+
+            $out[$key] = $ids;
+        }
+
+        return $out;
+    }
+
     /** Trending's scored products first; the caller adds the tie-breaks. */
     private static function orderTrending($base)
     {
-        $scores = self::trendingScores();
+        $scores = self::$trendingMemo ?? self::trendingScores();
 
         if ($scores !== []) {
             $case = 'CASE products.id';

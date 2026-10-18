@@ -809,6 +809,15 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
 @include('partials.home.hs-concerns', ['cls' => $sections->classFor('concerns'), 'cc' => $hsConcerns])
 @endif
 @endunless
+{{-- SHOP BY CONCERN (Lane SBC): concern tabs, a tip panel and products,
+     under Skin concerns; ships off (HomepageSections::OFF_BY_DEFAULT). Appearance → Homepage content → Shop by Concern.
+     Nothing is read or printed while it is off on both devices, or when no tab
+     has a product to show. --}}@unless ($sections->hidden('sbc'))
+@php $hsSbc = \App\Support\ShopByConcern::section($homeSettings, \App\Support\ShopByConcern::data($homeSettings), null, in_array('sbc', $homeFirst, true)); @endphp
+@if ($hsSbc !== null)
+@include('partials.home.hs-sbc', ['cls' => $sections->classFor('sbc'), 'sb' => $hsSbc])
+@endif
+@endunless
 
 {{-- BEST SELLERS --}}
 @unless ($sections->hidden('bestsellers'))

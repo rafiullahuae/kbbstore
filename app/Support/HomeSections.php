@@ -197,6 +197,9 @@ final class HomeSections
         // (Lane CX) Shop by skin concern, under Trending — in page order, as
         // HomepageApiController::WORDS claims them.
         ...HomeConcerns::SCHEMA,
+        // (Lane SBC) Shop by Concern — the tabs, tips and products — under
+        // Skin concerns, in page order.
+        ...ShopByConcern::SCHEMA,
         'home_bl_eyebrow' => ['type' => 'text', 'label' => 'Small line above the heading', 'default' => 'The journal', 'store' => 'setting', 'help' => 'Empty draws none.'],
         'home_bl_title' => ['type' => 'text', 'label' => 'Heading (H2)', 'default' => 'Korean Skincare Tips & Guides', 'store' => 'setting', 'help' => 'Written for search. Empty hides the heading — keep one: every section should carry an H2.'],
         'home_bl_sub' => ['type' => 'text', 'label' => 'Line under the heading', 'default' => 'Fresh articles from the K-Beauty Bliss journal to help you choose and use Korean skincare.', 'store' => 'setting', 'help' => 'Empty draws none.'],
@@ -272,6 +275,8 @@ final class HomeSections
         'trending' => ['Trending', 'Section 5: what is moving this week — 8 on a laptop, 6 on a phone, no button.', ['home_tr_eyebrow', 'home_tr_title', 'home_tr_sub', 'home_tr_source', 'home_tr_cat', 'home_tr_brand', 'home_tr_picks', 'home_tr_brands', 'home_tr_cats', 'home_tr_sort', 'home_tr_stock', 'home_tr_max', 'home_tr_count_d', 'home_tr_count_m', 'home_tr_cols_d', 'home_tr_cols_m', 'home_tr_btn', 'home_tr_url', 'home_tr_bg', 'home_tr_pt_d', 'home_tr_pt_m', 'home_tr_pb_d', 'home_tr_pb_m', 'home_tr_hg_d', 'home_tr_hg_m']],
         // (Lane CX) Shop by skin concern — directly under Trending, as the owner asked.
         'concerns' => HomeConcerns::TAB,
+        // (Lane SBC) Shop by Concern — under Skin concerns, in page order.
+        'sbc' => ShopByConcern::TAB,
         'blog' => ['Blog', 'Section 6: three articles side by side on a laptop, stacked on a phone.', ['home_bl_eyebrow', 'home_bl_title', 'home_bl_sub', 'home_bl_source', 'home_bl_picks', 'home_bl_count_m', 'home_bl_read', 'home_bl_tag', 'home_bl_more', 'home_bl_btn', 'home_bl_url', 'home_bl_bg', 'home_bl_pt_d', 'home_bl_pt_m', 'home_bl_pb_d', 'home_bl_pb_m', 'home_bl_hg_d', 'home_bl_hg_m']],
         'under54' => ['Under AED 54', 'Section 7: 10 on a laptop (5 per row), 6 on a phone (2 per row), at or under the price ceiling.', ['home_u54_eyebrow', 'home_u54_title', 'home_u54_sub', 'home_u54_source', 'home_u54_cat', 'home_u54_brand', 'home_u54_picks', 'home_u54_brands', 'home_u54_cats', 'home_u54_sort', 'home_u54_stock', 'home_u54_max', 'home_u54_count_d', 'home_u54_count_m', 'home_u54_cols_d', 'home_u54_cols_m', 'home_u54_btn', 'home_u54_url', 'home_u54_bg', 'home_u54_pt_d', 'home_u54_pt_m', 'home_u54_pb_d', 'home_u54_pb_m', 'home_u54_hg_d', 'home_u54_hg_m']],
         'feature' => ['Two-column feature', 'Section 8: two photo panels with a title, a thin rule, a line of text and SHOP NOW ▸ — Sunscreens on the left, best sellers on the right.', ['home_ft_l_img', 'home_ft_l_alt', 'home_ft_l_title', 'home_ft_l_text', 'home_ft_l_btn', 'home_ft_l_url', 'home_ft_r_img', 'home_ft_r_alt', 'home_ft_r_title', 'home_ft_r_text', 'home_ft_r_btn', 'home_ft_r_url', 'home_ft_bg', 'home_ft_pt_d', 'home_ft_pt_m', 'home_ft_pb_d', 'home_ft_pb_m']],

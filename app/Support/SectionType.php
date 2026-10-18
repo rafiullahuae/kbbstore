@@ -113,7 +113,9 @@ final class SectionType
     private const NO_SUB = ['about', 'routine', 'quiz', 'feature'];
 
     /** Headed, but with no heading ROW for a gap to open under. */
-    private const NO_GAP = ['quiz', 'newsletter', 'feature'];
+    // (Lane SBC) Shop by Concern draws its own heading row (.sbc-head), so a
+    // gap control aimed at .hs-head would move nothing.
+    private const NO_GAP = ['quiz', 'newsletter', 'feature', 'sbc'];
 
     /**
      * Spacing a section already owns, under its own keys — the hub moves those
@@ -172,6 +174,8 @@ final class SectionType
         'brands' => ['h_d' => 34, 'h_m' => 24, 'eb_d' => 12, 'eb_m' => 11, 'sub_d' => 16, 'sub_m' => 16, 'body_d' => 14, 'body_m' => 14, 'pt_d' => 0, 'pt_m' => 0, 'pb_d' => 0, 'pb_m' => 0, 'gap_d' => 28, 'gap_m' => 16],
         'spotted' => ['h_d' => 34, 'h_m' => 24, 'pt_d' => 8, 'pt_m' => 8, 'pb_d' => 8, 'pb_m' => 8, 'gap_d' => 24, 'gap_m' => 16],
         'trending' => ['h_d' => 34, 'h_m' => 24, 'eb_d' => 12, 'eb_m' => 11, 'sub_d' => 16, 'sub_m' => 16, 'body_d' => 14, 'body_m' => 14, 'pt_d' => 0, 'pt_m' => 0, 'pb_d' => 0, 'pb_m' => 0, 'gap_d' => 28, 'gap_m' => 16],
+        // (Lane SBC) The design's own numbers (docs/sbc-preview/template-v3.html), drawn by .sbc-* in its partial.
+        'sbc' => ['h_d' => 30, 'h_m' => 23, 'sub_d' => 15, 'sub_m' => 14, 'pt_d' => 44, 'pt_m' => 28, 'pb_d' => 48, 'pb_m' => 30],
         'concerns' => ['h_d' => 34, 'h_m' => 24, 'eb_d' => 12, 'eb_m' => 11, 'sub_d' => 16, 'sub_m' => 16, 'pt_d' => 0, 'pt_m' => 0, 'pb_d' => 0, 'pb_m' => 0, 'gap_d' => 24, 'gap_m' => 16],
         'bestsellers' => ['h_d' => 30, 'h_m' => 18, 'eb_d' => 12, 'eb_m' => 11, 'sub_d' => 14, 'sub_m' => 14, 'body_d' => 14, 'body_m' => 14, 'pt_d' => 0, 'pt_m' => 0, 'pb_d' => 14, 'pb_m' => 6, 'gap_d' => 22, 'gap_m' => 12],
         'flash' => ['h_d' => 30, 'h_m' => 18, 'eb_d' => 12, 'eb_m' => 11, 'sub_d' => 14, 'sub_m' => 14, 'body_d' => 14, 'body_m' => 14, 'pt_d' => 0, 'pt_m' => 0, 'pb_d' => 14, 'pb_m' => 6, 'gap_d' => 22, 'gap_m' => 12],

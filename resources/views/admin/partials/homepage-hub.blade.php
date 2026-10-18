@@ -685,6 +685,11 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
       // (Lane CX) Skin concerns: the shared chip editor around a hidden input
       // carrying this screen's data-hph-k, so set() stores it as usual.
       ctl = window.kbbCc.html(f, v, data.trim(), (S.data.vocab && S.data.vocab.categories) || []);
+    } else if (f.options && f.options.picker === 'sbc-tabs' && window.kbbSbc) {
+      // (Lane SBC) Shop by Concern: the shared tab editor around a hidden input
+      // carrying this screen's data-hph-k, so set() stores it as usual.
+      var sbcV = S.data.vocab || {};
+      ctl = window.kbbSbc.html(f, v, data.trim(), {cats: sbcV.categories, brands: sbcV.brands, cards: S.data.products});
     } else if (f.type === 'textarea') {
       ctl = '<textarea class="hph-in" id="' + id + '"' + data + '>' + esc(v) + '</textarea>';
     } else if (f.type === 'ids' && f.options && f.options.of && f.options.of !== 'products') {

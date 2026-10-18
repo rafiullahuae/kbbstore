@@ -319,6 +319,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // ▲ Lane AR round 2, spliced in, not regenerated: cart-panel gains a last
     // tab, wording_ar ("Arabic wording"), the ten txt_*_ar twins of the
     // Wording tab. Every earlier tab and field is byte-identical.
+    // ▲ Lane SBC (18 October), spliced in, not regenerated: Section dividers'
+    // section list gains `sbc` ("Shop by Concern") after `concerns`, from
+    // HomepageSections::REGISTRY. Four lines.
     // ▲ Lane HLB (17 October), the owner's approved design, spliced in, not
     // regenerated: cart-panel's Content gains wish_tab_m ("Wishlist tab
     // (phones)", ON) last, Wording and Arabic wording each gain the heart tab's
