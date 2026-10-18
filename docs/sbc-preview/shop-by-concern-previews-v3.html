@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shop by Concern — previews</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#E0567B;--deep:#C13E63;--ink:#2A2228;--ink2:#5E545A;--muted:#8C828A;--cream:#FFF8F5;--soft:#FFF0F4;--blush:#FCE0E8;--line:#F0E4E8;--card:#F6F2F3;--red:#D7263D}
+*{box-sizing:border-box}
+body{margin:0;font-family:Outfit,system-ui,sans-serif;color:var(--ink);background:#EFEAEC}
+.bar{position:relative;z-index:5;background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bar b{margin-inline-end:6px}
+.bar button{font:inherit;font-size:14px;border:1px solid var(--line);background:#fff;border-radius:99px;padding:7px 14px;cursor:pointer}
+.bar button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.note{max-width:1240px;margin:14px auto 0;padding:0 16px;font-size:14px;color:var(--ink2)}
+.stage{max-width:1300px;margin:0 auto;padding:12px 16px 40px;display:grid;gap:22px}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.dkwrap{overflow:hidden;border-radius:14px;box-shadow:0 2px 16px rgba(42,34,40,.08);background:#fff}
+.dk{width:1280px;transform-origin:0 0}
+[dir=rtl] .dk{transform-origin:100% 0}
+.phone{width:390px;max-width:100%;border:10px solid #1d1a1c;border-radius:36px;overflow:hidden;background:#fff;box-shadow:0 2px 16px rgba(42,34,40,.15)}
+.row2{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+/* ---------- shared section ---------- */
+.sbc{container-type:inline-size;background:#fff;font-family:inherit}
+[dir=rtl] .sbc{font-family:'Noto Kufi Arabic',Outfit,sans-serif}
+.sbc .in{padding:44px 60px 48px}
+.sbc h2{margin:0;font-size:30px;font-weight:700;display:flex;align-items:center;gap:10px}
+.sbc h2 .hi{width:34px;height:34px;color:var(--pink)}
+.sbc .sub{margin:6px 0 0;color:var(--ink2);font-size:15px}
+.sbc svg{display:block}
+.price{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.off{color:var(--red);font-weight:700}
+.now{font-weight:700}
+.was{color:var(--muted);text-decoration:line-through;font-size:.85em}
+.tip{display:inline-block;background:var(--pink);color:#fff;border-radius:99px;font-size:12px;padding:2px 10px;font-weight:600;letter-spacing:.04em}
+a{color:inherit;text-decoration:none}
+.thumb{background:#fff;border-radius:8px;display:grid;place-items:center;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:contain}
+/* ---------- A: the reference layout ---------- */
+.A .tabs{display:flex;gap:12px;margin:22px 0 24px;flex-wrap:wrap}
+.A .tab{display:flex;align-items:center;gap:9px;border:1px solid #E3DADD;background:#fff;border-radius:6px;padding:9px 16px 9px 11px;font:inherit;font-size:16px;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.A .tab .ic{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--deep)}
+.A .tab .ic svg{width:16px;height:16px}
+.A .tab.on{background:var(--pink);border-color:var(--pink);color:#fff}
+.A .tab.on .ic{background:#fff;color:var(--pink)}
+.A .body{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:12px}
+.A .hero{grid-row:span 3;border-radius:4px;position:relative;overflow:hidden;padding:44px 46px;min-height:452px}
+.A .hero h3{margin:0 0 26px;font-size:36px;font-weight:600;position:relative;z-index:1}
+.A .hero .tip,.A .hero p{position:relative;z-index:1}
+.A .hero p{margin:8px 0 0;font-size:17px;line-height:1.35;max-width:250px}
+.A .hero .art{position:absolute;inset-inline-end:-30px;bottom:-30px;width:300px;height:300px;color:rgba(255,255,255,.75)}
+.A .hero .shot{position:absolute;width:150px;height:150px;border-radius:50%;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.08);display:grid;place-items:center;overflow:hidden}
+.A .hero .shot img{width:86%;height:86%;object-fit:contain}
+.A .hero .s1{inset-inline-end:44px;bottom:120px}.A .hero .s2{inset-inline-end:196px;bottom:36px;width:118px;height:118px}
+.A .item{background:var(--card);border-radius:4px;display:flex;gap:18px;align-items:center;padding:24px 20px;min-height:142px}
+.A .item .thumb{width:88px;height:88px;flex:0 0 88px}
+.A .item .b{font-weight:700;font-size:15px;text-transform:uppercase}
+.A .item .n{font-size:16px;margin:3px 0 6px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.A .item .price{font-size:18px}
+@container (max-width:700px){
+ .A .in{padding:28px 16px 30px}.sbc h2{font-size:23px}.sbc .sub{font-size:13.5px}
+ .A .tabs{flex-wrap:nowrap;overflow-x:auto;margin:16px -16px 16px;padding:0 16px;scrollbar-width:none;gap:8px}
+ .A .tab{font-size:14px;padding:7px 12px 7px 8px}.A .tab .ic{width:22px;height:22px}
+ .A .body{grid-template-columns:1fr;gap:8px}
+ .A .hero{grid-row:auto;min-height:0;padding:20px 18px;border-radius:10px}
+ .A .hero h3{font-size:22px;margin-bottom:10px}.A .hero p{font-size:14px;max-width:62%}
+ .A .hero .art{width:150px;height:150px;bottom:-20px;inset-inline-end:-16px}.A .hero .shot{display:none}
+ .A .item{padding:12px;min-height:0;gap:12px;border-radius:10px}.A .item .thumb{width:72px;height:72px;flex-basis:72px}
+ .A .item .b{font-size:12.5px}.A .item .n{font-size:14px}.A .item .price{font-size:15px}
+ .A .more{display:block}
+}
+.A .more,.B .more{display:none;margin-top:14px;text-align:center;border:1.5px solid var(--ink);border-radius:99px;padding:11px;font-weight:600}
+/* ---------- B: icon circles ---------- */
+.B .head{text-align:center}
+.B h2{justify-content:center}
+.B .tabs{display:flex;justify-content:center;gap:26px;margin:26px 0 22px}
+.B .tab{background:none;border:0;font:inherit;cursor:pointer;display:grid;justify-items:center;gap:8px;color:var(--ink2);font-size:14px;width:96px}
+.B .tab .ic{width:74px;height:74px;border-radius:50%;background:var(--soft);display:grid;place-items:center;color:var(--deep);border:2px solid transparent;transition:transform .15s}
+.B .tab .ic svg{width:34px;height:34px}
+.B .tab.on{color:var(--ink);font-weight:600}
+.B .tab.on .ic{background:var(--pink);color:#fff;box-shadow:0 0 0 4px #fff,0 0 0 6px var(--pink)}
+.B .strip{display:flex;align-items:center;gap:14px;border-radius:14px;padding:14px 20px;margin:0 0 18px}
+.B .strip .si{width:44px;height:44px;border-radius:50%;background:#fff;display:grid;place-items:center;color:var(--deep);flex:0 0 44px}
+.B .strip .si svg{width:24px;height:24px}
+.B .strip b{display:block;font-size:17px}.B .strip span{font-size:14.5px;color:var(--ink2)}
+.B .strip .go{margin-inline-start:auto;background:var(--ink);color:#fff;border-radius:99px;padding:10px 18px;font-weight:600;white-space:nowrap;font-size:14px}
+.B .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.B .card{border:1px solid var(--line);border-radius:14px;padding:10px 10px 12px;display:flex;flex-direction:column;position:relative}
+.B .card .thumb{aspect-ratio:1;border-radius:10px;background:var(--cream)}
+.B .card .badge{position:absolute;top:16px;inset-inline-start:16px;background:#1F7A4D;color:#fff;font-size:12px;font-weight:700;border-radius:6px;padding:2px 7px}
+.B .card .b{font-size:12px;font-weight:700;color:var(--deep);text-transform:uppercase;margin-top:10px}
+.B .card .n{font-size:14px;line-height:1.3;margin:3px 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
+.B .card .price{margin-top:auto;font-size:16px}
+.B .card .add{margin-top:10px;background:var(--deep);color:#fff;border:0;border-radius:8px;padding:9px;font:inherit;font-weight:600;font-size:13.5px}
+@container (max-width:700px){
+ .B .in{padding:28px 0 30px}.B .head{padding:0 16px}
+ .B .tabs{justify-content:flex-start;overflow-x:auto;gap:4px;margin:18px 0 14px;padding:4px 12px 2px;scrollbar-width:none}
+ .B .tab{width:76px;flex:0 0 76px;font-size:12.5px}.B .tab .ic{width:58px;height:58px}.B .tab .ic svg{width:27px;height:27px}
+ .B .strip{margin:0 16px 14px;padding:12px 14px;border-radius:12px}.B .strip b{font-size:15px}.B .strip span{font-size:13px}.B .strip .go{display:none}
+ .B .grid{grid-template-columns:1fr 1fr;gap:10px;padding:0 16px}
+ .B .card .n{font-size:13.5px}.B .card .price{font-size:15px}
+ .B .more{display:block;margin:14px 16px 0}
+}
+/* ---------- C: side menu ---------- */
+.C .body{display:grid;grid-template-columns:280px minmax(0,1fr);gap:24px;margin-top:24px}
+.C .body>*{min-width:0}
+.C .tabs{display:grid;gap:6px;align-content:start}
+.C .tab{display:flex;align-items:center;gap:12px;border:0;background:none;font:inherit;text-align:start;padding:10px 12px;border-radius:12px;cursor:pointer;color:var(--ink2);font-size:15.5px}
+.C .tab .ic{width:40px;height:40px;border-radius:12px;background:var(--soft);display:grid;place-items:center;color:var(--deep);flex:0 0 40px}
+.C .tab .ic svg{width:22px;height:22px}
+.C .tab small{display:block;font-size:12.5px;color:var(--muted)}
+.C .tab.on{background:var(--ink);color:#fff}.C .tab.on small{color:#D9CFD4}.C .tab.on .ic{background:var(--pink);color:#fff}
+.C .tab .ch{margin-inline-start:auto;opacity:.5}
+[dir=rtl] .C .tab .ch{transform:scaleX(-1)}
+.C .hero{border-radius:16px;padding:22px 26px;display:flex;align-items:center;gap:18px;margin-bottom:16px;position:relative;overflow:hidden}
+.C .hero h3{margin:0;font-size:24px}.C .hero p{margin:4px 0 0;color:var(--ink2);font-size:15px;max-width:520px}
+.C .hero .art{width:110px;height:110px;color:rgba(255,255,255,.85);margin-inline-start:auto;flex:0 0 110px}
+.C .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.C .item{border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;gap:12px;align-items:center}
+.C .item .thumb{width:84px;height:84px;flex:0 0 84px;background:var(--cream)}
+.C .item .b{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--deep)}
+.C .item .n{font-size:14.5px;line-height:1.3;margin:2px 0 6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.C .item .price{font-size:15.5px}
+.C .more{display:inline-block;margin-top:16px;font-weight:600;color:var(--deep)}
+@container (max-width:700px){
+ .C .in{padding:28px 0 30px}.C .head{padding:0 16px}
+ .C .body{grid-template-columns:minmax(0,1fr);gap:12px;margin-top:16px}
+ .C .tabs{display:flex;overflow-x:auto;gap:8px;padding:0 16px;scrollbar-width:none}
+ .C .tab{flex:0 0 auto;background:var(--soft);padding:6px 12px 6px 6px;border-radius:99px;font-size:13.5px;gap:8px}
+ .C .tab small,.C .tab .ch{display:none}.C .tab .ic{width:28px;height:28px;flex-basis:28px;border-radius:50%;background:#fff}.C .tab .ic svg{width:16px;height:16px}
+ .C .panel{padding:0 16px}
+ .C .hero{padding:16px 18px;border-radius:14px}.C .hero h3{font-size:19px}.C .hero p{font-size:13.5px}.C .hero .art{width:70px;height:70px;flex-basis:70px}
+ .C .grid{display:flex;overflow-x:auto;gap:10px;margin:0 -16px;padding:0 16px;scroll-snap-type:x mandatory;scrollbar-width:none}
+ .C .item{flex:0 0 58%;scroll-snap-align:start;flex-direction:column;align-items:stretch;text-align:start}
+ .C .item .thumb{width:100%;height:auto;aspect-ratio:1.25;flex-basis:auto}
+}
+
+/* ---------- shared by A2-A4 ---------- */
+.Av{--icf:var(--blush)}
+.Av .tab .ic svg{width:20px;height:20px}
+.Av .tab .ic{display:grid;place-items:center;color:var(--deep)}
+.Av .thumb img{width:100%;height:100%;object-fit:contain}
+.Av .dots{display:none}
+.Av .go{font-weight:600;font-size:14px;color:var(--ink)}
+/* A2 */
+.A2 .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 22px}
+.A2 .tab{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px 0 10px;border:1px solid #E6DCE0;border-radius:99px;background:#fff;font:inherit;font-size:13.5px;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.A2 .tab.on{border-color:var(--pink);background:var(--soft);color:var(--deep);font-weight:600;box-shadow:inset 0 0 0 1px var(--pink)}
+.A2 .body,.A4 .body{display:grid;grid-template-columns:1.2fr 2fr;gap:12px}
+.A2 .rail,.A4 .rail{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.Av .hero{position:relative;overflow:hidden;border-radius:16px;padding:36px 36px;min-height:420px}
+.Av .hero h3{margin:10px 0 10px;font-size:30px;font-weight:600;position:relative;z-index:1}
+.Av .hero p{margin:0;font-size:15.5px;line-height:1.45;max-width:250px;position:relative;z-index:1;color:var(--ink2)}
+.Av .hero .tip{position:relative;z-index:1}
+.Av .hero .art{display:none;position:absolute;inset-inline-start:-36px;bottom:-40px;width:220px;height:220px;color:var(--pink);opacity:.18;--icf:transparent}
+.Av .hero .shot{position:absolute;border-radius:50%;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.08);display:grid;place-items:center;overflow:hidden;width:132px;height:132px}
+.Av .hero .shot img{width:84%;height:84%;object-fit:contain}
+.Av .hero .s1{inset-inline-end:28px;bottom:96px}.Av .hero .s2{inset-inline-end:150px;bottom:28px;width:104px;height:104px}
+.Av .hero .go{position:absolute;inset-inline-start:36px;bottom:30px;z-index:1;background:#fff;border-radius:99px;padding:8px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.A2 .item,.A4 .item{background:var(--card);border-radius:12px;display:flex;gap:14px;align-items:center;padding:16px}
+.A2 .item .thumb,.A4 .item .thumb{width:84px;height:84px;flex:0 0 84px;background:#fff;border-radius:10px}
+.Av .item .tx{display:block;min-width:0}
+.Av .b{display:block;font-weight:700;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase}
+.Av .n{display:-webkit-box;font-size:14.5px;margin:3px 0 6px;line-height:1.3;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.Av .price{font-size:16px}
+/* A3 */
+.A3 .tabs{display:flex;gap:4px;margin:18px 0 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.A3 .tab{display:inline-flex;align-items:center;gap:6px;background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:8px 10px 9px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.A3 .tab .ic{color:var(--muted)}
+.A3 .tab.on{color:var(--ink);border-bottom-color:var(--pink);font-weight:600}.A3 .tab.on .ic{color:var(--deep)}
+.A3 .body{display:grid;grid-template-columns:300px 1fr;gap:14px}
+.A3 .hero{min-height:0;padding:28px;display:flex;flex-direction:column;gap:12px}
+.A3 .hero .art{display:block;position:static;width:64px;height:64px;opacity:1;--icf:#fff;color:var(--deep)}
+.A3 .hero h3{font-size:24px;margin:0 0 8px}
+.A3 .hero .go{position:static;align-self:flex-start;margin-top:auto}
+.A3 .rail{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.A3 .card{border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column}
+.A3 .card .thumb{position:relative;aspect-ratio:1.5;background:#fff;border-radius:10px}
+.A3 .card .thumb img{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);object-fit:contain}
+.A3 .card .thumb em{position:absolute;top:8px;inset-inline-start:8px;font-style:normal;background:#1F7A4D;color:#fff;font-size:11.5px;font-weight:700;border-radius:6px;padding:1px 6px}
+.A3 .card .b{margin-top:9px;color:var(--deep);font-size:11.5px}
+/* A4 */
+.A4 .tabs{display:inline-flex;flex-wrap:wrap;gap:2px;margin:20px 0 22px;padding:4px;background:var(--soft);border-radius:99px}
+.A4 .tab{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px 0 8px;border:0;border-radius:99px;background:none;font:inherit;font-size:13px;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.A4 .tab.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 4px rgba(42,34,40,.12)}
+.A4 .body{grid-template-columns:1fr}
+.A4 .rail{grid-template-columns:1.2fr 1fr 1fr;grid-template-rows:repeat(3,auto)}
+.A4 .rail .hero{grid-row:span 3}
+@container (max-width:700px){
+ .Av .in{padding:28px 0 30px}.Av .head{padding:0 16px}
+ .Av .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:14px 0 14px;padding:0 16px}
+ .A4 .tabs{display:flex;margin:14px 16px;padding:3px}
+ .A3 .tabs{margin:12px 16px 14px;padding:0}
+ .Av .tab{font-size:12.5px}.A2 .tab{height:30px;padding:0 10px 0 7px}.A4 .tab{height:28px}
+ .Av .tab .ic svg{width:17px;height:17px}
+ .Av .body{grid-template-columns:minmax(0,1fr);gap:10px}
+ .Av .body>*{min-width:0}
+ .A2 .hero,.A3 .hero{margin:0 16px;min-height:0;padding:16px 18px;border-radius:14px}
+ .A2 .hero h3,.A3 .hero h3{font-size:20px;margin:6px 0 4px}.Av .hero p{font-size:13px;max-width:64%}
+ .A2 .hero .shot{display:none}.A2 .hero .go{display:none}
+ .A2 .hero .art{display:block;width:120px;height:120px;inset-inline-start:auto;inset-inline-end:-20px;bottom:-26px}
+ .A2 .rail,.A4 .rail{display:grid;grid-template-columns:none;grid-auto-flow:column;grid-template-rows:repeat(2,auto);grid-auto-columns:82%;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 16px;gap:8px;scrollbar-width:none}
+ .A2 .item,.A4 .item{scroll-snap-align:start;padding:10px;gap:10px;border-radius:12px}
+ .A2 .item .thumb,.A4 .item .thumb{width:64px;height:64px;flex-basis:64px}
+ .Av .n{font-size:13px}.Av .price{font-size:14.5px}.Av .b{font-size:11.5px}
+ .A4 .rail .hero{grid-row:span 2;min-height:0;padding:16px;scroll-snap-align:start}
+ .A4 .rail .hero h3{font-size:19px}.A4 .rail .hero .shot{display:none}.A4 .rail .hero .art{display:block;width:110px;height:110px;inset-inline-start:auto;inset-inline-end:-18px;bottom:-22px}
+ .A4 .rail .hero .go{position:static;display:inline-block;margin-top:10px}
+ .A3 .hero{flex-direction:row;align-items:center;gap:12px;padding:12px 14px}.A3 .hero .art{width:44px;height:44px;flex:0 0 44px}.A3 .hero .tip{display:none}.A3 .hero h3{font-size:16px;margin:0 0 2px}.A3 .hero p{max-width:none;font-size:12.5px}.A3 .hero .go{margin:0;align-self:center;padding:7px 11px;font-size:13px;white-space:nowrap}
+ .A3 .rail{display:grid;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:46%;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 16px;gap:10px;scrollbar-width:none}
+ .A3 .card{scroll-snap-align:start}.A3 .card .thumb{aspect-ratio:1}
+ .Av .dots{display:flex;justify-content:center;gap:6px;margin-top:12px}.Av .dots i{width:6px;height:6px;border-radius:99px;background:#E3D6DB}.Av .dots i.on{width:18px;background:var(--pink)}
+}
+
+/* ---------- K: the A tabs, one row, + four content designs ---------- */
+.K .tabs{flex-wrap:nowrap;gap:10px;margin:22px 0 24px;overflow-x:auto;scrollbar-width:none}
+.K .tab{flex:0 0 auto;border-radius:2px;padding:8px 16px 8px 9px;font-size:15px;gap:9px}
+.K .tab .ic{width:30px;height:30px;--icf:transparent}
+.K .tab .ic svg{width:20px;height:20px}
+.K .tab.on .ic{--icf:var(--soft)}
+.K .hero{border-radius:4px}
+.K .item,.K .card{border-radius:4px}
+.K .card{border:1px solid var(--line);padding:10px;display:flex;flex-direction:column;background:#fff}
+.K .card .thumb{position:relative;aspect-ratio:1.3;background:#fff;border-radius:2px}
+.K .card .thumb img{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);object-fit:contain}
+.K .card .thumb em{position:absolute;top:6px;inset-inline-start:6px;font-style:normal;background:#1F7A4D;color:#fff;font-size:11.5px;font-weight:700;border-radius:2px;padding:1px 6px}
+.K .card .b{margin-top:9px;color:var(--deep);font-size:11.5px}
+.K .item{background:var(--card);display:flex;gap:14px;align-items:center;padding:16px}
+.K .item .thumb{width:84px;height:84px;flex:0 0 84px;background:#fff;border-radius:2px}
+.K .add{display:inline-block;margin-top:8px;font-size:12.5px;font-weight:600;color:#fff;background:var(--deep);border-radius:2px;padding:5px 10px}
+.K1 .body{display:grid;grid-template-columns:1.2fr 2fr;gap:12px}
+.K1 .rail{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.K2 .body{display:grid;grid-template-columns:290px 1fr;gap:12px}
+.K2 .hero.slim{min-height:0;padding:28px;display:flex;flex-direction:column;gap:12px}
+.K2 .hero.slim .art,.K3 .hero.wide .art{display:block;position:static;width:58px;height:58px;opacity:1;color:var(--deep);--icf:#fff}
+.K2 .hero.slim .go{position:static;align-self:flex-start;margin-top:auto}
+.K2 .rail{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.K3 .body{display:grid;gap:12px}
+.K3 .hero.wide{min-height:0;padding:30px 36px;display:flex;align-items:center;gap:24px}
+.K3 .hero.wide .wtx{max-width:520px}.K3 .hero.wide h3{margin:8px 0 6px}
+.K3 .hero.wide .go{position:static;display:inline-block;margin-top:14px}
+.K3 .hero.wide .shot{position:static;width:120px;height:120px;flex:0 0 120px}.K3 .hero.wide .s1{margin-inline-start:auto}
+.K3 .hero.wide .art{order:-1;width:64px;height:64px;flex:0 0 64px}
+.K3 .rail{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.K4 .rail{display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr;grid-template-rows:auto auto;gap:12px}
+.K4 .rail .hero{grid-row:span 2;min-height:0}
+.K4 .rail .hero .shot{display:none}.K4 .rail .hero .art{display:block;width:170px;height:170px;inset-inline-start:auto;inset-inline-end:-24px;bottom:-30px;opacity:.25}
+.K4 .item{flex-direction:column;align-items:flex-start;text-align:start}.K4 .item .thumb{width:100%;height:120px;flex:none}
+@container (max-width:700px){
+ .K .in{padding:28px 0 30px}.K .head{padding:0 16px}
+ .K .tabs{margin:14px 0;padding:0 16px;gap:8px}
+ .K .tab{font-size:13.5px;padding:6px 12px 6px 6px}.K .tab .ic{width:26px;height:26px}.K .tab .ic svg{width:17px;height:17px}
+ .K .body{grid-template-columns:minmax(0,1fr) !important;gap:10px}.K .body>*{min-width:0}
+ .K .body>.hero{margin:0 16px;min-height:0;padding:16px 18px}
+ .K .body>.hero h3{font-size:20px;margin:6px 0 4px}.K .hero p{font-size:13px;max-width:66%}
+ .K .body>.hero .shot,.K .body>.hero .go{display:none}
+ .K1 .body>.hero .art{display:block;width:110px;height:110px;inset-inline-start:auto;inset-inline-end:-18px;bottom:-24px;opacity:.25}
+ .K2 .hero.slim{flex-direction:row;align-items:center;gap:12px;padding:12px 14px}.K2 .hero.slim .art{width:42px;height:42px;flex:0 0 42px}.K2 .hero.slim .tip{display:none}.K2 .hero.slim h3{font-size:16px;margin:0 0 2px}.K2 .hero.slim p{max-width:none;font-size:12.5px}
+ .K3 .hero.wide{padding:14px 16px;gap:12px}.K3 .hero.wide .art{width:40px;height:40px;flex-basis:40px}.K3 .hero.wide h3{font-size:17px}.K3 .hero.wide p{max-width:none}
+ .K .rail{display:grid;grid-template-columns:none !important;grid-auto-flow:column;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 16px;gap:8px;scrollbar-width:none}
+ .K1 .rail,.K4 .rail{grid-template-rows:repeat(2,auto);grid-auto-columns:82%}
+ .K2 .rail{grid-template-rows:auto;grid-auto-columns:46%}
+ .K3 .rail{grid-template-rows:repeat(2,auto);grid-auto-columns:42%}
+ .K .rail>*{scroll-snap-align:start}
+ .K .item{padding:10px;gap:10px}.K .item .thumb{width:64px;height:64px;flex-basis:64px}
+ .K4 .item{flex-direction:row;align-items:center}.K4 .item .thumb{width:64px;height:64px}.K4 .add{margin-top:4px;padding:3px 8px;font-size:11.5px}
+ .K4 .rail .hero{grid-row:span 2;padding:16px}.K4 .rail .hero h3{font-size:19px}.K4 .rail .hero .go{position:static;display:inline-block;margin-top:10px}
+ .K .card .thumb{aspect-ratio:1}
+ .K .dots{display:flex}
+}
+
+.K3 .body,.K4 .body{grid-template-columns:minmax(0,1fr)}
+.K .body>.hero{grid-row:auto}
+.K1 .body>.hero{grid-row:span 1}
+.K .item,.K .card{position:relative}
+.K .item .tx{padding-inline-end:40px}
+.K .cp{position:absolute;inset-inline-end:12px;bottom:12px;width:36px;height:36px;border-radius:2px;background:var(--pink);color:#fff;display:grid;place-items:center;cursor:pointer;transition:background .15s}
+.K .cp:hover{background:var(--deep)}
+.K .cp svg{width:20px;height:20px}
+.K .card .cp{position:absolute;top:auto;bottom:10px;inset-inline-end:10px}
+.K .card .price{padding-inline-end:42px}
+.K4 .item{padding-bottom:16px}
+.K4 .item .tx{padding-inline-end:0}
+.K4 .rail{grid-template-columns:1.15fr repeat(3,minmax(0,1fr))}
+.K4 .rail .hero{min-height:0;padding:30px}
+.K4 .rail .hero .go{position:static;display:inline-block;margin-top:16px}
+.K4 .item .price{padding-inline-end:42px}
+@container (max-width:700px){
+ .K .cp{width:32px;height:32px;inset-inline-end:8px;bottom:8px}.K .cp svg{width:18px;height:18px}
+ .K .item .tx{padding-inline-end:34px}
+ .K4 .item .tx{padding-inline-end:34px}
+ .K4 .item .price{padding-inline-end:0}
+ .K .card .price{padding-inline-end:36px}
+}
+
+.K4 .item .thumb{position:relative}
+.K4 .item .thumb img{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);object-fit:contain}
+.K4 .rail .hero .art{display:none}
+@container (max-width:700px){ .K4 .item .thumb img{inset:4px;width:calc(100% - 8px);height:calc(100% - 8px)} }
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Shop by Concern</b>
+  <button data-d="A">A · original</button>
+  <button data-d="K1" class="on">Content 1</button>
+  <button data-d="K2">Content 2</button>
+  <button data-d="K3">Content 3</button>
+  <button data-d="K4">Content 4</button>
+  <span style="flex:1"></span>
+  <button data-l="en" class="on">English</button>
+  <button data-l="ar">العربية</button>
+</div>
+<p class="note" id="note"></p>
+<div class="stage">
+  <div><p class="lbl">Computer · 1280px</p><div class="dkwrap" id="dkwrap"><div class="dk" id="dk"></div></div></div>
+  <div class="row2"><div><p class="lbl">Phone · 390px</p><div class="phone" id="ph"></div></div></div>
+</div>
+<script>
+var DATA = [{"k": "acne", "en": "Acne & Blemishes", "ar": "حب الشباب والشوائب", "tip": "Think salicylic acid (BHA) and centella: clears pores, calms breakouts.", "tipar": "الخيار الأمثل: حمض الساليسيليك والسنتيلا لتنقية المسام وتهدئة البثور.", "items": [{"b": "medicube", "n": "Red Acne Body Peeling Shot", "p": 86.0, "w": 110.0, "o": 22, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2025/09/medicube-Red-Acne-Body-Peeling-Shot.webp", "u": "https://kbeautybliss.com/product/medicube-red-acne-body-peeling-shot/"}, {"b": "Dr.G", "n": "R.E.D Blemish Clear Soothing Cream 70ml", "p": 189.0, "w": 189.0, "o": 0, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Dr.G-R.E.D-Blemish-Clear-Soothing-Cream-70ml.webp", "u": "https://kbeautybliss.com/product/dr-g-r-e-d-blemish-clear-soothing-cream-70ml/"}, {"b": "Cosrx", "n": "Acne Pimple Patch", "p": 28.0, "w": 62.0, "o": 55, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/COSRX-Acne-Pimple-Patch-K-Beauty-Bliss.webp", "u": "https://kbeautybliss.com/product/cosrx-acne-pimple-patch/"}, {"b": "medicube", "n": "Red Acne Succinic Acid Peel", "p": 99.0, "w": 99.0, "o": 0, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2025/04/medicube-Red-Acne-Succinic-Acid-Peel.webp", "u": "https://kbeautybliss.com/product/medicube-red-acne-succinic-acid-peel/"}, {"b": "Celimax", "n": "JIWOOGAE Cica BHA Blemish Toner Pad", "p": 123.0, "w": 137.0, "o": 10, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/12/Celimax-JIWOOGAE-Cica-BHA-Blemish-Toner-Pad.webp", "u": "https://kbeautybliss.com/product/celimax-jiwoogae-cica-bha-blemish-toner-pad/"}, {"b": "Cosrx", "n": "Salicylic Acid Daily Gentle Cleanser 150ml", "p": 53.0, "w": 190.0, "o": 72, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/COSRX-Salicylic-Acid-Daily-Gentle-Cleanser-150ml-kbeauty-bliss.webp", "u": "https://kbeautybliss.com/product/cosrx-salicylic-acid-daily-gentle-cleanser-150ml/"}], "s": "BHA · Centella · Tea tree", "sar": "BHA · سنتيلا · شجرة الشاي", "t": "Acne", "tar": "حب الشباب"}, {"k": "hydration", "en": "Dryness & Hydration", "ar": "الجفاف والترطيب", "tip": "Layer hyaluronic acid under a ceramide cream to lock moisture in.", "tipar": "طبّقي حمض الهيالورونيك تحت كريم السيراميد لحبس الترطيب.", "items": [{"b": "Anua", "n": "PDRN Hyaluronic Acid Hydrating Capsule Mist Mini", "p": 85.0, "w": 120.0, "o": 29, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Anua-PDRN-Hyaluronic-Acid-Hydrating-Capsule-Mist-Mini.webp", "u": "https://kbeautybliss.com/product/anua-pdrn-hyaluronic-acid-hydrating-capsule-mist-mini/"}, {"b": "Anua", "n": "PDRN + Hyaluronic Acid Hydrating Capsule Mist", "p": 135.0, "w": 170.0, "o": 21, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Anua-PDRN-Hyaluronic-Acid-Hydrating-Capsule-Mist-100ml.webp", "u": "https://kbeautybliss.com/product/anua-pdrn-hyaluronic-acid-hydrating-capsule-mist/"}, {"b": "ROUND LAB", "n": "Birch Juice Moisturizing Sunscreen 50ml", "p": 107.0, "w": 150.0, "o": 29, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/ROUND-LAB-Birch-Juice-Moisturizing-Sunscreen-50ml.webp", "u": "https://kbeautybliss.com/product/round-lab-birch-juice-moisturizing-sunscreen-50ml/"}, {"b": "Medicube", "n": "PDRN Hydrating UV Serum", "p": 135.0, "w": 156.0, "o": 13, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Medicube-PDRN-Hydrating-UV-Serum.webp", "u": "https://kbeautybliss.com/product/medicube-pdrn-hydrating-uv-serum/"}, {"b": "Isntree", "n": "Hyaluronic Acid Watery Sun Gel", "p": 60.0, "w": 98.0, "o": 39, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Isntree-Hyaluronic-Acid-Watery-Sun-Gel-1.webp", "u": "https://kbeautybliss.com/product/isntree-hyaluronic-acid-watery-sun-gel/"}, {"b": "Haruharu WONDER", "n": "Black Rice Moisture Airyfit Sunscreen", "p": 85.0, "w": 165.0, "o": 48, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Haruharu-WONDER-Black-Rice-Moisture-Airyfit-Sunscreen.webp", "u": "https://kbeautybliss.com/product/haruharu-wonder-black-rice-moisture-airyfit-sunscreen/"}], "s": "Hyaluronic acid · Ceramide", "sar": "هيالورونيك · سيراميد", "t": "Hydration", "tar": "الترطيب"}, {"k": "spots", "en": "Dark Spots", "ar": "البقع الداكنة", "tip": "Niacinamide + tranexamic acid fade spots; finish with SPF every day.", "tipar": "النياسيناميد مع حمض الترانيكساميك يخففان البقع، مع واقي شمس يوميًا.", "items": [{"b": "Anua", "n": "Niacinamide 10% + TXA 4% Dark Spot Correcting Serum 30ml", "p": 80.0, "w": 95.0, "o": 16, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/11/anua-txa-niacinaminde-serum-kbeautybliss.webp", "u": "https://kbeautybliss.com/product/anua-niacinamide-10-txa-4-dark-spot-correcting-serum-30ml/"}, {"b": "AXIS", "n": "Y - Dark Spot Correcting Glow Serum", "p": 58.0, "w": 99.0, "o": 41, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/AXIS-Y-Dark-Spot-Correcting-Glow-Serum.webp", "u": "https://kbeautybliss.com/product/axis-y-dark-spot-correcting-glow-serum/"}, {"b": "celimax", "n": "Pore+Dark Spot Brightening Cream", "p": 88.0, "w": 109.0, "o": 19, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/04/celimax-PoreDark-Spot-Brightening-Cream-kbeautybliss.webp", "u": "https://kbeautybliss.com/product/celimax-poredark-spot-brightening-cream/"}, {"b": "Goodal", "n": "Green Tangerine Vita C Dark Spot Care Serum", "p": 116.0, "w": 140.0, "o": 17, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Goodal-–-Green-Tangerine-Vita-C-Dark-Spot-Care-Serum.webp", "u": "https://kbeautybliss.com/product/goodal-green-tangerine-vita-c-dark-spot-care-serum/"}, {"b": "TOSOWOONG", "n": "Arbutin 7% + Tranexamic Acid 4% Cream", "p": 240.0, "w": 339.0, "o": 29, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2025/11/Tosowoong-Arbutus-7-Tranexamic-Acid-4-Cream.webp", "u": "https://kbeautybliss.com/product/tosowoong-arbutin-7-tranexamic-acid-4-cream/"}, {"b": "Celimax", "n": "TXA Body Clarifying Pad", "p": 140.0, "w": 189.0, "o": 26, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/08/Celimax-TXA-Body-Clarifying-Pad-kbeautybliss.webp", "u": "https://kbeautybliss.com/product/celimax-txa-body-clarifying-pad/"}], "s": "Niacinamide · TXA · Vitamin C", "sar": "نياسيناميد · TXA · فيتامين سي", "t": "Dark Spots", "tar": "البقع الداكنة"}, {"k": "ageing", "en": "Fine Lines & Ageing", "ar": "الخطوط الدقيقة والتقدّم في السن", "tip": "Start retinol slowly at night; peptides and PDRN support firmness.", "tipar": "ابدئي بالريتينول ليلًا بالتدريج؛ الببتيدات وPDRN تدعم الشد.", "items": [{"b": "SOME BY MI", "n": "Retinol Intense Advanced Triple Action Eye Cream", "p": 99.0, "w": 125.0, "o": 21, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/61hSd8kPTL-1.webp", "u": "https://kbeautybliss.com/product/some-by-mi-retinol-intense-advanced-triple-action-eye-cream/"}, {"b": "SOME BY MI", "n": "Retinol Intense Reactivating Serum", "p": 99.0, "w": 126.0, "o": 21, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/61hdLCmKBnL-1.webp", "u": "https://kbeautybliss.com/product/some-by-mi-retinol-intense-reactivating-serum/"}, {"b": "Anua", "n": "Collagen Retinol Refining Gua Sha Cream", "p": 125.0, "w": 158.0, "o": 21, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Anua-Collagen-Retinol-Refining-Gua-Sha-Cream.webp", "u": "https://kbeautybliss.com/product/anua-collagen-retinol-refining-gua-sha-cream/"}, {"b": "numbuzin", "n": "No.9 NAD+ Retinol Volumetox Eye Cream", "p": 78.0, "w": 130.0, "o": 40, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2025/11/numbuzin-No.9-NAD-Retinol-Volumetox-Eye-Cream.webp", "u": "https://kbeautybliss.com/product/numbuzin-no-9-nad-retinol-volumetox-eye-cream/"}, {"b": "celimax", "n": "The Vita-A Retinal Shot Tightening Booster", "p": 89.0, "w": 130.0, "o": 32, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2025/08/celimax-The-Vita-A-Retinal-Shot-Tightening-Booster.webp", "u": "https://kbeautybliss.com/product/celimax-the-vita-a-retinal-shot-tightening-booster/"}, {"b": "Medicube", "n": "PDRN Collagen Gua Sha Neck Wrinkle Cream", "p": 135.0, "w": 160.0, "o": 16, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/medicube-PDRN-Collagen-Gua-Sha-Neck-Wrinkle-Cream.webp", "u": "https://kbeautybliss.com/product/medicube-pdrn-collagen-gua-sha-neck-wrinkle-cream/"}], "s": "Retinol · Peptides · PDRN", "sar": "ريتينول · ببتيدات · PDRN", "t": "Anti-Ageing", "tar": "مكافحة الشيخوخة"}, {"k": "sensitive", "en": "Redness & Sensitivity", "ar": "الاحمرار والحساسية", "tip": "Centella, heartleaf and panthenol soothe; keep the routine short.", "tipar": "السنتيلا وعشبة هارتليف والبانثينول للتهدئة؛ روتين قصير وبسيط.", "items": [{"b": "SKIN 1004", "n": "Madagascar Centella Tone Brightening Capsule Ampoule - 50ml", "p": 95.0, "w": 153.0, "o": 38, "img": "https://kbeautybliss.com/img-cache/300https://kbeautybliss.com/uploads/products/skin-1004-madagascar-centella-tone-brightening-capsule-ampoule-50ml-4.webp", "u": "https://kbeautybliss.com/product/skin-1004-madagascar-centella-tone-brightening-capsule-ampoule/"}, {"b": "SKIN 1004", "n": "Madagascar Centella Hyalu - Cica Water - Fit Sun Serum 50ml", "p": 68.0, "w": 147.0, "o": 54, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/SKIN-1004-Madagascar-Centella-Hyalu-Cica-Water-Fit-Sun-Serum-50ml.webp", "u": "https://kbeautybliss.com/product/skin-1004-madagascar-centella-hyalu-cica-water-fit-sun-serum-50ml/"}, {"b": "Dr.Althea", "n": "345 Relief Cream Mist Spray", "p": 99.0, "w": 125.0, "o": 21, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/03/Dr.Althea-345-Relief-Cream-Mist-kbeautybliss.webp", "u": "https://kbeautybliss.com/product/dr-althea-345-relief-cream-mist/"}, {"b": "Dr.Althea", "n": "345 Relief Cream", "p": 99.0, "w": 155.0, "o": 36, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream.webp", "u": "https://kbeautybliss.com/product/dr-althea-345-relief-cream/"}, {"b": "Anua", "n": "Heartleaf Pore Control Cleansing Oil 200ml", "p": 95.0, "w": 110.0, "o": 14, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Anua-–-Heartleaf-Pore-Control-Cleansing-Oil-200ml-1.webp", "u": "https://kbeautybliss.com/product/anua-heartleaf-pore-control-cleansing-oil-200ml/"}, {"b": "Beauty Of Joseon", "n": "Relief Sun: Rice + Probiotics SPF50 PA++++ 50ml", "p": 85.0, "w": 125.0, "o": 32, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Beauty-of-Joseon-Relief-Sun_-Rice-Probiotics-SPF50-PA-50ml-1.webp", "u": "https://kbeautybliss.com/product/beauty-of-joseon-relief-sun-rice-probiotics-spf50-pa-50ml/"}], "s": "Centella · Heartleaf · Panthenol", "sar": "سنتيلا · هارتليف · بانثينول", "t": "Redness", "tar": "الاحمرار"}, {"k": "pores", "en": "Pores & Oil Control", "ar": "المسام والدهون", "tip": "A gentle BHA toner and clay mask keep pores clear without stripping.", "tipar": "تونر BHA لطيف وقناع طين يحافظان على المسام نظيفة دون جفاف.", "items": [{"b": "Anua", "n": "Heartleaf Quercetinol Pore Deep Cleansing Foam - 150ml", "p": 65.0, "w": 98.0, "o": 34, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Anua-–-Heartleaf-Quercetinol-Pore-Deep.webp", "u": "https://kbeautybliss.com/product/anua-heartleaf-quercetinol-pore-deep-cleansing-foam-150ml/"}, {"b": "Medicube", "n": "Zero Pore Pad 2.0", "p": 85.0, "w": 115.0, "o": 26, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0.webp", "u": "https://kbeautybliss.com/product/medicube-zero-pore-pad-2-0/"}, {"b": "Anua", "n": "Heartleaf Pore Control Cleansing Oil 200ml", "p": 95.0, "w": 110.0, "o": 14, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Anua-–-Heartleaf-Pore-Control-Cleansing-Oil-200ml-1.webp", "u": "https://kbeautybliss.com/product/anua-heartleaf-pore-control-cleansing-oil-200ml/"}, {"b": "celimax", "n": "Pore+Dark Spot Brightening Cream", "p": 88.0, "w": 109.0, "o": 19, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/04/celimax-PoreDark-Spot-Brightening-Cream-kbeautybliss.webp", "u": "https://kbeautybliss.com/product/celimax-poredark-spot-brightening-cream/"}, {"b": "Torriden", "n": "CELLMAZING Pore Perfecting Ampoule", "p": 78.0, "w": 115.0, "o": 32, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/06/Torriden-CELLMAZING-Pore-Perfecting-Ampoule-kbeautybliss.webp", "u": "https://kbeautybliss.com/product/torriden-cellmazing-pore-perfecting-ampoule/"}, {"b": "Beauty Of Joseon", "n": "Red Bean Refreshing Pore Mask 140ml", "p": 78.0, "w": 108.0, "o": 28, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Beauty_of_Joseon_Red_Bean_Refreshing_Pore_Mask_Korean_wash-off_mask__01941.webp", "u": "https://kbeautybliss.com/product/beauty-of-joseon-red-bean-refreshing-pore-mask-140ml/"}], "s": "BHA · Clay · Pads", "sar": "BHA · طين · وسادات", "t": "Pores", "tar": "المسام"}, {"k": "dull", "en": "Dullness & Glow", "ar": "البهتان والإشراقة", "tip": "Vitamin C in the morning, a mild exfoliant twice a week.", "tipar": "فيتامين سي صباحًا، ومقشّر لطيف مرتين أسبوعيًا.", "items": [{"b": "Dr. Althea", "n": "Vitamin C Boosting Serum - Renewed", "p": 132.0, "w": 224.0, "o": 41, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/11/Dr.-Althea-Vitamin-C-Boosting-Serum-RENEWED-1.webp", "u": "https://kbeautybliss.com/product/dr-althea-vitamin-c-boosting-serum/"}, {"b": "numbuzin", "n": "No.5 Vitamin-Niacinamide Concentrated Toner Pad", "p": 113.0, "w": 160.0, "o": 29, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/numbuzin-–-No.5-Vitamin-Niacinamide-Concentrated-Toner-Pad.webp", "u": "https://kbeautybliss.com/product/numbuzin-no-5-vitamin-niacinamide-concentrated-toner-pad/"}, {"b": "numbuzin", "n": "No.5 Vitamin Concentrated Serum", "p": 122.0, "w": 179.0, "o": 32, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Product-page-sizes_a1e4b5d3-e817-4688-9885-3213a47e9a27-1.webp", "u": "https://kbeautybliss.com/product/numbuzin-no-5-vitamin-concentrated-serum/"}, {"b": "JUMISO", "n": "All Day Vitamin Brightening & Balancing Facial Serum", "p": 115.0, "w": 195.0, "o": 41, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/JUMISO_ALL_DAY_VITAMIN_BRIGHTENING_BALANCING_FACIAL_SERUM_1_f261bf66-3e65-4a16-afd3-87309de47fde.webp", "u": "https://kbeautybliss.com/product/jumiso-all-day-vitamin-brightening-balancing-facial-serum/"}, {"b": "celimax", "n": "The Vita-A Retinal Shot Tightening Booster", "p": 89.0, "w": 130.0, "o": 32, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2025/08/celimax-The-Vita-A-Retinal-Shot-Tightening-Booster.webp", "u": "https://kbeautybliss.com/product/celimax-the-vita-a-retinal-shot-tightening-booster/"}, {"b": "Goodal", "n": "Green Tangerine Vita C Dark Spot Care Serum", "p": 116.0, "w": 140.0, "o": 17, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Goodal-–-Green-Tangerine-Vita-C-Dark-Spot-Care-Serum.webp", "u": "https://kbeautybliss.com/product/goodal-green-tangerine-vita-c-dark-spot-care-serum/"}], "s": "Vitamin C · Rice · AHA", "sar": "فيتامين سي · أرز · AHA", "t": "Glow", "tar": "الإشراقة"}, {"k": "sun", "en": "Sun Protection", "ar": "الحماية من الشمس", "tip": "SPF 50+ every morning, reapplied every two hours outdoors.", "tipar": "واقي شمس SPF 50+ كل صباح، وإعادة وضعه كل ساعتين في الخارج.", "items": [{"b": "ROUND LAB", "n": "Birch Juice Moisturizing Sunscreen 50ml", "p": 107.0, "w": 150.0, "o": 29, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/ROUND-LAB-Birch-Juice-Moisturizing-Sunscreen-50ml.webp", "u": "https://kbeautybliss.com/product/round-lab-birch-juice-moisturizing-sunscreen-50ml/"}, {"b": "Anua", "n": "Heartleaf Silky Moisture Sun Cream", "p": 90.0, "w": 110.0, "o": 18, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Anua-Heartleaf-Silky-Moisture-Sun-Cream.webp", "u": "https://kbeautybliss.com/product/anua-heartleaf-silky-moisture-sun-cream/"}, {"b": "Cosrx", "n": "Aloe Soothing SPF 50+ Sun Cream 50ml", "p": 75.0, "w": 75.0, "o": 0, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/COSRX-Aloe-Soothing-SPF-50-Sun-Cream-–-50ml.webp", "u": "https://kbeautybliss.com/product/cosrx-aloe-soothing-spf-50-sun-cream-50ml/"}, {"b": "TOCOBO", "n": "Bio Watery Sun Cream SPF50 PA++++", "p": 109.0, "w": 126.0, "o": 13, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/TOCOBO-Bio-Watery-Sun-Cream-SPF50-PA.webp", "u": "https://kbeautybliss.com/product/tocobo-bio-watery-sun-cream-spf50-pa/"}, {"b": "Medicube", "n": "Collagen Glow Sunscreen", "p": 130.0, "w": 155.0, "o": 16, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2026/09/Medicube-Collagen-Glow-Sunscreen.webp", "u": "https://kbeautybliss.com/product/medicube-collagen-glow-sunscreen/"}, {"b": "Beauty Of Joseon", "n": "Relief Sun: Rice + Probiotics SPF50 PA++++ 50ml", "p": 85.0, "w": 125.0, "o": 32, "img": "https://kbeautybliss.com/img-cache/400/wp-content/uploads/2024/10/Beauty-of-Joseon-Relief-Sun_-Rice-Probiotics-SPF50-PA-50ml-1.webp", "u": "https://kbeautybliss.com/product/beauty-of-joseon-relief-sun-rice-probiotics-spf50-pa-50ml/"}], "s": "SPF 50+ · PA++++", "sar": "SPF 50+ · PA++++", "t": "Sun Care", "tar": "الحماية من الشمس"}];
+var ICON = {
+ acne:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><circle cx="9" cy="10" r="1.1" fill="currentColor"/><circle cx="15" cy="9" r=".8" fill="currentColor"/><circle cx="14" cy="14.5" r="1.3" fill="currentColor"/><circle cx="8.5" cy="15" r=".7" fill="currentColor"/></svg>',
+ hydration:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/><path d="M9 14.5a3 3 0 0 0 3 3"/></svg>',
+ spots:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><circle cx="10" cy="10" r="2" fill="currentColor" opacity=".55"/><circle cx="15" cy="14" r="1.4" fill="currentColor" opacity=".55"/><circle cx="9.5" cy="15.5" r="1" fill="currentColor" opacity=".55"/></svg>',
+ ageing:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9"/></svg>',
+ sensitive:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 10-4-1.6-7-5.4-7-10V6z"/><path d="M9 12.5c1.5-2.8 4.4-3.6 6-3.5-.1 2.1-1.1 4.8-4 5.5M9 15l2-2"/></svg>',
+ pores:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><g fill="currentColor" stroke="none"><circle cx="9" cy="9" r=".9"/><circle cx="12" cy="9" r=".9"/><circle cx="15" cy="9" r=".9"/><circle cx="9" cy="12" r=".9"/><circle cx="12" cy="12" r=".9"/><circle cx="15" cy="12" r=".9"/><circle cx="9" cy="15" r=".9"/><circle cx="12" cy="15" r=".9"/><circle cx="15" cy="15" r=".9"/></g></svg>',
+ dull:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></svg>',
+ sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
+ head:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/><circle cx="9.5" cy="10" r=".9" fill="currentColor"/><circle cx="12.5" cy="12.5" r=".7" fill="currentColor"/></svg>'
+};
+
+var FACE='<path d="M12 3.2c-3.9 0-6.4 3.1-6.4 7.4 0 4.7 2.9 10.2 6.4 10.2s6.4-5.5 6.4-10.2c0-4.3-2.5-7.4-6.4-7.4z" fill="var(--icf)" stroke="currentColor"/>';
+var ICON2 = {
+ acne:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">'+FACE+'<circle cx="9" cy="13.2" r="1" fill="currentColor" stroke="none"/><circle cx="15.2" cy="12.6" r="1.2" fill="currentColor" stroke="none"/><circle cx="14.1" cy="15.4" r=".7" fill="currentColor" stroke="none"/><circle cx="10.3" cy="7.6" r=".6" fill="currentColor" stroke="none"/></svg>',
+ hydration:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8s6.2 6.8 6.2 11.3a6.2 6.2 0 0 1-12.4 0C5.8 9.6 12 2.8 12 2.8z" fill="var(--icf)"/><path d="M8.6 14.6c1.1-.9 2.3-.9 3.4 0s2.3.9 3.4 0"/><path d="M9.6 10.6c.4-.9 1-1.8 1.5-2.4"/></svg>',
+ spots:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">'+FACE+'<ellipse cx="9.3" cy="12.6" rx="1.9" ry="1.5" fill="currentColor" opacity=".45" stroke="none"/><circle cx="15" cy="14.6" r="1.2" fill="currentColor" opacity=".45" stroke="none"/><circle cx="14.4" cy="8.4" r=".9" fill="currentColor" opacity=".45" stroke="none"/></svg>',
+ ageing:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">'+FACE+'<path d="M9.2 6.9c1.8-.6 3.8-.6 5.6 0M9.6 8.6c1.6-.4 3.2-.4 4.8 0"/><path d="M7.4 11.6l-1 .7M16.6 11.6l1 .7"/><path d="M9 16.2c.5.8 1.5 1.2 3 1.2s2.5-.4 3-1.2"/></svg>',
+ sensitive:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">'+FACE+'<ellipse cx="8.7" cy="13.4" rx="2" ry="1.3" fill="currentColor" opacity=".35" stroke="none"/><ellipse cx="15.3" cy="13.4" rx="2" ry="1.3" fill="currentColor" opacity=".35" stroke="none"/><path d="M8.2 10.2l.6-.6.6.6M14.6 10.2l.6-.6.6.6"/></svg>',
+ pores:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.8" fill="var(--icf)"/><path d="M15.4 15.4l4.6 4.6"/><g fill="currentColor" stroke="none"><circle cx="8.2" cy="8.6" r=".75"/><circle cx="11" cy="8" r=".75"/><circle cx="13.2" cy="10" r=".75"/><circle cx="8.6" cy="11.6" r=".75"/><circle cx="11.4" cy="11.2" r=".75"/><circle cx="10.2" cy="13.6" r=".75"/></g></svg>',
+ dull:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">'+FACE+'<path d="M19.6 3.4l.5 1.5 1.5.5-1.5.5-.5 1.5-.5-1.5-1.5-.5 1.5-.5z" fill="currentColor"/><path d="M3.6 15.8l.4 1.1 1.1.4-1.1.4-.4 1.1-.4-1.1-1.1-.4 1.1-.4z" fill="currentColor"/><path d="M9.4 14.8c.7.6 1.6.9 2.6.9s1.9-.3 2.6-.9"/></svg>',
+ sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="9.5" r="3.4" fill="var(--icf)"/><path d="M9.5 2.6v1.6M9.5 14.8v1.6M2.6 9.5h1.6M14.8 9.5h1.6M4.6 4.6l1.1 1.1M13.3 13.3l1.1 1.1M4.6 14.4l1.1-1.1M13.3 5.7l1.1-1.1"/><path d="M17 12.2l3.6 1.4v2.7c0 2.3-1.5 4.1-3.6 4.9-2.1-.8-3.6-2.6-3.6-4.9v-2.7z" fill="#fff"/><path d="M15.6 16.4l1 1 1.9-2"/></svg>'
+};
+var CARTP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.2 10.2a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="16.5" cy="19.5" r="1.3"/><path d="M13 9.5v4M11 11.5h4"/></svg>';
+var BG = {acne:['#FFE3E8','#FFF4EC'],hydration:['#DDEFFF','#F2F9FF'],spots:['#FBE6D6','#FFF6EE'],ageing:['#EDE3FA','#FBF6FF'],sensitive:['#E0F3E6','#F5FBF6'],pores:['#E6EEF2','#F8FBFC'],dull:['#FFF0C9','#FFFAEC'],sun:['#FFE6C2','#FFF7EA']};
+var T = {
+ en:{title:'Shop by Concern',sub:'Tell us what is bothering your skin — we picked what works.',tip:'TIP',all:'View all',add:'Add to cart',shop:'Shop',cur:'AED'},
+ ar:{title:'تسوّقي حسب مشكلة البشرة',sub:'أخبرينا بما يزعج بشرتكِ — اخترنا لكِ ما ينفع.',tip:'نصيحة',all:'عرض الكل',add:'أضيفي إلى السلة',shop:'تسوّقي',cur:'د.إ'}
+};
+var NOTE = {
+ K1:'Content 1 — the A layout: coloured panel with the tip and two product photos, six list cards beside it. Phone: short banner, then the products in a TWO-ROW carousel.',
+ K2:'Content 2 — a slimmer panel and six photo cards with the discount badge and the old price. Phone: slim banner, then a ONE-ROW carousel of photo cards.',
+ K3:'Content 3 — a wide banner across the top (tip + two product photos), then the six products in one row. Phone: banner, then a TWO-ROW carousel of photo cards.',
+ K4:'Content 4 — panel on the side, six compact cards with an Add-to-cart button each. Phone: the banner is the first tile of a TWO-ROW carousel, so the whole section is one swipe.',
+ A2:'A2 — A with small outline tabs and new face icons. Computer: the same big panel and six list cards. Phone: the tabs are small and scroll; products slide in a TWO-ROW carousel (four on screen, swipe for more).',
+ A3:'A3 — the quietest: icon + word tabs with a pink underline. Computer: a narrower panel and six image-on-top cards. Phone: the tip is a slim strip and the products slide in a ONE-ROW carousel of bigger cards.',
+ A4:'A4 — tabs in one capsule bar. Computer: the panel and the six list cards as A, tighter. Phone: the concern banner is the FIRST tile of a two-row carousel, so the whole section is one swipe.',
+ A:'A — the same layout as Build Your Routine: icon tabs, a big coloured panel with the concern and a tip (your own photo goes here, one per tab), six products as list cards. Phone: the tabs scroll sideways, the panel becomes a short banner, products are a list.',
+ B:'B — round icon tabs like the category circles, a slim tip strip with a Shop button, then six shop cards with Add to cart. Phone: the circles scroll, cards are two per row.',
+ C:'C — a side menu of concerns with a one-line hint each, a tip banner and a 3×2 product grid. Phone: the menu becomes icon chips, products swipe sideways.'
+};
+var state = {d:'K1', l:'en'};
+var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+function money(v){ var t=T[state.l]; var n=v.toFixed(2); return state.l==='ar' ? n+' '+t.cur : t.cur+' '+n; }
+function priceHTML(p, showWas){ return '<div class="price">'+(p.o?'<span class="off">'+p.o+'%</span>':'')+'<span class="now">'+money(p.p)+'</span>'+(showWas&&p.o?'<span class="was">'+money(p.w)+'</span>':'')+'</div>'; }
+function name(c){ return state.l==='ar'?c.ar:c.en; }
+function tip(c){ return state.l==='ar'?c.tipar:c.tip; }
+function short(c){ return state.l==='ar'?c.sar:c.s; }
+function grad(k){ return 'linear-gradient(135deg,'+BG[k][0]+','+BG[k][1]+')'; }
+function render(root, active){
+  var t=T[state.l], c=DATA[active], D=state.d, h='', K=D.charAt(0)==='K', IC=(D==='A'?ICON:ICON2);
+  h+='<section class="sbc '+(K?'A Av K '+D:D)+'"><div class="in"><div class="head"><h2><span class="hi">'+ICON.head+'</span>'+esc(t.title)+'</h2><p class="sub">'+esc(t.sub)+'</p></div>';
+  var tabs = DATA.map(function(x,i){
+    var inner = '<span class="ic">'+IC[x.k]+'</span>';
+    if (D==='C') inner += '<span>'+esc(name(x))+'<small>'+esc(short(x))+'</small></span><span class="ch">›</span>';
+    else inner += '<span>'+esc(D==='A'?name(x):(state.l==='ar'?x.tar:x.t))+'</span>';
+    return '<button class="tab'+(i===active?' on':'')+'" data-i="'+i+'" role="tab" aria-selected="'+(i===active)+'">'+inner+'</button>';
+  }).join('');
+  if (D==='A'){
+    h+='<div class="tabs" role="tablist">'+tabs+'</div><div class="body">';
+    h+='<div class="hero" style="background:'+grad(c.k)+'"><h3>'+esc(name(c))+'</h3><span class="tip">'+t.tip+'</span><p>'+esc(tip(c))+'</p><span class="art">'+ICON[c.k]+'</span>'
+      +'<span class="shot s1"><img src="'+esc(c.items[0].img)+'" alt=""></span><span class="shot s2"><img src="'+esc(c.items[1].img)+'" alt=""></span></div>';
+    h+=c.items.map(function(p){ return '<a class="item" href="'+esc(p.u)+'" target="_blank" rel="noopener"><span class="thumb"><img src="'+esc(p.img)+'" alt="" loading="lazy"></span><span><div class="b">'+esc(p.b)+'</div><div class="n">'+esc(p.n)+'</div>'+priceHTML(p)+'</span></a>'; }).join('');
+    h+='</div><a class="more" href="#">'+t.all+'</a>';
+  } else if (K){
+    var heroA='<div class="hero" style="background:'+grad(c.k)+'"><span class="tip">'+t.tip+'</span><h3>'+esc(name(c))+'</h3><p>'+esc(tip(c))+'</p><span class="art">'+IC[c.k]+'</span><span class="shot s1"><img src="'+esc(c.items[0].img)+'" alt=""></span><span class="shot s2"><img src="'+esc(c.items[1].img)+'" alt=""></span><a class="go" href="#">'+t.all+' ›</a></div>';
+    var list=function(p,add){ return '<a class="item" href="'+esc(p.u)+'" target="_blank" rel="noopener"><span class="thumb"><img src="'+esc(p.img)+'" alt="" loading="lazy"></span><span class="tx"><span class="b">'+esc(p.b)+'</span><span class="n">'+esc(p.n)+'</span>'+priceHTML(p)+'</span><span class="cp" role="button" aria-label="'+t.add+'">'+CARTP+'</span></a>'; };
+    var card=function(p){ return '<a class="card" href="'+esc(p.u)+'" target="_blank" rel="noopener"><span class="thumb"><img src="'+esc(p.img)+'" alt="" loading="lazy">'+(p.o?'<em>-'+p.o+'%</em>':'')+'</span><span class="b">'+esc(p.b)+'</span><span class="n">'+esc(p.n)+'</span>'+priceHTML(p,true)+'<span class="cp" role="button" aria-label="'+t.add+'">'+CARTP+'</span></a>'; };
+    h+='<div class="tabs" role="tablist">'+tabs+'</div><div class="body">';
+    if (D==='K1') h+=heroA+'<div class="rail">'+c.items.map(function(p){return list(p);}).join('')+'</div>';
+    if (D==='K2') h+='<div class="hero slim" style="background:'+grad(c.k)+'"><span class="art">'+IC[c.k]+'</span><div><span class="tip">'+t.tip+'</span><h3>'+esc(name(c))+'</h3><p>'+esc(tip(c))+'</p></div><a class="go" href="#">'+t.shop+' ›</a></div><div class="rail">'+c.items.map(card).join('')+'</div>';
+    if (D==='K3') h+='<div class="hero wide" style="background:'+grad(c.k)+'"><div class="wtx"><span class="tip">'+t.tip+'</span><h3>'+esc(name(c))+'</h3><p>'+esc(tip(c))+'</p><a class="go" href="#">'+t.all+' ›</a></div><span class="shot s1"><img src="'+esc(c.items[0].img)+'" alt=""></span><span class="shot s2"><img src="'+esc(c.items[1].img)+'" alt=""></span><span class="art">'+IC[c.k]+'</span></div><div class="rail">'+c.items.map(card).join('')+'</div>';
+    if (D==='K4') h+='<div class="rail">'+heroA+c.items.map(function(p){return list(p,1);}).join('')+'</div>';
+    h+='</div><div class="dots"><i class="on"></i><i></i><i></i></div>';
+  } else if (D==='A2' || D==='A4'){
+    h+='<div class="tabs" role="tablist">'+tabs+'</div><div class="body">';
+    var hero='<div class="hero" style="background:'+grad(c.k)+'"><span class="tip">'+t.tip+'</span><h3>'+esc(name(c))+'</h3><p>'+esc(tip(c))+'</p><span class="art">'+IC[c.k]+'</span><span class="shot s1"><img src="'+esc(c.items[0].img)+'" alt=""></span><span class="shot s2"><img src="'+esc(c.items[1].img)+'" alt=""></span><a class="go" href="#">'+t.all+' ›</a></div>';
+    if (D==='A2') h+=hero;
+    h+='<div class="rail">'+(D==='A4'?hero:'')+c.items.map(function(p){ return '<a class="item" href="'+esc(p.u)+'" target="_blank" rel="noopener"><span class="thumb"><img src="'+esc(p.img)+'" alt="" loading="lazy"></span><span class="tx"><span class="b">'+esc(p.b)+'</span><span class="n">'+esc(p.n)+'</span>'+priceHTML(p)+'</span></a>'; }).join('')+'</div></div>';
+    h+='<div class="dots"><i class="on"></i><i></i><i></i></div>';
+  } else if (D==='A3'){
+    h+='<div class="tabs" role="tablist">'+tabs+'</div><div class="body">';
+    h+='<div class="hero" style="background:'+grad(c.k)+'"><span class="art">'+IC[c.k]+'</span><div><h3>'+esc(name(c))+'</h3><span class="tip">'+t.tip+'</span><p>'+esc(tip(c))+'</p></div><a class="go" href="#">'+t.shop+' ›</a></div>';
+    h+='<div class="rail">'+c.items.map(function(p){ return '<a class="card" href="'+esc(p.u)+'" target="_blank" rel="noopener"><span class="thumb"><img src="'+esc(p.img)+'" alt="" loading="lazy">'+(p.o?'<em>-'+p.o+'%</em>':'')+'</span><span class="b">'+esc(p.b)+'</span><span class="n">'+esc(p.n)+'</span>'+priceHTML(p,true)+'</a>'; }).join('')+'</div></div>';
+  } else if (D==='B'){
+    h+='<div class="tabs" role="tablist">'+tabs+'</div>';
+    h+='<div class="strip" style="background:'+grad(c.k)+'"><span class="si">'+ICON[c.k]+'</span><span><b>'+esc(name(c))+'</b><span>'+esc(tip(c))+'</span></span><a class="go" href="#">'+t.shop+' '+esc(name(c))+'</a></div>';
+    h+='<div class="grid">'+c.items.map(function(p){ return '<div class="card">'+(p.o?'<span class="badge">-'+p.o+'%</span>':'')+'<a class="thumb" href="'+esc(p.u)+'" target="_blank" rel="noopener"><img src="'+esc(p.img)+'" alt="" loading="lazy"></a><div class="b">'+esc(p.b)+'</div><div class="n">'+esc(p.n)+'</div>'+priceHTML(p,true)+'<button class="add">'+t.add+'</button></div>'; }).join('')+'</div>';
+    h+='<a class="more" href="#">'+t.all+'</a>';
+  } else {
+    h+='<div class="body"><div class="tabs" role="tablist">'+tabs+'</div><div class="panel">';
+    h+='<div class="hero" style="background:'+grad(c.k)+'"><div><span class="tip">'+t.tip+'</span><h3 style="margin-top:8px">'+esc(name(c))+'</h3><p>'+esc(tip(c))+'</p></div><span class="art" style="color:var(--pink);opacity:.35">'+ICON[c.k]+'</span></div>';
+    h+='<div class="grid">'+c.items.map(function(p){ return '<a class="item" href="'+esc(p.u)+'" target="_blank" rel="noopener"><span class="thumb"><img src="'+esc(p.img)+'" alt="" loading="lazy"></span><span><div class="b">'+esc(p.b)+'</div><div class="n">'+esc(p.n)+'</div>'+priceHTML(p,true)+'</span></a>'; }).join('')+'</div>';
+    h+='<a class="more" href="#">'+t.all+' ›</a></div></div>';
+  }
+  h+='</div></section>';
+  root.innerHTML=h;
+  root.querySelectorAll('.tab').forEach(function(b){ b.addEventListener('click', function(){ render(root, +b.dataset.i); }); });
+}
+var dk=document.getElementById('dk'), ph=document.getElementById('ph'), wrap=document.getElementById('dkwrap');
+function fit(){ var s=Math.min(1, wrap.clientWidth/1280); dk.style.transform='scale('+s+')'; wrap.style.height=(dk.offsetHeight*s)+'px'; }
+function all(){
+  document.documentElement.lang=state.l; document.documentElement.dir=state.l==='ar'?'rtl':'ltr';
+  document.getElementById('note').textContent=NOTE[state.d];
+  render(dk,0); render(ph,0); fit(); setTimeout(fit,400);
+}
+document.querySelectorAll('.bar button').forEach(function(b){ b.addEventListener('click', function(){
+  if (b.dataset.d){ state.d=b.dataset.d; document.querySelectorAll('[data-d]').forEach(function(x){x.classList.toggle('on',x===b);}); }
+  if (b.dataset.l){ state.l=b.dataset.l; document.querySelectorAll('[data-l]').forEach(function(x){x.classList.toggle('on',x===b);}); }
+  all();
+}); });
+new ResizeObserver(fit).observe(wrap); new ResizeObserver(fit).observe(dk);
+all();
+</script>
+</body>
+</html>
