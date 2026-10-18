@@ -394,6 +394,11 @@ it('mirrors on /ar with Arabic product names and logical properties only', funct
 
     $html = sbcTabHome('/ar/');
     expect($html)->toContain('dir="rtl"')->and(sbcTabSection($html))->toContain('<span class="sbc-n">منتج حب الشباب</span>');
+    // "View all" points the way Arabic reads (‹) once the layout is mirrored,
+    // as it is on the live shop; English keeps ›.
+    \App\Models\Setting::updateOrCreate(['key' => \App\Support\Locale::SETTING_RTL], ['value' => '1', 'autoload' => true]);
+    $html = sbcTabHome('/ar/');
+    expect(sbcTabSection($html))->toContain('<span aria-hidden="true">‹</span>')->not->toContain('<span aria-hidden="true">›</span>');
 
     $css = sbcTabCss();
     expect($css)->not->toBe('')
