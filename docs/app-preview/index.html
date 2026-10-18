@@ -541,6 +541,7 @@ img{display:block;max-width:100%}
 .dB .gal{background:var(--blush)}
 .dB .gal .gs button{background:transparent;padding:18px}
 .dB .gal .gs img{border-radius:18px;mix-blend-mode:multiply}
+.dB .gal .cnt,.dB .gal .zh{bottom:34px}
 .dB .pinfo{background:#fff;border-radius:26px 26px 0 0;margin-top:-22px;position:relative;padding-top:20px;box-shadow:0 -8px 24px rgba(193,62,99,.06)}
 .dB .ptabs,.dB .thumbs{display:none}
 .dB .acc{border-top:1px solid var(--line);margin:0 16px}
@@ -1021,7 +1022,7 @@ function productBody(p){
   if (S.st === 'error') return errState();
   const G = gal(p), w = wasOf(p), off = pct(p), d = S.design;
   const inst = Math.ceil(cur(p) / 4 * 100) / 100;
-  const galH = `<div class="gal"><div class="gs" data-dots="gthumbs">${G.map((g, i) => `<button data-act="viewer" data-v="${i}" aria-label="${t('Open photo', 'فتح الصورة')} ${num(i + 1)}"><img src="${g.src}" alt="" ${i ? 'loading="lazy"' : ''}></button>`).join('')}</div><span class="zh">${ico('zoom')}${t('Pinch to zoom', 'قرّبي بإصبعين')}</span><span class="cnt">${num(1)} / ${num(G.length)}</span></div>
+  const galH = `<div class="gal"><div class="gs" data-dots="gthumbs">${G.map((g, i) => `<button data-act="viewer" data-v="${i}" aria-label="${t('Open photo', 'فتح الصورة')} ${num(i + 1)}"><img src="${g.src}" alt="" ${i ? 'loading="lazy"' : ''}></button>`).join('')}</div><span class="zh">${ico('zoom')}${t('Pinch to zoom', 'قرّبي بإصبعين')}</span><span class="cnt">\u2066${num(1)} / ${num(G.length)}\u2069</span></div>
     <div class="thumbs" id="gthumbs">${G.map((g, i) => `<button class="${i ? '' : 'on'}" data-act="gi" data-v="${i}" aria-label="${num(i + 1)}"><img src="${g.thumb}" alt="" loading="lazy"></button>`).join('')}</div>`;
   const priceH = `<div class="pp"><span class="price">${money(cur(p))}</span>${w ? `<span class="was">${money(w)}</span><span class="off">−${num(off)}%</span>` : ''}</div>${w ? `<div class="save">${t('You save', 'وفّرتِ')} ${money(Math.round((w - cur(p)) * 100) / 100)}</div>` : ''}
     <button class="bnpl" data-sheet="tabby"><span class="lg"><span class="tabby">tabby</span><span class="tamara">tamara</span></span><span class="grow">${t(`4 interest-free payments of <b>${money(inst)}</b>. No fees. Sharia-compliant.`, `٤ دفعات بدون فوائد بقيمة <b>${money(inst)}</b>. بلا رسوم. متوافقة مع الشريعة.`).replace('٤', num(4))}</span>${ico('chevR', 'flip')}</button>`;
@@ -1489,7 +1490,7 @@ function wireScrollers(){
       const box = document.getElementById(el.dataset.dots);
       if (box) [...box.children].forEach((b, j) => b.classList.toggle('on', j === i));
       const cnt = el.parentElement.querySelector('.cnt');
-      if (cnt) cnt.textContent = `${num(i + 1)} / ${num(el.children.length)}`;
+      if (cnt) cnt.textContent = `\u2066${num(i + 1)} / ${num(el.children.length)}\u2069`; // isolated: reads 1 / 4 in Arabic too
     }, {passive:true});
   });
   const vs = $('[data-vs]');
