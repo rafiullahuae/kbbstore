@@ -1,0 +1,31 @@
+sitemap.xml on the preview (761 products, 100 brands, 51 categories, 11 posts)
+  loc total: 1868
+  loc under /ar/: 934
+  hreflang=ar alternates: 1868
+  bytes: 894890
+
+robots.txt:
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin-api
+Disallow: /api
+Disallow: /ar/api
+Disallow: /checkout
+Disallow: /ar/checkout
+Disallow: /cart
+Disallow: /ar/cart
+Disallow: /my-account
+Disallow: /ar/my-account
+Disallow: /my-wishlist
+Disallow: /ar/my-wishlist
+Disallow: /wishlist
+Disallow: /ar/wishlist
+Disallow: /track-my-order
+Disallow: /ar/track-my-order
+
+Sitemap: http://localhost/sitemap.xml
+
+Cache-Control (HTML caching setting at its default, off):
+Cache-Control: no-cache, private
+Cache-Control: max-age=3600, public, s-maxage=3600

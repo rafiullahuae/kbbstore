@@ -1,0 +1,46 @@
+{
+    "/api/online": {
+        "status": 204,
+        "n_warm": 15,
+        "ms_med": 12.8,
+        "cpu_ms_med": 10.7,
+        "ms_cold": 39.5,
+        "queries": 2,
+        "q_settings": 1,
+        "q_translations": 0,
+        "cache_reads": 8,
+        "cache_writes": 0,
+        "mem_peak_mb": 2,
+        "hit": {
+            "kbb.settings.map": 2,
+            "kbb.settings": 1,
+            "kbb.owner_app_host": 1,
+            "#": 2,
+            "kbb.modules": 2
+        },
+        "miss": [],
+        "cold_writes": []
+    },
+    "/api/viewed": {
+        "status": 204,
+        "n_warm": 15,
+        "ms_med": 16,
+        "cpu_ms_med": 12.3,
+        "ms_cold": 26,
+        "queries": 5,
+        "q_settings": 1,
+        "q_translations": 0,
+        "cache_reads": 8,
+        "cache_writes": 0,
+        "mem_peak_mb": 2,
+        "hit": {
+            "kbb.settings.map": 2,
+            "kbb.settings": 1,
+            "kbb.owner_app_host": 1,
+            "#": 2,
+            "kbb.modules": 2
+        },
+        "miss": [],
+        "cold_writes": []
+    }
+}

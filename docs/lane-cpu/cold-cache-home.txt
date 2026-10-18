@@ -1,0 +1,12 @@
+/ar/ 233.1 ms q=43 writes=20
+/ar/ 59.8 ms q=3 writes=0
+/ 182.6 ms q=34 writes=19
+/ 53.3 ms q=2 writes=0
+/ar/ 233.4 ms q=38 writes=20
+/ar/ 89.2 ms q=3 writes=0
+/ 239.9 ms q=34 writes=19
+/ 48.7 ms q=2 writes=0
+/ar/ 240.5 ms q=38 writes=20
+/ar/ 65.6 ms q=3 writes=0
+/ 181.3 ms q=34 writes=19
+/ 51.1 ms q=2 writes=0

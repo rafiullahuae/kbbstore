@@ -1,0 +1,107 @@
+## php artisan schedule:list
+
+  *   * * * *  php artisan ugc:cut-covers --limit=20 --unattended  Next Due: 16 seconds from now
+  0   * * * *  php artisan payments:tamara-capture  Next Due: 43 minutes from now
+  *   * * * *  php artisan kbb:order-reminders . Next Due: 16 seconds from now
+  *   * * * *  php artisan kbb:campaigns-step .. Next Due: 16 seconds from now
+  */5 * * * *  php artisan kbb:bounces-read ..... Next Due: 3 minutes from now
+  *   * * * *  php artisan kbb:push-step ....... Next Due: 16 seconds from now
+  23  * * * *  php artisan kbb:push-geo-import --auto  Next Due: 6 minutes from now
+  17  3 * * *  php artisan kbb:cart-tracking-prune  Next Due: 18 hours from now
+  29  3 * * *  php artisan kbb:picture-trash-purge  Next Due: 18 hours from now
+  37  * * * *  php artisan kbb:firewall data --auto  Next Due: 20 minutes from now
+  *   * * * *  php artisan kbb:analytics-rollup  Next Due: 16 seconds from now
+  *   * * * *  php artisan kbb:order-emirates .. Next Due: 16 seconds from now
+
+## schedule:run #0
+
+  2026-10-18 09:16:43 Running ['artisan' ugc:cut-covers --limit=20 --unattended] in background  5.64ms DONE
+  ⇂ ('/usr/bin/php8.3' 'artisan' ugc:cut-covers --limit=20 --unattended > '/dev/null' 2>&1 ; '/usr/bin/php8.3' 'artisan' schedule:finish "framework/schedule-f62f319a209779b318140622aadeff163110eee3" "$?") > '/dev/null' 2>&1 &  
+  2026-10-18 09:16:43 Running ['artisan' kbb:order-reminders] .. 209.60ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:order-reminders > '/dev/null' 2>&1  
+  2026-10-18 09:16:43 Running ['artisan' kbb:campaigns-step] ... 225.80ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:campaigns-step > '/dev/null' 2>&1  
+  2026-10-18 09:16:43 Running ['artisan' kbb:push-step] ........ 232.07ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:push-step > '/dev/null' 2>&1  
+  2026-10-18 09:16:44 Running ['artisan' kbb:analytics-rollup] . 217.83ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:analytics-rollup > '/dev/null' 2>&1  
+  2026-10-18 09:16:44 Running ['artisan' kbb:order-emirates] ... 197.93ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:order-emirates > '/dev/null' 2>&1  
+
+TIME 1.308 s wall  0.943 s user  0.301 s sys  69516 KB maxrss
+## schedule:run #1
+
+  2026-10-18 09:16:44 Running ['artisan' ugc:cut-covers --limit=20 --unattended] in background  5.14ms DONE
+  ⇂ ('/usr/bin/php8.3' 'artisan' ugc:cut-covers --limit=20 --unattended > '/dev/null' 2>&1 ; '/usr/bin/php8.3' 'artisan' schedule:finish "framework/schedule-f62f319a209779b318140622aadeff163110eee3" "$?") > '/dev/null' 2>&1 &  
+  2026-10-18 09:16:44 Running ['artisan' kbb:order-reminders] .. 499.28ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:order-reminders > '/dev/null' 2>&1  
+  2026-10-18 09:16:45 Running ['artisan' kbb:campaigns-step] ... 218.96ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:campaigns-step > '/dev/null' 2>&1  
+  2026-10-18 09:16:45 Running ['artisan' kbb:push-step] ........ 240.57ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:push-step > '/dev/null' 2>&1  
+  2026-10-18 09:16:45 Running ['artisan' kbb:analytics-rollup] . 219.47ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:analytics-rollup > '/dev/null' 2>&1  
+  2026-10-18 09:16:45 Running ['artisan' kbb:order-emirates] ... 195.22ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:order-emirates > '/dev/null' 2>&1  
+
+TIME 1.606 s wall  1.069 s user  0.427 s sys  69400 KB maxrss
+## schedule:run #2
+
+  2026-10-18 09:16:46 Running ['artisan' ugc:cut-covers --limit=20 --unattended] in background  4.18ms DONE
+  ⇂ ('/usr/bin/php8.3' 'artisan' ugc:cut-covers --limit=20 --unattended > '/dev/null' 2>&1 ; '/usr/bin/php8.3' 'artisan' schedule:finish "framework/schedule-f62f319a209779b318140622aadeff163110eee3" "$?") > '/dev/null' 2>&1 &  
+  2026-10-18 09:16:46 Running ['artisan' kbb:order-reminders] .. 206.92ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:order-reminders > '/dev/null' 2>&1  
+  2026-10-18 09:16:46 Running ['artisan' kbb:campaigns-step] ... 192.37ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:campaigns-step > '/dev/null' 2>&1  
+  2026-10-18 09:16:46 Running ['artisan' kbb:push-step] ........ 229.24ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:push-step > '/dev/null' 2>&1  
+  2026-10-18 09:16:47 Running ['artisan' kbb:analytics-rollup] . 203.54ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:analytics-rollup > '/dev/null' 2>&1  
+  2026-10-18 09:16:47 Running ['artisan' kbb:order-emirates] ... 201.14ms DONE
+  ⇂ '/usr/bin/php8.3' 'artisan' kbb:order-emirates > '/dev/null' 2>&1  
+
+TIME 1.374 s wall  1.042 s user  0.301 s sys  69244 KB maxrss
+## bare boot: php artisan --version
+Laravel Framework 11.56.1
+TIME 0.187 s wall  0.154 s user  0.029 s sys  62120 KB maxrss
+Laravel Framework 11.56.1
+TIME 0.192 s wall  0.142 s user  0.038 s sys  62152 KB maxrss
+## alone: ugc:cut-covers --limit=20 --unattended
+6 clip(s) to cut.
+#1  the 10-step routine, honestly
+   nothing was produced — The video file is missing from this server: /uploads/ugc/real-a.webm. The clip was uploaded and the file is no longer there — upload it again.
+#2  niacinamide, four weeks in
+   nothing was produced — The video file is missing from this server: /uploads/ugc/real-b.webm. The clip was uploaded and the file is no longer there — upload it again.
+#3  glass skin in six steps
+   nothing was produced — The video file is missing from this server: /uploads/ugc/real-a.webm. The clip was uploaded and the file is no longer there — upload it again.
+#4  sunscreen that does not pill
+   nothing was produced — The video file is missing from this server: /uploads/ugc/real-b.webm. The clip was uploaded and the file is no longer there — upload it again.
+#5  cleansing balm, first try
+   nothing was produced — The video file is missing from this server: /uploads/ugc/real-a.webm. The clip was uploaded and the file is no longer there — upload it again.
+#6  what I actually repurchase
+   nothing was produced — The video file is missing from this server: /uploads/ugc/real-b.webm. The clip was uploaded and the file is no longer there — upload it again.
+
+0 cut, 6 could not be.
+
+Every clip's file was missing, so check WHERE this looked before hunting for them:
+  /home/user/kbbstore/.claude/worktrees/agent-ab9f83d652ce29074/storage/framework/testing/arf-preview/webroot/uploads/ugc
+If that is not inside your web root, this command resolved a different public
+path than the shop does. bootstrap/public-path.php is the fix — it is a FILE, so
+the web and the command line read the same value. $KBB_PUBLIC_PATH set in an FPM
+pool, or in .env, reaches one of them at most.
+TIME 0.224 s wall  0.197 s user  0.026 s sys  69104 KB maxrss
+## alone: kbb:order-reminders
+Sent 0 reminder(s).
+TIME 0.229 s wall  0.176 s user  0.043 s sys  68016 KB maxrss
+## alone: kbb:campaigns-step
+Started 0 campaign(s), ran 0 step(s).
+TIME 0.248 s wall  0.201 s user  0.040 s sys  67528 KB maxrss
+## alone: kbb:push-step
+Started 0 campaign(s), queued 0, sent 0, stepped 0.
+TIME 0.241 s wall  0.179 s user  0.059 s sys  69536 KB maxrss
+## alone: kbb:analytics-rollup
+Analytics: rebuilt 0 day(s).
+TIME 0.252 s wall  0.202 s user  0.032 s sys  67720 KB maxrss
+## alone: kbb:order-emirates
+Read 0 order(s).
+TIME 0.216 s wall  0.162 s user  0.041 s sys  66676 KB maxrss
