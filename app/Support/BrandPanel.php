@@ -412,7 +412,7 @@ final class BrandPanel
      *
      * @param  array<string, mixed>  $layout  SiteLayout::all()
      * @param  array<string, mixed>|null  $banner  PageBanner::forModel()
-     * @return array{image:?string, class:string, style:string, description:string, logo:bool, more:bool}
+     * @return array{image:?string, image_phone:null, srcset:string, srcset_phone:string, sizes:string, sizes_phone:string, class:string, style:string, description:string, logo:bool, more:bool}
      */
     public static function forBrand(Brand $brand, array $layout, ?array $banner = null): array
     {
@@ -426,7 +426,29 @@ final class BrandPanel
             $description = e(trim($banner['subheading']));
         }
 
-        return self::draw($v, $image, $description, BrandLogo::ring($brand) ?? self::FALLBACK_COLOUR);
+        /*
+         * (Lane SPD) THE PHONE GOT THE WHOLE ORIGINAL. The owner: "the pages
+         * header, categories, normal pages, brands etc. should load the actual
+         * mobile size banner images." The category and page headers already
+         * printed a <picture> with the img-cache srcset; the brand page printed
+         * a bare <img> -- measured on the live shop, /brands/anua/ handed every
+         * phone the 2496x664 original, 925 KB, as its LCP, while its 400w and
+         * 800w copies sat on disk. So the brand's picture now carries the same
+         * srcset and the same cover-aware `sizes` as a category's, and the
+         * partial draws it with the category's own <picture>. A picture that
+         * is not on this server, or has no copies, gets '' and the brand page
+         * prints exactly the bare <img> it printed before. Disk reads only.
+         */
+        $ratio = $image === null ? null : self::onServer($image);
+        $srcset = $ratio === null ? '' : self::srcset((string) $image);
+
+        return [
+            'image_phone' => null,
+            'srcset' => $srcset,
+            'srcset_phone' => '',
+            'sizes' => $srcset === '' ? '' : self::sizes((string) $image, (int) $v['height'], (int) $v['height_m'], $ratio),
+            'sizes_phone' => '',
+        ] + self::draw($v, $image, $description, BrandLogo::ring($brand) ?? self::FALLBACK_COLOUR);
     }
 
     /**
@@ -822,7 +844,19 @@ final class BrandPanel
         $phone = (int) ceil($heightPhone * $ratio);
         $laptop = (int) ceil($height * $ratio);
 
-        return '(max-width: 599px) max(100vw, '.min(2400, $phone).'px), min(max(100vw, '.min(2400, $laptop).'px), 2400px)';
+        /*
+         * (Lane SPD) AND THE PRODUCT PAGE'S 2x CAP ON A 3x PHONE (2.60.465,
+         * ImageVariants::detailSizesAttribute). A 3.4 : 1 picture in the 165px
+         * phone banner is drawn 566 CSS px wide, which at ratio 3 is 1,698
+         * device pixels: no copy is that wide, so every 3x phone took the
+         * ORIGINAL -- measured on the preview, 738 KB for the brand banner and
+         * 731 KB for a page's, where the 1280w copy is 113 KB. Two thirds of
+         * the drawn width at 3x is a 2x picture, which is what the product
+         * photograph above it already gets. Ratio 2 and below are unchanged.
+         */
+        $phoneWidth = min(2400, $phone);
+
+        return '(max-width: 599px) and (min-resolution: 2.5dppx) calc(max(100vw, '.$phoneWidth.'px) * 0.67), (max-width: 599px) max(100vw, '.$phoneWidth.'px), min(max(100vw, '.min(2400, $laptop).'px), 2400px)';
     }
 
     /**

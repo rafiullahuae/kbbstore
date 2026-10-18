@@ -99,7 +99,11 @@
   @endphp
   <div class="cover" style="background:{{ \App\Support\CoverImage::background($post->cover) }}">
     @if($coverSrc)
-      <img src="{{ $coverSrc }}" alt="{{ $post->t('title') }}" width="1200" height="600" fetchpriority="high">
+      {{-- (Lane SPD) Its img-cache copies, so a phone takes a phone-sized file:
+           the column is 720px less 20px a side, drawn 16:8 with cover; a 3x phone
+           is asked for a 2x picture, as the product photograph is (2.60.465). --}}
+      @php $coverSet = \App\Support\ImageVariants::coverSrcsetFor($coverSrc); @endphp
+      <img src="{{ $coverSrc }}"@if ($coverSet !== '') srcset="{{ $coverSet }}" sizes="(max-width: 720px) and (min-resolution: 2.5dppx) calc((100vw - 40px) * 0.67), (max-width: 720px) calc(100vw - 40px), 680px"@endif alt="{{ $post->t('title') }}" width="1200" height="600" fetchpriority="high">
     @else
       {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$post->tag] ?? '✨' }}
     @endif
@@ -141,7 +145,8 @@
       @endphp
       <div class="mcover" style="background:{{ \App\Support\CoverImage::background($r->cover) }}">
         @if($relSrc)
-          <img src="{{ $relSrc }}" alt="{{ $r->t('title') }}" width="400" height="250" loading="lazy">
+          @php $relSet = \App\Support\ImageVariants::coverSrcsetFor($relSrc); @endphp
+          <img src="{{ $relSrc }}"@if ($relSet !== '') srcset="{{ $relSet }}" sizes="(max-width: 900px) and (min-resolution: 2.5dppx) calc((100vw - 40px) * 0.67), (max-width: 900px) calc(100vw - 40px), 380px"@endif alt="{{ $r->t('title') }}" width="400" height="250" loading="lazy">
         @else
           {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$r->tag] ?? '✨' }}
         @endif

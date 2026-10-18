@@ -41,6 +41,12 @@
     page, or true), so they draw the category branch -- the words are the
     panel's own `heading`, the picture the same <picture>. A page has no logo:
     `logo` is false, so no circle is printed.
+
+    LANE SPD. The BRAND's picture draws the same <picture> when it has img-cache
+    copies (BrandPanel::forBrand's `srcset`), so a phone takes a phone-sized
+    file instead of the original -- 925 KB on the live /brands/anua/. With no
+    copies, or a picture on another host, the bare <img> below is printed
+    exactly as before.
 --}}
 <div class="brw-phw" data-kbb-brand-header>
 <section class="{{ $panel['class'] }}" style="{{ $panel['style'] }}" aria-labelledby="brw-ph-title">
@@ -49,6 +55,8 @@
 @if ($panel['image'] !== null)
 @include('store.partials.category-panel-picture', ['panel' => $panel])
 @endif
+@elseif ($panel['image'] !== null && ($panel['srcset'] ?? '') !== '')
+@include('store.partials.category-panel-picture', ['panel' => $panel])
 @elseif ($panel['image'] !== null)
 <img class="brw-ph__img" src="{{ $panel['image'] }}" alt="" width="{{ \App\Support\TitleHeader::IMG_WIDTH }}" height="{{ \App\Support\TitleHeader::IMG_HEIGHT }}" decoding="async" fetchpriority="high">
 @endif

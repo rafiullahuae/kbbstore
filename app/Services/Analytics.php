@@ -250,8 +250,22 @@ final class Analytics
      * (ServerEvents), so a shopper who closes the tab that instant is still
      * counted. "now" puts the old tags back byte for byte: Growth & Marketing
      * -> Marketing Pixels -> Custom code -> Page speed.
+     *
+     * ▲ Lane SPD. "the speed is super fine. but i feel little bit that
+     * something still loading for a second, even the page loaded completed."
+     * It was these three files, on a page nobody had touched. The listener is
+     * on window in the CAPTURE phase, so it also hears a `scroll` of any
+     * scrolling ELEMENT -- and the product page's thumbnail strip (#gthumbs)
+     * fires one by itself while the page loads. Measured on the live product
+     * page with no input at all (tools/spd-pixel-wake.cjs): one scroll event,
+     * target div#gthumbs, at 668 ms, before load; fbevents.js, gtag/js and
+     * TikTok's events.js then requested the instant load fired, not 5 s later,
+     * so the loading bar and the phone's line ran on for them. A shopper
+     * scrolling the PAGE scrolls the document (target === document), and one
+     * swiping a strip touches it first (touchstart), so only an element's own
+     * scroll is ignored; every person still wakes them at once.
      */
-    public const LATE = "function(f){var d=0,h=0,l=0,o={passive:true,capture:true},E=['pointerdown','touchstart','keydown','scroll','wheel','mousemove'];function go(){if(d)return;d=1;E.forEach(function(e){removeEventListener(e,on,o)});f()}function on(){h=1;if(l)go()}E.forEach(function(e){addEventListener(e,on,o)});function lo(){l=1;h?go():setTimeout(go,5000)}document.readyState==='complete'?lo():addEventListener('load',lo,{once:true})}";
+    public const LATE = "function(f){var d=0,h=0,l=0,o={passive:true,capture:true},E=['pointerdown','touchstart','keydown','scroll','wheel','mousemove'];function go(){if(d)return;d=1;E.forEach(function(e){removeEventListener(e,on,o)});f()}function on(e){if(e.type==='scroll'&&e.target!==document)return;h=1;if(l)go()}E.forEach(function(e){addEventListener(e,on,o)});function lo(){l=1;h?go():setTimeout(go,5000)}document.readyState==='complete'?lo():addEventListener('load',lo,{once:true})}";
 
     /** Are the tracking files fetched after the page has loaded (the default)? */
     public static function loadsLate(): bool

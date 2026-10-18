@@ -122,7 +122,11 @@
              (Lane LZ) Not all of them: the first ROW is in view at 1280 --
              three, from this page's own `repeat(3,1fr)` above -- and the two
              beside the first were lazy, so they painted after it. --}}
-        <img src="{{ $coverSrc }}" alt="{{ $p->t('title') }}" width="800" height="500"
+        {{-- (Lane SPD) With its img-cache copies, so a phone is not handed the
+             original for a ~350px card: one column under 900px, three of
+             about 364px above it. --}}
+        @php $coverSet = \App\Support\ImageVariants::coverSrcsetFor($coverSrc); @endphp
+        <img src="{{ $coverSrc }}"@if ($coverSet !== '') srcset="{{ $coverSet }}" sizes="(max-width: 900px) and (min-resolution: 2.5dppx) calc((100vw - 40px) * 0.67), (max-width: 900px) calc(100vw - 40px), 380px"@endif alt="{{ $p->t('title') }}" width="800" height="500"
              loading="{{ $loop->index < 3 ? 'eager' : 'lazy' }}">
       @else
         {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$p->tag] ?? '✨' }}

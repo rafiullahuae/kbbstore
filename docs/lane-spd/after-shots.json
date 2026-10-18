@@ -1,0 +1,134 @@
+{
+ "brand-390": {
+  "chosen": "/img-cache/1280/uploads/brands/spd-brand-banner.jpg",
+  "natural": "379x110",
+  "box": "346x165",
+  "lazy": "auto",
+  "priority": "high",
+  "kb": 113.1,
+  "scrollWidth": 390
+ },
+ "category-390": {
+  "chosen": "/img-cache/800/uploads/categories/spd-cat-phone.jpg",
+  "natural": "261x217",
+  "box": "346x165",
+  "lazy": "auto",
+  "priority": "high",
+  "kb": 145.8,
+  "scrollWidth": 390
+ },
+ "page-390": {
+  "chosen": "/img-cache/1280/uploads/pages/spd-page-banner.jpg",
+  "natural": "379x110",
+  "box": "366x165",
+  "lazy": "auto",
+  "priority": "high",
+  "kb": 111,
+  "scrollWidth": 390
+ },
+ "post-390": {
+  "chosen": "/img-cache/800/uploads/ha/post2.webp",
+  "natural": "234x146",
+  "box": "350x175",
+  "lazy": "auto",
+  "priority": "high",
+  "kb": 2.3,
+  "scrollWidth": 390
+ },
+ "reviews-390": {
+  "thumbs": 15,
+  "thumbKB": 158.3,
+  "sample": [
+   {
+    "chosen": "/img-cache/c1x1/400/uploads/reviews/spd-r0-0.jpg",
+    "natural": "113x113",
+    "box": "134x160",
+    "kb": 29.3
+   },
+   {
+    "chosen": "/img-cache/c1x1/200/uploads/reviews/spd-r1-0.jpg",
+    "natural": "54x54",
+    "box": "65x76",
+    "kb": 5.6
+   },
+   {
+    "chosen": "/img-cache/c1x1/200/uploads/reviews/spd-r1-1.jpg",
+    "natural": "54x54",
+    "box": "65x76",
+    "kb": 5.4
+   }
+  ],
+  "cardHit": true,
+  "popupOpen": true,
+  "fullOnClick": [
+   "670.0K /uploads/reviews/spd-r0-0.jpg"
+  ],
+  "scrollWidth": 390
+ },
+ "brand-1280": {
+  "chosen": "/img-cache/1280/uploads/brands/spd-brand-banner.jpg",
+  "natural": "1280x373",
+  "box": "1236x270",
+  "lazy": "auto",
+  "priority": "high",
+  "kb": 113.1,
+  "scrollWidth": 1280
+ },
+ "category-1280": {
+  "chosen": "/img-cache/1280/uploads/categories/spd-cat-banner.jpg",
+  "natural": "1280x373",
+  "box": "1236x270",
+  "lazy": "auto",
+  "priority": "high",
+  "kb": 122.3,
+  "scrollWidth": 1280
+ },
+ "page-1280": {
+  "chosen": "/img-cache/1280/uploads/pages/spd-page-banner.jpg",
+  "natural": "1280x373",
+  "box": "1205x270",
+  "lazy": "auto",
+  "priority": "high",
+  "kb": 111,
+  "scrollWidth": 1280
+ },
+ "post-1280": {
+  "chosen": "/img-cache/800/uploads/ha/post2.webp",
+  "natural": "680x424",
+  "box": "680x340",
+  "lazy": "auto",
+  "priority": "high",
+  "kb": 2.3,
+  "scrollWidth": 1280
+ },
+ "reviews-1280": {
+  "thumbs": 15,
+  "thumbKB": 160.3,
+  "sample": [
+   {
+    "chosen": "/img-cache/c1x1/400/uploads/reviews/spd-r0-0.jpg",
+    "natural": "266x266",
+    "box": "173x160",
+    "kb": 29.6
+   },
+   {
+    "chosen": "/img-cache/c1x1/200/uploads/reviews/spd-r1-0.jpg",
+    "natural": "131x131",
+    "box": "84x76",
+    "kb": 5.6
+   },
+   {
+    "chosen": "/img-cache/c1x1/200/uploads/reviews/spd-r1-1.jpg",
+    "natural": "131x131",
+    "box": "84x76",
+    "kb": 5.4
+   }
+  ],
+  "cardHit": true,
+  "popupOpen": true,
+  "fullOnClick": [
+   "670.0K /uploads/reviews/spd-r0-0.jpg"
+  ],
+  "scrollWidth": 1280
+ }
+}

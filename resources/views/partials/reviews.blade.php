@@ -149,8 +149,20 @@
 
                          ON $u AND NOT ON $r->images: these have been through
                          SafeUrl::src() above, so a scheme this shop does not
-                         serve is already '' and never reaches here. --}}
-                    <div class="sr-pp {{ 1 === $nph ? 'one' : 'multi' }}"><span class="sr-pc">📷 {{ $nph }}</span>@foreach (array_slice($imgs, 0, 4) as $idx => $u)@php $more = ($nph > 4 && 3 === $idx) ? $nph - 4 : 0; $phSrcset = \App\Support\ImageVariants::srcsetFor($u); @endphp<span class="sr-ph"@if ($more) data-more="{{ \App\Support\Bidi::number('+' . $more) }}"@endif><img src="{{ $u }}" alt="" loading="lazy"@if ($phSrcset !== '') srcset="{{ $phSrcset }}" sizes="{{ \App\Support\ImageVariants::reviewPhotoSizesAttribute((int) $cols, $nph > 1) }}"@endif></span>@endforeach</div>
+                         serve is already '' and never reaches here.
+
+                         (Lane SPD) AND NOW A SMALL SQUARE CROP FIRST -- the
+                         owner: "the reviews thumbnails images should crop auto
+                         to small and upon click it should load the full size."
+                         ImageVariants::reviewThumbSrcsetFor() offers the
+                         photograph's centred square at 200/400/600 px, the
+                         part `cover` shows, instead of a full-height copy; with
+                         no crops on disk yet it notes them for after the
+                         response and the width copies above are used, as
+                         before. `src` stays the original and the popup
+                         (reviews.js) draws the original only when the card is
+                         opened. --}}
+                    <div class="sr-pp {{ 1 === $nph ? 'one' : 'multi' }}"><span class="sr-pc">📷 {{ $nph }}</span>@foreach (array_slice($imgs, 0, 4) as $idx => $u)@php $more = ($nph > 4 && 3 === $idx) ? $nph - 4 : 0; $phCrop = \App\Support\ImageVariants::reviewThumbSrcsetFor($u); $phSrcset = $phCrop !== '' ? $phCrop : \App\Support\ImageVariants::srcsetFor($u); @endphp<span class="sr-ph"@if ($more) data-more="{{ \App\Support\Bidi::number('+' . $more) }}"@endif><img src="{{ $u }}" alt="" loading="lazy"@if ($phSrcset !== '') srcset="{{ $phSrcset }}" sizes="{{ $phCrop !== '' ? \App\Support\ImageVariants::reviewThumbSizesAttribute((int) $cols, $nph > 1) : \App\Support\ImageVariants::reviewPhotoSizesAttribute((int) $cols, $nph > 1) }}"@endif></span>@endforeach</div>
                 @endif
                 <div class="sr-cf"><span class="sr-dt">{{ $date }}</span>@if ($r->demo ?? false)<span class="sr-help sr-help-demo">👍 <span>{{ (int) $r->helpful }}</span></span>@else<button class="sr-help" data-id="{{ $r->id }}" type="button">👍 <span>{{ (int) $r->helpful }}</span></button>@endif</div>
 

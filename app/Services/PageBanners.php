@@ -260,6 +260,23 @@ final class PageBanners
         return $banner === null ? null : self::view($banner, Locale::current() === 'ar');
     }
 
+    /**
+     * (Lane SPD) A page banner picture's img-cache srcset, or '' -- so a phone
+     * takes a phone-sized copy instead of the original. Called by
+     * partials/page-banner only when the banner is actually printed, never by
+     * view(), whose answer the brand-design page header also reads. Disk reads
+     * only (ImageVariants::bannerSrcsetFor); a picture on another host, or with
+     * no copies, is '' and the banner prints as it did before.
+     */
+    public static function srcset(string $url): string
+    {
+        try {
+            return \App\Support\ImageVariants::bannerSrcsetFor(\App\Support\ImageVariants::rootRelative($url));
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
     /** One banner resolved for rendering. Public so the tests can drive it. */
     public static function view(array $b, bool $arabic = false): ?array
     {

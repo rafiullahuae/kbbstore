@@ -1,7 +1,8 @@
 {{--
     The category banner's picture (Lane CB), inside store/partials/brand-panel.
 
-    The brand page draws a bare <img>; a category's banner is offered at the
+    (Lane SPD: the brand page draws this same picture too, whenever its banner
+    has img-cache copies.) A category's banner is offered at the
     img-cache widths instead (BrandPanel::forCategory -> ImageVariants::
     bannerSrcsetFor, read from the disk only), so a 390px phone is not handed
     the 2400px original, and `sizes` counts the crop (BrandPanel::sizes): a

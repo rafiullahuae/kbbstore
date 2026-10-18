@@ -543,6 +543,141 @@ final class ImageVariants
     }
 
     /**
+     * A Journal cover's srcset (the article's hero, the index cards, "More from
+     * the Journal"), or ''.                                         (Lane SPD)
+     *
+     * Those were bare <img src> -- every phone downloaded the original to
+     * paint a ~350px card. detailSrcsetFor() first, because the original stays
+     * the widest candidate and a 3x phone filling a 350px card wants more than
+     * 800 pixels: never softer than the page it replaces. With no copies on
+     * disk, srcsetFor() is asked as well -- it says '' too, and notes the
+     * photograph for after the response (tileAfterResponse), so the next view
+     * has them. '' means "print the <img> exactly as before".
+     */
+    public static function coverSrcsetFor(string $image): string
+    {
+        $srcset = self::detailSrcsetFor($image);
+
+        return $srcset !== '' ? $srcset : self::srcsetFor($image);
+    }
+
+    /**
+     * ── REVIEW PHOTOGRAPH THUMBNAILS: SMALL SQUARE CROPS ─────────── (Lane SPD)
+     *
+     * THE OWNER: "the reviews thumbnails images should crop auto to small and
+     * upon click it should load the full size."
+     *
+     * A review photograph comes off a phone at 1080x1440 (or 1080x1920), and
+     * the card paints it into a box of 266x160 (one photograph) or 131x76 (the
+     * two-up grid) with object-fit:cover. srcsetFor()'s width copies keep the
+     * whole height -- the 400w copy of a 3:4 shot is 400x533, a third of its
+     * rows never shown. A centred SQUARE crop holds every pixel `cover` shows
+     * in any box that is at least as wide as it is tall (all of them but the
+     * narrowest phone column, where it trims a few percent of each side), at
+     * 200, 400 and 600 px only: 600 is a 266px card at device-pixel-ratio 2.
+     *
+     * The full photograph is untouched: the card's popup (reviews.js) draws the
+     * ORIGINAL, and only when the card is opened.
+     *
+     * Written under img-cache/c1x1/<width>/ by generateCrop() -- the banner
+     * crops' own writer, same never-upscale and atomic-rename promises, and
+     * forget() already walks every c* directory. Made AFTER a response that
+     * found them missing (squareAfterResponse), never in front of a shopper.
+     */
+    public const REVIEW_THUMB_TOKEN = '1x1';
+
+    /** @var list<int> */
+    public const REVIEW_THUMB_WIDTHS = [200, 400, 600];
+
+    /**
+     * The square-crop srcset of a review photograph, or '' when its crops are
+     * not on disk yet -- in which case they are noted for after the response
+     * and the caller falls back to srcsetFor(), exactly the markup of before.
+     */
+    public static function reviewThumbSrcsetFor(string $image): string
+    {
+        $srcset = self::cropSrcsetFor($image, self::REVIEW_THUMB_TOKEN);
+
+        if ($srcset === '') {
+            self::squareAfterResponse($image);
+        }
+
+        return $srcset;
+    }
+
+    /**
+     * The `sizes` for a review card's SQUARE crop: reviewPhotoSizesAttribute()'s
+     * box, plus the product photograph's 2x cap on a 3x phone (2.60.465). The
+     * owner asked for the thumbnail "small": a 134x160 card at ratio 3 would
+     * otherwise take the 600px square (measured on the preview, 84.5 KB of a
+     * noisy photograph) where the 400px one is twice the box. Only the crop's
+     * markup carries this; the width-copy fallback keeps its own string.
+     */
+    public static function reviewThumbSizesAttribute(int $columns, bool $multi): string
+    {
+        return '(max-width: 760px) and (min-resolution: 2.5dppx) '.($multi ? '14vw' : '29vw').', '
+            .self::reviewPhotoSizesAttribute($columns, $multi);
+    }
+
+    /**
+     * Make one review photograph's square crops after the response. Off in
+     * tests (kbb.image_tile_after_response, tests/Pest.php), like the tiles.
+     * A cache key per photograph for a day, so a picture that cannot be
+     * cropped (square already, too small, unreadable) costs one cache read
+     * per view and never a decode; one worker at a time across the box.
+     */
+    public static function squareAfterResponse(string $image): void
+    {
+        if (! config('kbb.image_tile_after_response', true) || ! self::available() || ! app()->bound('request')
+            || ! self::mayWorkAfterResponse() || self::split($image) === null) {
+            return;
+        }
+
+        try {
+            $attributes = request()->attributes;
+            $pending = $attributes->get('kbb.img-square-pending', []);
+
+            if (isset($pending[$image])) {
+                return;
+            }
+
+            $pending[$image] = true;
+            $attributes->set('kbb.img-square-pending', $pending);
+
+            if (count($pending) > 1) {
+                return; // this response's callback is already registered
+            }
+
+            defer(static function () use ($attributes): void {
+                self::oneWorkerAtATime(static function () use ($attributes): void {
+                    $started = microtime(true);
+                    $attempts = 0;
+
+                    foreach (array_keys($attributes->get('kbb.img-square-pending', [])) as $one) {
+                        if ($attempts >= self::TILE_AFTER_RESPONSE_MAX
+                            || microtime(true) - $started > self::TILE_AFTER_RESPONSE_SECONDS) {
+                            break;
+                        }
+
+                        try {
+                            if (! \Illuminate\Support\Facades\Cache::add('kbb.img-square.'.sha1($one), 1, 86400)) {
+                                continue;
+                            }
+
+                            $attempts++;
+                            self::generateCrop($one, self::REVIEW_THUMB_TOKEN, 1.0, self::REVIEW_THUMB_WIDTHS);
+                        } catch (\Throwable $e) {
+                            report($e);
+                        }
+                    }
+                });
+            }, 'kbb-img-squares-'.spl_object_id($attributes));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
      * THE BANNER'S srcset: detailSrcsetFor() plus the WIDE_WIDTHS copies that
      * are on disk, and — when one the original is wide enough for is not —
      * those copies are made AFTER the response.                   (Lane PF2)
@@ -1619,6 +1754,32 @@ final class ImageVariants
     }
 
     /**
+     * (Lane SPD) A given width list for a crop: each width the crop is wider
+     * than, plus the crop's own width when it is no wider than the largest one
+     * asked for -- so a 500px square still gets a sharp 500w and nothing
+     * upscaled.
+     *
+     * @param  list<int>  $widths  smallest first
+     * @return list<int>
+     */
+    private static function cappedCropWidths(int $cropWidth, array $widths): array
+    {
+        $out = [];
+
+        foreach ($widths as $width) {
+            if ($width > 0 && $cropWidth > $width) {
+                $out[] = $width;
+            }
+        }
+
+        if ($widths !== [] && $cropWidth <= max($widths) && ! in_array($cropWidth, $out, true)) {
+            $out[] = $cropWidth;
+        }
+
+        return $out;
+    }
+
+    /**
      * The rectangle `object-fit: cover` shows of a picture in a frame.
      *
      * ── IT IS THE SAME RECTANGLE THE BROWSER ALREADY PICKS ──────────────────
@@ -1690,9 +1851,15 @@ final class ImageVariants
      * IDEMPOTENT, like generate(): a crop already on disk is left alone, so a
      * backfill that was interrupted can simply be run again.
      *
+     * (Lane SPD) $widths, when given, is the ONLY list written -- the review
+     * thumbnails' 200/400/600 -- still never wider than the crop itself, and
+     * the crop's own width is added only when it is narrower than the largest
+     * asked for. Null is the banner behaviour above, unchanged.
+     *
+     * @param  list<int>|null  $widths
      * @return array{made: int, skipped: int, reason: ?string}
      */
-    public static function generateCrop(string $image, string $token, float $frameAspect): array
+    public static function generateCrop(string $image, string $token, float $frameAspect, ?array $widths = null): array
     {
         $dir = self::cropDir($token);
 
@@ -1746,7 +1913,7 @@ final class ImageVariants
         $made = $skipped = 0;
         $wanted = [];
 
-        foreach (self::cropWidths($cropW) as $width) {
+        foreach (($widths === null ? self::cropWidths($cropW) : self::cappedCropWidths($cropW, $widths)) as $width) {
             if (is_file(public_path($dir.'/'.$width.'/'.$fsRel))) {
                 $skipped++;
 

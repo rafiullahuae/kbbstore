@@ -17,7 +17,14 @@
 <div class="kbb-pb" style="{{ $pageBanner['style'] }}" data-banner="{{ $pageBanner['id'] }}">
 @if ($pageBanner['img'])
 @php($pbImg = $pageBanner['img'])
-@if ($pbImg['href'] !== '')<a class="kbb-pb-img" href="{{ $pbImg['href'] }}">@else<div class="kbb-pb-img">@endif<picture>@if ($pbImg['two'])<source media="{{ $pageBanner['media'] }}" srcset="{{ $pbImg['m'] }}"@if ($pbImg['wm'] && $pbImg['hm']) width="{{ $pbImg['wm'] }}" height="{{ $pbImg['hm'] }}"@endif>@endif<img src="{{ $pbImg['d'] }}" alt="{{ $pbImg['alt'] }}"@if ($pbImg['wd'] && $pbImg['hd']) width="{{ $pbImg['wd'] }}" height="{{ $pbImg['hd'] }}"@endif fetchpriority="high" decoding="async"></picture>@if ($pbImg['href'] !== '')</a>@else</div>@endif
+{{-- (Lane SPD) Each picture offers its img-cache copies, so a phone downloads
+     a phone-sized file: the phone <source> at 100vw (it is never wider than the
+     screen), asking a 3x phone for a 2x picture as the product photograph does
+     since 2.60.465; the laptop <img> as the homepage banner declares itself. No copies
+     on disk, no srcset: the markup is what it was. --}}
+@php($pbSd = \App\Services\PageBanners::srcset($pbImg['d']))
+@php($pbSm = $pbImg['two'] ? \App\Services\PageBanners::srcset($pbImg['m']) : '')
+@if ($pbImg['href'] !== '')<a class="kbb-pb-img" href="{{ $pbImg['href'] }}">@else<div class="kbb-pb-img">@endif<picture>@if ($pbImg['two'])<source media="{{ $pageBanner['media'] }}" srcset="{{ $pbSm !== '' ? $pbSm : $pbImg['m'] }}"@if ($pbSm !== '') sizes="(min-resolution: 2.5dppx) 67vw, 100vw"@endif{{ '' }}@if ($pbImg['wm'] && $pbImg['hm']) width="{{ $pbImg['wm'] }}" height="{{ $pbImg['hm'] }}"@endif>@endif<img src="{{ $pbImg['d'] }}" alt="{{ $pbImg['alt'] }}"@if ($pbSd !== '') srcset="{{ $pbSd }}" sizes="{{ \App\Support\ImageVariants::bannerSliderSizesAttribute() }}"@endif{{ '' }}@if ($pbImg['wd'] && $pbImg['hd']) width="{{ $pbImg['wd'] }}" height="{{ $pbImg['hd'] }}"@endif fetchpriority="high" decoding="async"></picture>@if ($pbImg['href'] !== '')</a>@else</div>@endif
 
 @endif
 @if ($pageBanner['items'] !== [])
