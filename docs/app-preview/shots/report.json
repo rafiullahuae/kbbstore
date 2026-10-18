@@ -1,0 +1,24 @@
+{
+ "generated": "2026-10-18T20:50:51.738Z",
+ "renders": 1352,
+ "screens": 68,
+ "devices": [
+  "ip16",
+  "ipse",
+  "ipad",
+  "ipad-land",
+  "px9",
+  "flip",
+  "flip-tabletop",
+  "fold-cover",
+  "fold-inner",
+  "duo"
+ ],
+ "locales": [
+  "en",
+  "ar"
+ ],
+ "failed": 0,
+ "issues_by_kind": {},
+ "failures": []
+}
