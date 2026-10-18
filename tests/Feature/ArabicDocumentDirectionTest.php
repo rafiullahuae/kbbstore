@@ -95,7 +95,8 @@ it('declares right-to-left on every Arabic storefront document', function () {
         // Lane RD's press-feedback attribute rides on the same tag; it is not
         // direction, and PressFeedbackTest pins it. Only its exact shape is
         // taken out, so anything else added to <html> is still seen here.
-        $tag = (string) preg_replace('/ data-press="[a-e]"(?=>$)/', '', $m[0]);
+        // 18 October 2026: ` translate="no"` (Translation -> Language settings -> Keep the Arabic shop in Arabic) is not a language or direction attribute either; ArabicKeepArabicTest pins it. Taken off in its exact shape, first, because it is printed last.
+        $tag = (string) preg_replace('/ data-press="[a-e]"(?=>$)/', '', (string) preg_replace('/ translate="no"(?=>$)/', '', $m[0]));
         expect($tag)->toBe('<html lang="ar" dir="rtl">', "{$name} does not declare itself right-to-left: {$m[0]}");
     }
 });

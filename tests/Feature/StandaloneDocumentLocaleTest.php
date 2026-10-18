@@ -127,7 +127,8 @@ function sdlHtmlTag(string $uri, bool $admin = false): string
      * SiteLayout::PRESS_ATTR). It is not a language attribute, so it is taken
      * off before lang and dir are compared; nothing else is.
      */
-    return (string) preg_replace('# data-press="[a-z]+"#', '', $m[0], 1);
+    // 18 October 2026: ` translate="no"` (Translation -> Language settings -> Keep the Arabic shop in Arabic) is not a language or direction attribute either; ArabicKeepArabicTest pins it. Taken off in its exact shape, first, because it is printed last.
+    return (string) preg_replace('# data-press="[a-z]+"#', '', (string) preg_replace('# translate="no"(?=>$)#', '', $m[0]), 1);
 }
 
 it('declares Arabic and right-to-left on every standalone document', function () {

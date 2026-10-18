@@ -110,7 +110,8 @@ function htmlTag(string $url): string
      * to pin -- PressFeedbackTest pins it -- so it is taken out here, and only
      * in its exact shape, so that anything else added to <html> is still seen.
      */
-    return (string) preg_replace('/ data-press="[a-e]"(?=>$)/', '', $m[0]);
+    // 18 October 2026: ` translate="no"` (Translation -> Language settings -> Keep the Arabic shop in Arabic) is not a language or direction attribute either; ArabicKeepArabicTest pins it. Taken off in its exact shape, first, because it is printed last.
+    return (string) preg_replace('/ data-press="[a-e]"(?=>$)/', '', (string) preg_replace('/ translate="no"(?=>$)/', '', $m[0]));
 }
 
 it('serves all five documents and the control, so the sweeps below are asked of real pages', function () {

@@ -216,7 +216,7 @@ it('marks an Arabic page as Arabic and right-to-left', function () {
 
     // The tag also carries Lane RD's press-feedback attribute, the shipped
     // default; PressFeedbackTest pins that. Language and direction are this case's.
-    expect($html)->toContain('<html lang="ar" dir="rtl"'.SiteLayout::PRESS_ATTR[SiteLayout::SCHEMA['press'][2]].'>');
+    expect($html)->toContain('<html lang="ar" dir="rtl"'.SiteLayout::PRESS_ATTR[SiteLayout::SCHEMA['press'][2]].' translate="no">'); // + Keep the Arabic shop in Arabic, ON by default (ArabicKeepArabicTest)
 });
 
 it('keeps Arabic and right-to-left as two separate switches', function () {
@@ -227,7 +227,7 @@ it('keeps Arabic and right-to-left as two separate switches', function () {
 
     $html = test()->get('/ar/my-wishlist/')->getContent();
 
-    expect($html)->toContain('<html lang="ar" dir="ltr"'.SiteLayout::PRESS_ATTR[SiteLayout::SCHEMA['press'][2]].'>')
+    expect($html)->toContain('<html lang="ar" dir="ltr"'.SiteLayout::PRESS_ATTR[SiteLayout::SCHEMA['press'][2]].' translate="no">') // + Keep the Arabic shop in Arabic, ON by default (ArabicKeepArabicTest)
         ->and(Locale::isRtl('ar'))->toBeFalse();
 });
 
