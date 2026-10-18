@@ -396,7 +396,13 @@ function emkNormalise(string $html): string
     $html = (string) preg_replace('~/mail/view/[A-Za-z0-9_-]{43}~', '/mail/view/TOKEN', $html);
     $html = (string) preg_replace('~(expires=)\d+~', '$1N', $html);
 
-    return (string) preg_replace('~(signature=)[A-Za-z0-9_-]+~', '$1S', $html);
+    $html = (string) preg_replace('~(signature=)[A-Za-z0-9_-]+~', '$1S', $html);
+
+    // A signed order link (OrderLinks, ?t=EXPIRES.MAC). Its MAC covers the
+    // order's own id, which the suite's database hands out differently run to
+    // run, so it is time-and-key material like the pair above. Applied to the
+    // golden file too, which was written with one particular run's MAC in it.
+    return (string) preg_replace('~([?&](?:amp;)?t=)\d+\.[0-9a-f]{64}~', '$1T', $html);
 }
 
 it('renders all nineteen emails byte for byte as they were before the template editor, until a section is moved', function () {
@@ -416,7 +422,7 @@ it('renders all nineteen emails byte for byte as they were before the template e
         }
 
         expect(is_file("{$dir}/{$name}.html"))->toBeTrue("{$name}: no golden file")
-            ->and($html)->toBe((string) file_get_contents("{$dir}/{$name}.html"), "{$name} changed although no section was moved");
+            ->and($html)->toBe(emkNormalise((string) file_get_contents("{$dir}/{$name}.html")), "{$name} changed although no section was moved");
     }
 
     \Illuminate\Support\Carbon::setTestNow();

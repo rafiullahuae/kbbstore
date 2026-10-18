@@ -145,11 +145,21 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
      * is the page exactly as it was. Appearance -> Site layout -> Press feedback.
      */
     $kbbPress = app(\App\Services\SiteLayout::class)->pressAttribute();
+
+    /*
+     * KEEP THE ARABIC SHOP IN ARABIC (18 October 2026): on /ar only, and only
+     * with Translation -> Language settings -> "Keep the Arabic shop in Arabic"
+     * on (Locale::noTranslateHere()). A constant, never a stored value. English
+     * pages print nothing, byte for byte as before.
+     */
+    $kbbNoTr = \App\Support\Locale::noTranslateHere();
 @endphp
 <!DOCTYPE html>
-<html lang="{{ $kbbLocale }}" dir="{{ $kbbDir }}"{!! $kbbPress !!}>
+<html lang="{{ $kbbLocale }}" dir="{{ $kbbDir }}"{!! $kbbPress !!}@if ($kbbNoTr) translate="no"@endif>
 <head>
 <meta charset="UTF-8">
+@if ($kbbNoTr)<meta name="google" content="notranslate">
+@endif
 <meta name="viewport" content="width=device-width,initial-scale=1">
 {!! \App\Support\Seo::render($kbbSeoCtx) !!}
 @stack('head')
@@ -565,7 +575,8 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
      * translates the page" on, tell resources/js/kbb/translate-away.js it may
      * act. Absent on English, so the English page is byte-identical.
      */
-    if ($kbbLocale !== \App\Support\Locale::DEFAULT && \App\Support\Locale::opensEnglishOnTranslate()) {
+    // Not while "Keep the Arabic shop in Arabic" is on: that page stays Arabic.
+    if ($kbbLocale !== \App\Support\Locale::DEFAULT && ! $kbbNoTr && \App\Support\Locale::opensEnglishOnTranslate()) {
         $kbbJs['trEn'] = 1;
     }
 @endphp

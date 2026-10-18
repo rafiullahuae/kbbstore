@@ -518,6 +518,12 @@
       + rowHTML('Highlight untranslated text in the admin',
           'Marks strings with no Arabic yet while you work. Changes nothing a shopper sees.',
           togHTML('highlight_missing', s.highlight_missing, editable))
+      + rowHTML('Keep the Arabic shop in Arabic',
+          'Tells Chrome, Edge, Safari and in-app browsers not to translate the Arabic pages, so a shopper whose '
+          + 'browser translates to English by default still reads the shop\'s own Arabic. While this is on, the '
+          + 'switch below does nothing on Arabic pages; shoppers choose English with the language switch. '
+          + 'English pages are not affected.',
+          togHTML('keep_arabic', s.keep_arabic !== false, editable))
       + rowHTML('Open English when the browser translates the page',
           'When a shopper\'s browser (Chrome, Edge) translates an Arabic page into another language, open the '
           + 'real English page instead of a machine translation, and keep showing English to that browser until '

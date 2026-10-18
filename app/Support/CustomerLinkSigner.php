@@ -60,7 +60,11 @@ final class CustomerLinkSigner
 
         // Expiry is checked AFTER the MAC, and both results are folded into one
         // boolean, so a caller cannot tell a forged link from a stale one.
-        return $valid && $expiresAt >= time();
+        // The application clock, as OrderLinks issues against: the same instant
+        // as time() on the shop, and the one a test can move. With time() here,
+        // OrderPayLinkTest -- issued on a pinned 10 October with a 3-day term --
+        // went red for good once the real calendar passed 14 October.
+        return $valid && $expiresAt >= now()->getTimestamp();
     }
 
     public static function sign(string $purpose, array $claims, int $expiresAt): string

@@ -97,6 +97,33 @@ final class Locale
      */
     public const SETTING_TRANSLATE_OPENS_ENGLISH = 'translation_translate_opens_english';
 
+    /**
+     * Translation → Language settings → "Keep the Arabic shop in Arabic"
+     * (18 October 2026). The owner: a shopper whose browser translates to
+     * English by default should, on the Arabic shop, "stay in arabic as our
+     * original arabic version". ON when never saved: he asked for it.
+     *
+     * On an Arabic page it prints translate="no" on <html> and the
+     * <meta name="google" content="notranslate"> Chrome reads, so the browser
+     * neither offers nor auto-runs a translation, and it switches the English
+     * hand-off below off on that page (a remembered "English" no longer
+     * bounces him off /ar; the language switch is how a shopper picks English).
+     * English pages never look at it.
+     */
+    public const SETTING_KEEP_ARABIC = 'translation_keep_arabic';
+
+    /** Is "Keep the Arabic shop in Arabic" on? */
+    public static function keepsArabic(): bool
+    {
+        return (bool) app(\App\Services\SettingsService::class)->get(self::SETTING_KEEP_ARABIC, true);
+    }
+
+    /** Is THIS page an Arabic page that must not be machine-translated? One answer for <html> and <head>. */
+    public static function noTranslateHere(): bool
+    {
+        return self::current() !== self::DEFAULT && self::keepsArabic();
+    }
+
     /** Is the browser-translation hand-off to the English page switched on? */
     public static function opensEnglishOnTranslate(): bool
     {

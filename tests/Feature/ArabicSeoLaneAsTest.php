@@ -265,7 +265,11 @@ it('tells the Arabic page it may hand a translated browser to English, ON by def
      * page's window.KBB is the bytes it always was.
      */
     lasCatalogue();
-    lasArabicOn();
+    // 18 October 2026: "Keep the Arabic shop in Arabic" (ON by default, the
+    // owner's request) switches this hand-off off on Arabic pages. What this
+    // case pins is the hand-off itself, so it runs with that switch off;
+    // ArabicKeepArabicTest pins the new default.
+    lasArabicOn([Locale::SETTING_KEEP_ARABIC => '0']);
 
     $ar = test()->get('/ar/product/las-soothing-pad/')->assertOk()->getContent();
     $en = test()->get('/product/las-soothing-pad/')->assertOk()->getContent();
@@ -273,7 +277,7 @@ it('tells the Arabic page it may hand a translated browser to English, ON by def
     expect($ar)->toContain('"trEn":1')
         ->and($en)->not->toContain('trEn');
 
-    lasArabicOn([Locale::SETTING_TRANSLATE_OPENS_ENGLISH => '0']);
+    lasArabicOn([Locale::SETTING_KEEP_ARABIC => '0', Locale::SETTING_TRANSLATE_OPENS_ENGLISH => '0']);
     expect(test()->get('/ar/product/las-soothing-pad/')->assertOk()->getContent())->not->toContain('trEn');
 });
 
