@@ -1,0 +1,8 @@
+kbb.search.ar.v1                10518 bytes  0.032 ms/read
+kbb.translations.ar            187184 bytes  0.271 ms/read
+kbb.translations.en                16 bytes  0.006 ms/read
+kbb.settings                     3472 bytes  0.011 ms/read
+kbb.settings.map                 4378 bytes  0.011 ms/read
+kbb.nav.primary                  9203 bytes  0.035 ms/read
+kbb.modules                       148 bytes  0.004 ms/read
+kbb.redirects.sources.v1          418 bytes  0.004 ms/read

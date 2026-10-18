@@ -1,0 +1,14 @@
+The ship_emirate column is not there yet; run the migrations.
+TIME 0.446 s wall  0.372 s user  0.063 s sys  72064 KB maxrss
+The ship_emirate column is not there yet; run the migrations.
+TIME 0.510 s wall  0.430 s user  0.079 s sys  72276 KB maxrss
+The ship_emirate column is not there yet; run the migrations.
+TIME 0.516 s wall  0.436 s user  0.063 s sys  71836 KB maxrss
+The ship_emirate column is not there yet; run the migrations.
+TIME 0.439 s wall  0.362 s user  0.069 s sys  72224 KB maxrss
+The ship_emirate column is not there yet; run the migrations.
+TIME 0.319 s wall  0.239 s user  0.076 s sys  63016 KB maxrss
+The ship_emirate column is not there yet; run the migrations.
+TIME 0.267 s wall  0.216 s user  0.039 s sys  62944 KB maxrss
+The ship_emirate column is not there yet; run the migrations.
+TIME 0.315 s wall  0.228 s user  0.073 s sys  63016 KB maxrss
