@@ -1,6 +1,6 @@
 # K-Beauty Bliss mobile app — the plan (iOS + Android)
 
-Agreed with the owner on 15 October 2026. Status: **planned, not started** — the
+Agreed with the owner on 15 October 2026. Status: **Phase 1 (system design + design previews) started 18 October 2026** — the
 Arabic version of the shop comes first (the app reads the same translations), then
 Phase 1 (design previews) of this plan.
 
@@ -38,7 +38,7 @@ and Android.
 | Policies, Terms, Privacy, FAQ, About, blog | App screens; text from the admin |
 | Delete account | Native (Apple requires it for any app with sign-up) |
 | Help | In-app contact form → the existing Contact inquiries screen |
-| WhatsApp | **Open question:** the WhatsApp button can only open the WhatsApp app. Keep it, or in-app form only |
+| WhatsApp | **Decided 18 Oct 2026:** no floating button anywhere in the app. A WhatsApp button lives on the in-app **Contact** page only (it opens the WhatsApp app, the one place the app hands off, on the shopper's tap) |
 
 ## 3. How the app connects to the website
 
@@ -125,8 +125,22 @@ lotus logo. English and Arabic (full right-to-left mirror) from day one.
    in the app.
 5. **v2**: loyalty points, routines, personalised home, app-only offers.
 
+## Decisions, 18 October 2026
+
+- **WhatsApp:** on the Contact page only, never floating (see §2).
+- **Foldable and dual-screen phones are first-class:** Galaxy Z Fold / Z Flip,
+  Pixel Fold, Microsoft Surface Duo (two screens and a hinge), OnePlus Open,
+  plus tablets. Every screen has a layout for compact, medium and expanded
+  widths, folded and unfolded, a "tabletop" half-fold, and the hinge never cuts
+  through content. (There is no foldable iPhone today; iPad sizes are covered by
+  the same layouts.)
+- **The owner's bar:** "no bugs or styling issues on any screen ... proper
+  planning and system design ... don't start in the air ... everything super
+  perfect with advanced technology." So Phase 1 is TWO deliverables, before
+  any app code: the system design (`docs/MOBILE-APP-SYSTEM-DESIGN.md`) and the
+  design previews (`docs/app-preview/`).
+
 ## Open decisions for the owner
 
-1. WhatsApp: keep the button (leaves the app) or in-app form only?
-2. Developer accounts: company (D-U-N-S) or personal?
-3. Store name: "K-Beauty Bliss"?
+1. Developer accounts: company (D-U-N-S) or personal?
+2. Store name: "K-Beauty Bliss"?
