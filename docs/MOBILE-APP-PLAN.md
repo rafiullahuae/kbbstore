@@ -140,7 +140,30 @@ lotus logo. English and Arabic (full right-to-left mirror) from day one.
   any app code: the system design (`docs/MOBILE-APP-SYSTEM-DESIGN.md`) and the
   design previews (`docs/app-preview/`).
 
+## System design
+
+The engineering blueprint is **`docs/MOBILE-APP-SYSTEM-DESIGN.md`** (18 Oct 2026, Lane APD). It is binding
+on every app and `/app-api` lane. In short:
+
+- **Stack:** React Native (New Architecture, Hermes) + Expo SDK + Expo Router, TypeScript strict,
+  TanStack Query + MMKV, Zustand, FlashList, expo-image, Reanimated, Stripe RN SDK, Tabby/Tamara SDKs,
+  Sentry, EAS Build/Submit/Update. No WebView screens of our own.
+- **Foldables:** window size classes (compact / medium / expanded), plus a small Kotlin Expo module over
+  Jetpack WindowManager for hinge, tabletop and dual-screen; per-screen layouts and a device test matrix.
+- **Home and content are server-driven** from the same Homepage sections the owner edits; a new section
+  type needs one over-the-air update.
+- **`/app-api/v1`:** allowlisted, cursor-paged, problem-JSON errors, idempotent order creation; reuses the
+  existing checkout and payment classes by composition (payment lock untouched).
+- **Quality gates:** crash-free ≥ 99.8 %, start ≤ 1.8 s, 60 fps lists, AX5 text, RTL parity, hinge safety,
+  one real order per payment method before release.
+
+Its §18 holds the owner questions that remain (they are merged into the list below).
+
 ## Open decisions for the owner
 
 1. Developer accounts: company (D-U-N-S) or personal?
 2. Store name: "K-Beauty Bliss"?
+3. Which domain the app's links open from: kbeautybliss.com or the current live domain?
+4. Meta / TikTok measurement of app orders (needs an "Allow tracking?" prompt on iPhone): yes or no?
+5. Reviews in the app from signed-in customers only: OK?
+6. Cash on delivery in the app capped at 3 orders per phone per day: OK, or another number?
