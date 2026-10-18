@@ -25,7 +25,7 @@ use App\Support\Locale;
  * MUTATION: print $p->tag in .ptag again, or drop data-tag-label, or give the
  * chip `chip(t, t)` back -- each is red below.
  */
-function btSet(array $values): void
+function bltSet(array $values): void
 {
     foreach ($values as $key => $value) {
         Setting::updateOrCreate(['key' => $key], ['value' => (string) $value, 'autoload' => true]);
@@ -36,7 +36,7 @@ function btSet(array $values): void
     app(SettingsService::class)->flush();
 }
 
-function btPosts(): void
+function bltPosts(): void
 {
     foreach (['News', 'Acne Treatments', 'Glass Skin Club'] as $i => $tag) {
         Post::create([
@@ -46,7 +46,7 @@ function btPosts(): void
     }
 }
 
-function btTags(string $html): array
+function bltTags(string $html): array
 {
     preg_match_all('~<span class="ptag">([^<]*)</span>~u', $html, $m);
 
@@ -54,18 +54,18 @@ function btTags(string $html): array
 }
 
 beforeEach(function () {
-    btSet([Locale::SETTING_ENABLED => '1', Locale::SETTING_RTL => '1']);
+    bltSet([Locale::SETTING_ENABLED => '1', Locale::SETTING_RTL => '1']);
 });
 
 it('prints each post tag in Arabic on /ar/blog/, keeps the English tag as the filter value, and labels the chips from it', function () {
-    btPosts();
+    bltPosts();
 
     $ar = $this->get('/ar/blog/')->assertOk()->getContent();
 
-    expect(btTags($ar))->toContain('الأخبار')->toContain('علاج حب الشباب')
-        ->and(btTags($ar))->not->toContain('News')->not->toContain('Acne Treatments')
+    expect(bltTags($ar))->toContain('الأخبار')->toContain('علاج حب الشباب')
+        ->and(bltTags($ar))->not->toContain('News')->not->toContain('Acne Treatments')
         // A tag nobody has translated stays itself rather than vanishing.
-        ->and(btTags($ar))->toContain('Glass Skin Club')
+        ->and(bltTags($ar))->toContain('Glass Skin Club')
         ->and($ar)->toContain('data-tag="News" data-tag-label="الأخبار"')
         ->and($ar)->toContain('data-tag="Acne Treatments" data-tag-label="علاج حب الشباب"')
         ->and($ar)->not->toContain('data-tag="Glass Skin Club" data-tag-label')
@@ -75,25 +75,25 @@ it('prints each post tag in Arabic on /ar/blog/, keeps the English tag as the fi
 });
 
 it('leaves the English blog as it was: English tags, no label attribute', function () {
-    btPosts();
+    bltPosts();
 
     $en = $this->get('/blog/')->assertOk()->getContent();
 
-    expect(btTags($en))->toContain('News')->toContain('Acne Treatments')
+    expect(bltTags($en))->toContain('News')->toContain('Acne Treatments')
         ->and($en)->not->toContain('data-tag-label="');
 });
 
 it('lets the owner set the Arabic for any tag, which wins over the shipped Arabic', function () {
-    btPosts();
-    btSet([BlogTags::SETTING => json_encode(['glass skin club' => 'نادي البشرة الزجاجية', 'News' => 'أخبار كي بيوتي'], JSON_UNESCAPED_UNICODE)]);
+    bltPosts();
+    bltSet([BlogTags::SETTING => json_encode(['glass skin club' => 'نادي البشرة الزجاجية', 'News' => 'أخبار كي بيوتي'], JSON_UNESCAPED_UNICODE)]);
 
     $ar = $this->get('/ar/blog/')->assertOk()->getContent();
 
-    expect(btTags($ar))->toContain('نادي البشرة الزجاجية')->toContain('أخبار كي بيوتي')->not->toContain('الأخبار');
+    expect(bltTags($ar))->toContain('نادي البشرة الزجاجية')->toContain('أخبار كي بيوتي')->not->toContain('الأخبار');
 });
 
 it('lists the tags in Translation -> Language settings and saves only short plain pairs, admin only', function () {
-    btPosts();
+    bltPosts();
 
     $this->getJson('/admin-api/translations/settings')->assertUnauthorized();
     $this->actingAs(AdminUser::create(['name' => 'BT', 'email' => 'bt-'.uniqid().'@example.test', 'password' => 'secret-secret', 'role' => 'owner']), 'admin');
