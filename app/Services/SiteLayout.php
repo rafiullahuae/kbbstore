@@ -1254,7 +1254,36 @@ class SiteLayout
             'On: when a shopper points at a product, category, brand or blog link (or starts to tap it), the shop fetches that page in the background, so it opens at once. Only shop pages are fetched -- never the cart, checkout, account, login or anything that changes something -- and nothing is fetched for shoppers on Data Saver or a 2G connection. Analytics and pixels only count pages that are really opened. Off: pages load when clicked, as before.'],
         'nav_fade' => ['bool', 'Fade between pages', false,
             'Off, because it costs speed: measured in Chrome, the fade makes the next page appear 60-110 ms later on a laptop, and Chrome already keeps the old page on screen until the new one is ready, so there is no white flash without it. On: the next page fades in (0.15 s) with the header held still -- Chrome, Edge, Android and Safari 18.2+; shoppers who ask their phone for less motion get no fade.'],
+
+        /*
+         * ── PHONES SET TO LARGE TEXT (Lane BT) ─────────────────────────────
+         *
+         * The owner, 17 October, after a customer's Instagram screenshot with
+         * every word on the product page enlarged: "can we restrict our site to
+         * not zoom and open the normal site which we have in actual" ... "keep
+         * that fully separate and the site should auto detect". He asked, so it
+         * SHIPS AT `normal` (CLAUDE.md rule 1, 30 September): such a phone sees
+         * the shop at its own text sizes. `grow` is the shop as it was -- the
+         * layout prints nothing for it, byte for byte. Not CSS: in
+         * BIG_TEXT_KEYS, so isDefault() and css() skip it. The work is in
+         * partials/big-text-guard.blade.php, which carries the measurement.
+         */
+        'big_text' => ['select', 'Phones set to large text', 'normal',
+            'Some shoppers set their phone to large text, and apps such as Instagram and Facebook then enlarge every word of the shop while the pictures and icons stay their size -- the logo\'s line wraps, badges and titles crowd the photos. "Show the normal shop" spots those phones by itself and shows them the shop at its own sizes; nothing changes for anybody else, and every shopper can still pinch to zoom. "Let the phone enlarge the text" is how the shop was.',
+            self::BIG_TEXT_OPTIONS],
     ];
+
+    /**
+     * Lane BT: what a phone set to large text sees. `normal` includes
+     * partials/big-text-guard in the layout; `grow` includes nothing.
+     */
+    public const BIG_TEXT_OPTIONS = [
+        'normal' => 'Show the normal shop (the shop\'s own text sizes; pinch-to-zoom still works)',
+        'grow' => 'Let the phone enlarge the text (how the shop was)',
+    ];
+
+    /** Lane BT: read by bigTextNormal(); not CSS. */
+    public const BIG_TEXT_KEYS = ['big_text'];
 
     /**
      * The press styles, lettered as they were on the owner's playground, so
@@ -1502,6 +1531,9 @@ class SiteLayout
         'speed' => ['Page speed',
             'How fast one page changes to the next. The shop fetches the page a shopper is about to open, so it opens at once. The fade is off: it looks smooth but makes the next page appear later.',
             self::SPEED_KEYS],
+        'bigtext' => ['Large phone text',
+            'Phones set to large text. Apps such as Instagram enlarge every word of the shop on those phones and leave the pictures their size, which crowds the header, the badges and the titles. The shop can spot those phones by itself and show them the normal shop.',
+            self::BIG_TEXT_KEYS],
     ];
 
     /** Every key lives in `settings`, written by this module's own endpoint. */
@@ -1864,7 +1896,7 @@ class SiteLayout
                 || in_array($key, self::CATBANNER_KEYS, true)
                 || in_array($key, self::PGBANNER_KEYS, true)
                 || in_array($key, self::FONT_KEYS, true) || $key === 'sold_out' || $key === 'sub_products'
-                || in_array($key, self::SPEED_KEYS, true)) {
+                || in_array($key, self::SPEED_KEYS, true) || in_array($key, self::BIG_TEXT_KEYS, true)) {
                 continue;
             }
 
@@ -1932,6 +1964,16 @@ class SiteLayout
      * (a raw UPDATE, an import), which must still render the shipped style
      * rather than an attribute nobody can read.
      */
+    /**
+     * Lane BT: true when a phone set to large text is shown the normal shop
+     * (the default). One key through only(), from the settings map the
+     * request already holds -- no query and no settings-map read of its own.
+     */
+    public function bigTextNormal(): bool
+    {
+        return ($this->only(['big_text'])['big_text'] ?? 'normal') === 'normal';
+    }
+
     public function press(): string
     {
         $press = (string) $this->get('press');

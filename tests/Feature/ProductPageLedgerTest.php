@@ -928,8 +928,10 @@ it('adds no JavaScript to the product page and names no layout-measuring API', f
     // pixels and the layout already put there. Counted rather than forbidden,
     // because layouts/store.blade.php has its own and they are not this lane's.
     $before = substr_count(ledgerPage(ledgerProduct()), '<script');
+    // 13 since Lane BT: the large-text guard, one inline script first in
+    // <body> on every page (BigTextGuardTest pins it), raised deliberately.
     expect($before)->toBeLessThan(
-        12,
+        13,
         'the product page has grown a crop of inline scripts; this lane added none'
     );
     ledgerLacks(ledgerPage(ledgerProduct()), 'bb-morebox" type="checkbox" onclick', 'the read-more toggle is not scripted');

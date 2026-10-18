@@ -1,0 +1,50 @@
+{
+ "home": {
+  "before": {
+   "fcp": 620,
+   "dcl": 1201,
+   "guard": 0
+  },
+  "after": {
+   "fcp": 572,
+   "dcl": 1296,
+   "guard": 1
+  }
+ },
+ "product": {
+  "before": {
+   "fcp": 892,
+   "dcl": 1226,
+   "guard": 0
+  },
+  "after": {
+   "fcp": 416,
+   "dcl": 1260,
+   "guard": 1
+  }
+ },
+ "category": {
+  "before": {
+   "fcp": 628,
+   "dcl": 823,
+   "guard": 0
+  },
+  "after": {
+   "fcp": 508,
+   "dcl": 854,
+   "guard": 1
+  }
+ },
+ "brand": {
+  "before": {
+   "fcp": 616,
+   "dcl": 727,
+   "guard": 0
+  },
+  "after": {
+   "fcp": 540,
+   "dcl": 769,
+   "guard": 1
+  }
+ }
+}

@@ -55,6 +55,11 @@ export default defineConfig({
                 // of them — see partials/product/trust-share-assets.
                 'resources/css/kbb/kbb-pdp-trust.css',
                 'resources/js/kbb/pdp-trust.js',
+                // Lane BT: requested ONLY by a phone that enlarges text (the
+                // inline detector in partials/big-text-guard writes it), so a
+                // normal visitor never downloads it. A classic script: no
+                // import, no export.
+                'resources/js/kbb/big-text.js',
                 /*
                  * OUTFIT, SELF-HOSTED — Lane PERF's arrangement, Lane PLC's
                  * typeface. The owner asked for Outfit site-wide; it is served

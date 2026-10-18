@@ -844,6 +844,9 @@ it('ships every setting at the value the page already had, except the ones the o
         // page 60-110 ms of first paint (App\Support\InstantNav).
         'nav_instant' => true,
         'nav_fade' => false,
+        // Lane BT, Large phone text: the owner asked for the normal shop on a
+        // phone set to large text, so it ships at `normal`.
+        'big_text' => 'normal',
     ];
 
     expect(array_keys($fields))->toEqual(array_keys($expected));

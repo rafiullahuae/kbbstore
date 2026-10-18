@@ -432,6 +432,7 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
     method" on every storefront page.
 --}}<body class="@yield('body-class') {{ $kbbDiv->bodyClass() }}{{ $kbbCards->bodyClass() === '' ? '' : ' ' . $kbbCards->bodyClass() }}"
       style="{{ $kbbCards->cssVariables() }};{{ $kbbDiv->cssVariables() }}">{!! app(\App\Services\Pixels\ShopTags::class)->bodyStart() !!}
+@if (app(\App\Services\SiteLayout::class)->bigTextNormal())@include('partials.big-text-guard')@endif
 
 {{--
     Bare pages render no site header.

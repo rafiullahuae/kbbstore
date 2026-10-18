@@ -1,0 +1,614 @@
+{
+ "article-ar-1280.png": {
+  "size": [
+   1964,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "article-ar-390.png": {
+  "size": [
+   2067,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "article-en-1280.png": {
+  "size": [
+   1874,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 13,
+   "before/after2": 13,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 30,
+   "before3/after2": 30
+  },
+  "noise_before_vs_before": 13,
+  "noise_after_vs_after": 0
+ },
+ "article-en-390.png": {
+  "size": [
+   2010,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "blog-ar-1280.png": {
+  "size": [
+   1676,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "blog-ar-390.png": {
+  "size": [
+   2345,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 7,
+   "control/after": 7,
+   "control/after2": 0,
+   "before3/after": 7,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 7,
+  "noise_after_vs_after": 7
+ },
+ "blog-en-1280.png": {
+  "size": [
+   1619,
+   1280
+  ],
+  "min_before_vs_after": 49,
+  "pairs": {
+   "before/after": 53,
+   "before/after2": 51,
+   "control/after": 51,
+   "control/after2": 49,
+   "before3/after": 51,
+   "before3/after2": 49
+  },
+  "noise_before_vs_before": 2,
+  "noise_after_vs_after": 2
+ },
+ "blog-en-390.png": {
+  "size": [
+   2299,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "brand-ar-1280.png": {
+  "size": [
+   1607,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "brand-ar-390.png": {
+  "size": [
+   2569,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 7,
+   "control/after": 7,
+   "control/after2": 0,
+   "before3/after": 7,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 7,
+  "noise_after_vs_after": 7
+ },
+ "brand-en-1280.png": {
+  "size": [
+   1558,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 17,
+   "before3/after2": 17
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "brand-en-390.png": {
+  "size": [
+   2512,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 8,
+   "control/after": 0,
+   "control/after2": 8,
+   "before3/after": 17,
+   "before3/after2": 9
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 8
+ },
+ "cart-ar-1280.png": {
+  "size": [
+   2254,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "cart-ar-390.png": {
+  "size": [
+   929,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "cart-en-1280.png": {
+  "size": [
+   2254,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "cart-en-390.png": {
+  "size": [
+   929,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "category-ar-1280.png": {
+  "size": [
+   1684,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "category-ar-390.png": {
+  "size": [
+   2627,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "category-en-1280.png": {
+  "size": [
+   1634,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 1,
+   "control/after2": 1,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 1,
+  "noise_after_vs_after": 0
+ },
+ "category-en-390.png": {
+  "size": [
+   2569,
+   390
+  ],
+  "min_before_vs_after": 9,
+  "pairs": {
+   "before/after": 9,
+   "before/after2": 9,
+   "control/after": 9,
+   "control/after2": 9,
+   "before3/after": 9,
+   "before3/after2": 9
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "checkout-ar-1280.png": {
+  "size": [
+   1198,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "checkout-ar-390.png": {
+  "size": [
+   1638,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "checkout-en-1280.png": {
+  "size": [
+   1198,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "checkout-en-390.png": {
+  "size": [
+   1628,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "home-ar-1280.png": {
+  "size": [
+   8213,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "home-ar-390.png": {
+  "size": [
+   9187,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 7,
+   "control/after": 7,
+   "control/after2": 0,
+   "before3/after": 7,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 7,
+  "noise_after_vs_after": 7
+ },
+ "home-en-1280.png": {
+  "size": [
+   8181,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 17,
+   "before/after2": 0,
+   "control/after": 17,
+   "control/after2": 0,
+   "before3/after": 17,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 17
+ },
+ "home-en-390.png": {
+  "size": [
+   9073,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 3,
+   "before/after2": 3,
+   "control/after": 3,
+   "control/after2": 3,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "product-ar-1280.png": {
+  "size": [
+   4221,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 10,
+   "before/after2": 33,
+   "control/after": 43,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 43
+  },
+  "noise_before_vs_before": 33,
+  "noise_after_vs_after": 43
+ },
+ "product-ar-390.png": {
+  "size": [
+   4861,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 9,
+   "before/after2": 0,
+   "control/after": 9,
+   "control/after2": 0,
+   "before3/after": 9,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 9
+ },
+ "product-en-1280.png": {
+  "size": [
+   4153,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "product-en-390.png": {
+  "size": [
+   4756,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 6,
+   "before/after2": 0,
+   "control/after": 6,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 6
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 6
+ },
+ "shop-ar-1280.png": {
+  "size": [
+   3218,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ },
+ "shop-ar-390.png": {
+  "size": [
+   3548,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 7,
+   "control/after2": 7,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 7,
+  "noise_after_vs_after": 0
+ },
+ "shop-en-1280.png": {
+  "size": [
+   3168,
+   1280
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 25,
+   "before/after2": 0,
+   "control/after": 25,
+   "control/after2": 0,
+   "before3/after": 34,
+   "before3/after2": 9
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 25
+ },
+ "shop-en-390.png": {
+  "size": [
+   3491,
+   390
+  ],
+  "min_before_vs_after": 0,
+  "pairs": {
+   "before/after": 0,
+   "before/after2": 0,
+   "control/after": 0,
+   "control/after2": 0,
+   "before3/after": 0,
+   "before3/after2": 0
+  },
+  "noise_before_vs_before": 0,
+  "noise_after_vs_after": 0
+ }
+}

@@ -1,0 +1,86 @@
+{
+ "home-z1.6": {
+  "medianGuardMs": 65.7,
+  "jsMs": [
+   36.9,
+   36.4,
+   45.9,
+   54.8,
+   57.5
+  ],
+  "fetchMs": [
+   17,
+   17.1,
+   16.7,
+   28.6,
+   28.7
+  ],
+  "min": 56.9,
+  "max": 95.1,
+  "htmlClass": "kbb-bt",
+  "cpuThrottle": 1
+ },
+ "product-z1.6": {
+  "medianGuardMs": 86.4,
+  "jsMs": [
+   43,
+   47.4,
+   54.6,
+   54.7,
+   67.3
+  ],
+  "fetchMs": [
+   12.4,
+   31,
+   20.4,
+   20,
+   20.4
+  ],
+  "min": 60.7,
+  "max": 97.9,
+  "htmlClass": "kbb-bt",
+  "cpuThrottle": 1
+ },
+ "category-z1.6": {
+  "medianGuardMs": 96.5,
+  "jsMs": [
+   55.7,
+   46.9,
+   52.1,
+   73,
+   78.8
+  ],
+  "fetchMs": [
+   23.8,
+   32.9,
+   37.2,
+   24.1,
+   38
+  ],
+  "min": 83.9,
+  "max": 130.7,
+  "htmlClass": "kbb-bt",
+  "cpuThrottle": 1
+ },
+ "brand-z1.6": {
+  "medianGuardMs": 94.7,
+  "jsMs": [
+   60.6,
+   42,
+   38.2,
+   66.4,
+   35.7
+  ],
+  "fetchMs": [
+   18.6,
+   32.5,
+   53.1,
+   45.2,
+   128.5
+  ],
+  "min": 86.2,
+  "max": 167.3,
+  "htmlClass": "kbb-bt",
+  "cpuThrottle": 1
+ }
+}

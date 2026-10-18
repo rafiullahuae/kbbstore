@@ -775,6 +775,12 @@
       "resources/js/kbb/admin/storefront-admin.js"
     ]
   },
+  "resources/js/kbb/big-text.js": {
+    "file": "assets/big-text-DbW2IjVL.js",
+    "name": "big-text",
+    "src": "resources/js/kbb/big-text.js",
+    "isEntry": true
+  },
   "resources/js/kbb/email-capture.js": {
     "file": "assets/email-capture-BSs45LCf.js",
     "name": "email-capture",
