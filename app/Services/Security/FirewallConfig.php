@@ -100,6 +100,7 @@ final class FirewallConfig
         $settings = self::defaults();
         $countries = self::COUNTRY_DEFAULTS;
         $bots = array_map(static fn () => true, GoodBots::FAMILIES);
+        $clouds = self::cloudDefaults();
         $allow = [];
 
         foreach ($rows as $row) {
@@ -110,6 +111,9 @@ final class FirewallConfig
                 $settings[$subject] = self::cast($subject, json_decode((string) $row->value, true));
             } elseif ($kind === 'country' && preg_match('/^[A-Z]{2}$/', $subject) === 1) {
                 $countries[$subject] = isset(self::COUNTRY_ACTIONS[(string) $row->value]) ? (string) $row->value : 'allow';
+            } elseif ($kind === 'cloud' && isset(CloudNetworks::PROVIDERS[$subject])) {
+                // A stored value outside Block/Allow reads as the shipped default.
+                $clouds[$subject] = isset(CloudNetworks::ACTIONS[(string) $row->value]) ? (string) $row->value : $clouds[$subject];
             } elseif ($kind === 'bot' && isset(GoodBots::FAMILIES[$subject])) {
                 $bots[$subject] = (string) $row->value === '1';
             } elseif ($kind === 'allow' && ($r = IpRange::parse($subject)) !== null) {
@@ -119,7 +123,18 @@ final class FirewallConfig
 
         ksort($countries);
 
-        return ['settings' => $settings, 'countries' => $countries, 'bots' => $bots, 'allow' => $allow];
+        return ['settings' => $settings, 'countries' => $countries, 'bots' => $bots, 'clouds' => $clouds, 'allow' => $allow];
+    }
+
+    /**
+     * Cloud networks as shipped (Lane FWN): Alibaba, Tencent and Huawei on
+     * Block, because the owner asked for them; every other provider Allow.
+     *
+     * @return array<string, string>
+     */
+    public static function cloudDefaults(): array
+    {
+        return array_map(static fn (array $p): string => $p[2] ? 'block' : 'allow', CloudNetworks::PROVIDERS);
     }
 
     /** @return array<string, mixed> */
@@ -193,6 +208,9 @@ final class FirewallConfig
             'proof' => $s['protect_proof'],
             'fake' => $s['fake_bots'],
             'countries' => $countries,
+            // Lane FWN: the providers on Block, comma-joined ('' = none);
+            // CloudNetworks::match() reads the file compiled for this set.
+            'cloud' => CloudNetworks::enabledKey($all['clouds'] ?? self::cloudDefaults()),
             'botre' => GoodBots::regex(array_keys(array_filter($all['bots']))),
             'skip' => $skip,
             'allow_n' => count($all['allow']),
@@ -244,6 +262,31 @@ final class FirewallConfig
         IpBlockList::rebuild();
 
         return $n;
+    }
+
+    /**
+     * Cloud networks (Lane FWN). Every key must be a provider and every value
+     * Block or Allow, or NOTHING is saved: a half-applied switch board is
+     * worse than a refused one.
+     *
+     * @param  array<string, string>  $actions  provider => block|allow
+     * @return int|null  how many were saved, or null when the input was refused
+     */
+    public static function setClouds(array $actions, ?string $by = null): ?int
+    {
+        foreach ($actions as $key => $action) {
+            if (! isset(CloudNetworks::PROVIDERS[(string) $key]) || ! is_string($action) || ! isset(CloudNetworks::ACTIONS[$action])) {
+                return null;
+            }
+        }
+
+        foreach ($actions as $key => $action) {
+            self::put('cloud', (string) $key, $action, null, $by);
+        }
+
+        IpBlockList::rebuild();
+
+        return count($actions);
     }
 
     /** @param array<string, bool> $switches  family => on */

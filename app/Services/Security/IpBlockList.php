@@ -69,8 +69,12 @@ use Illuminate\Support\Facades\Log;
  */
 final class IpBlockList
 {
-    /** 3: the file also carries the compiled firewall (`fw`, Lane FW). */
-    public const VERSION = 3;
+    /**
+     * 3: the file also carries the compiled firewall (`fw`, Lane FW).
+     * 4: `fw` carries `cloud`, the cloud networks on Block (Lane FWN) — a
+     *    version-3 file is rebuilt on the first request after the update.
+     */
+    public const VERSION = 4;
 
     /** Seconds before a failed build (no table yet) is retried. */
     private const RETRY = 60;
@@ -235,6 +239,14 @@ final class IpBlockList
         }
 
         self::write($data);
+
+        // Lane FWN: the cloud networks' own request-path file, for the set
+        // just compiled. Skipped when it is already built for that set, so a
+        // block or unblock costs one include() here.
+        try {
+            CloudNetworks::compileFor((string) ($data['fw']['cloud'] ?? ''));
+        } catch (\Throwable) {
+        }
 
         return self::$memo = $data;
     }
