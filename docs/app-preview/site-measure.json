@@ -1,6 +1,6 @@
 {
  "source": "https://kbeautybliss.com",
- "captured": "2026-10-19T06:33:02.661Z",
+ "captured": "2026-10-19T07:14:26.723Z",
  "widths": [
   390,
   600,
@@ -4423,6 +4423,358 @@
    "badge": {
     "backgroundColor": "rgb(198, 57, 95)",
     "fontSize": "10px"
+   }
+  }
+ },
+ "co": {
+  "source": "this repository, rendered locally at 390 (the live cart and checkout refuse automated browsers)",
+  "captured": "2026-10-19T07:14:52.822Z",
+  "measured": {
+   "en-cart": {
+    "title": {
+     "h": 33.6,
+     "w": 362,
+     "y": 199,
+     "rad": "0px",
+     "bg": "rgba(0, 0, 0, 0)",
+     "fs": "21px",
+     "fw": "800",
+     "color": "rgb(42, 34, 40)"
+    },
+    "line": {
+     "h": 99.5,
+     "w": 360,
+     "y": 254,
+     "rad": "12px 12px 0px 0px",
+     "bg": "rgba(0, 0, 0, 0)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "qty": {
+     "h": 30,
+     "w": 86,
+     "y": 312,
+     "rad": "8px",
+     "bg": "rgba(0, 0, 0, 0)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "lines": {
+     "h": 214.7,
+     "w": 362,
+     "y": 253,
+     "rad": "13px",
+     "bg": "rgb(255, 255, 255)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "sum": {
+     "h": 345.6,
+     "w": 362,
+     "y": 483,
+     "rad": "13px",
+     "bg": "rgb(255, 255, 255)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "btn": {
+     "h": 53.2,
+     "w": 328,
+     "y": 661,
+     "rad": "12px",
+     "bg": "rgb(193, 62, 99)",
+     "fs": "14.5px",
+     "fw": "700",
+     "color": "rgb(255, 255, 255)"
+    },
+    "order": [
+     "a.backlink",
+     "h1.",
+     "div.",
+     "div.",
+     "aside.sum",
+     "h2.",
+     "div.srow",
+     "div.srow",
+     "div.srow",
+     "a.cobtn",
+     "a.conti",
+     "div.paylogos"
+    ]
+   },
+   "en-checkout": {
+    "head": {
+     "h": 55,
+     "w": 390,
+     "y": 0,
+     "rad": "0px",
+     "bg": "rgb(255, 255, 255)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "sumRow": {
+     "h": 50,
+     "w": 350,
+     "y": 71,
+     "rad": "0px",
+     "bg": "rgba(0, 0, 0, 0)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "h2": {
+     "h": 51.8,
+     "w": 348,
+     "y": 153,
+     "rad": "0px",
+     "bg": "rgb(255, 248, 245)",
+     "fs": "15px",
+     "fw": "700",
+     "color": "rgb(42, 34, 40)"
+    },
+    "field": {
+     "h": 51.8,
+     "w": 316,
+     "y": 218,
+     "rad": "0px",
+     "bg": "rgba(0, 0, 0, 0)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "place": {
+     "h": 49,
+     "w": 316,
+     "y": 1551,
+     "rad": "99px",
+     "bg": "rgb(198, 57, 95)",
+     "fs": "15px",
+     "fw": "700",
+     "color": "rgb(255, 255, 255)"
+    },
+    "method": {
+     "h": 234.4,
+     "w": 316,
+     "y": 1009,
+     "rad": "12px",
+     "bg": "rgba(0, 0, 0, 0)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "delivery": {
+     "h": 58,
+     "w": 316,
+     "y": 795,
+     "rad": "12px",
+     "bg": "rgb(238, 248, 241)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "sections": [
+     "1 Delivery InformationAlready a member?Sign in",
+     "2 DeliveryFree express delivery over AED 199",
+     "3 PaymentAll transactions are secure & encrypted"
+    ],
+    "fields": [
+     "billing_email_field",
+     "billing_first_name_field",
+     "billing_phone_field",
+     "billing_address_1_field",
+     "billing_address_2_field",
+     "billing_state_field",
+     "billing_country_field",
+     "create_account_field",
+     "billing_kbb_whatsapp_field",
+     "gift_field"
+    ],
+    "methods": [
+     "stripe",
+     "1",
+     "tabby",
+     "tamara",
+     "cod"
+    ],
+    "page": 1962
+   },
+   "ar-cart": {
+    "title": {
+     "h": 33.6,
+     "w": 362,
+     "y": 199,
+     "rad": "0px",
+     "bg": "rgba(0, 0, 0, 0)",
+     "fs": "21px",
+     "fw": "800",
+     "color": "rgb(42, 34, 40)"
+    },
+    "line": {
+     "h": 99.5,
+     "w": 360,
+     "y": 254,
+     "rad": "12px 12px 0px 0px",
+     "bg": "rgba(0, 0, 0, 0)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "qty": {
+     "h": 30,
+     "w": 86,
+     "y": 312,
+     "rad": "8px",
+     "bg": "rgba(0, 0, 0, 0)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "lines": {
+     "h": 214.7,
+     "w": 362,
+     "y": 253,
+     "rad": "13px",
+     "bg": "rgb(255, 255, 255)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "sum": {
+     "h": 379.6,
+     "w": 362,
+     "y": 483,
+     "rad": "13px",
+     "bg": "rgb(255, 255, 255)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "btn": {
+     "h": 53.2,
+     "w": 328,
+     "y": 661,
+     "rad": "12px",
+     "bg": "rgb(193, 62, 99)",
+     "fs": "14.5px",
+     "fw": "700",
+     "color": "rgb(255, 255, 255)"
+    },
+    "order": [
+     "a.backlink",
+     "h1.",
+     "div.",
+     "div.",
+     "aside.sum",
+     "h2.",
+     "div.srow",
+     "div.srow",
+     "div.srow",
+     "a.cobtn",
+     "a.conti",
+     "div.paylogos"
+    ]
+   },
+   "ar-checkout": {
+    "head": {
+     "h": 55,
+     "w": 390,
+     "y": 0,
+     "rad": "0px",
+     "bg": "rgb(255, 255, 255)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "sumRow": {
+     "h": 50,
+     "w": 350,
+     "y": 71,
+     "rad": "0px",
+     "bg": "rgba(0, 0, 0, 0)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "h2": {
+     "h": 51.8,
+     "w": 348,
+     "y": 153,
+     "rad": "0px",
+     "bg": "rgb(255, 248, 245)",
+     "fs": "15px",
+     "fw": "700",
+     "color": "rgb(42, 34, 40)"
+    },
+    "field": {
+     "h": 51.8,
+     "w": 316,
+     "y": 218,
+     "rad": "0px",
+     "bg": "rgba(0, 0, 0, 0)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "place": {
+     "h": 59,
+     "w": 316,
+     "y": 1551,
+     "rad": "99px",
+     "bg": "rgb(198, 57, 95)",
+     "fs": "15px",
+     "fw": "700",
+     "color": "rgb(255, 255, 255)"
+    },
+    "method": {
+     "h": 234.4,
+     "w": 316,
+     "y": 1009,
+     "rad": "12px",
+     "bg": "rgba(0, 0, 0, 0)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "delivery": {
+     "h": 58,
+     "w": 316,
+     "y": 795,
+     "rad": "12px",
+     "bg": "rgb(238, 248, 241)",
+     "fs": "14px",
+     "fw": "400",
+     "color": "rgb(42, 34, 40)"
+    },
+    "sections": [
+     "1 معلومات التوصيللديكِ حساب بالفعل؟تسجيل الدخول",
+     "2 التوصيلتوصيل سريع مجاني للطلبات فوق د.إ 199",
+     "3 الدفعجميع المعاملات آمنة ومشفّرة"
+    ],
+    "fields": [
+     "billing_email_field",
+     "billing_first_name_field",
+     "billing_phone_field",
+     "billing_address_1_field",
+     "billing_address_2_field",
+     "billing_state_field",
+     "billing_country_field",
+     "create_account_field",
+     "billing_kbb_whatsapp_field",
+     "gift_field"
+    ],
+    "methods": [
+     "stripe",
+     "1",
+     "tabby",
+     "tamara",
+     "cod"
+    ],
+    "page": 1972
    }
   }
  }

@@ -119,7 +119,7 @@ function savedAddresses(){
   ];
 }
 function defaultCheckout(){
-  return {step:'bag', guest:false, email:'', addresses:savedAddresses(), addr:'home', del:'std', pay:S.os === 'android' ? 'gpay' : 'apple', card:null, authorised:null, terms:true, gift:false};
+  return {step:'bag', guest:false, email:'', addresses:savedAddresses(), addr:'home', del:'std', pay:'card', card:null, authorised:null, terms:true, gift:false};
 }
 function seed(){
   const pick = n => PL.filter(p => p.tags.includes('best') || p.tags.includes('trending'))[n];
@@ -152,11 +152,11 @@ function bagTotals(o = {}){
   const gcc = a && a.country && a.country !== 'AE';
   const free = gcc ? SET.free_over_gcc : SET.free_over_uae;
   let ship = sub - disc >= free ? 0 : (gcc ? SET.ship_gcc : SET.ship_uae);
-  if (S.co && S.co.del === 'exp' && !gcc) ship = 30;
   const cod = S.co && S.co.pay === 'cod' && !o.noCod ? SET.cod_fee : 0;
-  const total = r2(sub - disc + ship + cod);
+  const gift = S.co && S.co.gift && !o.noGift ? 15 : 0; // the site's "This order is a gift +AED 15"
+  const total = r2(sub - disc + ship + cod + gift);
   const vat = r2(total / (1 + SET.vat / 100) * SET.vat / 100);
-  return {sub, disc, ship, cod, total, vat, free, gcc};
+  return {sub, disc, ship, cod, gift, total, vat, free, gcc};
 }
 const inst = v => Math.ceil(v / 4 * 100) / 100;
 

@@ -39,29 +39,21 @@ const JUMP = [
   {g:'Search', label:'Barcode scanner', path:'/scan'},
   {g:'Bag & Checkout', label:'Bag', path:'/bag'},
   {g:'Bag & Checkout', label:'Bag · empty', path:'/bag?state=empty'},
-  {g:'Bag & Checkout', label:'1 · Bag review', path:'/checkout/bag', step:1},
-  {g:'Bag & Checkout', label:'2 · Contact (signed in)', path:'/checkout/contact', step:2},
-  {g:'Bag & Checkout', label:'2 · Contact (guest)', path:'/checkout/contact?guest=1', ctl:{user:'0'}, step:2},
-  {g:'Bag & Checkout', label:'3 · Delivery address', path:'/checkout/address', step:3},
-  {g:'Bag & Checkout', label:'3 · New address (empty)', path:'/checkout/address/new', step:3},
-  {g:'Bag & Checkout', label:'3 · New address (filled)', path:'/checkout/address/new?filled=1', step:3},
-  {g:'Bag & Checkout', label:'3 · New address (errors)', path:'/checkout/address/new?errors=1', step:3},
-  {g:'Bag & Checkout', label:'3 · Emirate picker', path:'/checkout/address/new?filled=1', ctl:{sheet:'emirate'}, step:3},
-  {g:'Bag & Checkout', label:'3 · Area picker', path:'/checkout/address/new?filled=1', ctl:{sheet:'area'}, step:3},
-  {g:'Bag & Checkout', label:'4 · Delivery method', path:'/checkout/delivery', step:4},
-  {g:'Bag & Checkout', label:'5 · Payment method', path:'/checkout/payment', step:5},
-  {g:'Bag & Checkout', label:'6 · Card details', path:'/checkout/card', step:6},
-  {g:'Bag & Checkout', label:'6 · Card details (filled)', path:'/checkout/card?filled=1', step:6},
-  {g:'Bag & Checkout', label:'6 · Card details (errors)', path:'/checkout/card?errors=1', step:6},
-  {g:'Bag & Checkout', label:'6 · Card · 3-D Secure', path:'/checkout/3ds', step:6},
-  {g:'Bag & Checkout', label:'6 · Apple Pay / Google Pay', path:'/checkout/wallet', step:6},
-  {g:'Bag & Checkout', label:'6 · Tabby approval', path:'/checkout/tabby', step:6},
-  {g:'Bag & Checkout', label:'6 · Tamara approval', path:'/checkout/tamara', step:6},
-  {g:'Bag & Checkout', label:'6 · Cash on delivery', path:'/checkout/cod', step:6},
-  {g:'Bag & Checkout', label:'7 · Review & place order', path:'/checkout/review', step:7},
-  {g:'Bag & Checkout', label:'8 · Order placed', path:'/checkout/placed', step:8},
-  {g:'Bag & Checkout', label:'9 · Payment failed (card)', path:'/checkout/failed?m=card', step:9},
-  {g:'Bag & Checkout', label:'9 · Payment failed (Tabby)', path:'/checkout/failed?m=tabby', step:9},
+  {g:'Bag & Checkout', label:'Checkout (one page)', path:'/checkout', step:1},
+  {g:'Bag & Checkout', label:'Checkout · guest', path:'/checkout?guest=1', ctl:{user:'0'}, step:1},
+  {g:'Bag & Checkout', label:'Checkout · filled', path:'/checkout?filled=1', step:1},
+  {g:'Bag & Checkout', label:'Checkout · errors', path:'/checkout?errors=1&guest=1', ctl:{user:'0'}, step:1},
+  {g:'Bag & Checkout', label:'Checkout · summary open', path:'/checkout?filled=1&sum=1', step:1},
+  {g:'Bag & Checkout', label:'Checkout · emirate picker', path:'/checkout?guest=1', ctl:{user:'0', sheet:'emirate'}, step:1},
+  {g:'Bag & Checkout', label:'Checkout · Tabby chosen', path:'/checkout?filled=1&pay=tabby', step:1},
+  {g:'Bag & Checkout', label:'Checkout · cash on delivery', path:'/checkout?filled=1&pay=cod', step:1},
+  {g:'Bag & Checkout', label:'After Pay now · card 3-D Secure', path:'/checkout/3ds', step:2},
+  {g:'Bag & Checkout', label:'After Pay now · Apple Pay / Google Pay', path:'/checkout/wallet?filled=1', step:2},
+  {g:'Bag & Checkout', label:'After Pay now · Tabby approval', path:'/checkout/tabby', step:2},
+  {g:'Bag & Checkout', label:'After Pay now · Tamara approval', path:'/checkout/tamara', step:2},
+  {g:'Bag & Checkout', label:'After Pay now · order placed', path:'/checkout/placed', step:2},
+  {g:'Bag & Checkout', label:'After Pay now · payment failed (card)', path:'/checkout/failed?m=card', step:2},
+  {g:'Bag & Checkout', label:'After Pay now · payment failed (Tabby)', path:'/checkout/failed?m=tabby', step:2},
   {g:'Account', label:'Account', path:'/account'},
   {g:'Account', label:'Account · signed out', path:'/account', ctl:{user:'0'}},
   {g:'Account', label:'Sign in', path:'/account/signin'},
@@ -157,9 +149,9 @@ const ORDER_SEQ = {n:56215};
 function placeOrder(){
   const T = bagTotals();
   const id = 'KBB-' + ORDER_SEQ.n++;
-  S.orders.unshift({id, d:'2026-10-19', st:'proc', items:S.bag.map(b => ({...b})), total:T.total, pay:S.co.pay, addr:S.co.addr, del:S.co.del});
+  S.orders.unshift({id, d:'2026-10-19', st:'proc', items:S.bag.map(b => ({...b})), total:T.total, pay:S.co.pay, addr:S.co.addr, ship:{...(S.form.co || {})}});
   S.lastOrder = id;
-  S.bag = []; S.coupon = null; S.co.authorised = null; S.ferr.review = {};
+  S.bag = []; S.coupon = null; S.co.authorised = null; S.co.gift = false; S.formFor.co = null;
   persist();
   S.sheet = null; S.tab = 'bag'; S.stacks.bag = [{path:'/bag'}, {path:'/checkout/placed'}];
   render({anim:'fade'});
@@ -170,7 +162,7 @@ function pickDone(f, k, v){
   if (S.ferr[f]) delete S.ferr[f][k];
   if (k === 'emirate') {
     if (!areasOf(v).some(a => a[0] === S.form[f].area)) S.form[f].area = '';
-    S.areaQ = ''; S.sheet = S.form[f].area ? null : 'area'; render(); return;
+    S.areaQ = ''; S.sheet = f === 'co' || S.form[f].area ? null : 'area'; render(); return;
   }
   S.sheet = null; render();
 }
@@ -220,11 +212,7 @@ const ACT = {
     haptic('error'); render(); const i = $('#stage #f-coupon-code'); if (i) i.focus();
   },
   uncoupon:() => { S.coupon = null; haptic('impact light'); render(); },
-  'co-next':(el) => { if (el.disabled) return; go(el.dataset.v); },
-  'co-guest':() => { S.co.guest = true; render(); },
-  'co-contact':() => { if (S.user && !S.co.guest) { go('/checkout/address'); return; } if (submitForm('contact')) go('/checkout/address'); },
   news:() => { S.co.news = !S.co.news; render(); },
-  addr:(el) => { S.co.addr = el.dataset.v; haptic('selection'); render(); },
   flabel:(el) => { S.form[el.dataset.k].label = el.dataset.v; render(); },
   fdef:(el) => { const f = S.form[el.dataset.v]; f.def = f.def === false; render(); },
   'addr-save':(el) => {
@@ -236,39 +224,40 @@ const ACT = {
     if (i >= 0) S.co.addresses[i] = a; else S.co.addresses.push(a);
     S.formFor.addr = null; haptic('success');
     const st = S.stacks[S.tab];
-    if (el.dataset.v === 'checkout') { S.co.addr = a.id; st.pop(); if (topE().path !== '/checkout/address') st.push({path:'/checkout/address'}); go('/checkout/delivery'); toast(t('Address saved')); return; }
     st.pop(); render({anim:'pop'}); toast(t('Address saved'));
   },
-  pick:(el) => { haptic('selection'); pickDone(el.dataset.f || (route().path.startsWith('/contact') ? 'msg' : 'addr'), el.dataset.k, el.dataset.v); },
-  del:(el) => { S.co.del = el.dataset.v; haptic('selection'); render(); },
-  gift:() => { S.co.gift = !S.co.gift; render(); },
-  pay:(el) => { if (el.getAttribute('aria-disabled') === 'true') { haptic('error'); toast(t('Cash on delivery is available in the UAE only.')); return; } S.co.pay = el.dataset.v; S.co.authorised = null; haptic('selection'); render(); },
-  'co-pay':() => go(METHOD_ROUTE[S.co.pay]),
+  pick:(el) => { haptic('selection'); pickDone(el.dataset.f || (route().path.startsWith('/contact') ? 'msg' : route().s.pattern === '/checkout' ? 'co' : 'addr'), el.dataset.k, el.dataset.v); },
+  gift:() => { S.co.gift = !S.co.gift; haptic('selection'); render(); },
+  pay:(el) => { if (el.getAttribute('aria-disabled') === 'true') { haptic('error'); toast(t('Cash on delivery is available in the UAE only.')); return; } S.co.pay = el.dataset.v; S.co.authorised = null; S.ferr.card = {}; haptic('selection'); render(); },
   savecard:() => { S.co.saveCard = S.co.saveCard === false; render(); },
-  'card-next':() => { if (submitForm('card')) go('/checkout/3ds'); },
   'otp-submit':() => {
     const d = fval('otp', 'code').replace(/\D/g, '');
     S.ferr.otp = {};
     if (!d) S.ferr.otp.code = 'required'; else if (d.length !== 6) S.ferr.otp.code = 'Enter the 6-digit code.';
     if (S.ferr.otp.code) { haptic('error'); render(); focusFirstError('otp'); return; }
-    S.co.authorised = 'card'; haptic('success'); go('/checkout/review');
+    S.co.authorised = 'card'; haptic('success'); placeOrder();
   },
   decline:(el) => { S.co.failed = el.dataset.v; S.co.authorised = null; haptic('error'); goChain('/checkout/failed?m=' + el.dataset.v, 'fade'); },
-  authorise:(el) => { S.co.pay = el.dataset.v; S.co.authorised = el.dataset.v; haptic('success'); S.sheet = null; go('/checkout/review'); },
-  'bnpl-ok':(el) => { if (!submitForm('bnpl')) return; S.co.pay = el.dataset.v; S.co.authorised = el.dataset.v; haptic('success'); go('/checkout/review'); },
-  codok:() => { S.co.codOk = S.co.codOk === false; render(); },
-  'cod-ok':() => { if (!submitForm('cod')) return; if (S.co.codOk === false) { haptic('error'); toast(t('Please confirm you’ll be available to pay.')); return; } S.co.pay = 'cod'; go('/checkout/review'); },
-  terms:() => { S.co.terms = !S.co.terms; if (S.co.terms && S.ferr.review) delete S.ferr.review.terms; render(); },
+  authorise:(el) => { S.co.pay = el.dataset.v; S.co.authorised = el.dataset.v; haptic('success'); S.sheet = null; placeOrder(); },
+  'bnpl-ok':(el) => { if (!submitForm('bnpl')) return; S.co.pay = el.dataset.v; S.co.authorised = el.dataset.v; haptic('success'); placeOrder(); },
+  /* the one page's Pay now: every field judged on the page; then what follows the tap */
   place:() => {
-    if (!S.co.terms) { S.ferr.review = {terms:1}; haptic('error'); render(); return; }
-    if (S.co.pay !== 'cod' && S.co.authorised !== S.co.pay) { haptic('warning'); go(METHOD_ROUTE[S.co.pay]); toast(t('Confirm the payment first.')); return; }
-    haptic('success'); placeOrder();
+    const n = validate('co') + (S.co.pay === 'card' ? validate('card') : 0);
+    if (n) { haptic('error'); render(); focusFirstError(Object.keys(S.ferr.co || {}).length ? 'co' : 'card'); return; }
+    haptic('success');
+    const next = METHOD_ROUTE[S.co.pay];
+    if (next) { go(next); return; }
+    placeOrder();
   },
-  'retry-pay':(el) => go(METHOD_ROUTE[el.dataset.v] || '/checkout/payment'),
+  cotog:(el) => { const k = el.dataset.v; S.co[k] = !S.co[k]; render(); },
+  cosum:() => { S.co.sumOpen = !S.co.sumOpen; render(); },
+  cofoot:() => { S.co.footOpen = !S.co.footOpen; render(); },
+  totop:(el) => { const b = el.closest('.body'); if (b) b.scrollTo({top:0, behavior:reduced() ? 'auto' : 'smooth'}); },
+  'retry-pay':(el) => { const m = el.dataset.v; if (m !== 'other') S.co.pay = m === 'apple' || m === 'gpay' ? (isA() ? 'gpay' : 'apple') : m; S.stacks.bag = [{path:'/bag'}, {path:'/checkout'}]; S.tab = 'bag'; render({anim:'pop'}); },
   track:(el) => goChain('/account/orders/' + el.dataset.v, 'tab'),
   /* account */
   pw:() => { S.pw = !S.pw; render(); },
-  signin:(el) => { if (!submitForm('signin')) return; S.user = SARA; S.co.guest = false; persist(); haptic('success'); if (el.dataset.v === 'checkout') { goChain('/checkout/address', 'fade'); } else { S.stacks.account = [{path:'/account'}]; S.tab = 'account'; render({anim:'pop'}); } toast(t('Signed in as {n}', {n:esc(ut(SARA.first))})); },
+  signin:(el) => { if (!submitForm('signin')) return; S.user = SARA; S.co.guest = false; persist(); haptic('success'); if (el.dataset.v === 'checkout') { S.formFor.co = null; goChain('/checkout', 'fade'); } else { S.stacks.account = [{path:'/account'}]; S.tab = 'account'; render({anim:'pop'}); } toast(t('Signed in as {n}', {n:esc(ut(SARA.first))})); },
   register:() => { if (!submitForm('register')) return; S.user = SARA; persist(); haptic('success'); S.stacks.account = [{path:'/account'}]; S.tab = 'account'; render({anim:'pop'}); toast(t('Welcome to K-Beauty Bliss')); },
   forgot:() => { if (!submitForm('forgot')) return; S.sent.forgot = true; haptic('success'); render(); },
   signout:() => { S.user = null; persist(); haptic('impact medium'); render(); toast(t('Signed out')); },
@@ -288,6 +277,8 @@ const ACT = {
   reorder:(el) => { const o = S.orders.find(x => x.id === el.dataset.v) || S.orders[0]; o.items.forEach(b => addToBag(b.slug, b.qty)); haptic('success'); toast(t('Added again to your bag'), {tab:'bag', label:t('View bag')}); },
 };
 let swallowClick = false;
+/* the checkout's Emirate is the site's <select>: in the app it opens the picker sheet instead of the browser's list */
+document.addEventListener('mousedown', e => { const s = e.target.closest && e.target.closest('#stage select[data-sheet]'); if (s) e.preventDefault(); }, true);
 document.addEventListener('click', e => {
   if (swallowClick) { swallowClick = false; e.preventDefault(); e.stopPropagation(); return; }
   const sw = e.target.closest('[data-sw]');
@@ -459,6 +450,7 @@ window.APV = {
   devices:() => Object.keys(DEVKEYS),
   href:(id, o) => jumpHref(JUMP[id], o || {}),
   reset(){ try { sessionStorage.clear(); } catch {} seed(); Object.assign(S, {conc:0, qty:1, open:{}, bt:{}, sort:{}, filt:{}, more:{}, detail:{}, scroll:{}, q:'', qFrom:null, recent:[], brandQ:'', coupon:null, form:{}, ferr:{}, formFor:{}, sent:{}, pw:false, toast:null, lastOrder:null}); },
+  beforePlace:() => (stackFor('/checkout') || {st:[]}).st.length,
   state:() => ({bb:S.bb, tm:S.tm, menu:S.menu, mega:S.mega, tab:S.tab, path:topE().path, depth:S.stacks[S.tab].length, stacks:Object.fromEntries(TABS.map(k => [k, S.stacks[k].map(x => x.path)])), bag:bagCount(), wish:[...S.wish], sheet:S.sheet, co:{pay:S.co.pay, addr:S.co.addr, del:S.co.del, authorised:S.co.authorised}, orders:S.orders.length, lastOrder:S.lastOrder, scroll:{...S.scroll}, missing:[...missing]}),
   missing:() => [...missing],
   open(h){ APV.reset(); S.selfHash = h; history.replaceState(null, '', h); readHash(); render(); },

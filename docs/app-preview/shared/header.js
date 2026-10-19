@@ -47,7 +47,7 @@ S.menu = false; S.mega = null; S.mmNode = null; S.mmQ = '';
    unlock, update, order placed, scanner, photo viewer). */
 function siteOn(r, R){
   if (!SITEMK.header || R.raw || R.dark || (R.bare && R.nobar)) return false;
-  return !/^\/(checkout|start)\//.test(r.path) && r.s.pattern !== '/scan';
+  return !/^\/(checkout|start)(\/|\?|$)/.test(r.path) && r.s.pattern !== '/scan';
 }
 function siteHTML(d){
   const cls = sizeClass(d.w);
