@@ -33,10 +33,12 @@ function coTpl(){
   const cart = P0.parseFromString(`<body>${strip(SCO.cart)}</body>`, 'text/html').body.firstElementChild;
   const co = P0.parseFromString(`<body>${strip(SCO.checkout)}</body>`, 'text/html').body.firstElementChild;
   /* the site's CSS names ids as classes (#x -> .id-x, see tools/apv-site.cjs) */
-  for (const r of [cart, co]) [r, ...r.querySelectorAll('[id]')].forEach(e => { if (e.id) e.classList.add('id-' + e.id); });
+  for (const r of [cart, co]) [r, ...r.querySelectorAll('[id]')].forEach(e => { if (e.id && !e.closest('svg')) e.classList.add('id-' + e.id); });
   COT = {cart, co};
   return COT;
 }
+/* the site's cart and summary print the whole name, brand first */
+const fullName = p => (AR && isLatin(p.name)) ? X('name', esc(p.name)) : dt(p.name);
 const SYM = AR ? 'د.إ' : 'AED';
 const amt = v => `<span class="woocommerce-Price-amount amount" dir="ltr"><span class="woocommerce-Price-currencySymbol" dir="auto">${SYM}</span> ${num(r2(v))}</span>`;
 const $1 = (root, s) => root.querySelector(s);
@@ -65,7 +67,7 @@ function cartLine(tplLine, b){
   const p = P[b.slug]; if (!p) return null;
   const ci = tplLine.cloneNode(true);
   const th = $1(ci, '.cth'); th.style.backgroundImage = `url('${p.img}')`; th.setAttribute('role', 'button'); th.dataset.go = '/product/' + p.slug; th.setAttribute('aria-label', pn(p));
-  const a = $1(ci, '.cn a'); a.innerHTML = nameTxt(p); a.dataset.go = '/product/' + p.slug; a.removeAttribute('href'); a.setAttribute('role', 'button'); a.setAttribute('tabindex', '0');
+  const a = $1(ci, '.cn a'); a.innerHTML = fullName(p); a.dataset.go = '/product/' + p.slug; a.removeAttribute('href'); a.setAttribute('role', 'button'); a.setAttribute('tabindex', '0');
   const qb = ci.querySelectorAll('.qty button');
   qb.forEach(x => { x.dataset.act = 'bq'; x.dataset.p = p.slug; x.dataset.v = x.dataset.d; x.removeAttribute('data-kcpq'); });
   $1(ci, '.qty span').textContent = num(b.qty);
@@ -141,7 +143,7 @@ function coSummaryItems(root){
     const p = P[b.slug]; if (!p) return null;
     const ci = tpl.cloneNode(true); ci.dataset.key = p.slug;
     $1(ci, '.cth').style.backgroundImage = `url('${p.img}')`; $1(ci, '.qb').textContent = num(b.qty);
-    $1(ci, '.n').innerHTML = nameTxt(p);
+    $1(ci, '.n').innerHTML = fullName(p);
     ci.querySelectorAll('.co-q').forEach(x => { x.dataset.act = 'bq'; x.dataset.p = p.slug; x.dataset.v = x.dataset.d; });
     $1(ci, '.qty span').textContent = num(b.qty);
     const rm = $1(ci, '.co-rm'); rm.dataset.act = 'rm'; rm.dataset.p = p.slug; rm.setAttribute('aria-label', `${t('Remove')} · ${pn(p)}`);
@@ -173,7 +175,7 @@ function checkoutHTML(r, ctx){
   const root = coTpl().co.cloneNode(true);
   const head = $1(root, 'header.co-head'); head.remove();
   retarget(root);
-  each(root, '[id]', e => { if (!/^(billing_|payment_method_|shipping_method)/.test(e.id)) e.removeAttribute('id'); });
+  each(root, '[id]', e => { if (!/^(billing_|payment_method_|shipping_method)/.test(e.id) && !e.closest('svg')) e.removeAttribute('id'); }); // an svg keeps its own ids: the logos' gradients point at them
   /* 1 · Delivery information */
   each(root, 'input[name], select[name], textarea[name]', inp => { const k = COF[inp.name]; if (k) bindField(root, 'co', k, inp); });
   const signed = S.user && !r.query.guest;

@@ -66,7 +66,7 @@ async function extractRules(rootSels) {
            put the shorthand back as the stylesheet's own source writes it */
         if (/:\s*;/.test(body) && keep.length) {
           body = body.replace(/\s[a-z-]+:\s*;/g, '');
-          const src = srcOf[r.parentStyleSheet.href] || '';
+          const sh0 = r.parentStyleSheet; const src = (sh0.href ? srcOf[sh0.href] : sh0.ownerNode && sh0.ownerNode.textContent) || ''; // inline <style> blocks are their own source
           const esc = r.selectorText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s*').replace(/\\s\*>\\s\*|>/g, '\\s*>\\s*');
           const names = [...body.matchAll(/([a-z-]+)\s*:/g)].map((x) => x[1].replace(/^-webkit-/, ''));
           const m = [...src.matchAll(new RegExp('(?:^|[{};,\\s])' + esc + '\\s*\\{([^}]*)\\}', 'g'))].sort((a, b) => names.filter((n) => b[1].includes(n + ':')).length - names.filter((n) => a[1].includes(n + ':')).length)[0];

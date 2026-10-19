@@ -124,9 +124,11 @@ function measureCo(kind) {
       const pre = lang === 'ar' ? '/ar' : '';
       for (const it of bag) for (let k = 0; k < it.qty; k++) { await page.goto(`${BASE}${pre}/product/${it.slug}/`, {waitUntil:'domcontentloaded'}); await page.click('#mainAdd'); await page.waitForTimeout(1200); }
       const caps = [];
+      /* two pages: the checkout's rules are numbered after the cart's, so the union keeps both (and each page's own order) */
+      const shift = (c) => { c.rules.forEach((r) => { r.i += 1e6; }); return c; };
       /* the cart page */
       await page.goto(`${BASE}${pre}/cart/`, {waitUntil:'networkidle'}); await page.waitForTimeout(600);
-      caps.push(await page.evaluate(extractRules, ['main']));
+      caps.push(await page.evaluate(extractRules, ['.kbb-cartpage']));
       const cart = await page.evaluate(() => document.querySelector('.kbb-cartpage').outerHTML);
       measure[`${lang}-cart`] = await page.evaluate(measureCo, 'cart');
       await page.screenshot({path:path.join(SHOTS, `${lang}-cart.png`), fullPage:true});
@@ -136,11 +138,11 @@ function measureCo(kind) {
       const words = await page.evaluate(() => { const m = document.body.innerHTML.match(/WORDS = (\{[^;]*\});/); return m ? JSON.parse(m[1]) : null; });
       measure[`${lang}-checkout`] = await page.evaluate(measureCo, 'checkout');
       await page.screenshot({path:path.join(SHOTS, `${lang}-checkout.png`), fullPage:true});
-      caps.push(await page.evaluate(extractRules, ['section.kbb-checkout']));
+      caps.push(shift(await page.evaluate(extractRules, ['section.kbb-checkout'])));
       for (const act of ['#kbbSumRow', '.kbb-mobile-order .co-ta', '#payment_method_tabby', '#create_account', '#is_gift']) {
         await page.locator(act).first().click({force:true}).catch(() => {});
         await page.waitForTimeout(350);
-        caps.push(await page.evaluate(extractRules, ['section.kbb-checkout']));
+        caps.push(shift(await page.evaluate(extractRules, ['section.kbb-checkout'])));
       }
       await page.screenshot({path:path.join(SHOTS, `${lang}-checkout-open.png`), fullPage:true});
       /* a refused submit: the site's own inline errors */

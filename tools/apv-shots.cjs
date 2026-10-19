@@ -868,6 +868,7 @@ async function fullLength(lang, hash, file) {
   const page = await newPage(lang);
   await page.evaluate((h) => APV.open(h), hash + '&z=100');
   await settle(page);
+  await page.addStyleTag({content:'#stage .homeind{visibility:hidden}'}); // stitched: no home indicator in the middle of the page
   const g = await page.locator('#stage .glass').first().boundingBox();
   const parts = [];
   const info = await page.evaluate(() => { const b = document.querySelector('#stage .pane .body'); const r = b.getBoundingClientRect(); return {top:r.top, h:b.clientHeight, sh:b.scrollHeight}; });

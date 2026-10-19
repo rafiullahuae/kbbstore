@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-19T07:39:38.621Z",
+ "generated": "2026-10-19T08:18:21.890Z",
  "renders": 1952,
  "screens": 168,
  "devices": [
@@ -18,13 +18,11 @@
   "en",
   "ar"
  ],
- "failed": 7,
- "issues_by_kind": {
-  "safe-bottom": 8
- },
+ "failed": 0,
+ "issues_by_kind": {},
  "flows": {
   "steps": 237,
-  "steps_with_issues": 1,
+  "steps_with_issues": 0,
   "assertions_failed": 0,
   "by_run": {
    "en/ip16": [],
@@ -130,8 +128,8 @@
    "n": 164,
    "eg": [
     "#KBB-56214",
-    "#KBB-56215",
     "card_declined · insufficient",
+    "#KBB-56215",
     "tabby: rejected · order_amou",
     "#KBB-55870",
     "Aramex 4485 9921 03",
@@ -145,11 +143,11 @@
     "tabby",
     "tamara",
     "Pay",
-    "Visa",
-    "Mastercard",
     "Tabby",
     "Tamara",
-    "info@kbeautybliss.com"
+    "info@kbeautybliss.com",
+    "VISA",
+    "Visa"
    ]
   },
   "ugc": {
@@ -178,93 +176,5 @@
    ]
   }
  },
- "failures": [
-  {
-   "name": "ar/00-home-bbD-ip16",
-   "link": "#/home?device=ip16&bb=D",
-   "issues": [
-    {
-     "kind": "safe-bottom",
-     "at": "div.shell.hassite > nav.tabbar.bb-D > button.tab.raised > span.tbl",
-     "msg": "bottom 32 from edge < inset 34"
-    }
-   ]
-  },
-  {
-   "name": "ar/22-brand-page-bbD-ip16",
-   "link": "#/brand/medicube?device=ip16&bb=D",
-   "issues": [
-    {
-     "kind": "safe-bottom",
-     "at": "div.shell.hassite > nav.tabbar.bb-D > button.tab.raised > span.tbl",
-     "msg": "bottom 32 from edge < inset 34"
-    }
-   ]
-  },
-  {
-   "name": "ar/16-category-serums-bbD-ip16",
-   "link": "#/category/serums?device=ip16&bb=D",
-   "issues": [
-    {
-     "kind": "safe-bottom",
-     "at": "div.shell.hassite > nav.tabbar.bb-D > button.tab.raised > span.tbl",
-     "msg": "bottom 32 from edge < inset 34"
-    }
-   ]
-  },
-  {
-   "name": "ar/26-search-results-bbD-ip16",
-   "link": "#/search?q=%D8%B3%D9%8A%D8%B1%D9%88%D9%85&device=ip16&bb=D",
-   "issues": [
-    {
-     "kind": "safe-bottom",
-     "at": "div.shell.hassite > nav.tabbar.bb-D > button.tab.raised > span.tbl",
-     "msg": "bottom 32 from edge < inset 34"
-    }
-   ]
-  },
-  {
-   "name": "ar/46-account-bbD-ip16",
-   "link": "#/account?device=ip16&bb=D",
-   "issues": [
-    {
-     "kind": "safe-bottom",
-     "at": "div.shell.hassite > nav.tabbar.bb-D > button.tab.raised > span.tbl",
-     "msg": "bottom 32 from edge < inset 34"
-    }
-   ]
-  },
-  {
-   "name": "ar/29-bag-bbD-ip16",
-   "link": "#/bag?device=ip16&bb=D",
-   "issues": [
-    {
-     "kind": "safe-bottom",
-     "at": "div.shell.hassite > nav.tabbar.bb-D > button.tab.on > span.tbl",
-     "msg": "bottom 32 from edge < inset 34"
-    }
-   ]
-  },
-  {
-   "name": "ar/59-wishlist-bbD-ip16",
-   "link": "#/wishlist?device=ip16&bb=D",
-   "issues": [
-    {
-     "kind": "safe-bottom",
-     "at": "div.shell.hassite > nav.tabbar.bb-D > button.tab.raised > span.tbl",
-     "msg": "bottom 32 from edge < inset 34"
-    }
-   ]
-  },
-  {
-   "name": "flow ar/ip16 bb-D",
-   "issues": [
-    {
-     "kind": "safe-bottom",
-     "at": "div.shell.hassite > nav.tabbar.bb-D > button.tab.raised > span.tbl",
-     "msg": "bottom 32 from edge < inset 34"
-    }
-   ]
-  }
- ]
+ "failures": []
 }

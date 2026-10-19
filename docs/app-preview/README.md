@@ -185,49 +185,68 @@ alone.
 
 ## The checker
 
-`node tools/apv-shots.cjs` drives both apps in Chromium: every jump-list entry (Home and Product
-in A, B and C) × 10 device states × 2 languages by deep link, then the flows by real clicks and
-typing on iPhone 16 Pro, Pixel 9, Fold inner and Duo in both languages:
+`node tools/apv-shots.cjs` drives both apps in Chromium. It renders every jump-list entry (Home
+and Product in A, B and C) × 10 device states × 2 languages by deep link. On top of that it renders
+**bottom bars B–E** on iPhone 16 Pro, iPhone SE, Pixel 9 and Fold cover (Home, Category, Product,
+Bag, Account, Search results, Brand, Wishlist), and **"Tablet menu: menu bar"** on the Fold inner
+and iPad portrait. Then it runs the flows by real clicks and typing:
 
-- **checkout walk:** add from a home card → Bag tab → wrong coupon (error) → WELCOME10 → steps 1 to
-  8 by card, with each step's validation (empty email, empty address with summary, empty card),
-  typed values and their formatting (`50 123 4567`, `4242 4242 4242 4242`, `12 / 29`), the emirate
-  sheet and the area sheet filtered by typing; then the wallet, Tabby, Tamara and COD each back to
-  Review approved; a declined card → Payment failed with the bag kept → Try again.
-- **navigation smoke:** product → Back → Home; tab switch keeps each tab's stack; the wishlist
-  survives a reload; the edge swipe goes back; the search query survives product → Back; sort
-  really sorts, the price filter really filters; endless scroll loads more; pull to refresh; on the
-  Duo a list tap fills the detail screen without pushing.
+- **checkout walk** (iPhone 16 Pro, Pixel 9, Fold inner, Duo; both languages):
+  1. Add from a home card, then the bag icon.
+  2. The site's cart page, then Proceed to checkout. Here the checker **counts the screens before
+     Pay now and fails above 2**.
+  3. The summary bar, with a wrong coupon (error), then WELCOME10.
+  4. Pay now with an empty page: at least five inline errors on the one screen.
+  5. Fill in email, name, phone (`50 123 4567`), building and area, and pick an emirate from the
+     sheet.
+  6. Choose the card. An empty card shows its errors; then `4242 4242 4242 4242` and `12 / 29`.
+  7. Pay now → 3-D Secure → Order placed (the bag is emptied and an order added).
+  8. Repeat from the filled checkout with Apple / Google Pay, Tabby, Tamara and cash on delivery.
+     Each must end in the order placed.
+  9. A declined card → Payment failed, with the bag kept → Try again → back to the checkout with
+     the card chosen.
+- **the website's parts** (8 devices, both languages): the header's account, bag, logo, search
+  box (it becomes the search field and finds as you type), badge count and language link.
+  - The ☰ menu: every top-level item, every sub-level opened with its first item clicked, every
+    chip, Sign in, the language link, close by × and by the scrim, and "Search the menu…".
+  - The menu bar on iPad landscape (and with "menu bar" on the tablets): every item, every mega
+    panel opened, and its first link clicked.
+  - Every **bottom bar A–E** on iPhone 16 Pro and Pixel 9: each tab clicked and shown as active,
+    every More tile, and the bag and wishlist badges.
+- **navigation smoke:** as before. On frames without a bottom bar, the header's icons are the tabs.
 
 Per render and per flow step it asserts overflow, clipped text, overlapping text, icon sizes,
-contrast (3:1), tap targets ≥ 44, safe areas, hinge and fold, console errors, plus the
-**floating labels** (inside the box; centred at rest; lifted to the top-start corner, small, and
-never over the value — in both directions) and, in the Arabic app, **no English**: any Latin word
-in text, `aria-label`, `placeholder`, `title` or `alt` fails unless the element is marked
-`data-x="<why>"`. The allowed exceptions are counted by reason in `shots/report.json`
-(`arabic_exceptions`): `brand` (brand names the site has only in Latin), `term` (Latin product
-terms inside the site's own Arabic copy: PDRN, SPF50+, BHA…), `ugc` (reviews written in English,
-shown as written), `inci` (ingredient lists), `pay` (Visa, Mastercard, Apple/Google Pay marks,
-Tabby/Tamara logos, App Store), `code` (order and error codes, WELCOME10), `email`, `logo` (the
-K-BEAUTY BLISS wordmark), `dev` (device names in the preview chrome), `typed` (text the shopper
-typed in Latin), `lang` (the word "English" on the button that opens the English app). Digits
-are allowed.
+contrast (3:1), tap targets ≥ 44, safe areas, hinge and fold, console errors and the floating
+labels. In the Arabic app it also asserts **no English** (exceptions marked `data-x`, counted in
+`report.json`). New in APV3:
+
+- `site`: the website's header equals the live site at the frame's width. That covers height ±1,
+  search box height ±1 and width ±2, corners, placeholder, logo, wordmark (Arabic in the Arabic
+  app), language switch, ☰ and menu bar.
+- `rail`: no navigation rail is drawn.
+- `cart` and `checkout`: on phones, the bag and the checkout equal the site's cart page and
+  one-page checkout. That covers section order, button heights and corners, titles, the field
+  order by the site's ids, the payment methods and the number of sections.
+
+The site's own parts are held to the site's sizes and colours, not to the app's 44px and 3:1
+rules. Where the site itself falls short, `report.json` → `site_findings` says so.
 
 Options: `--lang=ar --dev=ip16,duo --only=<label or group> --no-shots --flows-only --no-flows
---workers=4`, and `--mutate='<css>'` to inject a defect and prove the checks fail, e.g.
-`--mutate='.fl>input{padding-top:8px}'` turns the label check red.
+--workers=4`. `--mutate='<css>'` injects a defect to prove a check fails, for example:
+`--mutate='.kh .search-in{height:40px!important}'` fails `site` ("search box 40.0px high, the
+site's is 34px"), and `--mutate='.kc .kbb-mobile-order .place{height:40px!important}'` fails
+`checkout` ("Pay now 40px, 99px; the site's is 59px, 99px").
 
-Output: `shots/en/`, `shots/ar/` (one JPEG per render and per flow step; not in git),
-`shots/sheet-<device>-<lang>.jpg` (contact sheets, in git), `shots/report.json`, and `key/`:
-`home-en/ar`, `category-fold-inner-en/ar`, `brand-fold-inner-en/ar`, `product-duo-en/ar`,
-`ipad-landscape-en/ar`, `en-checkout-steps`, `ar-checkout-steps` (every step, in order),
-`floating-label-before`, `floating-label-after`.
+Output: `shots/en/`, `shots/ar/` and `shots/site/` (renders and the site's own pictures; not kept),
+`shots/sheet-<device>-<lang>.jpg` (contact sheets, kept), `shots/report.json`, and `key/`:
 
-**Last full run (19 October 2026):** 1,840 renders (92 screens + Design B/C of Home and Product
-= 92 per language × 10 device states × 2 languages), 0 with an issue; 224 flow steps on 4
-devices × 2 languages, 0 with an issue, 0 failed assertions; both screens.html pages: 92 live
-cards, every one a deep link, no console error. Mutation check: `--mutate='.fl>input{padding-top:8px}'`
-fails the label check ("lifted label overlaps the value by 9.3px").
+- `header-phone-*`, `header-tablet-*`, `menu-phone-*`, `menu-tablet-*`, `bottom-bars-*`
+- `en|ar-cart`, `en|ar-checkout`, `en|ar-checkout-flow`
+- `category-fold-inner-*` (the owner's screen), `brand-fold-inner-*`, `product-duo-*`,
+  `ipad-landscape-*`, `home-*`
+- `floating-label-before/after`
+
+**Last full run (19 October 2026):** RUNLINE
 
 Defects the walk caught that a screen grid could not: the outline "ghost" buttons (Add a new
 address, Choose another method, Create an account…) took no clicks because a transition class
