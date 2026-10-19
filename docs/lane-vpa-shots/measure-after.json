@@ -1,0 +1,498 @@
+{
+  "checks": [
+    {
+      "name": "grid en 390: no console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "grid en 390: no sideways scroll",
+      "ok": true,
+      "detail": [
+        390,
+        390
+      ]
+    },
+    {
+      "name": "pdp en 390: no console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "pdp en 390: no sideways scroll",
+      "ok": true,
+      "detail": [
+        390,
+        390
+      ]
+    },
+    {
+      "name": "grid en 1280: no console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "grid en 1280: no sideways scroll",
+      "ok": true,
+      "detail": [
+        1280,
+        1280
+      ]
+    },
+    {
+      "name": "pdp en 1280: no console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "pdp en 1280: no sideways scroll",
+      "ok": true,
+      "detail": [
+        1280,
+        1280
+      ]
+    },
+    {
+      "name": "grid ar 390: no console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "grid ar 390: no sideways scroll",
+      "ok": true,
+      "detail": [
+        390,
+        390
+      ]
+    },
+    {
+      "name": "pdp ar 390: no console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "pdp ar 390: no sideways scroll",
+      "ok": true,
+      "detail": [
+        390,
+        390
+      ]
+    },
+    {
+      "name": "grid ar 1280: no console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "grid ar 1280: no sideways scroll",
+      "ok": true,
+      "detail": [
+        1280,
+        1280
+      ]
+    },
+    {
+      "name": "pdp ar 1280: no console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "pdp ar 1280: no sideways scroll",
+      "ok": true,
+      "detail": [
+        1280,
+        1280
+      ]
+    },
+    {
+      "name": "card 390: the dot is what is under the finger",
+      "ok": true
+    },
+    {
+      "name": "card 390: price moved to the shade's own",
+      "ok": true,
+      "detail": [
+        "AED 125 – AED 139",
+        "AED 128"
+      ]
+    },
+    {
+      "name": "card 390: picture moved to the shade's own",
+      "ok": true,
+      "detail": "/uploads/vpa/missha-27.png"
+    },
+    {
+      "name": "card 390: tapping a dot does not navigate",
+      "ok": true,
+      "detail": "/collections/vpa-makeup/"
+    },
+    {
+      "name": "card 390: the tapped dot is pressed",
+      "ok": true,
+      "detail": "Shade: #27 Honey Beige"
+    },
+    {
+      "name": "card 390: the name link is still clickable",
+      "ok": true
+    },
+    {
+      "name": "card 1280: the dot is what is under the finger",
+      "ok": true
+    },
+    {
+      "name": "card 1280: price moved to the shade's own",
+      "ok": true,
+      "detail": [
+        "AED 125 – AED 139",
+        "AED 128"
+      ]
+    },
+    {
+      "name": "card 1280: picture moved to the shade's own",
+      "ok": true,
+      "detail": "/uploads/vpa/missha-27.png"
+    },
+    {
+      "name": "card 1280: tapping a dot does not navigate",
+      "ok": true,
+      "detail": "/collections/vpa-makeup/"
+    },
+    {
+      "name": "card 1280: the tapped dot is pressed",
+      "ok": true,
+      "detail": "Shade: #27 Honey Beige"
+    },
+    {
+      "name": "card 1280: the name link is still clickable",
+      "ok": true
+    },
+    {
+      "name": "prefetch: the product page came from the prefetch",
+      "ok": true,
+      "detail": "navigational-prefetch"
+    },
+    {
+      "name": "page 390: label names the shade",
+      "ok": true,
+      "detail": "23N Sand"
+    },
+    {
+      "name": "page 390: price moved to the shade's sale price",
+      "ok": true,
+      "detail": {
+        "label": "23N Sand",
+        "price": "AED 129",
+        "was": "AED 145",
+        "wasShown": true,
+        "stock": "In stock · ready to ship",
+        "out": false,
+        "add": false,
+        "addText": "Add to cart",
+        "img": "/uploads/vpa/tirtir-23n.png",
+        "sku": "SKU: TT-MF-23NSand",
+        "vid": "7"
+      }
+    },
+    {
+      "name": "page 390: picture moved to the shade's own",
+      "ok": true,
+      "detail": "/uploads/vpa/tirtir-23n.png"
+    },
+    {
+      "name": "page 390: SKU moved",
+      "ok": true,
+      "detail": "SKU: TT-MF-23NSand"
+    },
+    {
+      "name": "page 390: still in stock and addable",
+      "ok": true,
+      "detail": {
+        "label": "23N Sand",
+        "price": "AED 129",
+        "was": "AED 145",
+        "wasShown": true,
+        "stock": "In stock · ready to ship",
+        "out": false,
+        "add": false,
+        "addText": "Add to cart",
+        "img": "/uploads/vpa/tirtir-23n.png",
+        "sku": "SKU: TT-MF-23NSand",
+        "vid": "7"
+      }
+    },
+    {
+      "name": "page 390: a sold-out shade says so",
+      "ok": true,
+      "detail": {
+        "label": "17C Porcelain",
+        "price": "AED 145",
+        "was": "",
+        "wasShown": false,
+        "stock": "Sold out — check back soon",
+        "out": true,
+        "add": true,
+        "addText": "Sold out",
+        "img": "/uploads/vpa/tirtir-17c.png",
+        "sku": "SKU: TT-MF-17CPorcelain",
+        "vid": "4"
+      }
+    },
+    {
+      "name": "page 390: the server refuses the sold-out shade",
+      "ok": true,
+      "detail": [
+        422,
+        false
+      ]
+    },
+    {
+      "name": "page 390: the basket holds 21N Ivory",
+      "ok": true,
+      "detail": "TIRTIR - Mask Fit Red Cushion Foundation (9 Shades)\nShade: 21N Ivory\n−\n1\n+\nAED 145\nRemove"
+    },
+    {
+      "name": "page 390: no console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "page 1280: label names the shade",
+      "ok": true,
+      "detail": "23N Sand"
+    },
+    {
+      "name": "page 1280: price moved to the shade's sale price",
+      "ok": true,
+      "detail": {
+        "label": "23N Sand",
+        "price": "AED 129",
+        "was": "AED 145",
+        "wasShown": true,
+        "stock": "In stock · ready to ship",
+        "out": false,
+        "add": false,
+        "addText": "Add to cart",
+        "img": "/uploads/vpa/tirtir-23n.png",
+        "sku": "SKU: TT-MF-23NSand",
+        "vid": "7"
+      }
+    },
+    {
+      "name": "page 1280: picture moved to the shade's own",
+      "ok": true,
+      "detail": "/uploads/vpa/tirtir-23n.png"
+    },
+    {
+      "name": "page 1280: SKU moved",
+      "ok": true,
+      "detail": "SKU: TT-MF-23NSand"
+    },
+    {
+      "name": "page 1280: still in stock and addable",
+      "ok": true,
+      "detail": {
+        "label": "23N Sand",
+        "price": "AED 129",
+        "was": "AED 145",
+        "wasShown": true,
+        "stock": "In stock · ready to ship",
+        "out": false,
+        "add": false,
+        "addText": "Add to cart",
+        "img": "/uploads/vpa/tirtir-23n.png",
+        "sku": "SKU: TT-MF-23NSand",
+        "vid": "7"
+      }
+    },
+    {
+      "name": "page 1280: a sold-out shade says so",
+      "ok": true,
+      "detail": {
+        "label": "17C Porcelain",
+        "price": "AED 145",
+        "was": "",
+        "wasShown": false,
+        "stock": "Sold out — check back soon",
+        "out": true,
+        "add": true,
+        "addText": "Sold out",
+        "img": "/uploads/vpa/tirtir-17c.png",
+        "sku": "SKU: TT-MF-17CPorcelain",
+        "vid": "4"
+      }
+    },
+    {
+      "name": "page 1280: the server refuses the sold-out shade",
+      "ok": true,
+      "detail": [
+        422,
+        false
+      ]
+    },
+    {
+      "name": "page 1280: the basket holds 21N Ivory",
+      "ok": true,
+      "detail": "TIRTIR\nTIRTIR - Mask Fit Red Cushion Foundation (9 Shades)\nShade: 21N Ivory\n−\n1\n+\nAED 145\nRemove"
+    },
+    {
+      "name": "page 1280: no console errors",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "measures": {
+    "cls /collections/vpa-makeup/ 390": 0,
+    "cls /product/vpa-tirtir/ 390": 0,
+    "pdp-en-390-after-options-display": "block",
+    "cls /collections/vpa-makeup/ 1280": 0,
+    "cls /product/vpa-tirtir/ 1280": 0,
+    "pdp-en-1280-after-options-display": "block",
+    "cls /ar/collections/vpa-makeup/ 390": 0,
+    "cls /ar/product/vpa-tirtir/ 390": 0,
+    "pdp-ar-390-after-options-display": "block",
+    "cls /ar/collections/vpa-makeup/ 1280": 0,
+    "cls /ar/product/vpa-tirtir/ 1280": 0,
+    "pdp-ar-1280-after-options-display": "block",
+    "card-390": {
+      "before": [
+        "AED 125 – AED 139",
+        "/uploads/vpa/missha-13.png"
+      ],
+      "after": [
+        "AED 128",
+        "/uploads/vpa/missha-27.png",
+        "Shade: #27 Honey Beige",
+        "/collections/vpa-makeup/"
+      ]
+    },
+    "card-1280": {
+      "before": [
+        "AED 125 – AED 139",
+        "/uploads/vpa/missha-13.png"
+      ],
+      "after": [
+        "AED 128",
+        "/uploads/vpa/missha-27.png",
+        "Shade: #27 Honey Beige",
+        "/collections/vpa-makeup/"
+      ]
+    },
+    "prefetch delivery (card name -> product)": "navigational-prefetch",
+    "page-390": {
+      "start": {
+        "label": "21N Ivory",
+        "price": "AED 129 – AED 145",
+        "was": "AED 145",
+        "wasShown": true,
+        "stock": "In stock · ready to ship",
+        "out": false,
+        "add": false,
+        "addText": "Add to cart",
+        "img": "/uploads/vpa/tirtir-21n.png",
+        "sku": "SKU: TT-MF-21NIvory",
+        "vid": "5"
+      },
+      "sand": {
+        "label": "23N Sand",
+        "price": "AED 129",
+        "was": "AED 145",
+        "wasShown": true,
+        "stock": "In stock · ready to ship",
+        "out": false,
+        "add": false,
+        "addText": "Add to cart",
+        "img": "/uploads/vpa/tirtir-23n.png",
+        "sku": "SKU: TT-MF-23NSand",
+        "vid": "7"
+      },
+      "porcelain": {
+        "label": "17C Porcelain",
+        "price": "AED 145",
+        "was": "",
+        "wasShown": false,
+        "stock": "Sold out — check back soon",
+        "out": true,
+        "add": true,
+        "addText": "Sold out",
+        "img": "/uploads/vpa/tirtir-17c.png",
+        "sku": "SKU: TT-MF-17CPorcelain",
+        "vid": "4"
+      },
+      "ivory": {
+        "label": "21N Ivory",
+        "price": "AED 145",
+        "was": "",
+        "wasShown": false,
+        "stock": "In stock · ready to ship",
+        "out": false,
+        "add": false,
+        "addText": "Add to cart",
+        "img": "/uploads/vpa/tirtir-21n.png",
+        "sku": "SKU: TT-MF-21NIvory",
+        "vid": "5"
+      },
+      "refused": [
+        422,
+        false
+      ]
+    },
+    "page-1280": {
+      "start": {
+        "label": "21N Ivory",
+        "price": "AED 129 – AED 145",
+        "was": "AED 145",
+        "wasShown": true,
+        "stock": "In stock · ready to ship",
+        "out": false,
+        "add": false,
+        "addText": "Add to cart",
+        "img": "/uploads/vpa/tirtir-21n.png",
+        "sku": "SKU: TT-MF-21NIvory",
+        "vid": "5"
+      },
+      "sand": {
+        "label": "23N Sand",
+        "price": "AED 129",
+        "was": "AED 145",
+        "wasShown": true,
+        "stock": "In stock · ready to ship",
+        "out": false,
+        "add": false,
+        "addText": "Add to cart",
+        "img": "/uploads/vpa/tirtir-23n.png",
+        "sku": "SKU: TT-MF-23NSand",
+        "vid": "7"
+      },
+      "porcelain": {
+        "label": "17C Porcelain",
+        "price": "AED 145",
+        "was": "",
+        "wasShown": false,
+        "stock": "Sold out — check back soon",
+        "out": true,
+        "add": true,
+        "addText": "Sold out",
+        "img": "/uploads/vpa/tirtir-17c.png",
+        "sku": "SKU: TT-MF-17CPorcelain",
+        "vid": "4"
+      },
+      "ivory": {
+        "label": "21N Ivory",
+        "price": "AED 145",
+        "was": "",
+        "wasShown": false,
+        "stock": "In stock · ready to ship",
+        "out": false,
+        "add": false,
+        "addText": "Add to cart",
+        "img": "/uploads/vpa/tirtir-21n.png",
+        "sku": "SKU: TT-MF-21NIvory",
+        "vid": "5"
+      },
+      "refused": [
+        422,
+        false
+      ]
+    }
+  }
+}

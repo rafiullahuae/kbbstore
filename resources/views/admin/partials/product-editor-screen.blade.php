@@ -3624,7 +3624,7 @@ a.peo-btn{display:inline-block;text-decoration:none}
       var cells = axes.map(function(a){
         var cur = v.values[a.id];
         var typed = typeof cur === 'string' && cur.indexOf('new:') === 0;
-        return '<td><select class="peo-sel" data-vpo-val="' + i + ':' + a.id + '">'
+        return '<td><select class="peo-sel" style="min-width:150px" data-vpo-val="' + i + ':' + a.id + '">'
           + '<option value="">Choose…</option>'
           + a.values.map(function(o){ return '<option value="' + o.id + '"' + (+cur === o.id ? ' selected' : '') + '>' + esc(o.name) + '</option>'; }).join('')
           + (typed ? '<option value="' + esc(cur) + '" selected>' + esc(cur.slice(4)) + ' (new)</option>' : '')
@@ -3634,15 +3634,15 @@ a.peo-btn{display:inline-block;text-decoration:none}
       var pics = gallery.slice();
       if (v.image && pics.indexOf(v.image) < 0) pics.push(v.image);
       return '<tr data-vpo-row="' + i + '">' + cells
-        + '<td><input class="peo-in" style="min-width:90px" data-vpo-f="' + i + ':sku" value="' + esc(v.sku || '') + '"></td>'
+        + '<td><input class="peo-in" style="min-width:130px" data-vpo-f="' + i + ':sku" value="' + esc(v.sku || '') + '"></td>'
         + '<td><input class="peo-in" style="width:76px" inputmode="decimal" data-vpo-f="' + i + ':price_aed" value="' + esc(v.price_aed || '') + '" placeholder="99"></td>'
         + '<td><input class="peo-in" style="width:76px" inputmode="decimal" data-vpo-f="' + i + ':sale_aed" value="' + esc(v.sale_aed || '') + '"></td>'
-        + '<td><select class="peo-sel" data-vpo-f="' + i + ':stock_status">'
+        + '<td><select class="peo-sel" style="min-width:112px" data-vpo-f="' + i + ':stock_status">'
         +   [['instock', 'In stock'], ['outofstock', 'Sold out'], ['onbackorder', 'Backorder']].map(function(o){
               return '<option value="' + o[0] + '"' + (v.stock_status === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
             }).join('') + '</select></td>'
         + '<td><input class="peo-in" style="width:64px" inputmode="numeric" data-vpo-f="' + i + ':stock" value="' + esc(v.stock == null ? '' : v.stock) + '" placeholder="—" title="Leave empty not to count units"></td>'
-        + '<td><select class="peo-sel" style="max-width:150px" data-vpo-f="' + i + ':image"><option value="">Product picture</option>'
+        + '<td><select class="peo-sel" style="min-width:120px;max-width:160px" data-vpo-f="' + i + ':image"><option value="">Product picture</option>'
         +   pics.map(function(u, k){ return '<option value="' + esc(u) + '"' + (v.image === u ? ' selected' : '') + '>' + (k === 0 && u === model.image ? 'Main picture' : 'Picture ' + (k + 1)) + '</option>'; }).join('')
         + '</select></td>'
         + '<td><button type="button" class="peo-btn peo-danger" data-vpo-del="' + i + '" aria-label="Remove option ' + (i + 1) + '">✕</button></td></tr>';

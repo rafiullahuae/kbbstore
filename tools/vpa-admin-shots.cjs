@@ -69,8 +69,8 @@ const check = (name, ok, detail) => { if (!ok) { failed++; console.log('FAIL', n
     await page.waitForTimeout(400);
     const rows = await page.evaluate(() => document.querySelectorAll('[data-vpo] tbody tr').length);
     check('editor: the Options panel lists nine shades', rows === 9, rows);
-    await page.evaluate(() => document.querySelector('[data-vpo]').scrollIntoView({ block: 'start' }));
-    await page.evaluate(() => window.scrollBy(0, -10));
+    // Below the editor's sticky save bar.
+    await page.evaluate(() => { const c = document.querySelector('[data-vpo]'); const host = document.scrollingElement; c.scrollIntoView({ block: 'start' }); window.scrollBy(0, -150); });
     await page.screenshot({ path: path.join(OUT, 'admin-editor-options-1280.png') });
     // Save round-trip: change a price, save, read the message.
     await page.fill('[data-vpo-f="1:price_aed"]', '146');
