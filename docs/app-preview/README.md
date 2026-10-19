@@ -1,5 +1,24 @@
 # K-Beauty Bliss app — live previews, English and Arabic (Lanes APV2, APV3)
 
+## What changed in APV4 (19 October 2026): one header, one bag
+
+Inner screens (a category, a brand, a product, the wishlist…) used to show the site's header and
+then a second app bar under it ("← Face Serums" with a second bag icon and badge). Now there is
+one header and one bag. Under the site's header there is a slim back row in the place and style of
+the site's breadcrumb: the app's back arrow (← in English, → on the right in Arabic) and the
+site's own trail, as kbeautybliss.com shows it at the same widths (12.5px, #756C74, "Home" in bold):
+
+- Category: Home / Shop / Skincare / Face Serums (Arabic: الرئيسية / التسوق / العناية بالبشرة / سيروم الوجه)
+- Brand: Home › Brands › Medicube (Arabic: الرئيسية › الماركات › ميديكوب)
+- Product: Home / <its category> / <the product's full name>
+- Other screens: Home / <the screen's title>
+
+A share button stays at the end of the row where the screen has one. Screens without the site's
+header (the checkout, the after-Pay-now screens, sheets, the Duo's second screen) keep their own
+bar. The checker has a new rule, `cart-icons`: at most one cart or bag icon in the top area of
+every screen (the site's header plus any bar under it). See `key/category-fold-inner-en.png` and
+`-ar.png`.
+
 ## What changed in APV3 (19 October 2026)
 
 The owner asked for five things:
@@ -224,6 +243,8 @@ labels. In the Arabic app it also asserts **no English** (exceptions marked `dat
   search box height ±1 and width ±2, corners, placeholder, logo, wordmark (Arabic in the Arabic
   app), language switch, ☰ and menu bar.
 - `rail`: no navigation rail is drawn.
+- `cart-icons` (APV4): at most one cart or bag icon in the top area of each screen: the site's
+  header plus every pane's bar. A second bag in a bar under the header fails.
 - `cart` and `checkout`: on phones, the bag and the checkout equal the site's cart page and
   one-page checkout. That covers section order, button heights and corners, titles, the field
   order by the site's ids, the payment methods and the number of sections.
@@ -235,7 +256,10 @@ Options: `--lang=ar --dev=ip16,duo --only=<label or group> --no-shots --flows-on
 --workers=4`. `--mutate='<css>'` injects a defect to prove a check fails, for example:
 `--mutate='.kh .search-in{height:40px!important}'` fails `site` ("search box 40.0px high, the
 site's is 34px"), and `--mutate='.kc .kbb-mobile-order .place{height:40px!important}'` fails
-`checkout` ("Pay now 40px, 99px; the site's is 59px, 99px").
+`checkout` ("Pay now 40px, 99px; the site's is 59px, 99px"). `--mutate='js:<code>'` runs code in the
+app instead, for an engine defect: `--mutate="js:const _c = crumbRow; crumbRow = (o) => _c(o).replace('</nav>', '</nav>' + bagBtn());"`
+puts the second bag back in the back row and fails `cart-icons` ("2 cart/bag icons in the top
+area…") on every inner screen under the site's header.
 
 Output: `shots/en/`, `shots/ar/` and `shots/site/` (renders and the site's own pictures; not kept),
 `shots/sheet-<device>-<lang>.jpg` (contact sheets, kept), `shots/report.json`, and `key/`:
