@@ -207,7 +207,10 @@ final class KitOrder
     public static function address(array $order): HtmlString
     {
         $lines = array_map(
-            static fn ($line): string => e((string) $line),
+            // KitRtl::auto: in an Arabic email each line in its own isolate, so a
+            // Latin street or "+971 50 123 4567" is not reordered right to
+            // left. English: e() exactly as before.
+            static fn ($line): string => KitRtl::auto((string) $line),
             (array) ($order['address'] ?? []),
         );
 
