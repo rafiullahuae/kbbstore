@@ -28,6 +28,20 @@
  *              an element marked data-x="<why>" (brand names, codes, card networks…); the
  *              exceptions are counted by reason in report.json
  *   console    no console error (a missing Arabic string is one), page error or failed request
+ *   site       Lane APV3: the website's header is the site's, measured: at this frame's width its
+ *              height, search box (height, corners), logo, language switch, ☰ and menu bar equal the
+ *              live site's (docs/app-preview/site-measure.json, from tools/apv-site.cjs) within 1px;
+ *              the Arabic app shows the site's Arabic wordmark
+ *   rail       no navigation rail anywhere (the site's menus replaced it)
+ *   The site's own header and menus (.kh) are held to the site's sizes and colours by the parity
+ *   check, not to the app's 44px tap rule or 3:1 contrast: the owner asked for exactly the site.
+ *   Where the site itself falls short (the 34px search field, white on #E991AE in the delivery
+ *   strip) the report says so in site_findings instead of failing the app for copying it.
+ *
+ * Lane APV3 flows: the site's phone menu (every top-level item and a sub-level of each, the chips,
+ * close by × and by the scrim), the menu bar and every mega panel on iPad landscape and with
+ * "Tablet menu: menu bar", the header's icons, logo, search box and language switch, and every
+ * bottom-bar variant A–E on the phones (each tab, each "More" tile, the badges).
  *
  * The flows click and type like a shopper: the whole checkout, step by step, for every payment
  * method, the coupon, a declined payment and its retry with the bag kept; and the navigation smoke
@@ -52,12 +66,28 @@ const FLOWS_ONLY = process.argv.includes('--flows-only');
 const NO_FLOWS = process.argv.includes('--no-flows');
 const MUTATE = (process.argv.find((x) => x.startsWith('--mutate=')) || '').slice(9);
 const WORKERS = Number((arg('workers') || ['3'])[0]);
+/* Lane APV3: the live site's header at the app's widths (tools/apv-site.cjs) */
+const SITEM = (() => {
+  const f = path.join(APP, 'site-measure.json');
+  if (!fs.existsSync(f)) return {en:null, ar:null};
+  const J = JSON.parse(fs.readFileSync(f, 'utf8'));
+  const out = {en:{}, ar:{}};
+  for (const [k, m] of Object.entries(J.measured)) {
+    const [lang, w] = k.split('-');
+    out[lang][w] = {h:m.header.h, si:{h:m.search.h, w:m.search.w, r:m.search.borderRadius, ph:m.search.placeholder}, icon:{w:m.logoIcon.w, h:m.logoIcon.h}, word:m.wordText.trim(),
+      lang:m.lang && m.lang.box ? {w:m.lang.box.w, h:m.lang.box.h} : null, menu:m.menuIcon ? {w:m.menuIcon.w, h:m.menuIcon.h} : null, bar:m.menuBar ? m.menuBar.h : 0,
+      iconSvg:((m.icons.filter((i) => i.svg).pop()) || {svg:{w:21}}).svg.w}; // the cart's: the language capsule is drawn text, not an icon
+  }
+  return out;
+})();
 const DEVICES = ['ip16', 'ipse', 'ipad', 'ipad-land', 'px9', 'flip', 'flip-tabletop', 'fold-cover', 'fold-inner', 'duo'].filter((d) => !arg('dev') || arg('dev').includes(d));
 const LANGS = arg('lang') || ['en', 'ar'];
 const FULL = !arg('dev') && !arg('lang') && !arg('only');
 
 /* ── the in-page checker ─────────────────────────────────────────────────── */
-function audit(lang) {
+function audit(arg) {
+  const lang = typeof arg === 'string' ? arg : arg.lang;
+  const SITE = (arg && arg.site) || null;
   const issues = [];
   const add = (kind, el, msg) => {
     const path = [];
@@ -72,7 +102,7 @@ function audit(lang) {
   const designedCut = (e) => { const s = cs(e); return s.textOverflow === 'ellipsis' || (s.webkitLineClamp && s.webkitLineClamp !== 'none'); };
   const inter = (a, b) => ({left:Math.max(a.left, b.left), top:Math.max(a.top, b.top), right:Math.min(a.right, b.right), bottom:Math.min(a.bottom, b.bottom)});
   const area = (r) => Math.max(0, r.right - r.left) * Math.max(0, r.bottom - r.top);
-  const stackOf = (e) => e.closest('.ovl') ? 'ovl' : e.closest('.viewer') ? 'viewer' : e.closest('.toast') ? 'toast' : e.closest('[data-layer="pb"]') ? 'peekbg' : 'base';
+  const stackOf = (e) => e.closest('.mmenu') ? 'menu' : e.closest('.mscrim') ? 'scrim' : e.closest('.ovl') ? 'ovl' : e.closest('.viewer') ? 'viewer' : e.closest('.toast') ? 'toast' : e.closest('[data-layer="pb"]') ? 'peekbg' : 'base';
   const hidden = (e) => { for (let x = e; x && !x.classList.contains('glass'); x = x.parentElement) { const s = cs(x); if (s.display === 'none' || s.visibility === 'hidden' || Number(s.opacity) === 0) return true; } return false; };
 
   /* visible part of a rect: intersect every clipping ancestor up to the glass.
@@ -160,7 +190,7 @@ function audit(lang) {
     /* 3b. text over a picture or an icon (designed overlays on photos excepted) */
     const media = [...g.querySelectorAll('img,svg')].filter((m) => !hidden(m) && !m.closest('.sb,.island,.punch')).map((m) => { const R = m.getBoundingClientRect(); return {m, sc:scOf(m), stack:stackOf(m), v:visible(m, R), ve:visible(m, R, true)}; }).filter((x) => area(x.ve) > 0);
     for (const r of runs) {
-      if (r.el.closest('.zh,.cnt,.badge,.bdg,.pbk,.tt-fold,.blogo,.cth')) continue;
+      if (r.el.closest('.zh,.cnt,.badge,.bdg,.pbk,.tt-fold,.blogo,.cth,.kh')) continue; // .kh: the site's own art behind its own text
       for (const x of media) {
         if (x.stack !== r.stack || x.m.contains(r.el) || r.el.contains(x.m)) continue;
         const same = x.sc === r.sc;
@@ -188,6 +218,7 @@ function audit(lang) {
     const checkedEl = new Set();
     for (const r of runs) {
       if (checkedEl.has(r.el)) continue; checkedEl.add(r.el);
+      if (r.el.closest('.kh')) continue; // the website's own colours: held to the site, see site_findings
       const fg = lum(cs(r.el).color); if (!fg || fg.a < .5) continue;
       // composite translucent backgrounds down to the first solid one
       let bg = null; const layers = [];
@@ -210,6 +241,7 @@ function audit(lang) {
     const T = g.querySelectorAll('button,a,input,select,textarea,[role=button],[data-go],[data-act],[data-tab],[data-sheet]');
     T.forEach((e) => {
       if (hidden(e) || e.matches('.scrim') || e.closest('.peek')) return; // .peek is a scaled transition frame
+      if (e.closest('.kh')) return; // the website's own header and menus: held to the site's sizes (site check)
       if (e.closest('.fl,.srch.field') && e.matches('input,textarea')) return; // the field box is the target
       const r = e.getBoundingClientRect();
       if (area(visible(e, r, true)) <= 0) return;
@@ -239,6 +271,50 @@ function audit(lang) {
       }
     }
   }
+  /* 9. Lane APV3: the website's header, measured against the live site at this frame's width */
+  for (const g of glasses) {
+    if (g.querySelector('.rail')) add('rail', g.querySelector('.rail'), 'a navigation rail is drawn');
+    const hd = g.querySelector('.kh-hd');
+    if (!hd || !SITE) continue;
+    const W = Math.round(g.offsetWidth), M = SITE[W];
+    if (!M) { add('site', hd, `no site measurement at ${W}px`); continue; }
+    const near = (a, b) => Math.abs(a - b) <= 1;
+    const box = (e) => e.getBoundingClientRect();
+    const h = box(hd).height - parseFloat(cs(hd).paddingTop);
+    if (!near(h, M.h)) add('site', hd, `header ${h.toFixed(1)}px high, the site's is ${M.h}px at ${W}px`);
+    const si = hd.querySelector('.search-in');
+    if (!si || hidden(si)) add('site', hd, 'no search box');
+    else {
+      const S2 = box(si);
+      if (!near(S2.height, M.si.h)) add('site', si, `search box ${S2.height.toFixed(1)}px high, the site's is ${M.si.h}px`);
+      if (!near(S2.width, M.si.w)) add('site', si, `search box ${S2.width.toFixed(1)}px wide, the site's is ${M.si.w}px`);
+      if (cs(si).borderTopLeftRadius !== M.si.r) add('site', si, `search box corners ${cs(si).borderTopLeftRadius}, the site's are ${M.si.r}`);
+      const inp = si.querySelector('input');
+      if (inp && inp.placeholder !== M.si.ph) add('site', inp, `placeholder “${inp.placeholder}”, the site's is “${M.si.ph}”`);
+    }
+    const li = hd.querySelector('.logo .lgx-i');
+    if (!li || !near(box(li).width, M.icon.w) || !near(box(li).height, M.icon.h)) add('site', hd, `logo ${li ? box(li).width.toFixed(1) + '×' + box(li).height.toFixed(1) : 'missing'}, the site's is ${M.icon.w}×${M.icon.h}`);
+    const lw = hd.querySelector('.lgx-w');
+    if (!lw || lw.textContent.trim() !== M.word) add('site', hd, `wordmark “${lw ? lw.textContent.trim() : ''}”, the site's is “${M.word}”`);
+    if (lang === 'ar' && lw && !/[\u0600-\u06FF]/.test(lw.textContent)) add('site', lw, 'the Arabic app does not show the Arabic wordmark');
+    const ls0 = [...hd.querySelectorAll('[data-lang]')].find((x) => !hidden(x) && box(x).width);
+    const ls = ls0 && (ls0.closest('.lsw-d') || ls0); // the computer's pill is the whole EN | ع switch
+    if (!ls) add('site', hd, 'no language switch');
+    else if (M.lang && (!near(box(ls).width, M.lang.w) || !near(box(ls).height, M.lang.h))) add('site', ls, `language switch ${box(ls).width.toFixed(1)}×${box(ls).height.toFixed(1)}, the site's is ${M.lang.w}×${M.lang.h}`);
+    const bu = hd.querySelector('[data-act="menu"]');
+    const buOn = bu && !hidden(bu) && box(bu).width > 0;
+    if (!!M.menu !== !!buOn) add('site', hd, `menu button ${buOn ? 'shown' : 'hidden'}, the site's is ${M.menu ? 'shown' : 'hidden'} at ${W}px`);
+    else if (buOn && (!near(box(bu).width, M.menu.w) || !near(box(bu).height, M.menu.h))) add('site', bu, `menu button ${box(bu).width}×${box(bu).height}, the site's is ${M.menu.w}×${M.menu.h}`);
+    const mb = hd.querySelector('.mbar');
+    const mbOn = mb && !hidden(mb) && box(mb).height > 0;
+    const tmBar = !!hd.closest('.kh.tm-bar');
+    if (!tmBar && !!M.bar !== !!mbOn) add('site', hd, `menu bar ${mbOn ? 'shown' : 'hidden'}, the site's is ${M.bar ? 'shown' : 'hidden'} at ${W}px`);
+    else if (mbOn && M.bar && !near(box(mb).height, M.bar)) add('site', mb, `menu bar ${box(mb).height}px high, the site's is ${M.bar}px`);
+    if (tmBar && !mbOn) add('site', hd, '"Tablet menu: menu bar" shows no menu bar');
+    const ib = [...hd.querySelectorAll('.hact .ib')].filter((x) => !x.matches('[data-lang]') && !hidden(x) && box(x).width);
+    for (const x of ib) { const sv = x.querySelector('svg'); if (sv && !near(box(sv).width, M.iconSvg)) add('site', x, `header icon ${box(sv).width.toFixed(1)}px, the site's are ${M.iconSvg}px`); }
+  }
+
   /* 6b. Duo hinge: nothing of either screen reaches into it */
   const h = document.querySelector('[data-hinge]');
   if (h) {
@@ -338,7 +414,7 @@ async function newPage(lang) {
 async function check(page, o = {}) {
   if (MUTATE) await page.addStyleTag({content:MUTATE});
   await settle(page);
-  const {issues, exceptions} = await page.evaluate(audit, page.lang);
+  const {issues, exceptions} = await page.evaluate(audit, {lang:page.lang, site:SITEM[page.lang]});
   for (const e of page.errs.splice(0)) issues.push({kind:'console', at:'', msg:e});
   if (o.shot && !NOSHOTS) await page.locator('.device').screenshot({path:o.shot, animations:'disabled', type:'jpeg', quality:82});
   if (o.key && !NOSHOTS) await page.locator('.device').screenshot({path:o.key, animations:'disabled'});
@@ -356,18 +432,22 @@ async function grid(results, exceptions) {
     fs.mkdirSync(path.join(OUT, lang), {recursive:true});
     const jobs = [];
     for (const d of DEVICES) for (const j of J) for (const design of j.designs ? ['A', 'B', 'C'] : ['A']) jobs.push({d, j, design, name:`${String(j.id).padStart(2, '0')}-${slug(j.label)}${design !== 'A' ? '-' + design : ''}-${d}`});
+    /* Lane APV3: every bottom-bar variant on the phones, and "Tablet menu: menu bar" on the tablets */
+    const VAR_SCREENS = ['Home', 'Category · Serums', 'Product', 'Bag', 'Account', 'Search results', 'Brand page', 'Wishlist'];
+    for (const d of DEVICES.filter((x) => ['ip16', 'px9', 'ipse', 'fold-cover'].includes(x))) for (const bb of ['B', 'C', 'D', 'E']) for (const j of J.filter((x) => VAR_SCREENS.includes(x.label))) jobs.push({d, j, design:'A', bb, name:`${String(j.id).padStart(2, '0')}-${slug(j.label)}-bb${bb}-${d}`});
+    for (const d of DEVICES.filter((x) => ['fold-inner', 'ipad'].includes(x))) for (const j of J.filter((x) => ['Home', 'Category · Serums', 'Product', 'Account'].includes(x.label))) jobs.push({d, j, design:'A', tm:'bar', name:`${String(j.id).padStart(2, '0')}-${slug(j.label)}-tmbar-${d}`});
     let done = 0; const t0 = Date.now(); const total = jobs.length;
     async function worker() {
       const page = await newPage(lang);
       for (;;) {
         const job = jobs.shift(); if (!job) break;
-        const href = await page.evaluate(([id, o]) => APV.href(id, o), [job.j.id, {device:job.d, design:job.design}]);
+        const href = await page.evaluate(([id, o]) => APV.href(id, o), [job.j.id, {device:job.d, design:job.design, bb:job.bb || 'A', tm:job.tm || 'site'}]);
         await page.evaluate((h) => APV.open(h + '&z=100'), href);
         const shot = path.join(OUT, lang, job.name + '.jpg');
-        const kp = KEYPICKS.find((k) => k.lang === lang && k.dev === job.d && k.label === job.j.label && job.design === 'A');
+        const kp = !job.bb && !job.tm && KEYPICKS.find((k) => k.lang === lang && k.dev === job.d && k.label === job.j.label && job.design === 'A');
         const r = await check(page, {shot, key:kp && FULL ? path.join(KEY, kp.file) : null});
         mergeEx(exceptions, r.exceptions);
-        results.push({name:job.name, lang, device:job.d, id:job.j.id, group:job.j.g, label:job.j.label, design:job.design, link:href, shot, issues:r.issues});
+        results.push({name:job.name, lang, device:job.d, id:job.j.id, group:job.j.g, label:job.j.label, design:job.design, bb:job.bb || 'A', tm:job.tm || 'site', link:href, shot, issues:r.issues});
         if (++done % 100 === 0) process.stdout.write(`${lang} ${done}/${total} ${Math.round((Date.now() - t0) / 1000)}s\n`);
       }
       await page.close();
@@ -519,15 +599,23 @@ async function flows(lang, dev, log) {
     await step('nav-product');
     await click('[data-act="back"]');
     expect((await st()).path === '/home', 'Back did not return to Home');
-    /* tab switch keeps each tab's stack */
+    /* tab switch keeps each tab's stack (phones: the bottom bar; tablets: the header's account and logo) */
     await open('/brands');
     await click('[data-go^="/brand/"]');
     const before = await st();
-    await click('[data-tab="home"]');
-    expect((await st()).tab === 'home', 'the Home tab did not open');
-    await click('[data-tab="shop"]');
-    const after = await st();
-    expect(after.tab === 'shop' && after.path === before.path && after.depth === before.depth, `the Shop tab lost its place (${before.path} → ${after.path})`);
+    if (await page.locator('#stage .tabbar').filter({visible:true}).count()) {
+      await click('.tabbar [data-tab="home"]');
+      expect((await st()).tab === 'home', 'the Home tab did not open');
+      await click('.tabbar [data-tab="shop"]');
+      const after = await st();
+      expect(after.tab === 'shop' && after.path === before.path && after.depth === before.depth, `the Shop tab lost its place (${before.path} → ${after.path})`);
+    } else {
+      await click('.kh-hd .ib-acct [data-tab="account"]');
+      expect((await st()).tab === 'account', "the header's account icon did not open Account");
+      await click('.kh-hd .logo');
+      const after = await st();
+      expect(after.tab === 'home' && after.path === '/home', "the header's logo did not open Home");
+    }
     await open('/product/' + pslug);
     await click('.pbar .fv');
     expect((await st()).wish.includes(pslug), 'the wishlist heart did not save the product');
@@ -592,6 +680,166 @@ async function flows(lang, dev, log) {
   return {shots, fails};
 }
 
+/* ── Lane APV3: the website's menus, header and the bottom-bar variants, clicked ── */
+async function siteFlows(lang, dev, log) {
+  const page = await newPage(lang);
+  const shots = {}, fails = [];
+  const st = () => page.evaluate(() => APV.state());
+  const open = async (p, extra = '') => { await page.evaluate((h) => APV.open(h), `#${p}${p.includes('?') ? '&' : '?'}device=${dev}&z=100${extra}`); await settle(page); };
+  const vis = (sel) => page.locator(`#stage ${sel}`).filter({visible:true});
+  const click = async (sel, n = 0) => { try { await vis(sel).nth(n).click({timeout:6000}); } catch (e) { throw new Error(`could not click ${sel} #${n} on ${(await st()).path}: ${String(e.message).split('\n')[0]}`); } await page.waitForTimeout(60); };
+  const expect = (ok, msg) => { if (!ok) fails.push(msg); };
+  const step = async (name) => { const file = path.join(OUT, lang, `site-${dev}-${name}.jpg`); const r = await check(page, {shot:file}); log.push({flow:`${lang}/${dev}`, step:name, issues:r.issues, shot:file}); shots[name] = file; return r; };
+  /* the header region of the frame, for the site-vs-app pictures */
+  const headerShot = async (name) => {
+    if (NOSHOTS) return;
+    const g = await page.locator('#stage .glass').first().boundingBox();
+    const h = await page.evaluate(() => { const e = document.querySelector('#stage .kh-hd'); return e ? e.getBoundingClientRect().height : 120; });
+    const file = path.join(OUT, lang, `site-${dev}-${name}.png`);
+    await page.screenshot({path:file, clip:{x:g.x, y:g.y, width:g.width, height:Math.ceil(h) + 40}});
+    shots[name] = file;
+  };
+  const go = async (sel, n, what) => {
+    const want = await vis(sel).nth(n).evaluate((e) => ({go:e.dataset.go || null, tab:e.dataset.tab || null, txt:e.textContent.replace(/\s+/g, ' ').trim().slice(0, 40)}));
+    await click(sel, n);
+    const s = await st();
+    if (want.go) expect(s.path === want.go.split('#')[0], `${what} “${want.txt}” went to ${s.path}, not ${want.go}`);
+    else if (want.tab) expect(s.tab === want.tab, `${what} “${want.txt}” opened the ${s.tab} tab, not ${want.tab}`);
+    else fails.push(`${what} “${want.txt}” has no destination`);
+    expect(!s.menu && s.mega == null, `${what} “${want.txt}” left the menu open`);
+    return want;
+  };
+  try {
+    const W = await (async () => { await open('/home'); return page.evaluate(() => document.querySelector('#stage .glass').offsetWidth); })();
+    const drawer = W <= 900;
+    await headerShot('header');
+    await step('header-home');
+    /* the header: icons, logo, search box, badges, language switch */
+    await open('/category/serums');
+    const s0 = await st();
+    const badge = await vis('.kh-hd .id-cartCt').first().textContent().catch(() => '');
+    expect(badge.replace(/[^\d٠-٩]/g, '') !== '' && Number(badge.replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))) === s0.bag, `the header's bag badge reads “${badge}”, the bag holds ${s0.bag}`);
+    const lhref = await vis('.kh-hd [data-lang]').first().getAttribute('href');
+    expect(lhref && lhref.startsWith(lang === 'ar' ? '../en/index.html#/category/serums' : '../ar/index.html#/category/serums'), `the language switch points at ${lhref}`);
+    await click('.kh-hd .ib-acct [data-tab="account"]');
+    expect((await st()).tab === 'account', "the header's account icon did not open Account");
+    await open('/category/serums');
+    await click('.kh-hd [data-tab="bag"]');
+    expect((await st()).path === '/bag', "the header's cart did not open the bag");
+    await open('/category/serums');
+    await click('.kh-hd .logo');
+    expect((await st()).path === '/home', "the header's logo did not go Home");
+    await open('/category/serums');
+    await click('.kh-hd .search-in');
+    expect((await st()).tab === 'search' && await page.evaluate(() => document.activeElement && document.activeElement.id === 'q' && !!document.activeElement.closest('.kh-hd')), "the header's search box did not become the search field");
+    await page.keyboard.type(lang === 'ar' ? 'سيروم' : 'serum', {delay:5});
+    expect(await page.locator('#stage #sres [data-go^="/product/"]').count() > 0, "typing in the header's search box found nothing");
+    await step('header-search');
+    if (drawer) {
+      /* the site's phone menu: open, every top-level item, a sub-level of each, chips, close */
+      await open('/home');
+      await click('[data-act="menu"]');
+      expect((await st()).menu && await vis('.mmenu.on').count() === 1, 'the ☰ did not open the menu');
+      await step('menu-open');
+      const nTop = await page.locator('#stage .mmenu .mm-body > .mm-node, #stage .mmenu .mm-body > a.mm-it').count();
+      const nPar = await page.locator('#stage .mmenu .mm-node').count();
+      expect(nTop >= 8, `the menu has ${nTop} top-level items`);
+      for (let i = 0; i < nPar; i++) {
+        await open('/home'); await click('[data-act="menu"]');
+        await click('.mmenu .mm-node .mm-par', i);
+        const on = await page.evaluate((i) => { const n = document.querySelectorAll('#stage .mmenu .mm-node')[i]; return n.classList.contains('on') && [...n.querySelectorAll('.mm-si')].filter((a) => a.getBoundingClientRect().height > 0).length; }, i);
+        expect(on > 0, `menu level ${i + 1} did not open its sub-items`);
+        if (i === 2) await step('menu-level');
+        await go('.mmenu .mm-node.on .mm-si', 0, 'menu sub-item');
+      }
+      const nIt = await page.locator('#stage .mmenu .mm-body > a.mm-it').count();
+      for (let i = 0; i < Math.max(nIt, 1); i++) { await open('/home'); await click('[data-act="menu"]'); if (nIt) await go('.mmenu .mm-body > a.mm-it', i, 'menu item'); }
+      await open('/home'); await click('[data-act="menu"]');
+      const nChip = await page.locator('#stage .mmenu .mm-chip').count();
+      expect(nChip >= 3, `the menu has ${nChip} chips`);
+      for (let i = 0; i < nChip; i++) { await open('/home'); await click('[data-act="menu"]'); await page.locator('#stage .mmenu .mm-chip').nth(i).scrollIntoViewIfNeeded(); await go('.mmenu .mm-chip', i, 'menu chip'); }
+      await open('/home'); await click('[data-act="menu"]'); await go('.mmenu .mm-acs a', 0, 'menu account');
+      await open('/home'); await click('[data-act="menu"]');
+      const mh = await vis('.mmenu [data-lang]').first().getAttribute('href').catch(() => null);
+      expect(mh && mh.includes(lang === 'ar' ? '../en/index.html#/home' : '../ar/index.html#/home'), `the menu's language switch points at ${mh}`);
+      await click('.mmenu .id-mmx');
+      expect(!(await st()).menu, 'the × did not close the menu');
+      await click('[data-act="menu"]');
+      const gb = await page.locator('#stage .glass').first().boundingBox();
+      await page.mouse.click(lang === 'ar' ? gb.x + 20 : gb.x + gb.width - 20, gb.y + gb.height * 0.3);
+      await page.waitForTimeout(80);
+      expect(!(await st()).menu, 'a tap on the scrim did not close the menu');
+      /* the site's "Search the menu…" filter */
+      if (await page.locator('#stage .kh-hd').count()) {
+        await click('[data-act="menu"]');
+        if (await vis('.mmenu .id-mmFilter').count()) {
+          await vis('.mmenu .id-mmFilter').first().fill(lang === 'ar' ? 'سيروم' : 'serum');
+          await page.dispatchEvent('#stage .mmenu .id-mmFilter', 'input');
+          const shown = await page.evaluate(() => [...document.querySelectorAll('#stage .mmenu .mm-si,#stage .mmenu .mm-body>a.mm-it')].filter((a) => a.getBoundingClientRect().height > 0).map((a) => a.textContent.trim()));
+          expect(shown.length > 0 && shown.length < 20, `the menu filter shows ${shown.length} items`);
+          await step('menu-filter');
+        }
+      }
+    }
+    /* the site's menu bar and its mega panels: iPad landscape as the site; tablets with "menu bar" */
+    for (const extra of W > 1000 ? [''] : W >= 600 ? ['&tm=bar'] : []) {
+      await open('/home', extra);
+      const n = await page.locator('#stage .kh-hd .mbar .navitem').count();
+      expect(n >= 8, `the menu bar has ${n} items`);
+      for (let i = 0; i < n; i++) {
+        await open('/home', extra);
+        const mega = await page.locator('#stage .kh-hd .mbar .navitem').nth(i).locator('[data-act="mega"]').count();
+        if (mega) {
+          await page.locator('#stage .kh-hd .mbar .navitem').nth(i).locator('[data-act="mega"]').click();
+          await page.waitForTimeout(260); // the site's panel fades in over .16s
+          const open1 = await page.evaluate((i) => { const it = document.querySelectorAll('#stage .kh-hd .mbar .navitem')[i]; const d = it.querySelector('.drop'); return it.classList.contains('kopen') && d && getComputedStyle(d).visibility === 'visible'; }, i);
+          expect(open1, `menu bar item ${i + 1}: the panel did not open`);
+          if (i === 2 || (i === 1 && extra)) { await step('mega-open' + (extra ? '-bar' : '')); }
+          await go('.kh-hd .mbar .navitem.kopen .drop a[data-go]', 0, 'mega panel link');
+        } else await go('.kh-hd .mbar .navitem .navlink', i, 'menu bar item');
+      }
+      const direct = await page.locator('#stage .kh-hd .mbar .wrap > a[data-go]').count();
+      for (let i = 0; i < direct; i++) { await open('/home', extra); await go('.kh-hd .mbar .wrap > a[data-go]', i, 'menu bar link'); }
+    }
+    /* every bottom-bar variant on the phones: each tab, each More tile, the badges */
+    if (['ip16', 'px9'].includes(dev)) {
+      for (const bb of ['A', 'B', 'C', 'D', 'E']) {
+        await open('/home', '&bb=' + bb);
+        const s = await st();
+        expect(s.bb === bb, `bottom bar ${bb} was not applied`);
+        await step('bb-' + bb);
+        const bagB = await page.evaluate(() => { const b = document.querySelector('#stage .tabbar [data-tab="bag"] .bdg'); return b ? b.textContent : null; });
+        if (['A', 'C', 'D', 'E'].includes(bb)) expect(bagB !== null && Number(bagB.replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))) === s.bag, `bar ${bb}: bag badge ${bagB}, bag ${s.bag}`);
+        if (['C', 'D'].includes(bb)) { const wB = await page.evaluate(() => { const b = document.querySelector('#stage .tabbar [data-tab="wish"] .bdg'); return b ? b.textContent : null; }); expect(wB !== null && Number(wB.replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))) === s.wish.length, `bar ${bb}: wishlist badge ${wB}, wishlist ${s.wish.length}`); }
+        const tabs = await page.$$eval('#stage .tabbar .tab', (L) => L.map((b) => b.dataset.tab || b.dataset.act));
+        expect(tabs.length === 5, `bar ${bb} has ${tabs.length} items`);
+        for (let i = 0; i < tabs.length; i++) {
+          await open('/home', '&bb=' + bb);
+          if (tabs[i] === 'home') await open('/category/serums', '&bb=' + bb);
+          await click('.tabbar .tab', i);
+          const s2 = await st();
+          if (tabs[i] === 'more') {
+            expect(s2.sheet === 'more', `bar ${bb}: More did not open its sheet`);
+            await step('bb-E-more');
+            const tiles = await page.locator('#stage .sheet .mtile').count();
+            expect(tiles === 8, `the More sheet has ${tiles} tiles`);
+            for (let k = 0; k < tiles; k++) { await open('/home', '&bb=' + bb); await click('.tabbar .tab', i); await go('.sheet .mtile', k, 'More tile'); }
+          } else {
+            expect(s2.tab === tabs[i] && s2.depth === 1, `bar ${bb}: tab ${tabs[i]} opened ${s2.tab} at depth ${s2.depth}`);
+            const on = await page.evaluate((i) => document.querySelectorAll('#stage .tabbar .tab')[i].classList.contains('on'), i);
+            expect(on, `bar ${bb}: tab ${tabs[i]} is not shown as active`);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    fails.push('flow stopped: ' + String(e.message || e).split('\n')[0]);
+  }
+  for (const e of page.errs.splice(0)) fails.push('console: ' + e);
+  await page.close();
+  return {shots, fails};
+}
+
 /* ── pictures made of pictures ───────────────────────────────────────────── */
 async function compose(file, title, items, o = {}) {
   const page = await ctx.newPage();
@@ -613,7 +861,7 @@ async function compose(file, title, items, o = {}) {
   const t0 = Date.now();
   const results = [], exceptions = {}, flowLog = [], flowFails = {};
   if (!FLOWS_ONLY) await grid(results, exceptions);
-  const flowShots = {};
+  const flowShots = {}, siteShots = {};
   if (!NO_FLOWS) {
     const FD = arg('dev') ? DEVICES : ['ip16', 'px9', 'fold-inner', 'duo'];
     for (const lang of LANGS) for (const d of FD) {
@@ -621,6 +869,13 @@ async function compose(file, title, items, o = {}) {
       flowFails[`${lang}/${d}`] = r.fails;
       flowShots[`${lang}/${d}`] = r.shots;
       process.stdout.write(`flow ${lang}/${d}: ${r.fails.length} failures\n`);
+    }
+    const SD = arg('dev') ? DEVICES : ['ip16', 'px9', 'fold-cover', 'fold-inner', 'ipad', 'ipad-land', 'duo', 'flip-tabletop'];
+    for (const lang of LANGS) for (const d of SD) {
+      const r = await siteFlows(lang, d, flowLog);
+      flowFails[`${lang}/${d}/site`] = r.fails;
+      siteShots[`${lang}/${d}`] = r.shots;
+      process.stdout.write(`site flow ${lang}/${d}: ${r.fails.length} failures\n`);
     }
   }
 
@@ -661,6 +916,21 @@ async function compose(file, title, items, o = {}) {
     await compose(path.join(KEY, 'floating-label-before.png'), 'Floating labels, before: the label is the placeholder, centred in the box (English, Arabic)', [{src:fl('en', '3-address-new'), cap:'English · empty'}, {src:fl('ar', '3-address-new'), cap:'Arabic · empty'}].filter((x) => x.src), {w:420, width:900});
     await compose(path.join(KEY, 'floating-label-after.png'), 'Floating labels, after: typed values; each label lifts to a small heading at the top-start corner', [{src:fl('en', '3-address-filled'), cap:'English · filled'}, {src:fl('ar', '3-address-filled'), cap:'Arabic · filled'}].filter((x) => x.src), {w:420, width:900});
   }
+  /* Lane APV3 key pictures: site vs app headers, the menus, the bottom bars */
+  if (!NOSHOTS && !NO_FLOWS && !arg('dev')) {
+    const SITE_SHOTS = path.join(OUT, 'site');
+    const ss = (lang, f) => { const p2 = path.join(SITE_SHOTS, `${lang}-${f}.png`); return fs.existsSync(p2) ? p2 : null; };
+    const ap = (lang, d, k) => (siteShots[`${lang}/${d}`] || {})[k];
+    const L = (lang) => lang === 'ar' ? 'Arabic' : 'English';
+    for (const lang of LANGS) {
+      const m = (w) => SITEM[lang][w];
+      await compose(path.join(KEY, `header-phone-${lang}.png`), `${L(lang)} · the website's header (left, live kbeautybliss.com${lang === 'ar' ? '/ar/' : '/'}) and the app's (right) at 402 wide: header ${m(402).h}px, search box ${m(402).si.h}px, corners ${m(402).si.r}, logo ${m(402).icon.w}×${m(402).icon.h}. The app adds only the phone's status bar above it.`, [{src:ss(lang, 402), cap:'Website, 402 px'}, {src:ap(lang, 'ip16', 'header'), cap:'App, iPhone 16 Pro (402 pt)'}, {src:ss(lang, 412), cap:'Website, 412 px'}, {src:ap(lang, 'px9', 'header'), cap:'App, Pixel 9 (412 dp)'}].filter((x) => x.src), {w:402, width:1700});
+      await compose(path.join(KEY, `header-tablet-${lang}.png`), `${L(lang)} · the website's header and the app's on the Galaxy Z Fold inner screen (673) and iPad mini (744 portrait; 1133 landscape with the site's menu bar)`, [{src:ss(lang, 673), cap:'Website, 673 px'}, {src:ap(lang, 'fold-inner', 'header'), cap:'App, Fold inner (673 dp)'}, {src:ss(lang, 744), cap:'Website, 744 px'}, {src:ap(lang, 'ipad', 'header'), cap:'App, iPad mini portrait (744 pt)'}, {src:ss(lang, 1133), cap:'Website, 1133 px'}, {src:ap(lang, 'ipad-land', 'header'), cap:'App, iPad mini landscape (1133 pt)'}].filter((x) => x.src), {w:760, width:1600});
+      await compose(path.join(KEY, `menu-phone-${lang}.png`), `${L(lang)} · the site's phone menu (☰): website at 402 px, then the app on iPhone 16 Pro, closed levels and a level opened`, [{src:ss(lang, '402-menu'), cap:'Website · menu'}, {src:ap(lang, 'ip16', 'menu-open') && ap(lang, 'ip16', 'menu-open'), cap:'App · menu'}, {src:ss(lang, '402-menu-open'), cap:'Website · Skincare opened'}, {src:ap(lang, 'ip16', 'menu-level'), cap:'App · Skincare opened'}].filter((x) => x.src), {w:330, width:1450});
+      await compose(path.join(KEY, `menu-tablet-${lang}.png`), `${L(lang)} · tablets: iPad landscape shows the site's menu bar and its mega panels (website left, app right); the Fold inner shows what the site shows at 673 (the ☰ menu), or the menu bar with “Tablet menu: menu bar”`, [{src:ss(lang, '1133-mega'), cap:'Website · 1133 px · Skincare panel'}, {src:ap(lang, 'ipad-land', 'mega-open'), cap:'App · iPad landscape · Skincare panel'}, {src:ss(lang, '673-menu'), cap:'Website · 673 px · menu'}, {src:ap(lang, 'fold-inner', 'menu-open'), cap:'App · Fold inner · menu'}, {src:ap(lang, 'fold-inner', 'mega-open-bar'), cap:'App · Fold inner · “menu bar” option, All Brands panel'}].filter((x) => x.src), {w:560, width:1800});
+      await compose(path.join(KEY, `bottom-bars-${lang}.png`), `${L(lang)} · bottom bar options on iPhone 16 Pro — A (now) · B · C · D · E, and E's More sheet. Pick a letter: “Bottom bar” chooser beside the phone.`, ['A', 'B', 'C', 'D', 'E'].map((b) => ({src:ap(lang, 'ip16', 'bb-' + b), cap:{A:'A · Home · Shop · Search · Bag · Account (now)', B:'B · Home · Categories · Brands · Offers · Account', C:'C · Home · Shop · Wishlist · Bag · Account', D:'D · Home · Categories · raised Bag · Wishlist · Account', E:'E · Home · Shop · Offers · Bag · More'}[b]})).concat([{src:ap(lang, 'ip16', 'bb-E-more'), cap:'E · More sheet'}]).filter((x) => x.src), {w:280, width:1860});
+    }
+  }
   await browser.close();
 
   const bad = results.filter((r) => r.issues.length);
@@ -673,6 +943,8 @@ async function compose(file, title, items, o = {}) {
     devices:DEVICES, locales:LANGS, failed:bad.length, issues_by_kind:byKind,
     flows:{steps:flowLog.length, steps_with_issues:flowBad.length, assertions_failed:nFlowFails, by_run:flowFails},
     screens_html:screensCheck,
+    variants:{bottom_bar:results.filter((r) => r.bb !== 'A').length, tablet_menu_bar:results.filter((r) => r.tm === 'bar').length},
+    site_findings:['The site\'s own search field is 34px high on phones (under the 44px tap target): the app copies it, as asked.', 'The site\'s delivery strip is white on #E991AE, 2.3:1 contrast: the app copies it, as asked.'],
     arabic_exceptions:exceptions,
     failures:bad.map((r) => ({name:`${r.lang}/${r.name}`, link:r.link, issues:r.issues.slice(0, 12)})).concat(flowBad.map((r) => ({name:`flow ${r.flow} ${r.step}`, issues:r.issues.slice(0, 12)}))),
   };

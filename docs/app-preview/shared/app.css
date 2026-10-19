@@ -1051,12 +1051,17 @@ html[dir=rtl] .edgehint.end svg{transform:none}
 
 /* ── Lane APV3: bottom-bar variants (phones) ─────────────────────────────── */
 .tabbar .tab .tbl{white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+/* D: the bag raised in the middle. The bar is 18px taller with a bump behind the bag, so the raised
+   circle never sits over the page (nothing of the page is under it) */
+.tabbar.bb-D{padding-top:18px;border-top:0;background:radial-gradient(circle at 50% 39px,rgba(255,255,255,.97) 37px,transparent 38px),linear-gradient(transparent 18px,rgba(255,255,255,.97) 18px);box-shadow:inset 0 0 0 0 transparent;filter:drop-shadow(0 -1px 0 var(--line))}
+.android .tabbar.bb-D{background:radial-gradient(circle at 50% 39px,#FFF5F7 37px,transparent 38px),linear-gradient(transparent 18px,#FFF5F7 18px)}
 .tab.raised{overflow:visible}
-.tab.raised .pill{width:54px;height:54px;border-radius:27px;background:var(--pk);color:#fff;display:flex;align-items:center;justify-content:center;margin-top:-22px;box-shadow:0 6px 16px rgba(193,62,99,.35),0 0 0 4px #fff}
+.tab.raised .pill{width:54px;height:54px;border-radius:27px;background:var(--pk);color:#fff;display:flex;align-items:center;justify-content:center;margin-top:-16px;box-shadow:0 6px 14px rgba(193,62,99,.32)}
 .tab.raised svg{width:26px;height:26px}
 .tab.raised.on{color:var(--pk)}
 .android .tab.raised .pill{background:var(--pk);color:#fff;width:56px;height:56px;border-radius:18px}
-.tab.raised .bdg{top:-14px;inset-inline-start:calc(50% + 12px);background:#fff;color:var(--pk);box-shadow:0 0 0 1.5px var(--pk)}
+.android .tab.raised.on .pill{background:var(--pk-d);color:#fff}
+.tab.raised .bdg{top:-14px;inset-inline-start:calc(50% + 14px);background:#fff;color:var(--pk);box-shadow:0 0 0 1.5px var(--pk)}
 .mgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:4px 0 8px}
 .mtile{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;min-height:84px;border-radius:14px;font-size:12.5px;font-weight:500;text-align:center;color:var(--ink)}
 .mtile .mi{width:46px;height:46px;border-radius:23px;background:var(--pk-xs);color:var(--pk);display:flex;align-items:center;justify-content:center}
