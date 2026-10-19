@@ -1,25 +1,40 @@
 #!/usr/bin/env node
 /*
- * Lane APV — visits every screen × device × locale of docs/app-preview/index.html
- * in Chromium, asserts the owner's bar, and saves a PNG of each.
+ * Lane APV2 — drives the two app previews, docs/app-preview/en/index.html and
+ * docs/app-preview/ar/index.html, in Chromium and holds them to the owner's bar.
  *
- *   node tools/apv-shots.cjs                      everything
- *   node tools/apv-shots.cjs --dev=ip16,duo --lang=ar --only=home,product --no-shots
+ *   node tools/apv-shots.cjs                         everything: every screen × device × language,
+ *                                                    the checkout walk, the navigation smoke tests,
+ *                                                    contact sheets, report.json and the key pictures
+ *   node tools/apv-shots.cjs --lang=ar --dev=ip16,duo --only=Bag,Product --no-shots
+ *   node tools/apv-shots.cjs --flows-only            only the clicked-through flows
+ *   node tools/apv-shots.cjs --no-flows              only the screen grid
+ *   node tools/apv-shots.cjs --mutate='<css>'        inject a defect to prove the checks can fail
  *
- * Per render it asserts:
- *   overflow   no screen root (.app/.pane/.body/.bar/.foot/.sheet) is wider than its box
- *              (scrollWidth == clientWidth)
- *   clipped    no text line is cut by a box that does not scroll (designed ellipses and
- *              line clamps excepted)
- *   overlap    no two text runs intersect (glyph core band) within the same stacking layer
- *   tap        every interactive element is at least 44 × 44
- *   safe       no fixed text/control in the status-bar / Dynamic Island band or in the
- *              home-indicator band
+ * Every screen is reached by its deep link (index.html#/route?device=…), the same
+ * link screens.html uses. Per render it asserts:
+ *   overflow   no screen root is wider than its box (scrollWidth == clientWidth)
+ *   clipped    no text line is cut by a box that does not scroll (designed ellipses and clamps excepted)
+ *   overlap    no two text runs, or text and a picture, intersect within one stacking layer
+ *   icon-size  no unsized inline icon
+ *   contrast   text against its solid background is at least 3:1
+ *   tap        every interactive element is at least 44 × 44 (a field's box is its target)
+ *   safe       no fixed text or control in the status-bar band or the home-indicator band
  *   hinge      nothing crosses the Duo hinge or the Flip tabletop fold
- *   console    no console error, page error or failed request
+ *   label      floating labels: the label stays inside its box; resting, it is centred; lifted, it
+ *              sits at the top-start corner (left in English, right in Arabic) and never overlaps
+ *              the value
+ *   english    Arabic app only: no Latin word in any text, aria-label, placeholder or title, outside
+ *              an element marked data-x="<why>" (brand names, codes, card networks…); the
+ *              exceptions are counted by reason in report.json
+ *   console    no console error (a missing Arabic string is one), page error or failed request
  *
- * Writes docs/app-preview/shots/<screen>-<device>-<locale>.png, one contact sheet per
- * device and locale (sheet-<device>-<locale>.png) and report.json.
+ * The flows click and type like a shopper: the whole checkout, step by step, for every payment
+ * method, the coupon, a declined payment and its retry with the bag kept; and the navigation smoke
+ * tests (product → back → tab switch → state kept, wishlist kept across a reload).
+ *
+ * Writes docs/app-preview/shots/<lang>/<screen>-<device>.png, contact sheets
+ * shots/sheet-<device>-<lang>.png, the checkout strips, report.json, and docs/app-preview/key/.
  */
 'use strict';
 const pw = require('/opt/node22/lib/node_modules/playwright');
@@ -27,30 +42,22 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const PAGE = 'file://' + path.join(ROOT, 'docs/app-preview/index.html');
-const OUT = path.join(ROOT, 'docs/app-preview/shots');
-const arg = (k) => { const a = process.argv.find((x) => x.startsWith(`--${k}=`)); return a ? a.split('=')[1].split(',') : null; };
+const APP = path.join(ROOT, 'docs/app-preview');
+const PAGE = (lang) => 'file://' + path.join(APP, lang, 'index.html');
+const OUT = path.join(APP, 'shots');
+const KEY = path.join(APP, 'key');
+const arg = (k) => { const a = process.argv.find((x) => x.startsWith(`--${k}=`)); return a ? a.slice(k.length + 3).split(',') : null; };
 const NOSHOTS = process.argv.includes('--no-shots');
-// --mutate=<css> injects a defect to prove the checks can fail (see README).
+const FLOWS_ONLY = process.argv.includes('--flows-only');
+const NO_FLOWS = process.argv.includes('--no-flows');
 const MUTATE = (process.argv.find((x) => x.startsWith('--mutate=')) || '').slice(9);
 const WORKERS = Number((arg('workers') || ['3'])[0]);
-
-const DEVICES = [
-  {key:'ip16', os:'ios', dev:'ip16'},
-  {key:'ipse', os:'ios', dev:'ipse'},
-  {key:'ipad', os:'ios', dev:'ipad'},
-  {key:'ipad-land', os:'ios', dev:'ipad', land:true},
-  {key:'px9', os:'android', dev:'px9'},
-  {key:'flip', os:'android', dev:'flip'},
-  {key:'flip-tabletop', os:'android', dev:'flip', posture:'tabletop'},
-  {key:'fold-cover', os:'android', dev:'fold', folded:true},
-  {key:'fold-inner', os:'android', dev:'fold', folded:false},
-  {key:'duo', os:'android', dev:'duo'},
-].filter((d) => !arg('dev') || arg('dev').includes(d.key));
-const LANGS = (arg('lang') || ['en', 'ar']);
+const DEVICES = ['ip16', 'ipse', 'ipad', 'ipad-land', 'px9', 'flip', 'flip-tabletop', 'fold-cover', 'fold-inner', 'duo'].filter((d) => !arg('dev') || arg('dev').includes(d));
+const LANGS = arg('lang') || ['en', 'ar'];
+const FULL = !arg('dev') && !arg('lang') && !arg('only');
 
 /* ── the in-page checker ─────────────────────────────────────────────────── */
-function audit() {
+function audit(lang) {
   const issues = [];
   const add = (kind, el, msg) => {
     const path = [];
@@ -153,7 +160,7 @@ function audit() {
     /* 3b. text over a picture or an icon (designed overlays on photos excepted) */
     const media = [...g.querySelectorAll('img,svg')].filter((m) => !hidden(m) && !m.closest('.sb,.island,.punch')).map((m) => { const R = m.getBoundingClientRect(); return {m, sc:scOf(m), stack:stackOf(m), v:visible(m, R), ve:visible(m, R, true)}; }).filter((x) => area(x.ve) > 0);
     for (const r of runs) {
-      if (r.el.closest('.zh,.cnt,.badge,.bdg,.pbk,.tt-fold')) continue;
+      if (r.el.closest('.zh,.cnt,.badge,.bdg,.pbk,.tt-fold,.blogo,.cth')) continue;
       for (const x of media) {
         if (x.stack !== r.stack || x.m.contains(r.el) || r.el.contains(x.m)) continue;
         const same = x.sc === r.sc;
@@ -203,7 +210,7 @@ function audit() {
     const T = g.querySelectorAll('button,a,input,select,textarea,[role=button],[data-go],[data-act],[data-tab],[data-sheet]');
     T.forEach((e) => {
       if (hidden(e) || e.matches('.scrim') || e.closest('.peek')) return; // .peek is a scaled transition frame
-      if (e.closest('label.inp,.inp,.card-el') && e.matches('input,textarea')) return; // the field box is the target
+      if (e.closest('.fl,.srch.field') && e.matches('input,textarea')) return; // the field box is the target
       const r = e.getBoundingClientRect();
       if (area(visible(e, r, true)) <= 0) return;
       if (r.width < 43.5 || r.height < 43.5) add('tap', e, `${Math.round(r.width)}×${Math.round(r.height)}`);
@@ -241,9 +248,58 @@ function audit() {
       if (r.width && r.height && area(inter(r, H)) > 0 && area(visible(e, r)) > 0 && area(inter(visible(e, r), H)) > 0) add('hinge', e, 'under the hinge');
     });
   }
+  /* 7. floating labels (the website's .kbb-fl): inside the box; resting = centred;
+        lifted = top-start corner, small, clear of the value */
+  document.querySelectorAll('.device .fl').forEach((f) => {
+    if (hidden(f)) return;
+    const F = f.getBoundingClientRect();
+    if (area(visible(f, F, true)) <= 0) return;
+    const lab = f.querySelector(':scope > label, :scope > .lbl'); if (!lab) return;
+    const inp = f.querySelector(':scope > input, :scope > textarea');
+    const L = lab.getBoundingClientRect();
+    const rtl = cs(f).direction === 'rtl';
+    if (L.left < F.left - .5 || L.right > F.right + .5 || L.top < F.top - .5 || L.bottom > F.bottom + .5) add('label', lab, `label outside its field (top ${Math.round(L.top - F.top)}, start ${Math.round(rtl ? F.right - L.right : L.left - F.left)})`);
+    const startGap = rtl ? F.right - L.right : L.left - F.left, endGap = rtl ? L.left - F.left : F.right - L.right;
+    if (startGap > 50) add('label', lab, `label sits on the end side, not the start (${rtl ? 'right' : 'left'})`);
+    const floated = inp ? (inp.value !== '' || document.activeElement === inp) : f.classList.contains('has');
+    if (floated) {
+      let vTop;
+      if (inp) { const I = inp.getBoundingClientRect(); const s = cs(inp); vTop = I.top + parseFloat(s.borderTopWidth) + parseFloat(s.paddingTop); }
+      else { const v = f.querySelector('.val'); const V = v.getBoundingClientRect(); vTop = V.top + parseFloat(cs(v).paddingTop); }
+      if (L.bottom > vTop + .5) add('label', lab, `lifted label overlaps the value by ${(L.bottom - vTop).toFixed(1)}px`);
+      if (L.top - F.top > 8) add('label', lab, `lifted label ${Math.round(L.top - F.top)}px below the top of the box`);
+      if (parseFloat(cs(lab).fontSize) > 12.5) add('label', lab, `lifted label is ${cs(lab).fontSize}, not the small heading`);
+    } else if (inp && inp.tagName === 'INPUT') {
+      const c = (L.top + L.bottom) / 2, fc = (F.top + F.bottom) / 2;
+      if (Math.abs(c - fc) > 1.5) add('label', lab, `resting label ${(c - fc).toFixed(1)}px off the centre of the box`);
+    }
+  });
+
+  /* 8. the Arabic app has no English, except what is marked data-x="<why>" */
+  const exceptions = {};
+  if (lang === 'ar') {
+    const LAT = /[A-Za-z]{2,}/;
+    const hiddenAny = (e) => { for (let x = e; x && x.nodeType === 1; x = x.parentElement) { const s = cs(x); if (s.display === 'none' || s.visibility === 'hidden') return true; } return false; };
+    const xOf = (e) => e && e.closest && e.closest('[data-x]');
+    const tw2 = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = tw2.nextNode(); n; n = tw2.nextNode()) {
+      const el = n.parentElement; if (!el || el.closest('script,style,.navghost')) continue;
+      const v = n.nodeValue; if (!LAT.test(v)) continue;
+      const x = xOf(el);
+      if (x) { const k = x.dataset.x; const E = exceptions[k] = exceptions[k] || {n:0, eg:[]}; E.n++; const s = v.trim().slice(0, 28); if (E.eg.length < 5 && !E.eg.includes(s)) E.eg.push(s); continue; }
+      if (el.tagName === 'OPTION' ? false : hiddenAny(el)) continue;
+      add('english', el, `“${v.trim().slice(0, 60)}”`);
+    }
+    document.querySelectorAll('[aria-label],[placeholder],[title],img[alt]').forEach((e) => {
+      if (e.closest('.navghost')) return;
+      for (const a of ['aria-label', 'placeholder', 'title', 'alt']) { const v = e.getAttribute(a); if (v && LAT.test(v) && !xOf(e)) add('english', e, `${a}=“${v.slice(0, 60)}”`); }
+    });
+    if (LAT.test(document.title)) add('english', document.body, `document title “${document.title}”`);
+  }
+
   // de-duplicate
   const key = new Set();
-  return issues.filter((x) => { const k = x.kind + x.at + x.msg; if (key.has(k)) return false; key.add(k); return true; });
+  return {issues:issues.filter((x) => { const k = x.kind + x.at + x.msg; if (key.has(k)) return false; key.add(k); return true; }), exceptions};
 }
 
 async function settle(page) {
@@ -253,90 +309,376 @@ async function settle(page) {
     for (;;) {
       const pending = [...document.querySelectorAll('.device img')].filter((im) => {
         if (im.complete) return false;
-        const r = im.getBoundingClientRect(), g = im.closest('.glass').getBoundingClientRect();
-        return r.bottom > g.top && r.top < g.bottom && r.right > g.left && r.left < g.right;
+        const r = im.getBoundingClientRect(), g = im.closest('.glass'); if (!g) return false;
+        const G = g.getBoundingClientRect();
+        return r.bottom > G.top && r.top < G.bottom && r.right > G.left && r.left < G.right;
       });
       if (!pending.length || performance.now() - t0 > 9000) break;
       await new Promise((r) => setTimeout(r, 60));
     }
+    await new Promise((r) => setTimeout(r, 200)); // label transitions are .16s
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   });
 }
 
+/* ── one browser, pages that remember their console ──────────────────────── */
+let browser, ctx;
+async function newPage(lang) {
+  const page = await ctx.newPage();
+  page.errs = [];
+  page.on('console', (m) => { if (m.type() === 'error') page.errs.push('console: ' + m.text().slice(0, 200)); });
+  page.on('pageerror', (e) => page.errs.push('pageerror: ' + e.message));
+  page.on('requestfailed', (r) => (r.failure() || {}).errorText === 'net::ERR_ABORTED' || page.errs.push('requestfailed: ' + r.url() + ' ' + (r.failure() || {}).errorText));
+  page.on('response', (r) => { if (r.status() >= 400) page.errs.push(`http ${r.status()}: ${r.url()}`); });
+  await page.goto(PAGE(lang) + '#/home?z=100');
+  await page.waitForFunction(() => window.APV);
+  page.lang = lang;
+  return page;
+}
+async function check(page, o = {}) {
+  if (MUTATE) await page.addStyleTag({content:MUTATE});
+  await settle(page);
+  const {issues, exceptions} = await page.evaluate(audit, page.lang);
+  for (const e of page.errs.splice(0)) issues.push({kind:'console', at:'', msg:e});
+  if (o.shot && !NOSHOTS) await page.locator('.device').screenshot({path:o.shot, animations:'disabled', type:'jpeg', quality:82});
+  if (o.key && !NOSHOTS) await page.locator('.device').screenshot({path:o.key, animations:'disabled'});
+  return {issues, exceptions};
+}
+const mergeEx = (into, ex) => { for (const [k, v] of Object.entries(ex)) { const E = into[k] = into[k] || {n:0, eg:[]}; E.n += v.n; for (const s of v.eg) if (E.eg.length < 8 && !E.eg.includes(s)) E.eg.push(s); } };
+
+/* ── the grid: every screen × device × language, by deep link ─────────────── */
+async function grid(results, exceptions) {
+  for (const lang of LANGS) {
+    const probe = await newPage(lang);
+    let J = await probe.evaluate(() => APV.jump());
+    await probe.close();
+    if (arg('only')) J = J.filter((j) => arg('only').some((o) => j.label.includes(o) || j.g === o || String(j.id) === o));
+    fs.mkdirSync(path.join(OUT, lang), {recursive:true});
+    const jobs = [];
+    for (const d of DEVICES) for (const j of J) for (const design of j.designs ? ['A', 'B', 'C'] : ['A']) jobs.push({d, j, design, name:`${String(j.id).padStart(2, '0')}-${slug(j.label)}${design !== 'A' ? '-' + design : ''}-${d}`});
+    let done = 0; const t0 = Date.now(); const total = jobs.length;
+    async function worker() {
+      const page = await newPage(lang);
+      for (;;) {
+        const job = jobs.shift(); if (!job) break;
+        const href = await page.evaluate(([id, o]) => APV.href(id, o), [job.j.id, {device:job.d, design:job.design}]);
+        await page.evaluate((h) => APV.open(h + '&z=100'), href);
+        const shot = path.join(OUT, lang, job.name + '.jpg');
+        const kp = KEYPICKS.find((k) => k.lang === lang && k.dev === job.d && k.label === job.j.label && job.design === 'A');
+        const r = await check(page, {shot, key:kp && FULL ? path.join(KEY, kp.file) : null});
+        mergeEx(exceptions, r.exceptions);
+        results.push({name:job.name, lang, device:job.d, id:job.j.id, group:job.j.g, label:job.j.label, design:job.design, link:href, shot, issues:r.issues});
+        if (++done % 100 === 0) process.stdout.write(`${lang} ${done}/${total} ${Math.round((Date.now() - t0) / 1000)}s\n`);
+      }
+      await page.close();
+    }
+    await Promise.all(Array.from({length:WORKERS}, worker));
+  }
+}
+/* key pictures, taken as PNG while the grid passes them */
+const KEYPICKS = ['en', 'ar'].flatMap((lang) => [
+  {lang, dev:'ip16', label:'Home', file:`home-${lang}.png`},
+  {lang, dev:'fold-inner', label:'Category · Serums', file:`category-fold-inner-${lang}.png`},
+  {lang, dev:'fold-inner', label:'Brand page', file:`brand-fold-inner-${lang}.png`},
+  {lang, dev:'duo', label:'Product', file:`product-duo-${lang}.png`},
+  {lang, dev:'ipad-land', label:'Category · Skincare', file:`ipad-landscape-${lang}.png`},
+]);
+const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+/* ── the flows: clicked and typed, like a shopper ────────────────────────── */
+async function flows(lang, dev, log) {
+  const page = await newPage(lang);
+  const shots = {};
+  const fails = [];
+  const st = () => page.evaluate(() => APV.state());
+  const open = async (p) => { await page.evaluate((h) => APV.open(h), `#${p}${p.includes('?') ? '&' : '?'}device=${dev}&z=100`); await settle(page); };
+  const vis = (sel) => page.locator(`#stage ${sel}`).filter({visible:true}).first();
+  const click = async (sel) => { try { await vis(sel).click({timeout:6000}); } catch (e) { throw new Error(`could not click ${sel} on ${(await st()).path}: ${String(e.message).split('\n')[0]}`); } await page.waitForTimeout(60); };
+  const type = async (sel, v, o = {}) => { const l = vis(sel); try { if (o.fill) await l.fill(v, {timeout:6000}); else { await l.click({timeout:6000}); await l.pressSequentially(v, {delay:5}); } } catch (e) { throw new Error(`could not type in ${sel} on ${(await st()).path}: ${String(e.message).split('\n')[0]}`); } };
+  const expect = (ok, msg) => { if (!ok) fails.push(msg); };
+  const step = async (name, o = {}) => {
+    const file = path.join(OUT, lang, `flow-${dev}-${name}.jpg`);
+    const r = await check(page, {shot:file});
+    log.push({flow:`${lang}/${dev}`, step:name, issues:r.issues, shot:file});
+    shots[name] = file;
+    return r;
+  };
+  try {
+    /* 1 · the whole checkout by card */
+    await open('/home');
+    const b0 = (await st()).bag;
+    await click('.pc .add');
+    expect((await st()).bag === b0 + 1, 'Add to bag on a home card did not raise the bag count');
+    await click('[data-tab="bag"]');
+    expect((await st()).path === '/bag', 'the Bag tab did not open the bag');
+    await type('#f-coupon-code', 'SUMMER');
+    await click('[data-act="coupon"]');
+    expect(await page.locator('#stage .fl.err [id="f-coupon-code"]').count() === 1, 'a wrong coupon did not show the error state');
+    await step('coupon-error');
+    await type('#f-coupon-code', 'welcome10', {fill:true});
+    await page.dispatchEvent('#stage #f-coupon-code', 'input');
+    await click('[data-act="coupon"]');
+    expect(await page.locator('#stage .cpn-on').count() === 1, 'WELCOME10 was not applied');
+    await step('bag');
+    await click('.foot [data-go="/checkout/bag"]');
+    await step('1-bag-review');
+    await click('[data-act="co-next"]');
+    expect((await st()).path === '/checkout/contact', 'Continue did not reach Contact');
+    await step('2-contact-signed-in');
+    await click('[data-act="co-guest"]');
+    await click('[data-act="co-contact"]');
+    expect(await page.locator('#stage .fl.err #f-contact-email').count() === 1, 'an empty email did not show its error');
+    await step('2-contact-error');
+    await type('#f-contact-email', 'sara@example.com');
+    await step('2-contact-guest');
+    await click('[data-act="co-contact"]');
+    expect((await st()).path === '/checkout/address', 'a valid email did not reach the address step');
+    await step('3-address-saved');
+    await click('[data-go="/checkout/address/new"]');
+    await step('3-address-new');
+    await click('[data-act="addr-save"]');
+    expect(await page.locator('#stage .errsum').count() === 1, 'saving an empty address did not show the error summary');
+    await step('3-address-errors');
+    await type('#f-addr-name', lang === 'ar' ? 'سارة المنصوري' : 'Sara Al Mansoori');
+    await type('#f-addr-phone', '0501234567');
+    expect(await vis('#f-addr-phone').inputValue() === '50 123 4567', 'the phone was not formatted as 50 123 4567');
+    await click('[data-sheet="emirate"]');
+    await step('3-emirate-sheet');
+    await click('[data-act="pick"][data-v="dubai"]');
+    expect((await st()).sheet === 'area', 'choosing an emirate did not open its areas');
+    await type('#aq', lang === 'ar' ? 'مار' : 'Mar');
+    await step('3-area-sheet');
+    await click('[data-act="pick"][data-v="dubai-marina"]');
+    await type('#f-addr-building', lang === 'ar' ? 'مارينا غيت 2' : 'Marina Gate 2');
+    await type('#f-addr-street', lang === 'ar' ? 'شارع المرسى' : 'Al Marsa Street');
+    await step('3-address-filled');
+    await click('[data-act="addr-save"]');
+    expect((await st()).path === '/checkout/delivery', 'a complete address did not reach Delivery');
+    await step('4-delivery');
+    await click('[data-act="del"][data-v="exp"]');
+    expect((await st()).co.del === 'exp', 'Express was not chosen');
+    await click('[data-act="co-next"]');
+    await step('5-payment');
+    await click('[data-act="pay"][data-v="card"]');
+    await click('[data-act="co-pay"]');
+    expect((await st()).path === '/checkout/card', 'Card did not open the card form');
+    await step('6-card-empty');
+    await click('[data-act="card-next"]');
+    expect(await page.locator('#stage .fl.err').count() >= 3, 'an empty card form did not show its errors');
+    await step('6-card-errors');
+    await type('#f-card-number', '4242424242424242');
+    expect(await vis('#f-card-number').inputValue() === '4242 4242 4242 4242', 'the card number was not grouped in fours');
+    expect(await page.locator('#stage #cbrand .cbrand').count() === 1, 'the card brand was not detected');
+    await type('#f-card-exp', '1229');
+    expect(await vis('#f-card-exp').inputValue() === '12 / 29', 'the expiry was not formatted MM / YY');
+    await type('#f-card-cvc', '123');
+    await type('#f-card-cname', 'SARA AL MANSOORI');
+    await step('6-card-filled');
+    await click('[data-act="card-next"]');
+    expect((await st()).path === '/checkout/3ds', 'a valid card did not reach 3-D Secure');
+    await step('6-card-3ds');
+    await type('#f-otp-code', '481205');
+    await click('[data-act="otp-submit"]');
+    expect((await st()).path === '/checkout/review', 'the code did not reach Review');
+    await step('7-review');
+    const o0 = (await st()).orders;
+    await click('[data-act="place"]');
+    const s8 = await st();
+    expect(s8.path === '/checkout/placed' && s8.bag === 0 && s8.orders === o0 + 1, 'Place order did not place the order and empty the bag');
+    await step('8-placed');
+
+    /* 2 · the other methods, each from the payment step with a bag */
+    const wallet = dev === 'px9' || dev.startsWith('fold') || dev.startsWith('flip') || dev === 'duo' ? 'gpay' : 'apple';
+    for (const m of [wallet, 'tabby', 'tamara', 'cod']) {
+      await open('/checkout/payment');
+      await click(`[data-act="pay"][data-v="${m}"]`);
+      await click('[data-act="co-pay"]');
+      await step('6-' + (m === 'apple' || m === 'gpay' ? 'wallet' : m));
+      if (m === 'cod') await click('[data-act="cod-ok"]');
+      else if (m === 'tabby' || m === 'tamara') await click(`[data-act="bnpl-ok"]`);
+      else await click('[data-act="authorise"]');
+      const s = await st();
+      expect(s.path === '/checkout/review' && (m === 'cod' || s.co.authorised === m), `${m}: did not come back to Review approved`);
+    }
+    /* 3 · a declined card keeps the bag; retry goes back to the card */
+    await open('/checkout/3ds');
+    const bagBefore = (await st()).bag;
+    await click('[data-act="decline"]');
+    expect((await st()).path.startsWith('/checkout/failed'), 'a declined card did not show Payment failed');
+    await step('9-failed');
+    expect((await st()).bag === bagBefore, 'the bag was not kept after a declined payment');
+    await click('[data-act="retry-pay"]');
+    expect((await st()).path === '/checkout/card', 'Try again did not return to the card form');
+
+    /* 4 · navigation smoke: product → back → tab switch → state kept */
+    await open('/home');
+    await click('.pc .open.meta');
+    let s = await st();
+    expect(s.path.startsWith('/product/'), 'a product card did not open the product');
+    const pslug = s.path.split('/')[2];
+    await step('nav-product');
+    await click('[data-act="back"]');
+    expect((await st()).path === '/home', 'Back did not return to Home');
+    /* tab switch keeps each tab's stack */
+    await open('/brands');
+    await click('[data-go^="/brand/"]');
+    const before = await st();
+    await click('[data-tab="home"]');
+    expect((await st()).tab === 'home', 'the Home tab did not open');
+    await click('[data-tab="shop"]');
+    const after = await st();
+    expect(after.tab === 'shop' && after.path === before.path && after.depth === before.depth, `the Shop tab lost its place (${before.path} → ${after.path})`);
+    await open('/product/' + pslug);
+    await click('.pbar .fv');
+    expect((await st()).wish.includes(pslug), 'the wishlist heart did not save the product');
+    await page.reload(); await page.waitForFunction(() => window.APV); await settle(page);
+    expect((await st()).wish.includes(pslug), 'the wishlist was not kept for the session');
+    /* edge swipe back (iOS from the start edge; Android predictive back from either edge) */
+    await open('/home');
+    await click('.pc .open.meta');
+    const g = await page.locator('#stage .glass').first().boundingBox();
+    const x0 = lang === 'ar' ? g.x + g.width - 6 : g.x + 6, dir = lang === 'ar' ? -1 : 1;
+    await page.mouse.move(x0, g.y + g.height / 2); await page.mouse.down();
+    for (let i = 1; i <= 8; i++) await page.mouse.move(x0 + dir * i * 20, g.y + g.height / 2);
+    await page.mouse.up(); await page.waitForTimeout(250);
+    expect((await st()).path === '/home', 'the edge swipe did not go back');
+    /* live search keeps its query across product → back */
+    await click('[data-tab="search"]');
+    await type('#q', lang === 'ar' ? 'سيروم' : 'serum');
+    const hits = await page.locator('#stage #sres [data-go^="/product/"]').count();
+    expect(hits > 0, 'live search found nothing');
+    await step('nav-search');
+    await click('#sres [data-go^="/product/"]');
+    if (dev !== 'duo') await click('[data-act="back"]'); // on the Duo the result opens in the other screen: nothing to go back from
+    expect(await vis('#q').inputValue() === (lang === 'ar' ? 'سيروم' : 'serum'), 'the search query was lost after product → back');
+    /* sort and filter really sort and filter */
+    await open('/category/serums');
+    await click('[data-sheet="sort"]');
+    await click('[data-act="sort"][data-v="low"]');
+    const prices = await page.$$eval('#stage .grid .pc .pr .price', (els) => els.slice(0, 8).map((e) => Number(e.textContent.replace(/[^\d.٠-٩]/g, '').replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)))));
+    expect(prices.length > 2 && prices.every((p, i) => !i || p >= prices[i - 1]), 'Price: low to high did not sort: ' + prices.join(','));
+    const filterBtn = await page.locator('#stage [data-sheet="filter"]').filter({visible:true}).count();
+    if (filterBtn) { await click('[data-sheet="filter"]'); await click('[data-act="fmax"][data-v="54"]'); await click('.sheet .sf [data-act="close"]'); }
+    else await click('.fpanel [data-act="fmax"][data-v="54"]');
+    const p2 = await page.$$eval('#stage .grid .pc .pr .price', (els) => els.map((e) => Number(e.textContent.replace(/[^\d.]/g, ''))));
+    expect(p2.length > 0 && p2.every((p) => p <= 54), 'Up to AED 54 did not filter: ' + p2.slice(0, 6).join(','));
+    await step('nav-filtered');
+    /* endless scroll */
+    await open('/products');
+    const n0 = await page.locator('#stage .grid .pc').count();
+    await page.evaluate(() => { const b = document.querySelector('#stage .body'); b.scrollTop = b.scrollHeight; });
+    await page.waitForTimeout(900);
+    const n1 = await page.locator('#stage .grid .pc').count();
+    expect(n1 > n0, `endless scroll did not load more (${n0} → ${n1})`);
+    /* pull to refresh */
+    await open('/home');
+    const hb = await page.locator('#stage .body[data-ptr]').first().boundingBox();
+    await page.mouse.move(hb.x + hb.width / 2, hb.y + 40); await page.mouse.down();
+    for (let i = 1; i <= 10; i++) await page.mouse.move(hb.x + hb.width / 2, hb.y + 40 + i * 18);
+    await page.mouse.up(); await page.waitForTimeout(900);
+    expect(await page.locator('#stage .toast').count() === 1, 'pull to refresh did not refresh');
+    /* list → detail on two panes: a tap updates the detail, nothing is pushed */
+    if (dev === 'duo') {
+      await open('/categories');
+      const depth = (await st()).depth;
+      await click('[data-slot="start"] [data-go^="/category/"]');
+      expect((await st()).depth === depth, 'on two panes a category tap pushed a screen instead of filling the detail pane');
+    }
+  } catch (e) {
+    fails.push('flow stopped: ' + String(e.message || e).split('\n')[0]);
+  }
+  for (const e of page.errs.splice(0)) fails.push('console: ' + e);
+  await page.close();
+  return {shots, fails};
+}
+
+/* ── pictures made of pictures ───────────────────────────────────────────── */
+async function compose(file, title, items, o = {}) {
+  const page = await ctx.newPage();
+  const w = o.w || 220;
+  const html = `<!doctype html><meta charset="utf-8"><style>body{margin:0;padding:18px;font:13px system-ui;background:#f3eef0;width:${o.width || 1800}px;color:#2a2228}h1{font:600 19px system-ui;margin:0 0 14px}div{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}figure{margin:0;width:${w}px}img{width:100%;display:block;border-radius:10px}figcaption{padding:5px 0 0;line-height:1.3}.bad{outline:3px solid #c0392b}</style><h1>${title}</h1><div>${items.map((x) => `<figure><img class="${x.bad ? 'bad' : ''}" src="file://${x.src}"><figcaption>${x.cap}</figcaption></figure>`).join('')}</div>`;
+  const tmp = path.join(OUT, '.compose.html');
+  fs.writeFileSync(tmp, html);
+  await page.goto('file://' + tmp, {waitUntil:'load'});
+  fs.unlinkSync(tmp);
+  await page.screenshot({path:file, fullPage:true, type:file.endsWith('.jpg') ? 'jpeg' : 'png', quality:file.endsWith('.jpg') ? 72 : undefined});
+  await page.close();
+}
+
 (async () => {
   fs.mkdirSync(OUT, {recursive:true});
-  const browser = await pw.chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', proxy:process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY} : undefined});
-  const ctx = await browser.newContext({viewport:{width:1300, height:1360}, deviceScaleFactor:1, ignoreHTTPSErrors:true, reducedMotion:'reduce'});
-  const probe = await ctx.newPage();
-  await probe.goto(PAGE + '#z=100');
-  let screens = await probe.evaluate(() => window.APV.screens());
-  await probe.close();
-  if (arg('only')) screens = screens.filter((s) => arg('only').includes(s.id));
-
-  const jobs = [];
-  for (const d of DEVICES) for (const lang of LANGS) for (const s of screens) {
-    if (s.androidOnly && d.os !== 'android') continue;
-    const designs = (s.id === 'home' || s.id === 'product') ? ['A', 'B', 'C'] : ['A'];
-    for (const design of designs) jobs.push({d, lang, s, design, name:`${s.id}${design !== 'A' ? '-' + design : ''}-${d.key}-${lang}`});
-  }
-  const results = [];
-  let done = 0;
+  fs.mkdirSync(KEY, {recursive:true});
+  browser = await pw.chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', proxy:process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY} : undefined});
+  ctx = await browser.newContext({viewport:{width:1400, height:1100}, reducedMotion:'reduce'});
   const t0 = Date.now();
-  async function worker() {
-    const page = await ctx.newPage();
-    let errs = [];
-    page.on('console', (m) => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
-    page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
-    page.on('requestfailed', (r) => errs.push('requestfailed: ' + r.url() + ' ' + (r.failure() || {}).errorText));
-    page.on('response', (r) => { if (r.status() >= 400) errs.push(`http ${r.status()}: ${r.url()}`); });
-    await page.goto(PAGE + '#z=100');
-    for (;;) {
-      const j = jobs.shift();
-      if (!j) break;
-      errs = [];
-      await page.evaluate((o) => window.APV.set(o), {screen:j.s.id, os:j.d.os, dev:j.d.dev, lang:j.lang, design:j.design, folded:j.d.folded !== false, posture:j.d.posture, land:j.d.land});
-      if (MUTATE) await page.addStyleTag({content:MUTATE});
-      await settle(page);
-      const issues = await page.evaluate(audit);
-      for (const e of errs) issues.push({kind:'console', at:'', msg:e});
-      if (!NOSHOTS) await page.locator('.device').screenshot({path:path.join(OUT, j.name + '.png'), animations:'disabled'});
-      results.push({name:j.name, screen:j.s.id, design:j.design, device:j.d.key, lang:j.lang, issues});
-      if (++done % 50 === 0) process.stdout.write(`${done}/${done + jobs.length} ${Math.round((Date.now() - t0) / 1000)}s\n`);
+  const results = [], exceptions = {}, flowLog = [], flowFails = {};
+  if (!FLOWS_ONLY) await grid(results, exceptions);
+  const flowShots = {};
+  if (!NO_FLOWS) {
+    const FD = arg('dev') ? DEVICES : ['ip16', 'px9', 'fold-inner', 'duo'];
+    for (const lang of LANGS) for (const d of FD) {
+      const r = await flows(lang, d, flowLog);
+      flowFails[`${lang}/${d}`] = r.fails;
+      flowShots[`${lang}/${d}`] = r.shots;
+      process.stdout.write(`flow ${lang}/${d}: ${r.fails.length} failures\n`);
     }
+  }
+
+  /* screens.html: one live card per screen, every card a working deep link, no console error */
+  const screensCheck = {};
+  if (!FLOWS_ONLY) for (const lang of LANGS) {
+    const page = await ctx.newPage(); const errs = [];
+    page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 160)); });
+    page.on('pageerror', (e) => errs.push(e.message));
+    await page.goto('file://' + path.join(APP, lang, 'screens.html') + '#device=ip16');
+    await page.waitForTimeout(2500);
+    const r = await page.evaluate(() => ({cards:document.querySelectorAll('.card').length, links:[...document.querySelectorAll('.card iframe')].filter((f) => /index\.html#\/.+device=ip16.*embed=1/.test(f.getAttribute('src'))).length, sw:document.documentElement.scrollWidth, w:innerWidth}));
+    const want = arg('only') ? r.cards : new Set(results.filter((x) => x.lang === lang).map((x) => x.id + x.design)).size || r.cards;
+    screensCheck[lang] = {...r, errors:[...new Set(errs)]};
+    if (r.cards !== want || r.links !== r.cards || r.sw > r.w || errs.length) results.push({name:'screens.html', lang, device:'-', id:-1, label:'screens.html', design:'A', issues:[{kind:'screens', at:lang + '/screens.html', msg:JSON.stringify(screensCheck[lang])}]});
     await page.close();
   }
-  await Promise.all(Array.from({length:WORKERS}, worker));
-
-  /* contact sheets: one per device and locale */
-  if (!NOSHOTS && !arg('only')) {
-    const sheet = await ctx.newPage();
+  /* contact sheets (JPEG, kept in git) */
+  if (!NOSHOTS && FULL && !FLOWS_ONLY) {
     for (const d of DEVICES) for (const lang of LANGS) {
-      const order = screens.map((x) => x.id);
-      const rows = results.filter((r) => r.device === d.key && r.lang === lang).sort((a, b) => order.indexOf(a.screen) - order.indexOf(b.screen) || a.design.localeCompare(b.design));
+      const rows = results.filter((r) => r.device === d && r.lang === lang).sort((a, b) => a.id - b.id || a.design.localeCompare(b.design));
       if (!rows.length) continue;
-      const w = d.key === 'duo' || d.key === 'ipad-land' ? 380 : d.key === 'ipad' || d.key === 'fold-inner' ? 260 : 200;
-      const html = `<!doctype html><meta charset="utf-8"><style>body{margin:0;padding:16px;font:12px system-ui;background:#f3eef0;width:${Math.floor(1800 / (w + 12)) * (w + 12)}px}h1{font:600 18px system-ui;margin:0 0 12px}div{display:flex;flex-wrap:wrap;gap:12px}figure{margin:0;width:${w}px}img{width:100%;display:block;border-radius:8px}figcaption{padding:4px 0;color:#444}.bad{outline:3px solid #c0392b}</style><h1>${d.key} · ${lang} · ${rows.length} screens · ${rows.filter((r) => r.issues.length).length} with issues</h1><div>${rows.map((r) => `<figure><img class="${r.issues.length ? 'bad' : ''}" src="file://${path.join(OUT, r.name + '.png')}"><figcaption>${r.screen}${r.design !== 'A' ? ' · ' + r.design : ''}</figcaption></figure>`).join('')}</div>`;
-      const tmp = path.join(OUT, `.sheet-${d.key}-${lang}.html`);
-      fs.writeFileSync(tmp, html);
-      await sheet.goto('file://' + tmp, {waitUntil:'load'});
-      fs.unlinkSync(tmp);
-      await sheet.screenshot({path:path.join(OUT, `sheet-${d.key}-${lang}.png`), fullPage:true});
+      const w = d === 'duo' || d === 'ipad-land' ? 380 : d === 'ipad' || d === 'fold-inner' ? 250 : 170;
+      await compose(path.join(OUT, `sheet-${d}-${lang}.jpg`), `${lang === 'ar' ? 'Arabic' : 'English'} · ${d} · ${rows.length} screens · ${rows.filter((r) => r.issues.length).length} with issues`, rows.map((r) => ({src:r.shot, cap:`${r.id} · ${r.label}${r.design !== 'A' ? ' · ' + r.design : ''}`, bad:r.issues.length})), {w});
     }
-    await sheet.close();
+  }
+  /* checkout strips and key pictures */
+  if (!NOSHOTS && !NO_FLOWS) {
+    fs.mkdirSync(KEY, {recursive:true});
+    const ORDER = [['1-bag-review', '1 · Bag review'], ['2-contact-guest', '2 · Contact'], ['3-address-saved', '3 · Address: saved'], ['3-address-errors', '3 · New address: validation'], ['3-emirate-sheet', '3 · Emirate'], ['3-area-sheet', '3 · Area by emirate'], ['3-address-filled', '3 · New address: filled'], ['4-delivery', '4 · Delivery'], ['5-payment', '5 · Payment'], ['6-card-filled', '6 · Card'], ['6-card-3ds', '6 · 3-D Secure'], ['6-wallet', '6 · Wallet sheet'], ['6-tabby', '6 · Tabby'], ['6-tamara', '6 · Tamara'], ['6-cod', '6 · Cash on delivery'], ['7-review', '7 · Review'], ['8-placed', '8 · Order placed'], ['9-failed', '9 · Payment failed']];
+    for (const lang of LANGS) {
+      const S = flowShots[`${lang}/ip16`]; if (!S) continue;
+      await compose(path.join(KEY, `${lang}-checkout-steps.png`), `${lang === 'ar' ? 'Arabic' : 'English'} app · checkout, every step, clicked and typed by tools/apv-shots.cjs (iPhone 16 Pro)`, ORDER.filter(([k]) => S[k]).map(([k, c]) => ({src:S[k], cap:c})), {w:200, width:2000});
+    }
+  }
+  if (!NOSHOTS && FULL) {
+    const fl = (lang, k) => (flowShots[`${lang}/ip16`] || {})[k];
+    await compose(path.join(KEY, 'floating-label-before.png'), 'Floating labels, before: the label is the placeholder, centred in the box (English, Arabic)', [{src:fl('en', '3-address-new'), cap:'English · empty'}, {src:fl('ar', '3-address-new'), cap:'Arabic · empty'}].filter((x) => x.src), {w:420, width:900});
+    await compose(path.join(KEY, 'floating-label-after.png'), 'Floating labels, after: typed values; each label lifts to a small heading at the top-start corner', [{src:fl('en', '3-address-filled'), cap:'English · filled'}, {src:fl('ar', '3-address-filled'), cap:'Arabic · filled'}].filter((x) => x.src), {w:420, width:900});
   }
   await browser.close();
 
   const bad = results.filter((r) => r.issues.length);
+  const flowBad = flowLog.filter((r) => r.issues.length);
   const byKind = {};
-  for (const r of results) for (const i of r.issues) byKind[i.kind] = (byKind[i.kind] || 0) + 1;
+  for (const r of results.concat(flowLog)) for (const i of r.issues) byKind[i.kind] = (byKind[i.kind] || 0) + 1;
+  const nFlowFails = Object.values(flowFails).reduce((a, b) => a + b.length, 0);
   const report = {
-    generated:new Date().toISOString(), renders:results.length,
-    screens:new Set(results.map((r) => r.screen + (r.design !== 'A' ? '-' + r.design : ''))).size,
-    devices:DEVICES.map((d) => d.key), locales:LANGS, failed:bad.length, issues_by_kind:byKind,
-    failures:bad.map((r) => ({name:r.name, issues:r.issues.slice(0, 12)})),
+    generated:new Date().toISOString(), renders:results.length, screens:new Set(results.map((r) => r.lang + r.id + r.design)).size,
+    devices:DEVICES, locales:LANGS, failed:bad.length, issues_by_kind:byKind,
+    flows:{steps:flowLog.length, steps_with_issues:flowBad.length, assertions_failed:nFlowFails, by_run:flowFails},
+    screens_html:screensCheck,
+    arabic_exceptions:exceptions,
+    failures:bad.map((r) => ({name:`${r.lang}/${r.name}`, link:r.link, issues:r.issues.slice(0, 12)})).concat(flowBad.map((r) => ({name:`flow ${r.flow} ${r.step}`, issues:r.issues.slice(0, 12)}))),
   };
-  if (!arg('only') && !arg('dev') && !arg('lang')) fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 1));
-  console.log(JSON.stringify({renders:report.renders, screens:report.screens, devices:report.devices.length, locales:LANGS.length, failed:report.failed, issues_by_kind:byKind, secs:Math.round((Date.now() - t0) / 1000)}));
-  for (const r of bad.slice(0, Number((arg('show') || ['40'])[0]))) console.log(r.name, JSON.stringify(r.issues.slice(0, 6)));
-  process.exit(bad.length ? 1 : 0);
+  if (FULL) fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 1));
+  console.log(JSON.stringify({renders:report.renders, screens:report.screens, failed:report.failed, flow_steps:flowLog.length, flow_step_issues:flowBad.length, flow_assertions_failed:nFlowFails, issues_by_kind:byKind, secs:Math.round((Date.now() - t0) / 1000)}));
+  for (const r of report.failures.slice(0, Number((arg('show') || ['40'])[0]))) console.log(r.name, JSON.stringify(r.issues.slice(0, 5)));
+  for (const [k, v] of Object.entries(flowFails)) if (v.length) console.log('FLOW', k, JSON.stringify(v));
+  process.exit(bad.length || flowBad.length || nFlowFails ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });
