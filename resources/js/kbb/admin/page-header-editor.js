@@ -69,10 +69,29 @@ function ensureStyle(id, text) {
     document.head.appendChild(st);
 }
 
-/** The picture a bag draws: {d, m, alt} or null. Mirrors PageHeaders::picture(). */
-export function picture(bag) {
-    const d = safeSrc(bag.img);
-    const m = safeSrc(bag.img_m);
+/** Is this page the Arabic site? The page's own <html lang>, as the server set it. */
+function arabicPage() {
+    return typeof document !== 'undefined' && String(document.documentElement.lang || '').toLowerCase().startsWith('ar');
+}
+
+/**
+ * The picture a bag draws: {d, m, alt} or null. Mirrors PageHeaders::picture(),
+ * including (Lane PHA) the Arabic pictures on an Arabic page.
+ */
+export function picture(bag, ar = arabicPage()) {
+    let d = safeSrc(bag.img);
+    let m = safeSrc(bag.img_m);
+    if (ar) {
+        const dAr = safeSrc(bag.img_ar);
+        let mAr = safeSrc(bag.img_m_ar);
+        if (!mAr && dAr && !m) mAr = dAr;
+        if (dAr || mAr) {
+            const dEn = d || m;
+            const mEn = m || d;
+            d = dAr || dEn;
+            m = mAr || mEn;
+        }
+    }
     if (!d && !m) return null;
     if (!bag.d.image && !bag.m.image) return null;
     return { d: d || m, m: m || d, alt: String(bag.alt || '') };
@@ -230,7 +249,7 @@ export function controls(host, opts) {
         const pic = (key, title) => {
             const v = safeSrc(opts.bag[key]);
             return h('div', { class: 'kbb-phe-pic' },
-                h('div', { class: 'kbb-phe-thumb' }, v ? h('img', { src: v, alt: '' }) : (key === 'img_m' ? 'Same as desktop' : 'No picture')),
+                h('div', { class: 'kbb-phe-thumb' }, v ? h('img', { src: v, alt: '' }) : ({ img_m: 'Same as desktop', img_ar: 'English picture', img_m_ar: 'English picture' }[key] || 'No picture')),
                 h('div', { class: 'kbb-phe-row' },
                     h('span', { text: title, style: 'width:100%;font-weight:600;font-size:12px' }),
                     h('button', {
@@ -244,6 +263,9 @@ export function controls(host, opts) {
             h('p', { class: 'kbb-phe-h', text: 'Header picture' }),
             pic('img', 'Picture'),
             pic('img_m', 'Phone picture (optional)'),
+            pic('img_ar', 'Arabic desktop picture'),
+            pic('img_m_ar', 'Arabic phone picture'),
+            h('p', { class: 'kbb-phe-help', text: 'Shown on the Arabic site (/ar). Empty = the English picture.' }),
             h('label', { class: 'kbb-phe-sel' }, h('span', { text: 'Alt text' }), h('input', {
                 type: 'text', maxlength: '160', value: opts.bag.alt || '', placeholder: 'What the picture shows',
                 oninput: (e) => { opts.bag.alt = e.currentTarget.value; opts.onChange(); },

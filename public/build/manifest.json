@@ -1,6 +1,6 @@
 {
-  "_page-header-editor-CP0ePsXD.js": {
-    "file": "assets/page-header-editor-CP0ePsXD.js",
+  "_page-header-editor-D20SmsD8.js": {
+    "file": "assets/page-header-editor-D20SmsD8.js",
     "name": "page-header-editor",
     "isDynamicEntry": true
   },
@@ -734,25 +734,25 @@
     "src": "resources/fonts/outfit/outfit-latin.woff2"
   },
   "resources/js/kbb/admin/category-header-editor.js": {
-    "file": "assets/category-header-editor-DrXonr_Z.js",
+    "file": "assets/category-header-editor-DyOCCYMs.js",
     "name": "category-header-editor",
     "src": "resources/js/kbb/admin/category-header-editor.js",
     "isDynamicEntry": true,
     "imports": [
-      "_page-header-editor-CP0ePsXD.js"
+      "_page-header-editor-D20SmsD8.js"
     ]
   },
   "resources/js/kbb/admin/page-header-editor.js": {
-    "file": "assets/page-header-editor-De8_sGCL.js",
+    "file": "assets/page-header-editor-B-HG3UHm.js",
     "name": "page-header-editor",
     "src": "resources/js/kbb/admin/page-header-editor.js",
     "isEntry": true,
     "imports": [
-      "_page-header-editor-CP0ePsXD.js"
+      "_page-header-editor-D20SmsD8.js"
     ]
   },
   "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-Up09Dvge.js",
+    "file": "assets/storefront-admin-DscX7raS.js",
     "name": "storefront-admin",
     "src": "resources/js/kbb/admin/storefront-admin.js",
     "isDynamicEntry": true,
@@ -765,7 +765,7 @@
     ]
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-B8EVxTy4.js",
+    "file": "assets/app-DpXo4J_F.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,
@@ -782,7 +782,7 @@
     "isEntry": true
   },
   "resources/js/kbb/email-capture.js": {
-    "file": "assets/email-capture-BSs45LCf.js",
+    "file": "assets/email-capture-DMwxL1we.js",
     "name": "email-capture",
     "src": "resources/js/kbb/email-capture.js",
     "isDynamicEntry": true,
