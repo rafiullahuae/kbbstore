@@ -1,6 +1,8 @@
 'use strict';
 /* ── building blocks ───────────────────────────────────────────────────── */
 const isA = () => S.os === 'android';
+/* the site's breadcrumb words ("Shop" is the tab's "تسوّقي" but the crumb's "التسوق") */
+const tc = k => t(k + ' (crumb)').replace(/ \(crumb\)$/, '');
 const backIco = () => isA() ? ico('arrowL', 'flip') : ico('chevL', 'flip');
 const logo = (tag = true) => `<span class="lgx"${AR ? ' data-x="logo"' : ''}>${LOTUS}<span class="w"><b>K-BEAUTY <em>BLISS</em></b>${tag ? `<small>${t('Authentic Korean skincare')}</small>` : ''}</span></span>`;
 const brandWord = () => AR ? 'كي بيوتي بليس' : 'K-Beauty Bliss';
@@ -30,7 +32,7 @@ const gridSkel = n => `<div class="grid">${Array.from({length:n}, () => `<div><d
 const empty = (icon, h, p, btn, path) => `<div class="state"><div class="ic">${ico(icon)}</div><h2>${h}</h2><p>${p}</p>${btn ? `<button class="btn" ${go$(path)} data-root="1">${btn}</button>` : ''}</div>`;
 const offbar = () => `<div class="offbar" role="status">${ico('wifioff')}<span class="grow">${t('You’re offline. Showing what was saved on this phone.')}</span><button data-act="retry">${t('Retry')}</button></div>`;
 const errState = () => `<div class="state"><div class="ic">${ico('alert')}</div><h2>${t('Something went wrong')}</h2><p>${t('We couldn’t load this page. Your bag and wishlist are safe.')}</p><button class="btn" data-act="retry">${ico('refresh')}${t('Try again')}</button><p class="tiny muted">${t('Error code {c}', {c:X('code', 'APP-503')})}</p></div>`;
-const bagBtn = () => `<button class="ib" data-tab="bag" aria-label="${t('Bag')}">${ico('bag')}${bagCount() ? `<span class="bdg">${num(bagCount())}</span>` : ''}</button>`;
+const bagBtn = () => `<button class="ib bagb" data-tab="bag" aria-label="${t('Bag')}">${ico('bag')}${bagCount() ? `<span class="bdg">${num(bagCount())}</span>` : ''}</button>`;
 const priceBlock = (p, big) => { const w = wasOf(p); return `<div class="pp"><span class="price">${money(cur(p))}</span>${w ? `<span class="was">${money(w)}</span><span class="off">−${num(pct(p))}%</span>` : ''}</div>${w ? `<div class="save">${t('You save {v}', {v:money(w - cur(p))})}</div>` : ''}`; };
 const qtyStep = (act, p, n, label) => `<div class="qty" role="group" aria-label="${label || t('Quantity')}"><button data-act="${act}" ${p ? `data-p="${p}"` : ''} data-v="-1" aria-label="${t('Less')}"${n <= 1 && act !== 'bq' ? ' disabled' : ''}>${ico(n <= 1 && act === 'bq' ? 'trash' : 'minus')}</button><b aria-live="polite">${num(n)}</b><button data-act="${act}" ${p ? `data-p="${p}"` : ''} data-v="1" aria-label="${t('More')}">${ico('plus')}</button></div>`;
 const toggleRow = (act, v, on, label, sub, icon) => `<button class="li" data-act="${act}" data-v="${v}" role="switch" aria-checked="${!!on}">${icon ? ico(icon) : ''}<span class="grow"><b class="lt">${label}</b>${sub ? `<span class="small muted">${sub}</span>` : ''}</span><span class="tgb"><span class="tgl${on ? ' on' : ''}"></span></span></button>`;

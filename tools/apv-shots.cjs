@@ -10,6 +10,7 @@
  *   node tools/apv-shots.cjs --flows-only            only the clicked-through flows
  *   node tools/apv-shots.cjs --no-flows              only the screen grid
  *   node tools/apv-shots.cjs --mutate='<css>'        inject a defect to prove the checks can fail
+ *   node tools/apv-shots.cjs --mutate='js:<code>'    the same with code run in the app (an engine defect)
  *
  * Every screen is reached by its deep link (index.html#/route?device=…), the same
  * link screens.html uses. Per render it asserts:
@@ -33,6 +34,8 @@
  *              live site's (docs/app-preview/site-measure.json, from tools/apv-site.cjs) within 1px;
  *              the Arabic app shows the site's Arabic wordmark
  *   rail       no navigation rail anywhere (the site's menus replaced it)
+ *   cart-icons Lane APV4: at most one cart/bag icon in the top area of a screen (the site's header
+ *              plus any bar under it); a second bag in a sub-bar fails
  *   The site's own header and menus (.kh) are held to the site's sizes and colours by the parity
  *   check, not to the app's 44px tap rule or 3:1 contrast: the owner asked for exactly the site.
  *   Where the site itself falls short (the 34px search field, white on #E991AE in the delivery
@@ -64,7 +67,11 @@ const arg = (k) => { const a = process.argv.find((x) => x.startsWith(`--${k}=`))
 const NOSHOTS = process.argv.includes('--no-shots');
 const FLOWS_ONLY = process.argv.includes('--flows-only');
 const NO_FLOWS = process.argv.includes('--no-flows');
-const MUTATE = (process.argv.find((x) => x.startsWith('--mutate=')) || '').slice(9);
+const MUTATE0 = (process.argv.find((x) => x.startsWith('--mutate=')) || '').slice(9);
+/* --mutate='<css>' injects a stylesheet; --mutate='js:<code>' runs code in the app's global scope once
+   the app is up (Lane APV4: an engine defect, e.g. the second bag back in the sub-bar) */
+const MUTATE_JS = MUTATE0.startsWith('js:') ? MUTATE0.slice(3) : '';
+const MUTATE = MUTATE_JS ? '' : MUTATE0;
 const WORKERS = Number((arg('workers') || ['3'])[0]);
 /* Lane APV3: the live site's header at the app's widths (tools/apv-site.cjs) */
 const SITEM = (() => {
@@ -319,6 +326,27 @@ function audit(arg) {
     for (const x of ib) { const sv = x.querySelector('svg'); if (sv && !near(box(sv).width, M.iconSvg)) add('site', x, `header icon ${box(sv).width.toFixed(1)}px, the site's are ${M.iconSvg}px`); }
   }
 
+  /* 9b. Lane APV4: one cart in the top area of every screen. The site's header carries the cart, so
+     a sub-bar under it must not draw a second bag (the "← Face Serums + bag" bar of APV3 did). The top
+     area is the site's header plus every pane's bar; a cart is anything that opens the bag or draws
+     the bag icon. Each glass is one screen (the Duo has two). */
+  const BAGD = typeof IP !== 'undefined' && IP.bag;
+  for (const g of glasses) {
+    const tops = [...g.querySelectorAll('.kh .kh-hd, .pane > .pbar0, .tt-top > .pbar0, .hhead')].filter((x) => !hidden(x));
+    const carts = new Set();
+    for (const top of tops) {
+      const hits = [...top.querySelectorAll('[data-tab="bag"], [data-kbb-cart], .bagb, [aria-label="Cart"], [aria-label="Bag"]')]
+        .concat(BAGD ? [...top.querySelectorAll('svg path')].filter((p) => p.getAttribute('d') === BAGD).map((p) => p.closest('svg')) : []);
+      for (const h of hits) {
+        const c = h.closest('a,button,[role=button]') || h;
+        if (hidden(c)) continue;
+        const r = c.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) carts.add(c);
+      }
+    }
+    if (carts.size >= 2) add('cart-icons', [...carts][1], `${carts.size} cart/bag icons in the top area (the site's header and the bar under it): exactly one is allowed`);
+  }
+
   /* 10. Lane APV3: the cart page and the checkout are the site's, measured against the site at 390 */
   if (SCO) for (const g of glasses) {
     if (g.offsetWidth >= 600) continue; // measured on the site at 390: the phone layout
@@ -444,6 +472,7 @@ async function newPage(lang) {
   page.on('response', (r) => { if (r.status() >= 400) page.errs.push(`http ${r.status()}: ${r.url()}`); });
   await page.goto(PAGE(lang) + '#/home?z=100');
   await page.waitForFunction(() => window.APV);
+  if (MUTATE_JS) await page.evaluate((src) => { (0, eval)(src); }, MUTATE_JS);
   page.lang = lang;
   return page;
 }

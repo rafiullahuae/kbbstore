@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-19T08:38:52.446Z",
+ "generated": "2026-10-19T09:07:09.454Z",
  "renders": 1952,
  "screens": 168,
  "devices": [
@@ -112,9 +112,9 @@
     "PHA",
     "LHA",
     "PDRN",
+    "SPF 50+ PA++++",
     "NP",
-    "ml",
-    "SPF 50+ PA++++"
+    "ml"
    ]
   },
   "logo": {
@@ -131,8 +131,8 @@
     "#KBB-56215",
     "card_declined · insufficient",
     "tabby: rejected · order_amou",
-    "Aramex 4485 9921 03",
     "#KBB-55870",
+    "Aramex 4485 9921 03",
     "#KBB-55102",
     "APP-503"
    ]
@@ -143,11 +143,11 @@
     "tabby",
     "tamara",
     "Pay",
-    "Visa",
-    "Mastercard",
     "Tabby",
     "Tamara",
-    "info@kbeautybliss.com"
+    "info@kbeautybliss.com",
+    "Visa",
+    "Mastercard"
    ]
   },
   "ugc": {

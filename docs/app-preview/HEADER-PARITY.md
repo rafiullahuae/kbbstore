@@ -91,6 +91,6 @@ bar wraps onto a second line where the items don't fit.
 - `header-tablet-en.png`, `header-tablet-ar.png`: site and app at 673, 744 and 1133
 - `menu-phone-en.png`, `menu-phone-ar.png`: the ☰ menu, closed levels and one level open, site and app
 - `menu-tablet-en.png`, `menu-tablet-ar.png`: the iPad landscape mega panel (site and app), the Fold inner menu (site and app) and the "menu bar" option
-- `category-fold-inner-en.png`, `category-fold-inner-ar.png`: the owner's own screen (Category · Face Serums on the Fold inner), as it is now
+- `category-fold-inner-en.png`, `category-fold-inner-ar.png`: the owner's own screen (Category · Face Serums on the Fold inner): the site's header, then the slim back row in the site's breadcrumb style (Lane APV4), with one bag
 
 Checkout and cart parity: `CHECKOUT-PARITY.md`.

@@ -40,7 +40,23 @@ function layoutFor(r, d){
 }
 
 /* ── one pane ──────────────────────────────────────────────────────────── */
+/* Lane APV4: under the website's header a screen gets no second app bar. The
+   site's header already carries the cart, so a second bag icon is never drawn
+   there; what is left is one slim row in the place and style of the site's
+   breadcrumb (12.5px, #756C74, "Home / Shop / Skincare / Face Serums"), with
+   the app's back arrow at its start (→ on the right in Arabic). Screens with no
+   site header (checkout, after-Pay-now, the Duo's second screen) keep their bar. */
+const BAGB = /<button class="ib bagb"[\s\S]*?<\/button>/g;
+function crumbRow(o){
+  const sep = `<i aria-hidden="true"> ${o.sep || '/'} </i>`;
+  const C = (o.crumbs || [o.titleH || dt(o.title || o.ptitle || '')]).filter(Boolean);
+  const trail = [`<b>${t('Home')}</b>`].concat(C.map((c, i) => i === C.length - 1 ? `<span aria-current="page">${c}</span>` : `<span>${c}</span>`)).join(sep);
+  const left = o.back ? `<button class="back" data-act="back" aria-label="${t('Back')}">${ico('arrowL', 'flip')}</button>` : '';
+  const right = (o.right || '').replace(BAGB, '');
+  return `<header class="bar crow${o.back ? '' : ' nob'}" data-bar="1"><div class="row">${left}<nav class="bcr" aria-label="${t('Breadcrumb')}">${trail}</nav>${right ? `<div class="e">${right}</div>` : ''}</div>${o.extra || ''}</header>`;
+}
 function bar(o){
+  if (o.slim) return crumbRow(o);
   const st = S.stacks[S.tab];
   const prev = st.length > 1 ? titleOf(st[st.length - 2].path) : '';
   const lbl = prev && prev.length <= 14 ? prev : t('Back');
@@ -61,7 +77,7 @@ function paneHTML(path, L, ctx, o = {}){
   const stack = S.stacks[S.tab];
   const canBack = !o.noBack && R.back !== false && stack.length > 1 && (o.slot !== 'end');
   const showLarge = R.large && !isA();
-  const head = R.head || (R.nobar ? '' : bar({title:R.title, titleH:R.titleH, large:showLarge, back:canBack && (R.back || stack.length > 1), right:R.right, extra:R.extra, line:R.line}));
+  const head = R.head || (R.nobar ? '' : bar({title:R.title, ptitle:ctx.site ? titleOf(r.path) : '', titleH:R.titleH, large:showLarge, back:canBack && (R.back || stack.length > 1), right:R.right, extra:R.extra, line:R.line, slim:!!ctx.site, crumbs:R.crumbs, sep:R.sep}));
   const large = showLarge ? `<h1 class="large">${R.titleH || esc(R.title)}</h1>` : '';
   const foot = R.foot ? `<footer class="foot" data-layer="${L}-foot">${R.foot}</footer>` : '';
   const pairAttr = o.match ? ` data-match="${esc(o.match.source)}" data-host="${esc(o.host)}"` : '';

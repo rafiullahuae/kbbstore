@@ -148,7 +148,9 @@ scr('/category/:k', {tab:'shop', group:'Category', label:'Category page', chain:
     const base = c.items.map(s => P[s]).filter(Boolean);
     const head = `<div class="cbanner">${c.banner ? `<picture><source media="(min-width:700px)" srcset="${c.banner_w || c.banner}"><img src="${c.banner}" alt="" class="cover"></picture>` : `<div class="cbg"></div>`}</div>
       <div class="chead"><h1 class="h1">${dt(c.name)}</h1>${aboutBlock('about-c-' + c.k, c.about)}</div>${subChips(c)}`;
-    return {title:c.name, back:true, right:bagBtn(), body:listing(r, ctx, base, {head}), ptr:true, sk:listKey(r)};
+    /* the site's crumb: Home / Shop / <parent> / <category> */
+    const crumbs = [tc('Shop')].concat(c.parent && CAT[c.parent] ? [dt(CAT[c.parent].name)] : [], [dt(c.name)]);
+    return {title:c.name, back:true, right:bagBtn(), crumbs, body:listing(r, ctx, base, {head}), ptr:true, sk:listKey(r)};
   },
   dual:listDual});
 
@@ -160,7 +162,7 @@ scr('/brand/:b', {tab:'shop', group:'Brand', label:'Brand page', chain:() => ['/
     const head = `<div class="bbanner">${b.banner ? `<picture><source media="(min-width:700px)" srcset="${b.banner_w || b.banner}"><img src="${b.banner}" alt="" class="cover"></picture>` : `<div class="cbg" style="background:${brandColour(b.slug)}"></div>`}</div>
       <div class="bhead"><span class="blogo" style="background:${brandColour(b.slug)}" aria-hidden="true">${bInit(b)}</span><div class="grow"><h1 class="h1">${brandTxt(b.name)}</h1><span class="small muted">${t('{n} products on K-Beauty Bliss', {n:num(b.items.length)})}</span></div><button class="ib" data-act="share" aria-label="${t('Share')}">${ico('share')}</button></div>
       <div class="chead" style="padding-top:0">${aboutBlock('about-b-' + b.slug, b.about)}</div>`;
-    return {title:b.name, titleH:brandTxt(b.name), back:true, right:bagBtn(), body:listing(r, ctx, base, {head, noBrand:true}), ptr:true, sk:listKey(r)};
+    return {title:b.name, titleH:brandTxt(b.name), back:true, right:bagBtn(), crumbs:[tc('Brands'), brandTxt(b.name)], sep:'›', body:listing(r, ctx, base, {head, noBrand:true}), ptr:true, sk:listKey(r)};
   },
   dual:listDual});
 
@@ -280,7 +282,9 @@ scr('/product/:slug', {tab:'shop', group:'Product', label:'Product', chain:r => 
     else if (ctx.tabletop) body = `<div class="d${d}">${X2.gal}</div>`;
     else body = `<div class="d${d}">${r.query.state === 'offline' ? offbar() : ''}<div class="pdp"><div class="pdp-g">${X2.gal}</div><div class="pdp-i">${X2.info}</div></div>${X2.rest}</div>`;
     const tt = `<div class="pad ttp"><div class="row2" style="align-items:flex-start"><div class="grow"><div class="small muted">${brandTxt(bn(p))}</div><b class="clamp2" style="font-size:16px">${nameTxt(p)}</b></div><span class="price" style="font-size:20px">${money(cur(p))}</span></div><div style="height:10px"></div><div class="row2">${qtyStep('pq', null, S.qty)}<span class="grow small muted">${t('4 payments of {v}', {v:money(inst(cur(p)))})}</span></div><div class="thumbs" style="padding:12px 0 0">${gal(p).map((g, i) => `<button class="${i ? '' : 'on'}" data-act="gi" data-v="${i}" aria-label="${t('Photo {n}', {n:num(i + 1)})}"><img src="${g.thumb}" alt="" loading="lazy"></button>`).join('')}</div></div>`;
-    return {title:'', back:true, right: ctx.half === 'start' ? '' : right, body, foot: ctx.half === 'start' ? '' : productFoot(p, r), noTabs:true, tt, sk:'p-' + p.slug + (ctx.half || '')};
+    /* the site's crumb: Home / <first category> / <the product's full name> */
+    const crumbs = (p.cats && CAT[p.cats[0]] ? [dt(CAT[p.cats[0]].name)] : []).concat([AR && isLatin(p.name) ? X('name', esc(p.name)) : dt(p.name)]);
+    return {title:'', back:true, crumbs, right: ctx.half === 'start' ? '' : right, body, foot: ctx.half === 'start' ? '' : productFoot(p, r), noTabs:true, tt, sk:'p-' + p.slug + (ctx.half || '')};
   },
   dual:() => 'halves'});
 
