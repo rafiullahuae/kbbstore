@@ -167,4 +167,14 @@ Output: `shots/en/`, `shots/ar/` (one JPEG per render and per flow step; not in 
 `ipad-landscape-en/ar`, `en-checkout-steps`, `ar-checkout-steps` (every step, in order),
 `floating-label-before`, `floating-label-after`.
 
-RESULTS_PLACEHOLDER
+**Last full run (19 October 2026):** 1,840 renders (92 screens + Design B/C of Home and Product
+= 92 per language × 10 device states × 2 languages), 0 with an issue; 224 flow steps on 4
+devices × 2 languages, 0 with an issue, 0 failed assertions; both screens.html pages: 92 live
+cards, every one a deep link, no console error. Mutation check: `--mutate='.fl>input{padding-top:8px}'`
+fails the label check ("lifted label overlaps the value by 9.3px").
+
+Defects the walk caught that a screen grid could not: the outline "ghost" buttons (Add a new
+address, Choose another method, Create an account…) took no clicks because a transition class
+shared their name; choosing an emirate did nothing; a toast closing re-drew the page and threw
+away what was being typed; dragging from the edge over a photo started an image drag instead of
+going back.

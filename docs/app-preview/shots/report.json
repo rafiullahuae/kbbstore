@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-19T02:28:44.449Z",
+ "generated": "2026-10-19T02:42:27.795Z",
  "renders": 1840,
  "screens": 184,
  "devices": [
@@ -33,6 +33,22 @@
    "ar/px9": [],
    "ar/fold-inner": [],
    "ar/duo": []
+  }
+ },
+ "screens_html": {
+  "en": {
+   "cards": 92,
+   "links": 92,
+   "sw": 1400,
+   "w": 1400,
+   "errors": []
+  },
+  "ar": {
+   "cards": 92,
+   "links": 92,
+   "sw": 1400,
+   "w": 1400,
+   "errors": []
   }
  },
  "arabic_exceptions": {
@@ -80,12 +96,12 @@
    "eg": [
     "#KBB-56214",
     "WELCOME10",
+    "card_declined · insufficient",
     "#KBB-56215",
     "tabby: rejected · order_amou",
-    "card_declined · insufficient",
-    "Aramex 4485 9921 03",
     "#KBB-55870",
-    "APP-503"
+    "#KBB-55102",
+    "Aramex 4485 9921 03"
    ]
   },
   "pay": {
@@ -98,7 +114,7 @@
     "MC",
     "AMEX",
     "checkout.tabby.ai",
-    "checkout.tamara.co"
+    "Secure"
    ]
   },
   "ugc": {
