@@ -1,0 +1,1914 @@
+{
+ "source": "https://kbeautybliss.com",
+ "captured": "2026-10-19T06:22:12.654Z",
+ "widths": [
+  390,
+  600,
+  768,
+  900,
+  1024,
+  1280
+ ],
+ "measured": {
+  "en-390": {
+   "header": {
+    "x": 0,
+    "y": 0,
+    "w": 390,
+    "h": 86
+   },
+   "headerS": {
+    "backgroundColor": "rgb(255, 255, 255)",
+    "borderBottomWidth": "1px",
+    "borderBottomColor": "rgba(42, 34, 40, 0.06)"
+   },
+   "wrap": {
+    "paddingLeft": "12px",
+    "paddingRight": "12px"
+   },
+   "row1": {
+    "h": 85
+   },
+   "menuIcon": {
+    "x": 12,
+    "y": 2,
+    "w": 46,
+    "h": 46,
+    "svg": {
+     "x": 23,
+     "y": 13,
+     "w": 24,
+     "h": 24
+    }
+   },
+   "logo": {
+    "x": 58,
+    "y": 3,
+    "w": 188,
+    "h": 44
+   },
+   "logoIcon": {
+    "x": 69.3,
+    "y": 12,
+    "w": 35,
+    "h": 26
+   },
+   "word": {
+    "x": 109.3,
+    "y": 12.2,
+    "w": 125.5,
+    "h": 14,
+    "fontFamily": "Outfit, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "fontSize": "14px",
+    "fontWeight": "650",
+    "letterSpacing": "1.19px",
+    "color": "rgb(42, 34, 40)"
+   },
+   "tag": {
+    "x": 109.3,
+    "y": 28.6,
+    "w": 125.5,
+    "h": 9.2,
+    "fontSize": "8px",
+    "fontWeight": "600",
+    "letterSpacing": "0.32px",
+    "color": "rgb(198, 57, 95)"
+   },
+   "wordText": "K-BeautyBliss",
+   "search": {
+    "x": 12,
+    "y": 48,
+    "w": 366,
+    "h": 34,
+    "borderRadius": "12px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgba(42, 34, 40, 0.1)",
+    "backgroundColor": "rgb(252, 252, 252)",
+    "paddingLeft": "14px",
+    "paddingRight": "14px",
+    "icon": {
+     "x": 27,
+     "y": 58.8,
+     "w": 12.4,
+     "h": 12.4
+    },
+    "iconColor": "rgb(198, 57, 95)",
+    "font": {
+     "fontFamily": "Outfit, system-ui, sans-serif",
+     "fontSize": "16px",
+     "color": "rgb(198, 57, 95)"
+    },
+    "placeholder": "Search skincare, brands…"
+   },
+   "icons": [
+    {
+     "label": "العربية",
+     "box": {
+      "x": 254,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 262.5,
+      "y": 20.5,
+      "w": 27.1,
+      "h": 9
+     }
+    },
+    {
+     "label": "Account",
+     "box": {
+      "x": 298,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 309.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "Cart",
+     "box": {
+      "x": 334,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 345.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    }
+   ],
+   "lang": {
+    "kind": "capsule",
+    "box": {
+     "x": 254,
+     "y": 3,
+     "w": 44,
+     "h": 44
+    },
+    "text": "",
+    "borderRadius": "50%",
+    "borderTopWidth": "0px",
+    "borderTopColor": "rgb(42, 34, 40)",
+    "fontSize": "14px",
+    "fontWeight": "400"
+   },
+   "menuBar": null,
+   "badge": {
+    "backgroundColor": "rgb(198, 57, 95)",
+    "fontSize": "10px"
+   }
+  },
+  "en-600": {
+   "header": {
+    "x": 0,
+    "y": 0,
+    "w": 600,
+    "h": 86
+   },
+   "headerS": {
+    "backgroundColor": "rgb(255, 255, 255)",
+    "borderBottomWidth": "1px",
+    "borderBottomColor": "rgba(42, 34, 40, 0.06)"
+   },
+   "wrap": {
+    "paddingLeft": "12px",
+    "paddingRight": "12px"
+   },
+   "row1": {
+    "h": 85
+   },
+   "menuIcon": {
+    "x": 12,
+    "y": 2,
+    "w": 46,
+    "h": 46,
+    "svg": {
+     "x": 23,
+     "y": 13,
+     "w": 24,
+     "h": 24
+    }
+   },
+   "logo": {
+    "x": 58,
+    "y": 3,
+    "w": 398,
+    "h": 44
+   },
+   "logoIcon": {
+    "x": 174.3,
+    "y": 12,
+    "w": 35,
+    "h": 26
+   },
+   "word": {
+    "x": 214.3,
+    "y": 12.2,
+    "w": 125.5,
+    "h": 14,
+    "fontFamily": "Outfit, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "fontSize": "14px",
+    "fontWeight": "650",
+    "letterSpacing": "1.19px",
+    "color": "rgb(42, 34, 40)"
+   },
+   "tag": {
+    "x": 214.3,
+    "y": 28.6,
+    "w": 125.5,
+    "h": 9.2,
+    "fontSize": "8px",
+    "fontWeight": "600",
+    "letterSpacing": "0.32px",
+    "color": "rgb(198, 57, 95)"
+   },
+   "wordText": "K-BeautyBliss",
+   "search": {
+    "x": 12,
+    "y": 48,
+    "w": 576,
+    "h": 34,
+    "borderRadius": "12px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgba(42, 34, 40, 0.1)",
+    "backgroundColor": "rgb(252, 252, 252)",
+    "paddingLeft": "14px",
+    "paddingRight": "14px",
+    "icon": {
+     "x": 27,
+     "y": 58.8,
+     "w": 12.4,
+     "h": 12.4
+    },
+    "iconColor": "rgb(198, 57, 95)",
+    "font": {
+     "fontFamily": "Outfit, system-ui, sans-serif",
+     "fontSize": "16px",
+     "color": "rgb(198, 57, 95)"
+    },
+    "placeholder": "Search skincare, brands…"
+   },
+   "icons": [
+    {
+     "label": "العربية",
+     "box": {
+      "x": 464,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 472.5,
+      "y": 20.5,
+      "w": 27.1,
+      "h": 9
+     }
+    },
+    {
+     "label": "Account",
+     "box": {
+      "x": 508,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 519.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "Cart",
+     "box": {
+      "x": 544,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 555.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    }
+   ],
+   "lang": {
+    "kind": "capsule",
+    "box": {
+     "x": 464,
+     "y": 3,
+     "w": 44,
+     "h": 44
+    },
+    "text": "",
+    "borderRadius": "50%",
+    "borderTopWidth": "0px",
+    "borderTopColor": "rgb(42, 34, 40)",
+    "fontSize": "14px",
+    "fontWeight": "400"
+   },
+   "menuBar": null,
+   "badge": {
+    "backgroundColor": "rgb(198, 57, 95)",
+    "fontSize": "10px"
+   }
+  },
+  "en-768": {
+   "header": {
+    "x": 0,
+    "y": 0,
+    "w": 768,
+    "h": 86
+   },
+   "headerS": {
+    "backgroundColor": "rgb(255, 255, 255)",
+    "borderBottomWidth": "1px",
+    "borderBottomColor": "rgba(42, 34, 40, 0.06)"
+   },
+   "wrap": {
+    "paddingLeft": "12px",
+    "paddingRight": "12px"
+   },
+   "row1": {
+    "h": 85
+   },
+   "menuIcon": {
+    "x": 12,
+    "y": 2,
+    "w": 46,
+    "h": 46,
+    "svg": {
+     "x": 23,
+     "y": 13,
+     "w": 24,
+     "h": 24
+    }
+   },
+   "logo": {
+    "x": 58,
+    "y": 3,
+    "w": 566,
+    "h": 44
+   },
+   "logoIcon": {
+    "x": 258.3,
+    "y": 12,
+    "w": 35,
+    "h": 26
+   },
+   "word": {
+    "x": 298.3,
+    "y": 12.2,
+    "w": 125.5,
+    "h": 14,
+    "fontFamily": "Outfit, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "fontSize": "14px",
+    "fontWeight": "650",
+    "letterSpacing": "1.19px",
+    "color": "rgb(42, 34, 40)"
+   },
+   "tag": {
+    "x": 298.3,
+    "y": 28.6,
+    "w": 125.5,
+    "h": 9.2,
+    "fontSize": "8px",
+    "fontWeight": "600",
+    "letterSpacing": "0.32px",
+    "color": "rgb(198, 57, 95)"
+   },
+   "wordText": "K-BeautyBliss",
+   "search": {
+    "x": 12,
+    "y": 48,
+    "w": 744,
+    "h": 34,
+    "borderRadius": "12px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgba(42, 34, 40, 0.1)",
+    "backgroundColor": "rgb(252, 252, 252)",
+    "paddingLeft": "14px",
+    "paddingRight": "14px",
+    "icon": {
+     "x": 27,
+     "y": 58.8,
+     "w": 12.4,
+     "h": 12.4
+    },
+    "iconColor": "rgb(198, 57, 95)",
+    "font": {
+     "fontFamily": "Outfit, system-ui, sans-serif",
+     "fontSize": "16px",
+     "color": "rgb(198, 57, 95)"
+    },
+    "placeholder": "Search skincare, brands…"
+   },
+   "icons": [
+    {
+     "label": "العربية",
+     "box": {
+      "x": 632,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 640.5,
+      "y": 20.5,
+      "w": 27.1,
+      "h": 9
+     }
+    },
+    {
+     "label": "Account",
+     "box": {
+      "x": 676,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 687.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "Cart",
+     "box": {
+      "x": 712,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 723.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    }
+   ],
+   "lang": {
+    "kind": "capsule",
+    "box": {
+     "x": 632,
+     "y": 3,
+     "w": 44,
+     "h": 44
+    },
+    "text": "",
+    "borderRadius": "50%",
+    "borderTopWidth": "0px",
+    "borderTopColor": "rgb(42, 34, 40)",
+    "fontSize": "14px",
+    "fontWeight": "400"
+   },
+   "menuBar": null,
+   "badge": {
+    "backgroundColor": "rgb(198, 57, 95)",
+    "fontSize": "10px"
+   }
+  },
+  "en-900": {
+   "header": {
+    "x": 0,
+    "y": 0,
+    "w": 900,
+    "h": 86
+   },
+   "headerS": {
+    "backgroundColor": "rgb(255, 255, 255)",
+    "borderBottomWidth": "1px",
+    "borderBottomColor": "rgba(42, 34, 40, 0.06)"
+   },
+   "wrap": {
+    "paddingLeft": "12px",
+    "paddingRight": "12px"
+   },
+   "row1": {
+    "h": 85
+   },
+   "menuIcon": {
+    "x": 12,
+    "y": 2,
+    "w": 46,
+    "h": 46,
+    "svg": {
+     "x": 23,
+     "y": 13,
+     "w": 24,
+     "h": 24
+    }
+   },
+   "logo": {
+    "x": 58,
+    "y": 3,
+    "w": 698,
+    "h": 44
+   },
+   "logoIcon": {
+    "x": 324.3,
+    "y": 12,
+    "w": 35,
+    "h": 26
+   },
+   "word": {
+    "x": 364.3,
+    "y": 12.2,
+    "w": 125.5,
+    "h": 14,
+    "fontFamily": "Outfit, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "fontSize": "14px",
+    "fontWeight": "650",
+    "letterSpacing": "1.19px",
+    "color": "rgb(42, 34, 40)"
+   },
+   "tag": {
+    "x": 364.3,
+    "y": 28.6,
+    "w": 125.5,
+    "h": 9.2,
+    "fontSize": "8px",
+    "fontWeight": "600",
+    "letterSpacing": "0.32px",
+    "color": "rgb(198, 57, 95)"
+   },
+   "wordText": "K-BeautyBliss",
+   "search": {
+    "x": 12,
+    "y": 48,
+    "w": 876,
+    "h": 34,
+    "borderRadius": "12px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgba(42, 34, 40, 0.1)",
+    "backgroundColor": "rgb(252, 252, 252)",
+    "paddingLeft": "14px",
+    "paddingRight": "14px",
+    "icon": {
+     "x": 27,
+     "y": 58.8,
+     "w": 12.4,
+     "h": 12.4
+    },
+    "iconColor": "rgb(198, 57, 95)",
+    "font": {
+     "fontFamily": "Outfit, system-ui, sans-serif",
+     "fontSize": "16px",
+     "color": "rgb(198, 57, 95)"
+    },
+    "placeholder": "Search skincare, brands…"
+   },
+   "icons": [
+    {
+     "label": "العربية",
+     "box": {
+      "x": 764,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 772.5,
+      "y": 20.5,
+      "w": 27.1,
+      "h": 9
+     }
+    },
+    {
+     "label": "Account",
+     "box": {
+      "x": 808,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 819.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "Cart",
+     "box": {
+      "x": 844,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 855.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    }
+   ],
+   "lang": {
+    "kind": "capsule",
+    "box": {
+     "x": 764,
+     "y": 3,
+     "w": 44,
+     "h": 44
+    },
+    "text": "",
+    "borderRadius": "50%",
+    "borderTopWidth": "0px",
+    "borderTopColor": "rgb(42, 34, 40)",
+    "fontSize": "14px",
+    "fontWeight": "400"
+   },
+   "menuBar": null,
+   "badge": {
+    "backgroundColor": "rgb(198, 57, 95)",
+    "fontSize": "10px"
+   }
+  },
+  "en-1024": {
+   "header": {
+    "x": 0,
+    "y": 0,
+    "w": 1024,
+    "h": 93.5
+   },
+   "headerS": {
+    "backgroundColor": "rgb(255, 255, 255)",
+    "borderBottomWidth": "1px",
+    "borderBottomColor": "rgba(42, 34, 40, 0.06)"
+   },
+   "wrap": {
+    "paddingLeft": "22px",
+    "paddingRight": "22px"
+   },
+   "row1": {
+    "h": 46
+   },
+   "menuIcon": null,
+   "logo": {
+    "x": 22,
+    "y": 4,
+    "w": 256.3,
+    "h": 38
+   },
+   "logoIcon": {
+    "x": 22,
+    "y": 4,
+    "w": 51.1,
+    "h": 38
+   },
+   "word": {
+    "x": 81.1,
+    "y": 4.8,
+    "w": 197.1,
+    "h": 22,
+    "fontFamily": "Outfit, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "fontSize": "22px",
+    "fontWeight": "650",
+    "letterSpacing": "1.87px",
+    "color": "rgb(42, 34, 40)"
+   },
+   "tag": {
+    "x": 81.1,
+    "y": 29.8,
+    "w": 197.1,
+    "h": 11.5,
+    "fontSize": "10px",
+    "fontWeight": "600",
+    "letterSpacing": "1px",
+    "color": "rgb(198, 57, 95)"
+   },
+   "wordText": "K-BeautyBliss",
+   "search": {
+    "x": 310.3,
+    "y": 6,
+    "w": 255,
+    "h": 34,
+    "borderRadius": "99px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgba(42, 34, 40, 0.1)",
+    "backgroundColor": "rgba(42, 34, 40, 0.06)",
+    "paddingLeft": "14px",
+    "paddingRight": "14px",
+    "icon": {
+     "x": 325.3,
+     "y": 14.5,
+     "w": 17,
+     "h": 17
+    },
+    "iconColor": "rgb(117, 108, 116)",
+    "font": {
+     "fontFamily": "Outfit, system-ui, sans-serif",
+     "fontSize": "13.5px",
+     "color": "rgb(42, 34, 40)"
+    },
+    "placeholder": "Search skincare, brands…"
+   },
+   "icons": [
+    {
+     "label": "Account",
+     "box": {
+      "x": 695.5,
+      "y": 3,
+      "w": 40,
+      "h": 40
+     },
+     "svg": {
+      "x": 705,
+      "y": 12.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "Wishlist",
+     "box": {
+      "x": 741.5,
+      "y": 3,
+      "w": 40,
+      "h": 40
+     },
+     "svg": {
+      "x": 751,
+      "y": 12.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "Cart",
+     "box": {
+      "x": 787.5,
+      "y": 3,
+      "w": 40,
+      "h": 40
+     },
+     "svg": {
+      "x": 797,
+      "y": 12.5,
+      "w": 21,
+      "h": 21
+     }
+    }
+   ],
+   "lang": {
+    "kind": "pill",
+    "box": {
+     "x": 589.3,
+     "y": 8,
+     "w": 90.3,
+     "h": 30
+    },
+    "text": "EN",
+    "borderRadius": "999px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgb(233, 223, 227)",
+    "fontSize": "12px",
+    "fontWeight": "700"
+   },
+   "menuBar": {
+    "x": 0,
+    "y": 46,
+    "w": 1024,
+    "h": 46.5,
+    "items": [
+     "Trending Brands",
+     "All Brands",
+     "Skincare",
+     "Shop by Skin Concern",
+     "Super Sale",
+     "Skincare Sets",
+     "Hair Care",
+     "Body Care",
+     "Beauty Devices",
+     "Everything Under 54 AED"
+    ]
+   },
+   "badge": {
+    "backgroundColor": "rgb(198, 57, 95)",
+    "fontSize": "10px"
+   }
+  },
+  "en-1280": {
+   "header": {
+    "x": 0,
+    "y": 0,
+    "w": 1280,
+    "h": 93.5
+   },
+   "headerS": {
+    "backgroundColor": "rgb(255, 255, 255)",
+    "borderBottomWidth": "1px",
+    "borderBottomColor": "rgba(42, 34, 40, 0.06)"
+   },
+   "wrap": {
+    "paddingLeft": "22px",
+    "paddingRight": "22px"
+   },
+   "row1": {
+    "h": 46
+   },
+   "menuIcon": null,
+   "logo": {
+    "x": 22,
+    "y": 4,
+    "w": 256.3,
+    "h": 38
+   },
+   "logoIcon": {
+    "x": 22,
+    "y": 4,
+    "w": 51.1,
+    "h": 38
+   },
+   "word": {
+    "x": 81.1,
+    "y": 4.8,
+    "w": 197.1,
+    "h": 22,
+    "fontFamily": "Outfit, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "fontSize": "22px",
+    "fontWeight": "650",
+    "letterSpacing": "1.87px",
+    "color": "rgb(42, 34, 40)"
+   },
+   "tag": {
+    "x": 81.1,
+    "y": 29.8,
+    "w": 197.1,
+    "h": 11.5,
+    "fontSize": "10px",
+    "fontWeight": "600",
+    "letterSpacing": "1px",
+    "color": "rgb(198, 57, 95)"
+   },
+   "wordText": "K-BeautyBliss",
+   "search": {
+    "x": 310.3,
+    "y": 6,
+    "w": 511,
+    "h": 34,
+    "borderRadius": "99px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgba(42, 34, 40, 0.1)",
+    "backgroundColor": "rgba(42, 34, 40, 0.06)",
+    "paddingLeft": "14px",
+    "paddingRight": "14px",
+    "icon": {
+     "x": 325.3,
+     "y": 14.5,
+     "w": 17,
+     "h": 17
+    },
+    "iconColor": "rgb(117, 108, 116)",
+    "font": {
+     "fontFamily": "Outfit, system-ui, sans-serif",
+     "fontSize": "13.5px",
+     "color": "rgb(42, 34, 40)"
+    },
+    "placeholder": "Search skincare, brands…"
+   },
+   "icons": [
+    {
+     "label": "Account",
+     "box": {
+      "x": 951.5,
+      "y": 3,
+      "w": 40,
+      "h": 40
+     },
+     "svg": {
+      "x": 961,
+      "y": 12.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "Wishlist",
+     "box": {
+      "x": 997.5,
+      "y": 3,
+      "w": 40,
+      "h": 40
+     },
+     "svg": {
+      "x": 1007,
+      "y": 12.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "Cart",
+     "box": {
+      "x": 1043.5,
+      "y": 3,
+      "w": 40,
+      "h": 40
+     },
+     "svg": {
+      "x": 1053,
+      "y": 12.5,
+      "w": 21,
+      "h": 21
+     }
+    }
+   ],
+   "lang": {
+    "kind": "pill",
+    "box": {
+     "x": 845.3,
+     "y": 8,
+     "w": 90.3,
+     "h": 30
+    },
+    "text": "EN",
+    "borderRadius": "999px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgb(233, 223, 227)",
+    "fontSize": "12px",
+    "fontWeight": "700"
+   },
+   "menuBar": {
+    "x": 0,
+    "y": 46,
+    "w": 1280,
+    "h": 46.5,
+    "items": [
+     "Trending Brands",
+     "All Brands",
+     "Skincare",
+     "Shop by Skin Concern",
+     "Super Sale",
+     "Skincare Sets",
+     "Hair Care",
+     "Body Care",
+     "Beauty Devices",
+     "Everything Under 54 AED"
+    ]
+   },
+   "badge": {
+    "backgroundColor": "rgb(198, 57, 95)",
+    "fontSize": "10px"
+   }
+  },
+  "ar-390": {
+   "header": {
+    "x": 0,
+    "y": 0,
+    "w": 390,
+    "h": 86
+   },
+   "headerS": {
+    "backgroundColor": "rgb(255, 255, 255)",
+    "borderBottomWidth": "1px",
+    "borderBottomColor": "rgba(42, 34, 40, 0.06)"
+   },
+   "wrap": {
+    "paddingLeft": "12px",
+    "paddingRight": "12px"
+   },
+   "row1": {
+    "h": 85
+   },
+   "menuIcon": {
+    "x": 332,
+    "y": 2,
+    "w": 46,
+    "h": 46,
+    "svg": {
+     "x": 343,
+     "y": 13,
+     "w": 24,
+     "h": 24
+    }
+   },
+   "logo": {
+    "x": 144,
+    "y": 3,
+    "w": 188,
+    "h": 44
+   },
+   "logoIcon": {
+    "x": 270.7,
+    "y": 12,
+    "w": 35,
+    "h": 26
+   },
+   "word": {
+    "x": 170.3,
+    "y": 12.2,
+    "w": 95.4,
+    "h": 14,
+    "fontFamily": "Outfit, Cairo, \"Geeza Pro\", \"Noto Sans Arabic\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "fontSize": "14px",
+    "fontWeight": "650",
+    "letterSpacing": "normal",
+    "color": "rgb(42, 34, 40)"
+   },
+   "tag": {
+    "x": 170.3,
+    "y": 28.6,
+    "w": 95.4,
+    "h": 9.2,
+    "fontSize": "8px",
+    "fontWeight": "600",
+    "letterSpacing": "normal",
+    "color": "rgb(198, 57, 95)"
+   },
+   "wordText": "كي بيوتيبليس",
+   "search": {
+    "x": 12,
+    "y": 48,
+    "w": 366,
+    "h": 34,
+    "borderRadius": "12px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgba(42, 34, 40, 0.1)",
+    "backgroundColor": "rgb(252, 252, 252)",
+    "paddingLeft": "14px",
+    "paddingRight": "14px",
+    "icon": {
+     "x": 350.6,
+     "y": 58.8,
+     "w": 12.4,
+     "h": 12.4
+    },
+    "iconColor": "rgb(198, 57, 95)",
+    "font": {
+     "fontFamily": "Outfit, Cairo, system-ui, sans-serif",
+     "fontSize": "16px",
+     "color": "rgb(198, 57, 95)"
+    },
+    "placeholder": "ابحثي عن منتجات العناية والعلامات…"
+   },
+   "icons": [
+    {
+     "label": "English",
+     "box": {
+      "x": 92,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": null
+    },
+    {
+     "label": "حسابي",
+     "box": {
+      "x": 48,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 59.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "السلة",
+     "box": {
+      "x": 12,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 23.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    }
+   ],
+   "lang": {
+    "kind": "capsule",
+    "box": {
+     "x": 92,
+     "y": 3,
+     "w": 44,
+     "h": 44
+    },
+    "text": "English",
+    "borderRadius": "50%",
+    "borderTopWidth": "0px",
+    "borderTopColor": "rgb(42, 34, 40)",
+    "fontSize": "14px",
+    "fontWeight": "400"
+   },
+   "menuBar": null,
+   "badge": {
+    "backgroundColor": "rgb(198, 57, 95)",
+    "fontSize": "10px"
+   }
+  },
+  "ar-600": {
+   "header": {
+    "x": 0,
+    "y": 0,
+    "w": 600,
+    "h": 86
+   },
+   "headerS": {
+    "backgroundColor": "rgb(255, 255, 255)",
+    "borderBottomWidth": "1px",
+    "borderBottomColor": "rgba(42, 34, 40, 0.06)"
+   },
+   "wrap": {
+    "paddingLeft": "12px",
+    "paddingRight": "12px"
+   },
+   "row1": {
+    "h": 85
+   },
+   "menuIcon": {
+    "x": 542,
+    "y": 2,
+    "w": 46,
+    "h": 46,
+    "svg": {
+     "x": 553,
+     "y": 13,
+     "w": 24,
+     "h": 24
+    }
+   },
+   "logo": {
+    "x": 144,
+    "y": 3,
+    "w": 398,
+    "h": 44
+   },
+   "logoIcon": {
+    "x": 375.7,
+    "y": 12,
+    "w": 35,
+    "h": 26
+   },
+   "word": {
+    "x": 275.3,
+    "y": 12.2,
+    "w": 95.4,
+    "h": 14,
+    "fontFamily": "Outfit, Cairo, \"Geeza Pro\", \"Noto Sans Arabic\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "fontSize": "14px",
+    "fontWeight": "650",
+    "letterSpacing": "normal",
+    "color": "rgb(42, 34, 40)"
+   },
+   "tag": {
+    "x": 275.3,
+    "y": 28.6,
+    "w": 95.4,
+    "h": 9.2,
+    "fontSize": "8px",
+    "fontWeight": "600",
+    "letterSpacing": "normal",
+    "color": "rgb(198, 57, 95)"
+   },
+   "wordText": "كي بيوتيبليس",
+   "search": {
+    "x": 12,
+    "y": 48,
+    "w": 576,
+    "h": 34,
+    "borderRadius": "12px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgba(42, 34, 40, 0.1)",
+    "backgroundColor": "rgb(252, 252, 252)",
+    "paddingLeft": "14px",
+    "paddingRight": "14px",
+    "icon": {
+     "x": 560.6,
+     "y": 58.8,
+     "w": 12.4,
+     "h": 12.4
+    },
+    "iconColor": "rgb(198, 57, 95)",
+    "font": {
+     "fontFamily": "Outfit, Cairo, system-ui, sans-serif",
+     "fontSize": "16px",
+     "color": "rgb(198, 57, 95)"
+    },
+    "placeholder": "ابحثي عن منتجات العناية والعلامات…"
+   },
+   "icons": [
+    {
+     "label": "English",
+     "box": {
+      "x": 92,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": null
+    },
+    {
+     "label": "حسابي",
+     "box": {
+      "x": 48,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 59.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "السلة",
+     "box": {
+      "x": 12,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 23.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    }
+   ],
+   "lang": {
+    "kind": "capsule",
+    "box": {
+     "x": 92,
+     "y": 3,
+     "w": 44,
+     "h": 44
+    },
+    "text": "English",
+    "borderRadius": "50%",
+    "borderTopWidth": "0px",
+    "borderTopColor": "rgb(42, 34, 40)",
+    "fontSize": "14px",
+    "fontWeight": "400"
+   },
+   "menuBar": null,
+   "badge": {
+    "backgroundColor": "rgb(198, 57, 95)",
+    "fontSize": "10px"
+   }
+  },
+  "ar-768": {
+   "header": {
+    "x": 0,
+    "y": 0,
+    "w": 768,
+    "h": 86
+   },
+   "headerS": {
+    "backgroundColor": "rgb(255, 255, 255)",
+    "borderBottomWidth": "1px",
+    "borderBottomColor": "rgba(42, 34, 40, 0.06)"
+   },
+   "wrap": {
+    "paddingLeft": "12px",
+    "paddingRight": "12px"
+   },
+   "row1": {
+    "h": 85
+   },
+   "menuIcon": {
+    "x": 710,
+    "y": 2,
+    "w": 46,
+    "h": 46,
+    "svg": {
+     "x": 721,
+     "y": 13,
+     "w": 24,
+     "h": 24
+    }
+   },
+   "logo": {
+    "x": 144,
+    "y": 3,
+    "w": 566,
+    "h": 44
+   },
+   "logoIcon": {
+    "x": 459.7,
+    "y": 12,
+    "w": 35,
+    "h": 26
+   },
+   "word": {
+    "x": 359.3,
+    "y": 12.2,
+    "w": 95.4,
+    "h": 14,
+    "fontFamily": "Outfit, Cairo, \"Geeza Pro\", \"Noto Sans Arabic\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "fontSize": "14px",
+    "fontWeight": "650",
+    "letterSpacing": "normal",
+    "color": "rgb(42, 34, 40)"
+   },
+   "tag": {
+    "x": 359.3,
+    "y": 28.6,
+    "w": 95.4,
+    "h": 9.2,
+    "fontSize": "8px",
+    "fontWeight": "600",
+    "letterSpacing": "normal",
+    "color": "rgb(198, 57, 95)"
+   },
+   "wordText": "كي بيوتيبليس",
+   "search": {
+    "x": 12,
+    "y": 48,
+    "w": 744,
+    "h": 34,
+    "borderRadius": "12px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgba(42, 34, 40, 0.1)",
+    "backgroundColor": "rgb(252, 252, 252)",
+    "paddingLeft": "14px",
+    "paddingRight": "14px",
+    "icon": {
+     "x": 728.6,
+     "y": 58.8,
+     "w": 12.4,
+     "h": 12.4
+    },
+    "iconColor": "rgb(198, 57, 95)",
+    "font": {
+     "fontFamily": "Outfit, Cairo, system-ui, sans-serif",
+     "fontSize": "16px",
+     "color": "rgb(198, 57, 95)"
+    },
+    "placeholder": "ابحثي عن منتجات العناية والعلامات…"
+   },
+   "icons": [
+    {
+     "label": "English",
+     "box": {
+      "x": 92,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": null
+    },
+    {
+     "label": "حسابي",
+     "box": {
+      "x": 48,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 59.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "السلة",
+     "box": {
+      "x": 12,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 23.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    }
+   ],
+   "lang": {
+    "kind": "capsule",
+    "box": {
+     "x": 92,
+     "y": 3,
+     "w": 44,
+     "h": 44
+    },
+    "text": "English",
+    "borderRadius": "50%",
+    "borderTopWidth": "0px",
+    "borderTopColor": "rgb(42, 34, 40)",
+    "fontSize": "14px",
+    "fontWeight": "400"
+   },
+   "menuBar": null,
+   "badge": {
+    "backgroundColor": "rgb(198, 57, 95)",
+    "fontSize": "10px"
+   }
+  },
+  "ar-900": {
+   "header": {
+    "x": 0,
+    "y": 0,
+    "w": 900,
+    "h": 86
+   },
+   "headerS": {
+    "backgroundColor": "rgb(255, 255, 255)",
+    "borderBottomWidth": "1px",
+    "borderBottomColor": "rgba(42, 34, 40, 0.06)"
+   },
+   "wrap": {
+    "paddingLeft": "12px",
+    "paddingRight": "12px"
+   },
+   "row1": {
+    "h": 85
+   },
+   "menuIcon": {
+    "x": 842,
+    "y": 2,
+    "w": 46,
+    "h": 46,
+    "svg": {
+     "x": 853,
+     "y": 13,
+     "w": 24,
+     "h": 24
+    }
+   },
+   "logo": {
+    "x": 144,
+    "y": 3,
+    "w": 698,
+    "h": 44
+   },
+   "logoIcon": {
+    "x": 525.7,
+    "y": 12,
+    "w": 35,
+    "h": 26
+   },
+   "word": {
+    "x": 425.3,
+    "y": 12.2,
+    "w": 95.4,
+    "h": 14,
+    "fontFamily": "Outfit, Cairo, \"Geeza Pro\", \"Noto Sans Arabic\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "fontSize": "14px",
+    "fontWeight": "650",
+    "letterSpacing": "normal",
+    "color": "rgb(42, 34, 40)"
+   },
+   "tag": {
+    "x": 425.3,
+    "y": 28.6,
+    "w": 95.4,
+    "h": 9.2,
+    "fontSize": "8px",
+    "fontWeight": "600",
+    "letterSpacing": "normal",
+    "color": "rgb(198, 57, 95)"
+   },
+   "wordText": "كي بيوتيبليس",
+   "search": {
+    "x": 12,
+    "y": 48,
+    "w": 876,
+    "h": 34,
+    "borderRadius": "12px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgba(42, 34, 40, 0.1)",
+    "backgroundColor": "rgb(252, 252, 252)",
+    "paddingLeft": "14px",
+    "paddingRight": "14px",
+    "icon": {
+     "x": 860.6,
+     "y": 58.8,
+     "w": 12.4,
+     "h": 12.4
+    },
+    "iconColor": "rgb(198, 57, 95)",
+    "font": {
+     "fontFamily": "Outfit, Cairo, system-ui, sans-serif",
+     "fontSize": "16px",
+     "color": "rgb(198, 57, 95)"
+    },
+    "placeholder": "ابحثي عن منتجات العناية والعلامات…"
+   },
+   "icons": [
+    {
+     "label": "English",
+     "box": {
+      "x": 92,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": null
+    },
+    {
+     "label": "حسابي",
+     "box": {
+      "x": 48,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 59.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "السلة",
+     "box": {
+      "x": 12,
+      "y": 3,
+      "w": 44,
+      "h": 44
+     },
+     "svg": {
+      "x": 23.5,
+      "y": 14.5,
+      "w": 21,
+      "h": 21
+     }
+    }
+   ],
+   "lang": {
+    "kind": "capsule",
+    "box": {
+     "x": 92,
+     "y": 3,
+     "w": 44,
+     "h": 44
+    },
+    "text": "English",
+    "borderRadius": "50%",
+    "borderTopWidth": "0px",
+    "borderTopColor": "rgb(42, 34, 40)",
+    "fontSize": "14px",
+    "fontWeight": "400"
+   },
+   "menuBar": null,
+   "badge": {
+    "backgroundColor": "rgb(198, 57, 95)",
+    "fontSize": "10px"
+   }
+  },
+  "ar-1024": {
+   "header": {
+    "x": 0,
+    "y": 0,
+    "w": 1024,
+    "h": 93.5
+   },
+   "headerS": {
+    "backgroundColor": "rgb(255, 255, 255)",
+    "borderBottomWidth": "1px",
+    "borderBottomColor": "rgba(42, 34, 40, 0.06)"
+   },
+   "wrap": {
+    "paddingLeft": "22px",
+    "paddingRight": "22px"
+   },
+   "row1": {
+    "h": 46
+   },
+   "menuIcon": null,
+   "logo": {
+    "x": 792.9,
+    "y": 4,
+    "w": 209.1,
+    "h": 38
+   },
+   "logoIcon": {
+    "x": 950.9,
+    "y": 4,
+    "w": 51.1,
+    "h": 38
+   },
+   "word": {
+    "x": 792.9,
+    "y": 4.8,
+    "w": 149.9,
+    "h": 22,
+    "fontFamily": "Outfit, Cairo, \"Geeza Pro\", \"Noto Sans Arabic\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "fontSize": "22px",
+    "fontWeight": "650",
+    "letterSpacing": "normal",
+    "color": "rgb(42, 34, 40)"
+   },
+   "tag": {
+    "x": 792.9,
+    "y": 29.8,
+    "w": 149.9,
+    "h": 11.5,
+    "fontSize": "10px",
+    "fontWeight": "600",
+    "letterSpacing": "normal",
+    "color": "rgb(198, 57, 95)"
+   },
+   "wordText": "كي بيوتيبليس",
+   "search": {
+    "x": 484.7,
+    "y": 6,
+    "w": 276.2,
+    "h": 34,
+    "borderRadius": "99px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgba(42, 34, 40, 0.1)",
+    "backgroundColor": "rgba(42, 34, 40, 0.06)",
+    "paddingLeft": "14px",
+    "paddingRight": "14px",
+    "icon": {
+     "x": 728.9,
+     "y": 14.5,
+     "w": 17,
+     "h": 17
+    },
+    "iconColor": "rgb(117, 108, 116)",
+    "font": {
+     "fontFamily": "Outfit, Cairo, system-ui, sans-serif",
+     "fontSize": "13.5px",
+     "color": "rgb(42, 34, 40)"
+    },
+    "placeholder": "ابحثي عن منتجات العناية والعلامات…"
+   },
+   "icons": [
+    {
+     "label": "حسابي",
+     "box": {
+      "x": 314.5,
+      "y": 3,
+      "w": 40,
+      "h": 40
+     },
+     "svg": {
+      "x": 324,
+      "y": 12.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "المفضلة",
+     "box": {
+      "x": 268.5,
+      "y": 3,
+      "w": 40,
+      "h": 40
+     },
+     "svg": {
+      "x": 278,
+      "y": 12.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "السلة",
+     "box": {
+      "x": 222.5,
+      "y": 3,
+      "w": 40,
+      "h": 40
+     },
+     "svg": {
+      "x": 232,
+      "y": 12.5,
+      "w": 21,
+      "h": 21
+     }
+    }
+   ],
+   "lang": {
+    "kind": "pill",
+    "box": {
+     "x": 370.5,
+     "y": 8,
+     "w": 90.3,
+     "h": 30
+    },
+    "text": "ENع",
+    "borderRadius": "999px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgb(233, 223, 227)",
+    "fontSize": "12px",
+    "fontWeight": "700"
+   },
+   "menuBar": {
+    "x": 0,
+    "y": 46,
+    "w": 1024,
+    "h": 46.5,
+    "items": [
+     "العلامات الرائجة",
+     "كل العلامات التجارية",
+     "العناية بالبشرة",
+     "تسوّقي حسب مشكلة البشرة",
+     "التخفيضات الكبرى",
+     "مجموعات العناية بالبشرة",
+     "العناية بالشعر",
+     "العناية بالجسم",
+     "أجهزة التجميل",
+     "كل شيء بأقل من 54 درهمًا"
+    ]
+   },
+   "badge": {
+    "backgroundColor": "rgb(198, 57, 95)",
+    "fontSize": "10px"
+   }
+  },
+  "ar-1280": {
+   "header": {
+    "x": 0,
+    "y": 0,
+    "w": 1280,
+    "h": 93.5
+   },
+   "headerS": {
+    "backgroundColor": "rgb(255, 255, 255)",
+    "borderBottomWidth": "1px",
+    "borderBottomColor": "rgba(42, 34, 40, 0.06)"
+   },
+   "wrap": {
+    "paddingLeft": "22px",
+    "paddingRight": "22px"
+   },
+   "row1": {
+    "h": 46
+   },
+   "menuIcon": null,
+   "logo": {
+    "x": 1048.9,
+    "y": 4,
+    "w": 209.1,
+    "h": 38
+   },
+   "logoIcon": {
+    "x": 1206.9,
+    "y": 4,
+    "w": 51.1,
+    "h": 38
+   },
+   "word": {
+    "x": 1048.9,
+    "y": 4.8,
+    "w": 149.9,
+    "h": 22,
+    "fontFamily": "Outfit, Cairo, \"Geeza Pro\", \"Noto Sans Arabic\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "fontSize": "22px",
+    "fontWeight": "650",
+    "letterSpacing": "normal",
+    "color": "rgb(42, 34, 40)"
+   },
+   "tag": {
+    "x": 1048.9,
+    "y": 29.8,
+    "w": 149.9,
+    "h": 11.5,
+    "fontSize": "10px",
+    "fontWeight": "600",
+    "letterSpacing": "normal",
+    "color": "rgb(198, 57, 95)"
+   },
+   "wordText": "كي بيوتيبليس",
+   "search": {
+    "x": 484.7,
+    "y": 6,
+    "w": 532.2,
+    "h": 34,
+    "borderRadius": "99px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgba(42, 34, 40, 0.1)",
+    "backgroundColor": "rgba(42, 34, 40, 0.06)",
+    "paddingLeft": "14px",
+    "paddingRight": "14px",
+    "icon": {
+     "x": 984.9,
+     "y": 14.5,
+     "w": 17,
+     "h": 17
+    },
+    "iconColor": "rgb(117, 108, 116)",
+    "font": {
+     "fontFamily": "Outfit, Cairo, system-ui, sans-serif",
+     "fontSize": "13.5px",
+     "color": "rgb(42, 34, 40)"
+    },
+    "placeholder": "ابحثي عن منتجات العناية والعلامات…"
+   },
+   "icons": [
+    {
+     "label": "حسابي",
+     "box": {
+      "x": 314.5,
+      "y": 3,
+      "w": 40,
+      "h": 40
+     },
+     "svg": {
+      "x": 324,
+      "y": 12.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "المفضلة",
+     "box": {
+      "x": 268.5,
+      "y": 3,
+      "w": 40,
+      "h": 40
+     },
+     "svg": {
+      "x": 278,
+      "y": 12.5,
+      "w": 21,
+      "h": 21
+     }
+    },
+    {
+     "label": "السلة",
+     "box": {
+      "x": 222.5,
+      "y": 3,
+      "w": 40,
+      "h": 40
+     },
+     "svg": {
+      "x": 232,
+      "y": 12.5,
+      "w": 21,
+      "h": 21
+     }
+    }
+   ],
+   "lang": {
+    "kind": "pill",
+    "box": {
+     "x": 370.5,
+     "y": 8,
+     "w": 90.3,
+     "h": 30
+    },
+    "text": "ENع",
+    "borderRadius": "999px",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgb(233, 223, 227)",
+    "fontSize": "12px",
+    "fontWeight": "700"
+   },
+   "menuBar": {
+    "x": 0,
+    "y": 46,
+    "w": 1280,
+    "h": 46.5,
+    "items": [
+     "العلامات الرائجة",
+     "كل العلامات التجارية",
+     "العناية بالبشرة",
+     "تسوّقي حسب مشكلة البشرة",
+     "التخفيضات الكبرى",
+     "مجموعات العناية بالبشرة",
+     "العناية بالشعر",
+     "العناية بالجسم",
+     "أجهزة التجميل",
+     "كل شيء بأقل من 54 درهمًا"
+    ]
+   },
+   "badge": {
+    "backgroundColor": "rgb(198, 57, 95)",
+    "fontSize": "10px"
+   }
+  }
+ }
+}
