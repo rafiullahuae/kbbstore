@@ -4,6 +4,8 @@
    website ("اكتشفي", "أضيفي"). Product, brand, category and concern names come
    from the site's own Arabic data, not from this file. */
 window.APV_I18N = {
+  /* ── Lane APV4: the back row under the site's header, in the site's breadcrumb words ── */
+  'Breadcrumb':'مسار التصفح', 'Shop (crumb)':'التسوق', 'Brands (crumb)':'الماركات',
   /* ── Lane APV3: the website's header and menus, the bottom-bar variants, the chooser ── */
   'Compact (under 600): the website’s phone header and menu, bottom tab bar, one pane, 2-column grid.':'مضغوط (أقل من 600): رأس الموقع وقائمته كما على الهاتف، شريط سفلي، لوحة واحدة، شبكة من عمودين.',
   'Medium (600 to 839): the website’s header and menu as the site shows them at this width, one pane, 3-column grid, gallery beside the details.':'متوسط (من 600 إلى 839): رأس الموقع وقائمته كما يعرضهما الموقع بهذا العرض، لوحة واحدة، شبكة من ثلاثة أعمدة، الصور بجانب التفاصيل.',

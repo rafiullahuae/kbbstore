@@ -1095,3 +1095,16 @@ body.embed .bbsw{display:none}
 .kc .fl-m svg{width:14px;height:14px;flex:0 0 auto;margin-top:1px}
 .kc .co-cpx{margin-inline-start:6px;color:var(--ink2,#6E6168);font-size:12px;min-width:24px}
 .kc .paybtn.mini{height:24px;font-size:13px}
+
+/* Lane APV4: under the website's header, the slim back row in the site's breadcrumb style
+   (the site: 12.5px, #756C74, "Home" bold, "/" between, "›" on brand pages). No second bag:
+   the site's header has the cart. The arrow sits at the start (it points right in Arabic: .flip). */
+.app .bar.crow{background:var(--cream);backdrop-filter:none;-webkit-backdrop-filter:none}
+.app .bar.crow .row{display:flex;align-items:center;min-height:44px;padding-block:0;padding-inline:4px 12px}
+.app .bar.crow.nob .row{padding:0 12px}
+.app .bar.crow .back{flex:0 0 44px;width:44px;height:44px;display:grid;place-items:center;padding:0;margin:0;color:var(--ink)}
+.app .bar.crow .back svg{width:20px;height:20px}
+.app .bar.crow .crumb{flex:1 1 auto;min-width:0;font-size:12.5px;line-height:1.4;color:#756C74;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app .bar.crow .crumb b{font-weight:700}
+.app .bar.crow .crumb i{font-style:normal;padding:0 .3em}
+.app .bar.crow .e{flex:0 0 auto;display:flex;align-items:center}
