@@ -259,7 +259,7 @@ class ProductVariantsApiController extends Controller
         VariantPricing::invalidate();
         VariantSwatches::invalidate();
 
-        return response()->json(['ok' => true] + $this->payload($product->fresh(['id', 'name', 'type']) ?? $product));
+        return response()->json(['ok' => true] + $this->payload($product));
     }
 
     /** @return array<string, mixed> */
