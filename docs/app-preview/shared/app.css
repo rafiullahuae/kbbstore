@@ -1055,10 +1055,10 @@ html[dir=rtl] .edgehint.end svg{transform:none}
 .tabbar .tab .tbl:not(:where(.kc *,.kh *)){white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}/* D: the bag raised in the middle. The bar is 18px taller with a bump behind the bag, so the raised
    circle never sits over the page (nothing of the page is under it) */
 
-.tabbar.bb-D:not(:where(.kc *,.kh *)){padding-top:24px;border-top:0;background:radial-gradient(circle at 50% 41px,rgba(255,255,255,.97) 37px,transparent 38px),linear-gradient(transparent 22px,rgba(255,255,255,.97) 22px);box-shadow:inset 0 0 0 0 transparent;filter:drop-shadow(0 -1px 0 var(--line))}
-.android .tabbar.bb-D:not(:where(.kc *,.kh *)){background:radial-gradient(circle at 50% 41px,#FFF5F7 37px,transparent 38px),linear-gradient(transparent 22px,#FFF5F7 22px)}
+.tabbar.bb-D:not(:where(.kc *,.kh *)){padding-top:28px;border-top:0;background:radial-gradient(circle at 50% 43px,rgba(255,255,255,.97) 37px,transparent 38px),linear-gradient(transparent 24px,rgba(255,255,255,.97) 22px);box-shadow:inset 0 0 0 0 transparent;filter:drop-shadow(0 -1px 0 var(--line))}
+.android .tabbar.bb-D:not(:where(.kc *,.kh *)){background:radial-gradient(circle at 50% 43px,#FFF5F7 37px,transparent 38px),linear-gradient(transparent 24px,#FFF5F7 22px)}
 .tab.raised:not(:where(.kc *,.kh *)){overflow:visible}
-.tab.raised .pill:not(:where(.kc *,.kh *)){width:54px;height:54px;border-radius:27px;background:var(--pk);color:#fff;display:flex;align-items:center;justify-content:center;margin-top:-22px;box-shadow:0 6px 14px rgba(193,62,99,.32)}
+.tab.raised .pill:not(:where(.kc *,.kh *)){width:54px;height:54px;border-radius:27px;background:var(--pk);color:#fff;display:flex;align-items:center;justify-content:center;margin-top:-28px;box-shadow:0 6px 14px rgba(193,62,99,.32)}
 .tab.raised svg:not(:where(.kc *,.kh *)){width:26px;height:26px}
 .tab.raised.on:not(:where(.kc *,.kh *)){color:var(--pk)}
 .android .tab.raised .pill:not(:where(.kc *,.kh *)){background:var(--pk);color:#fff;width:56px;height:56px;border-radius:18px}

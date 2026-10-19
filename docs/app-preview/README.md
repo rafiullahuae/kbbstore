@@ -1,4 +1,57 @@
-# K-Beauty Bliss app — live previews, English and Arabic (Lane APV2)
+# K-Beauty Bliss app — live previews, English and Arabic (Lanes APV2, APV3)
+
+## What changed in APV3 (19 October 2026)
+
+The owner asked for five things:
+
+> "on tablets, i need the proper menu … i don't want to disturbed the menu in mobiles … the header
+> style and height etc i need exactly the same as the site … with language switch same … same
+> search box … can you suggest something more in the bottom bar menu items"
+>
+> "we need the same one step as in site mobile version. or max two steps." / "same for cart page."
+
+- **The header is the website's own**, on every screen and every device: the same markup, the same
+  CSS and the same measured sizes. It has the same language switch (the capsule on phones, the
+  "EN | ع" pill on wide screens), the same search box and the Arabic wordmark in the Arabic app.
+  The numbers are in `HEADER-PARITY.md`.
+- **The website's menus.** Phones and the Fold inner / iPad portrait get the site's ☰ menu, just as
+  the site shows it at those widths. iPad landscape gets the site's menu bar with its mega panels.
+  The navigation rail is gone, and nothing sits under the Duo hinge.
+- **Bottom bar: five options, A to E**, on phones. A is the current bar; you pick a letter (below).
+- **Bag and checkout as on the site**: the bag is the site's cart page, then the checkout is the
+  site's **one page**. That's two screens before Pay now, and the nine step screens are gone. The
+  comparison is in `CHECKOUT-PARITY.md`.
+
+### Choosing the bottom bar
+
+Beside the phone, on `index.html` and `screens.html` in both languages, there is a small
+**"Bottom bar (phones): A B C D E"** chooser. It sits outside the device and changes every screen
+at once. The browser remembers the choice (localStorage), and a deep link can set it with `&bb=B`.
+
+| | Items |
+|---|---|
+| **A** (current) | Home · Shop · Search · Bag · Account |
+| **B** | Home · Categories · Brands · Offers · Account (the bag stays in the header) |
+| **C** | Home · Shop · Wishlist · Bag · Account (search is the header's box) |
+| **D** | Home · Categories · **raised Bag** · Wishlist · Account |
+| **E** | Home · Shop · Offers · Bag · **More**. More opens a sheet with Brands, Wishlist, Orders, Skin concerns, Blog, Contact us, Language & region and Settings. |
+
+Every option has badges for the bag and wishlist counts, shows the active tab in #C13E63, uses
+Arabic labels in the Arabic app and keeps clear of the home indicator. You can compare them in
+`key/bottom-bars-en.png` and `key/bottom-bars-ar.png`.
+
+The same chooser has **Tablet menu: As the site / Menu bar**. "Menu bar" shows the site's menu bar
+on the Fold inner and iPad portrait too, for comparison (`&tm=bar`).
+
+### Refreshing from the site
+
+- `node tools/apv-site.cjs` reads the live site and rewrites the header, the menus and their
+  measurements: `en|ar/site.js`, `en|ar/site.css` and `site-measure.json`.
+- `node tools/apv-site-co.cjs` reads the cart page and the one-page checkout. The live site
+  refuses those pages to automated browsers, so the tool renders them from this repository's own
+  shop, which it starts locally and stops again. It writes `en|ar/site-co.js` and
+  `en|ar/site-co.css`. It needs `vendor/`; see the tool's header.
+
 
 Two separate apps, one shared engine. Open from this folder (`file://` works) or from a phone:
 
@@ -14,7 +67,10 @@ Two separate apps, one shared engine. Open from this folder (`file://` works) or
 
 It behaves like the app, not like a slide: tap, scroll, type.
 
-- **Navigation stack per tab** (Home · Shop · Search · Bag · Account): every screen pushes, Back
+- **The website's header and menus on top** (see above). The ☰ opens the site's menu. Its levels
+  open in place, the "Search the menu…" field filters it, and every item opens its screen in the
+  app. On iPad landscape the menu bar's panels open with a tap.
+- **Navigation stack per tab** (the tabs of the chosen bottom bar): every screen pushes, Back
   pops, switching tabs keeps each tab where you left it. iOS: swipe from the left edge (right edge
   in Arabic) to go back; Android: predictive back from either edge (the page shrinks while you
   drag). Push, pop and tab transitions, mirrored in Arabic; off when the system asks for reduced
@@ -25,8 +81,9 @@ It behaves like the app, not like a slide: tap, scroll, type.
   heart is kept for the session (a reload keeps it); live search (instant results, recent and
   popular searches; the Arabic app searches in Arabic); sort and filter sheets that really sort
   and filter (concern, price, on sale, brand), with a filter side panel from 840 wide.
-- **Bag:** quantity steppers update the totals, the free-delivery bar (AED 199) fills, coupon
-  `WELCOME10` gives 10 %, any other code shows the error state.
+- **Bag:** the site's cart page. Quantity steppers and Remove update it, and "Proceed to checkout"
+  opens the one-page checkout, where the coupon is (`WELCOME10` gives 10%; any other code shows the
+  error state).
 - **Every card navigates:** product, brand, category, concern, blog, order.
 
 Top bar (outside the phone): System (iOS / Android), Device (iPhone 16 Pro, iPhone SE, iPad mini
@@ -51,16 +108,15 @@ ipad-land px9 flip flip-tabletop fold-cover fold-inner duo`; extra keys: `d=B|C`
 - **Category** (banner, about, sub-category chips, grid, sort/filter; concern pages), filter,
   sort, no matches, loading. **Brand** (banner, logo, about, grid), filter.
 - **Search** empty / results / no results, barcode scanner.
-- **Bag & checkout — every step its own screen**, with the step indicator, Back and validation:
-  1 Bag review · 2 Contact (signed in, or guest with email) · 3 Delivery address: saved list →
-  new address (full name, mobile +971, Emirate picker, Area picker filtered by the emirate and
-  searchable, building/villa, street, apartment/floor, landmark, Home/Work/Other, default) in
-  empty / filled / error states · 4 Delivery method (standard, express, GCC) and gift message ·
-  5 Payment (Apple Pay on iOS / Google Pay on Android, card, Tabby, Tamara, cash on delivery —
-  UAE only), instalment amounts and small print · 6 the method's own step: card form (brand
-  detection, grouping, expiry, CVC, name) → 3-D Secure, the wallet sheet, Tabby approval,
-  Tamara approval, COD confirmation · 7 Review & place order (terms) · 8 Order placed · 9 Payment
-  failed → Try again or another method, the bag kept.
+- **Bag & checkout, as on the site: two screens.** The bag is the site's cart page. Then comes
+  the site's one-page checkout: the Order summary bar (lines, promo code, totals), then
+  ① Delivery Information (email, full name, phone, building, area / street, emirate picker,
+  country, create an account, WhatsApp updates), ② Delivery (express, free over AED 199, gift
+  +AED 15) and ③ Payment (Apple Pay on iOS / Google Pay on Android, card fields in the page,
+  Tabby, Tamara, cash on delivery). Then Total, Pay now and the trust lines. Variants: guest,
+  filled, errors inline, summary open, emirate picker, Tabby chosen, cash on delivery. After Pay
+  now (these aren't steps): 3-D Secure, the wallet sheet, Tabby / Tamara approval, the order
+  placed, and a failed payment with the bag kept and Try again.
 - **Account:** signed in / out, sign in, create account (password meter), forgot password,
   Face ID / fingerprint unlock, profile, addresses (add, edit, delete), orders, order on the way /
   delivered (timeline, reorder), wishlist, notification settings, language & region, delete
@@ -72,22 +128,18 @@ ipad-land px9 flip flip-tabletop fold-cover fold-inner duo`; extra keys: `d=B|C`
 
 ## Fields: the website's floating labels
 
-Every form (checkout, sign in, register, address, contact, card, coupon, 3-D Secure code) uses
-the website checkout's `.fld.kbb-fl` (resources/css/kbb/kbb-checkout.css): the label sits inside
-the box as the placeholder, centred; on focus or once filled it lifts to a small pink heading in
-the top-start corner (left in English, right in Arabic) and the value sits under it. Same 12 px
-corners, 1.5 px border, pink focus ring, red error state with the message under the field,
-leading icons, `+971` that appears once the label has moved, hints that wait for focus. Prefilled
-fields show the lifted state. Phone, card and code digits are left-to-right inside the Arabic
-app. Pure CSS (`:focus`, `:not(:placeholder-shown)`), no measuring. Inline validation when you
-leave a field, all fields on Continue (with a summary and the first error focused), `autocomplete`,
-`inputmode` and `enterkeyhint` on each field.
+The checkout's fields are the site's own (`.fld.kbb-fl`, drawn by `site-co.css`). The label sits in
+the box until the field has a value or is focused, then it lifts to a small pink heading. The
+account forms (sign in, register, addresses, contact, profile) keep the app's copy of the same
+design (`.fl`). The phone, card and code digits stay left-to-right in the Arabic app. Messages
+appear under each field when you leave it, and for every field when Pay now is tapped.
 
 ## Size classes and two panes
 
 Each frame is a CSS container, so it lays out by its own width (system design §3.9):
-Compact < 600 (bottom tabs, one pane, 2-column grid) · Medium 600–839 (navigation rail, 3
-columns, gallery beside details, checkout centred at 600) · Expanded ≥ 840 (rail, list | detail
+Compact < 600 (the site's phone header and ☰ menu, bottom tabs, one pane, 2-column grid) · Medium
+600–839 (the site's header and ☰ menu as the site shows them at that width, no rail, 3 columns,
+gallery beside details) · Expanded ≥ 840 (the site's computer header with the menu bar, list | detail
 pairs: Shop → category, Brands → brand, Account → its sections, Orders → order, FAQ → contact,
 Policies → policy, Blog → article; filter side panel; checkout with the order summary beside it
 from 1000). Surface Duo spanned: list on one screen and detail on the other (a tap fills the
@@ -121,11 +173,15 @@ Express delivery, review photos where the API has none.
 ## Code
 
 `shared/` holds the engine: `core.js` (data, i18n, state, router), `ui.js` (cards, fields,
-validation, formatting), `shell.js` (devices, panes, rail/tab bar, render, transitions),
+validation, formatting), `shell.js` (devices, panes, tab bar, render, transitions), `header.js`
+(the website's header and menus wired to the app, the bottom-bar variants, the preview chooser),
 `screens-shop.js`, `screens-checkout.js`, `screens-account.js`, `events.js` (jump list,
 clicks, typing, gestures, deep links, the test hook `window.APV`), `screens.js` (the screens
 grid), `app.css`, `screens.css`, `icons.js`. Each language folder has its `index.html`,
-`screens.html` and `data.js`; the Arabic one adds `i18n.js`.
+`screens.html` and `data.js`, plus the site's own parts: `site.js` / `site.css` (header and menus)
+and `site-co.js` / `site-co.css` (cart and checkout). The Arabic folder adds `i18n.js`. `app.css`
+keeps its rules off the site's parts (`:not(:where(.kc *,.kh *))`), so the site's CSS draws them
+alone.
 
 ## The checker
 
