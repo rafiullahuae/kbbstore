@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Services\Security\CloudNetworks;
 use App\Services\Security\CountryDb;
 use App\Services\Security\Firewall;
 use App\Services\Security\FirewallConfig;
@@ -24,13 +25,20 @@ use Illuminate\Console\Command;
  *                                         the good-bot lists now
  *   php artisan kbb:firewall data --auto  only what is due (the schedule)
  *   php artisan kbb:firewall data --file=dbip-country-lite.csv.gz
+ *   php artisan kbb:firewall cloud        cloud networks: which are on Block,
+ *                                         ranges per provider, list date
+ *   php artisan kbb:firewall cloud refresh   download the cloud lists now
+ *                                         (also weekly, from `data --auto`)
+ *
+ * Cloud networks are switched in Store → Security → Firewall → Cloud
+ * networks; `off` above stops them with everything else.
  *
  * `off` writes the setting AND recompiles the request-path file even if the
  * database write fails, so the off switch works on a sick database too.
  */
 class FirewallCommand extends Command
 {
-    protected $signature = 'kbb:firewall {action : off|monitor|on|status|unban|data} {target? : for unban: an address or range}
+    protected $signature = 'kbb:firewall {action : off|monitor|on|status|unban|data|cloud} {target? : for unban: an address or range; for cloud: status|refresh}
         {--auto : data: only when due (countries monthly, bots weekly)}
         {--file= : data: build the country database from a DB-IP CSV or CSV.GZ already on disk}';
 
@@ -45,7 +53,8 @@ class FirewallCommand extends Command
             'status' => $this->status(),
             'unban' => $this->unban((string) $this->argument('target')),
             'data' => $this->data(),
-            default => $this->fail('Unknown action "'.$action.'". Use off, monitor, on, status, unban or data.'),
+            'cloud' => $this->cloud((string) ($this->argument('target') ?? 'status')),
+            default => $this->fail('Unknown action "'.$action.'". Use off, monitor, on, status, unban, data or cloud.'),
         };
     }
 
@@ -88,6 +97,7 @@ class FirewallCommand extends Command
         $this->line('Countries:       '.(json_encode($fw['countries']) ?: '{}'));
         $this->line('Counters:        storage/framework/firewall (fixed 4 MiB table); logs in the "'.FirewallStore::name().'" cache store');
         $this->line('Country data:    '.($country['ok'] ? $country['v4'].' IPv4 + '.$country['v6'].' IPv6 ranges, built '.$country['date'] : 'MISSING — '.$country['error'].' (run: php artisan kbb:firewall data)'));
+        $this->line('Cloud networks:  '.(($fw['cloud'] ?? '') !== '' ? str_replace(',', ', ', (string) $fw['cloud']).' on Block' : 'none on Block'));
         $this->line('Active bans:     '.count(Firewall::bans()));
 
         return self::SUCCESS;
@@ -145,10 +155,52 @@ class FirewallCommand extends Command
             }
         }
 
+        $cloudAge = CloudNetworks::ageDays();
+
+        // Weekly, like the bot lists; a failure waits six hours with the rest.
+        if (! $auto || $cloudAge === null || $cloudAge > 7) {
+            $ok = $this->cloudRefresh() && $ok;
+        }
+
         if (! $ok) {
             FirewallStore::put('fw:data:failed', 1, 6 * 3600);
         }
 
         return $ok ? self::SUCCESS : self::FAILURE;
+    }
+
+    /** kbb:firewall cloud [status|refresh] (Lane FWN) */
+    private function cloud(string $sub): int
+    {
+        if ($sub === 'refresh') {
+            return $this->cloudRefresh() ? self::SUCCESS : self::FAILURE;
+        }
+
+        if ($sub !== 'status') {
+            return $this->fail('Use: kbb:firewall cloud status | refresh');
+        }
+
+        $about = CloudNetworks::about();
+        $on = array_filter(explode(',', (string) (IpBlockList::compiled()['fw']['cloud'] ?? '')));
+        $this->line('List:  '.($about['ok'] ? $about['from'].', built '.($about['at'] ?? '?').', '.$about['total'].' ranges' : 'MISSING — '.$about['error']));
+
+        foreach ($about['providers'] as $key => $p) {
+            $this->line(str_pad(in_array($key, $on, true) ? 'BLOCK' : 'allow', 7).str_pad($p['label'], 24).str_pad($p['ranges'].' ranges', 13)
+                .implode(' ', array_map(static fn (int $a): string => 'AS'.$a, $p['asns'])));
+        }
+
+        return self::SUCCESS;
+    }
+
+    private function cloudRefresh(): bool
+    {
+        $any = false;
+
+        foreach (CloudNetworks::refresh() as $key => $r) {
+            $this->line(str_pad(CloudNetworks::PROVIDERS[$key][0], 24).($r['ok'] ? $r['ranges'].' ranges' : $r['error']));
+            $any = $any || $r['ok'];
+        }
+
+        return $any;
     }
 }

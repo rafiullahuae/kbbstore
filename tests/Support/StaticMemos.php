@@ -237,6 +237,9 @@ final class StaticMemos
             \App\Services\Security\FirewallLog::class => static fn () => \App\Services\Security\FirewallLog::reset(),
             \App\Services\Security\CountryDb::class => static fn () => \App\Services\Security\CountryDb::forget(),
             \App\Services\Security\GoodBots::class => static fn () => \App\Services\Security\GoodBots::forget(),
+            // (Lane FWN) The cloud networks' compiled file and source list: a
+            // test that refreshes or swaps the list must not leave it behind.
+            \App\Services\Security\CloudNetworks::class => static fn () => \App\Services\Security\CloudNetworks::forget(),
             // Public and written from the transport itself; there is no forget()
             // to call, so this is the assignment.
             ServerMailTransport::class => static function (): void {

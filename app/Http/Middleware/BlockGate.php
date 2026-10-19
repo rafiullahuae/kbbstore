@@ -139,8 +139,9 @@ final class BlockGate
     private static function refuseFirewall(Request $request, array $refusal, array $fw): Response
     {
         [$reason, $status, $retry] = $refusal;
-        $response = self::refuse($request, $reason === 'country' ? 'blocked' : 'bot', null,
-            $reason === 'fake_bot' || ($fw['scope'] ?? '') === 'site', $status, 'F'.strtoupper($reason[0]));
+        // A cloud network is "FN" (N for network): "FC" is already the country's.
+        $response = self::refuse($request, $reason === 'country' || $reason === 'cloud' ? 'blocked' : 'bot', null,
+            $reason === 'fake_bot' || ($fw['scope'] ?? '') === 'site', $status, 'F'.($reason === 'cloud' ? 'N' : strtoupper($reason[0])));
 
         if ($retry > 0) {
             $response->headers->set('Retry-After', (string) $retry);

@@ -43,6 +43,27 @@ final class FirewallLog
 
     private static bool $flushQueued = false;
 
+    /**
+     * Every reason with its label: REASONS plus one per cloud provider
+     * ("net_<key>", Lane FWN), so Live activity names the provider.
+     *
+     * @return array<string, string>
+     */
+    public static function reasons(): array
+    {
+        static $all = null;
+
+        if ($all === null) {
+            $all = self::REASONS;
+
+            foreach (CloudNetworks::PROVIDERS as $key => $p) {
+                $all['net_'.$key] = 'Cloud network ('.$p[0].')';
+            }
+        }
+
+        return $all;
+    }
+
     /** Record one flagged request. */
     public static function hit(string $reason, string $bin, string $cc, bool $enforced): void
     {
@@ -144,7 +165,7 @@ final class FirewallLog
                 $bin = @hex2bin($hex);
                 $ip = is_string($bin) ? (string) @inet_ntop($bin) : '';
 
-                if (! isset(self::REASONS[$reason]) || $ip === '') {
+                if (! isset(self::reasons()[$reason]) || $ip === '') {
                     continue;
                 }
 
@@ -160,7 +181,7 @@ final class FirewallLog
             }
         }
 
-        foreach (self::REASONS as $reason => $_) {
+        foreach (self::reasons() as $reason => $_) {
             foreach ([0, 1] as $e) {
                 $n = (int) (FirewallStore::get("fw:lo:{$bucket}:{$reason}:{$e}") ?? 0);
 
@@ -211,7 +232,7 @@ final class FirewallLog
             $hits = (int) $r['hits'];
             $enforced = (bool) $r['enforced'];
             $key = $r['reason'];
-            $byReason[$key] ??= ['reason' => $key, 'label' => self::REASONS[$key] ?? $key, 'refused' => 0, 'logged' => 0];
+            $byReason[$key] ??= ['reason' => $key, 'label' => self::reasons()[$key] ?? $key, 'refused' => 0, 'logged' => 0];
             $byReason[$key][$enforced ? 'refused' : 'logged'] += $hits;
             if ($enforced) {
                 $refused += $hits;

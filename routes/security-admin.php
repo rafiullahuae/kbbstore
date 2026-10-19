@@ -97,10 +97,11 @@ Route::post('/security/integrity', [SecurityController::class, 'integrity'])
 |   POST security/firewall               mode, scope, limits       firewall.manage
 |   POST security/firewall/countries     country rules             firewall.manage
 |   POST security/firewall/bots          good-bot switches         firewall.manage
+|   POST security/firewall/clouds        cloud networks Block/Allow firewall.manage (Lane FWN)
 |   POST security/firewall/allow         always allow (+ my IP)    firewall.manage
 |   POST security/firewall/allow/remove                            firewall.manage
 |   POST security/firewall/unban                                   firewall.manage
-|   POST security/firewall/data          download country / bot data (6/min)
+|   POST security/firewall/data          download country / bot / cloud data (6/min)
 |
 | CAPABILITIES: both owner-only, mapped in App\Support\AdminCapabilities ABOVE
 | the `admin-api/security/**` wildcard (first match wins), so neither falls to
@@ -113,6 +114,8 @@ Route::get('/security/firewall/live', [FirewallApiController::class, 'liveView']
 Route::post('/security/firewall', [FirewallApiController::class, 'save'])->middleware('throttle:60,1,fw');
 Route::post('/security/firewall/countries', [FirewallApiController::class, 'countriesSave'])->middleware('throttle:60,1,fw');
 Route::post('/security/firewall/bots', [FirewallApiController::class, 'botsSave'])->middleware('throttle:60,1,fw');
+// Lane FWN: hidden by a compiled route table until 2027_11_13_100000_clear_caches_cloud_networks.php has run.
+Route::post('/security/firewall/clouds', [FirewallApiController::class, 'cloudsSave'])->middleware('throttle:60,1,fw');
 Route::post('/security/firewall/allow', [FirewallApiController::class, 'allowAdd'])->middleware('throttle:60,1,fw');
 Route::post('/security/firewall/allow/remove', [FirewallApiController::class, 'allowRemove'])->middleware('throttle:60,1,fw');
 Route::post('/security/firewall/unban', [FirewallApiController::class, 'unban'])->middleware('throttle:60,1,fw');
