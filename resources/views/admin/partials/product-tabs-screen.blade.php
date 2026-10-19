@@ -326,7 +326,8 @@
       type: type,
       prefill: prefill,
       value: value,
-      maxlength: type === 'rich' ? null : 120
+      maxlength: type === 'rich' ? null : 120,
+      bar: type === 'rich' ? rteBar() : ''
     });
   }
 
@@ -334,9 +335,11 @@
      interpolation on this screen that is: it is the operator's own HTML, it is
      the thing being edited, and App\Support\RichText::clean() ran over it on
      the server before it could be stored. */
-  function rte(html) {
-    return '<div class="kpt-rte">'
-      + '<div class="kpt-rte-bar">'
+  /* The tab body's toolbar, ONE builder for both panes (Lane ART): the
+     English pane draws it and the Arabic box carries the same buttons in the
+     same order, handled by the same delegated listener below. */
+  function rteBar() {
+    return '<div class="kpt-rte-bar">'
       +   '<button type="button" data-kpt-cmd="bold">B</button>'
       +   '<button type="button" data-kpt-cmd="italic"><i>I</i></button>'
       +   '<button type="button" data-kpt-cmd="underline" title="Underline"><u>U</u></button>'
@@ -346,7 +349,12 @@
       +   '<button type="button" data-kpt-cmd="insertOrderedList">1.</button>'
       +   '<button type="button" data-kpt-cmd="createLink">Link</button>'
       +   '<button type="button" data-kpt-cmd="kbbMedia" data-rte-media title="Insert pictures from the Media Library">&#128444; Media</button>'
-      + '</div>'
+      + '</div>';
+  }
+
+  function rte(html) {
+    return '<div class="kpt-rte">'
+      + rteBar()
       + '<div class="kpt-rte-area" contenteditable="true" data-kpt-body '
       +   'data-ph="What this tab says. Headings, bold, lists and links all work.">'
       + (html || '')
@@ -1025,9 +1033,15 @@
     var cmd = hit('data-kpt-cmd');
     if (cmd) {
       e.preventDefault();
-      var area = t.closest('.kpt-rte').querySelector('[data-kpt-body]');
+      /* The pane this bar belongs to: the English body, or the Arabic box's own
+         pane (Lane ART) -- never the other one. */
+      var pane = t.closest('.kpt-rte, .kbbar-rte');
+      var area = pane && pane.querySelector('[contenteditable="true"]');
       if (!area) return;
       area.focus();
+
+      var sel = window.getSelection();
+      if (!sel || !sel.rangeCount || !area.contains(sel.anchorNode)) return;
 
       if (cmd.indexOf('formatBlock:') === 0) {
         document.execCommand('formatBlock', false, cmd.split(':')[1]);
