@@ -44,6 +44,8 @@ use Symfony\Component\HttpFoundation\Response;
  *   3. A verified good bot (GoodBots) → through, never counted. A FAKE one
  *      (its operator's DNS says no) → refused everywhere: no person's browser
  *      calls itself Googlebot.
+ *   3½. Cloud network on Block (CloudNetworks, Lane FWN): refused within the
+ *      scope, like a blocked country; logged as "net_<provider>".
  *   4. Country (CountryDb, ~12 µs): Block → refused within the scope; Watch →
  *      logged; Protect → stricter limits and the page-load proof below.
  *   5. An active ban on the address or its /24 (/64) → 429 within the scope.
@@ -151,6 +153,24 @@ final class Firewall
             }
 
             $claimed = true;
+        }
+
+        // Cloud networks (Lane FWN): a data-centre provider on Block is
+        // refused like a country on Block, within the same scope. After the
+        // exemptions, the always-allow list and verified good bots above;
+        // a claimed bot's GET (a link preview pending its DNS check) is let
+        // through as it is for countries. The server's own address never is
+        // refused. One binary search over an OPcache'd array.
+        if (($fw['cloud'] ?? '') !== '' && ! ($claimed && ! $write) && $ip !== $request->server->get('SERVER_ADDR')) {
+            $provider = CloudNetworks::match($bin, $fw['cloud']);
+
+            if ($provider !== null && ($fw['scope'] === 'site' || $write || BlockGate::isCommerce($route))) {
+                FirewallLog::hit('net_'.$provider, $bin, CountryDb::lookup($bin), $enforce);
+
+                if ($enforce) {
+                    return ['cloud', 403, 0];
+                }
+            }
         }
 
         $cc = $fw['countries'] !== [] ? CountryDb::lookup($bin) : '';

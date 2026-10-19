@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\Security\CloudNetworks;
 use App\Services\Security\CountryDb;
 use App\Services\Security\Firewall;
 use App\Services\Security\FirewallConfig;
@@ -49,6 +50,8 @@ final class FirewallApiController extends Controller
             'countries' => $this->countries($all['countries']),
             'actions' => FirewallConfig::COUNTRY_ACTIONS,
             'bots' => $this->bots($all['bots']),
+            'clouds' => $this->clouds($all['clouds']),
+            'clouds_not_offered' => CloudNetworks::NOT_OFFERED,
             'allow' => $all['allow'],
             'allow_max' => FirewallConfig::ALLOW_MAX,
             'my_ip' => IpRange::normalise($request->ip()),
@@ -58,6 +61,7 @@ final class FirewallApiController extends Controller
             'data' => [
                 'country' => CountryDb::verify(),
                 'bots' => GoodBots::about(),
+                'clouds' => $this->cloudData(),
                 'attribution' => ['text' => CountryDb::ATTRIBUTION, 'url' => CountryDb::ATTRIBUTION_URL],
             ],
             // The Overview tab's tiles and bans. The Live activity tab's
@@ -116,6 +120,44 @@ final class FirewallApiController extends Controller
         }
 
         return response()->json(['ok' => true, 'changed' => $n, 'countries' => $this->countries(FirewallConfig::all()['countries'])]);
+    }
+
+    /**
+     * POST security/firewall/clouds — {clouds: {provider: block|allow}}  (Lane FWN)
+     *
+     * Every key must be a listed provider and every value Block or Allow, or
+     * nothing is saved (422). Saving rebuilds the request-path files, so a
+     * provider switched to Allow stops being refused on the next request.
+     */
+    public function cloudsSave(Request $request): JsonResponse
+    {
+        $input = $request->input('clouds');
+
+        if (! is_array($input) || $input === [] || count($input) > count(CloudNetworks::PROVIDERS)) {
+            return response()->json(['ok' => false, 'error' => 'Nothing to save.'], 422);
+        }
+
+        $before = FirewallConfig::all()['clouds'];
+        $n = FirewallConfig::setClouds($input, $this->who());
+
+        if ($n === null) {
+            return response()->json(['ok' => false, 'error' => 'Each cloud network is either Block or Allow.'], 422);
+        }
+
+        $after = FirewallConfig::all()['clouds'];
+
+        foreach ($after as $key => $action) {
+            if ($before[$key] !== $action) {
+                $this->security->record('firewall.cloud', 'Firewall: cloud network '.CloudNetworks::PROVIDERS[$key][0], [
+                    'subject' => 'firewall.cloud.'.$key,
+                    'before' => $before[$key],
+                    'after' => $action,
+                    'severity' => 'notice',
+                ]);
+            }
+        }
+
+        return response()->json(['ok' => true, 'clouds' => $this->clouds($after)]);
     }
 
     /** POST security/firewall/bots — {bots: {family: bool}} */
@@ -195,6 +237,14 @@ final class FirewallApiController extends Controller
             return response()->json(['ok' => $ok, 'report' => $report, 'bots' => GoodBots::about()], $ok ? 200 : 502);
         }
 
+        if ($what === 'clouds') {
+            $report = CloudNetworks::refresh();
+            $ok = array_filter($report, static fn (array $r): bool => $r['ok']) !== [];
+            $this->security->record('firewall.data', 'Firewall: cloud network lists '.($ok ? 'refreshed' : 'not refreshed'), ['subject' => 'firewall.clouds', 'severity' => $ok ? 'info' : 'warning']);
+
+            return response()->json(['ok' => $ok, 'report' => $report, 'clouds' => $this->cloudData()], $ok ? 200 : 502);
+        }
+
         return response()->json(['ok' => false, 'error' => 'Unknown data set.'], 422);
     }
 
@@ -257,6 +307,38 @@ final class FirewallApiController extends Controller
         }
 
         return $out;
+    }
+
+    /** One row per provider for the Cloud networks tab (an allowlist of fields). */
+    private function clouds(array $actions): array
+    {
+        $about = CloudNetworks::about()['providers'];
+        $out = [];
+
+        foreach (CloudNetworks::PROVIDERS as $key => [$label, $asns, $preset, $who]) {
+            $out[] = [
+                'key' => $key,
+                'label' => $label,
+                'who' => $who,
+                'asns' => array_map(static fn (int $a): string => 'AS'.$a, $asns),
+                'action' => $actions[$key] ?? ($preset ? 'block' : 'allow'),
+                'preset' => $preset ? 'block' : 'allow',
+                'v4' => $about[$key]['v4'],
+                'v6' => $about[$key]['v6'],
+                'ranges' => $about[$key]['ranges'],
+            ];
+        }
+
+        return $out;
+    }
+
+    /** The list in use, for the Data tab. */
+    private function cloudData(): array
+    {
+        $a = CloudNetworks::about();
+
+        return ['from' => $a['from'], 'at' => $a['at'], 'ok' => $a['ok'], 'error' => $a['error'], 'total' => $a['total'],
+            'providers' => array_values(array_map(static fn (array $p): array => ['label' => $p['label'], 'ranges' => $p['ranges']], $a['providers']))];
     }
 
     private function allowed(array $allow, string $ip): bool

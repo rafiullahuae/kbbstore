@@ -357,9 +357,10 @@ final class AdminSearchIndex
             'Live activity' => ['By reason', 'Top countries', 'Top ranges', 'Top addresses'],
             'Rules' => ['What a ban blocks', 'Flood limits', 'Ban length', 'Protect countries', 'Search-engine impostors'],
             'Countries' => ['Country rules'],
+            'Cloud networks' => ['Cloud networks', 'Alibaba Cloud', 'Tencent Cloud', 'Huawei Cloud'],
             'Good bots' => ['Search engines and link previews', 'Published address lists'],
             'Allow & block lists' => ['Always allow', 'Block list'],
-            'Data' => ['Country database', 'Download country database', 'Bot address lists'],
+            'Data' => ['Country database', 'Download country database', 'Bot address lists', 'Cloud network lists', 'Refresh cloud lists'],
         ],
         'analytics' => [],
         'search' => [
