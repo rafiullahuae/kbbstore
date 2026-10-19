@@ -1104,7 +1104,7 @@ body.embed .bbsw{display:none}
 .app .bar.crow.nob .row{padding:0 12px}
 .app .bar.crow .back{flex:0 0 44px;width:44px;height:44px;display:grid;place-items:center;padding:0;margin:0;color:var(--ink)}
 .app .bar.crow .back svg{width:20px;height:20px}
-.app .bar.crow .crumb{flex:1 1 auto;min-width:0;font-size:12.5px;line-height:1.4;color:#756C74;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.app .bar.crow .crumb b{font-weight:700}
-.app .bar.crow .crumb i{font-style:normal;padding:0 .3em}
+.app .bar.crow .bcr{flex:1 1 auto;min-width:0;font-size:12.5px;line-height:1.4;color:#756C74;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app .bar.crow .bcr b{font-weight:700;color:var(--ink)}
+.app .bar.crow .bcr i{font-style:normal}
 .app .bar.crow .e{flex:0 0 auto;display:flex;align-items:center}
