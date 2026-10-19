@@ -383,7 +383,7 @@ document.addEventListener('change', e => {
   const s = e.target.closest('select[data-sw="jump"]');
   if (s && s.value) { location.hash = jumpHref(JUMP[+s.value]); }
 });
-window.addEventListener('hashchange', () => { if (location.hash === S.selfHash) return; readHash(); render(); });
+window.addEventListener('hashchange', () => { if (window.APV_SCREENS || location.hash === S.selfHash) return; readHash(); render(); });
 window.addEventListener('resize', fit);
 
 /* ── gestures: back swipe from the edge, pull to refresh ───────────────── */
@@ -459,6 +459,9 @@ window.APV = {
 
 /* ── start ─────────────────────────────────────────────────────────────── */
 seed();
-readHash();
-document.title = AR ? 'معاينة تطبيق كي بيوتي بليس' : 'K-Beauty Bliss app preview';
-render();
+/* screens.html loads the same code for the jump list and the strings, and draws its own page */
+if (!window.APV_SCREENS) {
+  readHash();
+  document.title = AR ? 'معاينة تطبيق كي بيوتي بليس' : 'K-Beauty Bliss app preview';
+  render();
+}

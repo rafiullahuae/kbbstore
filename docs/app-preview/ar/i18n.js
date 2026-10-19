@@ -6,7 +6,9 @@
 window.APV_I18N = {
   /* ── chrome around the phone ── */
   'App preview':'معاينة التطبيق', 'System':'النظام', 'Device':'الجهاز', 'Design':'التصميم', 'Jump to':'انتقلي إلى', 'View':'العرض', 'Fit':'ملاءمة', 'Screen':'الشاشة',
-  'All screens':'كل الشاشات', 'Open the English app':'افتحي التطبيق الإنجليزي', 'Open the Arabic app':'افتحي التطبيق العربي',
+  'All screens':'كل الشاشات', 'Every screen, live':'كل الشاشات مباشرة', 'Open the app':'افتحي التطبيق', 'Open the English screens':'افتحي الشاشات الإنجليزية', 'Open the Arabic screens':'افتحي الشاشات العربية', '{n} screens':'{n} شاشة',
+  'Each preview is the app itself, running. Click one to open it full size, then tap, scroll and type.':'كل معاينة هي التطبيق نفسه وهو يعمل. اضغطي على أي شاشة لفتحها بالحجم الكامل، ثم المسي ومرّري واكتبي.',
+'Open the English app':'افتحي التطبيق الإنجليزي', 'Open the Arabic app':'افتحي التطبيق العربي',
   'Unfold':'فتح الطيّ', 'Fold':'طيّ', 'Tabletop':'وضع الطاولة', 'Flat':'مسطّح', 'Portrait':'عمودي', 'Landscape':'أفقي',
   'cover screen':'الشاشة الخارجية', 'inner screen':'الشاشة الداخلية', 'addr:Home':'المنزل', 'addr:Work':'العمل', 'addr:Other':'أخرى',
   'compact':'مضغوط','medium':'متوسط', 'expanded':'موسّع',
