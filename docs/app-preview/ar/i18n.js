@@ -86,7 +86,7 @@ window.APV_I18N = {
   'Recent':'عمليات البحث الأخيرة', 'Popular searches':'عمليات بحث شائعة', 'Scan a barcode in the shop':'امسحي باركود منتج في المتجر', 'No results for “{q}”':'لا نتائج لـ«{q}»',
   'Check the spelling, or try a brand or a concern.':'تأكّدي من الكتابة، أو جرّبي علامة أو مشكلة بشرة.', 'Products':'المنتجات', 'Products, brands, concerns':'منتجات، علامات، مشاكل البشرة', 'Clear search':'مسح البحث',
   'Point at the barcode on the box':'وجّهي الكاميرا إلى الباركود على العلبة', 'The camera is used only while this screen is open. Nothing is recorded.':'تُستخدم الكاميرا فقط أثناء فتح هذه الشاشة، ولا يُسجَّل شيء.', 'Simulate a match':'محاكاة تطابق',
-  'q:Anua':'أنوا', 'q:PDRN':'PDRN', 'q:sunscreen':'واقي الشمس', 'q:COSRX':'كوسركس', 'q:Beauty of Joseon':'بيوتي أوف جوسون', 'q:toner pad':'تونر',
+  'q:Anua':'أنوا', 'q:PDRN':'بي دي آر إن', 'q:sunscreen':'واقي الشمس', 'q:COSRX':'كوسركس', 'q:Beauty of Joseon':'بيوتي أوف جوسون', 'q:toner pad':'تونر',
   'Discover products':'اكتشفي المنتجات', 'Save what you love':'احفظي ما تحبّين', 'Tap the heart on any product. We’ll tell you when the price drops.':'اضغطي القلب على أي منتج، ونخبرك عندما ينخفض سعره.',
   'Price-drop alerts are on for your wishlist.':'تنبيهات انخفاض السعر مفعّلة لمفضّلتك.', 'Move all to bag':'انقلي الكل إلى الحقيبة',
 
@@ -150,12 +150,12 @@ window.APV_I18N = {
   'Google Pay couldn’t complete the payment. Nothing was charged.':'لم تتمكّن محفظة جوجل من إتمام الدفع، ولم يُخصم أي مبلغ.', 'Tabby couldn’t approve this order. Nothing was charged.':'لم تتمكّن تابي من الموافقة على هذا الطلب، ولم يُخصم أي مبلغ.',
   'Tamara couldn’t approve this order. Nothing was charged.':'لم تتمكّن تمارا من الموافقة على هذا الطلب، ولم يُخصم أي مبلغ.', 'Payment didn’t go through':'لم يكتمل الدفع',
   'Your bag is safe: {n} items, {v}. Try again or choose another way to pay.':'حقيبتك محفوظة: {n} منتجات، {v}. حاولي مجدداً أو اختاري طريقة دفع أخرى.', 'Choose another method':'اختاري طريقة أخرى',
-  'Pay in 4, no interest':'ادفعي على 4 بدون فوائد', 'Pay later':'ادفعي لاحقاً', 'No interest, no fees. Pay the first today.':'بلا فوائد ولا رسوم. الدفعة الأولى اليوم.', 'Sharia-compliant, no late fees.':'متوافقة مع الشريعة، بلا غرامات تأخير.',
+  'Pay in 4, no interest':'ادفعي على 4 بدون فوائد', 'Apple Pay':'آبل باي', 'Google Pay':'جوجل باي', 'Order {id}':'الطلب {id}', 'Pay later':'ادفعي لاحقاً', 'No interest, no fees. Pay the first today.':'بلا فوائد ولا رسوم. الدفعة الأولى اليوم.', 'Sharia-compliant, no late fees.':'متوافقة مع الشريعة، بلا غرامات تأخير.',
   'Choose Tabby or Tamara at checkout.':'اختاري تابي أو تمارا عند إتمام الشراء.', 'Area in {e}':'المنطقة في {e}', 'Search areas':'ابحثي عن منطقة', 'No area matches. Check the spelling.':'لا توجد منطقة مطابقة. تأكّدي من الكتابة.',
   'Choose your emirate first. The areas are listed by emirate.':'اختاري الإمارة أولاً، فالمناطق مرتّبة حسب الإمارة.', 'Choose emirate':'اختاري الإمارة',
 
   /* ── field messages ── */
-  'This field is required.':'هذا الحقل مطلوب.', 'Enter your full name.':'أدخلي اسمك الكامل.', 'Enter an email address like name@example.com.':'أدخلي بريداً إلكترونياً صحيحاً، مثل name@example.com.',
+  'This field is required.':'هذا الحقل مطلوب.', 'Enter your full name.':'أدخلي اسمك الكامل.', 'Enter an email address like name@example.com.':'أدخلي بريداً إلكترونياً صحيحاً.',
   'Enter a 9-digit UAE mobile number, like 50 123 4567.':'أدخلي رقم جوال إماراتياً من 9 أرقام، مثل 50 123 4567.', 'Use at least 8 characters.':'استخدمي 8 أحرف على الأقل.',
   'Your card number is incomplete.':'رقم البطاقة غير مكتمل.', 'Your card number is invalid.':'رقم البطاقة غير صحيح.', 'Enter the expiry as MM / YY.':'أدخلي تاريخ الانتهاء بصيغة شهر / سنة.',
   'This card has expired.':'انتهت صلاحية هذه البطاقة.', 'Enter the 3 digits on the back of the card.':'أدخلي الأرقام الثلاثة على ظهر البطاقة.', 'Tell us a little more (10 characters or more).':'أخبرينا بالمزيد قليلاً (10 أحرف أو أكثر).',
@@ -242,7 +242,7 @@ window.APV_I18N = {
   'Update on the {s}':'حدّثي من {s}', 'Update on {s}':'حدّثي من {s}', 'Opens the store page.':'يفتح صفحة المتجر.', 'Set in the admin: App → Mobile app → Minimum version.':'يُضبط من لوحة التحكم: التطبيق ← تطبيق الجوال ← الحد الأدنى للإصدار.',
 
   /* ── blog: the site has these articles in English only; the Arabic app shows its own summary ── */
-  'blog:pdrn-skincare-what-is-it-does-it-actually-work:title':'العناية بالبشرة بمكوّن PDRN: ما هو وهل ينجح فعلاً؟',
+  'blog:pdrn-skincare-what-is-it-does-it-actually-work:title':'العناية بالبشرة بمكوّن بي دي آر إن: ما هو وهل ينجح فعلاً؟',
   'blog:pdrn-skincare-what-is-it-does-it-actually-work:excerpt':'إن كنتِ تتابعين العناية الكورية مؤخراً، فلا بد أنك لاحظتِ مكوّناً يظهر في كل مكان: كريمات وردية، وسيروم للبشرة الزجاجية، وأقنعة كولاجين، وأمبولات.',
   'blog:pdrn-skincare-what-is-it-does-it-actually-work:body':[
     'إن كنتِ تتابعين العناية الكورية بالبشرة مؤخراً، فلا بد أنك لاحظتِ مكوّناً واحداً يتكرّر في كل مكان: كريمات وردية، وسيروم للبشرة الزجاجية، وأقنعة كولاجين، وأمبولات، وحتى منتجات للشفاه.',

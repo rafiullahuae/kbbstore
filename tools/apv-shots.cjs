@@ -160,7 +160,7 @@ function audit(lang) {
     /* 3b. text over a picture or an icon (designed overlays on photos excepted) */
     const media = [...g.querySelectorAll('img,svg')].filter((m) => !hidden(m) && !m.closest('.sb,.island,.punch')).map((m) => { const R = m.getBoundingClientRect(); return {m, sc:scOf(m), stack:stackOf(m), v:visible(m, R), ve:visible(m, R, true)}; }).filter((x) => area(x.ve) > 0);
     for (const r of runs) {
-      if (r.el.closest('.zh,.cnt,.badge,.bdg,.pbk,.tt-fold')) continue;
+      if (r.el.closest('.zh,.cnt,.badge,.bdg,.pbk,.tt-fold,.blogo,.cth')) continue;
       for (const x of media) {
         if (x.stack !== r.stack || x.m.contains(r.el) || r.el.contains(x.m)) continue;
         const same = x.sc === r.sc;

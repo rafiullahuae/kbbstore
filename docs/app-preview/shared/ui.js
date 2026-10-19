@@ -37,6 +37,7 @@ const toggleRow = (act, v, on, label, sub, icon) => `<button class="li" data-act
 const cbxRow = (act, v, on, label) => `<button class="li cbr" data-act="${act}" data-v="${v}" role="checkbox" aria-checked="${!!on}"><span class="cbx${on ? ' on' : ''}">${ico('check')}</span><span class="grow">${label}</span></button>`;
 const radio = (on) => `<span class="rad${on ? ' on' : ''}" aria-hidden="true"></span>`;
 const rowLink = (path, icon, label, val) => `<button class="li" ${go$(path)}>${icon ? ico(icon) : ''}<span class="grow">${label}</span>${val != null ? `<span class="v">${val}</span>` : ''}${ico('chevR', 'chev flip')}</button>`;
+const bInit = b => initials(AR ? b.name : (b.name_en || b.name));
 const initials = s => esc(String(s || '?').replace(/[^A-Za-z0-9؀-ۿ ]/g, '').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase());
 
 /* ── fields: the website's floating label (kbb-checkout.css `.fld.kbb-fl`) ─
