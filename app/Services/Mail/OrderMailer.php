@@ -543,7 +543,7 @@ class OrderMailer
         try {
             $order->loadMissing('items');
 
-            \App\Support\OrderLocale::render($order, function () use ($to, $order, $note): void {
+            $this->inLocale($order, true, function () use ($to, $order, $note): void {
                 $this->log()?->labelNext('order.status_onhold');
 
                 Mail::mailer(MailConfigurator::MAILER)
@@ -609,7 +609,7 @@ class OrderMailer
             // inLocale() exists for: the operator pressing this button is
             // looking at an English back office, and the customer it goes to is
             // not necessarily reading one.
-            \App\Support\OrderLocale::render($order, static function () use ($to, $order): void {
+            $this->inLocale($order, true, static function () use ($to, $order): void {
                 Mail::mailer(MailConfigurator::MAILER)
                     ->to($to)
                     ->send(new OrderConfirmation($order));
@@ -711,7 +711,7 @@ class OrderMailer
 
             // Same again, and the invoice is the document most likely to be
             // regenerated long after the order — see inLocale().
-            \App\Support\OrderLocale::render($order, static function () use ($to, $order): void {
+            $this->inLocale($order, true, static function () use ($to, $order): void {
                 Mail::mailer(MailConfigurator::MAILER)
                     ->to($to)
                     ->send(new \App\Mail\OrderInvoice($order));
@@ -1036,7 +1036,40 @@ class OrderMailer
             return;
         }
 
-        \App\Support\OrderLocale::render($order, $run);
+        try {
+            \App\Support\OrderLocale::render($order, $run);
+        } catch (\Illuminate\View\ViewException $e) {
+            /*
+             * AN ARABIC RENDER THAT FAILS STILL DELIVERS — Lane AEM. The owner:
+             * "a rendering failure in Arabic must never stop a mail from going
+             * out". A ViewException is thrown while the BODY is being drawn,
+             * before anything reaches the transport, so nothing has been sent
+             * and sending once in English cannot be a duplicate. Only for an
+             * order in another language: an English render that fails has no
+             * other language to fall back to, and rethrows exactly as before.
+             * A transport failure is not a ViewException and is never retried.
+             */
+            $locale = (string) ($order->locale ?? \App\Support\Locale::DEFAULT);
+
+            if ($locale === \App\Support\Locale::DEFAULT) {
+                throw $e;
+            }
+
+            Log::error('order mail: the ' . $locale . ' render failed; sent in English instead', [
+                'order' => $order->order_number,
+                'exception' => class_basename($e->getPrevious() ?? $e),
+                'message' => $this->redact($e->getMessage()),
+            ]);
+
+            $previous = app()->getLocale();
+            app()->setLocale(\App\Support\Locale::DEFAULT);
+
+            try {
+                $run();
+            } finally {
+                app()->setLocale($previous);
+            }
+        }
     }
 
     /** @return bool  true when the message was handed to the transport without an exception. */
