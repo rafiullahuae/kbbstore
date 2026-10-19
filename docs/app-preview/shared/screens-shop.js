@@ -31,7 +31,7 @@ function homeSections(){
     <div class="dots" id="bd" aria-hidden="true">${B.map((_, i) => `<span class="${i ? '' : 'on'}"><i></i></span>`).join('')}</div></div>`;
   const TI = ['shield', 'truck', 'card', 'chat'];
   const trust = `<div class="trust">${(D.trust || []).map((x, i) => `<div><i>${ico(TI[i])}</i><span>${dt((x.t || []).join(' '))}</span></div>`).join('')}</div>`;
-  const brands = `<div class="brands">${D.brands.slice(0, 16).map(b => `<button class="brand" ${go$('/brand/' + b.slug)}><i style="background:${brandColour(b.slug)}">${bInit(b)}</i><span><b>${brandTxt(b.name)}</b><small>${t('{n} products', {n:num(b.count)})}</small></span></button>`).join('')}</div>`;
+  const brands = `<div class="brands">${D.brands.slice(0, 16).map(b => `<button class="brand" ${go$('/brand/' + b.slug)}><i style="background:${brandColour(b.slug)}">${bInit(b)}</i><span><b>${brandTxt(b.name)}</b><small>${t('{n} products', {n:num(b.items.length)})}</small></span></button>`).join('')}</div>`;
   const cats = `<div class="hs ctiles" style="--cw:132px">${D.categories.filter(c => c.parent === 'skincare' || !c.parent).slice(0, 10).map(catTile).join('')}</div>`;
   const blog = `<div class="hs" style="--cw:78%">${(D.posts || []).filter(x => bt(x, 'title')).slice(0, 5).map(x => `<button class="blog" ${go$('/blog/' + x.slug)}>${x.cover ? `<img src="${x.cover}" alt="" loading="lazy">` : ''}<span class="bt"><b class="clamp2">${esc(bt(x, 'title'))}</b><small>${date(x.date)}</small></span></button>`).join('')}</div>`;
   const search = `<button class="srch" data-tab="search"><span>${ico('search')}</span><span class="grow">${t('Search {n}+ Korean skincare products', {n:num(Math.floor((D.counts || {}).catalogue / 10) * 10 || 760)})}</span><span class="scan" ${go$('/scan')} aria-label="${t('Scan barcode')}">${ico('scan')}</span></button>`;
@@ -154,7 +154,7 @@ scr('/brand/:b', {tab:'shop', group:'Brand', label:'Brand page', chain:() => ['/
     const b = BR[r.params.b] || D.brands[0];
     const base = b.items.map(s => P[s]).filter(Boolean);
     const head = `<div class="bbanner">${b.banner ? `<picture><source media="(min-width:700px)" srcset="${b.banner_w || b.banner}"><img src="${b.banner}" alt="" class="cover"></picture>` : `<div class="cbg" style="background:${brandColour(b.slug)}"></div>`}</div>
-      <div class="bhead"><span class="blogo" style="background:${brandColour(b.slug)}" aria-hidden="true">${bInit(b)}</span><div class="grow"><h1 class="h1">${brandTxt(b.name)}</h1><span class="small muted">${t('{n} products on K-Beauty Bliss', {n:num(b.count)})}</span></div><button class="ib" data-act="share" aria-label="${t('Share')}">${ico('share')}</button></div>
+      <div class="bhead"><span class="blogo" style="background:${brandColour(b.slug)}" aria-hidden="true">${bInit(b)}</span><div class="grow"><h1 class="h1">${brandTxt(b.name)}</h1><span class="small muted">${t('{n} products on K-Beauty Bliss', {n:num(b.items.length)})}</span></div><button class="ib" data-act="share" aria-label="${t('Share')}">${ico('share')}</button></div>
       <div class="chead" style="padding-top:0">${aboutBlock('about-b-' + b.slug, b.about)}</div>`;
     return {title:b.name, titleH:brandTxt(b.name), back:true, right:bagBtn(), body:listing(r, ctx, base, {head, noBrand:true}), ptr:true, sk:listKey(r)};
   },
@@ -197,7 +197,7 @@ function brandList(){
   if (!L.length) return `<div class="state" style="min-height:0;padding-top:24px"><div class="ic">${ico('search')}</div><h2>${t('No brand called “{q}”', {q:esc(S.brandQ)})}</h2><p>${t('Check the spelling, or browse the list.')}</p></div>`;
   const groups = {};
   L.forEach(b => { const k = b.name[0].toUpperCase(); (groups[k] = groups[k] || []).push(b); });
-  return Object.entries(groups).map(([k, bs]) => `<div class="grp ltr-grp">${dt(k)}</div><div class="list" style="margin:0 16px">${bs.map(b => `<button class="li" ${go$('/brand/' + b.slug)}><span class="bav" style="background:${brandColour(b.slug)}">${bInit(b)}</span><span class="grow"><b class="lt">${brandTxt(b.name)}</b></span><span class="v">${num(b.count)}</span>${ico('chevR', 'chev flip')}</button>`).join('')}</div>`).join('');
+  return Object.entries(groups).map(([k, bs]) => `<div class="grp ltr-grp">${dt(k)}</div><div class="list" style="margin:0 16px">${bs.map(b => `<button class="li" ${go$('/brand/' + b.slug)}><span class="bav" style="background:${brandColour(b.slug)}">${bInit(b)}</span><span class="grow"><b class="lt">${brandTxt(b.name)}</b></span><span class="v">${num(b.items.length)}</span>${ico('chevR', 'chev flip')}</button>`).join('')}</div>`).join('');
 }
 
 /* ── Product ───────────────────────────────────────────────────────────── */

@@ -1,119 +1,170 @@
-# K-Beauty Bliss app — interactive previews (Lane APV)
+# K-Beauty Bliss app — live previews, English and Arabic (Lane APV2)
 
-Phase 1 of `docs/MOBILE-APP-PLAN.md`: every screen of the **native** app, clickable, in
-true-size device frames, English and Arabic, with real products and prices from
-kbeautybliss.com. The owner picks the design here before any app code is written.
+Two separate apps, one shared engine. Open from this folder (`file://` works) or from a phone:
 
-## Open it
+| | App | Every screen, live |
+|---|---|---|
+| English (LTR, English only) | `en/index.html` | `en/screens.html` |
+| Arabic (RTL, Arabic only, Cairo font) | `ar/index.html` | `ar/screens.html` |
 
-- Double-click `docs/app-preview/index.html` (works from `file://`, no server), or open it
-  in a phone browser. It is one file: vanilla JS, no framework, no build step. Only Google
-  Fonts (Outfit, Cairo) and the live product photos come from the network.
-- Every screen has a link: the address bar keeps the state, e.g.
-  `index.html#s=product&os=android&dev=fold&fold=0&l=ar&d=B`.
+`index.html` here only offers the two. The first single-page prototype is kept as
+`v1/index.html` for reference.
 
-## The switcher (top bar)
+## Using the app
 
-| Control | What it does |
-|---|---|
-| Design A / B / C | Only **Home** and **Product** have choices. A: editorial, full-bleed. B: soft boutique cards on blush. C: bold pink header (Home) / dark price card with express Apple Pay / Google Pay (Product). |
-| English / العربية | Full right-to-left mirror. In Arabic a third button switches digits 123 ↔ ١٢٣ (default: Latin digits, as on the site and UAE receipts). |
-| iOS / Android | iOS is the default. iOS: SF-style navigation bar, large titles, translucent tab bar, bottom sheets with grabber, iOS alerts, Face ID. Android: Material 3 top app bar, navigation bar with pill indicator, M3 sheets/dialogs, fingerprint; the back arrow plays the **predictive-back** shrink (also shown as a still: System → "Android predictive back"). |
-| Device | iOS: iPhone 16 Pro 402×874 pt, iPhone SE 375×667 pt, iPad mini 744×1133 pt (+ Landscape 1133×744). Android: Pixel 9 412×915 dp, Galaxy Z Flip 412×915 dp (+ **Tabletop**), Galaxy Z Fold (cover 344×882 dp ↔ **Unfold** inner 673×841 dp — the screen, bag and scroll position are kept), Surface Duo 2 spanned (two 540×720 dp screens + hinge). |
-| Screen | Jump to any of the 68 screens/states (grouped). Everything inside the phone is also tappable: tabs, carousels, concern tabs, gallery, qty, wishlist, add to bag, coupon, sheets, payment methods, toggles, search-as-you-type. |
-| Fit / 100% | Fit scales the frame to the window; 100% is true size (1 CSS px = 1 pt/dp). |
+It behaves like the app, not like a slide: tap, scroll, type.
 
-Haptics are shown as a pill under the frame ("Haptic · success (UIFeedbackGenerator)" /
-"CONFIRM (HapticFeedbackConstants)") when a tap would produce one.
+- **Navigation stack per tab** (Home · Shop · Search · Bag · Account): every screen pushes, Back
+  pops, switching tabs keeps each tab where you left it. iOS: swipe from the left edge (right edge
+  in Arabic) to go back; Android: predictive back from either edge (the page shrinks while you
+  drag). Push, pop and tab transitions, mirrored in Arabic; off when the system asks for reduced
+  motion.
+- **Scrolling:** sticky bars, iOS large titles that fold into the bar, a sticky sort/filter bar on
+  listings, pull down at the top of a list to refresh, endless scroll on listings (12 at a time).
+- **Shopping:** Add to bag updates the badge and the bag (toast with "View bag"); the wishlist
+  heart is kept for the session (a reload keeps it); live search (instant results, recent and
+  popular searches; the Arabic app searches in Arabic); sort and filter sheets that really sort
+  and filter (concern, price, on sale, brand), with a filter side panel from 840 wide.
+- **Bag:** quantity steppers update the totals, the free-delivery bar (AED 199) fills, coupon
+  `WELCOME10` gives 10 %, any other code shows the error state.
+- **Every card navigates:** product, brand, category, concern, blog, order.
 
-## Size classes (one rule for every screen)
+Top bar (outside the phone): System (iOS / Android), Device (iPhone 16 Pro, iPhone SE, iPad mini
+with portrait/landscape; Pixel 9, Galaxy Z Flip flat/tabletop, Galaxy Z Fold cover/inner with
+Fold ↔ Unfold, Surface Duo 2 spanned), Design A/B/C (Home and Product), **Jump to** (every screen,
+grouped), Fit / 100 %, a link to the screens grid and a link to the other language's app. There
+is no language toggle: the language is the app. The 123 / ١٢٣ digits choice is only in the
+Arabic app, Account → Language & region.
 
-Each frame is a CSS container (`container: app` for the window, `container: pane` per pane),
-so every frame lays out by its own width, not the browser's.
+**Every screen has a link:** `index.html#/route?device=<key>` — e.g.
+`ar/index.html#/checkout/card?filled=1&device=fold-cover`. Device keys: `ip16 ipse ipad
+ipad-land px9 flip flip-tabletop fold-cover fold-inner duo`; extra keys: `d=B|C` (design),
+`dg=arab` (Arabic digits), `sheet=filter|sort|emirate|area|bnpl|delconfirm`, `viewer=0`,
+`user=0` (signed out), `embed=1` (the phone only, as screens.html uses it), `z=100`.
 
-| Class | Width | Navigation | Content |
-|---|---|---|---|
-| Compact | < 600 | bottom tab bar (Home · Shop · Search · Bag · Account) | one pane; product grid 2 columns |
-| Medium | 600–839 | navigation rail | one pane; grid 3 columns; product gallery beside its details; landscape banners |
-| Expanded | ≥ 840 | navigation rail | two panes, list \| detail, where the screen has a pair (below) |
+## Screens (92 entries in the jump list, each in both apps)
 
-Two-pane pairs (expanded, and across the Duo hinge): Shop/Search/Wishlist → Product;
-Account → Orders; Orders → Order; Bag → checkout step; Blog → Article; Contact ↔ FAQ;
-Home → Product (Duo). Screens without a pair (splash, sign-in, order placed, update
-required…) sit on one screen with a brand panel on the other — **nothing is ever under the
-hinge**. Sheets and dialogs become centred dialogs from Medium up.
+- **Home** A/B/C, loading, offline, splash, first-run notifications.
+- **Shop:** all categories, all brands (A–Z, searchable), shop all, Best Sellers, Under AED 54.
+- **Product** A/B/C (gallery, zoom viewer, tabs or accordions, reviews with photos, bought
+  together, pay-in-4 sheet, express Apple Pay / Google Pay on C), on sale, loading, error.
+- **Category** (banner, about, sub-category chips, grid, sort/filter; concern pages), filter,
+  sort, no matches, loading. **Brand** (banner, logo, about, grid), filter.
+- **Search** empty / results / no results, barcode scanner.
+- **Bag & checkout — every step its own screen**, with the step indicator, Back and validation:
+  1 Bag review · 2 Contact (signed in, or guest with email) · 3 Delivery address: saved list →
+  new address (full name, mobile +971, Emirate picker, Area picker filtered by the emirate and
+  searchable, building/villa, street, apartment/floor, landmark, Home/Work/Other, default) in
+  empty / filled / error states · 4 Delivery method (standard, express, GCC) and gift message ·
+  5 Payment (Apple Pay on iOS / Google Pay on Android, card, Tabby, Tamara, cash on delivery —
+  UAE only), instalment amounts and small print · 6 the method's own step: card form (brand
+  detection, grouping, expiry, CVC, name) → 3-D Secure, the wallet sheet, Tabby approval,
+  Tamara approval, COD confirmation · 7 Review & place order (terms) · 8 Order placed · 9 Payment
+  failed → Try again or another method, the bag kept.
+- **Account:** signed in / out, sign in, create account (password meter), forgot password,
+  Face ID / fingerprint unlock, profile, addresses (add, edit, delete), orders, order on the way /
+  delivered (timeline, reorder), wishlist, notification settings, language & region, delete
+  account + confirm.
+- **Content:** Contact (the WhatsApp button is here and nowhere else — never floating), FAQ,
+  policies and each policy, About, Blog list and article.
+- **States:** skeletons (home, listing, product, bag, orders), offline banner and screen, error,
+  empty (bag, wishlist, orders), update required.
 
-Foldables: Fold cover = compact, Fold inner = medium. Flip **tabletop** (half-folded): content
-in the top half, controls in the bottom half (product: photo above; price, qty, thumbnails,
-Add to bag below), sheets open in the bottom half; nothing crosses the fold. iPad uses the
-same rules (portrait = medium, landscape = expanded). There is no foldable iPhone.
+## Fields: the website's floating labels
 
-## Screens (68, each in English and Arabic)
+Every form (checkout, sign in, register, address, contact, card, coupon, 3-D Secure code) uses
+the website checkout's `.fld.kbb-fl` (resources/css/kbb/kbb-checkout.css): the label sits inside
+the box as the placeholder, centred; on focus or once filled it lifts to a small pink heading in
+the top-start corner (left in English, right in Arabic) and the value sits under it. Same 12 px
+corners, 1.5 px border, pink focus ring, red error state with the message under the field,
+leading icons, `+971` that appears once the label has moved, hints that wait for focus. Prefilled
+fields show the lifted state. Phone, card and code digits are left-to-right inside the Arabic
+app. Pure CSS (`:focus`, `:not(:placeholder-shown)`), no measuring. Inline validation when you
+leave a field, all fields on Continue (with a summary and the first error focused), `autocomplete`,
+`inputmode` and `enterkeyhint` on each field.
 
-- **Start**: splash; first-run language choice; notifications primer.
-- **Shop**: Home (A/B/C) in the site's order — banner carousel, trust row, Shop by Concern
-  (the owner's "Content 1": tabs, tip panel with photo, View all, two-row product rail),
-  Best Sellers, Brands, Trending, Under AED 54, Blog; Shop grid; categories tree; filter sheet
-  (concern, price, brand); sort sheet; endless scroll; no-match empty state; Search (recent &
-  popular, instant results, no results); barcode scanner; Wishlist.
-- **Product** (A/B/C): swipe gallery, zoom hint, thumbnails, price with discount and saving,
-  Tabby/Tamara instalment line, rating, size, qty, sticky Add to bag, tabs (Description,
-  Ingredients, How to use, Shipping, Returns), reviews with photo thumbnails, full-screen photo
-  viewer, Bought together, You may also like; "Added to bag" toast.
-- **Checkout**: Bag (free-delivery bar, coupon, qty, totals with VAT, upsell); address (saved);
-  new address with validation errors; Emirate picker; delivery method; payment (Apple Pay on
-  iOS / Google Pay on Android, card with Stripe-style fields, Tabby, Tamara, cash on delivery
-  UAE-only + AED 10); Apple Pay / Google Pay sheet; 3-D Secure step; Tabby and Tamara in-app
-  approval sheets; review; order placed; payment failed with retry — the bag is kept.
-- **Account**: sign in, register, forgot password, Face ID / fingerprint unlock, account,
-  profile, addresses, orders (+ empty), order detail with live status timeline and Reorder,
-  notification settings per type, language (+ Arabic digits), delete account + confirm dialog.
-- **Info**: Contact (in-app form; **the only WhatsApp button in the app**, as decided on 18
-  October), FAQ, shipping & returns policy, About, Blog list, Article.
-- **System**: loading skeletons (home, product), offline banner, offline screen, error with
-  retry, empty states (wishlist, bag, orders), update required, toast/snackbar.
+## Size classes and two panes
+
+Each frame is a CSS container, so it lays out by its own width (system design §3.9):
+Compact < 600 (bottom tabs, one pane, 2-column grid) · Medium 600–839 (navigation rail, 3
+columns, gallery beside details, checkout centred at 600) · Expanded ≥ 840 (rail, list | detail
+pairs: Shop → category, Brands → brand, Account → its sections, Orders → order, FAQ → contact,
+Policies → policy, Blog → article; filter side panel; checkout with the order summary beside it
+from 1000). Surface Duo spanned: list on one screen and detail on the other (a tap fills the
+other screen; nothing is pushed), Product gallery | details, Bag lines | summary, checkout step |
+order summary, Home flowing across both; nothing ever sits under the hinge. Flip tabletop:
+content above the fold, controls below. Fold cover = compact, Fold inner = medium; iPad portrait =
+medium, landscape = expanded.
 
 ## Real data
 
-`node tools/apv-data.cjs` reads the live public API at build time and writes `data.json`
-(also inlined into `index.html` between the `APV-DATA` markers; `--inject` re-inlines without
-fetching):
+`node tools/apv-data.cjs` reads the live site at build time and writes `data.json`,
+`en/data.js` and `ar/data.js` (`--split` rewrites the two from `data.json` without the network).
+366 products (all in the categories and brands shown), 45 brands, 21 categories with their
+banners and about text, live prices, photos, stock, ratings and reviews with photos. The Arabic
+app shows the site's own Arabic names for every product, brand, category and concern, its Arabic
+descriptions where the site has them (215 of 366; the others say the description is being
+translated and show the key facts), and the Arabic banners and trust row. The English data file
+holds no Arabic.
 
-- 60 products picked from the 769-row catalogue (`/api/products`): the Shop by Concern
-  products, the 12 most-reviewed (shown as Best Sellers — the API has no sales figure),
-  Trending (catalogue order), Under AED 54. Prices are the live ones (fils ÷ 100).
-- Brand and the **Arabic product names** come from the site's own search
-  (`/api/search`, `/ar/api/search`): 60/60 products have an Arabic name.
-- Every image URL was checked to answer 200 (`img-cache/400` cards, `/800` gallery, `/200`
-  thumbs); blog covers use `img-cache/800`.
-- Reviews from `/api/products/{slug}/reviews`; banners and the trust row from the homepage
-  (EN + AR); blog from `/api/posts`; concern tabs and tips (EN + AR) from
-  `docs/sbc-preview/concerns.json`; delivery AED 20 free over AED 199 (UAE), AED 150 free over
-  AED 1,600 (Gulf), COD fee AED 10, VAT 5% — the live shipping zones and `/api/settings`.
+The interface strings of the Arabic app are in `ar/i18n.js` (a missing one is a console error,
+which the checker fails on). The site has its blog in English only: the Arabic app shows its own
+Arabic summary of each article and says so.
 
 ## What is mocked
 
-Payments (Apple Pay, Google Pay, Stripe card + 3-D Secure, Tabby, Tamara, COD — nothing is
-charged and no SDK is loaded), push notifications, camera/barcode, Face ID / fingerprint,
-haptics, share sheet, WhatsApp hand-off, the signed-in customer (Sara), her addresses and
-orders, coupon `WELCOME10`, the "Express" delivery option, ingredients lists, return-policy
-wording, review photos (the API has no review-photo field — gallery photos stand in).
-Categories are derived from product names (the API has no category field). Blog posts have
-no Arabic version on the site yet; the article screen says so and shows the English text.
+Payments (nothing is charged, no SDK is loaded; "Simulate a declined card / application" shows
+the failure path), push, camera, Face ID / fingerprint, haptics (shown under the phone), share
+sheet, WhatsApp hand-off, the signed-in customer (Sara), her addresses and orders, `WELCOME10`,
+Express delivery, review photos where the API has none.
+
+## Code
+
+`shared/` holds the engine: `core.js` (data, i18n, state, router), `ui.js` (cards, fields,
+validation, formatting), `shell.js` (devices, panes, rail/tab bar, render, transitions),
+`screens-shop.js`, `screens-checkout.js`, `screens-account.js`, `events.js` (jump list,
+clicks, typing, gestures, deep links, the test hook `window.APV`), `screens.js` (the screens
+grid), `app.css`, `screens.css`, `icons.js`. Each language folder has its `index.html`,
+`screens.html` and `data.js`; the Arabic one adds `i18n.js`.
 
 ## The checker
 
-`node tools/apv-shots.cjs` (Playwright, Chromium at `/opt/pw-browsers`) visits every screen ×
-device × locale (68 screens incl. design variants × 10 device states × 2 locales = 1,352
-renders) and asserts: no screen root wider than its box; no text cut by a non-scrolling box
-(designed ellipses/clamps excepted); no text over text, a photo or an icon; every control
-≥ 44×44; nothing fixed in the status-bar / Dynamic Island or home-indicator bands; nothing
-under the Duo hinge or across the Flip fold; icons keep their size; field values fit; text
-contrast ≥ 3:1; no console error or failed request. It audits the whole scroll content, not
-just what is on screen. Results: `shots/report.json`; contact sheets: `shots/sheet-<device>-<locale>.png`;
-key pictures: `key/`. Individual PNGs (`shots/<screen>-<device>-<locale>.png`) are regenerated
-by the script and not kept in git (≈110 MB).
+`node tools/apv-shots.cjs` drives both apps in Chromium: every jump-list entry (Home and Product
+in A, B and C) × 10 device states × 2 languages by deep link, then the flows by real clicks and
+typing on iPhone 16 Pro, Pixel 9, Fold inner and Duo in both languages:
 
-`--dev=ip16,duo --lang=ar --only=home,product --no-shots` narrows a run; `--mutate='<css>'`
-injects a defect to prove a check can fail (e.g. `.tab{min-height:30px}` → tap failures,
-`.pc .rt{margin-top:-20px}` → overlaps, `.hhead{padding-top:4px}` → safe-area failures).
+- **checkout walk:** add from a home card → Bag tab → wrong coupon (error) → WELCOME10 → steps 1 to
+  8 by card, with each step's validation (empty email, empty address with summary, empty card),
+  typed values and their formatting (`50 123 4567`, `4242 4242 4242 4242`, `12 / 29`), the emirate
+  sheet and the area sheet filtered by typing; then the wallet, Tabby, Tamara and COD each back to
+  Review approved; a declined card → Payment failed with the bag kept → Try again.
+- **navigation smoke:** product → Back → Home; tab switch keeps each tab's stack; the wishlist
+  survives a reload; the edge swipe goes back; the search query survives product → Back; sort
+  really sorts, the price filter really filters; endless scroll loads more; pull to refresh; on the
+  Duo a list tap fills the detail screen without pushing.
+
+Per render and per flow step it asserts overflow, clipped text, overlapping text, icon sizes,
+contrast (3:1), tap targets ≥ 44, safe areas, hinge and fold, console errors, plus the
+**floating labels** (inside the box; centred at rest; lifted to the top-start corner, small, and
+never over the value — in both directions) and, in the Arabic app, **no English**: any Latin word
+in text, `aria-label`, `placeholder`, `title` or `alt` fails unless the element is marked
+`data-x="<why>"`. The allowed exceptions are counted by reason in `shots/report.json`
+(`arabic_exceptions`): `brand` (brand names the site has only in Latin), `term` (Latin product
+terms inside the site's own Arabic copy: PDRN, SPF50+, BHA…), `ugc` (reviews written in English,
+shown as written), `inci` (ingredient lists), `pay` (Visa, Mastercard, Apple/Google Pay marks,
+Tabby/Tamara logos, App Store), `code` (order and error codes, WELCOME10), `email`, `logo` (the
+K-BEAUTY BLISS wordmark), `dev` (device names in the preview chrome), `typed` (text the shopper
+typed in Latin), `lang` (the word "English" on the button that opens the English app). Digits
+are allowed.
+
+Options: `--lang=ar --dev=ip16,duo --only=<label or group> --no-shots --flows-only --no-flows
+--workers=4`, and `--mutate='<css>'` to inject a defect and prove the checks fail, e.g.
+`--mutate='.fl>input{padding-top:8px}'` turns the label check red.
+
+Output: `shots/en/`, `shots/ar/` (one JPEG per render and per flow step; not in git),
+`shots/sheet-<device>-<lang>.jpg` (contact sheets, in git), `shots/report.json`, and `key/`:
+`home-en/ar`, `category-fold-inner-en/ar`, `brand-fold-inner-en/ar`, `product-duo-en/ar`,
+`ipad-landscape-en/ar`, `en-checkout-steps`, `ar-checkout-steps` (every step, in order),
+`floating-label-before`, `floating-label-after`.
+
+RESULTS_PLACEHOLDER

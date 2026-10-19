@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>K-Beauty Bliss app previews</title>
+<meta name="description" content="Two separate app previews, English and Arabic, and a grid of every screen for each.">
+<link rel="stylesheet" href="shared/app.css">
+<style>
+main{max-width:720px;margin:0 auto;padding:48px 16px;display:grid;gap:16px}
+h1{font-size:26px;margin:0 0 4px}
+p{margin:0;opacity:.8;line-height:1.5}
+.pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:12px}
+.pick section{background:var(--chrome-card);border:1px solid var(--chrome-line);border-radius:18px;padding:20px;display:grid;gap:10px}
+.pick h2{margin:0;font-size:20px}
+.pick a{display:flex;align-items:center;justify-content:center;min-height:46px;border-radius:999px;text-decoration:none;font-weight:600;border:1px solid var(--chrome-line);color:inherit}
+.pick a.main{background:var(--pk);border-color:var(--pk);color:#fff}
+.ar{font-family:var(--f-ar)}
+.v1{font-size:13px}
+.v1 a{color:inherit}
+</style>
+</head>
+<body>
+<main>
+<h1>K-Beauty Bliss app previews</h1>
+<p>Two separate apps. Each opens on its own, from this folder or from a phone: the English app is English only, the Arabic app is Arabic only, right to left.</p>
+<div class="pick">
+<section><h2>English</h2><a class="main" href="en/index.html">Open the English app</a><a href="en/screens.html">Every screen, live</a></section>
+<section class="ar" dir="rtl" lang="ar"><h2>العربية</h2><a class="main" href="ar/index.html">افتحي التطبيق العربي</a><a href="ar/screens.html">كل الشاشات مباشرة</a></section>
+</div>
+<p class="v1">The first single-page prototype is kept for reference at <a href="v1/index.html">v1/index.html</a>.</p>
+</main>
+</body>
+</html>

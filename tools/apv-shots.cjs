@@ -624,6 +624,20 @@ async function compose(file, title, items, o = {}) {
     }
   }
 
+  /* screens.html: one live card per screen, every card a working deep link, no console error */
+  const screensCheck = {};
+  if (!FLOWS_ONLY) for (const lang of LANGS) {
+    const page = await ctx.newPage(); const errs = [];
+    page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 160)); });
+    page.on('pageerror', (e) => errs.push(e.message));
+    await page.goto('file://' + path.join(APP, lang, 'screens.html') + '#device=ip16');
+    await page.waitForTimeout(2500);
+    const r = await page.evaluate(() => ({cards:document.querySelectorAll('.card').length, links:[...document.querySelectorAll('.card iframe')].filter((f) => /index\.html#\/.+device=ip16.*embed=1/.test(f.getAttribute('src'))).length, sw:document.documentElement.scrollWidth, w:innerWidth}));
+    const want = arg('only') ? r.cards : new Set(results.filter((x) => x.lang === lang).map((x) => x.id + x.design)).size || r.cards;
+    screensCheck[lang] = {...r, errors:[...new Set(errs)]};
+    if (r.cards !== want || r.links !== r.cards || r.sw > r.w || errs.length) results.push({name:'screens.html', lang, device:'-', id:-1, label:'screens.html', design:'A', issues:[{kind:'screens', at:lang + '/screens.html', msg:JSON.stringify(screensCheck[lang])}]});
+    await page.close();
+  }
   /* contact sheets (JPEG, kept in git) */
   if (!NOSHOTS && FULL && !FLOWS_ONLY) {
     for (const d of DEVICES) for (const lang of LANGS) {
@@ -658,6 +672,7 @@ async function compose(file, title, items, o = {}) {
     generated:new Date().toISOString(), renders:results.length, screens:new Set(results.map((r) => r.lang + r.id + r.design)).size,
     devices:DEVICES, locales:LANGS, failed:bad.length, issues_by_kind:byKind,
     flows:{steps:flowLog.length, steps_with_issues:flowBad.length, assertions_failed:nFlowFails, by_run:flowFails},
+    screens_html:screensCheck,
     arabic_exceptions:exceptions,
     failures:bad.map((r) => ({name:`${r.lang}/${r.name}`, link:r.link, issues:r.issues.slice(0, 12)})).concat(flowBad.map((r) => ({name:`flow ${r.flow} ${r.step}`, issues:r.issues.slice(0, 12)}))),
   };

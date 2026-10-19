@@ -1,7 +1,7 @@
 {
- "generated": "2026-10-18T21:01:01.121Z",
- "renders": 1352,
- "screens": 68,
+ "generated": "2026-10-19T02:28:44.449Z",
+ "renders": 1840,
+ "screens": 184,
  "devices": [
   "ip16",
   "ipse",
@@ -20,5 +20,119 @@
  ],
  "failed": 0,
  "issues_by_kind": {},
+ "flows": {
+  "steps": 224,
+  "steps_with_issues": 0,
+  "assertions_failed": 0,
+  "by_run": {
+   "en/ip16": [],
+   "en/px9": [],
+   "en/fold-inner": [],
+   "en/duo": [],
+   "ar/ip16": [],
+   "ar/px9": [],
+   "ar/fold-inner": [],
+   "ar/duo": []
+  }
+ },
+ "arabic_exceptions": {
+  "dev": {
+   "n": 9752,
+   "eg": [
+    "iOS",
+    "Android",
+    "iPhone 16 Pro",
+    "iPhone SE",
+    "iPad mini",
+    "Pixel 9",
+    "Galaxy Z Flip",
+    "Galaxy Z Fold"
+   ]
+  },
+  "logo": {
+   "n": 280,
+   "eg": [
+    "K-BEAUTY",
+    "BLISS"
+   ]
+  },
+  "term": {
+   "n": 95,
+   "eg": [
+    "BHA",
+    "AHA",
+    "PHA",
+    "LHA",
+    "PDRN",
+    "SPF 50+ PA++++",
+    "NP",
+    "ml"
+   ]
+  },
+  "brand": {
+   "n": 60,
+   "eg": [
+    "Medicube"
+   ]
+  },
+  "code": {
+   "n": 174,
+   "eg": [
+    "#KBB-56214",
+    "WELCOME10",
+    "#KBB-56215",
+    "tabby: rejected · order_amou",
+    "card_declined · insufficient",
+    "Aramex 4485 9921 03",
+    "#KBB-55870",
+    "APP-503"
+   ]
+  },
+  "pay": {
+   "n": 436,
+   "eg": [
+    "tabby",
+    "tamara",
+    "Pay",
+    "VISA",
+    "MC",
+    "AMEX",
+    "checkout.tabby.ai",
+    "checkout.tamara.co"
+   ]
+  },
+  "ugc": {
+   "n": 322,
+   "eg": [
+    "Kristen F.",
+    "after a month of use my skin",
+    "Mona K.",
+    "Wafa M.",
+    "Chelsea W.",
+    "Hadiyya W.",
+    "I’ve been enjoying this boos",
+    "Cleo M."
+   ]
+  },
+  "email": {
+   "n": 34,
+   "eg": [
+    "sara@example.com"
+   ]
+  },
+  "bank": {
+   "n": 14,
+   "eg": [
+    "Emirates NBD"
+   ]
+  },
+  "lang": {
+   "n": 20,
+   "eg": [
+    "EN",
+    "English"
+   ]
+  }
+ },
  "failures": []
 }
