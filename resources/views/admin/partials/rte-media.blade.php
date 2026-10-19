@@ -51,7 +51,7 @@
 .rgm-acts{display:flex;justify-content:flex-end;gap:8px}
 .rgm-btn{border:1px solid #e5e7eb;background:#fff;color:#1f2430;border-radius:9px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
 .rgm-btn.pri{background:#1f7d52;border-color:#1f7d52;color:#fff}
-.rgm-bar{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:99999;display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:#fff;color:#1f2430;border:1px solid #e5e7eb;border-radius:12px;padding:8px 10px;box-shadow:0 10px 30px rgba(0,0,0,.18);font:inherit;font-size:13px;max-width:calc(100vw - 24px)}
+.rgm-bar{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:100001;display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:#fff;color:#1f2430;border:1px solid #e5e7eb;border-radius:12px;padding:8px 10px;box-shadow:0 10px 30px rgba(0,0,0,.18);font:inherit;font-size:13px;max-width:calc(100vw - 24px)}
 .rgm-bar b{font-weight:600;margin-right:4px}
 .rgm-bar button{border:1px solid #e5e7eb;background:#fff;color:#1f2430;border-radius:8px;min-width:32px;height:32px;padding:0 10px;font:inherit;font-weight:700;cursor:pointer}
 .rgm-bar button.on{background:#1f7d52;border-color:#1f7d52;color:#fff}
@@ -273,7 +273,17 @@
     if (a && a.isContentEditable && a.getAttribute && a.getAttribute('contenteditable') === 'true') lock(a);
   });
   document.addEventListener('click', function (e) {
-    if (bar && bar.contains(e.target)) return;
+    /* A click on the bar, in the picture's dialog or in the columns question
+       is theirs alone: it must not also take the Gallery bar away. Asked of
+       the event's path, not contains(): the bar repaints its buttons on a
+       Columns click, so by the time this runs the clicked button is no
+       longer inside the bar, and the bar used to hide itself. And closing
+       the dialog (Cancel, Save, the backdrop) used to hide it too, so after
+       clicking a picture the Columns buttons were first under the dialog,
+       then gone. */
+    var path = e.composedPath ? e.composedPath() : [];
+    if ((bar && (path.indexOf(bar) !== -1 || bar.contains(e.target)))
+      || (dlg && path.indexOf(dlg) !== -1) || (shade && path.indexOf(shade) !== -1)) return;
     var g = e.target.closest && e.target.closest('.' + GAL);
     var area = g && g.closest('[contenteditable="true"]');
     if (!g || !area) { if (current) hideBar(); return; }
