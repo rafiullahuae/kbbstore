@@ -97,10 +97,10 @@ const JUMP = [
   {g:'States', label:'Orders · loading', path:'/account/orders?state=loading'},
   {g:'States', label:'Bag · loading', path:'/bag?state=loading'},
 ].map((j, i) => ({...j, id:i, label:j.label === 'Under 54' ? 'Under {v}' : j.label}));
-const jumpHref = (j, o = {}) => `#${j.path}${j.path.includes('?') ? '&' : '?'}device=${o.device || devKey()}${o.design && o.design !== 'A' ? '&d=' + o.design : ''}${Object.entries(j.ctl || {}).map(([k, v]) => `&${k}=${v}`).join('')}${o.embed ? '&embed=1' : ''}`;
+const jumpHref = (j, o = {}) => `#${j.path}${j.path.includes('?') ? '&' : '?'}device=${o.device || devKey()}${o.design && o.design !== 'A' ? '&d=' + o.design : ''}${(o.bb || S.bb) !== 'A' ? '&bb=' + (o.bb || S.bb) : ''}${(o.tm || S.tm) === 'bar' ? '&tm=bar' : ''}${Object.entries(j.ctl || {}).map(([k, v]) => `&${k}=${v}`).join('')}${o.embed ? '&embed=1' : ''}`;
 
 /* ── state from the address bar ────────────────────────────────────────── */
-const CTL = ['device', 'os', 'd', 'dg', 'embed', 'z', 'sheet', 'viewer', 'user', 'k'];
+const CTL = ['device', 'os', 'd', 'dg', 'embed', 'z', 'sheet', 'viewer', 'user', 'k', 'bb', 'tm', 'menu'];
 function readHash(){
   const raw = decodeURIComponent(location.hash.slice(1) || '/home');
   const [p0, qs] = raw.split('?');
@@ -111,6 +111,9 @@ function readHash(){
   if ('ABC'.includes(q.get('d') || 'x')) S.design = q.get('d'); else S.design = 'A';
   if (AR) S.digits = q.get('dg') === 'arab' ? 'arab' : 'latn';
   S.embed = q.get('embed') === '1';
+  S.bb = BB.includes(q.get('bb') || '') ? q.get('bb') : S.embed ? 'A' : pref.get('bb', 'A', v => BB.includes(v));
+  S.tm = q.get('tm') === 'bar' || q.get('tm') === 'site' ? q.get('tm') : S.embed ? 'site' : pref.get('tm', 'site', v => v === 'site' || v === 'bar');
+  S.menu = q.get('menu') === '1'; S.mega = q.get('menu') && /^m\d+$/.test(q.get('menu')) ? +q.get('menu').slice(1) : null; S.mmNode = null; S.mmQ = '';
   S.zoom = q.get('z') === '100' ? '100' : 'fit';
   if (q.get('user') === '0') { S.user = null; persist(); }
   const rq = new URLSearchParams();
@@ -281,6 +284,7 @@ const ACT = {
   wa:() => { haptic('impact light'); toast(t('Opens WhatsApp with K-Beauty Bliss')); },
   perm:() => { S.notif.orders = true; haptic('success'); go('/home', {tabroot:'home'}); toast(t('Notifications are on')); },
   wish2bag:() => { [...S.wish].forEach(s => { if (!S.bag.some(b => b.slug === s)) addToBag(s); }); haptic('success'); toast(t('Moved to bag'), {tab:'bag', label:t('View bag')}); },
+  ...ACT_EXTRA,
   reorder:(el) => { const o = S.orders.find(x => x.id === el.dataset.v) || S.orders[0]; o.items.forEach(b => addToBag(b.slug, b.qty)); haptic('success'); toast(t('Added again to your bag'), {tab:'bag', label:t('View bag')}); },
 };
 let swallowClick = false;
@@ -300,6 +304,7 @@ document.addEventListener('click', e => {
     render();
     return;
   }
+  if (S.mega != null && e.target.closest('#stage') && !e.target.closest('.navitem')) { S.mega = null; $$('#stage .navitem.kopen').forEach(x => x.classList.remove('kopen')); }
   const el = e.target.closest('[data-act],[data-go],[data-tab],[data-sheet]');
   if (!el || !el.closest('#stage')) return;
   if (el.tagName === 'A' && el.getAttribute('href') && !el.dataset.go) return;
@@ -310,7 +315,9 @@ document.addEventListener('click', e => {
     const tgo = S.toast && el.closest('.toast') && S.toast.go;
     clearTimeout(toastTimer); S.toast = null;
     if (tgo) { goChain(tgo, 'tab'); return; }
-    tab(el.dataset.tab); return;
+    tab(el.dataset.tab);
+    if (el.classList.contains('search-in')) { const q = $('#stage #q'); if (q) q.focus(); }
+    return;
   }
   if (el.dataset.sheet) {
     S.sheet = el.dataset.sheet; S.sheetKey = el.dataset.k || S.sheetKey; S.areaQ = '';
@@ -355,6 +362,7 @@ document.addEventListener('input', e => {
     return;
   }
   if (el.id === 'q') { S.q = el.value; const box = $('#sres'); if (box) box.innerHTML = searchResults({cls:sizeClass(dev().w)}); const c = el.parentElement.querySelector('.clr'); if (c) c.outerHTML = S.q ? `<button class="ib clr" data-act="q" data-v="" aria-label="${t('Clear search')}">${ico('close')}</button>` : `<button class="ib clr" ${go$('/scan')} aria-label="${t('Scan barcode')}">${ico('scan')}</button>`; return; }
+  if (el.classList && el.classList.contains('id-mmFilter')) { S.mmQ = el.value; mmFilter(el.closest('.kh')); return; }
   if (el.id === 'bq') { S.brandQ = el.value; const b = $('#blist'); if (b) b.innerHTML = brandList(); return; }
   if (el.id === 'aq') { S.areaQ = el.value; const b = $('#alist'); if (b) { const q = el.value.trim().toLowerCase(); b.innerHTML = areaRows(areasOf(fval('addr', 'emirate')).filter(a => !q || t(a[1]).toLowerCase().includes(q) || a[1].toLowerCase().includes(q)), fval('addr', 'area')); } }
 });
@@ -366,7 +374,7 @@ document.addEventListener('focusout', e => {
   validate(el.dataset.form, el.dataset.k); paintField(el.dataset.form, el.dataset.k);
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && (S.sheet || S.viewer)) { back(); return; }
+  if (e.key === 'Escape' && (S.sheet || S.viewer || S.menu || S.mega != null)) { back(); return; }
   if (e.key !== 'Enter') return;
   const el = e.target;
   if (el.closest && el.closest('.app [role=button]') && el.tagName !== 'BUTTON') { el.click(); return; }
@@ -451,7 +459,7 @@ window.APV = {
   devices:() => Object.keys(DEVKEYS),
   href:(id, o) => jumpHref(JUMP[id], o || {}),
   reset(){ try { sessionStorage.clear(); } catch {} seed(); Object.assign(S, {conc:0, qty:1, open:{}, bt:{}, sort:{}, filt:{}, more:{}, detail:{}, scroll:{}, q:'', qFrom:null, recent:[], brandQ:'', coupon:null, form:{}, ferr:{}, formFor:{}, sent:{}, pw:false, toast:null, lastOrder:null}); },
-  state:() => ({tab:S.tab, path:topE().path, depth:S.stacks[S.tab].length, stacks:Object.fromEntries(TABS.map(k => [k, S.stacks[k].map(x => x.path)])), bag:bagCount(), wish:[...S.wish], sheet:S.sheet, co:{pay:S.co.pay, addr:S.co.addr, del:S.co.del, authorised:S.co.authorised}, orders:S.orders.length, lastOrder:S.lastOrder, scroll:{...S.scroll}, missing:[...missing]}),
+  state:() => ({bb:S.bb, tm:S.tm, menu:S.menu, mega:S.mega, tab:S.tab, path:topE().path, depth:S.stacks[S.tab].length, stacks:Object.fromEntries(TABS.map(k => [k, S.stacks[k].map(x => x.path)])), bag:bagCount(), wish:[...S.wish], sheet:S.sheet, co:{pay:S.co.pay, addr:S.co.addr, del:S.co.del, authorised:S.co.authorised}, orders:S.orders.length, lastOrder:S.lastOrder, scroll:{...S.scroll}, missing:[...missing]}),
   missing:() => [...missing],
   open(h){ APV.reset(); S.selfHash = h; history.replaceState(null, '', h); readHash(); render(); },
   render:() => render(),

@@ -195,7 +195,8 @@ function resolve(path){
   }
   return null;
 }
-const TABS = ['home', 'shop', 'search', 'bag', 'account'];
-const ROOT = {home:'/home', shop:'/categories', search:'/search', bag:'/bag', account:'/account'};
+/* Lane APV3: brands, offers and wish are tabs of the bottom-bar variants B to E (shared/header.js) */
+const TABS = ['home', 'shop', 'search', 'bag', 'account', 'brands', 'offers', 'wish'];
+const ROOT = {home:'/home', shop:'/categories', search:'/search', bag:'/bag', account:'/account', brands:'/brands', offers:'/products?tag=sale', wish:'/wishlist'};
 const topE = () => { const st = S.stacks[S.tab]; return st[st.length - 1]; };
 const route = () => resolve(topE().path);

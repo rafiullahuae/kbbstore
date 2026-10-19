@@ -71,7 +71,7 @@ img{display:block;max-width:100%}
 
 /* ── App shell ──────────────────────────────────────────────────────────── */
 .app{position:absolute;inset:0;container:app/inline-size;font-family:var(--f-lat);color:var(--ink);background:var(--cream);font-size:15px;line-height:1.4;overflow:hidden;word-break:normal;overflow-wrap:normal;-webkit-tap-highlight-color:transparent}
-.app svg{width:22px;height:22px;flex:0 0 auto}
+.app svg:not(:where(.kh *)){width:22px;height:22px;flex:0 0 auto}
 .app[dir=rtl]{font-family:var(--f-ar)}
 .app[dir=rtl] .lat{font-family:var(--f-lat)}
 .shell{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
@@ -92,22 +92,10 @@ img{display:block;max-width:100%}
 .android .tab svg{width:24px;height:24px}
 .android .tab .bdg{top:8px}
 
-/* Medium and expanded: a navigation rail replaces the tab bar */
+/* Medium and expanded: no tab bar and no rail; the website's header and its menus
+   navigate, as on the site at that width (Lane APV3, shared/header.js) */
 @container app (min-width:600px){
-  .shell{grid-template-columns:80px minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
-  .shell>.main{grid-column:2}
   .shell .tabbar{display:none}
-  .shell:not(.bare) .rail{display:flex;grid-row:1;grid-column:1;flex-direction:column;align-items:center;gap:6px;padding:calc(var(--sat) + 10px) 0 calc(var(--sab) + 10px);background:#FFF;border-inline-end:1px solid var(--line)}
-  .shell.bare{grid-template-columns:minmax(0,1fr)}
-  .shell.bare>.main{grid-column:1}
-  .rail .rlogo{width:48px;height:48px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
-  .rail .rlogo svg{width:40px;height:30px}
-  .rl{position:relative;width:72px;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;font-weight:500;color:var(--ink2);text-align:center}
-  .rl .pill{width:56px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center}
-  .rl svg{width:24px;height:24px}
-  .rl.on{color:var(--ink)}
-  .rl.on .pill{background:var(--pk-s);color:var(--pk-d)}
-  .rl .bdg{top:0;inset-inline-start:42px}
   .foot{padding-bottom:calc(12px + var(--sab))!important}
   .pane>.body:last-child{padding-bottom:calc(24px + var(--sab))}
 }
@@ -139,9 +127,9 @@ img{display:block;max-width:100%}
 .android .bar .row{grid-template-columns:auto minmax(0,1fr) auto;min-height:64px;padding:0 4px}
 .android .bar .row .t{font-size:22px;font-weight:500;text-align:start;padding:0 8px}
 .android .bar{background:#FFF9F3}
-.ib{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:22px;color:var(--ink);position:relative;flex:0 0 auto}
-.android .ib{min-width:48px;min-height:48px;border-radius:24px}
-.ib svg{width:24px;height:24px}
+.ib:not(:where(.kh *)){min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:22px;color:var(--ink);position:relative;flex:0 0 auto}
+.android .ib:not(:where(.kh *)){min-width:48px;min-height:48px;border-radius:24px}
+.ib:not(:where(.kh *)) svg{width:24px;height:24px}
 .ib .bdg{position:absolute;top:4px;inset-inline-end:2px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--pk);color:#fff;font-size:10.5px;font-weight:600;display:flex;align-items:center;justify-content:center;line-height:1}
 .back{display:inline-flex;align-items:center;gap:0;min-height:44px;min-width:44px;color:var(--pk);font-size:17px;padding-inline-end:6px;max-width:100%;white-space:nowrap}
 .back svg{width:26px;height:26px;flex:0 0 auto}
@@ -353,14 +341,14 @@ img{display:block;max-width:100%}
 .state .btn{margin-top:10px;min-width:200px}
 
 /* logo */
-.lgx{display:inline-flex;align-items:center;gap:8px;direction:ltr}
-.lgx svg{width:40px;height:30px;flex:0 0 auto}
-.lgx .lgx-f{fill:var(--lg-p)}
-.lgx .lgx-o{fill:none;stroke:var(--lg-l);stroke-width:20;stroke-linecap:round;stroke-linejoin:round}
-.lgx .w{display:flex;flex-direction:column;line-height:1}
-.lgx .w b{font-family:var(--f-lat);font-weight:650;font-size:17px;letter-spacing:.085em;color:var(--ink);white-space:nowrap}
-.lgx .w b em{font-style:normal;color:var(--lg-a)}
-.lgx .w small{font-family:var(--f-lat);font-size:8.5px;letter-spacing:.1em;color:var(--ink2);margin-top:4px;white-space:nowrap;text-transform:uppercase}
+.lgx:not(:where(.logo)){display:inline-flex;align-items:center;gap:8px;direction:ltr}
+.lgx:not(:where(.logo)) svg{width:40px;height:30px;flex:0 0 auto}
+.lgx:not(:where(.logo)) .lgx-f{fill:var(--lg-p)}
+.lgx:not(:where(.logo)) .lgx-o{fill:none;stroke:var(--lg-l);stroke-width:20;stroke-linecap:round;stroke-linejoin:round}
+.lgx:not(:where(.logo)) .w{display:flex;flex-direction:column;line-height:1}
+.lgx:not(:where(.logo)) .w b{font-family:var(--f-lat);font-weight:650;font-size:17px;letter-spacing:.085em;color:var(--ink);white-space:nowrap}
+.lgx:not(:where(.logo)) .w b em{font-style:normal;color:var(--lg-a)}
+.lgx:not(:where(.logo)) .w small{font-family:var(--f-lat);font-size:8.5px;letter-spacing:.1em;color:var(--ink2);margin-top:4px;white-space:nowrap;text-transform:uppercase}
 
 /* ── Home ───────────────────────────────────────────────────────────────── */
 .hhead{padding:calc(var(--sat) + 4px) 8px 8px 16px;padding-inline:16px 8px;display:flex;align-items:center;gap:4px;background:var(--cream)}
@@ -1038,3 +1026,50 @@ html[dir=rtl] .edgehint.end svg{transform:none}
 @container app (min-width:600px){.sheet .sched{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .pinfo .br{min-width:44px}
 .app{-webkit-user-select:none;user-select:none}.app input,.app textarea{-webkit-user-select:text;user-select:text}.app img{-webkit-user-drag:none}
+
+/* ── Lane APV3: the website's header and menus inside the frame ─────────── */
+/* site.css is the site's own CSS (tools/apv-site.cjs); these rules only place it in the app. */
+.shell.hassite{grid-template-rows:auto minmax(0,1fr) auto}
+.shell.hassite.notabs{grid-template-rows:auto minmax(0,1fr)}
+.shell.hassite>.main{grid-row:2;--sat:0px}
+.shell.hassite>.tabbar{grid-row:3}
+/* the header sits under the status bar: the one deliberate difference (the site's header
+   starts at the top of the browser's page; an app's starts below the clock and battery) */
+.shell .kh .kh-hd{grid-row:1;grid-column:1/-1;position:relative;top:auto;z-index:30;padding-top:var(--sat)}
+.tt-top.hassite>.kh .kh-hd{position:relative;top:auto;padding-top:var(--sat);flex:0 0 auto}
+.tt-top.hassite>:not(.kh){--sat:0px}
+/* the drawer opens inside the screen, under the status bar, over the bottom bar */
+.shell .kh .mmenu{z-index:120;margin-top:var(--sat)}
+.shell .kh .mscrim{z-index:119}
+.kh .search-in[data-tab]{cursor:text}
+/* "Tablet menu: menu bar" (preview choice): the site's own menu bar on the tablets too, under
+   the header, wrapping onto a second line where the items do not fit, its panels as on the site */
+@container app (min-width:600px) and (max-width:1000px){
+  .shell .kh.tm-bar .mbar{display:block}
+  .shell .kh.tm-bar .mbar>.wrap{flex-wrap:wrap;justify-content:center;row-gap:0}
+}
+
+/* ── Lane APV3: bottom-bar variants (phones) ─────────────────────────────── */
+.tabbar .tab .tbl{white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.tab.raised{overflow:visible}
+.tab.raised .pill{width:54px;height:54px;border-radius:27px;background:var(--pk);color:#fff;display:flex;align-items:center;justify-content:center;margin-top:-22px;box-shadow:0 6px 16px rgba(193,62,99,.35),0 0 0 4px #fff}
+.tab.raised svg{width:26px;height:26px}
+.tab.raised.on{color:var(--pk)}
+.android .tab.raised .pill{background:var(--pk);color:#fff;width:56px;height:56px;border-radius:18px}
+.tab.raised .bdg{top:-14px;inset-inline-start:calc(50% + 12px);background:#fff;color:var(--pk);box-shadow:0 0 0 1.5px var(--pk)}
+.mgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:4px 0 8px}
+.mtile{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;min-height:84px;border-radius:14px;font-size:12.5px;font-weight:500;text-align:center;color:var(--ink)}
+.mtile .mi{width:46px;height:46px;border-radius:23px;background:var(--pk-xs);color:var(--pk);display:flex;align-items:center;justify-content:center}
+.mtile[data-n]::after{content:attr(data-n);position:absolute;top:6px;inset-inline-start:calc(50% + 10px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--pk);color:#fff;font-size:11px;font-weight:600;line-height:18px}
+@container app (max-width:359px){.mgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* ── Lane APV3: the preview chooser, outside the device ─────────────────── */
+.bbsw{position:fixed;inset-inline-end:16px;bottom:16px;z-index:40;background:var(--chrome-card);color:var(--chrome-ink);border:1px solid var(--chrome-line);border-radius:16px;box-shadow:0 10px 30px rgba(42,34,40,.18);padding:10px 12px;max-width:300px;font-size:13px}
+.bbsw .cr{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.bbsw .cr>span{font-size:11px;text-transform:uppercase;letter-spacing:.06em;opacity:.7;margin-inline-end:4px;width:100%}
+html[dir=rtl] .bbsw .cr>span{letter-spacing:0}
+.bbsw button{min-width:34px;min-height:32px;padding:4px 10px;border-radius:999px;border:1px solid var(--chrome-line);font-size:13px;font-weight:600}
+.bbsw button.on{background:var(--pk);border-color:var(--pk);color:#fff}
+.bbsw .cn{margin:6px 0 10px;font-size:12px;line-height:1.35;opacity:.8}
+body.embed .bbsw{display:none}
+@media (max-width:900px){.bbsw{position:static;margin:8px auto 24px;max-width:420px}}

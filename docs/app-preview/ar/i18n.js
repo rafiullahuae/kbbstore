@@ -4,6 +4,17 @@
    website ("اكتشفي", "أضيفي"). Product, brand, category and concern names come
    from the site's own Arabic data, not from this file. */
 window.APV_I18N = {
+  /* ── Lane APV3: the website's header and menus, the bottom-bar variants, the chooser ── */
+  'Compact (under 600): the website’s phone header and menu, bottom tab bar, one pane, 2-column grid.':'مضغوط (أقل من 600): رأس الموقع وقائمته كما على الهاتف، شريط سفلي، لوحة واحدة، شبكة من عمودين.',
+  'Medium (600 to 839): the website’s header and menu as the site shows them at this width, one pane, 3-column grid, gallery beside the details.':'متوسط (من 600 إلى 839): رأس الموقع وقائمته كما يعرضهما الموقع بهذا العرض، لوحة واحدة، شبكة من ثلاثة أعمدة، الصور بجانب التفاصيل.',
+  'Expanded (840 and over): the website’s computer header with its menu bar and mega panels, two panes (list and detail) where the screen has a pair, filter panel beside the grid.':'موسّع (840 فأكثر): رأس الموقع كما على الكمبيوتر مع شريط القوائم ولوحاته الكبيرة، لوحتان (قائمة وتفاصيل) حيث يكون للشاشة زوج، ولوحة التصفية بجانب الشبكة.',
+  'Preview options':'خيارات المعاينة', 'Bottom bar (phones)':'الشريط السفلي (الهواتف)', 'Tablet menu':'قائمة الأجهزة اللوحية', 'As the site':'كما في الموقع', 'Menu bar':'شريط القوائم',
+  'Now: Home · Shop · Search · Bag · Account':'الحالي: الرئيسية · تسوّقي · البحث · الحقيبة · الحساب',
+  'Home · Categories · Brands · Offers · Account (the bag is in the header)':'الرئيسية · الفئات · العلامات · العروض · الحساب (الحقيبة في الرأس)',
+  'Home · Shop · Wishlist · Bag · Account (search is the header box)':'الرئيسية · تسوّقي · المفضّلة · الحقيبة · الحساب (البحث في خانة الرأس)',
+  'Home · Categories · raised Bag · Wishlist · Account':'الرئيسية · الفئات · الحقيبة البارزة · المفضّلة · الحساب',
+  'Home · Shop · Offers · Bag · More (brands, wishlist, orders, blog…)':'الرئيسية · تسوّقي · العروض · الحقيبة · المزيد (العلامات، المفضّلة، الطلبات، المدوّنة…)',
+  'Offers':'العروض', 'More (tab)':'المزيد', 'Skin concerns':'مشاكل البشرة', 'Super Sale':'التخفيضات الكبرى',
   /* ── chrome around the phone ── */
   'App preview':'معاينة التطبيق', 'System':'النظام', 'Device':'الجهاز', 'Design':'التصميم', 'Jump to':'انتقلي إلى', 'View':'العرض', 'Fit':'ملاءمة', 'Screen':'الشاشة',
   'All screens':'كل الشاشات', 'Every screen, live':'كل الشاشات مباشرة', 'Open the app':'افتحي التطبيق', 'Open the English screens':'افتحي الشاشات الإنجليزية', 'Open the Arabic screens':'افتحي الشاشات العربية', '{n} screens':'{n} شاشة',

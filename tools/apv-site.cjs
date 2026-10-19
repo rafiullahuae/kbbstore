@@ -7,7 +7,7 @@
  *
  * In Chromium it opens https://kbeautybliss.com/ and /ar/ and writes:
  *
- *   docs/app-preview/shared/site.css   every stylesheet rule the site applies to its header,
+ *   docs/app-preview/en|ar/site.css    every stylesheet rule the site applies to its header,
  *                                      its menu bar and mega panels, its mobile menu (opened)
  *                                      and the delivery strip, rewritten for the app frame:
  *                                      scoped under .kh, `header` -> .kh-hd, #id -> .id-<id>,
@@ -33,9 +33,14 @@ const ROOT = path.resolve(__dirname, '..');
 const APP = path.join(ROOT, 'docs/app-preview');
 const SITE = 'https://kbeautybliss.com';
 const WIDTHS = [390, 600, 768, 900, 1024, 1280];
+/* the app's device widths (logical): Fold cover, SE, 16 Pro, Pixel 9 / Flip, Duo screen, Fold inner, iPad portrait, iPad landscape */
+const DEVW = [344, 375, 402, 412, 540, 673, 744, 1133];
+const SHOTS = path.join(APP, 'shots/site');
 
 /* ── in the page: the rules that reach the captured elements ─────────────── */
-function extractRules() {
+async function extractRules() {
+  const srcOf = {};
+  for (const sh of document.styleSheets) if (sh.href) { try { srcOf[sh.href] = await (await fetch(sh.href)).text(); } catch {} }
   const q = (s) => document.querySelector(s);
   const annc = q('.kbb-home .kts');
   const roots = [q('header'), q('nav.mmenu'), q('.mscrim'), annc].filter(Boolean);
@@ -44,9 +49,11 @@ function extractRules() {
   const split = (s) => { const out = []; let d = 0, cur = ''; for (const c of s) { if (c === '(' || c === '[') d++; if (c === ')' || c === ']') d--; if (c === ',' && !d) { out.push(cur.trim()); cur = ''; } else cur += c; } if (cur.trim()) out.push(cur.trim()); return out; };
   const ROOTSEL = /^(?:html|:root|body)(?:[.#\[:][^\s>+~]*)?$/;
   const rules = [], keyframes = {};
+  let seq = 0;
   const walk = (list, ctx) => {
     for (const r of list) {
       if (r instanceof CSSStyleRule) {
+        const i = seq++;
         const parts = split(r.selectorText);
         const keep = parts.filter((p) => {
           const t = p.replace(DYN, '').trim();
@@ -54,7 +61,19 @@ function extractRules() {
           if (ROOTSEL.test(t)) return true;
           try { return els.some((e) => e.matches(t)); } catch { return false; }
         });
-        if (keep.length) rules.push({ctx:ctx.slice(), sel:keep, body:r.cssText.slice(r.cssText.indexOf('{'))});
+        let body = r.cssText.slice(r.cssText.indexOf('{'));
+        /* Chromium serialises a shorthand holding var() as empty longhands ("background-image: ;"):
+           put the shorthand back as the stylesheet's own source writes it */
+        if (/:\s*;/.test(body) && keep.length) {
+          body = body.replace(/\s[a-z-]+:\s*;/g, '');
+          const src = srcOf[r.parentStyleSheet.href] || '';
+          const esc = r.selectorText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s*').replace(/\\s\*>\\s\*|>/g, '\\s*>\\s*');
+          const names = [...body.matchAll(/([a-z-]+)\s*:/g)].map((x) => x[1].replace(/^-webkit-/, ''));
+          const m = [...src.matchAll(new RegExp('(?:^|[{};,\\s])' + esc + '\\s*\\{([^}]*)\\}', 'g'))].sort((a, b) => names.filter((n) => b[1].includes(n + ':')).length - names.filter((n) => a[1].includes(n + ':')).length)[0];
+          const decl = m ? m[1].split(';').map((x) => x.trim()).filter((x) => /^(background|border|font|margin|padding|inset|mask|transition|animation|outline)\s*:/.test(x) && /var\(/.test(x)) : [];
+          body = body.replace(/^\{/, '{' + decl.map((x) => ' ' + x + ';').join(''));
+        }
+        if (keep.length) rules.push({i, ctx:ctx.slice(), sel:keep, body});
       } else if (r instanceof CSSMediaRule) walk(r.cssRules, ctx.concat(['@media ' + r.conditionText]));
       else if (r instanceof CSSSupportsRule) walk(r.cssRules, ctx.concat(['@supports ' + r.conditionText]));
       else if (typeof CSSLayerBlockRule !== 'undefined' && r instanceof CSSLayerBlockRule) walk(r.cssRules, ctx);
@@ -191,11 +210,15 @@ function convertMedia(cond) {
   if (/,|\bor\b|\bnot\b/.test(c) && other.length) return {media:c, cont:null};
   return {media:other.length ? other.join(' and ') : null, cont:width.length ? width.join(' and ') : null};
 }
-function buildCss(captures) {
+function buildCss(captures, lang) {
   const seen = new Set(), out = [], kf = {};
   const used = new Set();
-  for (const cap of captures) {
-    for (const r of cap.rules) {
+  /* one page, several captures (menu bar open, phone menu open): the union of the rules each
+     matched, in the stylesheet's own order, so the cascade is the site's */
+  const byI = new Map();
+  for (const cap of captures) { for (const r of cap.rules) byI.set(r.i, r); Object.assign(kf, cap.keyframes); }
+  {
+    for (const r of [...byI.values()].sort((a, b) => a.i - b.i)) {
       let pre = '', post = '', drop = false;
       for (const c of r.ctx) {
         if (c.startsWith('@media ')) {
@@ -218,10 +241,9 @@ function buildCss(captures) {
       if (seen.has(line)) continue;
       seen.add(line); out.push(line);
     }
-    Object.assign(kf, cap.keyframes);
   }
   const frames = Object.entries(kf).filter(([n]) => used.has(n)).map(([, v]) => v);
-  return `/* Generated by tools/apv-site.cjs from ${SITE}/ and ${SITE}/ar/ on ${new Date().toISOString().slice(0, 10)}.
+  return `/* Generated by tools/apv-site.cjs from ${SITE}${lang === 'ar' ? '/ar/' : '/'} on ${new Date().toISOString().slice(0, 10)}.
    The website's own rules for its header, menu bar + mega panels, mobile menu and delivery
    strip, scoped to .kh inside each device frame. Do not edit by hand: re-run the tool. */
 .kh{display:contents}
@@ -232,19 +254,35 @@ ${frames.join('\n')}
 
 (async () => {
   const browser = await pw.chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', proxy:process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY} : undefined});
-  const captures = [], measured = {}, markup = {};
+  const captures = {en:[], ar:[]}, measured = {}, markup = {};
   for (const lang of ['en', 'ar']) {
     const url = SITE + (lang === 'ar' ? '/ar/' : '/');
     const page = await browser.newPage({viewport:{width:1280, height:900}});
     await page.goto(url, {waitUntil:'networkidle', timeout:90000});
-    for (const w of WIDTHS) {
+    fs.mkdirSync(SHOTS, {recursive:true});
+    for (const w of [...new Set(WIDTHS.concat(DEVW))].sort((a, b) => a - b)) {
       await page.setViewportSize({width:w, height:900}); await page.waitForTimeout(350);
       measured[`${lang}-${w}`] = await page.evaluate(measure);
+      // the site's own header at the app's widths, for the side-by-side pictures (regenerated, not kept)
+      if (DEVW.includes(w)) await page.screenshot({path:path.join(SHOTS, `${lang}-${w}.png`), clip:{x:0, y:0, width:w, height:Math.ceil(measured[`${lang}-${w}`].header.h) + 40}});
     }
+    // the phone menu open (402 x 874, as the iPhone 16 Pro; 673 x 841, as the Fold inner), and a mega panel (1133 x 744, iPad landscape)
+    for (const [w, h] of [[402, 874], [673, 841]]) {
+      await page.setViewportSize({width:w, height:h}); await page.waitForTimeout(350);
+      await page.click('#burger'); await page.waitForTimeout(800);
+      await page.screenshot({path:path.join(SHOTS, `${lang}-${w}-menu.png`)});
+      await page.click('nav.mmenu .mm-par >> nth=2'); await page.waitForTimeout(600);
+      await page.screenshot({path:path.join(SHOTS, `${lang}-${w}-menu-open.png`)});
+      await page.click('#mmx').catch(() => {}); await page.waitForTimeout(500);
+    }
+    await page.setViewportSize({width:1133, height:744}); await page.waitForTimeout(350);
+    await page.hover('header .navitem >> nth=2'); await page.waitForTimeout(600);
+    await page.screenshot({path:path.join(SHOTS, `${lang}-1133-mega.png`)});
+    await page.mouse.move(5, 600); await page.waitForTimeout(300);
     // desktop: header + menu bar (mega panels in the DOM); rules matched with a panel open
     await page.setViewportSize({width:1280, height:900}); await page.waitForTimeout(300);
     await page.hover('header .navitem .navlink').catch(() => {});
-    captures.push(await page.evaluate(extractRules));
+    captures[lang].push(await page.evaluate(extractRules));
     const head = await page.evaluate(() => document.querySelector('header').outerHTML);
     const megaHrefs = await page.evaluate(() => [...document.querySelectorAll('header .navitem')].filter((n) => n.querySelector('.drop')).map((n) => n.querySelector('.navlink').getAttribute('href')));
     // phone: the menu opened and a level expanded, so the open-state rules are matched too
@@ -252,7 +290,7 @@ ${frames.join('\n')}
     await page.click('#burger'); await page.waitForTimeout(700);
     await page.click('nav.mmenu .mm-par').catch(() => {}); await page.waitForTimeout(500);
     const cap = await page.evaluate(extractRules);
-    captures.push(cap);
+    captures[lang].push(cap);
     const mm = await page.evaluate(() => { const m = document.querySelector('nav.mmenu'); m.classList.remove('on'); m.querySelectorAll('.mm-node.on').forEach((n) => n.classList.remove('on')); return m.outerHTML; });
     const map = routeMap(lang);
     markup[lang] = {
@@ -264,8 +302,8 @@ ${frames.join('\n')}
     await page.close();
   }
   await browser.close();
-  fs.writeFileSync(path.join(APP, 'shared/site.css'), buildCss(captures));
+  for (const lang of ['en', 'ar']) fs.writeFileSync(path.join(APP, lang, 'site.css'), buildCss(captures[lang], lang));
   for (const lang of ['en', 'ar']) fs.writeFileSync(path.join(APP, lang, 'site.js'), `/* Generated by tools/apv-site.cjs from ${SITE}${lang === 'ar' ? '/ar/' : '/'}: the site's own header, menu and delivery strip markup. */\nwindow.APV_SITE = ${JSON.stringify(markup[lang])};\n`);
-  fs.writeFileSync(path.join(APP, 'site-measure.json'), JSON.stringify({source:SITE, captured:new Date().toISOString(), widths:WIDTHS, measured}, null, 1));
-  console.log('site.css', fs.statSync(path.join(APP, 'shared/site.css')).size, 'bytes;', Object.entries(markup).map(([k, v]) => `${k}: header ${v.header.length}, menu ${v.mmenu.length}, strip ${v.annc.length}`).join('; '));
+  fs.writeFileSync(path.join(APP, 'site-measure.json'), JSON.stringify({source:SITE, captured:new Date().toISOString(), widths:WIDTHS, device_widths:DEVW, measured}, null, 1));
+  console.log('site.css', ['en', 'ar'].map((l) => fs.statSync(path.join(APP, l, 'site.css')).size).join(' / '), 'bytes;', Object.entries(markup).map(([k, v]) => `${k}: header ${v.header.length}, menu ${v.mmenu.length}, strip ${v.annc.length}`).join('; '));
 })().catch((e) => { console.error(e); process.exit(1); });

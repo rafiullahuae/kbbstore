@@ -44,3 +44,10 @@ Object.assign(IP, {
   list:'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01', store:'M4 9l1.5-5h13L20 9M4 9h16v11H4zM10 20v-5h4v5',
   hash:'M5 9h14M5 15h14M10 4 8 20M16 4l-2 16', grid:'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z', note:'M5 4h14v16H5zM8 8h8M8 12h8M8 16h5', ext:'M14 4h6v6M20 4l-9 9M18 14v6H4V6h6',
 });
+/* Lane APV3: the bottom-bar variants */
+Object.assign(IP, {
+  cats:'M4 5h6v6H4zM14 5h6M14 9h4M4 15h6v4H4zM14 15h6M14 19h4',
+  award:'M12 3a6 6 0 1 1 0 12 6 6 0 0 1 0-12zM8.5 13.8 7 21l5-2.6 5 2.6-1.5-7.2',
+  pct:'M19 5 5 19M7.5 5.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM16.5 14.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4z',
+  dots:'M4 12a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 0 0-3.2 0M10.4 12a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 0 0-3.2 0M16.8 12a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 0 0-3.2 0',
+});
