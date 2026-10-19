@@ -91,7 +91,7 @@ scr('/bag', {tab:'bag', group:'Bag & Checkout', label:'Bag', title:() => t('Bag'
     if (rows[1]) rows[1].lastElementChild.innerHTML = amt(T.sub - T.disc);
     each(root, '.paylogos span', s => { if (/[A-Za-z]/.test(s.textContent)) s.dataset.x = 'pay'; });
     root.removeAttribute('id'); each(root, '[id]', e => e.removeAttribute('id'));
-    return {nobar:true, body:`${st === 'offline' ? offbar() : ''}<div class="kc" dir="${AR ? 'rtl' : 'ltr'}">${root.outerHTML}</div>`, ptr:true, sk:'bag'};
+    return {nobar:true, body:`${st === 'offline' ? offbar() : ''}<div class="kc" dir="${AR ? 'rtl' : 'ltr'}" lang="${LANG}">${root.outerHTML}</div>`, ptr:true, sk:'bag'};
   }});
 
 /* ── the checkout: the site's one page ─────────────────────────────────── */
@@ -99,14 +99,14 @@ scr('/bag', {tab:'bag', group:'Bag & Checkout', label:'Bag', title:() => t('Bag'
 const COF = {billing_email:'email', billing_first_name:'name', billing_phone:'phone', billing_address_1:'building', billing_address_2:'street', billing_state:'emirate', billing_country:'country', account_password:'pw', gift_note:'giftmsg'};
 FORMS.co = () => [{k:'email', v:'email'}, {k:'name', v:'name'}, {k:'phone', v:'phone'}, {k:'building', v:'req'}, {k:'street', v:'req'}, {k:'emirate', v:'req'}, {k:'pw', v:'pw', when:() => !!S.co.acct}];
 FORMS.card = () => [{k:'number', v:'card'}, {k:'exp', v:'exp'}, {k:'cvc', v:'cvc'}];
-const SAMPLE_CO = () => ({email:'sara@example.com', name:ut('Sara Al Mansoori'), phone:'50 123 4567', building:ut('Marina Gate 2, Apartment 1804'), street:ut('Dubai Marina, Al Marsa Street'), emirate:'dubai', country:'AE'});
+const SAMPLE_CO = () => ({email:'sara@example.com', name:ut('Sara Al Mansoori'), phone:'50 123 4567', building:ut('Marina Gate 2'), street:areaName('dubai', 'dubai-marina'), emirate:'dubai', country:'AE'});
 function coPrefill(r){
   const key = r.path;
   if (S.formFor.co === key) return;
   S.formFor.co = key; S.ferr.co = {}; S.ferr.card = {};
   if (r.query.filled || (S.user && !r.query.guest)) {
     const a = coAddress() || {};
-    S.form.co = r.query.filled ? SAMPLE_CO() : {email:S.user.email, name:ut(S.user.name), phone:fmtPhone(S.user.phone), building:[ut(a.building), ut(a.flat)].filter(Boolean).join(', '), street:[areaName(a.emirate, a.area), ut(a.street)].filter(Boolean).join(', '), emirate:a.emirate || '', country:'AE'};
+    S.form.co = r.query.filled ? SAMPLE_CO() : {email:S.user.email, name:ut(S.user.name), phone:fmtPhone(S.user.phone), building:ut(a.building), street:areaName(a.emirate, a.area), emirate:a.emirate || '', country:'AE'};
   } else S.form.co = {country:'AE'};
   if (r.query.filled) S.form.card = {number:'4242 4242 4242 4242', exp:'12 / 29', cvc:'123'};
   else if (!S.form.card) S.form.card = {};
@@ -243,7 +243,7 @@ function checkoutHTML(r, ctx){
   const headH = head.outerHTML.replace(/^<header/, '<div').replace(/<\/header>$/, '</div>').replace('class="co-head"', 'class="kh-hd co-head"');
   const hdRoot = document.createElement('div'); hdRoot.innerHTML = headH; retarget(hdRoot);
   const cart = $1(hdRoot, '.co-cart'); if (cart) { cart.dataset.act = 'back'; delete cart.dataset.go; }
-  return {head:`<div class="kc kc-head" dir="${AR ? 'rtl' : 'ltr'}"><section class="${root.className}">${hdRoot.innerHTML}</section></div>`, body:`<div class="kc" dir="${AR ? 'rtl' : 'ltr'}">${root.outerHTML}</div>`};
+  return {head:`<div class="kc kc-head" dir="${AR ? 'rtl' : 'ltr'}" lang="${LANG}"><section class="${root.className}">${hdRoot.innerHTML}</section></div>`, body:`<div class="kc" dir="${AR ? 'rtl' : 'ltr'}" lang="${LANG}">${root.outerHTML}</div>`};
 }
 const coEmptyGuard = ctx => !S.bag.length ? {title:t('Checkout'), back:true, noTabs:true, body:empty('bag', t('Your bag is empty'), t('Add something you love, then check out.'), t('Start shopping'), '/categories')} : null;
 scr('/checkout', {tab:'bag', group:'Bag & Checkout', label:'Checkout (one page)', chain:() => ['/bag'], title:() => t('Checkout'),

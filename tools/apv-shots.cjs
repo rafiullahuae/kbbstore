@@ -78,6 +78,8 @@ const SITEM = (() => {
       lang:m.lang && m.lang.box ? {w:m.lang.box.w, h:m.lang.box.h} : null, menu:m.menuIcon ? {w:m.menuIcon.w, h:m.menuIcon.h} : null, bar:m.menuBar ? m.menuBar.h : 0,
       iconSvg:((m.icons.filter((i) => i.svg).pop()) || {svg:{w:21}}).svg.w}; // the cart's: the language capsule is drawn text, not an icon
   }
+  const C = (J.co || {}).measured || {};
+  for (const lang of ['en', 'ar']) out[lang].co = {cart:C[lang + '-cart'], checkout:C[lang + '-checkout']};
   return out;
 })();
 const DEVICES = ['ip16', 'ipse', 'ipad', 'ipad-land', 'px9', 'flip', 'flip-tabletop', 'fold-cover', 'fold-inner', 'duo'].filter((d) => !arg('dev') || arg('dev').includes(d));
@@ -88,6 +90,7 @@ const FULL = !arg('dev') && !arg('lang') && !arg('only');
 function audit(arg) {
   const lang = typeof arg === 'string' ? arg : arg.lang;
   const SITE = (arg && arg.site) || null;
+  const SCO = (arg && arg.co) || null;
   const issues = [];
   const add = (kind, el, msg) => {
     const path = [];
@@ -190,7 +193,7 @@ function audit(arg) {
     /* 3b. text over a picture or an icon (designed overlays on photos excepted) */
     const media = [...g.querySelectorAll('img,svg')].filter((m) => !hidden(m) && !m.closest('.sb,.island,.punch')).map((m) => { const R = m.getBoundingClientRect(); return {m, sc:scOf(m), stack:stackOf(m), v:visible(m, R), ve:visible(m, R, true)}; }).filter((x) => area(x.ve) > 0);
     for (const r of runs) {
-      if (r.el.closest('.zh,.cnt,.badge,.bdg,.pbk,.tt-fold,.blogo,.cth,.kh')) continue; // .kh: the site's own art behind its own text
+      if (r.el.closest('.zh,.cnt,.badge,.bdg,.pbk,.tt-fold,.blogo,.cth,.kh,.kc')) continue; // .kh: the site's own art behind its own text
       for (const x of media) {
         if (x.stack !== r.stack || x.m.contains(r.el) || r.el.contains(x.m)) continue;
         const same = x.sc === r.sc;
@@ -202,7 +205,7 @@ function audit(arg) {
 
     /* 3c. icons keep their size: an unsized inline <svg> grows to its box */
     g.querySelectorAll('svg').forEach((m) => {
-      if (hidden(m) || m.closest('.sb,.splash,.compan,.bio,.done-mark,.state .ic,.scanv,.lgx')) return;
+      if (hidden(m) || m.closest('.sb,.splash,.compan,.bio,.done-mark,.state .ic,.scanv,.lgx,.kh,.kc')) return; // .kh/.kc: the site's own art, at the site's sizes
       const r = m.getBoundingClientRect();
       if (r.width > 48 || r.height > 48) add('icon-size', m, `${Math.round(r.width)}×${Math.round(r.height)}`);
     });
@@ -218,7 +221,7 @@ function audit(arg) {
     const checkedEl = new Set();
     for (const r of runs) {
       if (checkedEl.has(r.el)) continue; checkedEl.add(r.el);
-      if (r.el.closest('.kh')) continue; // the website's own colours: held to the site, see site_findings
+      if (r.el.closest('.kh,.kc')) continue; // the website's own colours: held to the site, see site_findings
       const fg = lum(cs(r.el).color); if (!fg || fg.a < .5) continue;
       // composite translucent backgrounds down to the first solid one
       let bg = null; const layers = [];
@@ -241,7 +244,7 @@ function audit(arg) {
     const T = g.querySelectorAll('button,a,input,select,textarea,[role=button],[data-go],[data-act],[data-tab],[data-sheet]');
     T.forEach((e) => {
       if (hidden(e) || e.matches('.scrim') || e.closest('.peek')) return; // .peek is a scaled transition frame
-      if (e.closest('.kh')) return; // the website's own header and menus: held to the site's sizes (site check)
+      if (e.closest('.kh,.kc')) return; // the website's own header, menus, cart and checkout: held to the site's sizes (site, cart, checkout checks)
       if (e.closest('.fl,.srch.field') && e.matches('input,textarea')) return; // the field box is the target
       const r = e.getBoundingClientRect();
       if (area(visible(e, r, true)) <= 0) return;
@@ -274,7 +277,7 @@ function audit(arg) {
   /* 9. Lane APV3: the website's header, measured against the live site at this frame's width */
   for (const g of glasses) {
     if (g.querySelector('.rail')) add('rail', g.querySelector('.rail'), 'a navigation rail is drawn');
-    const hd = g.querySelector('.kh-hd');
+    const hd = g.querySelector('.kh .kh-hd');
     if (!hd || !SITE) continue;
     const W = Math.round(g.offsetWidth), M = SITE[W];
     if (!M) { add('site', hd, `no site measurement at ${W}px`); continue; }
@@ -314,6 +317,38 @@ function audit(arg) {
     if (tmBar && !mbOn) add('site', hd, '"Tablet menu: menu bar" shows no menu bar');
     const ib = [...hd.querySelectorAll('.hact .ib')].filter((x) => !x.matches('[data-lang]') && !hidden(x) && box(x).width);
     for (const x of ib) { const sv = x.querySelector('svg'); if (sv && !near(box(sv).width, M.iconSvg)) add('site', x, `header icon ${box(sv).width.toFixed(1)}px, the site's are ${M.iconSvg}px`); }
+  }
+
+  /* 10. Lane APV3: the cart page and the checkout are the site's, measured against the site at 390 */
+  if (SCO) for (const g of glasses) {
+    if (g.offsetWidth >= 600) continue; // measured on the site at 390: the phone layout
+    const near = (a, b) => Math.abs(a - b) <= 1;
+    const H = (e) => e.getBoundingClientRect().height;
+    const cart = g.querySelector('.kc .kbb-cartpage');
+    if (cart && SCO.cart) {
+      const M = SCO.cart, btn = cart.querySelector('a.cobtn'), h1 = cart.querySelector('h1'), q = cart.querySelector('.qty');
+      if (!btn || !near(H(btn), M.btn.h) || cs(btn).borderTopLeftRadius !== M.btn.rad) add('cart', btn || cart, `checkout button ${btn ? H(btn).toFixed(1) + 'px, corners ' + cs(btn).borderTopLeftRadius : 'missing'}; the site's is ${M.btn.h}px, ${M.btn.rad}`);
+      if (!h1 || cs(h1).fontSize !== M.title.fs) add('cart', h1 || cart, `title ${h1 ? cs(h1).fontSize : 'missing'}, the site's is ${M.title.fs}`);
+      if (q && !near(H(q), M.qty.h)) add('cart', q, `quantity stepper ${H(q)}px, the site's is ${M.qty.h}px`);
+      const order = [...cart.querySelectorAll('.wrap > *, .grid > *, aside.sum > *')].filter((e) => e.getBoundingClientRect().height).map((e) => (e.tagName + '.' + (String(e.className).split(' ').filter((c) => c && !/^id-/.test(c))[0] || '')).toLowerCase());
+      if (order.join(' ') !== M.order.join(' ')) add('cart', cart, `sections ${order.join(' ')} ≠ the site's ${M.order.join(' ')}`);
+    }
+    const hd = g.querySelector('.kc-head .co-head'), co = g.querySelector('.kc section.kbb-checkout:not(.kc-head *)');
+    if (hd && co && SCO.checkout) {
+      const M = SCO.checkout;
+      const h = H(hd) - parseFloat(cs(hd).paddingTop);
+      if (!near(h, M.head.h)) add('checkout', hd, `checkout header ${h.toFixed(1)}px, the site's is ${M.head.h}px`);
+      const row = co.querySelector('.cosr'); if (!row || !near(H(row), M.sumRow.h)) add('checkout', row || co, `summary bar ${row ? H(row) : 'missing'}, the site's is ${M.sumRow.h}px`);
+      const pl = co.querySelector('.kbb-mobile-order .place'); if (!pl || !near(H(pl), M.place.h) || cs(pl).borderTopLeftRadius !== M.place.rad) add('checkout', pl || co, `Pay now ${pl ? H(pl) + 'px, ' + cs(pl).borderTopLeftRadius : 'missing'}; the site's is ${M.place.h}px, ${M.place.rad}`);
+      const ids = [...co.querySelectorAll('.form-row')].map((e) => (String(e.className).match(/id-(billing_\w+)/) || [])[1]).filter(Boolean).map((x) => x + '');
+      const want = M.fields.filter((x) => /^billing_/.test(x));
+      if (ids.join(',') !== want.join(',')) add('checkout', co, `fields ${ids.join(',')} ≠ the site's ${want.join(',')}`);
+      const pm = [...co.querySelectorAll('.wc_payment_method > input.input-radio')].map((i) => i.value).filter((v) => v !== 'apple' && v !== 'gpay').map((v) => v === 'card' ? 'stripe' : v);
+      const pmWant = M.methods.filter((v) => /^[a-z]+$/.test(v)); // the site's own list (its save-card tick aside); the app adds Apple Pay / Google Pay on top, as the site's Apple Pay row does on Safari
+      if (pm.join(',') !== pmWant.join(',')) add('checkout', co, `payment methods ${pm.join(',')} ≠ the site's ${pmWant.join(',')}`);
+      const secs = co.querySelectorAll('.sec > h2 .n');
+      if (secs.length !== M.sections.length) add('checkout', co, `${secs.length} sections, the site has ${M.sections.length}`);
+    }
   }
 
   /* 6b. Duo hinge: nothing of either screen reaches into it */
@@ -415,7 +450,7 @@ async function newPage(lang) {
 async function check(page, o = {}) {
   if (MUTATE) await page.addStyleTag({content:MUTATE});
   await settle(page);
-  const {issues, exceptions} = await page.evaluate(audit, {lang:page.lang, site:SITEM[page.lang]});
+  const {issues, exceptions} = await page.evaluate(audit, {lang:page.lang, site:SITEM[page.lang], co:SITEM[page.lang] && SITEM[page.lang].co});
   for (const e of page.errs.splice(0)) issues.push({kind:'console', at:'', msg:e});
   if (o.shot && !NOSHOTS) await page.locator('.device').screenshot({path:o.shot, animations:'disabled', type:'jpeg', quality:82});
   if (o.key && !NOSHOTS) await page.locator('.device').screenshot({path:o.key, animations:'disabled'});
@@ -485,111 +520,98 @@ async function flows(lang, dev, log) {
     return r;
   };
   try {
-    /* 1 · the whole checkout by card */
-    await open('/home');
+    /* 1 · bag → checkout (one page) → Pay now by card, as a guest, every field typed (Lane APV3) */
+    await open('/home?user=0');
     const b0 = (await st()).bag;
     await click('.pc .add');
     expect((await st()).bag === b0 + 1, 'Add to bag on a home card did not raise the bag count');
     await click('[data-tab="bag"]');
-    expect((await st()).path === '/bag', 'the Bag tab did not open the bag');
+    expect((await st()).path === '/bag', 'the bag icon did not open the bag');
+    expect(await page.locator('#stage .kc .kbb-cartpage .ci').count() === (await st()).bagLines, 'the cart page does not list every line of the bag');
+    await step('bag');
+    await click('.kc a.cobtn');
+    let s1 = await st();
+    expect(s1.path === '/checkout', 'Proceed to checkout did not open the checkout');
+    /* the rule: never more than two screens before Place order */
+    expect(s1.stacks.bag.length <= 2 && (await page.evaluate(() => APV.beforePlace())) <= 2, `there are ${s1.stacks.bag.length} screens before Pay now (${s1.stacks.bag.join(' → ')}); the most is 2 (bag → checkout)`);
+    await step('checkout');
+    /* the coupon lives in the summary at the top, as on the site */
+    await click('.kc .cosr');
+    expect((await st()).sumOpen, 'the order summary did not open');
     await type('#f-coupon-code', 'SUMMER');
-    await click('[data-act="coupon"]');
-    expect(await page.locator('#stage .fl.err [id="f-coupon-code"]').count() === 1, 'a wrong coupon did not show the error state');
+    await click('.kc .coupon .apply');
+    expect(await page.locator('#stage [data-fld="coupon.code"].err').count() === 1, 'a wrong coupon did not show the error state');
     await step('coupon-error');
     await type('#f-coupon-code', 'welcome10', {fill:true});
     await page.dispatchEvent('#stage #f-coupon-code', 'input');
-    await click('[data-act="coupon"]');
-    expect(await page.locator('#stage .cpn-on').count() === 1, 'WELCOME10 was not applied');
-    await step('bag');
-    await click('.foot [data-go="/checkout/bag"]');
-    await step('1-bag-review');
-    await click('[data-act="co-next"]');
-    expect((await st()).path === '/checkout/contact', 'Continue did not reach Contact');
-    await step('2-contact-signed-in');
-    await click('[data-act="co-guest"]');
-    await click('[data-act="co-contact"]');
-    expect(await page.locator('#stage .fl.err #f-contact-email').count() === 1, 'an empty email did not show its error');
-    await step('2-contact-error');
-    await type('#f-contact-email', 'sara@example.com');
-    await step('2-contact-guest');
-    await click('[data-act="co-contact"]');
-    expect((await st()).path === '/checkout/address', 'a valid email did not reach the address step');
-    await step('3-address-saved');
-    await click('[data-go="/checkout/address/new"]');
-    await step('3-address-new');
-    await click('[data-act="addr-save"]');
-    expect(await page.locator('#stage .errsum').count() === 1, 'saving an empty address did not show the error summary');
-    await step('3-address-errors');
-    await type('#f-addr-name', lang === 'ar' ? 'سارة المنصوري' : 'Sara Al Mansoori');
-    await type('#f-addr-phone', '0501234567');
-    expect(await vis('#f-addr-phone').inputValue() === '50 123 4567', 'the phone was not formatted as 50 123 4567');
-    await click('[data-sheet="emirate"]');
-    await step('3-emirate-sheet');
+    await click('.kc .coupon .apply');
+    expect(await page.locator('#stage .kc .cpn-on').count() >= 1, 'WELCOME10 was not applied');
+    await step('coupon-applied');
+    /* Pay now with nothing filled: every error inline, on the one page */
+    await click('.kc .kbb-mobile-order [data-act="place"]');
+    const nErr = await page.locator('#stage .kc .fld.err').count();
+    expect((await st()).path === '/checkout' && nErr >= 5, `an empty form did not show its errors on the page (${nErr})`);
+    await step('checkout-errors');
+    await type('#f-co-email', 'sara@example.com');
+    await type('#f-co-name', lang === 'ar' ? 'سارة المنصوري' : 'Sara Al Mansoori');
+    await type('#f-co-phone', '0501234567');
+    expect(await vis('#f-co-phone').inputValue() === '50 123 4567', 'the phone was not formatted as 50 123 4567');
+    await type('#f-co-building', lang === 'ar' ? 'مارينا غيت 2' : 'Marina Gate 2');
+    await type('#f-co-street', lang === 'ar' ? 'دبي مارينا' : 'Dubai Marina');
+    await click('#f-co-emirate');
+    expect((await st()).sheet === 'emirate', 'the emirate field did not open the picker');
+    await step('emirate-sheet');
     await click('[data-act="pick"][data-v="dubai"]');
-    expect((await st()).sheet === 'area', 'choosing an emirate did not open its areas');
-    await type('#aq', lang === 'ar' ? 'مار' : 'Mar');
-    await step('3-area-sheet');
-    await click('[data-act="pick"][data-v="dubai-marina"]');
-    await type('#f-addr-building', lang === 'ar' ? 'مارينا غيت 2' : 'Marina Gate 2');
-    await type('#f-addr-street', lang === 'ar' ? 'شارع المرسى' : 'Al Marsa Street');
-    await step('3-address-filled');
-    await click('[data-act="addr-save"]');
-    expect((await st()).path === '/checkout/delivery', 'a complete address did not reach Delivery');
-    await step('4-delivery');
-    await click('[data-act="del"][data-v="exp"]');
-    expect((await st()).co.del === 'exp', 'Express was not chosen');
-    await click('[data-act="co-next"]');
-    await step('5-payment');
-    await click('[data-act="pay"][data-v="card"]');
-    await click('[data-act="co-pay"]');
-    expect((await st()).path === '/checkout/card', 'Card did not open the card form');
-    await step('6-card-empty');
-    await click('[data-act="card-next"]');
-    expect(await page.locator('#stage .fl.err').count() >= 3, 'an empty card form did not show its errors');
-    await step('6-card-errors');
+    const s2 = await st();
+    expect(!s2.sheet && s2.co.emirate === 'dubai', 'choosing an emirate did not fill the field');
+    expect(await page.locator('#stage .kc .fld.err').count() === 0 || (await st()).co.pay !== 'card', 'errors stayed after the fields were filled');
+    /* the card, inline in the payment section as on the site */
+    await click('.kc label[for="payment_method_card"]');
+    await click('.kc .kbb-mobile-order [data-act="place"]');
+    expect(await page.locator('#stage .kc .kbb-card-el.err').count() >= 2, 'an empty card did not show its errors');
     await type('#f-card-number', '4242424242424242');
     expect(await vis('#f-card-number').inputValue() === '4242 4242 4242 4242', 'the card number was not grouped in fours');
     expect(await page.locator('#stage #cbrand .cbrand').count() === 1, 'the card brand was not detected');
     await type('#f-card-exp', '1229');
     expect(await vis('#f-card-exp').inputValue() === '12 / 29', 'the expiry was not formatted MM / YY');
     await type('#f-card-cvc', '123');
-    await type('#f-card-cname', 'SARA AL MANSOORI');
-    await step('6-card-filled');
-    await click('[data-act="card-next"]');
-    expect((await st()).path === '/checkout/3ds', 'a valid card did not reach 3-D Secure');
-    await step('6-card-3ds');
+    await step('checkout-filled');
+    await click('.kc .kbb-mobile-order [data-act="place"]');
+    expect((await st()).path === '/checkout/3ds', 'Pay now by card did not reach 3-D Secure');
+    await step('after-3ds');
     await type('#f-otp-code', '481205');
-    await click('[data-act="otp-submit"]');
-    expect((await st()).path === '/checkout/review', 'the code did not reach Review');
-    await step('7-review');
     const o0 = (await st()).orders;
-    await click('[data-act="place"]');
+    await click('[data-act="otp-submit"]');
     const s8 = await st();
-    expect(s8.path === '/checkout/placed' && s8.bag === 0 && s8.orders === o0 + 1, 'Place order did not place the order and empty the bag');
-    await step('8-placed');
+    expect(s8.path === '/checkout/placed' && s8.bag === 0 && s8.orders === o0 + 1, 'the bank code did not place the order and empty the bag');
+    await step('after-placed');
 
-    /* 2 · the other methods, each from the payment step with a bag */
+    /* 2 · the other methods, each from the filled checkout: what follows Pay now, then the order */
     const wallet = dev === 'px9' || dev.startsWith('fold') || dev.startsWith('flip') || dev === 'duo' ? 'gpay' : 'apple';
     for (const m of [wallet, 'tabby', 'tamara', 'cod']) {
-      await open('/checkout/payment');
-      await click(`[data-act="pay"][data-v="${m}"]`);
-      await click('[data-act="co-pay"]');
-      await step('6-' + (m === 'apple' || m === 'gpay' ? 'wallet' : m));
-      if (m === 'cod') await click('[data-act="cod-ok"]');
-      else if (m === 'tabby' || m === 'tamara') await click(`[data-act="bnpl-ok"]`);
-      else await click('[data-act="authorise"]');
+      await open('/checkout?filled=1');
+      await click(`.kc label[for="payment_method_${m}"]`);
+      expect((await st()).co.pay === m, `${m}: the payment choice did not take`);
+      if (m === 'cod') await step('checkout-cod');
+      const o1 = (await st()).orders;
+      await click('.kc .kbb-mobile-order [data-act="place"]');
+      if (m !== 'cod') {
+        await step('after-' + (m === 'apple' || m === 'gpay' ? 'wallet' : m));
+        if (m === 'tabby' || m === 'tamara') await click('[data-act="bnpl-ok"]'); else await click('[data-act="authorise"]');
+      }
       const s = await st();
-      expect(s.path === '/checkout/review' && (m === 'cod' || s.co.authorised === m), `${m}: did not come back to Review approved`);
+      expect(s.path === '/checkout/placed' && s.orders === o1 + 1 && s.bag === 0, `${m}: Pay now did not end in the order placed`);
     }
-    /* 3 · a declined card keeps the bag; retry goes back to the card */
+    /* 3 · a declined card keeps the bag; Try again returns to the checkout with the card chosen */
     await open('/checkout/3ds');
     const bagBefore = (await st()).bag;
     await click('[data-act="decline"]');
     expect((await st()).path.startsWith('/checkout/failed'), 'a declined card did not show Payment failed');
-    await step('9-failed');
+    await step('after-failed');
     expect((await st()).bag === bagBefore, 'the bag was not kept after a declined payment');
     await click('[data-act="retry-pay"]');
-    expect((await st()).path === '/checkout/card', 'Try again did not return to the card form');
+    const sr = await st();
+    expect(sr.path === '/checkout' && sr.co.pay === 'card', 'Try again did not return to the checkout with the card');
 
     /* 4 · navigation smoke: product → back → tab switch → state kept */
     await open('/home');
@@ -841,6 +863,42 @@ async function siteFlows(lang, dev, log) {
   return {shots, fails};
 }
 
+/* the whole length of a screen: the frame's body scrolled a screenful at a time, stacked */
+async function fullLength(lang, hash, file) {
+  const page = await newPage(lang);
+  await page.evaluate((h) => APV.open(h), hash + '&z=100');
+  await settle(page);
+  const g = await page.locator('#stage .glass').first().boundingBox();
+  const parts = [];
+  const info = await page.evaluate(() => { const b = document.querySelector('#stage .pane .body'); const r = b.getBoundingClientRect(); return {top:r.top, h:b.clientHeight, sh:b.scrollHeight}; });
+  for (let y = 0, i = 0; ; i++) {
+    await page.evaluate((y) => { document.querySelector('#stage .pane .body').scrollTop = y; }, y);
+    await page.waitForTimeout(250); await settle(page);
+    const f = file.replace(/\.png$/, `.part${i}.png`);
+    const first = i === 0;
+    const at = await page.evaluate(() => document.querySelector('#stage .pane .body').scrollTop);
+    const clipTop = first ? g.y : info.top;
+    const clipH = first ? info.top - g.y + info.h : info.h;
+    await page.screenshot({path:f, clip:{x:g.x, y:clipTop, width:g.width, height:clipH}});
+    parts.push({f, skip:first ? 0 : (y - at) === 0 ? 0 : 0});
+    if (at + info.h >= info.sh - 1) {
+      const last = info.sh - info.h; // the final scroll stops short: keep only the new part of the last screenful
+      if (i > 0) parts[i].crop = (y - at);
+      break;
+    }
+    y += info.h;
+  }
+  await page.close();
+  const pg = await ctx.newPage();
+  const html = `<!doctype html><style>body{margin:0;background:#fff}div{width:${g.width}px}img{display:block;width:${g.width}px}</style><div>${parts.map((p, i) => `<div style="overflow:hidden;${p.crop ? `margin-top:0` : ''}"><img src="file://${p.f}" style="${p.crop ? `margin-top:-${p.crop}px` : ''}"></div>`).join('')}</div>`;
+  const tmp = file + '.html'; fs.writeFileSync(tmp, html);
+  await pg.goto('file://' + tmp, {waitUntil:'load'});
+  await pg.screenshot({path:file, fullPage:true});
+  await pg.close();
+  fs.unlinkSync(tmp); parts.forEach((p) => fs.unlinkSync(p.f));
+  return file;
+}
+
 /* ── pictures made of pictures ───────────────────────────────────────────── */
 async function compose(file, title, items, o = {}) {
   const page = await ctx.newPage();
@@ -906,16 +964,17 @@ async function compose(file, title, items, o = {}) {
   /* checkout strips and key pictures */
   if (!NOSHOTS && !NO_FLOWS) {
     fs.mkdirSync(KEY, {recursive:true});
-    const ORDER = [['1-bag-review', '1 · Bag review'], ['2-contact-guest', '2 · Contact'], ['3-address-saved', '3 · Address: saved'], ['3-address-errors', '3 · New address: validation'], ['3-emirate-sheet', '3 · Emirate'], ['3-area-sheet', '3 · Area by emirate'], ['3-address-filled', '3 · New address: filled'], ['4-delivery', '4 · Delivery'], ['5-payment', '5 · Payment'], ['6-card-filled', '6 · Card'], ['6-card-3ds', '6 · 3-D Secure'], ['6-wallet', '6 · Wallet sheet'], ['6-tabby', '6 · Tabby'], ['6-tamara', '6 · Tamara'], ['6-cod', '6 · Cash on delivery'], ['7-review', '7 · Review'], ['8-placed', '8 · Order placed'], ['9-failed', '9 · Payment failed']];
+    /* Lane APV3: bag → checkout is the whole road; the after-tap states follow */
+    const ORDER = [['bag', 'Bag (the site\'s cart page)'], ['checkout', 'Checkout · the one page'], ['coupon-applied', 'Coupon in the summary'], ['checkout-errors', 'Pay now with gaps: inline errors'], ['emirate-sheet', 'Emirate picker over the page'], ['checkout-filled', 'Filled, card inline'], ['after-3ds', 'After Pay now · 3-D Secure'], ['after-wallet', 'After Pay now · wallet sheet'], ['after-tabby', 'After Pay now · Tabby'], ['after-tamara', 'After Pay now · Tamara'], ['after-placed', 'Order placed'], ['after-failed', 'Payment failed, bag kept']];
     for (const lang of LANGS) {
       const S = flowShots[`${lang}/ip16`]; if (!S) continue;
-      await compose(path.join(KEY, `${lang}-checkout-steps.png`), `${lang === 'ar' ? 'Arabic' : 'English'} app · checkout, every step, clicked and typed by tools/apv-shots.cjs (iPhone 16 Pro)`, ORDER.filter(([k]) => S[k]).map(([k, c]) => ({src:S[k], cap:c})), {w:200, width:2000});
+      await compose(path.join(KEY, `${lang}-checkout-flow.png`), `${lang === 'ar' ? 'Arabic' : 'English'} app · bag → checkout (two screens) → Pay now, clicked and typed by tools/apv-shots.cjs (iPhone 16 Pro)`, ORDER.filter(([k]) => S[k]).map(([k, c]) => ({src:S[k], cap:c})), {w:230, width:1800});
     }
   }
   if (!NOSHOTS && FULL) {
     const fl = (lang, k) => (flowShots[`${lang}/ip16`] || {})[k];
-    await compose(path.join(KEY, 'floating-label-before.png'), 'Floating labels, before: the label is the placeholder, centred in the box (English, Arabic)', [{src:fl('en', '3-address-new'), cap:'English · empty'}, {src:fl('ar', '3-address-new'), cap:'Arabic · empty'}].filter((x) => x.src), {w:420, width:900});
-    await compose(path.join(KEY, 'floating-label-after.png'), 'Floating labels, after: typed values; each label lifts to a small heading at the top-start corner', [{src:fl('en', '3-address-filled'), cap:'English · filled'}, {src:fl('ar', '3-address-filled'), cap:'Arabic · filled'}].filter((x) => x.src), {w:420, width:900});
+    await compose(path.join(KEY, 'floating-label-before.png'), 'Floating labels, before: the label is the placeholder, centred in the box (English, Arabic)', [{src:fl('en', 'checkout'), cap:'English · empty'}, {src:fl('ar', 'checkout'), cap:'Arabic · empty'}].filter((x) => x.src), {w:420, width:900});
+    await compose(path.join(KEY, 'floating-label-after.png'), 'Floating labels, after: typed values; each label lifts to a small heading at the top-start corner', [{src:fl('en', 'checkout-filled'), cap:'English · filled'}, {src:fl('ar', 'checkout-filled'), cap:'Arabic · filled'}].filter((x) => x.src), {w:420, width:900});
   }
   /* Lane APV3 key pictures: site vs app headers, the menus, the bottom bars */
   if (!NOSHOTS && !NO_FLOWS && !arg('dev')) {
@@ -930,6 +989,19 @@ async function compose(file, title, items, o = {}) {
       await compose(path.join(KEY, `menu-phone-${lang}.png`), `${L(lang)} · the site's phone menu (☰): website at 402 px, then the app on iPhone 16 Pro, closed levels and a level opened`, [{src:ss(lang, '402-menu'), cap:'Website · menu'}, {src:ap(lang, 'ip16', 'menu-open') && ap(lang, 'ip16', 'menu-open'), cap:'App · menu'}, {src:ss(lang, '402-menu-open'), cap:'Website · Skincare opened'}, {src:ap(lang, 'ip16', 'menu-level'), cap:'App · Skincare opened'}].filter((x) => x.src), {w:330, width:1450});
       await compose(path.join(KEY, `menu-tablet-${lang}.png`), `${L(lang)} · tablets: iPad landscape shows the site's menu bar and its mega panels (website left, app right); the Fold inner shows what the site shows at 673 (the ☰ menu), or the menu bar with “Tablet menu: menu bar”`, [{src:ss(lang, '1133-mega'), cap:'Website · 1133 px · Skincare panel'}, {src:ap(lang, 'ipad-land', 'mega-open'), cap:'App · iPad landscape · Skincare panel'}, {src:ss(lang, '673-menu'), cap:'Website · 673 px · menu'}, {src:ap(lang, 'fold-inner', 'menu-open'), cap:'App · Fold inner · menu'}, {src:ap(lang, 'fold-inner', 'mega-open-bar'), cap:'App · Fold inner · “menu bar” option, All Brands panel'}].filter((x) => x.src), {w:560, width:1800});
       await compose(path.join(KEY, `bottom-bars-${lang}.png`), `${L(lang)} · bottom bar options on iPhone 16 Pro — A (now) · B · C · D · E, and E's More sheet. Pick a letter: “Bottom bar” chooser beside the phone.`, ['A', 'B', 'C', 'D', 'E'].map((b) => ({src:ap(lang, 'ip16', 'bb-' + b), cap:{A:'A · Home · Shop · Search · Bag · Account (now)', B:'B · Home · Categories · Brands · Offers · Account', C:'C · Home · Shop · Wishlist · Bag · Account', D:'D · Home · Categories · raised Bag · Wishlist · Account', E:'E · Home · Shop · Offers · Bag · More'}[b]})).concat([{src:ap(lang, 'ip16', 'bb-E-more'), cap:'E · More sheet'}]).filter((x) => x.src), {w:280, width:1860});
+    }
+  }
+  /* Lane APV3: the site's cart and one-page checkout beside the app's, full length, and what follows Pay now */
+  if (!NOSHOTS && !arg('dev')) {
+    const SITE_SHOTS = path.join(OUT, 'site');
+    for (const lang of LANGS) {
+      const L = lang === 'ar' ? 'Arabic' : 'English';
+      const ss = (f) => { const p2 = path.join(SITE_SHOTS, `${lang}-${f}.png`); return fs.existsSync(p2) ? p2 : null; };
+      const cartApp = await fullLength(lang, '#/bag?device=ip16', path.join(OUT, lang, 'full-cart.png'));
+      const coApp = await fullLength(lang, '#/checkout?guest=1&user=0&device=ip16', path.join(OUT, lang, 'full-checkout.png'));
+      await compose(path.join(KEY, `${lang}-cart.png`), `${L} · the bag: the site's cart page (left, at 390) and the app's (right, iPhone 16 Pro, under its header). Same sections, same order, same words.`, [{src:ss('cart'), cap:'Website · cart page'}, {src:cartApp, cap:'App · Bag'}].filter((x) => x.src), {w:402, width:900});
+      const F = flowShots[`${lang}/ip16`] || {};
+      await compose(path.join(KEY, `${lang}-checkout.png`), `${L} · the checkout is ONE page, as on the site: website (left, 390) and app (right), full length. Bag → checkout = two screens before Pay now. Then, after the tap (not steps): 3-D Secure, the wallet sheet, Tabby / Tamara approving in the app, the order placed, a declined payment with the bag kept.`, [{src:ss('checkout'), cap:'Website · one-page checkout'}, {src:coApp, cap:'App · one-page checkout'}].filter((x) => x.src).concat([['after-3ds', 'After Pay now · 3-D Secure'], ['after-wallet', 'After Pay now · Apple Pay sheet'], ['after-tabby', 'After Pay now · Tabby'], ['after-tamara', 'After Pay now · Tamara'], ['after-placed', 'Order placed'], ['after-failed', 'Payment failed · bag kept']].filter(([k]) => F[k]).map(([k, c]) => ({src:F[k], cap:c}))), {w:402, width:1950});
     }
   }
   await browser.close();

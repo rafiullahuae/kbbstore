@@ -14,6 +14,9 @@ window.APV_I18N = {
   'Home · Shop · Wishlist · Bag · Account (search is the header box)':'الرئيسية · تسوّقي · المفضّلة · الحقيبة · الحساب (البحث في خانة الرأس)',
   'Home · Categories · raised Bag · Wishlist · Account':'الرئيسية · الفئات · الحقيبة البارزة · المفضّلة · الحساب',
   'Home · Shop · Offers · Bag · More (brands, wishlist, orders, blog…)':'الرئيسية · تسوّقي · العروض · الحقيبة · المزيد (العلامات، المفضّلة، الطلبات، المدوّنة…)',
+  'Checkout (one page)':'إتمام الطلب (صفحة واحدة)', 'Checkout · guest':'إتمام الطلب · زائرة', 'Checkout · filled':'إتمام الطلب · مكتمل', 'Checkout · errors':'إتمام الطلب · أخطاء', 'Checkout · summary open':'إتمام الطلب · الملخص مفتوح', 'Checkout · emirate picker':'إتمام الطلب · اختيار الإمارة', 'Checkout · Tabby chosen':'إتمام الطلب · تابي', 'Checkout · cash on delivery':'إتمام الطلب · الدفع عند الاستلام',
+  'After Pay now · card 3-D Secure':'بعد «ادفع الآن» · تحقق البطاقة', 'After Pay now · Apple Pay / Google Pay':'بعد «ادفع الآن» · محفظة آبل أو جوجل', 'After Pay now · Tabby approval':'بعد «ادفع الآن» · موافقة تابي', 'After Pay now · Tamara approval':'بعد «ادفع الآن» · موافقة تمارا', 'After Pay now · order placed':'بعد «ادفع الآن» · تم الطلب', 'After Pay now · payment failed (card)':'بعد «ادفع الآن» · فشل الدفع (بطاقة)', 'After Pay now · payment failed (Tabby)':'بعد «ادفع الآن» · فشل الدفع (تابي)',
+  'Express Delivery':'توصيل سريع', 'Checkout':'إتمام الطلب',
   'Offers':'العروض', 'More (tab)':'المزيد', 'Skin concerns':'مشاكل البشرة', 'Super Sale':'التخفيضات الكبرى',
   /* ── chrome around the phone ── */
   'App preview':'معاينة التطبيق', 'System':'النظام', 'Device':'الجهاز', 'Design':'التصميم', 'Jump to':'انتقلي إلى', 'View':'العرض', 'Fit':'ملاءمة', 'Screen':'الشاشة',
