@@ -201,7 +201,8 @@ function brandList(){
 }
 
 /* ── Product ───────────────────────────────────────────────────────────── */
-function sizeOf(p){ const m = (p.name_en || p.name).match(/(\d+(?:\.\d+)?)\s?(ml|g|ea|pcs|sheets?)\b/i); return m ? `${m[1]} ${m[2].toLowerCase()}` : t('Standard'); }
+const UNIT_AR = {ml:'مل', g:'غ', ea:'قطعة', pcs:'قطعة', sheet:'ورقة', sheets:'ورقة'};
+function sizeOf(p){ const m = (p.name_en || p.name).match(/(\d+(?:\.\d+)?)\s?(ml|g|ea|pcs|sheets?)\b/i); if (!m) return t('Standard'); const u = m[2].toLowerCase(); return AR ? `${num(+m[1])} ${UNIT_AR[u]}` : `${m[1]} ${u}`; }
 function secByHead(p, words){ return (p.sec || []).find(s => words.some(w => s.h.toLowerCase().includes(w))); }
 function ptab(p, k){
   if (k === 'desc') {
@@ -245,7 +246,7 @@ function productParts(p, r){
   const info = `<div class="pinfo"><button class="br" ${go$('/brand/' + p.bslug)}>${brandTxt(bn(p))}${ico('chevR', 'flip')}</button><h1>${nameTxt(p)}</h1>
     <div class="rt">${p.reviews ? `${stars(p.rating)}<b>${num(p.rating, 1)}</b><button data-act="toreviews">${t('{n} reviews', {n:num(p.reviews)})}</button>` : `<span>${t('No reviews yet')}</span>`}<span aria-hidden="true">·</span><span style="color:var(--ok)">${p.stock === 'instock' ? t('In stock') : t('Few left')}</span></div>
     ${d === 'C' ? `<div class="pcard">${priceH}${expressPay()}</div>` : priceH}
-    <span class="lab">${t('Size')}</span><div class="vars"><button class="chip on" aria-pressed="true">${X('size', esc(sizeOf(p)))}</button></div>
+    <span class="lab">${t('Size')}</span><div class="vars"><button class="chip on" aria-pressed="true">${esc(sizeOf(p))}</button></div>
     <span class="lab">${t('Quantity')}</span>${qtyStep('pq', null, S.qty)}
     ${cat ? `<button class="crumb" ${go$('/category/' + cat)}>${ico('grid')}${t('More in {c}', {c:dt(catName(cat))})}${ico('chevR', 'flip')}</button>` : ''}</div>`;
   const tabsH = d === 'B'
@@ -280,6 +281,8 @@ scr('/product/:slug', {tab:'shop', group:'Product', label:'Product', chain:r => 
 
 /* ── Search ────────────────────────────────────────────────────────────── */
 const POP = ['Anua', 'PDRN', 'sunscreen', 'COSRX', 'Beauty of Joseon', 'toner pad'];
+/* the Arabic app searches in Arabic: each popular search has its Arabic query */
+const popQ = x => AR ? (DICT['q:' + x] || x) : x;
 function searchHits(q){
   const words = q.toLowerCase().split(/\s+/).filter(Boolean);
   const hay = p => (p.name + ' ' + (p.name_en || '') + ' ' + p.brand + ' ' + (BR[p.bslug] || {}).name_en).toLowerCase();
@@ -291,11 +294,11 @@ function searchHits(q){
 function searchResults(ctx = {}){
   const q = S.q.trim();
   if (!q) return `<div class="pad" style="padding-top:4px">${S.recent.length ? `<div class="sh"><h2 class="h3">${t('Recent')}</h2><button class="more" data-act="clearrecent">${t('Clear')}</button></div><div class="chips wrap">${S.recent.map(x => `<button class="chip" data-act="q" data-v="${esc(x)}">${ico('clock')}${utH(x)}</button>`).join('')}</div><div style="height:16px"></div>` : ''}
-    <div class="sh"><h2 class="h3">${t('Popular searches')}</h2></div><div class="list">${POP.map(x => `<button class="li" data-act="q" data-v="${esc(x)}">${ico('search')}<span class="grow">${AR ? (DICT['q:' + x] ? esc(DICT['q:' + x]) : X('brand', esc(x))) : esc(x)}</span>${ico('chevR', 'chev flip')}</button>`).join('')}</div>
+    <div class="sh"><h2 class="h3">${t('Popular searches')}</h2></div><div class="list">${POP.map(x => `<button class="li" data-act="q" data-v="${esc(popQ(x))}">${ico('search')}<span class="grow">${dt(popQ(x))}</span>${ico('chevR', 'chev flip')}</button>`).join('')}</div>
     <div class="sh" style="margin-top:20px"><h2 class="h3">${t('Shop by category')}</h2></div><div class="chips wrap">${D.categories.filter(c => c.parent === 'skincare').map(c => `<button class="chip" ${go$('/category/' + c.k)}>${dt(c.name)}</button>`).join('')}</div>
     <div style="height:16px"></div><button class="btn block soft" ${go$('/scan')}>${ico('scan')}${t('Scan a barcode in the shop')}</button></div>`;
   const {prods, brands, cats} = searchHits(q);
-  if (!prods.length && !brands.length && !cats.length) return `<div class="state" style="min-height:0;padding-top:28px"><div class="ic">${ico('search')}</div><h2>${t('No results for “{q}”', {q:utH(S.q)})}</h2><p>${t('Check the spelling, or try a brand or a concern.')}</p></div><div class="pad"><div class="sh"><h2 class="h3">${t('Popular searches')}</h2></div><div class="chips wrap">${POP.slice(0, 4).map(x => `<button class="chip" data-act="q" data-v="${esc(x)}">${AR ? (DICT['q:' + x] ? esc(DICT['q:' + x]) : X('brand', esc(x))) : esc(x)}</button>`).join('')}</div></div>`;
+  if (!prods.length && !brands.length && !cats.length) return `<div class="state" style="min-height:0;padding-top:28px"><div class="ic">${ico('search')}</div><h2>${t('No results for “{q}”', {q:utH(S.q)})}</h2><p>${t('Check the spelling, or try a brand or a concern.')}</p></div><div class="pad"><div class="sh"><h2 class="h3">${t('Popular searches')}</h2></div><div class="chips wrap">${POP.slice(0, 4).map(x => `<button class="chip" data-act="q" data-v="${esc(popQ(x))}">${dt(popQ(x))}</button>`).join('')}</div></div>`;
   return `<div class="spad">${brands.length || cats.length ? `<div class="chips wrap" style="margin-bottom:12px">${brands.map(b => `<button class="chip" ${go$('/brand/' + b.slug)}>${ico('tag')}${brandTxt(b.name)}</button>`).join('')}${cats.map(c => `<button class="chip" ${go$('/category/' + c.k)}>${ico('grid')}${dt(c.name)}</button>`).join('')}</div>` : ''}
     <div class="grp" style="padding:4px 2px 8px">${t('Products')} · ${num(prods.length)}</div>${ctx.cls !== 'compact' ? `<div class="grid">${prods.slice(0, 24).map(p => pcard(p, {sel:ctx.selected})).join('')}</div>` : `<div class="list">${prods.slice(0, 24).map(p => `<button class="li sr" ${go$('/product/' + p.slug)}><img src="${p.img200}" alt="" loading="lazy"><span class="grow"><span class="small muted ell" style="display:block">${brandTxt(bn(p))}</span><span class="clamp2 nm">${nameTxt(p)}</span></span><span class="price small">${money(cur(p))}</span></button>`).join('')}</div>`}</div>`;
 }
@@ -303,7 +306,7 @@ scr('/search', {tab:'search', group:'Search', label:'Search', title:() => t('Sea
   render(r, ctx){
     if (r.query.q != null && r.query.q !== S.qFrom) { S.q = r.query.q; S.qFrom = r.query.q; }
     const field = `<div class="sfield"><label class="srch field" for="q"><span>${ico('search')}</span><input id="q" type="search" value="${esc(S.q)}" placeholder="${t('Products, brands, concerns')}" autocomplete="off" enterkeyhint="search" aria-label="${t('Search')}" aria-controls="sres">${S.q ? `<button class="ib clr" data-act="q" data-v="" aria-label="${t('Clear search')}">${ico('close')}</button>` : `<button class="ib clr" ${go$('/scan')} aria-label="${t('Scan barcode')}">${ico('scan')}</button>`}</label></div>`;
-    return {title:t('Search'), large:true, head2:field, body:`<div id="sres" aria-live="polite">${searchResults(ctx)}</div>`};
+    return {title:t('Search'), large:true, body:`${field}<div id="sres" aria-live="polite">${searchResults(ctx)}</div>`};
   },
   dual:r => ({detail:true, def:() => { const h = S.q.trim() ? searchHits(S.q).prods : []; return '/product/' + ((h[0] || {}).slug || firstBest); }, match:/^\/product\//, modes:['dual']})});
 scr('/scan', {tab:'search', group:'Search', label:'Barcode scanner', chain:() => [], title:() => t('Scan barcode'),

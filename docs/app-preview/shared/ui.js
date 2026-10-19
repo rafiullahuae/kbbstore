@@ -2,7 +2,7 @@
 /* ── building blocks ───────────────────────────────────────────────────── */
 const isA = () => S.os === 'android';
 const backIco = () => isA() ? ico('arrowL', 'flip') : ico('chevL', 'flip');
-const logo = (tag = true) => `<span class="lgx">${LOTUS}<span class="w"><b>K-BEAUTY <em>BLISS</em></b>${tag ? `<small>${t('Authentic Korean skincare')}</small>` : ''}</span></span>`;
+const logo = (tag = true) => `<span class="lgx"${AR ? ' data-x="logo"' : ''}>${LOTUS}<span class="w"><b>K-BEAUTY <em>BLISS</em></b>${tag ? `<small>${t('Authentic Korean skincare')}</small>` : ''}</span></span>`;
 const brandWord = () => AR ? 'كي بيوتي بليس' : 'K-Beauty Bliss';
 const go$ = path => `data-go="${esc(path)}"`;
 

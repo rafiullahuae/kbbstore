@@ -132,7 +132,7 @@ function frameHTML(){
   const dark = R.dark || S.viewer;
   const vars = `--w:${d.w}px;--h:${d.h}px;--r:${d.r}px;--sat:${d.sat}px;--sab:${d.sab}px${dark ? ';--sbc:#fff;--hic:#fff' : ''}`;
   const furniture = () => `${statusBar(d)}${d.island ? '<div class="island"></div>' : ''}${d.punch ? '<div class="punch"></div>' : ''}${d.sab ? `<div class="homeind${d.os === 'android' ? ' android' : ''}"></div>` : ''}`;
-  const label = `<div class="lbl">${esc(d.name)}${S.dev === 'fold' ? (S.folded ? ' · cover' : ' · inner') : ''}${S.dev === 'flip' && S.posture === 'tabletop' ? ' · tabletop' : ''}${S.dev === 'ipad' && S.land ? ' · landscape' : ''} — ${d.w} × ${d.h} ${d.unit} · ${sizeClass(d.w)}</div>`;
+  const label = `<div class="lbl">${X('dev', esc(d.name))}${S.dev === 'fold' ? ' · ' + t(S.folded ? 'cover screen' : 'inner screen') : ''}${S.dev === 'flip' && S.posture === 'tabletop' ? ' · ' + t('Tabletop') : ''}${S.dev === 'ipad' && S.land ? ' · ' + t('Landscape') : ''} — ${X('dev', `${d.w} × ${d.h} ${d.unit}`)} · ${t(sizeClass(d.w))}</div>`;
   if (d.dual) {
     const lay = layoutFor(r, d);
     let L, Rh;
@@ -265,7 +265,7 @@ function writeHash(){
 }
 function haptic(kind){
   const el = $('#hap'); if (!el) return;
-  el.textContent = S.os === 'ios' ? t('Haptic · {k}', {k:kind}) : t('Haptic · {k}', {k:kind === 'success' ? 'CONFIRM' : kind === 'error' ? 'REJECT' : 'CLOCK_TICK'});
+  el.innerHTML = S.os === 'ios' ? t('Haptic · {k}', {k:t(kind)}) : t('Haptic · {k}', {k:X('code', kind === 'success' ? 'CONFIRM' : kind === 'error' ? 'REJECT' : 'CLOCK_TICK')});
   el.classList.add('on'); clearTimeout(haptic.t); haptic.t = setTimeout(() => el.classList.remove('on'), 1600);
 }
 let toastTimer;

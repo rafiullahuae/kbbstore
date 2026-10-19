@@ -177,6 +177,7 @@ const areaName = (ek, ak) => { const a = areasOf(ek).find(x => x[0] === ak); ret
 /* Text the customer typed (names, building, street). The demo customer's own
    words have an Arabic version in the string table; anything else she types in
    Latin letters is hers and is shown as typed (data-x="typed"). */
+const alabel = l => AR ? t('addr:' + l) : l;
 const ut = s => AR ? (DICT[s] || s) : s;
 const utH = s => { const v = ut(s); return AR && isLatin(v) ? X('typed', esc(v)) : esc(v); };
 const addrLine = (a, o = {}) => a ? [a.building, a.street, a.flat, o.short ? null : a.landmark, areaName(a.emirate, a.area), a.country && a.country !== 'AE' ? t(a.city || '') : emirateName(a.emirate)].filter(Boolean).map(utH).join(AR ? '، ' : ', ') : '';

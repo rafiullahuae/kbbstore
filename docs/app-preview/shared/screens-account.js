@@ -74,7 +74,7 @@ scr('/account/profile', {tab:'account', group:'Account', label:'Profile', chain:
 scr('/account/addresses', {tab:'account', group:'Account', label:'Addresses', chain:accChain, title:() => t('Addresses'),
   render(){
     const L = S.co.addresses;
-    return {title:t('Addresses'), back:true, body:`<div class="pad">${L.length ? L.map(a => `<div class="addr static"><span class="ai">${ico(a.label === 'Work' ? 'building' : 'pin')}</span><span class="grow"><b>${t(a.label)}${a.def ? ` <span class="tagp">${t('Default')}</span>` : ''}</b><small>${utH(a.name)} · ${LTR('+971 ' + fmtPhone(a.phone))}</small><small>${addrLine(a)}</small></span><span class="acts"><button class="ib" ${go$('/account/addresses/new?edit=' + a.id)} aria-label="${t('Edit')}">${ico('edit')}</button><button class="ib" data-act="addr-del" data-v="${a.id}" aria-label="${t('Delete')}">${ico('trash')}</button></span></div>`).join('') : empty('pin', t('No saved addresses'), t('Add one to check out faster.'), null)}
+    return {title:t('Addresses'), back:true, body:`<div class="pad">${L.length ? L.map(a => `<div class="addr static"><span class="ai">${ico(a.label === 'Work' ? 'building' : 'pin')}</span><span class="grow"><b>${alabel(a.label)}${a.def ? ` <span class="tagp">${t('Default')}</span>` : ''}</b><small>${utH(a.name)} · ${LTR('+971 ' + fmtPhone(a.phone))}</small><small>${addrLine(a)}</small></span><span class="acts"><button class="ib" ${go$('/account/addresses/new?edit=' + a.id)} aria-label="${t('Edit')}">${ico('edit')}</button><button class="ib" data-act="addr-del" data-v="${a.id}" aria-label="${t('Delete')}">${ico('trash')}</button></span></div>`).join('') : empty('pin', t('No saved addresses'), t('Add one to check out faster.'), null)}
       <button class="btn block ghost" ${go$('/account/addresses/new')}>${ico('plus')}${t('Add address')}</button></div>`};
   },
   dual:() => null});
@@ -122,8 +122,8 @@ scr('/account/language', {tab:'account', group:'Account', label:'Language & regi
   render(){
     const other = AR ? '../en/index.html#/account/language' : '../ar/index.html#/account/language';
     const langs = AR
-      ? `<button class="langc on" aria-current="true"><span class="fl">ع</span><span class="grow"><b>العربية</b><small>${t('This app')}</small></span>${radio(true)}</button><a class="langc" href="${other}" target="_top"><span class="fl">${X('lang', 'EN')}</span><span class="grow"><b>${X('lang', 'English')}</b><small>${t('Opens the English app')}</small></span>${ico('ext', 'chev')}</a>`
-      : `<button class="langc on" aria-current="true"><span class="fl">EN</span><span class="grow"><b>English</b><small>${t('This app')}</small></span>${radio(true)}</button><a class="langc" href="${other}" target="_top"><span class="fl">AR</span><span class="grow"><b>Arabic</b><small>Opens the Arabic app, right to left</small></span>${ico('ext', 'chev')}</a>`;
+      ? `<button class="langc on" aria-current="true"><span class="flg">ع</span><span class="grow"><b>العربية</b><small>${t('This app')}</small></span>${radio(true)}</button><a class="langc" href="${other}" target="_top"><span class="flg">${X('lang', 'EN')}</span><span class="grow"><b>${X('lang', 'English')}</b><small>${t('Opens the English app')}</small></span>${ico('ext', 'chev')}</a>`
+      : `<button class="langc on" aria-current="true"><span class="flg">EN</span><span class="grow"><b>English</b><small>${t('This app')}</small></span>${radio(true)}</button><a class="langc" href="${other}" target="_top"><span class="flg">AR</span><span class="grow"><b>Arabic</b><small>Opens the Arabic app, right to left</small></span>${ico('ext', 'chev')}</a>`;
     return {title:t('Language & region'), back:true, body:`<div class="pad">${langs}
       ${AR ? `<div class="grp px0">${t('Numbers')}</div><div class="list" role="radiogroup"><button class="li" data-act="digits" data-v="latn" role="radio" aria-checked="${S.digits === 'latn'}"><span class="grow">${t('Latin digits')} ${LTR('123')}</span>${radio(S.digits === 'latn')}</button><button class="li" data-act="digits" data-v="arab" role="radio" aria-checked="${S.digits === 'arab'}"><span class="grow">${t('Arabic digits')} ١٢٣</span>${radio(S.digits === 'arab')}</button></div><p class="tiny muted">${t('Default: Latin digits, as on the website and UAE receipts.')}</p>` : ''}
       <div class="grp px0">${t('Region')}</div><div class="list"><div class="li"><span class="grow">${t('Country')}</span><span class="v">${t('United Arab Emirates')}</span></div><div class="li"><span class="grow">${t('Currency')}</span><span class="v">${AR ? 'درهم إماراتي (د.إ)' : 'UAE dirham (AED)'}</span></div></div></div>`};
@@ -148,7 +148,7 @@ scr('/contact', {tab:'account', group:'Content', label:'Contact (WhatsApp here o
       ${fld({fid:'msg', k:'name', label:t('Name'), ac:'name', icon:'user', cap:'words', ekh:'next'})}
       ${fld({fid:'msg', k:'email', label:t('Email'), type:'email', ac:'email', im:'email', icon:'mail', ltr:true, ekh:'next'})}
       ${pickFld({fid:'msg', k:'topic', label:t('Topic'), sheet:'topic', value:tp ? t(tp[1]) : '', icon:'help'})}
-      ${fld({fid:'msg', k:'order', label:t('Order number'), opt:true, icon:'hash', ltr:true, hint:'KBB-12345', cap:'characters'})}
+      ${fld({fid:'msg', k:'order', label:t('Order number'), opt:true, icon:'hash', ltr:true, hint:AR ? '12345' : 'KBB-12345', cap:'characters'})}
       ${fld({fid:'msg', k:'body', label:t('Message'), area:true, max:1000})}
       <button class="btn block" data-act="msg-send">${t('Send message')}</button></div>`;
     return {title:t('Contact us'), back:true, body};
@@ -200,7 +200,7 @@ scr('/blog/:slug', {tab:'account', group:'Content', label:'Blog article', chain:
     const paras = AR ? (DICT['blog:' + x.slug + ':body'] || []) : ((D.articles || {})[x.slug] || []);
     const kw = (x.title || '').toLowerCase().match(/pdrn|spf|sun|mask|spot|pigment|axis|morning/);
     const rel = PL.filter(p => kw ? (p.name_en || p.name).toLowerCase().includes(kw[0] === 'pigment' || kw[0] === 'spot' ? 'spot' : kw[0] === 'morning' ? 'toner' : kw[0]) : false).slice(0, 8);
-    return {title:'', back:true, right:`<button class="ib" data-act="share" aria-label="${t('Share')}">${ico('share')}</button>`, body:`${x.cover ? `<img src="${x.cover}" alt="" class="acover">` : ''}<div class="prose"><p class="tiny muted" style="margin-top:14px">${date(x.date || '2026-10-15')} · ${brandWord()}</p><h1 class="h1">${esc(bt(x, 'title') || '')}</h1>${AR ? `<p class="note small">${t('Translated for the app preview. The website has this article in English only.')}</p>` : ''}${paras.map(s => `<p>${esc(s)}</p>`).join('')}</div>${rel.length ? sec(t('Shop the article'), rail(rel)) : ''}`};
+    return {title:'', back:true, right:`<button class="ib" data-act="share" aria-label="${t('Share')}">${ico('share')}</button>`, body:`${x.cover ? `<img src="${x.cover}" alt="" class="acover">` : ''}<div class="prose"><p class="tiny muted" style="margin-top:14px">${date(x.date || '2026-10-15')} · ${brandWord()}</p><h1 class="h1">${esc(bt(x, 'title') || '')}</h1>${AR ? `<p class="note small">${t('Summarised for the app preview. The website has this article in English only.')}</p>` : ''}${paras.map(s => `<p>${esc(s)}</p>`).join('')}</div>${rel.length ? sec(t('Shop the article'), rail(rel)) : ''}`};
   }});
 
 /* ── start & system states ─────────────────────────────────────────────── */
