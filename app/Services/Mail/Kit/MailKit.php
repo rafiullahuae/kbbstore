@@ -144,6 +144,11 @@ final class MailKit
             'nav' => array_map(static fn (array $n) => [__($n[0]), Url::external($n[1])], self::NAV),
             'year' => (int) now()->format('Y'),
             'site' => self::siteHost(),
+            // Lane AEM: an Arabic email's direction and its Arabic masthead
+            // (null unless Arabic on the shipped wordmark). Read only by the
+            // transactional emails -- see KitRtl.
+            'rtl' => KitRtl::rtl(),
+            'mast' => KitRtl::masthead([(string) $ink, (string) $accent]),
         ];
     }
 

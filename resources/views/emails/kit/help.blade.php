@@ -16,7 +16,7 @@
 @foreach ($k['support'] as $ch)<td class="stack" valign="top" style="padding:6px 6px;font-family:{!! $k['sans'] !!};">
 <a href="{{ $ch['url'] }}" style="text-decoration:none;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
 <td width="34" style="width:34px;"><div style="width:28px;height:28px;line-height:28px;border-radius:14px;background:{{ ['whatsapp' => '#2E9E6B', 'email' => '#C13E63', 'instagram' => '#E0567B'][$ch['kind']] }};color:#FFFFFF;font-size:13px;font-weight:700;text-align:center;">{{ $ch['glyph'] }}</div></td>
-<td><div class="ink" style="font-size:13.5px;font-weight:700;color:{{ $k['text'] }};">{{ $ch['value'] }}</div><div class="muted" style="font-size:11.5px;color:#8C828A;">{{ $ch['label'] }}</div></td>
+<td><div class="ink" style="font-size:13.5px;font-weight:700;color:{{ $k['text'] }};">{!! \App\Services\Mail\Kit\KitRtl::ltr($ch['value']) !!}</div><div class="muted" style="font-size:11.5px;color:#8C828A;">{{ $ch['label'] }}</div></td>
 </tr></table></a></td>
 @endforeach</tr></table></td></tr></table></td></tr>
 @endif

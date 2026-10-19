@@ -20,7 +20,7 @@
     by a person reaches the page except through {{ }}.
 --}}
 <!doctype html>
-<html lang="{{ str_replace('_', '-', \Illuminate\Support\Facades\App::getLocale()) }}" dir="{{ \App\Support\Locale::direction() }}" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+@php($kitRtl = ($k['rtl'] ?? false) && ($kitTemplate ?? null) !== null)<html lang="{{ str_replace('_', '-', \Illuminate\Support\Facades\App::getLocale()) }}" dir="{{ $kitRtl ? 'rtl' : \App\Support\Locale::direction() }}" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -63,11 +63,11 @@
 </style>
 </head>
 <body class="bg-outer" style="margin:0;padding:0;background:{{ $k['background'] }};" bgcolor="{{ $k['background'] }}">
-<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:{{ $k['background'] }};opacity:0;">{{ $kitPreheader ?? '' }}&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
-<table role="presentation" class="bg-outer" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ $k['background'] }}" style="width:100%;background:{{ $k['background'] }};border-collapse:collapse;">
+<div{!! $kitRtl ? ' dir="rtl"' : '' !!} style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:{{ $k['background'] }};opacity:0;">{{ $kitPreheader ?? '' }}&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
+<table role="presentation"{!! $kitRtl ? ' dir="rtl"' : '' !!} class="bg-outer" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ $k['background'] }}" style="width:100%;background:{{ $k['background'] }};border-collapse:collapse;">
 <tr><td align="center" style="padding:22px 10px 30px;">
-<!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse;">
+<!--[if mso]><table role="presentation"{!! $kitRtl ? ' dir="rtl"' : '' !!} width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+<table role="presentation"{!! $kitRtl ? ' dir="rtl"' : '' !!} width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse;">
 @kitsections($kitTemplate ?? null, $k)
 @yield('kit')
 @endkitsections

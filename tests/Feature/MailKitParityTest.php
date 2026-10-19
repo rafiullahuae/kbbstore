@@ -298,6 +298,12 @@ it('prints nothing a person typed raw: every {!! !!} in the kit is a constant or
         // still e()s them, and MarketingFooterWordsTest proves it rendered.
         "\$ftA(\$ftUnsub, \$ftW['unsub_label'] ?? __('email.common.unsubscribe'), true)", "\$ftA(\$ftUnsub, \$ftW['prefs_label'] ?? __('email.kit.preferences'))",
         "\$ftA(\$ftWebCopy, \$ftW['view_label'] ?? __('email.kit.view_in_browser'), true)",
+        // Lane AEM: a constant attribute, and KitRtl's isolates, which e() their
+        // argument exactly as {{ }} does (ArabicOrderEmailsTest).
+        "\$kitRtl ? ' dir=\"rtl\"' : ''",
+        "\\App\\Services\\Mail\\Kit\\KitRtl::ltr(\$ch['value'])",
+        "\\App\\Services\\Mail\\Kit\\KitRtl::auto(\$line['name'])",
+        "\\App\\Services\\Mail\\Kit\\KitRtl::number(\$chipNumber)",
     ];
 
     $found = [];

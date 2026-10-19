@@ -435,7 +435,11 @@ final class KitSections
         $html = (string) ob_get_clean();
         [$template, $k] = array_pop(self::$stack) ?? [null, []];
 
-        return self::arrange($template, $html, $k);
+        $html = self::arrange($template, $html, $k);
+
+        // Lane AEM: an Arabic transactional email's card, right to left in
+        // every client (KitRtl). English and campaigns pass straight through.
+        return $template !== null && ($k['rtl'] ?? false) === true ? KitRtl::mirror($html) : $html;
     }
 
     /**
