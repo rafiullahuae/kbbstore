@@ -1,0 +1,490 @@
+{
+ "en-390": {
+  "bodyText": [
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "a gentle oil cleanser"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "skincare journal"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "the sunscreen study"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "toner and SPF"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "see toners"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "Ask us"
+   }
+  ],
+  "picLink": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "3.2px",
+   "text": ""
+  },
+  "galLink": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "3.2px",
+   "text": ""
+  },
+  "cardLink": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "S"
+  },
+  "cardName": {
+   "line": "none",
+   "color": "rgb(34, 26, 32)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "Ceramide Daily Moisturiser"
+  },
+  "header": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "K-BeautyBlissKorean Skincare &"
+  },
+  "menu": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": ""
+  },
+  "crumb": {
+   "line": "none",
+   "color": "rgb(117, 108, 116)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "Home"
+  },
+  "related": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "🌿\n              \n      Ingred"
+  },
+  "back": {
+   "line": "none",
+   "color": "rgb(193, 62, 99)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "← Back to the Journal"
+  },
+  "footer": {
+   "line": "none",
+   "color": "rgb(193, 62, 99)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "Chat on WhatsApp"
+  },
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "cls": 0,
+  "htmlBytes": 81800,
+  "journalCssBytes": 4418,
+  "hit": true,
+  "hover": {
+   "thick": "2px",
+   "color": "rgb(193, 62, 99)"
+  },
+  "clickNavigatedTo": "http://127.0.0.1:10871/shop/",
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+ },
+ "en-1280": {
+  "bodyText": [
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "a gentle oil cleanser"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "skincare journal"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "the sunscreen study"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "toner and SPF"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "see toners"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "Ask us"
+   }
+  ],
+  "picLink": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "3.2px",
+   "text": ""
+  },
+  "galLink": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "3.2px",
+   "text": ""
+  },
+  "cardLink": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "S"
+  },
+  "cardName": {
+   "line": "none",
+   "color": "rgb(34, 26, 32)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "Ceramide Daily Moisturiser"
+  },
+  "header": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "K-BeautyBlissKorean Skincare &"
+  },
+  "menu": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": ""
+  },
+  "crumb": {
+   "line": "none",
+   "color": "rgb(117, 108, 116)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "Home"
+  },
+  "related": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "🌿\n              \n      Ingred"
+  },
+  "back": {
+   "line": "none",
+   "color": "rgb(193, 62, 99)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "← Back to the Journal"
+  },
+  "footer": {
+   "line": "none",
+   "color": "rgb(193, 62, 99)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "Chat on WhatsApp"
+  },
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "cls": 0,
+  "htmlBytes": 81845,
+  "journalCssBytes": 4418,
+  "hit": true,
+  "hover": {
+   "thick": "2px",
+   "color": "rgb(193, 62, 99)"
+  },
+  "clickNavigatedTo": "http://127.0.0.1:10871/shop/",
+  "errors": []
+ },
+ "ar-390": {
+  "bodyText": [
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "منظف زيتي لطيف"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "مدونة العناية بالبشرة"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "دراسة واقي الشمس"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "تونر وواقي شمس"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "اسألينا"
+   }
+  ],
+  "picLink": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "3.2px",
+   "text": ""
+  },
+  "galLink": null,
+  "cardLink": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "S"
+  },
+  "cardName": {
+   "line": "none",
+   "color": "rgb(34, 26, 32)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "Ceramide Daily Moisturiser"
+  },
+  "header": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "كي بيوتيبليسالعناية الكورية وا"
+  },
+  "menu": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "EN"
+  },
+  "crumb": {
+   "line": "none",
+   "color": "rgb(117, 108, 116)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "الرئيسية"
+  },
+  "related": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "🌿\n              \n      Ingred"
+  },
+  "back": {
+   "line": "none",
+   "color": "rgb(193, 62, 99)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "← العودة إلى المدونة"
+  },
+  "footer": {
+   "line": "none",
+   "color": "rgb(193, 62, 99)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "تواصلي عبر واتساب"
+  },
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "cls": 0,
+  "htmlBytes": 92593,
+  "journalCssBytes": 4418,
+  "hit": true,
+  "hover": {
+   "thick": "2px",
+   "color": "rgb(193, 62, 99)"
+  },
+  "clickNavigatedTo": "http://127.0.0.1:10871/ar/shop/",
+  "errors": []
+ },
+ "ar-1280": {
+  "bodyText": [
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "منظف زيتي لطيف"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "مدونة العناية بالبشرة"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "دراسة واقي الشمس"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "تونر وواقي شمس"
+   },
+   {
+    "line": "underline",
+    "color": "rgb(42, 34, 40)",
+    "thick": "1px",
+    "offset": "3.2px",
+    "text": "اسألينا"
+   }
+  ],
+  "picLink": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "3.2px",
+   "text": ""
+  },
+  "galLink": null,
+  "cardLink": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "S"
+  },
+  "cardName": {
+   "line": "none",
+   "color": "rgb(34, 26, 32)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "Ceramide Daily Moisturiser"
+  },
+  "header": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "كي بيوتيبليسالعناية الكورية وا"
+  },
+  "menu": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "EN"
+  },
+  "crumb": {
+   "line": "none",
+   "color": "rgb(117, 108, 116)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "الرئيسية"
+  },
+  "related": {
+   "line": "none",
+   "color": "rgb(42, 34, 40)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "🌿\n              \n      Ingred"
+  },
+  "back": {
+   "line": "none",
+   "color": "rgb(193, 62, 99)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "← العودة إلى المدونة"
+  },
+  "footer": {
+   "line": "none",
+   "color": "rgb(193, 62, 99)",
+   "thick": "auto",
+   "offset": "auto",
+   "text": "تواصلي عبر واتساب"
+  },
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "cls": 0,
+  "htmlBytes": 92638,
+  "journalCssBytes": 4418,
+  "hit": true,
+  "hover": {
+   "thick": "2px",
+   "color": "rgb(193, 62, 99)"
+  },
+  "clickNavigatedTo": "http://127.0.0.1:10871/ar/shop/",
+  "errors": []
+ }
+}
