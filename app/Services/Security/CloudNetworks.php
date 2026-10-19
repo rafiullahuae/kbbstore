@@ -126,6 +126,9 @@ final class CloudNetworks
 
     private static ?string $sourceOverride = null;
 
+    /** Tests that start from an empty list rather than the bundled one. */
+    private static bool $useBundled = true;
+
     private static bool $queued = false;
 
     /** A test changed the source list: its compiled file must not outlive it. */
@@ -356,9 +359,10 @@ final class CloudNetworks
     }
 
     /** Tests point the downloaded list somewhere of their own. */
-    public static function useSourcePath(?string $path): void
+    public static function useSourcePath(?string $path, bool $bundled = true): void
     {
         self::$sourceOverride = $path;
+        self::$useBundled = $bundled;
         self::$source = null;
         self::$compiled = null;
         self::$dirty = true;
@@ -382,7 +386,7 @@ final class CloudNetworks
             return self::$source = $mine + ['from' => 'downloaded'];
         }
 
-        $bundled = self::verify(resource_path(self::BUNDLED));
+        $bundled = self::$useBundled ? self::verify(resource_path(self::BUNDLED)) : ['ok' => false];
 
         if ($bundled['ok']) {
             return self::$source = $bundled + ['from' => 'bundled'];
@@ -723,6 +727,7 @@ final class CloudNetworks
 
         self::$dirty = false;
         self::$sourceOverride = null;
+        self::$useBundled = true;
     }
 
     /** Drop the in-process copies only (files stay). */

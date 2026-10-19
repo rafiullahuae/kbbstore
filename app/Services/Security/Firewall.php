@@ -161,7 +161,7 @@ final class Firewall
         // a claimed bot's GET (a link preview pending its DNS check) is let
         // through as it is for countries. The server's own address never is
         // refused. One binary search over an OPcache'd array.
-        if (($fw['cloud'] ?? '') !== '' && ! ($claimed && ! $write) && $ip !== ($_SERVER['SERVER_ADDR'] ?? null)) {
+        if (($fw['cloud'] ?? '') !== '' && ! ($claimed && ! $write) && $ip !== $request->server->get('SERVER_ADDR')) {
             $provider = CloudNetworks::match($bin, $fw['cloud']);
 
             if ($provider !== null && ($fw['scope'] === 'site' || $write || BlockGate::isCommerce($route))) {
