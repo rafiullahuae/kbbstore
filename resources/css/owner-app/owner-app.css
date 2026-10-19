@@ -174,6 +174,10 @@ button.pill { cursor: pointer; }
 .kv.tot { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 12px; font-weight: 700; font-size: 16px; }
 .kv.tot > span:first-child { color: var(--ink); }
 .tag { display: inline-block; font: 600 11px/1 var(--font); padding: 5px 8px; border-radius: var(--r-pill); background: var(--acc-soft); color: var(--acc-ink); }
+/* Lane OLG: EN / AR, the language an order was placed in. Small enough to sit
+   inside a row's one-line .rm small without making the line any taller. */
+.lg { display: inline-block; font: 700 10px/1 var(--font); letter-spacing: .03em; padding: 2px 5px; border-radius: 5px; background: var(--surface2); color: var(--ink2); vertical-align: 1px; }
+.lg.ar { background: var(--acc-soft); color: var(--acc-ink); }
 .mets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 4px; }
 .mets div { min-width: 0; }
 .mets b { display: block; font: 600 18px/1.1 var(--font); letter-spacing: -.01em; }

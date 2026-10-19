@@ -336,8 +336,12 @@ it('appends Emirate as the LAST column of the CSV and moves no other column', fu
         'units', 'lines', 'total_fils', 'total', 'refunded_fils', 'refunded',
         'net_fils', 'net', 'payment', 'placed_at', 'paid_at', 'completed_at',
         'trashed', 'currency', 'is_demo',
-    ])->and(end($head))->toBe('emirate')->and(count($head))->toBe(27)
-        ->and(end($row))->toBe('Al Ain');
+    ])->and($head[26])->toBe('emirate')
+        ->and($row[26])->toBe('Al Ain')
+        // Lane OLG appended `language` after it, deliberately and for the same
+        // reason: emirate keeps position 27, nothing before it moved. This pin
+        // read end($head) === 'emirate' / count 27 until then.
+        ->and(count($head))->toBe(28)->and(end($head))->toBe('language');
 });
 
 it('keeps the list at the same number of queries for 3 orders and for 40, and inside its budget', function () {

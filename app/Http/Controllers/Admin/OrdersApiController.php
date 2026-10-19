@@ -365,6 +365,12 @@ class OrdersApiController extends Controller
                  * is_demo is: every column before it keeps its position.
                  */
                 'emirate',
+                /*
+                 * Lane OLG: EN or AR, the language the order was placed in.
+                 * APPENDED LAST for the reason is_demo and emirate are: every
+                 * column before it keeps its position.
+                 */
+                'language',
             ]);
 
             $currency = Money::currency();
@@ -409,6 +415,7 @@ class OrdersApiController extends Controller
                         $currency,
                         $row['is_demo'] ? 'yes' : 'no',
                         $row['emirate'] ?? '',
+                        strtoupper($row['locale']),
                     ]));
                 }
             };
@@ -810,6 +817,10 @@ class OrdersApiController extends Controller
                 // Source chip costs the list no query of its own.
                 'orders.src_channel',
                 'orders.src_campaign',
+                // Lane OLG: the language the order was placed in ('en' / 'ar',
+                // recorded by App\Support\OrderLocale). One short column on the
+                // row already read, so the Lang badge costs the list no query.
+                'orders.locale',
                 // Selected for the name/city fallback on a guest order and
                 // reduced to three fields in rowToApi(). Never returned raw.
                 'orders.billing_address',
@@ -1379,6 +1390,10 @@ class OrdersApiController extends Controller
             // while it is not (a row the fill has not reached, or mid-update).
             'emirate' => $emirate === '' ? null : $emirate,
             'emirate_code' => OrderEmirate::code($emirate),
+            // Lane OLG: 'ar' for an order placed on /ar, otherwise 'en' -- the
+            // column's default, and what every imported WooCommerce order is.
+            // Never the raw value: anything that is not 'ar' reads as 'en'.
+            'locale' => self::orderLocale($o->locale ?? null),
             'units' => (int) $o->units,
             'lines' => (int) $o->lines_count,
             'total_fils' => $total,
@@ -1421,6 +1436,16 @@ class OrdersApiController extends Controller
              */
             'is_demo' => isset($demo[(int) $o->id]),
         ];
+    }
+
+    /**
+     * Lane OLG: the order's language as the list and the export show it --
+     * 'ar' only for an order recorded as Arabic, 'en' for everything else
+     * (the column default, imports, and anything unexpected).
+     */
+    public static function orderLocale(mixed $value): string
+    {
+        return is_string($value) && strtolower(trim($value)) === 'ar' ? 'ar' : 'en';
     }
 
     /** payment_method_title, else the humanised id, else nothing recorded. */

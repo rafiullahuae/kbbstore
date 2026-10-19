@@ -153,6 +153,8 @@ class AdminOrderController extends Controller
              */
             'created_at' => StoreTime::iso($order->created_at),
             'currency' => $order->currency,
+            // Lane OLG: the language the order was placed in, 'en' or 'ar'.
+            'locale' => OrdersApiController::orderLocale($order->locale),
 
             'payment_method' => $order->payment_method,
             'payment_method_title' => $order->payment_method_title,

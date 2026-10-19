@@ -14062,7 +14062,12 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '.ollink:hover{text-decoration:underline}' +
       '.olgo{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}' +
       '.olgo-t{font-size:12.5px;color:var(--ink-2)}' +
-      '.olres{font-size:12.5px;color:var(--ink-2)}';
+      '.olres{font-size:12.5px;color:var(--ink-2)}' +
+      /* Lane OLG: the order's language. EN is the grey pill the Emirate code
+         uses; AR is the same pill in the shop's pink, so an Arabic order is
+         seen at a glance. */
+      '.pill.ollang-ar{background:#fce6ec;color:#a8475c}' +
+      ':root[data-theme="midnight"] .pill.ollang-ar{background:#3a1a26;color:#f5a3b8}';
 
     document.head.appendChild(s);
   })();
@@ -14086,6 +14091,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      it: olCols() lays the saved choices over these defaults. */
   var OL_COLDEF = [
     ['emirate', 'Emirate'],
+    /* Lane OLG: EN / AR, the language the order was placed in, straight after
+       Emirate where the owner drew it. On by default, and a new key, so a
+       layout saved before it existed still shows it (olCols()). */
+    ['lang', 'Lang'],
     ['status', 'Status'], ['items', 'Items'], ['total', 'Total'], ['refunded', 'Refunded'],
     ['payment', 'Payment'], ['source', 'Source'], ['placed', 'Placed'], ['location', 'City'],
     ['contact', 'Phone'], ['wc', 'Woo ID']
@@ -14097,6 +14106,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      every page load. */
   var OL_COLS_DEFAULT = {
     emirate: true,
+    lang: true,
     status: true, items: true, total: true, refunded: false,
     payment: true, source: true, placed: true, location: false, contact: false, wc: false
   };
@@ -14531,6 +14541,13 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       (on ? 'color:var(--accent-ink)' : '') + '">' + sesc(label) + (on ? ' ▾' : '') + '</button>';
   }
 
+  /* Lane OLG: the order's language as a pill -- the list's Lang column and the
+     order screen's Language line draw the same one. Anything but 'ar' is EN. */
+  function olLangPill(locale){
+    var ar = locale === 'ar';
+    return '<span class="pill ' + (ar ? 'ollang-ar' : 'grey') + '" title="Placed in ' + (ar ? 'Arabic' : 'English') + '" style="font-family:var(--mono);letter-spacing:.02em">' + (ar ? 'AR' : 'EN') + '</span>';
+  }
+
   function olCell(key, o){
     switch(key){
       case 'status':
@@ -14567,6 +14584,9 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
         }
         return '<td style="white-space:nowrap;font-size:12px">' + olDash(o.country) +
           (o.country && o.city ? '<div class="pbrand" style="max-width:150px;overflow:hidden;text-overflow:ellipsis">' + sesc(o.city) + '</div>' : '') + '</td>';
+      case 'lang':
+        /* Lane OLG: EN or AR in the Emirate code's own pill; AR in pink. */
+        return '<td style="white-space:nowrap;font-size:12px">' + olLangPill(o.locale) + '</td>';
       case 'location':
         return '<td style="white-space:nowrap;font-size:12px">' + olDash(o.city) +
           (o.country ? '<div class="pbrand">' + sesc(o.country) + '</div>' : '') + '</td>';
@@ -15120,6 +15140,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '<p style="margin-bottom:10px"><a href="#" id="ordBack" style="font-size:12.5px;color:var(--pink-deep,#c0392b);text-decoration:none">\u2190 Back to Orders</a></p>'+
       '<div class="page-head" style="margin-bottom:4px"><h2>Order #'+sesc(o.order_number)+'</h2></div>'+
       '<p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:18px">'+paidLine+'</p>'+
+      odLanguageLine(o)+
       '<div class="odgrid">'+
       '<div class="odmain">'+odOverviewAddressesCard(o)+odCustomerNoteCard(o)+odItemsCard(o)+odJourneyCard(o)+odEmailsCard(o)+odNotesCard(o)+'</div>'+
       '<div class="odside">'+odAttributionCard(o)+odActionsCard(o)+odHistoryCard(o)+odInvoiceCard(o)+'</div>'+
@@ -15127,6 +15148,15 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 
     document.getElementById('ordBack').onclick = function(e){ e.preventDefault(); renderOrders(); };
     wireOrderDetail(o);
+  }
+
+  /* Lane OLG: the language the order was placed in, under the payment line.
+     Arabic says what follows from it: OrderLocale::render() sends this
+     customer's emails in Arabic. Drawn from the detail payload; no request. */
+  function odLanguageLine(o){
+    var ar = o.locale === 'ar';
+    return '<p style="font-size:12.5px;color:var(--ink-soft);margin:-12px 0 18px">Language: '+(ar ? 'Arabic' : 'English')+' '+olLangPill(o.locale)+
+      (ar ? ' <span style="color:var(--ink-faint)">· Emails to this customer go out in Arabic</span>' : '')+'</p>';
   }
 
   function odCardHead(title){

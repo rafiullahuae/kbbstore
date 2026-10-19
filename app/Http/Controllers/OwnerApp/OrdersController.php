@@ -122,6 +122,8 @@ final class OrdersController extends Controller
                 'o.id', 'o.order_number', 'o.status', 'o.total', 'o.created_at', 'o.payment_method',
                 'o.payment_method_title', 'o.billing_address', 'c.name as c_name',
                 'o.src_channel', 'o.src_campaign',
+                // Lane OLG: the order's language, for the EN / AR badge.
+                'o.locale',
                 DB::raw('(SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) as items_n'),
             ], $byEmirate ? ['o.ship_emirate'] : []));
 
@@ -301,6 +303,10 @@ final class OrdersController extends Controller
             // Lane EM: the owner's short code (DXB, AUH, ALAIN ...); null abroad,
             // unread, or where the row carried no column (history, dashboard).
             'emirate_code' => property_exists($o, 'ship_emirate') ? OrderEmirate::code($o->ship_emirate) : null,
+            // Lane OLG: 'en' / 'ar', the language the order was placed in; null
+            // where the row carried no column (history, dashboard), so nothing
+            // is shown there.
+            'locale' => property_exists($o, 'locale') ? OrdersApiController::orderLocale($o->locale) : null,
         ];
     }
 
@@ -383,6 +389,8 @@ final class OrdersController extends Controller
                 // Lane EM: stored, or read from the addresses while it is not.
                 'emirate' => $emirate === '' ? null : $emirate,
                 'emirate_code' => OrderEmirate::code($emirate),
+                // Lane OLG: the language the order was placed in, 'en' or 'ar'.
+                'locale' => OrdersApiController::orderLocale($order->locale),
                 'shipping_method' => (string) ($order->shipping_method ?? ''),
                 'payment' => self::payment($order),
                 // (Lane TM) the Payment journey card. See App\Support\PaymentJourney.

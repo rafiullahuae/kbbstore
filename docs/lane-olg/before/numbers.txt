@@ -1,0 +1,36 @@
+admin list 1280: scrollWidth 1280 / clientWidth 1280; table 1054px; first row 64px
+admin list 1280: headers [":42","Order:67","Customer:228","Emirate:105","Status:112","Items:60","Total:92","Payment:81","Source:95","Placed ▾:93",":79"]
+admin list 1280: rows ["33445#34 | FKFatima Khanfatima.k@example.com | SHJAl Nahda | processing","33446#35 | MAMariam Al Suwaidimariam.s@example.com | DXBAl Barsha 2 | pendingnot revenue","33447#36 | SDSabina Devsabina.dev@example.com | DXBDubai Marina | processing","33444#33 | ARAisha Rahmanaisha.r@example.com | AUHKhalifa City | onhold"]
+admin order ar 1280: scrollWidth 1280; grid top 194px; top lines ["← Back to Orders","Order #33445","Payment via Visa •••• 4242. Paid on 18 Oct 2026 at 22:31."]
+admin order en 1280: scrollWidth 1280; grid top 194px; top lines ["← Back to Orders","Order #33446","Payment via Tamara · Split in 3."]
+admin 1280: errors ["console Failed to load resource: the server responded with a status of 404 (Not Found)"]
+admin list 390: scrollWidth 390 / clientWidth 390; table 1054px; first row 64px
+admin list 390: headers [":42","Order:67","Customer:228","Emirate:105","Status:112","Items:60","Total:92","Payment:81","Source:95","Placed ▾:93",":79"]
+admin list 390: rows ["33445#34 | FKFatima Khanfatima.k@example.com | SHJAl Nahda | processing","33446#35 | MAMariam Al Suwaidimariam.s@example.com | DXBAl Barsha 2 | pendingnot revenue","33447#36 | SDSabina Devsabina.dev@example.com | DXBDubai Marina | processing","33444#33 | ARAisha Rahmanaisha.r@example.com | AUHKhalifa City | onhold"]
+admin order ar 390: scrollWidth 390; grid top 238px; top lines ["← Back to Orders","Order #33445","Payment via Visa •••• 4242. Paid on 18 Oct 2026 at 22:31."]
+admin order en 390: scrollWidth 390; grid top 238px; top lines ["← Back to Orders","Order #33446","Payment via Tamara · Split in 3."]
+admin 390: errors []
+owner app list 390: scrollWidth 390
+  91px 9 Sept · 5:55 AM · 0 items
+  91px AUH · 12 Sept · 8:55 AM · 0 items
+  91px DXB · 12 Sept · 5:55 PM · 0 items
+  91px DXB · 13 Sept · 2:55 AM · 0 items
+  91px DXB · 13 Sept · 11:55 AM · 0 items
+  91px AJM · 13 Sept · 8:55 PM · 0 items
+  91px SHJ · 14 Sept · 5:55 AM · 0 items
+  91px AUH · 14 Sept · 2:55 PM · 0 items
+owner app order ar 390: scrollWidth 390; summary 73px; line "Completed 9 Sept 2026, 5:55 AM"
+owner app order en 390: scrollWidth 390; summary 73px; line "Pending payment 12 Sept 2026, 8:55 AM"
+owner app 390: errors []
+owner app list 1280: scrollWidth 1280
+  91px 9 Sept · 5:55 AM · 0 items
+  91px AUH · 12 Sept · 8:55 AM · 0 items
+  91px DXB · 12 Sept · 5:55 PM · 0 items
+  91px DXB · 13 Sept · 2:55 AM · 0 items
+  91px DXB · 13 Sept · 11:55 AM · 0 items
+  91px AJM · 13 Sept · 8:55 PM · 0 items
+  91px SHJ · 14 Sept · 5:55 AM · 0 items
+  91px AUH · 14 Sept · 2:55 PM · 0 items
+owner app order ar 1280: scrollWidth 1280; summary 73px; line "Completed 9 Sept 2026, 5:55 AM"
+owner app order en 1280: scrollWidth 1280; summary 73px; line "Pending payment 12 Sept 2026, 8:55 AM"
+owner app 1280: errors []

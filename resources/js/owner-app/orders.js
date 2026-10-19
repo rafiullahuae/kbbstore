@@ -200,9 +200,15 @@ function paintEmirates(view) {
   paint(host, chips.length ? chips.map(([k, c, n, t]) => '<button type="button" data-em="' + esc(k) + '" title="' + esc(t) + '"' + (L.emirate === k ? ' class="on"' : '') + '>' + esc(c) + '<span>' + n.toLocaleString('en-US') + '</span></button>').join('') : '');
 }
 
+/**
+ * Lane OLG: EN / AR, the language the order was placed in, as a small badge;
+ * AR in the app's pink. Nothing where the payload carried no language.
+ */
+const lang = (l) => (l === 'ar' || l === 'en') ? '<span class="lg' + (l === 'ar' ? ' ar' : '') + '" title="Placed in ' + (l === 'ar' ? 'Arabic' : 'English') + '">' + l.toUpperCase() + '</span>' : '';
+
 export function row(o) {
   return '<div class="row ord' + (L.sel.has(o.id) ? ' on' : '') + (o.id === L.cur ? ' cur' : '') + '" data-o="' + o.id + '"><button type="button" class="sel" data-act="sel" aria-label="Select order ' + esc(o.number) + '">' + av(o.name) + ic('check') + '</button>'
-    + '<a class="rm" href="#/orders/' + o.id + '"><b>#' + esc(o.number) + ' <span>' + esc(o.name) + '</span></b><small>' + (o.emirate_code ? '<span class="em">' + esc(o.emirate_code) + '</span> · ' : '') + esc(day(o.created_at)) + ' · ' + esc(time(o.created_at))
+    + '<a class="rm" href="#/orders/' + o.id + '"><b>#' + esc(o.number) + ' <span>' + esc(o.name) + '</span></b><small>' + (o.emirate_code ? '<span class="em">' + esc(o.emirate_code) + '</span> ' : '') + (o.locale ? lang(o.locale) + ' ' : (o.emirate_code ? '· ' : '')) + esc(day(o.created_at)) + ' · ' + esc(time(o.created_at))
     + (o.items !== null && o.items !== undefined ? ' · ' + o.items + ' item' + (o.items === 1 ? '' : 's') : '') + '</small>'
     + (o.source ? '<small class="src">' + esc(o.source) + '</small>' : '') + '</a>'
     + '<a class="re" href="#/orders/' + o.id + '" tabindex="-1"><b>' + esc(o.total_display) + '</b>' + pill(o.status) + '</a></div>';
@@ -314,7 +320,7 @@ function paintDetail(host) {
   screen(host, 'order', o.id, top('Order #' + esc(o.number), esc(day(o.created_at)) + ' · ' + esc(t.total), O.pane ? '' : back('#/orders', 'Back to orders'), right, O.pane ? 'nosync' : ''), ''
     + '<div class="od-sum"><p class="nm">' + esc(o.customer.name || o.email) + '</p><div class="ln">'
     + (o.can.status ? '<button type="button" class="pill" data-s="' + esc(pillCode(o.status)) + '" data-act="status" aria-label="Change status, now ' + esc(stWord(o.status)) + '">' + esc(stWord(o.status)) + ' ' + ic('edit') + '</button>' : pill(o.status))
-    + '<span>' + esc(when(o.created_at)) + '</span></div></div>'
+    + '<span>' + esc(when(o.created_at)) + '</span>' + lang(o.locale) + '</div></div>'
     + (primary || payLinkOn(o) ? '<div class="btns od-act">' + primary + (payLinkOn(o) ? '<button type="button" class="btn ' + (primary ? 'sec' : 'pri') + '" data-act="paylink">' + ic('link', 's') + 'Send order link</button>' : '') + '</div>' : '')
     + (payLinkOn(o) && o.pay_link.last ? '<p class="muted pl-last" data-pl-last>' + plLast(o.pay_link.last) + '</p>' : '')
     + '<section class="card"><h4 class="sh">Products <span class="muted">' + o.items.reduce((a, i) => a + i.qty, 0) + ' items</span></h4>'
