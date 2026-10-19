@@ -287,6 +287,28 @@ it('keeps the owner\'s new-order alert in English for an Arabic order', function
         ->and($html)->not->toContain('dir="rtl"');
 });
 
+it('escapes what its isolates print, in both languages, exactly as {{ }} would in English', function () {
+    $typed = '<img src=x onerror=alert(1)> & "Halima"';
+
+    foreach (['ltr', 'auto', 'number'] as $fn) {
+        // English: byte for byte what Blade's {{ }} prints.
+        expect(KitRtl::$fn($typed))->toBe(e($typed));
+    }
+
+    app()->setLocale('ar');
+
+    expect(KitRtl::ltr($typed))->toBe('<span dir="ltr">' . e($typed) . '</span>')
+        ->and(KitRtl::auto($typed))->toBe('<span dir="auto">' . e($typed) . '</span>')
+        ->and(KitRtl::number($typed))->toBe('<span dir="ltr" style="white-space:nowrap">' . e($typed) . '</span>')
+        ->and(KitRtl::number($typed))->not->toContain('<img');
+});
+
+it('mirrors left and right in tags only, never in the words', function () {
+    $html = '<table role="presentation" width="100%"><tr><td align="right" style="padding:5px 0 5px 12px;padding-left:12px;border-left:4px solid #C13E63;letter-spacing:.12em;text-align:right">turn left at the right door</td></tr></table>';
+
+    expect(KitRtl::mirror($html))->toBe('<table role="presentation" dir="rtl" width="100%"><tr><td align="left" style="padding:5px 12px 5px 0;padding-right:12px;border-right:4px solid #C13E63;letter-spacing:0;text-align:left">turn left at the right door</td></tr></table>');
+});
+
 it('still delivers, in English, when the Arabic render throws -- and says so at ERROR', function () {
     $order = aemOrder('ar', ['status' => 'processing', 'paid_at' => now()]);
     Mail::purge('kbb');
