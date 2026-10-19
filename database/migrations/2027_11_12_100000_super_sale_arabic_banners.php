@@ -80,7 +80,7 @@ return new class extends Migration
                 $dest = $dir.'/'.$name;
 
                 if (! is_file($dest)) {
-                    $tmp = $dest.'.'.bin2hex(random_bytes(4)).'.part';
+                    $tmp = $dest.'.'.getmypid().'.part';
 
                     if (! @copy(resource_path('banners/'.$name), $tmp) || ! @rename($tmp, $dest)) {
                         @unlink($tmp);
