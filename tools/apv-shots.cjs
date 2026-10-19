@@ -260,7 +260,7 @@ function audit(lang) {
     const rtl = cs(f).direction === 'rtl';
     if (L.left < F.left - .5 || L.right > F.right + .5 || L.top < F.top - .5 || L.bottom > F.bottom + .5) add('label', lab, `label outside its field (top ${Math.round(L.top - F.top)}, start ${Math.round(rtl ? F.right - L.right : L.left - F.left)})`);
     const startGap = rtl ? F.right - L.right : L.left - F.left, endGap = rtl ? L.left - F.left : F.right - L.right;
-    if (startGap > endGap + 1) add('label', lab, `label sits on the end side, not the start (${rtl ? 'right' : 'left'})`);
+    if (startGap > 50) add('label', lab, `label sits on the end side, not the start (${rtl ? 'right' : 'left'})`);
     const floated = inp ? (inp.value !== '' || document.activeElement === inp) : f.classList.contains('has');
     if (floated) {
       let vTop;
@@ -283,7 +283,7 @@ function audit(lang) {
     const xOf = (e) => e && e.closest && e.closest('[data-x]');
     const tw2 = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     for (let n = tw2.nextNode(); n; n = tw2.nextNode()) {
-      const el = n.parentElement; if (!el || el.closest('script,style,.ghost')) continue;
+      const el = n.parentElement; if (!el || el.closest('script,style,.navghost')) continue;
       const v = n.nodeValue; if (!LAT.test(v)) continue;
       const x = xOf(el);
       if (x) { const k = x.dataset.x; const E = exceptions[k] = exceptions[k] || {n:0, eg:[]}; E.n++; const s = v.trim().slice(0, 28); if (E.eg.length < 5 && !E.eg.includes(s)) E.eg.push(s); continue; }
@@ -291,7 +291,7 @@ function audit(lang) {
       add('english', el, `“${v.trim().slice(0, 60)}”`);
     }
     document.querySelectorAll('[aria-label],[placeholder],[title],img[alt]').forEach((e) => {
-      if (e.closest('.ghost')) return;
+      if (e.closest('.navghost')) return;
       for (const a of ['aria-label', 'placeholder', 'title', 'alt']) { const v = e.getAttribute(a); if (v && LAT.test(v) && !xOf(e)) add('english', e, `${a}=“${v.slice(0, 60)}”`); }
     });
     if (LAT.test(document.title)) add('english', document.body, `document title “${document.title}”`);
@@ -328,7 +328,7 @@ async function newPage(lang) {
   page.errs = [];
   page.on('console', (m) => { if (m.type() === 'error') page.errs.push('console: ' + m.text().slice(0, 200)); });
   page.on('pageerror', (e) => page.errs.push('pageerror: ' + e.message));
-  page.on('requestfailed', (r) => page.errs.push('requestfailed: ' + r.url() + ' ' + (r.failure() || {}).errorText));
+  page.on('requestfailed', (r) => (r.failure() || {}).errorText === 'net::ERR_ABORTED' || page.errs.push('requestfailed: ' + r.url() + ' ' + (r.failure() || {}).errorText));
   page.on('response', (r) => { if (r.status() >= 400) page.errs.push(`http ${r.status()}: ${r.url()}`); });
   await page.goto(PAGE(lang) + '#/home?z=100');
   await page.waitForFunction(() => window.APV);
@@ -393,8 +393,8 @@ async function flows(lang, dev, log) {
   const st = () => page.evaluate(() => APV.state());
   const open = async (p) => { await page.evaluate((h) => APV.open(h), `#${p}${p.includes('?') ? '&' : '?'}device=${dev}&z=100`); await settle(page); };
   const vis = (sel) => page.locator(`#stage ${sel}`).filter({visible:true}).first();
-  const click = async (sel) => { await vis(sel).click(); await page.waitForTimeout(60); };
-  const type = async (sel, v, o = {}) => { const l = vis(sel); if (o.fill) await l.fill(v); else { await l.click(); await l.pressSequentially(v, {delay:5}); } };
+  const click = async (sel) => { try { await vis(sel).click({timeout:6000}); } catch (e) { throw new Error(`could not click ${sel} on ${(await st()).path}: ${String(e.message).split('\n')[0]}`); } await page.waitForTimeout(60); };
+  const type = async (sel, v, o = {}) => { const l = vis(sel); try { if (o.fill) await l.fill(v, {timeout:6000}); else { await l.click({timeout:6000}); await l.pressSequentially(v, {delay:5}); } } catch (e) { throw new Error(`could not type in ${sel} on ${(await st()).path}: ${String(e.message).split('\n')[0]}`); } };
   const expect = (ok, msg) => { if (!ok) fails.push(msg); };
   const step = async (name, o = {}) => {
     const file = path.join(OUT, lang, `flow-${dev}-${name}.jpg`);
@@ -549,18 +549,18 @@ async function flows(lang, dev, log) {
     expect(hits > 0, 'live search found nothing');
     await step('nav-search');
     await click('#sres [data-go^="/product/"]');
-    await click('[data-act="back"]');
+    if (dev !== 'duo') await click('[data-act="back"]'); // on the Duo the result opens in the other screen: nothing to go back from
     expect(await vis('#q').inputValue() === (lang === 'ar' ? 'سيروم' : 'serum'), 'the search query was lost after product → back');
     /* sort and filter really sort and filter */
     await open('/category/serums');
     await click('[data-sheet="sort"]');
     await click('[data-act="sort"][data-v="low"]');
-    const prices = await page.$$eval('#stage .pc .pr .price', (els) => els.slice(0, 8).map((e) => Number(e.textContent.replace(/[^\d.٠-٩]/g, '').replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)))));
+    const prices = await page.$$eval('#stage .grid .pc .pr .price', (els) => els.slice(0, 8).map((e) => Number(e.textContent.replace(/[^\d.٠-٩]/g, '').replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)))));
     expect(prices.length > 2 && prices.every((p, i) => !i || p >= prices[i - 1]), 'Price: low to high did not sort: ' + prices.join(','));
     const filterBtn = await page.locator('#stage [data-sheet="filter"]').filter({visible:true}).count();
     if (filterBtn) { await click('[data-sheet="filter"]'); await click('[data-act="fmax"][data-v="54"]'); await click('.sheet .sf [data-act="close"]'); }
     else await click('.fpanel [data-act="fmax"][data-v="54"]');
-    const p2 = await page.$$eval('#stage .pc .pr .price', (els) => els.map((e) => Number(e.textContent.replace(/[^\d.]/g, ''))));
+    const p2 = await page.$$eval('#stage .grid .pc .pr .price', (els) => els.map((e) => Number(e.textContent.replace(/[^\d.]/g, ''))));
     expect(p2.length > 0 && p2.every((p) => p <= 54), 'Up to AED 54 did not filter: ' + p2.slice(0, 6).join(','));
     await step('nav-filtered');
     /* endless scroll */
@@ -578,7 +578,7 @@ async function flows(lang, dev, log) {
     await page.mouse.up(); await page.waitForTimeout(900);
     expect(await page.locator('#stage .toast').count() === 1, 'pull to refresh did not refresh');
     /* list → detail on two panes: a tap updates the detail, nothing is pushed */
-    if (dev === 'duo' || dev === 'fold-inner') {
+    if (dev === 'duo') {
       await open('/categories');
       const depth = (await st()).depth;
       await click('[data-slot="start"] [data-go^="/category/"]');

@@ -236,6 +236,7 @@ const ACT = {
     if (el.dataset.v === 'checkout') { S.co.addr = a.id; st.pop(); if (topE().path !== '/checkout/address') st.push({path:'/checkout/address'}); go('/checkout/delivery'); toast(t('Address saved')); return; }
     st.pop(); render({anim:'pop'}); toast(t('Address saved'));
   },
+  pick:(el) => { haptic('selection'); pickDone(el.dataset.f || (route().path.startsWith('/contact') ? 'msg' : 'addr'), el.dataset.k, el.dataset.v); },
   del:(el) => { S.co.del = el.dataset.v; haptic('selection'); render(); },
   gift:() => { S.co.gift = !S.co.gift; render(); },
   pay:(el) => { if (el.getAttribute('aria-disabled') === 'true') { haptic('error'); toast(t('Cash on delivery is available in the UAE only.')); return; } S.co.pay = el.dataset.v; S.co.authorised = null; haptic('selection'); render(); },

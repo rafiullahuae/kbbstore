@@ -756,7 +756,7 @@ body.embed .device .lbl{display:none}
 
 /* transitions: push, pop, tab fade; Android predictive back shrinks the page */
 .shell>.main{position:relative;background:var(--cream)}
-.ghost{pointer-events:none}
+.navghost{pointer-events:none}
 .an-push{animation:apush .32s cubic-bezier(.2,.8,.2,1)}
 .gh-push{animation:gpush .32s cubic-bezier(.2,.8,.2,1) forwards}
 .an-pop{animation:apop .32s cubic-bezier(.2,.8,.2,1)}
@@ -1036,3 +1036,5 @@ html[dir=rtl] .edgehint.end svg{transform:none}
 @container pane (max-width:420px){.sched{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:14px}}
 .sheet .sched{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:14px}
 @container app (min-width:600px){.sheet .sched{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.pinfo .br{min-width:44px}
+.app{-webkit-user-select:none;user-select:none}.app input,.app textarea{-webkit-user-select:text;user-select:text}.app img{-webkit-user-drag:none}

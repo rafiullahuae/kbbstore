@@ -221,7 +221,7 @@ function animate(ghosts, kind){
     const g = ghosts[i]; if (!g) return;
     if (kind === 'tab' || kind === 'fade') { m.classList.add('an-fade'); setTimeout(() => m.classList.remove('an-fade'), 260); return; }
     if (g.el.innerHTML === m.innerHTML) return;
-    const ghost = g.el; ghost.classList.add('ghost', kind === 'pop' ? 'gh-pop' : 'gh-push'); ghost.setAttribute('aria-hidden', 'true'); ghost.querySelectorAll('[data-layer]').forEach(x => x.removeAttribute('data-layer')); ghost.querySelectorAll('[id]').forEach(x => x.removeAttribute('id'));
+    const ghost = g.el; ghost.classList.add('navghost', kind === 'pop' ? 'gh-pop' : 'gh-push'); ghost.setAttribute('aria-hidden', 'true'); ghost.querySelectorAll('[data-layer]').forEach(x => x.removeAttribute('data-layer')); ghost.querySelectorAll('[id]').forEach(x => x.removeAttribute('id'));
     m.parentElement.insertBefore(ghost, kind === 'pop' ? m.nextSibling : m);
     ghost.style.gridRow = getComputedStyle(m).gridRow; ghost.style.gridColumn = getComputedStyle(m).gridColumn;
     $$('.body', ghost).forEach((b, j) => b.scrollTop = g.tops[j] || 0);
@@ -269,7 +269,7 @@ function haptic(kind){
   el.classList.add('on'); clearTimeout(haptic.t); haptic.t = setTimeout(() => el.classList.remove('on'), 1600);
 }
 let toastTimer;
-function toast(msg, o = {}){ S.toast = {msg, ...o}; render(); clearTimeout(toastTimer); toastTimer = setTimeout(() => { S.toast = null; render(); }, 2600); }
+function toast(msg, o = {}){ S.toast = {msg, ...o}; render(); clearTimeout(toastTimer); toastTimer = setTimeout(() => { S.toast = null; $$('#stage .toast').forEach(x => x.remove()); }, 2600); }
 
 /* ── navigation ────────────────────────────────────────────────────────── */
 function enter(path){

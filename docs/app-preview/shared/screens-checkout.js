@@ -20,7 +20,7 @@ function bagLine(b, o = {}){
 }
 function couponBox(){
   if (S.coupon) return `<div class="note ok cpn-on">${ico('tag')}<span class="grow">${t('{c} applied · 10% off', {c:X('code', `<b>${S.coupon}</b>`)})}</span><button class="lnk sm" data-act="uncoupon">${t('Remove')}</button></div>`;
-  return `<div class="cpn">${fld({fid:'coupon', k:'code', label:t('Discount code'), icon:'tag', cap:'characters', ekh:'go', ac:'off', opt:true})}<button class="btn dark" data-act="coupon">${t('Apply')}</button></div>`;
+  return `<div class="cpn">${fld({fid:'coupon', k:'code', label:t('Discount code'), icon:'tag', cap:'characters', ekh:'go', ac:'off', opt:true, quiet:true})}<button class="btn dark" data-act="coupon">${t('Apply')}</button></div>`;
 }
 function totals(T, o = {}){
   return `<div class="tot"><div><span>${t('Subtotal')} · ${t('{n} items', {n:num(bagCount())})}</span><span>${money(T.sub)}</span></div>${T.disc ? `<div class="okc"><span>${t('Discount')} ${X('code', 'WELCOME10')}</span><span>−${money(T.disc)}</span></div>` : ''}<div><span>${o.ship === false ? t('Delivery') : T.gcc ? t('Delivery (GCC)') : t('Delivery (UAE)')}</span><span>${T.ship ? money(T.ship) : t('Free')}</span></div>${T.cod ? `<div><span>${t('Cash on delivery fee')}</span><span>${money(T.cod)}</span></div>` : ''}<div class="grand"><span>${t('Total')}</span><span>${money(T.total)}</span></div><div class="tiny muted vatl">${t('Includes VAT {v}', {v:money(T.vat)})}</div></div>`;
