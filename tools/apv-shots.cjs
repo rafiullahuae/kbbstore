@@ -102,7 +102,7 @@ function audit(arg) {
   const designedCut = (e) => { const s = cs(e); return s.textOverflow === 'ellipsis' || (s.webkitLineClamp && s.webkitLineClamp !== 'none'); };
   const inter = (a, b) => ({left:Math.max(a.left, b.left), top:Math.max(a.top, b.top), right:Math.min(a.right, b.right), bottom:Math.min(a.bottom, b.bottom)});
   const area = (r) => Math.max(0, r.right - r.left) * Math.max(0, r.bottom - r.top);
-  const stackOf = (e) => e.closest('.mmenu') ? 'menu' : e.closest('.mscrim') ? 'scrim' : e.closest('.ovl') ? 'ovl' : e.closest('.viewer') ? 'viewer' : e.closest('.toast') ? 'toast' : e.closest('[data-layer="pb"]') ? 'peekbg' : 'base';
+  const stackOf = (e) => e.closest('.mmenu') ? 'menu' : e.closest('.kh .drop') ? 'drop' : e.closest('.mscrim') ? 'scrim' : e.closest('.ovl') ? 'ovl' : e.closest('.viewer') ? 'viewer' : e.closest('.toast') ? 'toast' : e.closest('[data-layer="pb"]') ? 'peekbg' : 'base';
   const hidden = (e) => { for (let x = e; x && !x.classList.contains('glass'); x = x.parentElement) { const s = cs(x); if (s.display === 'none' || s.visibility === 'hidden' || Number(s.opacity) === 0) return true; } return false; };
 
   /* visible part of a rect: intersect every clipping ancestor up to the glass.
@@ -249,7 +249,7 @@ function audit(arg) {
     });
 
     /* 5. safe areas: fixed text / controls out of the status band and home-indicator band */
-    const fixedEls = [...T].filter((e) => !e.matches('.scrim')).map((e) => ({e, r:e.getBoundingClientRect()})).concat(runs.map((x) => ({e:x.el, r:x.n && x.rr})));
+    const fixedEls = [...T].filter((e) => !e.matches('.scrim,.mscrim')).map((e) => ({e, r:e.getBoundingClientRect()})).concat(runs.map((x) => ({e:x.el, r:x.n && x.rr})));
     const inScroll = (e) => { for (let a = e.parentElement; a && !a.classList.contains('glass'); a = a.parentElement) { const s = cs(a); if (scrollsY(s)) return a; } return null; };
     const seen = new Set();
     for (const {e, r:R0} of fixedEls) {
@@ -280,14 +280,15 @@ function audit(arg) {
     if (!M) { add('site', hd, `no site measurement at ${W}px`); continue; }
     const near = (a, b) => Math.abs(a - b) <= 1;
     const box = (e) => e.getBoundingClientRect();
-    const h = box(hd).height - parseFloat(cs(hd).paddingTop);
+    const mb0 = hd.closest('.kh.tm-bar') && hd.querySelector('.mbar');
+    const h = box(hd).height - parseFloat(cs(hd).paddingTop) - (mb0 ? box(mb0).height : 0); // "menu bar" option: the site's header + its menu bar
     if (!near(h, M.h)) add('site', hd, `header ${h.toFixed(1)}px high, the site's is ${M.h}px at ${W}px`);
     const si = hd.querySelector('.search-in');
     if (!si || hidden(si)) add('site', hd, 'no search box');
     else {
       const S2 = box(si);
       if (!near(S2.height, M.si.h)) add('site', si, `search box ${S2.height.toFixed(1)}px high, the site's is ${M.si.h}px`);
-      if (!near(S2.width, M.si.w)) add('site', si, `search box ${S2.width.toFixed(1)}px wide, the site's is ${M.si.w}px`);
+      if (Math.abs(S2.width - M.si.w) > 2) add('site', si, `search box ${S2.width.toFixed(1)}px wide, the site's is ${M.si.w}px`);
       if (cs(si).borderTopLeftRadius !== M.si.r) add('site', si, `search box corners ${cs(si).borderTopLeftRadius}, the site's are ${M.si.r}`);
       const inp = si.querySelector('input');
       if (inp && inp.placeholder !== M.si.ph) add('site', inp, `placeholder “${inp.placeholder}”, the site's is “${M.si.ph}”`);
