@@ -7,8 +7,7 @@ declare(strict_types=1);
 | Product editor -> Options (a variable product's shades and sizes) -- Lane VPA
 |------------------------------------------------------------------------------
 |
-| NOT YET LOADED: CLAUDE.md forbids lanes from editing routes/web.php. The
-| integrator wires it with ONE line inside the existing admin-api group (the
+| Mounted in routes/web.php inside the existing admin-api group (the
 | `Route::prefix('admin-api')->middleware(NoStoreAdminApi::class)` group inside
 | `Route::middleware('auth:admin')`), next to the product editor's own require:
 |

@@ -945,6 +945,9 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         // and its SEO blob for the editor — several joins and a json column,
         // which is exactly the shape that has produced a dialect failure here.
         'admin-api/product-editor-load/{id}' => '/admin-api/product-editor-load/' . $product->id,
+        // Lane VPA: a variable product's options (variants, their attribute
+        // values and the axes' swatch terms) -- joins across four tables.
+        'admin-api/product-variants/{id}' => '/admin-api/product-variants/' . $product->id,
         /*
          * Reads one image and then resolves WHERE IT IS USED, which walks every
          * product, brand and category — three cursor()ed queries whose results
