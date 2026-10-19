@@ -105,10 +105,27 @@ class OutboundSender
                 \App\Support\CustomerLocale::render($locale, function () use ($row, $wording, $locale): void {
                     $words = $locale === null ? $wording : ($this->alerts->messageWording($locale) ?? $wording);
 
+                    /*
+                     * (Lane VPA) "TIRTIR Mask Fit … — Shade: 21N Ivory". A
+                     * shopper who asked about one shade is told which shade
+                     * is back, in their language. One lookup per variant
+                     * alert, on the sender's run; none for a product alert.
+                     */
+                    $option = '';
+
+                    if ((int) ($row->product_variant_id ?? 0) > 0) {
+                        $variant = \App\Models\ProductVariant::query()
+                            ->with('attributeValues:id,attribute_id,name', 'attributeValues.attribute:id,name,position')
+                            ->find((int) $row->product_variant_id, ['id', 'product_id']);
+                        $option = \App\Support\VariantText::line(
+                            \App\Support\VariantText::snapshot($variant, \App\Support\Locale::current()), ', ');
+                    }
+
                     $mailable = new BackInStockAlert(
                         $words['subject'],
                         $words['body'],
-                        \App\Support\CustomerLocale::productName($row->product_id ?? null, (string) $row->product_name),
+                        \App\Support\CustomerLocale::productName($row->product_id ?? null, (string) $row->product_name)
+                            .($option !== '' ? ' — '.$option : ''),
                         Url::external('/product/' . (string) $row->product_slug . '/'),
                         OutboundOptOut::link('stock', (int) $row->id, (string) $row->email),
                     );

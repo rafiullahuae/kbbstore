@@ -373,13 +373,6 @@ class InvoiceDocument
         $out = [];
 
         foreach ($order->items as $item) {
-            $attributes = is_array($item->variant_attributes) ? $item->variant_attributes : [];
-
-            $variant = array_filter(
-                array_map(static fn ($v) => trim((string) $v), $attributes),
-                static fn (string $v) => $v !== '',
-            );
-
             $name = trim((string) $item->name) !== '' ? trim((string) $item->name) : 'Item';
 
             /*
@@ -410,7 +403,13 @@ class InvoiceDocument
                 'productId' => (int) ($item->product_id ?? 0),
                 'brand' => trim((string) $item->brand),
                 'sku' => trim((string) $item->sku),
-                'variant' => implode(', ', $variant),
+                // (Lane VPA) "Shade: #13 Bright Beige". `variant` is the
+                // operator's English (the packing slip); the invoice and the
+                // delivery note read `variantForCustomer`, beside
+                // nameForCustomer, for the reason given above. An older order's
+                // plain list prints exactly as it did.
+                'variant' => \App\Support\VariantText::forOrderItem($item, false, ', '),
+                'variantForCustomer' => \App\Support\VariantText::forOrderItem($item, true, ', '),
                 /*
                  * (Lane SET) WHAT WAS IN THE BOX, as one line per member —
                  * "2 × Anua Heartleaf Toner". An empty list on every line that

@@ -15098,13 +15098,31 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      re-attached whenever the screen is redrawn. See wireOrderDetail below. */
   var odPicker = null, odPickerOrder = null;
 
+  /* (Lane VPA) "Choose which option of … to add." Every label is escaped. */
+  function odChooseVariant(productId, j){
+    var box = document.getElementById('odAddProductResults');
+    if (!box) { toast(j.message, 'bad'); return; }
+    box.innerHTML = '<div style="padding:10px 12px;font-size:12.5px"><p style="margin:0 0 8px">'+sesc(j.message)+'</p>'+
+      j.options.map(function(o){
+        return '<button type="button" class="btn ghost sm odvpick" data-vid="'+(+o.id)+'" style="margin:0 6px 6px 0"'+(o.in_stock?'':' disabled')+'>'+
+          sesc(o.label)+' \u00b7 AED '+sesc(String(o.price_aed))+(o.in_stock?'':' \u00b7 sold out')+'</button>';
+      }).join('')+'</div>';
+    box.style.display = 'block';
+    box.querySelectorAll('.odvpick').forEach(function(b){
+      b.addEventListener('click', function(){ box.style.display = 'none'; odAddItem(productId, b.dataset.vid); });
+    });
+  }
+
   /** Put one of the picked products on the order that is open. */
-  async function odAddItem(productId){
+  async function odAddItem(productId, variantId){
     try{
       var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+odPickerOrder+'/items'),{method:'POST',credentials:'same-origin',
         headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
-        body:JSON.stringify({product_id:parseInt(productId,10), quantity:1})});
+        body:JSON.stringify({product_id:parseInt(productId,10), variant_id:variantId?parseInt(variantId,10):null, quantity:1})});
       var j = await r.json();
+      /* (Lane VPA) A product sold by its options answers with them: draw them
+         as buttons where the search results were, and send the pick back. */
+      if(j && j.needs_variant && j.options){ odChooseVariant(productId, j); return; }
       if(!r.ok || j.ok===false){ toast(j.message||'Could not add that product.', 'bad'); return; }
       toast('Product added'); renderOrderDetail(odPickerOrder);
     }catch(e){ toast('Could not add that product.','bad'); }
@@ -15418,6 +15436,15 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       + '</div>';
   }
 
+  /* (Lane VPA) Which shade or size a line is, under its brand: "Shade: #13
+     Bright Beige · SKU TT-MF-21N". Plain text from the order's own snapshot,
+     escaped like every other line. '' for a line with no options. */
+  function odVariant(it){
+    var v = (it && it.variant) || '';
+    if (!v) return '';
+    return '<div class="pbrand odvar" style="color:var(--ink,#2a2228)">'+sesc(v)+(it.sku?' \u00b7 SKU '+sesc(it.sku):'')+'</div>';
+  }
+
   function odItemsCard(o){
     var editable = !!o.editable;
     var rows = o.items.map(function(it){
@@ -15436,7 +15463,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
         : '';
       return '<tr><td style="width:44px">'+odItemThumb(it)+'</td>'+
         '<td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc(it.brand||'')+'</div>'+
-          odSetContents(it)+'</td>'+
+          odVariant(it)+odSetContents(it)+'</td>'+
         '<td>'+priceCell+'</td><td>'+qtyCell+'</td><td><b>AED '+it.total_aed+'</b></td>'+(editable?'<td>'+removeCell+'</td>':'')+'</tr>';
     }).join('');
 
@@ -16397,7 +16424,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '<button class="btn sm" id="ordStatusSave">Update</button></div>'+
       '<div class="card pad" style="margin-bottom:12px"><b style="font-size:12.5px">Customer</b><div style="font-size:12.5px;color:var(--ink-2);margin-top:6px;line-height:1.7">'+(addr||'\u2014')+'</div></div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead><tbody>'+
-      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div>'+odSetContents(it)+'</td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
+      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div>'+odVariant(it)+odSetContents(it)+'</td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
       '</tbody></table></div>'+
       '<div style="margin-top:12px;font-size:13px;display:flex;flex-direction:column;gap:5px">'+
       '<div class="between"><span style="color:var(--ink-soft)">Subtotal</span><span>AED '+o.subtotal_aed+'</span></div>'+

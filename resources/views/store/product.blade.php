@@ -130,8 +130,21 @@
        every row was tagged Sold out, and the button stayed live. */
     $out      = $out || ($isVar && $buyable === null);
 
+    /* (Lane VPA) "PAGE A": the colour/size picker, built from the variants
+       already loaded above (values and their axes eager-loaded with them, so
+       no query here). Null on a simple product and on quantity bundles, which
+       keep the rows below byte for byte. See partials/product/variant-picker. */
+    $kbbVpa = $isVar ? \App\Support\VariantOptions::build($product, \App\Support\VariantOptions::rowsFromModels($variants)) : null;
+
     // Bundles are variants carrying a savings tag, exactly as the design does.
     $hasBundle = $variants->contains(fn ($v) => (bool) $v->tag);
+
+    /* (Lane VPA) A product SOLD BY ITS OPTIONS keeps its options on screen:
+       "Bundle section" off hid them on Missha, TIRTIR, Heimish and House of
+       Hur, and nobody could choose a shade. `pm-vpa` (kbb-product.css) shows
+       the section whatever that switch says; quantity-bundle variants still
+       answer to it exactly as before. */
+    $kbbVarOn = $isVar && ! $hasBundle;
     $optNote   = $hasBundle ? 'Save more with bundles' : $variants->count() . ' options';
 
     // Capsule only by default: showing the capsule and the inline line puts
@@ -600,9 +613,11 @@
 
       <form class="cart kbb-cart-form" data-product_id="{{ $product->id }}" method="post">
         @csrf
-        <div class="pm-sec pm-bundles">@if ($isVar)
+        <div class="pm-sec pm-bundles{{ $kbbVarOn ? ' pm-vpa' : '' }}">@if ($kbbVpa)
+@include('partials.product.variant-picker')
+        @elseif ($isVar)
         <div class="opt-label">{{ __('store.product.choose_option') }} <span id="optNote">{{ $optNote }}</span></div>
-        <div class="{{ $modules->classFor('options') }} variants" id="variants">
+        <div class="{{ $kbbVarOn ? '' : $modules->classFor('options') }} variants" id="variants">
           @foreach ($variants as $n => $v)
             @php
               $vsale = $v->effectivePrice();
@@ -886,7 +901,7 @@
            off and unwritten, so applying the package changes this page by
            exactly nothing. partials/notify-me.blade.php argues the placement
            and carries the rest of the reasoning. --}}
-      @include('partials.notify-me', ['notifyLabel' => app(\App\Services\StockAlerts::class)->formLabel()])
+      @include('partials.notify-me', ['notifyLabel' => app(\App\Services\StockAlerts::class)->formLabel(), 'notifyVariants' => $kbbVpa !== null && collect($kbbVpa['variants'])->contains(fn ($vv) => ! $vv['in']), 'notifyVariantId' => $kbbVpa !== null && $out ? (int) ($kbbVpa['variants'][$kbbVpa['selected']]['id'] ?? 0) : 0])
 
       {{-- TWO OF THESE FOUR WERE PROMISES NOTHING RECORDED.
            "Fast UAE delivery" and "Easy 14-day returns" were literals here.

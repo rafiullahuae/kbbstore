@@ -215,7 +215,9 @@ $kbbLineWas = static function ($kbbWasLine): int {
                         // batch renders exactly what it renders today.
                         $imgCss = CssUrl::value(\App\Support\ImageVariants::variantUrl((string) $img, 400));
                         $thumb = $imgCss !== '' ? "background-image:url('" . e($imgCss) . "')" : 'background:' . Gradient::for($seed);
-                        $attrs = $item->variant?->label();
+                        // (Lane VPA) "Shade: #13 Bright Beige", in the page's
+                        // language; '' for a line with no options.
+                        $attrs = \App\Support\VariantText::forVariant($item->variant);
                         $line  = $item->lineTotal();
                         // $kbbLineWas(), defined once at the top of this file
                         // and read by the order-value total further down, so the

@@ -385,7 +385,9 @@ class ManualOrderBuilder
                 'name' => $product?->name ?? 'Item',
                 'brand' => $product?->brand?->name,
                 'sku' => $item->variant?->sku ?? $product?->sku,
-                'variant_attributes' => $item->variant?->attributeValues->pluck('name')->all(),
+                // (Lane VPA) Keyed by axis -- {"Shade": "#13 Bright Beige"} --
+                // as Store\CheckoutController::place() writes it.
+                'variant_attributes' => $item->variant ? \App\Support\VariantText::snapshot($item->variant) : null,
                 // (Lane SET) What was in the box, snapshotted the same way and
                 // in the same position as Store\CheckoutController::place().
                 // NULL for every line that is not a set. A back-office order
@@ -518,7 +520,7 @@ class ManualOrderBuilder
         return $cart->fresh([
             'items' => fn ($q) => $q->orderBy('id'),
             'items.product.brand',
-            'items.variant.attributeValues',
+            'items.variant.attributeValues.attribute',
             'coupon',
             'customer',
         ]);

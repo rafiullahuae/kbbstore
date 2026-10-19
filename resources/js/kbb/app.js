@@ -73,6 +73,8 @@ import { initHit } from './hit.js';
 import { initTrail } from './trail.js';
 // Lane AS: an Arabic page the browser translates hands over to the English one.
 import { initTranslateAway } from './translate-away.js';
+// (Lane VPA) Card A's dots and chips, Page A's swatches and pills.
+import { initVariantCards, initVariantPage } from './variant-pick.js';
 
 /* ── EVERY STEP RUNS, WHATEVER ANY OTHER STEP DOES. ─────────────────────────
  *
@@ -121,6 +123,8 @@ const STEPS = [
     initHit,
     initTrail,
     initTranslateAway,
+    initVariantCards,
+    initVariantPage,
 ];
 
 const boot = () => {

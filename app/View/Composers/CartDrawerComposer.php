@@ -163,6 +163,21 @@ class CartDrawerComposer
                 'coupon:id,code,type,amount',
             ]);
 
+            /* (Lane VPA) "Shade: #13 Bright Beige" under each line. The basket
+               page and the checkout have already named their variants this
+               request (App\Support\VariantLabels), so only a variant nobody
+               has named is read -- none on those two pages, one statement for
+               the whole drawer everywhere else, nothing for a basket with no
+               options. */
+            $labels = app(\App\Support\VariantLabels::class);
+            $unnamed = new \Illuminate\Database\Eloquent\Collection($cart->items->pluck('variant')->filter()
+                ->reject(fn ($v) => $labels->has((int) $v->id))->values()->all());
+
+            if ($unnamed->isNotEmpty()) {
+                $unnamed->load(['attributeValues:id,attribute_id,name', 'attributeValues.attribute:id,name,position']);
+                $labels->fill($cart->items);
+            }
+
             $this->carts->markDisplayLoaded();
         }
 

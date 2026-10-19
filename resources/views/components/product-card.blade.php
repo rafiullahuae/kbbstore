@@ -320,6 +320,18 @@
     $kbbRange = app(\App\Services\VariantPricing::class)->range($product);
 
     /*
+     * (Lane VPA) "CARD A": THE SHADE DOTS AND SIZE CHIPS, the owner's choice.
+     * App\Support\VariantCard draws them from App\Services\VariantSwatches,
+     * which reads every variable product's options in ONE query per request,
+     * taken only when a variable tile is drawn. '' for every other product, and
+     * printed at the START of the price line below, so a simple product's card
+     * is the same bytes it always was.
+     */
+    $kbbVpc = ($product->getAttributes()['type'] ?? null) === 'variable'
+        ? \App\Support\VariantCard::html(app(\App\Services\VariantSwatches::class)->forCard($product), (int) $product->id)
+        : '';
+
+    /*
      * THE WHOLE PRICE CELL, BUILT HERE AND NOT IN THE MARKUP, for two reasons
      * that both cost a red suite before this shape was found: the byte-for-byte
      * one above, and that a nested `@else@if … @endif @endif` inside one line
@@ -473,7 +485,7 @@
                  an unreviewed product still emits nothing at all. --}}
             <div class="kbb-card-rate"><span class="kbb-crate">@for ($s = 1; $s <= 5; $s++)<span class="kbb-cstar{{ $s <= $rating ? ' on' : '' }}">★</span>@endfor</span> <span class="kbb-card-rc">({{ $rc }})</span></div>
         @endif
-        <div class="cp">{!! $kbbPriceHtml !!}</div>
+        {!! $kbbVpc !!}<div class="cp">{!! $kbbPriceHtml !!}</div>
         @if ($kbbCanAdd)
             {{-- A REAL href, so the tile still works with JavaScript off — this
                  is the one thing the skinned card's <span> gave up. cart.js

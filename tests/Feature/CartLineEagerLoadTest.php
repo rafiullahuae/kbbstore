@@ -327,7 +327,9 @@ it('prints the option under every line it renders', function () {
     $printed = elPrintedOptions(elRequest($cart->fresh(), '/cart')['html']);
 
     sort($printed);
-    $expected = $sizes;
+    // (Lane VPA) Named by its axis now -- "Size: 50ml" -- which is the owner's
+    // "Shade: #13 Bright Beige" ask; the values themselves are unchanged.
+    $expected = array_map(fn (string $s) => 'Size: '.$s, $sizes);
     sort($expected);
 
     expect($printed)->toBe($expected);
@@ -349,7 +351,8 @@ it('prints a multi-axis option in the order the relation returns it', function (
     $variant = elLine($cart, 'el-axes', ['50ml', 'Rose']);
 
     expect(elPrintedOptions(elRequest($cart->fresh(), '/cart')['html']))
-        ->toBe([ProductVariant::query()->findOrFail($variant->id)->label()]);
+        // (Lane VPA) prefixed with its axis, the values in the same order.
+        ->toBe(['Size: '.ProductVariant::query()->findOrFail($variant->id)->label()]);
 });
 
 it('the checkout, which is the reference, does not grow either', function () {

@@ -3553,6 +3553,218 @@ a.peo-btn{display:inline-block;text-decoration:none}
      had moved it. Add and remove freely; rename only on purpose. */
   var COLUMNS = ['main', 'side'];
 
+  /* ════════════════════════════════════════════════════════════════════════
+     OPTIONS: A VARIABLE PRODUCT'S SHADES AND SIZES. (Lane VPA)
+
+     Catalog -> Product editor -> (a variable product) -> Options.
+
+     The shop draws these as the owner chose ("card A" dots under the name,
+     "page A" round swatches and size pills), and until this panel nothing in
+     the admin could make or change one: they came from the WooCommerce
+     import and stayed as they came. One row per option -- its value on each
+     axis (Shade, Size), its own SKU, price, sale price, stock and picture --
+     and below them the swatch colour of each shade.
+
+     ITS OWN SAVE. The rows are a list the server replaces in one transaction
+     (Admin\ProductVariantsApiController), with its own validation and its own
+     capability (catalog.variants), so they are sent by "Save options" and the
+     product's Save is untouched. Every value is escaped into the markup with
+     esc(); the server re-checks every one of them.
+
+     State lives in `vpo` and is written on every input, so a render() -- which
+     rebuilds every panel -- never loses what was typed.
+     ════════════════════════════════════════════════════════════════════════ */
+  var vpo = null;          // {for, attributes, axes, variants, swatches, busy, msg, err}
+
+  function vpoAttr(id){
+    for (var i = 0; vpo && i < vpo.attributes.length; i++) {
+      if (vpo.attributes[i].id === id) return vpo.attributes[i];
+    }
+    return null;
+  }
+
+  async function vpoLoad(){
+    var id = model && model.id;
+    if (!id) return;
+    vpo = { for: id, attributes: [], axes: [], variants: [], swatches: {}, busy: true, msg: '', err: '' };
+    try {
+      var d = await api('/product-variants/' + id);
+      if (!model || model.id !== id) return;
+      vpo.attributes = d.attributes || [];
+      vpo.axes = d.axes || [];
+      vpo.variants = (d.variants || []).map(function(v){ v.values = v.values || {}; return v; });
+    } catch (e) {
+      vpo.err = (e && e.body && e.body.message) || 'Could not load the options.';
+    }
+    vpo.busy = false;
+    render();
+  }
+
+  function optionsView(){
+    if (!model || !model.id) {
+      return '<div class="peo-card"><h3>Options</h3><div class="peo-note">Save the product once, then add its shades and sizes here.</div></div>';
+    }
+    if (!vpo || vpo.for !== model.id) { setTimeout(vpoLoad, 0); vpo = { for: model.id, busy: true, attributes: [], axes: [], variants: [], swatches: {} }; }
+    if (vpo.busy) return '<div class="peo-card" data-vpo><h3>Options</h3><div class="peo-note">Loading the options…</div></div>';
+
+    var code = boot ? boot.currency.code : 'AED';
+    var axes = vpo.axes.map(vpoAttr).filter(Boolean);
+    var gallery = [model.image].concat(model.images || []).filter(Boolean);
+
+    var axisChips = vpo.attributes.map(function(a){
+      var on = vpo.axes.indexOf(a.id) >= 0;
+      return '<label class="peo-check" style="display:inline-flex;margin:0 12px 6px 0"><input type="checkbox" data-vpo-axis="' + a.id + '"'
+        + (on ? ' checked' : '') + '><span>' + esc(a.name) + '</span></label>';
+    }).join('');
+
+    var head = '<tr>' + axes.map(function(a){ return '<th>' + esc(a.name) + '</th>'; }).join('')
+      + '<th>SKU</th><th>Price (' + esc(code) + ')</th><th>Sale</th><th>Stock</th><th>Units</th><th>Picture</th><th></th></tr>';
+
+    var rows = vpo.variants.map(function(v, i){
+      var cells = axes.map(function(a){
+        var cur = v.values[a.id];
+        var typed = typeof cur === 'string' && cur.indexOf('new:') === 0;
+        return '<td><select class="peo-sel" style="min-width:150px" data-vpo-val="' + i + ':' + a.id + '">'
+          + '<option value="">Choose…</option>'
+          + a.values.map(function(o){ return '<option value="' + o.id + '"' + (+cur === o.id ? ' selected' : '') + '>' + esc(o.name) + '</option>'; }).join('')
+          + (typed ? '<option value="' + esc(cur) + '" selected>' + esc(cur.slice(4)) + ' (new)</option>' : '')
+          + '<option value="__new">+ New ' + esc(a.name.toLowerCase()) + '…</option>'
+          + '</select></td>';
+      }).join('');
+      var pics = gallery.slice();
+      if (v.image && pics.indexOf(v.image) < 0) pics.push(v.image);
+      return '<tr data-vpo-row="' + i + '">' + cells
+        + '<td><input class="peo-in" style="min-width:130px" data-vpo-f="' + i + ':sku" value="' + esc(v.sku || '') + '"></td>'
+        + '<td><input class="peo-in" style="width:76px" inputmode="decimal" data-vpo-f="' + i + ':price_aed" value="' + esc(v.price_aed || '') + '" placeholder="99"></td>'
+        + '<td><input class="peo-in" style="width:76px" inputmode="decimal" data-vpo-f="' + i + ':sale_aed" value="' + esc(v.sale_aed || '') + '"></td>'
+        + '<td><select class="peo-sel" style="min-width:112px" data-vpo-f="' + i + ':stock_status">'
+        +   [['instock', 'In stock'], ['outofstock', 'Sold out'], ['onbackorder', 'Backorder']].map(function(o){
+              return '<option value="' + o[0] + '"' + (v.stock_status === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+            }).join('') + '</select></td>'
+        + '<td><input class="peo-in" style="width:64px" inputmode="numeric" data-vpo-f="' + i + ':stock" value="' + esc(v.stock == null ? '' : v.stock) + '" placeholder="—" title="Leave empty not to count units"></td>'
+        + '<td><select class="peo-sel" style="min-width:120px;max-width:160px" data-vpo-f="' + i + ':image"><option value="">Product picture</option>'
+        +   pics.map(function(u, k){ return '<option value="' + esc(u) + '"' + (v.image === u ? ' selected' : '') + '>' + (k === 0 && u === model.image ? 'Main picture' : 'Picture ' + (k + 1)) + '</option>'; }).join('')
+        + '</select></td>'
+        + '<td><button type="button" class="peo-btn peo-danger" data-vpo-del="' + i + '" aria-label="Remove option ' + (i + 1) + '">✕</button></td></tr>';
+    }).join('');
+
+    var colourAxes = axes.filter(function(a){ return a.colour; });
+    var used = {};
+    vpo.variants.forEach(function(v){ colourAxes.forEach(function(a){ if (+v.values[a.id]) used[+v.values[a.id]] = a; }); });
+    var swatchRows = Object.keys(used).map(function(id){
+      var a = used[id], val = null;
+      a.values.forEach(function(o){ if (o.id === +id) val = o; });
+      if (!val) return '';
+      var hex = vpo.swatches[id] !== undefined ? vpo.swatches[id] : (val.swatch_color || '');
+      return '<label class="vpo-sw" style="display:inline-flex;align-items:center;gap:6px;margin:0 14px 8px 0;font-size:12.5px">'
+        + '<input type="color" data-vpo-hex="' + val.id + '" value="' + esc(/^#[0-9A-Fa-f]{6}$/.test(hex) ? hex : '#E9DED6') + '" style="width:30px;height:26px;padding:0;border:0;background:none">'
+        + '<span>' + esc(val.name) + '</span></label>';
+    }).join('');
+
+    return '<div class="peo-card" data-vpo>'
+      + '<h3>Options</h3>'
+      + '<div class="peo-note" style="margin:0 0 10px">The shades and sizes a shopper picks from — dots on the product card, round swatches and size pills on the product page. '
+      +   'The choices (Shade, Size …) come from <b>Catalog → Attributes</b>; pick one here or type a new one. Each option carries its own price, so the product\u2019s own Price is cleared when options are saved.</div>'
+      + '<div style="margin-bottom:6px">' + (axisChips || '<span class="peo-note">No attributes yet — add Shade or Size on Catalog → Attributes.</span>') + '</div>'
+      + (axes.length
+          ? '<div style="overflow:auto"><table class="vpo-tbl" style="width:100%;border-collapse:collapse;font-size:12.5px"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div>'
+            + '<button type="button" class="peo-btn" data-vpo-add style="margin-top:8px">+ Add option</button>'
+          : '<div class="peo-note">Tick the axes this product comes in.</div>')
+      + (swatchRows ? '<div style="margin-top:14px"><div class="peo-note" style="margin-bottom:6px">Swatch colours — shared by every product using the shade:</div>' + swatchRows + '</div>' : '')
+      + '<div style="display:flex;gap:10px;align-items:center;margin-top:14px">'
+      +   '<button type="button" class="peo-btn peo-primary" data-vpo-save>Save options</button>'
+      +   '<span class="peo-note" id="vpoMsg" style="color:' + (vpo.err ? '#b4443c' : 'inherit') + '">' + esc(vpo.err || vpo.msg || '') + '</span>'
+      + '</div></div>';
+  }
+
+  function bindOptions(){
+    var card = document.querySelector('#content [data-vpo]');
+    if (!card || !vpo || vpo.busy) return;
+
+    card.querySelectorAll('[data-vpo-axis]').forEach(function(el){
+      el.addEventListener('change', function(){
+        var id = +el.dataset.vpoAxis, at = vpo.axes.indexOf(id);
+        if (el.checked && at < 0) { if (vpo.axes.length >= 3) { el.checked = false; return; } vpo.axes.push(id); }
+        if (!el.checked && at >= 0) vpo.axes.splice(at, 1);
+        render();
+      });
+    });
+
+    card.querySelectorAll('[data-vpo-f]').forEach(function(el){
+      el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', function(){
+        var p = el.dataset.vpoF.split(':'), v = vpo.variants[+p[0]];
+        if (!v) return;
+        v[p[1]] = p[1] === 'stock' ? (el.value.trim() === '' ? null : el.value.trim()) : el.value;
+        if (p[1] === 'stock') v.manage_stock = el.value.trim() !== '';
+      });
+    });
+
+    card.querySelectorAll('[data-vpo-val]').forEach(function(el){
+      el.addEventListener('change', function(){
+        var p = el.dataset.vpoVal.split(':'), v = vpo.variants[+p[0]], a = vpoAttr(+p[1]);
+        if (!v || !a) return;
+        if (el.value === '__new') {
+          var name = (window.prompt('New ' + a.name.toLowerCase() + ' — its name, as the shop shows it:') || '').trim().slice(0, 80);
+          v.values[a.id] = name ? 'new:' + name : '';
+          render();
+          return;
+        }
+        v.values[a.id] = el.value === '' ? '' : (el.value.indexOf('new:') === 0 ? el.value : +el.value);
+      });
+    });
+
+    card.querySelectorAll('[data-vpo-hex]').forEach(function(el){
+      el.addEventListener('input', function(){ vpo.swatches[el.dataset.vpoHex] = el.value.toUpperCase(); });
+    });
+
+    card.querySelectorAll('[data-vpo-del]').forEach(function(el){
+      el.addEventListener('click', function(){ vpo.variants.splice(+el.dataset.vpoDel, 1); render(); });
+    });
+
+    var add = card.querySelector('[data-vpo-add]');
+    if (add) add.addEventListener('click', function(){
+      var last = vpo.variants[vpo.variants.length - 1];
+      vpo.variants.push({ id: null, values: {}, sku: '', price_aed: last ? last.price_aed : '', sale_aed: '',
+                          stock_status: 'instock', manage_stock: false, stock: null, image: '' });
+      render();
+    });
+
+    var save = card.querySelector('[data-vpo-save]');
+    if (save) save.addEventListener('click', async function(){
+      save.disabled = true;
+      vpo.msg = 'Saving…'; vpo.err = '';
+      var msg = card.querySelector('#vpoMsg'); if (msg) msg.textContent = vpo.msg;
+      try {
+        var d = await api('/product-variants/' + vpo.for, { method: 'PUT', json: {
+          axes: vpo.axes,
+          variants: vpo.variants.map(function(v){
+            var values = {};
+            vpo.axes.forEach(function(a){ values[a] = v.values[a] === undefined ? '' : v.values[a]; });
+            return { id: v.id || null, values: values, sku: v.sku || null, price_aed: String(v.price_aed || '').trim(),
+                     sale_aed: String(v.sale_aed || '').trim() || null, stock_status: v.stock_status,
+                     manage_stock: !!v.manage_stock, stock: v.stock == null || v.stock === '' ? null : parseInt(v.stock, 10),
+                     image: v.image || null };
+          }),
+          swatches: vpo.swatches
+        }});
+        vpo.attributes = d.attributes || vpo.attributes;
+        vpo.axes = d.axes || vpo.axes;
+        vpo.variants = (d.variants || []).map(function(v){ v.values = v.values || {}; return v; });
+        vpo.swatches = {};
+        vpo.msg = 'Options saved — the shop shows them now.';
+        // Priced by its options now: the product's own price is cleared on the
+        // server, so the Price panel must not send the old one back on Save.
+        if (vpo.variants.length && model) { model.price_aed = ''; model.sale_aed = ''; }
+        say('Options saved');
+      } catch (e) {
+        var b = e && e.body, first = b && b.errors ? b.errors[Object.keys(b.errors)[0]] : null;
+        vpo.err = (first && first[0]) || (b && b.message) || 'Could not save the options.';
+        vpo.msg = '';
+      }
+      render();
+    });
+  }
+
   var PANELS = [
     { key: 'basics',     label: 'Basics',            col: 'main', view: basicsView },
     /* One panel, not two. The owner asked for the main image and the gallery
@@ -3591,6 +3803,12 @@ a.peo-btn{display:inline-block;text-decoration:none}
        and the arrange controls, the persistence and the reconciliation all
        know about it for free -- and HIDDEN unless the product is a set, by the
        one `when` below. (Lane SP) */
+    /* (Lane VPA) Options: a variable product's shades and sizes. A new key,
+       so reconcile() appends it to an arrangement saved before it existed;
+       hidden unless the product is variable, by the one `when` below. */
+    { key: 'options',    label: 'Options',           col: 'main',
+      when: function(){ return (model.type || 'simple') === 'variable'; },
+      view: function(){ return optionsView(); } },
     { key: 'setbox',     label: 'What is in the box', col: 'main',
       when: function(){ return (model.type || 'simple') === 'set'; },
       view: function(){ return setboxView(); } },
@@ -4258,6 +4476,7 @@ a.peo-btn{display:inline-block;text-decoration:none}
 
   function bindEditor(){
     bindSetBox();
+    bindOptions();
     bindYmal();
     bindTags();
 

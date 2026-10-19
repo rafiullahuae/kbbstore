@@ -192,7 +192,7 @@ export function initPdp() {
  * `mayCreate` says whether this element is allowed to GROW the two spans when
  * the server did not render them. The caller decides; see the note inside.
  */
-function setPrice(el, html, was, off, mayCreate) {
+export function setPrice(el, html, was, off, mayCreate) {
     /* `html` IS markup here and is meant to be -- the caller decides. The one
        caller that passes a value out of a data attribute escapes it first; see
        the comment above `const price` in initPdp(). The same is true of `was`

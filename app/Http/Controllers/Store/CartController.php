@@ -551,6 +551,9 @@ class CartController extends Controller
             // Store\CheckoutController::loadCart(), which is the list this one
             // was short of.
             'items.variant.attributeValues:id,attribute_id,name',
+            // (Lane VPA) the axis, so a line reads "Shade: #13 Bright Beige".
+            // Runs only when a line HOLDS a variant with values.
+            'items.variant.attributeValues.attribute:id,name,position',
             'coupon:id,code,type,amount',
         ]);
 
@@ -575,6 +578,9 @@ class CartController extends Controller
         // drawer is told it need not look.
         if ($cart !== null) {
             $this->carts->markDisplayLoaded();
+            // (Lane VPA) name each line's shade now, so the mini cart's own
+            // reload of these lines need not read the values again.
+            app(\App\Support\VariantLabels::class)->fill($cart->items);
         }
     }
 

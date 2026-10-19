@@ -220,7 +220,8 @@ it('does not get dearer as a product gains variations', function () {
     $small = slopeMeasure('/product/' . $make('one-option', 1));
     $large = slopeMeasure('/product/' . $make('ten-options', 10));
 
-    $rows = fn (array $r) => substr_count($r['html'], 'data-vid="');
+    // (Lane VPA) one size pill per option now ("Page A"), not one row.
+    $rows = fn (array $r) => substr_count($r['html'], 'class="vpa-pill');
 
     expect($rows($small))->toBe(1)
         ->and($rows($large))->toBe(10);

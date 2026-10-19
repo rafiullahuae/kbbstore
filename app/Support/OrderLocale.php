@@ -121,6 +121,15 @@ final class OrderLocale
                 return;
             }
 
+            /*
+             * (Lane VPA) THE OPTION, in the same language and for the same
+             * reason: an /ar order's confirmation said "#13 Bright Beige" under
+             * an Arabic product name with nothing saying it was a shade. One
+             * lookup per VARIANT line on an Arabic order, on the checkout POST;
+             * nothing for an English order or a line without options.
+             */
+            self::localiseVariant($item, $locale);
+
             $product = $item->relationLoaded('product') ? $item->getRelation('product') : $item->product;
 
             if ($product === null) {
@@ -157,6 +166,48 @@ final class OrderLocale
      * bilingual one it is N indexed reads on a checkout POST rather than on any
      * page StorefrontQueryBudgetTest measures.
      */
+    /** Whether `order_items.variant_localised` exists yet (one schema read per process). */
+    private static ?bool $hasVariantLocalised = null;
+
+    /** Forget the schema flag (Tests\Support\StaticMemos, and a test that drops the column). */
+    public static function forgetReady(): void
+    {
+        self::$hasVariantLocalised = null;
+    }
+
+    /**
+     * The line's option snapshot in the order's language, when it differs from
+     * the English one. Never throws: a missing column (the package applied but
+     * its migration not yet run) or a vanished variant leaves the column NULL,
+     * and every reader falls back to the English snapshot.
+     */
+    private static function localiseVariant(OrderItem $item, string $locale): void
+    {
+        if ($item->product_variant_id === null || $item->getAttribute('variant_localised') !== null) {
+            return;
+        }
+
+        try {
+            self::$hasVariantLocalised ??= \Illuminate\Support\Facades\Schema::hasColumn('order_items', 'variant_localised');
+
+            if (! self::$hasVariantLocalised) {
+                return;
+            }
+
+            $variant = \App\Models\ProductVariant::query()
+                ->with('attributeValues:id,attribute_id,name', 'attributeValues.attribute:id,name,position')
+                ->find((int) $item->product_variant_id, ['id', 'product_id']);
+
+            $localised = VariantText::snapshot($variant, $locale);
+
+            if ($localised !== [] && $localised !== VariantText::snapshot($variant, Locale::DEFAULT)) {
+                $item->variant_localised = $localised;
+            }
+        } catch (\Throwable) {
+            // The English snapshot still prints; an order is never refused over this.
+        }
+    }
+
     private static function localeOf(OrderItem $item): string
     {
         $order = $item->relationLoaded('order') ? $item->getRelation('order') : $item->order;

@@ -94,6 +94,8 @@ final class StaticMemos
             \App\Support\CheckoutEmailCapture::class => static fn () => \App\Support\CheckoutEmailCapture::forgetReady(),
             // Lane AE: the customer-language schema flag, read once per process.
             \App\Support\CustomerLocale::class => static fn () => \App\Support\CustomerLocale::forgetReady(),
+            // Lane VPA: whether order_items.variant_localised exists yet.
+            \App\Support\OrderLocale::class => static fn () => \App\Support\OrderLocale::forgetReady(),
             \App\Support\BrandLogo::class => static fn () => \App\Support\BrandLogo::forgetColumns(),
             // Lane BR2: whether brands.header_layout exists yet.
             \App\Support\BrandPanel::class => static fn () => \App\Support\BrandPanel::forgetColumn(),

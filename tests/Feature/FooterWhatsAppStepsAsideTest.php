@@ -30,7 +30,8 @@ it('starts with the rest of the shop, last, from the one app bundle', function (
         // Lane AN's initHit (the page-view beacon) runs after it, last.
         // Lane CJ's initTrail (the cart journey taps) after that, last.
         // Lane AS's initTranslateAway (browser translation -> English) last.
-        ->and($app)->toMatch('/initReadMore,\s*initWaAway,\s*initHit,\s*initTrail,\s*initTranslateAway,\s*\];/');
+        // Lane VPA's two picker steps after it, last.
+        ->and($app)->toMatch('/initReadMore,\s*initWaAway,\s*initHit,\s*initTrail,\s*initTranslateAway,\s*initVariantCards,\s*initVariantPage,\s*\];/');
 });
 
 it('hides the button and its bubble at once while the class is on, in CSS', function () {

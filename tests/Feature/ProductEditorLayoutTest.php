@@ -453,7 +453,15 @@ it('keeps the screen\'s panel registry internally consistent', function () {
      *               reconcile() appends it to the main column of any
      *               arrangement saved before it existed.
      */
-    expect($keys)->toHaveCount(15);
+    /*
+     * ── AND 15 -> 16 (Lane VPA) ───────────────────────────────────────────
+     *
+     *   `options`   a variable product's shades and sizes (Product editor ->
+     *               Options), the rows behind the owner's chosen picker.
+     *               Drawn only for a variable product, by its own `when`.
+     */
+    expect($keys)->toHaveCount(16);
+    expect($keys)->toContain('options');
     expect($keys)->toContain('alsolike');
     expect($keys)->toContain('setbox');
     expect($keys)->toContain('tags');

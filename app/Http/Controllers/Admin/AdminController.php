@@ -1034,6 +1034,10 @@ class AdminController extends Controller
              * when both will do.
              */
             'set_contents' => \App\Support\SetContents::lines(\App\Support\SetContents::fromOrderItem($i)),
+            // (Lane VPA) "Shade: #13 Bright Beige" -- the option this line is,
+            // in English, from the order's own snapshot. '' with none.
+            'variant'    => \App\Support\VariantText::forOrderItem($i, false, ' · '),
+            'sku'        => $i->variant_attributes ? (string) $i->sku : '',
             'qty'        => (int) ($i->quantity ?? 0),
             'unit_aed'   => (int) round(($i->unit_price ?? 0) / 100),
             'line_aed'   => (int) round((((int) ($i->unit_price ?? 0)) * ((int) ($i->quantity ?? 0))) / 100),

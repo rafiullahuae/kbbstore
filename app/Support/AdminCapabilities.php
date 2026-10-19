@@ -227,6 +227,11 @@ final class AdminCapabilities
         // Catalogue and storefront content.
         'catalog.view' => ['owner', 'manager', 'editor'],
         'catalog.manage' => ['owner', 'manager', 'editor'],
+        // (Lane VPA) A variable product's options -- shades, sizes, their
+        // prices, stock and pictures -- on Catalog -> Product editor ->
+        // Options. Its own line so it can be narrowed without touching the
+        // rest of the editor; the same three roles that edit a product.
+        'catalog.variants' => ['owner', 'manager', 'editor'],
         'catalog.export' => ['owner', 'manager', 'editor'],
 
         /*
@@ -1480,6 +1485,10 @@ final class AdminCapabilities
         // Lane RPL: Undo of a picture a product save took off the server. The
         // product edit capability, named on its own line; a GET is not a route.
         ['POST', 'admin-api/product-editor-photo-undo/*', 'catalog.manage'],
+        // (Lane VPA) Product editor -> Options. Above the product-editor-*
+        // rows only for reading order; the path does not match them anyway.
+        ['GET', 'admin-api/product-variants/*', 'catalog.view'],
+        ['*', 'admin-api/product-variants/*', 'catalog.variants'],
         ['GET', 'admin-api/product-editor-load/*', 'catalog.view'],
         ['GET', 'admin-api/product-editor-*', 'catalog.view'],
         ['*', 'admin-api/product-editor-*', 'catalog.manage'],

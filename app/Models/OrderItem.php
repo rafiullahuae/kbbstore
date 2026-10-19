@@ -22,7 +22,8 @@ class OrderItem extends Model
          * App\Support\SetContents is the only thing that writes it and the only
          * thing that reads it. NULL on every ordinary line.
          */
-        return ['variant_attributes' => 'array', 'set_contents' => 'array', 'quantity' => 'int', 'unit_price' => 'int', 'subtotal' => 'int', 'total' => 'int'];
+        // (Lane VPA) `variant_localised`: the same option snapshot in the customer's language.
+        return ['variant_attributes' => 'array', 'variant_localised' => 'array', 'set_contents' => 'array', 'quantity' => 'int', 'unit_price' => 'int', 'subtotal' => 'int', 'total' => 'int'];
     }
 
     public function order()

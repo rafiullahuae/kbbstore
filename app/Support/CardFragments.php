@@ -104,6 +104,7 @@ final class CardFragments
             now()->subDays(30)->getTimestamp(),
             $settings->moduleEnabled('product_labels', false) ? app(\App\Services\ProductLabels::class) : null,
             app(\App\Services\VariantPricing::class),
+            app(\App\Services\VariantSwatches::class),
         ];
         $keys = [];
         $sigs = [];
@@ -240,11 +241,11 @@ final class CardFragments
      * product's range comes from its variants; "new" and the owner's labels
      * are dates and settings. Services and the clock are taken once per call.
      *
-     * @param  array{0: string, 1: int, 2: ?\App\Services\ProductLabels, 3: \App\Services\VariantPricing}  $ctx
+     * @param  array{0: string, 1: int, 2: ?\App\Services\ProductLabels, 3: \App\Services\VariantPricing, 4: \App\Services\VariantSwatches}  $ctx
      */
     private static function signature(Product $p, array $ctx): string
     {
-        [$shop, $newSince, $labels, $variants] = $ctx;
+        [$shop, $newSince, $labels, $variants, $swatches] = $ctx;
         $brand = $p->relationLoaded('brand') ? $p->brand : null;
 
         // The union's source tag is not a column the card reads; leaving it in
@@ -263,6 +264,9 @@ final class CardFragments
             $created === null ? null : strtotime((string) $created) > $newSince,
             $labels?->for($p),
             ($row['type'] ?? null) === 'variable' ? $variants->range($p) : null,
+            // (Lane VPA) the card's shade dots and size chips: a new stock
+            // state, swatch colour or option picture is a new card.
+            ($row['type'] ?? null) === 'variable' ? $swatches->signature($p) : null,
         ]));
     }
 }

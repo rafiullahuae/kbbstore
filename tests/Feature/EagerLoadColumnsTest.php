@@ -66,6 +66,8 @@ function eagerLoadTables(): array
         'variant' => 'product_variants',
         'coupon' => 'coupons',
         'attributeValues' => 'attribute_values',
+        // (Lane VPA) AttributeValue::attribute(), the axis ("Shade") of a value.
+        'attribute' => 'attributes',
         'notes' => 'order_notes',
         'refunds' => 'refunds',
         'payments' => 'payments',

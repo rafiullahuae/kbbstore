@@ -230,9 +230,9 @@
             $thumb = $imageCss !== ''
                 ? "background-image:url('" . e($imageCss) . "')"
                 : 'background:' . Gradient::for((string) ($item->brand ?? '') . (string) $item->name);
-            $variant = is_array($item->variant_attributes)
-                ? implode(' · ', array_filter(array_map('strval', $item->variant_attributes)))
-                : '';
+            // (Lane VPA) "Shade: #13 Bright Beige", in the order's language;
+            // an older order's plain list prints exactly as it did.
+            $variant = \App\Support\VariantText::forOrderItem($item, ! \App\Support\Locale::isDefault(), ' · ');
             // (Lane SET) The snapshot, not the pivot: this page prints what was
             // in the box on the day. One JSON column, no query, and NONE for
             // every line that is not a set.

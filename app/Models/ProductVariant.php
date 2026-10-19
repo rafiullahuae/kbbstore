@@ -29,6 +29,9 @@ class ProductVariant extends Model
     {
         static::saved(static fn () => \App\Services\VariantPricing::invalidate());
         static::deleted(static fn () => \App\Services\VariantPricing::invalidate());
+        // (Lane VPA) The cards' swatch snapshot reads the same rows.
+        static::saved(static fn () => \App\Services\VariantSwatches::invalidate());
+        static::deleted(static fn () => \App\Services\VariantSwatches::invalidate());
     }
 
     protected function casts(): array
