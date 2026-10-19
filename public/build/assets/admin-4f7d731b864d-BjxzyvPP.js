@@ -29,14 +29,31 @@
     area.querySelectorAll('.' + GAL).forEach(function (g) { g.setAttribute('contenteditable', 'false'); });
   }
 
-  /* Keep where the cursor was: the picker takes focus away. */
+  /* Keep where the cursor was: the picker takes focus away. The last caret
+     placed in each box is remembered as it moves (a live Range, so typing
+     before it keeps it on the same words), because by the time the Media
+     button is pressed the selection may already have left the box: a tap on a
+     phone, or a click in the title field and back to the toolbar. */
+  var lastCaret = new WeakMap();
+  function boxOf(node) {
+    var el = node && (node.nodeType === 1 ? node : node.parentElement);
+    var a = el && el.closest ? el.closest('[contenteditable="true"]') : null;
+    return a && a.isContentEditable ? a : null;
+  }
+  document.addEventListener('selectionchange', function () {
+    var s = window.getSelection();
+    if (!s || !s.rangeCount) return;
+    var a = boxOf(s.anchorNode);
+    if (a) lastCaret.set(a, s.getRangeAt(0).cloneRange());
+  });
   document.addEventListener('mousedown', function (e) {
     var b = e.target.closest && e.target.closest('[data-rte-media]');
     if (!b) return;
     e.preventDefault();
     var area = areaFor(b), s = window.getSelection();
     savedArea = area;
-    saved = area && s.rangeCount && area.contains(s.anchorNode) ? s.getRangeAt(0).cloneRange() : null;
+    saved = area && s.rangeCount && area.contains(s.anchorNode) ? s.getRangeAt(0).cloneRange()
+      : (area && lastCaret.get(area)) || null;
   }, true);
 
   document.addEventListener('click', function (e) {
@@ -48,7 +65,7 @@
     e.stopPropagation();
     var area = areaFor(b);
     if (!area) return;
-    if (savedArea !== area) saved = null;
+    if (savedArea !== area) saved = lastCaret.get(area) || null;
     if (typeof window.kbbPickMedia !== 'function') { window.alert('The Media Library is not available on this screen.'); return; }
     pick(function (urls) {
       if (urls.length === 1) { insert(area, urls, 1); return; }
@@ -75,21 +92,71 @@
       + '</div>';
   }
 
-  function insert(area, urls, n) {
-    /* A gallery is a block of its own, never inside a list item, heading or
-       paragraph. It is placed straight after the top-level block the cursor
-       was in (or at the end), as DOM: execCommand('insertHTML') let Chrome pull
-       the caret back into the last bullet first, which put it inside the <li>. */
-    var after = null;
-    if (saved && area.contains(saved.endContainer)) {
-      after = saved.endContainer;
-      while (after && after.parentNode !== area) after = after.parentNode;
+  /* WHERE A GALLERY GOES (Lane BIM, 19 October 2026). The owner: "the image
+     change it's position to random ... i added the image at one place, it's
+     added in some different location." The old rule climbed from the cursor
+     to the box's TOP-LEVEL child and went after that. An article imported or
+     pasted inside one wrapper -- <div>, <section>, <span>, the <b> Google Docs
+     wraps a paste in -- has exactly one top-level child, so every picture went
+     to the end of the article; a cursor between blocks (right after a gallery,
+     on an empty line) climbed to nothing and went to the end too; and in a run
+     of plain lines it split the sentence at the next link.
+
+     The rule now, from the cursor:
+       - inside a paragraph, heading, list, table, quote, figure or <pre>: as a
+         new block straight AFTER the outermost of them (never inside a list
+         item or a heading), or straight BEFORE it when the cursor is at the
+         very start of one that has words in it;
+       - between blocks: exactly there;
+       - in plain lines (text and <br>, no paragraphs): at the end of the
+         cursor's line, in the same wrapper.
+     With no cursor in the box this visit (a fresh page load): at the end. */
+  var HOLD = /^(P|H[1-6]|LI|UL|OL|DL|DT|DD|TABLE|THEAD|TBODY|TFOOT|TR|TD|TH|CAPTION|PRE|BLOCKQUOTE|FIGURE|FIGCAPTION|ADDRESS)$/;
+  var BLOCK = /^(P|H[1-6]|UL|OL|DL|TABLE|PRE|BLOCKQUOTE|FIGURE|HR|DIV|SECTION|ARTICLE|ASIDE|HEADER|FOOTER|MAIN|NAV|ADDRESS|DETAILS)$/;
+  function isGal(el) { return el.nodeType === 1 && el.classList.contains(GAL); }
+  function breaks(el) {   // a line ends here: a <br> or any block
+    return el && el.nodeType === 1 && (el.tagName === 'BR' || BLOCK.test(el.tagName) || isGal(el));
+  }
+  function spot(area, r) {
+    if (!r || !area.contains(r.endContainer)) return [area, null];
+    var node = r.endContainer, hold = null;
+    for (var el = node; el && el !== area; el = el.parentNode) {
+      if (el.nodeType === 1 && (HOLD.test(el.tagName) || isGal(el))) hold = el;
     }
+    if (hold) {
+      var head = document.createRange();
+      head.setStart(hold, 0); head.setEnd(r.endContainer, r.endOffset);
+      var atStart = !isGal(hold) && head.toString() === '' && hold.textContent.trim() !== '';
+      return [hold.parentNode, atStart ? hold : hold.nextSibling, atStart];
+    }
+    /* Not in a block: the cursor is between children of a wrapper, or in a
+       run of plain text. c is the node just before it. */
+    var c;
+    if (node.nodeType === 1) {
+      c = node.childNodes[r.endOffset - 1] || null;
+      if (!c || breaks(c)) return [node, node.childNodes[r.endOffset] || null];
+    } else {
+      c = node;
+    }
+    // Up through inline wrappers (<a>, <b>, <span>) to the one that holds lines.
+    while (c.parentNode !== area && !Array.prototype.some.call(c.parentNode.childNodes, breaks)) c = c.parentNode;
+    var s = c.nextSibling;
+    while (s && !breaks(s)) s = s.nextSibling;
+    if (s && s.tagName === 'BR') s = s.nextSibling;   // after the line's own <br>
+    return [c.parentNode, s];
+  }
+
+  function insert(area, urls, n) {
+    /* A gallery is a block of its own, inserted as DOM: execCommand('insertHTML')
+       let Chrome pull the caret back into the last bullet first, which put it
+       inside the <li>. Where: spot() above. */
+    var at = spot(area, saved);
     var box = document.createElement('div');
     box.innerHTML = html(urls, n) + '<p><br></p>';
     var gal = box.firstChild, para = box.lastChild;
-    if (after) { after.after(gal); gal.after(para); }
-    else { area.appendChild(gal); area.appendChild(para); }
+    at[0].insertBefore(gal, at[1]);
+    // Before a paragraph: the cursor goes back to its start, no empty line.
+    if (at[2]) para = at[1]; else gal.after(para);
     area.focus();
     var r = document.createRange(), s = window.getSelection();
     r.setStart(para, 0); r.collapse(true); s.removeAllRanges(); s.addRange(r);
@@ -147,7 +214,17 @@
     if (a && a.isContentEditable && a.getAttribute && a.getAttribute('contenteditable') === 'true') lock(a);
   });
   document.addEventListener('click', function (e) {
-    if (bar && bar.contains(e.target)) return;
+    /* A click on the bar, in the picture's dialog or in the columns question
+       is theirs alone: it must not also take the Gallery bar away. Asked of
+       the event's path, not contains(): the bar repaints its buttons on a
+       Columns click, so by the time this runs the clicked button is no
+       longer inside the bar, and the bar used to hide itself. And closing
+       the dialog (Cancel, Save, the backdrop) used to hide it too, so after
+       clicking a picture the Columns buttons were first under the dialog,
+       then gone. */
+    var path = e.composedPath ? e.composedPath() : [];
+    if ((bar && (path.indexOf(bar) !== -1 || bar.contains(e.target)))
+      || (dlg && path.indexOf(dlg) !== -1) || (shade && path.indexOf(shade) !== -1)) return;
     var g = e.target.closest && e.target.closest('.' + GAL);
     var area = g && g.closest('[contenteditable="true"]');
     if (!g || !area) { if (current) hideBar(); return; }

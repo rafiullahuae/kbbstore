@@ -111,7 +111,7 @@ it('draws Page A on the product page and keeps it visible with Bundle section of
     expect($html)->toContain('<div class="pm-sec pm-bundles pm-vpa">')
         ->and($css)->toContain('.pdp-page .pm-sec.pm-bundles.pm-vpa,.pdp .pm-sec.pm-bundles.pm-vpa{display:block}')
         ->and($html)->toContain('class="vpa"')
-        ->and($html)->toContain('Shade: <b>21N Ivory</b>')
+        ->and($html)->toContain('Shade: <b dir="auto">21N Ivory</b>')
         ->and($html)->toMatch('/class="vpa-sw out" role="radio" aria-checked="false" data-v="\d+" data-n="17C Porcelain"/')
         ->and($html)->toMatch('/class="vpa-sw" role="radio" aria-checked="true" data-v="\d+" data-n="21N Ivory"/')
         // The form posts the first shade that can be bought.

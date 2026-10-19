@@ -324,8 +324,51 @@
     return picker;
   }
 
+  /* (Lane VPA) A PRODUCT SOLD BY ITS OPTIONS ASKS WHICH ONE. Picking a
+     variable product used to add it with no option, and the builder then
+     refused the whole order ("choose an option"). Now its shades and sizes
+     are offered as buttons under the search, priced and with sold-out ones
+     disabled; the line carries the variant, its own SKU and its own price.
+     The server still checks the variant belongs to the product. */
+  var pendingVar = null;
+
+  function variantChooserHTML(){
+    if (!pendingVar) return '';
+    return '<div class="mo-vchoose" id="moVarChoose" style="margin-top:10px;padding:10px 12px;border:1px solid var(--border,#e5e7eb);border-radius:10px">' +
+      '<p style="margin:0 0 8px"><b>' + esc(pendingVar.name) + '</b> comes in options. Choose one:</p>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
+      pendingVar.variants.map(function(v, i){
+        var out = v.stock_status !== 'instock';
+        return '<button type="button" class="btn ghost sm mo-vbtn" data-vi="' + i + '"' + (out ? ' disabled' : '') + '>' +
+          esc(v.label || ('Option ' + (i + 1))) + ' · ' + aed(v.price_fils) + (out ? ' · sold out' : '') + '</button>';
+      }).join('') +
+      '</div><button type="button" class="btn ghost sm mo-vcancel" style="margin-top:8px">Cancel</button></div>';
+  }
+
+  function wireVariantChooser(){
+    document.querySelectorAll('#content .mo-vbtn').forEach(function(b){
+      b.addEventListener('click', function(){
+        var p = pendingVar, v = p && p.variants[parseInt(b.dataset.vi, 10)];
+        if (!v) return;
+        pendingVar = null;
+        var existing = lines.filter(function(l){ return l.product_id === p.id && l.variant_id === v.id; })[0];
+        if (existing) {
+          existing.qty = Math.min(99, existing.qty + 1);
+        } else {
+          lines.push({product_id:p.id, variant_id:v.id, name:p.name + (v.label ? ' — ' + v.label : ''), sku:v.sku || p.sku,
+                      image:v.image || p.image || null, unit_price:v.price_fils, qty:1});
+        }
+        render();
+        requote();
+      });
+    });
+    var cancel = document.querySelector('#content .mo-vcancel');
+    if (cancel) cancel.addEventListener('click', function(){ pendingVar = null; render(); });
+  }
+
   function addLine(p){
     if (!p) return;
+    if (p.variants && p.variants.length) { pendingVar = p; render(); return; }
     var existing = lines.filter(function(l){ return l.product_id === p.id && !l.variant_id; })[0];
     if (existing) {
       existing.qty = Math.min(99, existing.qty + 1);
@@ -479,6 +522,7 @@
     host.scrollTop = 0;
     renderBanner();
     wire();
+    wireVariantChooser();
   }
 
   function stateName(){
@@ -544,6 +588,7 @@
       '<div class="mo-search"><input id="moProdSearch" type="search" autocomplete="off" ' +
       'placeholder="Search products by name, SKU or brand"></div>' +
       '<div class="mo-results" id="moProdResults"></div>' +
+      variantChooserHTML() +
       (errors.items ? '<span class="mo-err" style="margin:8px 0 0">' + esc(errors.items) + '</span>' : '') +
       '<div style="margin-top:12px">' + linesHTML() + '</div>' +
       '<div class="mo-run" id="moRun">' + runHTML() + '</div></div>';

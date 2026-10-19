@@ -100,7 +100,6 @@
 .gss-sg.is-on span{background:var(--accent,#E8919F);color:#fff}
 .gss-pairs{display:grid;gap:10px;min-width:0}
 .gss-pr{display:grid;gap:8px 14px;grid-template-columns:140px minmax(0,1fr) minmax(0,1fr);align-items:start;min-width:0}
-.gss-pairs.is-en .gss-pr{grid-template-columns:140px minmax(0,1fr)}
 .gss-ph{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft,#6b7280)}
 .gss-pl{font-size:12.5px;font-weight:600;padding-top:8px}
 .gss-pc{display:grid;gap:4px;min-width:0}
@@ -124,7 +123,7 @@
   .gss-foot{margin:13px -13px -13px;padding:10px 13px}
   .gss-sb{padding-left:0}
   .gss-two,.gss-three,.gss-cards{grid-template-columns:minmax(0,1fr)}
-  .gss-pr,.gss-pairs.is-en .gss-pr{grid-template-columns:minmax(0,1fr);gap:6px}
+  .gss-pr{grid-template-columns:minmax(0,1fr);gap:6px}
   .gss-pr + .gss-pr{border-top:1px solid var(--border,#e6e6e6);padding-top:10px}
   .gss-ph{display:none}
   .gss-pl{padding-top:0}

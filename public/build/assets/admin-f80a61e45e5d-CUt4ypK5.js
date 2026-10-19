@@ -150,6 +150,24 @@
     if (creating) check();
   }
 
+  /* The article's toolbar, ONE builder for both panes (Lane ART): the English
+     pane draws it and the Arabic box beside it carries the same buttons in the
+     same order, bound by the same bindRte() below. */
+  function rteBar(){
+    return '<div class="pj-rte-bar">'
+      +   '<button type="button" data-cmd="bold">B</button>'
+      +   '<button type="button" data-cmd="italic"><i>I</i></button>'
+      +   '<button type="button" data-cmd="underline" title="Underline"><u>U</u></button>'
+      +   '<button type="button" data-cmd="formatBlock:h2">H2</button>'
+      +   '<button type="button" data-cmd="formatBlock:h3">H3</button>'
+      +   '<button type="button" data-cmd="formatBlock:p">P</button>'
+      +   '<button type="button" data-cmd="insertUnorderedList">List</button>'
+      +   '<button type="button" data-cmd="insertOrderedList">1.</button>'
+      +   '<button type="button" data-cmd="createLink">Link</button>'
+      +   '<button type="button" data-cmd="kbbMedia" data-rte-media title="Insert pictures from the Media Library">&#128444; Media</button>'
+      + '</div>';
+  }
+
   function ar(opts){
     /* boxIf, not box: the SERVER says which fields are translatable, off the
        model's own $translatable allowlist. A screen carrying its own list is a
@@ -218,18 +236,7 @@
       +   '<div class="pj-card">'
       +     '<h3>The article</h3>'
       +     '<div class="pj-rte">'
-      +       '<div class="pj-rte-bar">'
-      +         '<button type="button" data-cmd="bold">B</button>'
-      +         '<button type="button" data-cmd="italic"><i>I</i></button>'
-      +         '<button type="button" data-cmd="underline" title="Underline"><u>U</u></button>'
-      +         '<button type="button" data-cmd="formatBlock:h2">H2</button>'
-      +         '<button type="button" data-cmd="formatBlock:h3">H3</button>'
-      +         '<button type="button" data-cmd="formatBlock:p">P</button>'
-      +         '<button type="button" data-cmd="insertUnorderedList">List</button>'
-      +         '<button type="button" data-cmd="insertOrderedList">1.</button>'
-      +         '<button type="button" data-cmd="createLink">Link</button>'
-      +         '<button type="button" data-cmd="kbbMedia" data-rte-media title="Insert pictures from the Media Library">&#128444; Media</button>'
-      +       '</div>'
+      +       rteBar()
       +       '<div class="pj-rte-area" id="pj-body" contenteditable="true" '
       +         'data-ph="Write the article here.">' + (model.body || '') + '</div>'
       +       '<p class="pj-rte-foot" id="pj-words">0 words</p>'
@@ -237,7 +244,8 @@
       +     '<p class="pj-hint">Headings, lists, links and images are kept. Inline styles, '
       +       '<b>id</b> attributes, embedded videos and forms are removed when you save — '
       +       'the same rule the WordPress import applies to an imported article.</p>'
-      +     ar({field:'body', label:'The article', prefill:t, type:'rich'})
+      +     ar({field:'body', label:'The article', prefill:t, type:'rich',
+                bar: rteBar(), foot: '<p class="pj-rte-foot" data-pj-ar-words>0 words</p>'})
       +   '</div>'
       + '</div>'
 
@@ -354,7 +362,18 @@
       check();
     };
 
-    bindRte($('#pj-body'));
+    bindRte($('#pj-body'), function(area){
+      model.body = area.innerHTML;
+      words();
+    });
+
+    /* The Arabic article: the same bar, the same handler, its OWN pane. It is
+       read back by KBBArabic.collect() at save, so all it has to keep up to
+       date is its own word count. */
+    var arBody = content().querySelector('[data-kbbar-box="body"] [data-kbbar-rich]');
+    var arWords = function(){ count(arBody, content().querySelector('[data-pj-ar-words]')); };
+    bindRte(arBody, arWords);
+    arWords();
 
     /* LANE S7 — the Google-result preview. `id` is null on a new article, which
        is a supported state: the preview then reads the Title and Address boxes
@@ -417,7 +436,16 @@
     words();
   }
 
-  function bindRte(area){
+  /* One pane's toolbar: the bar beside `area` and nothing else. `changed`
+     is the pane's own bookkeeping (the English writes model.body; the Arabic
+     only counts its words).
+
+     A command runs only while the selection is INSIDE this pane. focus() on a
+     pane normally brings the selection with it; when the browser leaves it in
+     the other pane instead, the press does nothing rather than bolding the
+     other language (Lane ART: a button on the Arabic bar must never touch the
+     English text, and the reverse). */
+  function bindRte(area, changed){
     if (!area) return;
 
     var bar = area.parentNode.querySelector('.pj-rte-bar');
@@ -426,6 +454,9 @@
       b.onclick = function(e){
         e.preventDefault();
         area.focus();
+
+        var sel = window.getSelection();
+        if (!sel || !sel.rangeCount || !area.contains(sel.anchorNode)) return;
 
         var cmd = b.dataset.cmd;
 
@@ -438,21 +469,19 @@
           document.execCommand(cmd, false, null);
         }
 
-        model.body = area.innerHTML;
-        words();
+        changed(area);
       };
     });
 
-    area.addEventListener('input', function(){
-      model.body = area.innerHTML;
-      words();
-    });
+    area.addEventListener('input', function(){ changed(area); });
   }
 
   /* A word count, not a measurement: it reads text, never geometry. */
   function words(){
-    var area = $('#pj-body');
-    var out = $('#pj-words');
+    count($('#pj-body'), $('#pj-words'));
+  }
+
+  function count(area, out){
     if (!area || !out) return;
 
     var text = (area.textContent || '').replace(/\s+/g, ' ').trim();

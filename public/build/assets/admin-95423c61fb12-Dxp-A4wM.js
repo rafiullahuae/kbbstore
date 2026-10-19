@@ -154,6 +154,24 @@
     render();
   }
 
+  /* The page's toolbar, ONE builder for both panes (Lane ART): the English
+     pane draws it and the Arabic box beside it carries the same buttons in the
+     same order, bound by the same bindRte() below. */
+  function rteBar(){
+    return '<div class="pg-rte-bar">'
+      +   '<button type="button" data-cmd="bold">B</button>'
+      +   '<button type="button" data-cmd="italic"><i>I</i></button>'
+      +   '<button type="button" data-cmd="underline" title="Underline"><u>U</u></button>'
+      +   '<button type="button" data-cmd="formatBlock:h2">H2</button>'
+      +   '<button type="button" data-cmd="formatBlock:h3">H3</button>'
+      +   '<button type="button" data-cmd="formatBlock:p">P</button>'
+      +   '<button type="button" data-cmd="insertUnorderedList">List</button>'
+      +   '<button type="button" data-cmd="insertOrderedList">1.</button>'
+      +   '<button type="button" data-cmd="createLink">Link</button>'
+      +   '<button type="button" data-cmd="kbbMedia" data-rte-media title="Insert pictures from the Media Library">&#128444; Media</button>'
+      + '</div>';
+  }
+
   function ar(opts){
     /* boxIf, not box: the SERVER says which fields are translatable, off the
        model's own $translatable allowlist. A screen carrying its own list is a
@@ -217,18 +235,7 @@
       +   '<div class="pg-card">'
       +     '<h3>The page</h3>'
       +     '<div class="pg-rte">'
-      +       '<div class="pg-rte-bar">'
-      +         '<button type="button" data-cmd="bold">B</button>'
-      +         '<button type="button" data-cmd="italic"><i>I</i></button>'
-      +         '<button type="button" data-cmd="underline" title="Underline"><u>U</u></button>'
-      +         '<button type="button" data-cmd="formatBlock:h2">H2</button>'
-      +         '<button type="button" data-cmd="formatBlock:h3">H3</button>'
-      +         '<button type="button" data-cmd="formatBlock:p">P</button>'
-      +         '<button type="button" data-cmd="insertUnorderedList">List</button>'
-      +         '<button type="button" data-cmd="insertOrderedList">1.</button>'
-      +         '<button type="button" data-cmd="createLink">Link</button>'
-      +         '<button type="button" data-cmd="kbbMedia" data-rte-media title="Insert pictures from the Media Library">&#128444; Media</button>'
-      +       '</div>'
+      +       rteBar()
       +       '<div class="pg-rte-area" id="pg-content" contenteditable="true" '
       +         'data-ph="Write the page here.">' + (model.content || '') + '</div>'
       +       '<p class="pg-rte-foot" id="pg-words">0 words</p>'
@@ -241,7 +248,8 @@
       +       'can read</b>, if <b>Store → SEO &amp; Meta → Sitemap &amp; robots</b> has the FAQ '
       +       'markup switched on. Write “How long does delivery take?” as an H3 with the answer '
       +       'under it.</p>'
-      +     ar({field:'content', label:'The page', prefill:t, type:'rich'})
+      +     ar({field:'content', label:'The page', prefill:t, type:'rich',
+                bar: rteBar(), foot: '<p class="pg-rte-foot" data-pg-ar-words>0 words</p>'})
       +   '</div>'
       + '</div>'
 
@@ -558,7 +566,18 @@
     var title = $('#pg-title');
     if (title) title.oninput = function(){ model.title = title.value; };
 
-    bindRte($('#pg-content'));
+    bindRte($('#pg-content'), function(area){
+      model.content = area.innerHTML;
+      words();
+    });
+
+    /* The Arabic page: the same bar, the same handler, its OWN pane. It is
+       read back by KBBArabic.collect() at save, so all it has to keep up to
+       date is its own word count. */
+    var arBody = content().querySelector('[data-kbbar-box="content"] [data-kbbar-rich]');
+    var arWords = function(){ count(arBody, content().querySelector('[data-pg-ar-words]')); };
+    bindRte(arBody, arWords);
+    arWords();
 
     /* LANE S7 — the Google-result preview, kind 'page'. Guarded, so a package
        shipped without the preview partial draws the editor it drew before
@@ -618,7 +637,12 @@
     words();
   }
 
-  function bindRte(area){
+  /* One pane's toolbar: the bar beside `area` and nothing else. `changed`
+     is the pane's own bookkeeping (the English writes model.content; the
+     Arabic only counts its words). A command runs only while the selection is
+     INSIDE this pane, so a button on one language's bar never edits the other
+     (Lane ART). */
+  function bindRte(area, changed){
     if (!area) return;
 
     var bar = area.parentNode.querySelector('.pg-rte-bar');
@@ -627,6 +651,9 @@
       b.onclick = function(e){
         e.preventDefault();
         area.focus();
+
+        var sel = window.getSelection();
+        if (!sel || !sel.rangeCount || !area.contains(sel.anchorNode)) return;
 
         var cmd = b.dataset.cmd;
 
@@ -639,21 +666,19 @@
           document.execCommand(cmd, false, null);
         }
 
-        model.content = area.innerHTML;
-        words();
+        changed(area);
       };
     });
 
-    area.addEventListener('input', function(){
-      model.content = area.innerHTML;
-      words();
-    });
+    area.addEventListener('input', function(){ changed(area); });
   }
 
   /* A word count, not a measurement: it reads text, never geometry. */
   function words(){
-    var area = $('#pg-content');
-    var out = $('#pg-words');
+    count($('#pg-content'), $('#pg-words'));
+  }
+
+  function count(area, out){
     if (!area || !out) return;
 
     var text = (area.textContent || '').replace(/\s+/g, ' ').trim();

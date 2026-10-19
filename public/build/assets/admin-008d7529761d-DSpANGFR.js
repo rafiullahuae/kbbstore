@@ -92,6 +92,13 @@ window.KBBArabic = (function(){
    *   fromText    true when `from` is a contenteditable / rich pane: its PLAIN
    *               TEXT is sent, never its markup.
    *   scope       a CSS scope prefix so two forms on one page cannot collide.
+   *   bar         'rich' only: the ENGLISH pane's own toolbar markup, from the
+   *               calling screen's own builder, so the Arabic pane carries the
+   *               same buttons in the same order (Lane ART). Screen-authored,
+   *               never operator input, so written through like `attrs`. The
+   *               screen binds it with the same handler as its English bar.
+   *   foot        'rich' only: screen-authored markup under the pane (the
+   *               English pane's word count line).
    */
   function box(opts){
     opts = opts || {};
@@ -124,11 +131,21 @@ window.KBBArabic = (function(){
          a formatted pane would mean the Arabic product page could not carry the
          headings and lists the English one does — the two languages would be
          different pages, not translations of one. */
+      /* LANE ART — the owner, 19 October: "i think you didn't make the
+         editors tools etc for arabic version". The bar sits in the box's own
+         direction (dir="rtl": B on the right); each button keeps its English
+         label (see .kbbar-bar button). The bar and the pane share the
+         .kbbar-rte wrapper, which is how the screen's handler and the shared
+         Media script (admin/partials/rte-media, areaFor()) find THIS pane and
+         never the English one. */
       control = '<div class="kbbar-rte kbbar-ctl" style="padding:0">'
+        + (opts.bar ? '<div class="kbbar-bar" dir="rtl">' + opts.bar + '</div>' : '')
         + '<div class="kbbar-area" contenteditable="true" dir="rtl" lang="' + LOCALE + '" '
         +   'data-kbbar-rich="' + esc(field) + '" data-ph="' + esc(PLACEHOLDER) + '"' + extra + '>'
         + (value || '')
-        + '</div></div>';
+        + '</div>'
+        + (opts.foot || '')
+        + '</div>';
     } else if (type === 'textarea') {
       control = '<textarea class="kbbar-ctl" dir="rtl" lang="' + LOCALE + '" '
         + 'data-kbbar-input="' + esc(field) + '" rows="' + (opts.rows || 3) + '"'

@@ -96,7 +96,7 @@
         $vpaColour = $vpaAxis['kind'] === 'colour';
     @endphp
     <div class="vpa-ax{{ $vpaColour ? ' vpa-c' : ' vpa-s' }}" data-ax="{{ $vpaI }}">
-        <div class="vpa-lbl" id="vpaL{{ $vpaI }}">{{ $vpaAxis['name'] }}: <b>{{ $vpaOn['name'] ?? '' }}</b></div>
+        <div class="vpa-lbl" id="vpaL{{ $vpaI }}">{{ $vpaAxis['name'] }}: <b dir="auto">{{ $vpaOn['name'] ?? '' }}</b></div>
         <div class="vpa-row" role="radiogroup" aria-labelledby="vpaL{{ $vpaI }}">
         @foreach ($vpaAxis['values'] as $vpaVal)
             @php
@@ -107,7 +107,7 @@
             @if ($vpaColour)
             <button type="button" class="vpa-sw{{ $vpaSold ? ' out' : '' }}" role="radio" aria-checked="{{ $vpaIsOn ? 'true' : 'false' }}" data-v="{{ $vpaVal['id'] }}" data-n="{{ $vpaVal['name'] }}" aria-label="{{ $vpaTitle }}" title="{{ $vpaTitle }}" style="{{ \App\Support\VariantOptions::swatchStyle($vpaVal) }}"></button>
             @else
-            <button type="button" class="vpa-pill{{ $vpaSold ? ' out' : '' }}" role="radio" aria-checked="{{ $vpaIsOn ? 'true' : 'false' }}" data-v="{{ $vpaVal['id'] }}" data-n="{{ $vpaVal['name'] }}" aria-label="{{ $vpaTitle }}">{{ $vpaVal['name'] }}</button>
+            <button type="button" class="vpa-pill{{ $vpaSold ? ' out' : '' }}" role="radio" aria-checked="{{ $vpaIsOn ? 'true' : 'false' }}" data-v="{{ $vpaVal['id'] }}" data-n="{{ $vpaVal['name'] }}" aria-label="{{ $vpaTitle }}" dir="auto">{{ $vpaVal['name'] }}</button>
             @endif
         @endforeach
         </div>
