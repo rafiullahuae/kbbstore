@@ -11,6 +11,16 @@ const LANG = window.APV_LANG === 'ar' ? 'ar' : 'en';
 const AR = LANG === 'ar';
 const D = window.APV_DATA || {products:[], brands:[], categories:[], concerns:[], posts:[], articles:{}, banners:[], trust:[], settings:{}};
 const DICT = window.APV_I18N || {};
+/* tools/apv-data.cjs --split may ship photo paths only (im / g / n2): rebuild
+   the site's img-cache URLs, so either form of data.js works. */
+(function hydrate(){
+  const IC = (w, p) => p ? (/^https?:/.test(p) ? p : `https://kbeautybliss.com/img-cache/${w}${p}`) : null;
+  for (const p of D.products) {
+    if (p.img || p.im == null) continue;
+    p.img = IC(400, p.im); p.img200 = p.n2 ? p.img : IC(200, p.im);
+    p.gallery = [p.im].concat(p.g || []).map(x => ({src:IC(800, x), thumb:IC(200, x)}));
+  }
+})();
 const PL = D.products;
 const P = Object.fromEntries(PL.map(p => [p.slug, p]));
 const BR = Object.fromEntries(D.brands.map(b => [b.slug, b]));
@@ -39,6 +49,17 @@ const date = (iso, o) => new Intl.DateTimeFormat(AR ? (S.digits === 'arab' ? 'ar
    checker can list each exception instead of guessing. */
 const X = (why, s, cls = '') => AR ? `<bdi class="lat${cls ? ' ' + cls : ''}" dir="ltr" data-x="${why}">${s}</bdi>` : (cls ? `<span class="${cls}">${s}</span>` : s);
 const LTR = s => `<bdi dir="ltr" class="ltr">${s}</bdi>`;
+/* Text that comes from the site's data. In the Arabic app the site's own Arabic
+   copy keeps Latin product terms (PDRN, SPF50+, BHA); each run is isolated and
+   marked data-x="term" so it reads in the right order and the checker can list it. */
+const LATIN_RUN = /[A-Za-z][A-Za-z0-9.+%&'’\-\/]*(?:[ \-]+[A-Za-z0-9][A-Za-z0-9.+%&'’\-\/]*)*/g;
+function dt(s){
+  s = String(s == null ? '' : s);
+  if (!AR) return esc(s);
+  let out = '', i = 0;
+  s.replace(LATIN_RUN, (m, at) => { out += esc(s.slice(i, at)) + X('term', esc(m)); i = at + m.length; return m; });
+  return out + esc(s.slice(i));
+}
 
 /* ── product helpers ───────────────────────────────────────────────────── */
 const cur = p => p.sale ?? p.price;
@@ -52,8 +73,8 @@ function pn(p){
 }
 const bn = p => p.brand || '';
 /* A brand name: Arabic when the site has one, else the Latin name marked as a brand. */
-const brandTxt = s => (AR && isLatin(s)) ? X('brand', esc(s)) : esc(s);
-const nameTxt = p => (AR && isLatin(pn(p))) ? X('name', esc(pn(p))) : esc(pn(p));
+const brandTxt = s => (AR && isLatin(s)) ? X('brand', esc(s)) : dt(s);
+const nameTxt = p => (AR && isLatin(pn(p))) ? X('name', esc(pn(p))) : dt(pn(p));
 const gal = p => (p.gallery && p.gallery.length ? p.gallery : [{src:p.img, thumb:p.img200}]);
 const firstBest = (PL.find(p => p.tags.includes('best') && gal(p).length >= 3 && p.revs && p.revs.length) || PL.find(p => gal(p).length >= 3) || PL[0] || {}).slug;
 const tagged = (tag, n) => PL.filter(p => p.tags.includes(tag)).slice(0, n);
@@ -163,7 +184,7 @@ const addrLine = (a, o = {}) => a ? [a.building, a.street, a.flat, o.short ? nul
 /* ── router ────────────────────────────────────────────────────────────── */
 /* A path names a screen; screens register a pattern. */
 const SCREENS = [];
-function screen(pattern, def){ const keys = []; const re = new RegExp('^' + pattern.replace(/:(\w+)/g, (m, k) => { keys.push(k); return '([^/]+)'; }) + '$'); SCREENS.push({pattern, re, keys, ...def}); }
+function scr(pattern, def){ const keys = []; const re = new RegExp('^' + pattern.replace(/:(\w+)/g, (m, k) => { keys.push(k); return '([^/]+)'; }) + '$'); SCREENS.push({pattern, re, keys, ...def}); }
 function resolve(path){
   const [p, qs] = String(path || '/home').split('?');
   const clean = p.replace(/\/+$/, '') || '/home';
@@ -175,5 +196,5 @@ function resolve(path){
 }
 const TABS = ['home', 'shop', 'search', 'bag', 'account'];
 const ROOT = {home:'/home', shop:'/categories', search:'/search', bag:'/bag', account:'/account'};
-const top = () => { const st = S.stacks[S.tab]; return st[st.length - 1]; };
-const route = () => resolve(top().path);
+const topE = () => { const st = S.stacks[S.tab]; return st[st.length - 1]; };
+const route = () => resolve(topE().path);

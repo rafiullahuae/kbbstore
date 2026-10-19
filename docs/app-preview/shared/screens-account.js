@@ -3,7 +3,7 @@
 const accChain = () => ['/account'];
 const ST_LABEL = {ship:'On the way', del:'Delivered', proc:'Processing', can:'Cancelled'};
 
-screen('/account', {tab:'account', group:'Account', label:'Account', title:() => t('Account'),
+scr('/account', {tab:'account', group:'Account', label:'Account', title:() => t('Account'),
   render(r, ctx){
     const u = S.user;
     const head = u
@@ -24,7 +24,7 @@ FORMS.signin = () => [{k:'email', v:'email'}, {k:'pw', v:'pwIn'}];
 FORMS.register = () => [{k:'name', v:'name'}, {k:'email', v:'email'}, {k:'phone', v:'phone'}, {k:'pw', v:'pw'}];
 FORMS.forgot = () => [{k:'email', v:'email'}];
 const eye = (k) => `<button type="button" class="ib eye" data-act="pw" aria-label="${t(S.pw ? 'Hide password' : 'Show password')}" aria-pressed="${S.pw}">${ico('eye')}</button>`;
-screen('/account/signin', {tab:'account', group:'Account', label:'Sign in', chain:accChain, title:() => t('Sign in'),
+scr('/account/signin', {tab:'account', group:'Account', label:'Sign in', chain:accChain, title:() => t('Sign in'),
   render(r){
     if (S.formFor.signin !== r.path) { S.formFor.signin = r.path; S.form.signin = r.query.filled ? {email:SARA.email, pw:'kbeauty2026'} : {}; S.ferr.signin = {}; }
     return {title:t('Sign in'), back:true, noTabs:true, bare:true, body:`<div class="pad narrow"><div class="lgc">${logo()}</div><p class="muted center">${t('Welcome back. Sign in to see your orders and saved addresses.')}</p>
@@ -35,7 +35,7 @@ screen('/account/signin', {tab:'account', group:'Account', label:'Sign in', chai
       ${cbxRow('faceid', '', S.faceid, isA() ? t('Unlock with fingerprint next time') : t('Use {f} next time', {f:X('pay', 'Face ID')}))}
       <div class="hr"></div><p class="center muted" style="margin:0">${t('New to K-Beauty Bliss?')}</p><button class="btn block ghost" style="margin-top:10px" ${go$('/account/register')}>${t('Create an account')}</button></div>`};
   }});
-screen('/account/register', {tab:'account', group:'Account', label:'Create account', chain:accChain, title:() => t('Create account'),
+scr('/account/register', {tab:'account', group:'Account', label:'Create account', chain:accChain, title:() => t('Create account'),
   render(r){
     if (S.formFor.register !== r.path) { S.formFor.register = r.path; S.form.register = r.query.filled ? {name:ut(SARA.name), email:SARA.email, phone:fmtPhone(SARA.phone), pw:'kbeauty2026'} : {}; S.ferr.register = {}; }
     const pw = fval('register', 'pw'), sc = Math.min(4, (pw.length >= 8) + /[A-Z]/.test(pw) + /\d/.test(pw) + (pw.length >= 12 || /[^A-Za-z0-9]/.test(pw)));
@@ -48,21 +48,21 @@ screen('/account/register', {tab:'account', group:'Account', label:'Create accou
       ${cbxRow('news', '', S.co.news, t('Send me offers and new arrivals (optional)'))}
       <div style="height:8px"></div><button class="btn block" data-act="register">${t('Create account')}</button><p class="tiny muted center">${t('By continuing you agree to the Terms and the Privacy policy.')}</p></div>`};
   }});
-screen('/account/forgot', {tab:'account', group:'Account', label:'Forgot password', chain:() => ['/account', '/account/signin'], title:() => t('Reset password'),
+scr('/account/forgot', {tab:'account', group:'Account', label:'Forgot password', chain:() => ['/account', '/account/signin'], title:() => t('Reset password'),
   render(r){
     if (S.formFor.forgot !== r.path) { S.formFor.forgot = r.path; S.form.forgot = {email:fval('signin', 'email')}; S.ferr.forgot = {}; S.sent.forgot = false; }
     return {title:t('Reset password'), back:true, noTabs:true, bare:true, body:`<div class="pad narrow"><p class="muted" style="margin-top:0">${t('Enter your email. We’ll send a link that opens this app to set a new password.')}</p>
       ${fld({fid:'forgot', k:'email', label:t('Email'), type:'email', ac:'email', im:'email', ekh:'send', icon:'mail', ltr:true})}<button class="btn block" data-act="forgot">${t('Send reset link')}</button>
       ${S.sent.forgot ? `<div class="note ok" role="status" style="margin-top:16px">${ico('check')}<span>${t('Sent. Check {e}. The link works for 60 minutes.', {e:X('email', esc(fval('forgot', 'email')))})}</span></div>` : ''}</div>`};
   }});
-screen('/account/biometric', {tab:'account', group:'Account', label:'Face ID / fingerprint unlock', chain:() => [], title:() => t('Unlock'),
+scr('/account/biometric', {tab:'account', group:'Account', label:'Face ID / fingerprint unlock', chain:() => [], title:() => t('Unlock'),
   render(){
     return {nobar:true, noTabs:true, bare:true, body:`<div class="state">${logo()}<div style="height:24px"></div><div class="bio">${isA() ? ico('finger', 'fi') : ico('faceid', 'fi')}<h2>${isA() ? t('Touch the fingerprint sensor') : t('Unlock with {f}', {f:X('pay', 'Face ID')})}</h2><p>${t('Your orders, addresses and saved details stay locked until it’s you.')}</p></div><button class="btn" ${go$('/account')} data-tabroot="account">${isA() ? t('Use fingerprint') : t('Use {f}', {f:X('pay', 'Face ID')})}</button><button class="lnk" ${go$('/account/signin')}>${t('Use password instead')}</button></div>`};
   }});
 
 /* profile, addresses */
 FORMS.profile = () => [{k:'name', v:'name'}, {k:'email', v:'email'}, {k:'phone', v:'phone'}];
-screen('/account/profile', {tab:'account', group:'Account', label:'Profile', chain:accChain, title:() => t('Profile'),
+scr('/account/profile', {tab:'account', group:'Account', label:'Profile', chain:accChain, title:() => t('Profile'),
   render(r){
     if (S.formFor.profile !== 'x') { S.formFor.profile = 'x'; S.form.profile = {name:ut(SARA.name), email:SARA.email, phone:fmtPhone(SARA.phone), skin:'combo'}; S.ferr.profile = {}; }
     const skin = fval('profile', 'skin');
@@ -71,14 +71,14 @@ screen('/account/profile', {tab:'account', group:'Account', label:'Profile', cha
       <span class="lab">${t('Skin type')}</span><div class="chips wrap" role="radiogroup">${[['dry', 'Dry'], ['oily', 'Oily'], ['combo', 'Combination'], ['sens', 'Sensitive']].map(([k, l]) => `<button class="chip${skin === k ? ' on' : ''}" role="radio" aria-checked="${skin === k}" data-act="skin" data-v="${k}">${t(l)}</button>`).join('')}</div>
       <div style="height:12px"></div><button class="lnk" ${go$('/account/forgot')}>${t('Change password')}</button></div>`, foot:`<button class="btn block" data-act="profile-save">${t('Save changes')}</button>`};
   }});
-screen('/account/addresses', {tab:'account', group:'Account', label:'Addresses', chain:accChain, title:() => t('Addresses'),
+scr('/account/addresses', {tab:'account', group:'Account', label:'Addresses', chain:accChain, title:() => t('Addresses'),
   render(){
     const L = S.co.addresses;
     return {title:t('Addresses'), back:true, body:`<div class="pad">${L.length ? L.map(a => `<div class="addr static"><span class="ai">${ico(a.label === 'Work' ? 'building' : 'pin')}</span><span class="grow"><b>${t(a.label)}${a.def ? ` <span class="tagp">${t('Default')}</span>` : ''}</b><small>${utH(a.name)} · ${LTR('+971 ' + fmtPhone(a.phone))}</small><small>${addrLine(a)}</small></span><span class="acts"><button class="ib" ${go$('/account/addresses/new?edit=' + a.id)} aria-label="${t('Edit')}">${ico('edit')}</button><button class="ib" data-act="addr-del" data-v="${a.id}" aria-label="${t('Delete')}">${ico('trash')}</button></span></div>`).join('') : empty('pin', t('No saved addresses'), t('Add one to check out faster.'), null)}
       <button class="btn block ghost" ${go$('/account/addresses/new')}>${ico('plus')}${t('Add address')}</button></div>`};
   },
   dual:() => null});
-screen('/account/addresses/new', {tab:'account', group:'Account', label:'Add / edit address', chain:() => ['/account', '/account/addresses'], title:() => t('Address'),
+scr('/account/addresses/new', {tab:'account', group:'Account', label:'Add / edit address', chain:() => ['/account', '/account/addresses'], title:() => t('Address'),
   render(r){
     if (S.formFor.addr !== r.path) { S.formFor.addr = r.path; S.ferr.addr = {}; const ed = r.query.edit && S.co.addresses.find(a => a.id === r.query.edit); if (ed) prefillAddr('addr', ed); else S.form.addr = r.query.filled ? SAMPLE_NEW() : {label:'Home', def:false}; }
     return {title:r.query.edit ? t('Edit address') : t('New address'), back:true, noTabs:true, body:`<div class="pad">${addrForm('addr')}</div>`, foot:`<button class="btn block" data-act="addr-save" data-v="account">${t('Save address')}</button>`};
@@ -86,7 +86,7 @@ screen('/account/addresses/new', {tab:'account', group:'Account', label:'Add / e
 
 /* orders */
 const statusPill = st => `<span class="stt ${st}">${t(ST_LABEL[st])}</span>`;
-screen('/account/orders', {tab:'account', group:'Account', label:'Orders', chain:accChain, title:() => t('Orders'),
+scr('/account/orders', {tab:'account', group:'Account', label:'Orders', chain:accChain, title:() => t('Orders'),
   render(r, ctx){
     const st = r.query.state;
     const sel = ctx.selected;
@@ -96,7 +96,7 @@ screen('/account/orders', {tab:'account', group:'Account', label:'Orders', chain
     return {title:t('Orders'), back:true, body, ptr:true};
   },
   dual:() => ({detail:true, def:() => '/account/orders/' + (S.orders[0] || {}).id, match:/^\/account\/orders\//, modes:['dual', 'expanded']})});
-screen('/account/orders/:id', {tab:'account', group:'Account', label:'Order detail', chain:() => ['/account', '/account/orders'], list:() => '/account/orders', title:r => '#' + r.params.id,
+scr('/account/orders/:id', {tab:'account', group:'Account', label:'Order detail', chain:() => ['/account', '/account/orders'], list:() => '/account/orders', title:r => '#' + r.params.id,
   render(r, ctx){
     const o = S.orders.find(x => x.id === r.params.id) || S.orders[0];
     const a = S.co.addresses.find(x => x.id === o.addr) || S.co.addresses[0] || savedAddresses()[0];
@@ -113,12 +113,12 @@ screen('/account/orders/:id', {tab:'account', group:'Account', label:'Order deta
   }});
 
 /* settings */
-screen('/account/notifications', {tab:'account', group:'Account', label:'Notification settings', chain:accChain, title:() => t('Notifications'),
+scr('/account/notifications', {tab:'account', group:'Account', label:'Notification settings', chain:accChain, title:() => t('Notifications'),
   render(){
     const N = [['orders', 'Order updates', 'Confirmed, shipped, delivered'], ['stock', 'Back in stock', 'Items you asked about'], ['drop', 'Price drops on your wishlist', 'Only for saved items'], ['bag', 'Bag reminders', 'At most once a day'], ['offers', 'Offers and campaigns', 'New arrivals and sales'], ['blog', 'Skincare tips', 'New blog posts']];
     return {title:t('Notifications'), back:true, body:`<div class="pad" style="padding-bottom:0"><div class="note ok">${ico('check')}<span>${t('Notifications are allowed for K-Beauty Bliss in the phone’s Settings.')}</span></div></div><div class="grp">${t('Push notifications')}</div><div class="list mx">${N.map(([k, l, s]) => toggleRow('ntog', k, S.notif[k], t(l), t(s))).join('')}</div><p class="tiny muted pnote">${t('Order updates also arrive by email, whatever you choose here.')}</p>`};
   }});
-screen('/account/language', {tab:'account', group:'Account', label:'Language & region', chain:accChain, title:() => t('Language & region'),
+scr('/account/language', {tab:'account', group:'Account', label:'Language & region', chain:accChain, title:() => t('Language & region'),
   render(){
     const other = AR ? '../en/index.html#/account/language' : '../ar/index.html#/account/language';
     const langs = AR
@@ -128,7 +128,7 @@ screen('/account/language', {tab:'account', group:'Account', label:'Language & r
       ${AR ? `<div class="grp px0">${t('Numbers')}</div><div class="list" role="radiogroup"><button class="li" data-act="digits" data-v="latn" role="radio" aria-checked="${S.digits === 'latn'}"><span class="grow">${t('Latin digits')} ${LTR('123')}</span>${radio(S.digits === 'latn')}</button><button class="li" data-act="digits" data-v="arab" role="radio" aria-checked="${S.digits === 'arab'}"><span class="grow">${t('Arabic digits')} ١٢٣</span>${radio(S.digits === 'arab')}</button></div><p class="tiny muted">${t('Default: Latin digits, as on the website and UAE receipts.')}</p>` : ''}
       <div class="grp px0">${t('Region')}</div><div class="list"><div class="li"><span class="grow">${t('Country')}</span><span class="v">${t('United Arab Emirates')}</span></div><div class="li"><span class="grow">${t('Currency')}</span><span class="v">${AR ? 'درهم إماراتي (د.إ)' : 'UAE dirham (AED)'}</span></div></div></div>`};
   }});
-screen('/account/delete', {tab:'account', group:'Account', label:'Delete account', chain:accChain, title:() => t('Delete account'),
+scr('/account/delete', {tab:'account', group:'Account', label:'Delete account', chain:accChain, title:() => t('Delete account'),
   render(){
     return {title:t('Delete account'), back:true, body:`<div class="pad"><div class="state" style="min-height:0;padding:12px 0 18px"><div class="ic errc">${ico('trash')}</div><h2>${t('Delete your account?')}</h2></div><p>${t('This permanently deletes:')}</p><ul class="dl"><li>${t('your profile, addresses and wishlist')}</li><li>${t('your saved sign-in on every device')}</li><li>${t('your marketing preferences')}</li></ul><div class="note warn">${ico('info')}<span>${t('Invoices for past orders are kept for 5 years, as UAE VAT law requires.')}</span></div></div>`, foot:`<button class="btn block danger" data-sheet="delconfirm">${t('Delete account')}</button><button class="btn block ghost noborder" style="margin-top:8px" data-act="back">${t('Keep my account')}</button>`};
   }});
@@ -136,7 +136,7 @@ screen('/account/delete', {tab:'account', group:'Account', label:'Delete account
 /* ── content ───────────────────────────────────────────────────────────── */
 FORMS.msg = () => [{k:'name', v:'name'}, {k:'email', v:'email'}, {k:'topic', pick:true}, {k:'order', opt:true}, {k:'body', v:'msg'}];
 const TOPICS = [['order', 'An order'], ['product', 'A product question'], ['returns', 'Returns'], ['other', 'Something else']];
-screen('/contact', {tab:'account', group:'Content', label:'Contact (WhatsApp here only)', chain:accChain, list:() => '/faq', title:() => t('Contact us'),
+scr('/contact', {tab:'account', group:'Content', label:'Contact (WhatsApp here only)', chain:accChain, list:() => '/faq', title:() => t('Contact us'),
   render(r){
     if (S.formFor.msg !== 'x') { S.formFor.msg = 'x'; S.form.msg = S.user ? {name:ut(SARA.name), email:SARA.email, topic:'order', order:'KBB-56214'} : {}; S.ferr.msg = {}; }
     if (r.query.filled && !fval('msg', 'body')) S.form.msg.body = t('Hi, can I change the delivery time to the evening?');
@@ -154,14 +154,14 @@ screen('/contact', {tab:'account', group:'Content', label:'Contact (WhatsApp her
     return {title:t('Contact us'), back:true, body};
   }});
 const FAQS = [['How long does delivery take?', '1–3 working days across the UAE. {a}, free over {b}.'], ['Are the products authentic?', 'Yes. Every product comes from the brand or its authorised distributor.'], ['Can I pay in instalments?', 'Yes, with Tabby or Tamara: 4 interest-free payments.'], ['Do you offer cash on delivery?', 'In the UAE, for a {c} fee.'], ['How do I return an item?', 'Orders → the order → Help. Unopened items only, within 7 days.'], ['Do you deliver outside the UAE?', 'Yes, to the GCC: {d}, free over {e}.']];
-screen('/faq', {tab:'account', group:'Content', label:'FAQ', chain:accChain, title:() => t('FAQ'),
+scr('/faq', {tab:'account', group:'Content', label:'FAQ', chain:accChain, title:() => t('FAQ'),
   render(){
     const v = {a:money(SET.ship_uae), b:money(SET.free_over_uae), c:money(SET.cod_fee), d:money(SET.ship_gcc), e:money(SET.free_over_gcc)};
     return {title:t('FAQ'), back:true, body:`<div class="pad" style="padding-top:4px">${FAQS.map(([q, a], i) => { const open = S.open['f' + i] ?? i === 0; return `<div class="faq${open ? ' open' : ''}"><button data-act="acc" data-v="f${i}" data-def="${i === 0 ? 1 : 0}" aria-expanded="${!!open}">${t(q)}${ico('chevD')}</button>${open ? `<p>${t(a, v)}</p>` : ''}</div>`; }).join('')}<div style="height:16px"></div><button class="btn block soft" ${go$('/contact')}>${t('Still need help? Contact us')}</button></div>`};
   },
   dual:() => ({detail:true, def:() => '/contact', match:/^\/contact/, modes:['dual', 'expanded']})});
 const POLICIES = [['shipping', 'Shipping', 'truck'], ['returns', 'Returns & refunds', 'refresh'], ['privacy', 'Privacy policy', 'shield'], ['terms', 'Terms of sale', 'doc']];
-screen('/policies', {tab:'account', group:'Content', label:'Policies', chain:accChain, title:() => t('Policies'),
+scr('/policies', {tab:'account', group:'Content', label:'Policies', chain:accChain, title:() => t('Policies'),
   render(r, ctx){
     return {title:t('Policies'), back:true, body:`<div class="pad"><div class="list">${POLICIES.map(([k, l, i]) => `<button class="li${ctx.selected === '/policy/' + k ? ' sel' : ''}" ${go$('/policy/' + k)}>${ico(i)}<span class="grow">${t(l)}</span>${ico('chevR', 'chev flip')}</button>`).join('')}</div></div>`};
   },
@@ -176,25 +176,25 @@ function policyText(k){
   }[k] || [];
   return T.map(([h, p]) => `<h2>${t(h)}</h2><p>${t(p, v)}</p>`).join('');
 }
-screen('/policy/:k', {tab:'account', group:'Content', label:'Policy page', chain:() => ['/account', '/policies'], list:() => '/policies', title:r => t((POLICIES.find(x => x[0] === r.params.k) || POLICIES[0])[1]),
+scr('/policy/:k', {tab:'account', group:'Content', label:'Policy page', chain:() => ['/account', '/policies'], list:() => '/policies', title:r => t((POLICIES.find(x => x[0] === r.params.k) || POLICIES[0])[1]),
   render(r){
     const p = POLICIES.find(x => x[0] === r.params.k) || POLICIES[0];
     return {title:t(p[1]), back:true, body:`<div class="prose"><h1 class="h1">${t(p[1])}</h1><p class="small muted">${t('Last updated {d}', {d:date('2026-10-01')})}</p>${policyText(p[0])}</div>`};
   }});
-screen('/about', {tab:'account', group:'Content', label:'About', chain:accChain, title:() => t('About'),
+scr('/about', {tab:'account', group:'Content', label:'About', chain:accChain, title:() => t('About'),
   render(){
     return {title:t('About'), back:true, body:`<div class="pad center">${logo()}</div><div class="prose"><p>${t('K-Beauty Bliss brings authentic Korean skincare to the UAE: {n}+ products from {b} brands, delivered fast across the Emirates.', {n:num(Math.floor(((D.counts || {}).catalogue || 760) / 10) * 10), b:num((D.counts || {}).brands_on_site || 96)})}</p><p>${t('Every product is sourced from the brand or its authorised distributor.')}</p></div><div class="trust">${(D.trust || []).map((x, i) => `<div><i>${ico(['shield', 'truck', 'card', 'chat'][i])}</i><span>${esc((x.t || []).join(' '))}</span></div>`).join('')}</div>`};
   }});
 /* blog: the site has no Arabic posts yet; the Arabic app reads its own
    translation from the string table (blog:<slug>:…) and says so */
 const bt = (x, f) => AR ? (DICT['blog:' + x.slug + ':' + f] || null) : x[f];
-screen('/blog', {tab:'account', group:'Content', label:'Blog list', chain:accChain, title:() => t('Blog'),
+scr('/blog', {tab:'account', group:'Content', label:'Blog list', chain:accChain, title:() => t('Blog'),
   render(r, ctx){
     const L = (D.posts || []).filter(x => bt(x, 'title'));
     return {title:t('Blog'), large:true, back:true, body:`<div class="pad bloglist">${L.map(x => `<button class="blog${ctx.selected === '/blog/' + x.slug ? ' sel' : ''}" ${go$('/blog/' + x.slug)}>${x.cover ? `<img src="${x.cover}" alt="" loading="lazy">` : ''}<span class="bt"><b class="clamp2">${esc(bt(x, 'title'))}</b><small class="clamp2">${esc(bt(x, 'excerpt') || '')}</small><small>${date(x.date)}</small></span></button>`).join('')}</div>`, ptr:true};
   },
   dual:() => ({detail:true, def:() => '/blog/' + ((D.posts || [])[0] || {}).slug, match:/^\/blog\//, modes:['dual', 'expanded']})});
-screen('/blog/:slug', {tab:'account', group:'Content', label:'Blog article', chain:() => ['/account', '/blog'], list:() => '/blog', title:r => { const x = (D.posts || []).find(p => p.slug === r.params.slug) || (D.posts || [])[0] || {}; return bt(x, 'title') || ''; },
+scr('/blog/:slug', {tab:'account', group:'Content', label:'Blog article', chain:() => ['/account', '/blog'], list:() => '/blog', title:r => { const x = (D.posts || []).find(p => p.slug === r.params.slug) || (D.posts || [])[0] || {}; return bt(x, 'title') || ''; },
   render(r){
     const x = (D.posts || []).find(p => p.slug === r.params.slug) || (D.posts || [])[0] || {};
     const paras = AR ? (DICT['blog:' + x.slug + ':body'] || []) : ((D.articles || {})[x.slug] || []);
@@ -204,9 +204,9 @@ screen('/blog/:slug', {tab:'account', group:'Content', label:'Blog article', cha
   }});
 
 /* ── start & system states ─────────────────────────────────────────────── */
-screen('/start/splash', {tab:'home', group:'States', label:'Splash', chain:() => [], title:() => t('Splash'),
+scr('/start/splash', {tab:'home', group:'States', label:'Splash', chain:() => [], title:() => t('Splash'),
   render(){ return {nobar:true, bare:true, noTabs:true, raw:`<div class="splash">${logo()}<div class="ld"><i></i></div></div>`}; }});
-screen('/start/notifications', {tab:'home', group:'States', label:'First run · notifications', chain:() => [], title:() => t('Notifications'),
+scr('/start/notifications', {tab:'home', group:'States', label:'First run · notifications', chain:() => [], title:() => t('Notifications'),
   render(){
     return {nobar:true, bare:true, noTabs:true, body:`<div class="onb"><div class="top"><div class="state" style="min-height:0;padding:0"><div class="ic">${ico('bell')}</div></div><h1>${t('Know the moment it ships')}</h1><p>${t('Order updates, back-in-stock and price drops on your wishlist. You choose which ones, any time.')}</p>
       <div class="notifmock"><span class="ai">${LOTUS}</span><span class="grow"><b>${t('Your order is on its way')}</b><small>${t('{id} left our Dubai warehouse. Arrives today.', {id:X('code', '#KBB-56214')})}</small></span></div>
@@ -214,9 +214,9 @@ screen('/start/notifications', {tab:'home', group:'States', label:'First run · 
       <button class="btn block" data-act="perm">${t('Turn on notifications')}</button><button class="btn block ghost noborder" style="margin-top:10px" ${go$('/home')} data-tabroot="home">${t('Not now')}</button>
       <p class="tiny muted center" style="margin:8px 0 0">${t('Next, the phone asks once. If you say no, Account → Notifications explains how to turn them on.')}</p></div>`};
   }});
-screen('/state/offline', {tab:'home', group:'States', label:'Offline screen', chain:() => [], title:() => t('Offline'),
+scr('/state/offline', {tab:'home', group:'States', label:'Offline screen', chain:() => [], title:() => t('Offline'),
   render(){ return {nobar:true, body:`<div class="state"><div class="ic">${ico('wifioff')}</div><h2>${t('You’re offline')}</h2><p>${t('Check Wi-Fi or mobile data. Your bag and wishlist are saved on this phone.')}</p><button class="btn" data-act="retry">${ico('refresh')}${t('Try again')}</button><button class="lnk" data-tab="bag">${t('Open my bag')}</button></div>`}; }});
-screen('/state/update', {tab:'home', group:'States', label:'Update required', chain:() => [], title:() => t('Update'),
+scr('/state/update', {tab:'home', group:'States', label:'Update required', chain:() => [], title:() => t('Update'),
   render(){ return {nobar:true, noTabs:true, bare:true, body:`<div class="state">${logo()}<div style="height:12px"></div><div class="ic">${ico('down')}</div><h2>${t('Time for an update')}</h2><p>${t('This version can no longer place orders safely. The update takes a minute; your bag stays as it is.')}</p><button class="btn" data-act="toast" data-v="Opens the store page.">${isA() ? t('Update on {s}', {s:X('pay', 'Google Play')}) : t('Update on the {s}', {s:X('pay', 'App Store')})}</button><p class="tiny muted">${t('Set in the admin: App → Mobile app → Minimum version.')}</p></div>`}; }});
 
 /* ── sheets (bottom sheets / centred dialogs from Medium up) ──────────── */
@@ -232,6 +232,7 @@ function sheetHTML(k){
   if (k === 'sort') return `<div class="sheet" role="dialog" aria-label="${t('Sort by')}">${head(t('Sort by'))}<div class="sb2"><div class="list" role="radiogroup">${SORTS.map(([v, l]) => `<button class="li" data-act="sort" data-k="${key}" data-v="${v}" role="radio" aria-checked="${(S.sort[key] || 'pop') === v}"><span class="grow">${t(l)}</span>${radio((S.sort[key] || 'pop') === v)}</button>`).join('')}</div></div></div>`;
   if (k === 'emirate') { const cur2 = fval('addr', 'emirate'); return `<div class="sheet" role="dialog" aria-label="${t('Emirate')}">${head(t('Emirate'))}<div class="sb2" role="listbox">${EMIRATES.map(e => `<button class="pickrow" role="option" aria-selected="${cur2 === e[0]}" data-act="pick" data-k="emirate" data-v="${e[0]}"><span>${t(e[1])}</span>${cur2 === e[0] ? ico('check') : ''}</button>`).join('')}</div></div>`; }
   if (k === 'emirate-first') return `<div class="sheet" role="dialog" aria-label="${t('Area')}">${head(t('Area'))}<div class="sb2"><div class="note">${ico('info')}<span>${t('Choose your emirate first. The areas are listed by emirate.')}</span></div><div style="height:12px"></div><button class="btn block" data-sheet="emirate">${t('Choose emirate')}</button></div></div>`;
+  if (k === 'area' && !fval('addr', 'emirate')) return sheetHTML('emirate-first');
   if (k === 'area') {
     const em = fval('addr', 'emirate'), cur2 = fval('addr', 'area');
     const q = (S.areaQ || '').trim().toLowerCase();

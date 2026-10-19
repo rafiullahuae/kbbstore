@@ -28,7 +28,7 @@ function bagSummary(T){
   return `<div class="bsum">${couponBox()}${S.coupon ? '' : `<p class="tiny muted promo">${ico('gift')}${t('First order? Use {c} for 10% off.', {c:X('code', '<b>WELCOME10</b>')})}</p>`}${totals(T)}
     <button class="bnpl" data-sheet="bnpl"><span class="lg"><span class="tabby" data-x="pay">tabby</span></span><span class="grow">${t('Or 4 interest-free payments of {v}', {v:`<b>${money(inst(T.total))}</b>`})}</span>${ico('chevR', 'flip')}</button></div>`;
 }
-screen('/bag', {tab:'bag', group:'Bag & Checkout', label:'Bag', title:() => t('Bag'),
+scr('/bag', {tab:'bag', group:'Bag & Checkout', label:'Bag', title:() => t('Bag'),
   render(r, ctx){
     const st = r.query.state;
     if (st === 'loading') return {title:t('Bag'), large:true, body:`<div class="pad">${skel(64, '100%', 14)}<div style="height:16px"></div>${[1, 2].map(() => `<div style="display:flex;gap:12px;margin-bottom:16px">${skel(76, '76px', 12)}<div style="flex:1">${skel(12, '40%')}<div style="height:8px"></div>${skel(16, '90%')}<div style="height:8px"></div>${skel(30, '60%')}</div></div>`).join('')}</div>`};
@@ -56,7 +56,7 @@ function coPage(n, title, inner, foot, ctx, o = {}){
 const coEmptyGuard = ctx => !S.bag.length ? {title:t('Checkout'), back:true, noTabs:true, body:empty('bag', t('Your bag is empty'), t('Add something you love, then check out.'), t('Start shopping'), '/categories')} : null;
 
 /* 1 · Bag review */
-screen('/checkout/bag', {tab:'bag', group:'Bag & Checkout', label:'1 · Bag review', chain:() => [], title:() => t('Review your bag'),
+scr('/checkout/bag', {tab:'bag', group:'Bag & Checkout', label:'1 · Bag review', chain:() => [], title:() => t('Review your bag'),
   render(r, ctx){
     const g = coEmptyGuard(ctx); if (g) return g;
     const T = bagTotals({noCod:true});
@@ -66,7 +66,7 @@ screen('/checkout/bag', {tab:'bag', group:'Bag & Checkout', label:'1 · Bag revi
 
 /* 2 · Contact & sign-in choice */
 FORMS.contact = () => [{k:'email', v:'email'}];
-screen('/checkout/contact', {tab:'bag', group:'Bag & Checkout', label:'2 · Contact & sign-in', chain:() => chainTo('/checkout/contact'), title:() => t('Contact'),
+scr('/checkout/contact', {tab:'bag', group:'Bag & Checkout', label:'2 · Contact & sign-in', chain:() => chainTo('/checkout/contact'), title:() => t('Contact'),
   render(r, ctx){
     const g = coEmptyGuard(ctx); if (g) return g;
     if (r.query.guest === '1' && !S.co._g) { S.co.guest = true; S.co._g = true; }
@@ -84,7 +84,7 @@ screen('/checkout/contact', {tab:'bag', group:'Bag & Checkout', label:'2 · Cont
   }, dual:() => 'halves'});
 
 /* 3 · Delivery address: saved list → new address form */
-screen('/checkout/address', {tab:'bag', group:'Bag & Checkout', label:'3 · Delivery address (saved)', chain:() => chainTo('/checkout/address'), title:() => t('Delivery address'),
+scr('/checkout/address', {tab:'bag', group:'Bag & Checkout', label:'3 · Delivery address (saved)', chain:() => chainTo('/checkout/address'), title:() => t('Delivery address'),
   render(r, ctx){
     const g = coEmptyGuard(ctx); if (g) return g;
     const L = S.co.addresses;
@@ -119,7 +119,7 @@ function prefillAddr(fid, a){
   S.form[fid] = {name:ut(a.name), phone:fmtPhone(a.phone), emirate:a.emirate, area:a.area, building:ut(a.building), street:ut(a.street), flat:ut(a.flat), landmark:ut(a.landmark), label:a.label, def:a.def, edit:a.id};
 }
 const SAMPLE_NEW = () => ({name:ut('Sara Al Mansoori'), phone:'55 987 6543', emirate:'sharjah', area:'al-majaz', building:ut('Al Majaz Pearl Tower'), street:ut('Jamal Abdul Nasser Street'), flat:ut('Flat 905, 9th floor'), landmark:'', label:'Home', def:false});
-screen('/checkout/address/new', {tab:'bag', group:'Bag & Checkout', label:'3b · New address form', chain:() => chainTo('/checkout/address').concat(['/checkout/address']), title:() => t('New address'),
+scr('/checkout/address/new', {tab:'bag', group:'Bag & Checkout', label:'3b · New address form', chain:() => chainTo('/checkout/address').concat(['/checkout/address']), title:() => t('New address'),
   render(r, ctx){
     const g = coEmptyGuard(ctx); if (g) return g;
     const key = r.path;
@@ -135,7 +135,7 @@ screen('/checkout/address/new', {tab:'bag', group:'Bag & Checkout', label:'3b ·
 
 /* 4 · Delivery method */
 function arrival(days){ const d = new Date('2026-10-19T12:00:00'); let n = 0; while (n < days) { d.setDate(d.getDate() + 1); if (d.getDay() !== 5) n++; } return date(d.toISOString().slice(0, 10), {weekday:'short', day:'numeric', month:'short'}); }
-screen('/checkout/delivery', {tab:'bag', group:'Bag & Checkout', label:'4 · Delivery method', chain:() => chainTo('/checkout/delivery'), title:() => t('Delivery'),
+scr('/checkout/delivery', {tab:'bag', group:'Bag & Checkout', label:'4 · Delivery method', chain:() => chainTo('/checkout/delivery'), title:() => t('Delivery'),
   render(r, ctx){
     const g = coEmptyGuard(ctx); if (g) return g;
     const T = bagTotals(), a = coAddress(), gcc = a && a.country !== 'AE';
@@ -165,7 +165,7 @@ function payList(){
   return `<div role="radiogroup" aria-label="${t('Payment method')}">${M.map(([k, lg, l, s]) => { const off = k === 'cod' && !uae; return `<button class="opt pm${S.co.pay === k ? ' on' : ''}${off ? ' off' : ''}" data-act="pay" data-v="${k}" role="radio" aria-checked="${S.co.pay === k}"${off ? ' aria-disabled="true"' : ''}>${radio(S.co.pay === k)}<span class="grow"><b>${l}</b><small>${s}</small></span><span class="pmlogo">${lg}</span></button>`; }).join('')}</div>`;
 }
 const payFoot = () => `<button class="btn block" data-act="co-pay">${t('Continue')}</button>`;
-screen('/checkout/payment', {tab:'bag', group:'Bag & Checkout', label:'5 · Payment method', chain:() => chainTo('/checkout/payment'), title:() => t('Payment'),
+scr('/checkout/payment', {tab:'bag', group:'Bag & Checkout', label:'5 · Payment method', chain:() => chainTo('/checkout/payment'), title:() => t('Payment'),
   render(r, ctx){
     const g = coEmptyGuard(ctx); if (g) return g;
     const inner = `<div class="pad">${payList()}<div class="note">${ico('shield')}<span>${t('Payments are processed by Stripe, Tabby and Tamara. We never see or store your card number.')}</span></div></div>`;
@@ -175,7 +175,7 @@ screen('/checkout/payment', {tab:'bag', group:'Bag & Checkout', label:'5 · Paym
 
 /* 6 · Per-method steps */
 FORMS.card = () => [{k:'number', v:'card'}, {k:'exp', v:'exp'}, {k:'cvc', v:'cvc'}, {k:'cname', v:'name'}];
-screen('/checkout/card', {tab:'bag', group:'Bag & Checkout', label:'6a · Card details', chain:() => CO_CHAIN, title:() => t('Card details'),
+scr('/checkout/card', {tab:'bag', group:'Bag & Checkout', label:'6a · Card details', chain:() => CO_CHAIN, title:() => t('Card details'),
   render(r, ctx){
     const g = coEmptyGuard(ctx); if (g) return g;
     S.co.pay = 'card';
@@ -190,7 +190,7 @@ screen('/checkout/card', {tab:'bag', group:'Bag & Checkout', label:'6a · Card d
     return coPage(4, t('Card details'), inner, `<button class="btn block" data-act="card-next">${t('Continue')}</button>`, ctx, {sub:t('Step 6 of 9 · card')});
   }, dual:() => 'halves'});
 FORMS.otp = () => [{k:'code', v:'req'}];
-screen('/checkout/3ds', {tab:'bag', group:'Bag & Checkout', label:'6b · Card 3-D Secure', chain:() => CO_CHAIN.concat(['/checkout/card']), title:() => t('Verify your payment'),
+scr('/checkout/3ds', {tab:'bag', group:'Bag & Checkout', label:'6b · Card 3-D Secure', chain:() => CO_CHAIN.concat(['/checkout/card']), title:() => t('Verify your payment'),
   render(r, ctx){
     const g = coEmptyGuard(ctx); if (g) return g;
     const T = bagTotals();
@@ -208,7 +208,7 @@ function walletSheet(){
   if (isA()) return `<div class="sheet gp" role="dialog" aria-label="Google Pay"><div class="grab"></div><div class="sh2"><div></div><b>${X('pay', 'Google Pay')}</b><div class="e"><button class="ib" data-act="back" aria-label="${t('Close')}">${ico('close')}</button></div></div><div class="sb2 ap"><div class="apr"><span>${t('Pay to')}</span><span class="grow"><b>${brandWord()}</b></span></div><div class="apr"><span>${t('Card')}</span><span class="grow"><b>${LTR('Visa •••• 4242')}</b></span>${ico('chevR', 'chev flip')}</div><div class="apr"><span>${t('Ship to')}</span><span class="grow"><b>${utH(a.name)}</b><span class="small">${addrLine(a, {short:true})}</span></span>${ico('chevR', 'chev flip')}</div><div class="total"><span>${t('Total')}</span><b>${money(T.total)}</b></div><button class="btn block dark gpb" data-act="authorise" data-v="gpay" data-hap="success">${t('Continue')}</button><p class="tiny" style="text-align:center;color:#5f6368">${t('Then confirm with your fingerprint or screen lock.')}</p><button class="lnk sm dcl" data-act="decline" data-v="gpay">${t('Simulate a declined card')}</button></div></div>`;
   return `<div class="sheet sheetpay" role="dialog" aria-label="Apple Pay"><div class="grab"></div><div class="sh2"><div><span class="paybtn mini" data-x="pay">${APPLE}Pay</span></div><b></b><div class="e"><button class="ib" data-act="back" aria-label="${t('Cancel')}">${ico('close')}</button></div></div><div class="sb2 ap"><div class="apr"><span>${t('Card')}</span><span class="grow"><b>${LTR('Visa •••• 4242')}</b><span class="small">${X('bank', 'Emirates NBD')}</span></span>${ico('chevR', 'chev flip')}</div><div class="apr"><span>${t('Ship to')}</span><span class="grow"><b>${utH(a.name)}</b><span class="small">${addrLine(a, {short:true})}</span></span>${ico('chevR', 'chev flip')}</div><div class="apr"><span>${t('Contact')}</span><span class="grow"><b>${X('email', SARA.email)}</b></span>${ico('chevR', 'chev flip')}</div><div class="total"><span>${t('Pay K-Beauty Bliss')}</span><b>${money(T.total)}</b></div><button class="side" data-act="authorise" data-v="apple" data-hap="success">${ico('faceid')}<span>${t('Confirm with Side Button')}</span></button><button class="lnk sm dcl" data-act="decline" data-v="apple">${t('Simulate a declined card')}</button></div></div>`;
 }
-screen('/checkout/wallet', {tab:'bag', group:'Bag & Checkout', label:'6c · Apple Pay / Google Pay sheet', chain:() => CO_CHAIN, title:() => isA() ? 'Google Pay' : 'Apple Pay',
+scr('/checkout/wallet', {tab:'bag', group:'Bag & Checkout', label:'6c · Apple Pay / Google Pay sheet', chain:() => CO_CHAIN, title:() => isA() ? 'Google Pay' : 'Apple Pay',
   render(r, ctx){
     const g = coEmptyGuard(ctx); if (g) return g;
     S.co.pay = isA() ? 'gpay' : 'apple';
@@ -228,7 +228,7 @@ function bnplPage(k){
     <p class="tiny muted">${t('{p}’s own approval screen, opened inside our app by their SDK.', {p:k === 'tabby' ? t('Tabby') : t('Tamara')})}</p></div></div>`;
 }
 FORMS.bnpl = () => [{k:'phone', v:'phone'}];
-for (const k of ['tabby', 'tamara']) screen('/checkout/' + k, {tab:'bag', group:'Bag & Checkout', label:k === 'tabby' ? '6d · Tabby approval' : '6e · Tamara approval', chain:() => CO_CHAIN, title:() => k === 'tabby' ? t('Tabby') : t('Tamara'),
+for (const k of ['tabby', 'tamara']) scr('/checkout/' + k, {tab:'bag', group:'Bag & Checkout', label:k === 'tabby' ? '6d · Tabby approval' : '6e · Tamara approval', chain:() => CO_CHAIN, title:() => k === 'tabby' ? t('Tabby') : t('Tamara'),
   render(r, ctx){
     const g = coEmptyGuard(ctx); if (g) return g;
     S.co.pay = k;
@@ -236,7 +236,7 @@ for (const k of ['tabby', 'tamara']) screen('/checkout/' + k, {tab:'bag', group:
     return coPage(4, k === 'tabby' ? t('Tabby') : t('Tamara'), bnplPage(k), `<button class="btn block ${k}b" data-act="bnpl-ok" data-v="${k}">${t('Confirm and continue')}</button><button class="btn block ghost noborder" style="margin-top:6px" data-act="decline" data-v="${k}">${t('Simulate a declined application')}</button>`, ctx, {sub:t('Step 6 of 9 · approval')});
   }, dual:() => 'halves'});
 FORMS.cod = () => [{k:'phone', v:'phone'}];
-screen('/checkout/cod', {tab:'bag', group:'Bag & Checkout', label:'6f · Cash on delivery', chain:() => CO_CHAIN, title:() => t('Cash on delivery'),
+scr('/checkout/cod', {tab:'bag', group:'Bag & Checkout', label:'6f · Cash on delivery', chain:() => CO_CHAIN, title:() => t('Cash on delivery'),
   render(r, ctx){
     const g = coEmptyGuard(ctx); if (g) return g;
     S.co.pay = 'cod';
@@ -250,7 +250,7 @@ screen('/checkout/cod', {tab:'bag', group:'Bag & Checkout', label:'6f · Cash on
   }, dual:() => 'halves'});
 
 /* 7 · Review & place order */
-screen('/checkout/review', {tab:'bag', group:'Bag & Checkout', label:'7 · Review & place order', chain:() => CO_CHAIN.concat([METHOD_ROUTE[S.co.pay] || '/checkout/card']), title:() => t('Review'),
+scr('/checkout/review', {tab:'bag', group:'Bag & Checkout', label:'7 · Review & place order', chain:() => CO_CHAIN.concat([METHOD_ROUTE[S.co.pay] || '/checkout/card']), title:() => t('Review'),
   render(r, ctx){
     const g = coEmptyGuard(ctx); if (g) return g;
     const T = bagTotals(), a = coAddress();
@@ -271,7 +271,7 @@ screen('/checkout/review', {tab:'bag', group:'Bag & Checkout', label:'7 · Revie
   }, dual:() => 'halves'});
 
 /* 8 · Order placed */
-screen('/checkout/placed', {tab:'bag', group:'Bag & Checkout', label:'8 · Order placed', chain:() => [], title:() => t('Order placed'),
+scr('/checkout/placed', {tab:'bag', group:'Bag & Checkout', label:'8 · Order placed', chain:() => [], title:() => t('Order placed'),
   render(r, ctx){
     let o = S.orders.find(x => x.id === S.lastOrder);
     if (!o) { o = {...S.orders[0], id:'KBB-56215', st:'proc', items:S.bag.length ? S.bag.slice() : S.orders[0].items, total:S.bag.length ? bagTotals().total : S.orders[0].total, pay:S.co.pay, addr:S.co.addr}; }
@@ -284,7 +284,7 @@ screen('/checkout/placed', {tab:'bag', group:'Bag & Checkout', label:'8 · Order
 
 /* 9 · Payment failed → retry, the bag is kept */
 const FAIL = {card:['Your bank declined the card. Nothing was charged.', 'card_declined · insufficient_funds'], apple:['The payment was cancelled in Apple Pay. Nothing was charged.', 'payment_intent_authentication_failure'], gpay:['Google Pay couldn’t complete the payment. Nothing was charged.', 'payment_intent_authentication_failure'], tabby:['Tabby couldn’t approve this order. Nothing was charged.', 'tabby: rejected · order_amount_too_high'], tamara:['Tamara couldn’t approve this order. Nothing was charged.', 'tamara: declined · risk_assessment']};
-screen('/checkout/failed', {tab:'bag', group:'Bag & Checkout', label:'9 · Payment failed → retry', chain:() => CO_CHAIN, title:() => t('Payment'),
+scr('/checkout/failed', {tab:'bag', group:'Bag & Checkout', label:'9 · Payment failed → retry', chain:() => CO_CHAIN, title:() => t('Payment'),
   render(r, ctx){
     const m = r.query.m || S.co.failed || 'card';
     const T = bagTotals();

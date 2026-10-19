@@ -13,30 +13,30 @@ function sbcBlock(){
   const shot = items[0];
   const target = CAT[CONCERN_CAT[c.k]] ? '/category/' + CONCERN_CAT[c.k] : '/products?concern=' + c.k;
   return `<section class="sec sbc" data-sec="sbc"><div class="sh"><h2>${t('Shop by Concern')}</h2></div>
-  <div class="tabs" role="tablist">${C.map((x, i) => `<button class="tab2${i === S.conc ? ' on' : ''}" role="tab" aria-selected="${i === S.conc}" data-act="conc" data-v="${i}"><i>${cIco(x.k)}</i>${esc(concernName(x))}</button>`).join('')}</div>
-  <div class="body2"><div class="panel" role="tabpanel"><div class="txt"><h3>${esc(c.name)}</h3><div class="sub">${esc(c.sub)}</div>
-  <span class="tipl">${ico('sparkle')}${t('TIP')}</span><p>${esc(c.tip)}</p></div>
+  <div class="tabs" role="tablist">${C.map((x, i) => `<button class="tab2${i === S.conc ? ' on' : ''}" role="tab" aria-selected="${i === S.conc}" data-act="conc" data-v="${i}"><i>${cIco(x.k)}</i>${dt(concernName(x))}</button>`).join('')}</div>
+  <div class="body2"><div class="panel" role="tabpanel"><div class="txt"><h3>${dt(c.name)}</h3><div class="sub">${dt(c.sub)}</div>
+  <span class="tipl">${ico('sparkle')}${t('TIP')}</span><p>${dt(c.tip)}</p></div>
   ${shot ? `<span class="shot"><img src="${shot.img200}" alt="" loading="lazy"></span>` : ''}
-  <button class="btn" ${go$(target)}>${t('View all')} · ${esc(concernName(c))}</button></div>
+  <button class="btn" ${go$(target)}>${t('View all')} · ${dt(concernName(c))}</button></div>
   <div class="rail2">${items.map(lcard).join('')}</div></div></section>`;
 }
 function bannerTarget(b){ const br = D.brands.find(x => (b.mobile + ' ' + b.desktop).toLowerCase().includes(x.slug.replace(/-/g, ''))) || D.brands.find(x => (b.mobile + ' ' + b.desktop).toLowerCase().includes(x.slug)); return br ? '/brand/' + br.slug : '/products?tag=trending'; }
 function catTile(c){
   const img = c.banner || (P[c.items[0]] || {}).img;
-  return `<button class="ctile" ${go$('/category/' + c.k)}><span class="ci"><img src="${img}" alt="" loading="lazy"${c.banner ? ' class="cover"' : ''}></span><span class="cn"><b class="clamp2">${esc(c.name)}</b><small>${t('{n} products', {n:num(c.items.length)})}</small></span></button>`;
+  return `<button class="ctile" ${go$('/category/' + c.k)}><span class="ci"><img src="${img}" alt="" loading="lazy"${c.banner ? ' class="cover"' : ''}></span><span class="cn"><b class="clamp2">${dt(c.name)}</b><small>${t('{n} products', {n:num(c.items.length)})}</small></span></button>`;
 }
 function homeSections(){
   const B = D.banners || [], d = S.design;
   const bnr = `<div class="banner"><div class="bnr" data-dots="bd">${B.map((b, i) => `<a role="button" tabindex="0" ${go$(bannerTarget(b))} aria-label="${esc(b.alt) || t('Offer')}">${d === 'C' ? '' : `<img class="bm" src="${b.mobile}" alt="" ${i ? 'loading="lazy"' : ''}>`}<img class="bd" src="${b.desktop}" alt="" loading="lazy"></a>`).join('')}</div>
     <div class="dots" id="bd" aria-hidden="true">${B.map((_, i) => `<span class="${i ? '' : 'on'}"><i></i></span>`).join('')}</div></div>`;
   const TI = ['shield', 'truck', 'card', 'chat'];
-  const trust = `<div class="trust">${(D.trust || []).map((x, i) => `<div><i>${ico(TI[i])}</i><span>${esc((x.t || []).join(' '))}</span></div>`).join('')}</div>`;
+  const trust = `<div class="trust">${(D.trust || []).map((x, i) => `<div><i>${ico(TI[i])}</i><span>${dt((x.t || []).join(' '))}</span></div>`).join('')}</div>`;
   const brands = `<div class="brands">${D.brands.slice(0, 16).map(b => `<button class="brand" ${go$('/brand/' + b.slug)}><i style="background:${brandColour(b.slug)}">${initials(b.name_en || b.name)}</i><span><b>${brandTxt(b.name)}</b><small>${t('{n} products', {n:num(b.count)})}</small></span></button>`).join('')}</div>`;
   const cats = `<div class="hs ctiles" style="--cw:132px">${D.categories.filter(c => c.parent === 'skincare' || !c.parent).slice(0, 10).map(catTile).join('')}</div>`;
-  const blog = `<div class="hs" style="--cw:78%">${(D.posts || []).slice(0, 5).map(x => `<button class="blog" ${go$('/blog/' + x.slug)}>${x.cover ? `<img src="${x.cover}" alt="" loading="lazy">` : ''}<span class="bt"><b class="clamp2">${esc(blogTitle(x))}</b><small>${date(x.date)}</small></span></button>`).join('')}</div>`;
+  const blog = `<div class="hs" style="--cw:78%">${(D.posts || []).filter(x => bt(x, 'title')).slice(0, 5).map(x => `<button class="blog" ${go$('/blog/' + x.slug)}>${x.cover ? `<img src="${x.cover}" alt="" loading="lazy">` : ''}<span class="bt"><b class="clamp2">${esc(bt(x, 'title'))}</b><small>${date(x.date)}</small></span></button>`).join('')}</div>`;
   const search = `<button class="srch" data-tab="search"><span>${ico('search')}</span><span class="grow">${t('Search {n}+ Korean skincare products', {n:num(Math.floor((D.counts || {}).catalogue / 10) * 10 || 760)})}</span><span class="scan" ${go$('/scan')} aria-label="${t('Scan barcode')}">${ico('scan')}</span></button>`;
   let topH;
-  if (d === 'C') topH = `<div class="hero">${search}<h1>${t('Glass skin starts here.')}</h1><div class="chips">${(D.concerns || []).slice(0, 6).map((c, i) => `<button class="chip" data-act="conc" data-v="${i}" data-scrollto="sbc">${esc(concernName(c))}</button>`).join('')}</div></div><div style="height:16px"></div>${bnr}`;
+  if (d === 'C') topH = `<div class="hero">${search}<h1>${t('Glass skin starts here.')}</h1><div class="chips">${(D.concerns || []).slice(0, 6).map((c, i) => `<button class="chip" data-act="conc" data-v="${i}" data-scrollto="sbc">${dt(concernName(c))}</button>`).join('')}</div></div><div style="height:16px"></div>${bnr}`;
   else topH = `<div class="hsearch" style="background:${d === 'B' ? 'var(--blush)' : 'var(--cream)'}">${search}</div>${bnr}`;
   return [
     topH + trust,
@@ -54,7 +54,7 @@ const blogTitle = x => x.title;
 function homeSkel(){
   return `<div style="padding:0 16px">${skel(46, '100%', 23)}</div><div style="height:12px"></div><div class="sk" style="aspect-ratio:4/5;border-radius:0"></div><div class="trust">${Array.from({length:4}, () => `<div>${skel(40, '40px', 20)}${skel(10, '80%')}</div>`).join('')}</div><div class="sec">${skel(22, '50%')}<div style="height:12px"></div><div style="display:flex;gap:8px;overflow:hidden">${Array.from({length:4}, () => skel(44, '110px', 22)).join('')}</div><div style="height:12px"></div>${skel(220, '100%', 20)}</div><div class="sec">${skel(22, '40%')}<div style="height:12px"></div><div style="display:flex;gap:12px;overflow:hidden">${Array.from({length:3}, () => `<div style="flex:0 0 148px">${skel(148, '148px', 14)}<div style="height:8px"></div>${skel(12, '60%')}<div style="height:6px"></div>${skel(14, '90%')}</div>`).join('')}</div></div>`;
 }
-screen('/home', {tab:'home', group:'Home', label:'Home', title:() => t('Home'),
+scr('/home', {tab:'home', group:'Home', label:'Home', title:() => t('Home'),
   render(r, ctx){
     const st = r.query.state;
     const head = `<div class="hhead d${S.design}">${logo()}<button class="ib" ${go$('/wishlist')} aria-label="${t('Wishlist')}">${ico('heart')}${S.wish.size ? `<span class="dotb"></span>` : ''}</button><button class="ib" ${go$('/account/notifications')} aria-label="${t('Notifications')}">${ico('bell')}</button></div>`;
@@ -68,7 +68,7 @@ screen('/home', {tab:'home', group:'Home', label:'Home', title:() => t('Home'),
       body = `<div class="d${S.design}">${st === 'offline' ? offbar() : ''}${use.join('')}</div>`;
     }
     return {head: ctx.half === 'end' ? `<div class="hhead d${S.design} sub"><b>${t('More to explore')}</b></div>` : head, body, ptr:true,
-      tt:`<div class="pad"><button class="srch" data-tab="search"><span>${ico('search')}</span><span class="grow">${t('Search products')}</span></button><div style="height:12px"></div><div class="chips">${(D.concerns || []).map((c, i) => `<button class="chip${i === S.conc ? ' on' : ''}" data-act="conc" data-v="${i}">${esc(concernName(c))}</button>`).join('')}</div></div>`};
+      tt:`<div class="pad"><button class="srch" data-tab="search"><span>${ico('search')}</span><span class="grow">${t('Search products')}</span></button><div style="height:12px"></div><div class="chips">${(D.concerns || []).map((c, i) => `<button class="chip${i === S.conc ? ' on' : ''}" data-act="conc" data-v="${i}">${dt(concernName(c))}</button>`).join('')}</div></div>`};
   },
   dual:() => 'halves'});
 
@@ -92,7 +92,7 @@ const nFilters = key => { const f = filt(key); return f.brands.length + (f.max ?
 function filterPanel(key, base, o = {}){
   const f = filt(key);
   const brands = [...new Set(base.map(p => p.bslug).filter(Boolean))].map(b => [b, base.filter(p => p.bslug === b).length]).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  return `${o.noConc ? '' : `<span class="lab" style="margin-top:4px">${t('Concern')}</span><div class="chips wrap">${(D.concerns || []).map(c => `<button class="chip${f.conc === c.k ? ' on' : ''}" data-act="fconc" data-k="${key}" data-v="${c.k}" aria-pressed="${f.conc === c.k}">${esc(concernName(c))}</button>`).join('')}</div>`}
+  return `${o.noConc ? '' : `<span class="lab" style="margin-top:4px">${t('Concern')}</span><div class="chips wrap">${(D.concerns || []).map(c => `<button class="chip${f.conc === c.k ? ' on' : ''}" data-act="fconc" data-k="${key}" data-v="${c.k}" aria-pressed="${f.conc === c.k}">${dt(concernName(c))}</button>`).join('')}</div>`}
     <span class="lab">${t('Price')}</span><div class="chips wrap">${[54, 100, 200].map(v => `<button class="chip${f.max === v ? ' on' : ''}" data-act="fmax" data-k="${key}" data-v="${v}" aria-pressed="${f.max === v}">${t('Up to {v}', {v:money(v)})}</button>`).join('')}</div>
     <div style="height:8px"></div>${cbxRow('fsale', key, f.sale, t('On sale only'))}
     ${o.noBrand || brands.length < 2 ? '' : `<span class="lab">${t('Brand')}</span><div class="list">${brands.map(([b, c]) => `<button class="li" data-act="fbrand" data-k="${key}" data-v="${b}" role="checkbox" aria-checked="${f.brands.includes(b)}"><span class="cbx${f.brands.includes(b) ? ' on' : ''}">${ico('check')}</span><span class="grow">${brandTxt((BR[b] || {}).name || b)}</span><span class="v">${num(c)}</span></button>`).join('')}</div>`}`;
@@ -127,7 +127,7 @@ function listItems(r){
 function aboutBlock(id, text){
   if (!text) return '';
   const open = S.open[id];
-  return `<div class="about${open ? ' open' : ''}"><p${open ? '' : ' class="clamp3"'}>${esc(text)}</p><button class="lnk sm" data-act="acc" data-v="${id}" aria-expanded="${!!open}">${t(open ? 'Read less' : 'Read more')}</button></div>`;
+  return `<div class="about${open ? ' open' : ''}"><p${open ? '' : ' class="clamp3"'}>${dt(text)}</p><button class="lnk sm" data-act="acc" data-v="${id}" aria-expanded="${!!open}">${t(open ? 'Read less' : 'Read more')}</button></div>`;
 }
 function subChips(c){
   let L = [], allK = null;
@@ -136,20 +136,20 @@ function subChips(c){
   else if (c.parent === 'concerns') L = D.categories.filter(x => x.parent === 'concerns');
   else L = D.categories.filter(x => !x.parent && x.k !== c.k).concat([]);
   if (!L.length) return '';
-  return `<div class="chips subc" role="list">${allK ? `<button class="chip" ${go$('/category/' + allK)} data-replace="1">${t('All {c}', {c:esc(catName(allK))})}</button>` : ''}${L.map(x => `<button class="chip${x.k === c.k ? ' on' : ''}" ${x.k === c.k ? 'aria-current="page"' : go$('/category/' + x.k) + ' data-replace="1"'}>${esc(x.name)}</button>`).join('')}</div>`;
+  return `<div class="chips subc" role="list">${allK ? `<button class="chip" ${go$('/category/' + allK)} data-replace="1">${t('All {c}', {c:dt(catName(allK))})}</button>` : ''}${L.map(x => `<button class="chip${x.k === c.k ? ' on' : ''}" ${x.k === c.k ? 'aria-current="page"' : go$('/category/' + x.k) + ' data-replace="1"'}>${dt(x.name)}</button>`).join('')}</div>`;
 }
-screen('/category/:k', {tab:'shop', group:'Category', label:'Category page', chain:() => ['/categories'], title:r => catName(r.params.k),
+scr('/category/:k', {tab:'shop', group:'Category', label:'Category page', chain:() => ['/categories'], title:r => catName(r.params.k),
   render(r, ctx){
     const c = CAT[r.params.k] || D.categories[0];
     const base = c.items.map(s => P[s]).filter(Boolean);
     const head = `<div class="cbanner">${c.banner ? `<picture><source media="(min-width:700px)" srcset="${c.banner_w || c.banner}"><img src="${c.banner}" alt="" class="cover"></picture>` : `<div class="cbg"></div>`}</div>
-      <div class="chead"><h1 class="h1">${esc(c.name)}</h1>${aboutBlock('about-c-' + c.k, c.about)}</div>${subChips(c)}`;
+      <div class="chead"><h1 class="h1">${dt(c.name)}</h1>${aboutBlock('about-c-' + c.k, c.about)}</div>${subChips(c)}`;
     return {title:c.name, back:true, right:bagBtn(), body:listing(r, ctx, base, {head}), ptr:true, sk:listKey(r)};
   },
   dual:listDual});
 
 /* ── Brand page ────────────────────────────────────────────────────────── */
-screen('/brand/:b', {tab:'shop', group:'Brand', label:'Brand page', chain:() => ['/brands'], title:r => (BR[r.params.b] || {}).name || '',
+scr('/brand/:b', {tab:'shop', group:'Brand', label:'Brand page', chain:() => ['/brands'], title:r => (BR[r.params.b] || {}).name || '',
   render(r, ctx){
     const b = BR[r.params.b] || D.brands[0];
     const base = b.items.map(s => P[s]).filter(Boolean);
@@ -168,7 +168,7 @@ function productsBase(r){
   return PL;
 }
 const PTITLE = {best:'Best Sellers', trending:'Trending', under54:'Under {v}'};
-screen('/products', {tab:'shop', group:'Shop', label:'All products', chain:() => ['/categories'], title:r => r.query.tag ? t(PTITLE[r.query.tag] || 'Shop all', {v:money(54)}) : t('Shop all'),
+scr('/products', {tab:'shop', group:'Shop', label:'All products', chain:() => ['/categories'], title:r => r.query.tag ? t(PTITLE[r.query.tag] || 'Shop all', {v:money(54)}) : t('Shop all'),
   render(r, ctx){
     const title = r.query.tag ? t(PTITLE[r.query.tag] || 'Shop all', {v:money(54)}) : t('Shop all');
     return {title, large:true, back:true, right:bagBtn(), body:listing(r, ctx, productsBase(r)), ptr:true, sk:listKey(r)};
@@ -177,7 +177,7 @@ screen('/products', {tab:'shop', group:'Shop', label:'All products', chain:() =>
 
 /* ── All categories / all brands (the Shop tab) ────────────────────────── */
 const seg = on => `<div class="seg" role="tablist"><button role="tab" aria-selected="${on === 'c'}" class="${on === 'c' ? 'on' : ''}" ${go$('/categories')} data-replace="1">${t('Categories')}</button><button role="tab" aria-selected="${on === 'b'}" class="${on === 'b' ? 'on' : ''}" ${go$('/brands')} data-replace="1">${t('Brands')}</button></div>`;
-screen('/categories', {tab:'shop', group:'Shop', label:'All categories', title:() => t('Shop'),
+scr('/categories', {tab:'shop', group:'Shop', label:'All categories', title:() => t('Shop'),
   render(r, ctx){
     const G = [[t('Skincare'), D.categories.filter(c => c.k === 'skincare' || c.parent === 'skincare')], [t('Shop by concern'), D.categories.filter(c => c.parent === 'concerns')], [t('More from K-Beauty Bliss'), D.categories.filter(c => !c.parent && c.k !== 'skincare')]];
     const body = `<div class="pad0">${seg('c')}</div><button class="srch inbody" data-tab="search"><span>${ico('search')}</span><span class="grow">${t('Search products')}</span></button>
@@ -186,7 +186,7 @@ screen('/categories', {tab:'shop', group:'Shop', label:'All categories', title:(
     return {title:t('Shop'), large:true, right:bagBtn(), body, ptr:true};
   },
   dual:() => ({detail:true, def:() => '/category/skincare', match:/^\/category\//, modes:['dual', 'expanded']})});
-screen('/brands', {tab:'shop', group:'Shop', label:'All brands', title:() => t('Brands'),
+scr('/brands', {tab:'shop', group:'Shop', label:'All brands', title:() => t('Brands'),
   render(r, ctx){
     return {title:t('Brands'), large:true, right:bagBtn(), body:`<div class="pad0">${seg('b')}</div><label class="srch inbody field" for="bq"><span>${ico('search')}</span><input id="bq" type="search" value="${esc(S.brandQ)}" placeholder="${t('Search {n} brands', {n:num(D.brands.length)})}" autocomplete="off" enterkeyhint="search" aria-label="${t('Search brands')}"></label><div id="blist">${brandList()}</div>`};
   },
@@ -206,10 +206,10 @@ function secByHead(p, words){ return (p.sec || []).find(s => words.some(w => s.h
 function ptab(p, k){
   if (k === 'desc') {
     const parts = (p.sec || []).filter(s => !/how to|طريقة|about|عن العلامة/i.test(s.h));
-    return `<p>${esc(p.desc || '')}</p>${parts.map(s => `<h3 class="pth">${esc(s.h)}</h3><ul>${s.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>`).join('')}`;
+    return `${p.desc ? `<p>${dt(p.desc)}</p>` : AR ? `<p class="muted">${t('The full description of this product is being translated. The key facts are below.')}</p>` : ''}${parts.map(s => `<h3 class="pth">${dt(s.h)}</h3><ul>${s.items.map(i => `<li>${dt(i)}</li>`).join('')}</ul>`).join('')}`;
   }
   if (k === 'ing') return p.inci ? `<p class="inci">${X('inci', esc(p.inci))}</p><p class="tiny muted">${t('Full ingredient list (INCI), as printed on the pack.')}</p>` : `<p class="muted">${t('The ingredient list for this product is being added.')}</p>`;
-  if (k === 'how') { const s = secByHead(p, ['how to', 'طريقة']); return s ? `<ul>${s.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : `<ul><li>${t('After cleansing and toner, take a small amount.')}</li><li>${t('Pat gently into face and neck until absorbed.')}</li><li>${t('Morning and evening. Follow with sunscreen in the day.')}</li></ul>`; }
+  if (k === 'how') { const s = secByHead(p, ['how to', 'طريقة']); return s ? `<ul>${s.items.map(i => `<li>${dt(i)}</li>`).join('')}</ul>` : `<ul><li>${t('After cleansing and toner, take a small amount.')}</li><li>${t('Pat gently into face and neck until absorbed.')}</li><li>${t('Morning and evening. Follow with sunscreen in the day.')}</li></ul>`; }
   if (k === 'ship') return `<ul><li>${t('UAE: {a}, free over {b}.', {a:money(SET.ship_uae), b:money(SET.free_over_uae)})}</li><li>${t('Gulf countries: {a}, free over {b}.', {a:money(SET.ship_gcc), b:money(SET.free_over_gcc)})}</li><li>${t('Cash on delivery in the UAE only (+{a}).', {a:money(SET.cod_fee)})}</li></ul>`;
   if (k === 'ret') return `<p>${t('Unopened items can be returned within 7 days. Start a return from Orders → the order → Help, and we arrange the pickup.')}</p>`;
   return '';
@@ -247,7 +247,7 @@ function productParts(p, r){
     ${d === 'C' ? `<div class="pcard">${priceH}${expressPay()}</div>` : priceH}
     <span class="lab">${t('Size')}</span><div class="vars"><button class="chip on" aria-pressed="true">${X('size', esc(sizeOf(p)))}</button></div>
     <span class="lab">${t('Quantity')}</span>${qtyStep('pq', null, S.qty)}
-    ${cat ? `<button class="crumb" ${go$('/category/' + cat)}>${ico('grid')}${t('More in {c}', {c:esc(catName(cat))})}${ico('chevR', 'flip')}</button>` : ''}</div>`;
+    ${cat ? `<button class="crumb" ${go$('/category/' + cat)}>${ico('grid')}${t('More in {c}', {c:dt(catName(cat))})}${ico('chevR', 'flip')}</button>` : ''}</div>`;
   const tabsH = d === 'B'
     ? PTABS.map(([k, l]) => { const open = S.open['acc-' + k] ?? k === 'desc'; return `<div class="acc${open ? ' open' : ''}"><button data-act="acc" data-v="acc-${k}" data-def="${k === 'desc' ? 1 : 0}" aria-expanded="${!!open}">${t(l)}${ico('chevD')}</button>${open ? `<div class="pt">${ptab(p, k)}</div>` : ''}</div>`; }).join('')
     : `<div class="ptabs" role="tablist">${PTABS.map(([k, l]) => `<button role="tab" class="${S.ptab === k ? 'on' : ''}" aria-selected="${S.ptab === k}" data-act="ptab" data-v="${k}">${t(l)}</button>`).join('')}</div><div class="pt" role="tabpanel">${ptab(p, S.ptab)}</div>`;
@@ -262,7 +262,7 @@ function productFoot(p, r){
   const fav = S.wish.has(p.slug);
   return `<div class="pbar"><button class="fv${fav ? ' on' : ''}" data-act="wish" data-p="${p.slug}" aria-pressed="${fav}" aria-label="${t(fav ? 'Remove from wishlist' : 'Save to wishlist')}">${ico('heart')}</button><button class="btn" data-act="add" data-p="${p.slug}" data-q="1">${ico('bag')}${t('Add to bag')} · ${money(cur(p) * S.qty)}</button></div>`;
 }
-screen('/product/:slug', {tab:'shop', group:'Product', label:'Product', chain:r => { const p = P[r.params.slug]; return p && p.cats && p.cats[0] ? ['/categories', '/category/' + p.cats[0]] : ['/categories']; }, title:r => pn(P[r.params.slug] || P[firstBest]),
+scr('/product/:slug', {tab:'shop', group:'Product', label:'Product', chain:r => { const p = P[r.params.slug]; return p && p.cats && p.cats[0] ? ['/categories', '/category/' + p.cats[0]] : ['/categories']; }, title:r => pn(P[r.params.slug] || P[firstBest]),
   render(r, ctx){
     const p = P[r.params.slug] || P[firstBest];
     if (r.query.state === 'error') return {title:'', back:true, body:errState(), noTabs:true};
@@ -292,27 +292,27 @@ function searchResults(ctx = {}){
   const q = S.q.trim();
   if (!q) return `<div class="pad" style="padding-top:4px">${S.recent.length ? `<div class="sh"><h2 class="h3">${t('Recent')}</h2><button class="more" data-act="clearrecent">${t('Clear')}</button></div><div class="chips wrap">${S.recent.map(x => `<button class="chip" data-act="q" data-v="${esc(x)}">${ico('clock')}${utH(x)}</button>`).join('')}</div><div style="height:16px"></div>` : ''}
     <div class="sh"><h2 class="h3">${t('Popular searches')}</h2></div><div class="list">${POP.map(x => `<button class="li" data-act="q" data-v="${esc(x)}">${ico('search')}<span class="grow">${AR ? (DICT['q:' + x] ? esc(DICT['q:' + x]) : X('brand', esc(x))) : esc(x)}</span>${ico('chevR', 'chev flip')}</button>`).join('')}</div>
-    <div class="sh" style="margin-top:20px"><h2 class="h3">${t('Shop by category')}</h2></div><div class="chips wrap">${D.categories.filter(c => c.parent === 'skincare').map(c => `<button class="chip" ${go$('/category/' + c.k)}>${esc(c.name)}</button>`).join('')}</div>
+    <div class="sh" style="margin-top:20px"><h2 class="h3">${t('Shop by category')}</h2></div><div class="chips wrap">${D.categories.filter(c => c.parent === 'skincare').map(c => `<button class="chip" ${go$('/category/' + c.k)}>${dt(c.name)}</button>`).join('')}</div>
     <div style="height:16px"></div><button class="btn block soft" ${go$('/scan')}>${ico('scan')}${t('Scan a barcode in the shop')}</button></div>`;
   const {prods, brands, cats} = searchHits(q);
   if (!prods.length && !brands.length && !cats.length) return `<div class="state" style="min-height:0;padding-top:28px"><div class="ic">${ico('search')}</div><h2>${t('No results for “{q}”', {q:utH(S.q)})}</h2><p>${t('Check the spelling, or try a brand or a concern.')}</p></div><div class="pad"><div class="sh"><h2 class="h3">${t('Popular searches')}</h2></div><div class="chips wrap">${POP.slice(0, 4).map(x => `<button class="chip" data-act="q" data-v="${esc(x)}">${AR ? (DICT['q:' + x] ? esc(DICT['q:' + x]) : X('brand', esc(x))) : esc(x)}</button>`).join('')}</div></div>`;
-  return `<div class="spad">${brands.length || cats.length ? `<div class="chips wrap" style="margin-bottom:12px">${brands.map(b => `<button class="chip" ${go$('/brand/' + b.slug)}>${ico('tag')}${brandTxt(b.name)}</button>`).join('')}${cats.map(c => `<button class="chip" ${go$('/category/' + c.k)}>${ico('grid')}${esc(c.name)}</button>`).join('')}</div>` : ''}
+  return `<div class="spad">${brands.length || cats.length ? `<div class="chips wrap" style="margin-bottom:12px">${brands.map(b => `<button class="chip" ${go$('/brand/' + b.slug)}>${ico('tag')}${brandTxt(b.name)}</button>`).join('')}${cats.map(c => `<button class="chip" ${go$('/category/' + c.k)}>${ico('grid')}${dt(c.name)}</button>`).join('')}</div>` : ''}
     <div class="grp" style="padding:4px 2px 8px">${t('Products')} · ${num(prods.length)}</div>${ctx.cls !== 'compact' ? `<div class="grid">${prods.slice(0, 24).map(p => pcard(p, {sel:ctx.selected})).join('')}</div>` : `<div class="list">${prods.slice(0, 24).map(p => `<button class="li sr" ${go$('/product/' + p.slug)}><img src="${p.img200}" alt="" loading="lazy"><span class="grow"><span class="small muted ell" style="display:block">${brandTxt(bn(p))}</span><span class="clamp2 nm">${nameTxt(p)}</span></span><span class="price small">${money(cur(p))}</span></button>`).join('')}</div>`}</div>`;
 }
-screen('/search', {tab:'search', group:'Search', label:'Search', title:() => t('Search'),
+scr('/search', {tab:'search', group:'Search', label:'Search', title:() => t('Search'),
   render(r, ctx){
     if (r.query.q != null && r.query.q !== S.qFrom) { S.q = r.query.q; S.qFrom = r.query.q; }
     const field = `<div class="sfield"><label class="srch field" for="q"><span>${ico('search')}</span><input id="q" type="search" value="${esc(S.q)}" placeholder="${t('Products, brands, concerns')}" autocomplete="off" enterkeyhint="search" aria-label="${t('Search')}" aria-controls="sres">${S.q ? `<button class="ib clr" data-act="q" data-v="" aria-label="${t('Clear search')}">${ico('close')}</button>` : `<button class="ib clr" ${go$('/scan')} aria-label="${t('Scan barcode')}">${ico('scan')}</button>`}</label></div>`;
     return {title:t('Search'), large:true, head2:field, body:`<div id="sres" aria-live="polite">${searchResults(ctx)}</div>`};
   },
   dual:r => ({detail:true, def:() => { const h = S.q.trim() ? searchHits(S.q).prods : []; return '/product/' + ((h[0] || {}).slug || firstBest); }, match:/^\/product\//, modes:['dual']})});
-screen('/scan', {tab:'search', group:'Search', label:'Barcode scanner', chain:() => [], title:() => t('Scan barcode'),
+scr('/scan', {tab:'search', group:'Search', label:'Barcode scanner', chain:() => [], title:() => t('Scan barcode'),
   render(){
     return {nobar:true, noTabs:true, dark:true, raw:`<div class="scanv"><div class="vt"><button class="ib" data-act="back" aria-label="${t('Close')}">${ico('close')}</button><b style="font-size:17px">${t('Scan barcode')}</b><button class="ib" data-act="torch" aria-label="${t('Torch')}">${ico('flash')}</button></div><div style="display:flex;align-items:center;justify-content:center"><div class="vf"><i></i><i></i><i></i><i></i><b></b></div></div><div class="vb"><p>${t('Point at the barcode on the box')}</p><p class="tiny" style="color:#cbbcc3">${t('The camera is used only while this screen is open. Nothing is recorded.')}</p><div class="row2"><button class="btn" ${go$('/product/' + firstBest)} data-replace="1" style="min-width:0">${t('Simulate a match')}</button></div></div></div>`};
   }});
 
 /* ── Wishlist ──────────────────────────────────────────────────────────── */
-screen('/wishlist', {tab:'account', group:'Account', label:'Wishlist', chain:() => [], title:() => t('Wishlist'),
+scr('/wishlist', {tab:'account', group:'Account', label:'Wishlist', chain:() => [], title:() => t('Wishlist'),
   render(r, ctx){
     const L = [...S.wish].map(s => P[s]).filter(Boolean);
     const st = r.query.state;

@@ -174,14 +174,14 @@ function swHTML(){
   const devs = DEVORDER.filter(k => DEV[k].os === S.os).map(k => B('dev', k, X('dev', DEV[k].name), S.dev === k)).join('');
   const extra = S.dev === 'fold' ? B('fold', S.folded ? 'unfold' : 'fold', S.folded ? t('Unfold') + ' ↔' : t('Fold') + ' ↔', false) : S.dev === 'flip' ? B('posture', S.posture === 'flat' ? 'tabletop' : 'flat', S.posture === 'flat' ? t('Tabletop') : t('Flat'), S.posture === 'tabletop') : S.dev === 'ipad' ? B('land', S.land ? '0' : '1', S.land ? t('Portrait') : t('Landscape'), false) : '';
   const groups = [...new Set(JUMP.map(j => j.g))];
-  const curPath = top().path;
+  const curPath = topE().path;
   return `<span class="ttl">${LOTUS.replace('<svg', '<svg class="lgx" style="width:30px;height:23px"').replace('class="lgx-f"', 'fill="#D94A76" class="lgx-f"').replace('class="lgx-o"', 'fill="none" stroke="#E5567E" stroke-width="20" stroke-linecap="round" class="lgx-o"')}${t('App preview')}</span>
   <div class="sg"><span>${t('System')}</span>${B('os', 'ios', X('dev', 'iOS'), S.os === 'ios')}${B('os', 'android', X('dev', 'Android'), S.os === 'android')}</div>
   <div class="sg"><span>${t('Device')}</span>${devs}${extra}</div>
   <div class="sg"><span>${t('Design')}</span>${['A', 'B', 'C'].map(x => B('design', x, X('dev', x), S.design === x)).join('')}</div>
-  <div class="sg"><span>${t('Jump to')}</span><select data-sw="jump" aria-label="${t('Jump to')}"><option value="">${esc(titleOf(curPath) || t('Screen'))}</option>${groups.map(g => `<optgroup label="${esc(t(g))}">${JUMP.filter(j => j.g === g).map(j => `<option value="${esc(j.path)}">${esc(t(j.label))}</option>`).join('')}</optgroup>`).join('')}</select></div>
+  <div class="sg"><span>${t('Jump to')}</span><select data-sw="jump" aria-label="${t('Jump to')}"><option value="">${esc(titleOf(curPath) || t('Screen'))}</option>${groups.map(g => `<optgroup label="${esc(t(g))}">${JUMP.filter(j => j.g === g).map(j => `<option value="${j.id}">${esc(t(j.label, {v:money(54)}))}</option>`).join('')}</optgroup>`).join('')}</select></div>
   <div class="sg"><span>${t('View')}</span>${B('zoom', 'fit', t('Fit'), S.zoom === 'fit')}${B('zoom', '100', '100%', S.zoom === '100')}</div>
-  <div class="sg links"><a href="screens.html#device=${devKey()}">${ico('grid')}${t('All screens')}</a><a href="${OTHER.href}#${esc(curPath)}${curPath.includes('?') ? '&' : '?'}device=${devKey()}" class="other">${ico('globe')}${OTHER.label}</a></div>`;
+  <div class="sg links"><a href="screens.html#device=${devKey()}">${ico('grid')}${t('All screens')}</a><a href="${OTHER.href}#${esc(curPath)}${curPath.includes('?') ? '&' : '?'}device=${devKey()}" class="other">${ico('globe')}${t(OTHER.label)}</a></div>`;
 }
 const SIZE_RULES = {compact:'Compact (under 600): bottom tab bar, one pane, 2-column grid.', medium:'Medium (600 to 839): navigation rail, one pane, 3-column grid, gallery beside the details.', expanded:'Expanded (840 and over): navigation rail, two panes (list and detail) where the screen has a pair, filter panel beside the grid.'};
 function notesHTML(){
@@ -259,7 +259,7 @@ function onBodyScroll(e, init){
 }
 function writeHash(){
   if (S.noHash) return;
-  const p = top().path;
+  const p = topE().path;
   const h = `#${p}${p.includes('?') ? '&' : '?'}device=${devKey()}&os=${S.os}${S.design !== 'A' ? '&d=' + S.design : ''}${AR && S.digits === 'arab' ? '&dg=arab' : ''}${S.embed ? '&embed=1' : ''}${S.zoom === '100' ? '&z=100' : ''}`;
   if (location.hash !== h) { S.selfHash = h; history.replaceState(null, '', h); }
 }
