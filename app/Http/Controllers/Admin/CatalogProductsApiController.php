@@ -1145,12 +1145,23 @@ class CatalogProductsApiController extends Controller
                 'effective_price_fils', 'effective_price', 'on_sale', 'discount_percent',
                 'has_image', 'orders', 'units_sold', 'revenue_fils', 'revenue',
                 'created_at', 'updated_at', 'trashed', 'currency',
+                // (Lane VPA) APPENDED, LAST, so every existing column keeps its
+                // position: a variable product's options, one per "|", each as
+                // "Shade: #13 Bright Beige / SKU / price / stock status / units".
+                'options',
             ]);
 
             $currency = Money::currency();
             $written = 0;
 
-            $query->with('categories:id,name')->chunk(self::EXPORT_CHUNK, function ($chunk) use ($out, $currency, &$written) {
+            $query->with([
+                'categories:id,name',
+                // (Lane VPA) the options column. Three statements per chunk,
+                // and the nested two run only when a chunk holds a variant.
+                'variants:id,product_id,sku,price,sale_price,stock_status,manage_stock,stock,position',
+                'variants.attributeValues:id,attribute_id,name',
+                'variants.attributeValues.attribute:id,name,position',
+            ])->chunk(self::EXPORT_CHUNK, function ($chunk) use ($out, $currency, &$written) {
                 foreach ($chunk as $product) {
                     if ($written >= self::EXPORT_MAX) {
                         return false;
@@ -1190,6 +1201,13 @@ class CatalogProductsApiController extends Controller
                         $row['updated_at'] ?? '',
                         $row['trashed'] ? 'yes' : 'no',
                         $currency,
+                        $product->variants->map(fn ($v) => implode(' / ', array_filter([
+                            \App\Support\VariantText::line(\App\Support\VariantText::snapshot($v), ', ') ?: 'Option '.$v->id,
+                            (string) $v->sku,
+                            $v->price === null ? "" : $this->majorString((int) $v->price),
+                            (string) $v->stock_status,
+                            $v->manage_stock && $v->stock !== null ? (string) $v->stock : '',
+                        ], static fn ($p) => $p !== '')))->implode(' | '),
                     ]));
                 }
             });

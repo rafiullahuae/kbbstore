@@ -158,13 +158,6 @@ class OrderEmailPresenter
         $out = [];
 
         foreach ($order->items as $item) {
-            $attributes = is_array($item->variant_attributes) ? $item->variant_attributes : [];
-
-            $variant = array_filter(
-                array_map(static fn ($v) => trim((string) $v), $attributes),
-                static fn (string $v) => $v !== '',
-            );
-
             /*
              * THE LANGUAGE THE ORDER WAS PLACED IN, NOT THE SHOP'S DEFAULT.
              *
@@ -192,7 +185,10 @@ class OrderEmailPresenter
                 // price stay this snapshot whatever the product has become.
                 'productId' => (int) ($item->product_id ?? 0),
                 'sku' => trim((string) $item->sku),
-                'variant' => implode(', ', $variant),
+                // (Lane VPA) "Shade: #13 Bright Beige", in the language the
+                // order was placed in where OrderLocale snapshotted one; an
+                // older order's plain list prints exactly as it did.
+                'variant' => \App\Support\VariantText::forOrderItem($item, true, ', '),
                 /*
                  * (Lane SET) WHAT WAS IN THE BOX, as one line per member —
                  * "2 × Anua Heartleaf Toner". An empty list on every line that

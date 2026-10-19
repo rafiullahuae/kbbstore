@@ -6864,3 +6864,6 @@ header .hact .lsw{display:none}
    take the slack track above the price, so the price and the button stay on
    the card's foot exactly where they were. */
 .kbb-pgrid[data-skin^="showcase"] .vpc{grid-row:4;align-self:end;margin-block:6px 0}
+
+/* (Lane VPA) The option a basket line holds, under its name: "Shade: #13 Bright Beige". */
+.kc-var{font-size:11.5px;line-height:1.3;color:#756C74;margin:-2px 0 5px}

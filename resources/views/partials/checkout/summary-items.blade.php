@@ -25,6 +25,10 @@
         // (Lane RE) This line's share of a "Buy these together" bundle; null
         // for every ordinary line, which leaves the row byte-identical.
         $kbbCoBt = ($totals['bundle']['lines'] ?? [])[$item->id] ?? null;
+        // (Lane VPA) "Shade: #13 Bright Beige" under the name; '' for a line
+        // with no options, printed at the start of an existing line.
+        $kbbCoVar = \App\Support\VariantText::forVariant($item->variant);
+        $kbbCoVar = $kbbCoVar !== '' ? '<div class="co-var">' . e($kbbCoVar) . '</div>' : '';
     @endphp
         <div class="ci" data-key="{{ $item->id }}">
             <div class="cth" style="{{ $thumb }}"><span class="qb">{{ $item->quantity }}</span></div>
@@ -32,7 +36,7 @@
 @if ($kbbRowBrand !== '')                <div class="b{{ $kbbBrandCls }}">{{ $kbbRowBrand }}</div>
 @endif
                 <div class="n">{{ $name }}</div>
-                @includeWhen($kbbCoBt, 'partials.buy-together.line-tag', ['cls' => 'co-bt', 'percent' => $kbbCoBt['percent'] ?? 0])@if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'checkout', 'key' => 'o' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="qty">
+                {!! $kbbCoVar !!}@includeWhen($kbbCoBt, 'partials.buy-together.line-tag', ['cls' => 'co-bt', 'percent' => $kbbCoBt['percent'] ?? 0])@if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'checkout', 'key' => 'o' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="qty">
                     <button type="button" class="co-q" data-key="{{ $item->id }}" data-d="-1" aria-label="{{ __('store.cart.decrease_quantity') }}">−</button>
                     <span>{{ $item->quantity }}</span>
                     <button type="button" class="co-q" data-key="{{ $item->id }}" data-d="1" aria-label="{{ __('store.cart.increase_quantity') }}">+</button>

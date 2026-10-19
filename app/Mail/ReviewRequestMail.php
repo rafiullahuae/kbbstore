@@ -86,8 +86,8 @@ class ReviewRequestMail extends OrderMail
                 continue;
             }
 
-            $attributes = is_array($item->variant_attributes) ? $item->variant_attributes : [];
-            $variant = implode(', ', array_filter(array_map(static fn ($v) => trim((string) $v), $attributes), static fn (string $v) => $v !== ''));
+            // (Lane VPA) "Shade: #13 Bright Beige", in the order's language.
+            $variant = \App\Support\VariantText::forOrderItem($item, true, ', ');
             $localised = trim((string) ($item->name_localised ?? ''));
             $brand = trim((string) ($item->brand ?? ''));
 

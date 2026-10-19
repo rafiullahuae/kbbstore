@@ -346,7 +346,6 @@ class ReviewRequestController extends Controller
                 continue;
             }
 
-            $attributes = $item !== null && is_array($item->variant_attributes) ? $item->variant_attributes : [];
             $review = $reviews[$id] ?? null;
             // The card's own rule (components/product-card): a picture known to be
             // missing is no picture, and every one offers its img-cache copies.
@@ -357,7 +356,8 @@ class ReviewRequestController extends Controller
                 'id' => $id,
                 'name' => $item !== null && trim((string) ($item->name_localised ?? '')) !== '' ? (string) $item->name_localised : (string) $product->name,
                 'brand' => trim((string) ($item?->brand ?: ($product->brand?->name ?? ''))),
-                'variant' => implode(', ', array_filter(array_map(static fn ($v) => trim((string) $v), $attributes), static fn (string $v) => $v !== '')),
+                // (Lane VPA) "Shade: #13 Bright Beige", in the order's language.
+                'variant' => $item !== null ? \App\Support\VariantText::forOrderItem($item, true, ', ') : '',
                 'image' => $image,
                 'srcset' => $image === null ? '' : \App\Support\ImageVariants::srcsetFor($image),
                 'url' => \App\Support\Url::to('/product/' . $product->slug . '/'),

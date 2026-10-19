@@ -98,7 +98,7 @@ Nothing else is read.
                         @php
                             $sub = array_values(array_filter([
                                 $item['brand'],
-                                $item['variant'],
+                                $item['variantForCustomer'] ?? $item['variant'],
                                 $item['sku'] !== '' ? 'SKU ' . $item['sku'] : '',
                             ], fn ($v) => $v !== ''));
                         @endphp

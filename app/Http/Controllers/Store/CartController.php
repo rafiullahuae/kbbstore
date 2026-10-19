@@ -551,6 +551,9 @@ class CartController extends Controller
             // Store\CheckoutController::loadCart(), which is the list this one
             // was short of.
             'items.variant.attributeValues:id,attribute_id,name',
+            // (Lane VPA) the axis, so a line reads "Shade: #13 Bright Beige".
+            // Runs only when a line HOLDS a variant with values.
+            'items.variant.attributeValues.attribute:id,name,position',
             'coupon:id,code,type,amount',
         ]);
 

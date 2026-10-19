@@ -15418,6 +15418,15 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       + '</div>';
   }
 
+  /* (Lane VPA) Which shade or size a line is, under its brand: "Shade: #13
+     Bright Beige · SKU TT-MF-21N". Plain text from the order's own snapshot,
+     escaped like every other line. '' for a line with no options. */
+  function odVariant(it){
+    var v = (it && it.variant) || '';
+    if (!v) return '';
+    return '<div class="pbrand odvar" style="color:var(--ink,#2a2228)">'+sesc(v)+(it.sku?' \u00b7 SKU '+sesc(it.sku):'')+'</div>';
+  }
+
   function odItemsCard(o){
     var editable = !!o.editable;
     var rows = o.items.map(function(it){
@@ -15436,7 +15445,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
         : '';
       return '<tr><td style="width:44px">'+odItemThumb(it)+'</td>'+
         '<td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc(it.brand||'')+'</div>'+
-          odSetContents(it)+'</td>'+
+          odVariant(it)+odSetContents(it)+'</td>'+
         '<td>'+priceCell+'</td><td>'+qtyCell+'</td><td><b>AED '+it.total_aed+'</b></td>'+(editable?'<td>'+removeCell+'</td>':'')+'</tr>';
     }).join('');
 
@@ -16397,7 +16406,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '<button class="btn sm" id="ordStatusSave">Update</button></div>'+
       '<div class="card pad" style="margin-bottom:12px"><b style="font-size:12.5px">Customer</b><div style="font-size:12.5px;color:var(--ink-2);margin-top:6px;line-height:1.7">'+(addr||'\u2014')+'</div></div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead><tbody>'+
-      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div>'+odSetContents(it)+'</td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
+      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div>'+odVariant(it)+odSetContents(it)+'</td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
       '</tbody></table></div>'+
       '<div style="margin-top:12px;font-size:13px;display:flex;flex-direction:column;gap:5px">'+
       '<div class="between"><span style="color:var(--ink-soft)">Subtotal</span><span>AED '+o.subtotal_aed+'</span></div>'+

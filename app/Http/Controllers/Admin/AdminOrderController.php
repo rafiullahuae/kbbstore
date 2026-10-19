@@ -179,6 +179,9 @@ class AdminOrderController extends Controller
                 'brand' => $i->brand,
                 'sku' => $i->sku,
                 'variant_attributes' => $i->variant_attributes,
+                // (Lane VPA) the same snapshot as one line of text, English,
+                // for the order screen: "Shade: #13 Bright Beige".
+                'variant' => \App\Support\VariantText::forOrderItem($i, false, ' · '),
                 /*
                  * (Lane SET) What was in the box, as one line per member, from
                  * the order's own snapshot. An EMPTY LIST for every line that is

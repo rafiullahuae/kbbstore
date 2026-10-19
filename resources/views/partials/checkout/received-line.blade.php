@@ -21,9 +21,9 @@
         ? "background-image:url('" . e($imageCss) . "')"
         : 'background:' . Gradient::for((string) ($item->brand ?? '') . (string) $item->name);
 
-    $variant = is_array($item->variant_attributes)
-        ? implode(' · ', array_filter(array_map('strval', $item->variant_attributes)))
-        : '';
+    // (Lane VPA) "Shade: #13 Bright Beige" in the language the order was
+    // placed in; an older order's plain list prints exactly as it did.
+    $variant = \App\Support\VariantText::forOrderItem($item, ! \App\Support\Locale::isDefault(), ' · ');
 
     /*
      * (Lane SET) THE SNAPSHOT, never the pivot. This is a placed order, so what

@@ -862,7 +862,16 @@ class CheckoutController extends Controller
                         'name' => $p?->name ?? 'Item',
                         'brand' => $p?->brand?->name,
                         'sku' => $item->variant?->sku ?? $p?->sku,
-                        'variant_attributes' => $item->variant?->attributeValues->pluck('name')->all(),
+                        /*
+                         * (Lane VPA) KEYED BY THE AXIS, {"Shade": "#13 Bright
+                         * Beige"}, in English like `name`. It was a bare list
+                         * of value names, so every document printed "#13
+                         * Bright Beige" and nothing said it was a shade.
+                         * App\Support\VariantText::line() still prints an old
+                         * list exactly as before. The customer's-language copy
+                         * is OrderLocale::listen()'s, beside name_localised.
+                         */
+                        'variant_attributes' => $item->variant ? \App\Support\VariantText::snapshot($item->variant) : null,
                         /*
                          * WHAT WAS IN THE BOX, on the day. (Lane SET)
                          *
@@ -2139,6 +2148,9 @@ class CheckoutController extends Controller
             'items.product.brand:id,name,slug',
             'items.variant:id,product_id,sku,price,sale_price,image,stock_status',
             'items.variant.attributeValues:id,attribute_id,name',
+            // (Lane VPA) the axis, so a line reads "Shade: #13 Bright Beige".
+            // Runs only when a line HOLDS a variant with values.
+            'items.variant.attributeValues.attribute:id,name,position',
             'coupon:id,code,type,amount',
         ]);
 

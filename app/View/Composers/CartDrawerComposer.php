@@ -160,6 +160,10 @@ class CartDrawerComposer
                 'items.product' => fn ($q) => $q->select(self::LINE_COLUMNS),
                 'items.product.brand:id,name,slug',
                 'items.variant:id,product_id,sku,price,sale_price,image,stock_status',
+                // (Lane VPA) "Shade: #13 Bright Beige" under the line. Both
+                // nested loads run only when a line holds a variant.
+                'items.variant.attributeValues:id,attribute_id,name',
+                'items.variant.attributeValues.attribute:id,name,position',
                 'coupon:id,code,type,amount',
             ]);
 

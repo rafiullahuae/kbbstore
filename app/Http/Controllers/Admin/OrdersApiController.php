@@ -926,6 +926,21 @@ class OrdersApiController extends Controller
                     $q->orWhereRaw($column . ' like ? escape ' . self::LIKE_ESCAPE_SQL, [$like]);
                 }
 
+                // (Lane VPA) A line's SKU or option finds its order: "TT-MF-21N"
+                // or "Bright Beige" answers "who bought this shade?". One
+                // correlated EXISTS on the indexed order_id, asked only while
+                // a search is typed.
+                if (mb_strlen($search) >= 2) {
+                    $q->orWhereExists(function ($sub) use ($like) {
+                        $sub->selectRaw('1')->from('order_items as vpa_i')
+                            ->whereColumn('vpa_i.order_id', 'orders.id')
+                            ->where(function ($w) use ($like) {
+                                $w->whereRaw('vpa_i.sku like ? escape '.self::LIKE_ESCAPE_SQL, [$like])
+                                    ->orWhereRaw('vpa_i.variant_attributes like ? escape '.self::LIKE_ESCAPE_SQL, [$like]);
+                            });
+                    });
+                }
+
                 // Typing an id finds that order, and typing a WooCommerce order
                 // id finds the row it was imported into — the only way to
                 // answer "did Woo order 18422 come across?".
