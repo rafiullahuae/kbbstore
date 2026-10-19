@@ -158,9 +158,12 @@ final class ProductsController extends Controller
             ->get(['id', 'sku', 'price', 'sale_price', 'manage_stock', 'stock', 'stock_status']);
         $labels = $variants->isEmpty() ? collect() : DB::table('product_variant_attribute_value as pv')
             ->join('attribute_values as av', 'av.id', '=', 'pv.attribute_value_id')
+            // (Lane VPA) the axis too, so an option reads "Shade: #21 Light
+            // Beige" here exactly as it does on the order and in the basket.
+            ->leftJoin('attributes as a', 'a.id', '=', 'av.attribute_id')
             ->whereIn('pv.product_variant_id', $variants->pluck('id')->all())
-            ->orderBy('av.position')
-            ->get(['pv.product_variant_id', 'av.name'])
+            ->orderBy('a.position')->orderBy('av.position')
+            ->get(['pv.product_variant_id', 'av.name', 'a.name as axis'])
             ->groupBy('product_variant_id');
 
         $sold = DB::table('order_items as i')->join('orders as o', 'o.id', '=', 'i.order_id')
@@ -191,7 +194,7 @@ final class ProductsController extends Controller
                 'description' => mb_substr(trim(preg_replace('/\s+/u', ' ', strip_tags((string) $p->description)) ?? ''), 0, 1200),
                 'variants' => $variants->map(fn ($v) => [
                     'id' => (int) $v->id,
-                    'label' => ($labels[$v->id] ?? collect())->pluck('name')->implode(' · ') ?: ('#'.$v->id),
+                    'label' => ($labels[$v->id] ?? collect())->map(fn ($l) => trim((string) $l->axis) !== '' ? trim((string) $l->axis).': '.$l->name : $l->name)->implode(' · ') ?: ('#'.$v->id),
                     'sku' => (string) ($v->sku ?? ''),
                     'price_display' => $v->price === null ? null : Money::plain((int) $v->price),
                     'stock' => $v->stock === null ? null : (int) $v->stock,

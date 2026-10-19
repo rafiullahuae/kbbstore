@@ -15098,13 +15098,31 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      re-attached whenever the screen is redrawn. See wireOrderDetail below. */
   var odPicker = null, odPickerOrder = null;
 
+  /* (Lane VPA) "Choose which option of … to add." Every label is escaped. */
+  function odChooseVariant(productId, j){
+    var box = document.getElementById('odAddProductResults');
+    if (!box) { toast(j.message, 'bad'); return; }
+    box.innerHTML = '<div style="padding:10px 12px;font-size:12.5px"><p style="margin:0 0 8px">'+sesc(j.message)+'</p>'+
+      j.options.map(function(o){
+        return '<button type="button" class="btn ghost sm odvpick" data-vid="'+(+o.id)+'" style="margin:0 6px 6px 0"'+(o.in_stock?'':' disabled')+'>'+
+          sesc(o.label)+' \u00b7 AED '+sesc(String(o.price_aed))+(o.in_stock?'':' \u00b7 sold out')+'</button>';
+      }).join('')+'</div>';
+    box.style.display = 'block';
+    box.querySelectorAll('.odvpick').forEach(function(b){
+      b.addEventListener('click', function(){ box.style.display = 'none'; odAddItem(productId, b.dataset.vid); });
+    });
+  }
+
   /** Put one of the picked products on the order that is open. */
-  async function odAddItem(productId){
+  async function odAddItem(productId, variantId){
     try{
       var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+odPickerOrder+'/items'),{method:'POST',credentials:'same-origin',
         headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
-        body:JSON.stringify({product_id:parseInt(productId,10), quantity:1})});
+        body:JSON.stringify({product_id:parseInt(productId,10), variant_id:variantId?parseInt(variantId,10):null, quantity:1})});
       var j = await r.json();
+      /* (Lane VPA) A product sold by its options answers with them: draw them
+         as buttons where the search results were, and send the pick back. */
+      if(j && j.needs_variant && j.options){ odChooseVariant(productId, j); return; }
       if(!r.ok || j.ok===false){ toast(j.message||'Could not add that product.', 'bad'); return; }
       toast('Product added'); renderOrderDetail(odPickerOrder);
     }catch(e){ toast('Could not add that product.','bad'); }

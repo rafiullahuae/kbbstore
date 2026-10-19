@@ -344,7 +344,7 @@ final class OwnerAppEvents
                 ->leftJoin('product_variants as v', 'v.id', '=', 'i.product_variant_id')
                 ->where('i.order_id', $orderId)
                 ->get([
-                    'p.id', 'p.name', 'i.name as line_name',
+                    'p.id', 'p.name', 'i.name as line_name', 'i.variant_attributes',
                     'p.manage_stock as p_managed', 'p.stock as p_stock',
                     'v.id as v_id', 'v.manage_stock as v_managed', 'v.stock as v_stock',
                 ]);
@@ -358,7 +358,10 @@ final class OwnerAppEvents
                 if (! $managed || $stock === null || (int) $stock > $at) {
                     continue;
                 }
-                $hits[(int) $r->id] = [(int) $stock, $variant ? (string) $r->line_name : (string) $r->name];
+                // (Lane VPA) A variant's alert names the option: "Low stock:
+                // TIRTIR Mask Fit … — Shade: 21N Ivory", not only the product.
+                $option = $variant ? \App\Support\VariantText::line($r->variant_attributes, ', ') : '';
+                $hits[(int) $r->id] = [(int) $stock, $variant ? (string) $r->line_name.($option !== '' ? ' — '.$option : '') : (string) $r->name];
             }
 
             if ($hits === []) {

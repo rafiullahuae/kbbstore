@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderNote;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Refund;
 use App\Services\ManualOrderBuilder;
 use App\Services\Mail\OrderMailer;
@@ -1098,11 +1099,57 @@ class AdminOrderController extends Controller
             // columns beside it are signed 32-bit; an unbounded quantity
             // overflows their product long before it overflows itself.
             'quantity' => ['required', 'integer', 'min:1', 'max:' . self::MAX_QUANTITY],
+            // (Lane VPA) the option, for a product sold by its options.
+            'variant_id' => ['nullable', 'integer'],
         ]);
 
         $product = \App\Models\Product::find($data['product_id']);
         $unitPrice = (int) ($product->sale_price ?: $product->price);
         $quantity = (int) $data['quantity'];
+
+        /*
+         * (Lane VPA) A VARIABLE PRODUCT IS ADDED AS ONE OF ITS OPTIONS, never
+         * as itself. Its parent row carries no price, so this used to add the
+         * line at AED 0 with nothing saying which shade went in the parcel.
+         * Without a variant the answer is the list to choose from (the screen
+         * draws it and sends the pick back); a variant from another product is
+         * refused. The price is the variant's own, sale window included.
+         */
+        $variant = null;
+
+        if (! empty($data['variant_id'])) {
+            $variant = ProductVariant::query()->where('product_id', $product->id)
+                ->with('attributeValues:id,attribute_id,name', 'attributeValues.attribute:id,name,position')
+                ->find((int) $data['variant_id']);
+
+            if ($variant === null) {
+                return response()->json(['ok' => false, 'message' => 'That option does not belong to this product.'], 422);
+            }
+
+            $variant->setRelation('product', $product);
+            $unitPrice = $variant->effectivePrice();
+        } elseif ($product->requiresVariant()) {
+            $options = ProductVariant::query()->where('product_id', $product->id)->orderBy('position')
+                ->with('attributeValues:id,attribute_id,name', 'attributeValues.attribute:id,name,position')
+                ->get()
+                ->map(function (ProductVariant $v) use ($product) {
+                    $v->setRelation('product', $product);
+
+                    return [
+                        'id' => (int) $v->id,
+                        'label' => \App\Support\VariantText::line(\App\Support\VariantText::snapshot($v), ' · ') ?: ('Option #'.$v->id),
+                        'price_aed' => Money::toAed($v->effectivePrice()),
+                        'in_stock' => $v->inStock(),
+                    ];
+                })->values();
+
+            return response()->json([
+                'ok' => false,
+                'needs_variant' => true,
+                'message' => 'Choose which option of '.$product->name.' to add.',
+                'options' => $options,
+            ], 422);
+        }
 
         if ($refusal = $this->refuseOverflowingLine($order, $unitPrice, $quantity)) {
             return $refusal;
@@ -1112,9 +1159,11 @@ class AdminOrderController extends Controller
 
         $item = $order->items()->create([
             'product_id' => $product->id,
+            'product_variant_id' => $variant?->id,
             'name' => $product->name,
             'brand' => $product->brand?->name,
-            'sku' => $product->sku,
+            'sku' => $variant?->sku ?: $product->sku,
+            'variant_attributes' => $variant ? \App\Support\VariantText::snapshot($variant) : null,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'subtotal' => $lineTotal,
@@ -1454,7 +1503,9 @@ class AdminOrderController extends Controller
                  */
                 'type', ...\App\Support\SetPricing::COLUMNS,
             ])
-            ->with(['brand:id,name', 'variants'])
+            // (Lane VPA) each option's name, so the picker can offer "Shade:
+            // #21 Light Beige" rather than a bare id.
+            ->with(['brand:id,name', 'variants', 'variants.attributeValues:id,attribute_id,name', 'variants.attributeValues.attribute:id,name,position'])
             // `id` after `name`, because forPage() below is LIMIT/OFFSET and
             // product names are not unique: two products sharing a name at a
             // page boundary can otherwise land on both pages of the picker,
@@ -1494,11 +1545,15 @@ class AdminOrderController extends Controller
                 'price_fils' => $p->effectivePrice(),
                 'stock' => $p->stock,
                 'stock_status' => $p->stock_status,
-                'variants' => $p->variants->map(fn ($v) => [
+                // (Lane VPA) the parent handed over, so effectivePrice() reads its sale
+                // window from memory instead of fetching it once per option.
+                'variants' => $p->variants->each(fn ($v) => $v->setRelation('product', $p))->map(fn ($v) => [
                     'id' => $v->id,
                     'sku' => $v->sku,
                     'price_fils' => $v->effectivePrice(),
                     'stock_status' => $v->stock_status,
+                    'label' => \App\Support\VariantText::line(\App\Support\VariantText::snapshot($v), ' · '),
+                    'image' => $v->image,
                 ])->values(),
             ])->values(),
         ]);
