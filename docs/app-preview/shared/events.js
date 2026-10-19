@@ -452,6 +452,7 @@ window.APV = {
   reset(){ try { sessionStorage.clear(); } catch {} seed(); Object.assign(S, {conc:0, qty:1, open:{}, bt:{}, sort:{}, filt:{}, more:{}, detail:{}, scroll:{}, q:'', qFrom:null, recent:[], brandQ:'', coupon:null, form:{}, ferr:{}, formFor:{}, sent:{}, pw:false, toast:null, lastOrder:null}); },
   state:() => ({tab:S.tab, path:topE().path, depth:S.stacks[S.tab].length, stacks:Object.fromEntries(TABS.map(k => [k, S.stacks[k].map(x => x.path)])), bag:bagCount(), wish:[...S.wish], sheet:S.sheet, co:{pay:S.co.pay, addr:S.co.addr, del:S.co.del, authorised:S.co.authorised}, orders:S.orders.length, lastOrder:S.lastOrder, scroll:{...S.scroll}, missing:[...missing]}),
   missing:() => [...missing],
+  open(h){ APV.reset(); S.selfHash = h; history.replaceState(null, '', h); readHash(); render(); },
   render:() => render(),
 };
 
