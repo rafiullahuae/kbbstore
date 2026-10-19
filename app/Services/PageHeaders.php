@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Support\Locale;
 use App\Support\SafeUrl;
 
 /**
@@ -247,7 +248,7 @@ final class PageHeaders
     /** A whole bag at the page as it was. */
     public static function blank(): array
     {
-        return ['d' => self::device('d'), 'm' => self::device('m'), 'img' => '', 'img_m' => '', 'alt' => '', 'blocks' => array_keys(self::BLOCKS)];
+        return ['d' => self::device('d'), 'm' => self::device('m'), 'img' => '', 'img_m' => '', 'img_ar' => '', 'img_m_ar' => '', 'alt' => '', 'blocks' => array_keys(self::BLOCKS)];
     }
 
     /** What ships: the global look unchanged, and /super-sale/ as the owner asked. */
@@ -359,11 +360,43 @@ final class PageHeaders
         return implode(';', $out);
     }
 
-    /** The picture to draw, or null for none. */
-    public static function picture(array $bag): ?array
+    /**
+     * The picture to draw, or null for none.
+     *
+     * (Lane PHA) The owner: "on super sale page. i want the header in arabic
+     * for arabic language ... also convert this in the desktop version too."
+     * On an Arabic page (/ar/...) the Arabic pictures replace the English ones
+     * where they are set; an empty one is the English picture:
+     *
+     *   desktop = Arabic desktop, else the English desktop rule
+     *   phone   = Arabic phone, else Arabic desktop when the English bag has
+     *             no phone picture of its own (the English rule would have
+     *             used the desktop one too), else the English phone rule
+     *
+     * So an Arabic phone picture alone never becomes the Arabic desktop one
+     * while an English desktop exists. English pages never read the Arabic
+     * keys: their output is what it always was. $ar null = the request's own
+     * language (Locale::current(), no query).
+     */
+    public static function picture(array $bag, ?bool $ar = null): ?array
     {
         $d = SafeUrl::src((string) ($bag['img'] ?? ''));
         $m = SafeUrl::src((string) ($bag['img_m'] ?? ''));
+
+        if ($ar ?? Locale::current() === 'ar') {
+            $dAr = SafeUrl::src((string) ($bag['img_ar'] ?? ''));
+            $mAr = SafeUrl::src((string) ($bag['img_m_ar'] ?? ''));
+            if ($mAr === '' && $dAr !== '' && $m === '') {
+                $mAr = $dAr;
+            }
+            if ($dAr !== '' || $mAr !== '') {
+                // Resolve the English pair first, then lay the Arabic over it.
+                $dEn = $d !== '' ? $d : $m;
+                $mEn = $m !== '' ? $m : $d;
+                $d = $dAr !== '' ? $dAr : $dEn;
+                $m = $mAr !== '' ? $mAr : $mEn;
+            }
+        }
 
         if ($d === '' && $m === '') {
             return null;
@@ -651,7 +684,7 @@ final class PageHeaders
             }
         }
 
-        foreach (['img' => 'Desktop picture', 'img_m' => 'Phone picture'] as $k => $label) {
+        foreach (['img' => 'Desktop picture', 'img_m' => 'Phone picture', 'img_ar' => 'Arabic desktop picture', 'img_m_ar' => 'Arabic phone picture'] as $k => $label) {
             $v = trim(is_string($raw[$k] ?? null) ? $raw[$k] : '');
             if ($v !== '' && (strlen($v) > 500 || SafeUrl::src($v) === '' || preg_match('/[\x00-\x20"\'<>`\\\\]/', $v) === 1)) {
                 $rejected["$at.$k"] = $label;
