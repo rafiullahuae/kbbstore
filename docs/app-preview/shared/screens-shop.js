@@ -25,7 +25,7 @@ function catTile(c){
   const img = c.banner || (P[c.items[0]] || {}).img;
   return `<button class="ctile" ${go$('/category/' + c.k)}><span class="ci"><img src="${img}" alt="" loading="lazy"${c.banner ? ' class="cover"' : ''}></span><span class="cn"><b class="clamp2">${dt(c.name)}</b><small>${t('{n} products', {n:num(c.items.length)})}</small></span></button>`;
 }
-function homeSections(){
+function homeSections(site){
   const B = D.banners || [], d = S.design;
   const bnr = `<div class="banner"><div class="bnr" data-dots="bd">${B.map((b, i) => `<a role="button" tabindex="0" ${go$(bannerTarget(b))} aria-label="${esc(b.alt) || t('Offer')}">${d === 'C' ? '' : `<img class="bm" src="${b.mobile}" alt="" ${i ? 'loading="lazy"' : ''}>`}<img class="bd" src="${b.desktop}" alt="" loading="lazy"></a>`).join('')}</div>
     <div class="dots" id="bd" aria-hidden="true">${B.map((_, i) => `<span class="${i ? '' : 'on'}"><i></i></span>`).join('')}</div></div>`;
@@ -36,8 +36,9 @@ function homeSections(){
   const blog = `<div class="hs" style="--cw:78%">${(D.posts || []).filter(x => bt(x, 'title')).slice(0, 5).map(x => `<button class="blog" ${go$('/blog/' + x.slug)}>${x.cover ? `<img src="${x.cover}" alt="" loading="lazy">` : ''}<span class="bt"><b class="clamp2">${esc(bt(x, 'title'))}</b><small>${date(x.date)}</small></span></button>`).join('')}</div>`;
   const search = `<button class="srch" data-tab="search"><span>${ico('search')}</span><span class="grow">${t('Search {n}+ Korean skincare products', {n:num(Math.floor((D.counts || {}).catalogue / 10) * 10 || 760)})}</span><span class="scan" ${go$('/scan')} aria-label="${t('Scan barcode')}">${ico('scan')}</span></button>`;
   let topH;
-  if (d === 'C') topH = `<div class="hero">${search}<h1>${t('Glass skin starts here.')}</h1><div class="chips">${(D.concerns || []).slice(0, 6).map((c, i) => `<button class="chip" data-act="conc" data-v="${i}" data-scrollto="sbc">${dt(concernName(c))}</button>`).join('')}</div></div><div style="height:16px"></div>${bnr}`;
-  else topH = `<div class="hsearch" style="background:${d === 'B' ? 'var(--blush)' : 'var(--cream)'}">${search}</div>${bnr}`;
+  if (d === 'C') topH = `<div class="hero">${site ? '' : search}<h1>${t('Glass skin starts here.')}</h1><div class="chips">${(D.concerns || []).slice(0, 6).map((c, i) => `<button class="chip" data-act="conc" data-v="${i}" data-scrollto="sbc">${dt(concernName(c))}</button>`).join('')}</div></div><div style="height:16px"></div>${bnr}`;
+  /* under the website's header its search box is the one search field (Lane APV3) */
+  else topH = site ? bnr : `<div class="hsearch" style="background:${d === 'B' ? 'var(--blush)' : 'var(--cream)'}">${search}</div>${bnr}`;
   return [
     topH + trust,
     sbcBlock(),
@@ -62,15 +63,18 @@ scr('/home', {tab:'home', group:'Home', label:'Home', title:() => t('Home'),
     if (st === 'loading') body = homeSkel();
     else if (st === 'error') body = errState();
     else {
-      const parts = homeSections();
+      const parts = homeSections(ctx.site);
       const cut = 3;
       const use = ctx.half === 'start' ? parts.slice(0, cut) : ctx.half === 'end' ? parts.slice(cut) : parts;
       body = `<div class="d${S.design}">${st === 'offline' ? offbar() : ''}${use.join('')}</div>`;
     }
+    /* under the website's header (shared/header.js) Home has no head of its own; the site's delivery strip leads */
+    if (ctx.site && ctx.half !== 'end') return {nobar:true, body:siteStrip() + body, ptr:true, tt:homeTT()};
     return {head: ctx.half === 'end' ? `<div class="hhead d${S.design} sub"><b>${t('More to explore')}</b></div>` : head, body, ptr:true,
-      tt:`<div class="pad"><button class="srch" data-tab="search"><span>${ico('search')}</span><span class="grow">${t('Search products')}</span></button><div style="height:12px"></div><div class="chips">${(D.concerns || []).map((c, i) => `<button class="chip${i === S.conc ? ' on' : ''}" data-act="conc" data-v="${i}">${dt(concernName(c))}</button>`).join('')}</div></div>`};
+      tt:homeTT()};
   },
   dual:() => 'halves'});
+const homeTT = () => `<div class="pad"><button class="srch" data-tab="search"><span>${ico('search')}</span><span class="grow">${t('Search products')}</span></button><div style="height:12px"></div><div class="chips">${(D.concerns || []).map((c, i) => `<button class="chip${i === S.conc ? ' on' : ''}" data-act="conc" data-v="${i}">${dt(concernName(c))}</button>`).join('')}</div></div>`;
 
 /* ── Listings: one engine for category, brand, "all products", wishlist ─ */
 const SORTS = [['pop', 'Most popular'], ['rating', 'Top rated'], ['low', 'Price: low to high'], ['high', 'Price: high to low']];
@@ -163,11 +167,12 @@ scr('/brand/:b', {tab:'shop', group:'Brand', label:'Brand page', chain:() => ['/
 /* ── All products (View all from home) ─────────────────────────────────── */
 function productsBase(r){
   const tag = r.query.tag, c = r.query.concern;
+  if (tag === 'sale') return PL.filter(p => pct(p) > 0).sort((a, b) => pct(b) - pct(a));
   if (tag) return PL.filter(p => p.tags.includes(tag));
   if (c) { const x = (D.concerns || []).find(y => y.k === c); return x ? x.items.map(s => P[s]).filter(Boolean) : PL; }
   return PL;
 }
-const PTITLE = {best:'Best Sellers', trending:'Trending', under54:'Under {v}'};
+const PTITLE = {best:'Best Sellers', trending:'Trending', under54:'Under {v}', sale:'Super Sale'};
 scr('/products', {tab:'shop', group:'Shop', label:'All products', chain:() => ['/categories'], title:r => r.query.tag ? t(PTITLE[r.query.tag] || 'Shop all', {v:money(54)}) : t('Shop all'),
   render(r, ctx){
     const title = r.query.tag ? t(PTITLE[r.query.tag] || 'Shop all', {v:money(54)}) : t('Shop all');
@@ -180,7 +185,7 @@ const seg = on => `<div class="seg" role="tablist"><button role="tab" aria-selec
 scr('/categories', {tab:'shop', group:'Shop', label:'All categories', title:() => t('Shop'),
   render(r, ctx){
     const G = [[t('Skincare'), D.categories.filter(c => c.k === 'skincare' || c.parent === 'skincare')], [t('Shop by concern'), D.categories.filter(c => c.parent === 'concerns')], [t('More from K-Beauty Bliss'), D.categories.filter(c => !c.parent && c.k !== 'skincare')]];
-    const body = `<div class="pad0">${seg('c')}</div><button class="srch inbody" data-tab="search"><span>${ico('search')}</span><span class="grow">${t('Search products')}</span></button>
+    const body = `<div class="pad0">${seg('c')}</div>${ctx.site ? '' : `<button class="srch inbody" data-tab="search"><span>${ico('search')}</span><span class="grow">${t('Search products')}</span></button>`}
       <div class="allp"><button class="li" ${go$('/products')}>${ico('grid')}<span class="grow"><b class="lt">${t('Shop all products')}</b><span class="small muted">${t('{n} products', {n:num(PL.length)})}</span></span>${ico('chevR', 'chev flip')}</button></div>
       ${G.filter(g => g[1].length).map(([h, L]) => `<div class="grp">${h}</div><div class="cgrid">${L.map(catTile).join('')}</div>`).join('')}`;
     return {title:t('Shop'), large:true, right:bagBtn(), body, ptr:true};
@@ -306,7 +311,8 @@ scr('/search', {tab:'search', group:'Search', label:'Search', title:() => t('Sea
   render(r, ctx){
     if (r.query.q != null && r.query.q !== S.qFrom) { S.q = r.query.q; S.qFrom = r.query.q; }
     const field = `<div class="sfield"><label class="srch field" for="q"><span>${ico('search')}</span><input id="q" type="search" value="${esc(S.q)}" placeholder="${t('Products, brands, concerns')}" autocomplete="off" enterkeyhint="search" aria-label="${t('Search')}" aria-controls="sres">${S.q ? `<button class="ib clr" data-act="q" data-v="" aria-label="${t('Clear search')}">${ico('close')}</button>` : `<button class="ib clr" ${go$('/scan')} aria-label="${t('Scan barcode')}">${ico('scan')}</button>`}</label></div>`;
-    return {title:t('Search'), large:true, body:`${field}<div id="sres" aria-live="polite">${searchResults(ctx)}</div>`};
+    /* under the website's header its search box is the field (shared/header.js) */
+    return {title:t('Search'), large:true, body:`${ctx.site ? '' : field}<div id="sres" aria-live="polite">${searchResults(ctx)}</div>`};
   },
   dual:r => ({detail:true, def:() => { const h = S.q.trim() ? searchHits(S.q).prods : []; return '/product/' + ((h[0] || {}).slug || firstBest); }, match:/^\/product\//, modes:['dual']})});
 scr('/scan', {tab:'search', group:'Search', label:'Barcode scanner', chain:() => [], title:() => t('Scan barcode'),

@@ -41,6 +41,7 @@
       <nav class="row jump" aria-label="${t('Jump to')}">${GROUPS.map(g => `<a href="#g-${g.replace(/\W+/g, '-').toLowerCase()}" data-keep="1">${esc(t(g))}</a>`).join('')}</nav>`;
     document.getElementById('intro').innerHTML = `${t('Each preview is the app itself, running. Click one to open it full size, then tap, scroll and type.')} ${t('{n} screens', {n:num(n)})}.`;
     document.getElementById('grid').innerHTML = cards;
+    paintChooser(); // the bottom-bar / tablet-menu chooser (shared/header.js): every card follows it
   }
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-dev]'); if (!b) return;
@@ -50,6 +51,7 @@
     const a = e.target.closest('a[data-keep]'); if (!a) return;
     e.preventDefault(); const s = document.querySelector(a.getAttribute('href')); if (s) s.scrollIntoView({behavior:'smooth'});
   });
+  window.APV_SCREENS_DRAW = draw;
   document.title = t('Every screen, live') + ' · ' + brandWord();
   draw();
 })();

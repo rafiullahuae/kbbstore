@@ -28,6 +28,20 @@
  *              an element marked data-x="<why>" (brand names, codes, card networks…); the
  *              exceptions are counted by reason in report.json
  *   console    no console error (a missing Arabic string is one), page error or failed request
+ *   site       Lane APV3: the website's header is the site's, measured: at this frame's width its
+ *              height, search box (height, corners), logo, language switch, ☰ and menu bar equal the
+ *              live site's (docs/app-preview/site-measure.json, from tools/apv-site.cjs) within 1px;
+ *              the Arabic app shows the site's Arabic wordmark
+ *   rail       no navigation rail anywhere (the site's menus replaced it)
+ *   The site's own header and menus (.kh) are held to the site's sizes and colours by the parity
+ *   check, not to the app's 44px tap rule or 3:1 contrast: the owner asked for exactly the site.
+ *   Where the site itself falls short (the 34px search field, white on #E991AE in the delivery
+ *   strip) the report says so in site_findings instead of failing the app for copying it.
+ *
+ * Lane APV3 flows: the site's phone menu (every top-level item and a sub-level of each, the chips,
+ * close by × and by the scrim), the menu bar and every mega panel on iPad landscape and with
+ * "Tablet menu: menu bar", the header's icons, logo, search box and language switch, and every
+ * bottom-bar variant A–E on the phones (each tab, each "More" tile, the badges).
  *
  * The flows click and type like a shopper: the whole checkout, step by step, for every payment
  * method, the coupon, a declined payment and its retry with the bag kept; and the navigation smoke
@@ -52,12 +66,31 @@ const FLOWS_ONLY = process.argv.includes('--flows-only');
 const NO_FLOWS = process.argv.includes('--no-flows');
 const MUTATE = (process.argv.find((x) => x.startsWith('--mutate=')) || '').slice(9);
 const WORKERS = Number((arg('workers') || ['3'])[0]);
+/* Lane APV3: the live site's header at the app's widths (tools/apv-site.cjs) */
+const SITEM = (() => {
+  const f = path.join(APP, 'site-measure.json');
+  if (!fs.existsSync(f)) return {en:null, ar:null};
+  const J = JSON.parse(fs.readFileSync(f, 'utf8'));
+  const out = {en:{}, ar:{}};
+  for (const [k, m] of Object.entries(J.measured)) {
+    const [lang, w] = k.split('-');
+    out[lang][w] = {h:m.header.h, si:{h:m.search.h, w:m.search.w, r:m.search.borderRadius, ph:m.search.placeholder}, icon:{w:m.logoIcon.w, h:m.logoIcon.h}, word:m.wordText.trim(),
+      lang:m.lang && m.lang.box ? {w:m.lang.box.w, h:m.lang.box.h} : null, menu:m.menuIcon ? {w:m.menuIcon.w, h:m.menuIcon.h} : null, bar:m.menuBar ? m.menuBar.h : 0,
+      iconSvg:((m.icons.filter((i) => i.svg).pop()) || {svg:{w:21}}).svg.w}; // the cart's: the language capsule is drawn text, not an icon
+  }
+  const C = (J.co || {}).measured || {};
+  for (const lang of ['en', 'ar']) out[lang].co = {cart:C[lang + '-cart'], checkout:C[lang + '-checkout']};
+  return out;
+})();
 const DEVICES = ['ip16', 'ipse', 'ipad', 'ipad-land', 'px9', 'flip', 'flip-tabletop', 'fold-cover', 'fold-inner', 'duo'].filter((d) => !arg('dev') || arg('dev').includes(d));
 const LANGS = arg('lang') || ['en', 'ar'];
 const FULL = !arg('dev') && !arg('lang') && !arg('only');
 
 /* ── the in-page checker ─────────────────────────────────────────────────── */
-function audit(lang) {
+function audit(arg) {
+  const lang = typeof arg === 'string' ? arg : arg.lang;
+  const SITE = (arg && arg.site) || null;
+  const SCO = (arg && arg.co) || null;
   const issues = [];
   const add = (kind, el, msg) => {
     const path = [];
@@ -72,7 +105,7 @@ function audit(lang) {
   const designedCut = (e) => { const s = cs(e); return s.textOverflow === 'ellipsis' || (s.webkitLineClamp && s.webkitLineClamp !== 'none'); };
   const inter = (a, b) => ({left:Math.max(a.left, b.left), top:Math.max(a.top, b.top), right:Math.min(a.right, b.right), bottom:Math.min(a.bottom, b.bottom)});
   const area = (r) => Math.max(0, r.right - r.left) * Math.max(0, r.bottom - r.top);
-  const stackOf = (e) => e.closest('.ovl') ? 'ovl' : e.closest('.viewer') ? 'viewer' : e.closest('.toast') ? 'toast' : e.closest('[data-layer="pb"]') ? 'peekbg' : 'base';
+  const stackOf = (e) => e.closest('.mmenu') ? 'menu' : e.closest('.kh .drop') ? 'drop' : e.closest('.mscrim') ? 'scrim' : e.closest('.ovl') ? 'ovl' : e.closest('.viewer') ? 'viewer' : e.closest('.toast') ? 'toast' : e.closest('[data-layer="pb"]') ? 'peekbg' : 'base';
   const hidden = (e) => { for (let x = e; x && !x.classList.contains('glass'); x = x.parentElement) { const s = cs(x); if (s.display === 'none' || s.visibility === 'hidden' || Number(s.opacity) === 0) return true; } return false; };
 
   /* visible part of a rect: intersect every clipping ancestor up to the glass.
@@ -160,7 +193,7 @@ function audit(lang) {
     /* 3b. text over a picture or an icon (designed overlays on photos excepted) */
     const media = [...g.querySelectorAll('img,svg')].filter((m) => !hidden(m) && !m.closest('.sb,.island,.punch')).map((m) => { const R = m.getBoundingClientRect(); return {m, sc:scOf(m), stack:stackOf(m), v:visible(m, R), ve:visible(m, R, true)}; }).filter((x) => area(x.ve) > 0);
     for (const r of runs) {
-      if (r.el.closest('.zh,.cnt,.badge,.bdg,.pbk,.tt-fold,.blogo,.cth')) continue;
+      if (r.el.closest('.zh,.cnt,.badge,.bdg,.pbk,.tt-fold,.blogo,.cth,.kh,.kc')) continue; // .kh: the site's own art behind its own text
       for (const x of media) {
         if (x.stack !== r.stack || x.m.contains(r.el) || r.el.contains(x.m)) continue;
         const same = x.sc === r.sc;
@@ -172,7 +205,7 @@ function audit(lang) {
 
     /* 3c. icons keep their size: an unsized inline <svg> grows to its box */
     g.querySelectorAll('svg').forEach((m) => {
-      if (hidden(m) || m.closest('.sb,.splash,.compan,.bio,.done-mark,.state .ic,.scanv,.lgx')) return;
+      if (hidden(m) || m.closest('.sb,.splash,.compan,.bio,.done-mark,.state .ic,.scanv,.lgx,.kh,.kc')) return; // .kh/.kc: the site's own art, at the site's sizes
       const r = m.getBoundingClientRect();
       if (r.width > 48 || r.height > 48) add('icon-size', m, `${Math.round(r.width)}×${Math.round(r.height)}`);
     });
@@ -188,6 +221,7 @@ function audit(lang) {
     const checkedEl = new Set();
     for (const r of runs) {
       if (checkedEl.has(r.el)) continue; checkedEl.add(r.el);
+      if (r.el.closest('.kh,.kc')) continue; // the website's own colours: held to the site, see site_findings
       const fg = lum(cs(r.el).color); if (!fg || fg.a < .5) continue;
       // composite translucent backgrounds down to the first solid one
       let bg = null; const layers = [];
@@ -210,6 +244,7 @@ function audit(lang) {
     const T = g.querySelectorAll('button,a,input,select,textarea,[role=button],[data-go],[data-act],[data-tab],[data-sheet]');
     T.forEach((e) => {
       if (hidden(e) || e.matches('.scrim') || e.closest('.peek')) return; // .peek is a scaled transition frame
+      if (e.closest('.kh,.kc')) return; // the website's own header, menus, cart and checkout: held to the site's sizes (site, cart, checkout checks)
       if (e.closest('.fl,.srch.field') && e.matches('input,textarea')) return; // the field box is the target
       const r = e.getBoundingClientRect();
       if (area(visible(e, r, true)) <= 0) return;
@@ -217,7 +252,7 @@ function audit(lang) {
     });
 
     /* 5. safe areas: fixed text / controls out of the status band and home-indicator band */
-    const fixedEls = [...T].filter((e) => !e.matches('.scrim')).map((e) => ({e, r:e.getBoundingClientRect()})).concat(runs.map((x) => ({e:x.el, r:x.n && x.rr})));
+    const fixedEls = [...T].filter((e) => !e.matches('.scrim,.mscrim')).map((e) => ({e, r:e.getBoundingClientRect()})).concat(runs.map((x) => ({e:x.el, r:x.n && x.rr})));
     const inScroll = (e) => { for (let a = e.parentElement; a && !a.classList.contains('glass'); a = a.parentElement) { const s = cs(a); if (scrollsY(s)) return a; } return null; };
     const seen = new Set();
     for (const {e, r:R0} of fixedEls) {
@@ -239,6 +274,83 @@ function audit(lang) {
       }
     }
   }
+  /* 9. Lane APV3: the website's header, measured against the live site at this frame's width */
+  for (const g of glasses) {
+    if (g.querySelector('.rail')) add('rail', g.querySelector('.rail'), 'a navigation rail is drawn');
+    const hd = g.querySelector('.kh .kh-hd');
+    if (!hd || !SITE) continue;
+    const W = Math.round(g.offsetWidth), M = SITE[W];
+    if (!M) { add('site', hd, `no site measurement at ${W}px`); continue; }
+    const near = (a, b) => Math.abs(a - b) <= 1;
+    const box = (e) => e.getBoundingClientRect();
+    const mb0 = hd.closest('.kh.tm-bar') && hd.querySelector('.mbar');
+    const h = box(hd).height - parseFloat(cs(hd).paddingTop) - (mb0 ? box(mb0).height : 0); // "menu bar" option: the site's header + its menu bar
+    if (!near(h, M.h)) add('site', hd, `header ${h.toFixed(1)}px high, the site's is ${M.h}px at ${W}px`);
+    const si = hd.querySelector('.search-in');
+    if (!si || hidden(si)) add('site', hd, 'no search box');
+    else {
+      const S2 = box(si);
+      if (!near(S2.height, M.si.h)) add('site', si, `search box ${S2.height.toFixed(1)}px high, the site's is ${M.si.h}px`);
+      if (Math.abs(S2.width - M.si.w) > 2) add('site', si, `search box ${S2.width.toFixed(1)}px wide, the site's is ${M.si.w}px`);
+      if (cs(si).borderTopLeftRadius !== M.si.r) add('site', si, `search box corners ${cs(si).borderTopLeftRadius}, the site's are ${M.si.r}`);
+      const inp = si.querySelector('input');
+      if (inp && inp.placeholder !== M.si.ph) add('site', inp, `placeholder “${inp.placeholder}”, the site's is “${M.si.ph}”`);
+    }
+    const li = hd.querySelector('.logo .lgx-i');
+    if (!li || !near(box(li).width, M.icon.w) || !near(box(li).height, M.icon.h)) add('site', hd, `logo ${li ? box(li).width.toFixed(1) + '×' + box(li).height.toFixed(1) : 'missing'}, the site's is ${M.icon.w}×${M.icon.h}`);
+    const lw = hd.querySelector('.lgx-w');
+    if (!lw || lw.textContent.trim() !== M.word) add('site', hd, `wordmark “${lw ? lw.textContent.trim() : ''}”, the site's is “${M.word}”`);
+    if (lang === 'ar' && lw && !/[\u0600-\u06FF]/.test(lw.textContent)) add('site', lw, 'the Arabic app does not show the Arabic wordmark');
+    const ls0 = [...hd.querySelectorAll('[data-lang]')].find((x) => !hidden(x) && box(x).width);
+    const ls = ls0 && (ls0.closest('.lsw-d') || ls0); // the computer's pill is the whole EN | ع switch
+    if (!ls) add('site', hd, 'no language switch');
+    else if (M.lang && (!near(box(ls).width, M.lang.w) || !near(box(ls).height, M.lang.h))) add('site', ls, `language switch ${box(ls).width.toFixed(1)}×${box(ls).height.toFixed(1)}, the site's is ${M.lang.w}×${M.lang.h}`);
+    const bu = hd.querySelector('[data-act="menu"]');
+    const buOn = bu && !hidden(bu) && box(bu).width > 0;
+    if (!!M.menu !== !!buOn) add('site', hd, `menu button ${buOn ? 'shown' : 'hidden'}, the site's is ${M.menu ? 'shown' : 'hidden'} at ${W}px`);
+    else if (buOn && (!near(box(bu).width, M.menu.w) || !near(box(bu).height, M.menu.h))) add('site', bu, `menu button ${box(bu).width}×${box(bu).height}, the site's is ${M.menu.w}×${M.menu.h}`);
+    const mb = hd.querySelector('.mbar');
+    const mbOn = mb && !hidden(mb) && box(mb).height > 0;
+    const tmBar = !!hd.closest('.kh.tm-bar');
+    if (!tmBar && !!M.bar !== !!mbOn) add('site', hd, `menu bar ${mbOn ? 'shown' : 'hidden'}, the site's is ${M.bar ? 'shown' : 'hidden'} at ${W}px`);
+    else if (mbOn && M.bar && !near(box(mb).height, M.bar)) add('site', mb, `menu bar ${box(mb).height}px high, the site's is ${M.bar}px`);
+    if (tmBar && !mbOn) add('site', hd, '"Tablet menu: menu bar" shows no menu bar');
+    const ib = [...hd.querySelectorAll('.hact .ib')].filter((x) => !x.matches('[data-lang]') && !hidden(x) && box(x).width);
+    for (const x of ib) { const sv = x.querySelector('svg'); if (sv && !near(box(sv).width, M.iconSvg)) add('site', x, `header icon ${box(sv).width.toFixed(1)}px, the site's are ${M.iconSvg}px`); }
+  }
+
+  /* 10. Lane APV3: the cart page and the checkout are the site's, measured against the site at 390 */
+  if (SCO) for (const g of glasses) {
+    if (g.offsetWidth >= 600) continue; // measured on the site at 390: the phone layout
+    const near = (a, b) => Math.abs(a - b) <= 1;
+    const H = (e) => e.getBoundingClientRect().height;
+    const cart = g.querySelector('.kc .kbb-cartpage');
+    if (cart && SCO.cart) {
+      const M = SCO.cart, btn = cart.querySelector('a.cobtn'), h1 = cart.querySelector('h1'), q = cart.querySelector('.qty');
+      if (!btn || !near(H(btn), M.btn.h) || cs(btn).borderTopLeftRadius !== M.btn.rad) add('cart', btn || cart, `checkout button ${btn ? H(btn).toFixed(1) + 'px, corners ' + cs(btn).borderTopLeftRadius : 'missing'}; the site's is ${M.btn.h}px, ${M.btn.rad}`);
+      if (!h1 || cs(h1).fontSize !== M.title.fs) add('cart', h1 || cart, `title ${h1 ? cs(h1).fontSize : 'missing'}, the site's is ${M.title.fs}`);
+      if (q && !near(H(q), M.qty.h)) add('cart', q, `quantity stepper ${H(q)}px, the site's is ${M.qty.h}px`);
+      const order = [...cart.querySelectorAll('.wrap > *, .grid > *, aside.sum > *')].filter((e) => e.getBoundingClientRect().height).map((e) => (e.tagName + '.' + (String(e.className).split(' ').filter((c) => c && !/^id-/.test(c))[0] || '')).toLowerCase());
+      if (order.join(' ') !== M.order.join(' ')) add('cart', cart, `sections ${order.join(' ')} ≠ the site's ${M.order.join(' ')}`);
+    }
+    const hd = g.querySelector('.kc-head .co-head'), co = g.querySelector('.kc section.kbb-checkout:not(.kc-head *)');
+    if (hd && co && SCO.checkout) {
+      const M = SCO.checkout;
+      const h = H(hd) - parseFloat(cs(hd).paddingTop);
+      if (!near(h, M.head.h)) add('checkout', hd, `checkout header ${h.toFixed(1)}px, the site's is ${M.head.h}px`);
+      const row = co.querySelector('.cosr'); if (!row || !near(H(row), M.sumRow.h)) add('checkout', row || co, `summary bar ${row ? H(row) : 'missing'}, the site's is ${M.sumRow.h}px`);
+      const pl = co.querySelector('.kbb-mobile-order .place'); if (!pl || !near(H(pl), M.place.h) || cs(pl).borderTopLeftRadius !== M.place.rad) add('checkout', pl || co, `Pay now ${pl ? H(pl) + 'px, ' + cs(pl).borderTopLeftRadius : 'missing'}; the site's is ${M.place.h}px, ${M.place.rad}`);
+      const ids = [...co.querySelectorAll('.form-row')].map((e) => (String(e.className).match(/id-(billing_\w+)/) || [])[1]).filter(Boolean).map((x) => x + '');
+      const want = M.fields.filter((x) => /^billing_/.test(x));
+      if (ids.join(',') !== want.join(',')) add('checkout', co, `fields ${ids.join(',')} ≠ the site's ${want.join(',')}`);
+      const pm = [...co.querySelectorAll('.wc_payment_method > input.input-radio')].map((i) => i.value).filter((v) => v !== 'apple' && v !== 'gpay').map((v) => v === 'card' ? 'stripe' : v);
+      const pmWant = M.methods.filter((v) => /^[a-z]+$/.test(v)); // the site's own list (its save-card tick aside); the app adds Apple Pay / Google Pay on top, as the site's Apple Pay row does on Safari
+      if (pm.join(',') !== pmWant.join(',')) add('checkout', co, `payment methods ${pm.join(',')} ≠ the site's ${pmWant.join(',')}`);
+      const secs = co.querySelectorAll('.sec > h2 .n');
+      if (secs.length !== M.sections.length) add('checkout', co, `${secs.length} sections, the site has ${M.sections.length}`);
+    }
+  }
+
   /* 6b. Duo hinge: nothing of either screen reaches into it */
   const h = document.querySelector('[data-hinge]');
   if (h) {
@@ -338,7 +450,7 @@ async function newPage(lang) {
 async function check(page, o = {}) {
   if (MUTATE) await page.addStyleTag({content:MUTATE});
   await settle(page);
-  const {issues, exceptions} = await page.evaluate(audit, page.lang);
+  const {issues, exceptions} = await page.evaluate(audit, {lang:page.lang, site:SITEM[page.lang], co:SITEM[page.lang] && SITEM[page.lang].co});
   for (const e of page.errs.splice(0)) issues.push({kind:'console', at:'', msg:e});
   if (o.shot && !NOSHOTS) await page.locator('.device').screenshot({path:o.shot, animations:'disabled', type:'jpeg', quality:82});
   if (o.key && !NOSHOTS) await page.locator('.device').screenshot({path:o.key, animations:'disabled'});
@@ -356,18 +468,22 @@ async function grid(results, exceptions) {
     fs.mkdirSync(path.join(OUT, lang), {recursive:true});
     const jobs = [];
     for (const d of DEVICES) for (const j of J) for (const design of j.designs ? ['A', 'B', 'C'] : ['A']) jobs.push({d, j, design, name:`${String(j.id).padStart(2, '0')}-${slug(j.label)}${design !== 'A' ? '-' + design : ''}-${d}`});
+    /* Lane APV3: every bottom-bar variant on the phones, and "Tablet menu: menu bar" on the tablets */
+    const VAR_SCREENS = ['Home', 'Category · Serums', 'Product', 'Bag', 'Account', 'Search results', 'Brand page', 'Wishlist'];
+    for (const d of DEVICES.filter((x) => ['ip16', 'px9', 'ipse', 'fold-cover'].includes(x))) for (const bb of ['B', 'C', 'D', 'E']) for (const j of J.filter((x) => VAR_SCREENS.includes(x.label))) jobs.push({d, j, design:'A', bb, name:`${String(j.id).padStart(2, '0')}-${slug(j.label)}-bb${bb}-${d}`});
+    for (const d of DEVICES.filter((x) => ['fold-inner', 'ipad'].includes(x))) for (const j of J.filter((x) => ['Home', 'Category · Serums', 'Product', 'Account'].includes(x.label))) jobs.push({d, j, design:'A', tm:'bar', name:`${String(j.id).padStart(2, '0')}-${slug(j.label)}-tmbar-${d}`});
     let done = 0; const t0 = Date.now(); const total = jobs.length;
     async function worker() {
       const page = await newPage(lang);
       for (;;) {
         const job = jobs.shift(); if (!job) break;
-        const href = await page.evaluate(([id, o]) => APV.href(id, o), [job.j.id, {device:job.d, design:job.design}]);
+        const href = await page.evaluate(([id, o]) => APV.href(id, o), [job.j.id, {device:job.d, design:job.design, bb:job.bb || 'A', tm:job.tm || 'site'}]);
         await page.evaluate((h) => APV.open(h + '&z=100'), href);
         const shot = path.join(OUT, lang, job.name + '.jpg');
-        const kp = KEYPICKS.find((k) => k.lang === lang && k.dev === job.d && k.label === job.j.label && job.design === 'A');
+        const kp = !job.bb && !job.tm && KEYPICKS.find((k) => k.lang === lang && k.dev === job.d && k.label === job.j.label && job.design === 'A');
         const r = await check(page, {shot, key:kp && FULL ? path.join(KEY, kp.file) : null});
         mergeEx(exceptions, r.exceptions);
-        results.push({name:job.name, lang, device:job.d, id:job.j.id, group:job.j.g, label:job.j.label, design:job.design, link:href, shot, issues:r.issues});
+        results.push({name:job.name, lang, device:job.d, id:job.j.id, group:job.j.g, label:job.j.label, design:job.design, bb:job.bb || 'A', tm:job.tm || 'site', link:href, shot, issues:r.issues});
         if (++done % 100 === 0) process.stdout.write(`${lang} ${done}/${total} ${Math.round((Date.now() - t0) / 1000)}s\n`);
       }
       await page.close();
@@ -404,111 +520,98 @@ async function flows(lang, dev, log) {
     return r;
   };
   try {
-    /* 1 · the whole checkout by card */
-    await open('/home');
+    /* 1 · bag → checkout (one page) → Pay now by card, as a guest, every field typed (Lane APV3) */
+    await open('/home?user=0');
     const b0 = (await st()).bag;
     await click('.pc .add');
     expect((await st()).bag === b0 + 1, 'Add to bag on a home card did not raise the bag count');
     await click('[data-tab="bag"]');
-    expect((await st()).path === '/bag', 'the Bag tab did not open the bag');
+    expect((await st()).path === '/bag', 'the bag icon did not open the bag');
+    expect(await page.locator('#stage .kc .kbb-cartpage .ci').count() === (await st()).bagLines, 'the cart page does not list every line of the bag');
+    await step('bag');
+    await click('.kc a.cobtn');
+    let s1 = await st();
+    expect(s1.path === '/checkout', 'Proceed to checkout did not open the checkout');
+    /* the rule: never more than two screens before Place order */
+    expect(s1.stacks.bag.length <= 2 && (await page.evaluate(() => APV.beforePlace())) <= 2, `there are ${s1.stacks.bag.length} screens before Pay now (${s1.stacks.bag.join(' → ')}); the most is 2 (bag → checkout)`);
+    await step('checkout');
+    /* the coupon lives in the summary at the top, as on the site */
+    await click('.kc .cosr');
+    expect((await st()).sumOpen, 'the order summary did not open');
     await type('#f-coupon-code', 'SUMMER');
-    await click('[data-act="coupon"]');
-    expect(await page.locator('#stage .fl.err [id="f-coupon-code"]').count() === 1, 'a wrong coupon did not show the error state');
+    await click('.kc .coupon .apply');
+    expect(await page.locator('#stage [data-fld="coupon.code"].err').count() === 1, 'a wrong coupon did not show the error state');
     await step('coupon-error');
     await type('#f-coupon-code', 'welcome10', {fill:true});
     await page.dispatchEvent('#stage #f-coupon-code', 'input');
-    await click('[data-act="coupon"]');
-    expect(await page.locator('#stage .cpn-on').count() === 1, 'WELCOME10 was not applied');
-    await step('bag');
-    await click('.foot [data-go="/checkout/bag"]');
-    await step('1-bag-review');
-    await click('[data-act="co-next"]');
-    expect((await st()).path === '/checkout/contact', 'Continue did not reach Contact');
-    await step('2-contact-signed-in');
-    await click('[data-act="co-guest"]');
-    await click('[data-act="co-contact"]');
-    expect(await page.locator('#stage .fl.err #f-contact-email').count() === 1, 'an empty email did not show its error');
-    await step('2-contact-error');
-    await type('#f-contact-email', 'sara@example.com');
-    await step('2-contact-guest');
-    await click('[data-act="co-contact"]');
-    expect((await st()).path === '/checkout/address', 'a valid email did not reach the address step');
-    await step('3-address-saved');
-    await click('[data-go="/checkout/address/new"]');
-    await step('3-address-new');
-    await click('[data-act="addr-save"]');
-    expect(await page.locator('#stage .errsum').count() === 1, 'saving an empty address did not show the error summary');
-    await step('3-address-errors');
-    await type('#f-addr-name', lang === 'ar' ? 'سارة المنصوري' : 'Sara Al Mansoori');
-    await type('#f-addr-phone', '0501234567');
-    expect(await vis('#f-addr-phone').inputValue() === '50 123 4567', 'the phone was not formatted as 50 123 4567');
-    await click('[data-sheet="emirate"]');
-    await step('3-emirate-sheet');
+    await click('.kc .coupon .apply');
+    expect(await page.locator('#stage .kc .cpn-on').count() >= 1, 'WELCOME10 was not applied');
+    await step('coupon-applied');
+    /* Pay now with nothing filled: every error inline, on the one page */
+    await click('.kc .kbb-mobile-order [data-act="place"]');
+    const nErr = await page.locator('#stage .kc .fld.err').count();
+    expect((await st()).path === '/checkout' && nErr >= 5, `an empty form did not show its errors on the page (${nErr})`);
+    await step('checkout-errors');
+    await type('#f-co-email', 'sara@example.com');
+    await type('#f-co-name', lang === 'ar' ? 'سارة المنصوري' : 'Sara Al Mansoori');
+    await type('#f-co-phone', '0501234567');
+    expect(await vis('#f-co-phone').inputValue() === '50 123 4567', 'the phone was not formatted as 50 123 4567');
+    await type('#f-co-building', lang === 'ar' ? 'مارينا غيت 2' : 'Marina Gate 2');
+    await type('#f-co-street', lang === 'ar' ? 'دبي مارينا' : 'Dubai Marina');
+    await click('#f-co-emirate');
+    expect((await st()).sheet === 'emirate', 'the emirate field did not open the picker');
+    await step('emirate-sheet');
     await click('[data-act="pick"][data-v="dubai"]');
-    expect((await st()).sheet === 'area', 'choosing an emirate did not open its areas');
-    await type('#aq', lang === 'ar' ? 'مار' : 'Mar');
-    await step('3-area-sheet');
-    await click('[data-act="pick"][data-v="dubai-marina"]');
-    await type('#f-addr-building', lang === 'ar' ? 'مارينا غيت 2' : 'Marina Gate 2');
-    await type('#f-addr-street', lang === 'ar' ? 'شارع المرسى' : 'Al Marsa Street');
-    await step('3-address-filled');
-    await click('[data-act="addr-save"]');
-    expect((await st()).path === '/checkout/delivery', 'a complete address did not reach Delivery');
-    await step('4-delivery');
-    await click('[data-act="del"][data-v="exp"]');
-    expect((await st()).co.del === 'exp', 'Express was not chosen');
-    await click('[data-act="co-next"]');
-    await step('5-payment');
-    await click('[data-act="pay"][data-v="card"]');
-    await click('[data-act="co-pay"]');
-    expect((await st()).path === '/checkout/card', 'Card did not open the card form');
-    await step('6-card-empty');
-    await click('[data-act="card-next"]');
-    expect(await page.locator('#stage .fl.err').count() >= 3, 'an empty card form did not show its errors');
-    await step('6-card-errors');
+    const s2 = await st();
+    expect(!s2.sheet && s2.co.emirate === 'dubai', 'choosing an emirate did not fill the field');
+    expect(await page.locator('#stage .kc .fld.err').count() === 0 || (await st()).co.pay !== 'card', 'errors stayed after the fields were filled');
+    /* the card, inline in the payment section as on the site */
+    await click('.kc label[for="payment_method_card"]');
+    await click('.kc .kbb-mobile-order [data-act="place"]');
+    expect(await page.locator('#stage .kc .kbb-card-el.err').count() >= 2, 'an empty card did not show its errors');
     await type('#f-card-number', '4242424242424242');
     expect(await vis('#f-card-number').inputValue() === '4242 4242 4242 4242', 'the card number was not grouped in fours');
     expect(await page.locator('#stage #cbrand .cbrand').count() === 1, 'the card brand was not detected');
     await type('#f-card-exp', '1229');
     expect(await vis('#f-card-exp').inputValue() === '12 / 29', 'the expiry was not formatted MM / YY');
     await type('#f-card-cvc', '123');
-    await type('#f-card-cname', 'SARA AL MANSOORI');
-    await step('6-card-filled');
-    await click('[data-act="card-next"]');
-    expect((await st()).path === '/checkout/3ds', 'a valid card did not reach 3-D Secure');
-    await step('6-card-3ds');
+    await step('checkout-filled');
+    await click('.kc .kbb-mobile-order [data-act="place"]');
+    expect((await st()).path === '/checkout/3ds', 'Pay now by card did not reach 3-D Secure');
+    await step('after-3ds');
     await type('#f-otp-code', '481205');
-    await click('[data-act="otp-submit"]');
-    expect((await st()).path === '/checkout/review', 'the code did not reach Review');
-    await step('7-review');
     const o0 = (await st()).orders;
-    await click('[data-act="place"]');
+    await click('[data-act="otp-submit"]');
     const s8 = await st();
-    expect(s8.path === '/checkout/placed' && s8.bag === 0 && s8.orders === o0 + 1, 'Place order did not place the order and empty the bag');
-    await step('8-placed');
+    expect(s8.path === '/checkout/placed' && s8.bag === 0 && s8.orders === o0 + 1, 'the bank code did not place the order and empty the bag');
+    await step('after-placed');
 
-    /* 2 · the other methods, each from the payment step with a bag */
+    /* 2 · the other methods, each from the filled checkout: what follows Pay now, then the order */
     const wallet = dev === 'px9' || dev.startsWith('fold') || dev.startsWith('flip') || dev === 'duo' ? 'gpay' : 'apple';
     for (const m of [wallet, 'tabby', 'tamara', 'cod']) {
-      await open('/checkout/payment');
-      await click(`[data-act="pay"][data-v="${m}"]`);
-      await click('[data-act="co-pay"]');
-      await step('6-' + (m === 'apple' || m === 'gpay' ? 'wallet' : m));
-      if (m === 'cod') await click('[data-act="cod-ok"]');
-      else if (m === 'tabby' || m === 'tamara') await click(`[data-act="bnpl-ok"]`);
-      else await click('[data-act="authorise"]');
+      await open('/checkout?filled=1');
+      await click(`.kc label[for="payment_method_${m}"]`);
+      expect((await st()).co.pay === m, `${m}: the payment choice did not take`);
+      if (m === 'cod') await step('checkout-cod');
+      const o1 = (await st()).orders;
+      await click('.kc .kbb-mobile-order [data-act="place"]');
+      if (m !== 'cod') {
+        await step('after-' + (m === 'apple' || m === 'gpay' ? 'wallet' : m));
+        if (m === 'tabby' || m === 'tamara') await click('[data-act="bnpl-ok"]'); else await click('[data-act="authorise"]');
+      }
       const s = await st();
-      expect(s.path === '/checkout/review' && (m === 'cod' || s.co.authorised === m), `${m}: did not come back to Review approved`);
+      expect(s.path === '/checkout/placed' && s.orders === o1 + 1 && s.bag === 0, `${m}: Pay now did not end in the order placed`);
     }
-    /* 3 · a declined card keeps the bag; retry goes back to the card */
+    /* 3 · a declined card keeps the bag; Try again returns to the checkout with the card chosen */
     await open('/checkout/3ds');
     const bagBefore = (await st()).bag;
     await click('[data-act="decline"]');
     expect((await st()).path.startsWith('/checkout/failed'), 'a declined card did not show Payment failed');
-    await step('9-failed');
+    await step('after-failed');
     expect((await st()).bag === bagBefore, 'the bag was not kept after a declined payment');
     await click('[data-act="retry-pay"]');
-    expect((await st()).path === '/checkout/card', 'Try again did not return to the card form');
+    const sr = await st();
+    expect(sr.path === '/checkout' && sr.co.pay === 'card', 'Try again did not return to the checkout with the card');
 
     /* 4 · navigation smoke: product → back → tab switch → state kept */
     await open('/home');
@@ -519,15 +622,23 @@ async function flows(lang, dev, log) {
     await step('nav-product');
     await click('[data-act="back"]');
     expect((await st()).path === '/home', 'Back did not return to Home');
-    /* tab switch keeps each tab's stack */
+    /* tab switch keeps each tab's stack (phones: the bottom bar; tablets: the header's account and logo) */
     await open('/brands');
     await click('[data-go^="/brand/"]');
     const before = await st();
-    await click('[data-tab="home"]');
-    expect((await st()).tab === 'home', 'the Home tab did not open');
-    await click('[data-tab="shop"]');
-    const after = await st();
-    expect(after.tab === 'shop' && after.path === before.path && after.depth === before.depth, `the Shop tab lost its place (${before.path} → ${after.path})`);
+    if (await page.locator('#stage .tabbar').filter({visible:true}).count()) {
+      await click('.tabbar [data-tab="home"]');
+      expect((await st()).tab === 'home', 'the Home tab did not open');
+      await click('.tabbar [data-tab="shop"]');
+      const after = await st();
+      expect(after.tab === 'shop' && after.path === before.path && after.depth === before.depth, `the Shop tab lost its place (${before.path} → ${after.path})`);
+    } else {
+      await click('.kh-hd .ib-acct [data-tab="account"]');
+      expect((await st()).tab === 'account', "the header's account icon did not open Account");
+      await click('.kh-hd .logo');
+      const after = await st();
+      expect(after.tab === 'home' && after.path === '/home', "the header's logo did not open Home");
+    }
     await open('/product/' + pslug);
     await click('.pbar .fv');
     expect((await st()).wish.includes(pslug), 'the wishlist heart did not save the product');
@@ -592,6 +703,204 @@ async function flows(lang, dev, log) {
   return {shots, fails};
 }
 
+/* ── Lane APV3: the website's menus, header and the bottom-bar variants, clicked ── */
+async function siteFlows(lang, dev, log) {
+  const page = await newPage(lang);
+  const shots = {}, fails = [];
+  const st = () => page.evaluate(() => APV.state());
+  const open = async (p, extra = '') => { await page.evaluate((h) => APV.open(h), `#${p}${p.includes('?') ? '&' : '?'}device=${dev}&z=100${extra}`); await settle(page); };
+  const vis = (sel) => page.locator(`#stage ${sel}`).filter({visible:true});
+  const click = async (sel, n = 0) => { try { await vis(sel).nth(n).click({timeout:6000}); } catch (e) { throw new Error(`could not click ${sel} #${n} on ${(await st()).path}: ${String(e.message).split('\n')[0]}`); } await page.waitForTimeout(60); };
+  const expect = (ok, msg) => { if (!ok) fails.push(msg); };
+  const step = async (name) => { const file = path.join(OUT, lang, `site-${dev}-${name}.jpg`); const r = await check(page, {shot:file}); log.push({flow:`${lang}/${dev}`, step:name, issues:r.issues, shot:file}); shots[name] = file; return r; };
+  /* the header region of the frame, for the site-vs-app pictures */
+  const headerShot = async (name) => {
+    if (NOSHOTS) return;
+    const g = await page.locator('#stage .glass').first().boundingBox();
+    const h = await page.evaluate(() => { const e = document.querySelector('#stage .kh-hd'); return e ? e.getBoundingClientRect().height : 120; });
+    const file = path.join(OUT, lang, `site-${dev}-${name}.png`);
+    await page.screenshot({path:file, clip:{x:g.x, y:g.y, width:g.width, height:Math.ceil(h) + 40}});
+    shots[name] = file;
+  };
+  const go = async (sel, n, what) => {
+    const want = await vis(sel).nth(n).evaluate((e) => ({go:e.dataset.go || null, tab:e.dataset.tab || null, txt:e.textContent.replace(/\s+/g, ' ').trim().slice(0, 40)}));
+    await click(sel, n);
+    const s = await st();
+    if (want.go) expect(s.path === want.go.split('#')[0], `${what} “${want.txt}” went to ${s.path}, not ${want.go}`);
+    else if (want.tab) expect(s.tab === want.tab, `${what} “${want.txt}” opened the ${s.tab} tab, not ${want.tab}`);
+    else fails.push(`${what} “${want.txt}” has no destination`);
+    expect(!s.menu && s.mega == null, `${what} “${want.txt}” left the menu open`);
+    return want;
+  };
+  try {
+    const W = await (async () => { await open('/home'); return page.evaluate(() => document.querySelector('#stage .glass').offsetWidth); })();
+    const drawer = W <= 900;
+    await headerShot('header');
+    await step('header-home');
+    /* the header: icons, logo, search box, badges, language switch */
+    await open('/category/serums');
+    const s0 = await st();
+    const badge = await vis('.kh-hd .id-cartCt').first().textContent().catch(() => '');
+    expect(badge.replace(/[^\d٠-٩]/g, '') !== '' && Number(badge.replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))) === s0.bag, `the header's bag badge reads “${badge}”, the bag holds ${s0.bag}`);
+    const lhref = await vis('.kh-hd [data-lang]').first().getAttribute('href');
+    expect(lhref && lhref.startsWith(lang === 'ar' ? '../en/index.html#/category/serums' : '../ar/index.html#/category/serums'), `the language switch points at ${lhref}`);
+    await click('.kh-hd .ib-acct [data-tab="account"]');
+    expect((await st()).tab === 'account', "the header's account icon did not open Account");
+    await open('/category/serums');
+    await click('.kh-hd [data-tab="bag"]');
+    expect((await st()).path === '/bag', "the header's cart did not open the bag");
+    await open('/category/serums');
+    await click('.kh-hd .logo');
+    expect((await st()).path === '/home', "the header's logo did not go Home");
+    await open('/category/serums');
+    await click('.kh-hd .search-in');
+    expect((await st()).tab === 'search' && await page.evaluate(() => document.activeElement && document.activeElement.id === 'q' && !!document.activeElement.closest('.kh-hd')), "the header's search box did not become the search field");
+    await page.keyboard.type(lang === 'ar' ? 'سيروم' : 'serum', {delay:5});
+    expect(await page.locator('#stage #sres [data-go^="/product/"]').count() > 0, "typing in the header's search box found nothing");
+    await step('header-search');
+    if (drawer) {
+      /* the site's phone menu: open, every top-level item, a sub-level of each, chips, close */
+      await open('/home');
+      await click('[data-act="menu"]');
+      expect((await st()).menu && await vis('.mmenu.on').count() === 1, 'the ☰ did not open the menu');
+      await step('menu-open');
+      const nTop = await page.locator('#stage .mmenu .mm-body > .mm-node, #stage .mmenu .mm-body > a.mm-it').count();
+      const nPar = await page.locator('#stage .mmenu .mm-node').count();
+      expect(nTop >= 8, `the menu has ${nTop} top-level items`);
+      for (let i = 0; i < nPar; i++) {
+        await open('/home'); await click('[data-act="menu"]');
+        await click('.mmenu .mm-node .mm-par', i);
+        const on = await page.evaluate((i) => { const n = document.querySelectorAll('#stage .mmenu .mm-node')[i]; return n.classList.contains('on') && [...n.querySelectorAll('.mm-si')].filter((a) => a.getBoundingClientRect().height > 0).length; }, i);
+        expect(on > 0, `menu level ${i + 1} did not open its sub-items`);
+        if (i === 2) await step('menu-level');
+        await go('.mmenu .mm-node.on .mm-si', 0, 'menu sub-item');
+      }
+      const nIt = await page.locator('#stage .mmenu .mm-body > a.mm-it').count();
+      for (let i = 0; i < Math.max(nIt, 1); i++) { await open('/home'); await click('[data-act="menu"]'); if (nIt) await go('.mmenu .mm-body > a.mm-it', i, 'menu item'); }
+      await open('/home'); await click('[data-act="menu"]');
+      const nChip = await page.locator('#stage .mmenu .mm-chip').count();
+      expect(nChip >= 3, `the menu has ${nChip} chips`);
+      for (let i = 0; i < nChip; i++) { await open('/home'); await click('[data-act="menu"]'); await page.locator('#stage .mmenu .mm-chip').nth(i).scrollIntoViewIfNeeded(); await go('.mmenu .mm-chip', i, 'menu chip'); }
+      await open('/home'); await click('[data-act="menu"]'); await go('.mmenu .mm-acs a', 0, 'menu account');
+      await open('/home'); await click('[data-act="menu"]');
+      const mh = await vis('.mmenu [data-lang]').first().getAttribute('href').catch(() => null);
+      expect(mh && mh.includes(lang === 'ar' ? '../en/index.html#/home' : '../ar/index.html#/home'), `the menu's language switch points at ${mh}`);
+      await click('.mmenu .id-mmx');
+      expect(!(await st()).menu, 'the × did not close the menu');
+      await click('[data-act="menu"]');
+      const gb = await page.locator('#stage .glass').first().boundingBox();
+      await page.mouse.click(lang === 'ar' ? gb.x + 20 : gb.x + gb.width - 20, gb.y + gb.height * 0.3);
+      await page.waitForTimeout(80);
+      expect(!(await st()).menu, 'a tap on the scrim did not close the menu');
+      /* the site's "Search the menu…" filter */
+      if (await page.locator('#stage .kh-hd').count()) {
+        await click('[data-act="menu"]');
+        if (await vis('.mmenu .id-mmFilter').count()) {
+          await vis('.mmenu .id-mmFilter').first().fill(lang === 'ar' ? 'سيروم' : 'serum');
+          await page.dispatchEvent('#stage .mmenu .id-mmFilter', 'input');
+          const shown = await page.evaluate(() => [...document.querySelectorAll('#stage .mmenu .mm-si,#stage .mmenu .mm-body>a.mm-it')].filter((a) => a.getBoundingClientRect().height > 0).map((a) => a.textContent.trim()));
+          expect(shown.length > 0 && shown.length < 20, `the menu filter shows ${shown.length} items`);
+          await step('menu-filter');
+        }
+      }
+    }
+    /* the site's menu bar and its mega panels: iPad landscape as the site; tablets with "menu bar" */
+    for (const extra of W > 1000 ? [''] : W >= 600 ? ['&tm=bar'] : []) {
+      await open('/home', extra);
+      const n = await page.locator('#stage .kh-hd .mbar .navitem').count();
+      expect(n >= 8, `the menu bar has ${n} items`);
+      for (let i = 0; i < n; i++) {
+        await open('/home', extra);
+        const mega = await page.locator('#stage .kh-hd .mbar .navitem').nth(i).locator('[data-act="mega"]').count();
+        if (mega) {
+          await page.locator('#stage .kh-hd .mbar .navitem').nth(i).locator('[data-act="mega"]').click();
+          await page.waitForTimeout(260); // the site's panel fades in over .16s
+          const open1 = await page.evaluate((i) => { const it = document.querySelectorAll('#stage .kh-hd .mbar .navitem')[i]; const d = it.querySelector('.drop'); return it.classList.contains('kopen') && d && getComputedStyle(d).visibility === 'visible'; }, i);
+          expect(open1, `menu bar item ${i + 1}: the panel did not open`);
+          if (i === 2 || (i === 1 && extra)) { await step('mega-open' + (extra ? '-bar' : '')); }
+          await go('.kh-hd .mbar .navitem.kopen .drop a[data-go]', 0, 'mega panel link');
+        } else await go('.kh-hd .mbar .navitem .navlink', i, 'menu bar item');
+      }
+      const direct = await page.locator('#stage .kh-hd .mbar .wrap > a[data-go]').count();
+      for (let i = 0; i < direct; i++) { await open('/home', extra); await go('.kh-hd .mbar .wrap > a[data-go]', i, 'menu bar link'); }
+    }
+    /* every bottom-bar variant on the phones: each tab, each More tile, the badges */
+    if (['ip16', 'px9'].includes(dev)) {
+      for (const bb of ['A', 'B', 'C', 'D', 'E']) {
+        await open('/home', '&bb=' + bb);
+        const s = await st();
+        expect(s.bb === bb, `bottom bar ${bb} was not applied`);
+        await step('bb-' + bb);
+        const bagB = await page.evaluate(() => { const b = document.querySelector('#stage .tabbar [data-tab="bag"] .bdg'); return b ? b.textContent : null; });
+        if (['A', 'C', 'D', 'E'].includes(bb)) expect(bagB !== null && Number(bagB.replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))) === s.bag, `bar ${bb}: bag badge ${bagB}, bag ${s.bag}`);
+        if (['C', 'D'].includes(bb)) { const wB = await page.evaluate(() => { const b = document.querySelector('#stage .tabbar [data-tab="wish"] .bdg'); return b ? b.textContent : null; }); expect(wB !== null && Number(wB.replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))) === s.wish.length, `bar ${bb}: wishlist badge ${wB}, wishlist ${s.wish.length}`); }
+        const tabs = await page.$$eval('#stage .tabbar .tab', (L) => L.map((b) => b.dataset.tab || b.dataset.act));
+        expect(tabs.length === 5, `bar ${bb} has ${tabs.length} items`);
+        for (let i = 0; i < tabs.length; i++) {
+          await open('/home', '&bb=' + bb);
+          if (tabs[i] === 'home') await open('/category/serums', '&bb=' + bb);
+          await click('.tabbar .tab', i);
+          const s2 = await st();
+          if (tabs[i] === 'more') {
+            expect(s2.sheet === 'more', `bar ${bb}: More did not open its sheet`);
+            await step('bb-E-more');
+            const tiles = await page.locator('#stage .sheet .mtile').count();
+            expect(tiles === 8, `the More sheet has ${tiles} tiles`);
+            for (let k = 0; k < tiles; k++) { await open('/home', '&bb=' + bb); await click('.tabbar .tab', i); await go('.sheet .mtile', k, 'More tile'); }
+          } else {
+            expect(s2.tab === tabs[i] && s2.depth === 1, `bar ${bb}: tab ${tabs[i]} opened ${s2.tab} at depth ${s2.depth}`);
+            const on = await page.evaluate((i) => document.querySelectorAll('#stage .tabbar .tab')[i].classList.contains('on'), i);
+            expect(on, `bar ${bb}: tab ${tabs[i]} is not shown as active`);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    fails.push('flow stopped: ' + String(e.message || e).split('\n')[0]);
+  }
+  for (const e of page.errs.splice(0)) fails.push('console: ' + e);
+  await page.close();
+  return {shots, fails};
+}
+
+/* the whole length of a screen: the frame's body scrolled a screenful at a time, stacked */
+async function fullLength(lang, hash, file) {
+  const page = await newPage(lang);
+  await page.evaluate((h) => APV.open(h), hash + '&z=100');
+  await settle(page);
+  await page.addStyleTag({content:'#stage .homeind{visibility:hidden}'}); // stitched: no home indicator in the middle of the page
+  const g = await page.locator('#stage .glass').first().boundingBox();
+  const parts = [];
+  const info = await page.evaluate(() => { const b = document.querySelector('#stage .pane .body'); const r = b.getBoundingClientRect(); return {top:r.top, h:b.clientHeight, sh:b.scrollHeight}; });
+  for (let y = 0, i = 0; ; i++) {
+    await page.evaluate((y) => { document.querySelector('#stage .pane .body').scrollTop = y; }, y);
+    await page.waitForTimeout(250); await settle(page);
+    const f = file.replace(/\.png$/, `.part${i}.png`);
+    const first = i === 0;
+    const at = await page.evaluate(() => document.querySelector('#stage .pane .body').scrollTop);
+    const clipTop = first ? g.y : info.top;
+    const clipH = first ? info.top - g.y + info.h : info.h;
+    await page.screenshot({path:f, clip:{x:g.x, y:clipTop, width:g.width, height:clipH}});
+    parts.push({f, skip:first ? 0 : (y - at) === 0 ? 0 : 0});
+    if (at + info.h >= info.sh - 1) {
+      const last = info.sh - info.h; // the final scroll stops short: keep only the new part of the last screenful
+      if (i > 0) parts[i].crop = (y - at);
+      break;
+    }
+    y += info.h;
+  }
+  await page.close();
+  const pg = await ctx.newPage();
+  await pg.setViewportSize({width:Math.ceil(g.width), height:800});
+  const html = `<!doctype html><style>body{margin:0;background:#fff}div{width:${g.width}px}img{display:block;width:${g.width}px}</style><div>${parts.map((p, i) => `<div style="overflow:hidden;${p.crop ? `margin-top:0` : ''}"><img src="file://${p.f}" style="${p.crop ? `margin-top:-${p.crop}px` : ''}"></div>`).join('')}</div>`;
+  const tmp = file + '.html'; fs.writeFileSync(tmp, html);
+  await pg.goto('file://' + tmp, {waitUntil:'load'});
+  await pg.screenshot({path:file, fullPage:true});
+  await pg.close();
+  fs.unlinkSync(tmp); parts.forEach((p) => fs.unlinkSync(p.f));
+  return file;
+}
+
 /* ── pictures made of pictures ───────────────────────────────────────────── */
 async function compose(file, title, items, o = {}) {
   const page = await ctx.newPage();
@@ -613,7 +922,7 @@ async function compose(file, title, items, o = {}) {
   const t0 = Date.now();
   const results = [], exceptions = {}, flowLog = [], flowFails = {};
   if (!FLOWS_ONLY) await grid(results, exceptions);
-  const flowShots = {};
+  const flowShots = {}, siteShots = {};
   if (!NO_FLOWS) {
     const FD = arg('dev') ? DEVICES : ['ip16', 'px9', 'fold-inner', 'duo'];
     for (const lang of LANGS) for (const d of FD) {
@@ -621,6 +930,13 @@ async function compose(file, title, items, o = {}) {
       flowFails[`${lang}/${d}`] = r.fails;
       flowShots[`${lang}/${d}`] = r.shots;
       process.stdout.write(`flow ${lang}/${d}: ${r.fails.length} failures\n`);
+    }
+    const SD = arg('dev') ? DEVICES : ['ip16', 'px9', 'fold-cover', 'fold-inner', 'ipad', 'ipad-land', 'duo', 'flip-tabletop'];
+    for (const lang of LANGS) for (const d of SD) {
+      const r = await siteFlows(lang, d, flowLog);
+      flowFails[`${lang}/${d}/site`] = r.fails;
+      siteShots[`${lang}/${d}`] = r.shots;
+      process.stdout.write(`site flow ${lang}/${d}: ${r.fails.length} failures\n`);
     }
   }
 
@@ -650,16 +966,45 @@ async function compose(file, title, items, o = {}) {
   /* checkout strips and key pictures */
   if (!NOSHOTS && !NO_FLOWS) {
     fs.mkdirSync(KEY, {recursive:true});
-    const ORDER = [['1-bag-review', '1 · Bag review'], ['2-contact-guest', '2 · Contact'], ['3-address-saved', '3 · Address: saved'], ['3-address-errors', '3 · New address: validation'], ['3-emirate-sheet', '3 · Emirate'], ['3-area-sheet', '3 · Area by emirate'], ['3-address-filled', '3 · New address: filled'], ['4-delivery', '4 · Delivery'], ['5-payment', '5 · Payment'], ['6-card-filled', '6 · Card'], ['6-card-3ds', '6 · 3-D Secure'], ['6-wallet', '6 · Wallet sheet'], ['6-tabby', '6 · Tabby'], ['6-tamara', '6 · Tamara'], ['6-cod', '6 · Cash on delivery'], ['7-review', '7 · Review'], ['8-placed', '8 · Order placed'], ['9-failed', '9 · Payment failed']];
+    /* Lane APV3: bag → checkout is the whole road; the after-tap states follow */
+    const ORDER = [['bag', 'Bag (the site\'s cart page)'], ['checkout', 'Checkout · the one page'], ['coupon-applied', 'Coupon in the summary'], ['checkout-errors', 'Pay now with gaps: inline errors'], ['emirate-sheet', 'Emirate picker over the page'], ['checkout-filled', 'Filled, card inline'], ['after-3ds', 'After Pay now · 3-D Secure'], ['after-wallet', 'After Pay now · wallet sheet'], ['after-tabby', 'After Pay now · Tabby'], ['after-tamara', 'After Pay now · Tamara'], ['after-placed', 'Order placed'], ['after-failed', 'Payment failed, bag kept']];
     for (const lang of LANGS) {
       const S = flowShots[`${lang}/ip16`]; if (!S) continue;
-      await compose(path.join(KEY, `${lang}-checkout-steps.png`), `${lang === 'ar' ? 'Arabic' : 'English'} app · checkout, every step, clicked and typed by tools/apv-shots.cjs (iPhone 16 Pro)`, ORDER.filter(([k]) => S[k]).map(([k, c]) => ({src:S[k], cap:c})), {w:200, width:2000});
+      await compose(path.join(KEY, `${lang}-checkout-flow.png`), `${lang === 'ar' ? 'Arabic' : 'English'} app · bag → checkout (two screens) → Pay now, clicked and typed by tools/apv-shots.cjs (iPhone 16 Pro)`, ORDER.filter(([k]) => S[k]).map(([k, c]) => ({src:S[k], cap:c})), {w:230, width:1800});
     }
   }
   if (!NOSHOTS && FULL) {
     const fl = (lang, k) => (flowShots[`${lang}/ip16`] || {})[k];
-    await compose(path.join(KEY, 'floating-label-before.png'), 'Floating labels, before: the label is the placeholder, centred in the box (English, Arabic)', [{src:fl('en', '3-address-new'), cap:'English · empty'}, {src:fl('ar', '3-address-new'), cap:'Arabic · empty'}].filter((x) => x.src), {w:420, width:900});
-    await compose(path.join(KEY, 'floating-label-after.png'), 'Floating labels, after: typed values; each label lifts to a small heading at the top-start corner', [{src:fl('en', '3-address-filled'), cap:'English · filled'}, {src:fl('ar', '3-address-filled'), cap:'Arabic · filled'}].filter((x) => x.src), {w:420, width:900});
+    await compose(path.join(KEY, 'floating-label-before.png'), 'Floating labels, before: the label is the placeholder, centred in the box (English, Arabic)', [{src:fl('en', 'checkout'), cap:'English · empty'}, {src:fl('ar', 'checkout'), cap:'Arabic · empty'}].filter((x) => x.src), {w:420, width:900});
+    await compose(path.join(KEY, 'floating-label-after.png'), 'Floating labels, after: typed values; each label lifts to a small heading at the top-start corner', [{src:fl('en', 'checkout-filled'), cap:'English · filled'}, {src:fl('ar', 'checkout-filled'), cap:'Arabic · filled'}].filter((x) => x.src), {w:420, width:900});
+  }
+  /* Lane APV3 key pictures: site vs app headers, the menus, the bottom bars */
+  if (!NOSHOTS && !NO_FLOWS && !arg('dev')) {
+    const SITE_SHOTS = path.join(OUT, 'site');
+    const ss = (lang, f) => { const p2 = path.join(SITE_SHOTS, `${lang}-${f}.png`); return fs.existsSync(p2) ? p2 : null; };
+    const ap = (lang, d, k) => (siteShots[`${lang}/${d}`] || {})[k];
+    const L = (lang) => lang === 'ar' ? 'Arabic' : 'English';
+    for (const lang of LANGS) {
+      const m = (w) => SITEM[lang][w];
+      await compose(path.join(KEY, `header-phone-${lang}.png`), `${L(lang)} · the website's header (left, live kbeautybliss.com${lang === 'ar' ? '/ar/' : '/'}) and the app's (right) at 402 wide: header ${m(402).h}px, search box ${m(402).si.h}px, corners ${m(402).si.r}, logo ${m(402).icon.w}×${m(402).icon.h}. The app adds only the phone's status bar above it.`, [{src:ss(lang, 402), cap:'Website, 402 px'}, {src:ap(lang, 'ip16', 'header'), cap:'App, iPhone 16 Pro (402 pt)'}, {src:ss(lang, 412), cap:'Website, 412 px'}, {src:ap(lang, 'px9', 'header'), cap:'App, Pixel 9 (412 dp)'}].filter((x) => x.src), {w:402, width:1700});
+      await compose(path.join(KEY, `header-tablet-${lang}.png`), `${L(lang)} · the website's header and the app's on the Galaxy Z Fold inner screen (673) and iPad mini (744 portrait; 1133 landscape with the site's menu bar)`, [{src:ss(lang, 673), cap:'Website, 673 px'}, {src:ap(lang, 'fold-inner', 'header'), cap:'App, Fold inner (673 dp)'}, {src:ss(lang, 744), cap:'Website, 744 px'}, {src:ap(lang, 'ipad', 'header'), cap:'App, iPad mini portrait (744 pt)'}, {src:ss(lang, 1133), cap:'Website, 1133 px'}, {src:ap(lang, 'ipad-land', 'header'), cap:'App, iPad mini landscape (1133 pt)'}].filter((x) => x.src), {w:760, width:1600});
+      await compose(path.join(KEY, `menu-phone-${lang}.png`), `${L(lang)} · the site's phone menu (☰): website at 402 px, then the app on iPhone 16 Pro, closed levels and a level opened`, [{src:ss(lang, '402-menu'), cap:'Website · menu'}, {src:ap(lang, 'ip16', 'menu-open') && ap(lang, 'ip16', 'menu-open'), cap:'App · menu'}, {src:ss(lang, '402-menu-open'), cap:'Website · Skincare opened'}, {src:ap(lang, 'ip16', 'menu-level'), cap:'App · Skincare opened'}].filter((x) => x.src), {w:330, width:1450});
+      await compose(path.join(KEY, `menu-tablet-${lang}.png`), `${L(lang)} · tablets: iPad landscape shows the site's menu bar and its mega panels (website left, app right); the Fold inner shows what the site shows at 673 (the ☰ menu), or the menu bar with “Tablet menu: menu bar”`, [{src:ss(lang, '1133-mega'), cap:'Website · 1133 px · Skincare panel'}, {src:ap(lang, 'ipad-land', 'mega-open'), cap:'App · iPad landscape · Skincare panel'}, {src:ss(lang, '673-menu'), cap:'Website · 673 px · menu'}, {src:ap(lang, 'fold-inner', 'menu-open'), cap:'App · Fold inner · menu'}, {src:ap(lang, 'fold-inner', 'mega-open-bar'), cap:'App · Fold inner · “menu bar” option, Skincare panel'}].filter((x) => x.src), {w:560, width:1800});
+      await compose(path.join(KEY, `bottom-bars-${lang}.png`), `${L(lang)} · bottom bar options on iPhone 16 Pro — A (now) · B · C · D · E, and E's More sheet. Pick a letter: “Bottom bar” chooser beside the phone.`, ['A', 'B', 'C', 'D', 'E'].map((b) => ({src:ap(lang, 'ip16', 'bb-' + b), cap:{A:'A · Home · Shop · Search · Bag · Account (now)', B:'B · Home · Categories · Brands · Offers · Account', C:'C · Home · Shop · Wishlist · Bag · Account', D:'D · Home · Categories · raised Bag · Wishlist · Account', E:'E · Home · Shop · Offers · Bag · More'}[b]})).concat([{src:ap(lang, 'ip16', 'bb-E-more'), cap:'E · More sheet'}]).filter((x) => x.src), {w:280, width:1860});
+    }
+  }
+  /* Lane APV3: the site's cart and one-page checkout beside the app's, full length, and what follows Pay now */
+  if (!NOSHOTS && !arg('dev')) {
+    const SITE_SHOTS = path.join(OUT, 'site');
+    for (const lang of LANGS) {
+      const L = lang === 'ar' ? 'Arabic' : 'English';
+      const ss = (f) => { const p2 = path.join(SITE_SHOTS, `${lang}-${f}.png`); return fs.existsSync(p2) ? p2 : null; };
+      const cartApp = await fullLength(lang, '#/bag?device=ip16', path.join(OUT, lang, 'full-cart.png'));
+      const coApp = await fullLength(lang, '#/checkout?guest=1&user=0&device=ip16', path.join(OUT, lang, 'full-checkout.png'));
+      await compose(path.join(KEY, `${lang}-cart.png`), `${L} · the bag: the site's cart page (left, at 390) and the app's (right, iPhone 16 Pro, under its header). Same sections, same order, same words.`, [{src:ss('cart'), cap:'Website · cart page'}, {src:cartApp, cap:'App · Bag'}].filter((x) => x.src), {w:402, width:900});
+      const F = flowShots[`${lang}/ip16`] || {};
+      await compose(path.join(KEY, `${lang}-checkout.png`), `${L} · the checkout is ONE page, as on the site: website (left, 390) and app (right), full length. Bag → checkout = two screens before Pay now. Then, after the tap (not steps): 3-D Secure, the wallet sheet, Tabby / Tamara approving in the app, the order placed, a declined payment with the bag kept.`, [{src:ss('checkout'), cap:'Website · one-page checkout'}, {src:coApp, cap:'App · one-page checkout'}].filter((x) => x.src).concat([['after-3ds', 'After Pay now · 3-D Secure'], ['after-wallet', 'After Pay now · Apple Pay sheet'], ['after-tabby', 'After Pay now · Tabby'], ['after-tamara', 'After Pay now · Tamara'], ['after-placed', 'Order placed'], ['after-failed', 'Payment failed · bag kept']].filter(([k]) => F[k]).map(([k, c]) => ({src:F[k], cap:c}))), {w:402, width:1950});
+    }
   }
   await browser.close();
 
@@ -673,6 +1018,8 @@ async function compose(file, title, items, o = {}) {
     devices:DEVICES, locales:LANGS, failed:bad.length, issues_by_kind:byKind,
     flows:{steps:flowLog.length, steps_with_issues:flowBad.length, assertions_failed:nFlowFails, by_run:flowFails},
     screens_html:screensCheck,
+    variants:{bottom_bar:results.filter((r) => r.bb !== 'A').length, tablet_menu_bar:results.filter((r) => r.tm === 'bar').length},
+    site_findings:['The site\'s own search field is 34px high on phones (under the 44px tap target): the app copies it, as asked.', 'The site\'s delivery strip is white on #E991AE, 2.3:1 contrast: the app copies it, as asked.'],
     arabic_exceptions:exceptions,
     failures:bad.map((r) => ({name:`${r.lang}/${r.name}`, link:r.link, issues:r.issues.slice(0, 12)})).concat(flowBad.map((r) => ({name:`flow ${r.flow} ${r.step}`, issues:r.issues.slice(0, 12)}))),
   };

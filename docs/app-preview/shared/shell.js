@@ -70,14 +70,17 @@ function paneHTML(path, L, ctx, o = {}){
 }
 
 /* ── navigation bar / rail ─────────────────────────────────────────────── */
-const TABDEF = () => [['home', 'home', t('Home')], ['shop', 'shop', t('Shop')], ['search', 'search', t('Search')], ['bag', 'bag', t('Bag')], ['account', 'user', t('Account')]];
+/* The bottom bar of the chosen variant (shared/header.js, BBDEF). Phones only:
+   from 600 wide the website's header and menus do the navigating, as on the site. */
+const TABDEF = () => BBDEF[S.bb] || BBDEF.A;
 function tabbar(){
-  const n = bagCount();
-  return `<nav class="tabbar" data-layer="nav" aria-label="${t('Main')}">${TABDEF().map(([k, i, l]) => `<button class="tab${S.tab === k ? ' on' : ''}" data-tab="${k}" aria-current="${S.tab === k ? 'page' : 'false'}">${isA() ? `<span class="pill">${ico(i)}</span>` : ico(i)}<span>${l}</span>${k === 'bag' && n ? `<span class="bdg">${num(n)}</span>` : ''}</button>`).join('')}</nav>`;
-}
-function navRail(){
-  const n = bagCount();
-  return `<nav class="rail" data-layer="nav" aria-label="${t('Main')}"><span class="rlogo lgx">${LOTUS}</span>${TABDEF().map(([k, i, l]) => `<button class="rl${S.tab === k ? ' on' : ''}" data-tab="${k}" aria-current="${S.tab === k ? 'page' : 'false'}"><span class="pill">${ico(i)}</span><span>${l}</span>${k === 'bag' && n ? `<span class="bdg">${num(n)}</span>` : ''}</button>`).join('')}</nav>`;
+  const n = bagCount(), w = S.wish.size;
+  return `<nav class="tabbar bb-${S.bb}" data-layer="nav" aria-label="${t('Main')}">${TABDEF().map(([k, i, l, x]) => {
+    const on = k === 'more' ? S.sheet === 'more' : S.tab === k;
+    const c = k === 'bag' ? n : k === 'wish' ? w : 0;
+    const act = k === 'more' ? `data-act="more" aria-expanded="${S.sheet === 'more'}"` : `data-tab="${k}" aria-current="${on ? 'page' : 'false'}"`;
+    return `<button class="tab${on ? ' on' : ''}${x ? ' ' + x : ''}" ${act}>${isA() || x ? `<span class="pill">${ico(i)}</span>` : ico(i)}<span class="tbl">${tl(l)}</span>${c ? `<span class="bdg">${num(c)}</span>` : ''}</button>`;
+  }).join('')}</nav>`;
 }
 
 /* ── the app inside one screen ─────────────────────────────────────────── */
@@ -86,6 +89,10 @@ function shellHTML(d, o = {}){
   const lay = o.lay || layoutFor(r, d);
   const cls = sizeClass(d.w);
   const base = {cls, dual:!!d.dual};
+  /* the website's header on top of the start screen (shared/header.js) */
+  const R00 = renderScreen(o.only || r.path, {...base, half:o.half || null}).R;
+  const site = o.slot !== 'end' && siteOn(resolve(o.only || r.path) || r, R00);
+  base.site = site;
   let main, R0;
   if (o.only) {
     const ctx = {...base, half:o.half || null, inPair:!!o.pair, selected:o.selected};
@@ -101,7 +108,7 @@ function shellHTML(d, o = {}){
   }
   const bare = R0.bare;
   const showTabs = !R0.noTabs && !bare && !o.noTabs;
-  return `<div class="shell${showTabs ? '' : ' notabs'}${bare ? ' bare' : ''}">${bare ? '' : navRail()}<main class="main">${main}</main>${showTabs ? tabbar() : ''}</div>`;
+  return `<div class="shell${showTabs ? '' : ' notabs'}${bare ? ' bare' : ''}${site ? ' hassite' : ''}">${site ? siteHTML(d) : ''}<main class="main">${main}</main>${showTabs ? tabbar() : ''}</div>`;
 }
 function overlayHTML(){
   let h = '';
@@ -153,11 +160,12 @@ function frameHTML(){
     let inner;
     if (R.raw) inner = `<div class="shell notabs bare"><main class="main">${paneHTML(r.path, 'p0', {cls:'compact'})}</main></div>`;
     else {
-      const T = paneHTML(r.path, 'p0', {cls:'compact', tabletop:true});
+      const ttSite = siteOn(r, R);
+      const T = paneHTML(r.path, 'p0', {cls:'compact', tabletop:true, site:ttSite});
       const showTabs = !R.noTabs && !R.bare;
       const ctl = T.R.tt || `<div class="pad ttgen"><b class="ell" style="font-size:17px">${T.R.titleH || esc(T.R.title || brandWord())}</b><p class="small muted" style="margin:2px 0 10px">${t('Half-folded: the page is above, the controls are here.')}</p><div class="row2"><button class="btn soft grow" data-act="page" data-v="-1">${ico('chevU')}${t('Page up')}</button><button class="btn soft grow" data-act="page" data-v="1">${ico('chevD')}${t('Page down')}</button></div></div>`;
       const sk = T.sk;
-      inner = `<div class="shell tts"><div class="pane tt-top" data-layer="p0top">${T.head ? `<div data-layer="p0-bar" class="pbar0">${T.head}</div>` : ''}${T.R.head2 || ''}<div class="body" data-layer="p0-body" data-sk="${esc(sk)}"${T.head ? '' : ' style="padding-top:var(--sat)"'}>${T.large}${T.R.body || ''}</div></div><div class="tt-gap"></div><div class="pane tt-bottom" data-layer="p0bot"><div class="tt-ctl" data-layer="p0-ctl">${ctl}</div>${T.foot}${showTabs ? tabbar() : `<div style="height:var(--sab);flex:0 0 auto"></div>`}</div></div>`;
+      inner = `<div class="shell tts"><div class="pane tt-top${ttSite ? ' hassite' : ''}" data-layer="p0top">${ttSite ? siteHTML(d) : ''}${T.head ? `<div data-layer="p0-bar" class="pbar0">${T.head}</div>` : ''}${T.R.head2 || ''}<div class="body" data-layer="p0-body" data-sk="${esc(sk)}"${T.head || ttSite ? '' : ' style="padding-top:var(--sat)"'}>${T.large}${T.R.body || ''}</div></div><div class="tt-gap"></div><div class="pane tt-bottom" data-layer="p0bot"><div class="tt-ctl" data-layer="p0-ctl">${ctl}</div>${T.foot}${showTabs ? tabbar() : `<div style="height:var(--sab);flex:0 0 auto"></div>`}</div></div>`;
     }
     return `<div class="device tabletop ${d.cls}" style="${vars}" data-dev="flip">${label}<div class="glass">${furniture()}${appHTML(inner, overlayHTML(), d, {toastb:'calc(50% + 16px)'})}<div class="tt-fold" data-fold="1"></div></div></div>`;
   }
@@ -183,7 +191,7 @@ function swHTML(){
   <div class="sg"><span>${t('View')}</span>${B('zoom', 'fit', t('Fit'), S.zoom === 'fit')}${B('zoom', '100', '100%', S.zoom === '100')}</div>
   <div class="sg links"><a href="screens.html#device=${devKey()}">${ico('grid')}${t('All screens')}</a><a href="${OTHER.href}#${esc(curPath)}${curPath.includes('?') ? '&' : '?'}device=${devKey()}" class="other">${ico('globe')}${t(OTHER.label)}</a></div>`;
 }
-const SIZE_RULES = {compact:'Compact (under 600): bottom tab bar, one pane, 2-column grid.', medium:'Medium (600 to 839): navigation rail, one pane, 3-column grid, gallery beside the details.', expanded:'Expanded (840 and over): navigation rail, two panes (list and detail) where the screen has a pair, filter panel beside the grid.'};
+const SIZE_RULES = {compact:'Compact (under 600): the website’s phone header and menu, bottom tab bar, one pane, 2-column grid.', medium:'Medium (600 to 839): the website’s header and menu as the site shows them at this width, one pane, 3-column grid, gallery beside the details.', expanded:'Expanded (840 and over): the website’s computer header with its menu bar and mega panels, two panes (list and detail) where the screen has a pair, filter panel beside the grid.'};
 function notesHTML(){
   const d = dev(), cls = sizeClass(d.w), r = route();
   const extra = d.dual ? t('Surface Duo spanned: list on one screen, detail on the other; nothing sits under the hinge.') : S.dev === 'flip' && S.posture === 'tabletop' ? t('Tabletop: content in the top half, controls in the bottom half.') : S.dev === 'fold' ? t('Fold or unfold: the same screen, bag and scroll position carry over.') : '';
@@ -211,6 +219,8 @@ function render(o = {}){
   document.documentElement.lang = LANG; document.documentElement.dir = AR ? 'rtl' : 'ltr';
   $$('#stage [data-sk]').forEach(b => { const v = S.scroll[b.dataset.sk]; if (v) b.scrollTop = v; });
   wire();
+  wireSite();
+  paintChooser();
   if (ghosts) animate(ghosts, o.anim);
   fit();
   writeHash();
@@ -260,7 +270,7 @@ function onBodyScroll(e, init){
 function writeHash(){
   if (S.noHash) return;
   const p = topE().path;
-  const h = `#${p}${p.includes('?') ? '&' : '?'}device=${devKey()}&os=${S.os}${S.design !== 'A' ? '&d=' + S.design : ''}${AR && S.digits === 'arab' ? '&dg=arab' : ''}${S.embed ? '&embed=1' : ''}${S.zoom === '100' ? '&z=100' : ''}`;
+  const h = `#${p}${p.includes('?') ? '&' : '?'}device=${devKey()}&os=${S.os}${S.design !== 'A' ? '&d=' + S.design : ''}${S.bb !== 'A' ? '&bb=' + S.bb : ''}${S.tm === 'bar' ? '&tm=bar' : ''}${AR && S.digits === 'arab' ? '&dg=arab' : ''}${S.embed ? '&embed=1' : ''}${S.zoom === '100' ? '&z=100' : ''}`;
   if (location.hash !== h) { S.selfHash = h; history.replaceState(null, '', h); }
 }
 function haptic(kind){
@@ -278,7 +288,7 @@ function enter(path){
 }
 function go(path, o = {}){
   const r = resolve(path); if (!r) return;
-  S.sheet = null; S.viewer = null;
+  S.sheet = null; S.viewer = null; S.menu = false; S.mega = null;
   enter(path);
   if (o.tabroot) { S.tab = o.tabroot; S.stacks[S.tab] = [{path:ROOT[S.tab]}]; if (r.path !== ROOT[S.tab]) S.stacks[S.tab].push({path:r.path}); render({anim:'tab'}); return; }
   if (o.root) { const sf = stackFor(path); S.tab = sf.tab; S.stacks[S.tab] = [{path:ROOT[sf.tab]}]; if (r.path !== ROOT[sf.tab]) S.stacks[S.tab].push({path:r.path}); render({anim:'tab'}); return; }
@@ -291,6 +301,7 @@ function go(path, o = {}){
 function back(o = {}){
   if (S.sheet) { S.sheet = null; render(); return; }
   if (S.viewer) { S.viewer = null; render(); return; }
+  if (S.menu || S.mega != null) { S.menu = false; S.mega = null; render(); return; }
   const st = S.stacks[S.tab];
   if (st.length < 2) return;
   const done = () => { const gone = st.pop(); delete S.scroll[gone.path + '|']; render({anim:o.noAnim ? null : 'pop'}); };
@@ -298,7 +309,7 @@ function back(o = {}){
   done();
 }
 function tab(k){
-  S.sheet = null; S.viewer = null;
+  S.sheet = null; S.viewer = null; S.menu = false; S.mega = null;
   if (S.tab === k) { const st = S.stacks[k]; if (st.length > 1) { S.stacks[k] = [st[0]]; render({anim:'pop'}); } else { const b = $('#stage .body'); if (b) b.scrollTo({top:0, behavior:reduced() ? 'auto' : 'smooth'}); } return; }
   S.tab = k; render({anim:'tab'});
 }

@@ -1,7 +1,7 @@
 {
- "generated": "2026-10-19T02:42:27.795Z",
- "renders": 1840,
- "screens": 184,
+ "generated": "2026-10-19T08:38:52.446Z",
+ "renders": 1952,
+ "screens": 168,
  "devices": [
   "ip16",
   "ipse",
@@ -21,7 +21,7 @@
  "failed": 0,
  "issues_by_kind": {},
  "flows": {
-  "steps": 224,
+  "steps": 237,
   "steps_with_issues": 0,
   "assertions_failed": 0,
   "by_run": {
@@ -32,28 +32,52 @@
    "ar/ip16": [],
    "ar/px9": [],
    "ar/fold-inner": [],
-   "ar/duo": []
+   "ar/duo": [],
+   "en/ip16/site": [],
+   "en/px9/site": [],
+   "en/fold-cover/site": [],
+   "en/fold-inner/site": [],
+   "en/ipad/site": [],
+   "en/ipad-land/site": [],
+   "en/duo/site": [],
+   "en/flip-tabletop/site": [],
+   "ar/ip16/site": [],
+   "ar/px9/site": [],
+   "ar/fold-cover/site": [],
+   "ar/fold-inner/site": [],
+   "ar/ipad/site": [],
+   "ar/ipad-land/site": [],
+   "ar/duo/site": [],
+   "ar/flip-tabletop/site": []
   }
  },
  "screens_html": {
   "en": {
-   "cards": 92,
-   "links": 92,
+   "cards": 84,
+   "links": 84,
    "sw": 1400,
    "w": 1400,
    "errors": []
   },
   "ar": {
-   "cards": 92,
-   "links": 92,
+   "cards": 84,
+   "links": 84,
    "sw": 1400,
    "w": 1400,
    "errors": []
   }
  },
+ "variants": {
+  "bottom_bar": 256,
+  "tablet_menu_bar": 16
+ },
+ "site_findings": [
+  "The site's own search field is 34px high on phones (under the 44px tap target): the app copies it, as asked.",
+  "The site's delivery strip is white on #E991AE, 2.3:1 contrast: the app copies it, as asked."
+ ],
  "arabic_exceptions": {
   "dev": {
-   "n": 9752,
+   "n": 10332,
    "eg": [
     "iOS",
     "Android",
@@ -65,60 +89,69 @@
     "Galaxy Z Fold"
    ]
   },
-  "logo": {
-   "n": 280,
+  "lang": {
+   "n": 796,
    "eg": [
-    "K-BEAUTY",
-    "BLISS"
+    "EN",
+    "English"
+   ]
+  },
+  "brand": {
+   "n": 1630,
+   "eg": [
+    "English",
+    "SUNGBOON EDITOR",
+    "Medicube"
    ]
   },
   "term": {
-   "n": 95,
+   "n": 113,
    "eg": [
     "BHA",
     "AHA",
     "PHA",
     "LHA",
     "PDRN",
-    "SPF 50+ PA++++",
     "NP",
-    "ml"
+    "ml",
+    "SPF 50+ PA++++"
    ]
   },
-  "brand": {
-   "n": 60,
+  "logo": {
+   "n": 194,
    "eg": [
-    "Medicube"
+    "K-BEAUTY",
+    "BLISS"
    ]
   },
   "code": {
-   "n": 174,
+   "n": 164,
    "eg": [
     "#KBB-56214",
-    "WELCOME10",
-    "card_declined · insufficient",
     "#KBB-56215",
+    "card_declined · insufficient",
     "tabby: rejected · order_amou",
+    "Aramex 4485 9921 03",
     "#KBB-55870",
     "#KBB-55102",
-    "Aramex 4485 9921 03"
+    "APP-503"
    ]
   },
   "pay": {
-   "n": 436,
+   "n": 845,
    "eg": [
     "tabby",
     "tamara",
     "Pay",
-    "VISA",
-    "MC",
-    "AMEX",
-    "checkout.tabby.ai",
-    "Secure"
+    "Visa",
+    "Mastercard",
+    "Tabby",
+    "Tamara",
+    "info@kbeautybliss.com"
    ]
   },
   "ugc": {
-   "n": 322,
+   "n": 430,
    "eg": [
     "Kristen F.",
     "after a month of use my skin",
@@ -131,7 +164,7 @@
    ]
   },
   "email": {
-   "n": 34,
+   "n": 92,
    "eg": [
     "sara@example.com"
    ]
@@ -140,13 +173,6 @@
    "n": 14,
    "eg": [
     "Emirates NBD"
-   ]
-  },
-  "lang": {
-   "n": 20,
-   "eg": [
-    "EN",
-    "English"
    ]
   }
  },
