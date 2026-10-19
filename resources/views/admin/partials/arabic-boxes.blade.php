@@ -89,6 +89,14 @@
   .kbbar-rte{border:1px solid #d6dee8;border-radius:7px;background:#fff;overflow:hidden}
   .kbbar-rte .kbbar-area{min-height:84px;padding:10px 12px;font-size:13.5px;line-height:1.75;outline:0}
   .kbbar-rte .kbbar-area:empty::before{content:attr(data-ph);color:#94a3b8}
+  /* Lane ART: the English toolbar inside the Arabic pane. The bar runs
+     right-to-left with the box; a label such as "1." stays as it reads on the
+     English bar instead of turning into ".1". */
+  .kbbar-bar button{direction:ltr;unicode-bidi:isolate}
+  .kbbar-rte .kbbar-area p{margin:0 0 .7em}
+  .kbbar-rte .kbbar-area h2{font-size:17px;margin:.7em 0 .35em}
+  .kbbar-rte .kbbar-area h3{font-size:15px;margin:.7em 0 .35em}
+  .kbbar-rte .kbbar-area img{max-width:100%;height:auto}
   @media (prefers-color-scheme: dark){
     .kbbar{--kbbar-line:#33415580;--kbbar-bg:#0f172a10}
   }
@@ -188,6 +196,13 @@ window.KBBArabic = (function(){
    *   fromText    true when `from` is a contenteditable / rich pane: its PLAIN
    *               TEXT is sent, never its markup.
    *   scope       a CSS scope prefix so two forms on one page cannot collide.
+   *   bar         'rich' only: the ENGLISH pane's own toolbar markup, from the
+   *               calling screen's own builder, so the Arabic pane carries the
+   *               same buttons in the same order (Lane ART). Screen-authored,
+   *               never operator input, so written through like `attrs`. The
+   *               screen binds it with the same handler as its English bar.
+   *   foot        'rich' only: screen-authored markup under the pane (the
+   *               English pane's word count line).
    */
   function box(opts){
     opts = opts || {};
@@ -220,11 +235,21 @@ window.KBBArabic = (function(){
          a formatted pane would mean the Arabic product page could not carry the
          headings and lists the English one does — the two languages would be
          different pages, not translations of one. */
+      /* LANE ART — the owner, 19 October: "i think you didn't make the
+         editors tools etc for arabic version". The bar sits in the box's own
+         direction (dir="rtl": B on the right); each button keeps its English
+         label (see .kbbar-bar button). The bar and the pane share the
+         .kbbar-rte wrapper, which is how the screen's handler and the shared
+         Media script (admin/partials/rte-media, areaFor()) find THIS pane and
+         never the English one. */
       control = '<div class="kbbar-rte kbbar-ctl" style="padding:0">'
+        + (opts.bar ? '<div class="kbbar-bar" dir="rtl">' + opts.bar + '</div>' : '')
         + '<div class="kbbar-area" contenteditable="true" dir="rtl" lang="' + LOCALE + '" '
         +   'data-kbbar-rich="' + esc(field) + '" data-ph="' + esc(PLACEHOLDER) + '"' + extra + '>'
         + (value || '')
-        + '</div></div>';
+        + '</div>'
+        + (opts.foot || '')
+        + '</div>';
     } else if (type === 'textarea') {
       control = '<textarea class="kbbar-ctl" dir="rtl" lang="' + LOCALE + '" '
         + 'data-kbbar-input="' + esc(field) + '" rows="' + (opts.rows || 3) + '"'
