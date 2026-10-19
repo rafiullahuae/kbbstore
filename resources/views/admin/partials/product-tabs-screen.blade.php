@@ -1036,7 +1036,7 @@
       /* The pane this bar belongs to: the English body, or the Arabic box's own
          pane (Lane ART) -- never the other one. */
       var pane = t.closest('.kpt-rte, .kbbar-rte');
-      var area = pane && pane.querySelector('[data-kpt-body], [data-kbbar-rich]');
+      var area = pane && pane.querySelector('[contenteditable="true"]');
       if (!area) return;
       area.focus();
 
