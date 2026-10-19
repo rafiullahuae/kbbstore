@@ -252,7 +252,18 @@ class ProductVariantsApiController extends Controller
             // A product with no option left in stock is sold out on the grid,
             // where the parent row is what the card reads.
             $anyIn = ProductVariant::query()->where('product_id', $product->id)->where('stock_status', 'instock')->exists();
-            $product->forceFill(['stock_status' => $anyIn || $rows === [] ? 'instock' : 'outofstock'])->save();
+            $product->forceFill(['stock_status' => $anyIn || $rows === [] ? 'instock' : 'outofstock']);
+
+            // A product sold by its options is priced by them: the card's
+            // "AED 125 – AED 139" and every basket line read the options, and
+            // VariantPricing reads them only while the parent's own price is
+            // empty. A price left on the parent from before it had options
+            // would quietly stand in for all of them on the grid.
+            if ($rows !== []) {
+                $product->forceFill(['price' => null, 'sale_price' => null]);
+            }
+
+            $product->save();
         });
 
         // Pivot writes fire no model events: drop both snapshots by hand.

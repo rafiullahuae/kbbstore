@@ -3664,7 +3664,7 @@ a.peo-btn{display:inline-block;text-decoration:none}
     return '<div class="peo-card" data-vpo>'
       + '<h3>Options</h3>'
       + '<div class="peo-note" style="margin:0 0 10px">The shades and sizes a shopper picks from — dots on the product card, round swatches and size pills on the product page. '
-      +   'The choices (Shade, Size …) come from <b>Catalog → Attributes</b>; pick one here or type a new one.</div>'
+      +   'The choices (Shade, Size …) come from <b>Catalog → Attributes</b>; pick one here or type a new one. Each option carries its own price, so the product\u2019s own Price is cleared when options are saved.</div>'
       + '<div style="margin-bottom:6px">' + (axisChips || '<span class="peo-note">No attributes yet — add Shade or Size on Catalog → Attributes.</span>') + '</div>'
       + (axes.length
           ? '<div style="overflow:auto"><table class="vpo-tbl" style="width:100%;border-collapse:collapse;font-size:12.5px"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div>'
@@ -3752,6 +3752,9 @@ a.peo-btn{display:inline-block;text-decoration:none}
         vpo.variants = (d.variants || []).map(function(v){ v.values = v.values || {}; return v; });
         vpo.swatches = {};
         vpo.msg = 'Options saved — the shop shows them now.';
+        // Priced by its options now: the product's own price is cleared on the
+        // server, so the Price panel must not send the old one back on Save.
+        if (vpo.variants.length && model) { model.price_aed = ''; model.sale_aed = ''; }
         say('Options saved');
       } catch (e) {
         var b = e && e.body, first = b && b.errors ? b.errors[Object.keys(b.errors)[0]] : null;

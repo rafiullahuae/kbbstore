@@ -10,7 +10,7 @@
 # deliverable, so the thing that produces them has to travel with the branch.
 set -e
 APP=$(cd "$(dirname "$0")/.." && pwd)
-DIR=$APP/storage/framework/testing/vpa-preview
+DIR=${VPA_PREVIEW_DIR:-$APP/storage/framework/testing/vpa-preview}
 ROOT=$DIR/webroot
 DB=$DIR/preview.sqlite
 # ▲ A PORT NOBODY ELSE IS ON. Three lanes run at once and this machine had

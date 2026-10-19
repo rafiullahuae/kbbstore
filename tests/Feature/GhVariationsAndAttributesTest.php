@@ -676,28 +676,27 @@ it('shows the shopper a price per option, and greys the size the owner withdrew'
     $live = ProductVariant::query()->where('wc_id', 4101)->firstOrFail();
     $withdrawn = ProductVariant::query()->where('wc_id', 4102)->firstOrFail();
 
-    expect($html)
-        ->toContain('data-vid="'.$live->id.'"')
-        ->toContain('data-vid="'.$withdrawn->id.'"')
-        // Each row's own price, in the row.
-        ->toContain('data-price="AED 60"')
-        ->toContain('data-price="AED 100"')
-        // The option's name comes from the term it is pinned to.
-        ->toContain('<span class="vn">50ml</span>')
-        ->toContain('<span class="vn">100ml</span>');
+    /*
+     * (Lane VPA) The options are drawn as the owner's "Page A" now -- size
+     * pills, one per term -- instead of rows. The same facts, read off the
+     * new markup: each option named by its term, the withdrawn one marked
+     * sold out and not chosen, each option's own price in the page's data,
+     * and the hidden field pointing at the option that can be bought.
+     */
+    $liveValue = $live->attributeValues()->first();
+    $withdrawnValue = $withdrawn->attributeValues()->first();
 
-    // The live option is the selected one and the withdrawn one is tagged.
     expect($html)
-        ->toContain('class="variant on" data-i="0" data-vid="'.$live->id.'"')
-        ->toContain('class="variant oos" data-i="1" data-vid="'.$withdrawn->id.'"')
-        ->toContain('<span class="vtag sold">Sold out</span>')
-        // And the hidden field the form posts when the shopper touches nothing
-        // points at the option that can be bought, which is what $buyable is
-        // for.
+        ->toContain('class="vpa-pill" role="radio" aria-checked="true" data-v="'.$liveValue->id.'" data-n="50ml"')
+        ->toContain('class="vpa-pill out" role="radio" aria-checked="false" data-v="'.$withdrawnValue->id.'" data-n="100ml"')
+        ->toContain('aria-label="100ml — Sold out"')
         ->toContain('name="variation_id" id="kbbVarId" value="'.$live->id.'"');
 
-    // The option count the page offers above the list.
-    expect($html)->toContain('<span id="optNote">2 options</span>');
+    preg_match('/data-vpa="([^"]+)"/', $html, $m);
+    $data = json_decode(html_entity_decode($m[1], ENT_QUOTES), true);
+    $prices = array_map(fn ($row) => trim(strip_tags($data['p'][$row[2]])), $data['v']);
+
+    expect($prices)->toBe(['AED 60', 'AED 100']);
 });
 
 it('turns a variable product\'s structured data from one AED 0.00 offer into a real range', function () {

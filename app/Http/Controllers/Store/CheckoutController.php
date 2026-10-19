@@ -2179,6 +2179,8 @@ class CheckoutController extends Controller
         // already in memory. See CartService::$displayLoaded.
         if ($cart !== null) {
             $this->carts->markDisplayLoaded();
+            // (Lane VPA) name each line's shade now, for the mini cart.
+            app(\App\Support\VariantLabels::class)->fill($cart->items);
         }
 
         return $cart;

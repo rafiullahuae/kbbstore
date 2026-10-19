@@ -44,10 +44,10 @@ use App\Services\Translation\TranslationStore;
  * QUANTITY BUNDLES (a savings `tag` and no attribute values — "2-pack, save
  * 10%"), which the owner decides with Bundle section, not with a picker.
  *
- * A variant pinned to no value at all (a WooCommerce "custom attribute" the
- * export could not carry) still has to be choosable, so a set of variants that
- * cannot be laid out as a clean matrix becomes ONE axis, "Option", with each
- * variant a pill named by whatever values it does have.
+ * A set of options that is not a clean matrix -- a variant pinned to no value
+ * (a WooCommerce "custom attribute" the export could not carry), or to two
+ * values on one axis -- is also null: the page keeps its rows, which name each
+ * option in full, and keeps them on screen.
  */
 final class VariantOptions
 {
@@ -274,89 +274,75 @@ final class VariantOptions
             ];
         }
 
-        $synthetic = ! $clean;
+        // Not a clean matrix -- options pinned to no value (a WooCommerce
+        // "custom attribute" the export could not carry), or to two values on
+        // one axis: the page keeps the rows it has always drawn, which name
+        // each option in full, and they are kept ON SCREEN (pm-vpa).
+        if (! $clean) {
+            return null;
+        }
 
-        if ($synthetic) {
-            // One axis, "Option", one pill per variant.
-            $values = [];
+        $synthetic = false;
 
-            foreach ($variants as $i => $v) {
-                $values[] = [
-                    'id' => $v['id'],
-                    'name' => $v['label'] !== '' ? $v['label'] : __('store.product.option_fallback', ['number' => $i + 1]),
-                    'fill' => null,
-                    'img' => null,
-                ];
-                $variants[$i]['vals'] = [0 => $v['id']];
+        uasort($axes, static fn (array $a, array $b): int => [$a['pos'], $a['order']] <=> [$b['pos'], $b['order']]);
+        $outAxes = [];
+
+        foreach ($axes as $axis) {
+            $colour = preg_match(self::COLOUR_WORDS, $axis['english'].' '.$axis['slug']) === 1;
+
+            foreach ($axis['values'] as $val) {
+                $colour = $colour || self::hex($val['color']) !== null
+                    || (is_string($val['image']) && trim($val['image']) !== '');
             }
 
-            $outAxes = [[
-                'id' => 0,
-                'name' => self::axisName(0, 'Option', $locale),
-                'kind' => 'size',
-                'values' => $values,
-            ]];
-        } else {
-            uasort($axes, static fn (array $a, array $b): int => [$a['pos'], $a['order']] <=> [$b['pos'], $b['order']]);
-            $outAxes = [];
+            $values = array_values($axis['values']);
+            usort($values, static fn (array $a, array $b): int => $a['pos'] <=> $b['pos']);
+            $outValues = [];
 
-            foreach ($axes as $axis) {
-                $colour = preg_match(self::COLOUR_WORDS, $axis['english'].' '.$axis['slug']) === 1;
+            foreach ($values as $val) {
+                $fill = null;
+                $img = null;
 
-                foreach ($axis['values'] as $val) {
-                    $colour = $colour || self::hex($val['color']) !== null
-                        || (is_string($val['image']) && trim($val['image']) !== '');
-                }
+                if ($colour) {
+                    $fill = self::hex($val['color']);
 
-                $values = array_values($axis['values']);
-                usort($values, static fn (array $a, array $b): int => $a['pos'] <=> $b['pos']);
-                $outValues = [];
+                    if ($fill === null) {
+                        $own = LostPictures::usable(is_string($val['image']) ? trim($val['image']) : null);
+                        $img = is_string($own) && $own !== '' ? $own : null;
+                    }
 
-                foreach ($values as $val) {
-                    $fill = null;
-                    $img = null;
-
-                    if ($colour) {
-                        $fill = self::hex($val['color']);
-
-                        if ($fill === null) {
-                            $own = LostPictures::usable(is_string($val['image']) ? trim($val['image']) : null);
-                            $img = is_string($own) && $own !== '' ? $own : null;
-                        }
-
-                        if ($fill === null && $img === null) {
-                            foreach ($variants as $v) {
-                                if (($v['vals'][$axis['id']] ?? null) === (int) $val['id'] && $v['image'] !== null) {
-                                    $img = $v['image'];
-                                    break;
-                                }
+                    if ($fill === null && $img === null) {
+                        foreach ($variants as $v) {
+                            if (($v['vals'][$axis['id']] ?? null) === (int) $val['id'] && $v['image'] !== null) {
+                                $img = $v['image'];
+                                break;
                             }
-                        }
-
-                        if ($fill === null && $img === null) {
-                            $fill = self::NEUTRAL;
                         }
                     }
 
-                    $outValues[] = [
-                        'id' => (int) $val['id'],
-                        'name' => self::valueName((int) $val['id'], (string) $val['name'], $locale),
-                        'fill' => $fill,
-                        'img' => $img,
-                    ];
+                    if ($fill === null && $img === null) {
+                        $fill = self::NEUTRAL;
+                    }
                 }
 
-                $outAxes[] = [
-                    'id' => $axis['id'],
-                    'name' => self::axisName($axis['id'], $axis['english'], $locale),
-                    'kind' => $colour ? 'colour' : 'size',
-                    'values' => $outValues,
+                $outValues[] = [
+                    'id' => (int) $val['id'],
+                    'name' => self::valueName((int) $val['id'], (string) $val['name'], $locale),
+                    'fill' => $fill,
+                    'img' => $img,
                 ];
             }
 
-            // Colour first, as both designs draw it.
-            usort($outAxes, static fn (array $a, array $b): int => ($a['kind'] === 'colour' ? 0 : 1) <=> ($b['kind'] === 'colour' ? 0 : 1));
+            $outAxes[] = [
+                'id' => $axis['id'],
+                'name' => self::axisName($axis['id'], $axis['english'], $locale),
+                'kind' => $colour ? 'colour' : 'size',
+                'values' => $outValues,
+            ];
         }
+
+        // Colour first, as both designs draw it.
+        usort($outAxes, static fn (array $a, array $b): int => ($a['kind'] === 'colour' ? 0 : 1) <=> ($b['kind'] === 'colour' ? 0 : 1));
 
         $selected = 0;
 

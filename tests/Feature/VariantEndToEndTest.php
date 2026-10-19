@@ -207,7 +207,7 @@ it('writes the Arabic order\'s shade in Arabic, and its emails print it', functi
     expect($order->locale)->toBe('ar')
         ->and($item->variant_attributes)->toBe(['Shade' => '#13 Bright Beige'])
         ->and($item->variant_localised)->toBe(['الدرجة' => '#13 بيج فاتح'])
-        ->and(VariantText::forOrderItem($item, true))->toBe('الدرجة: #13 بيج فاتح')
+        ->and(VariantText::forOrderItem($item, true))->toBe("الدرجة: \u{2068}#13 بيج فاتح\u{2069}")
         ->and(VariantText::forOrderItem($item, false))->toBe('Shade: #13 Bright Beige');
 });
 

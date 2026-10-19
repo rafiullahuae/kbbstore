@@ -747,7 +747,8 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // (email.kit.eyebrow_unpaid, email.alert.unpaid_note). It is sent in the
     // shop's language, like the new-order alert, so no migration publishes
     // them; a fresh install seeds them as drafts with the rest.
-    expect($ui['drafts'])->toBe(1625 + count(\App\Support\ArabicWording::ENGLISH) - 1 + 10 + 2, 'the shipped Arabic is not showing as drafts to review')
+    // +1 (Lane VPA): store.product.variant_sku, the picker's SKU line.
+    expect($ui['drafts'])->toBe(1625 + count(\App\Support\ArabicWording::ENGLISH) - 1 + 10 + 2 + 1, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

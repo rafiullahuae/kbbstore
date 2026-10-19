@@ -52,7 +52,10 @@ final class VariantText
             $attr = $v->relationLoaded('attribute') ? $v->getRelation('attribute') : null;
 
             if ($attr !== null && trim((string) $attr->name) !== '') {
-                $out[VariantOptions::axisName((int) $attr->id, (string) $attr->name, $locale)] = $name;
+                // Two values on one axis (an import can pin a variation to
+                // both) are both kept, in order: "Size: 50ml / Rose".
+                $key = VariantOptions::axisName((int) $attr->id, (string) $attr->name, $locale);
+                $out[$key] = isset($out[$key]) ? $out[$key].' / '.$name : $name;
             } else {
                 $out[] = $name;
             }
@@ -82,9 +85,21 @@ final class VariantText
                 continue;
             }
 
-            $parts[] = is_string($key) && trim($key) !== ''
-                ? trim($key).': '.trim((string) $value)
-                : trim((string) $value);
+            if (! is_string($key) || trim($key) === '') {
+                $parts[] = trim((string) $value);
+
+                continue;
+            }
+
+            /*
+             * AN ARABIC AXIS ISOLATES ITS VALUE. "الدرجة: #13 Bright Beige" laid
+             * out right to left printed the shade as "Bright Beige 13#": the
+             * "#" and the digits took the paragraph's direction. U+2068/U+2069
+             * (first-strong isolate) give the value its own direction in plain
+             * text and HTML alike, with no markup; an English line is untouched.
+             */
+            $value = trim((string) $value);
+            $parts[] = trim($key).': '.(preg_match('/\p{Arabic}/u', $key) === 1 ? "\u{2068}".$value."\u{2069}" : $value);
         }
 
         return implode($separator, $parts);
@@ -110,6 +125,16 @@ final class VariantText
     /** A live basket line, in the page's language. */
     public static function forVariant(?ProductVariant $variant, string $separator = ' · '): string
     {
+        if ($variant === null) {
+            return '';
+        }
+
+        // Values not loaded here (the mini cart's own reload): the label the
+        // page already worked out this request -- see VariantLabels.
+        if (! $variant->relationLoaded('attributeValues')) {
+            return (string) app(VariantLabels::class)->get((int) $variant->id);
+        }
+
         return self::line(self::snapshot($variant, Locale::current()), $separator);
     }
 }

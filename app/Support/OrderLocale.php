@@ -169,6 +169,12 @@ final class OrderLocale
     /** Whether `order_items.variant_localised` exists yet (one schema read per process). */
     private static ?bool $hasVariantLocalised = null;
 
+    /** Forget the schema flag (Tests\Support\StaticMemos, and a test that drops the column). */
+    public static function forgetReady(): void
+    {
+        self::$hasVariantLocalised = null;
+    }
+
     /**
      * The line's option snapshot in the order's language, when it differs from
      * the English one. Never throws: a missing column (the package applied but

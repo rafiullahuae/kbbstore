@@ -138,6 +138,13 @@
 
     // Bundles are variants carrying a savings tag, exactly as the design does.
     $hasBundle = $variants->contains(fn ($v) => (bool) $v->tag);
+
+    /* (Lane VPA) A product SOLD BY ITS OPTIONS keeps its options on screen:
+       "Bundle section" off hid them on Missha, TIRTIR, Heimish and House of
+       Hur, and nobody could choose a shade. `pm-vpa` (kbb-product.css) shows
+       the section whatever that switch says; quantity-bundle variants still
+       answer to it exactly as before. */
+    $kbbVarOn = $isVar && ! $hasBundle;
     $optNote   = $hasBundle ? 'Save more with bundles' : $variants->count() . ' options';
 
     // Capsule only by default: showing the capsule and the inline line puts
@@ -606,11 +613,11 @@
 
       <form class="cart kbb-cart-form" data-product_id="{{ $product->id }}" method="post">
         @csrf
-        <div class="pm-sec pm-bundles{{ $kbbVpa ? ' pm-vpa' : '' }}">@if ($kbbVpa)
+        <div class="pm-sec pm-bundles{{ $kbbVarOn ? ' pm-vpa' : '' }}">@if ($kbbVpa)
 @include('partials.product.variant-picker')
         @elseif ($isVar)
         <div class="opt-label">{{ __('store.product.choose_option') }} <span id="optNote">{{ $optNote }}</span></div>
-        <div class="{{ $modules->classFor('options') }} variants" id="variants">
+        <div class="{{ $kbbVarOn ? '' : $modules->classFor('options') }} variants" id="variants">
           @foreach ($variants as $n => $v)
             @php
               $vsale = $v->effectivePrice();

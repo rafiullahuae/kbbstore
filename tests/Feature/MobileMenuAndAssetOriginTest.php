@@ -117,7 +117,9 @@ it('still wires the mobile menu, and in the same position', function () {
     // initHit, so no step before it moved.
     // 30 since Lane AS added initTranslateAway LAST, after initTrail, so no
     // step before it moved.
-    expect($steps)->toHaveCount(30);
+    // 32 since Lane VPA added initVariantCards and initVariantPage (the
+    // colour/size pickers) LAST, after initTranslateAway, so no step moved.
+    expect($steps)->toHaveCount(32);
     expect($steps[0])->toBe('initOverlay');
     expect($steps[8])->toBe('initHome');   // wires the mobile menu
     expect($steps[16])->toBe('initListingLoad');

@@ -26,6 +26,11 @@ foreach (ProductVariant::with('attributeValues')->get() as $v) {
 
 \App\Models\Setting::query()->updateOrCreate(['key' => 'language_ar_enabled'], ['value' => '1', 'autoload' => true]);
 \App\Models\Setting::query()->updateOrCreate(['key' => 'language_rtl_enabled'], ['value' => '1', 'autoload' => true]);
+// The live shop's own switches: "Bundle section" off on the phone and the
+// options module off on the laptop -- the state in which nobody could choose
+// a shade (found shooting docs/variant-options).
+app(\App\Services\SettingsService::class)->set('pdpms_layout', ['on' => ['bundles' => false]]);
+app(\App\Services\SettingsService::class)->set('product_sections', ['options' => ['desktop' => false, 'mobile' => false]]);
 \App\Models\Setting::flushMap();
 
 \App\Models\AdminUser::updateOrCreate(
@@ -46,7 +51,7 @@ foreach (['en' => 'VPA-EN', 'ar' => 'VPA-AR'] as $locale => $number) {
     foreach ([[$c['missha'], $variant, 13900], [$c['tirtir'], $tt, 14500]] as [$p, $v, $price]) {
         $order->items()->create([
             'product_id' => $p->id, 'product_variant_id' => $v->id, 'name' => $p->name, 'brand' => $p->brand?->name,
-            'sku' => $v->sku, 'variant_attributes' => \App\Support\VariantText::snapshot($v),
+            'sku' => $v->sku, 'variant_attributes' => class_exists(\App\Support\VariantText::class) ? \App\Support\VariantText::snapshot($v) : $v->attributeValues->pluck('name')->all(),
             'quantity' => 1, 'unit_price' => $price, 'subtotal' => $price, 'total' => $price,
         ]);
     }

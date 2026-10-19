@@ -259,16 +259,22 @@ it('gives every variation row its own struck figure', function () {
 
     $html = tierPage($parent->fresh());
 
-    preg_match_all('#<div class="variant(?: [^"]*)?"[^>]*data-vid="[^"]*"[^>]*>#', $html, $m);
-    expect($m[0])->toHaveCount(3, 'three variations');
+    /*
+     * (Lane VPA) Size pills ("Page A") now, not rows: each option's pair
+     * travels in the picker's `data-vpa` -- [id, values, now, was, off, ...] --
+     * and variant-pick.js hands it to the same setPrice() with mayCreate.
+     */
+    preg_match('/data-vpa="([^"]+)"/', $html, $vm);
+    $vpa = json_decode(html_entity_decode($vm[1] ?? '', ENT_QUOTES), true);
+    expect($vpa['v'] ?? [])->toHaveCount(3, 'three variations');
 
     // The 30ml is full price, so it carries no pair at all.
-    expect(tierAttr($m[0][0], 'data-was'))->toBe('', 'a full-price variation strikes nothing');
-    expect(tierAttr($m[0][0], 'data-off'))->toBe('', 'and claims no discount');
+    expect($vpa['v'][0][3])->toBe(-1, 'a full-price variation strikes nothing');
+    expect($vpa['v'][0][4])->toBe('', 'and claims no discount');
 
-    foreach ([$m[0][1], $m[0][2]] as $tag) {
-        expect(tierAttr($tag, 'data-was'))->not->toBe('', 'a marked-down variation carries its regular price');
-        preg_match('/(\d+)/', tierAttr($tag, 'data-off'), $pm);
+    foreach ([$vpa['v'][1], $vpa['v'][2]] as $row) {
+        expect($row[3])->toBeGreaterThanOrEqual(0, 'a marked-down variation carries its regular price');
+        preg_match('/(\d+)/', (string) $row[4], $pm);
         expect((int) ($pm[1] ?? 0))->toBeGreaterThan(0, 'and the percent it is down by');
     }
 

@@ -19,12 +19,19 @@ const check = (name, ok, detail) => { results.checks.push({ name, ok: !!ok, deta
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
   const shoot = async (ctxOpts, url, file, fn) => {
     const ctx = await browser.newContext(ctxOpts);
+    // CLS, the browser's own count: every layout shift not caused by input.
+    await ctx.addInitScript(() => {
+      window.__cls = 0;
+      try { new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) window.__cls += e.value; }).observe({ type: 'layout-shift', buffered: true }); } catch (e) {}
+    });
     const page = await ctx.newPage();
     const errors = [];
     page.on('console', (m) => { if (m.type() === 'error' && !/status of (404|422)/.test(m.text())) errors.push(m.text()); });
     page.on('response', (r) => { if (r.status() >= 400 && !r.url().includes('/api/cart/add')) errors.push(r.status() + ' ' + r.url()); });
     page.on('pageerror', (e) => errors.push(String(e)));
     await page.goto(BASE + url, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(400);
+    results.measures['cls ' + url + ' ' + ctxOpts.viewport.width] = await page.evaluate(() => Math.round(window.__cls * 10000) / 10000);
     const out = fn ? await fn(page) : null;
     if (file) await page.screenshot({ path: path.join(OUT, file), fullPage: false });
     const sw = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
@@ -51,7 +58,9 @@ const check = (name, ok, detail) => { results.checks.push({ name, ok: !!ok, deta
       check(`grid ${lang} ${w}: no console errors`, g.errors.length === 0, g.errors.join(' | '));
       check(`grid ${lang} ${w}: no sideways scroll`, g.sw[0] <= g.sw[1], g.sw);
       const p = await shoot(opts, pre + '/product/vpa-tirtir/', `pdp-${lang}-${w}-${tag}.png`, async (page) => {
-        const box = page.locator(BEFORE ? '.pm-bundles' : '#vpa');
+        // Before, the options are display:none -- the defect -- so the shot is
+        // framed on the stock line where they should have been.
+        const box = page.locator(BEFORE ? '.stockline' : '#vpa');
         if (await box.count()) await box.first().scrollIntoViewIfNeeded();
         await page.evaluate(() => window.scrollBy(0, -140));
         return page.evaluate(() => { const b = document.querySelector('.pm-bundles'); return b ? getComputedStyle(b).display : 'none'; });
@@ -89,6 +98,21 @@ const check = (name, ok, detail) => { results.checks.push({ name, ok: !!ok, deta
       check(`card ${w}: the name link is still clickable`, nameHit);
       results.measures[`card-${w}`] = { before, after };
     });
+  }
+
+  // ── Prefetch still fires and is used from a card with dots ──────────────
+  {
+    const ctx = await browser.newContext(laptop);
+    const page = await ctx.newPage();
+    await page.goto(BASE + '/collections/vpa-makeup/', { waitUntil: 'networkidle' });
+    const link = page.locator('.kbb-tile', { hasText: 'TIRTIR' }).locator('a.cn');
+    await link.hover();
+    await page.waitForTimeout(700);
+    await Promise.all([page.waitForNavigation({ waitUntil: 'load' }), link.click()]);
+    const delivery = await page.evaluate(() => performance.getEntriesByType('navigation')[0].deliveryType || '');
+    results.measures['prefetch delivery (card name -> product)'] = delivery;
+    check('prefetch: the product page came from the prefetch', delivery === 'navigational-prefetch', delivery);
+    await ctx.close();
   }
 
   // ── Page: tap a shade on sale, a sold-out shade; add one to the basket ──
