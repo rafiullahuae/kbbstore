@@ -62,6 +62,11 @@
      is half the rule: WordPress writes width= and height= attributes, and
      constraining the width alone against a fixed height squashes the picture. */
   .kbb-journal .abody img{max-width:100%;height:auto}
+  /* Body text links underlined (owner, 19 Oct 2026). Classless only: card, button and embed links carry a class. */
+  .kbb-journal .abody a:not([class]){text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em}
+  .kbb-journal .abody a:not([class]):hover{color:var(--pink-deep);text-decoration-thickness:2px}
+  .kbb-journal .abody a:not([class]):has(img){text-decoration:none}
+  .kbb-journal .abody .kbb-gal a:not([class]){text-decoration:none}
   .kbb-journal .backrow{max-width:720px;margin:10px auto 0;padding:0 20px}
   .kbb-journal .backrow a{font-size:13px;font-weight:600;color:var(--pink-deep);text-decoration:none}
   .kbb-journal .more{border-top:1px solid var(--line-2);margin-top:40px;padding-top:30px}
