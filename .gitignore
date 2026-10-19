@@ -114,3 +114,6 @@ public/wp-content/
 /storage/framework/firewall*/
 /storage/framework/kbb-firewall-off
 /storage/framework/kbb-ip-blocks*.tmp
+# Lane FWN: the compiled cloud-network lookup (rebuilt from the list).
+/storage/framework/kbb-cloud-nets*.php
+/storage/framework/kbb-cloud-nets*.tmp

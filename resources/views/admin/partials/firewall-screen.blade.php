@@ -494,7 +494,7 @@
     if (!cl) return '';
     var from = cl.from === 'downloaded' ? 'Downloaded' : (cl.from === 'bundled' ? 'Copy shipped with the shop' : 'Missing');
     return section('Cloud network lists', 'The address ranges each cloud company announces, per network (ASN), from ipverse/asn-ip with RIPEstat as the fallback. Refreshed weekly when the server runs scheduled tasks; a failed download keeps the previous list.',
-      '<p class="sx-help"><span class="pill ' + (cl.ok ? 'green' : 'amber') + '"><span class="d"></span>' + esc(from) + '</span> <b>' + esc(cl.total) + '</b> ranges'
+      '<p class="sx-help" style="margin-bottom:8px"><span class="pill ' + (cl.ok ? 'green' : 'amber') + '"><span class="d"></span>' + esc(from) + '</span> <b>' + esc(cl.total) + '</b> ranges'
         + (cl.at ? ', built ' + esc(String(cl.at).replace('T', ' ').slice(0, 16)) : '') + (cl.ok ? ', checksum verified.' : ' — ' + esc(cl.error)) + '</p>'
       + list(cl.providers, 'No list.', function (x) {
           return '<div class="fwl-li"><span>' + esc(x.label) + '</span><span class="fwl-n">' + esc(x.ranges) + ' ranges</span></div>';
