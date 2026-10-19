@@ -99,7 +99,7 @@ ipad-land px9 flip flip-tabletop fold-cover fold-inner duo`; extra keys: `d=B|C`
 `dg=arab` (Arabic digits), `sheet=filter|sort|emirate|area|bnpl|delconfirm`, `viewer=0`,
 `user=0` (signed out), `embed=1` (the phone only, as screens.html uses it), `z=100`.
 
-## Screens (92 entries in the jump list, each in both apps)
+## Screens (80 entries in the jump list, each in both apps)
 
 - **Home** A/B/C, loading, offline, splash, first-run notifications.
 - **Shop:** all categories, all brands (A–Z, searchable), shop all, Best Sellers, Under AED 54.
@@ -246,7 +246,13 @@ Output: `shots/en/`, `shots/ar/` and `shots/site/` (renders and the site's own p
   `ipad-landscape-*`, `home-*`
 - `floating-label-before/after`
 
-**Last full run (19 October 2026):** RUNLINE
+**Last full run (19 October 2026):** 0 renders and 0 flow steps with an issue, and 0 failed assertions.
+
+- **Renders:** 1,952. That is 80 screens + Design B/C of Home and Product (84 per language), × 10 device states × 2
+  languages, plus 256 bottom-bar renders (B–E) and 16 tablet "menu bar" renders.
+- **Flow steps:** 237, from the checkout walk on 4 devices and the site's menus, header and
+  bottom bars on 8 devices, in both languages.
+- **screens.html:** 84 live cards per language, every one a deep link, no console error.
 
 Defects the walk caught that a screen grid could not: the outline "ghost" buttons (Add a new
 address, Choose another method, Create an account…) took no clicks because a transition class
