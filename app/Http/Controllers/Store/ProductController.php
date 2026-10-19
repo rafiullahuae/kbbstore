@@ -61,7 +61,12 @@ class ProductController extends Controller
                 // two more columns on the same query, not another one.
                 'categories:id,name,slug,path,parent_id,depth',
                 'variants' => fn ($q) => $q->orderBy('position'),
-                'variants.attributeValues:id,attribute_id,name,slug',
+                // (Lane VPA) the swatch's colour, picture and order, and the
+                // axis each value belongs to ("Shade", "Size") for the picker.
+                // Both nested loads run only when a variant HAS values, so a
+                // simple product's page asks nothing more than it did.
+                'variants.attributeValues:id,attribute_id,name,slug,swatch_color,swatch_image,position',
+                'variants.attributeValues.attribute:id,name,slug,position',
             ])
             ->where('slug', $slug)
             ->firstOrFail();

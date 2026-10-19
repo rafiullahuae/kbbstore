@@ -59,8 +59,12 @@
 --}}
 @php use App\Support\Url; @endphp
 
-@if ($notifyLabel !== null && $out)
-    <div class="notifyme" style="margin-top:14px;padding:14px;border:1px solid var(--line,#e6e6e6);border-radius:10px;">
+{{-- (Lane VPA) ON A PRODUCT WITH A PICKER IT IS IN THE PAGE WHENEVER ANY OPTION
+     IS SOLD OUT, hidden until that option is chosen: the picker (pdp.js) shows
+     it and fills `variant_id` as shades are tapped, so "tell me when #21 is
+     back" asks about #21. Both strings below are constants. --}}
+@if ($notifyLabel !== null && ($out || ($notifyVariants ?? false)))
+    <div class="notifyme"{!! ($notifyVariants ?? false) ? ' id="vpaNotify"' . ($out ? '' : ' hidden') : '' !!} style="margin-top:14px;padding:14px;border:1px solid var(--line,#e6e6e6);border-radius:10px;">
         {{-- The owner's prose, escaped. Plain text, not markup: this box is on
              a public page and the admin field behind it is a plain input. --}}
         <p style="margin:0 0 10px;font-size:14px;line-height:1.5;">{{ $notifyLabel }}</p>
@@ -100,7 +104,7 @@
                 belongs to this product and falls back to 0, which is the
                 request the shopper plainly meant.
             --}}
-            <input type="hidden" name="variant_id" id="notifyVariantId" value="0">
+            <input type="hidden" name="variant_id" id="notifyVariantId" value="{{ (int) ($notifyVariantId ?? 0) }}">
 
             <label for="notifyEmail" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">{{ __('store.notify_me.email_label') }}</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">

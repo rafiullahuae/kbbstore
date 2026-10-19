@@ -2017,3 +2017,41 @@ html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
   .pdp .buybox > .kbb-fbt.bt-more .bt-card{flex-basis:calc((100% - var(--bt-gap) * 3.5) / 4.5)}
   .pdp .buybox > .kbb-fbt.bt-more.is-peek .bt-card:first-child{animation:none}
 }
+
+/* ── (Lane VPA) PAGE A: ROUND SWATCHES AND SIZE PILLS ─────────────────────────
+   partials/product/variant-picker.blade.php. Only a variable product with
+   options draws `.vpa`, so no other page moves. Plain px and logical
+   properties: /ar mirrors with no rule of its own. Nothing is measured.
+
+   ▲ ALWAYS ON SCREEN. "Bundle section" off (Appearance → Product page →
+     Mobile / Desktop sections) hid `.pm-bundles` and with it every shade on
+     Missha, TIRTIR, Heimish and House of Hur, so nobody could choose one. A
+     product sold by its options cannot be bought without them; the switch
+     still hides quantity bundles exactly as it did. Four classes, so it
+     outranks both `.pm-off-bundles .pm-bundles` and
+     `.pdp-page.pd-off-bundles .pm-bundles` wherever they sit in this file. */
+.pdp-page .pm-sec.pm-bundles.pm-vpa,.pdp .pm-sec.pm-bundles.pm-vpa{display:block}
+.vpa{display:grid;gap:16px}
+.pdp .vpa{border-block-start:1px solid var(--line-2);margin-block:var(--pl-opt-gap-m,20px) 4px;padding-block-start:var(--pdp-rule-pad,20px)}
+.vpa-ax{display:grid;gap:10px;min-width:0}
+.vpa-lbl{font-size:13.5px;color:#756C74;line-height:1.35}
+.vpa-lbl b{color:#2A2228;font-weight:600}
+.vpa-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-width:0}
+.vpa-sw,.vpa-pill{cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}
+.vpa-sw{--c:#E9DED6;position:relative;flex:none;width:34px;height:34px;padding:0;border:0;border-radius:50%;
+    background:var(--c) center/cover no-repeat;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.vpa-sw[aria-checked="true"]{box-shadow:inset 0 0 0 1px rgba(0,0,0,.12),0 0 0 2px #fff,0 0 0 4px #2A2228}
+.vpa-sw.out{opacity:.5}
+.vpa-sw.out::after{content:"";position:absolute;inset:0;border-radius:50%;
+    background:linear-gradient(to top right,transparent calc(50% - 1px),#fff calc(50% - 1px),#fff calc(50% + 1px),transparent calc(50% + 1px))}
+.vpa-pill{flex:none;min-height:36px;padding:7px 16px;border:1.5px solid #EADFE3;border-radius:99px;background:#fff;color:#2A2228;
+    font-size:14px;line-height:1.3;font-variant-numeric:tabular-nums;white-space:nowrap}
+.vpa-pill[aria-checked="true"]{border-color:#2A2228;background:#2A2228;color:#fff}
+.vpa-pill.out{color:#8C828A;text-decoration:line-through}
+.vpa-pill.out[aria-checked="true"]{color:#fff}
+.vpa-sw:focus-visible,.vpa-pill:focus-visible{outline:2px solid #C6395F;outline-offset:3px}
+.vpa-sku{font-size:12.5px;color:#756C74;font-variant-numeric:tabular-nums}
+.vpa-sku:empty{display:none}
+@media (max-width:880px){
+  .pdp-page .pm-bundles .vpa{border-block-start:0;margin-block-start:0;padding-block-start:0}
+}

@@ -1146,6 +1146,7 @@ final class ArabicInterfaceDrafts
             'store.product.stock_sold_out' => 'نفدت الكمية — تابعنا قريبًا',
             'store.product.stock_low' => 'نفدت الكمية|بقيت قطعة واحدة · سارع بالطلب|بقيت قطعتان · سارع بالطلب|بقيت :count قطع · سارع بالطلب|بقيت :count قطعة · سارع بالطلب|بقيت :count قطعة · سارع بالطلب',
             'store.product.stock_in' => 'متوفر · جاهز للشحن',
+            'store.product.variant_sku' => 'رمز المنتج: :sku',
             'store.product.cutoff_delivery' => 'اطلب خلال :remaining ليصلك في :date',
             'store.product.cutoff_dispatch' => 'اطلب خلال :remaining ليُشحن في :ship',
             'store.product.buy_now' => 'اشترِ الآن',

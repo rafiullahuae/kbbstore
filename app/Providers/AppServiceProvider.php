@@ -76,6 +76,9 @@ class AppServiceProvider extends ServiceProvider
          * that flatters every number in that file.
          */
         $this->app->scoped(\App\Services\VariantPricing::class);
+        // (Lane VPA) The cards' shade dots and size chips: the same one-query,
+        // one-request memo, scoped for the same two reasons.
+        $this->app->scoped(\App\Services\VariantSwatches::class);
 
         /*
          * Appearance → Product styles, resolved once per request.    (Lane CARD)

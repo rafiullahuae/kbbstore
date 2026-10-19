@@ -1275,6 +1275,9 @@ final class InterfaceStrings
             // here; Arabic will have six.
             'product.stock_low' => 'Only :count left · order soon|Only :count left · order soon',
             'product.stock_in' => 'In stock · ready to ship',
+            // (Lane VPA) Under the colour/size picker: the chosen option's own
+            // stock-keeping code, which moves as a shade or a size is picked.
+            'product.variant_sku' => 'SKU: :sku',
             // Both the countdown and the date arrive wrapped in their own <b>, so the
             // sentence stays one unit. The <b id="cutoff"> is what pdp.js ticks.
             'product.cutoff_delivery' => 'Order within :remaining for delivery by :date',

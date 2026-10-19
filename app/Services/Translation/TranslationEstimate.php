@@ -83,6 +83,11 @@ final class TranslationEstimate
         // A clip's title and caption. Counted as work because the owner types
         // them; `caption` is in NEVER_MACHINE below and no machine sees it.
         \App\Models\UgcVideo::class => ['title', 'caption'],
+        // (Lane VPA) The colour/size picker's words: "Shade" / "Size" and each
+        // option's own name ("#13 Bright Beige", "50 ml"), printed on the
+        // product page, the card, the basket and every order document.
+        \App\Models\Attribute::class => ['name'],
+        \App\Models\AttributeValue::class => ['name'],
     ];
 
     /**
@@ -548,6 +553,9 @@ final class TranslationEstimate
             'product_tabs' => 'Product tabs',
             'ugc_sections' => 'Shoppable video sections',
             'ugc_videos' => 'Shoppable video clips',
+            // (Lane VPA) Catalog -> Attributes, by the screen's own name.
+            'attributes' => 'Attributes',
+            'attribute_values' => 'Attribute options (shades, sizes)',
         ][$table] ?? ucfirst(str_replace('_', ' ', $table));
     }
 
