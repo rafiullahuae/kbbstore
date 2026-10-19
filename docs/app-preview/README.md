@@ -270,7 +270,7 @@ Output: `shots/en/`, `shots/ar/` and `shots/site/` (renders and the site's own p
   `ipad-landscape-*`, `home-*`
 - `floating-label-before/after`
 
-**Last full run (19 October 2026):** 0 renders and 0 flow steps with an issue, and 0 failed assertions.
+**Last full run (19 October 2026, Lane APV4, with `cart-icons`):** 0 renders and 0 flow steps with an issue, and 0 failed assertions.
 
 - **Renders:** 1,952. That is 80 screens + Design B/C of Home and Product (84 per language), × 10 device states × 2
   languages, plus 256 bottom-bar renders (B–E) and 16 tablet "menu bar" renders.
