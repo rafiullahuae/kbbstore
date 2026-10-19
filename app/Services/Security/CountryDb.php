@@ -70,6 +70,25 @@ final class CountryDb
     /** Official monthly file; %s is YYYY-MM. */
     public const URL = 'https://download.db-ip.com/free/dbip-country-lite-%s.csv.gz';
 
+    /**
+     * THE SAME DB-IP LITE DATA, MIRRORED (19 October 2026). The owner pressed
+     * "Download country database" on the live server and it never installed,
+     * and the hourly schedule never got it either: download.db-ip.com refuses
+     * some servers. sapics/ip-location-db republishes DB-IP's lite file
+     * unchanged (start,end,cc per line, CC BY 4.0) on npm, served by jsDelivr.
+     * %s is the family: ipv4 / ipv6.
+     */
+    public const MIRROR_URL = 'https://cdn.jsdelivr.net/npm/@ip-location-db/dbip-country/dbip-country-%s.csv';
+
+    /**
+     * And a built copy shipped with the code (DB-IP lite, June 2026), for a
+     * server that can reach neither. Countries move slowly; the monthly
+     * schedule replaces it the first time a download succeeds. `.txt` only
+     * because the updater writes nothing else into resources/: it is the
+     * binary format verify() checks, sha256 and all.
+     */
+    public const BUNDLED = 'firewall/dbip-country-lite.bin.txt';
+
     private const HEADER = 64;
 
     private const CC_TABLE = 512;
@@ -521,7 +540,7 @@ final class CountryDb
 
         foreach ([now()->format('Y-m'), now()->subMonthNoOverflow()->format('Y-m')] as $month) {
             try {
-                $r = Http::timeout(240)->connectTimeout(15)->sink($gz)->get(sprintf(self::URL, $month));
+                $r = Http::timeout(240)->connectTimeout(15)->withHeaders(['User-Agent' => 'KBB-Firewall/1.0'])->sink($gz)->get(sprintf(self::URL, $month));
 
                 if ($r->successful() && filesize($gz) > 1_000_000) {
                     $result = self::build([$gz], self::path(), (int) str_replace('-', '', $month).'01');
@@ -537,6 +556,55 @@ final class CountryDb
         }
 
         @unlink($gz);
+
+        // The mirror: the same lite data as two plain CSVs.
+        $csv = [$dir.'/dbip-country-ipv4.csv', $dir.'/dbip-country-ipv6.csv'];
+
+        try {
+            $fetched = true;
+
+            foreach (['ipv4', 'ipv6'] as $i => $family) {
+                $r = Http::timeout(240)->connectTimeout(15)->withHeaders(['User-Agent' => 'KBB-Firewall/1.0'])->sink($csv[$i])->get(sprintf(self::MIRROR_URL, $family));
+
+                if (! $r->successful() || filesize($csv[$i]) < 1_000_000) {
+                    $error .= '; mirror: HTTP '.$r->status().' for '.$family;
+                    $fetched = false;
+                    break;
+                }
+            }
+
+            if ($fetched) {
+                $result = self::build($csv, self::path(), (int) (now()->format('Ym').'01'));
+
+                if ($result['ok']) {
+                    array_map('unlink', array_filter($csv, 'is_file'));
+
+                    return $result + ['source' => sprintf(self::MIRROR_URL, '{ipv4,ipv6}')];
+                }
+
+                $error .= '; mirror: '.$result['error'];
+            }
+        } catch (\Throwable $e) {
+            $error .= '; mirror: '.mb_substr($e->getMessage(), 0, 200);
+        }
+
+        array_map('unlink', array_filter($csv, 'is_file'));
+
+        // Last: the copy shipped with the code -- only when nothing usable is
+        // in place, so a good downloaded file is never replaced by an older one.
+        $bundled = resource_path(self::BUNDLED);
+
+        if (! self::verify()['ok'] && is_file($bundled) && self::verify($bundled)['ok']) {
+            $tmp = self::path().'.bundled.tmp';
+
+            if (@copy($bundled, $tmp) && self::verify($tmp)['ok'] && @rename($tmp, self::path())) {
+                self::close();
+
+                return self::verify() + ['source' => 'bundled copy (DB-IP lite, '.self::verify()['date'].'); downloads failed: '.$error];
+            }
+
+            @unlink($tmp);
+        }
 
         return ['ok' => false, 'date' => null, 'v4' => 0, 'v6' => 0, 'countries' => 0, 'bytes' => 0, 'error' => $error];
     }
