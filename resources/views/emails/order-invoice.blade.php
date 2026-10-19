@@ -25,7 +25,7 @@
     $kitPayLine = $doc['paid']
         ? ($doc['paidAt'] !== '' ? __('email.invoice.paid_by_on', ['method' => $doc['paymentLabel'], 'date' => $doc['paidAt']]) : __('email.invoice.paid_by', ['method' => $doc['paymentLabel']]))
         : __('email.invoice.payment_method', ['method' => $doc['paymentLabel']]);
-    $kitJoin = static fn (array $lines) => new \Illuminate\Support\HtmlString($lines === [] ? '&mdash;' : implode('<br>', array_map('e', $lines)));
+    $kitJoin = static fn (array $lines) => new \Illuminate\Support\HtmlString($lines === [] ? '&mdash;' : implode('<br>', array_map([\App\Services\Mail\Kit\KitRtl::class, 'auto'], $lines)));
     $kitSeller = array_values(array_filter(array_merge(
         [$doc['seller']['name']],
         $doc['seller']['addressLines'],

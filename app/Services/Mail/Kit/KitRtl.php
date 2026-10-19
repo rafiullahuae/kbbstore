@@ -191,6 +191,16 @@ final class KitRtl
     }
 
     /**
+     * An order number in the chip: left to right and in one piece. On a 320px
+     * phone the Arabic chip's longer labels squeezed "KBB-56262" until it broke
+     * at the hyphen into "KBB-" over "56262". English: exactly what {{ }} prints.
+     */
+    public static function number(mixed $text): string
+    {
+        return self::rtl() ? '<span dir="ltr" style="white-space:nowrap">' . e($text) . '</span>' : e($text);
+    }
+
+    /**
      * Text the customer or the catalogue typed, in either script -- a name, an
      * address line -- escaped, laid out by its own first strong letter. A line
      * with no letters at all (a phone number) reads left to right.
