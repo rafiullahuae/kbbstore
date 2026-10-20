@@ -1132,3 +1132,31 @@ body.embed .bbsw{display:none}
 .khb a:not(:where(.kc *,.kh *)),.khb button:not(:where(.kc *,.kh *)){flex:1;height:46px;border-radius:999px;display:grid;place-items:center;font:inherit;font-weight:800;font-size:14.5px;text-decoration:none;cursor:pointer}
 .khb .kw:not(:where(.kc *,.kh *)){background:#fff;color:#C13E63;border:0}
 .khb .kt:not(:where(.kc *,.kh *)){background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.85)}
+
+/* ── Bar D, the owner's pick (20 October 2026): the happy bag, A "little bag friend" ──
+   Smaller and lower than the old raised bag, no label. Empty: grey, a sad face, a slow sigh.
+   Something in it: pink, grinning, rosy cheeks; it hops with a burst of sparkles when the
+   count goes up, then a happy wiggle now and then. CSS only. */
+.tabbar.bb-D:not(:where(.kc *,.kh *)){padding-top:22px;background:radial-gradient(circle at 50% 31px,rgba(255,255,255,.97) 32px,transparent 33px),linear-gradient(transparent 18px,rgba(255,255,255,.97) 18px)}
+.android .tabbar.bb-D:not(:where(.kc *,.kh *)){background:radial-gradient(circle at 50% 31px,#FFF5F7 32px,transparent 33px),linear-gradient(transparent 18px,#FFF5F7 18px)}
+.tab.happy:not(:where(.kc *,.kh *)){justify-content:center}
+.tab.happy .pill:not(:where(.kc *,.kh *)),.android .tab.happy .pill:not(:where(.kc *,.kh *)){position:relative;width:52px;height:52px;border-radius:26px;margin-top:-16px;background:#F3EEF0;color:#8E838A;box-shadow:0 0 0 4px #fff,0 4px 10px rgba(42,34,40,.10);transition:background .45s,color .45s,box-shadow .45s}
+.tab.happy.full .pill:not(:where(.kc *,.kh *)),.android .tab.happy.full .pill:not(:where(.kc *,.kh *)){background:linear-gradient(160deg,#E0567B,var(--pk));color:#fff;box-shadow:0 0 0 4px #fff,0 8px 18px rgba(193,62,99,.36)}
+.tab.happy .hbf:not(:where(.kc *,.kh *)){width:36px;height:36px;overflow:visible;transform-origin:50% 90%;animation:hbSigh 5s ease-in-out infinite}
+.tab.happy.full .hbf:not(:where(.kc *,.kh *)){animation:hbGlee 3.6s ease-in-out infinite}
+.hbf .st{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hbf .sad,.hbf .hap{transition:opacity .25s}.hbf .hap{opacity:0}
+.tab.happy.full .hbf .hap{opacity:1}.tab.happy.full .hbf .sad{opacity:0}
+.hbf .ck{fill:#FFB3C6;opacity:0;transition:opacity .4s}.tab.happy.full .hbf .ck{opacity:.9}
+.tab.happy .bdg:not(:where(.kc *,.kh *)){top:-5px;inset-inline-start:auto;inset-inline-end:-7px;background:#fff;color:var(--pk);box-shadow:0 0 0 1.6px var(--pk)}
+.tab.happy.pop .pill:not(:where(.kc *,.kh *)){animation:hbPop .7s cubic-bezier(.3,1.6,.5,1)}
+.hbs{position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:50%;background:#E0567B;opacity:0;pointer-events:none}
+.hbs:nth-of-type(2n){background:#FFC94A}
+.tab.happy.pop .hbs{animation:hbSpark .75s ease-out}
+@keyframes hbSigh{0%,70%,100%{transform:rotate(-6deg) translateY(1px)}80%{transform:rotate(-9deg) translateY(2.5px)}90%{transform:rotate(-5deg) translateY(1px)}}
+@keyframes hbGlee{0%,82%,100%{transform:none}88%{transform:rotate(-7deg) translateY(-2px)}94%{transform:rotate(7deg) translateY(-2px)}}
+@keyframes hbPop{0%{transform:scale(.7)}50%{transform:scale(1.16) translateY(-7px)}100%{transform:none}}
+@keyframes hbSpark{0%{opacity:1;transform:translate(-50%,-50%) rotate(var(--a)) translateY(0) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--a)) translateY(-40px) scale(.4)}}
+@media (prefers-reduced-motion:reduce){.tab.happy .hbf,.tab.happy .pill,.hbs{animation:none!important}}
+/* the header with bar D: the site's own wishlist heart (and count) where Account was, on phones */
+@container app (max-width: 599px){.kh.hbb-D .kh-hd .hact .ib-acct{display:none!important}.kh.hbb-D .kh-hd .hact .ib-wcp{display:inline-flex!important;position:relative;margin-inline-start:6px}.kh.hbb-D .kh-hd .hact .ib-wcp i{top:-5px;inset-inline-end:auto;inset-inline-start:15px}}

@@ -144,6 +144,9 @@ function baseOrders(){
 
 /* ── bag maths ─────────────────────────────────────────────────────────── */
 const bagCount = () => S.bag.reduce((a, b) => a + b.qty, 0);
+/* the count the bag icons show: 0 on the "Bag · empty" preview, which draws an empty bag without
+   emptying the demo bag (so the happy bag is sad there, as it will be in the app) */
+const shownBag = () => { const r = route(); return r && /^\/bag(\?|$)/.test(r.path) && r.query.state === 'empty' ? 0 : bagCount(); };
 function coAddress(){ const c = S.co; return c.addresses.find(a => a.id === c.addr) || c.addresses[0] || null; }
 function bagTotals(o = {}){
   const sub = r2(S.bag.reduce((a, b) => a + cur(P[b.slug]) * b.qty, 0));

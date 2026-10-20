@@ -52,7 +52,7 @@ function siteOn(r, R){
 function siteHTML(d){
   const cls = sizeClass(d.w);
   const drawer = S.menu && d.w <= 900;
-  const k = `kh ${SITEMK.bodyClass}${drawer ? ' menu-open' : ''}${S.tm === 'bar' && cls === 'medium' ? ' tm-bar' : ''}`;
+  const k = `kh ${SITEMK.bodyClass}${drawer ? ' menu-open' : ''}${S.tm === 'bar' && cls === 'medium' ? ' tm-bar' : ''} hbb-${S.bb}`;
   return `<div class="${k}" dir="${AR ? 'rtl' : 'ltr'}" lang="${LANG}" data-layer="site">${SITE_HEADER}${drawer ? `<div class="mscrim on" data-act="menuclose" aria-hidden="true"></div>${SITE_MENU}` : ''}</div>`;
 }
 /* the site's delivery strip, at the top of Home (the site shows it under 900) */
@@ -60,7 +60,7 @@ const siteStrip = () => SITEMK.annc ? `<div class="kh" dir="${AR ? 'rtl' : 'ltr'
 
 /* after each render: counts, the other app's link, the search field, open panels */
 function wireSite(){
-  const n = bagCount(), w = S.wish.size;
+  const n = shownBag(), w = S.wish.size;
   const r = route(), onSearch = r.s.pattern === '/search';
   const curPath = topE().path;
   $$('#stage .kh').forEach(kh => {
@@ -119,14 +119,15 @@ const BBDEF = {
   A:[['home', 'home', 'Home'], ['shop', 'shop', 'Shop'], ['search', 'search', 'Search'], ['bag', 'bag', 'Bag'], ['account', 'user', 'Account']],
   B:[['home', 'home', 'Home'], ['shop', 'cats', 'Categories'], ['brands', 'award', 'Brands'], ['offers', 'pct', 'Offers'], ['account', 'user', 'Account']],
   C:[['home', 'home', 'Home'], ['shop', 'shop', 'Shop'], ['wish', 'heart', 'Wishlist'], ['bag', 'bag', 'Bag'], ['account', 'user', 'Account']],
-  D:[['home', 'home', 'Home'], ['shop', 'cats', 'Categories'], ['bag', 'bag', 'Bag', 'raised'], ['wish', 'heart', 'Wishlist'], ['account', 'user', 'Account']],
+  /* the owner's pick (20 October 2026): the happy bag raised in the middle, no label, and More */
+  D:[['home', 'home', 'Home'], ['shop', 'cats', 'Categories'], ['bag', 'bag', 'Bag', 'raised happy'], ['account', 'user', 'Account'], ['more', 'dots', 'More (tab)']],
   E:[['home', 'home', 'Home'], ['shop', 'shop', 'Shop'], ['offers', 'pct', 'Offers'], ['bag', 'bag', 'Bag'], ['more', 'dots', 'More (tab)']],
 };
 const BBNOTE = {
   A:'Now: Home · Shop · Search · Bag · Account',
   B:'Home · Categories · Brands · Offers · Account (the bag is in the header)',
   C:'Home · Shop · Wishlist · Bag · Account (search is the header box)',
-  D:'Home · Categories · raised Bag · Wishlist · Account',
+  D:'Home · Categories · happy Bag · Account · More (the wishlist is in the header)',
   E:'Home · Shop · Offers · Bag · More (brands, wishlist, orders, blog…)',
 };
 const MORE = [['/brands', 'award', 'Brands'], ['/wishlist', 'heart', 'Wishlist'], ['/account/orders', 'box', 'Orders'], ['/categories', 'sparkle', 'Skin concerns'], ['/blog', 'doc', 'Blog'], ['/contact', 'chat', 'Contact us'], ['/account/language', 'globe', 'Language & region'], ['/account/notifications', 'bell', 'Settings']];

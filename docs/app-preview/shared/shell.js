@@ -89,12 +89,22 @@ function paneHTML(path, L, ctx, o = {}){
 /* The bottom bar of the chosen variant (shared/header.js, BBDEF). Phones only:
    from 600 wide the website's header and menus do the navigating, as on the site. */
 const TABDEF = () => BBDEF[S.bb] || BBDEF.A;
+/* The happy bag (bar D, the owner's pick A): plain grey with a sad face while the bag is empty,
+   pink and grinning once something is in it. It pops only when the count goes UP, so a redraw
+   for any other reason does not replay it. Two mouths cross-faded: iOS Safari cannot animate `d`. */
+const HAPPYBAG = `<svg class="hbf" viewBox="0 0 32 32" aria-hidden="true"><path class="st" d="M7 11.5h18l-1.6 15a1.4 1.4 0 0 1-1.4 1.2H10a1.4 1.4 0 0 1-1.4-1.2zM12 11.5V9a4 4 0 0 1 8 0v2.5"/>
+  <g class="sad"><path class="st" d="M11.4 17.3l2.6-.9M20.6 17.3l-2.6-.9" stroke-width="1.6"/><circle cx="13" cy="18.6" r="1.2" fill="currentColor"/><circle cx="19" cy="18.6" r="1.2" fill="currentColor"/><path class="st" d="M13.4 23.6c1.6-1.6 3.6-1.6 5.2 0" stroke-width="1.7"/></g>
+  <g class="hap"><circle class="ck" cx="11" cy="21.4" r="1.7"/><circle class="ck" cx="21" cy="21.4" r="1.7"/><path class="st" d="M11.5 18.6c.7-1.3 2.3-1.3 3 0M17.5 18.6c.7-1.3 2.3-1.3 3 0" stroke-width="1.7"/><path class="st" d="M12.6 21.6c1.9 2.6 4.9 2.6 6.8 0" stroke-width="1.9"/></g></svg>`
+  + [0, 45, 90, 135, 180, 225, 270, 315].map(a => `<i class="hbs" style="--a:${a}deg"></i>`).join('');
+let lastBag = null;
 function tabbar(){
-  const n = bagCount(), w = S.wish.size;
+  const n = shownBag(), w = S.wish.size;
+  const pop = lastBag !== null && n > lastBag; lastBag = n;
   return `<nav class="tabbar bb-${S.bb}" data-layer="nav" aria-label="${t('Main')}">${TABDEF().map(([k, i, l, x]) => {
     const on = k === 'more' ? S.sheet === 'more' : S.tab === k;
     const c = k === 'bag' ? n : k === 'wish' ? w : 0;
     const act = k === 'more' ? `data-act="more" aria-expanded="${S.sheet === 'more'}"` : `data-tab="${k}" aria-current="${on ? 'page' : 'false'}"`;
+    if (x === 'raised happy') return `<button class="tab raised happy${n ? ' full' : ''}${pop ? ' pop' : ''}${on ? ' on' : ''}" ${act} aria-label="${tl(l)}${n ? ' · ' + num(n) : ''}"><span class="pill">${HAPPYBAG}${n ? `<span class="bdg">${num(n)}</span>` : ''}</span></button>`;
     return `<button class="tab${on ? ' on' : ''}${x ? ' ' + x : ''}" ${act}>${isA() || x ? `<span class="pill">${ico(i)}</span>` : ico(i)}<span class="tbl">${tl(l)}</span>${c ? `<span class="bdg">${num(c)}</span>` : ''}</button>`;
   }).join('')}</nav>`;
 }
