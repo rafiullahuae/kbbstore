@@ -1,0 +1,434 @@
+{
+ "acne": [
+  {
+   "img": "wp-content/uploads/2025/04/Anua-Azelaic-Acid-10-Hyaluron-Redness-Soothing-Serum.webp",
+   "name": "Anua - Azelaic Acid 10 Hyaluron Redness Soothing Serum"
+  },
+  {
+   "img": "wp-content/uploads/2025/11/APRILSKIN-Carrotene-Clarifying-Serum.webp",
+   "name": "APRILSKIN - Carrotene Clarifying Serum"
+  },
+  {
+   "img": "wp-content/uploads/2025/11/APRILSKIN-Carrotene-IPMP-Clearing-Solution.webp",
+   "name": "APRILSKIN - Carrotene IPMP Clearing Solution"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Arencia-Eraser-Shot-Glycolic-Acid-Booster.webp",
+   "name": "Arencia - Eraser Shot Glycolic Acid Booster"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Screenshot-2024-03-28-235025.webp",
+   "name": "AXIS - Y - Daily Purifying Treatment Toner"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/AXIS-–-Y-–-Mugwort-Pore-Clarifying-Wash-Off-Pack.webp",
+   "name": "AXIS - Y - Mugwort Pore Clarifying Wash Off Pack"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Screenshot-2024-03-29-001511.webp",
+   "name": "AXIS - Y - Spot The Difference Blemish Treatment"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Beauty-Of-Joseon-Glow-Serum-Propolis-Niacinamide.webp",
+   "name": "Beauty Of Joseon Glow Serum Propolis + Niacinamide – 30ml"
+  },
+  {
+   "img": "wp-content/uploads/2025/12/Biodance-Refreshing-Sea-Kelp-Real-Deep-Mask-Set.webp",
+   "name": "Biodance - Refreshing Sea Kelp Real Deep Mask Set"
+  },
+  {
+   "img": "wp-content/uploads/2024/12/Celimax-JIWOOGAE-Cica-BHA-Blemish-Toner-Pad.webp",
+   "name": "Celimax - JIWOOGAE Cica BHA Blemish Toner Pad"
+  },
+  {
+   "img": "wp-content/uploads/2025/03/celimax-The-Real-Noni-Acne-Bubble-Cleanser.webp",
+   "name": "celimax - The Real Noni Acne Bubble Cleanser"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/COSRX-AC-Collection-Blemish-Spot-Clearing-Serum.webp",
+   "name": "COSRX - AC Collection Blemish Spot Clearing Serum"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/COSRX-AC-Collection-Lightweight-Soothing-Moisturizer.webp",
+   "name": "COSRX - AC Collection Lightweight Soothing Moisturizer"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/COSRX-Acne-Pimple-Patch-K-Beauty-Bliss.webp",
+   "name": "COSRX - Acne Pimple Patch"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/COSRX-Aha-Bha-Clarifying-Treatment-Toner-150ml-K-Beauty-Bliss.webp",
+   "name": "COSRX - Aha/Bha Clarifying Treatment Toner 150ml"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/COSRX-Centella-BlemCreish.webp",
+   "name": "COSRX - Centella Blemish Cream"
+  }
+ ],
+ "hydration": [
+  {
+   "img": "wp-content/uploads/2026/09/Anua-PDRN-Hyaluronic-Acid-Hydrating-Capsule-Mist-Mini.webp",
+   "name": "Anua - PDRN Hyaluronic Acid Hydrating Capsule Mist Mini"
+  },
+  {
+   "img": "wp-content/uploads/2026/03/Dr.Althea-345-Relief-Cream-Mist-kbeautybliss.webp",
+   "name": "Dr.Althea - 345 Relief Cream Mist Spray"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Anua-PDRN-Collagen-Melting-Patch-For-Glass-Skin.webp",
+   "name": "Anua - PDRN Collagen Melting Patch For Glass Skin"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Arencia-Vitamin-C-Booster-Shot-Mask.webp",
+   "name": "Arencia - Vitamin C Booster Shot Mask"
+  },
+  {
+   "img": "wp-content/uploads/2026/04/celimax-PoreDark-Spot-Brightening-Cream-kbeautybliss.webp",
+   "name": "celimax - Pore+Dark Spot Brightening Cream"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/anua-PDRN-set-kbeautybliss.webp",
+   "name": "Anua - PDRN Glass Skin Set"
+  },
+  {
+   "img": "wp-content/uploads/2026/10/Arencia-Vitamin-C-Booster-Trio.webp",
+   "name": "Arencia - Vitamin C Booster Trio"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Celimax-PoreDark-Spot-Complete-Brightening-Skincare-Set.webp",
+   "name": "Celimax Pore+Dark Spot Complete Brightening Skincare Set"
+  },
+  {
+   "img": "wp-content/uploads/2026/03/Dr.-Althea-345-Relief-Cream-Mist-Spray-Set-kbeautybliss.webp",
+   "name": "Dr. Althea 345 Relief Cream + Mist Spray Set"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/medicube-PDRN-Collagen-Gua-Sha-Neck-Wrinkle-Cream.webp",
+   "name": "Medicube - PDRN Collagen Gua Sha Neck Wrinkle Cream"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Anua-Collagen-Retinol-Refining-Gua-Sha-Cream.webp",
+   "name": "Anua - Collagen Retinol Refining Gua Sha Cream"
+  },
+  {
+   "img": "wp-content/uploads/2026/06/Dr.-Althea-PDRN-Reju-5000-Cream.webp",
+   "name": "Dr. Althea - PDRN Reju 5000 Cream"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/products-thumbnails-2.webp",
+   "name": "Medicube - PDRN Collagen Firm & Glow Set"
+  },
+  {
+   "img": "wp-content/uploads/2026/01/Anua-PDRN-Hyaluronic-Acid-100-Moisturizing-Cream.webp",
+   "name": "Anua - PDRN Hyaluronic Acid 100 Moisturizing Cream"
+  },
+  {
+   "img": "wp-content/uploads/2026/03/medicube-Kojic-Acid-Turmeric-Vita-Jelly-Mist-Serum.webp",
+   "name": "medicube - Kojic Acid Turmeric Vita Jelly Mist Serum"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/celimax-The-Vita-A-Retinal-Shot-Tightening-Dual-Cream.webp",
+   "name": "Celimax - The Vita-A Retinal Shot Tightening Dual Cream"
+  }
+ ],
+ "spots": [
+  {
+   "img": "wp-content/uploads/2026/04/Arencia-Vitamin-C-Booster-Shot.webp",
+   "name": "Arencia - Vitamin C Booster Shot"
+  },
+  {
+   "img": "wp-content/uploads/2025/08/celimax-The-Vita-A-Retinal-Shot-Tightening-Booster.webp",
+   "name": "celimax - The Vita-A Retinal Shot Tightening Booster"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Anua-PDRN-Collagen-Melting-Patch-For-Glass-Skin.webp",
+   "name": "Anua - PDRN Collagen Melting Patch For Glass Skin"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Arencia-Vitamin-C-Booster-Shot-Mask.webp",
+   "name": "Arencia - Vitamin C Booster Shot Mask"
+  },
+  {
+   "img": "wp-content/uploads/2026/04/celimax-PoreDark-Spot-Brightening-Cream-kbeautybliss.webp",
+   "name": "celimax - Pore+Dark Spot Brightening Cream"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream.webp",
+   "name": "Dr.Althea - 345 Relief Cream"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/SKIN1004-Madagascar-Centella-Tone-Brightening-Tone-Up-Sunscreen.webp",
+   "name": "SKIN1004 - Madagascar Centella Tone Brightening Tone Up Sunscreen"
+  },
+  {
+   "img": "wp-content/uploads/2026/10/Arencia-Vitamin-C-Booster-Trio.webp",
+   "name": "Arencia - Vitamin C Booster Trio"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Celimax-PoreDark-Spot-Complete-Brightening-Skincare-Set.webp",
+   "name": "Celimax Pore+Dark Spot Complete Brightening Skincare Set"
+  },
+  {
+   "img": "wp-content/uploads/2026/03/Dr.-Althea-345-Relief-Cream-Mist-Spray-Set-kbeautybliss.webp",
+   "name": "Dr. Althea 345 Relief Cream + Mist Spray Set"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Arencia-NAD-Booster-Shot.webp",
+   "name": "Arencia - NAD+ Booster Shot"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/celimax-Pore-Dark-Spot-Brightening-Care-Sunscreen.webp",
+   "name": "celimax - Pore+ Dark Spot Brightening Care Sunscreen"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Arencia-TXA-Booster-Shot.webp",
+   "name": "Arencia - TXA Booster Shot"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/celimax-Pore-Dark-Spot-Brightening-Pad.webp",
+   "name": "celimax - Pore + Dark Spot Brightening Pad"
+  },
+  {
+   "img": "wp-content/uploads/2026/03/medicube-Kojic-Acid-Turmeric-Vita-Jelly-Mist-Serum.webp",
+   "name": "medicube - Kojic Acid Turmeric Vita Jelly Mist Serum"
+  },
+  {
+   "img": "wp-content/uploads/2024/11/anua-txa-niacinaminde-serum-kbeautybliss.webp",
+   "name": "Anua - Niacinamide 10% + TXA 4% Dark Spot Correcting Serum 30ml"
+  }
+ ],
+ "ageing": [
+  {
+   "img": "wp-content/uploads/2026/09/Anua-PDRN-Hyaluronic-Acid-Hydrating-Capsule-Mist-Mini.webp",
+   "name": "Anua - PDRN Hyaluronic Acid Hydrating Capsule Mist Mini"
+  },
+  {
+   "img": "wp-content/uploads/2026/04/Arencia-Vitamin-C-Booster-Shot.webp",
+   "name": "Arencia - Vitamin C Booster Shot"
+  },
+  {
+   "img": "wp-content/uploads/2026/03/Dr.Althea-345-Relief-Cream-Mist-kbeautybliss.webp",
+   "name": "Dr.Althea - 345 Relief Cream Mist Spray"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Anua-PDRN-Collagen-Melting-Patch-For-Glass-Skin.webp",
+   "name": "Anua - PDRN Collagen Melting Patch For Glass Skin"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Abib-PDRN-Collagen-Lip-Mask-Glazed-Jelly.webp",
+   "name": "Abib - PDRN Collagen Lip Mask Glazed Jelly"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/anua-PDRN-set-kbeautybliss.webp",
+   "name": "Anua - PDRN Glass Skin Set"
+  },
+  {
+   "img": "wp-content/uploads/2026/03/Dr.-Althea-345-Relief-Cream-Mist-Spray-Set-kbeautybliss.webp",
+   "name": "Dr. Althea 345 Relief Cream + Mist Spray Set"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/medicube-PDRN-Collagen-Gua-Sha-Neck-Wrinkle-Cream.webp",
+   "name": "Medicube - PDRN Collagen Gua Sha Neck Wrinkle Cream"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Anua-Collagen-Retinol-Refining-Gua-Sha-Cream.webp",
+   "name": "Anua - Collagen Retinol Refining Gua Sha Cream"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Arencia-NAD-Booster-Shot.webp",
+   "name": "Arencia - NAD+ Booster Shot"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/celimax-Pore-Dark-Spot-Brightening-Care-Sunscreen.webp",
+   "name": "celimax - Pore+ Dark Spot Brightening Care Sunscreen"
+  },
+  {
+   "img": "wp-content/uploads/2026/06/Dr.-Althea-PDRN-Reju-5000-Cream.webp",
+   "name": "Dr. Althea - PDRN Reju 5000 Cream"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/products-thumbnails-2.webp",
+   "name": "Medicube - PDRN Collagen Firm & Glow Set"
+  },
+  {
+   "img": "wp-content/uploads/2026/01/Anua-PDRN-Hyaluronic-Acid-100-Moisturizing-Cream.webp",
+   "name": "Anua - PDRN Hyaluronic Acid 100 Moisturizing Cream"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/celimax-The-Vita-A-Retinal-Shot-Tightening-Dual-Cream.webp",
+   "name": "Celimax - The Vita-A Retinal Shot Tightening Dual Cream"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Arencia-PDRN-Booster-Shot.webp",
+   "name": "Arencia - PDRN Booster Shot"
+  }
+ ],
+ "sensitive": [
+  {
+   "img": "wp-content/uploads/2024/10/ANUA-5-Step-Skincare-Routine-Set.jpg",
+   "name": "ANUA - All in 1 Glow Essentials : 5-Step Skincare Set"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Anua-Heartleaf-70-Intense-Calming-Cream-50ml.webp",
+   "name": "Anua - Heartleaf 70 Intense Calming Cream - 50ml"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Anua-–-Heartleaf-70-Soothing-Cream-–-100ml.webp",
+   "name": "Anua - Heartleaf 70% Soothing Cream -  100ml"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Anua-–-Heartleaf-77-Soothing-Toner-250ml.webp",
+   "name": "Anua - Heartleaf 77% Soothing Toner 250ml"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Beauty-of-Joseon-Relief-Sun_-Rice-Probiotics-SPF50-PA-50ml-1.webp",
+   "name": "Beauty of Joseon Relief Sun: Rice + Probiotics SPF50 PA++++ 50ml"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/SKIN-1004-–-Madagascar-Centella-Toning-Toner-–-200ml.webp",
+   "name": "SKIN 1004 - Madagascar Centella Toning Toner - 200ml"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Abib-Airy-Sunstick-Smoothing-Bar.webp",
+   "name": "Abib - Airy Sunstick Smoothing Bar"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Abib-Rice-Probiotics-Overnight-Mask-Barrier-Jelly.webp",
+   "name": "Abib - Rice Probiotics Overnight Mask Barrier Jelly"
+  },
+  {
+   "img": "wp-content/uploads/2025/04/Anua-Azelaic-Acid-10-Hyaluron-Redness-Soothing-Serum.webp",
+   "name": "Anua - Azelaic Acid 10 Hyaluron Redness Soothing Serum"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Anua-–-Heartleaf-70-Daily-Lotion-200ml.webp",
+   "name": "Anua - Heartleaf 70 Daily Lotion 200ml"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Anua-–-Heartleaf-77-Clear-Toner-Pad-1.webp",
+   "name": "Anua - Heartleaf 77 Clear Toner Pad"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/ANUA-–-Heartleaf-Intensive-Soothing-Set.webp",
+   "name": "ANUA - Heartleaf Intensive Soothing Set"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/JAdfhkj.png",
+   "name": "Anua - Heartleaf LHA Moisture Peeling Gel"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Anua-Heartleaf-Pore-Control-Cleansing-Oil.webp",
+   "name": "Anua - Heartleaf Pore Control Cleansing Oil - MILD"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Anua-Heartleaf-Silky-Moisture-Sun-Cream.webp",
+   "name": "Anua - Heartleaf Silky Moisture Sun Cream"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Anua-–-Heartleaf-Soothing-Trial-Kit-1.webp",
+   "name": "Anua - Heartleaf Soothing Trial Kit"
+  }
+ ],
+ "pores": [
+  {
+   "img": "wp-content/uploads/2026/09/Anua-PDRN-Hyaluronic-Acid-Hydrating-Capsule-Mist-Mini.webp",
+   "name": "Anua - PDRN Hyaluronic Acid Hydrating Capsule Mist Mini"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Anua-PDRN-Collagen-Melting-Patch-For-Glass-Skin.webp",
+   "name": "Anua - PDRN Collagen Melting Patch For Glass Skin"
+  },
+  {
+   "img": "wp-content/uploads/2026/04/celimax-PoreDark-Spot-Brightening-Cream-kbeautybliss.webp",
+   "name": "celimax - Pore+Dark Spot Brightening Cream"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Arencia-NAD-Booster-Shot.webp",
+   "name": "Arencia - NAD+ Booster Shot"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Arencia-TXA-Booster-Shot.webp",
+   "name": "Arencia - TXA Booster Shot"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/celimax-Pore-Dark-Spot-Brightening-Pad.webp",
+   "name": "celimax - Pore + Dark Spot Brightening Pad"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/celimax-The-Vita-A-Retinal-Shot-Tightening-Dual-Cream.webp",
+   "name": "Celimax - The Vita-A Retinal Shot Tightening Dual Cream"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Arencia-PDRN-Booster-Shot.webp",
+   "name": "Arencia - PDRN Booster Shot"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Arencia-Eraser-Shot-Glycolic-Acid-Booster.webp",
+   "name": "Arencia - Eraser Shot Glycolic Acid Booster"
+  },
+  {
+   "img": "wp-content/uploads/2026/06/Dr.-Althea-Melaclear-Cream.webp",
+   "name": "Dr. Althea - Melaclear Cream"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Medicube-Zero-Pore-Pad-2.0.webp",
+   "name": "Medicube - Zero Pore Pad 2.0"
+  },
+  {
+   "img": "wp-content/uploads/2026/06/Dr.-Althea-345-Relief-Cream-Mist-Mini.webp",
+   "name": "Dr. Althea - 345 Relief Cream Mist Mini"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Arencia-Fresh-Red-Smoothie-Serum-8.webp",
+   "name": "Arencia - Fresh Red Smoothie Serum 8"
+  },
+  {
+   "img": "wp-content/uploads/2024/11/medicube-PDRN-Pink-Peptide-Serum-4.webp",
+   "name": "medicube – PDRN Pink Peptide Serum"
+  },
+  {
+   "img": "wp-content/uploads/2026/09/Arencia-Red-Smoothie-Lotion-5.webp",
+   "name": "Arencia - Red Smoothie Lotion 5"
+  },
+  {
+   "img": "wp-content/uploads/2026/03/Arencia-Pore-Melt-Mochi-Cleansing-Oil.webp",
+   "name": "Arencia - Pore Melt Mochi Cleansing Oil"
+  }
+ ],
+ "dull": [
+  {
+   "img": "wp-content/uploads/2024/11/anua-txa-niacinaminde-serum-kbeautybliss.webp",
+   "name": "Anua - Niacinamide 10% + TXA 4% Dark Spot Correcting Serum 30ml"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Anua-–-Heartleaf-Quercetinol-Pore-Deep.webp",
+   "name": "Anua - Heartleaf Quercetinol Pore Deep Cleansing Foam - 150ml"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream.webp",
+   "name": "Dr.Althea - 345 Relief Cream"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Beauty-of-Joseon-Relief-Sun_-Rice-Probiotics-SPF50-PA-50ml-1.webp",
+   "name": "Beauty of Joseon Relief Sun: Rice + Probiotics SPF50 PA++++ 50ml"
+  }
+ ],
+ "sun": [
+  {
+   "img": "wp-content/uploads/2024/11/anua-txa-niacinaminde-serum-kbeautybliss.webp",
+   "name": "Anua - Niacinamide 10% + TXA 4% Dark Spot Correcting Serum 30ml"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Anua-–-Heartleaf-Quercetinol-Pore-Deep.webp",
+   "name": "Anua - Heartleaf Quercetinol Pore Deep Cleansing Foam - 150ml"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Dr.Althea-345-Relief-Cream.webp",
+   "name": "Dr.Althea - 345 Relief Cream"
+  },
+  {
+   "img": "wp-content/uploads/2024/10/Beauty-of-Joseon-Relief-Sun_-Rice-Probiotics-SPF50-PA-50ml-1.webp",
+   "name": "Beauty of Joseon Relief Sun: Rice + Probiotics SPF50 PA++++ 50ml"
+  }
+ ]
+}

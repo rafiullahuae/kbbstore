@@ -1,0 +1,138 @@
+{
+ "acne": [
+  {
+   "name": "COSRX - AC Collection Blemish Spot Clearing Serum",
+   "file": "acne-1-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "COSRX - Acne Pimple Patch",
+   "file": "acne-2-tight.png",
+   "code": "404"
+  },
+  {
+   "name": "celimax - The Real Noni Acne Bubble Cleanser",
+   "file": "acne-3-tight.png",
+   "code": "200"
+  }
+ ],
+ "hydration": [
+  {
+   "name": "Anua - PDRN Hyaluronic Acid 100 Moisturizing Cream",
+   "file": "hydration-1-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "Anua - PDRN Hyaluronic Acid Hydrating Capsule Mist Mini",
+   "file": "hydration-2-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "Anua - PDRN Collagen Melting Patch For Glass Skin",
+   "file": "hydration-3-tight.png",
+   "code": "200"
+  }
+ ],
+ "spots": [
+  {
+   "name": "Anua - Niacinamide 10% + TXA 4% Dark Spot Correcting Serum 30ml",
+   "file": "spots-1-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "Arencia - TXA Booster Shot",
+   "file": "spots-2-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "celimax - Pore+Dark Spot Brightening Cream",
+   "file": "spots-3-tight.png",
+   "code": "200"
+  }
+ ],
+ "ageing": [
+  {
+   "name": "Dr. Althea - PDRN Reju 5000 Cream",
+   "file": "ageing-1-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "Celimax - The Vita-A Retinal Shot Tightening Dual Cream",
+   "file": "ageing-2-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "Medicube - PDRN Collagen Gua Sha Neck Wrinkle Cream",
+   "file": "ageing-3-tight.png",
+   "code": "200"
+  }
+ ],
+ "sensitive": [
+  {
+   "name": "Anua - Heartleaf 77% Soothing Toner 250ml",
+   "file": "sensitive-1-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "Anua - Heartleaf 70% Soothing Cream -  100ml",
+   "file": "sensitive-2-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "SKIN 1004 - Madagascar Centella Toning Toner - 200ml",
+   "file": "sensitive-3-tight.png",
+   "code": "200"
+  }
+ ],
+ "pores": [
+  {
+   "name": "Medicube - Zero Pore Pad 2.0",
+   "file": "pores-1-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "Arencia - Pore Melt Mochi Cleansing Oil",
+   "file": "pores-2-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "AXIS - Y - Mugwort Pore Clarifying Wash Off Pack",
+   "file": "pores-3-tight.png",
+   "code": "200"
+  }
+ ],
+ "dull": [
+  {
+   "name": "Arencia - Vitamin C Booster Shot",
+   "file": "dull-1-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "Beauty Of Joseon Glow Serum Propolis + Niacinamide – 30ml",
+   "file": "dull-2-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "medicube - Kojic Acid Turmeric Vita Jelly Mist Serum",
+   "file": "dull-3-tight.png",
+   "code": "200"
+  }
+ ],
+ "sun": [
+  {
+   "name": "Beauty of Joseon Relief Sun: Rice + Probiotics SPF50 PA++++ 50ml",
+   "file": "sun-1-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "SKIN1004 - Madagascar Centella Tone Brightening Tone Up Sunscreen",
+   "file": "sun-2-tight.png",
+   "code": "200"
+  },
+  {
+   "name": "Anua - Heartleaf Silky Moisture Sun Cream",
+   "file": "sun-3-tight.png",
+   "code": "200"
+  }
+ ]
+}
