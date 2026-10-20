@@ -1,0 +1,328 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Adds To Cart</title><style>@font-face{font-family:Fredoka;src:url(fredoka.woff2) format('woff2');font-weight:300 700}
+@font-face{font-family:Caveat;src:url(caveat.woff2) format('woff2');font-weight:400 700}
+@font-face{font-family:Outfit;src:url(../../resources/fonts/outfit/outfit-latin.woff2) format('woff2');font-weight:100 900}
+@font-face{font-family:Cairo;src:url(../../resources/fonts/cairo/cairo-arabic.woff2) format('woff2');font-weight:200 1000;unicode-range:U+0600-06FF,U+FB50-FDFF,U+FE70-FEFF}
+@font-face{font-family:Cairo;src:url(../../resources/fonts/cairo/cairo-latin.woff2) format('woff2');font-weight:200 1000}
+@font-face{font-family:Ruqaa;src:url(ruqaa-arabic.woff2) format('woff2');font-weight:700;unicode-range:U+0600-06FF,U+FB50-FDFF,U+FE70-FEFF}
+body{margin:0;background:#ddd;display:flex;gap:40px;padding:40px;flex-wrap:wrap;align-items:flex-start}
+.frame{position:relative;overflow:hidden;flex:none}
+.post{position:absolute;left:0;top:0;width:1080px;height:1350px;overflow:hidden;font-family:Outfit,sans-serif;color:#231C21}
+.story .post{background:transparent!important}
+.a{position:absolute;margin:0}
+.p{position:absolute;filter:drop-shadow(0 18px 18px rgba(60,30,40,.16)) drop-shadow(0 3px 4px rgba(60,30,40,.12))}
+.fr{font-family:Fredoka,Cairo;font-weight:700;letter-spacing:-.5px}
+.fr .lt{font-family:Outfit,Cairo;font-weight:400;letter-spacing:-.3px}
+.lb{font-family:Caveat;font-weight:700;font-size:44px;color:#3A2E35;white-space:nowrap;line-height:1}
+.ar{position:absolute;overflow:visible}
+.ar path{fill:none;stroke:#3A2E35;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.btn{position:absolute;display:inline-flex;align-items:center;gap:12px;border-radius:999px;font-family:Fredoka,Cairo;font-weight:700;white-space:nowrap}
+.btn svg{width:1.1em;height:1.1em}
+[dir=rtl] .btn svg{transform:scaleX(-1)}
+.catph{position:absolute;object-fit:cover}
+.grain{position:absolute;inset:0;opacity:.35;mix-blend-mode:multiply}
+.dots{position:absolute;inset:0;background-image:radial-gradient(#F3CFDA 2.2px,transparent 2.4px);background-size:34px 34px;opacity:.75}
+.sale{font-size:22px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#9B7D8A}
+.d1{background:#FFFDFB}.d2{background:#FCEFF2}.d3{background:#F7F1EE}
+.b1{padding:18px 34px 18px 26px;font-size:40px;background:#E0567B;color:#fff;box-shadow:0 12px 26px rgba(224,86,123,.35),inset 0 -5px 0 rgba(0,0,0,.12)}
+.b2{padding:16px 30px 16px 24px;font-size:38px;background:#fff;color:#C13E63;border:3px solid #C13E63;box-shadow:0 9px 0 #C13E63}
+.b3{padding:22px 40px 22px 32px;font-size:44px;background:#E0567B;color:#fff;box-shadow:0 14px 30px rgba(224,86,123,.38),inset 0 -5px 0 rgba(0,0,0,.12)}
+.bar{position:absolute;left:0;right:0;top:0;height:150px;background:rgba(255,255,255,.92);border-bottom:1px solid #EADFE3}
+.msg{position:absolute;font-size:34px;line-height:1.3;padding:20px 28px;border-radius:34px;max-width:620px}
+.me{background:#E0567B;color:#fff}
+.them{background:#fff;color:#2A2228;box-shadow:0 2px 8px rgba(42,34,40,.06)}
+[dir=ltr] .me{border-bottom-right-radius:10px}[dir=ltr] .them{border-bottom-left-radius:10px}
+[dir=rtl] .me{border-bottom-left-radius:10px}[dir=rtl] .them{border-bottom-right-radius:10px}
+.pbox{width:760px;height:410px;background:#fff;border-radius:34px;box-shadow:0 2px 8px rgba(42,34,40,.06);overflow:hidden}
+[dir=ltr] .pbox{border-bottom-right-radius:10px}[dir=rtl] .pbox{border-bottom-left-radius:10px}
+.tm{position:absolute;font-size:20px;color:#9A8F94;font-weight:500;margin:0}
+/* Arabic */
+[lang=ar] .post,[lang=ar].post{font-family:Cairo,Outfit,sans-serif}
+[lang=ar] .lb,[lang=ar].post .lb{font-family:Ruqaa,Cairo;font-size:40px;line-height:1.25}
+[lang=ar].post .fr{font-family:Cairo;font-weight:800;letter-spacing:0}
+[lang=ar].post .msg{font-family:Cairo;font-size:32px;line-height:1.45}
+[lang=ar].post .sale{letter-spacing:0}
+.story>.fr{font-family:Fredoka,Cairo}
+.story[dir=rtl]>.fr{font-family:Cairo;font-weight:800}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute">
+ <filter id="paper"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="7"/><feColorMatrix values="0 0 0 0 .55  0 0 0 0 .45  0 0 0 0 .5  0 0 0 .18 0"/></filter>
+ <symbol id="cartic" viewBox="0 0 24 24"><path d="M3 4h2.2l2.3 10.4a1.6 1.6 0 0 0 1.6 1.2h7.7a1.6 1.6 0 0 0 1.5-1.1L20.5 8H6.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="19.5" r="1.6" fill="currentColor"/><circle cx="17" cy="19.5" r="1.6" fill="currentColor"/></symbol>
+</svg>
+<div class="frame" id="d1-post-en" style="width:1080px;height:1350px"><div class="post d1" dir="ltr" lang="en">
+ <svg class="grain" width="1080" height="1350"><rect width="1080" height="1350" filter="url(#paper)"/></svg>
+ <p class="a fr" style="left:86px;top:92px;font-size:66px">Me:</p>
+ <p class="a" style="left:86px;top:174px;font-size:50px">Trying to save money</p>
+ <p class="a fr" style="left:86px;top:292px;font-size:66px">Also me:</p>
+ <img class="p" src="cut-eyecream.png" style="left:71px;top:815px;width:230px;transform:rotate(-5deg)">
+ <img class="p" src="cut-cream.png"    style="left:329px;top:600px;height:400px;transform:rotate(-6deg)">
+ <img class="p" src="cut-serum.png"    style="left:467px;top:584px;height:420px;transform:rotate(3deg)">
+ <img class="p" src="cut-mist.png"     style="left:625px;top:592px;height:410px;transform:rotate(-3deg)">
+ <img class="p" src="cut-booster.png"  style="left:760px;top:562px;height:440px;transform:rotate(7deg)">
+ <img class="p" src="cut-deo.png"      style="left:897px;top:684px;height:320px;transform:rotate(-5deg)">
+ <p class="a lb" style="left:92px;top:1046px;transform:rotate(3deg)">Eye cream</p>
+ <p class="a lb" style="left:250px;top:500px;transform:rotate(-6deg)">Cream</p>
+ <svg class="ar" style="left:300px;top:540px" width="80" height="70"><path d="M8 8 C 30 22, 46 40, 56 62 M42 56 L 57 64 L 62 48"/></svg>
+ <p class="a lb" style="left:476px;top:1036px;transform:rotate(-2deg)">Serum</p>
+ <p class="a lb" style="left:560px;top:500px;transform:rotate(-3deg)">Face mist</p>
+ <svg class="ar" style="left:640px;top:546px" width="40" height="50"><path d="M12 6 C 18 18, 22 30, 22 44 M12 34 L 22 45 L 31 34"/></svg>
+ <p class="a lb" style="left:770px;top:470px;transform:rotate(4deg)">Booster shot</p>
+ <p class="a lb" style="left:830px;top:1036px;transform:rotate(-3deg);font-size:40px">Deodorant??</p>
+ <img class="catph" src="cat.jpg" style="left:86px;top:1112px;width:180px;height:180px;border-radius:50%;border:6px solid #fff;box-shadow:0 10px 24px rgba(42,34,40,.18)">
+ <p class="a fr" style="left:286px;top:1178px;font-size:56px;color:#C13E63">*Meooooow~*</p>
+ <svg class="ar" style="left:640px;top:1196px" width="64" height="40"><path d="M6 22 C 22 14, 38 14, 54 20 M44 10 L 56 20 L 44 30"/></svg>
+ <span class="btn b1" style="left:712px;top:1182px"><svg><use href="#cartic"/></svg>Add to cart</span>
+ <p class="a sale" style="right:70px;top:110px;width:200px;text-align:right">Super Sale</p></div></div><div class="frame story" id="d1-story-en" style="width:1080px;height:1920px;background:#FFFDFB"><svg class="grain" width="1080" height="1920" style="position:absolute;inset:0;opacity:.35;mix-blend-mode:multiply"><rect width="1080" height="1920" filter="url(#paper)"/></svg><div style="position:absolute;left:0;top:285px;width:1080px;height:1350px"><div class="post d1" dir="ltr" lang="en">
+ <svg style="display:none" class="grain" width="1080" height="1350"><rect width="1080" height="1350" filter="url(#paper)"/></svg>
+ <p class="a fr" style="left:86px;top:92px;font-size:66px">Me:</p>
+ <p class="a" style="left:86px;top:174px;font-size:50px">Trying to save money</p>
+ <p class="a fr" style="left:86px;top:292px;font-size:66px">Also me:</p>
+ <img class="p" src="cut-eyecream.png" style="left:71px;top:815px;width:230px;transform:rotate(-5deg)">
+ <img class="p" src="cut-cream.png"    style="left:329px;top:600px;height:400px;transform:rotate(-6deg)">
+ <img class="p" src="cut-serum.png"    style="left:467px;top:584px;height:420px;transform:rotate(3deg)">
+ <img class="p" src="cut-mist.png"     style="left:625px;top:592px;height:410px;transform:rotate(-3deg)">
+ <img class="p" src="cut-booster.png"  style="left:760px;top:562px;height:440px;transform:rotate(7deg)">
+ <img class="p" src="cut-deo.png"      style="left:897px;top:684px;height:320px;transform:rotate(-5deg)">
+ <p class="a lb" style="left:92px;top:1046px;transform:rotate(3deg)">Eye cream</p>
+ <p class="a lb" style="left:250px;top:500px;transform:rotate(-6deg)">Cream</p>
+ <svg class="ar" style="left:300px;top:540px" width="80" height="70"><path d="M8 8 C 30 22, 46 40, 56 62 M42 56 L 57 64 L 62 48"/></svg>
+ <p class="a lb" style="left:476px;top:1036px;transform:rotate(-2deg)">Serum</p>
+ <p class="a lb" style="left:560px;top:500px;transform:rotate(-3deg)">Face mist</p>
+ <svg class="ar" style="left:640px;top:546px" width="40" height="50"><path d="M12 6 C 18 18, 22 30, 22 44 M12 34 L 22 45 L 31 34"/></svg>
+ <p class="a lb" style="left:770px;top:470px;transform:rotate(4deg)">Booster shot</p>
+ <p class="a lb" style="left:830px;top:1036px;transform:rotate(-3deg);font-size:40px">Deodorant??</p>
+ <img class="catph" src="cat.jpg" style="left:86px;top:1112px;width:180px;height:180px;border-radius:50%;border:6px solid #fff;box-shadow:0 10px 24px rgba(42,34,40,.18)">
+ <p class="a fr" style="left:286px;top:1178px;font-size:56px;color:#C13E63">*Meooooow~*</p>
+ <svg class="ar" style="left:640px;top:1196px" width="64" height="40"><path d="M6 22 C 22 14, 38 14, 54 20 M44 10 L 56 20 L 44 30"/></svg>
+ <span class="btn b1" style="left:712px;top:1182px"><svg><use href="#cartic"/></svg>Add to cart</span>
+ <p class="a sale" style="right:70px;top:110px;width:200px;text-align:right">Super Sale</p></div></div></div><div class="frame" id="d1-post-ar" style="width:1080px;height:1350px"><div class="post d1" dir="rtl" lang="ar">
+ <svg class="grain" width="1080" height="1350"><rect width="1080" height="1350" filter="url(#paper)"/></svg>
+ <p class="a fr" style="right:86px;top:92px;font-size:66px">أنا:</p>
+ <p class="a" style="right:86px;top:174px;font-size:50px">أحاول توفير المال</p>
+ <p class="a fr" style="right:86px;top:292px;font-size:66px">وأنا أيضاً:</p>
+ <img class="p" src="cut-eyecream.png" style="left:71px;top:815px;width:230px;transform:rotate(-5deg)">
+ <img class="p" src="cut-cream.png"    style="left:329px;top:600px;height:400px;transform:rotate(-6deg)">
+ <img class="p" src="cut-serum.png"    style="left:467px;top:584px;height:420px;transform:rotate(3deg)">
+ <img class="p" src="cut-mist.png"     style="left:625px;top:592px;height:410px;transform:rotate(-3deg)">
+ <img class="p" src="cut-booster.png"  style="left:760px;top:562px;height:440px;transform:rotate(7deg)">
+ <img class="p" src="cut-deo.png"      style="left:897px;top:684px;height:320px;transform:rotate(-5deg)">
+ <p class="a lb" style="left:92px;top:1046px;transform:rotate(3deg)">كريم العين</p>
+ <p class="a lb" style="left:250px;top:500px;transform:rotate(-6deg)">كريم</p>
+ <svg class="ar" style="left:300px;top:540px" width="80" height="70"><path d="M8 8 C 30 22, 46 40, 56 62 M42 56 L 57 64 L 62 48"/></svg>
+ <p class="a lb" style="left:476px;top:1036px;transform:rotate(-2deg)">سيروم</p>
+ <p class="a lb" style="left:560px;top:500px;transform:rotate(-3deg)">رذاذ الوجه</p>
+ <svg class="ar" style="left:640px;top:546px" width="40" height="50"><path d="M12 6 C 18 18, 22 30, 22 44 M12 34 L 22 45 L 31 34"/></svg>
+ <p class="a lb" style="left:770px;top:470px;transform:rotate(4deg)">بوستر شوت</p>
+ <p class="a lb" style="left:830px;top:1036px;transform:rotate(-3deg);font-size:40px">مزيل عرق؟؟</p>
+ <img class="catph" src="cat.jpg" style="right:86px;top:1112px;width:180px;height:180px;border-radius:50%;border:6px solid #fff;box-shadow:0 10px 24px rgba(42,34,40,.18)">
+ <p class="a fr" style="right:286px;top:1178px;font-size:50px;color:#C13E63">*مياااااو~*</p>
+ <svg class="ar" style="left:420px;transform:scaleX(-1);top:1196px" width="64" height="40"><path d="M6 22 C 22 14, 38 14, 54 20 M44 10 L 56 20 L 44 30"/></svg>
+ <span class="btn b1" style="left:40px;font-size:36px;top:1182px"><svg><use href="#cartic"/></svg>أضف إلى السلة</span>
+ <p class="a sale" style="left:70px;top:110px;width:200px;text-align:left">السوبر سيل</p></div></div><div class="frame story" id="d1-story-ar" style="width:1080px;height:1920px;background:#FFFDFB"><svg class="grain" width="1080" height="1920" style="position:absolute;inset:0;opacity:.35;mix-blend-mode:multiply"><rect width="1080" height="1920" filter="url(#paper)"/></svg><div style="position:absolute;left:0;top:285px;width:1080px;height:1350px"><div class="post d1" dir="rtl" lang="ar">
+ <svg style="display:none" class="grain" width="1080" height="1350"><rect width="1080" height="1350" filter="url(#paper)"/></svg>
+ <p class="a fr" style="right:86px;top:92px;font-size:66px">أنا:</p>
+ <p class="a" style="right:86px;top:174px;font-size:50px">أحاول توفير المال</p>
+ <p class="a fr" style="right:86px;top:292px;font-size:66px">وأنا أيضاً:</p>
+ <img class="p" src="cut-eyecream.png" style="left:71px;top:815px;width:230px;transform:rotate(-5deg)">
+ <img class="p" src="cut-cream.png"    style="left:329px;top:600px;height:400px;transform:rotate(-6deg)">
+ <img class="p" src="cut-serum.png"    style="left:467px;top:584px;height:420px;transform:rotate(3deg)">
+ <img class="p" src="cut-mist.png"     style="left:625px;top:592px;height:410px;transform:rotate(-3deg)">
+ <img class="p" src="cut-booster.png"  style="left:760px;top:562px;height:440px;transform:rotate(7deg)">
+ <img class="p" src="cut-deo.png"      style="left:897px;top:684px;height:320px;transform:rotate(-5deg)">
+ <p class="a lb" style="left:92px;top:1046px;transform:rotate(3deg)">كريم العين</p>
+ <p class="a lb" style="left:250px;top:500px;transform:rotate(-6deg)">كريم</p>
+ <svg class="ar" style="left:300px;top:540px" width="80" height="70"><path d="M8 8 C 30 22, 46 40, 56 62 M42 56 L 57 64 L 62 48"/></svg>
+ <p class="a lb" style="left:476px;top:1036px;transform:rotate(-2deg)">سيروم</p>
+ <p class="a lb" style="left:560px;top:500px;transform:rotate(-3deg)">رذاذ الوجه</p>
+ <svg class="ar" style="left:640px;top:546px" width="40" height="50"><path d="M12 6 C 18 18, 22 30, 22 44 M12 34 L 22 45 L 31 34"/></svg>
+ <p class="a lb" style="left:770px;top:470px;transform:rotate(4deg)">بوستر شوت</p>
+ <p class="a lb" style="left:830px;top:1036px;transform:rotate(-3deg);font-size:40px">مزيل عرق؟؟</p>
+ <img class="catph" src="cat.jpg" style="right:86px;top:1112px;width:180px;height:180px;border-radius:50%;border:6px solid #fff;box-shadow:0 10px 24px rgba(42,34,40,.18)">
+ <p class="a fr" style="right:286px;top:1178px;font-size:50px;color:#C13E63">*مياااااو~*</p>
+ <svg class="ar" style="left:420px;transform:scaleX(-1);top:1196px" width="64" height="40"><path d="M6 22 C 22 14, 38 14, 54 20 M44 10 L 56 20 L 44 30"/></svg>
+ <span class="btn b1" style="left:40px;font-size:36px;top:1182px"><svg><use href="#cartic"/></svg>أضف إلى السلة</span>
+ <p class="a sale" style="left:70px;top:110px;width:200px;text-align:left">السوبر سيل</p></div></div></div><div class="frame" id="d2-post-en" style="width:1080px;height:1350px"><div class="post d2" dir="ltr" lang="en">
+ <div class="dots"></div>
+ <p class="a fr" style="left:0;right:0;top:86px;text-align:center;font-size:62px">Me: <span class="lt">trying to save money</span></p>
+ <p class="a fr" style="left:0;right:0;top:176px;text-align:center;font-size:62px">Also me:</p>
+ <img class="p" src="cut-booster.png"  style="left:252px;top:468px;height:470px;transform:rotate(-9deg)">
+ <img class="p" src="cut-cream.png"    style="left:372px;top:500px;height:440px;transform:rotate(-3deg)">
+ <img class="p" src="cut-serum.png"    style="left:492px;top:480px;height:460px;transform:rotate(2deg)">
+ <img class="p" src="cut-mist.png"     style="left:640px;top:496px;height:450px;transform:rotate(6deg)">
+ <img class="p" src="cut-deo.png"      style="left:760px;top:590px;height:350px;transform:rotate(10deg)">
+ <svg class="a" style="left:0;top:0;" width="1080" height="1350">
+  <path d="M206 760 L 874 760 L 830 1010 L 262 1010 Z" fill="rgba(255,255,255,.18)" stroke="#C13E63" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M 362 760 L 380 1010 M 500 760 L 506 1010 M 638 760 L 632 1010 M 760 760 L 744 1010" stroke="#E7A3B8" stroke-width="5" fill="none"/>
+  <path d="M206 760 L 182 700 L 96 700" stroke="#C13E63" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M262 1010 L 238 1072 L 860 1072" stroke="#C13E63" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="320" cy="1110" r="30" fill="#fff" stroke="#C13E63" stroke-width="10"/><circle cx="790" cy="1110" r="30" fill="#fff" stroke="#C13E63" stroke-width="10"/>
+ </svg>
+ <img class="p" src="cut-eyecream.png" style="left:410px;top:800px;width:270px;transform:rotate(-3deg)">
+ <p class="a lb" style="left:690px;top:950px;transform:rotate(-4deg);font-size:40px">Eye cream</p>
+ <p class="a lb" style="left:150px;top:470px;transform:rotate(-8deg)">Booster<br>shot</p>
+ <p class="a lb" style="left:470px;top:404px;transform:rotate(-2deg)">Serum</p>
+ <p class="a lb" style="left:846px;top:520px;transform:rotate(6deg)">Deodorant??</p>
+ <svg class="ar" style="left:830px;top:560px" width="60" height="60"><path d="M40 8 C 30 24, 24 36, 20 52 M10 42 L 20 53 L 30 42"/></svg>
+ <img class="catph" src="cat.jpg" style="left:60px;top:1160px;width:200px;height:170px;border-radius:24px;border:7px solid #fff;transform:rotate(-5deg);box-shadow:0 12px 26px rgba(42,34,40,.18)">
+ <p class="a lb" style="left:286px;top:1170px;font-size:48px;color:#C13E63;transform:rotate(-4deg)">meooow~ (adds to cart)</p>
+ <span class="btn b2" style="left:560px;top:1244px"><svg><use href="#cartic"/></svg>Add to cart</span></div></div><div class="frame story" id="d2-story-en" style="width:1080px;height:1920px;background:#FCEFF2"><div class="dots"></div><div style="position:absolute;left:0;top:285px;width:1080px;height:1350px"><div class="post d2" dir="ltr" lang="en">
+ 
+ <p class="a fr" style="left:0;right:0;top:86px;text-align:center;font-size:62px">Me: <span class="lt">trying to save money</span></p>
+ <p class="a fr" style="left:0;right:0;top:176px;text-align:center;font-size:62px">Also me:</p>
+ <img class="p" src="cut-booster.png"  style="left:252px;top:468px;height:470px;transform:rotate(-9deg)">
+ <img class="p" src="cut-cream.png"    style="left:372px;top:500px;height:440px;transform:rotate(-3deg)">
+ <img class="p" src="cut-serum.png"    style="left:492px;top:480px;height:460px;transform:rotate(2deg)">
+ <img class="p" src="cut-mist.png"     style="left:640px;top:496px;height:450px;transform:rotate(6deg)">
+ <img class="p" src="cut-deo.png"      style="left:760px;top:590px;height:350px;transform:rotate(10deg)">
+ <svg class="a" style="left:0;top:0;" width="1080" height="1350">
+  <path d="M206 760 L 874 760 L 830 1010 L 262 1010 Z" fill="rgba(255,255,255,.18)" stroke="#C13E63" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M 362 760 L 380 1010 M 500 760 L 506 1010 M 638 760 L 632 1010 M 760 760 L 744 1010" stroke="#E7A3B8" stroke-width="5" fill="none"/>
+  <path d="M206 760 L 182 700 L 96 700" stroke="#C13E63" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M262 1010 L 238 1072 L 860 1072" stroke="#C13E63" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="320" cy="1110" r="30" fill="#fff" stroke="#C13E63" stroke-width="10"/><circle cx="790" cy="1110" r="30" fill="#fff" stroke="#C13E63" stroke-width="10"/>
+ </svg>
+ <img class="p" src="cut-eyecream.png" style="left:410px;top:800px;width:270px;transform:rotate(-3deg)">
+ <p class="a lb" style="left:690px;top:950px;transform:rotate(-4deg);font-size:40px">Eye cream</p>
+ <p class="a lb" style="left:150px;top:470px;transform:rotate(-8deg)">Booster<br>shot</p>
+ <p class="a lb" style="left:470px;top:404px;transform:rotate(-2deg)">Serum</p>
+ <p class="a lb" style="left:846px;top:520px;transform:rotate(6deg)">Deodorant??</p>
+ <svg class="ar" style="left:830px;top:560px" width="60" height="60"><path d="M40 8 C 30 24, 24 36, 20 52 M10 42 L 20 53 L 30 42"/></svg>
+ <img class="catph" src="cat.jpg" style="left:60px;top:1160px;width:200px;height:170px;border-radius:24px;border:7px solid #fff;transform:rotate(-5deg);box-shadow:0 12px 26px rgba(42,34,40,.18)">
+ <p class="a lb" style="left:286px;top:1170px;font-size:48px;color:#C13E63;transform:rotate(-4deg)">meooow~ (adds to cart)</p>
+ <span class="btn b2" style="left:560px;top:1244px"><svg><use href="#cartic"/></svg>Add to cart</span></div></div></div><div class="frame" id="d2-post-ar" style="width:1080px;height:1350px"><div class="post d2" dir="rtl" lang="ar">
+ <div class="dots"></div>
+ <p class="a fr" style="left:0;right:0;top:86px;text-align:center;font-size:62px">أنا: <span class="lt">أحاول توفير المال</span></p>
+ <p class="a fr" style="left:0;right:0;top:176px;text-align:center;font-size:62px">وأنا أيضاً:</p>
+ <img class="p" src="cut-booster.png"  style="left:252px;top:468px;height:470px;transform:rotate(-9deg)">
+ <img class="p" src="cut-cream.png"    style="left:372px;top:500px;height:440px;transform:rotate(-3deg)">
+ <img class="p" src="cut-serum.png"    style="left:492px;top:480px;height:460px;transform:rotate(2deg)">
+ <img class="p" src="cut-mist.png"     style="left:640px;top:496px;height:450px;transform:rotate(6deg)">
+ <img class="p" src="cut-deo.png"      style="left:760px;top:590px;height:350px;transform:rotate(10deg)">
+ <svg class="a" style="left:0;top:0;transform:scaleX(-1);transform-origin:540px 0" width="1080" height="1350">
+  <path d="M206 760 L 874 760 L 830 1010 L 262 1010 Z" fill="rgba(255,255,255,.18)" stroke="#C13E63" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M 362 760 L 380 1010 M 500 760 L 506 1010 M 638 760 L 632 1010 M 760 760 L 744 1010" stroke="#E7A3B8" stroke-width="5" fill="none"/>
+  <path d="M206 760 L 182 700 L 96 700" stroke="#C13E63" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M262 1010 L 238 1072 L 860 1072" stroke="#C13E63" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="320" cy="1110" r="30" fill="#fff" stroke="#C13E63" stroke-width="10"/><circle cx="790" cy="1110" r="30" fill="#fff" stroke="#C13E63" stroke-width="10"/>
+ </svg>
+ <img class="p" src="cut-eyecream.png" style="left:410px;top:800px;width:270px;transform:rotate(-3deg)">
+ <p class="a lb" style="left:690px;top:950px;transform:rotate(-4deg);font-size:40px">كريم العين</p>
+ <p class="a lb" style="left:150px;top:470px;transform:rotate(-8deg)">بوستر<br>شوت</p>
+ <p class="a lb" style="left:470px;top:404px;transform:rotate(-2deg)">سيروم</p>
+ <p class="a lb" style="left:846px;top:520px;transform:rotate(6deg)">مزيل عرق؟؟</p>
+ <svg class="ar" style="left:830px;top:560px" width="60" height="60"><path d="M40 8 C 30 24, 24 36, 20 52 M10 42 L 20 53 L 30 42"/></svg>
+ <img class="catph" src="cat.jpg" style="right:60px;top:1160px;width:200px;height:170px;border-radius:24px;border:7px solid #fff;transform:rotate(5deg);box-shadow:0 12px 26px rgba(42,34,40,.18)">
+ <p class="a lb" style="right:286px;top:1170px;font-size:48px;color:#C13E63;transform:rotate(4deg)">مياااو~ (أضيف إلى السلة)</p>
+ <span class="btn b2" style="right:520px;top:1244px"><svg><use href="#cartic"/></svg>أضف إلى السلة</span></div></div><div class="frame story" id="d2-story-ar" style="width:1080px;height:1920px;background:#FCEFF2"><div class="dots"></div><div style="position:absolute;left:0;top:285px;width:1080px;height:1350px"><div class="post d2" dir="rtl" lang="ar">
+ 
+ <p class="a fr" style="left:0;right:0;top:86px;text-align:center;font-size:62px">أنا: <span class="lt">أحاول توفير المال</span></p>
+ <p class="a fr" style="left:0;right:0;top:176px;text-align:center;font-size:62px">وأنا أيضاً:</p>
+ <img class="p" src="cut-booster.png"  style="left:252px;top:468px;height:470px;transform:rotate(-9deg)">
+ <img class="p" src="cut-cream.png"    style="left:372px;top:500px;height:440px;transform:rotate(-3deg)">
+ <img class="p" src="cut-serum.png"    style="left:492px;top:480px;height:460px;transform:rotate(2deg)">
+ <img class="p" src="cut-mist.png"     style="left:640px;top:496px;height:450px;transform:rotate(6deg)">
+ <img class="p" src="cut-deo.png"      style="left:760px;top:590px;height:350px;transform:rotate(10deg)">
+ <svg class="a" style="left:0;top:0;transform:scaleX(-1);transform-origin:540px 0" width="1080" height="1350">
+  <path d="M206 760 L 874 760 L 830 1010 L 262 1010 Z" fill="rgba(255,255,255,.18)" stroke="#C13E63" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M 362 760 L 380 1010 M 500 760 L 506 1010 M 638 760 L 632 1010 M 760 760 L 744 1010" stroke="#E7A3B8" stroke-width="5" fill="none"/>
+  <path d="M206 760 L 182 700 L 96 700" stroke="#C13E63" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M262 1010 L 238 1072 L 860 1072" stroke="#C13E63" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="320" cy="1110" r="30" fill="#fff" stroke="#C13E63" stroke-width="10"/><circle cx="790" cy="1110" r="30" fill="#fff" stroke="#C13E63" stroke-width="10"/>
+ </svg>
+ <img class="p" src="cut-eyecream.png" style="left:410px;top:800px;width:270px;transform:rotate(-3deg)">
+ <p class="a lb" style="left:690px;top:950px;transform:rotate(-4deg);font-size:40px">كريم العين</p>
+ <p class="a lb" style="left:150px;top:470px;transform:rotate(-8deg)">بوستر<br>شوت</p>
+ <p class="a lb" style="left:470px;top:404px;transform:rotate(-2deg)">سيروم</p>
+ <p class="a lb" style="left:846px;top:520px;transform:rotate(6deg)">مزيل عرق؟؟</p>
+ <svg class="ar" style="left:830px;top:560px" width="60" height="60"><path d="M40 8 C 30 24, 24 36, 20 52 M10 42 L 20 53 L 30 42"/></svg>
+ <img class="catph" src="cat.jpg" style="right:60px;top:1160px;width:200px;height:170px;border-radius:24px;border:7px solid #fff;transform:rotate(5deg);box-shadow:0 12px 26px rgba(42,34,40,.18)">
+ <p class="a lb" style="right:286px;top:1170px;font-size:48px;color:#C13E63;transform:rotate(4deg)">مياااو~ (أضيف إلى السلة)</p>
+ <span class="btn b2" style="right:520px;top:1244px"><svg><use href="#cartic"/></svg>أضف إلى السلة</span></div></div></div><div class="frame" id="d3-post-en" style="width:1080px;height:1350px"><div class="post d3" dir="ltr" lang="en">
+ <div class="bar"></div>
+ <svg class="a" style="left:46px;top:58px;" width="34" height="34" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#E0567B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+ <img class="catph" src="cat.jpg" style="left:104px;top:36px;width:80px;height:80px;border-radius:50%">
+ <p class="a" style="left:204px;top:44px;font-size:34px;font-weight:700">My wallet 💸</p>
+ <p class="a" style="left:204px;top:88px;font-size:22px;color:#9A8F94">online · judging you</p>
+ <img class="a" src="logo-en.png" style="right:46px;top:52px;height:34px">
+ <p class="tm" style="left:0;right:0;top:186px;text-align:center">Today 9:41 PM</p>
+ <p class="msg me a" style="right:46px;top:232px">I'm saving money this month.<br>No more skincare 🙅‍♀️</p>
+ <p class="msg them a" style="left:46px;top:380px">so proud of you 🥹</p>
+ <p class="msg me a" style="right:46px;top:478px">the Super Sale is live though…</p>
+ <div class="a pbox" style="right:46px;top:590px">
+  <img class="p" src="cut-eyecream.png" style="left:24px;top:214px;width:170px;transform:rotate(-4deg)">
+  <img class="p" src="cut-cream.png"    style="left:200px;top:40px;height:330px;transform:rotate(-6deg)">
+  <img class="p" src="cut-serum.png"    style="left:300px;top:28px;height:350px;transform:rotate(-2deg)">
+  <img class="p" src="cut-mist.png"     style="left:420px;top:36px;height:340px;transform:rotate(3deg)">
+  <img class="p" src="cut-booster.png"  style="left:525px;top:22px;height:360px;transform:rotate(7deg)">
+  <img class="p" src="cut-deo.png"      style="left:640px;top:120px;height:250px;transform:rotate(-4deg)">
+ </div>
+ <p class="tm" style="right:56px;top:1010px">Read 9:42 PM</p>
+ <img class="catph" src="cat.jpg" style="left:46px;top:1046px;width:240px;height:200px;border-radius:30px;border-bottom-left-radius:10px">
+ <p class="msg them a" style="left:302px;top:1110px">meooow~ 😾</p>
+ <span class="btn b3" style="right:122px;top:1218px"><svg><use href="#cartic"/></svg>Add to cart</span></div></div><div class="frame story" id="d3-story-en" style="width:1080px;height:1920px;background:#F3DFE6" dir="ltr"><p class="a fr" style="left:0;right:0;top:226px;text-align:center;font-size:58px">POV: the Super Sale is live 👀</p><div style="position:absolute;left:43px;top:380px;width:1080px;height:1350px;transform:scale(.92);transform-origin:0 0;border-radius:44px;overflow:hidden;box-shadow:0 30px 60px rgba(120,50,80,.18)"><div class="post d3" dir="ltr" lang="en">
+ <div class="bar"></div>
+ <svg class="a" style="left:46px;top:58px;" width="34" height="34" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#E0567B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+ <img class="catph" src="cat.jpg" style="left:104px;top:36px;width:80px;height:80px;border-radius:50%">
+ <p class="a" style="left:204px;top:44px;font-size:34px;font-weight:700">My wallet 💸</p>
+ <p class="a" style="left:204px;top:88px;font-size:22px;color:#9A8F94">online · judging you</p>
+ <img class="a" src="logo-en.png" style="right:46px;top:52px;height:34px">
+ <p class="tm" style="left:0;right:0;top:186px;text-align:center">Today 9:41 PM</p>
+ <p class="msg me a" style="right:46px;top:232px">I'm saving money this month.<br>No more skincare 🙅‍♀️</p>
+ <p class="msg them a" style="left:46px;top:380px">so proud of you 🥹</p>
+ <p class="msg me a" style="right:46px;top:478px">the Super Sale is live though…</p>
+ <div class="a pbox" style="right:46px;top:590px">
+  <img class="p" src="cut-eyecream.png" style="left:24px;top:214px;width:170px;transform:rotate(-4deg)">
+  <img class="p" src="cut-cream.png"    style="left:200px;top:40px;height:330px;transform:rotate(-6deg)">
+  <img class="p" src="cut-serum.png"    style="left:300px;top:28px;height:350px;transform:rotate(-2deg)">
+  <img class="p" src="cut-mist.png"     style="left:420px;top:36px;height:340px;transform:rotate(3deg)">
+  <img class="p" src="cut-booster.png"  style="left:525px;top:22px;height:360px;transform:rotate(7deg)">
+  <img class="p" src="cut-deo.png"      style="left:640px;top:120px;height:250px;transform:rotate(-4deg)">
+ </div>
+ <p class="tm" style="right:56px;top:1010px">Read 9:42 PM</p>
+ <img class="catph" src="cat.jpg" style="left:46px;top:1046px;width:240px;height:200px;border-radius:30px;border-bottom-left-radius:10px">
+ <p class="msg them a" style="left:302px;top:1110px">meooow~ 😾</p>
+ <span class="btn b3" style="right:122px;top:1218px"><svg><use href="#cartic"/></svg>Add to cart</span></div></div></div><div class="frame" id="d3-post-ar" style="width:1080px;height:1350px"><div class="post d3" dir="rtl" lang="ar">
+ <div class="bar"></div>
+ <svg class="a" style="right:46px;top:58px;transform:scaleX(-1)" width="34" height="34" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#E0567B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+ <img class="catph" src="cat.jpg" style="right:104px;top:36px;width:80px;height:80px;border-radius:50%">
+ <p class="a" style="right:204px;top:44px;font-size:34px;font-weight:700">محفظتي 💸</p>
+ <p class="a" style="right:204px;top:88px;font-size:22px;color:#9A8F94">متصلة الآن · تراقبك</p>
+ <img class="a" src="logo-ar.png" style="left:46px;top:56px;height:40px">
+ <p class="tm" style="left:0;right:0;top:186px;text-align:center">اليوم 9:41 م</p>
+ <p class="msg me a" style="left:46px;top:232px">سأوفّر المال هذا الشهر.<br>لا مزيد من العناية بالبشرة 🙅‍♀️</p>
+ <p class="msg them a" style="right:46px;top:380px">فخورة بك 🥹</p>
+ <p class="msg me a" style="left:46px;top:478px">لكن السوبر سيل بدأ…</p>
+ <div class="a pbox" style="left:46px;top:590px">
+  <img class="p" src="cut-eyecream.png" style="left:24px;top:214px;width:170px;transform:rotate(-4deg)">
+  <img class="p" src="cut-cream.png"    style="left:200px;top:40px;height:330px;transform:rotate(-6deg)">
+  <img class="p" src="cut-serum.png"    style="left:300px;top:28px;height:350px;transform:rotate(-2deg)">
+  <img class="p" src="cut-mist.png"     style="left:420px;top:36px;height:340px;transform:rotate(3deg)">
+  <img class="p" src="cut-booster.png"  style="left:525px;top:22px;height:360px;transform:rotate(7deg)">
+  <img class="p" src="cut-deo.png"      style="left:640px;top:120px;height:250px;transform:rotate(-4deg)">
+ </div>
+ <p class="tm" style="left:56px;top:1010px">تمت القراءة 9:42 م</p>
+ <img class="catph" src="cat.jpg" style="right:46px;top:1046px;width:240px;height:200px;border-radius:30px;border-bottom-right-radius:10px">
+ <p class="msg them a" style="right:302px;top:1110px">مياااو~ 😾</p>
+ <span class="btn b3" style="left:120px;top:1218px"><svg><use href="#cartic"/></svg>أضف إلى السلة</span></div></div><div class="frame story" id="d3-story-ar" style="width:1080px;height:1920px;background:#F3DFE6" dir="rtl"><p class="a fr" style="left:0;right:0;top:226px;text-align:center;font-size:58px">عندما يبدأ السوبر سيل 👀</p><div style="position:absolute;left:43px;top:380px;width:1080px;height:1350px;transform:scale(.92);transform-origin:0 0;border-radius:44px;overflow:hidden;box-shadow:0 30px 60px rgba(120,50,80,.18)"><div class="post d3" dir="rtl" lang="ar">
+ <div class="bar"></div>
+ <svg class="a" style="right:46px;top:58px;transform:scaleX(-1)" width="34" height="34" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#E0567B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+ <img class="catph" src="cat.jpg" style="right:104px;top:36px;width:80px;height:80px;border-radius:50%">
+ <p class="a" style="right:204px;top:44px;font-size:34px;font-weight:700">محفظتي 💸</p>
+ <p class="a" style="right:204px;top:88px;font-size:22px;color:#9A8F94">متصلة الآن · تراقبك</p>
+ <img class="a" src="logo-ar.png" style="left:46px;top:56px;height:40px">
+ <p class="tm" style="left:0;right:0;top:186px;text-align:center">اليوم 9:41 م</p>
+ <p class="msg me a" style="left:46px;top:232px">سأوفّر المال هذا الشهر.<br>لا مزيد من العناية بالبشرة 🙅‍♀️</p>
+ <p class="msg them a" style="right:46px;top:380px">فخورة بك 🥹</p>
+ <p class="msg me a" style="left:46px;top:478px">لكن السوبر سيل بدأ…</p>
+ <div class="a pbox" style="left:46px;top:590px">
+  <img class="p" src="cut-eyecream.png" style="left:24px;top:214px;width:170px;transform:rotate(-4deg)">
+  <img class="p" src="cut-cream.png"    style="left:200px;top:40px;height:330px;transform:rotate(-6deg)">
+  <img class="p" src="cut-serum.png"    style="left:300px;top:28px;height:350px;transform:rotate(-2deg)">
+  <img class="p" src="cut-mist.png"     style="left:420px;top:36px;height:340px;transform:rotate(3deg)">
+  <img class="p" src="cut-booster.png"  style="left:525px;top:22px;height:360px;transform:rotate(7deg)">
+  <img class="p" src="cut-deo.png"      style="left:640px;top:120px;height:250px;transform:rotate(-4deg)">
+ </div>
+ <p class="tm" style="left:56px;top:1010px">تمت القراءة 9:42 م</p>
+ <img class="catph" src="cat.jpg" style="right:46px;top:1046px;width:240px;height:200px;border-radius:30px;border-bottom-right-radius:10px">
+ <p class="msg them a" style="right:302px;top:1110px">مياااو~ 😾</p>
+ <span class="btn b3" style="left:120px;top:1218px"><svg><use href="#cartic"/></svg>أضف إلى السلة</span></div></div></div>
+</body></html>
