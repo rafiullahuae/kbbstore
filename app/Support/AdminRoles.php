@@ -134,7 +134,6 @@ final class AdminRoles
             'orders.payment' => 'Mark an order as paid',
             'orders.paylink' => 'Send a failed or unpaid order\'s payment link (WhatsApp, email, copy)',
             'orders.paylink.settings' => 'Change the order link\'s expiry and wording',
-            'orders.phonereq' => 'Email a customer asking for a UAE mobile number for delivery',
             'orders.delete' => 'Delete orders',
             'orders.export' => 'Export orders',
             'orders.sample' => 'Create a sample order (Demo content)',

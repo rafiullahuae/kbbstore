@@ -409,7 +409,7 @@ class AdminOrderController extends Controller
             // sent, and whether the phone is a UAE mobile already. Its ability
             // rides here, not in `can`, which is pinned whole.
             'phone_request' => \App\Http\Controllers\Admin\OrderPhoneRequestController::panel($order) + [
-                'can' => self::may('orders.phonereq'),
+                'can' => self::may('orders.manage'),
             ],
             // (Lane TM) what the shopper did before paying, and every email sent
             // for the order. One query each; see the two classes.

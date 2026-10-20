@@ -15787,6 +15787,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' at '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   }
 
+  var odRunActionFn = null;
   function wireOrderDetail(o){
     var id = o.id;
 
@@ -15814,6 +15815,14 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 
     document.getElementById('odUpdate').onclick = async function(){
       var status = document.getElementById('odStatusSel').value;
+      // 2.60.563: an action picked in Order actions runs on Update too. With
+      // the status unchanged that is all Update does, so its toast is the one
+      // that names what was sent.
+      var picked = (document.getElementById('odActionSel')||{}).value || '';
+      if(picked && odRunActionFn){
+        var went = await odRunActionFn(picked);
+        if(status === o.status || !went){ renderOrderDetail(id); return; }
+      }
       var box = document.getElementById('odNotify');
       var body = {status:status};
       /*
@@ -16022,17 +16031,26 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     };
 
     // Actions dropdown.
-    document.getElementById('odActionGo').onclick = async function(){
-      var action = document.getElementById('odActionSel').value;
-      if(!action){ toast('Choose an action first.', 'bad'); return; }
+    /* Runs the action picked in Order actions; answers whether it went. The
+       › button and Update both call it (2.60.563): the owner picked "Resend
+       confirmation email" and pressed Update, as WooCommerce has it, and
+       Update only saved the status -- nothing was sent and nothing said so. */
+    async function odRunAction(action){
       try{
         var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/action'),{method:'POST',credentials:'same-origin',
           headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
           body:JSON.stringify({action:action})});
         var j = await r.json();
-        if(!r.ok || j.ok===false){ toast(j.message||'That action could not be completed.', 'bad'); return; }
-        toast('Done'); renderOrderDetail(id);
-      }catch(e){ toast('That action could not be completed.','bad'); }
+        if(!r.ok || j.ok===false){ toast(sesc(j.message||'That action could not be completed.'), 'bad'); return false; }
+        toast(sesc(j.message||'Done')); return true;
+      }catch(e){ toast('That action could not be completed.','bad'); return false; }
+    }
+    odRunActionFn = odRunAction;
+
+    document.getElementById('odActionGo').onclick = async function(){
+      var action = document.getElementById('odActionSel').value;
+      if(!action){ toast('Choose an action first.', 'bad'); return; }
+      if(await odRunAction(action)) renderOrderDetail(id);
     };
 
     /* All four are real documents now — the placeholder toast that used to

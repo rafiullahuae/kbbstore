@@ -12,7 +12,7 @@ declare(strict_types=1);
 | order-pay-link-admin.php (auth:admin, NoStoreAdminApi,
 | EnforceAdminCapability):
 |
-|     POST /admin-api/orders/{id}/phone-request     orders.phonereq
+|     POST /admin-api/orders/{id}/phone-request     orders.manage
 |
 | Its own row in App\Support\AdminCapabilities; the controller checks again.
 | Throttled per admin; the controller also refuses a second email for the same

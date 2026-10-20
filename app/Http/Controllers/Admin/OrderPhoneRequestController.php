@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
  * Store -> Orders -> (an order) -> Billing -> Phone -> "Ask for UAE number"
  * (2.60.562).
  *
- *   POST /admin-api/orders/{id}/phone-request   orders.phonereq
+ *   POST /admin-api/orders/{id}/phone-request   orders.manage (as Resend confirmation)
  *
  * The owner: "we want one button / option to require the local UAE's number
  * from the customer ... currently we do email manual, but i want it auto upon
@@ -44,7 +44,7 @@ final class OrderPhoneRequestController extends Controller
     {
         $admin = $request->user('admin') ?? auth('admin')->user();
 
-        if (! ($admin instanceof \App\Models\AdminUser && \App\Support\AdminRoles::can($admin, 'orders.phonereq'))) {
+        if (! ($admin instanceof \App\Models\AdminUser && \App\Support\AdminRoles::can($admin, 'orders.manage'))) {
             return response()->json(['ok' => false, 'code' => 'forbidden', 'message' => 'Your role does not include asking customers for their number.'], 403);
         }
 

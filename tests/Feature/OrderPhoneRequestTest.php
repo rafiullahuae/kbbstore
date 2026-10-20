@@ -148,6 +148,30 @@ it('leaves no "sent" mark when nothing was sent', function () {
     expect($order->fresh()->phone_request_sent_at)->toBeNull();
 });
 
+it('is held by the same capability as Resend confirmation, so every role that sends one sends the other', function () {
+    // DEFECT (2.60.562): a capability of its own, which an account whose
+    // access was saved before the patch never held -- the button did not draw.
+    expect(\App\Support\AdminCapabilities::forPath('POST', 'admin-api/orders/5/phone-request'))
+        ->toBe(\App\Support\AdminCapabilities::forPath('POST', 'admin-api/orders/5/action'));
+
+    Mail::fake();
+    uaeSend(uaeOrder(), false, 'support')->assertOk();
+    Mail::assertSent(OrderPhoneRequest::class, 1);
+});
+
+it('runs the action picked in Order actions when Update is pressed, not only from the arrow', function () {
+    // DEFECT: the owner picked "Resend confirmation email" and pressed Update,
+    // as WooCommerce has it; Update saved the status and sent nothing, and the
+    // mail log had no attempt at all.
+    // MUTATION: drop the `picked` block from the odUpdate handler -- red.
+    $console = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
+    $update = substr($console, (int) strpos($console, "document.getElementById('odUpdate').onclick"), 900);
+
+    expect($update)->toContain("var picked = (document.getElementById('odActionSel')||{}).value || '';")
+        ->toContain('await odRunActionFn(picked)')
+        ->and(substr_count($console, 'odRunActionFn = odRunAction;'))->toBe(1);
+});
+
 it('is refused to a role without it, and the rule fails closed', function () {
     Mail::fake();
     uaeSend(uaeOrder(), false, 'editor')->assertStatus(403);
