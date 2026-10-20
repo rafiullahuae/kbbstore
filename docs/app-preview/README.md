@@ -1,5 +1,17 @@
 # K-Beauty Bliss app — live previews, English and Arabic (Lanes APV2, APV3)
 
+## What's new (20 October 2026): the artboard and the happy bag
+
+- **`en/artboard.html`, `ar/artboard.html`**: every screen on one giant canvas, a row per journey
+  (Start · Browse & product · Brands & search · Buy · After Pay now · Account · Content · States),
+  numbered steps and arrows between them, each card the app itself running. Zoom with − / + / Fit
+  or ctrl + wheel / pinch; drag the empty canvas to move. The bottom-bar letters switch every card.
+  A screen not named in a journey lands in the last row, so none can go missing.
+- **`cart-mood/index.html`**: the owner's bar D reworked: Home · Categories · raised Bag · Account ·
+  More, the header's Account icon replaced by the wishlist. The bag is plain grey with a sad face
+  while empty and turns pink and happy, with its own animation, when something is added. Three
+  styles to pick from: A little bag friend, B cart buddy, C glow & wink. Not yet folded into the app.
+
 ## What changed in APV4 (19 October 2026): one header, one bag
 
 Inner screens (a category, a brand, a product, the wishlist…) used to show the site's header and

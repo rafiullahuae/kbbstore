@@ -1,0 +1,24 @@
+/* artboard.html: one giant canvas of every screen, a row per journey. */
+body.artboard{margin:0;background:#EDE7E4;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.artboard .stop{flex:none}
+.artboard .sintro{flex:none;margin:6px 16px 8px}
+.zm{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:#5E545A;margin-inline-start:8px}
+.zm button{font:inherit;font-size:13px;font-weight:700;min-width:32px;height:30px;border-radius:8px;border:1px solid #DCCFD5;background:#fff;color:#2A2228;cursor:pointer;padding:0 8px}
+.zm button.on{background:#C13E63;border-color:#C13E63;color:#fff}
+.zm output{min-width:46px;text-align:center;font-weight:700}
+#board{flex:1;overflow:auto;cursor:grab;background-image:radial-gradient(#D9CDD2 1px,transparent 1.2px);background-size:22px 22px}
+#board.grab{cursor:grabbing;user-select:none}
+#sizer{position:relative}
+#canvas{position:absolute;top:0;inset-inline-start:0;transform-origin:top left;width:max-content;padding:28px 36px 60px}
+[dir=rtl] #canvas{transform-origin:top right}
+.alane{margin-bottom:56px}
+.alane h2{display:flex;align-items:center;gap:12px;font-size:30px;margin:0 0 18px;color:#2A2228}
+.alane h2 b{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#C13E63;color:#fff;font-size:20px}
+.arow{display:flex;align-items:center;gap:0}
+.abc{position:relative;margin:0;flex:none;width:var(--cw)}
+.abc .frame{display:block;width:var(--cw);height:var(--ch);overflow:hidden;border-radius:30px;background:#fff;box-shadow:0 14px 34px rgba(42,34,40,.16)}
+.abc iframe{border:0;transform-origin:top left;pointer-events:none;display:block}
+[dir=rtl] .abc iframe{transform-origin:top right}
+.abc figcaption{margin-top:12px;font-size:16px;font-weight:600;color:#2A2228;text-align:center}
+.abn{position:absolute;top:-12px;inset-inline-start:-10px;z-index:1;width:32px;height:32px;border-radius:50%;background:#2A2228;color:#fff;font-size:14px;font-weight:700;display:grid;place-items:center}
+.abar{flex:none;width:56px;text-align:center;font-size:34px;color:#C13E63;font-weight:700}
