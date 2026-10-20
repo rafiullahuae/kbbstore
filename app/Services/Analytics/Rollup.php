@@ -296,11 +296,16 @@ final class Rollup
 
         $time = ['timed' => $timed, 'secs' => $secs, 'tvis' => $tvis, 'vsecs' => $vsecs];
 
+        $rows = self::mergeCollisions($rows);
+
         DB::transaction(function () use ($day, $rows, $views, $visitors, $sessions, $bounces, $cartV, $checkV, $stamp, $time): void {
             DB::table('an_dims')->where('day', $day)->delete();
 
             foreach (array_chunk($rows, 500) as $chunk) {
-                DB::table('an_dims')->insert(array_map(static fn (array $r): array => ['day' => $day] + $r, $chunk));
+                // insertOrIgnore: a value the database still calls equal to
+                // another (a collation rule mergeCollisions() does not know)
+                // loses one row's counts instead of failing the whole board.
+                DB::table('an_dims')->insertOrIgnore(array_map(static fn (array $r): array => ['day' => $day] + $r, $chunk));
             }
 
             DB::table('an_days')->upsert([[
@@ -398,6 +403,44 @@ final class Rollup
         }
 
         return $keep;
+    }
+
+    /**
+     * Fold rows that MySQL's unique key (day, dim, val) would call the same
+     * value into one, summing their counts. (20 Oct 2026: Overview →
+     * Analytics answered "Server Error" on the live shop.) PHP groups values
+     * exactly, but the live table's collation is case- and accent-insensitive
+     * and ignores trailing spaces, so "/Product/x/" and "/product/x/" -- or
+     * "Instagram" and "instagram" as a UTM source, the kind of near-duplicate
+     * bot traffic sends -- were two rows here and one key there: the INSERT
+     * failed with a duplicate key, the day's rebuild threw, and the summary
+     * and the live card that both trigger the rebuild answered 500.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array<string, mixed>>
+     */
+    public static function mergeCollisions(array $rows): array
+    {
+        $out = [];
+
+        foreach ($rows as $r) {
+            $v = rtrim((string) $r['val'], ' ');
+            if (class_exists(\Normalizer::class)) {
+                $v = (string) preg_replace('/\p{Mn}+/u', '', (string) \Normalizer::normalize($v, \Normalizer::FORM_D));
+            }
+            $key = $r['dim']."\0".mb_strtolower($v);
+
+            if (! isset($out[$key])) {
+                $out[$key] = $r;
+                continue;
+            }
+
+            foreach (['views', 'visitors', 'sessions', 'bounces', 'timed', 'secs'] as $f) {
+                $out[$key][$f] = ($out[$key][$f] ?? 0) + ($r[$f] ?? 0);
+            }
+        }
+
+        return array_values($out);
     }
 
     /** Delete raw hits older than KEEP_HOURS, and stale salts. */

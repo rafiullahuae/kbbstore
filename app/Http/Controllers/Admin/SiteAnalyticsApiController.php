@@ -31,12 +31,31 @@ final class SiteAnalyticsApiController extends Controller
 {
     public function summary(Request $request): JsonResponse
     {
-        return response()->json(self::summaryPayload($request));
+        return self::answer(fn (): array => self::summaryPayload($request));
     }
 
     public function live(Request $request): JsonResponse
     {
-        return response()->json(self::livePayload($request));
+        return self::answer(fn (): array => self::livePayload($request));
+    }
+
+    /**
+     * A failure says what failed (20 Oct 2026: the board showed only
+     * "Analytics could not be loaded (Server Error)" and nobody could tell
+     * why). The reason goes to laravel.log at ERROR and, to the owner's own
+     * admin screen, its class, message and place -- this endpoint is behind
+     * the admin login and the analytics capability.
+     */
+    private static function answer(\Closure $build): JsonResponse
+    {
+        try {
+            return response()->json($build());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json(['ok' => false, 'message' => 'Server Error — '.class_basename($e).': '
+                .mb_substr($e->getMessage(), 0, 240).' ('.basename($e->getFile()).':'.$e->getLine().')'], 500);
+        }
     }
 
     /** @return array<string, mixed> */
@@ -44,8 +63,14 @@ final class SiteAnalyticsApiController extends Controller
     {
         // The lazy half of the rollup: a late or missing scheduler is covered
         // the moment somebody opens the board.
-        if (Rollup::stale(120)) {
-            Rollup::runDue(true);
+        // A rebuild that fails is logged, never the board's failure: the
+        // summary is then the last good one (20 Oct 2026).
+        try {
+            if (Rollup::stale(120)) {
+                Rollup::runDue(true);
+            }
+        } catch (\Throwable $e) {
+            report($e);
         }
 
         [$from, $to, $key] = Report::range((string) $request->query('range', 'today'), $request->query('from'), $request->query('to'));
@@ -69,7 +94,11 @@ final class SiteAnalyticsApiController extends Controller
         // brings today's summary too, rebuilt here if it is over a minute old
         // (Rollup::freshToday, under a lock). Other ranges are not touched.
         if ($request->query('today') === '1') {
-            Rollup::freshToday(60);
+            try {
+                Rollup::freshToday(60);
+            } catch (\Throwable $e) {
+                report($e);
+            }
             [$from, $to] = Report::range('today');
             $out['today'] = ['ok' => true, 'range' => 'today'] + Report::summary($from, $to);
         }
