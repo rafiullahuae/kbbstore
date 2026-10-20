@@ -304,6 +304,8 @@ function walkExpectations(array $seed): array
         'checkout/sign-in/token'   => ['status' => 200],
         // 2.60.371, Lane RL: no signed ?order=&t= is the same 404 as a forged one (OrderLinks).
         'checkout/order-pay'       => ['status' => 404],
+        // 2.60.562: "Update my number" -- no signed ?order=&t= is the same 404 as a forged one.
+        'order-phone'              => ['status' => 404],
         // #KBeautyBliss Spotted (Lane HB, 2.60.372): 200 with or without posts (noindex while empty).
         'kbeautybliss-spotted'     => ['status' => 200],
         // Lane EM, the email kit (routes/mail-kit.php): a token that was never

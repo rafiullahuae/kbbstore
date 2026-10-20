@@ -104,6 +104,11 @@ use Tests\Support\KeyOrder;
  * gains `cartpage_bar_pad` = "50", the row migration 2027_10_19_110000_qk12b_cart_spacing
  * writes -- 50px under the cart page's checkout bar, as the owner asked.
  * Nothing else moved.
+ *
+ * ▲ 2.60.562 re-recorded (KBB_S7_RECORD=1), diff read as data: the settings body
+ * gains `home_sbc_tabs`, the row 2027_11_14_100000_shop_by_concern_dull_skin_tab
+ * writes when it adds the Dull Skin tab (2.60.560). Nothing else changed; the
+ * other lines in the text diff are the same keys in a new order.
  */
 function s7PayloadUrls(): array
 {

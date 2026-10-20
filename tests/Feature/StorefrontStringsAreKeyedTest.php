@@ -65,6 +65,9 @@ function keyedExcludedFiles(): array
 function keyedAllowedText(): array
 {
     return [
+        // emails/order-phone-request-text (2.60.562)
+        ': 05X XXX XXXX'
+            => 'The shape of a UAE mobile number after its translated label, the same in every language -- a pattern of digits, not a word.',
         // partials/footer, partials/drawers, partials/header-slim,
         // store/blog, store/post, store/checkout-success
         'K-Beauty      Bliss'

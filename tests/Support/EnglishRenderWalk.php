@@ -1374,6 +1374,8 @@ final class EnglishRenderWalk
             // 2.60.371, Lane RL: the page the reminder and payment-failed emails open. With no
             // signed ?order=&t= it is the same 404 a forged link gets, so there is no shop page to hold.
             'checkout/order-pay' => ['render' => false, 'why' => '404 without a signed order link; reached only from an email'],
+            // 2.60.562: "Update my number" from the UAE number email -- the same 404 without its signed link.
+            'order-phone' => ['render' => false, 'why' => '404 without a signed order link; reached only from an email'],
             // Lane EM: "View this email in your browser" serves the stored HTML
             // of one SENT email, byte for byte -- not a storefront page, and a
             // token nobody was sent is a 404. The font is a binary file.

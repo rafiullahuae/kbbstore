@@ -86,6 +86,8 @@ class PageController extends Controller
         'skincare-guide', 'blog', 'post',
         // Account and lists
         'my-account', 'track-my-order', 'my-wishlist', 'wishlist',
+        // 2.60.562: "Update my number", opened from the UAE number email.
+        'order-phone',
         // Standalone storefront pages
         // 'routines' is Phase 10's pair of pages (Lane FM). Reserved even
         // though the module ships OFF and both addresses 404 until it is turned
