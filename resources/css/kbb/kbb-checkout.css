@@ -302,6 +302,19 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 @media(prefers-reduced-motion:reduce){.kbb-checkout .co-cl-code[aria-busy=true]::after{animation:none}}
 .kbb-checkout .co-cl-err{grid-area:2/1;margin:4px 0 2px;font-size:12px;color:var(--pink-ink);white-space:normal}
 .kbb-checkout .co-cl-err[hidden]{display:none}
+/* 2.60.562 (design B): an outlined "Apply" at the end of the row. It and the
+   tick share one grid cell, so swapping them on apply moves nothing. */
+.kbb-checkout .co-cl-end{display:grid;flex:none;margin-inline-start:auto;align-items:center;justify-items:end}
+.kbb-checkout .co-cl-end>*{grid-area:1/1}
+.kbb-checkout .co-cl-end .co-cl-ok{margin:0}
+.kbb-checkout .co-cl-go{position:relative;display:inline-flex;align-items:center;min-height:26px;padding:0 12px;background:#fff;border:1.5px solid #C13E63;border-radius:999px;color:#C13E63;font:inherit;font-size:12.5px;font-weight:700;line-height:1;white-space:nowrap;cursor:pointer;transition:background .15s,color .15s}
+.kbb-checkout .co-cl-go::before{content:"";position:absolute;inset:-9px -6px}
+.kbb-checkout .co-cl-go:hover{background:#C13E63;color:#fff}
+.kbb-checkout .co-cl-go:focus-visible{outline:2px solid #C13E63;outline-offset:2px}
+.kbb-checkout .co-cl-go[aria-busy=true],.kbb-checkout .co-cl-go[aria-busy=true]:hover{background:#fff;color:transparent;cursor:progress}
+.kbb-checkout .co-cl-go[aria-busy=true]::after{content:"";position:absolute;inset:0;margin:auto;width:12px;height:12px;border:2px solid #C13E63;border-top-color:transparent;border-radius:50%;animation:kbbCpSpin .7s linear infinite}
+@media(prefers-reduced-motion:reduce){.kbb-checkout .co-cl-go[aria-busy=true]::after{animation:none}}
+.kbb-checkout .co-cline.is-done .co-cl-go{visibility:hidden}
 /* 2.60.512, the owner: "on the desktop, keep this coupon row on the right
    column above summary row, nicely and with little spacing in between". The
    line is the right column's first row, as wide as the summary and 12px above
@@ -319,6 +332,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout .co-cl-ic{width:22px;height:22px}
   .kbb-checkout .co-cl-ic svg{width:13px;height:13px}
   .kbb-checkout .co-cl-code{padding:0 6px;letter-spacing:.04em}
+  .kbb-checkout .co-cl-go{min-height:24px;padding:0 10px;font-size:clamp(10px,3.2vw,12.5px)}
 }
 
 /* unified form box + numbered sections */

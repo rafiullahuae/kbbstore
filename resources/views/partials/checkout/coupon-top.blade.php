@@ -21,6 +21,11 @@
     tick check icon on the right side of the coupon row inside ... green").
     The "applied" sentence stays in the page for screen readers only.
 
+    2.60.562 (design B, the owner's pick): an outlined "Apply" at the end of
+    the row, in the same cell as the green tick. It carries the same
+    data-kbb-cline as the code pill, so checkout.js applies it the same way;
+    once the coupon is on the order it hides and the tick shows in its place.
+
     The code is a real button: checkout.js hands it to the same in-place apply
     the "Have a discount code?" box uses (POST /checkout/coupon), so the totals,
     the summary row, the discount line and the box all move exactly as if the
@@ -34,7 +39,7 @@
         . e(__('store.checkout.cline_apply_label', ['code' => $kbbClCode])) . '">' . e($kbbClCode) . '</button>';
 @endphp
 <div class="co-cline{{ $kbbClApplied ? ' is-done' : '' }}" id="kbbCline">
-    <p class="co-cl-ask"><span class="co-cl-ic" aria-hidden="true">@include('partials.icon-tag')</span><span class="co-cl-t">{!! $kbbCoPage->couponLineHtml($kbbClCode, $kbbClPill) !!}</span><span class="co-cl-ok" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></p>
+    <p class="co-cl-ask"><span class="co-cl-ic" aria-hidden="true">@include('partials.icon-tag')</span><span class="co-cl-t">{!! $kbbCoPage->couponLineHtml($kbbClCode, $kbbClPill) !!}</span><span class="co-cl-end"><button type="button" class="co-cl-go" data-kbb-cline="{{ $kbbClCode }}" aria-label="{{ __('store.checkout.cline_apply_label', ['code' => $kbbClCode]) }}">{{ __('store.checkout.coupon_apply') }}</button><span class="co-cl-ok" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></span></p>
     <p class="co-cl-done" role="status" aria-live="polite"><span class="co-cl-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="co-cl-donetxt">{{ __('store.checkout.coupon_applied_plain', ['code' => $kbbClCode]) }}</span></p>
     <p class="co-cl-err" role="alert" hidden></p>
 </div>

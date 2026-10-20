@@ -245,6 +245,31 @@ it('advertises a coupon picked on its own select, and follows that coupon when i
     expect(q6Checkout())->not->toContain('kbbCline');
 });
 
+it('has an outlined Apply at the end of the row that applies like the code, and hides for the tick once applied (2.60.562)', function () {
+    /*
+     * Design B, the owner's pick: "we need here apply now beautiful small
+     * button to apply the code... once click on apply, the green tick will
+     * come and button will disappear. do the same for english and arabic".
+     * The button carries the pill's own data-kbb-cline, so checkout.js applies
+     * it exactly as it applies the code; it shares the tick's grid cell, so
+     * swapping the two on apply moves nothing.
+     *
+     * MUTATION: drop data-kbb-cline from the button and tapping Apply does
+     * nothing on the shop -- red. Drop the is-done rule and Apply stays next
+     * to the green tick -- red.
+     */
+    q6PanelChooses(q6Coupon());
+    expect(q6Checkout())->toContain('<span class="co-cl-end"><button type="button" class="co-cl-go" data-kbb-cline="GLOW" aria-label="Apply coupon GLOW">Apply</button><span class="co-cl-ok" aria-hidden="true">');
+
+    ArabicShop::on();
+    expect(q6Checkout(null, '/ar/checkout'))->toContain('class="co-cl-go" data-kbb-cline="GLOW" aria-label="طبّق القسيمة GLOW">تطبيق</button>');
+
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-checkout.css'));
+    expect($css)->toContain('.kbb-checkout .co-cline.is-done .co-cl-go{visibility:hidden}')
+        ->and($css)->toContain('.kbb-checkout .co-cl-end>*{grid-area:1/1}')
+        ->and($css)->toContain('background:#fff;border:1.5px solid #C13E63;border-radius:999px;color:#C13E63;');
+});
+
 it('shows the applied state, not the invitation, when that coupon is already on the order', function () {
     /*
      * MUTATION: drop the `is-done` class from coupon-top.blade.php and a
