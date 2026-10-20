@@ -6,134 +6,134 @@
 @font-face{font-family:Outfit;src:url(../../resources/fonts/outfit/outfit-latin.woff2) format('woff2');font-weight:100 900}
 body{margin:0;background:#ddd;display:flex;gap:40px;padding:40px;flex-wrap:wrap}
 .post{position:relative;width:1080px;height:1350px;overflow:hidden;font-family:Outfit,sans-serif;color:#231C21;flex:none}
-.post *{position:absolute;margin:0}
-.grain{inset:0;opacity:.35;mix-blend-mode:multiply;pointer-events:none}
-.me{left:86px;top:96px;font-family:Fredoka;font-weight:700;font-size:66px;letter-spacing:-.5px}
-.save{left:86px;top:178px;font-size:50px;font-weight:400;letter-spacing:-.3px}
-.also{left:86px;top:300px;font-family:Fredoka;font-weight:700;font-size:66px;letter-spacing:-.5px}
-.p{filter:drop-shadow(0 18px 18px rgba(60,30,40,.16)) drop-shadow(0 3px 4px rgba(60,30,40,.12))}
+.post .a{position:absolute;margin:0}
+.p{position:absolute;filter:drop-shadow(0 18px 18px rgba(60,30,40,.16)) drop-shadow(0 3px 4px rgba(60,30,40,.12))}
+.fr{font-family:Fredoka;font-weight:700;letter-spacing:-.5px}
 .lb{font-family:Caveat;font-weight:700;font-size:44px;color:#3A2E35;white-space:nowrap;line-height:1}
-.ar{overflow:visible}
+.ar{position:absolute;overflow:visible}
 .ar path{fill:none;stroke:#3A2E35;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
-.adds{font-family:Fredoka;font-weight:700;font-size:52px;white-space:nowrap;letter-spacing:-.3px}
-.url{font-size:22px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#9B7D8A}
-.cart{display:inline-flex;align-items:center;gap:12px;padding:16px 28px 16px 22px;border-radius:999px;font-family:Fredoka;font-weight:700;font-size:34px;white-space:nowrap;position:absolute}
-.cart svg{position:static;width:34px;height:34px}
-.bub{font-family:Caveat;font-weight:700;font-size:48px;white-space:nowrap}
+.btn{position:absolute;display:inline-flex;align-items:center;gap:12px;border-radius:999px;font-family:Fredoka;font-weight:700;white-space:nowrap}
+.btn svg{width:1.1em;height:1.1em}
+.catph{position:absolute;object-fit:cover}
 
-/* A: white, like the meme */
-#A{background:#FFFDFB}
-#A .cart{background:#E0567B;color:#fff;box-shadow:0 10px 24px rgba(224,86,123,.35),inset 0 -4px 0 rgba(0,0,0,.12)}
-/* B: blush */
-#B{background:#FCEFF2}
-#B .me,#B .also,#B .adds{color:#2A1F26}
-#B .dots{inset:0;background-image:radial-gradient(#F3CFDA 2.2px,transparent 2.4px);background-size:34px 34px;opacity:.7}
-#B .cart{background:#fff;color:#C13E63;border:3px solid #C13E63;box-shadow:0 10px 0 #C13E63}
+/* ---------- 1: the meme, centred ---------- */
+#D1{background:#FFFDFB}
+#D1 .grain{position:absolute;inset:0;opacity:.35;mix-blend-mode:multiply}
+#D1 .btn{padding:18px 34px 18px 26px;font-size:40px;background:#E0567B;color:#fff;box-shadow:0 12px 26px rgba(224,86,123,.35),inset 0 -5px 0 rgba(0,0,0,.12)}
+
+/* ---------- 2: the full cart ---------- */
+#D2{background:#FCEFF2}
+#D2 .dots{position:absolute;inset:0;background-image:radial-gradient(#F3CFDA 2.2px,transparent 2.4px);background-size:34px 34px;opacity:.75}
+#D2 .btn{padding:16px 30px 16px 24px;font-size:38px;background:#fff;color:#C13E63;border:3px solid #C13E63;box-shadow:0 9px 0 #C13E63}
+
+/* ---------- 3: the chat ---------- */
+#D3{background:#F7F1EE}
+#D3 .bar{position:absolute;left:0;right:0;top:0;height:150px;background:rgba(255,255,255,.85);border-bottom:1px solid #EADFE3}
+.msg{position:absolute;font-size:34px;line-height:1.3;padding:20px 28px;border-radius:34px;max-width:620px}
+.me{background:#E0567B;color:#fff;border-bottom-right-radius:10px}
+.them{background:#fff;color:#2A2228;border-bottom-left-radius:10px;box-shadow:0 2px 8px rgba(42,34,40,.06)}
+.tm{position:absolute;font-size:20px;color:#9A8F94;font-weight:500}
+#D3 .btn{padding:22px 40px 22px 32px;font-size:44px;background:#E0567B;color:#fff;box-shadow:0 14px 30px rgba(224,86,123,.38),inset 0 -5px 0 rgba(0,0,0,.12)}
 </style></head><body>
 
 <svg width="0" height="0" style="position:absolute">
  <filter id="paper"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="7"/><feColorMatrix values="0 0 0 0 .55  0 0 0 0 .45  0 0 0 0 .5  0 0 0 .18 0"/></filter>
- <symbol id="kitty" viewBox="0 0 300 330">
-  <!-- tail -->
-  <path d="M232 292 C 292 286, 300 228, 262 214" fill="none" stroke="#E9964A" stroke-width="26" stroke-linecap="round"/>
-  <path d="M262 214 C 254 210, 248 214, 246 220" fill="none" stroke="#C9772F" stroke-width="10" stroke-linecap="round"/>
-  <!-- body -->
-  <path d="M86 312 C 64 250, 78 176, 150 170 C 222 176, 236 250, 214 312 Z" fill="#F2A65A"/>
-  <path d="M112 312 C 104 262, 116 214, 150 210 C 184 214, 196 262, 188 312 Z" fill="#FFF3E6"/>
-  <!-- feet -->
-  <ellipse cx="112" cy="314" rx="28" ry="15" fill="#FFF3E6"/><ellipse cx="188" cy="314" rx="28" ry="15" fill="#FFF3E6"/>
-  <path d="M104 316v-8M114 317v-8M180 316v-8M190 317v-8" stroke="#E7C9AE" stroke-width="3" stroke-linecap="round"/>
-  <!-- raised paws (begging) -->
-  <path d="M114 236 C 100 218, 100 200, 112 194" fill="none" stroke="#F2A65A" stroke-width="26" stroke-linecap="round"/>
-  <path d="M186 236 C 200 218, 200 200, 188 194" fill="none" stroke="#F2A65A" stroke-width="26" stroke-linecap="round"/>
-  <circle cx="113" cy="192" r="15" fill="#FFF3E6"/><circle cx="187" cy="192" r="15" fill="#FFF3E6"/>
-  <!-- ears -->
-  <path d="M70 92 L 74 18 L 128 58 Z" fill="#F2A65A"/><path d="M230 92 L 226 18 L 172 58 Z" fill="#F2A65A"/>
-  <path d="M82 76 L 84 36 L 114 58 Z" fill="#F7B9C4"/><path d="M218 76 L 216 36 L 186 58 Z" fill="#F7B9C4"/>
-  <!-- head -->
-  <ellipse cx="150" cy="108" rx="96" ry="80" fill="#F2A65A"/>
-  <path d="M126 34 C 132 50, 132 60, 128 70 M150 30 C 152 48, 152 60, 150 72 M174 34 C 168 50, 168 60, 172 70" stroke="#D27F35" stroke-width="7" stroke-linecap="round" fill="none"/>
-  <ellipse cx="150" cy="140" rx="54" ry="38" fill="#FFF3E6"/>
-  <!-- big eyes -->
-  <ellipse cx="108" cy="106" rx="27" ry="30" fill="#2B1E1A"/><ellipse cx="192" cy="106" rx="27" ry="30" fill="#2B1E1A"/>
-  <ellipse cx="108" cy="110" rx="21" ry="24" fill="#3E2B22"/><ellipse cx="192" cy="110" rx="21" ry="24" fill="#3E2B22"/>
-  <circle cx="98" cy="94" r="10" fill="#fff"/><circle cx="182" cy="94" r="10" fill="#fff"/>
-  <circle cx="117" cy="120" r="4.5" fill="#fff"/><circle cx="201" cy="120" r="4.5" fill="#fff"/>
-  <path d="M88 132 C 98 140, 116 140, 124 132" stroke="#2B1E1A" stroke-width="0" fill="none"/>
-  <!-- blush -->
-  <ellipse cx="80" cy="142" rx="16" ry="9" fill="#F48FA4" opacity=".55"/><ellipse cx="220" cy="142" rx="16" ry="9" fill="#F48FA4" opacity=".55"/>
-  <!-- nose + mouth -->
-  <path d="M141 130 h18 l-9 9 z" fill="#E86A86" stroke="#E86A86" stroke-width="3" stroke-linejoin="round"/>
-  <path d="M150 139 v6 M150 145 C 146 154, 136 154, 133 147 M150 145 C 154 154, 164 154, 167 147" stroke="#5A3A2E" stroke-width="3.2" stroke-linecap="round" fill="none"/>
-  <!-- whiskers -->
-  <path d="M60 128 L 24 122 M60 140 L 22 144 M240 128 L 276 122 M240 140 L 278 144" stroke="#8B6A55" stroke-width="2.6" stroke-linecap="round"/>
- </symbol>
  <symbol id="cartic" viewBox="0 0 24 24"><path d="M3 4h2.2l2.3 10.4a1.6 1.6 0 0 0 1.6 1.2h7.7a1.6 1.6 0 0 0 1.5-1.1L20.5 8H6.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="19.5" r="1.6" fill="currentColor"/><circle cx="17" cy="19.5" r="1.6" fill="currentColor"/></symbol>
 </svg>
 
-<!-- ===================== A ===================== -->
-<div class="post" id="A">
+<!-- ======================= 1 · THE MEME, CENTRED ======================= -->
+<div class="post" id="D1">
  <svg class="grain" width="1080" height="1350"><rect width="1080" height="1350" filter="url(#paper)"/></svg>
- <p class="me">Me:</p>
- <p class="save">Trying to save money</p>
- <p class="also">Also me:</p>
+ <p class="a fr" style="left:86px;top:92px;font-size:66px">Me:</p>
+ <p class="a" style="left:86px;top:174px;font-size:50px">Trying to save money</p>
+ <p class="a fr" style="left:86px;top:292px;font-size:66px">Also me:</p>
 
- <img class="p" src="cut-cream.png"    style="left:236px;top:452px;height:440px;transform:rotate(7deg)">
- <img class="p" src="cut-serum.png"    style="left:432px;top:404px;height:430px;transform:rotate(-4deg)">
- <img class="p" src="cut-booster.png"  style="left:812px;top:372px;height:440px;transform:rotate(12deg)">
- <img class="p" src="cut-mist.png"     style="left:640px;top:520px;height:420px;transform:rotate(3deg)">
- <img class="p" src="cut-eyecream.png" style="left:46px;top:804px;width:236px;transform:rotate(-5deg)">
- <img class="p" src="cut-patches.png"  style="left:300px;top:930px;width:250px;transform:rotate(-9deg)">
- <img class="p" src="cut-deo.png"      style="left:556px;top:874px;height:300px;transform:rotate(-14deg)">
+ <img class="p" src="cut-eyecream.png" style="left:71px;top:815px;width:230px;transform:rotate(-5deg)">
+ <img class="p" src="cut-cream.png"    style="left:329px;top:600px;height:400px;transform:rotate(-6deg)">
+ <img class="p" src="cut-serum.png"    style="left:467px;top:584px;height:420px;transform:rotate(3deg)">
+ <img class="p" src="cut-mist.png"     style="left:625px;top:592px;height:410px;transform:rotate(-3deg)">
+ <img class="p" src="cut-booster.png"  style="left:760px;top:562px;height:440px;transform:rotate(7deg)">
+ <img class="p" src="cut-deo.png"      style="left:897px;top:684px;height:320px;transform:rotate(-5deg)">
 
- <p class="lb" style="left:110px;top:640px;transform:rotate(-6deg)">Cream</p>
- <svg class="ar" style="left:150px;top:690px" width="110" height="80"><path d="M6 6 C 30 40, 60 56, 96 58 M84 46 L 98 58 L 82 68"/></svg>
- <p class="lb" style="left:430px;top:340px;transform:rotate(-2deg)">Serum</p>
- <p class="lb" style="left:770px;top:300px;transform:rotate(3deg)">Booster shot</p>
- <p class="lb" style="left:800px;top:846px;transform:rotate(-4deg)">Face mist</p>
- <svg class="ar" style="left:752px;top:800px" width="70" height="60"><path d="M60 50 C 46 30, 30 22, 8 20 M20 10 L 7 20 L 19 30"/></svg>
- <p class="lb" style="left:58px;top:1032px;transform:rotate(4deg)">Eye cream</p>
- <p class="lb" style="left:316px;top:1132px;transform:rotate(-2deg);font-size:40px">Eye patches<br><span style="position:static;font-size:30px">(for the eye cream)</span></p>
- <p class="lb" style="left:560px;top:1196px;transform:rotate(-4deg);font-size:38px">Deodorant??</p>
+ <p class="a lb" style="left:92px;top:1046px;transform:rotate(3deg)">Eye cream</p>
+ <p class="a lb" style="left:250px;top:500px;transform:rotate(-6deg)">Cream</p>
+ <svg class="ar" style="left:300px;top:540px" width="80" height="70"><path d="M8 8 C 30 22, 46 40, 56 62 M42 56 L 57 64 L 62 48"/></svg>
+ <p class="a lb" style="left:476px;top:1036px;transform:rotate(-2deg)">Serum</p>
+ <p class="a lb" style="left:560px;top:500px;transform:rotate(-3deg)">Face mist</p>
+ <svg class="ar" style="left:640px;top:546px" width="40" height="50"><path d="M12 6 C 18 18, 22 30, 22 44 M12 34 L 22 45 L 31 34"/></svg>
+ <p class="a lb" style="left:770px;top:470px;transform:rotate(4deg)">Booster shot</p>
+ <p class="a lb" style="left:830px;top:1036px;transform:rotate(-3deg);font-size:40px">Deodorant??</p>
 
- <p class="adds" style="left:86px;top:1250px">*Adds to cart*</p>
-
- <svg style="left:808px;top:984px" width="232" height="256"><use href="#kitty"/></svg>
- <p class="bub" style="left:672px;top:1010px;transform:rotate(-8deg);color:#C13E63">meooow~</p>
- <span class="cart" style="left:742px;top:1236px"><svg><use href="#cartic"/></svg>Add to cart</span>
- <p class="url" style="left:830px;top:116px;text-align:right;width:180px">Super Sale</p>
+ <!-- the cart: the cat, the words and the button side by side -->
+ <img class="catph" src="cat.jpg" style="left:86px;top:1112px;width:180px;height:180px;border-radius:50%;border:6px solid #fff;box-shadow:0 10px 24px rgba(42,34,40,.18)">
+ <p class="a lb" style="left:286px;top:1124px;font-size:46px;color:#C13E63;transform:rotate(-4deg)">meooow~</p>
+ <p class="a fr" style="left:286px;top:1190px;font-size:52px">*Adds to cart*</p>
+ <svg class="ar" style="left:640px;top:1196px" width="64" height="40"><path d="M6 22 C 22 14, 38 14, 54 20 M44 10 L 56 20 L 44 30"/></svg>
+ <span class="btn" style="left:712px;top:1180px"><svg><use href="#cartic"/></svg>Add to cart</span>
+ <p class="a" style="left:830px;top:110px;width:180px;text-align:right;font-size:22px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#9B7D8A">Super Sale</p>
 </div>
 
-<!-- ===================== B ===================== -->
-<div class="post" id="B">
+<!-- ======================= 2 · THE FULL CART ======================= -->
+<div class="post" id="D2">
  <div class="dots"></div>
- <p class="me">Me:</p>
- <p class="save">Trying to save money</p>
- <p class="also">Also me:</p>
+ <p class="a fr" style="left:0;right:0;top:86px;text-align:center;font-size:62px">Me: <span style="font-family:Outfit;font-weight:400;letter-spacing:-.3px">trying to save money</span></p>
+ <p class="a fr" style="left:0;right:0;top:176px;text-align:center;font-size:62px">Also me:</p>
 
- <img class="p" src="cut-cream.png"    style="left:236px;top:452px;height:440px;transform:rotate(7deg)">
- <img class="p" src="cut-serum.png"    style="left:432px;top:404px;height:430px;transform:rotate(-4deg)">
- <img class="p" src="cut-booster.png"  style="left:812px;top:372px;height:440px;transform:rotate(12deg)">
- <img class="p" src="cut-mist.png"     style="left:640px;top:520px;height:420px;transform:rotate(3deg)">
- <img class="p" src="cut-eyecream.png" style="left:46px;top:804px;width:236px;transform:rotate(-5deg)">
- <img class="p" src="cut-patches.png"  style="left:300px;top:930px;width:250px;transform:rotate(-9deg)">
- <img class="p" src="cut-deo.png"      style="left:556px;top:874px;height:300px;transform:rotate(-14deg)">
+ <!-- products standing in the basket, centred between the cart's sides -->
+ <img class="p" src="cut-booster.png"  style="left:252px;top:468px;height:470px;transform:rotate(-9deg)">
+ <img class="p" src="cut-cream.png"    style="left:372px;top:500px;height:440px;transform:rotate(-3deg)">
+ <img class="p" src="cut-serum.png"    style="left:492px;top:480px;height:460px;transform:rotate(2deg)">
+ <img class="p" src="cut-mist.png"     style="left:640px;top:496px;height:450px;transform:rotate(6deg)">
+ <img class="p" src="cut-deo.png"      style="left:760px;top:590px;height:350px;transform:rotate(10deg)">
+ <!-- the cart, drawn in the shop pink; its front panel sits over the products -->
+ <svg class="a" style="left:0;top:0" width="1080" height="1350">
+  <path d="M206 760 L 874 760 L 830 1010 L 262 1010 Z" fill="rgba(255,255,255,.18)" stroke="#C13E63" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M 362 760 L 380 1010 M 500 760 L 506 1010 M 638 760 L 632 1010 M 760 760 L 744 1010" stroke="#E7A3B8" stroke-width="5" fill="none"/>
+  <path d="M206 760 L 182 700 L 96 700" stroke="#C13E63" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M262 1010 L 238 1072 L 860 1072" stroke="#C13E63" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="320" cy="1110" r="30" fill="#fff" stroke="#C13E63" stroke-width="10"/><circle cx="790" cy="1110" r="30" fill="#fff" stroke="#C13E63" stroke-width="10"/>
+ </svg>
+ <img class="p" src="cut-eyecream.png" style="left:410px;top:800px;width:270px;transform:rotate(-3deg)">
+ <p class="a lb" style="left:690px;top:950px;transform:rotate(-4deg);font-size:40px">Eye cream</p>
 
- <p class="lb" style="left:110px;top:640px;transform:rotate(-6deg)">Cream</p>
- <svg class="ar" style="left:150px;top:690px" width="110" height="80"><path d="M6 6 C 30 40, 60 56, 96 58 M84 46 L 98 58 L 82 68"/></svg>
- <p class="lb" style="left:430px;top:340px;transform:rotate(-2deg)">Serum</p>
- <p class="lb" style="left:770px;top:300px;transform:rotate(3deg)">Booster shot</p>
- <p class="lb" style="left:800px;top:846px;transform:rotate(-4deg)">Face mist</p>
- <svg class="ar" style="left:752px;top:800px" width="70" height="60"><path d="M60 50 C 46 30, 30 22, 8 20 M20 10 L 7 20 L 19 30"/></svg>
- <p class="lb" style="left:58px;top:1032px;transform:rotate(4deg)">Eye cream</p>
- <p class="lb" style="left:316px;top:1132px;transform:rotate(-2deg);font-size:40px">Eye patches<br><span style="position:static;font-size:30px">(for the eye cream)</span></p>
- <p class="lb" style="left:560px;top:1196px;transform:rotate(-4deg);font-size:38px">Deodorant??</p>
+ <p class="a lb" style="left:150px;top:470px;transform:rotate(-8deg)">Booster<br>shot</p>
+ <p class="a lb" style="left:470px;top:404px;transform:rotate(-2deg)">Serum</p>
+ <p class="a lb" style="left:846px;top:520px;transform:rotate(6deg)">Deodorant??</p>
+ <svg class="ar" style="left:830px;top:560px" width="60" height="60"><path d="M40 8 C 30 24, 24 36, 20 52 M10 42 L 20 53 L 30 42"/></svg>
 
- <p class="adds" style="left:86px;top:1250px">*Adds to cart*</p>
+ <!-- the cat at the handle, and the button right beside the cart -->
+ <img class="catph" src="cat.jpg" style="left:60px;top:1160px;width:200px;height:170px;border-radius:24px;border:7px solid #fff;transform:rotate(-5deg);box-shadow:0 12px 26px rgba(42,34,40,.18)">
+ <p class="a lb" style="left:286px;top:1170px;font-size:48px;color:#C13E63;transform:rotate(-4deg)">meooow~ (adds to cart)</p>
+ <span class="btn" style="left:560px;top:1244px"><svg><use href="#cartic"/></svg>Add to cart</span>
+</div>
 
- <svg style="left:808px;top:974px" width="232" height="256"><use href="#kitty"/></svg>
- <p class="bub" style="left:672px;top:1000px;transform:rotate(-8deg);color:#C13E63">meooow~</p>
- <span class="cart" style="left:742px;top:1224px"><svg><use href="#cartic"/></svg>Add to cart</span>
- <p class="url" style="left:830px;top:116px;text-align:right;width:180px">Super Sale</p>
+<!-- ======================= 3 · THE CHAT ======================= -->
+<div class="post" id="D3">
+ <div class="bar"></div>
+ <svg class="a" style="left:46px;top:58px" width="34" height="34" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#E0567B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+ <img class="catph" src="cat.jpg" style="left:104px;top:36px;width:80px;height:80px;border-radius:50%">
+ <p class="a" style="left:204px;top:44px;font-size:34px;font-weight:700">My wallet 💸</p>
+ <p class="a" style="left:204px;top:88px;font-size:22px;color:#9A8F94">online · judging you</p>
+
+ <p class="tm" style="left:0;right:0;top:186px;text-align:center">Today 9:41 PM</p>
+ <p class="msg me a" style="right:46px;top:232px">I'm saving money this month.<br>No more skincare 🙅‍♀️</p>
+ <p class="msg them a" style="left:46px;top:380px">so proud of you 🥹</p>
+ <p class="msg me a" style="right:46px;top:478px">the Super Sale is live though…</p>
+
+ <!-- the products, centred in an image bubble -->
+ <div class="a" style="right:46px;top:590px;width:760px;height:410px;background:#fff;border-radius:34px;border-bottom-right-radius:10px;box-shadow:0 2px 8px rgba(42,34,40,.06);overflow:hidden">
+  <img class="p" src="cut-cream.png"    style="left:200px;top:40px;height:330px;transform:rotate(-6deg)">
+  <img class="p" src="cut-serum.png"    style="left:300px;top:28px;height:350px;transform:rotate(-2deg)">
+  <img class="p" src="cut-mist.png"     style="left:420px;top:36px;height:340px;transform:rotate(3deg)">
+  <img class="p" src="cut-booster.png"  style="left:525px;top:22px;height:360px;transform:rotate(7deg)">
+  <img class="p" src="cut-deo.png"      style="left:640px;top:120px;height:250px;transform:rotate(-4deg)">
+  <img class="p" src="cut-eyecream.png" style="left:24px;top:214px;width:170px;transform:rotate(-4deg)">
+ </div>
+ <p class="tm" style="right:56px;top:1010px">Read 9:42 PM</p>
+
+ <img class="catph" src="cat.jpg" style="left:46px;top:1046px;width:240px;height:200px;border-radius:30px;border-bottom-left-radius:10px">
+ <p class="msg them a" style="left:302px;top:1110px">meooow~ 😾</p>
+
+ <span class="btn" style="left:600px;top:1218px"><svg><use href="#cartic"/></svg>Add to cart</span>
 </div>
 </body></html>
