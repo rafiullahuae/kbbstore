@@ -54,8 +54,8 @@
 .sbc-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-content:start}
 .sbc-it{position:relative;display:flex;background:var(--sbc-card,#F6F2F3);border-radius:4px;min-width:0}
 .sbc-ln{display:flex;flex:1 1 auto;min-width:0;gap:14px;align-items:stretch;padding:0;color:inherit;text-decoration:none}
-.sbc-th{display:grid;place-items:center;flex:0 0 120px;width:120px;min-height:120px;align-self:stretch;background:#fff;border-start-start-radius:4px;border-end-start-radius:4px;overflow:hidden}
-.sbc-th img{width:100%;height:100%;object-fit:cover}
+.sbc-th{display:grid;place-items:center;flex:0 0 120px;width:120px;min-height:120px;align-self:stretch;box-sizing:border-box;padding:5%;background:transparent;overflow:hidden}
+.sbc-th img{width:100%;height:100%;object-fit:cover;mix-blend-mode:multiply;border-radius:3px}
 .sbc-ph{display:grid;place-items:center;width:100%;height:100%;font-weight:700;font-size:18px;color:rgba(255,255,255,.92);letter-spacing:.04em}
 .sbc-tx{display:block;align-self:center;min-width:0;padding-block:14px;padding-inline-end:52px}
 .sbc-b{display:block;font-weight:700;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--sbc-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
