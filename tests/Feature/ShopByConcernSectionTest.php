@@ -313,7 +313,10 @@ it('shows six in-stock products per tab, priced like the grid card, each with th
         ->and($sec)->not->toContain('sold out')
         ->and($rail[1])->toContain('data-kbb-add="')
         ->and($rail[1])->toContain('aria-label="'.e(__('store.product_card.add_to_cart')).': Sbc acne product 0"')
-        ->and($rail[1])->toContain('<span class="sbc-off">22%</span>')
+        // The owner, 20 Oct 2026: the cut price as the grid card prints it,
+        // not the discount %. MUTATION: print 'off' again instead of 'was' → red.
+        ->and($rail[1])->toContain('<span class="sbc-was">'.\App\Support\Money::format(10000).'</span>')
+        ->and($rail[1])->not->toContain('class="sbc-off"')
         ->and($rail[1])->toContain(\App\Support\Money::format(7800));
 
     // The section's number, then a tab's own.

@@ -26,7 +26,7 @@
 .sbc svg{display:block}
 .sbc-tabs{display:flex;flex-wrap:nowrap;gap:10px;margin-block:22px 24px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .sbc-tabs::-webkit-scrollbar{display:none}
-.sbc-tab{display:flex;flex:0 0 auto;align-items:center;gap:9px;border:1px solid #E3DADD;background:#fff;border-radius:2px;padding-block:8px;padding-inline:9px 16px;font:inherit;font-size:15px;line-height:1.2;color:var(--sbc-ink2);cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.sbc-tab{display:flex;flex:0 0 auto;align-items:center;gap:9px;border:1px solid #E3DADD;background:#fff;border-radius:9px;padding-block:8px;padding-inline:9px 16px;font:inherit;font-size:15px;line-height:1.2;color:var(--sbc-ink2);cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
 .sbc-ic{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:var(--sbc-soft);color:var(--sbc-deep);--sbc-icf:transparent}
 .sbc-ic svg{width:20px;height:20px}
 .sbc-ic .f{fill:var(--sbc-icf)}
@@ -49,20 +49,21 @@
 .sbc-shot img{width:84%;height:84%;object-fit:contain}
 .sbc-s1{inset-inline-end:28px;bottom:28px}
 .sbc-s2{inset-inline-end:18px;bottom:150px;width:96px;height:96px}
-.sbc-go{position:absolute;inset-inline-start:36px;bottom:30px;z-index:1;min-width:230px;text-align:center;background:#fff;color:var(--sbc-ink);border-radius:99px;padding-block:12px;padding-inline:28px;font-size:15px;font-weight:600;line-height:1.2;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.sbc-go{position:absolute;inset-inline-start:36px;bottom:30px;z-index:1;min-width:170px;text-align:center;background:#fff;color:var(--sbc-ink);border-radius:99px;padding-block:12px;padding-inline:28px;font-size:15px;font-weight:600;line-height:1.2;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.06)}
 .sbc-go:hover{color:var(--sbc-deep)}
 .sbc-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-content:start}
 .sbc-it{position:relative;display:flex;background:var(--sbc-card,#F6F2F3);border-radius:4px;min-width:0}
-.sbc-ln{display:flex;flex:1 1 auto;min-width:0;gap:14px;align-items:center;padding:16px;color:inherit;text-decoration:none}
-.sbc-th{display:grid;place-items:center;flex:0 0 84px;width:84px;height:84px;background:#fff;border-radius:2px;overflow:hidden}
-.sbc-th img{width:100%;height:100%;object-fit:contain}
+.sbc-ln{display:flex;flex:1 1 auto;min-width:0;gap:14px;align-items:stretch;padding:0;color:inherit;text-decoration:none}
+.sbc-th{display:grid;place-items:center;flex:0 0 120px;width:120px;min-height:120px;align-self:stretch;background:#fff;border-start-start-radius:4px;border-end-start-radius:4px;overflow:hidden}
+.sbc-th img{width:100%;height:100%;object-fit:cover}
 .sbc-ph{display:grid;place-items:center;width:100%;height:100%;font-weight:700;font-size:18px;color:rgba(255,255,255,.92);letter-spacing:.04em}
-.sbc-tx{display:block;min-width:0;padding-inline-end:40px}
+.sbc-tx{display:block;align-self:center;min-width:0;padding-block:14px;padding-inline-end:52px}
 .sbc-b{display:block;font-weight:700;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--sbc-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sbc-n{display:-webkit-box;font-size:14.5px;margin-block:3px 6px;line-height:1.3;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--sbc-ink)}
 .sbc-pr{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:16px;font-weight:700}
 .sbc-off{color:var(--sbc-red)}
-.sbc-cp{position:absolute;inset-inline-end:12px;bottom:12px;width:36px;height:36px;border-radius:2px;background:var(--sbc-pk);color:#fff;display:grid;place-items:center;text-decoration:none}
+.sbc-was{color:#796C75;font-weight:500;font-size:.8em;text-decoration:line-through}
+.sbc-cp{position:absolute;inset-inline-end:12px;bottom:12px;width:36px;height:36px;border-radius:9px;background:var(--sbc-pk);color:#fff;display:grid;place-items:center;text-decoration:none}
 .sbc-cp:hover{background:var(--sbc-deep);color:#fff}
 .kbb-home .sbc-cp,.kbb-home .sbc-cp:hover,.kbb-home .sbc-cp:visited{color:#fff}
 .sbc-cp svg{width:20px;height:20px}
@@ -88,13 +89,13 @@
  .sbc-photo::before,[dir="rtl"] .sbc-photo::before{background:linear-gradient(180deg,rgba(255,255,255,.92) 0%,rgba(255,255,255,.84) 62%,rgba(255,255,255,.3) 100%)}
  .sbc-s1{width:118px;height:118px;inset-inline-end:16px;top:24px;bottom:auto}
  .sbc-s2{display:none}
- .sbc-go{position:static;display:block;margin-top:auto;min-width:0;width:100%;padding-block:11px;padding-inline:16px;font-size:14px}
+ .sbc-go{position:static;display:block;margin-top:auto;min-width:0;width:auto;align-self:flex-start;padding-block:10px;padding-inline:16px;font-size:14px}
  .sbc-rail{grid-template-columns:none;grid-auto-flow:column;grid-template-rows:repeat(2,auto);grid-auto-columns:82%;overflow-x:auto;scroll-snap-type:x mandatory;gap:8px;margin-inline:calc(-1 * var(--sbc-bleed));padding-inline:var(--sbc-bleed);scroll-padding-inline:var(--sbc-bleed);scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
  .sbc-rail::-webkit-scrollbar{display:none}
  .sbc-it{scroll-snap-align:start}
- .sbc-ln{padding:10px;gap:10px}
- .sbc-th{flex-basis:64px;width:64px;height:64px}
- .sbc-tx{padding-inline-end:34px}
+ .sbc-ln{padding:0;gap:10px}
+ .sbc-th{flex-basis:92px;width:92px;min-height:92px}
+ .sbc-tx{padding-block:10px;padding-inline-end:44px}
  .sbc-b{font-size:11.5px}
  .sbc-n{font-size:13px}
  .sbc-pr{font-size:14.5px}
@@ -121,7 +122,7 @@
 @if ($t['img'] === '')@foreach (array_slice($t['items'], 0, 2) as $n => $shot)@if ($shot['img'] !== '')<span class="sbc-shot sbc-s{{ $n + 1 }}" aria-hidden="true"><img src="{{ $shot['img'] }}" alt=""@if ($shot['srcset'] !== '') srcset="{{ $shot['srcset'] }}" sizes="132px"@endif width="132" height="132" loading="lazy" decoding="async"></span>@endif @endforeach @endif
 @if ($t['url'] !== '' && $sb['all'] !== '')<a class="sbc-go" href="{{ $t['url'] }}">{{ $sb['all'] }} <span aria-hidden="true">{{ \App\Support\Locale::isRtl() ? '‹' : '›' }}</span></a>@endif
 </div>
-<div class="sbc-rail">@foreach ($t['items'] as $p)<div class="sbc-it"><a class="sbc-ln" href="{{ $p['url'] }}"><span class="sbc-th">@if ($p['img'] !== '')<img src="{{ $p['img'] }}" alt="{{ $p['alt'] }}"@if ($p['srcset'] !== '') srcset="{{ $p['srcset'] }}" sizes="(max-width:900px) 64px, 84px"@endif width="84" height="84" loading="lazy" decoding="async">@else<span class="sbc-ph" style="background:{{ $p['ph'] }}">{{ $p['ini'] }}</span>@endif</span><span class="sbc-tx">@if ($p['brand'] !== '')<span class="sbc-b">{{ mb_strtoupper($p['brand']) }}</span>@endif<span class="sbc-n">{{ $p['name'] }}</span><span class="sbc-pr">@if ($p['off'] !== '')<span class="sbc-off">{{ $p['off'] }}</span>@endif<span class="sbc-now">{!! $p['price'] !!}</span></span></span></a>@if ($p['add'])<a class="sbc-cp" href="?add-to-cart={{ $p['pid'] }}" data-kbb-add="{{ $p['id'] }}" data-quantity="1" data-price="{{ $p['amount'] }}" data-name="{{ $p['name'] }}" rel="nofollow" aria-label="{{ $sb['add'] }}: {{ $p['name'] }}">{!! \App\Support\ShopByConcern::CART !!}</a>@else<a class="sbc-cp" href="{{ $p['url'] }}" aria-label="{{ $sb['view'] }}: {{ $p['name'] }}">{!! \App\Support\ShopByConcern::CART !!}</a>@endif</div>@endforeach</div>
+<div class="sbc-rail">@foreach ($t['items'] as $p)<div class="sbc-it"><a class="sbc-ln" href="{{ $p['url'] }}"><span class="sbc-th">@if ($p['img'] !== '')<img src="{{ $p['img'] }}" alt="{{ $p['alt'] }}"@if ($p['srcset'] !== '') srcset="{{ $p['srcset'] }}" sizes="(max-width:900px) 92px, 120px"@endif width="84" height="84" loading="lazy" decoding="async">@else<span class="sbc-ph" style="background:{{ $p['ph'] }}">{{ $p['ini'] }}</span>@endif</span><span class="sbc-tx">@if ($p['brand'] !== '')<span class="sbc-b">{{ mb_strtoupper($p['brand']) }}</span>@endif<span class="sbc-n">{{ $p['name'] }}</span><span class="sbc-pr">@if ($p['was'] !== '')<span class="sbc-was">{!! $p['was'] !!}</span>@endif<span class="sbc-now">{!! $p['price'] !!}</span></span></span></a>@if ($p['add'])<a class="sbc-cp" href="?add-to-cart={{ $p['pid'] }}" data-kbb-add="{{ $p['id'] }}" data-quantity="1" data-price="{{ $p['amount'] }}" data-name="{{ $p['name'] }}" rel="nofollow" aria-label="{{ $sb['add'] }}: {{ $p['name'] }}">{!! \App\Support\ShopByConcern::CART !!}</a>@else<a class="sbc-cp" href="{{ $p['url'] }}" aria-label="{{ $sb['view'] }}: {{ $p['name'] }}">{!! \App\Support\ShopByConcern::CART !!}</a>@endif</div>@endforeach</div>
 @if (count($t['items']) > 2)<div class="sbc-dots" aria-hidden="true">@for ($d = 0; $d < (int) ceil(count($t['items']) / 2); $d++)<i{!! $d === 0 ? ' class="on"' : '' !!}></i>@endfor</div>@endif
 </div>
 @endforeach

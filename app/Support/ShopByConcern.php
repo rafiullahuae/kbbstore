@@ -605,6 +605,23 @@ final class ShopByConcern
             $price = Money::format($p->effectivePrice());
         }
 
+        /*
+         * The cut price, as the grid card prints it (the owner, 20 Oct 2026:
+         * "i don't need to show discount %, i need the cut price, same like in
+         * our products grid"): the compare-at price struck through, with the
+         * same decimals rule as components/product-card. Only for a single
+         * price on sale -- a range shows the range alone, as the card does.
+         */
+        $was = '';
+        if ($range === null && $p->isOnSale()) {
+            $wasMinor = (int) $p->compareAtPrice();
+            if ($wasMinor > $p->effectivePrice()) {
+                $dp = Money::decimalsToDistinguish($wasMinor, $p->effectivePrice());
+                $was = Money::format($wasMinor, $dp);
+                $price = Money::format($p->effectivePrice(), $dp);
+            }
+        }
+
         return [
             'id' => (int) $p->id,
             'url' => $p->url(),
@@ -619,6 +636,8 @@ final class ShopByConcern
             'ph' => $img ? '' : Gradient::for(($p->brand?->name ?? '').$p->name),
             'ini' => $img ? '' : Gradient::initials((string) ($p->brand?->name ?: $p->name)),
             'off' => $off >= 1 ? Bidi::number($off.'%') : '',
+            // Money::format()'s own markup, struck through; '' when not on sale.
+            'was' => $was,
             // Money::format()'s own markup — the grid card prints the same string raw.
             'price' => $price,
             'add' => $p->isDirectlyBuyable(),
