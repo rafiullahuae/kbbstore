@@ -269,9 +269,10 @@ it('marks the tabs up as a real tablist and switches them with no request', func
     $html = sbcTabHome();
     $sec = sbcTabSection($html);
 
-    expect(substr_count($sec, 'role="tab"'))->toBe(8)
-        ->and(substr_count($sec, 'role="tabpanel"'))->toBe(8)
-        ->and(substr_count($sec, ' hidden '))->toBe(7)
+    // Nine since 2027_11_14_100000 appended the owner's Dull Skin tab.
+    expect(substr_count($sec, 'role="tab"'))->toBe(9)
+        ->and(substr_count($sec, 'role="tabpanel"'))->toBe(9)
+        ->and(substr_count($sec, ' hidden '))->toBe(8)
         ->and($sec)->toContain('<div class="sbc-tabs" role="tablist" aria-labelledby="sbc-h">')
         ->and($sec)->toContain('id="sbc-t0" aria-controls="sbc-p0" aria-selected="true" tabindex="0"')
         ->and($sec)->toContain('id="sbc-t1" aria-controls="sbc-p1" aria-selected="false" tabindex="-1"')
@@ -485,9 +486,10 @@ it('offers the section on the All sections list with its own editor, and the edi
         ->and(substr_count($screen, "f.options.picker === 'sbc-tabs' && window.kbbSbc"))->toBe(1)
         ->and(substr_count($hub, "f.options.picker === 'sbc-tabs' && window.kbbSbc"))->toBe(1);
 
-    // The editor's vocabulary is constants: eight icons, each sized.
+    // The editor's vocabulary is constants: nine icons (Dull Skin's since
+    // 20 Oct 2026), each sized, and the eight shipped tabs.
     $v = ShopByConcern::editorVocab();
-    expect(count($v['icons']))->toBe(8)->and(count($v['defaults']))->toBe(8);
+    expect(count($v['icons']))->toBe(9)->and(count($v['defaults']))->toBe(8);
     foreach ($v['icons'] as $icon) {
         expect($icon['svg'])->toStartWith('<svg viewBox="0 0 24 24" width="20" height="20"');
     }

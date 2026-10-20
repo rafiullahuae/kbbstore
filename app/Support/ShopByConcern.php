@@ -103,6 +103,9 @@ final class ShopByConcern
         'sensitive' => ['Redness (flushed face)', 'stroke-linecap="round"', self::FACE.'<ellipse cx="8.7" cy="13.4" rx="2" ry="1.3" fill="currentColor" opacity=".35" stroke="none"/><ellipse cx="15.3" cy="13.4" rx="2" ry="1.3" fill="currentColor" opacity=".35" stroke="none"/><path d="M8.2 10.2l.6-.6.6.6M14.6 10.2l.6-.6.6.6"/>'],
         'pores' => ['Pores (magnifier)', 'stroke-linecap="round"', '<circle class="f" cx="10.5" cy="10.5" r="6.8"/><path d="M15.4 15.4l4.6 4.6"/><g fill="currentColor" stroke="none"><circle cx="8.2" cy="8.6" r=".75"/><circle cx="11" cy="8" r=".75"/><circle cx="13.2" cy="10" r=".75"/><circle cx="8.6" cy="11.6" r=".75"/><circle cx="11.4" cy="11.2" r=".75"/><circle cx="10.2" cy="13.6" r=".75"/></g>'],
         'dull' => ['Glow (face with sparkles)', 'stroke-linecap="round" stroke-linejoin="round"', self::FACE.'<path d="M19.6 3.4l.5 1.5 1.5.5-1.5.5-.5 1.5-.5-1.5-1.5-.5 1.5-.5z" fill="currentColor"/><path d="M3.6 15.8l.4 1.1 1.1.4-1.1.4-.4 1.1-.4-1.1-1.1-.4 1.1-.4z" fill="currentColor"/><path d="M9.4 14.8c.7.6 1.6.9 2.6.9s1.9-.3 2.6-.9"/>'],
+        // (20 Oct 2026) The owner's "Dull Skin" tab: a tired face — eyes half
+        // closed — under a sparkle drawn in outline only, the glow gone flat.
+        'dullskin' => ['Dull skin (tired face, faded sparkle)', 'stroke-linecap="round" stroke-linejoin="round"', self::FACE.'<path d="M8.4 11.6c.8.5 1.7.5 2.4 0M13.2 11.6c.8.5 1.7.5 2.4 0"/><path d="M10.4 16c1 .5 2.2.5 3.2 0"/><path d="M19.6 2.9l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6z" opacity=".55"/>'],
         'sun' => ['Sun care (sun and shield)', 'stroke-linecap="round" stroke-linejoin="round"', '<circle class="f" cx="9.5" cy="9.5" r="3.4"/><path d="M9.5 2.6v1.6M9.5 14.8v1.6M2.6 9.5h1.6M14.8 9.5h1.6M4.6 4.6l1.1 1.1M13.3 13.3l1.1 1.1M4.6 14.4l1.1-1.1M13.3 5.7l1.1-1.1"/><path d="M17 12.2l3.6 1.4v2.7c0 2.3-1.5 4.1-3.6 4.9-2.1-.8-3.6-2.6-3.6-4.9v-2.7z" fill="#fff"/><path d="M15.6 16.4l1 1 1.9-2"/>'],
     ];
 
@@ -123,6 +126,7 @@ final class ShopByConcern
         'acne' => ['#FFE3E8', '#FFF4EC'], 'hydration' => ['#DDEFFF', '#F2F9FF'], 'spots' => ['#FBE6D6', '#FFF6EE'],
         'ageing' => ['#EDE3FA', '#FBF6FF'], 'sensitive' => ['#E0F3E6', '#F5FBF6'], 'pores' => ['#E6EEF2', '#F8FBFC'],
         'dull' => ['#FFF0C9', '#FFFAEC'], 'sun' => ['#FFE6C2', '#FFF7EA'],
+        'dullskin' => ['#F1E9E2', '#FBF7F3'],
     ];
 
     /**
@@ -138,6 +142,7 @@ final class ShopByConcern
         'pores' => ['pore-care', 'pores', 'oily-skin', 'oily'],
         'dull' => ['glow', 'dullness-glow', 'brightening', 'hydration-glow', 'hydration-and-glow'],
         'sun' => ['sun-care', 'sunscreens', 'sunscreen', 'sun-protection'],
+        'dullskin' => ['dull-skin', 'dullness', 'brightening', 'glow', 'hydration-glow'],
     ];
 
     /** The eight tabs as shipped — the owner's words, 18 October 2026. */
