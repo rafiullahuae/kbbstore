@@ -46,7 +46,7 @@ window.APV_I18N = {
   /* ── jump menu: groups and screens ── */
   'Home':'الرئيسية', 'Shop':'تسوّقي', 'Product':'المنتج', 'Category':'الفئة', 'Brand':'العلامة', 'Search':'البحث', 'Bag & Checkout':'الحقيبة والدفع', 'Account':'الحساب', 'Content':'المحتوى', 'States':'الحالات',
   'Home · loading':'الرئيسية · جارٍ التحميل', 'Home · offline':'الرئيسية · دون اتصال', 'Splash':'شاشة البداية', 'First run · notifications':'أول تشغيل · الإشعارات',
-  'All categories':'كل الفئات', 'All brands':'كل العلامات', 'Shop all products':'تسوّقي كل المنتجات', 'Best Sellers':'الأكثر مبيعاً', 'Under {v}':'أقل من {v}',
+  'All categories':'كل الفئات', 'All brands':'كل العلامات', 'Shop all products':'تسوّقي كل المنتجات', 'Best Sellers':'الأكثر مبيعاً', 'Big savings bundles':'مجموعات بتوفير كبير', 'Your beauty essentials, better together.':'أساسيات جمالكِ، أجمل معًا.', 'All skincare sets':'كل مجموعات العناية', 'Skincare sets':'مجموعات العناية', 'Find your perfect K-beauty match':'اعثري على منتجك الكوري المثالي', '24/7 available':'متاحون 24/7', 'Chat on WhatsApp':'تواصلي عبر واتساب', 'Track my order':'تتبع طلبي', 'Under {v}':'أقل من {v}',
   'Product on sale':'منتج بخصم', 'Product · photo viewer':'المنتج · عارض الصور', 'Product · pay in 4':'المنتج · الدفع على 4', 'Product · loading':'المنتج · جارٍ التحميل',
   'Category · Skincare':'الفئة · العناية بالبشرة', 'Category · Serums':'الفئة · السيروم', 'Concern · Acne':'المشكلة · حب الشباب', 'Category · filter':'الفئة · التصفية', 'Category · sort':'الفئة · الترتيب', 'Category · no matches':'الفئة · لا نتائج', 'Category · loading':'الفئة · جارٍ التحميل',
   'Brand page':'صفحة العلامة', 'Brand page (second)':'صفحة علامة ثانية', 'Brand · filter':'العلامة · التصفية',

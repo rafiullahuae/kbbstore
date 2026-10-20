@@ -20,6 +20,24 @@ function sbcBlock(){
   <button class="btn" ${go$(target)}>${t('View all')} · ${dt(concernName(c))}</button></div>
   <div class="rail2">${items.map(lcard).join('')}</div></div></section>`;
 }
+/* The website's "Big savings bundles", in the site's order (kbeautybliss.com, 20 October 2026).
+   Tagged `sets` so "All skincare sets" opens them as one list. */
+const SETS = ['medicube-vanilla-deodrant-and-body-mist-duo', 'anua-pdrn-glass-skin-set', 'medicube-viral-pdrn-lift-and-firm-set',
+  'skin1004-madagascar-centella-travel-kit', 'anua-heartleaf-soothing-trial-kit', 'dr-althea-345-relief-cream-mist-spray-set',
+  'anua-pdrn-hyaluron-ultimate-glass-skin-set', 'arencia-vitamin-c-booster-trio', 'medicube-age-r-booster-pro-x2-pink-set', 'medicube-pdrn-glow-booster-set'];
+SETS.forEach(x => { if (P[x] && !P[x].tags.includes('sets')) P[x].tags.push('sets'); });
+function setsBlock(){
+  const L = SETS.map(x => P[x]).filter(Boolean);
+  if (!L.length) return '';
+  return `<section class="sec sets"><div class="shc"><h2>${t('Big savings bundles')}</h2><p>${t('Your beauty essentials, better together.')}</p></div>${rail(L)}
+    <div class="setsall"><button class="pillbtn" ${go$('/products?tag=sets')}>${t('All skincare sets')}${ico('chevR', 'flip')}</button></div></section>`;
+}
+/* The website's support band (the footer's "Find your perfect K-beauty match"), without the footer:
+   the app ends with this band, then the bottom bar. */
+function supportBand(){
+  return `<section class="khelp"><span class="khi">${ico('chat')}</span><h2>${t('Find your perfect K-beauty match')} <span class="k247"><i></i>${t('24/7 available')}</span></h2>
+    <div class="khb"><a class="kw" href="https://wa.me/971585052611" target="_blank" rel="noopener">${t('Chat on WhatsApp')}</a><button class="kt" ${go$('/account/orders')}>${t('Track my order')}</button></div></section>`;
+}
 function bannerTarget(b){ const br = D.brands.find(x => (b.mobile + ' ' + b.desktop).toLowerCase().includes(x.slug.replace(/-/g, ''))) || D.brands.find(x => (b.mobile + ' ' + b.desktop).toLowerCase().includes(x.slug)); return br ? '/brand/' + br.slug : '/products?tag=trending'; }
 function catTile(c){
   const img = c.banner || (P[c.items[0]] || {}).img;
@@ -30,7 +48,8 @@ function homeSections(site){
   const bnr = `<div class="banner"><div class="bnr" data-dots="bd">${B.map((b, i) => `<a role="button" tabindex="0" ${go$(bannerTarget(b))} aria-label="${esc(b.alt) || t('Offer')}">${d === 'C' ? '' : `<img class="bm" src="${b.mobile}" alt="" ${i ? 'loading="lazy"' : ''}>`}<img class="bd" src="${b.desktop}" alt="" loading="lazy"></a>`).join('')}</div>
     <div class="dots" id="bd" aria-hidden="true">${B.map((_, i) => `<span class="${i ? '' : 'on'}"><i></i></span>`).join('')}</div></div>`;
   const TI = ['shield', 'truck', 'card', 'chat'];
-  const trust = `<div class="trust">${(D.trust || []).map((x, i) => `<div><i>${ico(TI[i])}</i><span>${dt((x.t || []).join(' '))}</span></div>`).join('')}</div>`;
+  /* the website's trust card under the hero: four icons in pink circles, divided, on a white card */
+  const trust = `<div class="trust ktr">${(D.trust || []).map((x, i) => `<div><i>${ico(TI[i])}</i><span>${dt((x.t || []).join(' '))}</span></div>`).join('')}</div>`;
   const brands = `<div class="brands">${D.brands.slice(0, 16).map(b => `<button class="brand" ${go$('/brand/' + b.slug)}><i style="background:${brandColour(b.slug)}">${bInit(b)}</i><span><b>${brandTxt(b.name)}</b><small>${t('{n} products', {n:num(b.items.length)})}</small></span></button>`).join('')}</div>`;
   const cats = `<div class="hs ctiles" style="--cw:132px">${D.categories.filter(c => c.parent === 'skincare' || !c.parent).slice(0, 10).map(catTile).join('')}</div>`;
   const blog = `<div class="hs" style="--cw:78%">${(D.posts || []).filter(x => bt(x, 'title')).slice(0, 5).map(x => `<button class="blog" ${go$('/blog/' + x.slug)}>${x.cover ? `<img src="${x.cover}" alt="" loading="lazy">` : ''}<span class="bt"><b class="clamp2">${esc(bt(x, 'title'))}</b><small>${date(x.date)}</small></span></button>`).join('')}</div>`;
@@ -39,15 +58,19 @@ function homeSections(site){
   if (d === 'C') topH = `<div class="hero">${site ? '' : search}<h1>${t('Glass skin starts here.')}</h1><div class="chips">${(D.concerns || []).slice(0, 6).map((c, i) => `<button class="chip" data-act="conc" data-v="${i}" data-scrollto="sbc">${dt(concernName(c))}</button>`).join('')}</div></div><div style="height:16px"></div>${bnr}`;
   /* under the website's header its search box is the one search field (Lane APV3) */
   else topH = site ? bnr : `<div class="hsearch" style="background:${d === 'B' ? 'var(--blush)' : 'var(--cream)'}">${search}</div>${bnr}`;
+  /* The website's order (owner, 20 October 2026): sets, best sellers, shop by concern, then the
+     app's own sections, then the support band. No site footer in the app. */
   return [
     topH + trust,
-    sbcBlock(),
+    setsBlock(),
     sec(t('Best Sellers'), rail(tagged('best', 10)), {more:'/products?tag=best'}),
+    sbcBlock(),
     sec(t('Shop by category'), cats, {more:'/categories'}),
     sec(t('Brands'), brands, {cls:'cream2', more:'/brands'}),
     sec(t('Trending'), rail(tagged('trending', 10)), {more:'/products?tag=trending'}),
     sec(t('Under {v}', {v:money(54)}), rail(tagged('under54', 10)), {cls:'tint', more:'/products?tag=under54'}),
     sec(t('From the blog'), blog, {more:'/blog'}),
+    supportBand(),
   ];
 }
 function brandColour(slug){ let h = 0; for (const c of slug) h = (h * 31 + c.charCodeAt(0)) % 360; return `hsl(${h} 60% 90%)`; }
@@ -174,7 +197,7 @@ function productsBase(r){
   if (c) { const x = (D.concerns || []).find(y => y.k === c); return x ? x.items.map(s => P[s]).filter(Boolean) : PL; }
   return PL;
 }
-const PTITLE = {best:'Best Sellers', trending:'Trending', under54:'Under {v}', sale:'Super Sale'};
+const PTITLE = {sets:'Skincare sets', best:'Best Sellers', trending:'Trending', under54:'Under {v}', sale:'Super Sale'};
 scr('/products', {tab:'shop', group:'Shop', label:'All products', chain:() => ['/categories'], title:r => r.query.tag ? t(PTITLE[r.query.tag] || 'Shop all', {v:money(54)}) : t('Shop all'),
   render(r, ctx){
     const title = r.query.tag ? t(PTITLE[r.query.tag] || 'Shop all', {v:money(54)}) : t('Shop all');
