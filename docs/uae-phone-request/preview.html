@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UAE Number Request</title>
+<style>
+@font-face{font-family:Outfit;src:url(../../resources/fonts/outfit/outfit-latin.woff2) format('woff2');font-weight:100 900}
+@font-face{font-family:Cairo;src:url(../../resources/fonts/cairo/cairo-arabic.woff2) format('woff2');font-weight:200 1000}
+@font-face{font-family:Cairo;src:url(../../resources/fonts/cairo/cairo-latin.woff2) format('woff2');font-weight:200 1000;unicode-range:U+0000-00FF}
+*{box-sizing:border-box}
+body{margin:0;background:#F4EFEC;font-family:Outfit,Arial,sans-serif;color:#2A2228}
+.wrap{max-width:1240px;margin:0 auto;padding:28px 16px 40px}
+h2.sec{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#9A6B2F;margin:30px 0 12px}
+h2.sec:first-child{margin-top:0}
+.row{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.col{flex:1 1 380px;min-width:0}
+.cap{font-size:13px;color:#6F6469;margin:8px 2px 0;line-height:1.5}
+
+/* admin */
+.adm{background:#fff;border-radius:16px;border:1px solid #EFE6DF;padding:24px 28px;font-size:15px;max-width:600px}
+.adm .lbl{font-size:12px;letter-spacing:.12em;color:#8C8288;font-weight:600;display:flex;justify-content:space-between}
+.adm .lbl a{color:#C98A2E;letter-spacing:0;font-weight:500;font-size:14px}
+.adm .nm{font-weight:600;margin:16px 0 6px}
+.adm .ln{color:#5E545A;font-size:14px;line-height:1.85}
+.adm .k{font-weight:600;font-size:14px;margin:16px 0 6px}
+.adm a.u{color:#2B3FD6;text-decoration:underline;font-size:14px}
+.ph{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag{font-size:11.5px;font-weight:600;color:#B4472B;background:#FDEDE7;border-radius:6px;padding:3px 8px}
+.ask{font:inherit;font-size:13px;font-weight:600;color:#fff;background:#D98A2B;border:0;border-radius:9px;padding:7px 12px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.ask svg{width:15px;height:15px}
+.sent{font-size:13px;font-weight:600;color:#2E7D4F;background:#E9F6EE;border-radius:9px;padding:7px 12px;display:inline-flex;gap:6px;align-items:center}
+.pop{margin-top:12px;border:1px solid #EFE2D2;background:#FFFBF6;border-radius:12px;padding:14px 16px;font-size:13.5px;color:#5E545A;line-height:1.55}
+.pop b{color:#2A2228}
+.pop .bt{display:flex;gap:8px;margin-top:10px}
+.pop .bt span{border-radius:9px;padding:7px 14px;font-weight:600;font-size:13px}
+.note{margin-top:12px;font-size:13px;color:#6F6469;border-left:3px solid #E6D3BC;padding:4px 0 4px 10px;line-height:1.5}
+
+/* email */
+.mail{background:#FFF8F5;border-radius:16px;padding:18px 10px 24px}
+.mail .tagline{font-size:11.5px;letter-spacing:.06em;color:#8C828A;padding:0 8px 10px}
+.card{background:#fff;border-radius:18px;overflow:hidden}
+.mast{background:#FFF0F4;text-align:center;padding:24px 20px 18px}
+.wm{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.wm span{color:#C13E63}
+.nav{margin-top:10px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#5E545A;font-weight:600}
+.nav i{color:#E0567B;font-style:normal;padding:0 8px}
+.bar{height:3px;background:#E0567B}
+.hero{text-align:center;padding:28px 30px 6px}
+.ic{width:54px;height:54px;line-height:54px;border-radius:27px;background:#FFF0F4;font-size:24px;margin:0 auto 14px}
+.eb{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:#C13E63;font-weight:700}
+.h1{margin-top:8px;font-size:27px;line-height:1.22;font-weight:600;letter-spacing:-.015em}
+.p{margin:12px auto 0;max-width:460px;font-size:15.5px;line-height:1.6;color:#5E545A}
+.box{margin:22px 28px 0;border-radius:14px;background:#FFF7F2;border:1px solid #F6DCCD;padding:16px 18px}
+.box .r{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;font-size:14px;color:#5E545A}
+.box .r+.r{margin-top:12px;padding-top:12px;border-top:1px dashed #F0D6C6}
+.box b{color:#2A2228;font-size:15px}
+.bad{color:#B4472B;font-weight:600;font-size:13px}
+.ok{color:#2E7D4F;font-weight:600;font-size:13px}
+.num{direction:ltr;unicode-bidi:isolate;font-weight:600;color:#2A2228}
+.strike{text-decoration:line-through;text-decoration-color:#D9805F;color:#8C7A80}
+.cta{text-align:center;padding:24px 28px 4px}
+.cta a{display:inline-block;background:#E0567B;color:#fff;font-weight:600;font-size:16px;border-radius:12px;padding:14px 30px;text-decoration:none}
+.or{text-align:center;font-size:14px;color:#6F6469;padding:12px 30px 0;line-height:1.6}
+.or a{color:#C13E63;font-weight:600;text-decoration:none}
+.wa{display:inline-block;margin-top:10px;border:1.5px solid #25A35A;color:#1F8A4C;border-radius:12px;padding:9px 18px;font-weight:600;font-size:14px;text-decoration:none}
+.sum{margin:22px 28px 0;border-top:1px solid #F1E7EA;padding-top:14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:13.5px;color:#6F6469}
+.sum b{color:#2A2228}
+.fine{padding:16px 30px 26px;text-align:center;font-size:13px;color:#8C828A;line-height:1.6}
+
+[dir=rtl],[dir=rtl] *{font-family:Cairo,Outfit,Arial,sans-serif}
+[dir=rtl] .eb,[dir=rtl] .nav{letter-spacing:0}
+[dir=rtl] .h1{letter-spacing:0;font-weight:700}
+[dir=rtl] .note{border-left:0;border-right:3px solid #E6D3BC;padding:4px 10px 4px 0}
+
+/* customer page */
+.page{background:#fff;border-radius:16px;border:1px solid #F1E7EA;padding:26px 24px;max-width:460px}
+.page .t{font-size:22px;font-weight:600;margin:4px 0 6px}
+.page .s{font-size:14.5px;color:#5E545A;line-height:1.55}
+.fld{margin-top:18px;display:flex;border:1.5px solid #E0567B;border-radius:12px;overflow:hidden;direction:ltr}
+.fld span{background:#FFF0F4;padding:13px 14px;font-weight:600;color:#C13E63;border-right:1px solid #F3C9D5}
+.fld div{padding:13px 14px;color:#2A2228;font-size:16px;letter-spacing:.02em}
+.hint{font-size:12.5px;color:#8C828A;margin-top:7px}
+.save{margin-top:16px;width:100%;background:#E0567B;color:#fff;border:0;border-radius:12px;padding:14px;font:inherit;font-weight:600;font-size:16px}
+.done{margin-top:16px;background:#E9F6EE;color:#2E7D4F;border-radius:12px;padding:13px 14px;font-weight:600;font-size:14.5px;line-height:1.5}
+@media (max-width:480px){.hero{padding:24px 18px 4px}.box,.sum{margin-left:16px;margin-right:16px}.h1{font-size:24px}.cta a{display:block}}
+</style></head><body><div class="wrap">
+
+<h2 class="sec">1 · On the order page: Orders → open an order → Billing → Phone</h2>
+<div class="row">
+ <div class="col">
+  <div class="adm" id="admin-before">
+   <div class="lbl">BILLING <a>Edit</a></div>
+   <div class="nm">moza alketbi</div>
+   <div class="ln">شارع قصر محمد بن زايد<br>الشارقة/الذيد<br>Sharjah<br>United Arab Emirates</div>
+   <div class="k">Email address</div><a class="u">moza.alketbi3@gmail.com</a>
+   <div class="k">Phone</div>
+   <div class="ph"><a class="u">+20507272773</a><span class="tag">⚠ Not a UAE mobile</span>
+    <button class="ask"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>Ask for UAE number</button></div>
+   <div class="pop"><b>Email moza.alketbi3@gmail.com asking for a UAE mobile number?</b><br>The order stays as it is. They get a secure link to add the number, and you get a note when they do.
+    <div class="bt"><span style="background:#D98A2B;color:#fff">Send email</span><span style="background:#F3ECE6;color:#5E545A">Cancel</span></div></div>
+  </div>
+  <div class="cap">The <b>⚠ Not a UAE mobile</b> tag shows automatically when the number isn't a UAE mobile (+971 5X…). The button is always there, so you can also use it when a UAE-looking number is wrong. One click, then confirm. The email goes out in the order's language (EN or AR).</div>
+ </div>
+ <div class="col">
+  <div class="adm" id="admin-after">
+   <div class="lbl">BILLING <a>Edit</a></div>
+   <div class="k" style="margin-top:12px">Phone</div>
+   <div class="ph"><a class="u">+20507272773</a><span class="tag">⚠ Not a UAE mobile</span><span class="sent">✓ UAE number requested · 20 Oct 13:52</span></div>
+   <div class="note">Order note: “UAE mobile number requested from the customer by email (English).”</div>
+   <div class="k" style="margin-top:22px">…after the customer replies through the link:</div>
+   <div class="ph"><a class="u">+971507272773</a><span class="sent">✓ Updated by customer · 20 Oct 14:05</span></div>
+   <div class="note">Order note: “Customer added UAE mobile +971 50 727 2773 (was +20507272773).” The old number stays in the note, so nothing is lost.</div>
+  </div>
+  <div class="cap">After sending, the button becomes a green “requested” stamp, so the team doesn't send it twice. You can still send it again (for example, a reminder the next day).</div>
+ </div>
+</div>
+
+<h2 class="sec">2 · The email the customer receives (English and Arabic)</h2>
+<div class="row">
+ <div class="col"><div class="mail" id="mail-en">
+  <div class="tagline">Authentic K-beauty, curated for you</div>
+  <div class="card">
+   <div class="mast"><div class="wm">K-Beauty<span>Bliss</span></div><div class="nav">Shop<i>•</i>Track order<i>•</i>My account</div></div>
+   <div class="bar"></div>
+   <div class="hero"><div class="ic">📱</div><div class="eb">One quick thing</div>
+    <div class="h1">We need your UAE mobile number</div>
+    <div class="p">Hi Moza, thank you for your order! It's ready to go, but the phone number on it isn't a UAE mobile number, so our courier can't call you on delivery day.</div></div>
+   <div class="box">
+    <div class="r"><span>Number on your order</span><span><span class="num strike">+20 507 272 773</span><br><span class="bad">Not a UAE mobile number</span></span></div>
+    <div class="r"><span>What we need</span><span><span class="num">05X XXX XXXX</span><br><span class="ok">A UAE mobile number</span></span></div>
+   </div>
+   <div class="cta"><a>Add my UAE number</a></div>
+   <div class="or">It takes ten seconds. Or simply reply to this email with your number.<br><a class="wa">WhatsApp us</a></div>
+   <div class="sum"><span>Order <b>#56272</b></span><span>2 items</span><span><b>AED 160</b> · Cash on delivery</span></div>
+   <div class="fine">We'll send your order out as soon as we have your number. Nothing else on your order changes.</div>
+  </div></div>
+  <div class="cap"><b>Subject:</b> Action needed: your UAE mobile number for order #56272<br><b>Preview line:</b> Our courier needs a UAE number to deliver your order.</div>
+ </div>
+ <div class="col"><div class="mail" id="mail-ar" dir="rtl" lang="ar">
+  <div class="tagline">منتجات كورية أصلية مختارة لكِ</div>
+  <div class="card">
+   <div class="mast"><div class="wm">كي بيوتي <span>بليس</span></div><div class="nav">تسوّق<i>•</i>تتبّع الطلب<i>•</i>حسابي</div></div>
+   <div class="bar"></div>
+   <div class="hero"><div class="ic">📱</div><div class="eb">خطوة صغيرة واحدة</div>
+    <div class="h1">نحتاج رقم جوالك الإماراتي</div>
+    <div class="p">مرحباً موزة، شكراً لطلبك! طلبك جاهز للتوصيل، لكن رقم الهاتف المسجّل ليس رقم جوال إماراتياً، لذلك لن يتمكن المندوب من الاتصال بك يوم التوصيل.</div></div>
+   <div class="box">
+    <div class="r"><span>الرقم المسجّل في طلبك</span><span><span class="num strike">+20 507 272 773</span><br><span class="bad">ليس رقم جوال إماراتي</span></span></div>
+    <div class="r"><span>المطلوب</span><span><span class="num">05X XXX XXXX</span><br><span class="ok">رقم جوال إماراتي</span></span></div>
+   </div>
+   <div class="cta"><a>إضافة رقمي الإماراتي</a></div>
+   <div class="or">يستغرق الأمر عشر ثوانٍ فقط. أو يمكنك الرد على هذه الرسالة برقمك.<br><a class="wa">راسلينا على واتساب</a></div>
+   <div class="sum"><span>الطلب <b class="num">#56272</b></span><span>منتجان</span><span><b>160 درهم</b> · الدفع عند الاستلام</span></div>
+   <div class="fine">سنرسل طلبك فور استلام رقمك. لن يتغيّر أي شيء آخر في طلبك.</div>
+  </div></div>
+  <div class="cap"><b>Subject:</b> مطلوب: رقم جوالك الإماراتي لطلبك رقم 56272<br>The real email uses your Arabic logo and RTL layout, the same as your other Arabic emails.</div>
+ </div>
+</div>
+
+<h2 class="sec">3 · Where “Add my UAE number” opens (one field, one button)</h2>
+<div class="row">
+ <div class="col"><div class="page" id="page-en">
+  <div class="eb">Order #56272</div><div class="t">Your UAE mobile number</div>
+  <div class="s">So our courier can call you when your order arrives.</div>
+  <div class="fld"><span>+971</span><div>50 727 2773</div></div>
+  <div class="hint">UAE mobile numbers start with 05 (or 5 after +971).</div>
+  <button class="save">Save my number</button>
+  <div class="done">✓ Thank you, Moza! We've added +971 50 727 2773 to your order. Your order will be on its way soon.</div>
+ </div><div class="cap">The link is private to this order (signed and expiring), shows only the order number and first name, and accepts only a valid UAE mobile number. After saving, it shows the green thank-you.</div></div>
+ <div class="col"><div class="page" id="page-ar" dir="rtl" lang="ar">
+  <div class="eb">الطلب #56272</div><div class="t">رقم جوالك الإماراتي</div>
+  <div class="s">ليتمكن المندوب من الاتصال بك عند وصول طلبك.</div>
+  <div class="fld"><span>+971</span><div>50 727 2773</div></div>
+  <div class="hint">تبدأ أرقام الجوال الإماراتية بـ 05 (أو 5 بعد ‎+971).</div>
+  <button class="save">حفظ رقمي</button>
+  <div class="done">✓ شكراً لك يا موزة! أضفنا الرقم <span class="num">+971 50 727 2773</span> إلى طلبك، وسيصلك طلبك قريباً.</div>
+ </div></div>
+</div>
+</div></body></html>
