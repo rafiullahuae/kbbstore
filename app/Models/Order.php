@@ -54,6 +54,10 @@ class Order extends Model
             'captured_total' => 'int',
             'completed_at' => 'datetime',
             'invoiced_at' => 'datetime',
+            // 2.60.562: "Ask for UAE number" -- when it was last emailed, and
+            // when the customer added the number on the signed page.
+            'phone_request_sent_at' => 'datetime',
+            'phone_updated_at' => 'datetime',
             'deleted_at' => 'datetime',
             'subtotal' => 'int',
             'discount_total' => 'int',

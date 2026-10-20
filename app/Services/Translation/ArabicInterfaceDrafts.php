@@ -166,6 +166,7 @@ final class ArabicInterfaceDrafts
             self::lanePnPushMessages(),
             self::laneAr2Wording(),
             self::laneAeCustomerLanguage(),
+            self::uaeNumberRequest(),
         ));
     }
 
@@ -445,6 +446,37 @@ final class ArabicInterfaceDrafts
      *
      * @return array<string, string>
      */
+    /** 2.60.562: the UAE number email and its "Update my number" page (owner-approved wording, Option H). */
+    private static function uaeNumberRequest(): array
+    {
+        return [
+            'email.phone_request.subject' => 'تحديث رقمك بضغطة واحدة ✨',
+            'email.phone_request.preheader' => 'رقم هاتفك الإماراتي غير موجود. أضفه بضغطة واحدة ليتمكن المندوب من الوصول إليك.',
+            'email.phone_request.eyebrow' => 'رقم هاتفك الإماراتي غير موجود',
+            'email.phone_request.heading' => 'تحديث رقمك بضغطة واحدة ✨',
+            'email.phone_request.body_foreign_named' => 'مرحباً :name، شكراً لطلبك! مندوبنا يتصل بالأرقام المحلية الإماراتية فقط، والرقم المسجّل في طلبك من دولة أخرى. يكفي الضغط على الزر أدناه لإضافة رقم جوالك الإماراتي، فالأمر لا يستغرق سوى لحظة.',
+            'email.phone_request.body_foreign_anon' => 'مرحباً، شكراً لطلبك! مندوبنا يتصل بالأرقام المحلية الإماراتية فقط، والرقم المسجّل في طلبك من دولة أخرى. يكفي الضغط على الزر أدناه لإضافة رقم جوالك الإماراتي، فالأمر لا يستغرق سوى لحظة.',
+            'email.phone_request.body_unreached_named' => 'مرحباً :name، شكراً لطلبك! مندوبنا يتصل بالأرقام المحلية الإماراتية فقط، ولم نتمكن من الوصول إليك على الرقم المسجّل في طلبك. يكفي الضغط على الزر أدناه لإضافة رقم جوالك الإماراتي، فالأمر لا يستغرق سوى لحظة.',
+            'email.phone_request.body_unreached_anon' => 'مرحباً، شكراً لطلبك! مندوبنا يتصل بالأرقام المحلية الإماراتية فقط، ولم نتمكن من الوصول إليك على الرقم المسجّل في طلبك. يكفي الضغط على الزر أدناه لإضافة رقم جوالك الإماراتي، فالأمر لا يستغرق سوى لحظة.',
+            'email.phone_request.row_have' => 'الرقم المسجّل في طلبك',
+            'email.phone_request.row_need' => 'الرقم الإماراتي المطلوب',
+            'email.phone_request.button' => 'تحديث رقمي',
+            'email.phone_request.note' => 'أو يمكنك الرد على هذه الرسالة برقمك. شكراً لك! 💕',
+            'store.order_phone.page_title' => 'رقم جوالك الإماراتي',
+            'store.order_phone.heading' => 'على أي رقم يتواصل معك المندوب؟',
+            'store.order_phone.lead' => 'شاركونا رقم جوال إماراتي وسنحرص على أن يصلك طلبك بكل سهولة. 💕',
+            'store.order_phone.order_label' => 'الطلب :number',
+            'store.order_phone.field_label' => 'رقم الجوال الإماراتي',
+            'store.order_phone.hint' => 'تبدأ أرقام الجوال الإماراتية بـ 05 (أو 5 بعد ‎+971).',
+            'store.order_phone.save' => 'حفظ رقمي',
+            'store.order_phone.invalid' => 'يرجى إدخال رقم جوال إماراتي، مثل 050 123 4567.',
+            'store.order_phone.done_named' => 'شكراً لك يا :name! أضفنا الرقم :phone إلى طلبك، وسيصلك طلبك قريباً.',
+            'store.order_phone.done' => 'شكراً لك! أضفنا الرقم :phone إلى طلبك، وسيصلك طلبك قريباً.',
+            'store.order_phone.closed' => 'لم يعد بالإمكان تعديل هذا الطلب من هنا. راسلنا عبر واتساب وسنسعد بمساعدتك.',
+            'store.order_phone.not_found' => 'انتهت صلاحية هذا الرابط أو أنه غير صالح. راسلنا عبر واتساب برقم طلبك وسنسعد بمساعدتك.',
+        ];
+    }
+
     private static function laneRlOrderEmails(): array
     {
         return [

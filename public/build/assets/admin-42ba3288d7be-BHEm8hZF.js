@@ -4,8 +4,8 @@
 
   var SCREEN = 'firewall';
   var TABS = [['overview', 'Overview'], ['live', 'Live activity'], ['rules', 'Rules'], ['countries', 'Countries'],
-              ['bots', 'Good bots'], ['lists', 'Allow & block lists'], ['data', 'Data']];
-  var data = null, live = null, blocks = null, values = {}, rules = {}, bots = {};
+              ['clouds', 'Cloud networks'], ['bots', 'Good bots'], ['lists', 'Allow & block lists'], ['data', 'Data']];
+  var data = null, live = null, blocks = null, values = {}, rules = {}, bots = {}, clouds = {};
   var banner = null, busy = false, seq = 0, tab = 'overview', query = '', filter = 'rule';
 
   function cookie(n) {
@@ -118,10 +118,11 @@
 
   function take(body) {
     data = body;
-    values = {}; rules = {}; bots = {};
+    values = {}; rules = {}; bots = {}; clouds = {};
     body.fields.forEach(function (f) { values[f.key] = f.value; });
     body.countries.forEach(function (c) { rules[c.code] = c.action; });
     body.bots.forEach(function (b) { bots[b.family] = b.on; });
+    (body.clouds || []).forEach(function (c) { clouds[c.key] = c.action; });
   }
 
   /* The two tabs whose data is fetched only when they are opened. */
@@ -163,6 +164,16 @@
   };
   var SHORT = { flood: 'flood ban', banned: 'while banned', no_proof: 'posted without a page', fake_bot: 'fake bot', country: 'country blocked', watch: 'watched' };
   var DIS = function () { return busy ? ' disabled' : ''; };
+
+  /* A reason in a few words; a cloud refusal ("net_<key>") names its provider. */
+  function short(r) {
+    if (SHORT[r]) return SHORT[r];
+    if (String(r).indexOf('net_') === 0) {
+      var hit = (data.clouds || []).filter(function (c) { return 'net_' + c.key === r; })[0];
+      return 'cloud: ' + (hit ? hit.label : String(r).slice(4));
+    }
+    return r;
+  }
 
   function field(key) {
     var fl = null;
@@ -251,7 +262,7 @@
     });
     var ips = list(lv.ips, 'No address yet.', function (i) {
       return '<div class="fwl-li"><span><b>' + esc(i.ip) + '</b>' + (i.country ? ' <span class="pill grey">' + esc(i.country) + '</span>' : '')
-        + '<small>' + esc(i.reasons.map(function (r) { return SHORT[r] || r; }).join(', ')) + '</small></span><span class="fwl-n">' + esc(i.hits) + '</span></div>';
+        + '<small>' + esc(i.reasons.map(short).join(', ')) + '</small></span><span class="fwl-n">' + esc(i.hits) + '</span></div>';
     });
     var nets = list(lv.nets, 'No range yet.', function (n) {
       return '<div class="fwl-li"><span>' + esc(n.net) + '</span><span class="fwl-n">' + esc(n.hits) + '</span></div>';
@@ -313,6 +324,28 @@
       body, 'countries');
   }
 
+  function cloudsTab() {
+    var scope = values.scope === 'site' ? 'every shop page' : 'the cart, the checkout and every form';
+    var on = 0;
+    var rows = (data.clouds || []).map(function (c) {
+      var block = clouds[c.key] === 'block';
+      if (block) on++;
+      var count = c.ranges ? c.ranges + ' ranges' + (c.v6 ? ' (' + c.v4 + ' IPv4, ' + c.v6 + ' IPv6)' : '') : 'no ranges in the list';
+      return '<div class="pref"><div class="pl"><b>' + esc(c.label) + '</b> <span class="pill ' + (block ? 'red' : 'grey') + '">' + (block ? 'Block' : 'Allow') + '</span>'
+        + '<small>' + esc(count + ' · ' + c.asns.join(', ')) + '</small><small>' + esc(c.who) + '</small></div>'
+        + '<div class="tog' + (block ? ' on' : '') + '" role="switch" tabindex="0" aria-checked="' + (block ? 'true' : 'false') + '"'
+        + ' aria-label="Block ' + esc(c.label) + '" data-fwl-cloud="' + esc(c.key) + '"></div></div>';
+    }).join('');
+
+    return section('Cloud networks', '<b>Block</b> refuses every visit from that company\'s data centres, exactly like a country on Block: '
+        + '<b>' + esc(scope) + '</b> (the scope under Rules → What a ban blocks), with the same refusal page, reference <b>FN</b>, logged in Live activity as "Cloud network (…)". '
+        + '<b>Never refused</b>, whatever is switched on: Google, Bing and the other verified search engines and link previews, your Always-allow list, '
+        + 'the admin, payment webhooks and customers returning from a payment. <b>Allow</b> treats them like any visitor. A change applies on the next request. '
+        + 'While the firewall is on Monitor, nothing is refused and blocked networks are only logged.',
+        rows + '<p class="sx-help" style="margin-top:12px">' + esc(on) + ' of ' + esc((data.clouds || []).length) + ' on Block. ' + esc(data.clouds_not_offered || '') + '</p>',
+        'clouds');
+  }
+
   function botsTab() {
     var rows = data.bots.map(function (x) {
       var how = x.method === 'none' ? 'Cannot be verified: the company publishes no method. A link preview is let through on its own.'
@@ -372,8 +405,22 @@
             return '<div class="fwl-li"><span>' + esc(x.label) + '</span><span class="fwl-n">' + (x.ranges ? esc(x.ranges) + ' ranges' : 'not downloaded') + '</span></div>';
           })
           + '<div class="fwl-actions"><button type="button" class="btn ghost sm" data-fwl-data="bots"' + DIS() + '>Refresh bot lists</button></div>')
+      + cloudData()
       + section('Where counts are kept', 'Per-address counts live in a fixed 4 MB table on this server\'s disk, never in the database; the 24-hour log is written in batches.',
           '<p class="sx-help">Log store: <b>' + esc(data.store.logs) + '</b> · shop cache: <b>' + esc(data.store.shop) + '</b></p>');
+  }
+
+  function cloudData() {
+    var cl = data.data.clouds;
+    if (!cl) return '';
+    var from = cl.from === 'downloaded' ? 'Downloaded' : (cl.from === 'bundled' ? 'Copy shipped with the shop' : 'Missing');
+    return section('Cloud network lists', 'The address ranges each cloud company announces, per network (ASN), from ipverse/asn-ip with RIPEstat as the fallback. Refreshed weekly when the server runs scheduled tasks; a failed download keeps the previous list.',
+      '<p class="sx-help" style="margin-bottom:8px"><span class="pill ' + (cl.ok ? 'green' : 'amber') + '"><span class="d"></span>' + esc(from) + '</span> <b>' + esc(cl.total) + '</b> ranges'
+        + (cl.at ? ', built ' + esc(String(cl.at).replace('T', ' ').slice(0, 16)) : '') + (cl.ok ? ', checksum verified.' : ' — ' + esc(cl.error)) + '</p>'
+      + list(cl.providers, 'No list.', function (x) {
+          return '<div class="fwl-li"><span>' + esc(x.label) + '</span><span class="fwl-n">' + esc(x.ranges) + ' ranges</span></div>';
+        })
+      + '<div class="fwl-actions"><button type="button" class="btn ghost sm" data-fwl-data="clouds"' + DIS() + '>Refresh cloud lists</button></div>');
   }
 
   function render() {
@@ -390,7 +437,7 @@
       return '<button type="button" class="subtab' + (t[0] === tab ? ' on' : '') + '" role="tab" aria-selected="' + (t[0] === tab ? 'true' : 'false')
         + '" data-fwl-tab="' + t[0] + '">' + esc(t[1]) + '</button>';
     }).join('') + '</div>';
-    var body = { overview: overviewTab, live: liveTab, rules: rulesTab, countries: countriesTab, bots: botsTab, lists: listsTab, data: dataTab }[tab] || overviewTab;
+    var body = { overview: overviewTab, live: liveTab, rules: rulesTab, countries: countriesTab, clouds: cloudsTab, bots: botsTab, lists: listsTab, data: dataTab }[tab] || overviewTab;
 
     host.innerHTML = '<div class="fwl" data-fwl-screen="' + esc(tab) + '">' + strip
       + (banner ? '<div class="fwl-err">' + esc(banner) + '</div>' : '')
@@ -435,9 +482,21 @@
     el.setAttribute('aria-checked', bots[fam] ? 'true' : 'false');
   }
 
+  function toggleCloud(el) {
+    var key = el.getAttribute('data-fwl-cloud');
+    clouds[key] = clouds[key] === 'block' ? 'allow' : 'block';
+    render();
+  }
+
   document.addEventListener('keydown', function (e) {
     var el = e.target && e.target.closest ? e.target.closest('[data-fwl-bot]') : null;
     if (el && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); toggleBot(el); }
+    var cl = e.target && e.target.closest ? e.target.closest('[data-fwl-cloud]') : null;
+    if (cl && (e.key === ' ' || e.key === 'Enter')) {
+      e.preventDefault(); toggleCloud(cl);
+      var again = document.querySelector('[data-fwl-cloud="' + cl.getAttribute('data-fwl-cloud') + '"]');
+      if (again) again.focus();
+    }
   });
 
   document.addEventListener('click', function (e) {
@@ -448,6 +507,7 @@
     if (t.closest('[data-fwl-reload]')) { load(); return; }
     if (!data) return;
     if ((el = t.closest('[data-fwl-bot]'))) { toggleBot(el); return; }
+    if ((el = t.closest('[data-fwl-cloud]'))) { toggleCloud(el); return; }
     if ((el = t.closest('[data-fwl-mode]'))) {
       var mode = el.getAttribute('data-fwl-mode');
       if (mode === values.mode) return;
@@ -464,6 +524,11 @@
         data.countries.forEach(function (c) { if (rules[c.code] !== c.action) changed[c.code] = rules[c.code]; });
         if (!Object.keys(changed).length) { say('Nothing changed.'); return; }
         act(function () { return api('/countries', { rules: changed }); }, function (b) { data.countries = b.countries; say(b.changed + ' saved.'); }, 'Not saved.');
+      } else if (which === 'clouds') {
+        var moved = {};
+        (data.clouds || []).forEach(function (c) { if (clouds[c.key] !== c.action) moved[c.key] = clouds[c.key]; });
+        if (!Object.keys(moved).length) { say('Nothing changed.'); return; }
+        act(function () { return api('/clouds', { clouds: moved }); }, function (b) { data.clouds = b.clouds; say('Saved.'); }, 'Not saved.');
       } else if (which === 'bots') {
         act(function () { return api('/bots', { bots: bots }); }, function (b) { data.bots = b.bots; say('Saved.'); }, 'Not saved.');
       } else if (SAVES[which]) {
@@ -503,7 +568,8 @@
     }
     if ((el = t.closest('[data-fwl-data]'))) {
       var what = el.getAttribute('data-fwl-data');
-      say(what === 'countries' ? 'Downloading the country database — this takes up to a minute.' : 'Downloading the published bot lists…');
+      say(what === 'countries' ? 'Downloading the country database — this takes up to a minute.'
+        : (what === 'clouds' ? 'Downloading the cloud network lists…' : 'Downloading the published bot lists…'));
       act(function () { return api('/data', { what: what }); }, function () { say('Done.'); }, 'The download did not finish.').then(load);
       return;
     }

@@ -312,6 +312,20 @@ final class KitSections
                 'preheader' => 'email.kit.invoice_lead',
             ],
         ],
+        // 2.60.562: "Ask for UAE number" on the order screen.
+        'order_phone_request' => [
+            'name' => 'UAE number request', 'header' => true,
+            'sections' => [
+                'hero' => ['"Number is missing" line + headline', true], 'chip' => ['Order number box', true],
+                'before' => ['Number on the order · UAE number needed', true], 'button' => ['Button · Update my number', true],
+                'help' => ['Help box (WhatsApp · email · Instagram)', true], 'signoff' => ['Signature', true],
+            ],
+            'words' => [
+                'subject' => 'email.phone_request.subject',
+                'preheader' => 'email.phone_request.preheader',
+                'heading' => 'email.phone_request.heading',
+            ],
+        ],
         'new_order_alert' => [
             'name' => 'New order alert', 'header' => false,
             'sections' => [

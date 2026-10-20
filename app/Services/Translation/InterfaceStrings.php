@@ -2074,6 +2074,19 @@ final class InterfaceStrings
     {
         return [
             // Lane RL — "Complete your order", the page the reminder emails open.
+            // 2.60.562 — "Update my number", the page the UAE number email opens.
+            'order_phone.page_title' => 'Your UAE mobile number',
+            'order_phone.heading' => 'Where can our courier reach you?',
+            'order_phone.lead' => 'Share a UAE mobile number and we\'ll make sure your order finds you. 💕',
+            'order_phone.order_label' => 'Order :number',
+            'order_phone.field_label' => 'UAE mobile number',
+            'order_phone.hint' => 'UAE mobile numbers start with 05 (or 5 after +971).',
+            'order_phone.save' => 'Save my number',
+            'order_phone.invalid' => 'Please enter a UAE mobile number, for example 050 123 4567.',
+            'order_phone.done_named' => 'Thank you, :name! We\'ve added :phone to your order. Your order will be on its way soon.',
+            'order_phone.done' => 'Thank you! We\'ve added :phone to your order. Your order will be on its way soon.',
+            'order_phone.closed' => 'This order can\'t be changed here any more. Message us on WhatsApp and we\'ll gladly help.',
+            'order_phone.not_found' => 'This link has expired or is not valid. Message us on WhatsApp with your order number and we\'ll gladly help.',
             'order_pay.page_title' => 'Complete your order',
             'order_pay.heading' => 'Complete your order',
             'order_pay.lead' => 'Order :number is saved but not paid yet. Choose how to pay and you are done.',
@@ -2678,6 +2691,19 @@ final class InterfaceStrings
             'paylink.heading' => 'Your order is saved for you 🛍️',
             'paylink.body' => 'Order :number is waiting for you with everything still in it. Choose how you would like to pay and we will get it on its way.',
             'paylink.closing' => 'Questions? Reply to this email or message us on WhatsApp — a real person will help.',
+            // 2.60.562: "Ask for UAE number" -> Email, sent by hand from the order screen.
+            'phone_request.subject' => 'Update your number in one tap ✨',
+            'phone_request.preheader' => 'Your UAE phone number is missing. Add it in one tap so our courier can reach you.',
+            'phone_request.eyebrow' => 'Your UAE phone number is missing',
+            'phone_request.heading' => 'Update your number in one tap ✨',
+            'phone_request.body_foreign_named' => 'Hi :name, thank you for your order! Our courier calls UAE local numbers only, and the one on your order is from another country. Tap below to add your UAE mobile number. It takes just a moment.',
+            'phone_request.body_foreign_anon' => 'Hi, thank you for your order! Our courier calls UAE local numbers only, and the one on your order is from another country. Tap below to add your UAE mobile number. It takes just a moment.',
+            'phone_request.body_unreached_named' => 'Hi :name, thank you for your order! Our courier calls UAE local numbers only, and we couldn\'t reach you on the number on your order. Tap below to add your UAE mobile number. It takes just a moment.',
+            'phone_request.body_unreached_anon' => 'Hi, thank you for your order! Our courier calls UAE local numbers only, and we couldn\'t reach you on the number on your order. Tap below to add your UAE mobile number. It takes just a moment.',
+            'phone_request.row_have' => 'Number on your order',
+            'phone_request.row_need' => 'UAE number needed',
+            'phone_request.button' => 'Update my number',
+            'phone_request.note' => 'Or reply to this email with your number. Thank you! 💕',
 
             /*
              * THE REST OF THE DISPATCH BODY. bodyFor() picks one of three by

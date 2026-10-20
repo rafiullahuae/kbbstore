@@ -405,6 +405,12 @@ class AdminOrderController extends Controller
                 'can' => self::may('orders.paylink'),
                 'can_settings' => self::may('orders.paylink.settings'),
             ],
+            // 2.60.562: "Ask for UAE number" beside the phone -- when it was last
+            // sent, and whether the phone is a UAE mobile already. Its ability
+            // rides here, not in `can`, which is pinned whole.
+            'phone_request' => \App\Http\Controllers\Admin\OrderPhoneRequestController::panel($order) + [
+                'can' => self::may('orders.phonereq'),
+            ],
             // (Lane TM) what the shopper did before paying, and every email sent
             // for the order. One query each; see the two classes.
             'customer_journey' => \App\Support\CustomerJourney::for($order),

@@ -15345,6 +15345,64 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     return [a.company, a.line1, a.line2, place, a.postcode, country].filter(Boolean).map(sesc).join('<br>');
   }
 
+  /*
+   * 2.60.562: Billing -> Phone -> "Ask for UAE number". The owner: "add button
+   * beside the phone number, it is for such order if we found incorrect number
+   * or another country number ... i want it auto upon just 1 click", and "the
+   * system will also show that the missing contact number email is already
+   * sent, with date and time ... so i can be sure by not sending the emails
+   * twice". Drawn from the detail payload (o.phone_request); the one request
+   * is the send itself. The server refuses a repeat that does not say so, and
+   * any send within ten minutes of the last.
+   */
+  function odPhoneReq(o){
+    var pr = o.phone_request;
+    if(!pr || !pr.can) return '';
+    var chip = 'display:inline-flex;align-items:center;gap:4px;margin:6px 6px 0 0;border-radius:7px;padding:3px 8px;font-size:11.5px;font-weight:600;';
+    var h = '<div id="odPhoneReq" style="margin-top:2px">';
+    if(!pr.uae) h += '<span style="'+chip+'color:#B4472B;background:#FDEDE7">&#9888; Not a UAE mobile</span>';
+    if(pr.sent_label) h += '<span style="'+chip+'color:#2E7D4F;background:#E9F6EE">&#10003; UAE number email sent · '+sesc(pr.sent_label)+'</span>';
+    if(pr.updated_label) h += '<span style="'+chip+'color:#2E7D4F;background:#E9F6EE">&#10003; Updated by customer · '+sesc(pr.updated_label)+'</span>';
+    h += '<div style="margin-top:6px">';
+    h += pr.has_email
+      ? (pr.sent_label
+          ? '<button type="button" class="odlinkbtn" id="odPhoneReqGo" data-again="1">Send a reminder</button>'
+          : '<button type="button" id="odPhoneReqGo" style="font:inherit;font-size:12.5px;font-weight:600;color:#fff;background:#D98A2B;border:0;border-radius:9px;padding:6px 12px;cursor:pointer">&#9993; Ask for UAE number</button>')
+      : '<span style="font-size:11.5px;color:var(--ink-faint)">No email on this order to ask for a UAE number.</span>';
+    h += '</div><div id="odPhoneReqAsk" hidden style="margin-top:8px;border:1px solid #EFE2D2;background:#FFFBF6;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5"></div></div>';
+    return h;
+  }
+
+  function odPhoneReqWire(o){
+    var go = document.getElementById('odPhoneReqGo'), ask = document.getElementById('odPhoneReqAsk');
+    if(!go || !ask) return;
+    var pr = o.phone_request || {};
+    go.onclick = function(){
+      var again = go.dataset.again === '1';
+      ask.innerHTML = (again
+          ? '<b>Already sent on '+sesc(pr.sent_label)+'.</b><br>Send a reminder to '+sesc(o.email)+'?'
+          : '<b>Email '+sesc(o.email)+' asking for a UAE mobile number?</b><br>They get a secure link to add it, and this order updates when they do.')+
+        '<div style="display:flex;gap:8px;margin-top:8px"><button type="button" id="odPhoneReqSend" style="font:inherit;font-size:12.5px;font-weight:600;color:#fff;background:#D98A2B;border:0;border-radius:9px;padding:6px 12px;cursor:pointer">'+(again ? 'Send reminder' : 'Send email')+'</button>'+
+        '<button type="button" class="odlinkbtn" id="odPhoneReqNo">Cancel</button></div>';
+      ask.hidden = false;
+      document.getElementById('odPhoneReqNo').onclick = function(){ ask.hidden = true; ask.innerHTML = ''; };
+      var send = document.getElementById('odPhoneReqSend');
+      send.onclick = async function(){
+        send.disabled = true; send.textContent = 'Sending…';
+        var msg, ok = false;
+        try{
+          var d = await api('/admin-api/orders/'+o.id+'/phone-request', {method:'POST', body: JSON.stringify({again: again})});
+          ok = !!(d && d.ok); msg = (d && d.message) || 'Sent.';
+        }catch(e){
+          msg = (e.body && e.body.message) || 'Could not send. Check the connection and try again.';
+        }
+        toast(sesc(msg), ok ? '' : 'bad');
+        // Still on this order? A late answer must not paint over another screen.
+        if(document.getElementById('odPhoneReq')) renderOrderDetail(o.id);
+      };
+    };
+  }
+
   function odOverviewAddressesCard(o){
     var c = o.customer||{};
     var b = o.billing_address||{}, s = o.shipping_address||{};
@@ -15378,7 +15436,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
         '<div class="odcollabel">BILLING '+editBtn('billing')+'</div>'+
         '<div class="odaddr"><span class="odname">'+sesc(odAddrName(b)||c.name||'')+'</span><br>'+(odAddrLines(b, countries)||'—')+'</div>'+
         '<div class="odfld" style="margin-top:14px;margin-bottom:0"><label>Email address</label>'+(o.email?'<a href="mailto:'+sesc(o.email)+'" style="font-size:11.5px">'+sesc(o.email)+'</a>':'—')+'</div>'+
-        '<div class="odfld" style="margin-top:10px;margin-bottom:0"><label>Phone</label>'+(o.phone?'<a href="tel:'+sesc(o.phone)+'" style="font-size:11.5px">'+sesc(o.phone)+'</a>':'—')+'</div>'+
+        '<div class="odfld" style="margin-top:10px;margin-bottom:0"><label>Phone</label>'+(o.phone?'<a href="tel:'+sesc(o.phone)+'" style="font-size:11.5px">'+sesc(o.phone)+'</a>':'—')+odPhoneReq(o)+'</div>'+
       '</div>'+
       '<div class="odcolcell">'+
         '<div class="odcollabel">SHIPPING '+editBtn('shipping')+'</div>'+
@@ -15823,6 +15881,9 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     document.querySelectorAll('#content [data-odcopy]').forEach(function(b){
       b.onclick = function(){ odCopy(b.dataset.odcopy, b); };
     });
+
+    // 2.60.562: Billing -> Phone -> "Ask for UAE number".
+    odPhoneReqWire(o);
 
     // (Lane OL) "Send order link".
     var payLinkGo = document.getElementById('odPayLinkGo');

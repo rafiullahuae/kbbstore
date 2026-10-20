@@ -64,6 +64,7 @@ final class KitSamples
             $template === 'order_feedback' => new OrderFeedbackRequest($order),
             $template === 'review_request' => new \App\Mail\ReviewRequestMail($order),
             $template === 'order_invoice' => new OrderInvoice($order),
+            $template === 'order_phone_request' => new \App\Mail\OrderPhoneRequest($order),
             $template === 'new_order_alert' => new NewOrderAlert($order),
             $template === 'back_in_stock' => self::stock($url),
             $template === 'cart_recovery' => self::cart($url),

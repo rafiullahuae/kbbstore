@@ -26,6 +26,8 @@
                     @kitsec; a switch the owner set wins over the $kitShow*
                     default through KitSections::on()
       $kitPromises  bool (default false): the three promises under the total
+      $kitHeroView  null, or another hero partial taking the same five values
+                    (emails.kit.hero-pill: the eyebrow as a soft pill, not capitals)
     and may fill @section('kit_before'), ('kit_mid'), ('kit_after').
 --}}
 @extends('emails.kit.doc')
@@ -39,7 +41,7 @@
 @include('emails.kit.card-open')
 @include('emails.kit.header')
 @kitsec('hero')
-@include('emails.kit.hero', ['icon' => $kitHero[0], 'tone' => $kitHero[1], 'eyebrow' => $kitHero[2], 'title' => $kitHero[3], 'lead' => $kitHero[4]])
+@include($kitHeroView ?? 'emails.kit.hero', ['icon' => $kitHero[0], 'tone' => $kitHero[1], 'eyebrow' => $kitHero[2], 'title' => $kitHero[3], 'lead' => $kitHero[4]])
 @endkitsec
 @kitsec('tracker')
 @if (($kitTracker ?? null) !== null && \App\Services\Mail\Kit\KitSections::on($kitTemplate ?? null, 'tracker', true))

@@ -206,6 +206,7 @@ Route::post('/checkout/place',  [\App\Http\Controllers\Store\CheckoutController:
 Route::get('/checkout/success', [\App\Http\Controllers\Store\CheckoutController::class, 'success'])->name('checkout.success');
 require __DIR__.'/checkout-return.php';
 require __DIR__.'/order-pay.php';   // "Complete your order" from the reminder and payment-failed emails (Lane RL)
+require __DIR__.'/order-phone.php';   // "Update my number" from the UAE number email (2.60.562)
 Route::get('/skin-quiz',   [PageController::class, 'skinQuiz'])->name('skin-quiz');
 Route::get('/reviews',     [PageController::class, 'reviewWall'])->name('review-wall');
 
@@ -631,6 +632,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/orders-admin.php';
         require __DIR__.'/order-detail-admin.php';
         require __DIR__.'/order-pay-link-admin.php';   // Store -> Orders -> (order) -> Send order link (Lane OL)
+        require __DIR__.'/order-phone-request-admin.php';   // Store -> Orders -> (order) -> Billing -> Phone -> Ask for UAE number (2.60.562)
 
         // Store → New Order: creating an order on a customer's behalf for the
         // WhatsApp and Instagram orders that never touch the website. Paths are

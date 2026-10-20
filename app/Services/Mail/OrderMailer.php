@@ -510,6 +510,41 @@ class OrderMailer
     }
 
     /**
+     * "Ask for UAE number", pressed beside the phone on the order screen
+     * (2.60.562). REPORTS, like payLink(): a person pressed it and reads the
+     * answer. No module switch, for the same reason -- it only happens because
+     * somebody asked, for one order, now. In the ORDER's language; the signed
+     * link is built inside that render (OrderPhoneRequest's constructor).
+     *
+     * @return array{ok: bool, message: string}
+     */
+    public function phoneRequest(Order $order): array
+    {
+        if ($this->isSample($order)) {
+            return $this->sampleRefusal();
+        }
+
+        $to = trim((string) $order->email);
+
+        if ($to === '' || ! str_contains($to, '@')) {
+            return ['ok' => false, 'message' => 'This order has no email address on it.'];
+        }
+
+        $deferring = self::$deferring;
+        self::$deferring = false;
+
+        try {
+            $sent = $this->send(static fn () => new \App\Mail\OrderPhoneRequest($order), $to, $order, 'phone_request');
+        } finally {
+            self::$deferring = $deferring;
+        }
+
+        return $sent
+            ? ['ok' => true, 'message' => 'UAE number request emailed to ' . $to . '.']
+            : ['ok' => false, 'message' => 'The email could not be sent. Store → Emails → Sent mail has the reason.'];
+    }
+
+    /**
      * "Send on-hold email", pressed on the order screen — Lane RL.
      *
      * The owner keeps the on-hold email OFF and sends it by hand, so this does

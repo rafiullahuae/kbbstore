@@ -193,6 +193,13 @@ final class AdminCapabilities
         'orders.paylink' => ['owner', 'manager', 'support'],
         'orders.paylink.settings' => ['owner', 'manager'],
         /*
+         * 2.60.562: "Ask for UAE number" beside the phone on an order -- one
+         * email to that order's customer asking for a UAE mobile for the
+         * courier. Support keeps it: it moves no money and changes nothing on
+         * the order but the time it was sent.
+         */
+        'orders.phonereq' => ['owner', 'manager', 'support'],
+        /*
          * Safety -> Demo Content -> Sample order. OWNER ALONE, and a line of
          * its own rather than a reuse of `data.import` beside the rest of Demo
          * Content, because this is the only endpoint in the back office that
@@ -1387,6 +1394,7 @@ final class AdminCapabilities
         ['PUT', 'admin-api/orders/*/address', 'orders.edit'],
         ['POST', 'admin-api/orders/*/mark-paid', 'orders.payment'],
         ['POST', 'admin-api/orders/*/pay-link', 'orders.paylink'],
+        ['POST', 'admin-api/orders/*/phone-request', 'orders.phonereq'],
         ['*', 'admin-api/order-pay-link-settings', 'orders.paylink.settings'],
         ['PUT', 'admin-api/orders/*/customer', 'orders.customer'],
         ['GET', 'admin-api/order-customer-search', 'orders.customer'],

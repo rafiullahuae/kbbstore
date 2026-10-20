@@ -118,6 +118,7 @@ final class OrderEmails
             $k === 'refund' => 'Refund',
             $k === 'status_onhold' => 'On-hold email',
             $k === 'paylink' => 'Order link (sent from the order screen)',
+            $k === 'phone_request' => 'UAE number request (sent from the order screen)',
             str_starts_with($k, 'reminder_') => 'Payment reminder (' . str_replace('_', ' ', substr($k, 9)) . ')',
             str_starts_with($k, 'status_') => 'Status email: ' . ucfirst(str_replace('_', ' ', substr($k, 7))),
             $k === 'cart.recovery' => 'Basket reminder',

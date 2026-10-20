@@ -39,7 +39,12 @@ final class OrderLinks
 
     public const PAY = 'order.pay';
 
+    /** "Update my number" in the UAE number email (2.60.562): add a UAE mobile to the order. */
+    public const PHONE = 'order.phone';
+
     public const TRACK_TTL = 30 * 86400;
+
+    public const PHONE_TTL = 14 * 86400;
 
     public const PAY_TTL = 7 * 86400;
 
@@ -62,6 +67,14 @@ final class OrderLinks
         return Url::external('/checkout/order-pay') . '?' . http_build_query([
             'order' => (string) $order->order_number,
             't' => self::token(self::PAY, $order, $ttl ?? self::PAY_TTL),
+        ]);
+    }
+
+    public static function phoneUrl(Order $order): string
+    {
+        return Url::external('/order-phone') . '?' . http_build_query([
+            'order' => (string) $order->order_number,
+            't' => self::token(self::PHONE, $order, self::PHONE_TTL),
         ]);
     }
 

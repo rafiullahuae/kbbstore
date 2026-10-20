@@ -69,6 +69,7 @@ final class CustomerEmails
         ['Orders — to the customer', 'order_refunded', 'Refund sent', 'Follows the money, not the <code>refunded</code> word', 'A refund is sent (full or part)', 'switch', 'email_order_refunded', ['order.refund']],
         ['Orders — to the customer', 'order_status_refunded', 'Order marked refunded', 'Status <code>refunded</code>, set by hand', 'Status → Refunded, with no refund made on the order screen', 'switch', 'email_order_marked_refunded', ['order.status_refunded']],
         ['Orders — to the customer', 'order_status_failed', 'Payment failed', 'NEW · status <code>failed</code>', 'Status → Failed', 'switch', 'email_order_failed', ['order.status_failed']],
+        ['Orders — to the customer', 'order_phone_request', 'UAE number request', 'NEW · asks for a UAE local mobile number for the courier', '“Ask for UAE number” button beside the phone on the order', 'manual', null, ['order.phone_request']],
         ['Orders — to the customer', 'order_invoice', 'Invoice', 'The invoice is the email itself', '“Email invoice” button on the order', 'manual', null, ['order.invoice']],
         ['To you', 'new_order_alert', 'New order alert', '', 'Order paid, or placed with cash on delivery', 'switch', 'email_merchant_new_order', ['order.merchant_alert']],
         ['To you', 'new_order_alert', 'Payment not received', '', 'Order still unpaid 30 minutes after it was placed (card, Tabby, Tamara)', 'switch', 'email_merchant_unpaid', ['order.merchant_unpaid']],
