@@ -64,10 +64,12 @@
 .sbc-off{color:var(--sbc-red)}
 .sbc-cp{position:absolute;inset-inline-end:12px;bottom:12px;width:36px;height:36px;border-radius:2px;background:var(--sbc-pk);color:#fff;display:grid;place-items:center;text-decoration:none}
 .sbc-cp:hover{background:var(--sbc-deep);color:#fff}
+.kbb-home .sbc-cp,.kbb-home .sbc-cp:hover,.kbb-home .sbc-cp:visited{color:#fff}
 .sbc-cp svg{width:20px;height:20px}
 .sbc-cp[disabled]{opacity:.6}
 .sbc-dots{display:none}
 @media (hover:hover){.sbc-tab:not([aria-selected="true"]):hover{border-color:var(--sbc-pk);color:var(--sbc-ink)}}
+@media (min-width:901px){.sbc-rail{align-content:stretch;grid-auto-rows:1fr}}
 @media (max-width:900px){
  .kbb-home .sec.sbc{padding-block:28px 30px;--sbc-bleed:clamp(18px,2vw,28px)}
  .sbc-head h2{font-size:23px}
