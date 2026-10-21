@@ -2233,7 +2233,7 @@ class Seo
                      * their Brand node: a Brand is not a Product snippet.
                      *
                      * Mutation: give this branch back an `item` of @type
-                     * Product and ListingProductSnippetTest goes red.
+                     * Product and ProductReviewSnippetTest goes red.
                      */
                     if ($rowType === 'Product') {
                         if ($itemUrl === null || $itemUrl === '') {
