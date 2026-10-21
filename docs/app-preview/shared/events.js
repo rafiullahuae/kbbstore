@@ -103,7 +103,7 @@ function readHash(){
   if ('ABC'.includes(q.get('d') || 'x')) S.design = q.get('d'); else S.design = 'A';
   if (AR) S.digits = q.get('dg') === 'arab' ? 'arab' : 'latn';
   S.embed = q.get('embed') === '1';
-  S.bb = BB.includes(q.get('bb') || '') ? q.get('bb') : S.embed ? 'A' : pref.get('bb', 'A', v => BB.includes(v));
+  S.bb = BB.includes(q.get('bb') || '') ? q.get('bb') : S.embed ? 'D' : pref.get('bb', 'D', v => BB.includes(v));
   S.tm = q.get('tm') === 'bar' || q.get('tm') === 'site' ? q.get('tm') : S.embed ? 'site' : pref.get('tm', 'site', v => v === 'site' || v === 'bar');
   S.menu = q.get('menu') === '1'; S.mega = q.get('menu') && /^m\d+$/.test(q.get('menu')) ? +q.get('menu').slice(1) : null; S.mmNode = null; S.mmQ = '';
   S.zoom = q.get('z') === '100' ? '100' : 'fit';
@@ -355,6 +355,7 @@ document.addEventListener('input', e => {
   if (el.id === 'q') { S.q = el.value; const box = $('#sres'); if (box) box.innerHTML = searchResults({cls:sizeClass(dev().w)}); const c = el.parentElement.querySelector('.clr'); if (c) c.outerHTML = S.q ? `<button class="ib clr" data-act="q" data-v="" aria-label="${t('Clear search')}">${ico('close')}</button>` : `<button class="ib clr" ${go$('/scan')} aria-label="${t('Scan barcode')}">${ico('scan')}</button>`; return; }
   if (el.classList && el.classList.contains('id-mmFilter')) { S.mmQ = el.value; mmFilter(el.closest('.kh')); return; }
   if (el.id === 'bq') { S.brandQ = el.value; const b = $('#blist'); if (b) b.innerHTML = brandList(); return; }
+  if (el.id === 'cq') { S.catQ = el.value; const b = $('#clist'); if (b) b.innerHTML = catList(); return; }
   if (el.id === 'aq') { S.areaQ = el.value; const b = $('#alist'); if (b) { const q = el.value.trim().toLowerCase(); b.innerHTML = areaRows(areasOf(fval('addr', 'emirate')).filter(a => !q || t(a[1]).toLowerCase().includes(q) || a[1].toLowerCase().includes(q)), fval('addr', 'area')); } }
 });
 /* leaving a field judges it (only once something was typed: an empty field is
@@ -449,7 +450,7 @@ window.APV = {
   jump:() => JUMP.map(j => ({id:j.id, g:j.g, label:j.label, title:t(j.label, {v:money(54)}), path:j.path, ctl:j.ctl || null, designs:!!j.designs, step:j.step || null})),
   devices:() => Object.keys(DEVKEYS),
   href:(id, o) => jumpHref(JUMP[id], o || {}),
-  reset(){ try { sessionStorage.clear(); } catch {} seed(); Object.assign(S, {conc:0, qty:1, open:{}, bt:{}, sort:{}, filt:{}, more:{}, detail:{}, scroll:{}, q:'', qFrom:null, recent:[], brandQ:'', coupon:null, form:{}, ferr:{}, formFor:{}, sent:{}, pw:false, toast:null, lastOrder:null}); },
+  reset(){ try { sessionStorage.clear(); } catch {} seed(); Object.assign(S, {conc:0, qty:1, open:{}, bt:{}, sort:{}, filt:{}, more:{}, detail:{}, scroll:{}, q:'', qFrom:null, recent:[], brandQ:'', catQ:'', coupon:null, form:{}, ferr:{}, formFor:{}, sent:{}, pw:false, toast:null, lastOrder:null}); },
   beforePlace:() => (stackFor('/checkout') || {st:[]}).st.length,
   state:() => ({bb:S.bb, tm:S.tm, menu:S.menu, mega:S.mega, tab:S.tab, path:topE().path, depth:S.stacks[S.tab].length, stacks:Object.fromEntries(TABS.map(k => [k, S.stacks[k].map(x => x.path)])), bag:bagCount(), wish:[...S.wish], sheet:S.sheet, co:{pay:S.co.pay, authorised:S.co.authorised, emirate:(S.form.co || {}).emirate || ''}, sumOpen:!!S.co.sumOpen, bagLines:S.bag.length, orders:S.orders.length, lastOrder:S.lastOrder, scroll:{...S.scroll}, missing:[...missing]}),
   missing:() => [...missing],

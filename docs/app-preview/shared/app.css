@@ -1160,3 +1160,14 @@ body.embed .bbsw{display:none}
 @media (prefers-reduced-motion:reduce){.tab.happy .hbf,.tab.happy .pill,.hbs{animation:none!important}}
 /* the header with bar D: the site's own wishlist heart (and count) where Account was, on phones */
 @container app (max-width: 599px){.kh.hbb-D .kh-hd .hact .ib-acct{display:none!important}.kh.hbb-D .kh-hd .hact .ib-wcp{display:inline-flex!important;position:relative;margin-inline-start:6px}.kh.hbb-D .kh-hd .hact .ib-wcp i{top:-5px;inset-inline-end:auto;inset-inline-start:15px}}
+
+/* ── The Shop tab (21 October 2026): two-column lists, the site's plain look ── */
+.tgtop:not(:where(.kc *,.kh *)){padding-top:14px}
+.tgh:not(:where(.kc *,.kh *)){display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tgall:not(:where(.kc *,.kh *)){display:inline-flex;align-items:center;gap:4px;background:none;border:0;font:inherit;font-size:12.5px;font-weight:700;color:var(--pk);cursor:pointer;padding:0;text-transform:none;letter-spacing:0}
+.tgall svg:not(:where(.kc *,.kh *)){width:14px;height:14px}
+.tg:not(:where(.kc *,.kh *)){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 16px 6px}
+.tgi:not(:where(.kc *,.kh *)){display:flex;align-items:center;gap:10px;min-height:54px;padding:8px 10px;background:#fff;border:1px solid var(--line);border-radius:14px;font:inherit;text-align:start;cursor:pointer;color:var(--ink);min-width:0}
+.tgi b:not(:where(.kc *,.kh *)){font-size:13.5px;font-weight:600;line-height:1.25;min-width:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.tav:not(:where(.kc *,.kh *)){flex:0 0 36px;width:36px;height:36px;border-radius:18px;display:grid;place-items:center;overflow:hidden;background:#F6EFF2;font-weight:700;font-size:12.5px;color:#5b3b48}
+.tav img:not(:where(.kc *,.kh *)){width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}

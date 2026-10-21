@@ -84,7 +84,7 @@ window.APV_I18N = {
   'Loading more…':'جارٍ تحميل المزيد…', 'You’ve seen all {n}':'شاهدتِ كل المنتجات ({n})',
   'Read more':'اقرئي المزيد', 'Read less':'عرض أقل', 'All {c}':'كل {c}', '{n} products on K-Beauty Bliss':'{n} منتج في كي بيوتي بليس',
   'Shop all':'تسوّقي الكل', 'Categories':'الفئات', 'Skincare':'العناية بالبشرة', 'Shop by concern':'حسب مشكلة البشرة', 'More from K-Beauty Bliss':'المزيد من كي بيوتي بليس',
-  'Search {n} brands':'ابحثي في {n} علامة', 'Search brands':'ابحثي عن علامة', 'No brand called “{q}”':'لا توجد علامة باسم «{q}»', 'Check the spelling, or browse the list.':'تأكّدي من الكتابة، أو تصفّحي القائمة.',
+  'Search {n} brands':'ابحثي في {n} علامة', 'Search {n} categories':'ابحثي في {n} فئة', 'Search categories':'ابحثي عن فئة', 'No category called “{q}”':'لا توجد فئة باسم “{q}”', 'Search brands':'ابحثي عن علامة', 'No brand called “{q}”':'لا توجد علامة باسم «{q}»', 'Check the spelling, or browse the list.':'تأكّدي من الكتابة، أو تصفّحي القائمة.',
 
   /* ── product ── */
   'Remove from wishlist':'إزالة من المفضّلة', 'Save to wishlist':'حفظ في المفضّلة', 'Add to bag':'أضيفي إلى الحقيبة',

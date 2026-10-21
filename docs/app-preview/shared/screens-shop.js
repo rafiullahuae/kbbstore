@@ -207,18 +207,32 @@ scr('/products', {tab:'shop', group:'Shop', label:'All products', chain:() => ['
 
 /* ── All categories / all brands (the Shop tab) ────────────────────────── */
 const seg = on => `<div class="seg" role="tablist"><button role="tab" aria-selected="${on === 'c'}" class="${on === 'c' ? 'on' : ''}" ${go$('/categories')} data-replace="1">${t('Categories')}</button><button role="tab" aria-selected="${on === 'b'}" class="${on === 'b' ? 'on' : ''}" ${go$('/brands')} data-replace="1">${t('Brands')}</button></div>`;
+/* The Shop tab, the owner's way (21 October 2026): "simple same like our website, straight forward".
+   No breadcrumb and no page heading on these two tab roots; a search field; two-column lists.
+   Categories: each parent with its subcategories under it. Brands: no counts. */
+const CATGROUPS = () => [
+  ['skincare', t('Skincare'), D.categories.filter(c => c.parent === 'skincare')],
+  ['', t('Shop by concern'), D.categories.filter(c => c.parent === 'concerns')],
+  ['', t('More from K-Beauty Bliss'), D.categories.filter(c => !c.parent && c.k !== 'skincare')],
+];
+const catAv = c => { const p = P[c.items[0]]; return `<span class="tav">${p ? `<img src="${p.img200 || p.img}" alt="" loading="lazy">` : ''}</span>`; };
+function catList(){
+  const q = (S.catQ || '').trim().toLowerCase();
+  const hit = c => !q || (c.name + ' ' + (c.name_en || '') + ' ' + c.k).toLowerCase().includes(q);
+  const G = CATGROUPS().map(([pk, h, L]) => [pk, h, L.filter(hit), pk && hit(CAT[pk] || {name:'', k:''})]).filter(g => g[2].length || g[3]);
+  if (!G.length) return `<div class="state" style="min-height:0;padding-top:24px"><div class="ic">${ico('search')}</div><h2>${t('No category called “{q}”', {q:esc(S.catQ)})}</h2><p>${t('Check the spelling, or browse the list.')}</p></div>`;
+  return G.map(([pk, h, L]) => `<div class="grp tgh"><span>${h}</span>${pk ? `<button class="tgall" ${go$('/category/' + pk)}>${t('View all')}${ico('chevR', 'flip')}</button>` : ''}</div>
+    <div class="tg">${L.map(c => `<button class="tgi" ${go$('/category/' + c.k)}>${catAv(c)}<b>${dt(c.name)}</b></button>`).join('')}</div>`).join('');
+}
 scr('/categories', {tab:'shop', group:'Shop', label:'All categories', title:() => t('Shop'),
   render(r, ctx){
-    const G = [[t('Skincare'), D.categories.filter(c => c.k === 'skincare' || c.parent === 'skincare')], [t('Shop by concern'), D.categories.filter(c => c.parent === 'concerns')], [t('More from K-Beauty Bliss'), D.categories.filter(c => !c.parent && c.k !== 'skincare')]];
-    const body = `<div class="pad0">${seg('c')}</div>${ctx.site ? '' : `<button class="srch inbody" data-tab="search"><span>${ico('search')}</span><span class="grow">${t('Search products')}</span></button>`}
-      <div class="allp"><button class="li" ${go$('/products')}>${ico('grid')}<span class="grow"><b class="lt">${t('Shop all products')}</b><span class="small muted">${t('{n} products', {n:num(PL.length)})}</span></span>${ico('chevR', 'chev flip')}</button></div>
-      ${G.filter(g => g[1].length).map(([h, L]) => `<div class="grp">${h}</div><div class="cgrid">${L.map(catTile).join('')}</div>`).join('')}`;
-    return {title:t('Shop'), large:true, right:bagBtn(), body, ptr:true};
+    const body = `<div class="pad0 tgtop">${seg('c')}</div><label class="srch inbody field" for="cq"><span>${ico('search')}</span><input id="cq" type="search" value="${esc(S.catQ || '')}" placeholder="${t('Search {n} categories', {n:num(D.categories.length)})}" autocomplete="off" enterkeyhint="search" aria-label="${t('Search categories')}"></label><div id="clist">${catList()}</div>`;
+    return {title:t('Shop'), nobar:true, body, ptr:true};
   },
   dual:() => ({detail:true, def:() => '/category/skincare', match:/^\/category\//, modes:['dual', 'expanded']})});
 scr('/brands', {tab:'shop', group:'Shop', label:'All brands', title:() => t('Brands'),
   render(r, ctx){
-    return {title:t('Brands'), large:true, right:bagBtn(), body:`<div class="pad0">${seg('b')}</div><label class="srch inbody field" for="bq"><span>${ico('search')}</span><input id="bq" type="search" value="${esc(S.brandQ)}" placeholder="${t('Search {n} brands', {n:num(D.brands.length)})}" autocomplete="off" enterkeyhint="search" aria-label="${t('Search brands')}"></label><div id="blist">${brandList()}</div>`};
+    return {title:t('Brands'), nobar:true, body:`<div class="pad0 tgtop">${seg('b')}</div><label class="srch inbody field" for="bq"><span>${ico('search')}</span><input id="bq" type="search" value="${esc(S.brandQ)}" placeholder="${t('Search {n} brands', {n:num(D.brands.length)})}" autocomplete="off" enterkeyhint="search" aria-label="${t('Search brands')}"></label><div id="blist">${brandList()}</div>`};
   },
   dual:() => ({detail:true, def:() => '/brand/' + (D.brands[0] || {}).slug, match:/^\/brand\//, modes:['dual', 'expanded']})});
 function brandList(){
@@ -227,7 +241,7 @@ function brandList(){
   if (!L.length) return `<div class="state" style="min-height:0;padding-top:24px"><div class="ic">${ico('search')}</div><h2>${t('No brand called “{q}”', {q:esc(S.brandQ)})}</h2><p>${t('Check the spelling, or browse the list.')}</p></div>`;
   const groups = {};
   L.forEach(b => { const k = b.name[0].toUpperCase(); (groups[k] = groups[k] || []).push(b); });
-  return Object.entries(groups).map(([k, bs]) => `<div class="grp ltr-grp">${dt(k)}</div><div class="list" style="margin:0 16px">${bs.map(b => `<button class="li" ${go$('/brand/' + b.slug)}><span class="bav" style="background:${brandColour(b.slug)}">${bInit(b)}</span><span class="grow"><b class="lt">${brandTxt(b.name)}</b></span><span class="v">${num(b.items.length)}</span>${ico('chevR', 'chev flip')}</button>`).join('')}</div>`).join('');
+  return Object.entries(groups).map(([k, bs]) => `<div class="grp ltr-grp">${dt(k)}</div><div class="tg">${bs.map(b => `<button class="tgi" ${go$('/brand/' + b.slug)}><span class="tav" style="background:${brandColour(b.slug)}">${bInit(b)}</span><b>${brandTxt(b.name)}</b></button>`).join('')}</div>`).join('');
 }
 
 /* ── Product ───────────────────────────────────────────────────────────── */
