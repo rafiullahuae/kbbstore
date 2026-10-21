@@ -24,7 +24,7 @@ use App\Http\Middleware\CheckRedirects;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-function scMigration(): object
+function gscRedirectMigration(): object
 {
     return require database_path('migrations/2027_11_21_100000_search_console_404_redirects.php');
 }
@@ -49,7 +49,7 @@ it('asks crawlers to skip the WordPress-only query addresses, and only those', f
 });
 
 it('forwards each Search Console 404 to the page that replaced it, in both spellings', function () {
-    $m = scMigration();
+    $m = gscRedirectMigration();
     $rows = $m::rows();
 
     expect(count($rows))->toBe(count($m::MAP) * 2);
@@ -82,7 +82,7 @@ it('keeps a redirect the owner already typed for the same address', function () 
     DB::table('redirects')->where('source', $src)->delete();
     DB::table('redirects')->insert(['source' => $src, 'target' => '/my-own/', 'code' => 301, 'enabled' => true, 'created_at' => now(), 'updated_at' => now()]);
 
-    scMigration()->up();
+    gscRedirectMigration()->up();
 
     expect(DB::table('redirects')->where('source', $src)->value('target'))->toBe('/my-own/')
         ->and(DB::table('redirects')->where('source', $src)->count())->toBe(1);
