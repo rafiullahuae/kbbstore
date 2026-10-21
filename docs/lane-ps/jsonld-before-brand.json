@@ -1,0 +1,377 @@
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "OnlineStore",
+    "name": "KBB",
+    "url": "http://127.0.0.1:10761"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "KBB",
+    "url": "http://127.0.0.1:10761",
+    "inLanguage": [
+      "en",
+      "ar"
+    ],
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "http://127.0.0.1:10761/shop/?s={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Anua",
+    "description": "Shop Korean skincare in the UAE — serums, creams, moisturisers and beauty devices from Korean beauty brands.",
+    "url": "http://127.0.0.1:10761/brands/anua/",
+    "inLanguage": "en",
+    "mainEntity": {
+      "@type": "ItemList",
+      "itemListOrder": "https://schema.org/ItemListOrderAscending",
+      "numberOfItems": 15,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "Product",
+            "name": "Advanced Snail 96 Mucin Power Essence",
+            "url": "http://127.0.0.1:10761/product/advanced-snail-96-mucin-power-essence/",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "95.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/advanced-snail-96-mucin-power-essence/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "Product",
+            "name": "Dive-In Low Molecular Hyaluronic Acid Serum",
+            "url": "http://127.0.0.1:10761/product/dive-in-low-molecular-hyaluronic-acid-serum/",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "70.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/dive-in-low-molecular-hyaluronic-acid-serum/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "Product",
+            "name": "Zinc Sunscreen SPF50+",
+            "url": "http://127.0.0.1:10761/product/zinc-sunscreen-spf50/",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "94.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/OutOfStock",
+              "url": "http://127.0.0.1:10761/product/zinc-sunscreen-spf50/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "Product",
+            "name": "Azelaic Acid 10 Serum",
+            "url": "http://127.0.0.1:10761/product/ps-azelaic-acid-10-serum/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0NERTdENiIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiMzRThFNjIiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "56.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-azelaic-acid-10-serum/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "item": {
+            "@type": "Product",
+            "name": "Birch Sun",
+            "url": "http://127.0.0.1:10761/product/ps-birch-sun/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0Q5RDJGMiIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiM3QjZDRjAiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "39.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-birch-sun/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 6,
+          "item": {
+            "@type": "Product",
+            "name": "Centella Ampoule",
+            "url": "http://127.0.0.1:10761/product/ps-centella-ampoule/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0ZGRTZCOCIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiNFMDkyMkYiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "91.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-centella-ampoule/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 7,
+          "item": {
+            "@type": "Product",
+            "name": "Ceramide Daily Moisturiser",
+            "url": "http://127.0.0.1:10761/product/ps-ceramide-daily-moisturiser/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0Y3QzZENCIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiNFMDU2N0IiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "77.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-ceramide-daily-moisturiser/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 8,
+          "item": {
+            "@type": "Product",
+            "name": "Green Tea Seed Serum",
+            "url": "http://127.0.0.1:10761/product/ps-green-tea-seed-serum/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0NERTdENiIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiMzRThFNjIiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "84.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-green-tea-seed-serum/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 9,
+          "item": {
+            "@type": "Product",
+            "name": "Heartleaf Toner",
+            "url": "http://127.0.0.1:10761/product/ps-heartleaf-toner/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0Y3QzZENCIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiNFMDU2N0IiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "49.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-heartleaf-toner/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 10,
+          "item": {
+            "@type": "Product",
+            "name": "Mugwort Mask",
+            "url": "http://127.0.0.1:10761/product/ps-mugwort-mask/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0Y3QzZENCIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiNFMDU2N0IiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "105.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/OutOfStock",
+              "url": "http://127.0.0.1:10761/product/ps-mugwort-mask/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 11,
+          "item": {
+            "@type": "Product",
+            "name": "Peach Slices Toner Pad",
+            "url": "http://127.0.0.1:10761/product/ps-peach-slices-toner-pad/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0Q5RDJGMiIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiM3QjZDRjAiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "126.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-peach-slices-toner-pad/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 12,
+          "item": {
+            "@type": "Product",
+            "name": "Propolis Light Ampoule",
+            "url": "http://127.0.0.1:10761/product/ps-propolis-light-ampoule/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0NERTdENiIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiMzRThFNjIiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "112.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-propolis-light-ampoule/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 13,
+          "item": {
+            "@type": "Product",
+            "name": "Retinal Night Cream",
+            "url": "http://127.0.0.1:10761/product/ps-retinal-night-cream/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0ZGRTZCOCIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiNFMDkyMkYiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "119.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-retinal-night-cream/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 14,
+          "item": {
+            "@type": "Product",
+            "name": "Rice 70 Glow Milky Toner",
+            "url": "http://127.0.0.1:10761/product/ps-rice-70-glow-milky-toner/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0ZGRTZCOCIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiNFMDkyMkYiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "63.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-rice-70-glow-milky-toner/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 15,
+          "item": {
+            "@type": "Product",
+            "name": "Snail Essence",
+            "url": "http://127.0.0.1:10761/product/ps-snail-essence/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0Q5RDJGMiIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiM3QjZDRjAiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "70.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-snail-essence/"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "http://127.0.0.1:10761/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Brands",
+        "item": "http://127.0.0.1:10761/brands/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Anua",
+        "item": "http://127.0.0.1:10761/brands/anua/"
+      }
+    ]
+  }
+]

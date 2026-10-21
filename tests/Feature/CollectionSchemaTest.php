@@ -24,6 +24,10 @@ declare(strict_types=1);
  *
  * ── THE FOUR THINGS THAT CAN GO WRONG HERE ────────────────────────────────
  *
+ * (Lane PS: items 1 and 2 are history. A listing row is now a ListItem with
+ *  url + name and publishes no Product and no Offer -- see the case "publishes
+ *  each row as a link" and ProductReviewSnippetTest for why.)
+ *
  * 1. THE PRICE. `products.price` is integer fils, AED × 100. A 126.00 AED serum
  *    is 12600 in the column, and an earlier pass at Product schema wired that
  *    column straight into the Offer -- caught in 2.60.36 before it shipped, and
@@ -233,7 +237,7 @@ it('lists the products actually on the page, in the order they appear', function
     expect($list['@type'])->toBe('ItemList');
     expect($list['numberOfItems'])->toBe(3);
 
-    $names = array_map(static fn ($e) => $e['item']['name'], $list['itemListElement']);
+    $names = array_column($list['itemListElement'], 'name');
     $positions = array_column($list['itemListElement'], 'position');
 
     expect($positions)->toBe([1, 2, 3]);
@@ -251,62 +255,39 @@ it('lists the products actually on the page, in the order they appear', function
 it('points each entry at the product page URL, absolute', function () {
     csProduct('cs-a-toner', 'A Toner', 5000);
 
-    $item = csCollection('/collections/cs-serums/')['mainEntity']['itemListElement'][0]['item'];
+    $entry = csCollection('/collections/cs-serums/')['mainEntity']['itemListElement'][0];
 
-    expect($item['url'])->toBe(CS_BASE . '/product/cs-a-toner/');
-    expect($item['offers']['url'])->toBe(CS_BASE . '/product/cs-a-toner/');
+    expect($entry['url'])->toBe(CS_BASE . '/product/cs-a-toner/');
 });
 
-/* ─────────────────────────────── the price ──────────────────────────────── */
+/* ──────────────── no Product, no price on a listing (Lane PS) ─────────────── */
 
-it('publishes the price in dirhams, never the fils column', function () {
-    // 12600 fils is AED 126.00. The number that must never appear is 12600.
-    csProduct('cs-relief-sun', 'Relief Sun', 12600);
+/*
+ * The four price cases that stood here (fils vs dirhams, sale price, tile
+ * agreement, out of stock) guarded an Offer this page no longer publishes.
+ * Each listing row used to be a full schema.org Product, which Google counted
+ * as a Product-snippet item -- 1,791 of them for ~781 products, every one
+ * flagged "Missing field aggregateRating / review". Google: "use markup for a
+ * specific product, not a category or list of products". The Product and its
+ * Offer now live only on the product page, where ProductSeoTest guards the same
+ * four things; ProductReviewSnippetTest guards the listing side.
+ */
+it('publishes each row as a link to its product page, with no Product and no price', function () {
+    // 12600 fils is AED 126.00 -- neither number may appear in the list now.
+    csProduct('cs-relief-sun', 'Relief Sun', 12600, ['sale_price' => 6020, 'stock_status' => 'outofstock']);
 
     $node = csCollection('/collections/cs-serums/');
-    $offer = $node['mainEntity']['itemListElement'][0]['item']['offers'];
+    $entry = $node['mainEntity']['itemListElement'][0];
 
-    expect($offer['price'])->toBe('126.00');
-    expect($offer['priceCurrency'])->toBe('AED');
-
-    // Not ->not->toContain(): Pest's toContain() is variadic, so a message
-    // passed as a second argument becomes a second NEEDLE and the assertion
-    // passes whatever the value is. Eight guards in this repository have been
-    // caught asserting nothing that way.
-    expect(str_contains(json_encode($node), '12600'))
-        ->toBeFalse('The raw fils column reached the schema — a 126 AED serum is being advertised at 12,600.');
-});
-
-it('publishes the sale price a shopper is actually offered', function () {
-    csProduct('cs-birch-sun', 'Birch Sun', 8600, [
-        'sale_price' => 6020,
-        'sale_starts_at' => now()->subDay(),
-        'sale_ends_at' => now()->addDay(),
+    expect($entry)->toBe([
+        '@type' => 'ListItem',
+        'position' => 1,
+        'url' => CS_BASE . '/product/cs-relief-sun/',
+        'name' => 'Relief Sun',
     ]);
 
-    $offer = csCollection('/collections/cs-serums/')['mainEntity']['itemListElement'][0]['item']['offers'];
-
-    expect($offer['price'])->toBe('60.20');
-});
-
-it('agrees with the price the tile prints', function () {
-    csProduct('cs-relief-sun', 'Relief Sun', 12600);
-
-    $html = test()->get('/collections/cs-serums/')->assertOk()->getContent();
-
-    expect(preg_match('#data-price="([^"]+)"#', $html, $m))->toBe(1);
-
-    $node = csCollection('/collections/cs-serums/');
-
-    expect($node['mainEntity']['itemListElement'][0]['item']['offers']['price'])->toBe($m[1]);
-});
-
-it('says out of stock when the product is', function () {
-    csProduct('cs-gone', 'Gone', 5000, ['stock_status' => 'outofstock']);
-
-    $offer = csCollection('/collections/cs-serums/')['mainEntity']['itemListElement'][0]['item']['offers'];
-
-    expect($offer['availability'])->toBe('https://schema.org/OutOfStock');
+    expect(str_contains(json_encode($node), '"Product"'))->toBeFalse()
+        ->and(str_contains(json_encode($node), 'offers'))->toBeFalse();
 });
 
 /* ────────────────── the wrong document: facets and search ───────────────── */
@@ -386,8 +367,8 @@ it('numbers page two by its place in the whole listing, not from one again', fun
     expect($two['url'])->toBe(csCanonical('/collections/cs-serums/?paged=2'));
 
     // And the two lists name different products.
-    $namesOne = array_map(static fn ($e) => $e['item']['name'], $one['mainEntity']['itemListElement']);
-    $namesTwo = array_map(static fn ($e) => $e['item']['name'], $two['mainEntity']['itemListElement']);
+    $namesOne = array_column($one['mainEntity']['itemListElement'], 'name');
+    $namesTwo = array_column($two['mainEntity']['itemListElement'], 'name');
 
     expect(array_intersect($namesOne, $namesTwo))->toBe([]);
 });
@@ -406,10 +387,12 @@ it('gives a brand landing page a CollectionPage naming that brand only', functio
     expect($node['name'])->toBe('COSRX');
     expect($node['url'])->toBe(CS_BASE . '/brands/cs-cosrx/');
 
-    $names = array_map(static fn ($e) => $e['item']['name'], $node['mainEntity']['itemListElement']);
+    $names = array_column($node['mainEntity']['itemListElement'], 'name');
 
     expect($names)->toBe(['Mucin Essence']);
-    expect($node['mainEntity']['itemListElement'][0]['item']['brand']['name'])->toBe('COSRX');
+    // The row is a link now (Lane PS): the brand travels on the product page's
+    // own Product node, not on a listing entry.
+    expect($node['mainEntity']['itemListElement'][0]['url'])->toBe(CS_BASE . '/product/cs-mucin/');
 });
 
 it('gives each curated listing a CollectionPage of its own products', function () {
@@ -456,7 +439,7 @@ it('keeps the Arabic archive and its list on Arabic addresses', function () {
     // The whole cluster, not just the page: an ItemList of English product URLs
     // on an Arabic archive is the same defect as an English canonical on an
     // Arabic page, which five page types shipped before 2.60.109.
-    expect($node['mainEntity']['itemListElement'][0]['item']['url'])
+    expect($node['mainEntity']['itemListElement'][0]['url'])
         ->toBe(CS_BASE . '/ar/product/cs-a-toner/');
 });
 
@@ -498,7 +481,7 @@ it('does not double the deployment base path into every entry URL', function () 
 
     expect($node)->not->toBeNull();
 
-    $url = $node['mainEntity']['itemListElement'][0]['item']['url'];
+    $url = $node['mainEntity']['itemListElement'][0]['url'];
 
     expect($url)->toBe('http://localhost/kbb-upgrade/product/cs-a-toner/');
     expect(substr_count($url, '/kbb-upgrade/'))
@@ -543,32 +526,15 @@ it('shows a listing as a CollectionPage in the Schema Inspector too', function (
     expect(implode(' ', $body['warnings']))->toContain('ItemList');
 });
 
-it('publishes exactly the image the tile draws', function () {
+it('publishes no picture on a listing entry, which is a link to the page that has them', function () {
     /*
-     * `products.image` is already a usable address — the card renders it as
-     * src="{{ $product->image }}" with nothing applied — so the only correct
-     * thing to publish is that string with the site root in front of it.
-     *
-     * The mutation this exists for is running it through Url::media(), which
-     * prefixes the WordPress uploads root and turns a complete path into a 404
-     * in the one field Google uses to draw the picture. Asserted against the
-     * tile's own src rather than against a literal, so the schema and the page
-     * cannot be right about different pictures.
-     */
-    /*
-     * A path OUTSIDE /wp-content/uploads, and that is the whole point of the
-     * fixture: Url::media() passes a path that already carries the uploads root
-     * through untouched, so a case built on one would pass with the mutation
-     * applied and prove nothing. The Media Library writes outside that root,
-     * and this is the shape that breaks.
+     * This case used to pin the listing entry's `image` to the tile's src.
+     * Since Lane PS a listing entry is a ListItem (url + name) and the gallery
+     * is published once, on the product page's own Product node.
      */
     csProduct('cs-shot', 'Shot', 5000, ['image' => '/storage/media/2026/01/shot.jpg']);
 
-    $html = test()->get('/collections/cs-serums/')->assertOk()->getContent();
+    $entry = csCollection('/collections/cs-serums/')['mainEntity']['itemListElement'][0];
 
-    expect(preg_match('#<img class="kbb-card-img" src="([^"]+)"#', $html, $m))->toBe(1);
-
-    $item = csCollection('/collections/cs-serums/')['mainEntity']['itemListElement'][0]['item'];
-
-    expect($item['image'])->toBe(CS_BASE . $m[1]);
+    expect($entry)->not->toHaveKey('image')->not->toHaveKey('item');
 });

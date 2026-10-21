@@ -1,0 +1,5 @@
+GET  /product/ps-heartleaf-toner/                     status 200  p50   94.0 ms  p95  116.9 ms  queries 14  settings-map reads 1  (n=30)
+GET  /product/ps-snail-essence/                       status 200  p50   96.3 ms  p95  125.6 ms  queries 14  settings-map reads 1  (n=30)
+GET  /collections/toners/                             status 200  p50  110.7 ms  p95  151.0 ms  queries 7  settings-map reads 1  (n=30)
+GET  /brands/anua/                                    status 200  p50   96.8 ms  p95  140.1 ms  queries 7  settings-map reads 1  (n=30)
+GET  /shop/                                           status 200  p50   82.5 ms  p95  132.1 ms  queries 6  settings-map reads 1  (n=30)

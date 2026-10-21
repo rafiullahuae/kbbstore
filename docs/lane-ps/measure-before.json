@@ -1,0 +1,132 @@
+{
+  "product-reviewed@390": {
+    "status": 200,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "height": 4450,
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "ldBlocks": 4
+  },
+  "product-reviewed@1280": {
+    "status": 200,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "height": 3987,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "product-none@390": {
+    "status": 200,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "height": 4132,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "product-none@1280": {
+    "status": 200,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "height": 3857,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "product-sale@390": {
+    "status": 200,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "height": 4132,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "product-sale@1280": {
+    "status": 200,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "height": 3858,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "product-soldout@390": {
+    "status": 200,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "height": 3855,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "product-soldout@1280": {
+    "status": 200,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "height": 3584,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "product-ar@390": {
+    "status": 200,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "height": 4562,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "product-ar@1280": {
+    "status": 200,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "height": 3982,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "category@390": {
+    "status": 200,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "height": 3685,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "category@1280": {
+    "status": 200,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "height": 2947,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "brand@390": {
+    "status": 200,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "height": 4223,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "brand@1280": {
+    "status": 200,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "height": 2426,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "shop@390": {
+    "status": 200,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "height": 3491,
+    "errors": [],
+    "ldBlocks": 4
+  },
+  "shop@1280": {
+    "status": 200,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "height": 3168,
+    "errors": [],
+    "ldBlocks": 4
+  }
+}

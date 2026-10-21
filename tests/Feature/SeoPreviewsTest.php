@@ -1267,7 +1267,7 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
         'CollectionPage + ItemList on archives, with position counted across the whole listing rather than restarting per page.',
         'SEO-GAP §3 — Have',
         spCheck(isset(spNode($shapes['category']['path'], 'CollectionPage')['mainEntity']['itemListElement'])),
-        'The category archive carries a CollectionPage whose mainEntity is an ItemList of ' . count((array) (spNode($shapes['category']['path'], 'CollectionPage')['mainEntity']['itemListElement'] ?? [])) . ' ListItems, each a Product with its own Offer and price as a decimal string built from integer fils. The list is attached only when the canonical is self-referencing, so a filtered or sorted view — which canonicalises to the clean archive — carries the node without a list rather than describing the wrong document.',
+        'The category archive carries a CollectionPage whose mainEntity is an ItemList of ' . count((array) (spNode($shapes['category']['path'], 'CollectionPage')['mainEntity']['itemListElement'] ?? [])) . ' ListItems, each a link (url + name) to a product page — no Product and no Offer on a listing, which Google counts as a Product-snippet item (Lane PS). The list is attached only when the canonical is self-referencing, so a filtered or sorted view — which canonicalises to the clean archive — carries the node without a list rather than describing the wrong document.',
         'app/Support/Seo.php:1353');
 
     $rows[] = spRow($D,

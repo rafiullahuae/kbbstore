@@ -132,6 +132,20 @@ class SchemaInspectorApiController extends Controller
                 'stock' => $product->stock_status === 'instock' ? 1 : 0,
                 'rating' => $product->rating ?: null,
                 'reviews' => $product->review_count ?: null,
+                // The same few reviews the product page publishes (Lane PS):
+                // approved, real, in the page's own order, one limited query.
+                'review_items' => $product->review_count > 0
+                    ? \App\Support\ReviewSchema::rows(
+                        \App\Support\ReviewSettings::applySort(
+                            \App\Models\Review::query()
+                                ->select('id', 'author_name', 'rating', 'title', 'content', 'created_at')
+                                ->where('product_id', $product->id)
+                                ->approved()
+                                ->real(),
+                            (string) \App\Support\ReviewSettings::get(app(\App\Services\SettingsService::class), 'sr_sort')
+                        )->limit(\App\Support\ReviewSchema::MAX * 3)->get()
+                    )
+                    : [],
             ],
         ];
 

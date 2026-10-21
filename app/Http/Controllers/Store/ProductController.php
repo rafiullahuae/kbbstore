@@ -255,7 +255,22 @@ class ProductController extends Controller
             // variable that does not exist inside the closure. PHP 8 raises
             // a warning, Laravel promotes it to an ErrorException, and every
             // product page returned 500.
-            'seoCtx' => (function () use ($product, $realSummary, $crumbTrail) {
+            'seoCtx' => (function () use ($product, $realSummary, $crumbTrail, $reviews) {
+                /*
+                 * WHAT THE PAGE SHOWS IS WHAT GOOGLE IS TOLD (Lane PS).
+                 *
+                 * The rating is published while the page shows it somewhere --
+                 * the review section, the inline rating line or the capsule --
+                 * and the individual reviews only while the review section that
+                 * draws them is shown. All three switches are Appearance ->
+                 * Product page sections, read through the request's settings
+                 * memo: no query. The reviews are the first few of the SAME
+                 * collection the review list below renders, so this costs no
+                 * query either.
+                 */
+                $sections = app(ProductSections::class);
+                $reviewsShown = ! $sections->hidden('reviews');
+                $ratingShown = $reviewsShown || ! $sections->hidden('rating') || ! $sections->hidden('capsule');
                 // SeoSettings::map(), not Setting::map(): the latter memoises in
                 // a process-level static as well as in the cache, so the first
                 // render in a long-lived process pins site_url for every render
@@ -423,8 +438,12 @@ class ProductController extends Controller
                         // shot and can pick an aspect ratio per layout.
                         'images' => $this->schemaImages($product, $override),
                         // $realSummary, never the demo fixture.
-                        'rating' => $realSummary['average'] ?: null,
-                        'reviews' => $realSummary['total'] ?: null,
+                        'rating' => $ratingShown ? ($realSummary['average'] ?: null) : null,
+                        'reviews' => $ratingShown ? ($realSummary['total'] ?: null) : null,
+                        // Real, approved reviews only (the list query applies
+                        // ->approved()->real()); App\Support\ReviewSchema says
+                        // what it refuses and why.
+                        'review_items' => $reviewsShown ? \App\Support\ReviewSchema::rows($reviews) : [],
                     ],
                 ];
 

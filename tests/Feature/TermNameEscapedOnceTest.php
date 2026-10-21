@@ -72,8 +72,10 @@ it('draws "Hydration & Glow" in the Filters drawer, escaped exactly once', funct
     fptImportedShape();
 
     $beforeHtml = (string) $this->get('/shop/')->assertOk()->getContent();
+    // (Lane PS: the listing's JSON-LD no longer carries a brand per row -- each
+    // row is a ListItem with url + name -- so the drawer is the precondition.)
     expect(fptDrawer($beforeHtml))->toContain('Hydration &amp;amp; Glow')
-        ->and($beforeHtml)->toContain('Rom'.chr(92).'u0026amp;nd');
+        ->and(fptDrawer($beforeHtml))->toContain('Rom&amp;amp;nd');
 
     fptMigrate();
 
