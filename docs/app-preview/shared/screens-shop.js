@@ -151,6 +151,14 @@ function listItems(r){
 }
 
 /* ── Category page ─────────────────────────────────────────────────────── */
+/* The website's collection / brand header (owner, 21 October 2026): a rounded banner photo with
+   the name in a white pill on it, then a white card with two lines of the description and
+   Read more, then the products. Same for categories and brands. */
+function siteHead(o){
+  const img = o.img ? `<picture><source media="(min-width:700px)" srcset="${o.imgW || o.img}"><img src="${o.img}" alt="" class="cover"></picture>` : `<div class="shbg" style="background:${o.bg || 'linear-gradient(135deg,#FCE3EB,#FFF1E6)'}"></div>`;
+  const open = o.about && S.open[o.id];
+  return `<div class="shban">${img}<h1 class="shpill">${o.name}</h1></div>${o.about ? `<div class="shabout${open ? ' open' : ''}"><p${open ? '' : ' class="clamp2"'}>${dt(o.about)}</p><button class="lnk sm" data-act="acc" data-v="${o.id}" aria-expanded="${!!open}">${t(open ? 'Read less' : 'Read more')}</button></div>` : ''}`;
+}
 function aboutBlock(id, text){
   if (!text) return '';
   const open = S.open[id];
@@ -169,8 +177,7 @@ scr('/category/:k', {tab:'shop', group:'Category', label:'Category page', chain:
   render(r, ctx){
     const c = CAT[r.params.k] || D.categories[0];
     const base = c.items.map(s => P[s]).filter(Boolean);
-    const head = `<div class="cbanner">${c.banner ? `<picture><source media="(min-width:700px)" srcset="${c.banner_w || c.banner}"><img src="${c.banner}" alt="" class="cover"></picture>` : `<div class="cbg"></div>`}</div>
-      <div class="chead"><h1 class="h1">${dt(c.name)}</h1>${aboutBlock('about-c-' + c.k, c.about)}</div>${subChips(c)}`;
+    const head = siteHead({img:c.banner, imgW:c.banner_w, name:dt(c.name), id:'about-c-' + c.k, about:c.about});
     /* the site's crumb: Home / Shop / <parent> / <category> */
     const crumbs = [tc('Shop')].concat(c.parent && CAT[c.parent] ? [dt(CAT[c.parent].name)] : [], [dt(c.name)]);
     return {title:c.name, back:true, right:bagBtn(), crumbs, body:listing(r, ctx, base, {head}), ptr:true, sk:listKey(r)};
@@ -182,9 +189,7 @@ scr('/brand/:b', {tab:'shop', group:'Brand', label:'Brand page', chain:() => ['/
   render(r, ctx){
     const b = BR[r.params.b] || D.brands[0];
     const base = b.items.map(s => P[s]).filter(Boolean);
-    const head = `<div class="bbanner">${b.banner ? `<picture><source media="(min-width:700px)" srcset="${b.banner_w || b.banner}"><img src="${b.banner}" alt="" class="cover"></picture>` : `<div class="cbg" style="background:${brandColour(b.slug)}"></div>`}</div>
-      <div class="bhead"><span class="blogo" style="background:${brandColour(b.slug)}" aria-hidden="true">${bInit(b)}</span><div class="grow"><h1 class="h1">${brandTxt(b.name)}</h1><span class="small muted">${t('{n} products on K-Beauty Bliss', {n:num(b.items.length)})}</span></div><button class="ib" data-act="share" aria-label="${t('Share')}">${ico('share')}</button></div>
-      <div class="chead" style="padding-top:0">${aboutBlock('about-b-' + b.slug, b.about)}</div>`;
+    const head = siteHead({img:b.banner, imgW:b.banner_w, name:brandTxt(b.name), id:'about-b-' + b.slug, about:b.about, bg:brandColour(b.slug)});
     return {title:b.name, titleH:brandTxt(b.name), back:true, right:bagBtn(), crumbs:[tc('Brands'), brandTxt(b.name)], sep:'›', body:listing(r, ctx, base, {head, noBrand:true}), ptr:true, sk:listKey(r)};
   },
   dual:listDual});
