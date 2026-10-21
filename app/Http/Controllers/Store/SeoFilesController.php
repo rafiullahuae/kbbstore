@@ -164,6 +164,25 @@ class SeoFilesController extends Controller
     ];
 
     /**
+     * Query parameters only the old WordPress/WooCommerce shop ever answered
+     * (2.60.564). Search Console, 21 October: of ~2,070 "not indexed"
+     * addresses, 1,357 sampled were ?add-to-cart=, 87 ?rey-global-sections=
+     * (the old theme), 58 ?remove_item=&_wpnonce=, plus shop_view,
+     * attachment_id, get_svg_icon and wc-ajax. Google keeps re-crawling them
+     * from old links and each is a 403 or a duplicate -- budget not spent on
+     * a product. One wildcard line covers every path and both languages.
+     *
+     * Only names this application does NOT read: filter_brands, paged and
+     * per_page are the new shop's own and stay crawlable. ?add-to-cart= still
+     * works for a shopper (old emails link to it); this only asks crawlers
+     * not to fetch it.
+     */
+    private const ROBOTS_WORDPRESS_PARAMS = [
+        'add-to-cart', 'rey-global-sections', 'remove_item', '_wpnonce',
+        'shop_view', 'attachment_id', 'get_svg_icon', 'wc-ajax',
+    ];
+
+    /**
      * The absolute base every URL in these files is built on.
      *
      * Was `$s['site_url'] ?? config('app.url') ?? url('/')`. The SEO screen
@@ -1290,6 +1309,11 @@ class SeoFilesController extends Controller
             foreach (Locale::enabledCodes() as $code) {
                 $body .= 'Disallow: ' . Url::raw(Locale::withSegment($path, $code)) . "\n";
             }
+        }
+
+        foreach (self::ROBOTS_WORDPRESS_PARAMS as $param) {
+            $body .= 'Disallow: ' . Url::raw('/*?' . $param . '=') . "\n";
+            $body .= 'Disallow: ' . Url::raw('/*&' . $param . '=') . "\n";
         }
 
         $body .= "\nSitemap: {$base}/sitemap.xml\n";
