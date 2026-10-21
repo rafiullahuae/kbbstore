@@ -1,0 +1,313 @@
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "OnlineStore",
+    "name": "KBB",
+    "url": "http://127.0.0.1:10761"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "KBB",
+    "url": "http://127.0.0.1:10761",
+    "inLanguage": [
+      "en",
+      "ar"
+    ],
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "http://127.0.0.1:10761/shop/?s={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Toners",
+    "description": "Shop Toners at K-Beauty Bliss — 16 authentic Korean skincare picks.",
+    "url": "http://127.0.0.1:10761/collections/toners/",
+    "inLanguage": "en",
+    "mainEntity": {
+      "@type": "ItemList",
+      "itemListOrder": "https://schema.org/ItemListOrderAscending",
+      "numberOfItems": 12,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "Product",
+            "name": "Glow Deep Serum Rice + Alpha Arbutin",
+            "url": "http://127.0.0.1:10761/product/glow-deep-serum-rice-alpha-arbutin/",
+            "brand": {
+              "@type": "Brand",
+              "name": "COSRX"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "141.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/glow-deep-serum-rice-alpha-arbutin/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "Product",
+            "name": "Collagen Night Wrapping Mask",
+            "url": "http://127.0.0.1:10761/product/collagen-night-wrapping-mask/",
+            "brand": {
+              "@type": "Brand",
+              "name": "SKIN1004"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "66.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/collagen-night-wrapping-mask/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "Product",
+            "name": "Green Tea Fresh Toner",
+            "url": "http://127.0.0.1:10761/product/green-tea-fresh-toner/",
+            "brand": {
+              "@type": "Brand",
+              "name": "Torriden"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "106.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/green-tea-fresh-toner/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "Product",
+            "name": "Barrier Repair Cream",
+            "url": "http://127.0.0.1:10761/product/barrier-repair-cream/",
+            "brand": {
+              "@type": "Brand",
+              "name": "Medicube"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "134.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/barrier-repair-cream/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "item": {
+            "@type": "Product",
+            "name": "Azelaic Acid 10 Serum",
+            "url": "http://127.0.0.1:10761/product/ps-azelaic-acid-10-serum/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0NERTdENiIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiMzRThFNjIiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "56.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-azelaic-acid-10-serum/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 6,
+          "item": {
+            "@type": "Product",
+            "name": "Birch Sun",
+            "url": "http://127.0.0.1:10761/product/ps-birch-sun/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0Q5RDJGMiIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiM3QjZDRjAiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "39.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-birch-sun/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 7,
+          "item": {
+            "@type": "Product",
+            "name": "Centella Ampoule",
+            "url": "http://127.0.0.1:10761/product/ps-centella-ampoule/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0ZGRTZCOCIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiNFMDkyMkYiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "91.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-centella-ampoule/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 8,
+          "item": {
+            "@type": "Product",
+            "name": "Ceramide Daily Moisturiser",
+            "url": "http://127.0.0.1:10761/product/ps-ceramide-daily-moisturiser/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0Y3QzZENCIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiNFMDU2N0IiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "77.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-ceramide-daily-moisturiser/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 9,
+          "item": {
+            "@type": "Product",
+            "name": "Green Tea Seed Serum",
+            "url": "http://127.0.0.1:10761/product/ps-green-tea-seed-serum/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0NERTdENiIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiMzRThFNjIiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "84.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-green-tea-seed-serum/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 10,
+          "item": {
+            "@type": "Product",
+            "name": "Heartleaf Toner",
+            "url": "http://127.0.0.1:10761/product/ps-heartleaf-toner/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0Y3QzZENCIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiNFMDU2N0IiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "49.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-heartleaf-toner/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 11,
+          "item": {
+            "@type": "Product",
+            "name": "Mugwort Mask",
+            "url": "http://127.0.0.1:10761/product/ps-mugwort-mask/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0Y3QzZENCIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiNFMDU2N0IiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "105.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/OutOfStock",
+              "url": "http://127.0.0.1:10761/product/ps-mugwort-mask/"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 12,
+          "item": {
+            "@type": "Product",
+            "name": "Peach Slices Toner Pad",
+            "url": "http://127.0.0.1:10761/product/ps-peach-slices-toner-pad/",
+            "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0Q5RDJGMiIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiM3QjZDRjAiLz48L3N2Zz4=",
+            "brand": {
+              "@type": "Brand",
+              "name": "Anua"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "126.00",
+              "priceCurrency": "AED",
+              "availability": "https://schema.org/InStock",
+              "url": "http://127.0.0.1:10761/product/ps-peach-slices-toner-pad/"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "http://127.0.0.1:10761/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Shop",
+        "item": "http://127.0.0.1:10761/shop/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Toners",
+        "item": "http://127.0.0.1:10761/collections/toners/"
+      }
+    ]
+  }
+]

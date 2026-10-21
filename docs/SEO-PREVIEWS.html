@@ -254,7 +254,7 @@ footer p{margin-top:7px;max-width:74ch}
         &quot;applicableCountry&quot;: &quot;AE&quot;,
         &quot;returnPolicyCategory&quot;: &quot;https://schema.org/MerchantReturnNotPermitted&quot;
     }
-} — the refusal publishes on its own and nothing is said about delivery. A typed 0 still publishes free shipping, which is a real answer; an absent key publishes nothing. All three halves shipped together: the rule accepts blank, the box ships blank, the emitter reads the absence.</p><p class="where"><code>app/Support/Seo.php — shippingDetails()</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">BreadcrumbList on products, categories, brands and articles.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> Present on the product, the category archive, the brand landing page, the curated listings, the concern page and the article. ABSENT on the seven content pages, which emit Organization and WebSite only — written up under &quot;Not fixed&quot;, because adding it would move all seven pages on a shop that has changed nothing.</p><p class="where"><code>app/Support/Seo.php:1484</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">CollectionPage + ItemList on archives, with position counted across the whole listing rather than restarting per page.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> The category archive carries a CollectionPage whose mainEntity is an ItemList of 4 ListItems, each a Product with its own Offer and price as a decimal string built from integer fils. The list is attached only when the canonical is self-referencing, so a filtered or sorted view — which canonicalises to the clean archive — carries the node without a list rather than describing the wrong document.</p><p class="where"><code>app/Support/Seo.php:1353</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">The item type in a list is allowlisted, not taken from the row.</p><p class="doc"><b>The documents say:</b> rule 5</p><p class="obs"><b>Driven today:</b> COLLECTION_ITEM_TYPES = [&quot;Product&quot;,&quot;Brand&quot;]. Anything else in a row falls back to Product, so a row reaching that code from anything less trusted than a builder in the namespace cannot name an arbitrary schema.org type. The Brand arm exists for the A-Z brand directory: publishing 93 brand pages as Product would put 93 priceless, SKU-less products into the index.</p><p class="where"><code>app/Support/Seo.php:1396</code></p></div></div><div class="mrow" data-v="STALE"><div class="mv vSTALE">STALE</div><div class="mc"><p class="claim">&quot;The Journal index emits no CollectionPage node, in either language.&quot;</p><p class="doc"><b>The documents say:</b> SEO-ARABIC-PARITY §7, SEO-MODULE-ROUND-4 §5 — found, not fixed</p><p class="obs"><b>Driven today:</b> FIXED and merged. Measured: /blog/ nodes are OnlineStore · WebSite · CollectionPage · BreadcrumbList. The exact ANCHOR/REPLACEMENT round 4 handed over was applied.</p><p class="where"><code>app/Http/Controllers/Store/PageController.php</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Article markup on every journal article.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> {
+} — the refusal publishes on its own and nothing is said about delivery. A typed 0 still publishes free shipping, which is a real answer; an absent key publishes nothing. All three halves shipped together: the rule accepts blank, the box ships blank, the emitter reads the absence.</p><p class="where"><code>app/Support/Seo.php — shippingDetails()</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">BreadcrumbList on products, categories, brands and articles.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> Present on the product, the category archive, the brand landing page, the curated listings, the concern page and the article. ABSENT on the seven content pages, which emit Organization and WebSite only — written up under &quot;Not fixed&quot;, because adding it would move all seven pages on a shop that has changed nothing.</p><p class="where"><code>app/Support/Seo.php:1484</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">CollectionPage + ItemList on archives, with position counted across the whole listing rather than restarting per page.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> The category archive carries a CollectionPage whose mainEntity is an ItemList of 4 ListItems, each a link (url + name) to a product page — no Product and no Offer on a listing, which Google counts as a Product-snippet item (Lane PS). The list is attached only when the canonical is self-referencing, so a filtered or sorted view — which canonicalises to the clean archive — carries the node without a list rather than describing the wrong document.</p><p class="where"><code>app/Support/Seo.php:1353</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">The item type in a list is allowlisted, not taken from the row.</p><p class="doc"><b>The documents say:</b> rule 5</p><p class="obs"><b>Driven today:</b> COLLECTION_ITEM_TYPES = [&quot;Product&quot;,&quot;Brand&quot;]. Anything else in a row falls back to Product, so a row reaching that code from anything less trusted than a builder in the namespace cannot name an arbitrary schema.org type. The Brand arm exists for the A-Z brand directory: publishing 93 brand pages as Product would put 93 priceless, SKU-less products into the index.</p><p class="where"><code>app/Support/Seo.php:1396</code></p></div></div><div class="mrow" data-v="STALE"><div class="mv vSTALE">STALE</div><div class="mc"><p class="claim">&quot;The Journal index emits no CollectionPage node, in either language.&quot;</p><p class="doc"><b>The documents say:</b> SEO-ARABIC-PARITY §7, SEO-MODULE-ROUND-4 §5 — found, not fixed</p><p class="obs"><b>Driven today:</b> FIXED and merged. Measured: /blog/ nodes are OnlineStore · WebSite · CollectionPage · BreadcrumbList. The exact ANCHOR/REPLACEMENT round 4 handed over was applied.</p><p class="where"><code>app/Http/Controllers/Store/PageController.php</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">Article markup on every journal article.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> {
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;Article&quot;,
     &quot;headline&quot;: &quot;Heartleaf extract: transforming K-beauty skincare&quot;,
@@ -573,7 +573,24 @@ footer p{margin-top:7px;max-width:74ch}
         &quot;reviewCount&quot;: 1,
         &quot;bestRating&quot;: &quot;5&quot;,
         &quot;worstRating&quot;: &quot;1&quot;
-    }
+    },
+    &quot;review&quot;: [
+        {
+            &quot;@type&quot;: &quot;Review&quot;,
+            &quot;author&quot;: {
+                &quot;@type&quot;: &quot;Person&quot;,
+                &quot;name&quot;: &quot;Noor&quot;
+            },
+            &quot;datePublished&quot;: &quot;2026-10-21&quot;,
+            &quot;reviewBody&quot;: &quot;Three weeks in and the marks on my cheek are genuinely lighter.&quot;,
+            &quot;reviewRating&quot;: {
+                &quot;@type&quot;: &quot;Rating&quot;,
+                &quot;ratingValue&quot;: &quot;5&quot;,
+                &quot;bestRating&quot;: &quot;5&quot;,
+                &quot;worstRating&quot;: &quot;1&quot;
+            }
+        }
+    ]
 }</pre></div><div class="node"><b>BreadcrumbList</b><pre>{
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;BreadcrumbList&quot;,
@@ -665,86 +682,26 @@ footer p{margin-top:7px;max-width:74ch}
             {
                 &quot;@type&quot;: &quot;ListItem&quot;,
                 &quot;position&quot;: 1,
-                &quot;item&quot;: {
-                    &quot;@type&quot;: &quot;Product&quot;,
-                    &quot;name&quot;: &quot;Medicube - Collagen Booster Set&quot;,
-                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-collagen-booster-set/&quot;,
-                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2024/11/Medicube-set-black.webp&quot;,
-                    &quot;brand&quot;: {
-                        &quot;@type&quot;: &quot;Brand&quot;,
-                        &quot;name&quot;: &quot;Medicube&quot;
-                    },
-                    &quot;offers&quot;: {
-                        &quot;@type&quot;: &quot;Offer&quot;,
-                        &quot;price&quot;: &quot;1299.00&quot;,
-                        &quot;priceCurrency&quot;: &quot;AED&quot;,
-                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
-                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-collagen-booster-set/&quot;
-                    }
-                }
+                &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-collagen-booster-set/&quot;,
+                &quot;name&quot;: &quot;Medicube - Collagen Booster Set&quot;
             },
             {
                 &quot;@type&quot;: &quot;ListItem&quot;,
                 &quot;position&quot;: 2,
-                &quot;item&quot;: {
-                    &quot;@type&quot;: &quot;Product&quot;,
-                    &quot;name&quot;: &quot;Medicube - Kojic Acid Turmeric Booster Pro Set&quot;,
-                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;,
-                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2026/03/Medicube-Kojic-Acid-Turmeric-Booster-Pro-Set-kbb.webp&quot;,
-                    &quot;brand&quot;: {
-                        &quot;@type&quot;: &quot;Brand&quot;,
-                        &quot;name&quot;: &quot;Medicube&quot;
-                    },
-                    &quot;offers&quot;: {
-                        &quot;@type&quot;: &quot;Offer&quot;,
-                        &quot;price&quot;: &quot;937.00&quot;,
-                        &quot;priceCurrency&quot;: &quot;AED&quot;,
-                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
-                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;
-                    }
-                }
+                &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;,
+                &quot;name&quot;: &quot;Medicube - Kojic Acid Turmeric Booster Pro Set&quot;
             },
             {
                 &quot;@type&quot;: &quot;ListItem&quot;,
                 &quot;position&quot;: 3,
-                &quot;item&quot;: {
-                    &quot;@type&quot;: &quot;Product&quot;,
-                    &quot;name&quot;: &quot;Medicube - PDRN Glow Booster Set (Pink Edition)&quot;,
-                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-pdrn-glow-booster-set-pink-edition/&quot;,
-                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2025/07/PDRN-Glow-booster-set.webp&quot;,
-                    &quot;brand&quot;: {
-                        &quot;@type&quot;: &quot;Brand&quot;,
-                        &quot;name&quot;: &quot;Medicube&quot;
-                    },
-                    &quot;offers&quot;: {
-                        &quot;@type&quot;: &quot;Offer&quot;,
-                        &quot;price&quot;: &quot;1399.00&quot;,
-                        &quot;priceCurrency&quot;: &quot;AED&quot;,
-                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
-                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-pdrn-glow-booster-set-pink-edition/&quot;
-                    }
-                }
+                &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-pdrn-glow-booster-set-pink-edition/&quot;,
+                &quot;name&quot;: &quot;Medicube - PDRN Glow Booster Set (Pink Edition)&quot;
             },
             {
                 &quot;@type&quot;: &quot;ListItem&quot;,
                 &quot;position&quot;: 4,
-                &quot;item&quot;: {
-                    &quot;@type&quot;: &quot;Product&quot;,
-                    &quot;name&quot;: &quot;ilso - Deep Clean Master&quot;,
-                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/ilso-deep-clean-master/&quot;,
-                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2025/04/ilso-Deep-Clean-Master.webp&quot;,
-                    &quot;brand&quot;: {
-                        &quot;@type&quot;: &quot;Brand&quot;,
-                        &quot;name&quot;: &quot;Medicube&quot;
-                    },
-                    &quot;offers&quot;: {
-                        &quot;@type&quot;: &quot;Offer&quot;,
-                        &quot;price&quot;: &quot;153.00&quot;,
-                        &quot;priceCurrency&quot;: &quot;AED&quot;,
-                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
-                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/ilso-deep-clean-master/&quot;
-                    }
-                }
+                &quot;url&quot;: &quot;https://kbeautybliss.test/product/ilso-deep-clean-master/&quot;,
+                &quot;name&quot;: &quot;ilso - Deep Clean Master&quot;
             }
         ]
     }
@@ -919,86 +876,26 @@ footer p{margin-top:7px;max-width:74ch}
             {
                 &quot;@type&quot;: &quot;ListItem&quot;,
                 &quot;position&quot;: 1,
-                &quot;item&quot;: {
-                    &quot;@type&quot;: &quot;Product&quot;,
-                    &quot;name&quot;: &quot;Medicube - Kojic Acid Turmeric Booster Pro Set&quot;,
-                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;,
-                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2026/03/Medicube-Kojic-Acid-Turmeric-Booster-Pro-Set-kbb.webp&quot;,
-                    &quot;brand&quot;: {
-                        &quot;@type&quot;: &quot;Brand&quot;,
-                        &quot;name&quot;: &quot;Medicube&quot;
-                    },
-                    &quot;offers&quot;: {
-                        &quot;@type&quot;: &quot;Offer&quot;,
-                        &quot;price&quot;: &quot;937.00&quot;,
-                        &quot;priceCurrency&quot;: &quot;AED&quot;,
-                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
-                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;
-                    }
-                }
+                &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-kojic-acid-turmeric-booster-pro-set/&quot;,
+                &quot;name&quot;: &quot;Medicube - Kojic Acid Turmeric Booster Pro Set&quot;
             },
             {
                 &quot;@type&quot;: &quot;ListItem&quot;,
                 &quot;position&quot;: 2,
-                &quot;item&quot;: {
-                    &quot;@type&quot;: &quot;Product&quot;,
-                    &quot;name&quot;: &quot;Medicube - PDRN Glow Booster Set (Pink Edition)&quot;,
-                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-pdrn-glow-booster-set-pink-edition/&quot;,
-                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2025/07/PDRN-Glow-booster-set.webp&quot;,
-                    &quot;brand&quot;: {
-                        &quot;@type&quot;: &quot;Brand&quot;,
-                        &quot;name&quot;: &quot;Medicube&quot;
-                    },
-                    &quot;offers&quot;: {
-                        &quot;@type&quot;: &quot;Offer&quot;,
-                        &quot;price&quot;: &quot;1399.00&quot;,
-                        &quot;priceCurrency&quot;: &quot;AED&quot;,
-                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
-                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-pdrn-glow-booster-set-pink-edition/&quot;
-                    }
-                }
+                &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-pdrn-glow-booster-set-pink-edition/&quot;,
+                &quot;name&quot;: &quot;Medicube - PDRN Glow Booster Set (Pink Edition)&quot;
             },
             {
                 &quot;@type&quot;: &quot;ListItem&quot;,
                 &quot;position&quot;: 3,
-                &quot;item&quot;: {
-                    &quot;@type&quot;: &quot;Product&quot;,
-                    &quot;name&quot;: &quot;Medicube - Collagen Booster Set&quot;,
-                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-collagen-booster-set/&quot;,
-                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2024/11/Medicube-set-black.webp&quot;,
-                    &quot;brand&quot;: {
-                        &quot;@type&quot;: &quot;Brand&quot;,
-                        &quot;name&quot;: &quot;Medicube&quot;
-                    },
-                    &quot;offers&quot;: {
-                        &quot;@type&quot;: &quot;Offer&quot;,
-                        &quot;price&quot;: &quot;1299.00&quot;,
-                        &quot;priceCurrency&quot;: &quot;AED&quot;,
-                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
-                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-collagen-booster-set/&quot;
-                    }
-                }
+                &quot;url&quot;: &quot;https://kbeautybliss.test/product/medicube-collagen-booster-set/&quot;,
+                &quot;name&quot;: &quot;Medicube - Collagen Booster Set&quot;
             },
             {
                 &quot;@type&quot;: &quot;ListItem&quot;,
                 &quot;position&quot;: 4,
-                &quot;item&quot;: {
-                    &quot;@type&quot;: &quot;Product&quot;,
-                    &quot;name&quot;: &quot;ilso - Deep Clean Master&quot;,
-                    &quot;url&quot;: &quot;https://kbeautybliss.test/product/ilso-deep-clean-master/&quot;,
-                    &quot;image&quot;: &quot;http://kbeautybliss.com/wp-content/uploads/2025/04/ilso-Deep-Clean-Master.webp&quot;,
-                    &quot;brand&quot;: {
-                        &quot;@type&quot;: &quot;Brand&quot;,
-                        &quot;name&quot;: &quot;Medicube&quot;
-                    },
-                    &quot;offers&quot;: {
-                        &quot;@type&quot;: &quot;Offer&quot;,
-                        &quot;price&quot;: &quot;153.00&quot;,
-                        &quot;priceCurrency&quot;: &quot;AED&quot;,
-                        &quot;availability&quot;: &quot;https://schema.org/InStock&quot;,
-                        &quot;url&quot;: &quot;https://kbeautybliss.test/product/ilso-deep-clean-master/&quot;
-                    }
-                }
+                &quot;url&quot;: &quot;https://kbeautybliss.test/product/ilso-deep-clean-master/&quot;,
+                &quot;name&quot;: &quot;ilso - Deep Clean Master&quot;
             }
         ]
     }

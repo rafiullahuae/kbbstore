@@ -1,0 +1,84 @@
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "OnlineStore",
+    "name": "KBB",
+    "url": "http://127.0.0.1:10761"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "KBB",
+    "url": "http://127.0.0.1:10761",
+    "inLanguage": [
+      "en",
+      "ar"
+    ],
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "http://127.0.0.1:10761/shop/?s={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Birch Sun",
+    "brand": {
+      "@type": "Brand",
+      "name": "Anua"
+    },
+    "description": "A gentle Birch Sun for calm, hydrated skin.",
+    "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI0Q5RDJGMiIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjEyMCIgcj0iNzAiIGZpbGw9IiM3QjZDRjAiLz48L3N2Zz4=",
+    "sku": "PS-8",
+    "url": "http://127.0.0.1:10761/product/ps-birch-sun/",
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "AED",
+      "price": "39.00",
+      "availability": "https://schema.org/InStock",
+      "url": "http://127.0.0.1:10761/product/ps-birch-sun/",
+      "itemCondition": "https://schema.org/NewCondition",
+      "priceSpecification": {
+        "@type": "UnitPriceSpecification",
+        "price": "39.00",
+        "priceCurrency": "AED",
+        "valueAddedTaxIncluded": true
+      },
+      "priceValidUntil": "2026-10-31"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "http://127.0.0.1:10761/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Shop",
+        "item": "http://127.0.0.1:10761/shop/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Toners",
+        "item": "http://127.0.0.1:10761/collections/toners/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 4,
+        "name": "Birch Sun",
+        "item": "http://127.0.0.1:10761/product/ps-birch-sun/"
+      }
+    ]
+  }
+]

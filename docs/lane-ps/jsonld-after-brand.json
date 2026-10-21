@@ -1,0 +1,155 @@
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "OnlineStore",
+    "name": "KBB",
+    "url": "http://127.0.0.1:10761"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "KBB",
+    "url": "http://127.0.0.1:10761",
+    "inLanguage": [
+      "en",
+      "ar"
+    ],
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "http://127.0.0.1:10761/shop/?s={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Anua",
+    "description": "Shop Korean skincare in the UAE — serums, creams, moisturisers and beauty devices from Korean beauty brands.",
+    "url": "http://127.0.0.1:10761/brands/anua/",
+    "inLanguage": "en",
+    "mainEntity": {
+      "@type": "ItemList",
+      "itemListOrder": "https://schema.org/ItemListOrderAscending",
+      "numberOfItems": 15,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "url": "http://127.0.0.1:10761/product/advanced-snail-96-mucin-power-essence/",
+          "name": "Advanced Snail 96 Mucin Power Essence"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "url": "http://127.0.0.1:10761/product/dive-in-low-molecular-hyaluronic-acid-serum/",
+          "name": "Dive-In Low Molecular Hyaluronic Acid Serum"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "url": "http://127.0.0.1:10761/product/zinc-sunscreen-spf50/",
+          "name": "Zinc Sunscreen SPF50+"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "url": "http://127.0.0.1:10761/product/ps-azelaic-acid-10-serum/",
+          "name": "Azelaic Acid 10 Serum"
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "url": "http://127.0.0.1:10761/product/ps-birch-sun/",
+          "name": "Birch Sun"
+        },
+        {
+          "@type": "ListItem",
+          "position": 6,
+          "url": "http://127.0.0.1:10761/product/ps-centella-ampoule/",
+          "name": "Centella Ampoule"
+        },
+        {
+          "@type": "ListItem",
+          "position": 7,
+          "url": "http://127.0.0.1:10761/product/ps-ceramide-daily-moisturiser/",
+          "name": "Ceramide Daily Moisturiser"
+        },
+        {
+          "@type": "ListItem",
+          "position": 8,
+          "url": "http://127.0.0.1:10761/product/ps-green-tea-seed-serum/",
+          "name": "Green Tea Seed Serum"
+        },
+        {
+          "@type": "ListItem",
+          "position": 9,
+          "url": "http://127.0.0.1:10761/product/ps-heartleaf-toner/",
+          "name": "Heartleaf Toner"
+        },
+        {
+          "@type": "ListItem",
+          "position": 10,
+          "url": "http://127.0.0.1:10761/product/ps-mugwort-mask/",
+          "name": "Mugwort Mask"
+        },
+        {
+          "@type": "ListItem",
+          "position": 11,
+          "url": "http://127.0.0.1:10761/product/ps-peach-slices-toner-pad/",
+          "name": "Peach Slices Toner Pad"
+        },
+        {
+          "@type": "ListItem",
+          "position": 12,
+          "url": "http://127.0.0.1:10761/product/ps-propolis-light-ampoule/",
+          "name": "Propolis Light Ampoule"
+        },
+        {
+          "@type": "ListItem",
+          "position": 13,
+          "url": "http://127.0.0.1:10761/product/ps-retinal-night-cream/",
+          "name": "Retinal Night Cream"
+        },
+        {
+          "@type": "ListItem",
+          "position": 14,
+          "url": "http://127.0.0.1:10761/product/ps-rice-70-glow-milky-toner/",
+          "name": "Rice 70 Glow Milky Toner"
+        },
+        {
+          "@type": "ListItem",
+          "position": 15,
+          "url": "http://127.0.0.1:10761/product/ps-snail-essence/",
+          "name": "Snail Essence"
+        }
+      ]
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "http://127.0.0.1:10761/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Brands",
+        "item": "http://127.0.0.1:10761/brands/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Anua",
+        "item": "http://127.0.0.1:10761/brands/anua/"
+      }
+    ]
+  }
+]

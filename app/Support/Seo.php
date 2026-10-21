@@ -2016,6 +2016,49 @@ class Seo
                     'bestRating' => '5',
                     'worstRating' => '1',
                 ];
+
+                /*
+                 * THE REVIEWS THEMSELVES (Lane PS). Search Console flagged
+                 * "Missing field review" on every product: the rating was
+                 * published, the reviews it was averaged from were not.
+                 *
+                 * Only under an aggregateRating, so a review can never be
+                 * published for a product whose page states no rating, and
+                 * only the rows the controller hands over -- the first few the
+                 * page's own review list draws, already loaded for it, already
+                 * approved-and-real, already cleaned by App\Support\ReviewSchema
+                 * (first name + initial, never the email or IP, valid UTF-8).
+                 * Re-checked here rather than trusted: a rating outside 1..5 or
+                 * an empty author is dropped, not published.
+                 */
+                $reviewNodes = [];
+
+                foreach ((array) ($p['review_items'] ?? []) as $r) {
+                    $stars = (int) ($r['rating'] ?? 0);
+                    $author = trim((string) ($r['author'] ?? ''));
+
+                    if (! is_array($r) || $stars < 1 || $stars > 5 || $author === '') {
+                        continue;
+                    }
+
+                    $reviewNodes[] = array_filter([
+                        '@type' => 'Review',
+                        'author' => ['@type' => 'Person', 'name' => $author],
+                        'datePublished' => is_string($r['date'] ?? null) ? $r['date'] : null,
+                        'name' => is_string($r['title'] ?? null) && $r['title'] !== '' ? $r['title'] : null,
+                        'reviewBody' => is_string($r['body'] ?? null) && $r['body'] !== '' ? $r['body'] : null,
+                        'reviewRating' => [
+                            '@type' => 'Rating',
+                            'ratingValue' => (string) $stars,
+                            'bestRating' => '5',
+                            'worstRating' => '1',
+                        ],
+                    ], static fn ($v) => $v !== null);
+                }
+
+                if ($reviewNodes !== []) {
+                    $node['review'] = $reviewNodes;
+                }
             }
 
             $nodes[] = $node;
@@ -2166,6 +2209,47 @@ class Seo
                             ? $row['schema_type']
                             : 'Product';
 
+                    /*
+                     * A PRODUCT ROW IS A LINK, NOT A PRODUCT (Lane PS).
+                     *
+                     * Every product on a category, brand, shop or curated page
+                     * used to go out as a full `Product` with its own Offer.
+                     * Google counts each of those as a Product-snippet item, so
+                     * one serum listed on its category, its brand page and
+                     * /shop/ was several "items" -- Search Console's 1,791 for a
+                     * ~781-product shop -- and every one of them was flagged
+                     * "Missing field aggregateRating / review", because a
+                     * listing has no review list to publish.
+                     *
+                     * Google's own rule for Product snippets is "use markup for
+                     * a specific product, not a category or list of products".
+                     * So the list stays (it is still a true statement of WHICH
+                     * products this page lists, in order) in the "summary page"
+                     * form Google documents for ItemList: each ListItem is the
+                     * product page's address and name, and the Product -- with
+                     * its price, stock, rating and reviews -- lives once, on the
+                     * page that shows all of them. Nothing visible changes; this
+                     * is the JSON-LD only. Brand rows (the A-Z directory) keep
+                     * their Brand node: a Brand is not a Product snippet.
+                     *
+                     * Mutation: give this branch back an `item` of @type
+                     * Product and ListingProductSnippetTest goes red.
+                     */
+                    if ($rowType === 'Product') {
+                        if ($itemUrl === null || $itemUrl === '') {
+                            continue;
+                        }
+
+                        $elements[] = array_filter([
+                            '@type' => 'ListItem',
+                            'position' => $offset + $i + 1,
+                            'url' => $itemUrl,
+                            'name' => isset($row['name']) && (string) $row['name'] !== '' ? (string) $row['name'] : null,
+                        ], static fn ($v) => $v !== null);
+
+                        continue;
+                    }
+
                     $item = array_filter([
                         '@type' => $rowType,
                         'name' => isset($row['name']) ? (string) $row['name'] : null,
@@ -2183,29 +2267,9 @@ class Seo
                         $item['brand'] = ['@type' => 'Brand', 'name' => (string) $row['brand']];
                     }
 
-                    /*
-                     * NO OFFER ON A ROW THAT IS NOT A PRODUCT, and this is the
-                     * half that is easy to leave out. priceString() reads
-                     * `price`/`price_minor`, a brand row carries neither, and
-                     * the result today would be null anyway -- so the guard
-                     * looks redundant and is not. `schema.org/Brand` has no
-                     * `offers` property at all, so the day any caller hands a
-                     * non-product row something price-shaped, the absence of
-                     * this test is what publishes an invalid node instead of
-                     * ignoring the field.
-                     */
-                    $price = $rowType === 'Product' ? self::priceString($row) : null;
-
-                    if ($price !== null) {
-                        $item['offers'] = array_filter([
-                            '@type' => 'Offer',
-                            'price' => $price,
-                            'priceCurrency' => SeoSettings::firstFilled($row['currency'] ?? null, 'AED'),
-                            'availability' => self::availability($row),
-                            'url' => $itemUrl,
-                        ], static fn ($v) => $v !== null);
-                    }
-
+                    // No offer here: only a Product row could carry one, and a
+                    // Product row has already left above as a plain ListItem.
+                    // `schema.org/Brand` has no `offers` property at all.
                     $elements[] = [
                         '@type' => 'ListItem',
                         'position' => $offset + $i + 1,
