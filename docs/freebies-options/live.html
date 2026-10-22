@@ -72,7 +72,7 @@ h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em;text-wrap:balan
 @media (prefers-reduced-motion:reduce){.pop{animation:none}}
 
 /* homepage frames */
-.drow{display:grid;gap:8px;min-width:0}
+.drow{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;min-width:0}
 .drow>*{min-width:0}
 .dhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .dhead .tag{font-weight:800;color:var(--pink);font-size:12.5px;letter-spacing:.08em}
@@ -106,6 +106,56 @@ h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em;text-wrap:balan
 .hs .pics{justify-content:flex-end;max-width:300px}
 .hs .pics .t{width:38px;height:38px}
 @container (max-width:640px){.hs .tr{grid-template-columns:1fr;gap:6px;padding:14px}.hs .pics{justify-content:flex-start;max-width:none}}
+/* 02 intro beside the list */
+.h2s{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.6fr);gap:26px;align-items:center}
+.h2s .intro{display:grid;gap:8px;justify-items:start}
+.h2s .intro .ey{font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--pink)}
+.h2s .intro h3{margin:0;font-size:clamp(22px,3.6cqi,32px);font-weight:800;line-height:1.15;letter-spacing:-.015em;text-wrap:balance}
+.h2s .intro p{margin:0;color:var(--muted);font-size:14.5px}
+.h2s .intro .cta{margin:8px 0 0}
+.h2s .tl{max-width:none;margin:0}
+@container (max-width:760px){.h2s{grid-template-columns:1fr}.h2s .intro{justify-items:center;text-align:center}.h2s .intro .cta{display:none}}
+@container (min-width:761px){.h2s .tr{grid-template-columns:130px minmax(0,1fr)}.h2s .tr .pics{display:none}}
+/* 03 table */
+.h3s .tbw{max-width:980px;margin:0 auto;border:1px solid #eedde4;border-radius:16px;overflow:hidden;background:#fff}
+.h3s table{width:100%;border-collapse:collapse}
+.h3s thead th{background:var(--ink);color:#fff;font-size:12px;letter-spacing:.1em;text-transform:uppercase;text-align:start;padding:11px 18px}
+.h3s tbody th{text-align:start;font-weight:800;color:var(--pink);white-space:nowrap;padding:14px 18px;vertical-align:top;width:1%;font-variant-numeric:tabular-nums}
+.h3s tbody td{padding:14px 18px 14px 0;display:grid;gap:3px}
+.rtl .h3s tbody td{padding:14px 0 14px 18px}
+.h3s tbody td b{font-size:15.5px}.h3s tbody td span{font-size:13px;color:var(--muted)}
+.h3s tbody tr:nth-child(even){background:var(--soft)}
+.h3s tbody tr+tr{border-top:1px solid #f3e8ed}
+@container (max-width:560px){.h3s tbody th{white-space:normal;width:34%;padding:12px}.h3s tbody td{padding:12px 12px 12px 0}.h3s thead th{padding:10px 12px}}
+/* 04 tap to open */
+.h4s .acc{max-width:820px;margin:0 auto;background:#fff;border:1px solid #eedde4;border-radius:16px;overflow:hidden}
+.h4s details+details{border-top:1px solid #f3e8ed}
+.h4s summary{list-style:none;display:grid;grid-template-columns:140px minmax(0,1fr) 20px;gap:12px;align-items:center;padding:14px 18px;cursor:pointer}
+.h4s summary::-webkit-details-marker{display:none}
+.h4s summary .ra{font-weight:800;color:var(--pink);font-variant-numeric:tabular-nums}
+.h4s summary b{font-size:15px}
+.h4s summary i{width:10px;height:10px;border-inline-end:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);justify-self:center;transition:transform .2s}
+.h4s details[open] summary i{transform:rotate(-135deg)}
+.h4s .in{display:grid;gap:10px;padding:0 18px 16px}
+.h4s .in ul{margin:0;padding-inline-start:18px;font-size:13.5px;color:var(--muted);display:grid;gap:2px}
+@media (prefers-reduced-motion:reduce){.h4s summary i{transition:none}}
+@container (max-width:520px){.h4s summary{grid-template-columns:minmax(0,1fr) 20px}.h4s summary .ra{grid-column:1/-1}.h4s summary b{grid-row:2}}
+/* 05 comparison chart */
+.h5s .cmp{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:#fff;border:1px solid #eedde4;border-radius:16px;overflow:hidden}
+.h5s .col{padding:16px 14px;display:grid;gap:8px;align-content:start}
+.h5s .col+.col{border-inline-start:1px solid #f3e8ed}
+.h5s .col .ra{font-weight:800;color:#fff;background:var(--pink);border-radius:999px;padding:3px 10px;justify-self:start;font-size:13px;font-variant-numeric:tabular-nums}
+.h5s .col b{font-size:14.5px;line-height:1.3}
+.h5s .col ul{margin:0;padding-inline-start:16px;font-size:12.5px;color:var(--muted);display:grid;gap:3px}
+@container (max-width:760px){.h5s .cmp{grid-template-columns:1fr}.h5s .col+.col{border-inline-start:0;border-top:1px solid #f3e8ed}}
+/* 06 plain text */
+.h6s .pl{max-width:760px;margin:0 auto;text-align:center}
+.h6s .ln{padding:14px 6px;border-top:1px solid #ead9e0;display:grid;gap:4px}
+.h6s .ln:last-child{border-bottom:1px solid #ead9e0}
+.h6s .ln .ra{font-weight:800;color:var(--pink);font-variant-numeric:tabular-nums}
+.h6s .ln b{font-size:16px}
+.h6s .ln>span{font-size:13px;color:var(--muted)}
+
 </style>
 
 <div class="pagehead">
@@ -152,7 +202,7 @@ const T = {
   en:{title:'Free gifts · gift box and homepage section', lead:'Gift box B: the gift photos with View all; View all opens the full list. Below it, the one homepage section. Change the bag at the top; switch Width to Phone 390 to see it on a phone. Striped tiles are gifts not in the shop yet.',
     jump:'Bag at', lang:'Language', width:'Width', valueT:'Gift value', on:'On', off:'Off (default)', desk:'Desktop', phone:'Phone 390',
     boxT:'Gift box · B (final)', boxP:'Cart panel, cart page and checkout summary. The summary has the new #fbf7f8 background you asked for.',
-    homeT:'Homepage section', homeP:'One simple section: each range with its wording and the gift products by name. Title, subtitle, button and every wording are editable in English and Arabic.',
+    homeT:'Homepage section · 6 options', homeP:'Each is one simple section: every range with its wording and the gift products by name. Title, subtitle, button and every wording are editable in English and Arabic.', yourGifts:'Your free gifts',
     cPanel:'Cart panel', cPage:'Cart page', cSum:'Checkout · summary',
     yourBag:'Your bag', bag:'Shopping bag', summary:'Order summary', items:n => n === 1 ? '1 item' : n + ' items', empty:'Your bag is empty.',
     sub:'Subtotal', giftsLine:n => `Free gifts (${n})`, deliv:'Delivery', freeDel:'Free', total:'Total', checkout:'Checkout', placeOrder:'Place order',
@@ -162,7 +212,7 @@ const T = {
   ar:{title:'الهدايا المجانية · الصندوق وقسم الرئيسية', lead:'الصندوق B: صور الهدايا مع عرض الكل. وتحته قسم الصفحة الرئيسية.',
     jump:'الحقيبة عند', lang:'اللغة', width:'العرض', valueT:'قيمة الهدايا', on:'تشغيل', off:'إيقاف (افتراضي)', desk:'كمبيوتر', phone:'هاتف 390',
     boxT:'صندوق الهدايا · B (نهائي)', boxP:'نافذة السلة وصفحة السلة وملخص الدفع.',
-    homeT:'قسم الصفحة الرئيسية', homeP:'قسم واحد بسيط: كل فئة مع نصها وأسماء المنتجات.',
+    homeT:'قسم الصفحة الرئيسية · 6 خيارات', homeP:'كل خيار قسم واحد بسيط: كل فئة مع نصها وأسماء المنتجات.', yourGifts:'هداياكِ المجانية',
     cPanel:'نافذة السلة', cPage:'صفحة السلة', cSum:'الدفع · الملخص',
     yourBag:'حقيبتك', bag:'حقيبة التسوق', summary:'ملخص الطلب', items:n => n === 1 ? 'منتج واحد' : n === 2 ? 'منتجان' : n + ' منتجات', empty:'حقيبتك فارغة.',
     sub:'المجموع الفرعي', giftsLine:n => `هدايا مجانية (${n})`, deliv:'التوصيل', freeDel:'مجاني', total:'الإجمالي', checkout:'إتمام الشراء', placeOrder:'تأكيد الطلب',
@@ -203,11 +253,25 @@ function items(){
   return ks.map(k => { const p = PRODUCTS[k], q = S.bag[k]; return `<div class="item"><img src="img/${p.img}.webp" alt="" loading="lazy"><div class="n"><small>${esc(AR() ? p.ba : p.b)}</small>${esc(AR() ? p.na : p.n)}${q > 1 ? ` <em>× ${q}</em>` : ''}</div><div class="p">${L().money(p.p * q)}</div></div>`; }).join('');
 }
 
-/* the homepage section: one simple, informative section */
-function homeSection(){
-  const lang = L();
-  const rows = RANGES.map(r => `<div class="tr"><div class="ra">${esc(amt(r))}</div><div class="tw"><b>${esc(words(r))}</b><span>${r.gifts.map(([k, q]) => `${q > 1 ? q + '× ' : ''}${gbrand(k) ? esc(gbrand(k)) + ' ' : ''}${esc(gname(k))}`).join(' · ')}</span></div>${pics(r)}</div>`).join('');
-  return `<section class="hs"><div class="hd"><span class="ey">${lang.ey}</span><h3>${lang.hpTitle}</h3><p>${lang.hpSub}</p></div><div class="tl">${rows}</div><button type="button" class="cta">${lang.shop}</button></section>`;
+/* the homepage section: one simple, informative section, in six treatments */
+const HOME = [
+  ['Simple list','One white card, a row per range: amount, wording, product names, small photos.'],
+  ['Intro beside the list','The title and button on the left, the same list on the right. Shorter on a computer.'],
+  ['Table','A real table: “Spend” and “Your free gifts” headings, light stripes. The most informative.'],
+  ['Tap to open','Each range is one line; tap it to see the product names and photos. The first one starts open. The shortest.'],
+  ['Comparison chart','One box split into five columns, a range in each, products listed underneath. Rows on a phone.'],
+  ['Plain text','No card at all: centred lines with thin dividers and product names in grey. The lightest.'],
+];
+const names = r => r.gifts.map(([k, q]) => `${q > 1 ? q + '× ' : ''}${gbrand(k) ? esc(gbrand(k)) + ' ' : ''}${esc(gname(k))}`);
+function homeSection(v){
+  const lang = L(), hd = `<div class="hd"><span class="ey">${lang.ey}</span><h3>${lang.hpTitle}</h3><p>${lang.hpSub}</p></div>`, cta = `<button type="button" class="cta">${lang.shop}</button>`;
+  const rows = RANGES.map(r => `<div class="tr"><div class="ra">${esc(amt(r))}</div><div class="tw"><b>${esc(words(r))}</b><span>${names(r).join(' · ')}</span></div>${pics(r)}</div>`).join('');
+  if (v === 0) return `<section class="hs">${hd}<div class="tl">${rows}</div>${cta}</section>`;
+  if (v === 1) return `<section class="hs h2s"><div class="intro"><span class="ey">${lang.ey}</span><h3>${lang.hpTitle}</h3><p>${lang.hpSub}</p>${cta}</div><div class="tl">${rows}</div></section>`;
+  if (v === 2) return `<section class="hs h3s">${hd}<div class="tbw"><table><thead><tr><th scope="col">${lang.spend}</th><th scope="col">${lang.yourGifts}</th></tr></thead><tbody>${RANGES.map(r => `<tr><th scope="row">${esc(amt(r))}</th><td><b>${esc(words(r))}</b><span>${names(r).join(' · ')}</span></td></tr>`).join('')}</tbody></table></div>${cta}</section>`;
+  if (v === 3) return `<section class="hs h4s">${hd}<div class="acc">${RANGES.map((r, i) => `<details${i === 0 ? ' open' : ''}><summary><span class="ra">${esc(amt(r))}</span><b>${esc(words(r))}</b><i aria-hidden="true"></i></summary><div class="in"><ul>${names(r).map(n => `<li>${n}</li>`).join('')}</ul>${pics(r)}</div></details>`).join('')}</div>${cta}</section>`;
+  if (v === 4) return `<section class="hs h5s">${hd}<div class="cmp">${RANGES.map(r => `<div class="col"><div class="ra">${esc(amt(r))}</div><b>${esc(words(r))}</b><ul>${names(r).map(n => `<li>${n}</li>`).join('')}</ul></div>`).join('')}</div>${cta}</section>`;
+  return `<section class="hs h6s">${hd}<div class="pl">${RANGES.map(r => `<div class="ln"><div><span class="ra">${esc(amt(r))}</span> <b>${esc(words(r))}</b></div><span>${names(r).join(' · ')}</span></div>`).join('')}</div>${cta}</section>`;
 }
 
 function render(){
@@ -227,7 +291,8 @@ function render(){
     <div><div class="cap">${lang.cPanel}</div><div class="surf panel" style="max-width:400px"><div class="ph">${lang.yourBag}<small>${lang.items(n)}</small></div>${it}${box('panel', ix, anim)}<div class="tot"><span>${lang.sub}</span><span>${lang.money(sub)}</span></div><div class="btn">${lang.checkout}</div></div></div>
     <div><div class="cap">${lang.cPage}</div><div class="surf"><div class="ph">${lang.bag}<small>${lang.items(n)}</small></div>${it}${box('page', ix, anim)}<div class="tot"><span>${lang.sub}</span><span>${lang.money(sub)}</span></div><div class="btn" style="max-width:240px;margin-inline-start:auto">${lang.checkout}</div></div></div>
     <div><div class="cap">${lang.cSum}</div><div class="surf sum"><div class="ph">${lang.summary}</div>${it}${box('sum', ix, anim)}<div class="tline"><span>${lang.sub}</span><b>${lang.money(sub)}</b></div>${gn ? `<div class="tline"><span>${lang.giftsLine(gn)}</span><b class="g">${lang.money(0)}</b></div>` : ''}<div class="tline"><span>${lang.deliv}</span><b>${lang.freeDel}</b></div><div class="tot"><span>${lang.total}</span><span>${lang.money(sub)}</span></div><div class="btn">${lang.placeOrder}</div></div></div></div>`;
-  h += `<div class="secT"><h2>${lang.homeT}</h2><p>${lang.homeP}</p></div><div class="frame" style="--fw:${S.fw === 'phone' ? '390px' : '100%'}">${homeSection()}</div>`;
+  h += `<div class="secT"><h2>${lang.homeT}</h2><p>${lang.homeP}</p></div>`;
+  h += HOME.map(([name, desc], i) => `<div class="drow"><div class="dhead"><span class="tag">${String(i + 1).padStart(2, '0')}</span><b>${esc(name)}</b><p>${esc(desc)}</p></div><div class="frame" style="--fw:${S.fw === 'phone' ? '390px' : '100%'}">${homeSection(i)}</div></div>`).join('');
   document.getElementById('board').innerHTML = h;
 }
 
