@@ -1,0 +1,102 @@
+<title>Gift Box B</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: gift box B only. Every range is one row; each row shows the box closed (photos + View all) and opened (the small-font list),
+   in the cart panel width, plus a working box you can open and close. Single light look in the shop's palette. */
+@font-face{font-family:Outfit;src:url(outfit-latin.woff2) format("woff2");font-weight:300 800;font-display:swap}
+@font-face{font-family:Cairo;src:url(cairo-arabic.woff2) format("woff2");font-weight:300 800;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
+:root{--bg:#f3edf0;--card:#ffffff;--ink:#2a2228;--muted:#756c74;--line:#efe3e8;--soft:#fbf7f8;--pink:#c13e63;--green:#2e8f62;--track:#e4f1ea;
+  --sans:Outfit,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--ar:Cairo,Outfit,system-ui,sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--sans)}
+body.rtl{font-family:var(--ar)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding-block:22px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
+h1{margin:0;font-size:24px;font-weight:800}
+.lead{margin:2px 0 0;color:var(--muted);max-width:75ch}
+.seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:999px;padding:6px 12px;font-weight:600;font-size:13px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.rowR{display:grid;grid-template-columns:150px repeat(3,minmax(0,1fr));gap:14px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px}
+.rowR>*{min-width:0}
+.rl b{display:block;color:var(--pink);font-size:15px}
+.rl span{font-size:13px;color:var(--muted)}
+.cap{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.surf{background:var(--card);border:1px solid #e6d8de;border-radius:14px;padding:4px 12px 10px;max-width:360px}
+.surf.sum{background:var(--soft)}
+@media (max-width:900px){.rowR{grid-template-columns:1fr}}
+
+/* gift box B */
+.gb{position:relative;margin:18px 0 4px;border:1.5px solid var(--green);border-radius:12px;padding:13px 11px 9px;background:transparent}
+.gb .h{position:absolute;top:-11px;inset-inline-start:10px;background:var(--card);padding:0 7px;color:var(--green);font-weight:700;font-size:14px;display:flex;align-items:center;gap:7px;line-height:1.4}
+.sum .gb .h{background:var(--soft)}
+.gb .h svg{width:16px;height:16px;flex:none}
+.gb .th{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.t{position:relative;display:inline-block;width:36px;height:36px;border-radius:8px;background:#fff;border:1px solid rgba(42,34,40,.08);flex:none}
+.t img{width:100%;height:100%;object-fit:contain;border-radius:8px;display:block}
+.t .ph0{display:grid;place-items:center;width:100%;height:100%;font-size:10.5px;font-weight:800;color:#8a7d86;background:repeating-linear-gradient(135deg,#faf5f7 0 6px,#f3ebef 6px 12px);border-radius:8px}
+.t b{position:absolute;top:-6px;inset-inline-end:-6px;background:var(--green);color:#fff;font-size:9.5px;font-weight:800;border-radius:999px;min-width:17px;height:17px;padding:0 4px;display:grid;place-items:center}
+.gb .more{border:0;background:none;padding:0 2px;color:var(--green);font-size:12px;font-weight:700;margin-inline-start:4px}
+.gb .list{display:grid;gap:3px}
+.gb .lr{display:flex;align-items:center;gap:8px}
+.gb .t.s{width:28px;height:28px;border-radius:7px}
+.gb .t.s img,.gb .t.s .ph0{border-radius:7px}
+.gb .ln{flex:1;min-width:0;font-size:12px;line-height:1.25}
+.gb .ln small{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.gb .ln em{font-style:normal;font-weight:700}
+.gb .lv{font-size:11px;font-weight:800;color:var(--green);white-space:nowrap}
+.gb .more.hide{display:block;margin:6px 0 0}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+'use strict';
+const GIFT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const G = {
+  mask:{img:'mask', b:'', ba:'', n:'Sheet Mask', na:'ماسك ورقي'},
+  m1:{img:'haruharu', b:'haruharu wonder', ba:'هاروهارو وندر', n:'Black Rice Hyaluronic Toner Mini', na:'تونر الأرز الأسود هيالورونيك ميني'},
+  m2:{img:'isntree', b:'Isntree', ba:'إيزنتري', n:'Mugwort Calming Clay Mask Mini', na:'ماسك الطين بالشيح المهدّئ ميني'},
+  m3:{img:null, ini:'BP', b:'beplain', ba:'بيبلين', n:'Mung Bean Milk Peeling Gel Mini', na:'جل التقشير بحليب الماش ميني'},
+  f1:{img:'glowset', b:'AXIS-Y', ba:'أكسس-واي', n:'The Glow Set', na:'مجموعة ذا جلو'},
+  f2:{img:'senka', b:'Shiseido', ba:'شيسيدو', n:'Senka Perfect Whip Fresh Beauty Face Foam', na:'غسول سينكا بيرفكت ويب'},
+  f3:{img:null, ini:'HH', b:'haruharu wonder', ba:'هاروهارو وندر', n:'Rose PDRN Peptide Glowy Balm Petal Pink', na:'بلسم الورد PDRN ببتيد جلوي بيتال بينك'},
+};
+const RANGES = [
+  {min:'AED 100 – 299', mina:'100 – 299 د.إ', en:'2 Masks', ar:'ماسكان', gifts:[['mask',2]]},
+  {min:'AED 300 – 499', mina:'300 – 499 د.إ', en:'3 Masks + 1 Mini Product', ar:'3 ماسكات + منتج ميني', gifts:[['mask',3],['m1',1]]},
+  {min:'AED 500 – 999', mina:'500 – 999 د.إ', en:'3 Masks + 2 Mini Products + 1 Full Size Product', ar:'3 ماسكات + منتجان ميني + منتج بحجم كامل', gifts:[['mask',3],['m1',1],['m2',1],['f2',1]]},
+  {min:'AED 1,000 – 1,999', mina:'1,000 – 1,999 د.إ', en:'5 Masks + 2 Minis + 2 Full Size Products', ar:'5 ماسكات + 2 ميني + منتجان بحجم كامل', gifts:[['mask',5],['m1',1],['m2',1],['f2',1],['f1',1]]},
+  {min:'AED 2,000+', mina:'2,000+ د.إ', en:'12 Masks + 5 Minis + 3 Full Size Products', ar:'12 ماسكاً + 5 ميني + 3 منتجات بحجم كامل', gifts:[['mask',12],['m1',1],['m2',2],['m3',2],['f1',1],['f2',1],['f3',1]]},
+];
+const T = {
+  en:{title:'Gift box B · View all', lead:'Each range shows the box closed (photos and View all) and opened (the small list). The third box works: tap View all and Hide.', closed:'Closed', opened:'After “View all”', live:'Try it (checkout summary)', head:'Free gifts for you', view:'View all', hide:'Hide', free:'FREE'},
+  ar:{title:'صندوق الهدايا B · عرض الكل', lead:'كل فئة تعرض الصندوق مغلقاً ومفتوحاً. الصندوق الثالث يعمل.', closed:'مغلق', opened:'بعد «عرض الكل»', live:'جرّبيه (ملخص الدفع)', head:'هدايا مجانية لكِ', view:'عرض الكل', hide:'إخفاء', free:'مجاناً'},
+};
+const S = {lang:'en', open:{}};
+const L = () => T[S.lang], AR = () => S.lang === 'ar';
+const nm = k => AR() ? G[k].na : G[k].n, br = k => AR() ? G[k].ba : G[k].b;
+const tile = (k, q, c = 't') => `<span class="${c}">${G[k].img ? `<img src="img/${G[k].img}.webp" alt="${esc(nm(k))}">` : `<span class="ph0" role="img" aria-label="${esc(nm(k))}">${G[k].ini}</span>`}${q > 1 ? `<b>×${q}</b>` : ''}</span>`;
+function box(r, open, id){
+  const l = L(), head = `<div class="h">${GIFT}<span>${l.head}</span></div>`;
+  if (!open) return `<div class="gb">${head}<div class="th">${r.gifts.map(([k, q]) => tile(k, q)).join('')}<button type="button" class="more"${id ? ` data-id="${id}"` : ''} aria-expanded="false">${l.view}</button></div></div>`;
+  return `<div class="gb">${head}<div class="list">${r.gifts.map(([k, q]) => `<div class="lr">${tile(k, 1, 't s')}<span class="ln">${br(k) ? `<small>${esc(br(k))}</small>` : ''}${q > 1 ? `<em>${q}× </em>` : ''}${esc(nm(k))}</span><span class="lv">${l.free}</span></div>`).join('')}</div><button type="button" class="more hide"${id ? ` data-id="${id}"` : ''} aria-expanded="true">${l.hide}</button></div>`;
+}
+function render(){
+  const l = L();
+  document.documentElement.lang = S.lang; document.documentElement.dir = AR() ? 'rtl' : 'ltr'; document.body.classList.toggle('rtl', AR());
+  document.getElementById('app').innerHTML = `<div><h1>${l.title}</h1><p class="lead">${l.lead}</p></div>
+    <div><div class="seg" role="group">${[['en','English'],['ar','العربية']].map(([v, t]) => `<button type="button" data-lang="${v}" aria-pressed="${v === S.lang}">${t}</button>`).join('')}</div></div>
+    ${RANGES.map((r, i) => `<div class="rowR"><div class="rl"><b>${esc(AR() ? r.mina : r.min)}</b><span>${esc(AR() ? r.ar : r.en)}</span></div>
+      <div><div class="cap">${l.closed}</div><div class="surf">${box(r, false)}</div></div>
+      <div><div class="cap">${l.opened}</div><div class="surf">${box(r, true)}</div></div>
+      <div><div class="cap">${l.live}</div><div class="surf sum">${box(r, !!S.open[i], 'r' + i)}</div></div></div>`).join('')}`;
+}
+document.addEventListener('click', e => {
+  const lb = e.target.closest('[data-lang]'); if (lb) { S.lang = lb.dataset.lang; render(); return; }
+  const b = e.target.closest('[data-id]'); if (b) { const i = +b.dataset.id.slice(1); S.open[i] = !S.open[i]; render(); }
+});
+render();
+</script>
