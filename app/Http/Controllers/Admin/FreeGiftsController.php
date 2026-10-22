@@ -346,7 +346,7 @@ class FreeGiftsController extends Controller
     {
         $q = trim(mb_substr((string) $request->query('q', ''), 0, 80));
         // A select stores one of its own options: anything else is "all".
-        $filter = in_array($request->query('filter'), ['gift', 'instock'], true) ? $request->query('filter') : 'all';
+        $filter = in_array($request->query('filter'), ['gift', 'instock', 'used'], true) ? $request->query('filter') : 'all';
         // Lane FG4: by remembered type; `none` is untagged, anything else all.
         $kind = in_array($request->query('kind'), [...FreeGifts::KINDS, 'none'], true) ? $request->query('kind') : 'all';
 
@@ -355,6 +355,13 @@ class FreeGiftsController extends Controller
             ->when($filter === 'gift', fn ($query) => $query->where('gift_only', true))
             ->when($filter === 'instock', fn ($query) => $query->where('stock_status', 'instock')
                 ->where(fn ($w) => $w->where('manage_stock', false)->orWhere('stock', '>', 0)))
+            // "Products used in gifts" (the owner, 22 Oct): every product that is,
+            // or ever was, a gift -- on a range now, or tagged with a gift type
+            // (a type is remembered the first time a product is picked and
+            // saved). One query with a subselect; no per-range walk.
+            ->when($filter === 'used', fn ($query) => $query->where(fn ($w) => $w
+                ->whereIn('id', DB::table('free_gift_range_items')->select('product_id'))
+                ->orWhereNotNull('gift_kind')))
             ->when($kind === 'none', fn ($query) => $query->whereNull('gift_kind'))
             ->when(in_array($kind, FreeGifts::KINDS, true), fn ($query) => $query->where('gift_kind', $kind))
             ->when($q !== '', function ($query) use ($q) {
@@ -364,7 +371,7 @@ class FreeGiftsController extends Controller
             ->orderByDesc('gift_only')
             ->orderBy('name')
             ->orderBy('id')
-            ->limit(20)
+            ->limit($filter === 'used' ? 200 : 20)
             ->get(['id', 'name', 'slug', 'sku', 'brand_id', 'image', 'type', 'status', 'stock_status', 'manage_stock', 'stock', 'gift_only', 'gift_kind', 'price', 'sale_price', 'sale_starts_at', 'sale_ends_at']);
 
         return response()->json(['products' => $rows->map(fn (Product $p) => $this->productRow($p))->values()]);

@@ -11,6 +11,11 @@
 .fg-h{font-weight:700;font-size:15px;margin:0;letter-spacing:-.01em}
 .fg-h2{font-weight:650;font-size:13px;margin:0 0 8px;color:var(--ink-2)}
 .fg-sub{color:var(--ink-soft);font-size:12.5px;line-height:1.55;margin:4px 0 0;max-width:80ch}
+.fg-pk-tip{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap}
+.fg-usedb{border:1.5px solid #2e8f62;background:#fff;color:#1f6e4a;border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.fg-usedb:hover{background:#f1f9f4}
+.fg-usedb.on{background:#2e8f62;color:#fff}
+.fg-usedb:focus-visible{outline:2px solid #2e8f62;outline-offset:2px}
 .fg-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;min-width:0}
 .fg-between{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;min-width:0}
 .fg-g2{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}

@@ -224,6 +224,32 @@ it('narrows the picker to gift-only or in-stock products, and treats any other f
         ->and($names('nonsense'))->toBe(['Zeta For Sale', 'Zeta Gift', 'Zeta Sold Out']);
 });
 
+it('lists every product used in gifts in one tap, searches inside it, and offers it in the picker', function () {
+    /*
+     * The owner, 22 Oct: "i need here button / option called Products used in
+     * gifts ... so i can directly pick for any tab / range from the list
+     * instantly instead of searching again n again." A product counts while it
+     * is on any range, and stays once it has a remembered gift type (saved
+     * once), so a gift taken off one range is still one tap away.
+     * MUTATION: drop the 'used' ->when() in products() -- every product comes back. RED.
+     * MUTATION: drop orWhereNotNull('gift_kind') -- the removed gift vanishes. RED.
+     */
+    $owner = fg2Admin();
+    $onRange = fg2Product('Used Mask On Range');
+    $tagged = fg2Product('Used Mini Removed Later');
+    DB::table('products')->where('id', $tagged->id)->update(['gift_kind' => 'mini']);
+    fg2Product('Never A Gift');
+    fg2Range(100, 299, [[$onRange, 2]]);
+    $names = fn (string $q) => collect(test()->actingAs($owner, 'admin')->getJson('/admin-api/free-gifts/products?filter=used&q=' . urlencode($q))->assertOk()->json('products'))->pluck('name')->sort()->values()->all();
+
+    expect($names(''))->toBe(['Used Mask On Range', 'Used Mini Removed Later'])
+        ->and($names('mini'))->toBe(['Used Mini Removed Later']);
+
+    $screen = (string) file_get_contents(resource_path('views/admin/partials/free-gifts-screen.blade.php'));
+    expect(substr_count($screen, "text: '★ Products used in gifts'"))->toBe(1)
+        ->and($screen)->toContain("p.filter = p.filter === 'used' ? 'all' : 'used'");
+});
+
 /*
 |------------------------------------------------------------------------------
 | OVERLAP AND GAP WORDS, THE CHECKLIST'S LINKS

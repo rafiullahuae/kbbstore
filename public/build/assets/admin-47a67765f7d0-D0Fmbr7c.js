@@ -1002,7 +1002,7 @@
     resultsNode.setAttribute('aria-busy', String(p.loading));
     if (pkStNode && !(had && had.indexOf('ask-') === 0)) pkStNode.textContent = p.loading ? 'Searching…' : (p.rows && p.q.trim().length >= 2 ? plural(p.rows.length, 'match', 'matches') + (p.rows.length >= 20 ? ' (first 20; keep typing to narrow)' : '') : '');
     if (p.err) resultsNode.appendChild(el('p', { class: 'fg-sub', text: p.err }));
-    else if (!p.loading && p.rows && !p.rows.length) resultsNode.appendChild(el('div', { class: 'fg-empty', text: 'No product matches' + (p.filter !== 'all' || p.kind !== 'all' ? ' this filter' : '') + '.' }));
+    else if (!p.loading && p.rows && !p.rows.length) resultsNode.appendChild(el('div', { class: 'fg-empty', text: p.filter === 'used' && p.q.trim().length < 2 ? 'No product has been used as a gift yet. Pick one with the search, and it appears here from then on.' : 'No product matches' + (p.filter !== 'all' || p.kind !== 'all' ? ' this filter' : '') + '.' }));
     (p.err ? [] : (p.rows || [])).forEach(function (pr) {
       var mine = x.gifts.filter(function (g) { return g.product_id === pr.id; })[0], taken = !!mine, bad = pr.type === 'variable', s = stockOf(pr);
       var into = taken ? kindRow(kindOf(mine.kind)) : null;
@@ -1047,10 +1047,20 @@
       return el('button', { type: 'button', class: p.filter === f[0] ? 'on' : '', 'aria-pressed': String(p.filter === f[0]), text: f[1], onclick: function () {
         if (p.filter === f[0]) return;
         p.filter = f[0]; p.initial = null;
+        if (usedBtn) { usedBtn.className = 'fg-usedb'; usedBtn.setAttribute('aria-pressed', 'false'); }
         seg.querySelectorAll('button').forEach(function (b) { var on = b.textContent === f[1]; b.className = on ? 'on' : ''; b.setAttribute('aria-pressed', String(on)); });
         clearTimeout(p.timer); fetchPicker(p.q.trim().length >= 2 ? p.q.trim() : '');
       } });
     }));
+    /* "Products used in gifts" (the owner, 22 Oct): one tap lists every product
+       used as a gift in any range, so a gift is picked again without searching.
+       Typing still searches -- inside that list. Tap again for everything. */
+    var usedBtn = el('button', { type: 'button', class: 'fg-usedb' + (p.filter === 'used' ? ' on' : ''), 'aria-pressed': String(p.filter === 'used'), 'data-fk': 'pk-used', text: '★ Products used in gifts', onclick: function () {
+      p.filter = p.filter === 'used' ? 'all' : 'used'; p.initial = null;
+      usedBtn.className = 'fg-usedb' + (p.filter === 'used' ? ' on' : ''); usedBtn.setAttribute('aria-pressed', String(p.filter === 'used'));
+      seg.querySelectorAll('button').forEach(function (b) { var on = p.filter === 'all' && b.textContent === 'All'; b.className = on ? 'on' : ''; b.setAttribute('aria-pressed', String(on)); });
+      clearTimeout(p.timer); fetchPicker(p.q.trim().length >= 2 ? p.q.trim() : '');
+    } });
     resultsNode = el('div', { class: 'fg-res-l', 'aria-live': 'polite' });
     pkFootNode = el('span', { class: 'fg-sub', style: 'margin:0' });
     pkStNode = el('div', { class: 'fg-pk-st', role: 'status', 'aria-live': 'polite', 'data-fk': 'pk-st' });
@@ -1078,7 +1088,7 @@
         el('div', { class: 'fg-row' }, [el('span', { class: 'fg-pk-lab', text: 'New picks go to' }), into]),
         el('div', { class: 'fg-row' }, [el('span', { class: 'fg-pk-lab', text: 'Type' }), kseg]),
         el('div', { class: 'fg-row' }, [el('span', { class: 'fg-pk-lab', text: 'Show' }), seg])
-      ]), el('p', { class: 'fg-sub', style: 'margin:0', text: 'A product tagged before goes to its own box. Types are internal only.' }), pkStNode]),
+      ]), el('div', { class: 'fg-pk-tip' }, [el('p', { class: 'fg-sub', style: 'margin:0', text: 'A product tagged before goes to its own box. Types are internal only.' }), usedBtn]), pkStNode]),
       el('div', { class: 'modal-b' }, [resultsNode]),
       el('div', { class: 'fg-pk-foot' }, [pkFootNode, el('button', { type: 'button', class: 'btn sm', text: 'Done', onclick: function () { closePicker(); } })])
     ]);
