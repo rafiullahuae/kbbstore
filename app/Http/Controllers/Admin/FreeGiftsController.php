@@ -204,16 +204,18 @@ class FreeGiftsController extends Controller
         $min = (int) $data['min'] * 100;
         $max = $data['max'] === null ? null : (int) $data['max'] * 100;
 
-        if ($max !== null && $max <= $min) {
-            throw ValidationException::withMessages(['max' => 'The maximum must be above the minimum (leave it empty for "and above").']);
-        }
-
-        foreach (DB::table('free_gift_ranges')->when($id !== null, fn ($q) => $q->where('id', '<>', $id))->get(['min_fils', 'max_fils']) as $other) {
-            if (FreeGifts::overlaps($min, $max, (int) $other->min_fils, $other->max_fils === null ? null : (int) $other->max_fils)) {
-                throw ValidationException::withMessages(['min' => 'Overlaps '
-                    . FreeGifts::rangeLabel(['min' => (int) $other->min_fils, 'max' => $other->max_fils === null ? null : (int) $other->max_fils])
-                    . ': one basket gets one range, so ranges may not share an amount.']);
-            }
+        /*
+         * NO RANGE RESTRICTIONS -- the owner, 22 October: "the server should not
+         * restrict the ranges. it's up to us how we set and what gap we set.
+         * server should also calculate the range." Ranges saved one at a time
+         * overlap for a moment while the owner moves a boundary (100-300 saved
+         * before 300-499 becomes 301-500), and refusing that made the screen
+         * unusable. Overlaps and gaps are allowed; FreeGifts::rangeFor() gives a
+         * basket that two ranges cover the HIGHER range. A top amount typed
+         * below the start is read the other way round rather than refused.
+         */
+        if ($max !== null && $max < $min) {
+            [$min, $max] = [$max, $min];
         }
 
         $ids = array_map(static fn ($g) => (int) $g['product_id'], $data['gifts']);

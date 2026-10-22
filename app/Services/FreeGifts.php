@@ -284,6 +284,10 @@ final class FreeGifts
     public function rangeFor(int $fils): ?array
     {
         $today = StoreTime::today()->format('Y-m-d');
+        // Overlapping ranges are allowed (the owner, 22 October): a basket two
+        // ranges cover gets the HIGHER one -- the larger start amount, and on a
+        // tie the later-ending one. Every range is walked; none is cut short.
+        $best = null;
 
         foreach ($this->ranges() as $range) {
             if (($range['starts'] ?? null) !== null && $today < $range['starts']) {
@@ -294,12 +298,14 @@ final class FreeGifts
                 continue;
             }
 
-            if (self::covers($range['min'], $range['max'], $fils)) {
-                return $range;
+            if (self::covers($range['min'], $range['max'], $fils)
+                && ($best === null || $range['min'] > $best['min']
+                    || ($range['min'] === $best['min'] && ($range['max'] === null || ($best['max'] !== null && $range['max'] > $best['max']))))) {
+                $best = $range;
             }
         }
 
-        return null;
+        return $best;
     }
 
     /** min <= amount, and amount below the dirham after max (null = and above). */

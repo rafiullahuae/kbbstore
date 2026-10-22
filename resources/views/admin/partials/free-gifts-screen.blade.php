@@ -483,10 +483,11 @@ select.fg-in{padding-inline-end:28px}
     var out = [];
     if (typeof x.min !== 'number' || isNaN(x.min) || x.min < 0) out.push({ level: 'err', text: 'Enter the amount the range starts at.' });
     else {
-      if (x.max != null && x.max <= x.min) out.push({ level: 'err', text: 'The top amount must be above ' + fmt(x.min) + ', or tick "and above".' });
+      if (x.max != null && x.max < x.min) out.push({ level: 'warn', text: 'The top amount is below the start; it saves as ' + amount(x.max, x.min) + '.' });
       bands().forEach(function (b) {
-        if (String(b.id) === String(id) || x.max != null && x.max <= x.min) return;
-        if (overlaps(x.min, x.max, b.min, b.max)) out.push({ level: 'err', text: 'Overlaps ' + amount(b.min, b.max) + '. One basket gets one range, so ranges may not share an amount.' });
+        if (String(b.id) === String(id)) return;
+        var lo = x.max != null && x.max < x.min ? x.max : x.min, hi = x.max != null && x.max < x.min ? x.min : x.max;
+        if (overlaps(lo, hi, b.min, b.max)) out.push({ level: 'warn', text: 'Shares amounts with ' + amount(b.min, b.max) + '. A basket in both gets the higher range.' });
       });
       if (x.enabled) gaps().forEach(function (g) {
         if (g.to + 1 === x.min || (x.max != null && g.from - 1 === x.max)) out.push({ level: 'warn', text: 'Gap: ' + amount(g.from, g.to) + ' gives nothing.' });
@@ -885,7 +886,7 @@ select.fg-in{padding-inline-end:28px}
     });
     wrap.appendChild(el('section', { class: 'card fg-card' }, [
       el('h3', { class: 'fg-h', text: 'Ranges & gifts' }),
-      el('p', { class: 'fg-sub', text: 'Whole dirhams: "AED 100 – 299" covers AED 100.00 to AED 299.99. Ranges may not overlap. Each gift is 1 to ' + MAX_QTY + ' of a product; a sold-out gift is skipped until it is back and the rest of the range is still given. Each range saves on its own.' }),
+      el('p', { class: 'fg-sub', text: 'Whole dirhams: "AED 100 – 299" covers AED 100.00 to AED 299.99. You set the amounts and gaps freely; if two ranges share an amount, the basket gets the higher range. Each gift is 1 to ' + MAX_QTY + ' of a product; a sold-out gift is skipped until it is back and the rest of the range is still given. Each range saves on its own.' }),
       strip
     ]));
     if (sel == null) { wrap.appendChild(el('div', { class: 'fg-empty' }, ['No ranges yet. ', can() ? el('button', { type: 'button', class: 'fg-link', text: 'Add the first range', onclick: function () { addRange(); } }) : null])); return; }

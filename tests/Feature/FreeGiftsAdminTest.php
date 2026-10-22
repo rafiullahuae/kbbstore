@@ -229,22 +229,26 @@ it('narrows the picker to gift-only or in-stock products, and treats any other f
 |------------------------------------------------------------------------------
 */
 
-it('names the range a new one overlaps, in the words the screen shows as you type', function () {
+it('saves a range that shares amounts with another, and only notes it on the screen', function () {
     /*
-     * The defect: the server's refusal and the inline message disagreeing, so
-     * the owner reads one thing while typing and another on Save.
-     * MUTATION: change 'Overlaps ' back to 'This range overlaps '. RED.
+     * The defect (the owner, 22 Oct, screenshot): saving "AED 100 – 300" while
+     * "AED 300 – 499" still existed answered "The server said: Overlaps AED
+     * 300 – 499 ..." and refused -- ranges save one at a time, so moving a
+     * boundary always passes through an overlap. "The server should not
+     * restrict the ranges ... I don't need any restrictions."
+     * MUTATION: put the overlaps() refusal back in FreeGiftsController::saveRange(). RED.
      */
     $owner = fg2Admin();
     fg2Range(300, 499);
-    $r = test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/ranges', [
-        'min' => 450, 'max' => 600, 'label_en' => 'Masks', 'label_ar' => 'أقنعة', 'enabled' => true, 'gifts' => [],
-    ])->assertStatus(422);
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/ranges', [
+        'min' => 100, 'max' => 300, 'label_en' => '2 Masks', 'label_ar' => 'أقنعة', 'enabled' => true, 'gifts' => [],
+    ])->assertOk();
 
-    expect($r->json('errors.min.0'))->toStartWith('Overlaps AED 300 – 499');
+    expect(DB::table('free_gift_ranges')->count())->toBe(2);
 
     $screen = (string) file_get_contents(resource_path('views/admin/partials/free-gifts-screen.blade.php'));
-    expect($screen)->toContain("'Overlaps ' + amount(b.min, b.max)")
+    expect($screen)->toContain("level: 'warn', text: 'Shares amounts with '")
+        ->and($screen)->not->toContain("text: 'Overlaps '")
         ->and($screen)->toContain("'Gap: ' + amount(g.from, g.to) + ' gives nothing.'");
 });
 

@@ -578,32 +578,38 @@ it('gives the screen its own capability and fails closed', function () {
     test()->actingAs(lfgAdmin('owner'), 'admin')->getJson('/admin-api/free-gifts')->assertOk()->assertJsonPath('config.on', false);
 });
 
-it('refuses overlapping bands, min above max, a bad quantity and a product that does not exist', function () {
+it('lets ranges overlap and gives a basket in two of them the higher range, and still refuses a bad quantity or product', function () {
     /*
-     * The defect: two bands sharing an amount make "one range at a time"
-     * ambiguous -- the shopper gets whichever sorts first.
-     * MUTATION: skip the overlaps() loop in FreeGiftsController::saveRange(). RED.
+     * The defect (the owner, 22 Oct): "the server should not restrict the
+     * ranges. it's up to us how we set and what gap we set. server should also
+     * calculate the range." Overlaps used to answer 422; a top amount below the
+     * start too.
+     * MUTATION: return the FIRST matching range in FreeGifts::rangeFor() -- the
+     * AED 300 basket gets the 100 – 300 gifts. RED.
+     * MUTATION: put the overlaps() refusal back in saveRange(). RED.
      */
     $owner = lfgAdmin('owner');
     $mask = lfgProduct('Mask');
+    $mini = lfgProduct('Mini');
     $post = fn (array $b) => test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/ranges', array_merge([
-        'min' => 100, 'max' => 299, 'label_en' => '2 Masks', 'label_ar' => 'قناعان', 'enabled' => true, 'gifts' => [['product_id' => $mask->id, 'quantity' => 2]],
+        'min' => 100, 'max' => 300, 'label_en' => '2 Masks', 'label_ar' => 'قناعان', 'enabled' => true, 'gifts' => [['product_id' => $mask->id, 'quantity' => 2]],
     ], $b));
 
     $post([])->assertOk();
-    $post(['min' => 200, 'max' => 399])->assertStatus(422)->assertJsonValidationErrors('min');
-    $post(['min' => 299, 'max' => null])->assertStatus(422);
-    $post(['min' => 300, 'max' => 499])->assertOk();
-    $post(['min' => 700, 'max' => 600])->assertStatus(422)->assertJsonValidationErrors('max');
+    $post(['min' => 300, 'max' => 499, 'gifts' => [['product_id' => $mini->id, 'quantity' => 1]]])->assertOk();   // shares AED 300
+    $post(['min' => 900, 'max' => 700])->assertOk();                                                             // read as 700 – 900
     $post(['min' => 1000, 'max' => null, 'gifts' => [['product_id' => $mask->id, 'quantity' => 51]]])->assertStatus(422);
     $post(['min' => 1000, 'max' => null, 'gifts' => [['product_id' => 999999, 'quantity' => 1]]])->assertStatus(422);
     $post(['min' => 1000, 'max' => null, 'gifts' => [['product_id' => $mask->id, 'quantity' => 0]]])->assertStatus(422);
 
-    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/settings', [
-        'show_value' => false, 'countries' => 'everywhere', 'basis' => 'after_discounts', 'texts' => [], 'home' => ['on' => false],
-    ])->assertStatus(422);
+    expect(DB::table('free_gift_ranges')->count())->toBe(3)
+        ->and((int) DB::table('free_gift_ranges')->where('min_fils', 70000)->value('max_fils'))->toBe(90000);
 
-    expect(DB::table('free_gift_ranges')->count())->toBe(2);
+    lfgFresh();
+    $engine = app(\App\Services\FreeGifts::class);
+    expect($engine->rangeFor(30000)['min'])->toBe(30000)      // in both: the higher
+        ->and($engine->rangeFor(29999)['min'])->toBe(10000)   // only the first
+        ->and($engine->rangeFor(45000)['min'])->toBe(30000);
 });
 
 it('switches to Testing and Live whatever the checklist says, and lists each problem as a warning', function () {
