@@ -1,0 +1,517 @@
+<title>Gift Box 02 Final</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one big live artboard. A sticky control bar (bag presets, products, language, zoom) drives every design on the board at once:
+   14 gift-box designs, each in the cart panel, the cart page and the checkout summary; then 8 homepage designs; then the editable ranges.
+   Single light look in the shop's own palette; each gift-box design carries its own colour scheme. */
+@font-face{font-family:Outfit;src:url(outfit-latin.woff2) format("woff2");font-weight:300 800;font-display:swap}
+@font-face{font-family:Cairo;src:url(cairo-arabic.woff2) format("woff2");font-weight:300 800;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
+:root{
+  --bg:#f3edf0;--card:#ffffff;--ink:#2a2228;--muted:#756c74;--line:#efe3e8;--line2:#e6d8de;--soft:#fbf7f8;
+  --pink:#c13e63;--pink2:#a82f53;--green:#2e8f62;--cream:#fff9f3;--on:#ffffff;
+  --sans:Outfit,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--ar:Cairo,Outfit,system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--sans)}
+body.rtl{font-family:var(--ar)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.pagehead{padding-block:20px 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em;text-wrap:balance}
+.lead{margin:4px 0 0;color:var(--muted);max-width:80ch}
+/* control bar */
+.ctl{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;margin:14px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;box-shadow:0 10px 24px -22px rgba(42,34,40,.6)}
+.grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.grp>span{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;background:var(--bg);border-radius:999px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;border-radius:999px;padding:5px 11px;font-weight:600;font-size:13px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--on)}
+.chipp{display:flex;align-items:center;gap:6px;border:1px solid var(--line2);background:var(--card);border-radius:999px;padding:3px 10px 3px 3px;font-size:12.5px;font-weight:600}
+.chipp img{width:26px;height:26px;border-radius:50%;object-fit:contain;background:var(--card)}
+.chipp:hover{border-color:var(--pink)}
+.status{font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.status b{color:var(--ink)}
+/* board */
+.boardwrap{overflow:auto;padding-block:16px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.board{display:grid;gap:26px;transform-origin:0 0;width:max-content;min-width:100%}
+.rtl .board{transform-origin:100% 0}
+.secT{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:6px 0 -6px}
+.secT h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.secT p{margin:0;color:var(--muted);font-size:14px;max-width:80ch}
+.drow{display:grid;grid-template-columns:200px 330px 520px 330px;gap:14px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px}
+.dinfo{display:grid;gap:6px;align-content:start}
+.dinfo .tag{font-weight:800;color:var(--pink);font-size:12.5px;letter-spacing:.08em}
+.dinfo b{font-size:17px;line-height:1.25}
+.dinfo p{margin:0;color:var(--muted);font-size:13px}
+.sw{display:flex;gap:4px;margin-top:2px}.sw i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.08)}
+.cap{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.surf{background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:13px;min-width:0}
+.panel{box-shadow:0 14px 30px -24px rgba(42,34,40,.6)}
+.sum{background:var(--soft)}
+.ph{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:15.5px;margin-bottom:4px}
+.ph small{font-weight:500;color:var(--muted);font-size:12.5px}
+.item{display:flex;gap:9px;align-items:center;padding:7px 0;border-bottom:1px solid #f3e9ed}
+.item img{width:46px;height:46px;border-radius:9px;border:1px solid #f0e6ea;object-fit:contain;background:var(--card);flex:none}
+.item .n{flex:1;min-width:0;font-size:13px;line-height:1.3}
+.item .n small{display:block;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+.item .n em{font-style:normal;color:var(--muted)}
+.item .p{font-weight:700;font-size:13.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.empty{padding:16px 0;text-align:center;color:var(--muted);font-size:13.5px}
+.tot{display:flex;justify-content:space-between;padding-top:9px;font-weight:700;font-variant-numeric:tabular-nums}
+.tline{display:flex;justify-content:space-between;font-size:13.5px;padding:2px 0;color:var(--muted);font-variant-numeric:tabular-nums}
+.tline b{color:var(--ink)}.tline b.g{color:var(--green)}
+.btn{margin-top:10px;background:var(--pink);color:var(--on);text-align:center;border-radius:999px;padding:10px;font-weight:700;font-size:14px}
+
+/* ───────── compact gift box: one structure, ten colour schemes ───────── */
+.gb{--b:#fff0f4;--bd:#e7a3b7;--a:#c13e63;--t:#2a2228;--m:#756c74;--chip:#c13e63;--chipt:#fff;--track:#f1e1e7;
+  margin:10px 0 4px;background:var(--b);border:1px solid var(--bd);border-radius:12px;padding:9px 11px;color:var(--t);position:relative}
+.gb .h{display:flex;align-items:center;gap:7px;font-weight:700;font-size:13.5px;color:var(--a)}
+.gb .h svg{width:16px;height:16px;flex:none}
+.gb .h .ct{margin-inline-start:auto;font-size:11.5px;font-weight:700;background:var(--chip);color:var(--chipt);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.gb .w{font-size:12.5px;font-weight:600;margin-top:3px;color:var(--t)}
+.gb .th{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.gb .t{position:relative;width:36px;height:36px;border-radius:8px;background:#fff;border:1px solid rgba(42,34,40,.08);flex:none}
+.gb .t img{width:100%;height:100%;object-fit:contain;border-radius:8px}
+.gb .t .ph0{display:grid;place-items:center;width:100%;height:100%;font-size:10.5px;font-weight:800;color:#8a7d86;background:repeating-linear-gradient(135deg,#faf5f7 0 6px,#f3ebef 6px 12px);border-radius:8px;letter-spacing:.02em}
+.gb .t b{position:absolute;top:-6px;inset-inline-end:-6px;background:var(--a);color:#fff;font-size:9.5px;font-weight:800;border-radius:999px;min-width:17px;height:17px;padding:0 4px;display:grid;place-items:center}
+.gb .more{border:0;background:none;padding:0;color:var(--a);font-size:11.5px;font-weight:700;margin-inline-start:4px;align-self:center}
+.gb .list{margin-top:6px;border-top:1px dashed var(--bd);padding-top:4px;display:grid;gap:2px}
+.gb .list div{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--t)}
+.gb .list span:last-child{font-weight:800;color:var(--a);font-size:11px;white-space:nowrap}
+.gb .nd{font-size:11.5px;margin-top:7px;color:var(--m)}
+.gb .nd b{color:var(--t)}
+.gb .bar{height:4px;border-radius:9px;background:var(--track);margin-top:4px;overflow:hidden}
+.gb .bar i{display:block;height:100%;border-radius:9px;background:var(--a);transition:width .4s ease}
+.tease{margin:10px 0 4px;border:1px dashed var(--line2);border-radius:12px;padding:8px 11px;font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.tease svg{width:15px;height:15px;color:var(--pink);flex:none}.tease b{color:var(--ink)}
+.pop{animation:pop .45s ease}
+@keyframes pop{0%{transform:scale(.97);opacity:.4}60%{transform:scale(1.01)}100%{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}.gb .bar i{transition:none}}
+/* N1 Blush */
+.gb.n1{border-style:dashed}
+/* N2 Mint, title on the border */
+.gb.n2{--b:#fff;--bd:#2e8f62;--a:#2e8f62;--chip:#e8f5ee;--chipt:#1f6e4a;--track:#e4f1ea;border-width:1.5px;margin-top:18px;padding-top:13px}
+.gb.n2 .h{position:absolute;top:-11px;inset-inline-start:10px;background:var(--card);padding:0 7px;font-size:14.5px}
+@container (max-width:345px){.gb.n2 .h{font-size:13.5px}}
+.sum .gb.n2 .h{background:var(--soft)}
+.gb.n2 .h .ct{display:none}
+/* N3 Gold header strip */
+.gb.n3{--b:linear-gradient(180deg,#fff8e8,#fff);--bd:#efd9a8;--a:#9a6a14;--chip:#fff;--chipt:#7a5410;--track:#f6e8c8;padding:0;overflow:hidden;background:linear-gradient(180deg,#fff8e8,#fff)}
+.gb.n3 .h{background:#fbedc9;padding:7px 11px;color:#7a5410}
+.gb.n3 .in{padding:4px 11px 9px}
+/* N4 Ink */
+.gb.n4{--b:#2a2228;--bd:#2a2228;--a:#ff8fb0;--t:#fff;--m:#cfc3ca;--chip:#ff8fb0;--chipt:#2a2228;--track:#4a3d45}
+.gb.n4 .t{border-color:transparent}
+/* N5 Lilac */
+.gb.n5{--b:#f4f0ff;--bd:#d9cdfb;--a:#6b4fd8;--chip:#6b4fd8;--track:#e5ddfb}
+/* N6 Peach ticket */
+.gb.n6{--b:#fff3ea;--bd:#f6c9a8;--a:#c4622d;--chip:#c4622d;--track:#fbe0cd;border-style:dashed;
+  -webkit-mask:radial-gradient(circle 7px at 0 50%,#0000 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 7px at 100% 50%,#0000 98%,#000) right/51% 100% no-repeat;
+  mask:radial-gradient(circle 7px at 0 50%,#0000 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 7px at 100% 50%,#0000 98%,#000) right/51% 100% no-repeat;padding-inline:16px}
+/* N7 Sky */
+.gb.n7{--b:#eef6ff;--bd:#c8def7;--a:#2f6fb5;--chip:#2f6fb5;--track:#d9e8f9;border-radius:18px}
+.gb.n7 .t,.gb.n7 .t img,.gb.n7 .t .ph0{border-radius:50%}
+/* N8 Gradient border */
+.gb.n8{--b:#fff;--a:#c13e63;--chip:linear-gradient(90deg,#c13e63,#d9a441);border:1.5px solid transparent;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(120deg,#e0567b,#d9a441) border-box}
+.sum .gb.n8{background:linear-gradient(var(--soft),var(--soft)) padding-box,linear-gradient(120deg,#e0567b,#d9a441) border-box}
+.gb.n8 .h .ct{background:linear-gradient(90deg,#c13e63,#d9a441)}
+.gb.n8 .bar i{background:linear-gradient(90deg,#e0567b,#d9a441)}
+/* N9 Minimal lines */
+.gb.n9{--b:transparent;--bd:transparent;border-radius:0;border-top:1px solid #ecdfe5;border-bottom:1px solid #ecdfe5;padding-inline:0}
+.gb.n9 .h .ct{background:none;color:var(--a);padding:0}
+/* N10 Sage side tag */
+.gb.n10{--b:#f3f7f1;--bd:#cfe0c9;--a:#4d7a45;--chip:#4d7a45;--track:#dde9d8;display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;padding:0;overflow:hidden}
+.gb.n10 .side{background:#4d7a45;color:#fff;writing-mode:vertical-rl;transform:rotate(180deg);display:grid;place-items:center;font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.rtl .gb.n10 .side{transform:none}
+.gb.n10 .in{padding:9px 11px 9px 0}
+.rtl .gb.n10 .in{padding:9px 0 9px 11px}
+
+
+/* value badge, open list, small phones */
+.gb .h .ct{font-size:12px;padding:2px 9px}
+.gb .w .cnt{font-weight:500;color:var(--m)}
+.gb .more.hide{display:block;margin:6px 0 0}
+.gb .list{margin-top:7px;border-top:1px dashed var(--bd);padding-top:5px;display:grid;gap:3px}
+.gb .lr{display:flex;align-items:center;gap:8px}
+.gb .t.s{width:28px;height:28px;border-radius:7px}
+.gb .ln{flex:1;min-width:0;font-size:12px;line-height:1.25;color:var(--t)}
+.gb .ln small{display:block;font-size:10px;color:var(--m);text-transform:uppercase;letter-spacing:.04em}
+.gb .ln em{font-style:normal;font-weight:700}
+.gb .lv{display:flex;gap:6px;align-items:baseline;font-size:11px;font-weight:800;color:var(--a);white-space:nowrap}
+.gb .lv s,.gb .lt s{color:var(--m);font-weight:500}
+.gb .lt{display:flex;justify-content:space-between;gap:8px;margin-top:4px;padding-top:5px;border-top:1px solid var(--bd);font-size:12px;color:var(--t)}
+.gb.n4 .lt,.gb.n4 .list{border-color:#4a3d45}
+.gb .lt b{color:var(--a)}
+.ob .h{justify-content:space-between}.ob .h>span{display:flex;align-items:center;gap:7px}
+.ob .ov{font-size:12px;font-weight:800;border-radius:999px;padding:2px 9px;background:currentColor}
+.oA .ov{background:#c13e63;color:#fff}.oB .ov{background:#e8f5ee;color:#1f6e4a}.oD .ov{background:#c13e63;color:#fff}
+.oB .h{justify-content:flex-start;gap:8px}
+.ob .was{color:var(--muted);text-decoration:line-through;font-size:11.5px;white-space:nowrap}
+.tline s{opacity:.85}
+.hv{display:inline-block;font-size:12px;font-weight:800;color:#a82f53;background:#fff0f4;border-radius:999px;padding:2px 10px;white-space:nowrap}
+.HD .hv{background:#4a3d45;color:#ff8fb0}
+.HB .s .hv{margin-bottom:-2px}
+.drow{grid-template-columns:200px var(--pw,390px) 520px 330px}
+.surf{container-type:inline-size}
+@container (max-width:345px){
+  .gb .h{font-size:12.5px}.gb .h .ct{font-size:11px;padding:1px 7px}
+  .gb .w{font-size:11.5px}.gb .t{width:31px;height:31px}.gb .t b{font-size:9px;min-width:15px;height:15px}
+  .gb .ln{font-size:11px}.gb .lv{font-size:10.5px}.gb .lt{font-size:11px}
+  .item .n{font-size:12px}.item img{width:40px;height:40px}.ph{font-size:14.5px}
+  .ob .gn{font-size:11.5px}.ob .gi .t{width:32px;height:32px}
+}
+
+/* ───────── earlier designs (A–D): the full list, for comparison ───────── */
+.ob{margin:10px 0 4px}
+.ob .gi{display:flex;gap:9px;align-items:center;padding:5px 0}
+.ob .gi .t{width:38px;height:38px;border-radius:8px;flex:none;background:#fff;border:1px solid #f1e6ea;position:relative}
+.ob .gi .t img{width:100%;height:100%;object-fit:contain;border-radius:8px}
+.ob .gi .t .ph0{display:grid;place-items:center;width:100%;height:100%;font-size:10.5px;font-weight:800;color:#8a7d86;background:repeating-linear-gradient(135deg,#faf5f7 0 6px,#f3ebef 6px 12px);border-radius:8px}
+.ob .gn{flex:1;min-width:0;font-size:12.5px;line-height:1.3}
+.ob .gn small{display:block;color:var(--muted);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase}
+.ob .gn em{font-style:normal;font-weight:700;color:var(--muted)}
+.ob .free{font-weight:800;font-size:12px;white-space:nowrap}
+.ob .nd{font-size:12px;margin-top:6px;color:var(--muted)}.ob .nd b{color:var(--ink)}
+.ob .bar{height:5px;border-radius:9px;background:#f1e4e9;margin-top:5px;overflow:hidden}.ob .bar i{display:block;height:100%;border-radius:9px}
+.ob .h{display:flex;align-items:center;gap:7px;font-weight:700;font-size:13.5px}.ob .h svg{width:16px;height:16px;flex:none}
+.oA{background:#fff0f4;border:1px dashed #e7a3b7;border-radius:12px;padding:9px 11px}.oA .h{color:#a82f53}.oA .free{color:#c13e63}.oA .bar i{background:#c13e63}
+.oB{position:relative;margin-top:18px;border:1.5px solid #2e8f62;border-radius:12px;padding:13px 11px 8px}
+.oB .h{position:absolute;top:-10px;inset-inline-start:10px;background:var(--card);padding:0 7px;color:#2e8f62;font-size:12.5px}.sum .oB .h{background:var(--soft)}
+.oB .free{color:#fff;background:#2e8f62;border-radius:999px;padding:1px 8px;font-size:11px}.oB .bar i{background:#2e8f62}
+.oC{background:linear-gradient(180deg,#fff6e3,#fff);border:1px solid #f0dcb0;border-radius:12px;overflow:hidden}
+.oC .h{justify-content:space-between;padding:7px 11px;background:#fbedc9;color:#7a5410}.oC .h span{display:flex;gap:7px;align-items:center}
+.oC .h em{font-style:normal;font-size:11.5px;background:#fff;border-radius:999px;padding:1px 8px}
+.oC .in{padding:4px 11px 9px}.oC .free{color:#a8741c}.oC .bar i{background:linear-gradient(90deg,#d9a441,#b7791f)}
+.oD{border:1px solid #ecd9e1;border-radius:12px;padding:9px 11px;background:#fff}.oD .h{justify-content:space-between}.oD .h span{display:flex;gap:7px;align-items:center}.oD .h svg{color:#c13e63}
+.oD .th{display:flex;gap:7px;margin-top:7px;flex-wrap:wrap}
+.oD .th .t{width:46px;height:46px;border-radius:9px;border:1px solid #f0e3e8;position:relative;background:#fff}
+.oD .th .t img{width:100%;height:100%;object-fit:contain;border-radius:9px}
+.oD .th .t .ph0{display:grid;place-items:center;width:100%;height:100%;font-size:10.5px;font-weight:800;color:#8a7d86;background:repeating-linear-gradient(135deg,#faf5f7 0 6px,#f3ebef 6px 12px);border-radius:9px}
+.oD .th .t b{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);background:#c13e63;color:#fff;font-size:9px;border-radius:999px;padding:0 5px;white-space:nowrap}
+.oD .th .t i{position:absolute;top:-6px;inset-inline-end:-6px;background:#2a2228;color:#fff;font-style:normal;font-size:9.5px;font-weight:700;border-radius:999px;min-width:17px;height:17px;display:grid;place-items:center}
+.oD .free{color:#c13e63}.oD .bar i{background:#c13e63}
+
+/* ───────── homepage ───────── */
+.hrow{display:grid;grid-template-columns:200px minmax(0,1160px);gap:14px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px}
+.hp{background:var(--cream);border:1px solid var(--line2);border-radius:18px;padding:24px 18px;min-width:0}
+.hp h3{margin:0;text-align:center;font-size:25px;font-weight:800;letter-spacing:-.01em;text-wrap:balance}
+.hp .sub{text-align:center;color:var(--muted);margin:4px 0 18px;font-size:14.5px}
+.cta{display:block;margin:18px auto 0;width:max-content;max-width:100%;background:var(--ink);color:var(--on);border:0;border-radius:999px;padding:10px 24px;font-weight:700;font-size:14px}
+.you{display:inline-block;font-size:10.5px;font-weight:700;color:#fff;background:var(--green);border-radius:999px;padding:1px 8px}
+.pics{display:flex;justify-content:center;flex-wrap:wrap;gap:4px}
+.pics .t{width:40px;height:40px;border-radius:9px;background:#fff;border:1px solid #f1e6ea;position:relative}
+.pics .t img{width:100%;height:100%;object-fit:contain;border-radius:9px}
+.pics .t .ph0{display:grid;place-items:center;width:100%;height:100%;font-size:10px;font-weight:800;color:#8a7d86;background:repeating-linear-gradient(135deg,#faf5f7 0 6px,#f3ebef 6px 12px);border-radius:9px}
+.pics .t b{position:absolute;top:-6px;inset-inline-end:-6px;background:var(--pink);color:#fff;font-size:9.5px;font-weight:800;border-radius:999px;min-width:17px;height:17px;padding:0 4px;display:grid;place-items:center}
+/* HA tier cards with a colour ramp */
+.HA{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.HA .c{background:#fff;border:1px solid #eedde4;border-radius:16px;overflow:hidden;display:grid;align-content:start;text-align:center}
+.HA .c .top{padding:10px 8px;color:#fff;font-weight:800;font-size:13.5px}
+.HA .c .body{padding:12px 10px 14px;display:grid;gap:8px;justify-items:center}
+.HA .c .num{font-size:30px;font-weight:800;line-height:1;color:var(--ink)}.HA .c .num small{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:3px}
+.HA .c b{font-size:13.5px;line-height:1.3;text-wrap:balance}
+.HA .c.cur{outline:2px solid var(--pink);outline-offset:-2px}
+/* HB staircase */
+.HB{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;align-items:end}
+.HB .s{display:grid;gap:8px;justify-items:center;text-align:center}
+.HB .s b{font-size:13.5px;line-height:1.3;text-wrap:balance}
+.HB .step{width:100%;border-radius:14px 14px 4px 4px;background:linear-gradient(180deg,#f7c9d6,#e48aa5);display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px;padding:8px 4px}
+.HB .s.cur .step{background:linear-gradient(180deg,#e0567b,#a82f53);box-shadow:0 10px 22px -14px rgba(168,47,83,.9)}
+/* HC spend -> get list */
+.HC{max-width:860px;margin:0 auto;display:grid;background:#fff;border:1px solid #eedde4;border-radius:16px;overflow:hidden}
+.HC .r{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 16px;border-top:1px solid #f4e9ee}
+.HC .r:first-child{border-top:0}
+.HC .r .sp{font-weight:800;color:var(--pink);font-variant-numeric:tabular-nums}
+.HC .r .sp small{display:block;font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.HC .r b{font-size:14.5px}
+.HC .r.cur{background:#fff5f8}
+.HC .hd{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:14px;padding:9px 16px;background:#2a2228;color:#fff;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+/* HD dark track */
+.HD{background:#2a2228;border-radius:18px;padding:22px 20px;color:#fff}
+.HD h3{color:#fff}.HD .sub{color:#cfc3ca}
+.HD .trk{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:6px}
+.HD .trk::before{content:"";position:absolute;top:17px;inset-inline:10%;height:3px;background:#4a3d45;border-radius:3px}
+.HD .trk .fill{position:absolute;top:17px;inset-inline-start:10%;height:3px;background:#ff8fb0;border-radius:3px;transition:width .4s ease}
+.HD .st{position:relative;display:grid;gap:6px;justify-items:center;text-align:center}
+.HD .st .dot{width:36px;height:36px;border-radius:50%;background:#2a2228;border:2.5px solid #6a5a63;display:grid;place-items:center;color:#cfc3ca;z-index:1}
+.HD .st .dot svg{width:17px;height:17px}
+.HD .st.on .dot{border-color:#ff8fb0;color:#ff8fb0}.HD .st.cur .dot{background:#ff8fb0;color:#2a2228}
+.HD .st .r{font-weight:800;font-size:13px;color:#ff8fb0}
+.HD .st b{font-size:13px;line-height:1.3;color:#fff;text-wrap:balance}
+.HD .cta{background:#ff8fb0;color:#2a2228}
+/* HE big numbers */
+.HE{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.HE .c{background:#fff;border-radius:16px;padding:16px 10px;text-align:center;display:grid;gap:6px;justify-items:center;border:1px solid #eedde4}
+.HE .c .n{font-size:46px;font-weight:800;line-height:.95;background:linear-gradient(160deg,#e0567b,#a82f53);-webkit-background-clip:text;background-clip:text;color:transparent}
+.HE .c .lb{font-size:10.5px;font-weight:800;letter-spacing:.12em;color:var(--pink);text-transform:uppercase}
+.HE .c .r{font-size:12.5px;font-weight:700;color:var(--muted);background:var(--bg);border-radius:999px;padding:2px 10px}
+.HE .c b{font-size:13.5px;line-height:1.3;text-wrap:balance}
+.HE .c.cur{border-color:var(--pink);box-shadow:0 12px 26px -20px rgba(193,62,99,.8)}
+/* earlier homepage designs, 5 ranges */
+.H1{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.H1 .c{background:#fff;border:1px solid #eedde4;border-radius:16px;padding:16px 10px;text-align:center;display:grid;gap:8px;align-content:start;justify-items:center}
+.H1 .c .r{font-weight:800;color:var(--pink);font-size:12.5px;letter-spacing:.04em}
+.H1 .c b{font-size:14px;line-height:1.3;text-wrap:balance}.H1 .c.cur{border:1.5px solid var(--pink)}
+.H2{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.H2 .s{position:relative;text-align:center;display:grid;gap:6px;justify-items:center}
+.H2 .s::before{content:"";position:absolute;top:20px;inset-inline-start:calc(-50% - 5px);width:calc(100% + 10px);height:3px;background:#f6c3d2}
+.H2 .s:first-child::before{display:none}
+.H2 .dot{position:relative;width:40px;height:40px;border-radius:50%;background:#fff;border:2.5px solid var(--pink);display:grid;place-items:center;color:var(--pink);z-index:1}
+.H2 .dot svg{width:18px;height:18px}.H2 .s.cur .dot{background:var(--pink);color:#fff}
+.H2 .r{font-weight:700;font-size:12.5px;color:var(--muted)}.H2 b{font-size:14px;line-height:1.3;text-wrap:balance}
+.H3{display:grid;gap:8px;max-width:860px;margin:0 auto}
+.H3 .l{display:flex;align-items:center;gap:14px;background:#fff;border-radius:14px;padding:10px 14px;border:1px solid #eedde4}
+.H3 .l.cur{border:1.5px solid var(--pink)}
+.H3 .l .r{flex:0 0 120px;font-weight:800;font-size:14px;color:#fff;border-radius:10px;padding:7px 10px;text-align:center;line-height:1.15}
+.H3 .l .r small{display:block;font-weight:500;font-size:10.5px;opacity:.92}
+.H3 .l b{flex:1;font-size:14.5px}
+/* ranges editor */
+.edit{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;display:grid;gap:8px;max-width:1240px}
+.edit h2{margin:0;font-size:18px}.edit p{margin:0;color:var(--muted);font-size:13px}
+.er{display:grid;grid-template-columns:90px 90px minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr);gap:8px;align-items:end}
+.er label{display:block;font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}
+.er input{width:100%;min-width:0;border:1px solid var(--line2);border-radius:10px;padding:7px 9px;font:inherit;font-size:13.5px;background:var(--card);color:var(--ink)}
+.er input[dir="rtl"]{font-family:var(--ar)}
+.er .gl{font-size:12px;color:var(--muted);padding-bottom:8px}
+.note{font-size:13px;color:var(--muted);max-width:1240px}
+.note b{color:var(--ink)}
+</style>
+
+<div class="pagehead">
+  <h1 data-t="title"></h1>
+  <p class="lead" data-t="lead"></p>
+</div>
+<div class="ctl" role="toolbar" aria-label="Preview controls">
+  <div class="grp"><span data-t="jump"></span><div class="seg" id="segJump"></div></div>
+  <div class="grp"><span data-t="add"></span><div class="grp" id="shop"></div></div>
+  <div class="grp"><span data-t="lang"></span><div class="seg" id="segLang"></div></div>
+  <div class="grp"><span data-t="seeAllBar"></span><div class="seg" id="segOpen"></div></div>
+  <div class="grp"><span data-t="panelW"></span><div class="seg" id="segPw"></div></div>
+  <div class="grp"><span data-t="pricesT"></span><div class="seg" id="segPrices"></div></div>
+  <div class="status" id="status" aria-live="polite"></div>
+</div>
+<div class="boardwrap"><div class="board" id="board"></div></div>
+
+<script>
+'use strict';
+const GIFT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* Real products from kbeautybliss.com (photos and prices as listed on 22 Oct). */
+const PRODUCTS = {
+  wrap:{img:'b-wrap', b:'Medicube', ba:'ميديكيوب', n:'Collagen Night Wrapping Mask 75ml', na:'ماسك الكولاجين الليلي 75 مل', p:85},
+  aqua:{img:'b-aqua', b:'Isntree', ba:'إيزنتري', n:'Hyaluronic Acid Aqua Gel Cream', na:'كريم جل الهيالورونيك أكوا', p:116},
+  serum:{img:'b-serum', b:'AXIS-Y', ba:'أكسس-واي', n:'Dark Spot Correcting Glow Serum', na:'سيروم تصحيح البقع الداكنة', p:58},
+  cream:{img:'b-cream', b:'Haruharu WONDER', ba:'هاروهارو وندر', n:'Black Rice 10 Hyaluronic Cream', na:'كريم الأرز الأسود 10 هيالورونيك', p:138},
+};
+/* The owner's gifts. img null = not in the shop yet: a placeholder tile with the brand's initials. */
+const G = {
+  mask:{v:12, img:'mask', b:'Sheet mask', ba:'ماسك ورقي', n:'Sheet Mask', na:'ماسك ورقي', kind:'mask'},
+  m1:{v:25, img:'haruharu', b:'haruharu wonder', ba:'هاروهارو وندر', n:'Black Rice Hyaluronic Toner Mini', na:'تونر الأرز الأسود هيالورونيك ميني', kind:'mini'},
+  m2:{v:30, img:'isntree', b:'Isntree', ba:'إيزنتري', n:'Mugwort Calming Clay Mask Mini', na:'ماسك الطين بالشيح المهدّئ ميني', kind:'mini'},
+  m3:{v:25, img:null, ini:'BP', b:'beplain', ba:'بيبلين', n:'Mung Bean Milk Peeling Gel Mini', na:'جل التقشير بحليب الماش ميني', kind:'mini'},
+  f1:{v:92, img:'glowset', b:'AXIS-Y', ba:'أكسس-واي', n:'The Glow Set', na:'مجموعة ذا جلو', kind:'full'},
+  f2:{v:75, img:'senka', b:'Shiseido', ba:'شيسيدو', n:'Senka Perfect Whip Fresh Beauty Face Foam', na:'غسول سينكا بيرفكت ويب', kind:'full'},
+  f3:{v:89, img:null, ini:'HH', b:'haruharu wonder', ba:'هاروهارو وندر', n:'Rose PDRN Peptide Glowy Balm Petal Pink', na:'بلسم الورد PDRN ببتيد جلوي بيتال بينك', kind:'full'},
+};
+const RANGES = [
+  {min:100, max:299, en:'2 Masks', ar:'ماسكان', gifts:[['mask',2]]},
+  {min:300, max:499, en:'3 Masks + 1 Mini Product', ar:'3 ماسكات + منتج ميني', gifts:[['mask',3],['m1',1]]},
+  {min:500, max:999, en:'3 Masks + 2 Mini Products + 1 Full Size Product', ar:'3 ماسكات + منتجان ميني + منتج بحجم كامل', gifts:[['mask',3],['m1',1],['m2',1],['f2',1]]},
+  {min:1000, max:1999, en:'5 Masks + 2 Minis + 2 Full Size Products', ar:'5 ماسكات + 2 ميني + منتجان بحجم كامل', gifts:[['mask',5],['m1',1],['m2',1],['f2',1],['f1',1]]},
+  {min:2000, max:null, en:'12 Masks + 5 Minis + 3 Full Size Products', ar:'12 ماسكاً + 5 ميني + 3 منتجات بحجم كامل', gifts:[['mask',12],['m1',1],['m2',2],['m3',2],['f1',1],['f2',1],['f3',1]]},
+];
+const NEW = [
+  ['n1','Blush','Soft pink, dashed outline. The shop’s own colours.',['#fff0f4','#e7a3b7','#c13e63']],
+  ['n2','Mint outline','White card, green outline, title on the border.',['#ffffff','#2e8f62','#e8f5ee']],
+  ['n3','Gold strip','Light-gold header strip with a gift counter. Premium.',['#fbedc9','#efd9a8','#9a6a14']],
+  ['n4','Ink','Dark box with pink accents. Stands out the most.',['#2a2228','#ff8fb0','#4a3d45']],
+  ['n5','Lilac','Soft lavender with a violet accent. Calm.',['#f4f0ff','#d9cdfb','#6b4fd8']],
+  ['n6','Peach ticket','Coupon ticket with cut-out edges. Playful.',['#fff3ea','#f6c9a8','#c4622d']],
+  ['n7','Sky','Pale blue, round photos. Fresh and light.',['#eef6ff','#c8def7','#2f6fb5']],
+  ['n8','Rose-gold border','White inside, pink-to-gold border.',['#ffffff','#e0567b','#d9a441']],
+  ['n9','Minimal lines','No box: two hairlines and a pink title. The lightest.',['#ffffff','#ecdfe5','#c13e63']],
+  ['n10','Sage tag','Side tag reading FREE GIFTS, sage green.',['#f3f7f1','#cfe0c9','#4d7a45']],
+];
+const OLD = [['A','Blush box (earlier)','Full list of every gift.'],['B','Outlined card (earlier)','Full list with green FREE pills.'],['C','Gold ribbon (earlier)','Full list under a gold strip.'],['D','Compact strip (earlier)','Photos only; the cart page and checkout list everything.']];
+const HOME_NEW = [['HA','Tier cards','Five cards, each topped with a deeper pink, the gift count large.'],['HB','Staircase','Steps rise with each range: spend more, climb higher.'],['HC','Spend → Get list','A clean two-column list. Easiest to scan on a phone.'],['HD','Dark track','A dark banner with a progress track and five stops.'],['HE','Big numbers','The number of free gifts as a big pink figure per range.']];
+const HOME_OLD = [['H1','Gift cards (earlier)','The earlier cards, now with your five ranges.'],['H2','Steps on a line (earlier)','The earlier steps, five ranges.'],['H3','Price tags (earlier)','The earlier price-tag rows, five ranges.']];
+
+const T = {
+  en:{title:'Gift box 02 · final', lead:'Your real ranges and gifts. Gift values are examples (except the AED 12 mask): you set each gift’s value in the admin. One bag drives every design on this board: jump to a range or add products at the top, and every gift box, cart page, checkout summary and homepage section updates together. Striped tiles are gifts not in the shop yet (their photo appears once added).',
+    jump:'Bag at', add:'Add', lang:'Language', zoom:'Zoom',
+    newT:'Gift box · 10 new compact designs', newP:'Same short box in every design: the gifts’ total value up front, the wording, and small photos with counts. “See all” opens each gift with its value (or open them all from the top bar).',
+    oldT:'Gift box · earlier designs with your real gifts', oldP:'For comparison: these list every gift, so the box grows with the range (try AED 2,000+).',
+    homeT:'Homepage · 5 new designs', homeP:'Range, wording and photos come from your settings; the range the shopper’s bag is in is marked.',
+    homeOldT:'Homepage · earlier designs with your five ranges', homeOldP:'',
+    cPanel:'Cart panel', cPage:'Cart page', cSum:'Checkout · summary',
+    editT:'Ranges and wording', editP:'Edit any amount or wording: the whole board follows. In the admin you also pick the gift products per range (Marketing → Free gifts).',
+    from:'From AED', to:'To AED', wEn:'Wording · English', wAr:'Wording · Arabic', gifts:'Gifts in this range', above:'and above',
+    note:'<b>Assumed, please confirm:</b> which minis go in the 300 and 500 ranges (shown: haruharu toner, then + Isntree clay mask), which full-size product goes in the 1,000 range (shown: Senka foam), which sheet mask (shown: medicube Collagen Lifting Mask), and that “AXIS-Y The Glow Set” is the Mini Glow Set on the shop. Not in the shop yet: Isntree Plum Peptide stick, oganacell Bio Actiome Toner Mini, Sulwhasoo UV Daily Fluid Mini.',
+    yourBag:'Your bag', bag:'Shopping bag', summary:'Order summary', items:n => n === 1 ? '1 item' : n + ' items', empty:'Your bag is empty.',
+    sub:'Subtotal', giftsLine:n => `Free gifts (${n})`, deliv:'Delivery', freeDel:'Free', total:'Total', checkout:'Checkout', placeOrder:'Place order',
+    head:'Free gifts for you', free:'FREE', seeAll:'View all', hide:'Hide', count:n => n === 1 ? '1 gift' : n + ' gifts', side:'Free gifts', worth:v => `Worth ${v}`, totalV:'Total value', youPay:'You pay', panelW:'Panel width', seeAllBar:'View all', pricesT:'Gift prices', hidden:'Hidden (default)', shown:'Shown', finalT:'Gift box 02 · final', finalP:'Design 02 exactly as before: the title is larger, the total row is gone, and gift prices show only when switched on. FREE stays green. Use View all: Closed / Open at the top, or tap View all on any box.',  closed:'Closed', opened:'Open', worthShort:'worth',
+    nudge:(amt, what) => `Add <b>${amt}</b> more for <b>${what}</b>`, top:'You’ve unlocked our biggest gift set.',
+    tease:(amt, what) => `Spend <b>${amt}</b> more to get <b>${what}</b> free`,
+    hpTitle:'Free gifts with every order', hpSub:'The more you shop, the more we add, free.', shop:'Start shopping', spend:'Spend', get:'You get', yours:'Your bag', giftsWord:'free gifts',
+    status:(sub, r) => `Bag <b>${sub}</b> · ${r ? `range <b>${r}</b>` : 'no gift yet'}`, money:v => 'AED ' + v.toLocaleString('en-US')},
+  ar:{title:'الهدايا المجانية · لوحة حيّة', lead:'فئاتك وهداياك الحقيقية. حقيبة واحدة تتحكم بكل التصاميم في هذه اللوحة.',
+    jump:'الحقيبة عند', add:'أضيفي', lang:'اللغة', zoom:'التكبير',
+    newT:'صندوق الهدايا · 10 تصاميم مختصرة جديدة', newP:'صندوق قصير في كل تصميم: النص، صور صغيرة مع العدد، وسطر تشجيع واحد.',
+    oldT:'صندوق الهدايا · التصاميم السابقة بهداياك الحقيقية', oldP:'للمقارنة: تعرض كل هدية، فيطول الصندوق مع الفئة.',
+    homeT:'الصفحة الرئيسية · 5 تصاميم جديدة', homeP:'الفئة والنص والصور من إعداداتك.',
+    homeOldT:'الصفحة الرئيسية · التصاميم السابقة', homeOldP:'',
+    cPanel:'نافذة السلة', cPage:'صفحة السلة', cSum:'الدفع · الملخص',
+    editT:'الفئات والنصوص', editP:'عدّلي أي مبلغ أو نص وستتحدث اللوحة كلها.',
+    from:'من د.إ', to:'إلى د.إ', wEn:'النص · إنجليزي', wAr:'النص · عربي', gifts:'هدايا هذه الفئة', above:'فأكثر',
+    note:'<b>افتراضات للتأكيد:</b> منتجات الميني في فئتي 300 و500، والمنتج بالحجم الكامل في فئة 1000، ونوع الماسك.',
+    yourBag:'حقيبتك', bag:'حقيبة التسوق', summary:'ملخص الطلب', items:n => n === 1 ? 'منتج واحد' : n === 2 ? 'منتجان' : n + ' منتجات', empty:'حقيبتك فارغة.',
+    sub:'المجموع الفرعي', giftsLine:n => `هدايا مجانية (${n})`, deliv:'التوصيل', freeDel:'مجاني', total:'الإجمالي', checkout:'إتمام الشراء', placeOrder:'تأكيد الطلب',
+    head:'هدايا مجانية لكِ', free:'مجاناً', seeAll:'عرض الكل', hide:'إخفاء', count:n => n === 1 ? 'هدية واحدة' : n === 2 ? 'هديتان' : n <= 10 ? n + ' هدايا' : n + ' هدية', side:'هدايا مجانية', worth:v => `بقيمة ${v}`, totalV:'القيمة الإجمالية', youPay:'تدفعين', panelW:'عرض النافذة', seeAllBar:'عرض الكل', pricesT:'أسعار الهدايا', hidden:'مخفية (افتراضي)', shown:'ظاهرة', finalT:'صندوق الهدايا 02 · نهائي', finalP:'التصميم 02 كما كان: العنوان أكبر، بلا سطر الإجمالي، والأسعار تظهر عند التشغيل فقط.', closed:'مغلق', opened:'مفتوح', worthShort:'بقيمة',
+    nudge:(amt, what) => `أضيفي <b>${amt}</b> لتحصلي على <b>${what}</b>`, top:'حصلتِ على أكبر مجموعة هدايا لدينا.',
+    tease:(amt, what) => `أنفقي <b>${amt}</b> إضافية لتحصلي على <b>${what}</b> مجاناً`,
+    hpTitle:'هدايا مجانية مع كل طلب', hpSub:'كلما تسوّقتِ أكثر، أضفنا لكِ أكثر، مجاناً.', shop:'تسوّقي الآن', spend:'أنفقي', get:'تحصلين على', yours:'حقيبتك', giftsWord:'هدايا مجانية',
+    status:(sub, r) => `الحقيبة <b>${sub}</b> · ${r ? `الفئة <b>${r}</b>` : 'لا هدية بعد'}`, money:v => v.toLocaleString('en-US') + ' د.إ'},
+};
+/* Preset bags that land in each range (real products and prices). */
+const PRESETS = [['0', {}], ['85', {wrap:1}], ['317', {wrap:1, aqua:1, serum:2}], ['535', {wrap:1, aqua:2, cream:2, serum:1}], ['1,190', {wrap:2, aqua:3, cream:4, serum:2}], ['2,102', {wrap:4, aqua:5, cream:6, serum:6}]];
+const S = {lang:'en', bag:{wrap:1, aqua:1, serum:2}, open:{}, last:-1, zoom:1, allOpen:true, pw:390, prices:false};
+try { const z = parseFloat(localStorage.getItem('fg-zoom')); if ([0.5, 0.75, 1].includes(z)) S.zoom = z; } catch (e) {}
+
+const L = () => T[S.lang];
+const AR = () => S.lang === 'ar';
+const subtotal = () => Object.entries(S.bag).reduce((a, [k, q]) => a + PRODUCTS[k].p * q, 0);
+const rangeIx = sub => RANGES.findIndex(r => sub >= r.min && (r.max == null || sub <= r.max));
+const words = r => (AR() ? r.ar : r.en) || r.gifts.map(([k, q]) => (q > 1 ? q + '× ' : '') + (AR() ? G[k].na : G[k].n)).join(' + ');
+const giftCount = r => r.gifts.reduce((a, g) => a + g[1], 0);
+const giftValue = r => r.gifts.reduce((a, [k, q]) => a + G[k].v * q, 0);
+const rangeLabel = r => r.max == null ? `${L().money(r.min)}+` : (AR() ? `${r.min.toLocaleString('en-US')} – ${r.max.toLocaleString('en-US')} د.إ` : `AED ${r.min.toLocaleString('en-US')} – ${r.max.toLocaleString('en-US')}`);
+const rangeShort = r => r.max == null ? `${r.min.toLocaleString('en-US')}+` : `${r.min.toLocaleString('en-US')} – ${r.max.toLocaleString('en-US')}`;
+const gname = k => AR() ? G[k].na : G[k].n;
+const gbrand = k => AR() ? G[k].ba : G[k].b;
+const tile = (k, q, cls = 't') => `<span class="${cls}" title="${esc(gname(k))}">${G[k].img ? `<img src="img/${G[k].img}.webp" alt="${esc(gname(k))}" loading="lazy">` : `<span class="ph0" role="img" aria-label="${esc(gname(k))}">${G[k].ini}</span>`}${q > 1 ? `<b>×${q}</b>` : ''}</span>`;
+
+function nudge(sub, ix){
+  const next = RANGES.find(r => r.min > sub), cur = ix >= 0 ? RANGES[ix] : null;
+  if (!next) return {txt:L().top, pct:100};
+  const from = cur ? cur.min : 0;
+  return {txt:L().nudge(L().money(next.min - sub), esc(words(next))), pct:Math.max(4, Math.min(100, Math.round((sub - from) / (next.min - from) * 100)))};
+}
+
+/* compact box (new designs): no nudge line; the total value is the headline */
+const openList = r => `<div class="list">${r.gifts.map(([k, q]) => `<div class="lr">${tile(k, 1, 't s')}<span class="ln"><small>${esc(gbrand(k))}</small>${q > 1 ? `<em>${q}× </em>` : ''}${esc(gname(k))}</span><span class="lv">${S.prices ? `<s>${L().money(G[k].v * q)}</s>` : ''}${L().free}</span></div>`).join('')}</div>`;
+function compact(id, where, sub, ix, anim){
+  if (ix < 0) return '';
+  const r = RANGES[ix], n = giftCount(r), open = S.allOpen || !!S.open[id + where];
+  const head = `<div class="h">${GIFT}<span>${L().head}</span><span class="ct">${L().worth(L().money(giftValue(r)))}</span></div>`;
+  const thumbs = `<div class="th">${r.gifts.map(([k, q]) => tile(k, q)).join('')}<button type="button" class="more" data-act="see" data-id="${id + where}" aria-expanded="${open}">${open ? L().hide : L().seeAll}</button></div>`;
+  const inner = `<div class="w">${esc(words(r))} <span class="cnt">· ${L().count(n)}</span></div>${open ? openList(r) : thumbs}${open ? `<button type="button" class="more hide" data-act="see" data-id="${id + where}" aria-expanded="true">${L().hide}</button>` : ''}`;
+  const pop = anim ? ' pop' : '';
+  if (id === 'n3') return `<div class="gb n3${pop}">${head}<div class="in">${inner}</div></div>`;
+  if (id === 'n10') return `<div class="gb n10${pop}"><div class="side" aria-hidden="true">${L().side}</div><div class="in">${head}${inner}</div></div>`;
+  return `<div class="gb ${id}${pop}">${head}${inner}</div>`;
+}
+
+/* earlier designs: the full list */
+function oldBox(id, where, sub, ix, anim){
+  if (ix < 0) return '';
+  const r = RANGES[ix], pop = anim ? ' pop' : '', val = `<span class="ov">${L().worth(L().money(giftValue(r)))}</span>`;
+  const rows = r.gifts.map(([k, q]) => `<div class="gi">${tile(k, 1)}<div class="gn"><small>${esc(gbrand(k))}</small>${q > 1 ? `<em>${q}× </em>` : ''}${esc(gname(k))}</div><span class="was">${L().money(G[k].v * q)}</span><span class="free">${L().free}</span></div>`).join('');
+  const nud = '';
+  const head = `<div class="h">${GIFT}<span>${L().head}</span>${val}</div>`;
+  if (id === 'A') return `<div class="ob oA${pop}">${head}${rows}${nud}</div>`;
+  if (id === 'B') return `<div class="ob oB${pop}">${head}${rows}${nud}</div>`;
+  if (id === 'C') return `<div class="ob oC${pop}"><div class="h"><span>${GIFT}${L().head}</span><em>${L().worth(L().money(giftValue(r)))}</em></div><div class="in">${rows}${nud}</div></div>`;
+  if (where !== 'panel') return `<div class="ob oD${pop}">${head}${rows}${nud}</div>`;
+  return `<div class="ob oD${pop}"><div class="h"><span>${GIFT}${L().head}</span>${val}</div><div class="th">${r.gifts.map(([k, q]) => `<span class="t">${G[k].img ? `<img src="img/${G[k].img}.webp" alt="" loading="lazy">` : `<span class="ph0">${G[k].ini}</span>`}<b>${L().free}</b>${q > 1 ? `<i>×${q}</i>` : ''}</span>`).join('')}</div>${nud}</div>`;
+}
+
+function itemsHtml(compactRows){
+  const ks = Object.keys(S.bag).filter(k => S.bag[k] > 0);
+  if (!ks.length) return `<div class="empty">${L().empty}</div>`;
+  return ks.map(k => { const p = PRODUCTS[k], q = S.bag[k]; return `<div class="item"><img src="img/${p.img}.webp" alt="" loading="lazy"><div class="n"><small>${esc(AR() ? p.ba : p.b)}</small>${esc(AR() ? p.na : p.n)}${q > 1 ? ` <em>× ${q}</em>` : ''}</div><div class="p">${L().money(p.p * q)}</div></div>`; }).join('');
+}
+function surfaces(box, sub, ix, anim){
+  const lang = L(), n = Object.values(S.bag).reduce((a, b) => a + b, 0), gn = ix >= 0 ? giftCount(RANGES[ix]) : 0, items = itemsHtml();
+  return `<div><div class="cap">${lang.cPanel}</div><div class="surf panel"><div class="ph">${lang.yourBag}<small>${lang.items(n)}</small></div>${items}${box('panel', sub, ix, anim)}<div class="tot"><span>${lang.sub}</span><span>${lang.money(sub)}</span></div><div class="btn">${lang.checkout}</div></div></div>
+    <div><div class="cap">${lang.cPage}</div><div class="surf"><div class="ph">${lang.bag}<small>${lang.items(n)}</small></div>${items}${box('page', sub, ix, anim)}<div class="tot"><span>${lang.sub}</span><span>${lang.money(sub)}</span></div><div class="btn" style="max-width:240px;margin-inline-start:auto">${lang.checkout}</div></div></div>
+    <div><div class="cap">${lang.cSum}</div><div class="surf sum"><div class="ph">${lang.summary}</div>${items}${box('sum', sub, ix, anim)}<div class="tline"><span>${lang.sub}</span><b>${lang.money(sub)}</b></div>${gn ? `<div class="tline"><span>${lang.giftsLine(gn)} · ${lang.worthShort} <s>${lang.money(giftValue(RANGES[ix]))}</s></span><b class="g">${lang.money(0)}</b></div>` : ''}<div class="tline"><span>${lang.deliv}</span><b>${lang.freeDel}</b></div><div class="tot"><span>${lang.total}</span><span>${lang.money(sub)}</span></div><div class="btn">${lang.placeOrder}</div></div></div>`;
+}
+
+/* homepage */
+const pics = (r, max) => `<div class="pics">${r.gifts.slice(0, max).map(([k, q]) => tile(k, q)).join('')}</div>`;
+const RAMP = ['#efa3ba', '#e07a98', '#d35d80', '#c13e63', '#962a4c'];
+function home(id, ix){
+  const lang = L(), head = `<h3>${lang.hpTitle}</h3><p class="sub">${lang.hpSub}</p>`, you = i => i === ix ? `<span class="you">${lang.yours}</span>` : '';
+  let body = '';
+  if (id === 'HA') body = `<div class="HA">${RANGES.map((r, i) => `<div class="c${i === ix ? ' cur' : ''}"><div class="top" style="background:${RAMP[i % 5]}">${esc(rangeLabel(r))}</div><div class="body"><div class="num">${giftCount(r)}<small>${lang.giftsWord}</small></div><span class="hv">${lang.worth(lang.money(giftValue(r)))}</span>${pics(r, 4)}<b>${esc(words(r))}</b>${you(i)}</div></div>`).join('')}</div>`;
+  if (id === 'HB') body = `<div class="HB">${RANGES.map((r, i) => `<div class="s${i === ix ? ' cur' : ''}"><b>${esc(words(r))}</b>${you(i)}<span class="hv">${lang.worth(lang.money(giftValue(r)))}</span><div class="step" style="min-height:${54 + i * 34}px">${esc(rangeShort(r))}</div></div>`).join('')}</div>`;
+  if (id === 'HC') body = `<div class="HC"><div class="hd"><span>${lang.spend}</span><span>${lang.get}</span><span></span></div>${RANGES.map((r, i) => `<div class="r${i === ix ? ' cur' : ''}"><span class="sp"><small>AED</small>${esc(rangeShort(r))}</span><span><b>${esc(words(r))}</b> <span class="hv">${lang.worth(lang.money(giftValue(r)))}</span> ${you(i)}</span>${pics(r, 5)}</div>`).join('')}</div>`;
+  if (id === 'HD') {
+    const fill = ix < 0 ? 0 : ix / (RANGES.length - 1) * 80;
+    return `<div class="hp HD"><h3>${lang.hpTitle}</h3><p class="sub">${lang.hpSub}</p><div class="trk"><span class="fill" style="width:${fill}%"></span>${RANGES.map((r, i) => `<div class="st${i <= ix ? ' on' : ''}${i === ix ? ' cur' : ''}"><span class="dot">${GIFT}</span><span class="r">${esc(rangeShort(r))}</span><b>${esc(words(r))}</b><span class="hv d">${lang.worth(lang.money(giftValue(r)))}</span>${you(i)}</div>`).join('')}</div><button type="button" class="cta">${lang.shop}</button></div>`;
+  }
+  if (id === 'HE') body = `<div class="HE">${RANGES.map((r, i) => `<div class="c${i === ix ? ' cur' : ''}"><span class="n">${giftCount(r)}</span><span class="lb">${lang.giftsWord}</span><span class="hv">${lang.worth(lang.money(giftValue(r)))}</span><span class="r">${esc(rangeLabel(r))}</span><b>${esc(words(r))}</b>${you(i)}</div>`).join('')}</div>`;
+  if (id === 'H1') body = `<div class="H1">${RANGES.map((r, i) => `<div class="c${i === ix ? ' cur' : ''}"><span class="r">${esc(rangeLabel(r))}</span>${pics(r, 4)}<b>${esc(words(r))}</b><span class="hv">${lang.worth(lang.money(giftValue(r)))}</span>${you(i)}</div>`).join('')}</div>`;
+  if (id === 'H2') body = `<div class="H2">${RANGES.map((r, i) => `<div class="s${i <= ix ? ' cur' : ''}"><span class="dot">${GIFT}</span><span class="r">${esc(rangeLabel(r))}</span><b>${esc(words(r))}</b><span class="hv">${lang.worth(lang.money(giftValue(r)))}</span>${you(i)}</div>`).join('')}</div>`;
+  if (id === 'H3') body = `<div class="H3">${RANGES.map((r, i) => `<div class="l${i === ix ? ' cur' : ''}"><span class="r" style="background:${RAMP[i % 5]}"><small>${lang.spend}</small>${esc(rangeShort(r))}</span><b>${esc(words(r))}<br><span class="hv">${lang.worth(lang.money(giftValue(r)))}</span></b>${pics(r, 6)}${you(i)}</div>`).join('')}</div>`;
+  return `<div class="hp">${head}${body}<button type="button" class="cta">${lang.shop}</button></div>`;
+}
+
+function info(tag, name, desc, sw){
+  return `<div class="dinfo"><span class="tag">${tag}</span><b>${esc(name)}</b><p>${esc(desc)}</p>${sw ? `<span class="sw">${sw.map(c => `<i style="background:${c}"></i>`).join('')}</span>` : ''}</div>`;
+}
+
+function render(){
+  const lang = L(), sub = subtotal(), ix = rangeIx(sub), anim = ix !== S.last && ix >= 0;
+  S.last = ix;
+  document.documentElement.lang = S.lang; document.documentElement.dir = AR() ? 'rtl' : 'ltr';
+  document.body.classList.toggle('rtl', AR());
+  document.querySelectorAll('[data-t]').forEach(el => { const v = lang[el.dataset.t]; if (typeof v === 'string') el.textContent = v; });
+  const seg = (id, opts, cur, act) => { document.getElementById(id).innerHTML = opts.map(([v, l]) => `<button type="button" data-act="${act}" data-v="${v}" aria-pressed="${String(v) === String(cur)}">${l}</button>`).join(''); };
+  const preset = PRESETS.findIndex(([, b]) => JSON.stringify(b) === JSON.stringify(S.bag));
+  seg('segJump', PRESETS.map(([, b], i) => [i, lang.money(Object.entries(b).reduce((a, [k, q]) => a + PRODUCTS[k].p * q, 0))]), preset, 'jump');
+  seg('segLang', [['en','English'],['ar','العربية']], S.lang, 'lang');
+  seg('segOpen', [[0, lang.closed], [1, lang.opened]], S.allOpen ? 1 : 0, 'allopen');
+  seg('segPw', [[390,'390'],[360,'360'],[320,'320']], S.pw, 'pw');
+  seg('segPrices', [[0, lang.hidden], [1, lang.shown]], S.prices ? 1 : 0, 'prices');
+  document.getElementById('shop').innerHTML = Object.entries(PRODUCTS).map(([k, p]) => `<button type="button" class="chipp" data-act="inc" data-k="${k}" title="${esc(p.b + ' · ' + p.n)}"><img src="img/${p.img}.webp" alt="">+ ${lang.money(p.p)}</button>`).join('') + `<button type="button" class="chipp" data-act="clear" style="padding-inline:10px">✕</button>`;
+  document.getElementById('status').innerHTML = lang.status(lang.money(sub), ix >= 0 ? esc(rangeLabel(RANGES[ix])) : '');
+
+  let h = `<div class="secT"><h2>${lang.finalT}</h2><p>${lang.finalP}</p></div>`;
+  h += NEW.filter(([id]) => id === 'n2').map(([id, name, desc, sw]) => `<div class="drow">${info('02', name, desc, sw)}${surfaces((w, s, x, a) => compact(id, w, s, x, a), sub, ix, anim)}</div>`).join('');
+  const board = document.getElementById('board');
+  const focused = document.activeElement && document.activeElement.id;
+  board.innerHTML = h;
+  board.style.zoom = S.zoom;
+  board.style.setProperty('--pw', S.pw + 'px');
+  if (document.getElementById('ranges')) document.getElementById('ranges').innerHTML = RANGES.map((r, i) => `<div class="er"><div><label for="mn${i}">${lang.from}</label><input id="mn${i}" inputmode="numeric" data-i="${i}" data-f="min" value="${r.min}"></div><div><label for="mx${i}">${lang.to}</label><input id="mx${i}" inputmode="numeric" data-i="${i}" data-f="max" value="${r.max ?? ''}" placeholder="${lang.above}"></div><div><label for="we${i}">${lang.wEn}</label><input id="we${i}" data-i="${i}" data-f="en" value="${esc(r.en)}"></div><div><label for="wa${i}">${lang.wAr}</label><input id="wa${i}" dir="rtl" data-i="${i}" data-f="ar" value="${esc(r.ar)}"></div><div class="gl">${r.gifts.map(([k, q]) => (q > 1 ? q + '× ' : '') + esc(gname(k))).join(', ')} · <b>${L().worth(L().money(giftValue(r)))}</b></div></div>`).join('');
+  if (focused) { const el = document.getElementById(focused); if (el && el.tagName === 'INPUT') { el.focus(); const v = el.value; el.setSelectionRange && el.type !== 'number' && el.setSelectionRange(v.length, v.length); } }
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act;
+  if (a === 'inc') S.bag[b.dataset.k] = Math.min(20, (S.bag[b.dataset.k] || 0) + 1);
+  else if (a === 'clear') S.bag = {};
+  else if (a === 'jump') S.bag = JSON.parse(JSON.stringify(PRESETS[+b.dataset.v][1]));
+  else if (a === 'lang') S.lang = b.dataset.v;
+  else if (a === 'prices') S.prices = b.dataset.v === '1';
+  else if (a === 'allopen') { S.allOpen = b.dataset.v === '1'; S.open = {}; }
+  else if (a === 'pw') S.pw = +b.dataset.v;
+  else if (a === 'zoom') { S.zoom = parseFloat(b.dataset.v); try { localStorage.setItem('fg-zoom', String(S.zoom)); } catch (err) {} }
+  else if (a === 'see') S.open[b.dataset.id] = !S.open[b.dataset.id];
+  else return;
+  render();
+});
+document.addEventListener('input', e => {
+  const el = e.target; if (!el.dataset || el.dataset.i == null) return;
+  const r = RANGES[+el.dataset.i]; if (!r) return;
+  if (el.dataset.f === 'min' || el.dataset.f === 'max') { const v = el.value.trim() === '' ? null : Math.max(0, parseInt(el.value, 10) || 0); if (el.dataset.f === 'min') r.min = v ?? 0; else r.max = v; }
+  else r[el.dataset.f] = el.value;
+  render();
+});
+render();
+</script>
