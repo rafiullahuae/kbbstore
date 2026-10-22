@@ -1237,6 +1237,72 @@ class CheckoutPage
         'lo_trust_ar'   => ['text', 'Words beside the lock — Arabic', self::LO_TRUST_AR, ''],
         'lo_apple_row'  => ['bool', 'Apple Pay also in the payment list', true,
                             'On, as asked (14 October: "express checkout will also show, and also the apple pay only in the list too"): Apple Pay is offered as method no. 2 under the card, on devices with Apple Pay only, and its own black button takes the place of the pay button once chosen. The Express checkout row above (Apple Pay and Google Pay) is shown exactly as before either way. Same Stripe card payment as before.'],
+
+        /*
+         * ── TEXT SIZES, THE REST OF THE PAGE (Lane CK, 22 October 2026) ─────
+         *
+         * "Make the text a little bigger" on the cart panel, the cart page and
+         * the checkout, with a live preview, Arabic included. He has not picked
+         * the values: he sets them on Desktop / Mobile · Text sizes with the
+         * real page beside the sliders. So EVERY ONE SHIPS AT TODAY'S SIZE
+         * (100%, Overall 0) and prints nothing until it is moved.
+         *
+         * Overall multiplies on top of every role, the six above included; a
+         * role multiplies only its own text. Spacing % moves the space above
+         * and below things (never a width or a side offset), and follows Text
+         * % while the lock is on. Small phones: on a phone 374px or narrower
+         * every mobile size the owner has set ABOVE today is taken down by the
+         * first percentage, at 340px or narrower by the second, never below
+         * today's size — pure CSS, see App\Support\TextSizes.
+         */
+        'd_ov_text'   => ['range', 'Overall · Text %', 0,
+                          'Every text on the desktop checkout at once, on top of the sizes below. 0 is today.',
+                          ['min' => -10, 'max' => 25, 'step' => 1, 'unit' => '%']],
+        'd_ov_space'  => ['range', 'Overall · Spacing %', 0,
+                          'The space above and below everything — padding, gaps between rows and sections. Widths and side margins never move. 0 is today.',
+                          ['min' => -10, 'max' => 25, 'step' => 1, 'unit' => '%']],
+        'd_ov_link'   => ['bool', 'Lock Spacing % to Text %', true,
+                          'On: spacing grows with the text, so the page keeps its proportions. Off: the two move separately.'],
+        'd_t_rows'    => ['range', 'Summary rows', 100, 'Subtotal, Delivery, Discount in the order summary. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'd_t_total'   => ['range', 'Summary total', 100, 'The Total line. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'd_t_coupon'  => ['range', 'Coupon line', 100, 'The coupon box, the "Apply coupon" line and its messages. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'd_t_help'    => ['range', 'Helper and notice text', 100, 'The small grey lines: "We send your order confirmation here", delivery notes, the secure-payment line, notices. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'd_t_dlv'     => ['range', 'Delivery option names', 100, 'The "3 Delivery" choices. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'd_t_pay'     => ['range', 'Payment method names and descriptions', 100, 'Card, Tabby, Tamara, Cash on delivery and the lines under them. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'd_t_tick'    => ['range', 'Tick-box lines', 100, '"Create an account", "This is a gift" and the other ticks — on top of Field label size, which they also follow. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'd_t_flift'   => ['range', 'Field label once lifted', 100, 'The small grey heading inside a filled field ("Phone", "Emirate") — 10.5px today. While a field is empty its label is the placeholder, which follows Field text size.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'm_ov_text'   => ['range', 'Overall · Text %', 0,
+                          'Every text on the phone checkout at once, on top of the sizes below. 0 is today. Field text never goes under the 16px that stops iPhones zooming.',
+                          ['min' => -10, 'max' => 25, 'step' => 1, 'unit' => '%']],
+        'm_ov_space'  => ['range', 'Overall · Spacing %', 0,
+                          'The space above and below everything. Widths and side margins never move. 0 is today.',
+                          ['min' => -10, 'max' => 25, 'step' => 1, 'unit' => '%']],
+        'm_ov_link'   => ['bool', 'Lock Spacing % to Text %', true,
+                          'On: spacing grows with the text. Off: the two move separately.'],
+        'm_t_rows'    => ['range', 'Summary rows', 100, 'Subtotal, Delivery, Discount in the order summary. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'm_t_total'   => ['range', 'Summary total', 100, 'The Total line, and the total in the summary bar. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'm_t_coupon'  => ['range', 'Coupon line', 100, 'The coupon box and its messages. 100% is today. (The one-line "Apply coupon" strip on a phone fits itself to the width and keeps doing so.)', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'm_t_help'    => ['range', 'Helper and notice text', 100, 'The small grey lines and notices. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'm_t_dlv'     => ['range', 'Delivery option names', 100, 'The "3 Delivery" choices. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'm_t_pay'     => ['range', 'Payment method names and descriptions', 100, 'Card, Tabby, Tamara, Cash on delivery and the lines under them. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'm_t_tick'    => ['range', 'Tick-box lines', 100, 'The tick lines, on top of Field label size. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'm_t_flift'   => ['range', 'Field label once lifted', 100, 'The small grey heading inside a filled field — 10.5px today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'm_fit_1'     => ['range', 'Small phones · smaller by, at 374px and below', 5,
+                          'Only sizes you have set ABOVE today are taken down, and never below today\'s size. Nothing happens while every size is at or under 100%.',
+                          ['min' => 0, 'max' => 20, 'step' => 1, 'unit' => '%']],
+        'm_fit_2'     => ['range', 'Small phones · smaller by, at 340px and below', 10,
+                          'The same, on the narrowest phones. Counted from your size, not on top of the step above.',
+                          ['min' => 0, 'max' => 25, 'step' => 1, 'unit' => '%']],
+        /*
+         * B, ON AS ASKED: "the placeholders which become mini headings inside
+         * fields" in grey once lifted, not pink. The control is here so the
+         * pink can come back without a package; it ships grey.
+         */
+        'fl_tone'     => ['select', 'Field label colour once lifted', 'grey',
+                          'The small heading inside a filled field ("Phone", "Emirate"). Grey, as asked (22 October), is the same muted ink the label rests in; a field left empty or wrong still turns red.', [
+                              'grey' => 'Grey — as asked, 22 October',
+                              'pink' => 'The shop\'s pink — as before',
+                          ]],
     ];
 
     /** 2.60.495 wording, his words, with Arabic drafts. */
@@ -1317,7 +1383,10 @@ class CheckoutPage
         'desktop_head' => ['Desktop · Header', 'The secure-checkout bar across the top. Its height is its padding plus the taller of the logo and the badge, so those are the controls rather than a "height" that would fight them.',
                            ['d_head_pad_y', 'd_head_pad_x', 'd_head_max', 'd_head_align', 'd_head_logo', 'd_head_badge', 'd_head_sticky']],
         'desktop_type' => ['Desktop · Text sizes', 'Every size is a share of the size that role already uses, so 100% is the page exactly as it is and the roles keep their relationship to each other.',
-                           ['d_t_title', 'd_t_lead', 'd_t_h2', 'd_t_label', 'd_t_input', 'd_t_ph', 'd_t_trust']],
+                           ['d_t_title', 'd_t_lead', 'd_t_h2', 'd_t_label', 'd_t_input', 'd_t_ph', 'd_t_trust',
+                            // Lane CK (22 October), appended so every field above keeps its place.
+                            'd_ov_text', 'd_ov_space', 'd_ov_link',
+                            'd_t_rows', 'd_t_total', 'd_t_coupon', 'd_t_help', 'd_t_dlv', 'd_t_pay', 'd_t_tick', 'd_t_flift']],
         'desktop_rows' => ['Desktop · Product rows', 'The lines in the order summary on the right — picture, name, stepper and price. Nothing on this tab can reach a phone, and nothing on it can reach the cart page.',
                            ['d_items_pt', 'd_row_h', 'd_row_pt', 'd_row_pr', 'd_row_pb', 'd_row_pl',
                             'd_row_gap', 'd_row_font', 'd_row_bold', 'd_row_brand', 'd_qty_size', 'd_rm_size',
@@ -1330,7 +1399,11 @@ class CheckoutPage
                            ['m_head_pad_y', 'm_head_pad_x', 'm_head_max', 'm_head_align', 'm_head_logo', 'm_head_badge', 'm_head_sticky']],
         'mobile_type'  => ['Mobile · Text sizes', 'Same six roles, their own values. The field-text floor is the one control here that will not go below where it is, and it says why.',
                            ['m_t_title', 'm_t_lead', 'm_t_h2', 'm_t_label',
-                            'm_t_input', 'm_t_input_floor', 'm_t_ph', 'm_t_trust']],
+                            'm_t_input', 'm_t_input_floor', 'm_t_ph', 'm_t_trust',
+                            // Lane CK (22 October), appended so every field above keeps its place.
+                            'm_ov_text', 'm_ov_space', 'm_ov_link',
+                            'm_t_rows', 'm_t_total', 'm_t_coupon', 'm_t_help', 'm_t_dlv', 'm_t_pay', 'm_t_tick', 'm_t_flift',
+                            'm_fit_1', 'm_fit_2']],
         'mobile_rows'  => ['Mobile · Product rows', 'The lines inside the summary card at the top of the phone page. Nothing on this tab can reach a desktop, and nothing on it can reach the cart page.',
                            ['m_items_pt', 'm_row_h', 'm_row_pt', 'm_row_pr', 'm_row_pb', 'm_row_pl',
                             'm_row_gap', 'm_row_font', 'm_row_bold', 'm_row_brand', 'm_qty_size', 'm_rm_size',
@@ -1348,7 +1421,7 @@ class CheckoutPage
                             'vat_amount', 'vat_text', 'vat_text_ar']],
         'cues'         => ['Fields & attention', 'Which optional fields the page draws, and the two moving things on it: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces.',
                            ['optin_on', 'optin_checked', 'notes_on', 'addr_picker', 'state_list', 'sum_row', 'sum_totals', 'float_labels', 'browsed_on', 'remember_on', 'remember_clear',
-                            'ph_weight', 'ph_tone', 'ph_italic',
+                            'ph_weight', 'ph_tone', 'ph_italic', 'fl_tone',
                             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'addr_cue_speed', 'addr_cue_size',
                             'trust_tick', 'trust_tick_speed']],
         /* Lane PY. Its own tab, so the owner finds it where its name says. */
@@ -1563,6 +1636,23 @@ class CheckoutPage
         'm_tocart_size' => '--cop-m-tocarts',
         'm_tocart_icon' => '--cop-m-tocartic',
         'addr_cue_size' => '--cop-cue-s',
+        // Lane CK (22 October): the text roles the six t_ keys did not cover.
+        'd_t_rows'   => '--cop-d-trows',
+        'd_t_total'  => '--cop-d-ttotal',
+        'd_t_coupon' => '--cop-d-tcoupon',
+        'd_t_help'   => '--cop-d-thelp',
+        'd_t_dlv'    => '--cop-d-tdlv',
+        'd_t_pay'    => '--cop-d-tpay',
+        'd_t_tick'   => '--cop-d-ttick',
+        'd_t_flift'  => '--cop-d-tflift',
+        'm_t_rows'   => '--cop-m-trows',
+        'm_t_total'  => '--cop-m-ttotal',
+        'm_t_coupon' => '--cop-m-tcoupon',
+        'm_t_help'   => '--cop-m-thelp',
+        'm_t_dlv'    => '--cop-m-tdlv',
+        'm_t_pay'    => '--cop-m-tpay',
+        'm_t_tick'   => '--cop-m-ttick',
+        'm_t_flift'  => '--cop-m-tflift',
         /*
          * SPEED IS EMITTED AS ITS RECIPROCAL, because what the stylesheet
          * needs is a DURATION and the owner is setting a SPEED. 200% fast has
@@ -1576,6 +1666,58 @@ class CheckoutPage
     private const INVERSE_VARS = [
         'addr_cue_speed'   => '--cop-cue-t',
         'trust_tick_speed' => '--cop-tick-t',
+    ];
+
+    /**
+     * Lane CK: Overall · Text % / Spacing %, stored as the signed change and
+     * printed as a factor (15 -> 1.15). key => [property, the lock, the text
+     * key]: while the lock is on, Spacing prints the Text value.
+     */
+    private const OV_VARS = [
+        'd_ov_text'  => ['--cop-d-ovt', null, null],
+        'd_ov_space' => ['--cop-d-ovs', 'd_ov_link', 'd_ov_text'],
+        'm_ov_text'  => ['--cop-m-ovt', null, null],
+        'm_ov_space' => ['--cop-m-ovs', 'm_ov_link', 'm_ov_text'],
+    ];
+
+    /**
+     * Every text size on the two Text sizes tabs, in one order, for the three
+     * things that need the whole list: the Arabic values, the small-phone
+     * block and the admin preview. key => [property, kind]. The existing
+     * per-surface keys come first and keep their own properties untouched.
+     */
+    public const TYPE_VARS = [
+        'd_t_title' => ['--cop-d-ttitle', 'pct'], 'd_t_lead' => ['--cop-d-tlead', 'pct'],
+        'd_t_h2' => ['--cop-d-th2', 'pct'], 'd_t_label' => ['--cop-d-tlabel', 'pct'],
+        'd_t_input' => ['--cop-d-tinput', 'pct'], 'd_t_ph' => ['--cop-d-tph', 'pct'],
+        'd_t_trust' => ['--cop-d-ttrust', 'pct'], 'd_row_font' => ['--cop-d-rowf', 'pct'],
+        'd_tab_font' => ['--cop-d-tabf', 'pct'],
+        'd_ov_text' => ['--cop-d-ovt', 'ov'], 'd_ov_space' => ['--cop-d-ovs', 'ov'],
+        'd_t_rows' => ['--cop-d-trows', 'pct'], 'd_t_total' => ['--cop-d-ttotal', 'pct'],
+        'd_t_coupon' => ['--cop-d-tcoupon', 'pct'], 'd_t_help' => ['--cop-d-thelp', 'pct'],
+        'd_t_dlv' => ['--cop-d-tdlv', 'pct'], 'd_t_pay' => ['--cop-d-tpay', 'pct'],
+        'd_t_tick' => ['--cop-d-ttick', 'pct'], 'd_t_flift' => ['--cop-d-tflift', 'pct'],
+        'm_t_title' => ['--cop-m-ttitle', 'pct'], 'm_t_lead' => ['--cop-m-tlead', 'pct'],
+        'm_t_h2' => ['--cop-m-th2', 'pct'], 'm_t_label' => ['--cop-m-tlabel', 'pct'],
+        'm_t_input' => ['--cop-m-tinput', 'pct'], 'm_t_ph' => ['--cop-m-tph', 'pct'],
+        'm_t_trust' => ['--cop-m-ttrust', 'pct'], 'm_row_font' => ['--cop-m-rowf', 'pct'],
+        'm_tab_font' => ['--cop-m-tabf', 'pct'],
+        'm_ov_text' => ['--cop-m-ovt', 'ov'], 'm_ov_space' => ['--cop-m-ovs', 'ov'],
+        'm_t_rows' => ['--cop-m-trows', 'pct'], 'm_t_total' => ['--cop-m-ttotal', 'pct'],
+        'm_t_coupon' => ['--cop-m-tcoupon', 'pct'], 'm_t_help' => ['--cop-m-thelp', 'pct'],
+        'm_t_dlv' => ['--cop-m-tdlv', 'pct'], 'm_t_pay' => ['--cop-m-tpay', 'pct'],
+        'm_t_tick' => ['--cop-m-ttick', 'pct'], 'm_t_flift' => ['--cop-m-tflift', 'pct'],
+    ];
+
+    /** The settings row holding the Arabic sizes: only the keys moved on the Arabic tab. */
+    public const AR_KEY = 'checkoutpage_ar_type';
+
+    /** Where each Text sizes tab's controls live, and the keys shown there from another tab. */
+    public const TYPE_TABS = ['desktop_type' => 'd', 'mobile_type' => 'm'];
+
+    public const TYPE_SURFACE = [
+        'desktop_type' => ['d_row_font', 'd_tab_font'],
+        'mobile_type' => ['m_row_font', 'm_tab_font'],
     ];
 
     /**
@@ -1656,6 +1798,8 @@ class CheckoutPage
         'lo_addr_rows'   => ['one' => 'cop-rows', 'two' => 'cop-rows', 'classic' => ''],
         // 2.60.497: the opened summary's background on a phone.
         'lo_sum_open'    => ['blush' => 'cop-sow cop-sob', 'white' => 'cop-sow', 'green' => 'cop-sog', 'classic' => ''],
+        // Lane CK: grey is the shipped look (as asked), so only pink adds a class.
+        'fl_tone'        => ['grey' => '', 'pink' => 'cop-flpink'],
     ];
 
     /**
@@ -2251,7 +2395,9 @@ class CheckoutPage
      */
     public function cssVariables(): string
     {
-        $c = $this->all();
+        // Lane CK: on an Arabic page, the Arabic sizes over the English ones.
+        // Everywhere else, and while Arabic follows English, this is all().
+        $c = $this->sized();
         $out = [];
 
         foreach (self::VARS as $key => $prop) {
@@ -2306,7 +2452,146 @@ class CheckoutPage
             $out[] = '--cop-paylogo:'.(int) $c['pay_logo_h'].'px';
         }
 
+        // Lane CK: Overall · Text % / Spacing %. Last, so every property above
+        // prints exactly where it always did; nothing at all while both are 0.
+        foreach (self::OV_VARS as $key => [$prop, $lock, $text]) {
+            $value = (int) ($lock !== null && $c[$lock] ? $c[$text] : $c[$key]);
+
+            if ($value !== 0) {
+                $out[] = $prop.':'.\App\Support\TextSizes::emit('ov', $value);
+            }
+        }
+
         return implode(';', $out);
+    }
+
+    /*
+     * ── TEXT SIZES: ARABIC, SMALL PHONES, THE PREVIEW (Lane CK) ────────────
+     */
+
+    /**
+     * all(), with the Arabic sizes laid over it on an Arabic page. The Arabic
+     * map is read only on an Arabic page, from the same memoised settings map
+     * as everything else here: no query, on any page.
+     *
+     * @return array<string, mixed>
+     */
+    private function sized(): array
+    {
+        $c = $this->all();
+
+        return \App\Support\TextSizes::arabic() ? \App\Support\TextSizes::overlay($c, $this->arValues()) : $c;
+    }
+
+    /** @return list<string> The keys that may carry an Arabic value. */
+    public static function arKeys(): array
+    {
+        return array_merge(array_keys(self::TYPE_VARS), ['m_fit_1', 'm_fit_2']);
+    }
+
+    /**
+     * The Arabic sizes the owner has set: key => value, only the moved ones.
+     *
+     * @return array<string, int>
+     */
+    public function arValues(): array
+    {
+        return \App\Support\TextSizes::arMap(
+            $this->settings->get(self::AR_KEY, null),
+            self::arKeys(),
+            fn (string $key, mixed $value): mixed => $this->cast($key, $value),
+        );
+    }
+
+    /**
+     * Store the Arabic map whole: what is not in it follows English. Each
+     * value is clamped exactly like its English slider; unknown keys are
+     * dropped (the controller refuses them first).
+     *
+     * @param  array<string, mixed>  $values
+     */
+    public function saveAr(array $values): void
+    {
+        $clean = \App\Support\TextSizes::arMap($values, self::arKeys(), fn (string $key, mixed $value): mixed => $this->cast($key, $value));
+
+        $this->settings->set(self::AR_KEY, $clean === [] ? null : json_encode($clean));
+    }
+
+    /**
+     * The small-phone block's CSS, or '' — '' whenever no mobile size is set
+     * above today, which is how it ships.
+     */
+    public function fitCss(): string
+    {
+        $c = $this->sized();
+        $rows = [];
+
+        foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
+            if (! str_starts_with($key, 'm_')) {
+                continue;
+            }
+
+            $value = (int) $c[$key];
+
+            if (isset(self::OV_VARS[$key]) && self::OV_VARS[$key][1] !== null && $c[self::OV_VARS[$key][1]]) {
+                $value = (int) $c[self::OV_VARS[$key][2]];
+            }
+
+            $rows[] = [$prop, $kind, $value, $kind === 'ov' ? 0 : 100];
+        }
+
+        return \App\Support\TextSizes::fitCss('.kbb-checkout', $rows, (int) $c['m_fit_1'], (int) $c['m_fit_2']);
+    }
+
+    /** `<style id="kbb-cofit">…</style>`, or nothing at all. */
+    public function fitStyle(): string
+    {
+        $css = $this->fitCss();
+
+        return $css === '' ? '' : '<style id="kbb-cofit">'.$css.'</style>';
+    }
+
+    /**
+     * What the admin's live preview needs to paint the same properties the
+     * page will print: one list, built from the constants above.
+     *
+     * @return array<string, mixed>
+     */
+    public static function typeDescriptor(): array
+    {
+        $vars = [];
+        $fit = [];
+
+        foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
+            $row = ['key' => $key, 'prop' => $prop, 'kind' => $kind];
+
+            if (isset(self::OV_VARS[$key]) && self::OV_VARS[$key][1] !== null) {
+                $row['lock'] = self::OV_VARS[$key][1];
+                $row['text'] = self::OV_VARS[$key][2];
+            }
+
+            $vars[] = $row;
+
+            if (str_starts_with($key, 'm_')) {
+                $fit[] = ['key' => $key, 'prop' => $prop, 'kind' => $kind, 'today' => $kind === 'ov' ? 0 : 100];
+            }
+        }
+
+        return [
+            'scope' => '.kbb-checkout',
+            'live' => '/checkout-page/live',
+            'fitId' => 'kbb-cofit',
+            'textVar' => '--ckt',
+            'tabs' => self::TYPE_TABS,
+            'surface' => self::TYPE_SURFACE,
+            'arKeys' => self::arKeys(),
+            'vars' => $vars,
+            'links' => [
+                ['text' => 'd_ov_text', 'space' => 'd_ov_space', 'lock' => 'd_ov_link'],
+                ['text' => 'm_ov_text', 'space' => 'm_ov_space', 'lock' => 'm_ov_link'],
+            ],
+            'fit' => ['scope' => '.kbb-checkout', 's1' => 'm_fit_1', 's2' => 'm_fit_2', 'rows' => $fit],
+        ];
     }
 
     /**

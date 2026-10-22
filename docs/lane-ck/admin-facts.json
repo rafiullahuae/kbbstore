@@ -1,0 +1,99 @@
+[
+ {
+  "screen": "checkoutpage",
+  "framesDesktop": 1,
+  "before": "15px",
+  "after": "17.25px",
+  "requestsForTheMove": 0,
+  "framesMobile": [
+   "312x390",
+   "288x360",
+   "256x320"
+  ],
+  "arBadgeBefore": "Same as English",
+  "arBadgeAfter": "Custom",
+  "savedEn": "15",
+  "savedAr": "130",
+  "previewAfterReload": "17.25px"
+ },
+ {
+  "screen": "cartpage",
+  "framesDesktop": 1,
+  "before": "15px",
+  "after": "17.25px",
+  "requestsForTheMove": 0,
+  "framesMobile": [
+   "312x390",
+   "288x360",
+   "256x320"
+  ],
+  "arBadgeBefore": "Same as English",
+  "arBadgeAfter": "Custom",
+  "savedEn": "15",
+  "savedAr": "130",
+  "previewAfterReload": "22.425px"
+ },
+ {
+  "screen": "cartpanel",
+  "framesDesktop": 1,
+  "before": "12.5px",
+  "after": "14.375px",
+  "requestsForTheMove": 0,
+  "framesMobile": [
+   "312x390",
+   "288x360",
+   "256x320"
+  ],
+  "arBadgeBefore": "Same as English",
+  "arBadgeAfter": "Custom",
+  "savedEn": "15",
+  "savedAr": "130",
+  "previewAfterReload": "18.6875px"
+ },
+ {
+  "shop": "/checkout/",
+  "en": true,
+  "ar": false,
+  "size": "17.25px"
+ },
+ {
+  "shop": "/ar/checkout/",
+  "en": true,
+  "ar": true,
+  "size": "17.25px"
+ },
+ {
+  "shop": "/cart/",
+  "en": true,
+  "ar": false,
+  "size": "17.25px"
+ },
+ {
+  "shop": "/ar/cart/",
+  "en": true,
+  "ar": true,
+  "size": "22.425px"
+ },
+ {
+  "shop": "/",
+  "en": true,
+  "ar": false,
+  "size": "14.375px"
+ },
+ {
+  "shop": "/ar/",
+  "en": true,
+  "ar": true,
+  "size": "18.6875px"
+ },
+ {
+  "reset": [
+   "checkoutpage 200",
+   "cartpage 200",
+   "cartpanel 200"
+  ]
+ },
+ {
+  "pageErrors": []
+ }
+]

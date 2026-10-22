@@ -189,11 +189,14 @@ it('reads Building / Apartment or Villa, Area / Street | Emirate, Country', func
         ->and($section)->toMatch('#<div class="row2">\s*<p[^>]*id="billing_address_2_field".*?id="billing_state_field".*?</div>\s*<p[^>]*id="billing_country_field"#s')
         // The labels he named, in English. (Arabic: drafts, see the Arabic test.)
         ->and($section)->toMatch('#<label for="billing_address_1"[^>]*>Building / Apartment or Villa&nbsp;#')
-        ->and($section)->toMatch('#<label for="billing_address_2"[^>]*>Area / Street&nbsp;#')
+        // Lane CK (22 October): Area / Street is optional now, and says neither "*" nor "(optional)".
+        ->and($section)->toMatch('#<label for="billing_address_2">Area / Street</label>#')
         ->and($section)->toMatch('#<label for="billing_state"[^>]*>Emirate&nbsp;#')
-        // A list, required in the browser as well as by place(); line 2 required too.
+        // A list, required in the browser as well as by place(). Line 2 is NOT
+        // required any more (Lane CK, 22 October, the owner's word).
         ->and($section)->toMatch('/<select[^>]*name="billing_state"[^>]*required/')
-        ->and($section)->toMatch('/<input[^>]*name="billing_address_2"[^>]*required[^>]*autocomplete="section-billing billing address-line2"/')
+        ->and($section)->toMatch('/<input[^>]*name="billing_address_2"[^>]*autocomplete="section-billing billing address-line2"/')
+        ->and($section)->not->toMatch('/<input[^>]*name="billing_address_2"[^>]*\brequired\b/')
         ->and($section)->not->toMatch('/<input[^>]*name="billing_state"/');
 });
 
@@ -492,15 +495,17 @@ it('stores the emirate as the order\'s city and state, Area / Street as line 2, 
     ]);
 });
 
-it('requires Area / Street in the list mode, and takes a pre-switch page\'s City / area as it', function () {
+it('takes Area / Street empty in the list mode, and a pre-switch page\'s City / area as it', function () {
     /*
      * A tab opened before the package, or a cached copy, still posts the old
      * "City / area" box and no Area / Street. That box always held the area,
      * so it becomes line 2 and the emirate the city, rather than a refused
-     * order. With neither, Area / Street is required.
-     * MUTATION: make billing_address_2 plainly required. RED on the second half.
+     * order. With neither, the order is placed with no line 2 -- Lane CK,
+     * 22 October: "Area / Street" is not mandatory (it used to be refused here).
+     * MUTATION: make billing_address_2 plainly required. RED on both halves.
      */
-    adPlace(adCart(), ['billing_address_2' => '', 'billing_city' => ''])->assertSessionHasErrors(['billing_address_2']);
+    adPlace(adCart(), ['billing_address_2' => '', 'billing_city' => ''])->assertSessionHasNoErrors();
+    expect((string) (Order::latest('id')->first()->shipping_address['line2'] ?? ''))->toBe('');
 
     adPlace(adCart(), ['billing_address_2' => null, 'billing_city' => 'Jumeirah 1', 'billing_state' => 'Dubai'])->assertSessionHasNoErrors();
 

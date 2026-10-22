@@ -411,6 +411,11 @@
       phoneMax = body.phoneMax || 680;
       tapMax = body.tapMax || 900;
       coupons = body.coupons || [];
+      /* Lane CK: the size controls' English / Arabic switch and live panel. */
+      if (window.kbbTypeLive && body.type) {
+        window.kbbTypeLive.attach('cpp', { type: body.type, ar: body.ar || {}, values: function () { return values; }, rerender: render,
+          base: function () { return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '') + '/admin-api'; } });
+      }
       values = {};
       tabs.forEach(function (t) {
         t.fields.forEach(function (f) { values[f.key] = f.value; });
@@ -438,7 +443,8 @@
     Object.keys(values).forEach(function (k) { payload[k] = values[k]; });
 
     try {
-      await api('/cart-panel', { settings: payload });
+      /* Lane CK: the Arabic sizes travel with every Save, as one map. */
+      await api('/cart-panel', { settings: payload, ar: window.kbbTypeLive ? window.kbbTypeLive.arPayload('cpp') : {} });
       if (window.kbbDrafts) window.kbbDrafts.saved(SCREEN);
       say('Cart panel saved.');
     } catch (e) {
@@ -640,6 +646,11 @@
        listed, so a phone tab added later gets the side-by-side layout its own
        name claims instead of silently falling through to the full-width one. */
     var side = /^mobile/.test(String(open));
+    /* Lane CK: Desktop and Mobile carry the panel's text sizes too, so they
+       also get the English / Arabic switch and the REAL panel, under the
+       drawing that shows the layout sliders. */
+    var tlDev = window.kbbTypeLive ? window.kbbTypeLive.devOf('cpp', open) : null;
+    var tlAr = tlDev && window.kbbTypeLive.isAr('cpp');
 
     host.innerHTML = '<div class="cpp-wrap' + (side ? ' cpp-side' : '') + '">'
       + (side ? '<div class="cpp-col">' : '')
@@ -649,7 +660,9 @@
       + '<div class="cpp-card">'
       + '<div class="cpp-tabs">' + strip + '</div>'
       + '<p class="cpp-sub" style="margin-top:12px">' + esc(current.description) + '</p>'
-      + '<div class="cpp-fields">' + current.fields.map(fieldHTML).join('') + '</div>'
+      + (tlDev ? window.kbbTypeLive.head('cpp', current.key) : '')
+      + (tlAr ? '<p class="ktl-note">Only the text sizes have Arabic values; everything else on this tab is the same in both languages.</p>' : '')
+      + '<div class="cpp-fields">' + (tlAr ? window.kbbTypeLive.arFields('cpp', current.fields) : current.fields.map(fieldHTML).join('')) + '</div>'
       + '<div class="cpp-actions">'
       + '<button class="cpp-btn is-primary" data-cpp-save' + (busy ? ' disabled' : '') + '>'
       + (busy ? 'Saving…' : 'Save') + '</button>'
@@ -667,9 +680,12 @@
       + '<b>this tab</b> — the other tabs are left exactly as you set them. Nothing is stored until '
       + 'you press Save, and Reload puts them back.</p>'
       + '</div>'
+      + (side && tlDev ? window.kbbTypeLive.frames('cpp', open) : '')
       + (side ? '</div>' : '')
       + previewHTML()
+      + (!side && tlDev ? window.kbbTypeLive.frames('cpp', open) : '')
       + '</div>';
+    if (tlDev) window.kbbTypeLive.mount('cpp');
   }
 
   /* --------------------------------------------------------------- presets */
@@ -949,6 +965,7 @@
     if (warn && fld) warn.innerHTML = warnHTML(fld);
 
     paintPreview();
+    if (window.kbbTypeLive) window.kbbTypeLive.afterInput('cpp', key);
   });
 
   document.addEventListener('click', function (e) {

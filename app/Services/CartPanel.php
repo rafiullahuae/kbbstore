@@ -306,7 +306,63 @@ class CartPanel
         // and allow us to choose the country on which we want to display this".
         'fd_countries'     => ['text',   'Countries', '',
                                'Where the line may show: country codes or names, comma separated, e.g. AE, SA, Oman. Empty: every country. Each country is measured against its own free-delivery amount (Store → Shipping), for the shopper’s own country: the one chosen at checkout, else where they are browsing from.'],
+
+        /*
+         * ── TEXT SIZES (Lane CK, 22 October 2026) ──────────────────────────
+         *
+         * "A little bigger", with a live preview, Arabic included. He has not
+         * picked values: every one ships at TODAY'S size and prints nothing
+         * new until moved. Product name, price and button sizes are the
+         * controls already on these tabs. Appended, so every key above keeps
+         * its recorded line.
+         */
+        'ov_text'          => ['range',  'Overall · Text %', 0, 'Every text in the panel at once, on top of the sizes above. 0 is today.', ['min' => -10, 'max' => 25, 'step' => 1, 'unit' => '%']],
+        'ov_space'         => ['range',  'Overall · Spacing %', 0, 'The space above and below everything in the panel. Its width and side padding never move. 0 is today.', ['min' => -10, 'max' => 25, 'step' => 1, 'unit' => '%']],
+        'ov_link'          => ['bool',   'Lock Spacing % to Text %', true, 'On: spacing grows with the text. Off: the two move separately.'],
+        'tabs_size'        => ['range',  'Cart / Browsed tabs', 100, '100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'sum_size'         => ['range',  'Subtotal line', 100, '100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'help_size'        => ['range',  'Helper and notice text', 100, 'The free-delivery line and notes. 100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'coupon_size'      => ['range',  'Coupon line', 100, '100% is today. (On a phone the coupon ticket fits itself to the width and keeps doing so.)', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'ov_text_m'        => ['range',  'Overall · Text %', 0, 'Every text in the phone panel at once, on top of the sizes above. 0 is today.', ['min' => -10, 'max' => 25, 'step' => 1, 'unit' => '%']],
+        'ov_space_m'       => ['range',  'Overall · Spacing %', 0, 'The space above and below everything in the panel. Its width and side padding never move. 0 is today.', ['min' => -10, 'max' => 25, 'step' => 1, 'unit' => '%']],
+        'ov_link_m'        => ['bool',   'Lock Spacing % to Text %', true, 'On: spacing grows with the text. Off: the two move separately.'],
+        'tabs_size_m'      => ['range',  'Cart / Browsed tabs', 100, '100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'sum_size_m'       => ['range',  'Subtotal line', 100, '100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'help_size_m'      => ['range',  'Helper and notice text', 100, '100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'coupon_size_m'    => ['range',  'Coupon line', 100, '100% is today.', ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'fit_1_m'          => ['range',  'Small phones · smaller by, at 374px and below', 5, 'Only sizes you have set ABOVE today are taken down, and never below today\'s size.', ['min' => 0, 'max' => 20, 'step' => 1, 'unit' => '%']],
+        'fit_2_m'          => ['range',  'Small phones · smaller by, at 340px and below', 10, 'The same, on the narrowest phones. Counted from your size.', ['min' => 0, 'max' => 25, 'step' => 1, 'unit' => '%']],
     ];
+
+    /**
+     * Lane CK: every text size on the Desktop and Mobile tabs, in one order,
+     * for the Arabic values, the small-phone block and the admin preview.
+     * key => [property, kind]. The first six are the panel's existing size
+     * controls with their existing properties, untouched.
+     */
+    public const TYPE_VARS = [
+        'name_size' => ['--cp-name', 'px'], 'price_size' => ['--cp-price', 'pct'], 'btn_size' => ['--cp-btnf', 'pct'],
+        'ov_text' => ['--cpz-d-ovt', 'ov'], 'ov_space' => ['--cpz-d-ovs', 'ov'],
+        'tabs_size' => ['--cpz-d-ttabs', 'pct'], 'sum_size' => ['--cpz-d-tsum', 'pct'],
+        'help_size' => ['--cpz-d-thelp', 'pct'], 'coupon_size' => ['--cpz-d-tcoupon', 'pct'],
+        'name_size_m' => ['--cp-name-m', 'px'], 'price_size_m' => ['--cp-price-m', 'pct'], 'btn_size_m' => ['--cp-btnf-m', 'pct'],
+        'ov_text_m' => ['--cpz-m-ovt', 'ov'], 'ov_space_m' => ['--cpz-m-ovs', 'ov'],
+        'tabs_size_m' => ['--cpz-m-ttabs', 'pct'], 'sum_size_m' => ['--cpz-m-tsum', 'pct'],
+        'help_size_m' => ['--cpz-m-thelp', 'pct'], 'coupon_size_m' => ['--cpz-m-tcoupon', 'pct'],
+    ];
+
+    /** The existing keys above, printed by cssVariables() every time as they always were. */
+    private const TYPE_EXISTING = ['name_size', 'price_size', 'btn_size', 'name_size_m', 'price_size_m', 'btn_size_m'];
+
+    /** Spacing key => [the lock, the text key]. */
+    private const TYPE_LINKS = [
+        'ov_space' => ['ov_link', 'ov_text'],
+        'ov_space_m' => ['ov_link_m', 'ov_text_m'],
+    ];
+
+    public const AR_KEY = 'cartpanel_ar_type';
+
+    public const TYPE_TABS = ['desktop' => 'd', 'mobile' => 'm'];
 
     /**
      * The coupon hint's shipped wording, the owner's own sentence. (Lane QK3;
@@ -353,13 +409,18 @@ class CartPanel
         'desktop'  => ['Desktop', 'The panel as it opens on a laptop — wider than 680px. Every value here has a twin on the Mobile tab, so squeezing the phone no longer squeezes this.',
                        ['panel_width', 'list_pad', 'row_pad', 'thumb_size', 'name_size', 'name_lines',
                         'price_size', 'stepper_size', 'rm_size', 'x_size', 'x_glyph',
-                        'btn_gap', 'btn_pad', 'btn_radius', 'btn_size']],
+                        'btn_gap', 'btn_pad', 'btn_radius', 'btn_size',
+                        // Lane CK (22 October), last so every field above keeps its place.
+                        'ov_text', 'ov_space', 'ov_link', 'tabs_size', 'sum_size', 'help_size', 'coupon_size']],
         'mobile'   => ['Mobile', 'The panel on a phone. Width, padding, rows and type take effect at 680px and below; the four tap targets at 900px and below, which is where the panel raises them today.',
                        ['panel_width_m', 'list_pad_m', 'row_pad_m', 'thumb_size_m', 'name_size_m', 'name_lines_m',
                         'price_size_m', 'stepper_size_m', 'rm_size_m', 'rm_tap_m', 'x_size_m', 'x_glyph_m',
                         'tab_h_m', 'btn_layout_m', 'btn_gap_m', 'btn_pad_m', 'btn_h_m', 'btn_radius_m', 'btn_size_m',
                         // Lane QK12, last so every field above keeps its place.
-                        'foot_gap_m']],
+                        'foot_gap_m',
+                        // Lane CK (22 October), last.
+                        'ov_text_m', 'ov_space_m', 'ov_link_m', 'tabs_size_m', 'sum_size_m', 'help_size_m', 'coupon_size_m',
+                        'fit_1_m', 'fit_2_m']],
         'content'  => ['Content', 'What each line and the panel show. The same on both devices.',
                        ['show_thumb', 'show_qty', 'show_remove', 'show_price', 'show_ship_bar', 'show_promo', 'show_browsed',
                         // Lane HLB, last so every field above keeps its place.
@@ -800,7 +861,8 @@ class CartPanel
      */
     public function cssVariables(): string
     {
-        $c = $this->all();
+        // Lane CK: the Arabic sizes over the English ones on an Arabic page.
+        $c = $this->sized();
 
         // 1 at 100%, to three decimals — a percentage that does not divide evenly
         // must not arrive as 0.93333333333333 in a style attribute on every page.
@@ -810,7 +872,7 @@ class CartPanel
             return $out === '' ? '0' : $out;
         };
 
-        return implode(';', [
+        $out = [
             // ── size ──
             '--cp-w:' . $c['panel_width'] . 'px',
             '--cp-w-m:' . $c['panel_width_m'] . 'vw',
@@ -860,7 +922,133 @@ class CartPanel
             // Lane QK12: the space under the phone's buttons. Last, so the
             // properties above print exactly as they did.
             '--cp-footgap-m:' . $c['foot_gap_m'] . 'px',
-        ]);
+        ];
+
+        // Lane CK: the new text sizes, after everything above and only what
+        // has been moved -- nothing at all while every one is today's.
+        foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
+            if (in_array($key, self::TYPE_EXISTING, true)) {
+                continue;
+            }
+
+            $value = (int) $this->typeValue($c, $key);
+
+            if ($value !== (int) self::SCHEMA[$key][2]) {
+                $out[] = $prop . ':' . \App\Support\TextSizes::emit($kind, $value);
+            }
+        }
+
+        return implode(';', $out);
+    }
+
+    /*
+     * ── TEXT SIZES: ARABIC, SMALL PHONES, THE PREVIEW (Lane CK) ────────────
+     */
+
+    /** @return array<string, mixed> all(), with the Arabic sizes over it on an Arabic page. */
+    private function sized(): array
+    {
+        $c = $this->all();
+
+        return \App\Support\TextSizes::arabic() ? \App\Support\TextSizes::overlay($c, $this->arValues()) : $c;
+    }
+
+    /** @param array<string, mixed> $c */
+    private function typeValue(array $c, string $key): mixed
+    {
+        if (isset(self::TYPE_LINKS[$key]) && $c[self::TYPE_LINKS[$key][0]]) {
+            return $c[self::TYPE_LINKS[$key][1]];
+        }
+
+        return $c[$key];
+    }
+
+    /** @return list<string> */
+    public static function arKeys(): array
+    {
+        return array_merge(array_keys(self::TYPE_VARS), ['fit_1_m', 'fit_2_m']);
+    }
+
+    /** @return array<string, int> */
+    public function arValues(): array
+    {
+        return \App\Support\TextSizes::arMap(
+            $this->settings->get(self::AR_KEY, null),
+            self::arKeys(),
+            fn (string $key, mixed $value): mixed => $this->cast($key, $value),
+        );
+    }
+
+    /** @param array<string, mixed> $values */
+    public function saveAr(array $values): void
+    {
+        $clean = \App\Support\TextSizes::arMap($values, self::arKeys(), fn (string $key, mixed $value): mixed => $this->cast($key, $value));
+
+        $this->settings->set(self::AR_KEY, $clean === [] ? null : json_encode($clean));
+    }
+
+    /**
+     * The small-phone block, or ''. "Today" for the panel's own px and %
+     * sizes is the size the schema ships, so a name the owner has already
+     * set SMALLER than that (the live panel's 11px) is never touched.
+     */
+    public function fitCss(): string
+    {
+        $c = $this->sized();
+        $rows = [];
+
+        foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
+            if (str_ends_with($key, '_m')) {
+                $rows[] = [$prop, $kind, (int) $this->typeValue($c, $key), (int) self::SCHEMA[$key][2]];
+            }
+        }
+
+        return \App\Support\TextSizes::fitCss('#cart', $rows, (int) $c['fit_1_m'], (int) $c['fit_2_m']);
+    }
+
+    /** `<style id="kbb-cpfit">…</style>`, or nothing at all. */
+    public function fitStyle(): string
+    {
+        $css = $this->fitCss();
+
+        return $css === '' ? '' : '<style id="kbb-cpfit">' . $css . '</style>';
+    }
+
+    /** @return array<string, mixed> What the admin's live preview needs. */
+    public static function typeDescriptor(): array
+    {
+        $vars = [];
+        $fit = [];
+
+        foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
+            $row = ['key' => $key, 'prop' => $prop, 'kind' => $kind];
+
+            if (isset(self::TYPE_LINKS[$key])) {
+                [$row['lock'], $row['text']] = self::TYPE_LINKS[$key];
+            }
+
+            $vars[] = $row;
+
+            if (str_ends_with($key, '_m')) {
+                $fit[] = ['key' => $key, 'prop' => $prop, 'kind' => $kind, 'today' => (int) self::SCHEMA[$key][2]];
+            }
+        }
+
+        return [
+            'scope' => '#cart',
+            'live' => '/cart-panel/live',
+            'fitId' => 'kbb-cpfit',
+            'textVar' => '--kpt',
+            'tabs' => self::TYPE_TABS,
+            'surface' => [],
+            'arKeys' => self::arKeys(),
+            'vars' => $vars,
+            'links' => [
+                ['text' => 'ov_text', 'space' => 'ov_space', 'lock' => 'ov_link'],
+                ['text' => 'ov_text_m', 'space' => 'ov_space_m', 'lock' => 'ov_link_m'],
+            ],
+            'fit' => ['scope' => '#cart', 's1' => 'fit_1_m', 's2' => 'fit_2_m', 'rows' => $fit],
+        ];
     }
 
     /**

@@ -1,0 +1,24 @@
+{
+    "checkout": {
+        "d_t_title": "--cop-d-ttitle:1.2",
+        "d_t_lead": "--cop-d-tlead:1.2",
+        "d_t_h2": "--cop-d-th2:1.2",
+        "d_t_label": "--cop-d-tlabel:1.2",
+        "d_t_input": "--cop-d-tinput:1.2",
+        "d_t_ph": "--cop-d-tph:1.2",
+        "d_t_trust": "--cop-d-ttrust:1.2",
+        "d_row_font": "--cop-d-rowf:1.2",
+        "d_tab_font": "--cop-d-tabf:1.2",
+        "m_t_title": "--cop-m-ttitle:1.2",
+        "m_t_lead": "--cop-m-tlead:1.2",
+        "m_t_h2": "--cop-m-th2:1.2",
+        "m_t_label": "--cop-m-tlabel:1.2",
+        "m_t_input": "--cop-m-tinput:1.2",
+        "m_t_ph": "--cop-m-tph:1.2",
+        "m_t_trust": "--cop-m-ttrust:1.2",
+        "m_row_font": "--cop-m-rowf:1.2",
+        "m_tab_font": "--cop-m-tabf:1.2"
+    },
+    "panel": "--cp-w:380px;--cp-w-m:77vw;--cp-pad:16px;--cp-pad-m:11px;--cp-rowpad:9px;--cp-rowpad-m:9px;--cp-thumb:42px;--cp-thumb-m:38px;--cp-name:15px;--cp-name-m:14px;--cp-lines:2;--cp-lines-m:2;--cp-price:1.1;--cp-price-m:0.95;--cp-step:22px;--cp-step-m:22px;--cp-rm:13px;--cp-rm-m:15px;--cp-rmbox-m:44px;--cp-x:28px;--cp-x-m:44px;--cp-xg:13px;--cp-xg-m:13px;--cp-tabh-m:44px;--cp-btngap:8px;--cp-btngap-m:6px;--cp-btnpad:12px;--cp-btnpad-m:10px;--cp-btnh-m:44px;--cp-btnr:99px;--cp-btnr-m:99px;--cp-btnf:1.15;--cp-btnf-m:1.2;--cp-accent:#C13E63;--cp-cta-bg:#C13E63;--cp-cta-fg:#FFFFFF;--cp-footgap-m:50px",
+    "cartrows": ".kbb-cartpage .items .ci:not(.ci-set){min-height:0px;padding-block:11px 11px;padding-inline:14px 14px;gap:12px}.kbb-cartpage .items .ci:not(.ci-set) .cth{width:56px;height:56px;border-radius:10px}.kbb-cartpage .items .ci:not(.ci-set) .cbrand{font-size:12px}.kbb-cartpage .items .ci:not(.ci-set) .cn{font-size:14px;margin-bottom:6px}.kbb-cartpage .items .ci:not(.ci-set) .qty{margin-block:0px 0px}@media (max-width:600px){.kbb-cartpage .items .ci:not(.ci-set){min-height:0px;padding-block:10px 10px;padding-inline:12px 12px;gap:11px}.kbb-cartpage .items .ci:not(.ci-set) .cth{width:52px;height:52px;border-radius:10px}.kbb-cartpage .items .ci:not(.ci-set) .cbrand{font-size:11px}.kbb-cartpage .items .ci:not(.ci-set) .cn{font-size:13.5px;margin-bottom:5px}.kbb-cartpage .items .ci:not(.ci-set) .qty{margin-block:0px 0px}}@media (max-width:600px){.kbb-cartpage .items .ci .cbrand{display:none}}"
+}

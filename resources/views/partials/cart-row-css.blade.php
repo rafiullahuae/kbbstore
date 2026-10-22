@@ -69,3 +69,4 @@
 @endphp
 @if ($kbbCartRowCss !== '')<style id="kbb-cartrows">{!! $kbbCartRowCss !!}</style>
 @endif
+{!! app(\App\Services\CartPage::class)->fitStyle() !!}

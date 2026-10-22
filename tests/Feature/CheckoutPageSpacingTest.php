@@ -336,6 +336,9 @@ it('offers spacing and nothing structural', function () {
             'lo_email_hint_on', 'lo_uae_short', 'lo_detected', 'lo_remember_tick', 'lo_dl_note_free',
             'lo_pay_secure_on', 'lo_bag_pics', 'lo_total_only', 'lo_btn_words',
             'lo_trust_on', 'lo_apple_row',
+            // Lane CK (22 October): whether Spacing % follows Text % on each
+            // surface (ON). A spacing lock; nothing is added or removed.
+            'd_ov_link', 'm_ov_link',
         ]);
 });
 

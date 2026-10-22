@@ -332,6 +332,15 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // search"), spliced in, not regenerated: mobile-menu's Top of the sheet
     // gains show_search_ar ("Search field on Arabic pages", OFF) after
     // show_search. 1 field in, nothing else moved.
+    // ▲ Lane CK (22 October), the owner's text sizes with a live preview,
+    // spliced in, not regenerated: checkout-page's Desktop / Mobile · Text
+    // sizes gain Overall (text, spacing, lock), eight roles and, on the phone,
+    // the two small-phone steps, last; Fields & attention gains fl_tone ("Field
+    // label colour once lifted", Grey as asked) after ph_italic; cart-panel's
+    // Desktop and Mobile gain the same Overall and four roles (and the steps on
+    // Mobile), last; cart-page gains two last tabs, type_d and type_m. 41
+    // fields and 2 tabs in; every recorded field byte-identical (checked by
+    // decoding both before writing); nothing else moved.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
@@ -799,7 +808,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // wording tab, the ten txt_*_ar twins of the Wording tab.
     // 847 -> 857 (Lane HLB): header lang_switch, cart-panel wish_tab_m and the
     // heart tab's four words in English and Arabic -- the owner's approved design.
-    expect($compared)->toBe(857, 'the number of controls drawn changed');
+    // 857 -> 916 (Lane CK): Text sizes -- checkout-page 25 (overall text and
+    // spacing, the lock, eight roles a side, two small-phone steps, label
+    // tone), cart-page 18 and cart-panel 16, the owner's request of 22 October.
+    expect($compared)->toBe(916, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

@@ -35,7 +35,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    here and put 52px of page background above .co-head and 52px of nothing under
    the last block, on every checkout, on both surfaces. A class beats an element
    selector, so this wins without !important. Both tokens default to 0. */
-.kbb-checkout{margin-top:0;padding:var(--cop-shellpt) 0 var(--cop-shellpb)}
+.kbb-checkout{margin-top:0;padding:var(--cop-shellpt) 0 var(--cop-shellpb)}.kbb-checkout{padding:calc(var(--cop-shellpt)*var(--cks,1)) 0 calc(var(--cop-shellpb)*var(--cks,1))}
 .kbb-checkout .co-notices:empty{padding:0!important}
 .kbb-checkout a{color:inherit;text-decoration:none}
 .kbb-checkout button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
@@ -146,15 +146,15 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout .mpbar,.kbb-checkout .mpbar.is-on{transition:none}
 }
 
-.kbb-checkout .co-grid{max-width:var(--cop-d-max,1040px);margin:0 auto;padding:var(--cop-pady) var(--cop-padx) 70px;display:grid;grid-template-columns:minmax(0,1fr) var(--cop-d-aside,380px);gap:var(--cop-d-gap,26px);align-items:start}
+.kbb-checkout .co-grid{max-width:var(--cop-d-max,1040px);margin:0 auto;padding:var(--cop-pady) var(--cop-padx) 70px;display:grid;grid-template-columns:minmax(0,1fr) var(--cop-d-aside,380px);gap:var(--cop-d-gap,26px);align-items:start}.kbb-checkout .co-grid{padding:calc(var(--cop-pady)*var(--cks,1)) var(--cop-padx) calc(70px*var(--cks,1));display:grid;grid-template-columns:minmax(0,1fr) var(--cop-d-aside,380px);gap:calc(var(--cop-d-gap,26px)*var(--cks,1)) var(--cop-d-gap,26px);align-items:start}
 
-.kbb-checkout .backlink{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);margin-bottom:10px}
+.kbb-checkout .backlink{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);margin-bottom:10px}.kbb-checkout .backlink{gap:calc(6px*var(--cks,1)) 6px;font-size:calc(12px*var(--ckt,1));color:var(--ink-2);margin-bottom:calc(10px*var(--cks,1))}
 .kbb-checkout .backlink:hover{color:var(--pink-deep)}
-.kbb-checkout h1.co-h{font-size:calc(19px * var(--cop-ttitle));font-weight:800;letter-spacing:-.01em;margin-bottom:2px}
-.kbb-checkout .co-lead{font-size:calc(12.5px * var(--cop-tlead));color:var(--muted);margin-bottom:16px}
+.kbb-checkout h1.co-h{font-size:calc(19px * var(--cop-ttitle));font-weight:800;letter-spacing:-.01em;margin-bottom:2px}.kbb-checkout h1.co-h{font-size:calc((19px * var(--cop-ttitle))*var(--ckt,1));font-weight:800;letter-spacing:-.01em;margin-bottom:calc(2px*var(--cks,1))}
+.kbb-checkout .co-lead{font-size:calc(12.5px * var(--cop-tlead));color:var(--muted);margin-bottom:16px}.kbb-checkout .co-lead{font-size:calc((12.5px * var(--cop-tlead))*var(--ckt,1));color:var(--muted);margin-bottom:calc(16px*var(--cks,1))}
 /* title row: heading left, "Go back to cart" right */
-.kbb-checkout .co-titlebar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
-.kbb-checkout .co-titlebar-main .co-lead{margin-bottom:var(--cop-block)}
+.kbb-checkout .co-titlebar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.kbb-checkout .co-titlebar{gap:calc(16px*var(--cks,1)) 16px}
+.kbb-checkout .co-titlebar-main .co-lead{margin-bottom:var(--cop-block)}.kbb-checkout .co-titlebar-main .co-lead{margin-bottom:calc(var(--cop-block)*var(--cks,1))}
 /* THE HEADING ON TOP (Lane QK8). The owner: "i want the summary section
    the checkout page heading." .co-titlebar is a .co-grid item of its own:
    on desktop the top of the main column (column 1, the summary spanning both
@@ -164,18 +164,18 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    the --cop-block it always was and the old position leaves nothing behind. */
 .kbb-checkout .co-grid{grid-template-rows:auto 1fr}
 .kbb-checkout .co-grid:has(> .co-cline){grid-template-rows:auto auto 1fr}
-.kbb-checkout .co-grid > .co-titlebar{grid-column:1;margin-bottom:calc(var(--cop-d-gap,26px) * -1)}
+.kbb-checkout .co-grid > .co-titlebar{grid-column:1;margin-bottom:calc(var(--cop-d-gap,26px) * -1)}.kbb-checkout .co-grid > .co-titlebar{margin-bottom:calc((var(--cop-d-gap,26px) * -1)*var(--cks,1))}
 .kbb-checkout .co-grid > .co-titlebar + div{grid-column:1}
 .kbb-checkout .co-grid > .summary{grid-column:2;grid-row:1 / span 2}
 /* "Space above the Checkout title" (Appearance -> Checkout page -> Desktop /
    Mobile · Layout): the gap from the header to the title row. Unset it IS the
    page's top padding, so the margin is 0 and nothing moves; set, the title
    alone moves to that distance. Only while the title is the first row. */
-.kbb-checkout .co-grid:not(:has(> .co-cline)) > .co-titlebar{margin-top:calc(var(--cop-titlept) - var(--cop-pady))}
+.kbb-checkout .co-grid:not(:has(> .co-cline)) > .co-titlebar{margin-top:calc(var(--cop-titlept) - var(--cop-pady))}.kbb-checkout .co-grid:not(:has(> .co-cline)) > .co-titlebar{margin-top:calc((var(--cop-titlept) - var(--cop-pady))*var(--cks,1))}
 /* The 40px back arrow reaches ~6px above the heading's line (its -8px block
    margins), so with the arrow on the row stops at 14px -- the button 8px under the header -- and a
    slider at 0 can never tuck the button under the sticky header. */
-.kbb-checkout .co-grid:not(:has(> .co-cline)) > .co-titlebar:has(> .co-titlebar-main > .co-back){margin-top:calc(max(var(--cop-titlept), 14px) - var(--cop-pady))}
+.kbb-checkout .co-grid:not(:has(> .co-cline)) > .co-titlebar:has(> .co-titlebar-main > .co-back){margin-top:calc(max(var(--cop-titlept), 14px) - var(--cop-pady))}.kbb-checkout .co-grid:not(:has(> .co-cline)) > .co-titlebar:has(> .co-titlebar-main > .co-back){margin-top:calc((max(var(--cop-titlept), 14px) - var(--cop-pady))*var(--cks,1))}
 .kbb-checkout .co-grid:has(> .co-cline) > .summary{grid-row:2 / span 2}
 /* THE BACK ARROW (Lane QK8). "the icon i want beside left side of Checkout
    heading", drawn from the talabat header he sent: a 40px white circle, a 1px
@@ -189,8 +189,8 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .co-titlebar-main:has(> .co-back) > *{grid-column:2}
 .kbb-checkout .co-titlebar-main:has(> .co-back) > .backlink{grid-column:1 / -1;justify-self:start}
 .kbb-checkout .co-titlebar-main:has(> .co-back) > h1.co-h{margin-bottom:0}
-.kbb-checkout .co-titlebar-main:has(> .co-back) > .co-lead{margin-top:2px}
-.kbb-checkout .co-titlebar-main > .co-back{grid-column:1;display:flex;align-items:center;justify-content:center;inline-size:40px;block-size:40px;margin-block:-8px;box-sizing:border-box;border-radius:50%;background:#fff;border:1px solid #E3E3E6;color:#2A2A2E;transition:background-color .15s}
+.kbb-checkout .co-titlebar-main:has(> .co-back) > .co-lead{margin-top:2px}.kbb-checkout .co-titlebar-main:has(> .co-back) > .co-lead{margin-top:calc(2px*var(--cks,1))}
+.kbb-checkout .co-titlebar-main > .co-back{grid-column:1;display:flex;align-items:center;justify-content:center;inline-size:40px;block-size:40px;margin-block:-8px;box-sizing:border-box;border-radius:50%;background:#fff;border:1px solid #E3E3E6;color:#2A2A2E;transition:background-color .15s}.kbb-checkout .co-titlebar-main > .co-back{margin-block:calc(-8px*var(--cks,1));box-sizing:border-box;border-radius:50%;background:#fff;border:1px solid #E3E3E6;color:#2A2A2E;transition:background-color .15s}
 .kbb-checkout .co-titlebar-main > .co-back:hover,.kbb-checkout .co-titlebar-main > .co-back:active{background:#F2F2F4}
 .kbb-checkout .co-titlebar-main > .co-back:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .kbb-checkout .co-titlebar-main > .co-back svg{display:block;inline-size:20px;block-size:20px}
@@ -198,7 +198,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 /* Sized from two shares rather than five sets of numbers: each look below
    carries the padding pair it was drawn with, multiplied by --cop-tocarts, so
    80% is THAT look smaller rather than a padding it was never drawn for. */
-.kbb-checkout .co-tocart{display:inline-flex;align-items:center;gap:calc(7px * var(--cop-tocarts));flex-shrink:0;margin-top:6px;font-size:calc(13px * var(--cop-tocarts));font-weight:600;white-space:nowrap;text-decoration:none;transition:.15s;color:var(--ink-2);min-height:var(--cop-tocartmin)}
+.kbb-checkout .co-tocart{display:inline-flex;align-items:center;gap:calc(7px * var(--cop-tocarts));flex-shrink:0;margin-top:6px;font-size:calc(13px * var(--cop-tocarts));font-weight:600;white-space:nowrap;text-decoration:none;transition:.15s;color:var(--ink-2);min-height:var(--cop-tocartmin)}.kbb-checkout .co-tocart{gap:calc((7px * var(--cop-tocarts))*var(--cks,1)) calc(7px * var(--cop-tocarts));flex-shrink:0;margin-top:calc(6px*var(--cks,1));font-size:calc((13px * var(--cop-tocarts))*var(--ckt,1));font-weight:600;white-space:nowrap;text-decoration:none;transition:.15s;color:var(--ink-2);min-height:var(--cop-tocartmin)}
 .kbb-checkout .co-tocart svg{width:calc(15px * var(--cop-tocartic));height:calc(15px * var(--cop-tocartic));flex-shrink:0}
 /* "Back to cart" points back, and back is the other way in Arabic. The glyph is
    an <svg> path (`M15 18l-6-6 6-6`), not a character, so the bidi algorithm
@@ -208,17 +208,17 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 /* text / text_chevron */
 .kbb-checkout .co-tocart--text:hover,.kbb-checkout .co-tocart--text_chevron:hover{color:var(--pink-deep)}
 /* ghost pill */
-.kbb-checkout .co-tocart--ghost{border:1.5px solid var(--line);border-radius:99px;padding:calc(9px * var(--cop-tocarts)) calc(15px * var(--cop-tocarts));gap:calc(8px * var(--cop-tocarts))}
+.kbb-checkout .co-tocart--ghost{border:1.5px solid var(--line);border-radius:99px;padding:calc(9px * var(--cop-tocarts)) calc(15px * var(--cop-tocarts));gap:calc(8px * var(--cop-tocarts))}.kbb-checkout .co-tocart--ghost{padding:calc((9px * var(--cop-tocarts))*var(--cks,1)) calc(15px * var(--cop-tocarts));gap:calc((8px * var(--cop-tocarts))*var(--cks,1)) calc(8px * var(--cop-tocarts))}
 .kbb-checkout .co-tocart--ghost:hover{border-color:var(--pink);color:var(--pink-deep);background:var(--pink-soft)}
 /* ghost rounded-rect (default) */
-.kbb-checkout .co-tocart--ghost_rect{border:1.5px solid var(--line);border-radius:var(--cop-tocartr);padding:calc(9px * var(--cop-tocarts)) calc(14px * var(--cop-tocarts));gap:calc(8px * var(--cop-tocarts))}
+.kbb-checkout .co-tocart--ghost_rect{border:1.5px solid var(--line);border-radius:var(--cop-tocartr);padding:calc(9px * var(--cop-tocarts)) calc(14px * var(--cop-tocarts));gap:calc(8px * var(--cop-tocarts))}.kbb-checkout .co-tocart--ghost_rect{padding:calc((9px * var(--cop-tocarts))*var(--cks,1)) calc(14px * var(--cop-tocarts));gap:calc((8px * var(--cop-tocarts))*var(--cks,1)) calc(8px * var(--cop-tocarts))}
 .kbb-checkout .co-tocart--ghost_rect svg{width:calc(16px * var(--cop-tocartic));height:calc(16px * var(--cop-tocartic))}
 .kbb-checkout .co-tocart--ghost_rect:hover{border-color:var(--pink);color:var(--pink-deep)}
 /* soft filled */
-.kbb-checkout .co-tocart--soft{background:var(--pink-soft);color:var(--pink-deep);border-radius:99px;padding:calc(10px * var(--cop-tocarts)) calc(16px * var(--cop-tocarts));font-weight:700;gap:calc(8px * var(--cop-tocarts))}
+.kbb-checkout .co-tocart--soft{background:var(--pink-soft);color:var(--pink-deep);border-radius:99px;padding:calc(10px * var(--cop-tocarts)) calc(16px * var(--cop-tocarts));font-weight:700;gap:calc(8px * var(--cop-tocarts))}.kbb-checkout .co-tocart--soft{padding:calc((10px * var(--cop-tocarts))*var(--cks,1)) calc(16px * var(--cop-tocarts));font-weight:700;gap:calc((8px * var(--cop-tocarts))*var(--cks,1)) calc(8px * var(--cop-tocarts))}
 .kbb-checkout .co-tocart--soft:hover{background:var(--blush)}
 /* solid */
-.kbb-checkout .co-tocart--solid{background:var(--pink);color:#fff;border-radius:99px;padding:calc(10px * var(--cop-tocarts)) calc(17px * var(--cop-tocarts));font-weight:700;gap:calc(8px * var(--cop-tocarts));box-shadow:0 10px 20px -10px rgba(193,62,99,.6)}
+.kbb-checkout .co-tocart--solid{background:var(--pink);color:#fff;border-radius:99px;padding:calc(10px * var(--cop-tocarts)) calc(17px * var(--cop-tocarts));font-weight:700;gap:calc(8px * var(--cop-tocarts));box-shadow:0 10px 20px -10px rgba(193,62,99,.6)}.kbb-checkout .co-tocart--solid{padding:calc((10px * var(--cop-tocarts))*var(--cks,1)) calc(17px * var(--cop-tocarts));font-weight:700;gap:calc((8px * var(--cop-tocarts))*var(--cks,1)) calc(8px * var(--cop-tocarts));box-shadow:0 10px 20px -10px rgba(193,62,99,.6)}
 .kbb-checkout .co-tocart--solid:hover{background:var(--pink-deep)}
 /* icon-only round */
 /* The only look with no padding to scale, so the share drives the circle. */
@@ -227,18 +227,18 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .co-tocart--icon_round:hover{border-color:var(--pink);color:var(--pink-deep);background:var(--pink-soft)}
 
 /* coupon — standalone card, champagne/green scheme */
-.kbb-checkout .coupon{background:linear-gradient(135deg,#EEF8F1,#fff);border:1.6px dashed #BFE0CD;border-radius:14px;padding:14px 15px;margin-bottom:var(--cop-block);position:relative;overflow:hidden;overflow:clip}
+.kbb-checkout .coupon{background:linear-gradient(135deg,#EEF8F1,#fff);border:1.6px dashed #BFE0CD;border-radius:14px;padding:14px 15px;margin-bottom:var(--cop-block);position:relative;overflow:hidden;overflow:clip}.kbb-checkout .coupon{padding:calc(14px*var(--cks,1)) 15px;margin-bottom:calc(var(--cop-block)*var(--cks,1));position:relative;overflow:hidden;overflow:clip}
 .kbb-checkout .coupon::after{content:"";position:absolute;inset-inline-end:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:rgba(46,158,107,.07)}
-.kbb-checkout .coupon .ch{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;margin-bottom:10px;color:#1F7D52}
-.kbb-checkout .coupon .ch .gift{font-size:17px}
-.kbb-checkout .coupon .crow{display:flex;gap:9px;position:relative;z-index:1}
-.kbb-checkout .coupon input{flex:1;min-width:0;border:1.6px solid #C9E7D5;border-radius:10px;padding:12px 14px;font-family:inherit;font-size:14px;font-weight:600;background:#fff;letter-spacing:.04em;text-transform:uppercase}
+.kbb-checkout .coupon .ch{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;margin-bottom:10px;color:#1F7D52}.kbb-checkout .coupon .ch{gap:calc(8px*var(--cks,1)) 8px;font-size:calc(13.5px*var(--ckt,1));font-weight:700;margin-bottom:calc(10px*var(--cks,1));color:#1F7D52}
+.kbb-checkout .coupon .ch .gift{font-size:17px}.kbb-checkout .coupon .ch .gift{font-size:calc(17px*var(--ckt,1))}
+.kbb-checkout .coupon .crow{display:flex;gap:9px;position:relative;z-index:1}.kbb-checkout .coupon .crow{gap:calc(9px*var(--cks,1)) 9px;position:relative;z-index:1}
+.kbb-checkout .coupon input{flex:1;min-width:0;border:1.6px solid #C9E7D5;border-radius:10px;padding:12px 14px;font-family:inherit;font-size:14px;font-weight:600;background:#fff;letter-spacing:.04em;text-transform:uppercase}.kbb-checkout .coupon input{padding:calc(12px*var(--cks,1)) 14px;font-family:inherit;font-size:calc(14px*var(--ckt,1));font-weight:600;background:#fff;letter-spacing:.04em;text-transform:uppercase}
 .kbb-checkout .coupon input::placeholder{text-transform:none;font-weight:500;letter-spacing:0;color:var(--muted)}
 .kbb-checkout .coupon input:focus{outline:none;border-color:#2E9E6B;box-shadow:0 0 0 3px rgba(46,158,107,.12)}
-.kbb-checkout .coupon .apply{background:var(--pink);color:#fff;border-radius:10px;padding:0 22px;font-weight:700;font-size:13.5px}
+.kbb-checkout .coupon .apply{background:var(--pink);color:#fff;border-radius:10px;padding:0 22px;font-weight:700;font-size:13.5px}.kbb-checkout .coupon .apply{font-size:calc(13.5px*var(--ckt,1))}
 .kbb-checkout .coupon .apply:hover{background:var(--pink-deep)}
-.kbb-checkout .coupon .hint{font-size:11px;color:#1F7D52;margin-top:9px;font-weight:500}
-.kbb-checkout .coupon .hint b{background:#fff;border:1px solid #BFE0CD;border-radius:6px;padding:1px 6px;font-weight:700;cursor:pointer;color:#1F7D52}
+.kbb-checkout .coupon .hint{font-size:11px;color:#1F7D52;margin-top:9px;font-weight:500}.kbb-checkout .coupon .hint{font-size:calc(11px*var(--ckt,1));color:#1F7D52;margin-top:calc(9px*var(--cks,1));font-weight:500}
+.kbb-checkout .coupon .hint b{background:#fff;border:1px solid #BFE0CD;border-radius:6px;padding:1px 6px;font-weight:700;cursor:pointer;color:#1F7D52}.kbb-checkout .coupon .hint b{padding:calc(1px*var(--cks,1)) 6px;font-weight:700;cursor:pointer;color:#1F7D52}
 /* Lane CP: the coupon's answer, in place, under the box -- applied (green, the
    box's own #1F7D52), refused (the checkout's error ink, as .co-note.err), or
    dimmed while the next answer is on its way. A flex row so Remove sits on the
@@ -248,8 +248,8 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    Under reduced motion the ring is still drawn, it just does not turn.
    Class names are this
    page's alone (co-cmsg, co-crm), so they carry no .kbb-checkout prefix. */
-.co-cmsg{position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;margin:9px 0 0;font-size:12.5px;line-height:1.45;font-weight:600;color:#1F7D52}
-.co-cmsg::before{content:"\2713";flex:0 0 17px;height:17px;border-radius:50%;background:#2E9E6B;color:#fff;font-size:10.5px;line-height:17px;text-align:center}
+.co-cmsg{position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;margin:9px 0 0;font-size:12.5px;line-height:1.45;font-weight:600;color:#1F7D52}.co-cmsg{gap:calc(2px*var(--cks,1)) 10px;margin:calc(9px*var(--cks,1)) 0 0;font-size:calc(12.5px*var(--ckt,1));line-height:1.45;font-weight:600;color:#1F7D52}
+.co-cmsg::before{content:"\2713";flex:0 0 17px;height:17px;border-radius:50%;background:#2E9E6B;color:#fff;font-size:10.5px;line-height:17px;text-align:center}.co-cmsg::before{font-size:calc(10.5px*var(--ckt,1));line-height:17px;text-align:center}
 .co-cmsg-t{flex:1 1 0;min-width:0}
 .co-cmsg.is-err{color:var(--pink-ink)}
 .co-cmsg.is-err::before{content:"!";background:var(--pink-ink)}
@@ -278,12 +278,12 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    turning into "Coupon GLOW applied" moves nothing (min-height on top). The
    refusal is a second row, drawn only after a tap. Sized with calc(), no
    script measures anything. Logical properties, so /ar/ mirrors itself. */
-.kbb-checkout .co-cline{grid-column:1/-1;justify-self:start;display:grid;align-items:center;min-height:42px;max-width:100%;box-sizing:border-box;margin-bottom:calc(12px - var(--cop-d-gap,26px));padding:6px 10px;background:#FFF0F4;border:1.5px dashed #ecaec4;border-radius:12px;color:#5e545a;font-size:13.5px;font-weight:500;line-height:1.35;white-space:nowrap}
+.kbb-checkout .co-cline{grid-column:1/-1;justify-self:start;display:grid;align-items:center;min-height:42px;max-width:100%;box-sizing:border-box;margin-bottom:calc(12px - var(--cop-d-gap,26px));padding:6px 10px;background:#FFF0F4;border:1.5px dashed #ecaec4;border-radius:12px;color:#5e545a;font-size:13.5px;font-weight:500;line-height:1.35;white-space:nowrap}.kbb-checkout .co-cline{margin-bottom:calc((12px - var(--cop-d-gap,26px))*var(--cks,1));padding:calc(6px*var(--cks,1)) 10px;background:#FFF0F4;border:1.5px dashed #ecaec4;border-radius:12px;color:#5e545a;font-size:calc(13.5px*var(--ckt,1));font-weight:500;line-height:1.35;white-space:nowrap}
 /* 2.60.512: ONE line (design A). Applied, the sentence stays and a green tick
    shows at the end of the row; "Coupon GLOW applied" is kept for screen
    readers only (role=status), out of the layout, so nothing moves. */
-.kbb-checkout .co-cline>.co-cl-ask{grid-area:1/1;display:flex;align-items:center;gap:8px;margin:0;min-width:0}
-.kbb-checkout .co-cline>.co-cl-done{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.kbb-checkout .co-cline>.co-cl-ask{grid-area:1/1;display:flex;align-items:center;gap:8px;margin:0;min-width:0}.kbb-checkout .co-cline>.co-cl-ask{gap:calc(8px*var(--cks,1)) 8px;margin:0;min-width:0}
+.kbb-checkout .co-cline>.co-cl-done{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}.kbb-checkout .co-cline>.co-cl-done{margin:calc(-1px*var(--cks,1)) -1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .kbb-checkout .co-cl-ic{display:grid;place-items:center;flex:none;width:26px;height:26px;border-radius:50%;background:#fff;color:#C13E63}
 .kbb-checkout .co-cl-ic svg{width:15px;height:15px}
 .kbb-checkout .co-cl-t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
@@ -300,14 +300,14 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .co-cl-code[aria-busy=true]{color:transparent;cursor:progress}
 .kbb-checkout .co-cl-code[aria-busy=true]::after{content:"";position:absolute;inset:0;margin:auto;width:13px;height:13px;border:2px solid #C13E63;border-top-color:transparent;border-radius:50%;animation:kbbCpSpin .7s linear infinite}
 @media(prefers-reduced-motion:reduce){.kbb-checkout .co-cl-code[aria-busy=true]::after{animation:none}}
-.kbb-checkout .co-cl-err{grid-area:2/1;margin:4px 0 2px;font-size:12px;color:var(--pink-ink);white-space:normal}
+.kbb-checkout .co-cl-err{grid-area:2/1;margin:4px 0 2px;font-size:12px;color:var(--pink-ink);white-space:normal}.kbb-checkout .co-cl-err{margin:calc(4px*var(--cks,1)) 0 calc(2px*var(--cks,1));font-size:calc(12px*var(--ckt,1));color:var(--pink-ink);white-space:normal}
 .kbb-checkout .co-cl-err[hidden]{display:none}
 /* 2.60.562 (design B): an outlined "Apply" at the end of the row. It and the
    tick share one grid cell, so swapping them on apply moves nothing. */
 .kbb-checkout .co-cl-end{display:grid;flex:none;margin-inline-start:auto;align-items:center;justify-items:end}
 .kbb-checkout .co-cl-end>*{grid-area:1/1}
 .kbb-checkout .co-cl-end .co-cl-ok{margin:0}
-.kbb-checkout .co-cl-go{position:relative;display:inline-flex;align-items:center;min-height:26px;padding:0 12px;background:#fff;border:1.5px solid #C13E63;border-radius:999px;color:#C13E63;font:inherit;font-size:12.5px;font-weight:700;line-height:1;white-space:nowrap;cursor:pointer;transition:background .15s,color .15s}
+.kbb-checkout .co-cl-go{position:relative;display:inline-flex;align-items:center;min-height:26px;padding:0 12px;background:#fff;border:1.5px solid #C13E63;border-radius:999px;color:#C13E63;font:inherit;font-size:12.5px;font-weight:700;line-height:1;white-space:nowrap;cursor:pointer;transition:background .15s,color .15s}.kbb-checkout .co-cl-go{font-size:calc(12.5px*var(--ckt,1));font-weight:700;line-height:1;white-space:nowrap;cursor:pointer;transition:background .15s,color .15s}
 .kbb-checkout .co-cl-go::before{content:"";position:absolute;inset:-9px -6px}
 .kbb-checkout .co-cl-go:hover{background:#C13E63;color:#fff}
 .kbb-checkout .co-cl-go:focus-visible{outline:2px solid #C13E63;outline-offset:2px}
@@ -327,8 +327,8 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout .co-grid > .co-cline + div{grid-column:1;grid-row:1 / span 3}
 }
 @media(max-width:900px){
-  .kbb-checkout .co-cline{order:-2;justify-self:stretch;margin-bottom:0;padding:6px 8px;font-size:clamp(10px,3.3vw,13px)}
-  .kbb-checkout .co-cline>.co-cl-ask{gap:6px}
+  .kbb-checkout .co-cline{order:-2;justify-self:stretch;margin-bottom:0;padding:6px 8px;font-size:clamp(10px,3.3vw,13px)}.kbb-checkout .co-cline{padding:calc(6px*var(--cks,1)) 8px;font-size:clamp(10px,3.3vw,13px)}
+  .kbb-checkout .co-cline>.co-cl-ask{gap:6px}.kbb-checkout .co-cline>.co-cl-ask{gap:calc(6px*var(--cks,1)) 6px}
   .kbb-checkout .co-cl-ic{width:22px;height:22px}
   .kbb-checkout .co-cl-ic svg{width:13px;height:13px}
   .kbb-checkout .co-cl-code{padding:0 6px;letter-spacing:.04em}
@@ -337,7 +337,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 
 /* unified form box + numbered sections */
 .kbb-checkout .formbox{background:#fff;border:1px solid var(--line-2);border-radius:var(--r);overflow:hidden;box-shadow:0 12px 36px -24px rgba(42,34,40,.22)}
-.kbb-checkout .sec{padding:var(--cop-secpad);border-bottom:1px solid var(--line-2)}
+.kbb-checkout .sec{padding:var(--cop-secpad);border-bottom:1px solid var(--line-2)}.kbb-checkout .sec{padding:calc(var(--cop-secpad)*var(--cks,1)) var(--cop-secpad);border-bottom:1px solid var(--line-2)}
 .kbb-checkout .sec:last-child{border-bottom:none}
 /* THE GAP BETWEEN TWO NUMBERED SECTIONS (Lane CO). It was this section's
    bottom padding, so "Space between blocks" never reached it -- the owner
@@ -347,7 +347,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    is the seam it shares with the Place order card. --cop-secgap is the block
    gap unless Appearance -> Checkout page -> Layout sets its own; at the
    shipped 16 = 16 nothing moves. */
-.kbb-checkout .sec:has(+ .sec){padding-bottom:var(--cop-secgap)}
+.kbb-checkout .sec:has(+ .sec){padding-bottom:var(--cop-secgap)}.kbb-checkout .sec:has(+ .sec){padding-bottom:calc(var(--cop-secgap)*var(--cks,1))}
 /* ── "SIGN IN" AND ITS WINDOW (Lane CO) ──────────────────────────────────
    The link sits at the end of the "1 Contact" bar. After the remember row's
    "Clear details" (which already takes the free space with an auto margin) it
@@ -355,11 +355,12 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    Its tap area grows with a pseudo-element that stays inside the bar's own
    10px padding -- it covers nothing else that can be clicked. */
 .kbb-checkout .sec > h2 .co-signin{margin-inline-start:auto;position:relative;font-size:12.5px;font-weight:600;line-height:1.2;
+  color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}.kbb-checkout .sec > h2 .co-signin{font-size:calc(12.5px*var(--ckt,1));font-weight:600;line-height:1.2;
   color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .kbb-checkout .sec > h2 .co-signin::after{content:"";position:absolute;inset:-8px -6px}
 /* Lane CSI: the small user icon before "Sign in" (Appearance -> Checkout page ->
    Coupon, express & sign in). Only with .has-ic, so the plain link is unchanged. */
-.kbb-checkout .sec > h2 .co-signin.has-ic{display:inline-flex;align-items:center;gap:5px}
+.kbb-checkout .sec > h2 .co-signin.has-ic{display:inline-flex;align-items:center;gap:5px}.kbb-checkout .sec > h2 .co-signin.has-ic{gap:calc(5px*var(--cks,1)) 5px}
 .kbb-checkout .sec > h2 .co-signin.has-ic svg{width:14px;height:14px;flex:none}
 .kbb-checkout .sec > h2 .co-signin:hover{color:var(--pink-deep)}
 .kbb-checkout .sec > h2 .kbb-rmb-clear + .co-signin{margin-inline-start:14px}
@@ -367,7 +368,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    takes the free space, then "Sign in" 4px after it (the bar's 9px gap less
    5px) in a darker grey, normal weight, still underlined. Only with .is-b, so
    switched off the link is exactly as it was. */
-.kbb-checkout .sec > h2 .co-signin-q{margin-inline-start:auto;font-size:12.5px;font-weight:400;line-height:1.2;color:#B0B0B0;white-space:nowrap}
+.kbb-checkout .sec > h2 .co-signin-q{margin-inline-start:auto;font-size:12.5px;font-weight:400;line-height:1.2;color:#B0B0B0;white-space:nowrap}.kbb-checkout .sec > h2 .co-signin-q{font-size:calc(12.5px*var(--ckt,1));font-weight:400;line-height:1.2;color:#B0B0B0;white-space:nowrap}
 .kbb-checkout .sec > h2 .kbb-rmb-clear + .co-signin-q{margin-inline-start:14px}
 .kbb-checkout .sec > h2 .co-signin-q + .co-signin{margin-inline-start:-5px}
 .kbb-checkout .sec > h2 .co-signin.is-b{font-weight:400;color:#7A7A7A;text-decoration-thickness:1px}
@@ -386,28 +387,29 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 }
 .kbb-checkout .co-si.is-out{opacity:0;transform:translateY(8px) scale(.96)}
 .kbb-checkout .co-si.is-out::backdrop{opacity:0}
-.kbb-checkout .co-si-in{position:relative;padding:26px 22px 22px}
+.kbb-checkout .co-si-in{position:relative;padding:26px 22px 22px}.kbb-checkout .co-si-in{padding:calc(26px*var(--cks,1)) 22px calc(22px*var(--cks,1))}
 .kbb-checkout .co-si-x{position:absolute;top:10px;inset-inline-end:10px;width:36px;height:36px;display:grid;place-items:center;
   border:0;border-radius:50%;background:transparent;color:var(--muted);cursor:pointer}
 .kbb-checkout .co-si-x:hover{background:var(--cream);color:var(--ink)}
-.kbb-checkout .co-si-h{margin:0 0 6px;font-size:19px;font-weight:800;line-height:1.25;color:var(--ink);outline:none}
-.kbb-checkout .co-si-lead{margin:0 0 16px;font-size:13px;line-height:1.45;color:var(--ink-2)}
-.kbb-checkout .co-si .form-row{margin-bottom:12px}
-.kbb-checkout .co-si-err{margin:2px 0 12px;font-size:12.5px;font-weight:600;color:var(--pink-deep)}
-.kbb-checkout .co-si-go{width:100%;min-height:48px;border:0;border-radius:12px;background:var(--pink);color:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer;position:relative}
+.kbb-checkout .co-si-h{margin:0 0 6px;font-size:19px;font-weight:800;line-height:1.25;color:var(--ink);outline:none}.kbb-checkout .co-si-h{margin:0 0 calc(6px*var(--cks,1));font-size:calc(19px*var(--ckt,1));font-weight:800;line-height:1.25;color:var(--ink);outline:none}
+.kbb-checkout .co-si-lead{margin:0 0 16px;font-size:13px;line-height:1.45;color:var(--ink-2)}.kbb-checkout .co-si-lead{margin:0 0 calc(16px*var(--cks,1));font-size:calc(13px*var(--ckt,1));line-height:1.45;color:var(--ink-2)}
+.kbb-checkout .co-si .form-row{margin-bottom:12px}.kbb-checkout .co-si .form-row{margin-bottom:calc(12px*var(--cks,1))}
+.kbb-checkout .co-si-err{margin:2px 0 12px;font-size:12.5px;font-weight:600;color:var(--pink-deep)}.kbb-checkout .co-si-err{margin:calc(2px*var(--cks,1)) 0 calc(12px*var(--cks,1));font-size:calc(12.5px*var(--ckt,1));font-weight:600;color:var(--pink-deep)}
+.kbb-checkout .co-si-go{width:100%;min-height:48px;border:0;border-radius:12px;background:var(--pink);color:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer;position:relative}.kbb-checkout .co-si-go{font-size:calc(15px*var(--ckt,1));font-weight:700;cursor:pointer;position:relative}
 .kbb-checkout .co-si-go:hover{background:var(--pink-deep)}
 .kbb-checkout .co-si-go[aria-busy="true"]{color:transparent;pointer-events:none}
 .kbb-checkout .co-si-go[aria-busy="true"]::after{content:"";position:absolute;inset:0;margin:auto;width:20px;height:20px;border-radius:50%;
   border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;animation:co-si-spin .7s linear infinite}
 @keyframes co-si-spin{to{transform:rotate(360deg)}}
-.kbb-checkout .co-si-foot{margin:14px 0 0;text-align:center}
+.kbb-checkout .co-si-foot{margin:14px 0 0;text-align:center}.kbb-checkout .co-si-foot{margin:calc(14px*var(--cks,1)) 0 0;text-align:center}
 .kbb-checkout .co-si-link{border:0;background:none;padding:6px 4px;font:inherit;font-size:13px;font-weight:600;color:var(--ink);
+  text-decoration:underline;text-underline-offset:3px;cursor:pointer}.kbb-checkout .co-si-link{padding:calc(6px*var(--cks,1)) 4px;font:inherit;font-size:calc(13px*var(--ckt,1));font-weight:600;color:var(--ink);
   text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .kbb-checkout .co-si-link:hover{color:var(--pink-deep)}
-.kbb-checkout .co-si-sent{margin:4px 0 0;padding:12px 14px;border-radius:12px;background:#EEF8F1;color:#1F7D52;font-size:13px;font-weight:600;line-height:1.45}
-.kbb-checkout .co-si-full{margin:12px 0 0;text-align:center;font-size:12.5px}
+.kbb-checkout .co-si-sent{margin:4px 0 0;padding:12px 14px;border-radius:12px;background:#EEF8F1;color:#1F7D52;font-size:13px;font-weight:600;line-height:1.45}.kbb-checkout .co-si-sent{margin:calc(4px*var(--cks,1)) 0 0;padding:calc(12px*var(--cks,1)) 14px;border-radius:12px;background:#EEF8F1;color:#1F7D52;font-size:calc(13px*var(--ckt,1));font-weight:600;line-height:1.45}
+.kbb-checkout .co-si-full{margin:12px 0 0;text-align:center;font-size:12.5px}.kbb-checkout .co-si-full{margin:calc(12px*var(--cks,1)) 0 0;text-align:center;font-size:calc(12.5px*var(--ckt,1))}
 .kbb-checkout .co-si-full a{color:var(--ink-2);text-decoration:underline}
-.kbb-checkout .co-si-done{display:grid;justify-items:center;gap:10px;padding:18px 0 8px;text-align:center}
+.kbb-checkout .co-si-done{display:grid;justify-items:center;gap:10px;padding:18px 0 8px;text-align:center}.kbb-checkout .co-si-done{gap:calc(10px*var(--cks,1)) 10px;padding:calc(18px*var(--cks,1)) 0 calc(8px*var(--cks,1));text-align:center}
 .kbb-checkout .co-si-done circle{stroke-dasharray:151;stroke-dashoffset:151;animation:co-si-draw .35s ease-out forwards}
 .kbb-checkout .co-si-done path{stroke-dasharray:36;stroke-dashoffset:36;animation:co-si-draw .25s .25s ease-out forwards}
 .kbb-checkout .co-si-done .co-si-h{color:#1F7D52;margin:0}
@@ -423,15 +425,15 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    edge. Hard-coded 16s here would come adrift the moment the slider moved,
    leaving a bar floating inside its own section. The inline-start side is
    3px short because the bar carries a 3px pink border there. */
-.kbb-checkout .sec > h2{font-size:calc(15px * var(--cop-th2));font-weight:700;margin:calc(var(--cop-secpad) * -1) calc(var(--cop-secpad) * -1) 13px;padding:10px var(--cop-secpad) 10px calc(var(--cop-secpad) - 3px);background:var(--cream);border-bottom:1px solid var(--line);border-inline-start:3px solid var(--pink);display:flex;align-items:center;gap:9px;color:var(--ink)}
+.kbb-checkout .sec > h2{font-size:calc(15px * var(--cop-th2));font-weight:700;margin:calc(var(--cop-secpad) * -1) calc(var(--cop-secpad) * -1) 13px;padding:10px var(--cop-secpad) 10px calc(var(--cop-secpad) - 3px);background:var(--cream);border-bottom:1px solid var(--line);border-inline-start:3px solid var(--pink);display:flex;align-items:center;gap:9px;color:var(--ink)}.kbb-checkout .sec > h2{font-size:calc((15px * var(--cop-th2))*var(--ckt,1));font-weight:700;margin:calc((var(--cop-secpad) * -1)*var(--cks,1)) calc(var(--cop-secpad) * -1) calc(13px*var(--cks,1));padding:calc(10px*var(--cks,1)) var(--cop-secpad) calc(10px*var(--cks,1)) calc(var(--cop-secpad) - 3px);background:var(--cream);border-bottom:1px solid var(--line);border-inline-start:3px solid var(--pink);display:flex;align-items:center;gap:calc(9px*var(--cks,1)) 9px;color:var(--ink)}
 /* The round number takes the heading's factor too, so the bar keeps its
    shape instead of a bigger heading beside the same small disc. */
-.kbb-checkout .sec > h2 .n{width:calc(21px * var(--cop-th2));height:calc(21px * var(--cop-th2));border-radius:50%;background:var(--pink);color:#fff;font-size:calc(11.5px * var(--cop-th2));display:grid;place-items:center;font-weight:800;box-shadow:0 4px 10px -4px rgba(193,62,99,.5)}
+.kbb-checkout .sec > h2 .n{width:calc(21px * var(--cop-th2));height:calc(21px * var(--cop-th2));border-radius:50%;background:var(--pink);color:#fff;font-size:calc(11.5px * var(--cop-th2));display:grid;place-items:center;font-weight:800;box-shadow:0 4px 10px -4px rgba(193,62,99,.5)}.kbb-checkout .sec > h2 .n{font-size:calc((11.5px * var(--cop-th2))*var(--ckt,1));display:grid;place-items:center;font-weight:800;box-shadow:0 4px 10px -4px rgba(193,62,99,.5)}
 
 /* fields — BRIDGE: WooCommerce .form-row → design .fld */
-.kbb-checkout .form-row{margin-bottom:10px;display:block;padding:0}
+.kbb-checkout .form-row{margin-bottom:10px;display:block;padding:0}.kbb-checkout .form-row{margin-bottom:calc(10px*var(--cks,1));display:block;padding:0}
 .kbb-checkout .form-row:last-child{margin-bottom:0}
-.kbb-checkout .form-row label{display:block;font-size:calc(11px * var(--cop-tlabel));font-weight:600;color:var(--ink-2);margin-bottom:4px}
+.kbb-checkout .form-row label{display:block;font-size:calc(11px * var(--cop-tlabel));font-weight:600;color:var(--ink-2);margin-bottom:4px}.kbb-checkout .form-row label{font-size:calc((11px * var(--cop-tlabel))*var(--ckt,1));font-weight:600;color:var(--ink-2);margin-bottom:calc(4px*var(--cks,1))}
 .kbb-checkout .form-row label .required{color:var(--pink);text-decoration:none;border:0}
 .kbb-checkout .form-row .optional{color:var(--muted);font-weight:400}
 .kbb-checkout .woocommerce-input-wrapper{width:100%;display:block}
@@ -441,7 +443,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .form-row input[type="tel"],
 .kbb-checkout .form-row input[type="password"],
 .kbb-checkout .form-row textarea,
-.kbb-checkout .form-row select{width:100%;font-family:inherit;font-size:calc(14px * var(--cop-tinput));border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--ink);background:#fff;transition:.15s;height:auto;line-height:1.3}
+.kbb-checkout .form-row select{width:100%;font-family:inherit;font-size:calc(14px * var(--cop-tinput));border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--ink);background:#fff;transition:.15s;height:auto;line-height:1.3}.kbb-checkout .input-text, .kbb-checkout .form-row input[type="text"], .kbb-checkout .form-row input[type="email"], .kbb-checkout .form-row input[type="tel"], .kbb-checkout .form-row input[type="password"], .kbb-checkout .form-row textarea, .kbb-checkout .form-row select{font-size:calc((14px * var(--cop-tinput))*var(--ckt,1));border:1.5px solid var(--line);border-radius:10px;padding:calc(11px*var(--cks,1)) 13px;color:var(--ink);background:#fff;transition:.15s;height:auto;line-height:1.3}
 /* THE PLACEHOLDER, SIZED APART FROM THE FIELD. `em` and not `px`, so it is a
    share of whatever the field ended up at -- the two sliders compound instead
    of fighting, and there is no third number to keep in step.
@@ -459,7 +461,10 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   font-weight:var(--cop-phw);
   color:var(--cop-phc);
   opacity:1;
-}
+}.kbb-checkout .form-row input::placeholder, .kbb-checkout .form-row textarea::placeholder, .kbb-checkout .input-text::placeholder, .kbb-checkout .coupon input::placeholder{font-size:calc((1em * var(--cop-tph))*var(--ckt,1));
+  font-weight:var(--cop-phw);
+  color:var(--cop-phc);
+  opacity:1;}
 /* Firefox paints ::placeholder at opacity .54 by default, so a colour set here
    without the reset above renders lighter there than anywhere else. */
 .kbb-checkout.cop-phit .form-row input::placeholder,
@@ -484,7 +489,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    no measuring. */
 .kbb-checkout .fld.kbb-fl{position:relative;display:block;margin:0}
 .kbb-checkout .fld.kbb-fl :is(input,select,textarea){border-radius:12px;
-  padding-top:calc(19px + var(--fld-gap,3px));padding-bottom:7px;padding-inline-start:14px}
+  padding-top:calc(19px + var(--fld-gap,3px));padding-bottom:7px;padding-inline-start:14px}.kbb-checkout .fld.kbb-fl :is(input,select,textarea){padding-top:calc((19px + var(--fld-gap,3px))*var(--cks,1));padding-bottom:calc(7px*var(--cks,1));padding-inline-start:14px}
 .kbb-checkout .fld.kbb-fl.ico :is(input,select,textarea){padding-inline-start:42px}
 /* The phone box on /ar (17 October 2026): browsers keep a tel box left-to-
    right, so its inline start is its LEFT and its inline end its right -- but
@@ -503,15 +508,24 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .fld.kbb-fl > label{position:absolute;inset-inline-start:15px;top:50%;transform:translateY(-50%);margin:0;max-width:calc(100% - 30px);
   font-size:calc(14px * var(--cop-tinput));line-height:1.3;font-weight:400;letter-spacing:0;color:var(--muted);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;
+  transition:top .16s ease,transform .16s ease,font-size .16s ease,color .16s ease}.kbb-checkout .fld.kbb-fl > label{font-size:calc((14px * var(--cop-tinput))*var(--ckt,1));line-height:1.3;font-weight:400;letter-spacing:0;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;
   transition:top .16s ease,transform .16s ease,font-size .16s ease,color .16s ease}
 .kbb-checkout .fld.kbb-fl:has(> textarea) > label{top:14px;transform:none}
 .kbb-checkout .fld.kbb-fl.ico > label{inset-inline-start:43px;max-width:calc(100% - 58px)}
 .kbb-checkout .fld.kbb-fl :is(input,textarea):is(:focus,:not(:placeholder-shown),:-webkit-autofill,:autofill) ~ label,
 .kbb-checkout .fld.kbb-fl select ~ label{
-  top:14px;transform:translateY(calc(-8px - var(--fld-gap,3px)));font-size:10.5px;letter-spacing:.04em;color:var(--pink-deep)}
+  top:14px;transform:translateY(calc(-8px - var(--fld-gap,3px)));font-size:10.5px;letter-spacing:.04em;color:var(--muted)}.kbb-checkout .fld.kbb-fl :is(input,textarea):is(:focus,:not(:placeholder-shown),:-webkit-autofill,:autofill) ~ label, .kbb-checkout .fld.kbb-fl select ~ label{font-size:calc(10.5px*var(--cop-tflift)*var(--ckt,1))}
+/* Lane CK, 22 October: "the placeholders which become mini headings inside
+   fields" read GREY once lifted, as asked -- the same muted ink they rest in.
+   Appearance -> Checkout page -> Fields & attention -> "Field label colour once
+   lifted" -> "The shop's pink" puts the old colour back. :where() adds no
+   weight, so a wrong field's red label and the coupon's green one still win. */
+.kbb-checkout:where(.cop-flpink) .fld.kbb-fl :is(input,textarea):is(:focus,:not(:placeholder-shown),:-webkit-autofill,:autofill) ~ label,
+.kbb-checkout:where(.cop-flpink) .fld.kbb-fl select ~ label{color:var(--pink-deep)}
 /* A select with nothing chosen reads as empty, like a blank input. */
 .kbb-checkout .fld.kbb-fl select:has(option[value=""]:checked):not(:focus) ~ label{
-  top:50%;transform:translateY(-50%);font-size:calc(14px * var(--cop-tinput));letter-spacing:0;color:var(--muted)}
+  top:50%;transform:translateY(-50%);font-size:calc(14px * var(--cop-tinput));letter-spacing:0;color:var(--muted)}.kbb-checkout .fld.kbb-fl select:has(option[value=""]:checked):not(:focus) ~ label{font-size:calc((14px * var(--cop-tinput))*var(--ckt,1));letter-spacing:0;color:var(--muted)}
 /* A hint of the field's own ("+971 5x xxx xxxx") waits until the label has
    moved out of its way, so the two never print on top of each other. */
 .kbb-checkout .fld.kbb-fl :is(input,textarea):not(:focus)::placeholder{color:transparent}
@@ -521,29 +535,45 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .fld.kbb-fl:focus-within .lead{color:var(--pink)}
 .kbb-checkout .fld.kbb-fl:has(textarea) .lead{top:16px;transform:none}
 .kbb-checkout .fld.kbb-fl .required{color:var(--pink)}
+/* NO "*" UNTIL A REQUIRED FIELD IS LEFT EMPTY (Lane CK, 22 October). The owner:
+   no asterisk on Email, Full name, Phone, Building, Emirate or Country -- one
+   only after a required field is left empty. The span stays in the markup
+   (aria-hidden; `required` and aria-required are what a screen reader hears),
+   and is drawn again when:
+     - checkout.js marks the row `kbb-req-miss`: the field lost focus empty, or
+       Place order / Enter found it empty (every browser, the fallback);
+     - the browser itself calls an empty field user-invalid (current Chrome,
+       Firefox and Safari). Each in a rule of its own, so a browser that does
+       not know :has() or :user-invalid drops only that rule. */
+.kbb-checkout .form-row .required{display:none}
+.kbb-checkout .form-row.kbb-req-miss .required{display:inline}
+.kbb-checkout .form-row:has(:is(input,textarea):placeholder-shown:user-invalid) .required{display:inline}
+.kbb-checkout .form-row:has(select:user-invalid) .required{display:inline}
 /* A field judged wrong says so in its label too -- .form-row in front so this
    outranks the lifted-label rule above (0,5,1 against 0,4,2). */
 .kbb-checkout .form-row.woocommerce-invalid .fld.kbb-fl > label,
 .kbb-checkout .form-row.kbb-invalid .fld.kbb-fl > label{color:var(--sale)}
+/* Lane CK: a required field left empty says so the same way. */
+.kbb-checkout .form-row.kbb-req-miss .fld.kbb-fl > label{color:var(--sale)}
 /* The discount code keeps its green box: green focus, green lifted label. */
 .kbb-checkout .coupon .fld.kbb-fl{flex:1;min-width:0}
 .kbb-checkout .coupon .fld.kbb-fl input{width:100%;border-radius:10px}
 .kbb-checkout .coupon .fld.kbb-fl input:is(:focus,:not(:placeholder-shown)) ~ label{color:#1F7D52;text-transform:none}
 .kbb-checkout .coupon .fld.kbb-fl:focus-within .lead{color:#2E9E6B}
 /* select2 (emirate dropdown) to match */
-.kbb-checkout .select2-container--default .select2-selection--single{border:1.5px solid var(--line)!important;border-radius:10px!important;min-height:46px;padding:5px 4px;background:#fff}
+.kbb-checkout .select2-container--default .select2-selection--single{border:1.5px solid var(--line)!important;border-radius:10px!important;min-height:46px;padding:5px 4px;background:#fff}.kbb-checkout .select2-container--default .select2-selection--single{padding:calc(5px*var(--cks,1)) 4px;background:#fff}
 .kbb-checkout .select2-container--default .select2-selection--single .select2-selection__rendered{line-height:34px;padding-inline-start:8px;color:var(--ink)}
 .kbb-checkout .select2-container--default .select2-selection--single .select2-selection__arrow{height:44px}
 /* two-up rows: first+last name, emirate+city */
-.kbb-checkout .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.kbb-checkout .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}.kbb-checkout .row2{gap:calc(11px*var(--cks,1)) 11px}
 @media(max-width:480px){.kbb-checkout .row2:not(.keep2){grid-template-columns:1fr}}
 /* any residual Woo fields we don't slot by hand still look right */
-.kbb-checkout .woocommerce-additional-fields{margin-top:2px}
-.kbb-checkout .woocommerce-additional-fields > h3{font-size:12px;font-weight:700;color:var(--ink-2);margin:2px 0 8px}
+.kbb-checkout .woocommerce-additional-fields{margin-top:2px}.kbb-checkout .woocommerce-additional-fields{margin-top:calc(2px*var(--cks,1))}
+.kbb-checkout .woocommerce-additional-fields > h3{font-size:12px;font-weight:700;color:var(--ink-2);margin:2px 0 8px}.kbb-checkout .woocommerce-additional-fields > h3{font-size:calc(12px*var(--ckt,1));font-weight:700;color:var(--ink-2);margin:calc(2px*var(--cks,1)) 0 calc(8px*var(--cks,1))}
 
 /* returning-customer / email note (design .emailmsg) */
-.kbb-checkout .co-note{background:var(--cream);border:1px solid var(--blush);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:12px;color:var(--ink-2)}
-.kbb-checkout .co-note.ok{background:#EEF8F1;border:1px solid #C9E7D5;color:#1F7D52;font-weight:600;display:flex;align-items:center;gap:7px}
+.kbb-checkout .co-note{background:var(--cream);border:1px solid var(--blush);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:12px;color:var(--ink-2)}.kbb-checkout .co-note{padding:calc(10px*var(--cks,1)) 12px;margin-top:calc(10px*var(--cks,1));font-size:calc(12px*var(--ckt,1));color:var(--ink-2)}
+.kbb-checkout .co-note.ok{background:#EEF8F1;border:1px solid #C9E7D5;color:#1F7D52;font-weight:600;display:flex;align-items:center;gap:7px}.kbb-checkout .co-note.ok{gap:calc(7px*var(--cks,1)) 7px}
 /* AND THE OTHER HALF OF THE PAIR, WHICH WAS NEVER WRITTEN. (Lane PLC, round 2)
    `.co-note.err` is what the checkout draws for a refused Place order, a
    rejected coupon, a gateway that declined and the Place-order overlay's own
@@ -566,22 +596,22 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .co-note.err{background:#FDECEF;border:1px solid #F3C4CE;color:#A82F53;font-weight:600}
 
 /* WhatsApp opt-in box (design .wa) — BRIDGE from the Woo checkbox field */
-.kbb-checkout .kbb-wa{background:var(--cream);border:1px solid var(--blush);border-radius:10px;padding:10px 12px;margin-top:10px}
+.kbb-checkout .kbb-wa{background:var(--cream);border:1px solid var(--blush);border-radius:10px;padding:10px 12px;margin-top:10px}.kbb-checkout .kbb-wa{padding:calc(10px*var(--cks,1)) 12px;margin-top:calc(10px*var(--cks,1))}
 .kbb-checkout .kbb-wa .form-row{margin:0}
-.kbb-checkout .kbb-wa label{display:flex;align-items:flex-start;gap:9px;font-size:12px;color:var(--ink-2);cursor:pointer;margin:0;font-weight:500}
-.kbb-checkout .kbb-wa input[type="checkbox"]{width:17px;height:17px;margin-top:1px;accent-color:var(--pink);flex-shrink:0}
+.kbb-checkout .kbb-wa label{display:flex;align-items:flex-start;gap:9px;font-size:12px;color:var(--ink-2);cursor:pointer;margin:0;font-weight:500}.kbb-checkout .kbb-wa label{gap:calc(9px*var(--cks,1)) 9px;font-size:calc(12px*var(--ckt,1));color:var(--ink-2);cursor:pointer;margin:0;font-weight:500}
+.kbb-checkout .kbb-wa input[type="checkbox"]{width:17px;height:17px;margin-top:1px;accent-color:var(--pink);flex-shrink:0}.kbb-checkout .kbb-wa input[type="checkbox"]{margin-top:calc(1px*var(--cks,1));accent-color:var(--pink);flex-shrink:0}
 .kbb-checkout .kbb-wa b{color:var(--ink)}
 /* "save info for next time" style checkbox */
-.kbb-checkout .form-row.kbb-inline-check label{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ink-2);font-weight:500;margin:0}
+.kbb-checkout .form-row.kbb-inline-check label{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ink-2);font-weight:500;margin:0}.kbb-checkout .form-row.kbb-inline-check label{gap:calc(9px*var(--cks,1)) 9px;font-size:calc(12px*var(--ckt,1));color:var(--ink-2);font-weight:500;margin:0}
 .kbb-checkout .form-row.kbb-inline-check input{width:17px;height:17px;accent-color:var(--pink)}
 
 /* express row (Apple / Google Pay) */
-.kbb-checkout .express{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.kbb-checkout .xbtn{border-radius:11px;padding:13px;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:7px;transition:.15s}
+.kbb-checkout .express{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.kbb-checkout .express{gap:calc(10px*var(--cks,1)) 10px;margin-bottom:calc(12px*var(--cks,1))}
+.kbb-checkout .xbtn{border-radius:11px;padding:13px;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:7px;transition:.15s}.kbb-checkout .xbtn{padding:calc(13px*var(--cks,1)) 13px;font-weight:700;font-size:calc(14px*var(--ckt,1));display:flex;align-items:center;justify-content:center;gap:calc(7px*var(--cks,1)) 7px;transition:.15s}
 .kbb-checkout .xapple{background:#000;color:#fff}.kbb-checkout .xapple:hover{opacity:.85}
 .kbb-checkout .xgoogle{background:#fff;color:#3c4043;border:1.5px solid var(--line)}.kbb-checkout .xgoogle:hover{box-shadow:0 6px 16px -8px rgba(0,0,0,.25)}
 .kbb-checkout .xg-b{color:#4285F4}.kbb-checkout .xg-o{color:#EA4335}.kbb-checkout .xg-y{color:#FBBC05}.kbb-checkout .xg-gr{color:#34A853}
-.kbb-checkout .ordiv{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:11px;margin:2px 0 14px}
+.kbb-checkout .ordiv{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:11px;margin:2px 0 14px}.kbb-checkout .ordiv{gap:calc(12px*var(--cks,1)) 12px;color:var(--muted);font-size:calc(11px*var(--ckt,1));margin:calc(2px*var(--cks,1)) 0 calc(14px*var(--cks,1))}
 .kbb-checkout .ordiv::before,.kbb-checkout .ordiv::after{content:"";flex:1;height:1px;background:var(--line)}
 /* Lane CO: the wallet row under the coupon box, Shopify's shape -- a small
    centred grey heading over the buttons and a ruled "OR" under them. All three
@@ -589,8 +619,8 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    rules only ever paint for a shopper whose browser can pay with a wallet.
    The OR line closes on the block gap, which is the gap the coupon box itself
    leaves above the form when there is no wallet row at all. */
-.kbb-checkout .co-xc-h{margin:0 0 9px;text-align:center;font-size:12.5px;font-weight:600;line-height:1.3;color:var(--muted);letter-spacing:.01em}
-.kbb-checkout .ordiv.co-xc-or{margin:2px 0 var(--cop-block);font-size:11.5px;font-weight:700;letter-spacing:.08em}
+.kbb-checkout .co-xc-h{margin:0 0 9px;text-align:center;font-size:12.5px;font-weight:600;line-height:1.3;color:var(--muted);letter-spacing:.01em}.kbb-checkout .co-xc-h{margin:0 0 calc(9px*var(--cks,1));text-align:center;font-size:calc(12.5px*var(--ckt,1));font-weight:600;line-height:1.3;color:var(--muted);letter-spacing:.01em}
+.kbb-checkout .ordiv.co-xc-or{margin:2px 0 var(--cop-block);font-size:11.5px;font-weight:700;letter-spacing:.08em}.kbb-checkout .ordiv.co-xc-or{margin:calc(2px*var(--cks,1)) 0 calc(var(--cop-block)*var(--cks,1));font-size:calc(11.5px*var(--ckt,1));font-weight:700;letter-spacing:.08em}
 
 /* ---- OPTION CARDS (delivery + payment) — design .opt with custom .dot ---- */
 /* Shared card shell for: relocated shipping <li>, and payment <li.wc_payment_method> */
@@ -598,7 +628,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .wc_payment_methods li.wc_payment_method{
   list-style:none;display:block;position:relative;border:1.6px solid var(--line);
   border-radius:12px;margin:0 0 10px;background:#fff;transition:.15s;overflow:hidden
-}
+}.kbb-checkout .kbb-delivery li, .kbb-checkout .wc_payment_methods li.wc_payment_method{margin:0 0 calc(10px*var(--cks,1));background:#fff;transition:.15s;overflow:hidden}
 .kbb-checkout .kbb-delivery li:hover,
 .kbb-checkout .wc_payment_methods li.wc_payment_method:hover{border-color:#CFE8DA;background:#F4FBF6}
 .kbb-checkout .kbb-delivery li:has(input:checked),
@@ -610,7 +640,8 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .wc_payment_methods li.wc_payment_method > label{
   display:flex;align-items:center;gap:12px;padding:14px 15px 14px 44px;margin:0;cursor:pointer;
   font-size:13.5px;font-weight:700;color:var(--ink);position:relative;min-height:52px
-}
+}.kbb-checkout .kbb-delivery li > label, .kbb-checkout .wc_payment_methods li.wc_payment_method > label{gap:calc(12px*var(--cks,1)) 12px;padding:calc(14px*var(--cks,1)) 15px calc(14px*var(--cks,1)) 44px;margin:0;cursor:pointer;
+  font-size:calc(13.5px*var(--ckt,1));font-weight:700;color:var(--ink);position:relative;min-height:52px}
 /* the custom radio dot */
 .kbb-checkout .kbb-delivery li > label::before,
 .kbb-checkout .wc_payment_methods li.wc_payment_method > label::before{
@@ -636,13 +667,13 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout #payment,
 .kbb-checkout .woocommerce-checkout-payment{background:transparent!important;border:0!important;border-radius:0!important;padding:0!important;box-shadow:none!important}
 .kbb-checkout #payment ul.payment_methods,
-.kbb-checkout ul.wc_payment_methods{border:0!important;margin:0 0 2px!important;padding:0!important;list-style:none}
+.kbb-checkout ul.wc_payment_methods{border:0!important;margin:0 0 2px!important;padding:0!important;list-style:none}.kbb-checkout #payment ul.payment_methods, .kbb-checkout ul.wc_payment_methods{margin:0 0 calc(2px*var(--cks,1))!important;padding:0!important;list-style:none}
 .kbb-checkout #payment ul.payment_methods::before,
 .kbb-checkout #payment ul.payment_methods::after{display:none!important}
 
 /* payment description panel (design .pay-panel) — beat core #dfdcde + plugin CSS */
 .kbb-checkout .wc_payment_methods .payment_box,
-.kbb-checkout #payment div.payment_box{display:none;position:static;margin:0;padding:13px 15px 14px;background:#EEF8F1!important;color:var(--ink-2);font-size:12.5px;font-weight:600;border:0;border-top:1px dashed #CFE8DA!important;border-radius:0 0 12px 12px;box-shadow:none!important;-webkit-box-shadow:none!important}
+.kbb-checkout #payment div.payment_box{display:none;position:static;margin:0;padding:13px 15px 14px;background:#EEF8F1!important;color:var(--ink-2);font-size:12.5px;font-weight:600;border:0;border-top:1px dashed #CFE8DA!important;border-radius:0 0 12px 12px;box-shadow:none!important;-webkit-box-shadow:none!important}.kbb-checkout .wc_payment_methods .payment_box, .kbb-checkout #payment div.payment_box{padding:calc(13px*var(--cks,1)) 15px calc(14px*var(--cks,1));background:#EEF8F1!important;color:var(--ink-2);font-size:calc(12.5px*var(--ckt,1));font-weight:600;border:0;border-top:1px dashed #CFE8DA!important;border-radius:0 0 12px 12px;box-shadow:none!important;-webkit-box-shadow:none!important}
 /* Was hard-coded so only the first gateway's box could ever show — every
    other one was permanently hidden no matter which was selected, since
    nothing ever un-hid it. Now shown for whichever option is actually
@@ -663,7 +694,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout #payment .wc_payment_method:has(input:checked) div.payment_box{display:block}
 .kbb-checkout .payment_box::before,
 .kbb-checkout #payment div.payment_box::before{content:none!important;display:none!important}
-.kbb-checkout .payment_box p{margin:0 0 6px}
+.kbb-checkout .payment_box p{margin:0 0 6px}.kbb-checkout .payment_box p{margin:0 0 calc(6px*var(--cks,1))}
 .kbb-checkout .payment_box p:last-child{margin:0}
 .kbb-checkout .payment_box b{color:#1F7D52}
 .kbb-checkout .wc_payment_methods li.wc_payment_method:has(input:checked){border-end-start-radius:0;border-end-end-radius:0}
@@ -672,23 +703,23 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .payment_box > div,
 .kbb-checkout .payment_box [class*="tamara"],
 .kbb-checkout .payment_box [class*="tabby"],
-.kbb-checkout .payment_box .wc-payment-gateway-description{background:transparent!important;border:0!important;box-shadow:none!important;padding:0;margin:0 0 6px;border-radius:10px}
+.kbb-checkout .payment_box .wc-payment-gateway-description{background:transparent!important;border:0!important;box-shadow:none!important;padding:0;margin:0 0 6px;border-radius:10px}.kbb-checkout .payment_box > div, .kbb-checkout .payment_box [class*="tamara"], .kbb-checkout .payment_box [class*="tabby"], .kbb-checkout .payment_box .wc-payment-gateway-description{margin:0 0 calc(6px*var(--cks,1));border-radius:10px}
 /* card fields inside the selected card option */
-.kbb-checkout .payment_box .kbb-card,.kbb-checkout .payment_box form{display:grid;gap:9px;margin-top:2px}
-.kbb-checkout .payment_box .cf-row{display:grid;grid-template-columns:1fr 104px;gap:9px}
-.kbb-checkout .payment_box label{font-size:10.5px;font-weight:600;color:var(--ink-2);margin-bottom:4px;display:block}
+.kbb-checkout .payment_box .kbb-card,.kbb-checkout .payment_box form{display:grid;gap:9px;margin-top:2px}.kbb-checkout .payment_box .kbb-card,.kbb-checkout .payment_box form{gap:calc(9px*var(--cks,1)) 9px;margin-top:calc(2px*var(--cks,1))}
+.kbb-checkout .payment_box .cf-row{display:grid;grid-template-columns:1fr 104px;gap:9px}.kbb-checkout .payment_box .cf-row{gap:calc(9px*var(--cks,1)) 9px}
+.kbb-checkout .payment_box label{font-size:10.5px;font-weight:600;color:var(--ink-2);margin-bottom:4px;display:block}.kbb-checkout .payment_box label{font-size:calc(10.5px*var(--ckt,1));font-weight:600;color:var(--ink-2);margin-bottom:calc(4px*var(--cks,1));display:block}
 .kbb-checkout .payment_box input,
 .kbb-checkout .payment_box .wc-stripe-elements-field,
 .kbb-checkout .payment_box .wc-credit-card-form-card-number,
 .kbb-checkout .payment_box .wc-credit-card-form-card-expiry,
-.kbb-checkout .payment_box .wc-credit-card-form-card-cvc{width:100%;border:1.4px solid var(--line);border-radius:9px;padding:11px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink)}
+.kbb-checkout .payment_box .wc-credit-card-form-card-cvc{width:100%;border:1.4px solid var(--line);border-radius:9px;padding:11px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink)}.kbb-checkout .payment_box input, .kbb-checkout .payment_box .wc-stripe-elements-field, .kbb-checkout .payment_box .wc-credit-card-form-card-number, .kbb-checkout .payment_box .wc-credit-card-form-card-expiry, .kbb-checkout .payment_box .wc-credit-card-form-card-cvc{padding:calc(11px*var(--cks,1)) 12px;font-family:inherit;font-size:calc(13.5px*var(--ckt,1));background:#fff;color:var(--ink)}
 .kbb-checkout .payment_box input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-soft)}
 /* brand badges at right of a payment option (design .lp / .paylogo / .emoji) */
-.kbb-checkout .paylogo{display:inline-flex;align-items:center;font-weight:800;border-radius:99px;padding:5px 13px;font-size:13px;letter-spacing:-.01em;line-height:1;margin-inline-start:auto}
+.kbb-checkout .paylogo{display:inline-flex;align-items:center;font-weight:800;border-radius:99px;padding:5px 13px;font-size:13px;letter-spacing:-.01em;line-height:1;margin-inline-start:auto}.kbb-checkout .paylogo{padding:calc(5px*var(--cks,1)) 13px;font-size:calc(13px*var(--ckt,1));letter-spacing:-.01em;line-height:1;margin-inline-start:auto}
 .kbb-checkout .paylogo.tabby{background:#3DE6A3;color:#06291F}
 .kbb-checkout .paylogo.tamara{background:#3A1772;color:#fff}
-.kbb-checkout .lp{margin-inline-start:auto;font-size:12px;font-weight:800;padding:4px 9px;border-radius:7px;letter-spacing:.02em;background:#1a1f71;color:#fff}
-.kbb-checkout .pemoji{margin-inline-start:auto;font-size:18px}
+.kbb-checkout .lp{margin-inline-start:auto;font-size:12px;font-weight:800;padding:4px 9px;border-radius:7px;letter-spacing:.02em;background:#1a1f71;color:#fff}.kbb-checkout .lp{font-size:calc(12px*var(--ckt,1));font-weight:800;padding:calc(4px*var(--cks,1)) 9px;border-radius:7px;letter-spacing:.02em;background:#1a1f71;color:#fff}
+.kbb-checkout .pemoji{margin-inline-start:auto;font-size:18px}.kbb-checkout .pemoji{font-size:calc(18px*var(--ckt,1))}
 
 /* ==========================================================================
    PAYMENT BOXES -- "A · Soft tint" (Lane PY). The owner picked A from four
@@ -764,6 +795,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 /* the logo slot: a fixed box, so the row is the same height before and after
    the artwork paints, and 26px is the height every row already had. */
 .kbb-checkout.cop-pay .pay-logo{margin-inline-start:auto;flex:none;display:inline-flex;align-items:center;justify-content:flex-end;gap:5px;
+  block-size:var(--cop-paylogo,26px);inline-size:calc(var(--cop-paylogo,26px) * 3.24)}.kbb-checkout.cop-pay .pay-logo{gap:calc(5px*var(--cks,1)) 5px;
   block-size:var(--cop-paylogo,26px);inline-size:calc(var(--cop-paylogo,26px) * 3.24)}
 .kbb-checkout.cop-pay .pay-logo svg{display:block;block-size:100%;inline-size:auto;max-inline-size:100%}
 .kbb-checkout.cop-pay .pay-logo-stripe svg{block-size:calc(var(--cop-paylogo,26px) * .77)}
@@ -772,7 +804,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    `padding-inline-start:44px`, so in Arabic the physical 44px stays on the
    LEFT -- the end of the row, where the logo now sits 29px further in than in
    English. Measured: logo at x82 in Arabic before, x53 after (390 wide). */
-.kbb-checkout.cop-pay .wc_payment_methods li.wc_payment_method > label:has(> .pay-logo){gap:10px;padding-inline-end:15px!important}
+.kbb-checkout.cop-pay .wc_payment_methods li.wc_payment_method > label:has(> .pay-logo){gap:10px;padding-inline-end:15px!important}.kbb-checkout.cop-pay .wc_payment_methods li.wc_payment_method > label:has(> .pay-logo){gap:calc(10px*var(--cks,1)) 10px;padding-inline-end:15px!important}
 /* the banknote icon replaces the 💵 (which also vanished on select, the dot
    needing the same ::after) */
 .kbb-checkout.cop-pay .wc_payment_methods li.payment_method_cod:not(:has(input:checked)) > label:has(> .pay-logo)::after{content:none}
@@ -786,18 +818,18 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout #payment #place_order{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0}
 [dir="rtl"] .kbb-checkout #payment #place_order{inset-inline-start:-9999px;inset-inline-end:auto}
 .kbb-checkout #payment .woocommerce-terms-and-conditions-wrapper,
-.kbb-checkout #payment .woocommerce-privacy-policy-text{background:transparent!important;border:0!important;padding:12px 2px 0!important;margin:0!important;font-size:12px;color:var(--muted)}
+.kbb-checkout #payment .woocommerce-privacy-policy-text{background:transparent!important;border:0!important;padding:12px 2px 0!important;margin:0!important;font-size:12px;color:var(--muted)}.kbb-checkout #payment .woocommerce-terms-and-conditions-wrapper, .kbb-checkout #payment .woocommerce-privacy-policy-text{padding:calc(12px*var(--cks,1)) 2px 0!important;margin:0!important;font-size:calc(12px*var(--ckt,1));color:var(--muted)}
 .kbb-checkout #payment .woocommerce-privacy-policy-text p{margin:0}
 .kbb-checkout #payment .woocommerce-privacy-policy-text:empty{display:none}
 .kbb-checkout #payment .woocommerce-privacy-policy-text a{color:var(--pink-deep);text-decoration:underline}
 
 /* --- fixes: card spacing, delivery/payment height parity, COD icon, VAT row --- */
 /* WooCommerce core zeroes payment <li> margins — force the gap back */
-.kbb-checkout #payment ul.payment_methods > li.wc_payment_method{margin:0 0 10px!important}
+.kbb-checkout #payment ul.payment_methods > li.wc_payment_method{margin:0 0 10px!important}.kbb-checkout #payment ul.payment_methods > li.wc_payment_method{margin:0 0 calc(10px*var(--cks,1))!important}
 .kbb-checkout #payment ul.payment_methods > li.wc_payment_method:last-child{margin-bottom:0!important}
 /* delivery options: same gap as payment, even after relocation */
 .kbb-checkout #kbbDeliverySlot li,
-.kbb-checkout .kbb-delivery li{margin:0 0 10px!important}
+.kbb-checkout .kbb-delivery li{margin:0 0 10px!important}.kbb-checkout #kbbDeliverySlot li, .kbb-checkout .kbb-delivery li{margin:0 0 calc(10px*var(--cks,1))!important}
 .kbb-checkout #kbbDeliverySlot li:last-child,
 .kbb-checkout .kbb-delivery li:last-child{margin-bottom:0!important}
 /* delivery: strip WooCommerce list chrome (ul padding + li padding add height) */
@@ -809,7 +841,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 /* delivery + payment cards — identical, comfortably tall */
 .kbb-checkout #kbbDeliverySlot li label,
 .kbb-checkout .kbb-delivery li > label,
-.kbb-checkout .wc_payment_methods li.wc_payment_method > label{min-height:56px!important;padding-top:15px!important;padding-bottom:15px!important;padding-inline-start:44px!important;line-height:1.35!important;display:flex!important;align-items:center!important;box-sizing:border-box!important}
+.kbb-checkout .wc_payment_methods li.wc_payment_method > label{min-height:56px!important;padding-top:15px!important;padding-bottom:15px!important;padding-inline-start:44px!important;line-height:1.35!important;display:flex!important;align-items:center!important;box-sizing:border-box!important}.kbb-checkout #kbbDeliverySlot li label, .kbb-checkout .kbb-delivery li > label, .kbb-checkout .wc_payment_methods li.wc_payment_method > label{padding-top:calc(15px*var(--cks,1))!important;padding-bottom:calc(15px*var(--cks,1))!important;padding-inline-start:44px!important;line-height:1.35!important;display:flex!important;align-items:center!important;box-sizing:border-box!important}
 /* Lane QK6: "Express Delivery" with its price, or "Free Express Delivery"
    with "Free", on the right of the option -- the label is already a flex row. */
 .kbb-checkout #kbbDeliverySlot .co-dl-t{flex:1 1 auto;min-width:0}
@@ -817,13 +849,13 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 /* Lane QK6: "Free delivery over AED 199" beside the Delivery heading, UAE
    only. Pushed to the far end of the bar; at 320px it wraps under the heading
    rather than squeezing it. */
-.kbb-checkout .sec > h2:has(.co-dnote){flex-wrap:wrap;row-gap:2px}
-.kbb-checkout .co-dnote{margin-inline-start:auto;font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+.kbb-checkout .sec > h2:has(.co-dnote){flex-wrap:wrap;row-gap:2px}.kbb-checkout .sec > h2:has(.co-dnote){row-gap:calc(2px*var(--cks,1))}
+.kbb-checkout .co-dnote{margin-inline-start:auto;font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap}.kbb-checkout .co-dnote{font-size:calc(11.5px*var(--ckt,1));font-weight:600;color:var(--muted);white-space:nowrap}
 .kbb-checkout .co-dnote[hidden]{display:none}
 /* Cash-on-delivery banknote icon (design .pemoji) — COD has no gateway logo */
-.kbb-checkout li.payment_method_cod > label::after{content:"\1F4B5";margin-inline-start:auto;font-size:18px;line-height:1}
+.kbb-checkout li.payment_method_cod > label::after{content:"\1F4B5";margin-inline-start:auto;font-size:18px;line-height:1}.kbb-checkout li.payment_method_cod > label::after{font-size:calc(18px*var(--ckt,1));line-height:1}
 /* inclusive-VAT line — informational, sits just under the total */
-.kbb-checkout .sumrow.vat{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:1px}
+.kbb-checkout .sumrow.vat{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:1px}.kbb-checkout .sumrow.vat{font-size:calc(11.5px*var(--ckt,1));color:var(--muted);font-weight:600;margin-top:calc(1px*var(--cks,1))}
 .kbb-checkout .sumrow.vat span:last-child{color:var(--ink-2)}
 
 /* ==========================================================================
@@ -906,25 +938,41 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   --cop-phw:400;
   --cop-phc:#757575;
   --cop-ttrust:var(--cop-d-ttrust,1);
+  /* Lane CK (22 October): Overall · Text % / Spacing % and the text roles the
+     six above did not cover. Every one is 1 until the owner moves it, and
+     every px size and vertical gap on this page has a twin rule written times
+     --ckt / --cks, so 1 is this page exactly as it was. */
+  --cop-ovt:var(--cop-d-ovt,1);
+  --cop-ovs:var(--cop-d-ovs,1);
+  --cop-trows:var(--cop-d-trows,1);
+  --cop-ttotal:var(--cop-d-ttotal,1);
+  --cop-tcoupon:var(--cop-d-tcoupon,1);
+  --cop-thelp:var(--cop-d-thelp,1);
+  --cop-tdlv:var(--cop-d-tdlv,1);
+  --cop-tpay:var(--cop-d-tpay,1);
+  --cop-ttick:var(--cop-d-ttick,1);
+  --cop-tflift:var(--cop-d-tflift,1);
+  --ckt:var(--cop-ovt);
+  --cks:var(--cop-ovs);
 }
 
 /* ---------------------------- SUMMARY (right) ---------------------------- */
-.kbb-checkout .summary{position:sticky;top:var(--cop-d-sticktop,18px);background:#fff;border:1px solid var(--line-2);border-radius:var(--r);padding:var(--cop-asidepad);box-shadow:var(--sh)}
+.kbb-checkout .summary{position:sticky;top:var(--cop-d-sticktop,18px);background:#fff;border:1px solid var(--line-2);border-radius:var(--r);padding:var(--cop-asidepad);box-shadow:var(--sh)}.kbb-checkout .summary{padding:calc(var(--cop-asidepad)*var(--cks,1)) var(--cop-asidepad);box-shadow:var(--sh)}
 /* "Summary follows the scroll", off. A custom property can change a number
    inside a declaration; it cannot decide whether the declaration applies.
    So this one is a class. Harmless on a phone, where the mobile block
    below sets position:static regardless. */
 .kbb-checkout.cop-nostick .summary{position:static}
 /* pill tabs (design .sumtabs / .stab) */
-.kbb-checkout .sumtabs{display:flex;gap:6px;margin-bottom:var(--cop-tabgap);background:var(--cream);border-radius:10px;padding:4px}
+.kbb-checkout .sumtabs{display:flex;gap:6px;margin-bottom:var(--cop-tabgap);background:var(--cream);border-radius:10px;padding:4px}.kbb-checkout .sumtabs{gap:calc(6px*var(--cks,1)) 6px;margin-bottom:calc(var(--cop-tabgap)*var(--cks,1));background:var(--cream);border-radius:10px;padding:calc(4px*var(--cks,1)) 4px}
 /* min-height rather than a second padding: the strip's height is the
    larger of the two, so one control can set a floor for a touch target and
    the other can set the breathing room, and neither has to know about the
    other. 0 on a desktop means the padding alone decides. */
-.kbb-checkout .stab{flex:1;border-radius:8px;padding:var(--cop-tabpad);min-height:var(--cop-tabmin);font-family:inherit;font-size:calc(12.5px * var(--cop-tabf));font-weight:700;color:var(--ink-2);transition:.15s}
+.kbb-checkout .stab{flex:1;border-radius:8px;padding:var(--cop-tabpad);min-height:var(--cop-tabmin);font-family:inherit;font-size:calc(12.5px * var(--cop-tabf));font-weight:700;color:var(--ink-2);transition:.15s}.kbb-checkout .stab{padding:calc(var(--cop-tabpad)*var(--cks,1)) var(--cop-tabpad);min-height:var(--cop-tabmin);font-family:inherit;font-size:calc((12.5px * var(--cop-tabf))*var(--ckt,1));font-weight:700;color:var(--ink-2);transition:.15s}
 .kbb-checkout .stab.on{background:#fff;color:var(--ink);box-shadow:0 2px 8px -3px rgba(42,34,40,.2)}
-.kbb-checkout .stab .bcount{display:inline-grid;place-items:center;min-width:calc(17px * var(--cop-tabf));height:calc(17px * var(--cop-tabf));border-radius:99px;background:var(--pink);color:#fff;font-size:calc(10px * var(--cop-tabf));margin-inline-start:4px;vertical-align:middle}
-.kbb-checkout .sum-h{font-size:15px;font-weight:800;margin-bottom:12px}
+.kbb-checkout .stab .bcount{display:inline-grid;place-items:center;min-width:calc(17px * var(--cop-tabf));height:calc(17px * var(--cop-tabf));border-radius:99px;background:var(--pink);color:#fff;font-size:calc(10px * var(--cop-tabf));margin-inline-start:4px;vertical-align:middle}.kbb-checkout .stab .bcount{font-size:calc((10px * var(--cop-tabf))*var(--ckt,1));margin-inline-start:4px;vertical-align:middle}
+.kbb-checkout .sum-h{font-size:15px;font-weight:800;margin-bottom:12px}.kbb-checkout .sum-h{font-size:calc(15px*var(--ckt,1));font-weight:800;margin-bottom:calc(12px*var(--cks,1))}
 .kbb-checkout .spanel{display:none}
 .kbb-checkout .spanel.on{display:block}
 
@@ -934,7 +982,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    in Chromium, 7px above `.co-items` -- and on a phone `.panels` has
    overflow:hidden and cuts it. This is the room it needs; 0 restores the
    flush, clipped edge this page shipped with. */
-.kbb-checkout .co-items{margin-bottom:2px;padding-top:var(--cop-itemspt)}
+.kbb-checkout .co-items{margin-bottom:2px;padding-top:var(--cop-itemspt)}.kbb-checkout .co-items{margin-bottom:calc(2px*var(--cks,1));padding-top:calc(var(--cop-itemspt)*var(--cks,1))}
 /* The order-summary line, under Appearance -> Checkout page -> Product
    rows. Every number below is the number this row already had, carried as
    a var() fallback, so a shop that has never opened that screen computes
@@ -944,33 +992,33 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    the order-received page. That page is a different template and is NOT
    handed the style attribute, so every var() here falls back and it keeps
    today's row at every setting. Deliberate: the brief was the checkout. */
-.kbb-checkout .ci{display:flex;gap:var(--cop-rowgap);padding:var(--cop-rowp-t) var(--cop-rowp-r) var(--cop-rowp-b) var(--cop-rowp-l);border-bottom:1px solid var(--line-2)}
+.kbb-checkout .ci{display:flex;gap:var(--cop-rowgap);padding:var(--cop-rowp-t) var(--cop-rowp-r) var(--cop-rowp-b) var(--cop-rowp-l);border-bottom:1px solid var(--line-2)}.kbb-checkout .ci{gap:calc(var(--cop-rowgap)*var(--cks,1)) var(--cop-rowgap);padding:calc(var(--cop-rowp-t)*var(--cks,1)) var(--cop-rowp-r) calc(var(--cop-rowp-b)*var(--cks,1)) var(--cop-rowp-l);border-bottom:1px solid var(--line-2)}
 .kbb-checkout .ci:first-child{padding-top:0}
 .kbb-checkout .cth{width:var(--cop-rowh);height:var(--cop-rowh);border-radius:11px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:10px;text-align:center;flex-shrink:0;position:relative;background-size:cover;background-position:center;line-height:1.1}
 .kbb-checkout .cth .qb{position:absolute;top:-7px;inset-inline-end:-7px;min-width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;border:2px solid #fff}
 .kbb-checkout .cinfo{flex:1;min-width:0}
-.kbb-checkout .cinfo .b{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--pink);font-weight:700}
+.kbb-checkout .cinfo .b{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--pink);font-weight:700}.kbb-checkout .cinfo .b{font-size:calc(10px*var(--ckt,1));letter-spacing:.1em;text-transform:uppercase;color:var(--pink);font-weight:700}
 /* The brand line's per-device switch (2.60.348): Appearance → Checkout page →
    Desktop · Product rows / Mobile · Product rows → "Show the brand name". */
 @media (min-width:901px){.kbb-checkout .cinfo .b.co-rb-nod{display:none}}
 @media (max-width:900px){.kbb-checkout .cinfo .b.co-rb-nom{display:none}}
-.kbb-checkout .cinfo .n{font-size:calc(12px * var(--cop-rowf));font-weight:var(--cop-rowb);line-height:1.3;margin:1px 0 4px}
+.kbb-checkout .cinfo .n{font-size:calc(12px * var(--cop-rowf));font-weight:var(--cop-rowb);line-height:1.3;margin:1px 0 4px}.kbb-checkout .cinfo .n{font-size:calc((12px * var(--cop-rowf))*var(--ckt,1));font-weight:var(--cop-rowb);line-height:1.3;margin:calc(1px*var(--cks,1)) 0 calc(4px*var(--cks,1))}
 .kbb-checkout .qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 /* --cop-qtys lands on the BOX AND THE GLYPH TOGETHER, which is the whole
    of the design: scaling only the box would draw a bigger square round the
    same 13px sign, and scaling only the glyph would push it out of a box
    that did not grow. Both, so the control is today's control, scaled. */
-.kbb-checkout .qty button{width:calc(23px * var(--cop-qtys));height:calc(23px * var(--cop-qtys));font-size:calc(13px * var(--cop-qtys));line-height:1;color:var(--ink-2);font-family:inherit}
+.kbb-checkout .qty button{width:calc(23px * var(--cop-qtys));height:calc(23px * var(--cop-qtys));font-size:calc(13px * var(--cop-qtys));line-height:1;color:var(--ink-2);font-family:inherit}.kbb-checkout .qty button{font-size:calc((13px * var(--cop-qtys))*var(--ckt,1));line-height:1;color:var(--ink-2);font-family:inherit}
 .kbb-checkout .qty button:hover{color:var(--pink-deep)}
-.kbb-checkout .qty span{min-width:calc(22px * var(--cop-qtys));text-align:center;font-size:calc(12px * var(--cop-rowf));font-weight:var(--cop-rowb)}
-.kbb-checkout .cside{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-inline-start:auto}
-.kbb-checkout .cprice{font-size:calc(12.5px * var(--cop-rowf));font-weight:var(--cop-rowpb);white-space:nowrap}
+.kbb-checkout .qty span{min-width:calc(22px * var(--cop-qtys));text-align:center;font-size:calc(12px * var(--cop-rowf));font-weight:var(--cop-rowb)}.kbb-checkout .qty span{font-size:calc((12px * var(--cop-rowf))*var(--ckt,1));font-weight:var(--cop-rowb)}
+.kbb-checkout .cside{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-inline-start:auto}.kbb-checkout .cside{gap:calc(6px*var(--cks,1)) 6px;margin-inline-start:auto}
+.kbb-checkout .cprice{font-size:calc(12.5px * var(--cop-rowf));font-weight:var(--cop-rowpb);white-space:nowrap}.kbb-checkout .cprice{font-size:calc((12.5px * var(--cop-rowf))*var(--ckt,1));font-weight:var(--cop-rowpb);white-space:nowrap}
 .kbb-checkout .co-rm{background:none;border:0;color:#c3b3bb;font-size:calc(12px * var(--cop-rms));line-height:1;padding:0;cursor:pointer}
 .kbb-checkout .co-rm:hover{color:var(--pink-deep)}
 
 /* ---------------- free-shipping progress bar (green + celebration) ---------------- */
-.kbb-checkout .freebar{margin:12px 0 13px}
-.kbb-checkout .freebar .free{font-size:11.5px;color:var(--ink-2);margin-bottom:7px;font-weight:500;transition:color .3s}
+.kbb-checkout .freebar{margin:12px 0 13px}.kbb-checkout .freebar{margin:calc(12px*var(--cks,1)) 0 calc(13px*var(--cks,1))}
+.kbb-checkout .freebar .free{font-size:11.5px;color:var(--ink-2);margin-bottom:7px;font-weight:500;transition:color .3s}.kbb-checkout .freebar .free{font-size:calc(11.5px*var(--ckt,1));color:var(--ink-2);margin-bottom:calc(7px*var(--cks,1));font-weight:500;transition:color .3s}
 .kbb-checkout .freebar .free .fs-amt,.kbb-checkout .freebar .free b{color:#1FA968;font-weight:700}
 .kbb-checkout .freebar .fs-done{color:#1FA968;font-weight:700}
 .kbb-checkout .freebar .fs-done::before{content:"\1F389 ";font-weight:400}
@@ -1027,7 +1075,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 @keyframes kbbPulse{0%,100%{opacity:.65;transform:translate(50%,-50%) scale(.8)}50%{opacity:1;transform:translate(50%,-50%) scale(1.2)}}
 .kbb-checkout .fs-aurora .ffill{background:linear-gradient(90deg,#3DD68C,#1FA968,#6BE7AD,#1FA968,#3DD68C);background-size:300% 100%;animation:kbbAurora 3s linear infinite}
 @keyframes kbbAurora{to{background-position:300% 0}}
-.kbb-checkout .fs-comet .fs-rider{display:block;position:absolute;right:-7px;top:50%;transform:translateY(-50%);font-size:13px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))}
+.kbb-checkout .fs-comet .fs-rider{display:block;position:absolute;right:-7px;top:50%;transform:translateY(-50%);font-size:13px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))}.kbb-checkout .fs-comet .fs-rider{font-size:calc(13px*var(--ckt,1));line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))}
 .kbb-checkout .fs-comet .fs-rider::before{content:"\2B50"}
 .kbb-checkout .is-unlocked.fs-comet .fs-rider{opacity:0}
 
@@ -1075,10 +1123,10 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 /* STAR BURST — emerald, aurora, comet */
 .kbb-checkout .fs-emerald .fs-cheer i::before,
 .kbb-checkout .fs-aurora .fs-cheer i::before,
-.kbb-checkout .fs-comet .fs-cheer i::before{content:"\2605";display:block;font-size:9px;color:#FFC93C;text-shadow:0 0 4px rgba(255,201,60,.7)}
+.kbb-checkout .fs-comet .fs-cheer i::before{content:"\2605";display:block;font-size:9px;color:#FFC93C;text-shadow:0 0 4px rgba(255,201,60,.7)}.kbb-checkout .fs-emerald .fs-cheer i::before, .kbb-checkout .fs-aurora .fs-cheer i::before, .kbb-checkout .fs-comet .fs-cheer i::before{font-size:calc(9px*var(--ckt,1));color:#FFC93C;text-shadow:0 0 4px rgba(255,201,60,.7)}
 .kbb-checkout .fs-emerald .fs-cheer::before,
 .kbb-checkout .fs-aurora .fs-cheer::before,
-.kbb-checkout .fs-comet .fs-cheer::before{content:"\2605";position:absolute;left:-8px;top:-9px;font-size:16px;color:#FFC93C;opacity:0;text-shadow:0 0 7px rgba(255,201,60,.85)}
+.kbb-checkout .fs-comet .fs-cheer::before{content:"\2605";position:absolute;left:-8px;top:-9px;font-size:16px;color:#FFC93C;opacity:0;text-shadow:0 0 7px rgba(255,201,60,.85)}.kbb-checkout .fs-emerald .fs-cheer::before, .kbb-checkout .fs-aurora .fs-cheer::before, .kbb-checkout .fs-comet .fs-cheer::before{font-size:calc(16px*var(--ckt,1));color:#FFC93C;opacity:0;text-shadow:0 0 7px rgba(255,201,60,.85)}
 .kbb-checkout .is-unlocked.fs-emerald .fs-cheer i,
 .kbb-checkout .is-unlocked.fs-aurora .fs-cheer i,
 .kbb-checkout .is-unlocked.fs-comet .fs-cheer i{animation:kbbBurst .75s ease-out forwards}
@@ -1098,7 +1146,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 
 /* SPARKLE — jade (twinkles scattered across the whole bar) */
 .kbb-checkout .fs-jade .fs-cheer{right:auto;left:0;top:0;width:100%;height:100%}
-.kbb-checkout .fs-jade .fs-cheer i::before{content:"\2726";display:block;font-size:9px;color:#FFD34E;text-shadow:0 0 4px rgba(255,211,78,.8)}
+.kbb-checkout .fs-jade .fs-cheer i::before{content:"\2726";display:block;font-size:9px;color:#FFD34E;text-shadow:0 0 4px rgba(255,211,78,.8)}.kbb-checkout .fs-jade .fs-cheer i::before{font-size:calc(9px*var(--ckt,1));color:#FFD34E;text-shadow:0 0 4px rgba(255,211,78,.8)}
 .kbb-checkout .fs-jade .fs-cheer i{top:-3px}
 .kbb-checkout .fs-jade .fs-cheer i:nth-child(1){left:8%}
 .kbb-checkout .fs-jade .fs-cheer i:nth-child(2){left:20%;top:2px}
@@ -1112,9 +1160,9 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 @keyframes kbbTwinkle{0%,100%{opacity:0;transform:scale(0) rotate(0)}50%{opacity:1;transform:scale(1.2) rotate(90deg)}}
 
 /* totals (design .sumrow) */
-.kbb-checkout .sumrow{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2);margin-bottom:7px}
+.kbb-checkout .sumrow{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2);margin-bottom:7px}.kbb-checkout .sumrow{font-size:calc(13px*var(--ckt,1));color:var(--ink-2);margin-bottom:calc(7px*var(--cks,1))}
 .kbb-checkout .sumrow.disc,.kbb-checkout .sumrow.disc span{color:var(--green);font-weight:600}
-.kbb-checkout .sumrow.tot{font-size:17px;font-weight:800;color:var(--ink);border-top:1px solid var(--line);padding-top:11px;margin-top:3px}
+.kbb-checkout .sumrow.tot{font-size:17px;font-weight:800;color:var(--ink);border-top:1px solid var(--line);padding-top:11px;margin-top:3px}.kbb-checkout .sumrow.tot{font-size:calc(17px*var(--ckt,1));font-weight:800;color:var(--ink);border-top:1px solid var(--line);padding-top:calc(11px*var(--cks,1));margin-top:calc(3px*var(--cks,1))}
 /* THE TOTALS CARD (Lane CD) -- Appearance -> Checkout page -> Fields &
    attention -> "Desktop: totals above Place order". .cotot is only rendered
    while that switch is on, and only a laptop draws it as a card: the phone
@@ -1122,71 +1170,72 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    unstyled block whose margins collapse through it and nothing moves. */
 @media(min-width:901px){
   .kbb-checkout .summary .cotot{margin-top:10px;padding:13px 15px 6px;border:1px solid var(--line-2);border-radius:14px;
+    background:linear-gradient(180deg,#FFFAFB,#fff)}.kbb-checkout .summary .cotot{margin-top:calc(10px*var(--cks,1));padding:calc(13px*var(--cks,1)) 15px calc(6px*var(--cks,1));border:1px solid var(--line-2);border-radius:14px;
     background:linear-gradient(180deg,#FFFAFB,#fff)}
-  .kbb-checkout .summary .cotot .freebar{margin:0 0 12px}
-  .kbb-checkout .summary .cotot .sumrow.tot{margin-top:6px;padding-top:10px;border-top-style:dashed}
+  .kbb-checkout .summary .cotot .freebar{margin:0 0 12px}.kbb-checkout .summary .cotot .freebar{margin:0 0 calc(12px*var(--cks,1))}
+  .kbb-checkout .summary .cotot .sumrow.tot{margin-top:6px;padding-top:10px;border-top-style:dashed}.kbb-checkout .summary .cotot .sumrow.tot{margin-top:calc(6px*var(--cks,1));padding-top:calc(10px*var(--cks,1));border-top-style:dashed}
   /* Folded, the card is the first thing under the row: its own edge is the
      divider, so the row's hairline and the panel gap above it are dropped. */
-  .kbb-checkout .summary.cosr-on:not(.cosr-open):has(.cotot) .panels{margin-top:4px}
+  .kbb-checkout .summary.cosr-on:not(.cosr-open):has(.cotot) .panels{margin-top:4px}.kbb-checkout .summary.cosr-on:not(.cosr-open):has(.cotot) .panels{margin-top:calc(4px*var(--cks,1))}
 }
-.kbb-checkout .place{width:100%;background:var(--pink);color:#fff;border-radius:99px;padding:15px;font-weight:700;font-size:15px;margin-top:13px;transition:.18s var(--ease);box-shadow:0 16px 30px -14px rgba(193,62,99,.6);border:none;font-family:inherit;cursor:pointer}
+.kbb-checkout .place{width:100%;background:var(--pink);color:#fff;border-radius:99px;padding:15px;font-weight:700;font-size:15px;margin-top:13px;transition:.18s var(--ease);box-shadow:0 16px 30px -14px rgba(193,62,99,.6);border:none;font-family:inherit;cursor:pointer}.kbb-checkout .place{padding:calc(15px*var(--cks,1)) 15px;font-weight:700;font-size:calc(15px*var(--ckt,1));margin-top:calc(13px*var(--cks,1));transition:.18s var(--ease);box-shadow:0 16px 30px -14px rgba(193,62,99,.6);border:none;font-family:inherit;cursor:pointer}
 .kbb-checkout .place:hover{background:var(--pink-deep);transform:translateY(-2px)}
 .kbb-checkout .place[disabled]{opacity:.6;cursor:default;transform:none}
-.kbb-checkout .trust{display:flex;justify-content:center;gap:16px;margin-top:13px;font-size:11px;color:var(--muted)}
-.kbb-checkout .trust span{display:flex;align-items:center;gap:5px}
+.kbb-checkout .trust{display:flex;justify-content:center;gap:16px;margin-top:13px;font-size:11px;color:var(--muted)}.kbb-checkout .trust{gap:calc(16px*var(--cks,1)) 16px;margin-top:calc(13px*var(--cks,1));font-size:calc(11px*var(--ckt,1));color:var(--muted)}
+.kbb-checkout .trust span{display:flex;align-items:center;gap:5px}.kbb-checkout .trust span{gap:calc(5px*var(--cks,1)) 5px}
 .kbb-checkout .trust svg{width:13px;height:13px;color:var(--green)}
-.kbb-checkout .kbb-delivery-line{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;padding-top:11px;border-top:1px solid rgba(42,34,40,.08);font-size:12px;font-weight:600;color:var(--ink-2)}
+.kbb-checkout .kbb-delivery-line{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;padding-top:11px;border-top:1px solid rgba(42,34,40,.08);font-size:12px;font-weight:600;color:var(--ink-2)}.kbb-checkout .kbb-delivery-line{gap:calc(7px*var(--cks,1)) 7px;margin-top:calc(11px*var(--cks,1));padding-top:calc(11px*var(--cks,1));border-top:1px solid rgba(42,34,40,.08);font-size:calc(12px*var(--ckt,1));font-weight:600;color:var(--ink-2)}
 .kbb-checkout .kbb-delivery-line svg{width:16px;height:16px;color:var(--pink-deep);flex-shrink:0}
 /* mobile Place-order box footer: one intentional divider above the trust row,
    delivery line flows below without its own border (fixes the stray lines) */
-.kbb-checkout .kbb-mobile-order .trust{margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2)}
-.kbb-checkout .kbb-mobile-order .kbb-delivery-line{border-top:none;padding-top:0;margin-top:9px}
+.kbb-checkout .kbb-mobile-order .trust{margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2)}.kbb-checkout .kbb-mobile-order .trust{margin-top:calc(16px*var(--cks,1));padding-top:calc(14px*var(--cks,1));border-top:1px solid var(--line-2)}
+.kbb-checkout .kbb-mobile-order .kbb-delivery-line{border-top:none;padding-top:0;margin-top:9px}.kbb-checkout .kbb-mobile-order .kbb-delivery-line{margin-top:calc(9px*var(--cks,1))}
 
 /* ---------------- mobile order thumbnails (circular, un-clickable) ---------------- */
-.kbb-checkout .kbb-mobile-thumbs{margin-bottom:14px}
-.kbb-checkout .kthumb-lbl{font-size:11px;font-weight:700;color:var(--ink-2);margin-bottom:9px;display:flex;gap:6px}
+.kbb-checkout .kbb-mobile-thumbs{margin-bottom:14px}.kbb-checkout .kbb-mobile-thumbs{margin-bottom:calc(14px*var(--cks,1))}
+.kbb-checkout .kthumb-lbl{font-size:11px;font-weight:700;color:var(--ink-2);margin-bottom:9px;display:flex;gap:6px}.kbb-checkout .kthumb-lbl{font-size:calc(11px*var(--ckt,1));font-weight:700;color:var(--ink-2);margin-bottom:calc(9px*var(--cks,1));display:flex;gap:calc(6px*var(--cks,1)) 6px}
 .kbb-checkout .kthumb-lbl .n{color:var(--muted);font-weight:600}
-.kbb-checkout .kthumb{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-weight:800;font-size:11.5px;flex-shrink:0;position:relative;background-color:var(--blush);background-size:cover;background-position:center;box-shadow:0 4px 10px -4px rgba(0,0,0,.35)}
-.kbb-checkout .kthumb-q{position:absolute;top:-5px;inset-inline-end:-5px;background:var(--ink);color:#fff;font-size:9px;font-weight:800;min-width:17px;height:17px;border-radius:99px;display:grid;place-items:center;border:2px solid #fff;padding:0 3px}
+.kbb-checkout .kthumb{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-weight:800;font-size:11.5px;flex-shrink:0;position:relative;background-color:var(--blush);background-size:cover;background-position:center;box-shadow:0 4px 10px -4px rgba(0,0,0,.35)}.kbb-checkout .kthumb{font-size:calc(11.5px*var(--ckt,1));flex-shrink:0;position:relative;background-color:var(--blush);background-size:cover;background-position:center;box-shadow:0 4px 10px -4px rgba(0,0,0,.35)}
+.kbb-checkout .kthumb-q{position:absolute;top:-5px;inset-inline-end:-5px;background:var(--ink);color:#fff;font-size:9px;font-weight:800;min-width:17px;height:17px;border-radius:99px;display:grid;place-items:center;border:2px solid #fff;padding:0 3px}.kbb-checkout .kthumb-q{font-size:calc(9px*var(--ckt,1));font-weight:800;min-width:17px;height:17px;border-radius:99px;display:grid;place-items:center;border:2px solid #fff;padding:0 3px}
 /* badges (default) */
-.kbb-checkout .kbb-thumbs--badges .kthumb-row{display:flex;gap:11px;flex-wrap:wrap}
+.kbb-checkout .kbb-thumbs--badges .kthumb-row{display:flex;gap:11px;flex-wrap:wrap}.kbb-checkout .kbb-thumbs--badges .kthumb-row{gap:calc(11px*var(--cks,1)) 11px;flex-wrap:wrap}
 /* stack */
 .kbb-checkout .kbb-thumbs--stack .kthumb-row{display:flex}
 .kbb-checkout .kbb-thumbs--stack .kthumb{border:2.5px solid #fff;margin-inline-start:-13px}
 .kbb-checkout .kbb-thumbs--stack .kthumb:first-child{margin-inline-start:0}
 .kbb-checkout .kthumb-more{background:var(--blush)!important;color:var(--pink-deep)}
 /* scroll */
-.kbb-checkout .kbb-thumbs--scroll .kthumb-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.kbb-checkout .kbb-thumbs--scroll .kthumb-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}.kbb-checkout .kbb-thumbs--scroll .kthumb-row{gap:calc(10px*var(--cks,1)) 10px;overflow-x:auto;padding-bottom:calc(4px*var(--cks,1))}
 /* total */
-.kbb-checkout .kbb-thumbs--total .kthumb-row{display:flex;align-items:center;gap:12px}
+.kbb-checkout .kbb-thumbs--total .kthumb-row{display:flex;align-items:center;gap:12px}.kbb-checkout .kbb-thumbs--total .kthumb-row{gap:calc(12px*var(--cks,1)) 12px}
 .kbb-checkout .kbb-thumbs--total .kstack{display:flex}
 .kbb-checkout .kbb-thumbs--total .kstack .kthumb{border:2.5px solid #fff;margin-inline-start:-13px;width:40px;height:40px}
 .kbb-checkout .kbb-thumbs--total .kstack .kthumb:first-child{margin-inline-start:0}
-.kbb-checkout .kbb-thumbs--total .kmeta{font-size:12px;color:var(--ink-2);font-weight:600}
-.kbb-checkout .kbb-thumbs--total .kmeta b{display:block;font-size:14px;color:var(--ink);font-weight:800}
+.kbb-checkout .kbb-thumbs--total .kmeta{font-size:12px;color:var(--ink-2);font-weight:600}.kbb-checkout .kbb-thumbs--total .kmeta{font-size:calc(12px*var(--ckt,1));color:var(--ink-2);font-weight:600}
+.kbb-checkout .kbb-thumbs--total .kmeta b{display:block;font-size:14px;color:var(--ink);font-weight:800}.kbb-checkout .kbb-thumbs--total .kmeta b{font-size:calc(14px*var(--ckt,1));color:var(--ink);font-weight:800}
 /* rings */
-.kbb-checkout .kbb-thumbs--rings .kthumb-row{display:flex;gap:12px;flex-wrap:wrap}
+.kbb-checkout .kbb-thumbs--rings .kthumb-row{display:flex;gap:12px;flex-wrap:wrap}.kbb-checkout .kbb-thumbs--rings .kthumb-row{gap:calc(12px*var(--cks,1)) 12px;flex-wrap:wrap}
 .kbb-checkout .kbb-thumbs--rings .kthumb{border:2px solid #fff;box-shadow:0 0 0 2px var(--pink)}
 /* names */
-.kbb-checkout .kbb-thumbs--names .kthumb-row{display:flex;gap:11px;overflow-x:auto;padding-bottom:4px}
+.kbb-checkout .kbb-thumbs--names .kthumb-row{display:flex;gap:11px;overflow-x:auto;padding-bottom:4px}.kbb-checkout .kbb-thumbs--names .kthumb-row{gap:calc(11px*var(--cks,1)) 11px;overflow-x:auto;padding-bottom:calc(4px*var(--cks,1))}
 .kbb-checkout .kbb-thumbs--names .kthumb-it{width:60px;flex-shrink:0;text-align:center}
-.kbb-checkout .kbb-thumbs--names .kthumb{display:grid;width:52px;height:52px;margin:0 auto 5px}
-.kbb-checkout .kbb-thumbs--names .kthumb-nm{font-size:9px;font-weight:600;color:var(--ink-2);line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.kbb-checkout .kbb-thumbs--names .kthumb{display:grid;width:52px;height:52px;margin:0 auto 5px}.kbb-checkout .kbb-thumbs--names .kthumb{margin:0 auto calc(5px*var(--cks,1))}
+.kbb-checkout .kbb-thumbs--names .kthumb-nm{font-size:9px;font-weight:600;color:var(--ink-2);line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.kbb-checkout .kbb-thumbs--names .kthumb-nm{font-size:calc(9px*var(--ckt,1));font-weight:600;color:var(--ink-2);line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
 /* ---------------- inline field validation ---------------- */
 .kbb-checkout .form-row.kbb-valid input,.kbb-checkout .form-row.kbb-valid select{border-color:var(--green)}
 .kbb-checkout .form-row.kbb-invalid input,.kbb-checkout .form-row.kbb-invalid select{border-color:var(--sale);background:#FFF6F6}
 .kbb-checkout .form-row.kbb-valid:has(input) .woocommerce-input-wrapper{position:relative}
-.kbb-checkout .form-row.kbb-valid:has(input) .woocommerce-input-wrapper::after{content:"\2713";position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%);color:var(--green);font-weight:800;font-size:13px;pointer-events:none}
-.kbb-checkout .kbb-fmsg{display:flex;align-items:center;gap:4px;color:var(--sale);font-size:10.5px;font-weight:600;margin-top:4px}
-.kbb-checkout .kbb-fmsg::before{content:"\26A0";font-size:11px}
+.kbb-checkout .form-row.kbb-valid:has(input) .woocommerce-input-wrapper::after{content:"\2713";position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%);color:var(--green);font-weight:800;font-size:13px;pointer-events:none}.kbb-checkout .form-row.kbb-valid:has(input) .woocommerce-input-wrapper::after{font-size:calc(13px*var(--ckt,1));pointer-events:none}
+.kbb-checkout .kbb-fmsg{display:flex;align-items:center;gap:4px;color:var(--sale);font-size:10.5px;font-weight:600;margin-top:4px}.kbb-checkout .kbb-fmsg{gap:calc(4px*var(--cks,1)) 4px;color:var(--sale);font-size:calc(10.5px*var(--ckt,1));font-weight:600;margin-top:calc(4px*var(--cks,1))}
+.kbb-checkout .kbb-fmsg::before{content:"\26A0";font-size:11px}.kbb-checkout .kbb-fmsg::before{font-size:calc(11px*var(--ckt,1))}
 
 /* ---------------- checkout reassurance block ---------------- */
-.kbb-checkout .kbb-reassure{background:#fff;border:1px solid var(--line-2);border-radius:var(--r);padding:14px 16px;margin-top:14px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--sh)}
-.kbb-checkout .kr-line{display:flex;align-items:center;gap:10px;font-size:calc(12px * var(--cop-ttrust));font-weight:600;color:var(--ink-2)}
+.kbb-checkout .kbb-reassure{background:#fff;border:1px solid var(--line-2);border-radius:var(--r);padding:14px 16px;margin-top:14px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--sh)}.kbb-checkout .kbb-reassure{padding:calc(14px*var(--cks,1)) 16px;margin-top:calc(14px*var(--cks,1));display:flex;flex-direction:column;gap:calc(10px*var(--cks,1)) 10px;box-shadow:var(--sh)}
+.kbb-checkout .kr-line{display:flex;align-items:center;gap:10px;font-size:calc(12px * var(--cop-ttrust));font-weight:600;color:var(--ink-2)}.kbb-checkout .kr-line{gap:calc(10px*var(--cks,1)) 10px;font-size:calc((12px * var(--cop-ttrust))*var(--ckt,1));font-weight:600;color:var(--ink-2)}
 .kbb-checkout .kr-line svg{width:17px;height:17px;color:var(--green);flex-shrink:0}
 .kbb-checkout .kr-line a{color:var(--pink-deep);text-decoration:underline}
-.kbb-checkout .kr-stars{letter-spacing:1px;font-size:13px;flex-shrink:0;line-height:1}
+.kbb-checkout .kr-stars{letter-spacing:1px;font-size:13px;flex-shrink:0;line-height:1}.kbb-checkout .kr-stars{font-size:calc(13px*var(--ckt,1));flex-shrink:0;line-height:1}
 .kbb-checkout .kr-star{color:var(--line)}
 .kbb-checkout .kr-star.on{color:#F4B740}
 
@@ -1221,22 +1270,22 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 }
 
 /* ---------------- Google Places dropdown ---------------- */
-.pac-container{border-radius:10px;box-shadow:0 16px 34px -12px rgba(0,0,0,.28);border:1px solid var(--line);font-family:var(--sans);margin-top:4px;z-index:100000}
-.pac-item{padding:8px 12px;font-size:13px;cursor:pointer}
+.pac-container{border-radius:10px;box-shadow:0 16px 34px -12px rgba(0,0,0,.28);border:1px solid var(--line);font-family:var(--sans);margin-top:4px;z-index:100000}.pac-container{margin-top:calc(4px*var(--cks,1));z-index:100000}
+.pac-item{padding:8px 12px;font-size:13px;cursor:pointer}.pac-item{padding:calc(8px*var(--cks,1)) 12px;font-size:calc(13px*var(--ckt,1));cursor:pointer}
 .pac-item:hover,.pac-item-selected{background:var(--pink-soft)}
 
 /* browsed list (design .bhead / .bitem) */
 /* position:relative + the right-hand gutter are what let .baddnote below sit
    in this heading without taking any height of its own. */
-.kbb-checkout .bhead{font-size:11.5px;color:var(--muted);margin-bottom:8px;font-weight:600;position:relative;padding-inline-end:58px;min-height:16px}
+.kbb-checkout .bhead{font-size:11.5px;color:var(--muted);margin-bottom:8px;font-weight:600;position:relative;padding-inline-end:58px;min-height:16px}.kbb-checkout .bhead{font-size:calc(11.5px*var(--ckt,1));color:var(--muted);margin-bottom:calc(8px*var(--cks,1));font-weight:600;position:relative;padding-inline-end:58px;min-height:16px}
 /* flex-wrap so a .berr appended to a row drops onto its own line instead of
    squeezing the thumbnail, the name and the button into what is left. */
-.kbb-checkout .bitem{display:flex;flex-wrap:wrap;gap:11px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-2)}
-.kbb-checkout .bth{width:48px;height:48px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:9px;text-align:center;flex-shrink:0;background-size:cover;background-position:center;text-decoration:none}
+.kbb-checkout .bitem{display:flex;flex-wrap:wrap;gap:11px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-2)}.kbb-checkout .bitem{gap:calc(11px*var(--cks,1)) 11px;align-items:center;padding:calc(9px*var(--cks,1)) 0;border-bottom:1px solid var(--line-2)}
+.kbb-checkout .bth{width:48px;height:48px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:9px;text-align:center;flex-shrink:0;background-size:cover;background-position:center;text-decoration:none}.kbb-checkout .bth{font-size:calc(9px*var(--ckt,1));text-align:center;flex-shrink:0;background-size:cover;background-position:center;text-decoration:none}
 .kbb-checkout .binfo{flex:1;min-width:0}
-.kbb-checkout .binfo .bb{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--pink);font-weight:700}
-.kbb-checkout .binfo .bn{font-size:12px;font-weight:600;line-height:1.3;margin:1px 0 2px;color:var(--ink);text-decoration:none;display:block}
-.kbb-checkout .binfo .bp{font-size:12px;font-weight:700;color:var(--ink)}
+.kbb-checkout .binfo .bb{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--pink);font-weight:700}.kbb-checkout .binfo .bb{font-size:calc(9.5px*var(--ckt,1));letter-spacing:.1em;text-transform:uppercase;color:var(--pink);font-weight:700}
+.kbb-checkout .binfo .bn{font-size:12px;font-weight:600;line-height:1.3;margin:1px 0 2px;color:var(--ink);text-decoration:none;display:block}.kbb-checkout .binfo .bn{font-size:calc(12px*var(--ckt,1));font-weight:600;line-height:1.3;margin:calc(1px*var(--cks,1)) 0 calc(2px*var(--cks,1));color:var(--ink);text-decoration:none;display:block}
+.kbb-checkout .binfo .bp{font-size:12px;font-weight:700;color:var(--ink)}.kbb-checkout .binfo .bp{font-size:calc(12px*var(--ckt,1));font-weight:700;color:var(--ink)}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    THE TWO PRICES ON A BROWSED ROW.
@@ -1262,10 +1311,11 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    Logical, so Arabic puts it on the other side from the same declaration.
    ═══════════════════════════════════════════════════════════════════════════ */
 .kbb-checkout .binfo .bp del{font-size:11px;font-weight:500;color:var(--muted);
+                             text-decoration-thickness:1px}.kbb-checkout .binfo .bp del{font-size:calc(11px*var(--ckt,1));font-weight:500;color:var(--muted);
                              text-decoration-thickness:1px}
 .kbb-checkout .binfo .bp ins{text-decoration:none;margin-inline-start:6px;
                              color:inherit;font-weight:inherit}
-.kbb-checkout .baddbtn{border:1.5px solid var(--pink);color:var(--pink-deep);background:#fff;border-radius:99px;padding:7px 13px;font-family:inherit;font-size:11.5px;font-weight:700;flex-shrink:0;transition:.15s;cursor:pointer}
+.kbb-checkout .baddbtn{border:1.5px solid var(--pink);color:var(--pink-deep);background:#fff;border-radius:99px;padding:7px 13px;font-family:inherit;font-size:11.5px;font-weight:700;flex-shrink:0;transition:.15s;cursor:pointer}.kbb-checkout .baddbtn{padding:calc(7px*var(--cks,1)) 13px;font-family:inherit;font-size:calc(11.5px*var(--ckt,1));font-weight:700;flex-shrink:0;transition:.15s;cursor:pointer}
 .kbb-checkout .baddbtn:hover{background:var(--pink-soft)}
 .kbb-checkout .baddbtn.added{background:var(--green);border-color:var(--green);color:#fff}
 .kbb-checkout .baddbtn:disabled{opacity:.6;cursor:default}
@@ -1282,18 +1332,21 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   font-size:10.5px;font-weight:700;line-height:1.5;color:#1F7D52;
   background:#EEF8F1;border:1px solid #C9E7D5;border-radius:99px;padding:0 8px;
   opacity:0;transform:translateY(-3px);
+  transition:opacity .18s var(--ease),transform .18s var(--ease)}.kbb-checkout .baddnote{font-size:calc(10.5px*var(--ckt,1));font-weight:700;line-height:1.5;color:#1F7D52;
+  background:#EEF8F1;border:1px solid #C9E7D5;border-radius:99px;padding:0 8px;
+  opacity:0;transform:translateY(-3px);
   transition:opacity .18s var(--ease),transform .18s var(--ease)}
 .kbb-checkout .baddnote.on{opacity:1;transform:none}
 
 /* A refusal, on the row that was tapped, in words. The row itself stays. */
-.kbb-checkout .berr{flex:0 0 100%;margin:0;font-size:11px;font-weight:600;color:var(--sale);line-height:1.35}
+.kbb-checkout .berr{flex:0 0 100%;margin:0;font-size:11px;font-weight:600;color:var(--sale);line-height:1.35}.kbb-checkout .berr{font-size:calc(11px*var(--ckt,1));font-weight:600;color:var(--sale);line-height:1.35}
 
 /* Added the last one: the tab keeps its shape instead of collapsing to an
    empty box, and .bcount goes to 0 alongside it. */
-.kbb-checkout .bempty{font-size:12px;color:var(--muted);margin:0;padding:12px 0 4px;line-height:1.5}
+.kbb-checkout .bempty{font-size:12px;color:var(--muted);margin:0;padding:12px 0 4px;line-height:1.5}.kbb-checkout .bempty{font-size:calc(12px*var(--ckt,1));color:var(--muted);margin:0;padding:calc(12px*var(--cks,1)) 0 calc(4px*var(--cks,1));line-height:1.5}
 
 /* Said when the new total withdrew the method that was selected. */
-.kbb-checkout .pay-moved{margin-bottom:8px}
+.kbb-checkout .pay-moved{margin-bottom:8px}.kbb-checkout .pay-moved{margin-bottom:calc(8px*var(--cks,1))}
 
 @media(prefers-reduced-motion:reduce){
   .kbb-checkout .baddnote{transition:none;transform:none}
@@ -1309,12 +1362,12 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .mpbar{display:none}
 
 /* WooCommerce notices */
-.kbb-checkout .woocommerce-error,.kbb-checkout .woocommerce-message,.kbb-checkout .woocommerce-info,.kbb-checkout .woocommerce-NoticeGroup{list-style:none;background:#fff;border:1px solid var(--line-2);border-inline-start:3px solid var(--pink);border-radius:10px;padding:12px 15px;font-size:13px;margin-bottom:14px}
+.kbb-checkout .woocommerce-error,.kbb-checkout .woocommerce-message,.kbb-checkout .woocommerce-info,.kbb-checkout .woocommerce-NoticeGroup{list-style:none;background:#fff;border:1px solid var(--line-2);border-inline-start:3px solid var(--pink);border-radius:10px;padding:12px 15px;font-size:13px;margin-bottom:14px}.kbb-checkout .woocommerce-error,.kbb-checkout .woocommerce-message,.kbb-checkout .woocommerce-info,.kbb-checkout .woocommerce-NoticeGroup{padding:calc(12px*var(--cks,1)) 15px;font-size:calc(13px*var(--ckt,1));margin-bottom:calc(14px*var(--cks,1))}
 .kbb-checkout .woocommerce-error{border-inline-start-color:var(--sale)}
 .kbb-checkout .blockUI.blockOverlay{background:#fff!important;opacity:.5!important}
 
 /* delivery loading placeholder */
-.kbb-checkout .kbb-delivery-loading{font-size:12.5px;color:var(--muted);padding:6px 2px}
+.kbb-checkout .kbb-delivery-loading{font-size:12.5px;color:var(--muted);padding:6px 2px}.kbb-checkout .kbb-delivery-loading{font-size:calc(12.5px*var(--ckt,1));color:var(--muted);padding:calc(6px*var(--cks,1)) 2px}
 
 /* ------------------------------- MOBILE -------------------------------- */
 @media(max-width:900px){
@@ -1368,23 +1421,33 @@ body.woocommerce-checkout main#content>p:empty{display:none}
     --cop-tinput:var(--cop-m-tinput,1);
     --cop-tph:var(--cop-m-tph,1);
     --cop-ttrust:var(--cop-m-ttrust,1);
+    --cop-ovt:var(--cop-m-ovt,1);
+    --cop-ovs:var(--cop-m-ovs,1);
+    --cop-trows:var(--cop-m-trows,1);
+    --cop-ttotal:var(--cop-m-ttotal,1);
+    --cop-tcoupon:var(--cop-m-tcoupon,1);
+    --cop-thelp:var(--cop-m-thelp,1);
+    --cop-tdlv:var(--cop-m-tdlv,1);
+    --cop-tpay:var(--cop-m-tpay,1);
+    --cop-ttick:var(--cop-m-ttick,1);
+    --cop-tflift:var(--cop-m-tflift,1);
   }
-  .kbb-checkout .co-grid{grid-template-columns:minmax(0,1fr);gap:var(--cop-m-gap,14px);padding-bottom:24px}
+  .kbb-checkout .co-grid{grid-template-columns:minmax(0,1fr);gap:var(--cop-m-gap,14px);padding-bottom:24px}.kbb-checkout .co-grid{gap:calc(var(--cop-m-gap,14px)*var(--cks,1)) var(--cop-m-gap,14px);padding-bottom:calc(24px*var(--cks,1))}
   /* Lane QK8: one column, so every item back in its own row, heading first */
   .kbb-checkout .co-grid,.kbb-checkout .co-grid:has(> .co-cline){grid-template-rows:none}
   .kbb-checkout .co-grid > .co-titlebar,.kbb-checkout .co-grid > .co-titlebar + div,.kbb-checkout .co-grid > .summary,.kbb-checkout .co-grid:has(> .co-cline) > .summary{grid-column:auto;grid-row:auto}
-  .kbb-checkout .co-grid > .co-titlebar,.kbb-checkout .co-grid:not(:has(> .co-cline)) > .co-titlebar{order:-3;margin-top:calc(var(--cop-titlept) - var(--cop-pady));margin-bottom:calc(var(--cop-m-gap,14px) * -1)}
+  .kbb-checkout .co-grid > .co-titlebar,.kbb-checkout .co-grid:not(:has(> .co-cline)) > .co-titlebar{order:-3;margin-top:calc(var(--cop-titlept) - var(--cop-pady));margin-bottom:calc(var(--cop-m-gap,14px) * -1)}.kbb-checkout .co-grid > .co-titlebar,.kbb-checkout .co-grid:not(:has(> .co-cline)) > .co-titlebar{margin-top:calc((var(--cop-titlept) - var(--cop-pady))*var(--cks,1));margin-bottom:calc((var(--cop-m-gap,14px) * -1)*var(--cks,1))}
   /* summary to the TOP, collapsible */
-  .kbb-checkout .summary{order:-1;position:static;box-shadow:none;padding:var(--cop-asidepad);border:1px solid var(--line-2);background:#fff;border-radius:var(--r)}
+  .kbb-checkout .summary{order:-1;position:static;box-shadow:none;padding:var(--cop-asidepad);border:1px solid var(--line-2);background:#fff;border-radius:var(--r)}.kbb-checkout .summary{padding:calc(var(--cop-asidepad)*var(--cks,1)) var(--cop-asidepad);border:1px solid var(--line-2);background:#fff;border-radius:var(--r)}
   .kbb-checkout .panels{position:relative;max-height:148px;overflow:hidden;transition:max-height .35s var(--ease)}
   .kbb-checkout .summary.open .panels{max-height:1600px}
   .kbb-checkout .peekfade{display:block;position:absolute;inset-inline-start:0;inset-inline-end:0;bottom:0;height:64px;background:linear-gradient(rgba(255,255,255,0),#fff);pointer-events:none}
   .kbb-checkout .summary.open .peekfade{display:none}
-  .kbb-checkout .viewfull{display:block;width:100%;margin-top:10px;background:var(--cream);border-radius:99px;padding:11px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;text-align:center}
+  .kbb-checkout .viewfull{display:block;width:100%;margin-top:10px;background:var(--cream);border-radius:99px;padding:11px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;text-align:center}.kbb-checkout .viewfull{margin-top:calc(10px*var(--cks,1));background:var(--cream);border-radius:99px;padding:calc(11px*var(--cks,1)) 11px;font-family:inherit;font-size:calc(12.5px*var(--ckt,1));font-weight:700;color:var(--pink-deep);cursor:pointer;text-align:center}
   .kbb-checkout .summary .place,.kbb-checkout .summary .trust,.kbb-checkout .summary .kbb-delivery-line{display:none}
   /* full on-page Place order box on mobile */
-  .kbb-checkout .kbb-mobile-order{display:block;background:#fff;border:1px solid var(--line-2);border-radius:var(--r);padding:var(--cop-secpad);margin-top:var(--cop-block);box-shadow:var(--sh)}
-  .kbb-checkout .kbb-mobile-order .place{margin-top:14px}
+  .kbb-checkout .kbb-mobile-order{display:block;background:#fff;border:1px solid var(--line-2);border-radius:var(--r);padding:var(--cop-secpad);margin-top:var(--cop-block);box-shadow:var(--sh)}.kbb-checkout .kbb-mobile-order{padding:calc(var(--cop-secpad)*var(--cks,1)) var(--cop-secpad);margin-top:calc(var(--cop-block)*var(--cks,1));box-shadow:var(--sh)}
+  .kbb-checkout .kbb-mobile-order .place{margin-top:14px}.kbb-checkout .kbb-mobile-order .place{margin-top:calc(14px*var(--cks,1))}
   /* Lane QK9 -- "the place order section and the payment section will have
      same white background and merged with a slightly grey separator line ...
      match to the payment gateway block width, so it will look as one block."
@@ -1406,12 +1469,12 @@ body.woocommerce-checkout main#content>p:empty{display:none}
        cannot draw a seam across the join. */
   .kbb-checkout:not(.cop-nomerge) .co-grid{padding-bottom:0}
   .kbb-checkout:not(.cop-nomerge) .formbox{border-bottom:none;border-end-start-radius:0;border-end-end-radius:0;box-shadow:none}
-  .kbb-checkout:not(.cop-nomerge) .kbb-mobile-order{width:min(calc(100% - 2 * var(--cop-padx)), calc(var(--cop-d-max,1040px) - 2 * var(--cop-padx)));margin:0 auto 24px;border-start-start-radius:0;border-start-end-radius:0;box-shadow:0 12px 36px -24px rgba(42,34,40,.22)}
+  .kbb-checkout:not(.cop-nomerge) .kbb-mobile-order{width:min(calc(100% - 2 * var(--cop-padx)), calc(var(--cop-d-max,1040px) - 2 * var(--cop-padx)));margin:0 auto 24px;border-start-start-radius:0;border-start-end-radius:0;box-shadow:0 12px 36px -24px rgba(42,34,40,.22)}.kbb-checkout:not(.cop-nomerge) .kbb-mobile-order{margin:0 auto calc(24px*var(--cks,1));border-start-start-radius:0;border-start-end-radius:0;box-shadow:0 12px 36px -24px rgba(42,34,40,.22)}
   /* fixed bottom pay bar (design .mpbar) */
-  .kbb-checkout .mpbar{display:flex;position:fixed;inset-inline-start:0;inset-inline-end:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:11px 16px;z-index:80;align-items:center;gap:12px;box-shadow:0 -8px 24px -14px rgba(0,0,0,.25)}
-  .kbb-checkout .mpbar .mt{font-weight:800;font-size:16px}
-  .kbb-checkout .mpbar .ml{font-size:10.5px;color:var(--muted)}
-  .kbb-checkout .mpbar .mb{margin-inline-start:auto;background:var(--pink);color:#fff;border-radius:99px;padding:13px 28px;font-weight:700;font-size:14.5px;border:none;font-family:inherit}
+  .kbb-checkout .mpbar{display:flex;position:fixed;inset-inline-start:0;inset-inline-end:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:11px 16px;z-index:80;align-items:center;gap:12px;box-shadow:0 -8px 24px -14px rgba(0,0,0,.25)}.kbb-checkout .mpbar{padding:calc(11px*var(--cks,1)) 16px;z-index:80;align-items:center;gap:calc(12px*var(--cks,1)) 12px;box-shadow:0 -8px 24px -14px rgba(0,0,0,.25)}
+  .kbb-checkout .mpbar .mt{font-weight:800;font-size:16px}.kbb-checkout .mpbar .mt{font-size:calc(16px*var(--ckt,1))}
+  .kbb-checkout .mpbar .ml{font-size:10.5px;color:var(--muted)}.kbb-checkout .mpbar .ml{font-size:calc(10.5px*var(--ckt,1));color:var(--muted)}
+  .kbb-checkout .mpbar .mb{margin-inline-start:auto;background:var(--pink);color:#fff;border-radius:99px;padding:13px 28px;font-weight:700;font-size:14.5px;border:none;font-family:inherit}.kbb-checkout .mpbar .mb{padding:calc(13px*var(--cks,1)) 28px;font-weight:700;font-size:calc(14.5px*var(--ckt,1));border:none;font-family:inherit}
 
   /*
    * THE BAR THAT WAITS FOR THE IN-PAGE BUTTON TO LEAVE.
@@ -1449,7 +1512,8 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 /* Payment & Shipping Rules: why Cash on delivery is not in the list. Without
    this the option simply vanishes and the shopper is left wondering. */
 .pay-note{font-size:12px;color:var(--ink-2);background:#FFF8E6;border:1px solid #F0DFB0;
-          border-radius:9px;padding:9px 12px;margin:0 0 10px;line-height:1.45}
+          border-radius:9px;padding:9px 12px;margin:0 0 10px;line-height:1.45}.pay-note{font-size:calc(12px*var(--ckt,1));color:var(--ink-2);background:#FFF8E6;border:1px solid #F0DFB0;
+          border-radius:9px;padding:calc(9px*var(--cks,1)) 12px;margin:0 0 calc(10px*var(--cks,1));line-height:1.45}
 
 
 /* Extended delivery.
@@ -1472,10 +1536,12 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 [dir="rtl"] #billing_country_field select.input-text{background-position:left 12px center}
 .xd-detected{background:#EAF7EF;color:#2F7D51;border:1px solid #CFE7DA;border-radius:99px;
              padding:1px 8px;font-size:9.5px;font-weight:800;letter-spacing:.06em;
+             text-transform:uppercase;margin-inline-start:8px;vertical-align:middle}.xd-detected{padding:calc(1px*var(--cks,1)) 8px;font-size:calc(9.5px*var(--ckt,1));font-weight:800;letter-spacing:.06em;
              text-transform:uppercase;margin-inline-start:8px;vertical-align:middle}
 .xd-unserved{font-size:12.5px;color:#7a5c14;background:#FFF8E6;border:1px solid #F0DFB0;
-             border-radius:10px;padding:10px 13px;margin:0 0 12px;line-height:1.5}
-.xd-eta{font-size:12px;color:var(--ink-2);margin:9px 0 0;display:flex;align-items:center;gap:6px}
+             border-radius:10px;padding:10px 13px;margin:0 0 12px;line-height:1.5}.xd-unserved{font-size:calc(12.5px*var(--ckt,1));color:#7a5c14;background:#FFF8E6;border:1px solid #F0DFB0;
+             border-radius:10px;padding:calc(10px*var(--cks,1)) 13px;margin:0 0 calc(12px*var(--cks,1));line-height:1.5}
+.xd-eta{font-size:12px;color:var(--ink-2);margin:9px 0 0;display:flex;align-items:center;gap:6px}.xd-eta{font-size:calc(12px*var(--ckt,1));color:var(--ink-2);margin:calc(9px*var(--cks,1)) 0 0;display:flex;align-items:center;gap:calc(6px*var(--cks,1)) 6px}
 
 
 /* Cash-on-delivery fee: visible on the option itself, and reflected in the
@@ -1484,7 +1550,8 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    option highlight on this list, so nothing new to maintain in JS for the
    showing/hiding itself. */
 .kbb-checkout .codfee{margin-inline-start:7px;font-size:11px;font-weight:800;color:var(--pink-deep);
-                       background:#FFF1F5;border-radius:99px;padding:1px 8px;white-space:nowrap}
+                       background:#FFF1F5;border-radius:99px;padding:1px 8px;white-space:nowrap}.kbb-checkout .codfee{font-size:calc(11px*var(--ckt,1));font-weight:800;color:var(--pink-deep);
+                       background:#FFF1F5;border-radius:99px;padding:calc(1px*var(--cks,1)) 8px;white-space:nowrap}
 .kbb-checkout .js-fee-row,
 .kbb-checkout .js-total-row-fee{display:none}
 .kbb-checkout:has(#payment_method_cod:checked) .js-fee-row{display:flex}
@@ -1523,7 +1590,9 @@ body.woocommerce-checkout main#content>p:empty{display:none}
     font-size:calc(13px * var(--cop-qtys));line-height:1;
     border:0;border-radius:0;background:transparent;
     color:var(--ink-2,#5E545A);cursor:pointer;
-  }
+  }.kbb-checkout .qty .co-q{font-size:calc((13px * var(--cop-qtys))*var(--ckt,1));line-height:1;
+    border:0;border-radius:0;background:transparent;
+    color:var(--ink-2,#5E545A);cursor:pointer;}
   .kbb-checkout .qty{display:inline-flex;align-items:center;gap:0}
   .kbb-checkout .qty span{min-width:calc(22px * var(--cop-qtys));text-align:center}
 
@@ -1546,7 +1615,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 
   /* Labels sat 4px above their field; give the pair a little more room so the
      label is not mistaken for the one below it. */
-  .kbb-checkout label{margin-bottom:6px}
+  .kbb-checkout label{margin-bottom:6px}.kbb-checkout label{margin-bottom:calc(6px*var(--cks,1))}
 
   /* THE 15px OF EMPTY BAR ON EVERY PHONE, AND WHERE IT CAME FROM.
      kbb.css gives `.logo` a 44px minimum touch target below 900px -- written
@@ -1610,7 +1679,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
      shopper on a checkout wider than their screen mid-order. max() lets the
      Mobile tab's slider raise this and makes it unable to lower it past the
      floor -- the control says so, and this is what enforces it. */
-  .kbb-checkout .form-row select{font-size:max(16px, calc(16px * var(--cop-tinput)))}
+  .kbb-checkout .form-row select{font-size:max(16px, calc(16px * var(--cop-tinput)))}.kbb-checkout .input-text, .kbb-checkout .coupon input, .kbb-checkout .form-row input[type="text"], .kbb-checkout .form-row input[type="email"], .kbb-checkout .form-row input[type="tel"], .kbb-checkout .form-row input[type="password"], .kbb-checkout .form-row input[type="number"], .kbb-checkout .form-row input[type="search"], .kbb-checkout .form-row textarea, .kbb-checkout .form-row select{font-size:max(16px, calc((16px * var(--cop-tinput))*var(--ckt,1)))}
 
   /* THE FLOOR REMOVED, ON PURPOSE AND ONLY ON PURPOSE.
      Appearance -> Checkout page -> Mobile -> Text sizes -> "Keep the 16px
@@ -1627,7 +1696,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout.cop-nofloor .form-row input[type="number"],
   .kbb-checkout.cop-nofloor .form-row input[type="search"],
   .kbb-checkout.cop-nofloor .form-row textarea,
-  .kbb-checkout.cop-nofloor .form-row select{font-size:calc(16px * var(--cop-tinput))}
+  .kbb-checkout.cop-nofloor .form-row select{font-size:calc(16px * var(--cop-tinput))}.kbb-checkout.cop-nofloor .input-text, .kbb-checkout.cop-nofloor .coupon input, .kbb-checkout.cop-nofloor .form-row input[type="text"], .kbb-checkout.cop-nofloor .form-row input[type="email"], .kbb-checkout.cop-nofloor .form-row input[type="tel"], .kbb-checkout.cop-nofloor .form-row input[type="password"], .kbb-checkout.cop-nofloor .form-row input[type="number"], .kbb-checkout.cop-nofloor .form-row input[type="search"], .kbb-checkout.cop-nofloor .form-row textarea, .kbb-checkout.cop-nofloor .form-row select{font-size:calc((16px * var(--cop-tinput))*var(--ckt,1))}
 
   .kbb-checkout .viewfull{min-height:44px}
 }
@@ -1676,9 +1745,9 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout.cop-sumg .summary .cosr{border-bottom-color:#CFE8DA}
 .kbb-checkout.cop-sumg .summary.cosr-on:not(.cosr-open) .cosr{border-bottom-color:transparent}
 .kbb-checkout.cop-sumg .cosr-ic{background:#fff;color:#1F7D52}
-.kbb-checkout.cop-sumg .cosr-tx{font-size:15.5px;font-weight:700}
-.kbb-checkout.cop-sumg .cosr-tot{display:inline-flex;flex-direction:column;align-items:flex-end;font-size:17px;line-height:1.12}
-.kbb-checkout.cop-sumg .cosr-tot s{font-size:11px;font-weight:500;color:#9A9298;text-decoration:line-through}
+.kbb-checkout.cop-sumg .cosr-tx{font-size:15.5px;font-weight:700}.kbb-checkout.cop-sumg .cosr-tx{font-size:calc(15.5px*var(--ckt,1));font-weight:700}
+.kbb-checkout.cop-sumg .cosr-tot{display:inline-flex;flex-direction:column;align-items:flex-end;font-size:17px;line-height:1.12}.kbb-checkout.cop-sumg .cosr-tot{font-size:calc(17px*var(--ckt,1));line-height:1.12}
+.kbb-checkout.cop-sumg .cosr-tot s{font-size:11px;font-weight:500;color:#9A9298;text-decoration:line-through}.kbb-checkout.cop-sumg .cosr-tot s{font-size:calc(11px*var(--ckt,1));font-weight:500;color:#9A9298;text-decoration:line-through}
 .kbb-checkout.cop-sumg .cosr-tot s.co-was{display:block}
 .kbb-checkout.cop-sumg:has(#payment_method_cod:checked) .cosr-tot s.co-was{display:none}
 .kbb-checkout.cop-sumg:has(#payment_method_cod:checked) .cosr-tot s.co-was-fee{display:block}
@@ -1694,7 +1763,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout.cop-sumg .summary.cosr-open .cosr{border-radius:0;
     margin-inline:calc(var(--cop-padx) * -1);padding-inline:var(--cop-padx);width:calc(100% + 2 * var(--cop-padx))}
   /* One even gap above and below it: "Space between stacked blocks". */
-  .kbb-checkout.cop-sumg .co-grid{padding-top:var(--cop-m-gap,16px);gap:var(--cop-m-gap,16px)}
+  .kbb-checkout.cop-sumg .co-grid{padding-top:var(--cop-m-gap,16px);gap:var(--cop-m-gap,16px)}.kbb-checkout.cop-sumg .co-grid{padding-top:calc(var(--cop-m-gap,16px)*var(--cks,1));gap:calc(var(--cop-m-gap,16px)*var(--cks,1)) var(--cop-m-gap,16px)}
   /* 2.60.496, the owner: "just the title row i wanted the full width, rest
      inner box will be normal width". What opens under the row lines up with
      the form's fields and payment boxes: the page gutter, the section's own
@@ -1706,57 +1775,58 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 
 /* The coupon field inside the summary (cop-cpin): no box of its own, the
    field and Apply the same height, room under them. */
-.kbb-checkout .co-sumcoupon .coupon,.kbb-checkout .co-oscoupon .coupon{background:none;border:0;border-radius:0;padding:0;margin:12px 0 14px;overflow:visible}
+.kbb-checkout .co-sumcoupon .coupon,.kbb-checkout .co-oscoupon .coupon{background:none;border:0;border-radius:0;padding:0;margin:12px 0 14px;overflow:visible}.kbb-checkout .co-sumcoupon .coupon,.kbb-checkout .co-oscoupon .coupon{margin:calc(12px*var(--cks,1)) 0 calc(14px*var(--cks,1));overflow:visible}
 .kbb-checkout .co-sumcoupon .coupon::before,.kbb-checkout .co-sumcoupon .coupon::after,
 .kbb-checkout .co-oscoupon .coupon::before,.kbb-checkout .co-oscoupon .coupon::after{content:none}
 .kbb-checkout .co-sumcoupon .coupon .crow,.kbb-checkout .co-oscoupon .coupon .crow{align-items:stretch}
 .kbb-checkout .co-sumcoupon .coupon input,.kbb-checkout .co-oscoupon .coupon input{height:46px;box-sizing:border-box;background:#fff}
-.kbb-checkout .co-sumcoupon .coupon .fld.kbb-fl input,.kbb-checkout .co-oscoupon .coupon .fld.kbb-fl input{padding-top:17px;padding-bottom:5px}
+.kbb-checkout .co-sumcoupon .coupon .fld.kbb-fl input,.kbb-checkout .co-oscoupon .coupon .fld.kbb-fl input{padding-top:17px;padding-bottom:5px}.kbb-checkout .co-sumcoupon .coupon .fld.kbb-fl input,.kbb-checkout .co-oscoupon .coupon .fld.kbb-fl input{padding-top:calc(17px*var(--cks,1));padding-bottom:calc(5px*var(--cks,1))}
 .kbb-checkout .co-sumcoupon .coupon .apply,.kbb-checkout .co-oscoupon .coupon .apply{height:46px;box-sizing:border-box;background:var(--ink);color:#fff}
 .kbb-checkout .co-sumcoupon .coupon .apply:hover,.kbb-checkout .co-oscoupon .coupon .apply:hover{background:#000}
 
 /* The applied coupon as a ticket (cop-tk): code, saving and x, as wide as its words. */
 .kbb-checkout.cop-tk .co-cmsg.is-ok::before{content:none}
-.co-tk{display:inline-flex;align-items:center;gap:6px;max-width:100%;font-size:12px;line-height:1.2;color:var(--ink,#2A2228)}
+.co-tk{display:inline-flex;align-items:center;gap:6px;max-width:100%;font-size:12px;line-height:1.2;color:var(--ink,#2A2228)}.co-tk{gap:calc(6px*var(--cks,1)) 6px;max-width:100%;font-size:calc(12px*var(--ckt,1));line-height:1.2;color:var(--ink,#2A2228)}
 .co-tk svg{width:14px;height:14px;flex:none;color:#1F7D52}
 .co-tk-code{font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .co-tk-off{font-weight:700;color:#1F7D52;white-space:nowrap}
 .co-tk .co-tk-x{flex:none;display:grid;place-items:center;width:22px;height:22px;margin:-2px -2px -2px 0;padding:0;border:0;border-radius:50%;
-  background:none;color:#8A8288;font-size:15px;line-height:1;cursor:pointer;text-decoration:none;position:relative}
+  background:none;color:#8A8288;font-size:15px;line-height:1;cursor:pointer;text-decoration:none;position:relative}.co-tk .co-tk-x{margin:calc(-2px*var(--cks,1)) -2px calc(-2px*var(--cks,1)) 0;padding:0;border:0;border-radius:50%;
+  background:none;color:#8A8288;font-size:calc(15px*var(--ckt,1));line-height:1;cursor:pointer;text-decoration:none;position:relative}
 .co-tk .co-tk-x::after{content:"";position:absolute;inset:-11px}
-.co-tk-ticket{background:#fff;border:1.5px dashed #7CC4A0;border-radius:9px;padding:4px 6px 4px 10px}
-.co-tk-tag{background:#fff;border:1px solid #CFE8DA;border-radius:99px;padding:4px 6px 4px 10px}
-.co-tk-line{padding:2px 0}
+.co-tk-ticket{background:#fff;border:1.5px dashed #7CC4A0;border-radius:9px;padding:4px 6px 4px 10px}.co-tk-ticket{padding:calc(4px*var(--cks,1)) 6px calc(4px*var(--cks,1)) 10px}
+.co-tk-tag{background:#fff;border:1px solid #CFE8DA;border-radius:99px;padding:4px 6px 4px 10px}.co-tk-tag{padding:calc(4px*var(--cks,1)) 6px calc(4px*var(--cks,1)) 10px}
+.co-tk-line{padding:2px 0}.co-tk-line{padding:calc(2px*var(--cks,1)) 0}
 .co-tk-line svg{color:#8A8288}
 .kbb-checkout.cop-tk .sumrow.disc .co-dcode{font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink)}
-.kbb-checkout .co-save{display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:12px;font-weight:600;color:#8A8288}
+.kbb-checkout .co-save{display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:12px;font-weight:600;color:#8A8288}.kbb-checkout .co-save{gap:calc(5px*var(--cks,1)) 5px;font-size:calc(12px*var(--ckt,1));font-weight:600;color:#8A8288}
 .kbb-checkout .co-save svg{width:13px;height:13px;flex:none}
 .kbb-checkout .co-save b{color:#8A8288}
 /* "5% VAT inclusive" and "Total savings" on one line under the total. */
 .kbb-checkout .cotot:has(> .co-save){display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;align-items:start}
 .kbb-checkout .cotot:has(> .co-save) > *{grid-column:1 / -1}
 .kbb-checkout .cotot:has(> .co-save) > .vat-note{grid-column:1}
-.kbb-checkout .cotot:has(> .co-save) > .co-save{grid-column:2;margin-bottom:7px}
+.kbb-checkout .cotot:has(> .co-save) > .co-save{grid-column:2;margin-bottom:7px}.kbb-checkout .cotot:has(> .co-save) > .co-save{margin-bottom:calc(7px*var(--cks,1))}
 
 /* Contact folded into "Delivery Information" (cop-1step). */
 .kbb-checkout .sec > h2 .co-h2t{white-space:nowrap}
-.kbb-checkout .sec > h2 .co-si-stack{margin-inline-start:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px;line-height:1.2}
+.kbb-checkout .sec > h2 .co-si-stack{margin-inline-start:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px;line-height:1.2}.kbb-checkout .sec > h2 .co-si-stack{gap:calc(2px*var(--cks,1)) 2px;line-height:1.2}
 .kbb-checkout .sec > h2 .co-si-stack .co-signin-q,
 .kbb-checkout .sec > h2 .co-si-stack .co-signin-q + .co-signin{margin:0}
-.kbb-checkout .sec > h2 .co-si-stack .co-signin-q{font-size:11.5px}
+.kbb-checkout .sec > h2 .co-si-stack .co-signin-q{font-size:11.5px}.kbb-checkout .sec > h2 .co-si-stack .co-signin-q{font-size:calc(11.5px*var(--ckt,1))}
 .kbb-checkout .sec > h2 .kbb-rmb-clear + .co-si-stack{margin-inline-start:14px}
-.kbb-checkout .co-ehint{margin:-4px 0 10px;padding-inline-start:4px;font-size:11.5px;line-height:1.4;color:var(--muted)}
+.kbb-checkout .co-ehint{margin:-4px 0 10px;padding-inline-start:4px;font-size:11.5px;line-height:1.4;color:var(--muted)}.kbb-checkout .co-ehint{margin:calc(-4px*var(--cks,1)) 0 calc(10px*var(--cks,1));padding-inline-start:4px;font-size:calc(11.5px*var(--ckt,1));line-height:1.4;color:var(--muted)}
 /* The secure line under "Payment". */
-.kbb-checkout .sec > h2 .co-h2t:has(.co-psec){display:flex;flex-direction:column;gap:3px;line-height:1.15}
-.kbb-checkout .co-psec{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:500;letter-spacing:0;color:var(--ink-2)}
+.kbb-checkout .sec > h2 .co-h2t:has(.co-psec){display:flex;flex-direction:column;gap:3px;line-height:1.15}.kbb-checkout .sec > h2 .co-h2t:has(.co-psec){gap:calc(3px*var(--cks,1)) 3px;line-height:1.15}
+.kbb-checkout .co-psec{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:500;letter-spacing:0;color:var(--ink-2)}.kbb-checkout .co-psec{gap:calc(5px*var(--cks,1)) 5px;font-size:calc(10.5px*var(--ckt,1));font-weight:500;letter-spacing:0;color:var(--ink-2)}
 .kbb-checkout .co-psec svg{flex:none;color:var(--green)}
 
 /* Emirate and Country (cop-rows): one 10px rhythm between every field. */
-.kbb-checkout.cop-rows #customer_details .row2.co-r2sc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0 0 10px}
+.kbb-checkout.cop-rows #customer_details .row2.co-r2sc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0 0 10px}.kbb-checkout.cop-rows #customer_details .row2.co-r2sc{gap:calc(10px*var(--cks,1)) 10px;margin:0 0 calc(10px*var(--cks,1))}
 .kbb-checkout.cop-rows #customer_details .row2.co-r2sc > .form-row{margin:0}
 .kbb-checkout.cop-rows #billing_address_2_field,
 .kbb-checkout.cop-rows #billing_state_field,
-.kbb-checkout.cop-rows #billing_country_field{margin-bottom:10px}
+.kbb-checkout.cop-rows #billing_country_field{margin-bottom:10px}.kbb-checkout.cop-rows #billing_address_2_field, .kbb-checkout.cop-rows #billing_state_field, .kbb-checkout.cop-rows #billing_country_field{margin-bottom:calc(10px*var(--cks,1))}
 .kbb-checkout.cop-rows .row2.co-r2sc #billing_state_field,
 .kbb-checkout.cop-rows .row2.co-r2sc #billing_country_field{margin-bottom:0}
 
@@ -1773,9 +1843,10 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout.cop-totonly .kbb-mobile-order:not(.co-open) .cotot > .sumrow:not(.tot):not(.vat-note){display:none}
   .kbb-checkout.cop-totonly .kbb-mobile-order:not(.co-open) .cotot > .sumrow.tot{border-top:0;margin-top:0;padding-top:0}
   .kbb-checkout.cop-totonly .kbb-mobile-order.co-open .co-ta{display:none}
-  .kbb-checkout.cop-totonly .kbb-mobile-order.co-open .co-osbox{display:block;margin-bottom:12px}
+  .kbb-checkout.cop-totonly .kbb-mobile-order.co-open .co-osbox{display:block;margin-bottom:12px}.kbb-checkout.cop-totonly .kbb-mobile-order.co-open .co-osbox{margin-bottom:calc(12px*var(--cks,1))}
   .kbb-checkout .co-osh{display:flex;align-items:center;justify-content:space-between;width:100%;margin:0 0 6px;padding:0;border:0;
-    background:none;font-family:inherit;font-size:19px;font-weight:500;color:var(--ink);cursor:pointer;text-align:start}
+    background:none;font-family:inherit;font-size:19px;font-weight:500;color:var(--ink);cursor:pointer;text-align:start}.kbb-checkout .co-osh{margin:0 0 calc(6px*var(--cks,1));padding:0;border:0;
+    background:none;font-family:inherit;font-size:calc(19px*var(--ckt,1));font-weight:500;color:var(--ink);cursor:pointer;text-align:start}
   .kbb-checkout .co-osh svg{transform:rotate(180deg)}
   .kbb-checkout .co-ositems .co-items{margin:0}
 }
@@ -1785,9 +1856,9 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    Stripe's Express Checkout Element cannot draw into -- and the pay button
    steps aside for Apple's own button while it is. */
 .kbb-checkout .co-apslot{visibility:hidden;height:0;overflow:hidden}
-.kbb-checkout:has(#payment_method_applepay:checked) .co-apslot{visibility:visible;height:auto;overflow:visible;margin-top:14px}
+.kbb-checkout:has(#payment_method_applepay:checked) .co-apslot{visibility:visible;height:auto;overflow:visible;margin-top:14px}.kbb-checkout:has(#payment_method_applepay:checked) .co-apslot{margin-top:calc(14px*var(--cks,1))}
 .kbb-checkout:has(#payment_method_applepay:checked) [data-place]{display:none!important}
-.kbb-checkout .co-aperr{margin:10px 0 0}
+.kbb-checkout .co-aperr{margin:10px 0 0}.kbb-checkout .co-aperr{margin:calc(10px*var(--cks,1)) 0 0}
 @media(max-width:900px){.kbb-checkout .summary .co-apslot{display:none}}
 .kbb-checkout .wc_payment_methods li.payment_method_applepay{--pt:linear-gradient(#F7F7F8,#F7F7F8);--pg:linear-gradient(90deg,#000,#000);--ps:#000;--pi:#000}
 /* 2.60.496: the outlined mark hugs its artwork and sits at the row's end like
@@ -1810,8 +1881,8 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout.cop-sumg.cop-sow .summary.cosr-open,.kbb-checkout.cop-sumg.cop-sog .summary.cosr-open{border-end-start-radius:18px;border-end-end-radius:18px;border-bottom:1px solid #D6EEDF}
   .kbb-checkout.cop-sumg.cop-sow .summary.cosr-open .cotot,.kbb-checkout.cop-sumg.cop-sow .summary.cosr-open .trust,
   .kbb-checkout.cop-sumg.cop-sog .summary.cosr-open .cotot,.kbb-checkout.cop-sumg.cop-sog .summary.cosr-open .trust{border-color:#E3F1E8}
-  .kbb-checkout.cop-totonly.cop-sow .kbb-mobile-order.co-open .co-osbox,.kbb-checkout.cop-totonly.cop-sog .kbb-mobile-order.co-open .co-osbox{margin-top:16px}
-  .kbb-checkout.cop-sow .co-osh,.kbb-checkout.cop-sog .co-osh{background:#DCEFE3;padding:12px 14px;border-radius:10px;margin:0 0 10px}
+  .kbb-checkout.cop-totonly.cop-sow .kbb-mobile-order.co-open .co-osbox,.kbb-checkout.cop-totonly.cop-sog .kbb-mobile-order.co-open .co-osbox{margin-top:16px}.kbb-checkout.cop-totonly.cop-sow .kbb-mobile-order.co-open .co-osbox,.kbb-checkout.cop-totonly.cop-sog .kbb-mobile-order.co-open .co-osbox{margin-top:calc(16px*var(--cks,1))}
+  .kbb-checkout.cop-sow .co-osh,.kbb-checkout.cop-sog .co-osh{background:#DCEFE3;padding:12px 14px;border-radius:10px;margin:0 0 10px}.kbb-checkout.cop-sow .co-osh,.kbb-checkout.cop-sog .co-osh{padding:calc(12px*var(--cks,1)) 14px;border-radius:10px;margin:0 0 calc(10px*var(--cks,1))}
 }
 
 /* 2.60.498, the owner (14 October): "keep all sections in between spacing
@@ -1823,11 +1894,11 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    it; the section heading's border is 1px). Appearance -> Checkout page -> 13
    October layout -> Same space between every section / Space between sections. */
 @media(max-width:900px){
-  .kbb-checkout.cop-eqgap .co-grid{gap:calc(var(--cop-lo-sec,35px) - 4px)}
-  .kbb-checkout.cop-eqgap .ordiv.co-xc-or{margin-bottom:calc(var(--cop-lo-sec,35px) - 5px)}
-  .kbb-checkout.cop-eqgap #customer_details>.sec:has(+ .sec){padding-bottom:calc(var(--cop-lo-sec,35px) - 1px)}
+  .kbb-checkout.cop-eqgap .co-grid{gap:calc(var(--cop-lo-sec,35px) - 4px)}.kbb-checkout.cop-eqgap .co-grid{gap:calc((var(--cop-lo-sec,35px) - 4px)*var(--cks,1)) calc(var(--cop-lo-sec,35px) - 4px)}
+  .kbb-checkout.cop-eqgap .ordiv.co-xc-or{margin-bottom:calc(var(--cop-lo-sec,35px) - 5px)}.kbb-checkout.cop-eqgap .ordiv.co-xc-or{margin-bottom:calc((var(--cop-lo-sec,35px) - 5px)*var(--cks,1))}
+  .kbb-checkout.cop-eqgap #customer_details>.sec:has(+ .sec){padding-bottom:calc(var(--cop-lo-sec,35px) - 1px)}.kbb-checkout.cop-eqgap #customer_details>.sec:has(+ .sec){padding-bottom:calc((var(--cop-lo-sec,35px) - 1px)*var(--cks,1))}
   .kbb-checkout.cop-eqgap #create_account_field{margin-bottom:0}
-  .kbb-checkout.cop-eqgap #customer_details>.sec:has(+ .sec):has(#create_account_field){padding-bottom:calc(var(--cop-lo-sec,35px) - 18px)}
+  .kbb-checkout.cop-eqgap #customer_details>.sec:has(+ .sec):has(#create_account_field){padding-bottom:calc(var(--cop-lo-sec,35px) - 18px)}.kbb-checkout.cop-eqgap #customer_details>.sec:has(+ .sec):has(#create_account_field){padding-bottom:calc((var(--cop-lo-sec,35px) - 18px)*var(--cks,1))}
 }
 
 /* 2.60.499, the owner (14 October): the same order summary on a computer as on
@@ -1857,4 +1928,18 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 @media(min-width:901px){.kbb-checkout.cop-sumg.cop-sob .summary{background:#fbf7f8}}
 
 /* (Lane VPA) The option a line holds, under its name: "Shade: #13 Bright Beige". */
-.kbb-checkout .cinfo .co-var{font-size:11.5px;line-height:1.3;color:var(--muted,#756C74);margin:-2px 0 4px}
+.kbb-checkout .cinfo .co-var{font-size:11.5px;line-height:1.3;color:var(--muted,#756C74);margin:-2px 0 4px}.kbb-checkout .cinfo .co-var{font-size:calc(11.5px*var(--ckt,1));line-height:1.3;color:var(--muted,#756C74);margin:calc(-2px*var(--cks,1)) 0 calc(4px*var(--cks,1))}
+
+/* ── TEXT ROLES (Lane CK, 22 October) ─────────────────────────────────────
+   Appearance -> Checkout page -> Desktop / Mobile · Text sizes. Each role sets
+   the text factor its own text is written with: Overall times the role. Every
+   factor is 1 until moved, so with nothing set these change no size at all.
+   Later rules win the ties: a total row is a row, a note row is a row. The
+   trust lines keep their own role (Trust line size) and are not in Helper. */
+.kbb-checkout :is(.sumrow,.srow){--ckt:calc(var(--cop-ovt)*var(--cop-trows))}
+.kbb-checkout :is(.sumrow.tot,.srow.tot,.cosr-tot){--ckt:calc(var(--cop-ovt)*var(--cop-ttotal))}
+.kbb-checkout :is(.coupon,.co-sumcoupon,.co-oscoupon,.co-cline,.co-cmsg){--ckt:calc(var(--cop-ovt)*var(--cop-tcoupon))}
+.kbb-checkout :is(.co-ehint,.co-dnote,.co-psec,.co-si-stack,.co-note,.kbb-placing-note,.kbb-card-save,.kbb-delivery-line,.srow.note,.sumrow.vat,.backlink,.conti,.paylogos,.optional,.woocommerce-error,.woocommerce-info,.woocommerce-message){--ckt:calc(var(--cop-ovt)*var(--cop-thelp))}
+.kbb-checkout .woocommerce-shipping-methods{--ckt:calc(var(--cop-ovt)*var(--cop-tdlv))}
+.kbb-checkout .wc_payment_methods{--ckt:calc(var(--cop-ovt)*var(--cop-tpay))}
+.kbb-checkout :is(label.kbb-acct-opt,label.kbb-gift-opt,label.checkbox){--ckt:calc(var(--cop-ovt)*var(--cop-ttick))}

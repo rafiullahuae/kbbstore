@@ -450,6 +450,7 @@
   var chosen = [];       // [{id,name,brand,image}] the rail's products, in order
   var maxRec = 24;
   var fsBar = false;     // Appearance → Checkout page's free-delivery bar switch (Lane QK7)
+  var typeSurface = {};  // Lane CK: Text sizes tab -> the size keys shown there from another tab
   var open = null;       // which tab is showing
   var results = [];      // last search
   var banner = null;
@@ -554,6 +555,12 @@
       chosen = body.chosen || [];
       maxRec = body.maxRec || 24;
       fsBar = body.fsBar === true;
+      /* Lane CK: the Text sizes tabs' English / Arabic switch and live page. */
+      typeSurface = (body.type && body.type.surface) || {};
+      if (window.kbbTypeLive && body.type) {
+        window.kbbTypeLive.attach('cps', { type: body.type, ar: body.ar || {}, values: function () { return values; }, rerender: render,
+          base: function () { return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '') + '/admin-api'; } });
+      }
       values = {};
       tabs.forEach(function (t) {
         t.fields.forEach(function (f) { values[f.key] = f.value; });
@@ -582,7 +589,8 @@
     payload.rec_ids = chosen.map(function (p) { return p.id; }).join(',');
 
     try {
-      await api('/cart-page', { settings: payload });
+      /* Lane CK: the Arabic sizes travel with every Save, as one map. */
+      await api('/cart-page', { settings: payload, ar: window.kbbTypeLive ? window.kbbTypeLive.arPayload('cps') : {} });
       if (window.kbbDrafts) window.kbbDrafts.saved(SCREEN);
       say('Cart page saved.');
     } catch (e) {
@@ -779,8 +787,10 @@
        nothing -- which is the complaint that brought this lane here, said by
        the console itself. */
     var liveOnClassic = open === 'rowsize' || open === 'rowphone';
+    /* Lane CK: the Text sizes tabs are live on both layouts, and say so themselves. */
+    var tlDev = window.kbbTypeLive ? window.kbbTypeLive.devOf('cps', open) : null;
 
-    var warn = String(values.layout) === 'classic' && !liveOnClassic
+    var warn = tlDev ? '' : String(values.layout) === 'classic' && !liveOnClassic
       ? '<div class="cps-note">This shop is on the <b>classic</b> cart page, which is the page it '
         + 'has always rendered. Nothing else on this screen changes anything a shopper sees until '
         + 'the layout above is set to <b>Squeezed</b>. That is deliberate: applying the update that '
@@ -792,14 +802,15 @@
           + 'never a set\u2019s: a set has its own under <b>Appearance \u2192 Set</b>.</div>'
         : '');
 
-    host.innerHTML = '<div class="cps-wrap' + (open === 'desktop' ? ' cps-stack' : '') + '"><div class="cps-col">'
+    host.innerHTML = '<div class="cps-wrap' + (open === 'desktop' || tlDev ? ' cps-stack' : '') + '"><div class="cps-col">'
       + (banner ? '<div class="cps-note" style="border-style:solid;border-color:#b4443c;color:#b4443c">'
           + esc(banner) + '</div>' : '')
       + warn
       + '<div class="cps-card">'
       + '<div class="cps-tabs">' + strip + '</div>'
       + '<p class="cps-sub" style="margin-top:12px">' + esc(current.description) + '</p>'
-      + '<div class="cps-fields">' + current.fields.map(fieldHTML).join('') + '</div>'
+      + (tlDev ? window.kbbTypeLive.head('cps', current.key) : '')
+      + '<div class="cps-fields">' + fieldsHTML(current, tlDev) + '</div>'
       + '</div>'
       + (open === 'rec' ? pickerHTML() : '')
       + '<div class="cps-actions">'
@@ -809,6 +820,7 @@
       + '</div></div>'
       + previewHTML()
       + '</div>';
+    if (tlDev) window.kbbTypeLive.mount('cps');
 
     var q = document.querySelector('#cps-q');
     if (q) {
@@ -1204,8 +1216,26 @@
   }
 
   /** What the open tab is responsible for, and nothing else. */
+  /* Lane CK: a Text sizes tab's controls -- its own, then the Product rows
+     name and brand sizes, which are THE SAME SETTING shown here too. On
+     Arabic, every size as "Same as English" until it is moved. */
+  function fieldsHTML(current, dev) {
+    var extra = [];
+    if (dev) {
+      (typeSurface[current.key] || []).forEach(function (k) {
+        tabs.forEach(function (t) { t.fields.forEach(function (x) { if (x.key === k && extra.indexOf(x) === -1) extra.push(x); }); });
+      });
+    }
+    if (dev && window.kbbTypeLive.isAr('cps')) return window.kbbTypeLive.arFields('cps', current.fields.concat(extra));
+    return current.fields.map(fieldHTML).join('')
+      + (extra.length ? '<p class="ktl-also">Also on Product rows \u2014 the same setting</p>' + extra.map(fieldHTML).join('') : '');
+  }
+
   function previewHTML() {
     var region, label;
+    /* Lane CK: 'type_d' and 'type_m' show the REAL cart page, drawn by the
+       shop (window.kbbTypeLive), not a drawing. */
+    if (open === 'type_d' || open === 'type_m') return window.kbbTypeLive ? window.kbbTypeLive.frames('cps', open) : '';
     if (open === 'rows')        { region = pvRows(); label = 'Product rows · the squeezed layout'; }
     else if (open === 'rowsize')  { region = pvClassic(false); label = 'Product rows · laptop values'; }
     else if (open === 'rowphone') { region = pvClassic(true); label = 'Product rows · phone values'; }
@@ -1276,6 +1306,7 @@
         if (f) out.textContent = shown(f);
       }
       paintPreview();
+      if (window.kbbTypeLive) window.kbbTypeLive.afterInput('cps', key);
       return;
     }
 

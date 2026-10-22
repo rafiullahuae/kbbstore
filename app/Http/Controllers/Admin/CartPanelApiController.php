@@ -47,6 +47,9 @@ class CartPanelApiController extends Controller
             'phoneMax' => 680,
             'tapMax' => 900,
             'coupons' => self::couponList((int) $this->panel->get('coupon_id')),
+            // Lane CK: the size controls' Arabic values and the live preview's map.
+            'type' => CartPanel::typeDescriptor(),
+            'ar' => (object) $this->panel->arValues(),
         ]);
     }
 
@@ -108,7 +111,7 @@ class CartPanelApiController extends Controller
 
     public function save(Request $request): JsonResponse
     {
-        $data = $request->validate(['settings' => ['required', 'array']]);
+        $data = $request->validate(['settings' => ['required', 'array'], 'ar' => ['sometimes', 'array']]);
 
         $unknown = array_diff(array_keys($data['settings']), array_keys(CartPanel::SCHEMA));
 
@@ -116,7 +119,20 @@ class CartPanelApiController extends Controller
             return response()->json(['ok' => false, 'error' => 'Unknown setting: ' . implode(', ', $unknown)], 422);
         }
 
+        // Lane CK: an Arabic value may only be one of the text sizes.
+        $unknownAr = array_diff(array_keys($data['ar'] ?? []), CartPanel::arKeys());
+
+        if ($unknownAr !== []) {
+            return response()->json(['ok' => false, 'error' => 'Unknown Arabic size: ' . implode(', ', $unknownAr)], 422);
+        }
+
         $this->panel->save($data['settings']);
+
+        // Sent by the screen on every Save; a request without it leaves the
+        // Arabic sizes as they were.
+        if ($request->has('ar')) {
+            $this->panel->saveAr($data['ar'] ?? []);
+        }
 
         return response()->json(['ok' => true]);
     }

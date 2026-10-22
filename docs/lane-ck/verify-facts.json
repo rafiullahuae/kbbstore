@@ -1,0 +1,157 @@
+[
+ {
+  "lang": "en",
+  "w": 390,
+  "restStars": 0,
+  "typable": {
+   "ok": 5,
+   "bad": []
+  },
+  "afterBlur": {
+   "star": "inline",
+   "color": "rgb(226, 58, 78)"
+  },
+  "afterType": {
+   "star": "none",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterSubmit": {
+   "billing_first_name": "inline",
+   "billing_phone": "inline",
+   "billing_address_1": "inline",
+   "billing_address_2": "none",
+   "billing_state": "inline"
+  },
+  "clickable": {
+   "ok": 9,
+   "bad": []
+  },
+  "sw": [
+   390,
+   390
+  ],
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+   "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+  ]
+ },
+ {
+  "lang": "en",
+  "w": 1280,
+  "restStars": 0,
+  "typable": {
+   "ok": 6,
+   "bad": []
+  },
+  "afterBlur": {
+   "star": "inline",
+   "color": "rgb(226, 58, 78)"
+  },
+  "afterType": {
+   "star": "none",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterSubmit": {
+   "billing_first_name": "inline",
+   "billing_phone": "inline",
+   "billing_address_1": "inline",
+   "billing_address_2": "none",
+   "billing_state": "inline"
+  },
+  "clickable": {
+   "ok": 14,
+   "bad": []
+  },
+  "sw": [
+   1280,
+   1280
+  ],
+  "errors": [
+   "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "w": 390,
+  "restStars": 0,
+  "typable": {
+   "ok": 5,
+   "bad": []
+  },
+  "afterBlur": {
+   "star": "inline",
+   "color": "rgb(226, 58, 78)"
+  },
+  "afterType": {
+   "star": "none",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterSubmit": {
+   "billing_first_name": "inline",
+   "billing_phone": "inline",
+   "billing_address_1": "inline",
+   "billing_address_2": "none",
+   "billing_state": "inline"
+  },
+  "clickable": {
+   "ok": 9,
+   "bad": []
+  },
+  "sw": [
+   390,
+   390
+  ],
+  "errors": [
+   "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "w": 1280,
+  "restStars": 0,
+  "typable": {
+   "ok": 6,
+   "bad": []
+  },
+  "afterBlur": {
+   "star": "inline",
+   "color": "rgb(226, 58, 78)"
+  },
+  "afterType": {
+   "star": "none",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterSubmit": {
+   "billing_first_name": "inline",
+   "billing_phone": "inline",
+   "billing_address_1": "inline",
+   "billing_address_2": "none",
+   "billing_state": "inline"
+  },
+  "clickable": {
+   "ok": 14,
+   "bad": []
+  },
+  "sw": [
+   1280,
+   1280
+  ],
+  "errors": [
+   "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+  ]
+ },
+ {
+  "order": "en",
+  "url": "http://127.0.0.1:11640/checkout/success?order=33458",
+  "title": "Order received · K-Beauty Bliss | KBB"
+ },
+ {
+  "order": "ar",
+  "url": "http://127.0.0.1:11640/ar/checkout/success?order=33459",
+  "title": "تم استلام الطلب · كي بيوتي بليس"
+ }
+]

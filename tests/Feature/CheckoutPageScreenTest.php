@@ -146,9 +146,16 @@ it('hands the screen every field, grouped into the two tabs', function () {
          * carries the iOS zoom floor, and a desktop has nothing to floor.
          */
         ->and($rowFields('desktop_type'))
-        ->toBe(['t_title', 't_lead', 't_h2', 't_label', 't_input', 't_ph', 't_trust'])
+        ->toBe(['t_title', 't_lead', 't_h2', 't_label', 't_input', 't_ph', 't_trust',
+            // Lane CK (22 October): Overall and the roles the six did not cover, appended.
+            'ov_text', 'ov_space', 'ov_link',
+            't_rows', 't_total', 't_coupon', 't_help', 't_dlv', 't_pay', 't_tick', 't_flift'])
+        // ...and the phone also carries the two small-phone steps, which a desktop has no use for.
         ->and($rowFields('mobile_type'))
-        ->toBe(['t_title', 't_lead', 't_h2', 't_label', 't_input', 't_input_floor', 't_ph', 't_trust']);
+        ->toBe(['t_title', 't_lead', 't_h2', 't_label', 't_input', 't_input_floor', 't_ph', 't_trust',
+            'ov_text', 'ov_space', 'ov_link',
+            't_rows', 't_total', 't_coupon', 't_help', 't_dlv', 't_pay', 't_tick', 't_flift',
+            'fit_1', 'fit_2']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 

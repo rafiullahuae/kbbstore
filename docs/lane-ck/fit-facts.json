@@ -1,0 +1,68 @@
+{
+ "set": [
+  "/checkout-page 200",
+  "/cart-page 200",
+  "/cart-panel 200"
+ ],
+ "widths": [
+  {
+   "w": 320,
+   "checkoutH2": "15.525px",
+   "checkoutField": "16.56px",
+   "checkoutSW": 320,
+   "cartHeading": "15.525px",
+   "cartSW": 320,
+   "panelTab": "12.9375px"
+  },
+  {
+   "w": 340,
+   "checkoutH2": "15.525px",
+   "checkoutField": "16.56px",
+   "checkoutSW": 340,
+   "cartHeading": "15.525px",
+   "cartSW": 340,
+   "panelTab": "12.9375px"
+  },
+  {
+   "w": 360,
+   "checkoutH2": "16.395px",
+   "checkoutField": "17.488px",
+   "checkoutSW": 360,
+   "cartHeading": "16.395px",
+   "cartSW": 360,
+   "panelTab": "13.6625px"
+  },
+  {
+   "w": 375,
+   "checkoutH2": "17.25px",
+   "checkoutField": "18.4px",
+   "checkoutSW": 375,
+   "cartHeading": "17.25px",
+   "cartSW": 375,
+   "panelTab": "14.375px"
+  },
+  {
+   "w": 390,
+   "checkoutH2": "17.25px",
+   "checkoutField": "18.4px",
+   "checkoutSW": 390,
+   "cartHeading": "17.25px",
+   "cartSW": 390,
+   "panelTab": "14.375px"
+  },
+  {
+   "w": 414,
+   "checkoutH2": "17.25px",
+   "checkoutField": "18.4px",
+   "checkoutSW": 414,
+   "cartHeading": "17.25px",
+   "cartSW": 414,
+   "panelTab": "14.375px"
+  }
+ ],
+ "reset": [
+  "/checkout-page 200",
+  "/cart-page 200",
+  "/cart-panel 200"
+ ]
+}

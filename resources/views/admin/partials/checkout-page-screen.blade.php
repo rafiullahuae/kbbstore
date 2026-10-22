@@ -368,6 +368,7 @@
   var squeezeKeys = [];  // which controls "Squeeze everything" drives to their minimum
   var coupons = [];      // Coupon line -> Coupon: the shop's coupons, usable first (Lane QK6)
   var layoutState = null; // 2.60.495: 'new' | 'old' | 'mixed' -- the 13 October layout
+  var typeSurface = {};   // Lane CK: Text sizes tab -> the size keys shown there from another tab
   var open = null;        // which tab is showing
   var banner = null;
   var busy = false;
@@ -471,6 +472,14 @@
       squeezeKeys = body.squeeze || [];
       coupons = body.coupons || [];
       layoutState = body.layout || null;
+      /* Lane CK: the Text sizes tabs' English / Arabic switch and live page. */
+      typeSurface = (body.type && body.type.surface) || {};
+      if (window.kbbTypeLive && body.type) {
+        window.kbbTypeLive.attach('chp', {
+          type: body.type, ar: body.ar || {}, values: function () { return values; }, rerender: render,
+          base: function () { return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '') + '/admin-api'; }
+        });
+      }
       values = {};
       tabs.forEach(function (t) {
         t.fields.forEach(function (f) { values[f.key] = f.value; });
@@ -498,7 +507,8 @@
     Object.keys(values).forEach(function (k) { payload[k] = values[k]; });
 
     try {
-      await api('/checkout-page', { settings: payload });
+      /* Lane CK: the Arabic sizes travel with every Save, as one map. */
+      await api('/checkout-page', { settings: payload, ar: window.kbbTypeLive ? window.kbbTypeLive.arPayload('chp') : {} });
       if (window.kbbDrafts) window.kbbDrafts.saved(SCREEN);
       say('Checkout page saved.');
     } catch (e) {
@@ -641,6 +651,10 @@
     /* Two columns on the mobile tabs, one everywhere else. The controls and
        the notes go in a column of their own so grid auto-placement cannot put
        a note beside the preview and the card under it. */
+    /* Lane CK: a Text sizes tab shows the REAL page where the drawing was --
+       beside the controls on the mobile tab (the three phones stacked), below them on desktop. */
+    var tl = window.kbbTypeLive;
+    var tlDev = tl ? tl.devOf('chp', open) : null;
     var side = /^mobile/.test(String(open));
 
     host.innerHTML = '<div class="chp-wrap' + (side ? ' chp-side' : '') + '">'
@@ -654,7 +668,8 @@
       + '<div class="chp-tabs">' + strip + '</div>'
       + '<p class="chp-sub" style="margin-top:12px">' + esc(current.description) + '</p>'
       + (current.key === 'layout13' ? layoutHTML() : '')
-      + '<div class="chp-fields">' + current.fields.map(fieldHTML).join('') + '</div>'
+      + (tlDev ? tl.head('chp', current.key) : '')
+      + '<div class="chp-fields">' + fieldsHTML(current, tlDev) + '</div>'
       + '<div class="chp-actions">'
       + '<button class="chp-btn is-primary" data-chp-save' + (busy ? ' disabled' : '') + '>'
       + (busy ? 'Saving…' : 'Save') + '</button>'
@@ -671,8 +686,19 @@
       + 'you press Save, and Reload puts them back.</p>'
       + '</div>'
       + (side ? '</div>' : '')
-      + previewHTML()
+      + (tlDev ? tl.frames('chp', open) : previewHTML())
       + '</div>';
+    if (tlDev) tl.mount('chp');
+  }
+
+  /* Lane CK: a Text sizes tab's controls -- its own, then the size controls
+     that live on another tab and are THE SAME SETTING (surfaced, not copied).
+     On Arabic, every size as "Same as English" until it is moved. */
+  function fieldsHTML(current, dev) {
+    var extra = dev ? (typeSurface[current.key] || []).map(fieldFor).filter(Boolean) : [];
+    if (dev && window.kbbTypeLive.isAr('chp')) return window.kbbTypeLive.arFields('chp', current.fields.concat(extra));
+    return current.fields.map(fieldHTML).join('')
+      + (extra.length ? '<p class="ktl-also">Also on Product rows \u2014 the same setting</p>' + extra.map(fieldHTML).join('') : '');
   }
 
   /* -------------------------------------------- the 13 October layout (2.60.495) */
@@ -1101,6 +1127,7 @@
       if (f) out.textContent = shown(f);
     }
     paintPreview();
+    if (window.kbbTypeLive) window.kbbTypeLive.afterInput('chp', key);
   });
 
   document.addEventListener('click', function (e) {
@@ -1123,3 +1150,4 @@
 })();
 </script>
 @endverbatim
+@include('admin.partials.shop-type-live')

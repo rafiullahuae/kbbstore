@@ -1,0 +1,122 @@
+[
+ {
+  "lang": "en",
+  "w": 390,
+  "where": "/checkout/",
+  "elements": 672,
+  "differences": 13,
+  "sample": [
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "LABEL.required_field display/colour: block rgb(200, 84, 114) -> block rgb(117, 108, 116)",
+   "SPAN.required height: 14 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)"
+  ]
+ },
+ {
+  "lang": "en",
+  "w": 390,
+  "where": "/cart/",
+  "elements": 430,
+  "differences": 0,
+  "sample": []
+ },
+ {
+  "lang": "en",
+  "w": 1280,
+  "where": "/checkout/",
+  "elements": 672,
+  "differences": 13,
+  "sample": [
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "LABEL.required_field display/colour: block rgb(200, 84, 114) -> block rgb(117, 108, 116)",
+   "SPAN.required height: 14 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)"
+  ]
+ },
+ {
+  "lang": "en",
+  "w": 1280,
+  "where": "/cart/",
+  "elements": 430,
+  "differences": 0,
+  "sample": []
+ },
+ {
+  "lang": "ar",
+  "w": 390,
+  "where": "/checkout/",
+  "elements": 670,
+  "differences": 13,
+  "sample": [
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "LABEL.required_field display/colour: block rgb(200, 84, 114) -> block rgb(117, 108, 116)",
+   "SPAN.required height: 14 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)"
+  ]
+ },
+ {
+  "lang": "ar",
+  "w": 390,
+  "where": "/cart/",
+  "elements": 428,
+  "differences": 0,
+  "sample": []
+ },
+ {
+  "lang": "ar",
+  "w": 1280,
+  "where": "/checkout/",
+  "elements": 670,
+  "differences": 13,
+  "sample": [
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "SPAN.required height: 18 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)",
+   "LABEL.required_field display/colour: block rgb(200, 84, 114) -> block rgb(117, 108, 116)",
+   "SPAN.required height: 14 -> 0",
+   "SPAN.required display/colour: inline rgb(227, 95, 130) -> none rgb(227, 95, 130)"
+  ]
+ },
+ {
+  "lang": "ar",
+  "w": 1280,
+  "where": "/cart/",
+  "elements": 428,
+  "differences": 0,
+  "sample": []
+ }
+]

@@ -54,3 +54,20 @@ Route::post('/checkout-page', [CheckoutPageApiController::class, 'save'])
 Route::post('/checkout-page/layout', [CheckoutPageApiController::class, 'layout'])
     ->middleware('throttle:20,1')
     ->name('admin.checkout-page.layout');
+
+/*
+ * Lane CK (22 October): the REAL checkout, and the real cart panel, behind
+ * the Text sizes live previews of Appearance -> Checkout page and Appearance
+ * -> Cart panel. One GET per language when a tab opens, none per slider. Each
+ * has its own line in AdminCapabilities (checkoutpage.manage, and the cart
+ * panel screen's content.manage). The panel's lives in this file only so no
+ * lane has to edit routes/web.php. Writes nothing (ShopLivePreview rolls its
+ * sample basket back); clear_caches_lane_ck_text_sizes ships with it.
+ */
+Route::get('/checkout-page/live', [\App\Http\Controllers\Admin\ShopLivePreviewController::class, 'checkout'])
+    ->middleware('throttle:60,1')
+    ->name('admin.checkout-page.live');
+
+Route::get('/cart-panel/live', [\App\Http\Controllers\Admin\ShopLivePreviewController::class, 'panel'])
+    ->middleware('throttle:60,1')
+    ->name('admin.cart-panel.live');

@@ -50,8 +50,8 @@
 @if ($kbbRows === 'classic')
                         <div class="row2">
 @endif
-                            <x-checkout.field name="billing_address_2" :label="__('store.checkout.field_area_street')" required icon="city"
-                                validate="validate-required" priority="60"
+                            {{-- Lane CK (22 October): NOT REQUIRED, as asked, and with no "optional" either -- the component prints neither marker for a field that is neither. place() takes it empty too. --}}<x-checkout.field name="billing_address_2" :label="__('store.checkout.field_area_street')" icon="city"
+                                priority="60"
                                 :placeholder="__('store.checkout.field_area_street_placeholder')"
                                 autocomplete="section-billing billing address-line2"
                                 :value="old('billing_address_2', $prefill['area'] ?? '')" />

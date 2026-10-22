@@ -57,12 +57,16 @@ class CheckoutPageApiController extends Controller
             'coupons' => CartPanelApiController::couponList((int) $this->page->get('cline_coupon')),
             // 2.60.495: which way the 13 October layout tab's buttons point.
             'layout' => app(\App\Services\CheckoutLayout::class)->state(),
+            // Lane CK: the Text sizes tabs' Arabic values and the live
+            // preview's map of what each control prints.
+            'type' => CheckoutPage::typeDescriptor(),
+            'ar' => (object) $this->page->arValues(),
         ]);
     }
 
     public function save(Request $request): JsonResponse
     {
-        $data = $request->validate(['settings' => ['required', 'array']]);
+        $data = $request->validate(['settings' => ['required', 'array'], 'ar' => ['sometimes', 'array']]);
 
         $unknown = array_diff(array_keys($data['settings']), array_keys(CheckoutPage::SCHEMA));
 
@@ -70,7 +74,20 @@ class CheckoutPageApiController extends Controller
             return response()->json(['ok' => false, 'error' => 'Unknown setting: '.implode(', ', $unknown)], 422);
         }
 
+        // Lane CK: an Arabic value may only be one of the text sizes.
+        $unknownAr = array_diff(array_keys($data['ar'] ?? []), CheckoutPage::arKeys());
+
+        if ($unknownAr !== []) {
+            return response()->json(['ok' => false, 'error' => 'Unknown Arabic size: '.implode(', ', $unknownAr)], 422);
+        }
+
         $this->page->save($data['settings']);
+
+        // Sent by the screen on every Save; a request without it (an older
+        // console, a script) leaves the Arabic sizes as they were.
+        if ($request->has('ar')) {
+            $this->page->saveAr($data['ar'] ?? []);
+        }
 
         return response()->json(['ok' => true]);
     }

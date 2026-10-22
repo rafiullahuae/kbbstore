@@ -28,6 +28,7 @@ export function initCheckout() {
     window.kbbDiag?.('checkout.js', 'handler attached');
 
     rememberDetails(form);
+    markEmptyRequired(form);
 
     /* Lane EH: "Did you mean …@yahoo.com?" once the email field is left.
        The server prints [data-efix] only while Emails → Sending & delivery →
@@ -1232,6 +1233,47 @@ const ratePrice = (radio) => {
     const label = radio && radio.id ? document.querySelector(`label[for="${radio.id}"]`) : null;
     return (label?.querySelector('.woocommerce-Price-amount')?.textContent || '').trim();
 };
+
+/*
+ * THE "*" SHOWS ONLY ON A REQUIRED FIELD LEFT EMPTY (Lane CK, 22 October).
+ *
+ * The labels no longer print an asterisk (kbb-checkout.css hides the span);
+ * this puts it back, with the label's existing red, on the row of a required
+ * field the shopper left empty -- on leaving it, and on a Place order press
+ * that found it empty -- and takes it away as soon as there is something in
+ * it. A class on the row and nothing else: no request, no timer, no
+ * measuring. Current browsers do the same from CSS (:user-invalid); this is
+ * the fallback for the Safari versions that do not know it.
+ *
+ * Delegated on the form, so a row the country change redraws is covered as
+ * it comes. `required` and the server's own rules are untouched.
+ */
+function markIfEmpty(el) {
+    const row = el && el.required && el.closest ? el.closest('.form-row') : null;
+    if (row) row.classList.toggle('kbb-req-miss', String(el.value ?? '').trim() === '');
+}
+
+function markEmptyRequired(form) {
+    form.addEventListener('focusout', (event) => markIfEmpty(event.target));
+    const clear = (event) => {
+        if (event.target?.closest?.('.form-row.kbb-req-miss')) markIfEmpty(event.target);
+    };
+    form.addEventListener('input', clear);
+    form.addEventListener('change', clear);
+
+    /* Place order (any [data-place] button) and Enter: every required field it
+       finds empty shows its "*". On WINDOW, in the capture phase, so it runs
+       before the placing overlay's and the card's own listeners on document --
+       which stop the press there -- and it only ever adds or removes a class:
+       it never cancels, delays or posts anything. */
+    const markAll = () => form.querySelectorAll('[required]').forEach(markIfEmpty);
+    window.addEventListener('click', (event) => {
+        if (event.target?.closest?.('[data-place]')) markAll();
+    }, true);
+    window.addEventListener('submit', (event) => {
+        if (event.target === form) markAll();
+    }, true);
+}
 
 function rememberDetails(form) {
     const tick = document.getElementById('kbb_remember');

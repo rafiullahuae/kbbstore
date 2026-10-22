@@ -1793,6 +1793,8 @@ final class AdminCapabilities
         ['*', 'admin-api/product-page', 'content.manage'],
         ['POST', 'admin-api/share-images', 'shareimages.make'],
         ['*', 'admin-api/cart-panel', 'content.manage'],
+        // Lane CK: the cart panel screen's live preview, the same capability as the screen.
+        ['GET', 'admin-api/cart-panel/live', 'content.manage'],
 
         /*
          * Appearance -> Cart page. A capability of its own, and NOT the
@@ -1819,6 +1821,8 @@ final class AdminCapabilities
         ['*', 'admin-api/cart-page/**', 'cartpage.manage'],
         // One line and no '/**' sibling: this screen has no sub-endpoint.
         ['*', 'admin-api/checkout-page', 'checkoutpage.manage'],
+        // Lane CK: the checkout screen's live preview, the same capability as the screen.
+        ['GET', 'admin-api/checkout-page/live', 'checkoutpage.manage'],
         ['*', 'admin-api/checkout-page/layout', 'checkoutlayout.restore'],
         /*
          * Appearance → Set. The '/**' sibling IS needed here: the preview is

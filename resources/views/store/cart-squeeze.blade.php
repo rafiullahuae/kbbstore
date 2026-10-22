@@ -79,35 +79,38 @@
 /* Room under the last thing on the page for the two bars that float over it.
    A shopper who cannot see the row they are about to pay for is the whole
    argument for this rule existing. */
-.kbb-cartpage.cpg-squeeze .wrap{padding-bottom:calc(var(--cpg-bars) + 24px)}
+.kbb-cartpage.cpg-squeeze .wrap{padding-bottom:calc(var(--cpg-bars) + 24px)}.kbb-cartpage.cpg-squeeze .wrap{padding-bottom:calc((var(--cpg-bars) + 24px)*var(--cgs,1))}
 .kbb-cartpage.cpg-squeeze .grid{grid-template-columns:minmax(0,1fr);gap:0}
 
 /* ── product rows ───────────────────────────────────────────────────────── */
 .kbb-cartpage.cpg-squeeze .ci{
-  height:var(--cpg-row-h);padding:var(--cpg-pad);gap:var(--cpg-pad);overflow:hidden}
+  height:var(--cpg-row-h);padding:var(--cpg-pad);gap:var(--cpg-pad);overflow:hidden}.kbb-cartpage.cpg-squeeze .ci{padding:calc(var(--cpg-pad)*var(--cgs,1)) var(--cpg-pad);gap:calc(var(--cpg-pad)*var(--cgs,1)) var(--cpg-pad);overflow:hidden}
 .kbb-cartpage.cpg-squeeze .cth{
   width:var(--cpg-thumb);height:var(--cpg-thumb);font-size:calc(var(--cpg-thumb) * .22)}
 .kbb-cartpage.cpg-squeeze .cmid{display:flex;flex-direction:column;justify-content:center;
-  gap:calc(var(--cpg-row-h) * .018);min-width:0}
+  gap:calc(var(--cpg-row-h) * .018);min-width:0}.kbb-cartpage.cpg-squeeze .cmid{gap:calc((var(--cpg-row-h) * .018)*var(--cgs,1)) calc(var(--cpg-row-h) * .018);min-width:0}
 .kbb-cartpage.cpg-squeeze .cbrand{font-size:var(--cpg-f-brand);font-weight:var(--cpg-row-bold);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kbb-cartpage.cpg-squeeze .cbrand{font-size:calc(var(--cpg-f-brand)*var(--cgt,1));font-weight:var(--cpg-row-bold);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* Two lines and then an ellipsis, so a long name cannot make one row taller
    than its neighbours and undo the whole point of a fixed row height. */
 .kbb-cartpage.cpg-squeeze .cn{font-size:var(--cpg-f-name);font-weight:var(--cpg-row-bold);
   line-height:1.25;margin:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical}.kbb-cartpage.cpg-squeeze .cn{font-size:calc(var(--cpg-f-name)*var(--cgt,1));font-weight:var(--cpg-row-bold);
+  line-height:1.25;margin:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;
   -webkit-box-orient:vertical}
 .kbb-cartpage.cpg-squeeze .cn a{display:inline;padding:0}
-.kbb-cartpage.cpg-squeeze .cvar{font-size:var(--cpg-f-brand);margin:0}
+.kbb-cartpage.cpg-squeeze .cvar{font-size:var(--cpg-f-brand);margin:0}.kbb-cartpage.cpg-squeeze .cvar{font-size:calc(var(--cpg-f-brand)*var(--cgt,1));margin:0}
 .kbb-cartpage.cpg-squeeze .qty{align-self:flex-start;height:var(--cpg-qty-h);
-  margin-top:calc(var(--cpg-row-h) * .022);border-radius:calc(var(--cpg-qty-h) * .28)}
+  margin-top:calc(var(--cpg-row-h) * .022);border-radius:calc(var(--cpg-qty-h) * .28)}.kbb-cartpage.cpg-squeeze .qty{margin-top:calc((var(--cpg-row-h) * .022)*var(--cgs,1));border-radius:calc(var(--cpg-qty-h) * .28)}
 .kbb-cartpage.cpg-squeeze .qty button{width:calc(var(--cpg-qty-h) * 1.5);height:100%;
-  font-size:var(--cpg-qty-f);line-height:1}
+  font-size:var(--cpg-qty-f);line-height:1}.kbb-cartpage.cpg-squeeze .qty button{font-size:calc(var(--cpg-qty-f)*var(--cgt,1));line-height:1}
 .kbb-cartpage.cpg-squeeze .qty span{min-width:calc(var(--cpg-qty-h) * 1.1);
-  font-size:var(--cpg-qty-f);font-weight:var(--cpg-row-bold)}
-.kbb-cartpage.cpg-squeeze .cright{gap:calc(var(--cpg-row-h) * .03)}
-.kbb-cartpage.cpg-squeeze .cpr{font-size:var(--cpg-f-price);font-weight:var(--cpg-row-bold)}
-.kbb-cartpage.cpg-squeeze .cwas{font-size:var(--cpg-f-brand)}
-.kbb-cartpage.cpg-squeeze .crm{font-size:var(--cpg-f-brand);min-height:0;padding:0}
+  font-size:var(--cpg-qty-f);font-weight:var(--cpg-row-bold)}.kbb-cartpage.cpg-squeeze .qty span{font-size:calc(var(--cpg-qty-f)*var(--cgt,1));font-weight:var(--cpg-row-bold)}
+.kbb-cartpage.cpg-squeeze .cright{gap:calc(var(--cpg-row-h) * .03)}.kbb-cartpage.cpg-squeeze .cright{gap:calc((var(--cpg-row-h) * .03)*var(--cgs,1)) calc(var(--cpg-row-h) * .03)}
+.kbb-cartpage.cpg-squeeze .cpr{font-size:var(--cpg-f-price);font-weight:var(--cpg-row-bold)}.kbb-cartpage.cpg-squeeze .cpr{font-size:calc(var(--cpg-f-price)*var(--cgt,1));font-weight:var(--cpg-row-bold)}
+.kbb-cartpage.cpg-squeeze .cwas{font-size:var(--cpg-f-brand)}.kbb-cartpage.cpg-squeeze .cwas{font-size:calc(var(--cpg-f-brand)*var(--cgt,1))}
+.kbb-cartpage.cpg-squeeze .crm{font-size:var(--cpg-f-brand);min-height:0;padding:0}.kbb-cartpage.cpg-squeeze .crm{font-size:calc(var(--cpg-f-brand)*var(--cgt,1));min-height:0;padding:0}
 /* "no bold text at all" — the off position of the Bold rows switch. Stated as
    a class rather than by flipping --cpg-row-bold so the `b`/`strong` inside a
    line is covered too. */
@@ -117,7 +120,8 @@
 /* ── recommended: FULL BLEED, no radius, no padding box ─────────────────── */
 .kbb-cartpage.cpg-squeeze .cpg-rec{
   position:relative;margin:14px calc(50% - 50vw) 0;width:100vw;max-width:100vw;
-  padding:13px 0 15px;border-radius:0;overflow:hidden}
+  padding:13px 0 15px;border-radius:0;overflow:hidden}.kbb-cartpage.cpg-squeeze .cpg-rec{margin:calc(14px*var(--cgs,1)) calc(50% - 50vw) 0;width:100vw;max-width:100vw;
+  padding:calc(13px*var(--cgs,1)) 0 calc(15px*var(--cgs,1));border-radius:0;overflow:hidden}
 /* The colour wash, on a layer of its own so the cards above it stay opaque and
    the animation never repaints them. */
 .kbb-cartpage.cpg-squeeze .cpg-rec::before{
@@ -133,9 +137,10 @@
 @media (prefers-reduced-motion:reduce){
   .kbb-cartpage.cpg-squeeze .cpg-rec::before{animation:none}}
 .kbb-cartpage.cpg-squeeze .cpg-rec > *{position:relative;z-index:1}
-.kbb-cartpage.cpg-squeeze .cpg-rec h2{font-size:14px;font-weight:600;margin:0 0 10px;padding:0 14px}
+.kbb-cartpage.cpg-squeeze .cpg-rec h2{font-size:14px;font-weight:600;margin:0 0 10px;padding:0 14px}.kbb-cartpage.cpg-squeeze .cpg-rec h2{font-size:calc(14px*var(--cgt,1));font-weight:600;margin:0 0 calc(10px*var(--cgs,1));padding:0 14px}
 .kbb-cartpage.cpg-squeeze .cpg-rail{display:flex;gap:7px;overflow-x:auto;
-  padding:2px 14px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  padding:2px 14px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.kbb-cartpage.cpg-squeeze .cpg-rail{gap:calc(7px*var(--cgs,1)) 7px;overflow-x:auto;
+  padding:calc(2px*var(--cgs,1)) 14px calc(4px*var(--cgs,1));scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .kbb-cartpage.cpg-squeeze .cpg-rail::-webkit-scrollbar{display:none}
 /* The carousel arrows are DESKTOP ONLY, and hidden here rather than only shown
    in the query, so the phone's answer is the one this rule gives by default and
@@ -146,10 +151,10 @@
    by the edge is what tells a thumb there is more to the right. */
 .kbb-cartpage.cpg-squeeze .cpg-card{
   flex:0 0 calc((100% - 14px - (7px * (var(--cpg-per) - 1))) / var(--cpg-per));
-  background:#fff;border:1px solid var(--line-2);border-radius:9px;padding:5px;min-width:0}
+  background:#fff;border:1px solid var(--line-2);border-radius:9px;padding:5px;min-width:0}.kbb-cartpage.cpg-squeeze .cpg-card{padding:calc(5px*var(--cgs,1)) 5px;min-width:0}
 .kbb-cartpage.cpg-squeeze .cpg-card .im{position:relative;aspect-ratio:1;border-radius:6px;
   display:grid;place-items:center;color:#fff;font-weight:500;background-size:cover;
-  background-position:center;font-size:clamp(11px,3.6vw,17px);margin-bottom:var(--cpg-rec-img-gap)}
+  background-position:center;font-size:clamp(11px,3.6vw,17px);margin-bottom:var(--cpg-rec-img-gap)}.kbb-cartpage.cpg-squeeze .cpg-card .im{margin-bottom:calc(var(--cpg-rec-img-gap)*var(--cgs,1))}
 /* "the font size of the product names should be small and auto adjust to the
    screen" — clamp() against vw, so it is the SCREEN it adjusts to and not a
    measurement somebody took. */
@@ -212,6 +217,8 @@
   min-height:calc(var(--cpg-rec-lh) * 2em);
   margin:0 0 var(--cpg-rec-gap);color:var(--ink-2);
   -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 0.55em),rgba(0,0,0,.35) 100%);
+  mask-image:linear-gradient(to bottom,#000 calc(100% - 0.55em),rgba(0,0,0,.35) 100%)}.kbb-cartpage.cpg-squeeze .cpg-card .nm{margin:0 0 calc(var(--cpg-rec-gap)*var(--cgs,1));color:var(--ink-2);
+  -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 0.55em),rgba(0,0,0,.35) 100%);
   mask-image:linear-gradient(to bottom,#000 calc(100% - 0.55em),rgba(0,0,0,.35) 100%)}
 /* The price on its OWN line, under the name. Both were <span> inside the same
    <a>, so they sat side by side on one line whatever the gap was set to. */
@@ -237,30 +244,35 @@
   height:calc(clamp(17px,5.4vw,22px) * var(--cpg-rec-add-s));border-radius:50%;
   background:var(--green);color:#fff;border:1.5px solid #fff;display:grid;place-items:center;
   font-size:calc(clamp(11px,3.4vw,14px) * var(--cpg-rec-add-s));line-height:1;cursor:pointer;
+  padding:0;min-height:0;font-family:inherit}.kbb-cartpage.cpg-squeeze .cpg-card .kc-badd{font-size:calc((clamp(11px,3.4vw,14px) * var(--cpg-rec-add-s))*var(--cgt,1));line-height:1;cursor:pointer;
   padding:0;min-height:0;font-family:inherit}
 .kbb-cartpage.cpg-squeeze .cpg-card .kc-badd:active{transform:scale(.9)}
 
 /* ── coupon: minimal, directly under the rail ───────────────────────────── */
 .kbb-cartpage.cpg-squeeze .coupon{display:flex;align-items:center;gap:8px;margin:0;
-  padding:11px 0;background:none;border:0;border-bottom:1px solid var(--line-2);border-radius:0}
+  padding:11px 0;background:none;border:0;border-bottom:1px solid var(--line-2);border-radius:0}.kbb-cartpage.cpg-squeeze .coupon{gap:calc(8px*var(--cgs,1)) 8px;margin:0;
+  padding:calc(11px*var(--cgs,1)) 0;background:none;border:0;border-bottom:1px solid var(--line-2);border-radius:0}
 .kbb-cartpage.cpg-squeeze .coupon input{border:0;border-radius:0;background:none;
-  border-bottom:1px solid var(--line-2);padding:5px 1px;font-size:13px;min-height:0}
+  border-bottom:1px solid var(--line-2);padding:5px 1px;font-size:13px;min-height:0}.kbb-cartpage.cpg-squeeze .coupon input{padding:calc(5px*var(--cgs,1)) 1px;font-size:calc(13px*var(--cgt,1));min-height:0}
 .kbb-cartpage.cpg-squeeze .coupon input:focus{box-shadow:none;border-color:var(--green)}
 .kbb-cartpage.cpg-squeeze .coupon button{background:var(--line-2);color:var(--ink-2);
   border-radius:7px;font-size:12px;font-weight:500;letter-spacing:.06em;
-  text-transform:uppercase;padding:9px 15px;min-height:0}
+  text-transform:uppercase;padding:9px 15px;min-height:0}.kbb-cartpage.cpg-squeeze .coupon button{font-size:calc(12px*var(--cgt,1));font-weight:500;letter-spacing:.06em;
+  text-transform:uppercase;padding:calc(9px*var(--cgs,1)) 15px;min-height:0}
 
 /* ── summary ────────────────────────────────────────────────────────────── */
-.kbb-cartpage.cpg-squeeze .sum{position:static;margin:14px 0 0;padding:14px}
-.kbb-cartpage.cpg-squeeze .srow{padding:3px 0}
-.kbb-cartpage.cpg-squeeze .srow .cpg-n{color:var(--muted);font-size:12px}
+.kbb-cartpage.cpg-squeeze .sum{position:static;margin:14px 0 0;padding:14px}.kbb-cartpage.cpg-squeeze .sum{margin:calc(14px*var(--cgs,1)) 0 0;padding:calc(14px*var(--cgs,1)) 14px}
+.kbb-cartpage.cpg-squeeze .srow{padding:3px 0}.kbb-cartpage.cpg-squeeze .srow{padding:calc(3px*var(--cgs,1)) 0}
+.kbb-cartpage.cpg-squeeze .srow .cpg-n{color:var(--muted);font-size:12px}.kbb-cartpage.cpg-squeeze .srow .cpg-n{font-size:calc(12px*var(--cgt,1))}
 .kbb-cartpage.cpg-squeeze .srow .cpg-was{color:var(--muted);font-size:11.5px;
+  text-decoration:line-through;margin-inline-end:4px}.kbb-cartpage.cpg-squeeze .srow .cpg-was{font-size:calc(11.5px*var(--cgt,1));
   text-decoration:line-through;margin-inline-end:4px}
 /* The little (i). A real control and not decoration: each of these charges is
    a rule the shop can change, and a shopper who cannot ask why assumes the
    worst. The note is a title, so it needs no script. */
 .kbb-cartpage.cpg-squeeze .cpg-i{display:inline-grid;place-items:center;width:13px;height:13px;
   border-radius:50%;border:1px solid var(--line);color:var(--muted);font-size:8.5px;
+  font-weight:600;font-style:normal;vertical-align:1px;cursor:help}.kbb-cartpage.cpg-squeeze .cpg-i{font-size:calc(8.5px*var(--cgt,1));
   font-weight:600;font-style:normal;vertical-align:1px;cursor:help}
 /* "Delivery & VAT are calculated at checkout".
 
@@ -271,14 +283,15 @@
    pressing Checkout. Same size as the charge rows it replaces, with the tick
    colour, so it reads as information and not as a disclaimer. */
 .kbb-cartpage.cpg-squeeze .srow.cpg-later{justify-content:flex-start;gap:6px;
-  color:var(--green);font-weight:500;padding:6px 0 2px}
+  color:var(--green);font-weight:500;padding:6px 0 2px}.kbb-cartpage.cpg-squeeze .srow.cpg-later{gap:calc(6px*var(--cgs,1)) 6px;
+  color:var(--green);font-weight:500;padding:calc(6px*var(--cgs,1)) 0 calc(2px*var(--cgs,1))}
 /* The shop's own free-delivery bar, standing where the delivery row was. Same
    element and the same stylesheet as the one at the top of the page — this
    only unpicks the card treatment kbb-cart.css gives it, because inside the
    summary it is a row of the summary and not a card sitting on the page. */
 .kbb-cartpage.cpg-squeeze .sum .ship{background:none;border:0;border-radius:0;
-  box-shadow:none;padding:8px 0 4px;margin:0}
-.kbb-cartpage.cpg-squeeze .sum .ship .t{margin-bottom:6px}
+  box-shadow:none;padding:8px 0 4px;margin:0}.kbb-cartpage.cpg-squeeze .sum .ship{padding:calc(8px*var(--cgs,1)) 0 calc(4px*var(--cgs,1));margin:0}
+.kbb-cartpage.cpg-squeeze .sum .ship .t{margin-bottom:6px}.kbb-cartpage.cpg-squeeze .sum .ship .t{margin-bottom:calc(6px*var(--cgs,1))}
 
 /* ── the bar flows, and a bloom rides its leading edge ───────────────────
    THE TRACK HAS TO STOP CLIPPING. kbb-cart.css gives `.ship .bar`
@@ -368,11 +381,12 @@
   .kbb-cartpage.cpg-squeeze .sum .ship .fill{background-position:0 0}}
 .kbb-cartpage.cpg-squeeze .cpg-totband{display:flex;justify-content:space-between;
   align-items:center;gap:12px;background:#EEF8F1;border-radius:9px;padding:10px 12px;
-  margin-top:10px;font-size:15px;font-weight:600}
+  margin-top:10px;font-size:15px;font-weight:600}.kbb-cartpage.cpg-squeeze .cpg-totband{gap:calc(12px*var(--cgs,1)) 12px;background:#EEF8F1;border-radius:9px;padding:calc(10px*var(--cgs,1)) 12px;
+  margin-top:calc(10px*var(--cgs,1));font-size:calc(15px*var(--cgt,1));font-weight:600}
 .kbb-cartpage.cpg-squeeze .cpg-totband .tr{text-align:end}
 .kbb-cartpage.cpg-squeeze .cpg-totband b{display:block;font-weight:700}
 .kbb-cartpage.cpg-squeeze .cpg-totband em{display:block;font-style:normal;font-weight:400;
-  font-size:9.5px;color:var(--muted);margin-top:1px}
+  font-size:9.5px;color:var(--muted);margin-top:1px}.kbb-cartpage.cpg-squeeze .cpg-totband em{font-size:calc(9.5px*var(--cgt,1));color:var(--muted);margin-top:calc(1px*var(--cgs,1))}
 
 /* ── trust row: tick, a rule, and the marks. One row, tiny. ─────────────── */
 /* ONE MULTIPLIER FOR THE WHOLE ROW, --cpg-trust-s. The tick, its wording, the
@@ -382,9 +396,10 @@
    the row height on the basket lines. */
 .kbb-cartpage.cpg-squeeze .cpg-trust{display:flex;align-items:center;justify-content:center;
   gap:calc(7px * var(--cpg-trust-s));flex-wrap:wrap;padding:calc(10px * var(--cpg-trust-s)) 0 0;
-  font-size:calc(10.5px * var(--cpg-trust-s));color:var(--muted)}
+  font-size:calc(10.5px * var(--cpg-trust-s));color:var(--muted)}.kbb-cartpage.cpg-squeeze .cpg-trust{gap:calc((7px * var(--cpg-trust-s))*var(--cgs,1)) calc(7px * var(--cpg-trust-s));flex-wrap:wrap;padding:calc((10px * var(--cpg-trust-s))*var(--cgs,1)) 0 0;
+  font-size:calc((10.5px * var(--cpg-trust-s))*var(--cgt,1));color:var(--muted)}
 .kbb-cartpage.cpg-squeeze .cpg-trust .sec{display:inline-flex;align-items:center;
-  gap:calc(4px * var(--cpg-trust-s));white-space:nowrap}
+  gap:calc(4px * var(--cpg-trust-s));white-space:nowrap}.kbb-cartpage.cpg-squeeze .cpg-trust .sec{gap:calc((4px * var(--cpg-trust-s))*var(--cgs,1)) calc(4px * var(--cpg-trust-s));white-space:nowrap}
 .kbb-cartpage.cpg-squeeze .cpg-trust .sec svg{width:calc(13px * var(--cpg-trust-s));
   height:calc(13px * var(--cpg-trust-s));color:var(--green);flex:none}
 .kbb-cartpage.cpg-squeeze .cpg-trust .sep{color:var(--line-2)}
@@ -395,9 +410,10 @@
    the size the slider asked for and take a second line when it needs one. The
    marks' own max-width:100% is still the floor, so a single mark too wide for a
    320px screen scales down rather than overlapping its neighbour. */
-.kbb-cartpage.cpg-squeeze .paylogos{margin:0;gap:calc(4px * var(--cpg-trust-s));flex-wrap:wrap}
+.kbb-cartpage.cpg-squeeze .paylogos{margin:0;gap:calc(4px * var(--cpg-trust-s));flex-wrap:wrap}.kbb-cartpage.cpg-squeeze .paylogos{gap:calc((4px * var(--cpg-trust-s))*var(--cgs,1)) calc(4px * var(--cpg-trust-s));flex-wrap:wrap}
 .kbb-cartpage.cpg-squeeze .paylogos span{height:calc(16px * var(--cpg-trust-s));
   padding:0 calc(4px * var(--cpg-trust-s));font-size:calc(6.5px * var(--cpg-trust-s));
+  display:grid;place-items:center;letter-spacing:.03em;border-radius:3px;background:#fff}.kbb-cartpage.cpg-squeeze .paylogos span{font-size:calc((6.5px * var(--cpg-trust-s))*var(--cgt,1));
   display:grid;place-items:center;letter-spacing:.03em;border-radius:3px;background:#fff}
 
 /* ── the two floating rows ──────────────────────────────────────────────── */
@@ -540,7 +556,8 @@
    larger setting grows the bar; it cannot crop the wording. */
 .kbb-cartpage.cpg-squeeze .cpg-addrbar{display:flex;align-items:center;justify-content:space-between;
   gap:10px;min-height:var(--cpg-addr-h);padding:0 14px;background:#fff;
-  border-top:1px solid var(--line-2);font-size:calc(11.5px * var(--cpg-bar-f) * var(--cpg-addr-f))}
+  border-top:1px solid var(--line-2);font-size:calc(11.5px * var(--cpg-bar-f) * var(--cpg-addr-f))}.kbb-cartpage.cpg-squeeze .cpg-addrbar{gap:calc(10px*var(--cgs,1)) 10px;min-height:var(--cpg-addr-h);padding:0 14px;background:#fff;
+  border-top:1px solid var(--line-2);font-size:calc((11.5px * var(--cpg-bar-f) * var(--cpg-addr-f))*var(--cgt,1))}
 .kbb-cartpage.cpg-squeeze .cpg-addrbar .who{min-width:0;overflow:hidden}
 /* ONE LINE, FADED OFF AT THE RIGHT — "the shown address should be blured cut
    from the right side, if the address is going too long. i want in one line
@@ -579,7 +596,7 @@
    off the right, and thickening it is what makes that fade read as a smear. */
 .kbb-cartpage.cpg-squeeze .cpg-addrbar .who b{font-weight:var(--cpg-addr-bold);color:var(--ink-2)}
 .kbb-cartpage.cpg-squeeze .cpg-addrbar .who span{color:var(--muted);
-  font-size:calc(10px * var(--cpg-bar-f) * var(--cpg-addr-f))}
+  font-size:calc(10px * var(--cpg-bar-f) * var(--cpg-addr-f))}.kbb-cartpage.cpg-squeeze .cpg-addrbar .who span{font-size:calc((10px * var(--cpg-bar-f) * var(--cpg-addr-f))*var(--cgt,1))}
 /* Its own multiplier ON TOP of the shared bar scale, never instead of it, so
    this slider and "Text in both rows" cannot fight and neither can silently
    win — the same rule the row-text slider follows. */
@@ -593,6 +610,7 @@
   font-family:inherit}
 .kbb-cartpage.cpg-squeeze .cpg-cobar{display:flex;align-items:center;justify-content:space-between;
   gap:12px;min-height:var(--cpg-co-h);padding:0 14px;background:#fff;
+  border-top:1px solid var(--line-2)}.kbb-cartpage.cpg-squeeze .cpg-cobar{gap:calc(12px*var(--cgs,1)) 12px;min-height:var(--cpg-co-h);padding:0 14px;background:#fff;
   border-top:1px solid var(--line-2)}
 .kbb-cartpage.cpg-squeeze .cpg-cobar .tally{min-width:0}
 /* `> span`, AND THE CHILD COMBINATOR IS THE WHOLE FIX.
@@ -610,9 +628,9 @@
    The item count is the only direct span child, so the child combinator says
    what this rule always meant. */
 .kbb-cartpage.cpg-squeeze .cpg-cobar .tally > span{display:block;color:var(--muted);
-  font-size:calc(11px * var(--cpg-bar-f))}
+  font-size:calc(11px * var(--cpg-bar-f))}.kbb-cartpage.cpg-squeeze .cpg-cobar .tally > span{font-size:calc((11px * var(--cpg-bar-f))*var(--cgt,1))}
 .kbb-cartpage.cpg-squeeze .cpg-cobar .tally b{display:block;font-weight:700;
-  font-size:calc(17px * var(--cpg-bar-f))}
+  font-size:calc(17px * var(--cpg-bar-f))}.kbb-cartpage.cpg-squeeze .cpg-cobar .tally b{font-size:calc((17px * var(--cpg-bar-f))*var(--cgt,1))}
 /* And said again from the other side, because the rule above is one careless
    edit away from being a descendant selector once more, and the failure it
    produces is silent. The symbol and its digits are one inline run at the
@@ -635,7 +653,8 @@
   text-overflow:ellipsis;text-align:center;
   background:var(--green);border-radius:10px;box-shadow:none;
   padding:calc(11px * var(--cpg-bar-f)) calc(16px * var(--cpg-bar-f));
-  font-size:calc(15px * var(--cpg-bar-f))}
+  font-size:calc(15px * var(--cpg-bar-f))}.kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn{padding:calc((11px * var(--cpg-bar-f))*var(--cgs,1)) calc(16px * var(--cpg-bar-f));
+  font-size:calc((15px * var(--cpg-bar-f))*var(--cgt,1))}
 /* The tally neither grows nor shrinks: `0 0 auto`.
 
    It does not grow, so the button keeps whatever is left rather than being
@@ -799,9 +818,10 @@
      so one long unbroken product name would push the column wider than the
      page instead of wrapping inside it. */
   .kbb-cartpage.cpg-squeeze.cpg-d .grid > *{grid-column:1}
-  .kbb-cartpage.cpg-squeeze.cpg-d .grid{row-gap:var(--cpg-d-secgap,16px)}
+  .kbb-cartpage.cpg-squeeze.cpg-d .grid{row-gap:var(--cpg-d-secgap,16px)}.kbb-cartpage.cpg-squeeze.cpg-d .grid{row-gap:calc(var(--cpg-d-secgap,16px)*var(--cgs,1))}
   .kbb-cartpage.cpg-squeeze.cpg-d .grid > .cpg-side{
     display:flex;flex-direction:column;gap:var(--cpg-d-secgap,16px);
+    grid-column:2;grid-row:1 / span 99}.kbb-cartpage.cpg-squeeze.cpg-d .grid > .cpg-side{gap:calc(var(--cpg-d-secgap,16px)*var(--cgs,1)) var(--cpg-d-secgap,16px);
     grid-column:2;grid-row:1 / span 99}
 
   /* ── Padding inside a section ───────────────────────────────────────────
@@ -810,8 +830,8 @@
      because the phone's column IS the page; here the page has a gutter of its
      own and a section's padding is a separate decision. */
   .kbb-cartpage.cpg-squeeze.cpg-d .items,
-  .kbb-cartpage.cpg-squeeze.cpg-d .sum{padding:var(--cpg-d-secpad,16px)}
-  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-rec{padding:var(--cpg-d-secpad,16px)}
+  .kbb-cartpage.cpg-squeeze.cpg-d .sum{padding:var(--cpg-d-secpad,16px)}.kbb-cartpage.cpg-squeeze.cpg-d .items, .kbb-cartpage.cpg-squeeze.cpg-d .sum{padding:calc(var(--cpg-d-secpad,16px)*var(--cgs,1)) var(--cpg-d-secpad,16px)}
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-rec{padding:var(--cpg-d-secpad,16px)}.kbb-cartpage.cpg-squeeze.cpg-d .cpg-rec{padding:calc(var(--cpg-d-secpad,16px)*var(--cgs,1)) var(--cpg-d-secpad,16px)}
 
   /* The right column travels with the page once it reaches the top. This is
      NOT the phone's fixed bar and the difference is the point: the owner asked
@@ -826,7 +846,7 @@
   .kbb-cartpage.cpg-squeeze.cpg-d .cpg-docked{
     position:static;z-index:auto;width:auto;
     border:1px solid var(--line-2);border-radius:14px;overflow:hidden;
-    padding:var(--cpg-d-dockpad,14px)}
+    padding:var(--cpg-d-dockpad,14px)}.kbb-cartpage.cpg-squeeze.cpg-d .cpg-docked{padding:calc(var(--cpg-d-dockpad,14px)*var(--cgs,1)) var(--cpg-d-dockpad,14px)}
 
   /* The stepper's desktop multiplier, on both of the phone's calc()s so the
      box and the glyph keep scaling as one shape -- the same rule `qty_size`
@@ -912,25 +932,27 @@
 /* ── THE 13 OCTOBER LAYOUT (2.60.495) ──────────────────────────────────────
    Appearance -> Cart page -> 13 October layout. Every rule is scoped to the
    class its switch prints, so with a switch off the page is as before. */
-.kbb-cartpage.cpg-squeeze .cpg-totband.cpg-tb2{display:block;padding:11px 12px 10px}
-.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ov{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:15px;font-weight:600}
+.kbb-cartpage.cpg-squeeze .cpg-totband.cpg-tb2{display:block;padding:11px 12px 10px}.kbb-cartpage.cpg-squeeze .cpg-totband.cpg-tb2{padding:calc(11px*var(--cgs,1)) 12px calc(10px*var(--cgs,1))}
+.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ov{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:15px;font-weight:600}.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ov{gap:calc(10px*var(--cgs,1)) 10px;font-size:calc(15px*var(--cgt,1));font-weight:600}
 .kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ov .tr{text-align:end;white-space:nowrap}
 .kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ov .tr b{display:inline;font-weight:700}
-.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ov .cpg-was{display:inline;margin-inline-end:6px;font-size:13px;font-weight:500;color:#9A9298;text-decoration:line-through}
-.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ship{margin-top:3px;font-size:12px;font-weight:400;color:#8A8288}
-.kbb-cartpage .co-tk{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin-bottom:9px;font-size:12px;line-height:1.2;color:var(--ink,#2A2228)}
+.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ov .cpg-was{display:inline;margin-inline-end:6px;font-size:13px;font-weight:500;color:#9A9298;text-decoration:line-through}.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ov .cpg-was{font-size:calc(13px*var(--cgt,1));font-weight:500;color:#9A9298;text-decoration:line-through}
+.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ship{margin-top:3px;font-size:12px;font-weight:400;color:#8A8288}.kbb-cartpage.cpg-squeeze .cpg-tb2 .cpg-ship{margin-top:calc(3px*var(--cgs,1));font-size:calc(12px*var(--cgt,1));font-weight:400;color:#8A8288}
+.kbb-cartpage .co-tk{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin-bottom:9px;font-size:12px;line-height:1.2;color:var(--ink,#2A2228)}.kbb-cartpage .co-tk{gap:calc(6px*var(--cgs,1)) 6px;max-width:100%;margin-bottom:calc(9px*var(--cgs,1));font-size:calc(12px*var(--cgt,1));line-height:1.2;color:var(--ink,#2A2228)}
 .kbb-cartpage .co-tk svg{width:14px;height:14px;flex:none;color:#1F7D52}
 .kbb-cartpage .co-tk-code{font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .kbb-cartpage .co-tk-off{font-weight:700;color:#1F7D52;white-space:nowrap}
 .kbb-cartpage .co-tk .co-tk-x{flex:none;display:grid;place-items:center;width:22px;height:22px;margin:-2px -2px -2px 0;padding:0;border:0;border-radius:50%;
-  background:none;color:#8A8288;font-size:15px;line-height:1;cursor:pointer;position:relative}
+  background:none;color:#8A8288;font-size:15px;line-height:1;cursor:pointer;position:relative}.kbb-cartpage .co-tk .co-tk-x{margin:calc(-2px*var(--cgs,1)) -2px calc(-2px*var(--cgs,1)) 0;padding:0;border:0;border-radius:50%;
+  background:none;color:#8A8288;font-size:calc(15px*var(--cgt,1));line-height:1;cursor:pointer;position:relative}
 .kbb-cartpage .co-tk .co-tk-x::after{content:"";position:absolute;inset:-11px}
-.kbb-cartpage .co-tk-ticket{background:#fff;border:1.5px dashed #7CC4A0;border-radius:9px;padding:4px 6px 4px 10px}
-.kbb-cartpage .co-tk-tag{background:#fff;border:1px solid #CFE8DA;border-radius:99px;padding:4px 6px 4px 10px}
-.kbb-cartpage .co-tk-line{padding:2px 0}
+.kbb-cartpage .co-tk-ticket{background:#fff;border:1.5px dashed #7CC4A0;border-radius:9px;padding:4px 6px 4px 10px}.kbb-cartpage .co-tk-ticket{padding:calc(4px*var(--cgs,1)) 6px calc(4px*var(--cgs,1)) 10px}
+.kbb-cartpage .co-tk-tag{background:#fff;border:1px solid #CFE8DA;border-radius:99px;padding:4px 6px 4px 10px}.kbb-cartpage .co-tk-tag{padding:calc(4px*var(--cgs,1)) 6px calc(4px*var(--cgs,1)) 10px}
+.kbb-cartpage .co-tk-line{padding:2px 0}.kbb-cartpage .co-tk-line{padding:calc(2px*var(--cgs,1)) 0}
 .kbb-cartpage .co-tk-line svg{color:#8A8288}
 .kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn.cpg-cob2{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#111;
-  font-size:calc(var(--cpg-cob-f,14px) * var(--cpg-bar-f))}
+  font-size:calc(var(--cpg-cob-f,14px) * var(--cpg-bar-f))}.kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn.cpg-cob2{gap:calc(7px*var(--cgs,1)) 7px;background:#111;
+  font-size:calc((var(--cpg-cob-f,14px) * var(--cpg-bar-f))*var(--cgt,1))}
 .kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn.cpg-cob2:hover{background:#000}
 .kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn.cpg-cob2 > span{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn.cpg-cob2 svg{flex:none}

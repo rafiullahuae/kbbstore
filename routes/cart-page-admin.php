@@ -76,3 +76,14 @@ Route::post('/cart-page', [CartPageApiController::class, 'save'])
 Route::get('/cart-page/products', [CartPageApiController::class, 'products'])
     ->middleware('throttle:120,1')
     ->name('admin.cart-page.products');
+
+/*
+ * Lane CK (22 October): the REAL cart page behind Appearance -> Cart page ->
+ * Desktop / Mobile · Text sizes' live preview -- one GET per language when
+ * the tab opens, none per slider. Under cart-page/** in AdminCapabilities, so
+ * it is cartpage.manage like the screen. Writes nothing (ShopLivePreview rolls
+ * its sample basket back); clear_caches_lane_ck_text_sizes ships with it.
+ */
+Route::get('/cart-page/live', [\App\Http\Controllers\Admin\ShopLivePreviewController::class, 'cart'])
+    ->middleware('throttle:60,1')
+    ->name('admin.cart-page.live');

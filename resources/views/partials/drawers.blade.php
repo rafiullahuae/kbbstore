@@ -10,7 +10,7 @@
     up under the last line item instead of sitting at the foot of the panel.
 --}}
 @php $cp = app(\App\Services\CartPanel::class); @endphp
-<aside class="drawer {{ $cp->bodyClass() }}" id="cart" style="{{ $cp->cssVariables() }}"
+{!! $cp->fitStyle() !!}<aside class="drawer {{ $cp->bodyClass() }}" id="cart" style="{{ $cp->cssVariables() }}"
        data-cp="{{ json_encode($cp->jsConfig()) }}">
     @include('partials.cart-drawer')
 {{-- The "added" tick: Appearance → Cart panel → Behaviour → "When

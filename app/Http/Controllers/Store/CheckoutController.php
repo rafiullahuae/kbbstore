@@ -420,7 +420,14 @@ class CheckoutController extends Controller
             // "City / area" box instead, and that box always held the area, so
             // it is taken as line 2 rather than refused. The typed mode is
             // unchanged.
-            'billing_address_2' => [$listMode ? 'required_without:billing_city' : 'nullable', 'nullable', 'string', 'max:255'],
+            //
+            // Lane CK (22 October): NOT REQUIRED any more, the owner's word --
+            // "Area / Street" left empty places the order. Building (line 1)
+            // and the Emirate stay required, so a courier still has an address;
+            // Tabby and Tamara were already sent line 2 only when there is one.
+            // MUTATION: put 'required_without:billing_city' back and
+            // LaneCkStreetOptionalTest's empty-street orders are refused.
+            'billing_address_2' => ['nullable', 'string', 'max:255'],
             'billing_city' => [$listMode ? 'nullable' : 'required', 'string', 'max:120'],
             // A free-text field on the live site, not a fixed list.
             'billing_state' => ['required', 'string', 'max:120'],

@@ -116,6 +116,10 @@
  *   in" -- 22 lines inserted, 0 modified, 0 removed.)
  *   (Lane CSM: checkout_page `signin_member` -- "Already a member?" before
  *   "Sign in", option B -- 11 lines inserted, 0 modified, 0 removed.)
+ *   (Lane CK, 22 October: the text sizes -- Overall text / spacing / lock,
+ *   the new roles and the small-phone steps on cart_panel, cart_page and
+ *   checkout_page, and checkout_page `fl_tone` -- 59 keys, 538 lines
+ *   inserted, 0 modified, 0 removed, by exactly this method.)
  *
  *   Take the new rows and nothing else: rebuild the corpus, then for every line
  *   whose identity (module|key|type|input) is already in the fixture, keep the

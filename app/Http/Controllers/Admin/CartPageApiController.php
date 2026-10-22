@@ -80,12 +80,15 @@ class CartPageApiController extends Controller
             // Lane QK7: the preview draws the free-delivery bar only while the
             // checkout's switch for both pages is on, so it shows the shop.
             'fsBar' => app(\App\Services\CheckoutPage::class)->freeDeliveryBar(),
+            // Lane CK: the Text sizes tabs' Arabic values and the live preview's map.
+            'type' => CartPage::typeDescriptor(),
+            'ar' => (object) $this->page->arValues(),
         ]);
     }
 
     public function save(Request $request): JsonResponse
     {
-        $data = $request->validate(['settings' => ['required', 'array']]);
+        $data = $request->validate(['settings' => ['required', 'array'], 'ar' => ['sometimes', 'array']]);
 
         $unknown = array_diff(array_keys($data['settings']), array_keys(CartPage::SCHEMA));
 
@@ -93,7 +96,20 @@ class CartPageApiController extends Controller
             return response()->json(['ok' => false, 'error' => 'Unknown setting: ' . implode(', ', $unknown)], 422);
         }
 
+        // Lane CK: an Arabic value may only be one of the text sizes.
+        $unknownAr = array_diff(array_keys($data['ar'] ?? []), CartPage::arKeys());
+
+        if ($unknownAr !== []) {
+            return response()->json(['ok' => false, 'error' => 'Unknown Arabic size: ' . implode(', ', $unknownAr)], 422);
+        }
+
         $this->page->save($data['settings']);
+
+        // Sent by the screen on every Save; a request without it leaves the
+        // Arabic sizes as they were.
+        if ($request->has('ar')) {
+            $this->page->saveAr($data['ar'] ?? []);
+        }
 
         return response()->json(['ok' => true]);
     }

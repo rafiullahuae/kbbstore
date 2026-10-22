@@ -145,7 +145,10 @@ it('routes every reset-to-default control in the admin through the dialog', func
     // editor, which asks for itself (data-kbb-asks + window.kbbConfirm).
     // ▲ Lane SBC: +1, "Restore the eight concerns" in the Shop by Concern tab
     // editor, which asks for itself the same way.
-    expect(count($controls))->toBe(56);
+    // ▲ Lane CK: +1, "Reset" on an Arabic text size (Appearance -> Checkout page,
+    // Cart page, Cart panel -> Text sizes -> Arabic), back to "Same as English";
+    // it asks for itself (data-kbb-asks + window.kbbConfirm).
+    expect(count($controls))->toBe(57);
 });
 
 it('names a control that still exists for every row of the list', function () {
@@ -175,6 +178,8 @@ it('asks once, in the admin box, where a screen asks for itself', function () {
         'partials/concern-chips-editor.blade.php' => 'data-kcc-reset data-kbb-asks',
         // Lane SBC: the Shop by Concern tab editor's "Restore the eight concerns".
         'partials/sbc-tabs-editor.blade.php' => 'data-ksb-reset data-kbb-asks',
+        // Lane CK: Text sizes, Arabic tab -- "Reset" back to Same as English.
+        'partials/shop-type-live.blade.php' => 'data-kbb-asks data-ktl-reset',
     ];
 
     $marked = 0;

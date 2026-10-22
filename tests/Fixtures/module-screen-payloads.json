@@ -230,6 +230,106 @@
             },
             "default": 100,
             "value": 100
+          },
+          {
+            "key": "ov_text",
+            "name": "ov_text",
+            "type": "range",
+            "label": "Overall · Text %",
+            "help": "Every text in the panel at once, on top of the sizes above. 0 is today.",
+            "options": {
+              "min": -10,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "ov_space",
+            "name": "ov_space",
+            "type": "range",
+            "label": "Overall · Spacing %",
+            "help": "The space above and below everything in the panel. Its width and side padding never move. 0 is today.",
+            "options": {
+              "min": -10,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "ov_link",
+            "name": "ov_link",
+            "type": "bool",
+            "label": "Lock Spacing % to Text %",
+            "help": "On: spacing grows with the text. Off: the two move separately.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "tabs_size",
+            "name": "tabs_size",
+            "type": "range",
+            "label": "Cart / Browsed tabs",
+            "help": "100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "sum_size",
+            "name": "sum_size",
+            "type": "range",
+            "label": "Subtotal line",
+            "help": "100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "help_size",
+            "name": "help_size",
+            "type": "range",
+            "label": "Helper and notice text",
+            "help": "The free-delivery line and notes. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "coupon_size",
+            "name": "coupon_size",
+            "type": "range",
+            "label": "Coupon line",
+            "help": "100% is today. (On a phone the coupon ticket fits itself to the width and keeps doing so.)",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
           }
         ]
       },
@@ -535,6 +635,136 @@
             },
             "default": 50,
             "value": 50
+          },
+          {
+            "key": "ov_text_m",
+            "name": "ov_text_m",
+            "type": "range",
+            "label": "Overall · Text %",
+            "help": "Every text in the phone panel at once, on top of the sizes above. 0 is today.",
+            "options": {
+              "min": -10,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "ov_space_m",
+            "name": "ov_space_m",
+            "type": "range",
+            "label": "Overall · Spacing %",
+            "help": "The space above and below everything in the panel. Its width and side padding never move. 0 is today.",
+            "options": {
+              "min": -10,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "ov_link_m",
+            "name": "ov_link_m",
+            "type": "bool",
+            "label": "Lock Spacing % to Text %",
+            "help": "On: spacing grows with the text. Off: the two move separately.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "tabs_size_m",
+            "name": "tabs_size_m",
+            "type": "range",
+            "label": "Cart / Browsed tabs",
+            "help": "100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "sum_size_m",
+            "name": "sum_size_m",
+            "type": "range",
+            "label": "Subtotal line",
+            "help": "100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "help_size_m",
+            "name": "help_size_m",
+            "type": "range",
+            "label": "Helper and notice text",
+            "help": "100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "coupon_size_m",
+            "name": "coupon_size_m",
+            "type": "range",
+            "label": "Coupon line",
+            "help": "100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "fit_1_m",
+            "name": "fit_1_m",
+            "type": "range",
+            "label": "Small phones · smaller by, at 374px and below",
+            "help": "Only sizes you have set ABOVE today are taken down, and never below today's size.",
+            "options": {
+              "min": 0,
+              "max": 20,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 5,
+            "value": 5
+          },
+          {
+            "key": "fit_2_m",
+            "name": "fit_2_m",
+            "type": "range",
+            "label": "Small phones · smaller by, at 340px and below",
+            "help": "The same, on the narrowest phones. Counted from your size.",
+            "options": {
+              "min": 0,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 10,
+            "value": 10
           }
         ]
       },
@@ -9519,6 +9749,280 @@
             "value": "/"
           }
         ]
+      },
+      {
+        "key": "type_d",
+        "label": "Desktop · Text sizes",
+        "description": "Every size is a share of what the cart page draws today, so 100% (and Overall 0) is the page exactly as it is. The product name and brand sizes are the Product rows controls, shown here too. English / Arabic at the top; the real page beside.",
+        "fields": [
+          {
+            "key": "tx_ov_text",
+            "name": "tx_ov_text",
+            "type": "range",
+            "label": "Overall · Text %",
+            "help": "Every text on the cart page at once, on top of the sizes below. 0 is today.",
+            "options": {
+              "min": -10,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "tx_ov_space",
+            "name": "tx_ov_space",
+            "type": "range",
+            "label": "Overall · Spacing %",
+            "help": "The space above and below everything. Widths and side margins never move. 0 is today.",
+            "options": {
+              "min": -10,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "tx_ov_link",
+            "name": "tx_ov_link",
+            "type": "bool",
+            "label": "Lock Spacing % to Text %",
+            "help": "On: spacing grows with the text. Off: the two move separately.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "tx_sumhead",
+            "name": "tx_sumhead",
+            "type": "range",
+            "label": "“Order summary” heading",
+            "help": "100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "tx_rows",
+            "name": "tx_rows",
+            "type": "range",
+            "label": "Summary rows",
+            "help": "Subtotal, delivery, discount. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "tx_total",
+            "name": "tx_total",
+            "type": "range",
+            "label": "Summary total",
+            "help": "The Total line and the total band. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "tx_coupon",
+            "name": "tx_coupon",
+            "type": "range",
+            "label": "Coupon line",
+            "help": "The coupon box and the coupon hint. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "tx_help",
+            "name": "tx_help",
+            "type": "range",
+            "label": "Helper and notice text",
+            "help": "The delivery line, the payment marks line and the small notes. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          }
+        ]
+      },
+      {
+        "key": "type_m",
+        "label": "Mobile · Text sizes",
+        "description": "The same roles on a phone (900px and narrower), their own values. Small phones: sizes set above today come down a little on the narrowest phones, never below today.",
+        "fields": [
+          {
+            "key": "tx_ov_text_m",
+            "name": "tx_ov_text_m",
+            "type": "range",
+            "label": "Overall · Text %",
+            "help": "Every text on the phone cart page at once, on top of the sizes below. 0 is today.",
+            "options": {
+              "min": -10,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "tx_ov_space_m",
+            "name": "tx_ov_space_m",
+            "type": "range",
+            "label": "Overall · Spacing %",
+            "help": "The space above and below everything. Widths and side margins never move. 0 is today.",
+            "options": {
+              "min": -10,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "tx_ov_link_m",
+            "name": "tx_ov_link_m",
+            "type": "bool",
+            "label": "Lock Spacing % to Text %",
+            "help": "On: spacing grows with the text. Off: the two move separately.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "tx_sumhead_m",
+            "name": "tx_sumhead_m",
+            "type": "range",
+            "label": "“Order summary” heading",
+            "help": "100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "tx_rows_m",
+            "name": "tx_rows_m",
+            "type": "range",
+            "label": "Summary rows",
+            "help": "Subtotal, delivery, discount. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "tx_total_m",
+            "name": "tx_total_m",
+            "type": "range",
+            "label": "Summary total",
+            "help": "The Total line and the total band. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "tx_coupon_m",
+            "name": "tx_coupon_m",
+            "type": "range",
+            "label": "Coupon line",
+            "help": "The coupon box and the coupon hint. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "tx_help_m",
+            "name": "tx_help_m",
+            "type": "range",
+            "label": "Helper and notice text",
+            "help": "The delivery line, the payment marks line and the small notes. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "tx_fit_1_m",
+            "name": "tx_fit_1_m",
+            "type": "range",
+            "label": "Small phones · smaller by, at 374px and below",
+            "help": "Only sizes you have set ABOVE today are taken down, and never below today's size.",
+            "options": {
+              "min": 0,
+              "max": 20,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 5,
+            "value": 5
+          },
+          {
+            "key": "tx_fit_2_m",
+            "name": "tx_fit_2_m",
+            "type": "range",
+            "label": "Small phones · smaller by, at 340px and below",
+            "help": "The same, on the narrowest phones. Counted from your size.",
+            "options": {
+              "min": 0,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 10,
+            "value": 10
+          }
+        ]
       }
     ],
     "chosen": [],
@@ -9935,6 +10439,166 @@
               "step": 5,
               "unit": "%"
             }
+          },
+          {
+            "key": "d_ov_text",
+            "name": "d_ov_text",
+            "type": "range",
+            "label": "Overall · Text %",
+            "help": "Every text on the desktop checkout at once, on top of the sizes below. 0 is today.",
+            "options": {
+              "min": -10,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "d_ov_space",
+            "name": "d_ov_space",
+            "type": "range",
+            "label": "Overall · Spacing %",
+            "help": "The space above and below everything — padding, gaps between rows and sections. Widths and side margins never move. 0 is today.",
+            "options": {
+              "min": -10,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "d_ov_link",
+            "name": "d_ov_link",
+            "type": "bool",
+            "label": "Lock Spacing % to Text %",
+            "help": "On: spacing grows with the text, so the page keeps its proportions. Off: the two move separately.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "d_t_rows",
+            "name": "d_t_rows",
+            "type": "range",
+            "label": "Summary rows",
+            "help": "Subtotal, Delivery, Discount in the order summary. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "d_t_total",
+            "name": "d_t_total",
+            "type": "range",
+            "label": "Summary total",
+            "help": "The Total line. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "d_t_coupon",
+            "name": "d_t_coupon",
+            "type": "range",
+            "label": "Coupon line",
+            "help": "The coupon box, the \"Apply coupon\" line and its messages. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "d_t_help",
+            "name": "d_t_help",
+            "type": "range",
+            "label": "Helper and notice text",
+            "help": "The small grey lines: \"We send your order confirmation here\", delivery notes, the secure-payment line, notices. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "d_t_dlv",
+            "name": "d_t_dlv",
+            "type": "range",
+            "label": "Delivery option names",
+            "help": "The \"3 Delivery\" choices. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "d_t_pay",
+            "name": "d_t_pay",
+            "type": "range",
+            "label": "Payment method names and descriptions",
+            "help": "Card, Tabby, Tamara, Cash on delivery and the lines under them. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "d_t_tick",
+            "name": "d_t_tick",
+            "type": "range",
+            "label": "Tick-box lines",
+            "help": "\"Create an account\", \"This is a gift\" and the other ticks — on top of Field label size, which they also follow. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "d_t_flift",
+            "name": "d_t_flift",
+            "type": "range",
+            "label": "Field label once lifted",
+            "help": "The small grey heading inside a filled field (\"Phone\", \"Emirate\") — 10.5px today. While a field is empty its label is the placeholder, which follows Field text size.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
           }
         ]
       },
@@ -10549,6 +11213,196 @@
               "step": 5,
               "unit": "%"
             }
+          },
+          {
+            "key": "m_ov_text",
+            "name": "m_ov_text",
+            "type": "range",
+            "label": "Overall · Text %",
+            "help": "Every text on the phone checkout at once, on top of the sizes below. 0 is today. Field text never goes under the 16px that stops iPhones zooming.",
+            "options": {
+              "min": -10,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "m_ov_space",
+            "name": "m_ov_space",
+            "type": "range",
+            "label": "Overall · Spacing %",
+            "help": "The space above and below everything. Widths and side margins never move. 0 is today.",
+            "options": {
+              "min": -10,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "m_ov_link",
+            "name": "m_ov_link",
+            "type": "bool",
+            "label": "Lock Spacing % to Text %",
+            "help": "On: spacing grows with the text. Off: the two move separately.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "m_t_rows",
+            "name": "m_t_rows",
+            "type": "range",
+            "label": "Summary rows",
+            "help": "Subtotal, Delivery, Discount in the order summary. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "m_t_total",
+            "name": "m_t_total",
+            "type": "range",
+            "label": "Summary total",
+            "help": "The Total line, and the total in the summary bar. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "m_t_coupon",
+            "name": "m_t_coupon",
+            "type": "range",
+            "label": "Coupon line",
+            "help": "The coupon box and its messages. 100% is today. (The one-line \"Apply coupon\" strip on a phone fits itself to the width and keeps doing so.)",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "m_t_help",
+            "name": "m_t_help",
+            "type": "range",
+            "label": "Helper and notice text",
+            "help": "The small grey lines and notices. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "m_t_dlv",
+            "name": "m_t_dlv",
+            "type": "range",
+            "label": "Delivery option names",
+            "help": "The \"3 Delivery\" choices. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "m_t_pay",
+            "name": "m_t_pay",
+            "type": "range",
+            "label": "Payment method names and descriptions",
+            "help": "Card, Tabby, Tamara, Cash on delivery and the lines under them. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "m_t_tick",
+            "name": "m_t_tick",
+            "type": "range",
+            "label": "Tick-box lines",
+            "help": "The tick lines, on top of Field label size. 100% is today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "m_t_flift",
+            "name": "m_t_flift",
+            "type": "range",
+            "label": "Field label once lifted",
+            "help": "The small grey heading inside a filled field — 10.5px today.",
+            "options": {
+              "min": 70,
+              "max": 160,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          },
+          {
+            "key": "m_fit_1",
+            "name": "m_fit_1",
+            "type": "range",
+            "label": "Small phones · smaller by, at 374px and below",
+            "help": "Only sizes you have set ABOVE today are taken down, and never below today's size. Nothing happens while every size is at or under 100%.",
+            "options": {
+              "min": 0,
+              "max": 20,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 5,
+            "value": 5
+          },
+          {
+            "key": "m_fit_2",
+            "name": "m_fit_2",
+            "type": "range",
+            "label": "Small phones · smaller by, at 340px and below",
+            "help": "The same, on the narrowest phones. Counted from your size, not on top of the step above.",
+            "options": {
+              "min": 0,
+              "max": 25,
+              "step": 1,
+              "unit": "%"
+            },
+            "default": 10,
+            "value": 10
           }
         ]
       },
@@ -11139,6 +11993,19 @@
             "default": false,
             "value": false,
             "options": null
+          },
+          {
+            "key": "fl_tone",
+            "name": "fl_tone",
+            "type": "select",
+            "label": "Field label colour once lifted",
+            "help": "The small heading inside a filled field (\"Phone\", \"Emirate\"). Grey, as asked (22 October), is the same muted ink the label rests in; a field left empty or wrong still turns red.",
+            "options": {
+              "grey": "Grey — as asked, 22 October",
+              "pink": "The shop's pink — as before"
+            },
+            "default": "grey",
+            "value": "grey"
           },
           {
             "key": "addr_cue",

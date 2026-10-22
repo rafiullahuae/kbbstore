@@ -1,0 +1,223 @@
+[
+ {
+  "lang": "en",
+  "w": 390,
+  "sw": 390,
+  "iw": 390,
+  "email": {
+   "text": "Email address *",
+   "color": "rgb(117, 108, 116)",
+   "size": "14px",
+   "star": "inline"
+  },
+  "name": {
+   "text": "Full name *",
+   "color": "rgb(117, 108, 116)",
+   "size": "14px",
+   "star": "inline"
+  },
+  "phone": {
+   "text": "Phone *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "building": {
+   "text": "Building / Apartment or Villa *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "area": {
+   "text": "Area / Street *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "state": {
+   "text": "Emirate *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "country": {
+   "text": "Country *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "areaRequired": true,
+  "optionalWords": [
+   "optional"
+  ],
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+   "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+  ]
+ },
+ {
+  "lang": "en",
+  "w": 1280,
+  "sw": 1280,
+  "iw": 1280,
+  "email": {
+   "text": "Email address *",
+   "color": "rgb(117, 108, 116)",
+   "size": "14px",
+   "star": "inline"
+  },
+  "name": {
+   "text": "Full name *",
+   "color": "rgb(117, 108, 116)",
+   "size": "14px",
+   "star": "inline"
+  },
+  "phone": {
+   "text": "Phone *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "building": {
+   "text": "Building / Apartment or Villa *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "area": {
+   "text": "Area / Street *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "state": {
+   "text": "Emirate *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "country": {
+   "text": "Country *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "areaRequired": true,
+  "optionalWords": [
+   "optional"
+  ],
+  "errors": [
+   "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "w": 390,
+  "sw": 390,
+  "iw": 390,
+  "email": {
+   "text": "البريد الإلكتروني *",
+   "color": "rgb(117, 108, 116)",
+   "size": "14px",
+   "star": "inline"
+  },
+  "name": {
+   "text": "الاسم الكامل *",
+   "color": "rgb(117, 108, 116)",
+   "size": "14px",
+   "star": "inline"
+  },
+  "phone": {
+   "text": "رقم الهاتف *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "building": {
+   "text": "المبنى / الشقة أو الفيلا *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "area": {
+   "text": "المنطقة / الشارع *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "state": {
+   "text": "الإمارة *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "country": {
+   "text": "الدولة *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "areaRequired": true,
+  "optionalWords": [
+   "اختياري"
+  ],
+  "errors": [
+   "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+  ]
+ },
+ {
+  "lang": "ar",
+  "w": 1280,
+  "sw": 1280,
+  "iw": 1280,
+  "email": {
+   "text": "البريد الإلكتروني *",
+   "color": "rgb(117, 108, 116)",
+   "size": "14px",
+   "star": "inline"
+  },
+  "name": {
+   "text": "الاسم الكامل *",
+   "color": "rgb(117, 108, 116)",
+   "size": "14px",
+   "star": "inline"
+  },
+  "phone": {
+   "text": "رقم الهاتف *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "building": {
+   "text": "المبنى / الشقة أو الفيلا *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "area": {
+   "text": "المنطقة / الشارع *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "state": {
+   "text": "الإمارة *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "country": {
+   "text": "الدولة *",
+   "color": "rgb(200, 84, 114)",
+   "size": "10.5px",
+   "star": "inline"
+  },
+  "areaRequired": true,
+  "optionalWords": [
+   "اختياري"
+  ],
+  "errors": [
+   "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+  ]
+ }
+]

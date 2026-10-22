@@ -234,7 +234,8 @@ it('gives every checkout field the Create account form\'s floating label, keepin
         // these three; the City box is gone and line 2 carries the area.
         'billing_address_1' => ['pin', 'section-billing billing address-line1', 'Building / Apartment or Villa'],
         'billing_state' => ['map', 'section-billing billing address-level1', 'Emirate'],
-        'billing_address_2' => ['city', 'section-billing billing address-line2', 'Area / Street'],
+        // Area / Street is not required since Lane CK (22 October, the owner's
+        // word); it is pinned on its own below.
         'billing_country' => ['globe', 'section-billing billing country', 'Country'],
     ];
 
@@ -260,6 +261,15 @@ it('gives every checkout field the Create account form\'s floating label, keepin
         // AD); the list takes no placeholder, its "Select" line is an option.
         ->and($html)->toContain('<select class="input-text" name="billing_state" id="billing_state" required')
         ->and($html)->not->toMatch('#<select[^>]*placeholder#');
+
+    // Area / Street floats the same way and asks for nothing: no `required`,
+    // no "*", no "(optional)" (Lane CK, 22 October).
+    expect(preg_match('#<p class="form-row[^"]*" id="billing_address_2_field"[^>]*>(.*?)</p>#s', $html, $area))->toBe(1);
+    $citySvg = trim((string) file_get_contents(resource_path('views/partials/icon-city.blade.php')));
+    expect($area[1])->toStartWith('<span class="woocommerce-input-wrapper fld kbb-fl ico"><span class="lead" aria-hidden="true">' . $citySvg . '</span>')
+        ->and($area[1])->toContain('autocomplete="section-billing billing address-line2"')
+        ->and($area[1])->not->toContain('required')
+        ->and($area[1])->toContain('<label for="billing_address_2">Area / Street</label>');
 });
 
 it('floats the discount code, the account password and the gift message the same way', function () {
@@ -277,7 +287,8 @@ it('lifts the label in CSS alone, on focus, on a value and on browser autofill',
 
     expect($css)->toContain('.kbb-checkout .fld.kbb-fl :is(input,textarea):is(:focus,:not(:placeholder-shown),:-webkit-autofill,:autofill) ~ label,')
         ->and($css)->toContain('.kbb-checkout .fld.kbb-fl select ~ label{')
-        ->and($css)->toContain('transform:translateY(calc(-8px - var(--fld-gap,3px)));font-size:10.5px;letter-spacing:.04em;color:var(--pink-deep)}')
+        // Lane CK (22 October): grey once lifted, as asked -- it was --pink-deep.
+        ->and($css)->toContain('transform:translateY(calc(-8px - var(--fld-gap,3px)));font-size:10.5px;letter-spacing:.04em;color:var(--muted)}')
         ->and($css)->toContain('.kbb-checkout .fld.kbb-fl :is(input,textarea):not(:focus)::placeholder{color:transparent}')
         // inset-inline-start, not left: Arabic puts the icon and label on the right.
         ->and($css)->toContain('.kbb-checkout .fld.kbb-fl > label{position:absolute;inset-inline-start:15px')
@@ -293,7 +304,8 @@ it('keeps the server rules and the inline validation hooks the fields always had
     cdSet(['float_labels' => true]);
     $html = cdPage(cdCart());
 
-    foreach (['billing_first_name', 'billing_phone', 'billing_email', 'billing_address_1', 'billing_state', 'billing_address_2', 'billing_country'] as $id) {
+    // billing_address_2 (Area / Street) left this list in Lane CK: not required, as asked.
+    foreach (['billing_first_name', 'billing_phone', 'billing_email', 'billing_address_1', 'billing_state', 'billing_country'] as $id) {
         expect($html)->toMatch('#<p class="form-row [^"]*validate-required[^"]*" id="' . $id . '_field"[^>]*><span class="woocommerce-input-wrapper fld kbb-fl ico">.*?class="input-text" name="' . $id . '"#s');
     }
 
