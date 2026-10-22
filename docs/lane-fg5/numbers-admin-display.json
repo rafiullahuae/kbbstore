@@ -1,0 +1,81 @@
+[
+ {
+  "w": 1280,
+  "defaults": {
+   "cls": "fgp fgp-clamp2",
+   "style": "--fg-ts:12px;--fg-pl:28px;--fg-pr:36px;--fg-fg:16px;--fg-rg:3px",
+   "title": "12px",
+   "photo": 28,
+   "gapFree": 16,
+   "brand": true,
+   "sep": "none"
+  },
+  "changed": {
+   "cls": "fgp fgp-nobrand fgp-fade fgp-sep",
+   "style": "--fg-ts:14px;--fg-pl:40px;--fg-pr:36px;--fg-fg:40px;--fg-rg:3px",
+   "title": "14px",
+   "photo": 40,
+   "gapFree": 40,
+   "brand": false,
+   "sep": "solid"
+  },
+  "requestsWhileEditing": 0,
+  "changedAr": {
+   "cls": "fgp fgp-nobrand fgp-fade fgp-sep",
+   "style": "--fg-ts:14px;--fg-pl:40px;--fg-pr:36px;--fg-fg:40px;--fg-rg:3px",
+   "title": "14px",
+   "photo": 40,
+   "gapFree": 40,
+   "brand": false,
+   "sep": "solid"
+  },
+  "afterReload": {
+   "cls": "fgp fgp-nobrand fgp-fade fgp-sep",
+   "style": "--fg-ts:14px;--fg-pl:40px;--fg-pr:36px;--fg-fg:40px;--fg-rg:3px",
+   "title": "14px",
+   "photo": 40,
+   "gapFree": 40,
+   "brand": false,
+   "sep": "solid"
+  },
+  "savedFreeGapField": "40",
+  "scrollW": 1280,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+ },
+ {
+  "w": 390,
+  "defaults": {
+   "cls": "fgp fgp-clamp2",
+   "style": "--fg-ts:12px;--fg-pl:28px;--fg-pr:36px;--fg-fg:16px;--fg-rg:3px",
+   "title": "12px",
+   "photo": 28,
+   "gapFree": 16,
+   "brand": true,
+   "sep": "none"
+  },
+  "changed": {
+   "cls": "fgp fgp-nobrand fgp-fade fgp-sep",
+   "style": "--fg-ts:14px;--fg-pl:40px;--fg-pr:36px;--fg-fg:40px;--fg-rg:3px",
+   "title": "14px",
+   "photo": 40,
+   "gapFree": 40,
+   "brand": false,
+   "sep": "solid"
+  },
+  "requestsWhileEditing": 0,
+  "afterReload": {
+   "cls": "fgp fgp-nobrand fgp-fade fgp-sep",
+   "style": "--fg-ts:14px;--fg-pl:40px;--fg-pr:36px;--fg-fg:40px;--fg-rg:3px",
+   "title": "14px",
+   "photo": 40,
+   "gapFree": 40,
+   "brand": false,
+   "sep": "solid"
+  },
+  "savedFreeGapField": "40",
+  "scrollW": 390,
+  "errors": []
+ }
+]

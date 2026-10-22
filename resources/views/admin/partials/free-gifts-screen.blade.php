@@ -295,6 +295,8 @@ select.fg-in{padding-inline-end:28px}
 .fg-txr>span{font-size:12.5px;font-weight:600;color:var(--ink-2)}
 .fg-txr>span small{display:block;font-weight:400;color:var(--ink-faint);font-size:11px}
 .fg-txr.hd{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);padding-top:0}
+.fg-look{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.fg-look .fg-in[type=number]{max-width:110px}
 .fg-grp{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:14px 0 2px}
 /* Each part's own Save (Lane FG3) */
 .fg-save{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px;margin-top:14px}
@@ -310,19 +312,28 @@ select.fg-in{padding-inline-end:28px}
 .fgp-w{font-size:12.5px;font-weight:600;margin-top:3px;color:#2a2228;overflow-wrap:anywhere}
 .fgp-cnt{font-weight:500;color:#756c74}
 .fgp-th{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
-.fgp-t{position:relative;display:block;width:36px;height:36px;border-radius:8px;background:#fff;border:1px solid rgba(42,34,40,.08);flex:none;box-sizing:border-box}
+.fgp-t{position:relative;display:block;width:var(--fg-pr,36px);height:var(--fg-pr,36px);border-radius:8px;background:#fff;border:1px solid rgba(42,34,40,.08);flex:none;box-sizing:border-box}
 .fgp-t img{display:block;width:100%;height:100%;object-fit:contain;border-radius:8px}
 .fgp-ph{display:grid;place-items:center;width:100%;height:100%;font-size:10.5px;font-weight:800;color:#8a7d86;background:repeating-linear-gradient(135deg,#faf5f7 0 6px,#f3ebef 6px 12px);border-radius:8px}
 .fgp-t b{position:absolute;top:-6px;inset-inline-end:-6px;background:#2e8f62;color:#fff;font-size:9.5px;font-weight:800;border-radius:999px;min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;display:grid;place-items:center;line-height:1}
 .fgp-tg{color:#2e8f62;font-size:11.5px;font-weight:700;margin-inline-start:4px;align-self:center}
-.fgp-list{margin-top:7px;border-top:1px dashed #2e8f62;padding-top:5px;display:grid;gap:3px}
+.fgp-list{margin-top:7px;border-top:1px dashed #2e8f62;padding-top:5px;display:grid;gap:var(--fg-rg,3px)}
+.fgp-sep .fgp-lr+.fgp-lr{border-top:1px solid #e4eee9;padding-top:var(--fg-rg,3px)}
 .fgp-lr{display:flex;align-items:center;gap:8px}
-.fgp-lr .fgp-t{width:28px;height:28px;border-radius:7px}
+.fgp-lr .fgp-t{width:var(--fg-pl,28px);height:var(--fg-pl,28px);border-radius:7px}
 .fgp-lr .fgp-t img,.fgp-lr .fgp-ph{border-radius:7px}
-.fgp-ln{flex:1;min-width:0;font-size:12px;line-height:1.25;color:#2a2228}
+.fgp-ln{flex:1;min-width:0;font-size:var(--fg-ts,12px);line-height:1.25;color:#2a2228}
+.fgp-nm{display:block}
+.fgp-clamp2 .fgp-nm{max-height:2.5em;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.fgp-fade .fgp-list{grid-template-columns:minmax(0,1fr)}
+.fgp-fade .fgp-nm{white-space:nowrap;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+.fgp-fade .fgp-nm[dir=rtl]{-webkit-mask-image:linear-gradient(270deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(270deg,#000 calc(100% - 28px),transparent)}
+.fgp-fade[dir=rtl] .fgp-nm[dir=ltr]{-webkit-mask-image:none;mask-image:none;text-overflow:ellipsis;text-align:right}
+.fgp-fade[dir=ltr] .fgp-nm[dir=rtl]{-webkit-mask-image:none;mask-image:none;text-overflow:ellipsis;text-align:left}
+.fgp-nobrand .fgp-ln small{display:none}
 .fgp-ln small{display:block;font-size:10px;color:#756c74;text-transform:uppercase;letter-spacing:.04em}
 .fgp-ln em{font-style:normal;font-weight:700}
-.fgp-lv{display:flex;gap:6px;align-items:baseline;font-size:11px;font-weight:800;color:#2e8f62;white-space:nowrap}
+.fgp-lv{display:flex;gap:6px;align-items:baseline;font-size:11px;font-weight:800;color:#2e8f62;white-space:nowrap;margin-inline-start:calc(var(--fg-fg,16px) - 8px)}
 .fgp-lv s{color:#756c74;font-weight:500}
 .fgp-hide{display:block;margin-top:6px;color:#2e8f62;font-size:11.5px;font-weight:700}
 .fgp-none{font-size:12px;color:#756c74;padding:10px 0}
@@ -378,6 +389,24 @@ select.fg-in{padding-inline-end:28px}
   ];
   var HOME_FIELDS = [['title', 'Title'], ['sub', 'Subtitle'], ['btn', 'Button']];
   var MAX_QTY = 50;
+  /* "Gift box look" (Lane FG5): FreeGifts::LOOK, ::LOOK_TITLES and
+     ::LOOK_RANGES, written out because this script is @verbatim
+     (FreeGiftsLookTest pins them equal), normalised here exactly as
+     FreeGifts::lookOf() does, so the preview never shows a value the save
+     would not keep. */
+  var LOOK = {"brand":true,"titles":"clamp2","free_gap":16,"title_px":12,"photo_list":28,"photo_row":36,"separator":false,"row_gap":3}, LOOK_TITLES = ["clamp2","fade","wrap"], LOOK_RANGES = {"free_gap":[0,40],"title_px":[11,16],"photo_list":[22,48],"photo_row":[22,48],"row_gap":[0,16]};
+  /* FreeGifts::textDir(): a fading title fades at its own end. */
+  function textDir(s) { return /^[^\p{L}]*[\p{Script=Arabic}\p{Script=Hebrew}]/u.test(String(s || '')) ? 'rtl' : 'ltr'; }
+  function lookOf(v) {
+    v = v && typeof v === 'object' ? v : {};
+    var o = { brand: typeof v.brand === 'boolean' ? v.brand : LOOK.brand, separator: typeof v.separator === 'boolean' ? v.separator : LOOK.separator,
+      titles: LOOK_TITLES.indexOf(v.titles) >= 0 ? v.titles : LOOK.titles };
+    Object.keys(LOOK_RANGES).forEach(function (k) {
+      var n = typeof v[k] === 'number' ? v[k] : (typeof v[k] === 'string' && v[k].trim() !== '' ? Number(v[k]) : NaN);
+      o[k] = isFinite(n) ? Math.max(LOOK_RANGES[k][0], Math.min(LOOK_RANGES[k][1], Math.round(n))) : LOOK[k];
+    });
+    return o;
+  }
   var GIFT_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>';
   var ICONS = {
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>',
@@ -563,7 +592,7 @@ select.fg-in{padding-inline-end:28px}
     });
   }
   function isDirty(k) { return dirtyRanges().indexOf(String(k)) >= 0; }
-  function dispNorm(c) { return JSON.stringify([c.show_value, c.countries, c.basis, c.texts]); }
+  function dispNorm(c) { return JSON.stringify([c.show_value, c.countries, c.basis, c.texts, lookOf(c.look)]); }
   function displayDirty() { return !!(st.cfg && st.data && dispNorm(st.cfg) !== dispNorm(st.data.config)); }
   function homeDirty() { return !!(st.cfg && st.data && JSON.stringify(st.cfg.home) !== JSON.stringify(st.data.config.home)); }
   function cfgDirty() { return displayDirty() || homeDirty(); }
@@ -687,23 +716,25 @@ select.fg-in{padding-inline-end:28px}
       return { p: g.product, q: q };
     }).filter(function (r) { return r.q > 0; });
   }
-  function pvTile(p, size, q) {
+  function pvTile(p, size, q, row) {
     var t = el('span', { class: 'fgp-t' }, [p.thumb ? el('img', { src: p.thumb, alt: '', width: size, height: size, loading: 'lazy' }) : el('span', { class: 'fgp-ph', text: initials(p) })]);
-    if (q > 1 && size === 36) t.appendChild(el('b', { text: '×' + q }));
+    if (q > 1 && row) t.appendChild(el('b', { text: '×' + q }));
     return t;
   }
   function previewBox(gifts, words, lang, opened) {
     var c = cfg(), T = function (k) { return c.texts[k + '_' + lang] || ''; }, rows = shopRows(gifts);
-    var box = el('fieldset', { class: 'fgp', dir: lang === 'ar' ? 'rtl' : 'ltr', lang: lang, 'aria-label': 'Preview' });
+    var lk = lookOf(c.look);
+    var box = el('fieldset', { class: 'fgp' + (lk.brand ? '' : ' fgp-nobrand') + ({ clamp2: ' fgp-clamp2', fade: ' fgp-fade', wrap: '' })[lk.titles] + (lk.separator ? ' fgp-sep' : ''), dir: lang === 'ar' ? 'rtl' : 'ltr', lang: lang, 'aria-label': 'Preview',
+      style: '--fg-ts:' + lk.title_px + 'px;--fg-pl:' + lk.photo_list + 'px;--fg-pr:' + lk.photo_row + 'px;--fg-fg:' + lk.free_gap + 'px;--fg-rg:' + lk.row_gap + 'px' });
     var lg = el('legend'); lg.innerHTML = GIFT_SVG; lg.appendChild(el('span', { text: T('title') })); box.appendChild(lg);
     if (!rows.length) { box.appendChild(el('div', { class: 'fgp-none', text: 'Nothing shows: this range has no gift the shop can give right now.' })); return box; }
     var units = rows.reduce(function (a, r) { return a + r.q; }, 0);
     box.appendChild(el('div', { class: 'fgp-w' }, (words || '').trim() ? [words.trim() + ' ', el('span', { class: 'fgp-cnt', text: '· ' + countText(units, lang, c) })] : [el('span', { class: 'fgp-cnt', text: countText(units, lang, c) })]));
     if (!opened) {
-      box.appendChild(el('div', { class: 'fgp-th' }, rows.map(function (r) { return pvTile(r.p, 36, r.q); }).concat([el('span', { class: 'fgp-tg', text: T('view_all') })])));
+      box.appendChild(el('div', { class: 'fgp-th' }, rows.map(function (r) { return pvTile(r.p, lk.photo_row, r.q, true); }).concat([el('span', { class: 'fgp-tg', text: T('view_all') })])));
     } else {
       box.appendChild(el('div', { class: 'fgp-list' }, rows.map(function (r) {
-        return el('div', { class: 'fgp-lr' }, [pvTile(r.p, 28, r.q), el('span', { class: 'fgp-ln' }, [r.p.brand ? el('small', { text: r.p.brand }) : null, r.q > 1 ? el('em', { text: r.q + '× ' }) : null, r.p.name]),
+        return el('div', { class: 'fgp-lr' }, [pvTile(r.p, lk.photo_list, r.q, false), el('span', { class: 'fgp-ln' }, [r.p.brand ? el('small', { text: r.p.brand }) : null, el('span', { class: 'fgp-nm', dir: lk.titles === 'fade' ? textDir(r.p.name) : null }, [r.q > 1 ? el('em', { text: r.q + '× ' }) : null, r.p.name])]),
           el('span', { class: 'fgp-lv' }, [c.show_value && r.p.price ? el('s', { text: r.p.price }) : null, T('free')])]);
       })));
       box.appendChild(el('span', { class: 'fgp-hide', text: T('hide') }));
@@ -784,7 +815,7 @@ select.fg-in{padding-inline-end:28px}
   function settingsBody(c) {
     var t = {};
     TEXT_GROUPS.forEach(function (g) { g[1].forEach(function (k) { t[k[0] + '_en'] = c.texts[k[0] + '_en']; t[k[0] + '_ar'] = c.texts[k[0] + '_ar']; }); });
-    return { show_value: !!c.show_value, countries: c.countries, basis: c.basis, texts: t, home: c.home };
+    return { show_value: !!c.show_value, countries: c.countries, basis: c.basis, texts: t, home: c.home, look: lookOf(c.look) };
   }
   function rangeName(x) { var w = (x.label_en || '').trim(); return amount(x.min, x.max) + (w ? ' (' + w + ')' : ''); }
   /* One range, alone: PUT (or POST for the new one) of that range and nothing
@@ -823,7 +854,7 @@ select.fg-in{padding-inline-end:28px}
     try {
       var d = await api('POST', '/settings', settingsBody(body));
       var keep = st.cfg, next = clone(d.config);
-      if (part === 'home') { next.show_value = keep.show_value; next.countries = keep.countries; next.basis = keep.basis; next.texts = clone(keep.texts); } else next.home = clone(keep.home);
+      if (part === 'home') { next.show_value = keep.show_value; next.countries = keep.countries; next.basis = keep.basis; next.texts = clone(keep.texts); next.look = clone(lookOf(keep.look)); } else next.home = clone(keep.home);
       st.data = d; st.cfg = next; delete st.errors[part];
       if (!cfgDirty()) st.cfg = null;
       say(part === 'home' ? 'Saved the homepage section.' : 'Saved the display settings and texts.');
@@ -835,7 +866,7 @@ select.fg-in{padding-inline-end:28px}
     if (!st.cfg) return;
     var o = st.data.config;
     if (part === 'home') st.cfg.home = clone(o.home);
-    else { st.cfg.show_value = o.show_value; st.cfg.countries = o.countries; st.cfg.basis = o.basis; st.cfg.texts = clone(o.texts); }
+    else { st.cfg.show_value = o.show_value; st.cfg.countries = o.countries; st.cfg.basis = o.basis; st.cfg.texts = clone(o.texts); st.cfg.look = clone(lookOf(o.look)); }
     delete st.errors[part];
     if (!cfgDirty()) st.cfg = null;
     say(part === 'home' ? 'Homepage section changes discarded.' : 'Display changes discarded.');
@@ -1573,6 +1604,38 @@ select.fg-in{padding-inline-end:28px}
       });
       return i;
     }
+    /* "Gift box look" (Lane FG5). Every change goes into the Display draft
+       through lookOf() -- the server's own normalising -- and repaints the
+       preview; nothing is sent until Save. */
+    function lookCard() {
+      var lk = lookOf(c.look);
+      function set(k, v) { var e = editCfg(), n = lookOf(e.look); n[k] = v; e.look = lookOf(n); c = cfg(); repaint(); }
+      function num(k, label, help) {
+        var r = LOOK_RANGES[k];
+        var i = el('input', { class: 'fg-in', type: 'number', min: r[0], max: r[1], step: 1, inputmode: 'numeric', value: String(lk[k]), disabled: ro, 'data-fk': 'lk-' + k, 'aria-label': label });
+        i.addEventListener('input', function () { if (i.value.trim() !== '' && isFinite(Number(i.value))) set(k, Number(i.value)); });
+        i.addEventListener('change', function () { i.value = String(lookOf(cfg().look)[k]); });
+        return field(label + ' (' + r[0] + '–' + r[1] + ' px)', i, help);
+      }
+      var titles = el('select', { class: 'fg-in', disabled: ro, 'data-fk': 'lk-titles' }, [['clamp2', 'Up to 2 lines, then …'], ['fade', 'One line, fades at the end'], ['wrap', 'Wrap fully']].map(function (o) {
+        return el('option', { value: o[0], text: o[1], selected: lk.titles === o[0] });
+      }));
+      titles.addEventListener('change', function () { set('titles', titles.value); });
+      return card('Gift box look', 'How each gift reads in the opened list. The preview follows every change.', [
+        el('div', { class: 'fg-row', style: 'margin-top:12px;gap:18px;flex-wrap:wrap' }, [
+          sw(lk.brand, 'Show brand names', function () { var v = !lookOf(cfg().look).brand; set('brand', v); this.setAttribute('aria-checked', String(v)); }, ro),
+          sw(lk.separator, 'Separator line between gifts', function () { var v = !lookOf(cfg().look).separator; set('separator', v); this.setAttribute('aria-checked', String(v)); }, ro)
+        ]),
+        el('div', { class: 'fg-look' }, [
+          field('Long titles', titles, 'Up to 2 lines keeps the box short. "Fades" keeps one line and fades its end: the left end for an Arabic name in Arabic; a name in the other language ends in "…".'),
+          num('free_gap', 'Space before FREE', 'A long title never runs into FREE. 16 as asked; it was 8.'),
+          num('title_px', 'Title font size', 'The gift\'s name. 12 is the shop\'s size today.'),
+          num('row_gap', 'Space between gifts', '3 today. With the separator on, the line sits in the middle of it.'),
+          num('photo_list', 'Photo size, opened list', '28 today.'),
+          num('photo_row', 'Photo size, closed row', '36 today: the row of photos before "View all".')
+        ])
+      ]);
+    }
     var left = el('div', { class: 'fg-wrap', style: 'padding:0' }, [
       card('What counts and where', null, [el('div', { class: 'fg-g2', style: 'margin-top:12px' }, [
         sel('basis', [['after_discounts', 'Products after the coupon (as asked)'], ['before_discounts', 'Products before the coupon']], 'What counts toward a range'),
@@ -1580,6 +1643,7 @@ select.fg-in{padding-inline-end:28px}
       ]), el('p', { class: 'fg-sub', text: 'Delivery, gift wrapping and the gifts themselves never count.' }),
         el('div', { class: 'fg-row', style: 'margin-top:14px' }, [sw(c.show_value, 'Show gift prices', function () { var e = editCfg(); e.show_value = !e.show_value; c = cfg(); this.setAttribute('aria-checked', String(e.show_value)); repaint(); }, ro)]),
         el('p', { class: 'fg-sub', text: 'Off, as asked. On, each gift in the opened list shows its price struck through before "FREE".' })]),
+      lookCard(),
       card('Texts', 'English and Arabic side by side. The preview follows as you type.', [el('div', { class: 'fg-tx', style: 'margin-top:8px' }, [el('div', { class: 'fg-txr hd', 'aria-hidden': 'true' }, [el('span', { text: 'Where' }), el('span', { text: 'English' }), el('span', { text: 'Arabic' })])].concat(
         [].concat.apply([], TEXT_GROUPS.map(function (g) {
           return [el('div', { class: 'fg-grp', text: g[0] })].concat(g[1].map(function (k) { return el('div', { class: 'fg-txr' }, [el('span', {}, [k[1], k[2] ? el('small', { text: k[2] }) : null]), t(k[0], 'en', k[1]), t(k[0], 'ar', k[1])]); }));

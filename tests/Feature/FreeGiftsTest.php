@@ -282,7 +282,7 @@ it('draws the 02 Mint outline box in the cart panel and the cart page, closed by
 
     $drawer = lfgShopper($cart)->getJson('/api/cart/drawer')->json('html');
 
-    expect($drawer)->toContain('<fieldset class="fgb">')
+    expect($drawer)->toContain('<fieldset class="fgb fgb-clamp2" style="--fg-ts:12px;--fg-pl:28px;--fg-pr:36px;--fg-fg:16px;--fg-rg:3px">')
         ->toContain('Free gifts for you')
         ->toContain('<b>×3</b>')
         ->toContain('aria-expanded="false"')
@@ -297,7 +297,7 @@ it('draws the 02 Mint outline box in the cart panel and the cart page, closed by
         ->not->toContain('more to');
 
     $page = lfgShopper($cart)->get('/cart/')->getContent();
-    expect($page)->toContain('<fieldset class="fgb fgb-page">');
+    expect($page)->toContain('<fieldset class="fgb fgb-page fgb-clamp2" style="--fg-ts:12px;--fg-pl:28px;--fg-pr:36px;--fg-fg:16px;--fg-rg:3px">');
 
     // Show gift prices, when the owner turns it on: the struck price before FREE.
     lfgOn(['show_value' => true]);
@@ -314,7 +314,7 @@ it('draws the box and the "Free gifts (N)" line in the checkout summary', functi
 
     $html = lfgShopper($cart)->get('/checkout/')->getContent();
 
-    expect($html)->toContain('<fieldset class="fgb">')
+    expect($html)->toContain('<fieldset class="fgb fgb-clamp2" style="--fg-ts:12px;--fg-pl:28px;--fg-pr:36px;--fg-fg:16px;--fg-rg:3px">')
         ->toContain('Free gifts (2)');
 });
 
@@ -829,11 +829,11 @@ it('in Testing gives a listed IP the box and the gifts on its order', function (
     lfgMode('testing', [['ip' => '203.0.113.7', 'label' => 'Owner'], ['ip' => '2001:db8::1', 'label' => '']]);
 
     $bytes = lfgShopBytes(lfgCart([[$serum, 1]]), '203.0.113.7');
-    expect($bytes['drawer'])->toContain('<fieldset class="fgb">')
+    expect($bytes['drawer'])->toContain('<fieldset class="fgb fgb-clamp2" style="--fg-ts:12px;--fg-pl:28px;--fg-pr:36px;--fg-fg:16px;--fg-rg:3px">')
         ->and($bytes['checkout'])->toContain('Free gifts (2)');
 
     // The same address written another way is the same address.
-    expect(lfgShopBytes(lfgCart([[$serum, 1]]), '2001:0db8:0:0:0:0:0:0001')['drawer'])->toContain('<fieldset class="fgb">');
+    expect(lfgShopBytes(lfgCart([[$serum, 1]]), '2001:0db8:0:0:0:0:0:0001')['drawer'])->toContain('<fieldset class="fgb fgb-clamp2" style="--fg-ts:12px;--fg-pl:28px;--fg-pr:36px;--fg-fg:16px;--fg-rg:3px">');
 
     test()->withServerVariables(['REMOTE_ADDR' => '203.0.113.7']);
     lfgPlace(lfgCart([[$serum, 1]]))->assertRedirect();
@@ -851,7 +851,7 @@ it('in Live gives every shopper the gifts, whatever their IP', function () {
     $serum = lfgProduct('Serum', ['price' => 15000]);
     lfgMode('live', [['ip' => '203.0.113.7', 'label' => '']]);
 
-    expect(lfgShopBytes(lfgCart([[$serum, 1]]), '198.51.100.9')['drawer'])->toContain('<fieldset class="fgb">');
+    expect(lfgShopBytes(lfgCart([[$serum, 1]]), '198.51.100.9')['drawer'])->toContain('<fieldset class="fgb fgb-clamp2" style="--fg-ts:12px;--fg-pl:28px;--fg-pr:36px;--fg-fg:16px;--fg-rg:3px">');
     test()->withServerVariables(['REMOTE_ADDR' => '198.51.100.9']);
     lfgPlace(lfgCart([[$serum, 1]]))->assertRedirect();
     expect(Order::latest('id')->first()->gifts)->toHaveCount(1);

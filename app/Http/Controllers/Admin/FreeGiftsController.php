@@ -148,6 +148,10 @@ class FreeGiftsController extends Controller
             'home.title_en' => ['required', 'string', 'max:160'], 'home.title_ar' => ['required', 'string', 'max:160'],
             'home.sub_en' => ['nullable', 'string', 'max:160'], 'home.sub_ar' => ['nullable', 'string', 'max:160'],
             'home.btn_en' => ['required', 'string', 'max:60'], 'home.btn_ar' => ['required', 'string', 'max:60'],
+            // "Gift box look" (Lane FG5): optional, so an older console that
+            // does not send it keeps what is saved. Its values are never
+            // refused, only normalised -- FreeGifts::lookOf() below.
+            'look' => ['sometimes', 'array'],
         ] + $textRules);
 
         foreach (['line'] as $key) {
@@ -162,6 +166,12 @@ class FreeGiftsController extends Controller
         $config['show_value'] = (bool) $data['show_value'];
         $config['countries'] = $data['countries'];
         $config['basis'] = $data['basis'];
+
+        if (array_key_exists('look', $data)) {
+            // Only its own keys, each a bool, one of its options or a clamped
+            // integer; anything else falls back to the default.
+            $config['look'] = FreeGifts::lookOf($data['look']);
+        }
 
         foreach (array_keys(FreeGifts::TEXTS) as $key) {
             $config['texts'][$key . '_en'] = trim($data['texts'][$key . '_en']);

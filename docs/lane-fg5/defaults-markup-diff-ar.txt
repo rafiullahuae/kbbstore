@@ -1,0 +1,66 @@
+1c1
+< <fieldset class="fgb fgb-page">
+---
+> <fieldset class="fgb fgb-page fgb-clamp2" style="--fg-ts:12px;--fg-pl:28px;--fg-pr:36px;--fg-fg:16px;--fg-rg:3px">
+14c14
+< .fgb-t{position:relative;display:block;width:36px;height:36px;border-radius:8px;background:#fff;border:1px solid rgba(42,34,40,.08);flex:none;box-sizing:border-box}
+---
+> .fgb-t{position:relative;display:block;width:var(--fg-pr,36px);height:var(--fg-pr,36px);border-radius:8px;background:#fff;border:1px solid rgba(42,34,40,.08);flex:none;box-sizing:border-box}
+20c20
+< .fgb-list{margin-top:7px;border-top:1px dashed #2e8f62;padding-top:5px;display:grid;gap:3px}
+---
+> .fgb-list{margin-top:7px;border-top:1px dashed #2e8f62;padding-top:5px;display:grid;gap:var(--fg-rg,3px)}
+22c22
+< .fgb-lr .fgb-t{width:28px;height:28px;border-radius:7px}
+---
+> .fgb-lr .fgb-t{width:var(--fg-pl,28px);height:var(--fg-pl,28px);border-radius:7px}
+24c24,25
+< .fgb-ln{flex:1;min-width:0;font-size:12px;line-height:1.25;color:#2a2228}
+---
+> .fgb-ln{flex:1;min-width:0;font-size:var(--fg-ts,12px);line-height:1.25;color:#2a2228}
+> .fgb-nm{display:block}
+27c28
+< .fgb-lv{display:flex;gap:6px;align-items:baseline;font-size:11px;font-weight:800;color:#2e8f62;white-space:nowrap}
+---
+> .fgb-lv{display:flex;gap:6px;align-items:baseline;font-size:11px;font-weight:800;color:#2e8f62;white-space:nowrap;margin-inline-start:calc(var(--fg-fg,16px) - 8px)}
+33a35
+> .fgb-clamp2 .fgb-nm{max-height:2.5em;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+75c77,80
+< <small>Mediheal</small> <em>12× </em>Tea Tree Sheet Mask</span>
+---
+> <small>Mediheal</small>
+> <span class="fgb-nm">
+> <em>12× </em>Tea Tree Sheet Mask</span>
+> </span>
+83c88,90
+< <small>haruharu wonder</small> Black Rice Hyaluronic Toner for Sensitive Skin Mini 30ml</span>
+---
+> <small>haruharu wonder</small>
+> <span class="fgb-nm">Black Rice Hyaluronic Toner for Sensitive Skin Mini 30ml</span>
+> </span>
+91c98,101
+< <small>Isntree</small> <em>2× </em>Mugwort Calming Clay Mask Mini</span>
+---
+> <small>Isntree</small>
+> <span class="fgb-nm">
+> <em>2× </em>Mugwort Calming Clay Mask Mini</span>
+> </span>
+99c109,112
+< <small>beplain</small> <em>2× </em>Mung Bean Milk Peeling Gel Mini</span>
+---
+> <small>beplain</small>
+> <span class="fgb-nm">
+> <em>2× </em>Mung Bean Milk Peeling Gel Mini</span>
+> </span>
+107c120,122
+< <small>AXIS-Y</small> The Glow Set</span>
+---
+> <small>AXIS-Y</small>
+> <span class="fgb-nm">The Glow Set</span>
+> </span>
+115c130,132
+< <small>Shiseido</small> Senka Perfect Whip Fresh Beauty Face Foam Cleanser for Normal to Dry Skin 120g</span>
+---
+> <small>Shiseido</small>
+> <span class="fgb-nm">Senka Perfect Whip Fresh Beauty Face Foam Cleanser for Normal to Dry Skin 120g</span>
+> </span>

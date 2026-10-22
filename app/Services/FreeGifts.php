@@ -112,6 +112,39 @@ final class FreeGifts
         'btn_en' => 'Shop now', 'btn_ar' => 'تسوّقي الآن',
     ];
 
+    /**
+     * "Gift box look" (Lane FG5, the owner 22 Oct: "controls to hide / show
+     * the brand names ... a little spacing between the names and the word
+     * FREE ... the product title, if long, may fade from the end or go to a
+     * 2nd line ... font size of the titles, sizes of the product thumbnails
+     * ... a thin, super light separator line").
+     *
+     * Every default is today's look EXCEPT the two he asked for: `free_gap`
+     * (16px of real space before FREE; it was the row's 8px gap) and
+     * `titles` (two lines then "…"; it wrapped without limit).
+     */
+    public const LOOK = [
+        'brand' => true,          // the brand line above each title
+        'titles' => 'clamp2',     // LOOK_TITLES
+        'free_gap' => 16,         // px between the title column and FREE
+        'title_px' => 12,         // the title's font size
+        'photo_list' => 28,       // a photo in the opened list
+        'photo_row' => 36,        // a photo in the closed row
+        'separator' => false,     // a hairline between the opened rows
+        'row_gap' => 3,           // px between the opened rows
+    ];
+
+    public const LOOK_TITLES = ['clamp2', 'fade', 'wrap'];
+
+    /** Each number's [min, max]. Out of range is clamped; not a number is the default. */
+    public const LOOK_RANGES = [
+        'free_gap' => [0, 40],
+        'title_px' => [11, 16],
+        'photo_list' => [22, 48],
+        'photo_row' => [22, 48],
+        'row_gap' => [0, 16],
+    ];
+
     public const PRODUCT_COLUMNS = [
         'products.id', 'products.name', 'products.slug', 'products.sku', 'products.brand_id', 'products.image', 'products.type',
         'products.status', 'products.stock_status', 'products.manage_stock', 'products.stock',
@@ -171,6 +204,76 @@ final class FreeGifts
             'basis' => in_array($saved['basis'] ?? null, self::BASES, true) ? $saved['basis'] : 'after_discounts',
             'texts' => $texts,
             'home' => $home,
+            'look' => self::lookOf($saved['look'] ?? null),
+        ];
+    }
+
+    /**
+     * A saved "Gift box look", every key present: a switch is a bool, a
+     * select one of its own options or the default, a number an integer
+     * clamped to its range (not a number at all is the default). The admin
+     * saves through this too, so nothing else ever reaches the settings row.
+     *
+     * @return array{brand:bool,titles:string,free_gap:int,title_px:int,photo_list:int,photo_row:int,separator:bool,row_gap:int}
+     */
+    public static function lookOf(mixed $saved): array
+    {
+        $saved = is_array($saved) ? $saved : [];
+        $look = self::LOOK;
+
+        foreach (['brand', 'separator'] as $key) {
+            if (array_key_exists($key, $saved)) {
+                $bool = filter_var($saved[$key], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                $look[$key] = is_bool($bool) && ! is_array($saved[$key]) ? $bool : self::LOOK[$key];
+            }
+        }
+
+        $look['titles'] = in_array($saved['titles'] ?? null, self::LOOK_TITLES, true) ? $saved['titles'] : self::LOOK['titles'];
+
+        foreach (self::LOOK_RANGES as $key => [$min, $max]) {
+            $v = $saved[$key] ?? null;
+            $num = is_int($v) || is_float($v) || (is_string($v) && is_numeric(trim($v))) ? (float) $v : null;
+            $look[$key] = $num !== null && is_finite($num)
+                ? max($min, min($max, (int) round($num)))
+                : self::LOOK[$key];
+        }
+
+        return $look;
+    }
+
+    /**
+     * "rtl" when a text's first letter is Arabic or Hebrew, else "ltr" -- what
+     * dir="auto" would decide, but as one of two constants. The one-line fade
+     * needs it: a title is clipped at ITS OWN end. An Arabic name on an
+     * Arabic page fades on the left; an English name there sits on the right
+     * and ends in "…" when too long (a fade on its end-aligned side would
+     * fade every short name). Without it the page's direction decides, and
+     * "Black Rice Hyaluronic Toner" on /ar/ read "yaluronic Toner...".
+     */
+    public static function textDir(string $text): string
+    {
+        return preg_match('/^[^\p{L}]*[\p{Arabic}\p{Hebrew}]/u', $text) === 1 ? 'rtl' : 'ltr';
+    }
+
+    /**
+     * The box's look as it reaches the page: fixed class names and integer
+     * custom properties, nothing else. Both strings are built only from
+     * constants and (int) casts, so no setting can put a character of its own
+     * into the markup.
+     *
+     * @return array{class:string,style:string}
+     */
+    public static function lookAttrs(array $look): array
+    {
+        $look = self::lookOf($look);
+        $class = ($look['brand'] ? '' : ' fgb-nobrand')
+            . ['clamp2' => ' fgb-clamp2', 'fade' => ' fgb-fade', 'wrap' => ''][$look['titles']]
+            . ($look['separator'] ? ' fgb-sep' : '');
+
+        return [
+            'class' => $class,
+            'style' => '--fg-ts:' . (int) $look['title_px'] . 'px;--fg-pl:' . (int) $look['photo_list'] . 'px;--fg-pr:' . (int) $look['photo_row']
+                . 'px;--fg-fg:' . (int) $look['free_gap'] . 'px;--fg-rg:' . (int) $look['row_gap'] . 'px',
         ];
     }
 
