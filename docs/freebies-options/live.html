@@ -127,6 +127,41 @@ h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em;text-wrap:balan
 .gb.n10 .in{padding:9px 11px 9px 0}
 .rtl .gb.n10 .in{padding:9px 0 9px 11px}
 
+
+/* value badge, open list, small phones */
+.gb .h .ct{font-size:12px;padding:2px 9px}
+.gb .w .cnt{font-weight:500;color:var(--m)}
+.gb .more.hide{display:block;margin:6px 0 0}
+.gb .list{margin-top:7px;border-top:1px dashed var(--bd);padding-top:5px;display:grid;gap:3px}
+.gb .lr{display:flex;align-items:center;gap:8px}
+.gb .t.s{width:28px;height:28px;border-radius:7px}
+.gb .ln{flex:1;min-width:0;font-size:12px;line-height:1.25;color:var(--t)}
+.gb .ln small{display:block;font-size:10px;color:var(--m);text-transform:uppercase;letter-spacing:.04em}
+.gb .ln em{font-style:normal;font-weight:700}
+.gb .lv{display:flex;gap:6px;align-items:baseline;font-size:11px;font-weight:800;color:var(--a);white-space:nowrap}
+.gb .lv s,.gb .lt s{color:var(--m);font-weight:500}
+.gb .lt{display:flex;justify-content:space-between;gap:8px;margin-top:4px;padding-top:5px;border-top:1px solid var(--bd);font-size:12px;color:var(--t)}
+.gb.n4 .lt,.gb.n4 .list{border-color:#4a3d45}
+.gb .lt b{color:var(--a)}
+.ob .h{justify-content:space-between}.ob .h>span{display:flex;align-items:center;gap:7px}
+.ob .ov{font-size:12px;font-weight:800;border-radius:999px;padding:2px 9px;background:currentColor}
+.oA .ov{background:#c13e63;color:#fff}.oB .ov{background:#e8f5ee;color:#1f6e4a}.oD .ov{background:#c13e63;color:#fff}
+.oB .h{justify-content:flex-start;gap:8px}
+.ob .was{color:var(--muted);text-decoration:line-through;font-size:11.5px;white-space:nowrap}
+.tline s{opacity:.85}
+.hv{display:inline-block;font-size:12px;font-weight:800;color:#a82f53;background:#fff0f4;border-radius:999px;padding:2px 10px;white-space:nowrap}
+.HD .hv{background:#4a3d45;color:#ff8fb0}
+.HB .s .hv{margin-bottom:-2px}
+.drow{grid-template-columns:200px var(--pw,390px) 520px 330px}
+.surf{container-type:inline-size}
+@container (max-width:345px){
+  .gb .h{font-size:12.5px}.gb .h .ct{font-size:11px;padding:1px 7px}
+  .gb .w{font-size:11.5px}.gb .t{width:31px;height:31px}.gb .t b{font-size:9px;min-width:15px;height:15px}
+  .gb .ln{font-size:11px}.gb .lv{font-size:10.5px}.gb .lt{font-size:11px}
+  .item .n{font-size:12px}.item img{width:40px;height:40px}.ph{font-size:14.5px}
+  .ob .gn{font-size:11.5px}.ob .gi .t{width:32px;height:32px}
+}
+
 /* ───────── earlier designs (A–D): the full list, for comparison ───────── */
 .ob{margin:10px 0 4px}
 .ob .gi{display:flex;gap:9px;align-items:center;padding:5px 0}
@@ -251,6 +286,8 @@ h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em;text-wrap:balan
   <div class="grp"><span data-t="jump"></span><div class="seg" id="segJump"></div></div>
   <div class="grp"><span data-t="add"></span><div class="grp" id="shop"></div></div>
   <div class="grp"><span data-t="lang"></span><div class="seg" id="segLang"></div></div>
+  <div class="grp"><span data-t="seeAllBar"></span><div class="seg" id="segOpen"></div></div>
+  <div class="grp"><span data-t="panelW"></span><div class="seg" id="segPw"></div></div>
   <div class="grp"><span data-t="zoom"></span><div class="seg" id="segZoom"></div></div>
   <div class="status" id="status" aria-live="polite"></div>
 </div>
@@ -270,14 +307,14 @@ const PRODUCTS = {
 };
 /* The owner's gifts. img null = not in the shop yet: a placeholder tile with the brand's initials. */
 const G = {
-  mask:{img:'mask', b:'Sheet mask', ba:'ماسك ورقي', n:'Sheet Mask', na:'ماسك ورقي', kind:'mask'},
-  m1:{img:'haruharu', b:'haruharu wonder', ba:'هاروهارو وندر', n:'Black Rice Hyaluronic Toner Mini', na:'تونر الأرز الأسود هيالورونيك ميني', kind:'mini'},
-  m2:{img:'isntree', b:'Isntree', ba:'إيزنتري', n:'Mugwort Calming Clay Mask Mini', na:'ماسك الطين بالشيح المهدّئ ميني', kind:'mini'},
-  m3:{img:null, ini:'IS', b:'Isntree', ba:'إيزنتري', n:'Plum Peptide Booster 2000s Stick Pouch', na:'بوستر البرقوق والببتيد ستيك', kind:'mini'},
-  m4:{img:null, ini:'OG', b:'oganacell', ba:'أوجاناسيل', n:'Bio Actiome Toner Mini', na:'تونر بايو أكتيوم ميني', kind:'mini'},
-  m5:{img:null, ini:'SW', b:'Sulwhasoo', ba:'سولواسو', n:'UV Daily Fluid Sunscreen Mini', na:'واقي الشمس UV ديلي فلويد ميني', kind:'mini'},
-  f1:{img:'glowset', b:'AXIS-Y', ba:'أكسس-واي', n:'The Glow Set', na:'مجموعة ذا جلو', kind:'full'},
-  f2:{img:'senka', b:'Shiseido', ba:'شيسيدو', n:'Senka Perfect Whip Fresh Beauty Face Foam', na:'غسول سينكا بيرفكت ويب', kind:'full'},
+  mask:{v:12, img:'mask', b:'Sheet mask', ba:'ماسك ورقي', n:'Sheet Mask', na:'ماسك ورقي', kind:'mask'},
+  m1:{v:25, img:'haruharu', b:'haruharu wonder', ba:'هاروهارو وندر', n:'Black Rice Hyaluronic Toner Mini', na:'تونر الأرز الأسود هيالورونيك ميني', kind:'mini'},
+  m2:{v:30, img:'isntree', b:'Isntree', ba:'إيزنتري', n:'Mugwort Calming Clay Mask Mini', na:'ماسك الطين بالشيح المهدّئ ميني', kind:'mini'},
+  m3:{v:20, img:null, ini:'IS', b:'Isntree', ba:'إيزنتري', n:'Plum Peptide Booster 2000s Stick Pouch', na:'بوستر البرقوق والببتيد ستيك', kind:'mini'},
+  m4:{v:25, img:null, ini:'OG', b:'oganacell', ba:'أوجاناسيل', n:'Bio Actiome Toner Mini', na:'تونر بايو أكتيوم ميني', kind:'mini'},
+  m5:{v:35, img:null, ini:'SW', b:'Sulwhasoo', ba:'سولواسو', n:'UV Daily Fluid Sunscreen Mini', na:'واقي الشمس UV ديلي فلويد ميني', kind:'mini'},
+  f1:{v:92, img:'glowset', b:'AXIS-Y', ba:'أكسس-واي', n:'The Glow Set', na:'مجموعة ذا جلو', kind:'full'},
+  f2:{v:75, img:'senka', b:'Shiseido', ba:'شيسيدو', n:'Senka Perfect Whip Fresh Beauty Face Foam', na:'غسول سينكا بيرفكت ويب', kind:'full'},
 };
 const RANGES = [
   {min:100, max:299, en:'2 Masks', ar:'ماسكان', gifts:[['mask',2]]},
@@ -303,9 +340,9 @@ const HOME_NEW = [['HA','Tier cards','Five cards, each topped with a deeper pink
 const HOME_OLD = [['H1','Gift cards (earlier)','The earlier cards, now with your five ranges.'],['H2','Steps on a line (earlier)','The earlier steps, five ranges.'],['H3','Price tags (earlier)','The earlier price-tag rows, five ranges.']];
 
 const T = {
-  en:{title:'Free gifts · live artboard', lead:'Your real ranges and gifts. One bag drives every design on this board: jump to a range or add products at the top, and every gift box, cart page, checkout summary and homepage section updates together. Striped tiles are gifts not in the shop yet (their photo appears once added).',
+  en:{title:'Free gifts · live artboard', lead:'Your real ranges and gifts. Gift values are examples (except the AED 12 mask): you set each gift’s value in the admin. One bag drives every design on this board: jump to a range or add products at the top, and every gift box, cart page, checkout summary and homepage section updates together. Striped tiles are gifts not in the shop yet (their photo appears once added).',
     jump:'Bag at', add:'Add', lang:'Language', zoom:'Zoom',
-    newT:'Gift box · 10 new compact designs', newP:'Same short box in every design: the wording, small photos with counts, and one nudge line. “See all” opens the names.',
+    newT:'Gift box · 10 new compact designs', newP:'Same short box in every design: the gifts’ total value up front, the wording, and small photos with counts. “See all” opens each gift with its value (or open them all from the top bar).',
     oldT:'Gift box · earlier designs with your real gifts', oldP:'For comparison: these list every gift, so the box grows with the range (try AED 2,000+).',
     homeT:'Homepage · 5 new designs', homeP:'Range, wording and photos come from your settings; the range the shopper’s bag is in is marked.',
     homeOldT:'Homepage · earlier designs with your five ranges', homeOldP:'',
@@ -315,7 +352,7 @@ const T = {
     note:'<b>Assumed, please confirm:</b> which minis go in the 300 and 500 ranges (shown: haruharu toner, then + Isntree clay mask), which full-size product goes in the 1,000 range (shown: Senka foam), which sheet mask (shown: medicube Collagen Lifting Mask), and that “AXIS-Y The Glow Set” is the Mini Glow Set on the shop. Not in the shop yet: Isntree Plum Peptide stick, oganacell Bio Actiome Toner Mini, Sulwhasoo UV Daily Fluid Mini.',
     yourBag:'Your bag', bag:'Shopping bag', summary:'Order summary', items:n => n === 1 ? '1 item' : n + ' items', empty:'Your bag is empty.',
     sub:'Subtotal', giftsLine:n => `Free gifts (${n})`, deliv:'Delivery', freeDel:'Free', total:'Total', checkout:'Checkout', placeOrder:'Place order',
-    head:'Free gifts for you', free:'FREE', seeAll:'See all', hide:'Hide', count:n => n === 1 ? '1 gift' : n + ' gifts', side:'Free gifts',
+    head:'Free gifts for you', free:'FREE', seeAll:'See all', hide:'Hide', count:n => n === 1 ? '1 gift' : n + ' gifts', side:'Free gifts', worth:v => `Worth ${v}`, totalV:'Total value', youPay:'You pay', panelW:'Panel width', seeAllBar:'See all',  closed:'Closed', opened:'Open', worthShort:'worth',
     nudge:(amt, what) => `Add <b>${amt}</b> more for <b>${what}</b>`, top:'You’ve unlocked our biggest gift set.',
     tease:(amt, what) => `Spend <b>${amt}</b> more to get <b>${what}</b> free`,
     hpTitle:'Free gifts with every order', hpSub:'The more you shop, the more we add, free.', shop:'Start shopping', spend:'Spend', get:'You get', yours:'Your bag', giftsWord:'free gifts',
@@ -332,7 +369,7 @@ const T = {
     note:'<b>افتراضات للتأكيد:</b> منتجات الميني في فئتي 300 و500، والمنتج بالحجم الكامل في فئة 1000، ونوع الماسك.',
     yourBag:'حقيبتك', bag:'حقيبة التسوق', summary:'ملخص الطلب', items:n => n === 1 ? 'منتج واحد' : n === 2 ? 'منتجان' : n + ' منتجات', empty:'حقيبتك فارغة.',
     sub:'المجموع الفرعي', giftsLine:n => `هدايا مجانية (${n})`, deliv:'التوصيل', freeDel:'مجاني', total:'الإجمالي', checkout:'إتمام الشراء', placeOrder:'تأكيد الطلب',
-    head:'هدايا مجانية لكِ', free:'مجاناً', seeAll:'عرض الكل', hide:'إخفاء', count:n => n === 1 ? 'هدية واحدة' : n === 2 ? 'هديتان' : n <= 10 ? n + ' هدايا' : n + ' هدية', side:'هدايا مجانية',
+    head:'هدايا مجانية لكِ', free:'مجاناً', seeAll:'عرض الكل', hide:'إخفاء', count:n => n === 1 ? 'هدية واحدة' : n === 2 ? 'هديتان' : n <= 10 ? n + ' هدايا' : n + ' هدية', side:'هدايا مجانية', worth:v => `بقيمة ${v}`, totalV:'القيمة الإجمالية', youPay:'تدفعين', panelW:'عرض النافذة', seeAllBar:'عرض الكل', closed:'مغلق', opened:'مفتوح', worthShort:'بقيمة',
     nudge:(amt, what) => `أضيفي <b>${amt}</b> لتحصلي على <b>${what}</b>`, top:'حصلتِ على أكبر مجموعة هدايا لدينا.',
     tease:(amt, what) => `أنفقي <b>${amt}</b> إضافية لتحصلي على <b>${what}</b> مجاناً`,
     hpTitle:'هدايا مجانية مع كل طلب', hpSub:'كلما تسوّقتِ أكثر، أضفنا لكِ أكثر، مجاناً.', shop:'تسوّقي الآن', spend:'أنفقي', get:'تحصلين على', yours:'حقيبتك', giftsWord:'هدايا مجانية',
@@ -340,7 +377,7 @@ const T = {
 };
 /* Preset bags that land in each range (real products and prices). */
 const PRESETS = [['0', {}], ['85', {wrap:1}], ['317', {wrap:1, aqua:1, serum:2}], ['535', {wrap:1, aqua:2, cream:2, serum:1}], ['1,190', {wrap:2, aqua:3, cream:4, serum:2}], ['2,102', {wrap:4, aqua:5, cream:6, serum:6}]];
-const S = {lang:'en', bag:{wrap:1, aqua:1, serum:2}, open:{}, last:-1, zoom:1};
+const S = {lang:'en', bag:{wrap:1, aqua:1, serum:2}, open:{}, last:-1, zoom:1, allOpen:false, pw:390};
 try { const z = parseFloat(localStorage.getItem('fg-zoom')); if ([0.5, 0.75, 1].includes(z)) S.zoom = z; } catch (e) {}
 
 const L = () => T[S.lang];
@@ -349,6 +386,7 @@ const subtotal = () => Object.entries(S.bag).reduce((a, [k, q]) => a + PRODUCTS[
 const rangeIx = sub => RANGES.findIndex(r => sub >= r.min && (r.max == null || sub <= r.max));
 const words = r => (AR() ? r.ar : r.en) || r.gifts.map(([k, q]) => (q > 1 ? q + '× ' : '') + (AR() ? G[k].na : G[k].n)).join(' + ');
 const giftCount = r => r.gifts.reduce((a, g) => a + g[1], 0);
+const giftValue = r => r.gifts.reduce((a, [k, q]) => a + G[k].v * q, 0);
 const rangeLabel = r => r.max == null ? `${L().money(r.min)}+` : (AR() ? `${r.min.toLocaleString('en-US')} – ${r.max.toLocaleString('en-US')} د.إ` : `AED ${r.min.toLocaleString('en-US')} – ${r.max.toLocaleString('en-US')}`);
 const rangeShort = r => r.max == null ? `${r.min.toLocaleString('en-US')}+` : `${r.min.toLocaleString('en-US')} – ${r.max.toLocaleString('en-US')}`;
 const gname = k => AR() ? G[k].na : G[k].n;
@@ -362,15 +400,14 @@ function nudge(sub, ix){
   return {txt:L().nudge(L().money(next.min - sub), esc(words(next))), pct:Math.max(4, Math.min(100, Math.round((sub - from) / (next.min - from) * 100)))};
 }
 
-/* compact box (new designs) */
+/* compact box (new designs): no nudge line; the total value is the headline */
+const openList = r => `<div class="list">${r.gifts.map(([k, q]) => `<div class="lr">${tile(k, 1, 't s')}<span class="ln"><small>${esc(gbrand(k))}</small>${q > 1 ? `<em>${q}× </em>` : ''}${esc(gname(k))}</span><span class="lv"><s>${L().money(G[k].v * q)}</s>${L().free}</span></div>`).join('')}<div class="lt"><span>${L().totalV} <s>${L().money(giftValue(r))}</s></span><span>${L().youPay} <b>${L().money(0)}</b></span></div></div>`;
 function compact(id, where, sub, ix, anim){
-  if (ix < 0) return sub > 0 ? `<div class="tease">${GIFT}<span>${L().tease(L().money(RANGES[0].min - sub), esc(words(RANGES[0])))}</span></div>` : '';
-  const r = RANGES[ix], n = giftCount(r), open = !!S.open[id + where], nd = nudge(sub, ix);
-  const head = `<div class="h">${GIFT}<span>${L().head}</span><span class="ct">${L().count(n)}</span></div>`;
+  if (ix < 0) return '';
+  const r = RANGES[ix], n = giftCount(r), open = S.allOpen || !!S.open[id + where];
+  const head = `<div class="h">${GIFT}<span>${L().head}</span><span class="ct">${L().worth(L().money(giftValue(r)))}</span></div>`;
   const thumbs = `<div class="th">${r.gifts.map(([k, q]) => tile(k, q)).join('')}<button type="button" class="more" data-act="see" data-id="${id + where}" aria-expanded="${open}">${open ? L().hide : L().seeAll}</button></div>`;
-  const list = open ? `<div class="list">${r.gifts.map(([k, q]) => `<div><span>${q > 1 ? q + '× ' : ''}${esc(gbrand(k))} · ${esc(gname(k))}</span><span>${L().free}</span></div>`).join('')}</div>` : '';
-  const nud = where === 'sum' ? '' : `<div class="nd">${nd.txt}</div><div class="bar"><i style="width:${nd.pct}%"></i></div>`;
-  const inner = `<div class="w">${esc(words(r))}</div>${thumbs}${list}${nud}`;
+  const inner = `<div class="w">${esc(words(r))} <span class="cnt">· ${L().count(n)}</span></div>${open ? openList(r) : thumbs}${open ? `<button type="button" class="more hide" data-act="see" data-id="${id + where}" aria-expanded="true">${L().hide}</button>` : ''}`;
   const pop = anim ? ' pop' : '';
   if (id === 'n3') return `<div class="gb n3${pop}">${head}<div class="in">${inner}</div></div>`;
   if (id === 'n10') return `<div class="gb n10${pop}"><div class="side" aria-hidden="true">${L().side}</div><div class="in">${head}${inner}</div></div>`;
@@ -379,16 +416,16 @@ function compact(id, where, sub, ix, anim){
 
 /* earlier designs: the full list */
 function oldBox(id, where, sub, ix, anim){
-  if (ix < 0) return sub > 0 ? `<div class="tease">${GIFT}<span>${L().tease(L().money(RANGES[0].min - sub), esc(words(RANGES[0])))}</span></div>` : '';
-  const r = RANGES[ix], nd = nudge(sub, ix), pop = anim ? ' pop' : '';
-  const rows = r.gifts.map(([k, q]) => `<div class="gi">${tile(k, 1)}<div class="gn"><small>${esc(gbrand(k))}</small>${q > 1 ? `<em>${q}× </em>` : ''}${esc(gname(k))}</div><span class="free">${L().free}</span></div>`).join('');
-  const nud = where === 'sum' ? '' : `<div class="nd">${nd.txt}</div><div class="bar"><i style="width:${nd.pct}%"></i></div>`;
-  const head = `<div class="h">${GIFT}${L().head}</div>`;
+  if (ix < 0) return '';
+  const r = RANGES[ix], pop = anim ? ' pop' : '', val = `<span class="ov">${L().worth(L().money(giftValue(r)))}</span>`;
+  const rows = r.gifts.map(([k, q]) => `<div class="gi">${tile(k, 1)}<div class="gn"><small>${esc(gbrand(k))}</small>${q > 1 ? `<em>${q}× </em>` : ''}${esc(gname(k))}</div><span class="was">${L().money(G[k].v * q)}</span><span class="free">${L().free}</span></div>`).join('');
+  const nud = '';
+  const head = `<div class="h">${GIFT}<span>${L().head}</span>${val}</div>`;
   if (id === 'A') return `<div class="ob oA${pop}">${head}${rows}${nud}</div>`;
   if (id === 'B') return `<div class="ob oB${pop}">${head}${rows}${nud}</div>`;
-  if (id === 'C') return `<div class="ob oC${pop}"><div class="h"><span>${GIFT}${L().head}</span><em>${L().count(giftCount(r))}</em></div><div class="in">${rows}${nud}</div></div>`;
+  if (id === 'C') return `<div class="ob oC${pop}"><div class="h"><span>${GIFT}${L().head}</span><em>${L().worth(L().money(giftValue(r)))}</em></div><div class="in">${rows}${nud}</div></div>`;
   if (where !== 'panel') return `<div class="ob oD${pop}">${head}${rows}${nud}</div>`;
-  return `<div class="ob oD${pop}"><div class="h"><span>${GIFT}${L().head}</span></div><div class="th">${r.gifts.map(([k, q]) => `<span class="t">${G[k].img ? `<img src="img/${G[k].img}.webp" alt="" loading="lazy">` : `<span class="ph0">${G[k].ini}</span>`}<b>${L().free}</b>${q > 1 ? `<i>×${q}</i>` : ''}</span>`).join('')}</div>${nud}</div>`;
+  return `<div class="ob oD${pop}"><div class="h"><span>${GIFT}${L().head}</span>${val}</div><div class="th">${r.gifts.map(([k, q]) => `<span class="t">${G[k].img ? `<img src="img/${G[k].img}.webp" alt="" loading="lazy">` : `<span class="ph0">${G[k].ini}</span>`}<b>${L().free}</b>${q > 1 ? `<i>×${q}</i>` : ''}</span>`).join('')}</div>${nud}</div>`;
 }
 
 function itemsHtml(compactRows){
@@ -400,7 +437,7 @@ function surfaces(box, sub, ix, anim){
   const lang = L(), n = Object.values(S.bag).reduce((a, b) => a + b, 0), gn = ix >= 0 ? giftCount(RANGES[ix]) : 0, items = itemsHtml();
   return `<div><div class="cap">${lang.cPanel}</div><div class="surf panel"><div class="ph">${lang.yourBag}<small>${lang.items(n)}</small></div>${items}${box('panel', sub, ix, anim)}<div class="tot"><span>${lang.sub}</span><span>${lang.money(sub)}</span></div><div class="btn">${lang.checkout}</div></div></div>
     <div><div class="cap">${lang.cPage}</div><div class="surf"><div class="ph">${lang.bag}<small>${lang.items(n)}</small></div>${items}${box('page', sub, ix, anim)}<div class="tot"><span>${lang.sub}</span><span>${lang.money(sub)}</span></div><div class="btn" style="max-width:240px;margin-inline-start:auto">${lang.checkout}</div></div></div>
-    <div><div class="cap">${lang.cSum}</div><div class="surf sum"><div class="ph">${lang.summary}</div>${items}${box('sum', sub, ix, anim)}<div class="tline"><span>${lang.sub}</span><b>${lang.money(sub)}</b></div>${gn ? `<div class="tline"><span>${lang.giftsLine(gn)}</span><b class="g">${lang.money(0)}</b></div>` : ''}<div class="tline"><span>${lang.deliv}</span><b>${lang.freeDel}</b></div><div class="tot"><span>${lang.total}</span><span>${lang.money(sub)}</span></div><div class="btn">${lang.placeOrder}</div></div></div>`;
+    <div><div class="cap">${lang.cSum}</div><div class="surf sum"><div class="ph">${lang.summary}</div>${items}${box('sum', sub, ix, anim)}<div class="tline"><span>${lang.sub}</span><b>${lang.money(sub)}</b></div>${gn ? `<div class="tline"><span>${lang.giftsLine(gn)} · ${lang.worthShort} <s>${lang.money(giftValue(RANGES[ix]))}</s></span><b class="g">${lang.money(0)}</b></div>` : ''}<div class="tline"><span>${lang.deliv}</span><b>${lang.freeDel}</b></div><div class="tot"><span>${lang.total}</span><span>${lang.money(sub)}</span></div><div class="btn">${lang.placeOrder}</div></div></div>`;
 }
 
 /* homepage */
@@ -409,17 +446,17 @@ const RAMP = ['#efa3ba', '#e07a98', '#d35d80', '#c13e63', '#962a4c'];
 function home(id, ix){
   const lang = L(), head = `<h3>${lang.hpTitle}</h3><p class="sub">${lang.hpSub}</p>`, you = i => i === ix ? `<span class="you">${lang.yours}</span>` : '';
   let body = '';
-  if (id === 'HA') body = `<div class="HA">${RANGES.map((r, i) => `<div class="c${i === ix ? ' cur' : ''}"><div class="top" style="background:${RAMP[i % 5]}">${esc(rangeLabel(r))}</div><div class="body"><div class="num">${giftCount(r)}<small>${lang.giftsWord}</small></div>${pics(r, 4)}<b>${esc(words(r))}</b>${you(i)}</div></div>`).join('')}</div>`;
-  if (id === 'HB') body = `<div class="HB">${RANGES.map((r, i) => `<div class="s${i === ix ? ' cur' : ''}"><b>${esc(words(r))}</b>${you(i)}<div class="step" style="min-height:${54 + i * 34}px">${esc(rangeShort(r))}</div></div>`).join('')}</div>`;
-  if (id === 'HC') body = `<div class="HC"><div class="hd"><span>${lang.spend}</span><span>${lang.get}</span><span></span></div>${RANGES.map((r, i) => `<div class="r${i === ix ? ' cur' : ''}"><span class="sp"><small>AED</small>${esc(rangeShort(r))}</span><span><b>${esc(words(r))}</b> ${you(i)}</span>${pics(r, 5)}</div>`).join('')}</div>`;
+  if (id === 'HA') body = `<div class="HA">${RANGES.map((r, i) => `<div class="c${i === ix ? ' cur' : ''}"><div class="top" style="background:${RAMP[i % 5]}">${esc(rangeLabel(r))}</div><div class="body"><div class="num">${giftCount(r)}<small>${lang.giftsWord}</small></div><span class="hv">${lang.worth(lang.money(giftValue(r)))}</span>${pics(r, 4)}<b>${esc(words(r))}</b>${you(i)}</div></div>`).join('')}</div>`;
+  if (id === 'HB') body = `<div class="HB">${RANGES.map((r, i) => `<div class="s${i === ix ? ' cur' : ''}"><b>${esc(words(r))}</b>${you(i)}<span class="hv">${lang.worth(lang.money(giftValue(r)))}</span><div class="step" style="min-height:${54 + i * 34}px">${esc(rangeShort(r))}</div></div>`).join('')}</div>`;
+  if (id === 'HC') body = `<div class="HC"><div class="hd"><span>${lang.spend}</span><span>${lang.get}</span><span></span></div>${RANGES.map((r, i) => `<div class="r${i === ix ? ' cur' : ''}"><span class="sp"><small>AED</small>${esc(rangeShort(r))}</span><span><b>${esc(words(r))}</b> <span class="hv">${lang.worth(lang.money(giftValue(r)))}</span> ${you(i)}</span>${pics(r, 5)}</div>`).join('')}</div>`;
   if (id === 'HD') {
     const fill = ix < 0 ? 0 : ix / (RANGES.length - 1) * 80;
-    return `<div class="hp HD"><h3>${lang.hpTitle}</h3><p class="sub">${lang.hpSub}</p><div class="trk"><span class="fill" style="width:${fill}%"></span>${RANGES.map((r, i) => `<div class="st${i <= ix ? ' on' : ''}${i === ix ? ' cur' : ''}"><span class="dot">${GIFT}</span><span class="r">${esc(rangeShort(r))}</span><b>${esc(words(r))}</b>${you(i)}</div>`).join('')}</div><button type="button" class="cta">${lang.shop}</button></div>`;
+    return `<div class="hp HD"><h3>${lang.hpTitle}</h3><p class="sub">${lang.hpSub}</p><div class="trk"><span class="fill" style="width:${fill}%"></span>${RANGES.map((r, i) => `<div class="st${i <= ix ? ' on' : ''}${i === ix ? ' cur' : ''}"><span class="dot">${GIFT}</span><span class="r">${esc(rangeShort(r))}</span><b>${esc(words(r))}</b><span class="hv d">${lang.worth(lang.money(giftValue(r)))}</span>${you(i)}</div>`).join('')}</div><button type="button" class="cta">${lang.shop}</button></div>`;
   }
-  if (id === 'HE') body = `<div class="HE">${RANGES.map((r, i) => `<div class="c${i === ix ? ' cur' : ''}"><span class="n">${giftCount(r)}</span><span class="lb">${lang.giftsWord}</span><span class="r">${esc(rangeLabel(r))}</span><b>${esc(words(r))}</b>${you(i)}</div>`).join('')}</div>`;
-  if (id === 'H1') body = `<div class="H1">${RANGES.map((r, i) => `<div class="c${i === ix ? ' cur' : ''}"><span class="r">${esc(rangeLabel(r))}</span>${pics(r, 4)}<b>${esc(words(r))}</b>${you(i)}</div>`).join('')}</div>`;
-  if (id === 'H2') body = `<div class="H2">${RANGES.map((r, i) => `<div class="s${i <= ix ? ' cur' : ''}"><span class="dot">${GIFT}</span><span class="r">${esc(rangeLabel(r))}</span><b>${esc(words(r))}</b>${you(i)}</div>`).join('')}</div>`;
-  if (id === 'H3') body = `<div class="H3">${RANGES.map((r, i) => `<div class="l${i === ix ? ' cur' : ''}"><span class="r" style="background:${RAMP[i % 5]}"><small>${lang.spend}</small>${esc(rangeShort(r))}</span><b>${esc(words(r))}</b>${pics(r, 6)}${you(i)}</div>`).join('')}</div>`;
+  if (id === 'HE') body = `<div class="HE">${RANGES.map((r, i) => `<div class="c${i === ix ? ' cur' : ''}"><span class="n">${giftCount(r)}</span><span class="lb">${lang.giftsWord}</span><span class="hv">${lang.worth(lang.money(giftValue(r)))}</span><span class="r">${esc(rangeLabel(r))}</span><b>${esc(words(r))}</b>${you(i)}</div>`).join('')}</div>`;
+  if (id === 'H1') body = `<div class="H1">${RANGES.map((r, i) => `<div class="c${i === ix ? ' cur' : ''}"><span class="r">${esc(rangeLabel(r))}</span>${pics(r, 4)}<b>${esc(words(r))}</b><span class="hv">${lang.worth(lang.money(giftValue(r)))}</span>${you(i)}</div>`).join('')}</div>`;
+  if (id === 'H2') body = `<div class="H2">${RANGES.map((r, i) => `<div class="s${i <= ix ? ' cur' : ''}"><span class="dot">${GIFT}</span><span class="r">${esc(rangeLabel(r))}</span><b>${esc(words(r))}</b><span class="hv">${lang.worth(lang.money(giftValue(r)))}</span>${you(i)}</div>`).join('')}</div>`;
+  if (id === 'H3') body = `<div class="H3">${RANGES.map((r, i) => `<div class="l${i === ix ? ' cur' : ''}"><span class="r" style="background:${RAMP[i % 5]}"><small>${lang.spend}</small>${esc(rangeShort(r))}</span><b>${esc(words(r))}<br><span class="hv">${lang.worth(lang.money(giftValue(r)))}</span></b>${pics(r, 6)}${you(i)}</div>`).join('')}</div>`;
   return `<div class="hp">${head}${body}<button type="button" class="cta">${lang.shop}</button></div>`;
 }
 
@@ -437,6 +474,8 @@ function render(){
   const preset = PRESETS.findIndex(([, b]) => JSON.stringify(b) === JSON.stringify(S.bag));
   seg('segJump', PRESETS.map(([, b], i) => [i, lang.money(Object.entries(b).reduce((a, [k, q]) => a + PRODUCTS[k].p * q, 0))]), preset, 'jump');
   seg('segLang', [['en','English'],['ar','العربية']], S.lang, 'lang');
+  seg('segOpen', [[0, lang.closed], [1, lang.opened]], S.allOpen ? 1 : 0, 'allopen');
+  seg('segPw', [[390,'390'],[360,'360'],[320,'320']], S.pw, 'pw');
   seg('segZoom', [[0.5,'50%'],[0.75,'75%'],[1,'100%']], S.zoom, 'zoom');
   document.getElementById('shop').innerHTML = Object.entries(PRODUCTS).map(([k, p]) => `<button type="button" class="chipp" data-act="inc" data-k="${k}" title="${esc(p.b + ' · ' + p.n)}"><img src="img/${p.img}.webp" alt="">+ ${lang.money(p.p)}</button>`).join('') + `<button type="button" class="chipp" data-act="clear" style="padding-inline:10px">✕</button>`;
   document.getElementById('status').innerHTML = lang.status(lang.money(sub), ix >= 0 ? esc(rangeLabel(RANGES[ix])) : '');
@@ -454,7 +493,8 @@ function render(){
   const focused = document.activeElement && document.activeElement.id;
   board.innerHTML = h;
   board.style.zoom = S.zoom;
-  document.getElementById('ranges').innerHTML = RANGES.map((r, i) => `<div class="er"><div><label for="mn${i}">${lang.from}</label><input id="mn${i}" inputmode="numeric" data-i="${i}" data-f="min" value="${r.min}"></div><div><label for="mx${i}">${lang.to}</label><input id="mx${i}" inputmode="numeric" data-i="${i}" data-f="max" value="${r.max ?? ''}" placeholder="${lang.above}"></div><div><label for="we${i}">${lang.wEn}</label><input id="we${i}" data-i="${i}" data-f="en" value="${esc(r.en)}"></div><div><label for="wa${i}">${lang.wAr}</label><input id="wa${i}" dir="rtl" data-i="${i}" data-f="ar" value="${esc(r.ar)}"></div><div class="gl">${r.gifts.map(([k, q]) => (q > 1 ? q + '× ' : '') + esc(gname(k))).join(', ')}</div></div>`).join('');
+  board.style.setProperty('--pw', S.pw + 'px');
+  document.getElementById('ranges').innerHTML = RANGES.map((r, i) => `<div class="er"><div><label for="mn${i}">${lang.from}</label><input id="mn${i}" inputmode="numeric" data-i="${i}" data-f="min" value="${r.min}"></div><div><label for="mx${i}">${lang.to}</label><input id="mx${i}" inputmode="numeric" data-i="${i}" data-f="max" value="${r.max ?? ''}" placeholder="${lang.above}"></div><div><label for="we${i}">${lang.wEn}</label><input id="we${i}" data-i="${i}" data-f="en" value="${esc(r.en)}"></div><div><label for="wa${i}">${lang.wAr}</label><input id="wa${i}" dir="rtl" data-i="${i}" data-f="ar" value="${esc(r.ar)}"></div><div class="gl">${r.gifts.map(([k, q]) => (q > 1 ? q + '× ' : '') + esc(gname(k))).join(', ')} · <b>${L().worth(L().money(giftValue(r)))}</b></div></div>`).join('');
   if (focused) { const el = document.getElementById(focused); if (el && el.tagName === 'INPUT') { el.focus(); const v = el.value; el.setSelectionRange && el.type !== 'number' && el.setSelectionRange(v.length, v.length); } }
 }
 
@@ -465,6 +505,8 @@ document.addEventListener('click', e => {
   else if (a === 'clear') S.bag = {};
   else if (a === 'jump') S.bag = JSON.parse(JSON.stringify(PRESETS[+b.dataset.v][1]));
   else if (a === 'lang') S.lang = b.dataset.v;
+  else if (a === 'allopen') { S.allOpen = b.dataset.v === '1'; S.open = {}; }
+  else if (a === 'pw') S.pw = +b.dataset.v;
   else if (a === 'zoom') { S.zoom = parseFloat(b.dataset.v); try { localStorage.setItem('fg-zoom', String(S.zoom)); } catch (err) {} }
   else if (a === 'see') S.open[b.dataset.id] = !S.open[b.dataset.id];
   else return;
