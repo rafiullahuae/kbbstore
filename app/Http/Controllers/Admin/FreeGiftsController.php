@@ -31,6 +31,12 @@ class FreeGiftsController extends Controller
 
     private const MAX_GIFTS = 30;
 
+    /** A gift with this many units or fewer reads "Low" (Overview, Ranges, Gift products). Stated on screen. */
+    public const LOW_STOCK = 20;
+
+    /** Overview's numbers look back this many days. */
+    public const STATS_DAYS = 30;
+
     public function __construct(private FreeGifts $gifts) {}
 
     /** GET /admin-api/free-gifts -- everything the five tabs draw. */
@@ -39,25 +45,76 @@ class FreeGiftsController extends Controller
         return response()->json($this->payload());
     }
 
-    /** POST /admin-api/free-gifts/switch {on} -- refused while a blocking item is open. */
+    /**
+     * POST /admin-api/free-gifts/switch {mode: off|testing|live} -- the Mode
+     * (Lane FG2). Testing and Live are refused while a "Needed" item is open,
+     * and Testing while no IP is on the list (it would show nobody, which
+     * reads as "it does not work"). The old {on} is still read: true is live.
+     */
     public function switch(Request $request): JsonResponse
     {
-        $on = $request->boolean('on');
+        $request->validate(['mode' => ['nullable', Rule::in(FreeGifts::MODES)]]);
+        $mode = $request->filled('mode') ? (string) $request->input('mode') : ($request->boolean('on') ? 'live' : 'off');
 
-        if ($on && $this->gifts->blocked()) {
+        if ($mode !== 'off' && $this->gifts->blocked()) {
             return response()->json([
                 'error' => 'Not yet: finish the items marked "Needed" on the Overview first.',
                 'checklist' => $this->gifts->checklist(),
             ], 422);
         }
 
-        $config = $this->gifts->config();
-        $config['on'] = $on;
+        $config = $this->gifts->freshConfig();
+
+        if ($mode === 'testing' && $config['testers'] === []) {
+            return response()->json(['error' => 'Add at least one IP to "IPs that can see it in Testing" first.'], 422);
+        }
+
+        $config['mode'] = $mode;
+        $config['on'] = $mode !== 'off';
         $this->gifts->saveConfig($config);
 
-        if ($on) {
+        if ($mode !== 'off') {
             $this->gifts->compile();
         }
+
+        return response()->json($this->payload());
+    }
+
+    /**
+     * POST /admin-api/free-gifts/testers {testers: [{ip, label}]} -- the
+     * Testing list, replaced whole. Every address passes filter_var
+     * FILTER_VALIDATE_IP (IPv4 and IPv6), is stored in its canonical form,
+     * de-duplicated, at most FreeGifts::MAX_TESTERS. Emptying the list while
+     * in Testing is refused rather than silently hiding the feature.
+     */
+    public function testers(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'testers' => ['present', 'array', 'max:' . FreeGifts::MAX_TESTERS],
+            'testers.*.ip' => ['required', 'string', 'max:45'],
+            'testers.*.label' => ['nullable', 'string', 'max:60'],
+        ]);
+
+        $list = [];
+        foreach (array_values($data['testers']) as $i => $t) {
+            $ip = trim((string) $t['ip']);
+
+            if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+                throw ValidationException::withMessages(['testers.' . $i . '.ip' => '"' . mb_substr($ip, 0, 45) . '" is not an IP address (IPv4 like 203.0.113.7, or IPv6).']);
+            }
+
+            $ip = \App\Support\IpRange::normalise($ip) ?? $ip;
+            $list[$ip] ??= ['ip' => $ip, 'label' => trim((string) ($t['label'] ?? ''))];
+        }
+
+        $config = $this->gifts->freshConfig();
+
+        if ($list === [] && $config['mode'] === 'testing') {
+            throw ValidationException::withMessages(['testers' => 'Testing needs at least one IP. Switch the mode to Off first to empty the list.']);
+        }
+
+        $config['testers'] = array_values($list);
+        $this->gifts->saveConfig($config);
 
         return response()->json($this->payload());
     }
@@ -91,7 +148,7 @@ class FreeGiftsController extends Controller
             }
         }
 
-        $config = $this->gifts->config();
+        $config = $this->gifts->freshConfig();
         $config['show_value'] = (bool) $data['show_value'];
         $config['countries'] = $data['countries'];
         $config['basis'] = $data['basis'];
@@ -143,9 +200,9 @@ class FreeGiftsController extends Controller
 
         foreach (DB::table('free_gift_ranges')->when($id !== null, fn ($q) => $q->where('id', '<>', $id))->get(['min_fils', 'max_fils']) as $other) {
             if (FreeGifts::overlaps($min, $max, (int) $other->min_fils, $other->max_fils === null ? null : (int) $other->max_fils)) {
-                throw ValidationException::withMessages(['min' => 'This range overlaps '
+                throw ValidationException::withMessages(['min' => 'Overlaps '
                     . FreeGifts::rangeLabel(['min' => (int) $other->min_fils, 'max' => $other->max_fils === null ? null : (int) $other->max_fils])
-                    . '. One basket gets one range, so ranges may not share an amount.']);
+                    . ': one basket gets one range, so ranges may not share an amount.']);
             }
         }
 
@@ -211,8 +268,9 @@ class FreeGiftsController extends Controller
         $this->gifts->compile();
 
         if ($this->gifts->on() && $this->gifts->blocked()) {
-            $config = $this->gifts->config();
+            $config = $this->gifts->freshConfig();
             $config['on'] = false;
+            $config['mode'] = 'off';
             $this->gifts->saveConfig($config);
         }
 
@@ -237,9 +295,14 @@ class FreeGiftsController extends Controller
     public function products(Request $request): JsonResponse
     {
         $q = trim(mb_substr((string) $request->query('q', ''), 0, 80));
+        // A select stores one of its own options: anything else is "all".
+        $filter = in_array($request->query('filter'), ['gift', 'instock'], true) ? $request->query('filter') : 'all';
 
         $rows = Product::query()
             ->with('brand:id,name')
+            ->when($filter === 'gift', fn ($query) => $query->where('gift_only', true))
+            ->when($filter === 'instock', fn ($query) => $query->where('stock_status', 'instock')
+                ->where(fn ($w) => $w->where('manage_stock', false)->orWhere('stock', '>', 0)))
             ->when($q !== '', function ($query) use ($q) {
                 $like = '%' . addcslashes($q, '%_\\') . '%';
                 $query->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('sku', 'like', $like)->orWhere('slug', 'like', $like));
@@ -283,6 +346,14 @@ class FreeGiftsController extends Controller
             'name' => ['required', 'string', 'min:2', 'max:160'],
             'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
             'stock' => ['nullable', 'integer', 'min:0', 'max:100000'],
+            // The gift's own price, in dirhams: what "Show gift prices" strikes
+            // through. Optional; a gift-only product is never sold at it.
+            'price' => ['nullable', 'numeric', 'min:0', 'max:100000'],
+            // A picture from the Media Library upload (/admin-api/media/upload).
+            // Scheme-checked: it becomes an <img src>, never a javascript: or data: URL.
+            'image' => ['nullable', 'string', 'max:500', 'regex:#^(https?://|/(?!/))[^\s"\'<>]+$#i'],
+        ], [
+            'image.regex' => 'The photo must be an uploaded image (an http(s) address).',
         ]);
 
         $base = \Illuminate\Support\Str::slug($data['name']) ?: 'gift';
@@ -298,15 +369,114 @@ class FreeGiftsController extends Controller
             'brand_id' => $data['brand_id'] ?? null,
             'type' => 'simple',
             'status' => 'publish',
-            'price' => 0,
-            'manage_stock' => $data['stock'] !== null,
-            'stock' => $data['stock'],
-            'stock_status' => ($data['stock'] === null || (int) $data['stock'] > 0) ? 'instock' : 'outofstock',
+            'price' => isset($data['price']) ? (int) round((float) $data['price'] * 100) : 0,
+            'image' => ($data['image'] ?? '') !== '' ? $data['image'] : null,
+            'manage_stock' => ($data['stock'] ?? null) !== null,
+            'stock' => $data['stock'] ?? null,
+            'stock_status' => (($data['stock'] ?? null) === null || (int) $data['stock'] > 0) ? 'instock' : 'outofstock',
             'gift_only' => true,
             'is_visible' => false,
         ])->save();
 
         return response()->json($this->payload() + ['created' => $this->productRow($product->load('brand:id,name'))]);
+    }
+
+    /**
+     * GET /admin-api/free-gifts/stats -- Overview's numbers, from data the shop
+     * already keeps: the order's own gift lines (order_items.is_gift) and the
+     * gift products' stock. FOUR queries whatever the number of orders, gifts
+     * or ranges (FreeGiftsAdminTest pins 3 orders against 40). Real orders
+     * only (Order::REAL_STATUSES): a failed or pending payment gave nothing.
+     */
+    public function stats(): JsonResponse
+    {
+        $since = now()->subDays(self::STATS_DAYS);
+        $real = \App\Models\Order::REAL_STATUSES;
+
+        $orders = (int) DB::table('orders')
+            ->where('free_gift_count', '>', 0)
+            ->whereIn('status', $real)
+            ->where('created_at', '>=', $since)
+            ->count();
+
+        $lines = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.is_gift', true)
+            ->whereIn('orders.status', $real)
+            ->where('orders.created_at', '>=', $since)
+            ->groupBy('order_items.product_id')
+            ->selectRaw('order_items.product_id as product_id, MAX(order_items.name) as name, SUM(order_items.quantity) as units')
+            ->orderByDesc('units')
+            ->orderBy('order_items.product_id')
+            ->get();
+
+        $top = $lines->first();
+
+        $usedIds = DB::table('free_gift_range_items')->distinct()->pluck('product_id')->map(fn ($id) => (int) $id)->all();
+        $stock = $usedIds === [] ? collect() : Product::query()
+            ->whereIn('id', $usedIds)
+            ->where(fn ($q) => $q->where('stock_status', '<>', 'instock')
+                ->orWhere(fn ($w) => $w->where('manage_stock', true)->where('stock', '<=', self::LOW_STOCK)))
+            ->orderBy('stock')
+            ->orderBy('name')
+            ->get(['id', 'name', 'stock_status', 'manage_stock', 'stock']);
+
+        return response()->json([
+            'days' => self::STATS_DAYS,
+            'low_stock' => self::LOW_STOCK,
+            'orders' => $orders,
+            'units' => (int) $lines->sum('units'),
+            'top' => $top === null ? null : ['product_id' => (int) $top->product_id, 'name' => (string) $top->name, 'units' => (int) $top->units],
+            'stock_alerts' => $stock->map(fn (Product $p) => [
+                'id' => (int) $p->id,
+                'name' => (string) $p->name,
+                'stock' => $p->manage_stock ? (int) $p->stock : null,
+                'level' => ($p->stock_status !== 'instock' || ($p->manage_stock && (int) $p->stock < 1)) ? 'out' : 'low',
+            ])->values(),
+        ]);
+    }
+
+    /** GET /admin-api/free-gifts/brands -- the create form's brand list, asked for only when that form opens. */
+    public function brands(): JsonResponse
+    {
+        return response()->json([
+            'brands' => DB::table('brands')->orderBy('name')->orderBy('id')->limit(1000)->get(['id', 'name'])
+                ->map(fn ($b) => ['id' => (int) $b->id, 'name' => (string) $b->name])->values(),
+        ]);
+    }
+
+    /**
+     * Amounts no enabled range covers, between two that do: "AED 300 - 300
+     * gives nothing" when one band ends at 299 and the next starts at 301.
+     * Below the first band is the shop's choice (no gift under AED 100) and
+     * is not a gap. Whole dirhams, as the screen shows them. The screen runs
+     * the same walk as you type; this is the server's copy of the answer.
+     *
+     * @return list<array{from:int,to:int}>
+     */
+    public static function gaps(iterable $ranges): array
+    {
+        $bands = [];
+        foreach ($ranges as $r) {
+            if ((bool) $r->enabled) {
+                $bands[] = [intdiv((int) $r->min_fils, 100), $r->max_fils === null ? null : intdiv((int) $r->max_fils, 100)];
+            }
+        }
+        usort($bands, static fn ($a, $b) => $a[0] <=> $b[0]);
+
+        $gaps = [];
+        $reach = null; // the last dirham covered so far; null before the first band
+        foreach ($bands as [$min, $max]) {
+            if ($reach !== null && $min > $reach + 1) {
+                $gaps[] = ['from' => $reach + 1, 'to' => $min - 1];
+            }
+            if ($max === null) {
+                break;
+            }
+            $reach = $reach === null ? $max : max($reach, $max);
+        }
+
+        return $gaps;
     }
 
     private function payload(): array
@@ -324,7 +494,7 @@ class FreeGiftsController extends Controller
             ->get(['id', 'name', 'slug', 'sku', 'brand_id', 'image', 'type', 'status', 'stock_status', 'manage_stock', 'stock', 'gift_only', 'price', 'sale_price', 'sale_starts_at', 'sale_ends_at']);
         $byId = $giftProducts->keyBy('id');
 
-        $config = $this->gifts->config();
+        $config = $this->gifts->freshConfig();
 
         return [
             'config' => $config,
@@ -348,6 +518,11 @@ class FreeGiftsController extends Controller
             'gift_products' => $giftProducts->map(fn (Product $p) => $this->productRow($p) + [
                 'used_in' => $items->filter(fn ($rows) => $rows->contains('product_id', $p->id))->keys()->map(fn ($k) => (int) $k)->values(),
             ])->values(),
+            'gaps' => self::gaps($ranges),
+            // The address the server sees for the person at this screen --
+            // $request->ip(), the firewall's answer -- for "Add my current IP".
+            'my_ip' => (string) (request()->ip() ?? ''),
+            'low_stock' => self::LOW_STOCK,
             'can_manage' => ($admin = auth('admin')->user()) instanceof \App\Models\AdminUser
                 && \App\Support\AdminRoles::can($admin, 'freegifts.manage'),
         ];

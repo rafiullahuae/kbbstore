@@ -659,3 +659,186 @@ it('paints the checkout summary content #fbf7f8, as the owner asked, and keeps t
     $page->save(['lo_sum_open' => 'white']);
     expect(app(\App\Services\CheckoutPage::class)->bodyClass())->toContain(' cop-sow')->not->toContain('cop-sob');
 });
+
+/*
+|------------------------------------------------------------------------------
+| MODE: OFF / TESTING / LIVE  (Lane FG2; the owner: "make sure it does not go
+| live without our checking completely. Add an IP list which will see this
+| feature, so we can test.")
+|------------------------------------------------------------------------------
+*/
+
+/** Every page bit a shopper gets, with the per-request tokens taken out. */
+function lfgShopBytes(Cart $cart, string $ip): array
+{
+    $strip = fn (string $h) => preg_replace(['/(name="_token"[^>]*value=|"csrf-token" content=|csrf["\']?\s*[:=]\s*)["\'][^"\']*["\']/i', '/nonce="[^"]*"/'], ['$1""', 'nonce=""'], $h);
+
+    return [
+        'drawer' => $strip((string) lfgShopper($cart)->withServerVariables(['REMOTE_ADDR' => $ip])->getJson('/api/cart/drawer')->json('html')),
+        'cart' => $strip(lfgShopper($cart)->withServerVariables(['REMOTE_ADDR' => $ip])->get('/cart/')->getContent()),
+        'checkout' => $strip(lfgShopper($cart)->withServerVariables(['REMOTE_ADDR' => $ip])->get('/checkout/')->getContent()),
+    ];
+}
+
+function lfgMode(string $mode, array $testers = []): void
+{
+    lfgOn(['mode' => $mode, 'on' => $mode !== 'off', 'testers' => $testers]);
+}
+
+it('in Testing shows a shopper whose IP is not listed exactly the Off shop, and saves no gifts on the order', function () {
+    /*
+     * The defect: the owner tests on his phone and every customer sees the
+     * half-checked gifts too -- or sees the box and then gets an order without
+     * them because placement asked a different question.
+     * MUTATION: make visibleTo() return true for 'testing'. RED.
+     */
+    PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
+    $mask = lfgProduct('Sheet Mask', ['manage_stock' => true, 'stock' => 10, 'gift_only' => true]);
+    lfgRange(100, 299, [[$mask, 2]], '2 Masks');
+    $serum = lfgProduct('Serum', ['price' => 15000]);
+    $cart = lfgCart([[$serum, 1]]);
+
+    lfgMode('off');
+    $off = lfgShopBytes($cart, '198.51.100.9');
+    lfgMode('testing', [['ip' => '203.0.113.7', 'label' => 'Owner']]);
+    $testing = lfgShopBytes($cart, '198.51.100.9');
+
+    expect($off['drawer'])->not->toContain('fgb')
+        ->and($testing['drawer'])->toBe($off['drawer'])
+        ->and($testing['cart'])->toBe($off['cart'])
+        ->and($testing['checkout'])->toBe($off['checkout']);
+
+    test()->withServerVariables(['REMOTE_ADDR' => '198.51.100.9']);
+    lfgPlace(lfgCart([[$serum, 1]]))->assertRedirect();
+    $order = Order::latest('id')->first();
+    expect($order->gifts)->toHaveCount(0)->and((int) $order->free_gift_count)->toBe(0)->and((int) $mask->fresh()->stock)->toBe(10);
+});
+
+it('in Testing gives a listed IP the box and the gifts on its order', function () {
+    /*
+     * MUTATION: make visibleTo() return false for 'testing'. RED.
+     */
+    PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
+    $mask = lfgProduct('Sheet Mask', ['manage_stock' => true, 'stock' => 10, 'gift_only' => true]);
+    lfgRange(100, 299, [[$mask, 2]], '2 Masks');
+    $serum = lfgProduct('Serum', ['price' => 15000]);
+    lfgMode('testing', [['ip' => '203.0.113.7', 'label' => 'Owner'], ['ip' => '2001:db8::1', 'label' => '']]);
+
+    $bytes = lfgShopBytes(lfgCart([[$serum, 1]]), '203.0.113.7');
+    expect($bytes['drawer'])->toContain('<fieldset class="fgb">')
+        ->and($bytes['checkout'])->toContain('Free gifts (2)');
+
+    // The same address written another way is the same address.
+    expect(lfgShopBytes(lfgCart([[$serum, 1]]), '2001:0db8:0:0:0:0:0:0001')['drawer'])->toContain('<fieldset class="fgb">');
+
+    test()->withServerVariables(['REMOTE_ADDR' => '203.0.113.7']);
+    lfgPlace(lfgCart([[$serum, 1]]))->assertRedirect();
+    $order = Order::latest('id')->first();
+    expect($order->gifts)->toHaveCount(1)->and((int) $order->free_gift_count)->toBe(2);
+});
+
+it('in Live gives every shopper the gifts, whatever their IP', function () {
+    /*
+     * MUTATION: make visibleTo() return false for 'live'. RED.
+     */
+    PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
+    $mask = lfgProduct('Sheet Mask', ['gift_only' => true]);
+    lfgRange(100, 299, [[$mask, 2]], '2 Masks');
+    $serum = lfgProduct('Serum', ['price' => 15000]);
+    lfgMode('live', [['ip' => '203.0.113.7', 'label' => '']]);
+
+    expect(lfgShopBytes(lfgCart([[$serum, 1]]), '198.51.100.9')['drawer'])->toContain('<fieldset class="fgb">');
+    test()->withServerVariables(['REMOTE_ADDR' => '198.51.100.9']);
+    lfgPlace(lfgCart([[$serum, 1]]))->assertRedirect();
+    expect(Order::latest('id')->first()->gifts)->toHaveCount(1);
+
+    // The old saved switch reads as a mode: on is live, anything else off.
+    expect(FreeGifts::modeOf(['on' => true]))->toBe('live')
+        ->and(FreeGifts::modeOf(['on' => false]))->toBe('off')
+        ->and(FreeGifts::modeOf([]))->toBe('off')
+        ->and(FreeGifts::modeOf(['mode' => 'nonsense', 'on' => false]))->toBe('off');
+});
+
+it('decides by the firewall\'s address, never by X-Forwarded-For, and with no query', function () {
+    /*
+     * The defect: a customer sends "X-Forwarded-For: <the owner's IP>" and
+     * sees -- and gets -- the gifts under test. The firewall (BlockGate,
+     * Firewall::before()) uses $request->ip() with no trusted proxy; so does
+     * visibleTo().
+     * MUTATION: read $request->header('X-Forwarded-For') in visibleTo(). RED.
+     */
+    lfgMode('testing', [['ip' => '203.0.113.7', 'label' => '']]);
+    lfgFresh();
+    $gifts = app(FreeGifts::class);
+
+    $spoof = Illuminate\Http\Request::create('/cart', 'GET', [], [], [], ['REMOTE_ADDR' => '198.51.100.9', 'HTTP_X_FORWARDED_FOR' => '203.0.113.7', 'HTTP_X_REAL_IP' => '203.0.113.7']);
+    $real = Illuminate\Http\Request::create('/cart', 'GET', [], [], [], ['REMOTE_ADDR' => '203.0.113.7']);
+
+    $gifts->visibleTo($real); // warm the settings memo
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    expect($gifts->visibleTo($spoof))->toBeFalse()
+        ->and($gifts->visibleTo($real))->toBeTrue()
+        ->and($gifts->visibleTo(null))->toBeFalse()
+        ->and(DB::getQueryLog())->toBe([]);
+    DB::disableQueryLog();
+
+    $source = (string) file_get_contents(app_path('Services/FreeGifts.php'));
+    expect($source)->toContain('IpRange::pack((string) $request->ip())')
+        ->not->toContain("header('X-Forwarded-For')")
+        ->not->toContain('getClientIps');
+});
+
+it('keeps only real IPs on the Testing list, canonical, de-duplicated, at most 50, and will not test with nobody on it', function () {
+    /*
+     * The defect: "203.0.113.300" or a hostname saved, matching nobody, and the
+     * owner concluding the feature is broken; or the list growing without end.
+     * MUTATION: drop the filter_var() check in FreeGiftsController::testers(). RED.
+     */
+    $owner = lfgAdmin('owner');
+    $mask = lfgProduct('Sheet Mask');
+    lfgRange(100, 299, [[$mask, 2]], '2 Masks');
+    $post = fn (array $t) => test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/testers', ['testers' => $t]);
+
+    foreach (['203.0.113.300', 'example.com', '10.0.0.0/8', '1.2.3', 'javascript:alert(1)'] as $bad) {
+        $post([['ip' => $bad, 'label' => '']])->assertStatus(422);
+    }
+    $post(array_map(fn ($i) => ['ip' => '10.0.' . intdiv($i, 250) . '.' . ($i % 250), 'label' => ''], range(1, 51)))->assertStatus(422);
+
+    // Testing with nobody on the list is refused.
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/switch', ['mode' => 'testing'])->assertStatus(422);
+
+    $post([['ip' => '2001:0DB8:0:0:0:0:0:1', 'label' => 'Phone'], ['ip' => '2001:db8::1', 'label' => 'dup'], ['ip' => ' 203.0.113.7 ', 'label' => 'Office']])
+        ->assertOk()
+        ->assertJsonPath('config.testers', [['ip' => '2001:db8::1', 'label' => 'Phone'], ['ip' => '203.0.113.7', 'label' => 'Office']]);
+
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/switch', ['mode' => 'testing'])->assertOk()->assertJsonPath('config.mode', 'testing');
+    $post([])->assertStatus(422);
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/switch', ['mode' => 'banana'])->assertStatus(422);
+
+    // The screen gets the address the server sees, for "Add my current IP".
+    test()->actingAs($owner, 'admin')->withServerVariables(['REMOTE_ADDR' => '198.51.100.23'])->getJson('/admin-api/free-gifts')->assertJsonPath('my_ip', '198.51.100.23');
+
+    test()->actingAs(lfgAdmin('support'), 'admin')->postJson('/admin-api/free-gifts/testers', ['testers' => []])->assertForbidden();
+});
+
+it('turns a saved switch into a mode on migrating: on becomes live, anything else off', function () {
+    /*
+     * MUTATION: write 'testing' for a saved on in 2027_11_23_100100_free_gifts_mode. RED.
+     */
+    $migration = require database_path('migrations/2027_11_23_100100_free_gifts_mode.php');
+    $read = fn () => json_decode((string) DB::table('settings')->where('key', 'free_gifts')->value('value'), true);
+
+    DB::table('settings')->updateOrInsert(['key' => 'free_gifts'], ['value' => json_encode(['on' => true, 'countries' => 'all']), 'autoload' => true]);
+    $migration->up();
+    expect($read())->toMatchArray(['mode' => 'live', 'on' => true, 'testers' => [], 'countries' => 'all']);
+
+    DB::table('settings')->updateOrInsert(['key' => 'free_gifts'], ['value' => json_encode(['on' => false]), 'autoload' => true]);
+    $migration->up();
+    expect($read()['mode'])->toBe('off');
+
+    // A row that already has a mode is left alone.
+    DB::table('settings')->updateOrInsert(['key' => 'free_gifts'], ['value' => json_encode(['mode' => 'testing', 'on' => true, 'testers' => [['ip' => '203.0.113.7', 'label' => '']]]), 'autoload' => true]);
+    $migration->up();
+    expect($read()['mode'])->toBe('testing');
+});

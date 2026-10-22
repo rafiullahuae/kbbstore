@@ -61,6 +61,16 @@ final class FreeGifts
 
     public const MAX_QTY = 50;
 
+    /**
+     * Who sees the gifts (Lane FG2; the owner: "make sure it does not go live
+     * without our checking completely"). off: nobody. testing: only the IPs on
+     * `testers`, in the same autoloaded settings row. live: everyone.
+     */
+    public const MODES = ['off', 'testing', 'live'];
+
+    /** At most this many IPs on the Testing list. */
+    public const MAX_TESTERS = 50;
+
     /** Every text the shopper reads, in both languages. Settings, printed escaped. */
     public const TEXTS = [
         'title' => ['Free gifts for you', 'هدايا مجانية لكِ'],
@@ -102,6 +112,19 @@ final class FreeGifts
         return $this->config ??= $this->readConfig();
     }
 
+    /**
+     * config() read again from the settings row. The admin's writes use it:
+     * a controller instance (and the FreeGifts it was given) can outlive one
+     * request -- Laravel keeps it on the route -- so a memo from an earlier
+     * request must never decide a later write (Lane FG2).
+     */
+    public function freshConfig(): array
+    {
+        $this->config = null;
+
+        return $this->config();
+    }
+
     private function readConfig(): array
     {
         $saved = $this->settings->get(self::KEY);
@@ -120,8 +143,12 @@ final class FreeGifts
                 : self::str($saved['home'][$key] ?? null, $default);
         }
 
+        $mode = self::modeOf($saved);
+
         return [
-            'on' => (bool) ($saved['on'] ?? false),
+            'mode' => $mode,
+            'on' => $mode !== 'off',
+            'testers' => self::testersOf($saved),
             'show_value' => (bool) ($saved['show_value'] ?? false),
             'countries' => in_array($saved['countries'] ?? null, self::COUNTRIES, true) ? $saved['countries'] : 'all',
             'basis' => in_array($saved['basis'] ?? null, self::BASES, true) ? $saved['basis'] : 'after_discounts',
@@ -130,11 +157,79 @@ final class FreeGifts
         ];
     }
 
+    /** Switched on at all (Testing or Live) -- the admin's meaning. Never decides what a shopper sees. */
     public function on(): bool
+    {
+        return $this->mode() !== 'off';
+    }
+
+    public function mode(): string
     {
         $saved = $this->settings->get(self::KEY);
 
-        return is_array($saved) && ! empty($saved['on']);
+        return self::modeOf(is_array($saved) ? $saved : []);
+    }
+
+    /** A saved mode, or the old switch read as one: `on` true is live, anything else off. */
+    public static function modeOf(array $saved): string
+    {
+        if (in_array($saved['mode'] ?? null, self::MODES, true)) {
+            return $saved['mode'];
+        }
+
+        return ! empty($saved['on']) ? 'live' : 'off';
+    }
+
+    /** @return list<array{ip:string,label:string}> valid, normalised, de-duplicated, at most MAX_TESTERS */
+    public static function testersOf(array $saved): array
+    {
+        $out = [];
+
+        foreach (is_array($saved['testers'] ?? null) ? $saved['testers'] : [] as $t) {
+            $ip = is_array($t) ? \App\Support\IpRange::normalise(trim((string) ($t['ip'] ?? ''))) : null;
+
+            if ($ip === null || isset($out[$ip]) || count($out) >= self::MAX_TESTERS) {
+                continue;
+            }
+
+            $out[$ip] = ['ip' => $ip, 'label' => mb_substr(trim((string) ($t['label'] ?? '')), 0, 60)];
+        }
+
+        return array_values($out);
+    }
+
+    /**
+     * THE ONE PLACE that decides whether a request sees free gifts: the box
+     * (cart panel, cart page, checkout), the checkout's "Free gifts (N)" line
+     * and order placement all reach it through forTotals(). The address is
+     * $request->ip(), the firewall's own answer (BlockGate, Firewall::before()):
+     * this application trusts no proxy, so X-Forwarded-For is never read.
+     * Compared packed (IpRange::pack), so "::1" and "0:0:0:0:0:0:0:1" are one.
+     * No query: the settings row is read through SettingsRequestMemo.
+     */
+    public function visibleTo(?\Illuminate\Http\Request $request): bool
+    {
+        $saved = $this->settings->get(self::KEY);
+        $saved = is_array($saved) ? $saved : [];
+        $mode = self::modeOf($saved);
+
+        if ($mode !== 'testing') {
+            return $mode === 'live';
+        }
+
+        $bin = $request === null ? null : \App\Support\IpRange::pack((string) $request->ip());
+
+        if ($bin === null) {
+            return false;
+        }
+
+        foreach (is_array($saved['testers'] ?? null) ? $saved['testers'] : [] as $t) {
+            if (is_array($t) && \App\Support\IpRange::pack(trim((string) ($t['ip'] ?? ''))) === $bin) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** One text in the language being drawn (the order's, inside OrderLocale::render()). */
@@ -233,7 +328,7 @@ final class FreeGifts
      */
     public function forTotals(array $totals, ?string $country = null): array
     {
-        if (! $this->on() || (int) ($totals['item_count'] ?? 1) < 1) {
+        if (! $this->visibleTo(app()->bound('request') ? request() : null) || (int) ($totals['item_count'] ?? 1) < 1) {
             return [];
         }
 
@@ -481,7 +576,7 @@ final class FreeGifts
         $out = [];
 
         if ($enabled->isEmpty()) {
-            $out[] = ['level' => 'block', 'text' => 'Add at least one spend range and switch it on.'];
+            $out[] = ['level' => 'block', 'text' => 'Add at least one spend range and switch it on.', 'range' => null];
         }
 
         foreach ($enabled as $r) {
@@ -489,7 +584,7 @@ final class FreeGifts
             $gifts = $items[$r->id] ?? collect();
 
             if ($gifts->isEmpty()) {
-                $out[] = ['level' => 'block', 'text' => $label . ' ("' . $r->label_en . '"): no gift products picked yet.'];
+                $out[] = ['level' => 'block', 'text' => $label . ' ("' . $r->label_en . '"): no gift products picked yet.', 'range' => (int) $r->id];
 
                 continue;
             }
@@ -500,13 +595,13 @@ final class FreeGifts
                 $p = $products[$g->product_id] ?? null;
 
                 if ($p === null || $p->deleted_at !== null || $p->status !== 'publish') {
-                    $out[] = ['level' => 'block', 'text' => $label . ': a picked product is deleted or not published.'];
+                    $out[] = ['level' => 'block', 'text' => $label . ': a picked product is deleted or not published.', 'range' => (int) $r->id];
                 } elseif ($p->type === 'variable') {
-                    $out[] = ['level' => 'block', 'text' => $label . ': "' . $p->name . '" has options (shades/sizes); pick a simple product.'];
+                    $out[] = ['level' => 'block', 'text' => $label . ': "' . $p->name . '" has options (shades/sizes); pick a simple product.', 'range' => (int) $r->id];
                 } elseif ($p->stock_status !== 'instock' || ($p->manage_stock && (int) $p->stock < 1)) {
-                    $out[] = ['level' => 'warn', 'text' => $label . ': "' . $p->name . '" is out of stock, so it is skipped until restocked.'];
+                    $out[] = ['level' => 'warn', 'text' => $label . ': "' . $p->name . '" is out of stock, so it is skipped until restocked.', 'range' => (int) $r->id];
                 } elseif ($p->manage_stock && (int) $p->stock < (int) $g->quantity) {
-                    $out[] = ['level' => 'warn', 'text' => $label . ': only ' . (int) $p->stock . ' of "' . $p->name . '" left for ' . (int) $g->quantity . ' per order.'];
+                    $out[] = ['level' => 'warn', 'text' => $label . ': only ' . (int) $p->stock . ' of "' . $p->name . '" left for ' . (int) $g->quantity . ' per order.', 'range' => (int) $r->id];
                 }
 
                 $names[] = mb_strtolower((string) ($p->name ?? ''));
@@ -514,7 +609,7 @@ final class FreeGifts
 
             if (str_contains(mb_strtolower((string) $r->label_en), 'mask')
                 && ! collect($names)->contains(static fn (string $n) => str_contains($n, 'mask'))) {
-                $out[] = ['level' => 'warn', 'text' => $label . ' says "' . $r->label_en . '" but no mask product is picked. Pick the sheet mask product.'];
+                $out[] = ['level' => 'warn', 'text' => $label . ' says "' . $r->label_en . '" but no mask product is picked. Pick the sheet mask product.', 'range' => (int) $r->id];
             }
         }
 

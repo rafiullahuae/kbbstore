@@ -1,0 +1,71 @@
+{
+  "390": {
+    "scrollWidth": {
+      "overview": 390,
+      "overview-testing": 390,
+      "ranges": 390,
+      "range-open": 390,
+      "picker": 390,
+      "products": 390,
+      "display": 390,
+      "home": 390
+    },
+    "kpis": [
+      "Orders with gifts: 14",
+      "Gift units given: 58",
+      "Most-given gift: Tea Tree Sheet Mask",
+      "Stock alerts: 3"
+    ],
+    "invalidIpMessage": "\"203.0.113.300\" is not an IP address (IPv4 like 203.0.113.7, or IPv6).",
+    "banner": "Testing: only 2 IPs see free gifts. Every other shopper sees the shop as if it were Off.",
+    "rangeRowHeight": 103,
+    "searchRequestsForSevenLetters": 1,
+    "searchRequestsForOneLetter": 0,
+    "saveBarVisible": true,
+    "inlineMessages": [
+      "!Overlaps AED 300 – 499. One basket gets one range, so ranges may not share an amount."
+    ],
+    "saveBarAfterDiscard": false,
+    "toast": "Saved AED 500 – 999 (3 Masks + 2 Mini Products + 1 Full Size Product).",
+    "displayPreviewTitle": "Your free gifts",
+    "errors": [
+      "422 http://127.0.0.1:10660/admin-api/free-gifts/testers",
+      "Failed to load resource: the server responded with a status of 422 (Unprocessable Content)"
+    ]
+  },
+  "1280": {
+    "scrollWidth": {
+      "overview": 1280,
+      "overview-testing": 1280,
+      "ranges": 1280,
+      "range-open": 1280,
+      "picker": 1280,
+      "products": 1280,
+      "display": 1280,
+      "home": 1280
+    },
+    "kpis": [
+      "Orders with gifts: 14",
+      "Gift units given: 58",
+      "Most-given gift: Tea Tree Sheet Mask",
+      "Stock alerts: 3"
+    ],
+    "invalidIpMessage": "\"203.0.113.300\" is not an IP address (IPv4 like 203.0.113.7, or IPv6).",
+    "banner": "Testing: only 2 IPs see free gifts. Every other shopper sees the shop as if it were Off.",
+    "rangeRowHeight": 52,
+    "searchRequestsForSevenLetters": 1,
+    "searchRequestsForOneLetter": 0,
+    "saveBarVisible": true,
+    "inlineMessages": [
+      "!Overlaps AED 300 – 499. One basket gets one range, so ranges may not share an amount."
+    ],
+    "saveBarAfterDiscard": false,
+    "toast": "Saved AED 500 – 999 (3 Masks + 2 Mini Products + 1 Full Size Product).",
+    "displayPreviewTitle": "Your free gifts",
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "422 http://127.0.0.1:10660/admin-api/free-gifts/testers",
+      "Failed to load resource: the server responded with a status of 422 (Unprocessable Content)"
+    ]
+  }
+}

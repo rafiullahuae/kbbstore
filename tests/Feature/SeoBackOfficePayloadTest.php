@@ -113,6 +113,10 @@ use Tests\Support\KeyOrder;
  * ▲ Lane FG re-recorded (KBB_S7_RECORD=1), diff read as data: the settings body
  * gains `free_gifts` (the switch, off) and `free_gifts_compiled` (the five
  * spend bands), the rows 2027_11_22_100100_free_gifts_seed writes. Nothing else.
+ *
+ * ▲ Lane FG2 re-recorded (KBB_S7_RECORD=1), diff read as data: `free_gifts`
+ * gains `"mode":"off","testers":[]`, written by 2027_11_23_100100_free_gifts_mode
+ * (the switch becomes Off / Testing / Live). One line; nothing else moved.
  */
 function s7PayloadUrls(): array
 {
