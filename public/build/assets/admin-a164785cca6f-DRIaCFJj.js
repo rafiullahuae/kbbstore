@@ -1,0 +1,933 @@
+
+(function () {
+  'use strict';
+
+  var SCREEN = 'freegifts';
+  var GROUP = 'Growth & Marketing';
+  var TITLE = 'Free gifts';
+  var TABS = [['overview', 'Overview'], ['ranges', 'Ranges & gifts'], ['products', 'Gift products'], ['display', 'Display'], ['home', 'Homepage section']];
+  /* [key, label, help]; grouped as the shopper meets them. */
+  var TEXT_GROUPS = [
+    ['The box', [['title', 'Box title', ''], ['view_all', 'Open button', ''], ['hide', 'Close button', ''], ['free', 'On each gift', '']]],
+    ['Gift count after the wording', [['count_one', '1 gift', ''], ['count_two', '2 gifts', 'Keep :count in English'], ['count_few', '3 to 10 gifts', 'Keep :count'], ['count_many', '11 gifts or more', 'Keep :count']]],
+    ['Elsewhere', [['line', 'Checkout summary line', 'Keep :count'], ['tag', 'Emails, invoice, packing slip', '']]]
+  ];
+  var HOME_FIELDS = [['title', 'Title'], ['sub', 'Subtitle'], ['btn', 'Button']];
+  var MAX_QTY = 50;
+  var GIFT_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>';
+  var ICONS = {
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>',
+    chev: '<svg class="fg-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
+    x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'
+  };
+
+  var st = {
+    tab: 'overview', data: null, stats: null, banner: null, busy: false, seq: 0,
+    open: null,      // the one range shown expanded: an id, 'new', or null
+    drafts: {},      // range id -> its edited copy (only once touched)
+    cfg: null,       // Display + Homepage section, edited copy (null = untouched)
+    errors: {},      // range id (or 'cfg') -> the server's refusal
+    confirm: null,   // range id waiting on "Delete?"
+    removed: {},     // range id -> { g, at } for the inline Undo
+    picker: null,    // the open "Add gift" panel
+    pvLang: 'en', pvRange: null,
+    tester: { ip: '', label: '', err: null },
+    create: { open: false, name: '', brand_id: '', stock: '', price: '', image: '', thumb: '', brands: null, busy: false, err: null, made: null }
+  };
+  var live = [];     // { node, fn } repainted in place while typing
+
+  /* ------------------------------------------------------------ helpers */
+  function cookie(n) { var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)'); return m ? decodeURIComponent(m.pop()) : ''; }
+  function root() { return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, ''); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  /* toast() writes innerHTML; every message can carry the owner's wording. */
+  function say(m, kind) { try { window.toast(esc(m), kind); } catch (e) {} }
+  function el(tag, attrs, kids) {
+    var x = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) {
+      var v = attrs[k];
+      if (v == null || v === false) return;
+      if (k === 'text') x.textContent = v; else if (k === 'class') x.className = v;
+      else if (k === 'value') x.value = v;
+      else if (k === 'html') x.innerHTML = v; /* constants only: the ICONS above */
+      else if (k.indexOf('on') === 0) x.addEventListener(k.slice(2), v); else x.setAttribute(k, v === true ? '' : String(v));
+    });
+    (kids || []).forEach(function (c) { if (c != null && c !== false) x.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return x;
+  }
+  function ours() { var c = document.querySelector('#content'); return !!c && (!c.firstChild || !!c.querySelector('[data-screen="' + SCREEN + '"]')); }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function fmt(n) { return Number(n).toLocaleString('en-US'); }
+  function amount(min, max) { return 'AED ' + fmt(min) + (max == null ? '+' : ' – ' + fmt(max)); }
+  function today() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function niceDate(s) { if (!s) return ''; var d = new Date(s + 'T00:00:00'); return isNaN(d) ? s : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  function can() { return !!(st.data && st.data.can_manage); }
+  function low() { return (st.data && st.data.low_stock) || 20; }
+
+  async function api(method, path, body) {
+    var opts = { method: method, headers: { Accept: 'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN') }, credentials: 'same-origin' };
+    if (body instanceof FormData) opts.body = body;
+    else if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    var r = await fetch(root() + (path.charAt(0) === '!' ? path.slice(1) : '/admin-api/free-gifts' + path), opts);
+    var payload = null;
+    try { payload = await r.json(); } catch (e) { payload = null; }
+    if (!r.ok) { var err = new Error('free-gifts ' + r.status); err.status = r.status; err.body = payload; throw err; }
+    return payload;
+  }
+  function explain(e, fallback) {
+    if (e && e.status === 404 && !(e.body && e.body.error)) return 'The Free gifts endpoints are not in this server\'s compiled route table yet. Clear the route cache and reload.';
+    if (e && e.status === 403) return 'Your role cannot do this. An owner or a manager can.';
+    if (e && e.body && e.body.errors) { var k = Object.keys(e.body.errors)[0]; return e.body.errors[k][0]; }
+    return (e && e.body && (e.body.error || e.body.message)) ? (e.body.error || e.body.message) : fallback;
+  }
+
+  /* ------------------------------------------------------------- the screen */
+  var previousGo = window.go;
+  window.go = function (id) {
+    if (id !== SCREEN) { closePicker(true); return previousGo.apply(this, arguments); }
+    document.querySelectorAll('.side .nav-item').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-go') === SCREEN); });
+    var group = document.querySelector('#nav .nav-group[data-sec="' + GROUP + '"]');
+    if (group) group.classList.add('open');
+    var crumb = document.querySelector('#crumb'), title = document.querySelector('#ptitle');
+    if (crumb) crumb.textContent = GROUP;
+    if (title) title.textContent = TITLE;
+    var side = document.querySelector('#side');
+    if (side) side.classList.remove('open');
+    var c = document.querySelector('#content');
+    if (c) c.textContent = '';
+    st.drafts = {}; st.cfg = null; st.errors = {}; st.confirm = null; st.removed = {}; st.picker = null; st.stats = null;
+    render();
+    run(function () { return api('GET', ''); }, 'Free gifts could not be loaded.');
+    loadStats();
+    return undefined;
+  };
+
+  function loadStats() {
+    api('GET', '/stats').then(function (s) { st.stats = s; if (st.tab === 'overview') render(); })
+      .catch(function () { st.stats = { failed: true }; if (st.tab === 'overview') render(); });
+  }
+
+  /* One write (or the first load): the payload replaces what the screen holds;
+     an answer that is no longer the latest one is dropped. */
+  async function run(fn, fallback, done) {
+    var mine = ++st.seq;
+    st.busy = true; st.banner = null; render();
+    try {
+      var d = await fn();
+      if (mine !== st.seq) return;
+      if (d && d.config) st.data = d;
+      if (done) done(d);
+    } catch (e) { if (mine === st.seq) { st.banner = explain(e, fallback); say(st.banner, 'bad'); } }
+    if (mine === st.seq) { st.busy = false; render(); }
+  }
+
+  /* ------------------------------------------------------------ the model */
+  function ranges() { return st.data ? st.data.ranges.slice().sort(function (a, b) { return a.min - b.min || a.id - b.id; }) : []; }
+  function rangeById(id) { return st.data ? st.data.ranges.filter(function (r) { return r.id === id; })[0] || null : null; }
+  function origOf(r) { return { min: r.min, max: r.max, label_en: r.label_en, label_ar: r.label_ar, enabled: r.enabled, starts_on: r.starts_on, ends_on: r.ends_on, gifts: clone(r.gifts) }; }
+  /* What a range reads as now: its draft when touched, otherwise the server's. */
+  function view(r) { return st.drafts[r.id] || origOf(r); }
+  function draft(id) {
+    if (!st.drafts[id]) { var r = rangeById(id); if (r) st.drafts[id] = origOf(r); }
+    return st.drafts[id];
+  }
+  function norm(x) { return JSON.stringify([x.min, x.max, (x.label_en || '').trim(), (x.label_ar || '').trim(), !!x.enabled, x.starts_on || null, x.ends_on || null, x.gifts.map(function (g) { return [g.product_id, g.quantity]; })]); }
+  function dirtyRanges() {
+    return Object.keys(st.drafts).filter(function (k) {
+      if (k === 'new') return true;
+      var r = rangeById(Number(k));
+      return !r || norm(st.drafts[k]) !== norm(origOf(r));
+    });
+  }
+  function cfgNorm(c) { return JSON.stringify([c.show_value, c.countries, c.basis, c.texts, c.home]); }
+  function cfgDirty() { return !!(st.cfg && st.data && cfgNorm(st.cfg) !== cfgNorm(st.data.config)); }
+  function cfg() { return st.cfg || (st.data && st.data.config); }
+  function editCfg() { if (!st.cfg) st.cfg = clone(st.data.config); return st.cfg; }
+
+  function stockOf(p, qty) {
+    if (!p) return { level: 'out', cls: 'red', text: 'Missing' };
+    if (p.status !== 'publish') return { level: 'out', cls: 'red', text: 'Not published' };
+    if (p.type === 'variable') return { level: 'out', cls: 'red', text: 'Has options' };
+    if (!p.in_stock) return { level: 'out', cls: 'red', text: 'Out of stock' };
+    if (p.stock !== null && qty && p.stock < qty) return { level: 'low', cls: 'amber', text: 'Only ' + p.stock + ' left' };
+    if (p.stock !== null && p.stock <= low()) return { level: 'low', cls: 'amber', text: 'Low · ' + p.stock + ' left' };
+    return { level: 'in', cls: 'green', text: p.stock === null ? 'In stock' : 'In stock · ' + fmt(p.stock) };
+  }
+  function pill(cls, text) { return el('span', { class: 'pill ' + cls, text: text }); }
+
+  /* The same walk as FreeGiftsController::gaps() and ::overlaps(), over the
+     ranges as they read NOW (drafts included), so a message appears as the
+     owner types. The server stays the authority on save. */
+  function bands() {
+    var list = ranges().map(function (r) { var v = view(r); return { id: r.id, min: v.min, max: v.max, enabled: v.enabled }; });
+    if (st.drafts['new']) list.push({ id: 'new', min: st.drafts['new'].min, max: st.drafts['new'].max, enabled: st.drafts['new'].enabled });
+    return list.filter(function (b) { return typeof b.min === 'number' && !isNaN(b.min); });
+  }
+  function overlaps(aMin, aMax, bMin, bMax) {
+    var aEnd = aMax == null ? Infinity : aMax + 1, bEnd = bMax == null ? Infinity : bMax + 1;
+    return aMin < bEnd && bMin < aEnd;
+  }
+  function gaps() {
+    var on = bands().filter(function (b) { return b.enabled && (b.max == null || b.max > b.min); }).sort(function (a, b) { return a.min - b.min; });
+    var out = [], reach = null;
+    for (var i = 0; i < on.length; i++) {
+      if (reach !== null && on[i].min > reach + 1) out.push({ from: reach + 1, to: on[i].min - 1 });
+      if (on[i].max == null) break;
+      reach = reach === null ? on[i].max : Math.max(reach, on[i].max);
+    }
+    return out;
+  }
+  /* [{ level: err|warn, text }] for one range as it reads now. */
+  function problems(id, x) {
+    var out = [];
+    if (typeof x.min !== 'number' || isNaN(x.min) || x.min < 0) out.push({ level: 'err', text: 'Enter the amount the range starts at.' });
+    else {
+      if (x.max != null && x.max <= x.min) out.push({ level: 'err', text: 'The top amount must be above ' + fmt(x.min) + ', or tick "and above".' });
+      bands().forEach(function (b) {
+        if (String(b.id) === String(id) || x.max != null && x.max <= x.min) return;
+        if (overlaps(x.min, x.max, b.min, b.max)) out.push({ level: 'err', text: 'Overlaps ' + amount(b.min, b.max) + '. One basket gets one range, so ranges may not share an amount.' });
+      });
+      if (x.enabled) gaps().forEach(function (g) {
+        if (g.to + 1 === x.min || (x.max != null && g.from - 1 === x.max)) out.push({ level: 'warn', text: 'Gap: ' + amount(g.from, g.to) + ' gives nothing.' });
+      });
+    }
+    if (!(x.label_en || '').trim() || !(x.label_ar || '').trim()) out.push({ level: 'err', text: 'The wording is needed in English and in Arabic.' });
+    if (x.starts_on && x.ends_on && x.ends_on < x.starts_on) out.push({ level: 'err', text: 'The end date is before the start date.' });
+    if (x.enabled && !x.gifts.length) out.push({ level: 'warn', text: 'On, with no gifts: the shop shows nothing for this range, and Free gifts cannot be switched on.' });
+    x.gifts.forEach(function (g) {
+      var s = stockOf(g.product, g.quantity);
+      if (s.level === 'out') out.push({ level: 'warn', text: (g.product ? g.product.name : 'A gift') + ': ' + s.text.toLowerCase() + ', so the shop skips it.' });
+      else if (g.product && g.product.stock !== null && g.product.stock < g.quantity) out.push({ level: 'warn', text: g.product.name + ': only ' + g.product.stock + ' left for ' + g.quantity + ' per order; the shop gives what there is.' });
+    });
+    return out;
+  }
+  function status(r, x) {
+    var p = [], t = today(), stock = x.gifts.map(function (g) { return stockOf(g.product, g.quantity).level; });
+    p.push(x.enabled ? pill('green', 'On') : pill('grey', 'Off'));
+    if (x.starts_on && x.starts_on > t) p.push(pill('blue', 'Starts ' + niceDate(x.starts_on)));
+    else if (x.ends_on && x.ends_on < t) p.push(pill('grey', 'Ended ' + niceDate(x.ends_on)));
+    else if (x.ends_on) p.push(pill('blue', 'Until ' + niceDate(x.ends_on)));
+    if (!x.gifts.length) p.push(pill('red', 'No gifts'));
+    if (stock.indexOf('out') >= 0) p.push(pill('red', 'Out of stock'));
+    else if (stock.indexOf('low') >= 0) p.push(pill('amber', 'Low stock'));
+    if (problems(r.id, x).some(function (m) { return m.level === 'err'; })) p.push(pill('red', 'Needs a fix'));
+    if (r.id === 'new' || st.drafts[r.id] && dirtyRanges().indexOf(String(r.id)) >= 0) p.push(pill('amber', 'Unsaved'));
+    return p;
+  }
+
+  /* ----------------------------------------------------------- the pictures */
+  function initials(p) { var s = (p && (p.brand || p.name)) || '?'; return s.slice(0, 2).toUpperCase(); }
+  function thumb(p, cls) {
+    cls = 'fg-th' + (cls ? ' ' + cls : '');
+    return p && p.thumb ? el('img', { class: cls, src: p.thumb, alt: '', width: 40, height: 40, loading: 'lazy', decoding: 'async' })
+      : el('span', { class: cls + ' fg-ph', 'aria-hidden': 'true', text: initials(p) });
+  }
+  function thumbs(gifts, max) {
+    var kids = gifts.slice(0, max).map(function (g) {
+      return el('span', { class: 'fg-tw', title: (g.product ? g.product.name : 'Product #' + g.product_id) + (g.quantity > 1 ? ' ×' + g.quantity : '') }, [thumb(g.product, 'sm'), g.quantity > 1 ? el('b', { text: '×' + g.quantity }) : null]);
+    });
+    if (gifts.length > max) kids.push(el('span', { class: 'fg-more', text: '+' + (gifts.length - max) }));
+    if (!gifts.length) kids.push(el('span', { class: 'fg-more', text: 'No gifts yet' }));
+    return el('span', { class: 'fg-thumbs' }, kids);
+  }
+
+  /* The shop's box for a range, built here from what the page holds: the
+     gifts the shop would give (a sold-out, unpublished or optioned product is
+     skipped; a short one gives what there is), the band's wording and the
+     Display texts, in either language. Mirrors partials/free-gifts/box. */
+  function countText(n, lang, c) {
+    var form = n === 1 ? 'count_one' : n === 2 ? 'count_two' : n <= 10 ? 'count_few' : 'count_many';
+    return (c.texts[form + '_' + lang] || '').split(':count').join(String(n));
+  }
+  function shopRows(gifts) {
+    return gifts.filter(function (g) { return stockOf(g.product).level !== 'out'; }).map(function (g) {
+      var q = g.quantity; if (g.product.stock !== null) q = Math.min(q, g.product.stock);
+      return { p: g.product, q: q };
+    }).filter(function (r) { return r.q > 0; });
+  }
+  function pvTile(p, size, q) {
+    var t = el('span', { class: 'fgp-t' }, [p.thumb ? el('img', { src: p.thumb, alt: '', width: size, height: size, loading: 'lazy' }) : el('span', { class: 'fgp-ph', text: initials(p) })]);
+    if (q > 1 && size === 36) t.appendChild(el('b', { text: '×' + q }));
+    return t;
+  }
+  function previewBox(gifts, words, lang, opened) {
+    var c = cfg(), T = function (k) { return c.texts[k + '_' + lang] || ''; }, rows = shopRows(gifts);
+    var box = el('fieldset', { class: 'fgp', dir: lang === 'ar' ? 'rtl' : 'ltr', lang: lang, 'aria-label': 'Preview' });
+    var lg = el('legend'); lg.innerHTML = GIFT_SVG; lg.appendChild(el('span', { text: T('title') })); box.appendChild(lg);
+    if (!rows.length) { box.appendChild(el('div', { class: 'fgp-none', text: 'Nothing shows: this range has no gift the shop can give right now.' })); return box; }
+    var units = rows.reduce(function (a, r) { return a + r.q; }, 0);
+    box.appendChild(el('div', { class: 'fgp-w' }, (words || '').trim() ? [words.trim() + ' ', el('span', { class: 'fgp-cnt', text: '· ' + countText(units, lang, c) })] : [el('span', { class: 'fgp-cnt', text: countText(units, lang, c) })]));
+    if (!opened) {
+      box.appendChild(el('div', { class: 'fgp-th' }, rows.map(function (r) { return pvTile(r.p, 36, r.q); }).concat([el('span', { class: 'fgp-tg', text: T('view_all') })])));
+    } else {
+      box.appendChild(el('div', { class: 'fgp-list' }, rows.map(function (r) {
+        return el('div', { class: 'fgp-lr' }, [pvTile(r.p, 28, r.q), el('span', { class: 'fgp-ln' }, [r.p.brand ? el('small', { text: r.p.brand }) : null, r.q > 1 ? el('em', { text: r.q + '× ' }) : null, r.p.name]),
+          el('span', { class: 'fgp-lv' }, [c.show_value && r.p.price ? el('s', { text: r.p.price }) : null, T('free')])]);
+      })));
+      box.appendChild(el('span', { class: 'fgp-hide', text: T('hide') }));
+    }
+    return box;
+  }
+  function langSeg(onchange) {
+    return el('div', { class: 'seg', role: 'group', 'aria-label': 'Preview language' }, [['en', 'English'], ['ar', 'العربية']].map(function (l) {
+      return el('button', { type: 'button', class: st.pvLang === l[0] ? 'on' : '', 'aria-pressed': String(st.pvLang === l[0]), text: l[1], onclick: function () { st.pvLang = l[0]; onchange(); } });
+    }));
+  }
+  function previewPair(getGifts, getWords) {
+    var holder = el('div', { class: 'fg-pvcol' });
+    function paint() {
+      holder.textContent = '';
+      var gifts = getGifts(), words = getWords(st.pvLang);
+      holder.appendChild(el('div', { class: 'fg-between' }, [el('h4', { class: 'fg-h2', style: 'margin:0', text: 'What the shopper sees' }), langSeg(function () { paint(); })]));
+      holder.appendChild(el('div', { class: 'fg-pvlab', text: 'Closed' }));
+      holder.appendChild(el('div', { class: 'fg-pvbg' }, [previewBox(gifts, words, st.pvLang, false)]));
+      holder.appendChild(el('div', { class: 'fg-pvlab', text: 'After "View all"' }));
+      holder.appendChild(el('div', { class: 'fg-pvbg' }, [previewBox(gifts, words, st.pvLang, true)]));
+    }
+    paint();
+    live.push({ node: holder, fn: paint });
+    return holder;
+  }
+
+  /* ----------------------------------------------------------------- render */
+  function sw(on, label, onclick, disabled, big) {
+    return el('button', { type: 'button', class: 'fg-sw' + (big ? ' big' : ''), role: 'switch', 'aria-checked': String(!!on), onclick: onclick, disabled: disabled }, [el('i'), el('span', { text: label })]);
+  }
+  function field(label, input, help) { return el('label', { class: 'fg-field' }, [el('span', { text: label }), input, help ? el('small', { text: help }) : null]); }
+  function card(title, sub, kids, extra) {
+    return el('section', { class: 'card fg-card' + (extra ? ' ' + extra : '') }, [title ? el('h3', { class: 'fg-h', text: title }) : null, sub ? el('p', { class: 'fg-sub', text: sub }) : null].concat(kids || []));
+  }
+  function repaint() { live.forEach(function (l) { if (l.node.isConnected) l.fn(); }); }
+
+  function render() {
+    var c = document.querySelector('#content');
+    if (!c || !ours()) return;
+    var focusKey = document.activeElement && document.activeElement.getAttribute && document.activeElement.getAttribute('data-fk');
+    live = [];
+    c.textContent = '';
+    var wrap = el('div', { class: 'fg-wrap', 'data-screen': SCREEN });
+    c.appendChild(wrap);
+    var tl = el('div', { class: 'fg-tabs', role: 'tablist', 'aria-label': 'Free gifts' }, TABS.map(function (t) {
+      var dirty = (t[0] === 'ranges' && dirtyRanges().length) || ((t[0] === 'display' || t[0] === 'home') && cfgDirty());
+      return el('button', { type: 'button', class: 'fg-tab', role: 'tab', id: 'fg-tab-' + t[0], 'data-fk': 'tab-' + t[0], 'aria-selected': String(st.tab === t[0]), tabindex: st.tab === t[0] ? '0' : '-1', onclick: function () { setTab(t[0]); } },
+        [t[1], dirty ? el('span', { class: 'fg-dot', title: 'Unsaved changes' }) : null]);
+    }));
+    tl.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      var i = TABS.map(function (t) { return t[0]; }).indexOf(st.tab) + (e.key === 'ArrowRight' ? 1 : -1);
+      setTab(TABS[(i + TABS.length) % TABS.length][0]);
+      var b = document.getElementById('fg-tab-' + st.tab); if (b) b.focus();
+    });
+    wrap.appendChild(tl);
+    if (st.banner) wrap.appendChild(el('div', { class: 'fg-note', role: 'alert', text: st.banner }));
+    if (!st.data) { wrap.appendChild(card(null, st.busy ? 'Loading…' : 'Nothing to show.')); return; }
+    var panel = el('div', { role: 'tabpanel', 'aria-labelledby': 'fg-tab-' + st.tab, class: 'fg-wrap', style: 'padding:0' });
+    wrap.appendChild(panel);
+    ({ overview: renderOverview, ranges: renderRanges, products: renderProducts, display: renderDisplay, home: renderHome })[st.tab](panel);
+    var bar = el('div', { class: 'fg-bar', role: 'region', 'aria-label': 'Unsaved changes', 'aria-live': 'polite' });
+    wrap.appendChild(bar);
+    live.push({ node: bar, fn: function () { paintBar(bar); } });
+    paintBar(bar);
+    if (st.picker) { wrap.appendChild(pickerModal()); paintResults(); }
+    if (focusKey) { var f = wrap.querySelector('[data-fk="' + focusKey + '"]'); if (f) f.focus(); }
+  }
+  function setTab(t) { st.tab = t; st.confirm = null; render(); }
+
+  /* -------------------------------------------------------------- save bar */
+  function changes() {
+    var out = dirtyRanges().map(function (k) { var x = st.drafts[k]; return k === 'new' ? 'new range' : amount(x.min, x.max); });
+    if (cfgDirty()) {
+      var o = st.data.config, c = st.cfg;
+      if (cfgNorm(Object.assign({}, c, { home: o.home })) !== cfgNorm(o)) out.push('display settings');
+      if (JSON.stringify(c.home) !== JSON.stringify(o.home)) out.push('homepage section');
+    }
+    return out;
+  }
+  function paintBar(bar) {
+    var list = changes();
+    bar.hidden = !list.length || !can();
+    bar.textContent = '';
+    if (bar.hidden) return;
+    bar.appendChild(el('div', {}, [el('b', { text: 'Unsaved changes' }), el('span', { text: ' · ' + list.join(', ') })]));
+    bar.appendChild(el('div', { class: 'fg-row' }, [
+      el('button', { type: 'button', class: 'btn ghost sm', text: 'Discard', disabled: st.busy, onclick: discard }),
+      el('button', { type: 'button', class: 'btn sm', text: st.busy ? 'Saving…' : 'Save', disabled: st.busy, onclick: saveAll })
+    ]));
+  }
+  function discard() {
+    st.drafts = {}; st.cfg = null; st.errors = {}; st.removed = {}; st.confirm = null;
+    if (st.open === 'new') st.open = null;
+    say('Changes discarded.');
+    render();
+  }
+  function rangeBody(x) {
+    return { min: x.min, max: x.max, label_en: (x.label_en || '').trim(), label_ar: (x.label_ar || '').trim(), enabled: !!x.enabled, starts_on: x.starts_on || null, ends_on: x.ends_on || null, gifts: x.gifts.map(function (g) { return { product_id: g.product_id, quantity: g.quantity }; }) };
+  }
+  function settingsBody(c) {
+    var t = {};
+    TEXT_GROUPS.forEach(function (g) { g[1].forEach(function (k) { t[k[0] + '_en'] = c.texts[k[0] + '_en']; t[k[0] + '_ar'] = c.texts[k[0] + '_ar']; }); });
+    return { show_value: !!c.show_value, countries: c.countries, basis: c.basis, texts: t, home: c.home };
+  }
+  /* Saves every changed range, then the settings, one request each, and says
+     exactly which were saved. A refusal keeps that draft and opens it. */
+  async function saveAll() {
+    if (st.busy) return;
+    var ids = dirtyRanges(), saved = [], failed = null, d = null;
+    st.busy = true; st.banner = null; repaint();
+    for (var i = 0; i < ids.length; i++) {
+      var k = ids[i], x = st.drafts[k];
+      try {
+        d = await api(k === 'new' ? 'POST' : 'PUT', k === 'new' ? '/ranges' : '/ranges/' + k, rangeBody(x));
+        saved.push(amount(x.min, x.max) + ' (' + (x.label_en || '').trim() + ')');
+        delete st.drafts[k]; delete st.errors[k]; delete st.removed[k];
+        if (k === 'new' && st.open === 'new') { var made = d.ranges.filter(function (r) { return r.min === x.min; })[0]; st.open = made ? made.id : null; }
+        st.data = d;
+      } catch (e) { st.errors[k] = explain(e, 'Not saved.'); if (!failed) failed = { key: k, msg: st.errors[k] }; }
+    }
+    if (cfgDirty()) {
+      try {
+        d = await api('POST', '/settings', settingsBody(st.cfg));
+        saved.push('display and homepage texts'); st.cfg = null; delete st.errors.cfg; st.data = d;
+      } catch (e) { st.errors.cfg = explain(e, 'Not saved.'); if (!failed) failed = { key: 'cfg', msg: st.errors.cfg }; }
+    }
+    st.busy = false;
+    if (saved.length) say('Saved ' + saved.join(', ') + '.');
+    if (failed) {
+      say('Not saved: ' + failed.msg, 'bad');
+      if (failed.key === 'cfg') { if (st.tab !== 'home') st.tab = 'display'; } else { st.tab = 'ranges'; st.open = failed.key === 'new' ? 'new' : Number(failed.key); }
+    }
+    if (saved.length) loadStats();
+    render();
+  }
+
+  /* -------------------------------------------------------------- overview */
+  function goRange(id) { st.tab = 'ranges'; st.open = id; st.confirm = null; render(); var b = document.querySelector('[data-fk="rg-' + id + '"]'); if (b) { b.focus(); b.scrollIntoView({ block: 'nearest' }); } }
+  /* The Mode (Off / Testing / Live) and the Testing list. Each is one
+     deliberate click that saves at once, with its own toast. */
+  var MODES = [['off', 'Off', 'Nobody sees free gifts.'], ['testing', 'Testing', 'Only the IPs listed here see them.'], ['live', 'Live', 'Every shopper sees them.']];
+  function modeControl(d, blocked) {
+    var mode = d.config.mode || (d.config.on ? 'live' : 'off'), testers = d.config.testers || [];
+    var g = el('div', { class: 'fg-modes', role: 'radiogroup', 'aria-label': 'Mode' }, MODES.map(function (m) {
+      var why = m[0] === 'off' ? null : blocked ? 'Finish the "Needed" items first.' : (m[0] === 'testing' && !testers.length ? 'Add an IP to the Testing list first.' : null);
+      return el('button', { type: 'button', role: 'radio', class: 'fg-mode m-' + m[0], 'aria-checked': String(mode === m[0]), 'data-fk': 'mode-' + m[0], tabindex: mode === m[0] ? '0' : '-1',
+        disabled: !can() || st.busy || (mode !== m[0] && !!why), title: mode !== m[0] && why ? why : null, onclick: function () {
+          if (mode === m[0]) return;
+          run(function () { return api('POST', '/switch', { mode: m[0] }); }, 'Mode not changed.', function () {
+            say(m[0] === 'live' ? 'Free gifts are Live: every shopper sees them.' : m[0] === 'testing' ? 'Free gifts are in Testing: only ' + plural(testers.length, 'IP', 'IPs') + ' on the list see them.' : 'Free gifts are Off: nobody sees them.');
+            loadStats();
+          });
+        } }, [el('b', { text: m[1] }), el('small', { text: m[2] })]);
+    }));
+    g.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      var b = Array.prototype.slice.call(g.querySelectorAll('button:not([disabled])')), i = b.indexOf(document.activeElement);
+      if (i < 0 || b.length < 2) return;
+      e.preventDefault(); b[(i + ((e.key === 'ArrowRight' || e.key === 'ArrowDown') ? 1 : b.length - 1)) % b.length].focus();
+    });
+    return g;
+  }
+  function saveTesters(list, msg) {
+    st.tester.err = null;
+    run(function () { return api('POST', '/testers', { testers: list }); }, 'The IP list was not saved.', function () { st.tester.ip = ''; st.tester.label = ''; say(msg); });
+  }
+  function testersCard(d) {
+    var testers = d.config.testers || [], t = st.tester, ro = !can();
+    var ip = el('input', { class: 'fg-in', type: 'text', value: t.ip, placeholder: '203.0.113.7 or 2001:db8::1', maxlength: 45, 'aria-label': 'IP address', 'data-fk': 'tester-ip', disabled: ro, style: 'font-family:ui-monospace,monospace' });
+    var label = el('input', { class: 'fg-in', type: 'text', value: t.label, placeholder: 'Label (optional)', maxlength: 60, 'aria-label': 'Label for this IP', 'data-fk': 'tester-label', disabled: ro });
+    ip.addEventListener('input', function () { t.ip = ip.value; });
+    label.addEventListener('input', function () { t.label = label.value; });
+    function add(addr, lab) {
+      addr = (addr || '').trim();
+      if (!addr) { t.err = 'Type an IP address.'; render(); return; }
+      if (testers.some(function (x) { return x.ip === addr; })) { t.err = addr + ' is already on the list.'; render(); return; }
+      if (testers.length >= 50) { t.err = 'The list holds at most 50 IPs.'; render(); return; }
+      saveTesters(testers.concat([{ ip: addr, label: (lab || '').trim() }]), 'Added ' + addr + ' to the Testing list.');
+    }
+    ip.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); add(t.ip, t.label); } });
+    var mine = d.my_ip, mineListed = testers.some(function (x) { return x.ip === mine; });
+    return el('div', { class: 'fg-testers' }, [
+      el('h4', { class: 'fg-h2', text: 'IPs that can see it in Testing' }),
+      el('p', { class: 'fg-sub', style: 'margin:0 0 8px', text: 'In Testing only these addresses see the gifts: in the cart, at checkout, on the order and in its emails. Everyone else sees the shop exactly as when it is Off. Up to 50.' }),
+      testers.length ? el('ul', { class: 'fg-iplist' }, testers.map(function (x, i) {
+        return el('li', {}, [el('code', { text: x.ip }), el('span', { class: 'fg-iplab', text: x.label }), x.ip === mine ? pill('blue', 'You') : null,
+          ro ? null : el('button', { type: 'button', class: 'fg-btn-i danger', 'aria-label': 'Remove ' + x.ip, title: 'Remove', html: ICONS.trash, onclick: function () {
+            saveTesters(testers.filter(function (_, j) { return j !== i; }), 'Removed ' + x.ip + ' from the Testing list.');
+          } })]);
+      })) : el('div', { class: 'fg-empty', text: 'No IPs yet.' }),
+      ro ? null : el('div', { class: 'fg-ipadd' }, [ip, label, el('button', { type: 'button', class: 'btn ghost sm', text: 'Add IP', disabled: st.busy, onclick: function () { add(t.ip, t.label); } })]),
+      ro || !mine ? null : el('div', { class: 'fg-row', style: 'margin-top:8px' }, [
+        el('button', { type: 'button', class: 'btn ghost sm', disabled: st.busy || mineListed, 'data-fk': 'tester-mine', onclick: function () { add(mine, 'My device'); } }, [mineListed ? 'Your IP is on the list' : 'Add my current IP']),
+        el('span', { class: 'fg-sub', style: 'margin:0' }, ['The server sees you as ', el('code', { text: mine })])
+      ]),
+      t.err ? el('div', { class: 'fg-msg err', role: 'alert', style: 'margin-top:6px' }, [el('i', { text: '!' }), el('span', { text: t.err })]) : null
+    ]);
+  }
+  function renderOverview(wrap) {
+    var d = st.data, mode = d.config.mode || (d.config.on ? 'live' : 'off'), blocked = d.checklist.some(function (i) { return i.level === 'block'; });
+    var items = d.checklist, n = (d.config.testers || []).length;
+    if (mode === 'testing') wrap.appendChild(el('div', { class: 'fg-banner', role: 'status' }, [el('b', { text: 'Testing: ' }), 'only ' + plural(n, 'IP sees', 'IPs see') + ' free gifts. Every other shopper sees the shop as if it were Off.']));
+    wrap.appendChild(el('section', { class: 'card fg-card' }, [el('div', { class: 'fg-status' }, [
+      el('div', { class: 'fg-state' }, [
+        el('h3', { class: 'fg-h', text: 'Free gifts: ' + (mode === 'live' ? 'Live' : mode === 'testing' ? 'Testing' : 'Off') }),
+        modeControl(d, blocked),
+        blocked && mode === 'off' ? el('p', { style: 'color:#b8362d', text: 'Testing and Live open once every "Needed" item is done.' }) : null,
+        el('p', { text: 'Spend a set amount and the order gets free gifts, shown in the cart panel, on the cart page and in the checkout summary, and kept on the order at AED 0. One range at a time, never added together. What counts: the products\' subtotal ' + (d.config.basis === 'after_discounts' ? 'after the coupon' : 'before the coupon') + ', without delivery, gift wrapping or the gifts. ' + (d.config.countries === 'AE' ? 'UAE deliveries only.' : 'Every country the shop delivers to.') }),
+        el('div', {}, [el('button', { type: 'button', class: 'fg-link', text: 'Change what counts and where', onclick: function () { setTab('display'); } })])
+      ]),
+      el('div', { class: 'fg-state' }, [testersCard(d)])
+    ])]));
+    wrap.appendChild(card('Before switching on', items.length ? 'Testing and Live open once nothing is "Needed".' : null, [el('ul', { class: 'fg-checks', style: 'margin-top:10px' }, (items.length ? items : [{ level: 'ok', text: 'Ready: every range that is on has its gifts, and they are in stock.' }]).map(function (i) {
+      var fix = i.level === 'ok' ? null : el('button', { type: 'button', class: 'fg-link', text: i.range ? 'Open range' : 'Add a range', onclick: function () { if (i.range) goRange(i.range); else { setTab('ranges'); if (can()) addRange(); } } });
+      return el('li', {}, [pill(i.level === 'block' ? 'red' : i.level === 'warn' ? 'amber' : 'green', i.level === 'block' ? 'Needed' : i.level === 'warn' ? 'Check' : 'Ready'), el('span', { text: i.text }), fix]);
+    }))]));
+
+    var s = st.stats, L = low();
+    function kpi(label, val, sub, kids, txt) { return el('div', { class: 'kpi' }, [el('div', { class: 'lbl', text: label }), el('div', { class: 'val' + (txt ? ' txt' : ''), text: val }), el('div', { class: 'sub', text: sub })].concat(kids || [])); }
+    var dash = s && !s.failed ? null : (s && s.failed ? '—' : '…');
+    var alerts = s && s.stock_alerts ? s.stock_alerts : [];
+    wrap.appendChild(el('div', { class: 'fg-kpis', 'aria-live': 'polite' }, [
+      kpi('Orders with gifts', dash || fmt(s.orders), 'Last ' + ((s && s.days) || 30) + ' days, paid orders'),
+      kpi('Gift units given', dash || fmt(s.units), 'Last ' + ((s && s.days) || 30) + ' days'),
+      kpi('Most-given gift', dash || (s.top ? s.top.name : 'None yet'), dash ? '' : (s.top ? plural(s.top.units, 'unit', 'units') + ' given' : 'No gift has gone out yet'), null, true),
+      kpi('Stock alerts', dash || String(alerts.length), 'Gifts with ' + L + ' units or fewer, or out of stock', alerts.length ? [el('ul', {}, alerts.slice(0, 4).map(function (a) { return el('li', {}, [pill(a.level === 'out' ? 'red' : 'amber', a.level === 'out' ? 'Out' : a.stock + ' left'), ' ' + a.name]); }).concat(alerts.length > 4 ? [el('li', { text: '+' + (alerts.length - 4) + ' more on Gift products' })] : []))] : null)
+    ]));
+
+    var list = ranges();
+    wrap.appendChild(card('Ranges at a glance', list.length ? 'Click a range to edit it.' : null, [list.length ? el('div', { class: 'fg-sum', style: 'margin-top:12px' }, list.map(function (r) {
+      var x = view(r);
+      return el('button', { type: 'button', class: 'fg-sumr', 'aria-label': 'Edit ' + amount(x.min, x.max), onclick: function () { goRange(r.id); } }, [
+        el('span', { class: 'fg-amtl', text: amount(x.min, x.max) }),
+        el('span', { class: 'fg-row', style: 'gap:6px 12px' }, [el('span', { class: 'fg-words', text: x.label_en || '—' }), thumbs(x.gifts, 8)]),
+        el('span', { class: 'fg-pills' }, status(r, x))
+      ]);
+    })) : el('div', { class: 'fg-empty', style: 'margin-top:12px' }, ['No ranges yet. ', can() ? el('button', { type: 'button', class: 'fg-link', text: 'Add the first range', onclick: function () { setTab('ranges'); addRange(); } }) : null])]));
+  }
+
+  /* ---------------------------------------------------------------- ranges */
+  function nextFree() { return bands().reduce(function (a, b) { return Math.max(a, b.max == null ? b.min + 1 : b.max + 1); }, 0); }
+  function addRange(from) {
+    if (!st.drafts['new']) {
+      var base = from ? clone(from) : { label_en: '', label_ar: '', gifts: [], starts_on: null, ends_on: null };
+      st.drafts['new'] = { min: nextFree(), max: null, label_en: base.label_en, label_ar: base.label_ar, enabled: false, starts_on: base.starts_on, ends_on: base.ends_on, gifts: base.gifts };
+    }
+    st.open = 'new'; st.confirm = null;
+    render();
+    var f = document.querySelector('[data-fk="min-new"]'); if (f) f.focus();
+  }
+  function renderRanges(wrap) {
+    var list = ranges();
+    wrap.appendChild(el('section', { class: 'card fg-card' }, [el('div', { class: 'fg-between' }, [
+      el('div', {}, [el('h3', { class: 'fg-h', text: 'Ranges & gifts' }), el('p', { class: 'fg-sub', text: 'Whole dirhams: "AED 100 – 299" covers AED 100.00 to AED 299.99. Ranges may not overlap. Each gift is 1 to ' + MAX_QTY + ' of a product; a sold-out gift is skipped until it is back. Click a range to edit it.' })]),
+      can() ? el('button', { type: 'button', class: 'btn sm', onclick: function () { addRange(); } }, [el('span', { html: ICONS.plus, style: 'display:inline-flex;width:16px;height:16px' }), 'Add range']) : null
+    ])]));
+    var rows = list.map(function (r) { return r; });
+    if (st.drafts['new']) rows.push({ id: 'new' });
+    if (!rows.length) { wrap.appendChild(el('div', { class: 'fg-empty', text: 'No ranges yet. "Add range" starts the first one.' })); return; }
+    wrap.appendChild(el('div', { class: 'fg-rgs' }, rows.map(rangeRow)));
+  }
+  function rangeRow(r) {
+    var id = r.id, isOpen = st.open === id || (st.open != null && String(st.open) === String(id));
+    function cur() { return id === 'new' ? st.drafts['new'] : (isOpen && can() ? draft(id) : view(r)); }
+    var head = el('button', { type: 'button', class: 'fg-rg-h', 'data-fk': 'rg-' + id, 'aria-expanded': String(isOpen), 'aria-controls': 'fg-rg-b-' + id, onclick: function () { st.open = isOpen ? null : id; st.confirm = null; render(); } });
+    function paintHead() {
+      var x = cur();
+      head.textContent = '';
+      head.appendChild(el('span', { class: 'fg-amtl', text: id === 'new' && (x.min == null || isNaN(x.min)) ? 'New range' : (id === 'new' ? 'New · ' : '') + amount(x.min, x.max) }));
+      head.appendChild(el('span', { class: 'fg-words', text: (x.label_en || '').trim() || 'No wording yet' }));
+      head.appendChild(thumbs(x.gifts, 6));
+      head.appendChild(el('span', { class: 'fg-pills' }, status(r, x)));
+      head.insertAdjacentHTML('beforeend', ICONS.chev);
+    }
+    paintHead();
+    live.push({ node: head, fn: paintHead });
+    var box = el('section', { class: 'fg-rg' + (isOpen ? ' open' : '') }, [head]);
+    if (isOpen) box.appendChild(rangeBodyEl(id, r));
+    return box;
+  }
+  function rangeBodyEl(id, r) {
+    var ro = !can(), x = ro ? view(r) : (id === 'new' ? st.drafts['new'] : draft(id)), key = String(id);
+    function changed() { repaint(); }
+    function num(prop, label) {
+      var i = el('input', { class: 'fg-in', type: 'number', inputmode: 'numeric', min: 0, step: 1, value: x[prop] == null ? '' : x[prop], disabled: ro || (prop === 'max' && x.max == null), 'aria-label': label, 'data-fk': prop + '-' + id });
+      i.addEventListener('input', function () { x[prop] = i.value === '' ? (prop === 'max' ? null : NaN) : Math.floor(Number(i.value)); changed(); });
+      return i;
+    }
+    function txt(prop, label, rtl) {
+      var i = el('input', { class: 'fg-in', type: 'text', value: x[prop] || '', maxlength: 160, dir: rtl ? 'rtl' : null, lang: rtl ? 'ar' : null, disabled: ro, 'data-fk': prop + '-' + id });
+      i.addEventListener('input', function () { x[prop] = i.value; changed(); });
+      return field(label, i);
+    }
+    function date(prop, label) {
+      var i = el('input', { class: 'fg-in', type: 'date', value: x[prop] || '', disabled: ro, 'data-fk': prop + '-' + id });
+      i.addEventListener('input', function () { x[prop] = i.value || null; changed(); });
+      return field(label, i);
+    }
+    var maxIn = num('max', 'Up to (AED)');
+    var above = el('input', { type: 'checkbox', checked: x.max == null, disabled: ro, 'data-fk': 'above-' + id });
+    above.addEventListener('change', function () {
+      if (above.checked) { x.max = null; maxIn.value = ''; maxIn.disabled = true; }
+      else { x.max = (typeof x.min === 'number' && !isNaN(x.min) ? x.min : 0) + 199; maxIn.value = x.max; maxIn.disabled = false; maxIn.focus(); }
+      changed();
+    });
+    var msgs = el('div', { class: 'fg-msgs', 'aria-live': 'polite' });
+    function paintMsgs() {
+      msgs.textContent = '';
+      problems(id, x).forEach(function (m) { msgs.appendChild(el('div', { class: 'fg-msg ' + m.level }, [el('i', { text: m.level === 'err' ? '!' : '·' }), el('span', { text: m.text })])); });
+      if (st.errors[key]) msgs.appendChild(el('div', { class: 'fg-msg err', role: 'alert' }, [el('i', { text: '!' }), el('span', { text: 'The server said: ' + st.errors[key] })]));
+    }
+    paintMsgs();
+    live.push({ node: msgs, fn: paintMsgs });
+
+    var units = x.gifts.reduce(function (a, g) { return a + g.quantity; }, 0);
+    var giftList = el('div', { class: 'fg-gl' });
+    var undo = st.removed[key];
+    x.gifts.forEach(function (g, gi) {
+      if (undo && undo.at === gi) giftList.appendChild(undoRow(key, x));
+      giftList.appendChild(giftRow(x, g, gi, ro));
+    });
+    if (undo && undo.at >= x.gifts.length) giftList.appendChild(undoRow(key, x));
+    if (!x.gifts.length && !undo) giftList.appendChild(el('div', { class: 'fg-empty', text: ro ? 'No gifts.' : 'No gifts yet. "Add gift" picks them from the catalogue.' }));
+
+    var foot = el('div', { class: 'fg-foot' });
+    if (!ro) {
+      if (st.confirm === id) {
+        foot = el('div', { class: 'fg-confirm', role: 'alertdialog', 'aria-label': 'Confirm delete' }, [
+          el('span', { text: 'Delete ' + amount(r.min, r.max) + ' and its ' + plural(r.gifts.length, 'gift', 'gifts') + '? The shop stops giving them at once.' }),
+          el('span', { class: 'fg-row' }, [
+            el('button', { type: 'button', class: 'btn ghost sm', text: 'Keep it', 'data-fk': 'keep-' + id, onclick: function () { st.confirm = null; render(); } }),
+            el('button', { type: 'button', class: 'btn danger sm', text: 'Delete range', onclick: function () {
+              var label = amount(r.min, r.max) + ' (' + r.label_en + ')';
+              st.confirm = null;
+              run(function () { return api('DELETE', '/ranges/' + id); }, 'Not deleted.', function () { delete st.drafts[id]; delete st.removed[id]; st.open = null; say('Deleted ' + label + '.'); loadStats(); });
+            } })
+          ])
+        ]);
+      } else {
+        foot.appendChild(el('div', { class: 'fg-row' }, id === 'new' ? [
+          el('button', { type: 'button', class: 'btn ghost sm', text: 'Remove this new range', onclick: function () { delete st.drafts['new']; delete st.errors['new']; delete st.removed['new']; st.open = null; render(); } })
+        ] : [
+          el('button', { type: 'button', class: 'btn ghost sm', text: 'Duplicate', title: 'A new range with this wording and these gifts', onclick: function () { if (st.drafts['new']) { say('Save or remove the new range first.', 'bad'); return; } addRange(x); } }),
+          el('button', { type: 'button', class: 'btn ghost sm', style: 'color:#b8362d', text: 'Delete…', onclick: function () { st.confirm = id; render(); var k = document.querySelector('[data-fk="keep-' + id + '"]'); if (k) k.focus(); } })
+        ]));
+        foot.appendChild(el('span', { class: 'fg-sub', style: 'margin:0', text: 'Changes save from the bar at the bottom.' }));
+      }
+    }
+
+    return el('div', { class: 'fg-rg-b', id: 'fg-rg-b-' + id }, [
+      el('div', { class: 'fg-ed' }, [
+        el('div', { class: 'fg-between', style: 'align-items:flex-end' }, [
+          el('div', { class: 'fg-sec' }, [el('span', { class: 'fg-h2', style: 'margin:0', id: 'fg-amt-' + id, text: 'Basket amount' }), el('div', { class: 'fg-amt', role: 'group', 'aria-labelledby': 'fg-amt-' + id }, [el('b', { text: 'AED' }), num('min', 'From (AED)'), el('b', { text: '–' }), maxIn, el('label', { class: 'fg-chk' }, [above, 'and above'])])]),
+          sw(x.enabled, x.enabled ? 'On' : 'Off', function () { x.enabled = !x.enabled; this.setAttribute('aria-checked', String(x.enabled)); this.lastChild.textContent = x.enabled ? 'On' : 'Off'; changed(); }, ro)
+        ]),
+        msgs,
+        el('div', { class: 'fg-g2' }, [txt('label_en', 'Wording (English)'), txt('label_ar', 'Wording (Arabic)', true)]),
+        el('div', { class: 'fg-g2' }, [date('starts_on', 'Starts (optional)'), date('ends_on', 'Ends (optional)')]),
+        el('div', { class: 'fg-sec' }, [
+          el('div', { class: 'fg-between' }, [el('span', { class: 'fg-h2', style: 'margin:0', text: 'Gifts · ' + plural(x.gifts.length, 'product', 'products') + ', ' + plural(units, 'unit', 'units') }),
+            ro ? null : el('button', { type: 'button', class: 'btn ghost sm', 'data-fk': 'add-' + id, onclick: function () { openPicker(id); } }, [el('span', { html: ICONS.plus, style: 'display:inline-flex;width:15px;height:15px' }), 'Add gift'])]),
+          giftList
+        ]),
+        foot
+      ]),
+      previewPair(function () { return x.gifts; }, function (lang) { return lang === 'ar' ? (x.label_ar || x.label_en) : x.label_en; })
+    ]);
+  }
+  function giftRow(x, g, gi, ro) {
+    var name = g.product ? g.product.name : 'Product #' + g.product_id, s = stockOf(g.product, g.quantity);
+    var badge = pill(s.cls, s.text);
+    var q = el('input', { type: 'number', min: 1, max: MAX_QTY, value: g.quantity, disabled: ro, inputmode: 'numeric', 'aria-label': 'Quantity of ' + name, 'data-fk': 'q-' + g.product_id });
+    var minus = el('button', { type: 'button', text: '−', 'aria-label': 'One fewer ' + name, disabled: ro || g.quantity <= 1 });
+    var plus = el('button', { type: 'button', text: '+', 'aria-label': 'One more ' + name, disabled: ro || g.quantity >= MAX_QTY });
+    function set(n) {
+      g.quantity = Math.max(1, Math.min(MAX_QTY, Math.floor(Number(n)) || 1));
+      q.value = g.quantity; minus.disabled = g.quantity <= 1; plus.disabled = g.quantity >= MAX_QTY;
+      var s2 = stockOf(g.product, g.quantity); badge.className = 'pill ' + s2.cls; badge.textContent = s2.text;
+      repaint();
+    }
+    minus.addEventListener('click', function () { set(g.quantity - 1); });
+    plus.addEventListener('click', function () { set(g.quantity + 1); });
+    q.addEventListener('change', function () { set(q.value); });
+    return el('div', { class: 'fg-gi' }, [
+      thumb(g.product),
+      el('div', { class: 'fg-gi-n' }, [g.product && g.product.brand ? el('small', { text: g.product.brand }) : null, el('b', { text: name }), badge]),
+      el('div', { class: 'fg-step' }, [minus, q, plus]),
+      ro ? null : el('button', { type: 'button', class: 'fg-btn-i danger', 'aria-label': 'Remove ' + name, title: 'Remove', html: ICONS.trash, onclick: function () {
+        var key = Object.keys(st.drafts).filter(function (k) { return st.drafts[k] === x; })[0];
+        st.removed[key] = { g: x.gifts.splice(gi, 1)[0], at: gi };
+        render();
+        var u = document.querySelector('[data-fk="undo-' + key + '"]'); if (u) u.focus();
+      } })
+    ]);
+  }
+  function undoRow(key, x) {
+    var u = st.removed[key];
+    return el('div', { class: 'fg-undo', role: 'status' }, [el('span', { text: 'Removed ' + (u.g.product ? u.g.product.name : 'a gift') + '.' }),
+      el('button', { type: 'button', class: 'fg-link', text: 'Undo', 'data-fk': 'undo-' + key, onclick: function () {
+        if (!x.gifts.some(function (g) { return g.product_id === u.g.product_id; })) x.gifts.splice(Math.min(u.at, x.gifts.length), 0, u.g);
+        delete st.removed[key]; render();
+      } })]);
+  }
+
+  /* ---------------------------------------------------------------- picker */
+  function pickerTarget() { var p = st.picker; return p ? (p.range === 'new' ? st.drafts['new'] : draft(p.range)) : null; }
+  function openPicker(id) {
+    st.picker = { range: id, q: '', filter: 'all', rows: null, initial: null, loading: false, seq: 0, timer: null, err: null, added: 0 };
+    delete st.removed[String(id)];
+    render();
+    var f = document.querySelector('[data-fk="pk-q"]'); if (f) f.focus();
+    fetchPicker('');
+  }
+  function closePicker(silent) {
+    var p = st.picker;
+    if (!p) return;
+    var x = pickerTarget();
+    clearTimeout(p.timer);
+    st.picker = null;
+    if (silent) return;
+    render();
+    var b = document.querySelector('[data-fk="add-' + p.range + '"]'); if (b) b.focus();
+    if (p.added > 0 && x) say(plural(p.added, 'gift', 'gifts') + ' added to ' + (p.range === 'new' ? 'the new range' : amount(x.min, x.max)) + '. Save to keep them.');
+  }
+  /* One request per 300 ms of typing at most, and none under 2 characters. */
+  function typed(q) {
+    var p = st.picker; if (!p) return;
+    p.q = q; clearTimeout(p.timer);
+    if (q.trim().length === 0) { p.rows = p.initial; p.err = null; paintResults(); return; }
+    if (q.trim().length < 2) { p.rows = null; p.err = 'Type at least 2 letters to search.'; paintResults(); return; }
+    p.timer = setTimeout(function () { fetchPicker(q.trim()); }, 300);
+  }
+  function fetchPicker(q) {
+    var p = st.picker; if (!p) return;
+    var mine = ++p.seq;
+    p.loading = true; p.err = null; paintResults();
+    api('GET', '/products?q=' + encodeURIComponent(q) + '&filter=' + encodeURIComponent(p.filter)).then(function (d) {
+      if (st.picker !== p || mine !== p.seq) return;
+      p.rows = d.products; if (q === '') p.initial = d.products; p.loading = false; paintResults();
+    }).catch(function (e) {
+      if (st.picker !== p || mine !== p.seq) return;
+      p.loading = false; p.err = explain(e, 'Search failed.'); paintResults();
+    });
+  }
+  var resultsNode = null, pkFootNode = null;
+  function paintResults() {
+    if (!ours() || !resultsNode || !resultsNode.isConnected) return;
+    var p = st.picker, x = pickerTarget();
+    if (!p || !x) return;
+    /* Repainting removes the button that was just pressed; give focus back to
+       its replacement, or Escape and Tab would start from the page body. */
+    var had = document.activeElement && resultsNode.contains(document.activeElement) ? document.activeElement.getAttribute('data-fk') : null;
+    resultsNode.textContent = '';
+    resultsNode.setAttribute('aria-busy', String(p.loading));
+    if (p.err) resultsNode.appendChild(el('p', { class: 'fg-sub', text: p.err }));
+    else if (p.loading && !p.rows) resultsNode.appendChild(el('p', { class: 'fg-sub', text: 'Searching…' }));
+    else if (p.rows && !p.rows.length) resultsNode.appendChild(el('div', { class: 'fg-empty', text: 'No product matches' + (p.filter !== 'all' ? ' this filter' : '') + '.' }));
+    (p.err ? [] : (p.rows || [])).forEach(function (pr) {
+      var taken = x.gifts.some(function (g) { return g.product_id === pr.id; }), bad = pr.type === 'variable', s = stockOf(pr);
+      resultsNode.appendChild(el('button', { type: 'button', class: 'fg-res', 'data-fk': 'res-' + pr.id, 'aria-pressed': String(taken), disabled: bad, title: bad ? 'Has shades or sizes: pick a simple product' : null, onclick: function () {
+        var i = x.gifts.map(function (g) { return g.product_id; }).indexOf(pr.id);
+        if (i >= 0) { x.gifts.splice(i, 1); p.added--; } else { x.gifts.push({ product_id: pr.id, quantity: 1, product: pr }); p.added++; }
+        paintResults(); repaint();
+      } }, [
+        thumb(pr),
+        el('span', {}, [pr.brand ? el('small', { text: pr.brand }) : null, el('b', { text: pr.name }), el('span', { class: 'fg-meta' }, [pr.gift_only ? pill('blue', 'Gift only') : el('span', { text: pr.price }), pill(s.cls, s.text)])]),
+        el('span', { class: 'fg-state-b', text: bad ? 'Has options' : taken ? '✓ Added' : '+ Add' })
+      ]));
+    });
+    if (had) { var back = resultsNode.querySelector('[data-fk="' + had + '"]'); if (back) back.focus(); }
+    if (pkFootNode) { pkFootNode.textContent = plural(x.gifts.length, 'gift', 'gifts') + ' in this range'; }
+  }
+  function pickerModal() {
+    var p = st.picker, x = pickerTarget();
+    var q = el('input', { class: 'fg-in', type: 'search', value: p.q, placeholder: 'Search by name or SKU', 'aria-label': 'Search products', autocomplete: 'off', 'data-fk': 'pk-q' });
+    q.addEventListener('input', function () { typed(q.value); });
+    q.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(p.timer); if (q.value.trim().length >= 2) fetchPicker(q.value.trim()); } });
+    var seg = el('div', { class: 'seg', role: 'group', 'aria-label': 'Show' }, [['all', 'All'], ['gift', 'Gift-only'], ['instock', 'In stock']].map(function (f) {
+      return el('button', { type: 'button', class: p.filter === f[0] ? 'on' : '', 'aria-pressed': String(p.filter === f[0]), text: f[1], onclick: function () {
+        if (p.filter === f[0]) return;
+        p.filter = f[0]; p.initial = null;
+        seg.querySelectorAll('button').forEach(function (b) { var on = b.textContent === f[1]; b.className = on ? 'on' : ''; b.setAttribute('aria-pressed', String(on)); });
+        clearTimeout(p.timer); fetchPicker(p.q.trim().length >= 2 ? p.q.trim() : '');
+      } });
+    }));
+    resultsNode = el('div', { class: 'fg-res-l', 'aria-live': 'polite' });
+    pkFootNode = el('span', { class: 'fg-sub', style: 'margin:0' });
+    var title = 'Add gifts to ' + (x ? (st.picker.range === 'new' ? 'the new range' : amount(x.min, x.max)) : 'the range');
+    var dlg = el('div', { class: 'modal fg-modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'fg-pk-t' }, [
+      el('div', { class: 'modal-h' }, [el('b', { id: 'fg-pk-t', text: title }), el('button', { type: 'button', class: 'x fg-btn-i', 'aria-label': 'Close', html: ICONS.x, onclick: function () { closePicker(); } })]),
+      el('div', { class: 'fg-pk-top' }, [q, seg]),
+      el('div', { class: 'modal-b' }, [resultsNode]),
+      el('div', { class: 'fg-pk-foot' }, [pkFootNode, el('button', { type: 'button', class: 'btn sm', text: 'Done', onclick: function () { closePicker(); } })])
+    ]);
+    var bg = el('div', { class: 'modal-bg on', onclick: function (e) { if (e.target === bg) closePicker(); } }, [dlg]);
+    bg.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { e.preventDefault(); closePicker(); return; }
+      if (e.key !== 'Tab') return;
+      var f = dlg.querySelectorAll('button:not([disabled]),input'); if (!f.length) return;
+      if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+    });
+    return bg;
+  }
+
+  /* -------------------------------------------------------------- products */
+  function renderProducts(wrap) {
+    var d = st.data, byId = {};
+    d.ranges.forEach(function (r) { byId[r.id] = r; });
+    var head = el('div', { class: 'fg-between' }, [
+      el('div', {}, [el('h3', { class: 'fg-h', text: 'Gift products' }), el('p', { class: 'fg-sub', text: '"Gift only" hides a product from the shop, listings, search, the sitemap, feeds and /api, and it cannot be added to the bag; it can still be a gift. Switching it off puts the product back on sale. Low stock: ' + low() + ' units or fewer.' })]),
+      can() && !st.create.open ? el('button', { type: 'button', class: 'btn sm', 'data-fk': 'new-gift', onclick: function () { st.create.open = true; st.create.err = null; render(); loadBrands(); var f = document.querySelector('[data-fk="c-name"]'); if (f) f.focus(); } }, [el('span', { html: ICONS.plus, style: 'display:inline-flex;width:16px;height:16px' }), 'New gift-only product']) : null
+    ]);
+    var kids = [head];
+    if (st.create.made) kids.push(el('div', { class: 'fg-msg ok', role: 'status', style: 'margin-top:10px' }, [el('i', { text: '✓' }), el('span', { text: 'Created "' + st.create.made.name + '". Pick it in a range with "Add gift", or ' }), typeof window.peoEdit === 'function' ? el('button', { type: 'button', class: 'fg-link', text: 'edit it in the product editor', onclick: function () { window.peoEdit(st.create.made.id); } }) : null]));
+    if (st.create.open && can()) kids.push(el('div', { style: 'margin-top:14px' }, [createForm()]));
+    var rows = [el('div', { class: 'fg-pr hd', 'aria-hidden': 'true' }, [el('span'), el('span', { text: 'Product' }), el('span', { text: 'Brand' }), el('span', { text: 'Used in' }), el('span', { text: 'Gift only' }), el('span')])];
+    d.gift_products.forEach(function (p) {
+      var s = stockOf(p);
+      rows.push(el('div', { class: 'fg-pr', role: 'listitem' }, [
+        thumb(p),
+        el('div', {}, [el('b', { text: p.name }), el('span', { class: 'fg-row', style: 'gap:6px;margin-top:3px' }, [pill(s.cls, s.text)])]),
+        el('small', { class: 'c-brand', text: p.brand || '—' }),
+        el('div', { class: 'c-used fg-pills' }, p.used_in.length ? p.used_in.slice().sort(function (a, b) { return ((byId[a] || {}).min || 0) - ((byId[b] || {}).min || 0); }).map(function (id) { var r = byId[id]; return r ? el('button', { type: 'button', class: 'pill grey', style: 'border:0;cursor:pointer;font:inherit;font-size:11px;font-weight:600', text: r.label, title: 'Open this range', onclick: function () { goRange(id); } }) : null; }) : [el('small', { text: 'Not in a range' })]),
+        el('div', { class: 'c-gift' }, [sw(p.gift_only, p.gift_only ? 'Gift only' : 'On sale', function () {
+          var to = !p.gift_only;
+          run(function () { return api('POST', '/products/' + p.id + '/gift-only', { on: to }); }, 'Not changed.', function () { say('"' + p.name + '" is ' + (to ? 'gift only: hidden from the shop.' : 'back on sale.')); });
+        }, !can() || st.busy)]),
+        el('div', { class: 'c-edit' }, [typeof window.peoEdit === 'function' ? el('button', { type: 'button', class: 'btn ghost sm', text: 'Edit', 'aria-label': 'Edit ' + p.name + ' in the product editor', onclick: function () { window.peoEdit(p.id); } }) : null])
+      ]));
+    });
+    if (!d.gift_products.length) rows.push(el('div', { class: 'fg-empty', style: 'margin-top:8px', text: 'No gift products yet.' }));
+    kids.push(el('div', { class: 'fg-pt', role: 'list', 'aria-label': 'Gift products', style: 'margin-top:14px' }, rows));
+    wrap.appendChild(el('section', { class: 'card fg-card' }, kids));
+  }
+  function loadBrands() {
+    if (st.create.brands) return;
+    api('GET', '/brands').then(function (d) { st.create.brands = d.brands; if (st.tab === 'products' && st.create.open) { var s = document.querySelector('[data-fk="c-brand"]'); if (s && ours()) fillBrands(s); } }).catch(function () { st.create.brands = []; });
+  }
+  function fillBrands(s) {
+    var c = st.create;
+    s.textContent = '';
+    s.appendChild(el('option', { value: '', text: c.brands ? 'No brand' : 'Loading brands…' }));
+    (c.brands || []).forEach(function (b) { s.appendChild(el('option', { value: String(b.id), text: b.name, selected: String(b.id) === c.brand_id })); });
+  }
+  function createForm() {
+    var c = st.create;
+    function inp(prop, type, extra) {
+      var i = el('input', Object.assign({ class: 'fg-in', type: type, value: c[prop], 'data-fk': 'c-' + prop }, extra || {}));
+      i.addEventListener('input', function () { c[prop] = i.value; });
+      return i;
+    }
+    var brand = el('select', { class: 'fg-in', 'data-fk': 'c-brand' });
+    fillBrands(brand);
+    brand.addEventListener('change', function () { c.brand_id = brand.value; });
+    var file = el('input', { type: 'file', accept: 'image/*', 'aria-label': 'Photo', style: 'max-width:100%;font-size:12px' });
+    var photoStatus = el('span', { class: 'fg-sub', style: 'margin:0' });
+    var photo = el('div', { class: 'fg-photo' }, [c.thumb ? el('img', { class: 'fg-th', src: c.thumb, alt: '' }) : el('span', { class: 'fg-th fg-ph', 'aria-hidden': 'true', text: 'IMG' }), file, photoStatus,
+      c.image ? el('button', { type: 'button', class: 'fg-link', text: 'Remove photo', onclick: function () { c.image = ''; c.thumb = ''; render(); } }) : null]);
+    file.addEventListener('change', function () {
+      var f = file.files && file.files[0]; if (!f) return;
+      var fd = new FormData(); fd.append('file', f); fd.append('folder', 'products');
+      photoStatus.textContent = 'Uploading…';
+      api('POST', '!/admin-api/media/upload', fd).then(function (res) {
+        c.image = res.url || ''; c.thumb = res.url || '';
+        if (ours() && st.tab === 'products') render();
+      }).catch(function (e) { photoStatus.textContent = e && e.status === 403 ? 'Your role cannot upload pictures; add the photo in the product editor afterwards.' : explain(e, 'Upload failed.'); });
+    });
+    return el('div', { class: 'fg-create', role: 'group', 'aria-label': 'New gift-only product' }, [
+      el('div', { class: 'fg-between' }, [el('h4', { class: 'fg-h2', style: 'margin:0', text: 'New gift-only product' }), el('button', { type: 'button', class: 'fg-btn-i', 'aria-label': 'Close the form', html: ICONS.x, onclick: function () { c.open = false; render(); } })]),
+      el('div', { class: 'fg-g2' }, [field('Name', inp('name', 'text', { maxlength: 160, placeholder: 'e.g. Mugwort Calming Clay Mask Mini', required: true })), field('Brand', brand)]),
+      el('div', { class: 'fg-field' }, [el('span', { text: 'Photo' }), photo]),
+      el('div', { class: 'fg-g2' }, [
+        field('Stock', inp('stock', 'number', { min: 0, step: 1, inputmode: 'numeric', placeholder: 'Empty: not counted' }), 'Gifts are skipped on the shop when this reaches 0.'),
+        field('Price (AED)', inp('price', 'number', { min: 0, step: '0.01', inputmode: 'decimal', placeholder: '0.00' }), 'Shown struck through only if Display → "Show gift prices" is on.')
+      ]),
+      c.err ? el('div', { class: 'fg-msg err', role: 'alert' }, [el('i', { text: '!' }), el('span', { text: c.err })]) : null,
+      el('div', { class: 'fg-row' }, [
+        el('button', { type: 'button', class: 'btn sm', text: c.busy ? 'Creating…' : 'Create gift-only product', disabled: c.busy, onclick: function () {
+          if (c.name.trim().length < 2) { c.err = 'Give it a name (2 letters or more).'; render(); var f = document.querySelector('[data-fk="c-name"]'); if (f) f.focus(); return; }
+          c.busy = true; c.err = null; render();
+          api('POST', '/products', { name: c.name.trim(), brand_id: c.brand_id ? Number(c.brand_id) : null, stock: c.stock === '' ? null : Number(c.stock), price: c.price === '' ? null : Number(c.price), image: c.image || null }).then(function (d) {
+            st.data = d;
+            st.create = { open: false, name: '', brand_id: '', stock: '', price: '', image: '', thumb: '', brands: c.brands, busy: false, err: null, made: d.created };
+            say('Created "' + d.created.name + '" as a gift-only product.');
+            render();
+          }).catch(function (e) { c.busy = false; c.err = explain(e, 'Not created.'); render(); });
+        } }),
+        el('button', { type: 'button', class: 'btn ghost sm', text: 'Cancel', onclick: function () { c.open = false; render(); } })
+      ])
+    ]);
+  }
+
+  /* --------------------------------------------------------------- display */
+  function renderDisplay(wrap) {
+    var ro = !can(), c = cfg();
+    function sel(prop, opts, label) {
+      var s = el('select', { class: 'fg-in', disabled: ro, 'data-fk': 'd-' + prop }, opts.map(function (o) { return el('option', { value: o[0], text: o[1], selected: c[prop] === o[0] }); }));
+      s.addEventListener('change', function () { editCfg()[prop] = s.value; c = cfg(); repaint(); });
+      return field(label, s);
+    }
+    function t(key, lang, label) {
+      var i = el('input', { class: 'fg-in', type: 'text', value: c.texts[key + '_' + lang], dir: lang === 'ar' ? 'rtl' : null, lang: lang, disabled: ro, maxlength: 160, 'aria-label': label + (lang === 'ar' ? ' (Arabic)' : ' (English)'), 'data-fk': 't-' + key + lang });
+      i.addEventListener('input', function () {
+        editCfg().texts[key + '_' + lang] = i.value; c = cfg();
+        var bad = (key === 'line' && i.value.indexOf(':count') < 0) || !i.value.trim();
+        i.classList.toggle('bad', bad);
+        repaint();
+      });
+      return i;
+    }
+    var left = el('div', { class: 'fg-wrap', style: 'padding:0' }, [
+      card('What counts and where', null, [el('div', { class: 'fg-g2', style: 'margin-top:12px' }, [
+        sel('basis', [['after_discounts', 'Products after the coupon (as asked)'], ['before_discounts', 'Products before the coupon']], 'What counts toward a range'),
+        sel('countries', [['all', 'Every country the shop delivers to'], ['AE', 'United Arab Emirates only']], 'Countries')
+      ]), el('p', { class: 'fg-sub', text: 'Delivery, gift wrapping and the gifts themselves never count.' }),
+        el('div', { class: 'fg-row', style: 'margin-top:14px' }, [sw(c.show_value, 'Show gift prices', function () { var e = editCfg(); e.show_value = !e.show_value; c = cfg(); this.setAttribute('aria-checked', String(e.show_value)); repaint(); }, ro)]),
+        el('p', { class: 'fg-sub', text: 'Off, as asked. On, each gift in the opened list shows its price struck through before "FREE".' })]),
+      card('Texts', 'English and Arabic side by side. The preview follows as you type.', [el('div', { class: 'fg-tx', style: 'margin-top:8px' }, [el('div', { class: 'fg-txr hd', 'aria-hidden': 'true' }, [el('span', { text: 'Where' }), el('span', { text: 'English' }), el('span', { text: 'Arabic' })])].concat(
+        [].concat.apply([], TEXT_GROUPS.map(function (g) {
+          return [el('div', { class: 'fg-grp', text: g[0] })].concat(g[1].map(function (k) { return el('div', { class: 'fg-txr' }, [el('span', {}, [k[1], k[2] ? el('small', { text: k[2] }) : null]), t(k[0], 'en', k[1]), t(k[0], 'ar', k[1])]); }));
+        }))
+      ))].concat(st.errors.cfg ? [el('div', { class: 'fg-msg err', role: 'alert', style: 'margin-top:10px' }, [el('i', { text: '!' }), el('span', { text: st.errors.cfg })])] : []))
+    ]);
+    var list = ranges().filter(function (r) { return r.gifts.length; });
+    if (st.pvRange == null || !list.some(function (r) { return r.id === st.pvRange; })) st.pvRange = list.length ? list[Math.min(2, list.length - 1)].id : null;
+    var pick = el('select', { class: 'fg-in', 'aria-label': 'Preview with the range', 'data-fk': 'pv-range' }, list.map(function (r) { return el('option', { value: String(r.id), text: r.label + ' · ' + r.label_en, selected: r.id === st.pvRange }); }));
+    pick.addEventListener('change', function () { st.pvRange = Number(pick.value); repaint(); });
+    var target = function () { return rangeById(st.pvRange); };
+    var right = card(null, null, [list.length ? pick : el('p', { class: 'fg-sub', text: 'Add gifts to a range to see the box.' }),
+      list.length ? previewPair(function () { var r = target(); return r ? view(r).gifts : []; }, function (lang) { var r = target(); if (!r) return ''; var v = view(r); return lang === 'ar' ? (v.label_ar || v.label_en) : v.label_en; }) : null], 'fg-pvcol');
+    right.style.display = 'grid'; right.style.gap = '10px';
+    wrap.appendChild(el('div', { class: 'fg-disp' }, [left, right]));
+  }
+
+  /* ------------------------------------------------------------------ home */
+  function renderHome(wrap) {
+    var ro = !can(), h = cfg().home;
+    function t(key, lang, label) {
+      var i = el('input', { class: 'fg-in', type: 'text', value: h[key + '_' + lang], dir: lang === 'ar' ? 'rtl' : null, lang: lang, disabled: ro, maxlength: 160, 'aria-label': label + (lang === 'ar' ? ' (Arabic)' : ' (English)'), 'data-fk': 'h-' + key + lang });
+      i.addEventListener('input', function () { editCfg().home[key + '_' + lang] = i.value; repaint(); });
+      return i;
+    }
+    wrap.appendChild(card('Homepage section', 'Its design is still being chosen, so nothing shows on the homepage yet. Its words are kept here, ready for it.', [
+      el('div', { class: 'fg-row', style: 'margin-top:14px' }, [sw(h.on, 'Show on the homepage (once its design is chosen)', function () { var e = editCfg(); e.home.on = !e.home.on; this.setAttribute('aria-checked', String(e.home.on)); repaint(); }, ro)]),
+      el('div', { class: 'fg-tx', style: 'margin-top:12px' }, [el('div', { class: 'fg-txr hd', 'aria-hidden': 'true' }, [el('span', { text: 'Where' }), el('span', { text: 'English' }), el('span', { text: 'Arabic' })])].concat(HOME_FIELDS.map(function (f) {
+        return el('div', { class: 'fg-txr' }, [el('span', { text: f[1] }), t(f[0], 'en', f[1]), t(f[0], 'ar', f[1])]);
+      })))
+    ].concat(st.errors.cfg ? [el('div', { class: 'fg-msg err', role: 'alert', style: 'margin-top:10px' }, [el('i', { text: '!' }), el('span', { text: st.errors.cfg })])] : [])));
+  }
+
+  /* The sidebar row is AdminNav's static `late` entry; this only returns it
+     when the console's own nav is drawn without it. */
+  function addNavEntry() {
+    if (typeof window.kbbAddNavEntry !== 'function') return;
+    window.kbbAddNavEntry({
+      screen: SCREEN,
+      label: 'Free gifts',
+      icon: '<path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7"/><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/>',
+      group: GROUP,
+      after: ['push', 'searchterms', 'pixels']
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addNavEntry); else addNavEntry();
+})();
