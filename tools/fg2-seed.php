@@ -6,7 +6,7 @@ declare(strict_types=1);
  * Lane FG2: tools/fg-seed.php's shop and the owner's five ranges with their
  * gifts, then the state the redesigned admin screen is photographed in: three
  * gifts low or out of stock, and a month of paid orders that carried gifts (so
- * Overview's numbers are real). Switch OFF, so "Before switching on" shows.
+ * Overview's numbers are real). Switch OFF, so "Things to check" shows.
  * Run through `FG_SEED=fg2-seed.php FG_ON=0 sh tools/fg-preview.sh`; never
  * against a real database.
  */

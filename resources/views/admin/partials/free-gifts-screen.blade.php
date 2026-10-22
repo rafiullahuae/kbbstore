@@ -5,30 +5,39 @@
     checkout summary show them in the owner's "02 · Mint outline" box, and the
     order stores them at AED 0. Five tabs:
 
-      Overview          the switch, "Before switching on" (each item opens the
-                        place that fixes it), four numbers from the last 30 days
-                        (GET free-gifts/stats), every range at a glance.
-      Ranges & gifts    one collapsed row per range; one opens at a time, with
-                        "AED [from] – [to]", wording EN | AR, dates, the gift
-                        list (photo, stock, −/+ stepper, remove with undo), the
-                        picker, and a live mini preview of the shop's box.
+      Overview          the Mode (never refused: Lane FG3), "Things to check"
+                        (each item opens the place that fixes it), four numbers
+                        from the last 30 days (GET free-gifts/stats), every
+                        range at a glance.
+      Ranges & gifts    a row of range tabs (Lane FG3); only the selected
+                        range's editor shows: "AED [from] – [to]", wording
+                        EN | AR, dates, the gift list (photo, stock, −/+
+                        stepper, remove with undo), the picker, a live mini
+                        preview of the shop's box, and its OWN Save.
       Gift products     every gift and gift-only product: stock, ranges using
                         it, the Gift-only switch, and "New gift-only product".
       Display           what counts, countries, gift prices, the texts EN | AR
                         beside a live preview of the box.
       Homepage section  data only; the owner is still choosing its design.
 
-    EVERY EDIT IS A DRAFT until the sticky save bar's Save: "Unsaved changes ·
-    Discard · Save" appears only when something differs from what the server
-    sent, and the toast names what was saved. The switch, Gift only, delete and
-    create act at once (each is one deliberate click with its own toast).
+    EVERY EDIT IS A DRAFT until its own Save (Lane FG3: no global save bar).
+    Each range keeps its draft while the owner moves between range tabs, and
+    its tab carries a dot until it is saved; its Save sends that range alone
+    and the toast names it. Display and Homepage section each have their own
+    Save too. The Mode, Gift only, delete and create act at once (each is one
+    deliberate click with its own toast). The selected range tab is
+    remembered in localStorage (wrapped in try/catch; a blocked store just
+    opens the first range).
 
     Pulled into resources/views/admin/app.blade.php beside Push Notifications,
     so window.go and toast() exist. It wraps window.go for one id, 'freegifts'.
 
     LIGHT: GET free-gifts and GET free-gifts/stats when the screen opens. The
-    picker asks once when it opens, then at most once per 300 ms of typing and
-    only for 2+ characters; a filter is one request per click. Brands are asked
+    picker asks once when it opens, then searches AS YOU TYPE -- at most once
+    per 300 ms of typing, only for 2+ characters, never on Enter, and every
+    new question aborts the one before it (AbortController), so a slower
+    earlier answer can never overwrite a newer one. A filter is one request
+    per click. Brands are asked
     for only when the create form opens. The previews and the overlap/gap check
     are built here from data the page already has: no request. No polling, no
     timer left running (the one debounce timer is cleared when the picker
@@ -47,8 +56,8 @@
 .fg-tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--border);scrollbar-width:none}
 .fg-tab{font:inherit;font-size:13.5px;padding:10px 12px;border:0;background:none;color:var(--ink-soft);border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-1px;white-space:nowrap;display:inline-flex;gap:6px;align-items:center}
 .fg-tab[aria-selected="true"]{color:var(--ink);font-weight:650;border-bottom-color:var(--accent)}
-.fg-tab:focus-visible,.fg-btn-i:focus-visible,.fg-rg-h:focus-visible,.fg-res:focus-visible,.fg-sw:focus-visible,.fg-step button:focus-visible,.fg-link:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:8px}
-.fg-tab .fg-dot{width:7px;height:7px;border-radius:50%;background:#e0a23a}
+.fg-tab:focus-visible,.fg-btn-i:focus-visible,.fg-rtab:focus-visible,.fg-res:focus-visible,.fg-sw:focus-visible,.fg-step button:focus-visible,.fg-link:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:8px}
+.fg-tab .fg-dot,.fg-rtab .fg-rt-dirty{width:8px;height:8px;border-radius:50%;background:#2f6fde;flex:none}
 .fg-card{padding:18px;min-width:0}
 .fg-h{font-weight:700;font-size:15px;margin:0;letter-spacing:-.01em}
 .fg-h2{font-weight:650;font-size:13px;margin:0 0 8px;color:var(--ink-2)}
@@ -101,6 +110,8 @@ select.fg-in{padding-inline-end:28px}
 .fg-checks{list-style:none;margin:0;padding:0;display:grid;gap:7px}
 .fg-checks li{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.45;padding:9px 11px;border:1px solid var(--border);border-radius:11px;background:var(--surface)}
 .fg-checks li>span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}
+.fg-checks li.lv-alert{border-color:#f0c6c2;background:var(--red-soft)}
+.fg-checks li.lv-warn{border-color:#f0d199;background:var(--amber-soft)}
 .fg-kpis{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(0,1fr))}
 .fg-kpis .kpi .val{overflow-wrap:anywhere}
 .fg-kpis .kpi .val.txt{font-size:15px;line-height:1.3;letter-spacing:0}
@@ -131,11 +142,18 @@ select.fg-in{padding-inline-end:28px}
 .fg-rgs{display:grid;gap:8px}
 .fg-rg{border:1px solid var(--border);border-radius:13px;background:var(--surface);min-width:0}
 .fg-rg.open{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-.fg-rg-h{display:grid;grid-template-columns:150px minmax(0,1.3fr) minmax(0,1fr) auto 18px;gap:12px;align-items:center;width:100%;padding:11px 13px;border:0;background:none;font:inherit;color:inherit;text-align:start;cursor:pointer;border-radius:13px}
-.fg-rg-h:hover{background:var(--surface-2)}
-.fg-rg.open .fg-rg-h{border-bottom:1px solid var(--border);border-radius:13px 13px 0 0}
-.fg-chev{width:16px;height:16px;color:var(--ink-faint);transition:transform .15s}
-.fg-rg.open .fg-chev{transform:rotate(180deg)}
+.fg-rg-top{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border)}
+.fg-rg-top .fg-words{flex:1;min-width:0}
+/* Range tabs (Lane FG3): one per range, scrolling sideways on a phone. */
+.fg-rtabs{display:flex;gap:6px;overflow-x:auto;padding:3px 3px 8px;margin:12px -3px 0;scrollbar-width:thin;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.fg-rtab{flex:none;display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13px;font-weight:650;padding:8px 13px;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap}
+.fg-rtab:hover{background:var(--surface-2)}
+.fg-rtab[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 2px var(--accent-soft)}
+.fg-rtab.off{color:var(--ink-faint);border-style:dashed;font-weight:550}
+.fg-rt-off{font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint)}
+.fg-rt-warn{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#d9534a;color:#fff;font-size:11px;font-weight:800;line-height:1;flex:none}
+.fg-rtab.add{border-style:dashed;color:var(--accent-ink);background:none}
+.fg-rtab.add svg{width:14px;height:14px}
 .fg-rg-b{padding:16px;display:grid;gap:16px;grid-template-columns:minmax(0,1fr) 360px;align-items:start}
 .fg-ed{display:grid;gap:16px;min-width:0}
 .fg-sec{display:grid;gap:8px;min-width:0}
@@ -149,6 +167,8 @@ select.fg-in{padding-inline-end:28px}
 .fg-gi-n b{display:block;font-size:13px;font-weight:600;overflow-wrap:anywhere;line-height:1.3}
 .fg-gi-n small{display:block;font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em}
 .fg-gi-n .pill{margin-top:3px}
+.fg-gi.out{border-color:#f0c6c2;background:var(--red-soft)}
+.fg-gi.low{border-color:#f0d199;background:var(--amber-soft)}
 .fg-undo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12.5px;color:var(--ink-soft);padding:8px 11px;border:1px dashed var(--border);border-radius:11px}
 .fg-step{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)}
 .fg-step button{width:30px;height:32px;border:0;background:none;font:inherit;font-size:16px;line-height:1;color:var(--ink-2);cursor:pointer;padding:0}
@@ -196,11 +216,11 @@ select.fg-in{padding-inline-end:28px}
 .fg-txr>span small{display:block;font-weight:400;color:var(--ink-faint);font-size:11px}
 .fg-txr.hd{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);padding-top:0}
 .fg-grp{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:14px 0 2px}
-/* Save bar */
-.fg-bar{position:sticky;bottom:0;z-index:20;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:11px 14px;border:1px solid var(--border);border-radius:13px;background:var(--surface);box-shadow:0 -6px 24px -10px rgba(16,23,41,.25)}
-.fg-bar b{font-size:13px}
-.fg-bar span{font-size:12px;color:var(--ink-soft)}
-.fg-bar .fg-row{gap:8px}
+/* Each part's own Save (Lane FG3) */
+.fg-save{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px;margin-top:14px}
+.fg-save .fg-sub{margin:0}
+.fg-save .fg-row{gap:8px;margin-inline-start:auto}
+.fg-pk-st{font-size:12px;color:var(--ink-soft);min-height:16px}
 /* The shop's box, "02 · Mint outline" -- the values of
    partials/free-gifts/box.blade.php, scoped here so nothing in the console
    restyles it and it restyles nothing in the console. */
@@ -237,12 +257,8 @@ select.fg-in{padding-inline-end:28px}
 }
 @media(max-width:700px){
   .fg-card{padding:14px}
-  .fg-rg-h{grid-template-columns:auto minmax(0,1fr) 18px;gap:6px 10px;padding:11px 12px}
-  .fg-rg-h>.fg-amtl{grid-column:1/3;grid-row:1}
-  .fg-rg-h>.fg-chev{grid-column:3;grid-row:1}
-  .fg-rg-h>.fg-words{grid-column:1/4;grid-row:2}
-  .fg-rg-h>.fg-thumbs{grid-column:1;grid-row:3}
-  .fg-rg-h>.fg-pills{grid-column:2/4;grid-row:3;justify-content:flex-end}
+  .fg-rg-top{padding:10px 12px}
+  .fg-rtab{padding:7px 11px;font-size:12.5px}
   .fg-rg-b{padding:12px}
   .fg-sumr{grid-template-columns:minmax(0,1fr);gap:6px}
   .fg-gi{grid-template-columns:40px minmax(0,1fr) auto;row-gap:8px}
@@ -281,14 +297,13 @@ select.fg-in{padding-inline-end:28px}
   var GIFT_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>';
   var ICONS = {
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>',
-    chev: '<svg class="fg-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'
   };
 
   var st = {
     tab: 'overview', data: null, stats: null, banner: null, busy: false, seq: 0,
-    open: null,      // the one range shown expanded: an id, 'new', or null
+    sel: null,       // the selected range tab: an id, 'new', or null (= remembered, else the first)
     drafts: {},      // range id -> its edited copy (only once touched)
     cfg: null,       // Display + Homepage section, edited copy (null = untouched)
     errors: {},      // range id (or 'cfg') -> the server's refusal
@@ -300,6 +315,9 @@ select.fg-in{padding-inline-end:28px}
     create: { open: false, name: '', brand_id: '', stock: '', price: '', image: '', thumb: '', brands: null, busy: false, err: null, made: null }
   };
   var live = [];     // { node, fn } repainted in place while typing
+  var LS_RANGE = 'kbb.freegifts.range';
+  function remember(id) { try { window.localStorage.setItem(LS_RANGE, String(id)); } catch (e) {} }
+  function recalled() { try { return window.localStorage.getItem(LS_RANGE); } catch (e) { return null; } }
 
   /* ------------------------------------------------------------ helpers */
   function cookie(n) { var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)'); return m ? decodeURIComponent(m.pop()) : ''; }
@@ -330,8 +348,9 @@ select.fg-in{padding-inline-end:28px}
   function can() { return !!(st.data && st.data.can_manage); }
   function low() { return (st.data && st.data.low_stock) || 20; }
 
-  async function api(method, path, body) {
+  async function api(method, path, body, signal) {
     var opts = { method: method, headers: { Accept: 'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN') }, credentials: 'same-origin' };
+    if (signal) opts.signal = signal;
     if (body instanceof FormData) opts.body = body;
     else if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
     var r = await fetch(root() + (path.charAt(0) === '!' ? path.slice(1) : '/admin-api/free-gifts' + path), opts);
@@ -361,7 +380,7 @@ select.fg-in{padding-inline-end:28px}
     if (side) side.classList.remove('open');
     var c = document.querySelector('#content');
     if (c) c.textContent = '';
-    st.drafts = {}; st.cfg = null; st.errors = {}; st.confirm = null; st.removed = {}; st.picker = null; st.stats = null;
+    st.drafts = {}; st.cfg = null; st.errors = {}; st.confirm = null; st.removed = {}; st.picker = null; st.stats = null; st.sel = null;
     render();
     run(function () { return api('GET', ''); }, 'Free gifts could not be loaded.');
     loadStats();
@@ -405,8 +424,11 @@ select.fg-in{padding-inline-end:28px}
       return !r || norm(st.drafts[k]) !== norm(origOf(r));
     });
   }
-  function cfgNorm(c) { return JSON.stringify([c.show_value, c.countries, c.basis, c.texts, c.home]); }
-  function cfgDirty() { return !!(st.cfg && st.data && cfgNorm(st.cfg) !== cfgNorm(st.data.config)); }
+  function isDirty(k) { return dirtyRanges().indexOf(String(k)) >= 0; }
+  function dispNorm(c) { return JSON.stringify([c.show_value, c.countries, c.basis, c.texts]); }
+  function displayDirty() { return !!(st.cfg && st.data && dispNorm(st.cfg) !== dispNorm(st.data.config)); }
+  function homeDirty() { return !!(st.cfg && st.data && JSON.stringify(st.cfg.home) !== JSON.stringify(st.data.config.home)); }
+  function cfgDirty() { return displayDirty() || homeDirty(); }
   function cfg() { return st.cfg || (st.data && st.data.config); }
   function editCfg() { if (!st.cfg) st.cfg = clone(st.data.config); return st.cfg; }
 
@@ -420,6 +442,19 @@ select.fg-in{padding-inline-end:28px}
     return { level: 'in', cls: 'green', text: p.stock === null ? 'In stock' : 'In stock · ' + fmt(p.stock) };
   }
   function pill(cls, text) { return el('span', { class: 'pill ' + cls, text: text }); }
+  /* The range editor's badge: an unavailable gift says, in so many words,
+     that the shop skips it until it is back (Lane FG3). */
+  function giftBadge(p, qty) {
+    var s = stockOf(p, qty);
+    return s.level === 'out' ? { level: 'out', cls: 'red', text: s.text + ' — skipped until restocked' } : s;
+  }
+  /* What a range's tab shows: red "!" when the range has no gifts or a gift
+     the shop cannot give now; dimmed when off; a dot when unsaved. */
+  function tabFlags(id, x) {
+    var out = x.gifts.filter(function (g) { return stockOf(g.product, g.quantity).level === 'out'; }).length;
+    var warn = !x.gifts.length ? 'No gifts yet: this range gives nothing.' : out ? plural(out, 'gift is', 'gifts are') + ' missing or out of stock — skipped until restocked.' : '';
+    return { warn: warn, off: !x.enabled, dirty: id === 'new' || isDirty(id) };
+  }
 
   /* The same walk as FreeGiftsController::gaps() and ::overlaps(), over the
      ranges as they read NOW (drafts included), so a message appears as the
@@ -459,10 +494,10 @@ select.fg-in{padding-inline-end:28px}
     }
     if (!(x.label_en || '').trim() || !(x.label_ar || '').trim()) out.push({ level: 'err', text: 'The wording is needed in English and in Arabic.' });
     if (x.starts_on && x.ends_on && x.ends_on < x.starts_on) out.push({ level: 'err', text: 'The end date is before the start date.' });
-    if (x.enabled && !x.gifts.length) out.push({ level: 'warn', text: 'On, with no gifts: the shop shows nothing for this range, and Free gifts cannot be switched on.' });
+    if (x.enabled && !x.gifts.length) out.push({ level: 'warn', text: 'On, with no gifts: this range gives nothing until a gift is added.' });
     x.gifts.forEach(function (g) {
       var s = stockOf(g.product, g.quantity);
-      if (s.level === 'out') out.push({ level: 'warn', text: (g.product ? g.product.name : 'A gift') + ': ' + s.text.toLowerCase() + ', so the shop skips it.' });
+      if (s.level === 'out') out.push({ level: 'warn', text: (g.product ? g.product.name : 'A gift') + ': ' + s.text.toLowerCase() + ' — skipped until restocked. The rest of this range is still given.' });
       else if (g.product && g.product.stock !== null && g.product.stock < g.quantity) out.push({ level: 'warn', text: g.product.name + ': only ' + g.product.stock + ' left for ' + g.quantity + ' per order; the shop gives what there is.' });
     });
     return out;
@@ -477,7 +512,7 @@ select.fg-in{padding-inline-end:28px}
     if (stock.indexOf('out') >= 0) p.push(pill('red', 'Out of stock'));
     else if (stock.indexOf('low') >= 0) p.push(pill('amber', 'Low stock'));
     if (problems(r.id, x).some(function (m) { return m.level === 'err'; })) p.push(pill('red', 'Needs a fix'));
-    if (r.id === 'new' || st.drafts[r.id] && dirtyRanges().indexOf(String(r.id)) >= 0) p.push(pill('amber', 'Unsaved'));
+    if (r.id === 'new' || isDirty(r.id)) p.push(pill('blue', 'Unsaved'));
     return p;
   }
 
@@ -573,11 +608,17 @@ select.fg-in{padding-inline-end:28px}
     c.textContent = '';
     var wrap = el('div', { class: 'fg-wrap', 'data-screen': SCREEN });
     c.appendChild(wrap);
-    var tl = el('div', { class: 'fg-tabs', role: 'tablist', 'aria-label': 'Free gifts' }, TABS.map(function (t) {
-      var dirty = (t[0] === 'ranges' && dirtyRanges().length) || ((t[0] === 'display' || t[0] === 'home') && cfgDirty());
-      return el('button', { type: 'button', class: 'fg-tab', role: 'tab', id: 'fg-tab-' + t[0], 'data-fk': 'tab-' + t[0], 'aria-selected': String(st.tab === t[0]), tabindex: st.tab === t[0] ? '0' : '-1', onclick: function () { setTab(t[0]); } },
-        [t[1], dirty ? el('span', { class: 'fg-dot', title: 'Unsaved changes' }) : null]);
-    }));
+    var tl = el('div', { class: 'fg-tabs', role: 'tablist', 'aria-label': 'Free gifts' });
+    function paintTop() {
+      tl.textContent = '';
+      TABS.forEach(function (t) {
+        var dirty = (t[0] === 'ranges' && dirtyRanges().length) || (t[0] === 'display' && displayDirty()) || (t[0] === 'home' && homeDirty());
+        tl.appendChild(el('button', { type: 'button', class: 'fg-tab', role: 'tab', id: 'fg-tab-' + t[0], 'data-fk': 'tab-' + t[0], 'aria-selected': String(st.tab === t[0]), tabindex: st.tab === t[0] ? '0' : '-1', onclick: function () { setTab(t[0]); } },
+          [t[1], dirty ? el('span', { class: 'fg-dot', title: 'Unsaved changes' }) : null]));
+      });
+    }
+    paintTop();
+    live.push({ node: tl, fn: function () { if (!tl.contains(document.activeElement)) paintTop(); } });
     tl.addEventListener('keydown', function (e) {
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
       var i = TABS.map(function (t) { return t[0]; }).indexOf(st.tab) + (e.key === 'ArrowRight' ? 1 : -1);
@@ -590,42 +631,12 @@ select.fg-in{padding-inline-end:28px}
     var panel = el('div', { role: 'tabpanel', 'aria-labelledby': 'fg-tab-' + st.tab, class: 'fg-wrap', style: 'padding:0' });
     wrap.appendChild(panel);
     ({ overview: renderOverview, ranges: renderRanges, products: renderProducts, display: renderDisplay, home: renderHome })[st.tab](panel);
-    var bar = el('div', { class: 'fg-bar', role: 'region', 'aria-label': 'Unsaved changes', 'aria-live': 'polite' });
-    wrap.appendChild(bar);
-    live.push({ node: bar, fn: function () { paintBar(bar); } });
-    paintBar(bar);
     if (st.picker) { wrap.appendChild(pickerModal()); paintResults(); }
     if (focusKey) { var f = wrap.querySelector('[data-fk="' + focusKey + '"]'); if (f) f.focus(); }
   }
   function setTab(t) { st.tab = t; st.confirm = null; render(); }
 
-  /* -------------------------------------------------------------- save bar */
-  function changes() {
-    var out = dirtyRanges().map(function (k) { var x = st.drafts[k]; return k === 'new' ? 'new range' : amount(x.min, x.max); });
-    if (cfgDirty()) {
-      var o = st.data.config, c = st.cfg;
-      if (cfgNorm(Object.assign({}, c, { home: o.home })) !== cfgNorm(o)) out.push('display settings');
-      if (JSON.stringify(c.home) !== JSON.stringify(o.home)) out.push('homepage section');
-    }
-    return out;
-  }
-  function paintBar(bar) {
-    var list = changes();
-    bar.hidden = !list.length || !can();
-    bar.textContent = '';
-    if (bar.hidden) return;
-    bar.appendChild(el('div', {}, [el('b', { text: 'Unsaved changes' }), el('span', { text: ' · ' + list.join(', ') })]));
-    bar.appendChild(el('div', { class: 'fg-row' }, [
-      el('button', { type: 'button', class: 'btn ghost sm', text: 'Discard', disabled: st.busy, onclick: discard }),
-      el('button', { type: 'button', class: 'btn sm', text: st.busy ? 'Saving…' : 'Save', disabled: st.busy, onclick: saveAll })
-    ]));
-  }
-  function discard() {
-    st.drafts = {}; st.cfg = null; st.errors = {}; st.removed = {}; st.confirm = null;
-    if (st.open === 'new') st.open = null;
-    say('Changes discarded.');
-    render();
-  }
+  /* ------------------------------------------------------- the own Saves */
   function rangeBody(x) {
     return { min: x.min, max: x.max, label_en: (x.label_en || '').trim(), label_ar: (x.label_ar || '').trim(), enabled: !!x.enabled, starts_on: x.starts_on || null, ends_on: x.ends_on || null, gifts: x.gifts.map(function (g) { return { product_id: g.product_id, quantity: g.quantity }; }) };
   }
@@ -634,52 +645,100 @@ select.fg-in{padding-inline-end:28px}
     TEXT_GROUPS.forEach(function (g) { g[1].forEach(function (k) { t[k[0] + '_en'] = c.texts[k[0] + '_en']; t[k[0] + '_ar'] = c.texts[k[0] + '_ar']; }); });
     return { show_value: !!c.show_value, countries: c.countries, basis: c.basis, texts: t, home: c.home };
   }
-  /* Saves every changed range, then the settings, one request each, and says
-     exactly which were saved. A refusal keeps that draft and opens it. */
-  async function saveAll() {
-    if (st.busy) return;
-    var ids = dirtyRanges(), saved = [], failed = null, d = null;
+  function rangeName(x) { var w = (x.label_en || '').trim(); return amount(x.min, x.max) + (w ? ' (' + w + ')' : ''); }
+  /* One range, alone: PUT (or POST for the new one) of that range and nothing
+     else, then a toast naming it. A refusal keeps its draft and says why. */
+  async function saveRange(k) {
+    var x = st.drafts[k];
+    if (st.busy || !x) return;
+    var name = rangeName(x);
     st.busy = true; st.banner = null; repaint();
-    for (var i = 0; i < ids.length; i++) {
-      var k = ids[i], x = st.drafts[k];
-      try {
-        d = await api(k === 'new' ? 'POST' : 'PUT', k === 'new' ? '/ranges' : '/ranges/' + k, rangeBody(x));
-        saved.push(amount(x.min, x.max) + ' (' + (x.label_en || '').trim() + ')');
-        delete st.drafts[k]; delete st.errors[k]; delete st.removed[k];
-        if (k === 'new' && st.open === 'new') { var made = d.ranges.filter(function (r) { return r.min === x.min; })[0]; st.open = made ? made.id : null; }
-        st.data = d;
-      } catch (e) { st.errors[k] = explain(e, 'Not saved.'); if (!failed) failed = { key: k, msg: st.errors[k] }; }
-    }
-    if (cfgDirty()) {
-      try {
-        d = await api('POST', '/settings', settingsBody(st.cfg));
-        saved.push('display and homepage texts'); st.cfg = null; delete st.errors.cfg; st.data = d;
-      } catch (e) { st.errors.cfg = explain(e, 'Not saved.'); if (!failed) failed = { key: 'cfg', msg: st.errors.cfg }; }
-    }
+    try {
+      var d = await api(k === 'new' ? 'POST' : 'PUT', k === 'new' ? '/ranges' : '/ranges/' + k, rangeBody(x));
+      delete st.drafts[k]; delete st.errors[k]; delete st.removed[k];
+      st.data = d;
+      if (k === 'new') { var made = d.ranges.filter(function (r) { return r.min === x.min; })[0]; selectRange(made ? made.id : null); }
+      say('Saved ' + name + '.');
+      loadStats();
+    } catch (e) { st.errors[k] = explain(e, 'Not saved.'); say('Not saved: ' + name + '. ' + st.errors[k], 'bad'); }
     st.busy = false;
-    if (saved.length) say('Saved ' + saved.join(', ') + '.');
-    if (failed) {
-      say('Not saved: ' + failed.msg, 'bad');
-      if (failed.key === 'cfg') { if (st.tab !== 'home') st.tab = 'display'; } else { st.tab = 'ranges'; st.open = failed.key === 'new' ? 'new' : Number(failed.key); }
-    }
-    if (saved.length) loadStats();
     render();
+  }
+  function discardRange(k) {
+    var x = st.drafts[k], name = x && k !== 'new' ? rangeName(x) : '';
+    delete st.drafts[k]; delete st.errors[k]; delete st.removed[k]; st.confirm = null;
+    if (k === 'new') selectRange(null);
+    say(k === 'new' ? 'Removed the new range.' : 'Changes to ' + name + ' discarded.');
+    render();
+  }
+  /* Display and Homepage section share one settings row on the server, so
+     each Save sends its own part with the OTHER part as the server has it,
+     and keeps the other part's unsaved edits afterwards. */
+  async function saveCfg(part) {
+    if (st.busy || !st.cfg) return;
+    var o = st.data.config, c = st.cfg;
+    var body = part === 'home' ? Object.assign(clone(o), { home: clone(c.home) }) : Object.assign(clone(c), { home: clone(o.home) });
+    st.busy = true; repaint();
+    try {
+      var d = await api('POST', '/settings', settingsBody(body));
+      var keep = st.cfg, next = clone(d.config);
+      if (part === 'home') { next.show_value = keep.show_value; next.countries = keep.countries; next.basis = keep.basis; next.texts = clone(keep.texts); } else next.home = clone(keep.home);
+      st.data = d; st.cfg = next; delete st.errors[part];
+      if (!cfgDirty()) st.cfg = null;
+      say(part === 'home' ? 'Saved the homepage section.' : 'Saved the display settings and texts.');
+    } catch (e) { st.errors[part] = explain(e, 'Not saved.'); say('Not saved: ' + st.errors[part], 'bad'); }
+    st.busy = false;
+    render();
+  }
+  function discardCfg(part) {
+    if (!st.cfg) return;
+    var o = st.data.config;
+    if (part === 'home') st.cfg.home = clone(o.home);
+    else { st.cfg.show_value = o.show_value; st.cfg.countries = o.countries; st.cfg.basis = o.basis; st.cfg.texts = clone(o.texts); }
+    delete st.errors[part];
+    if (!cfgDirty()) st.cfg = null;
+    say(part === 'home' ? 'Homepage section changes discarded.' : 'Display changes discarded.');
+    render();
+  }
+  function cfgSaveRow(part) {
+    if (!can()) return null;
+    var holder = el('div', { class: 'fg-save', role: 'region', 'aria-label': part === 'home' ? 'Save the homepage section' : 'Save display' });
+    function paint() {
+      var dirty = part === 'home' ? homeDirty() : displayDirty();
+      holder.textContent = '';
+      holder.appendChild(el('span', { class: 'fg-sub', text: dirty ? 'Unsaved changes' : 'Everything here is saved.' }));
+      holder.appendChild(el('div', { class: 'fg-row' }, [
+        dirty ? el('button', { type: 'button', class: 'btn ghost sm', text: 'Discard', disabled: st.busy, onclick: function () { discardCfg(part); } }) : null,
+        el('button', { type: 'button', class: 'btn sm', 'data-fk': 'save-' + part, text: st.busy && dirty ? 'Saving…' : 'Save', disabled: st.busy || !dirty, onclick: function () { saveCfg(part); } })
+      ]));
+    }
+    paint();
+    live.push({ node: holder, fn: paint });
+    return holder;
   }
 
   /* -------------------------------------------------------------- overview */
-  function goRange(id) { st.tab = 'ranges'; st.open = id; st.confirm = null; render(); var b = document.querySelector('[data-fk="rg-' + id + '"]'); if (b) { b.focus(); b.scrollIntoView({ block: 'nearest' }); } }
+  function goRange(id) {
+    st.tab = 'ranges'; selectRange(id); render();
+    var b = document.querySelector('[data-fk="rt-' + id + '"]'); if (b) { b.focus(); b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+  }
   /* The Mode (Off / Testing / Live) and the Testing list. Each is one
-     deliberate click that saves at once, with its own toast. */
+     deliberate click that saves at once, with its own toast. Testing and Live
+     are ALWAYS selectable (Lane FG3): "Things to check" warns, it never
+     refuses. Testing with nobody on the list puts the owner's own address on
+     it (the server does it and answers added_ip), so the click still works. */
   var MODES = [['off', 'Off', 'Nobody sees free gifts.'], ['testing', 'Testing', 'Only the IPs listed here see them.'], ['live', 'Live', 'Every shopper sees them.']];
-  function modeControl(d, blocked) {
-    var mode = d.config.mode || (d.config.on ? 'live' : 'off'), testers = d.config.testers || [];
+  function modeControl(d) {
+    var mode = d.config.mode || (d.config.on ? 'live' : 'off');
     var g = el('div', { class: 'fg-modes', role: 'radiogroup', 'aria-label': 'Mode' }, MODES.map(function (m) {
-      var why = m[0] === 'off' ? null : blocked ? 'Finish the "Needed" items first.' : (m[0] === 'testing' && !testers.length ? 'Add an IP to the Testing list first.' : null);
       return el('button', { type: 'button', role: 'radio', class: 'fg-mode m-' + m[0], 'aria-checked': String(mode === m[0]), 'data-fk': 'mode-' + m[0], tabindex: mode === m[0] ? '0' : '-1',
-        disabled: !can() || st.busy || (mode !== m[0] && !!why), title: mode !== m[0] && why ? why : null, onclick: function () {
+        disabled: !can() || st.busy, onclick: function () {
           if (mode === m[0]) return;
-          run(function () { return api('POST', '/switch', { mode: m[0] }); }, 'Mode not changed.', function () {
-            say(m[0] === 'live' ? 'Free gifts are Live: every shopper sees them.' : m[0] === 'testing' ? 'Free gifts are in Testing: only ' + plural(testers.length, 'IP', 'IPs') + ' on the list see them.' : 'Free gifts are Off: nobody sees them.');
+          run(function () { return api('POST', '/switch', { mode: m[0] }); }, 'Mode not changed.', function (res) {
+            var n = ((res && res.config && res.config.testers) || []).length;
+            say(m[0] === 'live' ? 'Free gifts are Live: every shopper sees them.'
+              : m[0] === 'testing' ? (res && res.added_ip ? 'Free gifts are in Testing. Your IP ' + res.added_ip + ' was added to the Testing list, so you see them; nobody else does.' : 'Free gifts are in Testing: only ' + plural(n, 'IP', 'IPs') + ' on the list see them.')
+              : 'Free gifts are Off: nobody sees them.');
             loadStats();
           });
         } }, [el('b', { text: m[1] }), el('small', { text: m[2] })]);
@@ -729,22 +788,21 @@ select.fg-in{padding-inline-end:28px}
     ]);
   }
   function renderOverview(wrap) {
-    var d = st.data, mode = d.config.mode || (d.config.on ? 'live' : 'off'), blocked = d.checklist.some(function (i) { return i.level === 'block'; });
+    var d = st.data, mode = d.config.mode || (d.config.on ? 'live' : 'off');
     var items = d.checklist, n = (d.config.testers || []).length;
     if (mode === 'testing') wrap.appendChild(el('div', { class: 'fg-banner', role: 'status' }, [el('b', { text: 'Testing: ' }), 'only ' + plural(n, 'IP sees', 'IPs see') + ' free gifts. Every other shopper sees the shop as if it were Off.']));
     wrap.appendChild(el('section', { class: 'card fg-card' }, [el('div', { class: 'fg-status' }, [
       el('div', { class: 'fg-state' }, [
         el('h3', { class: 'fg-h', text: 'Free gifts: ' + (mode === 'live' ? 'Live' : mode === 'testing' ? 'Testing' : 'Off') }),
-        modeControl(d, blocked),
-        blocked && mode === 'off' ? el('p', { style: 'color:#b8362d', text: 'Testing and Live open once every "Needed" item is done.' }) : null,
+        modeControl(d),
         el('p', { text: 'Spend a set amount and the order gets free gifts, shown in the cart panel, on the cart page and in the checkout summary, and kept on the order at AED 0. One range at a time, never added together. What counts: the products\' subtotal ' + (d.config.basis === 'after_discounts' ? 'after the coupon' : 'before the coupon') + ', without delivery, gift wrapping or the gifts. ' + (d.config.countries === 'AE' ? 'UAE deliveries only.' : 'Every country the shop delivers to.') }),
         el('div', {}, [el('button', { type: 'button', class: 'fg-link', text: 'Change what counts and where', onclick: function () { setTab('display'); } })])
       ]),
       el('div', { class: 'fg-state' }, [testersCard(d)])
     ])]));
-    wrap.appendChild(card('Before switching on', items.length ? 'Testing and Live open once nothing is "Needed".' : null, [el('ul', { class: 'fg-checks', style: 'margin-top:10px' }, (items.length ? items : [{ level: 'ok', text: 'Ready: every range that is on has its gifts, and they are in stock.' }]).map(function (i) {
+    wrap.appendChild(card('Things to check', items.length ? 'Nothing here stops Testing or Live. A gift that is missing or out of stock is skipped until it is back, and the rest of its range is still given.' : null, [el('ul', { class: 'fg-checks', style: 'margin-top:10px' }, (items.length ? items : [{ level: 'ok', text: 'All clear: every range that is on has its gifts, and they are in stock.' }]).map(function (i) {
       var fix = i.level === 'ok' ? null : el('button', { type: 'button', class: 'fg-link', text: i.range ? 'Open range' : 'Add a range', onclick: function () { if (i.range) goRange(i.range); else { setTab('ranges'); if (can()) addRange(); } } });
-      return el('li', {}, [pill(i.level === 'block' ? 'red' : i.level === 'warn' ? 'amber' : 'green', i.level === 'block' ? 'Needed' : i.level === 'warn' ? 'Check' : 'Ready'), el('span', { text: i.text }), fix]);
+      return el('li', { class: 'lv-' + i.level }, [pill(i.level === 'alert' ? 'red' : i.level === 'warn' ? 'amber' : 'green', i.level === 'ok' ? 'All clear' : 'Check'), el('span', { text: i.text }), fix]);
     }))]));
 
     var s = st.stats, L = low();
@@ -771,44 +829,78 @@ select.fg-in{padding-inline-end:28px}
 
   /* ---------------------------------------------------------------- ranges */
   function nextFree() { return bands().reduce(function (a, b) { return Math.max(a, b.max == null ? b.min + 1 : b.max + 1); }, 0); }
+  /* The selected range tab: the one asked for, else the one remembered from
+     last time, else the first. 'new' only while a new range is a draft. */
+  function selected() {
+    var list = ranges(), has = function (v) { return v != null && list.some(function (r) { return String(r.id) === String(v); }); };
+    if (st.sel === 'new' && st.drafts['new']) return 'new';
+    if (has(st.sel)) return Number(st.sel);
+    var saved = recalled();
+    if (has(saved)) return Number(saved);
+    return list.length ? list[0].id : (st.drafts['new'] ? 'new' : null);
+  }
+  function selectRange(id) { st.sel = id; st.confirm = null; if (id != null && id !== 'new') remember(id); }
   function addRange(from) {
     if (!st.drafts['new']) {
       var base = from ? clone(from) : { label_en: '', label_ar: '', gifts: [], starts_on: null, ends_on: null };
       st.drafts['new'] = { min: nextFree(), max: null, label_en: base.label_en, label_ar: base.label_ar, enabled: false, starts_on: base.starts_on, ends_on: base.ends_on, gifts: base.gifts };
     }
-    st.open = 'new'; st.confirm = null;
+    selectRange('new');
     render();
     var f = document.querySelector('[data-fk="min-new"]'); if (f) f.focus();
   }
   function renderRanges(wrap) {
-    var list = ranges();
-    wrap.appendChild(el('section', { class: 'card fg-card' }, [el('div', { class: 'fg-between' }, [
-      el('div', {}, [el('h3', { class: 'fg-h', text: 'Ranges & gifts' }), el('p', { class: 'fg-sub', text: 'Whole dirhams: "AED 100 – 299" covers AED 100.00 to AED 299.99. Ranges may not overlap. Each gift is 1 to ' + MAX_QTY + ' of a product; a sold-out gift is skipped until it is back. Click a range to edit it.' })]),
-      can() ? el('button', { type: 'button', class: 'btn sm', onclick: function () { addRange(); } }, [el('span', { html: ICONS.plus, style: 'display:inline-flex;width:16px;height:16px' }), 'Add range']) : null
-    ])]));
-    var rows = list.map(function (r) { return r; });
-    if (st.drafts['new']) rows.push({ id: 'new' });
-    if (!rows.length) { wrap.appendChild(el('div', { class: 'fg-empty', text: 'No ranges yet. "Add range" starts the first one.' })); return; }
-    wrap.appendChild(el('div', { class: 'fg-rgs' }, rows.map(rangeRow)));
-  }
-  function rangeRow(r) {
-    var id = r.id, isOpen = st.open === id || (st.open != null && String(st.open) === String(id));
-    function cur() { return id === 'new' ? st.drafts['new'] : (isOpen && can() ? draft(id) : view(r)); }
-    var head = el('button', { type: 'button', class: 'fg-rg-h', 'data-fk': 'rg-' + id, 'aria-expanded': String(isOpen), 'aria-controls': 'fg-rg-b-' + id, onclick: function () { st.open = isOpen ? null : id; st.confirm = null; render(); } });
+    var list = ranges(), sel = selected();
+    st.sel = sel;
+    var ids = list.map(function (r) { return r.id; });
+    if (st.drafts['new']) ids.push('new');
+    var strip = el('div', { class: 'fg-rtabs', role: 'tablist', 'aria-label': 'Ranges' });
+    function paintStrip() {
+      if (strip.contains(document.activeElement)) return;
+      strip.textContent = '';
+      ids.forEach(function (id) {
+        var r = id === 'new' ? null : rangeById(id), x = id === 'new' ? st.drafts['new'] : view(r), f = tabFlags(id, x), on = String(id) === String(sel);
+        var label = id === 'new' ? (typeof x.min === 'number' && !isNaN(x.min) ? 'New · ' + amount(x.min, x.max) : 'New range') : amount(x.min, x.max);
+        var tip = [f.off ? 'Off' : null, f.warn || null, f.dirty ? 'Unsaved changes' : null].filter(Boolean).join(' · ');
+        strip.appendChild(el('button', { type: 'button', role: 'tab', class: 'fg-rtab' + (f.off ? ' off' : ''), id: 'fg-rt-' + id, 'data-fk': 'rt-' + id, 'aria-selected': String(on), 'aria-controls': 'fg-rp', tabindex: on ? '0' : '-1', title: tip || null,
+          onclick: function () { if (on) return; selectRange(id); render(); var b = document.querySelector('[data-fk="rt-' + id + '"]'); if (b) { b.focus(); b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } } }, [
+          el('span', { class: 'fg-rt-l', text: label }),
+          f.off ? el('span', { class: 'fg-rt-off', text: 'Off' }) : null,
+          f.warn ? el('span', { class: 'fg-rt-warn', role: 'img', 'aria-label': f.warn, text: '!' }) : null,
+          f.dirty ? el('span', { class: 'fg-rt-dirty', role: 'img', 'aria-label': 'Unsaved changes' }) : null
+        ]));
+      });
+      if (can() && !st.drafts['new']) strip.appendChild(el('button', { type: 'button', class: 'fg-rtab add', 'data-fk': 'rt-add', onclick: function () { addRange(); } }, [el('span', { html: ICONS.plus, style: 'display:inline-flex' }), 'Add range']));
+    }
+    paintStrip();
+    live.push({ node: strip, fn: paintStrip });
+    strip.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      var i = ids.map(String).indexOf(String(sel));
+      if (i < 0 || ids.length < 2) return;
+      e.preventDefault();
+      var to = ids[(i + (e.key === 'ArrowRight' ? 1 : ids.length - 1)) % ids.length];
+      selectRange(to); render();
+      var b = document.querySelector('[data-fk="rt-' + to + '"]'); if (b) { b.focus(); b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+    });
+    wrap.appendChild(el('section', { class: 'card fg-card' }, [
+      el('h3', { class: 'fg-h', text: 'Ranges & gifts' }),
+      el('p', { class: 'fg-sub', text: 'Whole dirhams: "AED 100 – 299" covers AED 100.00 to AED 299.99. Ranges may not overlap. Each gift is 1 to ' + MAX_QTY + ' of a product; a sold-out gift is skipped until it is back and the rest of the range is still given. Each range saves on its own.' }),
+      strip
+    ]));
+    if (sel == null) { wrap.appendChild(el('div', { class: 'fg-empty' }, ['No ranges yet. ', can() ? el('button', { type: 'button', class: 'fg-link', text: 'Add the first range', onclick: function () { addRange(); } }) : null])); return; }
+    var r = sel === 'new' ? { id: 'new' } : rangeById(sel);
+    var head = el('div', { class: 'fg-rg-top' });
     function paintHead() {
-      var x = cur();
+      var x = sel === 'new' ? st.drafts['new'] : view(r);
       head.textContent = '';
-      head.appendChild(el('span', { class: 'fg-amtl', text: id === 'new' && (x.min == null || isNaN(x.min)) ? 'New range' : (id === 'new' ? 'New · ' : '') + amount(x.min, x.max) }));
+      head.appendChild(el('span', { class: 'fg-amtl', text: sel === 'new' ? 'New range' : amount(x.min, x.max) }));
       head.appendChild(el('span', { class: 'fg-words', text: (x.label_en || '').trim() || 'No wording yet' }));
-      head.appendChild(thumbs(x.gifts, 6));
       head.appendChild(el('span', { class: 'fg-pills' }, status(r, x)));
-      head.insertAdjacentHTML('beforeend', ICONS.chev);
     }
     paintHead();
     live.push({ node: head, fn: paintHead });
-    var box = el('section', { class: 'fg-rg' + (isOpen ? ' open' : '') }, [head]);
-    if (isOpen) box.appendChild(rangeBodyEl(id, r));
-    return box;
+    wrap.appendChild(el('section', { class: 'fg-rg open', role: 'tabpanel', id: 'fg-rp', 'aria-labelledby': 'fg-rt-' + sel }, [head, rangeBodyEl(sel, r)]));
   }
   function rangeBodyEl(id, r) {
     var ro = !can(), x = ro ? view(r) : (id === 'new' ? st.drafts['new'] : draft(id)), key = String(id);
@@ -864,18 +956,29 @@ select.fg-in{padding-inline-end:28px}
             el('button', { type: 'button', class: 'btn danger sm', text: 'Delete range', onclick: function () {
               var label = amount(r.min, r.max) + ' (' + r.label_en + ')';
               st.confirm = null;
-              run(function () { return api('DELETE', '/ranges/' + id); }, 'Not deleted.', function () { delete st.drafts[id]; delete st.removed[id]; st.open = null; say('Deleted ' + label + '.'); loadStats(); });
+              run(function () { return api('DELETE', '/ranges/' + id); }, 'Not deleted.', function () { delete st.drafts[id]; delete st.removed[id]; delete st.errors[id]; selectRange(null); say('Deleted ' + label + '.'); loadStats(); });
             } })
           ])
         ]);
       } else {
         foot.appendChild(el('div', { class: 'fg-row' }, id === 'new' ? [
-          el('button', { type: 'button', class: 'btn ghost sm', text: 'Remove this new range', onclick: function () { delete st.drafts['new']; delete st.errors['new']; delete st.removed['new']; st.open = null; render(); } })
+          el('button', { type: 'button', class: 'btn ghost sm', text: 'Remove this new range', onclick: function () { discardRange('new'); } })
         ] : [
           el('button', { type: 'button', class: 'btn ghost sm', text: 'Duplicate', title: 'A new range with this wording and these gifts', onclick: function () { if (st.drafts['new']) { say('Save or remove the new range first.', 'bad'); return; } addRange(x); } }),
           el('button', { type: 'button', class: 'btn ghost sm', style: 'color:#b8362d', text: 'Delete…', onclick: function () { st.confirm = id; render(); var k = document.querySelector('[data-fk="keep-' + id + '"]'); if (k) k.focus(); } })
         ]));
-        foot.appendChild(el('span', { class: 'fg-sub', style: 'margin:0', text: 'Changes save from the bar at the bottom.' }));
+        /* This range's OWN Save: it sends this range alone (Lane FG3). */
+        var saveBox = el('div', { class: 'fg-row', role: 'region', 'aria-label': 'Save this range' });
+        var paintSave = function () {
+          var dirty = id === 'new' || isDirty(key);
+          saveBox.textContent = '';
+          saveBox.appendChild(el('span', { class: 'fg-sub', style: 'margin:0', text: dirty ? 'Unsaved changes' : 'Saved' }));
+          if (dirty && id !== 'new') saveBox.appendChild(el('button', { type: 'button', class: 'btn ghost sm', text: 'Discard', disabled: st.busy, onclick: function () { discardRange(key); } }));
+          saveBox.appendChild(el('button', { type: 'button', class: 'btn sm', 'data-fk': 'save-' + id, text: st.busy && dirty ? 'Saving…' : 'Save range', disabled: st.busy || !dirty, onclick: function () { saveRange(key); } }));
+        };
+        paintSave();
+        live.push({ node: saveBox, fn: paintSave });
+        foot.appendChild(saveBox);
       }
     }
 
@@ -899,7 +1002,7 @@ select.fg-in{padding-inline-end:28px}
     ]);
   }
   function giftRow(x, g, gi, ro) {
-    var name = g.product ? g.product.name : 'Product #' + g.product_id, s = stockOf(g.product, g.quantity);
+    var name = g.product ? g.product.name : 'Product #' + g.product_id, s = giftBadge(g.product, g.quantity);
     var badge = pill(s.cls, s.text);
     var q = el('input', { type: 'number', min: 1, max: MAX_QTY, value: g.quantity, disabled: ro, inputmode: 'numeric', 'aria-label': 'Quantity of ' + name, 'data-fk': 'q-' + g.product_id });
     var minus = el('button', { type: 'button', text: '−', 'aria-label': 'One fewer ' + name, disabled: ro || g.quantity <= 1 });
@@ -907,13 +1010,14 @@ select.fg-in{padding-inline-end:28px}
     function set(n) {
       g.quantity = Math.max(1, Math.min(MAX_QTY, Math.floor(Number(n)) || 1));
       q.value = g.quantity; minus.disabled = g.quantity <= 1; plus.disabled = g.quantity >= MAX_QTY;
-      var s2 = stockOf(g.product, g.quantity); badge.className = 'pill ' + s2.cls; badge.textContent = s2.text;
+      var s2 = giftBadge(g.product, g.quantity); badge.className = 'pill ' + s2.cls; badge.textContent = s2.text;
+      row.className = 'fg-gi' + (s2.level === 'in' ? '' : ' ' + s2.level);
       repaint();
     }
     minus.addEventListener('click', function () { set(g.quantity - 1); });
     plus.addEventListener('click', function () { set(g.quantity + 1); });
     q.addEventListener('change', function () { set(q.value); });
-    return el('div', { class: 'fg-gi' }, [
+    var row = el('div', { class: 'fg-gi' + (s.level === 'in' ? '' : ' ' + s.level) }, [
       thumb(g.product),
       el('div', { class: 'fg-gi-n' }, [g.product && g.product.brand ? el('small', { text: g.product.brand }) : null, el('b', { text: name }), badge]),
       el('div', { class: 'fg-step' }, [minus, q, plus]),
@@ -924,6 +1028,7 @@ select.fg-in{padding-inline-end:28px}
         var u = document.querySelector('[data-fk="undo-' + key + '"]'); if (u) u.focus();
       } })
     ]);
+    return row;
   }
   function undoRow(key, x) {
     var u = st.removed[key];
@@ -937,7 +1042,7 @@ select.fg-in{padding-inline-end:28px}
   /* ---------------------------------------------------------------- picker */
   function pickerTarget() { var p = st.picker; return p ? (p.range === 'new' ? st.drafts['new'] : draft(p.range)) : null; }
   function openPicker(id) {
-    st.picker = { range: id, q: '', filter: 'all', rows: null, initial: null, loading: false, seq: 0, timer: null, err: null, added: 0 };
+    st.picker = { range: id, q: '', filter: 'all', rows: null, initial: null, loading: false, seq: 0, timer: null, ctl: null, err: null, added: 0 };
     delete st.removed[String(id)];
     render();
     var f = document.querySelector('[data-fk="pk-q"]'); if (f) f.focus();
@@ -947,34 +1052,42 @@ select.fg-in{padding-inline-end:28px}
     var p = st.picker;
     if (!p) return;
     var x = pickerTarget();
-    clearTimeout(p.timer);
+    clearTimeout(p.timer); stopSearch(p);
     st.picker = null;
     if (silent) return;
     render();
     var b = document.querySelector('[data-fk="add-' + p.range + '"]'); if (b) b.focus();
-    if (p.added > 0 && x) say(plural(p.added, 'gift', 'gifts') + ' added to ' + (p.range === 'new' ? 'the new range' : amount(x.min, x.max)) + '. Save to keep them.');
+    if (p.added > 0 && x) say(plural(p.added, 'gift', 'gifts') + ' added to ' + (p.range === 'new' ? 'the new range' : amount(x.min, x.max)) + '. "Save range" keeps them.');
   }
-  /* One request per 300 ms of typing at most, and none under 2 characters. */
+  /* INSTANT SEARCH, the only search path on this screen (Lane FG3): results
+     come while typing -- one request per 300 ms of typing at most, none under
+     2 characters, nothing on Enter, no Search button. Each new question
+     aborts the one in flight (AbortController) and the seq check drops any
+     answer that is not the latest, so a slower earlier answer can never
+     overwrite a newer one. */
+  function stopSearch(p) { p.seq++; if (p.ctl) { try { p.ctl.abort(); } catch (e) {} p.ctl = null; } p.loading = false; }
   function typed(q) {
     var p = st.picker; if (!p) return;
     p.q = q; clearTimeout(p.timer);
-    if (q.trim().length === 0) { p.rows = p.initial; p.err = null; paintResults(); return; }
-    if (q.trim().length < 2) { p.rows = null; p.err = 'Type at least 2 letters to search.'; paintResults(); return; }
+    if (q.trim().length === 0) { stopSearch(p); p.rows = p.initial; p.err = null; paintResults(); return; }
+    if (q.trim().length < 2) { stopSearch(p); p.rows = null; p.err = 'Type at least 2 letters to search.'; paintResults(); return; }
+    p.loading = true; p.err = null; paintResults();
     p.timer = setTimeout(function () { fetchPicker(q.trim()); }, 300);
   }
   function fetchPicker(q) {
     var p = st.picker; if (!p) return;
-    var mine = ++p.seq;
-    p.loading = true; p.err = null; paintResults();
-    api('GET', '/products?q=' + encodeURIComponent(q) + '&filter=' + encodeURIComponent(p.filter)).then(function (d) {
+    stopSearch(p);
+    var mine = p.seq, ctl = typeof AbortController === 'function' ? new AbortController() : null;
+    p.ctl = ctl; p.loading = true; p.err = null; paintResults();
+    api('GET', '/products?q=' + encodeURIComponent(q) + '&filter=' + encodeURIComponent(p.filter), undefined, ctl ? ctl.signal : undefined).then(function (d) {
       if (st.picker !== p || mine !== p.seq) return;
-      p.rows = d.products; if (q === '') p.initial = d.products; p.loading = false; paintResults();
+      p.ctl = null; p.rows = d.products; if (q === '') p.initial = d.products; p.loading = false; paintResults();
     }).catch(function (e) {
-      if (st.picker !== p || mine !== p.seq) return;
-      p.loading = false; p.err = explain(e, 'Search failed.'); paintResults();
+      if (st.picker !== p || mine !== p.seq || (e && e.name === 'AbortError')) return;
+      p.ctl = null; p.loading = false; p.err = explain(e, 'Search failed.'); paintResults();
     });
   }
-  var resultsNode = null, pkFootNode = null;
+  var resultsNode = null, pkFootNode = null, pkStNode = null;
   function paintResults() {
     if (!ours() || !resultsNode || !resultsNode.isConnected) return;
     var p = st.picker, x = pickerTarget();
@@ -984,9 +1097,9 @@ select.fg-in{padding-inline-end:28px}
     var had = document.activeElement && resultsNode.contains(document.activeElement) ? document.activeElement.getAttribute('data-fk') : null;
     resultsNode.textContent = '';
     resultsNode.setAttribute('aria-busy', String(p.loading));
+    if (pkStNode) pkStNode.textContent = p.loading ? 'Searching…' : (p.rows && p.q.trim().length >= 2 ? plural(p.rows.length, 'match', 'matches') + (p.rows.length >= 20 ? ' (first 20; keep typing to narrow)' : '') : '');
     if (p.err) resultsNode.appendChild(el('p', { class: 'fg-sub', text: p.err }));
-    else if (p.loading && !p.rows) resultsNode.appendChild(el('p', { class: 'fg-sub', text: 'Searching…' }));
-    else if (p.rows && !p.rows.length) resultsNode.appendChild(el('div', { class: 'fg-empty', text: 'No product matches' + (p.filter !== 'all' ? ' this filter' : '') + '.' }));
+    else if (!p.loading && p.rows && !p.rows.length) resultsNode.appendChild(el('div', { class: 'fg-empty', text: 'No product matches' + (p.filter !== 'all' ? ' this filter' : '') + '.' }));
     (p.err ? [] : (p.rows || [])).forEach(function (pr) {
       var taken = x.gifts.some(function (g) { return g.product_id === pr.id; }), bad = pr.type === 'variable', s = stockOf(pr);
       resultsNode.appendChild(el('button', { type: 'button', class: 'fg-res', 'data-fk': 'res-' + pr.id, 'aria-pressed': String(taken), disabled: bad, title: bad ? 'Has shades or sizes: pick a simple product' : null, onclick: function () {
@@ -1006,7 +1119,8 @@ select.fg-in{padding-inline-end:28px}
     var p = st.picker, x = pickerTarget();
     var q = el('input', { class: 'fg-in', type: 'search', value: p.q, placeholder: 'Search by name or SKU', 'aria-label': 'Search products', autocomplete: 'off', 'data-fk': 'pk-q' });
     q.addEventListener('input', function () { typed(q.value); });
-    q.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(p.timer); if (q.value.trim().length >= 2) fetchPicker(q.value.trim()); } });
+    /* Enter submits nothing and reloads nothing: the results are already coming. */
+    q.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });
     var seg = el('div', { class: 'seg', role: 'group', 'aria-label': 'Show' }, [['all', 'All'], ['gift', 'Gift-only'], ['instock', 'In stock']].map(function (f) {
       return el('button', { type: 'button', class: p.filter === f[0] ? 'on' : '', 'aria-pressed': String(p.filter === f[0]), text: f[1], onclick: function () {
         if (p.filter === f[0]) return;
@@ -1017,10 +1131,11 @@ select.fg-in{padding-inline-end:28px}
     }));
     resultsNode = el('div', { class: 'fg-res-l', 'aria-live': 'polite' });
     pkFootNode = el('span', { class: 'fg-sub', style: 'margin:0' });
+    pkStNode = el('div', { class: 'fg-pk-st', role: 'status', 'aria-live': 'polite', 'data-fk': 'pk-st' });
     var title = 'Add gifts to ' + (x ? (st.picker.range === 'new' ? 'the new range' : amount(x.min, x.max)) : 'the range');
     var dlg = el('div', { class: 'modal fg-modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'fg-pk-t' }, [
       el('div', { class: 'modal-h' }, [el('b', { id: 'fg-pk-t', text: title }), el('button', { type: 'button', class: 'x fg-btn-i', 'aria-label': 'Close', html: ICONS.x, onclick: function () { closePicker(); } })]),
-      el('div', { class: 'fg-pk-top' }, [q, seg]),
+      el('div', { class: 'fg-pk-top' }, [q, seg, pkStNode]),
       el('div', { class: 'modal-b' }, [resultsNode]),
       el('div', { class: 'fg-pk-foot' }, [pkFootNode, el('button', { type: 'button', class: 'btn sm', text: 'Done', onclick: function () { closePicker(); } })])
     ]);
@@ -1152,7 +1267,7 @@ select.fg-in{padding-inline-end:28px}
         [].concat.apply([], TEXT_GROUPS.map(function (g) {
           return [el('div', { class: 'fg-grp', text: g[0] })].concat(g[1].map(function (k) { return el('div', { class: 'fg-txr' }, [el('span', {}, [k[1], k[2] ? el('small', { text: k[2] }) : null]), t(k[0], 'en', k[1]), t(k[0], 'ar', k[1])]); }));
         }))
-      ))].concat(st.errors.cfg ? [el('div', { class: 'fg-msg err', role: 'alert', style: 'margin-top:10px' }, [el('i', { text: '!' }), el('span', { text: st.errors.cfg })])] : []))
+      ))].concat(st.errors.display ? [el('div', { class: 'fg-msg err', role: 'alert', style: 'margin-top:10px' }, [el('i', { text: '!' }), el('span', { text: st.errors.display })])] : [], [cfgSaveRow('display')]))
     ]);
     var list = ranges().filter(function (r) { return r.gifts.length; });
     if (st.pvRange == null || !list.some(function (r) { return r.id === st.pvRange; })) st.pvRange = list.length ? list[Math.min(2, list.length - 1)].id : null;
@@ -1178,7 +1293,7 @@ select.fg-in{padding-inline-end:28px}
       el('div', { class: 'fg-tx', style: 'margin-top:12px' }, [el('div', { class: 'fg-txr hd', 'aria-hidden': 'true' }, [el('span', { text: 'Where' }), el('span', { text: 'English' }), el('span', { text: 'Arabic' })])].concat(HOME_FIELDS.map(function (f) {
         return el('div', { class: 'fg-txr' }, [el('span', { text: f[1] }), t(f[0], 'en', f[1]), t(f[0], 'ar', f[1])]);
       })))
-    ].concat(st.errors.cfg ? [el('div', { class: 'fg-msg err', role: 'alert', style: 'margin-top:10px' }, [el('i', { text: '!' }), el('span', { text: st.errors.cfg })])] : [])));
+    ].concat(st.errors.home ? [el('div', { class: 'fg-msg err', role: 'alert', style: 'margin-top:10px' }, [el('i', { text: '!' }), el('span', { text: st.errors.home })])] : [], [cfgSaveRow('home')])));
   }
 
   /* The sidebar row is AdminNav's static `late` entry; this only returns it

@@ -868,7 +868,7 @@ final class AdminSearchIndex
         ],
         // Growth & Marketing -> Free gifts (Lane FG; redesigned by Lane FG2).
         'freegifts' => [
-            'Overview' => ['Free gifts', 'Before switching on', 'Ranges at a glance', 'Orders with gifts', 'Gift units given', 'Most-given gift', 'Stock alerts'],
+            'Overview' => ['Free gifts', 'Things to check', 'Ranges at a glance', 'Orders with gifts', 'Gift units given', 'Most-given gift', 'Stock alerts'],
             'Ranges & gifts' => ['Add range', 'Basket amount', 'Wording (English)', 'Wording (Arabic)', 'Add gift', 'Duplicate', 'What the shopper sees'],
             'Gift products' => ['Gift only', 'New gift-only product', 'Price (AED)'],
             'Display' => ['Show gift prices', 'Countries', 'What counts', 'Texts'],

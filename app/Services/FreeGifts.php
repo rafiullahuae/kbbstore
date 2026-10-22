@@ -557,10 +557,15 @@ final class FreeGifts
     }
 
     /**
-     * What stands between the owner and switching this on.
+     * "Things to check" on the Overview (Lane FG3, the owner 22 Oct: "allow me
+     * to enable the gifts and test, it should not be restricted by
+     * non-available products ... just highlight it").
      *
-     * `block` items refuse the switch; `warn` items do not (a sold-out gift
-     * is skipped on the shop, which is the documented behaviour).
+     * NOTHING here refuses the switch any more. `alert` items (red) are a
+     * range that gives nothing, or a gift the shop can never give as picked;
+     * `warn` items (amber) are a gift skipped until restocked or running
+     * short. The shop's own walk (linesFor) already skips what it cannot give
+     * and gives the rest, so a range keeps working around a missing gift.
      *
      * @return list<array{level:string,text:string}>
      */
@@ -576,7 +581,7 @@ final class FreeGifts
         $out = [];
 
         if ($enabled->isEmpty()) {
-            $out[] = ['level' => 'block', 'text' => 'Add at least one spend range and switch it on.', 'range' => null];
+            $out[] = ['level' => 'alert', 'text' => 'No range is on yet, so no basket gets a gift. Add a spend range and switch it on.', 'range' => null];
         }
 
         foreach ($enabled as $r) {
@@ -584,7 +589,7 @@ final class FreeGifts
             $gifts = $items[$r->id] ?? collect();
 
             if ($gifts->isEmpty()) {
-                $out[] = ['level' => 'block', 'text' => $label . ' ("' . $r->label_en . '"): no gift products picked yet.', 'range' => (int) $r->id];
+                $out[] = ['level' => 'alert', 'text' => $label . ' ("' . $r->label_en . '"): no gift products picked yet, so this range gives nothing.', 'range' => (int) $r->id];
 
                 continue;
             }
@@ -595,11 +600,11 @@ final class FreeGifts
                 $p = $products[$g->product_id] ?? null;
 
                 if ($p === null || $p->deleted_at !== null || $p->status !== 'publish') {
-                    $out[] = ['level' => 'block', 'text' => $label . ': a picked product is deleted or not published.', 'range' => (int) $r->id];
+                    $out[] = ['level' => 'alert', 'text' => $label . ': a picked product is deleted or not published, so it is skipped.', 'range' => (int) $r->id];
                 } elseif ($p->type === 'variable') {
-                    $out[] = ['level' => 'block', 'text' => $label . ': "' . $p->name . '" has options (shades/sizes); pick a simple product.', 'range' => (int) $r->id];
+                    $out[] = ['level' => 'alert', 'text' => $label . ': "' . $p->name . '" has options (shades/sizes), so it is skipped; pick a simple product.', 'range' => (int) $r->id];
                 } elseif ($p->stock_status !== 'instock' || ($p->manage_stock && (int) $p->stock < 1)) {
-                    $out[] = ['level' => 'warn', 'text' => $label . ': "' . $p->name . '" is out of stock, so it is skipped until restocked.', 'range' => (int) $r->id];
+                    $out[] = ['level' => 'warn', 'text' => $label . ': "' . $p->name . '" is out of stock — skipped until restocked; the rest of the range is still given.', 'range' => (int) $r->id];
                 } elseif ($p->manage_stock && (int) $p->stock < (int) $g->quantity) {
                     $out[] = ['level' => 'warn', 'text' => $label . ': only ' . (int) $p->stock . ' of "' . $p->name . '" left for ' . (int) $g->quantity . ' per order.', 'range' => (int) $r->id];
                 }
@@ -614,17 +619,6 @@ final class FreeGifts
         }
 
         return $out;
-    }
-
-    public function blocked(): bool
-    {
-        foreach ($this->checklist() as $item) {
-            if ($item['level'] === 'block') {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**

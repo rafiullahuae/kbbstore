@@ -1,0 +1,124 @@
+{
+  "390": {
+    "scrollWidth": {
+      "overview": 390,
+      "overview-testing": 390,
+      "ranges": 390,
+      "picker": 390,
+      "display": 390
+    },
+    "checks": [
+      "lv-warn | CheckAED 2,000+: \"Rose PDRN Peptide Glowy Balm Petal Pink\" is out of stock — skipped until restocked; the rest of the range is still given.Open range"
+    ],
+    "modeButtonsDisabled": [
+      "OffNobo:false",
+      "Testing:false",
+      "LiveEve:false"
+    ],
+    "testingToast": "Free gifts are in Testing. Your IP 127.0.0.1 was added to the Testing list, so you see them; nobody else does.",
+    "modeAfter": "TestingOnly the IPs listed here see them.",
+    "openedFromOverview": "AED 2,000+!",
+    "selectedTab": "AED 2,000+!",
+    "outBadges": [
+      "Out of stock — skipped until restocked"
+    ],
+    "editorsShown": 1,
+    "tabs": [
+      "AED 100 – 299",
+      "AED 300 – 499",
+      "AED 500 – 999",
+      "AED 1,000 – 1,999",
+      "AED 2,000+! [selected]",
+      "Add range"
+    ],
+    "tabStrip": {
+      "client": 338,
+      "scroll": 740,
+      "overflowX": "auto"
+    },
+    "unsavedDotOn": 1,
+    "saveButtonsOnPage": 1,
+    "globalBar": 0,
+    "editKept": "12 Masks + 5 Minis + 3 Full Size Products (edited)",
+    "searchButtons": 0,
+    "searchingState": "Searching…",
+    "searchesForMug": [
+      "mu",
+      "mug"
+    ],
+    "abortedSearches": [
+      "mu net::ERR_ABORTED"
+    ],
+    "resultsForMug": [
+      "Mugwort Calming Clay Mask Mini"
+    ],
+    "statusAfter": "1 match",
+    "requestsAfterEnter": 0,
+    "saveToast": "Saved AED 2,000+ (12 Masks + 5 Minis + 3 Full Size Products (edited)).",
+    "unsavedDotAfterSave": 0,
+    "rememberedAfterReload": true,
+    "displaySaveEnabled": true,
+    "errors": []
+  },
+  "1280": {
+    "scrollWidth": {
+      "overview": 1280,
+      "overview-testing": 1280,
+      "ranges": 1280,
+      "picker": 1280,
+      "display": 1280
+    },
+    "checks": [
+      "lv-warn | CheckAED 2,000+: \"Rose PDRN Peptide Glowy Balm Petal Pink\" is out of stock — skipped until restocked; the rest of the range is still given.Open range"
+    ],
+    "modeButtonsDisabled": [
+      "OffNobo:false",
+      "Testing:false",
+      "LiveEve:false"
+    ],
+    "testingToast": "Free gifts are in Testing. Your IP 127.0.0.1 was added to the Testing list, so you see them; nobody else does.",
+    "modeAfter": "TestingOnly the IPs listed here see them.",
+    "openedFromOverview": "AED 2,000+!",
+    "selectedTab": "AED 2,000+!",
+    "outBadges": [
+      "Out of stock — skipped until restocked"
+    ],
+    "editorsShown": 1,
+    "tabs": [
+      "AED 100 – 299",
+      "AED 300 – 499",
+      "AED 500 – 999",
+      "AED 1,000 – 1,999",
+      "AED 2,000+! [selected]",
+      "Add range"
+    ],
+    "tabStrip": {
+      "client": 964,
+      "scroll": 964,
+      "overflowX": "auto"
+    },
+    "unsavedDotOn": 1,
+    "saveButtonsOnPage": 1,
+    "globalBar": 0,
+    "editKept": "12 Masks + 5 Minis + 3 Full Size Products (edited)",
+    "searchButtons": 0,
+    "searchingState": "Searching…",
+    "searchesForMug": [
+      "mu",
+      "mug"
+    ],
+    "abortedSearches": [
+      "mu net::ERR_ABORTED"
+    ],
+    "resultsForMug": [
+      "Mugwort Calming Clay Mask Mini"
+    ],
+    "statusAfter": "1 match",
+    "requestsAfterEnter": 0,
+    "saveToast": "Saved AED 2,000+ (12 Masks + 5 Minis + 3 Full Size Products (edited)).",
+    "unsavedDotAfterSave": 0,
+    "rememberedAfterReload": true,
+    "displaySaveEnabled": true,
+    "errors": []
+  }
+}

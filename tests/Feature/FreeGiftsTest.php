@@ -606,18 +606,116 @@ it('refuses overlapping bands, min above max, a bad quantity and a product that 
     expect(DB::table('free_gift_ranges')->count())->toBe(2);
 });
 
-it('will not switch on while a band has no gifts, and lists what is missing', function () {
+it('switches to Testing and Live whatever the checklist says, and lists each problem as a warning', function () {
+    /*
+     * The defect (the owner, 22 Oct): "allow me to enable the gifts and test,
+     * it should not be restricted by non-available products". Testing and
+     * Live answered 422 "finish the items marked Needed" while one range had
+     * no gift, or a picked gift was unpublished -- so the owner could not
+     * even test the ranges that DID work.
+     * MUTATION: put back `if ($mode !== 'off' && $this->gifts->blocked())
+     * { return ... 422; }` in FreeGiftsController::switch(). RED.
+     */
     $owner = lfgAdmin('owner');
-    lfgRange(100, 299, [], '2 Masks');
+    $switch = fn (string $mode) => test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/switch', ['mode' => $mode]);
 
-    $r = test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/switch', ['on' => true]);
-    $r->assertStatus(422);
-    expect(collect($r->json('checklist'))->pluck('level'))->toContain('block');
-    expect(app(FreeGifts::class)->on())->toBeFalse();
+    // No range at all.
+    $switch('live')->assertOk()->assertJsonPath('config.mode', 'live');
+    $switch('off')->assertOk();
 
-    $mask = lfgProduct('Mediheal Sheet Mask');
-    DB::table('free_gift_range_items')->insert(['range_id' => DB::table('free_gift_ranges')->value('id'), 'product_id' => $mask->id, 'quantity' => 2, 'sort' => 0]);
-    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/switch', ['on' => true])->assertOk()->assertJsonPath('config.on', true);
+    $sold = lfgProduct('Sold Out Mask', ['stock_status' => 'outofstock']);
+    $draft = lfgProduct('Draft Mask', ['status' => 'draft']);
+    lfgRange(100, 299, [], '2 Masks');                       // no gifts
+    lfgRange(300, 499, [[$sold, 1], [$draft, 1]], 'Masks');  // nothing it can give
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/testers', ['testers' => [['ip' => '203.0.113.7', 'label' => 'Phone']]])->assertOk();
+
+    foreach (['testing', 'live', 'testing', 'off', 'live'] as $mode) {
+        $r = $switch($mode);
+        $r->assertOk()->assertJsonPath('config.mode', $mode);
+        expect($r->status())->not->toBe(422);
+    }
+
+    $levels = collect(app(FreeGifts::class)->checklist())->pluck('level')->unique()->sort()->values()->all();
+    expect($levels)->toBe(['alert', 'warn'])
+        ->and(method_exists(FreeGifts::class, 'blocked'))->toBeFalse();
+
+    // Deleting a range no longer flips the owner's mode to Off behind his back.
+    test()->actingAs($owner, 'admin')->deleteJson('/admin-api/free-gifts/ranges/' . DB::table('free_gift_ranges')->where('min_fils', 30000)->value('id'))->assertOk();
+    expect(app(FreeGifts::class)->mode())->toBe('live');
+});
+
+it('puts the owner\'s own IP on an empty Testing list instead of refusing Testing', function () {
+    /*
+     * The one case that used to be a 422 and still can never work as asked:
+     * Testing with nobody on the list shows the gifts to nobody. Lane FG3 chose
+     * the friendlier answer -- the address the click came from goes on the
+     * list, the answer names it (added_ip) and the screen toasts it.
+     * MUTATION: drop the `$config['testers'] = [[...$added...]]` line in
+     * FreeGiftsController::switch(). RED (testers stays empty).
+     */
+    $owner = lfgAdmin('owner');
+
+    test()->actingAs($owner, 'admin')->withServerVariables(['REMOTE_ADDR' => '198.51.100.23'])
+        ->postJson('/admin-api/free-gifts/switch', ['mode' => 'testing'])
+        ->assertOk()
+        ->assertJsonPath('config.mode', 'testing')
+        ->assertJsonPath('added_ip', '198.51.100.23')
+        ->assertJsonPath('config.testers.0.ip', '198.51.100.23');
+
+    // A list that already has someone is left exactly as it is.
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/switch', ['mode' => 'off'])->assertOk();
+    test()->actingAs($owner, 'admin')->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])
+        ->postJson('/admin-api/free-gifts/switch', ['mode' => 'testing'])
+        ->assertOk()
+        ->assertJsonMissingPath('added_ip')
+        ->assertJsonPath('config.testers', [['ip' => '198.51.100.23', 'label' => 'My device (added when Testing was switched on)']]);
+
+    // The screen says so in a toast, through say() (escaped).
+    $screen = (string) file_get_contents(resource_path('views/admin/partials/free-gifts-screen.blade.php'));
+    expect($screen)->toContain("res && res.added_ip ? 'Free gifts are in Testing. Your IP ' + res.added_ip");
+});
+
+it('places the order in every stock case: all gifts, the ones in stock, none -- and a restock brings a gift back', function () {
+    /*
+     * The owner: "That range will still work while placing the order by the
+     * customer, unless we add back stock." Switched on while one gift is out
+     * of stock, the range must still give the others; with every gift out it
+     * gives nothing and the order still goes through; a restocked gift comes
+     * back by itself, with no admin step.
+     * MUTATION: in FreeGifts::linesFor() change `continue;` after the
+     * stock_status check to `return [];`. RED at "one out of stock".
+     */
+    PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
+    $mask = lfgProduct('Sheet Mask', ['manage_stock' => true, 'stock' => 50, 'gift_only' => true]);
+    $mini = lfgProduct('Toner Mini', ['stock_status' => 'outofstock', 'gift_only' => true]);
+    lfgRange(100, 299, [[$mask, 2], [$mini, 1]], '2 Masks + 1 Mini');
+    $serum = lfgProduct('Serum', ['price' => 15000]);
+
+    // Switched on through the screen's own endpoint while $mini is out of stock.
+    test()->actingAs(lfgAdmin('owner'), 'admin')->postJson('/admin-api/free-gifts/switch', ['mode' => 'live'])->assertOk();
+    lfgFresh();
+    $place = function () use ($serum): Order {
+        lfgPlace(lfgCart([[$serum, 1]]))->assertRedirect();
+
+        return Order::latest('id')->first();
+    };
+    $gifts = fn (Order $o) => $o->gifts->mapWithKeys(fn ($g) => [$g->name => (int) $g->quantity])->all();
+
+    // One out of stock: the rest of the range is still given.
+    $o = $place();
+    expect($gifts($o))->toBe(['Sheet Mask' => 2])->and((int) $o->free_gift_count)->toBe(2)->and($o->items)->toHaveCount(1);
+
+    // Restocked: it comes back by itself. All available: everything is given.
+    $mini->forceFill(['stock_status' => 'instock'])->save();
+    $o = $place();
+    expect($gifts($o))->toBe(['Sheet Mask' => 2, 'Toner Mini' => 1])->and((int) $o->free_gift_count)->toBe(3);
+
+    // All out of stock: no gift, no error, the order is placed as usual.
+    $mask->forceFill(['stock' => 0])->save();
+    $mini->forceFill(['stock_status' => 'outofstock'])->save();
+    $o = $place();
+    expect($o->gifts)->toHaveCount(0)->and((int) $o->free_gift_count)->toBe(0)
+        ->and($o->items)->toHaveCount(1)->and((int) $o->total)->toBe(15000 + 2000);
 });
 
 it('ships the owner\'s five bands with the switch off', function () {
@@ -789,7 +887,7 @@ it('decides by the firewall\'s address, never by X-Forwarded-For, and with no qu
         ->not->toContain('getClientIps');
 });
 
-it('keeps only real IPs on the Testing list, canonical, de-duplicated, at most 50, and will not test with nobody on it', function () {
+it('keeps only real IPs on the Testing list, canonical, de-duplicated, at most 50, and will not empty it while Testing', function () {
     /*
      * The defect: "203.0.113.300" or a hostname saved, matching nobody, and the
      * owner concluding the feature is broken; or the list growing without end.
@@ -805,8 +903,10 @@ it('keeps only real IPs on the Testing list, canonical, de-duplicated, at most 5
     }
     $post(array_map(fn ($i) => ['ip' => '10.0.' . intdiv($i, 250) . '.' . ($i % 250), 'label' => ''], range(1, 51)))->assertStatus(422);
 
-    // Testing with nobody on the list is refused.
-    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/switch', ['mode' => 'testing'])->assertStatus(422);
+    // Testing with nobody on the list is no longer refused: the caller's own
+    // address goes on it (Lane FG3; its own case below). Back to Off for the rest.
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/switch', ['mode' => 'testing'])->assertOk()->assertJsonPath('added_ip', '127.0.0.1');
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/switch', ['mode' => 'off'])->assertOk();
 
     $post([['ip' => '2001:0DB8:0:0:0:0:0:1', 'label' => 'Phone'], ['ip' => '2001:db8::1', 'label' => 'dup'], ['ip' => ' 203.0.113.7 ', 'label' => 'Office']])
         ->assertOk()

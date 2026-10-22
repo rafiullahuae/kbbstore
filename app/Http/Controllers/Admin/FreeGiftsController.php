@@ -46,27 +46,37 @@ class FreeGiftsController extends Controller
     }
 
     /**
-     * POST /admin-api/free-gifts/switch {mode: off|testing|live} -- the Mode
-     * (Lane FG2). Testing and Live are refused while a "Needed" item is open,
-     * and Testing while no IP is on the list (it would show nobody, which
-     * reads as "it does not work"). The old {on} is still read: true is live.
+     * POST /admin-api/free-gifts/switch {mode: off|testing|live} -- the Mode.
+     *
+     * NEVER refused for the checklist (Lane FG3, the owner 22 Oct: "allow me
+     * to enable the gifts and test, it should not be restricted by
+     * non-available products"). A missing, sold-out or unpublished gift is
+     * skipped by the shop and the rest of its range is still given; a range
+     * with nothing it can give gives nothing. The Overview highlights them.
+     *
+     * The one case left is Testing with nobody on the list, which would show
+     * nobody. Rather than refuse, the address the request comes from -- the
+     * owner at this screen -- is put on the list and the answer says so
+     * (`added_ip`), so the screen can toast it. Only when that address is
+     * not a usable IP is it refused. The old {on} is still read: true is live.
      */
     public function switch(Request $request): JsonResponse
     {
         $request->validate(['mode' => ['nullable', Rule::in(FreeGifts::MODES)]]);
         $mode = $request->filled('mode') ? (string) $request->input('mode') : ($request->boolean('on') ? 'live' : 'off');
 
-        if ($mode !== 'off' && $this->gifts->blocked()) {
-            return response()->json([
-                'error' => 'Not yet: finish the items marked "Needed" on the Overview first.',
-                'checklist' => $this->gifts->checklist(),
-            ], 422);
-        }
-
         $config = $this->gifts->freshConfig();
+        $added = null;
 
         if ($mode === 'testing' && $config['testers'] === []) {
-            return response()->json(['error' => 'Add at least one IP to "IPs that can see it in Testing" first.'], 422);
+            $ip = (string) ($request->ip() ?? '');
+
+            if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+                return response()->json(['error' => 'Add at least one IP to "IPs that can see it in Testing" first.'], 422);
+            }
+
+            $added = \App\Support\IpRange::normalise($ip) ?? $ip;
+            $config['testers'] = [['ip' => $added, 'label' => 'My device (added when Testing was switched on)']];
         }
 
         $config['mode'] = $mode;
@@ -77,7 +87,7 @@ class FreeGiftsController extends Controller
             $this->gifts->compile();
         }
 
-        return response()->json($this->payload());
+        return response()->json($this->payload() + ($added !== null ? ['added_ip' => $added] : []));
     }
 
     /**
@@ -264,15 +274,10 @@ class FreeGiftsController extends Controller
     /** DELETE /admin-api/free-gifts/ranges/{id} */
     public function deleteRange(int $id): JsonResponse
     {
+        // Deleting the last range no longer switches the mode off (Lane FG3):
+        // the mode is the owner's, and an empty set of ranges gives nothing.
         DB::table('free_gift_ranges')->where('id', $id)->delete();
         $this->gifts->compile();
-
-        if ($this->gifts->on() && $this->gifts->blocked()) {
-            $config = $this->gifts->freshConfig();
-            $config['on'] = false;
-            $config['mode'] = 'off';
-            $this->gifts->saveConfig($config);
-        }
 
         return response()->json($this->payload());
     }

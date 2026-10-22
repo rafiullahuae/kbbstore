@@ -272,7 +272,7 @@ it('reports the amounts no enabled range covers, between two that do', function 
 
 it('names the range each checklist item is about, so Overview can open it', function () {
     /*
-     * The defect: "Before switching on" says what is wrong but not where, and
+     * The defect: "Things to check" says what is wrong but not where, and
      * the owner hunts through five ranges for the one with no gifts.
      * MUTATION: drop 'range' => (int) $r->id from the no-gifts item. RED.
      */
@@ -281,11 +281,12 @@ it('names the range each checklist item is about, so Overview can open it', func
     $short = fg2Range(300, 499, [[$gone, 1]]);
 
     $items = collect(app(FreeGifts::class)->checklist());
-    expect($items->firstWhere('level', 'block')['range'])->toBe($empty)
-        ->and($items->firstWhere('level', 'warn')['range'])->toBe($short);
+    expect($items->firstWhere('level', 'alert')['range'])->toBe($empty)
+        ->and($items->firstWhere('level', 'warn')['range'])->toBe($short)
+        ->and($items->firstWhere('level', 'warn')['text'])->toContain('out of stock — skipped until restocked');
 
     DB::table('free_gift_ranges')->delete();
-    expect(app(FreeGifts::class)->checklist()[0])->toBe(['level' => 'block', 'text' => 'Add at least one spend range and switch it on.', 'range' => null]);
+    expect(app(FreeGifts::class)->checklist()[0])->toBe(['level' => 'alert', 'text' => 'No range is on yet, so no basket gets a gift. Add a spend range and switch it on.', 'range' => null]);
 });
 
 /*
@@ -320,8 +321,96 @@ it('renders the screen in the console and keeps its promises: debounced search, 
         ->and($screen)->not->toContain('getBoundingClientRect')
         ->and($screen)->not->toContain('offsetHeight');
 
-    // The sticky save bar, the inline delete confirm, the picker's three filters.
-    expect($screen)->toContain("'aria-label': 'Unsaved changes'")
+    // Each part's own Save (no global bar), the inline delete confirm, the picker's three filters.
+    expect($screen)->toContain("cfgSaveRow('display')")
+        ->and($screen)->toContain("cfgSaveRow('home')")
+        ->and($screen)->not->toContain('fg-bar')
         ->and($screen)->toContain("text: 'Delete range'")
         ->and($screen)->toContain("[['all', 'All'], ['gift', 'Gift-only'], ['instock', 'In stock']]");
+});
+
+/*
+|------------------------------------------------------------------------------
+| LANE FG3 -- range tabs, instant search, never blocked
+|------------------------------------------------------------------------------
+*/
+
+/** The Free gifts script exactly as the console renders it. */
+function fg3Rendered(): string
+{
+    $html = test()->actingAs(fg2Admin(), 'admin')->get('/admin')->assertOk()->getContent();
+    $at = strpos($html, "var SCREEN = 'freegifts';");
+    expect($at)->not->toBeFalse();
+
+    return substr($html, $at, strpos($html, '</script>', $at) - $at);
+}
+
+it('searches as the owner types, through one debounced path, with no Search button and nothing on Enter', function () {
+    /*
+     * The defect: the owner's screenshot of the old screen has a "Search"
+     * button, and an Enter that searched at once beside the debounce made two
+     * paths, so an earlier slower answer could land after a newer one and
+     * show the wrong products.
+     * MUTATION: add `if (e.key === 'Enter') fetchPicker(q.value.trim())`, a
+     * `text: 'Search'` button, or drop `ctl.abort()` from stopSearch(). RED.
+     */
+    $js = fg3Rendered();
+
+    expect($js)->not->toContain("text: 'Search'")
+        ->and($js)->not->toMatch('/>\s*Search\s*</')
+        ->and($js)->not->toContain("type: 'submit'")
+        ->and($js)->not->toContain('<form')
+        // ONE debounced call site for a typed question, at 300 ms, 2+ characters.
+        ->and(substr_count($js, 'fetchPicker(q.'))->toBe(1)
+        ->and($js)->toContain("p.timer = setTimeout(function () { fetchPicker(q.trim()); }, 300);")
+        ->and($js)->toContain('if (q.trim().length < 2) {')
+        // Enter does nothing but stop the browser.
+        ->and($js)->toContain("q.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });")
+        // Stale answers: aborted, and dropped if they arrive anyway.
+        ->and($js)->toContain('new AbortController()')
+        ->and($js)->toContain('p.ctl.abort()')
+        ->and($js)->toContain("if (st.picker !== p || mine !== p.seq || (e && e.name === 'AbortError')) return;")
+        ->and($js)->toContain("p.loading ? 'Searching…'");
+
+    // Every product search on this screen goes through the picker: the products
+    // endpoint is asked from exactly one place.
+    expect(substr_count($js, "'/products?q='"))->toBe(1);
+});
+
+it('shows one range at a time behind range tabs, each with its own Save, and never disables Testing or Live', function () {
+    /*
+     * The owner, 22 Oct: a tab per range, only the selected editor showing,
+     * a Save per range that saves only that range, unsaved edits kept per
+     * range with a dot on the tab, the tab remembered, and Testing / Live
+     * always selectable.
+     * MUTATION: put `|| blocked` back into the Mode button's disabled, or
+     * have saveRange() loop over dirtyRanges(). RED.
+     */
+    $js = fg3Rendered();
+
+    expect($js)->toContain("class: 'fg-rtabs', role: 'tablist', 'aria-label': 'Ranges'")
+        ->and($js)->toContain("'Add range'")
+        ->and($js)->toContain("class: 'fg-rt-dirty', role: 'img', 'aria-label': 'Unsaved changes'")
+        ->and($js)->toContain("class: 'fg-rt-warn', role: 'img'")
+        ->and($js)->toContain("text: st.busy && dirty ? 'Saving…' : 'Save range'")
+        ->and($js)->toContain("var d = await api(k === 'new' ? 'POST' : 'PUT', k === 'new' ? '/ranges' : '/ranges/' + k, rangeBody(x));")
+        ->and($js)->toContain("say('Saved ' + name + '.');")
+        ->and($js)->not->toContain('saveAll')
+        ->and($js)->not->toContain('dirtyRanges().forEach')
+        // remembered, and a blocked store cannot break the screen
+        ->and($js)->toContain('function remember(id) { try { window.localStorage.setItem(LS_RANGE, String(id)); } catch (e) {} }')
+        ->and($js)->toContain('function recalled() { try { return window.localStorage.getItem(LS_RANGE); } catch (e) { return null; } }')
+        // Overview opens a range's tab
+        ->and($js)->toContain("text: i.range ? 'Open range' : 'Add a range'")
+        ->and($js)->toContain("st.tab = 'ranges'; selectRange(id); render();")
+        // never blocked
+        ->and($js)->toContain('disabled: !can() || st.busy, onclick: function () {')
+        ->and($js)->not->toContain("'Needed'")
+        ->and($js)->not->toContain('Before switching on')
+        ->and($js)->toContain("card('Things to check'")
+        ->and($js)->toContain("' — skipped until restocked'");
+
+    // A late answer still cannot paint over another screen, and nothing polls.
+    expect($js)->toContain('if (!c || !ours()) return;')
+        ->and($js)->not->toContain('setInterval');
 });

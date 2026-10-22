@@ -5,8 +5,8 @@
 .fg-tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--border);scrollbar-width:none}
 .fg-tab{font:inherit;font-size:13.5px;padding:10px 12px;border:0;background:none;color:var(--ink-soft);border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-1px;white-space:nowrap;display:inline-flex;gap:6px;align-items:center}
 .fg-tab[aria-selected="true"]{color:var(--ink);font-weight:650;border-bottom-color:var(--accent)}
-.fg-tab:focus-visible,.fg-btn-i:focus-visible,.fg-rg-h:focus-visible,.fg-res:focus-visible,.fg-sw:focus-visible,.fg-step button:focus-visible,.fg-link:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:8px}
-.fg-tab .fg-dot{width:7px;height:7px;border-radius:50%;background:#e0a23a}
+.fg-tab:focus-visible,.fg-btn-i:focus-visible,.fg-rtab:focus-visible,.fg-res:focus-visible,.fg-sw:focus-visible,.fg-step button:focus-visible,.fg-link:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:8px}
+.fg-tab .fg-dot,.fg-rtab .fg-rt-dirty{width:8px;height:8px;border-radius:50%;background:#2f6fde;flex:none}
 .fg-card{padding:18px;min-width:0}
 .fg-h{font-weight:700;font-size:15px;margin:0;letter-spacing:-.01em}
 .fg-h2{font-weight:650;font-size:13px;margin:0 0 8px;color:var(--ink-2)}
@@ -59,6 +59,8 @@ select.fg-in{padding-inline-end:28px}
 .fg-checks{list-style:none;margin:0;padding:0;display:grid;gap:7px}
 .fg-checks li{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.45;padding:9px 11px;border:1px solid var(--border);border-radius:11px;background:var(--surface)}
 .fg-checks li>span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}
+.fg-checks li.lv-alert{border-color:#f0c6c2;background:var(--red-soft)}
+.fg-checks li.lv-warn{border-color:#f0d199;background:var(--amber-soft)}
 .fg-kpis{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(0,1fr))}
 .fg-kpis .kpi .val{overflow-wrap:anywhere}
 .fg-kpis .kpi .val.txt{font-size:15px;line-height:1.3;letter-spacing:0}
@@ -89,11 +91,18 @@ select.fg-in{padding-inline-end:28px}
 .fg-rgs{display:grid;gap:8px}
 .fg-rg{border:1px solid var(--border);border-radius:13px;background:var(--surface);min-width:0}
 .fg-rg.open{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-.fg-rg-h{display:grid;grid-template-columns:150px minmax(0,1.3fr) minmax(0,1fr) auto 18px;gap:12px;align-items:center;width:100%;padding:11px 13px;border:0;background:none;font:inherit;color:inherit;text-align:start;cursor:pointer;border-radius:13px}
-.fg-rg-h:hover{background:var(--surface-2)}
-.fg-rg.open .fg-rg-h{border-bottom:1px solid var(--border);border-radius:13px 13px 0 0}
-.fg-chev{width:16px;height:16px;color:var(--ink-faint);transition:transform .15s}
-.fg-rg.open .fg-chev{transform:rotate(180deg)}
+.fg-rg-top{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border)}
+.fg-rg-top .fg-words{flex:1;min-width:0}
+/* Range tabs (Lane FG3): one per range, scrolling sideways on a phone. */
+.fg-rtabs{display:flex;gap:6px;overflow-x:auto;padding:3px 3px 8px;margin:12px -3px 0;scrollbar-width:thin;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.fg-rtab{flex:none;display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13px;font-weight:650;padding:8px 13px;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap}
+.fg-rtab:hover{background:var(--surface-2)}
+.fg-rtab[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 2px var(--accent-soft)}
+.fg-rtab.off{color:var(--ink-faint);border-style:dashed;font-weight:550}
+.fg-rt-off{font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint)}
+.fg-rt-warn{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#d9534a;color:#fff;font-size:11px;font-weight:800;line-height:1;flex:none}
+.fg-rtab.add{border-style:dashed;color:var(--accent-ink);background:none}
+.fg-rtab.add svg{width:14px;height:14px}
 .fg-rg-b{padding:16px;display:grid;gap:16px;grid-template-columns:minmax(0,1fr) 360px;align-items:start}
 .fg-ed{display:grid;gap:16px;min-width:0}
 .fg-sec{display:grid;gap:8px;min-width:0}
@@ -107,6 +116,8 @@ select.fg-in{padding-inline-end:28px}
 .fg-gi-n b{display:block;font-size:13px;font-weight:600;overflow-wrap:anywhere;line-height:1.3}
 .fg-gi-n small{display:block;font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em}
 .fg-gi-n .pill{margin-top:3px}
+.fg-gi.out{border-color:#f0c6c2;background:var(--red-soft)}
+.fg-gi.low{border-color:#f0d199;background:var(--amber-soft)}
 .fg-undo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12.5px;color:var(--ink-soft);padding:8px 11px;border:1px dashed var(--border);border-radius:11px}
 .fg-step{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)}
 .fg-step button{width:30px;height:32px;border:0;background:none;font:inherit;font-size:16px;line-height:1;color:var(--ink-2);cursor:pointer;padding:0}
@@ -154,11 +165,11 @@ select.fg-in{padding-inline-end:28px}
 .fg-txr>span small{display:block;font-weight:400;color:var(--ink-faint);font-size:11px}
 .fg-txr.hd{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);padding-top:0}
 .fg-grp{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:14px 0 2px}
-/* Save bar */
-.fg-bar{position:sticky;bottom:0;z-index:20;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:11px 14px;border:1px solid var(--border);border-radius:13px;background:var(--surface);box-shadow:0 -6px 24px -10px rgba(16,23,41,.25)}
-.fg-bar b{font-size:13px}
-.fg-bar span{font-size:12px;color:var(--ink-soft)}
-.fg-bar .fg-row{gap:8px}
+/* Each part's own Save (Lane FG3) */
+.fg-save{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px;margin-top:14px}
+.fg-save .fg-sub{margin:0}
+.fg-save .fg-row{gap:8px;margin-inline-start:auto}
+.fg-pk-st{font-size:12px;color:var(--ink-soft);min-height:16px}
 /* The shop's box, "02 · Mint outline" -- the values of
    partials/free-gifts/box.blade.php, scoped here so nothing in the console
    restyles it and it restyles nothing in the console. */
@@ -195,12 +206,8 @@ select.fg-in{padding-inline-end:28px}
 }
 @media(max-width:700px){
   .fg-card{padding:14px}
-  .fg-rg-h{grid-template-columns:auto minmax(0,1fr) 18px;gap:6px 10px;padding:11px 12px}
-  .fg-rg-h>.fg-amtl{grid-column:1/3;grid-row:1}
-  .fg-rg-h>.fg-chev{grid-column:3;grid-row:1}
-  .fg-rg-h>.fg-words{grid-column:1/4;grid-row:2}
-  .fg-rg-h>.fg-thumbs{grid-column:1;grid-row:3}
-  .fg-rg-h>.fg-pills{grid-column:2/4;grid-row:3;justify-content:flex-end}
+  .fg-rg-top{padding:10px 12px}
+  .fg-rtab{padding:7px 11px;font-size:12.5px}
   .fg-rg-b{padding:12px}
   .fg-sumr{grid-template-columns:minmax(0,1fr);gap:6px}
   .fg-gi{grid-template-columns:40px minmax(0,1fr) auto;row-gap:8px}
