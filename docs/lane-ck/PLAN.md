@@ -94,3 +94,11 @@ NOT touched: `express-wallets.blade.php`, wallet layout settings, `GatewayCountr
 
 - "Delivery notes (optional)" keeps its word: it is a different field and the brief says not to change other fields.
 - Lane TS's "Overall" scope is the checkout FORM, the cart page and the panel; the checkout's own secure header (`.co-head`) is outside it (header frozen).
+
+## 5. Results (final)
+
+- Payment set (Tamara*, Tabby*, Stripe*, Wallet*, Checkout*, Order*, Payment*): start 1578 tests, 1566 passed, 12 skipped; end the same, twice (after each commit).
+- Full suite: 12691 tests, 12624 passed, 65 skipped, 2 failed -- both fixed and green on rerun: DownloadNavigationGateTest (the 404 guard is now spelled `code === 404`) and CheckoutPlaceOrderOnceTest (query count 38 vs 40 between two Place orders in one test, once; green alone and in both payment-set runs).
+- Built CSS/JS, gzip: kbb-checkout.css +3,281 B, kbb-cart.css +773 B, kbb.css +875 B, app.js +160 B.
+- HTML at defaults, same DB: product/category/brand/cart identical; checkout -127 B (the hidden-until-needed markers).
+- Server ms (median; base code vs this branch, same DB copy, alternated): product 40.0-43.6 vs 42.2-43.9; category 32.8-34.0 vs 33.7-33.8; brand 31.5-35.1 vs 34.0-34.4; cart 27.4-29.6 vs 30.4-30.5; checkout 43.8-45.4 vs 46.8-48.7. Queries identical (16/10/10/9/18). Run-to-run spread on one tree is about 3 ms.
