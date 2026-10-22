@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkout Type Sizes</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="Live preview of text sizes on the cart panel, the cart page and the checkout, desktop and mobile, before the patch is made.">
+<style>
+:root{
+  --bg:#f6f3f1;--panel:#ffffff;--ink:#231d21;--muted:#6f646a;--line:#e6dde0;--accent:#c13e63;--accent-ink:#ffffff;
+  --chip:#f3e9ec;--warn:#9a4b00;--warn-bg:#fff3e2;--frame:#ffffff;--shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px -16px rgba(0,0,0,.25);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#17141a;--panel:#211d24;--ink:#f1ecef;--muted:#a99fa6;--line:#38313b;--accent:#ee7d9c;--accent-ink:#1b1418;
+    --chip:#2d2530;--warn:#ffc27a;--warn-bg:#3a2a16;--frame:#ffffff;--shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#17141a;--panel:#211d24;--ink:#f1ecef;--muted:#a99fa6;--line:#38313b;--accent:#ee7d9c;--accent-ink:#1b1418;
+  --chip:#2d2530;--warn:#ffc27a;--warn-bg:#3a2a16;--frame:#ffffff;--shadow:0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.app{display:grid;grid-template-columns:360px minmax(0,1fr);min-height:100vh}
+.side{background:var(--panel);border-right:1px solid var(--line);padding:16px;position:sticky;top:0;height:100vh;overflow:auto}
+.main{padding:16px;min-width:0;position:relative;overflow:hidden}
+h1{font-size:17px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+.seg{display:flex;background:var(--chip);border-radius:10px;padding:3px;gap:3px;margin:0 0 10px}
+.seg button{flex:1;border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;font-size:13px;padding:8px 6px;border-radius:8px;cursor:pointer;min-height:36px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.lbl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+.ctl{border-top:1px solid var(--line);padding:9px 0}
+.ctl-h{display:flex;align-items:baseline;gap:8px}
+.ctl-h b{font-size:13px;flex:1}
+.now{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.ctl-r{display:flex;align-items:center;gap:8px;margin-top:5px}
+.ctl-r input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
+.ctl-r input[type=number]{width:62px;font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.unit{font-size:12px;color:var(--muted);width:16px}
+.rst{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:6px;font:inherit;font-size:11.5px;padding:4px 7px;cursor:pointer}
+.rst:disabled{opacity:.35;cursor:default}
+.ctl.moved b::after{content:" •";color:var(--accent)}
+.sel{font-size:11px;color:var(--muted);margin-top:4px;display:none;word-break:break-word}
+.showsel .sel{display:block}
+.warn{display:none;background:var(--warn-bg);color:var(--warn);font-size:11.5px;border-radius:6px;padding:5px 7px;margin-top:5px}
+.warn.on{display:block}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-weight:600;font-size:13px;border-radius:8px;padding:8px 12px;cursor:pointer;min-height:36px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chk{display:flex;align-items:center;gap:7px;font-size:12.5px;margin:6px 0;color:var(--ink)}
+textarea.out{width:100%;height:110px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--panel);color:var(--ink);display:none}
+textarea.out.on{display:block}
+.frames{display:grid;gap:16px;align-items:start}
+.frames.all{grid-template-columns:repeat(3,minmax(0,1fr))}
+.fr{min-width:0}
+.fr-h{font-size:12px;font-weight:700;color:var(--muted);margin:0 0 6px;display:flex;gap:8px}
+.fr-box{background:var(--frame);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;position:relative}
+.fr-box iframe{border:0;display:block;transform-origin:0 0;background:#fff}
+.frames.m .fr{max-width:430px}
+/* A frame not on show is moved off screen, never display:none: a hidden
+   iframe has no viewport, so its media queries and sizes would be wrong. */
+.fr.off{position:absolute;left:-20000px;top:0;width:420px;visibility:hidden}
+.frames.m.all .fr{max-width:none}
+.note{font-size:12px;color:var(--muted);margin:12px 0 0}
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .frames.all{grid-template-columns:minmax(0,1fr)}
+  /* on a phone the page stays in view above the controls while a slider moves */
+  .main{order:-1;position:sticky;top:0;z-index:2;max-height:52vh;overflow:auto;background:var(--bg);border-bottom:1px solid var(--line)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <h1>Text sizes: cart and checkout</h1>
+    <p class="sub">The cart panel, the cart page and the checkout, rendered by the shop's own code and stylesheets. Move a control and the page changes at once. Nothing here touches the shop.</p>
+
+    <div class="lbl">Values for</div>
+    <div class="seg" id="devSeg">
+      <button type="button" data-dev="d" aria-pressed="true">Desktop · 1280</button>
+      <button type="button" data-dev="m" aria-pressed="false">Mobile · 390</button>
+    </div>
+    <div class="lbl">Page</div>
+    <div class="seg" id="pageSeg">
+      <button type="button" data-page="panel" aria-pressed="false">Cart panel</button>
+      <button type="button" data-page="cart" aria-pressed="false">Cart page</button>
+      <button type="button" data-page="checkout" aria-pressed="true">Checkout</button>
+      <button type="button" data-page="all" aria-pressed="false">All</button>
+    </div>
+
+    <div class="row">
+      <button type="button" class="btn pri" id="copyBtn">Copy values</button>
+      <button type="button" class="btn" id="resetAll">Reset this device</button>
+    </div>
+    <textarea class="out" id="out" readonly aria-label="Chosen values"></textarea>
+    <label class="chk"><input type="checkbox" id="tapChk"> Show a tapped field (Phone) so its hint text is visible</label>
+    <label class="chk"><input type="checkbox" id="tallChk"> Show the whole page (frames as tall as the page)</label>
+    <label class="chk"><input type="checkbox" id="selChk"> Show which page elements each control moves</label>
+
+    <div id="ctls"></div>
+    <p class="note">"Now" is the size the page uses today, measured from the rendered page. A group can hold more than one size (a heading and its step number, a label resting and lifted); the slider moves all of them together in proportion, and its number is the most common one.</p>
+  </aside>
+  <main class="main">
+    <div class="frames" id="frames"></div>
+    <p class="note" id="foot"></p>
+  </main>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  /* ── THE GROUPS ─────────────────────────────────────────────────────────
+     Each page element belongs to the FIRST group in this list whose selector
+     matches it or one of its ancestors inside the page's scope. Elements in
+     no group still follow "Overall". `x` is left alone entirely: the close
+     and remove crosses, the photo placeholders and payment logos are icons,
+     sized by their own settings, not text.
+     `fn` groups are decided by state, not by selector: a floating label is a
+     PLACEHOLDER while its field is empty and a LABEL once it has lifted. */
+  var LIFTED = '.fld.kbb-fl :is(input,textarea):is(:focus,:not(:placeholder-shown)) ~ label, .fld.kbb-fl select:not(:has(option[value=""]:checked)) ~ label, .fld.kbb-fl [data-ts-tap] ~ label';
+  var GROUPS = [
+    { id: 'x', name: 'Icons (not changed)', hidden: true, sel: '.kc-x, .kc-rm, .co-rm, .kc-th, .cth, .pay-logo, .kc-wt' },
+    { id: 'gifts', name: 'Free gifts box', sel: '.fgb' },
+    { id: 'coupon', name: 'Coupon line', sel: '.coupon, .co-sumcoupon, .co-oscoupon' },
+    { id: 'tabs', name: 'Cart panel tabs', sel: '.kc-tabs .kc-tab, .sumtabs .stab' },
+    { id: 'helper', name: 'Helper and notice text', sel: '.co-ehint, .co-dnote, .co-psec, .co-si-stack, .co-note, .kbb-placing-note, .kbb-card-save, .kbb-delivery-line, .trust, .srow.note, .sumrow.vat, .kc-ship, .backlink, .conti, .paylogos, .optional, .woocommerce-error, .woocommerce-info, .woocommerce-message' },
+    { id: 'label', name: 'Field labels', sel: '.kbb-card-lb, .fld.kbb-fl > label, .form-row > label:not(.checkbox):not(.kbb-acct-opt):not(.kbb-gift-opt)', fn: function (el) { return el.matches('.fld.kbb-fl > label') ? el.matches(LIFTED) : true; }, also: 'a floating label counts here only once lifted (field filled)' },
+    { id: 'ph', name: 'Placeholders (grey text in an empty field)', sel: '.fld.kbb-fl > label', fn: function (el) { return !el.matches(LIFTED); }, also: 'only while resting (field empty), and ::placeholder of every field' },
+    { id: 'input', name: 'Field text (what is typed)', sel: 'input.input-text, select.input-text, textarea' },
+    { id: 'pay', name: 'Payment method names and descriptions', sel: '.wc_payment_methods' },
+    { id: 'delivery', name: 'Delivery options', sel: '.woocommerce-shipping-methods' },
+    { id: 'tick', name: 'Tick-box lines', sel: 'label.kbb-acct-opt, label.kbb-gift-opt, label.checkbox' },
+    { id: 'total', name: 'Summary total', sel: '.sumrow.tot, .srow.tot, .cosr-tot' },
+    { id: 'rows', name: 'Summary rows (subtotal, delivery, discount)', sel: '.sumrow, .srow' },
+    { id: 'names', name: 'Product names in lists', sel: '.kc-nm, .cn, .cinfo .n' },
+    { id: 'meta', name: 'Product meta (brand, variant)', sel: '.cbrand, .cinfo .b, .kc-brand, .cvar, .kc-var, .cinfo .v' },
+    { id: 'prices', name: 'Prices on product lines', sel: '.kc-pr, .cpr, .cprice' },
+    { id: 'linectl', name: 'Quantity and Remove on lines', sel: '.kc-qty, .ci .qty, .crm' },
+    { id: 'buttons', name: 'Buttons', sel: 'button.place, .cobtn, .btn-ghost, .kc-btns a' },
+    { id: 'heading', name: 'Section headings', sel: '.sec > h2, #cartPage aside.sum > h2, #kbbSumRow .cosr-tx, .bhead' },
+    { id: 'title', name: 'Page title', sel: '#cartPage h1, h1.co-h' }
+  ];
+  var SCOPE = { panel: '#cart', cart: '#cartPage', checkout: '#kbbCheckoutForm' };
+  var PAGES = [['panel', 'Cart panel'], ['cart', 'Cart page'], ['checkout', 'Checkout']];
+  var DEV = { d: { w: 1280, h: 900, name: 'Desktop' }, m: { w: 390, h: 844, name: 'Mobile' } };
+
+  /* The one stylesheet put into every snapshot. Every element in scope
+     carries its own measured size (--ts-b) and its group's factor (--ts-k),
+     so a change is one custom property on <html>: no reflow script, no
+     request, and nothing compounds -- a child is its own size times the
+     factors, never its parent's new size times them again. */
+  // transition:none -- the floating labels and buttons animate font-size, so
+  // without it a slider would show a size 160ms late and half-way there.
+  var OVERRIDE = '[data-ts]{font-size:calc(var(--ts-b) * var(--ts-all,1) * var(--ts-k,1)) !important;transition:none !important}\n'
+    + '[data-ts="x"]{font-size:var(--ts-b) !important}\n'
+    + '[data-ts="all"]{--ts-k:1}\n'
+    + GROUPS.filter(function (g) { return g.id !== 'x'; }).map(function (g) { return '[data-ts="' + g.id + '"]{--ts-k:var(--ts-' + g.id + ',1)}'; }).join('\n') + '\n'
+    /* SPACING (the owner, 22 Oct: "+5% grows every font size AND the
+       spacing"). Each box keeps its own measured px and is multiplied by
+       --ts-sp: padding and margin per side, gaps, and the heights and the
+       small widths (controls, steppers, thumbnails, 120px and under) that
+       the shop's CSS sets in px. Auto margins, percentages and every wider
+       width (columns, containers, the panel) are never touched, so nothing
+       can grow wider than its column. Line heights set in px follow the TEXT
+       factor, as a unitless line height would. */
+    + ['pt:padding-top', 'pr:padding-right', 'pb:padding-bottom', 'pl:padding-left', 'mt:margin-top', 'mr:margin-right', 'mb:margin-bottom', 'ml:margin-left',
+       'rg:row-gap', 'cg:column-gap', 'h:height', 'mh:min-height', 'xh:max-height', 'w:width', 'mw:min-width', 'xw:max-width'].map(function (p) {
+        p = p.split(':'); return '[data-ts-' + p[0] + ']{' + p[1] + ':calc(var(--ts-' + p[0] + ') * var(--ts-sp,1)) !important}';
+      }).join('\n') + '\n'
+    + '[data-ts-lh]{line-height:calc(var(--ts-lh) * var(--ts-all,1) * var(--ts-k,1)) !important}\n'
+    + '[data-ts-phb]::placeholder{font-size:calc(var(--ts-phb) * var(--ts-all,1) * var(--ts-ph,1)) !important}\n'
+    /* "a tapped field": the checkout's own focused look, restated, because a
+       static page cannot hold :focus. Same numbers as kbb-checkout.css. */
+    + '.kbb-checkout .fld.kbb-fl [data-ts-tap]{border-color:var(--pink) !important;box-shadow:0 0 0 3px var(--pink-soft) !important}\n'
+    + '.kbb-checkout .fld.kbb-fl [data-ts-tap] ~ label{top:14px !important;transform:translateY(calc(-8px - var(--fld-gap,3px))) !important;letter-spacing:.04em !important;color:var(--pink-deep) !important}\n'
+    + '.kbb-checkout .fld.kbb-fl [data-ts-tap]::placeholder{color:var(--cop-phc,#9a9097) !important}\n';
+
+  var KEY = 'kbb-type-preview-v2';
+  var state = { dev: 'd', page: 'checkout', tall: false, tap: false, v: { d: {}, m: {} } };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved && saved.v) { state.v.d = saved.v.d || {}; state.v.m = saved.v.m || {}; state.dev = saved.dev === 'm' ? 'm' : 'd'; state.page = ['panel', 'cart', 'checkout', 'all'].indexOf(saved.page) >= 0 ? saved.page : 'checkout'; } } catch (e) { /* private window: start fresh */ }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify({ v: state.v, dev: state.dev, page: state.page })); } catch (e) { /* not stored, still works */ } }
+
+  var frames = {};        // 'checkout-d' -> {iframe, doc, box}
+  var measured = { d: {}, m: {} }; // dev -> group -> {px, min, max}
+  var loaded = 0, total = 6;
+
+  function pxNum(s) { return Math.round(parseFloat(s) * 100) / 100; }
+
+  function groupOf(el, roots) {
+    for (var i = 0; i < GROUPS.length; i++) {
+      var g = GROUPS[i];
+      var hit = el.closest(g.sel);
+      if (!hit || !roots.some(function (r) { return r.contains(hit); })) continue;
+      if (g.fn && hit === el && !g.fn(el)) continue;
+      if (g.fn && hit !== el && !g.fn(hit)) continue;
+      return g.id;
+    }
+    return 'all';
+  }
+
+  /* Once per frame, at load: tag every element in scope with its group and
+     its own computed size. Reading computed styles is fine here -- this is a
+     preview tool, never the shop. */
+  function prepare(key) {
+    var f = frames[key], doc = f.doc, page = key.split('-')[0];
+    var roots = Array.prototype.slice.call(doc.querySelectorAll(SCOPE[page]));
+    var win = doc.defaultView;
+    var tagged = [];
+    roots.forEach(function (root) {
+      [root].concat(Array.prototype.slice.call(root.querySelectorAll('*'))).forEach(function (el) {
+        var cs = win.getComputedStyle(el);
+        tagged.push([el, groupOf(el, roots), cs.fontSize, spacing(el, cs)]);
+        if (/^(INPUT|TEXTAREA)$/.test(el.tagName) && el.hasAttribute('placeholder')) {
+          el.style.setProperty('--ts-phb', win.getComputedStyle(el, '::placeholder').fontSize);
+          el.setAttribute('data-ts-phb', '');
+        }
+      });
+    });
+    // write after reading, so no read sees a half-tagged page
+    tagged.forEach(function (t) {
+      t[0].style.setProperty('--ts-b', t[2]); t[0].setAttribute('data-ts', t[1]);
+      Object.keys(t[3]).forEach(function (k) { t[0].style.setProperty('--ts-' + k, t[3][k] + 'px'); t[0].setAttribute('data-ts-' + k, ''); });
+    });
+    var st = doc.createElement('style'); st.id = 'ts-override'; st.textContent = OVERRIDE; doc.head.appendChild(st);
+    // the measured "now" per group: the most common size among elements that print text
+    var dev = key.split('-')[1];
+    tagged.forEach(function (t) {
+      var el = t[0];
+      var own = /^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName) || Array.prototype.some.call(el.childNodes, function (n) { return n.nodeType === 3 && n.textContent.trim(); });
+      if (!own || !el.getClientRects().length) return;
+      var m = measured[dev][t[1]] || (measured[dev][t[1]] = { counts: {}, pages: {} });
+      var px = pxNum(t[2]);
+      m.counts[px] = (m.counts[px] || 0) + 1; m.pages[page] = true;
+    });
+    // placeholders proper
+    Array.prototype.forEach.call(doc.querySelectorAll('[data-ts-phb]'), function (el) {
+      var m = measured[dev].ph || (measured[dev].ph = { counts: {}, pages: {} });
+      var px = pxNum(el.style.getPropertyValue('--ts-phb'));
+      m.counts[px] = (m.counts[px] || 0) + 0.25; m.pages[page] = true;
+    });
+    f.lifted = doc.querySelector('.fld.kbb-fl > label[data-ts="label"]');
+  }
+
+  /* The px lengths of one box that the spacing factor may scale. Typed OM
+     (computedStyleMap) is used because it keeps `auto` and percentages as
+     they were written, where getComputedStyle hands back the used px -- and
+     an auto margin scaled as if it were px would push a row past its edge.
+     Without Typed OM only padding, gaps and px line heights are scaled. */
+  var SIDES = { pt: 'padding-top', pr: 'padding-right', pb: 'padding-bottom', pl: 'padding-left', rg: 'row-gap', cg: 'column-gap' };
+  var OM = { mt: 'margin-top', mr: 'margin-right', mb: 'margin-bottom', ml: 'margin-left', h: 'height', mh: 'min-height', xh: 'max-height', w: 'width', mw: 'min-width', xw: 'max-width' };
+  function spacing(el, cs) {
+    var out = {}, map = null;
+    try { map = el.computedStyleMap ? el.computedStyleMap() : null; } catch (e) { map = null; }
+    var px = function (prop) {
+      if (map) { try { var v = map.get(prop); return v && v.unit === 'px' ? v.value : null; } catch (e) { return null; } }
+      var s = cs.getPropertyValue(prop); return /px$/.test(s) ? parseFloat(s) : null;
+    };
+    Object.keys(SIDES).forEach(function (k) { var v = px(SIDES[k]); if (v) out[k] = v; });
+    if (map) Object.keys(OM).forEach(function (k) {
+      var v = px(OM[k]); if (!v) return;
+      if ((k === 'w' || k === 'mw' || k === 'xw') && v > 120) return; // layout widths never scale
+      if ((k === 'h' || k === 'mh' || k === 'xh') && v > 400) return;  // nor whole panels' heights
+      out[k] = v;
+    });
+    var lh = px('line-height'); if (lh) out.lh = lh;
+    return out;
+  }
+
+  function summarise() {
+    ['d', 'm'].forEach(function (dev) {
+      Object.keys(measured[dev]).forEach(function (g) {
+        var m = measured[dev][g], best = null, sizes = Object.keys(m.counts).map(Number);
+        sizes.forEach(function (s) { if (best === null || m.counts[s] > m.counts[best] || (m.counts[s] === m.counts[best] && s > best)) best = s; });
+        m.px = best; m.min = Math.min.apply(null, sizes); m.max = Math.max.apply(null, sizes);
+      });
+    });
+  }
+
+  function factorOf(dev, g) {
+    var v = state.v[dev][g], m = measured[dev][g];
+    if (v == null || !m || !m.px) return 1;
+    return v / m.px;
+  }
+
+  function apply(dev) {
+    ['panel', 'cart', 'checkout'].forEach(function (p) {
+      var f = frames[p + '-' + dev]; if (!f || !f.doc) return;
+      var s = f.doc.documentElement.style;
+      s.setProperty('--ts-all', String(1 + (state.v[dev].text || 0) / 100));
+      s.setProperty('--ts-sp', String(1 + (state.v[dev].space || 0) / 100));
+      GROUPS.forEach(function (g) { if (g.id !== 'x') s.setProperty('--ts-' + g.id, String(factorOf(dev, g.id))); });
+      if (state.tall) fit(f);
+    });
+  }
+
+  function setTap(on) {
+    ['d', 'm'].forEach(function (dev) {
+      var f = frames['checkout-' + dev]; if (!f || !f.doc) return;
+      var inp = f.doc.querySelector('#billing_phone'); if (!inp) return;
+      var lab = inp.parentNode.querySelector(':scope > label');
+      if (on) {
+        inp.setAttribute('data-ts-tap', '');
+        if (lab && f.lifted) { lab.dataset.tsWas = lab.style.getPropertyValue('--ts-b'); lab.style.setProperty('--ts-b', f.lifted.style.getPropertyValue('--ts-b')); lab.setAttribute('data-ts', 'label'); }
+      } else {
+        inp.removeAttribute('data-ts-tap');
+        if (lab && lab.dataset.tsWas) { lab.style.setProperty('--ts-b', lab.dataset.tsWas); lab.setAttribute('data-ts', 'ph'); delete lab.dataset.tsWas; }
+      }
+    });
+  }
+
+  /* ── controls ── */
+  var ctlBox = document.getElementById('ctls');
+  function ctlRow(id, name, now, min, max, step, unit, selText) {
+    var d = document.createElement('div'); d.className = 'ctl'; d.dataset.g = id;
+    d.innerHTML = '<div class="ctl-h"><b></b><span class="now"></span></div>'
+      + '<div class="ctl-r"><input type="range"><input type="number"><span class="unit"></span><button type="button" class="rst">Reset</button></div>'
+      + '<div class="warn"></div><div class="sel"></div>';
+    d.querySelector('b').textContent = name;
+    d.querySelector('.now').textContent = now;
+    d.querySelector('.unit').textContent = unit;
+    d.querySelector('.sel').textContent = selText || '';
+    [d.querySelector('input[type=range]'), d.querySelector('input[type=number]')].forEach(function (i) { i.min = min; i.max = max; i.step = step; i.setAttribute('aria-label', name); });
+    ctlBox.appendChild(d);
+    return d;
+  }
+
+  function build() {
+    ctlBox.innerHTML = '';
+    var dev = state.dev;
+    var hd = document.createElement('div'); hd.className = 'lbl'; hd.textContent = 'Overall · all three pages'; ctlBox.appendChild(hd);
+    wire(ctlRow('text', 'Text', 'now +0%', -10, 25, 1, '%', 'Every font size on the three pages (not the site header or footer), in proportion; px line heights with it. Icons and crosses keep their glyph size.'), 0);
+    var lk = document.createElement('label'); lk.className = 'chk lock';
+    lk.innerHTML = '<input type="checkbox" id="lockChk"> Keep Text and Spacing equal';
+    ctlBox.appendChild(lk);
+    var lc = lk.querySelector('input'); lc.checked = !state.v[dev].unlock;
+    lc.addEventListener('change', function () {
+      if (lc.checked) { delete state.v[dev].unlock; if ((state.v[dev].space || 0) !== (state.v[dev].text || 0)) setOverall('space', state.v[dev].text || 0); }
+      else state.v[dev].unlock = true;
+      save();
+    });
+    wire(ctlRow('space', 'Spacing', 'now +0%', -10, 25, 1, '%', 'Padding, margins, gaps, field and button heights, steppers and thumbnails, by the same share. Column and container widths never change, so nothing gets wider than the screen.'), 0);
+    var hg = document.createElement('div'); hg.className = 'lbl'; hg.textContent = 'Each group · on top of Overall'; ctlBox.appendChild(hg);
+    GROUPS.forEach(function (g) {
+      if (g.hidden) return;
+      var m = measured[dev][g.id];
+      var selText = 'Selector: ' + g.sel + (g.also ? '  + ' + g.also : '');
+      if (!m || !m.px) { var e = ctlRow(g.id, g.name, 'not on these pages', 0, 0, 1, 'px', selText); e.querySelectorAll('input,button').forEach(function (i) { i.disabled = true; }); return; }
+      var lo = Math.max(7, Math.floor(m.px * 0.7 * 2) / 2), hi = Math.ceil(m.px * 1.6 * 2) / 2;
+      var range = m.min !== m.max ? ' (' + m.min + '–' + m.max + 'px)' : '';
+      var r = ctlRow(g.id, g.name, 'now ' + m.px + 'px' + range, lo, hi, 0.5, 'px', selText + '  · on: ' + Object.keys(m.pages).join(', '));
+      wire(r, m.px);
+    });
+    document.querySelector('.side').classList.toggle('showsel', document.getElementById('selChk').checked);
+  }
+
+  function wire(row, def) {
+    var g = row.dataset.g, dev = state.dev;
+    var rg = row.querySelector('input[type=range]'), nb = row.querySelector('input[type=number]'), rs = row.querySelector('.rst'), warn = row.querySelector('.warn');
+    function show() {
+      var v = state.v[dev][g]; if (v == null) v = def;
+      rg.value = v; nb.value = v;
+      rs.disabled = state.v[dev][g] == null;
+      row.classList.toggle('moved', state.v[dev][g] != null);
+      if (g === 'text' || g === 'space') nb.value = v, row.querySelector('b').textContent = (g === 'text' ? 'Text ' : 'Spacing ') + (v > 0 ? '+' : '') + v + '%';
+      if (g === 'input' && dev === 'm') {
+        var eff = v * (1 + (state.v.m.text || 0) / 100);
+        warn.textContent = 'Below 16px, iPhone Safari zooms the checkout in when a field is tapped. The shop keeps a 16px floor here today (Appearance → Checkout page → Mobile · Text sizes).';
+        warn.classList.toggle('on', eff < 16);
+      }
+    }
+    function set(v) {
+      v = Number(v); if (!isFinite(v)) return;
+      v = Math.min(Number(rg.max), Math.max(Number(rg.min), v));
+      if (Math.abs(v - def) < 0.001) delete state.v[dev][g]; else state.v[dev][g] = v;
+      if ((g === 'text' || g === 'space') && !state.v[dev].unlock) setOverall(g === 'text' ? 'space' : 'text', v);
+      show(); apply(dev); save(); refreshWarn();
+    }
+    rg.addEventListener('input', function () { set(rg.value); });
+    nb.addEventListener('change', function () { set(nb.value); });
+    rs.addEventListener('click', function () {
+      delete state.v[dev][g];
+      if ((g === 'text' || g === 'space') && !state.v[dev].unlock) setOverall(g === 'text' ? 'space' : 'text', 0);
+      show(); apply(dev); save(); refreshWarn();
+    });
+    row._show = show;
+    show();
+  }
+  function setOverall(g, v) {
+    if (v) state.v[state.dev][g] = v; else delete state.v[state.dev][g];
+    var r = ctlBox.querySelector('[data-g="' + g + '"]'); if (r && r._show) r._show();
+  }
+  function refreshWarn() { var r = ctlBox.querySelector('[data-g="input"]'); if (r && r._show) r._show(); }
+
+  /* ── frames ── */
+  var frameBox = document.getElementById('frames');
+  function fit(f) {
+    var box = f.box, w = DEV[f.dev].w, avail = box.clientWidth || 1, s = avail / w;
+    var h = DEV[f.dev].h;
+    if (state.tall && f.doc) h = Math.max(h, f.doc.documentElement.scrollHeight);
+    f.iframe.style.width = w + 'px'; f.iframe.style.height = h + 'px';
+    f.iframe.style.transform = 'scale(' + s + ')';
+    box.style.height = Math.ceil(h * s) + 'px';
+  }
+  function layout() {
+    var show = state.page === 'all' ? ['panel', 'cart', 'checkout'] : [state.page];
+    frameBox.className = 'frames ' + state.dev + (state.page === 'all' ? ' all' : '');
+    Object.keys(frames).forEach(function (k) {
+      var f = frames[k], on = f.dev === state.dev && show.indexOf(f.page) >= 0;
+      f.wrap.classList.toggle('off', !on);
+      f.wrap.style.order = String(show.indexOf(f.page));
+    });
+    Object.keys(frames).forEach(function (k) { fit(frames[k]); });
+  }
+  function makeFrames() {
+    ['d', 'm'].forEach(function (dev) {
+      PAGES.forEach(function (p) {
+        var key = p[0] + '-' + dev;
+        var wrap = document.createElement('div'); wrap.className = 'fr';
+        wrap.innerHTML = '<div class="fr-h"></div><div class="fr-box"><iframe loading="eager"></iframe></div>';
+        wrap.querySelector('.fr-h').textContent = p[1] + ' · ' + DEV[dev].name + ' ' + DEV[dev].w + 'px';
+        var ifr = wrap.querySelector('iframe');
+        ifr.title = p[1] + ' ' + DEV[dev].name;
+        ifr.width = DEV[dev].w; ifr.height = DEV[dev].h;
+        var f = frames[key] = { iframe: ifr, box: wrap.querySelector('.fr-box'), wrap: wrap, dev: dev, page: p[0], doc: null };
+        ifr.addEventListener('load', function () {
+          // an iframe fires load for about:blank too; count only the snapshot
+          if (f.doc || !ifr.contentDocument || ifr.contentDocument.URL.indexOf('snap/') < 0) return;
+          f.doc = ifr.contentDocument;
+          try { prepare(key); } catch (e) { console.warn('prepare', key, e); }
+          loaded++;
+          if (loaded === total) ready();
+        });
+        frameBox.appendChild(wrap);
+        ifr.src = 'snap/' + key + '.html';
+      });
+    });
+  }
+  function ready() {
+    summarise();
+    build();
+    setTap(state.tap);
+    apply('d'); apply('m');
+    layout();
+    document.getElementById('foot').textContent = 'Pages rendered by the shop’s own code and the same stylesheets the live shop serves (identical build files), with a three-item basket on a test copy of the shop; scripts removed. The cart panel carries the live shop’s own panel settings, read from kbeautybliss.com. The live cart page and checkout refuse this connection, so those two show the shop’s default settings: if a size there was changed in the admin, the live page differs by that much. Card number fields are drawn by the card processor and are not part of these pages.';
+    document.documentElement.setAttribute('data-ready', '1');
+  }
+
+  function segs() {
+    document.querySelectorAll('#devSeg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.dev === state.dev)); });
+    document.querySelectorAll('#pageSeg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.page === state.page)); });
+  }
+  document.getElementById('devSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; state.dev = b.dataset.dev; segs(); save(); if (loaded === total) { build(); layout(); } });
+  document.getElementById('pageSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; state.page = b.dataset.page; segs(); save(); layout(); });
+  document.getElementById('tallChk').addEventListener('change', function (e) { state.tall = e.target.checked; layout(); });
+  document.getElementById('tapChk').addEventListener('change', function (e) { state.tap = e.target.checked; setTap(state.tap); });
+  document.getElementById('selChk').addEventListener('change', function (e) { document.querySelector('.side').classList.toggle('showsel', e.target.checked); });
+  document.getElementById('resetAll').addEventListener('click', function () { state.v[state.dev] = {}; save(); build(); apply(state.dev); });
+
+  function values() {
+    var out = { v: 2, note: 'text/space = overall change in % (0 = as today); a group px = the size chosen BEFORE the overall change, was = the size the page uses today' };
+    ['d', 'm'].forEach(function (dev) {
+      var o = { text: state.v[dev].text || 0, space: state.v[dev].space || 0, linked: !state.v[dev].unlock }, any = false;
+      GROUPS.forEach(function (g) {
+        var v = state.v[dev][g.id], m = measured[dev][g.id];
+        if (v == null || !m) return;
+        o[g.id] = { was: m.px, px: v, factor: Math.round(v / m.px * 1000) / 1000 }; any = true;
+      });
+      out[dev === 'd' ? 'desktop' : 'mobile'] = o;
+    });
+    return JSON.stringify(out);
+  }
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    var t = document.getElementById('out'); t.value = values(); t.classList.add('on');
+    var done = function () { var b = document.getElementById('copyBtn'); b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy values'; }, 1400); };
+    try { navigator.clipboard.writeText(t.value).then(done, function () { t.select(); }); } catch (e) { t.select(); }
+  });
+  window.addEventListener('resize', layout);
+  window.__tsValues = values; // for the checking harness
+
+  segs();
+  makeFrames();
+  layout();
+})();
+</script>
+</body>
+</html>
