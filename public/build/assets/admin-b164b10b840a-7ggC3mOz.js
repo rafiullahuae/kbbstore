@@ -68,6 +68,60 @@
   function can() { return !!(st.data && st.data.can_manage); }
   function low() { return (st.data && st.data.low_stock) || 20; }
 
+  /* ------------------------------------------- gift types and criteria (FG4)
+     Internal only. [key, box title, short, one, many, icon]. The same table,
+     counts and words as FreeGifts::KIND_NAMES / tally() / criteriaGaps() /
+     criteriaWording(); FreeGiftsKindsTest runs these in node against PHP. */
+  var KINDS = [
+    ['mask', 'Face masks', 'Masks', 'face mask', 'face masks', '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c-4.4 0-7 2.6-7 7.2 0 5 3.2 10.8 7 10.8s7-5.8 7-10.8C19 5.6 16.4 3 12 3z"/><path d="M8.5 10.5h2M13.5 10.5h2M10 16c1.2.8 2.8.8 4 0"/></svg>'],
+    ['mini', 'Mini products', 'Minis', 'mini product', 'mini products', '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4v3h-4zM9 6h6l1 3v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9z"/><path d="M8 13h8"/></svg>'],
+    ['full', 'Full size products', 'Full size', 'full size product', 'full size products', '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2h6v3H9zM7 5h10l1 3v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8z"/><path d="M6 11h12M6 17h12"/></svg>']
+  ];
+  var KIND_KEYS = ['mask', 'mini', 'full'];
+  var MAX_NEED = 50;
+  function kindRow(k) { return KINDS.filter(function (r) { return r[0] === k; })[0] || null; }
+  function kindOf(v) { return KIND_KEYS.indexOf(v) >= 0 ? v : null; }
+  /* A range's criteria, or null when none is set (all 0 counts nothing). */
+  function needsOf(x) {
+    var n = x && x.needs;
+    if (!n) return null;
+    var total = KIND_KEYS.reduce(function (a, k) { return a + (Number(n[k]) || 0); }, 0);
+    return total > 0 ? n : null;
+  }
+  /* UNITS per type: 2x of one mask is 2 masks. */
+  function tally(gifts) {
+    var out = { mask: 0, mini: 0, full: 0, none: 0 };
+    (gifts || []).forEach(function (g) { out[kindOf(g.kind) || 'none'] += Math.max(0, Number(g.quantity) || 0); });
+    return out;
+  }
+  function criteriaGaps(needs, have) {
+    if (!needs) return [];
+    var out = [];
+    KINDS.forEach(function (k) {
+      var need = Number(needs[k[0]]) || 0, got = have[k[0]] || 0;
+      if (got < need) out.push({ kind: k[0], have: got, need: need, text: k[1] + ': ' + got + ' of ' + need + ' chosen — add ' + (need - got) + ' more.' });
+      else if (got > need) out.push({ kind: k[0], have: got, need: need, text: k[1] + ': ' + got + ' chosen, criteria says ' + need + '.' });
+    });
+    if (have.none > 0) out.push({ kind: 'none', have: have.none, need: 0, text: (have.none === 1 ? '1 gift is' : have.none + ' gifts are') + ' untagged, so not counted — set its type.' });
+    return out;
+  }
+  var WORDS = {
+    mask: ['Mask', 'Masks', ['قناع واحد', 'قناعان', ':n أقنعة', ':n قناعاً']],
+    mini: ['Mini Product', 'Mini Products', ['منتج صغير واحد', 'منتجان صغيران', ':n منتجات صغيرة', ':n منتجاً صغيراً']],
+    full: ['Full Size Product', 'Full Size Products', ['منتج بالحجم الكامل', 'منتجان بالحجم الكامل', ':n منتجات بالحجم الكامل', ':n منتجاً بالحجم الكامل']]
+  };
+  function wordingFor(needs) {
+    var en = [], ar = [];
+    KIND_KEYS.forEach(function (k) {
+      var n = Math.max(0, Math.floor(Number(needs && needs[k]) || 0)), w = WORDS[k];
+      if (!n) return;
+      en.push(n + ' ' + (n === 1 ? w[0] : w[1]));
+      ar.push(w[2][n === 1 ? 0 : n === 2 ? 1 : n <= 10 ? 2 : 3].split(':n').join(String(n)));
+    });
+    return { en: en.join(' + '), ar: ar.join(' + ') };
+  }
+  function kindPill(k) { var r = kindRow(k); return r ? el('span', { class: 'fg-kp k-' + k, title: 'Gift type (internal only)' }, [el('span', { class: 'fg-kd k-' + k }), r[2]]) : null; }
+
   async function api(method, path, body, signal) {
     var opts = { method: method, headers: { Accept: 'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN') }, credentials: 'same-origin' };
     if (signal) opts.signal = signal;
@@ -129,14 +183,14 @@
   /* ------------------------------------------------------------ the model */
   function ranges() { return st.data ? st.data.ranges.slice().sort(function (a, b) { return a.min - b.min || a.id - b.id; }) : []; }
   function rangeById(id) { return st.data ? st.data.ranges.filter(function (r) { return r.id === id; })[0] || null : null; }
-  function origOf(r) { return { min: r.min, max: r.max, label_en: r.label_en, label_ar: r.label_ar, enabled: r.enabled, starts_on: r.starts_on, ends_on: r.ends_on, gifts: clone(r.gifts) }; }
+  function origOf(r) { return { min: r.min, max: r.max, label_en: r.label_en, label_ar: r.label_ar, enabled: r.enabled, starts_on: r.starts_on, ends_on: r.ends_on, needs: r.needs ? clone(r.needs) : null, gifts: clone(r.gifts) }; }
   /* What a range reads as now: its draft when touched, otherwise the server's. */
   function view(r) { return st.drafts[r.id] || origOf(r); }
   function draft(id) {
     if (!st.drafts[id]) { var r = rangeById(id); if (r) st.drafts[id] = origOf(r); }
     return st.drafts[id];
   }
-  function norm(x) { return JSON.stringify([x.min, x.max, (x.label_en || '').trim(), (x.label_ar || '').trim(), !!x.enabled, x.starts_on || null, x.ends_on || null, x.gifts.map(function (g) { return [g.product_id, g.quantity]; })]); }
+  function norm(x) { return JSON.stringify([x.min, x.max, (x.label_en || '').trim(), (x.label_ar || '').trim(), !!x.enabled, x.starts_on || null, x.ends_on || null, x.gifts.map(function (g) { return [g.product_id, g.quantity, kindOf(g.kind)]; }), needsOf(x) ? KIND_KEYS.map(function (k) { return Number(x.needs[k]) || 0; }) : null]); }
   function dirtyRanges() {
     return Object.keys(st.drafts).filter(function (k) {
       if (k === 'new') return true;
@@ -172,7 +226,8 @@
      the shop cannot give now; dimmed when off; a dot when unsaved. */
   function tabFlags(id, x) {
     var out = x.gifts.filter(function (g) { return stockOf(g.product, g.quantity).level === 'out'; }).length;
-    var warn = !x.gifts.length ? 'No gifts yet: this range gives nothing.' : out ? plural(out, 'gift is', 'gifts are') + ' missing or out of stock — skipped until restocked.' : '';
+    var crit = criteriaGaps(needsOf(x), tally(x.gifts)).map(function (c) { return c.text; }).join(' ');
+    var warn = [!x.gifts.length ? 'No gifts yet: this range gives nothing.' : out ? plural(out, 'gift is', 'gifts are') + ' missing or out of stock — skipped until restocked.' : '', crit].filter(Boolean).join(' ');
     return { warn: warn, off: !x.enabled, dirty: id === 'new' || isDirty(id) };
   }
 
@@ -232,6 +287,7 @@
     if (!x.gifts.length) p.push(pill('red', 'No gifts'));
     if (stock.indexOf('out') >= 0) p.push(pill('red', 'Out of stock'));
     else if (stock.indexOf('low') >= 0) p.push(pill('amber', 'Low stock'));
+    if (needsOf(x)) { var cg = criteriaGaps(needsOf(x), tally(x.gifts)).length; p.push(cg ? pill('amber', 'Criteria: ' + plural(cg, 'thing', 'things') + ' to check') : pill('green', 'Matches criteria')); }
     if (problems(r.id, x).some(function (m) { return m.level === 'err'; })) p.push(pill('red', 'Needs a fix'));
     if (r.id === 'new' || isDirty(r.id)) p.push(pill('blue', 'Unsaved'));
     return p;
@@ -359,7 +415,7 @@
 
   /* ------------------------------------------------------- the own Saves */
   function rangeBody(x) {
-    return { min: x.min, max: x.max, label_en: (x.label_en || '').trim(), label_ar: (x.label_ar || '').trim(), enabled: !!x.enabled, starts_on: x.starts_on || null, ends_on: x.ends_on || null, gifts: x.gifts.map(function (g) { return { product_id: g.product_id, quantity: g.quantity }; }) };
+    return { min: x.min, max: x.max, label_en: (x.label_en || '').trim(), label_ar: (x.label_ar || '').trim(), enabled: !!x.enabled, starts_on: x.starts_on || null, ends_on: x.ends_on || null, gifts: x.gifts.map(function (g) { return { product_id: g.product_id, quantity: g.quantity, kind: kindOf(g.kind) }; }), needs: needsOf(x) ? { mask: Number(x.needs.mask) || 0, mini: Number(x.needs.mini) || 0, full: Number(x.needs.full) || 0 } : null };
   }
   function settingsBody(c) {
     var t = {};
@@ -564,7 +620,7 @@
   function addRange(from) {
     if (!st.drafts['new']) {
       var base = from ? clone(from) : { label_en: '', label_ar: '', gifts: [], starts_on: null, ends_on: null };
-      st.drafts['new'] = { min: nextFree(), max: null, label_en: base.label_en, label_ar: base.label_ar, enabled: false, starts_on: base.starts_on, ends_on: base.ends_on, gifts: base.gifts };
+      st.drafts['new'] = { min: nextFree(), max: null, label_en: base.label_en, label_ar: base.label_ar, enabled: false, starts_on: base.starts_on, ends_on: base.ends_on, needs: base.needs ? clone(base.needs) : null, gifts: base.gifts };
     }
     selectRange('new');
     render();
@@ -631,9 +687,11 @@
       i.addEventListener('input', function () { x[prop] = i.value === '' ? (prop === 'max' ? null : NaN) : Math.floor(Number(i.value)); changed(); });
       return i;
     }
+    var words = {};
     function txt(prop, label, rtl) {
       var i = el('input', { class: 'fg-in', type: 'text', value: x[prop] || '', maxlength: 160, dir: rtl ? 'rtl' : null, lang: rtl ? 'ar' : null, disabled: ro, 'data-fk': prop + '-' + id });
       i.addEventListener('input', function () { x[prop] = i.value; changed(); });
+      words[prop] = i;
       return field(label, i);
     }
     function date(prop, label) {
@@ -657,15 +715,9 @@
     paintMsgs();
     live.push({ node: msgs, fn: paintMsgs });
 
-    var units = x.gifts.reduce(function (a, g) { return a + g.quantity; }, 0);
-    var giftList = el('div', { class: 'fg-gl' });
-    var undo = st.removed[key];
-    x.gifts.forEach(function (g, gi) {
-      if (undo && undo.at === gi) giftList.appendChild(undoRow(key, x));
-      giftList.appendChild(giftRow(x, g, gi, ro));
-    });
-    if (undo && undo.at >= x.gifts.length) giftList.appendChild(undoRow(key, x));
-    if (!x.gifts.length && !undo) giftList.appendChild(el('div', { class: 'fg-empty', text: ro ? 'No gifts.' : 'No gifts yet. "Add gift" picks them from the catalogue.' }));
+    var wordsRow = el('div', { class: 'fg-g2' }, [txt('label_en', 'Wording (English)'), txt('label_ar', 'Wording (Arabic)', true)]);
+    var crit = criteriaEl(id, x, ro, words, changed);
+    var giftList = giftBoxes(id, key, x, ro);
 
     var foot = el('div', { class: 'fg-foot' });
     if (!ro) {
@@ -709,18 +761,146 @@
           el('div', { class: 'fg-sec' }, [el('span', { class: 'fg-h2', style: 'margin:0', id: 'fg-amt-' + id, text: 'Basket amount' }), el('div', { class: 'fg-amt', role: 'group', 'aria-labelledby': 'fg-amt-' + id }, [el('b', { text: 'AED' }), num('min', 'From (AED)'), el('b', { text: '–' }), maxIn, el('label', { class: 'fg-chk' }, [above, 'and above'])])]),
           sw(x.enabled, x.enabled ? 'On' : 'Off', function () { x.enabled = !x.enabled; this.setAttribute('aria-checked', String(x.enabled)); this.lastChild.textContent = x.enabled ? 'On' : 'Off'; changed(); }, ro)
         ]),
+        crit,
         msgs,
-        el('div', { class: 'fg-g2' }, [txt('label_en', 'Wording (English)'), txt('label_ar', 'Wording (Arabic)', true)]),
+        wordsRow,
         el('div', { class: 'fg-g2' }, [date('starts_on', 'Starts (optional)'), date('ends_on', 'Ends (optional)')]),
         el('div', { class: 'fg-sec' }, [
-          el('div', { class: 'fg-between' }, [el('span', { class: 'fg-h2', style: 'margin:0', text: 'Gifts · ' + plural(x.gifts.length, 'product', 'products') + ', ' + plural(units, 'unit', 'units') }),
-            ro ? null : el('button', { type: 'button', class: 'btn ghost sm', 'data-fk': 'add-' + id, onclick: function () { openPicker(id); } }, [el('span', { html: ICONS.plus, style: 'display:inline-flex;width:15px;height:15px' }), 'Add gift'])]),
+          el('div', { class: 'fg-between' }, [el('span', { class: 'fg-h2', style: 'margin:0', text: 'Gifts' }),
+            ro ? null : el('button', { type: 'button', class: 'btn ghost sm', 'data-fk': 'add-' + id, title: 'Each pick goes to its own type box, or you choose one', onclick: function () { openPicker(id, null); } }, [el('span', { html: ICONS.plus, style: 'display:inline-flex;width:15px;height:15px' }), 'Add gift'])]),
           giftList
         ]),
         foot
       ]),
       previewPair(function () { return x.gifts; }, function (lang) { return lang === 'ar' ? (x.label_ar || x.label_en) : x.label_en; })
     ]);
+  }
+  /* The criteria (Lane FG4): three steppers, their total, and "Use for
+     wording", which fills EN | AR from them on a click and never by itself. */
+  function criteriaEl(id, x, ro, words, changed) {
+    var sum = el('span', { class: 'fg-crit-sum', 'aria-live': 'polite' });
+    var use = el('button', { type: 'button', class: 'btn ghost sm', 'data-fk': 'usewords-' + id, title: 'Fill the English and Arabic wording from these counts', disabled: true, onclick: function () {
+      var w = wordingFor(x.needs);
+      if (!w.en) return;
+      x.label_en = w.en; x.label_ar = w.ar;
+      if (words.label_en) words.label_en.value = w.en;
+      if (words.label_ar) words.label_ar.value = w.ar;
+      changed();
+      say('Wording set to "' + w.en + '". "Save range" keeps it.');
+    } }, ['Use for wording']);
+    function paintSum() {
+      var n = needsOf(x), total = n ? KIND_KEYS.reduce(function (a, k) { return a + (Number(n[k]) || 0); }, 0) : 0;
+      sum.textContent = '= ' + plural(total, 'gift', 'gifts');
+      var w = n ? wordingFor(n) : null;
+      use.disabled = ro || !w || (w.en === (x.label_en || '').trim() && w.ar === (x.label_ar || '').trim());
+    }
+    function step(k) {
+      var r = kindRow(k), label = r[1];
+      var val = function () { return x.needs ? (Number(x.needs[k]) || 0) : 0; };
+      var q = el('input', { type: 'number', min: 0, max: MAX_NEED, value: val(), disabled: ro, inputmode: 'numeric', 'aria-label': label + ' needed', 'data-fk': 'need-' + k + '-' + id });
+      var minus = el('button', { type: 'button', text: '−', 'aria-label': 'One fewer ' + r[3] + ' needed', disabled: ro || val() <= 0 });
+      var plus = el('button', { type: 'button', text: '+', 'aria-label': 'One more ' + r[3] + ' needed', disabled: ro || val() >= MAX_NEED });
+      function set(n) {
+        if (!x.needs) x.needs = { mask: 0, mini: 0, full: 0 };
+        x.needs[k] = Math.max(0, Math.min(MAX_NEED, Math.floor(Number(n)) || 0));
+        q.value = x.needs[k]; minus.disabled = x.needs[k] <= 0; plus.disabled = x.needs[k] >= MAX_NEED;
+        changed();
+      }
+      minus.addEventListener('click', function () { set(val() - 1); });
+      plus.addEventListener('click', function () { set(val() + 1); });
+      q.addEventListener('change', function () { set(q.value); });
+      return el('span', { class: 'fg-crit-i' }, [el('span', { class: 'fg-kd k-' + k, 'aria-hidden': 'true' }), el('span', { text: label }), el('span', { class: 'fg-step' }, [minus, q, plus])]);
+    }
+    var box = el('div', { class: 'fg-crit', role: 'group', 'aria-label': 'Criteria for this range' }, [
+      el('div', { class: 'fg-crit-t' }, ['Criteria', el('small', { text: 'Internal only — shoppers never see the types.' })]),
+      step('mask'), step('mini'), step('full'), sum, ro ? null : use
+    ]);
+    paintSum();
+    live.push({ node: sum, fn: paintSum });
+    return box;
+  }
+  /* The gifts as three tinted boxes in one column, plus Untagged only when
+     there is one. Each box counts its UNITS against its criterion. */
+  function giftBoxes(id, key, x, ro) {
+    var holder = el('div', { class: 'fg-boxes' });
+    var undo = st.removed[key];
+    var undoKind = undo ? (kindOf(undo.g.kind) || 'none') : null;
+    var note = el('div', { class: 'fg-cnote', role: 'status', 'aria-live': 'polite' });
+    function paintNote() {
+      var gaps = criteriaGaps(needsOf(x), tally(x.gifts));
+      note.textContent = '';
+      note.hidden = !gaps.length;
+      if (!gaps.length) return;
+      note.appendChild(el('b', { text: 'Not as the criteria say — a warning only: Save, Testing and Live still work.' }));
+      note.appendChild(el('ul', {}, gaps.map(function (g) { return el('li', { text: g.text }); })));
+    }
+    paintNote();
+    live.push({ node: note, fn: paintNote });
+    holder.appendChild(note);
+    var rows = KINDS.slice();
+    var hasNone = x.gifts.some(function (g) { return !kindOf(g.kind); }) || undoKind === 'none';
+    if (hasNone) rows.push(['none', 'Untagged', 'Untagged', 'untagged gift', 'untagged gifts', '']);
+    rows.forEach(function (k) {
+      var kk = k[0];
+      var cnt = el('span', { class: 'fg-cnt' });
+      function paintCnt() {
+        var have = tally(x.gifts)[kk], n = needsOf(x);
+        if (kk === 'none' || !n) { cnt.className = 'fg-cnt'; cnt.textContent = plural(have, 'unit', 'units'); cnt.title = kk === 'none' ? 'Not counted until a type is set' : 'No criteria set for this range'; return; }
+        var need = Number(n[kk]) || 0;
+        cnt.className = 'fg-cnt ' + (have === need ? 'ok' : have < need ? 'short' : 'over');
+        cnt.textContent = have + ' of ' + need + (have === need ? ' ✓' : '');
+        cnt.title = have === need ? 'Matches the criteria' : have < need ? (need - have) + ' short' : (have - need) + ' over';
+      }
+      paintCnt();
+      live.push({ node: cnt, fn: paintCnt });
+      var box = el('section', { class: 'fg-box k-' + kk, 'aria-label': k[1] });
+      var h = el('h4', { html: k[5] });
+      h.appendChild(el('span', { text: k[1] }));
+      box.appendChild(el('div', { class: 'fg-box-h' }, [h, cnt]));
+      var any = false;
+      x.gifts.forEach(function (g, gi) {
+        if ((kindOf(g.kind) || 'none') !== kk) return;
+        any = true;
+        box.appendChild(giftRow(x, g, gi, ro));
+      });
+      if (undo && undoKind === kk) box.appendChild(undoRow(key, x));
+      if (!any && !(undo && undoKind === kk)) box.appendChild(el('div', { class: 'fg-box-e', text: 'None yet.' }));
+      if (!ro && kk !== 'none') box.appendChild(el('button', { type: 'button', class: 'fg-box-add', 'data-fk': 'add-' + kk + '-' + id, 'aria-label': 'Add ' + k[4] + ' to this range', onclick: function () { openPicker(id, kk); } }, [el('span', { html: ICONS.plus, style: 'display:inline-flex' }), 'Add ' + k[4]]));
+      holder.appendChild(box);
+    });
+    var tot = el('div', { class: 'fg-tot', role: 'status' });
+    function paintTot() {
+      var have = tally(x.gifts), n = needsOf(x), units = have.mask + have.mini + have.full + have.none;
+      tot.textContent = '';
+      if (!n) { tot.className = 'fg-tot none'; tot.appendChild(el('span', { text: 'Total: ' + plural(units, 'gift', 'gifts') + ' · No criteria set — use the steppers above to have each box counted.' })); return; }
+      var need = KIND_KEYS.reduce(function (a, k) { return a + (Number(n[k]) || 0); }, 0), counted = have.mask + have.mini + have.full;
+      var bits = [];
+      KINDS.forEach(function (k) { var d = have[k[0]] - (Number(n[k[0]]) || 0); if (d) bits.push(k[2] + ': ' + Math.abs(d) + (d < 0 ? ' short' : ' over')); });
+      if (have.none) bits.push(have.none + ' untagged');
+      tot.className = 'fg-tot ' + (bits.length ? 'short' : 'ok');
+      tot.appendChild(el('span', { text: 'Total: ' + counted + ' of ' + plural(need, 'gift', 'gifts') }));
+      tot.appendChild(el('span', { text: bits.length ? '· ' + bits.join(' · ') : '· Matches the criteria ✓' }));
+    }
+    paintTot();
+    live.push({ node: tot, fn: paintTot });
+    holder.appendChild(tot);
+    return holder;
+  }
+  /* Move a gift to another box: its row, and its product's memory here
+     (the server remembers it per product on Save). */
+  function kindPicker(x, g, ro, name) {
+    var grp = el('span', { class: 'fg-kinds', role: 'radiogroup', 'aria-label': 'Type of ' + name });
+    KINDS.forEach(function (k) {
+      var on = kindOf(g.kind) === k[0];
+      grp.appendChild(el('button', { type: 'button', role: 'radio', class: 'k-' + k[0], 'aria-checked': String(on), 'data-fk': 'k-' + g.product_id + '-' + k[0], disabled: ro, title: on ? 'In ' + k[1] : 'Move to ' + k[1], text: k[2], onclick: function () {
+        if (on) return;
+        g.kind = k[0];
+        if (g.product) g.product.gift_kind = k[0];
+        render();
+        var f = document.querySelector('[data-fk="k-' + g.product_id + '-' + k[0] + '"]'); if (f) f.focus();
+      } }));
+    });
+    return grp;
   }
   function giftRow(x, g, gi, ro) {
     var name = g.product ? g.product.name : 'Product #' + g.product_id, s = giftBadge(g.product, g.quantity);
@@ -740,7 +920,7 @@
     q.addEventListener('change', function () { set(q.value); });
     var row = el('div', { class: 'fg-gi' + (s.level === 'in' ? '' : ' ' + s.level) }, [
       thumb(g.product),
-      el('div', { class: 'fg-gi-n' }, [g.product && g.product.brand ? el('small', { text: g.product.brand }) : null, el('b', { text: name }), badge]),
+      el('div', { class: 'fg-gi-n' }, [g.product && g.product.brand ? el('small', { text: g.product.brand }) : null, el('b', { text: name }), badge, el('div', {}, [kindPicker(x, g, ro, name)])]),
       el('div', { class: 'fg-step' }, [minus, q, plus]),
       ro ? null : el('button', { type: 'button', class: 'fg-btn-i danger', 'aria-label': 'Remove ' + name, title: 'Remove', html: ICONS.trash, onclick: function () {
         var key = Object.keys(st.drafts).filter(function (k) { return st.drafts[k] === x; })[0];
@@ -762,8 +942,10 @@
 
   /* ---------------------------------------------------------------- picker */
   function pickerTarget() { var p = st.picker; return p ? (p.range === 'new' ? st.drafts['new'] : draft(p.range)) : null; }
-  function openPicker(id) {
-    st.picker = { range: id, q: '', filter: 'all', rows: null, initial: null, loading: false, seq: 0, timer: null, ctl: null, err: null, added: 0 };
+  /* `box` (Lane FG4): the box the picker was opened from, or null. A pick
+     goes to its product's remembered type, else this box, else the row asks. */
+  function openPicker(id, box) {
+    st.picker = { range: id, box: kindOf(box), kind: 'all', asking: null, from: box ? 'add-' + box + '-' + id : 'add-' + id, q: '', filter: 'all', rows: null, initial: null, loading: false, seq: 0, timer: null, ctl: null, err: null, added: 0 };
     delete st.removed[String(id)];
     render();
     var f = document.querySelector('[data-fk="pk-q"]'); if (f) f.focus();
@@ -777,7 +959,7 @@
     st.picker = null;
     if (silent) return;
     render();
-    var b = document.querySelector('[data-fk="add-' + p.range + '"]'); if (b) b.focus();
+    var b = document.querySelector('[data-fk="' + p.from + '"]'); if (b) b.focus();
     if (p.added > 0 && x) say(plural(p.added, 'gift', 'gifts') + ' added to ' + (p.range === 'new' ? 'the new range' : amount(x.min, x.max)) + '. "Save range" keeps them.');
   }
   /* INSTANT SEARCH, the only search path on this screen (Lane FG3): results
@@ -800,7 +982,7 @@
     stopSearch(p);
     var mine = p.seq, ctl = typeof AbortController === 'function' ? new AbortController() : null;
     p.ctl = ctl; p.loading = true; p.err = null; paintResults();
-    api('GET', '/products?q=' + encodeURIComponent(q) + '&filter=' + encodeURIComponent(p.filter), undefined, ctl ? ctl.signal : undefined).then(function (d) {
+    api('GET', '/products?q=' + encodeURIComponent(q) + '&filter=' + encodeURIComponent(p.filter) + '&kind=' + encodeURIComponent(p.kind), undefined, ctl ? ctl.signal : undefined).then(function (d) {
       if (st.picker !== p || mine !== p.seq) return;
       p.ctl = null; p.rows = d.products; if (q === '') p.initial = d.products; p.loading = false; paintResults();
     }).catch(function (e) {
@@ -818,23 +1000,42 @@
     var had = document.activeElement && resultsNode.contains(document.activeElement) ? document.activeElement.getAttribute('data-fk') : null;
     resultsNode.textContent = '';
     resultsNode.setAttribute('aria-busy', String(p.loading));
-    if (pkStNode) pkStNode.textContent = p.loading ? 'Searching…' : (p.rows && p.q.trim().length >= 2 ? plural(p.rows.length, 'match', 'matches') + (p.rows.length >= 20 ? ' (first 20; keep typing to narrow)' : '') : '');
+    if (pkStNode && !(had && had.indexOf('ask-') === 0)) pkStNode.textContent = p.loading ? 'Searching…' : (p.rows && p.q.trim().length >= 2 ? plural(p.rows.length, 'match', 'matches') + (p.rows.length >= 20 ? ' (first 20; keep typing to narrow)' : '') : '');
     if (p.err) resultsNode.appendChild(el('p', { class: 'fg-sub', text: p.err }));
-    else if (!p.loading && p.rows && !p.rows.length) resultsNode.appendChild(el('div', { class: 'fg-empty', text: 'No product matches' + (p.filter !== 'all' ? ' this filter' : '') + '.' }));
+    else if (!p.loading && p.rows && !p.rows.length) resultsNode.appendChild(el('div', { class: 'fg-empty', text: 'No product matches' + (p.filter !== 'all' || p.kind !== 'all' ? ' this filter' : '') + '.' }));
     (p.err ? [] : (p.rows || [])).forEach(function (pr) {
-      var taken = x.gifts.some(function (g) { return g.product_id === pr.id; }), bad = pr.type === 'variable', s = stockOf(pr);
+      var mine = x.gifts.filter(function (g) { return g.product_id === pr.id; })[0], taken = !!mine, bad = pr.type === 'variable', s = stockOf(pr);
+      var into = taken ? kindRow(kindOf(mine.kind)) : null;
       resultsNode.appendChild(el('button', { type: 'button', class: 'fg-res', 'data-fk': 'res-' + pr.id, 'aria-pressed': String(taken), disabled: bad, title: bad ? 'Has shades or sizes: pick a simple product' : null, onclick: function () {
-        var i = x.gifts.map(function (g) { return g.product_id; }).indexOf(pr.id);
-        if (i >= 0) { x.gifts.splice(i, 1); p.added--; } else { x.gifts.push({ product_id: pr.id, quantity: 1, product: pr }); p.added++; }
-        paintResults(); repaint();
+        var i = x.gifts.indexOf(mine);
+        if (i >= 0) { x.gifts.splice(i, 1); p.added--; p.asking = null; paintResults(); repaint(); return; }
+        var kind = kindOf(pr.gift_kind) || p.box;
+        if (!kind) { p.asking = p.asking === pr.id ? null : pr.id; paintResults(); var a = resultsNode.querySelector('[data-fk="ask-' + pr.id + '-mask"]'); if (a) a.focus(); return; }
+        pick(pr, kind);
       } }, [
         thumb(pr),
-        el('span', {}, [pr.brand ? el('small', { text: pr.brand }) : null, el('b', { text: pr.name }), el('span', { class: 'fg-meta' }, [pr.gift_only ? pill('blue', 'Gift only') : el('span', { text: pr.price }), pill(s.cls, s.text)])]),
-        el('span', { class: 'fg-state-b', text: bad ? 'Has options' : taken ? '✓ Added' : '+ Add' })
+        el('span', {}, [pr.brand ? el('small', { text: pr.brand }) : null, el('b', { text: pr.name }), el('span', { class: 'fg-meta' }, [pr.gift_only ? pill('blue', 'Gift only') : el('span', { text: pr.price }), pill(s.cls, s.text), kindPill(kindOf(pr.gift_kind))])]),
+        el('span', { class: 'fg-state-b', text: bad ? 'Has options' : taken ? '✓ Added' + (into ? ' · ' + into[2] : '') : '+ Add' })
       ]));
+      /* No remembered type and no box to go to: a tiny chooser, right here. */
+      if (p.asking === pr.id && !taken) resultsNode.appendChild(el('div', { class: 'fg-ask', role: 'group', 'aria-label': 'Which box for ' + pr.name }, [el('span', { text: 'Which box?' })].concat(KINDS.map(function (k) {
+        return el('button', { type: 'button', class: 'k-' + k[0], 'data-fk': 'ask-' + pr.id + '-' + k[0], text: k[1], onclick: function () { pick(pr, k[0]); } });
+      }), [el('button', { type: 'button', class: 'k-none', 'data-fk': 'ask-' + pr.id + '-none', text: 'Untagged', onclick: function () { pick(pr, null); } })])));
     });
+    function pick(pr, kind) {
+      if (kind && !pr.gift_kind) pr.gift_kind = kind;
+      x.gifts.push({ product_id: pr.id, quantity: 1, product: pr, kind: kind });
+      p.added++; p.asking = null;
+      var r = kindRow(kind);
+      paintResults(); repaint();
+      if (pkStNode) pkStNode.textContent = 'Added "' + pr.name + '" to ' + (r ? r[1] : 'Untagged') + '.';
+      var back = resultsNode.querySelector('[data-fk="res-' + pr.id + '"]'); if (back) back.focus();
+    }
     if (had) { var back = resultsNode.querySelector('[data-fk="' + had + '"]'); if (back) back.focus(); }
-    if (pkFootNode) { pkFootNode.textContent = plural(x.gifts.length, 'gift', 'gifts') + ' in this range'; }
+    if (pkFootNode) {
+      var t = tally(x.gifts), n = needsOf(x);
+      pkFootNode.textContent = KINDS.map(function (k) { return k[2] + ' ' + t[k[0]] + (n ? '/' + (Number(n[k[0]]) || 0) : ''); }).join(' · ') + (t.none ? ' · Untagged ' + t.none : '');
+    }
   }
   function pickerModal() {
     var p = st.picker, x = pickerTarget();
@@ -853,10 +1054,31 @@
     resultsNode = el('div', { class: 'fg-res-l', 'aria-live': 'polite' });
     pkFootNode = el('span', { class: 'fg-sub', style: 'margin:0' });
     pkStNode = el('div', { class: 'fg-pk-st', role: 'status', 'aria-live': 'polite', 'data-fk': 'pk-st' });
-    var title = 'Add gifts to ' + (x ? (st.picker.range === 'new' ? 'the new range' : amount(x.min, x.max)) : 'the range');
+    var boxRow = kindRow(p.box);
+    var title = 'Add ' + (boxRow ? boxRow[4] : 'gifts') + ' to ' + (x ? (st.picker.range === 'new' ? 'the new range' : amount(x.min, x.max)) : 'the range');
+    /* Where a pick with no remembered type goes, and the type filter (Lane FG4). */
+    var into = el('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'New picks go to' }, KINDS.map(function (k) { return [k[0], k[1]]; }).concat([[null, 'Ask me']]).map(function (o) {
+      return el('button', { type: 'button', role: 'radio', class: p.box === o[0] ? 'on' : '', 'aria-checked': String(p.box === o[0]), 'data-fk': 'pk-into-' + (o[0] || 'ask'), text: o[1], onclick: function () {
+        p.box = o[0]; p.asking = null;
+        into.querySelectorAll('button').forEach(function (b) { var on = b.textContent === o[1]; b.className = on ? 'on' : ''; b.setAttribute('aria-checked', String(on)); });
+        paintResults();
+      } });
+    }));
+    var kseg = el('div', { class: 'seg', role: 'group', 'aria-label': 'Type' }, [['all', 'All'], ['mask', 'Masks'], ['mini', 'Minis'], ['full', 'Full size'], ['none', 'Untagged']].map(function (f) {
+      return el('button', { type: 'button', class: p.kind === f[0] ? 'on' : '', 'aria-pressed': String(p.kind === f[0]), 'data-fk': 'pk-kind-' + f[0], text: f[1], onclick: function () {
+        if (p.kind === f[0]) return;
+        p.kind = f[0]; p.initial = null;
+        kseg.querySelectorAll('button').forEach(function (b) { var on = b.textContent === f[1]; b.className = on ? 'on' : ''; b.setAttribute('aria-pressed', String(on)); });
+        clearTimeout(p.timer); fetchPicker(p.q.trim().length >= 2 ? p.q.trim() : '');
+      } });
+    }));
     var dlg = el('div', { class: 'modal fg-modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'fg-pk-t' }, [
       el('div', { class: 'modal-h' }, [el('b', { id: 'fg-pk-t', text: title }), el('button', { type: 'button', class: 'x fg-btn-i', 'aria-label': 'Close', html: ICONS.x, onclick: function () { closePicker(); } })]),
-      el('div', { class: 'fg-pk-top' }, [q, seg, pkStNode]),
+      el('div', { class: 'fg-pk-top' }, [q, el('div', { class: 'fg-pk-rows' }, [
+        el('div', { class: 'fg-row' }, [el('span', { class: 'fg-pk-lab', text: 'New picks go to' }), into]),
+        el('div', { class: 'fg-row' }, [el('span', { class: 'fg-pk-lab', text: 'Type' }), kseg]),
+        el('div', { class: 'fg-row' }, [el('span', { class: 'fg-pk-lab', text: 'Show' }), seg])
+      ]), el('p', { class: 'fg-sub', style: 'margin:0', text: 'A product tagged before goes to its own box. Types are internal only.' }), pkStNode]),
       el('div', { class: 'modal-b' }, [resultsNode]),
       el('div', { class: 'fg-pk-foot' }, [pkFootNode, el('button', { type: 'button', class: 'btn sm', text: 'Done', onclick: function () { closePicker(); } })])
     ]);
@@ -887,7 +1109,7 @@
       var s = stockOf(p);
       rows.push(el('div', { class: 'fg-pr', role: 'listitem' }, [
         thumb(p),
-        el('div', {}, [el('b', { text: p.name }), el('span', { class: 'fg-row', style: 'gap:6px;margin-top:3px' }, [pill(s.cls, s.text)])]),
+        el('div', {}, [el('b', { text: p.name }), el('span', { class: 'fg-row', style: 'gap:6px;margin-top:3px' }, [pill(s.cls, s.text), kindPill(kindOf(p.gift_kind))])]),
         el('small', { class: 'c-brand', text: p.brand || '—' }),
         el('div', { class: 'c-used fg-pills' }, p.used_in.length ? p.used_in.slice().sort(function (a, b) { return ((byId[a] || {}).min || 0) - ((byId[b] || {}).min || 0); }).map(function (id) { var r = byId[id]; return r ? el('button', { type: 'button', class: 'pill grey', style: 'border:0;cursor:pointer;font:inherit;font-size:11px;font-weight:600', text: r.label, title: 'Open this range', onclick: function () { goRange(id); } }) : null; }) : [el('small', { text: 'Not in a range' })]),
         el('div', { class: 'c-gift' }, [sw(p.gift_only, p.gift_only ? 'Gift only' : 'On sale', function () {

@@ -1,0 +1,122 @@
+{
+  "390": {
+    "scrollWidth": {
+      "overview": 390,
+      "ranges": 390,
+      "picker": 390,
+      "products": 390,
+      "display": 390,
+      "home": 390
+    },
+    "checks": [
+      "CheckAED 500 – 999: Mini products: 1 of 2 chosen — add 1 more.Open range",
+      "CheckAED 2,000+: \"Rose PDRN Peptide Glowy Balm Petal Pink\" is out of stock — skipped until restocked; the rest of the range is still given.Open range",
+      "CheckAED 2,000+: Full size products: 2 of 3 chosen — add 1 more.Open range",
+      "CheckAED 2,000+: 1 gift is untagged, so not counted — set its type.Open range"
+    ],
+    "openedFromOverview": "AED 500 – 999!",
+    "tabWarn": "Mini products: 1 of 2 chosen — add 1 more.",
+    "notice": "Not as the criteria say — a warning only: Save, Testing and Live still work.\nMini products: 1 of 2 chosen — add 1 more.",
+    "counters": [
+      "Face masks: 3 of 3 ✓ [fg-cnt ok]",
+      "Mini products: 1 of 2 [fg-cnt short]",
+      "Full size products: 1 of 1 ✓ [fg-cnt ok]"
+    ],
+    "total": "Total: 5 of 6 gifts\n· Minis: 1 short",
+    "critSum": "= 6 gifts",
+    "useWordsDisabled": true,
+    "pickerTitle": "Add mini products to AED 500 – 999",
+    "pickerInto": "Mini products",
+    "pickerPills": [
+      "Minis",
+      "Minis",
+      "Minis"
+    ],
+    "pickerStatus": "Added \"Mugwort Calming Clay Mask Mini\" to Mini products.",
+    "pickerFoot": "Masks 3/3 · Minis 2/2 · Full size 1/1",
+    "afterPickCounters": [
+      "Face masks: 3 of 3 ✓",
+      "Mini products: 2 of 2 ✓",
+      "Full size products: 1 of 1 ✓"
+    ],
+    "afterPickNoticeHidden": true,
+    "afterPickTotal": "Total: 6 of 6 gifts\n· Matches the criteria ✓",
+    "saveToast": "Saved AED 500 – 999 (3 Masks + 2 Mini Products + 1 Full Size Product).",
+    "tabWarnAfterSave": 0,
+    "boxes2000": [
+      "Face masks: 12 of 12 ✓",
+      "Mini products: 5 of 5 ✓",
+      "Full size products: 2 of 3",
+      "Untagged: 1 unit"
+    ],
+    "askShown": 1,
+    "searches": [
+      "q=&filter=all&kind=all",
+      "q=mini&filter=all&kind=all",
+      "q=&filter=all&kind=all",
+      "q=ritual&filter=all&kind=all"
+    ],
+    "errors": []
+  },
+  "1280": {
+    "scrollWidth": {
+      "overview": 1280,
+      "ranges": 1280,
+      "picker": 1280,
+      "products": 1280,
+      "display": 1280,
+      "home": 1280
+    },
+    "checks": [
+      "CheckAED 500 – 999: Mini products: 1 of 2 chosen — add 1 more.Open range",
+      "CheckAED 2,000+: \"Rose PDRN Peptide Glowy Balm Petal Pink\" is out of stock — skipped until restocked; the rest of the range is still given.Open range",
+      "CheckAED 2,000+: Full size products: 2 of 3 chosen — add 1 more.Open range",
+      "CheckAED 2,000+: 1 gift is untagged, so not counted — set its type.Open range"
+    ],
+    "openedFromOverview": "AED 500 – 999!",
+    "tabWarn": "Mini products: 1 of 2 chosen — add 1 more.",
+    "notice": "Not as the criteria say — a warning only: Save, Testing and Live still work.\nMini products: 1 of 2 chosen — add 1 more.",
+    "counters": [
+      "Face masks: 3 of 3 ✓ [fg-cnt ok]",
+      "Mini products: 1 of 2 [fg-cnt short]",
+      "Full size products: 1 of 1 ✓ [fg-cnt ok]"
+    ],
+    "total": "Total: 5 of 6 gifts\n· Minis: 1 short",
+    "critSum": "= 6 gifts",
+    "useWordsDisabled": true,
+    "pickerTitle": "Add mini products to AED 500 – 999",
+    "pickerInto": "Mini products",
+    "pickerPills": [
+      "Minis",
+      "Minis",
+      "Minis"
+    ],
+    "pickerStatus": "Added \"Mugwort Calming Clay Mask Mini\" to Mini products.",
+    "pickerFoot": "Masks 3/3 · Minis 2/2 · Full size 1/1",
+    "afterPickCounters": [
+      "Face masks: 3 of 3 ✓",
+      "Mini products: 2 of 2 ✓",
+      "Full size products: 1 of 1 ✓"
+    ],
+    "afterPickNoticeHidden": true,
+    "afterPickTotal": "Total: 6 of 6 gifts\n· Matches the criteria ✓",
+    "saveToast": "Saved AED 500 – 999 (3 Masks + 2 Mini Products + 1 Full Size Product).",
+    "tabWarnAfterSave": 0,
+    "boxes2000": [
+      "Face masks: 12 of 12 ✓",
+      "Mini products: 5 of 5 ✓",
+      "Full size products: 2 of 3",
+      "Untagged: 1 unit"
+    ],
+    "askShown": 1,
+    "searches": [
+      "q=&filter=all&kind=all",
+      "q=mini&filter=all&kind=all",
+      "q=&filter=all&kind=all",
+      "q=ritual&filter=all&kind=all"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:10860/favicon.ico"
+    ]
+  }
+}

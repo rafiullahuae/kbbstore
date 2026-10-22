@@ -71,6 +71,23 @@ final class FreeGifts
     /** At most this many IPs on the Testing list. */
     public const MAX_TESTERS = 50;
 
+    /**
+     * Gift types (Lane FG4, the owner 22 Oct): INTERNAL ONLY, the boxes on the
+     * admin's range editor and the criteria they are counted against. Never
+     * compiled, so the shop and the orders never see them. Order is the boxes'.
+     */
+    public const KINDS = ['mask', 'mini', 'full'];
+
+    /** Each type's box on the admin: [box title, one, many]. */
+    public const KIND_NAMES = [
+        'mask' => ['Face masks', 'face mask', 'face masks'],
+        'mini' => ['Mini products', 'mini product', 'mini products'],
+        'full' => ['Full size products', 'full size product', 'full size products'],
+    ];
+
+    /** A criterion is 0 to this many units per type. */
+    public const MAX_NEED = 50;
+
     /** Every text the shopper reads, in both languages. Settings, printed escaped. */
     public const TEXTS = [
         'title' => ['Free gifts for you', 'هدايا مجانية لكِ'],
@@ -579,7 +596,7 @@ final class FreeGifts
     {
         $ranges = DB::table('free_gift_ranges')->orderBy('min_fils')->get();
         $enabled = $ranges->where('enabled', true);
-        $items = DB::table('free_gift_range_items')->get(['range_id', 'product_id', 'quantity'])->groupBy('range_id');
+        $items = DB::table('free_gift_range_items')->get(['range_id', 'product_id', 'quantity', 'kind'])->groupBy('range_id');
         $productIds = $items->flatten(1)->pluck('product_id')->unique()->values()->all();
         $products = $productIds === [] ? collect() : Product::withTrashed()->whereIn('id', $productIds)
             ->get(['id', 'name', 'status', 'type', 'stock_status', 'manage_stock', 'stock', 'deleted_at'])->keyBy('id');
@@ -618,7 +635,15 @@ final class FreeGifts
                 $names[] = mb_strtolower((string) ($p->name ?? ''));
             }
 
-            if (str_contains(mb_strtolower((string) $r->label_en), 'mask')
+            // The range's criteria (Lane FG4): a WARNING per type that differs,
+            // never a refusal -- the owner changes the criteria or the gifts.
+            $needs = self::needsOf($r);
+
+            foreach (self::criteriaGaps($needs, self::tally($gifts->map(static fn ($g) => ['kind' => $g->kind, 'quantity' => $g->quantity])->all())) as $gap) {
+                $out[] = ['level' => 'warn', 'text' => $label . ': ' . $gap['text'], 'range' => (int) $r->id];
+            }
+
+            if ($needs === null && str_contains(mb_strtolower((string) $r->label_en), 'mask')
                 && ! collect($names)->contains(static fn (string $n) => str_contains($n, 'mask'))) {
                 $out[] = ['level' => 'warn', 'text' => $label . ' says "' . $r->label_en . '" but no mask product is picked. Pick the sheet mask product.', 'range' => (int) $r->id];
             }
@@ -626,6 +651,128 @@ final class FreeGifts
 
         return $out;
     }
+
+    /** One of KINDS, or null for anything else (untagged). A select stores one of its own options. */
+    public static function kind(mixed $value): ?string
+    {
+        return is_string($value) && in_array($value, self::KINDS, true) ? $value : null;
+    }
+
+    /**
+     * A range row's criteria, or null when none is set (all three NULL, or
+     * all three 0: a range nobody has given criteria counts nothing).
+     *
+     * @return array{mask:int,mini:int,full:int}|null
+     */
+    public static function needsOf(object|array $range): ?array
+    {
+        $r = (array) $range;
+        $needs = [];
+
+        foreach (self::KINDS as $kind) {
+            $v = $r['need_' . $kind] ?? null;
+            $needs[$kind] = $v === null ? null : max(0, min(self::MAX_NEED, (int) $v));
+        }
+
+        if (array_sum(array_map('intval', $needs)) === 0) {
+            return null;
+        }
+
+        return array_map('intval', $needs);
+    }
+
+    /**
+     * Gift UNITS per type: 2x of one mask is 2 masks. `none` is untagged.
+     *
+     * @param  iterable<array{kind:?string,quantity:int}>  $gifts
+     * @return array{mask:int,mini:int,full:int,none:int}
+     */
+    public static function tally(iterable $gifts): array
+    {
+        $out = ['mask' => 0, 'mini' => 0, 'full' => 0, 'none' => 0];
+
+        foreach ($gifts as $g) {
+            $out[self::kind($g['kind'] ?? null) ?? 'none'] += max(0, (int) ($g['quantity'] ?? 0));
+        }
+
+        return $out;
+    }
+
+    /**
+     * Where a range's gifts differ from its criteria, one item per type, in
+     * the boxes' order, then untagged units. Empty when there are no criteria
+     * or everything matches. The screen runs the same walk as the owner edits
+     * (criteriaGaps() in free-gifts-screen.blade.php); this is the Overview's.
+     *
+     * @param  array{mask:int,mini:int,full:int}|null  $needs
+     * @param  array{mask:int,mini:int,full:int,none:int}  $have
+     * @return list<array{kind:string,have:int,need:int,text:string}>
+     */
+    public static function criteriaGaps(?array $needs, array $have): array
+    {
+        if ($needs === null) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach (self::KINDS as $kind) {
+            $need = (int) $needs[$kind];
+            $got = (int) ($have[$kind] ?? 0);
+            $title = self::KIND_NAMES[$kind][0];
+
+            if ($got < $need) {
+                $out[] = ['kind' => $kind, 'have' => $got, 'need' => $need, 'text' => $title . ': ' . $got . ' of ' . $need . ' chosen — add ' . ($need - $got) . ' more.'];
+            } elseif ($got > $need) {
+                $out[] = ['kind' => $kind, 'have' => $got, 'need' => $need, 'text' => $title . ': ' . $got . ' chosen, criteria says ' . $need . '.'];
+            }
+        }
+
+        $none = (int) ($have['none'] ?? 0);
+
+        if ($none > 0) {
+            $out[] = ['kind' => 'none', 'have' => $none, 'need' => 0, 'text' => ($none === 1 ? '1 gift is' : $none . ' gifts are') . ' untagged, so not counted — set its type.'];
+        }
+
+        return $out;
+    }
+
+    /**
+     * The range wording from its criteria, zeros left out, in the style of the
+     * owner's own seeded wording: "3 Masks + 2 Mini Products + 1 Full Size
+     * Product" / "3 أقنعة + منتجان صغيران + منتج بالحجم الكامل". Arabic counts
+     * four ways (1 / 2 / 3-10 / 11+). The screen's "Use for wording" button runs
+     * the same table (wordingFor() there); this is its authority in the tests.
+     *
+     * @param  array{mask:int,mini:int,full:int}  $needs
+     * @return array{en:string,ar:string}
+     */
+    public static function criteriaWording(array $needs): array
+    {
+        $en = [];
+        $ar = [];
+
+        foreach (self::WORDS as $kind => [$one, $many, $arForms]) {
+            $n = max(0, (int) ($needs[$kind] ?? 0));
+
+            if ($n === 0) {
+                continue;
+            }
+
+            $en[] = $n . ' ' . ($n === 1 ? $one : $many);
+            $form = $n === 1 ? 0 : ($n === 2 ? 1 : ($n <= 10 ? 2 : 3));
+            $ar[] = str_replace(':n', (string) $n, $arForms[$form]);
+        }
+
+        return ['en' => implode(' + ', $en), 'ar' => implode(' + ', $ar)];
+    }
+
+    /** [kind => [English one, English many, [Arabic 1, 2, 3-10, 11+]]] for criteriaWording(). */
+    public const WORDS = [
+        'mask' => ['Mask', 'Masks', ['قناع واحد', 'قناعان', ':n أقنعة', ':n قناعاً']],
+        'mini' => ['Mini Product', 'Mini Products', ['منتج صغير واحد', 'منتجان صغيران', ':n منتجات صغيرة', ':n منتجاً صغيراً']],
+        'full' => ['Full Size Product', 'Full Size Products', ['منتج بالحجم الكامل', 'منتجان بالحجم الكامل', ':n منتجات بالحجم الكامل', ':n منتجاً بالحجم الكامل']],
+    ];
 
     /**
      * The units for the checkout's "Free gifts (N)" line: counted as if the

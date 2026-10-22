@@ -766,13 +766,21 @@ it('adds no column to products, so the public API allowlist is unchanged', funct
      * shop gives away is not a field for an unauthenticated reader.
      * ApiSecurityTest "keeps the gift-only flag, and gift-only products, off
      * the public product api".
+     *
+     * ── AND A SIXTH (Lane FG4) ─────────────────────────────────────────────
+     *
+     * `gift_kind`, by 2027_11_24_100000_free_gift_kinds: the free-gift type
+     * the owner last gave a product (mask / mini / full), remembered so it is
+     * pre-tagged the next time. DECIDED FIRST: NOT in Product::toApi() -- the
+     * owner asked for it "only for us as internal understanding". ApiSecurityTest
+     * "keeps a product's free-gift type off the public product api".
      */
     $columns = Schema::getColumnListing('products');
     sort($columns);
 
     expect($columns)->toBe([
         'also_like', 'brand_id', 'brand_position', 'category_id', 'created_at', 'custom_tabs', 'deleted_at', 'description', 'featured',
-        'gift_only', 'gtin', 'how_to_use', 'id', 'image', 'image_alts', 'images', 'ingredients', 'is_visible',
+        'gift_kind', 'gift_only', 'gtin', 'how_to_use', 'id', 'image', 'image_alts', 'images', 'ingredients', 'is_visible',
         'manage_stock', 'meta_feed', 'name', 'position', 'price', 'published_at', 'rating',
         'review_count', 'routine_concerns', 'routine_role', 'sale_ends_at', 'sale_price',
         'sale_starts_at', 'seo', 'seo_json', 'set_discount', 'set_price_basis', 'set_price_mode',

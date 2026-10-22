@@ -179,6 +179,18 @@ it('keeps the gift-only flag, and gift-only products, off the public product api
     $this->getJson('/api/products/gift-mini-mask')->assertNotFound();
 });
 
+it('keeps a product\'s free-gift type off the public product api', function () {
+    /*
+     * Lane FG4 added products.gift_kind -- mask / mini / full, the owner's
+     * internal tag for the free-gift boxes ("only for us as internal
+     * understanding"). MUTATION: add 'gift_kind' to Product::toApi() -> red.
+     */
+    product(['slug' => 'typed-serum', 'name' => 'Typed Serum', 'gift_kind' => 'full']);
+
+    expect($this->getJson('/api/products')->assertOk()->getContent())->toContain('Typed Serum')->not->toContain('gift_kind')
+        ->and($this->getJson('/api/products/typed-serum')->assertOk()->getContent())->not->toContain('gift_kind')->not->toContain('"full"');
+});
+
 it('keeps a product\'s own "You may also like" picks off the public product api', function () {
     /*
      * Lane PS added `products.also_like` — one product's hand-picked companions

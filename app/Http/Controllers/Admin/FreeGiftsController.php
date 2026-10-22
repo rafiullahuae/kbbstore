@@ -199,6 +199,12 @@ class FreeGiftsController extends Controller
             'gifts' => ['present', 'array', 'max:' . self::MAX_GIFTS],
             'gifts.*.product_id' => ['required', 'integer', 'distinct'],
             'gifts.*.quantity' => ['required', 'integer', 'min:1', 'max:' . FreeGifts::MAX_QTY],
+            // Lane FG4, internal only: the gift's box, and the range's criteria.
+            'gifts.*.kind' => ['nullable', Rule::in(FreeGifts::KINDS)],
+            'needs' => ['sometimes', 'nullable', 'array'],
+            'needs.mask' => ['required_with:needs', 'integer', 'min:0', 'max:' . FreeGifts::MAX_NEED],
+            'needs.mini' => ['required_with:needs', 'integer', 'min:0', 'max:' . FreeGifts::MAX_NEED],
+            'needs.full' => ['required_with:needs', 'integer', 'min:0', 'max:' . FreeGifts::MAX_NEED],
         ]);
 
         $min = (int) $data['min'] * 100;
@@ -219,7 +225,7 @@ class FreeGiftsController extends Controller
         }
 
         $ids = array_map(static fn ($g) => (int) $g['product_id'], $data['gifts']);
-        $found = $ids === [] ? collect() : Product::query()->whereIn('id', $ids)->get(['id', 'type'])->keyBy('id');
+        $found = $ids === [] ? collect() : Product::query()->whereIn('id', $ids)->get(['id', 'type', 'gift_kind'])->keyBy('id');
 
         foreach ($data['gifts'] as $i => $g) {
             $p = $found[(int) $g['product_id']] ?? null;
@@ -233,7 +239,37 @@ class FreeGiftsController extends Controller
             }
         }
 
-        DB::transaction(function () use ($id, $data, $min, $max) {
+        /*
+         * Each gift's type (Lane FG4). A gift sent WITHOUT a `kind` key (an
+         * older screen) takes its product's remembered type; one sent with
+         * kind null is the owner's "untagged" and stays so. A gift sent with a
+         * type teaches its product that type for the next time it is added.
+         */
+        $kinds = [];
+        $remember = [];
+        foreach (array_values($data['gifts']) as $i => $g) {
+            $raw = $request->input('gifts.' . $i);
+            $kind = is_array($raw) && array_key_exists('kind', $raw)
+                ? FreeGifts::kind($g['kind'] ?? null)
+                : FreeGifts::kind($found[(int) $g['product_id']]->gift_kind ?? null);
+            $kinds[$i] = $kind;
+
+            if ($kind !== null && ($found[(int) $g['product_id']]->gift_kind ?? null) !== $kind) {
+                $remember[$kind][] = (int) $g['product_id'];
+            }
+        }
+
+        // Criteria: only when sent (an older screen leaves them as they are).
+        $needs = null;
+        if ($request->has('needs') && is_array($data['needs'] ?? null)) {
+            foreach (FreeGifts::KINDS as $kind) {
+                $needs['need_' . $kind] = (int) $data['needs'][$kind];
+            }
+        } elseif ($request->has('needs')) {
+            $needs = ['need_mask' => null, 'need_mini' => null, 'need_full' => null];
+        }
+
+        DB::transaction(function () use ($id, $data, $min, $max, $kinds, $remember, $needs) {
             $row = [
                 'min_fils' => $min,
                 'max_fils' => $max,
@@ -243,7 +279,7 @@ class FreeGiftsController extends Controller
                 'starts_at' => $data['starts_on'] ?? null,
                 'ends_at' => $data['ends_on'] ?? null,
                 'updated_at' => now(),
-            ];
+            ] + ($needs ?? []);
 
             if ($id === null) {
                 $id = DB::table('free_gift_ranges')->insertGetId($row + [
@@ -261,10 +297,17 @@ class FreeGiftsController extends Controller
                     'range_id' => $id,
                     'product_id' => (int) $g['product_id'],
                     'quantity' => (int) $g['quantity'],
+                    'kind' => $kinds[$sort] ?? null,
                     'sort' => $sort,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+            }
+
+            // Remembered per product: one statement per type, never per gift.
+            // DB::table, so Product::saving() and updated_at are not touched.
+            foreach ($remember as $kind => $productIds) {
+                DB::table('products')->whereIn('id', $productIds)->update(['gift_kind' => $kind]);
             }
         });
 
@@ -304,12 +347,16 @@ class FreeGiftsController extends Controller
         $q = trim(mb_substr((string) $request->query('q', ''), 0, 80));
         // A select stores one of its own options: anything else is "all".
         $filter = in_array($request->query('filter'), ['gift', 'instock'], true) ? $request->query('filter') : 'all';
+        // Lane FG4: by remembered type; `none` is untagged, anything else all.
+        $kind = in_array($request->query('kind'), [...FreeGifts::KINDS, 'none'], true) ? $request->query('kind') : 'all';
 
         $rows = Product::query()
             ->with('brand:id,name')
             ->when($filter === 'gift', fn ($query) => $query->where('gift_only', true))
             ->when($filter === 'instock', fn ($query) => $query->where('stock_status', 'instock')
                 ->where(fn ($w) => $w->where('manage_stock', false)->orWhere('stock', '>', 0)))
+            ->when($kind === 'none', fn ($query) => $query->whereNull('gift_kind'))
+            ->when(in_array($kind, FreeGifts::KINDS, true), fn ($query) => $query->where('gift_kind', $kind))
             ->when($q !== '', function ($query) use ($q) {
                 $like = '%' . addcslashes($q, '%_\\') . '%';
                 $query->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('sku', 'like', $like)->orWhere('slug', 'like', $like));
@@ -318,7 +365,7 @@ class FreeGiftsController extends Controller
             ->orderBy('name')
             ->orderBy('id')
             ->limit(20)
-            ->get(['id', 'name', 'slug', 'sku', 'brand_id', 'image', 'type', 'status', 'stock_status', 'manage_stock', 'stock', 'gift_only', 'price', 'sale_price', 'sale_starts_at', 'sale_ends_at']);
+            ->get(['id', 'name', 'slug', 'sku', 'brand_id', 'image', 'type', 'status', 'stock_status', 'manage_stock', 'stock', 'gift_only', 'gift_kind', 'price', 'sale_price', 'sale_starts_at', 'sale_ends_at']);
 
         return response()->json(['products' => $rows->map(fn (Product $p) => $this->productRow($p))->values()]);
     }
@@ -498,7 +545,7 @@ class FreeGiftsController extends Controller
             ->orderBy('name')
             ->orderBy('id')
             ->limit(200)
-            ->get(['id', 'name', 'slug', 'sku', 'brand_id', 'image', 'type', 'status', 'stock_status', 'manage_stock', 'stock', 'gift_only', 'price', 'sale_price', 'sale_starts_at', 'sale_ends_at']);
+            ->get(['id', 'name', 'slug', 'sku', 'brand_id', 'image', 'type', 'status', 'stock_status', 'manage_stock', 'stock', 'gift_only', 'gift_kind', 'price', 'sale_price', 'sale_starts_at', 'sale_ends_at']);
         $byId = $giftProducts->keyBy('id');
 
         $config = $this->gifts->freshConfig();
@@ -516,9 +563,12 @@ class FreeGiftsController extends Controller
                 'enabled' => (bool) $r->enabled,
                 'starts_on' => $r->starts_at ? substr((string) $r->starts_at, 0, 10) : null,
                 'ends_on' => $r->ends_at ? substr((string) $r->ends_at, 0, 10) : null,
+                // Lane FG4: the criteria (null = none set) and each gift's box.
+                'needs' => FreeGifts::needsOf($r),
                 'gifts' => ($items[$r->id] ?? collect())->map(fn ($i) => [
                     'product_id' => (int) $i->product_id,
                     'quantity' => (int) $i->quantity,
+                    'kind' => FreeGifts::kind($i->kind ?? null),
                     'product' => isset($byId[$i->product_id]) ? $this->productRow($byId[$i->product_id]) : null,
                 ])->values(),
             ])->values(),
@@ -548,6 +598,7 @@ class FreeGiftsController extends Controller
             'in_stock' => $p->stock_status === 'instock' && (! $p->manage_stock || (int) $p->stock > 0),
             'stock' => $p->manage_stock ? (int) $p->stock : null,
             'gift_only' => (bool) $p->gift_only,
+            'gift_kind' => FreeGifts::kind($p->gift_kind ?? null),
             'price' => Money::plain(max(0, (int) $p->effectivePrice())),
         ];
     }
