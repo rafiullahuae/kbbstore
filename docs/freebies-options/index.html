@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Free Gifts Designs</title>
+<style>
+@font-face{font-family:Outfit;src:url(outfit-latin.woff2) format("woff2");font-weight:300 800}
+@font-face{font-family:Cairo;src:url(cairo-arabic.woff2) format("woff2");font-weight:300 800;unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
+:root{--bg:#f6f0f2;--card:#fff;--ink:#2a2228;--muted:#756c74;--line:#efe3e8;--pink:#c13e63;--pink2:#a82f53;--pinks:#fff0f4;
+--green:#2e8f62;--greens:#ecf7f1;--gold:#a8741c;--golds:#fff6e3;--sans:Outfit,system-ui,sans-serif;--ar:Cairo,Outfit,system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#f6f0f2}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--sans)}
+.wrap{max-width:1240px;margin:0 auto;padding:26px 16px 60px}
+h1{margin:0;font-size:28px;font-weight:800;letter-spacing:-.01em}
+.lead{color:var(--muted);margin:6px 0 22px;max-width:75ch}
+.opt{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:22px}
+.opt>header{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px}
+.tag{font-weight:800;color:var(--pink);letter-spacing:.08em;font-size:13px}
+.opt h2{margin:0;font-size:19px}
+.opt>p{margin:0 0 14px;color:var(--muted);font-size:14px}
+.row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+figure{margin:0;display:grid;gap:6px;min-width:0}
+figcaption{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+/* the three real surfaces, simplified */
+.panel{width:340px;max-width:100%;background:#fff;border:1px solid #eadde3;border-radius:14px;padding:14px;box-shadow:0 12px 30px -20px rgba(42,34,40,.4)}
+.cartp{width:560px;max-width:100%;background:#fff;border:1px solid #eadde3;border-radius:14px;padding:16px}
+.sum{width:360px;max-width:100%;background:#fbf7f8;border:1px solid #eadde3;border-radius:14px;padding:16px}
+.ph{display:flex;justify-content:space-between;font-weight:700;font-size:16px;margin-bottom:10px}
+.ph small{font-weight:500;color:var(--muted)}
+.item{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #f3e9ed}
+.item img{width:52px;height:52px;border-radius:10px;border:1px solid #f0e6ea;object-fit:contain;background:#fff;flex:none}
+.item .n{flex:1;min-width:0;font-size:13.5px;line-height:1.3}
+.item .n small{display:block;color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+.item .p{font-weight:700;font-size:14px;white-space:nowrap}
+.tot{display:flex;justify-content:space-between;padding-top:10px;font-weight:700}
+.tline{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;color:var(--muted)}
+.tline b{color:var(--ink)}
+.btn{margin-top:12px;background:var(--pink);color:#fff;text-align:center;border-radius:999px;padding:11px;font-weight:700;font-size:14.5px}
+.gn{flex:1;min-width:0;font-size:13px;line-height:1.3}
+.gn small{display:block;color:var(--muted);font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.was{color:var(--muted);text-decoration:line-through;font-size:12px;font-weight:500;margin-inline-end:6px}
+.free{font-weight:800;font-size:12.5px;white-space:nowrap}
+.gi{display:flex;gap:10px;align-items:center;padding:6px 0}
+.gi img{width:42px;height:42px;border-radius:9px;object-fit:contain;background:#fff;flex:none}
+.nudge{font-size:12.5px;margin-top:8px;color:var(--muted)}
+.nudge b{color:var(--ink)}
+.bar{height:5px;border-radius:9px;background:#f1e4e9;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;border-radius:9px}
+.ar{direction:rtl;font-family:var(--ar)}
+/* ===== A · Blush box ===== */
+.gA{margin:12px 0 4px;background:var(--pinks);border:1px dashed #e7a3b7;border-radius:12px;padding:10px 12px}
+.gA .h{display:flex;align-items:center;gap:7px;font-weight:700;font-size:14px;color:var(--pink2)}
+.gA .h svg{width:17px;height:17px}
+.gA .gi img{border:1px solid #f4d5df}
+.gA .free{color:var(--pink)}
+.gA .bar i{background:var(--pink)}
+/* ===== B · Outlined card, label on the border ===== */
+.gB{position:relative;margin:20px 0 6px;border:1.5px solid var(--green);border-radius:12px;padding:14px 12px 8px}
+.gB .h{position:absolute;top:-11px;inset-inline-start:12px;background:#fff;padding:0 8px;font-weight:700;font-size:13px;color:var(--green);display:flex;align-items:center;gap:6px}
+.sum .gB .h{background:#fbf7f8}
+.gB .h svg{width:15px;height:15px}
+.gB .free{color:#fff;background:var(--green);border-radius:999px;padding:2px 9px;font-size:11.5px}
+.gB .gi img{border:1px solid #e3efe8}
+.gB .bar i{background:var(--green)}
+/* ===== C · Gold ribbon with progress ===== */
+.gC{margin:12px 0 4px;background:linear-gradient(180deg,var(--golds),#fff);border:1px solid #f0dcb0;border-radius:12px;overflow:hidden}
+.gC .h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;background:#fbedc9;font-weight:700;font-size:13.5px;color:#7a5410}
+.gC .h span{display:flex;align-items:center;gap:7px}.gC .h svg{width:16px;height:16px}
+.gC .h em{font-style:normal;font-weight:600;font-size:12px;background:#fff;border-radius:999px;padding:1px 8px}
+.gC .body{padding:6px 12px 10px}
+.gC .free{color:var(--gold)}
+.gC .gi img{border:1px solid #f3e4c4}
+.gC .bar i{background:linear-gradient(90deg,#d9a441,#b7791f)}
+/* ===== D · Compact strip ===== */
+.gD{margin:12px 0 4px;border:1px solid #ecd9e1;border-radius:12px;padding:10px 12px;background:#fff}
+.gD .h{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13.5px}
+.gD .h span{display:flex;align-items:center;gap:7px}.gD .h svg{width:16px;height:16px;color:var(--pink)}
+.gD .h a{font-size:12px;color:var(--pink);font-weight:600}
+.gD .th{display:flex;gap:8px;margin-top:8px}
+.gD .t{position:relative;width:54px;height:54px;border-radius:10px;border:1px solid #f0e3e8;background:#fff}
+.gD .t img{width:100%;height:100%;object-fit:contain;border-radius:10px}
+.gD .t b{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);background:var(--pink);color:#fff;font-size:9.5px;border-radius:999px;padding:0 6px;letter-spacing:.04em}
+.gD .bar i{background:var(--pink)}
+.note{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px 20px}
+.note h2{margin:0 0 8px;font-size:19px}
+.note ol{margin:0;padding-inline-start:20px;display:grid;gap:7px;font-size:14.5px}
+.note b{color:var(--ink)}
+
+/* ===== Homepage section designs ===== */
+.hp{background:#fff9f3;border:1px solid #eadde3;border-radius:16px;padding:22px 18px;width:100%}
+.hp h3{margin:0;text-align:center;font-size:24px;font-weight:800;letter-spacing:-.01em}
+.hp .sub{text-align:center;color:var(--muted);margin:4px 0 16px;font-size:14px}
+.H1{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.H1 .c{background:#fff;border:1px solid #eedde4;border-radius:16px;padding:16px 14px;text-align:center;display:grid;gap:8px;align-content:start}
+.H1 .c .r{font-weight:800;color:var(--pink);font-size:13px;letter-spacing:.06em}
+.H1 .c .im{display:flex;justify-content:center;gap:4px;height:58px}
+.H1 .c .im img{width:52px;height:52px;object-fit:contain;border-radius:10px;background:#fff;border:1px solid #f3e7ec}
+.H1 .c b{font-size:15.5px;line-height:1.3}
+.H1 .c.hot{border:1.5px solid var(--pink);box-shadow:0 10px 24px -18px rgba(193,62,99,.7)}
+.H1 .c.hot .r::after{content:" · Most loved";color:var(--muted);font-weight:600;letter-spacing:0}
+.H2{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding-top:6px}
+.H2::before{content:"";position:absolute;top:24px;left:16%;right:16%;height:3px;background:linear-gradient(90deg,#f6c3d2,var(--pink));border-radius:3px}
+.H2 .s{position:relative;text-align:center;display:grid;gap:6px;justify-items:center}
+.H2 .dot{width:40px;height:40px;border-radius:50%;background:#fff;border:2.5px solid var(--pink);display:grid;place-items:center;color:var(--pink);z-index:1}
+.H2 .dot svg{width:19px;height:19px}
+.H2 .s:last-child .dot{background:var(--pink);color:#fff}
+.H2 .r{font-weight:700;font-size:13px;color:var(--muted)}
+.H2 b{font-size:15px;line-height:1.3}
+.H3{display:grid;gap:10px}
+.H3 .l{display:flex;align-items:center;gap:14px;background:#fff;border-radius:14px;padding:12px 14px;border:1px solid #eedde4}
+.H3 .l .r{flex:0 0 116px;font-weight:800;font-size:15px;color:#fff;background:var(--pink);border-radius:10px;padding:8px 10px;text-align:center;line-height:1.15}
+.H3 .l .r small{display:block;font-weight:500;font-size:11px;opacity:.9}
+.H3 .l:nth-child(1) .r{background:#e48aa5}.H3 .l:nth-child(2) .r{background:#d35d80}
+.H3 .l b{flex:1;font-size:15px}
+.H3 .l .im{display:flex}.H3 .l .im img{width:44px;height:44px;margin-inline-start:-10px;border-radius:50%;border:2px solid #fff;background:#fff;object-fit:contain;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.cta{display:block;margin:16px auto 0;width:max-content;background:var(--ink);color:#fff;border-radius:999px;padding:10px 22px;font-weight:700;font-size:14px}
+@media (max-width:640px){.H1,.H2{grid-template-columns:1fr}.H2::before{display:none}.H3 .l{flex-wrap:wrap}.H3 .l .r{flex-basis:100%}}
+@media (max-width:640px){.panel,.cartp,.sum{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Free gifts for you · four designs</h1>
+<p class="lead">Each design shows the same cart in all three places: the <b>cart panel</b> (slide-out), the <b>cart page</b> and the <b>checkout order summary</b>, plus Arabic. The cart totals AED 245 here, so it sits in the <b>AED 201–500</b> tier (2 gifts). A line under the gifts shows how much more unlocks the next tier. Pick a letter; I can mix parts too (e.g. A's box with C's progress line).</p>
+<div id="opts"></div>
+<h1 style="margin-top:34px">Homepage section · three designs</h1>
+<p class="lead">Shows every range and what it gives. The <b>range</b>, the <b>wording</b> ("2 Masks + Mini + Full Size Product") and the pictures come from the admin, so you can add, edit or reorder ranges and the section follows by itself. The title, subtitle and button text are editable too, in English and Arabic.</p>
+<div id="home"></div>
+<div class="note">
+<h2>The plan, and what I need you to decide</h2>
+<ol id="plan"></ol>
+</div>
+</div>
+<script>
+const GIFT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>';
+const gifts = [['mist','Anua','PDRN Hyaluronic Capsule Mist Mini',45,'أنوا','ميست الكبسولات بالهيالورونيك ميني'],['patch','Anua','PDRN Collagen Melting Patch',39,'أنوا','لصقات الكولاجين PDRN']];
+const items = [['cream','Anua','Collagen Retinol Gua Sha Cream',129],['deo','Medicube','Vanilla Pistachio Deodorant',116]];
+const itemsH = items.map(([i,b,n,p]) => `<div class="item"><img src="img/${i}.webp" alt=""><div class="n"><small>${b}</small>${n}</div><div class="p">AED ${p}</div></div>`).join('');
+const nudgeEn = '<div class="nudge">Add <b>AED 256</b> more for <b>3 gifts</b></div><div class="bar"><i style="width:49%"></i></div>';
+const nudgeAr = '<div class="nudge">أضيفي <b>256 د.إ</b> لتحصلي على <b>3 هدايا</b></div><div class="bar"><i style="width:49%"></i></div>';
+const gl = (ar, freeTxt, list = gifts) => list.map(([i,b,n,v,ba,na]) => `<div class="gi"><img src="img/${i}.webp" alt=""><div class="gn"><small>${ar ? ba : b}</small>${ar ? na : n}</div><span class="was">${ar ? v + ' د.إ' : 'AED ' + v}</span><span class="free">${freeTxt}</span></div>`).join('');
+const T = {en:{h:'Free gifts for you', free:'FREE', more:'2 gifts'}, ar:{h:'هدايا مجانية لكِ', free:'مجاناً', more:'هديتان'}};
+const BOX = {
+  A:(ar, nudge = true) => `<div class="gA"><div class="h">${GIFT}${T[ar?'ar':'en'].h}</div>${gl(ar, T[ar?'ar':'en'].free)}${nudge ? (ar ? nudgeAr : nudgeEn) : ''}</div>`,
+  B:(ar, nudge = true) => `<div class="gB"><div class="h">${GIFT}${T[ar?'ar':'en'].h}</div>${gl(ar, T[ar?'ar':'en'].free)}${nudge ? (ar ? nudgeAr : nudgeEn) : ''}</div>`,
+  C:(ar, nudge = true) => `<div class="gC"><div class="h"><span>${GIFT}${T[ar?'ar':'en'].h}</span><em>${T[ar?'ar':'en'].more}</em></div><div class="body">${gl(ar, T[ar?'ar':'en'].free)}${nudge ? (ar ? nudgeAr : nudgeEn) : ''}</div></div>`,
+  D:(ar, nudge = true) => `<div class="gD"><div class="h"><span>${GIFT}${T[ar?'ar':'en'].h}</span><a>${ar ? 'التفاصيل' : 'Details'}</a></div><div class="th">${gifts.map(([i]) => `<div class="t"><img src="img/${i}.webp" alt=""><b>${T[ar?'ar':'en'].free}</b></div>`).join('')}</div>${nudge ? (ar ? nudgeAr : nudgeEn) : ''}</div>`,
+};
+const INFO = {
+  A:['Blush box','Soft pink background with a dashed pink outline, in the shop\'s own colours. Warm and clearly "a present", without shouting.'],
+  B:['Outlined card, title on the border','A clean white card with a green outline and the title sitting on the line, like a label. Green "FREE" pills. The most minimal and modern.'],
+  C:['Gold ribbon with counter','A light-gold header strip with a "2 gifts" counter, so it feels like a reward. The most premium-looking, and the easiest to spot.'],
+  D:['Compact strip','Just the gift thumbnails with a FREE tag, plus "Details". Takes the least room in a busy cart panel; the cart page and checkout show the full list.'],
+};
+const panel = (k) => `<div class="panel"><div class="ph">Your bag <small>2 items</small></div>${itemsH}${BOX[k](false)}<div class="tot"><span>Subtotal</span><span>AED 245</span></div><div class="btn">Checkout</div></div>`;
+const cartp = (k) => `<div class="cartp"><div class="ph">Shopping bag</div>${itemsH}${k === 'D' ? BOX.A(false).replace('gA','gA gA-wide') .replace(/class="gA[^"]*"/, 'class="gA" style="background:#fff;border:1px solid #ecd9e1"') : BOX[k](false)}<div class="tot"><span>Subtotal</span><span>AED 245</span></div></div>`;
+const sum = (k) => `<div class="sum"><div class="ph">Order summary</div>${itemsH}${k === 'D' ? BOX.A(false, false).replace(/class="gA"/, 'class="gA" style="background:#fff;border:1px solid #ecd9e1"') : BOX[k](false, false)}<div class="tline"><span>Subtotal</span><b>AED 245</b></div><div class="tline"><span>Free gifts (2)</span><b style="color:var(--green)">AED 0</b></div><div class="tline"><span>Delivery</span><b>Free</b></div><div class="tot"><span>Total</span><span>AED 245</span></div></div>`;
+const arPanel = (k) => `<div class="panel ar"><div class="ph">حقيبتك <small>منتجان</small></div>${BOX[k](true)}</div>`;
+document.getElementById('opts').innerHTML = Object.keys(BOX).map(k => `<section class="opt"><header><span class="tag">Option ${k}</span><h2>${INFO[k][0]}</h2></header><p>${INFO[k][1]}</p><div class="row"><figure><figcaption>Cart panel</figcaption>${panel(k)}</figure><figure><figcaption>Cart page</figcaption>${cartp(k)}</figure><figure><figcaption>Checkout summary</figcaption>${sum(k)}</figure><figure><figcaption>Arabic · cart panel</figcaption>${arPanel(k)}</figure></div></section>`).join('');
+
+const TIERS = [['AED 100 – 200','2 Masks',['patch','patch']],['AED 201 – 500','2 Masks + Mini + Full Size Product',['patch','mist','cream']],['AED 501 and above','5 Masks + Mini + 2 Full Size Products',['patch','mist','cream','deo']]];
+const img = a => a.map(i => `<img src="img/${i}.webp" alt="">`).join('');
+const HEAD = '<h3>Free gifts with every order</h3><p class="sub">The more you shop, the more we add, free.</p>';
+const HP = {
+  H1:['Gift cards in a row','Three cards side by side, the middle one outlined as the favourite. Stacks into one column on phones.', `<div class="hp">${HEAD}<div class="H1">${TIERS.map((t, i) => `<div class="c${i === 1 ? ' hot' : ''}"><span class="r">${t[0]}</span><div class="im">${img(t[2].slice(0,3))}</div><b>${t[1]}</b></div>`).join('')}</div><span class="cta">Start shopping</span></div>`],
+  H2:['Steps on a line','A progress line with a gift at each step, reading "spend more, unlock more". The lightest look.', `<div class="hp">${HEAD}<div class="H2">${TIERS.map(t => `<div class="s"><span class="dot">${GIFT}</span><span class="r">${t[0]}</span><b>${t[1]}</b></div>`).join('')}</div><span class="cta">Start shopping</span></div>`],
+  H3:['Price tags with the gifts','One row per range: a pink price tag (deeper pink as it grows), the wording, and the gift pictures stacked. Easiest to read on a phone.', `<div class="hp">${HEAD}<div class="H3">${TIERS.map(t => `<div class="l"><span class="r"><small>Spend</small>${t[0].replace('AED ','')}</span><b>${t[1]}</b><span class="im">${img(t[2])}</span></div>`).join('')}</div><span class="cta">Start shopping</span></div>`],
+};
+document.getElementById('home').innerHTML = Object.entries(HP).map(([k, v]) => `<section class="opt"><header><span class="tag">Option ${k}</span><h2>${v[0]}</h2></header><p>${v[1]}</p>${v[2]}</section>`).join('');
+const PLAN = [
+ '<b>Homepage section</b> (Appearance → Homepage → Free gifts): on/off, position among the other sections, title, subtitle and button text in English and Arabic. Each range carries its own <b>homepage wording</b> (e.g. "2 Masks + Mini + Full Size Product", and the Arabic) and optionally its own pictures; if you leave the wording empty it lists the gift names.',
+ '<b>Admin: Marketing → Free gifts.</b> One switch to turn the whole thing on/off, then a list of <b>price ranges</b> you can add, edit, delete and reorder (e.g. 100–200, 201–500, 501–1,000, 1,001 and above). For each range you pick the gift products with a product search. Optional start/end dates per range, for campaigns.',
+ '<b>Which amount counts?</b> I suggest the bag\'s product subtotal <b>after</b> any coupon, <b>not counting</b> delivery, gift wrapping or the gifts themselves. Otherwise a customer can use a coupon and still keep a gift they no longer qualify for.',
+ '<b>One range at a time.</b> A customer gets the gifts of the range they are in, not every lower range\'s gifts too (so AED 600 gets the 501–1,000 gifts only). If you want them to add up, it is one switch.',
+ '<b>Automatic, both ways.</b> Gifts appear the moment the bag reaches a range and change or disappear if items are removed. Each gift is quantity 1, cannot be changed, and costs AED 0. Should customers be allowed to remove a gift they don\'t want ("No thanks")? I suggest <b>no</b>.',
+ '<b>Out of stock gifts are skipped</b> silently, never shown as "free but unavailable". Gift stock is reduced when the order is placed, like any product.',
+ '<b>Gift-only products.</b> You may want items that are only ever gifts (minis, samples). I\'ll add a "gift only, not for sale" option so they can be gifts without appearing in the shop or search.',
+ '<b>On the order everywhere:</b> admin order page, the customer\'s confirmation email, invoice, packing slip, My account → Orders, order-received page. Marked "Free gift" at AED 0, so packing doesn\'t miss them. Reports keep revenue correct (gifts add AED 0).',
+ '<b>Payments stay frozen.</b> Tabby, Tamara, Stripe and cash on delivery are sent the same totals as today. Gifts are not sent to the payment providers as paid lines, so nothing in payments changes.',
+ '<b>The "add AED X more for N gifts" line</b> (shown in every design) nudges bigger baskets. Keep it, or hide it with one switch.',
+ 'Country: gifts for every country, or <b>UAE only</b>? And English and Arabic texts, editable in the admin, like other shop texts.',
+];
+document.getElementById('plan').innerHTML = PLAN.map(x => `<li>${x}</li>`).join('');
+</script>
+</body>
+</html>
