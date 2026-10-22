@@ -119,8 +119,10 @@ it('appends the language as the LAST column of the CSV, EN or AR', function () {
     $head = str_getcsv($lines[0]);
     $row = str_getcsv($lines[1]);
 
-    expect(end($head))->toBe('language')->and($head[26])->toBe('emirate')->and(count($head))->toBe(28)
-        ->and(end($row))->toBe('AR')->and(count($row))->toBe(28);
+    // Lane FG appended `free_gifts` after it, by the same rule: language is
+    // now the second-last column and keeps its position.
+    expect($head[27])->toBe('language')->and($head[26])->toBe('emirate')->and(count($head))->toBe(29)
+        ->and($row[27])->toBe('AR')->and(count($row))->toBe(29)->and(end($head))->toBe('free_gifts')->and(end($row))->toBe('0');
 });
 
 it('keeps the admin list at the same number of queries for 3 orders and for 40 of mixed language', function () {

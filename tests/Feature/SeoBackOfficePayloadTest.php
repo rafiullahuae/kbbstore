@@ -109,6 +109,10 @@ use Tests\Support\KeyOrder;
  * gains `home_sbc_tabs`, the row 2027_11_14_100000_shop_by_concern_dull_skin_tab
  * writes when it adds the Dull Skin tab (2.60.560). Nothing else changed; the
  * other lines in the text diff are the same keys in a new order.
+ *
+ * ▲ Lane FG re-recorded (KBB_S7_RECORD=1), diff read as data: the settings body
+ * gains `free_gifts` (the switch, off) and `free_gifts_compiled` (the five
+ * spend bands), the rows 2027_11_22_100100_free_gifts_seed writes. Nothing else.
  */
 function s7PayloadUrls(): array
 {

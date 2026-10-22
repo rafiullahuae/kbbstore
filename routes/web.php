@@ -596,6 +596,10 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // its address and contents. marketing.feed, owner and manager.
         require __DIR__.'/merchant-feed-admin.php';
 
+        // Growth & Marketing → Free gifts (Lane FG): spend ranges, their gifts,
+        // the gift-only flag, display and texts. freegifts.view / freegifts.manage.
+        require __DIR__.'/free-gifts-admin.php';
+
         /*
          * Store → SEO & Meta → SEO Audit. Lane S. Same group, same reason.
          * Its rows are four hand-built keys and never a model: the tables it

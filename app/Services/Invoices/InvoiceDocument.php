@@ -161,7 +161,9 @@ class InvoiceDocument
             'docType' => $this->docType($order),
 
             'items' => $this->items($order, $w),
-            'itemCount' => (int) $order->items->sum('quantity'),
+            // Every unit that goes in the parcel, free gifts included (Lane FG):
+            // the packing slip, delivery note and label count what is packed.
+            'itemCount' => (int) $order->items->sum('quantity') + (int) ($order->free_gift_count ?? 0),
             'totals' => $this->totals($order, $w),
             'totalFils' => (int) $order->total,
             'totalHtml' => self::money((int) $order->total, $w),
@@ -433,6 +435,42 @@ class InvoiceDocument
                 'lineHtml' => self::money((int) $item->total, $w),
                 'linePlain' => self::moneyPlain((int) $item->total, $w),
             ];
+        }
+
+        /*
+         * FREE GIFTS (Lane FG), after the lines that were bought, at AED 0 and
+         * tagged: the packer picks from the packing slip, so a gift not printed
+         * there is a gift not in the parcel. No query for an order without
+         * gifts (free_gift_count 0, every order before this package), so every
+         * document already printed is byte-identical.
+         */
+        if ((int) ($order->free_gift_count ?? 0) > 0) {
+            $order->loadMissing('gifts');
+            $tag = app(\App\Services\FreeGifts::class)->text('tag');
+
+            foreach ($order->gifts as $gift) {
+                $name = trim((string) $gift->name) !== '' ? trim((string) $gift->name) : 'Item';
+                $localised = trim((string) ($gift->name_localised ?? ''));
+                $out[] = [
+                    'name' => $name,
+                    'nameForCustomer' => $localised !== '' ? $localised : $name,
+                    'productId' => (int) ($gift->product_id ?? 0),
+                    'brand' => trim((string) $gift->brand),
+                    'sku' => trim((string) $gift->sku),
+                    'variant' => '',
+                    'variantForCustomer' => '',
+                    'setContents' => [],
+                    'quantity' => (int) $gift->quantity,
+                    'unitFils' => 0,
+                    'unitHtml' => self::money(0, $w),
+                    'unitPlain' => self::moneyPlain(0, $w),
+                    'lineFils' => 0,
+                    'lineHtml' => self::money(0, $w),
+                    'linePlain' => self::moneyPlain(0, $w),
+                    'gift' => true,
+                    'giftLabel' => $tag,
+                ];
+            }
         }
 
         return $out;

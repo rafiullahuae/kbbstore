@@ -1173,8 +1173,9 @@ class CheckoutPage
                             'Off, as asked: no “Checkout / Almost glowing” row and no round back arrow, so the order summary is the first thing under the header.'],
         'lo_sum_green'  => ['bool', 'Order summary as one green box', true,
                             'On, as asked: the summary is one light-green box, edge to edge on a phone, with the old total small above the new one when a coupon is on. Opened, its top row turns a shade darker.'],
-        'lo_sum_open'   => ['select', 'Opened summary background (phone)', 'white',
+        'lo_sum_open'   => ['select', 'Opened summary background (phone)', 'blush',
                             'The order summary on a phone once it is opened: the title row keeps its darker green, what opens under it gets this background and rounded bottom corners, and the heading row of the summary at the foot of the page takes the same darker green.', [
+                                'blush'   => 'Light pinkish-white #fbf7f8 (as chosen, 22 October)',
                                 'white'   => 'Almost white (as chosen, 14 October)',
                                 'green'   => 'Very light green',
                                 'classic' => 'As 2.60.495 (the same green, square corners)',
@@ -1654,7 +1655,7 @@ class CheckoutPage
         'lo_coupon_look' => ['ticket' => 'cop-tk', 'tag' => 'cop-tk', 'line' => 'cop-tk', 'classic' => ''],
         'lo_addr_rows'   => ['one' => 'cop-rows', 'two' => 'cop-rows', 'classic' => ''],
         // 2.60.497: the opened summary's background on a phone.
-        'lo_sum_open'    => ['white' => 'cop-sow', 'green' => 'cop-sog', 'classic' => ''],
+        'lo_sum_open'    => ['blush' => 'cop-sow cop-sob', 'white' => 'cop-sow', 'green' => 'cop-sog', 'classic' => ''],
     ];
 
     /**

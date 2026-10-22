@@ -22,8 +22,9 @@
 <td valign="top" style="font-family:{!! $k['sans'] !!};">
 @if (($line['brand'] ?? '') !== '')<div class="muted" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#C13E63;font-weight:700;">{{ $line['brand'] }}</div>
 @endif<div class="ink" style="margin-top:2px;font-size:14.5px;line-height:1.35;font-weight:600;color:{{ $k['text'] }};">@if (! empty($line['href']))<a href="{{ $line['href'] }}" style="color:{{ $k['text'] }};text-decoration:none;">{!! \App\Services\Mail\Kit\KitRtl::auto($line['name']) !!}</a>@else{!! \App\Services\Mail\Kit\KitRtl::auto($line['name']) !!}@endif</div>
+@if (($line['gift'] ?? '') !== '')<div style="margin-top:4px;"><span style="display:inline-block;padding:1px 8px;border-radius:999px;background:#2e8f62;color:#ffffff;font-size:11px;font-weight:800;">{{ $line['gift'] }}</span></div>@endif
 @foreach ($line['sub'] ?? [] as $subLine)<div class="muted" style="margin-top:2px;font-size:12px;line-height:1.45;color:#8C828A;">{{ $subLine }}</div>
-@endforeach<div class="muted" style="margin-top:3px;font-size:12.5px;color:#8C828A;">@if (($line['variant'] ?? '') !== ''){{ $line['variant'] }} &middot; @endif{{ __('email.kit.qty', ['count' => (int) $line['qty']]) }}@if (($showPrice ?? true) && (int) $line['qty'] > 1) &middot; {{ $line['unit'] }} {{ __('email.items.each') }}@endif</div>
+@endforeach<div class="muted" style="margin-top:3px;font-size:12.5px;color:#8C828A;">@if (($line['variant'] ?? '') !== ''){{ $line['variant'] }} &middot; @endif{{ __('email.kit.qty', ['count' => (int) $line['qty']]) }}@if (($showPrice ?? true) && (int) $line['qty'] > 1 && ($line['gift'] ?? '') === '') &middot; {{ $line['unit'] }} {{ __('email.items.each') }}@endif</div>
 </td>
 @if ($showPrice ?? true)<td width="96" align="right" valign="top" class="ink" style="width:96px;font-family:{!! $k['sans'] !!};font-size:14.5px;font-weight:700;color:{{ $k['text'] }};white-space:nowrap;">{{ $line['total'] }}</td>@endif
 </tr></table></td></tr>@endforeach</table></td></tr>

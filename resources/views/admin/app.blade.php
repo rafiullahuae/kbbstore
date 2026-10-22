@@ -3402,7 +3402,7 @@ window.kbbNavClick = kbbNavClick;
    `modules` used to be declared twice in this object: once as ['Platform',…]
    and again, later, as ['Store',…]. The second silently won, so anyone editing
    the first saw nothing change. One declaration now. */
-const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],'concernsync':['Catalog','Shop by Concern'],'mkt-health':['Growth & Marketing','Bounces & unsubscribes'],dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],siteaddr:['Platform','Site address'],'domainswitch':['Platform','Domain switch'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],'notfoundpage':['Safety','404 page'],console:['Console','Console settings'],catalog:['Catalog','Catalog'],import:['Store','Store Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],'merchantfeed':['Growth & Marketing','Google Shopping feed'],shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language settings'],'tr-progress':['Translation','Progress'],'tr-strings':['Translation','Strings'],'tr-machine':['Translation','Machine translation'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Tools'],'rev-likes':['Reviews','Bulk Tools'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Review Import / Export'],/* 'rev-capsule' has no sidebar row of its own any more — it and 'rev-badge'
+const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],'concernsync':['Catalog','Shop by Concern'],'mkt-health':['Growth & Marketing','Bounces & unsubscribes'],dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],siteaddr:['Platform','Site address'],'domainswitch':['Platform','Domain switch'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],'notfoundpage':['Safety','404 page'],console:['Console','Console settings'],catalog:['Catalog','Catalog'],import:['Store','Store Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],'merchantfeed':['Growth & Marketing','Google Shopping feed'],'freegifts':['Growth & Marketing','Free gifts'],shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language settings'],'tr-progress':['Translation','Progress'],'tr-strings':['Translation','Strings'],'tr-machine':['Translation','Machine translation'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Tools'],'rev-likes':['Reviews','Bulk Tools'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Review Import / Export'],/* 'rev-capsule' has no sidebar row of its own any more — it and 'rev-badge'
    open the same screen, whose two tabs are the two questions those screens used
    to ask of one set of seven settings. The id stays routable for #rev-capsule
    and ?go=rev-capsule, and it names the screen it actually opens rather than a
@@ -8571,7 +8571,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','concernsync','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','igembeds','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','site-analytics','routines','imageseo','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries']);
+const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','concernsync','tr-strings','tr-machine','hpcontent','freegifts','ugcvideo','ugcsections','ugcstyle','igembeds','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','site-analytics','routines','imageseo','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -15524,6 +15524,14 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
           odVariant(it)+odSetContents(it)+'</td>'+
         '<td>'+priceCell+'</td><td>'+qtyCell+'</td><td><b>AED '+it.total_aed+'</b></td>'+(editable?'<td>'+removeCell+'</td>':'')+'</tr>';
     }).join('');
+    /* (Lane FG) The free gifts, after the bought lines: AED 0, read-only, with
+       the spend range they came from. Absent on every order without gifts. */
+    rows += (o.gifts||[]).map(function(g){
+      return '<tr class="odgift"><td style="width:44px">'+odItemThumb(g)+'</td>'+
+        '<td><b style="font-size:12.5px">'+sesc(g.name)+'</b><div class="pbrand">'+sesc(g.brand||'')+'</div>'+
+        '<div class="pbrand" style="color:#1f6e4a;font-weight:700">Free gift'+(g.range?' \u00b7 '+sesc(g.range):'')+'</div></td>'+
+        '<td>AED 0</td><td>\u00d7 '+g.quantity+'</td><td><b>AED 0</b></td>'+(editable?'<td></td>':'')+'</tr>';
+    }).join('');
 
     var refundedLine = o.refunded_total_aed>0 ? '<div class="between" style="color:var(--sale,#c0392b)"><span>Refunded</span><span>-AED '+o.refunded_total_aed+'</span></div>' : '';
     var capturedLine = (o.settlement && o.settlement.captured) ? '<div class="between" style="color:var(--ink-soft)"><span>Captured</span><span>AED '+o.settlement.captured_total_aed+'</span></div>' : '';
@@ -16503,7 +16511,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '<button class="btn sm" id="ordStatusSave">Update</button></div>'+
       '<div class="card pad" style="margin-bottom:12px"><b style="font-size:12.5px">Customer</b><div style="font-size:12.5px;color:var(--ink-2);margin-top:6px;line-height:1.7">'+(addr||'\u2014')+'</div></div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead><tbody>'+
-      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div>'+odVariant(it)+odSetContents(it)+'</td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
+      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div>'+(it.gift?'<div class="pbrand" style="color:#1f6e4a;font-weight:700">Free gift</div>':'')+odVariant(it)+odSetContents(it)+'</td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
       '</tbody></table></div>'+
       '<div style="margin-top:12px;font-size:13px;display:flex;flex-direction:column;gap:5px">'+
       '<div class="between"><span style="color:var(--ink-soft)">Subtotal</span><span>AED '+o.subtotal_aed+'</span></div>'+
@@ -24977,6 +24985,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      window.go for 'merchantfeed'; its sidebar row is App\Support\AdminNav's.
      Endpoints: routes/merchant-feed-admin.php, `marketing.feed`. --}}
 @include('admin.partials.merchant-feed-screen')
+@include('admin.partials.free-gifts-screen')
 
 {{-- Store → Security (Lane C, Phase 18 items 6 and 7). The administrative
      audit trail and the report over it: one verdict sentence, the failed

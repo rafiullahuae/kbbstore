@@ -216,6 +216,7 @@
                         </div>
                     </div>
                 @endforeach
+@include('partials.free-gifts.box', app(\App\Services\FreeGifts::class)->box($totals))
             </div>
             <div class="dfoot">
                 @if ($promo)<div class="kc-coupon" style="color:#5e545a;background:#fff0f4;font-size:10px"><span class="ic">🎁</span><div>{!! $promo !!}</div></div>@endif

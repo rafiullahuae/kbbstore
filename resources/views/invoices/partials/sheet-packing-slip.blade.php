@@ -99,6 +99,7 @@ Nothing else is read.
                     <td class="num"><strong>{{ $item['quantity'] }}</strong></td>
                     <td>
                         <div class="it-name" dir="auto">{{ $item['name'] }}</div>
+@if (! empty($item['gift']))<div class="it-sub" dir="auto" style="font-weight:700;color:#1f6e4a">{{ $item['giftLabel'] }}</div>@endif
                         @php
                             $sub = array_values(array_filter([$item['brand'], $item['variant']], fn ($v) => $v !== ''));
                         @endphp

@@ -69,7 +69,7 @@ final class KitOrder
                 'unit' => (string) ($item['unitPlain'] ?? ''),
                 'total' => (string) ($item['linePlain'] ?? ''),
                 'sub' => array_values(array_map('strval', (array) ($item['setContents'] ?? []))),
-            ];
+            ] + (empty($item['gift']) ? [] : ['gift' => (string) ($item['giftLabel'] ?? '')]);
         }
 
         return $out;

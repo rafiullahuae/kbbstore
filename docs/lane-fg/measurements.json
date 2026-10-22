@@ -1,0 +1,1302 @@
+[
+ {
+  "tag": "en-390-100",
+  "panel": {
+   "box": true,
+   "boxW": 278,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 1,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 332,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 1,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 316,
+   "boxH": 97,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 1,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "Free gifts (2) | AED 0 | AED 0 | AED",
+  "errors": []
+ },
+ {
+  "tag": "en-390-300",
+  "panel": {
+   "box": true,
+   "boxW": 278,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 2,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 332,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 2,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 316,
+   "boxH": 97,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 2,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "Free gifts (4) | AED 0 | AED 0 | AED",
+  "errors": []
+ },
+ {
+  "tag": "en-390-500",
+  "panel": {
+   "box": true,
+   "boxW": 278,
+   "boxH": 119,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 4,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 332,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 4,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 316,
+   "boxH": 115,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 4,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "Free gifts (6) | AED 0 | AED 0 | AED",
+  "errors": []
+ },
+ {
+  "tag": "en-390-1000",
+  "panel": {
+   "box": true,
+   "boxW": 278,
+   "boxH": 119,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 5,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 332,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 5,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 316,
+   "boxH": 97,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 5,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "Free gifts (9) | AED 0 | AED 0 | AED",
+  "errors": []
+ },
+ {
+  "tag": "en-390-2000",
+  "panel": {
+   "box": true,
+   "boxW": 278,
+   "boxH": 160,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 7,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 332,
+   "boxH": 136,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 7,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 316,
+   "boxH": 134,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 7,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "Free gifts (20) | AED 0 | AED 0 | AED",
+  "errors": []
+ },
+ {
+  "tag": "en-1280-100",
+  "panel": {
+   "box": true,
+   "boxW": 348,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 1,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 568,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 1,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 312,
+   "boxH": 97,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 1,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "Free gifts (2) | AED 0 | AED 0 | AED",
+  "errors": []
+ },
+ {
+  "tag": "en-1280-300",
+  "panel": {
+   "box": true,
+   "boxW": 348,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 2,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 568,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 2,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 312,
+   "boxH": 97,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 2,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "Free gifts (4) | AED 0 | AED 0 | AED",
+  "errors": []
+ },
+ {
+  "tag": "en-1280-500",
+  "panel": {
+   "box": true,
+   "boxW": 348,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 4,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 568,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 4,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 312,
+   "boxH": 115,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 4,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "Free gifts (6) | AED 0 | AED 0 | AED",
+  "errors": []
+ },
+ {
+  "tag": "en-1280-1000",
+  "panel": {
+   "box": true,
+   "boxW": 348,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 5,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 568,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 5,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 312,
+   "boxH": 97,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 5,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "Free gifts (9) | AED 0 | AED 0 | AED",
+  "errors": []
+ },
+ {
+  "tag": "en-1280-2000",
+  "panel": {
+   "box": true,
+   "boxW": 348,
+   "boxH": 136,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 7,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 568,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 7,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 312,
+   "boxH": 134,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 7,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "Hide",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "Free gifts (20) | AED 0 | AED 0 | AED",
+  "errors": []
+ },
+ {
+  "tag": "ar-390-100",
+  "panel": {
+   "box": true,
+   "boxW": 278,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 1,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 332,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 1,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 316,
+   "boxH": 97,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 1,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "هدايا مجانية (2) | د.إ 0 | د.إ 0 | د.إ",
+  "errors": []
+ },
+ {
+  "tag": "ar-390-300",
+  "panel": {
+   "box": true,
+   "boxW": 278,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 2,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 332,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 2,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 316,
+   "boxH": 97,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 2,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "هدايا مجانية (4) | د.إ 0 | د.إ 0 | د.إ",
+  "errors": []
+ },
+ {
+  "tag": "ar-390-500",
+  "panel": {
+   "box": true,
+   "boxW": 278,
+   "boxH": 119,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 4,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 332,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 4,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 316,
+   "boxH": 97,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 4,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "هدايا مجانية (6) | د.إ 0 | د.إ 0 | د.إ",
+  "errors": []
+ },
+ {
+  "tag": "ar-390-1000",
+  "panel": {
+   "box": true,
+   "boxW": 278,
+   "boxH": 156,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 5,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 332,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 5,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 316,
+   "boxH": 115,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 5,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "هدايا مجانية (9) | د.إ 0 | د.إ 0 | د.إ",
+  "errors": []
+ },
+ {
+  "tag": "ar-390-2000",
+  "panel": {
+   "box": true,
+   "boxW": 278,
+   "boxH": 160,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 7,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 332,
+   "boxH": 156,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 7,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 316,
+   "boxH": 152,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 7,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 390
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "هدايا مجانية (20) | د.إ 0 | د.إ 0 | د.إ",
+  "errors": []
+ },
+ {
+  "tag": "ar-1280-100",
+  "panel": {
+   "box": true,
+   "boxW": 348,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 1,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 568,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 1,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 312,
+   "boxH": 97,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 1,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "هدايا مجانية (2) | د.إ 0 | د.إ 0 | د.إ",
+  "errors": []
+ },
+ {
+  "tag": "ar-1280-300",
+  "panel": {
+   "box": true,
+   "boxW": 348,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 2,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 568,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 2,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 312,
+   "boxH": 97,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 2,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "هدايا مجانية (4) | د.إ 0 | د.إ 0 | د.إ",
+  "errors": []
+ },
+ {
+  "tag": "ar-1280-500",
+  "panel": {
+   "box": true,
+   "boxW": 348,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 4,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 568,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 4,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 312,
+   "boxH": 97,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 4,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "هدايا مجانية (6) | د.إ 0 | د.إ 0 | د.إ",
+  "errors": []
+ },
+ {
+  "tag": "ar-1280-1000",
+  "panel": {
+   "box": true,
+   "boxW": 348,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 5,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 568,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 5,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 312,
+   "boxH": 115,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 5,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "هدايا مجانية (9) | د.إ 0 | د.إ 0 | د.إ",
+  "errors": []
+ },
+ {
+  "tag": "ar-1280-2000",
+  "panel": {
+   "box": true,
+   "boxW": 348,
+   "boxH": 136,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 7,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "panelOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "cart": {
+   "box": true,
+   "boxW": 568,
+   "boxH": 99,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 7,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "cartOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "checkout": {
+   "box": true,
+   "boxW": 312,
+   "boxH": 152,
+   "title": "14.5px/700",
+   "tile": 36,
+   "tiles": 7,
+   "viewAllClickable": true,
+   "border": "1px rgb(46, 143, 98)",
+   "scrollW": 1280
+  },
+  "checkoutOpen": {
+   "listShown": true,
+   "thumbsHidden": true,
+   "focus": "إخفاء",
+   "rowName": "12px",
+   "rowTile": 28,
+   "free": "11px/rgb(46, 143, 98)",
+   "closedAgain": true
+  },
+  "line": "هدايا مجانية (20) | د.إ 0 | د.إ 0 | د.إ",
+  "errors": []
+ }
+]

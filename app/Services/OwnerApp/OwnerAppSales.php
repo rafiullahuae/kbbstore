@@ -272,6 +272,7 @@ final class OwnerAppSales
             $rows = $range->apply(DemoSeed::exclude(
                 \App\Models\OrderItem::query()->from('order_items as i')->join('orders', 'orders.id', '=', 'i.order_id')
                     ->leftJoin('products as p', 'p.id', '=', 'i.product_id')
+                    ->where('i.is_gift', false) // Lane FG: a free gift is not a sale
                     ->whereNull('orders.deleted_at')->whereIn('orders.status', Order::REAL_STATUSES),
                 Order::class,
                 'orders',

@@ -912,6 +912,55 @@ class CheckoutController extends Controller
                 // which rolls the order back. That is the intended outcome: if the
                 // code ran out while this shopper was on the checkout page, they
                 // get the refusal rather than the discount.
+                /*
+                 * FREE GIFTS (Lane FG), decided HERE, by the server, from the
+                 * order's own totals and destination -- never from anything the
+                 * browser posted. AED 0 lines with `is_gift`, which
+                 * Order::items() leaves out, so the gateway started below is
+                 * handed exactly the order it was handed before gifts existed.
+                 *
+                 * Each gift takes its own stock through StockClaim with the
+                 * order's id, so a cancel or a failed payment puts it back the
+                 * way every line goes back. Inside a savepoint each: a gift
+                 * whose shelf ran dry since the summary was drawn is left out
+                 * and the order still goes through. Off, nothing runs.
+                 */
+                $kbbGiftUnits = 0;
+
+                foreach (app(\App\Services\FreeGifts::class)->forTotals($totals, $data['billing_country']) as $kbbGift) {
+                    try {
+                        DB::transaction(function () use ($order, $kbbGift) {
+                            app(\App\Services\StockClaim::class)->claim([[
+                                'product_id' => $kbbGift['product_id'],
+                                'variant_id' => null,
+                                'quantity' => $kbbGift['quantity'],
+                                'label' => (string) $kbbGift['product']->name,
+                            ]], (int) $order->id);
+
+                            $order->gifts()->create([
+                                'product_id' => $kbbGift['product_id'],
+                                'name' => (string) $kbbGift['product']->name,
+                                'brand' => $kbbGift['product']->brand?->name,
+                                'sku' => $kbbGift['product']->sku,
+                                'quantity' => $kbbGift['quantity'],
+                                'unit_price' => 0,
+                                'subtotal' => 0,
+                                'total' => 0,
+                                'is_gift' => true,
+                                'gift_range_id' => $kbbGift['range_id'],
+                                'gift_range_label' => $kbbGift['range_label'],
+                            ]);
+                        });
+                        $kbbGiftUnits += $kbbGift['quantity'];
+                    } catch (\App\Services\StockUnavailable) {
+                        // Sold out between the summary and Place order: no gift, no refusal.
+                    }
+                }
+
+                if ($kbbGiftUnits > 0) {
+                    $order->forceFill(['free_gift_count' => $kbbGiftUnits])->saveQuietly();
+                }
+
                 if ($cart->coupon) {
                     $this->coupons->recordRedemption(
                         $cart->coupon,

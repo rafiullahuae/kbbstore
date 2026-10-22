@@ -162,6 +162,23 @@ it('keeps a product\'s place in its brand\'s order off the public product api', 
         ->and($this->getJson('/api/products/ordered-serum')->assertOk()->getContent())->not->toContain('brand_position');
 });
 
+it('keeps the gift-only flag, and gift-only products, off the public product api', function () {
+    /*
+     * Lane FG added products.gift_only: "Gift only (not for sale)". Such a
+     * product is never visible, so the feed must not list it at all, and the
+     * flag itself is not the feed's business on any product. MUTATION: add
+     * 'gift_only' to Product::toApi(), or drop the gift_only line in
+     * Product::booted() -> red.
+     */
+    $shown = product(['slug' => 'shown-serum', 'name' => 'Shown Serum']);
+    product(['slug' => 'gift-mini-mask', 'name' => 'Gift Mini Mask', 'gift_only' => true]);
+
+    $list = $this->getJson('/api/products')->assertOk()->getContent();
+    expect($list)->toContain('Shown Serum')->not->toContain('Gift Mini Mask')->not->toContain('gift_only')
+        ->and($this->getJson('/api/products/shown-serum')->assertOk()->getContent())->not->toContain('gift_only');
+    $this->getJson('/api/products/gift-mini-mask')->assertNotFound();
+});
+
 it('keeps a product\'s own "You may also like" picks off the public product api', function () {
     /*
      * Lane PS added `products.also_like` — one product's hand-picked companions

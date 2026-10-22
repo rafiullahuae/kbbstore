@@ -229,6 +229,8 @@ final class AdminRoles
             'marketing.bounces.mailbox' => 'Set up the bounce mailbox',
             'push.view' => 'See push notification campaigns, reports and subscriber analytics',
             'push.send' => 'Send, schedule and test push notifications, and change their automations and rules',
+            'freegifts.view' => 'See Free gifts: the spend ranges, their gifts and the settings',
+            'freegifts.manage' => 'Change Free gifts: switch it on, edit ranges and gifts, the gift-only flag and the texts',
             'marketing.feed' => 'Google Shopping feed: see its address and switch it on or off',
             'marketing.pixels.connect' => 'Marketing Pixels: connect Meta, Google and TikTok, paste their tokens and run the checks',
             'marketing.customcode' => 'Marketing Pixels: custom head, body and footer code on the shop (Full Admin only by default)',

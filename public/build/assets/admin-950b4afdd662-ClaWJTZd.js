@@ -2005,6 +2005,14 @@
           odVariant(it)+odSetContents(it)+'</td>'+
         '<td>'+priceCell+'</td><td>'+qtyCell+'</td><td><b>AED '+it.total_aed+'</b></td>'+(editable?'<td>'+removeCell+'</td>':'')+'</tr>';
     }).join('');
+    /* (Lane FG) The free gifts, after the bought lines: AED 0, read-only, with
+       the spend range they came from. Absent on every order without gifts. */
+    rows += (o.gifts||[]).map(function(g){
+      return '<tr class="odgift"><td style="width:44px">'+odItemThumb(g)+'</td>'+
+        '<td><b style="font-size:12.5px">'+sesc(g.name)+'</b><div class="pbrand">'+sesc(g.brand||'')+'</div>'+
+        '<div class="pbrand" style="color:#1f6e4a;font-weight:700">Free gift'+(g.range?' \u00b7 '+sesc(g.range):'')+'</div></td>'+
+        '<td>AED 0</td><td>\u00d7 '+g.quantity+'</td><td><b>AED 0</b></td>'+(editable?'<td></td>':'')+'</tr>';
+    }).join('');
 
     var refundedLine = o.refunded_total_aed>0 ? '<div class="between" style="color:var(--sale,#c0392b)"><span>Refunded</span><span>-AED '+o.refunded_total_aed+'</span></div>' : '';
     var capturedLine = (o.settlement && o.settlement.captured) ? '<div class="between" style="color:var(--ink-soft)"><span>Captured</span><span>AED '+o.settlement.captured_total_aed+'</span></div>' : '';
@@ -2984,7 +2992,7 @@
       '<button class="btn sm" id="ordStatusSave">Update</button></div>'+
       '<div class="card pad" style="margin-bottom:12px"><b style="font-size:12.5px">Customer</b><div style="font-size:12.5px;color:var(--ink-2);margin-top:6px;line-height:1.7">'+(addr||'\u2014')+'</div></div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead><tbody>'+
-      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div>'+odVariant(it)+odSetContents(it)+'</td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
+      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div>'+(it.gift?'<div class="pbrand" style="color:#1f6e4a;font-weight:700">Free gift</div>':'')+odVariant(it)+odSetContents(it)+'</td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
       '</tbody></table></div>'+
       '<div style="margin-top:12px;font-size:13px;display:flex;flex-direction:column;gap:5px">'+
       '<div class="between"><span style="color:var(--ink-soft)">Subtotal</span><span>AED '+o.subtotal_aed+'</span></div>'+

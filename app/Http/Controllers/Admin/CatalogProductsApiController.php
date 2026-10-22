@@ -350,6 +350,7 @@ class CatalogProductsApiController extends Controller
             ->whereIn('orders.status', Order::REAL_STATUSES)
             ->whereNull('orders.deleted_at')
             ->where('order_items.product_id', '=', $product->id)
+            ->where('order_items.is_gift', false) // Lane FG: a free gift is not a sale
             ->selectRaw('COUNT(DISTINCT order_items.order_id) as orders_count,'
                 .' COALESCE(SUM(order_items.quantity), 0) as units_sold,'
                 .' COALESCE(SUM(order_items.total), 0) as revenue_fils')
@@ -1383,6 +1384,7 @@ class CatalogProductsApiController extends Controller
             ->whereIn('orders.status', Order::REAL_STATUSES)
             ->whereNull('orders.deleted_at')
             ->whereNotNull('order_items.product_id')
+            ->where('order_items.is_gift', false) // Lane FG: a free gift is not a sale
             ->groupBy('order_items.product_id')
             ->selectRaw('order_items.product_id as product_id,'
                 .' COUNT(DISTINCT order_items.order_id) as orders_count,'
@@ -1440,6 +1442,7 @@ class CatalogProductsApiController extends Controller
             ->whereIn('orders.status', Order::REAL_STATUSES)
             ->whereNull('orders.deleted_at')
             ->whereIn('order_items.product_id', $ids)
+            ->where('order_items.is_gift', false) // Lane FG: a free gift is not a sale
             ->groupBy('order_items.product_id')
             ->selectRaw('/*+ JOIN_ORDER(order_items, orders) */ order_items.product_id as product_id,'
                 .' COUNT(DISTINCT order_items.order_id) as orders_count,'

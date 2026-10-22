@@ -942,6 +942,7 @@ class AdminController extends Controller
 
         $lineCounts = OrderItem::query()
             ->whereIn('order_id', $orders->pluck('id'))
+            ->where('is_gift', false)
             ->groupBy('order_id')
             ->selectRaw('order_id, COUNT(*) as n')
             ->pluck('n', 'order_id');
@@ -1023,7 +1024,9 @@ class AdminController extends Controller
         if (!$o) return response()->json(['error' => 'not_found'], 404);
 
         $c = $o->customer;
-        $items = OrderItem::where('order_id', $o->id)->get()->map(fn (OrderItem $i) => [
+        $items = OrderItem::where('order_id', $o->id)->orderBy('is_gift')->orderBy('id')->get()->map(fn (OrderItem $i) => [
+            // Lane FG: a free gift, at AED 0, marked so the modal says so.
+            'gift'       => (bool) $i->is_gift,
             'name'       => $i->name,
             'brand'      => $i->brand,
             /*
@@ -1427,6 +1430,8 @@ class AdminController extends Controller
                 OrderItem::query()
                     ->join('orders', 'orders.id', '=', 'order_items.order_id')
                     ->whereNull('orders.deleted_at')
+                    // Lane FG: free gifts are not sales -- not units sold, not a top product.
+                    ->where('order_items.is_gift', false)
                     ->whereIn('orders.status', self::REVENUE_STATUSES),
                 Order::class,
                 'orders',
