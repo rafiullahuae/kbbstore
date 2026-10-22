@@ -1,0 +1,335 @@
+<title>Free Gifts First Live</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a control bar on top; a working bag (add products, change quantities) drives three real surfaces side by side (cart panel, cart page, checkout summary), then the homepage section with its editable range wording. Single light look, the shop's own palette. */
+@font-face{font-family:Outfit;src:url(outfit-latin.woff2) format("woff2");font-weight:300 800;font-display:swap}
+@font-face{font-family:Cairo;src:url(cairo-arabic.woff2) format("woff2");font-weight:300 800;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
+:root{
+  --bg:#f6f0f2;--card:#ffffff;--ink:#2a2228;--muted:#756c74;--line:#efe3e8;--line2:#eadde3;
+  --pink:#c13e63;--pink2:#a82f53;--pinks:#fff0f4;--pinkline:#e7a3b7;
+  --green:#2e8f62;--greens:#ecf7f1;--gold:#a8741c;--golds:#fff6e3;--goldh:#fbedc9;--goldink:#7a5410;
+  --cream:#fff9f3;--on:#ffffff;
+  --sans:Outfit,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--ar:Cairo,Outfit,system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--sans)}
+body.rtl{font-family:var(--ar)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding-block:22px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em;text-wrap:balance}
+.lead{margin:2px 0 0;color:var(--muted);max-width:72ch}
+/* control bar */
+.ctl{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;box-shadow:0 10px 24px -22px rgba(42,34,40,.6)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.grp>span{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;background:var(--bg);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:999px;padding:6px 12px;font-weight:600;font-size:13.5px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--on)}
+.shop{display:flex;gap:8px;flex-wrap:wrap}
+.chipp{display:flex;align-items:center;gap:8px;border:1px solid var(--line2);background:var(--card);border-radius:999px;padding:4px 12px 4px 4px;font-size:13px;font-weight:600}
+.chipp img{width:28px;height:28px;border-radius:50%;object-fit:contain;background:var(--card)}
+.chipp:hover{border-color:var(--pink)}
+.ghost{border:1px solid var(--line2);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
+.status{font-size:13.5px;color:var(--muted)}
+.status b{color:var(--ink)}
+/* surfaces */
+.stage{display:grid;grid-template-columns:340px minmax(0,1fr) 340px;gap:16px;align-items:start}
+@media (max-width:1100px){.stage{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}}
+figure{margin:0;display:grid;gap:6px;min-width:0}
+figcaption{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.surf{background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:14px;min-width:0}
+.panel{box-shadow:0 14px 34px -22px rgba(42,34,40,.55)}
+.sum{background:#fbf7f8}
+.ph{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:16px;margin-bottom:6px}
+.ph small{font-weight:500;color:var(--muted);font-size:13px}
+.item{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #f3e9ed}
+.item img{width:52px;height:52px;border-radius:10px;border:1px solid #f0e6ea;object-fit:contain;background:var(--card);flex:none}
+.item .n{flex:1;min-width:0;font-size:13.5px;line-height:1.3}
+.item .n small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.item .p{font-weight:700;font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:999px;margin-top:4px}
+.qty button{border:0;background:transparent;width:26px;height:24px;font-weight:700}
+.qty span{min-width:18px;text-align:center;font-size:13px;font-variant-numeric:tabular-nums}
+.empty{padding:22px 0;text-align:center;color:var(--muted);font-size:14px}
+.tot{display:flex;justify-content:space-between;padding-top:10px;font-weight:700;font-variant-numeric:tabular-nums}
+.tline{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;color:var(--muted);font-variant-numeric:tabular-nums}
+.tline b{color:var(--ink)}.tline b.g{color:var(--green)}
+.btn{margin-top:12px;background:var(--pink);color:var(--on);text-align:center;border-radius:999px;padding:11px;font-weight:700;font-size:14.5px}
+/* gift rows, shared */
+.gi{display:flex;gap:10px;align-items:center;padding:6px 0}
+.gi img{width:42px;height:42px;border-radius:9px;object-fit:contain;background:var(--card);flex:none;border:1px solid #f1e6ea}
+.gn{flex:1;min-width:0;font-size:13px;line-height:1.3}
+.gn small{display:block;color:var(--muted);font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.gn em{font-style:normal;font-weight:700;color:var(--muted)}
+.was{color:var(--muted);text-decoration:line-through;font-size:12px;font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums}
+.free{font-weight:800;font-size:12.5px;white-space:nowrap}
+.nudge{font-size:12.5px;margin-top:8px;color:var(--muted)}
+.nudge b{color:var(--ink)}
+.bar{height:5px;border-radius:9px;background:#f1e4e9;margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:9px;transition:width .4s ease}
+.gbox{margin:12px 0 4px}
+.pop{animation:pop .45s ease}
+@keyframes pop{0%{transform:scale(.96);opacity:.4}60%{transform:scale(1.015)}100%{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}.bar i{transition:none}}
+/* A · Blush box */
+.gA{background:var(--pinks);border:1px dashed var(--pinkline);border-radius:12px;padding:10px 12px}
+.gA .h{display:flex;align-items:center;gap:7px;font-weight:700;font-size:14px;color:var(--pink2)}
+.gA .free{color:var(--pink)}.gA .bar i{background:var(--pink)}
+/* B · Outlined card, title on the border */
+.gB{position:relative;margin-top:20px;border:1.5px solid var(--green);border-radius:12px;padding:14px 12px 8px}
+.gB .h{position:absolute;top:-11px;inset-inline-start:12px;background:var(--card);padding:0 8px;font-weight:700;font-size:13px;color:var(--green);display:flex;align-items:center;gap:6px}
+.sum .gB .h{background:#fbf7f8}
+.gB .free{color:var(--on);background:var(--green);border-radius:999px;padding:2px 9px;font-size:11.5px}
+.gB .bar i{background:var(--green)}
+/* C · Gold ribbon with counter */
+.gC{background:linear-gradient(180deg,var(--golds),var(--card));border:1px solid #f0dcb0;border-radius:12px;overflow:hidden}
+.gC .h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;background:var(--goldh);font-weight:700;font-size:13.5px;color:var(--goldink)}
+.gC .h span{display:flex;align-items:center;gap:7px}
+.gC .h em{font-style:normal;font-weight:600;font-size:12px;background:var(--card);border-radius:999px;padding:1px 9px}
+.gC .body{padding:6px 12px 10px}.gC .free{color:var(--gold)}.gC .bar i{background:linear-gradient(90deg,#d9a441,#b7791f)}
+/* D · Compact strip (panel only; the cart page and checkout list the gifts in full) */
+.gD{border:1px solid #ecd9e1;border-radius:12px;padding:10px 12px;background:var(--card)}
+.gD .h{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13.5px}
+.gD .h span{display:flex;align-items:center;gap:7px}.gD .h span svg{color:var(--pink)}
+.gD .h button{border:0;background:none;color:var(--pink);font-size:12px;font-weight:700;padding:0}
+.gD .th{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.gD .t{position:relative;width:54px;height:54px;border-radius:10px;border:1px solid #f0e3e8;background:var(--card)}
+.gD .t img{width:100%;height:100%;object-fit:contain;border-radius:10px}
+.gD .t b{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);background:var(--pink);color:var(--on);font-size:9.5px;border-radius:999px;padding:0 6px;letter-spacing:.04em;white-space:nowrap}
+.gD .t i{position:absolute;top:-6px;inset-inline-end:-6px;background:var(--ink);color:var(--on);font-style:normal;font-size:10px;font-weight:700;border-radius:999px;min-width:18px;height:18px;display:grid;place-items:center}
+.gD .bar i{background:var(--pink)}
+.gD .list{margin-top:6px;border-top:1px solid var(--line)}
+.gDfull{border:1px solid #ecd9e1;border-radius:12px;padding:10px 12px}
+.gDfull .h{display:flex;align-items:center;gap:7px;font-weight:700;font-size:14px}
+.gDfull .h svg{color:var(--pink)}.gDfull .free{color:var(--pink)}.gDfull .bar i{background:var(--pink)}
+.h svg{width:16px;height:16px;flex:none}
+.tease{margin:12px 0 4px;border:1px dashed var(--line2);border-radius:12px;padding:9px 12px;font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.tease svg{width:16px;height:16px;color:var(--pink);flex:none}.tease b{color:var(--ink)}
+/* homepage */
+.home{display:grid;gap:12px}
+.homehead{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between}
+.homehead h2{margin:0;font-size:20px}
+.hp{background:var(--cream);border:1px solid var(--line2);border-radius:18px;padding:26px 18px}
+.hp h3{margin:0;text-align:center;font-size:26px;font-weight:800;letter-spacing:-.01em;text-wrap:balance}
+.hp .sub{text-align:center;color:var(--muted);margin:4px 0 18px;font-size:14.5px}
+.cta{display:block;margin:18px auto 0;width:max-content;max-width:100%;background:var(--ink);color:var(--on);border:0;border-radius:999px;padding:10px 24px;font-weight:700;font-size:14px}
+.you{display:inline-block;font-size:11px;font-weight:700;color:var(--on);background:var(--green);border-radius:999px;padding:1px 8px;margin-top:2px}
+.H1{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}
+.H1 .c{background:var(--card);border:1px solid #eedde4;border-radius:16px;padding:18px 14px;text-align:center;display:grid;gap:9px;align-content:start;justify-items:center}
+.H1 .c .r{font-weight:800;color:var(--pink);font-size:13px;letter-spacing:.05em}
+.H1 .c .im{display:flex;justify-content:center;gap:4px;min-height:56px;flex-wrap:wrap}
+.H1 .c .im img{width:52px;height:52px;object-fit:contain;border-radius:10px;background:var(--card);border:1px solid #f3e7ec}
+.H1 .c b{font-size:16px;line-height:1.3;text-wrap:balance}
+.H1 .c.cur{border:1.5px solid var(--pink);box-shadow:0 12px 26px -20px rgba(193,62,99,.8)}
+.H2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:14px;position:relative}
+.H2 .s{position:relative;text-align:center;display:grid;gap:6px;justify-items:center;padding-top:4px}
+.H2 .s::before{content:"";position:absolute;top:24px;inset-inline-start:calc(-50% - 7px);width:calc(100% + 14px);height:3px;background:#f6c3d2}
+.H2 .s:first-child::before{display:none}
+.H2 .dot{position:relative;width:42px;height:42px;border-radius:50%;background:var(--card);border:2.5px solid var(--pink);display:grid;place-items:center;color:var(--pink);z-index:1}
+.H2 .dot svg{width:19px;height:19px}
+.H2 .s.cur .dot{background:var(--pink);color:var(--on)}
+.H2 .r{font-weight:700;font-size:13px;color:var(--muted)}
+.H2 b{font-size:15.5px;line-height:1.3;text-wrap:balance}
+@media (max-width:600px){.H2 .s::before{display:none}}
+.H3{display:grid;gap:10px;max-width:760px;margin:0 auto}
+.H3 .l{display:flex;align-items:center;gap:14px;background:var(--card);border-radius:14px;padding:12px 14px;border:1px solid #eedde4;flex-wrap:wrap}
+.H3 .l.cur{border:1.5px solid var(--pink)}
+.H3 .l .r{flex:0 0 120px;font-weight:800;font-size:15px;color:var(--on);border-radius:10px;padding:8px 10px;text-align:center;line-height:1.15}
+.H3 .l .r small{display:block;font-weight:500;font-size:11px;opacity:.92}
+.H3 .l b{flex:1;min-width:140px;font-size:15.5px}
+.H3 .l .im{display:flex;padding-inline-start:10px}
+.H3 .l .im img{width:44px;height:44px;margin-inline-start:-10px;border-radius:50%;border:2px solid var(--card);background:var(--card);object-fit:contain;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+/* editable ranges */
+.edit{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:10px}
+.edit h3{margin:0;font-size:15px}
+.edit p{margin:0;color:var(--muted);font-size:13px}
+.er{display:grid;grid-template-columns:90px 90px minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:center}
+.er label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.er input{width:100%;min-width:0;border:1px solid var(--line2);border-radius:10px;padding:8px 10px;font:inherit;font-size:14px;background:var(--card);color:var(--ink)}
+.er input[dir="rtl"]{font-family:var(--ar)}
+@media (max-width:700px){.er{grid-template-columns:1fr 1fr}.er .w{grid-column:1/-1}}
+.foot{font-size:13px;color:var(--muted)}
+</style>
+
+<div class="wrap" id="app">
+  <header>
+    <h1 data-t="title"></h1>
+    <p class="lead" data-t="lead"></p>
+  </header>
+  <div class="ctl" role="toolbar" aria-label="Preview controls">
+    <div class="grp"><span data-t="box"></span><div class="seg" id="segBox"></div></div>
+    <div class="grp"><span data-t="lang"></span><div class="seg" id="segLang"></div></div>
+    <div class="grp"><span data-t="add"></span><div class="shop" id="shop"></div><button class="ghost" id="clear" type="button" data-t="clear"></button></div>
+    <div class="status" id="status" aria-live="polite"></div>
+  </div>
+  <div class="stage">
+    <figure><figcaption data-t="cPanel"></figcaption><div class="surf panel" id="sPanel"></div></figure>
+    <figure><figcaption data-t="cPage"></figcaption><div class="surf" id="sPage"></div></figure>
+    <figure><figcaption data-t="cSum"></figcaption><div class="surf sum" id="sSum"></div></figure>
+  </div>
+  <section class="home">
+    <div class="homehead"><h2 data-t="homeT"></h2><div class="grp"><span data-t="design"></span><div class="seg" id="segHome"></div></div></div>
+    <div id="hp"></div>
+    <div class="edit">
+      <h3 data-t="editT"></h3>
+      <p data-t="editP"></p>
+      <div id="ranges"></div>
+    </div>
+  </section>
+  <p class="foot" data-t="foot"></p>
+</div>
+
+<script>
+'use strict';
+const GIFT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* Example catalogue: what a shopper can put in the bag here. */
+const PRODUCTS = {
+  cream:{img:'cream', b:'Anua', ba:'أنوا', n:'Collagen Retinol Gua Sha Cream', na:'كريم الكولاجين والريتينول جوا شا', p:129},
+  deo:{img:'deo', b:'Medicube', ba:'ميديكيوب', n:'Vanilla Pistachio Deodorant', na:'مزيل العرق فانيلا وفستق', p:116},
+  mist:{img:'mist', b:'Anua', ba:'أنوا', n:'PDRN Capsule Mist', na:'ميست الكبسولات PDRN', p:85},
+  patch:{img:'patch', b:'Anua', ba:'أنوا', n:'PDRN Collagen Melting Patch', na:'لصقات الكولاجين PDRN', p:39},
+};
+/* The gifts each range gives (set in Marketing -> Free gifts). */
+const G = {
+  mask:{img:'patch', b:'Anua', ba:'أنوا', n:'Collagen Sheet Mask', na:'ماسك الكولاجين', v:12},
+  mini:{img:'mist', b:'Anua', ba:'أنوا', n:'Capsule Mist Mini', na:'ميست الكبسولات ميني', v:45},
+  full1:{img:'cream', b:'Anua', ba:'أنوا', n:'Gua Sha Cream (full size)', na:'كريم جوا شا (حجم كامل)', v:129},
+  full2:{img:'deo', b:'Medicube', ba:'ميديكيوب', n:'Vanilla Deodorant (full size)', na:'مزيل العرق فانيلا (حجم كامل)', v:116},
+};
+const RANGES = [
+  {min:100, max:200, en:'2 Masks', ar:'ماسكان', gifts:[['mask',2]]},
+  {min:201, max:500, en:'2 Masks + Mini + Full Size Product', ar:'ماسكان + ميني + منتج بحجم كامل', gifts:[['mask',2],['mini',1],['full1',1]]},
+  {min:501, max:null, en:'5 Masks + Mini + 2 Full Size Products', ar:'5 ماسكات + ميني + منتجان بحجم كامل', gifts:[['mask',5],['mini',1],['full1',1],['full2',1]]},
+];
+const T = {
+  en:{title:'Free gifts, live', lead:'Add products to the bag and watch the gifts appear in the cart panel, the cart page and the checkout summary. Switch the gift box design, the homepage design and the language at the top. Everything below is a working example.',
+    box:'Gift box', lang:'Language', add:'Add to bag', clear:'Empty the bag', cPanel:'Cart panel (slide-out)', cPage:'Cart page', cSum:'Checkout · order summary',
+    homeT:'Homepage section', design:'Design', editT:'Ranges and wording (Marketing → Free gifts)', editP:'Edit any range or its wording and the homepage section and the bag update at once. In the real admin you also pick the gift products for each range.',
+    from:'From AED', to:'To AED', wEn:'Wording · English', wAr:'Wording · Arabic', above:'and above',
+    foot:'Example products and prices. Gifts are quantity-fixed, cost AED 0 and are added or removed by the bag total after any coupon, not counting delivery.',
+    yourBag:'Your bag', bag:'Shopping bag', summary:'Order summary', items:n => n === 1 ? '1 item' : n + ' items', empty:'Your bag is empty. Add a product above.',
+    sub:'Subtotal', giftsLine:n => `Free gifts (${n})`, deliv:'Delivery', freeDel:'Free', total:'Total', checkout:'Checkout', placeOrder:'Place order',
+    head:'Free gifts for you', free:'FREE', details:'Details', hide:'Hide', count:n => n === 1 ? '1 gift' : n + ' gifts',
+    nudge:(amt, what) => `Add <b>${amt}</b> more for <b>${what}</b>`, top:'You’ve unlocked our biggest gift. Enjoy!',
+    tease:(amt, what) => `Spend <b>${amt}</b> more to get <b>${what}</b> free`,
+    hpTitle:'Free gifts with every order', hpSub:'The more you shop, the more we add, free.', shop:'Start shopping', spend:'Spend', yours:'Your bag is here',
+    status:(sub, r) => `Bag: <b>${sub}</b> · ${r ? `range <b>${r}</b>` : 'no gift yet'}`, money:v => 'AED ' + v},
+  ar:{title:'الهدايا المجانية، معاينة حيّة', lead:'أضيفي منتجات إلى الحقيبة وشاهدي الهدايا تظهر في نافذة السلة وصفحة السلة وملخص الدفع.',
+    box:'صندوق الهدايا', lang:'اللغة', add:'أضيفي للحقيبة', clear:'إفراغ الحقيبة', cPanel:'نافذة السلة', cPage:'صفحة السلة', cSum:'الدفع · ملخص الطلب',
+    homeT:'قسم الصفحة الرئيسية', design:'التصميم', editT:'الفئات والنصوص (التسويق ← الهدايا المجانية)', editP:'عدّلي أي فئة أو نصها وسيتحدث القسم والحقيبة فوراً.',
+    from:'من د.إ', to:'إلى د.إ', wEn:'النص · إنجليزي', wAr:'النص · عربي', above:'فأكثر',
+    foot:'منتجات وأسعار للتوضيح فقط.',
+    yourBag:'حقيبتك', bag:'حقيبة التسوق', summary:'ملخص الطلب', items:n => n === 1 ? 'منتج واحد' : n === 2 ? 'منتجان' : n + ' منتجات', empty:'حقيبتك فارغة. أضيفي منتجاً من الأعلى.',
+    sub:'المجموع الفرعي', giftsLine:n => `هدايا مجانية (${n})`, deliv:'التوصيل', freeDel:'مجاني', total:'الإجمالي', checkout:'إتمام الشراء', placeOrder:'تأكيد الطلب',
+    head:'هدايا مجانية لكِ', free:'مجاناً', details:'التفاصيل', hide:'إخفاء', count:n => n === 1 ? 'هدية واحدة' : n === 2 ? 'هديتان' : n + ' هدايا',
+    nudge:(amt, what) => `أضيفي <b>${amt}</b> لتحصلي على <b>${what}</b>`, top:'حصلتِ على أكبر هدية لدينا. استمتعي!',
+    tease:(amt, what) => `أنفقي <b>${amt}</b> إضافية لتحصلي على <b>${what}</b> مجاناً`,
+    hpTitle:'هدايا مجانية مع كل طلب', hpSub:'كلما تسوّقتِ أكثر، أضفنا لكِ أكثر، مجاناً.', shop:'تسوّقي الآن', spend:'أنفقي', yours:'حقيبتك هنا',
+    status:(sub, r) => `الحقيبة: <b>${sub}</b> · ${r ? `الفئة <b>${r}</b>` : 'لا هدية بعد'}`, money:v => v + ' د.إ'},
+};
+const S = {lang:'en', box:'A', home:'H1', bag:{cream:1, deo:1}, open:false, lastRange:-1};
+try { const v = JSON.parse(localStorage.getItem('fg-live') || 'null'); if (v && typeof v === 'object') { if (['A','B','C','D'].includes(v.box)) S.box = v.box; if (['H1','H2','H3'].includes(v.home)) S.home = v.home; } } catch (e) {}
+const save = () => { try { localStorage.setItem('fg-live', JSON.stringify({box:S.box, home:S.home})); } catch (e) {} };
+
+const L = () => T[S.lang];
+const AR = () => S.lang === 'ar';
+const subtotal = () => Object.entries(S.bag).reduce((a, [k, q]) => a + PRODUCTS[k].p * q, 0);
+const rangeIx = sub => RANGES.findIndex(r => sub >= r.min && (r.max == null || sub <= r.max));
+const rangeLabel = r => r.max == null ? `${L().money(r.min)} ${L().above}` : (AR() ? `${r.min} – ${r.max} د.إ` : `AED ${r.min} – ${r.max}`);
+const words = r => (AR() ? r.ar : r.en) || r.gifts.map(([k, q]) => (q > 1 ? q + '× ' : '') + (AR() ? G[k].na : G[k].n)).join(' + ');
+const giftCount = r => r.gifts.reduce((a, g) => a + g[1], 0);
+
+function nudge(sub, ix){
+  const next = RANGES.find(r => r.min > sub);
+  const cur = ix >= 0 ? RANGES[ix] : null;
+  if (!next) return `<div class="nudge">${L().top}</div><div class="bar"><i style="width:100%"></i></div>`;
+  const from = cur ? cur.min : 0, pct = Math.max(4, Math.min(100, Math.round((sub - from) / (next.min - from) * 100)));
+  return `<div class="nudge">${L().nudge(L().money(next.min - sub), esc(words(next)))}</div><div class="bar"><i style="width:${pct}%"></i></div>`;
+}
+const rows = r => r.gifts.map(([k, q]) => { const g = G[k]; return `<div class="gi"><img src="img/${g.img}.webp" alt=""><div class="gn"><small>${AR() ? g.ba : g.b}</small>${q > 1 ? `<em>${q}× </em>` : ''}${AR() ? g.na : g.n}</div><span class="was">${L().money(g.v * q)}</span><span class="free">${L().free}</span></div>`; }).join('');
+
+function giftBox(where, sub, ix, anim){
+  if (ix < 0) {
+    const first = RANGES[0];
+    return sub > 0 ? `<div class="tease">${GIFT}<span>${L().tease(L().money(first.min - sub), esc(words(first)))}</span></div>` : '';
+  }
+  const r = RANGES[ix], withNudge = where !== 'sum', pop = anim ? ' pop' : '';
+  const nd = withNudge ? nudge(sub, ix) : '';
+  const box = S.box === 'D' && where !== 'panel' ? 'Dfull' : S.box;
+  if (box === 'A') return `<div class="gbox gA${pop}"><div class="h">${GIFT}${L().head}</div>${rows(r)}${nd}</div>`;
+  if (box === 'B') return `<div class="gbox gB${pop}"><div class="h">${GIFT}${L().head}</div>${rows(r)}${nd}</div>`;
+  if (box === 'C') return `<div class="gbox gC${pop}"><div class="h"><span>${GIFT}${L().head}</span><em>${L().count(giftCount(r))}</em></div><div class="body">${rows(r)}${nd}</div></div>`;
+  if (box === 'Dfull') return `<div class="gbox gDfull${pop}"><div class="h">${GIFT}${L().head}</div>${rows(r)}${nd}</div>`;
+  return `<div class="gbox gD${pop}"><div class="h"><span>${GIFT}${L().head}</span><button type="button" data-act="details" aria-expanded="${S.open}">${S.open ? L().hide : L().details}</button></div><div class="th">${r.gifts.map(([k, q]) => `<div class="t"><img src="img/${G[k].img}.webp" alt="${esc(AR() ? G[k].na : G[k].n)}"><b>${L().free}</b>${q > 1 ? `<i>×${q}</i>` : ''}</div>`).join('')}</div>${S.open ? `<div class="list">${rows(r)}</div>` : ''}${nd}</div>`;
+}
+
+function itemsHtml(steppers){
+  const ks = Object.keys(S.bag).filter(k => S.bag[k] > 0);
+  if (!ks.length) return `<div class="empty">${L().empty}</div>`;
+  return ks.map(k => { const p = PRODUCTS[k], q = S.bag[k]; return `<div class="item"><img src="img/${p.img}.webp" alt=""><div class="n"><small>${AR() ? p.ba : p.b}</small>${AR() ? p.na : p.n}${steppers ? `<div><span class="qty"><button type="button" data-act="dec" data-k="${k}" aria-label="−">−</button><span>${q}</span><button type="button" data-act="inc" data-k="${k}" aria-label="+">+</button></span></div>` : (q > 1 ? ` <em style="font-style:normal;color:var(--muted)">× ${q}</em>` : '')}</div><div class="p">${L().money(p.p * q)}</div></div>`; }).join('');
+}
+
+function render(){
+  const lang = L(), sub = subtotal(), ix = rangeIx(sub), anim = ix !== S.lastRange && ix >= 0;
+  S.lastRange = ix;
+  document.documentElement.lang = S.lang; document.documentElement.dir = AR() ? 'rtl' : 'ltr';
+  document.body.classList.toggle('rtl', AR());
+  document.querySelectorAll('[data-t]').forEach(el => { const v = lang[el.dataset.t]; if (typeof v === 'string') el.textContent = v; });
+  const seg = (id, opts, cur, act) => { document.getElementById(id).innerHTML = opts.map(([v, l]) => `<button type="button" data-act="${act}" data-v="${v}" aria-pressed="${v === cur}">${l}</button>`).join(''); };
+  seg('segBox', [['A','A · Blush'],['B','B · Outline'],['C','C · Gold'],['D','D · Strip']], S.box, 'box');
+  seg('segLang', [['en','English'],['ar','العربية']], S.lang, 'lang');
+  seg('segHome', [['H1','H1 · Cards'],['H2','H2 · Steps'],['H3','H3 · Price tags']], S.home, 'home');
+  document.getElementById('shop').innerHTML = Object.entries(PRODUCTS).map(([k, p]) => `<button type="button" class="chipp" data-act="inc" data-k="${k}"><img src="img/${p.img}.webp" alt="">+ ${lang.money(p.p)}</button>`).join('');
+  document.getElementById('status').innerHTML = lang.status(lang.money(sub), ix >= 0 ? esc(rangeLabel(RANGES[ix])) : '');
+  const n = Object.values(S.bag).reduce((a, b) => a + b, 0), gn = ix >= 0 ? giftCount(RANGES[ix]) : 0;
+  document.getElementById('sPanel').innerHTML = `<div class="ph">${lang.yourBag}<small>${lang.items(n)}</small></div>${itemsHtml(true)}${giftBox('panel', sub, ix, anim)}<div class="tot"><span>${lang.sub}</span><span>${lang.money(sub)}</span></div><div class="btn">${lang.checkout}</div>`;
+  document.getElementById('sPage').innerHTML = `<div class="ph">${lang.bag}<small>${lang.items(n)}</small></div>${itemsHtml(true)}${giftBox('page', sub, ix, anim)}<div class="tot"><span>${lang.sub}</span><span>${lang.money(sub)}</span></div><div class="btn" style="max-width:280px;margin-inline-start:auto">${lang.checkout}</div>`;
+  document.getElementById('sSum').innerHTML = `<div class="ph">${lang.summary}</div>${itemsHtml(false)}${giftBox('sum', sub, ix, anim)}<div class="tline"><span>${lang.sub}</span><b>${lang.money(sub)}</b></div>${gn ? `<div class="tline"><span>${lang.giftsLine(gn)}</span><b class="g">${lang.money(0)}</b></div>` : ''}<div class="tline"><span>${lang.deliv}</span><b>${lang.freeDel}</b></div><div class="tot"><span>${lang.total}</span><span>${lang.money(sub)}</span></div><div class="btn">${lang.placeOrder}</div>`;
+  renderHome(ix);
+}
+
+function renderHome(ix){
+  const lang = L(), head = `<h3>${lang.hpTitle}</h3><p class="sub">${lang.hpSub}</p>`;
+  const imgs = (r, max) => r.gifts.flatMap(([k, q]) => Array(Math.min(q, k === 'mask' ? 2 : 1)).fill(k)).slice(0, max).map(k => `<img src="img/${G[k].img}.webp" alt="">`).join('');
+  const you = i => i === ix ? `<span class="you">${lang.yours}</span>` : '';
+  let body;
+  if (S.home === 'H1') body = `<div class="H1">${RANGES.map((r, i) => `<div class="c${i === ix ? ' cur' : ''}"><span class="r">${esc(rangeLabel(r))}</span><div class="im">${imgs(r, 4)}</div><b>${esc(words(r))}</b>${you(i)}</div>`).join('')}</div>`;
+  else if (S.home === 'H2') body = `<div class="H2">${RANGES.map((r, i) => `<div class="s${i <= ix ? ' cur' : ''}"><span class="dot">${GIFT}</span><span class="r">${esc(rangeLabel(r))}</span><b>${esc(words(r))}</b>${you(i)}</div>`).join('')}</div>`;
+  else {
+    const tones = ['#e48aa5', '#d35d80', '#c13e63', '#a82f53', '#8f2546'];
+    body = `<div class="H3">${RANGES.map((r, i) => `<div class="l${i === ix ? ' cur' : ''}"><span class="r" style="background:${tones[Math.min(i, tones.length - 1)]}"><small>${lang.spend}</small>${esc(r.max == null ? (AR() ? r.min + '+ د.إ' : r.min + '+') : r.min + ' – ' + r.max)}</span><b>${esc(words(r))}</b><span class="im">${imgs(r, 5)}</span>${you(i)}</div>`).join('')}</div>`;
+  }
+  document.getElementById('hp').innerHTML = `<div class="hp">${head}${body}<button type="button" class="cta">${lang.shop}</button></div>`;
+  const ed = document.getElementById('ranges');
+  if (!ed.dataset.built || ed.dataset.lang !== S.lang) {
+    ed.innerHTML = RANGES.map((r, i) => `<div class="er"><div><label for="mn${i}">${lang.from}</label><input id="mn${i}" inputmode="numeric" data-i="${i}" data-f="min" value="${r.min}"></div><div><label for="mx${i}">${lang.to}</label><input id="mx${i}" inputmode="numeric" data-i="${i}" data-f="max" value="${r.max ?? ''}" placeholder="${lang.above}"></div><div class="w"><label for="we${i}">${lang.wEn}</label><input id="we${i}" data-i="${i}" data-f="en" value="${esc(r.en)}"></div><div class="w"><label for="wa${i}">${lang.wAr}</label><input id="wa${i}" dir="rtl" data-i="${i}" data-f="ar" value="${esc(r.ar)}"></div></div>`).join('');
+    ed.dataset.built = '1'; ed.dataset.lang = S.lang;
+  }
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act, k = b.dataset.k;
+  if (a === 'inc') S.bag[k] = Math.min(9, (S.bag[k] || 0) + 1);
+  else if (a === 'dec') { S.bag[k] = Math.max(0, (S.bag[k] || 0) - 1); if (!S.bag[k]) delete S.bag[k]; }
+  else if (a === 'box') { S.box = b.dataset.v; S.lastRange = -2; save(); }
+  else if (a === 'home') { S.home = b.dataset.v; save(); }
+  else if (a === 'lang') S.lang = b.dataset.v;
+  else if (a === 'details') S.open = !S.open;
+  else return;
+  render();
+});
+document.getElementById('clear').addEventListener('click', () => { S.bag = {}; render(); });
+document.getElementById('ranges').addEventListener('input', e => {
+  const el = e.target, r = RANGES[+el.dataset.i]; if (!r) return;
+  if (el.dataset.f === 'min' || el.dataset.f === 'max') { const v = el.value.trim() === '' ? null : Math.max(0, parseInt(el.value, 10) || 0); if (el.dataset.f === 'min') r.min = v ?? 0; else r.max = v; }
+  else r[el.dataset.f] = el.value;
+  render();
+});
+render();
+</script>
