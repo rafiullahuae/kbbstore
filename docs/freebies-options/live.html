@@ -28,7 +28,8 @@ h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em;text-wrap:balan
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--on)}
 .status{font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}.status b{color:var(--ink)}
 .boardwrap{padding-block:16px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.board{display:grid;gap:22px;min-width:0}
+.board{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;min-width:0}
+.board>*{min-width:0}
 .secT{display:grid;gap:2px;margin-top:8px}
 .secT h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
 .secT p{margin:0;color:var(--muted);font-size:14px;max-width:85ch}
@@ -88,143 +89,23 @@ h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em;text-wrap:balan
 .pics{display:flex;flex-wrap:wrap;gap:5px}
 .pics .t{width:40px;height:40px;border-radius:10px}
 
-/* 01 · Gift tags on a ribbon */
-.d1{background:linear-gradient(180deg,var(--blush),#fff 70%)}
-.d1 .rib{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;padding-top:26px}
-.d1 .rib::before{content:"";position:absolute;top:8px;left:-22px;right:-22px;height:4px;background:var(--pink);border-radius:4px}
-.d1 .tg{position:relative;background:#fff;border:1.5px solid #f0c8d4;border-radius:14px 14px 18px 18px;padding:22px 10px 14px;text-align:center;display:grid;gap:7px;justify-items:center;align-content:start;box-shadow:0 12px 22px -18px rgba(168,47,83,.6);transform:rotate(var(--r,0deg))}
-.d1 .tg::before{content:"";position:absolute;top:-20px;left:50%;width:2px;height:22px;background:var(--pink)}
-.d1 .tg::after{content:"";position:absolute;top:7px;left:50%;transform:translateX(-50%);width:11px;height:11px;border-radius:50%;border:2px solid #f0c8d4;background:var(--bg)}
-.d1 .tg .am{font-weight:800;font-size:19px;color:var(--pink2);line-height:1.1}
-.d1 .tg .am small{display:block;font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
-.d1 .tg .w{font-size:13.5px;font-weight:600;line-height:1.3;text-wrap:balance}
-.d1 .tg .pics{justify-content:center}
-.d1 .tg.cur{border-color:var(--pink);background:#fffafc}
-@container (max-width:700px){.d1 .rib{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:34px}.d1 .rib::before{display:none}.d1 .tg:last-child{grid-column:1/-1}}
+/* box B photos + View all */
+.fg .th{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding:3px 0 5px}
+.fg .va{border:0;background:none;padding:2px 4px;color:var(--green);font-weight:700;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.fg .va.hide{display:block;margin:4px 0 2px}
 
-/* 02 · Choose your spend (interactive) */
-.d2 .pills{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-.d2 .pills button{border:1.5px solid var(--line2);background:#fff;border-radius:999px;padding:8px 16px;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
-.d2 .pills button[aria-pressed="true"]{background:var(--pink);border-color:var(--pink);color:#fff}
-.d2 .stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px;align-items:center;max-width:860px;margin:0 auto;background:var(--soft);border-radius:18px;padding:20px}
-.d2 .big{font-size:clamp(34px,7cqi,58px);font-weight:800;line-height:1;color:var(--pink)}
-.d2 .big small{display:block;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
-.d2 .w{font-size:18px;font-weight:700;margin-top:10px;line-height:1.3}
-.d2 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
-.d2 .grid .t{width:100%;height:auto;aspect-ratio:1;border-radius:12px}
-.d2 .grid .t b{font-size:10.5px;min-width:22px;height:20px}
-@container (max-width:600px){.d2 .stage{grid-template-columns:1fr;text-align:center}.d2 .grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-
-/* 03 · Growing gift boxes */
-.d3{background:linear-gradient(180deg,#fff,var(--cream))}
-.d3 .row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;align-items:end}
-.d3 .c{display:grid;justify-items:center;gap:8px;text-align:center}
-.d3 .box{position:relative;width:calc(48px + var(--s) * 14px);max-width:100%;aspect-ratio:1/.86;margin-top:24px;background:linear-gradient(160deg,#e9718f,#b83a5e);border-radius:8px;box-shadow:0 14px 22px -16px rgba(120,30,60,.8)}
-.d3 .box::before{content:"";position:absolute;inset:0 calc(50% - 5px);background:#ffd5df}
-.d3 .box::after{content:"";position:absolute;left:-5%;right:-5%;top:-14%;height:26%;background:linear-gradient(160deg,#f08aa6,#c84a6c);border-radius:6px}
-.d3 .box i{position:absolute;top:-34%;left:50%;transform:translateX(-50%);width:44%;height:26%;border:5px solid #ffd5df;border-bottom:0;border-radius:50% 50% 0 0;z-index:1}
-.d3 .box span{position:absolute;inset:34% 0 0;display:grid;place-items:center;color:#fff;font-weight:800;font-size:calc(14px + var(--s) * 2px);z-index:1;text-shadow:0 1px 2px rgba(0,0,0,.25)}
-.d3 .am{font-weight:800;font-size:15px;color:var(--pink2)}
-.d3 .w{font-size:13px;font-weight:600;line-height:1.3;text-wrap:balance}
-.d3 .c.cur .am{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
-@container (max-width:640px){.d3 .row{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:22px}.d3 .c:last-child{grid-column:1/-1}.d3 .box{width:calc(46px + var(--s) * 9px)}}
-
-/* 04 · The receipt */
-.d4{background:var(--bg);display:grid;justify-items:center}
-.d4 .rc{width:min(100%,480px);background:#fff;padding:22px 22px 30px;font-variant-numeric:tabular-nums;box-shadow:0 18px 30px -24px rgba(42,34,40,.6);
-  -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/16px 51% repeat-x,linear-gradient(#000 0 0) top/100% calc(100% - 7px) no-repeat;
-  mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/16px 51% repeat-x,linear-gradient(#000 0 0) top/100% calc(100% - 7px) no-repeat}
-.d4 .rc h3{margin:0;text-align:center;font-size:20px;letter-spacing:.06em;text-transform:uppercase}
-.d4 .rc .sub{text-align:center;color:var(--muted);font-size:13px;margin:2px 0 12px}
-.d4 .rc .ln{display:flex;align-items:baseline;gap:6px;padding:9px 0;border-top:1.5px dashed #e6d8de;font-size:14px}
-.d4 .rc .ln b{white-space:nowrap}
-.d4 .rc .ln .dots{flex:1;border-bottom:2px dotted #d9c6ce;transform:translateY(-4px);min-width:10px}
-.d4 .rc .ln span:last-child{text-align:end;font-weight:600;max-width:62%}
-.d4 .rc .ln.cur{background:#fff5f8;margin-inline:-10px;padding-inline:10px;border-radius:8px}
-.d4 .rc .foot{text-align:center;margin-top:12px;font-size:12px;color:var(--muted);letter-spacing:.14em}
-.d4 .rc .foot b{display:block;font-size:22px;letter-spacing:.04em;color:var(--pink);margin-top:2px}
-
-/* 05 · Split hero with the full bundle */
-.frame>section.d5{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);padding:0}
-.d5 .l{background:linear-gradient(150deg,#5b2340,#a82f53);color:#fff;padding:30px 26px;display:grid;align-content:center;gap:12px}
-.d5 .l .ey{font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#ffc2d3}
-.d5 .l h3{margin:0;font-size:clamp(26px,5cqi,42px);line-height:1.05;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
-.d5 .l h3 em{font-style:normal;color:#ffc2d3}
-.d5 .l .pics .t{width:46px;height:46px;border-color:transparent}
-.d5 .l .cta{margin:6px 0 0;background:#fff;color:var(--plum)}
-.d5 .r{padding:22px;display:grid;gap:4px;align-content:center;background:#fff}
-.d5 .r .ln{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
-.d5 .r .ln:last-child{border-bottom:0}
-.d5 .r .ln .am{font-weight:800;color:var(--pink);font-variant-numeric:tabular-nums}
-.d5 .r .ln .w{font-weight:600;font-size:14px}
-@container (max-width:680px){.frame>section.d5{grid-template-columns:1fr}}
-
-/* 06 · Swipe cards */
-.d6 .rail{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(200px,1fr);gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px}
-.d6 .c{scroll-snap-align:start;border-radius:20px;padding:18px 16px;color:#fff;display:grid;gap:10px;min-height:250px;align-content:space-between}
-.d6 .c .am{font-size:13px;font-weight:700;letter-spacing:.06em;opacity:.92}
-.d6 .c .am b{display:block;font-size:30px;letter-spacing:-.01em;line-height:1.05}
-.d6 .c .w{font-size:15px;font-weight:700;line-height:1.3;text-wrap:balance}
-.d6 .c .pics .t{width:38px;height:38px;border-color:transparent}
-.d6 .c .you{background:#fff;color:var(--pink2);justify-self:start}
-@container (max-width:600px){.d6 .rail{grid-auto-columns:76%}}
-
-/* 07 · Zig-zag timeline */
-.d7{background:var(--cream)}
-.d7 .tl{position:relative;max-width:820px;margin:0 auto;display:grid;gap:14px}
-.d7 .tl::before{content:"";position:absolute;top:6px;bottom:6px;left:50%;width:3px;transform:translateX(-50%);background:linear-gradient(180deg,#f7c9d6,var(--pink2));border-radius:3px}
-.d7 .st{display:grid;grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr);align-items:center;gap:14px}
-.d7 .st .dot{width:44px;height:44px;border-radius:50%;background:#fff;border:3px solid var(--pink);display:grid;place-items:center;color:var(--pink);z-index:1;font-weight:800;font-size:14px}
-.d7 .st.cur .dot{background:var(--pink);color:#fff}
-.d7 .st .card{background:#fff;border-radius:14px;padding:12px 14px;border:1px solid #f0dfe6;display:grid;gap:6px}
-.d7 .st .card .am{font-weight:800;color:var(--pink2)}
-.d7 .st .card .w{font-weight:600;font-size:14px}
-.d7 .st:nth-child(odd) .card{grid-column:1;grid-row:1;text-align:end;justify-items:end}
-.d7 .st:nth-child(odd) .pics{justify-content:flex-end}
-.d7 .st .dot{grid-column:2;grid-row:1}
-.d7 .st:nth-child(even) .card{grid-column:3;grid-row:1}
-@container (max-width:620px){.d7 .tl::before{left:21px}.d7 .st{grid-template-columns:44px minmax(0,1fr)}.d7 .st .dot{grid-column:1!important}.d7 .st .card{grid-column:2!important;text-align:start!important;justify-items:start!important}.d7 .st .pics{justify-content:flex-start!important}}
-
-/* 08 · Editorial type */
-.d8 .hd h3{font-size:clamp(26px,5cqi,40px)}
-.d8 .ls{max-width:900px;margin:0 auto;border-top:2px solid var(--ink)}
-.d8 .ln{display:grid;grid-template-columns:minmax(0,.9fr) 40px minmax(0,1.6fr);gap:10px;align-items:baseline;padding:14px 4px;border-bottom:1px solid #e9dde2}
-.d8 .ln .am{font-size:clamp(20px,3.6cqi,32px);font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.d8 .ln .ar{color:var(--pink);font-size:22px;font-weight:300}
-.d8 .ln .w{font-size:clamp(15px,2.4cqi,21px);font-weight:500;line-height:1.3}
-.d8 .ln.cur .am{color:var(--pink)}
-@container (max-width:560px){.d8 .ln{grid-template-columns:1fr;gap:2px}.d8 .ln .ar{display:none}}
-
-/* 09 · Bento */
-.d9{background:var(--soft)}
-.d9 .bn{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:1080px;margin:0 auto}
-.d9 .c{background:#fff;border-radius:18px;padding:16px;display:grid;gap:8px;align-content:start;border:1px solid #efe1e7}
-.d9 .c .am{font-weight:800;font-size:13px;letter-spacing:.06em;color:var(--pink)}
-.d9 .c .w{font-weight:700;font-size:15px;line-height:1.3}
-.d9 .c.k1{grid-column:1;grid-row:1}.d9 .c.k2{grid-column:2;grid-row:1}.d9 .c.k3{grid-column:1/3;grid-row:2}.d9 .c.k4{grid-column:1/3;grid-row:3;background:var(--blush);border-color:#f3d2dc}
-.d9 .c.k5{grid-column:3/5;grid-row:1/4;background:linear-gradient(160deg,#2a2228,#5b2340);color:#fff;border:0;align-content:space-between}
-.d9 .c.k5 .am{color:#ffc2d3}.d9 .c.k5 .w{font-size:22px}
-.d9 .c.k5 .pics .t{width:54px;height:54px;border-color:transparent}
-.d9 .c.cur{outline:2.5px solid var(--green);outline-offset:-2.5px}
-@container (max-width:700px){.d9 .bn{grid-template-columns:repeat(2,minmax(0,1fr))}.d9 .c.k1{grid-column:1;grid-row:auto}.d9 .c.k2{grid-column:2;grid-row:auto}.d9 .c.k3,.d9 .c.k4,.d9 .c.k5{grid-column:1/-1;grid-row:auto}}
-
-/* 10 · Slim ticker band */
-.frame>section.d10{padding:0;background:var(--plum);color:#fff}
-.d10 .tk{display:flex;align-items:center;gap:14px;padding:14px 18px}
-.d10 .tk .lb{flex:none;display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;color:#ffc2d3}
-.d10 .tk .lb svg{width:18px;height:18px}
-.d10 .mq{flex:1;min-width:0;overflow:hidden;-webkit-mask:linear-gradient(90deg,#0000,#000 6%,#000 94%,#0000);mask:linear-gradient(90deg,#0000,#000 6%,#000 94%,#0000)}
-.d10 .mq .run{display:flex;gap:34px;width:max-content;animation:run 32s linear infinite}
-.d10 .mq .run span{white-space:nowrap;font-size:14.5px}
-.d10 .mq .run b{color:#ffc2d3}
-.d10 .tk .open{flex:none;border:1.5px solid #ffc2d3;background:transparent;color:#fff;border-radius:999px;padding:6px 14px;font-weight:700;font-size:13px}
-.d10 .drop{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;padding:0 18px 16px}
-.d10 .drop div{background:rgba(255,255,255,.08);border-radius:12px;padding:10px;display:grid;gap:4px}
-.d10 .drop .am{font-weight:800;color:#ffc2d3;font-size:13px}.d10 .drop .w{font-size:13px;font-weight:600}
-@keyframes run{to{transform:translateX(-50%)}}
-.rtl .d10 .mq .run{animation-name:runr}@keyframes runr{to{transform:translateX(50%)}}
-@media (prefers-reduced-motion:reduce){.d10 .mq .run{animation:none}}
-@container (max-width:640px){.d10 .tk{flex-wrap:wrap}.d10 .mq{flex-basis:100%;order:3}.d10 .drop{grid-template-columns:1fr 1fr}}
+/* homepage: one simple section */
+.hs{background:var(--cream)}
+.hs .tl{max-width:980px;margin:0 auto;background:#fff;border:1px solid #eedde4;border-radius:18px;overflow:hidden}
+.hs .tr{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 18px;border-top:1px solid #f3e8ed}
+.hs .tr:first-child{border-top:0}
+.hs .ra{font-weight:800;color:var(--pink);font-size:15px;font-variant-numeric:tabular-nums}
+.hs .tw{display:grid;gap:3px;min-width:0}
+.hs .tw b{font-size:15.5px;line-height:1.3}
+.hs .tw span{font-size:13px;color:var(--muted);line-height:1.45}
+.hs .pics{justify-content:flex-end;max-width:300px}
+.hs .pics .t{width:38px;height:38px}
+@container (max-width:640px){.hs .tr{grid-template-columns:1fr;gap:6px;padding:14px}.hs .pics{justify-content:flex-start;max-width:none}}
 </style>
 
 <div class="pagehead">
@@ -252,7 +133,7 @@ const PRODUCTS = {
 };
 /* The owner's gifts (22 Oct). img null = not in the shop yet (striped tile with initials). v = example value, only shown with "Gift value: On". */
 const G = {
-  mask:{v:12, img:'mask', b:'Sheet mask', ba:'ماسك ورقي', n:'Sheet Mask', na:'ماسك ورقي'},
+  mask:{v:12, img:'mask', b:'', ba:'', n:'Sheet Mask', na:'ماسك ورقي'},
   m1:{v:25, img:'haruharu', b:'haruharu wonder', ba:'هاروهارو وندر', n:'Black Rice Hyaluronic Toner Mini', na:'تونر الأرز الأسود هيالورونيك ميني'},
   m2:{v:30, img:'isntree', b:'Isntree', ba:'إيزنتري', n:'Mugwort Calming Clay Mask Mini', na:'ماسك الطين بالشيح المهدّئ ميني'},
   m3:{v:25, img:null, ini:'BP', b:'beplain', ba:'بيبلين', n:'Mung Bean Milk Peeling Gel Mini', na:'جل التقشير بحليب الماش ميني'},
@@ -267,42 +148,30 @@ const RANGES = [
   {min:1000, max:1999, en:'5 Masks + 2 Minis + 2 Full Size Products', ar:'5 ماسكات + 2 ميني + منتجان بحجم كامل', gifts:[['mask',5],['m1',1],['m2',1],['f2',1],['f1',1]]},
   {min:2000, max:null, en:'12 Masks + 5 Minis + 3 Full Size Products', ar:'12 ماسكاً + 5 ميني + 3 منتجات بحجم كامل', gifts:[['mask',12],['m1',1],['m2',2],['m3',2],['f1',1],['f2',1],['f3',1]]},
 ];
-const DESIGNS = [
-  ['d1','Gift tags on a ribbon','Five hanging gift tags on a pink ribbon; the tag the bag reaches is highlighted.'],
-  ['d2','Choose your spend','Tap an amount to see that bundle with every product photo. One range at a time.'],
-  ['d3','Growing gift boxes','Five drawn gift boxes that grow with the spend, the number of gifts on each.'],
-  ['d4','The receipt','A paper receipt: spend on the left, what you get on the right, “TOTAL: FREE” at the bottom.'],
-  ['d5','Split hero','A plum half with the biggest bundle (up to 20 free gifts), the five ranges beside it.'],
-  ['d6','Swipe cards','Five cards in deepening pinks; swipe sideways on a phone.'],
-  ['d7','Zig-zag timeline','A vertical path with the ranges alternating left and right.'],
-  ['d8','Editorial type','Large type only, line by line: “100 → 2 Masks”. The most minimal.'],
-  ['d9','Bento grid','Tiles of different sizes; the AED 2,000+ bundle is the big dark tile.'],
-  ['d10','Slim ticker band','A thin plum band with the ranges scrolling past and a See all button. Takes the least space.'],
-];
 const T = {
-  en:{title:'Free gifts · final box and 10 homepage designs', lead:'Gift box B is final: the title is a little larger and the gift value is off by default. Below it are ten new homepage section designs with your exact ranges and wording. Change the bag at the top and every design marks the range it reaches. Switch to Phone width to see each one on a phone. Striped tiles are gifts not in the shop yet.',
+  en:{title:'Free gifts · gift box and homepage section', lead:'Gift box B: the gift photos with View all; View all opens the full list. Below it, the one homepage section. Change the bag at the top; switch Width to Phone 390 to see it on a phone. Striped tiles are gifts not in the shop yet.',
     jump:'Bag at', lang:'Language', width:'Width', valueT:'Gift value', on:'On', off:'Off (default)', desk:'Desktop', phone:'Phone 390',
     boxT:'Gift box · B (final)', boxP:'Cart panel, cart page and checkout summary. The summary has the new #fbf7f8 background you asked for.',
-    homeT:'Homepage section · 10 new designs', homeP:'All ten read the same settings: title, subtitle, button, and each range’s wording in English and Arabic.',
+    homeT:'Homepage section', homeP:'One simple section: each range with its wording and the gift products by name. Title, subtitle, button and every wording are editable in English and Arabic.',
     cPanel:'Cart panel', cPage:'Cart page', cSum:'Checkout · summary',
     yourBag:'Your bag', bag:'Shopping bag', summary:'Order summary', items:n => n === 1 ? '1 item' : n + ' items', empty:'Your bag is empty.',
     sub:'Subtotal', giftsLine:n => `Free gifts (${n})`, deliv:'Delivery', freeDel:'Free', total:'Total', checkout:'Checkout', placeOrder:'Place order',
-    head:'Free gifts for you', free:'FREE', worth:v => `Worth ${v}`,
+    head:'Free gifts for you', free:'FREE', viewAll:'View all', hide:'Hide', worth:v => `Worth ${v}`,
     ey:'Free gifts', hpTitle:'Free gifts with every order', hpSub:'The more you shop, the more we add, free.', shop:'Start shopping', spend:'Spend', yours:'Your bag', giftsWord:'free gifts', upto:n => `Up to <em>${n} free gifts</em> with your order`, showAll:'See all', hideAll:'Hide', receipt:'Your free gifts', receiptSub:'Spend more, unlock more', totalFree:'TOTAL', freeWord:'FREE',
     status:(sub, r) => `Bag <b>${sub}</b> · ${r ? `range <b>${r}</b>` : 'no gift yet'}`, money:v => 'AED ' + v.toLocaleString('en-US')},
-  ar:{title:'الهدايا المجانية · الصندوق النهائي و10 تصاميم للرئيسية', lead:'الصندوق B نهائي. وتحته عشرة تصاميم جديدة لقسم الصفحة الرئيسية بفئاتك ونصوصك.',
+  ar:{title:'الهدايا المجانية · الصندوق وقسم الرئيسية', lead:'الصندوق B: صور الهدايا مع عرض الكل. وتحته قسم الصفحة الرئيسية.',
     jump:'الحقيبة عند', lang:'اللغة', width:'العرض', valueT:'قيمة الهدايا', on:'تشغيل', off:'إيقاف (افتراضي)', desk:'كمبيوتر', phone:'هاتف 390',
     boxT:'صندوق الهدايا · B (نهائي)', boxP:'نافذة السلة وصفحة السلة وملخص الدفع.',
-    homeT:'قسم الصفحة الرئيسية · 10 تصاميم جديدة', homeP:'كل التصاميم تستخدم الإعدادات نفسها.',
+    homeT:'قسم الصفحة الرئيسية', homeP:'قسم واحد بسيط: كل فئة مع نصها وأسماء المنتجات.',
     cPanel:'نافذة السلة', cPage:'صفحة السلة', cSum:'الدفع · الملخص',
     yourBag:'حقيبتك', bag:'حقيبة التسوق', summary:'ملخص الطلب', items:n => n === 1 ? 'منتج واحد' : n === 2 ? 'منتجان' : n + ' منتجات', empty:'حقيبتك فارغة.',
     sub:'المجموع الفرعي', giftsLine:n => `هدايا مجانية (${n})`, deliv:'التوصيل', freeDel:'مجاني', total:'الإجمالي', checkout:'إتمام الشراء', placeOrder:'تأكيد الطلب',
-    head:'هدايا مجانية لكِ', free:'مجاناً', worth:v => `بقيمة ${v}`,
+    head:'هدايا مجانية لكِ', free:'مجاناً', viewAll:'عرض الكل', hide:'إخفاء', worth:v => `بقيمة ${v}`,
     ey:'هدايا مجانية', hpTitle:'هدايا مجانية مع كل طلب', hpSub:'كلما تسوّقتِ أكثر، أضفنا لكِ أكثر، مجاناً.', shop:'تسوّقي الآن', spend:'أنفقي', yours:'حقيبتك', giftsWord:'هدية مجانية', upto:n => `حتى <em>${n} هدية مجانية</em> مع طلبك`, showAll:'عرض الكل', hideAll:'إخفاء', receipt:'هداياكِ المجانية', receiptSub:'تسوّقي أكثر، واحصلي على أكثر', totalFree:'الإجمالي', freeWord:'مجاناً',
     status:(sub, r) => `الحقيبة <b>${sub}</b> · ${r ? `الفئة <b>${r}</b>` : 'لا هدية بعد'}`, money:v => v.toLocaleString('en-US') + ' د.إ'},
 };
 const PRESETS = [{}, {wrap:1}, {wrap:1, aqua:1, serum:2}, {wrap:1, aqua:2, cream:2, serum:1}, {wrap:2, aqua:3, cream:4, serum:2}, {wrap:4, aqua:5, cream:6, serum:6}];
-const S = {lang:'en', bag:{wrap:1, aqua:2, cream:2, serum:1}, last:-1, fw:'desk', val:false, d2:2, d10:false};
+const S = {lang:'en', bag:{wrap:1, aqua:2, cream:2, serum:1}, last:-1, fw:'desk', val:false, open:{}};
 
 const L = () => T[S.lang];
 const AR = () => S.lang === 'ar';
@@ -320,12 +189,13 @@ const tile = (k, q) => `<span class="t" title="${esc(gname(k))}">${G[k].img ? `<
 const pics = (r, max = 9) => `<div class="pics">${r.gifts.slice(0, max).map(([k, q]) => tile(k, q)).join('')}</div>`;
 const you = (i, ix) => i === ix ? ` <span class="you">${L().yours}</span>` : '';
 
-/* gift box B (final) */
-function box(ix, anim){
+/* gift box B (final): photos + View all; View all opens the full list */
+function box(where, ix, anim){
   if (ix < 0) return '';
-  const r = RANGES[ix], lang = L();
+  const r = RANGES[ix], lang = L(), open = !!S.open[where];
   const rows = r.gifts.map(([k, q]) => `<div class="gi">${tile(k, 1)}<div class="gn"><small>${esc(gbrand(k))}</small>${q > 1 ? `<em>${q}× </em>` : ''}${esc(gname(k))}</div>${S.val ? `<span class="was">${lang.money(G[k].v * q)}</span>` : ''}<span class="free">${lang.free}</span></div>`).join('');
-  return `<div class="fg${anim ? ' pop' : ''}"><div class="h">${GIFT}<span>${lang.head}</span>${S.val ? `<span class="ov">${lang.worth(lang.money(giftValue(r)))}</span>` : ''}</div>${rows}</div>`;
+  const photos = `<div class="th">${r.gifts.map(([k, q]) => tile(k, q)).join('')}<button type="button" class="va" data-act="open" data-v="${where}" aria-expanded="false">${lang.viewAll}</button></div>`;
+  return `<div class="fg${anim ? ' pop' : ''}"><div class="h">${GIFT}<span>${lang.head}</span>${S.val ? `<span class="ov">${lang.worth(lang.money(giftValue(r)))}</span>` : ''}</div>${open ? `${rows}<button type="button" class="va hide" data-act="open" data-v="${where}" aria-expanded="true">${lang.hide}</button>` : photos}</div>`;
 }
 function items(){
   const ks = Object.keys(S.bag).filter(k => S.bag[k] > 0);
@@ -333,20 +203,11 @@ function items(){
   return ks.map(k => { const p = PRODUCTS[k], q = S.bag[k]; return `<div class="item"><img src="img/${p.img}.webp" alt="" loading="lazy"><div class="n"><small>${esc(AR() ? p.ba : p.b)}</small>${esc(AR() ? p.na : p.n)}${q > 1 ? ` <em>× ${q}</em>` : ''}</div><div class="p">${L().money(p.p * q)}</div></div>`; }).join('');
 }
 
-/* the ten homepage designs */
-function design(id, ix){
-  const lang = L(), R = RANGES, hd = `<div class="hd"><span class="ey">${lang.ey}</span><h3>${lang.hpTitle}</h3><p>${lang.hpSub}</p></div>`, cta = `<button type="button" class="cta">${lang.shop}</button>`;
-  if (id === 'd1') return `<section class="d1">${hd}<div class="rib">${R.map((r, i) => `<div class="tg${i === ix ? ' cur' : ''}" style="--r:${[-2, 1.5, -1, 2, -1.5][i % 5]}deg"><span class="am"><small>${lang.spend}</small>${esc(amt(r))}</span><span class="w">${esc(words(r))}</span>${pics(r, 4)}${you(i, ix)}</div>`).join('')}</div>${cta}</section>`;
-  if (id === 'd2') { const r = R[S.d2]; return `<section class="d2">${hd}<div class="pills" role="group">${R.map((x, i) => `<button type="button" data-act="d2" data-v="${i}" aria-pressed="${i === S.d2}">${esc(amt(x))}</button>`).join('')}</div><div class="stage"><div><div class="big">${giftCount(r)}<small>${lang.giftsWord}</small></div><div class="w">${esc(words(r))}${you(S.d2, ix)}</div></div><div class="grid">${r.gifts.map(([k, q]) => tile(k, q)).join('')}</div></div>${cta}</section>`; }
-  if (id === 'd3') return `<section class="d3">${hd}<div class="row">${R.map((r, i) => `<div class="c${i === ix ? ' cur' : ''}"><span class="box" style="--s:${i}"><i></i><span>${giftCount(r)}</span></span><span class="am">${esc(amt(r))}</span><span class="w">${esc(words(r))}</span>${you(i, ix)}</div>`).join('')}</div>${cta}</section>`;
-  if (id === 'd4') return `<section class="d4"><div class="rc"><h3>${lang.receipt}</h3><p class="sub">${lang.receiptSub}</p>${R.map((r, i) => `<div class="ln${i === ix ? ' cur' : ''}"><b>${esc(amt(r))}</b><span class="dots"></span><span>${esc(words(r))}</span></div>`).join('')}<div class="foot">${lang.totalFree}<b>${lang.freeWord}</b></div></div>${cta}</section>`;
-  if (id === 'd5') { const big = R[R.length - 1]; return `<section class="d5"><div class="l"><span class="ey">${lang.ey}</span><h3>${lang.upto(giftCount(big))}</h3>${pics(big)}<button type="button" class="cta">${lang.shop}</button></div><div class="r">${R.map((r, i) => `<div class="ln"><span class="am">${esc(amtShort(r))}</span><span class="w">${esc(words(r))}${you(i, ix)}</span></div>`).join('')}</div></section>`; }
-  if (id === 'd6') { const tones = ['linear-gradient(160deg,#f3a2b9,#e07a98)', 'linear-gradient(160deg,#e98aa6,#d35d80)', 'linear-gradient(160deg,#dc6688,#c13e63)', 'linear-gradient(160deg,#c94a6f,#962a4c)', 'linear-gradient(160deg,#8f2a4d,#4a1a33)']; return `<section class="d6">${hd}<div class="rail">${R.map((r, i) => `<div class="c" style="background:${tones[i % 5]}"><span class="am">${lang.spend}<b>${esc(amtShort(r))}</b></span><span class="w">${esc(words(r))}</span>${pics(r, 5)}${i === ix ? `<span class="you">${lang.yours}</span>` : ''}</div>`).join('')}</div>${cta}</section>`; }
-  if (id === 'd7') return `<section class="d7">${hd}<div class="tl">${R.map((r, i) => `<div class="st${i === ix ? ' cur' : ''}"><div class="card"><span class="am">${esc(amt(r))}</span><span class="w">${esc(words(r))}${you(i, ix)}</span>${pics(r, 5)}</div><span class="dot">${giftCount(r)}</span></div>`).join('')}</div>${cta}</section>`;
-  if (id === 'd8') return `<section class="d8">${hd}<div class="ls">${R.map((r, i) => `<div class="ln${i === ix ? ' cur' : ''}"><span class="am">${esc(amt(r))}</span><span class="ar" aria-hidden="true">${AR() ? '←' : '→'}</span><span class="w">${esc(words(r))}${you(i, ix)}</span></div>`).join('')}</div>${cta}</section>`;
-  if (id === 'd9') return `<section class="d9">${hd}<div class="bn">${R.map((r, i) => `<div class="c k${i + 1}${i === ix ? ' cur' : ''}"><span class="am">${esc(amt(r))}</span><span class="w">${esc(words(r))}${you(i, ix)}</span>${pics(r)}</div>`).join('')}</div>${cta}</section>`;
-  if (id === 'd10') { const line = R.map(r => `<span>${lang.spend} <b>${esc(amt(r))}</b> · ${esc(words(r))}</span>`).join(''); return `<section class="d10"><div class="tk"><span class="lb">${GIFT}${lang.ey}</span><div class="mq"><div class="run">${line}${line}</div></div><button type="button" class="open" data-act="d10" aria-expanded="${S.d10}">${S.d10 ? lang.hideAll : lang.showAll}</button></div>${S.d10 ? `<div class="drop">${R.map((r, i) => `<div><span class="am">${esc(amt(r))}</span><span class="w">${esc(words(r))}${you(i, ix)}</span></div>`).join('')}</div>` : ''}</section>`; }
-  return '';
+/* the homepage section: one simple, informative section */
+function homeSection(){
+  const lang = L();
+  const rows = RANGES.map(r => `<div class="tr"><div class="ra">${esc(amt(r))}</div><div class="tw"><b>${esc(words(r))}</b><span>${r.gifts.map(([k, q]) => `${q > 1 ? q + '× ' : ''}${gbrand(k) ? esc(gbrand(k)) + ' ' : ''}${esc(gname(k))}`).join(' · ')}</span></div>${pics(r)}</div>`).join('');
+  return `<section class="hs"><div class="hd"><span class="ey">${lang.ey}</span><h3>${lang.hpTitle}</h3><p>${lang.hpSub}</p></div><div class="tl">${rows}</div><button type="button" class="cta">${lang.shop}</button></section>`;
 }
 
 function render(){
@@ -361,13 +222,12 @@ function render(){
   seg('segW', [['desk', lang.desk], ['phone', lang.phone]], S.fw, 'fw');
   seg('segV', [[0, lang.off], [1, lang.on]], S.val ? 1 : 0, 'val');
   document.getElementById('status').innerHTML = lang.status(lang.money(sub), ix >= 0 ? esc(amt(RANGES[ix])) : '');
-  const n = Object.values(S.bag).reduce((a, b) => a + b, 0), gn = ix >= 0 ? giftCount(RANGES[ix]) : 0, it = items(), b = box(ix, anim);
+  const n = Object.values(S.bag).reduce((a, b) => a + b, 0), gn = ix >= 0 ? giftCount(RANGES[ix]) : 0, it = items();
   let h = `<div class="secT"><h2>${lang.boxT}</h2><p>${lang.boxP}</p></div><div class="trio">
-    <div><div class="cap">${lang.cPanel}</div><div class="surf panel" style="max-width:400px"><div class="ph">${lang.yourBag}<small>${lang.items(n)}</small></div>${it}${b}<div class="tot"><span>${lang.sub}</span><span>${lang.money(sub)}</span></div><div class="btn">${lang.checkout}</div></div></div>
-    <div><div class="cap">${lang.cPage}</div><div class="surf"><div class="ph">${lang.bag}<small>${lang.items(n)}</small></div>${it}${b}<div class="tot"><span>${lang.sub}</span><span>${lang.money(sub)}</span></div><div class="btn" style="max-width:240px;margin-inline-start:auto">${lang.checkout}</div></div></div>
-    <div><div class="cap">${lang.cSum}</div><div class="surf sum"><div class="ph">${lang.summary}</div>${it}${b}<div class="tline"><span>${lang.sub}</span><b>${lang.money(sub)}</b></div>${gn ? `<div class="tline"><span>${lang.giftsLine(gn)}</span><b class="g">${lang.money(0)}</b></div>` : ''}<div class="tline"><span>${lang.deliv}</span><b>${lang.freeDel}</b></div><div class="tot"><span>${lang.total}</span><span>${lang.money(sub)}</span></div><div class="btn">${lang.placeOrder}</div></div></div></div>`;
-  h += `<div class="secT"><h2>${lang.homeT}</h2><p>${lang.homeP}</p></div>`;
-  h += DESIGNS.map(([id, name, desc], i) => `<div class="drow"><div class="dhead"><span class="tag">${String(i + 1).padStart(2, '0')}</span><b>${esc(name)}</b><p>${esc(desc)}</p></div><div class="frame" style="--fw:${S.fw === 'phone' ? '390px' : '100%'}">${design(id, ix)}</div></div>`).join('');
+    <div><div class="cap">${lang.cPanel}</div><div class="surf panel" style="max-width:400px"><div class="ph">${lang.yourBag}<small>${lang.items(n)}</small></div>${it}${box('panel', ix, anim)}<div class="tot"><span>${lang.sub}</span><span>${lang.money(sub)}</span></div><div class="btn">${lang.checkout}</div></div></div>
+    <div><div class="cap">${lang.cPage}</div><div class="surf"><div class="ph">${lang.bag}<small>${lang.items(n)}</small></div>${it}${box('page', ix, anim)}<div class="tot"><span>${lang.sub}</span><span>${lang.money(sub)}</span></div><div class="btn" style="max-width:240px;margin-inline-start:auto">${lang.checkout}</div></div></div>
+    <div><div class="cap">${lang.cSum}</div><div class="surf sum"><div class="ph">${lang.summary}</div>${it}${box('sum', ix, anim)}<div class="tline"><span>${lang.sub}</span><b>${lang.money(sub)}</b></div>${gn ? `<div class="tline"><span>${lang.giftsLine(gn)}</span><b class="g">${lang.money(0)}</b></div>` : ''}<div class="tline"><span>${lang.deliv}</span><b>${lang.freeDel}</b></div><div class="tot"><span>${lang.total}</span><span>${lang.money(sub)}</span></div><div class="btn">${lang.placeOrder}</div></div></div></div>`;
+  h += `<div class="secT"><h2>${lang.homeT}</h2><p>${lang.homeP}</p></div><div class="frame" style="--fw:${S.fw === 'phone' ? '390px' : '100%'}">${homeSection()}</div>`;
   document.getElementById('board').innerHTML = h;
 }
 
@@ -378,8 +238,7 @@ document.addEventListener('click', e => {
   else if (a === 'lang') S.lang = v;
   else if (a === 'fw') S.fw = v;
   else if (a === 'val') S.val = v === '1';
-  else if (a === 'd2') S.d2 = +v;
-  else if (a === 'd10') S.d10 = !S.d10;
+  else if (a === 'open') S.open[v] = !S.open[v];
   else return;
   render();
 });
