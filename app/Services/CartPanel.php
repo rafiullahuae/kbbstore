@@ -946,11 +946,43 @@ class CartPanel
      */
 
     /** @return array<string, mixed> all(), with the Arabic sizes over it on an Arabic page. */
-    private function sized(): array
+    private function sized(?array $keys = null): array
     {
-        $c = $this->all();
+        $c = $keys === null ? $this->all() : $this->only($keys);
 
         return \App\Support\TextSizes::arabic() ? \App\Support\TextSizes::overlay($c, $this->arValues()) : $c;
+    }
+
+    /**
+     * Only these keys, read and cast exactly as all() reads them. The
+     * small-phone block runs on every page that draws this surface (the
+     * panel: every shop page), and needs a handful of sizes, not the whole
+     * schema -- all() here cost ~0.3 ms a call under the request memo.
+     *
+     * @param  list<string>  $keys
+     * @return array<string, mixed>
+     */
+    private function only(array $keys): array
+    {
+        $out = [];
+
+        foreach (array_unique($keys) as $key) {
+            $saved = $this->settings->get('cartpanel_' . $key, null);
+            $out[$key] = $saved === null ? self::SCHEMA[$key][2] : $this->cast($key, $saved);
+        }
+
+        return $out;
+    }
+
+    /**
+     * The keys fitCss() reads: every size it may print, the links that stand
+     * in for one, and the two small-phone steps.
+     *
+     * @return list<string>
+     */
+    private static function fitKeys(): array
+    {
+        return array_merge(self::arKeys(), array_merge(...array_values(self::TYPE_LINKS)));
     }
 
     /** @param array<string, mixed> $c */
@@ -994,7 +1026,7 @@ class CartPanel
      */
     public function fitCss(): string
     {
-        $c = $this->sized();
+        $c = $this->sized(self::fitKeys());
         $rows = [];
 
         foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
