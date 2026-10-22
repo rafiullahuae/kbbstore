@@ -103,7 +103,7 @@ const S = {
   design:'A', digits:'latn', os:'ios', dev:'ip16', folded:true, posture:'flat', land:false, zoom:'fit', embed:false,
   tab:'home', stacks:{}, scroll:{}, more:{}, detail:{}, sheet:null, toast:null, viewer:null, anim:null,
   bag:[], wish:new Set(), coupon:null, couponErr:null, couponDraft:'', recent:[], q:'',
-  user:null, conc:0, ptab:'desc', qty:1, gi:0, bt:{}, open:{}, sort:{}, filt:{}, brandQ:'', catQ:'',
+  user:null, conc:0, ptab:'desc', qty:1, gi:0, bt:{}, open:{}, sort:{}, filt:{}, brandQ:'', catQ:'', cols:(() => { try { return localStorage.getItem('apv-cols') === '1' ? 1 : 2; } catch { return 2; } })(),
   notif:{orders:true, stock:true, drop:true, bag:false, offers:true, blog:false}, faceid:true, pw:false,
   form:{}, ferr:{}, co:null, orders:[], lastOrder:null, sent:{},
 };

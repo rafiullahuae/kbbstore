@@ -79,7 +79,7 @@ window.APV_I18N = {
 
   /* ── listings ── */
   'Most popular':'الأكثر شيوعاً', 'Top rated':'الأعلى تقييماً', 'Price: low to high':'السعر: من الأقل إلى الأعلى', 'Price: high to low':'السعر: من الأعلى إلى الأقل',
-  'Concern':'مشكلة البشرة', 'Price':'السعر', 'Up to {v}':'حتى {v}', 'On sale only':'المنتجات المخفّضة فقط', 'Filter':'تصفية', 'Sort by':'ترتيب حسب', 'Show {n} results':'اعرضي {n} نتيجة',
+  'Concern':'مشكلة البشرة', 'Price':'السعر', 'Up to {v}':'حتى {v}', 'On sale only':'المنتجات المخفّضة فقط', 'Filter':'تصفية', 'Layout':'طريقة العرض', 'One column':'عمود واحد', 'Two columns':'عمودان', 'Sort by':'ترتيب حسب', 'Show {n} results':'اعرضي {n} نتيجة',
   'No products match these filters':'لا توجد منتجات تطابق هذه التصفية', 'Try another brand or a higher price, or clear the filters.':'جرّبي علامة أخرى أو سعراً أعلى، أو امسحي التصفية.', 'Clear filters':'مسح التصفية',
   'Loading more…':'جارٍ تحميل المزيد…', 'You’ve seen all {n}':'شاهدتِ كل المنتجات ({n})',
   'Read more':'اقرئي المزيد', 'Read less':'عرض أقل', 'All {c}':'كل {c}', '{n} products on K-Beauty Bliss':'{n} منتج في كي بيوتي بليس',

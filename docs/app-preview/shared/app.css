@@ -1180,3 +1180,29 @@ body.embed .bbsw{display:none}
 .shabout p:not(:where(.kc *,.kh *)){margin:0;font-size:14.5px;line-height:1.6;color:var(--ink)}
 .shabout .clamp2:not(:where(.kc *,.kh *)){display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .shabout .lnk:not(:where(.kc *,.kh *)){margin-top:8px;padding:0;font-weight:700;color:var(--pk)}
+
+/* ── 22 Oct: listing cards like the website's (.kbb-card: white, outlined,
+   14px radius) with a slightly firmer outline so each reads as its own card;
+   every card in a grid is the same height (name 2 lines, one price line, the
+   price sits at the bottom). One / two column switch in place of the count
+   and Filter; a compact breadcrumb row; header icon spacing. ── */
+.grid:not(:where(.kc *,.kh *)){grid-auto-rows:1fr;gap:12px}
+.grid .pc:not(:where(.kc *,.kh *)){height:100%;background:#fff;border:1px solid rgba(42,34,40,.11);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(42,34,40,.04)}
+.grid .pc .im:not(:where(.kc *,.kh *)){border:0;border-radius:0;border-bottom:1px solid rgba(42,34,40,.06)}
+.grid .pc>.open.meta:not(:where(.kc *,.kh *)){flex:1 1 auto;display:flex;flex-direction:column;padding:9px 10px 11px}
+.grid .pc .br:not(:where(.kc *,.kh *)){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grid .pc .pr:not(:where(.kc *,.kh *)){margin-top:auto;padding-top:4px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
+.grid.one:not(:where(.kc *,.kh *)){grid-template-columns:minmax(0,1fr)!important;gap:14px}
+.grid.one .pc .im:not(:where(.kc *,.kh *)){aspect-ratio:4/3}
+.grid.one .pc .nm:not(:where(.kc *,.kh *)){font-size:15px}
+.grid.one .pc .pr:not(:where(.kc *,.kh *)){font-size:16px}
+.ltools.lt2:not(:where(.kc *,.kh *)){flex-wrap:nowrap;padding-block:6px}
+.colsw:not(:where(.kc *,.kh *)){display:inline-flex;gap:2px;padding:2px;border:1px solid var(--line);border-radius:999px;background:#fff}
+.colb:not(:where(.kc *,.kh *)){width:34px;height:30px;display:grid;place-items:center;border-radius:999px;color:var(--ink3)}
+.colb svg:not(:where(.kc *,.kh *)){width:17px;height:17px}
+.colb.on:not(:where(.kc *,.kh *)){background:var(--ink);color:#fff}
+.app .bar.crow .row{min-height:30px}
+.app .bar.crow .back{flex-basis:32px;width:32px;height:30px;min-height:30px;min-width:32px}
+.app .bar.crow .back svg{width:18px;height:18px}
+.app .bar.crow .bcr{line-height:1.2}
+@container app (max-width: 599px){.kh.hbb-D .kh-hd .hact .ib-wcp{margin-inline-start:12px;width:36px}.kh.hbb-D .kh-hd .hact .ib-wcp+.ib{width:36px}.kh.hbb-D .kh-hd .hact .ib-wcp i{inset-inline-start:13px}}

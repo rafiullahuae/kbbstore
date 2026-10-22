@@ -129,14 +129,20 @@ function listing(r, ctx, base, o = {}){
   const L = st === 'nomatch' ? [] : applyList(key, base);
   const so = S.sort[key] || 'pop', nf = nFilters(key);
   const wide = ctx.cls === 'expanded' && !ctx.dual && !ctx.half && !o.noPanel;
-  const tools = `<div class="ltools" data-sticky="1"><span class="grow small muted" aria-live="polite">${t('{n} products', {n:num(L.length)})}</span><button class="chip sm" data-sheet="sort" data-k="${key}">${ico('sort')}${t(SORTS.find(x => x[0] === so)[1])}</button>${wide ? '' : `<button class="chip sm${nf ? ' on' : ''}" data-sheet="filter" data-k="${key}">${ico('filter')}${t('Filter')}${nf ? ` · ${num(nf)}` : ''}</button>`}</div>`;
+  /* The owner, 22 Oct: no product count and no Filter on the phone; the sort
+     stays, and a one / two column switch takes the Filter's place. The wide
+     layout keeps its filter panel (it has room for it). */
+  const colBtn = (n, ic, lbl) => `<button class="colb${S.cols === n ? ' on' : ''}" data-act="cols" data-v="${n}" aria-pressed="${S.cols === n}" aria-label="${t(lbl)}">${ico(ic)}</button>`;
+  const tools = wide
+    ? `<div class="ltools" data-sticky="1"><span class="grow small muted" aria-live="polite">${t('{n} products', {n:num(L.length)})}</span><button class="chip sm" data-sheet="sort" data-k="${key}">${ico('sort')}${t(SORTS.find(x => x[0] === so)[1])}</button></div>`
+    : `<div class="ltools lt2" data-sticky="1"><button class="chip sm" data-sheet="sort" data-k="${key}">${ico('sort')}${t(SORTS.find(x => x[0] === so)[1])}</button><span class="grow"></span><span class="colsw" role="group" aria-label="${t('Layout')}">${colBtn(1, 'col1', 'One column')}${colBtn(2, 'col2', 'Two columns')}</span></div>`;
   if (st === 'loading') return (o.head || '') + tools + `<div class="gpad">${gridSkel(6)}</div>`;
   if (st === 'error') return errState();
   const shown = Math.min(L.length, S.more[key] || 12);
   const sel = ctx.selected;
   const grid = !L.length
     ? `${empty('search', t('No products match these filters'), t('Try another brand or a higher price, or clear the filters.'), null)}<div style="display:flex;justify-content:center"><button class="btn ghost" data-act="clearf" data-k="${key}">${t('Clear filters')}</button></div>`
-    : `<div class="grid">${L.slice(0, shown).map((p, i) => pcard(p, {eager:i < 4, sel})).join('')}</div>${shown < L.length
+    : `<div class="grid${!wide && S.cols === 1 ? ' one' : ''}">${L.slice(0, shown).map((p, i) => pcard(p, {eager:i < 4, sel})).join('')}</div>${shown < L.length
       ? `<div class="more-load" data-more="${esc(key)}" data-total="${L.length}" aria-live="polite">${gridSkel(2)}<p class="small muted" style="text-align:center;margin:12px 0 0">${t('Loading more…')} · ${num(shown)} / ${num(L.length)}</p></div>`
       : `<p class="small muted endnote">${t('You’ve seen all {n}', {n:num(L.length)})}</p>`}`;
   return `${st === 'offline' ? offbar() : ''}${o.head || ''}${tools}${wide ? `<div class="lwide"><aside class="fpanel" aria-label="${t('Filter')}"><div class="fph"><b>${t('Filter')}</b>${nf ? `<button class="lnk" data-act="clearf" data-k="${key}">${t('Clear')}</button>` : ''}</div>${filterPanel(key, base, o)}</aside><div class="gpad">${grid}</div></div>` : `<div class="gpad">${grid}</div>`}`;

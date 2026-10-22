@@ -194,6 +194,7 @@ const ACT = {
   express:(el) => { const p = (route().params || {}).slug; if (p && !S.bag.some(b => b.slug === p)) addToBag(p, S.qty); goChain('/checkout/wallet'); },
   page:(el) => { const b = $('#stage [data-layer="p0-body"]'); if (b) b.scrollBy({top:+el.dataset.v * b.clientHeight * .8, behavior:reduced() ? 'auto' : 'smooth'}); },
   /* listings */
+  cols:(el) => { S.cols = +el.dataset.v === 1 ? 1 : 2; try { localStorage.setItem('apv-cols', String(S.cols)); } catch {} haptic('selection'); render(); },
   sort:(el) => { S.sort[el.dataset.k] = el.dataset.v; S.more[el.dataset.k] = 12; S.sheet = null; haptic('selection'); render(); },
   fconc:(el) => { const f = filt(el.dataset.k); f.conc = f.conc === el.dataset.v ? '' : el.dataset.v; S.more[el.dataset.k] = 12; render(); },
   fmax:(el) => { const f = filt(el.dataset.k); f.max = f.max === +el.dataset.v ? 0 : +el.dataset.v; S.more[el.dataset.k] = 12; render(); },
