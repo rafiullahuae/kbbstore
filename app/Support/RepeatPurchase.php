@@ -242,6 +242,7 @@ final class RepeatPurchase
             ->whereNull('o.deleted_at')
             ->whereIn('o.status', Order::REAL_STATUSES)
             ->whereNotNull('oi.product_id')
+            ->where('oi.is_gift', false) // Lane FG: nobody re-buys a gift they were given
             ->where('o.email', '<>', '')
             ->groupBy('oi.product_id', DB::raw('LOWER(o.email)'))
             // Separate ORDERS, not line quantities: two jars in one basket is

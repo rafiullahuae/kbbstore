@@ -167,7 +167,7 @@ final class ProductsController extends Controller
             ->groupBy('product_variant_id');
 
         $sold = DB::table('order_items as i')->join('orders as o', 'o.id', '=', 'i.order_id')
-            ->where('i.product_id', $id)->whereIn('o.status', \App\Models\Order::REAL_STATUSES)->whereNull('o.deleted_at')
+            ->where('i.product_id', $id)->where('i.is_gift', false)->whereIn('o.status', \App\Models\Order::REAL_STATUSES)->whereNull('o.deleted_at')
             ->where('o.created_at', '>=', now()->subDays(30))
             ->selectRaw('COALESCE(SUM(i.quantity), 0) as q, COALESCE(SUM(i.total), 0) as t')->first();
         $sold30 = (int) $sold->q;

@@ -95,6 +95,7 @@ Nothing else is read.
                 <tr>
                     <td>
                         <div class="it-name" dir="auto">{{ $item['nameForCustomer'] }}</div>{{-- nameForCustomer: the invoice is the customer's copy and Admin\InvoiceController renders it inside OrderLocale::render(), so the rest of it is already their language. The DELIVERY NOTE reads it too, for the same reason one document along: it goes in the parcel. The packing slip keeps `name` -- a picking list is read at the bench and is not wrapped, which is the split invoices/document.blade.php states. See InvoiceDocument::items(). One line, and at the END of this one, because Blade removes a comment and leaves the newline it sat on. --}}
+@if (! empty($item['gift']))<div class="it-sub" dir="auto" style="font-weight:700;color:#1f6e4a">{{ $item['giftLabel'] }}</div>@endif
                         @php
                             $sub = array_values(array_filter([
                                 $item['brand'],

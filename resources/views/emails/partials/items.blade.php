@@ -36,6 +36,7 @@
         <tr>
             <td style="padding:12px 8px 12px 0;border-bottom:1px solid {{ $c['line'] }};vertical-align:top;font-size:14.5px;line-height:1.45;">
                 <div style="font-weight:600;color:{{ $c['ink'] }};">{{ $item['name'] }}</div>
+@if (! empty($item['gift']))<div style="margin-top:3px;"><span style="display:inline-block;padding:1px 8px;border-radius:999px;background:#2e8f62;color:#ffffff;font-size:11px;font-weight:800;">{{ $item['giftLabel'] }}</span></div>@endif
 
                 @if ($item['brand'] !== '')
                     <div style="font-size:12.5px;color:{{ $c['pinkDeep'] }};">{{ $item['brand'] }}</div>

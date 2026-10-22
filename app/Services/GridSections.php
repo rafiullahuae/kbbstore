@@ -1073,6 +1073,7 @@ class GridSections
                 ->whereIn('o.status', \App\Models\Order::REAL_STATUSES)
                 ->where('o.created_at', '>=', $since->toDateTimeString())
                 ->whereNotNull('oi.product_id')
+                ->where('oi.is_gift', false) // Lane FG: a free gift is not a sale
                 ->groupBy('oi.product_id')
                 ->selectRaw('oi.product_id as pid, SUM(oi.quantity) as n')
                 ->orderByDesc('n')

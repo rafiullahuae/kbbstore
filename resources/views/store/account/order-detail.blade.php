@@ -249,6 +249,7 @@
           </div>
         @endforeach
       </div>
+@include('partials.free-gifts.box', ['kbbFgRows' => \App\Services\FreeGifts::orderRows($order), 'kbbFgShowValue' => false])
     </div>
 
     <div class="kbbod-sec">

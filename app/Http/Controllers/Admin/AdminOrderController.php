@@ -210,6 +210,24 @@ class AdminOrderController extends Controller
                 'product_slug' => $i->product?->slug,
             ]),
 
+            /*
+             * FREE GIFTS (Lane FG): AED 0 lines with the band they came from,
+             * read-only on the order screen. Order::items() leaves them out, so
+             * editing, totals and refunds never touch them. No query for an
+             * order without gifts.
+             */
+            'gifts' => (int) ($order->free_gift_count ?? 0) > 0
+                ? $order->gifts()->with('product:id,image,slug')->get()->map(fn ($i) => [
+                    'id' => $i->id,
+                    'name' => $i->name,
+                    'brand' => $i->brand,
+                    'sku' => $i->sku,
+                    'quantity' => (int) $i->quantity,
+                    'range' => (string) ($i->gift_range_label ?? ''),
+                    'image' => ImageVariants::variantUrl((string) ($i->product?->image ?? ''), 200),
+                ])->values()
+                : [],
+
             'shipping_method' => $order->shipping_method,
             'coupon_code' => $order->coupon_code,
             'customer_note' => $order->customer_note,

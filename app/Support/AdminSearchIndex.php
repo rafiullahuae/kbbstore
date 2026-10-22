@@ -866,6 +866,14 @@ final class AdminSearchIndex
         'merchantfeed' => [
             '' => ['Google Shopping feed', 'Feed address', 'Merchant Center', 'What the feed holds'],
         ],
+        // Growth & Marketing -> Free gifts (Lane FG).
+        'freegifts' => [
+            'Overview' => ['Free gifts', 'Before switching on', 'Ranges'],
+            'Ranges & gifts' => ['Add range', 'Wording (English)', 'Wording (Arabic)', 'Gifts', 'Save range'],
+            'Gift products' => ['Gift only', 'New gift-only product', 'Edit product'],
+            'Display' => ['Show gift prices', 'Countries', 'What counts', 'Save display'],
+            'Homepage section' => ['Show on the homepage', 'Title (English)', 'Button (English)'],
+        ],
         'push' => [
             'Campaigns' => ['New campaign', 'Who receives it', 'Emirate (where the phone is)', 'Send a test to my phone', 'Schedule', 'Send now'],
             'Automations' => ['Order updates', 'Back in stock', 'Basket reminder', 'Price drop', 'Wording (English · Arabic)'],

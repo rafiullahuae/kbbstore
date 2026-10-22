@@ -33,6 +33,9 @@
 @foreach ($order['items'] as $item)
 - {!! $item['name'] !!}@if ($item['brand'] !== '') ({!! $item['brand'] !!})@endif
 
+@if (! empty($item['gift']))
+  {!! $item['giftLabel'] !!}
+@endif
 @if ($item['variant'] !== '')
   {!! $item['variant'] !!}
 @endif

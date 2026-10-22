@@ -371,6 +371,11 @@ class OrdersApiController extends Controller
                  * column before it keeps its position.
                  */
                 'language',
+                /*
+                 * Lane FG: free-gift units on the order (AED 0, not in `units`).
+                 * APPENDED LAST for the reason is_demo, emirate and language are.
+                 */
+                'free_gifts',
             ]);
 
             $currency = Money::currency();
@@ -416,6 +421,7 @@ class OrdersApiController extends Controller
                         $row['is_demo'] ? 'yes' : 'no',
                         $row['emirate'] ?? '',
                         strtoupper($row['locale']),
+                        $row['free_gifts'] ?? 0,
                     ]));
                 }
             };
@@ -858,13 +864,17 @@ class OrdersApiController extends Controller
     {
         $items = DB::table('order_items')
             ->groupBy('order_id')
-            ->selectRaw('order_id, COALESCE(SUM(quantity), 0) as units, COUNT(*) as lines_count');
+            // Lane FG: free gifts are not units sold; they are counted on their own.
+            ->selectRaw('order_id, COALESCE(SUM(CASE WHEN is_gift = 1 THEN 0 ELSE quantity END), 0) as units,'
+                . ' COALESCE(SUM(CASE WHEN is_gift = 1 THEN 0 ELSE 1 END), 0) as lines_count,'
+                . ' COALESCE(SUM(CASE WHEN is_gift = 1 THEN quantity ELSE 0 END), 0) as gift_units');
 
         return $this->withRefundTotals($query)
             ->leftJoinSub($items, 'ia', 'ia.order_id', '=', 'orders.id')
             ->addSelect([
                 DB::raw('COALESCE(ia.units, 0) as units'),
                 DB::raw('COALESCE(ia.lines_count, 0) as lines_count'),
+                DB::raw('COALESCE(ia.gift_units, 0) as gift_units'),
             ]);
     }
 
@@ -1411,6 +1421,7 @@ class OrdersApiController extends Controller
             'locale' => self::orderLocale($o->locale ?? null),
             'units' => (int) $o->units,
             'lines' => (int) $o->lines_count,
+            'free_gifts' => (int) ($o->gift_units ?? 0),
             'total_fils' => $total,
             'total_display' => Money::plain($total),
             'refunded_fils' => $refunded,

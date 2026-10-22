@@ -757,13 +757,22 @@ it('adds no column to products, so the public API allowlist is unchanged', funct
      * FIRST: NOT in Product::toApi() -- the order is the owner's merchandising,
      * and the feed's own order already says all a reader needs. ApiSecurityTest
      * "keeps a product's place in its brand's order off the public product api".
+     *
+     * ── AND A FIFTH (Lane FG) ──────────────────────────────────────────────
+     *
+     * `gift_only`, by 2027_11_22_100000_free_gifts_schema: "Gift only (not for
+     * sale)". DECIDED FIRST: NOT in Product::toApi() -- a gift-only product is
+     * never visible, so the feed never lists it at all, and which products the
+     * shop gives away is not a field for an unauthenticated reader.
+     * ApiSecurityTest "keeps the gift-only flag, and gift-only products, off
+     * the public product api".
      */
     $columns = Schema::getColumnListing('products');
     sort($columns);
 
     expect($columns)->toBe([
         'also_like', 'brand_id', 'brand_position', 'category_id', 'created_at', 'custom_tabs', 'deleted_at', 'description', 'featured',
-        'gtin', 'how_to_use', 'id', 'image', 'image_alts', 'images', 'ingredients', 'is_visible',
+        'gift_only', 'gtin', 'how_to_use', 'id', 'image', 'image_alts', 'images', 'ingredients', 'is_visible',
         'manage_stock', 'meta_feed', 'name', 'position', 'price', 'published_at', 'rating',
         'review_count', 'routine_concerns', 'routine_role', 'sale_ends_at', 'sale_price',
         'sale_starts_at', 'seo', 'seo_json', 'set_discount', 'set_price_basis', 'set_price_mode',

@@ -11627,12 +11627,13 @@
             "label": "Opened summary background (phone)",
             "help": "The order summary on a phone once it is opened: the title row keeps its darker green, what opens under it gets this background and rounded bottom corners, and the heading row of the summary at the foot of the page takes the same darker green.",
             "options": {
+              "blush": "Light pinkish-white #fbf7f8 (as chosen, 22 October)",
               "white": "Almost white (as chosen, 14 October)",
               "green": "Very light green",
               "classic": "As 2.60.495 (the same green, square corners)"
             },
-            "default": "white",
-            "value": "white"
+            "default": "blush",
+            "value": "blush"
           },
           {
             "key": "lo_sec_even",

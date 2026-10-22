@@ -379,6 +379,7 @@ class CatalogReorderApiController extends Controller
             ->whereIn('orders.status', \App\Models\Order::REAL_STATUSES)
             ->whereNull('orders.deleted_at')
             ->whereIn('order_items.product_id', $ids)
+            ->where('order_items.is_gift', false) // Lane FG: a free gift is not a sale
             ->groupBy('order_items.product_id')
             ->selectRaw('/*+ JOIN_ORDER(order_items, orders) */ order_items.product_id as product_id,'
                 .' COUNT(DISTINCT order_items.order_id) as orders_count')

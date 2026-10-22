@@ -1848,5 +1848,13 @@ body.woocommerce-checkout main#content>p:empty{display:none}
     min-height:58px;border-radius:12px 12px 0 0;border-bottom-color:transparent}
 }
 
+/* Lane FG, the owner (22 October): the order summary's content was "super
+   light greenish"; it takes the free-gifts preview's summary colour, #fbf7f8.
+   ONLY that background: 'blush' carries cop-sow too, so the corners, borders
+   and the darker title row are the Almost-white option's, unchanged.
+   Appearance -> Checkout page -> 13 October layout -> Opened summary background. */
+@media(max-width:900px){.kbb-checkout.cop-sumg.cop-sob .summary.cosr-open{background:#fbf7f8}}
+@media(min-width:901px){.kbb-checkout.cop-sumg.cop-sob .summary{background:#fbf7f8}}
+
 /* (Lane VPA) The option a line holds, under its name: "Shade: #13 Bright Beige". */
 .kbb-checkout .cinfo .co-var{font-size:11.5px;line-height:1.3;color:var(--muted,#756C74);margin:-2px 0 4px}

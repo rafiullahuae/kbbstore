@@ -214,6 +214,39 @@ class OrderEmailPresenter
             ];
         }
 
+        /*
+         * FREE GIFTS (Lane FG), after the lines that were bought, each marked
+         * `gift` and printed at AED 0 with the "Free gift" tag in the email's
+         * language. No query for an order without gifts (free_gift_count 0,
+         * every order before this package), so every receipt already sent is
+         * byte-identical.
+         */
+        if ((int) ($order->free_gift_count ?? 0) > 0) {
+            $order->loadMissing('gifts');
+            $tag = app(\App\Services\FreeGifts::class)->text('tag');
+
+            foreach ($order->gifts as $gift) {
+                $localised = trim((string) ($gift->name_localised ?? ''));
+                $out[] = [
+                    'name' => $localised !== '' ? $localised : (trim((string) $gift->name) ?: 'Item'),
+                    'brand' => trim((string) $gift->brand),
+                    'productId' => (int) ($gift->product_id ?? 0),
+                    'sku' => trim((string) $gift->sku),
+                    'variant' => '',
+                    'setContents' => [],
+                    'quantity' => (int) $gift->quantity,
+                    'unitFils' => 0,
+                    'unitHtml' => self::html(0, $w),
+                    'unitPlain' => self::plain(0, $w),
+                    'lineFils' => 0,
+                    'lineHtml' => self::html(0, $w),
+                    'linePlain' => self::plain(0, $w),
+                    'gift' => true,
+                    'giftLabel' => $tag,
+                ];
+            }
+        }
+
         return $out;
     }
 

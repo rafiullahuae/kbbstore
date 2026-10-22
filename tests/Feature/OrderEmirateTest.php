@@ -341,7 +341,7 @@ it('appends Emirate as the LAST column of the CSV and moves no other column', fu
         // Lane OLG appended `language` after it, deliberately and for the same
         // reason: emirate keeps position 27, nothing before it moved. This pin
         // read end($head) === 'emirate' / count 27 until then.
-        ->and(count($head))->toBe(28)->and(end($head))->toBe('language');
+        ->and(count($head))->toBe(29)->and($head[27])->toBe('language')->and(end($head))->toBe('free_gifts'); // + free_gifts, appended after it (lane FG)
 });
 
 it('keeps the list at the same number of queries for 3 orders and for 40, and inside its budget', function () {

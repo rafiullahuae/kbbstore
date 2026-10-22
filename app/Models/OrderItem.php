@@ -23,7 +23,7 @@ class OrderItem extends Model
          * thing that reads it. NULL on every ordinary line.
          */
         // (Lane VPA) `variant_localised`: the same option snapshot in the customer's language.
-        return ['variant_attributes' => 'array', 'variant_localised' => 'array', 'set_contents' => 'array', 'quantity' => 'int', 'unit_price' => 'int', 'subtotal' => 'int', 'total' => 'int'];
+        return ['variant_attributes' => 'array', 'variant_localised' => 'array', 'set_contents' => 'array', 'is_gift' => 'bool', 'quantity' => 'int', 'unit_price' => 'int', 'subtotal' => 'int', 'total' => 'int'];
     }
 
     public function order()

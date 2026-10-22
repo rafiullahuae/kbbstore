@@ -66,6 +66,18 @@ class Product extends Model
         // A product moved to another brand has no place in that brand's order
         // yet: it joins the end of it rather than carrying the old brand's
         // number in. (Lane SO; App\Support\ScopeOrder.)
+        // "Gift only (not for sale)" (Lane FG, Marketing -> Free gifts): such a
+        // product is never visible, so every place the shop already hides an
+        // invisible product -- listings, search, the sitemap, feeds, /api, the
+        // product page and add-to-bag -- hides it, with no reader changed. It
+        // can still be given as a free gift. Unticking the flag is the only way
+        // back on sale (FreeGiftsController::giftOnly() shows it again).
+        static::saving(static function (self $p): void {
+            if ($p->gift_only) {
+                $p->is_visible = false;
+            }
+        });
+
         static::saving(static function (self $p): void {
             if ($p->exists && $p->isDirty('brand_id') && ! $p->isDirty(\App\Support\ScopeOrder::BRAND_COLUMN)) {
                 $p->setAttribute(\App\Support\ScopeOrder::BRAND_COLUMN, null);
@@ -121,6 +133,7 @@ class Product extends Model
             'also_like' => 'array',
             'featured' => 'bool',
             'is_visible' => 'bool',
+            'gift_only' => 'bool',
             'manage_stock' => 'bool',
             'sale_starts_at' => 'datetime',
             'sale_ends_at' => 'datetime',

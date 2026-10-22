@@ -64,6 +64,7 @@
     );
 @endphp
 <div class="sumrow"><span>{{ __('store.checkout.subtotal') }}</span><span class="js-subtotal">{!! \App\Support\Money::format($totals['subtotal'], $kbbLedgerDp) !!}</span></div>
+@if ($kbbFgUnits = app(\App\Services\FreeGifts::class)->lineUnits($totals))<div class="sumrow fg-line"><style>.kbb-order-slot:not(:has(.fgb)) .fg-line{display:none}</style><span>{{ app(\App\Services\FreeGifts::class)->text('line', ['count' => $kbbFgUnits]) }}</span><span style="color:var(--green);font-weight:700">{!! \App\Support\Money::format(0, $kbbLedgerDp) !!}</span></div>@endif{{-- Lane FG: "Free gifts (N)" at AED 0, under the subtotal. Counted as if the destination qualified, and hidden by :has() while the box above is absent, so a UAE-only gift that the country-change answer removes takes its line with it. --}}
 
 <div class="js-coupons">
     @includeWhen(($totals['bundle_discount'] ?? 0) > 0, 'partials.buy-together.total-row', ['cls' => 'sumrow disc co-btrow', 'label' => __('store.buy_together.bundle_row'), 'amount' => '&ndash; ' . \App\Support\Money::format((int) ($totals['bundle_discount'] ?? 0), $kbbLedgerDp)])@if ($totals['discount'])

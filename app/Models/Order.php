@@ -32,6 +32,7 @@ class Order extends Model
             'whatsapp_optin' => 'bool',
             'is_gift' => 'bool',
             'gift_fee' => 'int',
+            'free_gift_count' => 'int',
             'paid_at' => 'datetime',
             'captured_at' => 'datetime',
             /*
@@ -76,9 +77,24 @@ class Order extends Model
         ];
     }
 
+    /**
+     * The lines that were BOUGHT. Free gifts (Lane FG) are order_items rows too,
+     * at price 0 with `is_gift`, and they are left out HERE, deliberately: every
+     * payment gateway builds its line items from this relation, and payments are
+     * frozen -- Tabby, Tamara and Stripe receive exactly what they received
+     * before gifts existed (FreeGiftsTest proves the request bytes match). The
+     * totals, refunds and reports read it too, and a gift adds AED 0 to all of
+     * them. Every screen that shows an order reads gifts() beside it.
+     */
     public function items()
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->hasMany(OrderItem::class)->where('order_items.is_gift', false);
+    }
+
+    /** The free gifts on this order (Lane FG): AED 0 lines with the band they came from. */
+    public function gifts()
+    {
+        return $this->hasMany(OrderItem::class)->where('order_items.is_gift', true)->orderBy('order_items.id');
     }
 
     /**
