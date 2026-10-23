@@ -325,6 +325,9 @@ function paintDetail(host) {
     + (payLinkOn(o) && o.pay_link.last ? '<p class="muted pl-last" data-pl-last>' + plLast(o.pay_link.last) + '</p>' : '')
     + '<section class="card"><h4 class="sh">Products <span class="muted">' + o.items.reduce((a, i) => a + i.qty, 0) + ' items</span></h4>'
     + o.items.map((i) => '<' + (i.product_id ? 'a href="#/products/' + i.product_id + '"' : 'div') + ' class="row">' + th(i.thumb) + '<div class="rm"><b class="cl2">' + esc(i.name) + '</b><small>' + (i.variant ? esc(i.variant) + ' · ' : '') + i.qty + ' × ' + esc(i.unit_display) + (i.sku ? ' · ' + esc(i.sku) : '') + '</small></div><div class="re"><b>' + esc(i.total_display) + '</b></div></' + (i.product_id ? 'a' : 'div') + '>').join('') + '</section>'
+    // The free gifts on the order, always open under Products (owner, 23 Oct: "i want the opened free gifts box by default there. so i can see in one go").
+    + (o.gifts && o.gifts.length ? '<section class="card gifts"><h4 class="sh">Free gifts <span class="muted">' + o.gifts.reduce((a, g) => a + g.qty, 0) + ' items</span></h4>'
+      + o.gifts.map((g) => '<' + (g.product_id ? 'a href="#/products/' + g.product_id + '"' : 'div') + ' class="row">' + th(g.thumb) + '<div class="rm"><b class="cl2">' + esc(g.name) + '</b><small>' + (g.brand ? esc(g.brand) + ' · ' : '') + g.qty + ' × free gift</small></div><div class="re"><span class="gfree">FREE</span></div></' + (g.product_id ? 'a' : 'div') + '>').join('') + '</section>' : '')
     + '<section class="card"><h4 class="sh">Payment</h4><div class="kv"><span>Products</span><span>' + esc(t.subtotal) + '</span></div>'
     + (t.discount ? '<div class="kv"><span>Discount' + (t.coupon ? ' <span class="tag">' + esc(t.coupon) + '</span>' : '') + '</span><span>−' + esc(t.discount) + '</span></div>' : '')
     + '<div class="kv"><span>Shipping' + (o.shipping_method ? ' · ' + esc(o.shipping_method) : '') + '</span><span>' + esc(t.shipping) + '</span></div>'

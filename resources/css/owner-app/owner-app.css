@@ -174,6 +174,10 @@ button.pill { cursor: pointer; }
 .kv.tot { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 12px; font-weight: 700; font-size: 16px; }
 .kv.tot > span:first-child { color: var(--ink); }
 .tag { display: inline-block; font: 600 11px/1 var(--font); padding: 5px 8px; border-radius: var(--r-pill); background: var(--acc-soft); color: var(--acc-ink); }
+/* The free gifts on an order: an always-open box under Products, outlined in the "good" green. */
+.card.gifts { box-shadow: none; border: 1.5px solid var(--good); }
+.card.gifts .sh { color: var(--good); }
+.gfree { display: inline-block; font: 700 11px/1 var(--font); letter-spacing: .04em; padding: 5px 8px; border-radius: var(--r-pill); background: var(--good); color: #fff; }
 /* Lane OLG: EN / AR, the language an order was placed in. Small enough to sit
    inside a row's one-line .rm small without making the line any taller. */
 .lg { display: inline-block; font: 700 10px/1 var(--font); letter-spacing: .03em; padding: 2px 5px; border-radius: 5px; background: var(--surface2); color: var(--ink2); vertical-align: 1px; }
@@ -770,3 +774,4 @@ html.oa-nosync .ib.sync { display: none; }
 html.oa-nocontact .cu-act { display: none; }
 html.oa-nobulk :is([data-act="selall"], [data-act="selmode"], .bulk) { display: none; }
 html.oa-nobulk .sel { pointer-events: none; }
+

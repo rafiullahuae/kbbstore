@@ -352,6 +352,15 @@ final class OrdersController extends Controller
             return response()->json(['ok' => false, 'code' => 'not_found'], 404);
         }
 
+        // THE FREE GIFTS ON THE ORDER (owner, 23 October: "in owner app, the
+        // free gifts are not showing along with the order. i want the opened
+        // free gifts box by default"). `items` leaves the gift lines out on
+        // purpose (Order::items()), so they are read beside it -- and only for
+        // an order that has any: `free_gift_count` 0 costs no query.
+        if ((int) ($order->free_gift_count ?? 0) > 0) {
+            $order->load(['gifts:id,order_id,product_id,name,brand,quantity', 'gifts.product:id,image']);
+        }
+
         $refunded = (int) DB::table('refunds')->where('order_id', $order->id)
             ->whereIn('status', \App\Services\Payments\PaymentRefunder::COUNTED)->sum('amount');
 
@@ -407,6 +416,13 @@ final class OrdersController extends Controller
                     'product_id' => $i->product_id === null ? null : (int) $i->product_id,
                     'thumb' => self::thumb($i->product?->image),
                 ])->values(),
+                'gifts' => (int) ($order->free_gift_count ?? 0) > 0 ? $order->gifts->map(fn ($i) => [
+                    'name' => (string) $i->name,
+                    'brand' => (string) ($i->brand ?? ''),
+                    'qty' => (int) $i->quantity,
+                    'product_id' => $i->product_id === null ? null : (int) $i->product_id,
+                    'thumb' => self::thumb($i->product?->image),
+                ])->values() : [],
                 'totals' => [
                     'subtotal' => Money::plain((int) $order->subtotal),
                     'discount' => (int) $order->discount_total > 0 ? Money::plain((int) $order->discount_total) : null,
