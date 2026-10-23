@@ -440,7 +440,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    :has() or :user-invalid still honours the module's class; one with neither
    simply shows no star, and `required` plus the server still refuse the field. */
 .kbb-checkout .form-row label .required{display:none;color:var(--pink);text-decoration:none;border:0}
-.kbb-checkout :is(.form-row:has(:user-invalid),.woocommerce-invalid) .required{display:inline}
+.kbb-checkout :is(.form-row:has(:user-invalid),.woocommerce-invalid,.kbb-req-miss) .required{display:inline}
 .kbb-checkout .form-row .optional{color:var(--muted);font-weight:400}
 .kbb-checkout .woocommerce-input-wrapper{width:100%;display:block}
 .kbb-checkout .input-text,

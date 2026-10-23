@@ -1695,6 +1695,24 @@ final class EnglishRenderWalk
                 'hits' => 33,
             ],
             /*
+             * "ok go with option B, but this script must be only on checkout
+             * page" -- the owner, 23 October. The "*" shows on a required field
+             * left empty (on leaving it, and on a Place order press); a few
+             * lines inline in the checkout's own script, so app.js and every
+             * other page stay byte-identical. Its bytes are read from the view.
+             */
+            'the checkout star on a field left empty (2.60.572)' => [
+                'pattern' => '#window\.KBB\.routes\.checkoutCoupon = "\\\\/checkout\\\\/coupon";\n\n\K(?=\(function \(\) \{\n  var box = document\.getElementById\(\'create_account\'\);)#',
+                'with' => str_replace(['\\', '$'], ['\\\\', '\\$'], (static function (): string {
+                    $v = (string) file_get_contents(resource_path('views/store/checkout.blade.php'));
+                    $from = (int) strpos($v, "--}}\n(function () {\n  var f = document.getElementById('kbbCheckoutForm');") + 4;
+                    $to = (int) strpos($v, "(function () {\n  var box = document.getElementById('create_account');");
+
+                    return substr($v, $from, $to - $from);
+                })()),
+                'hits' => 1,
+            ],
+            /*
              * "on cart pane, i want another text row, only will show if user got
              * free delivery as per their cart total" -- the owner, 15 October;
              * his pick, design C, "Congrats! You’ve got free delivery"

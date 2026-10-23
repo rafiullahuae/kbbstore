@@ -624,6 +624,23 @@ window.KBB.routes.checkoutCoupon = @json(Url::to('/checkout/coupon'));
 window.KBB.routes.checkoutEmail = @json(Url::to('/api/checkout-contact'));
 @endif
 
+{{-- The "*" on a required field left empty (the owner, 23 October): on leaving it, and on a Place order press that finds it empty; gone once filled. Only a class on the row -- it never cancels, delays or sends anything. Inline on THIS page only, by the owner's choice: app.js and every other page stay byte-identical. Delegated on the form, so rows the country change redraws are covered. A Blade comment, so none of these words reach the shopper. --}}
+(function () {
+  var f = document.getElementById('kbbCheckoutForm');
+  if (!f) return;
+  function mark(el) {
+    var row = el && el.required && el.closest ? el.closest('.form-row') : null;
+    if (row) row.classList.toggle('kbb-req-miss', String(el.value == null ? '' : el.value).trim() === '');
+  }
+  function all() { f.querySelectorAll('[required]').forEach(mark); }
+  f.addEventListener('focusout', function (e) { mark(e.target); });
+  function clear(e) { if (e.target && e.target.closest && e.target.closest('.form-row.kbb-req-miss')) mark(e.target); }
+  f.addEventListener('input', clear);
+  f.addEventListener('change', clear);
+  window.addEventListener('click', function (e) { if (e.target && e.target.closest && e.target.closest('[data-place]')) all(); }, true);
+  window.addEventListener('submit', function (e) { if (e.target === f) all(); }, true);
+})();
+
 (function () {
   var box = document.getElementById('create_account');
   var wrap = document.getElementById('account_password_wrap');

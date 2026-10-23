@@ -60,7 +60,22 @@ it('hides every "*" until a required field has failed, in CSS alone', function (
     // MUTATION: delete display:none. RED -- the asterisks are back.
     expect($css)->toContain('.kbb-checkout .form-row label .required{display:none;color:var(--pink);')
         // Shown by the browser's own :user-invalid, or the inline-validation module's row class.
-        ->and($css)->toContain('.kbb-checkout :is(.form-row:has(:user-invalid),.woocommerce-invalid) .required{display:inline}');
+        ->and($css)->toContain('.kbb-checkout :is(.form-row:has(:user-invalid),.woocommerce-invalid,.kbb-req-miss) .required{display:inline}');
+});
+
+it('marks a required field left empty from a few lines on the checkout page only, never in app.js', function () {
+    /*
+     * The owner, 23 October: "ok go with option B, but this script must be only
+     * on checkout page." CSS alone (:user-invalid) misses a field that was only
+     * visited and left empty, and Place order (reportValidity() does not count
+     * as a submit), so the checkout's own inline script adds kbb-req-miss.
+     * MUTATION: move markEmptyRequired back into resources/js/kbb/checkout.js. RED.
+     * MUTATION: drop .kbb-req-miss from the star rule. RED (the class shows nothing).
+     */
+    $view = (string) file_get_contents(resource_path('views/store/checkout.blade.php'));
+    expect(substr_count($view, "row.classList.toggle('kbb-req-miss'"))->toBe(1)
+        ->and($view)->toContain("f.addEventListener('focusout'")
+        ->and((string) file_get_contents(resource_path('js/kbb/checkout.js')))->not->toContain('kbb-req-miss');
 });
 
 it('keeps required and aria-required on every required field, and the star in the markup for later', function (string $prefix) {
