@@ -556,7 +556,9 @@ class CartRecovery
         }
 
         $count = $apply ? $written : count($pick);
-        arsort($skipped);
+        // Biggest reason first; equal counts in SKIP_WORDS' order, never at random.
+        $rank = array_flip(array_keys(self::SKIP_WORDS));
+        uksort($skipped, static fn (string $a, string $b) => [$skipped[$b], $rank[$a] ?? 99] <=> [$skipped[$a], $rank[$b] ?? 99]);
 
         return ['ok' => true, 'baskets' => $count, 'ar' => min($ar, $count), 'en' => max(0, $count - $ar),
             'found' => count($rows),

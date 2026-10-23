@@ -369,8 +369,8 @@ it('says why each basket with an email is not emailed, in the count and in the l
         ->and($why)->toBe([
             CartRecovery::SKIP_WORDS['checked_out'] => 1,
             CartRecovery::SKIP_WORDS['empty'] => 1,
-            CartRecovery::SKIP_WORDS['newer'] => 1,
             CartRecovery::SKIP_WORDS['ordered'] => 1,
+            CartRecovery::SKIP_WORDS['newer'] => 1,
         ]);
 
     app(ReminderLog::class)->rows();
