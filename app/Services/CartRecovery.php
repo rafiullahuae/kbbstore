@@ -520,6 +520,7 @@ class CartRecovery
                 ->when(\Illuminate\Support\Facades\Schema::hasTable('email_bounces'), fn ($q) => $q->whereNotExists(fn ($w) => $w
                     ->select(DB::raw(1))->from('email_bounces as eb')->whereNull('eb.cleared_at')->whereRaw('LOWER(eb.email) = c.ct_email')))
                 ->orderByDesc('c.updated_at')
+                ->orderByDesc('c.id')
                 ->limit(5000)
                 ->get(array_merge(['c.id', 'c.ct_email'], $seen ? ['c.ct_seen_path'] : []));
         } catch (\Throwable $e) {
