@@ -199,7 +199,12 @@ final class CheckoutEmailCapture
         }
 
         if ($this->remindEnabled()) {
-            $this->recovery->captureTyped((int) $cart->getKey(), $email);
+            // The language of the checkout the address was typed on: its page
+            // address (this request is /api, which has no /ar), else the
+            // cart's last page. See CartRecovery::localeFromPath().
+            $this->recovery->captureTyped((int) $cart->getKey(), $email,
+                \App\Services\CartRecovery::localeFromPath($request->headers->get('referer'))
+                ?? \App\Services\CartRecovery::localeFromPath($cart->ct_seen_path ?? null));
         }
 
         return self::STORED;

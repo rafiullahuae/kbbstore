@@ -91,6 +91,38 @@ class CartTrackingApiController extends Controller
         return response()->json($log->rows((int) $request->query('page', 1)) + ['gates' => $log->gates()]);
     }
 
+    /**
+     * POST cart-tracking/reminders/schedule — reminders for baskets already
+     * left (last 10/20/30/60/90 days), now or at a chosen time. `apply` false
+     * only counts. carttracking.block, like every other write on this screen.
+     */
+    public function scheduleReminders(Request $request, \App\Services\CartRecovery $recovery): JsonResponse
+    {
+        $data = $request->validate([
+            'days' => ['required', 'integer', 'in:'.implode(',', \App\Services\CartRecovery::SCHEDULE_DAYS)],
+            'at' => ['nullable', 'date_format:Y-m-d\\TH:i'],
+            'apply' => ['nullable', 'boolean'],
+        ]);
+
+        $at = isset($data['at'])
+            ? \Illuminate\Support\Carbon::createFromFormat('Y-m-d\\TH:i', $data['at'], config('app.timezone'))
+            : now();
+
+        if ($at->lt(now()->subMinute()) || $at->gt(now()->addDays(60))) {
+            return response()->json(['ok' => false, 'reason' => 'Pick a time from now up to 60 days ahead.'], 422);
+        }
+
+        $result = $recovery->scheduleLeft((int) $data['days'], $at, (bool) ($data['apply'] ?? false));
+
+        return response()->json($result, $result['ok'] ? 200 : 422);
+    }
+
+    /** GET cart-tracking/reminders/preview?lang=en|ar — the email as a shopper gets it. */
+    public function previewReminder(Request $request, \App\Services\CartRecovery $recovery): JsonResponse
+    {
+        return response()->json($recovery->preview((string) $request->query('lang', 'en')));
+    }
+
     public function blocks(Request $request): JsonResponse
     {
         return response()->json([

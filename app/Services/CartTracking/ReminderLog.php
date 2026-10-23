@@ -98,6 +98,8 @@ final class ReminderLog
                 'c.id as cart_id', 'c.status', 'c.ct_email', 'c.ct_bot_score', 'c.updated_at as cart_updated_at',
                 'r.id as rid', 'r.email', 'r.source', 'r.stage', 'r.consented_at', 'r.last_sent_at', 'r.cancelled_at', 'r.cancel_reason',
             ])
+            ->when(Schema::hasColumn('carts', 'ct_seen_path'), fn ($q) => $q->addSelect('c.ct_seen_path'))
+            ->when(Schema::hasColumn('cart_recoveries', 'locale'), fn ($q) => $q->addSelect('r.locale'))
             ->selectRaw('(select count(*) from cart_items ci where ci.cart_id = c.id) as items')
             ->selectRaw('(select coalesce(sum(ci.quantity * ci.unit_price), 0) from cart_items ci where ci.cart_id = c.id) as value_fils')
             ->selectRaw('exists(select 1 from outbound_optouts o where o.email = coalesce(r.email, c.ct_email)) as opted_out')
@@ -115,12 +117,14 @@ final class ReminderLog
                 'cart' => (int) $row->cart_id,
                 'email' => (string) ($row->email ?? $row->ct_email ?? ''),
                 'how' => $row->rid === null || $row->source === CartRecovery::SOURCE_TYPED ? 'Typed at checkout' : 'Asked at the cart',
+                // The language the reminder goes in: the row's, else the basket's last page.
+                'lang' => ($row->locale ?? null) ?: (CartRecovery::localeFromPath($row->ct_seen_path ?? null) ?? 'en'),
                 'value' => (int) $row->value_fils,
                 'value_label' => \App\Support\Money::plain((int) $row->value_fils),
                 'items' => (int) $row->items,
                 'state' => $state,
                 'status' => $text,
-                'at' => self::iso($row->consented_at ?? $row->cart_updated_at),
+                'at' => self::iso($row->cart_updated_at),   // when the basket was left, not when its reminder was queued
             ];
         }
 

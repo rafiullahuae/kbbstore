@@ -137,6 +137,9 @@
 .ctk-rg-h{margin:0 0 4px;font-size:13.5px;line-height:1.45}
 .ctk-rg-h svg{vertical-align:-3px;margin-inline-end:4px}
 .ctk-rgl{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:center;font-size:13px}
+.ctk-rs{grid-template-columns:repeat(3,minmax(0,1fr)) auto;align-items:end}
+.ctk-rp{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.ctk-pvf{width:100%;max-width:640px;height:720px;border:1px solid var(--border,#e6e9f2);border-radius:10px;background:#fff;display:block}
 .ctk-lnk{border:0;background:none;padding:0;font:inherit;font-weight:700;color:inherit;cursor:pointer;text-decoration:underline}
 .ctk-bt.h{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft,#626c80);font-weight:700;border-bottom:1px solid var(--border,#e6e9f2);padding:8px 6px}
 .ctk-bt .cidr{font:700 13px var(--mono,ui-monospace,monospace);color:var(--ink,#101729);overflow-wrap:anywhere}

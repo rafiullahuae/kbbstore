@@ -376,7 +376,7 @@ class CartRecovery
      *     the new address, so the typo before a tapped fix is never emailed;
      *   - a typed row already sent, or cancelled: untouched. Never a second.
      */
-    public function captureTyped(int $cartId, string $email): string
+    public function captureTyped(int $cartId, string $email, ?string $locale = null): string
     {
         if (! $this->enabled()) {
             return self::OUTCOME_UNAVAILABLE;
@@ -411,7 +411,7 @@ class CartRecovery
                     'cancel_reason' => null,
                     'created_at' => $now,
                     'updated_at' => $now,
-                ] + self::pageLocale());
+                ] + ($locale !== null && \App\Support\CustomerLocale::ready() ? ['locale' => $locale] : self::pageLocale()));
 
                 return $written > 0 ? self::OUTCOME_STORED : self::OUTCOME_DUPLICATE;
             }
@@ -434,6 +434,171 @@ class CartRecovery
         }
 
         return $suppressed ? self::OUTCOME_SUPPRESSED : self::OUTCOME_STORED;
+    }
+
+    /**
+     * The language a basket was left in, from a page path: '/ar' or '/ar/...'
+     * is Arabic, any other page English, no path at all unknown (null).
+     *
+     * WHY A PATH AND NOT Locale::current() (the owner, 23 October: "if the cart
+     * was abandoned in eng, english email will go, if in arabic, then arabic
+     * email will go"). The checkout's email capture posts to /api/checkout-
+     * contact, which carries no /ar prefix, so the request's own locale was
+     * English for every shopper and an Arabic basket was reminded in English.
+     * The checkout page's address (the Referer) and the cart's last page
+     * (carts.ct_seen_path) both say which shop the basket was left in.
+     */
+    public static function localeFromPath(?string $path): ?string
+    {
+        $path = trim((string) $path);
+
+        if ($path === '') {
+            return null;
+        }
+
+        $path = (string) (parse_url($path, PHP_URL_PATH) ?? '');
+
+        return preg_match('#^/ar(/|$)#', $path) === 1 ? 'ar' : 'en';
+    }
+
+    /** The windows the owner can reach back over, in days. */
+    public const SCHEDULE_DAYS = [10, 20, 30, 60, 90];
+
+    /**
+     * Reminders for baskets left BEFORE reminders were on (the owner, 23
+     * October: "i want to schedule emails to all abandoned carts, give us option
+     * to schedule for last 10, 20, 30 days etc + any in future will go auto").
+     *
+     * Every basket in the window that carries an address typed at checkout, is
+     * still open and not empty, has no reminder row yet, and was not a bot visit
+     * -- minus an address that has since ordered, unsubscribed, bounced or been
+     * reminded in the last week, and one basket per address (the latest). Each
+     * becomes the same single typed reminder a new basket gets, in the language
+     * the basket was left in, made due at $sendAt; the ordinary sweep sends it
+     * (ten every five minutes, so a large batch spreads over hours, which is
+     * also what keeps it out of spam folders).
+     *
+     * $apply false counts and writes nothing, so the screen can say "47
+     * baskets, 12 in Arabic" before he presses the button.
+     *
+     * @return array{ok: bool, reason?: string, baskets?: int, ar?: int, en?: int, send_at?: string}
+     */
+    public function scheduleLeft(int $days, \DateTimeInterface $sendAt, bool $apply): array
+    {
+        $schedule = $this->schedule();
+
+        if ($schedule === [] || $this->messageWording() === null) {
+            return ['ok' => false, 'reason' => 'Reminders are off or not set up yet. Fix the red lines above first.'];
+        }
+
+        if (! in_array($days, self::SCHEDULE_DAYS, true)) {
+            return ['ok' => false, 'reason' => 'Choose one of the windows offered.'];
+        }
+
+        try {
+            $threshold = (int) app(\App\Services\CartTracking\CartTrackingSettings::class)->get('bot_threshold');
+            $seen = \Illuminate\Support\Facades\Schema::hasColumn('carts', 'ct_seen_path');
+
+            $rows = DB::table('carts as c')
+                ->whereNotNull('c.ct_email')
+                ->where('c.ct_email', '!=', '')
+                ->where('c.status', 'active')
+                ->where('c.updated_at', '>=', now()->subDays($days))
+                ->whereRaw('COALESCE(c.ct_bot_score, 0) < ?', [$threshold > 0 ? $threshold : 101])
+                ->whereExists(fn ($q) => $q->select(DB::raw(1))->from('cart_items as ci')->whereColumn('ci.cart_id', 'c.id'))
+                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('cart_recoveries as r')->whereColumn('r.cart_id', 'c.id'))
+                // Already chased: a reminder waiting, or one sent this week, for this address.
+                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('cart_recoveries as r2')->whereColumn('r2.email', 'c.ct_email')
+                    ->where(fn ($w) => $w->where(fn ($p) => $p->where('r2.stage', 0)->whereNull('r2.cancelled_at'))
+                        ->orWhere('r2.last_sent_at', '>', now()->subDays(self::TYPED_ONCE_PER_DAYS))))
+                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('outbound_optouts as o')->whereColumn('o.email', 'c.ct_email'))
+                // Bought since: an order by this address placed after the basket was left.
+                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('orders as od')
+                    ->whereRaw('LOWER(od.email) = c.ct_email')->whereColumn('od.created_at', '>=', 'c.updated_at'))
+                ->when(\Illuminate\Support\Facades\Schema::hasTable('email_suppressions'), fn ($q) => $q->whereNotExists(fn ($w) => $w
+                    ->select(DB::raw(1))->from('email_suppressions as es')->whereRaw('LOWER(es.email) = c.ct_email')))
+                ->when(\Illuminate\Support\Facades\Schema::hasTable('email_bounces'), fn ($q) => $q->whereNotExists(fn ($w) => $w
+                    ->select(DB::raw(1))->from('email_bounces as eb')->whereNull('eb.cleared_at')->whereRaw('LOWER(eb.email) = c.ct_email')))
+                ->orderByDesc('c.updated_at')
+                ->limit(5000)
+                ->get(array_merge(['c.id', 'c.ct_email'], $seen ? ['c.ct_seen_path'] : []));
+        } catch (\Throwable $e) {
+            report($e);
+
+            return ['ok' => false, 'reason' => 'The baskets could not be read. Nothing was scheduled.'];
+        }
+
+        $pick = [];
+
+        foreach ($rows as $row) {
+            $pick[(string) $row->ct_email] ??= $row;   // newest first: the latest basket per address
+        }
+
+        $ar = 0;
+        $consented = \Illuminate\Support\Carbon::instance(\DateTime::createFromInterface($sendAt))->subSeconds((int) round($schedule[0] * 3600));
+        $withLocale = \App\Support\CustomerLocale::ready();
+        $written = 0;
+
+        foreach ($pick as $email => $row) {
+            $locale = self::localeFromPath($row->ct_seen_path ?? null) ?? 'en';
+            $ar += $locale === 'ar' ? 1 : 0;
+
+            if ($apply) {
+                $written += DB::table('cart_recoveries')->insertOrIgnore([
+                    'cart_id' => (int) $row->id,
+                    'email' => $email,
+                    'source' => self::SOURCE_TYPED,
+                    'stage' => 0,
+                    'consented_at' => $consented,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ] + ($withLocale ? ['locale' => $locale] : []));
+            }
+        }
+
+        $count = $apply ? $written : count($pick);
+
+        return ['ok' => true, 'baskets' => $count, 'ar' => min($ar, $count), 'en' => max(0, $count - $ar),
+            'send_at' => \Illuminate\Support\Carbon::instance(\DateTime::createFromInterface($sendAt))->format('Y-m-d\TH:i')];
+    }
+
+    /**
+     * The reminder exactly as a shopper receives it, in English or Arabic, on
+     * two of the shop's own products (Cart Tracking -> Reminder emails ->
+     * Preview). Rendered by the same mailable and the same language switch the
+     * send uses, so what he sees is what goes. Written wording only; a blank box
+     * shows as such rather than being invented.
+     *
+     * @return array{subject: string, html: string}
+     */
+    public function preview(string $locale): array
+    {
+        $locale = $locale === 'ar' ? 'ar' : 'en';
+
+        return \App\Support\CustomerLocale::render($locale, function () use ($locale): array {
+            $subject = \App\Support\ArabicTwin::pick(self::KEY_SUBJECT, self::AR_SUBJECT, $locale);
+            $body = \App\Support\ArabicTwin::pick(self::KEY_BODY, self::AR_BODY, $locale);
+
+            $items = \App\Models\Product::query()->visible()->whereNotNull('price')->orderByDesc('id')->limit(2)
+                ->get(['id', 'name', 'slug', 'price'])
+                ->map(fn ($p) => [
+                    'name' => \App\Support\CustomerLocale::productName($p->id, (string) $p->name),
+                    'slug' => (string) $p->slug,
+                    'quantity' => 1,
+                    'unit_price' => (int) $p->price,
+                    'setContents' => [],
+                ])->all();
+
+            $mail = new \App\Mail\CartRecoveryReminder(
+                $subject !== '' ? $subject : '(no subject written yet)',
+                $body !== '' ? $body : '(no message written yet)',
+                $items,
+                \App\Support\Url::external('/cart'),
+                '#',
+            );
+
+            return ['subject' => $subject, 'html' => $mail->render()];
+        });
     }
 
     /* ------------------------------------------------------- the cancellation */

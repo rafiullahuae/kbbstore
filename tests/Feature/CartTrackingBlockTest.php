@@ -316,7 +316,8 @@ it('gives support and editor a 403 on every Cart Tracking endpoint, and owner an
      */
     $routes = CartTrackingRoutes::registered();
     // 10 -> 11 (23 October 2026): GET cart-tracking/reminders, the Reminder emails tab.
-    expect($routes)->toHaveCount(11);
+    // 11 -> 13: reminders/preview (view) and reminders/schedule (block), the same day.
+    expect($routes)->toHaveCount(13);
 
     foreach ($routes as $route) {
         $method = array_values(array_diff($route->methods(), ['HEAD', 'OPTIONS']))[0];

@@ -168,6 +168,9 @@
 .ctk-rg-h{margin:0 0 4px;font-size:13.5px;line-height:1.45}
 .ctk-rg-h svg{vertical-align:-3px;margin-inline-end:4px}
 .ctk-rgl{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:center;font-size:13px}
+.ctk-rs{grid-template-columns:repeat(3,minmax(0,1fr)) auto;align-items:end}
+.ctk-rp{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.ctk-pvf{width:100%;max-width:640px;height:720px;border:1px solid var(--border,#e6e9f2);border-radius:10px;background:#fff;display:block}
 .ctk-lnk{border:0;background:none;padding:0;font:inherit;font-weight:700;color:inherit;cursor:pointer;text-decoration:underline}
 .ctk-bt.h{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft,#626c80);font-weight:700;border-bottom:1px solid var(--border,#e6e9f2);padding:8px 6px}
 .ctk-bt .cidr{font:700 13px var(--mono,ui-monospace,monospace);color:var(--ink,#101729);overflow-wrap:anywhere}
@@ -1060,6 +1063,18 @@
           return '<div class="ctk-rgl"><span class="ctk-pill ' + (g.ok ? 'no' : 'yes') + '">' + (g.ok ? 'OK' : 'Off') + '</span><span>' + esc(g.label) + '</span><span class="ctk-sub">' + esc(g.where) + '</span></div>';
         }).join('')
       + '</div></div>';
+    // Older baskets: count first, then schedule (23 October). Future ones go by themselves.
+    var dd = st.remDays || 30;
+    html += '<div class="ctk-card"><p class="ctk-rg-h"><b>Send to baskets already left</b> New baskets get their reminder by themselves. This reaches back to the ones left before.</p>'
+      + '<div class="ctk-form ctk-rs">'
+      + '<label>Baskets left in the last<select class="ctk-sel" id="ctkRemDays">' + [10, 20, 30, 60, 90].map(function (n) { return '<option value="' + n + '"' + (n === dd ? ' selected' : '') + '>' + n + ' days</option>'; }).join('') + '</select></label>'
+      + '<label>Send<select class="ctk-sel" id="ctkRemWhen"><option value="now">Now</option><option value="at"' + (st.remAt ? ' selected' : '') + '>At a time I choose</option></select></label>'
+      + '<label' + (st.remAt ? '' : ' style="display:none"') + ' id="ctkRemAtL">Date and time<input class="ctk-in" type="datetime-local" id="ctkRemAt" value="' + esc(st.remAt || '') + '"></label>'
+      + '<button type="button" class="ctk-btn" data-ctk-remcount>Count baskets</button>'
+      + '</div><div class="ctk-msg" id="ctkRemMsg"></div>'
+      + '<p class="ctk-note" style="margin-top:8px">Skipped by itself: anyone who ordered since, unsubscribed, bounced or was already reminded this week, empty baskets and bot visits. One email per address, in the language the basket was left in. They go out ten every five minutes.</p>'
+      + '<div class="ctk-rp"><span class="ctk-note"><b>See the email:</b></span><button type="button" class="ctk-btn" data-ctk-rempv="en">English</button><button type="button" class="ctk-btn" data-ctk-rempv="ar">العربية</button></div>'
+      + '<div id="ctkRemPv"></div></div>';
     html += '<div class="ctk-card">';
     if (d.err) {
       html += '<div class="ctk-empty"><b>Something went wrong</b>' + esc(d.err) + '</div>';
@@ -1072,7 +1087,7 @@
         + d.rows.map(function (r) {
             return '<div class="ctk-bt ctk-rt">'
               + '<div><button type="button" class="ctk-lnk" data-ctk-open-cart="' + r.cart + '">#' + r.cart + '</button><span class="ctk-sub">' + esc(when(r.at)) + '</span></div>'
-              + '<div><b>' + esc(r.email) + '</b><span class="ctk-sub">' + esc(r.how) + '</span></div>'
+              + '<div><b>' + esc(r.email) + '</b><span class="ctk-sub">' + esc(r.how) + ' · ' + (r.lang === 'ar' ? 'Arabic email' : 'English email') + '</span></div>'
               + '<div class="ctk-num">' + esc(r.value_label) + '<span class="ctk-sub">' + num(r.items) + ' item' + (r.items === 1 ? '' : 's') + '</span></div>'
               + '<div><span class="ctk-pill ' + (tone[r.state] || 'mute') + '">' + (word[r.state] || '') + '</span><span class="ctk-sub">' + esc(r.status) + '</span></div>'
               + '</div>';
@@ -1085,6 +1100,53 @@
     }
     html += '</div>';
     p.innerHTML = html;
+  }
+
+  // Count (apply false), then the same call with apply true once he confirms.
+  async function remSchedule(btn, apply) {
+    var msg = document.getElementById('ctkRemMsg');
+    var days = Number((document.getElementById('ctkRemDays') || {}).value || 30);
+    var mode = (document.getElementById('ctkRemWhen') || {}).value;
+    var at = mode === 'at' ? ((document.getElementById('ctkRemAt') || {}).value || '') : '';
+    st.remDays = days; st.remAt = mode === 'at' ? at : '';
+    if (mode === 'at' && !at) { msg.className = 'ctk-msg on bad'; msg.textContent = 'Choose a date and time first.'; return; }
+    btn.disabled = true;
+    try {
+      var r = await api('/reminders/schedule', { method: 'POST', body: { days: days, at: at || null, apply: !!apply } });
+      if (!apply) {
+        msg.className = 'ctk-msg on';
+        msg.innerHTML = r.baskets
+          ? '<b>' + num(r.baskets) + '</b> basket' + (r.baskets === 1 ? '' : 's') + ' to remind (' + num(r.en) + ' English, ' + num(r.ar) + ' Arabic), ' + (at ? 'at ' + esc(when(r.send_at)) : 'starting now') + '. '
+            + '<button type="button" class="ctk-btn pri" data-ctk-remgo>Schedule ' + num(r.baskets) + ' reminder' + (r.baskets === 1 ? '' : 's') + '</button>'
+          : 'No basket in that window needs a reminder.';
+      } else {
+        msg.className = 'ctk-msg on';
+        msg.textContent = 'Scheduled ' + num(r.baskets) + ' reminder' + (r.baskets === 1 ? '' : 's') + '. They show below as Waiting, then Sent.';
+        st.rem = null;
+        loadReminders(1);
+      }
+    } catch (e) {
+      msg.className = 'ctk-msg on bad'; msg.textContent = failText(e);
+    }
+    btn.disabled = false;
+  }
+
+  async function remPreview(lang) {
+    var box = document.getElementById('ctkRemPv');
+    if (!box) return;
+    box.innerHTML = '<div class="ctk-empty">Loading…</div>';
+    try {
+      var r = await api('/reminders/preview?lang=' + (lang === 'ar' ? 'ar' : 'en'));
+      box.innerHTML = '<p class="ctk-note" style="margin:10px 0 6px"><b>Subject:</b> ' + esc(r.subject || '(no subject written yet)') + '</p>';
+      var f = document.createElement('iframe');
+      f.className = 'ctk-pvf';
+      f.setAttribute('sandbox', '');
+      f.setAttribute('title', 'Reminder email preview');
+      f.srcdoc = r.html;
+      box.appendChild(f);
+    } catch (e) {
+      box.innerHTML = '<div class="ctk-empty">' + esc(failText(e)) + '</div>';
+    }
   }
 
   async function addBlock(btn) {
@@ -1191,7 +1253,7 @@
       if (document.getElementById('ctkPop') && document.getElementById('ctkPop').classList.contains('on') && !(e.target.closest && e.target.closest('[data-ctk-shield]'))) closePop();
       return;
     }
-    var t = e.target.closest('[data-ctk-period],[data-ctk-pp],[data-ctk-sort],[data-ctk-page],[data-ctk-country],[data-ctk-selall],[data-ctk-sel],[data-ctk-allmatch],[data-ctk-bulk],[data-ctk-shield],[data-ctk-unblock],[data-ctk-doblock],[data-ctk-popclose],[data-ctk-close],[data-ctk-add],[data-ctk-save],[data-ctk-csv],[data-ctk-open-cart],[data-ctk-cust],#ctkScrim,[data-ctk-open]');
+    var t = e.target.closest('[data-ctk-period],[data-ctk-pp],[data-ctk-sort],[data-ctk-page],[data-ctk-country],[data-ctk-selall],[data-ctk-sel],[data-ctk-allmatch],[data-ctk-bulk],[data-ctk-shield],[data-ctk-unblock],[data-ctk-doblock],[data-ctk-popclose],[data-ctk-close],[data-ctk-add],[data-ctk-save],[data-ctk-csv],[data-ctk-open-cart],[data-ctk-cust],[data-ctk-rpage],[data-ctk-remcount],[data-ctk-remgo],[data-ctk-rempv],#ctkScrim,[data-ctk-open]');
     if (!t) return;
     if (t.disabled) return;
 
@@ -1211,6 +1273,9 @@
     if (t.hasAttribute('data-ctk-close') || t.id === 'ctkScrim') { closeCart(); return; }
     if (t.hasAttribute('data-ctk-add')) { addBlock(t); return; }
     if (t.hasAttribute('data-ctk-rpage')) { loadReminders(Number(t.getAttribute('data-ctk-rpage'))); return; }
+    if (t.hasAttribute('data-ctk-remcount')) { remSchedule(t, false); return; }
+    if (t.hasAttribute('data-ctk-remgo')) { remSchedule(t, true); return; }
+    if (t.hasAttribute('data-ctk-rempv')) { remPreview(t.getAttribute('data-ctk-rempv')); return; }
     if (t.hasAttribute('data-ctk-save')) { saveSettings(t); return; }
     if (t.hasAttribute('data-ctk-csv')) { exportCsv(qs(Object.assign({}, st.q, { page: '' }))); return; }
     if (t.hasAttribute('data-ctk-cust')) { e.preventDefault(); closeCart(); if (window.kbbCustomerOpen) window.kbbCustomerOpen(Number(t.getAttribute('data-ctk-cust'))); return; }
@@ -1240,6 +1305,10 @@
   }
 
   document.addEventListener('change', function (e) {
+    if (e.target && e.target.id === 'ctkRemWhen') {
+      var l = document.getElementById('ctkRemAtL');
+      if (l) l.style.display = e.target.value === 'at' ? '' : 'none';
+    }
     if (e.target && e.target.id === 'ctkFind') { find(e.target.value); return; }
     if (!e.target || !e.target.matches || !e.target.matches('[data-ctk-f]')) return;
     var f = e.target.getAttribute('data-ctk-f');

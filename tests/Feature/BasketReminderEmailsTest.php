@@ -188,7 +188,7 @@ it('serves the tab to the admin only', function () {
     $body = test()->actingAs($owner, 'admin')->getJson('/admin-api/cart-tracking/reminders')->assertOk()->json();
 
     expect($body['rows'][0]['email'])->toBe('tab@example.com')
-        ->and(array_keys($body['rows'][0]))->toBe(['cart', 'email', 'how', 'value', 'value_label', 'items', 'state', 'status', 'at'])
+        ->and(array_keys($body['rows'][0]))->toBe(['cart', 'email', 'how', 'lang', 'value', 'value_label', 'items', 'state', 'status', 'at'])
         ->and($body['gates'])->toHaveCount(6);
 });
 
@@ -198,4 +198,147 @@ it('puts the tab on the Cart Tracking screen once, next to Blocked', function ()
     expect(substr_count($view, "['reminders', 'Reminder emails']"))->toBe(1)
         ->and(substr_count($view, "Route::get('/cart-tracking/reminders'"))->toBe(0)
         ->and(substr_count((string) file_get_contents(base_path('routes/cart-tracking-admin.php')), "Route::get('/cart-tracking/reminders'"))->toBe(1);
+});
+
+/* ── 23 October, second ask: older baskets on demand, and the right language ── */
+
+function brmOn(): void
+{
+    brmTrading();
+    brmMigration()->up();
+    brmForget();
+}
+
+function brmSeen(Cart $cart, string $path): void
+{
+    DB::table('carts')->where('id', $cart->id)->update(['ct_seen_path' => $path]);
+}
+
+it('reads the language a basket was left in from its page, not from the /api request', function () {
+    // The defect: /api/checkout-contact has no /ar, so every typed reminder was English.
+    expect(CartRecovery::localeFromPath('https://kbeautybliss.com/ar/checkout/'))->toBe('ar')
+        ->and(CartRecovery::localeFromPath('/ar'))->toBe('ar')
+        ->and(CartRecovery::localeFromPath('/checkout/'))->toBe('en')
+        ->and(CartRecovery::localeFromPath('/arabic-skincare/'))->toBe('en')
+        ->and(CartRecovery::localeFromPath(null))->toBeNull();
+});
+
+it('schedules reminders for older baskets: one per address, never to a buyer, an unsubscriber or a bot', function () {
+    brmOn();
+    \Tests\Support\ArabicShop::on();
+    $en = brmTypedCart('en@example.com', 24 * 5);
+    $ar = brmTypedCart('ar@example.com', 24 * 12);
+    brmSeen($ar, '/ar/checkout/');
+    $older = brmTypedCart('en@example.com', 24 * 8);          // same address, older basket: skipped
+    $tooOld = brmTypedCart('old@example.com', 24 * 40);       // outside 30 days
+    $bought = brmTypedCart('bought@example.com', 24 * 6);
+    DB::table('orders')->insert(['order_number' => 'BRM-B', 'email' => 'Bought@Example.com', 'created_at' => now()->subDays(2), 'updated_at' => now()]);
+    $gone = brmTypedCart('gone@example.com', 24 * 3);
+    DB::table('outbound_optouts')->insert(['email' => 'gone@example.com', 'created_at' => now(), 'updated_at' => now()]);
+    brmTypedCart('bot@example.com', 24 * 3, 95);
+
+    $recovery = app(CartRecovery::class);
+    $count = $recovery->scheduleLeft(30, now(), false);
+
+    // MUTATION: drop the "ordered since" clause and bought@ is counted -- RED.
+    expect($count)->toMatchArray(['ok' => true, 'baskets' => 2, 'en' => 1, 'ar' => 1])
+        ->and(DB::table('cart_recoveries')->count())->toBe(0);   // counting writes nothing
+
+    $done = $recovery->scheduleLeft(30, now(), true);
+    expect($done['baskets'])->toBe(2)
+        ->and(DB::table('cart_recoveries')->orderBy('cart_id')->pluck('cart_id')->all())->toBe([$en->id, $ar->id])
+        ->and(DB::table('cart_recoveries')->where('cart_id', $ar->id)->value('locale'))->toBe('ar');
+
+    // Both go with the next sweep, each in its own language.
+    brmTick();
+    Mail::assertSent(CartRecoveryReminder::class, 2);
+    Mail::assertSent(CartRecoveryReminder::class, fn ($m) => $m->hasTo('ar@example.com') && str_contains($m->envelope()->subject, 'سلّتكِ'));
+    Mail::assertSent(CartRecoveryReminder::class, fn ($m) => $m->hasTo('en@example.com') && $m->envelope()->subject === 'Your basket is waiting 🛍️');
+
+    // Pressing it twice queues nothing new.
+    expect($recovery->scheduleLeft(30, now(), true)['baskets'])->toBe(0);
+});
+
+it('holds a reminder scheduled for later until its time', function () {
+    brmOn();
+    brmTypedCart('later@example.com', 24 * 4);
+
+    app(CartRecovery::class)->scheduleLeft(10, now()->addDay(), true);
+    brmTick();
+    Mail::assertNothingSent();
+
+    $this->travel(25)->hours();
+    brmTick();
+    Mail::assertSent(CartRecoveryReminder::class, fn ($m) => $m->hasTo('later@example.com'));
+});
+
+it('refuses to schedule while reminders are off, and takes only the offered windows', function () {
+    brmTypedCart('x@example.com', 24 * 3);
+
+    expect(app(CartRecovery::class)->scheduleLeft(30, now(), true))->toMatchArray(['ok' => false])
+        ->and(DB::table('cart_recoveries')->count())->toBe(0);
+
+    brmOn();
+    expect(app(CartRecovery::class)->scheduleLeft(45, now(), true)['ok'])->toBeFalse();
+});
+
+it('records an Arabic checkout\'s typed address as an Arabic reminder', function () {
+    brmOn();
+    \Tests\Support\ArabicShop::on();
+    $cart = brmTypedCart('typed-ar@example.com');
+    DB::table('carts')->where('id', $cart->id)->update(['ct_email' => null]);
+
+    // The capture itself, as CheckoutEmailCapture calls it with the page's language.
+    app(CartRecovery::class)->captureTyped($cart->id, 'typed-ar@example.com', CartRecovery::localeFromPath('/ar/checkout/'));
+
+    expect(DB::table('cart_recoveries')->where('cart_id', $cart->id)->value('locale'))->toBe('ar');
+});
+
+it('previews the email in English and Arabic, as it is sent', function () {
+    brmOn();
+    \Tests\Support\ArabicShop::on();
+    Product::create(['slug' => 'brm-pv', 'name' => 'Collagen Patch', 'status' => 'publish', 'is_visible' => true, 'price' => 23900, 'stock_status' => 'instock']);
+
+    $en = app(CartRecovery::class)->preview('en');
+    $ar = app(CartRecovery::class)->preview('ar');
+
+    expect($en['subject'])->toBe('Your basket is waiting 🛍️')
+        ->and($en['html'])->toContain('We noticed you left a few things in your basket')
+        ->and($en['html'])->toContain('Collagen Patch')
+        ->and($ar['subject'])->toBe(CartRecovery::AR_SUBJECT)
+        ->and($ar['html'])->toContain('لاحظنا أنكِ تركتِ بعض المنتجات');
+});
+
+it('guards the two new endpoints: view for the preview, block for scheduling', function () {
+    CartTrackingRoutes::wire(app());
+    brmOn();
+
+    test()->postJson('/admin-api/cart-tracking/reminders/schedule', ['days' => 30])->assertStatus(401);
+
+    $owner = AdminUser::create(['name' => 'O', 'email' => 'brm-o2@example.com', 'password' => Hash::make('secret-secret'), 'role' => 'owner']);
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/cart-tracking/reminders/schedule', ['days' => 30])->assertOk()->assertJson(['ok' => true]);
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/cart-tracking/reminders/schedule', ['days' => 7])->assertStatus(422);
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/cart-tracking/reminders/schedule', ['days' => 30, 'at' => now()->subDay()->format('Y-m-d\TH:i')])->assertStatus(422);
+    test()->actingAs($owner, 'admin')->getJson('/admin-api/cart-tracking/reminders/preview?lang=ar')->assertOk()->assertJsonStructure(['subject', 'html']);
+});
+
+it('answers every button the Cart Tracking screen draws: each one is on the click handler\'s list', function () {
+    /*
+     * THE DEFECT (2.60.575): the Reminder emails tab's page arrows were drawn
+     * with data-ctk-rpage and handled by name, but the handler only reacts to
+     * attributes on its closest() list, and that one was never added -- so the
+     * arrows did nothing and baskets past the first fifty could not be reached.
+     * The count, schedule and preview buttons were the same mistake, caught in
+     * Chromium before they shipped.
+     * MUTATION: take [data-ctk-remcount] off the list -- red.
+     */
+    $view = (string) file_get_contents(resource_path('views/admin/partials/cart-tracking-screen.blade.php'));
+    preg_match("/var t = e\\.target\\.closest\\('([^']+)'\\);/", $view, $list);
+    preg_match_all("/hasAttribute\\('(data-ctk-[a-z-]+)'\\)/", $view, $handled);
+
+    expect($list)->not->toBeEmpty();
+
+    foreach (array_unique($handled[1]) as $attr) {
+        expect(str_contains($list[1], '['.$attr.']'))->toBeTrue($attr.' is handled but the click never reaches it');
+    }
 });

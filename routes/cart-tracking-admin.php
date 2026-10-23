@@ -27,6 +27,8 @@ use Illuminate\Support\Facades\Route;
 |   GET  cart-tracking/products              Added / Removed tabs     view
 |   GET  cart-tracking/blocks                Blocked tab              view
 |   GET  cart-tracking/reminders             Reminders tab            view
+|   GET  cart-tracking/reminders/preview     the email, EN or AR      view
+|   POST cart-tracking/reminders/schedule    remind older baskets     block
 |   GET  cart-tracking/settings              Settings tab             view
 |   GET  cart-tracking/export                CSV of the filter / ids  view
 |   POST cart-tracking/blocks                block an IP / range      block
@@ -44,6 +46,8 @@ Route::get('/cart-tracking/carts/{id}', [CartTrackingApiController::class, 'show
 Route::get('/cart-tracking/products', [CartTrackingApiController::class, 'products']);
 Route::get('/cart-tracking/blocks', [CartTrackingApiController::class, 'blocks']);
 Route::get('/cart-tracking/reminders', [CartTrackingApiController::class, 'reminders']);
+Route::get('/cart-tracking/reminders/preview', [CartTrackingApiController::class, 'previewReminder']);
+Route::post('/cart-tracking/reminders/schedule', [CartTrackingApiController::class, 'scheduleReminders']);
 Route::get('/cart-tracking/settings', [CartTrackingApiController::class, 'settings']);
 Route::get('/cart-tracking/export', [CartTrackingApiController::class, 'export']);
 Route::post('/cart-tracking/blocks', [CartTrackingApiController::class, 'block']);
