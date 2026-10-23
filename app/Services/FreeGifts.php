@@ -352,6 +352,84 @@ final class FreeGifts
         return false;
     }
 
+    /**
+     * THE HOMEPAGE SECTION (Marketing -> Free gifts -> Homepage section). The
+     * owner, 23 October: "the section must be dynamic, if we publish any
+     * range from the ranges, it should show auto here also ... i need just a
+     * simple one section ... super simple for users to understand".
+     *
+     * One row per range that is published and in date today, in the order the
+     * checkout reads them, each with what that range gives right now: the
+     * wording ("1 Mask + 1 Full Size Product", or the range's own words when
+     * it has no counts) and the photos of the gifts actually in stock. A range
+     * whose gifts are all out of stock is left out, so the homepage never
+     * promises a gift the bag would not give.
+     *
+     * null when the section is off, gifts are off (or only on for testers who
+     * are not this visitor), or no range has a gift to show. ONE product query
+     * for every range together, so the cost does not grow with the ranges.
+     *
+     * @return array{title:string,sub:string,btn:string,rows:list<array{amount:string,words:string,gifts:list<array>}>}|null
+     */
+    public function home(?\Illuminate\Http\Request $request): ?array
+    {
+        $cfg = $this->config();
+
+        if (! $cfg['home']['on'] || ! $this->visibleTo($request)) {
+            return null;
+        }
+
+        $today = StoreTime::today()->format('Y-m-d');
+        $ranges = array_values(array_filter($this->ranges(), static fn (array $r) => (($r['starts'] ?? null) === null || $today >= $r['starts'])
+            && (($r['ends'] ?? null) === null || $today <= $r['ends'])));
+
+        if ($ranges === []) {
+            return null;
+        }
+
+        $products = $this->products(array_merge(...array_map(static fn (array $r) => array_map(static fn (array $g) => (int) $g[0], $r['gifts']), $ranges)));
+        $ar = ! Locale::isDefault();
+        $rows = [];
+
+        foreach ($ranges as $r) {
+            $lines = $this->linesFor($r, $products);
+
+            if ($lines === []) {
+                continue;
+            }
+
+            $words = $ar ? trim((string) $r['ar']) : trim((string) $r['en']);
+
+            if (($r['needs'] ?? null) !== null || $words === '') {
+                $words = self::sentence($lines)[$ar ? 'ar' : 'en'];
+            }
+
+            $min = number_format(intdiv((int) $r['min'], 100));
+            $max = $r['max'] === null ? null : number_format(intdiv((int) $r['max'], 100));
+
+            $rows[] = [
+                'amount' => $ar
+                    ? ($max === null ? $min . '+ د.إ' : $min . ' – ' . $max . ' د.إ')
+                    : ($max === null ? 'AED ' . $min . '+' : 'AED ' . $min . ' – ' . $max),
+                'words' => $words,
+                'gifts' => self::rows($lines),
+            ];
+        }
+
+        if ($rows === []) {
+            return null;
+        }
+
+        $h = $cfg['home'];
+
+        return [
+            'title' => $ar ? $h['title_ar'] : $h['title_en'],
+            'sub' => $ar ? $h['sub_ar'] : $h['sub_en'],
+            'btn' => $ar ? $h['btn_ar'] : $h['btn_en'],
+            'rows' => $rows,
+        ];
+    }
+
     /** One text in the language being drawn (the order's, inside OrderLocale::render()). */
     public function text(string $key, array $replace = []): string
     {
@@ -494,9 +572,9 @@ final class FreeGifts
      *
      * @return list<array{product:Product,product_id:int,quantity:int,value:int,range_id:int,range_label:string,kind:?string,backup:bool}>
      */
-    public function linesFor(array $range): array
+    public function linesFor(array $range, ?array $products = null): array
     {
-        $products = $this->products(array_map(static fn (array $g) => (int) $g[0], $range['gifts']));
+        $products ??= $this->products(array_map(static fn (array $g) => (int) $g[0], $range['gifts']));
         $label = self::rangeLabel($range);
         $needs = $range['needs'] ?? null;
         $out = [];

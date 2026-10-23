@@ -580,6 +580,7 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
 </div></section>
 @endunless
 
+@php $fgh = app(\App\Services\FreeGifts::class)->home(request()); @endphp@if ($fgh !== null)@include('partials.home.free-gifts', ['fgh' => $fgh])@endif
 {{-- BUNDLES — a carousel with arrows, the heading centred and the All sets
      button redesigned (2.60.370): App\Support\HomeBundles holds the reasoning;
      Appearance → Homepage content → Big savings bundles holds the controls. --}}
