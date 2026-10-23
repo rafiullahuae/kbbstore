@@ -6161,6 +6161,18 @@ checkout_page|cline_text_ar|text|"  sp  "|'sp'
 checkout_page|cline_text_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 checkout_page|cline_text_ar|text|null|'للحصول على خصم، طبّق القسيمة {coupon-code}'
 checkout_page|cline_text_ar|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|cline_done|text|"abc"|'abc'
+checkout_page|cline_done|text|""|'Discount code {coupon-code} applied'
+checkout_page|cline_done|text|"  sp  "|'sp'
+checkout_page|cline_done|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|cline_done|text|null|'Discount code {coupon-code} applied'
+checkout_page|cline_done|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|cline_done_ar|text|"abc"|'abc'
+checkout_page|cline_done_ar|text|""|'تم تطبيق رمز الخصم {coupon-code}'
+checkout_page|cline_done_ar|text|"  sp  "|'sp'
+checkout_page|cline_done_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+checkout_page|cline_done_ar|text|null|'تم تطبيق رمز الخصم {coupon-code}'
+checkout_page|cline_done_ar|text|"<b>x<\/b>"|'<b>x</b>'
 checkout_page|shop_link|bool|true|true
 checkout_page|shop_link|bool|false|false
 checkout_page|shop_link|bool|"1"|true

@@ -12382,6 +12382,26 @@
             "options": null,
             "default": "للحصول على خصم، طبّق القسيمة {coupon-code}",
             "value": "للحصول على خصم، طبّق القسيمة {coupon-code}"
+          },
+          {
+            "key": "cline_done",
+            "name": "cline_done",
+            "type": "text",
+            "label": "Text after apply",
+            "help": "What the line says once the coupon is on the order. Use {coupon-code} where the code should appear. Up to 120 characters.",
+            "options": null,
+            "default": "Discount code {coupon-code} applied",
+            "value": "Discount code {coupon-code} applied"
+          },
+          {
+            "key": "cline_done_ar",
+            "name": "cline_done_ar",
+            "type": "text",
+            "label": "Text after apply — Arabic",
+            "help": "The same, on the Arabic shop (/ar/). Cleared, it goes back to the shipped Arabic wording.",
+            "options": null,
+            "default": "تم تطبيق رمز الخصم {coupon-code}",
+            "value": "تم تطبيق رمز الخصم {coupon-code}"
           }
         ]
       },

@@ -811,7 +811,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // 857 -> 916 (Lane CK): Text sizes -- checkout-page 25 (overall text and
     // spacing, the lock, eight roles a side, two small-phone steps, label
     // tone), cart-page 18 and cart-panel 16, the owner's request of 22 October.
-    expect($compared)->toBe(916, 'the number of controls drawn changed');
+    // 916 -> 918 (23 October 2026): checkout-page Coupon line gains "Text after apply"
+    // and its Arabic twin, last on the tab; every recorded field byte-identical.
+    expect($compared)->toBe(918, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)
