@@ -236,6 +236,24 @@ select.fg-in{padding-inline-end:28px}
 .fg-box-add:focus-visible,.fg-kinds button:focus-visible,.fg-ask button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .fg-box-e{font-size:12px;color:var(--ink-soft);padding:2px 4px}
 .fg-kinds{display:inline-flex;gap:3px;flex-wrap:wrap}
+/* Main / Backup (23 October): the backups sit under the main gifts in each type box, dashed. */
+.fg-bk{margin-top:10px;padding:10px;border:1px dashed var(--kbd);border-radius:12px;background:rgba(255,255,255,.55);display:grid;gap:8px}
+.fg-bk-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:12.5px}
+.fg-bk-h b{color:var(--kink)}
+.fg-bk-h small{color:var(--ink-soft)}
+.fg-bk .fg-gi{opacity:.92}
+.fg-box-add.bk{border-style:dotted}
+.fg-bk-q{font-size:12px;color:var(--ink-soft);white-space:nowrap}
+.fg-roles{display:inline-flex;border:1px solid var(--border);border-radius:999px;padding:1px;background:var(--surface)}
+.fg-roles button{font:inherit;font-size:11px;font-weight:650;padding:2px 9px;border:0;border-radius:999px;background:none;color:var(--ink-soft);cursor:pointer;line-height:1.5}
+.fg-roles button[aria-checked="true"]{background:var(--ink);color:#fff}
+.fg-roles button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.fg-auto{border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:var(--surface);display:grid;gap:6px}
+.fg-auto-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.fg-auto-h small{color:var(--ink-soft)}
+.fg-auto-s{display:grid;gap:2px;font-size:15px;font-weight:650}
+.fg-auto-n{color:var(--ink-soft)}
+.fg-auto-n.short{color:#9a5b0a}
 .fg-kinds button{font:inherit;font-size:11px;font-weight:650;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--ink-soft);cursor:pointer;line-height:1.5}
 .fg-kinds button[aria-checked="true"].k-mask{background:var(--fk-mask-bg);border-color:var(--fk-mask-ink);color:var(--fk-mask-ink)}
 .fg-kinds button[aria-checked="true"].k-mini{background:var(--fk-mini-bg);border-color:var(--fk-mini-ink);color:var(--fk-mini-ink)}
@@ -484,7 +502,8 @@ select.fg-in{padding-inline-end:28px}
   /* UNITS per type: 2x of one mask is 2 masks. */
   function tally(gifts) {
     var out = { mask: 0, mini: 0, full: 0, none: 0 };
-    (gifts || []).forEach(function (g) { out[kindOf(g.kind) || 'none'] += Math.max(0, Number(g.quantity) || 0); });
+    // Main gifts only: a backup is a reserve, not part of the count.
+    (gifts || []).forEach(function (g) { if (g.role !== 'backup') out[kindOf(g.kind) || 'none'] += Math.max(0, Number(g.quantity) || 0); });
     return out;
   }
   function criteriaGaps(needs, have) {
@@ -512,6 +531,42 @@ select.fg-in{padding-inline-end:28px}
       ar.push(w[2][n === 1 ? 0 : n === 2 ? 1 : n <= 10 ? 2 : 3].split(':n').join(String(n)));
     });
     return { en: en.join(' + '), ar: ar.join(' + ') };
+  }
+  /* What a shopper gets right now: FreeGifts::linesFor(), in the browser, from
+     the stock the screen already has (no request). With counts: each type's
+     main gifts in order, then its backups, most stock first. Without: the main
+     gifts as listed. */
+  function availOf(p) {
+    if (!p || p.status !== 'publish' || p.type === 'variable' || !p.in_stock) return 0;
+    return p.stock === null ? Infinity : Math.max(0, p.stock);
+  }
+  function simulate(x) {
+    var out = [], needs = needsOf(x), gifts = x.gifts || [];
+    function add(g, q, backup) { out.push({ product: g.product, product_id: g.product_id, quantity: q, kind: kindOf(g.kind), backup: backup }); }
+    if (!needs) {
+      gifts.forEach(function (g) { var q = Math.min(g.quantity, availOf(g.product)); if (g.role !== 'backup' && q > 0) add(g, q, false); });
+      return out;
+    }
+    gifts.forEach(function (g) { var q = Math.min(g.quantity, availOf(g.product)); if (g.role !== 'backup' && !kindOf(g.kind) && q > 0) add(g, q, false); });
+    KIND_KEYS.forEach(function (k) {
+      var left = Number(needs[k]) || 0;
+      gifts.forEach(function (g) {
+        if (left < 1 || g.role === 'backup' || kindOf(g.kind) !== k) return;
+        var q = Math.min(g.quantity, availOf(g.product), left);
+        if (q > 0) { add(g, q, false); left -= q; }
+      });
+      if (left < 1) return;
+      gifts.filter(function (g) { return g.role === 'backup' && kindOf(g.kind) === k; })
+        .map(function (g, i) { return { g: g, i: i, a: availOf(g.product) }; })
+        .sort(function (a, b) { return b.a - a.a || a.i - b.i; })
+        .forEach(function (b) { if (left < 1) return; var q = Math.min(b.a, left); if (q > 0) { add(b.g, q, true); left -= q; } });
+    });
+    return out;
+  }
+  function givenNeeds(lines) {
+    var have = { mask: 0, mini: 0, full: 0 };
+    lines.forEach(function (l) { if (l.kind && have[l.kind] != null) have[l.kind] += l.quantity; });
+    return have;
   }
   function kindPill(k) { var r = kindRow(k); return r ? el('span', { class: 'fg-kp k-' + k, title: 'Gift type (internal only)' }, [el('span', { class: 'fg-kd k-' + k }), r[2]]) : null; }
 
@@ -583,7 +638,7 @@ select.fg-in{padding-inline-end:28px}
     if (!st.drafts[id]) { var r = rangeById(id); if (r) st.drafts[id] = origOf(r); }
     return st.drafts[id];
   }
-  function norm(x) { return JSON.stringify([x.min, x.max, (x.label_en || '').trim(), (x.label_ar || '').trim(), !!x.enabled, x.starts_on || null, x.ends_on || null, x.gifts.map(function (g) { return [g.product_id, g.quantity, kindOf(g.kind)]; }), needsOf(x) ? KIND_KEYS.map(function (k) { return Number(x.needs[k]) || 0; }) : null]); }
+  function norm(x) { return JSON.stringify([x.min, x.max, (x.label_en || '').trim(), (x.label_ar || '').trim(), !!x.enabled, x.starts_on || null, x.ends_on || null, x.gifts.map(function (g) { return [g.product_id, g.quantity, kindOf(g.kind), g.role === 'backup' ? 'backup' : 'primary']; }), needsOf(x) ? KIND_KEYS.map(function (k) { return Number(x.needs[k]) || 0; }) : null]); }
   function dirtyRanges() {
     return Object.keys(st.drafts).filter(function (k) {
       if (k === 'new') return true;
@@ -810,7 +865,9 @@ select.fg-in{padding-inline-end:28px}
 
   /* ------------------------------------------------------- the own Saves */
   function rangeBody(x) {
-    return { min: x.min, max: x.max, label_en: (x.label_en || '').trim(), label_ar: (x.label_ar || '').trim(), enabled: !!x.enabled, starts_on: x.starts_on || null, ends_on: x.ends_on || null, gifts: x.gifts.map(function (g) { return { product_id: g.product_id, quantity: g.quantity, kind: kindOf(g.kind) }; }), needs: needsOf(x) ? { mask: Number(x.needs.mask) || 0, mini: Number(x.needs.mini) || 0, full: Number(x.needs.full) || 0 } : null };
+    // With counts the wording IS the counts (the sentence is automatic); without, his own words.
+    var auto = needsOf(x) ? wordingFor(x.needs) : null;
+    return { min: x.min, max: x.max, label_en: auto && auto.en ? auto.en : (x.label_en || '').trim(), label_ar: auto && auto.ar ? auto.ar : (x.label_ar || '').trim(), enabled: !!x.enabled, starts_on: x.starts_on || null, ends_on: x.ends_on || null, gifts: x.gifts.map(function (g) { return { product_id: g.product_id, quantity: g.quantity, kind: kindOf(g.kind), role: g.role === 'backup' ? 'backup' : 'primary' }; }), needs: needsOf(x) ? { mask: Number(x.needs.mask) || 0, mini: Number(x.needs.mini) || 0, full: Number(x.needs.full) || 0 } : null };
   }
   function settingsBody(c) {
     var t = {};
@@ -1110,7 +1167,31 @@ select.fg-in{padding-inline-end:28px}
     paintMsgs();
     live.push({ node: msgs, fn: paintMsgs });
 
-    var wordsRow = el('div', { class: 'fg-g2' }, [txt('label_en', 'Wording (English)'), txt('label_ar', 'Wording (Arabic)', true)]);
+    var wordsInputs = el('div', { class: 'fg-g2' }, [txt('label_en', 'Wording (English)'), txt('label_ar', 'Wording (Arabic)', true)]);
+    var autoWords = el('div', { class: 'fg-auto', role: 'status', 'aria-live': 'polite' });
+    var wordsRow = el('div', {}, [autoWords, wordsInputs]);
+    /* With counts, the sentence writes itself from what a shopper actually gets
+       right now (main gifts, topped up from backups); the boxes stay for a range
+       with no counts. Homepage and box read the same. */
+    function paintWords() {
+      var n = needsOf(x);
+      wordsInputs.hidden = !!n;
+      autoWords.hidden = !n;
+      autoWords.textContent = '';
+      if (!n) return;
+      var lines = simulate(x), w = wordingFor(givenNeeds(lines)), want = wordingFor(n), units = lines.reduce(function (a, l) { return a + l.quantity; }, 0);
+      autoWords.appendChild(el('div', { class: 'fg-auto-h' }, [el('b', { text: 'Sentence on the shop' }), el('small', { text: 'Automatic, from the counts above' })]));
+      autoWords.appendChild(el('div', { class: 'fg-auto-s' }, [el('span', { text: w.en || '—' }), el('span', { dir: 'rtl', lang: 'ar', text: w.ar || '—' })]));
+      var backups = lines.filter(function (l) { return l.backup; });
+      var note = w.en !== want.en
+        ? 'Right now a shopper gets ' + plural(units, 'gift', 'gifts') + ', fewer than the counts: some gifts are out of stock with no backup left.'
+        : backups.length
+          ? 'Right now ' + backups.map(function (l) { return l.quantity + ' × ' + (l.product ? l.product.name : 'a backup'); }).join(', ') + ' ' + (backups.length === 1 ? 'comes' : 'come') + ' from the backups.'
+          : 'Right now every gift comes from the main list.';
+      autoWords.appendChild(el('small', { class: 'fg-auto-n' + (w.en !== want.en ? ' short' : ''), text: note }));
+    }
+    paintWords();
+    live.push({ node: autoWords, fn: paintWords });
     var crit = criteriaEl(id, x, ro, words, changed);
     var giftList = giftBoxes(id, key, x, ro);
 
@@ -1167,7 +1248,10 @@ select.fg-in{padding-inline-end:28px}
         ]),
         foot
       ]),
-      previewPair(function () { return x.gifts; }, function (lang) { return lang === 'ar' ? (x.label_ar || x.label_en) : x.label_en; })
+      previewPair(function () { return simulate(x); }, function (lang) {
+        if (needsOf(x)) { var w = wordingFor(givenNeeds(simulate(x))); return lang === 'ar' ? w.ar : w.en; }
+        return lang === 'ar' ? (x.label_ar || x.label_en) : x.label_en;
+      })
     ]);
   }
   /* The criteria (Lane FG4): three steppers, their total, and "Use for
@@ -1208,7 +1292,7 @@ select.fg-in{padding-inline-end:28px}
     }
     var box = el('div', { class: 'fg-crit', role: 'group', 'aria-label': 'Criteria for this range' }, [
       el('div', { class: 'fg-crit-t' }, ['Criteria', el('small', { text: 'Internal only — shoppers never see the types.' })]),
-      step('mask'), step('mini'), step('full'), sum, ro ? null : use
+      step('mask'), step('mini'), step('full'), sum
     ]);
     paintSum();
     live.push({ node: sum, fn: paintSum });
@@ -1252,15 +1336,28 @@ select.fg-in{padding-inline-end:28px}
       var h = el('h4', { html: k[5] });
       h.appendChild(el('span', { text: k[1] }));
       box.appendChild(el('div', { class: 'fg-box-h' }, [h, cnt]));
-      var any = false;
+      var any = false, backs = 0;
       x.gifts.forEach(function (g, gi) {
-        if ((kindOf(g.kind) || 'none') !== kk) return;
+        if ((kindOf(g.kind) || 'none') !== kk || g.role === 'backup') return;
         any = true;
         box.appendChild(giftRow(x, g, gi, ro));
       });
       if (undo && undoKind === kk) box.appendChild(undoRow(key, x));
       if (!any && !(undo && undoKind === kk)) box.appendChild(el('div', { class: 'fg-box-e', text: 'None yet.' }));
-      if (!ro && kk !== 'none') box.appendChild(el('button', { type: 'button', class: 'fg-box-add', 'data-fk': 'add-' + kk + '-' + id, 'aria-label': 'Add ' + k[4] + ' to this range', onclick: function () { openPicker(id, kk); } }, [el('span', { html: ICONS.plus, style: 'display:inline-flex' }), 'Add ' + k[4]]));
+      if (!ro && kk !== 'none') box.appendChild(el('button', { type: 'button', class: 'fg-box-add', 'data-fk': 'add-' + kk + '-' + id, 'aria-label': 'Add ' + k[4] + ' to this range', onclick: function () { openPicker(id, kk, 'primary'); } }, [el('span', { html: ICONS.plus, style: 'display:inline-flex' }), 'Add ' + k[4]]));
+      /* Backups (the owner, 23 October): used only when the main gifts above
+         run out, the one with the most stock first, as many as needed. */
+      if (kk !== 'none') {
+        var bk = el('div', { class: 'fg-bk' }, [el('div', { class: 'fg-bk-h' }, [el('b', { text: 'Backup' }), el('small', { text: 'Used only if a main gift runs out · most stock first' })])]);
+        x.gifts.forEach(function (g, gi) {
+          if ((kindOf(g.kind) || 'none') !== kk || g.role !== 'backup') return;
+          backs++;
+          bk.appendChild(giftRow(x, g, gi, ro));
+        });
+        if (!backs) bk.appendChild(el('div', { class: 'fg-box-e', text: 'No backup yet.' }));
+        if (!ro) bk.appendChild(el('button', { type: 'button', class: 'fg-box-add bk', 'data-fk': 'addbk-' + kk + '-' + id, 'aria-label': 'Add a backup ' + k[3] + ' to this range', onclick: function () { openPicker(id, kk, 'backup'); } }, [el('span', { html: ICONS.plus, style: 'display:inline-flex' }), 'Add backup']));
+        box.appendChild(bk);
+      }
       holder.appendChild(box);
     });
     var tot = el('div', { class: 'fg-tot', role: 'status' });
@@ -1298,7 +1395,8 @@ select.fg-in{padding-inline-end:28px}
     return grp;
   }
   function giftRow(x, g, gi, ro) {
-    var name = g.product ? g.product.name : 'Product #' + g.product_id, s = giftBadge(g.product, g.quantity);
+    var bkRow = g.role === 'backup';
+    var name = g.product ? g.product.name : 'Product #' + g.product_id, s = giftBadge(g.product, bkRow ? 1 : g.quantity);
     var badge = pill(s.cls, s.text);
     var q = el('input', { type: 'number', min: 1, max: MAX_QTY, value: g.quantity, disabled: ro, inputmode: 'numeric', 'aria-label': 'Quantity of ' + name, 'data-fk': 'q-' + g.product_id });
     var minus = el('button', { type: 'button', text: '−', 'aria-label': 'One fewer ' + name, disabled: ro || g.quantity <= 1 });
@@ -1315,8 +1413,8 @@ select.fg-in{padding-inline-end:28px}
     q.addEventListener('change', function () { set(q.value); });
     var row = el('div', { class: 'fg-gi' + (s.level === 'in' ? '' : ' ' + s.level) }, [
       thumb(g.product),
-      el('div', { class: 'fg-gi-n' }, [g.product && g.product.brand ? el('small', { text: g.product.brand }) : null, el('b', { text: name }), badge, el('div', {}, [kindPicker(x, g, ro, name)])]),
-      el('div', { class: 'fg-step' }, [minus, q, plus]),
+      el('div', { class: 'fg-gi-n' }, [g.product && g.product.brand ? el('small', { text: g.product.brand }) : null, el('b', { text: name }), badge, el('div', { class: 'fg-row', style: 'gap:6px;flex-wrap:wrap' }, [kindPicker(x, g, ro, name), kindOf(g.kind) ? roleSwitch(g, ro, name) : null])]),
+      bkRow ? el('span', { class: 'fg-bk-q', text: 'As needed' }) : el('div', { class: 'fg-step' }, [minus, q, plus]),
       ro ? null : el('button', { type: 'button', class: 'fg-btn-i danger', 'aria-label': 'Remove ' + name, title: 'Remove', html: ICONS.trash, onclick: function () {
         var key = Object.keys(st.drafts).filter(function (k) { return st.drafts[k] === x; })[0];
         st.removed[key] = { g: x.gifts.splice(gi, 1)[0], at: gi };
@@ -1325,6 +1423,20 @@ select.fg-in{padding-inline-end:28px}
       } })
     ]);
     return row;
+  }
+  /* Main or backup, one tap; the row moves to its section at once. */
+  function roleSwitch(g, ro, name) {
+    var grp = el('span', { class: 'fg-roles', role: 'radiogroup', 'aria-label': 'Main or backup: ' + name });
+    [['primary', 'Main'], ['backup', 'Backup']].forEach(function (r) {
+      var on = (g.role === 'backup' ? 'backup' : 'primary') === r[0];
+      grp.appendChild(el('button', { type: 'button', role: 'radio', 'aria-checked': String(on), disabled: ro, 'data-fk': 'role-' + g.product_id + '-' + r[0], text: r[1], onclick: function () {
+        if (on) return;
+        g.role = r[0];
+        render();
+        var f = document.querySelector('[data-fk="role-' + g.product_id + '-' + r[0] + '"]'); if (f) f.focus();
+      } }));
+    });
+    return grp;
   }
   function undoRow(key, x) {
     var u = st.removed[key];
@@ -1339,8 +1451,8 @@ select.fg-in{padding-inline-end:28px}
   function pickerTarget() { var p = st.picker; return p ? (p.range === 'new' ? st.drafts['new'] : draft(p.range)) : null; }
   /* `box` (Lane FG4): the box the picker was opened from, or null. A pick
      goes to its product's remembered type, else this box, else the row asks. */
-  function openPicker(id, box) {
-    st.picker = { range: id, box: kindOf(box), kind: 'all', asking: null, from: box ? 'add-' + box + '-' + id : 'add-' + id, q: '', filter: 'all', rows: null, initial: null, loading: false, seq: 0, timer: null, ctl: null, err: null, added: 0 };
+  function openPicker(id, box, role) {
+    st.picker = { range: id, box: kindOf(box), role: role === 'backup' ? 'backup' : 'primary', kind: 'all', asking: null, from: box ? (role === 'backup' ? 'addbk-' : 'add-') + box + '-' + id : 'add-' + id, q: '', filter: 'all', rows: null, initial: null, loading: false, seq: 0, timer: null, ctl: null, err: null, added: 0 };
     delete st.removed[String(id)];
     render();
     var f = document.querySelector('[data-fk="pk-q"]'); if (f) f.focus();
@@ -1419,11 +1531,11 @@ select.fg-in{padding-inline-end:28px}
     });
     function pick(pr, kind) {
       if (kind && !pr.gift_kind) pr.gift_kind = kind;
-      x.gifts.push({ product_id: pr.id, quantity: 1, product: pr, kind: kind });
+      x.gifts.push({ product_id: pr.id, quantity: 1, product: pr, kind: kind, role: kind && p.role === 'backup' ? 'backup' : 'primary' });
       p.added++; p.asking = null;
       var r = kindRow(kind);
       paintResults(); repaint();
-      if (pkStNode) pkStNode.textContent = 'Added "' + pr.name + '" to ' + (r ? r[1] : 'Untagged') + '.';
+      if (pkStNode) pkStNode.textContent = 'Added "' + pr.name + '" to ' + (r ? r[1] : 'Untagged') + (kind && p.role === 'backup' ? ' · Backup' : '') + '.';
       var back = resultsNode.querySelector('[data-fk="res-' + pr.id + '"]'); if (back) back.focus();
     }
     if (had) { var back = resultsNode.querySelector('[data-fk="' + had + '"]'); if (back) back.focus(); }

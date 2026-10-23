@@ -107,7 +107,7 @@ it('saves each gift\'s type and the range\'s criteria, and reads them back throu
     $range = collect($r->json('ranges'))->firstWhere('id', $id);
     expect($range['needs'])->toBe(['mask' => 3, 'mini' => 2, 'full' => 1])
         ->and(collect($range['gifts'])->pluck('kind', 'product_id')->all())->toBe([$mask->id => 'mask', $mini->id => 'mini', $full->id => 'full'])
-        ->and(array_keys($range['gifts'][0]))->toBe(['product_id', 'quantity', 'kind', 'product'])
+        ->and(array_keys($range['gifts'][0]))->toBe(['product_id', 'quantity', 'kind', 'role', 'product'])
         ->and($range['gifts'][0]['product']['gift_kind'])->toBe('mask');
 
     expect((array) DB::table('free_gift_ranges')->where('id', $id)->first(['need_mask', 'need_mini', 'need_full']))->toEqual(['need_mask' => 3, 'need_mini' => 2, 'need_full' => 1]);

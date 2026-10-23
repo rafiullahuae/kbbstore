@@ -29,7 +29,8 @@ class FreeGiftsController extends Controller
 {
     private const MAX_RANGES = 20;
 
-    private const MAX_GIFTS = 30;
+    // 60: main gifts and their backups (the owner, 23 October).
+    private const MAX_GIFTS = 60;
 
     /** A gift with this many units or fewer reads "Low" (Overview, Ranges, Gift products). Stated on screen. */
     public const LOW_STOCK = 20;
@@ -211,6 +212,8 @@ class FreeGiftsController extends Controller
             'gifts.*.quantity' => ['required', 'integer', 'min:1', 'max:' . FreeGifts::MAX_QTY],
             // Lane FG4, internal only: the gift's box, and the range's criteria.
             'gifts.*.kind' => ['nullable', Rule::in(FreeGifts::KINDS)],
+            // Main or backup (the owner, 23 October). Absent = main, as every gift was before.
+            'gifts.*.role' => ['nullable', Rule::in(['primary', 'backup'])],
             'needs' => ['sometimes', 'nullable', 'array'],
             'needs.mask' => ['required_with:needs', 'integer', 'min:0', 'max:' . FreeGifts::MAX_NEED],
             'needs.mini' => ['required_with:needs', 'integer', 'min:0', 'max:' . FreeGifts::MAX_NEED],
@@ -308,6 +311,7 @@ class FreeGiftsController extends Controller
                     'product_id' => (int) $g['product_id'],
                     'quantity' => (int) $g['quantity'],
                     'kind' => $kinds[$sort] ?? null,
+                    'role' => ($g['role'] ?? 'primary') === 'backup' ? 'backup' : 'primary',
                     'sort' => $sort,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -586,6 +590,7 @@ class FreeGiftsController extends Controller
                     'product_id' => (int) $i->product_id,
                     'quantity' => (int) $i->quantity,
                     'kind' => FreeGifts::kind($i->kind ?? null),
+                    'role' => ($i->role ?? 'primary') === 'backup' ? 'backup' : 'primary',
                     'product' => isset($byId[$i->product_id]) ? $this->productRow($byId[$i->product_id]) : null,
                 ])->values(),
             ])->values(),

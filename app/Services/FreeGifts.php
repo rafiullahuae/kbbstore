@@ -393,7 +393,8 @@ final class FreeGifts
     {
         $compiled = $this->settings->get(self::COMPILED);
 
-        if (! is_array($compiled) || ! isset($compiled['ranges']) || ! is_array($compiled['ranges'])) {
+        // v2 (main/backup gifts): an older compiled copy is rebuilt once.
+        if (! is_array($compiled) || ($compiled['v'] ?? 1) < 2 || ! isset($compiled['ranges']) || ! is_array($compiled['ranges'])) {
             $compiled = $this->compile();
         }
 
@@ -473,39 +474,128 @@ final class FreeGifts
         return $this->linesFor($range);
     }
 
-    /** @return list<array{product:Product,product_id:int,quantity:int,value:int,range_id:int,range_label:string}> */
+    /**
+     * The gifts a basket in this range gets, as lines.
+     *
+     * WITH COUNTS (the range's Masks / Minis / Full size numbers -- the owner,
+     * 23 October: "the back log will only trigger if the primary products get
+     * out of stock by any reason, so the system will pick any from the back
+     * log as per the quantity available ... first the 3 qnty product"):
+     *
+     *   for each type, its MAIN gifts in their order, each up to its own
+     *   quantity and to what is in stock, until the type's count is reached;
+     *   then, if still short, its BACKUP gifts, the one with the MOST stock
+     *   first, each as many as needed and in stock. Untagged main gifts are
+     *   given as they always were. A type that cannot be filled gives what
+     *   there is, and the sentence says what was actually given.
+     *
+     * WITHOUT COUNTS: the main gifts as listed, exactly as before; backups
+     * play no part.
+     *
+     * @return list<array{product:Product,product_id:int,quantity:int,value:int,range_id:int,range_label:string,kind:?string,backup:bool}>
+     */
     public function linesFor(array $range): array
     {
         $products = $this->products(array_map(static fn (array $g) => (int) $g[0], $range['gifts']));
         $label = self::rangeLabel($range);
+        $needs = $range['needs'] ?? null;
         $out = [];
 
-        foreach ($range['gifts'] as [$productId, $quantity]) {
-            $product = $products[(int) $productId] ?? null;
-
-            if ($product === null || $product->status !== 'publish' || $product->type === 'variable'
-                || $product->stock_status !== 'instock') {
-                continue;
+        $available = static function (?Product $p): int {
+            if ($p === null || $p->status !== 'publish' || $p->type === 'variable' || $p->stock_status !== 'instock') {
+                return 0;
             }
 
-            $quantity = max(1, min(self::MAX_QTY, (int) $quantity));
+            return $p->manage_stock ? max(0, (int) $p->stock) : PHP_INT_MAX;
+        };
 
-            if ($product->manage_stock) {
-                $quantity = min($quantity, max(0, (int) $product->stock));
-            }
-
-            if ($quantity < 1) {
-                continue;
-            }
-
+        $add = function (Product $p, int $quantity, ?string $kind, bool $backup) use (&$out, $range, $label): void {
             $out[] = [
-                'product' => $product,
-                'product_id' => (int) $product->id,
+                'product' => $p,
+                'product_id' => (int) $p->id,
                 'quantity' => $quantity,
-                'value' => max(0, (int) $product->effectivePrice()) * $quantity,
+                'value' => max(0, (int) $p->effectivePrice()) * $quantity,
                 'range_id' => (int) $range['id'],
                 'range_label' => $label,
+                'kind' => $kind,
+                'backup' => $backup,
             ];
+        };
+
+        $gifts = array_map(static fn (array $g) => [
+            'id' => (int) $g[0],
+            'qty' => max(1, min(self::MAX_QTY, (int) $g[1])),
+            'kind' => self::kind($g[2] ?? null),
+            'backup' => ($g[3] ?? 'primary') === 'backup',
+        ], $range['gifts']);
+
+        if ($needs === null) {
+            foreach ($gifts as $g) {
+                $p = $products[$g['id']] ?? null;
+                $quantity = min($g['qty'], $available($p));
+
+                if (! $g['backup'] && $quantity > 0) {
+                    $add($p, $quantity, $g['kind'], false);
+                }
+            }
+
+            return $out;
+        }
+
+        foreach ($gifts as $g) {
+            if (! $g['backup'] && $g['kind'] === null) {
+                $p = $products[$g['id']] ?? null;
+                $quantity = min($g['qty'], $available($p));
+
+                if ($quantity > 0) {
+                    $add($p, $quantity, null, false);
+                }
+            }
+        }
+
+        foreach (self::KINDS as $kind) {
+            $left = (int) ($needs[$kind] ?? 0);
+
+            foreach ($gifts as $g) {
+                if ($left < 1) {
+                    break;
+                }
+
+                if ($g['backup'] || $g['kind'] !== $kind) {
+                    continue;
+                }
+
+                $p = $products[$g['id']] ?? null;
+                $quantity = min($g['qty'], $available($p), $left);
+
+                if ($quantity > 0) {
+                    $add($p, $quantity, $kind, false);
+                    $left -= $quantity;
+                }
+            }
+
+            if ($left < 1) {
+                continue;
+            }
+
+            $backups = array_values(array_filter($gifts, static fn ($g) => $g['backup'] && $g['kind'] === $kind));
+            // Most stock first; a tie keeps the owner's order.
+            usort($backups, static fn ($a, $b) => [$available($products[$b['id']] ?? null), array_search($a, $backups, true)]
+                <=> [$available($products[$a['id']] ?? null), array_search($b, $backups, true)]);
+
+            foreach ($backups as $g) {
+                if ($left < 1) {
+                    break;
+                }
+
+                $p = $products[$g['id']] ?? null;
+                $quantity = min($available($p), $left);
+
+                if ($quantity > 0) {
+                    $add($p, $quantity, $kind, true);
+                    $left -= $quantity;
+                }
+            }
         }
 
         return $out;
@@ -648,7 +738,7 @@ final class FreeGifts
         $items = $ranges->isEmpty() ? collect() : DB::table('free_gift_range_items')
             ->whereIn('range_id', $ranges->pluck('id')->all())
             ->orderBy('sort')->orderBy('id')
-            ->get(['range_id', 'product_id', 'quantity'])
+            ->get(array_merge(['range_id', 'product_id', 'quantity', 'kind'], self::hasRole() ? ['role'] : []))
             ->groupBy('range_id');
 
         $out = [];
@@ -662,14 +752,18 @@ final class FreeGifts
                 'ar' => (string) $r->label_ar,
                 'starts' => $r->starts_at ? substr((string) $r->starts_at, 0, 10) : null,
                 'ends' => $r->ends_at ? substr((string) $r->ends_at, 0, 10) : null,
+                // [product, quantity, kind, role]: the type and main/backup
+                // drive the fill when the range has counts (see linesFor()).
                 'gifts' => array_values(array_map(
-                    static fn ($i) => [(int) $i->product_id, max(1, min(self::MAX_QTY, (int) $i->quantity))],
+                    static fn ($i) => [(int) $i->product_id, max(1, min(self::MAX_QTY, (int) $i->quantity)),
+                        self::kind($i->kind ?? null), ($i->role ?? 'primary') === 'backup' ? 'backup' : 'primary'],
                     ($items[$r->id] ?? collect())->all(),
                 )),
+                'needs' => self::needsOf($r),
             ];
         }
 
-        $compiled = ['v' => 1, 'ranges' => $out];
+        $compiled = ['v' => 2, 'ranges' => $out];
         $this->settings->set(self::COMPILED, $compiled);
 
         return $compiled;
@@ -699,7 +793,7 @@ final class FreeGifts
     {
         $ranges = DB::table('free_gift_ranges')->orderBy('min_fils')->get();
         $enabled = $ranges->where('enabled', true);
-        $items = DB::table('free_gift_range_items')->get(['range_id', 'product_id', 'quantity', 'kind'])->groupBy('range_id');
+        $items = DB::table('free_gift_range_items')->get(array_merge(['range_id', 'product_id', 'quantity', 'kind'], self::hasRole() ? ['role'] : []))->groupBy('range_id');
         $productIds = $items->flatten(1)->pluck('product_id')->unique()->values()->all();
         $products = $productIds === [] ? collect() : Product::withTrashed()->whereIn('id', $productIds)
             ->get(['id', 'name', 'status', 'type', 'stock_status', 'manage_stock', 'stock', 'deleted_at'])->keyBy('id');
@@ -742,7 +836,8 @@ final class FreeGifts
             // never a refusal -- the owner changes the criteria or the gifts.
             $needs = self::needsOf($r);
 
-            foreach (self::criteriaGaps($needs, self::tally($gifts->map(static fn ($g) => ['kind' => $g->kind, 'quantity' => $g->quantity])->all())) as $gap) {
+            // Main gifts only: a backup is a reserve, not part of the count.
+            foreach (self::criteriaGaps($needs, self::tally($gifts->filter(static fn ($g) => ($g->role ?? 'primary') !== 'backup')->map(static fn ($g) => ['kind' => $g->kind, 'quantity' => $g->quantity])->all())) as $gap) {
                 $out[] = ['level' => 'warn', 'text' => $label . ': ' . $gap['text'], 'range' => (int) $r->id];
             }
 
@@ -882,6 +977,33 @@ final class FreeGifts
      * destination qualified, because the line is hidden by :has() whenever the
      * box above it is absent (a UAE-only gift the country change removed).
      */
+    /**
+     * "3 Masks + 2 Mini Products + 1 Full Size Product" and its Arabic, from
+     * the lines actually given (untagged gifts are not in the sentence).
+     *
+     * @return array{en:string,ar:string}
+     */
+    public static function sentence(array $lines): array
+    {
+        $have = ['mask' => 0, 'mini' => 0, 'full' => 0];
+
+        foreach ($lines as $l) {
+            if (isset($have[$l['kind'] ?? ''])) {
+                $have[$l['kind']] += (int) $l['quantity'];
+            }
+        }
+
+        return self::criteriaWording($have);
+    }
+
+    /** Whether the main/backup column has been added yet (one schema look per process). */
+    private static function hasRole(): bool
+    {
+        static $has = null;
+
+        return $has ??= \Illuminate\Support\Facades\Schema::hasColumn('free_gift_range_items', 'role');
+    }
+
     public function lineUnits(array $totals): int
     {
         return self::units($this->forTotals($totals, 'AE'));
@@ -914,6 +1036,14 @@ final class FreeGifts
         foreach ($this->ranges() as $range) {
             if ((int) $range['id'] === (int) $lines[0]['range_id']) {
                 $words = Locale::isDefault() || trim((string) $range['ar']) === '' ? (string) $range['en'] : (string) $range['ar'];
+
+                // With counts the sentence is what is actually being given
+                // ("3 Masks + 2 Mini Products"), so a gift that ran out and
+                // was not replaced is never promised.
+                if (($range['needs'] ?? null) !== null) {
+                    $given = self::sentence($lines);
+                    $words = Locale::isDefault() ? $given['en'] : $given['ar'];
+                }
             }
         }
 
