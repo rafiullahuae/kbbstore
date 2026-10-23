@@ -290,6 +290,10 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .co-cl-ok{display:grid;place-items:center;flex:none;width:18px;height:18px;margin-inline-start:auto;border-radius:50%;background:#2E9E6B;color:#fff;visibility:hidden}
 .kbb-checkout .co-cl-ok svg{width:11px;height:11px}
 .kbb-checkout .co-cline.is-done .co-cl-ok{visibility:visible}
+/* Applied (the owner, 23 October, design D): ivory row, green border, green tag and code. The words do not change. */
+.kbb-checkout .co-cline.is-done{background:#FFFDF4;border-color:#2E9E6B}
+.kbb-checkout .co-cline.is-done .co-cl-ic{color:#2E9E6B}
+.kbb-checkout .co-cline.is-done .co-cl-code{color:#1F7D52;border-color:#BFE0CD}
 .kbb-checkout .co-cl-tick{display:inline-grid;place-items:center;flex:0 0 18px;width:18px;height:18px;border-radius:50%;background:#2E9E6B;color:#fff}
 .kbb-checkout .co-cl-tick svg{width:11px;height:11px}
 .kbb-checkout .co-cl-code{position:relative;display:inline-flex;align-items:center;min-height:24px;margin:0 2px;padding:0 8px;background:#fff;border:1px solid #f3c3d4;border-radius:7px;color:#A82F53;font:inherit;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;vertical-align:middle;transition:background .15s,border-color .15s}
@@ -439,7 +443,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    marks its row woocommerce-invalid. :is() is forgiving, so a browser without
    :has() or :user-invalid still honours the module's class; one with neither
    simply shows no star, and `required` plus the server still refuse the field. */
-.kbb-checkout .form-row label .required{display:none;color:var(--pink);text-decoration:none;border:0}
+.kbb-checkout .form-row label .required{display:none;color:#111;text-decoration:none;border:0}
 .kbb-checkout :is(.form-row:has(:user-invalid),.woocommerce-invalid,.kbb-req-miss) .required{display:inline}
 .kbb-checkout .form-row .optional{color:var(--muted);font-weight:400}
 .kbb-checkout .woocommerce-input-wrapper{width:100%;display:block}
@@ -476,7 +480,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout.cop-phit .coupon input::placeholder{font-style:italic}
 .kbb-checkout .form-row input:focus,
 .kbb-checkout .form-row textarea:focus,
-.kbb-checkout .form-row select:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-soft)}
+.kbb-checkout .form-row select:focus{outline:none;border-color:#3D3539;box-shadow:0 0 0 3px rgba(42,34,40,.10)}
 /* ── FLOATING LABELS (Lane CD) ─────────────────────────────────────────────
    Appearance -> Checkout page -> Fields & attention -> "Floating labels on
    checkout fields". The Create account form's `.fld` (kbb.css): the box is
@@ -531,7 +535,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .fld.kbb-fl .lead svg{width:18px;height:18px;display:block}
 .kbb-checkout .fld.kbb-fl:focus-within .lead{color:var(--pink)}
 .kbb-checkout .fld.kbb-fl:has(textarea) .lead{top:16px;transform:none}
-.kbb-checkout .fld.kbb-fl .required{color:var(--pink)}
+.kbb-checkout .fld.kbb-fl .required{color:#111}
 /* A field judged wrong says so in its label too -- .form-row in front so this
    outranks the lifted-label rule above (0,5,1 against 0,4,2). */
 .kbb-checkout .form-row.woocommerce-invalid .fld.kbb-fl > label,
@@ -693,7 +697,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .payment_box .wc-credit-card-form-card-number,
 .kbb-checkout .payment_box .wc-credit-card-form-card-expiry,
 .kbb-checkout .payment_box .wc-credit-card-form-card-cvc{width:100%;border:1.4px solid var(--line);border-radius:9px;padding:11px 12px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink)}
-.kbb-checkout .payment_box input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-soft)}
+.kbb-checkout .payment_box input:focus{outline:none;border-color:#3D3539;box-shadow:0 0 0 3px rgba(42,34,40,.10)}
 /* brand badges at right of a payment option (design .lp / .paylogo / .emoji) */
 .kbb-checkout .paylogo{display:inline-flex;align-items:center;font-weight:800;border-radius:99px;padding:5px 13px;font-size:13px;letter-spacing:-.01em;line-height:1;margin-inline-start:auto}
 .kbb-checkout .paylogo.tabby{background:#3DE6A3;color:#06291F}

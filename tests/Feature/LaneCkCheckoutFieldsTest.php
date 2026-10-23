@@ -58,7 +58,7 @@ it('hides every "*" until a required field has failed, in CSS alone', function (
     $css = ckCheckoutCss();
 
     // MUTATION: delete display:none. RED -- the asterisks are back.
-    expect($css)->toContain('.kbb-checkout .form-row label .required{display:none;color:var(--pink);')
+    expect($css)->toContain('.kbb-checkout .form-row label .required{display:none;color:#111;')
         // Shown by the browser's own :user-invalid, or the inline-validation module's row class.
         ->and($css)->toContain('.kbb-checkout :is(.form-row:has(:user-invalid),.woocommerce-invalid,.kbb-req-miss) .required{display:inline}');
 });
@@ -95,4 +95,24 @@ it('adds no JavaScript for the star: checkout.js is untouched', function () {
     expect($js)->not->toContain('kbb-req-miss')
         ->and($js)->not->toContain('markEmptyRequired')
         ->and($js)->not->toContain('markIfEmpty');
+});
+
+it('colours the applied coupon row ivory and green, a focused field dark grey and the star black (the owner, 23 October)', function () {
+    /*
+     * The owner, from his phone at the live checkout: "upon selection of any
+     * field, currently it's giving pink border, it should be dark grey ... the
+     * asteric * should be black ... when the coupon is applied, the row border
+     * should become green, also green icon, also green GLOW text ... background
+     * ... very light" -- he picked D, ivory. Only colours: the row's words stay.
+     * MUTATION: put border-color:var(--pink) back on the focused field. RED.
+     */
+    $css = ckCheckoutCss();
+
+    expect($css)->toContain('.kbb-checkout .co-cline.is-done{background:#FFFDF4;border-color:#2E9E6B}')
+        ->and($css)->toContain('.kbb-checkout .co-cline.is-done .co-cl-ic{color:#2E9E6B}')
+        ->and($css)->toContain('.kbb-checkout .co-cline.is-done .co-cl-code{color:#1F7D52;border-color:#BFE0CD}')
+        ->and($css)->toContain('.kbb-checkout .form-row select:focus{outline:none;border-color:#3D3539;box-shadow:0 0 0 3px rgba(42,34,40,.10)}')
+        ->and($css)->toContain('.kbb-checkout .fld.kbb-fl .required{color:#111}')
+        // No field on the checkout takes a pink border when focused.
+        ->and(preg_match('/:focus[^{]*\{[^}]*border-color:var\(--pink\)/', $css))->toBe(0);
 });
