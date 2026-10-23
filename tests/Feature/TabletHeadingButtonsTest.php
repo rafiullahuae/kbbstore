@@ -62,8 +62,17 @@ it('keeps the bag total and a slightly smaller checkout button side by side in a
 
     // A little wider column, a little smaller button (owner, 23 October).
     expect(str_contains($tablet, 'calc(var(--cpg-d-aside,380px) + 50px)'))->toBeTrue();
-    expect(str_contains($tablet, '.cpg-d .cpg-cobar .cobtn{font-size:calc(15px * var(--cpg-bar-f) * .85)'))->toBeTrue();
-    expect(str_contains($tablet, '.cobtn.cpg-cob2{font-size:calc(var(--cpg-cob-f,14px) * var(--cpg-bar-f) * .85)}'))->toBeTrue();
+    expect(str_contains($desktop, '.cpg-d .cpg-cobar .cobtn{font-size:calc(15px * var(--cpg-bar-f) * .85)'))->toBeTrue();
+    expect(str_contains($desktop, '.cobtn.cpg-cob2{font-size:calc(var(--cpg-cob-f,14px) * var(--cpg-bar-f) * .85)}'))->toBeTrue();
+
+    // DESKTOP TOO (2.60.582): the owner's computer showed "SECURE CHECKO…".
+    // The smaller button applies at every two-column width, capped by the
+    // bar's own width (a container unit inside @supports, the plain size
+    // outside), while the wider column stays tablet-only.
+    $afterTablet = substr($desktop, (int) strpos($desktop, $m[0] ?? ''));
+    expect(str_contains($afterTablet, ".kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar{container-type:inline-size}"))->toBeTrue();
+    expect(str_contains($afterTablet, "@supports (font-size:min(1px, 1cqi)){"))->toBeTrue();
+    expect(str_contains($tablet, 'cobtn{font-size'))->toBeFalse('the smaller button must not be tablet-only any more');
 
     // Side by side everywhere: no wrap, on tablets or anywhere else. 2.60.580
     // wrapped the bar at every desktop width; the owner: "for desktop etc it

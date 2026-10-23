@@ -799,14 +799,34 @@
      side ... increase the column width just littel bit, and also reduce the
      button size little bit." So up to 1199px the side column is 50px wider
      than his own width setting and the button's text and padding are 15%
-     smaller (letter spacing a touch tighter); from 1200px nothing here applies
-     and the bar is exactly as it was before 2.60.580. */
+     smaller (letter spacing a touch tighter).
+
+     (2.60.582) AND THE SMALLER BUTTON ON DESKTOP TOO. The owner's computer
+     showed "SECURE CHECKO…" at full width with his sizes (screenshot, 23
+     October): "reduce the font size little bit to fit in the button, don't
+     touch the mobile stuff". So the button's smaller text, padding and spacing
+     now apply at every two-column width (this whole block only exists from
+     "Desktop starts at"; phones never see it), and only the wider column stays
+     tablet-only -- the desktop column is his own width setting, untouched. */
   @media (max-width:1199px){
     .kbb-cartpage.cpg-squeeze.cpg-d .grid{grid-template-columns:minmax(0,1fr) calc(var(--cpg-d-aside,380px) + 50px)}
-    .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn{font-size:calc(15px * var(--cpg-bar-f) * .85);
-      padding:calc(11px * var(--cpg-bar-f) * .85) calc(16px * var(--cpg-bar-f) * .85)}
-    .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn.cpg-cob2{font-size:calc(var(--cpg-cob-f,14px) * var(--cpg-bar-f) * .85)}
-    .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn.cpg-cobcaps{letter-spacing:.06em}
+  }
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn{font-size:calc(15px * var(--cpg-bar-f) * .85);
+    padding:calc(11px * var(--cpg-bar-f) * .85) calc(16px * var(--cpg-bar-f) * .85)}
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn.cpg-cob2{font-size:calc(var(--cpg-cob-f,14px) * var(--cpg-bar-f) * .85)}
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn.cpg-cobcaps{letter-spacing:.06em}
+  /* ...and never more than the bar has room for. The size above is only a
+     ceiling: the owner's own column width and text sliders can still leave less
+     room than "SECURE CHECKOUT" needs beside a four-digit total. The bar is a
+     size container, so the label is also capped at what its width allows
+     (room left after the total, the gap, the icon and the padding, over the
+     label's ~10 em). CSS only, nothing measured by script. A container unit
+     beside var() goes inside @supports with the plain size outside it (the
+     header lock's rule): a browser without it keeps the line above. */
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar{container-type:inline-size}
+  @supports (font-size:min(1px, 1cqi)){
+    .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn{font-size:min(calc(15px * var(--cpg-bar-f) * .85), calc((100cqi - 188px) / 9.6))}
+    .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn.cpg-cob2{font-size:min(calc(var(--cpg-cob-f,14px) * var(--cpg-bar-f) * .85), calc((100cqi - 188px) / 9.6))}
   }
 
   /* EVERYTHING goes left except the side block, selected by position rather
