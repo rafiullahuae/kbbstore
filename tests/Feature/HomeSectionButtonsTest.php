@@ -89,7 +89,9 @@ it('centres both headings with room reserved on both sides, and drops the dot', 
         // The first cut named the wrapper `.spt-top`, which is ALREADY the
         // carousel card's @handle overlay (absolute, display:flex): on a phone
         // the button sat on top of the heading. One owner per class name.
-        ->and(substr_count($css, '.spt-hbtn'))->toBe(2);
+        // Three since 2.60.580: the tablet block (901-1199px) hides it again
+        // and shows the under-the-pictures copy (TabletHeadingButtonsTest).
+        ->and(substr_count($css, '.spt-hbtn'))->toBe(3);
 });
 
 it('turns the button on for a shop that saved the old empty default, and keeps his own text', function () {

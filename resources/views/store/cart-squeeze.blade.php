@@ -790,6 +790,19 @@
     column-gap:var(--cpg-d-gap,28px);
     align-items:start}
 
+  /* (2.60.580) THE CHECKOUT BUTTON NEVER LOSES ITS WORDS IN THE SIDE COLUMN.
+     Here the bar sits in the 380px side card, not across a phone, and with
+     "Text in both rows" and the button's own size turned up the label was cut
+     to "SECURE CHECK…" (owner's screenshot, 23 October; measured: 1024-1440px
+     at 150% / 18px). The phone's answer -- shrink and end in "…" -- is for a
+     bar that cannot grow; this one can. So the row may wrap: when the tally and
+     the whole label fit side by side nothing moves, and when they do not, the
+     button takes its own full-width line under the total. flex-wrap decides
+     from each item's natural width, so no script measures anything. */
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar{flex-wrap:wrap;row-gap:10px}
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn{flex:0 0 auto}
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .tally + .cobtn:not(:only-child){margin-inline-start:auto}
+
   /* EVERYTHING goes left except the side block, selected by position rather
      than by name: the column that holds the basket rows carries no class of
      its own, and the coupon box and the rail are siblings beside it. Naming

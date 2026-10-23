@@ -5166,6 +5166,25 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
   .kbb-home .spt-sg.spt-btn-d-top .spt-hbtn{display:block;position:absolute;inset-inline-start:auto;inset-inline-end:0;top:50%;transform:translateY(-50%)}
   .kbb-home .spt-sg.spt-btn-d-top .spt-sg-foot{display:none}
 }
+/* (2.60.580) TABLETS: THE HEADING'S BUTTON GOES UNDER THE SECTION.
+   Beside a centred heading the button sits in 220px (190px for bundles)
+   reserved on each side -- and "See every #KBeautyBliss look" is 307px wide,
+   so from 901px to ~1024px it lay over the heading and its subtitle (owner's
+   tablet screenshot, 23 October). Up to 1199px every "beside the heading"
+   button is drawn under its section instead, exactly as a phone does, and the
+   reserved room goes back to the heading. Each selector repeats the one it
+   overrides, later in the file. */
+@media (min-width:901px) and (max-width:1199px){
+  .kbb-home .bndl.bndl-btn-d-top .bndl-all-top{display:none}
+  .kbb-home .bndl.bndl-btn-d-top .bndl-foot{display:flex;margin-top:var(--bndl-bg-d)}
+  .kbb-home .bndl.bndl-center.bndl-btn-d-top .bndl-head{padding-inline:0}
+  .kbb-home .hs-btn-top{display:none}
+  .kbb-home .hs-head.hs-split~.hs-foot{display:flex}
+  .kbb-home .hs-head.hs-split.hs-split-c{padding-inline:0}
+  .kbb-home .spt-sg.spt-btn-d-top .spt-head{padding-inline:0}
+  .kbb-home .spt-sg.spt-btn-d-top .spt-hbtn{display:none}
+  .kbb-home .spt-sg.spt-btn-d-top .spt-sg-foot{display:flex}
+}
 /* The /kbeautybliss-spotted/ page's intro keeps its own size (Lane PF): the
    homepage section's description is sized with every other section's, in the
    "Section headings" block after this one. */
