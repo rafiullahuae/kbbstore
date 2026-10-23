@@ -216,6 +216,8 @@ it('refuses an anonymous caller on every route the products screen adds', functi
         ['post', '/admin-api/catalog-products-bulk-status'],
         ['post', '/admin-api/catalog-products-bulk-category'],
         ['post', '/admin-api/catalog-products-bulk-price'],
+        ['post', '/admin-api/catalog-products-trash'],
+        ['post', '/admin-api/catalog-products-restore'],
     ];
 
     foreach ($refusals as [$method, $uri]) {
@@ -293,9 +295,11 @@ it('really does mount every route behind the admin guard, not just appear to', f
 
     $routes = CatalogProductsAdminRoutes::registered();
 
-    // Eight routes, and the count is asserted so a ninth cannot be added
-    // without this file noticing it needs a guard assertion too.
-    expect($routes)->toHaveCount(8);
+    // Ten routes, and the count is asserted so another cannot be added
+    // without this file noticing it needs a guard assertion too. (Lane PD
+    // added trash and restore; both are in the refusal list above and their
+    // catalog.delete guard is ProductTrashTest's.)
+    expect($routes)->toHaveCount(10);
 
     foreach ($routes as $route) {
         // The trap this exists for: RouteRegistrar::middleware() REPLACES the
@@ -379,7 +383,7 @@ it('is wired into web.php, so the screen is not a set of 404s', function () {
     $routes = collect(app('router')->getRoutes()->getRoutes())
         ->filter(fn ($r) => str_starts_with($r->uri(), 'admin-api/catalog-products'));
 
-    expect($routes)->toHaveCount(8);
+    expect($routes)->toHaveCount(10);
 
     $routes->each(function ($route) {
         expect($route->gatherMiddleware())->toContain('auth:admin')

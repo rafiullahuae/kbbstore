@@ -153,6 +153,7 @@ final class AdminRoles
             'catalog.view' => 'See products, categories and brands',
             'catalog.manage' => 'Edit products, categories, brands and stock levels',
             'catalog.export' => 'Export the catalogue',
+            'catalog.delete' => 'Delete products (they go to Catalog → Products → Trash) and restore them',
             'catalog.variants' => 'Edit a product’s options — shades, sizes, their prices, stock and pictures (Product editor → Options)',
             'sets.view' => 'See sets',
             'sets.manage' => 'Create and edit sets',

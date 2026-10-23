@@ -567,7 +567,11 @@
   function modeControl(d) {
     var mode = d.config.mode || (d.config.on ? 'live' : 'off');
     var g = el('div', { class: 'fg-modes', role: 'radiogroup', 'aria-label': 'Mode' }, MODES.map(function (m) {
-      return el('button', { type: 'button', role: 'radio', class: 'fg-mode m-' + m[0], 'aria-checked': String(mode === m[0]), 'data-fk': 'mode-' + m[0], tabindex: mode === m[0] ? '0' : '-1',
+      return el('button', { type: 'button', role: 'radio', class: 'fg-mode m-' + m[0], 'aria-checked': String(mode === m[0]), 'data-fk': 'mode-' + m[0], /* (Lane PD) The owner, 23 October: each of the three asks Yes / No first
+           in the admin's "Are you sure?" box (partials/reset-guard) -- one
+           stray tap here turns gifts on or off for every shopper. The current
+           mode does not ask: clicking it does nothing. */
+        'data-kbb-sure': mode === m[0] ? null : m[2] + ' Switch free gifts to ' + m[1] + '?', tabindex: mode === m[0] ? '0' : '-1',
         disabled: !can() || st.busy, onclick: function () {
           if (mode === m[0]) return;
           run(function () { return api('POST', '/switch', { mode: m[0] }); }, 'Mode not changed.', function (res) {

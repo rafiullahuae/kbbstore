@@ -8296,6 +8296,7 @@
   ];
 
   var CP_PER_PAGE = [100, 200, 300];
+  var CP_TRASH_IC = '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>';
 
   function cpCols(){
     if(CP.cols) return CP.cols;
@@ -8462,6 +8463,9 @@
         '<button class="btn ghost" id="cplAdvBtn">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Filters ' + (CP.adv ? '▴' : '▾') + '</button>' +
         '<button class="btn ghost" id="cplColsBtn">Customize columns ' + (CP.colsOpen ? '▴' : '▾') + '</button>' +
         '<button class="btn ghost" id="cplExport">' + ic('<path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 19h16"/>') + ' Export CSV</button>' +
+        /* (Lane PD) The trash, as its own button: the Trash chip below does the
+           same, this is where the owner looks for it. A second click leaves it. */
+        '<button class="btn ghost' + (CP.filter === 'trashed' ? ' on' : '') + '" id="cplTrashBtn"' + (CP.filter === 'trashed' ? ' style="color:var(--red);border-color:var(--red)"' : '') + '>' + ic(CP_TRASH_IC) + ' ' + (CP.filter === 'trashed' ? 'Leave trash' : 'Trash') + ' <span style="opacity:.6">' + (counts.trashed || 0) + '</span></button>' +
         '</div>' +
       '</div>' +
       (CP.adv ? cpAdvanced() : '') +
@@ -8571,6 +8575,11 @@
       '</select>' +
       '<button class="btn ghost sm" id="cplBulkCatGo">Apply</button>' +
       '<button class="btn ghost sm" id="cplBulkPrice">Adjust prices…</button>' +
+      (CP.data && CP.data.can_delete
+        ? (CP.filter === 'trashed'
+          ? '<button class="btn ghost sm" id="cplBulkRestore">Restore selected</button>'
+          : '<button class="btn sm" id="cplBulkDel" data-kbb-sure="' + sesc('Move ' + selected.length + ' product' + (selected.length === 1 ? '' : 's') + ' to the Trash? They leave the shop at once. Orders and reviews keep them, and Trash → Restore brings them back.') + '" style="background:var(--red);border-color:var(--red);color:#fff">Delete selected</button>')
+        : '') +
       '<div style="flex:1"></div>' +
       '<button class="btn ghost sm" id="cplClearSel">Clear selection</button>' +
       '</div>';
@@ -8624,6 +8633,11 @@
             ? '<a class="btn ghost sm" data-cpvisit="' + p.id + '" href="' + sesc(p.url) + '" target="_blank" rel="noopener" title="Open on the shop, in a new tab" style="text-decoration:none">Visit</a>'
             : '<button type="button" class="btn ghost sm" data-cpvisit="' + p.id + '" disabled title="The shop does not show this product yet" style="opacity:.55;cursor:default">Not live yet</button>') +
           '<button class="btn ghost sm" data-cpedit="' + p.id + '">Edit</button>' +
+          (d.can_delete
+            ? (p.trashed
+              ? '<button class="btn ghost sm" data-cprestore="' + p.id + '">Restore</button>'
+              : '<button class="btn sm" data-cpdel="' + p.id + '" data-kbb-sure="' + sesc('Move “' + p.name + '” to the Trash? It leaves the shop at once. Orders and reviews keep it, and Trash → Restore brings it back.') + '" title="Move to the trash" style="background:var(--red);border-color:var(--red);color:#fff">Delete</button>')
+            : '') +
         '</div></td>' +
       '</tr>';
     }).join('');
@@ -8775,6 +8789,18 @@
     };
 
     var clearSel = byId('cplClearSel'); if(clearSel) clearSel.onclick = function(){ CP.sel = {}; cpPaint(); };
+
+    /* (Lane PD) Delete / Restore, one product or the selection. */
+    var trashBtn = byId('cplTrashBtn');
+    if(trashBtn) trashBtn.onclick = function(){ CP.filter = CP.filter === 'trashed' ? 'all' : 'trashed'; CP.page = 1; CP.sel = {}; cpLoad(); };
+    $$$('#catBody [data-cpdel]').forEach(function(b){
+      b.onclick = function(){ cpRunTrash('trash', [+b.dataset.cpdel]); };
+    });
+    $$$('#catBody [data-cprestore]').forEach(function(b){
+      b.onclick = function(){ cpRunTrash('restore', [+b.dataset.cprestore]); };
+    });
+    var bulkDel = byId('cplBulkDel'); if(bulkDel) bulkDel.onclick = function(){ cpRunTrash('trash', cpSelectedIds()); };
+    var bulkRestore = byId('cplBulkRestore'); if(bulkRestore) bulkRestore.onclick = function(){ cpRunTrash('restore', cpSelectedIds()); };
 
     /* ---- inline editing: the four cells an owner changes all day ---- */
 
@@ -8959,6 +8985,20 @@
    * which ones, and only a second, explicit confirmation carrying force goes
    * through.
    */
+  /* (Lane PD) Delete and Restore. Both ask Yes / No first in the admin's one
+     "Are you sure?" box (partials/reset-guard): Delete through its own
+     data-kbb-sure question, Restore through the guard's list. Only a Yes
+     reaches here. Delete moves to the trash -- nothing is erased. */
+  async function cpRunTrash(action, ids){
+    if(!ids.length) return;
+    try{
+      var out = await cpWrite(action === 'trash' ? '/admin-api/catalog-products-trash' : '/admin-api/catalog-products-restore', {ids: ids});
+      var n = +out.changed || 0;
+      cpToast(n + ' product' + (n === 1 ? '' : 's') + (action === 'trash' ? ' moved to the trash' : ' restored'));
+      CP.sel = {}; cpLoad();
+    }catch(e){ cpToast(e.message); }
+  }
+
   function cpConfirmStatus(ids, status){
     if(!ids.length) return;
 

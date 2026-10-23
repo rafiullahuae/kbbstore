@@ -149,6 +149,9 @@
     ['#olBulkRestore', 'Take the selected orders out of the trash?'],
     ['[data-curestore]', 'Take this customer out of the trash?'],
     ['#cuRestore', 'Take this customer out of the trash?'],
+    // (Lane PD) Catalog -> Products -> Trash.
+    ['[data-cprestore]', 'Take this product out of the trash? It goes back exactly as it was.'],
+    ['#cplBulkRestore', 'Take the selected products out of the trash? They go back exactly as they were.'],
     ['[data-upass]', 'Set a new password for this account? You type it on the next step.']
   ];
   window.kbbResetControls = KNOWN.map(function (k) { return k[0]; });

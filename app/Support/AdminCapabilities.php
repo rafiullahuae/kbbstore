@@ -233,6 +233,10 @@ final class AdminCapabilities
         // rest of the editor; the same three roles that edit a product.
         'catalog.variants' => ['owner', 'manager', 'editor'],
         'catalog.export' => ['owner', 'manager', 'editor'],
+        // (Lane PD) Move products to the trash and back (Catalog -> Products ->
+        // red Delete / Trash -> Restore). The owner asked for it to be his
+        // alone by default; Settings -> Roles can tick it for any role.
+        'catalog.delete' => ['owner'],
 
         /*
          * Catalog -> Sets (Lane SET, routes/sets-admin.php). A Set is a
@@ -1446,6 +1450,9 @@ final class AdminCapabilities
         ['GET', 'admin-api/catalog-products-list', 'catalog.view'],
         ['GET', 'admin-api/catalog-products-facets', 'catalog.view'],
         ['GET', 'admin-api/catalog-products-detail/*', 'catalog.view'],
+        // (Lane PD) Above the catalog.manage wildcard: first match wins.
+        ['POST', 'admin-api/catalog-products-trash', 'catalog.delete'],
+        ['POST', 'admin-api/catalog-products-restore', 'catalog.delete'],
         ['*', 'admin-api/catalog-products-*', 'catalog.manage'],
         ['*', 'admin-api/catalog-products-*/*', 'catalog.manage'],
         /*

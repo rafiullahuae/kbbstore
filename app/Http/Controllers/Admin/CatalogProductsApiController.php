@@ -291,6 +291,8 @@ class CatalogProductsApiController extends Controller
             'statuses' => $chips['statuses'],
             'stock_statuses' => $chips['stock_statuses'],
             'settable_statuses' => self::SETTABLE_STATUSES,
+            // (Lane PD) Whether to draw Delete / Restore at all. The routes check it again.
+            'can_delete' => \App\Support\AdminRoles::can($request->user('admin'), 'catalog.delete'),
             'settable_stock_statuses' => self::SETTABLE_STOCK_STATUSES,
             'low_stock_threshold' => self::LOW_STOCK,
             'currency' => Money::currency(),
@@ -2286,6 +2288,49 @@ class CatalogProductsApiController extends Controller
         }
 
         return $string;
+    }
+
+    /**
+     * (Lane PD) Delete: move products to the trash. `products` soft-deletes,
+     * so this only stamps deleted_at -- the row, its orders, reviews and
+     * pictures all stay, and Restore puts it back exactly as it was. While in
+     * the trash the default scope hides it from every shop page, search, the
+     * sitemap and /api, with no reader changed.
+     *
+     * One UPDATE for the whole selection, then the caches the model's own
+     * `deleted` event would have dropped, once rather than per row.
+     */
+    public function trash(Request $request): JsonResponse
+    {
+        $ids = $this->uniqueIds($request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:'.self::BULK_MAX],
+            'ids.*' => ['integer'],
+        ])['ids']);
+
+        $changed = Product::query()->whereIn('id', $ids)->update(['deleted_at' => now(), 'updated_at' => now()]);
+        $this->forgetProductCaches();
+
+        return response()->json(['ok' => true, 'changed' => $changed]);
+    }
+
+    /** (Lane PD) Restore: take products out of the trash, as they were. */
+    public function restore(Request $request): JsonResponse
+    {
+        $ids = $this->uniqueIds($request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:'.self::BULK_MAX],
+            'ids.*' => ['integer'],
+        ])['ids']);
+
+        $changed = Product::onlyTrashed()->whereIn('id', $ids)->update(['deleted_at' => null, 'updated_at' => now()]);
+        $this->forgetProductCaches();
+
+        return response()->json(['ok' => true, 'changed' => $changed]);
+    }
+
+    private function forgetProductCaches(): void
+    {
+        \App\Services\VariantPricing::invalidate();
+        \App\Support\SearchSpelling::flush();
     }
 
     /** @return list<int> */

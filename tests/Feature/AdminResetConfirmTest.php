@@ -148,14 +148,16 @@ it('routes every reset-to-default control in the admin through the dialog', func
     // ▲ Lane CK: +1, "Reset" on an Arabic text size (Appearance -> Checkout page,
     // Cart page, Cart panel -> Text sizes -> Arabic), back to "Same as English";
     // it asks for itself (data-kbb-asks + window.kbbConfirm).
-    expect(count($controls))->toBe(57);
+    // ▲ Lane PD: +2, Catalog -> Products -> Trash -> "Restore" on a row and
+    // "Restore selected", both in reset-guard's KNOWN list.
+    expect(count($controls))->toBe(59);
 });
 
 it('names a control that still exists for every row of the list', function () {
     $known = rcKnown();
     $all = implode("\n", rcViews());
 
-    expect(count($known))->toBe(47);
+    expect(count($known))->toBe(49); // Lane PD: +2, the product trash's Restore
     foreach ($known as $selector) {
         expect(str_contains($all, rcToken($selector)))->toBeTrue("{$selector} is in reset-guard's list but no admin view renders it");
     }

@@ -111,3 +111,7 @@ Route::post('/catalog-products-save/{id}', [CatalogProductsApiController::class,
 Route::post('/catalog-products-bulk-status', [CatalogProductsApiController::class, 'bulkStatus']);
 Route::post('/catalog-products-bulk-category', [CatalogProductsApiController::class, 'bulkCategory']);
 Route::post('/catalog-products-bulk-price', [CatalogProductsApiController::class, 'bulkPrice']);
+// (Lane PD) Delete = move to the trash (soft delete); Restore takes it back.
+// catalog.delete, owner-only by default (AdminCapabilities).
+Route::post('/catalog-products-trash', [CatalogProductsApiController::class, 'trash']);
+Route::post('/catalog-products-restore', [CatalogProductsApiController::class, 'restore']);
