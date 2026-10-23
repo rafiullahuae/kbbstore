@@ -460,7 +460,8 @@ it('renders the boxes, the steppers, the notice and the typed picker, and keeps 
         ->and($js)->toContain("['mini', 'Mini products', 'Minis'")
         ->and($js)->toContain("['full', 'Full size products', 'Full size'")
         ->and($js)->toContain("rows.push(['none', 'Untagged'")
-        ->and($js)->toContain("onclick: function () { openPicker(id, kk); }")
+        ->and($js)->toContain("onclick: function () { openPicker(id, kk, 'primary'); }")
+        ->and($js)->toContain("onclick: function () { openPicker(id, kk, 'backup'); }")
         ->and($js)->toContain("var kind = kindOf(pr.gift_kind) || p.box;")
         ->and($js)->toContain("'Which box?'")
         ->and($js)->toContain("[['all', 'All'], ['mask', 'Masks'], ['mini', 'Minis'], ['full', 'Full size'], ['none', 'Untagged']]")
@@ -472,7 +473,7 @@ it('renders the boxes, the steppers, the notice and the typed picker, and keeps 
         // The tab's warning mark and its tooltip carry the criteria.
         ->and($js)->toContain("var crit = criteriaGaps(needsOf(x), tally(x.gifts)).map(function (c) { return c.text; }).join(' ');")
         // The save sends the type and the criteria.
-        ->and($js)->toContain("kind: kindOf(g.kind) }; }), needs: needsOf(x) ?");
+        ->and($js)->toContain("kind: kindOf(g.kind), role: g.role === 'backup' ? 'backup' : 'primary' }; }), needs: needsOf(x) ?");
 
     // One search path, the old promises intact.
     expect(substr_count($js, "'/products?q='"))->toBe(1)
@@ -584,9 +585,18 @@ it('draws the shop, the checkout and the order byte-identically with or without 
     DB::table('free_gift_ranges')->where('id', $id)->update(['need_mask' => 3, 'need_mini' => 2, 'need_full' => 1]);
 
     $tagged = $shop();
-    foreach (['compiled', 'drawer', 'cart', 'checkout', 'order', 'rows'] as $k) {
+    /*
+     * ▲ 23 October 2026, the owner's main/backup ask: the counts now DECIDE
+     * what is given and the sentence is written from what is given, so the
+     * box's words move on purpose ("2 Masks" -> "2 Masks + 1 Mini Product +
+     * 1 Full Size Product") and the compiled copy carries the types. What must
+     * still not move is what was given -- the order's gift lines -- and the
+     * internal words must still never reach a shopper (below).
+     */
+    foreach (['order', 'rows'] as $k) {
         expect($tagged[$k])->toBe($plain[$k], $k . ' changed when gifts were typed');
     }
+    expect($tagged['drawer'])->toContain('2 Masks + 1 Mini Product + 1 Full Size Product');
     foreach ($tagged as $k => $bytes) {
         expect($bytes)->not->toContain('gift_kind')->not->toContain('need_mask')->not->toContain('Face masks');
     }

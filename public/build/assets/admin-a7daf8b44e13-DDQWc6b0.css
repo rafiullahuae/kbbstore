@@ -171,6 +171,24 @@ select.fg-in{padding-inline-end:28px}
 .fg-box-add:focus-visible,.fg-kinds button:focus-visible,.fg-ask button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .fg-box-e{font-size:12px;color:var(--ink-soft);padding:2px 4px}
 .fg-kinds{display:inline-flex;gap:3px;flex-wrap:wrap}
+/* Main / Backup (23 October): the backups sit under the main gifts in each type box, dashed. */
+.fg-bk{margin-top:10px;padding:10px;border:1px dashed var(--kbd);border-radius:12px;background:rgba(255,255,255,.55);display:grid;gap:8px}
+.fg-bk-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:12.5px}
+.fg-bk-h b{color:var(--kink)}
+.fg-bk-h small{color:var(--ink-soft)}
+.fg-bk .fg-gi{opacity:.92}
+.fg-box-add.bk{border-style:dotted}
+.fg-bk-q{font-size:12px;color:var(--ink-soft);white-space:nowrap}
+.fg-roles{display:inline-flex;border:1px solid var(--border);border-radius:999px;padding:1px;background:var(--surface)}
+.fg-roles button{font:inherit;font-size:11px;font-weight:650;padding:2px 9px;border:0;border-radius:999px;background:none;color:var(--ink-soft);cursor:pointer;line-height:1.5}
+.fg-roles button[aria-checked="true"]{background:var(--ink);color:#fff}
+.fg-roles button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.fg-auto{border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:var(--surface);display:grid;gap:6px}
+.fg-auto-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.fg-auto-h small{color:var(--ink-soft)}
+.fg-auto-s{display:grid;gap:2px;font-size:15px;font-weight:650}
+.fg-auto-n{color:var(--ink-soft)}
+.fg-auto-n.short{color:#9a5b0a}
 .fg-kinds button{font:inherit;font-size:11px;font-weight:650;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--ink-soft);cursor:pointer;line-height:1.5}
 .fg-kinds button[aria-checked="true"].k-mask{background:var(--fk-mask-bg);border-color:var(--fk-mask-ink);color:var(--fk-mask-ink)}
 .fg-kinds button[aria-checked="true"].k-mini{background:var(--fk-mini-bg);border-color:var(--fk-mini-ink);color:var(--fk-mini-ink)}
