@@ -7,6 +7,7 @@ namespace App\Services\Seo;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\Translation\TranslationStore;
 use App\Support\Gtin;
 use App\Support\Money;
 use App\Support\ProductVisibility;
@@ -127,12 +128,17 @@ final class MerchantFeed
      *
      * @return array{xml: string, items: int, products: int, built_at: string}
      */
-    public function cached(string $scheme = self::SCHEME_SKU): array
+    public function cached(string $scheme = self::SCHEME_SKU, string $locale = 'en'): array
     {
         $s = SeoSettings::map();
         $scheme = $scheme === self::SCHEME_SHOP ? self::SCHEME_SHOP : self::SCHEME_SKU;
+        $locale = $locale === 'ar' ? 'ar' : 'en';
         $key = self::CACHE_PREFIX . md5(implode('|', [
             $scheme,
+            // The Arabic feed (the owner, 23 October) is its own copy, and a new
+            // or edited Arabic translation rebuilds it. The English key is
+            // unchanged, so its cached copy stays valid across the update.
+            ...($locale === 'ar' ? ['ar', self::translationStamp()] : []),
             self::stamp(),
             (string) Cache::get(self::VERSION_KEY, 0),
             self::base($s),
@@ -145,7 +151,7 @@ final class MerchantFeed
             return $hit;
         }
 
-        $built = $this->build($s, $scheme);
+        $built = $this->build($s, $scheme, $locale);
         Cache::put($key, $built, self::TTL);
 
         return $built;
@@ -156,12 +162,13 @@ final class MerchantFeed
      *
      * @return array{xml: string, items: int, products: int, built_at: string}
      */
-    public function build(?array $settings = null, string $scheme = self::SCHEME_SKU): array
+    public function build(?array $settings = null, string $scheme = self::SCHEME_SKU, string $locale = 'en'): array
     {
         $s = $settings ?? SeoSettings::map();
         $base = self::base($s);
+        $ar = $locale === 'ar';
         $siteName = SeoSettings::firstFilled($s['seo_site_name'] ?? null, $s['store_name'] ?? null, 'K-Beauty Bliss');
-        $paths = self::categoryPaths();
+        $paths = self::categoryPaths($ar ? 'ar' : null);
         $currency = Money::currency();
 
         $items = [];
@@ -181,15 +188,18 @@ final class MerchantFeed
 
         self::onlyExistingColumns($query);
 
-        $query->chunkById(self::CHUNK, function ($chunk) use (&$items, &$products, &$ids, $base, $paths, $currency, $scheme) {
+        $query->chunkById(self::CHUNK, function ($chunk) use (&$items, &$products, &$ids, $base, $paths, $currency, $scheme, $ar) {
             SetEagerLoad::on($chunk);
+            // Arabic: the long fields (descriptions) for the whole chunk in one
+            // read, never one per product.
+            $long = $ar ? TranslationStore::longFor('ar', 'products', $chunk->modelKeys()) : [];
 
             foreach ($chunk as $product) {
                 if (self::isNoindex($product->seo)) {
                     continue;
                 }
 
-                $rows = $this->itemsFor($product, $base, $paths, $currency, $ids, $scheme);
+                $rows = $this->itemsFor($product, $base, $paths, $currency, $ids, $scheme, $ar ? ($long[(int) $product->id] ?? []) : null);
 
                 if ($rows !== []) {
                     $products++;
@@ -202,7 +212,7 @@ final class MerchantFeed
             . '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">' . "\n"
             . '<channel>' . "\n"
             . '<title>' . self::x($siteName) . '</title>' . "\n"
-            . '<link>' . self::x($base . '/') . '</link>' . "\n"
+            . '<link>' . self::x($base . ($ar ? '/ar' : '') . '/') . '</link>' . "\n"
             . '<description>' . self::x($siteName . ' products') . '</description>' . "\n";
 
         foreach ($items as $item) {
@@ -229,24 +239,27 @@ final class MerchantFeed
      * @param  array<string, true>  $ids  ids already used in this feed
      * @return list<array<string, string|list<string>>>
      */
-    private function itemsFor(Product $product, string $base, array $paths, string $currency, array &$ids, string $scheme = self::SCHEME_SKU): array
+    /** @param  array<string, string>|null  $arLong  Arabic long fields for this product; null = the English feed */
+    private function itemsFor(Product $product, string $base, array $paths, string $currency, array &$ids, string $scheme = self::SCHEME_SKU, ?array $arLong = null): array
     {
         $shop = $scheme === self::SCHEME_SHOP;
+        $ar = $arLong !== null;
 
-        $name = trim((string) $product->name);
-
-        if ($name === '' || trim((string) $product->slug) === '') {
+        if (trim((string) $product->name) === '' || trim((string) $product->slug) === '') {
             return [];
         }
 
+        // Arabic where a published translation exists, else the English text,
+        // exactly as the /ar/ product page shows it (HasTranslations::t()).
+        $name = trim((string) ($ar ? $product->t('name', 'ar') : $product->name));
         $images = self::images($product, $base);
         $common = [
-            'description' => self::description($product, $name),
-            'link' => $base . '/product/' . $product->slug . '/',
+            'description' => $ar ? self::arDescription($product, $name, $arLong) : self::description($product, $name),
+            'link' => $base . ($ar ? '/ar' : '') . '/product/' . $product->slug . '/',
             'condition' => 'new',
         ];
 
-        $brand = trim((string) ($product->brand?->name ?? ''));
+        $brand = trim((string) ($ar ? ($product->brand?->t('name', 'ar') ?? '') : ($product->brand?->name ?? '')));
         $categoryId = (int) ($product->category_id ?: ($product->categories->first()?->id ?? 0));
         $type = $paths[$categoryId] ?? '';
 
@@ -403,6 +416,20 @@ final class MerchantFeed
         return ($sku !== '' && mb_strlen($sku) <= self::MAX_ID) ? $sku : $fallback;
     }
 
+    /** The Arabic description from the chunk's translations, else the English one. */
+    private static function arDescription(Product $product, string $name, array $long): string
+    {
+        foreach (['description', 'short_description'] as $field) {
+            $text = RichText::toText(isset($long[$field]) && is_string($long[$field]) ? $long[$field] : null);
+
+            if ($text !== '') {
+                return mb_substr($text, 0, self::MAX_DESCRIPTION);
+            }
+        }
+
+        return self::description($product, $name);
+    }
+
     private static function description(Product $product, string $name): string
     {
         foreach ([$product->description, $product->short_description] as $html) {
@@ -458,12 +485,12 @@ final class MerchantFeed
      *
      * @return array<int, string>
      */
-    private static function categoryPaths(): array
+    private static function categoryPaths(?string $locale = null): array
     {
         $rows = [];
 
         foreach (Category::query()->get(['id', 'parent_id', 'name']) as $c) {
-            $rows[(int) $c->id] = [(int) ($c->parent_id ?? 0), trim((string) $c->name)];
+            $rows[(int) $c->id] = [(int) ($c->parent_id ?? 0), trim((string) ($locale === 'ar' ? $c->t('name', 'ar') : $c->name))];
         }
 
         $out = [];
@@ -482,6 +509,18 @@ final class MerchantFeed
         }
 
         return $out;
+    }
+
+    /** One query: has any translation changed since the Arabic copy was built? */
+    private static function translationStamp(): string
+    {
+        try {
+            $row = DB::selectOne('select max(updated_at) as tu, count(*) as tc from translations');
+
+            return implode('|', array_map('strval', (array) $row));
+        } catch (\Throwable) {
+            return 'none';
+        }
     }
 
     /** One query: has anything in the catalogue changed since the cached copy? */

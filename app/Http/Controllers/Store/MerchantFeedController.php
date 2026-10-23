@@ -24,11 +24,16 @@ final class MerchantFeedController extends Controller
 {
     public function __invoke(Request $request, MerchantFeed $feed): Response
     {
-        if (! MerchantFeed::enabled() || SiteHost::isPrivate()) {
+        // /feeds/google-merchant-ar.xml (the owner, 23 October): the same feed in
+        // Arabic, only while the Arabic shop is switched on.
+        $ar = $request->route()?->getName() === 'feeds.google-merchant-ar';
+
+        if (! MerchantFeed::enabled() || SiteHost::isPrivate()
+            || ($ar && ! in_array('ar', \App\Support\Locale::enabledCodes(), true))) {
             return response('Feed disabled', 404)->header('Content-Type', 'text/plain; charset=UTF-8');
         }
 
-        $response = response($feed->cached()['xml'], 200)
+        $response = response($feed->cached(MerchantFeed::SCHEME_SKU, $ar ? 'ar' : 'en')['xml'], 200)
             ->header('Content-Type', 'application/xml; charset=UTF-8')
             ->header('X-Robots-Tag', 'noindex');
 

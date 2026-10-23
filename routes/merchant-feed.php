@@ -23,3 +23,4 @@ use App\Http\Controllers\Store\MerchantFeedController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/feeds/google-merchant.xml', MerchantFeedController::class)->name('feeds.google-merchant');
+Route::get('/feeds/google-merchant-ar.xml', MerchantFeedController::class)->name('feeds.google-merchant-ar');
