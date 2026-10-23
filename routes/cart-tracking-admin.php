@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Route;
 |   GET  cart-tracking/carts/{id}            one cart's history       view
 |   GET  cart-tracking/products              Added / Removed tabs     view
 |   GET  cart-tracking/blocks                Blocked tab              view
+|   GET  cart-tracking/reminders             Reminders tab            view
 |   GET  cart-tracking/settings              Settings tab             view
 |   GET  cart-tracking/export                CSV of the filter / ids  view
 |   POST cart-tracking/blocks                block an IP / range      block
@@ -42,6 +43,7 @@ Route::get('/cart-tracking', [CartTrackingApiController::class, 'index']);
 Route::get('/cart-tracking/carts/{id}', [CartTrackingApiController::class, 'show'])->whereNumber('id');
 Route::get('/cart-tracking/products', [CartTrackingApiController::class, 'products']);
 Route::get('/cart-tracking/blocks', [CartTrackingApiController::class, 'blocks']);
+Route::get('/cart-tracking/reminders', [CartTrackingApiController::class, 'reminders']);
 Route::get('/cart-tracking/settings', [CartTrackingApiController::class, 'settings']);
 Route::get('/cart-tracking/export', [CartTrackingApiController::class, 'export']);
 Route::post('/cart-tracking/blocks', [CartTrackingApiController::class, 'block']);

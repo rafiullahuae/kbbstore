@@ -315,7 +315,8 @@ it('gives support and editor a 403 on every Cart Tracking endpoint, and owner an
      * manager is refused — or map them to admin.access and support gets in.
      */
     $routes = CartTrackingRoutes::registered();
-    expect($routes)->toHaveCount(10);
+    // 10 -> 11 (23 October 2026): GET cart-tracking/reminders, the Reminder emails tab.
+    expect($routes)->toHaveCount(11);
 
     foreach ($routes as $route) {
         $method = array_values(array_diff($route->methods(), ['HEAD', 'OPTIONS']))[0];

@@ -163,6 +163,11 @@
 .ctk-form label{display:grid;gap:5px;font-size:11.5px;font-weight:700;color:var(--ink-soft,#626c80);min-width:0}
 .ctk-form .ctk-in,.ctk-form .ctk-sel{width:100%}
 .ctk-bt{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr) minmax(0,1fr) 110px 120px;gap:12px;align-items:center;padding:12px 6px;border-bottom:1px solid var(--border-2,#eef0f6);font-size:13px}
+.ctk-rt{grid-template-columns:110px minmax(0,1.4fr) 110px minmax(0,1.6fr)}
+.ctk-rg{display:grid;gap:8px}
+.ctk-rg-h{margin:0 0 4px;font-size:13.5px;display:flex;align-items:center;gap:6px}
+.ctk-rgl{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:center;font-size:13px}
+.ctk-lnk{border:0;background:none;padding:0;font:inherit;font-weight:700;color:inherit;cursor:pointer;text-decoration:underline}
 .ctk-bt.h{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft,#626c80);font-weight:700;border-bottom:1px solid var(--border,#e6e9f2);padding:8px 6px}
 .ctk-bt .cidr{font:700 13px var(--mono,ui-monospace,monospace);color:var(--ink,#101729);overflow-wrap:anywhere}
 .ctk-bt.exp{opacity:.55}
@@ -271,6 +276,10 @@
   .ctk-rk.rm{grid-template-columns:26px minmax(0,1fr) 54px 54px}
   .ctk-bt{grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;border:1px solid var(--border,#e6e9f2);border-radius:12px;margin-bottom:8px;padding:12px}
   .ctk-bt.h{display:none}
+  .ctk-rt > div:nth-child(2),.ctk-rt > div:nth-child(4){grid-column:1 / 3}
+  .ctk-rt > div:nth-child(3){grid-column:2;grid-row:1}
+  .ctk-rgl{grid-template-columns:44px minmax(0,1fr)}
+  .ctk-rgl .ctk-sub{grid-column:2}
   .ctk-bt > div:nth-child(2),.ctk-bt > div:nth-child(3),.ctk-bt > div:nth-child(4){grid-column:1 / 3}
   .ctk-bt > div:nth-child(5){grid-column:2;grid-row:1}
   .ctk-form{grid-template-columns:minmax(0,1fr)}
@@ -286,7 +295,7 @@
   'use strict';
 
   var SCREEN = 'carttracking';
-  var TABS = [['carts', 'Carts'], ['added', 'Added products'], ['removed', 'Removed products'], ['blocked', 'Blocked'], ['settings', 'Settings']];
+  var TABS = [['carts', 'Carts'], ['added', 'Added products'], ['removed', 'Removed products'], ['reminders', 'Reminder emails'], ['blocked', 'Blocked'], ['settings', 'Settings']];
   var PERIODS = [['today', 'Today'], ['yesterday', 'Yesterday'], ['7d', 'Last 7 days'], ['30d', 'Last 30 days'], ['all', 'All time'], ['custom', 'Custom']];
   var PPERIODS = [['today', 'Today'], ['7d', 'Last 7 days'], ['30d', 'Last 30 days'], ['all', 'All time']];
 
@@ -461,6 +470,7 @@
     if (tab === 'carts') loadCarts();
     else if (tab === 'added' || tab === 'removed') loadProducts(tab);
     else if (tab === 'blocked') loadBlocks();
+    else if (tab === 'reminders') loadReminders(1);
     else if (tab === 'settings') loadSettings();
   }
 
@@ -1018,6 +1028,63 @@
     p.innerHTML = html;
   }
 
+  /* ──────────────────────────────── Reminder emails (23 October) ── */
+
+  // Every basket with an email (typed at checkout or asked for at the cart) and
+  // what happened to its reminder, under the checks that decide whether any is
+  // sent at all. One request per page, no polling.
+  async function loadReminders(page) {
+    var p = panel('reminders');
+    if (p && !st.rem) p.innerHTML = '<div class="ctk-card"><div class="ctk-empty">Loading…</div></div>';
+    var mine = ++st.seq;
+    try {
+      var d = await api('/reminders?page=' + Number(page || 1));
+      if (mine !== st.seq || st.tab !== 'reminders') return;
+      st.rem = d;
+    } catch (e) {
+      st.rem = { err: failText(e), rows: [], gates: [] };
+    }
+    paintReminders();
+  }
+
+  function paintReminders() {
+    var p = panel('reminders');
+    if (!p) return;
+    var d = st.rem || { rows: [], gates: [] };
+    var shut = (d.gates || []).filter(function (g) { return !g.ok; });
+    var html = '<div class="ctk-card"><div class="ctk-rg">'
+      + '<p class="ctk-rg-h">' + (shut.length ? icon(I.warn, 16) + ' <b>No reminder emails are being sent.</b> Fix the red line' + (shut.length > 1 ? 's' : '') + ' below.' : '<b>Reminder emails are on.</b> A basket left with an email gets one reminder.') + '</p>'
+      + (d.gates || []).map(function (g) {
+          return '<div class="ctk-rgl"><span class="ctk-pill ' + (g.ok ? 'no' : 'yes') + '">' + (g.ok ? 'OK' : 'Off') + '</span><span>' + esc(g.label) + '</span><span class="ctk-sub">' + esc(g.where) + '</span></div>';
+        }).join('')
+      + '</div></div>';
+    html += '<div class="ctk-card">';
+    if (d.err) {
+      html += '<div class="ctk-empty"><b>Something went wrong</b>' + esc(d.err) + '</div>';
+    } else if (!d.rows.length) {
+      html += '<div class="ctk-empty"><b>No baskets with an email yet</b>When a shopper types an email at checkout and leaves, the basket shows here with its reminder.</div>';
+    } else {
+      var tone = { sent: 'no', due: 'blue', waiting: 'blue', stopped: 'mute', none: 'amber', blocked: 'amber' };
+      var word = { sent: 'Sent', due: 'Sending', waiting: 'Waiting', stopped: 'Not sent', none: 'Not queued', blocked: 'Waiting' };
+      html += '<div class="ctk-bt ctk-rt h"><span>Cart</span><span>Customer</span><span>Value</span><span>Reminder</span></div>'
+        + d.rows.map(function (r) {
+            return '<div class="ctk-bt ctk-rt">'
+              + '<div><button type="button" class="ctk-lnk" data-ctk-open-cart="' + r.cart + '">#' + r.cart + '</button><span class="ctk-sub">' + esc(when(r.at)) + '</span></div>'
+              + '<div><b>' + esc(r.email) + '</b><span class="ctk-sub">' + esc(r.how) + '</span></div>'
+              + '<div class="ctk-num">' + esc(r.value_label) + '<span class="ctk-sub">' + num(r.items) + ' item' + (r.items === 1 ? '' : 's') + '</span></div>'
+              + '<div><span class="ctk-pill ' + (tone[r.state] || 'mute') + '">' + (word[r.state] || '') + '</span><span class="ctk-sub">' + esc(r.status) + '</span></div>'
+              + '</div>';
+          }).join('');
+      if (d.pages > 1) {
+        html += '<div class="ctk-pager"><span>Page ' + num(d.page) + ' of ' + num(d.pages) + ' · ' + num(d.total) + ' baskets</span><div class="pg">'
+          + '<button type="button" data-ctk-rpage="' + (d.page - 1) + '"' + (d.page <= 1 ? ' disabled' : '') + ' aria-label="Previous page">‹</button>'
+          + '<button type="button" data-ctk-rpage="' + (d.page + 1) + '"' + (d.page >= d.pages ? ' disabled' : '') + ' aria-label="Next page">›</button></div></div>';
+      }
+    }
+    html += '</div>';
+    p.innerHTML = html;
+  }
+
   async function addBlock(btn) {
     var msg = document.getElementById('ctkAddMsg');
     var target = (document.getElementById('ctkNewIp') || {}).value || '';
@@ -1141,6 +1208,7 @@
     if (t.hasAttribute('data-ctk-popclose')) { closePop(); return; }
     if (t.hasAttribute('data-ctk-close') || t.id === 'ctkScrim') { closeCart(); return; }
     if (t.hasAttribute('data-ctk-add')) { addBlock(t); return; }
+    if (t.hasAttribute('data-ctk-rpage')) { loadReminders(Number(t.getAttribute('data-ctk-rpage'))); return; }
     if (t.hasAttribute('data-ctk-save')) { saveSettings(t); return; }
     if (t.hasAttribute('data-ctk-csv')) { exportCsv(qs(Object.assign({}, st.q, { page: '' }))); return; }
     if (t.hasAttribute('data-ctk-cust')) { e.preventDefault(); closeCart(); if (window.kbbCustomerOpen) window.kbbCustomerOpen(Number(t.getAttribute('data-ctk-cust'))); return; }

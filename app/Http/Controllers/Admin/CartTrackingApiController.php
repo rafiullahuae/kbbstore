@@ -81,6 +81,16 @@ class CartTrackingApiController extends Controller
     }
 
     /** GET cart-tracking/blocks */
+    /**
+     * GET cart-tracking/reminders — the Reminders tab (the owner, 23 October):
+     * every basket with an email, what happened to its reminder, and every gate
+     * between a typed address and a sent email. Read-only.
+     */
+    public function reminders(Request $request, \App\Services\CartTracking\ReminderLog $log): JsonResponse
+    {
+        return response()->json($log->rows((int) $request->query('page', 1)) + ['gates' => $log->gates()]);
+    }
+
     public function blocks(Request $request): JsonResponse
     {
         return response()->json([
