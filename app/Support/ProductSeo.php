@@ -143,7 +143,40 @@ final class ProductSeo
          * either side of a block do not weld together. A blurb with no tag and
          * no entity in it reduces to exactly the string it did before.
          */
-        return self::hasText($product->short_description) ? RichText::toText($product->t('short_description')) : null;
+        if (self::hasText($product->short_description)) {
+            return RichText::toText($product->t('short_description'));
+        }
+
+        /*
+         * NO BLURB: THE PRODUCT'S OWN WORDS, NOT THE SHOP'S (the owner, 23
+         * October: "their every product comes like this on top of google
+         * search, why our's not"). A product with no short description fell
+         * through to Store -> SEO & Meta's sitewide sentence, so Google was
+         * told "Shop authentic Korean skincare in the UAE at KBeautyBliss..."
+         * for the AGE-R Booster Pro X2 and every product like it -- the same
+         * words on hundreds of pages. Now its first ~160 characters, cut at a
+         * word. Same language rule as above: t() on an /ar/ page.
+         */
+        if (self::hasText($product->description)) {
+            return self::excerpt(RichText::toText($product->t('description')));
+        }
+
+        return null;
+    }
+
+    /** About one search-result line: up to 160 characters, cut at a word, with an ellipsis. */
+    private static function excerpt(string $text): string
+    {
+        $text = trim((string) preg_replace('/\s+/u', ' ', $text));
+
+        if (mb_strlen($text) <= 160) {
+            return $text;
+        }
+
+        $cut = mb_substr($text, 0, 159);
+        $space = mb_strrpos($cut, ' ');
+
+        return rtrim($space !== false && $space > 100 ? mb_substr($cut, 0, $space) : $cut, " ,.;:-\u{2013}\u{2014}").'…';
     }
 
     /**
