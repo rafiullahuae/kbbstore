@@ -168,6 +168,9 @@ function walkExpectations(array $seed): array
         'robots.txt'               => ['status' => 200],
         'llms.txt'                 => ['status' => 200],
         'feeds/google-merchant.xml' => ['status' => 200], // Google Shopping feed (Lane SEO)
+        // The Arabic Google Shopping feed (23 October 2026): 404 while the Arabic
+        // shop is off, which it is in this walk (MerchantFeedArabicTest covers on).
+        'feeds/google-merchant-ar.xml' => ['status' => 404],
         // Meta and TikTok catalog feeds (Lane MP, 2.60.449): the Merchant feed's
         // own gate (MerchantFeed::enabled(), not a private host), so the same 200.
         'feeds/meta-catalog.xml'   => ['status' => 200],

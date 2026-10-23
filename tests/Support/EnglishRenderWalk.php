@@ -1171,6 +1171,8 @@ final class EnglishRenderWalk
             // The Google Merchant Center product feed (Lane SEO): XML for Merchant
             // Center and Meta, no Blade, no shopper string.
             'feeds/google-merchant.xml' => $file,
+            // Its Arabic twin (23 October 2026): the same XML builder.
+            'feeds/google-merchant-ar.xml' => $file,
             // Lane MP: the Meta and TikTok catalog feeds, the same builder as Google's.
             'feeds/meta-catalog.xml' => $file,
             'feeds/tiktok-catalog.xml' => $file,
