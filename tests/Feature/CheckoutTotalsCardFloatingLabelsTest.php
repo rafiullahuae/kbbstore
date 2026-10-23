@@ -471,6 +471,10 @@ it('renders the checkout byte for byte as before this lane with both switches of
         // inline script first in <body>, as the owner asked (Appearance -> Site
         // layout -> Large phone text). BigTextGuardTest pins it. Set aside.
         $after = (string) preg_replace('#<script style="font-size:16px">.*?</script>\n#s', '', $after, 1);
+        // 2.60.572 (the owner, 23 October, "option B ... only on checkout page"):
+        // the "*" on a required field left empty -- a few lines in the checkout's
+        // own inline script, after a blank line. LaneCkCheckoutFieldsTest pins them.
+        $after = (string) preg_replace("#\n\n\(function \(\) \{\n  var f = document\.getElementById\('kbbCheckoutForm'\);.*?\n\}\)\(\);\n(?=\n\(function \(\) \{\n  var box = document\.getElementById\('create_account'\);)#s", '', $after, 1);
     } finally {
         EnglishRenderWalk::useViewPath($current[0]);
     }
