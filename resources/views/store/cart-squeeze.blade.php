@@ -790,18 +790,24 @@
     column-gap:var(--cpg-d-gap,28px);
     align-items:start}
 
-  /* (2.60.580) THE CHECKOUT BUTTON NEVER LOSES ITS WORDS IN THE SIDE COLUMN.
-     Here the bar sits in the 380px side card, not across a phone, and with
-     "Text in both rows" and the button's own size turned up the label was cut
-     to "SECURE CHECK…" (owner's screenshot, 23 October; measured: 1024-1440px
-     at 150% / 18px). The phone's answer -- shrink and end in "…" -- is for a
-     bar that cannot grow; this one can. So the row may wrap: when the tally and
-     the whole label fit side by side nothing moves, and when they do not, the
-     button takes its own full-width line under the total. flex-wrap decides
-     from each item's natural width, so no script measures anything. */
-  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar{flex-wrap:wrap;row-gap:10px}
-  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn{flex:0 0 auto}
-  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .tally + .cobtn:not(:only-child){margin-inline-start:auto}
+  /* (2.60.581) TABLETS ONLY: A SMALLER CHECKOUT BUTTON, STILL BESIDE THE TOTAL.
+     In the two-column layout on a tablet the side card is narrow, and with the
+     owner's larger text sizes the label was cut to "SECURE CHECK…" (his
+     screenshot, 23 October). 2.60.580 wrapped the bar at every desktop width;
+     the owner: "for desktop etc it was absolutely fine side by side ... i would
+     prefer to reduce the button size. i want the value and button side by
+     side ... increase the column width just littel bit, and also reduce the
+     button size little bit." So up to 1199px the side column is 50px wider
+     than his own width setting and the button's text and padding are 15%
+     smaller (letter spacing a touch tighter); from 1200px nothing here applies
+     and the bar is exactly as it was before 2.60.580. */
+  @media (max-width:1199px){
+    .kbb-cartpage.cpg-squeeze.cpg-d .grid{grid-template-columns:minmax(0,1fr) calc(var(--cpg-d-aside,380px) + 50px)}
+    .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn{font-size:calc(15px * var(--cpg-bar-f) * .85);
+      padding:calc(11px * var(--cpg-bar-f) * .85) calc(16px * var(--cpg-bar-f) * .85)}
+    .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn.cpg-cob2{font-size:calc(var(--cpg-cob-f,14px) * var(--cpg-bar-f) * .85)}
+    .kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn.cpg-cobcaps{letter-spacing:.06em}
+  }
 
   /* EVERYTHING goes left except the side block, selected by position rather
      than by name: the column that holds the basket rows carries no class of

@@ -14,7 +14,8 @@ declare(strict_types=1);
  *    with the owner's larger text sizes (measured 1024-1440px at 150% / 18px).
  *
  * Mutation notes: delete the 901-1199px block in kbb.css and the first case is
- * red; delete the flex-wrap rule in cart-squeeze.blade.php and the second is.
+ * red; delete the tablet query in cart-squeeze.blade.php, or wrap the bar
+ * again (2.60.580's mistake), and the second is.
  */
 function tabletBlock(): string
 {
@@ -53,10 +54,20 @@ it('moves every beside-the-heading button under its section on tablets', functio
     expect($at)->toBeGreaterThan(strpos($css, '.kbb-home .bndl.bndl-center.bndl-btn-d-top .bndl-head{padding-inline:190px}'));
 });
 
-it('lets the bag checkout button take its own line in the side column instead of cutting its label', function () {
+it('keeps the bag total and a slightly smaller checkout button side by side in a slightly wider column, on tablets only', function () {
     $view = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
     $desktop = substr($view, (int) strpos($view, "@media (min-width: {{ (int) \$kbbCartPage->get('d_min') }}px){\n\n  /* The page stops growing"));
+    preg_match('/@media \(max-width:1199px\)\{(.*?)\n  \}/s', $desktop, $m);
+    $tablet = $m[1] ?? '';
 
-    expect(str_contains($desktop, '.kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar{flex-wrap:wrap'))->toBeTrue();
-    expect(str_contains($desktop, '.kbb-cartpage.cpg-squeeze.cpg-d .cpg-cobar .cobtn{flex:0 0 auto}'))->toBeTrue();
+    // A little wider column, a little smaller button (owner, 23 October).
+    expect(str_contains($tablet, 'calc(var(--cpg-d-aside,380px) + 50px)'))->toBeTrue();
+    expect(str_contains($tablet, '.cpg-d .cpg-cobar .cobtn{font-size:calc(15px * var(--cpg-bar-f) * .85)'))->toBeTrue();
+    expect(str_contains($tablet, '.cobtn.cpg-cob2{font-size:calc(var(--cpg-cob-f,14px) * var(--cpg-bar-f) * .85)}'))->toBeTrue();
+
+    // Side by side everywhere: no wrap, on tablets or anywhere else. 2.60.580
+    // wrapped the bar at every desktop width; the owner: "for desktop etc it
+    // was absolutely fine side by side ... i want the value and button side by
+    // side".
+    expect(str_contains($view, '.cpg-cobar{flex-wrap:wrap'))->toBeFalse();
 });
