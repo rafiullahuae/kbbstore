@@ -145,3 +145,22 @@ it('costs the same whether one range is published or five', function () {
 
     expect($five)->toBe($one);
 });
+
+/*
+ * What it looked like in the preview, 23 October: every row's wording was
+ * blank when the gifts had no kind set (sentence() counted nothing and won
+ * over the admin's own "2 Masks"), and "Shop now" was dark text on a dark
+ * button, because `.kbb-home a` outranks a bare `.fgh-btn`. Put the
+ * unconditional sentence() back, or the selector to `.fgh-btn{`, and this is red.
+ */
+it('keeps the admin\'s words when the gifts carry no kind, and its button text visible', function () {
+    $mask = fghProduct('Kindless Mask', '');
+    fghRange(194, null, [[$mask, 2, null]], ['mask' => 2]);
+    fghSwitch(true);
+
+    $html = $this->get('/')->getContent();
+
+    expect($html)->toContain('<span class="fgh-w">Own words</span>')
+        ->and($html)->toContain('.fgh a.fgh-btn{')
+        ->and($html)->not->toMatch('/[}>]\.fgh-btn\{/');
+});

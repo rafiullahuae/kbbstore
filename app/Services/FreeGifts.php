@@ -401,7 +401,13 @@ final class FreeGifts
             $words = $ar ? trim((string) $r['ar']) : trim((string) $r['en']);
 
             if (($r['needs'] ?? null) !== null || $words === '') {
-                $words = self::sentence($lines)[$ar ? 'ar' : 'en'];
+                // The counted wording ("1 Mask + 1 Full Size Product") when the
+                // gifts carry their kinds; the admin's own label when they do not.
+                $words = trim(self::sentence($lines)[$ar ? 'ar' : 'en']) ?: $words;
+            }
+
+            if ($words === '') {
+                $words = $this->count(array_sum(array_map(static fn (array $l) => (int) $l['quantity'], $lines)));
             }
 
             $min = number_format(intdiv((int) $r['min'], 100));
