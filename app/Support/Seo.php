@@ -1719,6 +1719,27 @@ class Seo
             if ($url)                      $node['url'] = $url;
 
             /*
+             * THIS PRODUCT IS WHAT THE PAGE IS ABOUT, AND THIS IS ITS PICTURE.
+             *
+             * Google showed the Centellian24 eye cream with the medicube
+             * Collagen Jelly Cream as its thumbnail (23 October) while the
+             * page, the feed and the sitemap all named the eye cream: a
+             * product page also carries ~25 "you may also like" cards, each
+             * with another product's photo, and Google picks the result
+             * thumbnail from the page itself. Its documented ways to state a
+             * preference are the main entity's `image` and `primaryImageOfPage`
+             * -- and nothing said the Product WAS the main entity. Both are
+             * stated now, pointing at the first gallery image.
+             */
+            if ($url && $images !== []) {
+                $node['mainEntityOfPage'] = [
+                    '@type' => 'WebPage',
+                    '@id' => $url,
+                    'primaryImageOfPage' => ['@type' => 'ImageObject', 'url' => $images[0]],
+                ];
+            }
+
+            /*
              * ═════════════════════════════════════════════════════════════════
              * A SET — AND WHY THE NODE STAYS A `Product`. (Lane SP)
              * ═════════════════════════════════════════════════════════════════
