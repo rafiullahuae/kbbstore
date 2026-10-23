@@ -105,7 +105,7 @@ function aemRender(Order $order, \Closure $build): string
     return \App\Support\OrderLocale::render($order, static fn (): string => (string) $build()->render());
 }
 
-it('mastheads an Arabic order email with the Arabic logo, not the English wordmark', function () {
+it('mastheads an Arabic order email with the Arabic name as text, not the English wordmark and not a picture', function () {
     $html = aemRender(aemOrder('ar'), fn () => new OrderConfirmation(Order::latest('id')->first()));
 
     /*
@@ -113,12 +113,12 @@ it('mastheads an Arabic order email with the Arabic logo, not the English wordma
      * of an Arabic email. MUTATION: return null from KitRtl::masthead() and the
      * first and last expectations are red.
      */
+    // 23 October: the picture carried a solid background and showed as a box;
+    // the masthead and the footer both print the name as text now.
+    // MUTATION: put 'logo' => self::logo() back in KitRtl::masthead(). RED.
     expect($html)->not->toContain('K-Beauty<span')
-        ->and($html)->toContain('<img src="https://extrabeauty.ae/img-cache/mail/kbb-logo-ar-' . KitRtl::VERSION . '.png" width="200" height="48" alt="كي بيوتي بليس"')
-        // The footer's brand line, in Arabic text, with its space.
-        ->and($html)->toContain('كي بيوتي<span style="color:#C13E63;"> بليس</span>')
-        // The copy the web server will serve.
-        ->and(is_file(public_path('img-cache/mail/kbb-logo-ar-' . KitRtl::VERSION . '.png')))->toBeTrue();
+        ->and($html)->not->toContain('kbb-logo-ar')
+        ->and(substr_count($html, 'كي بيوتي<span style="color:#C13E63;"> بليس</span>'))->toBe(2);
 });
 
 it('ships a small logo whose public name follows its bytes', function () {
@@ -249,7 +249,7 @@ it('sends a bulk status change and the scheduler\'s reminder in Arabic for Arabi
 
     expect($reminder->getTo()[0]->getAddress())->toBe('unpaid@example.com')
         ->and($reminder->getHtmlBody())->toContain('<html lang="ar" dir="rtl"')
-        ->and($reminder->getHtmlBody())->toContain('kbb-logo-ar-')
+        ->and($reminder->getHtmlBody())->toContain('كي بيوتي<span style="color:#C13E63;"> بليس</span>')
         ->and(app()->getLocale())->toBe('en');
 });
 

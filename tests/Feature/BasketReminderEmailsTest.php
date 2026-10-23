@@ -342,3 +342,41 @@ it('answers every button the Cart Tracking screen draws: each one is on the clic
         expect(str_contains($list[1], '['.$attr.']'))->toBeTrue($attr.' is handled but the click never reaches it');
     }
 });
+
+it('says why each basket with an email is not emailed, in the count and in the list', function () {
+    /*
+     * The owner, 23 October, a screen of "Not queued" rows: "I have a lot of
+     * abandoned carts with emails, but the system shows me only 11 in last 30
+     * days, why is that". The count skipped buyers, checked-out and emptied
+     * baskets, repeat addresses and the already-reminded without a word, and
+     * the list called all of them "reminders were off".
+     * MUTATION: return null from skipReason() for 'ordered'. RED.
+     */
+    brmOn();
+    brmTypedCart('send@example.com', 24 * 5);
+    brmTypedCart('bought@example.com', 24 * 6);
+    DB::table('orders')->insert(['order_number' => 'BRM-W', 'email' => 'bought@example.com', 'created_at' => now()->subDays(2), 'updated_at' => now()]);
+    $done = brmTypedCart('done@example.com', 24 * 4);
+    DB::table('carts')->where('id', $done->id)->update(['status' => 'converted']);
+    brmTypedCart('send@example.com', 24 * 9);            // same address, older basket
+    brmTypedCart('empty@example.com', 24 * 3, 0, 0);
+
+    $r = app(CartRecovery::class)->scheduleLeft(30, now(), false);
+    $why = collect($r['skipped'])->pluck('n', 'why')->all();
+
+    expect($r['baskets'])->toBe(1)
+        ->and($r['found'])->toBe(5)
+        ->and($why)->toBe([
+            CartRecovery::SKIP_WORDS['checked_out'] => 1,
+            CartRecovery::SKIP_WORDS['empty'] => 1,
+            CartRecovery::SKIP_WORDS['newer'] => 1,
+            CartRecovery::SKIP_WORDS['ordered'] => 1,
+        ]);
+
+    app(ReminderLog::class)->rows();
+    $rows = collect(app(ReminderLog::class)->rows()['rows'])->groupBy('email');
+    expect($rows['bought@example.com'][0]['status'])->toBe('Not needed: they ordered later')
+        ->and($rows['done@example.com'][0]['status'])->toBe('Not needed: checked out (an order was placed from it)')
+        ->and($rows['send@example.com']->pluck('status')->all())->toContain('Not sent yet: use “Send to baskets already left” above')
+        ->and($rows['send@example.com']->pluck('status')->all())->toContain('Not needed: a newer basket from the same email gets the reminder');
+});

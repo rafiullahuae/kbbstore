@@ -1119,6 +1119,11 @@
           ? '<b>' + num(r.baskets) + '</b> basket' + (r.baskets === 1 ? '' : 's') + ' to remind (' + num(r.en) + ' English, ' + num(r.ar) + ' Arabic), ' + (at ? 'at ' + esc(when(r.send_at)) : 'starting now') + '. '
             + '<button type="button" class="ctk-btn pri" data-ctk-remgo>Schedule ' + num(r.baskets) + ' reminder' + (r.baskets === 1 ? '' : 's') + '</button>'
           : 'No basket in that window needs a reminder.';
+        // Every basket with an email in the window, and why the rest are not emailed.
+        if (r.skipped && r.skipped.length) {
+          msg.innerHTML += '<div class="ctk-note" style="margin-top:8px"><b>' + num(r.found) + '</b> basket' + (r.found === 1 ? '' : 's') + ' with an email in this window. Not emailed: '
+            + r.skipped.map(function (k) { return '<b>' + num(k.n) + '</b> ' + esc(k.why); }).join(' · ') + '.</div>';
+        }
       } else {
         msg.className = 'ctk-msg on';
         msg.textContent = 'Scheduled ' + num(r.baskets) + ' reminder' + (r.baskets === 1 ? '' : 's') + '. They show below as Waiting, then Sent.';

@@ -101,11 +101,13 @@ final class ReminderLog
             ->when(Schema::hasColumn('carts', 'ct_seen_path'), fn ($q) => $q->addSelect('c.ct_seen_path'))
             ->when(Schema::hasColumn('cart_recoveries', 'locale'), fn ($q) => $q->addSelect('r.locale'))
             ->selectRaw('(select count(*) from cart_items ci where ci.cart_id = c.id) as items')
+            ->selectRaw('exists(select 1 from carts c3 where c3.ct_email = c.ct_email and c3.id <> c.id and c3.updated_at > c.updated_at) as sf_newer')
             ->selectRaw('(select coalesce(sum(ci.quantity * ci.unit_price), 0) from cart_items ci where ci.cart_id = c.id) as value_fils')
             ->selectRaw('exists(select 1 from outbound_optouts o where o.email = coalesce(r.email, c.ct_email)) as opted_out')
             ->when(Schema::hasTable('email_bounces'), fn ($q) => $q->selectRaw(
                 'exists(select 1 from email_bounces b where b.cleared_at is null and lower(b.email) = coalesce(r.email, c.ct_email)) as bounced'))
-            ->get();
+            ;
+        $rows = CartRecovery::withSkipFacts($rows)->get();
 
         $schedule = $this->recovery->schedule();
         $threshold = (int) $this->ct->get('bot_threshold');
@@ -145,7 +147,18 @@ final class ReminderLog
         }
 
         if ($row->rid === null) {
-            return ['none', 'Not queued: reminders were off when this email was typed'];
+            // The same rules the scheduler applies, so the list and the count agree.
+            $why = CartRecovery::skipReason($row, CartRecovery::botThreshold());
+
+            if ($why !== null) {
+                return ['stopped', 'Not needed: '.(CartRecovery::SKIP_WORDS[$why] ?? $why)];
+            }
+
+            if ((bool) ($row->sf_newer ?? false)) {
+                return ['stopped', 'Not needed: '.CartRecovery::SKIP_WORDS['newer']];
+            }
+
+            return ['none', 'Not sent yet: use “Send to baskets already left” above'];
         }
 
         if ($row->cancelled_at !== null) {

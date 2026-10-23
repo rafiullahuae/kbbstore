@@ -94,7 +94,18 @@ final class KitRtl
         }
 
         return [
-            'logo' => self::logo(),
+            /*
+             * TEXT, NOT THE PICTURE (the owner, 23 October 2026: "the arabic
+             * logo has white background i need the original arabic logo there
+             * as text which we have it, don't need any background"). The PNG
+             * carries its own solid #FFF0F4 behind the lettering, so wherever
+             * the masthead is not exactly that colour -- dark mode, a client
+             * that tints the cell -- it showed as a box. كي بيوتي بليس in the
+             * kit's own two-tone wordmark has no background at all and is the
+             * same text the footer already prints. logo() stays for anything
+             * that asks for the file.
+             */
+            'logo' => null,
             'alt' => self::NAME[0] . ' ' . self::NAME[1],
             // The space travels with the accent half: the two halves are
             // printed side by side, and two Arabic words with nothing between
