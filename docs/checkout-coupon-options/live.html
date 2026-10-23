@@ -1,0 +1,106 @@
+<title>Checkout Coupon Row</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: the real checkout top at phone width, repeated per option. Applied-coupon backgrounds A–F side by side,
+   then the fields before/after. Single light look: these are the shop's own colours, shown as they will be on the shop. */
+@font-face{font-family:Outfit;src:url(outfit-latin.woff2) format("woff2");font-weight:300 800;font-display:swap}
+:root{--page:#f6f1f3;--card:#ffffff;--shop:#fbf7f4;--ink:#2A2228;--ink-2:#5E545A;--muted:#756C74;--line:rgba(42,34,40,.12);
+  --pink:#C13E63;--pink-soft:rgba(193,62,99,.12);--green:#2E9E6B;--green-ink:#1F7D52;--green-line:#BFE0CD;
+  --sans:Outfit,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font:15px/1.45 var(--sans)}
+.wrap{max-width:1240px;margin:0 auto;padding-block:22px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:22px}
+h1{margin:0;font-size:24px;font-weight:800;text-wrap:balance}
+h2{margin:0;font-size:17px;font-weight:800;text-wrap:balance}
+.lead{margin:4px 0 0;color:var(--muted);max-width:70ch}
+.sec{display:grid;gap:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.opt{background:var(--card);border:1px solid #eadfe4;border-radius:16px;padding:12px;display:grid;gap:10px;min-width:0}
+.opt header{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.opt header b{font-size:15px}
+.opt header span{font-size:12.5px;color:var(--muted)}
+.opt header code{margin-inline-start:auto;font-size:11.5px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+.phone{background:var(--shop);border-radius:12px;padding:10px 10px 12px;display:grid;gap:8px}
+.cap{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.tog{justify-self:start;border:1px solid #e3d6dc;background:#fff;border-radius:999px;padding:5px 12px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink)}
+.tog:focus-visible,.cl-code:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+/* the shop's coupon line, copied from kbb-checkout.css (phone sizes) */
+.cl{display:flex;align-items:center;gap:8px;min-height:42px;padding:6px 8px;background:#FFF0F4;border:1.5px dashed #ecaec4;border-radius:12px;color:#5e545a;font-size:13px;font-weight:500;white-space:nowrap;transition:background .2s,border-color .2s}
+.cl-ic{display:grid;place-items:center;flex:none;width:26px;height:26px;border-radius:50%;background:#fff;color:#C13E63;transition:color .2s}
+.cl-ic svg{width:15px;height:15px}
+.cl-t{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.cl-code{display:inline-flex;align-items:center;min-height:24px;margin:0 2px;padding:0 8px;background:#fff;border:1px solid #f3c3d4;border-radius:7px;color:#A82F53;font:inherit;font-weight:800;letter-spacing:.06em;cursor:pointer;vertical-align:middle;transition:color .2s,border-color .2s}
+.cl-ok{display:grid;place-items:center;flex:none;width:18px;height:18px;margin-inline-start:auto;border-radius:50%;background:var(--green);color:#fff;visibility:hidden}
+.cl-ok svg{width:11px;height:11px}
+.cl.done .cl-ok{visibility:visible}
+/* applied: green border, icon, code; background per option */
+.cl.done{border-color:var(--green)}
+.cl.done .cl-ic{color:var(--green)}
+.cl.done .cl-code{color:var(--green-ink);border-color:var(--green-line)}
+
+/* fields */
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.fld{position:relative}
+.fld input{width:100%;font:inherit;font-size:16px;border:1.5px solid var(--line);border-radius:10px;padding:21px 13px 6px;color:var(--ink);background:#fff;transition:border-color .15s,box-shadow .15s}
+.fld label{position:absolute;inset-inline-start:14px;top:6px;font-size:11.5px;color:var(--muted);pointer-events:none}
+.fld .req{color:var(--pink)}
+.before .fld input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-soft)}
+.after .fld input:focus{outline:none;border-color:#3D3539;box-shadow:0 0 0 3px rgba(42,34,40,.10)}
+.after .fld .req{color:#111}
+.stack{display:grid;gap:8px}
+.note{font-size:13px;color:var(--ink-2);margin:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Checkout: applied coupon and field focus</h1>
+    <p class="lead">Tap GLOW, or the button, to apply and remove the coupon. Each card shows a different background for the applied row. In every option the border, the tag icon and GLOW turn green, and the tick stays green. The row with no coupon applied is unchanged. Pick a letter.</p>
+  </div>
+
+  <section class="sec">
+    <h2>1 · Coupon applied: background options</h2>
+    <div class="grid" id="opts"></div>
+  </section>
+
+  <section class="sec">
+    <h2>2 · Fields: border when you tap a field, and the *</h2>
+    <p class="note">Tap a field in each card. Left is today: pink border and pink *. Right is the change: dark grey border and black *. Pink is gone from every field border on the checkout.</p>
+    <div class="fields">
+      <div class="opt before"><header><b>Today</b><span>pink border, pink *</span></header>
+        <div class="phone stack">
+          <div class="fld"><input id="b1" value="Rafi Ullah"><label for="b1">Full name</label></div>
+          <div class="fld"><input id="b2" value=""><label for="b2">Email address <span class="req">*</span></label></div>
+        </div></div>
+      <div class="opt after"><header><b>New</b><span>dark grey border, black *</span></header>
+        <div class="phone stack">
+          <div class="fld"><input id="a1" value="Rafi Ullah"><label for="a1">Full name</label></div>
+          <div class="fld"><input id="a2" value=""><label for="a2">Email address <span class="req">*</span></label></div>
+        </div></div>
+    </div>
+  </section>
+</div>
+
+<script>
+'use strict';
+const TAG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3a1 1 0 0 1 0 1.4l-7.3 7.3a1 1 0 0 1-1.4 0z"/><circle cx="8" cy="8" r="1.4"/></svg>';
+const OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const OPTS = [
+  ['A', 'Cream yellow', '#FFFBEB'],
+  ['B', 'Soft apricot', '#FFF7EC'],
+  ['C', 'Light peach', '#FFF4EA'],
+  ['D', 'Ivory', '#FFFDF4'],
+  ['E', 'Butter', '#FEF8E2'],
+  ['F', 'Pale orange', '#FFF2E2'],
+];
+const done = {};
+const row = (k, bg, on) => `<div class="cl${on ? ' done' : ''}"${on ? ` style="background:${bg}"` : ''}><span class="cl-ic">${TAG}</span><span class="cl-t">For Discount, Apply coupon <button type="button" class="cl-code" data-k="${k}" aria-pressed="${on}">GLOW</button></span><span class="cl-ok">${OK}</span></div>`;
+function render(){
+  document.getElementById('opts').innerHTML = OPTS.map(([k, n, bg]) => `<div class="opt"><header><b>${k}</b><span>${n}</span><code>${bg}</code></header>
+    <div class="phone"><div class="cap">${done[k] === false ? 'No coupon (unchanged)' : 'Coupon applied'}</div>${row(k, bg, done[k] !== false)}</div>
+    <button type="button" class="tog" data-k="${k}">${done[k] === false ? 'Apply GLOW' : 'Remove coupon'}</button></div>`).join('');
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) { const k = b.dataset.k; done[k] = done[k] === false; render(); } });
+render();
+</script>
