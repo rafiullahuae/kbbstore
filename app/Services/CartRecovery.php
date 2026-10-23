@@ -496,43 +496,41 @@ class CartRecovery
         }
 
         try {
-            $threshold = (int) app(\App\Services\CartTracking\CartTrackingSettings::class)->get('bot_threshold');
             $seen = \Illuminate\Support\Facades\Schema::hasColumn('carts', 'ct_seen_path');
-
-            $rows = DB::table('carts as c')
+            $query = DB::table('carts as c')
                 ->whereNotNull('c.ct_email')
                 ->where('c.ct_email', '!=', '')
-                ->where('c.status', 'active')
                 ->where('c.updated_at', '>=', now()->subDays($days))
-                ->whereRaw('COALESCE(c.ct_bot_score, 0) < ?', [$threshold > 0 ? $threshold : 101])
-                ->whereExists(fn ($q) => $q->select(DB::raw(1))->from('cart_items as ci')->whereColumn('ci.cart_id', 'c.id'))
-                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('cart_recoveries as r')->whereColumn('r.cart_id', 'c.id'))
-                // Already chased: a reminder waiting, or one sent this week, for this address.
-                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('cart_recoveries as r2')->whereColumn('r2.email', 'c.ct_email')
-                    ->where(fn ($w) => $w->where(fn ($p) => $p->where('r2.stage', 0)->whereNull('r2.cancelled_at'))
-                        ->orWhere('r2.last_sent_at', '>', now()->subDays(self::TYPED_ONCE_PER_DAYS))))
-                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('outbound_optouts as o')->whereColumn('o.email', 'c.ct_email'))
-                // Bought since: an order by this address placed after the basket was left.
-                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('orders as od')
-                    ->whereRaw('LOWER(od.email) = c.ct_email')->whereColumn('od.created_at', '>=', 'c.updated_at'))
-                ->when(\Illuminate\Support\Facades\Schema::hasTable('email_suppressions'), fn ($q) => $q->whereNotExists(fn ($w) => $w
-                    ->select(DB::raw(1))->from('email_suppressions as es')->whereRaw('LOWER(es.email) = c.ct_email')))
-                ->when(\Illuminate\Support\Facades\Schema::hasTable('email_bounces'), fn ($q) => $q->whereNotExists(fn ($w) => $w
-                    ->select(DB::raw(1))->from('email_bounces as eb')->whereNull('eb.cleared_at')->whereRaw('LOWER(eb.email) = c.ct_email')))
                 ->orderByDesc('c.updated_at')
                 ->orderByDesc('c.id')
                 ->limit(5000)
-                ->get(array_merge(['c.id', 'c.ct_email'], $seen ? ['c.ct_seen_path'] : []));
+                ->select(array_merge(['c.id', 'c.ct_email', 'c.status', 'c.ct_bot_score', 'c.updated_at'], $seen ? ['c.ct_seen_path'] : []));
+            $rows = self::withSkipFacts($query)->get();
         } catch (\Throwable $e) {
             report($e);
 
             return ['ok' => false, 'reason' => 'The baskets could not be read. Nothing was scheduled.'];
         }
 
+        $threshold = self::botThreshold();
         $pick = [];
+        $skipped = [];
 
+        // Newest first, so the first sendable basket of an address is its latest.
         foreach ($rows as $row) {
-            $pick[(string) $row->ct_email] ??= $row;   // newest first: the latest basket per address
+            $why = self::skipReason($row, $threshold);
+
+            if ($why === null && isset($pick[(string) $row->ct_email])) {
+                $why = 'newer';
+            }
+
+            if ($why !== null) {
+                $skipped[$why] = ($skipped[$why] ?? 0) + 1;
+
+                continue;
+            }
+
+            $pick[(string) $row->ct_email] = $row;
         }
 
         $ar = 0;
@@ -558,9 +556,74 @@ class CartRecovery
         }
 
         $count = $apply ? $written : count($pick);
+        arsort($skipped);
 
         return ['ok' => true, 'baskets' => $count, 'ar' => min($ar, $count), 'en' => max(0, $count - $ar),
-            'send_at' => \Illuminate\Support\Carbon::instance(\DateTime::createFromInterface($sendAt))->format('Y-m-d\TH:i')];
+            'found' => count($rows),
+            // Why the rest are not emailed, so the count is never a mystery (the
+            // owner, 23 October: "I have a lot of abandoned carts with emails,
+            // but the system shows me only 11").
+            'skipped' => array_map(static fn (string $k, int $n) => ['why' => self::SKIP_WORDS[$k] ?? $k, 'n' => $n], array_keys($skipped), array_values($skipped)),
+            'send_at' => \Illuminate\Support\Carbon::instance(\DateTime::createFromInterface($sendAt))->format('Y-m-d\\TH:i')];
+    }
+
+    /** Why a basket with an address is not emailed, in his words. */
+    public const SKIP_WORDS = [
+        'checked_out' => 'checked out (an order was placed from it)',
+        'empty' => 'emptied',
+        'ordered' => 'they ordered later',
+        'unsubscribed' => 'unsubscribed',
+        'bounced' => 'email bounced or blocked',
+        'bot' => 'bot visit',
+        'reminded' => 'already reminded this week, or a reminder is waiting',
+        'queued' => 'already has its reminder',
+        'newer' => 'a newer basket from the same email gets the reminder',
+    ];
+
+    /**
+     * The facts skipReason() reads, as columns on a `carts as c` query: one
+     * statement for any number of baskets (correlated EXISTS), shared by the
+     * scheduler and the Reminder emails list so the two always agree.
+     */
+    public static function withSkipFacts(\Illuminate\Database\Query\Builder $q): \Illuminate\Database\Query\Builder
+    {
+        $schema = \Illuminate\Support\Facades\Schema::class;
+
+        return $q
+            ->selectRaw('exists(select 1 from cart_items ci where ci.cart_id = c.id) as sf_items')
+            ->selectRaw('exists(select 1 from cart_recoveries rq where rq.cart_id = c.id) as sf_row')
+            ->selectRaw('exists(select 1 from orders od where lower(od.email) = c.ct_email and od.created_at >= c.updated_at) as sf_ordered')
+            ->selectRaw('exists(select 1 from outbound_optouts oo where oo.email = c.ct_email) as sf_optout')
+            ->selectRaw('exists(select 1 from cart_recoveries r2 where r2.email = c.ct_email and r2.cart_id <> c.id and ((r2.stage = 0 and r2.cancelled_at is null) or r2.last_sent_at > ?)) as sf_chased', [now()->subDays(self::TYPED_ONCE_PER_DAYS)])
+            ->when($schema::hasTable('email_suppressions'), fn ($w) => $w->selectRaw('exists(select 1 from email_suppressions es where lower(es.email) = c.ct_email) as sf_supp'))
+            ->when($schema::hasTable('email_bounces'), fn ($w) => $w->selectRaw('exists(select 1 from email_bounces eb where eb.cleared_at is null and lower(eb.email) = c.ct_email) as sf_bounce'));
+    }
+
+    /** The first reason a basket is not emailed, or null when it can be. */
+    public static function skipReason(object $row, int $botThreshold): ?string
+    {
+        return match (true) {
+            ($row->status ?? 'active') !== 'active' => 'checked_out',
+            ! (bool) ($row->sf_items ?? false) => 'empty',
+            (bool) ($row->sf_ordered ?? false) => 'ordered',
+            (bool) ($row->sf_optout ?? false) => 'unsubscribed',
+            (bool) ($row->sf_supp ?? false) || (bool) ($row->sf_bounce ?? false) => 'bounced',
+            (int) ($row->ct_bot_score ?? 0) >= $botThreshold => 'bot',
+            (bool) ($row->sf_row ?? false) => 'queued',
+            (bool) ($row->sf_chased ?? false) => 'reminded',
+            default => null,
+        };
+    }
+
+    public static function botThreshold(): int
+    {
+        try {
+            $t = (int) app(\App\Services\CartTracking\CartTrackingSettings::class)->get('bot_threshold');
+        } catch (\Throwable) {
+            $t = 50;
+        }
+
+        return $t > 0 ? $t : 101;
     }
 
     /**
