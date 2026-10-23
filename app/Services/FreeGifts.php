@@ -996,12 +996,10 @@ final class FreeGifts
         return self::criteriaWording($have);
     }
 
-    /** Whether the main/backup column has been added yet (one schema look per process). */
+    /** Whether the main/backup column has been added yet. Asked only on a compile or the checklist, never per page. */
     private static function hasRole(): bool
     {
-        static $has = null;
-
-        return $has ??= \Illuminate\Support\Facades\Schema::hasColumn('free_gift_range_items', 'role');
+        return \Illuminate\Support\Facades\Schema::hasColumn('free_gift_range_items', 'role');
     }
 
     public function lineUnits(array $totals): int

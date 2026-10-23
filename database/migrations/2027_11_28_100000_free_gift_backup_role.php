@@ -18,8 +18,8 @@ use Illuminate\Support\Facades\Schema;
  * One column on the range's gift rows: 'primary' (every row that exists today,
  * so nothing a shopper gets moves on applying this) or 'backup'.
  * App\Services\FreeGifts::linesFor() reads it. The compiled copy the shop
- * reads is rebuilt on the next save; it is also cleared here so the shop
- * picks the column up at once.
+ * reads carries a version, and FreeGifts::ranges() rebuilds an older one by
+ * itself on the first request, so nothing needs clearing here.
  */
 return new class extends Migration
 {
@@ -31,14 +31,6 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('settings')) {
-            \Illuminate\Support\Facades\DB::table('settings')->where('key', 'free_gifts_compiled')->delete();
-            try {
-                \Illuminate\Support\Facades\Cache::forget('kbb.settings');
-                \Illuminate\Support\Facades\Cache::forget('kbb.settings.map');
-            } catch (\Throwable) {
-            }
-        }
     }
 
     public function down(): void
