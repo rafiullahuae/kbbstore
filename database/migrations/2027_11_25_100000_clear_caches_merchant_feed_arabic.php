@@ -6,6 +6,7 @@ use Illuminate\Database\Migrations\Migration;
 
 /*
  * The Arabic Google Shopping feed (the owner, 23 October 2026) adds one GET,
+ * /feeds/google-merchant-ar.xml. A compiled route table keeps answering 404
  * for it until it is cleared (CLAUDE.md, "How this ships").
  * Literals only: no application class is loaded. Nothing in the database
  * moves; the English feed is unchanged.
