@@ -116,7 +116,7 @@ final class ReminderLog
                 'email' => (string) ($row->email ?? $row->ct_email ?? ''),
                 'how' => $row->rid === null || $row->source === CartRecovery::SOURCE_TYPED ? 'Typed at checkout' : 'Asked at the cart',
                 'value' => (int) $row->value_fils,
-                'value_label' => \App\Support\Money::format((int) $row->value_fils),
+                'value_label' => \App\Support\Money::plain((int) $row->value_fils),
                 'items' => (int) $row->items,
                 'state' => $state,
                 'status' => $text,
