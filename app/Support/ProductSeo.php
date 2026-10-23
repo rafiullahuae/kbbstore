@@ -112,10 +112,10 @@ final class ProductSeo
      */
     public static function rawDescription(\App\Models\Product $product, bool $ignoreOverride = false): ?string
     {
-        $override = is_array($product->seo) ? $product->seo : [];
+        $desc = $ignoreOverride ? '' : self::override($product, 'desc');
 
-        if (! $ignoreOverride && self::hasText($override['desc'] ?? null)) {
-            return $override['desc'];
+        if (self::hasText($desc)) {
+            return $desc;
         }
 
         /*
@@ -147,6 +147,31 @@ final class ProductSeo
     }
 
     /**
+     * The per-product SEO title or description box ('title' / 'desc'), as this
+     * page's language may use it; '' = use the default.
+     *
+     * THE ARABIC PAGE SKIPS AN ENGLISH BOX (the owner, 23 October 2026: "some
+     * products has still english titles in browser in arabic version", e.g.
+     * /ar/product/dr-althea-345-relief-cream/). The boxes are one per product,
+     * filled in English by the Yoast import, and were published verbatim on
+     * /ar/: the tab read "Buy Dr.Althea 345 Relief Cream | K-Beauty Bliss" over
+     * an Arabic page. On a non-English page a box with no Arabic letter in it
+     * now falls to the default, which IS translated (brand + name, the Arabic
+     * blurb). An English page, and the admin preview, read the box as before.
+     */
+    public static function override(\App\Models\Product $product, string $key): string
+    {
+        // As stored (the English page printed it untrimmed); blank reads as ''.
+        $value = is_array($product->seo) && is_string($product->seo[$key] ?? null) ? $product->seo[$key] : '';
+
+        if (trim($value) === '' || (! Locale::isDefault() && preg_match('/\p{Arabic}/u', $value) !== 1)) {
+            return '';
+        }
+
+        return $value;
+    }
+
+    /**
      * Would the SEO engine get any words out of this?
      *
      * The same reduction App\Support\Seo::describe() applies before it decides
@@ -175,13 +200,13 @@ final class ProductSeo
      */
     public static function metaDescription(\App\Models\Product $product, bool $ignoreOverride = false): string
     {
-        $override = is_array($product->seo) ? $product->seo : [];
+        $custom = self::override($product, 'title');
 
         return \App\Support\Seo::describe([
             'type' => 'product',
-            'title' => empty($override['title'])
+            'title' => $custom === ''
                 ? ProductTitle::head($product->brand?->t('name'), $product->t('name'))
-                : (string) $override['title'],
+                : $custom,
             'description' => self::rawDescription($product, $ignoreOverride),
         ]);
     }
@@ -212,8 +237,7 @@ final class ProductSeo
      */
     public static function metaTitle(\App\Models\Product $product, bool $ignoreOverride = false): string
     {
-        $override = is_array($product->seo) ? $product->seo : [];
-        $custom = $ignoreOverride ? '' : trim((string) ($override['title'] ?? ''));
+        $custom = $ignoreOverride ? '' : trim(self::override($product, 'title'));
 
         return \App\Support\Seo::titleFor([
             'type' => 'product',

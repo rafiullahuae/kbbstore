@@ -463,8 +463,10 @@ class ProductController extends Controller
                  */
                 $ctx['title'] = \App\Support\ProductTitle::head($product->brand?->t('name') ?? '', $product->t('name'));
 
-                if (!empty($override['title'])) {
-                    $ctx['title'] = $override['title'];
+                // ProductSeo::override(): on /ar/ an English box falls to the
+                // translated default above (the owner, 23 October 2026).
+                if (($kbbSeoTitle = \App\Support\ProductSeo::override($product, 'title')) !== '') {
+                    $ctx['title'] = $kbbSeoTitle;
                     $ctx['title_is_final'] = true;
                     /*
                      * What `%%title%%` means inside that override. In Yoast it
