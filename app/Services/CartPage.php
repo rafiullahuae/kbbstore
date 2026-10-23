@@ -916,49 +916,6 @@ class CartPage
                         'tx_fit_1_m', 'tx_fit_2_m']],
     ];
 
-    /**
-     * Lane CK: every text size on the two Text sizes tabs, in one order, for
-     * the Arabic values, the small-phone block and the admin preview.
-     * key => [property, kind]. The custom properties live on #cartPage.
-     */
-    public const TYPE_VARS = [
-        'tx_ov_text' => ['--cgz-d-ovt', 'ov'], 'tx_ov_space' => ['--cgz-d-ovs', 'ov'],
-        'tx_sumhead' => ['--cgz-d-tsumh', 'pct'], 'tx_rows' => ['--cgz-d-trows', 'pct'],
-        'tx_total' => ['--cgz-d-ttotal', 'pct'], 'tx_coupon' => ['--cgz-d-tcoupon', 'pct'],
-        'tx_help' => ['--cgz-d-thelp', 'pct'],
-        'tx_ov_text_m' => ['--cgz-m-ovt', 'ov'], 'tx_ov_space_m' => ['--cgz-m-ovs', 'ov'],
-        'tx_sumhead_m' => ['--cgz-m-tsumh', 'pct'], 'tx_rows_m' => ['--cgz-m-trows', 'pct'],
-        'tx_total_m' => ['--cgz-m-ttotal', 'pct'], 'tx_coupon_m' => ['--cgz-m-tcoupon', 'pct'],
-        'tx_help_m' => ['--cgz-m-thelp', 'pct'],
-    ];
-
-    /** Spacing key => [the lock, the text key]: while locked, Spacing prints the Text value. */
-    private const TYPE_LINKS = [
-        'tx_ov_space' => ['tx_ov_link', 'tx_ov_text'],
-        'tx_ov_space_m' => ['tx_ov_link_m', 'tx_ov_text_m'],
-    ];
-
-    /**
-     * The existing product-row sizes, surfaced on the Text sizes tabs: printed
-     * by rowCss() as RULES, so the preview and the small-phone block write the
-     * same rule. key => [selector, kind, device].
-     */
-    public const TYPE_RULES = [
-        'ci_brand_f'   => ['.kbb-cartpage .items .ci:not(.ci-set) .cbrand', 'px', 'd'],
-        'ci_name_f'    => ['.kbb-cartpage .items .ci:not(.ci-set) .cn', 'px10', 'd'],
-        'ci_brand_f_m' => ['.kbb-cartpage .items .ci:not(.ci-set) .cbrand', 'px', 'm'],
-        'ci_name_f_m'  => ['.kbb-cartpage .items .ci:not(.ci-set) .cn', 'px10', 'm'],
-    ];
-
-    public const AR_KEY = 'cartpage_ar_type';
-
-    public const TYPE_TABS = ['type_d' => 'd', 'type_m' => 'm'];
-
-    public const TYPE_SURFACE = [
-        'type_d' => ['ci_name_f', 'ci_brand_f'],
-        'type_m' => ['ci_name_f_m', 'ci_brand_f_m'],
-    ];
-
     /** How many products the rail will hold. A cap, not a paging window. */
     /**
      * What a rail card SELECTs, rather than `select *`.
@@ -1098,6 +1055,9 @@ class CartPage
                 $this->settings->set(self::PREFIX . $key, $this->cast($key, $value));
             }
         }
+
+        // Lane CK2: the text-size block is built here, once, never per request.
+        $this->refreshTypeCss();
     }
 
     /** True when this shop serves the squeezed page. */
@@ -1471,8 +1431,7 @@ class CartPage
      */
     public function rowCss(): string
     {
-        // Lane CK: the Arabic sizes on an Arabic page (sized() is all() elsewhere).
-        $c = $this->sized();
+        $c = $this->all();
         $shipped = true;
 
         foreach (self::ROW_KEYS as $key) {
@@ -1547,7 +1506,7 @@ class CartPage
             // square in the sheet and a width alone would leave it an oblong.
             .$row.' .cth{width:'.$n('ci_thumb').'px;height:'.$n('ci_thumb').'px'
             .';border-radius:'.$n('ci_thumb_r').'px}'
-            .$row.' .cbrand{font-size:'.self::textSize($n('ci_brand_f').'px', $c).'}'
+            .$row.' .cbrand{font-size:'.$n('ci_brand_f').'px}'
             /*
              * `margin-bottom` and not `margin`: the sheet writes `.cn{margin:1px
              * 0 6px}`, and restating the shorthand here would throw away its 1px
@@ -1555,7 +1514,7 @@ class CartPage
              * higher specificity beats the shorthand's own bottom value and
              * leaves the other three where they are.
              */
-            .$row.' .cn{font-size:'.self::textSize(self::px10($n('ci_name_f')).'px', $c)
+            .$row.' .cn{font-size:'.self::px10($n('ci_name_f')).'px'
             .';margin-bottom:'.$n('ci_name_gap').'px}'
             .$row.' .qty{margin-block:'.$n('ci_qty_top').'px '.$n('ci_qty_bot').'px}';
     }
@@ -1616,112 +1575,92 @@ class CartPage
     {
         $vars = $this->cssVariables();
 
-        // Lane CK: the text sizes, on both layouts, after everything above
-        // and only what has been moved -- nothing while every size is today's.
-        $type = $this->typeVariables();
-
-        if ($type !== '') {
-            $vars = $vars === '' ? $type : $vars . ';' . $type;
-        }
-
         return $vars === '' ? '' : ' style="' . e($vars) . '"';
     }
 
     /*
-     * ── TEXT SIZES: ARABIC, SMALL PHONES, THE PREVIEW (Lane CK) ────────────
+     * ── TEXT SIZES (Lane CK / CK2) ──────────────────────────────────────────
+     *
+     * Appearance -> Cart page -> Desktop / Mobile · Text sizes. Nothing of this
+     * is in kbb-cart.css: App\Support\TextSizes builds one inline block, at
+     * Save, holding only what the moved values need. Nothing at the defaults.
      */
 
+    public const AR_KEY = 'cartpage_ar_type';
+
+    /** The settings row holding the built block (both languages). */
+    public const TYPE_CACHE = 'cartpage_type_css';
+
+    public const TYPE_TABS = ['type_d' => 'd', 'type_m' => 'm'];
+
+    /** The existing product-row sizes, shown on the Text sizes tabs too. */
+    public const TYPE_SURFACE = [
+        'type_d' => ['ci_name_f', 'ci_brand_f'],
+        'type_m' => ['ci_name_f_m', 'ci_brand_f_m'],
+    ];
+
+    /** See TextSizes::css() for the shape. Constants only (typeSpec() adds the row keys). */
+    private const TYPE_SPEC = [
+        'surface' => 'cartpage',
+        'scope' => '.kbb-cartpage',
+        'bp' => 900,
+        't' => '--cgt',
+        's' => '--cgs',
+        'dev' => ['d' => ['tx_ov_text', 'tx_ov_space', 'tx_ov_link'], 'm' => ['tx_ov_text_m', 'tx_ov_space_m', 'tx_ov_link_m']],
+        'roles' => [
+            'sumh' => ['tx_sumhead', 'tx_sumhead_m', '.kbb-cartpage aside.sum > h2', null],
+            'rows' => ['tx_rows', 'tx_rows_m', '.kbb-cartpage .srow', null],
+            'total' => ['tx_total', 'tx_total_m', '.kbb-cartpage :is(.srow.tot,.cpg-totband)', null],
+            'coupon' => ['tx_coupon', 'tx_coupon_m', '.kbb-cartpage :is(.coupon,.cohint,.co-tk)', null],
+            'help' => ['tx_help', 'tx_help_m', '.kbb-cartpage :is(.srow.note,.ship,.cpg-ship,.paylogos,.conti,.free,.backlink)', null],
+        ],
+        'old' => [],
+        'phoneOld' => [],
+        // The product-row sizes rowCss() prints as rules: key => [selector, kind, device].
+        'rules' => [
+            'ci_brand_f' => ['.kbb-cartpage .items .ci:not(.ci-set) .cbrand', 'px', 'd'],
+            'ci_name_f' => ['.kbb-cartpage .items .ci:not(.ci-set) .cn', 'px10', 'd'],
+            'ci_brand_f_m' => ['.kbb-cartpage .items .ci:not(.ci-set) .cbrand', 'px', 'm'],
+            'ci_name_f_m' => ['.kbb-cartpage .items .ci:not(.ci-set) .cn', 'px10', 'm'],
+        ],
+        'rulesBp' => 'ci_bp',
+        'today' => ['ci_brand_f' => 10, 'ci_name_f' => 130, 'ci_brand_f_m' => 10, 'ci_name_f_m' => 125],
+        'fit' => ['tx_fit_1_m', 'tx_fit_2_m'],
+        'extra' => [],
+    ];
+
     /**
-     * all(), with the Arabic sizes laid over it on an Arabic page; all() on
-     * every other page. The Arabic map comes out of the same memoised settings
-     * map: no query, on any page.
+     * The spec, with the keys whose moving makes rowCss() print its rules.
      *
      * @return array<string, mixed>
      */
-    private function sized(?array $keys = null): array
+    public static function typeSpec(): array
     {
-        $c = $keys === null ? $this->all() : $this->only($keys);
+        $spec = self::TYPE_SPEC;
+        $spec['rowKeys'] = ['ci_bp' => self::SCHEMA['ci_bp'][2]];
 
-        return \App\Support\TextSizes::arabic() ? \App\Support\TextSizes::overlay($c, $this->arValues()) : $c;
-    }
-
-    /**
-     * Only these keys, read and cast exactly as all() reads them. The
-     * small-phone block runs on every page that draws this surface (the
-     * panel: every shop page), and needs a handful of sizes, not the whole
-     * schema -- all() here cost ~0.3 ms a call under the request memo.
-     *
-     * @param  list<string>  $keys
-     * @return array<string, mixed>
-     */
-    private function only(array $keys): array
-    {
-        $out = [];
-
-        foreach (array_unique($keys) as $key) {
-            $saved = $this->settings->get(self::PREFIX . $key, null);
-            $out[$key] = $saved === null ? self::SCHEMA[$key][2] : $this->cast($key, $saved);
+        foreach (self::ROW_KEYS as $key) {
+            $spec['rowKeys'][$key] = self::SCHEMA[$key][2];
+            $spec['rowKeys'][$key . '_m'] = self::SCHEMA[$key . '_m'][2];
         }
 
-        return $out;
-    }
-
-    /**
-     * The keys fitCss() reads: every size it may print, the links that stand
-     * in for one, and the two small-phone steps.
-     *
-     * @return list<string>
-     */
-    private static function fitKeys(): array
-    {
-        return array_merge(self::arKeys(), array_merge(...array_values(self::TYPE_LINKS)));
-    }
-
-    /**
-     * A product-row size as rowCss() prints it: plain, as it always was, until
-     * an Overall · Text % is moved -- then times the page's text factor, so
-     * Overall reaches a row size the owner has already set.
-     *
-     * @param  array<string, mixed>  $c
-     */
-    private static function textSize(string $px, array $c): string
-    {
-        return ((int) $c['tx_ov_text'] !== 0 || (int) $c['tx_ov_text_m'] !== 0)
-            ? 'calc(' . $px . '*var(--cgt,1))'
-            : $px;
-    }
-
-    /** The moved text sizes as custom properties, or ''. */
-    public function typeVariables(): string
-    {
-        $c = $this->sized(self::fitKeys());
-        $out = [];
-
-        foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
-            $value = (int) $this->typeValue($c, $key);
-
-            if ($value !== (int) self::SCHEMA[$key][2]) {
-                $out[] = $prop . ':' . \App\Support\TextSizes::emit($kind, $value);
-            }
-        }
-
-        return implode(';', $out);
-    }
-
-    /** @param array<string, mixed> $c */
-    private function typeValue(array $c, string $key): mixed
-    {
-        if (isset(self::TYPE_LINKS[$key]) && $c[self::TYPE_LINKS[$key][0]]) {
-            return $c[self::TYPE_LINKS[$key][1]];
-        }
-
-        return $c[$key];
+        return $spec;
     }
 
     /** @return list<string> The keys that may carry an Arabic value. */
     public static function arKeys(): array
     {
-        return array_merge(array_keys(self::TYPE_VARS), array_keys(self::TYPE_RULES), ['tx_fit_1_m', 'tx_fit_2_m']);
+        $keys = array_keys(self::TYPE_SPEC['rules']);
+
+        foreach (self::TYPE_SPEC['dev'] as [$text, $space]) {
+            array_push($keys, $text, $space);
+        }
+
+        foreach (self::TYPE_SPEC['roles'] as [$d, $m]) {
+            array_push($keys, $d, $m);
+        }
+
+        return array_merge($keys, self::TYPE_SPEC['fit']);
     }
 
     /** @return array<string, int> */
@@ -1740,83 +1679,37 @@ class CartPage
         $clean = \App\Support\TextSizes::arMap($values, self::arKeys(), fn (string $key, mixed $value): mixed => $this->cast($key, $value));
 
         $this->settings->set(self::AR_KEY, $clean === [] ? null : json_encode($clean));
+        $this->refreshTypeCss();
     }
 
-    /** The small-phone block's CSS, or '' while no phone size is above today. */
-    public function fitCss(): string
+    /** Build and store the text-size block from the saved values. Called by every save. */
+    public function refreshTypeCss(): void
     {
-        $c = $this->sized(self::fitKeys());
-        $rows = [];
-
-        foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
-            if (str_ends_with($key, '_m')) {
-                $rows[] = [$prop, $kind, (int) $this->typeValue($c, $key), (int) self::SCHEMA[$key][2]];
-            }
-        }
-
-        foreach (self::TYPE_RULES as $key => [$sel, $kind, $dev]) {
-            if ($dev === 'm') {
-                $rows[] = ['font-size', $kind, (int) $c[$key], (int) self::SCHEMA[$key][2], $sel];
-            }
-        }
-
-        return \App\Support\TextSizes::fitCss('#cartPage', $rows, (int) $c['tx_fit_1_m'], (int) $c['tx_fit_2_m'], '--cgt');
+        \App\Support\TextSizes::refresh($this->settings, self::TYPE_CACHE, self::typeSpec(), $this->all(), $this->arValues());
     }
 
-    /** `<style id="kbb-cartfit">…</style>`, or nothing at all. */
-    public function fitStyle(): string
+    /** `<style id="kbb-carttype">…</style>`, or nothing at all (the defaults). */
+    public function typeStyle(): string
     {
-        $css = $this->fitCss();
+        $css = \App\Support\TextSizes::stored($this->settings, self::TYPE_CACHE, fn (): array => [
+            'en' => \App\Support\TextSizes::css(self::typeSpec(), $this->all()),
+            'ar' => \App\Support\TextSizes::css(self::typeSpec(), $this->all(), $this->arValues()),
+        ]);
 
-        return $css === '' ? '' : '<style id="kbb-cartfit">' . $css . '</style>';
+        return $css === '' ? '' : '<style id="kbb-carttype">' . $css . '</style>';
     }
 
     /** @return array<string, mixed> What the admin's live preview needs. */
     public static function typeDescriptor(): array
     {
-        $vars = [];
-        $fit = [];
-
-        foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
-            $row = ['key' => $key, 'prop' => $prop, 'kind' => $kind];
-
-            if (isset(self::TYPE_LINKS[$key])) {
-                [$row['lock'], $row['text']] = self::TYPE_LINKS[$key];
-            }
-
-            $vars[] = $row;
-
-            if (str_ends_with($key, '_m')) {
-                $fit[] = ['key' => $key, 'prop' => $prop, 'kind' => $kind, 'today' => (int) self::SCHEMA[$key][2]];
-            }
-        }
-
-        $rules = [];
-
-        foreach (self::TYPE_RULES as $key => [$sel, $kind, $dev]) {
-            $rules[] = ['key' => $key, 'sel' => $sel, 'kind' => $kind, 'dev' => $dev];
-
-            if ($dev === 'm') {
-                $fit[] = ['key' => $key, 'prop' => 'font-size', 'kind' => $kind, 'today' => (int) self::SCHEMA[$key][2], 'sel' => $sel];
-            }
-        }
-
         return [
-            'scope' => '#cartPage',
             'live' => '/cart-page/live',
-            'fitId' => 'kbb-cartfit',
-            'textVar' => '--cgt',
+            'styleId' => 'kbb-carttype',
             'tabs' => self::TYPE_TABS,
             'surface' => self::TYPE_SURFACE,
             'arKeys' => self::arKeys(),
-            'vars' => $vars,
-            'rules' => $rules,
-            'rulesBp' => 'ci_bp',
-            'links' => [
-                ['text' => 'tx_ov_text', 'space' => 'tx_ov_space', 'lock' => 'tx_ov_link'],
-                ['text' => 'tx_ov_text_m', 'space' => 'tx_ov_space_m', 'lock' => 'tx_ov_link_m'],
-            ],
-            'fit' => ['scope' => '#cartPage', 's1' => 'tx_fit_1_m', 's2' => 'tx_fit_2_m', 'rows' => $fit],
+            'spec' => self::typeSpec(),
+            'twins' => \App\Support\TextSizeTwins::TABLE['cartpage'],
         ];
     }
 

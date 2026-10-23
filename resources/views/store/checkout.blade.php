@@ -40,7 +40,7 @@
     // The pay button's two sets of words, for the layout script (null = "Place order" as before).
     $kbbLoWords = $kbbCoPage->lo('btn_words') ? ['pay' => $kbbCoPage->payButton('stripe'), 'cod' => $kbbCoPage->payButton('cod')] : null;
 @endphp
-{!! $kbbCoPage->fitStyle() !!}<section class="kbb-checkout{{ $kbbCoPage->bodyClass() }}"{!! $kbbCoPage->styleAttr() !!}>{{-- Lane PO: the diagnostic panel, /checkout/?kbbdiag=1 only; an echo rather than @if, because @endif at a line's end eats its newline and every other checkout must render not one byte more. --}}{!! request()->query('kbbdiag') === '1' ? view('partials.checkout.diag')->render() : '' !!}
+{!! $kbbCoPage->typeStyle() !!}<section class="kbb-checkout{{ $kbbCoPage->bodyClass() }}"{!! $kbbCoPage->styleAttr() !!}>{{-- Lane PO: the diagnostic panel, /checkout/?kbbdiag=1 only; an echo rather than @if, because @endif at a line's end eats its newline and every other checkout must render not one byte more. --}}{!! request()->query('kbbdiag') === '1' ? view('partials.checkout.diag')->render() : '' !!}
 
     <!-- slim secure-checkout header (design .head) -->
     <header class="co-head"><div class="in">

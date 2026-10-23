@@ -642,38 +642,36 @@
 
   /* ===== mini cart (two-tab) ===== */
   .kc-tabs{display:flex;align-items:center;border-bottom:1px solid var(--line-2);padding:0 10px;flex:none}
-  .kc-tab{flex:1;background:none;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--muted);padding:11px 8px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;justify-content:center;gap:6px}.kc-tab{font-size:calc(12.5px*var(--kpt,1));font-weight:700;color:var(--muted);padding:calc(11px*var(--kps,1)) 8px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:calc(-1px*var(--kps,1));display:flex;align-items:center;justify-content:center;gap:calc(6px*var(--kps,1)) 6px}
+  .kc-tab{flex:1;background:none;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--muted);padding:11px 8px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;justify-content:center;gap:6px}
   .kc-tab.on{color:var(--cp-accent,var(--pink-deep));border-bottom-color:var(--cp-accent,var(--pink))}
-  .kc-tab .n{background:var(--pink-soft);color:var(--pink-deep);border-radius:10px;padding:1px 7px;font-size:10px}.kc-tab .n{padding:calc(1px*var(--kps,1)) 7px;font-size:calc(10px*var(--kpt,1))}
+  .kc-tab .n{background:var(--pink-soft);color:var(--pink-deep);border-radius:10px;padding:1px 7px;font-size:10px}
   .kc-tab.on .n{background:var(--pink);color:#fff}
-  .kc-ship{padding:10px var(--cp-pad,16px);border-bottom:1px solid var(--line-2);background:linear-gradient(180deg,#fff,#fff8fb)}.kc-ship{padding:calc(10px*var(--kps,1)) var(--cp-pad,16px);border-bottom:1px solid var(--line-2);background:linear-gradient(180deg,#fff,#fff8fb)}
-  .kc-ship .t{font-size:12px;color:var(--ink-2);margin-bottom:7px}.kc-ship .t{font-size:calc(12px*var(--kpt,1));color:var(--ink-2);margin-bottom:calc(7px*var(--kps,1))}
+  .kc-ship{padding:10px var(--cp-pad,16px);border-bottom:1px solid var(--line-2);background:linear-gradient(180deg,#fff,#fff8fb)}
+  .kc-ship .t{font-size:12px;color:var(--ink-2);margin-bottom:7px}
   .kc-ship .t b{color:var(--pink-deep)}
   .kc-ship .t.done{color:var(--green)}
   .kc-bar{height:6px;border-radius:6px;background:#f0e2e8;overflow:hidden}
   .kc-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--pink),#ff9ab4);transition:width .3s}
-  .kc-item{display:flex;gap:10px;padding:var(--cp-rowpad,9px) 0;border-bottom:1px solid var(--line-2);align-items:center}.kc-item{gap:calc(10px*var(--kps,1)) 10px;padding:calc(var(--cp-rowpad,9px)*var(--kps,1)) 0;border-bottom:1px solid var(--line-2);align-items:center}
+  .kc-item{display:flex;gap:10px;padding:var(--cp-rowpad,9px) 0;border-bottom:1px solid var(--line-2);align-items:center}
   .kc-th{width:var(--cp-thumb,42px);height:var(--cp-thumb,42px);border-radius:9px;flex:none;display:grid;place-items:center;font-weight:700;font-size:10px;color:#fff;text-align:center;line-height:1.1}
   .kc-mid{flex:1;min-width:0}
-  .kc-nm{font-size:var(--cp-name,12.5px);font-weight:600;line-height:1.25;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:var(--cp-lines,2);-webkit-box-orient:vertical;overflow:hidden}.kc-nm{font-size:calc(var(--cp-name,12.5px)*var(--kpt,1));font-weight:600;line-height:1.25;margin-bottom:calc(5px*var(--kps,1));display:-webkit-box;-webkit-line-clamp:var(--cp-lines,2);-webkit-box-orient:vertical;overflow:hidden}
+  .kc-nm{font-size:var(--cp-name,12.5px);font-weight:600;line-height:1.25;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:var(--cp-lines,2);-webkit-box-orient:vertical;overflow:hidden}
   .kc-qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
   .kc-qty button{width:var(--cp-step,22px);height:var(--cp-step,22px);color:var(--ink-2)}
-  .kc-qty span{min-width:var(--cp-step,22px);text-align:center;font-size:11.5px;font-weight:600}.kc-qty span{font-size:calc(11.5px*var(--kpt,1));font-weight:600}
-  .kc-right{text-align:end;display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex:none}.kc-right{gap:calc(7px*var(--kps,1)) 7px;flex:none}
+  .kc-qty span{min-width:var(--cp-step,22px);text-align:center;font-size:11.5px;font-weight:600}
+  .kc-right{text-align:end;display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex:none}
   /* A SHARE OF 12.5px, not a pixel slider. A range stores whole numbers, so
      nothing a px slider could hold would leave this price where it is; 100%
      resolves to calc(12.5px * 1) and moves nothing. Same for .kc-btns a below. */
-  .kc-pr{font-size:calc(12.5px * var(--cp-price,1));font-weight:700;color:var(--cp-accent,var(--pink-deep))}.kc-pr{font-size:calc((12.5px * var(--cp-price,1))*var(--kpt,1));font-weight:700;color:var(--cp-accent,var(--pink-deep))}
+  .kc-pr{font-size:calc(12.5px * var(--cp-price,1));font-weight:700;color:var(--cp-accent,var(--pink-deep))}
   .kc-rm{background:none;color:#c3b3bb;cursor:pointer;font-size:var(--cp-rm,13px);line-height:1}
   .kc-rm:hover{color:var(--pink-deep)}
-  .kc-btns{display:grid;grid-template-columns:1fr 1fr;gap:var(--cp-btngap,8px);margin-top:12px}.kc-btns{gap:calc(var(--cp-btngap,8px)*var(--kps,1)) var(--cp-btngap,8px);margin-top:calc(12px*var(--kps,1))}
+  .kc-btns{display:grid;grid-template-columns:1fr 1fr;gap:var(--cp-btngap,8px);margin-top:12px}
   /* Sized here rather than inline on the anchors, so the phone rule below can
      shrink them. Both buttons share one rule; they only differ in colour. */
   .kc-btns a{display:flex;align-items:center;justify-content:center;text-align:center;
              padding:var(--cp-btnpad,12px) 8px;border-radius:var(--cp-btnr,99px);font-weight:700;
              font-size:calc(13.5px * var(--cp-btnf,1));
-             white-space:nowrap;margin:0;width:auto}.kc-btns a{padding:calc(var(--cp-btnpad,12px)*var(--kps,1)) 8px;border-radius:var(--cp-btnr,99px);font-weight:700;
-             font-size:calc((13.5px * var(--cp-btnf,1))*var(--kpt,1));
              white-space:nowrap;margin:0;width:auto}
   /* THE SHOP PAGE USED TO GIVE THESE TWO BUTTONS DIFFERENT HEIGHTS, AND IT WAS
      THE ONLY PAGE THAT DID.
@@ -704,8 +702,8 @@
   #kcCart .kc-btns .btn-ghost,#kcCart .kc-btns .cobtn{height:auto}
   .kc-x{margin-inline-start:6px;border:0;background:#f4eef1;width:var(--cp-x,28px);height:var(--cp-x,28px);border-radius:8px;color:var(--ink-2);cursor:pointer;font-size:var(--cp-xg,13px);flex:none;align-self:center}
   .kc-x:hover{background:var(--pink-soft);color:var(--pink-deep)}
-  .kc-coupon{display:flex;align-items:center;gap:10px;background:var(--pink-soft);border:1px dashed #f0b9cf;border-radius:12px;padding:10px 13px;font-size:11.5px;line-height:1.45;color:var(--ink-2);margin-bottom:12px}.kc-coupon{gap:calc(10px*var(--kps,1)) 10px;background:var(--pink-soft);border:1px dashed #f0b9cf;border-radius:12px;padding:calc(10px*var(--kps,1)) 13px;font-size:calc(11.5px*var(--kpt,1));line-height:1.45;color:var(--ink-2);margin-bottom:calc(12px*var(--kps,1))}
-  .kc-coupon .ic{font-size:16px;flex:none}.kc-coupon .ic{font-size:calc(16px*var(--kpt,1));flex:none}
+  .kc-coupon{display:flex;align-items:center;gap:10px;background:var(--pink-soft);border:1px dashed #f0b9cf;border-radius:12px;padding:10px 13px;font-size:11.5px;line-height:1.45;color:var(--ink-2);margin-bottom:12px}
+  .kc-coupon .ic{font-size:16px;flex:none}
   .kc-coupon b{color:var(--pink-deep);letter-spacing:.03em}
   /* (Lane QK3; 2.60.512 design A, the owner's pick) The coupon ticket — in
      the cart panel above Subtotal and on the cart page under "Your Bag";
@@ -713,26 +711,26 @@
      sentence never wraps and its size follows the width (calc, no script).
      Copying shows "Copied" inside the row's end for a moment, laid over it
      (absolute), so copying moves nothing; the green tick is the checkout's. */
-  .kc-cch{position:relative;display:flex;align-items:center;gap:8px;box-sizing:border-box;max-width:100%;overflow:hidden;margin:0 0 8px;padding:7px 10px;background:#FFF0F4;border:1.5px dashed #ecaec4;border-radius:12px;color:#5e545a;font-size:12.5px;line-height:1.4;white-space:nowrap}.kc-cch{gap:calc(8px*var(--kps,1)) 8px;box-sizing:border-box;max-width:100%;overflow:hidden;margin:0 0 calc(8px*var(--kps,1));padding:calc(7px*var(--kps,1)) 10px;background:#FFF0F4;border:1.5px dashed #ecaec4;border-radius:12px;color:#5e545a;font-size:calc(12.5px*var(--kpt,1));line-height:1.4;white-space:nowrap}
+  .kc-cch{position:relative;display:flex;align-items:center;gap:8px;box-sizing:border-box;max-width:100%;overflow:hidden;margin:0 0 8px;padding:7px 10px;background:#FFF0F4;border:1.5px dashed #ecaec4;border-radius:12px;color:#5e545a;font-size:12.5px;line-height:1.4;white-space:nowrap}
   .kc-cch-ic{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#fff;color:#C13E63}
   .kc-cch-ic svg{width:15px;height:15px}
   .kc-cch-t{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
-  .kc-cch.is-done::after{content:attr(data-done);position:absolute;top:50%;inset-inline-end:6px;transform:translateY(-50%);background:var(--ink);color:#fff;font-size:11px;font-weight:600;line-height:1.5;letter-spacing:0;padding:2px 9px;border-radius:99px;white-space:nowrap;pointer-events:none;animation:kbbCcCopied 1.6s ease both}.kc-cch.is-done::after{font-size:calc(11px*var(--kpt,1));font-weight:600;line-height:1.5;letter-spacing:0;padding:calc(2px*var(--kps,1)) 9px;border-radius:99px;white-space:nowrap;pointer-events:none;animation:kbbCcCopied 1.6s ease both}
+  .kc-cch.is-done::after{content:attr(data-done);position:absolute;top:50%;inset-inline-end:6px;transform:translateY(-50%);background:var(--ink);color:#fff;font-size:11px;font-weight:600;line-height:1.5;letter-spacing:0;padding:2px 9px;border-radius:99px;white-space:nowrap;pointer-events:none;animation:kbbCcCopied 1.6s ease both}
   @keyframes kbbCcCopied{0%{opacity:0}12%,78%{opacity:1}100%{opacity:0}}
   @media(prefers-reduced-motion:reduce){.kc-cch.is-done::after{animation:none}}
-  .kc-cc{position:relative;display:inline-flex;align-items:center;gap:4px;font:inherit;font-weight:800;letter-spacing:.06em;line-height:1.35;color:#A82F53;background:#fff;border:1px solid #f3c3d4;border-radius:7px;padding:1px 6px;margin:0 1px;cursor:pointer;vertical-align:baseline;white-space:nowrap}.kc-cc{gap:calc(4px*var(--kps,1)) 4px;font:inherit;font-weight:800;letter-spacing:.06em;line-height:1.35;color:#A82F53;background:#fff;border:1px solid #f3c3d4;border-radius:7px;padding:calc(1px*var(--kps,1)) 6px;margin:0 1px;cursor:pointer;vertical-align:baseline;white-space:nowrap}
+  .kc-cc{position:relative;display:inline-flex;align-items:center;gap:4px;font:inherit;font-weight:800;letter-spacing:.06em;line-height:1.35;color:#A82F53;background:#fff;border:1px solid #f3c3d4;border-radius:7px;padding:1px 6px;margin:0 1px;cursor:pointer;vertical-align:baseline;white-space:nowrap}
   .kc-cc::before{content:"";position:absolute;inset:-8px -3px}
   .kc-cc:hover{border-color:#C13E63}
   .kc-cc-cp{flex:none;width:11px;height:11px}
   /* 2.60.517 -- the free delivery line, design C: a plain line, no box, a
      celebration icon and a green tick; one line, sized from its own width
      like the coupon row, never outside the panel. */
-  .kc-fdl{container-type:inline-size;display:flex;align-items:center;gap:6px;max-width:100%;overflow:hidden;white-space:nowrap;margin:0 0 6px;color:#1f7d52}.kc-fdl{gap:calc(6px*var(--kps,1)) 6px;max-width:100%;overflow:hidden;white-space:nowrap;margin:0 0 calc(6px*var(--kps,1));color:#1f7d52}
+  .kc-fdl{container-type:inline-size;display:flex;align-items:center;gap:6px;max-width:100%;overflow:hidden;white-space:nowrap;margin:0 0 6px;color:#1f7d52}
   .kc-fdl-ic{flex:none;width:15px;height:15px;color:#c13e63}
-  .kc-fdl-t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:13px;font-size:clamp(9px,calc((100cqi - 44px) / 15.5),13.5px)}.kc-fdl-t{font-size:calc(13px*var(--kpt,1));font-size:clamp(9px,calc((100cqi - 44px) / 15.5),13.5px)}
+  .kc-fdl-t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:13px;font-size:clamp(9px,calc((100cqi - 44px) / 15.5),13.5px)}
   .kc-fdl-ok{flex:none;width:16px;height:16px;margin-inline-start:auto;color:#2e9e6b}
-  .kbb-cartpage .kc-cch{width:fit-content;margin:0 0 14px}.kbb-cartpage .kc-cch{margin:0 0 calc(14px*var(--kps,1))}
-  #kcCart .kc-cch{font-size:12px}#kcCart .kc-cch{font-size:calc(12px*var(--kpt,1))}
+  .kbb-cartpage .kc-cch{width:fit-content;margin:0 0 14px}
+  #kcCart .kc-cch{font-size:12px}
   /* 2.60.513, the owner: "the line must not go outside the panel, the row
      itself should adjust the overall size, and must show in one line". The
      panel's width is the owner's setting, so the sentence sizes from the ROW'S
@@ -943,17 +941,17 @@
   .kc-fragment{flex:1;display:flex;flex-direction:column;min-height:0}
   #cart #kcCart{flex:1;display:flex;flex-direction:column;min-height:0}
   #cart #kcBrowsed{flex:1;min-height:0;overflow:auto}
-  .dbody{flex:1;overflow:auto;padding:10px var(--cp-pad,16px);min-height:0}.dbody{padding:calc(10px*var(--kps,1)) var(--cp-pad,16px);min-height:0}
+  .dbody{flex:1;overflow:auto;padding:10px var(--cp-pad,16px);min-height:0}
   .ci{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line-2)}
   .cth{width:60px;height:60px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:11px;flex-shrink:0}
   .cinfo{flex:1;min-width:0}.cn2{font-size:12.5px;font-weight:600;line-height:1.3}.cp2{font-size:12.5px;font-weight:700;color:var(--pink-deep);margin-top:3px}
   .qty{display:inline-flex;align-items:center;gap:0;margin-top:6px;border:1px solid var(--line);border-radius:99px;overflow:hidden}
   .qty button{width:26px;height:26px}.qty span{min-width:26px;text-align:center;font-size:12px;font-weight:600}
-  .dfoot{border-top:1px solid var(--line-2);padding:16px 20px;flex-shrink:0}.dfoot{padding:calc(16px*var(--kps,1)) 20px;flex-shrink:0}
-  .sumrow{display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px;color:var(--ink-2)}.sumrow{font-size:calc(13px*var(--kpt,1));margin-bottom:calc(7px*var(--kps,1));color:var(--ink-2)}
-  .sumrow.tot{font-size:15px;font-weight:700;color:var(--ink)}.sumrow.tot{font-size:calc(15px*var(--kpt,1));font-weight:700;color:var(--ink)}
+  .dfoot{border-top:1px solid var(--line-2);padding:16px 20px;flex-shrink:0}
+  .sumrow{display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px;color:var(--ink-2)}
+  .sumrow.tot{font-size:15px;font-weight:700;color:var(--ink)}
   .cobtn{width:100%;background:var(--pink);color:#fff;border-radius:99px;padding:14px;font-weight:700;font-size:14px;margin-top:10px;display:block;text-align:center}
-  .empty-d{text-align:center;color:var(--muted);font-size:13px;padding:40px 0}.empty-d{font-size:calc(13px*var(--kpt,1));padding:calc(40px*var(--kps,1)) 0}
+  .empty-d{text-align:center;color:var(--muted);font-size:13px;padding:40px 0}
   .freebar{font-size:11.5px;color:var(--ink-2);margin-bottom:6px}.freetrack{height:6px;border-radius:99px;background:var(--pink-soft);overflow:hidden;margin-bottom:14px}.freefill{height:100%;background:linear-gradient(90deg,var(--blush),var(--pink))}
 
   /* mobile nav — sub-popup overlay (matches Nav Menu design) */
@@ -1031,13 +1029,13 @@
        rendered 11px whatever the desktop slider said and there was no way to
        set it. 11 is the default of list_pad_m for that reason — it is what this
        rule already drew. */
-    .dbody{padding:9px var(--cp-pad-m,11px)}.dbody{padding:calc(9px*var(--kps,1)) var(--cp-pad-m,11px)}
-    .kc-ship{padding:9px var(--cp-pad-m,11px)}.kc-ship{padding:calc(9px*var(--kps,1)) var(--cp-pad-m,11px)}
+    .dbody{padding:9px var(--cp-pad-m,11px)}
+    .kc-ship{padding:9px var(--cp-pad-m,11px)}
     .kc-tabs{padding:0 6px}
-    .kc-item{gap:8px;padding:var(--cp-rowpad-m,9px) 0}.kc-item{gap:calc(8px*var(--kps,1)) 8px;padding:calc(var(--cp-rowpad-m,9px)*var(--kps,1)) 0}
+    .kc-item{gap:8px;padding:var(--cp-rowpad-m,9px) 0}
     .kc-th{width:var(--cp-thumb-m,38px);height:var(--cp-thumb-m,38px)}
-    .kc-nm{font-size:var(--cp-name-m,13px);-webkit-line-clamp:var(--cp-lines-m,2)}.kc-nm{font-size:calc(var(--cp-name-m,13px)*var(--kpt,1));-webkit-line-clamp:var(--cp-lines-m,2)}
-    .kc-pr{font-size:calc(12.5px * var(--cp-price-m,1))}.kc-pr{font-size:calc((12.5px * var(--cp-price-m,1))*var(--kpt,1))}
+    .kc-nm{font-size:var(--cp-name-m,13px);-webkit-line-clamp:var(--cp-lines-m,2)}
+    .kc-pr{font-size:calc(12.5px * var(--cp-price-m,1))}
     /* Both boxes AND the number between them, which is what --cp-step does on
        the desktop rule. Moving one of the three draws a stepper the panel has
        never rendered. */
@@ -1047,18 +1045,17 @@
        Cart and Checkout in them. Stacking keeps the tap targets full width. */
     /* Side by side at 77% of a phone as well. Two 120px buttons are a fine tap
        target; stacking them cost a row of the product list for no gain. */
-    .kc-btns{grid-template-columns:1fr 1fr;gap:var(--cp-btngap-m,6px);margin-top:10px}.kc-btns{gap:calc(var(--cp-btngap-m,6px)*var(--kps,1)) var(--cp-btngap-m,6px);margin-top:calc(10px*var(--kps,1))}
+    .kc-btns{grid-template-columns:1fr 1fr;gap:var(--cp-btngap-m,6px);margin-top:10px}
     /* One above the other, when the owner asks for it on the Mobile tab. A
        CLASS and not a property: `.cp-btnstack .kc-btns` is the only thing that
        outranks the line above it, and it has to come after it as well. */
     .cp-btnstack .kc-btns{grid-template-columns:1fr}
     .kc-btns a{padding:var(--cp-btnpad-m,10px) 4px;font-size:calc(12px * var(--cp-btnf-m,1));
-               border-radius:var(--cp-btnr-m,99px)}.kc-btns a{padding:calc(var(--cp-btnpad-m,10px)*var(--kps,1)) 4px;font-size:calc((12px * var(--cp-btnf-m,1))*var(--kpt,1));
                border-radius:var(--cp-btnr-m,99px)}
     /* Lane QK12: Mobile → "Space below the buttons" (50, as the owner asked:
        "give space below the buttons, approx 50px"). max() with the home
        indicator rather than + -- see CartPanel::SCHEMA['foot_gap_m']. */
-    .dfoot{padding:12px 11px max(var(--cp-footgap-m,12px),env(safe-area-inset-bottom,0px))}.dfoot{padding:calc(12px*var(--kps,1)) 11px max(var(--cp-footgap-m,12px),env(safe-area-inset-bottom,0px))}
+    .dfoot{padding:12px 11px max(var(--cp-footgap-m,12px),env(safe-area-inset-bottom,0px))}
     /* (Lane QK3) One line on a 390px phone: the 77vw panel leaves 278px for
        it and the sentence is 289px at 11.5px, so the phone takes 11px and a
        narrower pill (measured 390: one line; 320: two). */
@@ -1067,14 +1064,14 @@
        type follows the panel (measured: "Use coupon code: GLOW on checkout
        page." is 21.6em, and the panel's sentence box is 62vw beside the
        tag). Under 360px the glyph goes too. */
-    .kc-cch{gap:5px;padding:5px 7px;font-size:clamp(9.5px,3vw,12.5px)}.kc-cch{gap:calc(5px*var(--kps,1)) 5px;padding:calc(5px*var(--kps,1)) 7px;font-size:clamp(9.5px,3vw,12.5px)}
+    .kc-cch{gap:5px;padding:5px 7px;font-size:clamp(9.5px,3vw,12.5px)}
     .kc-cch-ic{width:22px;height:22px}
     .kc-cch-ic svg{width:13px;height:13px}
-    .kc-cc{padding:1px 4px;gap:2px;letter-spacing:.03em}.kc-cc{padding:calc(1px*var(--kps,1)) 4px;gap:calc(2px*var(--kps,1)) 2px;letter-spacing:.03em}
+    .kc-cc{padding:1px 4px;gap:2px;letter-spacing:.03em}
     .kc-cc-cp{width:9px;height:9px}
-    #kcCart .kc-cch{gap:4px;padding:5px 6px;font-size:2.75vw}#kcCart .kc-cch{gap:calc(4px*var(--kps,1)) 4px;padding:calc(5px*var(--kps,1)) 6px;font-size:2.75vw}
+    #kcCart .kc-cch{gap:4px;padding:5px 6px;font-size:2.75vw}
     #kcCart .kc-cch-t{font-size:clamp(7px,calc((100cqi - 22px) / 23.5),12.5px)}
-    #kcCart .kc-cc{padding:1px 3px}#kcCart .kc-cc{padding:calc(1px*var(--kps,1)) 3px}
+    #kcCart .kc-cc{padding:1px 3px}
     #kcCart .kc-cch-ic{width:auto;height:auto;background:none}
     .search-wrap{display:none}
     .slide-txt h1{font-size:32px}.sec-head h2{font-size:24px}.slides{height:400px}
@@ -1102,7 +1099,7 @@
    an extra CSS file to render a shimmer would cost more than it saves. */
 .kc-skel{pointer-events:none}
 .kc-skel .kc-th{background:linear-gradient(90deg,#f2f4f7 25%,#e9edf2 37%,#f2f4f7 63%);background-size:400% 100%;animation:kbbshim 1.1s ease infinite;border-radius:10px}
-.kc-skel .kc-mid span{display:block;height:10px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,#f2f4f7 25%,#e9edf2 37%,#f2f4f7 63%);background-size:400% 100%;animation:kbbshim 1.1s ease infinite}.kc-skel .kc-mid span{margin-bottom:calc(8px*var(--kps,1));background:linear-gradient(90deg,#f2f4f7 25%,#e9edf2 37%,#f2f4f7 63%);background-size:400% 100%;animation:kbbshim 1.1s ease infinite}
+.kc-skel .kc-mid span{display:block;height:10px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,#f2f4f7 25%,#e9edf2 37%,#f2f4f7 63%);background-size:400% 100%;animation:kbbshim 1.1s ease infinite}
 .kc-skel .kc-mid span:first-child{width:70%}
 .kc-skel .kc-mid span:last-child{width:40%}
 @keyframes kbbshim{0%{background-position:100% 50%}100%{background-position:0 50%}}
@@ -1132,8 +1129,6 @@
    than faded, so it does not linger. */
 .kc-added{display:inline-block;margin-inline-start:7px;font-size:10px;font-weight:800;letter-spacing:.06em;
           text-transform:uppercase;color:#2F7D51;background:#EDF7F1;border-radius:99px;padding:1px 7px;
-          vertical-align:middle}.kc-added{font-size:calc(10px*var(--kpt,1));font-weight:800;letter-spacing:.06em;
-          text-transform:uppercase;color:#2F7D51;background:#EDF7F1;border-radius:99px;padding:calc(1px*var(--kps,1)) 7px;
           vertical-align:middle}
 
 /* The browsed row reuses .kc-item, so its right column needs to centre the
@@ -1156,13 +1151,13 @@
    become red, in both languages"). */
 .kc-tab.kc-wt .kc-wh{color:var(--muted)}
 .kc-tab.kc-wt .kc-wh.on{color:var(--pink)}
-#kcWish .kc-right{display:flex;flex-direction:row;align-items:center;gap:6px}#kcWish .kc-right{gap:calc(6px*var(--kps,1)) 6px}
-#kcWish .kc-wempty{padding:30px 20px}#kcWish .kc-wempty{padding:calc(30px*var(--kps,1)) 20px}
-#kcWish .kc-wempty svg{display:block;margin:0 auto 10px;color:var(--cp-accent,var(--pink))}#kcWish .kc-wempty svg{margin:0 auto calc(10px*var(--kps,1));color:var(--cp-accent,var(--pink))}
+#kcWish .kc-right{display:flex;flex-direction:row;align-items:center;gap:6px}
+#kcWish .kc-wempty{padding:30px 20px}
+#kcWish .kc-wempty svg{display:block;margin:0 auto 10px;color:var(--cp-accent,var(--pink))}
 .kc-wrm{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;padding:0;border:1px solid #f1d5de;border-radius:50%;background:#fff;color:var(--cp-accent,var(--pink));cursor:pointer}
 .kc-wrm svg{width:16px;height:16px}
 .kc-wrm:disabled{opacity:.5;cursor:default}
-.kc-wall{display:block;text-align:center;padding:12px 0 4px;font-size:12.5px;font-weight:700;color:var(--cp-accent,var(--pink-deep))}.kc-wall{padding:calc(12px*var(--kps,1)) 0 calc(4px*var(--kps,1));font-size:calc(12.5px*var(--kpt,1));font-weight:700;color:var(--cp-accent,var(--pink-deep))}
+.kc-wall{display:block;text-align:center;padding:12px 0 4px;font-size:12.5px;font-weight:700;color:var(--cp-accent,var(--pink-deep))}
 @media (min-width:901px){
     .kc-tab.kc-wt,#kcWish{display:none !important}
 }
@@ -6061,9 +6056,6 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
 @media (hover:none),(pointer:coarse){
   :where(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]):not([type=submit]):not([type=button]):not([type=reset]):not([type=image]),
   select,textarea,[contenteditable]:not([contenteditable=false])){font-size:max(16px, calc(16px * var(--cop-tinput, 1)))!important}
-  /* Lane CK: on the checkout the same floor times its Overall · Text % (--ckt),
-     the 16px still outside. Zero specificity like the line above, and later. */
-  :where(.kbb-checkout) :where(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]):not([type=submit]):not([type=button]):not([type=reset]):not([type=image]),select,textarea){font-size:max(16px, calc(16px * var(--cop-tinput, 1) * var(--ckt, 1)))!important}
   @media (max-width:900px){
     header .sbox .search-in input{font-size:max(16px, calc(var(--mh-stsize,16px) * max(1, var(--mh-sfit,1))))!important}
   }
@@ -6343,20 +6335,7 @@ header .hact .lsw{display:none}
 
 
 /* (Lane VPA) The option a basket line holds, under its name: "Shade: #13 Bright Beige". */
-.kc-var{font-size:11.5px;line-height:1.3;color:#756C74;margin:-2px 0 5px}.kc-var{font-size:calc(11.5px*var(--kpt,1));line-height:1.3;color:#756C74;margin:calc(-2px*var(--kps,1)) 0 calc(5px*var(--kps,1))}
-
-/* ── CART PANEL · TEXT SIZES (Lane CK, 22 October) ─────────────────────────
-   Appearance -> Cart panel -> Desktop / Mobile. Every px size and vertical gap of the
-   panel has a twin rule written times --kpt / --kps; Overall sets both, each role sets the
-   text factor of its own text. All 1 until moved, so with nothing set the
-   panel is exactly as it was. Phone values at 680px and below, where the
-   panel's own phone sizes start. */
-#cart{--cpz-ovt:var(--cpz-d-ovt,1);--cpz-ovs:var(--cpz-d-ovs,1);--cpz-ttabs:var(--cpz-d-ttabs,1);--cpz-tsum:var(--cpz-d-tsum,1);--cpz-thelp:var(--cpz-d-thelp,1);--cpz-tcoupon:var(--cpz-d-tcoupon,1);--kpt:var(--cpz-ovt);--kps:var(--cpz-ovs)}
-@media(max-width:680px){#cart{--cpz-ovt:var(--cpz-m-ovt,1);--cpz-ovs:var(--cpz-m-ovs,1);--cpz-ttabs:var(--cpz-m-ttabs,1);--cpz-tsum:var(--cpz-m-tsum,1);--cpz-thelp:var(--cpz-m-thelp,1);--cpz-tcoupon:var(--cpz-m-tcoupon,1)}}
-#cart .kc-tabs .kc-tab{--kpt:calc(var(--cpz-ovt)*var(--cpz-ttabs))}
-#cart .sumrow{--kpt:calc(var(--cpz-ovt)*var(--cpz-tsum))}
-#cart :is(.kc-ship,.kc-note,.kc-fdl,.empty-d){--kpt:calc(var(--cpz-ovt)*var(--cpz-thelp))}
-#cart :is(.kc-coupon,.kc-cch){--kpt:calc(var(--cpz-ovt)*var(--cpz-tcoupon))}
+.kc-var{font-size:11.5px;line-height:1.3;color:#756C74;margin:-2px 0 5px}
 
 .kbb-pgrid[data-skin^="showcase"]{
     --sc-border:rgba(42,34,40,.10);

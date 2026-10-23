@@ -116,7 +116,7 @@
         <div id="kbbCartNotices"></div>
         <div id="cartInner">
             @include('store.cart-inner')
-        </div>
+        </div>{!! $kbbCartPage->typeStyle() !!}
 
         {{-- "Email me a reminder about this basket" (Lane EN).
 

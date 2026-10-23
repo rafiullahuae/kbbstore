@@ -335,36 +335,6 @@ class CartPanel
     ];
 
     /**
-     * Lane CK: every text size on the Desktop and Mobile tabs, in one order,
-     * for the Arabic values, the small-phone block and the admin preview.
-     * key => [property, kind]. The first six are the panel's existing size
-     * controls with their existing properties, untouched.
-     */
-    public const TYPE_VARS = [
-        'name_size' => ['--cp-name', 'px'], 'price_size' => ['--cp-price', 'pct'], 'btn_size' => ['--cp-btnf', 'pct'],
-        'ov_text' => ['--cpz-d-ovt', 'ov'], 'ov_space' => ['--cpz-d-ovs', 'ov'],
-        'tabs_size' => ['--cpz-d-ttabs', 'pct'], 'sum_size' => ['--cpz-d-tsum', 'pct'],
-        'help_size' => ['--cpz-d-thelp', 'pct'], 'coupon_size' => ['--cpz-d-tcoupon', 'pct'],
-        'name_size_m' => ['--cp-name-m', 'px'], 'price_size_m' => ['--cp-price-m', 'pct'], 'btn_size_m' => ['--cp-btnf-m', 'pct'],
-        'ov_text_m' => ['--cpz-m-ovt', 'ov'], 'ov_space_m' => ['--cpz-m-ovs', 'ov'],
-        'tabs_size_m' => ['--cpz-m-ttabs', 'pct'], 'sum_size_m' => ['--cpz-m-tsum', 'pct'],
-        'help_size_m' => ['--cpz-m-thelp', 'pct'], 'coupon_size_m' => ['--cpz-m-tcoupon', 'pct'],
-    ];
-
-    /** The existing keys above, printed by cssVariables() every time as they always were. */
-    private const TYPE_EXISTING = ['name_size', 'price_size', 'btn_size', 'name_size_m', 'price_size_m', 'btn_size_m'];
-
-    /** Spacing key => [the lock, the text key]. */
-    private const TYPE_LINKS = [
-        'ov_space' => ['ov_link', 'ov_text'],
-        'ov_space_m' => ['ov_link_m', 'ov_text_m'],
-    ];
-
-    public const AR_KEY = 'cartpanel_ar_type';
-
-    public const TYPE_TABS = ['desktop' => 'd', 'mobile' => 'm'];
-
-    /**
      * The coupon hint's shipped wording, the owner's own sentence. (Lane QK3;
      * 2.60.512: "Use coupon code: {coupon-code in caps} on checkout page.")
      */
@@ -534,6 +504,117 @@ class CartPanel
         if (array_key_exists('coupon_id', $values)) {
             $this->refreshCouponSnapshot();
         }
+
+        // Lane CK2: the text-size block is built here, once, never per request.
+        $this->refreshTypeCss();
+    }
+
+    /*
+     * ── TEXT SIZES (Lane CK / CK2) ──────────────────────────────────────────
+     *
+     * Appearance -> Cart panel -> Desktop / Mobile. Nothing of this is in
+     * kbb.css: App\Support\TextSizes builds one inline block, at Save, holding
+     * only what the moved values need; drawers.blade.php prints it from the
+     * memoised settings map. Nothing at the defaults -- the panel is drawn on
+     * every shop page, so that is every shop page.
+     */
+
+    public const AR_KEY = 'cartpanel_ar_type';
+
+    /** The settings row holding the built block (both languages). */
+    public const TYPE_CACHE = 'cartpanel_type_css';
+
+    public const TYPE_TABS = ['desktop' => 'd', 'mobile' => 'm'];
+
+    /** See TextSizes::css() for the shape. Constants only. */
+    public const TYPE_SPEC = [
+        'surface' => 'cartpanel',
+        'scope' => '#cart',
+        'bp' => 680,
+        't' => '--kpt',
+        's' => '--kps',
+        'dev' => ['d' => ['ov_text', 'ov_space', 'ov_link'], 'm' => ['ov_text_m', 'ov_space_m', 'ov_link_m']],
+        'roles' => [
+            'tabs' => ['tabs_size', 'tabs_size_m', '#cart .kc-tabs .kc-tab', null],
+            'sum' => ['sum_size', 'sum_size_m', '#cart .sumrow', null],
+            'help' => ['help_size', 'help_size_m', '#cart :is(.kc-ship,.kc-note,.kc-fdl,.empty-d)', null],
+            'coupon' => ['coupon_size', 'coupon_size_m', '#cart :is(.kc-coupon,.kc-cch)', null],
+        ],
+        // The panel's existing size controls, printed by cssVariables().
+        'old' => [
+            'name_size' => ['--cp-name', 'px'], 'price_size' => ['--cp-price', 'pct'], 'btn_size' => ['--cp-btnf', 'pct'],
+            'name_size_m' => ['--cp-name-m', 'px'], 'price_size_m' => ['--cp-price-m', 'pct'], 'btn_size_m' => ['--cp-btnf-m', 'pct'],
+        ],
+        'phoneOld' => ['name_size_m', 'price_size_m', 'btn_size_m'],
+        'today' => ['name_size_m' => 13, 'price_size_m' => 100, 'btn_size_m' => 100],
+        'fit' => ['fit_1_m', 'fit_2_m'],
+        'extra' => [],
+    ];
+
+    /** @return list<string> The keys that may carry an Arabic value. */
+    public static function arKeys(): array
+    {
+        $keys = array_keys(self::TYPE_SPEC['old']);
+
+        foreach (self::TYPE_SPEC['dev'] as [$text, $space]) {
+            array_push($keys, $text, $space);
+        }
+
+        foreach (self::TYPE_SPEC['roles'] as [$d, $m]) {
+            array_push($keys, $d, $m);
+        }
+
+        return array_merge($keys, self::TYPE_SPEC['fit']);
+    }
+
+    /** @return array<string, int> */
+    public function arValues(): array
+    {
+        return \App\Support\TextSizes::arMap(
+            $this->settings->get(self::AR_KEY, null),
+            self::arKeys(),
+            fn (string $key, mixed $value): mixed => $this->cast($key, $value),
+        );
+    }
+
+    /** @param array<string, mixed> $values */
+    public function saveAr(array $values): void
+    {
+        $clean = \App\Support\TextSizes::arMap($values, self::arKeys(), fn (string $key, mixed $value): mixed => $this->cast($key, $value));
+
+        $this->settings->set(self::AR_KEY, $clean === [] ? null : json_encode($clean));
+        $this->refreshTypeCss();
+    }
+
+    /** Build and store the text-size block from the saved values. Called by every save. */
+    public function refreshTypeCss(): void
+    {
+        \App\Support\TextSizes::refresh($this->settings, self::TYPE_CACHE, self::TYPE_SPEC, $this->all(), $this->arValues());
+    }
+
+    /** `<style id="kbb-cptype">…</style>`, or nothing at all (the defaults). */
+    public function typeStyle(): string
+    {
+        $css = \App\Support\TextSizes::stored($this->settings, self::TYPE_CACHE, fn (): array => [
+            'en' => \App\Support\TextSizes::css(self::TYPE_SPEC, $this->all()),
+            'ar' => \App\Support\TextSizes::css(self::TYPE_SPEC, $this->all(), $this->arValues()),
+        ]);
+
+        return $css === '' ? '' : '<style id="kbb-cptype">' . $css . '</style>';
+    }
+
+    /** @return array<string, mixed> What the admin's live preview needs. */
+    public static function typeDescriptor(): array
+    {
+        return [
+            'live' => '/cart-panel/live',
+            'styleId' => 'kbb-cptype',
+            'tabs' => self::TYPE_TABS,
+            'surface' => (object) [],
+            'arKeys' => self::arKeys(),
+            'spec' => self::TYPE_SPEC,
+            'twins' => \App\Support\TextSizeTwins::TABLE['cartpanel'],
+        ];
     }
 
     /*
@@ -861,8 +942,7 @@ class CartPanel
      */
     public function cssVariables(): string
     {
-        // Lane CK: the Arabic sizes over the English ones on an Arabic page.
-        $c = $this->sized();
+        $c = $this->all();
 
         // 1 at 100%, to three decimals — a percentage that does not divide evenly
         // must not arrive as 0.93333333333333 in a style attribute on every page.
@@ -872,7 +952,7 @@ class CartPanel
             return $out === '' ? '0' : $out;
         };
 
-        $out = [
+        return implode(';', [
             // ── size ──
             '--cp-w:' . $c['panel_width'] . 'px',
             '--cp-w-m:' . $c['panel_width_m'] . 'vw',
@@ -922,165 +1002,7 @@ class CartPanel
             // Lane QK12: the space under the phone's buttons. Last, so the
             // properties above print exactly as they did.
             '--cp-footgap-m:' . $c['foot_gap_m'] . 'px',
-        ];
-
-        // Lane CK: the new text sizes, after everything above and only what
-        // has been moved -- nothing at all while every one is today's.
-        foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
-            if (in_array($key, self::TYPE_EXISTING, true)) {
-                continue;
-            }
-
-            $value = (int) $this->typeValue($c, $key);
-
-            if ($value !== (int) self::SCHEMA[$key][2]) {
-                $out[] = $prop . ':' . \App\Support\TextSizes::emit($kind, $value);
-            }
-        }
-
-        return implode(';', $out);
-    }
-
-    /*
-     * ── TEXT SIZES: ARABIC, SMALL PHONES, THE PREVIEW (Lane CK) ────────────
-     */
-
-    /** @return array<string, mixed> all(), with the Arabic sizes over it on an Arabic page. */
-    private function sized(?array $keys = null): array
-    {
-        $c = $keys === null ? $this->all() : $this->only($keys);
-
-        return \App\Support\TextSizes::arabic() ? \App\Support\TextSizes::overlay($c, $this->arValues()) : $c;
-    }
-
-    /**
-     * Only these keys, read and cast exactly as all() reads them. The
-     * small-phone block runs on every page that draws this surface (the
-     * panel: every shop page), and needs a handful of sizes, not the whole
-     * schema -- all() here cost ~0.3 ms a call under the request memo.
-     *
-     * @param  list<string>  $keys
-     * @return array<string, mixed>
-     */
-    private function only(array $keys): array
-    {
-        $out = [];
-
-        foreach (array_unique($keys) as $key) {
-            $saved = $this->settings->get('cartpanel_' . $key, null);
-            $out[$key] = $saved === null ? self::SCHEMA[$key][2] : $this->cast($key, $saved);
-        }
-
-        return $out;
-    }
-
-    /**
-     * The keys fitCss() reads: every size it may print, the links that stand
-     * in for one, and the two small-phone steps.
-     *
-     * @return list<string>
-     */
-    private static function fitKeys(): array
-    {
-        return array_merge(self::arKeys(), array_merge(...array_values(self::TYPE_LINKS)));
-    }
-
-    /** @param array<string, mixed> $c */
-    private function typeValue(array $c, string $key): mixed
-    {
-        if (isset(self::TYPE_LINKS[$key]) && $c[self::TYPE_LINKS[$key][0]]) {
-            return $c[self::TYPE_LINKS[$key][1]];
-        }
-
-        return $c[$key];
-    }
-
-    /** @return list<string> */
-    public static function arKeys(): array
-    {
-        return array_merge(array_keys(self::TYPE_VARS), ['fit_1_m', 'fit_2_m']);
-    }
-
-    /** @return array<string, int> */
-    public function arValues(): array
-    {
-        return \App\Support\TextSizes::arMap(
-            $this->settings->get(self::AR_KEY, null),
-            self::arKeys(),
-            fn (string $key, mixed $value): mixed => $this->cast($key, $value),
-        );
-    }
-
-    /** @param array<string, mixed> $values */
-    public function saveAr(array $values): void
-    {
-        $clean = \App\Support\TextSizes::arMap($values, self::arKeys(), fn (string $key, mixed $value): mixed => $this->cast($key, $value));
-
-        $this->settings->set(self::AR_KEY, $clean === [] ? null : json_encode($clean));
-    }
-
-    /**
-     * The small-phone block, or ''. "Today" for the panel's own px and %
-     * sizes is the size the schema ships, so a name the owner has already
-     * set SMALLER than that (the live panel's 11px) is never touched.
-     */
-    public function fitCss(): string
-    {
-        $c = $this->sized(self::fitKeys());
-        $rows = [];
-
-        foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
-            if (str_ends_with($key, '_m')) {
-                $rows[] = [$prop, $kind, (int) $this->typeValue($c, $key), (int) self::SCHEMA[$key][2]];
-            }
-        }
-
-        return \App\Support\TextSizes::fitCss('#cart', $rows, (int) $c['fit_1_m'], (int) $c['fit_2_m']);
-    }
-
-    /** `<style id="kbb-cpfit">…</style>`, or nothing at all. */
-    public function fitStyle(): string
-    {
-        $css = $this->fitCss();
-
-        return $css === '' ? '' : '<style id="kbb-cpfit">' . $css . '</style>';
-    }
-
-    /** @return array<string, mixed> What the admin's live preview needs. */
-    public static function typeDescriptor(): array
-    {
-        $vars = [];
-        $fit = [];
-
-        foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
-            $row = ['key' => $key, 'prop' => $prop, 'kind' => $kind];
-
-            if (isset(self::TYPE_LINKS[$key])) {
-                [$row['lock'], $row['text']] = self::TYPE_LINKS[$key];
-            }
-
-            $vars[] = $row;
-
-            if (str_ends_with($key, '_m')) {
-                $fit[] = ['key' => $key, 'prop' => $prop, 'kind' => $kind, 'today' => (int) self::SCHEMA[$key][2]];
-            }
-        }
-
-        return [
-            'scope' => '#cart',
-            'live' => '/cart-panel/live',
-            'fitId' => 'kbb-cpfit',
-            'textVar' => '--kpt',
-            'tabs' => self::TYPE_TABS,
-            'surface' => [],
-            'arKeys' => self::arKeys(),
-            'vars' => $vars,
-            'links' => [
-                ['text' => 'ov_text', 'space' => 'ov_space', 'lock' => 'ov_link'],
-                ['text' => 'ov_text_m', 'space' => 'ov_space_m', 'lock' => 'ov_link_m'],
-            ],
-            'fit' => ['scope' => '#cart', 's1' => 'fit_1_m', 's2' => 'fit_2_m', 'rows' => $fit],
-        ];
+        ]);
     }
 
     /**

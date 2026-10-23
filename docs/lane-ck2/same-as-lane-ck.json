@@ -1,0 +1,694 @@
+[
+    {
+        "scenario": "defaults",
+        "lang": "en",
+        "w": 390,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [],
+        "errors": []
+    },
+    {
+        "scenario": "defaults",
+        "lang": "en",
+        "w": 390,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [],
+        "errors": []
+    },
+    {
+        "scenario": "defaults",
+        "lang": "en",
+        "w": 1280,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [],
+        "errors": []
+    },
+    {
+        "scenario": "defaults",
+        "lang": "en",
+        "w": 1280,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [],
+        "errors": []
+    },
+    {
+        "scenario": "defaults",
+        "lang": "ar",
+        "w": 390,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [],
+        "errors": []
+    },
+    {
+        "scenario": "defaults",
+        "lang": "ar",
+        "w": 390,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [],
+        "errors": []
+    },
+    {
+        "scenario": "defaults",
+        "lang": "ar",
+        "w": 1280,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [],
+        "errors": []
+    },
+    {
+        "scenario": "defaults",
+        "lang": "ar",
+        "w": 1280,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [],
+        "errors": []
+    },
+    {
+        "scenario": "overall",
+        "lang": "en",
+        "w": 390,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:29161",
+            "kbb-cptype:7323"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "overall",
+        "lang": "en",
+        "w": 390,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:12872",
+            "kbb-cptype:7323"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "overall",
+        "lang": "en",
+        "w": 1280,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:29161",
+            "kbb-cptype:7323"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "overall",
+        "lang": "en",
+        "w": 1280,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:12872",
+            "kbb-cptype:7323"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "overall",
+        "lang": "ar",
+        "w": 390,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:29161",
+            "kbb-cptype:7323"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "overall",
+        "lang": "ar",
+        "w": 390,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:12872",
+            "kbb-cptype:7323"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "overall",
+        "lang": "ar",
+        "w": 1280,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:29161",
+            "kbb-cptype:7323"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "overall",
+        "lang": "ar",
+        "w": 1280,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:12872",
+            "kbb-cptype:7323"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "roles",
+        "lang": "en",
+        "w": 390,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:7632",
+            "kbb-cptype:1612"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "roles",
+        "lang": "en",
+        "w": 390,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:2867",
+            "kbb-cptype:1612"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "roles",
+        "lang": "en",
+        "w": 1280,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:7632",
+            "kbb-cptype:1612"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "roles",
+        "lang": "en",
+        "w": 1280,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:2867",
+            "kbb-cptype:1612"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "roles",
+        "lang": "ar",
+        "w": 390,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:7632",
+            "kbb-cptype:1612"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "roles",
+        "lang": "ar",
+        "w": 390,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:2867",
+            "kbb-cptype:1612"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "roles",
+        "lang": "ar",
+        "w": 1280,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:7632",
+            "kbb-cptype:1612"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "roles",
+        "lang": "ar",
+        "w": 1280,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:2867",
+            "kbb-cptype:1612"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "spacing",
+        "lang": "en",
+        "w": 390,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:21400",
+            "kbb-cptype:4910"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "spacing",
+        "lang": "en",
+        "w": 390,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:9119",
+            "kbb-cptype:4910"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "spacing",
+        "lang": "en",
+        "w": 1280,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:21400",
+            "kbb-cptype:4910"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "spacing",
+        "lang": "en",
+        "w": 1280,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:9119",
+            "kbb-cptype:4910"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "spacing",
+        "lang": "ar",
+        "w": 390,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:21400",
+            "kbb-cptype:4910"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "spacing",
+        "lang": "ar",
+        "w": 390,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:9119",
+            "kbb-cptype:4910"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "spacing",
+        "lang": "ar",
+        "w": 1280,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:21400",
+            "kbb-cptype:4910"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "spacing",
+        "lang": "ar",
+        "w": 1280,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:9119",
+            "kbb-cptype:4910"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "arabic",
+        "lang": "en",
+        "w": 390,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [],
+        "errors": []
+    },
+    {
+        "scenario": "arabic",
+        "lang": "en",
+        "w": 390,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [],
+        "errors": []
+    },
+    {
+        "scenario": "arabic",
+        "lang": "en",
+        "w": 1280,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [],
+        "errors": []
+    },
+    {
+        "scenario": "arabic",
+        "lang": "en",
+        "w": 1280,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [],
+        "errors": []
+    },
+    {
+        "scenario": "arabic",
+        "lang": "ar",
+        "w": 390,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:31624",
+            "kbb-cptype:7450"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "arabic",
+        "lang": "ar",
+        "w": 390,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:13527",
+            "kbb-cptype:7450"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "arabic",
+        "lang": "ar",
+        "w": 1280,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:31624",
+            "kbb-cptype:7450"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "arabic",
+        "lang": "ar",
+        "w": 1280,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:13527",
+            "kbb-cptype:7450"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "en",
+        "w": 330,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:31110",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "en",
+        "w": 330,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:13606",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "en",
+        "w": 360,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:31110",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "en",
+        "w": 360,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:13606",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "en",
+        "w": 390,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:31110",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "en",
+        "w": 390,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:13606",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "en",
+        "w": 1280,
+        "where": "/checkout/",
+        "elements": 552,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:31110",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "en",
+        "w": 1280,
+        "where": "/cart/",
+        "elements": 387,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:13606",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "ar",
+        "w": 330,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:31110",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "ar",
+        "w": 330,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:13606",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "ar",
+        "w": 360,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:31110",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "ar",
+        "w": 360,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:13606",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "ar",
+        "w": 390,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:31110",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "ar",
+        "w": 390,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:13606",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "ar",
+        "w": 1280,
+        "where": "/checkout/",
+        "elements": 550,
+        "differences": 0,
+        "block": [
+            "kbb-cotype:31110",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    },
+    {
+        "scenario": "phones",
+        "lang": "ar",
+        "w": 1280,
+        "where": "/cart/",
+        "elements": 385,
+        "differences": 0,
+        "block": [
+            "kbb-carttype:13606",
+            "kbb-cptype:7815"
+        ],
+        "errors": []
+    }
+]

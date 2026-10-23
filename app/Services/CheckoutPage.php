@@ -1636,23 +1636,6 @@ class CheckoutPage
         'm_tocart_size' => '--cop-m-tocarts',
         'm_tocart_icon' => '--cop-m-tocartic',
         'addr_cue_size' => '--cop-cue-s',
-        // Lane CK (22 October): the text roles the six t_ keys did not cover.
-        'd_t_rows'   => '--cop-d-trows',
-        'd_t_total'  => '--cop-d-ttotal',
-        'd_t_coupon' => '--cop-d-tcoupon',
-        'd_t_help'   => '--cop-d-thelp',
-        'd_t_dlv'    => '--cop-d-tdlv',
-        'd_t_pay'    => '--cop-d-tpay',
-        'd_t_tick'   => '--cop-d-ttick',
-        'd_t_flift'  => '--cop-d-tflift',
-        'm_t_rows'   => '--cop-m-trows',
-        'm_t_total'  => '--cop-m-ttotal',
-        'm_t_coupon' => '--cop-m-tcoupon',
-        'm_t_help'   => '--cop-m-thelp',
-        'm_t_dlv'    => '--cop-m-tdlv',
-        'm_t_pay'    => '--cop-m-tpay',
-        'm_t_tick'   => '--cop-m-ttick',
-        'm_t_flift'  => '--cop-m-tflift',
         /*
          * SPEED IS EMITTED AS ITS RECIPROCAL, because what the stylesheet
          * needs is a DURATION and the owner is setting a SPEED. 200% fast has
@@ -1666,58 +1649,6 @@ class CheckoutPage
     private const INVERSE_VARS = [
         'addr_cue_speed'   => '--cop-cue-t',
         'trust_tick_speed' => '--cop-tick-t',
-    ];
-
-    /**
-     * Lane CK: Overall · Text % / Spacing %, stored as the signed change and
-     * printed as a factor (15 -> 1.15). key => [property, the lock, the text
-     * key]: while the lock is on, Spacing prints the Text value.
-     */
-    private const OV_VARS = [
-        'd_ov_text'  => ['--cop-d-ovt', null, null],
-        'd_ov_space' => ['--cop-d-ovs', 'd_ov_link', 'd_ov_text'],
-        'm_ov_text'  => ['--cop-m-ovt', null, null],
-        'm_ov_space' => ['--cop-m-ovs', 'm_ov_link', 'm_ov_text'],
-    ];
-
-    /**
-     * Every text size on the two Text sizes tabs, in one order, for the three
-     * things that need the whole list: the Arabic values, the small-phone
-     * block and the admin preview. key => [property, kind]. The existing
-     * per-surface keys come first and keep their own properties untouched.
-     */
-    public const TYPE_VARS = [
-        'd_t_title' => ['--cop-d-ttitle', 'pct'], 'd_t_lead' => ['--cop-d-tlead', 'pct'],
-        'd_t_h2' => ['--cop-d-th2', 'pct'], 'd_t_label' => ['--cop-d-tlabel', 'pct'],
-        'd_t_input' => ['--cop-d-tinput', 'pct'], 'd_t_ph' => ['--cop-d-tph', 'pct'],
-        'd_t_trust' => ['--cop-d-ttrust', 'pct'], 'd_row_font' => ['--cop-d-rowf', 'pct'],
-        'd_tab_font' => ['--cop-d-tabf', 'pct'],
-        'd_ov_text' => ['--cop-d-ovt', 'ov'], 'd_ov_space' => ['--cop-d-ovs', 'ov'],
-        'd_t_rows' => ['--cop-d-trows', 'pct'], 'd_t_total' => ['--cop-d-ttotal', 'pct'],
-        'd_t_coupon' => ['--cop-d-tcoupon', 'pct'], 'd_t_help' => ['--cop-d-thelp', 'pct'],
-        'd_t_dlv' => ['--cop-d-tdlv', 'pct'], 'd_t_pay' => ['--cop-d-tpay', 'pct'],
-        'd_t_tick' => ['--cop-d-ttick', 'pct'], 'd_t_flift' => ['--cop-d-tflift', 'pct'],
-        'm_t_title' => ['--cop-m-ttitle', 'pct'], 'm_t_lead' => ['--cop-m-tlead', 'pct'],
-        'm_t_h2' => ['--cop-m-th2', 'pct'], 'm_t_label' => ['--cop-m-tlabel', 'pct'],
-        'm_t_input' => ['--cop-m-tinput', 'pct'], 'm_t_ph' => ['--cop-m-tph', 'pct'],
-        'm_t_trust' => ['--cop-m-ttrust', 'pct'], 'm_row_font' => ['--cop-m-rowf', 'pct'],
-        'm_tab_font' => ['--cop-m-tabf', 'pct'],
-        'm_ov_text' => ['--cop-m-ovt', 'ov'], 'm_ov_space' => ['--cop-m-ovs', 'ov'],
-        'm_t_rows' => ['--cop-m-trows', 'pct'], 'm_t_total' => ['--cop-m-ttotal', 'pct'],
-        'm_t_coupon' => ['--cop-m-tcoupon', 'pct'], 'm_t_help' => ['--cop-m-thelp', 'pct'],
-        'm_t_dlv' => ['--cop-m-tdlv', 'pct'], 'm_t_pay' => ['--cop-m-tpay', 'pct'],
-        'm_t_tick' => ['--cop-m-ttick', 'pct'], 'm_t_flift' => ['--cop-m-tflift', 'pct'],
-    ];
-
-    /** The settings row holding the Arabic sizes: only the keys moved on the Arabic tab. */
-    public const AR_KEY = 'checkoutpage_ar_type';
-
-    /** Where each Text sizes tab's controls live, and the keys shown there from another tab. */
-    public const TYPE_TABS = ['desktop_type' => 'd', 'mobile_type' => 'm'];
-
-    public const TYPE_SURFACE = [
-        'desktop_type' => ['d_row_font', 'd_tab_font'],
-        'mobile_type' => ['m_row_font', 'm_tab_font'],
     ];
 
     /**
@@ -1798,8 +1729,6 @@ class CheckoutPage
         'lo_addr_rows'   => ['one' => 'cop-rows', 'two' => 'cop-rows', 'classic' => ''],
         // 2.60.497: the opened summary's background on a phone.
         'lo_sum_open'    => ['blush' => 'cop-sow cop-sob', 'white' => 'cop-sow', 'green' => 'cop-sog', 'classic' => ''],
-        // Lane CK: grey is the shipped look (as asked), so only pink adds a class.
-        'fl_tone'        => ['grey' => '', 'pink' => 'cop-flpink'],
     ];
 
     /**
@@ -1963,6 +1892,9 @@ class CheckoutPage
         if (array_key_exists('cline_coupon', $values)) {
             $this->refreshCouponSnapshot();
         }
+
+        // Lane CK2: the text-size block is built here, once, never per request.
+        $this->refreshTypeCss();
     }
 
     /*
@@ -2395,9 +2327,7 @@ class CheckoutPage
      */
     public function cssVariables(): string
     {
-        // Lane CK: on an Arabic page, the Arabic sizes over the English ones.
-        // Everywhere else, and while Arabic follows English, this is all().
-        $c = $this->sized();
+        $c = $this->all();
         $out = [];
 
         foreach (self::VARS as $key => $prop) {
@@ -2452,178 +2382,7 @@ class CheckoutPage
             $out[] = '--cop-paylogo:'.(int) $c['pay_logo_h'].'px';
         }
 
-        // Lane CK: Overall · Text % / Spacing %. Last, so every property above
-        // prints exactly where it always did; nothing at all while both are 0.
-        foreach (self::OV_VARS as $key => [$prop, $lock, $text]) {
-            $value = (int) ($lock !== null && $c[$lock] ? $c[$text] : $c[$key]);
-
-            if ($value !== 0) {
-                $out[] = $prop.':'.\App\Support\TextSizes::emit('ov', $value);
-            }
-        }
-
         return implode(';', $out);
-    }
-
-    /*
-     * ── TEXT SIZES: ARABIC, SMALL PHONES, THE PREVIEW (Lane CK) ────────────
-     */
-
-    /**
-     * all(), with the Arabic sizes laid over it on an Arabic page. The Arabic
-     * map is read only on an Arabic page, from the same memoised settings map
-     * as everything else here: no query, on any page.
-     *
-     * @return array<string, mixed>
-     */
-    private function sized(?array $keys = null): array
-    {
-        $c = $keys === null ? $this->all() : $this->only($keys);
-
-        return \App\Support\TextSizes::arabic() ? \App\Support\TextSizes::overlay($c, $this->arValues()) : $c;
-    }
-
-    /**
-     * Only these keys, read and cast exactly as all() reads them. The
-     * small-phone block runs on every page that draws this surface (the
-     * panel: every shop page), and needs a handful of sizes, not the whole
-     * schema -- all() here cost ~0.3 ms a call under the request memo.
-     *
-     * @param  list<string>  $keys
-     * @return array<string, mixed>
-     */
-    private function only(array $keys): array
-    {
-        $out = [];
-
-        foreach (array_unique($keys) as $key) {
-            $saved = $this->settings->get(self::PREFIX.$key, null);
-            $out[$key] = $saved === null ? self::SCHEMA[$key][2] : $this->cast($key, $saved);
-        }
-
-        return $out;
-    }
-
-    /**
-     * The keys fitCss() reads: every size it may print, the links that stand
-     * in for one, and the two small-phone steps.
-     *
-     * @return list<string>
-     */
-    private static function fitKeys(): array
-    {
-        return array_merge(self::arKeys(), array_values(array_filter(array_merge(...array_map(fn (array $v): array => [$v[1], $v[2]], array_values(self::OV_VARS))))));
-    }
-
-    /** @return list<string> The keys that may carry an Arabic value. */
-    public static function arKeys(): array
-    {
-        return array_merge(array_keys(self::TYPE_VARS), ['m_fit_1', 'm_fit_2']);
-    }
-
-    /**
-     * The Arabic sizes the owner has set: key => value, only the moved ones.
-     *
-     * @return array<string, int>
-     */
-    public function arValues(): array
-    {
-        return \App\Support\TextSizes::arMap(
-            $this->settings->get(self::AR_KEY, null),
-            self::arKeys(),
-            fn (string $key, mixed $value): mixed => $this->cast($key, $value),
-        );
-    }
-
-    /**
-     * Store the Arabic map whole: what is not in it follows English. Each
-     * value is clamped exactly like its English slider; unknown keys are
-     * dropped (the controller refuses them first).
-     *
-     * @param  array<string, mixed>  $values
-     */
-    public function saveAr(array $values): void
-    {
-        $clean = \App\Support\TextSizes::arMap($values, self::arKeys(), fn (string $key, mixed $value): mixed => $this->cast($key, $value));
-
-        $this->settings->set(self::AR_KEY, $clean === [] ? null : json_encode($clean));
-    }
-
-    /**
-     * The small-phone block's CSS, or '' — '' whenever no mobile size is set
-     * above today, which is how it ships.
-     */
-    public function fitCss(): string
-    {
-        $c = $this->sized(self::fitKeys());
-        $rows = [];
-
-        foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
-            if (! str_starts_with($key, 'm_')) {
-                continue;
-            }
-
-            $value = (int) $c[$key];
-
-            if (isset(self::OV_VARS[$key]) && self::OV_VARS[$key][1] !== null && $c[self::OV_VARS[$key][1]]) {
-                $value = (int) $c[self::OV_VARS[$key][2]];
-            }
-
-            $rows[] = [$prop, $kind, $value, $kind === 'ov' ? 0 : 100];
-        }
-
-        return \App\Support\TextSizes::fitCss('.kbb-checkout', $rows, (int) $c['m_fit_1'], (int) $c['m_fit_2']);
-    }
-
-    /** `<style id="kbb-cofit">…</style>`, or nothing at all. */
-    public function fitStyle(): string
-    {
-        $css = $this->fitCss();
-
-        return $css === '' ? '' : '<style id="kbb-cofit">'.$css.'</style>';
-    }
-
-    /**
-     * What the admin's live preview needs to paint the same properties the
-     * page will print: one list, built from the constants above.
-     *
-     * @return array<string, mixed>
-     */
-    public static function typeDescriptor(): array
-    {
-        $vars = [];
-        $fit = [];
-
-        foreach (self::TYPE_VARS as $key => [$prop, $kind]) {
-            $row = ['key' => $key, 'prop' => $prop, 'kind' => $kind];
-
-            if (isset(self::OV_VARS[$key]) && self::OV_VARS[$key][1] !== null) {
-                $row['lock'] = self::OV_VARS[$key][1];
-                $row['text'] = self::OV_VARS[$key][2];
-            }
-
-            $vars[] = $row;
-
-            if (str_starts_with($key, 'm_')) {
-                $fit[] = ['key' => $key, 'prop' => $prop, 'kind' => $kind, 'today' => $kind === 'ov' ? 0 : 100];
-            }
-        }
-
-        return [
-            'scope' => '.kbb-checkout',
-            'live' => '/checkout-page/live',
-            'fitId' => 'kbb-cofit',
-            'textVar' => '--ckt',
-            'tabs' => self::TYPE_TABS,
-            'surface' => self::TYPE_SURFACE,
-            'arKeys' => self::arKeys(),
-            'vars' => $vars,
-            'links' => [
-                ['text' => 'd_ov_text', 'space' => 'd_ov_space', 'lock' => 'd_ov_link'],
-                ['text' => 'm_ov_text', 'space' => 'm_ov_space', 'lock' => 'm_ov_link'],
-            ],
-            'fit' => ['scope' => '.kbb-checkout', 's1' => 'm_fit_1', 's2' => 'm_fit_2', 'rows' => $fit],
-        ];
     }
 
     /**
@@ -2657,6 +2416,155 @@ class CheckoutPage
         $vars = $this->cssVariables();
 
         return $vars === '' ? '' : ' style="'.e($vars).'"';
+    }
+
+    /*
+     * ── TEXT SIZES: OVERALL, ROLES, ARABIC, SMALL PHONES (Lane CK / CK2) ────
+     *
+     * Appearance -> Checkout page -> Desktop / Mobile · Text sizes. Nothing of
+     * this is in kbb-checkout.css: App\Support\TextSizes builds one inline
+     * block, at Save, holding only what the moved values need, and the page
+     * prints it from the memoised settings map. Nothing at the defaults.
+     */
+
+    /** The settings row holding the Arabic sizes: only the keys moved on the Arabic tab. */
+    public const AR_KEY = 'checkoutpage_ar_type';
+
+    /** The settings row holding the built block (both languages). */
+    public const TYPE_CACHE = 'checkoutpage_type_css';
+
+    /** Where each Text sizes tab's controls live, and the keys shown there from another tab. */
+    public const TYPE_TABS = ['desktop_type' => 'd', 'mobile_type' => 'm'];
+
+    public const TYPE_SURFACE = [
+        'desktop_type' => ['d_row_font', 'd_tab_font'],
+        'mobile_type' => ['m_row_font', 'm_tab_font'],
+    ];
+
+    /** See TextSizes::css() for the shape. Constants only. */
+    public const TYPE_SPEC = [
+        'surface' => 'checkout',
+        'scope' => '.kbb-checkout',
+        'bp' => 900,
+        't' => '--ckt',
+        's' => '--cks',
+        'dev' => ['d' => ['d_ov_text', 'd_ov_space', 'd_ov_link'], 'm' => ['m_ov_text', 'm_ov_space', 'm_ov_link']],
+        // Later containers win the ties: a total row is a row, a note row is a row.
+        'roles' => [
+            'rows' => ['d_t_rows', 'm_t_rows', '.kbb-checkout :is(.sumrow,.srow)', null],
+            'total' => ['d_t_total', 'm_t_total', '.kbb-checkout :is(.sumrow.tot,.srow.tot,.cosr-tot)', null],
+            'coupon' => ['d_t_coupon', 'm_t_coupon', '.kbb-checkout :is(.coupon,.co-sumcoupon,.co-oscoupon,.co-cline,.co-cmsg)', null],
+            'help' => ['d_t_help', 'm_t_help', '.kbb-checkout :is(.co-ehint,.co-dnote,.co-psec,.co-si-stack,.co-note,.kbb-placing-note,.kbb-card-save,.kbb-delivery-line,.srow.note,.sumrow.vat,.backlink,.conti,.paylogos,.optional,.woocommerce-error,.woocommerce-info,.woocommerce-message)', null],
+            'dlv' => ['d_t_dlv', 'm_t_dlv', '.kbb-checkout .woocommerce-shipping-methods', null],
+            'pay' => ['d_t_pay', 'm_t_pay', '.kbb-checkout .wc_payment_methods', null],
+            'tick' => ['d_t_tick', 'm_t_tick', '.kbb-checkout :is(label.kbb-acct-opt,label.kbb-gift-opt,label.checkbox)', null],
+            'flift' => ['d_t_flift', 'm_t_flift', null, '--cop-tflift'],
+        ],
+        // The sizes the style attribute already prints (cssVariables()).
+        'old' => [
+            'd_t_title' => ['--cop-d-ttitle', 'pct'], 'd_t_lead' => ['--cop-d-tlead', 'pct'],
+            'd_t_h2' => ['--cop-d-th2', 'pct'], 'd_t_label' => ['--cop-d-tlabel', 'pct'],
+            'd_t_input' => ['--cop-d-tinput', 'pct'], 'd_t_ph' => ['--cop-d-tph', 'pct'],
+            'd_t_trust' => ['--cop-d-ttrust', 'pct'], 'd_row_font' => ['--cop-d-rowf', 'pct'],
+            'd_tab_font' => ['--cop-d-tabf', 'pct'],
+            'm_t_title' => ['--cop-m-ttitle', 'pct'], 'm_t_lead' => ['--cop-m-tlead', 'pct'],
+            'm_t_h2' => ['--cop-m-th2', 'pct'], 'm_t_label' => ['--cop-m-tlabel', 'pct'],
+            'm_t_input' => ['--cop-m-tinput', 'pct'], 'm_t_ph' => ['--cop-m-tph', 'pct'],
+            'm_t_trust' => ['--cop-m-ttrust', 'pct'], 'm_row_font' => ['--cop-m-rowf', 'pct'],
+            'm_tab_font' => ['--cop-m-tabf', 'pct'],
+        ],
+        'phoneOld' => ['m_t_title', 'm_t_lead', 'm_t_h2', 'm_t_label', 'm_t_input', 'm_t_ph', 'm_t_trust', 'm_row_font', 'm_tab_font'],
+        'today' => [
+            'm_t_title' => 100, 'm_t_lead' => 100, 'm_t_h2' => 100, 'm_t_label' => 100, 'm_t_input' => 100,
+            'm_t_ph' => 100, 'm_t_trust' => 100, 'm_row_font' => 100, 'm_tab_font' => 100,
+        ],
+        'fit' => ['m_fit_1', 'm_fit_2'],
+        // "The shop's pink" for the lifted label puts the old colour back (grey ships, as asked).
+        'extra' => [
+            ['fl_tone', 'pink', '.kbb-checkout .fld.kbb-fl :is(input,textarea):is(:focus,:not(:placeholder-shown),:-webkit-autofill,:autofill) ~ label,.kbb-checkout .fld.kbb-fl select ~ label{color:var(--pink-deep)}'],
+        ],
+    ];
+
+    /** @return list<string> The keys that may carry an Arabic value. */
+    public static function arKeys(): array
+    {
+        $keys = array_keys(self::TYPE_SPEC['old']);
+
+        foreach (self::TYPE_SPEC['dev'] as [$text, $space]) {
+            array_push($keys, $text, $space);
+        }
+
+        foreach (self::TYPE_SPEC['roles'] as [$d, $m]) {
+            array_push($keys, $d, $m);
+        }
+
+        return array_merge($keys, self::TYPE_SPEC['fit']);
+    }
+
+    /**
+     * The Arabic sizes the owner has set: key => value, only the moved ones.
+     * Read at Save and by the admin, never by a shop page.
+     *
+     * @return array<string, int>
+     */
+    public function arValues(): array
+    {
+        return \App\Support\TextSizes::arMap(
+            $this->settings->get(self::AR_KEY, null),
+            self::arKeys(),
+            fn (string $key, mixed $value): mixed => $this->cast($key, $value),
+        );
+    }
+
+    /**
+     * Store the Arabic map whole: what is not in it follows English. Each
+     * value is clamped exactly like its English slider; unknown keys are
+     * dropped (the controller refuses them first).
+     *
+     * @param  array<string, mixed>  $values
+     */
+    public function saveAr(array $values): void
+    {
+        $clean = \App\Support\TextSizes::arMap($values, self::arKeys(), fn (string $key, mixed $value): mixed => $this->cast($key, $value));
+
+        $this->settings->set(self::AR_KEY, $clean === [] ? null : json_encode($clean));
+        $this->refreshTypeCss();
+    }
+
+    /** Build and store the text-size block from the saved values. Called by every save. */
+    public function refreshTypeCss(): void
+    {
+        \App\Support\TextSizes::refresh($this->settings, self::TYPE_CACHE, self::TYPE_SPEC, $this->all(), $this->arValues());
+    }
+
+    /** `<style id="kbb-cotype">…</style>`, or nothing at all (the defaults). */
+    public function typeStyle(): string
+    {
+        $css = \App\Support\TextSizes::stored($this->settings, self::TYPE_CACHE, fn (): array => [
+            'en' => \App\Support\TextSizes::css(self::TYPE_SPEC, $this->all()),
+            'ar' => \App\Support\TextSizes::css(self::TYPE_SPEC, $this->all(), $this->arValues()),
+        ]);
+
+        return $css === '' ? '' : '<style id="kbb-cotype">'.$css.'</style>';
+    }
+
+    /**
+     * What the admin's live preview needs to build the same block the page
+     * will print: the spec and this surface's twins.
+     *
+     * @return array<string, mixed>
+     */
+    public static function typeDescriptor(): array
+    {
+        return [
+            'live' => '/checkout-page/live',
+            'styleId' => 'kbb-cotype',
+            'tabs' => self::TYPE_TABS,
+            'surface' => self::TYPE_SURFACE,
+            'arKeys' => self::arKeys(),
+            'spec' => self::TYPE_SPEC,
+            'twins' => \App\Support\TextSizeTwins::TABLE['checkout'],
+        ];
     }
 
     /**

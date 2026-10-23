@@ -1,0 +1,206 @@
+[
+    {
+        "page": "/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            126881,
+            126881
+        ],
+        "lines": 0,
+        "diffs": []
+    },
+    {
+        "page": "/shop/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            96757,
+            96757
+        ],
+        "lines": 0,
+        "diffs": []
+    },
+    {
+        "page": "/collections/cleansers/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            87768,
+            87768
+        ],
+        "lines": 0,
+        "diffs": []
+    },
+    {
+        "page": "/brands/anua/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            87280,
+            87280
+        ],
+        "lines": 0,
+        "diffs": []
+    },
+    {
+        "page": "/product/1025-dokdo-toner/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            158780,
+            158780
+        ],
+        "lines": 0,
+        "diffs": []
+    },
+    {
+        "page": "/cart/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            173356,
+            173356
+        ],
+        "lines": 0,
+        "diffs": []
+    },
+    {
+        "page": "/checkout/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            169714,
+            169587
+        ],
+        "lines": 2,
+        "diffs": [
+            {
+                "line": 525,
+                "base": "                            <p class=\"form-row form-row-wide validate-required\" id=\"billing_address_2_field\" data-priority=\"60\"><span class=\"woocommerce-input-w",
+                "branch": "                            <p class=\"form-row form-row-wide\" id=\"billing_address_2_field\" data-priority=\"60\"><span class=\"woocommerce-input-wrapper fld kbb-fl "
+            },
+            {
+                "line": 2629,
+                "base": "    fetch(\"http:\\/\\/127.0.0.1:8781\\/checkout\\/gift\", {",
+                "branch": "    fetch(\"http:\\/\\/127.0.0.1:8771\\/checkout\\/gift\", {"
+            }
+        ]
+    },
+    {
+        "page": "/ar/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            140532,
+            140532
+        ],
+        "lines": 0,
+        "diffs": []
+    },
+    {
+        "page": "/ar/shop/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            109543,
+            109543
+        ],
+        "lines": 0,
+        "diffs": []
+    },
+    {
+        "page": "/ar/collections/cleansers/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            100329,
+            100329
+        ],
+        "lines": 0,
+        "diffs": []
+    },
+    {
+        "page": "/ar/brands/anua/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            100126,
+            100126
+        ],
+        "lines": 0,
+        "diffs": []
+    },
+    {
+        "page": "/ar/product/1025-dokdo-toner/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            173703,
+            173703
+        ],
+        "lines": 0,
+        "diffs": []
+    },
+    {
+        "page": "/ar/cart/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            187078,
+            187078
+        ],
+        "lines": 0,
+        "diffs": []
+    },
+    {
+        "page": "/ar/checkout/",
+        "status": [
+            200,
+            200
+        ],
+        "bytes": [
+            185931,
+            185804
+        ],
+        "lines": 2,
+        "diffs": [
+            {
+                "line": 539,
+                "base": "                            <p class=\"form-row form-row-wide validate-required\" id=\"billing_address_2_field\" data-priority=\"60\"><span class=\"woocommerce-input-w",
+                "branch": "                            <p class=\"form-row form-row-wide\" id=\"billing_address_2_field\" data-priority=\"60\"><span class=\"woocommerce-input-wrapper fld kbb-fl "
+            },
+            {
+                "line": 2622,
+                "base": "    fetch(\"http:\\/\\/127.0.0.1:8781\\/checkout\\/gift\", {",
+                "branch": "    fetch(\"http:\\/\\/127.0.0.1:8771\\/checkout\\/gift\", {"
+            }
+        ]
+    }
+]

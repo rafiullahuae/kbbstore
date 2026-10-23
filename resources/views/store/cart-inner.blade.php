@@ -34,13 +34,12 @@
    Here and not in kbb-cart.css: printed only on a cart that draws the field
    with the switch on, so every other cart page carries none of it. */
 .kbb-cartpage .coupon .fld.kbb-fl{position:relative;flex:1;min-width:0;margin:0}
-.kbb-cartpage .coupon .fld.kbb-fl input{width:100%;padding:calc(17px + var(--fld-gap,3px)) 13px 5px;padding-inline-start:40px}.kbb-cartpage .coupon .fld.kbb-fl input{padding:calc((17px + var(--fld-gap,3px))*var(--cgs,1)) 13px calc(5px*var(--cgs,1));padding-inline-start:40px}
+.kbb-cartpage .coupon .fld.kbb-fl input{width:100%;padding:calc(17px + var(--fld-gap,3px)) 13px 5px;padding-inline-start:40px}
 .kbb-cartpage .coupon .fld.kbb-fl > label{position:absolute;inset-inline-start:41px;top:50%;transform:translateY(-50%);max-width:calc(100% - 54px);
   font-size:13px;line-height:1.3;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;
-  transition:top .16s ease,transform .16s ease,font-size .16s ease,color .16s ease}.kbb-cartpage .coupon .fld.kbb-fl > label{font-size:calc(13px*var(--cgt,1));line-height:1.3;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;
   transition:top .16s ease,transform .16s ease,font-size .16s ease,color .16s ease}
 .kbb-cartpage .coupon .fld.kbb-fl input:is(:focus,:not(:placeholder-shown),:-webkit-autofill,:autofill) ~ label{
-  top:13px;transform:translateY(calc(-7px - var(--fld-gap,3px)));font-size:10.5px;letter-spacing:.04em;color:#1F7D52}.kbb-cartpage .coupon .fld.kbb-fl input:is(:focus,:not(:placeholder-shown),:-webkit-autofill,:autofill) ~ label{font-size:calc(10.5px*var(--cgt,1));letter-spacing:.04em;color:#1F7D52}
+  top:13px;transform:translateY(calc(-7px - var(--fld-gap,3px)));font-size:10.5px;letter-spacing:.04em;color:#1F7D52}
 .kbb-cartpage .coupon .fld.kbb-fl .lead{position:absolute;inset-inline-start:13px;top:50%;transform:translateY(-50%);
   display:grid;place-items:center;color:var(--muted);pointer-events:none}
 .kbb-cartpage .coupon .fld.kbb-fl .lead svg{width:17px;height:17px;display:block}

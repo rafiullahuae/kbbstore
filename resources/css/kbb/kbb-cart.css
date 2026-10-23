@@ -2,10 +2,10 @@
    Scoped under .kbb-cartpage so it never collides with the mini-cart drawer. */
 
 .kbb-cartpage{background:var(--cream);min-height:60vh}
-.kbb-cartpage .wrap{max-width:1040px;padding-top:22px;padding-bottom:70px}.kbb-cartpage .wrap{padding-top:calc(22px*var(--cgs,1));padding-bottom:calc(70px*var(--cgs,1))}
-.kbb-cartpage .backlink{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);margin-bottom:12px}.kbb-cartpage .backlink{gap:calc(6px*var(--cgs,1)) 6px;font-size:calc(12.5px*var(--cgt,1));color:var(--ink-2);margin-bottom:calc(12px*var(--cgs,1))}
+.kbb-cartpage .wrap{max-width:1040px;padding-top:22px;padding-bottom:70px}
+.kbb-cartpage .backlink{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);margin-bottom:12px}
 .kbb-cartpage .backlink:hover{color:var(--pink-deep)}
-.kbb-cartpage h1{font-size:24px;font-weight:800;letter-spacing:-.01em;margin-bottom:20px}.kbb-cartpage h1{font-size:calc(24px*var(--cgt,1));font-weight:800;letter-spacing:-.01em;margin-bottom:calc(20px*var(--cgs,1))}
+.kbb-cartpage h1{font-size:24px;font-weight:800;letter-spacing:-.01em;margin-bottom:20px}
 /* Now a span inside the h1 rather than a paragraph under it: no block margin,
    and a lighter weight so it reads as a count and not part of the title.
 
@@ -17,13 +17,13 @@
    count was therefore lifted out of the heading and pinned to the page.
    Renaming the class removes the collision instead of layering another
    override on top of it. */
-.kbb-cartpage .cart-count{display:inline;position:static;font-size:14px;font-weight:600;color:var(--muted);letter-spacing:0;margin-inline-start:6px;white-space:nowrap}.kbb-cartpage .cart-count{font-size:calc(14px*var(--cgt,1));font-weight:600;color:var(--muted);letter-spacing:0;margin-inline-start:6px;white-space:nowrap}
+.kbb-cartpage .cart-count{display:inline;position:static;font-size:14px;font-weight:600;color:var(--muted);letter-spacing:0;margin-inline-start:6px;white-space:nowrap}
 
-.kbb-cartpage .grid{display:grid;grid-template-columns:1fr 372px;gap:26px;align-items:start}.kbb-cartpage .grid{gap:calc(26px*var(--cgs,1)) 26px;align-items:start}
+.kbb-cartpage .grid{display:grid;grid-template-columns:1fr 372px;gap:26px;align-items:start}
 @media(max-width:860px){.kbb-cartpage .grid{grid-template-columns:1fr}}
 
-.kbb-cartpage .ship{background:#fff;border:1px solid var(--line-2);border-radius:13px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px -24px rgba(42,34,40,.3)}.kbb-cartpage .ship{padding:calc(14px*var(--cgs,1)) 16px;margin-bottom:calc(14px*var(--cgs,1));box-shadow:0 12px 30px -24px rgba(42,34,40,.3)}
-.kbb-cartpage .ship .t{font-size:12.5px;color:var(--ink-2);margin-bottom:8px}.kbb-cartpage .ship .t{font-size:calc(12.5px*var(--cgt,1));color:var(--ink-2);margin-bottom:calc(8px*var(--cgs,1))}
+.kbb-cartpage .ship{background:#fff;border:1px solid var(--line-2);border-radius:13px;padding:14px 16px;margin-bottom:14px;box-shadow:0 12px 30px -24px rgba(42,34,40,.3)}
+.kbb-cartpage .ship .t{font-size:12.5px;color:var(--ink-2);margin-bottom:8px}
 .kbb-cartpage .ship .t b{color:var(--pink-deep)}
 .kbb-cartpage .bar{height:7px;border-radius:6px;background:var(--pink-soft);overflow:hidden}
 .kbb-cartpage .fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--pink-deep));border-radius:6px;transition:.4s var(--ease)}
@@ -87,54 +87,54 @@
    hidden` cut. Logical, so /ar mirrors from the same declaration. */
 .kbb-cartpage .items > .ci:first-child{border-start-start-radius:12px;border-start-end-radius:12px}
 .kbb-cartpage .items > .ci:last-child{border-end-start-radius:12px;border-end-end-radius:12px}
-.kbb-cartpage .ci{display:flex;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line-2)}.kbb-cartpage .ci{gap:calc(12px*var(--cgs,1)) 12px;align-items:center;padding:calc(11px*var(--cgs,1)) 14px;border-bottom:1px solid var(--line-2)}
+.kbb-cartpage .ci{display:flex;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line-2)}
 .kbb-cartpage .ci:last-child{border-bottom:none}
 .kbb-cartpage .cth{width:56px;height:56px;border-radius:10px;flex:none;display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px;text-align:center;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,.2);background-size:cover;background-position:center}
 .kbb-cartpage .cmid{flex:1;min-width:0}
-.kbb-cartpage .cbrand{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pink-ink)}.kbb-cartpage .cbrand{font-size:calc(10px*var(--cgt,1));font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pink-ink)}
-.kbb-cartpage .cn{font-size:13px;font-weight:500;margin:1px 0 6px;color:var(--ink);line-height:1.3}.kbb-cartpage .cn{font-size:calc(13px*var(--cgt,1));font-weight:500;margin:calc(1px*var(--cgs,1)) 0 calc(6px*var(--cgs,1));color:var(--ink);line-height:1.3}
+.kbb-cartpage .cbrand{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pink-ink)}
+.kbb-cartpage .cn{font-size:13px;font-weight:500;margin:1px 0 6px;color:var(--ink);line-height:1.3}
 .kbb-cartpage .cn a{color:inherit}
 .kbb-cartpage .cn a:hover{color:var(--pink-deep)}
-.kbb-cartpage .cvar{font-size:11.5px;color:var(--muted);margin:-4px 0 8px}.kbb-cartpage .cvar{font-size:calc(11.5px*var(--cgt,1));color:var(--muted);margin:calc(-4px*var(--cgs,1)) 0 calc(8px*var(--cgs,1))}
+.kbb-cartpage .cvar{font-size:11.5px;color:var(--muted);margin:-4px 0 8px}
 .kbb-cartpage .qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:0}
-.kbb-cartpage .qty button{width:28px;height:28px;font-size:15px;color:var(--ink-2)}.kbb-cartpage .qty button{font-size:calc(15px*var(--cgt,1));color:var(--ink-2)}
+.kbb-cartpage .qty button{width:28px;height:28px;font-size:15px;color:var(--ink-2)}
 .kbb-cartpage .qty button:hover{background:var(--pink-soft);color:var(--pink-deep)}
-.kbb-cartpage .qty span{min-width:28px;text-align:center;font-size:13px;font-weight:700}.kbb-cartpage .qty span{font-size:calc(13px*var(--cgt,1));font-weight:700}
-.kbb-cartpage .cright{text-align:end;display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none}.kbb-cartpage .cright{gap:calc(8px*var(--cgs,1)) 8px;flex:none}
-.kbb-cartpage .cpr{font-size:14px;font-weight:700;white-space:nowrap;color:var(--ink)}.kbb-cartpage .cpr{font-size:calc(14px*var(--cgt,1));font-weight:700;white-space:nowrap;color:var(--ink)}
-.kbb-cartpage .cwas{display:block;font-size:11.5px;color:var(--muted);text-decoration:line-through;margin-top:2px;font-weight:400}.kbb-cartpage .cwas{font-size:calc(11.5px*var(--cgt,1));color:var(--muted);text-decoration:line-through;margin-top:calc(2px*var(--cgs,1));font-weight:400}
-.kbb-cartpage .crm{font-size:11px;color:var(--muted);cursor:pointer}.kbb-cartpage .crm{font-size:calc(11px*var(--cgt,1));color:var(--muted);cursor:pointer}
+.kbb-cartpage .qty span{min-width:28px;text-align:center;font-size:13px;font-weight:700}
+.kbb-cartpage .cright{text-align:end;display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none}
+.kbb-cartpage .cpr{font-size:14px;font-weight:700;white-space:nowrap;color:var(--ink)}
+.kbb-cartpage .cwas{display:block;font-size:11.5px;color:var(--muted);text-decoration:line-through;margin-top:2px;font-weight:400}
+.kbb-cartpage .crm{font-size:11px;color:var(--muted);cursor:pointer}
 .kbb-cartpage .crm:hover{color:var(--sale)}
 
-.kbb-cartpage .empty{background:#fff;border:1px solid var(--line-2);border-radius:13px;padding:56px 24px;text-align:center;grid-column:1/-1}.kbb-cartpage .empty{padding:calc(56px*var(--cgs,1)) 24px;text-align:center;grid-column:1/-1}
-.kbb-cartpage .empty .em{font-size:40px;margin-bottom:10px}.kbb-cartpage .empty .em{font-size:calc(40px*var(--cgt,1));margin-bottom:calc(10px*var(--cgs,1))}
-.kbb-cartpage .empty b{display:block;font-size:17px;margin-bottom:6px}.kbb-cartpage .empty b{font-size:calc(17px*var(--cgt,1));margin-bottom:calc(6px*var(--cgs,1))}
-.kbb-cartpage .empty p{font-size:13px;color:var(--muted);margin-bottom:18px}.kbb-cartpage .empty p{font-size:calc(13px*var(--cgt,1));color:var(--muted);margin-bottom:calc(18px*var(--cgs,1))}
+.kbb-cartpage .empty{background:#fff;border:1px solid var(--line-2);border-radius:13px;padding:56px 24px;text-align:center;grid-column:1/-1}
+.kbb-cartpage .empty .em{font-size:40px;margin-bottom:10px}
+.kbb-cartpage .empty b{display:block;font-size:17px;margin-bottom:6px}
+.kbb-cartpage .empty p{font-size:13px;color:var(--muted);margin-bottom:18px}
 
-.kbb-cartpage .sum{background:#fff;border:1px solid var(--line-2);border-radius:13px;padding:20px;box-shadow:0 12px 36px -24px rgba(42,34,40,.22);position:sticky;top:120px}.kbb-cartpage .sum{padding:calc(20px*var(--cgs,1)) 20px;box-shadow:0 12px 36px -24px rgba(42,34,40,.22);position:sticky;top:120px}
-.kbb-cartpage .sum h2{font-size:15px;font-weight:800;margin-bottom:14px}.kbb-cartpage .sum h2{font-size:calc(15px*var(--cgt,1));font-weight:800;margin-bottom:calc(14px*var(--cgs,1))}
-.kbb-cartpage .srow{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2);padding:7px 0}.kbb-cartpage .srow{font-size:calc(13px*var(--cgt,1));color:var(--ink-2);padding:calc(7px*var(--cgs,1)) 0}
-.kbb-cartpage .srow.tot{border-top:1px solid var(--line);margin-top:8px;padding-top:14px;font-size:17px;font-weight:800;color:var(--ink)}.kbb-cartpage .srow.tot{margin-top:calc(8px*var(--cgs,1));padding-top:calc(14px*var(--cgs,1));font-size:calc(17px*var(--cgt,1));font-weight:800;color:var(--ink)}
+.kbb-cartpage .sum{background:#fff;border:1px solid var(--line-2);border-radius:13px;padding:20px;box-shadow:0 12px 36px -24px rgba(42,34,40,.22);position:sticky;top:120px}
+.kbb-cartpage .sum h2{font-size:15px;font-weight:800;margin-bottom:14px}
+.kbb-cartpage .srow{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2);padding:7px 0}
+.kbb-cartpage .srow.tot{border-top:1px solid var(--line);margin-top:8px;padding-top:14px;font-size:17px;font-weight:800;color:var(--ink)}
 .kbb-cartpage .srow .free{color:var(--green);font-weight:700}
 .kbb-cartpage .srow.disc{color:var(--green);font-weight:600}
 /* "Delivery calculated at checkout" — a caption under the Total, not another
    figure, so it sits quietly and takes no top padding away from the button. */
-.kbb-cartpage .srow.note{justify-content:flex-start;font-size:11.5px;color:var(--muted);padding:2px 0 0}.kbb-cartpage .srow.note{font-size:calc(11.5px*var(--cgt,1));color:var(--muted);padding:calc(2px*var(--cgs,1)) 0 0}
-.kbb-cartpage .coupon{display:flex;gap:8px;margin:14px 0;background:linear-gradient(135deg,#EEF8F1,#fff);border:1.4px dashed #BFE0CD;border-radius:12px;padding:10px}.kbb-cartpage .coupon{gap:calc(8px*var(--cgs,1)) 8px;margin:calc(14px*var(--cgs,1)) 0;background:linear-gradient(135deg,#EEF8F1,#fff);border:1.4px dashed #BFE0CD;border-radius:12px;padding:calc(10px*var(--cgs,1)) 10px}
-.kbb-cartpage .coupon input{flex:1;min-width:0;border:1.4px solid #C9E7D5;border-radius:9px;padding:11px 13px;font-family:inherit;font-size:13px;background:#fff}.kbb-cartpage .coupon input{padding:calc(11px*var(--cgs,1)) 13px;font-family:inherit;font-size:calc(13px*var(--cgt,1));background:#fff}
+.kbb-cartpage .srow.note{justify-content:flex-start;font-size:11.5px;color:var(--muted);padding:2px 0 0}
+.kbb-cartpage .coupon{display:flex;gap:8px;margin:14px 0;background:linear-gradient(135deg,#EEF8F1,#fff);border:1.4px dashed #BFE0CD;border-radius:12px;padding:10px}
+.kbb-cartpage .coupon input{flex:1;min-width:0;border:1.4px solid #C9E7D5;border-radius:9px;padding:11px 13px;font-family:inherit;font-size:13px;background:#fff}
 .kbb-cartpage .coupon input:focus{outline:none;border-color:#2E9E6B;box-shadow:0 0 0 3px rgba(46,158,107,.12)}
-.kbb-cartpage .coupon button{background:var(--pink);color:#fff;border-radius:9px;padding:0 16px;font-size:12.5px;font-weight:700;white-space:nowrap}.kbb-cartpage .coupon button{font-size:calc(12.5px*var(--cgt,1));font-weight:700;white-space:nowrap}
+.kbb-cartpage .coupon button{background:var(--pink);color:#fff;border-radius:9px;padding:0 16px;font-size:12.5px;font-weight:700;white-space:nowrap}
 .kbb-cartpage .coupon button:hover{background:var(--pink-deep)}
-.kbb-cartpage .appliedcoupon{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#EEF8F1;border:1px solid #C9E7D5;border-radius:10px;padding:9px 12px;font-size:12px;color:#1F7D52;font-weight:600;margin:12px 0}.kbb-cartpage .appliedcoupon{gap:calc(8px*var(--cgs,1)) 8px;background:#EEF8F1;border:1px solid #C9E7D5;border-radius:10px;padding:calc(9px*var(--cgs,1)) 12px;font-size:calc(12px*var(--cgt,1));color:#1F7D52;font-weight:600;margin:calc(12px*var(--cgs,1)) 0}
-.kbb-cartpage .appliedcoupon a{color:#1F7D52;text-decoration:underline;cursor:pointer;font-size:11px}.kbb-cartpage .appliedcoupon a{font-size:calc(11px*var(--cgt,1))}
-.kbb-cartpage .cohint{display:flex;gap:8px;align-items:center;background:var(--pink-soft);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--pink-ink);margin-bottom:14px}.kbb-cartpage .cohint{gap:calc(8px*var(--cgs,1)) 8px;align-items:center;background:var(--pink-soft);border-radius:10px;padding:calc(11px*var(--cgs,1)) 13px;font-size:calc(12px*var(--cgt,1));color:var(--pink-ink);margin-bottom:calc(14px*var(--cgs,1))}
+.kbb-cartpage .appliedcoupon{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#EEF8F1;border:1px solid #C9E7D5;border-radius:10px;padding:9px 12px;font-size:12px;color:#1F7D52;font-weight:600;margin:12px 0}
+.kbb-cartpage .appliedcoupon a{color:#1F7D52;text-decoration:underline;cursor:pointer;font-size:11px}
+.kbb-cartpage .cohint{display:flex;gap:8px;align-items:center;background:var(--pink-soft);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--pink-ink);margin-bottom:14px}
 .kbb-cartpage .cohint b{cursor:pointer}
-.kbb-cartpage .cobtn{display:block;width:100%;text-align:center;background:var(--pink-deep);color:#fff;font-size:14.5px;font-weight:700;padding:15px;border-radius:12px;transition:.15s;box-shadow:0 12px 26px -10px rgba(193,62,99,.5)}.kbb-cartpage .cobtn{font-size:calc(14.5px*var(--cgt,1));font-weight:700;padding:calc(15px*var(--cgs,1)) 15px;border-radius:12px;transition:.15s;box-shadow:0 12px 26px -10px rgba(193,62,99,.5)}
+.kbb-cartpage .cobtn{display:block;width:100%;text-align:center;background:var(--pink-deep);color:#fff;font-size:14.5px;font-weight:700;padding:15px;border-radius:12px;transition:.15s;box-shadow:0 12px 26px -10px rgba(193,62,99,.5)}
 .kbb-cartpage .cobtn:hover{background:var(--pink);transform:translateY(-1px)}
-.kbb-cartpage .conti{display:block;text-align:center;font-size:12.5px;color:var(--ink-2);margin-top:12px;font-weight:500}.kbb-cartpage .conti{font-size:calc(12.5px*var(--cgt,1));color:var(--ink-2);margin-top:calc(12px*var(--cgs,1));font-weight:500}
+.kbb-cartpage .conti{display:block;text-align:center;font-size:12.5px;color:var(--ink-2);margin-top:12px;font-weight:500}
 .kbb-cartpage .conti:hover{color:var(--pink-deep)}
-.kbb-cartpage .paylogos{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:14px}.kbb-cartpage .paylogos{gap:calc(6px*var(--cgs,1)) 6px;flex-wrap:wrap;justify-content:center;margin-top:calc(14px*var(--cgs,1))}
-.kbb-cartpage .paylogos span{background:var(--cream);border:1px solid var(--line-2);border-radius:6px;font-size:10px;font-weight:700;color:var(--ink-2);padding:5px 9px}.kbb-cartpage .paylogos span{font-size:calc(10px*var(--cgt,1));font-weight:700;color:var(--ink-2);padding:calc(5px*var(--cgs,1)) 9px}
+.kbb-cartpage .paylogos{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.kbb-cartpage .paylogos span{background:var(--cream);border:1px solid var(--line-2);border-radius:6px;font-size:10px;font-weight:700;color:var(--ink-2);padding:5px 9px}
 
 /* subtle refresh state while an AJAX update is in flight */
 .kbb-cartpage.busy #kbbCartInner{opacity:.55;pointer-events:none;transition:opacity .15s}
@@ -142,22 +142,22 @@
 /* WooCommerce notices, restyled to match */
 .kbb-cartpage .woocommerce-message,
 .kbb-cartpage .woocommerce-error,
-.kbb-cartpage .woocommerce-info{list-style:none;background:#fff;border:1px solid var(--line-2);border-inline-start:3px solid var(--pink);border-radius:10px;padding:12px 15px;font-size:13px;margin-bottom:14px;box-shadow:0 12px 30px -24px rgba(42,34,40,.3)}.kbb-cartpage .woocommerce-message, .kbb-cartpage .woocommerce-error, .kbb-cartpage .woocommerce-info{padding:calc(12px*var(--cgs,1)) 15px;font-size:calc(13px*var(--cgt,1));margin-bottom:calc(14px*var(--cgs,1));box-shadow:0 12px 30px -24px rgba(42,34,40,.3)}
+.kbb-cartpage .woocommerce-info{list-style:none;background:#fff;border:1px solid var(--line-2);border-inline-start:3px solid var(--pink);border-radius:10px;padding:12px 15px;font-size:13px;margin-bottom:14px;box-shadow:0 12px 30px -24px rgba(42,34,40,.3)}
 .kbb-cartpage .woocommerce-error{border-inline-start-color:var(--sale)}
 .kbb-cartpage .woocommerce-message{border-inline-start-color:var(--green)}
 
 /* ===== mobile ===== */
 @media(max-width:600px){
-  .kbb-cartpage .wrap{padding:16px 14px 40px}.kbb-cartpage .wrap{padding:calc(16px*var(--cgs,1)) 14px calc(40px*var(--cgs,1))}
-  .kbb-cartpage h1{font-size:21px}.kbb-cartpage h1{font-size:calc(21px*var(--cgt,1))}
-  .kbb-cartpage .grid{gap:16px}.kbb-cartpage .grid{gap:calc(16px*var(--cgs,1)) 16px}
-  .kbb-cartpage .sum{position:static;top:auto;padding:16px}.kbb-cartpage .sum{padding:calc(16px*var(--cgs,1)) 16px}
-  .kbb-cartpage .ci{padding:10px 12px;gap:11px}.kbb-cartpage .ci{padding:calc(10px*var(--cgs,1)) 12px;gap:calc(11px*var(--cgs,1)) 11px}
+  .kbb-cartpage .wrap{padding:16px 14px 40px}
+  .kbb-cartpage h1{font-size:21px}
+  .kbb-cartpage .grid{gap:16px}
+  .kbb-cartpage .sum{position:static;top:auto;padding:16px}
+  .kbb-cartpage .ci{padding:10px 12px;gap:11px}
   .kbb-cartpage .cth{width:52px;height:52px}
-  .kbb-cartpage .cn{font-size:12.5px;margin:1px 0 5px}.kbb-cartpage .cn{font-size:calc(12.5px*var(--cgt,1));margin:calc(1px*var(--cgs,1)) 0 calc(5px*var(--cgs,1))}
-  .kbb-cartpage .cpr{font-size:13.5px}.kbb-cartpage .cpr{font-size:calc(13.5px*var(--cgt,1))}
-  .kbb-cartpage .cwas{font-size:11px}.kbb-cartpage .cwas{font-size:calc(11px*var(--cgt,1))}
-  .kbb-cartpage .ship{padding:12px 14px}.kbb-cartpage .ship{padding:calc(12px*var(--cgs,1)) 14px}
+  .kbb-cartpage .cn{font-size:12.5px;margin:1px 0 5px}
+  .kbb-cartpage .cpr{font-size:13.5px}
+  .kbb-cartpage .cwas{font-size:11px}
+  .kbb-cartpage .ship{padding:12px 14px}
 }
 
 /* ==========================================================================
@@ -169,7 +169,7 @@
      you are buying is the single most-used control on this page. */
 
   /* "Remove" was 11px type with no padding, sitting 7.3px from the stepper. */
-  .kbb-cartpage .crm{display:inline-flex;align-items:center;min-height:44px;padding:0 6px;font-size:12px}.kbb-cartpage .crm{font-size:calc(12px*var(--cgt,1))}
+  .kbb-cartpage .crm{display:inline-flex;align-items:center;min-height:44px;padding:0 6px;font-size:12px}
 
   /* Coupon apply sat flush against its field. */
   .kbb-cartpage .coupon input{min-height:44px}
@@ -183,7 +183,7 @@
   /* "Continue shopping" was 20px tall. */
   .kbb-cartpage .backlink{min-height:44px}
   /* The line-item product name link was 192x15. */
-  .kbb-cartpage .cn a{display:inline-block;padding:5px 0}.kbb-cartpage .cn a{padding:calc(5px*var(--cgs,1)) 0}
+  .kbb-cartpage .cn a{display:inline-block;padding:5px 0}
 }
 
 
@@ -267,18 +267,3 @@
    row height and no clip — is not selected at all and cannot move.
    ========================================================================== */
 .kbb-cartpage.cpg-squeeze .items .ci.ci-set{height:auto;min-height:var(--cpg-row-h);overflow:visible}
-
-
-/* ── TEXT SIZES (Lane CK, 22 October) ─────────────────────────────────────
-   Appearance -> Cart page -> Desktop / Mobile · Text sizes. Every px size and
-   gap above has a twin rule written times --cgt / --cgs; Overall sets both, each role sets
-   the text factor of its own text. All 1 until moved, so with nothing set the
-   page is exactly as it was. Phone values from 900px down, like the rest of
-   the cart page's phone rules. */
-.kbb-cartpage{--cgz-ovt:var(--cgz-d-ovt,1);--cgz-ovs:var(--cgz-d-ovs,1);--cgz-tsumh:var(--cgz-d-tsumh,1);--cgz-trows:var(--cgz-d-trows,1);--cgz-ttotal:var(--cgz-d-ttotal,1);--cgz-tcoupon:var(--cgz-d-tcoupon,1);--cgz-thelp:var(--cgz-d-thelp,1);--cgt:var(--cgz-ovt);--cgs:var(--cgz-ovs)}
-@media(max-width:900px){.kbb-cartpage{--cgz-ovt:var(--cgz-m-ovt,1);--cgz-ovs:var(--cgz-m-ovs,1);--cgz-tsumh:var(--cgz-m-tsumh,1);--cgz-trows:var(--cgz-m-trows,1);--cgz-ttotal:var(--cgz-m-ttotal,1);--cgz-tcoupon:var(--cgz-m-tcoupon,1);--cgz-thelp:var(--cgz-m-thelp,1)}}
-.kbb-cartpage aside.sum > h2{--cgt:calc(var(--cgz-ovt)*var(--cgz-tsumh))}
-.kbb-cartpage .srow{--cgt:calc(var(--cgz-ovt)*var(--cgz-trows))}
-.kbb-cartpage :is(.srow.tot,.cpg-totband){--cgt:calc(var(--cgz-ovt)*var(--cgz-ttotal))}
-.kbb-cartpage :is(.coupon,.cohint,.co-tk){--cgt:calc(var(--cgz-ovt)*var(--cgz-tcoupon))}
-.kbb-cartpage :is(.srow.note,.ship,.cpg-ship,.paylogos,.conti,.free,.backlink){--cgt:calc(var(--cgz-ovt)*var(--cgz-thelp))}

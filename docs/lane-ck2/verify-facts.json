@@ -1,0 +1,162 @@
+[
+ {
+  "lang": "en",
+  "w": 390,
+  "restStars": 0,
+  "typable": {
+   "ok": 5,
+   "bad": []
+  },
+  "afterBlur": {
+   "star": "none",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterTypeClear": {
+   "star": "inline",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterType": {
+   "star": "none",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterSubmit": {
+   "billing_first_name": "inline",
+   "billing_phone": "none",
+   "billing_address_1": "none",
+   "billing_address_2": "none",
+   "billing_state": "none"
+  },
+  "clickable": {
+   "ok": 9,
+   "bad": []
+  },
+  "sw": [
+   390,
+   390
+  ],
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+ },
+ {
+  "lang": "en",
+  "w": 1280,
+  "restStars": 0,
+  "typable": {
+   "ok": 6,
+   "bad": []
+  },
+  "afterBlur": {
+   "star": "none",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterTypeClear": {
+   "star": "inline",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterType": {
+   "star": "none",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterSubmit": {
+   "billing_first_name": "inline",
+   "billing_phone": "none",
+   "billing_address_1": "none",
+   "billing_address_2": "none",
+   "billing_state": "none"
+  },
+  "clickable": {
+   "ok": 13,
+   "bad": []
+  },
+  "sw": [
+   1280,
+   1280
+  ],
+  "errors": []
+ },
+ {
+  "lang": "ar",
+  "w": 390,
+  "restStars": 0,
+  "typable": {
+   "ok": 5,
+   "bad": []
+  },
+  "afterBlur": {
+   "star": "none",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterTypeClear": {
+   "star": "inline",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterType": {
+   "star": "none",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterSubmit": {
+   "billing_first_name": "inline",
+   "billing_phone": "none",
+   "billing_address_1": "none",
+   "billing_address_2": "none",
+   "billing_state": "none"
+  },
+  "clickable": {
+   "ok": 9,
+   "bad": []
+  },
+  "sw": [
+   390,
+   390
+  ],
+  "errors": []
+ },
+ {
+  "lang": "ar",
+  "w": 1280,
+  "restStars": 0,
+  "typable": {
+   "ok": 6,
+   "bad": []
+  },
+  "afterBlur": {
+   "star": "none",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterTypeClear": {
+   "star": "inline",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterType": {
+   "star": "none",
+   "color": "rgb(117, 108, 116)"
+  },
+  "afterSubmit": {
+   "billing_first_name": "inline",
+   "billing_phone": "none",
+   "billing_address_1": "none",
+   "billing_address_2": "none",
+   "billing_state": "none"
+  },
+  "clickable": {
+   "ok": 13,
+   "bad": []
+  },
+  "sw": [
+   1280,
+   1280
+  ],
+  "errors": []
+ },
+ {
+  "order": "en",
+  "url": "http://127.0.0.1:8771/checkout/success?order=10001",
+  "title": "Order received · K-Beauty Bliss | KBB"
+ },
+ {
+  "order": "ar",
+  "url": "http://127.0.0.1:8771/ar/checkout/success?order=10002",
+  "title": "تم استلام الطلب · كي بيوتي بليس"
+ }
+]
