@@ -190,7 +190,7 @@
     /* Both only mean anything while the line above them is drawn at all. */
     if (f.key === 'rating_text' || f.key === 'rating_min') return !pvOn('rating_on');
     /* (Lane QK6) The coupon line's coupon and wording, only while it is drawn. */
-    if (f.key === 'cline_coupon' || f.key === 'cline_text' || f.key === 'cline_text_ar') return !pvOn('cline_on');
+    if (f.key === 'cline_coupon' || f.key === 'cline_text' || f.key === 'cline_text_ar' || f.key === 'cline_done' || f.key === 'cline_done_ar') return !pvOn('cline_on');
     /* NOT HIDDEN ANY MORE. It was, on the grounds that "lined up with the page"
        mode read the page's side padding and this slider would move nothing. The
        reasoning was fine and the outcome was not: it left no way to set the

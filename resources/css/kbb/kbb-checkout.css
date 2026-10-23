@@ -294,6 +294,10 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .co-cline.is-done{background:#FFFDF4;border-color:#2E9E6B}
 .kbb-checkout .co-cline.is-done .co-cl-ic{color:#2E9E6B}
 .kbb-checkout .co-cline.is-done .co-cl-code{color:#1F7D52;border-color:#BFE0CD}
+/* After apply only the words change ("Discount code GLOW applied"); both are in the render, the class picks one. */
+.kbb-checkout .co-cline .co-cl-d,.kbb-checkout .co-cline.is-done .co-cl-a{display:none}
+.kbb-checkout .co-cline.is-done .co-cl-d{display:inline}
+.kbb-checkout .co-cl-d .co-cl-code,.kbb-checkout .co-cl-d .co-cl-code:hover{cursor:default;border-color:#BFE0CD}
 .kbb-checkout .co-cl-tick{display:inline-grid;place-items:center;flex:0 0 18px;width:18px;height:18px;border-radius:50%;background:#2E9E6B;color:#fff}
 .kbb-checkout .co-cl-tick svg{width:11px;height:11px}
 .kbb-checkout .co-cl-code{position:relative;display:inline-flex;align-items:center;min-height:24px;margin:0 2px;padding:0 8px;background:#fff;border:1px solid #f3c3d4;border-radius:7px;color:#A82F53;font:inherit;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;vertical-align:middle;transition:background .15s,border-color .15s}

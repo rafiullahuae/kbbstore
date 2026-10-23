@@ -1035,6 +1035,12 @@ class CheckoutPage
                             'Use {coupon-code} where the tappable code should appear; without it the code is added at the end. Up to 120 characters.'],
         'cline_text_ar' => ['text', 'Text — Arabic', self::CLINE_TEXT_AR,
                             'The same line on the Arabic shop (/ar/). Cleared, it goes back to the shipped Arabic wording.'],
+        /* The owner, 23 October: "Discount code {coupon-code} applied" once
+           the coupon is on the order, same style, only the words change. */
+        'cline_done'    => ['text', 'Text after apply', self::CLINE_DONE,
+                            'What the line says once the coupon is on the order. Use {coupon-code} where the code should appear. Up to 120 characters.'],
+        'cline_done_ar' => ['text', 'Text after apply — Arabic', self::CLINE_DONE_AR,
+                            'The same, on the Arabic shop (/ar/). Cleared, it goes back to the shipped Arabic wording.'],
 
         /*
          * ── THE TWO WAYS BACK, OFF (Lane QK6) ──────────────────────────────
@@ -1365,6 +1371,10 @@ class CheckoutPage
 
     public const CLINE_TEXT_AR = 'للحصول على خصم، طبّق القسيمة {coupon-code}';
 
+    public const CLINE_DONE = 'Discount code {coupon-code} applied';
+
+    public const CLINE_DONE_AR = 'تم تطبيق رمز الخصم {coupon-code}';
+
     /** Where the stored snapshot of a coupon picked on this screen lives. NOT in SCHEMA. */
     public const CLINE_SNAPSHOT = 'checkoutpage_cline_snapshot';
 
@@ -1432,7 +1442,7 @@ class CheckoutPage
         'delivery'     => ['Delivery labels', 'The "3 Delivery" section on a UAE checkout: what the delivery option is called, paid and free, and the small free-delivery line beside the heading. Last on the tab: the free-delivery bar on the cart page and the checkout. One set of values for both surfaces.',
                            ['dl_on', 'dl_paid', 'dl_paid_ar', 'dl_free', 'dl_free_ar', 'dl_note_on', 'dl_note', 'dl_note_ar', 'fs_bar_on']],
         'cline'        => ['Coupon line', 'The line at the very top of the checkout: "For Discount, Apply coupon GLOW". Tapping the code applies it to the order in place. One set of values for both surfaces.',
-                           ['cline_on', 'cline_coupon', 'cline_text', 'cline_text_ar']],
+                           ['cline_on', 'cline_coupon', 'cline_text', 'cline_text_ar', 'cline_done', 'cline_done_ar']],
         /* Lane CO, appended so every other tab keeps its place. */
         'express'      => ['Coupon, express & sign in', 'The coupon box, the Apple Pay / Google Pay row under it with its "Express checkout" heading and "OR" line, and the "Sign in" link beside "1 Contact" with its sign-in window. One set of values for both surfaces.',
                            ['coupon_head', 'xc_head', 'xc_head_ar', 'signin_on', 'signin_icon', 'signin_member']],
@@ -1946,17 +1956,22 @@ class CheckoutPage
      * {coupon-code} token replaced by $pill (markup the caller built and
      * escaped). Nothing printed unescaped comes from a setting.
      */
-    public function couponLineHtml(string $code, string $pill): string
+    public function couponLineHtml(string $code, string $pill, bool $done = false): string
     {
         $ar = ! \App\Support\Locale::isDefault() && \App\Support\Locale::current() === 'ar';
-        $text = $ar ? trim((string) $this->flagless('cline_text_ar')) : '';
+        [$key, $default] = $done ? ['cline_done', self::CLINE_DONE] : ['cline_text', self::CLINE_TEXT];
+        $text = $ar ? trim((string) $this->flagless($key.'_ar')) : '';
 
-        if ($text === '') {
-            $text = trim((string) $this->flagless('cline_text'));
+        if ($text === '' && $ar && $done) {
+            $text = self::CLINE_DONE_AR;
         }
 
         if ($text === '') {
-            $text = self::CLINE_TEXT;
+            $text = trim((string) $this->flagless($key));
+        }
+
+        if ($text === '') {
+            $text = $default;
         }
 
         return str_contains($text, CartPanel::COUPON_TOKEN)

@@ -394,7 +394,7 @@ it('stores only "same as the cart panel" or a real coupon id, and lists the shop
 
     $tab = collect($body['tabs'])->firstWhere('key', 'cline');
     expect($tab['label'])->toBe('Coupon line')
-        ->and(array_column($tab['fields'], 'key'))->toBe(['cline_on', 'cline_coupon', 'cline_text', 'cline_text_ar']);
+        ->and(array_column($tab['fields'], 'key'))->toBe(['cline_on', 'cline_coupon', 'cline_text', 'cline_text_ar', 'cline_done', 'cline_done_ar']);
 
     // Behind the screen's own capability, failing closed.
     test()->actingAs(q6Owner('support'), 'admin')
@@ -502,4 +502,44 @@ it('heads section 2 "Shipping Details" and opens it with Full name then Phone; C
 
 it('says Shipping Details in Arabic from the shipped draft wording', function () {
     expect(\App\Services\Translation\ArabicInterfaceDrafts::all()['store.checkout.step_shipping'])->toBe('تفاصيل الشحن');
+});
+
+it('says "Discount code GLOW applied" once the coupon is on the order, in English and Arabic (the owner, 23 October)', function () {
+    /*
+     * The owner: "i need to change the text also in coupon row after apply the
+     * coupon: Discount code {coupon-code} applied ... same style applied only
+     * the text change", and "in arabic will change the same txt in arabic".
+     * Both wordings are in the render; .is-done picks one, so applying in place
+     * swaps the words with no script.
+     * MUTATION: drop the .is-done .co-cl-d rule and the row still invites the
+     * shopper to apply a coupon that is already on -- red.
+     */
+    $glow = q6Coupon();
+    q6PanelChooses($glow);
+    $cart = q6Cart();
+    $cart->forceFill(['coupon_id' => $glow->id])->save();
+
+    $html = q6Checkout($cart);
+    expect($html)->toContain('<span class="co-cl-a">For Discount, Apply coupon <button type="button" class="co-cl-code" data-kbb-cline="GLOW"')
+        ->and($html)->toContain('<span class="co-cl-d" aria-hidden="true">Discount code <span class="co-cl-code">GLOW</span> applied</span>')
+        // Only the invitation's code is a button: the applied chip cannot re-apply.
+        ->and(substr_count($html, 'class="co-cl-code" data-kbb-cline="GLOW"'))->toBe(1);
+
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-checkout.css'));
+    expect($css)->toContain('.kbb-checkout .co-cline .co-cl-d,.kbb-checkout .co-cline.is-done .co-cl-a{display:none}')
+        ->and($css)->toContain('.kbb-checkout .co-cline.is-done .co-cl-d{display:inline}');
+
+    // His own wording, escaped, from Appearance -> Checkout page -> Coupon line.
+    q6Set(['cline_done' => 'Saved <b> with {coupon-code}']);
+    expect(q6Checkout($cart))->toContain('Saved &lt;b&gt; with <span class="co-cl-code">GLOW</span>');
+});
+
+it('says it in Arabic on /ar/', function () {
+    $glow = q6Coupon();
+    q6PanelChooses($glow);
+    ArabicShop::on();
+
+    expect(app(CheckoutPage::class)->couponLineHtml('GLOW', '[c]', true))->toBe('Discount code [c] applied');
+    app()->setLocale('ar');
+    expect(app(CheckoutPage::class)->couponLineHtml('GLOW', '[c]', true))->toBe('تم تطبيق رمز الخصم [c]');
 });
