@@ -29,7 +29,7 @@ use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-const FG5_DEFAULT_FIELDSET = '<fieldset class="fgb fgb-clamp2" style="--fg-ts:12px;--fg-pl:28px;--fg-pr:36px;--fg-fg:16px;--fg-rg:3px">';
+const FG5_DEFAULT_FIELDSET = '<fieldset class="fgb fgb-clamp2" style="--fg-ts:12px;--fg-pl:28px;--fg-pr:36px;--fg-fg:16px;--fg-rg:3px"';
 
 beforeEach(function () {
     DB::table('free_gift_ranges')->delete();
@@ -292,7 +292,7 @@ it('costs the cart page no query for the look: the same count with or without on
     [$with, $b] = $count(['brand' => false, 'titles' => 'fade', 'separator' => true, 'free_gap' => 30, 'title_px' => 15, 'photo_list' => 44, 'photo_row' => 44, 'row_gap' => 9]);
 
     expect($a)->toContain('<fieldset class="fgb fgb-page fgb-clamp2"')
-        ->and($b)->toContain('<fieldset class="fgb fgb-page fgb-nobrand fgb-fade fgb-sep" style="--fg-ts:15px;--fg-pl:44px;--fg-pr:44px;--fg-fg:30px;--fg-rg:9px">')
+        ->and($b)->toContain('<fieldset class="fgb fgb-page fgb-nobrand fgb-fade fgb-sep" style="--fg-ts:15px;--fg-pl:44px;--fg-pr:44px;--fg-fg:30px;--fg-rg:9px" data-fgs="')
         ->and($with)->toBe($without);
 
     // And the box itself, drawn once the settings row has been read (as the

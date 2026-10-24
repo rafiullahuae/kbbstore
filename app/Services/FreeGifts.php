@@ -1264,7 +1264,11 @@ final class FreeGifts
         $lines = $this->forTotals($totals, $country);
 
         if ($lines === []) {
-            return ['kbbFgRows' => [], 'kbbFgWords' => ''];
+            // (Lane FGL) A shopper who can see gifts gets an empty marker, so a
+            // box that comes into stock later has a place to appear; with the
+            // switch off (or Testing, for everyone else) there is no marker and
+            // no live check at all.
+            return ['kbbFgRows' => [], 'kbbFgWords' => '', 'kbbFgSig' => $this->visibleTo(app()->bound('request') ? request() : null) ? '0' : null];
         }
 
         $words = '';
@@ -1284,7 +1288,36 @@ final class FreeGifts
         }
 
         // kbbFgThumbs: the small photos, full size first (fullFirst()); the list keeps this order.
-        return ['kbbFgRows' => self::rows($lines), 'kbbFgThumbs' => self::rows(self::fullFirst($lines)), 'kbbFgWords' => $words];
+        $box = ['kbbFgRows' => self::rows($lines), 'kbbFgThumbs' => self::rows(self::fullFirst($lines)), 'kbbFgWords' => $words];
+
+        return $box + ['kbbFgSig' => $this->sig($box)];
+    }
+
+    /**
+     * THE LIVE BOX'S FINGERPRINT (Lane FGL). The owner, 24 October: "the free
+     * gifts box must update silently at backend during customer journey, to
+     * see what's actually available as gifts and as per criteria ... i don't
+     * want to disturb the customer at all. and neither compromise on the page
+     * speed or server load".
+     *
+     * Twelve hex characters over everything the box draws -- the rows (product,
+     * name, brand, photo, quantity, value), the photo order, the band's
+     * sentence, the look and the owner's words -- printed on the box as
+     * data-fgs. GET /api/cart/gifts compares the shopper's copy with a fresh
+     * one and answers 204, no body, when they match, which is nearly always;
+     * only a box that really changed travels. No query of its own: it hashes
+     * what box() already read.
+     */
+    public function sig(array $box): string
+    {
+        $config = $this->config();
+
+        return substr(sha1(serialize([
+            $box['kbbFgRows'], $box['kbbFgThumbs'] ?? null, $box['kbbFgWords'] ?? '',
+            $config['look'] ?? null, $config['show_value'] ?? null,
+            $this->text('title'), $this->text('view_all'), $this->text('hide'), $this->text('free'),
+            $this->count(self::units($box['kbbFgRows'])),
+        ])), 0, 12);
     }
 
     /**

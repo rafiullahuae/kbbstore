@@ -180,6 +180,7 @@ Route::prefix('api/cart')->group(function () {
     Route::get('/debug', [\App\Http\Controllers\Store\CartController::class, 'debug'])
         ->middleware('auth:admin');
     Route::get('/drawer',  [\App\Http\Controllers\Store\CartController::class, 'drawer']);
+    require __DIR__.'/cart-gifts-live.php';
     Route::post('/add',    [\App\Http\Controllers\Store\CartController::class, 'add']);
     Route::post('/update', [\App\Http\Controllers\Store\CartController::class, 'update']);
     Route::post('/remove', [\App\Http\Controllers\Store\CartController::class, 'remove']);

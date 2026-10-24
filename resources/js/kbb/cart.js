@@ -13,6 +13,7 @@ import { open, closeAll } from './overlay.js';
 import { toast, tick } from './toast.js';
 import { t } from './i18n.js';
 import { escapeHtml } from './safe.js';
+import { initGiftLive, giftsFresh } from './gift-live.js';
 
 /* Requests are queued, not dropped.
    Adding the same product twice in quick succession used to lose the second
@@ -181,6 +182,7 @@ const apply = (data) => {
        window.kbbRefreshCart below. */
     const frag = fragment();
     if (frag && data.drawer) frag.outerHTML = data.drawer;
+    if (data.drawer || data.page) giftsFresh();   // their gift boxes are fresh (gift-live.js)
 
     const inner = document.getElementById('cartInner');
     if (inner && data.page) inner.innerHTML = data.page;   // null off the cart page
@@ -266,6 +268,7 @@ export async function addTogether(items, mainId = null) {
 }
 
 export function initCart() {
+    initGiftLive();
     document.addEventListener('click', async (event) => {
         // Add to cart — product cards, and later the product page.
         const add = event.target.closest('[data-kbb-add]');
@@ -428,7 +431,7 @@ export function initCart() {
             const r = await fetch(`${window.KBB.routes.cartApi}/drawer`, { headers: { Accept: 'application/json' } });
             const d = await r.json();
             const frag = fragment();
-            if (frag && d.html) frag.outerHTML = d.html;
+            if (frag && d.html) { frag.outerHTML = d.html; giftsFresh(); }
             setCartCount(d.count);
         } catch { /* a stale badge is not worth breaking the page over */ }
     };
