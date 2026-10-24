@@ -1410,6 +1410,10 @@
     var str = el('input', { type: 'range', min: 5, max: 60, step: 1, value: h.strength, 'aria-label': 'Strength', 'data-fk': 'h-strength', disabled: ro });
     var strV = el('b', { text: h.strength + '%' });
     str.addEventListener('input', function () { editCfg().home.strength = +str.value; strV.textContent = str.value + '%'; paintSwatch(); repaint(); });
+    /* (Lane FGH) Width on a computer, as a share of the site width; tablets and phones are always full. */
+    var wid = el('input', { type: 'range', min: 40, max: 100, step: 5, value: h.width, 'aria-label': 'Width on a computer', 'data-fk': 'h-width', disabled: ro });
+    var widV = el('b', { text: h.width + '%' });
+    wid.addEventListener('input', function () { editCfg().home.width = +wid.value; widV.textContent = wid.value + '%'; repaint(); });
     wrap.appendChild(card('Homepage section', 'Shows on the homepage under Shop by Concern while this is on and a range is published. Move it up or down, or hide it on desktop or mobile, in Appearance → Homepage (the “Free gifts” row).', [
       el('div', { class: 'fg-row', style: 'margin-top:14px' }, [sw(h.on, 'Show on the homepage', function () { var e = editCfg(); e.home.on = !e.home.on; this.setAttribute('aria-checked', String(e.home.on)); repaint(); }, ro)]),
       el('div', { style: 'margin-top:16px;display:grid;gap:10px' }, [
@@ -1417,7 +1421,11 @@
         bgSel,
         el('div', { style: 'display:flex;gap:14px;flex-wrap:wrap;align-items:center' }, [colour('c1', 'Colour 1'), colour('c2', 'Colour 2'), colour('c3', 'Colour 3')]),
         el('label', { style: 'display:flex;gap:10px;align-items:center;font-size:12.5px' }, ['Strength (lighter ← → stronger)', str, strV]),
-        swatch
+        swatch,
+        el('b', { text: 'Button link', style: 'font-size:13px;margin-top:6px' }),
+        (function () { var u = el('input', { class: 'fg-in', type: 'text', value: h.url, maxlength: 500, placeholder: '/super-sale/', 'aria-label': 'Button link', 'data-fk': 'h-url', disabled: ro, dir: 'ltr' }); u.addEventListener('input', function () { editCfg().home.url = u.value; repaint(); }); return el('label', { style: 'display:grid;gap:4px;font-size:12.5px' }, [u, el('span', { text: 'A page on this shop (/super-sale/) or a full https:// address. Anything else goes to /super-sale/.', style: 'color:var(--ink-soft,#6b7280)' })]); })(),
+        el('b', { text: 'Width', style: 'font-size:13px;margin-top:6px' }),
+        el('label', { style: 'display:flex;gap:10px;align-items:center;font-size:12.5px;flex-wrap:wrap' }, ['On a computer, share of the site width', wid, widV, el('span', { text: '100% = as wide as the other sections. Tablets and phones always use the full width.', style: 'color:var(--ink-soft,#6b7280)' })]),
       ]),
       el('div', { class: 'fg-tx', style: 'margin-top:12px' }, [el('div', { class: 'fg-txr hd', 'aria-hidden': 'true' }, [el('span', { text: 'Where' }), el('span', { text: 'English' }), el('span', { text: 'Arabic' })])].concat(HOME_FIELDS.map(function (f) {
         return el('div', { class: 'fg-txr' }, [el('span', { text: f[1] }), t(f[0], 'en', f[1]), t(f[0], 'ar', f[1])]);

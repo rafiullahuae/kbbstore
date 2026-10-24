@@ -150,7 +150,7 @@ class FreeGiftsController extends Controller
             'home.sub_en' => ['nullable', 'string', 'max:160'], 'home.sub_ar' => ['nullable', 'string', 'max:160'],
             'home.btn_en' => ['required', 'string', 'max:60'], 'home.btn_ar' => ['required', 'string', 'max:60'],
             // (Lane FGH) The background: optional, never refused, normalised by FreeGifts::homeBg().
-            'home.bg' => ['sometimes'], 'home.c1' => ['sometimes'], 'home.c2' => ['sometimes'], 'home.c3' => ['sometimes'], 'home.strength' => ['sometimes'],
+            'home.bg' => ['sometimes'], 'home.c1' => ['sometimes'], 'home.c2' => ['sometimes'], 'home.c3' => ['sometimes'], 'home.strength' => ['sometimes'], 'home.width' => ['sometimes'], 'home.url' => ['nullable', 'string', 'max:500'],
             // "Gift box look" (Lane FG5): optional, so an older console that
             // does not send it keeps what is saved. Its values are never
             // refused, only normalised -- FreeGifts::lookOf() below.
@@ -181,7 +181,7 @@ class FreeGiftsController extends Controller
             $config['texts'][$key . '_ar'] = trim($data['texts'][$key . '_ar']);
         }
 
-        $bgKeys = ['bg', 'c1', 'c2', 'c3', 'strength'];
+        $bgKeys = ['bg', 'c1', 'c2', 'c3', 'strength', 'width'];
         foreach (array_keys(FreeGifts::HOME) as $key) {
             if (in_array($key, $bgKeys, true)) {
                 continue;

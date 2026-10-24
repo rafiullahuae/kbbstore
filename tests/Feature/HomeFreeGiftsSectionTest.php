@@ -150,8 +150,8 @@ it('costs the same whether one range is published or five', function () {
  * What it looked like in the preview, 23 October: every row's wording was
  * blank when the gifts had no kind set (sentence() counted nothing and won
  * over the admin's own "2 Masks"), and "Shop now" was dark text on a dark
- * button, because `.kbb-home a` outranks a bare `.fgh-btn`. Put the
- * unconditional sentence() back, or the selector to `.fgh-btn{`, and this is red.
+ * button, because `.kbb-home a` outranks a bare `.fgh-btn` (since 2.60.588 the
+ * button is the shop's pill). Put the unconditional sentence() back and this is red.
  */
 it('keeps the admin\'s words when the gifts carry no kind, and its button text visible', function () {
     $mask = fghProduct('Kindless Mask', '');
@@ -161,8 +161,8 @@ it('keeps the admin\'s words when the gifts carry no kind, and its button text v
     $html = $this->get('/')->getContent();
 
     expect($html)->toContain('<span class="fgh-w">Own words</span>')
-        ->and($html)->toContain('.fgh a.fgh-btn{')
-        ->and($html)->not->toMatch('/[}>]\.fgh-btn\{/');
+        // The button is now the shop's own pill (.bndl-all), whose colours kbb.css sets.
+        ->and($html)->toContain('<a class="bndl-all hs-btn hs-btn-top"');
 });
 
 /*
@@ -235,7 +235,9 @@ it('shows at most five photos and a +N on a phone', function () {
     expect($html)->toContain('<span class="fgh-mo m">+2</span>')
         ->and($html)->toContain('<span class="fgh-mo d">+1</span>')
         ->and($html)->toContain('.fgh-p .fgh-t:nth-child(n+6){display:none}')
-        ->and($html)->toContain('.fgh-card{max-height:410px;overflow-y:auto');
+        // The page scrolls through the section: the card has no scroller of its own.
+        ->and($html)->not->toMatch('/\.fgh-card\{[^}]*(overflow-y|overscroll-behavior|max-height)/')
+        ->and($html)->not->toContain('touch-action:none');
 });
 
 /*
@@ -275,15 +277,68 @@ it('paints a light moving pink gradient by default, and keeps every colour a col
 
     $html = $this->get('/')->assertOk()->getContent();
     expect($html)->toContain('class="sec fgh fgh-bg-flow ')
-        ->and($html)->toMatch('/style="--fg1:#[0-9A-F]{6};--fg2:#[0-9A-F]{6};--fg3:#[0-9A-F]{6}"/')
+        ->and($html)->toMatch('/style="--fgw:100%;--fg1:#[0-9A-F]{6};--fg2:#[0-9A-F]{6};--fg3:#[0-9A-F]{6}"/')
         ->and($html)->toContain('@keyframes fghflow{to{transform:translateX(-66.6667%)}}')
         ->and($html)->toContain('@media(prefers-reduced-motion:reduce){.fgh-bg-flow::before{animation:none}}');
 
     $bg = FreeGifts::homeBg(['bg' => 'disco', 'c1' => 'red;}body{display:none', 'c2' => '#123456', 'strength' => 500]);
-    expect($bg)->toBe(['bg' => 'flow', 'c1' => FreeGifts::HOME['c1'], 'c2' => '#123456', 'c3' => FreeGifts::HOME['c3'], 'strength' => 60]);
+    expect($bg)->toBe(['bg' => 'flow', 'c1' => FreeGifts::HOME['c1'], 'c2' => '#123456', 'c3' => FreeGifts::HOME['c3'], 'strength' => 60, 'width' => 100]);
 
     // "super light": at the shipped strength every washed colour is within a few shades of white.
     foreach (FreeGifts::washed(FreeGifts::homeBg([])) as $hex) {
         expect(min(array_map('hexdec', str_split(substr($hex, 1), 2))))->toBeGreaterThan(220);
     }
+});
+
+/*
+ * "plz match the width of the section to the site width ... give also to
+ * choose width as percentage ... by default 100%" (owner, 24 October). The
+ * card used to stop at 980px. Mutation note: put max-width:980px back on
+ * .fgh-in, or drop the clamp in homeBg(), and this is red.
+ */
+it('runs the site width by default, and takes a clamped percentage on a computer', function () {
+    $mask = fghProduct('Gel Mask');
+    fghRange(194, null, [[$mask, 1, 'mask']], ['mask' => 1]);
+    fghSwitch(true);
+
+    $html = $this->get('/')->assertOk()->getContent();
+    expect($html)->toContain('.fgh-in{width:100%;display:grid;gap:16px}')
+        ->and($html)->toContain('@media(min-width:901px){.fgh-in{max-width:var(--fgw,100%)}}')
+        ->and($html)->toContain('style="--fgw:100%')
+        ->and($html)->not->toContain('max-width:980px');
+
+    expect(FreeGifts::homeBg(['width' => 70])['width'])->toBe(70)
+        ->and(FreeGifts::homeBg(['width' => 5])['width'])->toBe(40)
+        ->and(FreeGifts::homeBg(['width' => '100%;}body{'])['width'])->toBe(100);
+});
+
+/*
+ * "the button style i need the same as othe sections, and beside the heading
+ * right side, and link it to super-sale page ... give option to change the
+ * link" (owner, 24 October). Mutation notes: go back to the old dark button,
+ * or drop HomeSections::url() from home(), and this is red.
+ */
+it('draws the shop pill beside the heading, linked to the super sale, with a checked link', function () {
+    $mask = fghProduct('Gel Mask');
+    fghRange(194, null, [[$mask, 1, 'mask']], ['mask' => 1]);
+    fghSwitch(true);
+
+    $html = $this->get('/')->assertOk()->getContent();
+    preg_match('#<section class="sec fgh .*?</section>#s', $html, $m);
+    expect($m[0])->toContain('<div class="hs-head hs-split hs-split-c">')
+        ->and($m[0])->toMatch('#<a class="bndl-all hs-btn hs-btn-top" href="[^"]*/super-sale/">Shop now<i>#')
+        ->and($m[0])->toMatch('#<div class="hs-foot"><a class="bndl-all hs-btn hs-btn-bottom" href="[^"]*/super-sale/">#');
+
+    $set = function (string $url) {
+        app(SettingsService::class)->set(FreeGifts::KEY, ['mode' => 'live', 'home' => ['on' => true, 'url' => $url]]);
+        SettingsService::forgetMemo();
+        Setting::flushMap();
+        app(FreeGifts::class)->compile();
+        preg_match('#<section class="sec fgh .*?<a class="bndl-all hs-btn hs-btn-top" href="([^"]*)"#s', $this->get('/')->getContent(), $m);
+
+        return $m[1] ?? '';
+    };
+    expect($set('/new-in/'))->toEndWith('/new-in/')
+        ->and($set('https://example.com/x'))->toBe('https://example.com/x')
+        ->and($set('javascript:alert(1)'))->toEndWith('/super-sale/');
 });

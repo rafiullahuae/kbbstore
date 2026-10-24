@@ -54,7 +54,7 @@
     $fghBg = $fgh['bg'] ?? \App\Services\FreeGifts::homeBg([]);
     $fghW = \App\Services\FreeGifts::washed($fghBg);
 @endphp
-<section class="sec fgh fgh-bg-{{ $fghBg['bg'] }} {{ $cls ?? '' }}" aria-labelledby="fgh-h" data-fgh @if ($fghBg['bg'] === 'flow' || $fghBg['bg'] === 'still') style="--fg1:{{ $fghW[0] }};--fg2:{{ $fghW[1] }};--fg3:{{ $fghW[2] }}" @endif><style>
+<section class="sec fgh fgh-bg-{{ $fghBg['bg'] }} {{ $cls ?? '' }}" aria-labelledby="fgh-h" data-fgh style="--fgw:{{ (int) $fghBg['width'] }}%@if ($fghBg['bg'] === 'flow' || $fghBg['bg'] === 'still');--fg1:{{ $fghW[0] }};--fg2:{{ $fghW[1] }};--fg3:{{ $fghW[2] }}@endif"><style>
 /* The background (Marketing -> Free gifts -> Homepage section -> Background):
    three brand pinks washed to a few percent over white on the server, drawn on
    a layer behind the section. "Moving" slides that layer with transform only,
@@ -66,11 +66,12 @@
 @keyframes fghflow{to{transform:translateX(-66.6667%)}}
 @media(prefers-reduced-motion:reduce){.fgh-bg-flow::before{animation:none}}
 .fgh .wrap{display:grid;justify-items:center}
-.fgh-in{width:100%;max-width:980px;display:grid;gap:16px}
-.fgh-hd{display:grid;gap:4px;justify-items:center;text-align:center}
-.fgh-hd h2{margin:0;display:flex;align-items:center;gap:9px;font-size:clamp(20px,2.4vw,26px);line-height:1.2;color:#2a2228;letter-spacing:-.01em}
-.fgh-hd h2 svg{width:24px;height:24px;flex:none;color:#2e8f62}
-.fgh-hd p{margin:0;color:#756c74;font-size:14.5px}
+/* The site's own width, like every other section (.wrap); on a computer the
+   owner's percentage of it (Homepage section -> Width), centred. */
+.fgh-in{width:100%;display:grid;gap:16px}
+.fgh .hs-head{margin-bottom:0}
+.fgh .hs-ht h2 svg{width:.9em;height:.9em;vertical-align:-.08em;margin-inline-end:.3em;color:#2e8f62}
+@media(min-width:901px){.fgh-in{max-width:var(--fgw,100%)}}
 .fgh-card{background:#fff;border:1.5px solid #2e8f62;border-radius:18px;overflow:hidden}
 .fgh .fgh-r{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:grid;grid-template-columns:140px minmax(0,320px) auto minmax(0,1fr) 14px;gap:16px;align-items:center;padding:14px 18px;color:#2a2228}
 .fgh .fgh-r+.fgh-r{border-top:1px solid #ece4e8}
@@ -86,23 +87,29 @@
 .fgh-t b{position:absolute;top:-7px;inset-inline-start:-7px;background:#2e8f62;color:#fff;font-size:10px;font-weight:800;border-radius:999px;min-width:19px;height:19px;padding:0 4px;box-sizing:border-box;display:grid;place-items:center;line-height:1}
 .fgh-ph{display:grid;place-items:center;width:100%;height:100%;font-size:11px;font-weight:800;color:#8a7d86;background:#faf5f7;border-radius:10px}
 .fgh-mo{font-size:12.5px;font-weight:700;color:#756c74;white-space:nowrap}
-.fgh-mo.m{display:none}
+.fgh-mo.m,.fgh-mo.t{display:none}
 .fgh-c{width:9px;height:9px;border-top:2px solid #8a7d86;border-inline-end:2px solid #8a7d86;transform:rotate(45deg);justify-self:center}
 [dir=rtl] .fgh-c{transform:rotate(-45deg)}
-.fgh-ft2{display:flex;justify-content:center}
-.fgh a.fgh-btn{display:inline-block;background:#2a2228;color:#fff;border-radius:999px;padding:12px 28px;font-weight:700;font-size:14.5px;text-decoration:none}
-.fgh a.fgh-btn:hover{background:#000}
-.fgh a.fgh-btn:focus-visible{outline:2px solid #2e8f62;outline-offset:2px}
+/* A tablet or a small laptop (761-1199px): the wording column gives way
+   instead of the photos running over it -- up to four photos, "+N" past
+   four, so every row keeps to its own lane at the site's full width. */
+@media(min-width:761px) and (max-width:1199px){
+.fgh .fgh-r{grid-template-columns:120px minmax(0,1fr) auto auto 14px;gap:14px}
+.fgh-t{width:40px;height:40px}
+.fgh-p .fgh-t:nth-child(n+5){display:none}
+.fgh-mo.d{display:none}.fgh-mo.t{display:inline}
+}
 @media(max-width:760px){
 /* A phone keeps the section short (owner, 24 October: "fixed height around
    500-550 px max"), as the photo strip he picked (option 27): one line per
    range -- the amount, up to five small round gift photos and "+N" past five
    ("max upto 5 and put + sign if there's more"), the coupon and an arrow. The
-   wording and every gift's name are in the popup. Past about seven ranges the
-   card scrolls inside itself, so the page never grows. */
+   wording and every gift's name are in the popup. The card never scrolls on
+   its own (owner, 24 October: "i want that user can scroll the page in any
+   case, unless they click on it to open the details popup") -- an inner
+   scroller held the swipe and the page stood still. */
 .fgh-in{gap:12px}
-.fgh-hd h2{font-size:19px;gap:7px}.fgh-hd h2 svg{width:20px;height:20px}.fgh-hd p{font-size:13px}
-.fgh-card{max-height:410px;overflow-y:auto;overscroll-behavior-y:contain;border-radius:16px}
+.fgh-card{border-radius:16px}
 .fgh .fgh-r{grid-template-columns:minmax(0,1fr) auto auto 8px;gap:8px;padding:6px 10px 6px 14px;min-height:56px}
 .fgh-a{grid-column:1;grid-row:1;font-size:14px;white-space:normal;line-height:1.2}
 .fgh-p{grid-column:2;grid-row:1}.fgh-ft{grid-column:3;grid-row:1}.fgh-c{grid-column:4;grid-row:1}
@@ -115,10 +122,9 @@
 .fgh-t b{display:none}
 .fgh-p .fgh-t:nth-child(n+6){display:none}
 .fgh-mo{font-size:12px;margin-inline-start:4px}
-.fgh-mo.d{display:none}.fgh-mo.m{display:inline}
+.fgh-mo.d,.fgh-mo.t{display:none}.fgh-mo.m{display:inline}
 .fgh-ft{font-size:10px;padding:5px 9px;letter-spacing:.06em}
 .fgh-c{width:7px;height:7px}
-.fgh a.fgh-btn{padding:10px 24px;font-size:14px}
 }
 dialog.fgh-pop{border:0;padding:0;background:transparent;max-width:none;max-height:none;width:100%;height:100%;margin:0;color:#2a2228;overflow:hidden}
 dialog.fgh-pop::backdrop{background:rgba(32,22,28,.38);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
@@ -158,23 +164,28 @@ dialog.fgh-pop::backdrop{background:rgba(32,22,28,.38);-webkit-backdrop-filter:b
 .fgh-dots i{width:7px;height:7px;border-radius:50%;background:#ece4e8;transition:width .2s}
 .fgh-dots i.on{background:#2e8f62;width:18px;border-radius:9px}
 @media(max-width:640px){
-.fgh-box{left:0;right:0;top:auto;bottom:0;width:100%;height:78%;transform:none;border-radius:26px 26px 0 0;padding-bottom:env(safe-area-inset-bottom,0px);animation:fghup .24s ease-out}
+.fgh-box{left:0;right:0;top:auto;bottom:0;width:100%;height:68%;max-height:600px;transform:none;border-radius:26px 26px 0 0;padding-bottom:env(safe-area-inset-bottom,0px);animation:fghup .24s ease-out}
 .fgh-grab{display:block}
-.fgh-top{padding:12px 14px;gap:4px}.fgh-top h3{font-size:17px}.fgh-gi{width:30px;height:30px;border-radius:10px}.fgh-gi svg{width:18px;height:18px}.fgh-top p{font-size:12px}
+.fgh-top{padding:10px 12px;gap:3px;border-radius:14px}.fgh-top h3{font-size:16px;gap:8px}.fgh-am{font-size:13px;padding:5px 11px}.fgh-cn{font-size:12px;padding:4px 10px}.fgh-gi{width:30px;height:30px;border-radius:10px}.fgh-gi svg{width:18px;height:18px}.fgh-top p{font-size:11.5px;line-height:1.35}.fgh-bar{padding:8px 10px 4px 16px}.fgh-nav,.fgh-x{width:32px;height:32px}.fgh-dots{padding:8px 0 10px}
 .fgh-s{padding:4px 14px 12px;gap:10px}
 .fgh-gl{grid-template-columns:repeat(var(--cm),minmax(0,190px));grid-template-rows:repeat(var(--rm),minmax(0,1fr));max-height:calc(var(--rm) * 290px);gap:8px}
 .fgh-gl.dm small{display:none}.fgh-gl.dm .fgh-nm{-webkit-line-clamp:1;font-size:11px}.fgh-gl.dm .fgh-g{padding:6px 6px 8px;border-radius:13px}.fgh-gl.dm .fgh-fr{font-size:8.5px;padding:2px 6px;top:4px;inset-inline-start:4px}.fgh-gl.dm .fgh-q{font-size:10px;top:4px;inset-inline-end:4px}
 }
 @media(prefers-reduced-motion:reduce){.fgh-box{animation:none}.fgh-dots i{transition:none}}
 </style><div class="wrap"><div class="fgh-in">
-  <div class="fgh-hd"><h2 id="fgh-h">{!! $fghGift !!}{{ $fgh['title'] }}</h2>@if ($fgh['sub'] !== '')<p>{{ $fgh['sub'] }}</p>@endif</div>
+  {{-- The heading and its button as every other homepage section draws them
+       (partials/home/hs-head): the shop's pill (.bndl-all) beside the centred
+       heading on a computer, under the section on a tablet or phone
+       (kbb.css hides one of the two). The gift icon stays in the heading. --}}
+  @php $fghBtn = $fgh['btn'] !== '' && ($fgh['url'] ?? '') !== ''; @endphp
+  <div class="hs-head{{ $fghBtn ? ' hs-split hs-split-c' : '' }}"><div class="hs-ht"><h2 id="fgh-h">{!! $fghGift !!}{{ $fgh['title'] }}</h2>@if ($fgh['sub'] !== '')<p>{{ $fgh['sub'] }}</p>@endif</div>@if ($fghBtn)<a class="bndl-all hs-btn hs-btn-top" href="{{ $fgh['url'] }}">{{ $fgh['btn'] }}<i>{!! \App\Support\HomeSections::ARROW !!}</i></a>@endif</div>
   <div class="fgh-card">
 @foreach ($fgh['rows'] as $i => $r)
 @php $fghMore = count($r['gifts']); @endphp
-    <button type="button" class="fgh-r" data-fgo="{{ $i }}" aria-haspopup="dialog" aria-label="{{ $r['amount'] }}: {{ $r['words'] }} · {{ $fghT['view'] }}"><span class="fgh-a">{{ $r['amount'] }}</span><span class="fgh-w">{{ $r['words'] }}</span><span class="fgh-ft">{{ $fghT['free'] }}</span><span class="fgh-p">@foreach (array_slice($r['gifts'], 0, 6) as $g)<span class="fgh-t">{!! $fghImg($g, 200, '46px') !!}@if ((int) $g['quantity'] > 1)<b>×{{ (int) $g['quantity'] }}</b>@endif</span>@endforeach @if ($fghMore > 6)<span class="fgh-mo d">+{{ $fghMore - 6 }}</span>@endif @if ($fghMore > 5)<span class="fgh-mo m">+{{ $fghMore - 5 }}</span>@endif</span><span class="fgh-c" aria-hidden="true"></span></button>
+    <button type="button" class="fgh-r" data-fgo="{{ $i }}" aria-haspopup="dialog" aria-label="{{ $r['amount'] }}: {{ $r['words'] }} · {{ $fghT['view'] }}"><span class="fgh-a">{{ $r['amount'] }}</span><span class="fgh-w">{{ $r['words'] }}</span><span class="fgh-ft">{{ $fghT['free'] }}</span><span class="fgh-p">@foreach (array_slice($r['gifts'], 0, 6) as $g)<span class="fgh-t">{!! $fghImg($g, 200, '46px') !!}@if ((int) $g['quantity'] > 1)<b>×{{ (int) $g['quantity'] }}</b>@endif</span>@endforeach @if ($fghMore > 6)<span class="fgh-mo d">+{{ $fghMore - 6 }}</span>@endif @if ($fghMore > 4)<span class="fgh-mo t">+{{ $fghMore - 4 }}</span>@endif @if ($fghMore > 5)<span class="fgh-mo m">+{{ $fghMore - 5 }}</span>@endif</span><span class="fgh-c" aria-hidden="true"></span></button>
 @endforeach
   </div>
-  @if ($fgh['btn'] !== '')<div class="fgh-ft2"><a class="fgh-btn" href="{{ \App\Support\Url::to('/shop/') }}">{{ $fgh['btn'] }}</a></div>@endif
+  @if ($fghBtn)<div class="hs-foot"><a class="bndl-all hs-btn hs-btn-bottom" href="{{ $fgh['url'] }}">{{ $fgh['btn'] }}<i>{!! \App\Support\HomeSections::ARROW !!}</i></a></div>@endif
 </div></div>
 <dialog class="fgh-pop" aria-labelledby="fgh-pt" data-of="{{ $fghT['of'] }}"><div class="fgh-box"><span class="fgh-grab" aria-hidden="true"></span>
   <div class="fgh-bar"><span class="fgh-ct" aria-live="polite"></span><button type="button" class="fgh-nav" data-fn="-1" aria-label="{{ $fghT['prev'] }}">{!! $fghArr(false) !!}</button><button type="button" class="fgh-nav" data-fn="1" aria-label="{{ $fghT['next'] }}">{!! $fghArr(true) !!}</button><button type="button" class="fgh-x" data-fx aria-label="{{ $fghT['close'] }}">×</button></div>

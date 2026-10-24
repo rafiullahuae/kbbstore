@@ -110,6 +110,10 @@ final class FreeGifts
         'title_en' => 'Free gifts with every order', 'title_ar' => 'هدايا مجانية مع كل طلب',
         'sub_en' => 'The more you shop, the more you get.', 'sub_ar' => 'كلما تسوّقتِ أكثر، حصلتِ على المزيد.',
         'btn_en' => 'Shop now', 'btn_ar' => 'تسوّقي الآن',
+        // Where the button goes (owner, 24 October: "link it to super-sale page
+        // ... give option to change the link"): a path on this shop or an
+        // http(s) address, checked by HomeSections::url() before it is an href.
+        'url' => '/super-sale/',
         /*
          * The section's background (owner, 24 October: "a nice gradient color
          * scheme, but super light, and it should change continues inside our
@@ -120,6 +124,13 @@ final class FreeGifts
          * `strength` an integer clamped to 5..60 -- homeBg() is the one reader.
          */
         'bg' => 'flow', 'c1' => '#F7A8C4', 'c2' => '#FFB8C9', 'c3' => '#F4C2E0', 'strength' => 22,
+        /*
+         * The card's width on a computer, as a percentage of the site width
+         * (owner, 24 October: "match the width of the section to the site
+         * width ... give also to choose width as percentage ... by default
+         * 100%"). 40..100; tablets and phones always use the full width.
+         */
+        'width' => 100,
     ];
 
     /** Background styles for the homepage section: `token => label`. */
@@ -453,6 +464,7 @@ final class FreeGifts
             'title' => $ar ? $h['title_ar'] : $h['title_en'],
             'sub' => $ar ? $h['sub_ar'] : $h['sub_en'],
             'btn' => $ar ? $h['btn_ar'] : $h['btn_en'],
+            'url' => \App\Support\HomeSections::url((string) $h['url'], \App\Support\Url::to(self::HOME['url'])),
             'rows' => $rows,
             'ar' => $ar,
             'bg' => self::homeBg($h),
@@ -1160,7 +1172,9 @@ final class FreeGifts
      * #RRGGBB colours and a strength of 5..60 -- anything else is its default,
      * never refused (rule 5: a select stores one of its options or the default).
      *
-     * @return array{bg:string,c1:string,c2:string,c3:string,strength:int}
+     * And the card's computer width, an integer clamped to 40..100 percent.
+     *
+     * @return array{bg:string,c1:string,c2:string,c3:string,strength:int,width:int}
      */
     public static function homeBg(mixed $in): array
     {
@@ -1168,6 +1182,7 @@ final class FreeGifts
         $hex = static fn (mixed $v, string $d): string => is_string($v) && preg_match('/^#[0-9a-fA-F]{6}$/', $v) ? strtoupper($v) : $d;
         $bg = is_string($in['bg'] ?? null) && isset(self::BG_STYLES[$in['bg']]) ? $in['bg'] : self::HOME['bg'];
         $s = is_numeric($in['strength'] ?? null) ? (int) $in['strength'] : self::HOME['strength'];
+        $w = is_numeric($in['width'] ?? null) ? (int) $in['width'] : self::HOME['width'];
 
         return [
             'bg' => $bg,
@@ -1175,6 +1190,7 @@ final class FreeGifts
             'c2' => $hex($in['c2'] ?? null, self::HOME['c2']),
             'c3' => $hex($in['c3'] ?? null, self::HOME['c3']),
             'strength' => max(5, min(60, $s)),
+            'width' => max(40, min(100, $w)),
         ];
     }
 
