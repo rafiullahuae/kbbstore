@@ -419,6 +419,8 @@ final class FreeGifts
                     : ($max === null ? 'AED ' . $min . '+' : 'AED ' . $min . ' – ' . $max),
                 'words' => $words,
                 'gifts' => self::rows($lines),
+                // "4 gifts" / "4 هدايا" for the popup, every Arabic number form covered by count().
+                'count' => $this->count(array_sum(array_map(static fn (array $l) => (int) $l['quantity'], $lines))),
             ];
         }
 
@@ -433,6 +435,7 @@ final class FreeGifts
             'sub' => $ar ? $h['sub_ar'] : $h['sub_en'],
             'btn' => $ar ? $h['btn_ar'] : $h['btn_en'],
             'rows' => $rows,
+            'ar' => $ar,
         ];
     }
 

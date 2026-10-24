@@ -164,3 +164,57 @@ it('keeps the admin\'s words when the gifts carry no kind, and its button text v
         ->and($html)->toContain('.fgh a.fgh-btn{')
         ->and($html)->not->toMatch('/[}>]\.fgh-btn\{/');
 });
+
+/*
+ * Design 20, as the owner picked it (24 October): the One card rows with a
+ * FREE coupon, each row opening a fixed-size popup of that range's gifts that
+ * swipes between ranges. Mutation notes: drop the data-fgo on a row and the
+ * popup can never open (red); give the popup grid a fixed column count and the
+ * "more gifts, smaller photos" vars are gone (red).
+ */
+it('draws the coupon rows and one popup slide per published range, sized by its gift count', function () {
+    $ps = array_map(static fn ($i) => fghProduct('Popup Gift ' . $i), range(1, 8));
+    fghRange(194, 399, [[$ps[0], 1, 'mask'], [$ps[1], 1, 'full']], ['mask' => 1, 'full' => 1]);
+    fghRange(400, null, array_map(static fn ($p) => [$p, 1, 'mask'], $ps), ['mask' => 8]);
+    fghSwitch(true);
+
+    $html = $this->get('/')->assertOk()->getContent();
+
+    expect(substr_count($html, 'class="fgh-r" data-fgo="'))->toBe(2)
+        ->and(substr_count($html, '<span class="fgh-ft">Free</span>'))->toBe(2)
+        ->and(substr_count($html, '<div class="fgh-s" data-i="'))->toBe(2)
+        ->and($html)->toContain('<dialog class="fgh-pop"')
+        // 2 gifts: two columns, one row; 8 gifts: 4x2 on a computer, 3x3 on a phone.
+        ->and($html)->toContain('style="--c:2;--r:1;--cm:2;--rm:1"')
+        ->and($html)->toContain(' dm" style="--c:4;--r:2;--cm:3;--rm:3"')
+        ->and($html)->toContain('<span class="fgh-cn">8 gifts</span>')
+        ->and($html)->toContain('data-of="Level :i of :n"')
+        // Fixed-size popup: the box never grows with its content.
+        ->and($html)->toContain('.fgh-box{position:absolute;left:50%;top:50%;width:min(600px,calc(100% - 32px));height:min(620px,calc(100% - 48px))')
+        ->and($html)->not->toMatch('/getBoundingClientRect|offsetWidth|clientWidth|setInterval/');
+});
+
+/*
+ * "translate properly everything, all 1 to 10 numbers incase whatever we
+ * change it will be pre-translated" (owner, 24 October). Arabic counts take a
+ * different word at 1, 2, 3-10 and 11+; every one of them is pinned here.
+ */
+it('words every count from 1 to 11 in proper Arabic', function () {
+    $ar = static fn (int $n, string $k) => FreeGifts::criteriaWording([$k => $n])['ar'];
+
+    expect($ar(1, 'mask'))->toBe('قناع واحد')->and($ar(2, 'mask'))->toBe('قناعان')
+        ->and($ar(3, 'mask'))->toBe('3 أقنعة')->and($ar(10, 'mask'))->toBe('10 أقنعة')->and($ar(11, 'mask'))->toBe('11 قناعاً')
+        ->and($ar(1, 'mini'))->toBe('منتج صغير واحد')->and($ar(2, 'mini'))->toBe('منتجان صغيران')->and($ar(5, 'mini'))->toBe('5 منتجات صغيرة')
+        ->and($ar(1, 'full'))->toBe('منتج بالحجم الكامل')->and($ar(2, 'full'))->toBe('منتجان بالحجم الكامل')->and($ar(4, 'full'))->toBe('4 منتجات بالحجم الكامل');
+
+    foreach (range(1, 11) as $n) {
+        foreach (['mask', 'mini', 'full'] as $k) {
+            expect($ar($n, $k))->not->toBe('')->not->toContain(':n');
+        }
+    }
+
+    app()->setLocale('ar');
+    $g = app(FreeGifts::class);
+    $counts = array_map(static fn ($n) => $g->count($n), [1, 2, 3, 10, 11]);
+    expect($counts)->each->not->toContain(':count');
+});
