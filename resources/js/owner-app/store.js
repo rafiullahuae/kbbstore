@@ -12,7 +12,37 @@ import { bioAvailable, bioOn, bioEnable, bioDisable, bioClear, bioPrepareNew } f
 
 /* view: the hero's measure; range: its period; top: the top sellers' period (Lane OA4). */
 const D = { view: 'total', data: null, range: 'today', top: 'month' };
-const RANGES = [['today', 'Today'], ['yesterday', 'Yesterday'], ['7d', 'Last 7 days'], ['month', 'This month'], ['last_month', 'Last month']];
+const RANGES = [['today', 'Today'], ['yesterday', 'Yesterday'], ['7d', 'Last 7 days'], ['month', 'This month'], ['30d', 'Last 30 days'], ['last_month', 'Last month'], ['year', 'This year']];
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/*
+ * (Lane REV) A month, a year or two dates of the owner's choosing, under the
+ * named periods: "total revenue as This month, last 30 days, Month wise
+ * selection and custom date, and also year wise". Plain selects and date
+ * inputs (no type=month, which some browsers draw as a text box); the key
+ * goes to the server as m:YYYY-MM, y:YYYY or c:FROM:TO, which
+ * OwnerAppSales::rangeKey() checks again.
+ */
+function pickHTML() {
+  const now = new Date(), y = now.getFullYear(), years = [];
+  for (let i = y; i >= 2015; i--) years.push(i);
+  const pad = (n) => String(n).padStart(2, '0'), today = y + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+  const yopts = years.map((v) => '<option value="' + v + '">' + v + '</option>').join('');
+  return '<div class="rpick"><p class="rp-h">Pick a month</p><div class="rp-row"><select data-pmm aria-label="Month">' + MONTHS.map((m, i) => '<option value="' + pad(i + 1) + '"' + (i === now.getMonth() ? ' selected' : '') + '>' + m + '</option>').join('') + '</select><select data-pmy aria-label="Year of the month">' + yopts + '</select><button type="button" class="rp-go" data-pick="m">Show</button></div>'
+    + '<p class="rp-h">Pick a year</p><div class="rp-row"><select data-py aria-label="Year">' + yopts + '</select><button type="button" class="rp-go" data-pick="y">Show</button></div>'
+    + '<p class="rp-h">Custom dates</p><div class="rp-row"><label><span>From</span><input type="date" data-pf min="2015-01-01" max="' + today + '"></label><label><span>To</span><input type="date" data-pt min="2015-01-01" max="' + today + '" value="' + today + '"></label><button type="button" class="rp-go" data-pick="c">Show</button></div><p class="rp-err" data-perr hidden></p></div>';
+}
+
+/* The key for a pick, or an error to show. */
+function pickKey(panel, kind) {
+  const v = (sel) => (panel.querySelector(sel) || {}).value || '';
+  if (kind === 'm') return { key: 'm:' + v('[data-pmy]') + '-' + v('[data-pmm]') };
+  if (kind === 'y') return { key: 'y:' + v('[data-py]') };
+  const f = v('[data-pf]'), t = v('[data-pt]');
+  if (!f || !t) return { err: 'Choose both dates.' };
+  if (t < f) return { err: 'The second date is before the first.' };
+  return { key: 'c:' + f + ':' + t };
+}
 onReset(() => { D.data = null; N.rows = []; N.held = false; });
 
 /**
@@ -126,7 +156,7 @@ function hero(d) {
   const dp = d.delta ? d.delta[D.view] : null;
   const delta = dp === null || dp === undefined ? ''
     : '<div class="delta-row"><span class="delta' + (dp < 0 ? ' dn' : '') + '">' + ic(dp < 0 ? 'down' : 'up-r') + Math.abs(dp) + '% ' + esc(d.vs) + '</span></div>';
-  const label = (RANGES.find(([k]) => k === d.range) || RANGES[0])[1];
+  const label = d.range_label || (RANGES.find(([k]) => k === d.range) || RANGES[0])[1];
   return '<section class="card hero" data-hero><div class="hero-top">'
     + (fn('range') ? '<button type="button" class="rng" data-range aria-label="Sales period: ' + esc(label) + '">' + esc(label) + ic('down', 's') + '</button>' : '<p class="kick">Today</p>')
     + (d.figs && d.figs.gross !== undefined ? '<div class="seg" role="group" aria-label="Sales measure">' + [['total', 'Total'], ['gross', 'Gross'], ['net', 'Net']].map(([k, l]) => '<button type="button" data-dview="' + k + '"' + (D.view === k ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>' : '') + '</div>'
@@ -163,8 +193,16 @@ export function dashboardClick(e, view) {
   if (!b) return false;
   if (b.hasAttribute('data-dview')) { D.view = b.getAttribute('data-dview'); swap(view, '[data-hero]', hero(D.data)); return true; }
   if (b.hasAttribute('data-range')) {
-    sheet('Sales period', '<div class="stlist">' + RANGES.map(([k, l]) => '<button type="button" data-rk="' + k + '"' + (D.range === k ? ' class="cur"' : '') + '><b>' + l + '</b>' + ic('check') + '</button>').join('') + '</div>', (panel, close) => {
+    sheet('Sales period', '<div class="stlist">' + RANGES.map(([k, l]) => '<button type="button" data-rk="' + k + '"' + (D.range === k ? ' class="cur"' : '') + '><b>' + l + '</b>' + ic('check') + '</button>').join('') + '</div>' + pickHTML(), (panel, close) => {
       panel.addEventListener('click', (ev) => {
+        const p = ev.target.closest('[data-pick]');
+        if (p) {
+          const r = pickKey(panel, p.getAttribute('data-pick')), err = panel.querySelector('[data-perr]');
+          if (r.err) { err.textContent = r.err; err.hidden = false; return; }
+          close();
+          if (r.key !== D.range) { D.range = r.key; part(view, 'sales', '[data-hero]'); }
+          return;
+        }
         const r = ev.target.closest('[data-rk]');
         if (!r) return;
         close();

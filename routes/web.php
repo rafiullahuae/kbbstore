@@ -891,6 +891,8 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // /admin-api/products/{id} above carries no constraint on {id}, so a
         // nested /catalog/products/... would be decided by where this line sits.
         require __DIR__.'/catalog-products-admin.php';
+        // Lane REV: Dashboard -> Revenue (this month / 30 days / year / a month / a year / two dates).
+        require __DIR__.'/revenue-report-admin.php';
 
 
         // Catalog → Product editor: the full editor (gallery, categories, rich

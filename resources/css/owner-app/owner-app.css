@@ -177,6 +177,15 @@ button.pill { cursor: pointer; }
 /* The free gifts on an order: an always-open box under Products, outlined in the "good" green. */
 .card.gifts { box-shadow: none; border: 1.5px solid var(--good); }
 .card.gifts .sh { color: var(--good); }
+/* (Lane REV) Sales period sheet: a month, a year or two dates under the named periods. */
+.rpick { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 4px; }
+.rpick .rp-h { margin: 12px 0 6px; font: 700 12px/1.2 var(--font); letter-spacing: .04em; text-transform: uppercase; color: var(--ink3); }
+.rpick .rp-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.rpick select, .rpick input { flex: 1 1 110px; min-width: 0; min-height: 42px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: 500 15px/1.2 var(--font); }
+.rpick label { flex: 1 1 130px; display: grid; gap: 4px; min-width: 0; }
+.rpick label span { font: 600 12px/1 var(--font); color: var(--ink3); }
+.rpick .rp-go { flex: 0 0 auto; min-height: 42px; padding: 0 16px; border-radius: var(--r-pill); background: var(--acc); color: var(--on-acc); font: 700 14px/1 var(--font); }
+.rpick .rp-err { margin: 8px 0 0; color: var(--bad); font: 600 13px/1.3 var(--font); }
 .gfree { display: inline-block; font: 700 11px/1 var(--font); letter-spacing: .04em; padding: 5px 8px; border-radius: var(--r-pill); background: var(--good); color: #fff; }
 /* Lane OLG: EN / AR, the language an order was placed in. Small enough to sit
    inside a row's one-line .rm small without making the line any taller. */

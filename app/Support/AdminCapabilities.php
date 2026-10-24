@@ -2100,6 +2100,8 @@ final class AdminCapabilities
 
         ['GET', 'admin-api/stats', 'dashboard.view'],
         ['GET', 'admin-api/analytics', 'analytics.view'],
+        // Lane REV: the dashboard's Revenue card.
+        ['GET', 'admin-api/revenue-report', 'analytics.view'],
         // Analytics (Lane AN): the board, its live slice and its settings.
         // Exact paths: nothing else under site-analytics/ is reachable.
         ['GET', 'admin-api/site-analytics', 'analytics.view'],

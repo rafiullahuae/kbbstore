@@ -52,7 +52,20 @@ use Illuminate\Support\Facades\DB;
  */
 final class OwnerAppSales
 {
-    public const RANGES = ['today' => 'Today', 'yesterday' => 'Yesterday', '7d' => 'Last 7 days', 'month' => 'This month', 'last_month' => 'Last month'];
+    public const RANGES = ['today' => 'Today', 'yesterday' => 'Yesterday', '7d' => 'Last 7 days', 'month' => 'This month', '30d' => 'Last 30 days', 'last_month' => 'Last month', 'year' => 'This year'];
+
+    /*
+     * (Lane REV) Besides the named ranges, three the owner picks (owner, 24
+     * October: "total revenue as This month, last 30 days, Month wise
+     * selection and custom date, and also year wise"):
+     *   m:YYYY-MM              one calendar month
+     *   y:YYYY                 one calendar year
+     *   c:YYYY-MM-DD:YYYY-MM-DD two dates, both whole days
+     * rangeKey() admits a key only in exactly that shape, from 2015 up to
+     * today and at most five years long; anything else is 'today'. The key is
+     * part of the cache key, so it never carries anything but digits.
+     */
+    public const PICK_FROM_YEAR = 2015;
 
     public const TOP_PERIODS = ['7d' => '7 days', 'month' => 'This month'];
 
@@ -63,7 +76,75 @@ final class OwnerAppSales
 
     public static function rangeKey(mixed $key): string
     {
-        return is_string($key) && isset(self::RANGES[$key]) ? $key : 'today';
+        if (! is_string($key)) {
+            return 'today';
+        }
+
+        if (isset(self::RANGES[$key])) {
+            return $key;
+        }
+
+        return self::picked($key) !== null ? $key : 'today';
+    }
+
+    /**
+     * A picked key's first and last day, or null when it is not one.
+     *
+     * @return array{0: CarbonImmutable, 1: CarbonImmutable}|null
+     */
+    private static function picked(string $key): ?array
+    {
+        $tz = AnalyticsRange::timezone();
+        $today = CarbonImmutable::now($tz)->startOfDay();
+        $date = static function (string $ymd) use ($tz): ?CarbonImmutable {
+            $d = CarbonImmutable::createFromFormat('!Y-m-d', $ymd, $tz);
+
+            return $d !== false && $d->format('Y-m-d') === $ymd ? $d : null;
+        };
+
+        if (preg_match('/^m:(\d{4})-(\d{2})$/', $key, $m) === 1) {
+            $from = $date($m[1].'-'.$m[2].'-01');
+            $to = $from?->endOfMonth()->startOfDay();
+        } elseif (preg_match('/^y:(\d{4})$/', $key, $m) === 1) {
+            $from = $date($m[1].'-01-01');
+            $to = $from?->endOfYear()->startOfDay();
+        } elseif (preg_match('/^c:(\d{4}-\d{2}-\d{2}):(\d{4}-\d{2}-\d{2})$/', $key, $m) === 1) {
+            $from = $date($m[1]);
+            $to = $date($m[2]);
+        } else {
+            return null;
+        }
+
+        if ($from === null || $to === null || $to->lt($from) || (int) $from->format('Y') < self::PICK_FROM_YEAR || $from->gt($today) || $from->diffInDays($to) > 1830) {
+            return null;
+        }
+
+        // A month or year still running ends today, not in the future.
+        return [$from, $to->gt($today) ? $today : $to];
+    }
+
+    /** The words for a range: "Last 30 days", "March 2026", "2025", "1 Mar – 15 Apr 2026". */
+    public static function label(string $key): string
+    {
+        if (isset(self::RANGES[$key])) {
+            return self::RANGES[$key];
+        }
+
+        $p = self::picked($key);
+
+        if ($p === null) {
+            return self::RANGES['today'];
+        }
+
+        [$from, $to] = $p;
+
+        return match ($key[0]) {
+            'm' => $from->format('F Y'),
+            'y' => $from->format('Y'),
+            default => $from->format('Y') === $to->format('Y')
+                ? $from->format('j M').' – '.$to->format('j M Y')
+                : $from->format('j M Y').' – '.$to->format('j M Y'),
+        };
     }
 
     public static function topKey(mixed $key): string
@@ -82,7 +163,11 @@ final class OwnerAppSales
             '7d' => AnalyticsRange::resolve('custom', $d($today->subDays(6)), $d($today)),
             'month' => AnalyticsRange::resolve('month'),
             'last_month' => AnalyticsRange::resolve('custom', $d($today->subMonthNoOverflow()->startOfMonth()), $d($today->startOfMonth()->subDay())),
-            default => AnalyticsRange::resolve('today'),
+            '30d' => AnalyticsRange::resolve('custom', $d($today->subDays(29)), $d($today)),
+            'year' => AnalyticsRange::resolve('custom', $d($today->startOfYear()), $d($today)),
+            default => ($p = self::picked($key)) !== null
+                ? AnalyticsRange::resolve('custom', $d($p[0]), $d($p[1]))
+                : AnalyticsRange::resolve('today'),
         };
     }
 
@@ -164,12 +249,14 @@ final class OwnerAppSales
         $current = null;
         foreach (array_values($buckets) as $i => $b) {
             $at = CarbonImmutable::parse($b['start'], AnalyticsRange::timezone());
-            $end = $hourly ? $at->addHour() : $at->addDay();
+            $unit = $range->bucket();
+            $end = match ($unit) { 'hour' => $at->addHour(), 'week' => $at->addWeek(), 'month' => $at->addMonth(), default => $at->addDay() };
             if ($now->gte($at) && $now->lt($end)) {
                 $current = $i;
             }
             $v = $acc[$b['key']];
-            $bar = ['label' => $hourly ? $at->format('ga') : ($count <= 7 ? ($i === $count - 1 && $key === '7d' ? 'Today' : $at->format('D')) : $at->format('j')), 'future' => (bool) $b['future']];
+            // (Lane REV) A year is weekly bars and a longer span monthly: their label is the date or the month.
+            $bar = ['label' => $hourly ? $at->format('ga') : ($unit === 'week' ? $at->format('j M') : ($unit === 'month' ? $at->format('M') : ($count <= 7 ? ($i === $count - 1 && $key === '7d' ? 'Today' : $at->format('D')) : $at->format('j')))), 'future' => (bool) $b['future']];
             if ($money) {
                 foreach ($measures as $m) {
                     $bar[$m] = round(Money::toMajor(self::measure($m, $v)), 2);
@@ -204,13 +291,15 @@ final class OwnerAppSales
 
         return [
             'range' => $key,
-            'range_label' => self::RANGES[$key],
+            'range_label' => self::label($key),
             'span_label' => $range->rangeLabel(),
             'vs' => $vs,
             'hourly' => $hourly,
             'figs' => $figs,
             'delta' => $delta,
             'paid_orders' => $n,
+            // (Lane REV) The Total in fils, for the admin card's average order.
+            'total_fils' => $money ? self::measure('total', $sum) : null,
             'bars' => $bars,
             'mark' => $mark,
             'views_from' => $range->fromDate(),
@@ -251,7 +340,38 @@ final class OwnerAppSales
             '7d' => [$today->subDays(13), $today->subDays(6), 'vs the 7 days before'],
             'month' => [$today->startOfMonth()->subMonthNoOverflow(), $now->subMonthNoOverflow(), 'vs '.$today->subMonthNoOverflow()->format('F').' to date'],
             'last_month' => [$today->startOfMonth()->subMonthsNoOverflow(2), $today->startOfMonth()->subMonthNoOverflow(), 'vs '.$today->startOfMonth()->subMonthsNoOverflow(2)->format('F')],
-            default => [$today->subDays(7), $now->subDays(7), 'vs last '.$today->format('l')],
+            '30d' => [$today->subDays(59), $today->subDays(29), 'vs the 30 days before'],
+            'year' => [$today->startOfYear()->subYear(), $now->subYear(), 'vs '.$today->subYear()->format('Y').' to date'],
+            'today' => [$today->subDays(7), $now->subDays(7), 'vs last '.$today->format('l')],
+            default => self::previousPicked($key, $now) ?? [$today->subDays(7), $now->subDays(7), 'vs last '.$today->format('l')],
+        };
+    }
+
+    /**
+     * A picked range against the one before it: a month against the month
+     * before, a year against the year before, two dates against the same number
+     * of days just before them. A month or year still running is compared up to
+     * the same day.
+     *
+     * @return array{0: CarbonImmutable, 1: CarbonImmutable, 2: string}|null
+     */
+    private static function previousPicked(string $key, CarbonImmutable $now): ?array
+    {
+        $p = self::picked($key);
+
+        if ($p === null) {
+            return null;
+        }
+
+        [$from, $to] = $p;
+        $end = $to->addDay();
+        $running = $end->gt($now);
+        $endAt = $running ? $now : $end;
+
+        return match ($key[0]) {
+            'm' => [$from->subMonthNoOverflow(), $endAt->subMonthNoOverflow(), 'vs '.$from->subMonthNoOverflow()->format('F Y').($running ? ' to date' : '')],
+            'y' => [$from->subYear(), $endAt->subYear(), 'vs '.$from->subYear()->format('Y').($running ? ' to date' : '')],
+            default => [$from->subDays((int) $from->diffInDays($end)), $from, 'vs the '.(int) $from->diffInDays($end).' days before'],
         };
     }
 

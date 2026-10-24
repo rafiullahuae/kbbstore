@@ -3466,6 +3466,7 @@ function renderDash(){
       ${kpi(I.cust,'#7b6cf0','var(--violet-soft)','Customers','—','with logins preserved')}
       ${kpi(I.orders,'#e0922f','var(--amber-soft)','Orders completed','—','of all orders placed')}
     </div>
+    <div id="kbbRevCard"></div>
     <div class="grid2" style="margin-top:16px">
       <!-- LANE DH. This card was headed "System health" over a green pill
            reading "All core OK" and six hrow() string literals, hydrated by
@@ -3525,6 +3526,8 @@ function renderDash(){
       </div>
     </div>
   </div>`;
+  /* Lane REV: Revenue by this month / 30 days / year / a month / a year / two dates (partials/revenue-card). */
+  if(window.kbbRevenueCard) window.kbbRevenueCard(document.getElementById('kbbRevCard'));
 }
 const kpi=(icon,col,bg,lbl,val,sub)=>`<div class="kpi"><div class="ic" style="background:${bg};color:${col}">${ic(icon)}</div><div class="lbl">${lbl}</div><div class="val">${val}</div><div class="sub">${sub}</div></div>`;
 const hrow=(s,n,m)=>`<div class="hrow"><span class="hd ${s}"></span><b>${n}</b><small>${m}</small></div>`;
@@ -25026,6 +25029,8 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      Endpoints: routes/merchant-feed-admin.php, `marketing.feed`. --}}
 @include('admin.partials.merchant-feed-screen')
 @include('admin.partials.free-gifts-screen')
+{{-- Dashboard -> Revenue (Lane REV): the card under the tiles, filled by window.kbbRevenueCard. --}}
+@include('admin.partials.revenue-card')
 
 {{-- Store → Security (Lane C, Phase 18 items 6 and 7). The administrative
      audit trail and the report over it: one verdict sentence, the failed
