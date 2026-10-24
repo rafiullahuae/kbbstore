@@ -72,7 +72,6 @@
 .fgh-t b{position:absolute;top:-7px;inset-inline-start:-7px;background:#2e8f62;color:#fff;font-size:10px;font-weight:800;border-radius:999px;min-width:19px;height:19px;padding:0 4px;box-sizing:border-box;display:grid;place-items:center;line-height:1}
 .fgh-ph{display:grid;place-items:center;width:100%;height:100%;font-size:11px;font-weight:800;color:#8a7d86;background:#faf5f7;border-radius:10px}
 .fgh-mo{font-size:12.5px;font-weight:700;color:#756c74;white-space:nowrap}
-.fgh-mo.m{display:none}
 .fgh-c{width:9px;height:9px;border-top:2px solid #8a7d86;border-inline-end:2px solid #8a7d86;transform:rotate(45deg);justify-self:center}
 [dir=rtl] .fgh-c{transform:rotate(-45deg)}
 .fgh-ft2{display:flex;justify-content:center}
@@ -80,13 +79,21 @@
 .fgh a.fgh-btn:hover{background:#000}
 .fgh a.fgh-btn:focus-visible{outline:2px solid #2e8f62;outline-offset:2px}
 @media(max-width:760px){
-.fgh .fgh-r{grid-template-columns:minmax(0,1fr) auto 14px;gap:6px 10px;padding:14px 14px 14px 16px}
-.fgh-a{grid-column:1;grid-row:1}.fgh-w{grid-column:1;grid-row:2}.fgh-ft{grid-column:2;grid-row:1/3;align-self:center}
-.fgh-p{grid-column:1/3;grid-row:3;justify-self:start;margin-top:6px;gap:7px}
-.fgh-c{grid-column:3;grid-row:1/4}
-.fgh-t{width:44px;height:44px}
-.fgh-p .fgh-t:nth-child(n+6){display:none}
-.fgh-mo.d{display:none}.fgh-mo.m{display:inline}
+/* A phone keeps the section short (owner, 24 October: "fixed height around
+   500-550 px max ... it will be shown in popup if anybody needs to see full
+   details"): one compact line per range -- amount, wording on one line, the
+   coupon and the arrow -- and the photos live in the popup only. Past about
+   seven ranges the card scrolls inside itself, so the page never grows. */
+.fgh-in{gap:12px}
+.fgh-hd h2{font-size:19px;gap:7px}.fgh-hd h2 svg{width:20px;height:20px}.fgh-hd p{font-size:13px}
+.fgh-card{max-height:410px;overflow-y:auto;overscroll-behavior-y:contain;border-radius:16px}
+.fgh .fgh-r{grid-template-columns:minmax(0,1fr) auto 10px;gap:2px 10px;padding:9px 12px 9px 14px;min-height:56px}
+.fgh-a{grid-column:1;grid-row:1;font-size:14px}
+.fgh-w{grid-column:1;grid-row:2;font-size:12.5px;font-weight:500;color:#5d545b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fgh-ft{grid-column:2;grid-row:1/3;align-self:center;font-size:10.5px;padding:5px 10px}
+.fgh-p{display:none}
+.fgh-c{grid-column:3;grid-row:1/3;width:7px;height:7px}
+.fgh a.fgh-btn{padding:10px 24px;font-size:14px}
 }
 dialog.fgh-pop{border:0;padding:0;background:transparent;max-width:none;max-height:none;width:100%;height:100%;margin:0;color:#2a2228;overflow:hidden}
 dialog.fgh-pop::backdrop{background:rgba(32,22,28,.38);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
@@ -139,7 +146,7 @@ dialog.fgh-pop::backdrop{background:rgba(32,22,28,.38);-webkit-backdrop-filter:b
   <div class="fgh-card">
 @foreach ($fgh['rows'] as $i => $r)
 @php $fghMore = count($r['gifts']); @endphp
-    <button type="button" class="fgh-r" data-fgo="{{ $i }}" aria-haspopup="dialog" aria-label="{{ $r['amount'] }}: {{ $r['words'] }} · {{ $fghT['view'] }}"><span class="fgh-a">{{ $r['amount'] }}</span><span class="fgh-w">{{ $r['words'] }}</span><span class="fgh-ft">{{ $fghT['free'] }}</span><span class="fgh-p">@foreach (array_slice($r['gifts'], 0, 6) as $g)<span class="fgh-t">{!! $fghImg($g, 200, '46px') !!}@if ((int) $g['quantity'] > 1)<b>×{{ (int) $g['quantity'] }}</b>@endif</span>@endforeach @if ($fghMore > 6)<span class="fgh-mo d">+{{ $fghMore - 6 }}</span>@endif @if ($fghMore > 5)<span class="fgh-mo m">+{{ $fghMore - 5 }}</span>@endif</span><span class="fgh-c" aria-hidden="true"></span></button>
+    <button type="button" class="fgh-r" data-fgo="{{ $i }}" aria-haspopup="dialog" aria-label="{{ $r['amount'] }}: {{ $r['words'] }} · {{ $fghT['view'] }}"><span class="fgh-a">{{ $r['amount'] }}</span><span class="fgh-w">{{ $r['words'] }}</span><span class="fgh-ft">{{ $fghT['free'] }}</span><span class="fgh-p">@foreach (array_slice($r['gifts'], 0, 6) as $g)<span class="fgh-t">{!! $fghImg($g, 200, '46px') !!}@if ((int) $g['quantity'] > 1)<b>×{{ (int) $g['quantity'] }}</b>@endif</span>@endforeach @if ($fghMore > 6)<span class="fgh-mo d">+{{ $fghMore - 6 }}</span>@endif</span><span class="fgh-c" aria-hidden="true"></span></button>
 @endforeach
   </div>
   @if ($fgh['btn'] !== '')<div class="fgh-ft2"><a class="fgh-btn" href="{{ \App\Support\Url::to('/shop/') }}">{{ $fgh['btn'] }}</a></div>@endif
