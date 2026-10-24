@@ -342,3 +342,20 @@ it('draws the shop pill beside the heading, linked to the super sale, with a che
         ->and($set('https://example.com/x'))->toBe('https://example.com/x')
         ->and($set('javascript:alert(1)'))->toEndWith('/super-sale/');
 });
+
+/*
+ * "need button to the most right, and increase the button length to 10% more"
+ * (owner, 24 October). The shared heading caps itself at 760px and shrank to
+ * its content inside this section's grid, so the button stopped mid-page.
+ * Mutation note: drop either rule below and this is red (measured: the button
+ * ends at the card's right edge, 163px wide against 148).
+ */
+it('puts the button at the card\'s right edge and makes the pill 10% longer', function () {
+    $mask = fghProduct('Gel Mask');
+    fghRange(194, null, [[$mask, 1, 'mask']], ['mask' => 1]);
+    fghSwitch(true);
+
+    $html = $this->get('/')->assertOk()->getContent();
+    expect($html)->toContain('.fgh .hs-head.hs-split{width:100%;max-width:none;margin-inline:0;box-sizing:border-box}')
+        ->and($html)->toContain('.fgh .hs-btn{padding-inline-start:35px}');
+});

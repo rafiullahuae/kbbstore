@@ -70,6 +70,12 @@
    owner's percentage of it (Homepage section -> Width), centred. */
 .fgh-in{width:100%;display:grid;gap:16px}
 .fgh .hs-head{margin-bottom:0}
+/* The heading runs the card's full width, so the button sits at its right
+   edge (owner, 24 October: "need button to the most right"); the heading
+   itself stays centred on the section. And the pill 10% longer: 148 -> 163px,
+   by its leading padding, so the arrow circle keeps its size. */
+.fgh .hs-head.hs-split{width:100%;max-width:none;margin-inline:0;box-sizing:border-box}
+.fgh .hs-btn{padding-inline-start:35px}
 .fgh .hs-ht h2 svg{width:.9em;height:.9em;vertical-align:-.08em;margin-inline-end:.3em;color:#2e8f62}
 @media(min-width:901px){.fgh-in{max-width:var(--fgw,100%)}}
 .fgh-card{background:#fff;border:1.5px solid #2e8f62;border-radius:18px;overflow:hidden}
