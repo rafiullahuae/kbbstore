@@ -70,6 +70,8 @@
    owner's percentage of it (Homepage section -> Width), centred. */
 .fgh-in{width:100%;display:grid;gap:16px}
 .fgh .hs-head{margin-bottom:0}
+.fgh .fgh-note{margin:0;display:flex;justify-content:center;align-items:center;gap:8px;font-size:15px;font-weight:700;color:#2e8f62;text-align:center}
+.fgh .fgh-note svg{width:18px;height:18px;flex:none}
 /* The heading runs the card's full width, so the button sits at its right
    edge (owner, 24 October: "need button to the most right"); the heading
    itself stays centred on the section. And the pill 10% longer: 148 -> 163px,
@@ -106,6 +108,7 @@
 .fgh-mo.d{display:none}.fgh-mo.t{display:inline}
 }
 @media(max-width:760px){
+.fgh .fgh-note{font-size:13.5px;gap:6px}.fgh .fgh-note svg{width:16px;height:16px}
 /* A phone keeps the section short (owner, 24 October: "fixed height around
    500-550 px max"), as the photo strip he picked (option 27): one line per
    range -- the amount, up to five small round gift photos and "+N" past five
@@ -195,6 +198,8 @@ dialog.fgh-pop::backdrop{background:rgba(32,22,28,.38);-webkit-backdrop-filter:b
     <button type="button" class="fgh-r" data-fgo="{{ $i }}" aria-haspopup="dialog" aria-label="{{ $r['amount'] }}: {{ $r['words'] }} · {{ $fghT['view'] }}"><span class="fgh-a">{{ $r['amount'] }}</span><span class="fgh-w">{{ $r['words'] }}</span><span class="fgh-ft">{{ $fghT['free'] }}</span><span class="fgh-p">@foreach (array_slice($r['gifts'], 0, 6) as $g)<span class="fgh-t">{!! $fghImg($g, 200, '46px') !!}@if ((int) $g['quantity'] > 1)<b>×{{ (int) $g['quantity'] }}</b>@endif</span>@endforeach @if ($fghMore > 6)<span class="fgh-mo d">+{{ $fghMore - 6 }}</span>@endif @if ($fghMore > 4)<span class="fgh-mo t">+{{ $fghMore - 4 }}</span>@endif @if ($fghMore > 5)<span class="fgh-mo m">+{{ $fghMore - 5 }}</span>@endif</span><span class="fgh-c" aria-hidden="true"></span></button>
 @endforeach
   </div>
+  {{-- The owner's line under the gifts ("New gifts added daily"), Homepage section -> Line under the gifts. --}}
+  @if (($fgh['note'] ?? '') !== '')<p class="fgh-note">{!! $fghGift !!}<span>{{ $fgh['note'] }}</span></p>@endif
   @if ($fghBtn)<div class="hs-foot"><a class="bndl-all hs-btn hs-btn-bottom" href="{{ $fgh['url'] }}">{{ $fgh['btn'] }}<i>{!! \App\Support\HomeSections::ARROW !!}</i></a></div>@endif
 </div></div>
 <dialog class="fgh-pop" aria-labelledby="fgh-pt" data-of="{{ $fghT['of'] }}"><div class="fgh-box"><span class="fgh-grab" aria-hidden="true"></span>

@@ -110,6 +110,10 @@ final class FreeGifts
         'title_en' => 'Free gifts with every order', 'title_ar' => 'هدايا مجانية مع كل طلب',
         'sub_en' => 'The more you shop, the more you get.', 'sub_ar' => 'كلما تسوّقتِ أكثر، حصلتِ على المزيد.',
         'btn_en' => 'Shop now', 'btn_ar' => 'تسوّقي الآن',
+        // The line under the gifts, with a gift icon (owner, 24 October: "gift
+        // icon + New gifts added daily ... give control to change this line for
+        // both languages"). Emptied in the admin, it is not drawn.
+        'note_en' => 'New gifts added daily', 'note_ar' => 'هدايا جديدة تُضاف يومياً',
         // Where the button goes (owner, 24 October: "link it to super-sale page
         // ... give option to change the link"): a path on this shop or an
         // http(s) address, checked by HomeSections::url() before it is an href.
@@ -219,7 +223,9 @@ final class FreeGifts
         foreach (self::HOME as $key => $default) {
             $home[$key] = is_bool($default)
                 ? (bool) ($saved['home'][$key] ?? $default)
-                : (is_int($default) ? $default : self::str($saved['home'][$key] ?? null, $default));
+                : (is_int($default) ? $default : (str_starts_with($key, 'note_') && isset($saved['home'][$key]) && is_string($saved['home'][$key])
+                    ? mb_substr(trim($saved['home'][$key]), 0, 160) // may be '' -- the owner hid it
+                    : self::str($saved['home'][$key] ?? null, $default)));
         }
         $home = array_merge($home, self::homeBg($saved['home'] ?? []));
 
@@ -464,6 +470,7 @@ final class FreeGifts
             'title' => $ar ? $h['title_ar'] : $h['title_en'],
             'sub' => $ar ? $h['sub_ar'] : $h['sub_en'],
             'btn' => $ar ? $h['btn_ar'] : $h['btn_en'],
+            'note' => $ar ? $h['note_ar'] : $h['note_en'],
             'url' => \App\Support\HomeSections::url((string) $h['url'], \App\Support\Url::to(self::HOME['url'])),
             'rows' => $rows,
             'ar' => $ar,

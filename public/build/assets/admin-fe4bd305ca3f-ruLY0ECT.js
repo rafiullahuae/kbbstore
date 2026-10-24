@@ -12,7 +12,7 @@
     ['Gift count after the wording', [['count_one', '1 gift', ''], ['count_two', '2 gifts', 'Keep :count in English'], ['count_few', '3 to 10 gifts', 'Keep :count'], ['count_many', '11 gifts or more', 'Keep :count']]],
     ['Elsewhere', [['line', 'Checkout summary line', 'Keep :count'], ['tag', 'Emails, invoice, packing slip', '']]]
   ];
-  var HOME_FIELDS = [['title', 'Title'], ['sub', 'Subtitle'], ['btn', 'Button']];
+  var HOME_FIELDS = [['title', 'Title'], ['sub', 'Subtitle'], ['btn', 'Button'], ['note', 'Line under the gifts (empty = hidden)']];
   var MAX_QTY = 50;
   /* "Gift box look" (Lane FG5): FreeGifts::LOOK, ::LOOK_TITLES and
      ::LOOK_RANGES, written out because this script is @verbatim

@@ -376,3 +376,24 @@ it('shows the ×N circle on phone photos too', function () {
         ->and($html)->not->toContain('.fgh-t b{display:none}')
         ->and($html)->toContain('.fgh-t b{display:grid;top:-5px;inset-inline-start:-5px;');
 });
+
+/*
+ * "gift icon + New gifts added daily ... give control to change this line for
+ * both languages" (owner, 24 October), so shoppers do not read the photos as
+ * the final gifts. Mutation notes: drop the line from the partial, or let an
+ * emptied field fall back to the default, and this is red.
+ */
+it('says new gifts are added daily under the gifts, in each language, and hides when emptied', function () {
+    $mask = fghProduct('Gel Mask');
+    fghRange(194, null, [[$mask, 1, 'mask']], ['mask' => 1]);
+    fghSwitch(true);
+
+    expect($this->get('/')->assertOk()->getContent())->toMatch('#<p class="fgh-note"><svg[^>]*>.*?</svg><span>New gifts added daily</span></p>#s');
+    expect(FreeGifts::HOME['note_ar'])->toBe('هدايا جديدة تُضاف يومياً');
+
+    app(SettingsService::class)->set(FreeGifts::KEY, ['mode' => 'live', 'home' => ['on' => true, 'note_en' => '']]);
+    SettingsService::forgetMemo();
+    Setting::flushMap();
+    app(FreeGifts::class)->compile();
+    expect($this->get('/')->getContent())->not->toContain('class="fgh-note"');
+});
