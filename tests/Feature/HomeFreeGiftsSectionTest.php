@@ -218,3 +218,22 @@ it('words every count from 1 to 11 in proper Arabic', function () {
     $counts = array_map(static fn ($n) => $g->count($n), [1, 2, 3, 10, 11]);
     expect($counts)->each->not->toContain(':count');
 });
+
+/*
+ * The phone photo strip the owner picked (option 27, 24 October): "max upto 5
+ * and put + sign if there's more". A range with 7 gifts shows five photos and
+ * "+2" on a phone (the computer shows six and "+1"). Mutation note: drop the
+ * phone "+N" span or the nth-child(n+6) rule and this is red.
+ */
+it('shows at most five photos and a +N on a phone', function () {
+    $ps = array_map(static fn ($i) => fghProduct('Strip Gift ' . $i), range(1, 7));
+    fghRange(194, null, array_map(static fn ($p) => [$p, 1, 'mask'], $ps), ['mask' => 7]);
+    fghSwitch(true);
+
+    $html = $this->get('/')->assertOk()->getContent();
+
+    expect($html)->toContain('<span class="fgh-mo m">+2</span>')
+        ->and($html)->toContain('<span class="fgh-mo d">+1</span>')
+        ->and($html)->toContain('.fgh-p .fgh-t:nth-child(n+6){display:none}')
+        ->and($html)->toContain('.fgh-card{max-height:410px;overflow-y:auto');
+});
