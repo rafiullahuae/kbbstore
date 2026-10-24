@@ -22,18 +22,31 @@
     (Marketing -> Free gifts -> Display), in the email's language.
 --}}
 @if (($lines ?? []) !== [])
-@php $gbFg = app(\App\Services\FreeGifts::class); $gbG = '#2e8f62'; @endphp
+@php
+    $gbFg = app(\App\Services\FreeGifts::class);
+    $gbG = '#2e8f62';
+    // Written left to right like every other kit block: an Arabic email is
+    // mirrored as a whole by KitRtl::mirror() (dir="rtl" tables, left/right
+    // swapped in every style and align, the one-sided corner radii included).
+    $gbStart = 'left';
+    $gbEnd = 'right';
+    // One corner piece: a 22px cell split in two 11px rows, the lower one
+    // carrying the top border and the side border, so the line meets the
+    // heading's middle. Plain table cells and heights, which Outlook keeps
+    // (it squares the corner; every other client rounds it).
+    $gbCorner = static fn (string $side): string => '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="11" style="height:11px;font-size:0;line-height:0;">&nbsp;</td></tr><tr><td height="11" style="height:11px;border-top:1.5px solid #2e8f62;border-' . $side . ':1.5px solid #2e8f62;border-top-' . $side . '-radius:12px;font-size:0;line-height:0;">&nbsp;</td></tr></table>';
+@endphp
 <tr><td class="px" style="padding:18px 32px 6px;font-family:{!! $k['sans'] !!};"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr>
-<td width="14" valign="top" style="width:14px;"><div style="margin-top:11px;height:11px;border-top:1.5px solid {{ $gbG }};border-left:1.5px solid {{ $gbG }};border-top-left-radius:12px;font-size:0;line-height:0;">&nbsp;</div></td>
+<td width="14" valign="top" style="width:14px;">{!! $gbCorner($gbStart) !!}</td>
 <td width="1" style="white-space:nowrap;padding:0 7px;font-family:{!! $k['sans'] !!};font-size:15px;line-height:22px;font-weight:700;color:{{ $gbG }};">&#127873;&nbsp;{{ ($added ?? false) ? $gbFg->text('email_added') : $gbFg->text('title') }}</td>
-<td valign="top"><div style="margin-top:11px;height:11px;border-top:1.5px solid {{ $gbG }};border-right:1.5px solid {{ $gbG }};border-top-right-radius:12px;font-size:0;line-height:0;">&nbsp;</div></td>
+<td valign="top">{!! $gbCorner($gbEnd) !!}</td>
 </tr>
 <tr><td colspan="3" style="border:1.5px solid {{ $gbG }};border-top:0;border-radius:0 0 12px 12px;padding:2px 14px 12px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">@foreach ($lines as $line)
 <tr><td style="padding:7px 0;{{ $loop->first ? '' : 'border-top:1px solid #E4EEE9;' }}"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
 <td width="52" valign="middle" style="width:52px;">@if (! empty($line['img']))<img src="{{ $line['img'] }}" width="44" height="44" alt="{{ $line['name'] }}" style="display:block;width:44px;height:44px;border-radius:8px;border:1px solid #EEE7EA;background:#ffffff;">@else<div style="width:44px;height:44px;border-radius:8px;background:#FFF0F4;font-size:0;line-height:0;">&nbsp;</div>@endif</td>
 <td valign="middle" style="font-family:{!! $k['sans'] !!};">@if (($line['brand'] ?? '') !== '')<div class="muted" style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#8C828A;">{{ $line['brand'] }}</div>@endif<div class="ink" style="font-size:13.5px;line-height:1.35;color:{{ $k['text'] }};">@if ((int) ($line['qty'] ?? 1) > 1)<b>{{ (int) $line['qty'] }}&times;&nbsp;</b>@endif{!! \App\Services\Mail\Kit\KitRtl::auto($line['name']) !!}</div></td>
-<td width="64" align="right" valign="middle" style="width:64px;padding-left:12px;font-family:{!! $k['sans'] !!};font-size:12px;font-weight:800;letter-spacing:.04em;color:{{ $gbG }};white-space:nowrap;">{{ $gbFg->text('free') }}</td>
+<td width="64" align="{{ $gbEnd }}" valign="middle" style="width:64px;padding-{{ $gbStart }}:12px;font-family:{!! $k['sans'] !!};font-size:12px;font-weight:800;letter-spacing:.04em;color:{{ $gbG }};white-space:nowrap;">{{ $gbFg->text('free') }}</td>
 </tr></table></td></tr>@endforeach
 @php $note = ($added ?? false) ? $gbFg->text('email_added_note') : ($note ?? ''); @endphp
 @if ($note !== '')<tr><td style="padding:8px 0 0;border-top:1px dashed {{ $gbG }};font-family:{!! $k['sans'] !!};font-size:12px;line-height:1.5;color:#5F6B65;">{{ $note }}</td></tr>@endif

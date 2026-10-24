@@ -304,6 +304,9 @@ it('prints nothing a person typed raw: every {!! !!} in the kit is a constant or
         "\\App\\Services\\Mail\\Kit\\KitRtl::ltr(\$ch['value'])",
         "\\App\\Services\\Mail\\Kit\\KitRtl::auto(\$line['name'])",
         "\\App\\Services\\Mail\\Kit\\KitRtl::number(\$chipNumber)",
+        // Lane FGE: the gift box's two corner pieces, built from constants
+        // only ('left'/'right' and fixed colours) -- emails.kit.gift-box.
+        '$gbCorner($gbStart)', '$gbCorner($gbEnd)',
     ];
 
     $found = [];

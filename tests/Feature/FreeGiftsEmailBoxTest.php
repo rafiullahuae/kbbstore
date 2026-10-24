@@ -148,3 +148,28 @@ it('says the gifts were added only in a successful order\'s emails', function ()
         expect(str_contains($html, 'Free gifts added to your order'))->toBe($added, $status);
     }
 });
+
+/*
+ * "don't break anything neither any alignment etc issues in the email" (owner,
+ * 24 October). The heading sits on the box's top line through two corner
+ * pieces built from table cells (Outlook keeps cell heights and borders, not
+ * a div's margin), and in an Arabic email -- whose cells run right to left --
+ * the pieces swap sides so each corner still meets its own side of the box.
+ * Mutation note: hard-code 'left' for the first piece and the Arabic case is red.
+ */
+it('draws the box corners on the right sides in English and in Arabic', function () {
+    $k = ['sans' => 'Arial', 'text' => '#111111'];
+    $lines = [['img' => null, 'brand' => 'Mediheal', 'name' => 'Tea Tree Sheet Mask', 'qty' => 2]];
+    $en = view('emails.kit.gift-box', ['k' => $k, 'lines' => $lines])->render();
+
+    $corner = '#<td width="14" valign="top" style="width:14px;"><table[^>]*><tr><td height="11"[^>]*>&nbsp;</td></tr><tr><td height="11" style="height:11px;border-top:1.5px solid \#2e8f62;border-%s:1.5px solid \#2e8f62;border-top-%s-radius:12px;#';
+    expect($en)->toMatch(sprintf($corner, 'left', 'left'))
+        ->and($en)->toContain('align="right" valign="middle" style="width:64px;padding-left:12px;')
+        ->and($en)->not->toContain('margin-top:11px');
+
+    // An Arabic email is mirrored as a whole: the border AND its rounding
+    // move to the other side together, so each corner still meets its edge.
+    $ar = \App\Services\Mail\Kit\KitRtl::mirror($en);
+    expect($ar)->toMatch(sprintf($corner, 'right', 'right'))
+        ->and($ar)->toContain('align="left" valign="middle" style="width:64px;padding-right:12px;');
+});

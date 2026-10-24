@@ -272,6 +272,9 @@ final class KitRtl
             'padding-left' => 'padding-right', 'padding-right' => 'padding-left',
             'margin-left' => 'margin-right', 'margin-right' => 'margin-left',
             'border-left' => 'border-right', 'border-right' => 'border-left',
+            // One-sided corners (the free gifts box's top corners, Lane FGE).
+            'border-top-left-radius' => 'border-top-right-radius', 'border-top-right-radius' => 'border-top-left-radius',
+            'border-bottom-left-radius' => 'border-bottom-right-radius', 'border-bottom-right-radius' => 'border-bottom-left-radius',
             'text-align:left' => 'text-align:right', 'text-align:right' => 'text-align:left',
             'float:left' => 'float:right', 'float:right' => 'float:left',
         ]);
