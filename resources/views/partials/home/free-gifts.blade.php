@@ -116,16 +116,20 @@
    scroller held the swipe and the page stood still. */
 .fgh-in{gap:12px}
 .fgh-card{border-radius:16px}
-.fgh .fgh-r{grid-template-columns:minmax(0,1fr) auto auto 8px;gap:8px;padding:6px 10px 6px 14px;min-height:56px}
+.fgh .fgh-r{grid-template-columns:minmax(0,1fr) auto auto 8px;gap:8px;padding:10px 10px 8px 14px;min-height:64px}
 .fgh-a{grid-column:1;grid-row:1;font-size:14px;white-space:normal;line-height:1.2}
 .fgh-p{grid-column:2;grid-row:1}.fgh-ft{grid-column:3;grid-row:1}.fgh-c{grid-column:4;grid-row:1}
 .fgh-w{display:none}
 .fgh-p{justify-self:end;gap:0;align-items:center}
-.fgh-t{width:30px;height:30px;border-radius:50%;margin-inline-start:-8px;border:2px solid #fff;box-shadow:0 1px 4px rgba(42,34,40,.14);background:#fff}
+.fgh-t{width:36px;height:36px;border-radius:50%;margin-inline-start:-9px;border:2px solid #fff;box-shadow:0 1px 4px rgba(42,34,40,.14);background:#fff}
 .fgh-t:first-child{margin-inline-start:0}
 .fgh-t img,.fgh-t .fgh-ph{border-radius:50%;padding:2px;box-sizing:border-box}
 .fgh-t .fgh-ph{font-size:8px}
-.fgh-t b{display:none}
+/* "if any gift we give 2x, then there should mention beautifully in a circle
+   2x, 3x etc on each product image" (owner, 24 October): a small green circle
+   on the photo's top leading corner -- the side the next photo never covers,
+   since each photo overlaps the one before it on the other side. */
+.fgh-t b{display:grid;top:-5px;inset-inline-start:-5px;inset-inline-end:auto;min-width:19px;height:19px;padding:0 4px;font-size:10px;border:1.5px solid #fff;z-index:1;box-shadow:0 1px 3px rgba(42,34,40,.2)}
 .fgh-p .fgh-t:nth-child(n+6){display:none}
 .fgh-mo{font-size:12px;margin-inline-start:4px}
 .fgh-mo.d,.fgh-mo.t{display:none}.fgh-mo.m{display:inline}

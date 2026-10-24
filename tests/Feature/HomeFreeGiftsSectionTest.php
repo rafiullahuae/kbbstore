@@ -359,3 +359,20 @@ it('puts the button at the card\'s right edge and makes the pill 10% longer', fu
     expect($html)->toContain('.fgh .hs-head.hs-split{width:100%;max-width:none;margin-inline:0;box-sizing:border-box}')
         ->and($html)->toContain('.fgh .hs-btn{padding-inline-start:35px}');
 });
+
+/*
+ * "in mobile if any gift we give 2x, then there should mention beautifully in
+ * a circle 2x, 3x etc on each product image" (owner, 24 October). The phone
+ * strip hid the ×N badge (`.fgh-t b{display:none}`). Mutation note: put that
+ * back and this is red.
+ */
+it('shows the ×N circle on phone photos too', function () {
+    $mask = fghProduct('Gel Mask');
+    fghRange(194, null, [[$mask, 3, 'mask']], ['mask' => 3]);
+    fghSwitch(true);
+
+    $html = $this->get('/')->assertOk()->getContent();
+    expect($html)->toContain('<b>×3</b>')
+        ->and($html)->not->toContain('.fgh-t b{display:none}')
+        ->and($html)->toContain('.fgh-t b{display:grid;top:-5px;inset-inline-start:-5px;');
+});
