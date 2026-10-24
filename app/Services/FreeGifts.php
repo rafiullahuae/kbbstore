@@ -812,6 +812,79 @@ final class FreeGifts
         return array_column(self::fullFirst(array_map(static fn (array $r, string $k) => ['kind' => $k, 'row' => $r], $rows, $kinds)), 'row');
     }
 
+    /**
+     * Why a backup gift was given, in words for the order's notes, or null when
+     * every gift came from the main list. (Lane FGB, owner 24 October: "we set
+     * the fwee product as primary ... but the customer get the mixsoon product
+     * instead ... i need an urgent fix. check everything.")
+     *
+     * The choice itself is linesFor()'s and is unchanged: a main gift is given
+     * while it is published, has no options, is marked in stock and has units
+     * left; otherwise the type's backups fill in, most stock first. What was
+     * missing is the RECORD: an order that got a backup said nothing about why,
+     * so "fwee had its last unit held by an unpaid order" and "the basket was
+     * over AED 500.99, so it took the higher range" looked the same as a fault.
+     * This names the range used, each main gift that was passed over with its
+     * reason, and what was given instead. No query: the products are the
+     * request's own, already loaded by forTotals().
+     *
+     * @param  list<array<string, mixed>>  $lines  forTotals()' lines for this order
+     */
+    public function backupNote(array $lines): ?string
+    {
+        $used = array_values(array_filter($lines, static fn (array $l) => ! empty($l['backup'])));
+
+        if ($used === []) {
+            return null;
+        }
+
+        $range = null;
+        foreach ($this->ranges() as $r) {
+            if ((int) $r['id'] === (int) $used[0]['range_id']) {
+                $range = $r;
+                break;
+            }
+        }
+
+        if ($range === null) {
+            return null;
+        }
+
+        $products = $this->products(array_map(static fn (array $g) => (int) $g[0], $range['gifts']));
+        $why = static function (?Product $p, int $want): string {
+            if ($p === null) {
+                return 'the product no longer exists';
+            }
+            if ($p->status !== 'publish') {
+                return 'it is not published';
+            }
+            if ($p->type === 'variable') {
+                return 'it has options (shades/sizes)';
+            }
+            if ($p->stock_status !== 'instock') {
+                return 'it is marked out of stock';
+            }
+
+            return $p->manage_stock && (int) $p->stock < $want ? ((int) $p->stock < 1 ? '0 left' : 'only '.(int) $p->stock.' left') : 'not enough units';
+        };
+
+        $parts = [];
+        foreach (array_unique(array_map(static fn (array $l) => (string) $l['kind'], $used)) as $kind) {
+            $skipped = [];
+            foreach ($range['gifts'] as $g) {
+                if (($g[3] ?? 'primary') === 'backup' || self::kind($g[2] ?? null) !== $kind) {
+                    continue;
+                }
+                $p = $products[(int) $g[0]] ?? null;
+                $skipped[] = '“'.($p?->name ?? '#'.(int) $g[0]).'” ('.$why($p, (int) $g[1]).')';
+            }
+            $given = array_map(static fn (array $l) => '“'.$l['product']->name.'” ×'.(int) $l['quantity'], array_filter($used, static fn (array $l) => (string) $l['kind'] === $kind));
+            $parts[] = ucfirst(self::WORDS[$kind][1] ?? $kind).': main gift'.(count($skipped) === 1 ? '' : 's').' '.($skipped === [] ? 'none set' : implode(', ', $skipped)).' — backup given: '.implode(', ', $given).'.';
+        }
+
+        return 'Free gifts, range '.self::rangeLabel($range).': a backup gift was used. '.implode(' ', $parts);
+    }
+
     /** "AED 100 – 299" / "AED 2,000+", the operator's record of a band. */
     public static function rangeLabel(array $range): string
     {

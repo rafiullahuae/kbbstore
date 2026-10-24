@@ -933,8 +933,9 @@ class CheckoutController extends Controller
                  * and the order still goes through. Off, nothing runs.
                  */
                 $kbbGiftUnits = 0;
+                $kbbGiftLines = app(\App\Services\FreeGifts::class)->forTotals($totals, $data['billing_country']);
 
-                foreach (app(\App\Services\FreeGifts::class)->forTotals($totals, $data['billing_country']) as $kbbGift) {
+                foreach ($kbbGiftLines as $kbbGift) {
                     try {
                         DB::transaction(function () use ($order, $kbbGift) {
                             app(\App\Services\StockClaim::class)->claim([[
@@ -966,6 +967,13 @@ class CheckoutController extends Controller
 
                 if ($kbbGiftUnits > 0) {
                     $order->forceFill(['free_gift_count' => $kbbGiftUnits])->saveQuietly();
+                }
+
+                // (Lane FGB) A backup gift is recorded with its reason, so the
+                // owner can see why the main one was passed over. Nothing for
+                // an order whose gifts all came from the main list.
+                if (($kbbGiftNote = app(\App\Services\FreeGifts::class)->backupNote($kbbGiftLines)) !== null) {
+                    $order->notes()->create(['author' => 'system', 'is_customer_note' => false, 'content' => $kbbGiftNote]);
                 }
 
                 if ($cart->coupon) {

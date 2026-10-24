@@ -661,7 +661,14 @@ select.fg-in{padding-inline-end:28px}
     if (!p.in_stock) return { level: 'out', cls: 'red', text: 'Out of stock' };
     if (p.stock !== null && qty && p.stock < qty) return { level: 'low', cls: 'amber', text: 'Only ' + p.stock + ' left' };
     if (p.stock !== null && p.stock <= low()) return { level: 'low', cls: 'amber', text: 'Low · ' + p.stock + ' left' };
-    return { level: 'in', cls: 'green', text: p.stock === null ? 'In stock' : 'In stock · ' + fmt(p.stock) };
+    /* (Lane FGB) A product whose stock is not tracked never runs out: giving it
+       takes nothing off any count, so a number shown elsewhere stays as it was
+       (the owner, 24 October: "the mixsoon should out of stock with this order,
+       but it was still showing 2 pcs"). Say so in amber rather than a green
+       "In stock" that reads as counted. Turn on stock tracking in the product
+       editor to have gifts counted down. */
+    if (p.stock === null) return { level: 'in', cls: 'amber', text: 'Stock not tracked · never runs out' };
+    return { level: 'in', cls: 'green', text: 'In stock · ' + fmt(p.stock) };
   }
   function pill(cls, text) { return el('span', { class: 'pill ' + cls, text: text }); }
   /* The range editor's badge: an unavailable gift says, in so many words,

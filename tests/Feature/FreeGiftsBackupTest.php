@@ -179,3 +179,47 @@ it('saves main and backup from the admin, and a gift sent without a role stays m
         'gifts' => [['product_id' => $bk->id, 'quantity' => 1, 'kind' => 'mask', 'role' => 'spare']],
     ])->assertStatus(422);
 });
+
+/*
+ * Order 56312 (owner, 24 October): "we set the fwee product as primary in
+ * range of 350 - 500 and put mixsoon product as backup, but the customer get
+ * the mixsoon product instead ... and the mixsoon should out of stock with this
+ * order, but it was still showing 2 pcs". The choice rule is unchanged and
+ * pinned above; what an order lacked was the reason. Now an order that gets a
+ * backup carries a system note naming the range, each main gift passed over
+ * and why, and what was given. And a gift whose stock is not tracked says so
+ * in the admin instead of a green "In stock". Mutation notes: drop the
+ * backupNote() call from CheckoutController::place() or the reason from the
+ * note, and this is red.
+ */
+it('gives the main full size gift while it has a unit, and writes no note', function () {
+    $mask = fgbProduct('Rose Mask', 6);
+    $fwee = fgbProduct('fwee Jelly Pot', 1, 'full');
+    $mix = fgbProduct('Mixsoon Bean Essence', null, 'full');
+    fgbRange([[$mask, 3, 'mask', 'primary'], [$fwee, 1, 'full', 'primary'], [$mix, 1, 'full', 'backup']], ['mask' => 3, 'full' => 1]);
+
+    expect(fgbGiven())->toBe(['Rose Mask' => '3', 'fwee Jelly Pot' => '1']);
+    $lines = app(FreeGifts::class)->linesFor(app(FreeGifts::class)->ranges()[0]);
+    expect(app(FreeGifts::class)->backupNote($lines))->toBeNull();
+});
+
+it('records why the backup was given when the main gift had no unit left', function () {
+    $mask = fgbProduct('Rose Mask', 6);
+    $fwee = fgbProduct('fwee Jelly Pot', 0, 'full');
+    $fwee->update(['stock_status' => 'instock']); // a held last unit: tracked, 0 left
+    $mix = fgbProduct('Mixsoon Bean Essence', null, 'full');
+    fgbRange([[$mask, 3, 'mask', 'primary'], [$fwee, 1, 'full', 'primary'], [$mix, 1, 'full', 'backup']], ['mask' => 3, 'full' => 1]);
+
+    expect(fgbGiven())->toBe(['Rose Mask' => '3', 'Mixsoon Bean Essence' => '1 backup']);
+    $lines = app(FreeGifts::class)->linesFor(app(FreeGifts::class)->ranges()[0]);
+    expect(app(FreeGifts::class)->backupNote($lines))
+        ->toBe('Free gifts, range AED 300 – 499: a backup gift was used. Full Size Products: main gift “fwee Jelly Pot” (0 left) — backup given: “Mixsoon Bean Essence” ×1.');
+
+    expect((string) file_get_contents(app_path('Http/Controllers/Store/CheckoutController.php')))
+        ->toContain("if ((\$kbbGiftNote = app(\\App\\Services\\FreeGifts::class)->backupNote(\$kbbGiftLines)) !== null) {");
+});
+
+it('marks a gift whose stock is not tracked in amber, never a green In stock', function () {
+    $screen = (string) file_get_contents(resource_path('views/admin/partials/free-gifts-screen.blade.php'));
+    expect($screen)->toContain("if (p.stock === null) return { level: 'in', cls: 'amber', text: 'Stock not tracked · never runs out' };");
+});
