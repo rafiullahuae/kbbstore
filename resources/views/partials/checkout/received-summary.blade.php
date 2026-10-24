@@ -153,7 +153,7 @@
         </details>
     @endif
 </div>
-@include('partials.free-gifts.box', ['kbbFgRows' => \App\Services\FreeGifts::orderRows($order), 'kbbFgShowValue' => false])
+@include('partials.free-gifts.box', ['kbbFgRows' => \App\Services\FreeGifts::orderRows($order), 'kbbFgThumbs' => \App\Services\FreeGifts::orderThumbs($order), 'kbbFgShowValue' => false, 'kbbFgOpen' => true])
 
 <div class="co-totals">
     {{-- Subtotal removed at the owner's request: the line items above already

@@ -24,6 +24,8 @@
     // The status emails share one preview line; the builder words it per email (Lane EK).
     $kitPreheader = \App\Services\Mail\Kit\EmailWording::line('order_status_' . $status, 'preheader', ['number' => $order['number']]) ?? __('email.kit.pre_status', ['number' => $order['number']]);
     $kitWhy = __('email.kit.why_order', ['site' => $k['site']]);
+    // (Lane FGE) A successful order's updates say the gifts were added to it; on hold, cancelled, failed and refunded do not.
+    $kitGiftsAdded = in_array($status, ['processing', 'shipped', 'completed'], true);
     $kitTrack = [__('email.order_status.track_button'), $ctaUrl, __('email.order_status.track_note')];
 
     $kitShape = [

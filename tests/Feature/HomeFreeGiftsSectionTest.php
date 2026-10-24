@@ -397,3 +397,22 @@ it('says new gifts are added daily under the gifts, in each language, and hides 
     app(FreeGifts::class)->compile();
     expect($this->get('/')->getContent())->not->toContain('class="fgh-note"');
 });
+
+/*
+ * "for higher ranges. show the full sizes products then mini and mask if
+ * space is there. don't start with the masks first" (owner, 24 October).
+ * Mutation note: hand home() the lines unsorted and this is red.
+ */
+it('shows the row photos full size first, then minis, then masks; the popup keeps the admin order', function () {
+    $mask = fghProduct('Order Mask');
+    $mini = fghProduct('Order Mini', 'mini');
+    $full = fghProduct('Order Full', 'full');
+    fghRange(194, null, [[$mask, 2, 'mask'], [$mini, 1, 'mini'], [$full, 1, 'full']], ['mask' => 2, 'mini' => 1, 'full' => 1]);
+    fghSwitch(true);
+
+    app()->instance('request', \Illuminate\Http\Request::create('/'));
+    $row = app(FreeGifts::class)->home(request())['rows'][0];
+    // The row's small photos lead with full size; the popup keeps the admin's order.
+    expect(array_column($row['thumbs'], 'name'))->toBe(['Order Full', 'Order Mini', 'Order Mask'])
+        ->and(array_column($row['gifts'], 'name'))->toBe(['Order Mask', 'Order Mini', 'Order Full']);
+});

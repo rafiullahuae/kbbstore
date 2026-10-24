@@ -30,6 +30,15 @@
             'href' => ($i['slug'] ?? '') !== '' ? \App\Support\Url::external('/product/' . $i['slug'] . '/') : null,
         ];
     }, $items);
+    // (Lane FGE) The free gifts this basket's total reaches today, in the
+    // checkout's opened box, with the owner's line that they depend on
+    // availability when the order is placed. Nothing while gifts are off or
+    // the basket reaches no range; the gift lookup is FreeGifts' own cached one.
+    $kitFgSub = array_sum(array_map(static fn (array $i) => (int) ($i['unit_price'] ?? 0) * (int) ($i['quantity'] ?? 0), $items));
+    $kitGiftLines = array_map(static fn (array $r) => [
+        'img' => \App\Services\Mail\Kit\MailKit::image($r['image'] !== '' ? $r['image'] : null, 200, false),
+        'brand' => $r['brand'], 'name' => $r['name'], 'qty' => (int) $r['quantity'],
+    ], \App\Services\FreeGifts::rows(app(\App\Services\FreeGifts::class)->forTotals(['subtotal' => $kitFgSub, 'item_count' => count($items)])));
 @endphp
 
 @section('kit_inner')
@@ -40,6 +49,7 @@
 @if ($kitLines !== [])
 @include('emails.kit.items', ['lines' => $kitLines, 'showPrice' => true])
 @endif
+@include('emails.kit.gift-box', ['lines' => $kitGiftLines, 'note' => app(\App\Services\FreeGifts::class)->text('availability')])
 @endkitsec
 @kitsec('button')
 @include('emails.kit.button', ['label' => __('email.kit.basket_button'), 'href' => $cartUrl])

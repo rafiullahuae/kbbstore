@@ -96,6 +96,14 @@ final class FreeGifts
         'hide' => ['Hide', 'إخفاء'],
         'line' => ['Free gifts (:count)', 'هدايا مجانية (:count)'],
         'tag' => ['Free gift', 'هدية مجانية'],
+        // The basket reminder email (Lane FGE, owner 24 October: "write one
+        // line that depends on the availability while placing the order").
+        // A successful order's emails (Lane FGE, owner 24 October: "the heading
+        // should change. Gifts are added to your order ... only for the
+        // successed order"): the box's heading and its line under the gifts.
+        'email_added' => ['Free gifts added to your order', 'هدايا مجانية أُضيفت إلى طلبكِ'],
+        'email_added_note' => ['They arrive together with your order.', 'تصلكِ مع طلبكِ.'],
+        'availability' => ['Added to your order when you place it, depending on availability.', 'تُضاف إلى طلبكِ عند إتمامه، حسب التوفّر.'],
         // " · N gifts" after the band's wording. Arabic counts four ways
         // (هدية واحدة / هديتان / 3-10 هدايا / 11+ هدية), English two.
         'count_one' => ['1 gift', 'هدية واحدة'],
@@ -455,6 +463,12 @@ final class FreeGifts
                     : ($max === null ? 'AED ' . $min . '+' : 'AED ' . $min . ' – ' . $max),
                 'words' => $words,
                 'gifts' => self::rows($lines),
+                // The row's small photos: full size first, then minis, then
+                // masks (owner, 24 October: "show the full sizes products then
+                // mini and mask if space is there. don't start with the masks
+                // first ... only default thumbnails"). The popup keeps the
+                // admin's own order.
+                'thumbs' => self::rows(self::fullFirst($lines)),
                 // "4 gifts" / "4 هدايا" for the popup, every Arabic number form covered by count().
                 'count' => $this->count(array_sum(array_map(static fn (array $l) => (int) $l['quantity'], $lines))),
             ];
@@ -762,7 +776,7 @@ final class FreeGifts
             return [];
         }
 
-        $order->loadMissing('gifts.product:id,image');
+        $order->loadMissing('gifts.product:id,image,gift_kind');
 
         return $order->gifts->map(static fn ($i) => [
             'name' => (string) ((trim((string) ($i->name_localised ?? '')) !== '' && ! Locale::isDefault()) ? $i->name_localised : $i->name),
@@ -771,6 +785,27 @@ final class FreeGifts
             'quantity' => (int) $i->quantity,
             'value' => 0,
         ])->values()->all();
+    }
+
+    /**
+     * The same rows for the box's small photos: full size first, then minis,
+     * then masks, by each gift's own type (owner, 24 October: "only default
+     * thumbnails"). The list keeps orderRows()' order. The type itself never
+     * reaches the page.
+     *
+     * @return list<array{name:string,brand:string,image:string,quantity:int,value:int}>
+     */
+    public static function orderThumbs(\App\Models\Order $order): array
+    {
+        $rows = self::orderRows($order);
+
+        if ($rows === []) {
+            return [];
+        }
+
+        $kinds = $order->gifts->map(static fn ($i) => (string) ($i->product?->gift_kind ?? ''))->values()->all();
+
+        return array_column(self::fullFirst(array_map(static fn (array $r, string $k) => ['kind' => $k, 'row' => $r], $rows, $kinds)), 'row');
     }
 
     /** "AED 100 – 299" / "AED 2,000+", the operator's record of a band. */
@@ -1145,7 +1180,7 @@ final class FreeGifts
      * Everything the box partial needs for a basket: its rows and the band's
      * wording in the language being drawn ("3 Masks + 1 Mini Product").
      *
-     * @return array{kbbFgRows: list<array>, kbbFgWords: string}
+     * @return array{kbbFgRows: list<array>, kbbFgThumbs?: list<array>, kbbFgWords: string}
      */
     public function box(array $totals, ?string $country = null): array
     {
@@ -1171,7 +1206,24 @@ final class FreeGifts
             }
         }
 
-        return ['kbbFgRows' => self::rows($lines), 'kbbFgWords' => $words];
+        // kbbFgThumbs: the small photos, full size first (fullFirst()); the list keeps this order.
+        return ['kbbFgRows' => self::rows($lines), 'kbbFgThumbs' => self::rows(self::fullFirst($lines)), 'kbbFgWords' => $words];
+    }
+
+    /**
+     * Gift lines ordered full size, mini, mask, then untagged, keeping each
+     * kind's own order (usort is not stable before PHP 8; the index breaks ties).
+     *
+     * @param  list<array<string, mixed>>  $lines
+     * @return list<array<string, mixed>>
+     */
+    public static function fullFirst(array $lines): array
+    {
+        $rank = ['full' => 0, 'mini' => 1, 'mask' => 2];
+        $keyed = array_map(null, $lines, array_keys($lines));
+        usort($keyed, static fn (array $a, array $b) => [($rank[$a[0]['kind'] ?? ''] ?? 3), $a[1]] <=> [($rank[$b[0]['kind'] ?? ''] ?? 3), $b[1]]);
+
+        return array_column($keyed, 0);
     }
 
     /**
