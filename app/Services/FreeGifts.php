@@ -110,6 +110,24 @@ final class FreeGifts
         'title_en' => 'Free gifts with every order', 'title_ar' => 'هدايا مجانية مع كل طلب',
         'sub_en' => 'The more you shop, the more you get.', 'sub_ar' => 'كلما تسوّقتِ أكثر، حصلتِ على المزيد.',
         'btn_en' => 'Shop now', 'btn_ar' => 'تسوّقي الآن',
+        /*
+         * The section's background (owner, 24 October: "a nice gradient color
+         * scheme, but super light, and it should change continues inside our
+         * branding pinkish colors. but super light opacity. same in mobile").
+         * Shipped ON at what he asked for: a slowly moving gradient of three
+         * brand pinks, washed to `strength` percent over white. Each colour is
+         * a #RRGGBB or its default, `bg` one of BG_STYLES or its default, and
+         * `strength` an integer clamped to 5..60 -- homeBg() is the one reader.
+         */
+        'bg' => 'flow', 'c1' => '#F7A8C4', 'c2' => '#FFB8C9', 'c3' => '#F4C2E0', 'strength' => 22,
+    ];
+
+    /** Background styles for the homepage section: `token => label`. */
+    public const BG_STYLES = [
+        'flow' => 'Moving gradient — the three colours drift slowly',
+        'still' => 'Still gradient — the same colours, not moving',
+        'white' => 'Plain white',
+        'none' => 'None — the page’s own background shows through',
     ];
 
     /**
@@ -190,8 +208,9 @@ final class FreeGifts
         foreach (self::HOME as $key => $default) {
             $home[$key] = is_bool($default)
                 ? (bool) ($saved['home'][$key] ?? $default)
-                : self::str($saved['home'][$key] ?? null, $default);
+                : (is_int($default) ? $default : self::str($saved['home'][$key] ?? null, $default));
         }
+        $home = array_merge($home, self::homeBg($saved['home'] ?? []));
 
         $mode = self::modeOf($saved);
 
@@ -436,6 +455,7 @@ final class FreeGifts
             'btn' => $ar ? $h['btn_ar'] : $h['btn_en'],
             'rows' => $rows,
             'ar' => $ar,
+            'bg' => self::homeBg($h),
         ];
     }
 
@@ -1133,6 +1153,47 @@ final class FreeGifts
         }
 
         return ['kbbFgRows' => self::rows($lines), 'kbbFgWords' => $words];
+    }
+
+    /**
+     * The section background, normalised: a style from BG_STYLES, three
+     * #RRGGBB colours and a strength of 5..60 -- anything else is its default,
+     * never refused (rule 5: a select stores one of its options or the default).
+     *
+     * @return array{bg:string,c1:string,c2:string,c3:string,strength:int}
+     */
+    public static function homeBg(mixed $in): array
+    {
+        $in = is_array($in) ? $in : [];
+        $hex = static fn (mixed $v, string $d): string => is_string($v) && preg_match('/^#[0-9a-fA-F]{6}$/', $v) ? strtoupper($v) : $d;
+        $bg = is_string($in['bg'] ?? null) && isset(self::BG_STYLES[$in['bg']]) ? $in['bg'] : self::HOME['bg'];
+        $s = is_numeric($in['strength'] ?? null) ? (int) $in['strength'] : self::HOME['strength'];
+
+        return [
+            'bg' => $bg,
+            'c1' => $hex($in['c1'] ?? null, self::HOME['c1']),
+            'c2' => $hex($in['c2'] ?? null, self::HOME['c2']),
+            'c3' => $hex($in['c3'] ?? null, self::HOME['c3']),
+            'strength' => max(5, min(60, $s)),
+        ];
+    }
+
+    /**
+     * Each colour washed to `strength` percent over white, in plain hex, so the
+     * stylesheet needs no color-mix() (CLAUDE.md: no newer CSS function beside
+     * var() outside @supports) and works on every browser the shop supports.
+     *
+     * @return list<string>
+     */
+    public static function washed(array $bg): array
+    {
+        $t = $bg['strength'] / 100;
+
+        return array_map(static function (string $c) use ($t): string {
+            $rgb = array_map('hexdec', str_split(substr($c, 1), 2));
+
+            return sprintf('#%02X%02X%02X', ...array_map(static fn (int $v) => (int) round(255 - (255 - $v) * $t), $rgb));
+        }, [$bg['c1'], $bg['c2'], $bg['c3']]);
     }
 
     private static function str(mixed $value, string $default): string

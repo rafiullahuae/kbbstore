@@ -580,7 +580,6 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
 </div></section>
 @endunless
 
-@php $fgh = app(\App\Services\FreeGifts::class)->home(request()); @endphp@if ($fgh !== null)@include('partials.home.free-gifts', ['fgh' => $fgh])@endif
 {{-- BUNDLES — a carousel with arrows, the heading centred and the All sets
      button redesigned (2.60.370): App\Support\HomeBundles holds the reasoning;
      Appearance → Homepage content → Big savings bundles holds the controls. --}}
@@ -817,6 +816,16 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
 @php $hsSbc = \App\Support\ShopByConcern::section($homeSettings, \App\Support\ShopByConcern::data($homeSettings), null, in_array('sbc', $homeFirst, true)); @endphp
 @if ($hsSbc !== null)
 @include('partials.home.hs-sbc', ['cls' => $sections->classFor('sbc'), 'sb' => $hsSbc])
+@endif
+@endunless
+{{-- FREE GIFTS (Lane FGH): under Shop by Concern, the owner's place for it;
+     ↑/↓ and Desktop/Mobile in Appearance → Homepage, words and background in
+     Marketing → Free gifts → Homepage section. Nothing is read or printed while
+     its row is off on both devices or the gifts' homepage switch is off. --}}@unless ($sections->hidden('freegifts'))
+@php $fgh = app(\App\Services\FreeGifts::class)->home(request()); @endphp
+@if ($fgh !== null)
+@php $sections->draws('freegifts'); @endphp
+@include('partials.home.free-gifts', ['fgh' => $fgh, 'cls' => $sections->classFor('freegifts')])
 @endif
 @endunless
 

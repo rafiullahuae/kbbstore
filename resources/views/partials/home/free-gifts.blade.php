@@ -50,7 +50,21 @@
     $fghGift2 = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="3.5" y="10" width="17" height="11" rx="2" fill="#fff"/><rect x="2.5" y="7" width="19" height="4.2" rx="1.4" fill="#ffe3ec"/><rect x="10.6" y="7" width="2.8" height="14" fill="#2e8f62"/><path d="M12 7c-1.2-2.6-3.6-4.3-5.3-3.6-1.4.6-1.2 2.6.4 3.3C8.4 7.2 10.4 7.2 12 7zm0 0c1.2-2.6 3.6-4.3 5.3-3.6 1.4.6 1.2 2.6-.4 3.3-1.3.5-3.3.5-4.9.3z" fill="#2e8f62"/></svg>';
     $fghArr = static fn (bool $next): string => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' . ($next ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6') . '"/></svg>';
 @endphp
-<section class="sec fgh" aria-labelledby="fgh-h" data-fgh><style>
+@php
+    $fghBg = $fgh['bg'] ?? \App\Services\FreeGifts::homeBg([]);
+    $fghW = \App\Services\FreeGifts::washed($fghBg);
+@endphp
+<section class="sec fgh fgh-bg-{{ $fghBg['bg'] }} {{ $cls ?? '' }}" aria-labelledby="fgh-h" data-fgh @if ($fghBg['bg'] === 'flow' || $fghBg['bg'] === 'still') style="--fg1:{{ $fghW[0] }};--fg2:{{ $fghW[1] }};--fg3:{{ $fghW[2] }}" @endif><style>
+/* The background (Marketing -> Free gifts -> Homepage section -> Background):
+   three brand pinks washed to a few percent over white on the server, drawn on
+   a layer behind the section. "Moving" slides that layer with transform only,
+   which the compositor does without repainting the page; reduced motion stops it. */
+.fgh{position:relative;isolation:isolate;overflow:hidden}
+.fgh-bg-white{background:#fff}
+.fgh-bg-flow::before,.fgh-bg-still::before{content:"";position:absolute;top:0;bottom:0;left:0;width:100%;z-index:-1;pointer-events:none;background:linear-gradient(115deg,var(--fg1),var(--fg2),var(--fg3),var(--fg1))}
+.fgh-bg-flow::before{width:300%;background:linear-gradient(115deg,var(--fg1),var(--fg2),var(--fg3),var(--fg1),var(--fg2),var(--fg3),var(--fg1));animation:fghflow 30s linear infinite alternate;will-change:transform}
+@keyframes fghflow{to{transform:translateX(-66.6667%)}}
+@media(prefers-reduced-motion:reduce){.fgh-bg-flow::before{animation:none}}
 .fgh .wrap{display:grid;justify-items:center}
 .fgh-in{width:100%;max-width:980px;display:grid;gap:16px}
 .fgh-hd{display:grid;gap:4px;justify-items:center;text-align:center}

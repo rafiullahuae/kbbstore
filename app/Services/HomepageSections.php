@@ -195,6 +195,17 @@ class HomepageSections
          * It also draws nothing until one tab has a product to show.
          */
         'sbc'         => ['Shop by Concern', 'Concern tabs with a tip panel and products, each tab its own collection. Tabs, tips, photos, products and colours: Homepage content → Shop by Concern.', false, null],
+        /*
+         * (Lane FGH) The free gift ranges, a row each, opening a popup of the
+         * gifts. The owner, 24 October: "i need the gifts sections here" (under
+         * Shop by Concern, above Top brands) "but also give control to move up
+         * down on homepage". FOLLOWS keeps it directly under Shop by Concern on
+         * a shop that has saved its order; ↑/↓ moves it from there. It draws
+         * only while Marketing -> Free gifts -> Homepage section is switched on
+         * and a range is published (MAY_BE_ABSENT), so applying it moves
+         * nothing on a shop that never switched that on.
+         */
+        'freegifts'   => ['Free gifts', 'A row per free gift range, each opening a popup of its gifts. Words, background colours and the on/off switch: Marketing → Free gifts → Homepage section.', false, null],
         'bestsellers' => ['Best sellers', 'Ranked by sales this month.', true, GridSkins::DEFAULT],
         'flash'       => ['Flash sale', 'Discounted, with stock remaining.', true, GridSkins::DEFAULT],
         'blog'        => ['Skincare guide', 'Three journal articles. Words and which articles: Homepage content → Blog.', false, null],
@@ -723,7 +734,8 @@ class HomepageSections
      */
     // (Lane SBC) `sbc` under `concerns`, after it in this list so the host
     // is already placed: Trending, Skin concerns, Shop by Concern.
-    public const FOLLOWS = ['concerns' => 'trending', 'sbc' => 'concerns'];
+    // (Lane FGH) `freegifts` under `sbc`, after it so the host is placed.
+    public const FOLLOWS = ['concerns' => 'trending', 'sbc' => 'concerns', 'freegifts' => 'sbc'];
 
     /**
      * Put each FOLLOWS key the saved payload has no position for directly
@@ -1099,7 +1111,9 @@ class HomepageSections
      *
      * @var list<string>
      */
-    public const MAY_BE_ABSENT = ['cards_banner'];
+    // (Lane FGH) `freegifts` too: its <section> is drawn only while the free
+    // gifts homepage switch is on and a range is published.
+    public const MAY_BE_ABSENT = ['cards_banner', 'freegifts'];
 
     /**
      * The keys of MAY_BE_ABSENT this request has confirmed ARE in the document.

@@ -1392,8 +1392,33 @@
       i.addEventListener('input', function () { editCfg().home[key + '_' + lang] = i.value; repaint(); });
       return i;
     }
-    wrap.appendChild(card('Homepage section', 'Its design is still being chosen, so nothing shows on the homepage yet. Its words are kept here, ready for it.', [
-      el('div', { class: 'fg-row', style: 'margin-top:14px' }, [sw(h.on, 'Show on the homepage (once its design is chosen)', function () { var e = editCfg(); e.home.on = !e.home.on; this.setAttribute('aria-checked', String(e.home.on)); repaint(); }, ro)]),
+    /* (Lane FGH) The background: a style, three colours and how strong they
+       are. The swatch is the section's own gradient, washed the way the server
+       washes it (FreeGifts::washed), so what is seen here is what ships. */
+    var BG = [['flow', 'Moving gradient — the colours drift slowly'], ['still', 'Still gradient'], ['white', 'Plain white'], ['none', 'None — the page’s own background']];
+    function wash(c, t) { return '#' + [1, 3, 5].map(function (i) { var v = Math.round(255 - (255 - parseInt(c.substr(i, 2), 16)) * t / 100); return ('0' + v.toString(16)).slice(-2); }).join(''); }
+    function swatchCss() { var b = cfg().home, t = b.strength; return b.bg === 'white' ? 'background:#fff' : b.bg === 'none' ? 'background:repeating-conic-gradient(#f3f3f3 0 25%,#fff 0 50%) 0 0/16px 16px' : 'background:linear-gradient(115deg,' + [b.c1, b.c2, b.c3, b.c1].map(function (c) { return wash(c, t); }).join(',') + ')'; }
+    var swatch = el('div', { 'aria-hidden': 'true', style: 'height:56px;border-radius:12px;border:1px solid var(--line,#e5e7eb);margin-top:10px;' + swatchCss() });
+    function paintSwatch() { swatch.setAttribute('style', 'height:56px;border-radius:12px;border:1px solid var(--line,#e5e7eb);margin-top:10px;' + swatchCss()); }
+    var bgSel = el('select', { class: 'fg-in', 'aria-label': 'Background', 'data-fk': 'h-bg', disabled: ro }, BG.map(function (o) { var x = el('option', { value: o[0], text: o[1] }); if (h.bg === o[0]) x.selected = true; return x; }));
+    bgSel.addEventListener('change', function () { editCfg().home.bg = bgSel.value; paintSwatch(); repaint(); });
+    function colour(key, label) {
+      var i = el('input', { type: 'color', value: h[key], 'aria-label': label, 'data-fk': 'h-' + key, disabled: ro, style: 'width:44px;height:36px;padding:0;border:1px solid var(--line,#e5e7eb);border-radius:8px;background:none' });
+      i.addEventListener('input', function () { editCfg().home[key] = i.value.toUpperCase(); paintSwatch(); repaint(); });
+      return el('label', { style: 'display:inline-flex;align-items:center;gap:6px;font-size:12.5px' }, [i, label]);
+    }
+    var str = el('input', { type: 'range', min: 5, max: 60, step: 1, value: h.strength, 'aria-label': 'Strength', 'data-fk': 'h-strength', disabled: ro });
+    var strV = el('b', { text: h.strength + '%' });
+    str.addEventListener('input', function () { editCfg().home.strength = +str.value; strV.textContent = str.value + '%'; paintSwatch(); repaint(); });
+    wrap.appendChild(card('Homepage section', 'Shows on the homepage under Shop by Concern while this is on and a range is published. Move it up or down, or hide it on desktop or mobile, in Appearance → Homepage (the “Free gifts” row).', [
+      el('div', { class: 'fg-row', style: 'margin-top:14px' }, [sw(h.on, 'Show on the homepage', function () { var e = editCfg(); e.home.on = !e.home.on; this.setAttribute('aria-checked', String(e.home.on)); repaint(); }, ro)]),
+      el('div', { style: 'margin-top:16px;display:grid;gap:10px' }, [
+        el('b', { text: 'Background', style: 'font-size:13px' }),
+        bgSel,
+        el('div', { style: 'display:flex;gap:14px;flex-wrap:wrap;align-items:center' }, [colour('c1', 'Colour 1'), colour('c2', 'Colour 2'), colour('c3', 'Colour 3')]),
+        el('label', { style: 'display:flex;gap:10px;align-items:center;font-size:12.5px' }, ['Strength (lighter ← → stronger)', str, strV]),
+        swatch
+      ]),
       el('div', { class: 'fg-tx', style: 'margin-top:12px' }, [el('div', { class: 'fg-txr hd', 'aria-hidden': 'true' }, [el('span', { text: 'Where' }), el('span', { text: 'English' }), el('span', { text: 'Arabic' })])].concat(HOME_FIELDS.map(function (f) {
         return el('div', { class: 'fg-txr' }, [el('span', { text: f[1] }), t(f[0], 'en', f[1]), t(f[0], 'ar', f[1])]);
       })))

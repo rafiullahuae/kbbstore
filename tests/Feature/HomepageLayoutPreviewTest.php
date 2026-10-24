@@ -174,7 +174,8 @@ it('counts the same sections it always did, and names the same ones off', functi
     // ON in those two. Signature already had it off-by-default, Boutique off.
     // ▲ Lane CX: +1 each — Shop by skin concern (`concerns`) ships on, under
     // Trending, in every preset (the owner asked for it there).
-    $expected = ['signature' => 15, 'conversion' => 23, 'editorial' => 23, 'boutique' => 15];
+    // ▲ Lane FGH: +1 in each, the Free gifts row under Shop by Concern.
+    $expected = ['signature' => 16, 'conversion' => 24, 'editorial' => 24, 'boutique' => 16];
 
     foreach (app(HomepageLayouts::class)->summaries() as $summary) {
         expect($summary['count'])->toBe($expected[$summary['key']], $summary['key'] . ' changed its section count');

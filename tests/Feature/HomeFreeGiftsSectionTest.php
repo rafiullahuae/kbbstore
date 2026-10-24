@@ -68,7 +68,7 @@ it('shows every published range on the homepage with its wording and gift photos
 
     $html = $this->get('/')->assertOk()->getContent();
 
-    expect($html)->toContain('class="sec fgh"')
+    expect($html)->toContain('class="sec fgh fgh-bg-flow ')
         ->and($html)->toContain('Free gifts with every order')
         ->and($html)->toContain('AED 194 – 399')
         ->and($html)->toContain('AED 400+')
@@ -83,10 +83,10 @@ it('draws nothing while the homepage switch is off, or gifts are off', function 
     fghRange(194, null, [[$mask, 1, 'mask']], ['mask' => 1]);
 
     fghSwitch(false);
-    expect($this->get('/')->assertOk()->getContent())->not->toContain('class="sec fgh"');
+    expect($this->get('/')->assertOk()->getContent())->not->toContain('class="sec fgh ');
 
     fghSwitch(true, 'off');
-    expect($this->get('/')->assertOk()->getContent())->not->toContain('class="sec fgh"');
+    expect($this->get('/')->assertOk()->getContent())->not->toContain('class="sec fgh ');
 });
 
 it('follows the ranges by itself: a newly published range appears, a switched-off one goes', function () {
@@ -111,7 +111,7 @@ it('never promises a gift that is out of stock', function () {
     fghRange(400, null, [[$mask, 1, 'mask']], ['mask' => 1]);
     fghSwitch(true);
 
-    preg_match('#<section class="sec fgh".*?</section>#s', $this->get('/')->getContent(), $m);
+    preg_match('#<section class="sec fgh .*?</section>#s', $this->get('/')->getContent(), $m);
     $html = $m[0] ?? '';
     expect($html)->not->toContain('AED 194 – 399')->and($html)->not->toContain('Sold Out Mask')->and($html)->toContain('AED 400+');
 });
@@ -236,4 +236,54 @@ it('shows at most five photos and a +N on a phone', function () {
         ->and($html)->toContain('<span class="fgh-mo d">+1</span>')
         ->and($html)->toContain('.fgh-p .fgh-t:nth-child(n+6){display:none}')
         ->and($html)->toContain('.fgh-card{max-height:410px;overflow-y:auto');
+});
+
+/*
+ * Where it sits and what it is painted with (owner, 24 October): "i need the
+ * gifts sections here" -- under Shop by Concern, above Top brands -- "but also
+ * give control to move up down on homepage, and also the background colors
+ * control, put a nice gradient ... super light ... change continues inside our
+ * branding pinkish colors". Mutation notes: drop `freegifts` from FOLLOWS and a
+ * saved order puts it last (red); drop homeBg()'s hex check and the bad colour
+ * reaches the page (red); remove the reduced-motion rule (red).
+ */
+it('is a homepage row placed under Shop by Concern, with ↑/↓ like every section', function () {
+    expect(\App\Services\HomepageSections::REGISTRY)->toHaveKey('freegifts')
+        ->and(\App\Services\HomepageSections::FOLLOWS['freegifts'] ?? null)->toBe('sbc');
+
+    $keys = array_keys(\App\Services\HomepageSections::REGISTRY);
+    expect(array_search('freegifts', $keys, true))->toBe(array_search('sbc', $keys, true) + 1);
+
+    // A shop that saved its order before this row existed gets it under Shop by Concern.
+    $saved = [];
+    foreach (array_reverse($keys) as $i => $k) {
+        if ($k !== 'freegifts') {
+            $saved[$k] = ['desktop' => true, 'mobile' => true, 'order' => $i];
+        }
+    }
+    app(SettingsService::class)->set('homepage_sections', $saved);
+    SettingsService::forgetMemo();
+    Setting::flushMap();
+    $order = array_keys(app(\App\Services\HomepageSections::class)->all());
+    expect(array_search('freegifts', $order, true))->toBe(array_search('sbc', $order, true) + 1);
+});
+
+it('paints a light moving pink gradient by default, and keeps every colour a colour', function () {
+    $mask = fghProduct('Gel Mask');
+    fghRange(194, null, [[$mask, 1, 'mask']], ['mask' => 1]);
+    fghSwitch(true);
+
+    $html = $this->get('/')->assertOk()->getContent();
+    expect($html)->toContain('class="sec fgh fgh-bg-flow ')
+        ->and($html)->toMatch('/style="--fg1:#[0-9A-F]{6};--fg2:#[0-9A-F]{6};--fg3:#[0-9A-F]{6}"/')
+        ->and($html)->toContain('@keyframes fghflow{to{transform:translateX(-66.6667%)}}')
+        ->and($html)->toContain('@media(prefers-reduced-motion:reduce){.fgh-bg-flow::before{animation:none}}');
+
+    $bg = FreeGifts::homeBg(['bg' => 'disco', 'c1' => 'red;}body{display:none', 'c2' => '#123456', 'strength' => 500]);
+    expect($bg)->toBe(['bg' => 'flow', 'c1' => FreeGifts::HOME['c1'], 'c2' => '#123456', 'c3' => FreeGifts::HOME['c3'], 'strength' => 60]);
+
+    // "super light": at the shipped strength every washed colour is within a few shades of white.
+    foreach (FreeGifts::washed(FreeGifts::homeBg([])) as $hex) {
+        expect(min(array_map('hexdec', str_split(substr($hex, 1), 2))))->toBeGreaterThan(220);
+    }
 });
