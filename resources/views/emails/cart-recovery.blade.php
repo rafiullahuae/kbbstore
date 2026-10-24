@@ -49,7 +49,7 @@
 @if ($kitLines !== [])
 @include('emails.kit.items', ['lines' => $kitLines, 'showPrice' => true])
 @endif
-@include('emails.kit.gift-box', ['lines' => $kitGiftLines, 'note' => app(\App\Services\FreeGifts::class)->text('availability')])
+@include('emails.kit.gift-box', ['lines' => $kitGiftLines, 'note' => app(\App\Services\FreeGifts::class)->text('availability'), 'cta' => app(\App\Services\FreeGifts::class)->text('basket_cta')])
 @endkitsec
 @kitsec('button')
 @include('emails.kit.button', ['label' => __('email.kit.basket_button'), 'href' => $cartUrl])

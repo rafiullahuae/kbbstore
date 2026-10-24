@@ -88,9 +88,11 @@ it('shows the basket reminder the gifts its total reaches, with the availability
     $mail = fn (int $price) => (new \App\Mail\CartRecoveryReminder('Your basket', 'Hi', [['name' => 'Glow Serum', 'slug' => 'glow', 'quantity' => 1, 'unit_price' => $price]], 'https://example.test/cart/', 'https://example.test/u'))->render();
 
     expect($mail(25000))->toContain('Free gifts for you')->toContain('Gel Mask')
-        ->toContain('Added to your order when you place it, depending on availability.');
+        ->toContain('Added to your order when you place it, depending on availability.')
+        // The owner's closing line, last in the box (24 October).
+        ->toMatch('#depending on availability\.</td></tr>\s*<tr><td[^>]*font-weight:700;color:\#2e8f62;">Don’t miss out on your FREE GIFTS! 🎁 Grab yours before they are gone\.</td></tr>#u');
     // Below every range: no box, no line.
-    expect($mail(5000))->not->toContain('Free gifts for you')->not->toContain('depending on availability');
+    expect($mail(5000))->not->toContain('Free gifts for you')->not->toContain('depending on availability')->not->toContain('Don’t miss out');
 });
 
 /*

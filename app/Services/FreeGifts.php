@@ -98,6 +98,10 @@ final class FreeGifts
         'tag' => ['Free gift', 'هدية مجانية'],
         // The basket reminder email (Lane FGE, owner 24 October: "write one
         // line that depends on the availability while placing the order").
+        // The basket reminder's closing line, at the box's bottom (owner, 24
+        // October: "Don’t miss out on your FREE GIFTS! 🎁 Grab yours before
+        // they are gone. add this line to the abandoned gift box at the bottom").
+        'basket_cta' => ['Don’t miss out on your FREE GIFTS! 🎁 Grab yours before they are gone.', 'لا تفوّتي هداياكِ المجانية! 🎁 احصلي عليها قبل نفادها.'],
         // A successful order's emails (Lane FGE, owner 24 October: "the heading
         // should change. Gifts are added to your order ... only for the
         // successed order"): the box's heading and its line under the gifts.

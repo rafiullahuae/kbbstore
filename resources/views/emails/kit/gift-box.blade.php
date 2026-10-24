@@ -15,6 +15,8 @@
             KitOrder::lines()' shape, so an order's gift lines pass straight in
     $note   optional plain line under the gifts (the basket reminder's
             "depending on availability")
+    $cta    optional closing line at the very bottom, green and bold (the
+            basket reminder's "Don't miss out on your FREE GIFTS!", text basket_cta)
     $added  true on a successful order's emails: the heading says the gifts
             were added to the order and the line that they arrive with it
             (texts email_added / email_added_note)
@@ -50,6 +52,7 @@
 </tr></table></td></tr>@endforeach
 @php $note = ($added ?? false) ? $gbFg->text('email_added_note') : ($note ?? ''); @endphp
 @if ($note !== '')<tr><td style="padding:8px 0 0;border-top:1px dashed {{ $gbG }};font-family:{!! $k['sans'] !!};font-size:12px;line-height:1.5;color:#5F6B65;">{{ $note }}</td></tr>@endif
+@if (($cta ?? '') !== '')<tr><td style="padding:{{ $note !== '' ? '6px' : '8px' }} 0 0;{{ $note !== '' ? '' : 'border-top:1px dashed ' . $gbG . ';' }}font-family:{!! $k['sans'] !!};font-size:13.5px;line-height:1.45;font-weight:700;color:{{ $gbG }};">{{ $cta }}</td></tr>@endif
 </table></td></tr>
 </table></td></tr>
 @endif
