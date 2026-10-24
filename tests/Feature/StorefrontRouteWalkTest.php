@@ -285,6 +285,8 @@ function walkExpectations(array $seed): array
         // --- Cart and checkout ------------------------------------------
         'cart'                     => ['status' => 200],
         'api/cart/drawer'          => ['status' => 200],
+        // The live free gifts box (Lane FGL): a guest has no basket and no gifts.
+        'api/cart/gifts'           => ['status' => 200],
         /*
          * ▲ PIN ADVANCED, DELIBERATELY (Lane SEC, round 2). This used to read
          *

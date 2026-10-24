@@ -29,7 +29,7 @@ use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-const FG5_DEFAULT_FIELDSET = '<fieldset class="fgb fgb-clamp2" style="--fg-ts:12px;--fg-pl:28px;--fg-pr:36px;--fg-fg:16px;--fg-rg:3px"';
+const FG5_DEFAULT_FIELDSET = '<fieldset class="fgb fgb-clamp2 fgb-k1" style="--fg-ts:12px;--fg-pl:28px;--fg-pr:36px;--fg-fg:16px;--fg-rg:3px"';
 
 beforeEach(function () {
     DB::table('free_gift_ranges')->delete();
@@ -117,7 +117,7 @@ it('falls back to the default for a bad value and clamps every number to its ran
      */
     expect(FreeGifts::lookOf(null))->toBe(FreeGifts::LOOK)
         ->and(FreeGifts::lookOf('nonsense'))->toBe(FreeGifts::LOOK)
-        ->and(FreeGifts::LOOK)->toBe(['brand' => true, 'titles' => 'clamp2', 'free_gap' => 16, 'title_px' => 12, 'photo_list' => 28, 'photo_row' => 36, 'separator' => false, 'row_gap' => 3]);
+        ->and(FreeGifts::LOOK)->toBe(['brand' => true, 'titles' => 'clamp2', 'free_gap' => 16, 'title_px' => 12, 'photo_list' => 28, 'photo_row' => 36, 'separator' => false, 'row_gap' => 3, 'photos' => 'fill5']);
 
     $bad = FreeGifts::lookOf([
         'brand' => 'maybe', 'separator' => ['x'], 'titles' => 'marquee',
@@ -153,7 +153,7 @@ it('saves the look from Display through the same normalising, and keeps it when 
     ]])->assertOk();
 
     $saved = app(SettingsService::class)->get(FreeGifts::KEY)['look'];
-    expect($saved)->toBe(['brand' => false, 'titles' => 'clamp2', 'free_gap' => 40, 'title_px' => 14, 'photo_list' => 28, 'photo_row' => 36, 'separator' => true, 'row_gap' => 3]);
+    expect($saved)->toBe(['brand' => false, 'titles' => 'clamp2', 'free_gap' => 40, 'title_px' => 14, 'photo_list' => 28, 'photo_row' => 36, 'separator' => true, 'row_gap' => 3, 'photos' => 'fill5']);
 
     // An older console (no "look" in the body) leaves the saved look alone.
     test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/settings', $body)->assertOk();
@@ -193,7 +193,7 @@ it('ships today\'s look except the two the owner asked for: 16px before FREE and
         ->toContain('.fgb-lr .fgb-t{width:var(--fg-pl,28px);height:var(--fg-pl,28px);border-radius:7px}')
         ->toContain('font-size:var(--fg-ts,12px);line-height:1.25')
         ->toContain('gap:var(--fg-rg,3px)')
-        ->toContain('width="36" height="36"')->toContain('width="28" height="28"')
+        ->toContain('width="45" height="45"')->toContain('width="28" height="28"')
         // Brand shown, no separator, no fade: and their CSS is not even printed.
         ->toContain('<small>')
         ->not->toContain('fgb-nobrand')->not->toContain('fgb-sep')->not->toContain('fgb-fade')
@@ -212,11 +212,11 @@ it('turns each control into its fixed class or integer variable, and nothing els
     $cart = fg5Basket($p);
 
     fg5On(['brand' => false]);
-    expect(fg5Box($cart))->toContain('<fieldset class="fgb fgb-nobrand fgb-clamp2"')->toContain('.fgb-nobrand .fgb-ln small{display:none}');
+    expect(fg5Box($cart))->toContain('<fieldset class="fgb fgb-nobrand fgb-clamp2 fgb-k1"')->toContain('.fgb-nobrand .fgb-ln small{display:none}');
 
     fg5On(['titles' => 'fade']);
     $fade = fg5Box($cart);
-    expect($fade)->toContain('<fieldset class="fgb fgb-fade"')
+    expect($fade)->toContain('<fieldset class="fgb fgb-fade fgb-k1"')
         ->toContain('.fgb-fade .fgb-nm{white-space:nowrap;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}')
         ->toContain('.fgb-fade .fgb-list{grid-template-columns:minmax(0,1fr)}')
         ->toContain('<span class="fgb-nm" dir="ltr">Tea Tree Sheet Mask</span>')
@@ -224,18 +224,18 @@ it('turns each control into its fixed class or integer variable, and nothing els
 
     fg5On(['titles' => 'wrap']);
     $wrap = fg5Box($cart);
-    expect($wrap)->toContain('<fieldset class="fgb" style=')->not->toContain('-webkit-line-clamp')->not->toContain('mask-image')
+    expect($wrap)->toContain('<fieldset class="fgb fgb-k1" style=')->not->toContain('-webkit-line-clamp')->not->toContain('mask-image')
         ->toContain('<span class="fgb-nm">Tea Tree Sheet Mask</span>');
 
     fg5On(['separator' => true]);
-    expect(fg5Box($cart))->toContain('<fieldset class="fgb fgb-clamp2 fgb-sep"')
+    expect(fg5Box($cart))->toContain('<fieldset class="fgb fgb-clamp2 fgb-sep fgb-k1"')
         ->toContain('.fgb-sep .fgb-lr+.fgb-lr{border-top:1px solid #e4eee9;padding-top:var(--fg-rg,3px)}');
 
     fg5On(['free_gap' => 24, 'title_px' => 14, 'photo_list' => 40, 'photo_row' => 44, 'row_gap' => 8]);
     $big = fg5Box($cart);
     expect($big)->toContain('style="--fg-ts:14px;--fg-pl:40px;--fg-pr:44px;--fg-fg:24px;--fg-rg:8px"')
-        // The photos ask for the copy that fits the size they are drawn at.
-        ->toContain('width="44" height="44"')->toContain('width="40" height="40"');
+        // The photos ask for the copy that fits the size they are drawn at (one gift under B: 44 x 1.25).
+        ->toContain('width="55" height="55"')->toContain('width="40" height="40"');
 });
 
 it('prints no string from the settings: classes are constants and the variables are integers', function () {
@@ -291,8 +291,8 @@ it('costs the cart page no query for the look: the same count with or without on
     [$without, $a] = $count(null);
     [$with, $b] = $count(['brand' => false, 'titles' => 'fade', 'separator' => true, 'free_gap' => 30, 'title_px' => 15, 'photo_list' => 44, 'photo_row' => 44, 'row_gap' => 9]);
 
-    expect($a)->toContain('<fieldset class="fgb fgb-page fgb-clamp2"')
-        ->and($b)->toContain('<fieldset class="fgb fgb-page fgb-nobrand fgb-fade fgb-sep" style="--fg-ts:15px;--fg-pl:44px;--fg-pr:44px;--fg-fg:30px;--fg-rg:9px" data-fgs="')
+    expect($a)->toContain('<fieldset class="fgb fgb-page fgb-clamp2 fgb-k2"')
+        ->and($b)->toContain('<fieldset class="fgb fgb-page fgb-nobrand fgb-fade fgb-sep fgb-k2" style="--fg-ts:15px;--fg-pl:44px;--fg-pr:44px;--fg-fg:30px;--fg-rg:9px" data-fgs="')
         ->and($with)->toBe($without);
 
     // And the box itself, drawn once the settings row has been read (as the
@@ -355,7 +355,7 @@ it('draws every control on Display and keeps the preview\'s copy of the defaults
      */
     $screen = file_get_contents(resource_path('views/admin/partials/free-gifts-screen.blade.php'));
 
-    expect($screen)->toContain('  var LOOK = ' . json_encode(FreeGifts::LOOK) . ', LOOK_TITLES = ' . json_encode(FreeGifts::LOOK_TITLES) . ', LOOK_RANGES = ' . json_encode(FreeGifts::LOOK_RANGES) . ';')
+    expect($screen)->toContain('  var LOOK = ' . json_encode(FreeGifts::LOOK) . ', LOOK_TITLES = ' . json_encode(FreeGifts::LOOK_TITLES) . ', LOOK_RANGES = ' . json_encode(FreeGifts::LOOK_RANGES) . ', LOOK_PHOTOS = ' . json_encode(FreeGifts::LOOK_PHOTOS) . ';')
         ->and(substr_count($screen, 'lookCard(),'))->toBe(1)
         ->and($screen)->toContain("card('Gift box look'")
         ->toContain("'Show brand names'")->toContain("'Separator line between gifts'")

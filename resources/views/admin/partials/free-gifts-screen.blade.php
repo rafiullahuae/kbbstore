@@ -335,6 +335,14 @@ select.fg-in{padding-inline-end:28px}
 .fgp-ph{display:grid;place-items:center;width:100%;height:100%;font-size:10.5px;font-weight:800;color:#8a7d86;background:repeating-linear-gradient(135deg,#faf5f7 0 6px,#f3ebef 6px 12px);border-radius:8px}
 .fgp-t b{position:absolute;top:-6px;inset-inline-end:-6px;background:#2e8f62;color:#fff;font-size:9.5px;font-weight:800;border-radius:999px;min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;display:grid;place-items:center;line-height:1}
 .fgp-tg{color:#2e8f62;font-size:11.5px;font-weight:700;margin-inline-start:4px;align-self:center}
+.fgp-k1 .fgp-th .fgp-t{width:calc(var(--fg-pr,36px)*1.25);height:calc(var(--fg-pr,36px)*1.25)}
+.fgp-k2 .fgp-th .fgp-t{width:calc(var(--fg-pr,36px)*1.17);height:calc(var(--fg-pr,36px)*1.17)}
+.fgp-k3 .fgp-th .fgp-t{width:calc(var(--fg-pr,36px)*1.11);height:calc(var(--fg-pr,36px)*1.11)}
+.fgp-k1 .fgp-th .fgp-tg,.fgp-k2 .fgp-th .fgp-tg,.fgp-k3 .fgp-th .fgp-tg,.fgp-g5 .fgp-th .fgp-tg,.fgp-g4 .fgp-th .fgp-tg{flex-basis:100%;margin-inline-start:0;grid-column:1/-1;justify-self:start}
+.fgp-g5 .fgp-th,.fgp-g4 .fgp-th{display:grid;gap:6px;grid-template-columns:repeat(5,1fr)}
+.fgp-g4 .fgp-th{grid-template-columns:repeat(4,1fr);gap:7px}
+.fgp-g5 .fgp-th .fgp-t,.fgp-g4 .fgp-th .fgp-t{width:100%;min-width:0;height:auto;aspect-ratio:1;max-width:64px}
+.fgp-g4 .fgp-th .fgp-t{max-width:72px}
 .fgp-list{margin-top:7px;border-top:1px dashed #2e8f62;padding-top:5px;display:grid;gap:var(--fg-rg,3px)}
 .fgp-sep .fgp-lr+.fgp-lr{border-top:1px solid #e4eee9;padding-top:var(--fg-rg,3px)}
 .fgp-lr{display:flex;align-items:center;gap:8px}
@@ -412,13 +420,20 @@ select.fg-in{padding-inline-end:28px}
      (FreeGiftsLookTest pins them equal), normalised here exactly as
      FreeGifts::lookOf() does, so the preview never shows a value the save
      would not keep. */
-  var LOOK = {"brand":true,"titles":"clamp2","free_gap":16,"title_px":12,"photo_list":28,"photo_row":36,"separator":false,"row_gap":3}, LOOK_TITLES = ["clamp2","fade","wrap"], LOOK_RANGES = {"free_gap":[0,40],"title_px":[11,16],"photo_list":[22,48],"photo_row":[22,48],"row_gap":[0,16]};
+  var LOOK = {"brand":true,"titles":"clamp2","free_gap":16,"title_px":12,"photo_list":28,"photo_row":36,"separator":false,"row_gap":3,"photos":"fill5"}, LOOK_TITLES = ["clamp2","fade","wrap"], LOOK_RANGES = {"free_gap":[0,40],"title_px":[11,16],"photo_list":[22,48],"photo_row":[22,48],"row_gap":[0,16]}, LOOK_PHOTOS = ["fixed","scale","fill5","fill4"];
+  /* FreeGifts::photoTier(): the closed row's size class for n photos (Lane FGP). */
+  function photoTier(lk, n) {
+    if (lk.photos === 'fixed' || n < 1) return '';
+    if (n === 1) return ' fgp-k1';
+    if (n <= (lk.photos === 'fill4' ? 3 : 4)) return ' fgp-k2';
+    return ({ scale: ' fgp-k3', fill5: ' fgp-g5', fill4: ' fgp-g4' })[lk.photos];
+  }
   /* FreeGifts::textDir(): a fading title fades at its own end. */
   function textDir(s) { return /^[^\p{L}]*[\p{Script=Arabic}\p{Script=Hebrew}]/u.test(String(s || '')) ? 'rtl' : 'ltr'; }
   function lookOf(v) {
     v = v && typeof v === 'object' ? v : {};
     var o = { brand: typeof v.brand === 'boolean' ? v.brand : LOOK.brand, separator: typeof v.separator === 'boolean' ? v.separator : LOOK.separator,
-      titles: LOOK_TITLES.indexOf(v.titles) >= 0 ? v.titles : LOOK.titles };
+      titles: LOOK_TITLES.indexOf(v.titles) >= 0 ? v.titles : LOOK.titles, photos: LOOK_PHOTOS.indexOf(v.photos) >= 0 ? v.photos : LOOK.photos };
     Object.keys(LOOK_RANGES).forEach(function (k) {
       var n = typeof v[k] === 'number' ? v[k] : (typeof v[k] === 'string' && v[k].trim() !== '' ? Number(v[k]) : NaN);
       o[k] = isFinite(n) ? Math.max(LOOK_RANGES[k][0], Math.min(LOOK_RANGES[k][1], Math.round(n))) : LOOK[k];
@@ -786,7 +801,7 @@ select.fg-in{padding-inline-end:28px}
   function previewBox(gifts, words, lang, opened) {
     var c = cfg(), T = function (k) { return c.texts[k + '_' + lang] || ''; }, rows = shopRows(gifts);
     var lk = lookOf(c.look);
-    var box = el('fieldset', { class: 'fgp' + (lk.brand ? '' : ' fgp-nobrand') + ({ clamp2: ' fgp-clamp2', fade: ' fgp-fade', wrap: '' })[lk.titles] + (lk.separator ? ' fgp-sep' : ''), dir: lang === 'ar' ? 'rtl' : 'ltr', lang: lang, 'aria-label': 'Preview',
+    var box = el('fieldset', { class: 'fgp' + (lk.brand ? '' : ' fgp-nobrand') + ({ clamp2: ' fgp-clamp2', fade: ' fgp-fade', wrap: '' })[lk.titles] + (lk.separator ? ' fgp-sep' : '') + photoTier(lk, rows.length), dir: lang === 'ar' ? 'rtl' : 'ltr', lang: lang, 'aria-label': 'Preview',
       style: '--fg-ts:' + lk.title_px + 'px;--fg-pl:' + lk.photo_list + 'px;--fg-pr:' + lk.photo_row + 'px;--fg-fg:' + lk.free_gap + 'px;--fg-rg:' + lk.row_gap + 'px' });
     var lg = el('legend'); lg.innerHTML = GIFT_SVG; lg.appendChild(el('span', { text: T('title') })); box.appendChild(lg);
     if (!rows.length) { box.appendChild(el('div', { class: 'fgp-none', text: 'Nothing shows: this range has no gift the shop can give right now.' })); return box; }
@@ -1744,18 +1759,23 @@ select.fg-in{padding-inline-end:28px}
         return el('option', { value: o[0], text: o[1], selected: lk.titles === o[0] });
       }));
       titles.addEventListener('change', function () { set('titles', titles.value); });
+      var photos = el('select', { class: 'fg-in', disabled: ro, 'data-fk': 'lk-photos' }, [['fill5', 'B · Fill the row, 5 per row (as asked)'], ['scale', 'A · Bigger by count (1 gift +25%, 2–4 +17%, 5+ +11%)'], ['fill4', 'C · Biggest, 4 per row'], ['fixed', 'Same size for every count (before)']].map(function (o) {
+        return el('option', { value: o[0], text: o[1], selected: lk.photos === o[0] });
+      }));
+      photos.addEventListener('change', function () { set('photos', photos.value); });
       return card('Gift box look', 'How each gift reads in the opened list. The preview follows every change.', [
         el('div', { class: 'fg-row', style: 'margin-top:12px;gap:18px;flex-wrap:wrap' }, [
           sw(lk.brand, 'Show brand names', function () { var v = !lookOf(cfg().look).brand; set('brand', v); this.setAttribute('aria-checked', String(v)); }, ro),
           sw(lk.separator, 'Separator line between gifts', function () { var v = !lookOf(cfg().look).separator; set('separator', v); this.setAttribute('aria-checked', String(v)); }, ro)
         ]),
         el('div', { class: 'fg-look' }, [
+          field('Photo row', photos, 'The small photos before "View all". B: one gift 25% bigger, 2–4 gifts 17% bigger, 5 or more fill the box edge to edge, five to a row, then a second row. Sizes grow from "Photo size, closed row".'),
           field('Long titles', titles, 'Up to 2 lines keeps the box short. "Fades" keeps one line and fades its end: the left end for an Arabic name in Arabic; a name in the other language ends in "…".'),
           num('free_gap', 'Space before FREE', 'A long title never runs into FREE. 16 as asked; it was 8.'),
           num('title_px', 'Title font size', 'The gift\'s name. 12 is the shop\'s size today.'),
           num('row_gap', 'Space between gifts', '3 today. With the separator on, the line sits in the middle of it.'),
           num('photo_list', 'Photo size, opened list', '28 today.'),
-          num('photo_row', 'Photo size, closed row', '36 today: the row of photos before "View all".')
+          num('photo_row', 'Photo size, closed row', '36: the base size of the photos before "View all"; Photo row above makes them bigger by count.')
         ])
       ]);
     }

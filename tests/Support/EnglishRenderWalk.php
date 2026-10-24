@@ -1367,6 +1367,8 @@ final class EnglishRenderWalk
             // --- cart and checkout -------------------------------------------
             'cart' => ['render' => true],
             'api/cart/drawer' => $json,
+            // The live free gifts box (Lane FGL): JSON, or 204 while unchanged.
+            'api/cart/gifts' => $json,
             'api/cart/debug' => $redirect,
             'checkout' => $redirect,
             'checkout/success' => ['render' => true],

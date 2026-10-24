@@ -177,9 +177,30 @@ final class FreeGifts
         'photo_row' => 36,        // a photo in the closed row
         'separator' => false,     // a hairline between the opened rows
         'row_gap' => 3,           // px between the opened rows
+        'photos' => 'fill5',      // LOOK_PHOTOS: how the closed row sizes its photos
     ];
 
     public const LOOK_TITLES = ['clamp2', 'fade', 'wrap'];
+
+    /**
+     * THE CLOSED ROW'S PHOTOS (Lane FGP). The owner, 24 October, on a cart
+     * panel whose five photos stopped well short of the box's right edge:
+     * "increase the gifts thumbnails size to the end of the box. if one
+     * product, then make 25% more ... 2-4 products 15-20% ... 4-5 products
+     * 10-15 ... if more products then it may come in 2nd row" -- then, having
+     * seen the three previews: "give us option to choose all three options
+     * from backend, and keep option B by default."
+     *
+     *   fixed  every photo at "Photo size, closed row" (the look until 2.60.596)
+     *   scale  A: 1 gift x1.25, 2-4 x1.17, 5 or more x1.11, wrapping
+     *   fill5  B (default, as asked): 1 gift x1.25, 2-4 x1.17, 5 or more
+     *          five to a row edge to edge, up to 64px, then a second row
+     *   fill4  C: 1 gift x1.25, 2-3 x1.17, 4 or more four to a row edge to
+     *          edge, up to 72px
+     * Multiples of the owner's own "Photo size, closed row", so that number
+     * still moves the row. Pure CSS from fixed class names (photoTier()).
+     */
+    public const LOOK_PHOTOS = ['fixed', 'scale', 'fill5', 'fill4'];
 
     /** Each number's [min, max]. Out of range is clamped; not a number is the default. */
     public const LOOK_RANGES = [
@@ -262,7 +283,7 @@ final class FreeGifts
      * clamped to its range (not a number at all is the default). The admin
      * saves through this too, so nothing else ever reaches the settings row.
      *
-     * @return array{brand:bool,titles:string,free_gap:int,title_px:int,photo_list:int,photo_row:int,separator:bool,row_gap:int}
+     * @return array{brand:bool,titles:string,free_gap:int,title_px:int,photo_list:int,photo_row:int,separator:bool,row_gap:int,photos:string}
      */
     public static function lookOf(mixed $saved): array
     {
@@ -277,6 +298,7 @@ final class FreeGifts
         }
 
         $look['titles'] = in_array($saved['titles'] ?? null, self::LOOK_TITLES, true) ? $saved['titles'] : self::LOOK['titles'];
+        $look['photos'] = in_array($saved['photos'] ?? null, self::LOOK_PHOTOS, true) ? $saved['photos'] : self::LOOK['photos'];
 
         foreach (self::LOOK_RANGES as $key => [$min, $max]) {
             $v = $saved[$key] ?? null;
@@ -323,6 +345,37 @@ final class FreeGifts
             'style' => '--fg-ts:' . (int) $look['title_px'] . 'px;--fg-pl:' . (int) $look['photo_list'] . 'px;--fg-pr:' . (int) $look['photo_row']
                 . 'px;--fg-fg:' . (int) $look['free_gap'] . 'px;--fg-rg:' . (int) $look['row_gap'] . 'px',
         ];
+    }
+
+    /**
+     * The closed row's size class for $tiles photos under the look's "photos"
+     * choice (LOOK_PHOTOS), and the largest size a photo can be drawn at, for
+     * its `sizes` hint: [' fgb-k1', 45]. A fixed class name, never a setting.
+     *
+     *   fgb-k1  x1.25   fgb-k2  x1.17   fgb-k3  x1.11
+     *   fgb-g5  five to a row, edge to edge, up to 64px
+     *   fgb-g4  four to a row, edge to edge, up to 72px
+     *
+     * @return array{0:string,1:int}
+     */
+    public static function photoTier(array $look, int $tiles): array
+    {
+        $look = self::lookOf($look);
+        $px = (int) $look['photo_row'];
+        $grid = ['fill5' => 5, 'fill4' => 4][$look['photos']] ?? null;
+        $few = $look['photos'] === 'fill4' ? 3 : 4;
+
+        if ($look['photos'] === 'fixed' || $tiles < 1) {
+            return ['', $px];
+        }
+        if ($tiles === 1) {
+            return [' fgb-k1', (int) round($px * 1.25)];
+        }
+        if ($tiles <= $few) {
+            return [' fgb-k2', (int) round($px * 1.17)];
+        }
+
+        return $grid === null ? [' fgb-k3', (int) round($px * 1.11)] : [' fgb-g' . $grid, $grid === 5 ? 64 : 72];
     }
 
     /** Switched on at all (Testing or Live) -- the admin's meaning. Never decides what a shopper sees. */

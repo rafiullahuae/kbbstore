@@ -62,9 +62,10 @@
     // gifts has no gift lines, so its email is the one it always was.
     $kitAllLines = \App\Services\Mail\Kit\KitOrder::lines($order, $kitProducts);
     $kitGiftLines = array_values(array_filter($kitAllLines, static fn (array $l) => array_key_exists('gift', $l)));
+    $kitItemLines = $kitGiftLines === [] ? $kitAllLines : array_values(array_filter($kitAllLines, static fn (array $l) => ! array_key_exists('gift', $l)));
 @endphp
 @include('emails.kit.section-title', ['text' => __('email.kit.your_items')])
-@include('emails.kit.items', ['lines' => $kitGiftLines === [] ? $kitAllLines : array_values(array_filter($kitAllLines, static fn (array $l) => ! array_key_exists('gift', $l))), 'showPrice' => true])
+@include('emails.kit.items', ['lines' => $kitItemLines, 'showPrice' => true])
 @include('emails.kit.gift-box', ['lines' => $kitGiftLines, 'added' => $kitGiftsAdded ?? false])
 @endif
 @endkitsec
