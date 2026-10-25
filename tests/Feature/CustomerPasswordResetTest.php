@@ -508,3 +508,43 @@ it('writes no token, link or address to the log', function () {
 
     @unlink($path);
 });
+
+it('shows the password-changed confirmation in the page language, Arabic on /ar', function () {
+    /*
+     * The owner reset from an Arabic link and the sign-in page greeted him in
+     * Arabic but flashed "Your password has been changed…" in English: the
+     * controller hard-coded that one sentence instead of translating it like
+     * the failure branch beside it. The Arabic is published
+     * (store.wording.msg_pw_changed, 2027_11_02); the fix wraps the flash in
+     * ArabicWording::of().
+     *
+     * MUTATION: drop the ArabicWording::of() wrapper in
+     * PasswordResetController::update and the /ar assertion below is red.
+     */
+    \Tests\Support\ArabicShop::on();
+    \Tests\Support\ArabicShop::string('store.wording.msg_pw_changed', 'تم تغيير كلمة المرور. سجّلي الدخول بها الآن.');
+
+    $linkFor = function (int $id): array {
+        foreach (resetMessages() as $sent) {
+            $body = (string) $sent->getOriginalMessage()->getHtmlBody();
+            if (preg_match('#/reset/(' . $id . ')/([A-Za-z0-9]+)/#', $body, $m) === 1) {
+                return [$m[1], $m[2]];
+            }
+        }
+        return ['', ''];
+    };
+
+    // English page -> English flash (also pins the English, which nothing did).
+    $en = Customer::create(['name' => 'En', 'email' => 'en@example.com', 'password' => 'old-en-1']);
+    $this->post('/my-account/forgot', ['email' => 'en@example.com']);
+    [$id, $tok] = $linkFor($en->id);
+    $this->post('/my-account/reset', ['id' => $id, 'token' => $tok, 'password' => 'brand-new-en', 'password_confirmation' => 'brand-new-en'])
+        ->assertSessionHas('status', 'Your password has been changed. Please sign in with it.');
+
+    // Arabic page -> Arabic flash.
+    $ar = Customer::create(['name' => 'Ar', 'email' => 'ar@example.com', 'password' => 'old-ar-1']);
+    $this->post('/ar/my-account/forgot', ['email' => 'ar@example.com']);
+    [$id2, $tok2] = $linkFor($ar->id);
+    $this->post('/ar/my-account/reset', ['id' => $id2, 'token' => $tok2, 'password' => 'brand-new-ar', 'password_confirmation' => 'brand-new-ar'])
+        ->assertSessionHas('status', 'تم تغيير كلمة المرور. سجّلي الدخول بها الآن.');
+});

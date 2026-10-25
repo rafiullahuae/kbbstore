@@ -300,8 +300,12 @@ class PasswordResetController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
+        // The confirmation the sign-in page shows. In the request's language,
+        // like the error on the failure branch above: on /ar it was coming out
+        // in English because the sentence was hard-coded. ArabicWording::of()
+        // maps it to store.wording.msg_pw_changed (Arabic published 2027_11_02).
         return redirect(Url::redirect('/my-account/'))
-            ->with('status', 'Your password has been changed. Please sign in with it.');
+            ->with('status', \App\Support\ArabicWording::of('Your password has been changed. Please sign in with it.'));
     }
 
     /* ---------------------------------------------------------------- helpers */
