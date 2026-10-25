@@ -113,7 +113,8 @@ it('shows a signed-in customer their dashboard, not the sign-in form', function 
     asCustomer($customer)->get('/my-account')
         ->assertOk()
         ->assertSee('Sign out')
-        ->assertSee('Recent orders');
+        // (Lane ACC) the redesigned dashboard calls the order block "Latest order".
+        ->assertSee('Latest order');
 });
 
 it('still shows a guest the sign-in form', function () {
@@ -201,7 +202,8 @@ it('renders a customer their own order in full', function () {
          * cases in CustomerPasswordResetTest and OrderReceivedPageTest) and the
          * three files were 59 passed / 0 failed. With these needles, 3 red.
          */
-        ->assertSee('<h1>Order #' . $order->order_number . '</h1>', escape: false)
+        // (Lane ACC) the heading now sits in the account bar.
+        ->assertSee('<h1 class="kac-title">Order #' . $order->order_number . '</h1>', escape: false)
         ->assertSee('Rice Toner')
         // The order LINE's brand, not the header menu item and the navigation
         // JSON that carry the same brand name on every page of the shop.

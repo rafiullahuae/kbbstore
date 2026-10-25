@@ -1,48 +1,75 @@
 {{--
-    The account landing page for a signed-in shopper.
+    The account landing page for a signed-in shopper (Lane ACC redesign).
 
-    $orders is now an Eloquent Collection rather than a plain array, so the
-    empty check is ->isEmpty(). `empty($collection)` is always FALSE for an
-    object, which would have silently swallowed the "nothing here yet" line and
-    rendered an empty strip instead.
+    Top: back to the shop, the title, the dashboard button and the account
+    menu (partials.account.chrome). Then a hello card with three numbers, the
+    latest order with its photos and steps, and every part of the account as a
+    big row, Change password among them. On a computer the account rows sit
+    beside the hello card; on a phone everything is one column.
+
+    $latest is the newest order (or null) with its lines and photos loaded;
+    $orderCount / $liveCount / $wishCount come from AccountController::index().
 --}}
 @extends('layouts.store')
 @section('title', __('store.account.dashboard_title'))
 
 @section('content')
-@php use App\Support\Money; use App\Support\Url; @endphp
+@php
+    use App\Support\AccountIcons;
+    use App\Support\Money;
+    use App\Support\OrderProgress;
+    use App\Support\Url;
+    $first = trim((string) ($customer->first_name ?: strtok($customer->displayName(), ' @')));
+    $rows = [
+        ['/my-account/orders/', 'box', __('store.account.nav_orders'), __('store.account.row_orders_note'), ''],
+        ['/my-wishlist/', 'heart', __('store.account.nav_wishlist'), __('store.account.row_wishlist_note'), ''],
+    ];
+    if (app(\App\Services\SettingsService::class)->moduleEnabled('address_book', true)) {
+        $rows[] = ['/my-account/edit-address/', 'pin', __('store.account.nav_addresses'), __('store.account.row_addresses_note'), ''];
+    }
+    $rows[] = ['/my-account/profile/', 'user', __('store.account.nav_profile'), __('store.account.row_profile_note'), ''];
+    $rows[] = ['/my-account/profile/#password', 'lock', __('store.account.row_password'), __('store.account.row_password_note'), ' g'];
+    $rows[] = ['/track-my-order/', 'truck', __('store.account.nav_track'), __('store.account.row_track_note'), ''];
+@endphp
+<div class="acw wide kac">
+    @include('partials.account.chrome', ['kacTitle' => __('store.account.dashboard_title'), 'kacBack' => '/', 'kacBackLabel' => __('store.account.back_to_shop'), 'kacActive' => 'dash'])
 
-<div class="acw wide">
-    <div class="acw-head">
-        <span class="acw-av">{{ mb_strtoupper(mb_substr($customer->displayName(), 0, 1)) }}</span>
-        <div><h1>{{ $customer->displayName() }}</h1>
-            <p class="acw-sub">{{ $customer->email }}</p></div>
-        <form method="post" action="{{ Url::to('/my-account/logout') }}" class="acw-outform">@csrf
-            <button class="acw-out" type="submit">{{ __('store.account_panel.sign_out') }}</button></form>
-    </div>
+    <div class="kac-dash">
+        <div>
+            <div class="kac-card">
+                <div class="kac-hello">
+                    <span class="kac-av" aria-hidden="true">{{ mb_strtoupper(mb_substr($customer->displayName(), 0, 1)) }}</span>
+                    <div style="min-width:0"><b>{{ __('store.account.hello', ['name' => $first !== '' ? $first : $customer->displayName()]) }}</b>
+                        <small>{{ $customer->email }}@if ($customer->created_at) · {{ __('store.account.member_since', ['year' => $customer->created_at->format('Y')]) }}@endif</small></div>
+                </div>
+                <div class="kac-stats">
+                    <a class="kac-stat" href="{{ Url::to('/my-account/orders/') }}"><b>{{ $orderCount }}</b><span>{{ __('store.account.stat_orders') }}</span></a>
+                    <a class="kac-stat" href="{{ Url::to('/my-account/orders/') }}"><b>{{ $liveCount }}</b><span>{{ __('store.account.stat_in_progress') }}</span></a>
+                    <a class="kac-stat" href="{{ Url::to('/my-wishlist/') }}"><b>{{ $wishCount }}</b><span>{{ __('store.account.stat_wishlist') }}</span></a>
+                </div>
+            </div>
 
-    <div class="acw-cards">
-        <a class="acw-card" href="{{ Url::to('/my-account/orders/') }}"><b>{{ __('store.account.card_orders') }}</b><span>{{ __('store.account.card_orders_note') }}</span></a>
-        <a class="acw-card" href="{{ Url::to('/my-wishlist/') }}"><b>{{ __('store.account.card_wishlist') }}</b><span>{{ __('store.account.card_wishlist_note') }}</span></a>
-        @if (app(\App\Services\SettingsService::class)->moduleEnabled('address_book', true))<a class="acw-card" href="{{ Url::to('/my-account/edit-address/') }}"><b>{{ __('store.account.card_addresses') }}</b><span>{{ __('store.account.card_addresses_note') }}</span></a>@endif
-        <a class="acw-card" href="{{ Url::to('/track-my-order/') }}"><b>{{ __('store.account.card_track') }}</b><span>{{ __('store.account.card_track_note') }}</span></a>
-    </div>
-
-    <h2 class="acw-h2">{{ __('store.account.recent_orders') }}</h2>
-    @if ($orders->isEmpty())
-        <p class="acw-empty">{!! __('store.account.orders_empty', ['link' => '<a href="' . e(Url::to('/shop/')) . '">' . e(__('store.account.orders_empty_link')) . '</a>']) !!}</p>
-    @else
-        <div class="acw-orders">
-            @foreach ($orders as $order)
-                <a class="acw-order" href="{{ Url::to('/my-account/orders/' . $order->id) }}">
-                    <b>#{{ $order->order_number }}</b>
-                    <span>{{ (class_exists(\App\Support\LocalDate::class) ? \App\Support\LocalDate::format($order->created_at, 'j M Y') : (($kbbD = $order->created_at) ? $kbbD->format('j M Y') : '')) }}</span>
-                    <span>{!! Money::format((int) $order->total) !!}</span>
-                    <span class="acw-status">{{ \App\Support\OrderStatusLabel::for((string) ($order->status ?: 'pending')) }}</span>
-                </a>
-            @endforeach
+            <h2 class="kac-h2">{{ __('store.account.latest_order') }}@if ($latest)<a href="{{ Url::to('/my-account/orders/') }}">{{ __('store.account.all_orders') }}</a>@endif</h2>
+            @if ($latest)
+                <div class="kac-rows kac-one">@include('partials.account.order-row', ['order' => $latest])</div>
+                @php $steps = OrderProgress::steps($latest); @endphp
+                @if ($steps !== [])
+                    <div class="kac-card" style="margin-top:14px">@include('partials.account.steps', ['steps' => $steps])</div>
+                @endif
+            @else
+                <div class="kac-card"><p class="kac-empty">{{ __('store.account.no_orders_yet') }} <a href="{{ Url::to('/shop/') }}">{{ __('store.account.start_shopping') }}</a></p></div>
+            @endif
         </div>
-        <p class="acw-empty" style="margin-top:12px"><a href="{{ Url::to('/my-account/orders/') }}">{{ __('store.account.see_all_orders') }}</a></p>
-    @endif
+
+        <div class="kac-side">
+            <h2 class="kac-h2">{{ __('store.account.your_account') }}</h2>
+            <div class="kac-list">
+                @foreach ($rows as [$href, $icon, $label, $note, $tone])
+                    <a class="kac-li" href="{{ Url::to($href) }}"><span class="kac-ib{{ $tone }}">{!! AccountIcons::svg($icon, 18) !!}</span><span class="kac-lt">{{ $label }}<small>{{ $note }}</small></span>{!! AccountIcons::svg('chev', 16, 'kac-chev') !!}</a>
+                @endforeach
+                <form method="post" action="{{ Url::to('/my-account/logout') }}" style="margin:0">@csrf<button class="kac-li" type="submit"><span class="kac-ib">{!! AccountIcons::svg('out', 18) !!}</span><span class="kac-lt">{{ __('store.account.nav_sign_out') }}</span></button></form>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

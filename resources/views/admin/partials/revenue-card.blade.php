@@ -98,7 +98,13 @@
           card.querySelector('[data-rspan]').textContent = d.label + (/^(month|30d|year)$/.test(d.range) && d.span ? ' · ' + d.span : '');
           card.querySelector('[data-rbody]').innerHTML = body(d);
         })
-        .catch(function () { if (card.isConnected && key === range) { card.classList.remove('busy'); card.querySelector('[data-rbody]').innerHTML = '<p class="rv-err">Revenue could not be loaded. Try again.</p>'; } });
+        .catch(function (status) {
+          if (!card.isConnected || key !== range) return;
+          card.classList.remove('busy');
+          // A 404 here is the route cache, not the data: the remedy is one click (Platform → Cache).
+          var msg = status === 404 ? 'Revenue is not in the server\'s route table yet. Clear the route cache (Platform → Cache) and reload.' : 'Revenue could not be loaded. Try again.';
+          card.querySelector('[data-rbody]').innerHTML = '<p class="rv-err">' + esc(msg) + '</p>';
+        });
     }
 
     card.addEventListener('click', function (e) {

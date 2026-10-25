@@ -75,9 +75,25 @@ class AccountController extends Controller
         $customer = $this->customer();
 
         if ($customer !== null) {
+            /*
+             * THE DASHBOARD (Lane ACC): the latest order with its photos, and
+             * three numbers -- orders, orders still in progress, wishlist.
+             * Four queries whatever the customer's history: the two counts in
+             * ONE aggregate, the latest order, its lines, their photos. The
+             * wishlist lives in a cookie; only its ids that are still on sale
+             * are counted, the same rule /my-wishlist/ shows them by.
+             */
+            $counts = $customer->orders()->toBase()
+                ->selectRaw('count(*) as total, sum(case when status in (?, ?, ?, ?, ?, ?) then 1 else 0 end) as live',
+                    ['pending', 'processing', 'paid', 'onhold', 'on-hold', 'shipped'])
+                ->first();
+
             return view('store.account.dashboard', [
                 'customer' => $customer,
-                'orders' => $customer->orders()->latest('id')->limit(self::RECENT)->get(),
+                'latest' => $customer->orders()->latest('id')->with(self::THUMBS)->withCount('items')->first(),
+                'orderCount' => (int) ($counts->total ?? 0),
+                'liveCount' => (int) ($counts->live ?? 0),
+                'wishCount' => $this->wishlistCount(request()),
                 'panel' => $this->panel->all(),
             ]);
         }
@@ -96,20 +112,95 @@ class AccountController extends Controller
      * was unreachable from the account area — and the list is the only route
      * to the detail page.
      */
-    public function orders(): View
+    public function orders(Request $request): View
     {
         $customer = $this->requireCustomer();
 
-        $orders = $customer->orders()
-            ->withCount('items')
-            ->latest('id')
-            ->paginate(self::PER_PAGE)
-            ->withQueryString();
+        /*
+         * SEARCH AND DATES (Lane ACC). `q` matches the order number or a
+         * product name on the order's own lines (the snapshot, so a renamed
+         * product is still found by the name it was bought under); `when` is
+         * one of the fixed choices whenChoices() offers. Anything else is
+         * ignored, never echoed into a query: the LIKE wildcards are escaped
+         * and `when` must be one of the keys. The page's queries stay flat as
+         * the history grows: the orders, their lines, their photos, the count,
+         * and one min() for the oldest year.
+         */
+        $q = mb_substr(trim((string) $request->query('q', '')), 0, 60);
+        $choices = $this->whenChoices($customer);
+        $when = (string) $request->query('when', '');
+        $when = isset($choices[$when]) ? $when : '';
+
+        $query = $customer->orders()->withCount('items')->with(self::THUMBS)->latest('id');
+
+        if ($q !== '') {
+            $like = '%' . addcslashes($q, '%_\\') . '%';
+            $query->where(function ($w) use ($like): void {
+                $w->where('order_number', 'like', $like)
+                    ->orWhereHas('items', fn ($i) => $i->where('name', 'like', $like));
+            });
+        }
+
+        if ($when !== '') {
+            [$from, $to] = $choices[$when]['range'];
+            $query->where('created_at', '>=', $from)->where('created_at', '<', $to);
+        }
 
         return view('store.account.orders', [
             'customer' => $customer,
-            'orders' => $orders,
+            'orders' => $query->paginate(self::PER_PAGE)->withQueryString(),
+            'q' => $q,
+            'when' => $when,
+            'choices' => $choices,
+            'filtered' => $q !== '' || $when !== '',
         ]);
+    }
+
+    /**
+     * The date choices on the orders list: this month, the last three months,
+     * each of the last twelve months, and each year since the first order.
+     * Fixed keys (month, 3m, YYYY-MM, YYYY) mapped to [from, to) in the shop's
+     * clock; the list is built here, so the page can only ask for one of them.
+     *
+     * @return array<string, array{label:string,range:array{0:\Carbon\CarbonInterface,1:\Carbon\CarbonInterface},group:string}>
+     */
+    private function whenChoices(Customer $customer): array
+    {
+        $now = now();
+        $out = [
+            'month' => ['label' => __('store.orders.when_month'), 'range' => [$now->copy()->startOfMonth(), $now->copy()->addDay()->startOfDay()], 'group' => 'quick'],
+            '3m' => ['label' => __('store.orders.when_3m'), 'range' => [$now->copy()->subMonthsNoOverflow(2)->startOfMonth(), $now->copy()->addDay()->startOfDay()], 'group' => 'quick'],
+        ];
+
+        for ($i = 0; $i < 12; $i++) {
+            $m = $now->copy()->startOfMonth()->subMonthsNoOverflow($i);
+            $out[$m->format('Y-m')] = ['label' => \App\Support\LocalDate::format($m, 'F Y'), 'range' => [$m, $m->copy()->addMonthNoOverflow()], 'group' => 'month'];
+        }
+
+        $first = $customer->orders()->toBase()->min('created_at');
+        $firstYear = $first ? max(2015, (int) substr((string) $first, 0, 4)) : (int) $now->format('Y');
+
+        for ($y = (int) $now->format('Y'); $y >= $firstYear; $y--) {
+            $start = $now->copy()->setDate($y, 1, 1)->startOfDay();
+            $out[(string) $y] = ['label' => (string) $y, 'range' => [$start, $start->copy()->addYear()], 'group' => 'year'];
+        }
+
+        return $out;
+    }
+
+    /** Line photos for the order rows: two queries for a whole page of orders. */
+    private const THUMBS = ['items:id,order_id,product_id,name,brand,quantity,unit_price', 'items.product:id,image'];
+
+    /** The wishlist cookie's ids still on sale -- what /my-wishlist/ would show. */
+    private function wishlistCount(Request $request): int
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', explode(',', (string) $request->cookie('kbb_wishlist', ''))))));
+
+        if ($ids === []) {
+            return 0;
+        }
+
+        return \App\Models\Product::query()->visible()->whereIn('id', array_slice($ids, 0, 500))->count();
     }
 
     /**
@@ -139,6 +230,8 @@ class AccountController extends Controller
             'customer' => $customer,
             'order' => $order,
             'items' => $order->items,
+            // (Lane ACC) "Track this order": the same signed link the order emails carry.
+            'trackUrl' => \App\Support\OrderLinks::trackUrl($order),
         ]);
     }
 

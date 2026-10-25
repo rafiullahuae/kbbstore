@@ -382,7 +382,8 @@ it('states the same total on the order list, the tracker and the thank-you page'
     $total = (int) $order->total;
 
     $list = receiptSignIn($customer)->get('/my-account/orders')->assertOk()->getContent();
-    preg_match('~<span class="kbbol-total">(.*?)</span>\s*<span class="kbbol-pill~s', $list, $m);
+    // (Lane ACC) The redesigned list's row: the total sits in kac-amt, before the item count.
+    preg_match('~<span class="kac-amt">(.*?)</span> <span class="kac-cnt">~s', $list, $m);
     expect(filsFromPrinted($m[1]))->toBe($total, 'the order list rounds the total');
 
     $track = test()->get('/track-my-order?order=' . $order->order_number . '&email=' . urlencode((string) $order->email))

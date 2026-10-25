@@ -1401,6 +1401,7 @@ final class EnglishRenderWalk
             'my-account/orders/{id}' => ['params' => ['id' => fn () => (string) $order->id], 'render' => true, 'auth' => true],
             'my-account/edit-address' => ['render' => true, 'auth' => true],
             'my-account/edit-address/{id}' => ['params' => ['id' => fn () => (string) $address->id], 'render' => true, 'auth' => true],
+            'my-account/profile' => ['render' => false, 'why' => 'added after BASE_COMMIT (Lane ACC): Profile & password; AccountAreaRedesignTest pins it'],
             'my-account/verify' => $redirect,
             'newsletter/confirm/{id}' => ['params' => ['id' => '999999'], 'render' => true],
             'newsletter/unsubscribe/{id}' => ['params' => ['id' => '999999'], 'render' => true],
@@ -4045,6 +4046,15 @@ KBB_BH_CSS;
                 'pattern' => '#(?<=\n)    <div id="kcWish" style="display:none">\n.*?\n    </div>\n(?=</div>)#s',
                 'hits' => 33, // every page
             ],
+            /* THE ACCOUNT AREA, REDESIGNED (Lane ACC): see the removals of the same name. */
+            'the account area, redesigned: the new content (Lane ACC)' => [
+                'pattern' => '#<main id="content">\n    \K\s*<div class="acw wide kac">.*?(?=\n</main>)#s',
+                'hits' => 4,
+            ],
+            'the account area, redesigned: its stylesheet (Lane ACC)' => [
+                'pattern' => '#<style>\n\.kac\{.*?</style>\n#s',
+                'hits' => 4,
+            ],
         ];
     }
 
@@ -4673,6 +4683,28 @@ KBB_BH_CSS;
              */
             'the checkout\'s heading block at the top of the grid, with its back arrow (Lane QK8)' => [
                 'pattern' => '#            <div>\n\K                <div class="co-titlebar">\n.*?\n                </div>\n\n#s',
+                'hits' => 1,
+            ],
+            /*
+             * THE ACCOUNT AREA, REDESIGNED (Lane ACC, 2.60.597). The owner, 25
+             * October: "redesign the Account dashboard ... orders list ... order
+             * detail page" with a menu, Back and dashboard buttons on every
+             * account page. The OLD content block of the four signed-in pages in
+             * this walk (orders, one order, the address book and one address) is
+             * cut from the before side, and the NEW block from the after side
+             * (the insertions of the same name), so the header, the signed-in
+             * phone menu, the footer and every other byte of these pages are
+             * still compared. The new blocks are pinned by AccountAreaRedesignTest,
+             * the receipt by ReceiptFiguresAgreeTest, the address forms by
+             * AddressRegionsCheckoutTest. The old orders list's own stylesheet
+             * went with its rows.
+             */
+            'the account area, redesigned: the old content (Lane ACC)' => [
+                'pattern' => '#<main id="content">\n    \K\s*<div class="acw wide">.*?(?=\n</main>)#s',
+                'hits' => 4,
+            ],
+            'the account area, redesigned: the old orders list stylesheet (Lane ACC)' => [
+                'pattern' => '#<style>\n\.kbbol-list\{.*?</style>\n#s',
                 'hits' => 1,
             ],
         ];

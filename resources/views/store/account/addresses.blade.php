@@ -3,10 +3,11 @@
 
 @section('content')
 @php use App\Support\Url; @endphp
-<div class="acw wide">
+<div class="acw wide kac">
+  {{-- (Lane ACC) The account bar and menu; its title is the page's heading. --}}
+  @include('partials.account.chrome', ['kacTitle' => __('store.addresses.heading'), 'kacBack' => '/my-account/', 'kacBackLabel' => __('store.account.to_dashboard'), 'kacActive' => 'addr'])
   <div class="acw-in">
-    <h1>{{ __('store.addresses.heading') }}</h1>
-    <p class="acw-sub">{{ __('store.addresses.subtitle') }}</p>
+    <p class="acw-sub" style="margin-top:0">{{ __('store.addresses.subtitle') }}</p>
 
     @if (session('kbb_status'))
       <p class="ab-note">{{ session('kbb_status') }}</p>

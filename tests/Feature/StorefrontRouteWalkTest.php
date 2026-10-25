@@ -373,6 +373,8 @@ function walkExpectations(array $seed): array
         'my-account/orders/{id}'         => ['params' => ['id' => fn () => (string) $order->id], 'status' => 302, 'auth' => 200],
         'my-account/edit-address'        => ['status' => 302, 'auth' => 200],
         'my-account/edit-address/{id}'   => ['params' => ['id' => fn () => (string) $address->id], 'status' => 302, 'auth' => 200],
+        // (Lane ACC) Profile & password: signed-in only, like the orders and the address book.
+        'my-account/profile'             => ['status' => 302, 'auth' => 200],
         'my-account/verify'              => ['status' => 302],
         /*
          * Newsletter confirm and unsubscribe, opened from a shopper's inbox.

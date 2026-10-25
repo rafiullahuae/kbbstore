@@ -6011,6 +6011,10 @@
         "label": "Shop by Concern"
       },
       {
+        "key": "freegifts",
+        "label": "Free gifts"
+      },
+      {
         "key": "bestsellers",
         "label": "Best sellers"
       },

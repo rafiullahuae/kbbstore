@@ -644,11 +644,21 @@ it('renders the checkout byte-identical to the typed box with the switch off', f
         shell_exec('rm -rf ' . escapeshellarg($dir));
     }
 
+    /*
+     * (Lane ACC, 2.60.597) The address book's TOP was redesigned on the owner's
+     * request -- the account bar and menu, its own styles in the head -- so the
+     * book is compared from the end of its subtitle on, which is everything
+     * this test is about: the forms, the region fields, the autocomplete.
+     * The checkout is still compared whole.
+     */
+    $book = static fn (string $h): string => substr($h, (int) strpos($h, '</p>', (int) strpos($h, 'class="acw-sub"')));
+
     expect($before[0])->toContain('name="billing_state"')
         ->and($before[0])->toContain('maps.googleapis.com')
         ->and($before[1])->toContain('name="state"')
         ->and($after[0])->toBe($before[0])
-        ->and($after[1])->toBe($before[1]);
+        ->and(strlen($book($after[1])))->toBeGreaterThan(2000)
+        ->and($book($after[1]))->toBe($book($before[1]));
 });
 
 it('costs the checkout no query and no settings read', function () {

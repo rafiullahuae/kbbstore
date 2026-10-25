@@ -104,6 +104,8 @@ final class InterfaceStrings
                 self::storeReviewWall(),
                 self::storeAccount(),
                 self::storeOrders(),
+                // Lane ACC: the redesigned account area, English and Arabic in one list.
+                AccountAreaStrings::english(),
                 self::storeAddresses(),
                 self::storeTrack(),
                 self::storeQuiz(),

@@ -167,6 +167,7 @@ final class ArabicInterfaceDrafts
             self::laneAr2Wording(),
             self::laneAeCustomerLanguage(),
             self::uaeNumberRequest(),
+            AccountAreaStrings::arabic(),
         ));
     }
 

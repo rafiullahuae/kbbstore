@@ -40,11 +40,25 @@
 @section('content')
 <div class="kbb-home">
 <section class="sec"><div class="wrap">
+@php
+    // (Lane ACC) A signed-in shopper gets the account bar and menu in place of
+    // the breadcrumb and title; a guest's page is byte for byte as it was
+    // (the directives sit at column 0 so they print nothing at all).
+    $kacIn = auth('customer')->check();
+@endphp
+@if ($kacIn)
+<div class="kac">@include('partials.account.chrome', ['kacTitle' => __('store.wishlist.title'), 'kacBack' => '/my-account/', 'kacBackLabel' => __('store.account.to_dashboard'), 'kacActive' => 'wish'])</div>
+@else
     <nav class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.wishlist.breadcrumb_home') }}</a> / <span>{{ __('store.wishlist.breadcrumb_current') }}</span></nav>
+@endif
 
     <div class="sh">
         <div>
+@if ($kacIn)
+            @if ($products->isNotEmpty())<p><span class="cnt">{{ __('store.wishlist.saved_count', ['count' => $products->count()]) }}</span></p>@endif
+@else
             <h2>{{ __('store.wishlist.title') }} @if ($products->isNotEmpty())<span class="cnt">{{ __('store.wishlist.saved_count', ['count' => $products->count()]) }}</span>@endif</h2>
+@endif
             <p>{{ __('store.wishlist.subtitle') }}</p>
         </div>
         @if ($products->isNotEmpty())<a class="lnk" href="{{ Url::to('/shop/') }}">{{ __('store.wishlist.keep_browsing') }}</a>@endif

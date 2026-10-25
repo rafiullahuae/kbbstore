@@ -1231,6 +1231,8 @@ Route::middleware('auth:customer')->group(function () {
         ->whereNumber('id')->name('account.addresses.delete');
     Route::post('/my-account/addresses/{id}/default', [\App\Http\Controllers\Store\AddressController::class, 'makeDefault'])
         ->whereNumber('id')->name('account.addresses.default');
+    // (Lane ACC) My account -> Profile & password.
+    require __DIR__.'/account-profile.php';
 });
 
 Route::middleware('guest:customer')->group(function () {

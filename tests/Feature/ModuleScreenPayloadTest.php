@@ -322,6 +322,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // ▲ Lane SBC (18 October), spliced in, not regenerated: Section dividers'
     // section list gains `sbc` ("Shop by Concern") after `concerns`, from
     // HomepageSections::REGISTRY. Four lines.
+    // ▲ Lane FGH (2.60.583, 23 October), spliced in late (Lane ACC found it red):
+    // Section dividers' section list gains `freegifts` ("Free gifts") after
+    // `sbc`, from HomepageSections::REGISTRY -- the homepage free gifts section.
+    // Four lines.
     // ▲ Lane HLB (17 October), the owner's approved design, spliced in, not
     // regenerated: cart-panel's Content gains wish_tab_m ("Wishlist tab
     // (phones)", ON) last, Wording and Arabic wording each gain the heart tab's

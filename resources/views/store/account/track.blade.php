@@ -46,6 +46,10 @@
 
 @section('content')
 @php $ap = app(\App\Services\AccountPanel::class); @endphp
+@auth('customer')
+{{-- (Lane ACC) A signed-in shopper gets the account bar and menu above the form; a guest's page is unchanged. --}}
+<div class="acw wide kac kac-trk">@include('partials.account.chrome', ['kacTitle' => __('store.account.nav_track'), 'kacBack' => '/my-account/', 'kacBackLabel' => __('store.account.to_dashboard'), 'kacActive' => 'track', 'kacTag' => 'p'])</div>
+@endauth
 <div class="auth {{ $ap->formClass() }}" style="{{ $ap->cssVariables() }}">
     <div class="auth-grid">
         <div class="authcard">

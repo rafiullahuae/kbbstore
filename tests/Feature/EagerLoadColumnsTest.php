@@ -60,6 +60,8 @@ function eagerLoadTables(): array
         'categories' => 'categories',
         'customer' => 'customers',
         'items' => 'order_items',
+        // Order::gifts(), the gift lines Order::items() leaves out (2.60.583).
+        'gifts' => 'order_items',
         'order' => 'orders',
         'orders' => 'orders',
         'variants' => 'product_variants',

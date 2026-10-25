@@ -346,7 +346,8 @@ const KBB_ELEMENT_ANCHORED_R6 = [
         ['<h1 class="brw-ph__name" id="brw-ph-title">Round Lab</h1>', 1],
     ],
     'tests/Feature/AccountAreaTest.php' => [
-        ['<h1>Order #', 1],
+        // (Lane ACC) the order heading now sits in the account bar, still anchored to its <h1>.
+        ['<h1 class="kac-title">Order #', 1],
         ['<div class="kbbod-brand">', 1],
     ],
     'tests/Feature/CustomerPasswordResetTest.php' => [

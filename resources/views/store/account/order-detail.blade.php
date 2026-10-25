@@ -201,20 +201,25 @@
     $receiptMoney = static fn (int $fils): string => Money::format($fils, $receiptDp);
 @endphp
 
-<div class="acw wide">
-  <div class="acw-in">
-    <a class="kbbod-back" href="{{ Url::to('/my-account/orders/') }}">&larr; {{ __('store.orders.all_orders') }}</a>
-
-    <div class="kbbod-head">
-      <div style="flex:1 1 auto;min-width:0">
-        <h1>{{ __('store.orders.order_number', ['number' => $order->order_number]) }}</h1>
-        <p class="kbbod-when">
+<div class="acw wide kac">
+  {{-- (Lane ACC) The account bar and menu, then the order's status with its steps and buttons; the receipt below is unchanged. --}}
+  @include('partials.account.chrome', ['kacTitle' => __('store.orders.order_number', ['number' => $order->order_number]), 'kacBack' => '/my-account/orders/', 'kacBackLabel' => __('store.account.all_orders'), 'kacActive' => 'orders'])
+  @php $kacTone = \App\Support\OrderProgress::tone($status); $kacSteps = \App\Support\OrderProgress::steps($order); @endphp
+  <div class="kac-status">
+    <div class="kac-band kac-t-{{ $kacTone }}"><span>{!! \App\Support\AccountIcons::svg(\App\Support\AccountIcons::forTone($kacTone), 17) !!}{{ __(\App\Support\OrderProgress::bandKey($status)) }}</span><span class="kbbod-pill {{ $statusClass }}">{{ \App\Support\OrderStatusLabel::for($status) }}</span></div>
+    <div class="kac-sb">
+      <p class="kac-meta kbbod-when">
           {{ __('store.orders.placed_on', ['date' => (class_exists(\App\Support\LocalDate::class) ? \App\Support\LocalDate::format($order->created_at, 'j F Y') : (($kbbD = $order->created_at) ? $kbbD->format('j F Y') : ''))]) }}
-          @if ($items->count()) · {{ trans_choice('store.cart.item_count', $items->count()) }} @endif
-        </p>
+          @if ($items->count()) · {{ trans_choice('store.cart.item_count', $items->count()) }} @endif · <b>{!! $receiptMoney((int) $order->total) !!}</b>
+      </p>
+      @if ($kacSteps !== [])@include('partials.account.steps', ['steps' => $kacSteps])@endif
+      <div class="kac-acts">
+        @if ($kacTone !== 'off' && ! empty($trackUrl))<a class="kac-btn p" href="{{ $trackUrl }}">{!! \App\Support\AccountIcons::svg('truck', 17) !!}{{ __('store.orders.track_this') }}</a>@endif
+        <a class="kac-btn" href="{{ Url::to('/shop/') }}">{!! \App\Support\AccountIcons::svg('bag', 17) !!}{{ __('store.orders.continue_shopping') }}</a>
       </div>
-      <span class="kbbod-pill {{ $statusClass }}">{{ \App\Support\OrderStatusLabel::for($status) }}</span>
     </div>
+  </div>
+  <div class="acw-in">
 
     <div class="kbbod-sec">
       <h2 class="kbbod-h2">{{ __('store.orders.what_you_ordered') }}</h2>
