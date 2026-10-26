@@ -3,12 +3,12 @@
    Shop: /collections/new-arrivals/ EN + AR at 390 and 1280, /new-in/ landing.
    Admin: Catalog -> New Arrivals at 1280 and 390 -- the settings card, Display's
    grid, two crosses tapped (unsaved), after Save, and the grid reloaded with the
-   saved exclusions faded in place. Pictures to storage/na-shots/. */
+   saved exclusions faded in place. Pictures to docs/na-shots/. */
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const BASE = process.env.BASE;
 if (!BASE || !/^http:\/\/127\.0\.0\.1:\d+$/.test(BASE)) throw new Error('BASE must be http://127.0.0.1:PORT');
-const OUT = path.resolve(__dirname, '../storage/na-shots');
+const OUT = path.resolve(__dirname, '../docs/na-shots');
 fs.mkdirSync(OUT, { recursive: true });
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 const UA_M = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
