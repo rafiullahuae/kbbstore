@@ -35,9 +35,70 @@ const post = (path, body) => {
     return run;
 };
 
-const send = async (path, body) => {
+/* ── THE PANEL MUST NEVER DIE OF AN OLD PAGE ─────────────────────────────────
+ *
+ * The owner: "when user come back to our website after several hours or after
+ * a day, then when user try to add to cart, then add to cart panel freeze and
+ * continues grey bars loading coming, until user refresh the whole website."
+ *
+ * The basket is a 30-day cookie and outlives the absence; the CSRF token in
+ * window.KBB.csrf belongs to the SESSION, which dies after 120 minutes. The
+ * first Add after that was refused with a 419, send() never repainted, and the
+ * skeleton stayed. Three things now hold, and none of them costs an ordinary
+ * page view anything — no timer, no polling, no request until one is needed:
+ *
+ *   1. A 419 fetches a fresh token (GET /api/cart/token) and sends the refused
+ *      request ONCE more. Safe to repeat: a 419 is refused before CartController
+ *      runs, so nothing was written the first time.
+ *   2. Whatever else goes wrong — a 500, an HTML error page, the network, a
+ *      request that hangs — the panel is repainted from the real cart, and if
+ *      even that cannot be fetched, the panel it had before is put back. The
+ *      skeleton is never left on screen.
+ *   3. A tab that comes back into view after TOKEN_AGE asks for a fresh token
+ *      quietly, so the first tap after a long absence goes through first time.
+ */
+const TOKEN_AGE = 90 * 60 * 1000;   // under the 120-minute session, with room to spare
+const TIMEOUT = 15000;              // a request the shopper has given up on is a failure
+let tokenAt = Date.now();
+let tokenRun = null;
+
+const refreshToken = () => {
+    // One request however many callers ask at once.
+    tokenRun ??= fetch(`${window.KBB.routes.cartApi}/token`, {
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+        credentials: 'same-origin',
+    })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+            if (!d || typeof d.token !== 'string' || d.token === '') return false;
+            // Every script that posts reads window.KBB.csrf at the moment it
+            // sends, so this one write mends the wishlist, the reviews and the
+            // newsletter too.
+            window.KBB.csrf = d.token;
+            document.querySelector('meta[name="csrf-token"]')?.setAttribute('content', d.token);
+            tokenAt = Date.now();
+            return true;
+        })
+        .catch(() => false)
+        .finally(() => { tokenRun = null; });
+
+    return tokenRun;
+};
+
+const wake = () => {
+    if (document.visibilityState === 'visible' && Date.now() - tokenAt > TOKEN_AGE) refreshToken();
+};
+document.addEventListener('visibilitychange', wake);
+// A page restored from the back/forward cache is the same old page, token and all.
+window.addEventListener('pageshow', (event) => { if (event.persisted) wake(); });
+
+const send = async (path, body, retried = false) => {
     const page = document.getElementById('cartPage');
     page?.classList.add('busy');
+
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), TIMEOUT);
 
     try {
         // The Browsed list is always rendered. Skipping it saved one small query
@@ -58,17 +119,58 @@ const send = async (path, body) => {
                 'X-KBB-Hm': String(Math.round(performance.now())),
             },
             body: JSON.stringify(body),
+            signal: abort.signal,
         });
 
-        const data = await response.json();
+        // The page has outlived its session. Mend the token and send it again —
+        // once, so a server that keeps refusing cannot loop.
+        if (response.status === 419 && !retried) {
+            clearTimeout(timer);
+            if (await refreshToken()) return await send(path, body, true);
+        }
+
+        const data = await response.json().catch(() => null);
+
+        // A refusal the server explained (sold out, bad coupon) is an answer and
+        // is applied as before. Anything that is not — an HTML error page, a
+        // 419 that survived the retry, a 500 — is a failure, not an empty cart.
+        if (!data || typeof data !== 'object' || (!response.ok && !data.drawer && !data.error)) {
+            throw new Error(`cart ${response.status}`);
+        }
+
         apply(data);
         return data;
     } catch {
         toast(t('store.js.generic_error', 'Something went wrong — please try again.'));
         return null;
     } finally {
+        clearTimeout(timer);
         page?.classList.remove('busy');
+        // Never leave the loading bars up. Whatever happened above, if the
+        // panel is still the skeleton, draw the real cart into it.
+        if (fragment()?.dataset.busy === '1') repaint();
     }
+};
+
+/* The panel as it was before the skeleton replaced it: the last resort when the
+   real cart cannot be fetched either (offline). */
+let lastFragment = '';
+
+/* Draw the real cart into the panel from GET /drawer, which needs no token. */
+const repaint = async () => {
+    try {
+        const r = await fetch(`${window.KBB.routes.cartApi}/drawer`, {
+            headers: { Accept: 'application/json' },
+            cache: 'no-store',
+        });
+        const d = await r.json();
+        const frag = fragment();
+        if (frag && d.html) { frag.outerHTML = d.html; giftsFresh(); showTab(); }
+        setCartCount(d.count);
+    } catch { /* a stale badge is not worth breaking the page over */ }
+
+    const frag = fragment();
+    if (frag?.dataset.busy === '1' && lastFragment) frag.outerHTML = lastFragment;
 };
 
 /**
@@ -163,6 +265,7 @@ const skeleton = () => {
     const frag = fragment();
     if (!frag || frag.dataset.busy === '1') return;
 
+    lastFragment = frag.outerHTML;
     frag.dataset.busy = '1';
     frag.outerHTML = `<div class="kc-fragment" data-busy="1">
         <div class="kc-tabs"><button class="kc-tab on" type="button">Cart</button>
@@ -426,13 +529,5 @@ export function initCart() {
         }
     });
 
-    window.kbbRefreshCart = async () => {
-        try {
-            const r = await fetch(`${window.KBB.routes.cartApi}/drawer`, { headers: { Accept: 'application/json' } });
-            const d = await r.json();
-            const frag = fragment();
-            if (frag && d.html) { frag.outerHTML = d.html; giftsFresh(); }
-            setCartCount(d.count);
-        } catch { /* a stale badge is not worth breaking the page over */ }
-    };
+    window.kbbRefreshCart = repaint;
 }
