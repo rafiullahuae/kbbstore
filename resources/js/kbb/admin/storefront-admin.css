@@ -132,8 +132,10 @@ html.kbb-adm-on .kbb-cartpage .sum{top:calc(120px + var(--kbb-adm-h))}
 .kbb-qe-pill svg{width:14px;height:14px;flex:none}
 /* A page with no header: the pill sits beside the plain heading instead. */
 .kbb-qe-pill--plain{position:static;margin-inline-start:10px;vertical-align:middle;background:#1f1a1d}
-/* "Edit banner" on /super-sale/ (Lane SSB): the top-left corner, beside "Edit header". */
-.kbb-qe-pill--start{inset-inline-end:auto;inset-inline-start:10px}
+/* "Edit banner" on /super-sale/ (Lane SSB): under "Edit header", over the
+   picture. At the start corner it sat on the tabby logo, so the owner saw the
+   logos row as missing (2.60.610). */
+.kbb-qe-pill--start{top:46px}
 
 /* ──────────────────────────────────────────────────────────── the pop-up */
 html.kbb-qe-lock{overflow:hidden}

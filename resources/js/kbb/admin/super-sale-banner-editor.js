@@ -99,9 +99,15 @@ export function safeSrc(value) {
 
 /** One of the server's constant SVGs, as nodes. */
 function svgOf(markup) {
-    const doc = new DOMParser().parseFromString(String(markup || ''), 'image/svg+xml');
-    const el = doc.documentElement;
-    return el && el.nodeName === 'svg' ? document.importNode(el, true) : null;
+    // Parsed as HTML, the way the page parses the server's copy. The marks carry
+    // no xmlns, so an 'image/svg+xml' parse made a namespace-less <svg> that the
+    // browser draws as nothing: with the editor loaded (admin signed in) the
+    // tabby/tamara row went blank on phone and computer (2.60.610). The markup
+    // is the server's own constant, never a setting.
+    const tpl = document.createElement('template');
+    tpl.innerHTML = String(markup || '');
+    const el = tpl.content.firstElementChild;
+    return el && el.namespaceURI === 'http://www.w3.org/2000/svg' && el.localName === 'svg' ? el : null;
 }
 
 /** A number as SuperSaleBanner::num() prints it. */
@@ -149,6 +155,12 @@ export function styleAttr(c, spec, lang) {
         }
         const g = resolve(st, spec.style_defaults, lang, dev, '_', 'g');
         if (String(g) !== String(def._.g)) parts.push(`--ssb-g${dev}:${num(Number(g) / spec.ucap[dev])}`);
+        if (dev === 'd') {
+            for (const p of ['pt', 'pb']) {
+                const v = resolve(st, spec.style_defaults, lang, dev, '_', p);
+                if (String(v) !== String(def._[p])) parts.push(`--ssb-${p}d:${num(Number(v) / spec.ucap.d)}`);
+            }
+        }
     }
     for (const dev of ['m', 'd']) {
         const [x, y] = spec.focus[dev];
@@ -347,7 +359,9 @@ export function controls(ctx, st, on) {
     const layout = section(`Layout — ${where}`, false,
         field('Text alignment', select(value('_', 'al'), aligns, (v) => set('_', 'al', v))),
         field('Space between the lines (px)', numIn('_', 'g', 0.5)),
-        h('button', { type: 'button', class: 'ssb-ed-link', text: lang === 'ar' ? 'Use English' : 'Reset', onclick: () => { set('_', 'al', null); set('_', 'g', null); on.redraw(); changed(); } }));
+        dev === 'd' ? field('Space above the tabby / tamara logos (px)', numIn('_', 'pt', 1)) : null,
+        dev === 'd' ? field('Space below the coupon code (px)', numIn('_', 'pb', 1)) : null,
+        h('button', { type: 'button', class: 'ssb-ed-link', text: lang === 'ar' ? 'Use English' : 'Reset', onclick: () => { ['al', 'g', 'pt', 'pb'].forEach((p) => set('_', p, null)); on.redraw(); changed(); } }));
 
     /* -- the pictures */
     const rect = dev === 'd' && c.mode_d === 'rect';

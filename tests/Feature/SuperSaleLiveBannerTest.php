@@ -671,11 +671,43 @@ it('costs a shopper nothing: no editor in the page, and the admin is sent the ve
     expect($guest)->not->toContain('Edit banner')->not->toContain('super-sale-banner-editor')->not->toContain('ssb-ed')
         // The editor's device-toggle rules are the editor's to add, not the page's.
         ->and($guest)->not->toContain('.kbb-ssb.ssb-fd')->not->toContain('.kbb-ssb.ssb-fm')
-        ->and(SuperSaleBanner::cssForced())->toContain('.kbb-ssb.ssb-fd .ssb-hero{height:calc(var(--u)*18.7)');
+        ->and(SuperSaleBanner::cssForced())->toContain('.kbb-ssb.ssb-fd .ssb-hero{height:calc(var(--u)*(13.9 + var(--ssb-ptd,2.5) + var(--ssb-pbd,2.3)))');
 
     $this->actingAs(ssbAdmin(), 'admin');
     $admin = $this->get('/super-sale/')->getContent();
     $mask = static fn (string $h): string => (string) preg_replace(['/name="csrf-token" content="[^"]*"/', '/"csrf":"[^"]*"/', '/_token" value="[^"]*"/'], '', $h);
     expect(ssbBlock($admin))->toBe(ssbBlock($guest))
         ->and($admin)->not->toContain('ssb-ed')->not->toContain('super-sale-banner-editor');
+});
+
+/*
+ * 2.60.610, the owner: "give controls for desktop padding". The computer's room
+ * above the tabby/tamara logos and below the coupon line are two numbers in
+ * the editor's Layout section (computer only). Untouched, nothing is printed
+ * and the hero is exactly 18.7u as approved; set, the hero grows by what was
+ * added and the lady still stands on the gift row. Out of range is refused.
+ * Mutation: drop the PAD_D loop in styleAttr() and the --ssb-ptd case is red.
+ */
+it('gives the computer its own room above the logos and below the coupon', function () {
+    expect(SuperSaleBanner::styleDefaults('en', 'd')['_'])->toMatchArray(['pt' => 25.0, 'pb' => 23.0])
+        ->and(SuperSaleBanner::styleDefaults('en', 'm')['_'])->not->toHaveKey('pt')
+        ->and(SuperSaleBanner::css())->toContain('.ssb-hero{height:calc(var(--u)*(13.9 + var(--ssb-ptd,2.5) + var(--ssb-pbd,2.3)));gap:calc(var(--u)*2);padding:calc(var(--u)*var(--ssb-ptd,2.5)) calc(var(--u)*4) calc(var(--u)*var(--ssb-pbd,2.3))}')
+        ->and(SuperSaleBanner::css())->toContain('margin-bottom:calc(var(--u)*var(--ssb-pbd,2.3)*-1)');
+
+    expect(ssbBlock($this->get('/super-sale/')->getContent()))->not->toContain('--ssb-ptd')->not->toContain('--ssb-pbd');
+
+    ssbSet(['st' => ['en' => ['d' => ['_' => ['pt' => 40, 'pb' => 30]]], 'ar' => []]]);
+    expect(ssbBlock($this->get('/super-sale/')->getContent()))->toContain('--ssb-ptd:4;--ssb-pbd:3');
+
+    [, $bad] = SuperSaleBanner::sanitize(['st' => ['en' => ['d' => ['_' => ['pt' => 500]]]]]);
+    expect($bad)->toHaveKey('st.en.d._.pt');
+});
+
+/*
+ * 2.60.610, the owner: "it should come in new line, not beside the logos". The
+ * pay-later line takes the whole row, so it wraps under the tabby/tamara marks
+ * on every width. Mutation: drop flex:0 0 100% and it sits beside them again.
+ */
+it('puts the pay-later line on its own line under the logos', function () {
+    expect(SuperSaleBanner::css())->toContain('.ssb-paytxt{letter-spacing:.03em;line-height:1.2;flex:0 0 100%}');
 });

@@ -137,7 +137,7 @@ final class SuperSaleBanner
     public const PROPS = ['s', 'w', 'c', 'x', 'y', 'v'];
 
     /** Per element, per device: [min, max] in px (size, at full width) or px (offsets). */
-    public const RANGES = ['s' => [6, 120], 'x' => [-80, 80], 'y' => [-80, 80], 'g' => [0, 40]];
+    public const RANGES = ['s' => [6, 120], 'x' => [-80, 80], 'y' => [-80, 80], 'g' => [0, 40], 'pt' => [0, 80], 'pb' => [0, 80]];
 
     public const WEIGHTS = [300, 400, 500, 600, 700, 800, 900];
 
@@ -146,6 +146,14 @@ final class SuperSaleBanner
 
     /** The copy block's line gap per device, in u (the computer's from version 17). */
     public const GAP = ['m' => 1.3, 'd' => 0.5];
+
+    /**
+     * The computer's hero padding, in u: above the tabby/tamara logos (pt) and
+     * below the coupon line (pb). The owner asked for the room (2.60.609) and
+     * then for the controls (2.60.610: "give controls for desktop padding");
+     * the hero grows by whatever he adds, so the text keeps its space.
+     */
+    public const PAD_D = ['pt' => 2.5, 'pb' => 2.3];
 
     /**
      * Where the shipped Arabic already differed from the English, in px:
@@ -205,9 +213,11 @@ final class SuperSaleBanner
         '&[dir=rtl] .ssb-in{font-family:"Cairo",var(--sans,system-ui),sans-serif}',
         '& .ssb-hero{display:flex;align-items:center;gap:calc(var(--u)*2.2);height:calc(var(--u)*44);padding:calc(var(--u)*1.6) calc(var(--u)*4.5) 0;box-sizing:border-box;min-height:0}',
         '& .ssb-copy{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:calc(var(--u)*var(--ssb-gm,1.3));padding-bottom:calc(var(--u)*1.6);align-items:var(--ssb-al-am,stretch);text-align:var(--ssb-al-tm,start)}',
-        '& .ssb-pay{display:flex;align-items:center;flex-wrap:wrap;gap:calc(var(--u)*2);justify-content:var(--ssb-al-am,flex-start)}',
+        '& .ssb-pay{display:flex;align-items:center;flex-wrap:wrap;gap:calc(var(--u)*.9) calc(var(--u)*2);justify-content:var(--ssb-al-am,flex-start)}',
         '& .ssb-pay svg{display:block;height:calc(var(--u)*4.6);width:auto;max-width:100%}',
-        '& .ssb-paytxt{letter-spacing:.03em;line-height:1.2}',
+        // On its own line under the logos, never beside them (the owner, 2.60.610:
+        // "it should come in new line, not beside the logos").
+        '& .ssb-paytxt{letter-spacing:.03em;line-height:1.2;flex:0 0 100%}',
         '& .ssb-tag{letter-spacing:.02em;line-height:1.3}',
         '& .ssb-super{margin:0;line-height:.95;letter-spacing:-.01em;white-space:nowrap;'
             .'text-shadow:calc(var(--u)*.2) calc(var(--u)*.2) 0 #fff,calc(var(--u)*-.2) calc(var(--u)*.2) 0 #fff,calc(var(--u)*.2) calc(var(--u)*-.2) 0 #fff,calc(var(--u)*-.2) calc(var(--u)*-.2) 0 #fff,0 var(--u) calc(var(--u)*1.6) rgba(236,58,128,.25)}',
@@ -260,7 +270,7 @@ final class SuperSaleBanner
         // taller, so the room above tabby/tamara and below the coupon line
         // grows by about 11px each (the owner, 26 October: "give padding in
         // desktop ... above tabby / tamara, and below coupon code text").
-        '& .ssb-hero{height:calc(var(--u)*18.7);gap:calc(var(--u)*2);padding:calc(var(--u)*2.5) calc(var(--u)*4) calc(var(--u)*2.3)}',
+        '& .ssb-hero{height:calc(var(--u)*(13.9 + var(--ssb-ptd,2.5) + var(--ssb-pbd,2.3)));gap:calc(var(--u)*2);padding:calc(var(--u)*var(--ssb-ptd,2.5)) calc(var(--u)*4) calc(var(--u)*var(--ssb-pbd,2.3))}',
         '& .ssb-copy{gap:calc(var(--u)*var(--ssb-gd,.5));padding-bottom:0;align-items:var(--ssb-al-ad,stretch);text-align:var(--ssb-al-td,start)}',
         '& .ssb-pay{gap:calc(var(--u)*1.4);justify-content:var(--ssb-al-ad,flex-start)}& .ssb-pay svg{height:calc(var(--u)*3.2)}',
         '& .ssb-tag{line-height:1.15}& .ssb-coupon{margin-top:0;line-height:1.15}& .ssb-coupon b{padding:calc(var(--u)*.2) calc(var(--u)*1.6)}',
@@ -268,7 +278,7 @@ final class SuperSaleBanner
         // room from the gap (AR_DEFAULTS), so the shorter hero still holds it.
         '&[dir=rtl] .ssb-super{line-height:1}&[dir=rtl] .ssb-coupon{line-height:1.3}&[dir=rtl] .ssb-copy{gap:calc(var(--u)*var(--ssb-gd,.35))}',
         // She stands on the gift row's line, as on the phone.
-        '& .ssb-model{width:calc(var(--u)*20);height:calc(100% + var(--u)*2.3);margin-bottom:calc(var(--u)*-2.3);--ssb-fp:var(--ssb-fpd)}',
+        '& .ssb-model{width:calc(var(--u)*20);height:calc(100% + var(--u)*var(--ssb-pbd,2.3));margin-bottom:calc(var(--u)*var(--ssb-pbd,2.3)*-1);--ssb-fp:var(--ssb-fpd)}',
         // "Rectangle design": his own wide picture (1440 x 700) fills a box
         // the full height of the hero's content, about 2:1, cover.
         '& .ssb-model.ssb-mode-rect{align-self:stretch;width:calc(var(--u)*34);height:auto;margin-bottom:0;overflow:hidden;border-radius:var(--u);background:#f6dfe7}',
@@ -409,6 +419,11 @@ final class SuperSaleBanner
             $out[$el] = ['s' => round(($dev === 'm' ? $sm : $sd) * $cap, 2), 'w' => $w, 'c' => $c, 'x' => 0, 'y' => 0, 'v' => $dev === 'm' ? $vm : $vd];
         }
         $out['_'] = ['al' => 'start', 'g' => round(self::GAP[$dev] * $cap, 2)];
+        if ($dev === 'd') {
+            foreach (self::PAD_D as $p => $u) {
+                $out['_'][$p] = round($u * $cap, 2);
+            }
+        }
 
         if ($lang === 'ar') {
             foreach (self::AR_DEFAULTS[$dev] ?? [] as $el => $props) {
@@ -554,7 +569,7 @@ final class SuperSaleBanner
         if ($el === '_') {
             return match ($p) {
                 'al' => is_string($v) && isset(self::ALIGNS[$v]) ? $v : null,
-                'g' => is_numeric($v) && (float) $v >= self::RANGES['g'][0] && (float) $v <= self::RANGES['g'][1] ? round((float) $v, 2) : null,
+                'g', 'pt', 'pb' => is_numeric($v) && (float) $v >= self::RANGES[$p][0] && (float) $v <= self::RANGES[$p][1] ? round((float) $v, 2) : null,
                 default => null,
             };
         }
@@ -622,6 +637,14 @@ final class SuperSaleBanner
             $g = self::resolve($st, $lang, $dev, '_', 'g');
             if ((string) $g !== (string) $def['_']['g']) {
                 $parts[] = '--ssb-g'.$dev.':'.self::num((float) $g / self::UCAP[$dev]);
+            }
+            if ($dev === 'd') {
+                foreach (self::PAD_D as $p => $_) {
+                    $v = self::resolve($st, $lang, $dev, '_', $p);
+                    if ((string) $v !== (string) $def['_'][$p]) {
+                        $parts[] = '--ssb-'.$p.'d:'.self::num((float) $v / self::UCAP['d']);
+                    }
+                }
             }
         }
 
