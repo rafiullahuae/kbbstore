@@ -160,6 +160,8 @@ final class AdminNav
             ['id' => 'concernsync', 'label' => 'Shop by Concern', 'read' => 'admin-api/concern-sync', 'late' => true, 'icon' => '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/>'],
             // Catalog -> New Arrivals (Lane NA): the newest products, kept automatically; limit, age, include/exclude, order.
             ['id' => 'newarrivals', 'label' => 'New Arrivals', 'read' => 'admin-api/new-arrivals', 'late' => true, 'icon' => '<path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"/>'],
+            // Catalog -> Translate & categorise (Lane LT): the newest products into Arabic and into the skin-concern collections.
+            ['id' => 'recentlocalise', 'label' => 'Translate & categorise', 'read' => 'admin-api/recent-localise', 'late' => true, 'icon' => '<path d="M4 5h8"/><path d="M8 3v2"/><path d="M5.5 5c.8 3 3 5 6 6"/><path d="M10.5 5c-.8 3-3 5-6 6"/><path d="M13 21l4-9 4 9"/><path d="M14.5 18h5"/>'],
             ['id' => 'routines', 'label' => 'Build my routine', 'read' => 'admin-api/routines', 'late' => true, 'icon' => '<path d="M4 6h10"/><path d="M4 12h16"/><path d="M4 18h7"/><circle cx="18" cy="6" r="2"/><circle cx="15" cy="18" r="2"/>'],
             ['id' => 'category-tree', 'label' => 'Categories', 'read' => 'admin-api/categories', 'late' => true, 'icon' => '<path d="M3 7h6l2 2h10v10a2 2 0 0 1-2 2H3z"/><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2"/>'],
             ['id' => 'brands-manager', 'label' => 'Brands', 'read' => 'admin-api/brands', 'late' => true, 'icon' => '<path d="M20.6 13.4 12 22l-8.6-8.6a5 5 0 0 1 0-7.1 5 5 0 0 1 7.1 0L12 7.8l1.5-1.5a5 5 0 0 1 7.1 7.1Z"/>'],

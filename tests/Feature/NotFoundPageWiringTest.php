@@ -129,6 +129,8 @@ it('keeps the three handover documents that quote LATE_RENDERED in step with the
         // Lane CT (2.60.449) appended 'inquiries' after this lane's id, so the
         // tail every record quotes is now ...,'notfoundpage','inquiries','tabbycaptures','newarrivals']);
         expect(str_contains($w[$doc], "'spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures','newarrivals']);"))->toBeTrue($doc);
+        // tail every record quotes is now ...,'notfoundpage','inquiries','tabbycaptures','recentlocalise']);
+        expect(str_contains($w[$doc], "'spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures','recentlocalise']);"))->toBeTrue($doc);
     }
 });
 

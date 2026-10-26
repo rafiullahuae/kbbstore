@@ -107,6 +107,9 @@ it('keeps the three handover records that quote LATE_RENDERED in step with the c
         expect($w['files'][$doc] ?? (string) file_get_contents(base_path($doc)))->toContain("'emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures','newarrivals']);");
     }
     expect($line[0])->toContain("'emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures','newarrivals']);");
+        expect($w['files'][$doc] ?? (string) file_get_contents(base_path($doc)))->toContain("'emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures','recentlocalise']);");
+    }
+    expect($line[0])->toContain("'emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures','recentlocalise']);");
 });
 
 it('wraps go() once for its own id and adds no sidebar row of its own', function () {

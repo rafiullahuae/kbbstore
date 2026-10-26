@@ -96,7 +96,11 @@ final class ClaudeConcernSuggester
             'short_description' => (string) ($p['short'] ?? ''),
             'ingredients' => (string) ($p['ingredients'] ?? ''),
             'description' => (string) ($p['description'] ?? ''),
-        ], $batch);
+        // (Lane LT) The shop's own category names, when the caller sends them
+        // (Catalog -> Translate & categorise does; Sync does not, so its
+        // request is byte-identical to before): tells a cleanser from a serum.
+        ] + (isset($p['type']) ? ['product_type' => (string) $p['type']] : []), $batch);
+        $typed = array_filter($batch, static fn (array $p): bool => isset($p['type'])) !== [];
 
         $system = 'You file products of a Korean-beauty shop into its "Shop by Skin Concern" collections. '
             .'Use only the collections listed, by slug. Assign a collection only when the product\'s own ingredients or claims '
@@ -106,6 +110,10 @@ final class ClaudeConcernSuggester
             .'sebum or oil control for oily skin). Hair, scalp, body, lip, make-up, tools and devices get no collection. '
             .'Be conservative: no collection is better than a wrong one. Give each assignment one short reason (under 20 words) '
             .'that names the ingredient or claim. Return every product id you were given, with an empty list when nothing fits.';
+        if ($typed) {
+            $system .= ' product_type is the shop\'s own category for the product (cleanser, serum, sunscreen...): read it with the ingredients, '
+                .'and judge each product on its key actives at their likely strength, not on a single word in a long ingredient list.';
+        }
 
         $user = "Collections:\n".json_encode($list, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
             ."\n\nProducts:\n".json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

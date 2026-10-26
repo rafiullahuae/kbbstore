@@ -887,6 +887,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/image-seo-admin.php';
         require __DIR__.'/concern-sync-admin.php';
         require __DIR__.'/new-arrivals-admin.php';   // Catalog -> New Arrivals (Lane NA)
+        require __DIR__.'/recent-localise-admin.php';   // Catalog -> Translate & categorise (Lane LT)
 
         // Content → HTML Blocks: reusable snippets placed into pages and posts
         // with [kbb_block slug="…"].

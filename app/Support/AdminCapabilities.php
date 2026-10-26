@@ -321,6 +321,11 @@ final class AdminCapabilities
         // order. Its own capability: it rewrites a whole storefront collection
         // in one press. Owner and manager; every other role fails closed.
         'catalog.new_arrivals' => ['owner', 'manager'],
+        // Catalog -> Translate & categorise (Lane LT). Its own capability: a
+        // run sends the newest products' copy to the Claude API on the owner's
+        // key (it spends his money), Approve all publishes Arabic to the shop,
+        // and Apply adds products to the concern collections. Owner, manager.
+        'catalog.localise' => ['owner', 'manager'],
 
         /*
          * Content -> Shoppable video (Lane V2, Phase 20). The UGC library: the
@@ -1748,6 +1753,9 @@ final class AdminCapabilities
         // Lane NA. Every path under the prefix, reads and writes alike.
         ['*', 'admin-api/new-arrivals', 'catalog.new_arrivals'],
         ['*', 'admin-api/new-arrivals/**', 'catalog.new_arrivals'],
+        // Lane LT. Every path under the prefix, reads and writes alike.
+        ['*', 'admin-api/recent-localise', 'catalog.localise'],
+        ['*', 'admin-api/recent-localise/**', 'catalog.localise'],
         ['*', 'admin-api/media', 'content.manage'],
         ['*', 'admin-api/media/**', 'content.manage'],
         ['*', 'admin-api/blocks', 'content.manage'],
