@@ -1,0 +1,139 @@
+[
+  {
+    "name": "before",
+    "width": 390,
+    "requests": [
+      "POST /api/cart/add 200",
+      "--- shopper goes away ---",
+      "POST /api/cart/add 419"
+    ],
+    "console": [
+      "Failed to load resource: the server responded with a status of 419 (unknown status)"
+    ],
+    "panel": "SKELETON",
+    "scrollWidth": 390
+  },
+  {
+    "name": "expired",
+    "width": 390,
+    "requests": [
+      "POST /api/cart/add 200",
+      "--- shopper goes away ---",
+      "POST /api/cart/add 419",
+      "GET /api/cart/token 200",
+      "POST /api/cart/add 200"
+    ],
+    "console": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 419 (unknown status)"
+    ],
+    "panel": "cart-with-items",
+    "scrollWidth": 390
+  },
+  {
+    "name": "before",
+    "width": 1280,
+    "requests": [
+      "POST /api/cart/add 200",
+      "--- shopper goes away ---",
+      "POST /api/cart/add 419"
+    ],
+    "console": [
+      "Failed to load resource: the server responded with a status of 419 (unknown status)"
+    ],
+    "panel": "SKELETON",
+    "scrollWidth": 1280
+  },
+  {
+    "name": "expired",
+    "width": 1280,
+    "requests": [
+      "POST /api/cart/add 200",
+      "--- shopper goes away ---",
+      "POST /api/cart/add 419",
+      "GET /api/cart/token 200",
+      "POST /api/cart/add 200"
+    ],
+    "console": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 419 (unknown status)"
+    ],
+    "panel": "cart-with-items",
+    "scrollWidth": 1280
+  },
+  {
+    "name": "server500",
+    "width": 390,
+    "requests": [
+      "POST /api/cart/add 200",
+      "--- shopper goes away ---",
+      "POST /api/cart/add 500",
+      "GET /api/cart/drawer 200"
+    ],
+    "console": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    ],
+    "panel": "cart-with-items",
+    "scrollWidth": 390
+  },
+  {
+    "name": "offline",
+    "width": 390,
+    "requests": [
+      "POST /api/cart/add 200",
+      "--- shopper goes away ---",
+      "POST /api/cart/add FAILED",
+      "GET /api/cart/drawer FAILED"
+    ],
+    "console": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+    ],
+    "panel": "cart-with-items",
+    "scrollWidth": 390
+  },
+  {
+    "name": "wake",
+    "width": 390,
+    "requests": [
+      "POST /api/cart/add 200",
+      "--- shopper goes away ---",
+      "GET /api/cart/token 200",
+      "--- tab shown again ---",
+      "POST /api/cart/add 200"
+    ],
+    "console": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "panel": "cart-with-items",
+    "scrollWidth": 390
+  },
+  {
+    "name": "normal",
+    "width": 1280,
+    "requests": [
+      "POST /api/cart/add 200",
+      "--- shopper goes away ---",
+      "POST /api/cart/add 200"
+    ],
+    "console": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "panel": "cart-with-items",
+    "scrollWidth": 1280
+  },
+  {
+    "name": "normalold",
+    "width": 1280,
+    "requests": [
+      "POST /api/cart/add 200",
+      "--- shopper goes away ---",
+      "POST /api/cart/add 200"
+    ],
+    "console": [],
+    "panel": "cart-with-items",
+    "scrollWidth": 1280
+  }
+]

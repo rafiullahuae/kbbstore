@@ -12,7 +12,7 @@
  *   wake      91 minutes away, tab shown again: token refreshed BEFORE the tap
  *   normal    an ordinary add: no /token request at all
  *
- * Writes PNGs and a JSON report to storage/cr-shots/.
+ * Writes PNGs and a JSON report to docs/cr-shots/.
  */
 const { execSync } = require('child_process');
 const fs = require('fs');
@@ -23,7 +23,7 @@ try { ({ chromium } = require('playwright')); } catch { ({ chromium } = require(
 
 const PORT = process.argv[2] || '11470';
 const BASE = `http://127.0.0.1:${PORT}`;
-const OUT = path.join(__dirname, '..', 'storage', 'cr-shots');
+const OUT = path.join(__dirname, '..', 'docs', 'cr-shots');
 fs.mkdirSync(OUT, { recursive: true });
 
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
