@@ -95,6 +95,11 @@ beforeEach(function () {
     PageBannersRoutes::wire($this->app);
     DB::table('free_gift_ranges')->delete();
     Setting::query()->updateOrCreate(['key' => Locale::SETTING_ENABLED], ['value' => '1', 'autoload' => true]);
+    // The live shop as it is: GLOW is a real coupon, and the banner is as
+    // shipped (migration 2027_12_26_100001 found GLOW and wrote nothing).
+    \App\Models\Coupon::create(['code' => 'GLOW', 'type' => 'fixed_cart', 'amount' => 1000]);
+    DB::table('settings')->where('key', SuperSaleBanner::KEY)->delete();
+    \Illuminate\Support\Facades\Cache::forget('kbb.settings');
     ssbFlush();
     Product::create(['slug' => 'ssb-sale-1', 'name' => 'SSB Sale 1', 'type' => 'simple', 'status' => 'publish',
         'is_visible' => true, 'price' => 2000, 'sale_price' => 1000, 'stock_status' => 'instock']);
@@ -320,6 +325,7 @@ it('saves from Pages → Page banners → Super Sale banner, refuses a bad band 
         expect(DB::table('settings')->where('key', SuperSaleBanner::KEY)->value('value'))->toBe($before);
     }
 
+    \App\Models\Coupon::create(['code' => 'SALE20', 'type' => 'fixed_cart', 'amount' => 2000]);
     $cfg = ['code' => 'SALE20', 'title_en' => 'MEGA SALE', 'model' => 'https://kbeautybliss.com/uploads/appearance/me.webp'] + $payload['sale_banner']['config'];
     $this->postJson('/admin-api/page-banners', $base + ['super_sale_banner' => $cfg])->assertOk();
     ssbFlush();
@@ -395,4 +401,44 @@ it('ships the lady from the current banner and puts her in the Media Library', f
             File::deleteDirectory(public_path('img-cache/200/uploads/appearance'));
         }
     }
+});
+
+it('never offers a coupon code the shop has not got: off at apply time, refused on save', function () {
+    /*
+     * DEFECT IT GUARDS: "COUPON CODE: GLOW" printed on a public page of a shop
+     * whose coupons table has no GLOW (PublicPagesQuoteRealPricesTest). The
+     * check is at apply time and on save, so the page spends no query on it.
+     * MUTATION: return early in the migration, or drop the controller's
+     * Coupon check -> red.
+     */
+    $run = function (): void {
+        (require database_path('migrations/2027_12_26_100001_super_sale_live_banner_coupon_check.php'))->up();
+        \Illuminate\Support\Facades\Cache::forget('kbb.settings');
+        ssbFlush();
+    };
+
+    // GLOW exists: nothing written, the banner says GLOW.
+    $run();
+    expect(DB::table('settings')->where('key', SuperSaleBanner::KEY)->exists())->toBeFalse()
+        ->and(ssbBlock($this->get('/super-sale/')->getContent()))->toContain('<b>GLOW</b>');
+
+    // No GLOW: the banner ships without its coupon line, the rest as approved.
+    \App\Models\Coupon::query()->delete();
+    $run();
+    $block = ssbBlock($this->get('/super-sale/')->getContent());
+    expect($block)->toContain('SUPER SALE')->not->toContain('ssb-coupon')->not->toContain('<b>GLOW</b>');
+
+    // A banner he saved is never rewritten.
+    ssbSet(['code' => 'GLOW', 'title_en' => 'MINE']);
+    $run();
+    expect(ssbBlock($this->get('/super-sale/')->getContent()))->toContain('MINE');
+
+    // And the admin refuses a code that is not a coupon, writing nothing.
+    $this->actingAs(ssbAdmin(), 'admin');
+    $payload = $this->getJson('/admin-api/page-banners')->assertOk()->json();
+    $before = DB::table('settings')->where('key', SuperSaleBanner::KEY)->value('value');
+    $this->postJson('/admin-api/page-banners', ['banners' => $payload['banners'], 'assign' => [], 'super_sale_source' => 'auto',
+        'super_sale_banner' => ['code' => 'NOPE50'] + $payload['sale_banner']['config']])
+        ->assertStatus(422)->assertJsonPath('rejected', ['super_sale_banner.code']);
+    expect(DB::table('settings')->where('key', SuperSaleBanner::KEY)->value('value'))->toBe($before);
 });

@@ -64,6 +64,12 @@ class PageBannersApiController extends Controller
             foreach ($bannerRejected as $k => $label) {
                 $rejected['super_sale_banner.'.$k] = 'Super Sale banner: '.$label;
             }
+            // A public page never offers a code the shop has not got
+            // (PublicPagesQuoteRealPricesTest): checked here, on save, so the
+            // page itself spends no query on it.
+            if ($saleBanner['code'] !== '' && ! \App\Models\Coupon::query()->code($saleBanner['code'])->exists()) {
+                $rejected['super_sale_banner.code'] = 'Super Sale banner: coupon code '.$saleBanner['code'].' is not one of this shop\'s coupons';
+            }
         }
 
         if ($rejected !== []) {

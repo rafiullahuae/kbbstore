@@ -409,7 +409,7 @@
       + '<div class="pbs-sec">' + ssbChk('on', 'Show the live Super Sale banner')
       + '<div class="pbs-actions" style="margin-top:0"><a class="pbs-btn" href="' + esc(sb.url) + '" target="_blank" rel="noopener">See it on the shop</a></div></div>'
       + '<div class="pbs-sec"><h4>Words — English and Arabic</h4><p class="pbs-help">Left English, right Arabic. Empty a line and it is not drawn.</p>' + texts
-      + '<div class="pbs-f"><label for="pbs-ssb-code">Coupon code</label><input class="pbs-in" id="pbs-ssb-code" data-pbs-ssb-t="code" maxlength="24" value="' + esc(c.code) + '" placeholder="GLOW"><p class="pbs-help">The same in both languages. Empty = no coupon line.</p></div>'
+      + '<div class="pbs-f"><label for="pbs-ssb-code">Coupon code</label><input class="pbs-in' + (bad['super_sale_banner.code'] ? ' is-bad' : '') + '" id="pbs-ssb-code" data-pbs-ssb-t="code" maxlength="24" value="' + esc(c.code) + '" placeholder="GLOW"><p class="pbs-help">The same in both languages, and it must be one of the shop\'s coupons (Save refuses a code that is not). Empty = no coupon line.</p></div>'
       + ssbChk('logos', 'Show the tabby and tamara logos') + '</div>'
       + '<div class="pbs-sec"><h4>Model picture</h4>' + ssbChk('model_on', 'Show the model')
       + '<div class="pbs-pic"><div class="pbs-thumb">' + (pic && picOk(pic) ? '<img src="' + esc(pic) + '" alt="" style="max-height:140px;width:auto">' : 'No picture — the model is not drawn') + '</div>'
