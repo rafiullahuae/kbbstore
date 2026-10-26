@@ -164,6 +164,7 @@ final class AdminRoles
             'shareimages.make' => 'Make link-preview pictures',
             'concerns.sync' => 'Find products in no skin-concern collection, get suggestions (Claude API or built-in rules) and add them (Catalog → Shop by Concern)',
             'catalog.new_arrivals' => 'Keep the New Arrivals collection: on/off, how many, how recent, include/exclude products and their order (Catalog → New Arrivals)',
+            'catalog.localise' => 'Translate recent products into Arabic and file them under Shop by Skin (Catalog → Translate & categorise)',
         ]],
         ['inventory', 'Inventory', [
             'sets.stock' => 'Decide whether selling a set takes stock from its items',
