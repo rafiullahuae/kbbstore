@@ -22,6 +22,9 @@
       Where they show     one select per custom page — the four curated
                           listings and every routed content page
       Super Sale products which products /super-sale/ lists
+      Super Sale banner   the live banner on /super-sale/ (Lane SSB): on/off,
+                          its words in English and Arabic, the coupon code,
+                          the model picture and which free gifts it shows
 
     ── THE PREVIEW IS THE SHOP'S OWN MARKUP AND CSS ─────────────────────────
 
@@ -110,7 +113,7 @@
   if (window.kbbDrafts) window.kbbDrafts.track({
     id: SCREEN, screen: SCREEN, label: 'Pages → Page banners',
     values: function () { return data ? { state: JSON.stringify(state()) } : null; },
-    set: function (k, v) { if (k === 'state' && data) { try { var s = JSON.parse(v); data.banners = s.banners; data.assign = s.assign; data.super_sale.source = s.super_sale_source; } catch (e) {} } },
+    set: function (k, v) { if (k === 'state' && data) { try { var s = JSON.parse(v); data.banners = s.banners; data.assign = s.assign; data.super_sale.source = s.super_sale_source; if (s.super_sale_banner && data.sale_banner) data.sale_banner.config = s.super_sale_banner; } catch (e) {} } },
     render: function () { render(); },
     save: function () { save(); }
   });
@@ -173,7 +176,9 @@
   };
 
   function state() {
-    return { banners: data.banners, assign: data.assign, super_sale_source: data.super_sale.source };
+    var out = { banners: data.banners, assign: data.assign, super_sale_source: data.super_sale.source };
+    if (data.sale_banner) out.super_sale_banner = data.sale_banner.config;
+    return out;
   }
 
   function take(body) {
@@ -381,6 +386,43 @@
       + '<p class="pbs-help" style="margin-top:10px"><b>Running the campaign.</b> Add or remove a product: <b>Catalog → Product editor → Categories</b>, tick or untick <b>Super Sale</b>. Change the order: <b>Catalog → Catalog → Reorder</b>, choose <b>Super Sale</b>, drag, Save. That order is Super Sale\'s own: saving it moves no other category or brand page, and theirs never move it.</p>';
   }
 
+  /* ── (Lane SSB) THE LIVE SUPER SALE BANNER ──────────────────────────────
+     Built from the payload already here: no request until Save. The banner
+     itself is drawn by the shop (App\Support\SuperSaleBanner); "See it on
+     the shop" opens the page. */
+  function ssbChk(k, label, help) {
+    var c = data.sale_banner.config;
+    return '<label class="pbs-f" style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-pbs-ssb-chk="' + k + '"' + (c[k] ? ' checked' : '') + '> <span class="pbs-lbl">' + esc(label) + '</span></label>'
+      + (help ? '<p class="pbs-help" style="margin-top:-6px">' + help + '</p>' : '');
+  }
+
+  function ssbTab() {
+    var sb = data.sale_banner;
+    if (!sb) return '<p class="pbs-help">This server does not have the live Super Sale banner yet.</p>';
+    var c = sb.config, pic = c.model || sb.shipped_model;
+    var texts = sb.texts.map(function (t) {
+      return '<div class="pbs-f"><label for="pbs-ssb-' + t.key + '">' + esc(t.label) + '</label><div class="pbs-two">'
+        + '<input class="pbs-in" id="pbs-ssb-' + t.key + '" data-pbs-ssb-t="' + t.key + '_en" maxlength="' + sb.max_text + '" value="' + esc(c[t.key + '_en']) + '" placeholder="' + esc(t.en) + '" aria-label="' + esc(t.label) + ' (English)">'
+        + '<input class="pbs-in" dir="rtl" lang="ar" data-pbs-ssb-t="' + t.key + '_ar" maxlength="' + sb.max_text + '" value="' + esc(c[t.key + '_ar']) + '" placeholder="' + esc(t.ar) + '" aria-label="' + esc(t.label) + ' (Arabic)"></div></div>';
+    }).join('');
+    return '<p class="pbs-sub" style="margin-top:0">The live banner at the top of <a href="' + esc(sb.url) + '" target="_blank" rel="noopener">/super-sale/</a>, in the place of the header picture. The trust strip under it stays as it is. Off = the header picture, exactly as before.</p>'
+      + '<div class="pbs-sec">' + ssbChk('on', 'Show the live Super Sale banner')
+      + '<div class="pbs-actions" style="margin-top:0"><a class="pbs-btn" href="' + esc(sb.url) + '" target="_blank" rel="noopener">See it on the shop</a></div></div>'
+      + '<div class="pbs-sec"><h4>Words — English and Arabic</h4><p class="pbs-help">Left English, right Arabic. Empty a line and it is not drawn.</p>' + texts
+      + '<div class="pbs-f"><label for="pbs-ssb-code">Coupon code</label><input class="pbs-in' + (bad['super_sale_banner.code'] ? ' is-bad' : '') + '" id="pbs-ssb-code" data-pbs-ssb-t="code" maxlength="24" value="' + esc(c.code) + '" placeholder="GLOW"><p class="pbs-help">The same in both languages, and it must be one of the shop\'s coupons (Save refuses a code that is not). Empty = no coupon line.</p></div>'
+      + ssbChk('logos', 'Show the tabby and tamara logos') + '</div>'
+      + '<div class="pbs-sec"><h4>Model picture</h4>' + ssbChk('model_on', 'Show the model')
+      + '<div class="pbs-pic"><div class="pbs-thumb">' + (pic && picOk(pic) ? '<img src="' + esc(pic) + '" alt="" style="max-height:140px;width:auto">' : 'No picture — the model is not drawn') + '</div>'
+      + '<p class="pbs-help">' + (c.model ? 'Your own picture.' : 'The lady from the current Super Sale banner (shipped with this package).') + ' A portrait about 600 × 900 works well; the top of the picture is kept.</p>'
+      + '<div class="pbs-bar" style="margin-top:0"><button type="button" class="pbs-btn" data-pbs-ssb-pick>Choose from Media Library</button>'
+      + (c.model ? '<button type="button" class="pbs-btn" data-pbs-ssb-shipped>Use the shipped lady again</button>' : '') + '</div>'
+      + '<div class="pbs-f"><label for="pbs-ssb-model">Or a picture address</label><input class="pbs-in' + (bad['super_sale_banner.model'] ? ' is-bad' : '') + '" id="pbs-ssb-model" data-pbs-ssb-model maxlength="500" value="' + esc(c.model) + '" placeholder="https://…/model.webp"></div></div></div>'
+      + '<div class="pbs-sec"><h4>Free gifts row</h4>' + ssbChk('gifts_on', 'Show the free gifts row', 'The photos are your real gifts from <b>Marketing → Free gifts</b>, picked the way the cart’s gift box picks them: nothing sold out, backups when a main gift runs out. Gifts that are Off (or Testing, for anyone not on your testers list) are not shown.' + (sb.gifts_mode !== 'live' ? ' <b>Free gifts are ' + esc(sb.gifts_mode) + ' now.</b>' : ''))
+      + '<div class="pbs-f"><label for="pbs-ssb-band">Which gifts</label><select class="pbs-in' + (bad['super_sale_banner.band'] ? ' is-bad' : '') + '" id="pbs-ssb-band" data-pbs-ssb-band>' + sb.bands.map(function (o) {
+        return '<option value="' + esc(o.value) + '"' + (o.value === c.band ? ' selected' : '') + '>' + esc(o.label) + '</option>';
+      }).join('') + '</select><p class="pbs-help">Up to six photos on a computer, four on a phone, full-size products first.</p></div></div>';
+  }
+
   function render() {
     var host = document.querySelector('#content');
     if (!host || (document.querySelector('#ptitle') || {}).textContent !== TITLE) return;
@@ -395,8 +437,8 @@
       var st = document.createElement('style'); st.id = 'pbs-shop-css'; st.textContent = data.css; document.head.appendChild(st); cssIn = true;
     }
 
-    var tabs = [['banners', 'Banners'], ['pages', 'Where they show'], ['sale', 'Super Sale products']];
-    var body = open === 'pages' ? pagesTab() : (open === 'sale' ? saleTab() : bannersTab());
+    var tabs = [['banners', 'Banners'], ['pages', 'Where they show'], ['sale', 'Super Sale products'], ['ssb', 'Super Sale banner']];
+    var body = open === 'pages' ? pagesTab() : (open === 'sale' ? saleTab() : (open === 'ssb' ? ssbTab() : bannersTab()));
 
     host.innerHTML = '<div class="pbs-wrap"><div class="pbs-card">'
       + '<div class="pbs-title">' + TITLE + '</div>'
@@ -405,14 +447,15 @@
       + '<div class="pbs-tabs" role="tablist">' + tabs.map(function (t) {
         return '<button type="button" class="pbs-tab" role="tab" data-pbs-tab="' + t[0] + '" aria-selected="' + (open === t[0]) + '">' + t[1] + '</button>';
       }).join('') + '</div>'
-      + '<p class="ectabs-hint pbs-help" style="margin-top:8px"><b>Banners</b> is the pictures and strips themselves; <b>Where they show</b> puts one on a page; <b>Super Sale products</b> chooses what /super-sale/ lists. One Save stores all three.</p>'
+      + '<p class="ectabs-hint pbs-help" style="margin-top:8px"><b>Banners</b> is the pictures and strips themselves; <b>Where they show</b> puts one on a page; <b>Super Sale products</b> chooses what /super-sale/ lists; <b>Super Sale banner</b> is the live banner at its top. One Save stores them all.</p>'
       + '</div>'
       + '<div class="pbs-grid"><div class="pbs-card">' + body
       + '<div class="pbs-actions"><button type="button" class="pbs-btn is-primary" data-pbs-save' + (busy ? ' disabled' : '') + '>' + (busy ? 'Saving…' : 'Save') + '</button>'
       + '<button type="button" class="pbs-btn" data-pbs-reload' + (busy ? ' disabled' : '') + '>Reload</button></div></div>'
-      + '<div class="pbs-card pbs-sticky"><div class="pbs-title">Preview</div><p class="pbs-sub">The shop\'s own markup and stylesheet' + (b() ? ' for “' + esc(b().name) + '”' : '') + '.</p>'
+      + (open === 'ssb' ? '<div class="pbs-card pbs-sticky"><div class="pbs-title">Preview</div><p class="pbs-sub">The live banner is drawn by the shop itself, with your real gifts. Save, then <a href="' + esc((data.sale_banner || {}).url || '') + '" target="_blank" rel="noopener">open /super-sale/</a> (and <b>/ar/super-sale/</b> for Arabic).</p></div></div></div>' : '')
+      + (open === 'ssb' ? '' : '<div class="pbs-card pbs-sticky"><div class="pbs-title">Preview</div><p class="pbs-sub">The shop\'s own markup and stylesheet' + (b() ? ' for “' + esc(b().name) + '”' : '') + '.</p>'
       + '<div class="pbs-bar"><button type="button" class="pbs-btn" data-pbs-dev="m" aria-pressed="' + (dev === 'm') + '">Phone</button><button type="button" class="pbs-btn" data-pbs-dev="d" aria-pressed="' + (dev === 'd') + '">Desktop</button></div>'
-      + '<div data-pbs-stagehost></div></div></div></div>';
+      + '<div data-pbs-stagehost></div></div></div></div>');
 
     drawStage();
   }
@@ -421,6 +464,8 @@
   document.addEventListener('input', function (e) {
     if (!data || !e.target.closest) return;
     var x = b(), el;
+    if (data.sale_banner && (el = e.target.closest('[data-pbs-ssb-t]'))) { data.sale_banner.config[el.getAttribute('data-pbs-ssb-t')] = el.value; return; }
+    if (data.sale_banner && (el = e.target.closest('[data-pbs-ssb-model]'))) { data.sale_banner.config.model = el.value.trim(); el.classList.toggle('is-bad', !picOk(el.value)); return; }
     if ((el = e.target.closest('[data-pbs-k]')) && x) {
       var k = el.getAttribute('data-pbs-k');
       x[k] = el.value;
@@ -451,6 +496,9 @@
     var el;
     if ((el = e.target.closest('[data-pbs-assign]'))) { data.assign[el.getAttribute('data-pbs-assign')] = el.value; return; }
     if ((el = e.target.closest('[data-pbs-source]'))) { data.super_sale.source = el.value; return; }
+    if (data.sale_banner && (el = e.target.closest('[data-pbs-ssb-chk]'))) { data.sale_banner.config[el.getAttribute('data-pbs-ssb-chk')] = el.checked; return; }
+    if (data.sale_banner && (el = e.target.closest('[data-pbs-ssb-band]'))) { data.sale_banner.config.band = el.value; return; }
+    if (data.sale_banner && e.target.closest('[data-pbs-ssb-model]')) { render(); return; }
     if ((el = e.target.closest('[data-pbs-strip]')) && b()) { b().strip = el.checked; drawStage(); return; }
     if ((el = e.target.closest('[data-pbs-sdev]')) && b()) { b()[el.getAttribute('data-pbs-sdev') === 'strip_m' ? 'strip_m' : 'strip_d'] = el.checked; drawStage(); return; }
     if ((el = e.target.closest('[data-pbs-idev]')) && b()) { b().items[Number(el.getAttribute('data-pbs-idev'))].dev = el.value; drawStage(); }
@@ -472,6 +520,15 @@
     if (e.target.closest('[data-pbs-copyorder]')) { copyOrder('copy'); return; }
     if (e.target.closest('[data-pbs-clearorder]')) { copyOrder('clear'); return; }
     if (!data) return;
+    if (data.sale_banner && e.target.closest('[data-pbs-ssb-shipped]')) { data.sale_banner.config.model = ''; render(); return; }
+    if (data.sale_banner && e.target.closest('[data-pbs-ssb-pick]')) {
+      if (typeof window.kbbPickMedia !== 'function') { say('The Media Library is not available on this page.'); return; }
+      window.kbbPickMedia({ title: 'Super Sale banner — model picture', note: 'A portrait; the top of the picture is kept.', folder: 'appearance', onPick: function (urls) {
+        if (!urls || !urls[0]) return;
+        data.sale_banner.config.model = String(urls[0]); render();
+      } });
+      return;
+    }
     var x = b();
     if ((el = e.target.closest('[data-pbs-pickb]'))) { cur = Number(el.getAttribute('data-pbs-pickb')); render(); return; }
     if (e.target.closest('[data-pbs-add]')) {
