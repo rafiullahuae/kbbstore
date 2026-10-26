@@ -191,7 +191,7 @@ lane's and is not part of the anchor/replacement pair, so a later lane can
 lengthen the line without disturbing it):
 
 ```
-const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','concernsync','tr-strings','tr-machine','hpcontent','freegifts','ugcvideo','ugcsections','ugcstyle','igembeds','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','site-analytics','routines','imageseo','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries']);
+const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','concernsync','tr-strings','tr-machine','hpcontent','freegifts','ugcvideo','ugcsections','ugcstyle','igembeds','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','site-analytics','routines','imageseo','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures']);
 ```
 
 > **THIS ONE LINE MOVES, AND IT MOVED ONCE WHILE THIS LANE WAS OPEN.** The

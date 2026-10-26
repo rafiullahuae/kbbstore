@@ -172,6 +172,9 @@ final class AdminSearchIndex
         'notfoundpage' => [
             '' => ['Design', 'Global', 'Desktop', 'Mobile', 'Trending now', 'Accent colour', 'Reset to defaults'],
         ],
+        'tabbycaptures' => [
+            '' => ['Uncaptured orders', 'Tabby', 'Capture', 'Not captured', 'Authorised', 'Capturable', 'capture now', 'likely expired'],
+        ],
         'democontent' => [
             '' => [
                 'This is sample data, clearly separate from anything real', 'Create a sample order',

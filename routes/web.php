@@ -396,6 +396,9 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // so: these endpoints move money. Capture takes a customer's funds;
         // the settlement read exposes what an authorisation is still worth.
         require __DIR__.'/payments-settlement.php';
+        // Store → Uncaptured orders: READ list of Tabby authorised-but-never-
+        // captured orders, beside the capture endpoint above.
+        require __DIR__.'/tabby-captures-admin.php';
 
         /*
          * Tabby's own two endpoints. Same group, same reason as the two files

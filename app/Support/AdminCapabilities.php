@@ -1068,6 +1068,9 @@ final class AdminCapabilities
         ['GET', 'admin-api/orders/*/settlement', 'orders.money'],
         ['POST', 'admin-api/orders/*/capture', 'orders.money'],
         ['POST', 'admin-api/orders/*/refund', 'orders.money'],
+        // Uncaptured orders screen's list. Literal path, BEFORE the
+        // 'admin-api/orders/*' read below so it keeps orders.money.
+        ['GET', 'admin-api/orders/uncaptured', 'orders.money'],
         /*
          * Releasing a BNPL authorisation on a cancelled order —
          * routes/payments-void.php, App\Services\Payments\VoidsAuthorisation.
