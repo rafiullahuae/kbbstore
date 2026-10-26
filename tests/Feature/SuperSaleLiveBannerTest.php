@@ -671,7 +671,7 @@ it('costs a shopper nothing: no editor in the page, and the admin is sent the ve
     expect($guest)->not->toContain('Edit banner')->not->toContain('super-sale-banner-editor')->not->toContain('ssb-ed')
         // The editor's device-toggle rules are the editor's to add, not the page's.
         ->and($guest)->not->toContain('.kbb-ssb.ssb-fd')->not->toContain('.kbb-ssb.ssb-fm')
-        ->and(SuperSaleBanner::cssForced())->toContain('.kbb-ssb.ssb-fd .ssb-hero{height:calc(var(--u)*16.5)');
+        ->and(SuperSaleBanner::cssForced())->toContain('.kbb-ssb.ssb-fd .ssb-hero{height:calc(var(--u)*18.7)');
 
     $this->actingAs(ssbAdmin(), 'admin');
     $admin = $this->get('/super-sale/')->getContent();

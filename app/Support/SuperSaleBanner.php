@@ -254,9 +254,13 @@ final class SuperSaleBanner
         // 17): all of it from the hero -- 21.5u to 16.5u -- with the study's
         // padding and gap; the gift row keeps its height.
         // The copy is taller than the content box and is centred, so its
-        // overflow is split evenly into the padding: 1.4u above and 1.2u below
-        // hold it in English and Arabic (scrollHeight == clientHeight).
-        '& .ssb-hero{height:calc(var(--u)*16.5);gap:calc(var(--u)*2);padding:calc(var(--u)*1.4) calc(var(--u)*4) calc(var(--u)*1.2)}',
+        // overflow is split evenly into the padding: 2.5u above and 2.3u below
+        // hold it in English and Arabic (scrollHeight == clientHeight). Both
+        // are 1.1u (11px at 1280) more than version 17 and the hero 2.2u
+        // taller, so the room above tabby/tamara and below the coupon line
+        // grows by about 11px each (the owner, 26 October: "give padding in
+        // desktop ... above tabby / tamara, and below coupon code text").
+        '& .ssb-hero{height:calc(var(--u)*18.7);gap:calc(var(--u)*2);padding:calc(var(--u)*2.5) calc(var(--u)*4) calc(var(--u)*2.3)}',
         '& .ssb-copy{gap:calc(var(--u)*var(--ssb-gd,.5));padding-bottom:0;align-items:var(--ssb-al-ad,stretch);text-align:var(--ssb-al-td,start)}',
         '& .ssb-pay{gap:calc(var(--u)*1.4);justify-content:var(--ssb-al-ad,flex-start)}& .ssb-pay svg{height:calc(var(--u)*3.2)}',
         '& .ssb-tag{line-height:1.15}& .ssb-coupon{margin-top:0;line-height:1.15}& .ssb-coupon b{padding:calc(var(--u)*.2) calc(var(--u)*1.6)}',
@@ -264,7 +268,7 @@ final class SuperSaleBanner
         // room from the gap (AR_DEFAULTS), so the shorter hero still holds it.
         '&[dir=rtl] .ssb-super{line-height:1}&[dir=rtl] .ssb-coupon{line-height:1.3}&[dir=rtl] .ssb-copy{gap:calc(var(--u)*var(--ssb-gd,.35))}',
         // She stands on the gift row's line, as on the phone.
-        '& .ssb-model{width:calc(var(--u)*20);height:calc(100% + var(--u)*1.2);margin-bottom:calc(var(--u)*-1.2);--ssb-fp:var(--ssb-fpd)}',
+        '& .ssb-model{width:calc(var(--u)*20);height:calc(100% + var(--u)*2.3);margin-bottom:calc(var(--u)*-2.3);--ssb-fp:var(--ssb-fpd)}',
         // "Rectangle design": his own wide picture (1440 x 700) fills a box
         // the full height of the hero's content, about 2:1, cover.
         '& .ssb-model.ssb-mode-rect{align-self:stretch;width:calc(var(--u)*34);height:auto;margin-bottom:0;overflow:hidden;border-radius:var(--u);background:#f6dfe7}',

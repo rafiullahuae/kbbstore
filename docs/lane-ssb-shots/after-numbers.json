@@ -58,12 +58,16 @@
   "stylesheets": 2,
   "htmlBytes": 122873,
   "cls": 0,
-  "lcp": "IMG.kbb-card-img 1496ms",
+  "lcp": "IMG.kbb-card-img 388ms",
   "overflow": [
    ".ssb-hero 172/172",
    ".ssb-copy 132/132",
    ".ssb-in 234/234"
   ],
+  "room": {
+   "aboveBadges": 23,
+   "belowCoupon": 23
+  },
   "payShown": true,
   "modelImg": {
    "current": "/uploads/appearance/kbb-super-sale-model-mobile.webp",
@@ -110,36 +114,36 @@
    "x": 38,
    "y": 124,
    "w": 1205,
-   "h": 254
+   "h": 276
   },
   "headerPicture": null,
   "hero": {
    "x": 38,
    "y": 124,
    "w": 1205,
-   "h": 165
+   "h": 187
   },
   "gifts": {
    "x": 38,
-   "y": 289,
+   "y": 311,
    "w": 1205,
    "h": 89
   },
   "model": {
    "x": 1002,
-   "y": 138,
+   "y": 149,
    "w": 200,
-   "h": 151
+   "h": 162
   },
   "giftIcon": {
    "x": 78,
-   "y": 312,
+   "y": 334,
    "w": 43,
    "h": 43
   },
   "thumb": {
    "x": 864,
-   "y": 306,
+   "y": 328,
    "w": 56,
    "h": 56
   },
@@ -149,7 +153,7 @@
   "titleOverflows": false,
   "trustStrip": {
    "x": 0,
-   "y": 460,
+   "y": 482,
    "w": 1280,
    "h": 64
   },
@@ -163,20 +167,24 @@
   "stylesheets": 2,
   "htmlBytes": 127764,
   "cls": 0,
-  "lcp": "IMG.kbb-card-img 396ms",
+  "lcp": "IMG.kbb-card-img 388ms",
   "overflow": [
-   ".ssb-hero 165/165",
+   ".ssb-hero 187/187",
    ".ssb-copy 159/159",
-   ".ssb-in 254/254"
+   ".ssb-in 276/276"
   ],
+  "room": {
+   "aboveBadges": 15,
+   "belowCoupon": 13
+  },
   "payShown": false,
   "modelImg": {
    "current": "/img-cache/200/uploads/appearance/kbb-super-sale-model-mobile.webp",
    "box": {
     "x": 1002,
-    "y": 138,
+    "y": 149,
     "w": 200,
-    "h": 151
+    "h": 162
    }
   },
   "editorTrace": false,
@@ -270,12 +278,16 @@
   "stylesheets": 2,
   "htmlBytes": 132901,
   "cls": 0,
-  "lcp": "IMG.kbb-card-img 360ms",
+  "lcp": "IMG.kbb-card-img 368ms",
   "overflow": [
    ".ssb-hero 172/172",
    ".ssb-copy 130/130",
    ".ssb-in 234/234"
   ],
+  "room": {
+   "aboveBadges": 24,
+   "belowCoupon": 24
+  },
   "payShown": true,
   "modelImg": {
    "current": "/uploads/appearance/kbb-super-sale-model-mobile.webp",
@@ -320,36 +332,36 @@
    "x": 38,
    "y": 124,
    "w": 1205,
-   "h": 254
+   "h": 276
   },
   "headerPicture": null,
   "hero": {
    "x": 38,
    "y": 124,
    "w": 1205,
-   "h": 165
+   "h": 187
   },
   "gifts": {
    "x": 38,
-   "y": 289,
+   "y": 311,
    "w": 1205,
    "h": 89
   },
   "model": {
    "x": 78,
-   "y": 138,
+   "y": 149,
    "w": 200,
-   "h": 151
+   "h": 162
   },
   "giftIcon": {
    "x": 1159,
-   "y": 312,
+   "y": 334,
    "w": 43,
    "h": 43
   },
   "thumb": {
    "x": 353,
-   "y": 306,
+   "y": 328,
    "w": 56,
    "h": 56
   },
@@ -359,7 +371,7 @@
   "titleOverflows": false,
   "trustStrip": {
    "x": 0,
-   "y": 460,
+   "y": 482,
    "w": 1280,
    "h": 64
   },
@@ -373,20 +385,24 @@
   "stylesheets": 2,
   "htmlBytes": 137792,
   "cls": 0,
-  "lcp": "DIV.ssb-super 432ms",
+  "lcp": "DIV.ssb-super 532ms",
   "overflow": [
-   ".ssb-hero 165/165",
+   ".ssb-hero 187/187",
    ".ssb-copy 159/156",
-   ".ssb-in 254/254"
+   ".ssb-in 276/276"
   ],
+  "room": {
+   "aboveBadges": 16,
+   "belowCoupon": 14
+  },
   "payShown": false,
   "modelImg": {
    "current": "/img-cache/200/uploads/appearance/kbb-super-sale-model-mobile.webp",
    "box": {
     "x": 78,
-    "y": 138,
+    "y": 149,
     "w": 200,
-    "h": 151
+    "h": 162
    }
   },
   "editorTrace": false,

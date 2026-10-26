@@ -57,6 +57,8 @@ fs.mkdirSync(out, { recursive: true });
           cls: Math.round(window.__cls * 10000) / 10000, lcp: window.__lcp,
           // No clipping: the hero and the copy hold all of their content.
           overflow: ['.ssb-hero', '.ssb-copy', '.ssb-in'].map((s) => { const el = document.querySelector(s); return el ? `${s} ${el.scrollHeight}/${el.clientHeight}` : null; }),
+          // The room above the tabby/tamara row and below the coupon line, inside the hero.
+          room: (() => { const h = document.querySelector('.ssb-hero'), p = document.querySelector('.ssb-pay'), c = document.querySelector('.ssb-coupon'); if (!h || !p || !c) return null; const hb = h.getBoundingClientRect(); return { aboveBadges: Math.round(p.getBoundingClientRect().top - hb.top), belowCoupon: Math.round(hb.bottom - c.getBoundingClientRect().bottom) }; })(),
           payShown: (() => { const el = document.querySelector('.ssb-paytxt'); return el ? getComputedStyle(el).display !== 'none' : null; })(),
           modelImg: (() => { const el = document.querySelector('.ssb-model img'); return el ? { current: el.currentSrc.replace(location.origin, ''), box: r(el) } : null; })(),
           editorTrace: /ssb-ed|Edit banner|super-sale-banner-editor/.test(document.documentElement.outerHTML),
