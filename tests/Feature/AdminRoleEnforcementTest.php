@@ -331,6 +331,17 @@ it('has an authorization layer reading the role column', function () {
         'ComingSoonAdminPass',
         'ComingSoonGate',
         'EnforceAdminCapability',
+        /*
+         * Lane WJ (2.60.604), and I have come and read this file as instructed.
+         *
+         * GoneWordPressProbes authorises nothing and reads no role. It answers
+         * 410 Gone to dead WordPress addresses (/wp-json, /xmlrpc.php,
+         * wp-*.php, ?rest_route=) before the session starts, and leaves alone
+         * the admin path (even one the owner named wp-admin), /admin-api, /api
+         * and anything with a redirect row. WordPressProbesGoneTest pins all of
+         * that.
+         */
+        'GoneWordPressProbes',
         'NoIndexStaging',
         'NoStoreAdminApi',
         /*

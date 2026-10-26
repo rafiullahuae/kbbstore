@@ -178,7 +178,12 @@ it('has nothing that outlives a single request', function () {
     // 12 with Lane EM: `kbb:order-emirates`, every minute -- stores the
     // emirate of orders that carry none yet (one indexed IS NULL query when
     // there are none), exits. Nothing is held between runs.
-    expect(substr_count($console, 'Schedule::command('))->toBe(12, 'the set of scheduled commands has changed');
+    // 13 with 2.60.601 (Tabby auto-capture, the owner asked): `payments:tabby-
+    // capture`, every five minutes -- captures authorised, live, uncaptured
+    // Tabby orders (one indexed SELECT bounded by --limit when there are none),
+    // exits; returns at once while the switch is off. Nothing is held between
+    // runs.
+    expect(substr_count($console, 'Schedule::command('))->toBe(13, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {

@@ -44,6 +44,10 @@ final class UncapturedOrdersController
             ->whereNull('captured_at')
             ->whereNotIn('status', self::DEAD)
             ->orderBy('paid_at')
+            // `paid_at` can tie (one busy minute, an import) and the list is
+            // sliced at LIMIT, so `id` makes the order total: without it two
+            // reads could hand back different orders at the cut. StableOrderingTest.
+            ->orderBy('id')
             ->limit(self::LIMIT)
             ->get(['id', 'order_number', 'status', 'total', 'currency', 'paid_at']);
 
