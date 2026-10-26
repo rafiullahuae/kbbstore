@@ -302,6 +302,23 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
             'webhook_secret' => ['secret', 'Webhook secret', 'Generated for you. It forms part of the webhook URL below; regenerate it by clearing this field and saving. Re-register the webhook with Tabby afterwards or the old address keeps being called.', 'keys'],
             'capture_days' => ['text', 'Capture window (days)', 'How long Tabby leaves an authorisation capturable on your account. Default 30. Used only to warn you before it lapses — Tabby itself decides.', 'settings'],
             /*
+             * ON as it ships — a default the owner asked for in as many words
+             * ("the tabby orders must be captured automatically ... before in
+             * wordpress website the orders were auto capturing"), written on by
+             * the migration tabby_auto_capture_on_by_default, which is the only
+             * place that can tell "never set" from a deliberate Off (see that
+             * file). Tabby authorises at checkout and takes no money until a
+             * capture, and voids an authorisation nobody captured after about
+             * 30 days — so an uncaptured order is one that never counts in a
+             * payout. With this on, the check that runs every few minutes
+             * captures any authorised, live, uncaptured Tabby order; set it Off
+             * and nothing captures on its own, but the Capture button on each
+             * order (and Store → Uncaptured orders) still works. Run "php
+             * artisan payments:tabby-capture --dry" over SSH to see exactly
+             * which orders would be captured before changing anything.
+             */
+            'auto_capture' => ['bool', 'Capture automatically', 'ON. Tabby authorises at checkout but pays nothing until the order is captured, and voids an uncaptured authorisation after about 30 days — until then the order does not count in your Tabby payout. With this on, a check that runs every few minutes captures every authorised Tabby order that is still live and not yet captured. Set it Off and capture stays a button on each order.', 'settings'],
+            /*
              * OFF as it ships, per CLAUDE.md rule 1, and this one is not
              * caution: turning it on sends Tabby a description of up to ten of
              * this buyer's PREVIOUS orders — the name, phone, email and
@@ -878,6 +895,23 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
         $configured = (int) $this->credentials->get($this->id(), 'capture_days', (string) self::DEFAULT_CAPTURE_DAYS);
 
         return $configured > 0 ? $configured : self::DEFAULT_CAPTURE_DAYS;
+    }
+
+    /**
+     * Does the owner want authorised Tabby orders captured on their own?
+     *
+     * Exactly the shape TamaraGateway::autoCapture() has, and for the reason
+     * its migration spells out: the payments screen stores a bool as '1' for On
+     * and the EMPTY STRING for Off, and GatewayCredentials::get() returns '' for
+     * a key no config blob carries — so "never set" and "switched Off" are the
+     * same string and the only safe code test is `=== '1'`. The switch ships On
+     * because the owner asked for it, which the migration
+     * tabby_auto_capture_on_by_default does by writing the '1' once, only when
+     * the key is absent; an Off written over it is a real Off nothing puts back.
+     */
+    public function autoCapture(): bool
+    {
+        return $this->credentials->get($this->id(), 'auto_capture') === '1';
     }
 
     /**

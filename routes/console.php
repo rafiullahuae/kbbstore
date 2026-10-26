@@ -99,6 +99,37 @@ Schedule::command('payments:tamara-capture')
     ->runInBackground();
 
 /*
+| ── CAPTURE AUTHORISED TABBY ORDERS, ALMOST AT ONCE ────────────────────────
+|
+| The owner asked for this in as many words — "the tabby orders must be
+| captured automatically ... before in wordpress website the orders were auto
+| capturing" — and the serious half of why: "until capture tabby is not
+| counting those orders and not count in payout". Tabby authorises at checkout
+| and pays nothing; the money, and the payout, only arrive on capture, and
+| Tabby voids an uncaptured authorisation after about 30 days.
+|
+| WHY EVERY FIVE MINUTES AND NOT HOURLY. Unlike Tamara, which captures when the
+| goods ship and has a 180-day window to do it in, Tabby here captures on
+| AUTHORISATION — the owner's policy — so "automatically" means "soon after
+| checkout". Five minutes is effectively immediate for a payout while touching
+| none of the locked checkout path: the capture is a network call to Tabby and
+| MUST NOT sit inside the order's confirmation transaction, so a sweep a few
+| minutes behind the shopper is the safe shape, not a hook on the webhook.
+|
+| SAFE TO RUN WITH NOTHING TO DO, which is almost every tick: TabbyCaptureSweep
+| ::run() returns early when Tabby is unconfigured or the switch is off, and the
+| candidate query is one indexed SELECT bounded by --limit. withoutOverlapping,
+| because a slow Tabby is when two runs would otherwise ask about the same
+| orders — though PaymentCapturer's conditional claim makes even that safe;
+| runInBackground, because the scheduler waits for a foreground command and this
+| one talks to the network.
+*/
+Schedule::command('payments:tabby-capture')
+    ->everyFiveMinutes()
+    ->withoutOverlapping(10)
+    ->runInBackground();
+
+/*
 | ── "COMPLETE YOUR ORDER" REMINDERS (Lane RL) ───────────────────────────────
 |
 | 30 minutes and 24 hours after an order nobody has paid for. Every minute, so
