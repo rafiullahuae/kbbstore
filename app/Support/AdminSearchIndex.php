@@ -209,6 +209,7 @@ final class AdminSearchIndex
         // Catalog → New Arrivals (Lane NA).
         'newarrivals' => [
             '' => ['Keep New Arrivals automatically', 'How many products', 'Only products added in the last', 'Always show', 'Never show', 'Display', 'Reset to newest first', 'new in', 'exclude', 'include'],
+        ],
         // Catalog → Translate & categorise (Lane LT).
         'recentlocalise' => [
             '' => ['Scan', 'Review Arabic', 'Skin concerns', 'Apply all ticked', 'Retry them', 'Rules only (no API)'],
