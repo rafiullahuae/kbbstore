@@ -302,7 +302,10 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
             'webhook_secret' => ['secret', 'Webhook secret', 'Generated for you. It forms part of the webhook URL below; regenerate it by clearing this field and saving. Re-register the webhook with Tabby afterwards or the old address keeps being called.', 'keys'],
             'capture_days' => ['text', 'Capture window (days)', 'How long Tabby leaves an authorisation capturable on your account. Default 30. Used only to warn you before it lapses — Tabby itself decides.', 'settings'],
             /*
-             * ON as it ships — a default the owner asked for in as many words
+             * OFF since 2.60.611: the owner asked for it back off ("reverse the
+             * auto capture functionality that you did today ... give me a
+             * switch"), written by the migration tabby_auto_capture_off. The
+             * history: it shipped ON in 2.60.601 — a default the owner asked for in as many words
              * ("the tabby orders must be captured automatically ... before in
              * wordpress website the orders were auto capturing"), written on by
              * the migration tabby_auto_capture_on_by_default, which is the only
@@ -317,7 +320,7 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
              * artisan payments:tabby-capture --dry" over SSH to see exactly
              * which orders would be captured before changing anything.
              */
-            'auto_capture' => ['bool', 'Capture automatically', 'ON. Tabby authorises at checkout but pays nothing until the order is captured, and voids an uncaptured authorisation after about 30 days — until then the order does not count in your Tabby payout. With this on, a check that runs every few minutes captures every authorised Tabby order that is still live and not yet captured. Set it Off and capture stays a button on each order.', 'settings'],
+            'auto_capture' => ['bool', 'Capture automatically', 'OFF. Tabby authorises at checkout but pays nothing until the order is captured, and voids an uncaptured authorisation after about 30 days — until then the order does not count in your Tabby payout. With this on, a check that runs every few minutes captures every authorised Tabby order that is still live and not yet captured. Set it Off and capture stays a button on each order.', 'settings'],
             /*
              * OFF as it ships, per CLAUDE.md rule 1, and this one is not
              * caution: turning it on sends Tabby a description of up to ten of
