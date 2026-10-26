@@ -1367,6 +1367,9 @@ final class EnglishRenderWalk
             // --- cart and checkout -------------------------------------------
             'cart' => ['render' => true],
             'api/cart/drawer' => $json,
+            // A fresh CSRF token for a page that outlived its session (the cart
+            // panel freeze fix): JSON, one key, never a page.
+            'api/cart/token' => $json,
             // The live free gifts box (Lane FGL): JSON, or 204 while unchanged.
             'api/cart/gifts' => $json,
             'api/cart/debug' => $redirect,
