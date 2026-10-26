@@ -134,7 +134,7 @@ final class Tracker
             return null;
         }
 
-        $host =self::host((string) $request->input('r', ''), (string) $request->getHost());
+        $host = self::host((string) $request->input('r', ''), (string) $request->getHost());
         $src = self::utm($request->input('us'), 60);
         $med = self::utm($request->input('um'), 40);
         $click = (string) $request->input('ck', '');
