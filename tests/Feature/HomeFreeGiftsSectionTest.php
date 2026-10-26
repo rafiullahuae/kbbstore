@@ -384,14 +384,18 @@ it('shows the ×N circle on phone photos too', function () {
  * emptied field fall back to the default, and this is red.
  */
 it('says new gifts are added daily under the gifts, in each language, and hides when emptied', function () {
+    // (Lane GU2) With "Gifts go fast" switched off -- the default is now the urgency line (GiftUrgencyLineTest).
     $mask = fghProduct('Gel Mask');
     fghRange(194, null, [[$mask, 1, 'mask']], ['mask' => 1]);
-    fghSwitch(true);
+    app(SettingsService::class)->set(FreeGifts::KEY, ['mode' => 'live', 'home' => ['on' => true, 'urgency' => false]]);
+    SettingsService::forgetMemo();
+    Setting::flushMap();
+    app(FreeGifts::class)->compile();
 
     expect($this->get('/')->assertOk()->getContent())->toMatch('#<p class="fgh-note"><svg[^>]*>.*?</svg><span>New gifts added daily</span></p>#s');
     expect(FreeGifts::HOME['note_ar'])->toBe('هدايا جديدة تُضاف يومياً');
 
-    app(SettingsService::class)->set(FreeGifts::KEY, ['mode' => 'live', 'home' => ['on' => true, 'note_en' => '']]);
+    app(SettingsService::class)->set(FreeGifts::KEY, ['mode' => 'live', 'home' => ['on' => true, 'urgency' => false, 'note_en' => '']]);
     SettingsService::forgetMemo();
     Setting::flushMap();
     app(FreeGifts::class)->compile();

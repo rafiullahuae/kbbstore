@@ -414,14 +414,16 @@ select.fg-in{padding-inline-end:28px}
     ['Elsewhere', [['line', 'Checkout summary line', 'Keep :count'], ['tag', 'Emails, invoice, packing slip', ''], ['availability', 'Basket reminder email, under the gifts', ''], ['basket_cta', 'Basket reminder email, last line in the gift box', ''], ['email_added', 'Paid order emails: gift box heading', ''], ['email_added_note', 'Paid order emails: line under the gifts', '']]],
     ['Under the box', [['urgency', 'Urgency line: cart panel, cart page, checkout, basket reminder email', 'One line, up to 80 characters. Switch it off under Gift box look']]]
   ];
-  var HOME_FIELDS = [['title', 'Title'], ['sub', 'Subtitle'], ['btn', 'Button'], ['note', 'Line under the gifts (empty = hidden)']];
+  var HOME_FIELDS = [['title', 'Title'], ['sub', 'Subtitle'], ['btn', 'Button'], ['note', 'Line under the gifts (shown when “Gifts go fast” is off; empty = hidden)']];
   var MAX_QTY = 50;
   /* "Gift box look" (Lane FG5): FreeGifts::LOOK, ::LOOK_TITLES and
      ::LOOK_RANGES, written out because this script is @verbatim
      (FreeGiftsLookTest pins them equal), normalised here exactly as
      FreeGifts::lookOf() does, so the preview never shows a value the save
      would not keep. */
-  var LOOK = {"brand":true,"titles":"clamp2","free_gap":16,"title_px":12,"photo_list":28,"photo_row":36,"separator":false,"row_gap":3,"photos":"fill5","urgency":true}, LOOK_TITLES = ["clamp2","fade","wrap"], LOOK_RANGES = {"free_gap":[0,40],"title_px":[11,16],"photo_list":[22,48],"photo_row":[22,48],"row_gap":[0,16]}, LOOK_PHOTOS = ["fixed","scale","fill5","fill4"];
+  var LOOK = {"brand":true,"titles":"clamp2","free_gap":16,"title_px":12,"photo_list":28,"photo_row":36,"separator":false,"row_gap":3,"photos":"fill5","urgency":true,"u_px":11,"u_px_m":11,"u_weight":800,"u_speed":26}, LOOK_TITLES = ["clamp2","fade","wrap"], LOOK_RANGES = {"free_gap":[0,40],"title_px":[11,16],"photo_list":[22,48],"photo_row":[22,48],"row_gap":[0,16],"u_px":[9,24],"u_px_m":[9,24],"u_speed":[10,100]}, LOOK_PHOTOS = ["fixed","scale","fill5","fill4"];
+  /* FreeGifts::LOOK_U_WEIGHTS (Lane GU2): the urgency line's font weights. */
+  var LOOK_U_WEIGHTS = [500,600,700,800,900];
   /* FreeGifts::photoTier(): the closed row's size class for n photos (Lane FGP). */
   function photoTier(lk, n) {
     if (lk.photos === 'fixed' || n < 1) return '';
@@ -435,6 +437,7 @@ select.fg-in{padding-inline-end:28px}
     v = v && typeof v === 'object' ? v : {};
     var o = { brand: typeof v.brand === 'boolean' ? v.brand : LOOK.brand, separator: typeof v.separator === 'boolean' ? v.separator : LOOK.separator,
       urgency: typeof v.urgency === 'boolean' ? v.urgency : LOOK.urgency,
+      u_weight: LOOK_U_WEIGHTS.indexOf(Number(v.u_weight)) >= 0 && String(v.u_weight).trim() !== '' ? Number(v.u_weight) : LOOK.u_weight,
       titles: LOOK_TITLES.indexOf(v.titles) >= 0 ? v.titles : LOOK.titles, photos: LOOK_PHOTOS.indexOf(v.photos) >= 0 ? v.photos : LOOK.photos };
     Object.keys(LOOK_RANGES).forEach(function (k) {
       var n = typeof v[k] === 'number' ? v[k] : (typeof v[k] === 'string' && v[k].trim() !== '' ? Number(v[k]) : NaN);
@@ -1757,6 +1760,25 @@ select.fg-in{padding-inline-end:28px}
         i.addEventListener('change', function () { i.value = String(lookOf(cfg().look)[k]); });
         return field(label + ' (' + r[0] + '–' + r[1] + ' px)', i, help);
       }
+      /* (Lane GU2) The urgency line's look, on the box and on the homepage:
+         size on a computer and on a phone, weight, and sweep speed in seconds
+         (stored as tenths, LOOK_RANGES.u_speed). */
+      function uLook() {
+        var wsel = el('select', { class: 'fg-in', disabled: ro, 'data-fk': 'lk-u_weight', 'aria-label': 'Urgency line weight' }, LOOK_U_WEIGHTS.map(function (w) {
+          return el('option', { value: String(w), text: w + ({ 500: ' · medium', 600: ' · semi-bold', 700: ' · bold', 800: ' · extra bold (today)', 900: ' · black' })[w], selected: lk.u_weight === w });
+        }));
+        wsel.addEventListener('change', function () { set('u_weight', Number(wsel.value)); });
+        var r = LOOK_RANGES.u_speed;
+        var sp = el('input', { class: 'fg-in', type: 'number', min: r[0] / 10, max: r[1] / 10, step: 0.1, inputmode: 'decimal', value: String(lk.u_speed / 10), disabled: ro, 'data-fk': 'lk-u_speed', 'aria-label': 'Sweep speed in seconds' });
+        sp.addEventListener('input', function () { if (sp.value.trim() !== '' && isFinite(Number(sp.value))) set('u_speed', Number(sp.value) * 10); });
+        sp.addEventListener('change', function () { sp.value = String(lookOf(cfg().look).u_speed / 10); });
+        return el('div', { class: 'fg-look', 'data-fk': 'lk-urgency-look' }, [
+          num('u_px', 'Urgency line size, computer', '11 today. The box and the homepage line.'),
+          num('u_px_m', 'Urgency line size, phone', '11 today. Phones and screens up to 760px wide.'),
+          field('Urgency line weight', wsel, '800 today.'),
+          field('Sweep speed (' + r[0] / 10 + '–' + r[1] / 10 + ' s)', sp, 'Seconds for one pass of the fire highlight. 2.6 today; smaller is faster.')
+        ]);
+      }
       var titles = el('select', { class: 'fg-in', disabled: ro, 'data-fk': 'lk-titles' }, [['clamp2', 'Up to 2 lines, then …'], ['fade', 'One line, fades at the end'], ['wrap', 'Wrap fully']].map(function (o) {
         return el('option', { value: o[0], text: o[1], selected: lk.titles === o[0] });
       }));
@@ -1771,6 +1793,7 @@ select.fg-in{padding-inline-end:28px}
           sw(lk.separator, 'Separator line between gifts', function () { var v = !lookOf(cfg().look).separator; set('separator', v); this.setAttribute('aria-checked', String(v)); }, ro),
           sw(lk.urgency, 'Urgency line under the box', function () { var v = !lookOf(cfg().look).urgency; set('urgency', v); this.setAttribute('aria-checked', String(v)); }, ro)
         ]),
+        uLook(),
         el('p', { class: 'fg-sub', text: '"🔥 Gifts go fast! Grab yours now" under the box, with a moving fire highlight: cart panel, cart page, checkout and the basket reminder email (still there). On, as asked. Its words are under Texts → Under the box.' }),
         el('div', { class: 'fg-look' }, [
           field('Photo row', photos, 'The small photos before "View all". B: one gift 25% bigger, 2–4 gifts 17% bigger, 5 or more fill the box edge to edge, five to a row, then a second row. Sizes grow from "Photo size, closed row".'),
@@ -1840,6 +1863,9 @@ select.fg-in{padding-inline-end:28px}
     wid.addEventListener('input', function () { editCfg().home.width = +wid.value; widV.textContent = wid.value + '%'; repaint(); });
     wrap.appendChild(card('Homepage section', 'Shows on the homepage under Shop by Concern while this is on and a range is published. Move it up or down, or hide it on desktop or mobile, in Appearance → Homepage (the “Free gifts” row).', [
       el('div', { class: 'fg-row', style: 'margin-top:14px' }, [sw(h.on, 'Show on the homepage', function () { var e = editCfg(); e.home.on = !e.home.on; this.setAttribute('aria-checked', String(e.home.on)); repaint(); }, ro)]),
+      /* (Lane GU2) The line under the gifts: the box's "Gifts go fast" (as asked) or the line below. */
+      el('div', { class: 'fg-row', style: 'margin-top:10px' }, [sw(h.urgency !== false, 'Line under the gifts: “🔥 Gifts go fast! Grab yours now”', function () { var e = editCfg(); e.home.urgency = e.home.urgency === false; this.setAttribute('aria-checked', String(e.home.urgency)); repaint(); }, ro)]),
+      el('p', { class: 'fg-sub', 'data-fk': 'h-urgency-help', text: 'On, as asked: the cart panel’s line with its fire highlight, in place of “Line under the gifts” below. Its words: Display → Texts → Under the box; its size, weight and speed: Display → Gift box look. Off: the line below, as before.' }),
       el('div', { style: 'margin-top:16px;display:grid;gap:10px' }, [
         el('b', { text: 'Background', style: 'font-size:13px' }),
         bgSel,

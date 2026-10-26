@@ -23,6 +23,15 @@
     none of them until the owner's shopper opens it. The script measures no
     layout -- the slide on show comes from an IntersectionObserver, a jump is
     scrollIntoView -- and starts no timer. Every string printed is escaped.
+
+    THE LINE UNDER THE GIFTS (Lane GU2, owner 26 October: "the gift grab yours
+    line should also come on homepage and replace the line new gifts added
+    daily ... same effect i need continues"). With Homepage section -> "Line
+    under the gifts: Gifts go fast" on (the default) it is the box's urgency
+    line -- the same words (Display -> Texts -> Under the box), the same fire
+    sweep, reversed under dir=rtl, still under reduced motion, CSS only -- at
+    the size, weight and speed of Display -> Gift box look -> Urgency line.
+    Off, the owner's "New gifts added daily" line exactly as before.
 --}}
 @php
     $fghAr = (bool) ($fgh['ar'] ?? false);
@@ -51,6 +60,8 @@
     $fghArr = static fn (bool $next): string => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' . ($next ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6') . '"/></svg>';
 @endphp
 @php
+    $fghU = $fgh['urgency'] ?? null;
+    $fghUl = \App\Services\FreeGifts::lookOf($fgh['look'] ?? null);
     $fghBg = $fgh['bg'] ?? \App\Services\FreeGifts::homeBg([]);
     $fghW = \App\Services\FreeGifts::washed($fghBg);
 @endphp
@@ -185,6 +196,8 @@ dialog.fgh-pop::backdrop{background:rgba(32,22,28,.38);-webkit-backdrop-filter:b
 .fgh-gl.dm small{display:none}.fgh-gl.dm .fgh-nm{-webkit-line-clamp:1;font-size:11px}.fgh-gl.dm .fgh-g{padding:6px 6px 8px;border-radius:13px}.fgh-gl.dm .fgh-fr{font-size:8.5px;padding:2px 6px;top:4px;inset-inline-start:4px}.fgh-gl.dm .fgh-q{font-size:10px;top:4px;inset-inline-end:4px}
 }
 @media(prefers-reduced-motion:reduce){.fgh-box{animation:none}.fgh-dots i{transition:none}}
+@if ($fghU !== null).fgh .fgh-u{margin:0;text-align:center;font-size:{{ (int) $fghUl['u_px'] }}px;font-weight:{{ (int) $fghUl['u_weight'] }};line-height:1.45;color:#9a9298}.fgh-us{color:#9a9298}@supports ((-webkit-background-clip:text) or (background-clip:text)){.fgh-us{background-image:linear-gradient(90deg,#9a9298 0,#9a9298 47%,#ff7a18 48.5%,#e23b7b 50%,#ff3d5a 51.5%,#9a9298 53%,#9a9298 100%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:fgh-sw {{ $fghUl['u_speed'] / 10 }}s linear infinite}[dir=rtl] .fgh-us{animation-direction:reverse}}@keyframes fgh-sw{from{background-position:100% 0}to{background-position:0 0}}@media (prefers-reduced-motion:reduce){.fgh-us{animation:none;background-image:none;color:#9a9298;-webkit-text-fill-color:#9a9298}}@media (max-width:760px){.fgh .fgh-u{font-size:{{ (int) $fghUl['u_px_m'] }}px}}
+@endif
 </style><div class="wrap"><div class="fgh-in">
   {{-- The heading and its button as every other homepage section draws them
        (partials/home/hs-head): the shop's pill (.bndl-all) beside the centred
@@ -199,7 +212,8 @@ dialog.fgh-pop::backdrop{background:rgba(32,22,28,.38);-webkit-backdrop-filter:b
 @endforeach
   </div>
   {{-- The owner's line under the gifts ("New gifts added daily"), Homepage section -> Line under the gifts. --}}
-  @if (($fgh['note'] ?? '') !== '')<p class="fgh-note">{!! $fghGift !!}<span>{{ $fgh['note'] }}</span></p>@endif
+  @if ($fghU !== null)<p class="fgh-u">@if ($fghU['lead'] !== ''){{ $fghU['lead'] }} @endif<span class="fgh-us">{{ $fghU['words'] }}</span></p>
+  @elseif (($fgh['note'] ?? '') !== '')<p class="fgh-note">{!! $fghGift !!}<span>{{ $fgh['note'] }}</span></p>@endif
   @if ($fghBtn)<div class="hs-foot"><a class="bndl-all hs-btn hs-btn-bottom" href="{{ $fgh['url'] }}">{{ $fgh['btn'] }}<i>{!! \App\Support\HomeSections::ARROW !!}</i></a></div>@endif
 </div></div>
 <dialog class="fgh-pop" aria-labelledby="fgh-pt" data-of="{{ $fghT['of'] }}"><div class="fgh-box"><span class="fgh-grab" aria-hidden="true"></span>

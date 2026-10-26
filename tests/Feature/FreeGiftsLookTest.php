@@ -117,7 +117,7 @@ it('falls back to the default for a bad value and clamps every number to its ran
      */
     expect(FreeGifts::lookOf(null))->toBe(FreeGifts::LOOK)
         ->and(FreeGifts::lookOf('nonsense'))->toBe(FreeGifts::LOOK)
-        ->and(FreeGifts::LOOK)->toBe(['brand' => true, 'titles' => 'clamp2', 'free_gap' => 16, 'title_px' => 12, 'photo_list' => 28, 'photo_row' => 36, 'separator' => false, 'row_gap' => 3, 'photos' => 'fill5', 'urgency' => true]);
+        ->and(FreeGifts::LOOK)->toBe(['brand' => true, 'titles' => 'clamp2', 'free_gap' => 16, 'title_px' => 12, 'photo_list' => 28, 'photo_row' => 36, 'separator' => false, 'row_gap' => 3, 'photos' => 'fill5', 'urgency' => true, 'u_px' => 11, 'u_px_m' => 11, 'u_weight' => 800, 'u_speed' => 26]);
 
     $bad = FreeGifts::lookOf([
         'brand' => 'maybe', 'separator' => ['x'], 'titles' => 'marquee',
@@ -153,7 +153,7 @@ it('saves the look from Display through the same normalising, and keeps it when 
     ]])->assertOk();
 
     $saved = app(SettingsService::class)->get(FreeGifts::KEY)['look'];
-    expect($saved)->toBe(['brand' => false, 'titles' => 'clamp2', 'free_gap' => 40, 'title_px' => 14, 'photo_list' => 28, 'photo_row' => 36, 'separator' => true, 'row_gap' => 3, 'photos' => 'fill5', 'urgency' => true]);
+    expect($saved)->toBe(['brand' => false, 'titles' => 'clamp2', 'free_gap' => 40, 'title_px' => 14, 'photo_list' => 28, 'photo_row' => 36, 'separator' => true, 'row_gap' => 3, 'photos' => 'fill5', 'urgency' => true, 'u_px' => 11, 'u_px_m' => 11, 'u_weight' => 800, 'u_speed' => 26]);
 
     // An older console (no "look" in the body) leaves the saved look alone.
     test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/settings', $body)->assertOk();

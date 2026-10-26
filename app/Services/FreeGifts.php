@@ -157,6 +157,15 @@ final class FreeGifts
          * 100%"). 40..100; tablets and phones always use the full width.
          */
         'width' => 100,
+        /*
+         * (Lane GU2) The line under the gifts (owner, 26 October: "the gift grab
+         * yours line should also come on homepage and replace the line new gifts
+         * added daily. give option to switch on off. by default just keep on the
+         * Grab yours line"). ON: the box's "🔥 Gifts go fast! Grab yours now"
+         * (texts `urgency`, its look from LOOK u_*) in place of `note`. OFF: the
+         * `note` line exactly as before.
+         */
+        'urgency' => true,
     ];
 
     /** Background styles for the homepage section: `token => label`. */
@@ -189,7 +198,18 @@ final class FreeGifts
         'row_gap' => 3,           // px between the opened rows
         'photos' => 'fill5',      // LOOK_PHOTOS: how the closed row sizes its photos
         'urgency' => true,        // Lane GU: "Gifts go fast" under the box (ON: the owner asked for it)
+        // (Lane GU2) The urgency line's look, on the box AND the homepage
+        // ("allow us to control the line font size etc, same effect i need
+        // continues"): px on a computer, px on a phone (760px and under),
+        // weight (LOOK_U_WEIGHTS), sweep in tenths of a second. Today's values.
+        'u_px' => 11,
+        'u_px_m' => 11,
+        'u_weight' => 800,
+        'u_speed' => 26,
     ];
+
+    /** (Lane GU2) The urgency line's font weights. */
+    public const LOOK_U_WEIGHTS = [500, 600, 700, 800, 900];
 
     public const LOOK_TITLES = ['clamp2', 'fade', 'wrap'];
 
@@ -220,6 +240,9 @@ final class FreeGifts
         'photo_list' => [22, 48],
         'photo_row' => [22, 48],
         'row_gap' => [0, 16],
+        'u_px' => [9, 24],
+        'u_px_m' => [9, 24],
+        'u_speed' => [10, 100], // 1.0 - 10.0 s
     ];
 
     public const PRODUCT_COLUMNS = [
@@ -310,6 +333,8 @@ final class FreeGifts
 
         $look['titles'] = in_array($saved['titles'] ?? null, self::LOOK_TITLES, true) ? $saved['titles'] : self::LOOK['titles'];
         $look['photos'] = in_array($saved['photos'] ?? null, self::LOOK_PHOTOS, true) ? $saved['photos'] : self::LOOK['photos'];
+        $w = $saved['u_weight'] ?? null;
+        $look['u_weight'] = (is_int($w) || (is_string($w) && ctype_digit($w))) && in_array((int) $w, self::LOOK_U_WEIGHTS, true) ? (int) $w : self::LOOK['u_weight'];
 
         foreach (self::LOOK_RANGES as $key => [$min, $max]) {
             $v = $saved[$key] ?? null;
@@ -553,6 +578,9 @@ final class FreeGifts
             'sub' => $ar ? $h['sub_ar'] : $h['sub_en'],
             'btn' => $ar ? $h['btn_ar'] : $h['btn_en'],
             'note' => $ar ? $h['note_ar'] : $h['note_en'],
+            // (Lane GU2) The urgency line in the note's place, or null for the note.
+            'urgency' => $h['urgency'] ? $this->urgencyWords() : null,
+            'look' => self::lookOf($cfg['look'] ?? null),
             'url' => \App\Support\HomeSections::url((string) $h['url'], \App\Support\Url::to(self::HOME['url'])),
             'rows' => $rows,
             'ar' => $ar,
@@ -1404,6 +1432,12 @@ final class FreeGifts
             return null;
         }
 
+        return $this->urgencyWords();
+    }
+
+    /** urgency() without the box's switch: the homepage has its own (HOME['urgency']). */
+    public function urgencyWords(): ?array
+    {
         $text = trim(mb_substr($this->text('urgency'), 0, self::URGENCY_MAX));
         if ($text === '') {
             return null;

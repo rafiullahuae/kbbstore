@@ -315,3 +315,179 @@ it('costs the cart page and the checkout no query', function () {
         expect($count(true, $path))->toBe($count(false, $path), $path);
     }
 });
+
+/*
+|------------------------------------------------------------------------------
+| LANE GU2 -- THE HOMEPAGE LINE AND THE LINE'S LOOK
+|------------------------------------------------------------------------------
+| The owner, 26 October: "the gift grab yours line should also come on homepage
+| and replace the line new gifts added daily. give option to switch on off. by
+| default just keep on the Grab yours line, the same line which we have on cart
+| panel gift box. and allow us to control the line font size etc, same effect i
+| need continues."
+*/
+
+/** The homepage section on, a range a shopper can reach; $home merged into the saved home settings. */
+function guHome(array $home = [], array $extra = []): void
+{
+    $mask = guProduct('Home Gel Mask', ['manage_stock' => true, 'stock' => 50, 'gift_kind' => 'mask']);
+    $id = DB::table('free_gift_ranges')->insertGetId(['min_fils' => 19400, 'max_fils' => null, 'label_en' => 'Own words', 'label_ar' => 'كلمات', 'sort' => 0, 'enabled' => true, 'need_mask' => 1, 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('free_gift_range_items')->insert(['range_id' => $id, 'product_id' => $mask->id, 'quantity' => 1, 'kind' => 'mask', 'role' => 'primary', 'sort' => 0]);
+    guOn(['home' => array_merge(['on' => true], $home)] + $extra);
+    app(FreeGifts::class)->compile();
+}
+
+/** The free gifts section of a homepage. */
+function guSection(string $html): string
+{
+    preg_match('#<section class="sec fgh.*?</section>#s', $html, $m);
+
+    return $m[0] ?? '';
+}
+
+it('puts the "Gifts go fast" line on the homepage in place of "New gifts added daily", sweeping, in English and Arabic', function () {
+    /*
+     * The defect: the homepage still saying "New gifts added daily", both lines
+     * at once, or a line with no sweep / the wrong direction on /ar/.
+     * MUTATION: drop 'urgency' from FreeGifts::home()'s payload, or the
+     * @if ($fghU !== null) branch in partials/home/free-gifts. RED.
+     */
+    guHome();
+    $sec = guSection(test()->get('/')->assertOk()->getContent());
+
+    expect($sec)->toContain('<p class="fgh-u">🔥 <span class="fgh-us">Gifts go fast! Grab yours now</span></p>')
+        ->not->toContain('class="fgh-note"')->not->toContain('New gifts added daily')
+        ->toContain('.fgh .fgh-u{margin:0;text-align:center;font-size:11px;font-weight:800;line-height:1.45;color:#9a9298}')
+        ->toContain('linear-gradient(90deg,#9a9298 0,#9a9298 47%,#ff7a18 48.5%,#e23b7b 50%,#ff3d5a 51.5%,#9a9298 53%,#9a9298 100%);background-size:300% 100%')
+        ->toContain('animation:fgh-sw 2.6s linear infinite}[dir=rtl] .fgh-us{animation-direction:reverse}}')
+        ->toContain('@keyframes fgh-sw{from{background-position:100% 0}to{background-position:0 0}}')
+        ->toContain('@media (prefers-reduced-motion:reduce){.fgh-us{animation:none;background-image:none;color:#9a9298;-webkit-text-fill-color:#9a9298}}')
+        ->toContain('@media (max-width:760px){.fgh .fgh-u{font-size:11px}}');
+    // Exactly once: the line sits where the note sat, after the card.
+    expect(substr_count($sec, 'class="fgh-u"'))->toBe(1)
+        ->and(strpos($sec, 'class="fgh-u"'))->toBeGreaterThan(strpos($sec, '<div class="fgh-card">'));
+
+    guSet('language_ar_enabled', '1');
+    guSet(Locale::SETTING_RTL, '1');
+    $ar = guSection(test()->get('/ar/')->assertOk()->getContent());
+    expect($ar)->toContain('<p class="fgh-u">🔥 <span class="fgh-us">الهدايا تنفد بسرعة! احصلي على هديتك الآن</span></p>')
+        ->not->toContain('هدايا جديدة تُضاف يومياً');
+});
+
+it('switched off, gives the homepage back "New gifts added daily" byte for byte', function () {
+    /*
+     * "give option to switch on off". The defect: off leaving the sweep's CSS
+     * behind, or drawing the old line in any way it was not drawn before.
+     * The reference is the section rendered from a payload of the shape it had
+     * before this lane (no 'urgency', no 'look' key at all).
+     * MUTATION: in home() ignore $h['urgency']. RED.
+     */
+    guHome(['urgency' => false]);
+    $sec = guSection(test()->get('/')->assertOk()->getContent());
+    expect($sec)->toMatch('#<p class="fgh-note"><svg[^>]*>.*?</svg><span>New gifts added daily</span></p>#s')
+        ->not->toContain('fgh-u')->not->toContain('fgh-sw');
+
+    app()->instance('request', \Illuminate\Http\Request::create('/'));
+    $payload = app(FreeGifts::class)->home(request());
+    expect($payload['urgency'])->toBeNull();
+    $now = view('partials.home.free-gifts', ['fgh' => $payload])->render();
+    unset($payload['urgency'], $payload['look']);
+    expect($now)->toBe(view('partials.home.free-gifts', ['fgh' => $payload])->render());
+});
+
+it('sizes, weights and speeds the line from Gift box look, on the box and the homepage; the defaults move nothing', function () {
+    /*
+     * The defect: a size that only reaches one of the two lines, a phone size
+     * the phone never sees, or the box line moving although nobody touched a
+     * control (its CSS must stay byte-identical at 11 / 11 / 800 / 2.6 s).
+     * MUTATION: print a fixed 11px in box.blade.php, or drop the 760px block
+     * from either partial. RED.
+     */
+    $cart = guBasket();
+    guOn();
+    $drawer = (string) guShopper($cart)->getJson('/api/cart/drawer')->json('html');
+    expect($drawer)->toContain('fieldset.fgb-hu{position:relative;margin-bottom:30px}fieldset.fgb-page.fgb-hu{margin-bottom:40px}.fgb-u{position:absolute;left:0;right:0;bottom:-27.5px;margin:0;padding:0 4px;text-align:center;font-size:11px;font-weight:800;line-height:16px;white-space:nowrap')
+        ->toContain('animation:fgb-sw 2.6s linear infinite')
+        ->toContain('-webkit-text-fill-color:#9a9298}}</style>')
+        ->not->toContain('@media (max-width:760px){fieldset.fgb-hu');
+
+    $look = ['u_px' => 14, 'u_px_m' => 12, 'u_weight' => 700, 'u_speed' => 40];
+    guOn(['look' => $look]);
+    $drawer = (string) guShopper($cart)->getJson('/api/cart/drawer')->json('html');
+    expect($drawer)->toContain('fieldset.fgb-hu{position:relative;margin-bottom:33px}fieldset.fgb-page.fgb-hu{margin-bottom:43px}.fgb-u{position:absolute;left:0;right:0;bottom:-30.5px;margin:0;padding:0 4px;text-align:center;font-size:14px;font-weight:700;line-height:19px;')
+        ->toContain('animation:fgb-sw 4s linear infinite')
+        ->toContain('@media (max-width:760px){fieldset.fgb-hu{margin-bottom:31px}fieldset.fgb-page.fgb-hu{margin-bottom:41px}.fgb-u{bottom:-28.5px;font-size:12px;line-height:17px}}');
+
+    DB::table('free_gift_ranges')->delete();
+    guHome([], ['look' => $look]);
+    $sec = guSection(test()->get('/')->assertOk()->getContent());
+    expect($sec)->toContain('.fgh .fgh-u{margin:0;text-align:center;font-size:14px;font-weight:700;')
+        ->toContain('animation:fgh-sw 4s linear infinite')
+        ->toContain('@media (max-width:760px){.fgh .fgh-u{font-size:12px}}');
+
+    // Out of range is clamped; not one of the weights is the default.
+    $bad = FreeGifts::lookOf(['u_px' => 99, 'u_px_m' => 2, 'u_weight' => '650', 'u_speed' => '0.5']);
+    expect([$bad['u_px'], $bad['u_px_m'], $bad['u_weight'], $bad['u_speed']])->toBe([24, 9, 800, 10])
+        ->and(FreeGifts::lookOf(['u_weight' => '900'])['u_weight'])->toBe(900)
+        ->and(FreeGifts::lookOf(['u_weight' => ['x']])['u_weight'])->toBe(800);
+});
+
+it('saves the homepage switch and the line\'s look from the admin, and keeps both when an older console sends neither', function () {
+    /*
+     * MUTATION: in FreeGiftsController::settings() drop the 'urgency' branch
+     * (the string branch saves trim((string) false) = ''), or store look
+     * unnormalised. RED.
+     */
+    $owner = AdminUser::create(['name' => 'GU2', 'email' => 'gu2-' . uniqid() . '@example.test', 'password' => 'password-long-enough', 'role' => 'owner']);
+    $c = app(FreeGifts::class)->freshConfig();
+    expect($c['home']['urgency'])->toBeTrue();
+    $body = ['show_value' => false, 'countries' => 'all', 'basis' => 'after_discounts', 'texts' => $c['texts']];
+
+    $home = $c['home'];
+    $home['urgency'] = false;
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/settings', $body + ['home' => $home, 'look' => ['u_px' => 30, 'u_px_m' => '13', 'u_weight' => 600, 'u_speed' => 35]])->assertOk();
+    $saved = app(SettingsService::class)->get(FreeGifts::KEY);
+    expect($saved['home']['urgency'])->toBeFalse()
+        ->and([$saved['look']['u_px'], $saved['look']['u_px_m'], $saved['look']['u_weight'], $saved['look']['u_speed']])->toBe([24, 13, 600, 35]);
+
+    // An older console: no home.urgency, no look -- both kept.
+    $old = $c['home'];
+    unset($old['urgency']);
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/settings', $body + ['home' => $old])->assertOk();
+    $saved = app(SettingsService::class)->get(FreeGifts::KEY);
+    expect($saved['home']['urgency'])->toBeFalse()->and($saved['look']['u_weight'])->toBe(600);
+
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/settings', $body + ['home' => ['urgency' => 'yes'] + $c['home']])->assertStatus(422);
+
+    $screen = (string) file_get_contents(resource_path('views/admin/partials/free-gifts-screen.blade.php'));
+    expect($screen)->toContain('Line under the gifts: “🔥 Gifts go fast! Grab yours now”')
+        ->toContain("num('u_px', 'Urgency line size, computer'")
+        ->toContain("num('u_px_m', 'Urgency line size, phone'")
+        ->toContain("field('Urgency line weight'")
+        ->toContain("'data-fk': 'lk-u_speed'")
+        ->toContain('  var LOOK_U_WEIGHTS = ' . json_encode(FreeGifts::LOOK_U_WEIGHTS) . ';');
+});
+
+it('costs the homepage no query', function () {
+    /*
+     * The line's words and look are in the free_gifts row home() already read.
+     * MUTATION: read them with a Setting::query() in home(). RED.
+     */
+    guHome();
+    $count = function (bool $on): int {
+        $s = app(SettingsService::class)->get(FreeGifts::KEY);
+        $s['home']['urgency'] = $on;
+        guSet(FreeGifts::KEY, $s);
+        test()->get('/')->assertOk();
+        guSet(FreeGifts::KEY, $s);
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $html = test()->get('/')->assertOk()->getContent();
+        $n = count(DB::getQueryLog());
+        DB::disableQueryLog();
+        expect(str_contains($html, 'class="fgh-u"'))->toBe($on);
+
+        return $n;
+    };
+    expect($count(true))->toBe($count(false));
+});

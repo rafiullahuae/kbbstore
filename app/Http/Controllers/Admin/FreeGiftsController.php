@@ -149,6 +149,8 @@ class FreeGiftsController extends Controller
             'texts' => ['required', 'array'],
             'home' => ['required', 'array'],
             'home.on' => ['required', 'boolean'],
+            // (Lane GU2) Optional: an older console keeps what is saved.
+            'home.urgency' => ['sometimes', 'boolean'],
             'home.title_en' => ['required', 'string', 'max:160'], 'home.title_ar' => ['required', 'string', 'max:160'],
             'home.sub_en' => ['nullable', 'string', 'max:160'], 'home.sub_ar' => ['nullable', 'string', 'max:160'],
             'home.btn_en' => ['required', 'string', 'max:60'], 'home.btn_ar' => ['required', 'string', 'max:60'],
@@ -188,6 +190,10 @@ class FreeGiftsController extends Controller
         $bgKeys = ['bg', 'c1', 'c2', 'c3', 'strength', 'width'];
         foreach (array_keys(FreeGifts::HOME) as $key) {
             if (in_array($key, $bgKeys, true)) {
+                continue;
+            }
+            if ($key === 'urgency') {
+                $config['home']['urgency'] = (bool) ($data['home']['urgency'] ?? $config['home']['urgency']);
                 continue;
             }
             $config['home'][$key] = $key === 'on' ? (bool) $data['home']['on'] : trim((string) ($data['home'][$key] ?? ''));
