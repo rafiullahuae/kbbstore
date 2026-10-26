@@ -23,12 +23,12 @@ use Tests\Support\CatalogProductsAdminRoutes;
  * trash() call forceDelete and the restore case is red; remove can_delete from
  * the list and the screen case is.
  */
-function ptProduct(string $name): Product
+function ptrProduct(string $name): Product
 {
     return Product::create(['slug' => Str::slug($name) . '-' . Str::random(5), 'name' => $name, 'status' => 'publish', 'is_visible' => true, 'price' => 9900, 'stock_status' => 'instock']);
 }
 
-function ptAdmin(string $role): AdminUser
+function ptrAdmin(string $role): AdminUser
 {
     return AdminUser::create(['name' => 'PT ' . $role, 'email' => 'pt-' . $role . '-' . uniqid() . '@example.test', 'password' => 'secret-secret', 'role' => $role]);
 }
@@ -36,9 +36,9 @@ function ptAdmin(string $role): AdminUser
 beforeEach(fn () => CatalogProductsAdminRoutes::wire(app()));
 
 it('moves a product to the trash, off the shop, and restores it exactly as it was', function () {
-    $p = ptProduct('Trash Me Serum');
-    $keep = ptProduct('Keep Me Cream');
-    $this->actingAs(ptAdmin('owner'), 'admin');
+    $p = ptrProduct('Trash Me Serum');
+    $keep = ptrProduct('Keep Me Cream');
+    $this->actingAs(ptrAdmin('owner'), 'admin');
 
     $this->postJson('/admin-api/catalog-products-trash', ['ids' => [$p->id]])->assertOk()->assertJson(['changed' => 1]);
 
@@ -55,12 +55,12 @@ it('moves a product to the trash, off the shop, and restores it exactly as it wa
 });
 
 it('is the owner\'s alone by default, and a role can be given it', function () {
-    $p = ptProduct('Guarded Toner');
+    $p = ptrProduct('Guarded Toner');
 
     expect(AdminCapabilities::CAPABILITIES['catalog.delete'])->toBe(['owner']);
 
     foreach (['manager', 'editor', 'support'] as $role) {
-        $this->actingAs(ptAdmin($role), 'admin');
+        $this->actingAs(ptrAdmin($role), 'admin');
         $this->postJson('/admin-api/catalog-products-trash', ['ids' => [$p->id]])->assertForbidden();
         $this->postJson('/admin-api/catalog-products-restore', ['ids' => [$p->id]])->assertForbidden();
         expect($this->getJson('/admin-api/catalog-products-list')->json('can_delete'))->toBe($role === 'manager' || $role === 'editor' ? false : null);
@@ -72,7 +72,7 @@ it('is the owner\'s alone by default, and a role can be given it', function () {
 });
 
 it('draws a red Delete that asks Yes / No first, Restore in the trash, and a Trash button', function () {
-    $this->actingAs(ptAdmin('owner'), 'admin');
+    $this->actingAs(ptrAdmin('owner'), 'admin');
     expect($this->getJson('/admin-api/catalog-products-list')->json('can_delete'))->toBeTrue();
 
     $js = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
