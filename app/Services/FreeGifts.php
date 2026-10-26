@@ -606,37 +606,58 @@ final class FreeGifts
      */
     public function bannerLines(?\Illuminate\Http\Request $request, string $band = 'all'): array
     {
+        return $this->bannerChoices($request, [$band])[$band] ?? [];
+    }
+
+    /**
+     * bannerLines() for several bands at once -- what the banner's editor
+     * shows as he switches "Which gifts", with no request per choice. Still
+     * ONE product query for every range together, and none at all when gifts
+     * are off for this visitor or no range is running.
+     *
+     * @param  list<string>  $bands
+     * @return array<string, list<array>>
+     */
+    public function bannerChoices(?\Illuminate\Http\Request $request, array $bands): array
+    {
+        $out = array_fill_keys($bands, []);
+
         if (! $this->visibleTo($request)) {
-            return [];
+            return $out;
         }
 
         $today = StoreTime::today()->format('Y-m-d');
-        $ranges = array_values(array_filter($this->ranges(), static fn (array $r) => $r['gifts'] !== []
+        $running = array_values(array_filter($this->ranges(), static fn (array $r) => $r['gifts'] !== []
             && (($r['starts'] ?? null) === null || $today >= $r['starts'])
             && (($r['ends'] ?? null) === null || $today <= $r['ends'])));
 
-        if (str_starts_with($band, 'range:')) {
-            $id = (int) substr($band, 6);
-            $ranges = array_values(array_filter($ranges, static fn (array $r) => (int) $r['id'] === $id));
-        } elseif ($band === 'first' || $band === 'last') {
-            // ranges() is lowest first.
-            $ranges = $ranges === [] ? [] : [$band === 'first' ? $ranges[0] : $ranges[count($ranges) - 1]];
+        if ($running === []) {
+            return $out;
         }
 
-        if ($ranges === []) {
-            return [];
-        }
+        $products = $this->products(array_merge(...array_map(static fn (array $r) => array_map(static fn (array $g) => (int) $g[0], $r['gifts']), $running)));
 
-        $products = $this->products(array_merge(...array_map(static fn (array $r) => array_map(static fn (array $g) => (int) $g[0], $r['gifts']), $ranges)));
-        $lines = [];
-
-        foreach ($ranges as $r) {
-            foreach ($this->linesFor($r, $products) as $line) {
-                $lines[$line['product_id']] ??= $line;
+        foreach ($bands as $band) {
+            if (str_starts_with($band, 'range:')) {
+                $id = (int) substr($band, 6);
+                $ranges = array_values(array_filter($running, static fn (array $r) => (int) $r['id'] === $id));
+            } elseif ($band === 'first' || $band === 'last') {
+                // ranges() is lowest first.
+                $ranges = [$band === 'first' ? $running[0] : $running[count($running) - 1]];
+            } else {
+                $ranges = $running;
             }
+
+            $lines = [];
+            foreach ($ranges as $r) {
+                foreach ($this->linesFor($r, $products) as $line) {
+                    $lines[$line['product_id']] ??= $line;
+                }
+            }
+            $out[$band] = self::fullFirst(array_values($lines));
         }
 
-        return self::fullFirst(array_values($lines));
+        return $out;
     }
 
     /** One text in the language being drawn (the order's, inside OrderLocale::render()). */

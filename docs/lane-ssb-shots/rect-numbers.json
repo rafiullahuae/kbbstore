@@ -1,0 +1,419 @@
+{
+ "en-390": {
+  "banner": {
+   "x": 0,
+   "y": 157,
+   "w": 390,
+   "h": 256
+  },
+  "headerPicture": null,
+  "hero": {
+   "x": 0,
+   "y": 157,
+   "w": 390,
+   "h": 172
+  },
+  "gifts": {
+   "x": 0,
+   "y": 329,
+   "w": 390,
+   "h": 84
+  },
+  "model": {
+   "x": 244,
+   "y": 173,
+   "w": 129,
+   "h": 155
+  },
+  "giftIcon": {
+   "x": 18,
+   "y": 357,
+   "w": 27,
+   "h": 27
+  },
+  "thumb": {
+   "x": 182,
+   "y": 351,
+   "w": 41,
+   "h": 41
+  },
+  "thumbsShown": 4,
+  "titleFont": "31.2px",
+  "titleOneLine": true,
+  "titleOverflows": false,
+  "trustStrip": {
+   "x": 0,
+   "y": 461,
+   "w": 390,
+   "h": 81
+  },
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "linksInView": 9,
+  "linksBlocked": [
+   " /product/medicube-age-r-booster-pro/",
+   "Medicube - AGE-R Booster Pro /product/medicube-age-r-booster-pro/"
+  ],
+  "scripts": 12,
+  "stylesheets": 2,
+  "htmlBytes": 123174,
+  "cls": 0,
+  "lcp": "IMG.kbb-card-img 464ms",
+  "overflow": [
+   ".ssb-hero 172/172",
+   ".ssb-copy 132/132",
+   ".ssb-in 256/256"
+  ],
+  "payShown": true,
+  "modelImg": {
+   "current": "/uploads/appearance/kbb-super-sale-model-mobile.webp",
+   "box": {
+    "x": 244,
+    "y": 173,
+    "w": 129,
+    "h": 155
+   }
+  },
+  "editorTrace": false,
+  "status": 200,
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "imageRequests": [
+   "/uploads/appearance/kbb-super-sale-model-mobile.webp",
+   "/uploads/ss/15-b-serum.webp",
+   "/uploads/ss/0-b-aqua.webp",
+   "/uploads/ss/2-b-serum.webp",
+   "/uploads/ss/1-b-cream.webp",
+   "/uploads/ss/3-b-wrap.webp",
+   "/uploads/ss/12-senka.webp",
+   "/uploads/ss/8-isntree.webp",
+   "/uploads/gifts/senka.webp",
+   "/uploads/gifts/glowset.webp",
+   "/uploads/gifts/haruharu.webp",
+   "/uploads/gifts/isntree.webp",
+   "/uploads/ss/6-glowset.webp",
+   "/uploads/ss/7-haruharu.webp",
+   "/uploads/ss/11-patch.webp",
+   "/uploads/ss/9-mask.webp",
+   "/uploads/ss/4-cream.webp",
+   "/uploads/ss/5-deo.webp",
+   "/uploads/ss/13-b-aqua.webp"
+  ],
+  "modelRequests": [
+   "/uploads/appearance/kbb-super-sale-model-mobile.webp"
+  ]
+ },
+ "en-1280": {
+  "banner": {
+   "x": 38,
+   "y": 124,
+   "w": 1205,
+   "h": 280
+  },
+  "headerPicture": null,
+  "hero": {
+   "x": 38,
+   "y": 124,
+   "w": 1205,
+   "h": 165
+  },
+  "gifts": {
+   "x": 38,
+   "y": 289,
+   "w": 1205,
+   "h": 115
+  },
+  "model": {
+   "x": 862,
+   "y": 138,
+   "w": 340,
+   "h": 139
+  },
+  "giftIcon": {
+   "x": 78,
+   "y": 322,
+   "w": 50,
+   "h": 50
+  },
+  "thumb": {
+   "x": 834,
+   "y": 316,
+   "w": 62,
+   "h": 62
+  },
+  "thumbsShown": 5,
+  "titleFont": "56px",
+  "titleOneLine": true,
+  "titleOverflows": false,
+  "trustStrip": {
+   "x": 0,
+   "y": 486,
+   "w": 1280,
+   "h": 64
+  },
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "linksInView": 29,
+  "linksBlocked": [
+   " /product/medicube-collagen-booster-set-pink-edition/"
+  ],
+  "scripts": 12,
+  "stylesheets": 2,
+  "htmlBytes": 128065,
+  "cls": 0,
+  "lcp": "IMG. 556ms",
+  "overflow": [
+   ".ssb-hero 165/165",
+   ".ssb-copy 159/159",
+   ".ssb-in 280/280"
+  ],
+  "payShown": false,
+  "modelImg": {
+   "current": "/img-cache/400/uploads/appearance/ssb-rect-preview.webp",
+   "box": {
+    "x": 862,
+    "y": 138,
+    "w": 340,
+    "h": 139
+   }
+  },
+  "editorTrace": false,
+  "status": 200,
+  "consoleErrors": [],
+  "imageRequests": [
+   "/img-cache/400/uploads/appearance/ssb-rect-preview.webp",
+   "/uploads/ss/15-b-serum.webp",
+   "/uploads/ss/0-b-aqua.webp",
+   "/uploads/ss/2-b-serum.webp",
+   "/uploads/ss/1-b-cream.webp",
+   "/uploads/ss/3-b-wrap.webp",
+   "/uploads/ss/12-senka.webp",
+   "/uploads/ss/8-isntree.webp",
+   "/uploads/gifts/senka.webp",
+   "/uploads/gifts/glowset.webp",
+   "/uploads/gifts/haruharu.webp",
+   "/uploads/gifts/isntree.webp",
+   "/uploads/gifts/mask.webp",
+   "/uploads/ss/6-glowset.webp",
+   "/uploads/ss/7-haruharu.webp",
+   "/uploads/ss/11-patch.webp",
+   "/uploads/ss/10-mist.webp",
+   "/uploads/ss/14-b-cream.webp",
+   "/uploads/ss/9-mask.webp",
+   "/uploads/ss/4-cream.webp",
+   "/uploads/ss/5-deo.webp",
+   "/uploads/ss/13-b-aqua.webp"
+  ],
+  "modelRequests": [
+   "/img-cache/400/uploads/appearance/ssb-rect-preview.webp"
+  ]
+ },
+ "ar-390": {
+  "banner": {
+   "x": 0,
+   "y": 167,
+   "w": 390,
+   "h": 256
+  },
+  "headerPicture": null,
+  "hero": {
+   "x": 0,
+   "y": 167,
+   "w": 390,
+   "h": 172
+  },
+  "gifts": {
+   "x": 0,
+   "y": 338,
+   "w": 390,
+   "h": 84
+  },
+  "model": {
+   "x": 18,
+   "y": 183,
+   "w": 129,
+   "h": 155
+  },
+  "giftIcon": {
+   "x": 345,
+   "y": 367,
+   "w": 27,
+   "h": 27
+  },
+  "thumb": {
+   "x": 163,
+   "y": 360,
+   "w": 41,
+   "h": 41
+  },
+  "thumbsShown": 4,
+  "titleFont": "31.2px",
+  "titleOneLine": true,
+  "titleOverflows": false,
+  "trustStrip": {
+   "x": 0,
+   "y": 471,
+   "w": 390,
+   "h": 81
+  },
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "linksInView": 9,
+  "linksBlocked": [
+   " /ar/product/medicube-age-r-booster-pro/"
+  ],
+  "scripts": 13,
+  "stylesheets": 2,
+  "htmlBytes": 133202,
+  "cls": 0,
+  "lcp": "IMG.kbb-card-img 476ms",
+  "overflow": [
+   ".ssb-hero 172/172",
+   ".ssb-copy 130/130",
+   ".ssb-in 256/256"
+  ],
+  "payShown": true,
+  "modelImg": {
+   "current": "/uploads/appearance/kbb-super-sale-model-mobile.webp",
+   "box": {
+    "x": 18,
+    "y": 183,
+    "w": 129,
+    "h": 155
+   }
+  },
+  "editorTrace": false,
+  "status": 200,
+  "consoleErrors": [],
+  "imageRequests": [
+   "/uploads/appearance/kbb-super-sale-model-mobile.webp",
+   "/uploads/ss/15-b-serum.webp",
+   "/uploads/ss/0-b-aqua.webp",
+   "/uploads/ss/2-b-serum.webp",
+   "/uploads/ss/1-b-cream.webp",
+   "/uploads/ss/3-b-wrap.webp",
+   "/uploads/ss/12-senka.webp",
+   "/uploads/ss/8-isntree.webp",
+   "/uploads/gifts/senka.webp",
+   "/uploads/gifts/glowset.webp",
+   "/uploads/gifts/haruharu.webp",
+   "/uploads/gifts/isntree.webp",
+   "/uploads/ss/6-glowset.webp",
+   "/uploads/ss/7-haruharu.webp",
+   "/uploads/ss/11-patch.webp",
+   "/uploads/ss/9-mask.webp",
+   "/uploads/ss/4-cream.webp",
+   "/uploads/ss/5-deo.webp",
+   "/uploads/ss/13-b-aqua.webp"
+  ],
+  "modelRequests": [
+   "/uploads/appearance/kbb-super-sale-model-mobile.webp"
+  ]
+ },
+ "ar-1280": {
+  "banner": {
+   "x": 38,
+   "y": 124,
+   "w": 1205,
+   "h": 280
+  },
+  "headerPicture": null,
+  "hero": {
+   "x": 38,
+   "y": 124,
+   "w": 1205,
+   "h": 165
+  },
+  "gifts": {
+   "x": 38,
+   "y": 289,
+   "w": 1205,
+   "h": 115
+  },
+  "model": {
+   "x": 78,
+   "y": 138,
+   "w": 340,
+   "h": 139
+  },
+  "giftIcon": {
+   "x": 1152,
+   "y": 322,
+   "w": 50,
+   "h": 50
+  },
+  "thumb": {
+   "x": 377,
+   "y": 316,
+   "w": 62,
+   "h": 62
+  },
+  "thumbsShown": 5,
+  "titleFont": "52px",
+  "titleOneLine": true,
+  "titleOverflows": false,
+  "trustStrip": {
+   "x": 0,
+   "y": 486,
+   "w": 1280,
+   "h": 64
+  },
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "linksInView": 29,
+  "linksBlocked": [
+   " /ar/product/medicube-collagen-booster-set-pink-edition/"
+  ],
+  "scripts": 13,
+  "stylesheets": 2,
+  "htmlBytes": 138093,
+  "cls": 0,
+  "lcp": "IMG. 428ms",
+  "overflow": [
+   ".ssb-hero 165/165",
+   ".ssb-copy 159/156",
+   ".ssb-in 280/280"
+  ],
+  "payShown": false,
+  "modelImg": {
+   "current": "/img-cache/400/uploads/appearance/ssb-rect-preview.webp",
+   "box": {
+    "x": 78,
+    "y": 138,
+    "w": 340,
+    "h": 139
+   }
+  },
+  "editorTrace": false,
+  "status": 200,
+  "consoleErrors": [],
+  "imageRequests": [
+   "/img-cache/400/uploads/appearance/ssb-rect-preview.webp",
+   "/uploads/ss/15-b-serum.webp",
+   "/uploads/ss/0-b-aqua.webp",
+   "/uploads/ss/2-b-serum.webp",
+   "/uploads/ss/1-b-cream.webp",
+   "/uploads/ss/3-b-wrap.webp",
+   "/uploads/ss/12-senka.webp",
+   "/uploads/ss/8-isntree.webp",
+   "/uploads/gifts/senka.webp",
+   "/uploads/gifts/glowset.webp",
+   "/uploads/gifts/haruharu.webp",
+   "/uploads/gifts/isntree.webp",
+   "/uploads/gifts/mask.webp",
+   "/uploads/ss/6-glowset.webp",
+   "/uploads/ss/7-haruharu.webp",
+   "/uploads/ss/11-patch.webp",
+   "/uploads/ss/10-mist.webp",
+   "/uploads/ss/14-b-cream.webp",
+   "/uploads/ss/9-mask.webp",
+   "/uploads/ss/4-cream.webp",
+   "/uploads/ss/5-deo.webp",
+   "/uploads/ss/13-b-aqua.webp"
+  ],
+  "modelRequests": [
+   "/img-cache/400/uploads/appearance/ssb-rect-preview.webp"
+  ]
+ }
+}

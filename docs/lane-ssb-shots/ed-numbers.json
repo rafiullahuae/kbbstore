@@ -1,0 +1,80 @@
+{
+ "guest-390": {
+  "pill": 0,
+  "adminRequests": []
+ },
+ "guest-1280": {
+  "pill": 0,
+  "adminRequests": []
+ },
+ "admin-1280": {
+  "pillBox": {
+   "x": 47.59375,
+   "y": 165.5,
+   "width": 112.953125,
+   "height": 30
+  },
+  "requestsWhileEditing": [],
+  "liveTitle": {
+   "text": "MEGA SALE",
+   "color": "rgb(155, 28, 90)",
+   "size": "51.508px"
+  },
+  "otherDevice": {
+   "cls": "kbb-ssb ssb-fm",
+   "w": 390,
+   "h": 256
+  },
+  "arabic": {
+   "dir": "rtl",
+   "title": "تخفيضات كبرى",
+   "chip": "Same as English"
+  },
+  "requestsWhileToggling": [],
+  "saveMessage": "Saved. It is on the shop now.",
+  "afterReload": {
+   "text": "MEGA SALE",
+   "color": "rgb(155, 28, 90)",
+   "size": "64px",
+   "style": "--ssb-title-sd:6.4;--ssb-title-cd:#9B1C5A"
+  },
+  "draft": {
+   "dialogs": 0,
+   "message": "Your unsaved changes are back. Save them, or Discard."
+  },
+  "restored": 200,
+  "console": {
+   "stage": "kbb-ssb ssb-fm",
+   "dir": "rtl"
+  },
+  "errors": [],
+  "scrollWidth": 1280
+ },
+ "admin-390": {
+  "pillBox": {
+   "x": 10,
+   "y": 199,
+   "width": 112.953125,
+   "height": 30
+  },
+  "requestsWhileEditing": [],
+  "liveTitle": {
+   "text": "MEGA SALE",
+   "color": "rgb(155, 28, 90)",
+   "size": "36.0001px"
+  },
+  "otherDevice": {
+   "cls": "kbb-ssb ssb-fd",
+   "w": 390,
+   "h": 110
+  },
+  "arabic": {
+   "dir": "rtl",
+   "title": "تخفيضات كبرى",
+   "chip": "Same as English"
+  },
+  "requestsWhileToggling": [],
+  "errors": [],
+  "scrollWidth": 390
+ }
+}

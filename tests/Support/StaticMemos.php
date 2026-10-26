@@ -295,6 +295,9 @@ final class StaticMemos
         \App\Services\GridSections::class => 'trendingMemo (Lane SBC) is set at the top of idsForMany() and put back to '
             .'null in its finally, so it is null again however the call ends, exception included: a value scoped '
             .'to one call, like Shortcodes\' stack, not a memo that can cross a test.',
+        \App\Support\SuperSaleBanner::class => 'css (Lane SSB) is the banner\'s stylesheet, built from the class\'s '
+            .'constants only (BASE, PHONE, DESK, SHAPE_RULES, ELEMENTS) -- no database, no settings, no request -- so it '
+            .'holds the same bytes in every test; a cache of a constant, not state.',
         \App\Support\AdminSearchIndex::class => 'built is derived from class constants only (CURATED and '
             .'the SCHEMA/TABS of the SCHEMA_SCREENS classes) -- no database, no settings, no request -- so '
             .'no test can make it differ from what a fresh process would build.',

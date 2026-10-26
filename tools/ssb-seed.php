@@ -67,6 +67,10 @@ foreach (DB::table('products')->whereNotNull('image')->pluck('image') as $img) {
     \App\Support\ImageVariants::generate((string) $img);
 }
 
+// The live shop runs coupon GLOW (it is printed on the banner picture the page
+// shows today); without it the banner's coupon line is refused on save.
+\App\Models\Coupon::query()->firstOrCreate(['code' => 'GLOW'], ['type' => 'percent', 'amount' => 10]);
+
 $on = getenv('SSB_ON') !== '0';
 app(\App\Services\SettingsService::class)->set(\App\Support\SuperSaleBanner::KEY, ['on' => $on] + \App\Support\SuperSaleBanner::defaults());
 \Illuminate\Support\Facades\Cache::flush();

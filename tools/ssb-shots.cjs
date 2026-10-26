@@ -55,11 +55,17 @@ fs.mkdirSync(out, { recursive: true });
           scripts: document.scripts.length, stylesheets: document.querySelectorAll('link[rel=stylesheet]').length,
           htmlBytes: document.documentElement.outerHTML.length,
           cls: Math.round(window.__cls * 10000) / 10000, lcp: window.__lcp,
+          // No clipping: the hero and the copy hold all of their content.
+          overflow: ['.ssb-hero', '.ssb-copy', '.ssb-in'].map((s) => { const el = document.querySelector(s); return el ? `${s} ${el.scrollHeight}/${el.clientHeight}` : null; }),
+          payShown: (() => { const el = document.querySelector('.ssb-paytxt'); return el ? getComputedStyle(el).display !== 'none' : null; })(),
+          modelImg: (() => { const el = document.querySelector('.ssb-model img'); return el ? { current: el.currentSrc.replace(location.origin, ''), box: r(el) } : null; })(),
+          editorTrace: /ssb-ed|Edit banner|super-sale-banner-editor/.test(document.documentElement.outerHTML),
         };
       });
       m.status = res.status();
       m.consoleErrors = errors;
       m.imageRequests = requests.filter((u) => /\.(webp|png|jpe?g|svg)(\?|$)/.test(u));
+      m.modelRequests = m.imageRequests.filter((u) => /appearance\//.test(u));
       numbers[`${lang}-${width}`] = m;
       await page.screenshot({ path: path.join(out, `${label}-${lang}-${width}.png`), clip: { x: 0, y: 0, width, height: width === 390 ? 760 : 820 } });
       await ctx.close();

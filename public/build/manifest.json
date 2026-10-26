@@ -240,6 +240,10 @@
     "file": "assets/admin-6c0aad2fd01b-dDu9yvxr.js",
     "src": "admin-console/6c0aad2fd01b17c2e7b103ed36ffceeedb8a08d7.js"
   },
+  "admin-console/6c46ac64387b87afa37ec6a32d60f72affce5f52.js": {
+    "file": "assets/admin-6c46ac64387b-C-Y6toLa.js",
+    "src": "admin-console/6c46ac64387b87afa37ec6a32d60f72affce5f52.js"
+  },
   "admin-console/6fcf6e3f711ed984942d4bc6249ccffee4512c3e.js": {
     "file": "assets/admin-6fcf6e3f711e-jIETD3JE.js",
     "src": "admin-console/6fcf6e3f711ed984942d4bc6249ccffee4512c3e.js"
@@ -375,10 +379,6 @@
   "admin-console/a9a1468964f97cda0943f59e052594f3b89a2aaf.css": {
     "file": "assets/admin-a9a1468964f9-CScI8B62.css",
     "src": "admin-console/a9a1468964f97cda0943f59e052594f3b89a2aaf.css"
-  },
-  "admin-console/acda05a0c4035565e04da95fbae0d370a6496e8c.js": {
-    "file": "assets/admin-acda05a0c403-C5uuwqxM.js",
-    "src": "admin-console/acda05a0c4035565e04da95fbae0d370a6496e8c.js"
   },
   "admin-console/add0831bb8a6044b4a32329aae466c0424471054.js": {
     "file": "assets/admin-add0831bb8a6-Dw09PgwY.js",
@@ -772,7 +772,7 @@
     ]
   },
   "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-BbE2RERA.js",
+    "file": "assets/storefront-admin-4oW9R0VW.js",
     "name": "storefront-admin",
     "src": "resources/js/kbb/admin/storefront-admin.js",
     "isDynamicEntry": true,
@@ -781,11 +781,19 @@
     ],
     "dynamicImports": [
       "resources/js/kbb/admin/page-header-editor.js",
+      "resources/js/kbb/admin/super-sale-banner-editor.js",
       "resources/js/kbb/admin/category-header-editor.js"
     ]
   },
+  "resources/js/kbb/admin/super-sale-banner-editor.js": {
+    "file": "assets/super-sale-banner-editor-LMHk0l7Y.js",
+    "name": "super-sale-banner-editor",
+    "src": "resources/js/kbb/admin/super-sale-banner-editor.js",
+    "isEntry": true,
+    "isDynamicEntry": true
+  },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-JCXg0Q2o.js",
+    "file": "assets/app-uIdR_szC.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,
@@ -802,7 +810,7 @@
     "isEntry": true
   },
   "resources/js/kbb/email-capture.js": {
-    "file": "assets/email-capture-DPadw2fi.js",
+    "file": "assets/email-capture-BIl432WX.js",
     "name": "email-capture",
     "src": "resources/js/kbb/email-capture.js",
     "isDynamicEntry": true,

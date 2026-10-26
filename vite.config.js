@@ -90,6 +90,11 @@ export default defineConfig({
                 // can import the same module by its manifest address. Never
                 // linked by a storefront page.
                 'resources/js/kbb/admin/page-header-editor.js',
+                // The live Super Sale banner's editor (Lane SSB): the same
+                // arrangement -- the storefront layer's dynamic import on
+                // /super-sale/, and the console's Pages → Page banners →
+                // Super Sale banner tab by its manifest address.
+                'resources/js/kbb/admin/super-sale-banner-editor.js',
                 // The owner app (Lane MAC): its one script and one stylesheet,
                 // and the icons its manifest and service worker name. Loaded
                 // only by the app's own shell at its secret address; no

@@ -360,12 +360,17 @@ it('sizes with CSS alone, and keeps min() and container units behind @supports w
      * browser that cannot read its value. --u is a plain 3.9px first; the
      * min()/cqw forms are each inside @supports.
      */
-    $css = SuperSaleBanner::CSS;
+    $css = SuperSaleBanner::css();
     $outside = (string) preg_replace('/@supports \((?:[^()]|\([^()]*\))*\)\{(?:[^{}]|\{[^{}]*\}|\{(?:[^{}]|\{[^{}]*\})*\})*\}/', '', $css);
 
     expect($css)->toContain('.kbb-ssb{container-type:inline-size;--u:3.9px;')
         ->and($outside)->not->toContain('min(')->not->toContain('cqw')
-        ->and($css)->not->toContain('round(')->not->toContain('color-mix(')->not->toContain('<');
+        ->and($css)->not->toContain('round(')->not->toContain('color-mix(')->not->toContain('<')
+        // Every percentage survived the stylesheet's templating (a `%` root
+        // placeholder once turned 100% into ".kbb-ssb" and dropped the rule).
+        ->and($css)->not->toMatch('/\d\.kbb-ssb/')->and($css)->toContain('width:100%;height:100%')
+        // The hairline under the gift row, as an inset shadow: no height change.
+        ->and($css)->toContain('box-shadow:inset 0 calc(var(--u)*-.16) 0 rgba(46,143,98,.3)');
 
     // Every inline SVG it prints carries its own size.
     $block = ssbBlock($this->get('/super-sale/')->getContent());
@@ -376,22 +381,31 @@ it('sizes with CSS alone, and keeps min() and container units behind @supports w
     }
 });
 
-it('ships the lady from the current banner and puts her in the Media Library', function () {
+it('ships the owner\'s transparent cutout, standing on the banner with no arch, and puts it in the Media Library', function () {
+    /*
+     * The owner (26 October): the phone picture is his own transparent
+     * cutout, and "remove the background dome background". MUTATION: make
+     * 'auto' pick the backdrop for a transparent picture -> red.
+     */
     $dest = public_path(SuperSaleBanner::MODEL_REL);
     $existed = is_file($dest);
 
     (require database_path('migrations/2027_12_26_100000_super_sale_live_banner_model.php'))->up();
 
     try {
+        $src = resource_path('banners/'.SuperSaleBanner::MODEL_FILE);
         expect(is_file($dest))->toBeTrue()
-            ->and(getimagesize(resource_path('banners/'.SuperSaleBanner::MODEL_FILE))[0])->toBe(288)
-            ->and(filesize(resource_path('banners/'.SuperSaleBanner::MODEL_FILE)))->toBeLessThan(20 * 1024)
+            ->and(getimagesize($src)[0])->toBe(381)->and(getimagesize($src)[1])->toBe(500)
+            ->and(filesize($src))->toBeLessThan(48 * 1024)
+            ->and(SuperSaleBanner::hasAlpha('/'.SuperSaleBanner::MODEL_REL))->toBeTrue()
             ->and(DB::table('media')->where('path', SuperSaleBanner::MODEL_REL)->count())->toBe(1);
 
         ssbFlush();
         $block = ssbBlock($this->get('/super-sale/')->getContent());
-        expect($block)->toContain('class="ssb-model"><img src="')
-            ->and($block)->toContain(SuperSaleBanner::MODEL_FILE);
+        // No <source>: the computer's "Single image" is the same picture.
+        expect($block)->toContain('class="ssb-model ssb-shm-none ssb-shd-none"><picture><img src="')
+            ->and($block)->toContain(SuperSaleBanner::MODEL_FILE)
+            ->and($block)->not->toContain('<source');
 
         ssbSet(['model_on' => false]);
         expect(ssbBlock($this->get('/super-sale/')->getContent()))->not->toContain('ssb-model');
@@ -441,4 +455,227 @@ it('never offers a coupon code the shop has not got: off at apply time, refused 
         'super_sale_banner' => ['code' => 'NOPE50'] + $payload['sale_banner']['config']])
         ->assertStatus(422)->assertJsonPath('rejected', ['super_sale_banner.code']);
     expect(DB::table('settings')->where('key', SuperSaleBanner::KEY)->value('value'))->toBe($before);
+});
+
+/* ══════════════════════════ every control, per device and per language ═══ */
+
+it('prints no style at all for an untouched banner, and only what he changed after', function () {
+    /*
+     * "Defaults are today's values, so nothing moves until the owner changes a
+     * control." MUTATION: print every property, or compare against the wrong
+     * default -> the first expectation is red.
+     */
+    expect(ssbBlock($this->get('/super-sale/')->getContent()))->toStartWith('<div class="kbb-ssb" dir="ltr" data-ssb><div class="ssb-in">');
+
+    ssbSet(['st' => ['en' => [
+        'd' => ['title' => ['s' => 64, 'c' => '#112233', 'w' => 700, 'x' => 4, 'y' => -2], '_' => ['al' => 'center', 'g' => 8]],
+        'm' => ['pay' => ['v' => false]],
+    ], 'ar' => []]]);
+
+    $block = ssbBlock($this->get('/super-sale/')->getContent());
+    // The phone's first, then the computer's: 64px at the 10px cap is 6.4u.
+    expect($block)->toContain('style="--ssb-pay-vm:none;--ssb-title-sd:6.4;--ssb-title-wd:700;--ssb-title-cd:#112233;--ssb-title-xd:4px;--ssb-title-yd:-2px;--ssb-al-ad:center;--ssb-al-td:center;--ssb-gd:0.8"');
+});
+
+it('lets Arabic inherit English until he overrides it, and keeps Arabic\'s own shipped title size', function () {
+    ssbSet(['st' => ['en' => ['m' => ['tag' => ['c' => '#AA0000']]], 'ar' => []]]);
+    $ar = ssbBlock($this->get('/ar/super-sale/')->getContent());
+    expect($ar)->toContain('--ssb-tag-cm:#AA0000');          // inherited
+
+    ssbSet(['st' => ['en' => ['m' => ['tag' => ['c' => '#AA0000']]], 'ar' => ['m' => ['tag' => ['c' => '#00AA00']]]]]);
+    expect(ssbBlock($this->get('/ar/super-sale/')->getContent()))->toContain('--ssb-tag-cm:#00AA00')
+        ->and(ssbBlock($this->get('/super-sale/')->getContent()))->toContain('--ssb-tag-cm:#AA0000');
+
+    // The shipped Arabic computer title is 52px; at 52 nothing is printed, at 56 (English's) it is.
+    expect(SuperSaleBanner::styleDefaults('ar', 'd')['title']['s'])->toBe(52.0)
+        ->and(SuperSaleBanner::styleAttr(SuperSaleBanner::defaults(), 'ar'))->toBe('');
+    $c = SuperSaleBanner::defaults();
+    $c['st']['ar']['d']['title']['s'] = 56;
+    expect(SuperSaleBanner::styleAttr($c, 'ar'))->toBe('--ssb-title-sd:5.6');
+});
+
+it('ships the pay-later line off on a computer and on on a phone, as the owner decided', function () {
+    $css = SuperSaleBanner::css();
+    expect($css)->toContain('.kbb-ssb:not(.ssb-fm) .ssb-paytxt{font-size:calc(var(--u)*var(--ssb-pay-sd,1.85));font-weight:var(--ssb-pay-wd,700);color:var(--ssb-pay-cd,#3B2F36);display:var(--ssb-pay-vd,none)')
+        ->and($css)->toContain('.kbb-ssb:not(.ssb-fd) .ssb-paytxt{font-size:calc(var(--u)*var(--ssb-pay-sm,2.8));font-weight:var(--ssb-pay-wm,700);color:var(--ssb-pay-cm,#3B2F36);display:var(--ssb-pay-vm,inline)');
+
+    ssbSet(['st' => ['en' => ['d' => ['pay' => ['v' => true]]], 'ar' => []]]);
+    expect(ssbBlock($this->get('/super-sale/')->getContent()))->toContain('--ssb-pay-vd:inline');
+});
+
+it('refuses a colour, weight, size or element it does not know, and writes nothing', function () {
+    $this->actingAs(ssbAdmin(), 'admin');
+    $cfg = $this->getJson('/admin-api/page-banners')->json('sale_banner.config');
+
+    foreach ([
+        ['en' => ['m' => ['title' => ['c' => 'red']]]],
+        ['en' => ['m' => ['title' => ['c' => '#12345G']]]],
+        ['en' => ['d' => ['title' => ['w' => 750]]]],
+        ['en' => ['d' => ['title' => ['s' => 999]]]],
+        ['ar' => ['m' => ['script' => ['c' => '#000000']]]],
+        ['en' => ['m' => ['_' => ['al' => 'justify']]]],
+        ['en' => ['m' => ['title' => ['c' => '#000000;background:url(x)']]]],
+    ] as $bad) {
+        $before = DB::table('settings')->where('key', SuperSaleBanner::KEY)->value('value');
+        $this->postJson('/admin-api/page-banners', ['super_sale_banner' => ['st' => $bad] + $cfg])->assertStatus(422);
+        expect(DB::table('settings')->where('key', SuperSaleBanner::KEY)->value('value'))->toBe($before);
+    }
+});
+
+it('computes the style attribute the same in PHP and in the editor\'s JavaScript', function () {
+    /*
+     * The editor previews with styleAttr() in JavaScript; the page prints
+     * SuperSaleBanner::styleAttr(). Thirty random configs through both, per
+     * language. MUTATION: drop the Arabic-inherits-English branch from either
+     * -> red.
+     */
+    $node = trim((string) shell_exec('command -v node 2>/dev/null')) ?: (is_file('/opt/node22/bin/node') ? '/opt/node22/bin/node' : '');
+    if ($node === '') {
+        $this->markTestSkipped('node is not installed');
+    }
+
+    mt_srand(26);
+    $els = array_keys(SuperSaleBanner::ELEMENTS);
+    $configs = [];
+    for ($i = 0; $i < 30; $i++) {
+        $st = ['en' => [], 'ar' => []];
+        foreach (['en', 'ar'] as $lang) {
+            foreach (['m', 'd'] as $dev) {
+                foreach ($els as $el) {
+                    if (mt_rand(0, 2) === 0) {
+                        $st[$lang][$dev][$el] = array_filter([
+                            's' => mt_rand(0, 1) ? mt_rand(80, 900) / 10 : null,
+                            'c' => mt_rand(0, 1) ? sprintf('#%06X', mt_rand(0, 0xFFFFFF)) : null,
+                            'w' => mt_rand(0, 1) ? SuperSaleBanner::WEIGHTS[mt_rand(0, 6)] : null,
+                            'x' => mt_rand(0, 1) ? mt_rand(-40, 40) : null,
+                            'v' => mt_rand(0, 3) === 0 ? (bool) mt_rand(0, 1) : null,
+                        ], static fn ($v) => $v !== null);
+                    }
+                }
+                if (mt_rand(0, 2) === 0) {
+                    $st[$lang][$dev]['_'] = ['al' => ['start', 'center', 'end'][mt_rand(0, 2)], 'g' => mt_rand(0, 300) / 10];
+                }
+            }
+        }
+        [$clean] = SuperSaleBanner::sanitize(['st' => $st, 'fx_m' => mt_rand(0, 100), 'fy_d' => mt_rand(0, 100)], false);
+        $configs[] = $clean;
+    }
+
+    $spec = SuperSaleBanner::editorContext(app(SettingsService::class)->all(), null)['spec'];
+    $in = tempnam(sys_get_temp_dir(), 'ssb');
+    file_put_contents($in, json_encode(['spec' => $spec, 'configs' => $configs]));
+    $module = base_path('resources/js/kbb/admin/super-sale-banner-editor.js');
+    $script = "import {styleAttr} from '{$module}'; import {readFileSync} from 'node:fs';"
+        ."globalThis.document={};const d=JSON.parse(readFileSync(process.argv[1],'utf8'));"
+        ."process.stdout.write(JSON.stringify(d.configs.map(c=>[styleAttr(c,d.spec,'en'),styleAttr(c,d.spec,'ar')])));";
+    $out = json_decode((string) shell_exec(escapeshellarg($node).' --input-type=module -e '.escapeshellarg($script).' '.escapeshellarg($in)), true);
+    @unlink($in);
+
+    expect($out)->toBeArray()->toHaveCount(30);
+    foreach ($configs as $n => $c) {
+        expect($out[$n])->toBe([SuperSaleBanner::styleAttr($c, 'en'), SuperSaleBanner::styleAttr($c, 'ar')], "config $n");
+    }
+});
+
+/* ═══════════════════════════════════════════════════════════ the pictures ═══ */
+
+it('gives the computer his rectangle design only in that mode, and each device downloads only its own picture', function () {
+    /*
+     * "a separate DESKTOP image ... rectangle". MUTATION: print the rectangle
+     * as a second <img> (both devices would download both) -> red.
+     */
+    ssbSet(['mode_d' => 'rect', 'model_d' => 'https://kbeautybliss.com/uploads/appearance/rect.webp', 'model' => 'https://kbeautybliss.com/uploads/appearance/cut.webp']);
+    $block = ssbBlock($this->get('/super-sale/')->getContent());
+
+    expect($block)->toContain('class="ssb-model ssb-shm-clip ssb-mode-rect"><picture><source media="(min-width: 901px)" srcset="https://kbeautybliss.com/uploads/appearance/rect.webp"')
+        ->and(substr_count($block, '<img src="https://kbeautybliss.com/uploads/appearance/'))->toBe(1)
+        ->and($block)->toContain('<img src="https://kbeautybliss.com/uploads/appearance/cut.webp"');
+
+    // Rectangle mode with no rectangle picture: the single picture, as before.
+    ssbSet(['mode_d' => 'rect', 'model' => 'https://kbeautybliss.com/uploads/appearance/cut.webp']);
+    expect(ssbBlock($this->get('/super-sale/')->getContent()))->not->toContain('<source')->not->toContain('ssb-mode-rect');
+
+    // Arabic's own pictures, inheriting English's where it has none.
+    ssbSet(['mode_d' => 'rect', 'model_d' => 'https://kbeautybliss.com/uploads/appearance/rect.webp', 'model_ar' => 'https://kbeautybliss.com/uploads/appearance/cut-ar.webp']);
+    $ar = ssbBlock($this->get('/ar/super-sale/')->getContent());
+    expect($ar)->toContain('srcset="https://kbeautybliss.com/uploads/appearance/rect.webp"')->toContain('<img src="https://kbeautybliss.com/uploads/appearance/cut-ar.webp"');
+});
+
+it('reads a picture\'s transparency from its file on save, and never trusts the browser\'s flag', function () {
+    /*
+     * "Detect transparency once at upload/save time (store a flag), never in
+     * the browser." MUTATION: keep $in['alpha'] in cleanSaleBanner -> red.
+     */
+    $this->actingAs(ssbAdmin(), 'admin');
+    File::ensureDirectoryExists(public_path('uploads/ssbt'));
+    $clear = imagecreatetruecolor(40, 60);
+    imagesavealpha($clear, true);
+    imagefill($clear, 0, 0, imagecolorallocatealpha($clear, 0, 0, 0, 127));
+    imagefilledrectangle($clear, 10, 10, 30, 59, imagecolorallocate($clear, 200, 100, 120));
+    imagepng($clear, public_path('uploads/ssbt/cut.png'));
+    $photo = imagecreatetruecolor(40, 60);
+    imagefill($photo, 0, 0, imagecolorallocate($photo, 250, 240, 240));
+    imagejpeg($photo, public_path('uploads/ssbt/photo.jpg'));
+    imagepng($photo, public_path('uploads/ssbt/opaque.png'));
+
+    $cfg = $this->getJson('/admin-api/page-banners')->json('sale_banner.config');
+    $this->postJson('/admin-api/page-banners', ['super_sale_banner' => [
+        'model' => '/uploads/ssbt/cut.png', 'model_ar' => '/uploads/ssbt/photo.jpg', 'model_d' => '/uploads/ssbt/opaque.png',
+        'alpha' => ['model_ar' => true, 'model_d' => true],
+    ] + $cfg])->assertOk();
+
+    $stored = json_decode((string) DB::table('settings')->where('key', SuperSaleBanner::KEY)->value('value'), true);
+    expect($stored['alpha'])->toBe(['model' => true]);
+
+    ssbFlush();
+    expect(ssbBlock($this->get('/super-sale/')->getContent()))->toContain('ssb-shm-none')       // cutout: no arch
+        ->and(ssbBlock($this->get('/ar/super-sale/')->getContent()))->toContain('ssb-shm-clip'); // photo: the arch
+});
+
+/* ════════════════════════════════════════ the on-page editor, and its cost ═══ */
+
+it('saves the banner alone through the same endpoint and capability, all or nothing', function () {
+    $this->actingAs(ssbAdmin(), 'admin');
+    $cfg = $this->getJson('/admin-api/page-banners')->json('sale_banner.config');
+
+    $res = $this->postJson('/admin-api/page-banners', ['super_sale_banner' => ['title_en' => 'BIG SALE'] + $cfg])->assertOk();
+    expect($res->json('sale_banner.config.title_en'))->toBe('BIG SALE')
+        ->and(DB::table('settings')->where('key', \App\Services\PageBanners::KEY)->exists())->toBeFalse(); // nothing else written
+
+    $this->actingAs(ssbAdmin('support'), 'admin');
+    $this->postJson('/admin-api/page-banners', ['super_sale_banner' => ['title_en' => 'NOPE'] + $cfg])->assertStatus(403);
+    ssbFlush();
+    expect(ssbBlock($this->get('/super-sale/')->getContent()))->toContain('BIG SALE');
+});
+
+it('offers "Edit banner" to the admin on /super-sale/ only, from the authenticated context', function () {
+    $this->actingAs(ssbAdmin(), 'admin');
+
+    $sale = $this->getJson('/admin-api/storefront/context?path=/super-sale/')->assertOk();
+    expect($sale->json('salebanner.config.on'))->toBeTrue()
+        ->and($sale->json('salebanner.spec.elements.0.key'))->toBe('pay')
+        ->and($sale->json('salebanner.endpoints.save'))->toEndWith('/admin-api/page-banners')
+        ->and($sale->json('salebanner.gifts'))->toHaveKeys(['all', 'first', 'last']);
+
+    expect($this->getJson('/admin-api/storefront/context?path=/new-in/')->json('salebanner'))->toBeNull()
+        ->and($this->getJson('/admin-api/storefront/context?path=/ar/super-sale/')->json('salebanner'))->not->toBeNull();
+});
+
+it('costs a shopper nothing: no editor in the page, and the admin is sent the very same page', function () {
+    /*
+     * The editor is never in the HTML -- the storefront admin layer draws it
+     * from the authenticated context -- so no cache can hand it to a
+     * shopper. MUTATION: @include an editor partial for admins -> red.
+     */
+    $guest = $this->get('/super-sale/')->assertOk()->getContent();
+    expect($guest)->not->toContain('Edit banner')->not->toContain('super-sale-banner-editor')->not->toContain('ssb-ed')
+        // The editor's device-toggle rules are the editor's to add, not the page's.
+        ->and($guest)->not->toContain('.kbb-ssb.ssb-fd')->not->toContain('.kbb-ssb.ssb-fm')
+        ->and(SuperSaleBanner::cssForced())->toContain('.kbb-ssb.ssb-fd .ssb-hero{height:calc(var(--u)*16.5)');
+
+    $this->actingAs(ssbAdmin(), 'admin');
+    $admin = $this->get('/super-sale/')->getContent();
+    $mask = static fn (string $h): string => (string) preg_replace(['/name="csrf-token" content="[^"]*"/', '/"csrf":"[^"]*"/', '/_token" value="[^"]*"/'], '', $h);
+    expect(ssbBlock($admin))->toBe(ssbBlock($guest))
+        ->and($admin)->not->toContain('ssb-ed')->not->toContain('super-sale-banner-editor');
 });

@@ -56,15 +56,31 @@
   ],
   "scripts": 12,
   "stylesheets": 2,
-  "htmlBytes": 116307,
+  "htmlBytes": 122930,
   "cls": 0,
-  "lcp": "IMG.kbb-card-img 564ms",
+  "lcp": "IMG.kbb-card-img 432ms",
+  "overflow": [
+   ".ssb-hero 172/172",
+   ".ssb-copy 132/132",
+   ".ssb-in 256/256"
+  ],
+  "payShown": true,
+  "modelImg": {
+   "current": "/uploads/appearance/kbb-super-sale-model-mobile.webp",
+   "box": {
+    "x": 244,
+    "y": 173,
+    "w": 129,
+    "h": 155
+   }
+  },
+  "editorTrace": false,
   "status": 200,
   "consoleErrors": [
    "Failed to load resource: the server responded with a status of 404 (Not Found)"
   ],
   "imageRequests": [
-   "/uploads/appearance/kbb-super-sale-model.webp",
+   "/uploads/appearance/kbb-super-sale-model-mobile.webp",
    "/uploads/ss/15-b-serum.webp",
    "/uploads/ss/0-b-aqua.webp",
    "/uploads/ss/2-b-serum.webp",
@@ -83,6 +99,9 @@
    "/uploads/ss/4-cream.webp",
    "/uploads/ss/5-deo.webp",
    "/uploads/ss/13-b-aqua.webp"
+  ],
+  "modelRequests": [
+   "/uploads/appearance/kbb-super-sale-model-mobile.webp"
   ]
  },
  "en-1280": {
@@ -90,36 +109,36 @@
    "x": 38,
    "y": 124,
    "w": 1205,
-   "h": 330
+   "h": 280
   },
   "headerPicture": null,
   "hero": {
    "x": 38,
    "y": 124,
    "w": 1205,
-   "h": 215
+   "h": 165
   },
   "gifts": {
    "x": 38,
-   "y": 339,
+   "y": 289,
    "w": 1205,
    "h": 115
   },
   "model": {
    "x": 1002,
-   "y": 154,
+   "y": 138,
    "w": 200,
-   "h": 185
+   "h": 151
   },
   "giftIcon": {
    "x": 78,
-   "y": 372,
+   "y": 322,
    "w": 50,
    "h": 50
   },
   "thumb": {
    "x": 834,
-   "y": 366,
+   "y": 316,
    "w": 62,
    "h": 62
   },
@@ -129,23 +148,41 @@
   "titleOverflows": false,
   "trustStrip": {
    "x": 0,
-   "y": 536,
+   "y": 486,
    "w": 1280,
    "h": 64
   },
   "scrollWidth": 1280,
   "innerWidth": 1280,
-  "linksInView": 24,
-  "linksBlocked": [],
+  "linksInView": 29,
+  "linksBlocked": [
+   " /product/medicube-collagen-booster-set-pink-edition/"
+  ],
   "scripts": 12,
   "stylesheets": 2,
-  "htmlBytes": 121198,
+  "htmlBytes": 127821,
   "cls": 0,
-  "lcp": "IMG.kbb-card-img 608ms",
+  "lcp": "IMG.kbb-card-img 540ms",
+  "overflow": [
+   ".ssb-hero 165/165",
+   ".ssb-copy 159/159",
+   ".ssb-in 280/280"
+  ],
+  "payShown": false,
+  "modelImg": {
+   "current": "/img-cache/200/uploads/appearance/kbb-super-sale-model-mobile.webp",
+   "box": {
+    "x": 1002,
+    "y": 138,
+    "w": 200,
+    "h": 151
+   }
+  },
+  "editorTrace": false,
   "status": 200,
   "consoleErrors": [],
   "imageRequests": [
-   "/uploads/appearance/kbb-super-sale-model.webp",
+   "/img-cache/200/uploads/appearance/kbb-super-sale-model-mobile.webp",
    "/uploads/ss/15-b-serum.webp",
    "/uploads/ss/0-b-aqua.webp",
    "/uploads/ss/2-b-serum.webp",
@@ -167,6 +204,9 @@
    "/uploads/ss/4-cream.webp",
    "/uploads/ss/5-deo.webp",
    "/uploads/ss/13-b-aqua.webp"
+  ],
+  "modelRequests": [
+   "/img-cache/200/uploads/appearance/kbb-super-sale-model-mobile.webp"
   ]
  },
  "ar-390": {
@@ -225,13 +265,29 @@
   ],
   "scripts": 13,
   "stylesheets": 2,
-  "htmlBytes": 126335,
+  "htmlBytes": 132958,
   "cls": 0,
-  "lcp": "IMG.kbb-card-img 472ms",
+  "lcp": "IMG.kbb-card-img 444ms",
+  "overflow": [
+   ".ssb-hero 172/172",
+   ".ssb-copy 130/130",
+   ".ssb-in 256/256"
+  ],
+  "payShown": true,
+  "modelImg": {
+   "current": "/uploads/appearance/kbb-super-sale-model-mobile.webp",
+   "box": {
+    "x": 18,
+    "y": 183,
+    "w": 129,
+    "h": 155
+   }
+  },
+  "editorTrace": false,
   "status": 200,
   "consoleErrors": [],
   "imageRequests": [
-   "/uploads/appearance/kbb-super-sale-model.webp",
+   "/uploads/appearance/kbb-super-sale-model-mobile.webp",
    "/uploads/ss/15-b-serum.webp",
    "/uploads/ss/0-b-aqua.webp",
    "/uploads/ss/2-b-serum.webp",
@@ -250,6 +306,9 @@
    "/uploads/ss/4-cream.webp",
    "/uploads/ss/5-deo.webp",
    "/uploads/ss/13-b-aqua.webp"
+  ],
+  "modelRequests": [
+   "/uploads/appearance/kbb-super-sale-model-mobile.webp"
   ]
  },
  "ar-1280": {
@@ -257,36 +316,36 @@
    "x": 38,
    "y": 124,
    "w": 1205,
-   "h": 330
+   "h": 280
   },
   "headerPicture": null,
   "hero": {
    "x": 38,
    "y": 124,
    "w": 1205,
-   "h": 215
+   "h": 165
   },
   "gifts": {
    "x": 38,
-   "y": 339,
+   "y": 289,
    "w": 1205,
    "h": 115
   },
   "model": {
    "x": 78,
-   "y": 154,
+   "y": 138,
    "w": 200,
-   "h": 185
+   "h": 151
   },
   "giftIcon": {
    "x": 1152,
-   "y": 372,
+   "y": 322,
    "w": 50,
    "h": 50
   },
   "thumb": {
    "x": 377,
-   "y": 366,
+   "y": 316,
    "w": 62,
    "h": 62
   },
@@ -296,23 +355,41 @@
   "titleOverflows": false,
   "trustStrip": {
    "x": 0,
-   "y": 536,
+   "y": 486,
    "w": 1280,
    "h": 64
   },
   "scrollWidth": 1280,
   "innerWidth": 1280,
-  "linksInView": 24,
-  "linksBlocked": [],
+  "linksInView": 29,
+  "linksBlocked": [
+   " /ar/product/medicube-collagen-booster-set-pink-edition/"
+  ],
   "scripts": 13,
   "stylesheets": 2,
-  "htmlBytes": 131226,
+  "htmlBytes": 137849,
   "cls": 0,
-  "lcp": "DIV.ssb-super 516ms",
+  "lcp": "DIV.ssb-super 372ms",
+  "overflow": [
+   ".ssb-hero 165/165",
+   ".ssb-copy 159/156",
+   ".ssb-in 280/280"
+  ],
+  "payShown": false,
+  "modelImg": {
+   "current": "/img-cache/200/uploads/appearance/kbb-super-sale-model-mobile.webp",
+   "box": {
+    "x": 78,
+    "y": 138,
+    "w": 200,
+    "h": 151
+   }
+  },
+  "editorTrace": false,
   "status": 200,
   "consoleErrors": [],
   "imageRequests": [
-   "/uploads/appearance/kbb-super-sale-model.webp",
+   "/img-cache/200/uploads/appearance/kbb-super-sale-model-mobile.webp",
    "/uploads/ss/15-b-serum.webp",
    "/uploads/ss/0-b-aqua.webp",
    "/uploads/ss/2-b-serum.webp",
@@ -334,6 +411,9 @@
    "/uploads/ss/4-cream.webp",
    "/uploads/ss/5-deo.webp",
    "/uploads/ss/13-b-aqua.webp"
+  ],
+  "modelRequests": [
+   "/img-cache/200/uploads/appearance/kbb-super-sale-model-mobile.webp"
   ]
  }
 }
