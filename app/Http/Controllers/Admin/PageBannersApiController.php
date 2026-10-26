@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Services\PageBanners;
 use App\Services\SettingsService;
 use App\Support\SuperSale;
+use App\Support\SuperSaleBanner;
 use App\Support\Url;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -40,6 +41,9 @@ class PageBannersApiController extends Controller
             'banners' => ['present', 'array'],
             'assign' => ['present', 'array'],
             'super_sale_source' => ['required', 'string', 'max:40'],
+            // (Lane SSB) The live Super Sale banner. Optional, so a screen
+            // that predates it still saves what it always saved.
+            'super_sale_banner' => ['sometimes', 'array'],
         ]);
 
         $source = $data['super_sale_source'];
@@ -54,6 +58,14 @@ class PageBannersApiController extends Controller
             $rejected['super_sale_source'] = 'Super Sale products';
         }
 
+        $saleBanner = null;
+        if (array_key_exists('super_sale_banner', $data)) {
+            [$saleBanner, $bannerRejected] = SuperSaleBanner::sanitize($data['super_sale_banner'], true);
+            foreach ($bannerRejected as $k => $label) {
+                $rejected['super_sale_banner.'.$k] = 'Super Sale banner: '.$label;
+            }
+        }
+
         if ($rejected !== []) {
             return response()->json([
                 'ok' => false,
@@ -64,6 +76,9 @@ class PageBannersApiController extends Controller
 
         $this->banners->save($in);
         $this->settings->set(SuperSale::KEY, $source);
+        if ($saleBanner !== null) {
+            $this->settings->set(SuperSaleBanner::KEY, $saleBanner);
+        }
 
         return response()->json(['ok' => true] + $this->payload());
     }
@@ -154,6 +169,40 @@ class PageBannersApiController extends Controller
             // Strip item device choice (Lane PH): value => label.
             'devices' => array_map(static fn (string $v, string $l): array => ['value' => $v, 'label' => $l], array_keys(PageBanners::DEVICES), PageBanners::DEVICES),
             'super_sale' => $this->superSale(),
+            'sale_banner' => $this->saleBanner(),
+        ];
+    }
+
+    /**
+     * (Lane SSB) Pages → Page banners → Super Sale banner: the stored config,
+     * the words' labels and defaults, and which gifts the row can show -- the
+     * compiled ranges (a settings row already loaded: no query).
+     */
+    private function saleBanner(): array
+    {
+        $texts = [];
+        foreach (SuperSaleBanner::TEXTS as $k => [$en, $ar, $label]) {
+            $texts[] = ['key' => $k, 'label' => $label, 'en' => $en, 'ar' => $ar];
+        }
+
+        $bands = [];
+        foreach (SuperSaleBanner::BANDS as $value => $label) {
+            $bands[] = ['value' => $value, 'label' => $label];
+        }
+        $gifts = app(\App\Services\FreeGifts::class);
+        foreach ($gifts->ranges() as $r) {
+            $bands[] = ['value' => 'range:'.$r['id'], 'label' => 'Only the range '.\App\Services\FreeGifts::rangeLabel($r)];
+        }
+
+        return [
+            'config' => SuperSaleBanner::config($this->settings->all()),
+            'defaults' => SuperSaleBanner::defaults(),
+            'texts' => $texts,
+            'bands' => $bands,
+            'max_text' => SuperSaleBanner::MAX_TEXT,
+            'shipped_model' => SuperSaleBanner::modelUrl(''),
+            'gifts_mode' => $gifts->mode(),
+            'url' => Url::to('/super-sale/'),
         ];
     }
 

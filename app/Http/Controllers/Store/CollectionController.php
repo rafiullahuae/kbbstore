@@ -252,6 +252,10 @@ class CollectionController extends Controller
             // area and the strip in the owner's order, or null = the original
             // title block and no strip. Two settings already loaded: no query.
             'pageTop' => app(\App\Services\PageHeaders::class)->top('collection:' . $key, 'collection'),
+            // The live Super Sale banner (Lane SSB), in the place of the Super
+            // Sale header's picture: off the settings map already loaded, plus
+            // at most one gift-product query. Every other listing: null.
+            'ssb' => $key === 'super-sale' ? \App\Support\SuperSaleBanner::view($this->settings->all(), $request) : null,
             // SEO → Keywords (Lane KW): which listing's keywords these are.
             'seoCtx' => $this->seoCtx($request, $title, $intro, $products->total(), $page, $products) + ['seo_entity' => 'collection:' . $key],
         ]);
