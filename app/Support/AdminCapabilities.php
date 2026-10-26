@@ -316,6 +316,12 @@ final class AdminCapabilities
         // storefront collections at once. Owner and manager.
         'concerns.sync' => ['owner', 'manager'],
 
+        // Catalog -> New Arrivals (Lane NA): the rule that keeps the New
+        // Arrivals category (on/off, limit, age window, include/exclude) and its
+        // order. Its own capability: it rewrites a whole storefront collection
+        // in one press. Owner and manager; every other role fails closed.
+        'catalog.new_arrivals' => ['owner', 'manager'],
+
         /*
          * Content -> Shoppable video (Lane V2, Phase 20). The UGC library: the
          * clips, who made them, whether they said yes, and which products are
@@ -1739,6 +1745,9 @@ final class AdminCapabilities
         // Lane SC. Every path under the prefix, reads and writes alike.
         ['*', 'admin-api/concern-sync', 'concerns.sync'],
         ['*', 'admin-api/concern-sync/**', 'concerns.sync'],
+        // Lane NA. Every path under the prefix, reads and writes alike.
+        ['*', 'admin-api/new-arrivals', 'catalog.new_arrivals'],
+        ['*', 'admin-api/new-arrivals/**', 'catalog.new_arrivals'],
         ['*', 'admin-api/media', 'content.manage'],
         ['*', 'admin-api/media/**', 'content.manage'],
         ['*', 'admin-api/blocks', 'content.manage'],

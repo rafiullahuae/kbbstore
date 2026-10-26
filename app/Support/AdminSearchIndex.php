@@ -206,6 +206,10 @@ final class AdminSearchIndex
         'concernsync' => [
             '' => ['Sync', 'Apply', 'Claude API key & model', 'Show older products'],
         ],
+        // Catalog → New Arrivals (Lane NA).
+        'newarrivals' => [
+            '' => ['Keep New Arrivals automatically', 'How many products', 'Only products added in the last', 'Always show', 'Never show', 'Display', 'Reset to newest first', 'new in', 'exclude', 'include'],
+        ],
         'sets' => [],
         'product-editor' => [],
         'routines' => [

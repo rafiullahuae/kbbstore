@@ -256,6 +256,9 @@ final class StaticMemos
             \App\Support\SearchSpelling::class => static fn () => \App\Support\SearchSpelling::forget(),
             // Lane AN: the crawler pattern and the day's visitor salt.
             \App\Services\Analytics\Tracker::class => static fn () => \App\Services\Analytics\Tracker::forget(),
+            // Lane NA: the "a product changed, sync New Arrivals" flag, the
+            // application it is hooked to, and the sync counter.
+            \App\Services\NewArrivals::class => static fn () => \App\Services\NewArrivals::resetState(),
         ];
     }
 

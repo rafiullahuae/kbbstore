@@ -178,7 +178,13 @@ it('has nothing that outlives a single request', function () {
     // 12 with Lane EM: `kbb:order-emirates`, every minute -- stores the
     // emirate of orders that carry none yet (one indexed IS NULL query when
     // there are none), exits. Nothing is held between runs.
-    expect(substr_count($console, 'Schedule::command('))->toBe(12, 'the set of scheduled commands has changed');
+    // 13 at the integration tip (2.60.604) without this line moving: the
+    // Tabby capture sweep, `payments:tabby-capture`, every five minutes.
+    // 14 with Lane NA: `kbb:new-arrivals-sync`, every minute -- keeps New
+    // Arrivals to its rule (ages products out of the window); a cache read
+    // when nothing keeps itself, two reads and no writes when nothing
+    // changed, exits. Nothing is held between runs.
+    expect(substr_count($console, 'Schedule::command('))->toBe(14, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {

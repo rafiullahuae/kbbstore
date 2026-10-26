@@ -680,6 +680,8 @@ class CatalogProductsApiController extends Controller
                 'status' => $status,
                 'updated_at' => now(),
             ]);
+            // A mass update fires no model events (Lane NA).
+            \App\Services\NewArrivals::defer();
         }
 
         return response()->json([
@@ -2331,6 +2333,7 @@ class CatalogProductsApiController extends Controller
     {
         \App\Services\VariantPricing::invalidate();
         \App\Support\SearchSpelling::flush();
+        \App\Services\NewArrivals::defer();
     }
 
     /** @return list<int> */

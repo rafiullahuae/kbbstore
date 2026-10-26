@@ -1,0 +1,157 @@
+{
+  "shop": [
+    {
+      "w": 390,
+      "name": "en",
+      "status": 200,
+      "redirected": null,
+      "hit": true,
+      "url": "/collections/new-arrivals/",
+      "sw": 390,
+      "first": [
+        "/product/na-1/",
+        "/product/na-2/",
+        "/product/na-3/",
+        "/product/na-4/"
+      ],
+      "h1": "New Arrivals"
+    },
+    {
+      "w": 390,
+      "name": "ar",
+      "status": 200,
+      "redirected": null,
+      "hit": true,
+      "url": "/ar/collections/new-arrivals/",
+      "sw": 390,
+      "first": [
+        "/ar/product/na-1/",
+        "/ar/product/na-2/",
+        "/ar/product/na-3/",
+        "/ar/product/na-4/"
+      ],
+      "h1": "New Arrivals"
+    },
+    {
+      "w": 390,
+      "name": "newin",
+      "status": 200,
+      "redirected": "http://127.0.0.1:11870/new-in/",
+      "hit": true,
+      "url": "/collections/new-arrivals/",
+      "sw": 390,
+      "first": [
+        "/product/na-1/",
+        "/product/na-2/",
+        "/product/na-3/",
+        "/product/na-4/"
+      ],
+      "h1": "New Arrivals"
+    },
+    {
+      "w": 390,
+      "name": "newin-ar",
+      "status": 200,
+      "redirected": "http://127.0.0.1:11870/ar/new-in/",
+      "hit": true,
+      "url": "/ar/collections/new-arrivals/",
+      "sw": 390,
+      "first": [
+        "/ar/product/na-1/",
+        "/ar/product/na-2/",
+        "/ar/product/na-3/",
+        "/ar/product/na-4/"
+      ],
+      "h1": "New Arrivals"
+    },
+    {
+      "w": 1280,
+      "name": "en",
+      "status": 200,
+      "redirected": null,
+      "hit": true,
+      "url": "/collections/new-arrivals/",
+      "sw": 1280,
+      "first": [
+        "/product/na-1/",
+        "/product/na-2/",
+        "/product/na-3/",
+        "/product/na-4/"
+      ],
+      "h1": "New Arrivals"
+    },
+    {
+      "w": 1280,
+      "name": "ar",
+      "status": 200,
+      "redirected": null,
+      "hit": true,
+      "url": "/ar/collections/new-arrivals/",
+      "sw": 1280,
+      "first": [
+        "/ar/product/na-1/",
+        "/ar/product/na-2/",
+        "/ar/product/na-3/",
+        "/ar/product/na-4/"
+      ],
+      "h1": "New Arrivals"
+    },
+    {
+      "w": 1280,
+      "name": "newin",
+      "status": 200,
+      "redirected": "http://127.0.0.1:11870/new-in/",
+      "hit": true,
+      "url": "/collections/new-arrivals/",
+      "sw": 1280,
+      "first": [
+        "/product/na-1/",
+        "/product/na-2/",
+        "/product/na-3/",
+        "/product/na-4/"
+      ],
+      "h1": "New Arrivals"
+    },
+    {
+      "w": 1280,
+      "name": "newin-ar",
+      "status": 200,
+      "redirected": "http://127.0.0.1:11870/ar/new-in/",
+      "hit": true,
+      "url": "/ar/collections/new-arrivals/",
+      "sw": 1280,
+      "first": [
+        "/ar/product/na-1/",
+        "/ar/product/na-2/",
+        "/ar/product/na-3/",
+        "/ar/product/na-4/"
+      ],
+      "h1": "New Arrivals"
+    }
+  ],
+  "admin": [
+    {
+      "w": 1280,
+      "unfinished": "Unfinished (1)",
+      "firstPaintMs": 189,
+      "gridBytes": 22355,
+      "pendingText": "3 unsaved changes",
+      "afterSave": "Reload listNo unsaved changesSaved ✓Save",
+      "fadedAfterReload": 2,
+      "scrollWidth": 1280
+    },
+    {
+      "w": 390,
+      "unfinished": "Unfinished (1)",
+      "firstPaintMs": 166,
+      "gridBytes": 22355,
+      "pendingText": "3 unsaved changes",
+      "afterSave": "Reload listNo unsaved changesSaved ✓Save",
+      "fadedAfterReload": 2,
+      "scrollWidth": 390
+    }
+  ],
+  "errors": [
+    "shop 390 console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

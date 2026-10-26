@@ -379,7 +379,7 @@ it('renders the sidebar the console settled on, group by group and row by row', 
         'App' => ['siteapp', 'ownerapp'],
         // 'notfoundpage' — Safety → 404 page (Lane NF), after Demo Content.
         'Safety' => ['debug', 'sandbox', 'democontent', 'notfoundpage'],
-        'Catalog' => ['catalog', 'product-tabs', 'sets', 'product-editor', 'imageseo', 'concernsync', 'routines', 'category-tree', 'brands-manager', 'pagination'],
+        'Catalog' => ['catalog', 'product-tabs', 'sets', 'product-editor', 'imageseo', 'concernsync', 'newarrivals', 'routines', 'category-tree', 'brands-manager', 'pagination'],
         // 'inquiries' — Store → Inquiries (Lane CT), after Quiz Leads.
         'Store' => ['modules', 'megamenu', 'ecommerce', 'tax', 'payship', 'shipping', 'import',
             'order-new', 'coupon-editor', 'payments', 'tabbycaptures', 'paygw', 'security', 'firewall', 'analytics', 'search', 'seo', 'seokeywords',

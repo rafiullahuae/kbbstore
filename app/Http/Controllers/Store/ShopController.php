@@ -112,6 +112,13 @@ class ShopController extends Controller
         $perPage = \App\Support\ListingPagination::perPage($pgKind, $pgId, (int) $this->settings->get('products_per_page', 24));
 
         if ($category) {
+            // New Arrivals keeps itself (Lane NA): a product written earlier in
+            // THIS process is in before the page is drawn. A flag check when
+            // nothing is pending, and nothing at all on any other category.
+            if (\App\Services\NewArrivals::pending() && \App\Services\NewArrivals::isAuto($category)) {
+                \App\Services\NewArrivals::flushPending();
+            }
+
             // The category's products, with ITS OWN order beside them -- one
             // join on the pivot's key in place of the EXISTS this was. (Lane SO)
             // And its sub-categories' products, once each, when it lists them
@@ -127,7 +134,7 @@ class ShopController extends Controller
         // A category may open newest first (Catalog -> Categories -> Edit ->
         // Product order; 2.60.501). Read off the row already held: no query.
         $sortDefault = \App\Support\CategoryOrder::defaultFor($category);
-        $this->applySort($query, Facets::sort($sortDefault), $category !== null);
+        $this->sortListing($query, $request, $category, $sortDefault);
 
         // Sold-out products as usual, last, or not at all (Lane SX): the
         // category's own choice, else the shop's -- /shop/ and search follow
@@ -153,7 +160,7 @@ class ShopController extends Controller
             && ($fixed = \App\Support\SearchSpelling::correct($search)) !== null) {
             $retry = clone $unsearched;
             $this->applyFacets($retry, $active, $fixed);
-            $this->applySort($retry, Facets::sort($sortDefault), $category !== null);
+            $this->sortListing($retry, $request, $category, $sortDefault);
             \App\Support\SoldOut::apply($retry, \App\Support\SoldOut::for($category));
             $found = (clone $retry)->count();
 
@@ -877,6 +884,23 @@ class ShopController extends Controller
         if ($active['instock'] === '1') {
             $query->where('stock_status', 'instock');
         }
+    }
+
+    /**
+     * The listing's order. An automatic New Arrivals category opens on its own
+     * kept order (the owner's arrangement, newest on top -- read off the pivot
+     * row ScopeOrder already joins); a shopper's own ?orderby= still wins, and
+     * every other listing is exactly applySort() as before. (Lane NA)
+     */
+    private function sortListing($query, Request $request, ?Category $category, string $sortDefault): void
+    {
+        if ($category !== null && $request->query('orderby') === null && \App\Services\NewArrivals::isAuto($category)) {
+            \App\Services\NewArrivals::orderShop($query);
+
+            return;
+        }
+
+        $this->applySort($query, Facets::sort($sortDefault), $category !== null);
     }
 
     private function applySort($query, string $orderby, bool $inCategory = false): void

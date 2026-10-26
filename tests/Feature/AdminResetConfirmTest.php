@@ -150,7 +150,9 @@ it('routes every reset-to-default control in the admin through the dialog', func
     // it asks for itself (data-kbb-asks + window.kbbConfirm).
     // ▲ Lane PD: +2, Catalog -> Products -> Trash -> "Restore" on a row and
     // "Restore selected", both in reset-guard's KNOWN list.
-    expect(count($controls))->toBe(59);
+    // ▲ Lane NA: +1, "Reset to newest first" on Catalog -> New Arrivals, which
+    // asks for itself (data-kbb-asks + window.kbbConfirm).
+    expect(count($controls))->toBe(60);
 });
 
 it('names a control that still exists for every row of the list', function () {
@@ -182,6 +184,8 @@ it('asks once, in the admin box, where a screen asks for itself', function () {
         'partials/sbc-tabs-editor.blade.php' => 'data-ksb-reset data-kbb-asks',
         // Lane CK: Text sizes, Arabic tab -- "Reset" back to Same as English.
         'partials/shop-type-live.blade.php' => 'data-kbb-asks data-ktl-reset',
+        // Lane NA: Catalog -> New Arrivals -> "Reset to newest first".
+        'partials/new-arrivals-screen.blade.php' => 'data-na-reset data-kbb-asks',
     ];
 
     $marked = 0;
