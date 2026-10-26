@@ -29,7 +29,7 @@
     "count": 1,
     "what": "replay a click that lands before the partial",
     "anchor": "'spotted','mkt-email','mkt-health','notfoundpage']);",
-    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures']);"
+    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures','recentlocalise']);"
   },
   {
     "n": 5,
@@ -45,7 +45,7 @@
     "count": 1,
     "what": "keep the recorded block in step",
     "anchor": "'spotted','mkt-email','mkt-health','notfoundpage']);",
-    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures']);"
+    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures','recentlocalise']);"
   },
   {
     "n": 7,
@@ -53,7 +53,7 @@
     "count": 1,
     "what": "keep the recorded block in step",
     "anchor": "'spotted','mkt-email','mkt-health','notfoundpage']);",
-    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures']);"
+    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures','recentlocalise']);"
   },
   {
     "n": 8,
@@ -61,6 +61,6 @@
     "count": 2,
     "what": "keep the recorded block in step",
     "anchor": "'spotted','mkt-email','mkt-health','notfoundpage']);",
-    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures']);"
+    "replacement": "'spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures','recentlocalise']);"
   }
 ]

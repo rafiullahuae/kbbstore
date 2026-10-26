@@ -316,6 +316,12 @@ final class AdminCapabilities
         // storefront collections at once. Owner and manager.
         'concerns.sync' => ['owner', 'manager'],
 
+        // Catalog -> Translate & categorise (Lane LT). Its own capability: a
+        // run sends the newest products' copy to the Claude API on the owner's
+        // key (it spends his money), Approve all publishes Arabic to the shop,
+        // and Apply adds products to the concern collections. Owner, manager.
+        'catalog.localise' => ['owner', 'manager'],
+
         /*
          * Content -> Shoppable video (Lane V2, Phase 20). The UGC library: the
          * clips, who made them, whether they said yes, and which products are
@@ -1739,6 +1745,9 @@ final class AdminCapabilities
         // Lane SC. Every path under the prefix, reads and writes alike.
         ['*', 'admin-api/concern-sync', 'concerns.sync'],
         ['*', 'admin-api/concern-sync/**', 'concerns.sync'],
+        // Lane LT. Every path under the prefix, reads and writes alike.
+        ['*', 'admin-api/recent-localise', 'catalog.localise'],
+        ['*', 'admin-api/recent-localise/**', 'catalog.localise'],
         ['*', 'admin-api/media', 'content.manage'],
         ['*', 'admin-api/media/**', 'content.manage'],
         ['*', 'admin-api/blocks', 'content.manage'],

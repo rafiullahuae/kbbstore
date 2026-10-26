@@ -104,9 +104,9 @@ it('keeps the three handover records that quote LATE_RENDERED in step with the c
 
     // Lane CT (2.60.449) appended 'inquiries' at the end of the line.
     foreach (['docs/GS-ADMIN-APP-BLOCKS.md', 'docs/BG-ADMIN-APP-BLOCKS.md', 'docs/T1B-ADMIN-APP-BLOCKS.md'] as $doc) {
-        expect($w['files'][$doc] ?? (string) file_get_contents(base_path($doc)))->toContain("'emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures']);");
+        expect($w['files'][$doc] ?? (string) file_get_contents(base_path($doc)))->toContain("'emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures','recentlocalise']);");
     }
-    expect($line[0])->toContain("'emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures']);");
+    expect($line[0])->toContain("'emails-edit','siteapp','spotted','mkt-email','mkt-health','notfoundpage','inquiries','tabbycaptures','recentlocalise']);");
 });
 
 it('wraps go() once for its own id and adds no sidebar row of its own', function () {

@@ -206,6 +206,10 @@ final class AdminSearchIndex
         'concernsync' => [
             '' => ['Sync', 'Apply', 'Claude API key & model', 'Show older products'],
         ],
+        // Catalog → Translate & categorise (Lane LT).
+        'recentlocalise' => [
+            '' => ['Scan', 'Review Arabic', 'Skin concerns', 'Apply all ticked', 'Retry them', 'Rules only (no API)'],
+        ],
         'sets' => [],
         'product-editor' => [],
         'routines' => [
