@@ -63,6 +63,12 @@ function phAbout(): void
 
 beforeEach(function () {
     PageHeaderRoutes::wire($this->app);
+    // Lane SSB: the live Super Sale banner ships ON in the header picture's
+    // place; these cases pin the PICTURE, which is what /super-sale/ draws with
+    // it switched off (SuperSaleLiveBannerTest pins both).
+    app(SettingsService::class)->set(\App\Support\SuperSaleBanner::KEY, ['on' => false]);
+    \App\Models\Setting::flushMap();
+    SettingsService::forgetMemo();
     // Lane PH: these pin a content page under "Normal page banner" -- the
     // banner and header this module draws. The shipped brand-page design
     // replaces both on a content page; PageBrandHeaderTest pins that.

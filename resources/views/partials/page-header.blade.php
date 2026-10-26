@@ -11,14 +11,18 @@
 
     Raw output is the CSS constant only. The style attribute is built from
     constant letters and integers by PageHeaders::compile() and printed
-    escaped; picture addresses went through SafeUrl::src(). $ph['title'] may be
+    escaped; picture addresses went through SafeUrl::src(). $ph['live'] (Lane SSB,
+    /super-sale/ only) is the live Super Sale banner, drawn in the picture's
+    place; no other page passes it, so every other page prints what it did. $ph['title'] may be
     an HtmlString — a content page's title is the admin's own HTML, printed raw
     there exactly as page.blade.php always printed it.
---}}@php($phC = \App\Services\PageHeaders::compile($pageHeader['bag'], $pageHeader['kind'], ['intro' => ($ph['intro'] ?? '') !== '', 'image' => $pageHeader['img'] !== null, 'crumb' => \App\Services\PageHeaders::siteCrumb()]))
+--}}@php($phC = \App\Services\PageHeaders::compile($pageHeader['bag'], $pageHeader['kind'], ['intro' => ($ph['intro'] ?? '') !== '', 'image' => $pageHeader['img'] !== null || isset($ph['live']), 'crumb' => \App\Services\PageHeaders::siteCrumb()]))
 <style id="kbb-ph-css">{!! \App\Services\PageHeaders::CSS !!}</style>
 <div class="{{ $phC['wrap'] }}" style="{{ $phC['style'] }}" data-kbb-ph="{{ $pageHeader['key'] }}">
 <nav class="{{ $phC['cls']['crumb'] }}"><a href="{{ $ph['home'] }}">{{ __('store.breadcrumb.home') }}</a> / @if (($ph['shop'] ?? null) !== null)<a href="{{ $ph['shop'] }}">{{ __('store.breadcrumb.shop') }}</a> / @endif<span>{{ $ph['crumb'] }}</span></nav>
-@if ($pageHeader['img'])
+@if (isset($ph['live']))
+<div class="{{ $phC['cls']['image'] }}">@include('partials.super-sale-banner', ['ssb' => $ph['live']])</div>
+@elseif ($pageHeader['img'])
 <picture class="{{ $phC['cls']['image'] }}">@if ($pageHeader['img']['two'])<source media="(max-width: {{ \App\Services\PageHeaders::BREAKPOINT }}px)" srcset="{{ $pageHeader['img']['m'] }}">@endif<img src="{{ $pageHeader['img']['d'] }}" alt="{{ $pageHeader['img']['alt'] }}" decoding="async"></picture>
 @endif
 <h1 class="{{ $phC['cls']['title'] }}">{{ $ph['title'] }}@if (isset($ph['count'])) <span class="{{ $phC['cls']['count'] }}">{{ $ph['count'] }}</span>@endif</h1>

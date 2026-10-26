@@ -1,0 +1,339 @@
+{
+ "en-390": {
+  "banner": {
+   "x": 0,
+   "y": 157,
+   "w": 390,
+   "h": 256
+  },
+  "headerPicture": null,
+  "hero": {
+   "x": 0,
+   "y": 157,
+   "w": 390,
+   "h": 172
+  },
+  "gifts": {
+   "x": 0,
+   "y": 329,
+   "w": 390,
+   "h": 84
+  },
+  "model": {
+   "x": 244,
+   "y": 173,
+   "w": 129,
+   "h": 155
+  },
+  "giftIcon": {
+   "x": 18,
+   "y": 357,
+   "w": 27,
+   "h": 27
+  },
+  "thumb": {
+   "x": 182,
+   "y": 351,
+   "w": 41,
+   "h": 41
+  },
+  "thumbsShown": 4,
+  "titleFont": "31.2px",
+  "titleOneLine": true,
+  "titleOverflows": false,
+  "trustStrip": {
+   "x": 0,
+   "y": 461,
+   "w": 390,
+   "h": 81
+  },
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "linksInView": 9,
+  "linksBlocked": [
+   " /product/medicube-age-r-booster-pro/",
+   "Medicube - AGE-R Booster Pro /product/medicube-age-r-booster-pro/"
+  ],
+  "scripts": 12,
+  "stylesheets": 2,
+  "htmlBytes": 116307,
+  "cls": 0,
+  "lcp": "IMG.kbb-card-img 564ms",
+  "status": 200,
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "imageRequests": [
+   "/uploads/appearance/kbb-super-sale-model.webp",
+   "/uploads/ss/15-b-serum.webp",
+   "/uploads/ss/0-b-aqua.webp",
+   "/uploads/ss/2-b-serum.webp",
+   "/uploads/ss/1-b-cream.webp",
+   "/uploads/ss/3-b-wrap.webp",
+   "/uploads/ss/12-senka.webp",
+   "/uploads/ss/8-isntree.webp",
+   "/uploads/gifts/senka.webp",
+   "/uploads/gifts/glowset.webp",
+   "/uploads/gifts/haruharu.webp",
+   "/uploads/gifts/isntree.webp",
+   "/uploads/ss/6-glowset.webp",
+   "/uploads/ss/7-haruharu.webp",
+   "/uploads/ss/11-patch.webp",
+   "/uploads/ss/9-mask.webp",
+   "/uploads/ss/4-cream.webp",
+   "/uploads/ss/5-deo.webp",
+   "/uploads/ss/13-b-aqua.webp"
+  ]
+ },
+ "en-1280": {
+  "banner": {
+   "x": 38,
+   "y": 124,
+   "w": 1205,
+   "h": 330
+  },
+  "headerPicture": null,
+  "hero": {
+   "x": 38,
+   "y": 124,
+   "w": 1205,
+   "h": 215
+  },
+  "gifts": {
+   "x": 38,
+   "y": 339,
+   "w": 1205,
+   "h": 115
+  },
+  "model": {
+   "x": 1002,
+   "y": 154,
+   "w": 200,
+   "h": 185
+  },
+  "giftIcon": {
+   "x": 78,
+   "y": 372,
+   "w": 50,
+   "h": 50
+  },
+  "thumb": {
+   "x": 834,
+   "y": 366,
+   "w": 62,
+   "h": 62
+  },
+  "thumbsShown": 5,
+  "titleFont": "56px",
+  "titleOneLine": true,
+  "titleOverflows": false,
+  "trustStrip": {
+   "x": 0,
+   "y": 536,
+   "w": 1280,
+   "h": 64
+  },
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "linksInView": 24,
+  "linksBlocked": [],
+  "scripts": 12,
+  "stylesheets": 2,
+  "htmlBytes": 121198,
+  "cls": 0,
+  "lcp": "IMG.kbb-card-img 608ms",
+  "status": 200,
+  "consoleErrors": [],
+  "imageRequests": [
+   "/uploads/appearance/kbb-super-sale-model.webp",
+   "/uploads/ss/15-b-serum.webp",
+   "/uploads/ss/0-b-aqua.webp",
+   "/uploads/ss/2-b-serum.webp",
+   "/uploads/ss/1-b-cream.webp",
+   "/uploads/ss/3-b-wrap.webp",
+   "/uploads/ss/12-senka.webp",
+   "/uploads/ss/8-isntree.webp",
+   "/uploads/gifts/senka.webp",
+   "/uploads/gifts/glowset.webp",
+   "/uploads/gifts/haruharu.webp",
+   "/uploads/gifts/isntree.webp",
+   "/uploads/gifts/mask.webp",
+   "/uploads/ss/6-glowset.webp",
+   "/uploads/ss/7-haruharu.webp",
+   "/uploads/ss/11-patch.webp",
+   "/uploads/ss/10-mist.webp",
+   "/uploads/ss/14-b-cream.webp",
+   "/uploads/ss/9-mask.webp",
+   "/uploads/ss/4-cream.webp",
+   "/uploads/ss/5-deo.webp",
+   "/uploads/ss/13-b-aqua.webp"
+  ]
+ },
+ "ar-390": {
+  "banner": {
+   "x": 0,
+   "y": 167,
+   "w": 390,
+   "h": 256
+  },
+  "headerPicture": null,
+  "hero": {
+   "x": 0,
+   "y": 167,
+   "w": 390,
+   "h": 172
+  },
+  "gifts": {
+   "x": 0,
+   "y": 338,
+   "w": 390,
+   "h": 84
+  },
+  "model": {
+   "x": 18,
+   "y": 183,
+   "w": 129,
+   "h": 155
+  },
+  "giftIcon": {
+   "x": 345,
+   "y": 367,
+   "w": 27,
+   "h": 27
+  },
+  "thumb": {
+   "x": 163,
+   "y": 360,
+   "w": 41,
+   "h": 41
+  },
+  "thumbsShown": 4,
+  "titleFont": "31.2px",
+  "titleOneLine": true,
+  "titleOverflows": false,
+  "trustStrip": {
+   "x": 0,
+   "y": 471,
+   "w": 390,
+   "h": 81
+  },
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "linksInView": 9,
+  "linksBlocked": [
+   " /ar/product/medicube-age-r-booster-pro/"
+  ],
+  "scripts": 13,
+  "stylesheets": 2,
+  "htmlBytes": 126335,
+  "cls": 0,
+  "lcp": "IMG.kbb-card-img 472ms",
+  "status": 200,
+  "consoleErrors": [],
+  "imageRequests": [
+   "/uploads/appearance/kbb-super-sale-model.webp",
+   "/uploads/ss/15-b-serum.webp",
+   "/uploads/ss/0-b-aqua.webp",
+   "/uploads/ss/2-b-serum.webp",
+   "/uploads/ss/1-b-cream.webp",
+   "/uploads/ss/3-b-wrap.webp",
+   "/uploads/ss/12-senka.webp",
+   "/uploads/ss/8-isntree.webp",
+   "/uploads/gifts/senka.webp",
+   "/uploads/gifts/glowset.webp",
+   "/uploads/gifts/haruharu.webp",
+   "/uploads/gifts/isntree.webp",
+   "/uploads/ss/6-glowset.webp",
+   "/uploads/ss/7-haruharu.webp",
+   "/uploads/ss/11-patch.webp",
+   "/uploads/ss/9-mask.webp",
+   "/uploads/ss/4-cream.webp",
+   "/uploads/ss/5-deo.webp",
+   "/uploads/ss/13-b-aqua.webp"
+  ]
+ },
+ "ar-1280": {
+  "banner": {
+   "x": 38,
+   "y": 124,
+   "w": 1205,
+   "h": 330
+  },
+  "headerPicture": null,
+  "hero": {
+   "x": 38,
+   "y": 124,
+   "w": 1205,
+   "h": 215
+  },
+  "gifts": {
+   "x": 38,
+   "y": 339,
+   "w": 1205,
+   "h": 115
+  },
+  "model": {
+   "x": 78,
+   "y": 154,
+   "w": 200,
+   "h": 185
+  },
+  "giftIcon": {
+   "x": 1152,
+   "y": 372,
+   "w": 50,
+   "h": 50
+  },
+  "thumb": {
+   "x": 377,
+   "y": 366,
+   "w": 62,
+   "h": 62
+  },
+  "thumbsShown": 5,
+  "titleFont": "52px",
+  "titleOneLine": true,
+  "titleOverflows": false,
+  "trustStrip": {
+   "x": 0,
+   "y": 536,
+   "w": 1280,
+   "h": 64
+  },
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "linksInView": 24,
+  "linksBlocked": [],
+  "scripts": 13,
+  "stylesheets": 2,
+  "htmlBytes": 131226,
+  "cls": 0,
+  "lcp": "DIV.ssb-super 516ms",
+  "status": 200,
+  "consoleErrors": [],
+  "imageRequests": [
+   "/uploads/appearance/kbb-super-sale-model.webp",
+   "/uploads/ss/15-b-serum.webp",
+   "/uploads/ss/0-b-aqua.webp",
+   "/uploads/ss/2-b-serum.webp",
+   "/uploads/ss/1-b-cream.webp",
+   "/uploads/ss/3-b-wrap.webp",
+   "/uploads/ss/12-senka.webp",
+   "/uploads/ss/8-isntree.webp",
+   "/uploads/gifts/senka.webp",
+   "/uploads/gifts/glowset.webp",
+   "/uploads/gifts/haruharu.webp",
+   "/uploads/gifts/isntree.webp",
+   "/uploads/gifts/mask.webp",
+   "/uploads/ss/6-glowset.webp",
+   "/uploads/ss/7-haruharu.webp",
+   "/uploads/ss/11-patch.webp",
+   "/uploads/ss/10-mist.webp",
+   "/uploads/ss/14-b-cream.webp",
+   "/uploads/ss/9-mask.webp",
+   "/uploads/ss/4-cream.webp",
+   "/uploads/ss/5-deo.webp",
+   "/uploads/ss/13-b-aqua.webp"
+  ]
+ }
+}
