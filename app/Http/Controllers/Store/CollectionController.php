@@ -92,6 +92,12 @@ class CollectionController extends Controller
     {
         abort_unless(isset(self::COLLECTIONS[$key]), 404);
 
+        // /new-in/ opens the New Arrivals collection while that keeps itself
+        // (Lane NA; App\Support\NewInLink says why a 301 and how it cannot loop).
+        if ($key === 'new-in' && ($to = \App\Support\NewInLink::target($request)) !== null) {
+            return redirect()->to($to, 301);
+        }
+
         [, , $mode] = self::COLLECTIONS[$key];
 
         [$title, $intro] = $this->wordingFor($key);

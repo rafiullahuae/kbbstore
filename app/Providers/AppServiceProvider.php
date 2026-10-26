@@ -932,6 +932,10 @@ class AppServiceProvider extends ServiceProvider
             \App\Http\Controllers\Store\ShopController::flushSidebarCache();
         });
 
+        // New Arrivals keeps itself (Lane NA): a product write raises a flag,
+        // spent by one sync when the process ends. No query per product.
+        \App\Services\NewArrivals::listen();
+
         \App\Models\Post::saved(function (\App\Models\Post $post) {
             // `cover`, not `image` — the journal row renders posts.cover, and
             // there is no posts.image at all. wasChanged() on a column that does

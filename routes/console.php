@@ -280,3 +280,17 @@ Schedule::command('kbb:analytics-rollup')
 Schedule::command('kbb:order-emirates')
     ->everyMinute()
     ->withoutOverlapping(5);
+
+/*
+| ── NEW ARRIVALS KEEPS ITSELF (Lane NA) ─────────────────────────────────────
+|
+| Catalog -> New Arrivals: the newest products added in the window (default 3
+| months), at most the limit (default 300). Product writes sync when their
+| request ends; this minute run is what ages a product out with nobody
+| touching anything, and lets a scheduled product in at its publish time. A
+| cache read when nothing keeps itself; two reads and no writes when nothing
+| changed (App\Services\NewArrivals).
+*/
+Schedule::command('kbb:new-arrivals-sync')
+    ->everyMinute()
+    ->withoutOverlapping(5);

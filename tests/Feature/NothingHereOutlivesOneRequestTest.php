@@ -183,7 +183,11 @@ it('has nothing that outlives a single request', function () {
     // Tabby orders (one indexed SELECT bounded by --limit when there are none),
     // exits; returns at once while the switch is off. Nothing is held between
     // runs.
-    expect(substr_count($console, 'Schedule::command('))->toBe(13, 'the set of scheduled commands has changed');
+    // 14 with Lane NA: `kbb:new-arrivals-sync`, every minute -- keeps New
+    // Arrivals to its rule (ages products out of the window); a cache read
+    // when nothing keeps itself, two reads and no writes when nothing
+    // changed, exits. Nothing is held between runs.
+    expect(substr_count($console, 'Schedule::command('))->toBe(14, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {
