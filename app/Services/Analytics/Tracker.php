@@ -128,7 +128,13 @@ final class Tracker
             return null;
         }
 
-        $host = self::host((string) $request->input('r', ''), (string) $request->getHost());
+        $title = self::text($request->input('t'), 120);
+
+        if (self::isNotFoundTitle($title)) {
+            return null;
+        }
+
+        $host =self::host((string) $request->input('r', ''), (string) $request->getHost());
         $src = self::utm($request->input('us'), 60);
         $med = self::utm($request->input('um'), 40);
         $click = (string) $request->input('ck', '');
@@ -142,7 +148,7 @@ final class Tracker
             'k' => self::isCheckout($path) ? 2 : 0,
             'e' => $entry,
             'path' => $path,
-            'title' => self::text($request->input('t'), 120),
+            'title' => $title,
             // Source fields describe how a session ARRIVED, so only the first
             // page of one carries them; a later page's referrer is the shop.
             'ref' => $entry ? $host : '',
@@ -188,6 +194,34 @@ final class Tracker
         }
 
         return self::visitor($ip, $ua);
+    }
+
+    /**
+     * Is this the shop's 404 page? (Lane WJ)
+     *
+     * The themed not-found page loads the bundle like every shop page, so its
+     * beacon arrived here and every robot asking for a dead address (mostly
+     * old WordPress ones) became "Page not found · United States · desktop ·
+     * Direct" in Store → Analytics. A missing page is not a page view.
+     *
+     * Decided from the title because it is the one thing the beacon carries
+     * that says so, and it is a CONSTANT (NotFoundPage::LABELS, not an owner
+     * setting): "Page not found" / "الصفحة غير موجودة", with or without the
+     * shop name the layout adds on either side. Server-side on purpose: no
+     * bundle rebuild, and pages already cached in a browser with the old
+     * bundle are refused too. Zero queries.
+     */
+    public static function isNotFoundTitle(string $title): bool
+    {
+        foreach (\App\Support\NotFoundPage::LABELS as $labels) {
+            $nf = $labels['title'];
+
+            if ($title === $nf || str_starts_with($title, $nf.' ') || str_ends_with($title, ' '.$nf)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function isBot(string $ua): bool
