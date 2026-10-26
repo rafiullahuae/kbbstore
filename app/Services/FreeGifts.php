@@ -114,7 +114,17 @@ final class FreeGifts
         'count_two' => [':count gifts', 'هديتان'],
         'count_few' => [':count gifts', ':count هدايا'],
         'count_many' => [':count gifts', ':count هدية'],
+        // THE URGENCY LINE under the box (Lane GU, owner 26 October, design 5
+        // "Fire sweep": "this design is final ... on cart panel, cart page,
+        // checkout summary section, and in the abandoned cart email. need this
+        // only at 4 places. also in arabic too"). Shipped ON with these words
+        // because he asked for it; LOOK['urgency'] switches it off. A leading
+        // emoji is drawn outside the sweep (urgency()).
+        'urgency' => ['🔥 Gifts go fast! Grab yours now', '🔥 الهدايا تنفد بسرعة! احصلي على هديتك الآن'],
     ];
+
+    /** The urgency line is one line: a longer text is refused by the admin and cut here. */
+    public const URGENCY_MAX = 80;
 
     /** The homepage section's data. No storefront section yet: the owner is choosing its design. */
     public const HOME = [
@@ -178,6 +188,7 @@ final class FreeGifts
         'separator' => false,     // a hairline between the opened rows
         'row_gap' => 3,           // px between the opened rows
         'photos' => 'fill5',      // LOOK_PHOTOS: how the closed row sizes its photos
+        'urgency' => true,        // Lane GU: "Gifts go fast" under the box (ON: the owner asked for it)
     ];
 
     public const LOOK_TITLES = ['clamp2', 'fade', 'wrap'];
@@ -290,7 +301,7 @@ final class FreeGifts
         $saved = is_array($saved) ? $saved : [];
         $look = self::LOOK;
 
-        foreach (['brand', 'separator'] as $key) {
+        foreach (['brand', 'separator', 'urgency'] as $key) {
             if (array_key_exists($key, $saved)) {
                 $bool = filter_var($saved[$key], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
                 $look[$key] = is_bool($bool) && ! is_array($saved[$key]) ? $bool : self::LOOK[$key];
@@ -1369,8 +1380,89 @@ final class FreeGifts
             $box['kbbFgRows'], $box['kbbFgThumbs'] ?? null, $box['kbbFgWords'] ?? '',
             $config['look'] ?? null, $config['show_value'] ?? null,
             $this->text('title'), $this->text('view_all'), $this->text('hide'), $this->text('free'),
-            $this->count(self::units($box['kbbFgRows'])),
+            $this->count(self::units($box['kbbFgRows'])), $this->urgency(),
         ])), 0, 12);
+    }
+
+    /**
+     * THE URGENCY LINE (Lane GU): [lead, words] in the language being drawn,
+     * or null while Display -> Gift box look -> "Urgency line under the box"
+     * is off or its text is empty. `lead` is the text's leading emoji or
+     * symbols ("🔥"), drawn in its own colours outside the fire sweep; `words`
+     * the rest. Both are the owner's settings: callers print them escaped.
+     * No query: config() is the free_gifts row the box has already read.
+     *
+     * Drawn only where the caller asks -- the live box (cart panel, cart page,
+     * checkout: box() supplies kbbFgSig) and the basket reminder email --
+     * never on an order's own box or email.
+     *
+     * @return array{lead:string,words:string}|null
+     */
+    public function urgency(): ?array
+    {
+        if (! (self::lookOf($this->config()['look'] ?? null)['urgency'])) {
+            return null;
+        }
+
+        $text = trim(mb_substr($this->text('urgency'), 0, self::URGENCY_MAX));
+        if ($text === '') {
+            return null;
+        }
+
+        return preg_match('/^([^\p{L}\p{N}\s]+)\s+(\S.*)$/us', $text, $m) === 1
+            ? ['lead' => $m[1], 'words' => $m[2]]
+            : ['lead' => '', 'words' => $text];
+    }
+
+    /**
+     * The email's still frame of the sweep (Lane GU): email clients run no
+     * CSS animation, so the reminder prints the line grey with about a fifth
+     * of it -- whole words, nearest the middle -- in the fire colour.
+     * [before, hot, after], each a plain string the caller escapes.
+     *
+     * @return array{0:string,1:string,2:string}
+     */
+    public static function urgencySlice(string $words): array
+    {
+        $parts = preg_split('/(\s+)/u', $words, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY) ?: [];
+        $len = mb_strlen($words);
+        $target = $len * 0.2;
+        $best = null;
+        $offset = 0;
+        $starts = [];
+
+        foreach ($parts as $i => $part) {
+            $starts[$i] = $offset;
+            $offset += mb_strlen($part);
+        }
+
+        // Every run of whole words; the one whose length is nearest a fifth,
+        // then whose centre is nearest the line's centre.
+        foreach ($parts as $i => $part) {
+            if (trim($part) === '') {
+                continue;
+            }
+            for ($j = $i; $j < count($parts); $j++) {
+                if (trim($parts[$j]) === '') {
+                    continue;
+                }
+                $end = $starts[$j] + mb_strlen($parts[$j]);
+                $score = [abs(($end - $starts[$i]) - $target), abs(($starts[$i] + $end) / 2 - $len / 2)];
+                if ($best === null || $score < $best[0]) {
+                    $best = [$score, $i, $j];
+                }
+            }
+        }
+
+        if ($best === null) {
+            return [$words, '', ''];
+        }
+
+        return [
+            implode('', array_slice($parts, 0, $best[1])),
+            implode('', array_slice($parts, $best[1], $best[2] - $best[1] + 1)),
+            implode('', array_slice($parts, $best[2] + 1)),
+        ];
     }
 
     /**

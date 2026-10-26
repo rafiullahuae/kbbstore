@@ -411,7 +411,8 @@ select.fg-in{padding-inline-end:28px}
   var TEXT_GROUPS = [
     ['The box', [['title', 'Box title', ''], ['view_all', 'Open button', ''], ['hide', 'Close button', ''], ['free', 'On each gift', '']]],
     ['Gift count after the wording', [['count_one', '1 gift', ''], ['count_two', '2 gifts', 'Keep :count in English'], ['count_few', '3 to 10 gifts', 'Keep :count'], ['count_many', '11 gifts or more', 'Keep :count']]],
-    ['Elsewhere', [['line', 'Checkout summary line', 'Keep :count'], ['tag', 'Emails, invoice, packing slip', ''], ['availability', 'Basket reminder email, under the gifts', ''], ['basket_cta', 'Basket reminder email, last line in the gift box', ''], ['email_added', 'Paid order emails: gift box heading', ''], ['email_added_note', 'Paid order emails: line under the gifts', '']]]
+    ['Elsewhere', [['line', 'Checkout summary line', 'Keep :count'], ['tag', 'Emails, invoice, packing slip', ''], ['availability', 'Basket reminder email, under the gifts', ''], ['basket_cta', 'Basket reminder email, last line in the gift box', ''], ['email_added', 'Paid order emails: gift box heading', ''], ['email_added_note', 'Paid order emails: line under the gifts', '']]],
+    ['Under the box', [['urgency', 'Urgency line: cart panel, cart page, checkout, basket reminder email', 'One line, up to 80 characters. Switch it off under Gift box look']]]
   ];
   var HOME_FIELDS = [['title', 'Title'], ['sub', 'Subtitle'], ['btn', 'Button'], ['note', 'Line under the gifts (empty = hidden)']];
   var MAX_QTY = 50;
@@ -420,7 +421,7 @@ select.fg-in{padding-inline-end:28px}
      (FreeGiftsLookTest pins them equal), normalised here exactly as
      FreeGifts::lookOf() does, so the preview never shows a value the save
      would not keep. */
-  var LOOK = {"brand":true,"titles":"clamp2","free_gap":16,"title_px":12,"photo_list":28,"photo_row":36,"separator":false,"row_gap":3,"photos":"fill5"}, LOOK_TITLES = ["clamp2","fade","wrap"], LOOK_RANGES = {"free_gap":[0,40],"title_px":[11,16],"photo_list":[22,48],"photo_row":[22,48],"row_gap":[0,16]}, LOOK_PHOTOS = ["fixed","scale","fill5","fill4"];
+  var LOOK = {"brand":true,"titles":"clamp2","free_gap":16,"title_px":12,"photo_list":28,"photo_row":36,"separator":false,"row_gap":3,"photos":"fill5","urgency":true}, LOOK_TITLES = ["clamp2","fade","wrap"], LOOK_RANGES = {"free_gap":[0,40],"title_px":[11,16],"photo_list":[22,48],"photo_row":[22,48],"row_gap":[0,16]}, LOOK_PHOTOS = ["fixed","scale","fill5","fill4"];
   /* FreeGifts::photoTier(): the closed row's size class for n photos (Lane FGP). */
   function photoTier(lk, n) {
     if (lk.photos === 'fixed' || n < 1) return '';
@@ -433,6 +434,7 @@ select.fg-in{padding-inline-end:28px}
   function lookOf(v) {
     v = v && typeof v === 'object' ? v : {};
     var o = { brand: typeof v.brand === 'boolean' ? v.brand : LOOK.brand, separator: typeof v.separator === 'boolean' ? v.separator : LOOK.separator,
+      urgency: typeof v.urgency === 'boolean' ? v.urgency : LOOK.urgency,
       titles: LOOK_TITLES.indexOf(v.titles) >= 0 ? v.titles : LOOK.titles, photos: LOOK_PHOTOS.indexOf(v.photos) >= 0 ? v.photos : LOOK.photos };
     Object.keys(LOOK_RANGES).forEach(function (k) {
       var n = typeof v[k] === 'number' ? v[k] : (typeof v[k] === 'string' && v[k].trim() !== '' ? Number(v[k]) : NaN);
@@ -1733,7 +1735,7 @@ select.fg-in{padding-inline-end:28px}
       return field(label, s);
     }
     function t(key, lang, label) {
-      var i = el('input', { class: 'fg-in', type: 'text', value: c.texts[key + '_' + lang], dir: lang === 'ar' ? 'rtl' : null, lang: lang, disabled: ro, maxlength: 160, 'aria-label': label + (lang === 'ar' ? ' (Arabic)' : ' (English)'), 'data-fk': 't-' + key + lang });
+      var i = el('input', { class: 'fg-in', type: 'text', value: c.texts[key + '_' + lang], dir: lang === 'ar' ? 'rtl' : null, lang: lang, disabled: ro, maxlength: key === 'urgency' ? 80 : 160, 'aria-label': label + (lang === 'ar' ? ' (Arabic)' : ' (English)'), 'data-fk': 't-' + key + lang });
       i.addEventListener('input', function () {
         editCfg().texts[key + '_' + lang] = i.value; c = cfg();
         var bad = (key === 'line' && i.value.indexOf(':count') < 0) || !i.value.trim();
@@ -1766,8 +1768,10 @@ select.fg-in{padding-inline-end:28px}
       return card('Gift box look', 'How each gift reads in the opened list. The preview follows every change.', [
         el('div', { class: 'fg-row', style: 'margin-top:12px;gap:18px;flex-wrap:wrap' }, [
           sw(lk.brand, 'Show brand names', function () { var v = !lookOf(cfg().look).brand; set('brand', v); this.setAttribute('aria-checked', String(v)); }, ro),
-          sw(lk.separator, 'Separator line between gifts', function () { var v = !lookOf(cfg().look).separator; set('separator', v); this.setAttribute('aria-checked', String(v)); }, ro)
+          sw(lk.separator, 'Separator line between gifts', function () { var v = !lookOf(cfg().look).separator; set('separator', v); this.setAttribute('aria-checked', String(v)); }, ro),
+          sw(lk.urgency, 'Urgency line under the box', function () { var v = !lookOf(cfg().look).urgency; set('urgency', v); this.setAttribute('aria-checked', String(v)); }, ro)
         ]),
+        el('p', { class: 'fg-sub', text: '"🔥 Gifts go fast! Grab yours now" under the box, with a moving fire highlight: cart panel, cart page, checkout and the basket reminder email (still there). On, as asked. Its words are under Texts → Under the box.' }),
         el('div', { class: 'fg-look' }, [
           field('Photo row', photos, 'The small photos before "View all". B: one gift 25% bigger, 2–4 gifts 17% bigger, 5 or more fill the box edge to edge, five to a row, then a second row. Sizes grow from "Photo size, closed row".'),
           field('Long titles', titles, 'Up to 2 lines keeps the box short. "Fades" keeps one line and fades its end: the left end for an Arabic name in Arabic; a name in the other language ends in "…".'),

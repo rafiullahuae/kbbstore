@@ -138,6 +138,9 @@ class FreeGiftsController extends Controller
             $textRules['texts.' . $key . '_en'] = ['required', 'string', 'max:160'];
             $textRules['texts.' . $key . '_ar'] = ['required', 'string', 'max:160'];
         }
+        // (Lane GU) The urgency line under the box is one line.
+        $textRules['texts.urgency_en'] = ['required', 'string', 'max:' . FreeGifts::URGENCY_MAX];
+        $textRules['texts.urgency_ar'] = ['required', 'string', 'max:' . FreeGifts::URGENCY_MAX];
 
         $data = $request->validate([
             'show_value' => ['required', 'boolean'],
