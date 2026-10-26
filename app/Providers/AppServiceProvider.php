@@ -309,6 +309,14 @@ class AppServiceProvider extends ServiceProvider
              * ClearPrefetchOnWrite is pushed: it only adds a header to the
              * response of a write (App\Support\InstantNav).
              */
+            /*
+             * Lane WJ. 410 Gone for WordPress probes (/wp-json, /xmlrpc.php,
+             * /wp-login.php ...). Prepended just BEFORE the memo, so it runs
+             * second: inside the memo, ahead of ComingSoonGate/CanonicalHost
+             * and the router, so a probe reads no setting and starts no
+             * session. A redirect row for the path still wins. See the class.
+             */
+            $kernel->prependMiddleware(\App\Http\Middleware\GoneWordPressProbes::class);
             $kernel->prependMiddleware(\App\Http\Middleware\SettingsRequestMemo::class);
             $kernel->pushMiddleware(\App\Http\Middleware\ClearPrefetchOnWrite::class);
         }

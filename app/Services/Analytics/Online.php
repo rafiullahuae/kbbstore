@@ -65,6 +65,11 @@ final class Online
                 return true;
             }
 
+            // Lane WJ: a 404 page is not a page anyone is "on" (Tracker says why).
+            if (Tracker::isNotFoundTitle(Tracker::text($request->input('t'), 120))) {
+                return false;
+            }
+
             $ua = (string) $request->userAgent();
             DB::table('an_online')->upsert(
                 [['v' => $v, 't' => now()->getTimestamp(), 'gone' => 0, 'path' => $path, 'title' => Tracker::text($request->input('t'), 120),
