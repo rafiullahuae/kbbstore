@@ -2936,24 +2936,9 @@ KBB_BH_CSS;
              * control to hide it, not for a page without a visible heading.
              * `[^<]*` for the stylesheet: PageHeaders::CSS has no `<`.
              */
-            /*
-             * THE LIVE SUPER SALE BANNER (Lane SSB). The owner approved it for
-             * /super-sale/ and it ships ON: it takes the header picture's place
-             * (Pages → Page banners → Super Sale banner turns it off). One block
-             * in the header area, between the crumb and the title, on that page
-             * only; `[^<]*` for its stylesheet (SuperSaleBanner::CSS has no
-             * `<`). Must stay ABOVE the title block's rule, which expects the
-             * crumb to be followed by the <h1>. SuperSaleLiveBannerTest pins
-             * what is inside it.
-             */
-            'the live Super Sale banner in the header picture\'s place (Lane SSB)' => [
-                'pattern' => '#<div class="kbb-ph-i"><style id="kbb-ssb-css">[^<]*</style>\n'
-                    .'<div class="kbb-ssb" dir="ltr" data-ssb><div class="ssb-in">\n.*?</div></div>\n</div>\n#s',
-                'hits' => 1,
-            ],
             'the Super Sale title block, configured (Lane PH)' => [
                 'pattern' => '#<style id="kbb-ph-css">[^<]*</style>\n'
-                    .'<div class="sh kbb-ph kbb-ph-nod kbb-ph-nom kbb-ph-wm" style="[^"]*" data-kbb-ph="collection:super-sale">\n'
+                    .'<div class="sh kbb-ph kbb-ph-nod kbb-ph-nom" style="[^"]*" data-kbb-ph="collection:super-sale">\n'
                     .'<nav class="crumb kbb-ph-c kbb-ph-hd kbb-ph-hm"><a href="[^"]*">Home</a> / <span>Super Sale</span></nav>\n'   // Breadcrumbs ship off
                     .'<h1 class="kbb-ph-t">Super Sale <span class="cnt kbb-ph-hd kbb-ph-hm">[^<]*</span></h1>\n'
                     .'<p class="kbb-ph-p kbb-ph-hm">[^<]*</p>\n'   // hidden on a phone, as .sh p always was

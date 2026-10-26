@@ -65,12 +65,6 @@ function phaExpect(string $d, ?string $m): string
 
 beforeEach(function () {
     PageHeaderRoutes::wire($this->app);
-    // Lane SSB: the live Super Sale banner ships ON in the header picture's
-    // place; these cases pin the PICTURE, which is what /super-sale/ draws with
-    // it switched off (SuperSaleLiveBannerTest pins both).
-    app(SettingsService::class)->set(\App\Support\SuperSaleBanner::KEY, ['on' => false]);
-    \App\Models\Setting::flushMap();
-    SettingsService::forgetMemo();
     phaArabicOn();
 });
 

@@ -588,57 +588,6 @@ final class FreeGifts
         ];
     }
 
-    /**
-     * THE SUPER SALE BANNER'S GIFT ROW (Lane SSB, App\Support\SuperSaleBanner):
-     * the gifts the shop gives right now, picked exactly as the cart's box
-     * picks them -- linesFor() over the compiled ranges in date today, so a
-     * sold-out main gift gives way to its backup and a gift nobody can get is
-     * never shown. $band: 'all' (every such range, each product once), 'first'
-     * or 'last' (the smallest / biggest basket's range), or 'range:<id>'.
-     * Full-size first, as the homepage section orders its photos.
-     *
-     * Nothing at all -- and no query -- when gifts are off for this visitor
-     * (visibleTo(), the same rule as the box) or no range is running. Otherwise
-     * ONE product query for every range together (products(), memoised on the
-     * request), so the cost is flat however many gifts or products there are.
-     *
-     * @return list<array{product:Product,product_id:int,quantity:int,value:int,range_id:int,range_label:string,kind:?string,backup:bool}>
-     */
-    public function bannerLines(?\Illuminate\Http\Request $request, string $band = 'all'): array
-    {
-        if (! $this->visibleTo($request)) {
-            return [];
-        }
-
-        $today = StoreTime::today()->format('Y-m-d');
-        $ranges = array_values(array_filter($this->ranges(), static fn (array $r) => $r['gifts'] !== []
-            && (($r['starts'] ?? null) === null || $today >= $r['starts'])
-            && (($r['ends'] ?? null) === null || $today <= $r['ends'])));
-
-        if (str_starts_with($band, 'range:')) {
-            $id = (int) substr($band, 6);
-            $ranges = array_values(array_filter($ranges, static fn (array $r) => (int) $r['id'] === $id));
-        } elseif ($band === 'first' || $band === 'last') {
-            // ranges() is lowest first.
-            $ranges = $ranges === [] ? [] : [$band === 'first' ? $ranges[0] : $ranges[count($ranges) - 1]];
-        }
-
-        if ($ranges === []) {
-            return [];
-        }
-
-        $products = $this->products(array_merge(...array_map(static fn (array $r) => array_map(static fn (array $g) => (int) $g[0], $r['gifts']), $ranges)));
-        $lines = [];
-
-        foreach ($ranges as $r) {
-            foreach ($this->linesFor($r, $products) as $line) {
-                $lines[$line['product_id']] ??= $line;
-            }
-        }
-
-        return self::fullFirst(array_values($lines));
-    }
-
     /** One text in the language being drawn (the order's, inside OrderLocale::render()). */
     public function text(string $key, array $replace = []): string
     {

@@ -58,10 +58,6 @@ function ssabCleanup(): void
 beforeEach(function () {
     PageHeaderRoutes::wire($this->app);
     Setting::query()->updateOrCreate(['key' => Locale::SETTING_ENABLED], ['value' => '1', 'autoload' => true]);
-    // Lane SSB: the live Super Sale banner ships ON and takes the header
-    // picture's place. These cases pin the PICTURE path, which is what the page
-    // draws with that banner switched off (SuperSaleLiveBannerTest pins both).
-    app(SettingsService::class)->set(\App\Support\SuperSaleBanner::KEY, ['on' => false]);
     Setting::flushMap();
     SettingsService::forgetMemo();
     Product::create(['slug' => 'ssab-1', 'name' => 'SSAB 1', 'type' => 'simple', 'status' => 'publish',

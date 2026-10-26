@@ -26,16 +26,11 @@
     if ($shopLinks ?? true) {
         $phParts['button'] = ['href' => Url::to('/shop/'), 'label' => __('store.collection.all_products')];
     }
-    // Lane SSB: /super-sale/'s live banner takes the header picture's place.
-    if (! empty($ssb)) {
-        $phParts['live'] = $ssb;
-    }
 @endphp
 @include('partials.page-top', ['ph' => $phParts])
 @endif
 @if (($ktrSale ?? null) !== null && ! empty($pageTop))@include('partials.trust-strip', ['v' => 'bare', 'cls' => $ktrSale])@endif
 <section class="sec"><div class="wrap">
-@if (empty($pageTop) && ! empty($ssb))@include('partials.super-sale-banner', ['ssb' => $ssb])@endif
 @if (empty($pageTop))
     <nav class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <span>{{ $title }}</span></nav>
 

@@ -61,12 +61,6 @@ function fwWrapClass(string $html): string
 
 beforeEach(function () {
     PageHeaderRoutes::wire($this->app);
-    // Lane SSB: the live Super Sale banner ships ON in the header picture's
-    // place; these cases pin the PICTURE, which is what /super-sale/ draws with
-    // it switched off (SuperSaleLiveBannerTest pins both).
-    app(SettingsService::class)->set(\App\Support\SuperSaleBanner::KEY, ['on' => false]);
-    \App\Models\Setting::flushMap();
-    SettingsService::forgetMemo();
     SettingsService::forgetMemo();
     for ($i = 1; $i <= 2; $i++) {
         Product::create(['slug' => "fw-{$i}", 'name' => "FW {$i}", 'type' => 'simple', 'status' => 'publish',
