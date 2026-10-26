@@ -96,7 +96,7 @@ final class SuperSaleBanner
 
     public const MAX_TEXT = 60;
 
-    /** Gift photos drawn: six on a computer, the first four on a phone (bigger photos, as he asked, need the room). */
+    /** Gift photos drawn: six on a computer, the first five on a phone. */
     public const MAX_GIFTS = 6;
 
     /** --u's ceiling per device, in px: a size stored in px is px at that width. */
@@ -129,8 +129,8 @@ final class SuperSaleBanner
         // code, and a property --ssb-code-c with a colour after it is exactly that.
         'clabel' => ['Coupon label', '.ssb-coupon>span', 3.5, 2.2, 700, '#2A2228', 'inline', true, true],
         'cvalue' => ['Coupon code', '.ssb-coupon b', 3.5, 2.2, 800, '#C3306A', 'inline', true, true],
-        'gifts' => ['Gift row text', '.ssb-gi', 3.1, 2.1, 800, '#2E8F62', 'inline-flex', true, true],
-        'free' => ['FREE chip', '.ssb-free', 2.6, 1.7, 800, '#2E8F62', 'inline-flex', true, true],
+        'gifts' => ['Gift row text', '.ssb-gi', 3.0, 2.0, 800, '#2E8F62', 'inline-flex', true, true],
+        'free' => ['FREE chip', '.ssb-free', 2.7, 1.7, 800, '#2E8F62', 'inline-flex', true, true],
     ];
 
     /** Every property of an element, in the order styleAttr() prints them. */
@@ -220,15 +220,15 @@ final class SuperSaleBanner
 
         // The hairline under the gift row (the owner, version 14 of the study):
         // an INSET shadow, so not one pixel of height changes.
-        '& .ssb-gifts{display:flex;align-items:center;gap:calc(var(--u)*1.5);background:rgba(255,255,255,.74);border-top:calc(var(--u)*.16) solid rgba(46,143,98,.3);box-shadow:inset 0 calc(var(--u)*-.16) 0 rgba(46,143,98,.3);padding:calc(var(--u)*5.4) calc(var(--u)*4.5)}',
-        '& .ssb-gi{display:inline-flex;align-items:center;gap:calc(var(--u)*1.3);flex:0 1 auto;max-width:calc(var(--u)*38);min-width:0}',
-        '& .ssb-gic{flex:none;display:block;color:#e4457c;width:calc(var(--u)*7);height:calc(var(--u)*7)}',
-        '& .ssb-gi span{line-height:1.12;text-wrap:balance;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}',
+        '& .ssb-gifts{display:flex;align-items:center;gap:calc(var(--u)*1.5);background:rgba(255,255,255,.74);border-top:calc(var(--u)*.16) solid rgba(46,143,98,.3);box-shadow:inset 0 calc(var(--u)*-.16) 0 rgba(46,143,98,.3);padding:calc(var(--u)*3.4) calc(var(--u)*4.5)}',
+        '& .ssb-gi{display:inline-flex;align-items:center;gap:calc(var(--u)*1.3);flex:0 0 auto;max-width:calc(var(--u)*30);min-width:0}',
+        '& .ssb-gic{flex:none;display:block;color:#e4457c;width:calc(var(--u)*5.8);height:calc(var(--u)*5.8)}',
+        '& .ssb-gi span{line-height:1.12;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}',
         '& .ssb-circs{display:flex;align-items:center;margin-inline-start:auto;min-width:0}',
-        '& .ssb-c{position:relative;flex:none;border-radius:50%;background:#fff;border:calc(var(--u)*.45) solid #fff;width:calc(var(--u)*10.5);height:calc(var(--u)*10.5);margin-inline-start:calc(var(--u)*-2);box-shadow:0 calc(var(--u)*.4) calc(var(--u)*1.2) calc(var(--u)*-.3) rgba(42,34,40,.3);box-sizing:border-box}',
+        '& .ssb-c{position:relative;flex:none;border-radius:50%;background:#fff;border:calc(var(--u)*.45) solid #fff;width:calc(var(--u)*9);height:calc(var(--u)*9);margin-inline-start:calc(var(--u)*-1.3);box-shadow:0 calc(var(--u)*.4) calc(var(--u)*1.2) calc(var(--u)*-.3) rgba(42,34,40,.3);box-sizing:border-box}',
         '& .ssb-c:first-child{margin-inline-start:0}',
         '& .ssb-c img,.kbb-ph>.kbb-ph-i & .ssb-c img{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;object-fit:cover;border-radius:50%;background:#fff}',
-        '& .ssb-free{display:inline-flex;align-items:center;flex:none;background:#eaf7f0;border:calc(var(--u)*.26) dashed #2e8f62;border-radius:var(--u);letter-spacing:.06em;text-transform:uppercase;padding:calc(var(--u)*.7) calc(var(--u)*1.5);margin-inline-start:calc(var(--u)*.8);line-height:1.2}',
+        '& .ssb-free{display:inline-flex;align-items:center;flex:none;background:#eaf7f0;border:calc(var(--u)*.26) dashed #2e8f62;border-radius:var(--u);letter-spacing:.06em;text-transform:uppercase;padding:calc(var(--u)*.8) calc(var(--u)*1.8);margin-inline-start:calc(var(--u)*1.2);line-height:1.2}',
         // The on-page "Edit header" panel (page-header-editor.js) previews the
         // header's picture by inserting a <picture> beside this banner; while
         // the banner is on, that picture is not what the shop shows.
@@ -243,7 +243,7 @@ final class SuperSaleBanner
 
     /** Phone only (900px and under, or the editor's phone preview). */
     private const PHONE = [
-        '& .ssb-c:nth-child(n+5){display:none}',
+        '& .ssb-c:nth-child(n+6){display:none}',
         '&[dir=rtl] .ssb-copy{gap:calc(var(--u)*var(--ssb-gm,.9))}',
         '& .ssb-model{--ssb-fp:var(--ssb-fpm)}',
     ];
@@ -271,10 +271,13 @@ final class SuperSaleBanner
         '& .ssb-mode-rect img,.kbb-ph>.kbb-ph-i & .ssb-mode-rect img{position:static;height:100%;object-fit:cover;object-position:var(--ssb-fpd,50% 50%)}',
         '& .ssb-mode-rect.ssb-fit-contain img,.kbb-ph>.kbb-ph-i & .ssb-mode-rect.ssb-fit-contain img{object-fit:contain}',
         '& .ssb-mode-rect::before{content:none}',
-        '& .ssb-gifts{gap:calc(var(--u)*2);padding:calc(var(--u)*2.6) calc(var(--u)*4)}',
-        '& .ssb-gi{gap:calc(var(--u)*1.2);max-width:calc(var(--u)*28)}',
-        '& .ssb-gic{width:calc(var(--u)*5);height:calc(var(--u)*5)}',
-        '& .ssb-c{width:calc(var(--u)*6.2);height:calc(var(--u)*6.2);margin-inline-start:calc(var(--u)*-1.3)}',
+        // The gift row as the approved study drew it (the owner, 26 October:
+        // "reverse the gifts row height to previously"); only the hairline
+        // under it is new.
+        '& .ssb-gifts{gap:calc(var(--u)*2);padding:calc(var(--u)*1.6) calc(var(--u)*4)}',
+        '& .ssb-gi{gap:calc(var(--u)*1.1);max-width:calc(var(--u)*26)}',
+        '& .ssb-gic{width:calc(var(--u)*4.3);height:calc(var(--u)*4.3)}',
+        '& .ssb-c{width:calc(var(--u)*5.6);height:calc(var(--u)*5.6)}',
         '& .ssb-free{padding:calc(var(--u)*.55) calc(var(--u)*1.5);margin-inline-start:var(--u)}',
     ];
 
