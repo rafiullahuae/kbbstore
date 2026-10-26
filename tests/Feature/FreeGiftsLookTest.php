@@ -117,7 +117,7 @@ it('falls back to the default for a bad value and clamps every number to its ran
      */
     expect(FreeGifts::lookOf(null))->toBe(FreeGifts::LOOK)
         ->and(FreeGifts::lookOf('nonsense'))->toBe(FreeGifts::LOOK)
-        ->and(FreeGifts::LOOK)->toBe(['brand' => true, 'titles' => 'clamp2', 'free_gap' => 16, 'title_px' => 12, 'photo_list' => 28, 'photo_row' => 36, 'separator' => false, 'row_gap' => 3, 'photos' => 'fill5']);
+        ->and(FreeGifts::LOOK)->toBe(['brand' => true, 'titles' => 'clamp2', 'free_gap' => 16, 'title_px' => 12, 'photo_list' => 28, 'photo_row' => 36, 'separator' => false, 'row_gap' => 3, 'photos' => 'fill5', 'urgency' => true]);
 
     $bad = FreeGifts::lookOf([
         'brand' => 'maybe', 'separator' => ['x'], 'titles' => 'marquee',
@@ -153,7 +153,7 @@ it('saves the look from Display through the same normalising, and keeps it when 
     ]])->assertOk();
 
     $saved = app(SettingsService::class)->get(FreeGifts::KEY)['look'];
-    expect($saved)->toBe(['brand' => false, 'titles' => 'clamp2', 'free_gap' => 40, 'title_px' => 14, 'photo_list' => 28, 'photo_row' => 36, 'separator' => true, 'row_gap' => 3, 'photos' => 'fill5']);
+    expect($saved)->toBe(['brand' => false, 'titles' => 'clamp2', 'free_gap' => 40, 'title_px' => 14, 'photo_list' => 28, 'photo_row' => 36, 'separator' => true, 'row_gap' => 3, 'photos' => 'fill5', 'urgency' => true]);
 
     // An older console (no "look" in the body) leaves the saved look alone.
     test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/settings', $body)->assertOk();
@@ -291,8 +291,8 @@ it('costs the cart page no query for the look: the same count with or without on
     [$without, $a] = $count(null);
     [$with, $b] = $count(['brand' => false, 'titles' => 'fade', 'separator' => true, 'free_gap' => 30, 'title_px' => 15, 'photo_list' => 44, 'photo_row' => 44, 'row_gap' => 9]);
 
-    expect($a)->toContain('<fieldset class="fgb fgb-page fgb-clamp2 fgb-k2"')
-        ->and($b)->toContain('<fieldset class="fgb fgb-page fgb-nobrand fgb-fade fgb-sep fgb-k2" style="--fg-ts:15px;--fg-pl:44px;--fg-pr:44px;--fg-fg:30px;--fg-rg:9px" data-fgs="')
+    expect($a)->toContain('<fieldset class="fgb fgb-page fgb-clamp2 fgb-k2 fgb-hu"')
+        ->and($b)->toContain('<fieldset class="fgb fgb-page fgb-nobrand fgb-fade fgb-sep fgb-k2 fgb-hu" style="--fg-ts:15px;--fg-pl:44px;--fg-pr:44px;--fg-fg:30px;--fg-rg:9px" data-fgs="')
         ->and($with)->toBe($without);
 
     // And the box itself, drawn once the settings row has been read (as the

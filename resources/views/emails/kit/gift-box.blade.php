@@ -17,6 +17,15 @@
             "depending on availability")
     $cta    optional closing line at the very bottom, green and bold (the
             basket reminder's "Don't miss out on your FREE GIFTS!", text basket_cta)
+    $urgency  true on the basket reminder ONLY (Lane GU, owner 26 October:
+            "on cart panel, cart page, checkout summary section, and in the
+            abandoned cart email. need this only at 4 places"): the shop's
+            "🔥 Gifts go fast! Grab yours now" line, centred under the box,
+            outside its border. Email clients run no CSS animation, so it is
+            the sweep's still frame: grey, with about a fifth of the words
+            (FreeGifts::urgencySlice()) in the fire colour. Inline styles, a
+            table row. Nothing while Display -> Gift box look -> "Urgency line
+            under the box" is off.
     $added  true on a successful order's emails: the heading says the gifts
             were added to the order and the line that they arrive with it
             (texts email_added / email_added_note)
@@ -54,5 +63,8 @@
 @if ($note !== '')<tr><td style="padding:8px 0 0;border-top:1px dashed {{ $gbG }};font-family:{!! $k['sans'] !!};font-size:12px;line-height:1.5;color:#5F6B65;">{{ $note }}</td></tr>@endif
 @if (($cta ?? '') !== '')<tr><td style="padding:{{ $note !== '' ? '6px' : '8px' }} 0 0;{{ $note !== '' ? '' : 'border-top:1px dashed ' . $gbG . ';' }}font-family:{!! $k['sans'] !!};font-size:13.5px;line-height:1.45;font-weight:700;color:{{ $gbG }};">{{ $cta }}</td></tr>@endif
 </table></td></tr>
+@php $gbU = ($urgency ?? false) === true ? $gbFg->urgency() : null; @endphp
+@if ($gbU !== null)@php [$gbU1, $gbU2, $gbU3] = \App\Services\FreeGifts::urgencySlice($gbU['words']); @endphp
+<tr><td colspan="3" align="center" style="padding:12px 0 0;text-align:center;font-family:{!! $k['sans'] !!};font-size:12.5px;line-height:18px;font-weight:800;color:#9a9298;">@if ($gbU['lead'] !== ''){{ $gbU['lead'] }}&nbsp;@endif{{ $gbU1 }}<span style="color:#f0532d;">{{ $gbU2 }}</span>{{ $gbU3 }}</td></tr>@endif
 </table></td></tr>
 @endif
