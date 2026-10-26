@@ -196,6 +196,7 @@ export async function start() {
     if (state.ctx.edit && !(ch && state.ctx.edit.type === 'category' && !ch.legacy_banner)) drawPencil(state.ctx.edit);
     if (state.ctx.pageheader) drawHeaderPill(state.ctx.pageheader);
     if (ch) drawCategoryPill(ch);
+    if (state.ctx.salebanner) drawSaleBannerPill(state.ctx.salebanner);
 
     return state;
 }
@@ -367,6 +368,36 @@ function drawHeaderPill(ph) {
                 .catch(() => toast('The header editor could not load. Reload the page and try again.'));
         },
     }, svg(ICON.pencil), h('span', { text: 'Edit header' }));
+
+    host.classList.add('kbb-qe-host');
+    host.appendChild(pill);
+}
+
+/* ------------------------------------------- Super Sale banner (Lane SSB) */
+
+/**
+ * "Edit banner" on /super-sale/: every option of the live banner, previewed
+ * in place. The context answers `salebanner` only there and only to a role
+ * with pagebanners.manage. The panel is its own chunk, fetched on the first
+ * press, as the header panels are. It sits at the banner's top-left corner,
+ * because "Edit header" holds the top-right.
+ */
+function drawSaleBannerPill(sb) {
+    const banner = document.querySelector('.kbb-ssb[data-ssb]');
+    const host = banner ? banner.parentNode : (document.querySelector('.kbb-ph>picture.kbb-ph-i')?.parentNode || document.querySelector('[data-kbb-ph]'));
+    if (!host) return;
+
+    const pill = h('button', {
+        type: 'button',
+        class: 'kbb-qe-pill kbb-qe-pill--start',
+        'aria-haspopup': 'dialog',
+        'aria-label': 'Edit the Super Sale banner',
+        onclick: () => {
+            import('./super-sale-banner-editor.js')
+                .then((m) => m.openPanel(sb, state.ctx.csrf, pill, toast))
+                .catch(() => toast('The banner editor could not load. Reload the page and try again.'));
+        },
+    }, svg(ICON.pencil), h('span', { text: 'Edit banner' }));
 
     host.classList.add('kbb-qe-host');
     host.appendChild(pill);

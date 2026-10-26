@@ -117,6 +117,11 @@ use Tests\Support\KeyOrder;
  * ▲ Lane FG2 re-recorded (KBB_S7_RECORD=1), diff read as data: `free_gifts`
  * gains `"mode":"off","testers":[]`, written by 2027_11_23_100100_free_gifts_mode
  * (the switch becomes Off / Testing / Live). One line; nothing else moved.
+ *
+ * ▲ Lane SSB re-recorded (KBB_S7_RECORD=1), diff read as data: the settings
+ * body gains `super_sale_banner`, the row 2027_12_26_100001 writes on a shop
+ * with no GLOW coupon (the live banner, shipped with its coupon line off).
+ * One key; nothing else moved.
  */
 function s7PayloadUrls(): array
 {

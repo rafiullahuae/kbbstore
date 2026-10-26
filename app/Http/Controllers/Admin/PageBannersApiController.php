@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Services\PageBanners;
 use App\Services\SettingsService;
 use App\Support\SuperSale;
+use App\Support\SuperSaleBanner;
 use App\Support\Url;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -36,10 +37,19 @@ class PageBannersApiController extends Controller
 
     public function save(Request $request): JsonResponse
     {
+        // (Lane SSB) The on-page "Edit banner" saves the Super Sale banner
+        // alone, through this same endpoint and capability.
+        if (! $request->exists('banners') && $request->exists('super_sale_banner')) {
+            return $this->saveSaleBanner($request);
+        }
+
         $data = $request->validate([
             'banners' => ['present', 'array'],
             'assign' => ['present', 'array'],
             'super_sale_source' => ['required', 'string', 'max:40'],
+            // (Lane SSB) The live Super Sale banner. Optional, so a screen
+            // that predates it still saves what it always saved.
+            'super_sale_banner' => ['sometimes', 'array'],
         ]);
 
         $source = $data['super_sale_source'];
@@ -54,6 +64,12 @@ class PageBannersApiController extends Controller
             $rejected['super_sale_source'] = 'Super Sale products';
         }
 
+        $saleBanner = null;
+        if (array_key_exists('super_sale_banner', $data)) {
+            [$saleBanner, $bannerRejected] = $this->cleanSaleBanner($data['super_sale_banner']);
+            $rejected += $bannerRejected;
+        }
+
         if ($rejected !== []) {
             return response()->json([
                 'ok' => false,
@@ -64,6 +80,9 @@ class PageBannersApiController extends Controller
 
         $this->banners->save($in);
         $this->settings->set(SuperSale::KEY, $source);
+        if ($saleBanner !== null) {
+            $this->settings->set(SuperSaleBanner::KEY, $saleBanner);
+        }
 
         return response()->json(['ok' => true] + $this->payload());
     }
@@ -154,7 +173,73 @@ class PageBannersApiController extends Controller
             // Strip item device choice (Lane PH): value => label.
             'devices' => array_map(static fn (string $v, string $l): array => ['value' => $v, 'label' => $l], array_keys(PageBanners::DEVICES), PageBanners::DEVICES),
             'super_sale' => $this->superSale(),
+            'sale_banner' => $this->saleBanner(),
         ];
+    }
+
+    /**
+     * (Lane SSB) Pages → Page banners → Super Sale banner: the stored config,
+     * the words' labels and defaults, and which gifts the row can show -- the
+     * compiled ranges (a settings row already loaded: no query).
+     */
+    /**
+     * (Lane SSB) POST /admin-api/page-banners with only `super_sale_banner`:
+     * the on-page editor's Save. All or nothing, like the screen's.
+     */
+    private function saveSaleBanner(Request $request): JsonResponse
+    {
+        $data = $request->validate(['super_sale_banner' => ['required', 'array']]);
+        [$clean, $rejected] = $this->cleanSaleBanner($data['super_sale_banner']);
+
+        if ($rejected !== []) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Not saved — check: '.implode(', ', array_unique(array_values($rejected))),
+                'message' => 'Not saved — check: '.implode(', ', array_unique(array_values($rejected))),
+                'rejected' => array_keys($rejected),
+            ], 422);
+        }
+
+        $this->settings->set(SuperSaleBanner::KEY, $clean);
+
+        return response()->json(['ok' => true, 'sale_banner' => $this->saleBanner()]);
+    }
+
+    /**
+     * The banner as it will be stored, and what was refused. Two checks only
+     * the server can make, both on save so the page spends nothing on them:
+     * the coupon code must be one of this shop's coupons (a public page never
+     * offers a code the shop has not got -- PublicPagesQuoteRealPricesTest),
+     * and each picture's transparency is read from its file
+     * (SuperSaleBanner::hasAlpha()); a flag the browser sent is never kept.
+     *
+     * @return array{0: array, 1: array<string,string>}
+     */
+    private function cleanSaleBanner(array $in): array
+    {
+        [$clean, $bad] = SuperSaleBanner::sanitize($in, true);
+        $rejected = [];
+        foreach ($bad as $k => $label) {
+            $rejected['super_sale_banner.'.$k] = 'Super Sale banner: '.$label;
+        }
+
+        if ($clean['code'] !== '' && ! \App\Models\Coupon::query()->code($clean['code'])->exists()) {
+            $rejected['super_sale_banner.code'] = 'Super Sale banner: coupon code '.$clean['code'].' is not one of this shop\'s coupons';
+        }
+
+        $clean['alpha'] = [];
+        foreach (SuperSaleBanner::SLOTS as $slot => $_) {
+            if ($clean[$slot] !== '' && SuperSaleBanner::hasAlpha($clean[$slot])) {
+                $clean['alpha'][$slot] = true;
+            }
+        }
+
+        return [$clean, $rejected];
+    }
+
+    private function saleBanner(): array
+    {
+        return SuperSaleBanner::editorContext($this->settings->all(), request());
     }
 
     /**

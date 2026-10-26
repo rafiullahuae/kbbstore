@@ -22,6 +22,9 @@
       Where they show     one select per custom page — the four curated
                           listings and every routed content page
       Super Sale products which products /super-sale/ lists
+      Super Sale banner   the live banner on /super-sale/ (Lane SSB): on/off,
+                          its words in English and Arabic, the coupon code,
+                          the model picture and which free gifts it shows
 
     ── THE PREVIEW IS THE SHOP'S OWN MARKUP AND CSS ─────────────────────────
 
@@ -110,7 +113,7 @@
   if (window.kbbDrafts) window.kbbDrafts.track({
     id: SCREEN, screen: SCREEN, label: 'Pages → Page banners',
     values: function () { return data ? { state: JSON.stringify(state()) } : null; },
-    set: function (k, v) { if (k === 'state' && data) { try { var s = JSON.parse(v); data.banners = s.banners; data.assign = s.assign; data.super_sale.source = s.super_sale_source; } catch (e) {} } },
+    set: function (k, v) { if (k === 'state' && data) { try { var s = JSON.parse(v); data.banners = s.banners; data.assign = s.assign; data.super_sale.source = s.super_sale_source; if (s.super_sale_banner && data.sale_banner) data.sale_banner.config = s.super_sale_banner; } catch (e) {} } },
     render: function () { render(); },
     save: function () { save(); }
   });
@@ -173,7 +176,9 @@
   };
 
   function state() {
-    return { banners: data.banners, assign: data.assign, super_sale_source: data.super_sale.source };
+    var out = { banners: data.banners, assign: data.assign, super_sale_source: data.super_sale.source };
+    if (data.sale_banner) out.super_sale_banner = data.sale_banner.config;
+    return out;
   }
 
   function take(body) {
@@ -381,6 +386,39 @@
       + '<p class="pbs-help" style="margin-top:10px"><b>Running the campaign.</b> Add or remove a product: <b>Catalog → Product editor → Categories</b>, tick or untick <b>Super Sale</b>. Change the order: <b>Catalog → Catalog → Reorder</b>, choose <b>Super Sale</b>, drag, Save. That order is Super Sale\'s own: saving it moves no other category or brand page, and theirs never move it.</p>';
   }
 
+  /* ── (Lane SSB) THE LIVE SUPER SALE BANNER ──────────────────────────────
+     Every control the on-page "Edit banner" has -- the words, each text
+     element's size, colour, weight, offset and visibility per device and
+     per language, the pictures, the gifts -- from ONE module,
+     resources/js/kbb/admin/super-sale-banner-editor.js, imported by its
+     manifest address as Pages → Page header imports its own. It edits
+     data.sale_banner.config in place, which state() saves with the rest; its
+     preview is built in the browser from the payload: no request until Save. */
+  var ssbMod = null, ssbUi = { lang: 'en', dev: 'd' };
+
+  function ssbTab() {
+    var sb = data.sale_banner;
+    if (!sb) return '<p class="pbs-help">This server does not have the live Super Sale banner yet.</p>';
+    return '<p class="pbs-sub" style="margin-top:0">The live banner at the top of <a href="' + esc(sb.url) + '" target="_blank" rel="noopener">/super-sale/</a> (and <a href="' + esc(sb.url_ar) + '" target="_blank" rel="noopener">/ar/super-sale/</a>), in the place of the header picture. The same controls are on the page itself: open it signed in and press <b>Edit banner</b>.</p>'
+      + '<div data-pbs-ssbhost style="margin-top:12px"><div class="pbs-empty">Loading the banner controls…</div></div>';
+  }
+
+  function mountSsb() {
+    var hostEl = document.querySelector('[data-pbs-ssbhost]');
+    if (!hostEl || !data || !data.sale_banner) return;
+    var go = function () {
+      hostEl.__ssb = ssbUi;
+      ssbMod.mountConsole(hostEl, data.sale_banner, function () { return { 'X-XSRF-TOKEN': cookie('XSRF-TOKEN') }; }, function () {});
+    };
+    if (ssbMod) { go(); return; }
+    var ed = data.sale_banner.editor;
+    if (!ed || ed.charAt(0) !== '/' || ed.charAt(1) === '/') { hostEl.textContent = 'The banner controls are not built on this server yet (run the asset build).'; return; }
+    import(ed).then(function (m) {
+      ssbMod = m;
+      if (document.querySelector('[data-pbs-ssbhost]') === hostEl) go();
+    }).catch(function () { hostEl.textContent = 'The banner controls could not load. Reload the page and try again.'; });
+  }
+
   function render() {
     var host = document.querySelector('#content');
     if (!host || (document.querySelector('#ptitle') || {}).textContent !== TITLE) return;
@@ -395,8 +433,8 @@
       var st = document.createElement('style'); st.id = 'pbs-shop-css'; st.textContent = data.css; document.head.appendChild(st); cssIn = true;
     }
 
-    var tabs = [['banners', 'Banners'], ['pages', 'Where they show'], ['sale', 'Super Sale products']];
-    var body = open === 'pages' ? pagesTab() : (open === 'sale' ? saleTab() : bannersTab());
+    var tabs = [['banners', 'Banners'], ['pages', 'Where they show'], ['sale', 'Super Sale products'], ['ssb', 'Super Sale banner']];
+    var body = open === 'pages' ? pagesTab() : (open === 'sale' ? saleTab() : (open === 'ssb' ? ssbTab() : bannersTab()));
 
     host.innerHTML = '<div class="pbs-wrap"><div class="pbs-card">'
       + '<div class="pbs-title">' + TITLE + '</div>'
@@ -405,16 +443,17 @@
       + '<div class="pbs-tabs" role="tablist">' + tabs.map(function (t) {
         return '<button type="button" class="pbs-tab" role="tab" data-pbs-tab="' + t[0] + '" aria-selected="' + (open === t[0]) + '">' + t[1] + '</button>';
       }).join('') + '</div>'
-      + '<p class="ectabs-hint pbs-help" style="margin-top:8px"><b>Banners</b> is the pictures and strips themselves; <b>Where they show</b> puts one on a page; <b>Super Sale products</b> chooses what /super-sale/ lists. One Save stores all three.</p>'
+      + '<p class="ectabs-hint pbs-help" style="margin-top:8px"><b>Banners</b> is the pictures and strips themselves; <b>Where they show</b> puts one on a page; <b>Super Sale products</b> chooses what /super-sale/ lists; <b>Super Sale banner</b> is the live banner at its top. One Save stores them all.</p>'
       + '</div>'
-      + '<div class="pbs-grid"><div class="pbs-card">' + body
+      + (open === 'ssb' ? '<div class="pbs-card">' : '<div class="pbs-grid"><div class="pbs-card">') + body
       + '<div class="pbs-actions"><button type="button" class="pbs-btn is-primary" data-pbs-save' + (busy ? ' disabled' : '') + '>' + (busy ? 'Saving…' : 'Save') + '</button>'
       + '<button type="button" class="pbs-btn" data-pbs-reload' + (busy ? ' disabled' : '') + '>Reload</button></div></div>'
-      + '<div class="pbs-card pbs-sticky"><div class="pbs-title">Preview</div><p class="pbs-sub">The shop\'s own markup and stylesheet' + (b() ? ' for “' + esc(b().name) + '”' : '') + '.</p>'
+      + (open === 'ssb' ? '</div>' : '<div class="pbs-card pbs-sticky"><div class="pbs-title">Preview</div><p class="pbs-sub">The shop\'s own markup and stylesheet' + (b() ? ' for “' + esc(b().name) + '”' : '') + '.</p>'
       + '<div class="pbs-bar"><button type="button" class="pbs-btn" data-pbs-dev="m" aria-pressed="' + (dev === 'm') + '">Phone</button><button type="button" class="pbs-btn" data-pbs-dev="d" aria-pressed="' + (dev === 'd') + '">Desktop</button></div>'
-      + '<div data-pbs-stagehost></div></div></div></div>';
+      + '<div data-pbs-stagehost></div></div></div></div>');
 
     drawStage();
+    if (open === 'ssb') mountSsb();
   }
 
 

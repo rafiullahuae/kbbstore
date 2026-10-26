@@ -159,6 +159,17 @@ it('names every admin-api address the server builds and hands out as data', func
         'StorefrontAdminController.php /admin-api/media/upload',
         'StorefrontAdminController.php /admin-api/storefront/quick-edit/',
         'StripeConnect.php /admin-api/payments/stripe/connect/callback',
+        /*
+         * Lane SSB: the "Edit banner" panel's addresses, handed out in its
+         * context (and the console's tab): the media library, its upload,
+         * the banner's save (Pages → Page banners' own endpoint and
+         * capability) and the context again, for a fresh CSRF token after
+         * 120 minutes. All fetch(), never a navigation.
+         */
+        'SuperSaleBanner.php /admin-api/media',
+        'SuperSaleBanner.php /admin-api/media/upload',
+        'SuperSaleBanner.php /admin-api/page-banners',
+        'SuperSaleBanner.php /admin-api/storefront/context',
     ], 'the set of server-built admin-api URLs has changed');
 });
 

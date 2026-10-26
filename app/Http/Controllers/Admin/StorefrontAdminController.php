@@ -131,8 +131,11 @@ class StorefrontAdminController extends Controller
         $header = StorefrontAdminHint::can($admin, 'pageheader.manage');
         // A category page's "Edit header" panel (Lane CH): the same three roles.
         $catHeader = StorefrontAdminHint::can($admin, 'categoryheader.manage');
+        // /super-sale/'s "Edit banner" (Lane SSB): Pages → Page banners' own
+        // capability, so the panel can do exactly what that screen can.
+        $saleBanner = StorefrontAdminHint::can($admin, 'pagebanners.manage');
 
-        if (! $bar && ! $edit && ! $header && ! $catHeader) {
+        if (! $bar && ! $edit && ! $header && ! $catHeader && ! $saleBanner) {
             return response()->json([
                 'ok' => false,
                 'error' => 'forbidden',
@@ -154,6 +157,9 @@ class StorefrontAdminController extends Controller
             'pageheader' => $header ? $this->headerEditable($page) : null,
             'categoryheader' => $catHeader && $page['kind'] === 'category' && $page['model'] instanceof Category
                 ? CategoryHeaderApiController::editorContext($page['model'])
+                : null,
+            'salebanner' => $saleBanner && ($page['key'] ?? '') === 'collection:super-sale'
+                ? \App\Support\SuperSaleBanner::editorContext(app(\App\Services\SettingsService::class)->all(), $request)
                 : null,
         ])->withCookie(StorefrontAdminHint::refresh($request));
     }
