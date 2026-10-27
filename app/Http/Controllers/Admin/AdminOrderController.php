@@ -217,15 +217,21 @@ class AdminOrderController extends Controller
              * order without gifts.
              */
             'gifts' => (int) ($order->free_gift_count ?? 0) > 0
-                ? $order->gifts()->with('product:id,image,slug')->get()->map(fn ($i) => [
-                    'id' => $i->id,
-                    'name' => $i->name,
-                    'brand' => $i->brand,
-                    'sku' => $i->sku,
-                    'quantity' => (int) $i->quantity,
-                    'range' => (string) ($i->gift_range_label ?? ''),
-                    'image' => ImageVariants::variantUrl((string) ($i->product?->image ?? ''), 200),
-                ])->values()
+                ? (function () use ($order) {
+                    $gifts = $order->gifts()->with('product:id,image,slug')->get();
+                    // (Lane FGV) A gift that is one variation: its own photo. No query otherwise.
+                    $images = \App\Services\FreeGifts::variantImages($gifts);
+
+                    return $gifts->map(fn ($i) => [
+                        'id' => $i->id,
+                        'name' => $i->name,
+                        'brand' => $i->brand,
+                        'sku' => $i->sku,
+                        'quantity' => (int) $i->quantity,
+                        'range' => (string) ($i->gift_range_label ?? ''),
+                        'image' => ImageVariants::variantUrl((string) ($images[(int) ($i->product_variant_id ?? 0)] ?? $i->product?->image ?? ''), 200),
+                    ])->values();
+                })()
                 : [],
 
             'shipping_method' => $order->shipping_method,

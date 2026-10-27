@@ -296,6 +296,10 @@ select.fg-in{padding-inline-end:28px}
 .fg-res b{display:block;font-size:13px;font-weight:600;overflow-wrap:anywhere;line-height:1.3}
 .fg-res .fg-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:3px;font-size:12px;color:var(--ink-soft)}
 .fg-state-b{font-size:12px;font-weight:700;white-space:nowrap;color:var(--accent-ink)}
+/* Lane FGV: a product with options opens its variations, each its own gift. */
+.fg-vars{display:grid;gap:6px;margin:-2px 0 2px 22px;padding:8px;border:1px solid var(--accent);border-radius:11px;background:var(--accent-soft)}
+.fg-vars>span{font-size:12px;font-weight:650;color:var(--ink-soft)}
+.fg-vars .fg-res{grid-template-columns:34px minmax(0,1fr) auto;padding:5px 8px}
 .fg-pk-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border);flex-wrap:wrap}
 /* Products */
 .fg-pt{display:grid;gap:0}
@@ -491,6 +495,8 @@ select.fg-in{padding-inline-end:28px}
   }
   function ours() { var c = document.querySelector('#content'); return !!c && (!c.firstChild || !!c.querySelector('[data-screen="' + SCREEN + '"]')); }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  /* Lane FGV: a gift is a product, or ONE variation of it ("the pink one"). */
+  function gk(g) { return g.variant_id ? g.product_id + 'v' + g.variant_id : String(g.product_id); }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
   function amount(min, max) { return 'AED ' + fmt(min) + (max == null ? '+' : ' – ' + fmt(max)); }
   function today() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
@@ -658,7 +664,7 @@ select.fg-in{padding-inline-end:28px}
     if (!st.drafts[id]) { var r = rangeById(id); if (r) st.drafts[id] = origOf(r); }
     return st.drafts[id];
   }
-  function norm(x) { return JSON.stringify([x.min, x.max, (x.label_en || '').trim(), (x.label_ar || '').trim(), !!x.enabled, x.starts_on || null, x.ends_on || null, x.gifts.map(function (g) { return [g.product_id, g.quantity, kindOf(g.kind), g.role === 'backup' ? 'backup' : 'primary']; }), needsOf(x) ? KIND_KEYS.map(function (k) { return Number(x.needs[k]) || 0; }) : null]); }
+  function norm(x) { return JSON.stringify([x.min, x.max, (x.label_en || '').trim(), (x.label_ar || '').trim(), !!x.enabled, x.starts_on || null, x.ends_on || null, x.gifts.map(function (g) { return [g.product_id, g.quantity, kindOf(g.kind), g.role === 'backup' ? 'backup' : 'primary', g.variant_id || null]; }), needsOf(x) ? KIND_KEYS.map(function (k) { return Number(x.needs[k]) || 0; }) : null]); }
   function dirtyRanges() {
     return Object.keys(st.drafts).filter(function (k) {
       if (k === 'new') return true;
@@ -677,7 +683,9 @@ select.fg-in{padding-inline-end:28px}
   function stockOf(p, qty) {
     if (!p) return { level: 'out', cls: 'red', text: 'Missing' };
     if (p.status !== 'publish') return { level: 'out', cls: 'red', text: 'Not published' };
-    if (p.type === 'variable') return { level: 'out', cls: 'red', text: 'Has options' };
+    /* Lane FGV: a product with options is given as one of its variations; a
+       gift row always carries the variation itself (type "variation"). */
+    if (p.type === 'variable') return { level: 'in', cls: 'blue', text: 'Has options · gift a variation' };
     if (!p.in_stock) return { level: 'out', cls: 'red', text: 'Out of stock' };
     if (p.stock !== null && qty && p.stock < qty) return { level: 'low', cls: 'amber', text: 'Only ' + p.stock + ' left' };
     if (p.stock !== null && p.stock <= low()) return { level: 'low', cls: 'amber', text: 'Low · ' + p.stock + ' left' };
@@ -894,7 +902,7 @@ select.fg-in{padding-inline-end:28px}
   function rangeBody(x) {
     // With counts the wording IS the counts (the sentence is automatic); without, his own words.
     var auto = needsOf(x) ? wordingFor(x.needs) : null;
-    return { min: x.min, max: x.max, label_en: auto && auto.en ? auto.en : (x.label_en || '').trim(), label_ar: auto && auto.ar ? auto.ar : (x.label_ar || '').trim(), enabled: !!x.enabled, starts_on: x.starts_on || null, ends_on: x.ends_on || null, gifts: x.gifts.map(function (g) { return { product_id: g.product_id, quantity: g.quantity, kind: kindOf(g.kind), role: g.role === 'backup' ? 'backup' : 'primary' }; }), needs: needsOf(x) ? { mask: Number(x.needs.mask) || 0, mini: Number(x.needs.mini) || 0, full: Number(x.needs.full) || 0 } : null };
+    return { min: x.min, max: x.max, label_en: auto && auto.en ? auto.en : (x.label_en || '').trim(), label_ar: auto && auto.ar ? auto.ar : (x.label_ar || '').trim(), enabled: !!x.enabled, starts_on: x.starts_on || null, ends_on: x.ends_on || null, gifts: x.gifts.map(function (g) { return g.variant_id ? { product_id: g.product_id, variant_id: g.variant_id, quantity: g.quantity, kind: kindOf(g.kind), role: g.role === 'backup' ? 'backup' : 'primary' } : { product_id: g.product_id, quantity: g.quantity, kind: kindOf(g.kind), role: g.role === 'backup' ? 'backup' : 'primary' }; }), needs: needsOf(x) ? { mask: Number(x.needs.mask) || 0, mini: Number(x.needs.mini) || 0, full: Number(x.needs.full) || 0 } : null };
   }
   function settingsBody(c) {
     var t = {};
@@ -1415,12 +1423,12 @@ select.fg-in{padding-inline-end:28px}
     var grp = el('span', { class: 'fg-kinds', role: 'radiogroup', 'aria-label': 'Type of ' + name });
     KINDS.forEach(function (k) {
       var on = kindOf(g.kind) === k[0];
-      grp.appendChild(el('button', { type: 'button', role: 'radio', class: 'k-' + k[0], 'aria-checked': String(on), 'data-fk': 'k-' + g.product_id + '-' + k[0], disabled: ro, title: on ? 'In ' + k[1] : 'Move to ' + k[1], text: k[2], onclick: function () {
+      grp.appendChild(el('button', { type: 'button', role: 'radio', class: 'k-' + k[0], 'aria-checked': String(on), 'data-fk': 'k-' + gk(g) + '-' + k[0], disabled: ro, title: on ? 'In ' + k[1] : 'Move to ' + k[1], text: k[2], onclick: function () {
         if (on) return;
         g.kind = k[0];
         if (g.product) g.product.gift_kind = k[0];
         render();
-        var f = document.querySelector('[data-fk="k-' + g.product_id + '-' + k[0] + '"]'); if (f) f.focus();
+        var f = document.querySelector('[data-fk="k-' + gk(g) + '-' + k[0] + '"]'); if (f) f.focus();
       } }));
     });
     return grp;
@@ -1429,7 +1437,7 @@ select.fg-in{padding-inline-end:28px}
     var bkRow = g.role === 'backup';
     var name = g.product ? g.product.name : 'Product #' + g.product_id, s = giftBadge(g.product, bkRow ? 1 : g.quantity);
     var badge = pill(s.cls, s.text);
-    var q = el('input', { type: 'number', min: 1, max: MAX_QTY, value: g.quantity, disabled: ro, inputmode: 'numeric', 'aria-label': 'Quantity of ' + name, 'data-fk': 'q-' + g.product_id });
+    var q = el('input', { type: 'number', min: 1, max: MAX_QTY, value: g.quantity, disabled: ro, inputmode: 'numeric', 'aria-label': 'Quantity of ' + name, 'data-fk': 'q-' + gk(g) });
     var minus = el('button', { type: 'button', text: '−', 'aria-label': 'One fewer ' + name, disabled: ro || g.quantity <= 1 });
     var plus = el('button', { type: 'button', text: '+', 'aria-label': 'One more ' + name, disabled: ro || g.quantity >= MAX_QTY });
     function set(n) {
@@ -1460,11 +1468,11 @@ select.fg-in{padding-inline-end:28px}
     var grp = el('span', { class: 'fg-roles', role: 'radiogroup', 'aria-label': 'Main or backup: ' + name });
     [['primary', 'Main'], ['backup', 'Backup']].forEach(function (r) {
       var on = (g.role === 'backup' ? 'backup' : 'primary') === r[0];
-      grp.appendChild(el('button', { type: 'button', role: 'radio', 'aria-checked': String(on), disabled: ro, 'data-fk': 'role-' + g.product_id + '-' + r[0], text: r[1], onclick: function () {
+      grp.appendChild(el('button', { type: 'button', role: 'radio', 'aria-checked': String(on), disabled: ro, 'data-fk': 'role-' + gk(g) + '-' + r[0], text: r[1], onclick: function () {
         if (on) return;
         g.role = r[0];
         render();
-        var f = document.querySelector('[data-fk="role-' + g.product_id + '-' + r[0] + '"]'); if (f) f.focus();
+        var f = document.querySelector('[data-fk="role-' + gk(g) + '-' + r[0] + '"]'); if (f) f.focus();
       } }));
     });
     return grp;
@@ -1473,7 +1481,7 @@ select.fg-in{padding-inline-end:28px}
     var u = st.removed[key];
     return el('div', { class: 'fg-undo', role: 'status' }, [el('span', { text: 'Removed ' + (u.g.product ? u.g.product.name : 'a gift') + '.' }),
       el('button', { type: 'button', class: 'fg-link', text: 'Undo', 'data-fk': 'undo-' + key, onclick: function () {
-        if (!x.gifts.some(function (g) { return g.product_id === u.g.product_id; })) x.gifts.splice(Math.min(u.at, x.gifts.length), 0, u.g);
+        if (!x.gifts.some(function (g) { return gk(g) === gk(u.g); })) x.gifts.splice(Math.min(u.at, x.gifts.length), 0, u.g);
         delete st.removed[key]; render();
       } })]);
   }
@@ -1483,7 +1491,7 @@ select.fg-in{padding-inline-end:28px}
   /* `box` (Lane FG4): the box the picker was opened from, or null. A pick
      goes to its product's remembered type, else this box, else the row asks. */
   function openPicker(id, box, role) {
-    st.picker = { range: id, box: kindOf(box), role: role === 'backup' ? 'backup' : 'primary', kind: 'all', asking: null, from: box ? (role === 'backup' ? 'addbk-' : 'add-') + box + '-' + id : 'add-' + id, q: '', filter: 'all', rows: null, initial: null, loading: false, seq: 0, timer: null, ctl: null, err: null, added: 0 };
+    st.picker = { range: id, box: kindOf(box), role: role === 'backup' ? 'backup' : 'primary', kind: 'all', asking: null, from: box ? (role === 'backup' ? 'addbk-' : 'add-') + box + '-' + id : 'add-' + id, q: '', filter: 'all', rows: null, initial: null, loading: false, seq: 0, timer: null, ctl: null, err: null, added: 0, choosing: null };
     delete st.removed[String(id)];
     render();
     var f = document.querySelector('[data-fk="pk-q"]'); if (f) f.focus();
@@ -1542,9 +1550,14 @@ select.fg-in{padding-inline-end:28px}
     if (p.err) resultsNode.appendChild(el('p', { class: 'fg-sub', text: p.err }));
     else if (!p.loading && p.rows && !p.rows.length) resultsNode.appendChild(el('div', { class: 'fg-empty', text: p.filter === 'used' && p.q.trim().length < 2 ? 'No product has been used as a gift yet. Pick one with the search, and it appears here from then on.' : 'No product matches' + (p.filter !== 'all' || p.kind !== 'all' ? ' this filter' : '') + '.' }));
     (p.err ? [] : (p.rows || [])).forEach(function (pr) {
-      var mine = x.gifts.filter(function (g) { return g.product_id === pr.id; })[0], taken = !!mine, bad = pr.type === 'variable', s = stockOf(pr);
-      var into = taken ? kindRow(kindOf(mine.kind)) : null;
-      resultsNode.appendChild(el('button', { type: 'button', class: 'fg-res', 'data-fk': 'res-' + pr.id, 'aria-pressed': String(taken), disabled: bad, title: bad ? 'Has shades or sizes: pick a simple product' : null, onclick: function () {
+      /* Lane FGV: a product with options is no longer greyed out -- it opens
+         its variations, and each one picked is its own gift line. */
+      var isVar = pr.type === 'variable', vars = pr.variants || [];
+      var chosen = isVar ? x.gifts.filter(function (g) { return g.product_id === pr.id && g.variant_id; }) : [];
+      var mine = isVar ? null : x.gifts.filter(function (g) { return g.product_id === pr.id && !g.variant_id; })[0], taken = isVar ? chosen.length > 0 : !!mine, bad = isVar && !vars.length, s = isVar ? { cls: 'blue', text: plural(vars.length, 'variation', 'variations') } : stockOf(pr);
+      var into = taken && mine ? kindRow(kindOf(mine.kind)) : null, open = isVar && p.choosing === pr.id;
+      resultsNode.appendChild(el('button', { type: 'button', class: 'fg-res', 'data-fk': 'res-' + pr.id, 'aria-pressed': String(taken), 'aria-expanded': isVar ? String(open) : null, disabled: bad, title: bad ? 'This product has no variations to choose from' : isVar ? 'Has shades or sizes: choose which variation is the gift' : null, onclick: function () {
+        if (isVar) { p.choosing = open ? null : pr.id; p.asking = null; paintResults(); var f = resultsNode.querySelector('[data-fk^="var-' + pr.id + '-"]'); if (f && !open) f.focus(); return; }
         var i = x.gifts.indexOf(mine);
         if (i >= 0) { x.gifts.splice(i, 1); p.added--; p.asking = null; paintResults(); repaint(); return; }
         var kind = kindOf(pr.gift_kind) || p.box;
@@ -1553,21 +1566,47 @@ select.fg-in{padding-inline-end:28px}
       } }, [
         thumb(pr),
         el('span', {}, [pr.brand ? el('small', { text: pr.brand }) : null, el('b', { text: pr.name }), el('span', { class: 'fg-meta' }, [pr.gift_only ? pill('blue', 'Gift only') : el('span', { text: pr.price }), pill(s.cls, s.text), kindPill(kindOf(pr.gift_kind))])]),
-        el('span', { class: 'fg-state-b', text: bad ? 'Has options' : taken ? '✓ Added' + (into ? ' · ' + into[2] : '') : '+ Add' })
+        el('span', { class: 'fg-state-b', text: bad ? 'No variations' : isVar ? (taken ? '✓ ' + chosen.length + ' chosen · ' : '') + (open ? 'Close ▴' : 'Choose variation ▾') : taken ? '✓ Added' + (into ? ' · ' + into[2] : '') : '+ Add' })
       ]));
+      if (open) {
+        var vbox = el('div', { class: 'fg-vars', role: 'group', 'aria-label': 'Choose variation of ' + pr.name }, [el('span', { text: 'Choose variation — each one you pick is its own gift' })]);
+        vars.forEach(function (v) {
+          var vg = x.gifts.filter(function (g) { return g.product_id === pr.id && g.variant_id === v.variant_id; })[0], vs = stockOf(v), vin = vg ? kindRow(kindOf(vg.kind)) : null;
+          vbox.appendChild(el('button', { type: 'button', class: 'fg-res', 'data-fk': 'var-' + pr.id + '-' + v.variant_id, 'aria-pressed': String(!!vg), onclick: function () {
+            var i = x.gifts.indexOf(vg);
+            if (i >= 0) { x.gifts.splice(i, 1); p.added--; p.asking = null; paintResults(); repaint(); return; }
+            var kind = kindOf(pr.gift_kind) || p.box;
+            if (!kind) { p.asking = p.asking === 'v' + v.variant_id ? null : 'v' + v.variant_id; paintResults(); var a = resultsNode.querySelector('[data-fk="ask-v' + v.variant_id + '-mask"]'); if (a) a.focus(); return; }
+            pick(pr, kind, v);
+          } }, [
+            thumb(v, 'sm'),
+            el('span', {}, [el('b', { text: v.variant_label || v.name }), el('span', { class: 'fg-meta' }, [el('span', { text: v.price }), pill(vs.cls, vs.text)])]),
+            el('span', { class: 'fg-state-b', text: vg ? '✓ Added' + (vin ? ' · ' + vin[2] : '') : '+ Add' })
+          ]));
+          if (p.asking === 'v' + v.variant_id && !vg) vbox.appendChild(askRow(pr, v));
+        });
+        resultsNode.appendChild(vbox);
+      }
       /* No remembered type and no box to go to: a tiny chooser, right here. */
-      if (p.asking === pr.id && !taken) resultsNode.appendChild(el('div', { class: 'fg-ask', role: 'group', 'aria-label': 'Which box for ' + pr.name }, [el('span', { text: 'Which box?' })].concat(KINDS.map(function (k) {
-        return el('button', { type: 'button', class: 'k-' + k[0], 'data-fk': 'ask-' + pr.id + '-' + k[0], text: k[1], onclick: function () { pick(pr, k[0]); } });
-      }), [el('button', { type: 'button', class: 'k-none', 'data-fk': 'ask-' + pr.id + '-none', text: 'Untagged', onclick: function () { pick(pr, null); } })])));
+      if (p.asking === pr.id && !taken) resultsNode.appendChild(askRow(pr, null));
     });
-    function pick(pr, kind) {
+    function askRow(pr, v) {
+      var key = v ? 'v' + v.variant_id : pr.id, nm = v ? v.name : pr.name;
+      return el('div', { class: 'fg-ask', role: 'group', 'aria-label': 'Which box for ' + nm }, [el('span', { text: 'Which box?' })].concat(KINDS.map(function (k) {
+        return el('button', { type: 'button', class: 'k-' + k[0], 'data-fk': 'ask-' + key + '-' + k[0], text: k[1], onclick: function () { pick(pr, k[0], v); } });
+      }), [el('button', { type: 'button', class: 'k-none', 'data-fk': 'ask-' + key + '-none', text: 'Untagged', onclick: function () { pick(pr, null, v); } })]));
+    }
+    function pick(pr, kind, v) {
       if (kind && !pr.gift_kind) pr.gift_kind = kind;
-      x.gifts.push({ product_id: pr.id, quantity: 1, product: pr, kind: kind, role: kind && p.role === 'backup' ? 'backup' : 'primary' });
+      if (v && kind && !v.gift_kind) v.gift_kind = kind;
+      var g = { product_id: pr.id, quantity: 1, product: v || pr, kind: kind, role: kind && p.role === 'backup' ? 'backup' : 'primary' };
+      if (v) g.variant_id = v.variant_id;
+      x.gifts.push(g);
       p.added++; p.asking = null;
       var r = kindRow(kind);
       paintResults(); repaint();
-      if (pkStNode) pkStNode.textContent = 'Added "' + pr.name + '" to ' + (r ? r[1] : 'Untagged') + (kind && p.role === 'backup' ? ' · Backup' : '') + '.';
-      var back = resultsNode.querySelector('[data-fk="res-' + pr.id + '"]'); if (back) back.focus();
+      if (pkStNode) pkStNode.textContent = 'Added "' + (v || pr).name + '" to ' + (r ? r[1] : 'Untagged') + (kind && p.role === 'backup' ? ' · Backup' : '') + '.';
+      var back = resultsNode.querySelector('[data-fk="' + (v ? 'var-' + pr.id + '-' + v.variant_id : 'res-' + pr.id) + '"]'); if (back) back.focus();
     }
     if (had) { var back = resultsNode.querySelector('[data-fk="' + had + '"]'); if (back) back.focus(); }
     if (pkFootNode) {

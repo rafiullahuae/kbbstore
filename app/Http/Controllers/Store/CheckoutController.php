@@ -938,18 +938,28 @@ class CheckoutController extends Controller
                 foreach ($kbbGiftLines as $kbbGift) {
                     try {
                         DB::transaction(function () use ($order, $kbbGift) {
+                            // (Lane FGV) A gift that is one variation ("the pink
+                            // one") takes that variation's stock and is written
+                            // as it: its id, "Product – Pink", its own SKU. A
+                            // gift with no variation is written exactly as before.
+                            $kbbGiftVariant = $kbbGift['variant'] ?? null;
+                            $kbbGiftName = \App\Services\FreeGifts::giftName((string) $kbbGift['product']->name, $kbbGiftVariant, \App\Support\Locale::DEFAULT);
+
                             app(\App\Services\StockClaim::class)->claim([[
                                 'product_id' => $kbbGift['product_id'],
-                                'variant_id' => null,
+                                'variant_id' => $kbbGift['variant_id'] ?? null,
                                 'quantity' => $kbbGift['quantity'],
-                                'label' => (string) $kbbGift['product']->name,
+                                'label' => $kbbGiftName,
                             ]], (int) $order->id);
 
                             $order->gifts()->create([
                                 'product_id' => $kbbGift['product_id'],
-                                'name' => (string) $kbbGift['product']->name,
+                            ] + ($kbbGiftVariant === null ? [] : ['product_variant_id' => (int) $kbbGiftVariant->id]
+                                // On an Arabic order the name in its language carries the variation too.
+                                + (\App\Support\Locale::isDefault() ? [] : ['name_localised' => \App\Services\FreeGifts::giftName((string) ($kbbGift['product']->t('name') ?: $kbbGift['product']->name), $kbbGiftVariant)])) + [
+                                'name' => $kbbGiftName,
                                 'brand' => $kbbGift['product']->brand?->name,
-                                'sku' => $kbbGift['product']->sku,
+                                'sku' => $kbbGiftVariant?->sku ?: $kbbGift['product']->sku,
                                 'quantity' => $kbbGift['quantity'],
                                 'unit_price' => 0,
                                 'subtotal' => 0,

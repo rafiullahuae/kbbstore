@@ -21,7 +21,8 @@ use Illuminate\Validation\ValidationException;
  *
  * Every write is validated here and nowhere else: amounts are whole dirhams,
  * min below max, bands never overlap, a quantity is 1-50, a product exists, is
- * not deleted and has no options, and a select stores one of its own options.
+ * not deleted, a product with options names one of ITS OWN variations (Lane
+ * FGV), and a select stores one of its own options.
  * Every band or gift change recompiles the storefront's copy
  * (FreeGifts::compile()), so the shop never reads the two tables.
  */
@@ -229,7 +230,10 @@ class FreeGiftsController extends Controller
             'starts_on' => ['nullable', 'date_format:Y-m-d'],
             'ends_on' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:starts_on'],
             'gifts' => ['present', 'array', 'max:' . self::MAX_GIFTS],
-            'gifts.*.product_id' => ['required', 'integer', 'distinct'],
+            // Not `distinct` on its own any more (Lane FGV): the pink and the
+            // black of one product are two gifts. The PAIR is checked below.
+            'gifts.*.product_id' => ['required', 'integer'],
+            'gifts.*.variant_id' => ['nullable', 'integer', 'min:1'],
             'gifts.*.quantity' => ['required', 'integer', 'min:1', 'max:' . FreeGifts::MAX_QTY],
             // Lane FG4, internal only: the gift's box, and the range's criteria.
             'gifts.*.kind' => ['nullable', Rule::in(FreeGifts::KINDS)],
@@ -259,18 +263,47 @@ class FreeGiftsController extends Controller
         }
 
         $ids = array_map(static fn ($g) => (int) $g['product_id'], $data['gifts']);
-        $found = $ids === [] ? collect() : Product::query()->whereIn('id', $ids)->get(['id', 'type', 'gift_kind'])->keyBy('id');
+        $found = $ids === [] ? collect() : Product::query()->whereIn('id', $ids)->get(['id', 'name', 'type', 'gift_kind'])->keyBy('id');
+
+        /*
+         * (Lane FGV) THE CHOSEN VARIATION. The owner, 27 October: "if we choose
+         * variable product, then the system should give us option to choose the
+         * variation ... the pink one we want to add in gifts". A product with
+         * options used to be refused here outright ("pick a simple product"),
+         * and the picker greyed it out, which is why it could never be added.
+         * Now it must name one of ITS OWN variations -- read in one query --
+         * and a variation that is not that product's, or does not exist, is
+         * refused with nothing written. A simple product never carries one.
+         */
+        $variantIds = array_values(array_filter(array_map(static fn ($g) => (int) ($g['variant_id'] ?? 0), $data['gifts'])));
+        $variantOwner = $variantIds === [] ? collect() : DB::table('product_variants')->whereIn('id', $variantIds)->pluck('product_id', 'id');
+        $pairs = [];
 
         foreach ($data['gifts'] as $i => $g) {
             $p = $found[(int) $g['product_id']] ?? null;
+            $vid = (int) ($g['variant_id'] ?? 0);
 
             if ($p === null) {
                 throw ValidationException::withMessages(['gifts.' . $i . '.product_id' => 'That product does not exist (or was deleted).']);
             }
 
-            if ($p->type === 'variable') {
-                throw ValidationException::withMessages(['gifts.' . $i . '.product_id' => 'A product with shades or sizes cannot be a gift; pick a simple product.']);
+            if ($vid > 0 && (int) ($variantOwner[$vid] ?? 0) !== (int) $p->id) {
+                throw ValidationException::withMessages(['gifts.' . $i . '.variant_id' => 'That variation does not belong to "' . $p->name . '". Choose one of its own variations.']);
             }
+
+            if ($vid > 0 && $p->type !== 'variable') {
+                throw ValidationException::withMessages(['gifts.' . $i . '.variant_id' => '"' . $p->name . '" has no variations; add it without one.']);
+            }
+
+            if ($vid === 0 && $p->type === 'variable') {
+                throw ValidationException::withMessages(['gifts.' . $i . '.variant_id' => '"' . $p->name . '" has shades or sizes: choose which variation is the gift.']);
+            }
+
+            $pair = (int) $p->id . ':' . $vid;
+            if (isset($pairs[$pair])) {
+                throw ValidationException::withMessages(['gifts.' . $i . '.product_id' => 'The gifts.' . $i . '.product_id field has a duplicate value.']);
+            }
+            $pairs[$pair] = true;
         }
 
         /*
@@ -330,6 +363,7 @@ class FreeGiftsController extends Controller
                 DB::table('free_gift_range_items')->insert([
                     'range_id' => $id,
                     'product_id' => (int) $g['product_id'],
+                ] + ((int) ($g['variant_id'] ?? 0) > 0 ? ['variant_id' => (int) $g['variant_id']] : []) + [
                     'quantity' => (int) $g['quantity'],
                     'kind' => $kinds[$sort] ?? null,
                     'role' => ($g['role'] ?? 'primary') === 'backup' ? 'backup' : 'primary',
@@ -409,7 +443,13 @@ class FreeGiftsController extends Controller
             ->limit($filter === 'used' ? 200 : 20)
             ->get(['id', 'name', 'slug', 'sku', 'brand_id', 'image', 'type', 'status', 'stock_status', 'manage_stock', 'stock', 'gift_only', 'gift_kind', 'price', 'sale_price', 'sale_starts_at', 'sale_ends_at']);
 
-        return response()->json(['products' => $rows->map(fn (Product $p) => $this->productRow($p))->values()]);
+        // (Lane FGV) Each product with options lists its variations, all of
+        // them in ONE query for the whole result, never one per product.
+        $variants = FreeGifts::variantsOfProducts($rows->where('type', 'variable')->pluck('id')->all());
+
+        return response()->json(['products' => $rows->map(fn (Product $p) => $this->productRow($p) + ($p->type === 'variable'
+            ? ['variants' => array_map(fn ($v) => $this->variantRow($p, $v), $variants[(int) $p->id] ?? [])]
+            : []))->values()]);
     }
 
     /** POST /admin-api/free-gifts/products/{id}/gift-only {on} -- the "Gift only (not for sale)" flag. */
@@ -589,6 +629,8 @@ class FreeGiftsController extends Controller
             ->limit(200)
             ->get(['id', 'name', 'slug', 'sku', 'brand_id', 'image', 'type', 'status', 'stock_status', 'manage_stock', 'stock', 'gift_only', 'gift_kind', 'price', 'sale_price', 'sale_starts_at', 'sale_ends_at']);
         $byId = $giftProducts->keyBy('id');
+        // (Lane FGV) The chosen variations on the ranges, one query, none when none.
+        $variants = FreeGifts::variants($items->flatten(1)->pluck('variant_id')->filter()->all());
 
         $config = $this->gifts->freshConfig();
 
@@ -607,13 +649,18 @@ class FreeGiftsController extends Controller
                 'ends_on' => $r->ends_at ? substr((string) $r->ends_at, 0, 10) : null,
                 // Lane FG4: the criteria (null = none set) and each gift's box.
                 'needs' => FreeGifts::needsOf($r),
-                'gifts' => ($items[$r->id] ?? collect())->map(fn ($i) => [
+                'gifts' => ($items[$r->id] ?? collect())->map(fn ($i) => array_merge([
                     'product_id' => (int) $i->product_id,
                     'quantity' => (int) $i->quantity,
                     'kind' => FreeGifts::kind($i->kind ?? null),
                     'role' => ($i->role ?? 'primary') === 'backup' ? 'backup' : 'primary',
                     'product' => isset($byId[$i->product_id]) ? $this->productRow($byId[$i->product_id]) : null,
-                ])->values(),
+                ], ((int) ($i->variant_id ?? 0) > 0 ? [
+                    // (Lane FGV) The gift is this variation: the screen draws its
+                    // name, photo and stock from `product` like any other gift.
+                    'variant_id' => (int) $i->variant_id,
+                    'product' => isset($byId[$i->product_id], $variants[(int) $i->variant_id]) ? $this->variantRow($byId[$i->product_id], $variants[(int) $i->variant_id]) : null,
+                ] : [])))->values(),
             ])->values(),
             'gift_products' => $giftProducts->map(fn (Product $p) => $this->productRow($p) + [
                 'used_in' => $items->filter(fn ($rows) => $rows->contains('product_id', $p->id))->keys()->map(fn ($k) => (int) $k)->values(),
@@ -626,6 +673,33 @@ class FreeGiftsController extends Controller
             'can_manage' => ($admin = auth('admin')->user()) instanceof \App\Models\AdminUser
                 && \App\Support\AdminRoles::can($admin, 'freegifts.manage'),
         ];
+    }
+
+    /**
+     * (Lane FGV) One variation as the screen draws a gift: the product's row
+     * with the variation's own name ("Product – Pink"), its "Colour: Pink",
+     * photo, price and stock -- the same shelf FreeGifts::variantAvailable()
+     * gives from -- and `type` "variation", so it is never "Has options".
+     */
+    private function variantRow(Product $p, \App\Models\ProductVariant $v): array
+    {
+        $v->setRelation('product', $p);
+        $row = $this->productRow($p);
+        $image = trim((string) $v->image) !== '' ? (string) $v->image : $row['image'];
+        $counted = $v->manage_stock ? (int) $v->stock : ($p->manage_stock ? (int) $p->stock : null);
+
+        return array_merge($row, [
+            'name' => FreeGifts::giftName((string) $p->name, $v),
+            'product_name' => (string) $p->name,
+            'variant_id' => (int) $v->id,
+            'variant_label' => FreeGifts::variantLabel($v, true),
+            'image' => $image,
+            'thumb' => $image !== '' ? \App\Support\ImageVariants::variantUrl($image, 200) : '',
+            'type' => 'variation',
+            'in_stock' => $v->stock_status === 'instock' && ($counted === null || $counted > 0),
+            'stock' => $counted,
+            'price' => Money::plain(max(0, (int) $v->effectivePrice())),
+        ]);
     }
 
     private function productRow(Product $p): array
