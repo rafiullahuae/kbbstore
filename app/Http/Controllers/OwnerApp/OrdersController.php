@@ -15,6 +15,7 @@ use App\Support\ImageVariants;
 use App\Support\Money;
 use App\Support\OrderEmirate;
 use App\Support\OrderPaymentPanel;
+use App\Support\OrderProductSearch;
 use App\Support\StoreTime;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
@@ -258,7 +259,7 @@ final class OrdersController extends Controller
             return;
         }
 
-        $q->where(function (Builder $w) use ($like) {
+        $q->where(function (Builder $w) use ($like, $term) {
             foreach (['o.email', 'o.phone', 'o.order_number', 'o.billing_address'] as $col) {
                 $w->orWhereRaw($col." like ? escape '".self::LIKE_ESCAPE."'", [$like]);
             }
@@ -267,11 +268,12 @@ final class OrdersController extends Controller
                     ->where(fn (Builder $n) => $n->whereRaw("cs.name like ? escape '".self::LIKE_ESCAPE."'", [$like])
                         ->orWhereRaw("cs.phone like ? escape '".self::LIKE_ESCAPE."'", [$like]));
             });
-            $w->orWhereExists(function (Builder $i) use ($like) {
-                $i->selectRaw('1')->from('order_items as oi')->whereColumn('oi.order_id', 'o.id')
-                    ->where(fn (Builder $n) => $n->whereRaw("oi.name like ? escape '".self::LIKE_ESCAPE."'", [$like])
-                        ->orWhereRaw("oi.sku like ? escape '".self::LIKE_ESCAPE."'", [$like]));
-            });
+            // (Lane OQ) A product on the order: the SAME rule as Store → Orders
+            // in the admin -- every word in the line's name, SKU or options,
+            // one uncorrelated IN. App\Support\OrderProductSearch.
+            if (OrderProductSearch::applies($term)) {
+                $w->orWhereIn('o.id', OrderProductSearch::orderIdsQuery($term));
+            }
         });
     }
 
