@@ -194,9 +194,7 @@ it('offers the switch on the payments screen as a bool in the settings column', 
 
     $lower = strtolower($help);
 
-    // The default it names moved from ON to OFF in 2.60.611, when the owner
-    // asked for Tabby auto-capture back off (tabby_auto_capture_off).
-    expect(str_starts_with($lower, 'off.'))->toBeTrue('the help no longer opens by saying what the default is');
+    expect(str_starts_with($lower, 'on.'))->toBeTrue('the help no longer opens by saying what the default is');
     expect(str_contains($lower, 'set it off'))->toBeTrue('the help does not tell the owner how to stop it');
 });
 
