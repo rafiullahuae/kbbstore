@@ -231,6 +231,10 @@ select.fg-in{padding-inline-end:28px}
 .fg-res b{display:block;font-size:13px;font-weight:600;overflow-wrap:anywhere;line-height:1.3}
 .fg-res .fg-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:3px;font-size:12px;color:var(--ink-soft)}
 .fg-state-b{font-size:12px;font-weight:700;white-space:nowrap;color:var(--accent-ink)}
+/* Lane FGV: a product with options opens its variations, each its own gift. */
+.fg-vars{display:grid;gap:6px;margin:-2px 0 2px 22px;padding:8px;border:1px solid var(--accent);border-radius:11px;background:var(--accent-soft)}
+.fg-vars>span{font-size:12px;font-weight:650;color:var(--ink-soft)}
+.fg-vars .fg-res{grid-template-columns:34px minmax(0,1fr) auto;padding:5px 8px}
 .fg-pk-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border);flex-wrap:wrap}
 /* Products */
 .fg-pt{display:grid;gap:0}

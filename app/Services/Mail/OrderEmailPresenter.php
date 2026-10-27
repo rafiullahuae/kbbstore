@@ -224,6 +224,8 @@ class OrderEmailPresenter
         if ((int) ($order->free_gift_count ?? 0) > 0) {
             $order->loadMissing('gifts');
             $tag = app(\App\Services\FreeGifts::class)->text('tag');
+            // (Lane FGV) A gift that is one variation shows its own photo. No query otherwise.
+            $giftImages = \App\Services\FreeGifts::variantImages($order->gifts);
 
             foreach ($order->gifts as $gift) {
                 $localised = trim((string) ($gift->name_localised ?? ''));
@@ -243,7 +245,7 @@ class OrderEmailPresenter
                     'linePlain' => self::plain(0, $w),
                     'gift' => true,
                     'giftLabel' => $tag,
-                ];
+                ] + (isset($giftImages[(int) ($gift->product_variant_id ?? 0)]) ? ['giftImage' => $giftImages[(int) $gift->product_variant_id]] : []);
             }
         }
 

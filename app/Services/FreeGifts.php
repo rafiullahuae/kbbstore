@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Support\Locale;
 use App\Support\Money;
 use App\Support\StoreTime;
@@ -525,11 +526,12 @@ final class FreeGifts
         }
 
         $products = $this->products(array_merge(...array_map(static fn (array $r) => array_map(static fn (array $g) => (int) $g[0], $r['gifts']), $ranges)));
+        $variants = $this->variantsFor($ranges);
         $ar = ! Locale::isDefault();
         $rows = [];
 
         foreach ($ranges as $r) {
-            $lines = $this->linesFor($r, $products);
+            $lines = $this->linesFor($r, $products, $variants);
 
             if ($lines === []) {
                 continue;
@@ -636,6 +638,7 @@ final class FreeGifts
         }
 
         $products = $this->products(array_merge(...array_map(static fn (array $r) => array_map(static fn (array $g) => (int) $g[0], $r['gifts']), $running)));
+        $variants = $this->variantsFor($running);
 
         foreach ($bands as $band) {
             if (str_starts_with($band, 'range:')) {
@@ -650,8 +653,10 @@ final class FreeGifts
 
             $lines = [];
             foreach ($ranges as $r) {
-                foreach ($this->linesFor($r, $products) as $line) {
-                    $lines[$line['product_id']] ??= $line;
+                foreach ($this->linesFor($r, $products, $variants) as $line) {
+                    // Each product once -- each VARIATION once (Lane FGV): the
+                    // pink and the black of one product are two gifts.
+                    $lines[$line['product_id'] . (isset($line['variant_id']) ? ':' . $line['variant_id'] : '')] ??= $line;
                 }
             }
             $out[$band] = self::fullFirst(array_values($lines));
@@ -802,9 +807,11 @@ final class FreeGifts
      *
      * @return list<array{product:Product,product_id:int,quantity:int,value:int,range_id:int,range_label:string,kind:?string,backup:bool}>
      */
-    public function linesFor(array $range, ?array $products = null): array
+    public function linesFor(array $range, ?array $products = null, ?array $variants = null): array
     {
         $products ??= $this->products(array_map(static fn (array $g) => (int) $g[0], $range['gifts']));
+        // (Lane FGV) The chosen variations: no query unless a gift names one.
+        $variants ??= $this->variantsFor([$range]);
         $label = self::rangeLabel($range);
         $needs = $range['needs'] ?? null;
         $out = [];
@@ -817,17 +824,34 @@ final class FreeGifts
             return $p->manage_stock ? max(0, (int) $p->stock) : PHP_INT_MAX;
         };
 
-        $add = function (Product $p, int $quantity, ?string $kind, bool $backup) use (&$out, $range, $label): void {
+        /*
+         * (Lane FGV) A gift may name ONE variation of a product with options
+         * ("the pink one"): then that variation's own stock decides, and its
+         * line carries `variant` / `variant_id`. A gift with no variation is
+         * read exactly as before -- the keys are not even added -- so every
+         * band saved before this lane gives, draws and fingerprints the same.
+         */
+        $avail = static function (array $g) use ($products, $variants, $available): int {
+            $p = $products[$g['id']] ?? null;
+
+            return $g['variant'] === null ? $available($p) : self::variantAvailable($p, $variants[$g['variant']] ?? null);
+        };
+
+        $add = function (array $g, int $quantity, ?string $kind, bool $backup) use (&$out, $range, $label, $products, $variants): void {
+            $p = $products[$g['id']];
+            $v = $g['variant'] === null ? null : $variants[$g['variant']];
+            $v?->setRelation('product', $p);
+
             $out[] = [
                 'product' => $p,
                 'product_id' => (int) $p->id,
                 'quantity' => $quantity,
-                'value' => max(0, (int) $p->effectivePrice()) * $quantity,
+                'value' => max(0, (int) ($v ?? $p)->effectivePrice()) * $quantity,
                 'range_id' => (int) $range['id'],
                 'range_label' => $label,
                 'kind' => $kind,
                 'backup' => $backup,
-            ];
+            ] + ($v === null ? [] : ['variant' => $v, 'variant_id' => (int) $v->id]);
         };
 
         $gifts = array_map(static fn (array $g) => [
@@ -835,15 +859,15 @@ final class FreeGifts
             'qty' => max(1, min(self::MAX_QTY, (int) $g[1])),
             'kind' => self::kind($g[2] ?? null),
             'backup' => ($g[3] ?? 'primary') === 'backup',
+            'variant' => (int) ($g[4] ?? 0) > 0 ? (int) $g[4] : null,
         ], $range['gifts']);
 
         if ($needs === null) {
             foreach ($gifts as $g) {
-                $p = $products[$g['id']] ?? null;
-                $quantity = min($g['qty'], $available($p));
+                $quantity = min($g['qty'], $avail($g));
 
                 if (! $g['backup'] && $quantity > 0) {
-                    $add($p, $quantity, $g['kind'], false);
+                    $add($g, $quantity, $g['kind'], false);
                 }
             }
 
@@ -852,11 +876,10 @@ final class FreeGifts
 
         foreach ($gifts as $g) {
             if (! $g['backup'] && $g['kind'] === null) {
-                $p = $products[$g['id']] ?? null;
-                $quantity = min($g['qty'], $available($p));
+                $quantity = min($g['qty'], $avail($g));
 
                 if ($quantity > 0) {
-                    $add($p, $quantity, null, false);
+                    $add($g, $quantity, null, false);
                 }
             }
         }
@@ -873,11 +896,10 @@ final class FreeGifts
                     continue;
                 }
 
-                $p = $products[$g['id']] ?? null;
-                $quantity = min($g['qty'], $available($p), $left);
+                $quantity = min($g['qty'], $avail($g), $left);
 
                 if ($quantity > 0) {
-                    $add($p, $quantity, $kind, false);
+                    $add($g, $quantity, $kind, false);
                     $left -= $quantity;
                 }
             }
@@ -888,19 +910,18 @@ final class FreeGifts
 
             $backups = array_values(array_filter($gifts, static fn ($g) => $g['backup'] && $g['kind'] === $kind));
             // Most stock first; a tie keeps the owner's order.
-            usort($backups, static fn ($a, $b) => [$available($products[$b['id']] ?? null), array_search($a, $backups, true)]
-                <=> [$available($products[$a['id']] ?? null), array_search($b, $backups, true)]);
+            usort($backups, static fn ($a, $b) => [$avail($b), array_search($a, $backups, true)]
+                <=> [$avail($a), array_search($b, $backups, true)]);
 
             foreach ($backups as $g) {
                 if ($left < 1) {
                     break;
                 }
 
-                $p = $products[$g['id']] ?? null;
-                $quantity = min($available($p), $left);
+                $quantity = min($avail($g), $left);
 
                 if ($quantity > 0) {
-                    $add($p, $quantity, $kind, true);
+                    $add($g, $quantity, $kind, true);
                     $left -= $quantity;
                 }
             }
@@ -920,11 +941,13 @@ final class FreeGifts
     {
         return array_map(static function (array $l): array {
             $p = $l['product'];
+            // (Lane FGV) A chosen variation: "Product – Pink" and its own photo.
+            $v = $l['variant'] ?? null;
 
             return [
-                'name' => (string) ($p->t('name') ?: $p->name),
+                'name' => self::giftName((string) ($p->t('name') ?: $p->name), $v),
                 'brand' => (string) ($p->brand?->t('name') ?? ''),
-                'image' => (string) ($p->image ?? ''),
+                'image' => (string) (($v !== null && trim((string) $v->image) !== '' ? $v->image : null) ?? $p->image ?? ''),
                 'quantity' => (int) $l['quantity'],
                 'value' => (int) $l['value'],
             ];
@@ -945,14 +968,42 @@ final class FreeGifts
         }
 
         $order->loadMissing('gifts.product:id,image,gift_kind');
+        // (Lane FGV) A gift that is one variation shows that variation's photo.
+        $images = self::variantImages($order->gifts);
 
         return $order->gifts->map(static fn ($i) => [
             'name' => (string) ((trim((string) ($i->name_localised ?? '')) !== '' && ! Locale::isDefault()) ? $i->name_localised : $i->name),
             'brand' => (string) ($i->brand ?? ''),
-            'image' => (string) ($i->product?->image ?? ''),
+            'image' => (string) ($images[(int) ($i->product_variant_id ?? 0)] ?? $i->product?->image ?? ''),
             'quantity' => (int) $i->quantity,
             'value' => 0,
         ])->values()->all();
+    }
+
+    /**
+     * (Lane FGV) The own photos of the variations some gift lines are, by
+     * variant id, for every screen that shows an order's gifts. NO query when
+     * no line is a variation (every order before this lane); one otherwise.
+     *
+     * @param  iterable<object>  $gifts  order_items rows
+     * @return array<int, string>
+     */
+    public static function variantImages(iterable $gifts): array
+    {
+        $ids = [];
+        foreach ($gifts as $g) {
+            if ((int) ($g->product_variant_id ?? 0) > 0) {
+                $ids[] = (int) $g->product_variant_id;
+            }
+        }
+
+        if ($ids === []) {
+            return [];
+        }
+
+        return DB::table('product_variants')->whereIn('id', array_values(array_unique($ids)))
+            ->whereNotNull('image')->where('image', '!=', '')
+            ->pluck('image', 'id')->map(static fn ($i) => (string) $i)->all();
     }
 
     /**
@@ -1015,12 +1066,26 @@ final class FreeGifts
         }
 
         $products = $this->products(array_map(static fn (array $g) => (int) $g[0], $range['gifts']));
-        $why = static function (?Product $p, int $want): string {
+        $variants = $this->variantsFor([$range]);
+        $why = static function (?Product $p, int $want, ?int $variantId = null) use ($variants): string {
             if ($p === null) {
                 return 'the product no longer exists';
             }
             if ($p->status !== 'publish') {
                 return 'it is not published';
+            }
+            // (Lane FGV) A chosen variation answers with its own shelf.
+            if ($variantId !== null) {
+                $v = $variants[$variantId] ?? null;
+                if ($v === null || (int) $v->product_id !== (int) $p->id) {
+                    return 'the chosen variation no longer exists';
+                }
+                if ($v->stock_status !== 'instock') {
+                    return 'it is marked out of stock';
+                }
+                $have = self::variantAvailable($p, $v);
+
+                return $have < $want ? ($have < 1 ? '0 left' : 'only '.$have.' left') : 'not enough units';
             }
             if ($p->type === 'variable') {
                 return 'it has options (shades/sizes)';
@@ -1040,9 +1105,11 @@ final class FreeGifts
                     continue;
                 }
                 $p = $products[(int) $g[0]] ?? null;
-                $skipped[] = '“'.($p?->name ?? '#'.(int) $g[0]).'” ('.$why($p, (int) $g[1]).')';
+                $vid = (int) ($g[4] ?? 0) > 0 ? (int) $g[4] : null;
+                $name = $p === null ? '#'.(int) $g[0] : self::giftName((string) $p->name, $vid === null ? null : ($variants[$vid] ?? null));
+                $skipped[] = '“'.$name.'” ('.$why($p, (int) $g[1], $vid).')';
             }
-            $given = array_map(static fn (array $l) => '“'.$l['product']->name.'” ×'.(int) $l['quantity'], array_filter($used, static fn (array $l) => (string) $l['kind'] === $kind));
+            $given = array_map(static fn (array $l) => '“'.self::giftName((string) $l['product']->name, $l['variant'] ?? null).'” ×'.(int) $l['quantity'], array_filter($used, static fn (array $l) => (string) $l['kind'] === $kind));
             $parts[] = ucfirst(self::WORDS[$kind][1] ?? $kind).': main gift'.(count($skipped) === 1 ? '' : 's').' '.($skipped === [] ? 'none set' : implode(', ', $skipped)).' — backup given: '.implode(', ', $given).'.';
         }
 
@@ -1117,6 +1184,177 @@ final class FreeGifts
         return $rows;
     }
 
+    /**
+     * THE CHOSEN VARIATIONS (Lane FGV) of every gift in these ranges, keyed by
+     * variant id, in ONE statement however many ranges, gifts or values: the
+     * variant joined to its option values and their axis, folded here. NO
+     * query at all when no gift names a variation -- every band saved before
+     * this lane -- so a shop page costs exactly what it cost before.
+     * Memoised on the request like products().
+     *
+     * Each variant carries `fg_values`: list of [axis, value, value id, axis id]
+     * in the axis order the product page uses, read by variantLabel().
+     *
+     * @param  list<array>  $ranges  compiled ranges (their `gifts`)
+     * @return array<int, ProductVariant>
+     */
+    public function variantsFor(array $ranges): array
+    {
+        $ids = [];
+        foreach ($ranges as $r) {
+            foreach ($r['gifts'] ?? [] as $g) {
+                if ((int) ($g[4] ?? 0) > 0) {
+                    $ids[] = (int) $g[4];
+                }
+            }
+        }
+
+        return self::variants($ids);
+    }
+
+    /**
+     * @param  list<int>  $ids
+     * @return array<int, ProductVariant>
+     */
+    public static function variants(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn (int $i) => $i > 0)));
+        sort($ids);
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $key = 'kbb.free_gifts.variants.' . implode(',', $ids);
+        $request = app()->bound('request') ? request() : null;
+
+        if ($request !== null && $request->attributes->has($key)) {
+            return $request->attributes->get($key);
+        }
+
+        $out = self::loadVariants('v.id', $ids);
+        $request?->attributes->set($key, $out);
+
+        return $out;
+    }
+
+    /**
+     * Every variation of these products, for the admin's "Choose variation"
+     * list (Lane FGV): ONE statement for every product on the screen, in the
+     * product page's order (position, then id).
+     *
+     * @param  list<int>  $productIds
+     * @return array<int, list<ProductVariant>>  by product id
+     */
+    public static function variantsOfProducts(array $productIds): array
+    {
+        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds), static fn (int $i) => $i > 0)));
+
+        if ($productIds === []) {
+            return [];
+        }
+
+        $out = [];
+        foreach (self::loadVariants('v.product_id', $productIds) as $v) {
+            $out[(int) $v->product_id][] = $v;
+        }
+
+        return $out;
+    }
+
+    /** @return array<int, ProductVariant> */
+    private static function loadVariants(string $column, array $ids): array
+    {
+        $rows = DB::table('product_variants as v')
+            ->leftJoin('product_variant_attribute_value as pv', 'pv.product_variant_id', '=', 'v.id')
+            ->leftJoin('attribute_values as av', 'av.id', '=', 'pv.attribute_value_id')
+            ->leftJoin('attributes as a', 'a.id', '=', 'av.attribute_id')
+            ->whereIn($column, $ids)
+            ->orderBy('v.position')->orderBy('v.id')->orderBy('a.position')->orderBy('av.attribute_id')->orderBy('av.position')
+            ->get(['v.id', 'v.product_id', 'v.sku', 'v.price', 'v.sale_price', 'v.manage_stock', 'v.stock', 'v.stock_status', 'v.image', 'v.position',
+                'av.id as av_id', 'av.name as av_name', 'a.id as a_id', 'a.name as a_name']);
+
+        $out = [];
+        $values = [];
+
+        foreach ($rows as $row) {
+            $id = (int) $row->id;
+
+            if (! isset($out[$id])) {
+                $v = (new ProductVariant)->forceFill([
+                    'id' => $id, 'product_id' => (int) $row->product_id, 'sku' => $row->sku,
+                    'price' => $row->price, 'sale_price' => $row->sale_price, 'manage_stock' => (bool) $row->manage_stock,
+                    'stock' => $row->stock, 'stock_status' => (string) $row->stock_status, 'image' => $row->image,
+                ]);
+                $v->exists = true;
+                $v->syncOriginal();
+                $out[$id] = $v;
+                $values[$id] = [];
+            }
+
+            if ($row->av_id !== null) {
+                $values[$id][] = [(string) ($row->a_name ?? ''), (string) $row->av_name, (int) $row->av_id, (int) ($row->a_id ?? 0)];
+            }
+        }
+
+        foreach ($out as $id => $v) {
+            $v->setAttribute('fg_values', $values[$id]);
+            $v->syncOriginal();
+        }
+
+        return $out;
+    }
+
+    /**
+     * A variation's own words: "Pink" ($axes false, for "Product – Pink") or
+     * "Colour: Pink" ($axes true, for the admin), in the language being drawn.
+     * No query in English; the translation store otherwise, as the product
+     * page reads it. '' for a variation with no values.
+     */
+    public static function variantLabel(?ProductVariant $v, bool $axes = false, ?string $locale = null): string
+    {
+        if ($v === null) {
+            return '';
+        }
+
+        $parts = [];
+        foreach ((array) ($v->getAttribute('fg_values') ?? []) as [$axis, $value, $valueId, $axisId]) {
+            $value = \App\Support\VariantOptions::valueName((int) $valueId, (string) $value, $locale);
+            $parts[] = $axes && trim((string) $axis) !== ''
+                ? \App\Support\VariantOptions::axisName((int) $axisId, (string) $axis, $locale) . ': ' . $value
+                : $value;
+        }
+
+        return implode($axes ? ' · ' : ' / ', $parts);
+    }
+
+    /** "Product – Pink"; the product's own name when no variation (or no label). */
+    public static function giftName(string $name, ?ProductVariant $v, ?string $locale = null): string
+    {
+        $label = self::variantLabel($v, false, $locale);
+
+        return $label === '' ? $name : $name . ' – ' . $label;
+    }
+
+    /**
+     * Units a chosen variation can give: the parent published, the variation
+     * its own product's and marked in stock, and its shelf -- the same shelf
+     * StockClaim takes from (the variation's own count when it keeps one, the
+     * parent's otherwise, unlimited when neither counts).
+     */
+    public static function variantAvailable(?Product $p, ?ProductVariant $v): int
+    {
+        if ($p === null || $v === null || $p->status !== 'publish' || (int) $v->product_id !== (int) $p->id || $v->stock_status !== 'instock') {
+            return 0;
+        }
+
+        if ($v->manage_stock) {
+            return max(0, (int) $v->stock);
+        }
+
+        return $p->manage_stock ? max(0, (int) $p->stock) : PHP_INT_MAX;
+    }
+
     private function shopperCountry(): string
     {
         if ($this->config()['countries'] === 'all') {
@@ -1140,7 +1378,7 @@ final class FreeGifts
         $items = $ranges->isEmpty() ? collect() : DB::table('free_gift_range_items')
             ->whereIn('range_id', $ranges->pluck('id')->all())
             ->orderBy('sort')->orderBy('id')
-            ->get(array_merge(['range_id', 'product_id', 'quantity', 'kind'], self::hasRole() ? ['role'] : []))
+            ->get(array_merge(['range_id', 'product_id', 'quantity', 'kind'], self::hasRole() ? ['role'] : [], self::hasVariant() ? ['variant_id'] : []))
             ->groupBy('range_id');
 
         $out = [];
@@ -1154,11 +1392,15 @@ final class FreeGifts
                 'ar' => (string) $r->label_ar,
                 'starts' => $r->starts_at ? substr((string) $r->starts_at, 0, 10) : null,
                 'ends' => $r->ends_at ? substr((string) $r->ends_at, 0, 10) : null,
-                // [product, quantity, kind, role]: the type and main/backup
-                // drive the fill when the range has counts (see linesFor()).
+                // [product, quantity, kind, role(, variant)]: the type and
+                // main/backup drive the fill when the range has counts (see
+                // linesFor()). The fifth entry is the chosen variation (Lane
+                // FGV) and is there ONLY when one was chosen, so every gift
+                // saved before it compiles to exactly the four it always did.
                 'gifts' => array_values(array_map(
-                    static fn ($i) => [(int) $i->product_id, max(1, min(self::MAX_QTY, (int) $i->quantity)),
+                    static fn ($i) => array_merge([(int) $i->product_id, max(1, min(self::MAX_QTY, (int) $i->quantity)),
                         self::kind($i->kind ?? null), ($i->role ?? 'primary') === 'backup' ? 'backup' : 'primary'],
+                        (int) ($i->variant_id ?? 0) > 0 ? [(int) $i->variant_id] : []),
                     ($items[$r->id] ?? collect())->all(),
                 )),
                 'needs' => self::needsOf($r),
@@ -1195,10 +1437,12 @@ final class FreeGifts
     {
         $ranges = DB::table('free_gift_ranges')->orderBy('min_fils')->get();
         $enabled = $ranges->where('enabled', true);
-        $items = DB::table('free_gift_range_items')->get(array_merge(['range_id', 'product_id', 'quantity', 'kind'], self::hasRole() ? ['role'] : []))->groupBy('range_id');
+        $items = DB::table('free_gift_range_items')->get(array_merge(['range_id', 'product_id', 'quantity', 'kind'], self::hasRole() ? ['role'] : [], self::hasVariant() ? ['variant_id'] : []))->groupBy('range_id');
         $productIds = $items->flatten(1)->pluck('product_id')->unique()->values()->all();
         $products = $productIds === [] ? collect() : Product::withTrashed()->whereIn('id', $productIds)
             ->get(['id', 'name', 'status', 'type', 'stock_status', 'manage_stock', 'stock', 'deleted_at'])->keyBy('id');
+        // (Lane FGV) The chosen variations, one query, none when there are none.
+        $variants = self::variants($items->flatten(1)->pluck('variant_id')->filter()->all());
 
         $out = [];
 
@@ -1221,10 +1465,24 @@ final class FreeGifts
             foreach ($gifts as $g) {
                 $p = $products[$g->product_id] ?? null;
 
+                $vid = (int) ($g->variant_id ?? 0);
+
                 if ($p === null || $p->deleted_at !== null || $p->status !== 'publish') {
                     $out[] = ['level' => 'alert', 'text' => $label . ': a picked product is deleted or not published, so it is skipped.', 'range' => (int) $r->id];
+                } elseif ($vid > 0) {
+                    $v = $variants[$vid] ?? null;
+                    $vname = self::giftName((string) $p->name, $v);
+                    $have = self::variantAvailable($p, $v);
+
+                    if ($v === null || (int) $v->product_id !== (int) $p->id) {
+                        $out[] = ['level' => 'alert', 'text' => $label . ': the variation picked for "' . $p->name . '" no longer exists, so it is skipped; pick it again.', 'range' => (int) $r->id];
+                    } elseif ($have < 1) {
+                        $out[] = ['level' => 'warn', 'text' => $label . ': "' . $vname . '" is out of stock — skipped until restocked; the rest of the range is still given.', 'range' => (int) $r->id];
+                    } elseif ($have < (int) $g->quantity) {
+                        $out[] = ['level' => 'warn', 'text' => $label . ': only ' . $have . ' of "' . $vname . '" left for ' . (int) $g->quantity . ' per order.', 'range' => (int) $r->id];
+                    }
                 } elseif ($p->type === 'variable') {
-                    $out[] = ['level' => 'alert', 'text' => $label . ': "' . $p->name . '" has options (shades/sizes), so it is skipped; pick a simple product.', 'range' => (int) $r->id];
+                    $out[] = ['level' => 'alert', 'text' => $label . ': "' . $p->name . '" has options (shades/sizes) and no variation is picked, so it is skipped; add it again and choose the variation.', 'range' => (int) $r->id];
                 } elseif ($p->stock_status !== 'instock' || ($p->manage_stock && (int) $p->stock < 1)) {
                     $out[] = ['level' => 'warn', 'text' => $label . ': "' . $p->name . '" is out of stock — skipped until restocked; the rest of the range is still given.', 'range' => (int) $r->id];
                 } elseif ($p->manage_stock && (int) $p->stock < (int) $g->quantity) {
@@ -1396,6 +1654,12 @@ final class FreeGifts
         }
 
         return self::criteriaWording($have);
+    }
+
+    /** Whether the chosen-variation column (Lane FGV) has been added yet. Asked only on a compile or the checklist, never per page. */
+    public static function hasVariant(): bool
+    {
+        return \Illuminate\Support\Facades\Schema::hasColumn('free_gift_range_items', 'variant_id');
     }
 
     /** Whether the main/backup column has been added yet. Asked only on a compile or the checklist, never per page. */

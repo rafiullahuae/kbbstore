@@ -61,7 +61,8 @@ final class KitOrder
             $id = (int) ($item['productId'] ?? 0);
 
             $out[] = [
-                'img' => $images[$id] ?? null,
+                // (Lane FGV) A gift that is one variation brings its own photo.
+                'img' => isset($item['giftImage']) ? MailKit::image($item['giftImage'], 200) : ($images[$id] ?? null),
                 'brand' => (string) ($item['brand'] ?? ''),
                 'name' => (string) ($item['name'] ?? ''),
                 'variant' => (string) ($item['variant'] ?? ''),
