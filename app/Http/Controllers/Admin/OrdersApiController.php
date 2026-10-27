@@ -11,6 +11,7 @@ use App\Services\Payments\PaymentRefunder;
 use App\Support\DemoSeed;
 use App\Support\Money;
 use App\Support\OrderEmirate;
+use App\Support\OrderProductSearch;
 use App\Support\StoreTime;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -219,8 +220,26 @@ class OrdersApiController extends Controller
             ->map(fn ($o) => $this->rowToApi($o))
             ->values();
 
+        /*
+         * (Lane OQ) WHY each row matched, when the search names a product:
+         * "2 × Medicube PDRN Jelly Cream" under the customer. One statement
+         * for the page's lines and one grouped statement for the line above
+         * the table -- two, whether the page holds 3 orders or 200. Neither
+         * runs without a search, so the list everybody opens costs what it did.
+         */
+        $search = OrderProductSearch::term($request->query('search', ''));
+        $productMatch = null;
+
+        if (OrderProductSearch::applies($search)) {
+            $matched = OrderProductSearch::matchedLines($rows->pluck('id')->map(fn ($id) => (int) $id)->all(), $search);
+            $rows = $rows->map(fn (array $r) => $r + ['matched' => $matched[(int) $r['id']] ?? null])->values();
+            $productMatch = OrderProductSearch::summary((clone $query)->toBase()->select('orders.id'), $search);
+        }
+
         return response()->json([
             'orders' => $rows,
+            // (Lane OQ) Null unless the search matched order lines.
+            'product_match' => $productMatch,
             // $total is passed in rather than counted again: it is already the
             // row count for exactly this filtered view, and summaryFor()'s own
             // note explains why that one figure is not demo-excluded.
@@ -906,7 +925,8 @@ class OrdersApiController extends Controller
     {
         $query = $this->rowQuery();
 
-        $search = trim((string) $request->query('search', ''));
+        // (Lane OQ) Capped: a pasted paragraph is not a bigger statement.
+        $search = OrderProductSearch::term($request->query('search', ''));
 
         if ($search !== '') {
             // Somebody searching for "100%" must not turn it into a wildcard.
@@ -937,18 +957,14 @@ class OrdersApiController extends Controller
                 }
 
                 // (Lane VPA) A line's SKU or option finds its order: "TT-MF-21N"
-                // or "Bright Beige" answers "who bought this shade?". One
-                // correlated EXISTS on the indexed order_id, asked only while
-                // a search is typed.
-                if (mb_strlen($search) >= 2) {
-                    $q->orWhereExists(function ($sub) use ($like) {
-                        $sub->selectRaw('1')->from('order_items as vpa_i')
-                            ->whereColumn('vpa_i.order_id', 'orders.id')
-                            ->where(function ($w) use ($like) {
-                                $w->whereRaw('vpa_i.sku like ? escape '.self::LIKE_ESCAPE_SQL, [$like])
-                                    ->orWhereRaw('vpa_i.variant_attributes like ? escape '.self::LIKE_ESCAPE_SQL, [$like]);
-                            });
-                    });
+                // or "Bright Beige" answers "who bought this shade?". (Lane OQ)
+                // And its PRODUCT NAME, word by word: "medicube jelly" finds
+                // every order with Medicube PDRN Jelly Cream in it. One
+                // uncorrelated IN, materialised once -- OrderProductSearch says
+                // why that and not the EXISTS this used to be. Asked only while
+                // a search of two characters or more is typed.
+                if (OrderProductSearch::applies($search)) {
+                    $q->orWhereIn('orders.id', OrderProductSearch::orderIdsQuery($search));
                 }
 
                 // Typing an id finds that order, and typing a WooCommerce order

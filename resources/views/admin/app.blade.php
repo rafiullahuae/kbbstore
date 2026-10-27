@@ -490,6 +490,17 @@ input.inp[type=file]{padding:6px 9px}
 .odthumb{width:36px;height:36px;border-radius:8px;overflow:hidden;display:grid;place-items:center;
          font-size:10px;font-weight:800;color:#fff}
 .odthumb img{width:100%;height:100%;object-fit:cover;display:block}
+/* (Lane OQ) A line of MORE THAN ONE piece: the quantity in a red circle, so
+   "this customer took three" is seen before anything else on the order.
+   Quantity 1 draws no badge at all -- the line is exactly as it was. */
+.kqb{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 7px;box-sizing:border-box;
+     border-radius:999px;background:#e5383b;color:#fff;font-weight:800;font-size:12.5px;line-height:1;
+     font-variant-numeric:tabular-nums;white-space:nowrap;vertical-align:middle;
+     box-shadow:0 0 0 3px rgba(229,56,59,.16)}
+.kqb.sm{min-width:20px;height:20px;padding:0 5px;font-size:11px;box-shadow:none}
+/* The same red on the editable quantity box (processing / on-hold orders),
+   switched live as the number is typed. */
+.odqty.kqhot{background:#e5383b;border-color:#e5383b;color:#fff;font-weight:800;border-radius:999px;text-align:center}
 /* The Customer note card's body.
    This class was written into the markup and never given a rule, so the card
    had NO horizontal padding: the gift pill, both labels and the message box
@@ -14070,6 +14081,29 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
          uses; AR is the same pill in the shop's pink, so an Arabic order is
          seen at a glance. */
       '.pill.ollang-ar{background:#fce6ec;color:#a8475c}' +
+      /* Lane OQ: a product search. Under the customer, the line(s) that made
+         the row match; above the table, the product in this view. One line
+         per chip, ellipsised, so a row grows by at most two short lines. */
+      '.olm{display:flex;flex-direction:column;gap:3px;margin-top:6px;max-width:300px}' +
+      '.olmc{display:flex;align-items:center;gap:6px;min-width:0;font-size:11.5px;line-height:1.3;color:var(--ink-2);' +
+        'background:var(--bg-soft,#f6f6f7);border:1px solid var(--line,#ececef);border-radius:999px;padding:2px 9px 2px 3px}' +
+      '.olmc .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+      '.olmc .q1{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:999px;' +
+        'background:var(--line,#ececef);color:var(--ink-2);font-weight:700;font-size:11px;font-variant-numeric:tabular-nums;flex:none}' +
+      '.olmc .kqb{flex:none}' +
+      '.olmc .v{color:var(--ink-soft)}' +
+      '.olm-more{font-size:11px;color:var(--ink-soft);padding-inline-start:9px}' +
+      'mark.olhi{background:#ffe08a;color:inherit;border-radius:3px;padding:0 1px}' +
+      ':root[data-theme="midnight"] mark.olhi{background:#7a5b10;color:#fff}' +
+      '.olpm{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;padding:12px 14px;border-inline-start:3px solid #e5383b}' +
+      '.olpm-i{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:rgba(229,56,59,.1);color:#e5383b}' +
+      '.olpm-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}' +
+      '.olpm-k{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}' +
+      '.olpm-r{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:13px;min-width:0}' +
+      '.olpm-r .n{font-weight:700;min-width:0;overflow-wrap:anywhere}' +
+      '.olpm-r .c{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}' +
+      '.olpm-r .c b{color:var(--ink,#1c1d22)}' +
+      '.olpm-more{font-size:11.5px;color:var(--ink-soft)}' +
       ':root[data-theme="midnight"] .pill.ollang-ar{background:#3a1a26;color:#f5a3b8}';
 
     document.head.appendChild(s);
@@ -14188,6 +14222,64 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '</div></div>';
   }
 
+  /* (Lane OQ) The words of the search, for highlighting -- the same split the
+     server matches order lines with (App\Support\OrderProductSearch). */
+  function olWords(){
+    var seen = {};
+    return String(OL.search || '').trim().split(/\s+/).filter(function(w){
+      var k = w.toLowerCase();
+      if(!w || seen[k]) return false;
+      seen[k] = 1; return true;
+    }).slice(0, 6);
+  }
+
+  /* Text with every searched word marked. The text is split on the words and
+     EACH PIECE is escaped, so nothing typed or stored ever becomes markup. */
+  function olHi(text, words){
+    text = String(text || '');
+    if(!words.length) return sesc(text);
+    var re = new RegExp('(' + words.map(function(w){ return w.replace(/[.*+?^$()|[\]\\{}]/g, '\\$&'); }).join('|') + ')', 'gi');
+    return text.split(re).map(function(part, i){ return i % 2 ? '<mark class="olhi">' + sesc(part) + '</mark>' : sesc(part); }).join('');
+  }
+
+  /* Under the customer: the order line(s) the search found, "2× Medicube PDRN
+     Jelly Cream · 50ml", with the quantity in the red circle when it is more
+     than one. Nothing at all on a row that matched by name, email or phone. */
+  function olMatched(o){
+    var m = o.matched;
+    if(!m || !m.lines || !m.lines.length) return '';
+    var words = olWords();
+    return '<div class="olm">' + m.lines.map(function(l){
+      var full = l.qty + ' \u00d7 ' + l.name + (l.variant ? ' \u00b7 ' + l.variant : '') + (l.sku ? ' \u00b7 SKU ' + l.sku : '') + (l.gift ? ' \u00b7 free gift' : '');
+      return '<span class="olmc" title="' + sesc(full) + '">' +
+        (l.qty > 1 ? kqBadge(l.qty, 'sm') : '<span class="q1" aria-label="Quantity 1">1\u00d7</span>') +
+        '<span class="t"><bdi>' + olHi(l.name, words) + '</bdi>' +
+        (l.variant ? '<span class="v"> \u00b7 ' + olHi(l.variant, words) + '</span>' : '') +
+        (l.gift ? '<span class="v"> \u00b7 free gift</span>' : '') + '</span></span>';
+    }).join('') +
+    (m.more ? '<span class="olm-more">+' + m.more + ' more matching line' + (m.more === 1 ? '' : 's') + '</span>' : '') +
+    '</div>';
+  }
+
+  /* Above the table: each product the search found, in this view (status
+     chip, emirate and Filters all apply): "in 37 orders · 52 pieces". */
+  function olProductMatch(d){
+    var pm = d.product_match;
+    if(!pm || !pm.products || !pm.products.length) return '';
+    var words = olWords();
+    var n = function(v, one, many){ return '<b>' + (+v).toLocaleString() + '</b> ' + (+v === 1 ? one : many); };
+    return '<div class="card olpm" role="status">' +
+      '<span class="olpm-i" aria-hidden="true">' + ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>') + '</span>' +
+      '<div class="olpm-b"><div class="olpm-k">Product in this view</div>' +
+      pm.products.map(function(p){
+        return '<div class="olpm-r"><span class="n"><bdi>' + olHi(p.name, words) + '</bdi></span>' +
+          '<span class="c">in ' + n(p.orders, 'order', 'orders') + ' \u00b7 ' + n(p.pieces, 'piece', 'pieces') +
+          (p.gift_pieces ? ' \u00b7 ' + n(p.gift_pieces, 'free gift', 'free gifts') : '') + '</span></div>';
+      }).join('') +
+      (pm.more ? '<div class="olpm-more">More products match too \u2014 type more of the name to narrow it.</div>' : '') +
+      '</div></div>';
+  }
+
   function olDash(v){ return (v === null || v === undefined || v === '') ? '<span style="color:var(--ink-faint)">—</span>' : sesc(v); }
 
   function olDate(iso){
@@ -14225,7 +14317,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
   function olLabel(o){ return o.customer_name || o.email || ('Order ' + o.order_number); }
 
   async function olLoad(){
-    if(OL.busy) return;
+    /* (Lane OQ) A search typed while the last one is still answering is
+       queued, not dropped: "medi" then "medicube" used to leave the list on
+       "medi" whenever the first request was slow. One follow-up at most. */
+    if(OL.busy){ OL.again = true; return; }
     OL.busy = true;
     OL.result = null; OL.pend = '';
     try{
@@ -14248,6 +14343,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       }
     }
     OL.busy = false;
+    if(OL.again){
+      OL.again = false;
+      if(document.getElementById('olSearch')) return olLoad();
+    }
     olPaint();
   }
 
@@ -14328,6 +14427,11 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     var s = d.summary || {};
     if(!selected.length) OL.pend = '';
 
+    /* (Lane OQ) Typing carries on: the box is redrawn with the list, so the
+       cursor goes back where it was instead of leaving the search mid-word. */
+    var typing = document.activeElement && document.activeElement.id === 'olSearch' ? document.activeElement : null;
+    var caret = typing ? [typing.selectionStart, typing.selectionEnd, typing.value] : null;
+
     el.innerHTML =
       '<div class="wrap">' +
       '<div class="between" style="margin-bottom:8px;flex-wrap:wrap;gap:12px">' +
@@ -14351,7 +14455,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 
       '<div class="odltools">' +
         '<div class="search">' + ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>') +
-        '<input id="olSearch" placeholder="Search order number, name, email, phone or Woo ID…" value="' + sesc(OL.search) + '"></div>' +
+        '<input id="olSearch" placeholder="Search order, customer, phone, product or SKU…" aria-label="Search orders by order number, customer, email, phone, Woo ID, product name or SKU" value="' + sesc(OL.search) + '"></div>' +
         '<select class="inp" id="olSort" style="max-width:220px">' +
           OL_SORTS.map(function(o){ return '<option value="' + o[0] + '"' + (OL.sort === o[0] ? ' selected' : '') + '>Sort: ' + o[1] + '</option>'; }).join('') +
         '</select>' +
@@ -14363,6 +14467,8 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '<div class="chips" style="margin-bottom:12px">' + olChips(d) + '</div>' +
 
       olEmirates(d) +
+
+      olProductMatch(d) +
 
       (selected.length ? olSelectionBar(selected) : olResultLine()) +
 
@@ -14385,6 +14491,13 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '</div></div>';
 
     olBind();
+
+    if(caret){
+      var again = document.getElementById('olSearch');
+      // What is in the box now, not what was searched: letters typed while
+      // the answer was on its way are kept (their own search is queued).
+      if(again){ again.value = caret[2]; again.focus(); try{ again.setSelectionRange(caret[0], caret[1]); }catch(e){} }
+    }
   }
 
   function olSelectionBar(selected){
@@ -14528,7 +14641,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
           '<div style="min-width:0"><div class="pname" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px">' +
             (o.customer_name ? sesc(o.customer_name) : '<span style="color:var(--ink-faint)">No name on record</span>') +
             (o.guest ? ' <span class="pill grey">Guest</span>' : '') + '</div>' +
-          '<div class="pbrand" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px">' + olDash(o.email) + '</div></div></div></td>' +
+          '<div class="pbrand" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px">' + olDash(o.email) + '</div>' + olMatched(o) + '</div></div></td>' +
         cols.map(function(col){ return olCell(col[0], o); }).join('') +
         '<td style="white-space:nowrap">' +
           '<button class="btn ghost sm" data-olview="' + o.id + '">View</button></td>' +
@@ -15001,6 +15114,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       var d = await api('/admin-api/orders-list?' + qs);
       if(!OL.data || qs !== olParams(false) || !document.getElementById('olSearch')) return;
       OL.data.counts = d.counts; OL.data.summary = d.summary; OL.data.statuses = d.statuses; OL.data.emirates = d.emirates;
+      OL.data.product_match = d.product_match;
       var a = document.activeElement;
       if(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) && document.querySelector('#content').contains(a)) return;
       olPaint();
@@ -15506,12 +15620,22 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     return '<div class="pbrand odvar" style="color:var(--ink,#2a2228)">'+sesc(v)+(it.sku?' \u00b7 SKU '+sesc(it.sku):'')+'</div>';
   }
 
+  /* (Lane OQ) The red quantity circle, for a line of 2 or more pieces; ''
+     for 1, so a single-piece line keeps its exact old markup. */
+  function kqBadge(n, cls){
+    n = +n || 0;
+    if (n <= 1) return '';
+    return '<b class="kqb'+(cls?' '+cls:'')+'" role="img" aria-label="Quantity '+n+'" title="Quantity '+n+'">'+n+'\u00d7</b>';
+  }
+
   function odItemsCard(o){
     var editable = !!o.editable;
     var rows = o.items.map(function(it){
       var qtyCell = editable
-        ? '<input class="odinp odqty" data-itemid="'+it.id+'" type="number" min="1" value="'+it.quantity+'" style="width:60px;padding:6px 7px">'
-        : '\u00d7 '+it.quantity;
+        ? (it.quantity > 1
+            ? '<input class="odinp odqty kqhot" data-itemid="'+it.id+'" type="number" min="1" value="'+it.quantity+'" aria-label="Quantity" oninput="this.classList.toggle(\'kqhot\',+this.value>1)" style="width:60px;padding:6px 7px">'
+            : '<input class="odinp odqty" data-itemid="'+it.id+'" type="number" min="1" value="'+it.quantity+'" style="width:60px;padding:6px 7px">')
+        : (it.quantity > 1 ? kqBadge(it.quantity) : '\u00d7 '+it.quantity);
       var priceCell = editable
         /* WHOLE DIRHAMS. AdminOrderController refuses a NEW line price
            carrying fils. The stored value is still printed as it is, so a line
@@ -15533,7 +15657,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       return '<tr class="odgift"><td style="width:44px">'+odItemThumb(g)+'</td>'+
         '<td><b style="font-size:12.5px">'+sesc(g.name)+'</b><div class="pbrand">'+sesc(g.brand||'')+'</div>'+
         '<div class="pbrand" style="color:#1f6e4a;font-weight:700">Free gift'+(g.range?' \u00b7 '+sesc(g.range):'')+'</div></td>'+
-        '<td>AED 0</td><td>\u00d7 '+g.quantity+'</td><td><b>AED 0</b></td>'+(editable?'<td></td>':'')+'</tr>';
+        '<td>AED 0</td><td>'+(g.quantity > 1 ? kqBadge(g.quantity) : '\u00d7 '+g.quantity)+'</td><td><b>AED 0</b></td>'+(editable?'<td></td>':'')+'</tr>';
     }).join('');
 
     var refundedLine = o.refunded_total_aed>0 ? '<div class="between" style="color:var(--sale,#c0392b)"><span>Refunded</span><span>-AED '+o.refunded_total_aed+'</span></div>' : '';
@@ -16514,7 +16638,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '<button class="btn sm" id="ordStatusSave">Update</button></div>'+
       '<div class="card pad" style="margin-bottom:12px"><b style="font-size:12.5px">Customer</b><div style="font-size:12.5px;color:var(--ink-2);margin-top:6px;line-height:1.7">'+(addr||'\u2014')+'</div></div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead><tbody>'+
-      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div>'+(it.gift?'<div class="pbrand" style="color:#1f6e4a;font-weight:700">Free gift</div>':'')+odVariant(it)+odSetContents(it)+'</td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
+      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div>'+(it.gift?'<div class="pbrand" style="color:#1f6e4a;font-weight:700">Free gift</div>':'')+odVariant(it)+odSetContents(it)+'</td><td>'+(it.qty > 1 ? kqBadge(it.qty) : it.qty)+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
       '</tbody></table></div>'+
       '<div style="margin-top:12px;font-size:13px;display:flex;flex-direction:column;gap:5px">'+
       '<div class="between"><span style="color:var(--ink-soft)">Subtotal</span><span>AED '+o.subtotal_aed+'</span></div>'+
