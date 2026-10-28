@@ -1063,6 +1063,53 @@ select.fg-in{padding-inline-end:28px}
       t.err ? el('div', { class: 'fg-msg err', role: 'alert', style: 'margin-top:6px' }, [el('i', { text: '!' }), el('span', { text: t.err })]) : null
     ]);
   }
+  /* GIFT BOX POPUPS (Lane GBX). The owner, 28 October: "i need a switch also
+     with TESTING phase, and my our IPs ... keep turn off by default this
+     feature." Its own Off / Testing / Live (Testing = the IP list beside the
+     free gifts Mode, the same list), and the designs he picks from the
+     previews. Every control saves at once (POST /extras) with its own toast;
+     the server refuses a value that is not one of its options. */
+  var X_MODES = [['off', 'Off', 'Nobody sees the popups. The box is exactly as before.'], ['testing', 'Testing', 'Only the IPs on the Testing list see them.'], ['live', 'Live', 'Every shopper sees them.']];
+  var X_POPS = [['A', 'A · Compact card (slides up on a phone)'], ['B', 'B · Photo on top, pink FREE badge'], ['C', 'C · Card inside the box, under the photo'], ['D', 'D · Minimal luxe, value struck then FREE']];
+  var X_CRITS = [['1', '1 · Stacked cards'], ['2', '2 · Compact ladder'], ['3', '3 · Tabs by amount']];
+  var X_GLOWS = [['none', 'None'], ['G1', 'G1 · Soft pink halo'], ['G2', 'G2 · Thin pink ring'], ['G3', 'G3 · White ring, blush glow'], ['G4', 'G4 · Pink and champagne']];
+  function saveExtras(body, msg) {
+    run(function () { return api('POST', '/extras', body); }, 'Gift box popups not changed.', function (res) {
+      say(res && res.added_ip ? msg + ' Your IP ' + res.added_ip + ' was added to the Testing list.' : msg);
+    });
+  }
+  function extrasCard(d) {
+    var x = d.config.extras || { mode: 'off', pop: 'A', crit_on: true, crit: '1', glow: 'none' }, ro = !can();
+    var g = el('div', { class: 'fg-modes', role: 'radiogroup', 'aria-label': 'Gift box popups mode', 'data-fk': 'x-modes' }, X_MODES.map(function (m) {
+      return el('button', { type: 'button', role: 'radio', class: 'fg-mode m-' + m[0], 'aria-checked': String(x.mode === m[0]), 'data-fk': 'x-mode-' + m[0], tabindex: x.mode === m[0] ? '0' : '-1',
+        'data-kbb-sure': x.mode === m[0] ? null : m[2] + ' Switch Gift box popups to ' + m[1] + '?',
+        disabled: ro || st.busy, onclick: function () {
+          if (x.mode === m[0]) return;
+          saveExtras({ mode: m[0] }, m[0] === 'live' ? 'Gift box popups are Live: every shopper sees them.' : m[0] === 'testing' ? 'Gift box popups are in Testing: only the IPs on the Testing list see them.' : 'Gift box popups are Off.');
+        } }, [el('b', { text: m[1] }), el('small', { text: m[2] })]);
+    }));
+    g.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      var b = Array.prototype.slice.call(g.querySelectorAll('button:not([disabled])')), i = b.indexOf(document.activeElement);
+      if (i < 0 || b.length < 2) return;
+      e.preventDefault(); b[(i + ((e.key === 'ArrowRight' || e.key === 'ArrowDown') ? 1 : b.length - 1)) % b.length].focus();
+    });
+    function pick(key, opts, label, help) {
+      var s = el('select', { class: 'fg-in', disabled: ro || st.busy, 'data-fk': 'x-' + key }, opts.map(function (o) { return el('option', { value: o[0], text: o[1], selected: x[key] === o[0] }); }));
+      s.addEventListener('change', function () { var b = {}; b[key] = s.value; saveExtras(b, label + ': ' + s.options[s.selectedIndex].text + '.'); });
+      return field(label, s, help);
+    }
+    return card('Gift box popups', 'Extras on the gift box in the cart panel, on the cart page and in the checkout summary: tap a gift photo for its popup, a “Gifts Criteria” button beside “View all” for every spend band, and a glow on the photos. Off by default.', [
+      el('div', { style: 'margin-top:12px' }, [g]),
+      x.mode === 'testing' ? el('p', { class: 'fg-sub', style: 'margin:8px 0 0', text: 'Testing uses the same list as free gifts: “IPs that can see it in Testing” above (' + plural((d.config.testers || []).length, 'IP', 'IPs') + ').' }) : null,
+      el('div', { class: 'fg-grid2', style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px' }, [
+        pick('pop', X_POPS, 'Photo popup', 'What a tap on a gift photo opens.'),
+        pick('crit', X_CRITS, 'Gifts Criteria popup', 'How the spend bands are laid out.'),
+        pick('glow', X_GLOWS, 'Photo glow', 'A soft glow around the gift photos.')
+      ]),
+      el('div', { class: 'fg-row', style: 'margin-top:12px' }, [sw(x.crit_on, '“Gifts Criteria” button', function () { saveExtras({ crit_on: !x.crit_on }, x.crit_on ? 'The Gifts Criteria button is off.' : 'The Gifts Criteria button is on.'); }, ro || st.busy)])
+    ], 'fg-xcard');
+  }
   function renderOverview(wrap) {
     var d = st.data, mode = d.config.mode || (d.config.on ? 'live' : 'off');
     var items = d.checklist, n = (d.config.testers || []).length;
@@ -1076,6 +1123,7 @@ select.fg-in{padding-inline-end:28px}
       ]),
       el('div', { class: 'fg-state' }, [testersCard(d)])
     ])]));
+    wrap.appendChild(extrasCard(d));
     wrap.appendChild(card('Things to check', items.length ? 'Nothing here stops Testing or Live. A gift that is missing or out of stock is skipped until it is back, and the rest of its range is still given.' : null, [el('ul', { class: 'fg-checks', style: 'margin-top:10px' }, (items.length ? items : [{ level: 'ok', text: 'All clear: every range that is on has its gifts, and they are in stock.' }]).map(function (i) {
       var fix = i.level === 'ok' ? null : el('button', { type: 'button', class: 'fg-link', text: i.range ? 'Open range' : 'Add a range', onclick: function () { if (i.range) goRange(i.range); else { setTab('ranges'); if (can()) addRange(); } } });
       return el('li', { class: 'lv-' + i.level }, [pill(i.level === 'alert' ? 'red' : i.level === 'warn' ? 'amber' : 'green', i.level === 'ok' ? 'All clear' : 'Check'), el('span', { text: i.text }), fix]);

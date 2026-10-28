@@ -131,6 +131,47 @@ class FreeGiftsController extends Controller
         return response()->json($this->payload());
     }
 
+    /**
+     * POST /admin-api/free-gifts/extras {mode?, pop?, crit_on?, crit?, glow?}
+     * -- Overview -> Gift box popups (Lane GBX). The owner, 28 October: "i
+     * need a switch also with TESTING phase, and my our IPs ... keep turn off
+     * by default this feature." Each key is optional, so one control saves at
+     * once; a value that is not one of its own options is REFUSED (422), and
+     * what is stored goes through FreeGifts::extrasOf() regardless. Testing
+     * uses the free gifts Testing list itself; with nobody on it the address
+     * of the request -- the owner at this screen -- is put on it, as the
+     * free gifts Mode does, and the answer says so (added_ip).
+     */
+    public function extras(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'mode' => ['sometimes', 'string', Rule::in(FreeGifts::MODES)],
+            'pop' => ['sometimes', 'string', Rule::in(FreeGifts::EXTRA_POPS)],
+            'crit' => ['sometimes', 'string', Rule::in(FreeGifts::EXTRA_CRITS)],
+            'glow' => ['sometimes', 'string', Rule::in(FreeGifts::EXTRA_GLOWS)],
+            'crit_on' => ['sometimes', 'boolean'],
+        ]);
+
+        $config = $this->gifts->freshConfig();
+        $added = null;
+
+        if (($data['mode'] ?? null) === 'testing' && $config['testers'] === []) {
+            $ip = (string) ($request->ip() ?? '');
+
+            if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+                return response()->json(['error' => 'Add at least one IP to "IPs that can see it in Testing" first.'], 422);
+            }
+
+            $added = \App\Support\IpRange::normalise($ip) ?? $ip;
+            $config['testers'] = [['ip' => $added, 'label' => 'My device (added when Gift box popups went to Testing)']];
+        }
+
+        $config['extras'] = FreeGifts::extrasOf(array_merge($config['extras'], $data));
+        $this->gifts->saveConfig($config);
+
+        return response()->json($this->payload() + ($added !== null ? ['added_ip' => $added] : []));
+    }
+
     /** POST /admin-api/free-gifts/settings -- Display and Homepage section. */
     public function settings(Request $request): JsonResponse
     {

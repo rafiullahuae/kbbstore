@@ -127,6 +127,31 @@ final class FreeGifts
     /** The urgency line is one line: a longer text is refused by the admin and cut here. */
     public const URGENCY_MAX = 80;
 
+    /*
+     * GIFT BOX POPUPS (Lane GBX, Marketing -> Free gifts -> Overview -> Gift
+     * box popups). The owner, 28 October: "i need a switch also with TESTING
+     * phase, and my our IPs ... keep turn off by default this feature." Off,
+     * the box is byte for byte what it was. Testing reads the SAME Testing IP
+     * list as free gifts (testerMatch()); Live is every shopper. On, the box's
+     * photos open a small popup (design A-D), a "Gifts Criteria" button beside
+     * View all opens every spend band (design 1-3, its own switch), and the
+     * photos can take a glow (G1-G4). Every value is one of its own options or
+     * the default (extrasOf()), never a string from the request.
+     */
+    public const EXTRAS = ['mode' => 'off', 'pop' => 'A', 'crit_on' => true, 'crit' => '1', 'glow' => 'none'];
+
+    public const EXTRA_POPS = ['A', 'B', 'C', 'D'];
+
+    public const EXTRA_CRITS = ['1', '2', '3'];
+
+    public const EXTRA_GLOWS = ['none', 'G1', 'G2', 'G3', 'G4'];
+
+    /** The popups' own words, constants (escaped where printed). */
+    public const EXTRA_TEXTS = [
+        'en' => ['crit' => 'Gifts Criteria', 'sub' => 'The more you shop, the more you get.', 'close' => 'Close', 'free_with' => 'FREE with your order', 'yours' => 'Your basket', 'value' => 'Value'],
+        'ar' => ['crit' => 'شروط الهدايا', 'sub' => 'كلما تسوّقتِ أكثر، حصلتِ على المزيد.', 'close' => 'إغلاق', 'free_with' => 'مجاناً مع طلبكِ', 'yours' => 'سلّتكِ الآن', 'value' => 'القيمة'],
+    ];
+
     /** The homepage section's data. No storefront section yet: the owner is choosing its design. */
     public const HOME = [
         'on' => false,
@@ -309,6 +334,7 @@ final class FreeGifts
             'texts' => $texts,
             'home' => $home,
             'look' => self::lookOf($saved['look'] ?? null),
+            'extras' => self::extrasOf($saved['extras'] ?? null),
         ];
     }
 
@@ -475,6 +501,12 @@ final class FreeGifts
             return $mode === 'live';
         }
 
+        return self::testerMatch($saved, $request);
+    }
+
+    /** Whether this request's address is on the free gifts Testing list -- the one list, one rule. */
+    private static function testerMatch(array $saved, ?\Illuminate\Http\Request $request): bool
+    {
         $bin = $request === null ? null : \App\Support\IpRange::pack((string) $request->ip());
 
         if ($bin === null) {
@@ -488,6 +520,54 @@ final class FreeGifts
         }
 
         return false;
+    }
+
+    /**
+     * (Lane GBX) A saved "Gift box popups", every key present: the mode and
+     * each design one of its own options or the default, the criteria switch
+     * a bool. The admin saves through this, so nothing else reaches the row.
+     *
+     * @return array{mode:string,pop:string,crit_on:bool,crit:string,glow:string}
+     */
+    public static function extrasOf(mixed $saved): array
+    {
+        $saved = is_array($saved) ? $saved : [];
+        $out = self::EXTRAS;
+
+        foreach (['mode' => self::MODES, 'pop' => self::EXTRA_POPS, 'crit' => self::EXTRA_CRITS, 'glow' => self::EXTRA_GLOWS] as $key => $options) {
+            $v = $saved[$key] ?? null;
+            $v = is_int($v) ? (string) $v : $v;
+            if (is_string($v) && in_array($v, $options, true)) {
+                $out[$key] = $v;
+            }
+        }
+
+        if (array_key_exists('crit_on', $saved)) {
+            $out['crit_on'] = filter_var($saved['crit_on'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? self::EXTRAS['crit_on'];
+        }
+
+        return $out;
+    }
+
+    /**
+     * (Lane GBX) The popups' settings when this request should see them, else
+     * null: Off for everyone, Testing only for an address on the free gifts
+     * Testing list, Live for all. No query: the settings row is the request's
+     * memo (SettingsRequestMemo).
+     *
+     * @return array{mode:string,pop:string,crit_on:bool,crit:string,glow:string}|null
+     */
+    public function extrasFor(?\Illuminate\Http\Request $request): ?array
+    {
+        $saved = $this->settings->get(self::KEY);
+        $saved = is_array($saved) ? $saved : [];
+        $x = self::extrasOf($saved['extras'] ?? null);
+
+        if ($x['mode'] === 'off' || ($x['mode'] === 'testing' && ! self::testerMatch($saved, $request))) {
+            return null;
+        }
+
+        return $x;
     }
 
     /**
@@ -528,6 +608,39 @@ final class FreeGifts
         $products = $this->products(array_merge(...array_map(static fn (array $r) => array_map(static fn (array $g) => (int) $g[0], $r['gifts']), $ranges)));
         $variants = $this->variantsFor($ranges);
         $ar = ! Locale::isDefault();
+        $rows = $this->bandRows($ranges, $products, $variants, $ar);
+
+        if ($rows === []) {
+            return null;
+        }
+
+        $h = $cfg['home'];
+
+        return [
+            'title' => $ar ? $h['title_ar'] : $h['title_en'],
+            'sub' => $ar ? $h['sub_ar'] : $h['sub_en'],
+            'btn' => $ar ? $h['btn_ar'] : $h['btn_en'],
+            'note' => $ar ? $h['note_ar'] : $h['note_en'],
+            // (Lane GU2) The urgency line in the note's place, or null for the note.
+            'urgency' => $h['urgency'] ? $this->urgencyWords() : null,
+            'look' => self::lookOf($cfg['look'] ?? null),
+            'url' => \App\Support\HomeSections::url((string) $h['url'], \App\Support\Url::to(self::HOME['url'])),
+            'rows' => $rows,
+            'ar' => $ar,
+            'bg' => self::homeBg($h),
+        ];
+    }
+
+    /**
+     * One row per range that gives something right now -- the homepage
+     * section's rows (home()) and, with "Gift box popups" on, the box's
+     * Gifts Criteria popup (box()). No query of its own: the products and
+     * variations are the caller's.
+     *
+     * @return list<array{range_id:int,amount:string,words:string,gifts:list<array>,thumbs:list<array>,count:string}>
+     */
+    private function bandRows(array $ranges, array $products, array $variants, bool $ar): array
+    {
         $rows = [];
 
         foreach ($ranges as $r) {
@@ -553,6 +666,7 @@ final class FreeGifts
             $max = $r['max'] === null ? null : number_format(intdiv((int) $r['max'], 100));
 
             $rows[] = [
+                'range_id' => (int) $r['id'],
                 'amount' => $ar
                     ? ($max === null ? $min . '+ د.إ' : $min . ' – ' . $max . ' د.إ')
                     : ($max === null ? 'AED ' . $min . '+' : 'AED ' . $min . ' – ' . $max),
@@ -569,25 +683,7 @@ final class FreeGifts
             ];
         }
 
-        if ($rows === []) {
-            return null;
-        }
-
-        $h = $cfg['home'];
-
-        return [
-            'title' => $ar ? $h['title_ar'] : $h['title_en'],
-            'sub' => $ar ? $h['sub_ar'] : $h['sub_en'],
-            'btn' => $ar ? $h['btn_ar'] : $h['btn_en'],
-            'note' => $ar ? $h['note_ar'] : $h['note_en'],
-            // (Lane GU2) The urgency line in the note's place, or null for the note.
-            'urgency' => $h['urgency'] ? $this->urgencyWords() : null,
-            'look' => self::lookOf($cfg['look'] ?? null),
-            'url' => \App\Support\HomeSections::url((string) $h['url'], \App\Support\Url::to(self::HOME['url'])),
-            'rows' => $rows,
-            'ar' => $ar,
-            'bg' => self::homeBg($h),
-        ];
+        return $rows;
     }
 
     /**
@@ -1153,6 +1249,13 @@ final class FreeGifts
             return $request->attributes->get($key);
         }
 
+        // (Lane GBX) Every gift of every running range, loaded once by box()
+        // for the Gifts Criteria popup: the box's own range is in it already.
+        $pool = $request?->attributes->get('kbb.free_gifts.pool');
+        if (is_array($pool) && array_diff($ids, array_keys($pool)) === []) {
+            return array_intersect_key($pool, array_flip($ids));
+        }
+
         // ONE statement: the brand comes in on a join and is set as the
         // relation by hand, so the box costs a single query whatever the band
         // holds (FreeGiftsTest pins 3 gifts and 40 at the same count).
@@ -1228,6 +1331,12 @@ final class FreeGifts
 
         if ($request !== null && $request->attributes->has($key)) {
             return $request->attributes->get($key);
+        }
+
+        // (Lane GBX) As products(): the popup's one load covers the box's.
+        $pool = $request?->attributes->get('kbb.free_gifts.vpool');
+        if (is_array($pool) && array_diff($ids, array_keys($pool)) === []) {
+            return array_intersect_key($pool, array_flip($ids));
         }
 
         $out = self::loadVariants('v.id', $ids);
@@ -1731,6 +1840,26 @@ final class FreeGifts
      */
     public function box(array $totals, ?string $country = null): array
     {
+        // (Lane GBX) Gift box popups: with them on, every running range's
+        // gifts are loaded FIRST, in one statement, so the box's own range
+        // costs nothing more -- the whole feature is one query, however many
+        // ranges or gifts. Off: not a statement, not a byte.
+        $request = app()->bound('request') ? request() : null;
+        $extras = $this->extrasFor($request);
+        $running = [];
+
+        if ($extras !== null && $this->visibleTo($request)) {
+            $today = StoreTime::today()->format('Y-m-d');
+            $running = array_values(array_filter($this->ranges(), static fn (array $r) => $r['gifts'] !== []
+                && (($r['starts'] ?? null) === null || $today >= $r['starts'])
+                && (($r['ends'] ?? null) === null || $today <= $r['ends'])));
+
+            if ($running !== [] && $request !== null) {
+                $request->attributes->set('kbb.free_gifts.pool', $this->products(array_merge(...array_map(static fn (array $r) => array_map(static fn (array $g) => (int) $g[0], $r['gifts']), $running))));
+                $request->attributes->set('kbb.free_gifts.vpool', $this->variantsFor($running));
+            }
+        }
+
         $lines = $this->forTotals($totals, $country);
 
         if ($lines === []) {
@@ -1759,8 +1888,48 @@ final class FreeGifts
 
         // kbbFgThumbs: the small photos, full size first (fullFirst()); the list keeps this order.
         $box = ['kbbFgRows' => self::rows($lines), 'kbbFgThumbs' => self::rows(self::fullFirst($lines)), 'kbbFgWords' => $words];
+        $box += ['kbbFgSig' => $this->sig($box)];
 
-        return $box + ['kbbFgSig' => $this->sig($box)];
+        if ($extras !== null) {
+            $box['kbbFgX'] = $this->extrasBox($extras, $lines, $running, $request);
+        }
+
+        return $box;
+    }
+
+    /**
+     * (Lane GBX) What the box's popups draw: each small photo's gift with its
+     * brand and prices (regular and what it sells for), in the photos' own
+     * order, and -- with Gifts Criteria on -- every band as the homepage
+     * section reads it, the basket's own marked. Plain strings and integers;
+     * the view escapes every one. No query: box() loaded everything first.
+     *
+     * @return array{cfg:array,gifts:list<array>,bands:list<array>,cur:int}
+     */
+    private function extrasBox(array $extras, array $lines, array $running, ?\Illuminate\Http\Request $request): array
+    {
+        $gifts = [];
+        foreach (self::fullFirst($lines) as $l) {
+            $item = $l['variant'] ?? $l['product'];
+            $row = self::rows([$l])[0];
+            $gifts[] = $row + ['reg' => max(0, (int) $item->price), 'now' => max(0, (int) $item->effectivePrice())];
+        }
+
+        $bands = [];
+        $cur = -1;
+
+        if ($extras['crit_on'] && $running !== []) {
+            $products = $request?->attributes->get('kbb.free_gifts.pool') ?? $this->products(array_merge(...array_map(static fn (array $r) => array_map(static fn (array $g) => (int) $g[0], $r['gifts']), $running)));
+            $bands = $this->bandRows($running, $products, $this->variantsFor($running), ! Locale::isDefault());
+
+            foreach ($bands as $i => $b) {
+                if ($b['range_id'] === (int) $lines[0]['range_id']) {
+                    $cur = $i;
+                }
+            }
+        }
+
+        return ['cfg' => $extras, 'gifts' => $gifts, 'bands' => $bands, 'cur' => $cur];
     }
 
     /**
