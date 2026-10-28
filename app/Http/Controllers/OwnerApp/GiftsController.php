@@ -63,6 +63,26 @@ class GiftsController extends Controller
             return $r;
         }
 
+        /*
+         * THE APP'S PIN, ONCE, FOR THIS SWITCH ONLY (2.60.615, the owner: Off /
+         * Testing / Live "lock these options in owner app ... it will require
+         * the app password once to apply the change ... this security is only
+         * for the free gifts functionality OFF, TESTING and LIVE status").
+         * Checked here, on the server, before anything is written -- the
+         * phone's yes/no sheet and PIN pad are only the way in. The check is
+         * the lock screen's own (OwnerAppAuth::confirmPin): the same lockout
+         * ladder and attempt limits, so this box is no softer a door.
+         */
+        $device = $request->attributes->get('oa.device');
+        if (! $device instanceof \App\Models\OwnerAppDevice) {
+            return response()->json(['ok' => false, 'code' => 'pin', 'message' => 'Enter your app PIN to change the mode.'], 403);
+        }
+        $pin = $request->input('pin');
+        $refused = \App\Services\OwnerApp\OwnerAppAuth::confirmPin($request, $device, is_string($pin) ? mb_substr($pin, 0, 16) : '');
+        if ($refused !== null) {
+            return response()->json($refused['body'] + ['pin_refused' => true], $refused['status']);
+        }
+
         $sub = $this->sub($request, ['mode' => $request->input('mode')]);
 
         return $this->answer($this->delegate(fn () => $this->desk()->switch($sub)));

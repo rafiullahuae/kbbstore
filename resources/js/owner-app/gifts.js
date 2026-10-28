@@ -207,7 +207,7 @@ function paintHome() {
   const head = top('Free gifts', '<span data-gsub>' + esc(sub()) + '</span>', back('#/more'));
   const checks = d.checklist || [];
   let body = '<section class="card g-mode"><h4 class="sh">Mode <span class="muted">' + esc((MODES.find((m) => m[0] === mode) || MODES[0])[2]) + '</span></h4>'
-    + '<div class="g-modes" role="radiogroup" aria-label="Mode">' + MODES.map((m) => '<button type="button" role="radio" class="m-' + m[0] + (mode === m[0] ? ' on' : '') + '" aria-checked="' + (mode === m[0]) + '" data-gmode="' + m[0] + '"' + (can() ? '' : ' disabled') + '>' + m[1] + '</button>').join('') + '</div>'
+    + '<div class="g-modes" role="radiogroup" aria-label="Mode">' + MODES.map((m) => '<button type="button" role="radio" class="m-' + m[0] + (mode === m[0] ? ' on' : '') + '" aria-checked="' + (mode === m[0]) + '" data-gmode="' + m[0] + '"' + (can() ? '' : ' disabled') + '>' + ic('lock', 's') + m[1] + '</button>').join('') + '</div>'
     + (mode === 'testing' ? '<p class="hint g-hint">' + esc(plural(d.testers, 'IP is', 'IPs are')) + ' on the Testing list.</p>' : '') + '</section>';
   if (checks.length) {
     body += '<section class="card g-checks"><h4 class="sh">Things to check <span class="muted">' + checks.length + '</span></h4>'
@@ -403,6 +403,31 @@ function conflict() {
   });
 }
 
+function pinSheet(to, row) {
+  sheet('Enter your app PIN', '<p class="hint">' + esc('Confirm switching free gifts to ' + row[1] + '.') + '</p>'
+    + '<form class="g-pin" data-gpin><input type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="8" aria-label="App PIN" autofocus data-gpinv>'
+    + '<p class="hint g-pinmsg" aria-live="polite" data-gpinm></p>'
+    + '<div class="btns"><button type="button" class="btn sec" data-close>Cancel</button><button type="submit" class="btn ' + (to === 'off' ? 'sec danger' : 'pri') + '">' + ic('lock', 's') + 'Confirm</button></div></form>', (s, close) => {
+    const f = $('[data-gpin]', s), v = $('[data-gpinv]', s), msg = $('[data-gpinm]', s);
+    v.focus({ preventScroll: true });
+    f.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const pin = v.value.replace(/\D/g, '');
+      if (pin.length < 6) { msg.textContent = 'Your PIN is 6 to 8 digits.'; return; }
+      busy(f.querySelector('[type=submit]'), async () => {
+        const r = await api('POST', 'gifts/mode', { mode: to, pin });
+        v.value = '';
+        if (!r.ok) {
+          if (r.data && r.data.pin_refused && r.data.code === 'bad_pin') { msg.textContent = r.data.message || 'Wrong PIN.'; v.focus(); return; }
+          close(); toast((r.data && r.data.message) || 'Mode not changed.', true); return;
+        }
+        close(); take(r.data); redraw();
+        toast(to === 'live' ? 'Free gifts are Live: every shopper sees them.' : to === 'testing' ? 'Free gifts are in Testing: only the IPs on the list see them.' : 'Free gifts are Off: nobody sees them.');
+      });
+    });
+  });
+}
+
 function confirmSheet(title, text, yes, cls, run) {
   sheet(title, '<p class="hint">' + esc(text) + '</p><div class="btns"><button type="button" class="btn sec" data-close>No</button><button type="button" class="btn ' + (cls || 'pri') + '" data-gyes>' + esc(yes) + '</button></div>', (s, close) => {
     $('[data-gyes]', s).addEventListener('click', (e) => busy(e.currentTarget, async () => { await run(); close(); }));
@@ -561,11 +586,10 @@ export async function giftsClick(e) {
   if (m) {
     const to = m.getAttribute('data-gmode'), row = MODES.find((r) => r[0] === to);
     if (!G.d || to === G.d.mode || !row) return true;
+    // Locked (2.60.615): Yes / No first, then the app PIN once. The server
+    // checks the PIN before it writes anything; this is only the way in.
     confirmSheet('Switch to ' + row[1] + '?', row[2] + ' Switch free gifts to ' + row[1] + '?', 'Yes, ' + row[1], to === 'off' ? 'sec danger' : 'pri', async () => {
-      const r = await api('POST', 'gifts/mode', { mode: to });
-      if (!r.ok) { toast(r.data.message || 'Mode not changed.', true); return; }
-      take(r.data); redraw();
-      toast(to === 'live' ? 'Free gifts are Live: every shopper sees them.' : to === 'testing' ? 'Free gifts are in Testing: only the IPs on the list see them.' : 'Free gifts are Off: nobody sees them.');
+      pinSheet(to, row); // sheet() closes this Yes / No sheet first
     });
     return true;
   }

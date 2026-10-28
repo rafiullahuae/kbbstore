@@ -180,6 +180,42 @@ final class OwnerAppAuth
      */
     public static function unlock(Request $request, OwnerAppDevice $device, string $pin): array
     {
+        if (($refused = self::checkPin($request, $device, $pin)) !== null) {
+            return $refused;
+        }
+
+        return self::opened($request, $device, 'unlock');
+    }
+
+    /**
+     * The PIN typed again to confirm one sensitive change while the app is
+     * already open (2.60.615, the owner: free gifts Off / Testing / Live must
+     * "require the app password once to apply the change"). EXACTLY the
+     * unlock's check -- the same per-connection limit, member lockout ladder
+     * and device revoke counter, so a confirm box is no softer a door than the
+     * lock screen -- but it opens no new session. Null = confirmed.
+     *
+     * @return array{status:int, body:array<string,mixed>}|null
+     */
+    public static function confirmPin(Request $request, OwnerAppDevice $device, string $pin): ?array
+    {
+        $refused = self::checkPin($request, $device, $pin);
+
+        if ($refused === null) {
+            self::log($request, 'confirm', true, 'ok', (int) $device->member_id, $device->id);
+        }
+
+        return $refused;
+    }
+
+    /**
+     * unlock()'s checks, shared with confirmPin(): null when the PIN is right,
+     * else the refusal to send. On success the failure counters are cleared.
+     *
+     * @return array{status:int, body:array<string,mixed>}|null
+     */
+    private static function checkPin(Request $request, OwnerAppDevice $device, string $pin): ?array
+    {
         $ipKey = OwnerAppThrottle::bucket('pin', $request->ip());
 
         if (! OwnerAppThrottle::reserve($ipKey, self::IP_MAX_FAILS, self::LOCK_MINUTES * 60)) {
@@ -223,7 +259,7 @@ final class OwnerAppAuth
         self::cleared((int) $member->id, self::UNLOCK);
         DB::table('owner_app_devices')->where('id', $device->id)->update(['failed_count' => 0]);
 
-        return self::opened($request, $device, 'unlock');
+        return null;
     }
 
     /** The one answer a passkey refusal gets, whatever the reason: no oracle. */

@@ -126,11 +126,63 @@ it('reads the ranges for the owner, allowlisted: no Testing IPs, texts or my_ip 
 it('changes the mode with the console\'s own switch, and refuses a mode that is not one of its options', function () {
     // MUTATION: route gifts/mode anywhere but FreeGiftsController::switch -- the config does not move.
     [$c, $k] = OA::enrol($this);
-    expect(OA::post($this, 'gifts/mode', ['mode' => 'live'], $c, $k)->assertOk()->json('mode'))->toBe('live');
+    expect(OA::post($this, 'gifts/mode', ['mode' => 'live', 'pin' => '482613'], $c, $k)->assertOk()->json('mode'))->toBe('live');
     expect(app(FreeGifts::class)->freshConfig()['mode'])->toBe('live');
 
-    OA::post($this, 'gifts/mode', ['mode' => 'everyone'], $c, $k)->assertStatus(422);
+    OA::post($this, 'gifts/mode', ['mode' => 'everyone', 'pin' => '482613'], $c, $k)->assertStatus(422);
     expect(app(FreeGifts::class)->freshConfig()['mode'])->toBe('live');
+});
+
+/*
+ * 2.60.615, the owner: "OFF TESTING LIVE, lock these options in owner app ...
+ * the owner app must ask yes / no, and upon changing, it will require the app
+ * password once to apply the change. this security is only for the free gifts
+ * functionality OFF, TESTING and LIVE status".
+ * DEFECT this stops: anyone holding an unlocked phone could switch every
+ * shopper's free gifts on or off with two taps.
+ * MUTATION: delete the confirmPin() block in GiftsController::mode -- the
+ * first two cases go red (the mode moves with no PIN and with a wrong one).
+ */
+it('locks Off / Testing / Live behind the app PIN, checked on the server; ranges need no PIN', function () {
+    [$c, $k] = OA::enrol($this);
+
+    // No PIN: refused, nothing written.
+    expect(OA::post($this, 'gifts/mode', ['mode' => 'live'], $c, $k)->status())->toBeIn([403, 422]);
+    expect(app(FreeGifts::class)->freshConfig()['mode'])->toBe('off');
+
+    // A wrong PIN: refused as the lock screen refuses it (bad_pin, attempts left), nothing written.
+    $r = OA::post($this, 'gifts/mode', ['mode' => 'live', 'pin' => '111111'], $c, $k)->assertStatus(422);
+    expect($r->json('code'))->toBe('bad_pin')->and($r->json('pin_refused'))->toBeTrue()->and($r->json('left'))->toBeInt();
+    expect(app(FreeGifts::class)->freshConfig()['mode'])->toBe('off');
+
+    // The right PIN: applied, and the wrong-PIN counter is cleared.
+    OA::post($this, 'gifts/mode', ['mode' => 'testing', 'pin' => '482613'], $c, $k)->assertOk();
+    expect(app(FreeGifts::class)->freshConfig()['mode'])->toBe('testing')
+        ->and((int) DB::table('owner_app_members')->where('admin_user_id', $this->owner->id)->value('failed_count'))->toBe(0);
+
+    // Only the mode is locked: a range still saves with no PIN.
+    $p = oagProduct('Snail Mask');
+    OA::post($this, 'gifts/ranges', oagRange([['product_id' => $p->id, 'quantity' => 1, 'kind' => 'mask']]), $c, $k)->assertOk();
+    expect(DB::table('free_gift_ranges')->count())->toBe(1);
+});
+
+it('shares the lock screen\'s lockout: five wrong PINs on the mode switch lock the member', function () {
+    // MUTATION: give confirmPin() its own counter instead of checkPin() -- the
+    // sixth try is not 423 and a guesser gets unlimited tries from this box.
+    [$c, $k] = OA::enrol($this);
+    for ($i = 0; $i < 5; $i++) {
+        OA::post($this, 'gifts/mode', ['mode' => 'live', 'pin' => '11111'.$i], $c, $k);
+    }
+    expect(OA::post($this, 'gifts/mode', ['mode' => 'live', 'pin' => '482613'], $c, $k)->status())->toBeIn([401, 403, 423]);
+    expect(app(FreeGifts::class)->freshConfig()['mode'])->toBe('off');
+});
+
+it('draws the three mode buttons locked and asks Yes / No, then the PIN, on the phone', function () {
+    $js = file_get_contents(resource_path('js/owner-app/gifts.js'));
+    expect($js)->toContain("data-gmode=\"' + m[0] + '\"' + (can() ? '' : ' disabled') + '>' + ic('lock', 's')")
+        ->and($js)->toContain("pinSheet(to, row); // sheet() closes this Yes / No sheet first")
+        ->and($js)->toContain("api('POST', 'gifts/mode', { mode: to, pin })")
+        ->and(substr_count($js, "api('POST', 'gifts/mode'"))->toBe(1);
 });
 
 it('adds a range with a simple product, and refuses a bad range with 422 and nothing written', function () {

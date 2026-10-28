@@ -718,6 +718,11 @@ details summary::-webkit-details-marker { display: none; }
 .g-modes button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .g-modes button.on.m-live { background: var(--good); color: #fff; }
 .g-modes button.on.m-testing { background: var(--warn); color: #fff; }
+/* Free gifts mode, locked behind the app PIN (2.60.615). */
+.g-modes button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.g-modes button .i { width: 13px; height: 13px; opacity: .7; }
+.g-pin input { width: 100%; height: 52px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface2); text-align: center; font: 700 24px/1 var(--font); letter-spacing: .4em; color: var(--ink); }
+.g-pin .g-pinmsg { min-height: 18px; color: var(--bad, #d33); margin: 8px 0 0; }
 .g-modes button[disabled] { opacity: .6; }
 .hint.g-hint { margin: 8px 2px 4px; font-size: 12.5px; color: var(--ink3); }
 .g-checks .row { padding: 8px 0; }
