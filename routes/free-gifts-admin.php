@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 |   freegifts.view    GET  free-gifts, free-gifts/products, free-gifts/stats,
 |                          free-gifts/brands  (the last two: Lane FG2)
 |   freegifts.manage  POST free-gifts/switch, free-gifts/settings, free-gifts/testers,
+|                     POST free-gifts/extras (Lane GBX, Gift box popups),
 |                     POST free-gifts/ranges, free-gifts/ranges/order,
 |                     PUT/DELETE free-gifts/ranges/{id},
 |                     POST free-gifts/products, free-gifts/products/{id}/gift-only
@@ -39,6 +40,7 @@ Route::prefix('free-gifts')->group(function () {
     Route::post('/switch', [FreeGiftsController::class, 'switch']);
     Route::post('/settings', [FreeGiftsController::class, 'settings']);
     Route::post('/testers', [FreeGiftsController::class, 'testers']);
+    Route::post('/extras', [FreeGiftsController::class, 'extras']);
     Route::post('/ranges', [FreeGiftsController::class, 'saveRange']);
     Route::post('/ranges/order', [FreeGiftsController::class, 'order']);
     Route::put('/ranges/{id}', [FreeGiftsController::class, 'saveRange'])->whereNumber('id');

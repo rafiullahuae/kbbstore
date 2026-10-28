@@ -1,0 +1,135 @@
+{
+ "admin": {
+  "default": "OffNobody sees the popups. The box is exactly as before.",
+  "saved": {
+   "mode": "testing",
+   "pop": "A",
+   "crit_on": true,
+   "crit": "1",
+   "glow": "G1"
+  },
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "testersAfter": [
+   {
+    "ip": "203.0.113.7",
+    "label": "Owner phone"
+   }
+  ]
+ },
+ "shop": [
+  {
+   "label": "listed",
+   "where": "panel",
+   "w": 390,
+   "cls": 0,
+   "sw": 390,
+   "popups": true,
+   "criteriaButton": 2,
+   "photoPopup": "✕Rom&ndGlow Lip Tint – PinkAED 45 AED 39FREE with your order",
+   "requestsOnOpen": 0,
+   "photoEscCloses": true,
+   "focusBack": true,
+   "panelStillOpen": true,
+   "criteria": 5,
+   "criteriaEscCloses": true,
+   "swOpen": 390,
+   "errors": []
+  },
+  {
+   "label": "listed",
+   "where": "checkout",
+   "w": 390,
+   "cls": 0.022620692107844235,
+   "sw": 390,
+   "popups": true,
+   "criteriaButton": 2,
+   "photoPopup": "✕Rom&ndGlow Lip Tint – PinkAED 45 AED 39FREE with your order",
+   "requestsOnOpen": 0,
+   "photoEscCloses": true,
+   "focusBack": true,
+   "panelStillOpen": true,
+   "criteria": 5,
+   "criteriaEscCloses": true,
+   "swOpen": 390,
+   "errors": []
+  },
+  {
+   "label": "listed",
+   "where": "panel",
+   "w": 1280,
+   "cls": 0,
+   "sw": 1280,
+   "popups": true,
+   "criteriaButton": 2,
+   "photoPopup": "✕Rom&ndGlow Lip Tint – PinkAED 45 AED 39FREE with your order",
+   "requestsOnOpen": 0,
+   "photoEscCloses": true,
+   "focusBack": true,
+   "panelStillOpen": true,
+   "criteria": 5,
+   "criteriaEscCloses": true,
+   "swOpen": 1280,
+   "errors": []
+  },
+  {
+   "label": "listed",
+   "where": "checkout",
+   "w": 1280,
+   "cls": 0,
+   "sw": 1280,
+   "popups": true,
+   "criteriaButton": 2,
+   "photoPopup": "✕Rom&ndGlow Lip Tint – PinkAED 45 AED 39FREE with your order",
+   "requestsOnOpen": 0,
+   "photoEscCloses": true,
+   "focusBack": true,
+   "panelStillOpen": true,
+   "criteria": 5,
+   "criteriaEscCloses": true,
+   "swOpen": 1280,
+   "errors": []
+  },
+  {
+   "label": "unlisted",
+   "where": "panel",
+   "w": 390,
+   "cls": 0,
+   "sw": 390,
+   "popups": false,
+   "criteriaButton": 0,
+   "errors": []
+  },
+  {
+   "label": "unlisted",
+   "where": "checkout",
+   "w": 390,
+   "cls": 0,
+   "sw": 390,
+   "popups": false,
+   "criteriaButton": 0,
+   "errors": []
+  },
+  {
+   "label": "unlisted",
+   "where": "panel",
+   "w": 1280,
+   "cls": 0,
+   "sw": 1280,
+   "popups": false,
+   "criteriaButton": 0,
+   "errors": []
+  },
+  {
+   "label": "unlisted",
+   "where": "checkout",
+   "w": 1280,
+   "cls": 0,
+   "sw": 1280,
+   "popups": false,
+   "criteriaButton": 0,
+   "errors": []
+  }
+ ]
+}
