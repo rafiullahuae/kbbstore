@@ -871,7 +871,7 @@ final class FreeGifts
                 }
             }
 
-            return $out;
+            return self::fullFirst($out);
         }
 
         foreach ($gifts as $g) {
@@ -927,7 +927,10 @@ final class FreeGifts
             }
         }
 
-        return $out;
+        // (Lane GBX) Full size, then minis, then masks, then untagged -- the
+        // one order every list, photo row, sentence and new order follows
+        // (owner, 28 October). Which gifts are given is unchanged.
+        return self::fullFirst($out);
     }
 
     /**
@@ -971,13 +974,15 @@ final class FreeGifts
         // (Lane FGV) A gift that is one variation shows that variation's photo.
         $images = self::variantImages($order->gifts);
 
-        return $order->gifts->map(static fn ($i) => [
+        // (Lane GBX) Full size, minis, masks -- also for orders placed before
+        // linesFor() gave them in that order. No query: gift_kind is loaded above.
+        return array_column(self::fullFirst($order->gifts->map(static fn ($i) => ['kind' => (string) ($i->product?->gift_kind ?? ''), 'row' => [
             'name' => (string) ((trim((string) ($i->name_localised ?? '')) !== '' && ! Locale::isDefault()) ? $i->name_localised : $i->name),
             'brand' => (string) ($i->brand ?? ''),
             'image' => (string) ($images[(int) ($i->product_variant_id ?? 0)] ?? $i->product?->image ?? ''),
             'quantity' => (int) $i->quantity,
             'value' => 0,
-        ])->values()->all();
+        ]])->values()->all()), 'row');
     }
 
     /**
@@ -1016,15 +1021,8 @@ final class FreeGifts
      */
     public static function orderThumbs(\App\Models\Order $order): array
     {
-        $rows = self::orderRows($order);
-
-        if ($rows === []) {
-            return [];
-        }
-
-        $kinds = $order->gifts->map(static fn ($i) => (string) ($i->product?->gift_kind ?? ''))->values()->all();
-
-        return array_column(self::fullFirst(array_map(static fn (array $r, string $k) => ['kind' => $k, 'row' => $r], $rows, $kinds)), 'row');
+        // (Lane GBX) orderRows() is in this order itself now.
+        return self::orderRows($order);
     }
 
     /**
@@ -1669,11 +1667,11 @@ final class FreeGifts
         return ['en' => implode(' + ', $en), 'ar' => implode(' + ', $ar)];
     }
 
-    /** [kind => [English one, English many, [Arabic 1, 2, 3-10, 11+]]] for criteriaWording(). */
+    /** [kind => [English one, English many, [Arabic 1, 2, 3-10, 11+]]] for criteriaWording(), in the sentence's order: full size, minis, masks (Lane GBX). */
     public const WORDS = [
-        'mask' => ['Mask', 'Masks', ['قناع واحد', 'قناعان', ':n أقنعة', ':n قناعاً']],
-        'mini' => ['Mini Product', 'Mini Products', ['منتج صغير واحد', 'منتجان صغيران', ':n منتجات صغيرة', ':n منتجاً صغيراً']],
         'full' => ['Full Size Product', 'Full Size Products', ['منتج بالحجم الكامل', 'منتجان بالحجم الكامل', ':n منتجات بالحجم الكامل', ':n منتجاً بالحجم الكامل']],
+        'mini' => ['Mini Product', 'Mini Products', ['منتج صغير واحد', 'منتجان صغيران', ':n منتجات صغيرة', ':n منتجاً صغيراً']],
+        'mask' => ['Mask', 'Masks', ['قناع واحد', 'قناعان', ':n أقنعة', ':n قناعاً']],
     ];
 
     /**

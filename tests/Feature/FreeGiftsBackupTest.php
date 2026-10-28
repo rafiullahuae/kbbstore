@@ -77,7 +77,7 @@ it('gives the main gifts while they are in stock, and never touches a backup', f
     $bk = fgbProduct('Backup Mask', 9);
     fgbRange([[$mask, 3, 'mask', 'primary'], [$mini, 2, 'mini', 'primary'], [$bk, 1, 'mask', 'backup']], ['mask' => 3, 'mini' => 2, 'full' => 0]);
 
-    expect(fgbGiven())->toBe(['Tea Tree Mask' => '3', 'Toner Mini' => '2']);
+    expect(fgbGiven())->toBe(['Toner Mini' => '2', 'Tea Tree Mask' => '3']);
 });
 
 it('tops a sold-out main gift up from the backups, the one with the most stock first', function () {
@@ -116,12 +116,12 @@ it('writes the sentence from what is actually given, in English and Arabic', fun
 
     // MUTATION: keep the range's saved label in box(). RED (it would still promise 3 Masks).
     expect(FreeGifts::sentence($gifts->linesFor($gifts->ranges()[0])))
-        ->toBe(['en' => '2 Mini Products + 1 Full Size Product', 'ar' => 'منتجان صغيران + منتج بالحجم الكامل']);
+        ->toBe(['en' => '1 Full Size Product + 2 Mini Products', 'ar' => 'منتج بالحجم الكامل + منتجان صغيران']);
 
     DB::table('products')->where('id', $mask->id)->update(['stock' => 50, 'stock_status' => 'instock']);
     app()->instance('request', Request::create('/'));
     $gifts->compile();
-    expect(FreeGifts::sentence($gifts->linesFor($gifts->ranges()[0]))['en'])->toBe('3 Masks + 2 Mini Products + 1 Full Size Product');
+    expect(FreeGifts::sentence($gifts->linesFor($gifts->ranges()[0]))['en'])->toBe('1 Full Size Product + 2 Mini Products + 3 Masks');
 });
 
 it('keeps a range with no counts exactly as before: main gifts as listed, backups ignored', function () {
@@ -198,7 +198,7 @@ it('gives the main full size gift while it has a unit, and writes no note', func
     $mix = fgbProduct('Mixsoon Bean Essence', null, 'full');
     fgbRange([[$mask, 3, 'mask', 'primary'], [$fwee, 1, 'full', 'primary'], [$mix, 1, 'full', 'backup']], ['mask' => 3, 'full' => 1]);
 
-    expect(fgbGiven())->toBe(['Rose Mask' => '3', 'fwee Jelly Pot' => '1']);
+    expect(fgbGiven())->toBe(['fwee Jelly Pot' => '1', 'Rose Mask' => '3']);
     $lines = app(FreeGifts::class)->linesFor(app(FreeGifts::class)->ranges()[0]);
     expect(app(FreeGifts::class)->backupNote($lines))->toBeNull();
 });
@@ -210,7 +210,7 @@ it('records why the backup was given when the main gift had no unit left', funct
     $mix = fgbProduct('Mixsoon Bean Essence', null, 'full');
     fgbRange([[$mask, 3, 'mask', 'primary'], [$fwee, 1, 'full', 'primary'], [$mix, 1, 'full', 'backup']], ['mask' => 3, 'full' => 1]);
 
-    expect(fgbGiven())->toBe(['Rose Mask' => '3', 'Mixsoon Bean Essence' => '1 backup']);
+    expect(fgbGiven())->toBe(['Mixsoon Bean Essence' => '1 backup', 'Rose Mask' => '3']);
     $lines = app(FreeGifts::class)->linesFor(app(FreeGifts::class)->ranges()[0]);
     expect(app(FreeGifts::class)->backupNote($lines))
         ->toBe('Free gifts, range AED 300 – 499: a backup gift was used. Full Size Products: main gift “fwee Jelly Pot” (0 left) — backup given: “Mixsoon Bean Essence” ×1.');

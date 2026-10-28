@@ -72,8 +72,8 @@ it('shows every published range on the homepage with its wording and gift photos
         ->and($html)->toContain('Free gifts with every order')
         ->and($html)->toContain('AED 194 – 399')
         ->and($html)->toContain('AED 400+')
-        ->and($html)->toContain('1 Mask + 1 Full Size Product')
-        ->and($html)->toContain('2 Masks + 2 Full Size Products')
+        ->and($html)->toContain('1 Full Size Product + 1 Mask')
+        ->and($html)->toContain('2 Full Size Products + 2 Masks')
         ->and($html)->toContain('alt="EGF NAD Firming Gel Mask"')
         ->and($html)->toContain('<b>×2</b>');
 });
@@ -407,7 +407,7 @@ it('says new gifts are added daily under the gifts, in each language, and hides 
  * space is there. don't start with the masks first" (owner, 24 October).
  * Mutation note: hand home() the lines unsorted and this is red.
  */
-it('shows the row photos full size first, then minis, then masks; the popup keeps the admin order', function () {
+it('shows the row photos and the popup full size first, then minis, then masks', function () {
     $mask = fghProduct('Order Mask');
     $mini = fghProduct('Order Mini', 'mini');
     $full = fghProduct('Order Full', 'full');
@@ -416,7 +416,8 @@ it('shows the row photos full size first, then minis, then masks; the popup keep
 
     app()->instance('request', \Illuminate\Http\Request::create('/'));
     $row = app(FreeGifts::class)->home(request())['rows'][0];
-    // The row's small photos lead with full size; the popup keeps the admin's order.
+    // The row's small photos lead with full size, and so does the popup (Lane
+    // GBX, 28 October: "when open the list ... in this sequence").
     expect(array_column($row['thumbs'], 'name'))->toBe(['Order Full', 'Order Mini', 'Order Mask'])
-        ->and(array_column($row['gifts'], 'name'))->toBe(['Order Mask', 'Order Mini', 'Order Full']);
+        ->and(array_column($row['gifts'], 'name'))->toBe(['Order Full', 'Order Mini', 'Order Mask']);
 });
