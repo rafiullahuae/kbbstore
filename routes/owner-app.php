@@ -59,6 +59,8 @@ declare(strict_types=1);
 |     GET  /{app}/api/customers/{id}                      customers.view
 |     GET  /{app}/api/carts                               carttracking.view (Lane QK10)
 |     GET  /{app}/api/carts/{id}/journey                  carttracking.view (Lane CJ)
+|     GET  /{app}/api/gifts, /api/gifts/products          freegifts.view (Lane OAG)
+|     POST /{app}/api/gifts/mode, /api/gifts/ranges[/{id}[/delete]]  freegifts.manage
 |     GET  /{app}/api/changes                             (filtered per capability)
 |     GET  /{app}/api/notifications                       (filtered per capability)
 |     POST /{app}/api/push, /api/push/off, /api/push/test -
@@ -156,6 +158,17 @@ if ($ownerAppPath !== null) {
                 // for the phone. carttracking.view, checked in the controller.
                 Route::get('/carts', [\App\Http\Controllers\OwnerApp\CartsController::class, 'index'])->name('carts');
                 Route::get('/carts/{id}/journey', [\App\Http\Controllers\OwnerApp\CartsController::class, 'journey'])->whereNumber('id')->name('carts.journey');
+                // Free gifts (Lane OAG): the console's Marketing -> Free gifts ->
+                // Ranges & gifts, for the phone. Every one delegates to
+                // Admin\FreeGiftsController (one rule); freegifts.view to read
+                // and search, freegifts.manage to change, both checked in the
+                // controller (fail closed). No polling: read on open and on Sync.
+                Route::get('/gifts', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'show'])->name('gifts');
+                Route::get('/gifts/products', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'products'])->middleware('throttle:60,1,oa-gift-search')->name('gifts.products');
+                Route::post('/gifts/mode', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'mode'])->name('gifts.mode');
+                Route::post('/gifts/ranges', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'save'])->name('gifts.create');
+                Route::post('/gifts/ranges/{id}', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'save'])->whereNumber('id')->name('gifts.save');
+                Route::post('/gifts/ranges/{id}/delete', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'delete'])->whereNumber('id')->name('gifts.delete');
                 Route::post('/push', [LiveController::class, 'subscribe'])->name('push');
                 Route::post('/push/off', [LiveController::class, 'unsubscribe'])->name('push.off');
                 Route::post('/push/test', [LiveController::class, 'test'])->middleware('throttle:6,1,oa-push-test')->name('push.test');

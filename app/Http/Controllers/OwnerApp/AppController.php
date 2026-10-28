@@ -391,6 +391,9 @@ final class AppController extends Controller
                     'customers' => $can('customers.view'),
                     // Cart tracking (Lane QK10): the console's capability.
                     'carts' => $can('carttracking.view'),
+                    // Free gifts (Lane OAG): the console's two capabilities.
+                    'gifts' => $can('freegifts.view'),
+                    'gifts_edit' => $can('freegifts.manage'),
                 ],
                 'notify' => OwnerAppEvents::groupsFrom($device->member->notify),
             ],

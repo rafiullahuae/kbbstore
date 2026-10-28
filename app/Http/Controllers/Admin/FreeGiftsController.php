@@ -336,7 +336,9 @@ class FreeGiftsController extends Controller
             $needs = ['need_mask' => null, 'need_mini' => null, 'need_full' => null];
         }
 
-        DB::transaction(function () use ($id, $data, $min, $max, $kinds, $remember, $needs) {
+        DB::transaction(function () use ($request, $id, $data, $min, $max, $kinds, $remember, $needs) {
+            self::guard($request);
+
             $row = [
                 'min_fils' => $min,
                 'max_fils' => $max,
@@ -386,11 +388,14 @@ class FreeGiftsController extends Controller
     }
 
     /** DELETE /admin-api/free-gifts/ranges/{id} */
-    public function deleteRange(int $id): JsonResponse
+    public function deleteRange(Request $request, int $id): JsonResponse
     {
         // Deleting the last range no longer switches the mode off (Lane FG3):
         // the mode is the owner's, and an empty set of ranges gives nothing.
-        DB::table('free_gift_ranges')->where('id', $id)->delete();
+        DB::transaction(function () use ($request, $id) {
+            self::guard($request);
+            DB::table('free_gift_ranges')->where('id', $id)->delete();
+        });
         $this->gifts->compile();
 
         return response()->json($this->payload());
@@ -401,9 +406,12 @@ class FreeGiftsController extends Controller
     {
         $data = $request->validate(['ids' => ['required', 'array', 'max:' . self::MAX_RANGES], 'ids.*' => ['integer', 'distinct']]);
 
-        foreach (array_values($data['ids']) as $sort => $rangeId) {
-            DB::table('free_gift_ranges')->where('id', (int) $rangeId)->update(['sort' => $sort]);
-        }
+        DB::transaction(function () use ($request, $data) {
+            self::guard($request);
+            foreach (array_values($data['ids']) as $sort => $rangeId) {
+                DB::table('free_gift_ranges')->where('id', (int) $rangeId)->update(['sort' => $sort]);
+            }
+        });
 
         $this->gifts->compile();
 
@@ -615,6 +623,40 @@ class FreeGiftsController extends Controller
         return $gaps;
     }
 
+    /**
+     * (Lane OAG) THE OVERRIDE GUARD, one rule for the desk and the phone. The
+     * owner, 28 October: "i almost edit from desktop and owner app both ...
+     * so there will be no override things". Each screen sends the `revision`
+     * it loaded (payload()); a save from an older one is refused with 409 and
+     * NOTHING is written -- the caller's transaction rolls back. Called inside
+     * that transaction, with the rows read FOR UPDATE, so two saves racing
+     * from two devices cannot both pass. A request with no revision (an older
+     * console still open) is let through as before.
+     */
+    private static function guard(Request $request): void
+    {
+        if (! $request->exists('revision') || $request->input('revision') === null) {
+            return;
+        }
+
+        $current = FreeGifts::lockedRevision();
+
+        $given = $request->input('revision');
+
+        if (! is_scalar($given) || ! hash_equals($current, (string) $given)) {
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json([
+                'ok' => false,
+                'code' => 'stale',
+                'error' => self::STALE,
+                'message' => self::STALE,
+                'revision' => $current,
+            ], 409));
+        }
+    }
+
+    /** What both screens say when a save is refused for being made from older data. */
+    public const STALE = 'These gifts were changed on another device. Refresh to see the latest.';
+
     private function payload(): array
     {
         $ranges = DB::table('free_gift_ranges')->orderBy('sort')->orderBy('min_fils')->get();
@@ -666,6 +708,8 @@ class FreeGiftsController extends Controller
                 'used_in' => $items->filter(fn ($rows) => $rows->contains('product_id', $p->id))->keys()->map(fn ($k) => (int) $k)->values(),
             ])->values(),
             'gaps' => self::gaps($ranges),
+            // (Lane OAG) What a save sends back, so it is refused if somebody else saved since.
+            'revision' => FreeGifts::revisionOf($ranges, $items->flatten(1)),
             // The address the server sees for the person at this screen --
             // $request->ip(), the firewall's answer -- for "Add my current IP".
             'my_ip' => (string) (request()->ip() ?? ''),

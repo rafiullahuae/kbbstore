@@ -628,7 +628,7 @@ select.fg-in{padding-inline-end:28px}
     if (side) side.classList.remove('open');
     var c = document.querySelector('#content');
     if (c) c.textContent = '';
-    st.drafts = {}; st.cfg = null; st.errors = {}; st.confirm = null; st.removed = {}; st.picker = null; st.stats = null; st.sel = null;
+    st.drafts = {}; st.cfg = null; st.errors = {}; st.confirm = null; st.removed = {}; st.picker = null; st.stats = null; st.sel = null; st.stale = false;
     render();
     run(function () { return api('GET', ''); }, 'Free gifts could not be loaded.');
     loadStats();
@@ -650,7 +650,7 @@ select.fg-in{padding-inline-end:28px}
       if (mine !== st.seq) return;
       if (d && d.config) st.data = d;
       if (done) done(d);
-    } catch (e) { if (mine === st.seq) { st.banner = explain(e, fallback); say(st.banner, 'bad'); } }
+    } catch (e) { if (mine === st.seq) { st.banner = explain(e, fallback); if (e && e.status === 409) st.stale = true; say(st.banner, 'bad'); } }
     if (mine === st.seq) { st.busy = false; render(); }
   }
 
@@ -888,7 +888,14 @@ select.fg-in{padding-inline-end:28px}
       var b = document.getElementById('fg-tab-' + st.tab); if (b) b.focus();
     });
     wrap.appendChild(tl);
-    if (st.banner) wrap.appendChild(el('div', { class: 'fg-note', role: 'alert', text: st.banner }));
+    if (st.banner) wrap.appendChild(el('div', { class: 'fg-note', role: 'alert' }, [st.banner, st.stale ? ' ' : null,
+      /* (Lane OAG) Saved from another device (the owner app, another tab) since
+         this screen loaded: the server refused the save and wrote nothing.
+         Refresh drops this screen's unsaved edits and reads the latest. */
+      st.stale ? el('button', { type: 'button', class: 'fg-link', 'data-fk': 'stale-refresh', text: 'Refresh', onclick: function () {
+        st.drafts = {}; st.removed = {}; st.errors = {}; st.stale = false; st.confirm = null;
+        run(function () { return api('GET', ''); }, 'Free gifts could not be loaded.', function () { say('Up to date. Your unsaved edits were dropped; redo them here.'); });
+      } }) : null]));
     if (!st.data) { wrap.appendChild(card(null, st.busy ? 'Loading…' : 'Nothing to show.')); return; }
     var panel = el('div', { role: 'tabpanel', 'aria-labelledby': 'fg-tab-' + st.tab, class: 'fg-wrap', style: 'padding:0' });
     wrap.appendChild(panel);
@@ -918,13 +925,13 @@ select.fg-in{padding-inline-end:28px}
     var name = rangeName(x);
     st.busy = true; st.banner = null; repaint();
     try {
-      var d = await api(k === 'new' ? 'POST' : 'PUT', k === 'new' ? '/ranges' : '/ranges/' + k, rangeBody(x));
+      var d = await api(k === 'new' ? 'POST' : 'PUT', k === 'new' ? '/ranges' : '/ranges/' + k, Object.assign(rangeBody(x), { revision: st.data.revision }));
       delete st.drafts[k]; delete st.errors[k]; delete st.removed[k];
       st.data = d;
       if (k === 'new') { var made = d.ranges.filter(function (r) { return r.min === x.min; })[0]; selectRange(made ? made.id : null); }
       say('Saved ' + name + '.');
       loadStats();
-    } catch (e) { st.errors[k] = explain(e, 'Not saved.'); say('Not saved: ' + name + '. ' + st.errors[k], 'bad'); }
+    } catch (e) { st.errors[k] = explain(e, 'Not saved.'); if (e && e.status === 409) { st.stale = true; st.banner = st.errors[k]; } say('Not saved: ' + name + '. ' + st.errors[k], 'bad'); }
     st.busy = false;
     render();
   }
@@ -1244,7 +1251,7 @@ select.fg-in{padding-inline-end:28px}
             el('button', { type: 'button', class: 'btn danger sm', text: 'Delete range', onclick: function () {
               var label = amount(r.min, r.max) + ' (' + r.label_en + ')';
               st.confirm = null;
-              run(function () { return api('DELETE', '/ranges/' + id); }, 'Not deleted.', function () { delete st.drafts[id]; delete st.removed[id]; delete st.errors[id]; selectRange(null); say('Deleted ' + label + '.'); loadStats(); });
+              run(function () { return api('DELETE', '/ranges/' + id, { revision: st.data.revision }); }, 'Not deleted.', function () { delete st.drafts[id]; delete st.removed[id]; delete st.errors[id]; selectRange(null); say('Deleted ' + label + '.'); loadStats(); });
             } })
           ])
         ]);
