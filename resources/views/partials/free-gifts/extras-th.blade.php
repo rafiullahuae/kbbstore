@@ -11,6 +11,9 @@
     $gbxPop = $kbbFgX['cfg']['pop'];
     $gbxCols = $kbbFgTier === ' fgb-g5' ? 5 : ($kbbFgTier === ' fgb-g4' ? 4 : 0);
 @endphp
+@if ($gbxPop === 'off')
+@foreach ($kbbFgThumbs ?? $kbbFgRows as $kbbFgRow){!! $kbbFgTile($kbbFgRow, (string) (int) $kbbFgRowPx) !!}@if ($kbbFgRow['quantity'] > 1)<b>×{{ $kbbFgRow['quantity'] }}</b>@endif</span>@endforeach
+@else
 @foreach ($kbbFgThumbs ?? $kbbFgRows as $gbxI => $kbbFgRow)@php
     $gbxTile = $kbbFgTile($kbbFgRow, (string) (int) $kbbFgRowPx);
     $gbxOn = $gbxPop === 'C'
@@ -18,6 +21,7 @@
         : "var p=this.closest('.fgb').querySelectorAll('.gbx-pp')[" . $gbxI . "];if(p&&p.showPopover){p.gbxFrom=this;p.showPopover();p.querySelector('.gbx-x').focus()}";
 @endphp
 {!! '<button type="button" class="fgb-t" aria-label="' . e($kbbFgRow['name']) . '"' . ($gbxPop === 'C' ? ' aria-expanded="false"' : ' aria-haspopup="dialog"') . ' onclick="' . e($gbxOn) . '">' . substr($gbxTile, strlen('<span class="fgb-t">')) !!}@if ($kbbFgRow['quantity'] > 1)<b>×{{ $kbbFgRow['quantity'] }}</b>@endif</button>@endforeach
+@endif
 @if ($gbxPop === 'C')@php
     $gbxAr = ! \App\Support\Locale::isDefault();
     $gbxT = \App\Services\FreeGifts::EXTRA_TEXTS[$gbxAr ? 'ar' : 'en'];

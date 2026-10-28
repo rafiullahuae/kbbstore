@@ -150,6 +150,8 @@ class FreeGiftsController extends Controller
             'crit' => ['sometimes', 'string', Rule::in(FreeGifts::EXTRA_CRITS)],
             'glow' => ['sometimes', 'string', Rule::in(FreeGifts::EXTRA_GLOWS)],
             'crit_on' => ['sometimes', 'boolean'],
+            // (2.60.620) The space above the box in the cart panel: a whole number of px.
+            'panel_gap' => ['sometimes', 'integer', 'min:0', 'max:' . FreeGifts::PANEL_GAP_MAX],
         ]);
 
         $config = $this->gifts->freshConfig();

@@ -114,7 +114,7 @@ it('in Testing shows the popups only to an address on the free gifts Testing lis
     // The owner tries designs live without any shopper seeing them.
     // MUTATION: return $x for testing without testerMatch() -- red (the stranger sees them).
     gbxBands();
-    gbxSave(['mode' => 'testing']);
+    gbxSave(['mode' => 'testing', 'pop' => 'A']);
 
     $mine = gbxBox(GBX_TESTER);
     // What it looked like with the box marked "gbx-pA", the popup's own class:
@@ -125,7 +125,7 @@ it('in Testing shows the popups only to an address on the free gifts Testing lis
 
 it('in Live shows them to every shopper', function () {
     gbxBands();
-    gbxSave(['mode' => 'live']);
+    gbxSave(['mode' => 'live', 'pop' => 'A']);
 
     expect(gbxBox(GBX_STRANGER))->toContain(' gbx gbx-dA')->toContain('class="gbx-cr"');
 });
@@ -183,7 +183,7 @@ it('reads a damaged setting as the default, never as a class', function () {
     gbxBands();
     gbxSave(['mode' => 'live', 'pop' => '"><script>', 'glow' => 'G9', 'crit' => 7]);
     $x = app(FreeGifts::class)->freshConfig()['extras'];
-    expect([$x['pop'], $x['glow'], $x['crit']])->toBe(['A', 'none', '1'])
+    expect([$x['pop'], $x['glow'], $x['crit']])->toBe(['off', 'none', '1'])
         ->and(gbxBox())->not->toContain('<script>');
 });
 
@@ -197,7 +197,7 @@ it('costs nothing Off, at most one query On, and the same with 3 gifts as with 1
     gbxSave(['mode' => 'off']);
     expect(gbxQueries())->toBe($base);
 
-    gbxSave(['mode' => 'live']);
+    gbxSave(['mode' => 'live', 'pop' => 'A']);
     $on3 = gbxQueries();
     // Measured: 2 queries Off and 2 On -- the one statement for every band's
     // gifts replaces the box's own (the brief allows +1; it costs 0).
@@ -206,7 +206,7 @@ it('costs nothing Off, at most one query On, and the same with 3 gifts as with 1
     DB::table('free_gift_range_items')->delete();
     DB::table('free_gift_ranges')->delete();
     gbxBands(15);
-    gbxSave(['mode' => 'live']);
+    gbxSave(['mode' => 'live', 'pop' => 'A']);
     expect(gbxQueries())->toBe($on3);
 });
 
@@ -220,7 +220,7 @@ it('saves from the admin, refuses a value that is not an option, and fails close
     test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['mode' => 'on'])->assertStatus(422);
 
     $r = test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['mode' => 'testing', 'pop' => 'D', 'glow' => 'G1', 'crit' => '2', 'crit_on' => false])->assertOk();
-    expect($r->json('config.extras'))->toBe(['mode' => 'testing', 'pop' => 'D', 'crit_on' => false, 'crit' => '2', 'glow' => 'G1'])
+    expect($r->json('config.extras'))->toBe(['mode' => 'testing', 'pop' => 'D', 'crit_on' => false, 'crit' => '2', 'glow' => 'G1', 'panel_gap' => 12])
         // The one Testing list, untouched (it already had the owner's IP).
         ->and($r->json('config.testers'))->toBe([['ip' => GBX_TESTER, 'label' => 'Owner']])
         // The free gifts Mode is its own switch.
@@ -246,4 +246,113 @@ it('opens with no layout measuring and nothing fetched: popovers and inline hand
         $html = gbxBox();
         expect($html)->not->toContain('getBoundingClientRect')->not->toContain('offsetWidth')->not->toContain('fetch(')->not->toContain('<script');
     }
+});
+
+/*
+|------------------------------------------------------------------------------
+| 2.60.620 -- the owner on 2.60.619: "I want the Gifts Criteria button to simple
+| text same like View all, but keep the gift icon along with it. also turn off
+| the click on the products images. and prominent the cross icon and little big
+| size on the gifts criteria popup, and when the popup changes the size as per
+| the range selection or view. put a super slight animation, just a bit. also i
+| want little spacing above the gift box in the cart panel. plz allow this
+| control".
+|------------------------------------------------------------------------------
+*/
+
+it('ships the photo popup Off: the photos are plain pictures again, the criteria link stays', function () {
+    // What it looked like: every photo a button opening a popup he no longer
+    // wants. MUTATION: put EXTRAS['pop'] back to 'A' -- red.
+    gbxBands(3);
+    gbxSave(['mode' => 'live']);
+    $html = gbxBox();
+    expect(FreeGifts::EXTRAS['pop'])->toBe('off')
+        ->and($html)->toContain(' gbx gbx-doff"')
+        ->and(substr_count($html, '<span class="fgb-t">'))->toBe(6) // 3 photos + 3 in the list
+        ->and($html)->not->toContain('<button type="button" class="fgb-t"')->not->toContain('class="gbx-pp')->not->toContain('class="gbx-k"')
+        ->and($html)->not->toContain('button.fgb-t{')
+        ->and($html)->toContain('class="gbx-cr"');
+});
+
+it('draws "Gifts Criteria" as a text link exactly like View all, with its gift icon', function () {
+    // What it looked like: a green pill beside a plain "View all".
+    // MUTATION: restore the pill's border/background/radius -- red.
+    gbxBands(3);
+    gbxSave(['mode' => 'live']);
+    $html = gbxBox();
+    preg_match('/\.gbx \.gbx-cr\{([^}]*)\}/', $html, $cr);
+    preg_match('/\.fgb \.fgb-tg\{([^}]*)\}/', $html, $tg);
+    foreach (['border:0', 'background:none', 'padding:0', 'color:#2e8f62', 'font:inherit', 'font-size:11.5px', 'font-weight:700', 'min-height:32px', 'cursor:pointer'] as $same) {
+        expect($tg[1])->toContain($same)->and($cr[1])->toContain($same);
+    }
+    expect($cr[1])->not->toContain('border-radius')->not->toContain('#f3faf6')
+        ->and($html)->toMatch('#<button type="button" class="gbx-cr"[^>]*><svg viewBox="0 0 24 24" width="13" height="13"#');
+});
+
+it('gives the criteria popup a big, clearly visible close, mirrored in Arabic by inset-inline-end', function () {
+    // MUTATION: drop the .gbx-cp .gbx-x rule -- red (a 36px ghost on white).
+    gbxBands(3);
+    foreach (['1', '2', '3'] as $d) {
+        gbxSave(['mode' => 'live', 'crit' => $d]);
+        expect(gbxBox())->toContain('.gbx-cp .gbx-x{top:12px;inset-inline-end:12px;width:40px;height:40px;background:#221A20;color:#fff;font-size:20px')
+            ->toContain('.gbx-cp .gbx-x:focus-visible{outline:3px solid #C6395F');
+    }
+});
+
+it('grows and shrinks the tabs\' panel a little, CSS only, and not at all for reduced motion', function () {
+    // What it looked like: the popup jumping between heights on each tab.
+    // MUTATION: put the panels back on display:none/block -- red.
+    gbxBands(3);
+    gbxSave(['mode' => 'live', 'crit' => '3']);
+    $html = gbxBox();
+    expect($html)->toContain('.gbx-tp{display:grid;grid-template-rows:0fr;visibility:hidden;transition:grid-template-rows .2s ease-out')
+        ->toContain('@media (prefers-reduced-motion:reduce){.gbx-tp{transition:none}}')
+        ->toContain('data-i="0"><div><p class="gbx-wd">')
+        ->toContain('.gbx-cp:popover-open{animation:gbx-in .2s ease-out}')
+        ->not->toContain('.gbx-tp{display:none}')
+        ->not->toContain('getBoundingClientRect');
+});
+
+it('puts 12px above the box in the cart panel by default, his to change 0-40, popups on or off', function () {
+    // What it looked like: the box tight under the last bag line.
+    // MUTATION: EXTRAS['panel_gap'] back to 0 -- red.
+    gbxBands(3);
+    gbxSave(null);
+    expect(gbxBox())->toContain('#cart{--fg-cg:12px}#cart fieldset.fgb{margin-top:calc(18px + var(--fg-cg))}');
+
+    gbxSave(['panel_gap' => 30]);
+    expect(gbxBox())->toContain('#cart{--fg-cg:30px}');
+    gbxSave(['panel_gap' => 0]);
+    expect(gbxBox())->not->toContain('--fg-cg');
+
+    expect(FreeGifts::extrasOf(['panel_gap' => 99])['panel_gap'])->toBe(40)
+        ->and(FreeGifts::extrasOf(['panel_gap' => '"><b>'])['panel_gap'])->toBe(12)
+        ->and(FreeGifts::extrasOf(['panel_gap' => -5])['panel_gap'])->toBe(0);
+
+    // An order's own box (thank-you, My account) is not in the panel: nothing.
+    gbxSave(null);
+    $order = view('partials.free-gifts.box', ['kbbFgRows' => [['name' => 'G', 'brand' => '', 'image' => '', 'quantity' => 1, 'value' => 0]], 'kbbFgOpen' => true])->render();
+    expect($order)->not->toContain('--fg-cg');
+
+    $owner = AdminUser::create(['name' => 'GBX2', 'email' => 'gbx2-' . uniqid() . '@example.test', 'password' => 'password-long-enough', 'role' => 'owner']);
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['panel_gap' => 41])->assertStatus(422);
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['panel_gap' => 'abc'])->assertStatus(422);
+    expect(test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['panel_gap' => 20, 'pop' => 'off'])->assertOk()->json('config.extras.panel_gap'))->toBe(20);
+});
+
+it('turns the photo click off on a shop that already saved the popups, and touches nothing else', function () {
+    // His row has pop "A" from 2.60.619. MUTATION: skip the write -- red.
+    gbxSave(['mode' => 'testing', 'pop' => 'B', 'glow' => 'G2', 'crit' => '3']);
+    (require database_path('migrations/2027_12_31_130000_gift_box_photos_off.php'))->up();
+    SettingsService::forgetMemo();
+    Setting::flushMap();
+    $x = app(FreeGifts::class)->freshConfig();
+    expect($x['extras'])->toBe(['mode' => 'testing', 'pop' => 'off', 'crit_on' => true, 'crit' => '3', 'glow' => 'G2', 'panel_gap' => 12])
+        ->and($x['mode'])->toBe('live')->and($x['testers'])->toBe([['ip' => GBX_TESTER, 'label' => 'Owner']]);
+
+    // No popups saved yet: the row is left exactly as it was.
+    gbxSave(null);
+    $before = DB::table('settings')->where('key', FreeGifts::KEY)->value('value');
+    (require database_path('migrations/2027_12_31_130000_gift_box_photos_off.php'))->up();
+    expect(DB::table('settings')->where('key', FreeGifts::KEY)->value('value'))->toBe($before);
 });
