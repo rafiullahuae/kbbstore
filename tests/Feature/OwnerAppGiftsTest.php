@@ -430,3 +430,19 @@ it('offers every control of the desk\'s Ranges & gifts on the phone', function (
             ->and(str_contains($app, $a))->toBeTrue('app: '.$a);
     }
 });
+
+/*
+ * 2.60.616, the owner: "if we open the free gifts page in owner app, and then
+ * go back, and when try to open again, it's not clickable at all." On a second
+ * visit the data was already loaded, so renderGifts() called redraw(), which
+ * repaints only a screen that is ALREADY Free gifts -- the view still held
+ * More, so nothing was drawn and the tap seemed dead. Checked in Chromium at
+ * 390: three open/back rounds (header back and browser back) all open.
+ * MUTATION: put back `if (G.d) redraw();` -- this is red.
+ */
+it('opens Free gifts again after going back: the open paints the screen itself, not via redraw()', function () {
+    $js = file_get_contents(resource_path('js/owner-app/gifts.js'));
+    $open = substr($js, strpos($js, 'export async function renderGifts('), 900);
+    expect($open)->toContain('if (G.d) { if (cur === 0) paintHome(); else paintRange(); }')
+        ->not->toContain('if (G.d) redraw();');
+});

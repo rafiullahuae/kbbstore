@@ -189,7 +189,12 @@ export async function renderGifts(v, id) {
   v.className = 'view single';
   cur = /\/gifts\/new$/.test(location.hash) ? 'new' : (id || 0);
   if (cur === 'new' && !G.drafts.new) addRange(null, true);
-  if (G.d) redraw();
+  // Paint directly, not through redraw(): redraw() only repaints a screen
+  // that is ALREADY Free gifts, and on a second visit (data in hand) the view
+  // still holds More, so it painted nothing and the screen never opened
+  // (2.60.616, the owner: "open the free gifts page, go back, and when try to
+  // open again, it's not clickable at all").
+  if (G.d) { if (cur === 0) paintHome(); else paintRange(); }
   else {
     screen(v, 'gifts', 0, top('Free gifts', 'Syncing…', back('#/more')),
       skNote + times(2, () => '<div class="card">' + ln(60) + ln(85, 'k-sm') + '</div>') + '<div class="list">' + times(3, () => '<div class="row"><div class="rm">' + ln(50) + ln(75, 'k-sm') + '</div></div>') + '</div>', true);
