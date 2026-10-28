@@ -269,7 +269,7 @@ it('stores exactly what the desk stores for the same range: rows, kinds remember
     OA::post($this, 'gifts/ranges', oagRange($gifts, ['needs' => $needs, 'label_en' => 'x', 'label_ar' => 'y', 'starts_on' => '2027-01-01']), $c, $k)->assertOk();
 
     expect(oagStored())->toBe($desk)
-        ->and($desk[0][0]['label_en'])->toBe('2 Masks + 1 Mini Product');
+        ->and($desk[0][0]['label_en'])->toBe('1 Mini Product + 2 Masks');
 });
 
 it('refuses a stale save from the phone with 409 and writes nothing; a fresh one passes and moves the revision', function () {

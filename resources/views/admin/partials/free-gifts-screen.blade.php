@@ -550,7 +550,8 @@ select.fg-in{padding-inline-end:28px}
   };
   function wordingFor(needs) {
     var en = [], ar = [];
-    KIND_KEYS.forEach(function (k) {
+    /* Full size, minis, masks: FreeGifts::WORDS' order (Lane GBX). */
+    ['full', 'mini', 'mask'].forEach(function (k) {
       var n = Math.max(0, Math.floor(Number(needs && needs[k]) || 0)), w = WORDS[k];
       if (!n) return;
       en.push(n + ' ' + (n === 1 ? w[0] : w[1]));

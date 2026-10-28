@@ -103,7 +103,7 @@ it('shows the basket reminder the gifts its total reaches, with the availability
  * emails). Mutation note: drop fullFirst() from box() or orderRows() and this
  * is red.
  */
-it('leads the gift box\'s small photos with full size, then minis, then masks; the list keeps its order', function () {
+it('leads the gift box\'s small photos and its list with full size, then minis, then masks', function () {
     $mask = fgeProduct('Kind Mask');
     $mini = fgeProduct('Kind Mini'); $mini->update(['gift_kind' => 'mini']);
     $full = fgeProduct('Kind Full'); $full->update(['gift_kind' => 'full']);
@@ -114,9 +114,9 @@ it('leads the gift box\'s small photos with full size, then minis, then masks; t
     fgeLive();
 
     $box = app(FreeGifts::class)->box(['subtotal' => 30000, 'item_count' => 1]);
-    // The list keeps the admin's order ...
-    expect(array_column($box['kbbFgRows'], 'name'))->toBe(['Kind Mask', 'Kind Mini', 'Kind Full']);
-    // ... and only the small photos shown by default lead with full size.
+    // The list leads with full size too (Lane GBX, 28 October) ...
+    expect(array_column($box['kbbFgRows'], 'name'))->toBe(['Kind Full', 'Kind Mini', 'Kind Mask']);
+    // ... as do the small photos shown by default.
     $html = view('partials.free-gifts.box', $box)->render();
     preg_match('#<div class="fgb-th">(.*?)</div>#s', $html, $th);
     preg_match_all('#alt="([^"]+)"#', $th[1], $alts);
@@ -128,7 +128,7 @@ it('leads the gift box\'s small photos with full size, then minis, then masks; t
         OrderItem::create(['order_id' => $o->id, 'product_id' => $p->id, 'name' => $p->name, 'quantity' => 1, 'unit_price' => 0, 'subtotal' => 0, 'total' => 0, 'is_gift' => true]);
     }
     $o = $o->fresh();
-    expect(array_column(FreeGifts::orderRows($o), 'name'))->toBe(['Kind Mask', 'Kind Mini', 'Kind Full'])
+    expect(array_column(FreeGifts::orderRows($o), 'name'))->toBe(['Kind Full', 'Kind Mini', 'Kind Mask'])
         ->and(array_column(FreeGifts::orderThumbs($o), 'name'))->toBe(['Kind Full', 'Kind Mini', 'Kind Mask'])
         ->and(FreeGifts::orderRows($o)[0])->not->toHaveKey('kind');
 });

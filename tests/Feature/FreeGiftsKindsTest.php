@@ -499,15 +499,17 @@ it('words the criteria in English and Arabic, singular and plural, zeros left ou
      */
     $w = fn (int $a, int $b, int $c) => FreeGifts::criteriaWording(['mask' => $a, 'mini' => $b, 'full' => $c]);
 
-    // The owner's seeded wording, word for word.
+    // The owner's seeded wording, full size first (Lane GBX, 28 October: "full
+    // size products, mini products and then mask"). MUTATION: put WORDS back
+    // in mask, mini, full order. RED.
     expect($w(2, 0, 0))->toBe(['en' => '2 Masks', 'ar' => 'قناعان'])
-        ->and($w(3, 1, 0))->toBe(['en' => '3 Masks + 1 Mini Product', 'ar' => '3 أقنعة + منتج صغير واحد'])
-        ->and($w(3, 2, 1))->toBe(['en' => '3 Masks + 2 Mini Products + 1 Full Size Product', 'ar' => '3 أقنعة + منتجان صغيران + منتج بالحجم الكامل'])
-        ->and($w(5, 2, 2)['ar'])->toBe('5 أقنعة + منتجان صغيران + منتجان بالحجم الكامل')
-        ->and($w(12, 5, 3)['ar'])->toBe('12 قناعاً + 5 منتجات صغيرة + 3 منتجات بالحجم الكامل');
+        ->and($w(3, 1, 0))->toBe(['en' => '1 Mini Product + 3 Masks', 'ar' => 'منتج صغير واحد + 3 أقنعة'])
+        ->and($w(3, 2, 1))->toBe(['en' => '1 Full Size Product + 2 Mini Products + 3 Masks', 'ar' => 'منتج بالحجم الكامل + منتجان صغيران + 3 أقنعة'])
+        ->and($w(5, 2, 2)['ar'])->toBe('منتجان بالحجم الكامل + منتجان صغيران + 5 أقنعة')
+        ->and($w(12, 5, 3)['ar'])->toBe('3 منتجات بالحجم الكامل + 5 منتجات صغيرة + 12 قناعاً');
 
     expect($w(1, 0, 0))->toBe(['en' => '1 Mask', 'ar' => 'قناع واحد'])
-        ->and($w(0, 1, 1))->toBe(['en' => '1 Mini Product + 1 Full Size Product', 'ar' => 'منتج صغير واحد + منتج بالحجم الكامل'])
+        ->and($w(0, 1, 1))->toBe(['en' => '1 Full Size Product + 1 Mini Product', 'ar' => 'منتج بالحجم الكامل + منتج صغير واحد'])
         ->and($w(0, 0, 2))->toBe(['en' => '2 Full Size Products', 'ar' => 'منتجان بالحجم الكامل'])
         ->and($w(0, 11, 0))->toBe(['en' => '11 Mini Products', 'ar' => '11 منتجاً صغيراً'])
         ->and($w(0, 0, 0))->toBe(['en' => '', 'ar' => '']);
@@ -593,10 +595,23 @@ it('draws the shop, the checkout and the order byte-identically with or without 
      * still not move is what was given -- the order's gift lines -- and the
      * internal words must still never reach a shopper (below).
      */
+    /*
+     * ▲ 28 October 2026 (Lane GBX), the owner: "full size products, mini
+     * products and then mask". The same gifts in the same quantities are
+     * given; only their ORDER follows the types now (full size first).
+     */
+    $sorted = static function (string $json): string {
+        $a = json_decode($json, true);
+        $list = is_array($a[1] ?? null) && array_is_list($a) ? $a[1] : $a;
+        usort($list, static fn ($x, $y) => strcmp(json_encode($x), json_encode($y)));
+
+        return json_encode($list);
+    };
     foreach (['order', 'rows'] as $k) {
-        expect($tagged[$k])->toBe($plain[$k], $k . ' changed when gifts were typed');
+        expect($sorted($tagged[$k]))->toBe($sorted($plain[$k]), $k . ' changed when gifts were typed');
     }
-    expect($tagged['drawer'])->toContain('2 Masks + 1 Mini Product + 1 Full Size Product');
+    expect(json_decode($tagged['order'], true)[1][0][1])->toBe('Senka Foam');
+    expect($tagged['drawer'])->toContain('1 Full Size Product + 1 Mini Product + 2 Masks');
     foreach ($tagged as $k => $bytes) {
         expect($bytes)->not->toContain('gift_kind')->not->toContain('need_mask')->not->toContain('Face masks');
     }
