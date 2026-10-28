@@ -408,7 +408,9 @@ it('sizes, weights and speeds the line from Gift box look, on the box and the ho
     $drawer = (string) guShopper($cart)->getJson('/api/cart/drawer')->json('html');
     expect($drawer)->toContain('fieldset.fgb-hu{position:relative;margin-bottom:30px}fieldset.fgb-page.fgb-hu{margin-bottom:40px}.fgb-u{position:absolute;left:0;right:0;bottom:-27.5px;margin:0;padding:0 4px;text-align:center;font-size:11px;font-weight:800;line-height:16px;white-space:nowrap')
         ->toContain('animation:fgb-sw 2.6s linear infinite')
-        ->toContain('-webkit-text-fill-color:#9a9298}}</style>')
+        // ▲ 2.60.620: the cart panel's "Space above the gift box" (12px, the owner
+        // asked) now follows the urgency CSS, before </style>.
+        ->toContain('-webkit-text-fill-color:#9a9298}}#cart{--fg-cg:12px}#cart fieldset.fgb{margin-top:calc(18px + var(--fg-cg))}</style>')
         ->not->toContain('@media (max-width:760px){fieldset.fgb-hu');
 
     $look = ['u_px' => 14, 'u_px_m' => 12, 'u_weight' => 700, 'u_speed' => 40];

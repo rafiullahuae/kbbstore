@@ -1,0 +1,208 @@
+{
+ "admin": {
+  "photoPopup": "off",
+  "gap": "12",
+  "popOptions": [
+   "Off · photos are not clickable",
+   "A · Compact card (slides up on a phone)",
+   "B · Photo on top, pink FREE badge",
+   "C · Card inside the box, under the photo",
+   "D · Minimal luxe, value struck then FREE"
+  ],
+  "errors": []
+ },
+ "shop": [
+  {
+   "crit": "1",
+   "lang": "en",
+   "w": 390,
+   "box": {
+    "marginTop": "30px",
+    "gapAbove": 30,
+    "photosAreButtons": 0,
+    "photoPopups": 0,
+    "linkLikeViewAll": true,
+    "icon": true,
+    "sw": 390
+   },
+   "photoTapOpensNothing": true,
+   "close": {
+    "w": 40,
+    "h": 40,
+    "glyph": "20px",
+    "bg": "rgb(34, 26, 32)",
+    "fromEnd": 12,
+    "focused": true
+   },
+   "escCloses": true,
+   "focusBack": true,
+   "errors": []
+  },
+  {
+   "crit": "1",
+   "lang": "en",
+   "w": 1280,
+   "box": {
+    "marginTop": "30px",
+    "gapAbove": 30,
+    "photosAreButtons": 0,
+    "photoPopups": 0,
+    "linkLikeViewAll": true,
+    "icon": true,
+    "sw": 1280
+   },
+   "photoTapOpensNothing": true,
+   "close": {
+    "w": 40,
+    "h": 40,
+    "glyph": "20px",
+    "bg": "rgb(34, 26, 32)",
+    "fromEnd": 12,
+    "focused": true
+   },
+   "escCloses": true,
+   "focusBack": true,
+   "errors": []
+  },
+  {
+   "crit": "1",
+   "lang": "ar",
+   "w": 390,
+   "box": {
+    "marginTop": "30px",
+    "gapAbove": 30,
+    "photosAreButtons": 0,
+    "photoPopups": 0,
+    "linkLikeViewAll": true,
+    "icon": true,
+    "sw": 390
+   },
+   "photoTapOpensNothing": true,
+   "close": {
+    "w": 40,
+    "h": 40,
+    "glyph": "20px",
+    "bg": "rgb(34, 26, 32)",
+    "fromEnd": 12,
+    "focused": true
+   },
+   "escCloses": true,
+   "focusBack": true,
+   "errors": []
+  },
+  {
+   "crit": "2",
+   "lang": "en",
+   "w": 390,
+   "box": {
+    "marginTop": "30px",
+    "gapAbove": 30,
+    "photosAreButtons": 0,
+    "photoPopups": 0,
+    "linkLikeViewAll": true,
+    "icon": true,
+    "sw": 390
+   },
+   "photoTapOpensNothing": true,
+   "close": {
+    "w": 40,
+    "h": 40,
+    "glyph": "20px",
+    "bg": "rgb(34, 26, 32)",
+    "fromEnd": 12,
+    "focused": true
+   },
+   "escCloses": true,
+   "focusBack": true,
+   "errors": []
+  },
+  {
+   "crit": "2",
+   "lang": "en",
+   "w": 1280,
+   "box": {
+    "marginTop": "30px",
+    "gapAbove": 30,
+    "photosAreButtons": 0,
+    "photoPopups": 0,
+    "linkLikeViewAll": true,
+    "icon": true,
+    "sw": 1280
+   },
+   "photoTapOpensNothing": true,
+   "close": {
+    "w": 40,
+    "h": 40,
+    "glyph": "20px",
+    "bg": "rgb(34, 26, 32)",
+    "fromEnd": 12,
+    "focused": true
+   },
+   "escCloses": true,
+   "focusBack": true,
+   "errors": []
+  },
+  {
+   "crit": "3",
+   "lang": "en",
+   "w": 390,
+   "box": {
+    "marginTop": "30px",
+    "gapAbove": 30,
+    "photosAreButtons": 0,
+    "photoPopups": 0,
+    "linkLikeViewAll": true,
+    "icon": true,
+    "sw": 390
+   },
+   "photoTapOpensNothing": true,
+   "close": {
+    "w": 40,
+    "h": 40,
+    "glyph": "20px",
+    "bg": "rgb(34, 26, 32)",
+    "fromEnd": 12,
+    "focused": true
+   },
+   "tabHeights": {
+    "before": 456,
+    "at90ms": 365,
+    "after": 302
+   },
+   "escCloses": true,
+   "focusBack": true,
+   "errors": []
+  },
+  {
+   "crit": "3",
+   "lang": "en",
+   "w": 1280,
+   "box": {
+    "marginTop": "30px",
+    "gapAbove": 30,
+    "photosAreButtons": 0,
+    "photoPopups": 0,
+    "linkLikeViewAll": true,
+    "icon": true,
+    "sw": 1280
+   },
+   "photoTapOpensNothing": true,
+   "close": {
+    "w": 40,
+    "h": 40,
+    "glyph": "20px",
+    "bg": "rgb(34, 26, 32)",
+    "fromEnd": 12,
+    "focused": true
+   },
+   "tabHeights": {
+    "before": 435,
+    "at90ms": 370,
+    "after": 302
+   },
+   "escCloses": true,
+   "focusBack": true,
+   "errors": []
+  }
+ ]
+}

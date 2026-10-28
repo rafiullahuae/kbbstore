@@ -138,9 +138,19 @@ final class FreeGifts
      * photos can take a glow (G1-G4). Every value is one of its own options or
      * the default (extrasOf()), never a string from the request.
      */
-    public const EXTRAS = ['mode' => 'off', 'pop' => 'A', 'crit_on' => true, 'crit' => '1', 'glow' => 'none'];
+    /*
+     * ▲ 2.60.620 (the owner, on 2.60.619: "turn off the click on the products
+     * images ... i want little spacing above the gift box in the cart panel.
+     * plz allow this control"): the photo popup gains an "off" option and
+     * ships at it, and panel_gap -- the space above the box in the cart panel,
+     * 0-40px -- ships at 12. Both moved because he asked.
+     */
+    public const EXTRAS = ['mode' => 'off', 'pop' => 'off', 'crit_on' => true, 'crit' => '1', 'glow' => 'none', 'panel_gap' => 12];
 
-    public const EXTRA_POPS = ['A', 'B', 'C', 'D'];
+    public const EXTRA_POPS = ['off', 'A', 'B', 'C', 'D'];
+
+    /** "Space above the gift box" in the cart panel, px. */
+    public const PANEL_GAP_MAX = 40;
 
     public const EXTRA_CRITS = ['1', '2', '3'];
 
@@ -527,7 +537,7 @@ final class FreeGifts
      * each design one of its own options or the default, the criteria switch
      * a bool. The admin saves through this, so nothing else reaches the row.
      *
-     * @return array{mode:string,pop:string,crit_on:bool,crit:string,glow:string}
+     * @return array{mode:string,pop:string,crit_on:bool,crit:string,glow:string,panel_gap:int}
      */
     public static function extrasOf(mixed $saved): array
     {
@@ -544,6 +554,11 @@ final class FreeGifts
 
         if (array_key_exists('crit_on', $saved)) {
             $out['crit_on'] = filter_var($saved['crit_on'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? self::EXTRAS['crit_on'];
+        }
+
+        // An integer, clamped to 0..PANEL_GAP_MAX; anything else is the default.
+        if (isset($saved['panel_gap']) && is_numeric($saved['panel_gap'])) {
+            $out['panel_gap'] = max(0, min(self::PANEL_GAP_MAX, (int) $saved['panel_gap']));
         }
 
         return $out;
@@ -1909,7 +1924,8 @@ final class FreeGifts
     private function extrasBox(array $extras, array $lines, array $running, ?\Illuminate\Http\Request $request): array
     {
         $gifts = [];
-        foreach (self::fullFirst($lines) as $l) {
+        // Photo popup "off": the photos are plain pictures, so no popup data at all.
+        foreach ($extras['pop'] === 'off' ? [] : self::fullFirst($lines) as $l) {
             $item = $l['variant'] ?? $l['product'];
             $row = self::rows([$l])[0];
             $gifts[] = $row + ['reg' => max(0, (int) $item->price), 'now' => max(0, (int) $item->effectivePrice())];
