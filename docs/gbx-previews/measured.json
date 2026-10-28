@@ -1,0 +1,334 @@
+[
+ {
+  "lang": "en",
+  "w": 390,
+  "panelCls": 0,
+  "panelCritFirstTry": true,
+  "panelViewAllFirstTry": true,
+  "panelThumbFirstTry": true,
+  "popA-panel": {
+   "sw": 390,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popB-panel": {
+   "sw": 390,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popC-panel": {
+   "sw": 390,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popD-panel": {
+   "sw": 390,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit1-panel": {
+   "sw": 390,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit2-panel": {
+   "sw": 390,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit3-panel": {
+   "sw": 390,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "panelRequestsWhileOpening": 0,
+  "checkoutCls": 0,
+  "checkoutCritFirstTry": true,
+  "checkoutViewAllFirstTry": true,
+  "checkoutThumbFirstTry": true,
+  "popA-checkout": {
+   "sw": 390,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popB-checkout": {
+   "sw": 390,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popC-checkout": {
+   "sw": 390,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popD-checkout": {
+   "sw": 390,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit1-checkout": {
+   "sw": 390,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit2-checkout": {
+   "sw": 390,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit3-checkout": {
+   "sw": 390,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "checkoutRequestsWhileOpening": 0,
+  "glowG0-homeHeightSame": true,
+  "glowG1-homeHeightSame": true,
+  "glowG2-homeHeightSame": true,
+  "glowG3-homeHeightSame": true,
+  "glowG4-homeHeightSame": true,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+ },
+ {
+  "lang": "en",
+  "w": 1280,
+  "panelCls": 0,
+  "panelCritFirstTry": true,
+  "panelViewAllFirstTry": true,
+  "panelThumbFirstTry": true,
+  "popA-panel": {
+   "sw": 1280,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popB-panel": {
+   "sw": 1280,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popC-panel": {
+   "sw": 1280,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popD-panel": {
+   "sw": 1280,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit1-panel": {
+   "sw": 1280,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit2-panel": {
+   "sw": 1280,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit3-panel": {
+   "sw": 1280,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "panelRequestsWhileOpening": 0,
+  "checkoutCls": 0,
+  "checkoutCritFirstTry": true,
+  "checkoutViewAllFirstTry": true,
+  "checkoutThumbFirstTry": true,
+  "popA-checkout": {
+   "sw": 1280,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popB-checkout": {
+   "sw": 1280,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popC-checkout": {
+   "sw": 1280,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popD-checkout": {
+   "sw": 1280,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit1-checkout": {
+   "sw": 1280,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit2-checkout": {
+   "sw": 1280,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit3-checkout": {
+   "sw": 1280,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "checkoutRequestsWhileOpening": 0,
+  "glowG0-homeHeightSame": true,
+  "glowG1-homeHeightSame": true,
+  "glowG2-homeHeightSame": true,
+  "glowG3-homeHeightSame": true,
+  "glowG4-homeHeightSame": true,
+  "errors": []
+ },
+ {
+  "lang": "ar",
+  "w": 390,
+  "panelCls": 0,
+  "panelCritFirstTry": true,
+  "panelViewAllFirstTry": true,
+  "panelThumbFirstTry": true,
+  "popA-panel": {
+   "sw": 390,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popB-panel": {
+   "sw": 390,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popC-panel": {
+   "sw": 390,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popD-panel": {
+   "sw": 390,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit1-panel": {
+   "sw": 390,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit2-panel": {
+   "sw": 390,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit3-panel": {
+   "sw": 390,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "panelRequestsWhileOpening": 0,
+  "errors": []
+ },
+ {
+  "lang": "ar",
+  "w": 1280,
+  "panelCls": 0,
+  "panelCritFirstTry": true,
+  "panelViewAllFirstTry": true,
+  "panelThumbFirstTry": true,
+  "popA-panel": {
+   "sw": 1280,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popB-panel": {
+   "sw": 1280,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popC-panel": {
+   "sw": 1280,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "popD-panel": {
+   "sw": 1280,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit1-panel": {
+   "sw": 1280,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit2-panel": {
+   "sw": 1280,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "crit3-panel": {
+   "sw": 1280,
+   "dlgOverflowX": false,
+   "focusIn": true,
+   "escClosed": true,
+   "focusBack": true
+  },
+  "panelRequestsWhileOpening": 0,
+  "errors": []
+ }
+]

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gift box previews</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<!--
+  Lane GBX -- LIVE PREVIEW of the free-gift box (built by tools/gbx-live-build.cjs).
+  The boxes are the shop's own markup and CSS, rendered by partials.free-gifts.box
+  from the owner's six live bands; the popups, the Gifts Criteria button and the
+  glow come from tools/gbx-kit.{js,css}. Open this file in a browser and play.
+-->
+<style>
+:root{--ink:#221A20;--muted:#756C74;--pink:#C6395F;--line:#ece4e8;--bg:#f7f3f5;--card:#fff}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Outfit',system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+[dir=rtl] body,[lang=ar] body{font-family:'Cairo','Outfit',system-ui,sans-serif}
+
+/* ── the control page ── */
+.bar{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.bar h1{font-size:15px;margin:0 8px 0 0;white-space:nowrap}
+.grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.grp>span{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:#fff}
+.seg button{font:inherit;font-size:13px;font-weight:600;border:0;background:none;color:var(--ink);padding:6px 11px;cursor:pointer;min-height:32px}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff}
+.seg button:focus-visible,.bar select:focus-visible{outline:2px solid var(--pink);outline-offset:1px}
+.bar select{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:999px;padding:6px 10px;min-height:32px;background:#fff}
+.hint{font-size:12px;color:var(--muted);padding:8px 16px 0;margin:0}
+.stagewrap{padding:16px;overflow-x:auto}
+.frame{box-sizing:content-box;display:block;margin:0 auto;border:1px solid #ddd2d8;background:#fff;box-shadow:0 10px 40px rgba(34,26,32,.12)}
+.frame.phone{width:390px;height:844px;border-radius:36px;border:10px solid #221A20}
+.frame.desk{width:1280px;height:820px;border-radius:12px}
+
+/* ── the stage (inside the frame) ── */
+.st{padding:20px 16px 40px;display:flex;gap:24px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+.st section{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px 18px}
+.st h2{font-size:12px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.st .line{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.st .line i{width:48px;height:48px;border-radius:10px;background:#f4e6ec;flex:none}
+.st .line b{font-weight:600;font-size:14px;flex:1}
+.st .line em{font-style:normal;font-weight:700;color:var(--pink)}
+.st .tot{display:flex;justify-content:space-between;font-size:14px;padding:6px 0}
+.st .tot.big{font-weight:800;font-size:16px;border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
+.st .btn{display:block;text-align:center;background:var(--pink);color:#fff;border-radius:999px;padding:12px;font-weight:700;margin-top:12px}
+@media (min-width:900px){.st{padding:32px}}
+
+/*KIT_CSS*/
+</style>
+</head>
+<body>
+<script>
+window.GBX_DATA = /*DATA*/;
+</script>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search), STAGE = q.has('stage'), D = window.GBX_DATA;
+  var S = { pop: 'A', crit: '1', glow: 'G1', lang: 'en', width: 'phone', basket: 4 };
+  try { Object.assign(S, JSON.parse(localStorage.getItem('gbx-live') || '{}')); } catch (e) {}
+
+  if (STAGE) {
+    // Inside the frame: the cart panel and the checkout summary, each with the real box.
+    var money = function (aed, ar) { var n = aed.toLocaleString('en-US'); return ar ? n + ' د.إ' : 'AED ' + n; };
+    var apply = function (s) {
+      var ar = s.lang === 'ar', aed = D.baskets[s.basket];
+      document.documentElement.lang = s.lang; document.documentElement.dir = ar ? 'rtl' : 'ltr';
+      window.GBX_LANG = s.lang; window.GBX_OPT = { pop: s.pop, crit: s.crit };
+      if (s.glow === 'none') delete document.documentElement.dataset.gbxGlow; else document.documentElement.dataset.gbxGlow = s.glow;
+      var box = D[s.lang].boxes[s.basket], t = ar
+        ? { cart: 'السلة', sum: 'ملخص الطلب', item: 'مجموعة العناية', sub: 'المجموع الفرعي', ship: 'التوصيل', free: 'مجاني', total: 'الإجمالي', go: 'إتمام الطلب' }
+        : { cart: 'Cart panel', sum: 'Checkout · Order summary', item: 'Glow Ritual Set', sub: 'Subtotal', ship: 'Delivery', free: 'Free', total: 'Total', go: 'Checkout' };
+      var line = '<div class="line"><i></i><b>' + t.item + '</b><em>' + money(aed, ar) + '</em></div>';
+      document.getElementById('st').innerHTML =
+        '<section><h2>' + t.cart + '</h2>' + line + box + '<div class="tot big"><span>' + t.sub + '</span><span>' + money(aed, ar) + '</span></div><span class="btn">' + t.go + '</span></section>' +
+        '<section><h2>' + t.sum + '</h2>' + line + box + '<div class="tot"><span>' + t.sub + '</span><span>' + money(aed, ar) + '</span></div><div class="tot"><span>' + t.ship + '</span><span>' + t.free + '</span></div><div class="tot big"><span>' + t.total + '</span><span>' + money(aed, ar) + '</span></div></section>';
+    };
+    document.addEventListener('DOMContentLoaded', function () {
+      document.body.innerHTML = '<main class="st" id="st"></main>';
+      apply(S);
+    });
+    window.addEventListener('message', function (e) { if (e.data && e.data.gbx) { var open = document.querySelector('dialog[open]'); if (open) open.close(); apply(e.data.gbx); } });
+    return;
+  }
+
+  // The control page.
+  var ctl = [
+    ['pop', 'Popup', [['A', 'A'], ['B', 'B'], ['C', 'C'], ['D', 'D']]],
+    ['crit', 'Criteria', [['1', '1'], ['2', '2'], ['3', '3']]],
+    ['glow', 'Glow', [['none', 'None'], ['G1', 'G1'], ['G2', 'G2'], ['G3', 'G3'], ['G4', 'G4']]],
+    ['lang', 'Language', [['en', 'EN'], ['ar', 'AR']]],
+    ['width', 'Width', [['phone', 'Phone 390'], ['desk', 'Desktop 1280']]],
+  ];
+  document.addEventListener('DOMContentLoaded', function () {
+    var bar = '<div class="bar" role="toolbar" aria-label="Preview controls"><h1>Gift box previews</h1>' + ctl.map(function (c) {
+      return '<div class="grp"><span>' + c[1] + '</span><div class="seg" data-k="' + c[0] + '">' + c[2].map(function (o) {
+        return '<button type="button" data-v="' + o[0] + '" aria-pressed="false">' + o[1] + '</button>';
+      }).join('') + '</div></div>';
+    }).join('') + '<div class="grp"><span>Basket</span><select id="basket" aria-label="Basket total">' + D.en.crit.map(function (r, i) {
+      return '<option value="' + i + '">AED ' + D.baskets[i].toLocaleString('en-US') + ' — ' + r.amount + '</option>';
+    }).join('') + '</select></div></div>'
+      + '<p class="hint">Tap a gift photo for its popup · “View all” opens the list · “Gifts Criteria” opens the bands · Esc, ✕ or a tap outside closes.</p>'
+      + '<div class="stagewrap"><iframe class="frame" id="fr" title="Preview" src="' + location.pathname + '?stage"></iframe></div>';
+    document.body.innerHTML = bar;
+    var fr = document.getElementById('fr');
+    var sync = function (send) {
+      [].forEach.call(document.querySelectorAll('.seg'), function (seg) {
+        [].forEach.call(seg.children, function (b) { b.setAttribute('aria-pressed', String(S[seg.dataset.k] === b.dataset.v)); });
+      });
+      document.getElementById('basket').value = S.basket;
+      fr.className = 'frame ' + S.width;
+      try { localStorage.setItem('gbx-live', JSON.stringify(S)); } catch (e) {}
+      if (send && fr.contentWindow) fr.contentWindow.postMessage({ gbx: S }, '*');
+    };
+    document.querySelector('.bar').addEventListener('click', function (e) {
+      var b = e.target.closest('.seg button'); if (!b) return;
+      S[b.parentNode.dataset.k] = b.dataset.v; sync(true);
+    });
+    document.getElementById('basket').addEventListener('change', function (e) { S.basket = Number(e.target.value); sync(true); });
+    fr.addEventListener('load', function () { fr.contentWindow.postMessage({ gbx: S }, '*'); });
+    sync(false);
+  });
+})();
+</script>
+<script>
+/*KIT_JS*/
+</script>
+</body>
+</html>

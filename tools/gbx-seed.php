@@ -29,3 +29,43 @@ $fg->saveConfig($config);
 $fg->compile();
 \Illuminate\Support\Facades\Cache::flush();
 echo "gbx: homepage gift section on\n";
+
+/*
+ * PREVIEW DATA for the popup / criteria / glow designs (tools/gbx-kit.js):
+ * each gift's photo, brand, regular and current price, and the homepage
+ * section's bands -- written to the preview's own webroot, read by the shots
+ * script and handed to the page inline (no request). Realistic prices first,
+ * some on sale, so "cut price and price" has something to cut.
+ */
+foreach ([
+    'Senka Perfect Whip%' => [3500, 2900], 'The Glow Set' => [12000, null], 'Black Rice Hyaluronic%' => [2500, 1990],
+    'Mugwort Calming%' => [2200, null], 'Tea Tree Sheet Mask' => [900, 700], 'Mung Bean%' => [2000, null], 'Rose PDRN%' => [6900, 5900],
+] as $like => [$reg, $sale]) {
+    DB::table('products')->where('name', 'like', $like)->update(['price' => $reg, 'sale_price' => $sale]);
+}
+DB::table('product_variants')->where('product_id', $tint)->update(['price' => 4500, 'sale_price' => 3900]);
+$fg->compile();
+\Illuminate\Support\Facades\Cache::flush();
+
+$out = [];
+foreach (['en', 'ar'] as $lang) {
+    app()->setLocale($lang);
+    app()->instance('request', \Illuminate\Http\Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '127.0.0.1']));
+    $g = app(\App\Services\FreeGifts::class);
+    $gifts = [];
+    foreach ($g->ranges() as $r) {
+        foreach ($g->linesFor($r) as $l) {
+            $row = \App\Services\FreeGifts::rows([$l])[0];
+            $item = $l['variant'] ?? $l['product'];
+            $gifts[$row['name']] = ['name' => $row['name'], 'brand' => $row['brand'], 'img' => \App\Support\ImageVariants::variantUrl($row['image'], 400),
+                'srcset' => \App\Support\ImageVariants::srcsetFor($row['image']), 'reg' => (int) $item->price, 'now' => (int) $item->effectivePrice()];
+        }
+    }
+    $home = $g->home(request());
+    $crit = array_map(static fn (array $r) => ['amount' => $r['amount'], 'words' => $r['words'], 'count' => $r['count'],
+        'thumbs' => array_map(static fn (array $t) => ['name' => $t['name'], 'img' => \App\Support\ImageVariants::variantUrl($t['image'], 200), 'q' => $t['quantity']], $r['thumbs'])], $home['rows'] ?? []);
+    $out[$lang] = ['gifts' => $gifts, 'crit' => $crit];
+}
+app()->setLocale('en');
+file_put_contents((getenv('KBB_PUBLIC_PATH') ?: public_path()).'/gbx-data.json', json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+echo 'gbx: preview data, '.count($out['en']['gifts']).' gifts, '.count($out['en']['crit'])." bands\n";
