@@ -300,10 +300,6 @@
     "file": "assets/admin-871a23394db9-DUumVXYE.js",
     "src": "admin-console/871a23394db91565f4753d977288afdd59cb6280.js"
   },
-  "admin-console/877dee38dfeda3b7dead3bc8b0dc38d292efd790.js": {
-    "file": "assets/admin-877dee38dfed-V-5heay3.js",
-    "src": "admin-console/877dee38dfeda3b7dead3bc8b0dc38d292efd790.js"
-  },
   "admin-console/88cc33f1ac7e69f286d2127dc7be77f53477dd68.js": {
     "file": "assets/admin-88cc33f1ac7e-CxQM0wfe.js",
     "src": "admin-console/88cc33f1ac7e69f286d2127dc7be77f53477dd68.js"
@@ -511,6 +507,10 @@
   "admin-console/fedc327ac910df3ca0524077188e4bce3403a1cd.js": {
     "file": "assets/admin-fedc327ac910-Da17pFDY.js",
     "src": "admin-console/fedc327ac910df3ca0524077188e4bce3403a1cd.js"
+  },
+  "admin-console/ff385ebdcd777c0f638cb5e575a22233fefa2ec8.js": {
+    "file": "assets/admin-ff385ebdcd77-Bo2uWrqE.js",
+    "src": "admin-console/ff385ebdcd777c0f638cb5e575a22233fefa2ec8.js"
   },
   "resources/css/kbb/kbb-account.css": {
     "file": "assets/kbb-account-Ck4TS5ez.css",
