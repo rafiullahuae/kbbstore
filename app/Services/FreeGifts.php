@@ -1413,6 +1413,50 @@ final class FreeGifts
         return $compiled;
     }
 
+    /**
+     * (Lane OAG) The ranges-and-gifts revision: a short fingerprint of every
+     * range row and every gift row as stored, timestamps and row ids left out,
+     * so it moves when the CONTENT moves and a save that changes nothing keeps
+     * it. The owner edits from the desk and from the phone: each screen sends
+     * the revision it loaded, and FreeGiftsController::guard() refuses a save
+     * made from an older one (409) instead of overwriting the newer work.
+     *
+     * Built from rows the caller already holds (the payload's two reads), so
+     * it costs no query of its own.
+     */
+    public static function revisionOf(iterable $ranges, iterable $items): string
+    {
+        $norm = static function (iterable $rows, array $drop): array {
+            $out = [];
+            foreach ($rows as $row) {
+                $r = array_diff_key((array) $row, array_flip($drop));
+                ksort($r);
+                $out[] = array_map(static fn ($v) => $v === null ? null : (is_bool($v) ? (string) (int) $v : (string) $v), $r);
+            }
+            usort($out, static fn ($a, $b) => strcmp(json_encode($a), json_encode($b)));
+
+            return $out;
+        };
+
+        return substr(sha1(json_encode([
+            $norm($ranges, ['created_at', 'updated_at']),
+            $norm($items, ['id', 'created_at', 'updated_at']),
+        ])), 0, 16);
+    }
+
+    /**
+     * The revision as stored NOW, read with FOR UPDATE inside the caller's
+     * transaction, so two saves cannot both pass the comparison: on MySQL the
+     * second waits for the first to commit, then reads the new rows.
+     */
+    public static function lockedRevision(): string
+    {
+        return self::revisionOf(
+            DB::table('free_gift_ranges')->orderBy('id')->lockForUpdate()->get(),
+            DB::table('free_gift_range_items')->orderBy('id')->lockForUpdate()->get(),
+        );
+    }
+
     /** Save the owner's settings (already validated by the admin controller). */
     public function saveConfig(array $config): void
     {

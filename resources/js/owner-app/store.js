@@ -386,6 +386,8 @@ export async function renderMore(view) {
   // Cart tracking (Lane QK10), FIRST: the owner asked for it on the phone, and
   // the bottom bar already holds five tabs, so it is one tap from More.
   const go = (me.can.carts ? r('cart', 'Cart tracking', ch, 'Live carts, items and value', 'href="#/carts"') : '')
+    // Free gifts (Lane OAG): Marketing -> Free gifts -> Ranges & gifts, for the phone.
+    + (me.can.gifts ? r('gift', 'Free gifts', ch, 'Spend ranges, gift products and the mode', 'href="#/gifts"') : '')
     + (me.can.customers && scr('customers') ? r('users', 'Customers', ch, '', 'href="#/customers"') : '')
     + (scr('notifications') ? r('bell', 'Notifications', ch, S.unread ? S.unread + ' unread' : 'All caught up', 'href="#/notifications"') : '')
     + (me.can.products && scr('products') ? r('stack', 'Low stock', ch, '', 'href="#/products?low"') : '');

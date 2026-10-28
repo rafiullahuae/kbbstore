@@ -424,7 +424,8 @@ it('shows one range at a time behind range tabs, each with its own Save, and nev
         ->and($js)->toContain("class: 'fg-rt-dirty', role: 'img', 'aria-label': 'Unsaved changes'")
         ->and($js)->toContain("class: 'fg-rt-warn', role: 'img'")
         ->and($js)->toContain("text: st.busy && dirty ? 'Saving…' : 'Save range'")
-        ->and($js)->toContain("var d = await api(k === 'new' ? 'POST' : 'PUT', k === 'new' ? '/ranges' : '/ranges/' + k, rangeBody(x));")
+        // (Lane OAG) The one range's body, plus the revision it was loaded at (409 when stale).
+        ->and($js)->toContain("var d = await api(k === 'new' ? 'POST' : 'PUT', k === 'new' ? '/ranges' : '/ranges/' + k, Object.assign(rangeBody(x), { revision: st.data.revision }));")
         ->and($js)->toContain("say('Saved ' + name + '.');")
         ->and($js)->not->toContain('saveAll')
         ->and($js)->not->toContain('dirtyRanges().forEach')

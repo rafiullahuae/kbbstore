@@ -708,6 +708,96 @@ details summary::-webkit-details-marker { display: none; }
 .pl-acts .btn { min-width: 0; justify-content: center; text-decoration: none; }
 .pl-acts .pl-wa { background: #25D366; border-color: #25D366; color: #fff; }
 
+/* ------------------------------------------------- Free gifts (Lane OAG) */
+/* Marketing -> Free gifts -> Ranges & gifts on the phone. The app's own cards,
+   rows, chips, sheets and buttons; only the pieces below are new. Type tints
+   match the console's boxes (mask rose, mini violet, full blue). */
+.pill.g-ok { --pc: #16A34A; } .pill.g-low { --pc: #D97706; } .pill.g-out { --pc: #DC2626; } .pill.g-info { --pc: #2563EB; } .pill.g-mute { --pc: #7C8494; }
+.g-modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 4px; border-radius: 16px; background: var(--seg-bg, var(--surface2)); }
+.g-modes button { height: 40px; border-radius: 12px; font: 600 14px/1 var(--font); color: var(--ink2); }
+.g-modes button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.g-modes button.on.m-live { background: var(--good); color: #fff; }
+.g-modes button.on.m-testing { background: var(--warn); color: #fff; }
+.g-modes button[disabled] { opacity: .6; }
+.hint.g-hint { margin: 8px 2px 4px; font-size: 12.5px; color: var(--ink3); }
+.g-checks .row { padding: 8px 0; }
+.g-ckd { width: 8px; height: 8px; border-radius: 50%; flex: none; align-self: flex-start; margin-top: 5px; background: var(--warn); }
+.g-ck.bad .g-ckd { background: var(--bad); }
+.rm small.g-wrap { white-space: normal; color: var(--ink2); }
+.g-rr.off .rm b { color: var(--ink3); }
+.g-bang { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; background: var(--bad); color: #fff; font: 800 11px/1 var(--font); font-style: normal; vertical-align: 1px; }
+.g-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--info); vertical-align: 2px; }
+.g-thumbs { display: flex; gap: 4px; margin-top: 8px; align-items: center; }
+.g-thumbs em { font: 600 12px/1 var(--font); font-style: normal; color: var(--ink3); }
+.th.xs { width: 28px; height: 28px; border-radius: 9px; }
+.g-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.g-onoff { display: inline-flex; align-items: center; gap: 8px; color: var(--ink2); }
+.g-amt { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin-bottom: 4px; }
+.g-amt .inp { min-width: 0; }
+.g-amt .inp input[disabled] { color: var(--ink3); }
+.g-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.g-dates .fld { margin-bottom: 0; min-width: 0; }
+.g-dates .inp input { font-size: 15px; }
+.g-need > span:first-child { display: inline-flex; align-items: center; gap: 8px; }
+.g-kd { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: none; background: #A1A1AA; }
+.g-kd.k-mask { background: #DB2777; } .g-kd.k-mini { background: #7C3AED; } .g-kd.k-full { background: #2563EB; }
+.g-step { display: inline-flex; align-items: center; border-radius: 12px; background: var(--inp-bg); height: 38px; flex: none; }
+.g-step button { width: 40px; height: 100%; font: 500 20px/1 var(--font); color: var(--acc); }
+.g-step button[disabled] { opacity: .35; }
+.g-step b { min-width: 26px; text-align: center; font: 700 16px/1 var(--font); font-variant-numeric: tabular-nums; }
+.g-step.sm { height: 34px; }
+.g-step.sm button { width: 34px; }
+.g-msgs { margin: 0 0 12px; padding: 12px 14px 12px 30px; font-size: 13px; line-height: 1.4; }
+.card.g-msgs { box-shadow: none; background: #FFF7ED; }
+.g-msgs li { margin: 2px 0; color: var(--warn); }
+.g-msgs li.err { color: var(--bad); font-weight: 600; }
+.g-box { border-inline-start: 4px solid #A1A1AA; }
+.g-box.k-mask { border-inline-start-color: #DB2777; } .g-box.k-mini { border-inline-start-color: #7C3AED; } .g-box.k-full { border-inline-start-color: #2563EB; }
+.g-box .sh > span:first-child { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); font-size: 14px; }
+.g-cnt { font: 700 12.5px/1 var(--font); padding: 5px 9px; border-radius: 999px; background: var(--surface2); color: var(--ink2); }
+.g-cnt.ok { background: #DCFCE7; color: #166534; } .g-cnt.short { background: #FEF3C7; color: #92400E; } .g-cnt.over { background: #FEE2E2; color: #991B1B; }
+.g-gi { align-items: center; gap: 10px; }
+.g-gi.out .th { opacity: .5; }
+.g-gn { text-align: start; padding: 0; min-width: 0; }
+.g-gn small { margin: 0 0 1px; }
+.g-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; align-items: center; font-size: 12px; }
+.g-asn { font: 600 12px/1.2 var(--font); color: var(--ink3); flex: none; max-width: 64px; text-align: center; }
+.g-none { margin: 6px 0; font-size: 13px; color: var(--ink3); }
+.g-addk { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 40px; margin-top: 8px; border-radius: 12px; border: 1.5px dashed var(--line); font: 600 13.5px/1 var(--font); color: var(--acc); }
+.g-addk.bk { color: var(--ink2); }
+.g-bk { margin-top: 12px; padding: 10px 12px 12px; border-radius: 16px; background: var(--surface2); }
+.g-bk .row { border-top-color: rgba(0,0,0,.06); }
+.g-bkh { margin: 4px 0 8px; font-size: 12px; color: var(--ink3); }
+.g-bkh b { color: var(--ink); font-size: 13px; margin-inline-end: 4px; }
+.g-undo { padding: 8px 0; }
+.g-tot { margin: 0 4px 14px; font: 600 13px/1.4 var(--font); color: var(--ink2); }
+.g-tot.ok { color: var(--good); } .g-tot.short { color: var(--warn); }
+.g-acts { margin: 4px 0 14px; }
+/* Sticky inside .body, whose bottom padding (nav + 40px) Chromium counts in: -20px sits it 10px above the nav. */
+.g-save { position: sticky; z-index: 5; bottom: -20px; display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 16px; border-radius: 20px; background: var(--surface); box-shadow: 0 12px 30px -12px rgba(120,40,60,.45); }
+.g-save span { flex: 1; min-width: 0; font: 600 13px/1.2 var(--font); color: var(--ink2); }
+.g-save .btn { height: 42px; padding: 0 14px; }
+.g-chips { flex-wrap: wrap; overflow: visible; margin: 0 0 10px; padding: 0; }
+.g-fl { display: flex; align-items: center; gap: 8px; margin: 0 -20px 4px 0; min-width: 0; }
+.g-fl > b { flex: none; width: 76px; font: 600 12px/1.2 var(--font); color: var(--ink3); }
+.g-fl .chips { flex: 1; min-width: 0; margin: 0; padding: 2px 20px 6px 0; }
+.g-fl .chips button { height: 30px; padding: 0 11px; font-size: 12.5px; }
+.g-rm { margin-top: 8px; }
+.g-sheet .search { margin-bottom: 8px; box-shadow: none; background: var(--inp-bg); }
+.g-pkst { min-height: 16px; margin: 2px 2px 6px; font-size: 12.5px; color: var(--ink3); }
+.g-res { width: 100%; text-align: start; }
+.g-res[disabled] { opacity: .5; }
+.g-st { flex: none; max-width: 92px; text-align: end; font: 700 12px/1.25 var(--font); color: var(--acc); }
+.g-st.on { color: var(--good); }
+.g-ask { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: -2px 0 10px; padding: 10px; border-radius: 14px; background: var(--surface2); font-size: 12.5px; color: var(--ink2); }
+.g-ask button { height: 32px; padding: 0 11px; border-radius: 999px; background: var(--surface); font: 600 12.5px/1 var(--font); color: var(--ink); }
+.g-vh { display: flex; gap: 10px; align-items: center; margin: 6px 0 10px; }
+.g-pkfoot { position: sticky; bottom: calc(-28px - var(--sab)); display: flex; align-items: center; gap: 10px; margin: 8px -20px calc(-28px - var(--sab)); padding: 12px 20px calc(14px + var(--sab)); background: var(--surface); border-top: 1px solid var(--line); }
+.g-pkfoot span { flex: 1; min-width: 0; font-size: 12.5px; color: var(--ink2); }
+.g-pkfoot .btn { height: 42px; }
+.g-conf ul { padding-inline-start: 18px; }
+.g-conf li { color: var(--ink2); }
+
 /* ---------------------------------------------- Customise app (Lane OA4)
  * Users & Roles → Owner app → Customise app. Every rule below hangs off a
  * class the app puts on <html> (core.js applyUi) — or, for the font, the
@@ -789,4 +879,5 @@ html.oa-nosync .ib.sync { display: none; }
 html.oa-nocontact .cu-act { display: none; }
 html.oa-nobulk :is([data-act="selall"], [data-act="selmode"], .bulk) { display: none; }
 html.oa-nobulk .sel { pointer-events: none; }
+
 
