@@ -311,6 +311,25 @@ it('does not invent a scarcity line when stock is not being counted', function (
     expect(str_contains($html, 'In stock'))->toBeTrue();
 });
 
+it('shows no quantity once the owner\'s low_stock_at is 0: every in-stock product reads In stock, ready to ship', function () {
+    /*
+     * The owner, 28 October 2026, at "Only 1 left · order soon": "i don't want
+     * to show the quantity, just it should say as like other products. In
+     * stock, ready to ship." The migration low_stock_note_off writes 0, which
+     * the setting defines as never. MUTATION: make the migration write '5' --
+     * "Only 1 left" is back and this is red.
+     */
+    $product = cfProduct(['manage_stock' => true, 'stock' => 1]);
+    (require database_path('migrations/2027_12_31_100000_low_stock_note_off.php'))->up();
+    \Illuminate\Support\Facades\Cache::flush();
+
+    $html = test()->get($product->url())->assertOk()->getContent();
+
+    expect(str_contains($html, 'Only 1 left'))->toBeFalse('The product page still shows the quantity left.')
+        ->and(str_contains($html, 'order soon'))->toBeFalse()
+        ->and(str_contains($html, 'In stock'))->toBeTrue();
+});
+
 /*
 |------------------------------------------------------------------------------
 | 6. A variable product whose first option is sold out
