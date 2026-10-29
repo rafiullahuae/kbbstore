@@ -464,7 +464,9 @@ final class CartTrackingReport
             // migration has run (a package's files land seconds before it does).
             ...($this->journeyReady() ? ['c.ct_stage', 'c.ct_seen_at', 'c.ct_seen_path', 'c.ct_left_at'] : []),
             // Lane CAP: the email typed at checkout, and the customer row it was filed under.
-            ...($this->captureReady() ? ['c.ct_email', 'c.ct_email_customer_id'] : [])];
+            ...($this->captureReady() ? ['c.ct_email', 'c.ct_email_customer_id'] : []),
+            // (2.60.627) The cart's gift box counts, once their migration has run.
+            ...(GiftClicks::ready() ? ['c.ct_gifts'] : [])];
     }
 
     private ?bool $captureReady = null;
@@ -588,6 +590,8 @@ final class CartTrackingReport
             'blocked' => $single === null ? null : ['id' => $single[0], 'cidr' => $single[1]],
             // Lane CJ: furthest step, last page, and whether they left or are still here.
             'journey' => CartTrail::summary($r, (bool) ($r->ct_bought ?? false)),
+            // (2.60.627) View all / Hide / Gifts Criteria / ranges / photos taps, or null.
+            'gifts' => GiftClicks::forCart($r->ct_gifts ?? null),
         ];
     }
 

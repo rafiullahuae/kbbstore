@@ -75,7 +75,7 @@ final class CartsController extends Controller
     }
 
     /** The allowlist: what a phone row shows, and nothing else. */
-    public const ROW_KEYS = ['id', 'first', 'last', 'value', 'value_label', 'items', 'removed', 'country', 'bot', 'customer', 'email', 'order', 'journey'];
+    public const ROW_KEYS = ['id', 'first', 'last', 'value', 'value_label', 'items', 'removed', 'country', 'bot', 'customer', 'email', 'order', 'journey', 'gifts'];
 
     /** GET /{app}/api/carts/{id}/journey -- one basket's pages and taps. (Lane CJ) */
     public function journey(Request $request, int $id): JsonResponse
@@ -86,7 +86,7 @@ final class CartsController extends Controller
 
         $steps = array_map(fn (array $e) => [
             'at' => $e['at'], 'kind' => (string) $e['kind'], 'title' => (string) $e['title'],
-            'detail' => $e['code'] === 40 ? $e['detail'] : null,
+            'detail' => $e['code'] === 40 || \App\Services\CartTracking\GiftClicks::isRange((int) $e['code']) ? $e['detail'] : null,
         ], \App\Services\CartTracking\CartTrail::journey($id));
 
         return response()->json(['ok' => true, 'steps' => $steps]);
@@ -128,6 +128,8 @@ final class CartsController extends Controller
                 'left' => $r['journey']['left'],
                 'online' => (bool) $r['journey']['online'],
             ] : null,
+            // (2.60.627) The gift box taps: five integers and their total, or null.
+            'gifts' => isset($r['gifts']) ? array_map('intval', array_intersect_key($r['gifts'], array_flip(['view_all', 'hide', 'criteria', 'ranges', 'photos', 'total']))) : null,
         ];
     }
 }

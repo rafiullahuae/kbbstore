@@ -29,10 +29,31 @@ const BACK = 3;
 const PAY = { cod: 32, stripe: 33, tabby: 34, tamara: 35 };
 const ADDRESS = ['billing_first_name', 'billing_phone', 'billing_address_1'];
 
+/*
+ * (2.60.627) The free gift box: which of its controls a click was, or -1.
+ * 0 View all, 1 Hide, 2 Gifts Criteria, 3 a range in Gifts Criteria, 4 a gift
+ * photo. A range counts on its radio's click only: a tap on the label fires a
+ * second click on the radio, and counting both would count one tap twice.
+ */
+export function giftAction(el) {
+    if (!el || !el.closest || !el.closest('.fgb')) return -1;
+    if (el.closest('.gbx-cr')) return 2;
+    if (el.matches && el.matches('.gbx-tabs input')) return 3;
+    if (el.closest('.fgb-th .fgb-tg')) return 0;
+    if (el.closest('.fgb-ls .fgb-tg')) return 1;
+    if (el.closest('.fgb-th button.fgb-t')) return 4;
+    return -1;
+}
+
+/** The gift box's code: 60-64 in the bag, 65-69 on the cart page, 70-74 at checkout. */
+export const GIFT_BASE = { bag: 60, cart: 65, checkout: 70 };
+
 /** Which code a click means, or 0. Pure, so the test can run it on markup. */
 export function codeFor(el, inDrawer, onCheckout) {
     if (!el || !el.closest) return 0;
     const c = (s) => el.closest(s);
+    const g = giftAction(el);
+    if (g >= 0) return (inDrawer ? GIFT_BASE.bag : (onCheckout ? GIFT_BASE.checkout : GIFT_BASE.cart)) + g;
     if (inDrawer) {
         if (c('a.cobtn')) return 12;
         if (c('a.btn-ghost')) return 13;
@@ -112,7 +133,8 @@ export function initTrail() {
         const code = codeFor(t, inDrawer, !!form && !inDrawer);
         if (t && t.closest && t.closest('a[href]')) leaving = true;
         if (!code) return;
-        push(code);
+        // A range tap names its range by id; the server turns it into "AED 500 – 999".
+        push(code, code >= 60 && (code - 60) % 5 === 3 ? 'r' + (parseInt(t.getAttribute('data-r'), 10) || 0) : null);
         if (code === 39 && form) {
             // After the page's own checks have run: which fields stopped the order.
             setTimeout(() => {

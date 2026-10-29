@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 |
 | Paths (all under /admin-api) and their capability (AdminCapabilities::RULES):
 |
-|   freegifts.view    GET  free-gifts, free-gifts/products, free-gifts/stats,
+|   freegifts.view    GET  free-gifts, free-gifts/products, free-gifts/stats, free-gifts/clicks,
 |                          free-gifts/brands  (the last two: Lane FG2)
 |   freegifts.manage  POST free-gifts/switch, free-gifts/settings, free-gifts/testers,
 |                     POST free-gifts/extras (Lane GBX, Gift box popups),
@@ -35,6 +35,7 @@ Route::prefix('free-gifts')->group(function () {
     Route::get('/', [FreeGiftsController::class, 'show']);
     Route::get('/products', [FreeGiftsController::class, 'products'])->middleware('throttle:60,1,free-gifts-search');
     Route::get('/stats', [FreeGiftsController::class, 'stats']);
+    Route::get('/clicks', [FreeGiftsController::class, 'clicks']);
     Route::get('/brands', [FreeGiftsController::class, 'brands']);
 
     Route::post('/switch', [FreeGiftsController::class, 'switch']);

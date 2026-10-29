@@ -348,6 +348,7 @@
       + '<span class="ctk-ip">' + esc(r.ip || 'no address') + '</span>' + shield + '</div>'
       + (r.browser ? '<span class="ctk-agent">' + esc(r.browser === r.device ? r.browser : r.browser + ' · ' + r.device) + '</span>' : '')
       + leftHtml(r.journey)
+      + giftsHtml(r.gifts)
       + '</div>';
   }
 
@@ -361,6 +362,18 @@
         : (j.seen ? '<span class="lv"><i></i>Left at <b>' + where + '</b> · ' + esc(ago(j.left || j.seen)) + '</span>' : ''));
     return '<div class="ctk-left">' + state
       + '<span class="ctk-pill ' + (j.stage === 8 ? 'no' : (j.stage >= 3 ? 'amber' : 'mute')) + '" title="The furthest step this shopper reached">' + esc(j.stage_label) + '</span></div>';
+  }
+
+  /* (2.60.627) What this shopper did with the free gift box: one chip per
+     control they used, with how many times. From the cart row (ct_gifts):
+     no extra request. */
+  var GIFT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>';
+  var GIFT_KEYS = [['criteria', 'Gifts Criteria'], ['view_all', 'View all'], ['ranges', 'Ranges'], ['photos', 'Photos'], ['hide', 'Hide']];
+  function giftsHtml(g) {
+    if (!g || !g.total) return '';
+    return '<div class="ctk-gb" title="Taps on the free gift box">' + GIFT_ICON.replace('<svg', '<svg style="color:#a12d4f;margin-top:3px"') + GIFT_KEYS.filter(function (k) { return g[k[0]] > 0; }).map(function (k) {
+      return '<span' + (k[0] === 'criteria' ? ' class="g"' : '') + '>' + esc(k[1]) + ' <b>×' + Number(g[k[0]]) + '</b></span>';
+    }).join('') + '</div>';
   }
 
   function funnelTile(f, exits) {
@@ -620,6 +633,8 @@
 
       + '<div class="ctk-card ctk-sec"><h4>In the cart now</h4>' + (prodList(c.products) || '<p class="ctk-note">Empty.</p>')
       + (c.removed.length ? '<h4 style="margin-top:14px">Taken out</h4>' + prodList(c.removed, 'ctk-rem') : '') + '</div>'
+
+      + '<div class="ctk-card ctk-sec"><h4>Free gift box</h4>' + (c.gifts && c.gifts.total ? giftsHtml(c.gifts) + '<p class="ctk-note" style="margin-top:8px">' + Number(c.gifts.total) + ' tap' + (c.gifts.total === 1 ? '' : 's') + ' on the gift box. Which range they looked at, and where, is in the Journey below.</p>' : '<p class="ctk-note">No taps on the gift box yet. Counted from update 2.60.627 on.</p>') + '</div>'
 
       + '<div class="ctk-card ctk-sec"><h4>Journey</h4>' + journeyHtml(c) + '</div>'
 

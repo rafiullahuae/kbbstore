@@ -119,6 +119,22 @@ final class CartTrail
         42 => ['Changed the delivery option', 3, 'checkout'],
         43 => ['Ticked Create an account', 3, 'checkout'],
         44 => ['Opened a policy page', 3, 'checkout'],
+        // (2.60.627) The free gift box's controls: GiftClicks::codes() builds the same table.
+        60 => ['Gift box: View all (bag panel)', 2, 'bag'],
+        61 => ['Gift box: Hide (bag panel)', 2, 'bag'],
+        62 => ['Gift box: Gifts Criteria (bag panel)', 2, 'bag'],
+        63 => ['Gift box: Range tapped (bag panel)', 2, 'bag'],
+        64 => ['Gift box: Gift photo tapped (bag panel)', 2, 'bag'],
+        65 => ['Gift box: View all (cart page)', 2, 'cart'],
+        66 => ['Gift box: Hide (cart page)', 2, 'cart'],
+        67 => ['Gift box: Gifts Criteria (cart page)', 2, 'cart'],
+        68 => ['Gift box: Range tapped (cart page)', 2, 'cart'],
+        69 => ['Gift box: Gift photo tapped (cart page)', 2, 'cart'],
+        70 => ['Gift box: View all (checkout)', 3, 'checkout'],
+        71 => ['Gift box: Hide (checkout)', 3, 'checkout'],
+        72 => ['Gift box: Gifts Criteria (checkout)', 3, 'checkout'],
+        73 => ['Gift box: Range tapped (checkout)', 3, 'checkout'],
+        74 => ['Gift box: Gift photo tapped (checkout)', 3, 'checkout'],
     ];
 
     /** The checkout fields "Place order stopped" may name, and how they read. */
@@ -193,6 +209,7 @@ final class CartTrail
             $stage = 0;
             $left = false;
             $lastPath = null;
+            $gifts = [];
             $now = now();
 
             foreach (array_slice($events, 0, self::MAX_BATCH) as $e) {
@@ -206,7 +223,12 @@ final class CartTrail
                     continue;
                 }
 
-                $path = $code === 40 ? self::fields((string) ($e[1] ?? '')) : self::path((string) ($e[1] ?? ''));
+                $path = match (true) {
+                    $code === 40 => self::fields((string) ($e[1] ?? '')),
+                    // (2.60.627) A range by id, named from the shop's own ranges.
+                    GiftClicks::isRange($code) => GiftClicks::rangeLabel((string) ($e[1] ?? '')),
+                    default => self::path((string) ($e[1] ?? '')),
+                };
                 $age = max(0, min(600000, (int) ($e[2] ?? 0)));
 
                 $rows[] = ['cart_id' => (int) $cart->getKey(), 'code' => $code, 'path' => $path, 'created_at' => $now->copy()->subMilliseconds($age)];
@@ -216,7 +238,9 @@ final class CartTrail
                     $left = $code === self::LEFT;
                 }
 
-                if ($code !== 40 && $path !== null) {
+                if (GiftClicks::isGift($code)) {
+                    $gifts[] = ['code' => $code, 'path' => $path];
+                } elseif ($code !== 40 && $path !== null) {
                     $lastPath = $path;
                 }
             }
@@ -225,8 +249,10 @@ final class CartTrail
                 return 0;
             }
 
+            // Counted BEFORE this batch's rows are written: "first today" reads the earlier ones.
+            $giftCounts = $gifts === [] ? null : GiftClicks::record((int) $cart->getKey(), $cart->getAttribute('ct_gifts'), $gifts);
             DB::table('cart_trail')->insert($rows);
-            $this->summarise($cart, $lastPath, $stage, $left);
+            $this->summarise($cart, $lastPath, $stage, $left, $giftCounts);
 
             return count($rows);
         } catch (\Throwable) {
@@ -377,10 +403,15 @@ final class CartTrail
         return (bool) $this->settings->get('track') && (bool) $this->settings->get('journey');
     }
 
-    /** One UPDATE: last page and when, the furthest step, and the leave. */
-    private function summarise(Cart $cart, ?string $path, int $stage, bool $left): void
+    /** One UPDATE: last page and when, the furthest step, the leave, and the gift box counts. */
+    private function summarise(Cart $cart, ?string $path, int $stage, bool $left, ?string $gifts = null): void
     {
         $set = ['ct_seen_at' => now()];
+
+        // (2.60.627) The cart's own gift box counts, in this same UPDATE.
+        if ($gifts !== null) {
+            $set['ct_gifts'] = $gifts;
+        }
 
         if ($path !== null) {
             $set['ct_seen_path'] = $path;

@@ -11,6 +11,12 @@
    polls and no timer runs. Every value passes through esc(). */
 import { S, esc, api, $, top, back, toast, busy, paint, errorBox, ago, when, pill, sheet, screen, onScreen, mark, once, landed, isFresh, onReset, ln, blk, times, skChips, skNote } from './core.js';
 
+/* (2.60.627) The free gift box taps on this cart, one tag per control used:
+   from the cart row itself, no request of its own. */
+const GIFT_KEYS = [['criteria', 'Gifts Criteria'], ['view_all', 'View all'], ['ranges', 'Ranges'], ['photos', 'Photos'], ['hide', 'Hide']];
+const gifts = (g) => (g && g.total
+  ? '<span class="ct-gb">' + GIFT_KEYS.filter(([k]) => g[k] > 0).map(([k, l]) => '<span class="tag">' + esc(l) + ' ×' + fmt(g[k]) + '</span>').join('') + '</span>'
+  : '');
 const PERIODS = [['today', 'Today'], ['7d', '7 days'], ['30d', '30 days'], ['all', 'All time']];
 const SHOW = [['', 'All carts'], ['no', 'Not bought'], ['yes', 'Became orders']];
 
@@ -88,6 +94,7 @@ function paintCarts(view) {
     ? '<div class="list">' + C.rows.map((r, i) => '<button type="button" class="row ct-row" data-cto="' + i + '"><div class="rm"><b>' + esc(who(r)) + '</b>'
       + '<small>' + fmt(count(r)) + ' item' + (count(r) === 1 ? '' : 's') + ' · ' + esc(since(r.last)) + (r.country ? ' · ' + esc(r.country) : '') + '</small>'
       + left(r.journey)
+      + gifts(r.gifts)
       + '<span class="ct-st">' + (r.order ? pill(r.order.status, '') + '<span class="muted">#' + esc(r.order.number) + '</span>' : '<span class="tag ct-open">Not bought</span>' + (r.journey && r.journey.stage ? '<span class="tag">' + esc(r.journey.stage_label) + '</span>' : '')) + (r.bot ? '<span class="tag ct-bot">Bot</span>' : '') + '</span></div>'
       + '<div class="re"><b>' + esc(r.value_label) + '</b></div></button>').join('') + '</div>'
     : '<div class="card empty">No carts in this period.</div>')
@@ -125,6 +132,7 @@ function openCart(r) {
     + (r.items.length ? r.items.map((l) => '<div class="row"><div class="rm"><b>' + esc(l.name) + '</b></div><div class="re"><b>× ' + fmt(l.qty) + '</b>'
       + (l.id && can.products ? link('#/products/' + l.id, 'Open') : '') + '</div></div>').join('') : '<p class="empty">Empty now.</p>')
     + (r.removed ? '<p class="muted ct-rm">' + fmt(r.removed) + ' removed along the way</p>' : '') + '</section>'
+    + (r.gifts && r.gifts.total ? '<section class="card"><h4 class="sh">Free gift box <span class="muted">' + fmt(r.gifts.total) + ' tap' + (r.gifts.total === 1 ? '' : 's') + '</span></h4>' + gifts(r.gifts) + '</section>' : '')
     + '<section class="card"><h4 class="sh">Journey <span class="muted">' + esc(r.journey ? r.journey.stage_label : '') + '</span></h4>' + left(r.journey) + '<div id="ctj-' + r.id + '"><p class="muted">Loading…</p></div></section>'
     + '<section class="card"><h4 class="sh">Customer</h4><div class="row"><div class="rm"><b>' + esc(who(r)) + '</b>' + (r.email && r.customer ? '<small>' + esc(r.email) + '</small>' : '') + '</div><div class="re">'
       + (r.email ? '<a class="tbtn" href="mailto:' + esc(r.email) + '">Email</a>' : '')

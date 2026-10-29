@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Services\CartTracking\GiftClicks;
 use App\Services\FreeGifts;
 use App\Support\Money;
 use Illuminate\Http\JsonResponse;
@@ -571,6 +572,29 @@ class FreeGiftsController extends Controller
         ])->save();
 
         return response()->json($this->payload() + ['created' => $this->productRow($product->load('brand:id,name'))]);
+    }
+
+    /**
+     * GET /admin-api/free-gifts/clicks?from=Y-m-d&to=Y-m-d&by=day|week|month
+     * -- (2.60.627) the Clicks tab: how often shoppers used View all, Hide,
+     * Gifts Criteria, its ranges and the gift photos, from gift_clicks (one row
+     * per day x control x place x range) plus one aggregate over carts. The
+     * period is capped at GiftClicks::MAX_DAYS. freegifts.view.
+     */
+    public function clicks(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d'],
+            'by' => ['nullable', 'string', Rule::in(GiftClicks::BY)],
+        ]);
+        $today = \App\Support\StoreTime::today();
+
+        return response()->json(GiftClicks::report(
+            (string) ($data['from'] ?? $today->subDays(6)->format('Y-m-d')),
+            (string) ($data['to'] ?? $today->format('Y-m-d')),
+            (string) ($data['by'] ?? 'day'),
+        ));
     }
 
     /**

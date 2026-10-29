@@ -401,6 +401,42 @@ select.fg-in{padding-inline-end:28px}
   .fg-box{padding:7px}
   .fg-pk-lab{min-width:0;flex-basis:100%}
 }
+/* (2.60.627) Clicks: the gift box's controls, day / week / month. */
+.gc-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.gc-seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;flex-wrap:wrap}
+.gc-seg button{font:inherit;font-size:12.5px;padding:7px 11px;border:0;background:var(--surface);color:var(--ink-soft);cursor:pointer;border-inline-end:1px solid var(--border)}
+.gc-seg button:last-child{border-inline-end:0}
+.gc-seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--ink);font-weight:650}
+.gc-seg button:focus-visible,.gc-bar .fg-in:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.gc-dates{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;color:var(--ink-soft)}
+.gc-dates .fg-in{width:auto;padding:6px 8px}
+.gc-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
+.gc-tile{border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--surface);border-top:3px solid var(--c)}
+.gc-tile b{display:block;font-size:24px;letter-spacing:-.02em;line-height:1.2;font-variant-numeric:tabular-nums}
+.gc-tile span{font-size:12px;color:var(--ink-soft)}
+.gc-tile small{display:block;font-size:11.5px;color:var(--ink-faint);margin-top:2px}
+.gc-conv{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}
+.gc-conv div{border-radius:12px;padding:12px 14px;background:var(--surface-2)}
+.gc-conv b{font-size:22px;font-variant-numeric:tabular-nums}
+.gc-conv p{margin:2px 0 0;font-size:12.5px;color:var(--ink-soft)}
+.gc-chart{display:flex;align-items:flex-end;gap:3px;height:170px;padding:8px 2px 0;border-bottom:1px solid var(--border);overflow-x:auto;margin-top:12px}
+.gc-col{flex:1 0 12px;max-width:46px;height:100%;display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden}
+.gc-col i{display:block;background:var(--c);min-height:0}
+.gc-x{display:flex;gap:3px;padding:4px 2px 0;overflow:hidden}
+.gc-x span{flex:1 0 12px;max-width:46px;font-size:10.5px;color:var(--ink-faint);text-align:center;white-space:nowrap;overflow:visible}
+.gc-key{display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:10px;font-size:12px;color:var(--ink-soft)}
+.gc-key i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c);margin-inline-end:5px;vertical-align:-1px}
+.gc-tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;font-variant-numeric:tabular-nums}
+.gc-tbl th,.gc-tbl td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:end;white-space:nowrap}
+.gc-tbl th:first-child,.gc-tbl td:first-child{text-align:start}
+.gc-tbl th{font-size:11.5px;font-weight:600;color:var(--ink-soft)}
+.gc-tbl tr.sum td{font-weight:700}
+.gc-wrap{overflow-x:auto}
+.gc-rng{display:grid;gap:8px;margin-top:12px}
+.gc-rng div{display:grid;grid-template-columns:minmax(110px,180px) 1fr auto;gap:10px;align-items:center;font-size:12.5px}
+.gc-rng em{display:block;height:10px;border-radius:999px;background:var(--surface-2);overflow:hidden;font-style:normal}
+.gc-rng em i{display:block;height:100%;background:#C6395F;border-radius:999px}
+@media (max-width:640px){.gc-tile b{font-size:20px}.gc-rng div{grid-template-columns:1fr auto;row-gap:5px}.gc-rng b{grid-row:1;grid-column:2}.gc-rng em{grid-column:1/-1;grid-row:2}.gc-col,.gc-x span{flex-basis:5px}.gc-chart,.gc-x{gap:2px}}
 </style>
 
 <script>
@@ -410,7 +446,7 @@ select.fg-in{padding-inline-end:28px}
   var SCREEN = 'freegifts';
   var GROUP = 'Growth & Marketing';
   var TITLE = 'Free gifts';
-  var TABS = [['overview', 'Overview'], ['ranges', 'Ranges & gifts'], ['products', 'Gift products'], ['display', 'Display'], ['home', 'Homepage section']];
+  var TABS = [['overview', 'Overview'], ['ranges', 'Ranges & gifts'], ['products', 'Gift products'], ['display', 'Display'], ['home', 'Homepage section'], ['clicks', 'Clicks']];
   /* [key, label, help]; grouped as the shopper meets them. */
   var TEXT_GROUPS = [
     ['The box', [['title', 'Box title', ''], ['view_all', 'Open button', ''], ['hide', 'Close button', ''], ['free', 'On each gift', '']]],
@@ -900,11 +936,11 @@ select.fg-in{padding-inline-end:28px}
     if (!st.data) { wrap.appendChild(card(null, st.busy ? 'Loading…' : 'Nothing to show.')); return; }
     var panel = el('div', { role: 'tabpanel', 'aria-labelledby': 'fg-tab-' + st.tab, class: 'fg-wrap', style: 'padding:0' });
     wrap.appendChild(panel);
-    ({ overview: renderOverview, ranges: renderRanges, products: renderProducts, display: renderDisplay, home: renderHome })[st.tab](panel);
+    ({ overview: renderOverview, ranges: renderRanges, products: renderProducts, display: renderDisplay, home: renderHome, clicks: renderClicks })[st.tab](panel);
     if (st.picker) { wrap.appendChild(pickerModal()); paintResults(); }
     if (focusKey) { var f = wrap.querySelector('[data-fk="' + focusKey + '"]'); if (f) f.focus(); }
   }
-  function setTab(t) { st.tab = t; st.confirm = null; render(); }
+  function setTab(t) { st.tab = t; st.confirm = null; if (t === 'clicks' && st.gc) loadClicks(); render(); }
 
   /* ------------------------------------------------------- the own Saves */
   function rangeBody(x) {
@@ -1139,6 +1175,123 @@ select.fg-in{padding-inline-end:28px}
     });
     return el('div', { style: 'margin-top:14px;max-width:340px' }, [field('Space above the gift box (px)', i, 'Cart panel only, 0 to 40. Applies whether the popups are on or off.')]);
   }
+  /* ------------------------------------------------------------ Clicks (2.60.627)
+     How often shoppers used the gift box: View all, Hide, Gifts Criteria, its
+     ranges and the gift photos -- GET /clicks, which reads one small table of
+     daily totals. Nothing here polls: one request per change of period. */
+  var GC_COLORS = ['#2f6fde', '#9aa3ae', '#2e8f62', '#C6395F', '#d79a2b'];
+  var GC_ORDER = [2, 0, 3, 4, 1]; /* Criteria, View all, ranges, photos, Hide */
+  var GC_PRESETS = [['today', 'Today'], ['7d', '7 days'], ['30d', '30 days'], ['month', 'This month'], ['last', 'Last month'], ['90d', '90 days'], ['year', 'This year'], ['custom', 'Custom']];
+  function gcDay(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function gcRange(p, today) {
+    var t = new Date(today + 'T12:00:00'), y = t.getFullYear(), m = t.getMonth();
+    var back = function (n) { var d = new Date(t); d.setDate(d.getDate() - n); return gcDay(d); };
+    if (p === 'today') return [today, today];
+    if (p === '30d') return [back(29), today];
+    if (p === '90d') return [back(89), today];
+    if (p === 'month') return [gcDay(new Date(y, m, 1)), today];
+    if (p === 'last') return [gcDay(new Date(y, m - 1, 1)), gcDay(new Date(y, m, 0))];
+    if (p === 'year') return [gcDay(new Date(y, 0, 1)), today];
+    return [back(6), today];
+  }
+  function loadClicks() {
+    var q = st.gc || (st.gc = { p: '7d', by: 'day', from: '', to: '', data: null, busy: false, err: null });
+    var seq = (q.seq = (q.seq || 0) + 1);
+    q.busy = true; q.err = null;
+    var qs = q.from && q.to ? '?from=' + q.from + '&to=' + q.to + '&by=' + q.by : '?by=' + q.by;
+    api('GET', '/clicks' + qs).then(function (d) {
+      if (seq !== q.seq) return;
+      q.data = d; q.busy = false; q.from = d.from; q.to = d.to; q.today = d.today;
+      if (st.tab === 'clicks') render();
+    }).catch(function () {
+      if (seq !== q.seq) return;
+      q.busy = false; q.err = 'The clicks could not be loaded. Try again.';
+      if (st.tab === 'clicks') render();
+    });
+  }
+  function renderClicks(wrap) {
+    var q = st.gc;
+    if (!q) { loadClicks(); q = st.gc; }
+    var d = q.data;
+    function setP(p) {
+      q.p = p;
+      if (p !== 'custom' && q.today) { var r = gcRange(p, q.today); q.from = r[0]; q.to = r[1]; }
+      if (p === 'today') q.by = 'day';
+      if (p === 'year' && q.by === 'day') q.by = 'month';
+      if (p === 'custom') { render(); return; }
+      loadClicks(); render();
+    }
+    var seg = el('div', { class: 'gc-seg', role: 'group', 'aria-label': 'Period' }, GC_PRESETS.map(function (x) {
+      return el('button', { type: 'button', 'aria-pressed': String(q.p === x[0]), 'data-fk': 'gc-p-' + x[0], text: x[1], onclick: function () { setP(x[0]); } });
+    }));
+    var by = el('div', { class: 'gc-seg', role: 'group', 'aria-label': 'Group by' }, [['day', 'Day'], ['week', 'Week'], ['month', 'Month']].map(function (x) {
+      return el('button', { type: 'button', 'aria-pressed': String(q.by === x[0]), 'data-fk': 'gc-by-' + x[0], text: x[1], onclick: function () { q.by = x[0]; loadClicks(); render(); } });
+    }));
+    var bar = el('div', { class: 'gc-bar' }, [seg, by]);
+    if (q.p === 'custom') {
+      var f = el('input', { type: 'date', class: 'fg-in', value: q.from, 'aria-label': 'From', 'data-fk': 'gc-from' });
+      var t = el('input', { type: 'date', class: 'fg-in', value: q.to, 'aria-label': 'To', 'data-fk': 'gc-to' });
+      var go = function () { if (f.value && t.value) { q.from = f.value; q.to = t.value; loadClicks(); render(); } };
+      f.addEventListener('change', go); t.addEventListener('change', go);
+      bar.appendChild(el('span', { class: 'gc-dates' }, [f, '–', t]));
+    }
+    wrap.appendChild(card('Gift box clicks', 'How often shoppers use the gift box in the cart panel, on the cart page and at checkout: View all, Gifts Criteria, the ranges they look at inside it, a tap on a gift photo, and Hide. Each number is taps; “carts” under it counts each basket once a day.', [bar,
+      d ? el('p', { class: 'fg-sub', style: 'margin-top:8px', text: 'Showing ' + d.from + ' to ' + d.to + (q.busy ? ' · updating…' : '') + '.' }) : null]));
+    if (q.err) wrap.appendChild(el('div', { class: 'fg-note', role: 'alert', text: q.err }));
+    if (!d) { wrap.appendChild(card(null, q.busy ? 'Loading…' : 'Nothing to show.')); return; }
+    if (!d.ready) { wrap.appendChild(card(null, 'Counting starts once update 2.60.627 has finished installing.')); return; }
+
+    /* The five tiles, the most telling first. */
+    wrap.appendChild(el('div', { class: 'gc-tiles' }, GC_ORDER.map(function (a) {
+      return el('div', { class: 'gc-tile', style: '--c:' + GC_COLORS[a] }, [el('span', { text: d.actions[a] }), el('b', { text: fmt(d.totals[a]) }), el('small', { text: plural(d.carts[a], 'cart', 'carts') })]);
+    })));
+
+    /* Did the box help? Carts that used it against carts that did not. */
+    var o = d.orders;
+    if (o) {
+      var pc = function (a, b) { return b ? Math.round(a * 1000 / b) / 10 + '%' : '–'; };
+      wrap.appendChild(card('Did it lead to orders?', 'Carts last active in this period, people only (bots left out). A cart that used the gift box is one with any tap on it.', [el('div', { class: 'gc-conv' }, [
+        el('div', {}, [el('b', { text: pc(o.used_ordered, o.used) }), el('p', { text: fmt(o.used_ordered) + ' of ' + plural(o.used, 'cart', 'carts') + ' that used the gift box ordered' })]),
+        el('div', {}, [el('b', { text: pc(o.others_ordered, o.others) }), el('p', { text: fmt(o.others_ordered) + ' of ' + plural(o.others, 'cart', 'carts') + ' that did not use it ordered' })])
+      ])]));
+    }
+
+    /* The chart: stacked bars, heights in % of the busiest bucket (nothing measured). */
+    var max = Math.max.apply(null, d.buckets.map(function (b) { return b.total; }).concat([1]));
+    var every = Math.max(1, Math.ceil(d.buckets.length / 12));
+    var chart = el('div', { class: 'gc-chart', role: 'img', 'aria-label': 'Taps per ' + d.by + ', stacked by control' }, d.buckets.map(function (b) {
+      return el('div', { class: 'gc-col', title: b.label + ': ' + fmt(b.total) + ' taps' }, GC_ORDER.map(function (a) {
+        return b.clicks[a] ? el('i', { style: '--c:' + GC_COLORS[a] + ';height:' + (b.clicks[a] * 100 / max) + '%' }) : null;
+      }));
+    }));
+    var xs = el('div', { class: 'gc-x', 'aria-hidden': 'true' }, d.buckets.map(function (b, i) { return el('span', { text: i % every === 0 ? b.label.replace(/^\w{3} /, '') : '' }); }));
+    var key = el('div', { class: 'gc-key' }, GC_ORDER.map(function (a) { return el('span', { style: '--c:' + GC_COLORS[a] }, [el('i'), d.actions[a]]); }));
+    wrap.appendChild(card('By ' + d.by, d.total ? null : 'No taps in this period yet.', [chart, xs, key]));
+
+    /* The same numbers as a table, busiest controls first. */
+    var head = el('tr', {}, [el('th', { text: d.by === 'day' ? 'Day' : d.by === 'week' ? 'Week' : 'Month' })].concat(GC_ORDER.map(function (a) { return el('th', { text: d.actions[a] }); }), [el('th', { text: 'All' })]));
+    var rows = d.buckets.slice().reverse().map(function (b) {
+      return el('tr', {}, [el('td', { text: b.label })].concat(GC_ORDER.map(function (a) { return el('td', { text: b.clicks[a] ? fmt(b.clicks[a]) : '–' }); }), [el('td', { text: fmt(b.total) })]));
+    });
+    rows.push(el('tr', { class: 'sum' }, [el('td', { text: 'Total' })].concat(GC_ORDER.map(function (a) { return el('td', { text: fmt(d.totals[a]) }); }), [el('td', { text: fmt(d.total) })])));
+    wrap.appendChild(card('Table', null, [el('div', { class: 'gc-wrap' }, [el('table', { class: 'gc-tbl' }, [el('thead', {}, [head]), el('tbody', {}, rows)])])]));
+
+    /* Where: bag panel, cart page, checkout. */
+    var ph = el('tr', {}, [el('th', { text: 'Where' })].concat(GC_ORDER.map(function (a) { return el('th', { text: d.actions[a] }); }), [el('th', { text: 'All' })]));
+    var pr = d.places.map(function (name, i) {
+      var c = d.by_place[i], all = c.reduce(function (x, y) { return x + y; }, 0);
+      return el('tr', {}, [el('td', { text: name })].concat(GC_ORDER.map(function (a) { return el('td', { text: c[a] ? fmt(c[a]) : '–' }); }), [el('td', { text: fmt(all) })]));
+    });
+    wrap.appendChild(card('Where they tapped', null, [el('div', { class: 'gc-wrap' }, [el('table', { class: 'gc-tbl' }, [el('thead', {}, [ph]), el('tbody', {}, pr)])])]));
+
+    /* Which ranges they look at in Gifts Criteria: what they are aiming for. */
+    var top = d.ranges.length ? d.ranges[0].clicks : 1;
+    wrap.appendChild(card('Ranges looked at in Gifts Criteria', d.ranges.length ? 'Which spend range shoppers tapped to see its gifts: what they are aiming for.' : 'No range taps in this period yet.', [el('div', { class: 'gc-rng' }, d.ranges.map(function (r) {
+      return el('div', {}, [el('span', { text: r.label }), el('em', {}, [el('i', { style: 'width:' + (r.clicks * 100 / top) + '%' })]), el('b', { text: fmt(r.clicks) })]);
+    }))]));
+    wrap.appendChild(el('p', { class: 'fg-sub', style: 'margin:4px 2px 0', text: 'Counted from update 2.60.627 on, for shoppers with something in the bag, through Cart Tracking (it must be on: Growth & Marketing → Cart Tracking → Settings). Each cart’s own taps are on its row in Cart Tracking.' }));
+  }
+
   function renderOverview(wrap) {
     var d = st.data, mode = d.config.mode || (d.config.on ? 'live' : 'off');
     var items = d.checklist, n = (d.config.testers || []).length;

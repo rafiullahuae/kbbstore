@@ -666,6 +666,9 @@ details summary::-webkit-details-marker { display: none; }
 /* Cart tracking (Lane QK10): the list's rows are buttons that open a sheet. */
 .ct-row { width: 100%; text-align: left; }
 .ct-st { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 7px; font-size: 12px; }
+/* (2.60.627) The free gift box taps on a cart. */
+.ct-gb { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; font-size: 11.5px; }
+.ct-gb .tag { background: #fff0f4; color: #a12d4f; }
 .ct-open { background: #FDF0E1; color: #9A5B13; }
 /* Lane CJ: where the shopper left, the furthest step, and the journey. */
 .ct-left { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 12px; color: var(--ink2); }
