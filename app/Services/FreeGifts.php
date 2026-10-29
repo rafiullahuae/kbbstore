@@ -145,7 +145,18 @@ final class FreeGifts
      * ships at it, and panel_gap -- the space above the box in the cart panel,
      * 0-40px -- ships at 12. Both moved because he asked.
      */
-    public const EXTRAS = ['mode' => 'off', 'pop' => 'off', 'crit_on' => true, 'crit' => '1', 'glow' => 'none', 'panel_gap' => 12];
+    public const EXTRAS = ['mode' => 'off', 'pop' => 'off', 'crit_on' => true, 'crit' => '1', 'glow' => 'none', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10];
+
+    /*
+     * ▲ 2.60.621 (the owner: "I want to reduce the font size of View all and
+     * Gifts Criteria text. plz give controls."): the size of "View all" /
+     * "Hide" / "Gifts Criteria" in every gift box, phone (link_m, up to 760px)
+     * and computer (link_d), 10-18px. Both were 11.5px; they ship at 10 --
+     * "reduce by 2" would be 9.5, under the 10px floor he was given.
+     */
+    public const LINK_MIN = 10;
+
+    public const LINK_MAX = 18;
 
     public const EXTRA_POPS = ['off', 'A', 'B', 'C', 'D'];
 
@@ -537,7 +548,7 @@ final class FreeGifts
      * each design one of its own options or the default, the criteria switch
      * a bool. The admin saves through this, so nothing else reaches the row.
      *
-     * @return array{mode:string,pop:string,crit_on:bool,crit:string,glow:string,panel_gap:int}
+     * @return array{mode:string,pop:string,crit_on:bool,crit:string,glow:string,panel_gap:int,link_m:int,link_d:int}
      */
     public static function extrasOf(mixed $saved): array
     {
@@ -559,6 +570,12 @@ final class FreeGifts
         // An integer, clamped to 0..PANEL_GAP_MAX; anything else is the default.
         if (isset($saved['panel_gap']) && is_numeric($saved['panel_gap'])) {
             $out['panel_gap'] = max(0, min(self::PANEL_GAP_MAX, (int) $saved['panel_gap']));
+        }
+
+        foreach (['link_m', 'link_d'] as $key) {
+            if (isset($saved[$key]) && is_numeric($saved[$key])) {
+                $out[$key] = max(self::LINK_MIN, min(self::LINK_MAX, (int) $saved[$key]));
+            }
         }
 
         return $out;
