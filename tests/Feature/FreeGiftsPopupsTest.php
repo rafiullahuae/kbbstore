@@ -220,7 +220,7 @@ it('saves from the admin, refuses a value that is not an option, and fails close
     test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['mode' => 'on'])->assertStatus(422);
 
     $r = test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['mode' => 'testing', 'pop' => 'D', 'glow' => 'G1', 'crit' => '2', 'crit_on' => false])->assertOk();
-    expect($r->json('config.extras'))->toBe(['mode' => 'testing', 'pop' => 'D', 'crit_on' => false, 'crit' => '2', 'glow' => 'G1', 'panel_gap' => 12])
+    expect($r->json('config.extras'))->toBe(['mode' => 'testing', 'pop' => 'D', 'crit_on' => false, 'crit' => '2', 'glow' => 'G1', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10])
         // The one Testing list, untouched (it already had the owner's IP).
         ->and($r->json('config.testers'))->toBe([['ip' => GBX_TESTER, 'label' => 'Owner']])
         // The free gifts Mode is its own switch.
@@ -282,7 +282,7 @@ it('draws "Gifts Criteria" as a text link exactly like View all, with its gift i
     $html = gbxBox();
     preg_match('/\.gbx \.gbx-cr\{([^}]*)\}/', $html, $cr);
     preg_match('/\.fgb \.fgb-tg\{([^}]*)\}/', $html, $tg);
-    foreach (['border:0', 'background:none', 'padding:0', 'color:#2e8f62', 'font:inherit', 'font-size:11.5px', 'font-weight:700', 'min-height:32px', 'cursor:pointer'] as $same) {
+    foreach (['border:0', 'background:none', 'padding:0', 'color:#2e8f62', 'font:inherit', 'font-size:var(--fg-lk,11.5px)', 'font-weight:700', 'min-height:32px', 'cursor:pointer'] as $same) {
         expect($tg[1])->toContain($same)->and($cr[1])->toContain($same);
     }
     expect($cr[1])->not->toContain('border-radius')->not->toContain('#f3faf6')
@@ -294,23 +294,58 @@ it('gives the criteria popup a big, clearly visible close, mirrored in Arabic by
     gbxBands(3);
     foreach (['1', '2', '3'] as $d) {
         gbxSave(['mode' => 'live', 'crit' => $d]);
-        expect(gbxBox())->toContain('.gbx-cp .gbx-x{top:12px;inset-inline-end:12px;width:40px;height:40px;background:#221A20;color:#fff;font-size:20px')
+        // ▲ 2.60.621: in em with the popup's fluid size, never under 36px.
+        expect(gbxBox())->toContain('.gbx-cp .gbx-x{top:.75em;inset-inline-end:.75em;width:2.7em;height:2.7em;min-width:36px;min-height:36px;background:#221A20;color:#fff')
+            ->toContain('.gbx-cp .gbx-x span{font-size:1.35em}')
             ->toContain('.gbx-cp .gbx-x:focus-visible{outline:3px solid #C6395F');
     }
 });
 
-it('grows and shrinks the tabs\' panel a little, CSS only, and not at all for reduced motion', function () {
-    // What it looked like: the popup jumping between heights on each tab.
-    // MUTATION: put the panels back on display:none/block -- red.
+it('keeps the tabs\' popup one fixed size: two rows of gifts that scroll sideways, a slight cross-fade only', function () {
+    // ▲ 2.60.621, the owner: "I want popup height fixed ... if there's more
+    // than 6 products, the products grid should display two rows ... with
+    // scroll left right ... keep the fixed height which is on the 500 range".
+    // What it looked like: the sheet growing on AED 2,000+ (558px against
+    // 302px at AED 100 at 390 wide). Measured after: 413px on every tab at
+    // 390, 340 at 320, 441 at 430 and 1280 (docs/gbx-feature-shots/v4).
+    // MUTATION: put the grid back on grid-template-columns:repeat(4,...) -- red.
     gbxBands(3);
     gbxSave(['mode' => 'live', 'crit' => '3']);
     $html = gbxBox();
-    expect($html)->toContain('.gbx-tp{display:grid;grid-template-rows:0fr;visibility:hidden;transition:grid-template-rows .2s ease-out')
-        ->toContain('@media (prefers-reduced-motion:reduce){.gbx-tp{transition:none}}')
+    expect($html)->toContain('.gbx-grid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,7.1em);grid-auto-columns:calc((100% - 2.3 * .7em) / 3.3);')
+        ->toContain('overflow-x:auto;overflow-y:hidden;')
+        ->toContain('.gbx-tp .gbx-wd{margin:.1em .1em .55em;font-size:.95em;font-weight:700;line-height:1.35;height:2.7em;overflow:hidden;')
+        ->toContain('.gbx-tp>div{animation:gbx-fade .18s ease-out}')
+        ->toContain('@media (prefers-reduced-motion:reduce){.gbx-tp>div{animation:none}}')
         ->toContain('data-i="0"><div><p class="gbx-wd">')
-        ->toContain('.gbx-cp:popover-open{animation:gbx-in .2s ease-out}')
-        ->not->toContain('.gbx-tp{display:none}')
-        ->not->toContain('getBoundingClientRect');
+        ->not->toContain('grid-template-rows:0fr')
+        ->not->toContain('getBoundingClientRect')->not->toContain('scrollIntoView');
+});
+
+it('never shifts the tabs\' popup sideways: each radio stays inside its own tab, and the popup clips', function () {
+    // The owner's two phone screenshots, 2.60.620: tapping "AED 1,000 - 1,599"
+    // slid the whole sheet left, the X in the middle, a white strip on the
+    // right. Cause: the radio was position:absolute against the POPUP, so it
+    // sat far right inside the scrolled tab strip; tapping a tab focused it
+    // and the browser scrolled the popup itself (overflow:hidden still
+    // scrolls) to show it -- measured: the popup's scrollLeft 114px (-64 in
+    // Arabic), 0 after the fix on every tab at 320-1280.
+    // MUTATION: drop position:relative from the label -- red.
+    gbxBands(3);
+    gbxSave(['mode' => 'live', 'crit' => '3']);
+    $html = gbxBox();
+    expect($html)->toContain('.gbx-tabs label{position:relative;flex:none;cursor:pointer}.gbx-tabs input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;pointer-events:none}')
+        ->toMatch('/\.gbx-cp\{[^}]*overflow:hidden;overflow:clip\}/');
+});
+
+it('scales the whole criteria popup with the screen, fonts included', function () {
+    // "percentage wise it should reduce overall including content font size
+    // etc if low res phone": 11.5px at 320, 14px at 390, 15px from 417.
+    // MUTATION: a fixed font-size on .gbx-cp -- red.
+    gbxBands(3);
+    gbxSave(['mode' => 'live', 'crit' => '1']);
+    expect(gbxBox())->toContain('.gbx-cp{font-size:15px;font-size:clamp(11px,3.6vw,15px);width:min(37em,calc(100vw - 48px));')
+        ->toContain('.gbx-c1,.gbx-c2{height:min(31em,88vh)}');
 });
 
 it('puts 12px above the box in the cart panel by default, his to change 0-40, popups on or off', function () {
@@ -347,7 +382,7 @@ it('turns the photo click off on a shop that already saved the popups, and touch
     SettingsService::forgetMemo();
     Setting::flushMap();
     $x = app(FreeGifts::class)->freshConfig();
-    expect($x['extras'])->toBe(['mode' => 'testing', 'pop' => 'off', 'crit_on' => true, 'crit' => '3', 'glow' => 'G2', 'panel_gap' => 12])
+    expect($x['extras'])->toBe(['mode' => 'testing', 'pop' => 'off', 'crit_on' => true, 'crit' => '3', 'glow' => 'G2', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10])
         ->and($x['mode'])->toBe('live')->and($x['testers'])->toBe([['ip' => GBX_TESTER, 'label' => 'Owner']]);
 
     // No popups saved yet: the row is left exactly as it was.
@@ -355,4 +390,48 @@ it('turns the photo click off on a shop that already saved the popups, and touch
     $before = DB::table('settings')->where('key', FreeGifts::KEY)->value('value');
     (require database_path('migrations/2027_12_31_130000_gift_box_photos_off.php'))->up();
     expect(DB::table('settings')->where('key', FreeGifts::KEY)->value('value'))->toBe($before);
+});
+
+/*
+ * 2.60.621 -- the owner: "I want to reduce the font size of View all and Gifts
+ * Criteria text. plz give controls." Overview -> Gift box popups -> Link text
+ * size, phone and computer, 10-18px, 10 by default (was 11.5).
+ */
+it('draws View all, Hide and Gifts Criteria at 10px by default, phone and computer, popups on or off', function () {
+    // What it looked like: 11.5px links he found too big.
+    // MUTATION: EXTRAS['link_m'] / ['link_d'] back to 12 -- red; or the rule
+    // back to font-size:11.5px -- red.
+    gbxBands(3);
+    gbxSave(null);
+    $off = gbxBox();
+    expect([FreeGifts::EXTRAS['link_m'], FreeGifts::EXTRAS['link_d']])->toBe([10, 10])
+        ->and($off)->toContain('.fgb{--fg-lk:10px}@media (min-width:761px){.fgb{--fg-lk:10px}}.fgb .fgb-tg{border:0;background:none;padding:0;color:#2e8f62;font:inherit;font-size:var(--fg-lk,11.5px);')
+        ->and($off)->not->toContain('font-size:11.5px;font-weight:700');
+
+    gbxSave(['mode' => 'live', 'link_m' => 12, 'link_d' => 15]);
+    $on = gbxBox();
+    expect($on)->toContain('.fgb{--fg-lk:12px}@media (min-width:761px){.fgb{--fg-lk:15px}}')
+        // The criteria link reads the same size, its icon scaling with it.
+        ->toContain('.gbx .gbx-cr{display:inline-flex;align-items:center;gap:4px;border:0;background:none;padding:0;color:#2e8f62;font:inherit;font-size:var(--fg-lk,11.5px);')
+        ->toContain('.gbx .gbx-cr svg{width:1.13em;height:1.13em;flex:none}');
+
+    // An order's own box (thank-you, My account) carries the size too.
+    $order = view('partials.free-gifts.box', ['kbbFgRows' => [['name' => 'G', 'brand' => '', 'image' => '', 'quantity' => 1, 'value' => 0]], 'kbbFgOpen' => true])->render();
+    expect($order)->toContain('.fgb{--fg-lk:12px}');
+});
+
+it('keeps the link size a whole number from 10 to 18, refused otherwise', function () {
+    expect(FreeGifts::extrasOf(['link_m' => 4, 'link_d' => 99]))->toMatchArray(['link_m' => 10, 'link_d' => 18])
+        ->and(FreeGifts::extrasOf(['link_m' => '"}body{x', 'link_d' => null]))->toMatchArray(['link_m' => 10, 'link_d' => 10]);
+
+    gbxSave(null);
+    $owner = AdminUser::create(['name' => 'GBX3', 'email' => 'gbx3-' . uniqid() . '@example.test', 'password' => 'password-long-enough', 'role' => 'owner']);
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['link_m' => 9])->assertStatus(422);
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['link_d' => 19])->assertStatus(422);
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['link_d' => '12px'])->assertStatus(422);
+    $r = test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['link_m' => 11, 'link_d' => 13])->assertOk();
+    expect([$r->json('config.extras.link_m'), $r->json('config.extras.link_d')])->toBe([11, 13]);
+
+    $screen = file_get_contents(resource_path('views/admin/partials/free-gifts-screen.blade.php'));
+    expect(substr_count($screen, "linkField(x, ro, 'link_m', 'Link text size — phone (px)'), linkField(x, ro, 'link_d', 'Link text size — computer (px)')"))->toBe(1);
 });

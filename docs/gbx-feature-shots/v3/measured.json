@@ -1,0 +1,80 @@
+[
+ {
+  "admin": [
+   "10",
+   "10"
+  ]
+ },
+ {
+  "w": 390,
+  "where": "panel",
+  "when": "before",
+  "viewAll": "11.5px",
+  "criteria": "11.5px",
+  "icon": 13,
+  "sw": 390
+ },
+ {
+  "w": 390,
+  "where": "panel",
+  "when": "after",
+  "viewAll": "10px",
+  "criteria": "10px",
+  "icon": 11.3,
+  "sw": 390
+ },
+ {
+  "w": 390,
+  "where": "checkout",
+  "when": "before",
+  "viewAll": "11.5px",
+  "criteria": "11.5px",
+  "icon": 13,
+  "sw": 390
+ },
+ {
+  "w": 390,
+  "where": "checkout",
+  "when": "after",
+  "viewAll": "10px",
+  "criteria": "10px",
+  "icon": 11.3,
+  "sw": 390
+ },
+ {
+  "w": 1280,
+  "where": "panel",
+  "when": "before",
+  "viewAll": "11.5px",
+  "criteria": "11.5px",
+  "icon": 13,
+  "sw": 1280
+ },
+ {
+  "w": 1280,
+  "where": "panel",
+  "when": "after",
+  "viewAll": "10px",
+  "criteria": "10px",
+  "icon": 11.3,
+  "sw": 1280
+ },
+ {
+  "w": 1280,
+  "where": "checkout",
+  "when": "before",
+  "viewAll": "11.5px",
+  "criteria": "11.5px",
+  "icon": 13,
+  "sw": 1280
+ },
+ {
+  "w": 1280,
+  "where": "checkout",
+  "when": "after",
+  "viewAll": "10px",
+  "criteria": "10px",
+  "icon": 11.3,
+  "sw": 1280
+ }
+]
