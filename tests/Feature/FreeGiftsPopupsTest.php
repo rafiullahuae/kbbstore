@@ -421,6 +421,30 @@ it('draws the range boxes as the owner picked (B2 + T5) by default, and T1 bring
         ->toContain('.gbx-tabs small,.gbx-tk{display:none}');
 });
 
+it('never lets the "Your basket" range slide out of sight in the range row', function () {
+    // ▲ 2.60.625, the owner on 2.60.624 (iPhone, basket in the 4th range):
+    // "if the customer choosed the higher range. then the your basket hiding.
+    // it must be infront of the user whatever is their basket tab. it should
+    // not hid in any case." What it looked like: the basket box sat past the
+    // row's right edge, its pill cut to "Your b". Now the basket's box is
+    // position:sticky on both sides of the row, so it stops at whichever edge
+    // it would leave by and the other ranges slide under it -- CSS only, no
+    // script. Measured (Chromium, 320-1280, EN/AR, basket in range 4 and 3):
+    // seen on open, scrolled to either end, and after choosing the top range.
+    // MUTATION: drop the label.gbx-yb rule, or the class on the label -- red.
+    gbxBands(3);
+    gbxSave(['mode' => 'live', 'crit' => '3']);
+    $html = gbxBox();
+    expect($html)->toContain('.gbx-t5 .gbx-tabs label.gbx-yb{position:sticky;left:0;right:0;z-index:2}')
+        ->toContain('.gbx-t5 .gbx-yb>span{box-shadow:0 0 0 .3em #fff}')
+        ->not->toContain('scrollIntoView')->not->toContain('scrollLeft');
+    // Exactly the basket's own range carries it, and it is the one with the pill.
+    expect(substr_count($html, '<label class="gbx-yb">'))->toBeLessThanOrEqual(1);
+    if (str_contains($html, '<i>')) {
+        expect($html)->toMatch('#<label class="gbx-yb"><input type="radio"[^>]*><span>[^<]*<i>#');
+    }
+});
+
 it('leaves no box around Gifts Criteria after a tap or a click, and keeps the ring for the keyboard', function () {
     // ▲ 2.60.622, the owner: "the gifts criteria button is leaving an outline
     // box upon click. it should not be." What it looked like: closing the
