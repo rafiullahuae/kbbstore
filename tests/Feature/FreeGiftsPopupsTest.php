@@ -312,7 +312,7 @@ it('keeps the tabs\' popup one fixed size: two rows of gifts that scroll sideway
     gbxBands(3);
     gbxSave(['mode' => 'live', 'crit' => '3']);
     $html = gbxBox();
-    expect($html)->toContain('.gbx-grid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,7.1em);grid-auto-columns:calc((100% - 2.3 * .7em) / 3.3);')
+    expect($html)->toContain('.gbx-grid{display:grid;grid-template-rows:repeat(2,7.1em);grid-template-columns:repeat(var(--gc,3),calc((100% - 2.3 * .7em) / 3.3));')
         ->toContain('overflow-x:auto;overflow-y:hidden;')
         ->toContain('.gbx-tp .gbx-wd{margin:.1em .1em .55em;font-size:.95em;font-weight:700;line-height:1.35;height:2.7em;overflow:hidden;')
         ->toContain('.gbx-tp>div{animation:gbx-fade .18s ease-out}')
@@ -320,6 +320,50 @@ it('keeps the tabs\' popup one fixed size: two rows of gifts that scroll sideway
         ->toContain('data-i="0"><div><p class="gbx-wd">')
         ->not->toContain('grid-template-rows:0fr')
         ->not->toContain('getBoundingClientRect')->not->toContain('scrollIntoView');
+});
+
+it('fills the first row of gifts before the second, on phone and computer', function () {
+    // ▲ 2.60.622, the owner: "The first row must be filled. then second" and
+    // "on desktop also it should fill first the first row". What it looked
+    // like: the grid flowed by COLUMN, so a range with 5 gifts showed three
+    // across the top and two underneath on a phone, and on a computer the
+    // 4th column sat empty beside them. Now each range's grid carries its own
+    // column count -- half its gifts, rounded up, never under the 3 a phone
+    // shows (--gc) or the 4 a computer shows (--gd) -- and fills row by row.
+    // Measured after (Chromium, 5 ranges of 2/3/4/6/7): 4 gifts read 3+1 at
+    // 390 and 4+0 at 1280; 7 read 4+3 and scroll sideways at 390.
+    // MUTATION: put grid-auto-flow:column back, or drop the style="--gc..." -- red.
+    gbxBands(3);
+    gbxSave(['mode' => 'live', 'crit' => '3']);
+    $html = gbxBox();
+    expect($html)->not->toContain('grid-auto-flow:column')
+        ->toContain('@media (min-width:601px){.gbx-grid{grid-template-columns:repeat(var(--gd,4),calc((100% - 3.3 * .7em) / 4.3))}}');
+    preg_match_all('#<div class="gbx-grid" style="--gc:(\d+);--gd:(\d+)">(.*?)</div></div></div>#s', $html, $m, PREG_SET_ORDER);
+    expect($m)->not->toBeEmpty();
+    foreach ($m as [$all, $gc, $gd, $cells]) {
+        $n = substr_count($cells, 'class="gbx-gc"');
+        expect((int) $gc)->toBe(max(3, (int) ceil($n / 2)))->and((int) $gd)->toBe(max(4, (int) ceil($n / 2)));
+    }
+});
+
+it('leaves no box around Gifts Criteria after a tap or a click, and keeps the ring for the keyboard', function () {
+    // ▲ 2.60.622, the owner: "the gifts criteria button is leaving an outline
+    // box upon click. it should not be." What it looked like: closing the
+    // popup handed focus back to the link by script, which on a phone drew
+    // the green focus ring round it until the next tap elsewhere. Now focus is
+    // handed back only when the popup was opened from the keyboard
+    // (event.detail is 0), and a pointer focus never draws the outline.
+    // Measured after (Chromium, 320-1280, EN/AR): outline none after a click
+    // and close; solid after Enter and Escape.
+    // MUTATION: put p.gbxFrom=this back, or drop :focus:not(:focus-visible) -- red.
+    gbxBands(3);
+    gbxSave(['mode' => 'live', 'crit' => '3']);
+    $html = gbxBox();
+    expect($html)->toContain('p.gbxFrom=event.detail?null:this;')
+        ->not->toContain('p.gbxFrom=this;')
+        ->toContain('.gbx .gbx-cr:focus:not(:focus-visible){outline:0}')
+        ->toContain('white-space:nowrap;-webkit-tap-highlight-color:transparent}')
+        ->toContain('.gbx .gbx-cr:focus-visible{outline:2px solid #2e8f62');
 });
 
 it('never shifts the tabs\' popup sideways: each radio stays inside its own tab, and the popup clips', function () {
