@@ -12,7 +12,9 @@
     $gbxCols = $kbbFgTier === ' fgb-g5' ? 5 : ($kbbFgTier === ' fgb-g4' ? 4 : 0);
 @endphp
 @if ($gbxPop === 'off')
-@foreach ($kbbFgThumbs ?? $kbbFgRows as $kbbFgRow){!! $kbbFgTile($kbbFgRow, (string) (int) $kbbFgRowPx) !!}@if ($kbbFgRow['quantity'] > 1)<b>×{{ $kbbFgRow['quantity'] }}</b>@endif</span>@endforeach
+{{-- 2.60.623, the owner: "the products thumbnails inside the gift box should
+     give list upon click on them" -- each photo opens the list, as View all. --}}
+@foreach ($kbbFgThumbs ?? $kbbFgRows as $kbbFgRow){!! '<button type="button" class="fgb-t" aria-label="' . e($kbbFgRow['name']) . '" aria-expanded="false" onclick="var f=this.closest(\'.fgb\');f.querySelector(\'.fgb-th\').hidden=true;f.querySelector(\'.fgb-ls\').hidden=false;if(!event.detail)f.querySelector(\'.fgb-ls .fgb-tg\').focus()">' . substr($kbbFgTile($kbbFgRow, (string) (int) $kbbFgRowPx), strlen('<span class="fgb-t">')) !!}@if ($kbbFgRow['quantity'] > 1)<b>×{{ $kbbFgRow['quantity'] }}</b>@endif</button>@endforeach
 @else
 @foreach ($kbbFgThumbs ?? $kbbFgRows as $gbxI => $kbbFgRow)@php
     $gbxTile = $kbbFgTile($kbbFgRow, (string) (int) $kbbFgRowPx);

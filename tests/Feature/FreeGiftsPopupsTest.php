@@ -268,10 +268,28 @@ it('ships the photo popup Off: the photos are plain pictures again, the criteria
     $html = gbxBox();
     expect(FreeGifts::EXTRAS['pop'])->toBe('off')
         ->and($html)->toContain(' gbx gbx-doff"')
-        ->and(substr_count($html, '<span class="fgb-t">'))->toBe(6) // 3 photos + 3 in the list
-        ->and($html)->not->toContain('<button type="button" class="fgb-t"')->not->toContain('class="gbx-pp')->not->toContain('class="gbx-k"')
-        ->and($html)->not->toContain('button.fgb-t{')
+        // ▲ 2.60.623: the photos open the LIST again (next test), never a popup.
+        ->and(substr_count($html, '<span class="fgb-t">'))->toBe(3) // the 3 in the list
+        ->and($html)->not->toContain('aria-haspopup="dialog" onclick="var p=this.closest(&#039;.fgb&#039;).querySelectorAll')->not->toContain('class="gbx-pp')->not->toContain('class="gbx-k"')
         ->and($html)->toContain('class="gbx-cr"');
+});
+
+it('opens the gift list when a photo in the box is tapped, exactly as View all does', function () {
+    // ▲ 2.60.623, the owner: "the products thumbnails inside the gift box
+    // should give list upon click on them like before." What it looked like:
+    // tapping a photo did nothing; only "View all" opened the list. Each photo
+    // is now a button with View all's own handler (keyboard focus moves to
+    // Hide; a tap leaves no ring). MUTATION: render the off-branch photos as
+    // plain <span class="fgb-t"> again -- red.
+    gbxBands(3);
+    gbxSave(['mode' => 'live']);
+    $html = gbxBox();
+    preg_match('#<div class="fgb-th"[^>]*>(.*?)<span class="gbx-ft">#s', $html, $m);
+    expect($m)->not->toBeEmpty()
+        ->and(substr_count($m[1], '<button type="button" class="fgb-t" aria-label="'))->toBe(3)
+        ->and(substr_count($m[1], 'aria-expanded="false" onclick="var f=this.closest(\'.fgb\');f.querySelector(\'.fgb-th\').hidden=true;f.querySelector(\'.fgb-ls\').hidden=false;if(!event.detail)'))->toBe(3)
+        ->and($html)->toContain('.gbx .fgb-th button.fgb-t{padding:0;')
+        ->toContain('.gbx .fgb-th button.fgb-t:focus:not(:focus-visible){outline:0}');
 });
 
 it('draws "Gifts Criteria" as a text link exactly like View all, with its gift icon', function () {
@@ -338,11 +356,34 @@ it('fills the first row of gifts before the second, on phone and computer', func
     $html = gbxBox();
     expect($html)->not->toContain('grid-auto-flow:column')
         ->toContain('@media (min-width:601px){.gbx-grid{grid-template-columns:repeat(var(--gd,4),calc((100% - 3.3 * .7em) / 4.3))}}');
-    preg_match_all('#<div class="gbx-grid" style="--gc:(\d+);--gd:(\d+)">(.*?)</div></div></div>#s', $html, $m, PREG_SET_ORDER);
+    preg_match_all('#<div class="gbx-grid(?: gbx-s3)?(?: gbx-s4)?" style="--gc:(\d+);--gd:(\d+)">(.*?)</div></div></div>#s', $html, $m, PREG_SET_ORDER);
     expect($m)->not->toBeEmpty();
     foreach ($m as [$all, $gc, $gd, $cells]) {
         $n = substr_count($cells, 'class="gbx-gc"');
         expect((int) $gc)->toBe(max(3, (int) ceil($n / 2)))->and((int) $gd)->toBe(max(4, (int) ceil($n / 2)));
+    }
+});
+
+it('opens the criteria popup still, and shows 3.2 gifts across when a range scrolls', function () {
+    // ▲ 2.60.623, the owner: "remove the slide animation while opening ... jxt
+    // reverse that popup opening slide animation. AND if any range has scroll
+    // ... then it should show 3.2 grid." What it looked like: the sheet rose
+    // 6px as it faded in, and a scrolling range showed 3.3 gifts (4.3 on a
+    // computer). Scrolls = over 6 gifts on a phone, over 8 on a computer.
+    // MUTATION: put .gbx-cp:popover-open{animation:gbx-in ...} back, or drop
+    // the gbx-s3 class -- red.
+    gbxBands(3);
+    gbxSave(['mode' => 'live', 'crit' => '3']);
+    $html = gbxBox();
+    expect($html)->not->toContain('gbx-in')->not->toContain('translateY(6px)')
+        ->toContain('.gbx-tp>div{animation:gbx-fade .18s ease-out}')
+        ->toContain('@media (max-width:600px){.gbx-grid.gbx-s3{grid-template-columns:repeat(var(--gc,3),calc((100% - 3 * .7em) / 3.2))}}')
+        ->toContain('@media (min-width:601px){.gbx-grid.gbx-s4{grid-template-columns:repeat(var(--gd,4),calc((100% - 3 * .7em) / 3.2))}}');
+    preg_match_all('#<div class="gbx-grid( gbx-s3)?( gbx-s4)?" style="--gc:\d+;--gd:\d+">(.*?)</div></div></div>#s', $html, $m, PREG_SET_ORDER);
+    expect($m)->not->toBeEmpty();
+    foreach ($m as $g) {
+        $n = substr_count($g[3], 'class="gbx-gc"');
+        expect($g[1] !== '')->toBe($n > 6)->and($g[2] !== '')->toBe($n > 8);
     }
 });
 
