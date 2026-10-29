@@ -674,7 +674,7 @@
     });
   }
   function extrasCard(d) {
-    var x = d.config.extras || { mode: 'off', pop: 'off', crit_on: true, crit: '1', glow: 'none', panel_gap: 12 }, ro = !can();
+    var x = d.config.extras || { mode: 'off', pop: 'off', crit_on: true, crit: '1', glow: 'none', panel_gap: 12, link_m: 10, link_d: 10 }, ro = !can();
     var g = el('div', { class: 'fg-modes', role: 'radiogroup', 'aria-label': 'Gift box popups mode', 'data-fk': 'x-modes' }, X_MODES.map(function (m) {
       return el('button', { type: 'button', role: 'radio', class: 'fg-mode m-' + m[0], 'aria-checked': String(x.mode === m[0]), 'data-fk': 'x-mode-' + m[0], tabindex: x.mode === m[0] ? '0' : '-1',
         'data-kbb-sure': x.mode === m[0] ? null : m[2] + ' Switch Gift box popups to ' + m[1] + '?',
@@ -703,12 +703,26 @@
         pick('glow', X_GLOWS, 'Photo glow', 'A soft glow around the gift photos.')
       ]),
       el('div', { class: 'fg-row', style: 'margin-top:12px' }, [sw(x.crit_on, '“Gifts Criteria” button', function () { saveExtras({ crit_on: !x.crit_on }, x.crit_on ? 'The Gifts Criteria button is off.' : 'The Gifts Criteria button is on.'); }, ro || st.busy)]),
-      gapField(x, ro)
+      gapField(x, ro),
+      el('div', { style: 'display:flex;gap:12px;flex-wrap:wrap;margin-top:12px' }, [linkField(x, ro, 'link_m', 'Link text size — phone (px)'), linkField(x, ro, 'link_d', 'Link text size — computer (px)')])
     ], 'fg-xcard');
   }
   /* (2.60.620) "Space above the gift box" in the cart panel, 0-40px. The box
      itself, so it applies whatever the popups' mode. Saves on change (one
      request, not per keystroke); the server refuses anything but 0-40. */
+  /* (2.60.621) "View all" / "Hide" / "Gifts Criteria" text size, 10-18px, in
+     every gift box, popups on or off. Saves on change; the server refuses
+     anything outside 10-18. */
+  function linkField(x, ro, key, label) {
+    var cur = x[key] == null ? 10 : x[key];
+    var i = el('input', { class: 'fg-in', type: 'number', min: 10, max: 18, step: 1, inputmode: 'numeric', value: String(cur), disabled: ro || st.busy, 'data-fk': 'x-' + key, style: 'max-width:110px' });
+    i.addEventListener('change', function () {
+      var n = Math.round(Number(i.value));
+      if (!isFinite(n) || n < 10 || n > 18) { say(label + ': 10 to 18 px.', 'bad'); i.value = String(cur); return; }
+      var b = {}; b[key] = n; saveExtras(b, label + ': ' + n + ' px.');
+    });
+    return el('div', { style: 'max-width:240px' }, [field(label, i, key === 'link_m' ? 'View all, Hide and Gifts Criteria on a phone (up to 760px wide).' : 'The same on a computer.')]);
+  }
   function gapField(x, ro) {
     var i = el('input', { class: 'fg-in', type: 'number', min: 0, max: 40, step: 1, inputmode: 'numeric', value: String(x.panel_gap == null ? 12 : x.panel_gap), disabled: ro || st.busy, 'data-fk': 'x-panel_gap', style: 'max-width:110px' });
     i.addEventListener('change', function () {
