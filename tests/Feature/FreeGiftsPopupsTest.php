@@ -218,9 +218,11 @@ it('saves from the admin, refuses a value that is not an option, and fails close
     test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['pop' => 'Z'])->assertStatus(422);
     test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['glow' => '<b>'])->assertStatus(422);
     test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['mode' => 'on'])->assertStatus(422);
+    // (2.60.624) Range boxes: one of its own options only. MUTATION: drop Rule::in on tabs -- red.
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['tabs' => 'T3'])->assertStatus(422);
 
     $r = test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['mode' => 'testing', 'pop' => 'D', 'glow' => 'G1', 'crit' => '2', 'crit_on' => false])->assertOk();
-    expect($r->json('config.extras'))->toBe(['mode' => 'testing', 'pop' => 'D', 'crit_on' => false, 'crit' => '2', 'glow' => 'G1', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10])
+    expect($r->json('config.extras'))->toBe(['mode' => 'testing', 'pop' => 'D', 'crit_on' => false, 'crit' => '2', 'glow' => 'G1', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10, 'tabs' => 'T5'])
         // The one Testing list, untouched (it already had the owner's IP).
         ->and($r->json('config.testers'))->toBe([['ip' => GBX_TESTER, 'label' => 'Owner']])
         // The free gifts Mode is its own switch.
@@ -230,6 +232,8 @@ it('saves from the admin, refuses a value that is not an option, and fails close
     test()->actingAs($support, 'admin')->postJson('/admin-api/free-gifts/extras', ['mode' => 'live'])->assertForbidden();
     expect(test()->postJson('/admin-api/free-gifts/extras', ['mode' => 'live'])->status())->toBeIn([401, 403]);
     expect(app(FreeGifts::class)->freshConfig()['extras']['mode'])->toBe('testing');
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['tabs' => 'T1'])->assertOk();
+    expect(app(FreeGifts::class)->freshConfig()['extras']['tabs'])->toBe('T1');
 });
 
 it('puts the card on the Overview, saving through its own endpoint', function () {
@@ -387,6 +391,36 @@ it('opens the criteria popup still, and shows 3.2 gifts across when a range scro
     }
 });
 
+it('draws the range boxes as the owner picked (B2 + T5) by default, and T1 brings the green fill back', function () {
+    // ▲ 2.60.624, the owner, picking from the preview: "B2 + T5 ... finalize
+    // this design." What it looked like before: "Your basket" sat inside the
+    // green-filled box as a second line. Now: a white box with the gift count
+    // under the amount, a green outline and a tick on the chosen one, and
+    // "Your basket" a pink pill sitting on the box's top line. Default T5 as
+    // he asked; Gift box popups -> Range boxes -> T1 is the way back.
+    // MUTATION: put EXTRAS['tabs'] back to 'T1' -- red; drop the gbx-t5 class -- red.
+    expect(FreeGifts::EXTRAS['tabs'])->toBe('T5')
+        ->and(FreeGifts::extrasOf(['tabs' => 'T9'])['tabs'])->toBe('T5')
+        ->and(FreeGifts::extrasOf(['tabs' => 'T1'])['tabs'])->toBe('T1');
+    gbxBands(3);
+    gbxSave(['mode' => 'live', 'crit' => '3']);
+    $html = gbxBox();
+    expect($html)->toContain('<div class="gbx-3 gbx-t5">')
+        ->toContain('.gbx-t5 .gbx-tabs i{position:absolute;top:0;left:50%;transform:translate(-50%,-55%);')
+        ->toContain('background:#C6395F;color:#fff;padding:.3em .7em;border-radius:999px')
+        ->toContain('.gbx-t5 .gbx-tabs input:checked+span{background:#fff;color:#221A20;border:2px solid #2e8f62;')
+        ->toContain('.gbx-t5 .gbx-tabs input:checked~.gbx-tk{display:block;')
+        ->toContain('<b class="gbx-tk" aria-hidden="true"></b></label>');
+    // Every box carries its band's own count under the amount.
+    expect(substr_count($html, '</small></span><b class="gbx-tk"'))->toBe(substr_count($html, '<input type="radio"'));
+
+    gbxSave(['mode' => 'live', 'crit' => '3', 'tabs' => 'T1']);
+    $t1 = gbxBox();
+    expect($t1)->toContain('<div class="gbx-3">')->not->toContain('.gbx-t5 ')
+        ->toContain('.gbx-tabs input:checked+span{background:#2e8f62;border-color:#2e8f62;color:#fff}')
+        ->toContain('.gbx-tabs small,.gbx-tk{display:none}');
+});
+
 it('leaves no box around Gifts Criteria after a tap or a click, and keeps the ring for the keyboard', function () {
     // ▲ 2.60.622, the owner: "the gifts criteria button is leaving an outline
     // box upon click. it should not be." What it looked like: closing the
@@ -467,7 +501,7 @@ it('turns the photo click off on a shop that already saved the popups, and touch
     SettingsService::forgetMemo();
     Setting::flushMap();
     $x = app(FreeGifts::class)->freshConfig();
-    expect($x['extras'])->toBe(['mode' => 'testing', 'pop' => 'off', 'crit_on' => true, 'crit' => '3', 'glow' => 'G2', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10])
+    expect($x['extras'])->toBe(['mode' => 'testing', 'pop' => 'off', 'crit_on' => true, 'crit' => '3', 'glow' => 'G2', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10, 'tabs' => 'T5'])
         ->and($x['mode'])->toBe('live')->and($x['testers'])->toBe([['ip' => GBX_TESTER, 'label' => 'Owner']]);
 
     // No popups saved yet: the row is left exactly as it was.

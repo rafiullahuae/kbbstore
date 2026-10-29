@@ -145,7 +145,7 @@ final class FreeGifts
      * ships at it, and panel_gap -- the space above the box in the cart panel,
      * 0-40px -- ships at 12. Both moved because he asked.
      */
-    public const EXTRAS = ['mode' => 'off', 'pop' => 'off', 'crit_on' => true, 'crit' => '1', 'glow' => 'none', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10];
+    public const EXTRAS = ['mode' => 'off', 'pop' => 'off', 'crit_on' => true, 'crit' => '1', 'glow' => 'none', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10, 'tabs' => 'T5'];
 
     /*
      * ▲ 2.60.621 (the owner: "I want to reduce the font size of View all and
@@ -166,6 +166,15 @@ final class FreeGifts
     public const EXTRA_CRITS = ['1', '2', '3'];
 
     public const EXTRA_GLOWS = ['none', 'G1', 'G2', 'G3', 'G4'];
+
+    /**
+     * The range boxes in the tabs design (Criteria design 3). T1 is the green
+     * fill of 2.60.619-623; T5 (2.60.624, the owner's pick "B2 + T5", the
+     * default as he asked) is a white box with the gift count under the
+     * amount, a green outline and tick when chosen, and "Your basket" as a
+     * pink pill sitting on the box's top line.
+     */
+    public const EXTRA_TABS = ['T1', 'T5'];
 
     /** The popups' own words, constants (escaped where printed). */
     public const EXTRA_TEXTS = [
@@ -548,14 +557,14 @@ final class FreeGifts
      * each design one of its own options or the default, the criteria switch
      * a bool. The admin saves through this, so nothing else reaches the row.
      *
-     * @return array{mode:string,pop:string,crit_on:bool,crit:string,glow:string,panel_gap:int,link_m:int,link_d:int}
+     * @return array{mode:string,pop:string,crit_on:bool,crit:string,glow:string,panel_gap:int,link_m:int,link_d:int,tabs:string}
      */
     public static function extrasOf(mixed $saved): array
     {
         $saved = is_array($saved) ? $saved : [];
         $out = self::EXTRAS;
 
-        foreach (['mode' => self::MODES, 'pop' => self::EXTRA_POPS, 'crit' => self::EXTRA_CRITS, 'glow' => self::EXTRA_GLOWS] as $key => $options) {
+        foreach (['mode' => self::MODES, 'pop' => self::EXTRA_POPS, 'crit' => self::EXTRA_CRITS, 'glow' => self::EXTRA_GLOWS, 'tabs' => self::EXTRA_TABS] as $key => $options) {
             $v = $saved[$key] ?? null;
             $v = is_int($v) ? (string) $v : $v;
             if (is_string($v) && in_array($v, $options, true)) {

@@ -132,7 +132,7 @@ class FreeGiftsController extends Controller
     }
 
     /**
-     * POST /admin-api/free-gifts/extras {mode?, pop?, crit_on?, crit?, glow?}
+     * POST /admin-api/free-gifts/extras {mode?, pop?, crit_on?, crit?, glow?, tabs?}
      * -- Overview -> Gift box popups (Lane GBX). The owner, 28 October: "i
      * need a switch also with TESTING phase, and my our IPs ... keep turn off
      * by default this feature." Each key is optional, so one control saves at
@@ -149,6 +149,8 @@ class FreeGiftsController extends Controller
             'pop' => ['sometimes', 'string', Rule::in(FreeGifts::EXTRA_POPS)],
             'crit' => ['sometimes', 'string', Rule::in(FreeGifts::EXTRA_CRITS)],
             'glow' => ['sometimes', 'string', Rule::in(FreeGifts::EXTRA_GLOWS)],
+            // (2.60.624) The range boxes in the tabs design.
+            'tabs' => ['sometimes', 'string', Rule::in(FreeGifts::EXTRA_TABS)],
             'crit_on' => ['sometimes', 'boolean'],
             // (2.60.620) The space above the box in the cart panel: a whole number of px.
             'panel_gap' => ['sometimes', 'integer', 'min:0', 'max:' . FreeGifts::PANEL_GAP_MAX],
