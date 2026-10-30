@@ -402,6 +402,11 @@ class ManualOrderBuilder
             ]);
         }
 
+        // (2.60.630) The free gifts the total earns, unless the operator switched them off.
+        if (($input['free_gifts'] ?? true) && ($priced['gifts']['lines'] ?? []) !== []) {
+            $this->attachGifts($order, $priced['gifts']['lines'], array_values($input['gift_skip'] ?? []), $priced['gifts']['range'], $author);
+        }
+
         // Spend the coupon, in the transaction that wrote the order — the same
         // call, in the same position, as Store\CheckoutController::place().
         //
@@ -434,7 +439,7 @@ class ManualOrderBuilder
 
         $this->writeAudit($order, $input, $author);
 
-        return $order->load('items', 'notes');
+        return $order->load('items', 'gifts', 'notes');
     }
 
     /* ===================================================================
@@ -630,7 +635,111 @@ class ManualOrderBuilder
             // The number the customer pays. Written out rather than left for
             // the caller to add up, so there is one answer to that question.
             'grand_total' => (int) $totals['total'] + $fee,
+            // (2.60.630) The free gifts this total earns, as the website works them out.
+            'gifts' => $this->giftsFor($totals, $country),
         ];
+    }
+
+    /**
+     * (2.60.630) The free gifts an order of these totals earns -- the owner:
+     * "in new create order from backend, i can't add freebies ... according to
+     * the price range ... the system will auto add as per the total price of
+     * order."
+     *
+     * The website's own rules, called rather than re-derived: the same basis
+     * (before or after the coupon, as Free gifts -> Display says), the same
+     * range, the same main / backup choice and stock checks (FreeGifts::
+     * linesFor). Asked whatever the free gifts Mode is: the operator decides on
+     * the screen, and the screen says when the Mode is Off or the country is
+     * not one gifts go to. Ranges come from the settings memo -- no query --
+     * and linesFor() reads only the gift products of the one range.
+     *
+     * @return array{range:?string,lines:list<array>,country_ok:bool,mode:string}
+     */
+    private function giftsFor(array $totals, string $country): array
+    {
+        $gifts = app(\App\Services\FreeGifts::class);
+        $none = ['range' => null, 'lines' => [], 'country_ok' => true, 'mode' => $gifts->mode()];
+
+        try {
+            if ((int) ($totals['item_count'] ?? 0) < 1) {
+                return $none;
+            }
+
+            $range = $gifts->rangeFor($gifts->basis($totals));
+
+            if ($range === null || $range['gifts'] === []) {
+                return $none;
+            }
+
+            return ['range' => \App\Services\FreeGifts::rangeLabel($range), 'lines' => $gifts->linesFor($range),
+                'country_ok' => $gifts->countryAllowed($country), 'mode' => $gifts->mode()];
+        } catch (\Throwable) {
+            return $none;
+        }
+    }
+
+    /** "12:0" -- one gift line's key on the screen: product and variation (0 for none). */
+    public static function giftKey(array $line): string
+    {
+        return (int) $line['product_id'] . ':' . (int) ($line['variant_id'] ?? 0);
+    }
+
+    /**
+     * (2.60.630) Put the earned gifts on the order, written as Store\Checkout-
+     * Controller::place() writes them for a website order: AED 0 lines with
+     * is_gift (which Order::items() leaves out, so no total moves), the
+     * order's free_gift_count and the backup-gift note. A gift the operator
+     * unticked ($skip) is not added.
+     *
+     * NO STOCK IS TAKEN, for the gifts as for the order's own lines: this class
+     * moves no stock (see its header, and OrderStockReturnTest). A sold-out gift
+     * is already left out by FreeGifts::linesFor(), which reads the shelf.
+     *
+     * @param  list<array>  $lines  giftsFor()['lines']
+     * @param  list<string>  $skip  giftKey()s to leave out
+     */
+    private function attachGifts(Order $order, array $lines, array $skip, ?string $range, ?string $author): void
+    {
+        $gifts = app(\App\Services\FreeGifts::class);
+        $units = 0;
+        $given = [];
+
+        foreach ($lines as $gift) {
+            if (in_array(self::giftKey($gift), $skip, true)) {
+                continue;
+            }
+
+            $variant = $gift['variant'] ?? null;
+            $name = \App\Services\FreeGifts::giftName((string) $gift['product']->name, $variant, \App\Support\Locale::DEFAULT);
+
+            $order->gifts()->create([
+                        'product_id' => $gift['product_id'],
+            ] + ($variant === null ? [] : ['product_variant_id' => (int) $variant->id]) + [
+                'name' => $name,
+                'brand' => $gift['product']->brand?->name,
+                'sku' => $variant?->sku ?: $gift['product']->sku,
+                'quantity' => $gift['quantity'],
+                'unit_price' => 0,
+                'subtotal' => 0,
+                'total' => 0,
+                'is_gift' => true,
+                'gift_range_id' => $gift['range_id'],
+                'gift_range_label' => $gift['range_label'],
+            ]);
+            $units += $gift['quantity'];
+            $given[] = $gift['quantity'] . '× ' . $name;
+        }
+
+        if ($units > 0) {
+            $order->forceFill(['free_gift_count' => $units])->saveQuietly();
+            $order->notes()->create(['author' => 'system', 'is_customer_note' => false,
+                'content' => 'Free gifts' . ($range !== null ? ' (' . $range . ')' : '') . ' added on New Order' . ($author ? ' by ' . $author : '') . ': ' . implode(', ', $given) . '.']);
+        }
+
+        if (($note = $gifts->backupNote(array_values(array_filter($lines, fn (array $g) => ! in_array(self::giftKey($g), $skip, true))))) !== null) {
+            $order->notes()->create(['author' => 'system', 'is_customer_note' => false, 'content' => $note]);
+        }
     }
 
     /** Pre-discount basket value, as Store\CheckoutController computes it. */

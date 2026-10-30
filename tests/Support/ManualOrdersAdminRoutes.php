@@ -109,7 +109,9 @@ final class ManualOrdersAdminRoutes
     public static function paths(): array
     {
         return collect(self::registered())
-            ->map(fn ($r) => [collect($r->methods())->first(fn ($m) => $m !== 'HEAD'), '/' . $r->uri()])
+            // A number for {id}: a route constrained by whereNumber() would answer a
+            // literal "{id}" with its own 404 before the guard was ever asked.
+            ->map(fn ($r) => [collect($r->methods())->first(fn ($m) => $m !== 'HEAD'), '/' . str_replace('{id}', '1', $r->uri())])
             ->values()
             ->all();
     }

@@ -69,5 +69,11 @@ Route::post('/manual-orders/quote', [AdminOrderController::class, 'quote']);
 // Create the order.
 Route::post('/manual-orders', [AdminOrderController::class, 'store']);
 
+// (2.60.630) Drafts: the form kept to finish later -- never an order.
+Route::get('/manual-orders/drafts', [AdminOrderController::class, 'drafts']);
+Route::post('/manual-orders/drafts', [AdminOrderController::class, 'saveDraft']);
+Route::get('/manual-orders/drafts/{id}', [AdminOrderController::class, 'draft'])->whereNumber('id');
+Route::post('/manual-orders/drafts/{id}/delete', [AdminOrderController::class, 'deleteDraft'])->whereNumber('id');
+
 // The packer's document is the store's existing packing slip
 // (routes/invoices-admin.php), not a second one from this lane.

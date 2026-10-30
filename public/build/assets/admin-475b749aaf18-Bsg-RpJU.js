@@ -20,6 +20,11 @@
   var created = null;        // the order, once placed
   var busy = false;
   var quoteSeq = 0;          // guards against an older quote landing last
+  /* (2.60.630) Free gifts: on unless the operator switches them off (or, untouched,
+     the website's Mode is Off / the country gets none); unticked gifts by key. */
+  var giftOff = false, giftTouched = false, giftSkip = {};
+  /* (2.60.630) Drafts: the list, and the one being finished (its id). */
+  var drafts = null, draftId = null, draftBusy = false;
 
   var form = {
     line1:'', city:'', state:'', country:'', phone:'',
@@ -176,6 +181,107 @@
     var enabled = (V.payment_methods || []).filter(function(m){ return m.enabled; });
     form.payment_method = form.payment_method || (enabled[0] || V.payment_methods[0] || {}).id || '';
     render();
+    loadDrafts();
+  }
+
+  /* ---------------------------------------------------------- drafts (2.60.630) */
+  async function loadDrafts(){
+    try { drafts = (await api('/manual-orders/drafts')).drafts || []; } catch (e) { drafts = drafts || []; }
+    renderDrafts();
+  }
+  function draftsHTML(){
+    if (!drafts || !drafts.length) return '';
+    return '<div class="mo-drafts"><h4>Drafts (' + drafts.length + ')</h4><ul>' + drafts.map(function(d){
+      return '<li' + (d.id === draftId ? ' class="on"' : '') + '><b>' + esc(d.title) + '</b><span>' + d.items + ' item' + (d.items === 1 ? '' : 's') +
+        ' · ' + aed(d.value_fils) + ' · saved ' + esc(String(d.updated_at || '').replace('T', ' ').slice(0, 16)) + (d.author ? ' by ' + esc(d.author) : '') + '</span>' +
+        '<button type="button" data-draft-open="' + d.id + '">' + (d.id === draftId ? 'Open again' : 'Open') + '</button>' +
+        '<button type="button" class="del" data-draft-del="' + d.id + '">Delete</button></li>';
+    }).join('') + '</ul></div>';
+  }
+  function renderDrafts(){
+    var host = document.querySelector('#moDrafts');
+    if (host) host.innerHTML = draftsHTML();
+  }
+  function draftState(){
+    return {customer: customer, newCustomer: newCustomer, lines: lines, form: form,
+            giftOff: giftOff, giftTouched: giftTouched, giftSkip: Object.keys(giftSkip)};
+  }
+  async function saveDraft(){
+    if (draftBusy) return;
+    if (!lines.length && !customer && !newCustomer) { say('Add a customer or a product first.'); return; }
+    draftBusy = true;
+    try {
+      var res = await api('/manual-orders/drafts', {method:'POST', body:JSON.stringify({id: draftId, draft: draftState()})});
+      draftId = res.id;
+      say('Draft saved: ' + res.title);
+      await loadDrafts();
+    } catch (e) {
+      say((e.body && e.body.error) || 'The draft could not be saved.');
+    }
+    draftBusy = false;
+  }
+  async function openDraft(id){
+    try {
+      var d = (await api('/manual-orders/drafts/' + id)).draft || {};
+      customer = d.customer || null; newCustomer = !!d.newCustomer;
+      lines = Array.isArray(d.lines) ? d.lines : [];
+      Object.keys(form).forEach(function(k){ if (d.form && d.form[k] !== undefined) form[k] = d.form[k]; });
+      giftOff = !!d.giftOff; giftTouched = !!d.giftTouched; giftSkip = {};
+      (d.giftSkip || []).forEach(function(k){ giftSkip[k] = true; });
+      draftId = id; priced = null; errors = {}; banner = null;
+      render();
+      requote();
+      say('Draft opened');
+    } catch (e) {
+      say((e.body && e.body.error) || 'That draft could not be opened.');
+      loadDrafts();
+    }
+  }
+  async function deleteDraft(id){
+    if (!window.confirm('Delete this draft? It cannot be undone.')) return;
+    try { await api('/manual-orders/drafts/' + id + '/delete', {method:'POST'}); } catch (e) {}
+    if (draftId === id) draftId = null;
+    loadDrafts();
+  }
+  function wireDrafts(){
+    var host = document.querySelector('#moDrafts');
+    if (!host) return;
+    host.onclick = function(e){
+      var o = e.target.closest('[data-draft-open]'), d = e.target.closest('[data-draft-del]');
+      if (o) openDraft(parseInt(o.getAttribute('data-draft-open'), 10));
+      if (d) deleteDraft(parseInt(d.getAttribute('data-draft-del'), 10));
+    };
+  }
+
+  /* ------------------------------------------------------- free gifts (2.60.630) */
+  var GIFT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>';
+  function giftsHTML(){
+    var g = priced && priced.gifts;
+    if (!g) return '';
+    if (!g.lines || !g.lines.length) return '<div class="mo-gifts none">' + (g.range ? 'No free gifts in stock for this range.' : 'No free gifts at this total.') + '</div>';
+    if (!giftTouched) giftOff = g.mode === 'off' || !g.country_ok;
+    var why = g.mode === 'off' ? 'Free gifts are Off on the website.' : (!g.country_ok ? 'On the website, gifts do not go to this country.' : '');
+    return '<div class="mo-gifts' + (giftOff ? ' off' : '') + '"><h4>' + GIFT_ICON + 'Free gifts <span>· ' + esc(g.range || '') + '</span></h4>' +
+      '<label class="mo-check"><input type="checkbox" data-gift-all' + (giftOff ? '' : ' checked') + '><span><b>Add free gifts to this order</b>' +
+      '<small>Added at AED 0 when the order is created, from the range this total falls in' + (why ? '. ' + esc(why) : '') + '</small></span></label>' +
+      '<ul>' + g.lines.map(function(l){
+        return '<li><label class="mo-check"><input type="checkbox" data-gift="' + esc(l.key) + '"' + (giftSkip[l.key] ? '' : ' checked') + (giftOff ? ' disabled' : '') + '>' +
+          '<span>' + l.quantity + '× ' + esc(l.name) + (l.backup ? '<i class="tag">backup</i>' : '') + '</span></label></li>';
+      }).join('') + '</ul>' +
+      '<p>Follows the total: add or remove products and the gifts follow the range. A sold-out gift is left out; like the rest of this order, no stock is moved.</p></div>';
+  }
+  function renderGifts(){
+    var host = document.querySelector('#moGifts');
+    if (host) host.innerHTML = giftsHTML();
+  }
+  function wireGifts(){
+    var host = document.querySelector('#moGifts');
+    if (!host) return;
+    host.onchange = function(e){
+      var t = e.target;
+      if (t.hasAttribute('data-gift-all')) { giftOff = !t.checked; giftTouched = true; renderGifts(); }
+      else if (t.hasAttribute('data-gift')) { var k = t.getAttribute('data-gift'); if (t.checked) delete giftSkip[k]; else giftSkip[k] = true; }
+    };
   }
 
   /* ---------------------------------------------------------------- quote */
@@ -196,7 +302,10 @@
       channel: form.channel,
       customer_note: form.customer_note || null,
       whatsapp_optin: !!form.whatsapp_optin,
-      send_confirmation: !!form.send_confirmation
+      send_confirmation: !!form.send_confirmation,
+      free_gifts: !giftOff,
+      gift_skip: Object.keys(giftSkip),
+      draft_id: draftId
     };
     if (newCustomer) {
       body.new_customer = {name:form.nc_name, email:form.nc_email, phone:form.nc_phone || null};
@@ -461,6 +570,7 @@
   }
 
   function reset(){
+    giftOff = false; giftTouched = false; giftSkip = {}; draftId = null;
     customer = null; newCustomer = false; lines = []; priced = null;
     errors = {}; banner = null; created = null;
     form.line1 = form.city = form.state = form.phone = '';
@@ -470,6 +580,7 @@
     form.country = (V && V.default_country) || 'AE';
     form.status = (V && V.default_status) || 'processing';
     render();
+    loadDrafts();
   }
 
   /* --------------------------------------------------------------- render */
@@ -508,6 +619,7 @@
           'customer pays what they were quoted.</p>' +
         '</div>' +
         '<div id="moBanner"></div>' +
+        '<div id="moDrafts">' + draftsHTML() + '</div>' +
         '<div class="mo-grid">' +
           /* Who it is for, what they are buying, where it is going. */
           '<div class="mo-col">' +
@@ -828,6 +940,7 @@
       'so the customer pays what they were quoted.</p>' +
       '<div id="moCouponRow">' + couponRowHTML() + '</div>' +
       '<div id="moTotals">' + totalsRowsHTML() + '</div>' +
+      '<div id="moGifts">' + giftsHTML() + '</div>' +
 
       '<div style="margin:14px 0 12px">' +
         '<label class="mo-check' + (emailCap.available ? '' : ' off') + '">' +
@@ -857,6 +970,7 @@
       '<div class="mo-actions">' +
         '<button type="button" class="btn" id="moSubmit"' + (busy ? ' disabled' : '') + '>' +
           icon('<path d="M20 6 9 17l-5-5"/>') + (busy ? 'Creating…' : 'Create order') + '</button>' +
+        '<button type="button" class="btn ghost" id="moDraft">' + (draftId ? 'Update draft' : 'Save as draft') + '</button>' +
         '<button type="button" class="btn ghost" id="moReset">Clear</button>' +
       '</div></div>';
   }
@@ -879,6 +993,7 @@
     if (!host) return;
 
     host.innerHTML = totalsRowsHTML();
+    renderGifts();
     renderLines();
   }
 
@@ -921,6 +1036,8 @@
             esc(i.sku || '') + '</span>' + members + '</td><td>' + i.quantity + '</td><td>' +
             aed(i.unit_price_fils) + '</td><td><b>' + aed(i.line_total_fils) + '</b></td></tr>';
         }).join('') + '</tbody></table></div>' +
+        ((o.gifts || []).length ? '<div class="mo-gifts" style="margin-top:12px"><h4>' + GIFT_ICON + 'Free gifts <span>· AED 0</span></h4><ul>' +
+          o.gifts.map(function(g){ return '<li>' + g.quantity + '× ' + esc(g.name) + '</li>'; }).join('') + '</ul></div>' : '') +
 
         '<div class="mo-tot" style="margin-top:14px">' +
           '<div class="mo-tot-r"><span>Subtotal</span><b>' + aed(o.subtotal_fils) + '</b></div>' +
@@ -1036,6 +1153,11 @@
 
     var resetBtn = document.querySelector('#moReset');
     if (resetBtn) resetBtn.onclick = reset;
+
+    var draftBtn = document.querySelector('#moDraft');
+    if (draftBtn) draftBtn.onclick = saveDraft;
+    wireGifts();
+    wireDrafts();
   }
 
   function wire(){

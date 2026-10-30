@@ -38,8 +38,13 @@ it('registers exactly the routes the lane documents, and no others', function ()
     expect($registered)->toBe([
         'GET /admin-api/manual-orders/bootstrap',
         'GET /admin-api/manual-orders/customers',
+        // (2.60.630) Drafts: the New Order form kept to finish later.
+        'GET /admin-api/manual-orders/drafts',
+        'GET /admin-api/manual-orders/drafts/{id}',
         'GET /admin-api/manual-orders/products',
         'POST /admin-api/manual-orders',
+        'POST /admin-api/manual-orders/drafts',
+        'POST /admin-api/manual-orders/drafts/{id}/delete',
         'POST /admin-api/manual-orders/quote',
     ]);
 });

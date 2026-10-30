@@ -25,6 +25,7 @@ use App\Support\OrderTax;
 use App\Support\StoreTime;
 use App\Support\TaxRule;
 use App\Support\WholeDirhams;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -1634,6 +1635,11 @@ class AdminOrderController extends Controller
         /** @var Order $order */
         $order = $result['order'];
 
+        // (2.60.630) Finished from a draft: the draft has done its job.
+        if (! empty($input['draft_id'])) {
+            DB::table('manual_order_drafts')->where('id', (int) $input['draft_id'])->delete();
+        }
+
         return response()->json([
             'ok' => true,
             'order' => [
@@ -1679,6 +1685,8 @@ class AdminOrderController extends Controller
                     'unit_price_fils' => (int) $i->unit_price,
                     'line_total_fils' => (int) $i->total,
                 ])->values(),
+                // (2.60.630) The free gifts that went on it, at AED 0.
+                'gifts' => $order->gifts->map(fn ($g) => ['name' => $g->name, 'quantity' => (int) $g->quantity])->values(),
             ],
             // Said plainly rather than left to be discovered.
             'email' => $this->sendConfirmation($order, (bool) ($input['send_confirmation'] ?? false), $mailer),
@@ -1688,6 +1696,86 @@ class AdminOrderController extends Controller
                     . 'order does not decrement it either. Adjust it in Catalog → Inventory.',
             ],
         ], 201);
+    }
+
+    /* ===================================================================
+     | Drafts -- (2.60.630) the owner: "also need a save as draft button in
+     | create new order page".
+     |
+     | A draft is the New Order form as it stood, kept in its own table and
+     | NOT an order: no number, no stock, no coupon, no revenue, no email,
+     | nothing on the Orders list. Resuming it fills the form back in; Create
+     | order then goes through store() and every check it makes, and the draft
+     | is removed. Behind orders.money like every manual-orders route.
+     |=================================================================== */
+
+    public const DRAFT_MAX_BYTES = 60000;
+
+    /** GET /admin-api/manual-orders/drafts -- newest first, 50 at most. */
+    public function drafts(): JsonResponse
+    {
+        $rows = DB::table('manual_order_drafts')->orderByDesc('updated_at')->orderByDesc('id')->limit(50)
+            ->get(['id', 'title', 'item_count', 'value_fils', 'author', 'updated_at']);
+
+        return response()->json(['drafts' => $rows->map(fn ($r) => [
+            'id' => (int) $r->id, 'title' => (string) $r->title, 'items' => (int) $r->item_count,
+            'value_fils' => (int) $r->value_fils, 'author' => $r->author, 'updated_at' => \App\Support\StoreTime::iso($r->updated_at),
+        ])->values()]);
+    }
+
+    /** GET /admin-api/manual-orders/drafts/{id} -- the form to fill back in. */
+    public function draft(int $id): JsonResponse
+    {
+        $row = DB::table('manual_order_drafts')->where('id', $id)->first(['id', 'payload']);
+
+        if ($row === null) {
+            return response()->json(['error' => 'That draft no longer exists.'], 404);
+        }
+
+        return response()->json(['id' => (int) $row->id, 'draft' => json_decode((string) $row->payload, true) ?: []]);
+    }
+
+    /** POST /admin-api/manual-orders/drafts {id?, draft} -- save a new draft, or over the one being edited. */
+    public function saveDraft(Request $request): JsonResponse
+    {
+        $data = $request->validate(['id' => ['nullable', 'integer'], 'draft' => ['required', 'array']]);
+        $draft = $data['draft'];
+        $json = json_encode($draft, JSON_UNESCAPED_UNICODE);
+
+        if ($json === false || strlen($json) > self::DRAFT_MAX_BYTES) {
+            return response()->json(['error' => 'That draft is too large to keep.'], 422);
+        }
+
+        // What the list shows: worked out here from the form, never taken as typed.
+        $lines = is_array($draft['lines'] ?? null) ? array_slice($draft['lines'], 0, 60) : [];
+        $count = 0;
+        $value = 0;
+        foreach ($lines as $l) {
+            $q = max(0, min(99, (int) (is_array($l) ? ($l['qty'] ?? 0) : 0)));
+            $count += $q;
+            $value += $q * max(0, min(10_000_000, (int) (is_array($l) ? ($l['unit_price'] ?? 0) : 0)));
+        }
+        $who = trim((string) (($draft['customer']['name'] ?? null) ?: ($draft['form']['nc_name'] ?? null) ?: ($draft['customer']['email'] ?? '')));
+        $title = mb_substr($who !== '' ? $who : 'No customer yet', 0, 120);
+        $author = $request->user('admin')?->name ?: $request->user('admin')?->email;
+        $row = ['title' => $title, 'item_count' => $count, 'value_fils' => $value, 'payload' => $json, 'author' => $author !== null ? mb_substr((string) $author, 0, 120) : null, 'updated_at' => now()];
+
+        $id = (int) ($data['id'] ?? 0);
+        if ($id > 0 && DB::table('manual_order_drafts')->where('id', $id)->update($row) > 0) {
+            return response()->json(['ok' => true, 'id' => $id, 'title' => $title]);
+        }
+
+        $id = (int) DB::table('manual_order_drafts')->insertGetId($row + ['created_at' => now()]);
+
+        return response()->json(['ok' => true, 'id' => $id, 'title' => $title], 201);
+    }
+
+    /** POST /admin-api/manual-orders/drafts/{id}/delete */
+    public function deleteDraft(int $id): JsonResponse
+    {
+        DB::table('manual_order_drafts')->where('id', $id)->delete();
+
+        return response()->json(['ok' => true]);
     }
 
     /* ===================================================================
@@ -1769,6 +1857,12 @@ class AdminOrderController extends Controller
             'customer_note' => ['nullable', 'string', 'max:2000'],
             'whatsapp_optin' => ['nullable', 'boolean'],
             'send_confirmation' => ['nullable', 'boolean'],
+            // (2.60.630) Free gifts: on unless switched off; a gift unticked by its key.
+            'free_gifts' => ['nullable', 'boolean'],
+            'gift_skip' => ['nullable', 'array', 'max:60'],
+            'gift_skip.*' => ['string', 'regex:/^\d{1,10}:\d{1,10}$/'],
+            // (2.60.630) The draft this order was finished from: removed once the order exists.
+            'draft_id' => ['nullable', 'integer'],
         ];
 
         if ($forCreate) {
@@ -1838,6 +1932,19 @@ class AdminOrderController extends Controller
                 'free_shipping_remaining_fils' => $totals['free_shipping_remaining'],
                 // Display only — never added to the total (D-64).
                 'vat' => $totals['vat'],
+            ],
+            // (2.60.630) The free gifts this total earns: names and counts only.
+            'gifts' => [
+                'range' => $priced['gifts']['range'] ?? null,
+                'country_ok' => (bool) ($priced['gifts']['country_ok'] ?? true),
+                'mode' => (string) ($priced['gifts']['mode'] ?? 'off'),
+                'lines' => array_map(fn (array $g) => [
+                    'key' => ManualOrderBuilder::giftKey($g),
+                    'name' => \App\Services\FreeGifts::giftName((string) $g['product']->name, $g['variant'] ?? null, \App\Support\Locale::DEFAULT),
+                    'quantity' => (int) $g['quantity'],
+                    'kind' => $g['kind'] ?? null,
+                    'backup' => (bool) ($g['backup'] ?? false),
+                ], $priced['gifts']['lines'] ?? []),
             ],
         ];
     }

@@ -179,6 +179,26 @@
 .mo-check small{display:block;font-size:10.5px;color:var(--ink-soft);margin-top:3px}
 
 .mo-actions{display:flex;gap:9px;flex-wrap:wrap}
+/* (2.60.630) Free gifts on the order, and the drafts kept to finish later. */
+.mo-gifts{margin:12px 0 4px;padding:11px 12px;border:1px solid #cfe7da;border-radius:12px;background:#f3faf6}
+.mo-gifts h4{display:flex;align-items:center;gap:7px;margin:0 0 8px;font-size:13px;color:#1f6b48}
+.mo-gifts h4 svg{width:15px;height:15px;flex:none}
+.mo-gifts h4 span{font-weight:600;color:var(--ink-soft);font-size:11.5px}
+.mo-gifts ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.mo-gifts li .mo-check{font-size:12.5px}
+.mo-gifts .tag{display:inline-block;margin-inline-start:6px;font-size:10px;font-weight:700;color:#8a5a00;background:#fff4dc;border-radius:999px;padding:1px 6px}
+.mo-gifts.off ul{opacity:.5}
+.mo-gifts.none{background:var(--surface-2);border-color:var(--border-2);color:var(--ink-soft);font-size:12px}
+.mo-gifts p{margin:8px 0 0;font-size:11px;color:var(--ink-soft)}
+.mo-drafts{margin:0 0 14px;padding:12px 14px;border:1px solid var(--border-2);border-radius:14px;background:var(--surface)}
+.mo-drafts h4{margin:0 0 8px;font-size:13px}
+.mo-drafts ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.mo-drafts li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;border-radius:10px;background:var(--surface-2)}
+.mo-drafts li.on{outline:2px solid var(--accent)}
+.mo-drafts li b{font-size:13px}
+.mo-drafts li span{font-size:11.5px;color:var(--ink-soft);flex:1 1 160px}
+.mo-drafts li button{font:inherit;font-size:12px;font-weight:700;padding:5px 10px;border-radius:8px;border:1px solid var(--border-2);background:var(--surface);cursor:pointer}
+.mo-drafts li button.del{color:var(--red,#c0392b)}
 .mo-actions .btn{flex:1 1 auto}
 
 /* The confirmation, after the order is created. */
