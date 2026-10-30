@@ -148,6 +148,8 @@ const sub = () => (G.d ? 'Up to date · ' + (ago(G.at) === 'now' ? 'just now' : 
 
 /** The one read: on open (unless fresh), on Sync now, on Refresh after a conflict. */
 export function fetchGifts(passive, force) {
+  // (2.60.628) The refresh icon on Gift box clicks re-reads the clicks too.
+  if (cur === 'clicks' && onScreen('gifts')) loadClicks();
   return once('gifts', async () => {
     const g = S.gen;
     const r = await api('GET', 'gifts', undefined, passive);
@@ -187,7 +189,9 @@ let host = null, cur = null;
 export async function renderGifts(v, id) {
   host = v;
   v.className = 'view single';
-  cur = /\/gifts\/new$/.test(location.hash) ? 'new' : (id || 0);
+  cur = /\/gifts\/new$/.test(location.hash) ? 'new' : (/\/gifts\/clicks$/.test(location.hash) ? 'clicks' : (id || 0));
+  // (2.60.628) Gift box clicks: its own report, not the ranges' data.
+  if (cur === 'clicks') { paintClicks(); if (!GC.d || GC.stale) loadClicks(); return; }
   if (cur === 'new' && !G.drafts.new) addRange(null, true);
   // Paint directly, not through redraw(): redraw() only repaints a screen
   // that is ALREADY Free gifts, and on a second visit (data in hand) the view
@@ -203,7 +207,9 @@ export async function renderGifts(v, id) {
 }
 
 function redraw() {
-  if (!host || !onScreen('gifts') || !G.d) return;
+  if (!host || !onScreen('gifts')) return;
+  if (cur === 'clicks') { paintClicks(); return; }
+  if (!G.d) return;
   if (cur === 0) paintHome(); else paintRange();
 }
 
@@ -218,6 +224,7 @@ function paintHome() {
     body += '<section class="card g-checks"><h4 class="sh">Things to check <span class="muted">' + checks.length + '</span></h4>'
       + checks.map((c) => '<' + (c.range ? 'a href="#/gifts/' + c.range + '"' : 'div') + ' class="row g-ck ' + (c.level === 'alert' ? 'bad' : 'warn') + '"><span class="g-ckd"></span><div class="rm"><small class="g-wrap">' + esc(c.text) + '</small></div></' + (c.range ? 'a' : 'div') + '>').join('') + '</section>';
   }
+  body += '<a class="row g-ckl" href="#/gifts/clicks"><span class="tone t-acc">' + ic('chart', 's') + '</span><div class="rm"><b>Gift box clicks</b><small>View all, Gifts Criteria, ranges and photos: by day, week or month</small></div><div class="re">' + ic('chev', 'chev s') + '</div></a>';
   body += '<div class="gh"><span>Ranges & gifts</span>' + (can() ? '<button type="button" data-gadd>+ Add range</button>' : '') + '</div>';
   const rows = list.map((r) => {
     const x = view(r), warn = problems(r.id, x).length;
@@ -587,6 +594,12 @@ function picker(x, box, role) {
 
 export async function giftsClick(e) {
   const t = e.target;
+  if (cur === 'clicks') {
+    const p = t.closest('[data-gcp]'), b = t.closest('[data-gcb]');
+    if (p) { setPeriod(p.getAttribute('data-gcp')); return true; }
+    if (b) { GC.by = b.getAttribute('data-gcb'); loadClicks(); paintClicks(); return true; }
+    return false;
+  }
   const m = t.closest('[data-gmode]');
   if (m) {
     const to = m.getAttribute('data-gmode'), row = MODES.find((r) => r[0] === to);
@@ -654,3 +667,79 @@ document.addEventListener('input', (e) => {
 });
 /* Leaving a field redraws the parts that read it (the title, the pills). */
 document.addEventListener('change', (e) => { if (e.target.closest && e.target.closest('[data-gf]') && onScreen('gifts') && cur !== 0) redraw(); });
+
+/* ------------------------------------------------- gift box clicks (2.60.628)
+   The console's Free gifts -> Clicks, for the phone: GET gifts/clicks reads one
+   small table of daily totals. One request per change of period; nothing
+   polls, nothing measures. A late answer repaints only if this screen is still
+   the one on show. Bars are SVG: the owner app's CSP refuses inline styles in
+   markup, and an SVG's sizes are attributes, not styles. */
+const GC = { p: '7d', by: 'day', from: '', to: '', today: '', d: null, busy: false, seq: 0, err: '', stale: false };
+const GC_ORDER = [2, 0, 3, 4, 1];
+const GC_PERIODS = [['today', 'Today'], ['7d', '7 days'], ['30d', '30 days'], ['month', 'This month'], ['last', 'Last month'], ['90d', '90 days'], ['year', 'This year']];
+const gcDay = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+function gcRange(p, today) {
+  const t = new Date(today + 'T12:00:00'), y = t.getFullYear(), m = t.getMonth();
+  const back = (n) => { const d = new Date(t); d.setDate(d.getDate() - n); return gcDay(d); };
+  if (p === 'today') return [today, today];
+  if (p === '30d') return [back(29), today];
+  if (p === '90d') return [back(89), today];
+  if (p === 'month') return [gcDay(new Date(y, m, 1)), today];
+  if (p === 'last') return [gcDay(new Date(y, m - 1, 1)), gcDay(new Date(y, m, 0))];
+  if (p === 'year') return [gcDay(new Date(y, 0, 1)), today];
+  return [back(6), today];
+}
+function setPeriod(p) {
+  GC.p = p;
+  if (GC.today) { const r = gcRange(p, GC.today); GC.from = r[0]; GC.to = r[1]; }
+  if (p === 'today') GC.by = 'day';
+  if (p === 'year' && GC.by === 'day') GC.by = 'month';
+  loadClicks();
+  paintClicks();
+}
+async function loadClicks() {
+  const seq = ++GC.seq;
+  GC.busy = true; GC.err = ''; GC.stale = false;
+  const r = await api('GET', 'gifts/clicks?' + (GC.from && GC.to ? 'from=' + GC.from + '&to=' + GC.to + '&' : '') + 'by=' + GC.by);
+  if (seq !== GC.seq) return;
+  GC.busy = false;
+  if (r.ok) { GC.d = r.data; GC.from = r.data.from; GC.to = r.data.to; GC.today = r.data.today; }
+  else GC.err = (r.data && r.data.message) || 'The clicks could not be loaded.';
+  if (cur === 'clicks' && onScreen('gifts')) paintClicks();
+}
+function paintClicks() {
+  const d = GC.d, f = (n) => Number(n || 0).toLocaleString('en-US');
+  const head = top('Gift box clicks', '<span>' + (d ? esc(d.from + ' – ' + d.to) : 'Loading…') + (GC.busy && d ? ' · updating…' : '') + '</span>', back('#/gifts'));
+  let b = '<div class="chips" role="group" aria-label="Period">' + GC_PERIODS.map(([k, l]) => '<button type="button" data-gcp="' + k + '"' + (GC.p === k ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>'
+    + '<div class="gc-by"><div class="seg" role="group" aria-label="Group by">' + [['day', 'Day'], ['week', 'Week'], ['month', 'Month']].map(([k, l]) => '<button type="button" data-gcb="' + k + '"' + (GC.by === k ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div></div>';
+  if (GC.err) b += errorBox(GC.err);
+  if (!d) { screen(host, 'gifts', 0, head, b + '<div class="tiles">' + times(4, () => '<div class="card">' + ln(70, 'k-sm') + ln(45, 'k-tile') + '</div>') + '</div>', true); return; }
+  if (!d.ready) { screen(host, 'gifts', 0, head, b + '<div class="card empty">Counting starts once update 2.60.627 has finished installing.</div>', false); return; }
+  b += '<div class="tiles gc-tiles">' + GC_ORDER.map((a) => '<div class="card gc-c' + a + '"><small>' + esc(d.actions[a]) + '</small><b>' + f(d.totals[a]) + '</b><small>' + esc(plural(d.carts[a], 'cart', 'carts')) + '</small></div>').join('') + '</div>';
+  const o = d.orders;
+  if (o) {
+    const pc = (a, n) => (n ? Math.round(a * 1000 / n) / 10 + '%' : '–');
+    b += '<section class="card"><h4 class="sh">Did it lead to orders?</h4><div class="gc-conv"><div><b>' + pc(o.used_ordered, o.used) + '</b><small>' + f(o.used_ordered) + ' of ' + esc(plural(o.used, 'cart', 'carts')) + ' that used the gift box ordered</small></div>'
+      + '<div><b>' + pc(o.others_ordered, o.others) + '</b><small>' + f(o.others_ordered) + ' of ' + esc(plural(o.others, 'cart', 'carts')) + ' that did not</small></div></div><p class="hint">People only, bots left out.</p></section>';
+  }
+  const max = Math.max(1, ...d.buckets.map((x) => x.total)), every = Math.max(1, Math.ceil(d.buckets.length / 6));
+  b += '<section class="card"><h4 class="sh">By ' + esc(d.by) + ' <span class="muted">' + f(d.total) + ' taps</span></h4>'
+    + '<svg class="gc-chart" viewBox="0 0 ' + (d.buckets.length * 10) + ' 100" preserveAspectRatio="none" role="img" aria-label="Taps per ' + esc(d.by) + '">' + d.buckets.map((x, i) => {
+      let y = 100;
+      return GC_ORDER.map((a) => { if (!x.clicks[a]) return ''; const h = x.clicks[a] * 100 / max; y -= h; return '<rect class="gc-c' + a + '" x="' + (i * 10 + 1) + '" y="' + y.toFixed(2) + '" width="8" height="' + h.toFixed(2) + '"/>'; }).join('');
+    }).join('') + '</svg>'
+    + '<div class="gc-x">' + d.buckets.map((x, i) => '<span>' + (i % every === 0 ? esc(x.label.replace(/^\w{3} /, '')) : '') + '</span>').join('') + '</div>'
+    + '<div class="gc-key">' + GC_ORDER.map((a) => '<span class="gc-c' + a + '"><i></i>' + esc(d.actions[a]) + '</span>').join('') + '</div></section>';
+  // Newest first: each period's taps, with its own split bar.
+  b += '<div class="gh"><span>' + (d.by === 'day' ? 'Each day' : d.by === 'week' ? 'Each week' : 'Each month') + '</span></div><div class="list">'
+    + d.buckets.slice().reverse().map((x) => '<div class="row gc-row"><div class="rm"><b>' + esc(x.label) + '</b><small>' + GC_ORDER.filter((a) => x.clicks[a]).map((a) => esc(d.actions[a]) + ' ' + f(x.clicks[a])).join(' · ') + (x.total ? '' : 'No taps') + '</small>'
+      + (x.total ? (() => { let at = 0; return '<svg class="gc-split" viewBox="0 0 ' + x.total + ' 1" preserveAspectRatio="none" aria-hidden="true">' + GC_ORDER.map((a) => { if (!x.clicks[a]) return ''; const r = '<rect class="gc-c' + a + '" x="' + at + '" y="0" width="' + x.clicks[a] + '" height="1"/>'; at += x.clicks[a]; return r; }).join('') + '</svg>'; })() : '') + '</div><div class="re"><b>' + f(x.total) + '</b></div></div>').join('') + '</div>';
+  b += '<section class="card"><h4 class="sh">Where they tapped</h4>' + d.places.map((name, i) => {
+    const c = d.by_place[i], all = c.reduce((x, y) => x + y, 0);
+    return '<div class="row"><div class="rm"><b>' + esc(name) + '</b><small>' + GC_ORDER.filter((a) => c[a]).map((a) => esc(d.actions[a]) + ' ' + f(c[a])).join(' · ') + (all ? '' : 'No taps') + '</small></div><div class="re"><b>' + f(all) + '</b></div></div>';
+  }).join('') + '</section>';
+  const top1 = d.ranges.length ? d.ranges[0].clicks : 1;
+  b += '<section class="card"><h4 class="sh">Ranges looked at <span class="muted">in Gifts Criteria</span></h4>' + (d.ranges.length ? d.ranges.map((r) => '<div class="gc-rng"><span>' + esc(r.label) + '</span><b>' + f(r.clicks) + '</b><svg class="gc-bar" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="0" width="' + (r.clicks * 100 / top1).toFixed(2) + '" height="1"/></svg></div>').join('') : '<p class="empty">No range taps in this period yet.</p>') + '</section>';
+  b += '<p class="hint g-hint">Counted from update 2.60.627 on, for shoppers with something in the bag. Each cart’s own taps are on it in Carts.</p>';
+  screen(host, 'gifts', 0, head, b, false);
+}

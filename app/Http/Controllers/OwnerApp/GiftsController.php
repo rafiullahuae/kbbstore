@@ -56,6 +56,23 @@ class GiftsController extends Controller
         return $this->answer($this->delegate(fn () => $this->desk()->show()));
     }
 
+    /**
+     * GET /{app}/api/gifts/clicks?from=&to=&by= -- (2.60.628) the console's
+     * Free gifts -> Clicks report, for the phone: the same GiftClicks::report()
+     * and the same rules (freegifts.view; dates Y-m-d; by day|week|month).
+     */
+    public function clicks(Request $request): JsonResponse
+    {
+        if ($r = $this->refuse($request, 'freegifts.view')) {
+            return $r;
+        }
+
+        $res = $this->delegate(fn () => $this->desk()->clicks($request));
+        $d = $res instanceof JsonResponse ? (array) $res->getData(true) : [];
+
+        return $res->getStatusCode() === 200 ? response()->json(['ok' => true] + $d) : $this->failed($res, $d);
+    }
+
     /** POST /{app}/api/gifts/mode {mode} -- Off / Testing / Live, the console's switch(). */
     public function mode(Request $request): JsonResponse
     {

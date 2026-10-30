@@ -265,3 +265,35 @@ it('puts the Clicks tab in Free gifts and the gift chips in Cart Tracking, exact
         ->and($fg)->toContain("if (st.tab === 'clicks') render();")
         ->and($fg)->not->toMatch('/setInterval|getBoundingClientRect/');
 });
+
+it('gives the owner app the same Clicks report, behind freegifts.view, and a way in from Free gifts', function () {
+    /*
+     * 2.60.628, the owner: "I can not see the Clicks page on the owner app."
+     * What it looked like: the report lived only in the desktop console.
+     * MUTATION: drop the route or the refuse() -> red; drop the "Gift box
+     * clicks" row on Free gifts -> red.
+     */
+    OA::wire($this->app);
+    $o = OA::admin();
+    OA::member($o);
+    [$c] = OA::enrol($this);
+    $day = StoreTime::today();
+    DB::table('gift_clicks')->insert(['day' => $day->format('Y-m-d'), 'code' => 62, 'label' => '', 'clicks' => 7, 'carts' => 4]);
+
+    $r = OA::get($this, 'gifts/clicks?by=week', $c)->assertOk();
+    expect($r->json('ok'))->toBeTrue()
+        ->and($r->json('totals.2'))->toBe(7)
+        ->and($r->json('carts.2'))->toBe(4)
+        ->and($r->json('by'))->toBe('week');
+    OA::get($this, 'gifts/clicks?from=nope', $c)->assertStatus(422);
+
+    $a = OA::admin('support', 'sue-gc@example.com', 'Sue');
+    OA::member($a);
+    [$s] = OA::enrol($this, 'sue-gc@example.com');
+    OA::get($this, 'gifts/clicks', $s)->assertForbidden();
+
+    $js = (string) file_get_contents(resource_path('js/owner-app/gifts.js'));
+    expect(substr_count($js, 'href="#/gifts/clicks"'))->toBe(1)
+        ->and($js)->toContain("if (cur === 'clicks' && onScreen('gifts')) paintClicks();")
+        ->and($js)->not->toMatch('/setInterval|getBoundingClientRect|offsetWidth/');
+});

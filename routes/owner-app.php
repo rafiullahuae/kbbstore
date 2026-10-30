@@ -59,7 +59,7 @@ declare(strict_types=1);
 |     GET  /{app}/api/customers/{id}                      customers.view
 |     GET  /{app}/api/carts                               carttracking.view (Lane QK10)
 |     GET  /{app}/api/carts/{id}/journey                  carttracking.view (Lane CJ)
-|     GET  /{app}/api/gifts, /api/gifts/products          freegifts.view (Lane OAG)
+|     GET  /{app}/api/gifts, /api/gifts/products, /api/gifts/clicks  freegifts.view (Lane OAG; clicks 2.60.628)
 |     POST /{app}/api/gifts/mode, /api/gifts/ranges[/{id}[/delete]]  freegifts.manage
 |     GET  /{app}/api/changes                             (filtered per capability)
 |     GET  /{app}/api/notifications                       (filtered per capability)
@@ -164,6 +164,7 @@ if ($ownerAppPath !== null) {
                 // and search, freegifts.manage to change, both checked in the
                 // controller (fail closed). No polling: read on open and on Sync.
                 Route::get('/gifts', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'show'])->name('gifts');
+                Route::get('/gifts/clicks', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'clicks'])->name('gifts.clicks');
                 Route::get('/gifts/products', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'products'])->middleware('throttle:60,1,oa-gift-search')->name('gifts.products');
                 Route::post('/gifts/mode', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'mode'])->name('gifts.mode');
                 Route::post('/gifts/ranges', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'save'])->name('gifts.create');

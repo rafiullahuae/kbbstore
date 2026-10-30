@@ -669,6 +669,26 @@ details summary::-webkit-details-marker { display: none; }
 /* (2.60.627) The free gift box taps on a cart. */
 .ct-gb { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; font-size: 11.5px; }
 .ct-gb .tag { background: #fff0f4; color: #a12d4f; }
+/* (2.60.628) Free gifts -> Gift box clicks. */
+.gc-c0 { --c: #2f6fde; } .gc-c1 { --c: #9aa3ae; } .gc-c2 { --c: #2e8f62; } .gc-c3 { --c: #C6395F; } .gc-c4 { --c: #d79a2b; }
+.g-ckl { margin-bottom: 12px; border-radius: var(--r-card, 16px); background: var(--surface); }
+.gc-by { margin: 2px 0 12px; }
+.gc-tiles .card { border-top: 3px solid var(--c); }
+.gc-tiles small { display: block; }
+.gc-conv { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+.gc-conv div { border-radius: 12px; padding: 10px 12px; background: var(--surface2); }
+.gc-conv b { display: block; font: 600 20px/1.2 var(--font); }
+.gc-conv small { font-size: 12px; color: var(--ink3); }
+.gc-chart { display: block; width: 100%; height: 140px; margin-top: 10px; border-bottom: 1px solid var(--line, rgba(0,0,0,.08)); }
+.gc-chart rect, .gc-split rect { fill: var(--c); }
+.gc-x { display: flex; padding-top: 5px; font: 500 10px/1 var(--font); color: var(--ink3); }
+.gc-x span { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: visible; }
+.gc-key { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; font-size: 12px; color: var(--ink2); }
+.gc-key i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; background: var(--c); margin-right: 5px; }
+.gc-split { display: block; width: 100%; height: 5px; border-radius: 3px; margin-top: 7px; background: var(--surface2); }
+.gc-rng { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; padding: 8px 0; font-size: 13px; }
+.gc-rng .gc-bar { grid-column: 1 / -1; display: block; width: 100%; height: 7px; border-radius: 99px; background: var(--surface2); }
+.gc-rng .gc-bar rect { fill: #C6395F; }
 .ct-open { background: #FDF0E1; color: #9A5B13; }
 /* Lane CJ: where the shopper left, the furthest step, and the journey. */
 .ct-left { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 12px; color: var(--ink2); }
