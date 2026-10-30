@@ -293,7 +293,30 @@ it('gives the owner app the same Clicks report, behind freegifts.view, and a way
     OA::get($this, 'gifts/clicks', $s)->assertForbidden();
 
     $js = (string) file_get_contents(resource_path('js/owner-app/gifts.js'));
-    expect(substr_count($js, 'href="#/gifts/clicks"'))->toBe(1)
-        ->and($js)->toContain("if (cur === 'clicks' && onScreen('gifts')) paintClicks();")
-        ->and($js)->not->toMatch('/setInterval|getBoundingClientRect|offsetWidth/');
+    expect(substr_count($js, 'href="#/clicks?from=gifts"'))->toBe(1)
+        ->and($js)->toContain("if (ch && onScreen('clicks')) paintClicks();")
+        // The owner app's CSP refuses inline styles: the bars are SVG attributes.
+        ->and($js)->not->toMatch('/style="|setInterval|getBoundingClientRect|offsetWidth/');
+});
+
+it('puts Cart tracking, Free gifts and Gift box clicks on My store as thin rows under the sales card, each its own screen', function () {
+    /*
+     * 2.60.629, the owner: "i can't see any clicks options on gifts page. I
+     * want the carts tracking and gifts and clicks on homepage of the owner
+     * app, under stats as thin rows. with separate pages each."
+     * MUTATION: drop quick() after 'hero' in arrange() -> red; route
+     * #/clicks back under #/gifts -> red; draw the rows twice -> red.
+     */
+    $store = (string) file_get_contents(resource_path('js/owner-app/store.js'));
+    $app = (string) file_get_contents(resource_path('js/owner-app/owner-app.js'));
+    expect($store)->toContain("out += p[keys[i]] + (keys[i] === 'hero' ? q : '');")
+        ->and(substr_count($store, 'quick: quick()'))->toBe(2) // the drawn screen and its grey skeleton
+        ->and(substr_count($store, "row('#/carts', 'cart', 'Cart tracking'"))->toBe(1)
+        ->and(substr_count($store, "row('#/gifts', 'gift', 'Free gifts'"))->toBe(1)
+        ->and(substr_count($store, "row('#/clicks', 'chart', 'Gift box clicks'"))->toBe(1)
+        // Each row only for a role that may open it; the home screen asks for nothing new.
+        ->and($store)->toContain('(c.carts ? row(')->toContain('(c.gifts ? row(')
+        ->and(substr_count($app, "else if (n === 'clicks') await renderClicks(view, route.q);"))->toBe(1)
+        ->and(substr_count($app, "if (n === 'clicks' && clicksClick(e)) return;"))->toBe(1)
+        ->and($app)->toContain("if (route.name === 'clicks' && can.gifts) jobs.push(loadClicks());");
 });

@@ -367,7 +367,7 @@ it('is reachable from the app: More lists it, the router draws it, the refresh i
     $web = (string) file_get_contents(base_path('routes/owner-app.php'));
 
     expect(substr_count($js('store.js'), 'href="#/gifts"'))->toBe(1)
-        ->and(substr_count($js('owner-app.js'), "import { renderGifts, giftsClick, fetchGifts } from './gifts.js';"))->toBe(1)
+        ->and(substr_count($js('owner-app.js'), "import { renderGifts, giftsClick, fetchGifts, renderClicks, clicksClick, loadClicks } from './gifts.js';"))->toBe(1)
         ->and(substr_count($js('owner-app.js'), "else if (n === 'gifts') await renderGifts(view, route.id);"))->toBe(1)
         // The header's refresh icon (sync) re-reads the gifts while the screen is open, and only then.
         ->and(substr_count($js('owner-app.js'), "if (route.name === 'gifts' && can.gifts) jobs.push(fetchGifts(quiet, manual));"))->toBe(1)

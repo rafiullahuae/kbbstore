@@ -98,6 +98,7 @@ function dashSkel() {
     needs: '<section class="card att"><h4 class="sh">' + ln(25, 'k-h') + '</h4>' + need() + need() + '</section>',
     avg: tile, returning: tile,
     top: '<section class="card tp"><h4 class="sh">' + ln(45, 'k-h') + '</h4>' + times(3, perf) + '</section>',
+    quick: quick(),
   });
 }
 
@@ -113,13 +114,30 @@ const isTile = (k) => k === 'avg' || k === 'returning';
 function arrange(p) {
   const u = S.ui || {}, off = u.sections_off || [];
   const keys = (u.sections || SECTIONS).filter((k) => off.indexOf(k) === -1 && p[k] !== undefined);
-  let out = '';
+  // (2.60.629) The quick rows sit under the sales card, or first when it is off.
+  const q = p.quick || '';
+  let out = keys.indexOf('hero') === -1 ? q : '';
   for (let i = 0; i < keys.length; i++) {
-    if (!isTile(keys[i])) { out += p[keys[i]]; continue; }
+    if (!isTile(keys[i])) { out += p[keys[i]] + (keys[i] === 'hero' ? q : ''); continue; }
     const pair = isTile(keys[i + 1]);
     out += '<div class="tiles' + (pair ? '' : ' solo') + '">' + p[keys[i]] + (pair ? p[keys[++i]] : '') + '</div>';
   }
   return out;
+}
+
+/*
+ * (2.60.629) The owner: "I want the carts tracking and gifts and clicks on
+ * homepage of the owner app, under stats as thin rows. with separate pages
+ * each." Plain links, the same in the grey skeleton and the drawn screen, so
+ * they cost no request and nothing moves when the figures land. Each shows
+ * only to a role that may open it (the server refuses the rest anyway).
+ */
+function quick() {
+  const c = (S.me && S.me.can) || {}, row = (href, icon, t, sub) => '<a class="row qk" href="' + href + '"><span class="ico">' + ic(icon) + '</span><div class="rm"><b>' + t + '</b><small>' + sub + '</small></div>' + ic('chev', 'chev s') + '</a>';
+  const rows = (c.carts ? row('#/carts', 'cart', 'Cart tracking', 'Live carts and where shoppers left') : '')
+    + (c.gifts ? row('#/gifts', 'gift', 'Free gifts', 'Ranges, gift products and the mode') : '')
+    + (c.gifts ? row('#/clicks', 'chart', 'Gift box clicks', 'View all, Gifts Criteria, ranges, photos') : '');
+  return rows ? '<nav class="card qks" aria-label="Shortcuts">' + rows + '</nav>' : '';
 }
 
 function header() {
@@ -183,7 +201,7 @@ function body(d) {
   const avg = '<div class="card"><small>Avg. order · ' + esc(d.month_label) + '</small><b>' + esc(d.tiles.avg_order || '—') + '</b></div>';
   const returning = '<div class="card"><small>Returning customers</small><b>' + (d.tiles.returning_pct === null ? '—' : d.tiles.returning_pct + '%') + '</b></div>';
 
-  return arrange({ hero: hero(d), needs, avg, returning, top: topCard(d) });
+  return arrange({ hero: hero(d), needs, avg, returning, top: topCard(d), quick: quick() });
 }
 
 export function dashboardClick(e, view) {
@@ -388,6 +406,8 @@ export async function renderMore(view) {
   const go = (me.can.carts ? r('cart', 'Cart tracking', ch, 'Live carts, items and value', 'href="#/carts"') : '')
     // Free gifts (Lane OAG): Marketing -> Free gifts -> Ranges & gifts, for the phone.
     + (me.can.gifts ? r('gift', 'Free gifts', ch, 'Spend ranges, gift products and the mode', 'href="#/gifts"') : '')
+    // (2.60.629) Gift box clicks: its own screen.
+    + (me.can.gifts ? r('chart', 'Gift box clicks', ch, 'View all, Gifts Criteria, ranges and photos', 'href="#/clicks?from=more"') : '')
     + (me.can.customers && scr('customers') ? r('users', 'Customers', ch, '', 'href="#/customers"') : '')
     + (scr('notifications') ? r('bell', 'Notifications', ch, S.unread ? S.unread + ' unread' : 'All caught up', 'href="#/notifications"') : '')
     + (me.can.products && scr('products') ? r('stack', 'Low stock', ch, '', 'href="#/products?low"') : '');

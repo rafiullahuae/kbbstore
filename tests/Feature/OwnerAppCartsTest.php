@@ -157,7 +157,7 @@ it('is reachable from the app: More lists it first, the router draws it, nothing
     expect(substr_count($app, "import { renderCarts, cartsClick, fetchCarts } from './carts.js';"))->toBe(1)
         ->and(substr_count($app, "else if (n === 'carts') await renderCarts(view);"))->toBe(1)
         // (Lane OAG) Free gifts joined the list after it: carts stays in it.
-        ->and($app)->toContain("['customers', 'notifications', 'carts', 'gifts'].indexOf(route.name)");
+        ->and($app)->toContain("['customers', 'notifications', 'carts', 'gifts', 'clicks'].indexOf(route.name)");
 
     $carts = $js('carts.js');
     expect($carts)->not->toContain('setInterval')->not->toContain('setTimeout')

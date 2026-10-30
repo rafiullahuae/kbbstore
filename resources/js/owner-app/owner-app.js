@@ -47,7 +47,7 @@ import { offerPush } from './ask.js';
 import { offerBio } from './passkey.js';
 import { renderAnalytics, analyticsClick, stopAnalytics } from './analytics.js';
 import { renderCarts, cartsClick, fetchCarts } from './carts.js';
-import { renderGifts, giftsClick, fetchGifts } from './gifts.js';
+import { renderGifts, giftsClick, fetchGifts, renderClicks, clicksClick, loadClicks } from './gifts.js';
 
 /* The live check: 25 s unless Customise app sets 15–120 s, or switches it off (Lane OA4). */
 const pollMs = () => Math.max(15, Math.min(120, +(S.ui && S.ui.live_seconds) || 25)) * 1000;
@@ -154,6 +154,8 @@ function sync(manual, passive) {
   if (route.name === 'carts' && can.carts) jobs.push(fetchCarts(quiet, manual));
   // Free gifts (Lane OAG): likewise only while open; the refresh icon re-reads the ranges.
   if (route.name === 'gifts' && can.gifts) jobs.push(fetchGifts(quiet, manual));
+  // Gift box clicks (2.60.629): its own screen; the refresh icon re-reads it.
+  if (route.name === 'clicks' && can.gifts) jobs.push(loadClicks());
   if (id && route.name === 'orders' && can.orders && scr('orders')) jobs.push(fetchOrder(id, quiet));
   if (id && route.name === 'products' && can.products && scr('products')) jobs.push(fetchProduct(id, quiet));
   if (id && route.name === 'customers' && can.customers && scr('customers')) jobs.push(fetchCustomer(id, quiet));
@@ -263,7 +265,7 @@ async function show() {
   const prev = route.name;
   route = parse();
   if (offHere(route.name)) { const t = tabsOn()[0][0]; route = { name: t, id: 0, q: '' }; history.replaceState(null, '', '#/' + t); }
-  const tab = ['customers', 'notifications', 'carts', 'gifts'].indexOf(route.name) !== -1 ? 'more' : route.name;
+  const tab = ['customers', 'notifications', 'carts', 'gifts', 'clicks'].indexOf(route.name) !== -1 ? 'more' : route.name;
   $$('[data-tab]', root).forEach((t) => {
     const on = t.getAttribute('data-tab') === tab;
     t.classList.toggle('on', on);
@@ -283,6 +285,7 @@ async function show() {
   else if (n === 'analytics') await renderAnalytics(view);
   else if (n === 'carts') await renderCarts(view);
   else if (n === 'gifts') await renderGifts(view, route.id);
+  else if (n === 'clicks') await renderClicks(view, route.q);
   else await renderDashboard(view);
   badges();
 }
@@ -305,6 +308,7 @@ root.addEventListener('click', async (e) => {
     if (n === 'analytics' && analyticsClick(e)) return;
     if (n === 'carts' && await cartsClick(e, view)) return;
     if (n === 'gifts' && await giftsClick(e)) return;
+    if (n === 'clicks' && clicksClick(e)) return;
     if (n === 'more') await moreClick(e, view, gate);
   } catch (err) {
     if (!(err instanceof AuthError)) toast('That did not work. Try again.', true);
