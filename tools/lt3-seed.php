@@ -41,6 +41,7 @@ foreach (\App\Models\Brand::whereIn('name', array_keys($brandAr))->get() as $b) 
         ['value' => $brandAr[$b->name], 'status' => 'published', 'source' => 'manual', 'created_at' => now(), 'updated_at' => now()]);
 }
 (require base_path('database/migrations/2027_12_31_230000_arabic_new_products_31_october.php'))->up();
+(require base_path('database/migrations/2027_12_31_230100_arabic_short_descriptions_31_october.php'))->up();
 
 $sv->flush();
 \App\Models\Setting::flushMap();
