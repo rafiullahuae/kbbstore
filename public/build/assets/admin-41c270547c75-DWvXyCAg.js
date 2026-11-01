@@ -8784,9 +8784,15 @@
           return '<td style="text-align:right"><span class="pill ' + (p.stock_status === 'outofstock' ? 'red' : 'green') + '">' +
             sesc(cpStockLabel(p.stock_status)) + '</span></td>';
         }
+        /* Lane C: allowed to sell below zero and owing units -- a red minus
+           figure and/or an "On back order" pill, per Store -> Ecommerce ->
+           General -> Stock & back orders. */
+        var bo = p.backorder ? ((CP.data && CP.data.backorder_display) || 'both') : '';
         return '<td style="text-align:right"><span class="cplcell cplnum" data-cpfield="stock" data-cpid="' + p.id + '" ' +
           'data-cpvalue="' + p.stock + '" title="Click to edit">' +
-          (p.stock === 0 ? '<span class="pill red"><span class="d"></span>0</span>'
+          (bo ? (bo !== 'label' ? '<b class="cp-bo-n" style="color:#C8102E">' + (p.stock < 0 ? '\u2212' + Math.abs(p.stock) : p.stock) + '</b>' : '')
+              + (bo !== 'minus' ? ' <span class="pill red cp-bo">On back order</span>' : '')
+          : p.stock === 0 ? '<span class="pill red"><span class="d"></span>0</span>'
             : (p.low_stock ? '<span class="pill amber"><span class="d"></span>' + p.stock + '</span>' : p.stock)) +
           '</span></td>';
 

@@ -1153,6 +1153,13 @@
         + (isNew ? '' : '<p class="ct-note">This category and everything under it are not offered — a category cannot sit inside itself. '
           + 'Moving it rewrites the address of every sub-category too; each old address becomes a redirect.</p>')
       + '</div>'
+      /* 2.60.633: "Same products as brand" -- the owner: "We have Medicube
+         category and also brand, please equal these both". Brands load once,
+         after the dialog opens; a role that cannot list brands keeps the
+         current choice as it is (the key is only sent once the list loads). */
+      + '<div class="ct-fld"><label for="ct-mirror">Same products as brand</label>'
+        + '<select id="ct-mirror" disabled><option value="">' + (cat.mirror_brand_id ? 'Linked (loading brands…)' : '— none —') + '</option></select>'
+        + '<p class="ct-note">Every product of this brand is kept in this category, and a product here with no brand gets this one — on save, when a product changes brand, and once a day. Nothing is ever taken out.</p></div>'
       /* THE LIBRARY IS THE WAY IN, NOT A SECOND ONE.
          This field used to be a bare browser "Choose File" sitting next to the
          URL box, and it is the control in the owner's screenshot. A raw file
@@ -1301,6 +1308,21 @@
 
     wireHeaderPanel();
 
+    /* 2.60.633: the brands for "Same products as brand", once. */
+    (async function(){
+      var sel = document.getElementById('ct-mirror');
+      if (!sel) return;
+      try {
+        var r = await api('/brands');
+        var list = Array.isArray(r) ? r : (r && (r.brands || r.data)) || [];
+        var cur = cat.mirror_brand_id != null ? Number(cat.mirror_brand_id) : null;
+        sel.innerHTML = '<option value="">— none —</option>' + list.map(function(b){
+          return '<option value="' + esc(b.id) + '"' + (cur === Number(b.id) ? ' selected' : '') + '>' + esc(b.name) + '</option>';
+        }).join('');
+        if (document.body.contains(sel)) sel.disabled = false;
+      } catch (e) { /* keeps the current link; the key is not sent */ }
+    })();
+
     /* LANE S7 — the Google-result preview. `id` is null while creating, which
        is a supported state and not a gap: the preview then reads the Name and
        Address boxes on this very form, which is the moment the wording matters
@@ -1357,6 +1379,9 @@
            reach the server to delete the row. */
         translations: window.KBBArabic ? KBBArabic.collect(modal || document) : {}
       });
+
+      var mirror = document.getElementById('ct-mirror');
+      if (mirror && !mirror.disabled) payload.mirror_brand_id = mirror.value === '' ? null : parseInt(mirror.value, 10);
 
       if (!payload.name) { say('A category needs a name'); return; }
 

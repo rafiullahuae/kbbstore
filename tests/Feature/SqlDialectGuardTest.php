@@ -1178,6 +1178,8 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          */
         'admin-api/payments/reconcile/{run}' => 'needs a run built against a faked gateway; covered by PaymentReconciliationTest',
         'admin-api/payments/reconcile/{run}/findings' => 'same run, same coverage',
+        // 2.60.630: one row by primary key (id, payload) -- no join, no function, no dialect.
+        'admin-api/manual-orders/drafts/{id}' => 'single primary-key read of manual_order_drafts',
     ];
 
     $parameterised = [];

@@ -31,7 +31,7 @@ use Tests\Support\CatalogProductsAdminRoutes;
 use Tests\Support\OwnerAppRoutes as OA;
 use Tests\Support\ProductEditorRoutes;
 
-function scProduct(array $over = []): Product
+function sblProduct(array $over = []): Product
 {
     static $n = 0;
     $n++;
@@ -43,19 +43,19 @@ function scProduct(array $over = []): Product
     ], $over));
 }
 
-function scAdmin(string $role = 'owner'): AdminUser
+function sblAdmin(string $role = 'owner'): AdminUser
 {
     return AdminUser::create(['name' => 'SC '.$role, 'email' => 'sc-'.$role.'-'.uniqid().'@example.test', 'password' => 'secret-secret', 'role' => $role]);
 }
 
-function scClaim(Product $p, int $qty, ?ProductVariant $v = null): void
+function sblClaim(Product $p, int $qty, ?ProductVariant $v = null): void
 {
     DB::transaction(fn () => app(StockClaim::class)->claim([[
         'product_id' => (int) $p->id, 'variant_id' => $v?->id, 'quantity' => $qty, 'label' => (string) $p->name,
     ]], null));
 }
 
-function scOwnerApp($test): array
+function sblOwnerApp($test): array
 {
     OA::wire(app());
     \Illuminate\Support\Facades\RateLimiter::clear('owner-app-pin:127.0.0.1');
@@ -73,11 +73,11 @@ it('counts a product as low at its own level, and at the default when it has non
     // "fine" at 5 and a slow mask "low" at 5. MUTATION: drop the COALESCE in
     // StockLevels::lowSql() (compare to the default only) and A drops out of
     // the count while C comes in.
-    $a = scProduct(['stock' => 8, 'low_stock_amount' => 10]);   // own 10: low
-    $b = scProduct(['stock' => 4]);                              // default 5: low
-    $c = scProduct(['stock' => 4, 'low_stock_amount' => 2]);    // own 2: NOT low
-    scProduct(['stock' => 8]);                                   // default 5: not low
-    [$ck] = scOwnerApp($this);
+    $a = sblProduct(['stock' => 8, 'low_stock_amount' => 10]);   // own 10: low
+    $b = sblProduct(['stock' => 4]);                              // default 5: low
+    $c = sblProduct(['stock' => 4, 'low_stock_amount' => 2]);    // own 2: NOT low
+    sblProduct(['stock' => 8]);                                   // default 5: not low
+    [$ck] = sblOwnerApp($this);
 
     $list = OA::get($this, 'products?filter=low', $ck)->assertOk()->json();
     expect(collect($list['products'])->pluck('id')->sort()->values()->all())->toBe(collect([$a->id, $b->id])->sort()->values()->all())
@@ -95,10 +95,10 @@ it('counts a product as low at its own level in the admin catalogue, else at 15'
     // MUTATION: put `self::LOW_STOCK` back in place of LOW_SQL in
     // CatalogProductsApiController::applyFilter() and $own is missing.
     CatalogProductsAdminRoutes::wire(app());
-    test()->actingAs(scAdmin(), 'admin');
-    $own = scProduct(['stock' => 20, 'low_stock_amount' => 25]);   // own 25: low
-    $dflt = scProduct(['stock' => 10]);                             // default 15: low
-    scProduct(['stock' => 10, 'low_stock_amount' => 3]);            // own 3: NOT low
+    test()->actingAs(sblAdmin(), 'admin');
+    $own = sblProduct(['stock' => 20, 'low_stock_amount' => 25]);   // own 25: low
+    $dflt = sblProduct(['stock' => 10]);                             // default 15: low
+    sblProduct(['stock' => 10, 'low_stock_amount' => 3]);            // own 3: NOT low
 
     $r = test()->getJson('/admin-api/catalog-products-list?filter=low')->assertOk()->json();
     expect(collect($r['data'] ?? $r['products'] ?? $r['rows'])->pluck('id')->sort()->values()->all())
@@ -109,11 +109,11 @@ it('counts a product as low at its own level in the admin catalogue, else at 15'
 it('keeps the low-stock lists and Needs you at the same query count for 3 products and for 40', function (string $path) {
     // DEFECT: a per-product level read row by row. MUTATION: look the level up
     // with a query inside ProductsController::row() and this is red.
-    [$ck] = scOwnerApp($this);
+    [$ck] = sblOwnerApp($this);
     $count = function (int $n) use ($path, $ck) {
         Product::query()->where('slug', 'like', 'sc-p-%')->forceDelete();
         for ($i = 0; $i < $n; $i++) {
-            scProduct(['stock' => $i % 3 === 0 ? -2 : 3, 'low_stock_amount' => $i % 2 ? 4 : null, 'backorders' => $i % 3 === 0]);
+            sblProduct(['stock' => $i % 3 === 0 ? -2 : 3, 'low_stock_amount' => $i % 2 ? 4 : null, 'backorders' => $i % 3 === 0]);
         }
         OA::get($this, $path, $ck)->assertOk();
         DB::flushQueryLog();
@@ -130,11 +130,11 @@ it('keeps the low-stock lists and Needs you at the same query count for 3 produc
 
 it('keeps the admin catalogue list flat with levels and back orders', function () {
     CatalogProductsAdminRoutes::wire(app());
-    test()->actingAs(scAdmin(), 'admin');
+    test()->actingAs(sblAdmin(), 'admin');
     $count = function (int $n) {
         Product::query()->where('slug', 'like', 'sc-p-%')->forceDelete();
         for ($i = 0; $i < $n; $i++) {
-            scProduct(['stock' => $i % 3 === 0 ? -2 : 3, 'low_stock_amount' => $i % 2 ? 4 : null, 'backorders' => $i % 3 === 0]);
+            sblProduct(['stock' => $i % 3 === 0 ? -2 : 3, 'low_stock_amount' => $i % 2 ? 4 : null, 'backorders' => $i % 3 === 0]);
         }
         test()->getJson('/admin-api/catalog-products-list?per_page=50')->assertOk();
         DB::flushQueryLog();
@@ -151,8 +151,8 @@ it('keeps the admin catalogue list flat with levels and back orders', function (
 
 it('saves a product\'s own low-stock level from the admin editor, and empties it back to the default', function () {
     ProductEditorRoutes::wire(app());
-    test()->actingAs(scAdmin(), 'admin');
-    $p = scProduct();
+    test()->actingAs(sblAdmin(), 'admin');
+    $p = sblProduct();
 
     test()->postJson('/admin-api/product-editor-save/'.$p->id, ['low_stock_amount' => 7])->assertOk()
         ->assertJsonPath('product.low_stock_amount', 7);
@@ -167,8 +167,8 @@ it('saves the level from the owner app, and refuses it behind edit_stock and the
     // DEFECT: a new field outside the owner app's function switch. MUTATION:
     // drop 'low_stock_amount' from OwnerAppUiGate::PRODUCT_FIELDS and the
     // switched-off save goes through.
-    $p = scProduct();
-    [$ck, $csrf] = scOwnerApp($this);
+    $p = sblProduct();
+    [$ck, $csrf] = sblOwnerApp($this);
 
     OA::post($this, 'products/'.$p->id, ['low_stock_amount' => 9], $ck, $csrf)->assertOk()->assertJsonPath('product.low_stock_amount', 9);
     expect(Product::query()->find($p->id)->low_stock_amount)->toBe(9);
@@ -183,8 +183,8 @@ it('saves the level from the owner app, and refuses it behind edit_stock and the
 
 it('refuses the new fields to an admin without catalog.manage', function () {
     ProductEditorRoutes::wire(app());
-    test()->actingAs(scAdmin('support'), 'admin');
-    $p = scProduct();
+    test()->actingAs(sblAdmin('support'), 'admin');
+    $p = sblProduct();
 
     test()->postJson('/admin-api/product-editor-save/'.$p->id, ['low_stock_amount' => 3, 'stock_status' => 'onbackorder'])->assertStatus(403);
     $fresh = Product::query()->find($p->id);
@@ -198,8 +198,8 @@ it('keeps a back-ordered product on sale when "Allow back orders" is saved at ze
     // product to out of stock." The owner app saved 'onbackorder' and the cart
     // refused it. MUTATION: store the posted stock_status as-is in
     // ProductEditorApiController::apply() and add-to-bag answers 422.
-    $p = scProduct(['stock' => 3]);
-    [$ck, $csrf] = scOwnerApp($this);
+    $p = sblProduct(['stock' => 3]);
+    [$ck, $csrf] = sblOwnerApp($this);
 
     OA::post($this, 'products/'.$p->id, ['manage_stock' => true, 'stock' => 0, 'stock_status' => 'onbackorder'], $ck, $csrf)->assertOk()
         ->assertJsonPath('product.stock_status', 'onbackorder')
@@ -214,12 +214,12 @@ it('keeps a back-ordered product on sale when "Allow back orders" is saved at ze
 it('lets an order take a back-ordered product to 0 and below, and never marks it out of stock', function () {
     // MUTATION: drop the `if ($backorders)` branch in StockClaim::takeFromShelf()
     // and the second claim throws "is sold out".
-    $p = scProduct(['stock' => 1, 'backorders' => true]);
+    $p = sblProduct(['stock' => 1, 'backorders' => true]);
 
-    scClaim($p, 1);
+    sblClaim($p, 1);
     expect(Product::query()->find($p->id)->stock)->toBe(0)->and(Product::query()->find($p->id)->stock_status)->toBe('instock');
 
-    scClaim($p, 2);
+    sblClaim($p, 2);
     $fresh = Product::query()->find($p->id);
     expect($fresh->stock)->toBe(-2)->and($fresh->stock_status)->toBe('instock');
 
@@ -228,11 +228,11 @@ it('lets an order take a back-ordered product to 0 and below, and never marks it
 });
 
 it('does the same for a variant that counts its own stock', function () {
-    $p = scProduct(['type' => 'variable', 'manage_stock' => false, 'stock' => null]);
+    $p = sblProduct(['type' => 'variable', 'manage_stock' => false, 'stock' => null]);
     $v = ProductVariant::query()->create(['product_id' => $p->id, 'sku' => 'SC-V-'.uniqid(), 'price' => 9900,
         'manage_stock' => true, 'stock' => 0, 'stock_status' => 'instock', 'backorders' => true]);
 
-    scClaim($p, 3, $v);
+    sblClaim($p, 3, $v);
     $fresh = ProductVariant::query()->find($v->id);
     expect($fresh->stock)->toBe(-3)->and($fresh->stock_status)->toBe('instock');
 });
@@ -240,12 +240,12 @@ it('does the same for a variant that counts its own stock', function () {
 it('still takes a product WITHOUT back orders out of stock, and refuses what the shelf cannot cover', function () {
     // The half that must not move. MUTATION: default $backorders to true in
     // takeFromShelf() and this is red.
-    $p = scProduct(['stock' => 2]);
+    $p = sblProduct(['stock' => 2]);
 
-    expect(fn () => scClaim($p, 3))->toThrow(StockUnavailable::class);
+    expect(fn () => sblClaim($p, 3))->toThrow(StockUnavailable::class);
     expect(Product::query()->find($p->id)->stock)->toBe(2);
 
-    scClaim($p, 2);
+    sblClaim($p, 2);
     $fresh = Product::query()->find($p->id);
     expect($fresh->stock)->toBe(0)->and($fresh->stock_status)->toBe('outofstock')->and($fresh->backorders)->toBeFalse();
     test()->postJson('/api/cart/add', ['product_id' => $p->id, 'quantity' => 1])->assertStatus(422);
@@ -253,8 +253,8 @@ it('still takes a product WITHOUT back orders out of stock, and refuses what the
 
 it('refuses a negative stock figure unless the product allows back orders', function () {
     ProductEditorRoutes::wire(app());
-    test()->actingAs(scAdmin(), 'admin');
-    $p = scProduct();
+    test()->actingAs(sblAdmin(), 'admin');
+    $p = sblProduct();
 
     test()->postJson('/admin-api/product-editor-save/'.$p->id, ['stock' => -3, 'stock_status' => 'instock'])->assertStatus(422);
     test()->postJson('/admin-api/product-editor-save/'.$p->id, ['stock' => -3, 'stock_status' => 'onbackorder', 'manage_stock' => true])->assertOk()
@@ -267,7 +267,7 @@ it('refuses a negative stock figure unless the product allows back orders', func
 
 it('converts every row stored as onbackorder into a sellable back order on migrate', function () {
     // The DEFAULT that moved, because he asked: those products were sold out.
-    $p = scProduct(['stock' => 0]);
+    $p = sblProduct(['stock' => 0]);
     DB::table('products')->where('id', $p->id)->update(['stock_status' => 'onbackorder', 'backorders' => false]);
 
     (require database_path('migrations/2028_01_02_100000_product_backorders_low_stock.php'))->up();
@@ -286,8 +286,8 @@ it('shows a back-ordered product as a red minus figure and/or "On back order", p
     if ($how !== '') {
         app(SettingsService::class)->set(StockLevels::DISPLAY_KEY, $how);
     }
-    $p = scProduct(['stock' => -3, 'backorders' => true]);
-    [$ck] = scOwnerApp($this);
+    $p = sblProduct(['stock' => -3, 'backorders' => true]);
+    [$ck] = sblOwnerApp($this);
 
     $list = OA::get($this, 'products', $ck)->json();
     $row = collect($list['products'])->firstWhere('id', $p->id);
@@ -296,7 +296,7 @@ it('shows a back-ordered product as a red minus figure and/or "On back order", p
         ->and($list['backorder_display'])->toBe($how === '' ? 'both' : $how);
 
     CatalogProductsAdminRoutes::wire(app());
-    test()->actingAs(scAdmin(), 'admin');
+    test()->actingAs(sblAdmin(), 'admin');
     $cat = test()->getJson('/admin-api/catalog-products-list')->assertOk()->json();
     $crow = collect($cat['data'] ?? $cat['products'] ?? $cat['rows'])->firstWhere('id', $p->id);
     expect($crow['backorder'])->toBeTrue()->and($crow['stock'])->toBe(-3)
@@ -326,7 +326,7 @@ it('draws the red figure and the label in the admin list, the editor and the own
 it('does not tell the owner app a back-ordered product is out of stock', function () {
     // DEFECT: an order taking a back-order shelf below zero raised
     // "Out of stock: …" on the owner's phone for a product still on sale.
-    $p = scProduct(['stock' => 0, 'backorders' => true]);
+    $p = sblProduct(['stock' => 0, 'backorders' => true]);
     \App\Services\OwnerApp\OwnerAppEvents::stockChanged((int) $p->id, (string) $p->name, 1, -1, true, null, true);
 
     $types = DB::table('owner_app_events')->where('ref_id', $p->id)->pluck('title')->all();

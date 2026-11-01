@@ -268,3 +268,13 @@
 .ctk-gb span b{font-weight:800}
 .ctk-gb span.g{background:#e7f7ee;color:#0b6e3a}
 .ctk-gb svg{width:12px;height:12px;flex:none}
+/* (Lane B) The free gifts a cart got (its order) or would get (its value now). */
+.ctk-fg{display:flex;align-items:flex-start;gap:5px;margin-top:6px;font-size:11.5px;line-height:1.4;color:#a12d4f}
+.ctk-fg svg{width:12px;height:12px;flex:none;margin-top:2px}
+.ctk-fg b{font-weight:750}
+.ctk-fg.would{color:#7a5a12}
+.ctk-fg.none{color:var(--ink-soft)}
+.ctk-fgl{list-style:none;margin:0;padding:0}
+.ctk-fgl li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--line,#eee);font-size:13px}
+.ctk-fgl li:first-child{border-top:0}
+.ctk-fgl li b{font-variant-numeric:tabular-nums}

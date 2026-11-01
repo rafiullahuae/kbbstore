@@ -376,6 +376,31 @@
     }).join('') + '</div>';
   }
 
+  /* (Lane B) The free gifts on this cart: "Got" -- the gift lines on its
+     order -- or "Would get" -- the band its basket value is in today. From
+     the cart row (two batched reads for the whole page): no extra request.
+     Every name passes through esc(). */
+  var FG_WORD = { got: 'Got', would: 'Would get' };
+  function freebiesHtml(f) {
+    if (!f) return '';
+    if (f.state === 'none') return f.hint ? '<div class="ctk-fg none" title="Free gifts">' + GIFT_ICON + '<span>No gifts yet — ' + esc(f.hint) + '</span></div>' : '';
+    if (!f.items || !f.items.length) return '';
+    return '<div class="ctk-fg ' + (f.state === 'got' ? 'got' : 'would') + '" title="' + (f.state === 'got' ? 'Free gifts on the order' : 'Free gifts this basket would get' + (f.range ? ' (' + esc(f.range) + ')' : '')) + '">' + GIFT_ICON
+      + '<span><b>' + (FG_WORD[f.state] || '') + ':</b> ' + f.items.map(function (l) { return num(l.qty) + '× ' + esc(l.name); }).join(', ') + '</span></div>';
+  }
+  function freebiesCard(f) {
+    var body;
+    if (f && f.state !== 'none' && f.items && f.items.length) {
+      body = '<p class="ctk-note">' + (f.state === 'got' ? 'On the order, as placed.' : 'What this basket would get at its value now' + (f.range ? ' — ' + esc(f.range) : '') + '.') + '</p>'
+        + '<ul class="ctk-fgl">' + f.items.map(function (l) { return '<li><span>' + esc(l.name) + '</span><b>×' + num(l.qty) + '</b></li>'; }).join('') + '</ul>';
+    } else if (f && f.hint) {
+      body = '<p class="ctk-note">No gifts yet — ' + esc(f.hint) + '.</p>';
+    } else {
+      body = '<p class="ctk-note">No free gifts on this cart.</p>';
+    }
+    return '<div class="ctk-card ctk-sec"><h4>Free gifts</h4>' + body + '</div>';
+  }
+
   function funnelTile(f, exits) {
     if (!f || !f.length) return '';
     var top = f[0].carts || 0;
@@ -404,7 +429,7 @@
       + '<td class="c-chk" data-stop><input type="checkbox" class="ctk-chk" data-ctk-sel="' + r.id + '"' + (st.sel[r.id] ? ' checked' : '') + ' aria-label="Select cart ' + r.id + '"></td>'
       + '<td class="c-id"><span class="ctk-id">#' + r.id + '</span>' + (r.status === 'merged' ? ' <span class="ctk-pill mute">merged</span>' : '') + '</td>'
       + '<td class="c-when ctk-when">' + esc(when(r.last)) + '<small>' + esc(ago(r.last)) + '</small></td>'
-      + '<td class="c-prod" data-l="Products">' + (prodList(r.products) || '<span class="ctk-more">Empty now</span>') + '</td>'
+      + '<td class="c-prod" data-l="Products">' + (prodList(r.products) || '<span class="ctk-more">Empty now</span>') + freebiesHtml(r.freebies) + '</td>'
       + '<td class="c-who" data-l="Customer / IP">' + whoHtml(r) + '</td>'
       + '<td class="c-bot">' + botHtml(r) + '</td>'
       + '<td class="c-rem"' + (r.removed.length ? ' data-l="Removed"' : '') + '>' + prodList(r.removed, 'ctk-rem') + '</td>'
@@ -633,6 +658,8 @@
 
       + '<div class="ctk-card ctk-sec"><h4>In the cart now</h4>' + (prodList(c.products) || '<p class="ctk-note">Empty.</p>')
       + (c.removed.length ? '<h4 style="margin-top:14px">Taken out</h4>' + prodList(c.removed, 'ctk-rem') : '') + '</div>'
+
+      + freebiesCard(c.freebies)
 
       + '<div class="ctk-card ctk-sec"><h4>Free gift box</h4>' + (c.gifts && c.gifts.total ? giftsHtml(c.gifts) + '<p class="ctk-note" style="margin-top:8px">' + Number(c.gifts.total) + ' tap' + (c.gifts.total === 1 ? '' : 's') + ' on the gift box. Which range they looked at, and where, is in the Journey below.</p>' : '<p class="ctk-note">No taps on the gift box yet. Counted from update 2.60.627 on.</p>') + '</div>'
 
