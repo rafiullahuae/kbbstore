@@ -72,6 +72,9 @@ it('carries exactly the drafts and corrections the classes hold', function () {
     // Tabby title): 2027_11_09_200000 carries it, and ArabicCheckoutPolishTest
     // pins that copy to this class.
     unset($want['store.wording.pay_tabby_installments']);
+    // And wording.msg_cod_unavailable (Lane CODR, 1 November 2026): carried
+    // by 2028_01_03_100050, and CodRefusalsTest pins that copy to this class.
+    unset($want['store.wording.msg_cod_unavailable']);
     expect($rows)->toBe($want);
 
     $fixes = shipConst(base_path('database/migrations/2027_11_02_100100_correct_lane_ar2_arabic_drafts.php'), 'FIXES');

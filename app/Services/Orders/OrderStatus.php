@@ -345,6 +345,14 @@ class OrderStatus
             $order->refresh();
         }
 
+        // (Lane CODR) Refused deliveries: shipped -> cancelled records one,
+        // leaving cancelled removes it, completed lifts the customer's. After
+        // the commit, never inside it, and it cannot throw: a status change
+        // must never fail on this. Every other transition returns at once.
+        if ($from !== null && $from !== $to) {
+            app(\App\Services\Payments\CodRefusals::class)->transitioned($id, $from, $to);
+        }
+
         return $from;
     }
 

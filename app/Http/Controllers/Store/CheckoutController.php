@@ -605,6 +605,16 @@ class CheckoutController extends Controller
             if ($reason !== null) {
                 return $this->refused($request, $reason);
             }
+
+            // (Lane CODR) A shopper who refused a dispatched order: the billing
+            // email and phone and the signed-in account, one query. The refusal
+            // sets the session flag, so the list stops offering COD from here
+            // on. Ahead of the generic check below for its own sentence -- once
+            // the flag is set gateways() has already dropped cod.
+            if (app(\App\Services\Payments\CodRefusals::class)
+                    ->refusesAtPlace($request, $data['billing_email'] ?? null, $data['billing_phone'] ?? null)) {
+                return $this->refused($request, __('store.wording.msg_cod_unavailable'));
+            }
         }
 
         // Generalised from the COD-only check that stood here. The reasoning
@@ -2494,7 +2504,10 @@ class CheckoutController extends Controller
             ->checkoutList($totalFils, $country);
 
         if ($list !== []) {
-            return $list;
+            // (Lane CODR) COD out for a refuser: this session was refused it,
+            // or the signed-in account is blocked. Untouched, and no query,
+            // for everyone else. Every redraw comes through here.
+            return app(\App\Services\Payments\CodRefusals::class)->filterCheckoutList($list, request());
         }
 
         $cod = (int) $this->settings->get('cod_fee', 0);
@@ -2512,7 +2525,9 @@ class CheckoutController extends Controller
         // Lane PCY: the safe floor respects the owner's countries too.
         $codAllowed = $codAllowed && app(\App\Services\Payments\GatewayCountries::class)->allows('cod', $country);
 
-        return (! $codRowExists && $codAllowed)
+        // (Lane CODR) and not for a shopper who refused a dispatched order.
+        return (! $codRowExists && $codAllowed
+                && ! app(\App\Services\Payments\CodRefusals::class)->hiddenForShopper(request()))
             ? [[
                 'id' => 'cod', 'title' => 'Cash on delivery',
                 'description' => $cod > 0 ? 'Pay in cash to the courier. A small ' . \App\Support\Money::format($cod) . ' handling fee applies.' : null,

@@ -330,6 +330,15 @@ class CheckoutController extends Controller
                         && \App\Models\PaymentProvider::whereKey('cod')->exists()) {
                     return response()->json(['ok' => false, 'error' => __('store.wording.msg_cod_na')], 422);
                 }
+
+                // (Lane CODR) A shopper who refused a dispatched order, by the
+                // email and phone this order is placed under. One query.
+                if (app(\App\Services\Payments\CodRefusals::class)->blocks(
+                    $data['customer']['email'] ?? null,
+                    $data['customer']['phone'] ?? null,
+                )) {
+                    return response()->json(['ok' => false, 'error' => __('store.wording.msg_cod_unavailable')], 422);
+                }
             }
 
             // The same gate the storefront checkout applies, applied here too.

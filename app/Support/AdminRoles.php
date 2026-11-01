@@ -247,6 +247,8 @@ final class AdminRoles
             'emails.review_requests' => 'Review request email: when it goes, which orders and products, and its report',
         ]],
         ['shipping', 'Shipping & payments', [
+            'codrefusals.view' => 'Refused deliveries: see who cash on delivery is hidden from',
+            'codrefusals.manage' => 'Refused deliveries: switch it on or off, and allow cash on delivery again',
             'store.shipping' => 'Shipping rates and rules',
             'payments.manage' => 'Payment gateways and their keys',
             'payments.stripe_webhook' => 'Stripe: see webhook status and set the webhook up automatically',

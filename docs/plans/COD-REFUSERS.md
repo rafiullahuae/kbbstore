@@ -1,5 +1,15 @@
 # Hide Cash on Delivery from shoppers who refused a dispatched order
 
+> **Built (Lane CODR), with two changes to the plan below.** No IP matching at
+> all — email and phone only, because UAE carriers share addresses and real
+> customers would be hit. And no check while a guest types: the checkout's
+> email capture stays an identical 204 for every address, so nothing public can
+> say whether someone is blocked. A signed-in refuser never sees COD; a guest
+> refuser is refused on Place order and COD is then hidden for that session.
+> Table `cod_refusals`; service `App\Services\Payments\CodRefusals`; admin at
+> Store → Payments → Cash on delivery → Refused deliveries; tests in
+> `tests/Feature/CodRefusalsTest.php`. The plan as first written follows.
+
 Owner, 1 November 2026: hide COD from anyone whose order was **shipped and then
 cancelled** because they would not accept it at the door. Skip anyone who has at
 least one **completed** order. Match them by email, phone and IP. Status: **plan,

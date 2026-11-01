@@ -601,6 +601,11 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // its address and contents. marketing.feed, owner and manager.
         require __DIR__.'/merchant-feed-admin.php';
 
+        // Store → Payments → Cash on delivery → Refused deliveries (Lane CODR).
+        // Customers' emails and phones: this guarded group only.
+        // codrefusals.view / codrefusals.manage, owner.
+        require __DIR__.'/cod-refusals-admin.php';
+
         // Growth & Marketing → Free gifts (Lane FG): spend ranges, their gifts,
         // the gift-only flag, display and texts. freegifts.view / freegifts.manage.
         require __DIR__.'/free-gifts-admin.php';

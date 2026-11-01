@@ -11074,6 +11074,10 @@
        straight back — see the note on payStripeStatus() for what that cost. */
     var connHost=document.getElementById('pay_conn_stripe');
     if(connHost && !connHost.dataset.painted) payStripeStatus();
+    /* (Lane CODR) Refused deliveries: partials/cod-refusals-panel finds its
+       own gateway's card and adds its section once per painted pane. This
+       screen names no gateway, so it only hands over the console's helpers. */
+    if(window.kbbCodRefusals) window.kbbCodRefusals({api:api,esc:sesc,toast:toast,openOrder:renderOrderDetail});
 
     document.querySelectorAll('[data-paycheck]').forEach(function(b){
       b.addEventListener('click', function(){ payPreflight(b.getAttribute('data-paycheck')); });

@@ -143,6 +143,12 @@ final class AdminCapabilities
         // COD orders, so we need to block those users".
         'carttracking.view' => ['owner', 'manager'],
         'carttracking.block' => ['owner', 'manager'],
+        // Store -> Payments -> Cash on delivery -> Refused deliveries (Lane
+        // CODR). Customers who refused a dispatched order, by email and phone.
+        // `view` reads the list; `manage` flips the switch and allows COD
+        // again. Owner only, like the Payments screen it sits on.
+        'codrefusals.view' => ['owner'],
+        'codrefusals.manage' => ['owner'],
         // Store -> SEO Keywords (Lane KW). Reading the keyword bank and each
         // page's keywords is a manager's job as much as the owner's; changing
         // what the storefront publishes -- a sync, an undo, a hand edit, the
@@ -2140,6 +2146,9 @@ final class AdminCapabilities
         ['GET', 'admin-api/cart-tracking', 'carttracking.view'],
         ['GET', 'admin-api/cart-tracking/**', 'carttracking.view'],
         ['*', 'admin-api/cart-tracking/**', 'carttracking.block'],
+        // (Lane CODR) Refused deliveries. The GET reads; every other verb writes.
+        ['GET', 'admin-api/cod-refusals', 'codrefusals.view'],
+        ['*', 'admin-api/cod-refusals/**', 'codrefusals.manage'],
         /*
          * Store -> SEO Keywords -- routes/seo-keywords-admin.php, Lane KW.
          * Reads first, then every other verb on the same prefix: the order is

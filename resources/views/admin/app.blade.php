@@ -24607,6 +24607,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
        straight back — see the note on payStripeStatus() for what that cost. */
     var connHost=document.getElementById('pay_conn_stripe');
     if(connHost && !connHost.dataset.painted) payStripeStatus();
+    /* (Lane CODR) Refused deliveries: partials/cod-refusals-panel finds its
+       own gateway's card and adds its section once per painted pane. This
+       screen names no gateway, so it only hands over the console's helpers. */
+    if(window.kbbCodRefusals) window.kbbCodRefusals({api:api,esc:sesc,toast:toast,openOrder:renderOrderDetail});
 
     document.querySelectorAll('[data-paycheck]').forEach(function(b){
       b.addEventListener('click', function(){ payPreflight(b.getAttribute('data-paycheck')); });
@@ -25422,6 +25426,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 @include('admin.partials.site-app-screen')
 {{-- Store -> Uncaptured orders: Tabby authorised-but-never-captured orders, Capture per row (reuses the settlement capture endpoint). Wraps window.go for 'tabbycaptures'; its sidebar row is AdminNav's late entry. --}}
 @include('admin.partials.uncaptured-orders-screen')
+@include('admin.partials.cod-refusals-panel')
 {{-- Catalog -> New Arrivals (Lane NA): the rule that keeps the New Arrivals collection, and Display's grid to exclude and reorder. Wraps window.go for 'newarrivals'; its sidebar row is AdminNav's late entry. --}}
 @include('admin.partials.new-arrivals-screen')
 {{-- Catalog -> Translate & categorise (Lane LT): the newest products into Arabic (Claude API drafts, HTML checked tag-for-tag), review side by side, Approve all, and skin-concern suggestions. Wraps window.go for 'recentlocalise'; its sidebar row is AdminNav's late entry. --}}
