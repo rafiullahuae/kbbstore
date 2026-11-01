@@ -139,6 +139,18 @@ Schedule::command('payments:tabby-capture')
 | `order_emails`, so both running is harmless. Costs two indexed queries a
 | minute when nothing is due.
 */
+/*
+| ── CATEGORIES THAT MIRROR A BRAND (2.60.633) ───────────────────────────────
+|
+| Catalog -> Categories -> "Same products as brand". A product save and a
+| category save already keep them level; this catches what moved another way
+| (an import, a bulk edit). Two set-based statements per linked category.
+*/
+Schedule::call(static fn () => \App\Services\CategoryBrandSync::sync())
+    ->name('kbb:category-brand-sync')
+    ->dailyAt('03:17')
+    ->withoutOverlapping(30);
+
 Schedule::command('kbb:order-reminders')
     ->everyMinute()
     ->withoutOverlapping(5);

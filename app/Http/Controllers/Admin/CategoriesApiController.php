@@ -87,6 +87,8 @@ class CategoriesApiController extends Controller
             ->when($subProducts, static fn ($q) => $q->addSelect('categories.'.CategoryRollup::COLUMN))
             // Lane CB: the category banner's own layout, once its column exists.
             ->when(\App\Support\BrandPanel::columnReady('categories'), static fn ($q) => $q->addSelect('categories.header_layout'))
+            // 2.60.633: "Same products as brand", once its column exists.
+            ->when(\App\Services\CategoryBrandSync::ready(), static fn ($q) => $q->addSelect('categories.'.\App\Services\CategoryBrandSync::COLUMN))
             // The headline count, and it has to agree with the archive page.
             //
             // It did not. This subquery filtered on `deleted_at IS NULL` alone,
@@ -299,12 +301,17 @@ class CategoriesApiController extends Controller
             }
         });
 
+        // 2.60.633: a category that mirrors a brand is brought level at once.
+        $brandSync = $category->fresh()?->getAttribute(\App\Services\CategoryBrandSync::COLUMN) !== null
+            ? \App\Services\CategoryBrandSync::sync((int) $category->id) : null;
+
         $this->flushStorefrontCaches();
 
         return response()->json([
             'ok' => true,
             'category' => $category->fresh(),
             'redirects' => $this->movedPaths($before),
+            'brand_sync' => $brandSync,
         ]);
     }
 
@@ -794,6 +801,8 @@ class CategoriesApiController extends Controller
              * leave the choice alone.
              */
             SoldOut::COLUMN => ['sometimes', 'nullable', 'string', Rule::in(SoldOut::MODES)],
+            // 2.60.633: "Same products as brand" ('' / null = none). OPTIONAL like the header keys.
+            \App\Services\CategoryBrandSync::COLUMN => ['sometimes', 'nullable', 'integer', Rule::exists('brands', 'id')],
             // 2.60.501: the category's own starting order ('' = shop default).
             \App\Support\CategoryOrder::COLUMN => ['sometimes', 'nullable', 'string', Rule::in(\App\Support\CategoryOrder::MODES)],
             /*

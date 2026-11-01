@@ -63,6 +63,14 @@ class Product extends Model
         });
         static::deleted(static fn () => \App\Support\SearchSpelling::flush());
 
+        // (2.60.633) A category that mirrors a brand takes in this product the
+        // moment it is created with, or moved to, that brand.
+        static::saved(static function (self $p): void {
+            if (($p->wasRecentlyCreated || $p->wasChanged('brand_id')) && $p->brand_id !== null) {
+                \App\Services\CategoryBrandSync::forProduct((int) $p->getKey(), (int) $p->brand_id);
+            }
+        });
+
         // A product moved to another brand has no place in that brand's order
         // yet: it joins the end of it rather than carrying the old brand's
         // number in. (Lane SO; App\Support\ScopeOrder.)
