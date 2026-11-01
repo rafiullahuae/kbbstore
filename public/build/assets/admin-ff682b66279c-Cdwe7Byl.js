@@ -378,16 +378,9 @@
 
   /* (Lane B) The free gifts on this cart: "Got" -- the gift lines on its
      order -- or "Would get" -- the band its basket value is in today. From
-     the cart row (two batched reads for the whole page): no extra request.
+     the cart's own page only (2.60.634, the owner: "we don't need it in the
+     list") -- the list reads none of it.
      Every name passes through esc(). */
-  var FG_WORD = { got: 'Got', would: 'Would get' };
-  function freebiesHtml(f) {
-    if (!f) return '';
-    if (f.state === 'none') return f.hint ? '<div class="ctk-fg none" title="Free gifts">' + GIFT_ICON + '<span>No gifts yet — ' + esc(f.hint) + '</span></div>' : '';
-    if (!f.items || !f.items.length) return '';
-    return '<div class="ctk-fg ' + (f.state === 'got' ? 'got' : 'would') + '" title="' + (f.state === 'got' ? 'Free gifts on the order' : 'Free gifts this basket would get' + (f.range ? ' (' + esc(f.range) + ')' : '')) + '">' + GIFT_ICON
-      + '<span><b>' + (FG_WORD[f.state] || '') + ':</b> ' + f.items.map(function (l) { return num(l.qty) + '× ' + esc(l.name); }).join(', ') + '</span></div>';
-  }
   function freebiesCard(f) {
     var body;
     if (f && f.state !== 'none' && f.items && f.items.length) {
@@ -429,7 +422,7 @@
       + '<td class="c-chk" data-stop><input type="checkbox" class="ctk-chk" data-ctk-sel="' + r.id + '"' + (st.sel[r.id] ? ' checked' : '') + ' aria-label="Select cart ' + r.id + '"></td>'
       + '<td class="c-id"><span class="ctk-id">#' + r.id + '</span>' + (r.status === 'merged' ? ' <span class="ctk-pill mute">merged</span>' : '') + '</td>'
       + '<td class="c-when ctk-when">' + esc(when(r.last)) + '<small>' + esc(ago(r.last)) + '</small></td>'
-      + '<td class="c-prod" data-l="Products">' + (prodList(r.products) || '<span class="ctk-more">Empty now</span>') + freebiesHtml(r.freebies) + '</td>'
+      + '<td class="c-prod" data-l="Products">' + (prodList(r.products) || '<span class="ctk-more">Empty now</span>') + '</td>'
       + '<td class="c-who" data-l="Customer / IP">' + whoHtml(r) + '</td>'
       + '<td class="c-bot">' + botHtml(r) + '</td>'
       + '<td class="c-rem"' + (r.removed.length ? ' data-l="Removed"' : '') + '>' + prodList(r.removed, 'ctk-rem') + '</td>'

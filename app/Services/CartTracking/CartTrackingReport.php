@@ -488,7 +488,7 @@ final class CartTrackingReport
      *
      * @param  list<object>  $rows
      */
-    private function present(array $rows, int $threshold): array
+    private function present(array $rows, int $threshold, bool $withFreebies = false): array
     {
         if ($rows === []) {
             return [];
@@ -534,9 +534,10 @@ final class CartTrackingReport
 
         $emails = DB::table('cart_recoveries')->whereIn('cart_id', $ids)->pluck('email', 'cart_id');
 
-        // (Lane B) The free gifts each cart gets: at most one read for the
-        // gifts on this page's orders and one for the open carts' gift names.
-        $freebies = $this->freebies($rows, $orderIds);
+        // (Lane B) The free gifts a cart gets: on its own page only. The
+        // owner, 2.60.634: "we don't need it in the list, we need it in the
+        // cart details when we click" -- so the list reads none of it.
+        $freebies = $withFreebies ? $this->freebies($rows, $orderIds) : [];
 
         $settings = $this->settings->all();
         $out = [];
@@ -591,6 +592,23 @@ final class CartTrackingReport
      * @param  list<int>  $orderIds
      * @return array<int, array{state:string,range:?string,items:list<array{name:string,qty:int}>,hint:?string}>
      */
+    /**
+     * One cart's free gifts, for the owner app's cart sheet (2.60.634): the
+     * same answer as the console's cart page, read when the sheet opens.
+     *
+     * @return array{state:string,range:?string,items:list<array{name:string,qty:int}>,hint:?string}|null
+     */
+    public function freebiesFor(int $id): ?array
+    {
+        $r = DB::table('carts as c')->where('c.id', $id)->first(['c.id', 'c.ct_order_id', 'c.ct_value', 'c.ct_ip', 'c.ct_country']);
+
+        if ($r === null) {
+            return null;
+        }
+
+        return $this->freebies([$r], $r->ct_order_id === null ? [] : [(int) $r->ct_order_id])[(int) $r->id] ?? null;
+    }
+
     private function freebies(array $rows, array $orderIds): array
     {
         $out = [];
@@ -833,7 +851,7 @@ final class CartTrackingReport
 
         $threshold = (int) $this->settings->get('bot_threshold');
         $settings = $this->settings->all();
-        $row = $this->present([$r], $threshold)[0];
+        $row = $this->present([$r], $threshold, withFreebies: true)[0];
 
         $events = DB::table('cart_events')->where('cart_id', $id)->orderBy('id')->limit(500)
             ->get(['id', 'type', 'product_id', 'variant_id', 'qty', 'qty_after', 'unit_price', 'ip', 'country', 'created_at']);

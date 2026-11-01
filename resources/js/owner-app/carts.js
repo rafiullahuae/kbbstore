@@ -18,16 +18,9 @@ const gifts = (g) => (g && g.total
   ? '<span class="ct-gb">' + GIFT_KEYS.filter(([k]) => g[k] > 0).map(([k, l]) => '<span class="tag">' + esc(l) + ' ×' + fmt(g[k]) + '</span>').join('') + '</span>'
   : '');
 /* (Lane B) The free gifts on this cart: "Got" (the gift lines on its order)
-   or "Would get" (the band its value is in now). From the cart row itself --
-   no request of its own. Every name passes through esc(). */
-const FG_WORD = { got: 'Got', would: 'Would get' };
-const freebies = (f) => {
-  if (!f) return '';
-  if (f.state === 'none') return f.hint ? '<small class="ct-fg none">No gifts yet · ' + esc(f.hint) + '</small>' : '';
-  if (!f.items || !f.items.length) return '';
-  return '<small class="ct-fg ' + (f.state === 'got' ? 'got' : 'would') + '"><b>' + (FG_WORD[f.state] || '') + ':</b> '
-    + f.items.map((l) => fmt(l.qty) + '× ' + esc(l.name)).join(', ') + '</small>';
-};
+   or "Would get" (the band its value is in now). On the cart's sheet only
+   (2.60.634, the owner: "we don't need it in the list"), arriving with the
+   journey the sheet already fetches. Every name passes through esc(). */
 const freebiesCard = (f) => (f && f.state !== 'none' && f.items && f.items.length
   ? '<section class="card"><h4 class="sh">Free gifts <span class="muted">' + (f.state === 'got' ? 'on the order' : 'would get' + (f.range ? ' · ' + esc(f.range) : '')) + '</span></h4>'
     + f.items.map((l) => '<div class="row"><div class="rm"><b>' + esc(l.name) + '</b></div><div class="re"><b>× ' + fmt(l.qty) + '</b></div></div>').join('') + '</section>'
@@ -109,7 +102,6 @@ function paintCarts(view) {
     ? '<div class="list">' + C.rows.map((r, i) => '<button type="button" class="row ct-row" data-cto="' + i + '"><div class="rm"><b>' + esc(who(r)) + '</b>'
       + '<small>' + fmt(count(r)) + ' item' + (count(r) === 1 ? '' : 's') + ' · ' + esc(since(r.last)) + (r.country ? ' · ' + esc(r.country) : '') + '</small>'
       + left(r.journey)
-      + freebies(r.freebies)
       + gifts(r.gifts)
       + '<span class="ct-st">' + (r.order ? pill(r.order.status, '') + '<span class="muted">#' + esc(r.order.number) + '</span>' : '<span class="tag ct-open">Not bought</span>' + (r.journey && r.journey.stage ? '<span class="tag">' + esc(r.journey.stage_label) + '</span>' : '')) + (r.bot ? '<span class="tag ct-bot">Bot</span>' : '') + '</span></div>'
       + '<div class="re"><b>' + esc(r.value_label) + '</b></div></button>').join('') + '</div>'
@@ -134,6 +126,8 @@ async function journey(r) {
   const host = document.getElementById('ctj-' + r.id);
   if (!host) return;
   if (!r2.ok) { host.innerHTML = '<p class="muted">' + esc(r2.data.message || 'Could not load the journey.') + '</p>'; return; }
+  const fg = document.getElementById('ctf-' + r.id);
+  if (fg) fg.innerHTML = freebiesCard(r2.data.freebies);
   const st = r2.data.steps || [];
   host.innerHTML = st.length ? '<ul class="ct-jr">' + st.map((e) => '<li class="' + esc(e.kind) + '"><span>' + esc(e.title) + (e.detail ? ' <b>' + esc(e.detail) + '</b>' : '') + '<small>' + esc(when(e.at)) + '</small></span></li>').join('') + '</ul>'
     : '<p class="muted">No pages recorded for this cart yet. They are recorded from 2.60.494 on, for shoppers with something in the bag.</p>';
@@ -148,7 +142,7 @@ function openCart(r) {
     + (r.items.length ? r.items.map((l) => '<div class="row"><div class="rm"><b>' + esc(l.name) + '</b></div><div class="re"><b>× ' + fmt(l.qty) + '</b>'
       + (l.id && can.products ? link('#/products/' + l.id, 'Open') : '') + '</div></div>').join('') : '<p class="empty">Empty now.</p>')
     + (r.removed ? '<p class="muted ct-rm">' + fmt(r.removed) + ' removed along the way</p>' : '') + '</section>'
-    + freebiesCard(r.freebies)
+    + '<div id="ctf-' + r.id + '"></div>'
     + (r.gifts && r.gifts.total ? '<section class="card"><h4 class="sh">Free gift box <span class="muted">' + fmt(r.gifts.total) + ' tap' + (r.gifts.total === 1 ? '' : 's') + '</span></h4>' + gifts(r.gifts) + '</section>' : '')
     + '<section class="card"><h4 class="sh">Journey <span class="muted">' + esc(r.journey ? r.journey.stage_label : '') + '</span></h4>' + left(r.journey) + '<div id="ctj-' + r.id + '"><p class="muted">Loading…</p></div></section>'
     + '<section class="card"><h4 class="sh">Customer</h4><div class="row"><div class="rm"><b>' + esc(who(r)) + '</b>' + (r.email && r.customer ? '<small>' + esc(r.email) + '</small>' : '') + '</div><div class="re">'

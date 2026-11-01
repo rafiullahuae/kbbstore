@@ -14,10 +14,16 @@ declare(strict_types=1);
  * free cleanser, read exactly like baskets with no gifts at all -- the owner
  * had to open each order, or work the ranges out in his head.
  *
- * MUTATION NOTES: drop 'freebies' from CartTrackingReport::present() -> every
- * test here is red; drop it from OwnerApp\CartsController::row() -> the owner
- * app test is red; read the gift names inside the per-cart loop -> the flat
- * query test is red (3 carts and 40 no longer cost the same).
+ * AND THEN, 2.60.634, the owner: "on cart tracking we don't needed in the
+ * list, we needed in the cart details when we click. please remove from the
+ * default list in desktop and also in owner app." So the gifts are on the
+ * cart's own page (console) and its sheet (owner app, with the journey the
+ * sheet already fetches), and the list neither shows nor reads them.
+ *
+ * MUTATION NOTES: pass withFreebies: true from carts() -> the list test is red
+ * (rows carry freebies again); drop it from the cart page -> every detail
+ * assertion is red; drop 'freebies' from the owner app journey answer -> the
+ * owner app test is red.
  */
 
 use App\Models\AdminUser;
@@ -98,30 +104,35 @@ function ctfRows(): \Illuminate\Support\Collection
     return collect(test()->actingAs(ctfOwner(), 'admin')->getJson('/admin-api/cart-tracking?period=7d')->assertOk()->json('rows'));
 }
 
-it('shows what an ordered cart got and what an open cart would get, on its row and its page', function () {
+/** One cart's page, as the console opens it on a click. */
+function ctfDetail(int $id): ?array
+{
+    Cache::flush();
+
+    return test()->actingAs(ctfOwner(), 'admin')->getJson('/admin-api/cart-tracking/carts/' . $id)->assertOk()->json('freebies');
+}
+
+it('shows what an ordered cart got and what an open cart would get, on its page and not on the list', function () {
     ctfGifts();
     $ordered = ctfCart(70000, '94.200.1.9', [['Tea Tree Mask – Pink', 2], ['Senka Whip', 1]]);
     $open = ctfCart(60000);
     $below = ctfCart(42000);
 
-    $rows = ctfRows();
-
-    expect($rows->firstWhere('id', $ordered->id)['freebies'])->toBe(['state' => 'got', 'range' => null,
+    expect(ctfDetail($ordered->id))->toBe(['state' => 'got', 'range' => null,
         'items' => [['name' => 'Tea Tree Mask – Pink', 'qty' => 2], ['name' => 'Senka Whip', 'qty' => 1]], 'hint' => null])
-        ->and($rows->firstWhere('id', $open->id)['freebies'])->toBe(['state' => 'would', 'range' => 'AED 500+',
+        ->and(ctfDetail($open->id))->toBe(['state' => 'would', 'range' => 'AED 500+',
             'items' => [['name' => 'Tea Tree Mask', 'qty' => 2], ['name' => 'Senka Whip', 'qty' => 1]], 'hint' => null])
         // Below the first range: no gifts, only how far it has to go.
-        ->and($rows->firstWhere('id', $below->id)['freebies'])->toBe(['state' => 'none', 'range' => 'AED 500+', 'items' => [], 'hint' => 'AED 80 more for AED 500+']);
+        ->and(ctfDetail($below->id))->toBe(['state' => 'none', 'range' => 'AED 500+', 'items' => [], 'hint' => 'AED 80 more for AED 500+']);
 
-    $detail = test()->actingAs(ctfOwner(), 'admin')->getJson('/admin-api/cart-tracking/carts/' . $open->id)->assertOk();
-    expect($detail->json('freebies.state'))->toBe('would')
-        ->and(array_column($detail->json('freebies.items'), 'name'))->toBe(['Tea Tree Mask', 'Senka Whip']);
+    // The list carries none of it.
+    expect(ctfRows()->pluck('freebies')->filter()->all())->toBe([]);
 
-    // The screen draws a line on the row and a "Free gifts" block on the page, every name escaped.
+    // The screen draws a "Free gifts" block on the cart page only, every name escaped.
     $blade = (string) file_get_contents(resource_path('views/admin/partials/cart-tracking-screen.blade.php'));
-    expect(substr_count($blade, 'freebiesHtml(r.freebies)'))->toBe(1)
+    expect($blade)->not->toContain('r.freebies')
+        ->and($blade)->not->toContain('freebiesHtml')
         ->and(substr_count($blade, 'freebiesCard(c.freebies)'))->toBe(1)
-        ->and($blade)->toContain("num(l.qty) + '× ' + esc(l.name)")
         ->and($blade)->toContain("'<li><span>' + esc(l.name) + '</span>");
 });
 
@@ -130,24 +141,22 @@ it('shows nothing for open carts when free gifts are Off, and only a tester\'s b
     $ordered = ctfCart(70000, '94.200.1.9', [['Senka Whip', 1]]);
     $open = ctfCart(60000);
 
-    $rows = ctfRows();
-    expect($rows->firstWhere('id', $open->id)['freebies'])->toBeNull()
-        ->and($rows->firstWhere('id', $ordered->id)['freebies']['items'])->toBe([['name' => 'Senka Whip', 'qty' => 1]]);
+    expect(ctfDetail($open->id))->toBeNull()
+        ->and(ctfDetail($ordered->id)['items'])->toBe([['name' => 'Senka Whip', 'qty' => 1]]);
 
     ctfSet(FreeGifts::KEY, ['mode' => 'testing', 'countries' => 'all', 'basis' => 'after_discounts', 'testers' => [['ip' => '10.1.2.3', 'label' => 'Rafi']]]);
     $tester = ctfCart(60000, '10.1.2.3');
 
-    $rows = ctfRows();
-    expect($rows->firstWhere('id', $open->id)['freebies'])->toBeNull()
-        ->and($rows->firstWhere('id', $tester->id)['freebies']['state'])->toBe('would');
+    expect(ctfDetail($open->id))->toBeNull()
+        ->and(ctfDetail($tester->id)['state'])->toBe('would');
 });
 
-it('keeps the Cart Tracking list flat in queries: 3 carts and 40 cost the same', function () {
+it('keeps the Cart Tracking list flat in queries, and reads no gifts for it at all', function () {
     /*
-     * What the defect would look like: a page of 50 carts reading gift names
-     * or order gift lines once per cart -- 100 extra queries on every open of
-     * Cart Tracking, growing with the shop. MUTATION: move the order_items
-     * read or the Product read into the per-cart loop -> $big > $small.
+     * What the defect would look like: the list reading gift names or order
+     * gift lines it no longer shows (2.60.634) -- queries on every open of
+     * Cart Tracking for nothing. MUTATION: pass withFreebies: true from
+     * carts() -> rows carry freebies and the order_items read is back.
      */
     ctfGifts();
     $owner = ctfOwner();
@@ -173,19 +182,19 @@ it('keeps the Cart Tracking list flat in queries: 3 carts and 40 cost the same',
 
     $make(3);
     [$small, $rows] = $count();
-    expect(collect($rows)->whereNotNull('freebies')->count())->toBe(3);
+    expect(collect($rows)->whereNotNull('freebies')->count())->toBe(0);
 
     $make(37);
     [$big, $rows] = $count();
-    expect(collect($rows)->whereNotNull('freebies')->count())->toBe(40)
+    expect(collect($rows)->whereNotNull('freebies')->count())->toBe(0)
         ->and($big)->toBe($small);
 });
 
-it('allowlists the freebies on the owner app row, and the phone draws them escaped with classes, not inline style', function () {
+it('gives the owner app the freebies on the cart sheet only, allowlisted, drawn escaped with classes, not inline style', function () {
     ctfGifts('live', '<script>alert(1)</script> Mask');
     $open = ctfCart(60000);
 
-    expect(\App\Http\Controllers\OwnerApp\CartsController::ROW_KEYS)->toContain('freebies');
+    expect(\App\Http\Controllers\OwnerApp\CartsController::ROW_KEYS)->not->toContain('freebies');
 
     OA::wire($this->app);
     $o = OA::admin();
@@ -194,16 +203,19 @@ it('allowlists the freebies on the owner app row, and the phone draws them escap
     Cache::flush();
     $res = OA::get($this, 'carts?period=7d', $c)->assertOk();
     $row = collect($res->json('rows'))->firstWhere('id', $open->id);
-    expect(array_keys($row))->toBe(\App\Http\Controllers\OwnerApp\CartsController::ROW_KEYS)
-        ->and($row['freebies'])->toBe(['state' => 'would', 'range' => 'AED 500+',
-            'items' => [['name' => '<script>alert(1)</script> Mask', 'qty' => 2], ['name' => 'Senka Whip', 'qty' => 1]], 'hint' => null]);
+    expect(array_keys($row))->toBe(\App\Http\Controllers\OwnerApp\CartsController::ROW_KEYS);
+
+    // The sheet's journey answer brings them, allowlisted.
+    $sheet = OA::get($this, 'carts/' . $open->id . '/journey', $c)->assertOk();
+    expect($sheet->json('freebies'))->toBe(['state' => 'would', 'range' => 'AED 500+',
+        'items' => [['name' => '<script>alert(1)</script> Mask', 'qty' => 2], ['name' => 'Senka Whip', 'qty' => 1]], 'hint' => null]);
     // The name travels as data; the screens escape it (below, and in Chromium: no script ran).
 
     $js = (string) file_get_contents(resource_path('js/owner-app/carts.js'));
-    expect(substr_count($js, 'freebies(r.freebies)'))->toBe(1)
-        ->and(substr_count($js, 'freebiesCard(r.freebies)'))->toBe(1)
-        ->and($js)->toContain("fmt(l.qty) + '× ' + esc(l.name)")
+    expect($js)->not->toContain('r.freebies')
+        ->and(substr_count($js, 'freebiesCard(r2.data.freebies)'))->toBe(1)
+        ->and(substr_count($js, "'<div id=\"ctf-' + r.id + '\"></div>'"))->toBe(1)
         ->and($js)->toContain("<b>' + esc(l.name) + '</b></div><div class=\"re\"><b>× ' + fmt(l.qty) + '</b></div></div>').join('') + '</section>'")
-        ->and(preg_match('/const freebies[\s\S]*?const PERIODS/', $js, $m))->toBe(1)
+        ->and(preg_match('/const freebiesCard[\s\S]*?const PERIODS/', $js, $m))->toBe(1)
         ->and($m[0])->not->toContain('style=');
 });

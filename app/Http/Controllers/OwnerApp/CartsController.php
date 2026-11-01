@@ -75,7 +75,7 @@ final class CartsController extends Controller
     }
 
     /** The allowlist: what a phone row shows, and nothing else. */
-    public const ROW_KEYS = ['id', 'first', 'last', 'value', 'value_label', 'items', 'removed', 'country', 'bot', 'customer', 'email', 'order', 'journey', 'gifts', 'freebies'];
+    public const ROW_KEYS = ['id', 'first', 'last', 'value', 'value_label', 'items', 'removed', 'country', 'bot', 'customer', 'email', 'order', 'journey', 'gifts'];
 
     /** GET /{app}/api/carts/{id}/journey -- one basket's pages and taps. (Lane CJ) */
     public function journey(Request $request, int $id): JsonResponse
@@ -89,7 +89,11 @@ final class CartsController extends Controller
             'detail' => $e['code'] === 40 || \App\Services\CartTracking\GiftClicks::isRange((int) $e['code']) ? $e['detail'] : null,
         ], \App\Services\CartTracking\CartTrail::journey($id));
 
-        return response()->json(['ok' => true, 'steps' => $steps]);
+        // 2.60.634: the freebies are on the cart's sheet only, read here with
+        // the journey the sheet already asks for -- no request of their own.
+        $freebies = self::freebiesOut(app(\App\Services\CartTracking\CartTrackingReport::class)->freebiesFor($id));
+
+        return response()->json(['ok' => true, 'steps' => $steps, 'freebies' => $freebies]);
     }
 
     private static function row(array $r): array
@@ -130,13 +134,17 @@ final class CartsController extends Controller
             ] : null,
             // (2.60.627) The gift box taps: five integers and their total, or null.
             'gifts' => isset($r['gifts']) ? array_map('intval', array_intersect_key($r['gifts'], array_flip(['view_all', 'hide', 'criteria', 'ranges', 'photos', 'total']))) : null,
-            // (Lane B) The free gifts this cart got (its order) or would get (its value now): names and quantities only.
-            'freebies' => isset($r['freebies']) ? [
-                'state' => in_array($r['freebies']['state'], ['got', 'would', 'none'], true) ? $r['freebies']['state'] : 'none',
-                'range' => $r['freebies']['range'] === null ? null : (string) $r['freebies']['range'],
-                'items' => array_map(fn (array $l) => ['name' => (string) $l['name'], 'qty' => (int) $l['qty']], $r['freebies']['items']),
-                'hint' => $r['freebies']['hint'] === null ? null : (string) $r['freebies']['hint'],
-            ] : null,
+        ];
+    }
+
+    /** (Lane B) The free gifts a cart got (its order) or would get (its value now): names and quantities only. */
+    private static function freebiesOut(?array $f): ?array
+    {
+        return $f === null ? null : [
+            'state' => in_array($f['state'], ['got', 'would', 'none'], true) ? $f['state'] : 'none',
+            'range' => $f['range'] === null ? null : (string) $f['range'],
+            'items' => array_map(fn (array $l) => ['name' => (string) $l['name'], 'qty' => (int) $l['qty']], $f['items']),
+            'hint' => $f['hint'] === null ? null : (string) $f['hint'],
         ];
     }
 }

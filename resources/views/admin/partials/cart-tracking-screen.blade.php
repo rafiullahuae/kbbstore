@@ -300,11 +300,6 @@
 .ctk-gb span.g{background:#e7f7ee;color:#0b6e3a}
 .ctk-gb svg{width:12px;height:12px;flex:none}
 /* (Lane B) The free gifts a cart got (its order) or would get (its value now). */
-.ctk-fg{display:flex;align-items:flex-start;gap:5px;margin-top:6px;font-size:11.5px;line-height:1.4;color:#a12d4f}
-.ctk-fg svg{width:12px;height:12px;flex:none;margin-top:2px}
-.ctk-fg b{font-weight:750}
-.ctk-fg.would{color:#7a5a12}
-.ctk-fg.none{color:var(--ink-soft)}
 .ctk-fgl{list-style:none;margin:0;padding:0}
 .ctk-fgl li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--line,#eee);font-size:13px}
 .ctk-fgl li:first-child{border-top:0}
@@ -691,16 +686,9 @@
 
   /* (Lane B) The free gifts on this cart: "Got" -- the gift lines on its
      order -- or "Would get" -- the band its basket value is in today. From
-     the cart row (two batched reads for the whole page): no extra request.
+     the cart's own page only (2.60.634, the owner: "we don't need it in the
+     list") -- the list reads none of it.
      Every name passes through esc(). */
-  var FG_WORD = { got: 'Got', would: 'Would get' };
-  function freebiesHtml(f) {
-    if (!f) return '';
-    if (f.state === 'none') return f.hint ? '<div class="ctk-fg none" title="Free gifts">' + GIFT_ICON + '<span>No gifts yet — ' + esc(f.hint) + '</span></div>' : '';
-    if (!f.items || !f.items.length) return '';
-    return '<div class="ctk-fg ' + (f.state === 'got' ? 'got' : 'would') + '" title="' + (f.state === 'got' ? 'Free gifts on the order' : 'Free gifts this basket would get' + (f.range ? ' (' + esc(f.range) + ')' : '')) + '">' + GIFT_ICON
-      + '<span><b>' + (FG_WORD[f.state] || '') + ':</b> ' + f.items.map(function (l) { return num(l.qty) + '× ' + esc(l.name); }).join(', ') + '</span></div>';
-  }
   function freebiesCard(f) {
     var body;
     if (f && f.state !== 'none' && f.items && f.items.length) {
@@ -742,7 +730,7 @@
       + '<td class="c-chk" data-stop><input type="checkbox" class="ctk-chk" data-ctk-sel="' + r.id + '"' + (st.sel[r.id] ? ' checked' : '') + ' aria-label="Select cart ' + r.id + '"></td>'
       + '<td class="c-id"><span class="ctk-id">#' + r.id + '</span>' + (r.status === 'merged' ? ' <span class="ctk-pill mute">merged</span>' : '') + '</td>'
       + '<td class="c-when ctk-when">' + esc(when(r.last)) + '<small>' + esc(ago(r.last)) + '</small></td>'
-      + '<td class="c-prod" data-l="Products">' + (prodList(r.products) || '<span class="ctk-more">Empty now</span>') + freebiesHtml(r.freebies) + '</td>'
+      + '<td class="c-prod" data-l="Products">' + (prodList(r.products) || '<span class="ctk-more">Empty now</span>') + '</td>'
       + '<td class="c-who" data-l="Customer / IP">' + whoHtml(r) + '</td>'
       + '<td class="c-bot">' + botHtml(r) + '</td>'
       + '<td class="c-rem"' + (r.removed.length ? ' data-l="Removed"' : '') + '>' + prodList(r.removed, 'ctk-rem') + '</td>'
