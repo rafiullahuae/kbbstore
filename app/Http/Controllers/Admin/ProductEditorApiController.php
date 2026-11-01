@@ -252,6 +252,12 @@ class ProductEditorApiController extends Controller
 
             'statuses' => self::EDITOR_STATUSES,
             'stock_statuses' => ['instock', 'outofstock', 'onbackorder'],
+            // Lane C: how a back-ordered figure is drawn (Store -> Ecommerce ->
+            // General -> Stock & back orders) and the default low-stock line
+            // a product with no level of its own follows.
+            'backorder_display' => \App\Support\StockLevels::display(),
+            'low_stock_default' => \App\Services\OwnerApp\OwnerAppSettings::lowStock(),
+            'low_stock_catalog' => CatalogProductsApiController::LOW_STOCK,
             /*
              * What selling a set does to the shelves, so the screen can SAY it
              * when a product is turned into a set and on a set's Stock card
@@ -492,7 +498,10 @@ class ProductEditorApiController extends Controller
 
             'manage_stock' => (bool) $product->manage_stock,
             'stock' => $product->stock === null ? null : (int) $product->stock,
-            'stock_status' => $product->stock_status,
+            // 'onbackorder' when the product allows back orders (Lane C): the
+            // row itself stays 'instock' so the shop keeps selling it.
+            'stock_status' => \App\Support\StockLevels::reported($product->backorders, $product->stock_status),
+            'low_stock_amount' => $product->low_stock_amount === null ? null : (int) $product->low_stock_amount,
 
             'short_description' => (string) ($product->short_description ?? ''),
             'description' => (string) ($product->description ?? ''),
@@ -951,8 +960,20 @@ class ProductEditorApiController extends Controller
             'sale_ends_at' => ['sometimes', 'nullable', 'date', 'after_or_equal:sale_starts_at'],
 
             'manage_stock' => ['sometimes', 'boolean'],
-            'stock' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:1000000'],
+            /*
+             * Below zero only for a product that allows back orders (Lane C):
+             * StockClaim takes such a product to -3, and the editor sends the
+             * figure back on every save, so min:0 would refuse every later
+             * save of a back-ordered product.
+             */
+            'stock' => ['sometimes', 'nullable', 'integer', 'max:1000000', static function (string $attribute, $value, \Closure $fail) use (&$payload) {
+                $back = ($payload['stock_status'] ?? null) === 'onbackorder';
+                if ($value !== null && (int) $value < ($back ? \App\Support\StockLevels::MIN_STOCK : 0)) {
+                    $fail($back ? 'Units in stock is too low.' : 'Units in stock cannot be below zero unless the product allows back orders.');
+                }
+            }],
             'stock_status' => ['sometimes', Rule::in(['instock', 'outofstock', 'onbackorder'])],
+            'low_stock_amount' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:'.\App\Support\StockLevels::MAX_LEVEL],
 
             'short_description' => ['sometimes', 'nullable', 'string', 'max:20000'],
             'description' => ['sometimes', 'nullable', 'string', 'max:200000'],
@@ -1237,10 +1258,16 @@ class ProductEditorApiController extends Controller
         }
 
         /* ----------------------------------------------------------- plain */
-        foreach (['name', 'sku', 'stock', 'stock_status', 'position'] as $field) {
+        foreach (['name', 'sku', 'stock', 'position', 'low_stock_amount'] as $field) {
             if (array_key_exists($field, $data)) {
                 $product->{$field} = $data[$field];
             }
+        }
+
+        // 'onbackorder' posted = "allow back orders": stored as the flag plus
+        // 'instock', so the shop keeps selling it (Lane C, StockLevels).
+        if (array_key_exists('stock_status', $data)) {
+            $product->forceFill(\App\Support\StockLevels::fromPosted((string) $data['stock_status']));
         }
 
         /*

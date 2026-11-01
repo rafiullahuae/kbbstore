@@ -1038,8 +1038,11 @@ it('saves stock, status, visibility and the stock status from an inline cell', f
     test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['is_visible' => false])->assertOk();
     expect((bool) $product->fresh()->is_visible)->toBeFalse();
 
-    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['stock_status' => 'onbackorder'])->assertOk();
-    expect($product->fresh()->stock_status)->toBe('onbackorder');
+    // Lane C: 'onbackorder' means "allow back orders" and is stored as the
+    // flag plus 'instock', so the shop keeps selling it (StockLevels).
+    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['stock_status' => 'onbackorder'])->assertOk()
+        ->assertJsonPath('product.stock_status', 'onbackorder');
+    expect($product->fresh()->stock_status)->toBe('instock')->and($product->fresh()->backorders)->toBeTrue();
 
     // One key in, one column changed. An inline edit of the stock cell must not
     // quietly reset the status beside it.

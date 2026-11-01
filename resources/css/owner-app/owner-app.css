@@ -446,6 +446,8 @@ textarea.ta { width: 100%; min-height: 120px; resize: none; border: 0; border-ra
 .stk::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--good); }
 .stk.low { color: var(--warn); } .stk.low::before { background: var(--warn); }
 .stk.out { color: var(--bad); } .stk.out::before { background: var(--bad); }
+/* Lane C: a back-ordered product (selling below zero) -- red, with its minus figure. */
+.stk.bo { color: var(--bad); font-weight: 600; } .stk.bo::before { background: var(--bad); } .bon { color: var(--bad); font-weight: 700; }
 .sortrow { display: flex; justify-content: space-between; align-items: center; margin: 4px 2px 6px; font-size: 13px; color: var(--ink3); }
 .sortrow b { color: var(--ink); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
 .sortrow .i { width: 16px; height: 16px; }

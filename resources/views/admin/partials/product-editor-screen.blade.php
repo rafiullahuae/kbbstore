@@ -729,7 +729,7 @@ a.peo-btn{display:inline-block;text-decoration:none}
      description pane he was typing in, which lives in the DOM until then. */
   var DRAFT_FIELDS = ['name', 'slug', 'sku', 'gtin', 'brand_id', 'status', 'published_at',
     'is_visible', 'featured', 'category_ids', 'primary_category_id', 'price_aed', 'sale_aed',
-    'sale_starts_at', 'sale_ends_at', 'manage_stock', 'stock', 'stock_status',
+    'sale_starts_at', 'sale_ends_at', 'manage_stock', 'stock', 'stock_status', 'low_stock_amount',
     'short_description', 'description', 'ingredients', 'how_to_use', 'image', 'images',
     'image_alts', 'seo', 'type', 'tags', 'ar', 'set_members', 'price_mode',
     'discount_percent', 'discount_amount', 'also_like'];
@@ -1218,6 +1218,8 @@ a.peo-btn{display:inline-block;text-decoration:none}
       manage_stock: !!model.manage_stock,
       stock: model.stock === '' ? null : model.stock,
       stock_status: model.stock_status,
+      // Lane C: empty = the shop's default low-stock line.
+      low_stock_amount: model.low_stock_amount === '' || model.low_stock_amount == null ? null : model.low_stock_amount,
       short_description: model.short_description,
       description: model.description,
       ingredients: model.ingredients,
@@ -2610,12 +2612,25 @@ a.peo-btn{display:inline-block;text-decoration:none}
       + '</div>';
   }
 
+  /* Lane C: a product allowed to sell below zero that is owing units, drawn
+     the way Store -> Ecommerce -> General -> Stock & back orders says. */
+  function backorderBadge(){
+    var n = model.stock == null || model.stock === '' ? null : parseInt(model.stock, 10);
+    if (model.stock_status !== 'onbackorder' || (model.manage_stock && n !== null && n > 0)) return '';
+    var how = (boot && boot.backorder_display) || 'both';
+    return '<div class="peo-note peo-bo" style="color:#C8102E;font-weight:600">'
+      + (how !== 'label' && model.manage_stock && n !== null ? '<b class="peo-bo-n">' + (n < 0 ? '\u2212' + Math.abs(n) : n) + '</b> ' : '')
+      + (how !== 'minus' ? '<span class="pill red">On back order</span> ' : '')
+      + '<span style="color:#7b8697;font-weight:400">Still on sale — shoppers see it in stock.</span></div>';
+  }
+
   function stockView(){
+    var lowDef = boot && boot.low_stock_default != null ? boot.low_stock_default : 5;
     return '<div class="peo-card">'
       + '<h3>Stock</h3>'
       + '<div class="peo-fld"><label>Availability</label>'
       +   '<select class="peo-sel" data-bind="stock_status">'
-      +     ['instock:In stock', 'outofstock:Out of stock', 'onbackorder:On backorder'].map(function(o){
+      +     ['instock:In stock', 'outofstock:Out of stock', 'onbackorder:Allow back orders (keep selling)'].map(function(o){
               var p = o.split(':');
               return '<option value="' + p[0] + '"' + (model.stock_status === p[0] ? ' selected' : '') + '>' + p[1] + '</option>';
             }).join('')
@@ -2623,7 +2638,13 @@ a.peo-btn{display:inline-block;text-decoration:none}
       + '<label class="peo-check"><input type="checkbox" data-bind="manage_stock"'
       +   (model.manage_stock ? ' checked' : '') + '><span>Count individual units</span></label>'
       + '<div class="peo-fld"><label>Units in stock</label>'
-      +   '<input class="peo-in" inputmode="numeric" data-bind="stock" value="' + esc(model.stock == null ? '' : model.stock) + '"></div>'
+      +   '<input class="peo-in" inputmode="numeric" data-bind="stock" value="' + esc(model.stock == null ? '' : model.stock) + '"'
+      +   (model.stock_status === 'onbackorder' && parseInt(model.stock, 10) < 0 ? ' style="color:#C8102E;font-weight:700"' : '') + '></div>'
+      + backorderBadge()
+      + '<div class="peo-fld"><label>Low stock at</label>'
+      +   '<input class="peo-in" type="number" min="0" max="100000" inputmode="numeric" data-bind="low_stock_amount" value="' + esc(model.low_stock_amount == null ? '' : model.low_stock_amount) + '" placeholder="' + esc(lowDef) + ' (shop default)"></div>'
+      + '<div class="peo-note">At or below this many units the product counts as low on stock. Leave empty for the defaults: '
+      +   esc(lowDef) + ' in the owner app (Users &amp; Roles → Owner app → Low stock at), ' + esc((boot && boot.low_stock_catalog) || 15) + ' in Catalog → Products.</div>'
       /* A SET'S OWN COUNT IS A SECOND LIMIT, and a product converted from an
          import arrives with one. Said here so the number keeps its meaning.
          (Lane PI-A) */
@@ -3641,7 +3662,7 @@ a.peo-btn{display:inline-block;text-decoration:none}
         +   [['instock', 'In stock'], ['outofstock', 'Sold out'], ['onbackorder', 'Backorder']].map(function(o){
               return '<option value="' + o[0] + '"' + (v.stock_status === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
             }).join('') + '</select></td>'
-        + '<td><input class="peo-in" style="width:64px" inputmode="numeric" data-vpo-f="' + i + ':stock" value="' + esc(v.stock == null ? '' : v.stock) + '" placeholder="—" title="Leave empty not to count units"></td>'
+        + '<td><input class="peo-in" style="width:64px' + (v.stock_status === 'onbackorder' && parseInt(v.stock, 10) < 0 ? ';color:#C8102E;font-weight:700' : '') + '" inputmode="numeric" data-vpo-f="' + i + ':stock" value="' + esc(v.stock == null ? '' : v.stock) + '" placeholder="—" title="Leave empty not to count units"></td>'
         + '<td><select class="peo-sel" style="min-width:120px;max-width:160px" data-vpo-f="' + i + ':image"><option value="">Product picture</option>'
         +   pics.map(function(u, k){ return '<option value="' + esc(u) + '"' + (v.image === u ? ' selected' : '') + '>' + (k === 0 && u === model.image ? 'Main picture' : 'Picture ' + (k + 1)) + '</option>'; }).join('')
         + '</select></td>'

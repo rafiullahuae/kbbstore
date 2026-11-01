@@ -59,6 +59,8 @@ final class OwnerAppUiGate
         'stock' => 'edit_stock',
         'stock_status' => 'edit_stock',
         'manage_stock' => 'edit_stock',
+        // Lane C: a product's own low-stock line is a stock edit.
+        'low_stock_amount' => 'edit_stock',
         'status' => 'edit_catalogue',
         'is_visible' => 'edit_catalogue',
         'category_ids' => 'edit_catalogue',

@@ -108,8 +108,10 @@ final class OwnerAppServiceProvider extends ServiceProvider
             $id = (int) $product->getKey();
             $name = (string) $product->getRawOriginal('name', (string) $product->getAttribute('name'));
             $managed = (bool) $product->manage_stock;
+            $level = $product->low_stock_amount === null ? null : (int) $product->low_stock_amount;
+            $back = (bool) $product->backorders;
             self::later(static fn () => OwnerAppEvents::stockChanged(
-                $id, $name, $before === null ? null : (int) $before, $after === null ? null : (int) $after, $managed,
+                $id, $name, $before === null ? null : (int) $before, $after === null ? null : (int) $after, $managed, $level, $back,
             ));
         });
     }

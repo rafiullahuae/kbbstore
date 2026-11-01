@@ -118,16 +118,22 @@ final class OwnerAppEvents
     }
 
     /** A product's own stock column moved (an edit in the admin or the app). */
-    public static function stockChanged(int $productId, string $name, ?int $before, ?int $after, bool $managed): void
+    public static function stockChanged(int $productId, string $name, ?int $before, ?int $after, bool $managed, ?int $ownLevel = null, bool $backorders = false): void
     {
         if (! $managed || $after === null) {
             return;
         }
 
-        $at = OwnerAppSettings::lowStock();
+        // The product's own low-stock line when it has one (Lane C).
+        $at = $ownLevel ?? OwnerAppSettings::lowStock();
         $wasAbove = $before === null || $before > $at;
 
-        if ($after <= 0 && ($before === null || $before > 0)) {
+        if ($backorders && $after <= 0) {
+            // Still on sale: a back order, never "Out of stock" (Lane C).
+            if ($before === null || $before > 0) {
+                self::record('stock.low', $productId, 'On back order: '.self::clip($name, 90), \App\Support\StockLevels::figure($after).' · still selling');
+            }
+        } elseif ($after <= 0 && ($before === null || $before > 0)) {
             self::record('stock.out', $productId, 'Out of stock: '.self::clip($name, 90), 'Nothing left to sell.');
         } elseif ($after > 0 && $after <= $at && $wasAbove) {
             self::record('stock.low', $productId, 'Low stock: '.self::clip($name, 90), $after.' left');
@@ -346,7 +352,8 @@ final class OwnerAppEvents
                 ->get([
                     'p.id', 'p.name', 'i.name as line_name', 'i.variant_attributes',
                     'p.manage_stock as p_managed', 'p.stock as p_stock',
-                    'v.id as v_id', 'v.manage_stock as v_managed', 'v.stock as v_stock',
+                    'p.low_stock_amount as p_level', 'p.backorders as p_back',
+                    'v.id as v_id', 'v.manage_stock as v_managed', 'v.stock as v_stock', 'v.backorders as v_back',
                 ]);
 
             $hits = [];
@@ -354,14 +361,17 @@ final class OwnerAppEvents
                 $variant = $r->v_id !== null && (bool) $r->v_managed;
                 $managed = $variant || (bool) $r->p_managed;
                 $stock = $variant ? $r->v_stock : $r->p_stock;
+                // Lane C: the product's own line, and whether this shelf sells on.
+                $level = $r->p_level === null ? $at : (int) $r->p_level;
+                $back = (bool) ($variant ? $r->v_back : $r->p_back);
 
-                if (! $managed || $stock === null || (int) $stock > $at) {
+                if (! $managed || $stock === null || (int) $stock > $level) {
                     continue;
                 }
                 // (Lane VPA) A variant's alert names the option: "Low stock:
                 // TIRTIR Mask Fit … — Shade: 21N Ivory", not only the product.
                 $option = $variant ? \App\Support\VariantText::line($r->variant_attributes, ', ') : '';
-                $hits[(int) $r->id] = [(int) $stock, $variant ? (string) $r->line_name.($option !== '' ? ' — '.$option : '') : (string) $r->name];
+                $hits[(int) $r->id] = [(int) $stock, $variant ? (string) $r->line_name.($option !== '' ? ' — '.$option : '') : (string) $r->name, $back];
             }
 
             if ($hits === []) {
@@ -374,8 +384,13 @@ final class OwnerAppEvents
                 ->where('created_at', '>=', now()->subDay())
                 ->pluck('ref_id')->map(fn ($v) => (int) $v)->all();
 
-            foreach ($hits as $productId => [$stock, $name]) {
+            foreach ($hits as $productId => [$stock, $name, $back]) {
                 if (in_array($productId, $recent, true)) {
+                    continue;
+                }
+                if ($back && $stock <= 0) {
+                    self::record('stock.low', $productId, 'On back order: '.self::clip($name, 90), \App\Support\StockLevels::figure($stock).' · still selling');
+
                     continue;
                 }
                 $stock <= 0

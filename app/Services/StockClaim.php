@@ -187,6 +187,7 @@ final class StockClaim
                 $shelf['label'],
                 $orderId,
                 $shelf['line'],
+                $shelf['backorders'],
             );
         }
     }
@@ -352,10 +353,10 @@ final class StockClaim
              */
             if ($variant !== null && $variant->manage_stock) {
                 $key = 'product_variants:' . (int) $variant->id;
-                $shelf = ['table' => 'product_variants', 'id' => (int) $variant->id, 'have' => (int) ($variant->stock ?? 0)];
+                $shelf = ['table' => 'product_variants', 'id' => (int) $variant->id, 'have' => (int) ($variant->stock ?? 0), 'backorders' => (bool) $variant->backorders];
             } elseif ($product->manage_stock) {
                 $key = 'products:' . (int) $product->id;
-                $shelf = ['table' => 'products', 'id' => (int) $product->id, 'have' => (int) ($product->stock ?? 0)];
+                $shelf = ['table' => 'products', 'id' => (int) $product->id, 'have' => (int) ($product->stock ?? 0), 'backorders' => (bool) $product->backorders];
             } else {
                 continue;
             }
@@ -419,11 +420,34 @@ final class StockClaim
         string $label,
         ?int $orderId,
         array $line,
+        bool $backorders = false,
     ): void {
         // NULL on a row that says it counts stock is zero, not "unlimited" —
         // the same reading the admin's own list takes (CatalogProductsApi
         // Controller prints `stock` as 0 for a managed product with no figure).
         $have = (int) ($have ?? 0);
+
+        /*
+         * BACK ORDERS (Lane C). A shelf that allows them is decremented past
+         * zero -- COALESCE, because NULL minus n is NULL -- and is never
+         * marked sold out: the owner, "the back stock option should not turn
+         * the product to out of stock." Before this, the only way to say
+         * "back order" was stock_status 'onbackorder', which the status test
+         * in perShelf() refused outright.
+         */
+        if ($backorders) {
+            $changed = DB::table($table)
+                ->where('id', $id)
+                ->update(['stock' => DB::raw('COALESCE(stock, 0) - ' . $quantity)]);
+
+            if ($changed !== 1) {
+                throw new StockUnavailable($this->shortfall($label, $have), $label);
+            }
+
+            $this->record($orderId, $table, $id, $quantity, false, $line);
+
+            return;
+        }
 
         $changed = DB::table($table)
             ->where('id', $id)
@@ -770,10 +794,12 @@ final class StockClaim
      */
     private function takeBack(string $table, int $shelfId, int $quantity, int $ledgerId, object $row): void
     {
+        // A shelf that allows back orders (Lane C) takes the units back
+        // whatever its figure, as the claim itself did.
         $changed = DB::table($table)
             ->where('id', $shelfId)
-            ->where('stock', '>=', $quantity)
-            ->update(['stock' => DB::raw('stock - ' . $quantity)]);
+            ->where(fn ($w) => $w->where('stock', '>=', $quantity)->orWhere('backorders', true))
+            ->update(['stock' => DB::raw('COALESCE(stock, 0) - ' . $quantity)]);
 
         if ($changed !== 1) {
             // Read what is actually there for the sentence. The shelf row may
@@ -803,6 +829,7 @@ final class StockClaim
             $marked = DB::table($table)
                 ->where('id', $shelfId)
                 ->where('stock_status', 'instock')
+                ->where('backorders', false)
                 ->update(['stock_status' => 'outofstock']) === 1;
         }
 

@@ -324,13 +324,13 @@ final class SetStockReconciler
         return [
             'products' => Product::query()
                 ->whereIn('id', array_keys($productIds))
-                ->get(['id', 'name', 'manage_stock', 'stock', 'stock_status'])
+                ->get(['id', 'name', 'manage_stock', 'stock', 'stock_status', 'backorders'])
                 ->keyBy('id'),
             'variants' => $variantIds === []
                 ? collect()
                 : ProductVariant::query()
                     ->whereIn('id', array_keys($variantIds))
-                    ->get(['id', 'product_id', 'manage_stock', 'stock', 'stock_status'])
+                    ->get(['id', 'product_id', 'manage_stock', 'stock', 'stock_status', 'backorders'])
                     ->keyBy('id'),
         ];
     }
@@ -463,7 +463,16 @@ final class SetStockReconciler
 
         $soldOut = ($variant?->stock_status ?? $product->stock_status) !== 'instock';
 
+        /*
+         * A shelf that allows back orders cannot run out (Lane C):
+         * StockClaim decrements it past zero, so it is never the one
+         * contested, exactly like a shelf that counts nothing.
+         */
         if ($variant !== null && $variant->manage_stock) {
+            if ((bool) $variant->backorders) {
+                return null;
+            }
+
             return [
                 'key' => 'variant:' . (int) $variant->id,
                 'available' => $soldOut ? 0 : max(0, (int) ($variant->stock ?? 0)),
@@ -471,6 +480,10 @@ final class SetStockReconciler
         }
 
         if ($product->manage_stock) {
+            if ((bool) $product->backorders) {
+                return null;
+            }
+
             return [
                 'key' => 'product:' . (int) $product->id,
                 'available' => $soldOut ? 0 : max(0, (int) ($product->stock ?? 0)),

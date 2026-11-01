@@ -153,10 +153,12 @@ final class DashboardController extends Controller
 
         if ($catalog) {
             $at = OwnerAppSettings::lowStock();
-            $low = DB::table('products')->whereNull('deleted_at')->where('manage_stock', true)
-                ->where('stock', '>', 0)->where('stock', '<=', $at)->orderBy('stock')->orderBy('id')->limit(3)->get(['id', 'name', 'stock']);
+            // Each product's own low-stock level, else the default -- in SQL,
+            // so the count costs the same for 3 products or 3,000 (Lane C).
+            $low = \App\Support\StockLevels::whereLow(DB::table('products')->whereNull('deleted_at'), 'products', $at)
+                ->orderBy('stock')->orderBy('id')->limit(3)->get(['id', 'name', 'stock']);
             if ($low->isNotEmpty()) {
-                $n = DB::table('products')->whereNull('deleted_at')->where('manage_stock', true)->where('stock', '>', 0)->where('stock', '<=', $at)->count();
+                $n = \App\Support\StockLevels::whereLow(DB::table('products')->whereNull('deleted_at'), 'products', $at)->count();
                 $out[] = ['tone' => 'warn', 'icon' => 'stack', 'href' => '#/products?low',
                     'title' => $n.' product'.($n === 1 ? '' : 's').' low on stock',
                     'sub' => $low->map(fn ($p) => self::short((string) $p->name).' '.$p->stock)->implode(' · ')];

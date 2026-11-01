@@ -13,12 +13,14 @@ use App\Support\ImageVariants;
 use App\Support\MajorUnits;
 use App\Support\Money;
 use App\Support\RichText;
+use App\Support\StockLevels;
 use App\Support\WholeDirhams;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -123,7 +125,13 @@ class CatalogProductsApiController extends Controller
      * admin-configurable setting; naming it once is the most that can honestly
      * be said about it.
      */
-    private const LOW_STOCK = 15;
+    public const LOW_STOCK = 15;
+
+    /** The stock chip a row counts under: back orders first (Lane C). A constant. */
+    private const STOCK_CHIP_SQL = "CASE WHEN products.backorders = 1 THEN 'onbackorder' ELSE products.stock_status END";
+
+    /** "Low", per product (Lane C): its own level, else LOW_STOCK. A constant. */
+    private const LOW_SQL = 'products.manage_stock = 1 AND products.stock > 0 AND products.stock <= COALESCE(products.low_stock_amount, '.self::LOW_STOCK.')';
 
     /**
      * The statuses this schema declares, offered as chips even at a count of
@@ -295,6 +303,7 @@ class CatalogProductsApiController extends Controller
             'can_delete' => \App\Support\AdminRoles::can($request->user('admin'), 'catalog.delete'),
             'settable_stock_statuses' => self::SETTABLE_STOCK_STATUSES,
             'low_stock_threshold' => self::LOW_STOCK,
+            'backorder_display' => StockLevels::display(),
             'currency' => Money::currency(),
             'minor_exponent' => Money::minorExponent(),
         ]);
@@ -394,7 +403,7 @@ class CatalogProductsApiController extends Controller
             'sale_ends_at' => $this->iso($product->sale_ends_at),
             'manage_stock' => (bool) $product->manage_stock,
             'stock' => $product->stock === null ? null : (int) $product->stock,
-            'stock_status' => (string) $product->stock_status,
+            'stock_status' => StockLevels::reported($product->backorders, $product->stock_status),
             'short_description' => $product->short_description,
             'description' => $product->description,
             'image' => $this->blankToNull($product->image),
@@ -459,7 +468,9 @@ class CatalogProductsApiController extends Controller
             'is_visible' => ['sometimes', 'boolean'],
             'featured' => ['sometimes', 'boolean'],
             'manage_stock' => ['sometimes', 'boolean'],
-            'stock' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:1000000'],
+            // Below zero only for a product that allows back orders (Lane C);
+            // checked against the row after validation.
+            'stock' => ['sometimes', 'nullable', 'integer', 'min:'.StockLevels::MIN_STOCK, 'max:1000000'],
             // Decimal strings in major units. Parsed by integer arithmetic.
             'price' => ['sometimes', 'nullable', ...self::moneyRule()],
             'sale_price' => ['sometimes', 'nullable', ...self::moneyRule()],
@@ -475,10 +486,20 @@ class CatalogProductsApiController extends Controller
 
         $changes = [];
 
-        foreach (['name', 'status', 'stock_status'] as $key) {
+        foreach (['name', 'status'] as $key) {
             if (array_key_exists($key, $data)) {
                 $changes[$key] = $data[$key];
             }
+        }
+
+        // 'onbackorder' = allow back orders, stored as the flag + 'instock'.
+        if (array_key_exists('stock_status', $data)) {
+            $changes += StockLevels::fromPosted((string) $data['stock_status']);
+        }
+
+        $backAfter = array_key_exists('backorders', $changes) ? $changes['backorders'] : (bool) $product->backorders;
+        if (array_key_exists('stock', $data) && $data['stock'] !== null && (int) $data['stock'] < 0 && ! $backAfter) {
+            throw ValidationException::withMessages(['stock' => 'Stock cannot be below zero unless the product allows back orders.']);
         }
 
         /*
@@ -1277,6 +1298,8 @@ class CatalogProductsApiController extends Controller
                 'products.manage_stock',
                 'products.stock',
                 'products.stock_status',
+                'products.backorders',
+                'products.low_stock_amount',
                 'products.image',
                 'products.rating',
                 'products.review_count',
@@ -1584,9 +1607,7 @@ class CatalogProductsApiController extends Controller
         }
 
         if ($filter === 'low') {
-            return $query->where('products.manage_stock', true)
-                ->where('products.stock', '>', 0)
-                ->where('products.stock', '<=', self::LOW_STOCK);
+            return $query->whereRaw('('.self::LOW_SQL.')');
         }
 
         if ($filter === 'hidden') {
@@ -1652,7 +1673,7 @@ class CatalogProductsApiController extends Controller
         }
 
         if (in_array($filter, self::KNOWN_STOCK_STATUSES, true)) {
-            return $query->where('products.stock_status', '=', $filter);
+            return $query->whereRaw(self::STOCK_CHIP_SQL.' = ?', [$filter]);
         }
 
         // Anything else is a literal status. An unknown one is NOT rewritten to
@@ -1724,8 +1745,10 @@ class CatalogProductsApiController extends Controller
             $all += (int) $row->c;
         }
 
-        $stockRows = $this->aggregateQuery($base, 'products.stock_status as s, COUNT(*) as c')
-            ->groupBy('products.stock_status')
+        // A product that allows back orders is stored 'instock' (Lane C,
+        // StockLevels) and counted under its own chip, as it was before.
+        $stockRows = $this->aggregateQuery($base, self::STOCK_CHIP_SQL.' as s, COUNT(*) as c')
+            ->groupByRaw(self::STOCK_CHIP_SQL)
             ->get();
 
         foreach ($stockRows as $row) {
@@ -1739,7 +1762,7 @@ class CatalogProductsApiController extends Controller
             // `ca` and nothing else: this is the one aggregate that reads a
             // category count per row.
             $this->withCategoryCounts(clone $base),
-            'SUM(CASE WHEN products.manage_stock = 1 AND products.stock > 0 AND products.stock <= '.self::LOW_STOCK.' THEN 1 ELSE 0 END) as low,'
+            'SUM(CASE WHEN '.self::LOW_SQL.' THEN 1 ELSE 0 END) as low,'
             .' SUM(CASE WHEN products.is_visible = 0 THEN 1 ELSE 0 END) as hidden,'
             .' SUM(CASE WHEN products.featured = 1 THEN 1 ELSE 0 END) as featured,'
             ." SUM(CASE WHEN products.image IS NULL OR products.image = '' THEN 1 ELSE 0 END) as no_image,"
@@ -1972,12 +1995,14 @@ class CatalogProductsApiController extends Controller
             'status' => (string) $p->status,
             'is_visible' => (bool) $p->is_visible,
             'featured' => (bool) $p->featured,
-            'stock_status' => (string) $p->stock_status,
+            'stock_status' => StockLevels::reported($p->backorders ?? false, $p->stock_status),
             'manage_stock' => (bool) $p->manage_stock,
             // Null means "not tracked", which is a different statement from
             // zero and reads differently on the shelf.
             'stock' => $p->manage_stock ? ($p->stock === null ? 0 : (int) $p->stock) : null,
-            'low_stock' => (bool) $p->manage_stock && $p->stock !== null && (int) $p->stock > 0 && (int) $p->stock <= self::LOW_STOCK,
+            'low_stock' => StockLevels::isLow($p->manage_stock, $p->stock, $p->low_stock_amount ?? null, self::LOW_STOCK),
+            // Lane C: allows back orders and owes them -- drawn red / labelled.
+            'backorder' => StockLevels::onBackorder($p->backorders ?? false, $p->manage_stock, $p->stock),
             'price_fils' => $price,
             'price_display' => $price === null ? null : Money::plain($price),
             'price_input' => $price === null ? '' : $this->majorString($price),
