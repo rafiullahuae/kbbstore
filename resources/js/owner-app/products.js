@@ -6,7 +6,7 @@
 import { S, fn, esc, api, $, $$, ic, th, top, back, toast, sheet, busy, debounce, paint, errorBox, tgl,
   screen, onScreen, mark, once, landed, isFresh, onReset, merge, ln, blk, times, skChips, skNote } from './core.js';
 
-const L = { q: '', filter: 'all', rows: [], next: null, counts: {}, lowAt: 5, loaded: false, paged: false, lastQ: '' };
+const L = { q: '', filter: 'all', rows: [], next: null, counts: {}, lowAt: 5, bo: 'both', loaded: false, paged: false, lastQ: '' };
 let P = null;
 onReset(() => { Object.assign(L, { rows: [], next: null, counts: {}, loaded: false, paged: false, lastQ: '' }); P = null; });
 
@@ -25,8 +25,18 @@ function query(extra) {
   return 'products' + (s ? '?' + s : '');
 }
 
-export const stk = (p) => (p.stock_status === 'outofstock' ? '<span class="stk out">Out of stock</span>'
-  : p.stock_status === 'onbackorder' ? '<span class="stk low">On backorder</span>'
+/* A figure with a real minus sign: −3. */
+const fig = (n) => (n < 0 ? '\u2212' + Math.abs(n) : String(n));
+/* Lane C: selling below zero. Red minus figure and/or "On back order", per
+   Store → Ecommerce → General → Stock & back orders (the server sends which). */
+export const boTag = (p, how) => {
+  how = how || 'both';
+  const n = p.manage_stock && p.stock !== null ? '<b class="bon">' + fig(p.stock) + '</b>' : '';
+  return '<span class="stk bo">' + (how !== 'label' ? n : '') + (how !== 'minus' || !n ? (how !== 'label' && n ? ' ' : '') + 'On back order' : '') + '</span>';
+};
+export const stk = (p, how) => (p.backorder ? boTag(p, how || L.bo)
+  : p.stock_status === 'outofstock' ? '<span class="stk out">Out of stock</span>'
+  : p.stock_status === 'onbackorder' && !p.manage_stock ? '<span class="stk">In stock · back orders on</span>'
     : p.manage_stock && p.stock !== null ? (p.low ? '<span class="stk low">Low · ' + p.stock + ' left</span>' : '<span class="stk">In stock · ' + p.stock + '</span>')
       : '<span class="stk">In stock</span>');
 
@@ -60,6 +70,7 @@ export function fetchProducts(passive, force) {
     if (!keep) { L.next = r.data.next; L.paged = false; }
     L.lastQ = q;
     L.lowAt = r.data.low_at;
+    if (r.data.backorder_display) L.bo = r.data.backorder_display;
     if (r.data.counts) L.counts = r.data.counts;
     L.loaded = true;
     landed('products');
@@ -146,14 +157,14 @@ function paintProduct(view) {
     + '<div class="tiles"><div class="card"><small>Sold · 30 days</small><b>' + p.sold_30d + '</b></div><div class="card"><small>Revenue · 30 days</small><b>' + esc(p.revenue_30d || '—') + '</b></div></div>'
     + '<section class="ed list">'
     + row('price', 'tag', 'Price', p.sale_display ? esc(p.price_display || '—') + ' · on sale ' + esc(p.sale_display) : esc(p.price_display || 'No price'))
-    + row('inv', 'stack', 'Inventory', stk(p) + (p.manage_stock ? '' : ' · not tracked'))
+    + row('inv', 'stack', 'Inventory', stk(p, p.backorder_display) + (p.manage_stock ? '' : ' · not tracked') + (p.low_stock_amount !== null ? ' · low at ' + p.low_stock_amount : ''))
     + row('cat', 'grid', 'Categories', esc(p.category_names.join(', ') || 'None'))
     + row('vis', 'eye', 'Visibility', esc(st[1]) + (p.visible ? ' · in catalogue' : ' · hidden'))
     + row('desc', 'text', 'Description', esc(p.description ? p.description.slice(0, 80) : 'None'))
     + row('short', 'text', 'Short description', esc(p.short_description || 'None'))
     + '<div class="row" aria-disabled="true"><span class="ico">' + ic('box') + '</span><div class="rm"><b>Product type</b><span class="rv">' + esc(p.type_label) + '</span></div></div>'
     + '</section>'
-    + (p.variants.length ? '<section class="card"><h4 class="sh">Variants <span class="muted">' + p.variants.length + '</span></h4>' + p.variants.map((v) => '<div class="row"><div class="rm"><b>' + esc(v.label) + '</b><small>' + esc([v.sku, v.price_display].filter(Boolean).join(' · ')) + '</small></div><div class="re"><b>' + (v.stock !== null ? v.stock + ' left' : esc(v.stock_status)) + '</b></div></div>').join('') + '<p class="hint">Variant stock is edited in the admin product editor.</p></section>' : '')
+    + (p.variants.length ? '<section class="card"><h4 class="sh">Variants <span class="muted">' + p.variants.length + '</span></h4>' + p.variants.map((v) => '<div class="row"><div class="rm"><b>' + esc(v.label) + '</b><small>' + esc([v.sku, v.price_display].filter(Boolean).join(' · ')) + '</small></div><div class="re"><b>' + (v.backorder ? boTag(v, p.backorder_display) : v.stock !== null ? v.stock + ' left' : esc(v.stock_status)) + '</b></div></div>').join('') + '<p class="hint">Variant stock is edited in the admin product editor.</p></section>' : '')
     + (can ? '' : '<p class="ver">Your role can view products but not change them.</p>'));
 }
 
@@ -198,16 +209,22 @@ function priceSheet(view) {
 }
 
 function invSheet(view) {
-  sheet('Inventory', '<div class="fld"><span>Quantity in stock</span><div class="step"><button type="button" data-step="-1" aria-label="One less">−</button><input type="number" inputmode="numeric" min="0" max="1000000" data-qty value="' + (P.stock === null ? 0 : P.stock) + '" aria-label="Quantity"><button type="button" data-step="1" aria-label="One more">+</button></div></div>'
+  const backOn = P.stock_status === 'onbackorder';
+  sheet('Inventory', '<div class="fld"><span>Quantity in stock</span><div class="step"><button type="button" data-step="-1" aria-label="One less">−</button><input type="number" inputmode="numeric" max="1000000" data-qty value="' + (P.stock === null ? 0 : P.stock) + '" aria-label="Quantity"' + (P.backorder && P.stock < 0 ? ' class="bon"' : '') + '><button type="button" data-step="1" aria-label="One more">+</button></div></div>'
     + '<div class="fld-row"><div>Track quantity<small>Stock goes down with each order</small></div>' + tgl(P.manage_stock, 'Track quantity', 'data-track') + '</div>'
     + '<div class="fld-row" data-instock-row' + (P.manage_stock ? ' hidden' : '') + '><div>In stock<small>When the quantity is not tracked</small></div>' + tgl(P.stock_status !== 'outofstock', 'In stock', 'data-instock') + '</div>'
-    + '<div class="fld-row"><div>Allow backorders<small>Keep selling at zero</small></div>' + tgl(P.stock_status === 'onbackorder', 'Allow backorders', 'data-back') + '</div>'
-    + '<div class="fld-row"><div>Low-stock alert at<small>Sends a notification</small></div><b>' + L.lowAt + '</b></div>'
+    + '<div class="fld-row"><div>Allow back orders<small>Keep selling at zero and below · stays in stock on the shop</small></div>' + tgl(backOn, 'Allow back orders', 'data-back') + '</div>'
+    + '<label class="fld"><span>Low-stock alert at<small> · empty = shop default (' + (P.low_default != null ? P.low_default : L.lowAt) + ')</small></span><span class="inp"><input type="number" inputmode="numeric" min="0" max="100000" data-low value="' + (P.low_stock_amount === null || P.low_stock_amount === undefined ? '' : P.low_stock_amount) + '" placeholder="' + (P.low_default != null ? P.low_default : L.lowAt) + '" aria-label="Low-stock alert at"><em>units</em></span></label>'
     + '<p class="alert" data-err hidden></p><button class="btn pri wide" type="button" data-save>Save inventory</button>', (panel, close) => {
     const qty = $('[data-qty]', panel);
     panel.addEventListener('click', (e) => {
       const st = e.target.closest('[data-step]');
-      if (st) { qty.value = Math.max(0, (parseInt(qty.value, 10) || 0) + +st.getAttribute('data-step')); return; }
+      if (st) {
+        const next = (parseInt(qty.value, 10) || 0) + +st.getAttribute('data-step');
+        const back = $('[data-back]', panel).getAttribute('aria-checked') === 'true';
+        qty.value = back ? next : Math.max(0, next);
+        return;
+      }
       const t = e.target.closest('.tgl');
       if (t) {
         t.setAttribute('aria-checked', t.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
@@ -217,9 +234,13 @@ function invSheet(view) {
     $('[data-save]', panel).addEventListener('click', (e) => {
       const track = $('[data-track]', panel).getAttribute('aria-checked') === 'true';
       const backo = $('[data-back]', panel).getAttribute('aria-checked') === 'true';
-      const n = Math.max(0, parseInt(qty.value, 10) || 0);
+      // Below zero is kept only for a back-ordered product (Lane C): saving
+      // −3 as 0 would quietly forgive three owed units.
+      const raw = parseInt(qty.value, 10) || 0;
+      const n = backo ? raw : Math.max(0, raw);
       const inStock = track ? n > 0 : $('[data-instock]', panel).getAttribute('aria-checked') === 'true';
-      const data = { manage_stock: track, stock_status: backo ? 'onbackorder' : (inStock ? 'instock' : 'outofstock') };
+      const low = $('[data-low]', panel).value.trim();
+      const data = { manage_stock: track, stock_status: backo ? 'onbackorder' : (inStock ? 'instock' : 'outofstock'), low_stock_amount: low === '' ? null : Math.max(0, parseInt(low, 10) || 0) };
       if (track) data.stock = n;
       busy(e.currentTarget, () => save(panel, close, view, data));
     });

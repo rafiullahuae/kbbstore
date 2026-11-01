@@ -143,6 +143,9 @@ class Product extends Model
             'is_visible' => 'bool',
             'gift_only' => 'bool',
             'manage_stock' => 'bool',
+            // Lane C: keep selling below zero; NULL level = the default.
+            'backorders' => 'bool',
+            'low_stock_amount' => 'int',
             'sale_starts_at' => 'datetime',
             'sale_ends_at' => 'datetime',
             'published_at' => 'datetime',

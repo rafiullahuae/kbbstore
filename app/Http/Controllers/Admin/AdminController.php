@@ -346,7 +346,8 @@ class AdminController extends Controller
         $ordersTotal   = DemoSeed::exclude(Order::query(), Order::class)->count();
         $customers     = DemoSeed::exclude(Customer::query(), Customer::class)->count();
         $products      = DemoSeed::exclude(Product::query(), Product::class)->count();
-        $lowStock      = DemoSeed::exclude(Product::query(), Product::class)->whereNotNull('stock')->where('stock', '>', 0)->where('stock', '<=', 15)->count();
+        // Each product's own low-stock level, else 15 (Lane C, in SQL).
+        $lowStock      = DemoSeed::exclude(Product::query(), Product::class)->whereNotNull('stock')->where('stock', '>', 0)->whereRaw('products.stock <= COALESCE(products.low_stock_amount, 15)')->count();
         $outStock      = DemoSeed::exclude(Product::query(), Product::class)->whereNotNull('stock')->where('stock', '=', 0)->count();
 
         /*

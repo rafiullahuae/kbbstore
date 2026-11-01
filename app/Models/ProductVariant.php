@@ -36,7 +36,7 @@ class ProductVariant extends Model
 
     protected function casts(): array
     {
-        return ['manage_stock' => 'bool', 'price' => 'int', 'sale_price' => 'int'];
+        return ['manage_stock' => 'bool', 'backorders' => 'bool', 'price' => 'int', 'sale_price' => 'int'];
     }
 
     public function product()

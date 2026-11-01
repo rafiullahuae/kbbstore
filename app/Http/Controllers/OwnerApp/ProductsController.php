@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Services\OwnerApp\OwnerAppSettings;
 use App\Support\EditPresence;
 use App\Support\Money;
+use App\Support\StockLevels;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -40,7 +41,7 @@ final class ProductsController extends Controller
 
     public const FILTERS = ['all', 'low', 'out', 'instock', 'draft', 'hidden'];
 
-    public const EDITABLE = ['price_aed', 'sale_aed', 'stock', 'stock_status', 'manage_stock', 'status', 'is_visible', 'category_ids'];
+    public const EDITABLE = ['price_aed', 'sale_aed', 'stock', 'stock_status', 'manage_stock', 'low_stock_amount', 'status', 'is_visible', 'category_ids'];
 
     private const LIKE_ESCAPE = '!';
 
@@ -69,7 +70,8 @@ final class ProductsController extends Controller
         }
 
         match ($filter) {
-            'low' => $q->where('p.manage_stock', true)->where('p.stock', '>', 0)->where('p.stock', '<=', $at),
+            // Each product's own level, else the default -- in SQL (Lane C).
+            'low' => StockLevels::whereLow($q, 'p', $at),
             'out' => $q->where('p.stock_status', 'outofstock'),
             'instock' => $q->where('p.stock_status', 'instock'),
             'draft' => $q->where('p.status', '!=', 'publish'),
@@ -80,12 +82,13 @@ final class ProductsController extends Controller
         $counts = null;
         if ($before === 0) {
             // The inventory chips, in one pass over the same search.
+            [$lowSql, $lowBind] = StockLevels::lowSql('p', $at);
             $counts = (clone $q)->selectRaw(
                 'COUNT(*) as all_n,
-                 SUM(CASE WHEN p.manage_stock = 1 AND p.stock > 0 AND p.stock <= ? THEN 1 ELSE 0 END) as low_n,
+                 SUM(CASE WHEN '.$lowSql.' THEN 1 ELSE 0 END) as low_n,
                  SUM(CASE WHEN p.stock_status = ? THEN 1 ELSE 0 END) as out_n,
                  SUM(CASE WHEN p.status <> ? THEN 1 ELSE 0 END) as draft_n',
-                [$at, 'outofstock', 'publish'],
+                [...$lowBind, 'outofstock', 'publish'],
             )->first();
         }
 
@@ -94,7 +97,7 @@ final class ProductsController extends Controller
             ->limit(self::PER_PAGE + 1)
             ->get([
                 'p.id', 'p.name', 'p.image', 'p.type', 'p.status', 'p.is_visible', 'p.price', 'p.sale_price',
-                'p.manage_stock', 'p.stock', 'p.stock_status', 'b.name as brand',
+                'p.manage_stock', 'p.stock', 'p.stock_status', 'p.backorders', 'p.low_stock_amount', 'b.name as brand',
             ]);
 
         $more = $rows->count() > self::PER_PAGE;
@@ -105,6 +108,7 @@ final class ProductsController extends Controller
             'products' => $rows->map(fn ($p) => self::row($p, $at))->values(),
             'next' => $more ? (int) $rows->last()->id : null,
             'low_at' => $at,
+            'backorder_display' => StockLevels::display(),
         ];
         if ($counts !== null) {
             $out['counts'] = ['all' => (int) $counts->all_n, 'low' => (int) $counts->low_n, 'out' => (int) $counts->out_n, 'draft' => (int) $counts->draft_n];
@@ -130,8 +134,13 @@ final class ProductsController extends Controller
             'sale_display' => $p->sale_price === null ? null : Money::plain((int) $p->sale_price),
             'manage_stock' => (bool) $p->manage_stock,
             'stock' => $stock,
-            'stock_status' => (string) $p->stock_status,
-            'low' => (bool) $p->manage_stock && $stock !== null && $stock > 0 && $stock <= $at,
+            // 'onbackorder' when it allows back orders; the row stays 'instock'
+            // so the shop sells it (Lane C, StockLevels).
+            'stock_status' => StockLevels::reported($p->backorders ?? false, $p->stock_status),
+            'low' => StockLevels::isLow($p->manage_stock, $stock, $p->low_stock_amount ?? null, $at),
+            'low_stock_amount' => isset($p->low_stock_amount) ? (int) $p->low_stock_amount : null,
+            'backorder' => StockLevels::onBackorder($p->backorders ?? false, $p->manage_stock, $stock),
+            'stock_figure' => StockLevels::figure($stock),
         ];
     }
 
@@ -146,7 +155,7 @@ final class ProductsController extends Controller
             ->first([
                 'p.id', 'p.name', 'p.slug', 'p.sku', 'p.image', 'p.images', 'p.type', 'p.status', 'p.is_visible',
                 'p.price', 'p.sale_price', 'p.sale_starts_at', 'p.sale_ends_at', 'p.manage_stock', 'p.stock',
-                'p.stock_status', 'p.short_description', 'p.description', 'b.name as brand', 'p.updated_at',
+                'p.stock_status', 'p.backorders', 'p.low_stock_amount', 'p.short_description', 'p.description', 'b.name as brand', 'p.updated_at',
             ]);
 
         if ($p === null) {
@@ -155,7 +164,7 @@ final class ProductsController extends Controller
 
         $at = OwnerAppSettings::lowStock();
         $variants = DB::table('product_variants')->where('product_id', $id)->orderBy('position')->orderBy('id')->limit(60)
-            ->get(['id', 'sku', 'price', 'sale_price', 'manage_stock', 'stock', 'stock_status']);
+            ->get(['id', 'sku', 'price', 'sale_price', 'manage_stock', 'stock', 'stock_status', 'backorders']);
         $labels = $variants->isEmpty() ? collect() : DB::table('product_variant_attribute_value as pv')
             ->join('attribute_values as av', 'av.id', '=', 'pv.attribute_value_id')
             // (Lane VPA) the axis too, so an option reads "Shade: #21 Light
@@ -198,9 +207,13 @@ final class ProductsController extends Controller
                     'sku' => (string) ($v->sku ?? ''),
                     'price_display' => $v->price === null ? null : Money::plain((int) $v->price),
                     'stock' => $v->stock === null ? null : (int) $v->stock,
-                    'stock_status' => (string) $v->stock_status,
+                    'stock_status' => StockLevels::reported($v->backorders, $v->stock_status),
+                    'backorder' => StockLevels::onBackorder($v->backorders, $v->manage_stock, $v->stock),
+                    'stock_figure' => StockLevels::figure($v->stock === null ? null : (int) $v->stock),
                 ])->values(),
                 'can_edit' => $this->may($request, 'catalog.manage'),
+                'low_default' => $at,
+                'backorder_display' => StockLevels::display(),
                 'updated_at' => self::iso($p->updated_at),
             ],
         ]);

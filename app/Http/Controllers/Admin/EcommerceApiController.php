@@ -61,10 +61,18 @@ class EcommerceApiController extends Controller
                      * The section keeps `products_per_page`, which is live.
                      */
                     'layout' => ['Catalogue layout', 'How many products on a page.', 'grid', ['products_per_page']],
+                    /*
+                     * Lane C. The owner: "back order will give option for us on
+                     * admin to write 'on back order' or show red minus quantity
+                     * so we will know it's back order product." Admin and owner
+                     * app only -- a shopper still sees "In stock" and can buy.
+                     */
+                    'stock' => ['Stock & back orders', 'How a back-ordered product (allowed to sell below zero) is shown in Catalog → Products, the product editor and the owner app. Each product\'s own low-stock level is set in its editor under Stock.', 'box', [\App\Support\StockLevels::DISPLAY_KEY]],
                 ],
                 'fields' => [
                     'store_country'    => ['select', 'Store country', 'AE', 'Used for shipping zones and tax.', ['AE' => 'United Arab Emirates', 'SA' => 'Saudi Arabia', 'KW' => 'Kuwait', 'QA' => 'Qatar', 'BH' => 'Bahrain', 'OM' => 'Oman']],
                     'products_per_page'=> ['int', 'Products per page', 24, 'Shop and category archives.'],
+                    \App\Support\StockLevels::DISPLAY_KEY => ['select', 'Show a back-ordered product as', \App\Support\StockLevels::DISPLAY_BOTH, 'Admin and owner app only. Shoppers still see it in stock and can order it.', \App\Support\StockLevels::DISPLAYS],
                     'low_stock_at'     => ['int', 'Low stock threshold', 5, 'Shows a scarcity note at or below this.'],
                 ],
             ],

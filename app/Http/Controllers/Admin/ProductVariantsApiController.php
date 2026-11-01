@@ -89,7 +89,8 @@ class ProductVariantsApiController extends Controller
             'variants.*.sale_aed' => ['nullable', 'regex:/^\d{1,7}(\.\d{1,2})?$/'],
             'variants.*.stock_status' => ['required', 'string'],
             'variants.*.manage_stock' => ['nullable', 'boolean'],
-            'variants.*.stock' => ['nullable', 'integer', 'min:0', 'max:1000000'],
+            // Below zero is a back-ordered option (Lane C), checked per row below.
+            'variants.*.stock' => ['nullable', 'integer', 'min:'.\App\Support\StockLevels::MIN_STOCK, 'max:1000000'],
             'variants.*.image' => ['nullable', 'string', 'max:2048'],
             'swatches' => ['nullable', 'array', 'max:500'],
             'swatches.*' => ['nullable', 'string', 'max:9'],
@@ -127,6 +128,10 @@ class ProductVariantsApiController extends Controller
 
             if (! in_array($row['stock_status'], self::STATUSES, true)) {
                 throw ValidationException::withMessages(["variants.$n.stock_status" => "$label: choose In stock, Out of stock or On backorder."]);
+            }
+
+            if (isset($row['stock']) && (int) $row['stock'] < 0 && $row['stock_status'] !== 'onbackorder') {
+                throw ValidationException::withMessages(["variants.$n.stock" => "$label: stock cannot be below zero unless the option is on back order."]);
             }
 
             $price = Money::fromMajor((string) $row['price_aed']);
@@ -170,7 +175,9 @@ class ProductVariantsApiController extends Controller
                 'sku' => isset($row['sku']) && trim((string) $row['sku']) !== '' ? trim((string) $row['sku']) : null,
                 'price' => $price,
                 'sale_price' => $sale,
-                'stock_status' => $row['stock_status'],
+                // 'onbackorder' = allow back orders, stored as the flag plus
+                // 'instock' so the option stays on sale (Lane C).
+                ...\App\Support\StockLevels::fromPosted((string) $row['stock_status']),
                 'manage_stock' => (bool) ($row['manage_stock'] ?? false),
                 'stock' => isset($row['stock']) ? (int) $row['stock'] : null,
                 'image' => $this->safeImage($row['image'] ?? null, $n),
@@ -313,7 +320,7 @@ class ProductVariantsApiController extends Controller
                 'sku' => (string) ($v->sku ?? ''),
                 'price_aed' => $this->major($v->price),
                 'sale_aed' => $this->major($v->sale_price),
-                'stock_status' => (string) $v->stock_status,
+                'stock_status' => \App\Support\StockLevels::reported($v->backorders, $v->stock_status),
                 'manage_stock' => (bool) $v->manage_stock,
                 'stock' => $v->stock === null ? null : (int) $v->stock,
                 'image' => (string) ($v->image ?? ''),
