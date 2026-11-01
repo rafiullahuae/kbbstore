@@ -534,6 +534,10 @@ final class CartTrackingReport
 
         $emails = DB::table('cart_recoveries')->whereIn('cart_id', $ids)->pluck('email', 'cart_id');
 
+        // (Lane B) The free gifts each cart gets: at most one read for the
+        // gifts on this page's orders and one for the open carts' gift names.
+        $freebies = $this->freebies($rows, $orderIds);
+
         $settings = $this->settings->all();
         $out = [];
 
@@ -556,7 +560,167 @@ final class CartTrackingReport
                     'email' => $customer?->email ?? $order?->email ?? ($r->ct_email ?? null) ?? $emails->get($id),
                     'order' => $order === null ? null : $this->orderRow($order),
                     'typed' => $typed,
+                    'freebies' => $freebies[$id] ?? null,
                 ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * THE FREE GIFTS EACH CART GETS (Lane B). The owner: "on the Cart
+     * tracking, we also need to see the freebies list to keep eyes on what
+     * people are getting".
+     *
+     *   - A cart that became an order: the gift lines ON that order
+     *     (order_items.is_gift), as placed -- "got". ONE read for the page.
+     *   - An open cart: what its basket value would earn today -- "would".
+     *     The bands come from the compiled copy in the settings memo (no
+     *     query); the gift products for every band the page lands in are read
+     *     in ONE statement, and given through FreeGifts::linesFor(), the same
+     *     fill (stock, counts, backups) the cart panel uses. The value is
+     *     carts.ct_value, the lines total -- the "before discounts" basis
+     *     exactly; on "after discounts" a coupon taken later can only lower
+     *     it, so the screen says "would get".
+     *   - Free gifts Off, an empty cart, a cart below the first band: nothing,
+     *     or a short "AED X more for <band>" hint (no query: the bands only).
+     *
+     * Never one read per row: 3 carts and 40 cost the same.
+     *
+     * @param  list<object>  $rows
+     * @param  list<int>  $orderIds
+     * @return array<int, array{state:string,range:?string,items:list<array{name:string,qty:int}>,hint:?string}>
+     */
+    private function freebies(array $rows, array $orderIds): array
+    {
+        $out = [];
+
+        // Orders: the gifts actually placed on them.
+        if ($orderIds !== []) {
+            try {
+                $lines = DB::table('order_items')->whereIn('order_id', $orderIds)->where('is_gift', true)
+                    ->orderBy('id')->get(['order_id', 'name', 'quantity'])->groupBy('order_id');
+            } catch (\Throwable) {
+                $lines = collect();
+            }
+
+            foreach ($rows as $r) {
+                $got = $r->ct_order_id !== null ? $lines->get($r->ct_order_id) : null;
+
+                if ($got !== null && $got->isNotEmpty()) {
+                    $out[(int) $r->id] = [
+                        'state' => 'got',
+                        'range' => null,
+                        'items' => $got->map(fn ($l) => ['name' => (string) $l->name, 'qty' => (int) $l->quantity])->values()->all(),
+                        'hint' => null,
+                    ];
+                }
+            }
+        }
+
+        $fg = app(\App\Services\FreeGifts::class);
+        $config = app(\App\Services\SettingsService::class)->get(\App\Services\FreeGifts::KEY);
+        $config = is_array($config) ? $config : [];
+        $mode = \App\Services\FreeGifts::modeOf($config);
+
+        if ($mode === 'off') {
+            return $out;
+        }
+
+        $testers = [];
+
+        if ($mode === 'testing') {
+            foreach (\App\Services\FreeGifts::testersOf($config) as $t) {
+                $testers[(string) IpRange::pack($t['ip'])] = true;
+            }
+        }
+
+        $ranges = $fg->ranges();
+
+        if ($ranges === []) {
+            return $out;
+        }
+
+        $first = null;
+
+        foreach ($ranges as $range) {
+            if ($range['gifts'] !== [] && ($first === null || $range['min'] < $first['min'])) {
+                $first = $range;
+            }
+        }
+
+        // Open carts: the band each one's value lands in today.
+        $open = [];
+        $hit = [];
+
+        foreach ($rows as $r) {
+            if ($r->ct_order_id !== null || (int) $r->ct_value < 1) {
+                continue;
+            }
+
+            // Testing: only a tester's basket gets gifts; the cart keeps the address it was filled from.
+            if ($mode === 'testing' && ! isset($testers[(string) IpRange::pack($r->ct_ip)])) {
+                continue;
+            }
+
+            if ($r->ct_country !== null && ! $fg->countryAllowed($r->ct_country)) {
+                continue;
+            }
+
+            $basis = $fg->basis(['subtotal' => (int) $r->ct_value]);
+            $range = $fg->rangeFor($basis);
+
+            if ($range === null || $range['gifts'] === []) {
+                if ($first !== null && $basis < $first['min']) {
+                    $out[(int) $r->id] = [
+                        'state' => 'none',
+                        'range' => \App\Services\FreeGifts::rangeLabel($first),
+                        'items' => [],
+                        'hint' => Money::plain($first['min'] - $basis).' more for '.\App\Services\FreeGifts::rangeLabel($first),
+                    ];
+                }
+
+                continue;
+            }
+
+            $open[(int) $r->id] = $range;
+            $hit[(int) $range['id']] = $range;
+        }
+
+        if ($hit === []) {
+            return $out;
+        }
+
+        $productIds = [];
+
+        foreach ($hit as $range) {
+            foreach ($range['gifts'] as $g) {
+                $productIds[(int) $g[0]] = true;
+            }
+        }
+
+        $products = \App\Models\Product::query()->whereIn('products.id', array_keys($productIds))
+            ->get(\App\Services\FreeGifts::PRODUCT_COLUMNS)->keyBy('id')->all();
+        // Chosen variations: no query unless a gift names one.
+        $variants = $fg->variantsFor(array_values($hit));
+        $given = [];
+
+        foreach ($hit as $rid => $range) {
+            $given[$rid] = array_map(static fn (array $l) => [
+                'name' => \App\Services\FreeGifts::giftName((string) $l['product']->name, $l['variant'] ?? null),
+                'qty' => (int) $l['quantity'],
+            ], $fg->linesFor($range, $products, $variants));
+        }
+
+        foreach ($open as $cartId => $range) {
+            if ($given[(int) $range['id']] !== []) {
+                $out[$cartId] = [
+                    'state' => 'would',
+                    'range' => \App\Services\FreeGifts::rangeLabel($range),
+                    'items' => $given[(int) $range['id']],
+                    'hint' => null,
+                ];
+            }
         }
 
         return $out;
