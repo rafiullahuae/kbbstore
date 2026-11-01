@@ -75,7 +75,10 @@ it('defaults to today\'s app in every key, and still reads the store name saved 
             'edit_catalogue' => true, 'contact' => true, 'fullscreen' => true, 'sync' => true, 'live' => true,
             // The three the owner DID ask for: Gross/Net off ("just the total
             // revenu should display"), the range and the top-sellers switch on.
-            'gross_net' => false, 'range' => true, 'top_period' => true],
+            'gross_net' => false, 'range' => true, 'top_period' => true,
+            // 1 November: "Hide the cities in the owner app orders page" (off),
+            // and the Today / Yesterday / 7 days / Custom chips he asked for (on).
+            'emirates' => false, 'date_chips' => true],
         'live_seconds' => 25,
     ]);
 

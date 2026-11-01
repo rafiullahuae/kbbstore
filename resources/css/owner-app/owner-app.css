@@ -128,6 +128,18 @@ a { color: inherit; text-decoration: none; }
 .chips button { flex: none; height: 34px; padding: 0 13px; border-radius: 999px; font: 600 13px/1 var(--font); background: var(--chip-bg); color: var(--ink2); white-space: nowrap; box-shadow: 0 4px 14px -10px rgba(150,60,85,.5); }
 .chips button span { font-weight: 500; opacity: .75; margin-left: 4px; }
 .chips button.on { background: var(--chip-on-bg); color: var(--chip-on-ink); }
+/* Orders (owner, 1 November). The date chips sit where the emirate chips were,
+   in the status chips' own look; the Custom sheet uses the gift editor's
+   two-date grid. Back on the phone list, the order just viewed glows once:
+   a tint and ring that fade (opacity only), under the row's text, never over
+   its taps. */
+.chips.dr button .i { width: 14px; height: 14px; vertical-align: -2px; }
+.dr-btns { margin-top: 14px; }
+/* For the one scrollTop write on return (orders.js): every row at its real height, not content-visibility's estimate. */
+.body.cv-all .list .row { content-visibility: visible; }
+.view.single .list .row.ord.cur { position: relative; isolation: isolate; }
+.view.single .list .row.ord.cur::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--acc-soft); box-shadow: inset 0 0 0 2px var(--acc); opacity: 0; pointer-events: none; animation: curglow 1.8s ease-out 1; }
+@keyframes curglow { 0%, 35% { opacity: 1; } 100% { opacity: 0; } }
 .pill { display: inline-flex; align-items: center; gap: 6px; height: 23px; padding: 0 9px; border-radius: var(--r-pill); font: 600 11.5px/1 var(--font); white-space: nowrap;
   --pc: #7C8494; background: color-mix(in srgb, var(--pc) 15%, #fff); color: color-mix(in srgb, var(--pc) 70%, #000); }
 .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--pc); }

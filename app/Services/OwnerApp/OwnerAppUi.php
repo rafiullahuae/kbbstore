@@ -86,10 +86,19 @@ final class OwnerAppUi
         'gross_net' => 'Show Gross and Net revenue on My store',
         'range' => 'Date range on My store (Today … Last month)',
         'top_period' => 'Top performers: 7 days | This month',
+        // The owner, 1 November: "Hide the cities in the owner app orders page" -- the
+        // DXB / AUH chips and each row's emirate badge. Ships OFF (FUNCTIONS_OFF).
+        'emirates' => 'Orders by emirate (city chips and badges)',
+        // ...and "filter by today, yesterday, last 7 days and custom date range".
+        'date_chips' => 'Orders: Today / Yesterday / Last 7 days / Custom',
     ];
 
-    /** Functions that ship OFF: the owner asked for Total alone ("from backend i will enable the net/gross etc when i need it"). */
-    public const FUNCTIONS_OFF = ['gross_net'];
+    /**
+     * Functions that ship OFF: the owner asked for Total alone ("from backend i
+     * will enable the net/gross etc when i need it"), and for the orders page
+     * without its cities (1 November).
+     */
+    public const FUNCTIONS_OFF = ['gross_net', 'emirates'];
 
     /** Each select: its options, the first being today's look. */
     public const CHOICES = [

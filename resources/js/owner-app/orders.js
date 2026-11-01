@@ -13,9 +13,30 @@
 import { S, fn, esc, api, $, $$, ic, av, th, pill, stWord, top, back, toast, sheet, busy, debounce, paint, errorBox, day, time, when, year, isTablet,
   screen, onScreen, mark, once, landed, isFresh, onReset, merge, ln, blk, times, skChips, skNote } from './core.js';
 
-const L = { q: '', status: '', emirate: '', emirates: null, from: '', to: '', payment: '', rows: [], next: null, counts: {}, payments: [], emails: {}, today: '', yesterday: '', sel: new Set(), mode: false, loaded: false, at: null, paged: false, lastQ: '', cur: 0 };
+const L = { q: '', status: '', emirate: '', emirates: null, from: '', to: '', payment: '', rows: [], next: null, counts: {}, payments: [], emails: {}, today: '', yesterday: '', sel: new Set(), mode: false, loaded: false, at: null, paged: false, lastQ: '', cur: 0, top: 0, back: null, flash: 0 };
 let O = null;
-onReset(() => { Object.assign(L, { rows: [], next: null, counts: {}, emirates: null, payments: [], emails: {}, mode: false, loaded: false, at: null, paged: false, lastQ: '', cur: 0 }); L.sel.clear(); O = null; });
+onReset(() => { Object.assign(L, { rows: [], next: null, counts: {}, emirates: null, payments: [], emails: {}, mode: false, loaded: false, at: null, paged: false, lastQ: '', cur: 0, top: 0, back: null, flash: 0 }); L.sel.clear(); O = null; });
+
+/*
+ * WHERE HE LEFT THE LIST (owner, 1 November: "when we open any order and come
+ * back to list it went to top ... we have 100s of orders"). The list is one
+ * scroller, its .body; renderOrders() repaints the shell, so a fresh .body
+ * starts at 0. Its scrollTop is kept when an order is opened from the list
+ * (L.top) and written back after the list is painted again (L.back) -- one
+ * read and one write of that one element's scrollTop, nothing measured. The
+ * pages "Show more" opened stay in L.rows, so the row he was on is still
+ * there to come back to.
+ *
+ * Two things would move it anyway. Rows wear content-visibility:auto, so rows
+ * never drawn since the repaint count at a 70px estimate rather than the
+ * height he scrolled past -- about 2px a row, 45px at row 20, more the deeper
+ * he was. For the one write the scroller carries .cv-all (every row drawn
+ * for real), dropped two frames later, once each row's real height is
+ * remembered. And a silent refresh that lands with the same rows does not
+ * repaint them (the list's markup is compared with what is on screen), so
+ * the remembered heights stay; changed rows repaint as they always did.
+ */
+const listBody = (view) => $(':scope > .body', $('[data-pl]', view) || view);
 
 /* Selection mode (Lane ORD): on while anything is ticked, and also straight
    after "Select" with nothing ticked yet. */
@@ -50,6 +71,8 @@ export async function renderOrders(view, id) {
       return;
     }
     view.className = 'view';
+    const was = view.getAttribute('data-scr') === 'orders' && listBody(view);
+    L.back = was ? was.scrollTop : null;
     paint(view, '<div class="split"><div class="pane-l" data-pl>' + listShell(held) + '</div><div class="pane-d" data-pd></div></div>');
     mark(view, 'orders', 0, !held);
     wireSearch(view);
@@ -70,7 +93,19 @@ export async function renderOrders(view, id) {
     return;
   }
   view.className = 'view single';
-  if (id) { await loadDetail(view, id, false); return; }
+  const scr = view.getAttribute('data-scr'), sc = listBody(view);
+  if (id) {
+    // Leaving the list for an order: remember where it was, and which row.
+    if (scr === 'orders' && sc) L.top = sc.scrollTop;
+    L.flash = +id || 0;
+    await loadDetail(view, id, false);
+    return;
+  }
+  // Back from an order (Back, browser back): where he was. The same list
+  // drawn again (Sync now): where it is. Anywhere else: the top.
+  L.back = scr === 'order' ? L.top : (scr === 'orders' && sc ? sc.scrollTop : null);
+  if (scr !== 'order') L.flash = 0;
+  L.cur = 0;                                    // the tablet's mark; the phone lights its row once (L.flash)
   paint(view, listShell(held));
   mark(view, 'orders', 0, !held);
   wireSearch(view);
@@ -97,6 +132,7 @@ function listShell(held) {
   return selHdr() + top('Orders', '<span data-sub>' + (held ? '' : 'Syncing…') + '</span>', '', selBtn(), 'norm')
     + '<div class="body"><label class="search">' + ic('search', 's') + '<input type="search" data-search placeholder="Search orders, names, products" aria-label="Search orders" value="' + esc(L.q) + '" enterkeyhint="search"><kbd>/</kbd></label>'
     + '<div class="chips" role="group" aria-label="Filter by status" data-chips>' + (held ? '' : skChips(5)) + '</div>'
+    + '<div class="chips dr" role="group" aria-label="Filter by date" data-dchips' + (fn('date_chips') ? '>' + dateChips() : ' hidden>') + '</div>'
     + '<div class="chips" role="group" aria-label="Orders by emirate" data-emchips hidden></div><div data-list>' + (held ? '' : listSkel()) + '</div></div>' + bulkBar();
 }
 
@@ -109,6 +145,66 @@ const listSkel = () => skNote + '<div class="og"><div class="gh">' + ln(15, 'k-h
 const orderSkel = () => skNote + '<div class="od-sum">' + ln(55, 'k-nm') + '<div class="ln">' + blk('k-pill') + ln(35, 'k-sm') + '</div></div>'
   + '<section class="card"><h4 class="sh">' + ln(25, 'k-h') + '</h4>' + times(2, () => '<div class="row">' + blk('th') + '<div class="rm">' + ln(70) + ln(45, 'k-sm') + '</div><div class="re">' + ln(0, 'k-amt') + '</div></div>') + '</section>'
   + '<section class="card"><h4 class="sh">' + ln(20, 'k-h') + '</h4>' + times(4, () => '<div class="kv">' + ln(30) + ln(0, 'k-amt') + '</div>') + '</section>';
+
+/*
+ * DATE CHIPS (owner, 1 November: "filter by today, yesterday, last 7 days and
+ * custom date range"). They set the list's own from / to -- the same two the
+ * Filters sheet sets and the server already reads in the SHOP's time zone, for
+ * the rows AND the status-chip counts in its one GROUP BY. So no new request:
+ * a tap is the list's ordinary call with from= and to=. "Today" is the
+ * server's today (L.today), the phone's clock only before the first answer.
+ * Which chip is lit is read from from / to, so dates picked in Filters light
+ * the right one. Tapping the lit chip clears the dates; Custom opens a sheet.
+ */
+const ymd = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: S.tz || undefined, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+const isDay = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v || '');
+export function shiftDay(day, n) {
+  const d = new Date(day + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+export function dateRange(k, today) {
+  if (k === 'today') return [today, today];
+  if (k === 'yday') { const y = shiftDay(today, -1); return [y, y]; }
+  if (k === '7d') return [shiftDay(today, -6), today];
+  return ['', ''];
+}
+const todayKey = () => (isDay(L.today) ? L.today : ymd(new Date()));
+function activeRange() {
+  if (!L.from && !L.to) return '';
+  const t = todayKey();
+  for (const k of ['today', 'yday', '7d']) { const [f, x] = dateRange(k, t); if (L.from === f && L.to === x) return k; }
+  return 'custom';
+}
+const short = (v) => (isDay(v) ? new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short' }).format(new Date(v + 'T12:00:00Z')) : '…');
+function dateChips() {
+  const on = activeRange();
+  const label = on === 'custom' ? (L.from === L.to ? short(L.from) : short(L.from) + ' – ' + short(L.to)) : 'Custom';
+  return [['today', 'Today'], ['yday', 'Yesterday'], ['7d', 'Last 7 days'], ['custom', label]]
+    .map(([k, l]) => '<button type="button" data-dr="' + k + '"' + (on === k ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + (k === 'custom' ? ic('clock', 's') + ' ' : '') + esc(l) + '</button>').join('');
+}
+
+function customSheet(view) {
+  const t = todayKey();
+  sheet('Custom dates', '<div class="g-dates"><label class="fld"><span>From</span><span class="inp"><input type="date" name="from" max="' + t + '" value="' + esc(L.from) + '"></span></label>'
+    + '<label class="fld"><span>To</span><span class="inp"><input type="date" name="to" max="' + t + '" value="' + esc(L.to) + '"></span></label></div>'
+    + '<p class="alert" data-err hidden></p>'
+    + '<div class="btns dr-btns"><button class="btn sec" type="button" data-clear>Clear</button><button class="btn pri" type="button" data-apply>Show orders</button></div>', (panel, close) => {
+    panel.addEventListener('click', (e) => {
+      if (e.target.closest('[data-clear]')) { L.from = L.to = ''; }
+      else if (e.target.closest('[data-apply]')) {
+        let f = panel.querySelector('[name=from]').value, x = panel.querySelector('[name=to]').value;
+        if (!isDay(f) && !isDay(x)) { const er = $('[data-err]', panel); er.hidden = false; er.textContent = 'Pick a date.'; return; }
+        if (!isDay(f)) f = x;
+        if (!isDay(x)) x = f;
+        if (f > x) { const s = f; f = x; x = s; }
+        L.from = f; L.to = x;
+      } else return;
+      close();
+      loadList(view);
+    });
+  });
+}
 
 function wireSearch(view) {
   const input = $('[data-search]', view);
@@ -150,7 +246,7 @@ export function fetchOrders(passive, force) {
 }
 
 async function loadList(view, more) {
-  if (!more) { await fetchOrders(false, true); return; }
+  if (!more) { L.back = null; await fetchOrders(false, true); return; }
   const r = await api('GET', query({ before: L.next }));
   if (!r.ok) { toast(r.data.message || 'Could not load more.', true); return; }
   L.rows = L.rows.concat(r.data.orders);
@@ -168,6 +264,8 @@ function paintList(view) {
   const filtered = L.from || L.to || L.payment;
   paint($('[data-chips]', view), chips.map(([k, l, n]) => '<button type="button" data-chip="' + k + '"' + (L.status === k ? ' class="on"' : '') + '>' + l + '<span>' + (k ? (L.counts[k] || 0) : n) + '</span></button>').join('')
     + '<button type="button" data-act="filters"' + (filtered ? ' class="on"' : '') + '>' + ic('filter', 's') + ' Filters</button>');
+  const dc = $('[data-dchips]', view);
+  if (dc && fn('date_chips')) paint(dc, dateChips());
   paintEmirates(view);
 
   const groups = [];
@@ -176,10 +274,28 @@ function paintList(view) {
     if (!groups.length || groups[groups.length - 1][0] !== g) groups.push([g, []]);
     groups[groups.length - 1][1].push(o);
   });
-  paint($('[data-list]', view), (groups.length ? groups.map(([g, rows], i) => '<div class="og"><div class="gh"><span>' + g + '</span>' + (i === 0 ? '<button type="button" data-act="selall">Select all</button>' : '') + '</div><div class="list">' + rows.map(row).join('') + '</div></div>').join('')
+  const list = $('[data-list]', view);
+  const html = (groups.length ? groups.map(([g, rows], i) => '<div class="og"><div class="gh"><span>' + g + '</span>' + (i === 0 ? '<button type="button" data-act="selall">Select all</button>' : '') + '</div><div class="list">' + rows.map(row).join('') + '</div></div>').join('')
     : '<div class="card empty">' + (L.q || L.status || L.emirate || filtered ? 'No orders match.' : 'No orders yet.') + '</div>')
-    + (L.next ? '<button type="button" class="btn sec wide" data-act="more">Show more</button>' : ''));
+    + (L.next ? '<button type="button" class="btn sec wide" data-act="more">Show more</button>' : '');
+  // The same rows as on screen (a silent refresh with nothing new): left as
+  // they are, so the scroll and each row's remembered height stay put.
+  if (list && list.oaHtml !== html) { paint(list, html); list.oaHtml = html; }
   syncSel(view);
+  // Back where he left it, once, the first time the list is drawn again.
+  if (L.back !== null) {
+    const b = listBody(view);
+    if (b) {
+      b.classList.add('cv-all');
+      b.scrollTop = L.back;
+      requestAnimationFrame(() => requestAnimationFrame(() => b.classList.remove('cv-all')));
+    }
+    L.back = null;
+    // The order he opened lights once, and is on screen whatever happened.
+    const cur = L.flash && $('.row.ord[data-o="' + L.flash + '"]', view);
+    if (cur) { cur.classList.add('cur'); cur.scrollIntoView({ block: 'nearest' }); }
+    L.flash = 0;
+  }
 }
 
 /*
@@ -193,7 +309,8 @@ function paintEmirates(view) {
   const host = $('[data-emchips]', view);
   if (!host) return;
   const em = L.emirates;
-  if (!em) { host.hidden = true; return; }
+  // Hidden unless switched back on (Customise app → 'emirates'; ships off).
+  if (!em || !fn('emirates')) { host.hidden = true; return; }
   const chips = (em.rows || []).map((r) => [r.key, r.code, r.orders, r.key]).concat([['other', 'Other', em.other || 0, 'Outside the UAE, or no emirate on the address']])
     .filter(([k, , n]) => n || L.emirate === k);
   host.hidden = !chips.length;
@@ -207,8 +324,9 @@ function paintEmirates(view) {
 const lang = (l) => (l === 'ar' || l === 'en') ? '<span class="lg' + (l === 'ar' ? ' ar' : '') + '" title="Placed in ' + (l === 'ar' ? 'Arabic' : 'English') + '">' + l.toUpperCase() + '</span>' : '';
 
 export function row(o) {
+  const ec = fn('emirates') ? o.emirate_code : '';
   return '<div class="row ord' + (L.sel.has(o.id) ? ' on' : '') + (o.id === L.cur ? ' cur' : '') + '" data-o="' + o.id + '"><button type="button" class="sel" data-act="sel" aria-label="Select order ' + esc(o.number) + '">' + av(o.name) + ic('check') + '</button>'
-    + '<a class="rm" href="#/orders/' + o.id + '"><b>#' + esc(o.number) + ' <span>' + esc(o.name) + '</span></b><small>' + (o.emirate_code ? '<span class="em">' + esc(o.emirate_code) + '</span> ' : '') + (o.locale ? lang(o.locale) + ' ' : (o.emirate_code ? '· ' : '')) + esc(day(o.created_at)) + ' · ' + esc(time(o.created_at))
+    + '<a class="rm" href="#/orders/' + o.id + '"><b>#' + esc(o.number) + ' <span>' + esc(o.name) + '</span></b><small>' + (ec ? '<span class="em">' + esc(ec) + '</span> ' : '') + (o.locale ? lang(o.locale) + ' ' : (ec ? '· ' : '')) + esc(day(o.created_at)) + ' · ' + esc(time(o.created_at))
     + (o.items !== null && o.items !== undefined ? ' · ' + o.items + ' item' + (o.items === 1 ? '' : 's') : '') + '</small>'
     + (o.source ? '<small class="src">' + esc(o.source) + '</small>' : '') + '</a>'
     + '<a class="re" href="#/orders/' + o.id + '" tabindex="-1"><b>' + esc(o.total_display) + '</b>' + pill(o.status) + '</a></div>';
@@ -364,12 +482,19 @@ const pillCode = (s) => ({ pending: 'pend', processing: 'proc', onhold: 'hold', 
 /* ---------------------------------------------------------------- clicks */
 
 export async function ordersClick(e, view) {
-  const b = e.target.closest('[data-act],[data-chip],[data-em]');
+  const b = e.target.closest('[data-act],[data-chip],[data-em],[data-dr]');
   const act = b ? b.getAttribute('data-act') : null;
   const rowEl = e.target.closest('.row.ord');
 
   if (b && b.hasAttribute('data-chip')) { L.status = b.getAttribute('data-chip'); await loadList(view); return true; }
-  if (b && b.hasAttribute('data-em')) { const k = b.getAttribute('data-em'); L.emirate = L.emirate === k ? '' : k; await loadList(view); return true; }
+  if (b && b.hasAttribute('data-em')) { if (!fn('emirates')) return true; const k = b.getAttribute('data-em'); L.emirate = L.emirate === k ? '' : k; await loadList(view); return true; }
+  if (b && b.hasAttribute('data-dr')) {
+    const k = b.getAttribute('data-dr'), on = activeRange();
+    if (k === 'custom') { customSheet(view); return true; }
+    [L.from, L.to] = on === k ? ['', ''] : dateRange(k, todayKey());
+    await loadList(view);
+    return true;
+  }
   // Bulk status change switched off (Customise app, Lane OA4): no selecting at all; the server refuses it too.
   if (!fn('bulk') && ['sel', 'selall', 'selnone', 'bulk', 'bulk-more'].indexOf(act) !== -1) return true;
   if (!fn('bulk') && act === 'selmode') return true;
