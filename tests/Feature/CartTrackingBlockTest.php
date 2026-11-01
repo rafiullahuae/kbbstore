@@ -467,8 +467,13 @@ it('costs the same number of queries with forty carts as with three, on every ta
     };
 
     $seed(1, 3);
+    // Warm once: the one-time schema checks (GiftClicks::ready(), the carts
+    // column probe) are memoised per process and reset per test by
+    // StaticMemos, so the first read pays them. They are not per cart.
+    $count();
     $three = $count();
     $seed(4, 40);
+    $count();   // the seeding requests reset those memos again
     $forty = $count();
 
     fwrite(STDERR, "\n[ct] queries per tab, 3 carts → 40 carts: ".json_encode(['3' => $three, '40' => $forty])."\n");
