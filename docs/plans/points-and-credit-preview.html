@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Points and Credit Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#C6395F;--pink2:#E0567A;--blush:#FFF0F4;--blush2:#fde6ee;--green:#2e8f62;--mint:#EEF7F2;--ink:#221A20;--ink2:#4a3f46;--mute:#756C74;--line:#ece3e7;--bg:#f7f1f4;--card:#fff;--gold:#c99a2e;--gold2:#fff6e2;
+--a-bg:#f5f6fb;--a-card:#fff;--a-line:#e6e8f0;--a-ink:#1d2433;--a-soft:#626c80;--a-accent:#16a34a;--a-accent-soft:#e7f7ee}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1619}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Outfit',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer}
+.top{position:sticky;top:0;z-index:20;background:#221A20;color:#fff;padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.top b{font-size:15px;margin-right:6px;white-space:nowrap}
+.top .grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.top .lab{font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.6;margin:0 2px 0 8px}
+.top button{border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:600}
+.top button[aria-pressed="true"]{background:#fff;color:#221A20}
+.note{max-width:1100px;margin:14px auto 0;padding:0 16px;font-size:13px;color:var(--mute)}
+.stage{display:flex;justify-content:center;padding:18px 16px 60px}
+.frame{width:100%;max-width:1180px}
+.frame.phone{max-width:390px}
+.phone .shell{border-radius:28px;box-shadow:0 30px 70px rgba(34,26,32,.18);overflow:hidden;background:#fff}
+/* --- shop chrome --- */
+.shop{background:linear-gradient(180deg,#fff,#fff8fa);min-height:640px}
+.shead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px;border-bottom:1px solid var(--line);background:#fff}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:.02em;font-size:17px;white-space:nowrap}
+.phone .logo{font-size:14px}.phone .hico{gap:9px;font-size:12px}.phone .ptschip{font-size:11.5px;padding:4px 8px}
+.logo i{width:28px;height:22px;display:inline-block;background:radial-gradient(circle at 50% 70%,var(--pink) 0 30%,transparent 31%),conic-gradient(from 200deg at 50% 80%,transparent 0 10deg,var(--pink2) 10deg 40deg,transparent 40deg 70deg,var(--pink) 70deg 100deg,transparent 100deg);border-radius:50%}
+.logo span{color:var(--pink)}
+.hico{display:flex;gap:14px;align-items:center;font-size:13px;color:var(--ink2)}
+.ptschip{display:inline-flex;align-items:center;gap:6px;background:var(--gold2);color:#7a5a12;border:1px solid #f0dfb3;border-radius:999px;padding:5px 10px;font-weight:700;font-size:12.5px}
+.ptschip svg{width:14px;height:14px}
+.wrap{max-width:1100px;margin:0 auto;padding:22px}
+.phone .wrap{padding:16px}
+.grid2{display:grid;grid-template-columns:1.05fr 1fr;gap:28px}
+.phone .grid2{grid-template-columns:1fr;gap:16px}
+.pimg{aspect-ratio:1;border-radius:18px;background:linear-gradient(135deg,#fdf1f5,#fff);display:grid;place-items:center;border:1px solid var(--line)}
+.tube{width:38%;height:62%;border-radius:12px 12px 30px 30px;background:linear-gradient(90deg,#f4f4f6,#fff 40%,#e9e9ee);position:relative;box-shadow:0 18px 30px rgba(0,0,0,.08)}
+.tube:after{content:"";position:absolute;bottom:-14%;left:30%;width:40%;height:16%;background:#b3242c;border-radius:4px 4px 10px 10px}
+.tube b{position:absolute;left:12%;top:20%;font-size:11px;color:#b3242c;writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.05em}
+.brand{display:inline-block;background:var(--blush);color:var(--pink);font-weight:700;font-size:12px;border-radius:6px;padding:3px 8px}
+h1{font-size:28px;line-height:1.2;margin:10px 0 8px}
+.phone h1{font-size:22px}
+.price{font-size:26px;font-weight:800;margin:6px 0 12px}
+.earn{display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,var(--gold2),#fffaf0);border:1px solid #f1e2bd;border-radius:14px;padding:11px 13px;margin:6px 0 14px}
+.earn .coin{width:34px;height:34px;flex:none;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe59a,#e3b13b 60%,#b98516);display:grid;place-items:center;color:#5c3f00;font-weight:800;font-size:13px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+.earn b{color:#6b4c0c}
+.earn small{display:block;color:#8a7552;font-size:12px}
+.btn{border:0;border-radius:14px;background:var(--pink);color:#fff;font-weight:700;padding:14px 18px;font-size:15px}
+.btn.green{background:var(--green)}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:9px 13px;font-size:13px;border-radius:11px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;align-items:center}
+.muted{color:var(--mute)}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px}
+.sec-t{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:0 0 10px}
+/* cart drawer */
+.drawer{max-width:430px;margin-left:auto;background:#fff;min-height:640px;border-left:1px solid var(--line);box-shadow:-20px 0 40px rgba(0,0,0,.06)}
+.phone .drawer{max-width:none;border:0;box-shadow:none}
+.dtabs{display:flex;gap:18px;padding:16px 18px 0;border-bottom:1px solid var(--line);font-weight:700;color:var(--mute)}
+.dtabs span{padding-bottom:10px}.dtabs .on{color:var(--pink);border-bottom:2px solid var(--pink)}
+.line{display:flex;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.thumb{width:62px;height:62px;border-radius:12px;background:linear-gradient(135deg,#fdf1f5,#fff);border:1px solid var(--line);flex:none;display:grid;place-items:center;font-size:10px;color:var(--mute)}
+.tot{padding:14px 18px;display:grid;gap:8px;font-size:14px}
+.tot div{display:flex;justify-content:space-between}
+.tot .g{font-size:17px;font-weight:800}
+.tot .pts{color:var(--green);font-weight:700}
+/* checkout */
+.co{display:grid;grid-template-columns:1.2fr .9fr;gap:22px}
+.phone .co{grid-template-columns:1fr}
+.fld{display:grid;gap:5px;margin-bottom:10px;font-size:13px}
+.fld input,.fld select{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:#fff;color:var(--ink)}
+.redeem{border:2px solid #f0dfb3;background:linear-gradient(180deg,#fffaf0,#fff);border-radius:16px;padding:14px;margin:4px 0 14px}
+.redeem h4{margin:0;display:flex;align-items:center;gap:8px;font-size:15px}
+.switch{position:relative;width:46px;height:26px;border-radius:999px;background:#d9cfd4;border:0;flex:none;transition:background .2s}
+.switch:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.switch[aria-checked="true"]{background:var(--green)}.switch[aria-checked="true"]:after{left:23px}
+.range{width:100%;accent-color:var(--gold)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chips button{border:1px solid #ecd9a9;background:#fff;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700;color:#7a5a12}
+.chips button.on{background:#7a5a12;color:#fff;border-color:#7a5a12}
+.hint{font-size:12px;color:var(--mute);margin-top:6px}
+/* thank you */
+.ty{text-align:center;padding:40px 22px}
+.burst{width:120px;height:120px;margin:0 auto 14px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,#e3b13b 60%,#a8740e);display:grid;place-items:center;color:#4a3200;font-weight:800;font-size:30px;box-shadow:0 18px 40px rgba(201,154,46,.35),inset 0 -5px 0 rgba(0,0,0,.12)}
+/* account */
+.acc{display:grid;grid-template-columns:230px 1fr;gap:22px}
+.phone .acc{grid-template-columns:1fr}
+.anav{display:grid;gap:4px;align-content:start}
+.anav a{padding:10px 12px;border-radius:12px;color:var(--ink2);text-decoration:none;font-weight:600;font-size:14px}
+.anav a.on{background:var(--blush);color:var(--pink)}
+.phone .anav{display:flex;overflow:auto;gap:6px}
+.phone .anav a{white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px}
+.bal{border-radius:22px;padding:20px;color:#fff;background:radial-gradient(120% 140% at 100% 0%,#E0567A 0,#C6395F 40%,#8f2346 100%);position:relative;overflow:hidden}
+.bal:after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08)}
+.bal .n{font-size:40px;font-weight:800;line-height:1.1}
+.bal .v{opacity:.9;font-weight:600}
+.bal .sub{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:13px;opacity:.95}
+.bal .sub b{display:block;font-size:16px}
+.bal .acts{display:flex;gap:8px;margin-top:16px;position:relative;z-index:1;flex-wrap:wrap}
+.bal .acts button{border:0;border-radius:12px;padding:10px 14px;font-weight:700;font-size:14px;background:#fff;color:var(--pink)}
+.bal .acts button.alt{background:rgba(255,255,255,.18);color:#fff}
+.hist{display:grid}
+.h{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.h:first-child{border-top:0}
+.h .ic{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;flex:none;font-weight:800}
+.h .ic.e{background:var(--mint);color:var(--green)}.h .ic.r{background:var(--blush);color:var(--pink)}.h .ic.t{background:#eef2ff;color:#3b4fd8}.h .ic.p{background:var(--gold2);color:#8a6410}.h .ic.x{background:#f2f2f4;color:#888}
+.h .amt{margin-left:auto;font-weight:800;white-space:nowrap}
+.plus{color:var(--green)}.minus{color:var(--pink)}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:1px}
+.tag.pend{background:var(--gold2);color:#8a6410}
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.phone .how{grid-template-columns:1fr}
+.how div{background:var(--blush);border-radius:14px;padding:12px;font-size:13px}
+.how b{display:block;font-size:14px;margin-bottom:3px}
+/* transfer */
+.steps{display:flex;gap:6px;margin-bottom:14px}
+.steps i{flex:1;height:5px;border-radius:999px;background:var(--line)}
+.steps i.on{background:var(--pink)}
+.found{display:flex;gap:10px;align-items:center;background:var(--mint);border:1px solid #cfe7da;border-radius:14px;padding:10px 12px;margin:6px 0 12px}
+.av{width:38px;height:38px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:800}
+.big{font-size:34px;font-weight:800;text-align:center;border:0;width:100%;outline:0;background:transparent;color:var(--ink)}
+.otp{display:flex;gap:8px;justify-content:center;margin:12px 0}
+.otp input{width:44px;height:52px;text-align:center;font-size:22px;font-weight:800;border:1px solid var(--line);border-radius:12px}
+.err{color:#c0392b;font-size:12.5px;margin-top:4px}
+/* email */
+.mail{max-width:560px;margin:0 auto;background:#fff;border-radius:18px;overflow:hidden;border:1px solid var(--line)}
+.mail .mh{background:linear-gradient(135deg,#C6395F,#8f2346);color:#fff;padding:22px;text-align:center}
+.mail .mb{padding:22px;font-size:14px;line-height:1.6}
+/* admin */
+.admin{display:grid;grid-template-columns:230px 1fr;min-height:700px;background:var(--a-bg);color:var(--a-ink)}
+.phone .admin{grid-template-columns:1fr}
+.aside{background:#fff;border-right:1px solid var(--a-line);padding:16px 12px}
+.phone .aside{display:none}
+.aside .k{display:flex;gap:8px;align-items:center;font-weight:800;margin-bottom:16px}
+.aside .k i{width:30px;height:30px;border-radius:9px;background:#16a34a;color:#fff;display:grid;place-items:center;font-style:normal}
+.aside a{display:block;padding:8px 10px;border-radius:9px;color:var(--a-soft);font-size:13.5px;text-decoration:none}
+.aside a.on{background:var(--a-accent-soft);color:#0b6e3a;font-weight:700}
+.aside .g{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#9aa3b5;margin:12px 10px 4px}
+.amain{padding:20px}
+.phone .amain{padding:14px}
+.ah{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.ah h2{margin:0;font-size:22px}
+.ah p{margin:2px 0 0;color:var(--a-soft);font-size:13px}
+.atabs{display:flex;gap:2px;border-bottom:1px solid var(--a-line);margin-bottom:14px;overflow:auto}
+.atabs button{border:0;background:none;padding:10px 12px;color:var(--a-soft);font-size:13.5px;border-bottom:2px solid transparent;white-space:nowrap}
+.atabs button.on{color:var(--a-ink);font-weight:700;border-color:#16a34a}
+.acard{background:#fff;border:1px solid var(--a-line);border-radius:14px;padding:16px;margin-bottom:12px}
+.acard h3{margin:0 0 4px;font-size:15px}
+.acard p.s{margin:0 0 12px;color:var(--a-soft);font-size:12.5px}
+.ag{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.af{display:grid;gap:5px;font-size:12.5px}
+.af span{font-weight:600;color:#3b4456}
+.af small{color:#8a93a6;font-size:11.5px}
+.af input,.af select{font:inherit;font-size:13.5px;padding:9px 11px;border:1px solid var(--a-line);border-radius:10px;background:#fff;color:var(--a-ink)}
+.inl{display:flex;align-items:center;gap:6px}
+.inl input{width:100%}
+.modes{display:inline-flex;border:1px solid var(--a-line);border-radius:12px;overflow:hidden}
+.modes button{border:0;background:#fff;padding:9px 14px;font-weight:700;font-size:13px;color:var(--a-soft)}
+.modes button.on.off{background:#f3f4f6;color:#333}.modes button.on.test{background:#fff4dc;color:#8a5a00}.modes button.on.live{background:#16a34a;color:#fff}
+.calc{background:#f8fafc;border:1px dashed #cfd6e4;border-radius:12px;padding:12px;font-size:13px;display:grid;gap:6px}
+.calc b{font-size:15px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px}
+.tile{background:#fff;border:1px solid var(--a-line);border-radius:12px;padding:12px 14px;border-top:3px solid var(--c)}
+.tile span{font-size:12px;color:var(--a-soft)}.tile b{display:block;font-size:22px;margin-top:2px}.tile small{color:#8a93a6;font-size:11.5px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:9px 8px;border-bottom:1px solid var(--a-line);text-align:left;white-space:nowrap}
+th{font-size:11.5px;color:var(--a-soft);font-weight:600}
+.tw{overflow:auto}
+.pill{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px}
+.pill.g{background:#e7f7ee;color:#0b6e3a}.pill.p{background:#fdeceb;color:#b4231a}.pill.b{background:#eef2ff;color:#3b4fd8}.pill.y{background:#fff4dc;color:#8a5a00}.pill.x{background:#f2f2f4;color:#666}
+.bars{display:flex;align-items:flex-end;gap:4px;height:120px;margin-top:8px}
+.bars i{flex:1;background:linear-gradient(#16a34a,#7ad3a0);border-radius:4px 4px 0 0}
+.bars i.r{background:linear-gradient(#C6395F,#f1a3b8)}
+/* owner app */
+.oa{background:linear-gradient(180deg,#fbeef2,#fff);min-height:700px;padding:16px}
+.oah{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.oah h3{margin:0;font-size:22px}
+.oacard{background:#fff;border-radius:20px;padding:4px 14px;box-shadow:0 8px 24px rgba(150,60,85,.08);margin-bottom:12px}
+.oarow{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid #f2e6eb}
+.oarow:first-child{border-top:0}
+.oarow .ico{width:32px;height:32px;border-radius:10px;background:#f6edf1;display:grid;place-items:center;font-size:15px}
+.oarow small{display:block;color:var(--mute);font-size:12px}
+.oarow .chev{margin-left:auto;color:#bbb}
+.oaher{border-radius:22px;padding:16px;color:#fff;background:linear-gradient(160deg,#a33a5c,#7d2a45);margin-bottom:12px}
+.flow{display:grid;gap:10px}
+.tag2{font-size:11px;background:#16a34a;color:#fff;border-radius:6px;padding:2px 6px;font-weight:700}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#221A20;color:#fff;padding:10px 16px;border-radius:12px;font-size:13.5px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+.toast.on{opacity:1}
+@media (max-width:760px){.grid2,.co,.acc,.admin{grid-template-columns:1fr}.aside{display:none}.how{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top">
+  <b>Bliss Points + Store credit · preview</b>
+  <div class="grp" id="scrBtns"></div>
+  <div class="grp"><span class="lab">View</span><button data-v="desk" aria-pressed="true">Computer</button><button data-v="phone" aria-pressed="false">Phone</button></div>
+</div>
+<p class="note">A live preview, not built yet. Change the rules under <b>Admin · Points settings</b> and every shopper screen follows. Nothing here talks to the shop.</p>
+<div class="stage"><div class="frame" id="frame"><div class="shell" id="app"></div></div></div>
+<div class="toast" id="toast"></div>
+<script>
+const S = {
+  mode: 'live', earnPer: 1, value: 0.05, minRedeem: 100, maxPct: 50, award: 'delivered', expiry: 12,
+  transfers: true, tMin: 50, tMaxDay: 2000, tAge: 7, otp: true, signup: 100, review: 0, birthday: 200,
+  balance: 1240, pending: 238, expiring: 120, credit: 75, useCredit: false, creditOn: true,
+  cartSubtotal: 238, delivery: 0, use: false, usePts: 0,
+  tStep: 1, tTo: '', tFound: null, tAmt: 200, tErr: '', aTab: 'settings', scr: 'product', view: 'desk'
+};
+const SCREENS = [
+  ['product', 'Product page'], ['cart', 'Bag panel'], ['checkout', 'Checkout'], ['thanks', 'Order placed'],
+  ['account', 'My points'], ['transfer', 'Send points'], ['email', 'Emails'],
+  ['admin', 'Admin · Points'], ['customer', 'Admin · Customer'], ['owner', 'Owner app']
+];
+const $ = (s, r) => (r || document).querySelector(s);
+const fmt = (n) => Math.round(n).toLocaleString('en-US');
+const aed = (n) => 'AED ' + (Math.round(n * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+const earnFor = (aedAmt) => Math.floor(aedAmt * S.earnPer);
+const worth = (pts) => pts * S.value;
+const COIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/></svg>';
+function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('on'), 1800); }
+
+/* the points a basket may use: whole dirhams, the minimum, the cap */
+function redeemable() {
+  const capAed = Math.floor(S.cartSubtotal * S.maxPct / 100);
+  const capPts = Math.floor(capAed / S.value);
+  let pts = Math.min(S.balance, capPts);
+  pts = Math.floor(worth(pts)) / S.value; // whole dirhams only
+  return S.balance < S.minRedeem ? 0 : Math.floor(pts);
+}
+
+function header() {
+  return '<div class="shead"><div class="logo"><i></i>K-BEAUTY <span>BLISS</span></div><div class="hico">' +
+    (S.mode === 'off' ? '' : '<span class="ptschip">' + COIN + fmt(S.balance) + ' pts' + (S.creditOn && S.credit ? ' · ' + aed(S.credit) : '') + '</span>') + '<span>♡</span><span>👤</span><span>🛍 1</span></div></div>';
+}
+
+function product() {
+  const price = 119, e = earnFor(price);
+  return header() + '<div class="wrap"><div class="grid2"><div class="pimg"><div class="tube"><b>RETINOL 0.1%</b></div></div><div>' +
+    '<span class="brand">FRANKLY</span><h1>FRANKLY - Retinol 0.1% Cream</h1><div class="price">AED 119</div>' +
+    (S.mode === 'off' ? '' : '<div class="earn"><span class="coin">+' + (e > 999 ? '1k' : e) + '</span><div><b>Earn ' + fmt(e) + ' Bliss Points</b> with this product<small>Worth ' + aed(worth(e)) + ' on your next order · ' + (S.award === 'delivered' ? 'ready once it is delivered' : 'ready once it is paid') + '</small></div></div>') +
+    '<p class="muted" style="font-size:14px;line-height:1.6">This vegan and cruelty-free cream is enriched with retinol, adenosine and ceramide NP to promote skin cell turnover and strengthen the skin barrier.</p>' +
+    '<div class="row" style="margin-top:14px"><button class="btn ghost">− 1 +</button><button class="btn" style="flex:1" data-go="cart">Add to bag</button></div>' +
+    '<p class="hint">Shown under the price on every product, and on product cards as a small “+119 pts” when you switch that on. Worked out from the price alone: no extra loading.</p></div></div></div>';
+}
+
+function cart() {
+  const e = earnFor(S.cartSubtotal);
+  return header() + '<div class="drawer"><div class="dtabs"><span class="on">Bag 2</span><span>Browsed</span></div>' +
+    '<div class="line"><div class="thumb">FRANKLY</div><div><b>FRANKLY - Retinol 0.1% Cream</b><div class="muted" style="font-size:13px">1 × AED 119</div></div></div>' +
+    '<div class="line"><div class="thumb">FRANKLY</div><div><b>FRANKLY - PDRN Bounce Ball Serum</b><div class="muted" style="font-size:13px">1 × AED 119</div></div></div>' +
+    '<div class="tot"><div><span>Subtotal</span><b>AED ' + S.cartSubtotal + '</b></div>' +
+    (S.mode === 'off' ? '' : '<div class="earn" style="margin:4px 0"><span class="coin">+' + e + '</span><div><b>You’ll earn ' + fmt(e) + ' points</b><small>You have ' + fmt(S.balance) + ' points (' + aed(worth(S.balance)) + ') — use them at checkout</small></div></div>') +
+    '<button class="btn" data-go="checkout">Checkout · AED ' + S.cartSubtotal + '</button></div>' +
+    '<p class="hint" style="padding:0 18px">Signed-out shoppers see “Sign in to earn ' + fmt(e) + ' points” instead.</p></div>';
+}
+
+function checkout() {
+  const max = redeemable();
+  if (S.usePts > max) S.usePts = max;
+  const off = S.use ? worth(S.usePts) : 0;
+  const before = S.cartSubtotal + S.delivery - off;
+  const cr = S.creditOn && S.useCredit ? Math.min(S.credit, before) : 0;
+  const total = before - cr;
+  const earn = earnFor(Math.max(0, S.cartSubtotal - off - cr));
+  const steps = [0.25, 0.5, 1].map((f) => Math.floor(worth(Math.floor(max * f))) / S.value).filter((v, i, a) => v > 0 && a.indexOf(v) === i);
+  return header() + '<div class="wrap"><div class="co"><div class="card"><p class="sec-t">Delivery</p>' +
+    '<div class="fld"><span>Full name</span><input value="Layla Hassan"></div><div class="fld"><span>Address</span><input value="Villa 12, Al Barsha 2, Dubai"></div>' +
+    '<p class="sec-t" style="margin-top:14px">Payment</p><div class="fld"><select><option>Card · Apple Pay</option><option>Tabby</option><option>Tamara</option><option>Cash on delivery</option></select></div></div>' +
+    '<div><div class="card"><p class="sec-t">Order summary</p>' +
+    (S.mode === 'off' ? '' : '<div class="redeem"><div class="row" style="justify-content:space-between"><h4><span class="coin" style="width:26px;height:26px;font-size:11px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#ffe59a,#e3b13b 60%,#b98516);color:#5c3f00">★</span>Use my Bliss Points</h4>' +
+      '<button class="switch" role="switch" aria-checked="' + S.use + '" data-act="use"' + (max ? '' : ' disabled') + '></button></div>' +
+      '<p class="hint" style="margin-top:4px">You have <b>' + fmt(S.balance) + '</b> points · up to <b>' + fmt(max) + '</b> on this order (' + aed(worth(max)) + ')</p>' +
+      (max === 0 ? '<p class="err">You need at least ' + fmt(S.minRedeem) + ' points to use them.</p>' : '') +
+      (S.use && max ? '<input class="range" type="range" min="0" max="' + max + '" step="' + Math.round(1 / S.value) + '" value="' + S.usePts + '" data-act="slide">' +
+        '<div class="row" style="justify-content:space-between;font-weight:700"><span>' + fmt(S.usePts) + ' points</span><span class="plus">− ' + aed(off) + '</span></div>' +
+        '<div class="chips">' + steps.map((v) => '<button data-pts="' + v + '" class="' + (v === S.usePts ? 'on' : '') + '">' + fmt(v) + ' pts</button>').join('') + '</div>' : '') + '</div>') +
+    (S.creditOn && S.credit > 0 ? '<div class="redeem" style="border-color:#cfe7da;background:linear-gradient(180deg,#f3faf6,#fff)"><div class="row" style="justify-content:space-between"><h4><span style="width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--green);color:#fff;font-size:13px">AED</span>Use my store credit</h4>' +
+      '<button class="switch" role="switch" aria-checked="' + S.useCredit + '" data-act="credit"></button></div>' +
+      '<p class="hint" style="margin-top:4px">You have <b>' + aed(S.credit) + '</b> store credit' + (S.useCredit ? ' · <b>' + aed(cr) + '</b> used on this order, <b>' + aed(S.credit - cr) + '</b> left' : '') + '</p></div>' : '') +
+    '<div class="tot" style="padding:0"><div><span>Subtotal</span><span>AED ' + S.cartSubtotal + '</span></div><div><span>Delivery</span><span>Free</span></div>' +
+    (off ? '<div><span>Bliss Points (' + fmt(S.usePts) + ')</span><span class="pts">− ' + aed(off) + '</span></div>' : '') +
+    (cr ? '<div><span>Store credit</span><span class="pts">− ' + aed(cr) + '</span></div>' : '') +
+    '<div class="g"><span>Total</span><span>' + aed(total) + '</span></div>' +
+    (total === 0 ? '<div class="muted" style="font-size:12.5px">Fully paid with points and credit — no payment step.</div>' : '') +
+    (S.mode === 'off' ? '' : '<div class="muted" style="font-size:12.5px">You’ll earn <b class="plus">' + fmt(earn) + ' points</b> on this order — on what you pay, not on points or credit used.</div>') +
+    '<button class="btn" data-go="thanks" style="margin-top:6px">Place order</button></div></div>' +
+    '<p class="hint">Points come off the products’ total, in whole dirhams. Store credit then pays any part of the rest, delivery included — up to the whole order. Works with every payment method; if a payment fails, points and credit go straight back.</p></div></div></div>';
+}
+
+function thanks() {
+  const off = S.use ? worth(S.usePts) : 0, crU = S.useCredit && S.creditOn ? Math.min(S.credit, S.cartSubtotal - off) : 0, e = earnFor(Math.max(0, S.cartSubtotal - off - crU));
+  return header() + '<div class="ty"><div class="burst">+' + e + '</div><h1>Thank you, Layla!</h1><p class="muted" style="font-size:15px">Order #56231 is confirmed.</p>' +
+    '<div class="card" style="max-width:460px;margin:18px auto;text-align:left">' +
+    (S.use && S.usePts ? '<div class="row" style="justify-content:space-between;margin-bottom:8px"><span>Points used</span><b class="minus">− ' + fmt(S.usePts) + ' (' + aed(off) + ')</b></div>' : '') +
+    (S.useCredit && S.creditOn ? '<div class="row" style="justify-content:space-between;margin-bottom:8px"><span>Store credit used</span><b class="minus">− ' + aed(Math.min(S.credit, S.cartSubtotal - (S.use ? worth(S.usePts) : 0))) + '</b></div>' : '') +
+    '<div class="row" style="justify-content:space-between"><span>Points earned</span><b class="plus">+ ' + fmt(e) + '</b></div>' +
+    '<p class="hint">' + (S.award === 'delivered' ? 'They show as “on the way” and become yours to spend when the order is delivered.' : 'They are yours to spend as soon as the payment is confirmed.') + '</p>' +
+    '<button class="btn sm ghost" data-go="account" style="margin-top:8px">See my points</button></div></div>';
+}
+
+function account() {
+  const hist = [
+    ['p', '+238', 'Order #56231', 'On the way — ready when delivered', 'pend'],
+    ['e', '+412', 'Order #56102', '12 Oct · delivered'],
+    ['r', '−400', 'Used on order #56044', '3 Oct · ' + aed(worth(400)) + ' off'],
+    ['t', '−200', 'Sent to Mariam A.', '28 Sep · “Happy birthday!”'],
+    ['t', '+150', 'From Noora K.', '21 Sep'],
+    ['e', '+' + S.signup, 'Welcome points', 'Joined 2 Sep'],
+    ['x', '−' + S.expiring, 'Expiring 31 Dec', 'Use them before they go', 'pend']
+  ];
+  return header() + '<div class="wrap"><div class="acc"><nav class="anav"><a>Dashboard</a><a>Orders</a><a class="on">Points & credit</a><a>Addresses</a><a>Profile</a></nav><div class="flow">' +
+    '<div class="bal"><div style="opacity:.85;font-weight:600">Your Bliss Points</div><div class="n">' + fmt(S.balance) + '</div><div class="v">worth ' + aed(worth(S.balance)) + '</div>' +
+    '<div class="sub"><div><b>' + fmt(S.pending) + '</b>on the way</div><div><b>' + fmt(S.expiring) + '</b>expire 31 Dec</div><div><b>1 pt = ' + aed(S.value) + '</b>' + S.earnPer + ' pt per AED 1</div></div>' +
+    '<div class="acts"><button data-go="cart">Use on my bag</button>' + (S.transfers ? '<button class="alt" data-go="transfer">Send points</button>' : '') + '</div></div>' +
+    (S.creditOn ? '<div class="card" style="display:flex;align-items:center;gap:14px;border-color:#cfe7da;background:linear-gradient(90deg,#f3faf6,#fff)"><span style="width:44px;height:44px;border-radius:14px;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none">AED</span><div style="flex:1"><div class="muted" style="font-size:13px">Store credit</div><div style="font-size:24px;font-weight:800">' + aed(S.credit) + '</div><div class="muted" style="font-size:12.5px">“Sorry for the late delivery — enjoy AED 75 on us.” · 30 Oct</div></div><button class="btn sm green" data-go="checkout">Use it</button></div>' : '') +
+    '<div class="card"><p class="sec-t">History</p><div class="hist">' + hist.map((h) => '<div class="h"><span class="ic ' + h[0] + '">' + ({ p: '⏳', e: '+', r: '−', t: '⇄', x: '!' })[h[0]] + '</span><div><b>' + h[2] + '</b>' + (h[4] ? '<span class="tag pend">' + (h[0] === 'x' ? 'soon' : 'pending') + '</span>' : '') + '<div class="muted" style="font-size:12.5px">' + h[3] + '</div></div><span class="amt ' + (h[1][0] === '+' ? 'plus' : 'minus') + '">' + h[1] + '</span></div>').join('') + '</div></div>' +
+    '<div class="card"><p class="sec-t">How it works</p><div class="how"><div><b>Earn</b>' + S.earnPer + ' point for every AED 1 you spend' + (S.signup ? ', plus ' + S.signup + ' when you join' : '') + '.</div><div><b>Use</b>Every ' + fmt(1 / S.value) + ' points = AED 1 off. Use from ' + fmt(S.minRedeem) + ' points, up to ' + S.maxPct + '% of an order.</div><div><b>Share</b>' + (S.transfers ? 'Send points to a friend’s Bliss account in seconds.' : 'Points stay in your account.') + (S.expiry ? ' Points last ' + S.expiry + ' months.' : '') + '</div></div></div>' +
+    '</div></div></div>';
+}
+
+function transfer() {
+  const st = S.tStep;
+  const bar = '<div class="steps">' + [1, 2, 3, 4].map((i) => '<i class="' + (i <= st ? 'on' : '') + '"></i>').join('') + '</div>';
+  let body = '';
+  if (!S.transfers) body = '<p>Sending points is switched off.</p>';
+  else if (st === 1) body = '<h2 style="margin:0 0 6px">Who are you sending to?</h2><p class="muted" style="margin:0 0 12px">Their email or mobile number on Bliss.</p>' +
+    '<div class="fld"><input id="tTo" placeholder="friend@email.com or 05X XXX XXXX" value="' + S.tTo + '"></div>' + (S.tErr ? '<p class="err">' + S.tErr + '</p>' : '') +
+    (S.tFound ? '<div class="found"><span class="av">M</span><div><b>' + S.tFound + '</b><div class="muted" style="font-size:12px">Bliss member · we only show initials</div></div></div>' : '') +
+    '<div class="row"><button class="btn ghost sm" data-act="find">Find</button><button class="btn" style="flex:1" data-act="next1"' + (S.tFound ? '' : ' disabled') + '>Continue</button></div><p class="hint">Try “mariam@example.com”. Someone without a Bliss account can’t receive points.</p>';
+  else if (st === 2) body = '<h2 style="margin:0 0 6px">How many points?</h2><p class="muted" style="margin:0">To ' + S.tFound + ' · you have ' + fmt(S.balance) + '</p>' +
+    '<input class="big" id="tAmt" inputmode="numeric" value="' + S.tAmt + '"><p style="text-align:center;margin:0" class="muted">worth ' + aed(worth(S.tAmt)) + '</p>' +
+    '<div class="chips" style="justify-content:center">' + [100, 200, 500].map((v) => '<button data-amt="' + v + '" class="' + (v === S.tAmt ? 'on' : '') + '">' + v + '</button>').join('') + '</div>' +
+    '<div class="fld" style="margin-top:12px"><span>Message (optional)</span><input placeholder="Happy birthday! 🎁" maxlength="80"></div>' + (S.tErr ? '<p class="err">' + S.tErr + '</p>' : '') +
+    '<button class="btn" style="width:100%" data-act="next2">Continue</button><p class="hint">From ' + fmt(S.tMin) + ' points, up to ' + fmt(S.tMaxDay) + ' a day. Only points already yours can be sent (not ones on the way).</p>';
+  else if (st === 3) body = '<h2 style="margin:0 0 6px">Check and confirm</h2><div class="card" style="margin:10px 0"><div class="row" style="justify-content:space-between"><span>To</span><b>' + S.tFound + '</b></div><div class="row" style="justify-content:space-between;margin-top:6px"><span>Points</span><b>' + fmt(S.tAmt) + ' (' + aed(worth(S.tAmt)) + ')</b></div><div class="row" style="justify-content:space-between;margin-top:6px"><span>Left after</span><b>' + fmt(S.balance - S.tAmt) + '</b></div></div>' +
+    (S.otp ? '<p class="muted" style="text-align:center;margin:6px 0 0">Enter the 6-digit code we just emailed you</p><div class="otp">' + '<input maxlength="1" value="4">'.repeat(1) + '<input maxlength="1" value="8">' + '<input maxlength="1" value="2">' + '<input maxlength="1" value="6">' + '<input maxlength="1" value="1">' + '<input maxlength="1" value="5">' + '</div>' : '') +
+    '<button class="btn green" style="width:100%" data-act="send">Send ' + fmt(S.tAmt) + ' points</button><p class="hint">Sent points can’t be taken back, so we check once. ' + (S.otp ? 'The code stops anyone else using your account to send them.' : '') + '</p>';
+  else body = '<div class="ty" style="padding:10px"><div class="burst" style="background:radial-gradient(circle at 35% 30%,#bff0d6,#2e8f62 70%);color:#fff">✓</div><h2>Sent!</h2><p class="muted">' + fmt(S.tAmt) + ' points are with ' + S.tFound + ' now. We emailed you both.</p><button class="btn ghost sm" data-act="again">Back to my points</button></div>';
+  return header() + '<div class="wrap" style="max-width:520px"><div class="card">' + bar + body + '</div></div>';
+}
+
+function email() {
+  return '<div class="wrap"><div class="grid2"><div class="mail"><div class="mh"><div style="font-weight:800;letter-spacing:.06em">K-BEAUTY BLISS</div><div style="font-size:30px;font-weight:800;margin-top:8px">+' + fmt(S.tAmt) + ' points</div><div>from Layla H.</div></div><div class="mb">Hi Mariam,<br><br>Layla sent you <b>' + fmt(S.tAmt) + ' Bliss Points</b> — worth ' + aed(worth(S.tAmt)) + ' on your next order.<br><i>“Happy birthday! 🎁”</i><br><br><button class="btn" style="width:100%">Shop with my points</button><p class="hint">You now have 1,040 points.</p></div></div>' +
+    '<div class="mail"><div class="mh" style="background:linear-gradient(135deg,#c99a2e,#8a6410)"><div style="font-weight:800;letter-spacing:.06em">K-BEAUTY BLISS</div><div style="font-size:30px;font-weight:800;margin-top:8px">' + fmt(S.balance) + ' points</div><div>are ready to spend</div></div><div class="mb">Your order #56102 was delivered, so its <b>412 points</b> are now yours.<br><br>That’s ' + aed(worth(S.balance)) + ' to use on your next order. ' + (S.expiry ? '<b>' + fmt(S.expiring) + ' points expire on 31 Dec</b> — a gentle reminder goes out 14 days before.' : '') + '<br><br><button class="btn" style="width:100%">Use my points</button></div></div></div>' +
+    '<p class="hint" style="text-align:center">Also on the order confirmation email: “You’ll earn 238 points”. Every email in English and Arabic.</p></div>';
+}
+
+function adminShell(active, inner) {
+  const nav = [['Dashboard'], ['Orders'], ['Customers', 'customer'], ['g', 'Growth & Marketing'], ['Free gifts'], ['Points & credit', 'admin'], ['Cart Tracking'], ['Coupons']];
+  return '<div class="admin"><aside class="aside"><div class="k"><i>K</i>K-Beauty Bliss</div>' + nav.map((n) => n[0] === 'g' ? '<div class="g">' + n[1] + '</div>' : '<a class="' + (n[1] === active ? 'on' : '') + '"' + (n[1] ? ' data-go="' + n[1] + '"' : '') + '>' + n[0] + '</a>').join('') + '</aside><main class="amain">' + inner + '</main></div>';
+}
+
+function adminPoints() {
+  const t = S.aTab;
+  const tabs = '<div class="atabs">' + [['settings', 'Settings'], ['overview', 'Overview'], ['ledger', 'Activity'], ['transfers', 'Transfers'], ['credit', 'Store credit']].map((x) => '<button data-atab="' + x[0] + '" class="' + (t === x[0] ? 'on' : '') + '">' + x[1] + '</button>').join('') + '</div>';
+  let inner = '';
+  if (t === 'settings') {
+    const f = (k, label, help, attrs, unit) => '<label class="af"><span>' + label + '</span><div class="inl">' + (unit && unit[0] ? '<em style="font-style:normal;color:#8a93a6">' + unit[0] + '</em>' : '') + '<input data-set="' + k + '" value="' + S[k] + '" ' + (attrs || '') + '>' + (unit && unit[1] ? '<em style="font-style:normal;color:#8a93a6;white-space:nowrap">' + unit[1] + '</em>' : '') + '</div><small>' + help + '</small></label>';
+    inner = '<div class="acard"><h3>Bliss Points</h3><p class="s">Off, Testing (only the IPs on the Testing list see it) or Live — locked behind your PIN in the owner app, like Free gifts.</p><div class="modes">' + ['off', 'test', 'live'].map((m) => '<button data-mode="' + m + '" class="' + m + (S.mode === m ? ' on' : '') + '">' + ({ off: 'Off', test: 'Testing', live: 'Live' })[m] + '</button>').join('') + '</div></div>' +
+      '<div class="acard"><h3>Earning and value</h3><p class="s">Two numbers decide everything. Change them and the calculator — and every shopper screen in this preview — follows.</p><div class="ag">' +
+      f('earnPer', 'Points per AED 1 spent', 'On the products’ total after coupons; never on delivery, fees, gifts or points used.', 'type="number" min="0.1" step="0.1"', ['', 'pts']) +
+      f('value', 'Value of 1 point', 'What a point takes off an order.', 'type="number" min="0.001" step="0.01"', ['AED', '']) +
+      '<label class="af"><span>Points become usable</span><select data-set="award"><option value="delivered"' + (S.award === 'delivered' ? ' selected' : '') + '>When the order is delivered</option><option value="paid"' + (S.award === 'paid' ? ' selected' : '') + '>When it is paid</option></select><small>Delivered is safest: a cancel or refund before then simply removes them.</small></label>' +
+      f('expiry', 'Points expire after', '0 = never. A reminder email goes 14 days before.', 'type="number" min="0" step="1"', ['', 'months']) +
+      '</div><div class="calc" style="margin-top:12px"><span>A AED 250 order earns <b>' + fmt(earnFor(250)) + ' points</b>, worth <b>' + aed(worth(earnFor(250))) + '</b> — a <b>' + (Math.round(S.earnPer * S.value * 1000) / 10) + '%</b> reward.</span><span class="muted">' + fmt(1 / S.value) + ' points = AED 1 off.</span></div></div>' +
+      '<div class="acard"><h3>Using points</h3><div class="ag">' + f('minRedeem', 'Minimum to use', 'Below this the checkout says how many more are needed.', 'type="number" min="0" step="10"', ['', 'pts']) + f('maxPct', 'Up to this much of an order', 'Of the products’ total.', 'type="number" min="1" max="100" step="5"', ['', '%']) + '</div></div>' +
+      '<div class="acard"><h3>Sending points</h3><p class="s">Shoppers can send points to another Bliss account.</p><label class="af" style="flex-direction:row;display:flex;gap:8px;align-items:center;margin-bottom:10px"><input type="checkbox" data-set="transfers" ' + (S.transfers ? 'checked' : '') + '> <span>Allow sending points</span></label><div class="ag">' + f('tMin', 'Smallest send', '', 'type="number" min="1"', ['', 'pts']) + f('tMaxDay', 'Most a day, per account', 'Stops a stolen account being emptied.', 'type="number" min="1"', ['', 'pts']) + f('tAge', 'Account at least', 'New accounts can receive but not send.', 'type="number" min="0"', ['', 'days old']) + '<label class="af"><span>Confirm with an email code</span><select data-set="otp"><option value="1"' + (S.otp ? ' selected' : '') + '>Yes (recommended)</option><option value="0"' + (!S.otp ? ' selected' : '') + '>No</option></select><small>A 6-digit code to the sender’s email before points leave.</small></label></div></div>' +
+      '<div class="acard"><h3>Store credit</h3><p class="s">Credit you give by hand (Customers → a customer, or the Store credit tab). Spent at checkout on anything, delivery included.</p><label class="af" style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-set="creditOn" ' + (S.creditOn ? 'checked' : '') + '> <span>Let customers use store credit at checkout</span></label></div>' +
+      '<div class="acard"><h3>Bonus points</h3><div class="ag">' + f('signup', 'On joining', '', 'type="number" min="0"', ['', 'pts']) + f('birthday', 'On their birthday', 'Needs a birthday on the profile.', 'type="number" min="0"', ['', 'pts']) + f('review', 'For a product review', 'Once the review is approved.', 'type="number" min="0"', ['', 'pts']) + '</div></div>';
+  } else if (t === 'overview') {
+    inner = '<div class="tiles">' + [['#16a34a', 'Points earned', '412,380', aed(worth(412380)) + ' value'], ['#C6395F', 'Points used', '186,900', aed(worth(186900)) + ' off orders'], ['#c99a2e', 'Still to be used', '201,640', aed(worth(201640)) + ' owed — your liability'], ['#3b4fd8', 'Sent between shoppers', '14,250', '96 sends · 71 people']].map((x) => '<div class="tile" style="--c:' + x[0] + '"><span>' + x[1] + '</span><b>' + x[2] + '</b><small>' + x[3] + '</small></div>').join('') + '</div>' +
+      '<div class="acard"><h3>Earned and used, last 30 days</h3><div class="bars">' + Array.from({ length: 30 }, (_, i) => '<i style="height:' + (35 + 30 * Math.sin(i / 3) + (i % 5) * 6) + '%"></i>').join('') + '</div><div class="bars" style="height:60px">' + Array.from({ length: 30 }, (_, i) => '<i class="r" style="height:' + (25 + 25 * Math.cos(i / 4) + (i % 3) * 8) + '%"></i>').join('') + '</div></div>' +
+      '<div class="acard"><h3>Did it bring them back?</h3><p class="s">Customers with points ordered again 2.4× as often as those without (last 90 days).</p></div>';
+  } else if (t === 'ledger') {
+    const rows = [['31 Oct 14:02', 'Layla Hassan', 'Earned', '+238', '#56231', 'On the way', 'y'], ['31 Oct 13:40', 'Noora Al Ketbi', 'Used', '−600', '#56229', '', 'p'], ['31 Oct 12:11', 'Layla → Mariam', 'Sent', '200', '', '“Happy birthday!”', 'b'], ['30 Oct 18:22', 'Fatima R.', 'Adjusted', '+500', '', 'Sorry for the delay — Rafi', 'x'], ['30 Oct 09:15', 'Aisha M.', 'Removed', '−119', '#56101', 'Order refunded', 'p'], ['29 Oct 23:59', '312 accounts', 'Expired', '−18,240', '', 'Older than 12 months', 'x']];
+    inner = '<div class="acard"><div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px"><input placeholder="Search a customer, email or order" style="flex:1;min-width:200px;padding:9px 11px;border:1px solid var(--a-line);border-radius:10px;font:inherit"><select style="padding:9px;border:1px solid var(--a-line);border-radius:10px;font:inherit"><option>Everything</option><option>Earned</option><option>Used</option><option>Sent</option><option>Adjusted</option><option>Expired</option></select></div><div class="tw"><table><thead><tr><th>When</th><th>Who</th><th>What</th><th>Points</th><th>Order</th><th>Note</th></tr></thead><tbody>' + rows.map((r) => '<tr><td>' + r[0] + '</td><td><b>' + r[1] + '</b></td><td><span class="pill ' + r[6] + '">' + r[2] + '</span></td><td><b>' + r[3] + '</b></td><td>' + r[4] + '</td><td class="muted">' + r[5] + '</td></tr>').join('') + '</tbody></table></div><p class="hint">Every point is one line here, so a balance can always be explained. Export to CSV.</p></div>';
+  } else if (t === 'credit') {
+    inner = '<div class="tiles">' + [['#2e8f62', 'Credit given', 'AED 4,250', '63 customers'], ['#C6395F', 'Credit used', 'AED 2,980', 'on 51 orders'], ['#c99a2e', 'Still to be used', 'AED 1,270', 'your liability']].map((x) => '<div class="tile" style="--c:' + x[0] + '"><span>' + x[1] + '</span><b>' + x[2] + '</b><small>' + x[3] + '</small></div>').join('') + '</div>' +
+      '<div class="acard"><h3>Give store credit</h3><p class="s">To any customer, by name, email or phone. Also on each customer’s page.</p><div class="ag"><label class="af"><span>Customer</span><input placeholder="Search name, email or phone" value="Layla Hassan · layla@example.ae"></label><label class="af"><span>Amount</span><div class="inl"><em style="font-style:normal;color:#8a93a6">AED</em><input type="number" value="50"></div><small>Whole dirhams.</small></label><label class="af"><span>Internal note <span class="pill x">team only</span></span><input placeholder="Why — never shown to the customer"></label><label class="af"><span>Message to the customer</span><input placeholder="Optional — shown in her account and email"></label></div><button class="btn sm green" style="margin-top:12px">Give credit</button></div>' +
+      '<div class="acard"><h3>Credit activity</h3><div class="tw"><table><thead><tr><th>When</th><th>Customer</th><th>What</th><th>Amount</th><th>Internal note</th><th>By</th></tr></thead><tbody>' +
+      [['30 Oct 18:22', 'Layla Hassan', 'Added', '+AED 75', 'Late delivery #56101', 'Rafi', 'g'], ['30 Oct 11:04', 'Noora Al Ketbi', 'Used', '−AED 40', 'Order #56190', '—', 'p'], ['29 Oct 15:30', 'Huda S.', 'Added', '+AED 120', 'Return #RT-88 refunded as credit', 'Sara', 'g'], ['28 Oct 09:12', 'Aisha M.', 'Removed', '−AED 20', 'Added twice by mistake', 'Rafi', 'x']].map((r) => '<tr><td>' + r[0] + '</td><td><b>' + r[1] + '</b></td><td><span class="pill ' + r[6] + '">' + r[2] + '</span></td><td><b>' + r[3] + '</b></td><td class="muted">' + r[4] + '</td><td>' + r[5] + '</td></tr>').join('') + '</tbody></table></div></div>';
+  } else {
+    inner = '<div class="acard"><h3>Sends</h3><p class="s">Every send between shoppers, with a hold if something looks unusual (many sends to one account, a new account, a big amount).</p><div class="tw"><table><thead><tr><th>When</th><th>From</th><th>To</th><th>Points</th><th>Status</th><th></th></tr></thead><tbody>' +
+      [['31 Oct 12:11', 'Layla H.', 'Mariam A.', '200', 'Sent', 'g', ''], ['30 Oct 22:40', 'New account (2 days)', '—', '1,500', 'Refused: account too new', 'p', ''], ['30 Oct 16:05', 'Sara K.', 'Huda S.', '1,900', 'Held for review', 'y', '<button class="btn sm green">Release</button> <button class="btn sm ghost">Return</button>']].map((r) => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td><b>' + r[3] + '</b></td><td><span class="pill ' + r[5] + '">' + r[4] + '</span></td><td>' + r[6] + '</td></tr>').join('') + '</tbody></table></div></div>';
+  }
+  return adminShell('admin', '<div class="ah"><div><h2>Points & credit</h2><p>Growth & Marketing → Points & credit</p></div></div>' + tabs + inner);
+}
+
+function adminCustomer() {
+  return adminShell('customer', '<div class="ah"><div><h2>Layla Hassan</h2><p>layla@example.ae · +971 50 123 4567 · 7 orders</p></div></div>' +
+    '<div class="ag"><div class="acard"><h3>Bliss Points</h3><div style="font-size:30px;font-weight:800">' + fmt(S.balance) + ' <span style="font-size:14px;color:#8a93a6">(' + aed(worth(S.balance)) + ')</span></div><p class="s">' + fmt(S.pending) + ' on the way · ' + fmt(S.expiring) + ' expire 31 Dec</p>' +
+    '<div class="af"><span>Add or remove points</span><div class="inl"><input id="adj" type="number" value="100"><button class="btn sm green" data-act="adj">Add</button><button class="btn sm ghost" data-act="adjm">Remove</button></div><input placeholder="Reason (shown in her history)" style="margin-top:6px"><small>Logged with your name. She gets an email.</small></div></div>' +
+    '<div class="acard"><h3>Store credit</h3><div style="font-size:30px;font-weight:800">' + aed(S.credit) + '</div><p class="s">Money she can spend at checkout. Added by hand, in whole dirhams.</p>' +
+    '<div class="af"><span>Amount</span><div class="inl"><em style="font-style:normal;color:#8a93a6">AED</em><input id="cr" type="number" value="50" min="1" step="1"><button class="btn sm green" data-act="cradd">Add credit</button><button class="btn sm ghost" data-act="crrem">Remove</button></div></div>' +
+    '<div class="af" style="margin-top:8px"><span>Internal note <span class="pill x">team only</span></span><input placeholder="e.g. Order #56101 arrived damaged — agreed with her on WhatsApp"><small>Never shown to the customer. Kept with your name and the time.</small></div>' +
+    '<div class="af" style="margin-top:8px"><span>Message to her (optional)</span><input placeholder="Sorry for the late delivery — enjoy AED 50 on us."><small>Shown in her account and in the email. Leave empty to add credit quietly.</small></div>' +
+    '<div class="af" style="margin-top:8px"><span>Expires</span><select><option>Never</option><option>In 3 months</option><option>In 6 months</option><option>In 12 months</option></select></div>' +
+    '<div class="tw" style="margin-top:10px"><table><tbody><tr><td>30 Oct</td><td><span class="pill g">Added</span></td><td>+AED 75</td><td class="muted">Late delivery #56101 — Rafi</td></tr><tr><td>14 Sep</td><td><span class="pill p">Used</span></td><td>−AED 40</td><td>#55870</td></tr></tbody></table></div></div>' +
+    '<div class="acard"><h3>Points activity</h3><div class="tw"><table><tbody><tr><td>31 Oct</td><td><span class="pill y">Earned</span></td><td>+238</td><td>#56231</td></tr><tr><td>12 Oct</td><td><span class="pill g">Earned</span></td><td>+412</td><td>#56102</td></tr><tr><td>3 Oct</td><td><span class="pill p">Used</span></td><td>−400</td><td>#56044</td></tr><tr><td>28 Sep</td><td><span class="pill b">Sent</span></td><td>−200</td><td>to Mariam A.</td></tr></tbody></table></div></div></div>' +
+    '<div class="acard"><h3>On each order</h3><p class="s">Order #56231 — Totals: Subtotal AED 238 · Points used −AED 0 · <b>Points earned +238 (on the way)</b>. A refund or cancel removes the points it earned and returns any it used, automatically.</p></div>');
+}
+
+function owner() {
+  return '<div class="oa"><div class="oah"><div><div class="muted" style="font-size:12px">Friday, 31 October</div><h3>K-Beauty Bliss</h3></div><span class="ptschip">⟳</span></div>' +
+    '<div class="oaher"><div style="opacity:.8;font-size:13px">Today</div><div style="font-size:34px;font-weight:800">AED 1,766</div><div style="opacity:.85;font-size:13px">5 paid orders</div></div>' +
+    '<div class="oacard">' + [['🛒', 'Cart tracking', 'Live carts and where shoppers left'], ['🎁', 'Free gifts', 'Ranges, gift products and the mode'], ['📈', 'Gift box clicks', 'View all, Gifts Criteria, ranges, photos'], ['⭐', 'Points & credit <span class="tag2">new</span>', '201,640 points · AED 1,270 credit out']].map((r) => '<div class="oarow"><span class="ico">' + r[0] + '</span><div><b>' + r[1] + '</b><small>' + r[2] + '</small></div><span class="chev">›</span></div>').join('') + '</div>' +
+    '<div class="oacard" style="padding:14px"><b>Bliss Points</b><div class="row" style="margin:10px 0;gap:8px"><div class="card" style="flex:1;padding:10px"><small class="muted">Earned today</small><div style="font-weight:800;font-size:18px">+3,410</div></div><div class="card" style="flex:1;padding:10px"><small class="muted">Used today</small><div style="font-weight:800;font-size:18px">−1,200</div></div></div><div class="muted" style="font-size:12.5px">Mode, rates, a customer’s points and store credit (add with an internal note) — the same controls as the console, with the PIN for Off / Testing / Live.</div></div></div>';
+}
+
+const VIEWS = { product, cart, checkout, thanks, account, transfer, email, admin: adminPoints, customer: adminCustomer, owner };
+function render() {
+  $('#scrBtns').innerHTML = SCREENS.map((s) => '<button data-scr="' + s[0] + '" aria-pressed="' + (S.scr === s[0]) + '">' + s[1] + '</button>').join('');
+  document.querySelectorAll('[data-v]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === S.view)));
+  $('#frame').className = 'frame' + (S.view === 'phone' ? ' phone' : '');
+  $('#app').innerHTML = '<div class="shop">' + VIEWS[S.scr]() + '</div>';
+  try { location.hash = S.scr === 'product' ? '' : S.scr; } catch (e) {}
+}
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('button,a,[data-go]');
+  if (!t) return;
+  const d = t.dataset;
+  if (d.scr) { S.scr = d.scr; render(); window.scrollTo(0, 0); return; }
+  if (d.v) { S.view = d.v; render(); return; }
+  if (d.go) { S.scr = d.go; render(); window.scrollTo(0, 0); return; }
+  if (d.atab) { S.aTab = d.atab; render(); return; }
+  if (d.mode) { S.mode = d.mode; render(); toast('Bliss Points: ' + t.textContent); return; }
+  if (d.pts) { S.usePts = +d.pts; render(); return; }
+  if (d.amt) { S.tAmt = +d.amt; S.tErr = ''; render(); return; }
+  const a = d.act;
+  if (a === 'use') { S.use = !S.use; S.usePts = S.use ? redeemable() : 0; render(); }
+  if (a === 'find') { const v = ($('#tTo') || {}).value || ''; S.tTo = v; if (/^\S+@\S+\.\S+$/.test(v) || /^0?5\d{8}$/.test(v.replace(/\s/g, ''))) { if (/layla/i.test(v)) { S.tFound = null; S.tErr = 'That’s your own account.'; } else { S.tFound = 'M••••• A.'; S.tErr = ''; } } else { S.tFound = null; S.tErr = 'Enter an email or a UAE mobile number.'; } render(); }
+  if (a === 'next1') { S.tStep = 2; render(); }
+  if (a === 'next2') { const v = parseInt(($('#tAmt') || {}).value, 10) || 0; S.tAmt = v; if (v < S.tMin) S.tErr = 'Send at least ' + S.tMin + ' points.'; else if (v > S.balance) S.tErr = 'You have ' + fmt(S.balance) + ' points.'; else if (v > S.tMaxDay) S.tErr = 'Up to ' + fmt(S.tMaxDay) + ' a day.'; else { S.tErr = ''; S.tStep = 3; } render(); }
+  if (a === 'send') { S.balance -= S.tAmt; S.tStep = 4; render(); }
+  if (a === 'again') { S.tStep = 1; S.tFound = null; S.tTo = ''; S.scr = 'account'; render(); }
+  if (a === 'credit') { S.useCredit = !S.useCredit; render(); }
+  if (a === 'cradd' || a === 'crrem') { const v = parseInt(($('#cr') || {}).value, 10) || 0; S.credit = Math.max(0, S.credit + (a === 'cradd' ? v : -v)); render(); toast((a === 'cradd' ? 'Added AED ' : 'Removed AED ') + v + ' store credit'); }
+  if (a === 'adj' || a === 'adjm') { const v = parseInt(($('#adj') || {}).value, 10) || 0; S.balance = Math.max(0, S.balance + (a === 'adj' ? v : -v)); render(); toast((a === 'adj' ? 'Added ' : 'Removed ') + v + ' points'); }
+});
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  if (t.dataset.act === 'slide') { S.usePts = +t.value; const p = t.closest('.card'); render(); const r = document.querySelector('.range'); if (r) r.focus(); }
+  if (t.dataset.set) {
+    const k = t.dataset.set; let v = t.type === 'checkbox' ? t.checked : t.value;
+    if (k === 'otp') v = v === '1';
+    else if (k !== 'award' && k !== 'transfers' && k !== 'creditOn') v = Math.max(0, parseFloat(v) || 0);
+    if (k === 'value' && v <= 0) return;
+    if (k === 'earnPer' && v <= 0) return;
+    S[k] = v;
+    const calc = document.querySelector('.calc');
+    if (calc) calc.innerHTML = '<span>A AED 250 order earns <b>' + fmt(earnFor(250)) + ' points</b>, worth <b>' + aed(worth(earnFor(250))) + '</b> — a <b>' + (Math.round(S.earnPer * S.value * 1000) / 10) + '%</b> reward.</span><span class="muted">' + fmt(1 / S.value) + ' points = AED 1 off.</span>';
+  }
+});
+document.addEventListener('change', (e) => { if (e.target.dataset.set) render(); });
+const h = (location.hash || '').slice(1);
+if (VIEWS[h]) S.scr = h;
+render();
+</script>
+</body>
+</html>
