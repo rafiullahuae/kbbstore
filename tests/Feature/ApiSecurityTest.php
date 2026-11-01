@@ -191,6 +191,18 @@ it('keeps a product\'s free-gift type off the public product api', function () {
         ->and($this->getJson('/api/products/typed-serum')->assertOk()->getContent())->not->toContain('gift_kind')->not->toContain('"full"');
 });
 
+it('keeps a product\'s low-stock line and back-order flag off the public product api', function () {
+    /*
+     * 2.60.633 added products.low_stock_amount and products.backorders -- the
+     * owner's stock thresholds, back-office only.
+     * MUTATION: add either to Product::toApi() -> red.
+     */
+    product(['slug' => 'stocked-serum', 'name' => 'Stocked Serum', 'low_stock_amount' => 7, 'backorders' => true]);
+
+    expect($this->getJson('/api/products')->assertOk()->getContent())->toContain('Stocked Serum')->not->toContain('low_stock_amount')->not->toContain('backorders')
+        ->and($this->getJson('/api/products/stocked-serum')->assertOk()->getContent())->not->toContain('low_stock_amount')->not->toContain('backorders');
+});
+
 it('keeps a product\'s own "You may also like" picks off the public product api', function () {
     /*
      * Lane PS added `products.also_like` — one product's hand-picked companions

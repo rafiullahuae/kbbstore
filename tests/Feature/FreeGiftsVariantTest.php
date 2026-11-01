@@ -35,6 +35,7 @@ use App\Services\Payments\GatewayCredentials;
 use App\Services\SettingsService;
 use App\Support\Money;
 use Illuminate\Support\Facades\DB;
+use Tests\Support\SqlShape;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
@@ -142,7 +143,7 @@ function fgvTotals(Cart $cart): array
 /** Queries logged, less the settings map this test's own fgvFresh() made the app read again. */
 function fgvQueries(): int
 {
-    return count(array_filter(DB::getQueryLog(), static fn (array $q) => ! str_contains($q['query'], 'from "settings"')));
+    return count(array_filter(DB::getQueryLog(), static fn (array $q) => ! str_contains(SqlShape::portable($q['query']), 'from "settings"')));
 }
 
 function fgvAdmin(): AdminUser

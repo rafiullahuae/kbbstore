@@ -146,8 +146,7 @@ Schedule::command('payments:tabby-capture')
 | category save already keep them level; this catches what moved another way
 | (an import, a bulk edit). Two set-based statements per linked category.
 */
-Schedule::call(static fn () => \App\Services\CategoryBrandSync::sync())
-    ->name('kbb:category-brand-sync')
+Schedule::command('kbb:category-brand-sync')
     ->dailyAt('03:17')
     ->withoutOverlapping(30);
 

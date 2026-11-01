@@ -6,7 +6,7 @@
 #   tools/lt3-preview.sh [port]
 set -e
 APP=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-PORT=$(python3 - "${1:-8771}" <<'PY'
+PORT=$(python3 - "${1:-8771}" <<'KBBPORTPY'
 import socket, sys
 start = int(sys.argv[1])
 for p in range(start, start + 400):
@@ -17,7 +17,7 @@ for p in range(start, start + 400):
         s.close()
 else:
     raise SystemExit('no free port')
-PY
+KBBPORTPY
 )
 DIR=$APP/storage/framework/testing/lane-lt3-preview
 ROOT=$DIR/webroot

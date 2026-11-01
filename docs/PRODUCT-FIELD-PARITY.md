@@ -97,8 +97,8 @@ code and this table drift apart.
 | 32 | `tax_class` | General | No per-product tax class to select into — `tax_rates` has no class column |
 | 33 | `virtual` | Beside "Simple product" | Every product is treated as a physical good |
 | 34 | `downloadable` | Beside "Simple product" | No downloadable products, no file-permissions table |
-| 35 | `backorders` | Inventory | No backorder *policy* column. `stock_status` can say `onbackorder` but not whether to allow one |
-| 36 | `low_stock_amount` | Inventory | The low-stock threshold is one shop-wide setting |
+| 35 | `backorders` | Inventory | **Carried since 2.60.633** into `products.backorders` (`notify`/`yes`, or a stock status of `onbackorder`, allow back orders) |
+| 36 | `low_stock_amount` | Inventory | **Carried since 2.60.633** into `products.low_stock_amount` |
 | 37 | `upsell_ids` | Linked Products | No upsell pivot; related products are computed from the category |
 | 38 | `cross_sell_ids` | Linked Products | No cross-sell pivot |
 | 39 | `grouped_ids` | Linked Products | Grouped products are not a type this shop sells |

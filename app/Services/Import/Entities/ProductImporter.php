@@ -182,14 +182,6 @@ final class ProductImporter extends EntityImporter
             'why' => 'there are no downloadable products and no file permissions table',
             'aliases' => ['is_downloadable'],
         ],
-        'backorders' => [
-            'why' => 'there is no backorder policy column -- `stock_status` can say onbackorder but not whether to allow one',
-            'aliases' => ['backorders_allowed'],
-        ],
-        'low_stock_amount' => [
-            'why' => 'the low-stock threshold is one shop-wide setting here, not a per-product number',
-            'aliases' => [],
-        ],
         'upsell_ids' => [
             'why' => 'there is no upsell pivot; related products are computed from the category',
             'aliases' => ['upsells'],
@@ -456,7 +448,15 @@ final class ProductImporter extends EntityImporter
             'sale_ends_at' => $row->date('sale_ends_at', $context->timezone(), 'sale_ends_at', 'date_sale_price_ends', 'date_on_sale_to'),
             'manage_stock' => $row->bool(false, 'manage_stock'),
             'stock' => $row->text('stock', 'stock_quantity') === null ? null : $row->int(0, 'stock', 'stock_quantity'),
-            'stock_status' => $stockStatus,
+            // 2.60.633: carried, now there are columns for them. WooCommerce's
+            // "notify" and "yes" both allow back orders; a row stored as
+            // onbackorder means the same and is kept in stock, the way
+            // StockLevels::fromPosted() stores the editors' choice -- without
+            // it an imported back-order product would read as sold out.
+            'stock_status' => $stockStatus === 'onbackorder' ? 'instock' : $stockStatus,
+            'backorders' => $stockStatus === 'onbackorder'
+                || in_array(mb_strtolower((string) $row->text('backorders', 'backorders_allowed')), ['1', 'yes', 'notify', 'true'], true),
+            'low_stock_amount' => $row->text('low_stock_amount') === null ? null : max(0, $row->int(0, 'low_stock_amount')),
             // Sanitised on the way in, not on the way out.
             //
             // A WooCommerce export is a THIRD-PARTY FILE. Everything else in

@@ -138,5 +138,5 @@ it('puts the picker in the category editor and runs once a day', function () {
     $screen = (string) file_get_contents(resource_path('views/admin/partials/category-tree-screen.blade.php'));
     expect(substr_count($screen, '<select id="ct-mirror" disabled>'))->toBe(1)
         ->and($screen)->toContain("if (mirror && !mirror.disabled) payload.mirror_brand_id")
-        ->and((string) file_get_contents(base_path('routes/console.php')))->toContain("->name('kbb:category-brand-sync')");
+        ->and((string) file_get_contents(base_path('routes/console.php')))->toContain("Schedule::command('kbb:category-brand-sync')");
 });

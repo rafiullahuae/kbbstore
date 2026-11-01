@@ -52,6 +52,8 @@ function keyedExcludedFiles(): array
             => "One @page rule and nothing else. It used to sit inside @section('page') in invoices/shipping-label.blade.php, which BladeProse blanks by name; Lane GC moved it into a partial so the single label and a BULK run of labels cannot end up with two answers to how big A6 is. Same bytes, same output, no prose — the scanner reads a CSS at-rule as a sentence, which is the failure this exclusion is for.",
         'invoices/partials/style-dispatch-label.blade.php'
             => "The dispatch label's stylesheet, 26 lines of CSS and not one word. Moved out of @section('style') in invoices/shipping-label.blade.php by Lane GC for the same reason as the file above, and excluded for the same reason: BladeProse blanks that section by name and cannot tell that a file holding only its body is still CSS. docs/invoice-previews/dispatch-label.html regenerates byte-for-byte across the move, which is the check that it is the same stylesheet.",
+        'partials/free-gifts/extras-css.blade.php'
+            => "The gift box popups' stylesheet (Lane GBX), CSS and not one word, printed inside the box's own <style>. Excluded on the dispatch-label terms above: the scanner cannot tell that a file holding only a stylesheet's body is still CSS.",
         'store/skin-quiz.blade.php'
             => "The script is converted now (Lane FB): ~90 keys under store.quiz.js_*, its own window.KBB_T, and the invented catalogue deleted. Still excluded for what REMAINS English on purpose — the skin types, concerns, ages, depths, budgets and allergens the shopper picks, which are compared by recommend() and POSTed to /api/quiz as the lead's answers. QuizScriptStringsAreKeyedTest pins both halves: the converted chrome, and those values staying English.",
     ];
@@ -65,6 +67,9 @@ function keyedExcludedFiles(): array
 function keyedAllowedText(): array
 {
     return [
+        // partials/free-gifts/box (Lane GBX)
+        '·'
+            => 'A middle dot between the gift box words and their count -- punctuation, the same in every language.',
         // emails/order-phone-request-text (2.60.562)
         ': 05X XXX XXXX'
             => 'The shape of a UAE mobile number after its translated label, the same in every language -- a pattern of digits, not a word.',

@@ -187,7 +187,10 @@ it('has nothing that outlives a single request', function () {
     // Arrivals to its rule (ages products out of the window); a cache read
     // when nothing keeps itself, two reads and no writes when nothing
     // changed, exits. Nothing is held between runs.
-    expect(substr_count($console, 'Schedule::command('))->toBe(14, 'the set of scheduled commands has changed');
+    // 15 with 2.60.633: `kbb:category-brand-sync`, daily at 03:17 -- brings a
+    // category linked to a brand (Medicube) level with it in two set-based
+    // statements, exits. Nothing is held between runs.
+    expect(substr_count($console, 'Schedule::command('))->toBe(15, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {

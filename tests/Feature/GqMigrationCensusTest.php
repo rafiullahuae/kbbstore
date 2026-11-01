@@ -190,8 +190,8 @@ function gqCensus(): array
              */
             'date_modified' => GQ_NAMED.': this shop stamps its own updated_at',
             'product_visibility' => GQ_NAMED.": WooCommerce's four-state visibility, folded into is_visible and featured",
-            'backorders' => GQ_NAMED.': no backorder policy column',
-            'low_stock_amount' => GQ_NAMED.': the low-stock threshold is a shop-wide setting here',
+            'backorders' => GQ_LANDS.'products.backorders',
+            'low_stock_amount' => GQ_LANDS.'products.low_stock_amount',
             'weight' => GQ_NAMED.': no shipping weight column; shipping is decided per zone',
             'length' => GQ_NAMED.': no parcel dimensions',
             'width' => GQ_NAMED.': no parcel dimensions',
@@ -1549,6 +1549,9 @@ function gqEmptyInThisFixture(): array
         'coupons.excluded_category_ids' => "the harness coupon has no `exclude_product_categories` meta",
         'coupons.allowed_emails' => "the harness coupon has no `customer_email` meta",
         'coupons.limit_usage_to_x_items' => "the harness coupon has no `limit_usage_to_x_items` meta",
+        // 2.60.633: no harness product sets `_low_stock_amount`; WooCommerce
+        // leaves it empty unless the owner typed a per-product threshold.
+        'products.low_stock_amount' => "the harness products have no `_low_stock_amount` meta",
         'coupons.starts_at' => "`date_starts` comes from the Smart Coupons `_wc_sc_start_date` meta, which core WooCommerce does not write and the harness does not seed",
 
         /*

@@ -177,6 +177,9 @@ final class BladeProse
     private static function textHits(string $source): array
     {
         $value = self::strip($source, keepTags: false);
+        // Raw PHP blocks are code, never prose -- partials/free-gifts/box
+        // guards its legacy thumbnails with a raw PHP if (Lane GBX).
+        $value = self::blankAll('/<\?php\b.*?\?>/s', $value);
         $hits = [];
 
         foreach (explode("\n", $value) as $i => $line) {

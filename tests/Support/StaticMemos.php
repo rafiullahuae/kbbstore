@@ -68,6 +68,9 @@ final class StaticMemos
     {
         return [
             Setting::class => static fn () => Setting::flushMap(),
+            // 2.60.627 / 2.60.633: whether their migration has run (a schema read, memoised).
+            \App\Services\CartTracking\GiftClicks::class => static fn () => \App\Services\CartTracking\GiftClicks::forgetReady(),
+            \App\Services\CategoryBrandSync::class => static fn () => \App\Services\CategoryBrandSync::forgetReady(),
             SettingsService::class => static fn () => SettingsService::forgetMemo(),
             AdminPathService::class => static fn () => AdminPathService::forgetMemo(),
             \App\Services\OwnerApp\OwnerAppPath::class => static fn () => \App\Services\OwnerApp\OwnerAppPath::forgetMemo(),

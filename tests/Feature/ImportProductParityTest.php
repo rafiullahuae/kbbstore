@@ -262,8 +262,6 @@ it('names every field it does not carry, with the value that field held', functi
         'tax_class' => 'reduced-rate',
         'virtual' => 'no',
         'downloadable' => 'no',
-        'backorders' => 'notify',
-        'low_stock_amount' => '3',
         'upsell_ids' => '4102,4103,4104',
         'cross_sell_ids' => '4210,4211',
         'grouped_ids' => '4301,4302',
@@ -324,7 +322,7 @@ it('counts the fields it skipped, once each, however many rows carried them', fu
      * size of the catalogue is one nobody can sanity-check.
      *
      * MUTATION: change EntityReport::droppedField() to keep a counter instead of
-     * a set keyed by the field name, and this reads 42 instead of 21.
+     * a set keyed by the field name, and this reads 38 instead of 19.
      */
     $report = pxImport(pxExport([
         pxRow(),
@@ -333,10 +331,11 @@ it('counts the fields it skipped, once each, however many rows carried them', fu
 
     $products = $report->for('products');
 
-    expect($products->droppedFieldCount())->toBe(21)
+    // 19 since 2.60.633: backorders and low_stock_amount now land in columns.
+    expect($products->droppedFieldCount())->toBe(19)
         ->and($products->droppedFieldNames())->toBe([
-            'attribute_summary', 'backorders', 'cross_sell_ids', 'date_modified', 'default_attributes',
-            'downloadable', 'grouped_ids', 'height', 'length', 'low_stock_amount', 'product_visibility',
+            'attribute_summary', 'cross_sell_ids', 'date_modified', 'default_attributes',
+            'downloadable', 'grouped_ids', 'height', 'length', 'product_visibility',
             'purchase_note', 'reviews_enabled', 'shipping_class', 'sold_individually', 'tax_class',
             'tax_status', 'upsell_ids', 'virtual', 'weight', 'width',
         ]);
@@ -524,7 +523,7 @@ it('ends with a sentence that counts the rows AND the fields', function () {
     $sentence = $report->for('products')->verification()['sentence'];
 
     expect($sentence)->toContain('1 read, 1 accounted for, 0 refused')
-        ->and($sentence)->toContain('21 fields skipped')
+        ->and($sentence)->toContain('19 fields skipped')
         ->and($sentence)->toContain('not rows');
 });
 
@@ -774,14 +773,21 @@ it('adds no column to products, so the public API allowlist is unchanged', funct
      * pre-tagged the next time. DECIDED FIRST: NOT in Product::toApi() -- the
      * owner asked for it "only for us as internal understanding". ApiSecurityTest
      * "keeps a product's free-gift type off the public product api".
+     *
+     * ── AND A SEVENTH (2.60.633) ───────────────────────────────────────────
+     *
+     * `low_stock_amount` and `backorders`, by 2028_01_02_100000: the owner's
+     * per-product low-stock line and "keep selling at zero". DECIDED FIRST:
+     * NOT in Product::toApi() -- stock thresholds are back-office. ApiSecurityTest
+     * "keeps a product's low-stock line and back-order flag off the public product api".
      */
     $columns = Schema::getColumnListing('products');
     sort($columns);
 
     expect($columns)->toBe([
-        'also_like', 'brand_id', 'brand_position', 'category_id', 'created_at', 'custom_tabs', 'deleted_at', 'description', 'featured',
+        'also_like', 'backorders', 'brand_id', 'brand_position', 'category_id', 'created_at', 'custom_tabs', 'deleted_at', 'description', 'featured',
         'gift_kind', 'gift_only', 'gtin', 'how_to_use', 'id', 'image', 'image_alts', 'images', 'ingredients', 'is_visible',
-        'manage_stock', 'meta_feed', 'name', 'position', 'price', 'published_at', 'rating',
+        'low_stock_amount', 'manage_stock', 'meta_feed', 'name', 'position', 'price', 'published_at', 'rating',
         'review_count', 'routine_concerns', 'routine_role', 'sale_ends_at', 'sale_price',
         'sale_starts_at', 'seo', 'seo_json', 'set_discount', 'set_price_basis', 'set_price_mode',
         'short_description', 'sku',
@@ -804,8 +810,9 @@ it('adds no column to products, so the public API allowlist is unchanged', funct
         .'need looking at.'
     );
 
+    // 21 -> 19 at 2.60.633: backorders and low_stock_amount are carried now.
     expect($notCarried)->toHaveCount(
-        21,
+        19,
         'the number of fields this shop has nowhere to put has changed. That is either a column newly '
         .'carried -- in which case docs/PRODUCT-FIELD-PARITY.md and the census both move with it -- or a '
         .'new column in the export that nothing reads.'
@@ -997,7 +1004,7 @@ it('shows the fields it dropped on the live progress page, per file', function (
         ->and($products['dropped_fields'])->toContain('weight')
         ->and($products['dropped_fields'])->toContain('tax_class')
         ->and($products['dropped_fields'])->toContain('sold_individually')
-        ->and($products['dropped_fields'])->toHaveCount(21);
+        ->and($products['dropped_fields'])->toHaveCount(19);
 
     // And the entities that lose nothing say so by having nothing, rather than
     // by being absent -- a dash on the page, not a blank.
@@ -1041,8 +1048,10 @@ it('ends the progress page with a reconciliation the owner can read', function (
          * This number is the count of DISTINCT declared fields across the run,
          * so one more declaration is one more here, and that it moved is the
          * proof the declaration reaches the sentence the owner actually reads.
+         * 22 -> 20 at 2.60.633: products.backorders and low_stock_amount are
+         * columns now, and the importer carries both.
          */
-        ->and($reconciliation['sentence'])->toContain('22 fields skipped');
+        ->and($reconciliation['sentence'])->toContain('20 fields skipped');
 
     expect($reconciliation['fields'])->toContain('weight');
 

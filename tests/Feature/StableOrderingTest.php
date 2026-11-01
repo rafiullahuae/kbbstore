@@ -500,6 +500,11 @@ it('leaves no query in app/ that slices a list it has not finished ordering', fu
         // product, so total by construction; the real tie (the SUM) is broken
         // by it. Same terms as RepeatPurchase above.
         ['Services/GridSections.php', "orderBy('oi.product_id')"],
+        // Lane OQ: the order search's product summary, grouped by
+        // oqs_s.name and ending on it -- the GROUP BY key, one row per name,
+        // so total by construction; the real ties (orders, pieces) are broken
+        // by it. Caught by the full suite at 2.60.633 integration.
+        ['Support/OrderProductSearch.php', "orderBy('oqs_s.name')"],
         ['Services/GridSections.php', "orderBy('product_id')"],
         // Lane CT: Cart Tracking's "Top countries" tile, grouped by
         // c.ct_country and ending on it — the GROUP BY key, one row per
