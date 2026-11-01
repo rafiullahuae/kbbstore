@@ -75,7 +75,7 @@ final class CartsController extends Controller
     }
 
     /** The allowlist: what a phone row shows, and nothing else. */
-    public const ROW_KEYS = ['id', 'first', 'last', 'value', 'value_label', 'items', 'removed', 'country', 'bot', 'customer', 'email', 'order', 'journey', 'gifts'];
+    public const ROW_KEYS = ['id', 'first', 'last', 'value', 'value_label', 'items', 'removed', 'country', 'bot', 'customer', 'email', 'order', 'journey', 'gifts', 'freebies'];
 
     /** GET /{app}/api/carts/{id}/journey -- one basket's pages and taps. (Lane CJ) */
     public function journey(Request $request, int $id): JsonResponse
@@ -130,6 +130,13 @@ final class CartsController extends Controller
             ] : null,
             // (2.60.627) The gift box taps: five integers and their total, or null.
             'gifts' => isset($r['gifts']) ? array_map('intval', array_intersect_key($r['gifts'], array_flip(['view_all', 'hide', 'criteria', 'ranges', 'photos', 'total']))) : null,
+            // (Lane B) The free gifts this cart got (its order) or would get (its value now): names and quantities only.
+            'freebies' => isset($r['freebies']) ? [
+                'state' => in_array($r['freebies']['state'], ['got', 'would', 'none'], true) ? $r['freebies']['state'] : 'none',
+                'range' => $r['freebies']['range'] === null ? null : (string) $r['freebies']['range'],
+                'items' => array_map(fn (array $l) => ['name' => (string) $l['name'], 'qty' => (int) $l['qty']], $r['freebies']['items']),
+                'hint' => $r['freebies']['hint'] === null ? null : (string) $r['freebies']['hint'],
+            ] : null,
         ];
     }
 }
