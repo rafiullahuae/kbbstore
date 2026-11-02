@@ -236,9 +236,10 @@ it('never matches a short phone', function () {
 
 // ------------------------------------------------------------------ checkout
 
-it('refuses a forced COD on Place order, and still places the same customer’s Tabby order', function () {
+it('refuses a forced COD on Place order SILENTLY, and still places the same customer’s Tabby order', function () {
     // On the shop: a refuser posting payment_method=cod anyway and getting it;
-    // or the block wrongly taking every other method from them.
+    // or the block wrongly taking every other method from them; or (2.60.636,
+    // "i want this feature silently") a sentence telling her why.
     // MUTATION: drop refusesAtPlace() from CheckoutController::place() -> the
     // first half is red; make it run for every method -> the second half is red.
     codrRefused('refuser@example.com', '0501234567');
@@ -253,7 +254,7 @@ it('refuses a forced COD on Place order, and still places the same customer’s 
     $before = Order::count();
 
     codrPlace(codrCart(), 'REFUSER@example.com', '+971 50 123 4567')->assertRedirect();
-    expect(session('errors')?->first())->toBe("Cash on delivery isn't available for this order. Please choose another payment method.")
+    expect(session('errors'))->toBeNull()
         ->and(Order::count())->toBe($before)
         ->and(session(CodRefusals::SESSION))->toBeTrue();
 
@@ -335,8 +336,9 @@ it('refuses COD on the public order endpoint for a refuser too', function () {
         'method' => 'cod',
     ]);
 
+    // 2.60.636: the same plain sentence as COD switched off -- nothing says why.
     $post('refuser@example.com')->assertStatus(422)
-        ->assertJsonPath('error', "Cash on delivery isn't available for this order. Please choose another payment method.");
+        ->assertJsonPath('error', __('store.wording.msg_cod_na'));
 });
 
 it('answers the checkout contact endpoint identically for a blocked and an unblocked email', function () {
@@ -387,7 +389,7 @@ it('lists, searches, switches and allows COD again from Store → Payments', fun
 
     $list = test()->actingAs($owner, 'admin')->getJson('/admin-api/cod-refusals')->assertOk()->json();
     expect($list['enabled'])->toBeTrue()->and($list['total'])->toBe(2)
-        ->and(array_keys($list['rows'][0]))->toBe(['id', 'email', 'phone', 'order_id', 'order_number', 'refused_at']);
+        ->and(array_keys($list['rows'][0]))->toBe(['id', 'email', 'phone', 'order_id', 'order_number', 'refused_at', 'source']);
 
     $found = test()->actingAs($owner, 'admin')->getJson('/admin-api/cod-refusals?q=050+123+4567')->assertOk()->json();
     expect($found['total'])->toBe(1)->and($found['rows'][0]['order_id'])->toBe($o->id);
@@ -471,4 +473,138 @@ it('ships its migrations as literals, spelled exactly as the live code spells th
     expect((new ReflectionClassConstant($ar, 'ENGLISH'))->getValue())->toBe(\App\Support\ArabicWording::ENGLISH['wording.msg_cod_unavailable'])
         ->and((new ReflectionClassConstant($ar, 'ARABIC'))->getValue())->toBe(\App\Support\ArabicWording::ARABIC['wording.msg_cod_unavailable'])
         ->and(__('store.wording.msg_cod_unavailable'))->toBe("Cash on delivery isn't available for this order. Please choose another payment method.");
+});
+
+// ------------------------------------------------------------------ 2.60.636
+
+/** The checkout's rates call as checkout.js makes it when a field is left. */
+function codrRates(Cart $cart, array $extra)
+{
+    return codrShopper($cart)->postJson('/api/checkout/rates', $extra + [
+        'country' => 'AE', 'state' => 'Dubai', 'offered' => ['cod'], 'payment_method' => 'cod',
+    ]);
+}
+
+it('takes COD off the list silently when a blocked email or phone is entered', function () {
+    // On the shop (2.60.636): the owner asked for no message at all -- a
+    // refuser still shown COD until Place order, or shown a sentence.
+    // MUTATION: drop noteShopper() from CheckoutController::rates() -> red.
+    codrRefused('refuser@example.com', '0501234567');
+    $card = PaymentProvider::create(['id' => 'tabby', 'title' => 'Tabby', 'enabled' => true, 'mode' => 'test', 'position' => 1]);
+    $card->config = ['public_key' => 'pk_test_x', 'secret_key' => 'sk_test_x', 'merchant_code' => 'AE'];
+    $card->save();
+    app(\App\Services\Payments\GatewayCredentials::class)->forget();
+
+    $r = codrRates(codrCart(), ['offered' => ['cod', 'tabby'], 'billing_phone' => '+971 50 123 4567'])->assertOk()->json();
+    expect($r['paymentHtml'] ?? '')->not->toContain('value="cod"')
+        ->and($r['paymentHtml'] ?? '')->toContain('value="tabby"')
+        ->and($r['paymentHtml'] ?? '')->not->toContain('not available')
+        ->and(session(CodRefusals::SESSION))->toBeTrue();
+});
+
+it('leaves an unrelated shopper’s rates answer exactly as it was when her email is sent', function () {
+    // On the shop: a real customer's payment list redrawn, or a card being
+    // typed into torn down, because her email was checked.
+    // MUTATION: make blocksAny() return true for everyone -> red.
+    codrRefused('refuser@example.com', '0501234567');
+    $cart = codrCart();
+    $plain = codrRates($cart, [])->assertOk()->json();
+    $sent = codrRates($cart, ['billing_email' => 'happy@example.com', 'billing_phone' => '0509998888'])->assertOk()->json();
+
+    expect($sent)->toBe($plain)->and($sent)->not->toHaveKey('paymentHtml')
+        ->and(session(CodRefusals::SESSION))->toBeNull();
+});
+
+it('answers a forced COD from the placing overlay with the list and no sentence', function () {
+    // On the shop: the overlay printing "Something went wrong" over a refuser.
+    // MUTATION: give codQuietlyGone() an error string -> red.
+    codrRefused('refuser@example.com', '0501234567');
+    $res = codrShopper(codrCart())->postJson('/checkout/place', [
+        'billing_email' => 'refuser@example.com', 'billing_phone' => '0501234567',
+        'billing_first_name' => 'Noura', 'billing_last_name' => 'A', 'billing_address_1' => '44 Road',
+        'billing_city' => 'Dubai', 'billing_state' => 'Dubai', 'billing_country' => 'AE', 'payment_method' => 'cod',
+    ])->assertStatus(422)->json();
+
+    expect($res['code'])->toBe('pay_list')->and($res['error'])->toBe('')
+        ->and($res['paymentHtml'])->not->toContain('value="cod"');
+
+    $js = (string) file_get_contents(resource_path('js/kbb/checkout.js'));
+    $overlay = (string) file_get_contents(resource_path('views/partials/checkout/placing-overlay.blade.php'));
+    expect($js)->toContain("body.code === 'pay_list'")
+        ->and(substr_count($overlay, "data.code === 'pay_list'"))->toBe(1);
+});
+
+it('records COD orders only: a Tabby, Tamara or card order shipped then cancelled never counts', function (string $method) {
+    // On the shop (the owner, 2 November: "ignore if any customer's order
+    // failed with tabby, tamara or card payment"): a prepaid shopper losing COD.
+    // MUTATION: drop the payment_method check from transitioned() -> red.
+    $o = Order::create(['order_number' => 'CRP' . Str::upper(Str::random(6)), 'email' => 'paid@example.com',
+        'phone' => '0501112233', 'status' => 'processing', 'total' => 12000, 'payment_method' => $method]);
+    app(OrderStatus::class)->moveTo($o, 'shipped', 'test');
+    app(OrderStatus::class)->moveTo($o, 'cancelled', 'test');
+
+    expect(DB::table('cod_refusals')->count())->toBe(0)
+        ->and(app(CodRefusals::class)->blocks('paid@example.com', null))->toBeFalse();
+})->with(['tabby', 'tamara', 'stripe']);
+
+it('backfills every past cancelled COD order as its own switchable group, and nothing else', function () {
+    // On the shop: a customer whose only order was a cancelled COD (before it
+    // ever shipped) still offered COD at launch; or a failed Tabby / card
+    // order, or a customer with a completed order, losing it.
+    // MUTATION: drop the payment_method filter from the history migration ->
+    // the Tabby row appears; drop the completed check -> the loyal row does.
+    DB::table('cod_refusals')->delete();
+    $early = codrOrder('cancelled', 'early@example.com', '0505556666');
+    $tabby = Order::create(['order_number' => 'CRT1', 'email' => 'tabby@example.com', 'phone' => '0504440000',
+        'status' => 'cancelled', 'total' => 9000, 'payment_method' => 'tabby']);
+    codrOrder('cancelled', 'loyal@example.com', '0507778888');
+    codrOrder('completed', 'loyal@example.com', null);
+    // A non-COD row 2.60.635 may already hold goes on install.
+    DB::table('cod_refusals')->insert(['email' => 'tabby@example.com', 'phone' => '971504440000', 'order_id' => $tabby->id,
+        'order_number' => 'CRT1', 'refused_at' => now(), 'source' => 'refused', 'created_at' => now(), 'updated_at' => now()]);
+
+    $m = require database_path('migrations/2028_01_04_100000_cod_refusals_past_cancelled.php');
+    $m->up();
+    $m->up(); // idempotent
+
+    expect(DB::table('cod_refusals')->pluck('order_id')->all())->toBe([$early->id])
+        ->and(DB::table('cod_refusals')->value('source'))->toBe('history');
+
+    $svc = fn () => app(CodRefusals::class);
+    expect($svc()->blocks('early@example.com', null))->toBeTrue();
+
+    // Its own switch: off frees the past-cancelled group, never the refusers.
+    $refuser = codrRefused('refuser@example.com', '0501234567');
+    app(SettingsService::class)->set(CodRefusals::HISTORY_SETTING, '0');
+    codrForget();
+    expect($svc()->blocks('early@example.com', null))->toBeFalse()
+        ->and($svc()->blocks('refuser@example.com', null))->toBeTrue();
+
+    codrSwitch(false);
+    app(SettingsService::class)->set(CodRefusals::HISTORY_SETTING, '1');
+    codrForget();
+    expect($svc()->blocks('early@example.com', null))->toBeTrue()
+        ->and($svc()->blocks('refuser@example.com', null))->toBeFalse();
+
+    // And the second switch saves from the admin.
+    $owner = codrOwner();
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/cod-refusals/settings', ['history_enabled' => false])
+        ->assertOk()->assertJsonPath('history_enabled', false)->assertJsonPath('enabled', false);
+});
+
+it('ships the history migration as literals too', function () {
+    // MUTATION: change the 10-digit rule in the migration's phone() -> red.
+    $file = database_path('migrations/2028_01_04_100000_cod_refusals_past_cancelled.php');
+    $m = require $file;
+    $code = '';
+    foreach (token_get_all((string) file_get_contents($file)) as $t) {
+        $code .= (is_array($t) && in_array($t[0], [T_COMMENT, T_DOC_COMMENT], true)) ? '' : (is_array($t) ? $t[1] : $t);
+    }
+    expect(str_contains($code, 'App\\'))->toBeFalse();
+    foreach (['050 123 4567', '+971 50 123 4567', '00971501234567', '501234567', '12345', '', null, '0412345678'] as $p) {
+        expect($m::phone($p))->toBe(CodRefusals::phone($p));
+    }
+    foreach (['  A@B.com ', 'no-at', '', null] as $e) {
+        expect($m::email($e))->toBe(CodRefusals::email($e));
+    }
 });

@@ -50,26 +50,33 @@
     }
 
     function paint() {
-      var d = state.data || { enabled: true, rows: [], total: 0, page: 1, pages: 1 };
+      var d = state.data || { enabled: true, history_enabled: true, rows: [], total: 0, page: 1, pages: 1 };
       var rows = d.rows.map(function (r) {
         return '<tr><td>' + esc(r.email || '—') + '</td><td dir="ltr">' + esc(r.phone ? '+' + r.phone : '—') + '</td>' +
           '<td><a href="#" data-codrorder="' + esc(r.order_id) + '">#' + esc(r.order_number) + '</a></td>' +
           '<td>' + when(r.refused_at) + '</td>' +
+          '<td>' + (r.source === 'history' ? 'Past cancelled order' : 'Refused at delivery') + '</td>' +
           '<td style="text-align:end"><button type="button" class="btn ghost sm" data-codrallow="' + esc(r.id) + '">Allow COD again</button></td></tr>';
       }).join('');
 
       host.innerHTML =
         '<div class="card mmcard" data-codr><div class="mmhd"><b>Refused deliveries</b></div><div class="mmbody">' +
         '<div class="ecopt istog"><div class="ecom"><div class="ecl"><label>Hide cash on delivery from customers who refused a delivery</label></div>' +
-        '<div class="echelp">A customer whose order went from Shipped to Cancelled is not offered cash on delivery again — matched by email and phone, never by IP. ' +
+        '<div class="echelp">A customer whose cash on delivery order went from Shipped to Cancelled is not offered cash on delivery again — matched by email and phone, never by IP. ' +
         'Anyone with a completed order is never affected. Card, Apple Pay, Tabby and Tamara stay open to them.</div></div>' +
-        '<div class="ecctl"><span class="ectog' + (d.enabled ? ' on' : '') + '" data-codrtog role="switch" aria-checked="' + (d.enabled ? 'true' : 'false') + '" tabindex="0"></span></div></div>' +
+        '<div class="ecctl"><span class="ectog' + (d.enabled ? ' on' : '') + '" data-codrtog="enabled" role="switch" aria-checked="' + (d.enabled ? 'true' : 'false') + '" tabindex="0"></span></div></div>' +
+        /* 2.60.636: the second switch, for every customer with a cancelled
+           order from before that package and no completed one. */
+        '<div class="ecopt istog"><div class="ecom"><div class="ecl"><label>Also hide it from customers with a past cancelled order</label></div>' +
+        '<div class="echelp">Every cash on delivery order cancelled before this switch arrived, however it was cancelled, when that customer has no completed order. Card, Tabby and Tamara orders never count. ' +
+        'Off offers them cash on delivery again; the refused deliveries above stay hidden.</div></div>' +
+        '<div class="ecctl"><span class="ectog' + (d.history_enabled ? ' on' : '') + '" data-codrtog="history_enabled" role="switch" aria-checked="' + (d.history_enabled ? 'true' : 'false') + '" tabindex="0"></span></div></div>' +
         '<div class="codr-bar"><input type="search" class="inp" data-codrq placeholder="Search email, phone or order number" value="' + esc(state.q) + '" maxlength="120">' +
         '<button type="button" class="btn ghost" data-codrgo>Search</button>' +
-        '<span class="echelp" style="margin:0">' + esc(d.total) + ' customer' + (d.total === 1 ? '' : 's') + ' without cash on delivery</span></div>' +
+        '<span class="echelp" style="margin:0">' + esc(d.total) + ' order' + (d.total === 1 ? '' : 's') + ' on this list</span></div>' +
         (state.msg ? '<p class="echelp" style="margin:8px 0 0">' + esc(state.msg) + '</p>' : '') +
         (rows
-          ? '<div class="codr-wrap"><table class="codr-tbl"><thead><tr><th>Customer email</th><th>Phone</th><th>Order</th><th>Refused</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+          ? '<div class="codr-wrap"><table class="codr-tbl"><thead><tr><th>Customer email</th><th>Phone</th><th>Order</th><th>Date</th><th>Why</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>'
           : '<p class="echelp" style="margin:12px 0 0">' + (state.q ? 'Nobody matches that search.' : 'Nobody — every customer is offered cash on delivery.') + '</p>') +
         (d.pages > 1
           ? '<div class="codr-pg"><button type="button" class="btn ghost sm" data-codrpg="' + (d.page - 1) + '"' + (d.page <= 1 ? ' disabled' : '') + '>Previous</button>' +
@@ -93,22 +100,24 @@
     }
 
     function bind() {
-      var tog = host.querySelector('[data-codrtog]');
-      if (tog) {
+      host.querySelectorAll('[data-codrtog]').forEach(function (tog) {
+        var key = tog.dataset.codrtog === 'history_enabled' ? 'history_enabled' : 'enabled';
+        var name = key === 'enabled' ? 'Refused deliveries' : 'Past cancelled orders';
         var flip = async function () {
           var on = !tog.classList.contains('on');
+          var body = {}; body[key] = on;
           try {
-            await ctx.api('/admin-api/cod-refusals/settings', { method: 'POST', body: JSON.stringify({ enabled: on }) });
+            await ctx.api('/admin-api/cod-refusals/settings', { method: 'POST', body: JSON.stringify(body) });
             if (!alive()) return;
-            if (state.data) state.data.enabled = on;
-            state.msg = on ? 'On — cash on delivery is hidden from the customers below.' : 'Off — every customer is offered cash on delivery.';
-            ctx.toast && ctx.toast(on ? 'Refused deliveries: on' : 'Refused deliveries: off');
+            if (state.data) state.data[key] = on;
+            state.msg = name + (on ? ': on — cash on delivery is hidden from them.' : ': off — they are offered cash on delivery.');
+            ctx.toast && ctx.toast(name + (on ? ': on' : ': off'));
           } catch (e) { state.msg = 'Could not save — nothing changed.'; }
           if (alive()) paint();
         };
         tog.onclick = flip;
         tog.onkeydown = function (e) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); } };
-      }
+      });
       var q = host.querySelector('[data-codrq]');
       var go = function () { state.q = q ? q.value.trim() : ''; state.page = 1; state.msg = ''; load(); };
       var gb = host.querySelector('[data-codrgo]');

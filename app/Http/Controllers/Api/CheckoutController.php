@@ -337,7 +337,9 @@ class CheckoutController extends Controller
                     $data['customer']['email'] ?? null,
                     $data['customer']['phone'] ?? null,
                 )) {
-                    return response()->json(['ok' => false, 'error' => __('store.wording.msg_cod_unavailable')], 422);
+                    // 2.60.636: the same plain sentence as COD switched off,
+                    // so nothing here says why.
+                    return response()->json(['ok' => false, 'error' => __('store.wording.msg_cod_na')], 422);
                 }
             }
 

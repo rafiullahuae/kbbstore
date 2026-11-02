@@ -90,7 +90,9 @@ return new class extends Migration
         $added = 0;
         $now = now();
 
+        // Cash on delivery orders only (the owner, 2 November 2026).
         DB::table('orders')->where('status', 'cancelled')->whereNull('deleted_at')
+            ->whereRaw("LOWER(TRIM(payment_method)) = 'cod'")
             ->whereExists(function ($q) {
                 $q->select(DB::raw(1))->from('order_notes')
                     ->whereColumn('order_notes.order_id', 'orders.id')

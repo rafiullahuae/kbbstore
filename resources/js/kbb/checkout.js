@@ -303,6 +303,47 @@ export function initCheckout() {
      */
     const countryField = document.getElementById('billing_country');
 
+    /*
+     * CASH ON DELIVERY, QUIETLY (2.60.636). The owner: "i don't want to
+     * display any message ... i want this feature silently." When the email or
+     * phone field is left, and only while Cash on delivery is on the list, the
+     * two values go to the rates endpoint once; for a customer COD is hidden
+     * from, the answer carries the payment list without it, swapped in with no
+     * sentence. Everyone else gets no paymentHtml and nothing moves. Nothing
+     * while typing, the same pair is never sent twice, no layout read.
+     */
+    let codSent = '';
+    const codCheck = async () => {
+        const slot = document.getElementById('payment');
+        if (!slot || !slot.querySelector('input[name="payment_method"][value="cod"]') || !window.KBB?.routes?.checkoutRates) return;
+        const email = String(document.getElementById('billing_email')?.value || '').trim();
+        const phone = String(document.getElementById('billing_phone')?.value || '').trim();
+        const pair = email.toLowerCase() + '|' + phone;
+        if ((!email && !phone) || pair === codSent) return;
+        codSent = pair;
+        try {
+            const response = await fetch(window.KBB.routes.checkoutRates, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.KBB.csrf, Accept: 'application/json' },
+                body: JSON.stringify({
+                    country: countryField?.value || '',
+                    state: document.getElementById('billing_state')?.value || '',
+                    offered: [...slot.querySelectorAll('input[name="payment_method"]')].map((r) => r.value),
+                    payment_method: document.querySelector('input[name="payment_method"]:checked')?.value || '',
+                    billing_email: email,
+                    billing_phone: phone,
+                }),
+            });
+            const data = await response.json();
+            if (data && data.ok && data.paymentHtml) slot.innerHTML = data.paymentHtml;
+        } catch { /* silent by design: Place order still checks */ }
+    };
+    ['billing_email', 'billing_phone'].forEach((id) => {
+        const el = document.getElementById(id);
+        el?.addEventListener('blur', codCheck);
+        el?.addEventListener('change', () => { if (document.activeElement !== el) codCheck(); });
+    });
+
     countryField?.addEventListener('change', async () => {
         const slot = document.getElementById('kbbDeliverySlot');
         const state = document.getElementById('billing_state')?.value || '';
@@ -1153,6 +1194,14 @@ export function initCheckout() {
     window.KBB = window.KBB || {};
     window.KBB.refused = (body, line) => {
         if (body && body.code === 'sold_out') return openSoldOut(body);
+
+        // 2.60.636: COD quietly gone at Place order -- the list without it,
+        // no sentence. true tells the overlay to say nothing either.
+        if (body && body.code === 'pay_list') {
+            const slot = document.getElementById('payment');
+            if (slot && typeof body.paymentHtml === 'string') slot.innerHTML = body.paymentHtml;
+            return true;
+        }
 
         if (line && body && body.code === 'bag_gone' && typeof body.url === 'string' && body.url.charAt(0) === '/') {
             const a = document.createElement('a');

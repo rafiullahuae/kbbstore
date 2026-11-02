@@ -611,9 +611,16 @@ class CheckoutController extends Controller
             // sets the session flag, so the list stops offering COD from here
             // on. Ahead of the generic check below for its own sentence -- once
             // the flag is set gateways() has already dropped cod.
+            //
+            // SILENT (2.60.636, the owner: "i don't want to display any
+            // message ... i want this feature silently"). The payment list
+            // comes back without COD and no sentence: the placing overlay
+            // swaps it in and comes down (code `pay_list`), a plain form post
+            // reloads the page with what was typed. Normally the field check
+            // in rates() has already taken COD away before Place order.
             if (app(\App\Services\Payments\CodRefusals::class)
                     ->refusesAtPlace($request, $data['billing_email'] ?? null, $data['billing_phone'] ?? null)) {
-                return $this->refused($request, __('store.wording.msg_cod_unavailable'));
+                return $this->codQuietlyGone($request, (int) ($totals['total'] ?? 0), $data['billing_country']);
             }
         }
 
@@ -1325,6 +1332,31 @@ class CheckoutController extends Controller
      * its content, and it is the status Laravel's own validator returns for
      * the same class of thing, so the browser half has one code to check.
      */
+    /**
+     * Place order with COD from a shopper it is hidden from (2.60.636): no
+     * sentence. JSON gets the redrawn payment list under code `pay_list`
+     * (placing-overlay → window.KBB.refused swaps it in); a form post goes
+     * back with its input and no error, onto a page that no longer offers COD.
+     */
+    private function codQuietlyGone(Request $request, int $totalFils, ?string $country): RedirectResponse|JsonResponse
+    {
+        if (! $request->expectsJson()) {
+            return back()->withInput();
+        }
+
+        return response()->json([
+            'ok' => false,
+            'code' => 'pay_list',
+            'error' => '',
+            'paymentHtml' => view('partials.checkout.payment-methods', [
+                'gateways' => $this->gateways($totalFils, $country),
+                'codHidden' => null,
+                'selectedMethod' => null,
+                'payNotice' => null,
+            ])->render(),
+        ], 422);
+    }
+
     private function refused(Request $request, string $message): RedirectResponse|JsonResponse
     {
         if ($request->expectsJson()) {
@@ -2759,6 +2791,10 @@ class CheckoutController extends Controller
             'offered' => ['sometimes', 'array', 'max:12'],
             'offered.*' => ['string', 'max:40'],
             'payment_method' => ['nullable', 'string', 'max:40'],
+            // 2.60.636: the email and phone, sent when either field is left
+            // while cash on delivery is on the list (checkout.js).
+            'billing_email' => ['nullable', 'string', 'max:254'],
+            'billing_phone' => ['nullable', 'string', 'max:40'],
         ]);
 
         $cart = $this->loadCart($request);
@@ -2801,6 +2837,17 @@ class CheckoutController extends Controller
          */
         $payment = [];
 
+        // (2.60.636) A shopper who refused a delivery, or has only a past
+        // cancelled order, loses COD here SILENTLY: the session is marked and
+        // the list below is redrawn without it, with no sentence. One indexed
+        // query, only when an email or phone came with the request.
+        $codrNow = false;
+        if (($data['billing_email'] ?? '') !== '' || ($data['billing_phone'] ?? '') !== '') {
+            $codr = app(\App\Services\Payments\CodRefusals::class);
+            $codr->noteShopper($request, $data['billing_email'] ?? null, $data['billing_phone'] ?? null);
+            $codrNow = $codr->hiddenForShopper($request);
+        }
+
         if (array_key_exists('offered', $data)) {
             $totalFils = (int) ($totals['total'] ?? 0);
             $gateways = $this->gateways($totalFils, $country);
@@ -2812,7 +2859,7 @@ class CheckoutController extends Controller
                 $dropped = $posted !== '' && ! in_array($posted, $offeredIds, true);
                 $payNotice = null;
 
-                if ($dropped) {
+                if ($dropped && ! ($codrNow && $posted === 'cod')) {
                     // The country moved the list here, so the sentences name
                     // the country rather than the order total.
                     $payNotice = ($gateways === [])

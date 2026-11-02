@@ -624,6 +624,8 @@
              basket that is genuinely gone gets its link under the sentence. --}}
         var refused = window.KBB && window.KBB.refused;
         if (refused && data.code === 'sold_out') { down(); if (refused(data)) { return; } }
+        {{-- 2.60.636: COD quietly taken off the list -- no sentence. --}}
+        if (refused && data.code === 'pay_list') { down(); if (refused(data)) { return; } }
 
         fail(
           (typeof data.error === 'string' && data.error)

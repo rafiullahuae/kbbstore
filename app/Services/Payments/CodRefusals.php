@@ -46,6 +46,14 @@ final class CodRefusals
     public const SETTING = 'cod_refusals_on';
 
     /** The session flag that keeps COD hidden after a refused Place order. */
+    /**
+     * The second switch (2.60.636): customers whose only history is a
+     * cancelled order from before this package, whatever its route there.
+     * Store -> Payments -> Cash on delivery -> Refused deliveries. ON, as the
+     * owner asked; off leaves the Shipped -> Cancelled refusers hidden.
+     */
+    public const HISTORY_SETTING = 'cod_refusals_history_on';
+
     public const SESSION = 'kbb_cod_refused';
 
     /** What the order notes say, lower-cased, on both systems. */
@@ -92,7 +100,29 @@ final class CodRefusals
 
     public function enabled(): bool
     {
-        $v = $this->settings->get(self::SETTING, '1');
+        return $this->on(self::SETTING);
+    }
+
+    public function historyEnabled(): bool
+    {
+        return $this->on(self::HISTORY_SETTING);
+    }
+
+    /** Either switch on: anything at all to check. */
+    public function anyEnabled(): bool
+    {
+        return $this->enabled() || $this->historyEnabled();
+    }
+
+    /** The row kinds whose switch is on: `refused`, `history`, both or none. */
+    public function activeSources(): array
+    {
+        return array_keys(array_filter(['refused' => $this->enabled(), 'history' => $this->historyEnabled()]));
+    }
+
+    private function on(string $key): bool
+    {
+        $v = $this->settings->get($key, '1');
 
         return ! in_array(strtolower(trim((string) $v)), ['0', '', 'false', 'off', 'no'], true);
     }
@@ -112,7 +142,9 @@ final class CodRefusals
      */
     public function blocksAny(array $emails, array $phones): bool
     {
-        if (! $this->enabled()) {
+        $sources = $this->activeSources();
+
+        if ($sources === []) {
             return false;
         }
 
@@ -125,6 +157,7 @@ final class CodRefusals
 
         return DB::table('cod_refusals')
             ->whereNull('lifted_at')
+            ->whereIn('source', $sources)
             ->where(function ($q) use ($emails, $phones) {
                 if ($emails !== []) {
                     $q->whereIn('email', $emails);
@@ -147,7 +180,7 @@ final class CodRefusals
      */
     public function filterCheckoutList(array $list, ?Request $request): array
     {
-        if ($request === null || ! collect($list)->contains('id', 'cod') || ! $this->enabled()) {
+        if ($request === null || ! collect($list)->contains('id', 'cod') || ! $this->anyEnabled()) {
             return $list;
         }
 
@@ -161,7 +194,7 @@ final class CodRefusals
     /** Session flag, then the signed-in account. The guest case costs nothing. */
     public function hiddenForShopper(Request $request): bool
     {
-        if (! $this->enabled()) {
+        if (! $this->anyEnabled()) {
             return false;
         }
 
@@ -178,9 +211,26 @@ final class CodRefusals
      * Place order's lock: the billing pair and the signed-in pair, one query.
      * A refusal also sets the session flag, so the list stops offering COD.
      */
+    /**
+     * The checkout's email or phone field was left (2.60.636, "silently"):
+     * a blocked shopper's session stops being offered COD from this answer
+     * on, with no sentence anywhere. One indexed query, and only when there
+     * is an address or number to ask about.
+     */
+    public function noteShopper(Request $request, ?string $email, ?string $phone): void
+    {
+        if (! $request->hasSession() || $request->session()->get(self::SESSION) === true) {
+            return;
+        }
+
+        if ($this->blocks($email, $phone)) {
+            $request->session()->put(self::SESSION, true);
+        }
+    }
+
     public function refusesAtPlace(Request $request, ?string $email, ?string $phone): bool
     {
-        if (! $this->enabled()) {
+        if (! $this->anyEnabled()) {
             return false;
         }
 
@@ -234,9 +284,16 @@ final class CodRefusals
             }
 
             $order = DB::table('orders')->where('id', $orderId)
-                ->first(['id', 'order_number', 'email', 'phone']);
+                ->first(['id', 'order_number', 'email', 'phone', 'payment_method']);
 
             if ($order === null) {
+                return;
+            }
+
+            // Only cash on delivery orders are recorded (the owner, 2 November:
+            // "ignore if any customer's order failed with tabby, tamara or card
+            // payment"). A completed order of ANY method still lifts below.
+            if ($record && strtolower(trim((string) $order->payment_method)) !== 'cod') {
                 return;
             }
 
@@ -262,9 +319,10 @@ final class CodRefusals
                 'refused_at' => $now,
                 'lifted_at' => null,
                 'lifted_by' => null,
+                'source' => 'refused',
                 'created_at' => $now,
                 'updated_at' => $now,
-            ]], ['order_id'], ['email', 'phone', 'order_number', 'refused_at', 'lifted_at', 'lifted_by', 'updated_at']);
+            ]], ['order_id'], ['email', 'phone', 'order_number', 'refused_at', 'lifted_at', 'lifted_by', 'source', 'updated_at']);
         } catch (\Throwable $e) {
             Log::error('COD refusals: could not record a status change', [
                 'order_id' => $orderId, 'from' => $from, 'to' => $to, 'error' => $e->getMessage(),

@@ -52,7 +52,7 @@ final class CodRefusalsApiController extends Controller
         $total = (clone $base)->count();
         $rows = $base->orderByDesc('refused_at')->orderByDesc('id')
             ->forPage($page, self::PER_PAGE)
-            ->get(['id', 'email', 'phone', 'order_id', 'order_number', 'refused_at'])
+            ->get(['id', 'email', 'phone', 'order_id', 'order_number', 'refused_at', 'source'])
             ->map(static fn ($r) => [
                 'id' => (int) $r->id,
                 'email' => $r->email,
@@ -60,10 +60,12 @@ final class CodRefusalsApiController extends Controller
                 'order_id' => (int) $r->order_id,
                 'order_number' => (string) $r->order_number,
                 'refused_at' => $r->refused_at,
+                'source' => $r->source === 'history' ? 'history' : 'refused',
             ])->all();
 
         return response()->json([
             'enabled' => $this->refusals->enabled(),
+            'history_enabled' => $this->refusals->historyEnabled(),
             'rows' => $rows,
             'total' => $total,
             'page' => $page,
@@ -73,11 +75,24 @@ final class CodRefusalsApiController extends Controller
 
     public function saveSettings(Request $request): JsonResponse
     {
-        $data = $request->validate(['enabled' => ['required', 'boolean']]);
+        // Either switch, or both, in one save (2.60.636 adds the second).
+        $data = $request->validate([
+            'enabled' => ['required_without:history_enabled', 'boolean'],
+            'history_enabled' => ['required_without:enabled', 'boolean'],
+        ]);
 
-        $this->settings->set(CodRefusals::SETTING, $data['enabled'] ? '1' : '0');
+        if (array_key_exists('enabled', $data)) {
+            $this->settings->set(CodRefusals::SETTING, $data['enabled'] ? '1' : '0');
+        }
+        if (array_key_exists('history_enabled', $data)) {
+            $this->settings->set(CodRefusals::HISTORY_SETTING, $data['history_enabled'] ? '1' : '0');
+        }
 
-        return response()->json(['ok' => true, 'enabled' => (bool) $data['enabled']]);
+        return response()->json([
+            'ok' => true,
+            'enabled' => $this->refusals->enabled(),
+            'history_enabled' => $this->refusals->historyEnabled(),
+        ]);
     }
 
     public function allow(Request $request, int $id): JsonResponse
