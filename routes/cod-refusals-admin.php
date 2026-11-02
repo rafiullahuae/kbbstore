@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 |   GET  cod-refusals              list + switch          codrefusals.view
 |   POST cod-refusals/settings     switch on / off        codrefusals.manage
 |   POST cod-refusals/{id}/allow   Allow COD again        codrefusals.manage
+|   POST cod-refusals/whitelist    always offered COD     codrefusals.manage
 |
 | Both capabilities owner only (App\Support\AdminCapabilities), the same as the
 | Payments screen they sit on; any other role is refused before the controller.
@@ -24,4 +25,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/cod-refusals', [CodRefusalsApiController::class, 'index']);
 Route::post('/cod-refusals/settings', [CodRefusalsApiController::class, 'saveSettings']);
+// 2.60.637: the whitelist -- always offered COD. codrefusals.manage.
+Route::post('/cod-refusals/whitelist', [CodRefusalsApiController::class, 'saveWhitelist']);
 Route::post('/cod-refusals/{id}/allow', [CodRefusalsApiController::class, 'allow'])->whereNumber('id');

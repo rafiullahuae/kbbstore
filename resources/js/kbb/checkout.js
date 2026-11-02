@@ -313,9 +313,11 @@ export function initCheckout() {
      * while typing, the same pair is never sent twice, no layout read.
      */
     let codSent = '';
+    let codGone = false; // this check took COD away, so a whitelisted value can bring it back (2.60.637)
     const codCheck = async () => {
         const slot = document.getElementById('payment');
-        if (!slot || !slot.querySelector('input[name="payment_method"][value="cod"]') || !window.KBB?.routes?.checkoutRates) return;
+        if (!slot || !window.KBB?.routes?.checkoutRates) return;
+        if (!codGone && !slot.querySelector('input[name="payment_method"][value="cod"]')) return;
         const email = String(document.getElementById('billing_email')?.value || '').trim();
         const phone = String(document.getElementById('billing_phone')?.value || '').trim();
         const pair = email.toLowerCase() + '|' + phone;
@@ -335,7 +337,10 @@ export function initCheckout() {
                 }),
             });
             const data = await response.json();
-            if (data && data.ok && data.paymentHtml) slot.innerHTML = data.paymentHtml;
+            if (data && data.ok && data.paymentHtml) {
+                slot.innerHTML = data.paymentHtml;
+                codGone = !slot.querySelector('input[name="payment_method"][value="cod"]');
+            }
         } catch { /* silent by design: Place order still checks */ }
     };
     ['billing_email', 'billing_phone'].forEach((id) => {

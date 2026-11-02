@@ -608,3 +608,58 @@ it('ships the history migration as literals too', function () {
         expect($m::email($e))->toBe(CodRefusals::email($e));
     }
 });
+
+// ------------------------------------------------------------------ 2.60.637 whitelist
+
+it('keeps only real emails, phones and IPs in the whitelist, normalised', function () {
+    // On the back office: a typo like "all" or "*" widening the whitelist, or
+    // "050 123 4567" stored in a shape checkout never compares against.
+    // MUTATION: accept any line in parseAllow() -> red.
+    $p = CodRefusals::parseAllow("Orders@KBeautyBliss.com\n050 123 4567\n94.200.10.25\n10.0.0.7/24\nall\n*\n\n12345\nnot an email@");
+    expect(array_keys($p['emails']))->toBe(['orders@kbeautybliss.com'])
+        ->and(array_map('strval', array_keys($p['phones'])))->toBe(['971501234567'])
+        ->and($p['ips'])->toBe(['94.200.10.25', '10.0.0.0/24'])
+        ->and(CodRefusals::allowText($p))->toBe("orders@kbeautybliss.com\n+971501234567\n94.200.10.25\n10.0.0.0/24")
+        ->and(CodRefusals::parseAllow(CodRefusals::allowText($p)))->toBe($p);
+});
+
+it('always offers COD to a whitelisted email, phone or IP, even on the list', function () {
+    // On the shop: the owner's own address, or a customer he agreed with,
+    // still losing COD after he whitelisted them.
+    // MUTATION: drop the whitelisted() check from blocksAny() -> the email and
+    // phone halves are red; from hiddenForShopper() -> the IP half is red.
+    codrRefused('refuser@example.com', '0501234567');
+    $svc = fn () => app(CodRefusals::class);
+    expect($svc()->blocks('refuser@example.com', null))->toBeTrue();
+
+    $owner = codrOwner();
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/cod-refusals/whitelist', ['text' => "REFUSER@example.com\nrubbish"])
+        ->assertOk()->assertJsonPath('whitelist', 'refuser@example.com')->assertJsonPath('count', 1);
+    codrForget();
+    expect($svc()->blocks('refuser@example.com', null))->toBeFalse()
+        ->and($svc()->blocks(null, '0501234567'))->toBeTrue();
+
+    app(SettingsService::class)->set(CodRefusals::ALLOW_SETTING, '+971 50 123 4567');
+    codrForget();
+    expect($svc()->blocks(null, '050 123 4567'))->toBeFalse();
+
+    // By IP: the guest's session flag no longer hides COD, and Place order passes.
+    app(SettingsService::class)->set(CodRefusals::ALLOW_SETTING, '127.0.0.0/8');
+    codrForget();
+    $before = Order::count();
+    codrShopper(codrCart())->withSession([CodRefusals::SESSION => true])->post('/checkout/place', [
+        'billing_email' => 'refuser@example.com', 'billing_phone' => '0501234567',
+        'billing_first_name' => 'Noura', 'billing_last_name' => 'A', 'billing_address_1' => '44 Road',
+        'billing_city' => 'Dubai', 'billing_state' => 'Dubai', 'billing_country' => 'AE', 'payment_method' => 'cod',
+    ]);
+    expect(Order::count())->toBe($before + 1)
+        ->and(Order::latest('id')->first()->payment_method)->toBe('cod');
+});
+
+it('keeps the whitelist endpoint to codrefusals.manage', function () {
+    // On the back office: a manager or editor whitelisting anyone.
+    foreach (['manager', 'editor'] as $role) {
+        expect(test()->actingAs(codrOwner($role), 'admin')->postJson('/admin-api/cod-refusals/whitelist', ['text' => 'x@y.com'])->status())->toBe(403);
+    }
+    expect(\App\Support\AdminCapabilities::forPath('POST', 'admin-api/cod-refusals/whitelist'))->toBe('codrefusals.manage');
+});

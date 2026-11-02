@@ -54,7 +54,21 @@ final class CodRefusals
      */
     public const HISTORY_SETTING = 'cod_refusals_history_on';
 
+    /**
+     * The whitelist (2.60.637): emails, phone numbers and IP addresses or
+     * ranges that are ALWAYS offered cash on delivery, whatever the list says
+     * -- the shop's own, or a customer the owner has agreed with. One per
+     * line, stored normalised by allowlistSave().
+     */
+    public const ALLOW_SETTING = 'cod_refusals_allow';
+
+    /** At most this many whitelist entries are kept. */
+    public const ALLOW_MAX = 500;
+
     public const SESSION = 'kbb_cod_refused';
+
+    /** @var array{emails: array<string,true>, phones: array<string,true>, ips: list<string>}|null */
+    private ?array $allow = null;
 
     /** What the order notes say, lower-cased, on both systems. */
     public const NEEDLE = 'from shipped to cancelled';
@@ -120,6 +134,75 @@ final class CodRefusals
         return array_keys(array_filter(['refused' => $this->enabled(), 'history' => $this->historyEnabled()]));
     }
 
+    /**
+     * The owner's text as entered, split into what each line is. Anything that
+     * is not an email, a phone number or an IP address / range is dropped, so
+     * a typo can never widen the whitelist.
+     *
+     * @return array{emails: array<string,true>, phones: array<string,true>, ips: list<string>}
+     */
+    public static function parseAllow(string $text): array
+    {
+        $out = ['emails' => [], 'phones' => [], 'ips' => []];
+
+        foreach (preg_split('/[\r\n,;]+/', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $line) {
+            $line = trim($line);
+            if ($line === '' || count($out['emails']) + count($out['phones']) + count($out['ips']) >= self::ALLOW_MAX) {
+                continue;
+            }
+            if (str_contains($line, '@')) {
+                if (($e = self::email($line)) !== null && filter_var($e, FILTER_VALIDATE_EMAIL) !== false) {
+                    $out['emails'][$e] = true;
+                }
+            } elseif (str_contains($line, '/') || \App\Support\IpRange::pack($line) !== null) {
+                $range = str_contains($line, '/') ? \App\Support\IpRange::parse($line) : null;
+                $ip = $range !== null ? $range['cidr'] : \App\Support\IpRange::normalise($line);
+                if ($ip !== null && ! in_array($ip, $out['ips'], true)) {
+                    $out['ips'][] = $ip;
+                }
+            } elseif (($p = self::phone($line)) !== null) {
+                $out['phones'][$p] = true;
+            }
+        }
+
+        return $out;
+    }
+
+    /** The same entries, one per line, as stored and shown back. */
+    public static function allowText(array $parsed): string
+    {
+        return implode("\n", array_merge(array_keys($parsed['emails']), array_map(static fn ($p) => '+' . $p, array_keys($parsed['phones'])), $parsed['ips']));
+    }
+
+    /** @return array{emails: array<string,true>, phones: array<string,true>, ips: list<string>} */
+    public function allowlist(): array
+    {
+        return $this->allow ??= self::parseAllow((string) $this->settings->get(self::ALLOW_SETTING, ''));
+    }
+
+    /** Is this shopper on the whitelist, by any email, phone or the request's IP? */
+    public function whitelisted(array $emails, array $phones, ?Request $request = null): bool
+    {
+        $a = $this->allowlist();
+
+        if ($a['emails'] === [] && $a['phones'] === [] && $a['ips'] === []) {
+            return false;
+        }
+        foreach ($emails as $e) {
+            if (($e = self::email($e)) !== null && isset($a['emails'][$e])) {
+                return true;
+            }
+        }
+        foreach ($phones as $p) {
+            if (($p = self::phone($p)) !== null && isset($a['phones'][$p])) {
+                return true;
+            }
+        }
+
+        return $request !== null && $a['ips'] !== []
+            && \App\Services\Analytics\Tracker::excluded((string) $request->ip(), implode("\n", $a['ips']));
+    }
+
     private function on(string $key): bool
     {
         $v = $this->settings->get($key, '1');
@@ -145,6 +228,10 @@ final class CodRefusals
         $sources = $this->activeSources();
 
         if ($sources === []) {
+            return false;
+        }
+
+        if ($this->whitelisted($emails, $phones)) {
             return false;
         }
 
@@ -198,11 +285,18 @@ final class CodRefusals
             return false;
         }
 
+        $customer = $request->user('customer');
+        if ($this->whitelisted(
+            [$customer instanceof Customer ? $customer->email : null],
+            [$customer instanceof Customer ? $customer->phone : null],
+            $request,
+        )) {
+            return false;
+        }
+
         if ($request->hasSession() && $request->session()->get(self::SESSION) === true) {
             return true;
         }
-
-        $customer = $request->user('customer');
 
         return $customer instanceof Customer && $this->blocks($customer->email, $customer->phone);
     }
@@ -219,7 +313,18 @@ final class CodRefusals
      */
     public function noteShopper(Request $request, ?string $email, ?string $phone): void
     {
-        if (! $request->hasSession() || $request->session()->get(self::SESSION) === true) {
+        if (! $request->hasSession()) {
+            return;
+        }
+
+        // A whitelisted email or phone typed after a blocked one: offered again.
+        if ($this->whitelisted([$email], [$phone], $request)) {
+            $request->session()->forget(self::SESSION);
+
+            return;
+        }
+
+        if ($request->session()->get(self::SESSION) === true) {
             return;
         }
 
@@ -235,6 +340,19 @@ final class CodRefusals
         }
 
         $customer = $request->user('customer');
+
+        if ($this->whitelisted(
+            [$email, $customer instanceof Customer ? $customer->email : null],
+            [$phone, $customer instanceof Customer ? $customer->phone : null],
+            $request,
+        )) {
+            if ($request->hasSession()) {
+                $request->session()->forget(self::SESSION);
+            }
+
+            return false;
+        }
+
         $refused = ($request->hasSession() && $request->session()->get(self::SESSION) === true)
             || $this->blocksAny(
                 [$email, $customer instanceof Customer ? $customer->email : null],

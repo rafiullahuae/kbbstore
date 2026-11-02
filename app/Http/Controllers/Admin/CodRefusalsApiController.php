@@ -66,6 +66,7 @@ final class CodRefusalsApiController extends Controller
         return response()->json([
             'enabled' => $this->refusals->enabled(),
             'history_enabled' => $this->refusals->historyEnabled(),
+            'whitelist' => CodRefusals::allowText($this->refusals->allowlist()),
             'rows' => $rows,
             'total' => $total,
             'page' => $page,
@@ -93,6 +94,22 @@ final class CodRefusalsApiController extends Controller
             'enabled' => $this->refusals->enabled(),
             'history_enabled' => $this->refusals->historyEnabled(),
         ]);
+    }
+
+    /**
+     * The whitelist (2.60.637): emails, phones and IPs always offered COD.
+     * Only lines that ARE one of those are kept, normalised, at most
+     * CodRefusals::ALLOW_MAX; the answer shows back exactly what was kept.
+     */
+    public function saveWhitelist(Request $request): JsonResponse
+    {
+        $data = $request->validate(['text' => ['present', 'nullable', 'string', 'max:40000']]);
+        $text = CodRefusals::allowText(CodRefusals::parseAllow((string) ($data['text'] ?? '')));
+
+        $this->settings->set(CodRefusals::ALLOW_SETTING, $text);
+
+        return response()->json(['ok' => true, 'whitelist' => $text,
+            'count' => $text === '' ? 0 : substr_count($text, "\n") + 1]);
     }
 
     public function allow(Request $request, int $id): JsonResponse

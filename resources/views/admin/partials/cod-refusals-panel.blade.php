@@ -71,6 +71,12 @@
         '<div class="echelp">Every cash on delivery order cancelled before this switch arrived, however it was cancelled, when that customer has no completed order. Card, Tabby and Tamara orders never count. ' +
         'Off offers them cash on delivery again; the refused deliveries above stay hidden.</div></div>' +
         '<div class="ecctl"><span class="ectog' + (d.history_enabled ? ' on' : '') + '" data-codrtog="history_enabled" role="switch" aria-checked="' + (d.history_enabled ? 'true' : 'false') + '" tabindex="0"></span></div></div>' +
+        /* 2.60.637: the whitelist -- always offered cash on delivery. */
+        '<div class="ecopt"><div class="ecom"><div class="ecl"><label for="codr_wl">Always offer cash on delivery to</label></div>' +
+        '<div class="echelp">Your own emails, phone numbers and IP addresses, or a customer you have agreed with. One per line — an email, a phone number, or an IP address or range (like 94.200.10.0/24). ' +
+        'Anyone here is offered cash on delivery even if they are on the list below.</div>' +
+        '<textarea id="codr_wl" class="inp" data-codrwl rows="4" maxlength="40000" style="width:100%;margin-top:8px;font-family:inherit" placeholder="orders@kbeautybliss.com&#10;+971 50 123 4567&#10;94.200.10.25">' + esc(d.whitelist || '') + '</textarea>' +
+        '<div style="margin-top:8px"><button type="button" class="btn ghost" data-codrwlsave>Save list</button></div></div></div>' +
         '<div class="codr-bar"><input type="search" class="inp" data-codrq placeholder="Search email, phone or order number" value="' + esc(state.q) + '" maxlength="120">' +
         '<button type="button" class="btn ghost" data-codrgo>Search</button>' +
         '<span class="echelp" style="margin:0">' + esc(d.total) + ' order' + (d.total === 1 ? '' : 's') + ' on this list</span></div>' +
@@ -118,6 +124,19 @@
         tog.onclick = flip;
         tog.onkeydown = function (e) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); } };
       });
+      var wb = host.querySelector('[data-codrwlsave]');
+      if (wb) wb.onclick = async function () {
+        var ta = host.querySelector('[data-codrwl]');
+        wb.disabled = true;
+        try {
+          var r = await ctx.api('/admin-api/cod-refusals/whitelist', { method: 'POST', body: JSON.stringify({ text: ta ? ta.value : '' }) });
+          if (!alive()) return;
+          if (state.data) state.data.whitelist = r.whitelist;
+          state.msg = 'Saved — ' + r.count + (r.count === 1 ? ' entry' : ' entries') + ' always offered cash on delivery.';
+          ctx.toast && ctx.toast('Whitelist saved');
+        } catch (e) { state.msg = 'Could not save the list — nothing changed.'; }
+        if (alive()) paint();
+      };
       var q = host.querySelector('[data-codrq]');
       var go = function () { state.q = q ? q.value.trim() : ''; state.page = 1; state.msg = ''; load(); };
       var gb = host.querySelector('[data-codrgo]');
