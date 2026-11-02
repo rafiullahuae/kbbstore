@@ -56,35 +56,28 @@ async function shotPay(page, file) {
     await s.ctx.close();
 
     // (b) guest refuser: sees COD, Place order refused, then gone.
-    s = await shopper(browser, w, null);
-    const before = await methods(s.page);
-    await s.page.evaluate(() => {
-      const set = (n, v) => { document.querySelectorAll(`[name="${n}"]`).forEach((el) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }); };
-      set('billing_email', 'guest-refuser@example.com'); set('billing_phone', '+971 50 222 3333');
-      set('billing_first_name', 'Layla Hassan'); set('billing_last_name', 'Hassan'); set('billing_address_1', 'Villa 9, Al Safa Street');
-      set('billing_address_2', 'Al Safa 1'); set('billing_city', 'Dubai'); set('billing_state', 'Dubai');
-      const cod = document.querySelector('input[name=payment_method][value=cod]');
-      if (cod) { cod.checked = true; cod.dispatchEvent(new Event('change', { bubbles: true })); }
-    });
-    const place = s.page.locator('[data-place]:visible, #place_order:visible').first();
-    await place.scrollIntoViewIfNeeded().catch(() => {});
-    await place.click();
-    await s.page.waitForTimeout(2500);
-    const said = await s.page.evaluate(() => {
-      const t = document.body.innerText; const i = t.indexOf("Cash on delivery isn't available");
-      return i >= 0 ? t.slice(i, i + 90) : null;
-    });
-    const msg = s.page.getByText("Cash on delivery isn't available", { exact: false }).first();
-    if (await msg.count()) await msg.scrollIntoViewIfNeeded().catch(() => {});
-    await s.page.waitForTimeout(300);
-    await s.page.screenshot({ path: `${OUT}/b-guest-refused-${w}.png` });
-    await s.page.goto(BASE + '/checkout/', { waitUntil: 'networkidle' });
-    const after = await methods(s.page);
-    await shotPay(s.page, `b-guest-after-reload-${w}.png`);
-    out[`b-${w}`] = { before, said, after, scrollWidth: await sw(s.page), errors: s.errors };
-    await s.ctx.close();
+    // (b) 2.60.636, silent: a guest refuser types her email and phone and
+    // moves on -- COD leaves the list with no sentence, before Place order.
+    // (e) the same for a past-cancelled COD customer; (f) a customer whose
+    // only cancelled order was Tabby keeps COD.
+    for (const [key, email, phone, file] of [
+      ['b', 'guest-refuser@example.com', '+971 50 222 3333', 'b-guest-refuser-silent'],
+      ['e', 'past@example.com', '056 111 2222', 'e-past-cancelled-silent'],
+      ['f', 'tabbyfail@example.com', '056 333 4444', 'f-tabby-cancelled-keeps-cod'],
+    ]) {
+      s = await shopper(browser, w, null);
+      const before = await methods(s.page);
+      await s.page.locator('#billing_email').fill(email);
+      await s.page.locator('#billing_phone').fill(phone);
+      await s.page.locator('#billing_phone').blur();
+      await s.page.waitForTimeout(1800);
+      const after = await methods(s.page);
+      const said = await s.page.evaluate(() => /not available|isn.t available|unavailable/i.test(document.body.innerText));
+      await shotPay(s.page, `${file}-${w}.png`);
+      out[`${key}-${w}`] = { before, after, anySentence: said, scrollWidth: await sw(s.page), errors: s.errors };
+      await s.ctx.close();
+    }
 
-    // (d) admin
     const actx = await browser.newContext({ viewport: { width: w, height: w === 390 ? 844 : 1000 } });
     const page = await actx.newPage();
     const errors = []; page.on('pageerror', (e) => errors.push(String(e)));

@@ -50,6 +50,20 @@ foreach (['mariam.k', 'fatima.r', 'noor.a', 'sara.h'] as $i => $who) {
     $refuse($who.'@example.com', '05'.(5 + $i % 3).' 4'.$i.'0 12'.$i.'4');
 }
 
+// 2.60.636: a COD order cancelled before it shipped (the past-cancelled
+// group, as its migration would have written it), and a cancelled Tabby
+// order that must never count.
+$past = \App\Models\Order::create(['order_number' => '57090', 'email' => 'past@example.com', 'phone' => '0561112222',
+    'status' => 'cancelled', 'total' => 8400, 'payment_method' => 'cod', 'payment_method_title' => 'Cash on delivery']);
+\Illuminate\Support\Facades\DB::table('cod_refusals')->insert(['email' => 'past@example.com', 'phone' => '971561112222',
+    'order_id' => $past->id, 'order_number' => '57090', 'refused_at' => now()->subMonths(3), 'source' => 'history',
+    'created_at' => now(), 'updated_at' => now()]);
+\App\Models\Order::create(['order_number' => '57091', 'email' => 'tabbyfail@example.com', 'phone' => '0563334444',
+    'status' => 'processing', 'total' => 8400, 'payment_method' => 'tabby', 'payment_method_title' => 'Tabby']);
+$tf = \App\Models\Order::where('order_number', '57091')->first();
+app(OrderStatus::class)->moveTo($tf, 'shipped', 'Preview');
+app(OrderStatus::class)->moveTo($tf, 'cancelled', 'Preview');
+
 $sv = app(\App\Services\SettingsService::class);
 $sv->set('cod_fee', 0);
 $sv->flush();
