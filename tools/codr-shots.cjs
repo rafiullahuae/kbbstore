@@ -64,6 +64,8 @@ async function shotPay(page, file) {
       ['b', 'guest-refuser@example.com', '+971 50 222 3333', 'b-guest-refuser-silent'],
       ['e', 'past@example.com', '056 111 2222', 'e-past-cancelled-silent'],
       ['f', 'tabbyfail@example.com', '056 333 4444', 'f-tabby-cancelled-keeps-cod'],
+      // 2.60.637: on the list, but whitelisted -- keeps COD.
+      ['g', 'sara.h@example.com', '050 000 0000', 'g-whitelisted-keeps-cod'],
     ]) {
       s = await shopper(browser, w, null);
       const before = await methods(s.page);

@@ -66,6 +66,9 @@ app(OrderStatus::class)->moveTo($tf, 'cancelled', 'Preview');
 
 $sv = app(\App\Services\SettingsService::class);
 $sv->set('cod_fee', 0);
+// 2.60.637: the whitelist -- the shop's own address, a customer the owner
+// agreed with (on the list, but always offered COD), and the office IP.
+$sv->set('cod_refusals_allow', "orders@kbeautybliss.com\nsara.h@example.com\n+971 4 123 4567\n94.200.10.0/24");
 $sv->flush();
 \App\Models\Setting::flushMap();
 \App\Services\SettingsService::forgetMemo();

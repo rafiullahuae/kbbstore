@@ -75,7 +75,7 @@
         '<div class="ecopt"><div class="ecom"><div class="ecl"><label for="codr_wl">Always offer cash on delivery to</label></div>' +
         '<div class="echelp">Your own emails, phone numbers and IP addresses, or a customer you have agreed with. One per line — an email, a phone number, or an IP address or range (like 94.200.10.0/24). ' +
         'Anyone here is offered cash on delivery even if they are on the list below.</div>' +
-        '<textarea id="codr_wl" class="inp" data-codrwl rows="4" maxlength="40000" style="width:100%;margin-top:8px;font-family:inherit" placeholder="orders@kbeautybliss.com&#10;+971 50 123 4567&#10;94.200.10.25">' + esc(d.whitelist || '') + '</textarea>' +
+        '<textarea id="codr_wl" class="inp" data-codrwl rows="5" maxlength="40000" style="width:100%;box-sizing:border-box;margin-top:8px;padding:8px 10px;line-height:1.5;font-family:inherit" placeholder="orders@kbeautybliss.com&#10;+971 50 123 4567&#10;94.200.10.25">' + esc(d.whitelist || '') + '</textarea>' +
         '<div style="margin-top:8px"><button type="button" class="btn ghost" data-codrwlsave>Save list</button></div></div></div>' +
         '<div class="codr-bar"><input type="search" class="inp" data-codrq placeholder="Search email, phone or order number" value="' + esc(state.q) + '" maxlength="120">' +
         '<button type="button" class="btn ghost" data-codrgo>Search</button>' +
