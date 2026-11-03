@@ -28,13 +28,21 @@ box in the cart panel, cart page and checkout summary.
 | Popup timer | **15 minutes**, shown live on the popup; the gift is held 15 minutes |
 | Claim | big animated green tick, then the cart page opens |
 | Cart / checkout row | **R2** (cream chips in R6's cream and gold, 93px, "Complete your order in" + big clock, thin grey border with a pink line that shrinks as time runs; only the clock moves) |
-| Abandoned email | **A · Golden ticket**, words 1, placed **at the top, before the bag items**; the shop's green free-gifts box stays under the items |
+| Abandoned email | **FINAL (3 Nov): A · Golden ticket**, words 1, eyebrow **"ADDITIONAL GIFT FOR YOU"** (not "A gift for you"), placed **at the top, before the bag items**; the shop's green free-gifts box stays under the items |
 | Email timer | **8 hours** from sending (live moving clock image assumed — confirm vs fixed end time) |
-| Pending-order email | same Golden ticket at the top of "Your items", button "Pay now & claim my gift", free-gifts box kept; gift added to the order when it is paid inside 8 hours |
+| Pending-order email | **FINAL (3 Nov)**: same Golden ticket at the top of "Your items", button "Pay now & claim my gift", free-gifts box kept; gift added to the order when it is paid inside 8 hours |
 | Products | chosen **per cart-value range** in the admin |
 | Admin | Marketing → new page: products per range, timers, all texts, design, who sees it, switches per place, live preview of popup and emails |
 | Tracking | popup shown, claimed, dismissed; email sent; email claim clicked; gift added; order placed with it; expired |
 | Primary + backup (owner, 3 Nov) | each range has a **primary** product and one or more **backup** products; when the primary is sold out or out of stock, the backup is offered instead — in the popup, the emails, the cart row and at Place order. Same rule as Free gifts' main/backup gifts (`FreeGifts`, "a sold-out main gift gives way to its backup") — reuse it, do not write a second one. If every product of a range is out of stock, that range offers nothing. |
+
+## Owner's build requirements (3 November)
+
+- Product picker with **search**, primary and backup shown as **beautiful boxes**.
+- Each chosen product has its **own inventory quantity** for this offer; at zero it gives way to the backup.
+- **No gift chosen (or none available) = no box in the email, in any case.**
+- **Test the emails before going live** (send a test to an address).
+- Super light, Google/Gmail-compliant (under Gmail's 102 KB clip, alt text, unsubscribe headers), and correct in **dark and light** mode on the reader's device. His dark-mode screenshot showed the bag's product names unreadable — fix that in the kit too.
 
 ## Still to decide
 
