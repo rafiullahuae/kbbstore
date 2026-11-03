@@ -206,8 +206,9 @@ class GiftOffersController extends Controller
         $this->fresh();
         $data = $this->previewInput($request);
         $this->offers->useConfig((array) $request->input('config', []));
+        $saved = 0;
 
-        $html = CustomerLocale::render($data['locale'], function () use ($data): string {
+        $html = CustomerLocale::render($data['locale'], function () use ($data, &$saved): string {
             [$offer, $example] = $this->sample($data);
 
             if ($data['place'] === 'popup') {
@@ -221,7 +222,10 @@ class GiftOffersController extends Controller
             $view = $this->offers->emailView($offer, GiftOffers::previewToken(), $data['place'], CarbonImmutable::now()->addHours($this->offers->config()['hold_hours']));
 
             if ($view['clock'] !== null) {
-                $view['clock'] = 'data:image/gif;base64,' . base64_encode(GiftClock::render($this->offers->config()['hold_hours'] * 3600));
+                // Drawn inline for the preview; the size reported is the sent email's, with its short clock address.
+                $inline = 'data:image/gif;base64,' . base64_encode(GiftClock::render($this->offers->config()['hold_hours'] * 3600));
+                $saved = strlen($inline) - strlen((string) $view['clock']);
+                $view['clock'] = $inline;
             }
 
             $mail = $this->mailFor($data['place'], $view, null);
@@ -229,7 +233,7 @@ class GiftOffersController extends Controller
             return $mail === null ? $this->note('There is no order yet to draw the pending reminder with.') : $mail->render();
         });
 
-        return response()->json(['html' => $html, 'bytes' => strlen($html)]);
+        return response()->json(['html' => $html, 'bytes' => strlen($html) - $saved]);
     }
 
     /** POST test {to, place, locale, range_id?}: a real send, its claim marked test (never allocation, never the report). */
@@ -348,6 +352,7 @@ class GiftOffersController extends Controller
         $js = (string) @file_get_contents(resource_path('js/kbb/gift-offer-popup.js'));
 
         return '<!doctype html><html lang="' . ($rtl ? 'ar' : 'en') . '" dir="' . ($rtl ? 'rtl' : 'ltr') . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+            . '<base href="' . e(Url::external('/')) . '">'
             . '<style>body{margin:0;min-height:100vh;font-family:Outfit,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#fff8f5}.pg{padding:70px 16px}.pg i{display:block;height:14px;border-radius:7px;background:#f1e4e8;margin:12px 0}.pg i.b{height:90px;border-radius:12px}.ex{position:fixed;left:8px;bottom:8px;z-index:2147483647;font:600 11px system-ui;background:#2a2228;color:#fff;border-radius:6px;padding:4px 8px}</style></head><body>'
             . '<div class="pg"><i></i><i class="b"></i><i></i><i class="b"></i><i></i></div>'
             . ($example ? '<div class="ex">Example product: no range gives a gift yet</div>' : '')
