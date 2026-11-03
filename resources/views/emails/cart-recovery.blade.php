@@ -13,6 +13,8 @@
     $kitWhy = __('email.kit.why_basket');
     $kitUnsubscribe = $unsubscribeUrl;
     $kitTemplate = 'cart_recovery';
+    // (Lane GO) The Golden ticket's dark-mode rules in the head, only when it is drawn.
+    $kitGiftOffer = ! empty($giftOffer);
     $kitLead = new \Illuminate\Support\HtmlString(nl2br(e($body)));
     $kitFound = \App\Services\Mail\Kit\KitProducts::forSlugs(array_map(static fn (array $i) => (string) ($i['slug'] ?? ''), $items));
     $kitLines = array_map(static function (array $i) use ($kitFound) {
@@ -46,6 +48,7 @@
 @include('emails.kit.hero', ['icon' => 'bag', 'tone' => 'pink', 'eyebrow' => __('email.kit.eyebrow_basket'), 'title' => __('email.kit.basket_title'), 'lead' => $kitLead])
 @endkitsec
 @kitsec('items')
+@includeWhen(! empty($giftOffer), 'emails.kit.gift-ticket', ['o' => $giftOffer ?? null])
 @if ($kitLines !== [])
 @include('emails.kit.items', ['lines' => $kitLines, 'showPrice' => true])
 @endif

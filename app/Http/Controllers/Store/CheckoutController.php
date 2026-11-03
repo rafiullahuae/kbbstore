@@ -992,6 +992,19 @@ class CheckoutController extends Controller
                     }
                 }
 
+                /*
+                 * GIFT OFFERS (Lane GO): the extra full-size gift this basket
+                 * claimed from an email or the exit popup, decided HERE from
+                 * the basket's own claim and totals -- live, in range,
+                 * allocation and shelf left -- and silently left out
+                 * otherwise. The same AED 0 `is_gift` line as the free gifts,
+                 * so Order::items() (what every gateway is handed) is
+                 * unchanged. No claim on the basket: not a query.
+                 */
+                if (($kbbOffer = app(\App\Services\GiftOffers\GiftOffers::class)->forPlace($cart, $totals)) !== null) {
+                    $kbbGiftUnits += app(\App\Services\GiftOffers\GiftOffers::class)->attach($order, $kbbOffer);
+                }
+
                 if ($kbbGiftUnits > 0) {
                     $order->forceFill(['free_gift_count' => $kbbGiftUnits])->saveQuietly();
                 }

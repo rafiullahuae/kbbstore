@@ -65,6 +65,9 @@ class CartRecoveryReminder extends Mailable
         private array $items,
         private string $cartUrl,
         private string $unsubscribeUrl,
+        // (Lane GO) Marketing -> Gift offers: GiftOffers::issue()'s Golden
+        // ticket, or null -- and then the email carries no gift block at all.
+        private ?array $giftOffer = null,
     ) {
         $this->brand = \App\Services\Mail\EmailBranding::forMailable(true, self::class);
     }
@@ -86,8 +89,15 @@ class CartRecoveryReminder extends Mailable
                 'cartUrl' => $this->cartUrl,
                 'unsubscribeUrl' => $this->unsubscribeUrl,
                 'brand' => $this->brand,
+                'giftOffer' => $this->giftOffer,
             ],
         );
+    }
+
+    /** The gift offer this email carries, or null (the sender counts a sent gift by it). */
+    public function giftOffer(): ?array
+    {
+        return $this->giftOffer;
     }
 
     public function headers(): Headers

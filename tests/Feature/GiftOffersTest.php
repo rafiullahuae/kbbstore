@@ -1,0 +1,642 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Marketing -> Gift offers (Lane GO). The owner, 1-3 November 2026:
+ * docs/plans/GIFT-OFFERS.md. One extra full-size gift at AED 0, by cart-value
+ * range, in the abandoned-cart email and both pending-order reminders (ON),
+ * and the exit popup (built, OFF). Each case says what the defect would look
+ * like on the shop and carries a mutation note: change the named line back
+ * and the case goes red.
+ */
+
+use App\Models\AdminUser;
+use App\Models\Cart;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Product;
+use App\Models\Setting;
+use App\Services\CartService;
+use App\Services\FreeGifts;
+use App\Services\GiftOffers\GiftClock;
+use App\Services\GiftOffers\GiftOffers;
+use App\Services\GiftOffers\GiftOfferStats;
+use App\Services\SettingsService;
+use App\Support\AdminCapabilities;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+
+beforeEach(function () {
+    DB::table('free_gift_ranges')->delete();
+    app(FreeGifts::class)->compile();
+    goFresh();
+});
+
+function goFresh(): void
+{
+    SettingsService::forgetMemo();
+    Setting::flushMap();
+    request()->attributes->replace([]);
+    app(CartService::class)->forget();
+}
+
+function goSet(array $config): void
+{
+    app(SettingsService::class)->set(GiftOffers::KEY, $config);
+    goFresh();
+}
+
+function goProduct(string $name, array $o = []): Product
+{
+    return Product::create(array_merge([
+        'slug' => Str::slug($name) . '-' . Str::random(6), 'name' => $name, 'status' => 'publish', 'is_visible' => true,
+        'price' => 8900, 'stock_status' => 'instock', 'manage_stock' => true, 'stock' => 20, 'image' => '/media/' . Str::slug($name) . '.webp',
+    ], $o));
+}
+
+/** A range AED $min..$max with [[Product, role, allocation], ...]; returns [range id, item ids]. */
+function goRange(int $min, ?int $max, array $items): array
+{
+    $id = DB::table('gift_offer_ranges')->insertGetId(['min_fils' => $min * 100, 'max_fils' => $max === null ? null : $max * 100, 'enabled' => true, 'sort' => 0, 'created_at' => now(), 'updated_at' => now()]);
+    $ids = [];
+    foreach ($items as $i => [$p, $role, $alloc]) {
+        $ids[] = DB::table('gift_offer_items')->insertGetId(['range_id' => $id, 'product_id' => $p->id, 'role' => $role, 'sort' => $i, 'allocation' => $alloc, 'used' => 0, 'created_at' => now(), 'updated_at' => now()]);
+    }
+    app(GiftOffers::class)->compile();
+    goFresh();
+
+    return [$id, $ids];
+}
+
+function goCart(array $lines): Cart
+{
+    $cart = Cart::create(['token' => (string) Str::uuid(), 'currency' => 'AED', 'status' => 'active', 'shipping_country' => 'AE', 'last_activity_at' => now()]);
+    foreach ($lines as [$product, $qty]) {
+        $cart->items()->create(['product_id' => $product->id, 'quantity' => $qty, 'unit_price' => (int) $product->price]);
+    }
+
+    return $cart->fresh();
+}
+
+function goShopper(?Cart $cart = null)
+{
+    app(CartService::class)->forget();
+    $t = test()->withCredentials()->withoutMiddleware(Illuminate\Cookie\Middleware\EncryptCookies::class);
+
+    return $cart ? $t->withUnencryptedCookie(CartService::COOKIE, $cart->token) : $t;
+}
+
+function goAdmin(string $role = 'owner'): AdminUser
+{
+    return AdminUser::create(['name' => 'GO ' . $role, 'email' => 'go-' . $role . '-' . uniqid() . '@example.test', 'password' => 'password-long-enough', 'role' => $role]);
+}
+
+function goBasketMail(int $unitPrice, ?array $offer): string
+{
+    return (new \App\Mail\CartRecoveryReminder('Your basket', 'Hi Layla', [['name' => 'Glow Serum', 'slug' => 'glow-serum', 'quantity' => 1, 'unit_price' => $unitPrice]], 'https://example.test/cart/', 'https://example.test/u', $offer))->render();
+}
+
+function goPendingOrder(int $subtotal = 40000): Order
+{
+    $o = Order::create(['order_number' => 'GO-' . Str::random(6), 'email' => 'go@example.test', 'status' => 'pending', 'total' => $subtotal, 'subtotal' => $subtotal,
+        'currency' => 'AED', 'payment_method' => 'stripe', 'payment_method_title' => 'Card', 'shipping_address' => ['first_name' => 'Aisha', 'country' => 'AE', 'city' => 'Dubai']]);
+    OrderItem::create(['order_id' => $o->id, 'name' => 'Glow Serum', 'quantity' => 1, 'unit_price' => $subtotal, 'subtotal' => $subtotal, 'total' => $subtotal]);
+
+    return $o->fresh();
+}
+
+function goTokenOf(array $offer): string
+{
+    return (string) preg_replace('~^.*/gift-offer/c/~', '', $offer['href']);
+}
+
+/*
+|------------------------------------------------------------------------------
+| WHICH PRODUCT
+|------------------------------------------------------------------------------
+*/
+
+it('offers the primary, then the next backup when the primary is out of stock or its allocation is spent, and nothing when all are out', function () {
+    /*
+     * The defect: a sold-out or used-up primary still promised in an email, or
+     * a range with nothing left still drawing a block.
+     * MUTATION: in GiftOffers::resolve() drop the `$i[3] > 0` filter -- the
+     * spent primary is offered again. RED.
+     */
+    $toner = goProduct('Dokdo Toner');
+    $sun = goProduct('Relief Sun');
+    $ess = goProduct('Snail Essence');
+    [, [$tonerItem]] = goRange(300, 499, [[$toner, 'primary', 50], [$sun, 'backup', 50], [$ess, 'backup', 50]]);
+
+    $name = fn () => app(GiftOffers::class)->offerFor(40000)['product']->name ?? null;
+    expect($name())->toBe('Dokdo Toner');
+
+    DB::table('gift_offer_items')->where('id', $tonerItem)->update(['used' => 50]);
+    app(GiftOffers::class)->compile();
+    goFresh();
+    expect($name())->toBe('Relief Sun');
+
+    $sun->update(['stock' => 0, 'stock_status' => 'outofstock']);
+    goFresh();
+    expect($name())->toBe('Snail Essence');
+
+    $ess->update(['status' => 'draft']);
+    goFresh();
+    expect(app(GiftOffers::class)->offerFor(40000))->toBeNull()
+        // Below the range: nothing either.
+        ->and(app(GiftOffers::class)->offerFor(20000))->toBeNull();
+});
+
+/*
+|------------------------------------------------------------------------------
+| THE EMAILS
+|------------------------------------------------------------------------------
+*/
+
+it('puts the Golden ticket at the top of the abandoned-cart email only when a gift resolves', function () {
+    /*
+     * The defect: a gift block in an email with no gift behind it (module off,
+     * place off, no range, nothing in stock) -- "No gift chosen (or none
+     * available) = no box in the email, in any case."
+     * MUTATION: in GiftOffers::issue() drop the placeOn() check. RED (place off).
+     */
+    $toner = goProduct('Dokdo Toner');
+    goRange(100, null, [[$toner, 'primary', 50]]);
+
+    $offer = GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null);
+    expect($offer)->not->toBeNull();
+    $html = goBasketMail(40000, $offer);
+
+    expect($html)->toContain('ADDITIONAL GIFT FOR YOU')->toContain('Wait… this is for you')
+        ->toContain("Your bag is still here, and we&#039;ve added a full-size gift to go with it. Free, just for you.")
+        ->toContain('Claim my free gift')->toContain('Worth AED 89 · one per order')->toContain('Dokdo Toner')
+        ->and(strpos($html, 'ADDITIONAL GIFT FOR YOU'))->toBeLessThan(strpos($html, 'Glow Serum'))
+        // Its dark-mode rules travel with it, and only with it.
+        ->and($html)->toContain('.gt-card{background:#2B2026!important')
+        ->and(goBasketMail(40000, null))->not->toContain('ADDITIONAL GIFT FOR YOU')->not->toContain('.gt-card');
+
+    // Every way of having no gift: no row, no block.
+    $before = DB::table('gift_offer_claims')->count();
+    goSet(['places' => ['cart' => false]]);
+    expect(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null))->toBeNull();
+    goSet(['on' => false]);
+    expect(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null))->toBeNull();
+    goSet([]);
+    $toner->update(['stock' => 0, 'stock_status' => 'outofstock']);
+    goFresh();
+    expect(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null))->toBeNull()
+        ->and(DB::table('gift_offer_claims')->count())->toBe($before);
+});
+
+it('puts the ticket at the top of "Your items" in both pending reminders, with the pay button wording', function () {
+    $toner = goProduct('Dokdo Toner');
+    goRange(100, null, [[$toner, 'primary', 50]]);
+    $order = goPendingOrder();
+
+    foreach ([1, 2] as $stage) {
+        $offer = GiftOffers::forOrder($order, $stage);
+        $html = (new \App\Mail\OrderPaymentReminder($order, $stage, $offer))->render();
+        expect($offer['place'])->toBe('reminder_' . $stage)
+            ->and($html)->toContain('ADDITIONAL GIFT FOR YOU')->toContain('Pay now &amp; claim my gift')
+            ->toContain("Complete your order and we&#039;ll add a full-size gift to it. Free, just for you.")
+            ->and(strpos($html, 'ADDITIONAL GIFT FOR YOU'))->toBeLessThan(strpos($html, 'Glow Serum'));
+    }
+
+    expect((new \App\Mail\OrderPaymentReminder($order, 1, null))->render())->not->toContain('ADDITIONAL GIFT FOR YOU');
+});
+
+it('keeps the green free gifts box in both emails, gift offer or not', function () {
+    /*
+     * The owner caught a preview without it (2 November): the free gifts box
+     * must never go missing from either email.
+     * MUTATION: delete the emails.kit.gift-box include from cart-recovery or
+     * from kit/order. RED.
+     */
+    $mask = goProduct('Gel Mask', ['gift_kind' => 'mask']);
+    $rid = DB::table('free_gift_ranges')->insertGetId(['min_fils' => 10000, 'max_fils' => null, 'label_en' => '1 Mask', 'label_ar' => 'قناع', 'sort' => 0, 'enabled' => true, 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('free_gift_range_items')->insert(['range_id' => $rid, 'product_id' => $mask->id, 'quantity' => 1, 'sort' => 0]);
+    app(SettingsService::class)->set(FreeGifts::KEY, ['mode' => 'live']);
+    goFresh();
+    app(FreeGifts::class)->compile();
+    goRange(100, null, [[goProduct('Dokdo Toner'), 'primary', 50]]);
+
+    foreach ([true, false] as $withOffer) {
+        $basket = goBasketMail(40000, $withOffer ? GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null) : null);
+        expect($basket)->toContain('Free gifts for you')->toContain('Gel Mask');
+
+        $order = goPendingOrder();
+        OrderItem::create(['order_id' => $order->id, 'name' => 'Gel Mask', 'quantity' => 1, 'unit_price' => 0, 'subtotal' => 0, 'total' => 0, 'is_gift' => true]);
+        $order->forceFill(['free_gift_count' => 1])->save();
+        $pending = (new \App\Mail\OrderPaymentReminder($order->fresh(), 1, $withOffer ? GiftOffers::forOrder($order, 1) : null))->render();
+        expect($pending)->toContain('border:1.5px solid #2e8f62')->toContain('Gel Mask');
+    }
+});
+
+it('stays under Gmail\'s 102 KB clip with the gift, with images sized and described, and the unsubscribe header intact', function () {
+    /*
+     * The defect: Gmail cuts a message over 102 KB ("[Message clipped]") and the
+     * claim button falls below the cut.
+     * MUTATION: inline the GIF as a data: URI in emailView(). RED.
+     */
+    goRange(100, null, [[goProduct('Dokdo Toner'), 'primary', 50]]);
+    $offer = GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null);
+    $mail = new \App\Mail\CartRecoveryReminder('Your basket', 'Hi', [['name' => 'Glow Serum', 'slug' => 'glow', 'quantity' => 1, 'unit_price' => 40000]], 'https://example.test/cart/', 'https://example.test/u', $offer);
+    $html = $mail->render();
+    $without = goBasketMail(40000, null);
+
+    expect(strlen($html))->toBeLessThan(102 * 1024)
+        ->and(strlen($html) - strlen($without))->toBeLessThan(9000)
+        ->and($html)->toMatch('#<img src="[^"]+/gift-offer/t/[A-Za-z0-9_-]{43}\.gif" width="216" height="56" alt="Held until [^"]+"#')
+        ->and($mail->headers()->text['List-Unsubscribe'])->toBe('<https://example.test/u>');
+
+    $order = goPendingOrder();
+    expect(strlen((new \App\Mail\OrderPaymentReminder($order, 1, GiftOffers::forOrder($order, 1)))->render()))->toBeLessThan(102 * 1024);
+
+    // Fixed mode: the end time as text, no picture.
+    goSet(['timer' => 'fixed']);
+    $fixed = goBasketMail(40000, GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null));
+    expect($fixed)->not->toContain('/gift-offer/t/')->toMatch('#Held until \d{1,2}:\d{2} (AM|PM) (today|tomorrow)#');
+});
+
+it('speaks Arabic in the ticket for an Arabic shopper', function () {
+    app(SettingsService::class)->set(\App\Support\Locale::SETTING_ENABLED, '1');
+    goFresh();
+    goRange(100, null, [[goProduct('Dokdo Toner'), 'primary', 50]]);
+    $html = \App\Support\CustomerLocale::render('ar', fn () => goBasketMail(40000, GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null)));
+
+    expect($html)->toContain('هدية إضافية لكِ')->toContain('احصلي على هديتي المجانية')->not->toContain('ADDITIONAL GIFT FOR YOU');
+});
+
+it('fixes the dark-mode bag item names in every email, and leaves light mode alone', function () {
+    /*
+     * The owner's dark-mode screenshot: the bag's product names (links with an
+     * inline dark colour) were unreadable. The kit's dark rules recoloured the
+     * line, not the link inside it.
+     * MUTATION: remove `.ink a{...}` from emails/kit/doc.blade.php. RED.
+     */
+    $html = goBasketMail(40000, null);
+    preg_match('#@media \(prefers-color-scheme:dark\)\{(.*?)\n  \}#s', $html, $dark);
+
+    expect($dark[1] ?? '')->toContain('.ink a{color:#F7EEF2!important}')
+        ->and($html)->toContain('[data-ogsc] .ink a{color:#F7EEF2!important}')
+        // The link itself is unchanged in light mode.
+        ->and($html)->toContain('<a href="' . \App\Support\Url::external('/product/glow-serum/') . '" style="color:#2A2228;text-decoration:none;">');
+});
+
+/*
+|------------------------------------------------------------------------------
+| THE CLAIM
+|------------------------------------------------------------------------------
+*/
+
+it('stores only the token\'s hash, and the link claims the gift without signing anyone in or restoring a basket', function () {
+    /*
+     * The defect: a bearer link that hands over a shopping session (see
+     * CartRecoveryReminder's header) or a database that leaks claim tokens.
+     * MUTATION: store `$token` instead of self::hash($token) in issue(). RED.
+     */
+    $customer = \App\Models\Customer::create(['email' => 'aisha@example.test', 'name' => 'Aisha', 'password' => 'password-long-enough']);
+    $theirs = goCart([[goProduct('Their Serum', ['price' => 40000]), 1]]);
+    $theirs->forceFill(['customer_id' => $customer->id])->save();
+    goRange(100, null, [[goProduct('Dokdo Toner'), 'primary', 50]]);
+    $offer = GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], $theirs->id);
+    $token = goTokenOf($offer);
+    $row = DB::table('gift_offer_claims')->latest('id')->first();
+
+    expect($row->token_hash)->toBe(hash('sha256', $token))
+        ->and(json_encode(DB::table('gift_offer_claims')->get()))->not->toContain($token);
+
+    // Opened on another device: a fresh empty basket gets the gift; nobody is signed in; their basket is untouched.
+    $res = goShopper()->get('/gift-offer/c/' . $token);
+    $res->assertRedirect();
+    expect($res->headers->get('Location'))->toEndWith('/cart')
+        ->and(auth('customer')->check())->toBeFalse()
+        ->and(DB::table('carts')->where('id', $theirs->id)->value('gift_offer_claim_id'))->toBeNull();
+    $mine = Cart::query()->where('gift_offer_claim_id', $row->id)->first();
+    expect($mine)->not->toBeNull()->and($mine->id)->not->toBe($theirs->id)->and($mine->customer_id)->toBeNull()
+        ->and($mine->items()->count())->toBe(0)
+        ->and(DB::table('gift_offer_claims')->where('id', $row->id)->value('status'))->toBe('claimed');
+});
+
+it('answers an expired, a forged and an unknown link the same way, and the cart page says the gift has ended', function () {
+    /*
+     * MUTATION: drop the expiry comparison in GiftOffers::claim(). RED.
+     */
+    goRange(100, null, [[goProduct('Dokdo Toner'), 'primary', 50]]);
+    $token = goTokenOf(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null));
+    DB::table('gift_offer_claims')->update(['expires_at' => now()->subMinute()]);
+
+    $expired = goShopper()->get('/gift-offer/c/' . $token)->headers->get('Location');
+    $unknown = goShopper()->get('/gift-offer/c/' . str_repeat('A', 43))->headers->get('Location');
+
+    expect($expired)->toEndWith('/cart?gift=ended')->and($unknown)->toBe($expired)
+        ->and(Cart::query()->whereNotNull('gift_offer_claim_id')->count())->toBe(0);
+
+    $cart = goCart([[goProduct('Serum', ['price' => 40000]), 1]]);
+    expect(goShopper($cart)->get('/cart/?gift=ended')->getContent())->toContain('This gift has ended.');
+});
+
+/*
+|------------------------------------------------------------------------------
+| THE CART ROW AND PLACE ORDER
+|------------------------------------------------------------------------------
+*/
+
+it('draws the R2 row only for a basket holding a live claim, and nothing at all otherwise', function () {
+    /*
+     * The defect: a byte of gift markup (or a script) on a page whose basket
+     * has no gift, or a query to find out.
+     * MUTATION: in GiftOffers::liveClaim() drop the `! $cart->gift_offer_claim_id`
+     * early return -- the basket without a claim pays a query. RED.
+     */
+    goRange(100, null, [[goProduct('Dokdo Toner'), 'primary', 50]]);
+    $cart = goCart([[goProduct('Serum', ['price' => 40000]), 1]]);
+
+    $page = goShopper($cart)->get('/cart/')->getContent();
+    expect($page)->not->toContain('kgo-')->not->toContain('data-kgo');
+
+    $totals = app(CartService::class)->totals($cart->fresh(), 'AE');
+    app(CartService::class)->current(request(), false);
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    expect(app(GiftOffers::class)->row($totals))->toBe([])->and(DB::getQueryLog())->toBe([]);
+
+    $token = goTokenOf(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null));
+    goShopper($cart)->get('/gift-offer/c/' . $token);
+    goFresh();
+
+    $page = goShopper($cart)->get('/cart/')->getContent();
+    $drawer = goShopper($cart)->getJson('/api/cart/drawer')->json('html');
+    expect($page)->toContain('class="kgo-r" data-kgo-row')->toContain('Dokdo Toner')->toContain('Complete your order in')
+        ->and(substr_count($page, 'w.kbbGoT=1') >= 1)->toBeTrue()
+        ->and($drawer)->toContain('data-kgo-row');
+});
+
+it('writes the gift onto the order at AED 0, spends the allocation once, and leaves it out silently when the bag fell below the range', function () {
+    /*
+     * The defect: a gift given twice from one claim, an allocation that goes
+     * below zero, or a gift kept by a bag that no longer qualifies.
+     * MUTATION: drop `whereColumn('used', '<', 'allocation')` in attach(). RED
+     * (the second order with allocation 1).
+     */
+    \App\Models\PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
+    $zone = \App\Models\ShippingZone::create(['name' => 'UAE', 'position' => 0]);
+    \App\Models\ShippingZoneLocation::create(['shipping_zone_id' => $zone->id, 'type' => 'country', 'code' => 'AE']);
+    \App\Models\ShippingMethod::create(['shipping_zone_id' => $zone->id, 'type' => 'flat_rate', 'title' => 'Standard', 'cost' => 2000, 'enabled' => true, 'position' => 0]);
+    $toner = goProduct('Dokdo Toner');
+    [, [$item]] = goRange(300, null, [[$toner, 'primary', 1]]);
+
+    $place = function (Cart $cart) {
+        return goShopper($cart)->post('/checkout/place', [
+            'billing_email' => 'buyer@example.com', 'billing_phone' => '+971500000000', 'billing_first_name' => 'Aisha', 'billing_last_name' => 'Khan',
+            'billing_address_1' => '12 Marina Walk', 'billing_city' => 'Dubai', 'billing_state' => 'Dubai', 'billing_country' => 'AE', 'payment_method' => 'cod',
+        ]);
+    };
+    $claimInto = function (Cart $cart) {
+        $token = goTokenOf(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null));
+        goShopper($cart)->get('/gift-offer/c/' . $token);
+        goFresh();
+    };
+
+    $cart = goCart([[goProduct('Serum', ['price' => 40000]), 1]]);
+    $claimInto($cart);
+    $place($cart);
+    $order = Order::query()->latest('id')->first();
+    $line = $order->gifts()->first();
+
+    expect($line)->not->toBeNull()
+        ->and($line->name)->toBe('Dokdo Toner')->and((int) $line->total)->toBe(0)->and($line->gift_range_label)->toBe(GiftOffers::LINE_LABEL)
+        ->and($order->items()->pluck('name')->all())->toBe(['Serum'])
+        ->and((int) $order->free_gift_count)->toBe(1)
+        ->and((int) DB::table('gift_offer_items')->where('id', $item)->value('used'))->toBe(1)
+        ->and((int) $toner->fresh()->stock)->toBe(19);
+
+    // A second basket: the allocation (1) is spent -- no gift, the order still goes through.
+    goFresh();
+    $cart2 = goCart([[goProduct('Serum 2', ['price' => 40000]), 1]]);
+    DB::table('gift_offer_items')->where('id', $item)->update(['used' => 0, 'allocation' => 1]);
+    app(GiftOffers::class)->compile();
+    $claimInto($cart2);
+    DB::table('gift_offer_items')->where('id', $item)->update(['used' => 1]);
+    $place($cart2);
+    $order2 = Order::query()->latest('id')->first();
+    expect($order2->id)->not->toBe($order->id)->and($order2->gifts()->count())->toBe(0)
+        ->and((int) DB::table('gift_offer_items')->where('id', $item)->value('used'))->toBe(1);
+
+    // Below the range's minimum at Place order: left out.
+    goFresh();
+    DB::table('gift_offer_items')->where('id', $item)->update(['used' => 0, 'allocation' => 5]);
+    app(GiftOffers::class)->compile();
+    $cart3 = goCart([[goProduct('Serum 3', ['price' => 40000]), 1]]);
+    $claimInto($cart3);
+    $cart3->items()->update(['unit_price' => 10000]);
+    $place($cart3);
+    expect(Order::query()->latest('id')->first()->gifts()->count())->toBe(0)
+        ->and((int) DB::table('gift_offer_items')->where('id', $item)->value('used'))->toBe(0);
+});
+
+it('adds the pending order\'s gift only when it is paid inside the window of a claimed reminder', function () {
+    /*
+     * The defect: a gift added to an order paid after the 8 hours, to one whose
+     * reminder was never clicked, or by gateway code (payments are frozen).
+     * MUTATION: in GiftOffers::orderPaid() drop the `$at->lessThan(...expires_at)`
+     * test. RED (the late payment).
+     */
+    $toner = goProduct('Dokdo Toner');
+    [, [$item]] = goRange(100, null, [[$toner, 'primary', 10]]);
+    $pay = fn (Order $o) => app(\App\Services\Orders\OrderStatus::class)->moveTo($o, 'processing', by: 'system', also: ['paid_at' => now()], only: ['paid_at' => null]);
+
+    // Claimed, paid in time: the gift line, allocation spent once.
+    $order = goPendingOrder();
+    $token = goTokenOf(GiftOffers::forOrder($order, 1));
+    $to = goShopper()->get('/gift-offer/c/' . $token)->headers->get('Location');
+    expect($to)->toContain('/checkout/order-pay')->toContain('gift=1')
+        ->and(auth('customer')->check())->toBeFalse();
+    $pay($order);
+    expect($order->fresh()->gifts()->pluck('name')->all())->toBe(['Dokdo Toner'])
+        ->and((int) $order->fresh()->free_gift_count)->toBe(1)
+        ->and((int) DB::table('gift_offer_items')->where('id', $item)->value('used'))->toBe(1);
+
+    // Never clicked: nothing.
+    $quiet = goPendingOrder();
+    GiftOffers::forOrder($quiet, 1);
+    $pay($quiet);
+    expect($quiet->fresh()->gifts()->count())->toBe(0);
+
+    // Clicked, paid after the window: nothing.
+    $late = goPendingOrder();
+    $t = goTokenOf(GiftOffers::forOrder($late, 2));
+    goShopper()->get('/gift-offer/c/' . $t);
+    DB::table('gift_offer_claims')->where('order_id', $late->id)->update(['expires_at' => now()->subMinute()]);
+    $pay($late);
+    expect($late->fresh()->gifts()->count())->toBe(0)
+        ->and((int) DB::table('gift_offer_items')->where('id', $item)->value('used'))->toBe(1);
+});
+
+/*
+|------------------------------------------------------------------------------
+| THE POPUP
+|------------------------------------------------------------------------------
+*/
+
+it('prints nothing and loads no script while the popup is off, and costs no query to know it', function () {
+    /*
+     * The defect: popup markup or its script on every shop page while the
+     * owner has it off ("keep turned off by default").
+     * MUTATION: default PLACE_DEFAULTS['popup'] to true. RED.
+     */
+    goRange(100, null, [[goProduct('Dokdo Toner'), 'primary', 50]]);
+    $cart = goCart([[goProduct('Serum', ['price' => 40000]), 1]]);
+    $drawer = goShopper($cart)->getJson('/api/cart/drawer')->json('html');
+    expect($drawer)->not->toContain('data-kgo-pop')->not->toContain('gift-offer-popup');
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    expect(app(GiftOffers::class)->popup(['item_count' => 1, 'subtotal' => 40000]))->toBeNull()
+        ->and(DB::getQueryLog())->toBe([]);
+
+    // On: the template and the watcher; the script itself only by URL, loaded on exit intent.
+    goSet(['places' => ['popup' => true]]);
+    $drawer = goShopper($cart)->getJson('/api/cart/drawer')->json('html');
+    expect($drawer)->toContain('<template data-kgo-pop')->toContain('Psst… a secret gift, just for you')->toContain('WAIT…')
+        ->toContain('kgo-dA')->toContain('kgo-S3')
+        ->not->toContain('<script src=');
+});
+
+it('claims from the popup onto this basket with the popup\'s minutes, never twice', function () {
+    goSet(['places' => ['popup' => true]]);
+    goRange(100, null, [[goProduct('Dokdo Toner'), 'primary', 50]]);
+    $cart = goCart([[goProduct('Serum', ['price' => 40000]), 1]]);
+
+    $res = goShopper($cart)->postJson('/gift-offer/popup');
+    $res->assertOk()->assertJsonPath('ok', true);
+    $claim = DB::table('gift_offer_claims')->where('place', 'popup')->first();
+    expect((int) $cart->fresh()->gift_offer_claim_id)->toBe((int) $claim->id)
+        ->and(abs(abs(\Carbon\CarbonImmutable::parse($claim->expires_at)->diffInMinutes(now())) - 15))->toBeLessThan(1.0);
+
+    goShopper($cart)->postJson('/gift-offer/popup')->assertStatus(409);
+
+    goSet(['places' => ['popup' => false]]);
+    $other = goCart([[goProduct('Serum 2', ['price' => 40000]), 1]]);
+    goShopper($other)->postJson('/gift-offer/popup')->assertStatus(409);
+});
+
+/*
+|------------------------------------------------------------------------------
+| THE CLOCK, THE REPORT, THE ADMIN
+|------------------------------------------------------------------------------
+*/
+
+it('draws the email clock as a small animated GIF, once per minute however many opens', function () {
+    /*
+     * MUTATION: drop the Cache::remember in GiftOfferController::clock(). The
+     * renders count goes to 2. RED.
+     */
+    $gif = GiftClock::render(8 * 3600);
+    expect(substr($gif, 0, 6))->toBe('GIF89a')->and(strlen($gif))->toBeLessThan(40 * 1024)
+        ->and(substr_count($gif, "\x21\xF9\x04"))->toBe(60);
+
+    goRange(100, null, [[goProduct('Dokdo Toner'), 'primary', 50]]);
+    $token = goTokenOf(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null));
+    \Illuminate\Support\Facades\Cache::flush();
+    $a = test()->get('/gift-offer/t/' . $token . '.gif');
+    $a->assertOk()->assertHeader('Content-Type', 'image/gif');
+    expect($a->headers->get('Cache-Control'))->toContain('no-store');
+    $keys = 0;
+    $end = \Carbon\CarbonImmutable::parse(DB::table('gift_offer_claims')->value('expires_at'))->getTimestamp();
+    expect(\Illuminate\Support\Facades\Cache::has('gift_offer_gif:' . $end . ':' . intdiv(time(), 60)))->toBeTrue();
+    expect(test()->get('/gift-offer/t/' . $token . '.gif')->getContent())->toBe($a->getContent());
+
+    expect(DB::table('gift_offer_stats')->where('event', 'open')->value('n'))->toEqual(2);
+});
+
+it('gives the screen its own capability and fails closed', function () {
+    /*
+     * MUTATION: map ['*', 'admin-api/gift-offers/**'] to giftoffers.view. RED.
+     */
+    expect(AdminCapabilities::forPath('GET', 'admin-api/gift-offers'))->toBe('giftoffers.view')
+        ->and(AdminCapabilities::forPath('GET', 'admin-api/gift-offers/report'))->toBe('giftoffers.view')
+        ->and(AdminCapabilities::forPath('POST', 'admin-api/gift-offers/preview'))->toBe('giftoffers.view')
+        ->and(AdminCapabilities::forPath('POST', 'admin-api/gift-offers/settings'))->toBe('giftoffers.manage')
+        ->and(AdminCapabilities::forPath('POST', 'admin-api/gift-offers/test'))->toBe('giftoffers.manage')
+        ->and(AdminCapabilities::forPath('PATCH', 'admin-api/gift-offers/anything'))->toBe('giftoffers.manage')
+        ->and(AdminCapabilities::roleCan('support', 'giftoffers.view'))->toBeFalse()
+        ->and(AdminCapabilities::roleCan('editor', 'giftoffers.manage'))->toBeFalse()
+        ->and(AdminCapabilities::roleCan('manager', 'giftoffers.manage'))->toBeTrue();
+
+    test()->getJson('/admin-api/gift-offers')->assertStatus(401);
+    test()->actingAs(goAdmin('support'), 'admin')->postJson('/admin-api/gift-offers/settings', ['config' => ['on' => true]])->assertForbidden();
+    test()->actingAs(goAdmin('owner'), 'admin')->getJson('/admin-api/gift-offers')->assertOk()
+        ->assertJsonPath('config.places.popup', false)->assertJsonPath('config.places.cart', true)
+        ->assertJsonPath('config.hold_hours', 8)->assertJsonPath('config.popup_minutes', 15)->assertJsonPath('config.timer', 'live')
+        ->assertJsonPath('config.popup.design', 'A')->assertJsonPath('config.popup.words', '3');
+});
+
+it('saves a range with a primary and backups, keeps what was given, and refuses two primaries', function () {
+    $owner = goAdmin();
+    $a = goProduct('Dokdo Toner');
+    $b = goProduct('Relief Sun');
+    $res = test()->actingAs($owner, 'admin')->postJson('/admin-api/gift-offers/ranges', ['min' => 150, 'max' => 299, 'enabled' => true, 'items' => [
+        ['product_id' => $b->id, 'role' => 'backup', 'allocation' => 20], ['product_id' => $a->id, 'role' => 'primary', 'allocation' => 50],
+    ]])->assertOk();
+    $range = $res->json('ranges.0');
+    expect(array_column($range['items'], 'role'))->toBe(['primary', 'backup'])
+        ->and($range['items'][0]['product'])->toHaveKeys(['name', 'brand', 'thumb', 'stock', 'in_stock'])
+        ->and($range['items'][0]['product'])->not->toHaveKeys(['wc_id', 'sku', 'total_sales']);
+
+    DB::table('gift_offer_items')->where('product_id', $a->id)->update(['used' => 7]);
+    test()->actingAs($owner, 'admin')->putJson('/admin-api/gift-offers/ranges/' . $range['id'], ['min' => 150, 'max' => null, 'items' => [
+        ['product_id' => $a->id, 'role' => 'primary', 'allocation' => 60],
+    ]])->assertOk();
+    expect((int) DB::table('gift_offer_items')->where('product_id', $a->id)->value('used'))->toBe(7)
+        ->and(DB::table('gift_offer_items')->where('product_id', $b->id)->exists())->toBeFalse();
+
+    test()->actingAs($owner, 'admin')->putJson('/admin-api/gift-offers/ranges/' . $range['id'], ['min' => 150, 'max' => null, 'items' => [
+        ['product_id' => $a->id, 'role' => 'primary', 'allocation' => 1], ['product_id' => $b->id, 'role' => 'primary', 'allocation' => 1],
+    ]])->assertStatus(422);
+});
+
+it('previews the real email from unsaved values without storing anything, and a test send never counts', function () {
+    Mail::fake();
+    $owner = goAdmin();
+    goRange(100, null, [[goProduct('Dokdo Toner'), 'primary', 50]]);
+    $claims = DB::table('gift_offer_claims')->count();
+
+    $html = test()->actingAs($owner, 'admin')->postJson('/admin-api/gift-offers/preview', ['place' => 'cart', 'locale' => 'en',
+        'config' => ['texts' => ['email_title_en' => 'Unsaved heading']]])->assertOk()->json('html');
+    expect($html)->toContain('Unsaved heading')->toContain('data:image/gif;base64,')
+        ->and(DB::table('gift_offer_claims')->count())->toBe($claims)
+        ->and(app(GiftOffers::class)->freshConfig()['texts']['email_title_en'])->toBe('Wait… this is for you');
+
+    app(SettingsService::class)->set(\App\Support\Locale::SETTING_ENABLED, '1');
+    goFresh();
+    $pop = test()->actingAs($owner, 'admin')->postJson('/admin-api/gift-offers/preview', ['place' => 'popup', 'locale' => 'ar', 'config' => ['popup' => ['design' => 'D', 'style' => 'S4']]])->json('html');
+    expect($pop)->toContain('kgo-dD')->toContain('data-kgo-mm')->toContain('dir="rtl"');
+
+    test()->actingAs($owner, 'admin')->postJson('/admin-api/gift-offers/test', ['to' => 'owner@example.test', 'place' => 'cart', 'locale' => 'en']);
+    expect(DB::table('gift_offer_claims')->where('is_test', true)->count())->toBe(1)
+        ->and(DB::table('gift_offer_stats')->count())->toBe(0);
+});
+
+it('reports per day, place and range at a flat cost as the rows grow', function () {
+    /*
+     * MUTATION: query gift_offer_stats once per bucket instead of once. RED.
+     */
+    $count = function (int $days): int {
+        DB::table('gift_offer_stats')->delete();
+        for ($i = 0; $i < $days; $i++) {
+            DB::table('gift_offer_stats')->insert(['day' => now()->subDays($i)->format('Y-m-d'), 'place' => 'cart', 'range_id' => 1, 'event' => 'sent', 'n' => 3]);
+        }
+        GiftOfferStats::report(now()->format('Y-m-d'), now()->format('Y-m-d'), 'day');
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $r = GiftOfferStats::report(now()->subDays(60)->format('Y-m-d'), now()->format('Y-m-d'), 'week');
+        expect($r['totals']['sent'])->toBe(3 * $days);
+
+        return count(DB::getQueryLog());
+    };
+
+    expect($count(3))->toBe($count(40))->toBe(1);
+});

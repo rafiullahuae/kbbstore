@@ -25,3 +25,4 @@
 </div>
 @endif
 @include('partials.free-gifts.box', app(\App\Services\FreeGifts::class)->box($totals)){{-- Lane FG: the free gifts box, IN the free-delivery slot because that slot is the one the country-change answer redraws (CheckoutController::rates() renders this partial), so a UAE-only gift follows the country with no new script. Nothing at all while the switch is off. --}}
+@include('partials.gift-offers.row', app(\App\Services\GiftOffers\GiftOffers::class)->row($totals))

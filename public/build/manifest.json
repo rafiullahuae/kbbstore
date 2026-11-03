@@ -68,6 +68,10 @@
     "file": "assets/admin-20fdfaa1f111-Bj5LPzsl.js",
     "src": "admin-console/20fdfaa1f11176f52e11f35cb4da313b76e8fbda.js"
   },
+  "admin-console/259d03e0b57fa17efe7c60b3bb3ad1f9b4cc6039.js": {
+    "file": "assets/admin-259d03e0b57f-DCXa4ZOR.js",
+    "src": "admin-console/259d03e0b57fa17efe7c60b3bb3ad1f9b4cc6039.js"
+  },
   "admin-console/275d8c586d9a5a74bdea1725b1a9d49bd9e465ec.js": {
     "file": "assets/admin-275d8c586d9a-DPGbzGqe.js",
     "src": "admin-console/275d8c586d9a5a74bdea1725b1a9d49bd9e465ec.js"
@@ -420,6 +424,10 @@
     "file": "assets/admin-c3a475d79399-Btu2RdLm.js",
     "src": "admin-console/c3a475d79399f56e7d6679a828405b6b2c1390b1.js"
   },
+  "admin-console/c56f857bf2e1bcb04f2485c2c8bd67269b02ba60.js": {
+    "file": "assets/admin-c56f857bf2e1-BrhgZ1rA.js",
+    "src": "admin-console/c56f857bf2e1bcb04f2485c2c8bd67269b02ba60.js"
+  },
   "admin-console/c88903c392f3baa1e5f857504a6512345e05842b.js": {
     "file": "assets/admin-c88903c392f3-BXI7U5DQ.js",
     "src": "admin-console/c88903c392f3baa1e5f857504a6512345e05842b.js"
@@ -467,10 +475,6 @@
   "admin-console/e582716d7892ecc8962d95e15f131bad6dd35837.css": {
     "file": "assets/admin-e582716d7892-Iug3HjZ1.css",
     "src": "admin-console/e582716d7892ecc8962d95e15f131bad6dd35837.css"
-  },
-  "admin-console/ed3d85bffdde6e5bba6bc5d2c8e2129e85db4af4.js": {
-    "file": "assets/admin-ed3d85bffdde-CpojrLf2.js",
-    "src": "admin-console/ed3d85bffdde6e5bba6bc5d2c8e2129e85db4af4.js"
   },
   "admin-console/ee226d252e9dc0df06299910946c4fd18b920f1e.css": {
     "file": "assets/admin-ee226d252e9d-ByapR_Yv.css",
@@ -827,6 +831,12 @@
     "name": "email-fix",
     "src": "resources/js/kbb/email-fix.js",
     "isDynamicEntry": true
+  },
+  "resources/js/kbb/gift-offer-popup.js": {
+    "file": "assets/gift-offer-popup-B_Na6j00.js",
+    "name": "gift-offer-popup",
+    "src": "resources/js/kbb/gift-offer-popup.js",
+    "isEntry": true
   },
   "resources/js/kbb/pdp-trust.js": {
     "file": "assets/pdp-trust-CLra4tho.js",

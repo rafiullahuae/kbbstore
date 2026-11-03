@@ -334,6 +334,18 @@ class OrderStatus
              */
             app(OrderTransitionStock::class)->applied($id, $from, $to);
 
+            /*
+             * (Lane GO) Marketing -> Gift offers: a pending order paid inside
+             * the window of a reminder's gift it claimed gets the gift line
+             * now -- in this transaction, so the receipt the mail observer
+             * sends after the commit lists it. Out of pending/failed into a
+             * placed status only; one query for every other such move, none
+             * for any other transition. Cannot throw.
+             */
+            if (in_array($from, ['pending', 'failed'], true) && in_array($to, Order::REAL_STATUSES, true)) {
+                app(\App\Services\GiftOffers\GiftOffers::class)->orderPaid($locked);
+            }
+
             $this->record($locked, $from, $to, $author, $reason, $released, $retaken);
 
             return $from;
