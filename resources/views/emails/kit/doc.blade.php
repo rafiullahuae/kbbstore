@@ -57,10 +57,30 @@
     .muted{color:#A898A0!important}
     .line{border-color:#3A2B33!important}
     .wm-ink{color:#F7EEF2!important}
+    .ink a{color:#F7EEF2!important}
   }
   [data-ogsc] .ink{color:#F7EEF2!important}
+  [data-ogsc] .ink a{color:#F7EEF2!important}
   [data-ogsb] .card{background:#211921!important}
 </style>
+@if (! empty($kitGiftOffer))
+<style>
+  @media (prefers-color-scheme:dark){
+    .gt-card{background:#2B2026!important;border-color:#8A6A2C!important}
+    .gt-in{background:#211921!important;border-color:#4A3A33!important}
+    .gt-ink{color:#F7EEF2!important}
+    .gt-soft{color:#CBBBC3!important}
+    .gt-gold{color:#E4C38A!important}
+    .gt-pink{color:#F28AA8!important}
+  }
+  [data-ogsb] .gt-card{background:#2B2026!important}
+  [data-ogsb] .gt-in{background:#211921!important}
+  [data-ogsc] .gt-ink{color:#F7EEF2!important}
+  [data-ogsc] .gt-soft{color:#CBBBC3!important}
+  [data-ogsc] .gt-gold{color:#E4C38A!important}
+  [data-ogsc] .gt-pink{color:#F28AA8!important}
+</style>
+@endif
 </head>
 <body class="bg-outer" style="margin:0;padding:0;background:{{ $k['background'] }};" bgcolor="{{ $k['background'] }}">
 <div{!! $kitRtl ? ' dir="rtl"' : '' !!} style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:{{ $k['background'] }};opacity:0;">{{ $kitPreheader ?? '' }}&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>

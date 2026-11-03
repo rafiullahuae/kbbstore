@@ -1,0 +1,55 @@
+{
+  "emails": {
+    "cart-en_bytes": 27899,
+    "reminder1-en_bytes": 39029,
+    "reminder2-ar_bytes": 40313,
+    "cart-ar_bytes": 28703,
+    "item_link_dark_before": "rgb(42, 34, 40)",
+    "item_link_dark_after": "rgb(247, 238, 242)",
+    "item_link_light": "rgb(42, 34, 40)",
+    "sizes": {
+      "cart_without": 15171,
+      "cart_with": 19261,
+      "reminder_without": 26373,
+      "reminder_with": 30458
+    }
+  },
+  "rows": {
+    "cart_390": {
+      "h": 93,
+      "w": 360,
+      "clock": "7:59:57"
+    },
+    "scrollWidth_cart_390": 390,
+    "checkout_390": {
+      "h": 93,
+      "w": 278.296875
+    },
+    "popup_claim_clock_390": "14:58",
+    "cart_1280": {
+      "h": 93,
+      "w": 596,
+      "clock": "7:59:58"
+    },
+    "scrollWidth_cart_1280": 1280,
+    "checkout_1280": {
+      "h": 93,
+      "w": 312
+    },
+    "popup_claim_clock_1280": "14:58"
+  },
+  "popup": {
+    "script_before_intent_390": 0,
+    "script_after_intent_390": 1,
+    "script_before_intent_1280": 0,
+    "script_after_intent_1280": 1
+  },
+  "console": {
+    "errors_390": [],
+    "errors_1280": []
+  },
+  "admin": {
+    "scrollWidth_1280": 1280,
+    "scrollWidth_390": 390
+  }
+}

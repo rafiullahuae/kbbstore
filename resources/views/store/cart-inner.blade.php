@@ -299,6 +299,7 @@ $kbbLineWas = static function ($kbbWasLine): int {
                     </div>
                 @endforeach
 @include('partials.free-gifts.box', app(\App\Services\FreeGifts::class)->box($totals) + ['kbbFgClass' => 'fgb-page'])
+@include('partials.gift-offers.row', app(\App\Services\GiftOffers\GiftOffers::class)->row($totals))
             </div>
         </div>
 @if ($kbbSq)

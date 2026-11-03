@@ -30,9 +30,14 @@ class OrderPaymentReminder extends OrderMail
 
     public string $payUrl = '';
 
-    public function __construct(Order $order, int $stage)
+    /** (Lane GO) GiftOffers::issue()'s Golden ticket, or null: no gift block at all. */
+    public ?array $giftOffer = null;
+
+    public function __construct(Order $order, int $stage, ?array $giftOffer = null)
     {
         parent::__construct($order);
+
+        $this->giftOffer = $giftOffer;
 
         $this->stage = $stage === 2 ? 2 : 1;
 
@@ -60,7 +65,7 @@ class OrderPaymentReminder extends OrderMail
         return new Content(
             view: 'emails.order-reminder',
             text: 'emails.order-reminder-text',
-            with: ['kitTitle' => (string) $this->envelope()->subject] + ($this->stage === 2
+            with: ['kitTitle' => (string) $this->envelope()->subject, 'giftOffer' => $this->giftOffer] + ($this->stage === 2
                 ? [
                     'heading' => __('email.reminder.second_heading'),
                     'body' => __('email.reminder.second_body', $number),

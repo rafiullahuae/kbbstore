@@ -68,6 +68,10 @@
     "file": "assets/admin-20fdfaa1f111-Bj5LPzsl.js",
     "src": "admin-console/20fdfaa1f11176f52e11f35cb4da313b76e8fbda.js"
   },
+  "admin-console/259d03e0b57fa17efe7c60b3bb3ad1f9b4cc6039.js": {
+    "file": "assets/admin-259d03e0b57f-DCXa4ZOR.js",
+    "src": "admin-console/259d03e0b57fa17efe7c60b3bb3ad1f9b4cc6039.js"
+  },
   "admin-console/275d8c586d9a5a74bdea1725b1a9d49bd9e465ec.js": {
     "file": "assets/admin-275d8c586d9a-DPGbzGqe.js",
     "src": "admin-console/275d8c586d9a5a74bdea1725b1a9d49bd9e465ec.js"
@@ -388,6 +392,10 @@
     "file": "assets/admin-b05eb30ba210-B_3jpnXs.js",
     "src": "admin-console/b05eb30ba2103be45936fdc474b20d01c4a74801.js"
   },
+  "admin-console/b49ec04e5c93139148da49d574c81106098e6a56.js": {
+    "file": "assets/admin-b49ec04e5c93-8pmWJQgC.js",
+    "src": "admin-console/b49ec04e5c93139148da49d574c81106098e6a56.js"
+  },
   "admin-console/b59ef5e502ee230f0a3a6e6c85c15b303baefbcd.js": {
     "file": "assets/admin-b59ef5e502ee-CpU3ANlb.js",
     "src": "admin-console/b59ef5e502ee230f0a3a6e6c85c15b303baefbcd.js"
@@ -467,10 +475,6 @@
   "admin-console/e582716d7892ecc8962d95e15f131bad6dd35837.css": {
     "file": "assets/admin-e582716d7892-Iug3HjZ1.css",
     "src": "admin-console/e582716d7892ecc8962d95e15f131bad6dd35837.css"
-  },
-  "admin-console/ed3d85bffdde6e5bba6bc5d2c8e2129e85db4af4.js": {
-    "file": "assets/admin-ed3d85bffdde-CpojrLf2.js",
-    "src": "admin-console/ed3d85bffdde6e5bba6bc5d2c8e2129e85db4af4.js"
   },
   "admin-console/ee226d252e9dc0df06299910946c4fd18b920f1e.css": {
     "file": "assets/admin-ee226d252e9d-ByapR_Yv.css",
@@ -827,6 +831,12 @@
     "name": "email-fix",
     "src": "resources/js/kbb/email-fix.js",
     "isDynamicEntry": true
+  },
+  "resources/js/kbb/gift-offer-popup.js": {
+    "file": "assets/gift-offer-popup-B_Na6j00.js",
+    "name": "gift-offer-popup",
+    "src": "resources/js/kbb/gift-offer-popup.js",
+    "isEntry": true
   },
   "resources/js/kbb/pdp-trust.js": {
     "file": "assets/pdp-trust-CLra4tho.js",

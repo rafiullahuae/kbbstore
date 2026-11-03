@@ -60,6 +60,11 @@ export default defineConfig({
                 // normal visitor never downloads it. A classic script: no
                 // import, no export.
                 'resources/js/kbb/big-text.js',
+                // Lane GO: the exit popup (Marketing -> Gift offers). Fetched
+                // ONLY by the inline watcher in partials/gift-offers/popup, at
+                // the moment of exit intent, while the owner has the popup on.
+                // A classic script: no import, no export.
+                'resources/js/kbb/gift-offer-popup.js',
                 /*
                  * OUTFIT, SELF-HOSTED — Lane PERF's arrangement, Lane PLC's
                  * typeface. The owner asked for Outfit site-wide; it is served

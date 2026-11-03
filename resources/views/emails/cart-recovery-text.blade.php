@@ -1,6 +1,13 @@
 {!! __('email.greeting.hello') !!}
 
 {{ $body }}
+@if (! empty($giftOffer))
+
+{!! mb_strtoupper($giftOffer['eyebrow']) !!}
+{!! $giftOffer['title'] !!} {!! $giftOffer['body'] !!}
+{!! $giftOffer['name'] !!} · {!! $giftOffer['held'] !!}
+{!! $giftOffer['button'] !!}: {!! $giftOffer['href'] !!}
+@endif
 @if (! empty($items))
 
 {!! __('email.text.your_basket') !!}

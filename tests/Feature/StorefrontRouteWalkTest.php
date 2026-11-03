@@ -318,6 +318,11 @@ function walkExpectations(array $seed): array
         // sent is the same 404 a forged one gets; the font every email asks for.
         'mail/view/{token}'        => ['params' => ['token' => str_repeat('a', 43)], 'status' => 404],
         'mail/font/outfit-latin.woff2' => ['status' => 200],
+        // Lane GO, Marketing -> Gift offers: an unknown claim link is the same
+        // redirect to "This gift has ended" as an ended one; an unknown clock
+        // is the 00:00:00 picture.
+        'gift-offer/c/{token}'     => ['params' => ['token' => str_repeat('a', 43)], 'status' => 302],
+        'gift-offer/t/{token}.gif' => ['params' => ['token' => str_repeat('a', 43)], 'status' => 200],
 
         /*
          * 404, and deliberately so: CartAddressController aborts unless the

@@ -58,6 +58,8 @@ class PageController extends Controller
          * mounted, which is the guard doing exactly its job.
          */
         'import-chain',
+        // Marketing -> Gift offers (Lane GO): an email's claim link and its clock.
+        'gift-offer',
         /*
          * The shop as a Home Screen app (Lane PW): /site-app/icons/{name}.png
          * and /offline, the page its service worker shows when the network

@@ -443,12 +443,25 @@ class OrderMailer
 
         $order->loadMissing('items');
 
-        $this->send(
-            static fn () => new \App\Mail\OrderPaymentReminder($order, $stage),
+        // (Lane GO) Marketing -> Gift offers: the Golden ticket, issued inside
+        // the build so it is in the order's language, and counted only once
+        // the message has actually gone.
+        $goOffer = null;
+
+        $went = $this->send(
+            static function () use ($order, $stage, &$goOffer) {
+                $goOffer = \App\Services\GiftOffers\GiftOffers::forOrder($order, $stage);
+
+                return new \App\Mail\OrderPaymentReminder($order, $stage, $goOffer);
+            },
             (string) $order->email,
             $order,
             'reminder_' . $stage,
         );
+
+        if ($went && $goOffer !== null) {
+            \App\Services\GiftOffers\GiftOfferStats::bump('reminder_' . ($stage === 2 ? 2 : 1), (int) $goOffer['range_id'], 'sent');
+        }
     }
 
     /**

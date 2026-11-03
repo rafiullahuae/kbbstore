@@ -679,6 +679,17 @@ final class AdminCapabilities
         'freegifts.manage' => ['owner', 'manager'],
 
         /*
+         * Growth & Marketing -> Gift offers (Lane GO). giftoffers.view reads
+         * the screen, its live preview and its report, and searches the
+         * catalogue for a gift; giftoffers.manage switches it and each place
+         * on or off, edits the ranges, their products and allocations, the
+         * texts and the popup, and sends a test email. Owner and manager, the
+         * Free gifts precedent; support and editor hold neither.
+         */
+        'giftoffers.view' => ['owner', 'manager'],
+        'giftoffers.manage' => ['owner', 'manager'],
+
+        /*
          * Growth & Marketing -> Google Shopping feed (Lane SEO): read the feed's
          * address and contents, and switch the public feed on or off. The feed
          * itself is public by design (Merchant Center fetches it); this guards
@@ -2020,6 +2031,18 @@ final class AdminCapabilities
          * GETs are freegifts.view, everything else under the prefix
          * freegifts.manage. Fails closed: a verb not listed is manage.
          */
+        /*
+         * Gift offers (Lane GO), every route in routes/gift-offers-admin.php:
+         * the GETs and the live preview (a POST that only renders the draft
+         * it is sent and stores nothing) are giftoffers.view; everything else
+         * under the prefix -- the test send included -- giftoffers.manage.
+         * Fails closed: a verb not listed is manage.
+         */
+        ['GET', 'admin-api/gift-offers', 'giftoffers.view'],
+        ['GET', 'admin-api/gift-offers/**', 'giftoffers.view'],
+        ['POST', 'admin-api/gift-offers/preview', 'giftoffers.view'],
+        ['*', 'admin-api/gift-offers', 'giftoffers.manage'],
+        ['*', 'admin-api/gift-offers/**', 'giftoffers.manage'],
         ['GET', 'admin-api/free-gifts', 'freegifts.view'],
         ['GET', 'admin-api/free-gifts/**', 'freegifts.view'],
         ['*', 'admin-api/free-gifts', 'freegifts.manage'],

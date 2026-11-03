@@ -64,6 +64,7 @@
         @php $width = \App\Services\Mail\OrderEmailPresenter::ledgerWidth($order); @endphp
         <h1>{{ __('store.order_pay.heading') }}</h1>
         <p class="lede">{{ __('store.order_pay.lead', ['number' => $order->order_number]) }}</p>
+@include('partials.gift-offers.row', app(\App\Services\GiftOffers\GiftOffers::class)->payNote($order))
 
         <div class="kbbop-err @if ($errors->any()) is-on @endif" id="kbbopErr" role="alert">{{ $errors->first() }}</div>
 

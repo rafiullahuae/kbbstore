@@ -208,6 +208,7 @@ Route::post('/checkout/place',  [\App\Http\Controllers\Store\CheckoutController:
 Route::get('/checkout/success', [\App\Http\Controllers\Store\CheckoutController::class, 'success'])->name('checkout.success');
 require __DIR__.'/checkout-return.php';
 require __DIR__.'/order-pay.php';   // "Complete your order" from the reminder and payment-failed emails (Lane RL)
+require __DIR__.'/gift-offers.php';   // Marketing -> Gift offers: an email's claim link, its moving clock, the exit popup (Lane GO)
 require __DIR__.'/order-phone.php';   // "Update my number" from the UAE number email (2.60.562)
 Route::get('/skin-quiz',   [PageController::class, 'skinQuiz'])->name('skin-quiz');
 Route::get('/reviews',     [PageController::class, 'reviewWall'])->name('review-wall');
@@ -609,6 +610,11 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // Growth & Marketing → Free gifts (Lane FG): spend ranges, their gifts,
         // the gift-only flag, display and texts. freegifts.view / freegifts.manage.
         require __DIR__.'/free-gifts-admin.php';
+
+        // Growth & Marketing -> Gift offers (Lane GO): the extra full-size gift
+        // in the abandoned-cart and pending-order emails and the exit popup.
+        // giftoffers.view / giftoffers.manage, owner and manager.
+        require __DIR__.'/gift-offers-admin.php';
 
         /*
          * Store → SEO & Meta → SEO Audit. Lane S. Same group, same reason.

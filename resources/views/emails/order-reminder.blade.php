@@ -25,8 +25,15 @@
     $kitWhy = __('email.kit.why_order', ['site' => $k['site']]);
     $kitTemplate = $kitSecond ? 'order_reminder_2' : 'order_reminder_1';
     $kitPromises = true;
+    // (Lane GO) The Golden ticket's dark-mode rules in the head, only when it is drawn.
+    $kitGiftOffer = ! empty($giftOffer);
 @endphp
 
+
+{{-- (Lane GO) The gift offer at the top of "Your items": nothing at all without one. --}}
+@section('kit_before')
+@includeWhen(! empty($giftOffer), 'emails.kit.gift-ticket', ['o' => $giftOffer ?? null])
+@endsection
 
 @section('kit_after')
 @include('emails.kit.para', ['html' => $closing, 'pad' => '10px 32px 0', 'size' => 12.5, 'center' => true])

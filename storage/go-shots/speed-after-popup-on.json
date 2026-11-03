@@ -1,0 +1,42 @@
+{
+    "product": {
+        "status": 200,
+        "median_ms": 33.3,
+        "queries": 11,
+        "settings_reads": 6,
+        "html_bytes": 154041,
+        "has_gift_markup": false
+    },
+    "category": {
+        "status": 200,
+        "median_ms": 26.3,
+        "queries": 5,
+        "settings_reads": 5,
+        "html_bytes": 88837,
+        "has_gift_markup": false
+    },
+    "brand": {
+        "status": 200,
+        "median_ms": 23.7,
+        "queries": 5,
+        "settings_reads": 6,
+        "html_bytes": 89236,
+        "has_gift_markup": false
+    },
+    "cart": {
+        "status": 200,
+        "median_ms": 27.3,
+        "queries": 11,
+        "settings_reads": 4,
+        "html_bytes": 86174,
+        "has_gift_markup": true
+    },
+    "checkout": {
+        "status": 200,
+        "median_ms": 49.3,
+        "queries": 13,
+        "settings_reads": 4,
+        "html_bytes": 203121,
+        "has_gift_markup": true
+    }
+}

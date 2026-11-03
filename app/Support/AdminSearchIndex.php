@@ -885,6 +885,15 @@ final class AdminSearchIndex
             'Display' => ['Show gift prices', 'Countries', 'What counts', 'Texts'],
             'Homepage section' => ['Show on the homepage', 'Title', 'Button'],
         ],
+        // Growth & Marketing -> Gift offers (Lane GO).
+        'giftoffers' => [
+            'Settings' => ['Gift offers', 'Abandoned-cart email', 'Pending reminder', 'Exit popup', 'Timer in the email', 'Texts'],
+            'Ranges & products' => ['Add range', 'Primary', 'Backup', 'Allocation'],
+            'Popup' => ['Popup design', 'Content style', 'Words', 'Who sees it'],
+            'Live preview' => ['Dark mode', 'Phone', 'Computer'],
+            'Test' => ['Send a test email'],
+            'Report' => ['Claim clicks', 'Clock opens', 'Orders with the gift'],
+        ],
         'push' => [
             'Campaigns' => ['New campaign', 'Who receives it', 'Emirate (where the phone is)', 'Send a test to my phone', 'Schedule', 'Send now'],
             'Automations' => ['Order updates', 'Back in stock', 'Basket reminder', 'Price drop', 'Wording (English · Arabic)'],

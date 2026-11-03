@@ -3,6 +3,13 @@
 {!! strtoupper($heading) !!}
 
 {!! wordwrap($body, 72) !!}
+@if (! empty($giftOffer))
+
+{!! mb_strtoupper($giftOffer['eyebrow']) !!}
+{!! $giftOffer['title'] !!} {!! $giftOffer['body'] !!}
+{!! $giftOffer['name'] !!} · {!! $giftOffer['held'] !!}
+{!! $giftOffer['button'] !!}: {!! $giftOffer['href'] !!}
+@endif
 
 - {!! __('email.reminder.why_fast') !!} · {!! __('email.reminder.why_fast_note') !!}
 - {!! __('email.reminder.why_original') !!} · {!! __('email.reminder.why_original_note') !!}

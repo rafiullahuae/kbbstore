@@ -170,7 +170,8 @@ class OutboundSender
                 // Lane AE: the shopper's language -- see sendStockAlerts().
                 $locale = self::rowLocale($row);
 
-                $went = \App\Support\CustomerLocale::render($locale, function () use ($row, $wording, $locale, $id): bool {
+                $goOffer = null;
+                $went = \App\Support\CustomerLocale::render($locale, function () use ($row, $wording, $locale, $id, &$goOffer): bool {
                     $words = $locale === null ? $wording : ($this->recovery->messageWording($locale) ?? $wording);
 
                     /*
@@ -180,12 +181,17 @@ class OutboundSender
                      * that after the check would put every one of those queries
                      * inside the window this check exists to shrink.
                      */
+                    $basket = $this->recovery->basket((int) $row->cart_id);
+                    // (Lane GO) Marketing -> Gift offers: the Golden ticket for this
+                    // basket's range, in this shopper's language, or null (no block).
+                    $goOffer = \App\Services\GiftOffers\GiftOffers::forBasket($basket, (int) $row->cart_id);
                     $mailable = new CartRecoveryReminder(
                         $words['subject'],
                         $words['body'],
-                        $this->recovery->basket((int) $row->cart_id),
+                        $basket,
                         Url::external('/cart'),
                         OutboundOptOut::link('cart', $id, (string) $row->email),
+                        $goOffer,
                     );
 
                     /*
@@ -209,6 +215,10 @@ class OutboundSender
 
                 if (! $went) {
                     continue;
+                }
+
+                if ($goOffer !== null) {
+                    \App\Services\GiftOffers\GiftOfferStats::bump('cart', (int) $goOffer['range_id'], 'sent');
                 }
 
                 $sent++;
