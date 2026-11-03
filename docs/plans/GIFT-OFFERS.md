@@ -34,6 +34,7 @@ box in the cart panel, cart page and checkout summary.
 | Products | chosen **per cart-value range** in the admin |
 | Admin | Marketing → new page: products per range, timers, all texts, design, who sees it, switches per place, live preview of popup and emails |
 | Tracking | popup shown, claimed, dismissed; email sent; email claim clicked; gift added; order placed with it; expired |
+| Primary + backup (owner, 3 Nov) | each range has a **primary** product and one or more **backup** products; when the primary is sold out or out of stock, the backup is offered instead — in the popup, the emails, the cart row and at Place order. Same rule as Free gifts' main/backup gifts (`FreeGifts`, "a sold-out main gift gives way to its backup") — reuse it, do not write a second one. If every product of a range is out of stock, that range offers nothing. |
 
 ## Still to decide
 
