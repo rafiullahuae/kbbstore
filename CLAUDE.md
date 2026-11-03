@@ -11,7 +11,15 @@ repo does and does not track.
 Platform → Core Updates in the admin panel (§3 of `docs/HANDOVER.md`; reference packages in `docs/patch-reference/`). This repo is the durable record of
 server state; the packages are how code actually moves.
 
-**The live shop is `extrabeauty.ae`, on Cloudways, and IT HAS A SHELL.** Both
+**THE LIVE SHOP'S ADDRESS IS `kbeautybliss.com` (the owner, 3 November 2026:
+"everything is on kbeautybliss.com ... forget about extrabeauty.ae that domain
+is disconnected").** Read the live shop, its sitemap and its /ar pages there;
+`extrabeauty.ae` no longer answers (this session's proxy refused it, and a lane
+built a stop-and-ask around it before the owner corrected it). The server
+layout below (Cloudways, app root, shell) is unchanged.
+
+**The live shop is on Cloudways, and IT HAS A SHELL.** (It was called
+`extrabeauty.ae` until November 2026; see above.) Both
 halves of that sentence were wrong in this file until 24 September 2026, and
 both cost real time:
 
