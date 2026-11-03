@@ -1,0 +1,615 @@
+<title>Exit Gift Offer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: a working board — choices on the left, a live phone on the right; it stacks on a phone. */
+:root{
+  --bg:#f7f2f3; --panel:#ffffff; --ink:#2a1f24; --soft:#6f5d65; --line:#eadde1; --accent:#c6395f; --accent-ink:#ffffff; --chip:#f6e6ea;
+  /* the shop's own colours: the popup is drawn as the shop draws it, in both themes */
+  --rose:#c6395f; --rose-d:#a12d4f; --blush:#fde9ef; --cream:#fbf6ef; --gold:#c9a36a; --shop-ink:#2a2228; --shop-soft:#7a6a71; --white:#ffffff; --green:#1f7a4c;
+  --display:"Fraunces", Georgia, "Times New Roman", serif;
+  --body:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1b1518;--panel:#251d21;--ink:#f3e9ec;--soft:#bca9b1;--line:#3a2e33;--accent:#ee7d9c;--accent-ink:#2a1218;--chip:#3a2930;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1b1518;--panel:#251d21;--ink:#f3e9ec;--soft:#bca9b1;--line:#3a2e33;--accent:#ee7d9c;--accent-ink:#2a1218;--chip:#3a2930;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 60px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,4vw,40px);font-weight:700}
+h2{font-size:24px;font-weight:700}
+h3{font-size:16px;font-family:var(--body);font-weight:800}
+p{margin:0}
+.lede{color:var(--soft);max-width:68ch}
+.eyebrow{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:var(--accent)}
+.board{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px;align-items:start}
+@media (max-width:900px){.board{grid-template-columns:minmax(0,1fr)}}
+.col{display:grid;gap:22px;min-width:0}
+.group{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:12px;min-width:0}
+.group-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.group-h small{color:var(--soft)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.opt{all:unset;cursor:pointer;display:grid;gap:4px;border:1.5px solid var(--line);border-radius:12px;padding:12px 13px;min-width:0}
+.opt b{font-size:14px}
+.opt span{font-size:13px;color:var(--soft)}
+.opt .tag{font-family:var(--display);font-size:20px;color:var(--accent);font-weight:700;line-height:1}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--chip)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.copy-opts .opt{grid-template-columns:auto minmax(0,1fr);column-gap:12px;align-items:start}
+.copy-opts .opt .tag{grid-row:span 3}
+.copy-opts{grid-template-columns:minmax(0,1fr)}
+.copy-opts q{quotes:none;font-weight:700;font-size:14.5px}
+.stage{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);display:grid;gap:12px;justify-items:center}
+@media (max-width:900px){.stage{position:static}}
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.btn{all:unset;cursor:pointer;font-weight:700;font-size:13.5px;padding:10px 14px;border-radius:999px;background:var(--accent);color:var(--accent-ink)}
+.btn.sec{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-size:12.5px;color:var(--soft);text-align:center;max-width:340px}
+.live{font-size:12px;font-weight:700;color:var(--green);min-height:18px;text-align:center}
+
+/* ── the phone ───────────────────────────────────────── */
+.phone{width:min(360px,100%);aspect-ratio:360/740;max-width:100%;border-radius:38px;background:#111;padding:10px;box-shadow:0 30px 60px -20px rgba(60,20,35,.45)}
+.screen{position:relative;width:100%;height:100%;border-radius:30px;overflow:hidden;background:var(--cream);color:var(--shop-ink);font-family:var(--body)}
+.sbar{height:28px;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:11px;font-weight:700}
+.shop-h{display:flex;align-items:center;justify-content:space-between;padding:6px 16px 10px;border-bottom:1px solid #efe3e6;background:var(--white)}
+.shop-h b{font-family:var(--display);font-size:17px;color:var(--rose-d)}
+.shop-h small{font-size:11px;color:var(--shop-soft)}
+.page{position:absolute;inset:72px 0 0;overflow:auto;padding:14px 14px 80px;display:grid;gap:10px;align-content:start}
+.ttl{font-family:var(--display);font-size:20px;font-weight:700}
+.line{display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--white);border-radius:12px;padding:8px}
+.line .img{width:54px;height:54px;border-radius:9px;background:#f3eaec;display:grid;place-items:center}
+.line .img svg{width:34px;height:44px}
+.line b{font-size:13px;display:block;line-height:1.3}
+.line small{font-size:11.5px;color:var(--shop-soft)}
+.line .pr{font-weight:800;font-size:13px}
+.giftbox{border:1.5px dashed #e6b7c4;border-radius:14px;padding:16px 10px 10px;position:relative;background:#fff9fb}
+.giftbox legend,.giftbox .lg{position:absolute;top:-10px;left:12px;background:var(--cream);padding:0 6px;font-size:12px;font-weight:800;color:var(--rose-d)}
+.giftbox .thumbs{display:flex;gap:6px}
+.giftbox .thumbs i{width:38px;height:38px;border-radius:8px;background:#f3eaec;display:grid;place-items:center}
+.giftbox .thumbs svg{width:22px;height:30px}
+.giftbox small{font-size:11.5px;color:var(--shop-soft);display:block;margin-top:6px}
+.tot{background:var(--white);border-radius:12px;padding:10px 12px;display:grid;gap:4px;font-size:13px}
+.tot div{display:flex;justify-content:space-between}
+.tot .g{font-weight:800;font-size:15px;border-top:1px solid #f0e4e7;padding-top:6px;margin-top:2px}
+.cta{position:absolute;left:12px;right:12px;bottom:12px;border-radius:14px;background:var(--shop-ink);color:var(--white);text-align:center;font-weight:800;padding:14px;font-size:14px}
+
+/* ── the three thin rows ─────────────────────────────── */
+.xr{position:relative;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:11px;align-items:center;border-radius:14px;padding:9px 12px 9px 9px;font-size:12.5px;border:1px solid #ddd6d9;background:var(--white);animation:pop .45s ease}
+.xr .im{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:#fff;border:1px solid #f0e6e9}
+.xr .im svg{width:26px;height:34px}
+.xr .nm{min-width:0;display:grid;gap:3px}
+.xr b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:13px;font-weight:800;line-height:1.25}
+.xr .meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11.5px;font-weight:700;color:var(--rose-d)}
+.xr .fs{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--rose-d);background:#fff0f4;border:1px solid #f6d3de;border-radius:999px;padding:1px 7px;line-height:1.5}
+.xr .tm{display:grid;justify-items:end;gap:1px;text-align:right}
+.xr .tm small{font-size:9.5px;font-weight:600;color:var(--shop-soft);white-space:nowrap}
+.xr .clk{font-variant-numeric:tabular-nums;font-weight:800;font-size:22px;line-height:1.05;letter-spacing:.01em;color:var(--rose-d)}
+.xr.low .clk{color:#d1213f}
+.xr .loop{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);pointer-events:none;overflow:visible}
+.xr .loop rect{x:1px;y:1px;width:calc(100% - 2px);height:calc(100% - 2px);rx:12px;fill:none;stroke:var(--rose);stroke-width:2.5;stroke-dasharray:100 100;transition:stroke-dashoffset 1s linear}
+/* R1 Blush */
+.xr.R1{background:linear-gradient(90deg,#fdeaf0,#fff6f8)}
+/* R2 Clean white, chips */
+.xr.R2{background:#fffaf2;padding-block:19px}
+.xr.R2 .im{border-color:#f1e4cc}
+.xr.R2 .meta{color:#8a6a2c;font-weight:600}
+.xr.R2 .meta{gap:4px;flex-wrap:nowrap}
+.xr.R2 .chip{font-size:10px;font-weight:800;border-radius:6px;padding:1px 6px;background:#fbf1de;color:#8a6a2c;white-space:nowrap}
+.xr.R2 .chip.g{background:#8a6a2c;color:#fffaf2}
+.xr.R2 .tm small{color:#8a6a2c}
+.xr.R2 .clk{color:var(--shop-ink)}
+/* R3 Dark */
+.xr.R3{background:var(--shop-ink);color:var(--white);border-color:#574a51}
+.xr.R3 .im{background:#3b3036;border-color:#4a3e45}
+.xr.R3 .meta{color:#f2c9d5}
+.xr.R3 .fs{background:transparent;color:#ffd7e2;border-color:#7a5a66}
+.xr.R3 .tm small{color:#cdb8bf}
+.xr.R3 .clk{color:#ffd7e2}
+.xr.R3.low .clk{color:#ff8fa8}
+/* R4 Widget tile */
+.xr.R4{grid-template-columns:44px minmax(0,1fr) auto;padding:7px 7px 7px 9px}
+.xr.R4 .tm{background:#fff0f4;border-radius:10px;padding:6px 10px;justify-items:center;text-align:center}
+.xr.R4 .tm small{color:var(--rose-d)}
+/* R5 Two lines */
+.xr.R5{grid-template-columns:44px minmax(0,1fr);row-gap:8px}
+.xr.R5 .tm{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;background:#fdf3f6;border-radius:9px;padding:6px 10px}
+.xr.R5 .tm small{font-size:11.5px;color:var(--rose-d);font-weight:700}
+.xr.R5 .clk{font-size:20px}
+/* R6 Ticket */
+.xr.R6{grid-template-columns:44px minmax(0,1fr) auto;background:#fffaf2}
+.xr.R6 .tm{border-left:1.5px dashed #e6cfa6;padding-left:12px;margin-left:2px}
+.xr.R6 .meta{color:#8a6a2c}
+.xr.R6 .fs{color:#8a6a2c;background:#fbf1de;border-color:#eddcb8}
+.xr.R6 .clk{color:var(--shop-ink)}
+
+/* ── the popups (shop colours) ───────────────────────── */
+.ov{position:absolute;inset:0;background:rgba(42,24,32,.55);display:grid;z-index:5;animation:fade .25s ease}
+.ov[hidden]{display:none!important}
+.pp{position:relative;font-family:var(--body);color:var(--shop-ink)}
+.x{all:unset;cursor:pointer;position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.85);color:var(--shop-ink);font-size:18px;line-height:1;z-index:2}
+.x:focus-visible{outline:2px solid var(--rose)}
+.claim{all:unset;cursor:pointer;display:block;text-align:center;font-weight:800;font-size:15px;padding:14px 16px;border-radius:14px;background:var(--rose);color:var(--white);box-shadow:0 10px 22px -10px rgba(198,57,95,.8)}
+.claim:focus-visible{outline:2px solid var(--shop-ink);outline-offset:2px}
+.later{all:unset;cursor:pointer;display:block;text-align:center;font-size:12.5px;color:var(--shop-soft);padding:6px}
+.worth{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:700}
+.worth s{color:var(--shop-soft);font-weight:600}
+.worth em{font-style:normal;background:var(--rose);color:var(--white);border-radius:999px;padding:2px 8px;font-size:11px;letter-spacing:.05em}
+.pp h4.wait{font-family:var(--display);font-weight:700;font-size:48px;line-height:.95;letter-spacing:.04em;color:var(--rose);margin:0}
+.pD h4.wait{color:var(--shop-ink);font-weight:500}
+.pp .sub{font-family:var(--display);font-weight:700;font-size:19px;line-height:1.2;color:var(--shop-ink);text-wrap:balance}
+.pB h4.wait{font-size:40px}
+.wsm{font-family:var(--display);color:var(--accent)}
+.tick{position:absolute;inset:0;z-index:6;display:grid;place-items:center;align-content:center;gap:12px;background:rgba(255,255,255,.94);animation:fade .2s ease}
+.tick svg{width:120px;height:120px}
+.tick .c{fill:none;stroke:#1fa463;stroke-width:6;stroke-dasharray:302;stroke-dashoffset:302;animation:draw .55s ease-out forwards}
+.tick .k{fill:none;stroke:#1fa463;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:80;stroke-dashoffset:80;animation:draw .35s .45s ease-out forwards}
+.tick .bg{fill:#e8f7ef;transform-origin:60px 60px;animation:pulse .6s .7s ease-out}
+.tick b{font-family:var(--display);font-size:20px;color:#14784a}
+.tick small{font-size:12.5px;color:var(--shop-soft)}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pulse{50%{transform:scale(1.08)}}
+.prod-name{font-weight:800;font-size:14px;line-height:1.3}
+.hold{font-size:11.5px;color:var(--shop-soft)}
+
+/* A — Ribbon card */
+.ov.A{place-items:center;padding:18px}
+.pA{width:100%;background:var(--white);border-radius:24px;overflow:hidden;text-align:center;animation:rise .35s cubic-bezier(.2,.9,.3,1.2)}
+.pA .top{background:linear-gradient(160deg,#f7c6d5,#fde9ef 60%,#fff);padding:22px 18px 8px;position:relative}
+.pA .bow{position:absolute;left:50%;top:-2px;transform:translateX(-50%);width:84px;height:26px}
+.pA .ph{width:120px;height:150px;margin:14px auto 0;display:grid;place-items:center;filter:drop-shadow(0 12px 14px rgba(160,45,79,.25))}
+.pA .ph svg{width:82px;height:118px}
+.pA .bd{padding:14px 20px 16px;display:grid;gap:9px}
+.pA h4{font-family:var(--display);font-size:23px;margin:0;line-height:1.15;text-wrap:balance}
+.pA p{font-size:13.5px;color:var(--shop-soft)}
+
+/* B — Bottom sheet */
+.ov.B{align-items:end}
+.pB{background:var(--white);border-radius:24px 24px 0 0;padding:10px 18px 18px;display:grid;gap:12px;animation:up .35s cubic-bezier(.2,.9,.3,1)}
+.pB .grab{width:42px;height:4px;border-radius:9px;background:#e8d8dd;margin:0 auto 4px}
+.pB .rowp{display:grid;grid-template-columns:104px minmax(0,1fr);gap:14px;align-items:center}
+.pB .ph{height:128px;border-radius:16px;background:linear-gradient(170deg,#fde9ef,#fff);display:grid;place-items:center}
+.pB .ph svg{width:62px;height:94px}
+.pB h4{font-family:var(--display);font-size:21px;margin:0 0 4px;line-height:1.15}
+.pB p{font-size:13px;color:var(--shop-soft)}
+.pB .chip{justify-self:start;display:inline-flex;gap:6px;align-items:center;background:var(--blush);color:var(--rose-d);font-weight:800;font-size:11.5px;border-radius:999px;padding:4px 10px}
+
+/* C — Unwrap & reveal */
+.ov.C{place-items:center;padding:18px}
+.pC{width:100%;background:radial-gradient(120% 90% at 50% 0%,#ffe3ec,#fff 70%);border-radius:26px;padding:24px 20px 16px;text-align:center;display:grid;gap:10px;animation:rise .35s cubic-bezier(.2,.9,.3,1.2)}
+.pC h4{font-family:var(--display);font-size:22px;margin:0;line-height:1.15;text-wrap:balance}
+.pC p{font-size:13.5px;color:var(--shop-soft)}
+.pC .box{all:unset;cursor:pointer;justify-self:center;width:150px;height:140px;position:relative;display:block}
+.pC .box:focus-visible{outline:2px dashed var(--rose);outline-offset:4px;border-radius:10px}
+.pC .box .bx{position:absolute;left:15px;right:15px;bottom:0;height:86px;background:var(--rose);border-radius:8px}
+.pC .box .lid{position:absolute;left:5px;right:5px;top:30px;height:28px;background:var(--rose-d);border-radius:8px;transition:transform .5s cubic-bezier(.3,1.4,.4,1)}
+.pC .box .rib{position:absolute;left:50%;top:30px;bottom:0;width:16px;transform:translateX(-50%);background:#ffd36e}
+.pC .box .knot{position:absolute;left:50%;top:6px;transform:translateX(-50%);width:66px;height:30px}
+.pC .box.wig{animation:wig 1.6s ease-in-out infinite}
+.pC .reveal{display:grid;gap:10px;animation:rise .4s ease}
+.pC .ph{width:110px;height:140px;margin:0 auto;display:grid;place-items:center}
+.pC .ph svg{width:76px;height:110px}
+.pC .tap{font-size:12px;font-weight:800;color:var(--rose-d);letter-spacing:.06em;text-transform:uppercase}
+
+/* D — Luxe minimal */
+.ov.D{place-items:center;padding:18px}
+.pD{width:100%;background:var(--cream);border-radius:6px;overflow:hidden;animation:rise .35s ease;border:1px solid #e8dcc6}
+.pD .ph{height:190px;background:linear-gradient(180deg,#efe2cf,#f8f0e4);display:grid;place-items:center;position:relative}
+.pD .ph svg{width:80px;height:120px}
+.pD .ph .lab{position:absolute;left:14px;top:14px;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:800;color:#8a6a2c}
+.pD .bd{padding:18px 20px 16px;display:grid;gap:9px}
+.pD h4{font-family:var(--display);font-weight:500;font-size:26px;margin:0;line-height:1.12;text-wrap:balance}
+.pD p{font-size:13px;color:#6b5d55}
+.pD .claim{background:var(--shop-ink);border-radius:4px;box-shadow:none;letter-spacing:.06em;text-transform:uppercase;font-size:13px}
+
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{opacity:0;transform:translateY(14px) scale(.97)}}
+@keyframes up{from{transform:translateY(100%)}}
+@keyframes pop{from{opacity:0;transform:scale(.96)}}
+@keyframes wig{0%,70%,100%{transform:rotate(0)}75%{transform:rotate(-6deg)}85%{transform:rotate(6deg)}92%{transform:rotate(-3deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── how it works ───────────────────────────────────── */
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:8px;align-content:start;min-width:0}
+.card ul{margin:0;padding-left:18px;display:grid;gap:5px;font-size:14px}
+.card p{font-size:14px;color:var(--soft)}
+.trig{width:100%;border-collapse:collapse;font-size:13.5px}
+.trig th,.trig td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.trig th{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.tablebox{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.pill{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;background:var(--chip);color:var(--accent)}
+.decide{background:var(--panel);border:1.5px solid var(--accent);border-radius:16px;padding:18px;display:grid;gap:10px}
+.decide ol{margin:0;padding-left:20px;display:grid;gap:6px}
+.pick{font-family:var(--display);font-size:20px}
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <p class="eyebrow">Preview · nothing is built until you choose</p>
+    <h1>Exit gift offer</h1>
+    <p class="lede">When a shopper with something in her bag tries to leave, she sees one full-size product as a gift, chosen by her bag value. She taps <b>Claim</b>, the product goes into her bag at AED 0 with a 20-minute timer, and the cart page opens. Choose a popup design, the words and the timer row below, then try it on the phone.</p>
+  </header>
+
+  <section class="board">
+    <div class="col">
+      <div class="group">
+        <div class="group-h"><h3>1 · Popup design</h3><small>Tap one, then try it on the phone</small></div>
+        <div class="opts" id="designs"></div>
+      </div>
+      <div class="group">
+        <div class="group-h"><h3>2 · Words</h3><small>Every option works with every design</small></div>
+        <div class="opts copy-opts" id="copies"></div>
+      </div>
+      <div class="group">
+        <div class="group-h"><h3>3 · Timer row under the gift box</h3><small>Cart panel, cart page and checkout summary</small></div>
+        <div class="opts" id="rows"></div>
+      </div>
+      <div class="group">
+        <div class="group-h"><h3>4 · Who sees it</h3><small>A setting you can change any time</small></div>
+        <div class="opts" id="auds"></div>
+      </div>
+    </div>
+
+    <aside class="stage">
+      <div class="phone"><div class="screen" id="screen">
+        <div class="sbar"><span>9:41</span><span>●●● 5G</span></div>
+        <div class="shop-h"><b>K-Beauty Bliss</b><small id="shopwhere">Product page</small></div>
+        <div class="page" id="page"></div>
+        <div class="ov" id="ov" hidden></div>
+      </div></div>
+      <div class="controls" id="bags" role="group" aria-label="Example bag value"></div>
+      <div class="controls">
+        <button class="btn sec" type="button" id="act" hidden>Go to checkout and type details</button>
+        <button class="btn" type="button" id="go">Try leaving the page</button>
+        <button class="btn sec" type="button" id="skip">Skip 5 minutes</button>
+        <button class="btn sec" type="button" id="reset">Start again</button>
+      </div>
+      <p class="live" id="live" aria-live="polite"></p>
+      <p class="hint">After claiming, the row stays still: only the clock runs, and the pink line around it gets shorter until 00:00, leaving the thin grey border. Use "Skip 5 minutes" to watch it. On a computer you can also really try it: move your mouse up towards the browser tabs, or switch to another tab and come back. The popup opens the way it will on the shop.</p>
+    </aside>
+  </section>
+
+  <section style="display:grid;gap:14px">
+    <h2>How it will work</h2>
+    <div class="card">
+      <h3>The gift follows the bag value</h3>
+      <p>You set cart-value ranges, the same way as the free gift box, and choose one full-size product for each. The popup shows the gift for the range the shopper's bag is in at the moment she tries to leave. Below the first range, no popup. Switch the bag value under the phone to see it change.</p>
+      <div class="tablebox" style="border:0"><table class="trig"><thead><tr><th>Bag value</th><th>Full-size gift (example)</th><th>Worth</th></tr></thead><tbody id="ranges"></tbody></table></div>
+      <p>If she claims and then changes her bag: the gift stays while the bag is still in its range. If the bag drops below that range, the gift leaves the bag, and the row says why. If the bag grows into a higher range, she keeps the gift she claimed. She can't claim a second one.</p>
+    </div>
+    <div class="tablebox">
+      <table class="trig">
+        <thead><tr><th>What the shopper does</th><th>Computer</th><th>Phone</th></tr></thead>
+        <tbody>
+          <tr><td>Moves to close the tab, type a new address or press Back</td><td><span class="pill">Instant</span> The mouse leaving through the top of the page opens it before she clicks</td><td>No mouse on a phone, see the rows below</td></tr>
+          <tr><td>Switches to another tab or app</td><td colspan="2"><span class="pill">On return</span> It is waiting the moment she comes back. A browser does not let any site draw on screen while its tab is hidden.</td></tr>
+          <tr><td>Scrolls up fast towards the address bar</td><td>—</td><td><span class="pill">Instant</span> A quick upward flick near the top is the phone version of "leaving"</td></tr>
+          <tr><td>Presses the phone's Back button</td><td colspan="2"><span class="pill">Optional, off</span> We can catch the first Back press and show the offer instead. It works, but Google treats blocking Back as pushy, so I suggest leaving it off.</td></tr>
+          <tr><td>Closes the browser outright</td><td colspan="2">No site can show its own popup at that moment, on any browser. The only thing allowed is the browser's plain "Leave site?" box, with no picture or offer, so we don't use it.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="how">
+      <div class="card">
+        <h3>Who sees it</h3>
+        <ul>
+          <li><b>Setting "Who sees it":</b> everyone with a product in her bag, or only shoppers who reached checkout and did something there (typed a detail, picked delivery or payment)</li>
+          <li>Checkout activity is noticed in the page itself: no extra request, nothing sent while she types</li>
+          <li>Once per bag; after "Maybe later", not again for 24 hours</li>
+          <li>Only while the gift product is in stock</li>
+          <li>Only when the bag is inside one of your ranges</li>
+          <li>Leaving checkout counts as leaving (closing it, or going back to the shop), but never once she has pressed Place order</li>
+          <li>Never on the account pages or the order-received page</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>When she taps Claim</h3>
+        <ul>
+          <li>The product goes into her bag as quantity 1 at AED 0</li>
+          <li>The cart page opens, with the thin timer row under the gift box</li>
+          <li>The same row shows in the cart panel and the checkout summary</li>
+          <li>The timer is kept by the shop's server, so a reload, a new tab or a wrong phone clock doesn't reset it</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>When the 20 minutes run out</h3>
+        <ul>
+          <li>The gift leaves the bag by itself, and the row says so for a moment</li>
+          <li>A checkout started in time is honoured if she places the order within the timer</li>
+          <li>The server checks the timer again when the order is placed, so the gift can't be kept by any trick</li>
+          <li>The minutes are a setting: 20 by default</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Fair and safe</h3>
+        <ul>
+          <li>One claim per bag, and one per customer or phone in 24 hours</li>
+          <li>The gift doesn't count towards the free gift box ranges or coupon minimums</li>
+          <li>It is on the order as a gift line, like the gift box items, so stock goes down correctly</li>
+          <li>"Maybe later" is a plain, polite choice, never "No, I hate free things"</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Light and fast</h3>
+        <ul>
+          <li>About 3 KB of script, loaded only when the bag has items</li>
+          <li>Built from what the page already has: no request until she taps Claim</li>
+          <li>Nothing is added to the head of any page; the speed rules stay untouched</li>
+          <li>The product photo uses the shop's small image sizes</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>In the admin</h3>
+        <p><b>Growth &amp; Marketing → Exit offer</b>: on/off, the cart-value ranges with one full-size product each, the minutes (20), the design and the words in English and Arabic.</p>
+        <p>Counts in <b>Cart Tracking</b>: shown, claimed, and became an order. They also go to the owner app, with a "Claimed exit gift" tag on the cart.</p>
+      </div>
+    </div>
+
+    <div class="decide">
+      <h3>What I need from you</h3>
+      <ol>
+        <li>A popup design: <span class="pick">A, B, C or D</span></li>
+        <li>The words: <span class="pick">1 to 5</span> (you can also mix a headline from one with the text of another)</li>
+        <li>The timer row: <span class="pick">R1 to R6</span></li>
+        <li>Who sees it: <span class="pick">Bag or Checkout</span></li>
+        <li>Your ranges and the full-size product for each one (or I can start from the gift box ranges you already have)</li>
+      </ol>
+      <p style="font-size:13.5px;color:var(--soft)">The product, price and shop name on this page are examples only. Arabic versions of the words you choose come with the build.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var MINUTES = 20;
+  // Cart-value ranges, each with its own full-size gift (examples; the owner sets them in the admin).
+  var RANGES = [
+    { min: 0, max: 149, label: 'Under AED 150', p: null },
+    { min: 150, max: 299, label: 'AED 150 – 299', p: { name: 'Rice Toner 150ml', short: 'Rice Toner 150ml', worth: 'AED 59', kind: 'toner' } },
+    { min: 300, max: 499, label: 'AED 300 – 499', p: { name: 'Relief Sun: Rice + Probiotics SPF50+ 50ml', short: 'Relief Sun SPF50+ 50ml', worth: 'AED 69', kind: 'spf' } },
+    { min: 500, max: null, label: 'AED 500+', p: { name: 'Snail Mucin 96% Power Essence 100ml', short: 'Snail 96 Essence 100ml', worth: 'AED 89', kind: 'essence' } }
+  ];
+  var BAGS = [120, 210, 380, 560];
+  var PRODUCT = RANGES[2].p;
+  function rangeFor(v) { for (var i = RANGES.length - 1; i >= 0; i--) if (v >= RANGES[i].min) return RANGES[i]; return RANGES[0]; }
+
+  var DESIGNS = [
+    ['A', 'Ribbon card', 'Centred card with a bow, big product photo. Classic and warm.'],
+    ['B', 'Bottom sheet', 'Slides up from the bottom, easy to reach with a thumb.'],
+    ['C', 'Unwrap & reveal', 'A wiggling gift box: she taps to open it, then claims. Most playful, most clicks.'],
+    ['D', 'Luxe minimal', 'Cream and ink, magazine style. Quiet and premium.']
+  ];
+  var COPIES = [
+    { h: 'Beautiful, this one is on us', p: 'Before you go, take a full-size {p} free with your order. We\'re holding it in your bag for {m} minutes.', c: 'Claim my free gift', l: 'Maybe later' },
+    { h: 'Your skin deserves a little extra', p: 'Finish your order in the next {m} minutes and a full-size {p} comes home with you, free.', c: 'Yes, add my gift', l: 'Not today' },
+    { h: 'Psst… a secret gift, just for you', p: 'Only shoppers who almost leave get this one: a full-size {p}, free with this bag.', c: 'Claim it now', l: 'Maybe later' },
+    { h: 'Don\'t leave your glow behind', p: 'Your bag is ready, and we\'ve added a treat: a full-size {p}, free if you order within {m} minutes.', c: 'Add my free {s}', l: 'I\'ll pass for now' },
+    { h: 'A full-size gift is waiting for you', p: 'No code, no catch. Tap below and a full-size {p} joins your bag for free, held for {m} minutes.', c: 'Claim now, it\'s free', l: 'Maybe later' }
+  ];
+  var ROWS = [
+    ['R1', 'Blush', 'Soft pink row, big clock on the right.'],
+    ['R2', 'Cream chips', 'Your pick: chips like a delivery app, in the cream and gold of R6, 20px taller.'],
+    ['R3', 'Dark', 'Dark row that stands out most in a light cart.'],
+    ['R4', 'Widget tile', 'The clock sits in its own soft pink tile.'],
+    ['R5', 'Two lines', 'Product on top, a full-width countdown strip below.'],
+    ['R6', 'Ticket', 'Coupon-stub look, the clock behind a dashed line.']
+  ];
+  var st = { d: 'A', c: 1, r: 'R2', claimed: false, end: 0, tick: 0, armed: true, shown: false, bag: 380, aud: 'bag', active: false };
+  var AUDS = [
+    ['bag', 'Bag', 'Everyone who added to the bag', 'Shows to any shopper with a product in her bag who tries to leave, from any page. Reaches the most people.'],
+    ['checkout', 'Checkout', 'Only shoppers active on checkout', 'Shows only after she reached checkout and typed a detail, picked delivery or chose a payment. Fewer people, but the ones closest to buying.']
+  ];
+
+  function bottle(tone) {
+    var cap = tone === 'gold' ? '#c9a36a' : '#a12d4f', body = tone === 'gold' ? '#fffaf2' : '#ffffff', band = tone === 'gold' ? '#e9d6b4' : '#f7c6d5';
+    return '<svg viewBox="0 0 60 90" aria-hidden="true"><rect x="22" y="2" width="16" height="14" rx="3" fill="' + cap + '"/><rect x="10" y="15" width="40" height="72" rx="12" fill="' + body + '" stroke="#e7d3d9" stroke-width="1.5"/><rect x="10" y="44" width="40" height="18" fill="' + band + '"/><text x="30" y="56" text-anchor="middle" font-family="Manrope,sans-serif" font-size="7.5" font-weight="800" fill="#2a2228">' + ({ toner: 'TONER', essence: 'SNAIL 96', spf: 'SPF50+' }[PRODUCT && PRODUCT.kind] || 'SPF50+') + '</text><circle cx="30" cy="30" r="5" fill="' + band + '"/></svg>';
+  }
+  function fill(t) { return fillPlain(t.replace('{p}', '<b>' + shown().name + '</b>').replace('{m}', MINUTES)); }
+  function shown() { return PRODUCT || RANGES[2].p; }
+  function fillPlain(t) { return t.replace('{s}', { toner: 'toner', essence: 'essence', spf: 'sunscreen' }[shown().kind] || 'gift'); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var $ = function (id) { return document.getElementById(id); };
+
+  function optBtn(group, key, tag, title, sub, on) {
+    return '<button type="button" class="opt" data-g="' + group + '" data-k="' + key + '" aria-pressed="' + on + '"><span class="tag">' + tag + '</span><b>' + title + '</b><span>' + sub + '</span></button>';
+  }
+  function drawOptions() {
+    $('designs').innerHTML = DESIGNS.map(function (d) { return optBtn('d', d[0], d[0], d[1], d[2], st.d === d[0]); }).join('');
+    $('copies').innerHTML = COPIES.map(function (c, i) { return optBtn('c', i, i + 1, '<q><span class="wsm">WAIT…</span> ' + esc(c.h) + '</q>', fill(c.p) + ' <br>Button: <b>' + esc(fillPlain(c.c)) + '</b>', st.c === i); }).join('');
+    $('rows').innerHTML = ROWS.map(function (r) { return optBtn('r', r[0], r[0], r[1], r[2], st.r === r[0]); }).join('');
+  }
+
+  function head(h) { return '<h4 class="wait">WAIT…</h4><p class="sub">' + h + '</p>'; }
+  function worth() { return '<span class="worth"><s>' + PRODUCT.worth + '</s><em>FREE</em> full size</span>'; }
+  function popup() {
+    var c = COPIES[st.c], h = esc(c.h), p = fill(c.p), cl = esc(fillPlain(c.c)), l = esc(c.l);
+    var x = '<button type="button" class="x" data-later aria-label="Close">×</button>';
+    var foot = '<button type="button" class="claim" data-claim>' + cl + '</button><button type="button" class="later" data-later>' + l + '</button>';
+    if (st.d === 'A') return '<div class="pp pA" role="dialog" aria-modal="true" aria-label="Free gift">' + x
+      + '<div class="top"><svg class="bow" viewBox="0 0 84 26" aria-hidden="true"><path d="M42 13C30 0 12 2 14 13s18 8 28 0zm0 0c12-13 30-11 28 0s-18 8-28 0z" fill="#c6395f"/><circle cx="42" cy="13" r="5" fill="#a12d4f"/></svg>' + worth() + '<div class="ph">' + bottle() + '</div></div>'
+      + '<div class="bd">' + head(h) + '<p>' + p + '</p>' + foot + '</div></div>';
+    if (st.d === 'B') return '<div class="pp pB" role="dialog" aria-modal="true" aria-label="Free gift"><div class="grab"></div>' + x
+      + '<div class="rowp"><div class="ph">' + bottle() + '</div><div>' + head(h) + worth() + '</div></div>'
+      + '<p>' + p + '</p><span class="chip">⏱ Held for ' + MINUTES + ' minutes after you claim</span>' + foot + '</div>';
+    if (st.d === 'C') return '<div class="pp pC" role="dialog" aria-modal="true" aria-label="Free gift">' + x
+      + '<div id="cstep"><div style="display:grid;gap:10px">' + head(h) + '<p>There\'s a little something in this box for you.</p>'
+      + '<button type="button" class="box wig" data-open aria-label="Open the gift box"><svg class="knot" viewBox="0 0 66 30" aria-hidden="true"><path d="M33 15C23 2 7 4 9 15s15 7 24 0zm0 0c10-13 26-11 24 0s-15 7-24 0z" fill="#ffd36e"/></svg><span class="lid"></span><span class="bx"></span><span class="rib"></span></button>'
+      + '<span class="tap">Tap the box to open</span></div></div></div>';
+    return '<div class="pp pD" role="dialog" aria-modal="true" aria-label="Free gift">' + x
+      + '<div class="ph"><span class="lab">A gift for you · ' + PRODUCT.worth + '</span>' + bottle('gold') + '</div>'
+      + '<div class="bd">' + head(h) + '<p>' + p + '</p>' + foot + '</div></div>';
+  }
+  function revealC() {
+    var c = COPIES[st.c];
+    $('cstep').innerHTML = '<div class="reveal"><div class="ph">' + bottle() + '</div>' + worth() + '<p class="prod-name">' + PRODUCT.name + '</p><p>' + fill(c.p) + '</p>'
+      + '<button type="button" class="claim" data-claim>' + esc(fillPlain(c.c)) + '</button><button type="button" class="later" data-later>' + esc(c.l) + '</button></div>';
+  }
+
+  function line(name, meta, pr) { return '<div class="line"><div class="img">' + bottle() + '</div><div><b>' + name + '</b><small>' + meta + '</small></div><div class="pr">' + pr + '</div></div>'; }
+  function giftbox() { return '<div class="giftbox"><span class="lg">Your free gifts · 2</span><div class="thumbs"><i>' + bottle() + '</i><i>' + bottle('gold') + '</i></div><small>Sheet mask ×2 · Mini cleanser ×1</small></div>'; }
+  function mmss(s) { s = Math.max(0, s); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
+  /* The pink line around the row: full at the start, shorter every second, gone at 00:00. */
+  function loop(frac) { return '<svg class="loop" aria-hidden="true"><rect pathLength="100" style="stroke-dashoffset:' + (100 * (1 - frac)).toFixed(2) + '"/></svg>'; }
+  function rowTick(row, left) {
+    var frac = left / (MINUTES * 60);
+    row.classList.toggle('low', left <= 120);
+    row.querySelector('.clk').textContent = mmss(left);
+    row.querySelector('.loop rect').style.strokeDashoffset = (100 * (1 - frac)).toFixed(2);
+  }
+  function rowHtml(left) {
+    var low = left <= 120 ? ' low' : '', frac = left / (MINUTES * 60);
+    var im = '<div class="im">' + bottle(st.r === 'R6' || st.r === 'R2' ? 'gold' : null) + '</div>';
+    var meta = st.r === 'R2'
+      ? '<span class="chip g">Free</span><span class="chip">Full size</span><span class="chip">×1</span>'
+      : '<span>Free gift · Qty 1</span><span class="fs">Full size</span>';
+    var tm = '<div class="tm"><small>Complete your order in</small><span class="clk">' + mmss(left) + '</span></div>';
+    return '<div class="xr ' + st.r + low + '" data-xr>' + loop(frac) + im
+      + '<div class="nm"><b>' + PRODUCT.short + '</b><div class="meta">' + meta + '</div></div>' + tm + '</div>';
+  }
+
+
+  function drawPage() {
+    var p = $('page');
+    if (!st.claimed && st.aud === 'checkout' && st.active) {
+      $('shopwhere').textContent = 'Checkout';
+      p.innerHTML = '<div class="ttl">Checkout</div>'
+        + '<div class="tot"><div><span>Email</span><span>sara.k@example.com</span></div><div><span>Phone</span><span>050 123 4567</span></div><div><span>Delivery</span><span>Dubai · 1–3 days</span></div><div><span>Payment</span><span>Tabby · 4 payments</span></div></div>'
+        + giftbox() + totals().replace('<div style="height:40px"></div>', '')
+        + '<p style="font-size:12px;color:var(--shop-soft);text-align:center;margin-top:6px">She typed her details and picked a payment, then hesitated. Leaving now shows the gift.</p>';
+      return;
+    }
+    if (!st.claimed) {
+      $('shopwhere').textContent = 'Product page';
+      p.innerHTML = '<div class="ttl">Your bag · 2 items</div>' + line('Snail Mucin 96% Power Essence', 'Qty 1', 'AED 89') + line('Rice Toner 150ml', 'Qty 1', 'AED 74') + giftbox()
+        + totals().replace('<div style="height:40px"></div>', '')
+        + '<p style="font-size:12px;color:var(--shop-soft);text-align:center;margin-top:6px">' + (PRODUCT ? 'Bag AED ' + st.bag + ' is in ' + rangeFor(st.bag).label + ', so leaving shows the free ' + PRODUCT.short + '.' : 'Bag AED ' + st.bag + ' is under every range, so no popup shows.') + '</p>';
+      return;
+    }
+    $('shopwhere').textContent = 'Cart page';
+    var left = Math.round((st.end - Date.now()) / 1000);
+    if (left <= 0) {
+      p.innerHTML = '<div class="ttl">Your bag · 2 items</div>' + line('Snail Mucin 96% Power Essence', 'Qty 1', 'AED 89') + line('Rice Toner 150ml', 'Qty 1', 'AED 74') + giftbox()
+        + '<div class="xr R2" style="grid-template-columns:minmax(0,1fr)"><small style="color:#8a6a2c;font-weight:700">Your 20 minutes are up, so the free ' + PRODUCT.short + ' has left your bag.</small></div>' + totals();
+      return;
+    }
+    p.innerHTML = '<div class="ttl">Your bag · 3 items</div>' + line('Snail Mucin 96% Power Essence', 'Qty 1', 'AED 89') + line('Rice Toner 150ml', 'Qty 1', 'AED 74') + giftbox() + rowHtml(left) + totals();
+  }
+  function totals() { return '<div class="tot"><div><span>Subtotal</span><span>AED ' + st.bag + '</span></div><div><span>Free gifts</span><span>AED 0</span></div><div class="g"><span>Total</span><span>AED ' + st.bag + '</span></div></div><div style="height:40px"></div>'; }
+
+  function show(why) {
+    if (st.claimed || st.shown) return;
+    if (st.aud === 'checkout' && !st.active) { $('live').textContent = 'No popup yet: this shopper has not done anything on checkout. Tap "Go to checkout and type details" first.'; return; }
+    if (!PRODUCT) { $('live').textContent = 'No popup: AED ' + st.bag + ' is below the first range.'; return; }
+    st.shown = true;
+    var ov = $('ov');
+    ov.className = 'ov ' + st.d;
+    ov.innerHTML = popup();
+    ov.hidden = false;
+    $('live').textContent = why || '';
+    var b = ov.querySelector('[data-claim],[data-open]');
+    if (b) b.focus({ preventScroll: true });
+  }
+  function hide() { $('ov').hidden = true; $('ov').innerHTML = ''; }
+  function claim() {
+    hide();
+    var t = document.createElement('div');
+    t.className = 'tick';
+    t.innerHTML = '<svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="48"/><circle class="c" cx="60" cy="60" r="48"/><path class="k" d="M38 62l15 15 30-32"/></svg><b>Added to your bag!</b><small>Opening your cart…</small>';
+    $('screen').appendChild(t);
+    $('live').textContent = 'Claimed: added at AED 0.';
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(function () { t.remove(); opened(); }, reduce ? 400 : 1400);
+  }
+  function opened() {
+    st.claimed = true; st.end = Date.now() + MINUTES * 60 * 1000;
+    $('live').textContent = 'Claimed: added at AED 0, cart page opened, timer running.';
+    drawPage();
+    clearInterval(st.tick);
+    st.tick = setInterval(function () {
+      var row = $('page').querySelector('[data-xr]');
+      var left = Math.round((st.end - Date.now()) / 1000);
+      if (left <= 0) { clearInterval(st.tick); drawPage(); return; }
+      if (row) rowTick(row, left);
+    }, 1000);
+  }
+  function reset() {
+    st.active = false; drawAudBtn();
+    clearInterval(st.tick); hide();
+    var tk = $('screen').querySelector('.tick'); if (tk) tk.remove();
+    st.claimed = false; st.shown = false; st.end = 0;
+    $('live').textContent = '';
+    drawPage();
+  }
+
+  document.addEventListener('click', function (e) {
+    var o = e.target.closest('.opt');
+    if (o) {
+      var g = o.getAttribute('data-g'), k = o.getAttribute('data-k');
+      if (g === 'a') { st.aud = k; drawAuds(); reset(); $('live').textContent = k === 'bag' ? 'Who sees it: everyone with a product in her bag.' : 'Who sees it: only shoppers active on checkout.'; return; }
+      if (g === 'd') st.d = k; else if (g === 'c') st.c = +k; else st.r = k;
+      drawOptions();
+      if (g === 'r' && st.claimed) drawPage();
+      else if (g !== 'r') { reset(); st.shown = false; show('Preview of ' + (g === 'd' ? 'design ' + k : 'words ' + (+k + 1)) + '.'); }
+      else if (g === 'r') { reset(); opened(); }
+      return;
+    }
+    if (e.target.closest('[data-claim]')) { claim(); return; }
+    if (e.target.closest('[data-open]')) { revealC(); var c = $('ov').querySelector('[data-claim]'); if (c) c.focus({ preventScroll: true }); return; }
+    if (e.target.closest('[data-later]')) { hide(); $('live').textContent = '"Maybe later": not shown again for 24 hours.'; return; }
+  });
+  function drawAuds() {
+    $('auds').innerHTML = AUDS.map(function (a) { return optBtn('a', a[0], a[1], a[2], a[3], st.aud === a[0]); }).join('');
+  }
+  function drawAudBtn() {
+    var b = $('act'); if (!b) return;
+    b.hidden = st.aud !== 'checkout';
+    b.disabled = st.active;
+    b.textContent = st.active ? 'Details typed on checkout' : 'Go to checkout and type details';
+  }
+  $('act').addEventListener('click', function () {
+    if (st.claimed) reset();
+    st.active = true; st.shown = false; drawAudBtn(); drawPage();
+    $('live').textContent = 'Checkout activity noticed. Now try leaving the page.';
+  });
+  $('go').addEventListener('click', function () { var was = st.active; reset(); st.active = was; drawAudBtn(); drawPage(); show('Opened by an exit attempt.'); });
+  $('reset').addEventListener('click', reset);
+  $('skip').addEventListener('click', function () {
+    if (!st.claimed) { $('live').textContent = 'Claim the gift first, then skip ahead to watch the pink line shrink.'; return; }
+    st.end -= 5 * 60 * 1000;
+    var row = $('page').querySelector('[data-xr]'), left = Math.round((st.end - Date.now()) / 1000);
+    if (left <= 0) { clearInterval(st.tick); drawPage(); } else if (row) rowTick(row, left);
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('ov').hidden) hide(); });
+
+  // The real triggers, live in this preview, exactly as the shop will use them.
+  document.documentElement.addEventListener('mouseleave', function (e) {
+    if (e.clientY <= 0 && !st.claimed && !st.shown) show('Opened instantly: the mouse left through the top of the window.');
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && !st.claimed && !st.shown) show('Opened on your return from another tab.');
+  });
+
+  function drawBags() {
+    $('bags').innerHTML = BAGS.map(function (v) { return '<button type="button" class="btn' + (st.bag === v ? '' : ' sec') + '" data-bag="' + v + '">Bag AED ' + v + '</button>'; }).join('');
+  }
+  $('bags').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-bag]'); if (!b) return;
+    st.bag = +b.getAttribute('data-bag'); PRODUCT = rangeFor(st.bag).p;
+    drawBags(); reset(); drawOptions();
+  });
+  function drawRanges() {
+    $('ranges').innerHTML = RANGES.map(function (r) {
+      return '<tr><td><b>' + r.label + '</b></td><td>' + (r.p ? r.p.name : '<span style="color:var(--soft)">No offer</span>') + '</td><td>' + (r.p ? r.p.worth : '') + '</td></tr>';
+    }).join('');
+  }
+  drawAuds();
+  drawAudBtn();
+  drawBags();
+  drawRanges();
+  drawOptions();
+  drawPage();
+})();
+</script>
