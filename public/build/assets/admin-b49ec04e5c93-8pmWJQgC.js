@@ -100,7 +100,7 @@
     var focus = document.activeElement && document.activeElement.getAttribute ? document.activeElement.getAttribute('data-k') : null;
     var tabs = '<div class="go-tabs" role="tablist">' + TABS.map(function (t) {
       return '<button type="button" class="go-tab" role="tab" data-tab="' + t[0] + '" aria-selected="' + (st.tab === t[0]) + '">' + esc(t[1]) + '</button>';
-    }).join('') + '</div>';
+    }).join('') + '</div><p class="ectabs-hint go-sub">One extra full-size gift: its switches and texts, the ranges and products it gives, the exit popup, a live preview, a test send and the report.</p>';
     var body = !st.data ? '<div class="card go-card"><p class="go-sub">' + (st.busy ? 'Loading…' : esc(st.msg || '')) + '</p></div>'
       : st.tab === 'ranges' ? ranges() : st.tab === 'popup' ? popup() : st.tab === 'preview' ? preview() : st.tab === 'test' ? test() : st.tab === 'report' ? report() : settings();
     c.innerHTML = '<div class="go-wrap" data-screen="' + SCREEN + '">' + tabs + body + '</div>';
@@ -440,7 +440,7 @@
       label: 'Gift offers',
       icon: '<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18"/><circle cx="17.5" cy="4.5" r="2.5"/><path d="M17.5 3.3v1.2l.8.6"/>',
       group: GROUP,
-      after: ['freegifts', 'push']
+      after: ['freegifts', 'push', 'searchterms', 'pixels']
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addNavEntry); else addNavEntry();

@@ -887,7 +887,7 @@ final class AdminSearchIndex
         ],
         // Growth & Marketing -> Gift offers (Lane GO).
         'giftoffers' => [
-            'Settings' => ['Gift offers', 'Abandoned-cart email', 'Pending reminder', 'Exit popup', 'Hold hours', 'Timer in the email', 'Texts'],
+            'Settings' => ['Gift offers', 'Abandoned-cart email', 'Pending reminder', 'Exit popup', 'Timer in the email', 'Texts'],
             'Ranges & products' => ['Add range', 'Primary', 'Backup', 'Allocation'],
             'Popup' => ['Popup design', 'Content style', 'Words', 'Who sees it'],
             'Live preview' => ['Dark mode', 'Phone', 'Computer'],

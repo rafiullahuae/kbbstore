@@ -1383,6 +1383,8 @@ final class EnglishRenderWalk
             'checkout/order-pay' => ['render' => false, 'why' => '404 without a signed order link; reached only from an email'],
             // 2.60.562: "Update my number" from the UAE number email -- the same 404 without its signed link.
             'order-phone' => ['render' => false, 'why' => '404 without a signed order link; reached only from an email'],
+            'gift-offer/c/{token}' => ['render' => false, 'why' => 'Lane GO: a claim link from an email, a redirect and never a page'],
+            'gift-offer/t/{token}.gif' => ['render' => false, 'why' => 'Lane GO: the email clock, a GIF and never a page'],
             // Lane EM: "View this email in your browser" serves the stored HTML
             // of one SENT email, byte for byte -- not a storefront page, and a
             // token nobody was sent is a 404. The font is a binary file.
