@@ -4,7 +4,7 @@
  *   sh tools/go-preview.sh 9530
  *   GO_BASE=http://127.0.0.1:9530 NODE_PATH=/home/user/kbbstore/node_modules node tools/go-shots.cjs
  *
- * Writes storage/go-shots/*.png and storage/go-shots/result.json. Every figure
+ * Writes docs/lane-go-shots/*.png and docs/lane-go-shots/result.json. Every figure
  * in result.json is read from the page or the server, never typed in.
  */
 const { chromium } = require('playwright');
@@ -16,7 +16,7 @@ const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const BASE = process.env.GO_BASE || 'http://127.0.0.1:9530';
 const PORT = new URL(BASE).port;
 const APP = path.resolve(__dirname, '..');
-const OUT = path.resolve(APP, 'storage/go-shots');
+const OUT = path.resolve(APP, 'docs/lane-go-shots');
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
 const result = { emails: {}, rows: {}, popup: {}, console: {}, admin: {} };
 fs.mkdirSync(OUT, { recursive: true });
