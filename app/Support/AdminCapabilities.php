@@ -1431,6 +1431,11 @@ final class AdminCapabilities
         // holds the same three roles today and can be narrowed on its own.
         ['PUT', 'admin-api/orders/*/address', 'orders.edit'],
         ['POST', 'admin-api/orders/*/mark-paid', 'orders.payment'],
+        // 2.60.641: change an unpaid order's payment method (COD fee added or
+        // removed), and put a coupon on it or take one off.
+        ['POST', 'admin-api/orders/*/payment-method', 'orders.payment'],
+        ['POST', 'admin-api/orders/*/coupon', 'orders.money'],
+        ['DELETE', 'admin-api/orders/*/coupon', 'orders.money'],
         ['POST', 'admin-api/orders/*/pay-link', 'orders.paylink'],
         // 2.60.563: "Ask for UAE number" is an order email like Resend
         // confirmation, so it is held by the same capability -- anyone who can

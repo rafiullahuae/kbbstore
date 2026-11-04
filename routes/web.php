@@ -651,6 +651,8 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // cannot collide however these requires are ordered.
         require __DIR__.'/orders-admin.php';
         require __DIR__.'/order-detail-admin.php';
+        // Store -> Orders -> (an order): change the payment method, apply / remove a coupon (2.60.641).
+        require __DIR__.'/order-payment-edit.php';
         require __DIR__.'/order-pay-link-admin.php';   // Store -> Orders -> (order) -> Send order link (Lane OL)
         require __DIR__.'/order-phone-request-admin.php';   // Store -> Orders -> (order) -> Billing -> Phone -> Ask for UAE number (2.60.562)
 

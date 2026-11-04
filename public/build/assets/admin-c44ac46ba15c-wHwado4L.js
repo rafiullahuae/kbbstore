@@ -2158,6 +2158,7 @@
       '<div class="between"><span style="color:var(--ink-soft)">Subtotal</span><span>AED '+o.subtotal_aed+'</span></div>'+
       (o.bundle_discount_aed>0?'<div class="between"><span style="color:var(--ink-soft)">Buy-together discount</span><span>-AED '+o.bundle_discount_aed+'</span></div>':'')+
       (Math.round((o.discount_total_aed-(o.bundle_discount_aed||0))*100)>0?'<div class="between"><span style="color:var(--ink-soft)">Discount'+(o.coupon_code?' ('+sesc(o.coupon_code)+')':'')+'</span><span>-AED '+(Math.round((o.discount_total_aed-(o.bundle_discount_aed||0))*100)/100)+'</span></div>':'')+
+      odCouponRow(o)+
       '<div class="between"><span style="color:var(--ink-soft)">Shipping</span><span>AED '+o.shipping_total_aed+'</span></div>'+
       (o.fee_total_aed>0?'<div class="between"><span style="color:var(--ink-soft)">Fees</span><span>AED '+o.fee_total_aed+'</span></div>':'')+
       '<div class="between" style="font-weight:800;font-size:14px;border-top:1px solid var(--border);padding-top:8px"><span>Order total</span><span>AED '+o.total_aed+'</span></div>'+
@@ -2236,6 +2237,11 @@
     var actions = '';
     if(p.can_record_cash && can.payment){
       actions += '<button type="button" class="btn sm odpay-act" id="odRecordCash">Record cash received</button>';
+    }
+    /* 2.60.641: "Change payment method" -- an unpaid order's method, the COD
+       fee with it, and optionally the payment recorded in the same step. */
+    if(o.payment_edit && o.payment_edit.change && o.payment_edit.change.allowed && can.payment){
+      actions += '<button type="button" class="btn sm odpay-act" id="odPayMethodGo">Change payment method</button>';
     }
     /* (Lane OL) "Send order link": a failed order, or a pending one nobody
        has paid, handed back to the customer as one signed link. */
@@ -2512,6 +2518,21 @@
     // (Lane PU) Cash on delivery, amber: "Record cash received".
     var recordCash = document.getElementById('odRecordCash');
     if(recordCash) recordCash.onclick = function(){ odMarkPaidModal(o, {cash:true}); };
+
+    // 2.60.641: Change payment method, Apply / Remove coupon.
+    var payMethodGo = document.getElementById('odPayMethodGo');
+    if(payMethodGo) payMethodGo.onclick = function(){ odPayMethodModal(o); };
+    var couponGo = document.getElementById('odCouponGo');
+    if(couponGo) couponGo.onclick = function(){ odCouponModal(o); };
+    var couponRm = document.getElementById('odCouponRm');
+    if(couponRm) couponRm.onclick = async function(){
+      couponRm.disabled = true;
+      try{
+        var j = await api('/admin-api/orders/'+o.id+'/coupon', {method:'DELETE'});
+        toast(j.message || 'Coupon removed');
+        renderOrderDetail(o.id);
+      }catch(e){ couponRm.disabled = false; toast(odErrText(e, 'Could not remove the coupon.'), 'bad'); }
+    };
 
     // Item editing: quantity, price, remove, add product — only rendered when o.editable.
     if(o.editable){
@@ -2790,6 +2811,117 @@
   }
 
   /* ---------------------------------------------------- Mark as paid */
+  /* ------------------------------------------- 2.60.641 Coupon on the order
+     Items -> totals -> Coupon: "Apply coupon" / "Change" / "Remove". Only on
+     an unpaid order the server says may take one (payment_edit.coupon); the
+     code is priced by the server on this order's own lines and prices, with
+     every rule the code carries. "Remove" asks Yes / No in the console's
+     "Are you sure?" box (data-kbb-sure). Every server word is escaped. */
+  function odCouponRow(o){
+    var pe = o.payment_edit || {}, can = o.can || {};
+    if(!(pe.coupon && pe.coupon.allowed && can.money)) return '';
+    return '<div class="between" style="align-items:center;gap:8px"><span style="color:var(--ink-soft)">Coupon</span><span class="row" style="gap:6px;align-items:center;justify-content:flex-end">'+
+      (o.coupon_code ? '<b>'+sesc(o.coupon_code)+'</b><button type="button" class="btn ghost sm" id="odCouponRm" style="padding:3px 9px" data-kbb-sure="Take coupon '+sesc(o.coupon_code)+' off this order? The total goes back up and the code\u2019s use is given back.">Remove</button>' : '')+
+      '<button type="button" class="btn ghost sm" id="odCouponGo" style="padding:3px 9px">'+(o.coupon_code?'Change':'Apply coupon')+'</button></span></div>';
+  }
+  function odCouponModal(o){
+    var m = odModal(
+      '<div class="modal-h"><b>'+(o.coupon_code?'Change coupon':'Apply coupon')+' · #'+sesc(o.order_number)+'</b><button class="x" data-odx aria-label="Cancel">✕</button></div>'+
+      '<div class="modal-b odmodal">'+
+        '<p class="odm-lead">The code is checked against this order\u2019s own products and prices, with all its rules: dates, usage limits, minimum spend, products and brands. The total is recalculated'+(o.coupon_code?', and <b>'+sesc(o.coupon_code)+'</b> is taken off and its use given back':'')+'.</p>'+
+        '<div class="odfld"><label for="odCpCode">Coupon code</label>'+
+          '<input class="odinp" id="odCpCode" maxlength="60" autocomplete="off" spellcheck="false" style="text-transform:uppercase"></div>'+
+        '<p class="odm-err" id="odCpErr" role="alert"></p>'+
+        '<div class="odm-acts"><button type="button" class="btn ghost" data-odx>Cancel</button>'+
+          '<button type="button" class="btn primary" id="odCpGo">Apply</button></div>'+
+      '</div>');
+    var go = document.getElementById('odCpGo'), err = document.getElementById('odCpErr'), inp = document.getElementById('odCpCode');
+    setTimeout(function(){ inp.focus(); }, 30);
+    inp.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); go.click(); } };
+    go.onclick = async function(){
+      var code = inp.value.trim();
+      if(!code){ err.textContent = 'Type a coupon code.'; return; }
+      go.disabled = true; err.textContent = '';
+      try{
+        var j = await api('/admin-api/orders/'+o.id+'/coupon', {method:'POST', body:JSON.stringify({code:code})});
+        m.close(); toast(j.message || 'Coupon applied'); renderOrderDetail(o.id);
+      }catch(e){ go.disabled = false; err.textContent = odErrText(e, 'Could not apply that code.'); }
+    };
+  }
+
+  /* ---------------------------------- 2.60.641 Change payment method
+     Payment -> "Change payment method", on an order with no money recorded
+     against it (payment_edit.change). Choosing Cash on delivery adds the COD
+     fee (a tick, on by default); leaving it takes the order's COD fee off.
+     "Paid" records the payment in the same step through Mark as paid's own
+     service. An unpaid status can move to Processing with it. */
+  function odPayMethodModal(o){
+    var pe = o.payment_edit || {};
+    var methods = o.payment_methods || [];
+    var current = o.payment_method || '';
+    var unpaid = !!pe.unpaid_status;
+    var options = methods.map(function(mm){
+      return '<option value="'+sesc(mm.id)+'"'+(mm.id===current?' selected':'')+'>'+sesc(mm.title)+'</option>';
+    }).join('');
+    var m = odModal(
+      '<div class="modal-h"><b>Change payment method · #'+sesc(o.order_number)+'</b><button class="x" data-odx aria-label="Cancel">✕</button></div>'+
+      '<div class="modal-b odmodal">'+
+        '<p class="odm-lead">Now: <b>'+sesc((o.payment && o.payment.method_title) || o.payment_method_title || o.payment_method || 'none')+'</b> · AED '+sesc(String(o.total_aed))+'. The total is recalculated and the change is written to the order\u2019s history.</p>'+
+        '<div class="odfld"><label for="odPmMethod">Payment method</label><select class="odinp" id="odPmMethod">'+options+'</select></div>'+
+        '<label class="row" id="odPmFeeRow" style="gap:8px;align-items:center;font-size:13px;margin:4px 0 10px"><input type="checkbox" id="odPmFee" checked> <span id="odPmFeeTxt"></span></label>'+
+        '<p class="odm-err" id="odPmRefused" style="color:#b45309"></p>'+
+        '<div class="odfld"><label>Payment</label><div class="row" style="gap:14px;font-size:13px">'+
+          '<label class="row" style="gap:6px;align-items:center"><input type="radio" name="odPmPaid" value="0" checked> Not paid yet</label>'+
+          '<label class="row" style="gap:6px;align-items:center"><input type="radio" name="odPmPaid" value="1"> Paid — record it now</label></div></div>'+
+        '<div id="odPmPaidBox" style="display:none">'+
+          '<div class="odfld"><label for="odPmRef">Payment reference / transaction ID <span class="odm-opt">optional</span></label>'+
+            '<input class="odinp" id="odPmRef" maxlength="191" autocomplete="off" placeholder="The ID from your gateway’s dashboard"></div>'+
+          '<div class="odfld"><label for="odPmDate">Date paid</label>'+
+            '<input class="odinp" id="odPmDate" type="datetime-local" value="'+odShopNowLocal(o)+'" max="'+odShopNowLocal(o)+'"></div>'+
+        '</div>'+
+        (unpaid ? '<label class="row" style="gap:8px;align-items:center;font-size:13px;margin:6px 0"><input type="checkbox" id="odPmProc"> Move the order from <b>'+sesc(odStatusLabel(o.status))+'</b> to <b>Processing</b></label>'+
+          '<label class="row" id="odPmNotifyRow" style="gap:8px;align-items:center;font-size:13px;margin:0 0 6px 22px"><input type="checkbox" id="odPmNotify" checked> Email the customer</label>' : '')+
+        '<p class="odm-err" id="odPmErr" role="alert"></p>'+
+        '<div class="odm-acts"><button type="button" class="btn ghost" data-odx>Cancel</button>'+
+          '<button type="button" class="btn primary" id="odPmGo">Save</button></div>'+
+      '</div>');
+    var sel = document.getElementById('odPmMethod'), fee = document.getElementById('odPmFee'), feeRow = document.getElementById('odPmFeeRow');
+    var feeTxt = document.getElementById('odPmFeeTxt'), refused = document.getElementById('odPmRefused');
+    var paidBox = document.getElementById('odPmPaidBox'), proc = document.getElementById('odPmProc'), notifyRow = document.getElementById('odPmNotifyRow');
+    var go = document.getElementById('odPmGo'), err = document.getElementById('odPmErr');
+    var paid = function(){ var r = document.querySelector('input[name="odPmPaid"]:checked'); return !!r && r.value === '1'; };
+    var sync = function(){
+      var cod = sel.value === 'cod';
+      feeRow.style.display = cod ? '' : 'none';
+      feeTxt.textContent = current === 'cod' && pe.order_cod_fee_aed > 0
+        ? 'Keep the COD fee (AED '+pe.order_cod_fee_aed+')'
+        : 'Add the COD fee (AED '+pe.cod_fee_aed+')';
+      refused.textContent = cod && pe.cod_refused ? 'This customer is on the COD refusals list (a delivery was refused). You can still choose Cash on delivery.' : '';
+      paidBox.style.display = paid() ? '' : 'none';
+      if(notifyRow) notifyRow.style.display = proc && proc.checked ? '' : 'none';
+    };
+    if(proc){ proc.checked = (o.status === 'failed' || o.status === 'pending'); proc.onchange = sync; }
+    sel.onchange = sync;
+    document.querySelectorAll('input[name="odPmPaid"]').forEach(function(r){ r.onchange = sync; });
+    sync();
+    setTimeout(function(){ sel.focus(); }, 30);
+    go.onclick = async function(){
+      var body = { payment_method: sel.value, paid: paid() };
+      if(sel.value === 'cod') body.cod_fee = !!fee.checked;
+      if(body.paid){
+        body.reference = document.getElementById('odPmRef').value.trim();
+        body.paid_at = document.getElementById('odPmDate').value;
+        if(!body.paid_at){ err.textContent = 'Enter the date the payment was made.'; return; }
+      }
+      if(proc && proc.checked){ body.status = 'processing'; body.notify = !!document.getElementById('odPmNotify').checked; }
+      go.disabled = true; err.textContent = '';
+      try{
+        var j = await api('/admin-api/orders/'+o.id+'/payment-method', {method:'POST', body:JSON.stringify(body)});
+        m.close(); toast(j.message || 'Payment method changed'); renderOrderDetail(o.id);
+      }catch(e){ go.disabled = false; err.textContent = odErrText(e, 'Could not change the payment method.'); }
+    };
+  }
+
   function odMarkPaidModal(o, opts){
     opts = opts || {};
     var cash = !!opts.cash;
