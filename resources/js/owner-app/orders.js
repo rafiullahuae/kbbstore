@@ -437,6 +437,7 @@ function thq(src, qty) {
 
 function paintDetail(host) {
   const o = O, t = o.totals;
+  const offers = (o.gifts || []).filter((g) => g.offer), freeGifts = (o.gifts || []).filter((g) => !g.offer);
   const right = '<a class="ib plain" href="' + (o.next_id ? '#/orders/' + o.next_id : '#/orders/' + o.id) + '" aria-label="Newer order"' + (o.next_id ? '' : ' aria-disabled="true"') + '>' + ic('up') + '</a>'
     + '<a class="ib plain" href="' + (o.prev_id ? '#/orders/' + o.prev_id : '#/orders/' + o.id) + '" aria-label="Older order"' + (o.prev_id ? '' : ' aria-disabled="true"') + '>' + ic('down') + '</a>';
   const primary = o.can.paid ? '<button type="button" class="btn pri" data-act="paid">' + ic('card', 's') + 'Mark as paid</button>'
@@ -450,11 +451,14 @@ function paintDetail(host) {
     + '<span>' + esc(when(o.created_at)) + '</span>' + lang(o.locale) + '</div></div>'
     + (primary || payLinkOn(o) ? '<div class="btns od-act">' + primary + (payLinkOn(o) ? '<button type="button" class="btn ' + (primary ? 'sec' : 'pri') + '" data-act="paylink">' + ic('link', 's') + 'Send order link</button>' : '') + '</div>' : '')
     + (payLinkOn(o) && o.pay_link.last ? '<p class="muted pl-last" data-pl-last>' + plLast(o.pay_link.last) + '</p>' : '')
+    // Marketing -> Gift offers: the additional gift the shopper claimed, above Products so it gets packed (owner, 4 Nov).
+    + (offers.length ? '<section class="card goffer"><h4 class="sh">🎁 Additional gift · pack this too</h4>'
+      + offers.map((g) => '<' + (g.product_id ? 'a href="#/products/' + g.product_id + '"' : 'div') + ' class="row">' + thq(g.thumb, g.qty) + '<div class="rm"><b class="cl2">' + esc(g.name) + '</b><small>' + (g.brand ? esc(g.brand) + ' · ' : '') + g.qty + ' × gift offer, full size</small></div><div class="re"><span class="gofree">FREE</span></div></' + (g.product_id ? 'a' : 'div') + '>').join('') + '</section>' : '')
     + '<section class="card"><h4 class="sh">Products <span class="muted">' + o.items.reduce((a, i) => a + i.qty, 0) + ' items</span></h4>'
     + o.items.map((i) => '<' + (i.product_id ? 'a href="#/products/' + i.product_id + '"' : 'div') + ' class="row">' + thq(i.thumb, i.qty) + '<div class="rm"><b class="cl2">' + esc(i.name) + '</b><small>' + (i.variant ? esc(i.variant) + ' · ' : '') + i.qty + ' × ' + esc(i.unit_display) + (i.sku ? ' · ' + esc(i.sku) : '') + '</small></div><div class="re"><b>' + esc(i.total_display) + '</b></div></' + (i.product_id ? 'a' : 'div') + '>').join('') + '</section>'
     // The free gifts on the order, always open under Products (owner, 23 Oct: "i want the opened free gifts box by default there. so i can see in one go").
-    + (o.gifts && o.gifts.length ? '<section class="card gifts"><h4 class="sh">Free gifts <span class="muted">' + o.gifts.reduce((a, g) => a + g.qty, 0) + ' items</span></h4>'
-      + o.gifts.map((g) => '<' + (g.product_id ? 'a href="#/products/' + g.product_id + '"' : 'div') + ' class="row">' + thq(g.thumb, g.qty) + '<div class="rm"><b class="cl2">' + esc(g.name) + '</b><small>' + (g.brand ? esc(g.brand) + ' · ' : '') + g.qty + ' × free gift</small></div><div class="re"><span class="gfree">FREE</span></div></' + (g.product_id ? 'a' : 'div') + '>').join('') + '</section>' : '')
+    + (freeGifts.length ? '<section class="card gifts"><h4 class="sh">Free gifts <span class="muted">' + freeGifts.reduce((a, g) => a + g.qty, 0) + ' items</span></h4>'
+      + freeGifts.map((g) => '<' + (g.product_id ? 'a href="#/products/' + g.product_id + '"' : 'div') + ' class="row">' + thq(g.thumb, g.qty) + '<div class="rm"><b class="cl2">' + esc(g.name) + '</b><small>' + (g.brand ? esc(g.brand) + ' · ' : '') + g.qty + ' × free gift</small></div><div class="re"><span class="gfree">FREE</span></div></' + (g.product_id ? 'a' : 'div') + '>').join('') + '</section>' : '')
     + '<section class="card"><h4 class="sh">Payment</h4><div class="kv"><span>Products</span><span>' + esc(t.subtotal) + '</span></div>'
     + (t.discount ? '<div class="kv"><span>Discount' + (t.coupon ? ' <span class="tag">' + esc(t.coupon) + '</span>' : '') + '</span><span>−' + esc(t.discount) + '</span></div>' : '')
     + '<div class="kv"><span>Shipping' + (o.shipping_method ? ' · ' + esc(o.shipping_method) : '') + '</span><span>' + esc(t.shipping) + '</span></div>'

@@ -16,18 +16,24 @@
   var STYLES = [['S1', 'Timer pill', '"Held for you · 14:59" in a soft pink pill.'], ['S2', 'Shrinking bar', 'A pink bar that shortens as time runs.'], ['S3', 'Cream clock', 'Chips under the name and the cream clock, like the cart row.'], ['S4', 'Countdown tiles', 'Big minute and second boxes.'], ['S5', 'Luxe ticket', 'Gold dashed frame (on design A) and a plum timer strip.']];
   var AUDS = [['bag', 'Bag', 'Anyone with a product in her bag.'], ['checkout', 'Checkout', 'Only shoppers who did something on checkout.']];
   var EMAIL_TEXTS = [
-    ['email_eyebrow', 'Small line on top'], ['email_title', 'Heading'], ['email_body_cart', 'Abandoned-cart email: text'], ['email_button_cart', 'Abandoned-cart email: button'],
+    ['email_subject', 'Start of the subject line (only when the gift is in the email)'], ['email_eyebrow', 'Small line on top'], ['email_title', 'Heading'], ['email_body_cart', 'Abandoned-cart email: text'], ['email_button_cart', 'Abandoned-cart email: button'],
     ['email_body_order', 'Pending reminders: text'], ['email_button_order', 'Pending reminders: button'], ['email_worth', 'Line under the button (keep :price)'],
     ['clock_label', 'Above the clock (email and cart row)'], ['held', 'Fixed end time / clock alt text (keep :time)'], ['today', 'Today'], ['tomorrow', 'Tomorrow'], ['chip_free', 'Chip: Free'], ['chip_full', 'Chip: Full size']
   ];
   var ROW_TEXTS = [['row_free', 'Row chip: Free'], ['row_full', 'Row chip: Full size'], ['row_below', 'Bag below the range (keep :amount)'], ['row_over', 'When the time is up'], ['ended', 'An ended or unavailable gift'], ['pay_note', 'Order-pay page, under the row']];
   var POP_TEXTS = [['wait', 'Big word'], ['pop_full', 'After FREE'], ['pop_held', 'S1 pill'], ['pop_held_for', 'S2 bar'], ['pop_minutes', 'S4 minutes'], ['pop_seconds', 'S4 seconds'], ['pop_gold', 'S5 strip'], ['pop_box', 'C: before opening'], ['pop_tap', 'C: tap to open'], ['pop_added', 'Green tick'], ['pop_opening', 'Under the tick'], ['pop_close', 'Close button (screen readers)']];
+  /* Off / Testing / Live (the owner, 4 November: "the same TEST / LIVE / OFF
+     function" as Free gifts). Each saves at once and asks Yes / No first in the
+     console's "Are you sure?" box (partials/reset-guard, data-kbb-sure); the
+     current mode does not ask and clicking it does nothing. */
+  var MODES = [['off', 'Off', 'Nobody gets a gift offer: no email box, no cart row, no popup.'], ['testing', 'Testing', 'Only the IPs listed below. Everyone else as if Off.'], ['live', 'Live', 'Every shopper.']];
   var EVENTS_ORDER = ['sent', 'open', 'click', 'shown', 'claimed', 'dismissed', 'added', 'orders', 'revenue'];
 
   var st = { data: null, cfg: null, tab: 'settings', seq: 0, busy: false, msg: '', msgKind: '', drafts: {}, pick: null,
     pv: { place: 'cart', locale: 'en', scheme: 'light', width: 'ph', range: '', bag: '', html: '', bytes: 0, seq: 0, timer: 0, busy: false },
     test: { to: '', place: 'cart', locale: 'en', range: '', msg: '', kind: '' },
-    rep: { from: '', to: '', by: 'day', data: null, seq: 0 } };
+    rep: { from: '', to: '', by: 'day', data: null, seq: 0 },
+    tester: { ip: '', label: '', err: '' } };
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function cookie(n) { var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)'); return m ? decodeURIComponent(m.pop()) : ''; }
@@ -71,11 +77,27 @@
     if (side) side.classList.remove('open');
     var c = document.querySelector('#content');
     if (c) c.textContent = '';
-    st.drafts = {}; st.pick = null; st.msg = ''; st.cfg = null; st.pv.html = '';
+    /* st.data goes with st.cfg. Clearing only the draft left the last visit's
+       data behind, so coming back drew settings() over a null cfg and threw
+       ("reading 'places'"): an empty screen until a refresh (the owner,
+       4 November). With both cleared it shows "Loading…" until the fresh GET. */
+    st.drafts = {}; st.pick = null; st.msg = ''; st.data = null; st.cfg = null; st.pv.html = '';
     render();
     run(function () { return api('GET', ''); }, 'Gift offers could not be loaded.');
     return undefined;
   };
+  function saveTesters(list, msg) {
+    st.tester.err = '';
+    run(function () { return api('POST', '/testers', { testers: list }); }, 'The IP list was not saved.', function (d) { syncLive(d); st.tester.ip = ''; st.tester.label = ''; say(msg); });
+  }
+  function addTester(addr, label) {
+    var t = st.tester, list = (st.data.config.testers || []).slice();
+    addr = String(addr || '').trim();
+    if (!addr) { t.err = 'Type an IP address.'; render(); return; }
+    if (list.some(function (x) { return x.ip === addr; })) { t.err = addr + ' is already on the list.'; render(); return; }
+    if (list.length >= 50) { t.err = 'The list holds at most 50 IPs.'; render(); return; }
+    saveTesters(list.concat([{ ip: addr, label: String(label || '').trim() }]), 'Added ' + addr + ' to the Testing list.');
+  }
   function stopTimers() {
     clearTimeout(st.pv.timer); st.pv.timer = 0;
     if (st.pick) { clearTimeout(st.pick.timer); if (st.pick.ctl) st.pick.ctl.abort(); st.pick = null; }
@@ -124,6 +146,42 @@
       '<button type="button" class="btn ghost" data-act="reset"' + (can() ? '' : ' disabled') + '>Undo changes</button>' +
       '<button type="button" class="btn" data-act="save"' + (can() && !st.busy ? '' : ' disabled') + '>Save</button></div>';
   }
+  /* Mode, Testing list and place switches are saved by their own requests;
+     the draft takes the server's answer for exactly those, and nothing else. */
+  function syncLive(d) {
+    if (!d || !d.config || !st.cfg) return;
+    st.cfg.mode = d.config.mode; st.cfg.testers = clone(d.config.testers); st.cfg.places = clone(d.config.places);
+  }
+  function modeOf(c) { return (c && c.mode) || 'testing'; }
+  function modes() {
+    var mode = modeOf(st.data.config), ro = !can();
+    return '<div class="go-modes" role="radiogroup" aria-label="Mode">' + MODES.map(function (m) {
+      var on = mode === m[0];
+      return '<button type="button" role="radio" class="go-mode m-' + m[0] + '" data-mode="' + m[0] + '" aria-checked="' + on + '"' +
+        (on ? '' : ' data-kbb-sure="' + esc(m[2] + ' Switch gift offers to ' + m[1] + '?') + '"') + (ro || st.busy ? ' disabled' : '') + '><b>' + esc(m[1]) + '</b><small>' + esc(m[2]) + '</small></button>';
+    }).join('') + '</div>';
+  }
+  function testersCard() {
+    var d = st.data, list = d.config.testers || [], t = st.tester, ro = !can(), mine = d.my_ip || '';
+    var listed = list.some(function (x) { return x.ip === mine; });
+    return '<h3 class="go-h" style="font-size:13.5px">IPs that see it in Testing</h3>' +
+      '<p class="go-sub">In Testing only these addresses get the offer: the popup and the cart row by the address they browse from, the emails by the address the bag or the order was made from. Up to 50. Test sends from the Test tab work in every mode.</p>' +
+      (list.length ? '<ul class="go-iplist">' + list.map(function (x, i) {
+        return '<li><code>' + esc(x.ip) + '</code><span class="go-iplab">' + esc(x.label) + '</span>' + (x.ip === mine ? '<span class="go-you">You</span>' : '') +
+          (ro ? '' : '<button type="button" class="btn ghost sm" data-iprm="' + i + '" aria-label="Remove ' + esc(x.ip) + '">Remove</button>') + '</li>';
+      }).join('') + '</ul>' : '<p class="go-sub">No IPs yet.</p>') +
+      (ro ? '' : '<div class="go-ipadd"><input class="go-in" data-k="tip" maxlength="45" placeholder="203.0.113.7 or 2001:db8::1" aria-label="IP address" value="' + esc(t.ip) + '" style="font-family:ui-monospace,monospace">' +
+        '<input class="go-in" data-k="tlab" maxlength="60" placeholder="Label (optional)" aria-label="Label for this IP" value="' + esc(t.label) + '">' +
+        '<button type="button" class="btn ghost sm" data-act="ipadd"' + (st.busy ? ' disabled' : '') + '>Add IP</button></div>' +
+        (mine ? '<div class="go-row" style="margin-top:8px"><button type="button" class="btn ghost sm" data-act="ipmine"' + (st.busy || listed ? ' disabled' : '') + '>' + (listed ? 'Your IP is on the list' : 'Add my current IP') + '</button><span class="go-sub" style="margin:0">The server sees you as <code>' + esc(mine) + '</code></span></div>' : '')) +
+      (t.err ? '<div class="go-err" role="alert">' + esc(t.err) + '</div>' : '');
+  }
+  function modeBanner() {
+    var mode = modeOf(st.data.config), n = (st.data.config.testers || []).length;
+    if (mode === 'testing') return '<div class="go-banner" role="status"><b>Testing: </b>only ' + n + (n === 1 ? ' IP gets' : ' IPs get') + ' gift offers. Every other shopper sees the shop and the emails as if Off.</div>';
+    if (mode === 'off') return '<div class="go-banner off" role="status"><b>Off: </b>nobody gets a gift offer. The emails go out exactly as before.</div>';
+    return '';
+  }
   function dirty() { return st.data && st.cfg && JSON.stringify(st.cfg) !== JSON.stringify(st.data.config); }
 
   function settings() {
@@ -131,9 +189,12 @@
     var places = PLACES.map(function (p) {
       return '<div class="go-place">' + sw(c.places[p[0]], p[1], 'place:' + p[0], ro) + '<small>' + esc(p[2]) + '</small></div>';
     }).join('');
-    return '<div class="card go-card"><div class="go-row" style="justify-content:space-between"><h2 class="go-h">Gift offers</h2>' + sw(c.on, c.on ? 'On' : 'Off', 'on', ro) + '</div>' +
-      '<p class="go-sub">One extra full-size gift at AED 0, chosen by the bag\'s value. Nothing shows anywhere until a range has a product that is in stock with allocation left; with none, every email goes out exactly as it does today.</p>' +
-      '<div class="go-places">' + places + '</div>' +
+    var mode = modeOf(st.data.config);
+    return '<div class="card go-card"><h2 class="go-h">Gift offers: ' + (mode === 'live' ? 'Live' : mode === 'testing' ? 'Testing' : 'Off') + '</h2>' + modes() + modeBanner() +
+      testersCard() + '</div>' +
+      '<div class="card go-card"><h2 class="go-h">Where it shows</h2><p class="go-sub">Each switch saves at once.</p>' +
+      '<div class="go-places">' + places + '</div></div>' +
+      '<div class="card go-card"><p class="go-sub">One extra full-size gift at AED 0, chosen by the bag\'s value. Nothing shows anywhere until a range has a product that is in stock with allocation left; with none, every email goes out exactly as it does today.</p>' +
       '<div class="go-g2">' +
         '<label class="go-f"><span>Emails: hold the gift for (hours)</span><input class="go-in num" type="number" data-k="hold_hours" min="1" max="72" value="' + esc(c.hold_hours) + '"' + (ro ? ' disabled' : '') + '><small>From when each email is sent. Every email gets its own window.</small></label>' +
         '<label class="go-f"><span>Popup: hold the gift for (minutes)</span><input class="go-in num" type="number" data-k="popup_minutes" min="5" max="120" value="' + esc(c.popup_minutes) + '"' + (ro ? ' disabled' : '') + '><small>From the moment she claims it.</small></label>' +
@@ -154,7 +215,7 @@
       }).join('') + '</div>';
     }
     var words = ['1', '2', '3', '4', '5'].map(function (n) { return [n, (t['w' + n + '_h_en'] || ''), 'Button: ' + (t['w' + n + '_c_en'] || '')]; });
-    return '<div class="card go-card"><div class="go-row" style="justify-content:space-between"><h2 class="go-h">Exit popup</h2>' + sw(c.places.popup, c.places.popup ? 'On' : 'Off', 'place:popup', ro) + '</div>' +
+    return '<div class="card go-card"><div class="go-row" style="justify-content:space-between"><h2 class="go-h">Exit popup</h2>' + sw(c.places.popup, c.places.popup ? 'On' : 'Off', 'place:popup', ro) + '</div>' + modeBanner() + '<p class="go-sub">The switch saves at once.</p>' +
       '<p class="go-sub">Off by default. When on, it shows once per visit to a shopper with a bag who moves to leave (the mouse leaving through the top of the window on a computer; leaving and coming back to the tab on a phone), never during Place order, never for you while signed in to this console, and not for 24 hours after "Maybe later". Its script loads only at that moment, only on pages whose visitor has a bag.</p>' +
       '<h3 class="go-h" style="font-size:13.5px">1 · Popup design</h3>' + opts(DESIGNS, 'design', p.design) +
       '<h3 class="go-h" style="font-size:13.5px">2 · Content style (the timer)</h3>' + opts(STYLES, 'style', p.style) +
@@ -382,10 +443,29 @@
     if ((b = e.target.closest('[data-sw]'))) {
       if (b.disabled) return;
       var k = b.getAttribute('data-sw');
-      if (k === 'on') st.cfg.on = !st.cfg.on;
-      else if (k.indexOf('place:') === 0) { var pl = k.slice(6); st.cfg.places[pl] = !st.cfg.places[pl]; }
-      else if (k.indexOf('renabled:') === 0) { var dr = draftOf(k.slice(9)); dr.enabled = !dr.enabled; }
+      if (k.indexOf('place:') === 0) {
+        var pl = k.slice(6), want = !st.data.config.places[pl];
+        run(function () { return api('POST', '/place', { place: pl, on: want }); }, 'Not changed.', function (d) {
+          syncLive(d); say((PLACES.filter(function (x) { return x[0] === pl; })[0] || [0, pl])[1] + (want ? ' is on.' : ' is off.'));
+        });
+        return;
+      }
+      if (k.indexOf('renabled:') === 0) { var dr = draftOf(k.slice(9)); dr.enabled = !dr.enabled; }
       st.msg = ''; schedulePreview(); render(); return;
+    }
+    if ((b = e.target.closest('[data-mode]'))) {
+      var m = b.getAttribute('data-mode');
+      if (b.disabled || m === modeOf(st.data.config)) return;
+      run(function () { return api('POST', '/mode', { mode: m }); }, 'Mode not changed.', function (d) {
+        syncLive(d);
+        say(m === 'live' ? 'Gift offers are Live: every shopper gets them.' : m === 'testing' ? (d && d.added_ip ? 'Gift offers are in Testing. Your IP ' + d.added_ip + ' was added to the Testing list, so you see them; nobody else does.' : 'Gift offers are in Testing: only the IPs on the list get them.') : 'Gift offers are Off: nobody gets them.');
+      });
+      return;
+    }
+    if ((b = e.target.closest('[data-iprm]'))) {
+      var all = (st.data.config.testers || []).slice(), gone = all.splice(Number(b.getAttribute('data-iprm')), 1)[0];
+      saveTesters(all, 'Removed ' + (gone ? gone.ip : '') + ' from the Testing list.');
+      return;
     }
     if ((b = e.target.closest('[data-opt]'))) { st.cfg.popup[b.getAttribute('data-opt')] = b.getAttribute('data-v'); schedulePreview(); render(); return; }
     if ((b = e.target.closest('[data-it]'))) {
@@ -414,6 +494,8 @@
     else if (a === 'refresh') { clearTimeout(st.pv.timer); loadPreview(); render(); }
     else if (a === 'pvpop') { st.pv.place = 'popup'; st.pv.html = ''; st.tab = 'preview'; render(); }
     else if (a === 'send') sendTest();
+    else if (a === 'ipadd') addTester(st.tester.ip, st.tester.label);
+    else if (a === 'ipmine') addTester(st.data.my_ip, 'My device');
     else if (a === 'report') { st.rep.data = null; render(); }
   });
   function onField(e) {
@@ -425,6 +507,8 @@
     if (parts[0] === 'al') { draftOf(parts[1]).items[Number(parts[2])].allocation = v; return; }
     if (parts[0] === 'pv') { st.pv[parts[1]] = v; if (parts[1] === 'range' && v) st.pv.bag = ''; if (e.type === 'change') { st.pv.html = ''; render(); } return; }
     if (parts[0] === 'ts') { st.test[parts[1]] = v; return; }
+    if (k === 'tip') { st.tester.ip = v; return; }
+    if (k === 'tlab') { st.tester.label = v; return; }
     if (parts[0] === 'rp') { st.rep[parts[1]] = v; return; }
     setCfg(k, v);
   }

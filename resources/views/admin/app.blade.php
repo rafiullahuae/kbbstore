@@ -15654,6 +15654,13 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     /* (Lane FG) The free gifts, after the bought lines: AED 0, read-only, with
        the spend range they came from. Absent on every order without gifts. */
     rows += (o.gifts||[]).map(function(g){
+      /* Marketing -> Gift offers: the additional full-size gift, gold and
+         spelled out so the packing team cannot miss it (the owner, 4 Nov). */
+      if (g.offer) return '<tr class="odgift odoffer" style="background:#fff7e6;box-shadow:inset 4px 0 0 #c99a2e"><td style="width:44px">'+odItemThumb(g)+'</td>'+
+        '<td><div style="display:inline-block;margin:0 0 4px;padding:2px 8px;border-radius:99px;background:#c99a2e;color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em">ADDITIONAL GIFT · PACK THIS TOO</div>'+
+        '<div><b style="font-size:12.5px">'+sesc(g.name)+'</b></div><div class="pbrand">'+sesc(g.brand||'')+'</div>'+
+        '<div class="pbrand" style="color:#8a6420;font-weight:700">Gift offer · full size, free</div></td>'+
+        '<td>AED 0</td><td>'+(g.quantity > 1 ? kqBadge(g.quantity) : '× '+g.quantity)+'</td><td><b>AED 0</b></td>'+(editable?'<td></td>':'')+'</tr>';
       return '<tr class="odgift"><td style="width:44px">'+odItemThumb(g)+'</td>'+
         '<td><b style="font-size:12.5px">'+sesc(g.name)+'</b><div class="pbrand">'+sesc(g.brand||'')+'</div>'+
         '<div class="pbrand" style="color:#1f6e4a;font-weight:700">Free gift'+(g.range?' \u00b7 '+sesc(g.range):'')+'</div></td>'+
@@ -15669,8 +15676,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
         '<div id="odAddProductResults" style="display:none;position:absolute;z-index:20;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.08);width:340px;max-height:280px;overflow:auto;margin-top:4px"></div></div>'
       : '<p style="font-size:12px;color:var(--ink-faint);margin-top:12px;display:flex;align-items:center;gap:6px">'+ic('<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1" stroke-linecap="round"/>')+'This order is no longer editable \u2014 it has already shipped or been closed out.</p>';
 
+    var odOffers = (o.gifts||[]).filter(function(g){ return g.offer; });
     return '<div class="odcard" id="odItems">'+odCardHead('Items')+
       '<div class="pad">'+
+      (odOffers.length ? '<div role="note" style="margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#fff7e6;border:1.5px dashed #c99a2e;color:#6b4d12;font-size:13px;line-height:1.45">🎁 <b>This order has an additional gift:</b> '+odOffers.map(function(g){ return '<b>'+sesc(g.name)+'</b> × '+g.quantity; }).join(', ')+'. Pack it with the order.</div>' : '')+
       '<div style="overflow:auto"><table><thead><tr><th></th><th>Item</th><th>Price</th><th>Qty</th><th>Total</th>'+(editable?'<th></th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'+
       addProductBlock+
       (o.shipping_method?'<p style="font-size:12px;color:var(--ink-soft);margin-top:10px">Shipping: '+sesc(o.shipping_method)+'</p>':'')+

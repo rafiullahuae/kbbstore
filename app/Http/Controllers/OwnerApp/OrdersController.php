@@ -360,7 +360,7 @@ final class OrdersController extends Controller
         // purpose (Order::items()), so they are read beside it -- and only for
         // an order that has any: `free_gift_count` 0 costs no query.
         if ((int) ($order->free_gift_count ?? 0) > 0) {
-            $order->load(['gifts:id,order_id,product_id,name,brand,quantity', 'gifts.product:id,image']);
+            $order->load(['gifts:id,order_id,product_id,name,brand,quantity,gift_range_label', 'gifts.product:id,image']);
         }
 
         $refunded = (int) DB::table('refunds')->where('order_id', $order->id)
@@ -419,6 +419,8 @@ final class OrdersController extends Controller
                     'thumb' => self::thumb($i->product?->image),
                 ])->values(),
                 'gifts' => (int) ($order->free_gift_count ?? 0) > 0 ? $order->gifts->map(fn ($i) => [
+                    // Marketing -> Gift offers: the additional gift, drawn apart.
+                    'offer' => (string) ($i->gift_range_label ?? '') === \App\Services\GiftOffers\GiftOffers::LINE_LABEL,
                     'name' => (string) $i->name,
                     'brand' => (string) ($i->brand ?? ''),
                     'qty' => (int) $i->quantity,

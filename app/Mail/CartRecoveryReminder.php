@@ -74,7 +74,7 @@ class CartRecoveryReminder extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: $this->subjectLine);
+        return new Envelope(subject: \App\Services\GiftOffers\GiftOffers::subjectWith($this->subjectLine, $this->giftOffer));
     }
 
     public function content(): Content

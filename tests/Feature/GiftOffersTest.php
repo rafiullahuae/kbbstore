@@ -31,7 +31,7 @@ use Illuminate\Support\Str;
 beforeEach(function () {
     DB::table('free_gift_ranges')->delete();
     app(FreeGifts::class)->compile();
-    gfoFresh();
+    gfoSet([]);
 });
 
 function gfoFresh(): void
@@ -44,7 +44,9 @@ function gfoFresh(): void
 
 function gfoSet(array $config): void
 {
-    app(SettingsService::class)->set(GiftOffers::KEY, $config);
+    // Live unless a test says otherwise: 2.60.640 ships the module in Testing
+    // (the owner's Off / Testing / Live), and these cases are about what Live does.
+    app(SettingsService::class)->set(GiftOffers::KEY, $config + ['mode' => 'live']);
     gfoFresh();
 }
 
@@ -181,7 +183,7 @@ it('puts the Golden ticket at the top of the abandoned-cart email only when a gi
     $before = DB::table('gift_offer_claims')->count();
     gfoSet(['places' => ['cart' => false]]);
     expect(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null))->toBeNull();
-    gfoSet(['on' => false]);
+    gfoSet(['mode' => 'off']);
     expect(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null))->toBeNull();
     gfoSet([]);
     $toner->update(['stock' => 0, 'stock_status' => 'outofstock']);
@@ -651,4 +653,184 @@ it('reports per day, place and range at a flat cost as the rows grow', function 
     };
 
     expect($count(3))->toBe($count(40))->toBe(1);
+});
+
+/*
+|------------------------------------------------------------------------------
+| OFF / TESTING / LIVE (2.60.640, the owner, 4 November: "i need the same
+| TEST / LIVE / OFF function, make sure it's working perfectly")
+|------------------------------------------------------------------------------
+*/
+
+it('reads an old saved row as Off or Testing, never Live by itself, and keeps only real addresses on the list', function () {
+    /*
+     * The defect this guards: a package that turns the gift on for every
+     * customer because a row from 2.60.639 had no `mode`.
+     * MUTATION: make modeOf() default to 'live' -- RED.
+     */
+    expect(GiftOffers::normalise([])['mode'])->toBe('testing')
+        ->and(GiftOffers::normalise(['on' => true])['mode'])->toBe('testing')
+        ->and(GiftOffers::normalise(['on' => false])['mode'])->toBe('off')
+        ->and(GiftOffers::normalise(['mode' => 'live'])['mode'])->toBe('live')
+        ->and(GiftOffers::normalise(['mode' => 'everyone'])['mode'])->toBe('testing')
+        ->and(GiftOffers::normalise(['testers' => [['ip' => '203.0.113.9', 'label' => 'Office'], ['ip' => 'nope'], ['ip' => '203.0.113.9'], 'x']])['testers'])
+        ->toBe([['ip' => '203.0.113.9', 'label' => 'Office']]);
+});
+
+it('gives nothing anywhere when Off: no email box, no claim, no cart row', function () {
+    /*
+     * MUTATION: drop `$c['mode'] !== 'off'` from placeOn() -- the email gets the box. RED.
+     * MUTATION: drop the visibleTo() check in liveClaim() -- the row stays. RED.
+     */
+    gfoRange(100, null, [[gfoProduct('Dokdo Toner'), 'primary', 50]]);
+    $cart = gfoCart([[gfoProduct('Serum', ['price' => 40000]), 1]]);
+    $token = gfoTokenOf(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null));
+    gfoShopper($cart)->get('/gift-offer/c/' . $token);
+    gfoFresh();
+    expect(gfoShopper($cart)->get('/cart/')->getContent())->toContain('data-kgo-row');
+
+    gfoSet(['mode' => 'off']);
+    $before = DB::table('gift_offer_claims')->count();
+    expect(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], $cart->id))->toBeNull()
+        ->and(GiftOffers::forOrder(gfoPendingOrder(), 1))->toBeNull()
+        ->and(DB::table('gift_offer_claims')->count())->toBe($before)
+        ->and(gfoShopper($cart)->get('/cart/')->getContent())->not->toContain('data-kgo-row');
+
+    // A link sent while it was on says the gift has ended.
+    gfoSet(['mode' => 'live']);
+    $later = gfoTokenOf(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null));
+    gfoSet(['mode' => 'off']);
+    expect(gfoShopper()->get('/gift-offer/c/' . $later)->headers->get('Location'))->toEndWith('/cart?gift=ended');
+
+    // A test send is a test send in every mode.
+    expect(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null, true))->not->toBeNull();
+});
+
+it('in Testing gives the gift only to listed addresses: emails by the cart\'s or order\'s address, the shop by the browser\'s', function () {
+    /*
+     * The defect: Testing that leaks the gift to real customers, or one the
+     * owner cannot see himself.
+     * MUTATION: drop the Testing check in issue() -- a customer's email gets
+     * the box. RED. Drop testerIp() from visibleTo() -- the row shows for
+     * anybody. RED.
+     */
+    gfoRange(100, null, [[gfoProduct('Dokdo Toner'), 'primary', 50]]);
+    gfoSet(['mode' => 'testing', 'testers' => [['ip' => '203.0.113.9', 'label' => 'Office']]]);
+    $offers = app(GiftOffers::class);
+
+    $customer = gfoCart([[gfoProduct('Serum A', ['price' => 40000]), 1]]);
+    $customer->forceFill(['ct_ip' => '198.51.100.20'])->save();
+    $tester = gfoCart([[gfoProduct('Serum B', ['price' => 40000]), 1]]);
+    $tester->forceFill(['ct_ip' => '203.0.113.9'])->save();
+    expect(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], $customer->id))->toBeNull()
+        ->and(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], $tester->id))->not->toBeNull()
+        ->and(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null))->toBeNull();
+
+    $theirs = gfoPendingOrder();
+    $theirs->forceFill(['ip_address' => '198.51.100.20'])->save();
+    $ours = gfoPendingOrder();
+    $ours->forceFill(['ip_address' => '203.0.113.9'])->save();
+    expect(GiftOffers::forOrder($theirs, 1))->toBeNull()->and(GiftOffers::forOrder($ours, 1))->not->toBeNull();
+
+    // The shop: by the request's own address (tests run as 127.0.0.1).
+    $req = \Illuminate\Http\Request::create('/cart/', 'GET', [], [], [], ['REMOTE_ADDR' => '203.0.113.9']);
+    expect($offers->visibleTo($req))->toBeTrue()
+        ->and($offers->visibleTo(\Illuminate\Http\Request::create('/cart/', 'GET', [], [], [], ['REMOTE_ADDR' => '198.51.100.20'])))->toBeFalse()
+        ->and($offers->visibleTo(null))->toBeFalse();
+
+    // A claim opened from an address not on the list ends; from a listed one it works.
+    gfoSet(['mode' => 'live']);
+    $token = gfoTokenOf(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null));
+    gfoSet(['mode' => 'testing', 'testers' => [['ip' => '203.0.113.9', 'label' => '']]]);
+    expect(gfoShopper()->get('/gift-offer/c/' . $token)->headers->get('Location'))->toEndWith('/cart?gift=ended');
+    gfoSet(['mode' => 'testing', 'testers' => [['ip' => '127.0.0.1', 'label' => '']]]);
+    expect(gfoShopper()->get('/gift-offer/c/' . $token)->headers->get('Location'))->toEndWith('/cart');
+});
+
+it('switches mode, the Testing list and each place at once, and the form\'s Save never moves them', function () {
+    /*
+     * The owner, 4 November: "the GIFT OFFER page on/off is not working". The
+     * switch only changed a draft that waited for a Save at the foot of a long
+     * form. Now each saves itself.
+     * MUTATION: let settings() take `mode`/`places` from the posted draft --
+     * the stale draft turns the place back on. RED.
+     */
+    $admin = gfoAdmin();
+    $api = fn () => test()->actingAs($admin, 'admin');
+
+    $res = $api()->postJson('/admin-api/gift-offers/mode', ['mode' => 'testing'])->assertOk();
+    expect($res->json('config.mode'))->toBe('testing')->and($res->json('added_ip'))->toBe('127.0.0.1')
+        ->and($res->json('config.testers'))->toBe([['ip' => '127.0.0.1', 'label' => 'My device']])->and($res->json('my_ip'))->toBe('127.0.0.1');
+
+    $api()->postJson('/admin-api/gift-offers/mode', ['mode' => 'everyone'])->assertStatus(422);
+    $api()->postJson('/admin-api/gift-offers/testers', ['testers' => [['ip' => 'not-an-ip']]])->assertStatus(422)->assertJsonFragment(['not-an-ip is not an IP address.']);
+    $api()->postJson('/admin-api/gift-offers/testers', ['testers' => [['ip' => '203.0.113.9', 'label' => 'Office']]])->assertOk();
+    $api()->postJson('/admin-api/gift-offers/place', ['place' => 'reminder_2', 'on' => false])->assertOk();
+    $api()->postJson('/admin-api/gift-offers/mode', ['mode' => 'live'])->assertOk();
+
+    // A draft opened before all that, saved after.
+    $stale = GiftOffers::normalise(['mode' => 'off', 'testers' => [], 'hold_hours' => 9]);
+    $cfg = $api()->postJson('/admin-api/gift-offers/settings', ['config' => $stale])->assertOk()->json('config');
+    expect($cfg['mode'])->toBe('live')->and($cfg['testers'])->toBe([['ip' => '203.0.113.9', 'label' => 'Office']])
+        ->and($cfg['places']['reminder_2'])->toBeFalse()->and($cfg['hold_hours'])->toBe(9);
+
+    // Every one of them is a manage write: a support login is refused.
+    foreach (['mode' => ['mode' => 'off'], 'testers' => ['testers' => []], 'place' => ['place' => 'cart', 'on' => false]] as $path => $body) {
+        test()->actingAs(gfoAdmin('support'), 'admin')->postJson('/admin-api/gift-offers/' . $path, $body)->assertForbidden();
+    }
+});
+
+it('puts "Free gift" at the front of the subject only when the email carries the gift', function () {
+    /*
+     * The owner, 4 November: "mention Free Gift in the title some how very
+     * nicely and short".
+     * MUTATION: return $subject unchanged from GiftOffers::subjectWith() -- RED.
+     */
+    gfoRange(100, null, [[gfoProduct('Dokdo Toner'), 'primary', 50]]);
+    $offer = GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null, true);
+    $with = new \App\Mail\CartRecoveryReminder('Your basket is waiting', 'Hi', [['name' => 'Glow Serum', 'slug' => 'glow-serum', 'quantity' => 1, 'unit_price' => 40000]], 'https://example.test/cart/', 'https://example.test/u', $offer);
+    $without = new \App\Mail\CartRecoveryReminder('Your basket is waiting', 'Hi', [['name' => 'Glow Serum', 'slug' => 'glow-serum', 'quantity' => 1, 'unit_price' => 40000]], 'https://example.test/cart/', 'https://example.test/u', null);
+
+    expect($with->envelope()->subject)->toBe('🎁 A free gift inside · Your basket is waiting')
+        ->and($without->envelope()->subject)->toBe('Your basket is waiting');
+
+    $order = gfoPendingOrder();
+    $plain = (new \App\Mail\OrderPaymentReminder($order, 1))->envelope()->subject;
+    expect((new \App\Mail\OrderPaymentReminder($order, 1, GiftOffers::forOrder($order, 1, true)))->envelope()->subject)->toBe('🎁 A free gift inside · ' . $plain);
+
+    app(SettingsService::class)->set(\App\Support\Locale::SETTING_ENABLED, '1');
+    gfoFresh();
+    $ar = \App\Support\CustomerLocale::render('ar', fn () => GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null, true));
+    expect(GiftOffers::subjectWith('x', $ar))->toBe('🎁 هدية مجانية بانتظاركِ · x');
+});
+
+it('marks the additional gift on the admin order screen so packing cannot miss it', function () {
+    /*
+     * MUTATION: drop 'offer' from AdminOrderController's gift rows, or the
+     * gold row and the banner from the Items card -- RED.
+     */
+    $order = gfoPendingOrder();
+    OrderItem::create(['order_id' => $order->id, 'name' => 'Dokdo Toner 200ml', 'quantity' => 1, 'unit_price' => 0, 'subtotal' => 0, 'total' => 0, 'is_gift' => true, 'gift_range_label' => GiftOffers::LINE_LABEL]);
+    OrderItem::create(['order_id' => $order->id, 'name' => 'Tea Tree Mask', 'quantity' => 2, 'unit_price' => 0, 'subtotal' => 0, 'total' => 0, 'is_gift' => true, 'gift_range_label' => 'AED 100+']);
+    $order->forceFill(['free_gift_count' => 3])->save();
+
+    $gifts = test()->actingAs(gfoAdmin(), 'admin')->getJson('/admin-api/orders/' . $order->id . '/detail')->assertOk()->json('gifts');
+    expect(collect($gifts)->where('offer', true)->pluck('name')->all())->toBe(['Dokdo Toner 200ml'])
+        ->and(collect($gifts)->where('offer', false)->pluck('name')->all())->toBe(['Tea Tree Mask']);
+
+    $blade = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
+    expect($blade)->toContain('ADDITIONAL GIFT · PACK THIS TOO')->toContain('This order has an additional gift:');
+});
+
+it('draws the screen again when the owner comes back to it, without a refresh', function () {
+    /*
+     * The owner, 4 November: "when i go to any other page, and come back to
+     * gift offer page. it's showing empty, on refresh it fixed." Re-entry
+     * cleared the draft but kept the old data, so settings() read a null
+     * config and threw; the page stayed blank. Chromium, four round trips
+     * (Free gifts, Orders, Newsletter, Dashboard) now draw it every time.
+     * MUTATION: drop `st.data = null;` from the screen's go() -- RED.
+     */
+    $screen = (string) file_get_contents(resource_path('views/admin/partials/gift-offers-screen.blade.php'));
+    expect($screen)->toContain("st.drafts = {}; st.pick = null; st.msg = ''; st.data = null; st.cfg = null;");
 });

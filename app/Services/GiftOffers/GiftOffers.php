@@ -70,6 +70,20 @@ final class GiftOffers
     /** Where an offer is made. `test` is a test send's claim: never allocation, never reports. */
     public const PLACES = ['cart', 'reminder_1', 'reminder_2', 'popup'];
 
+    /**
+     * Who sees gift offers (the owner, 4 November: "i need the same TEST / LIVE
+     * / OFF function" as Free gifts). off: nobody. testing: only the IPs on this
+     * module's own `testers` list -- on the shop by the request's address, in
+     * the emails by the address the cart (carts.ct_ip) or the order
+     * (orders.ip_address) was made from. live: everyone. A test send is a test
+     * send in every mode. Ships in Testing: nothing reaches a customer until
+     * the owner picks Live.
+     */
+    public const MODES = ['off', 'testing', 'live'];
+
+    /** At most this many IPs on the Testing list (Free gifts' number). */
+    public const MAX_TESTERS = 50;
+
     /** The owner: emails ON (approved 3 November), the popup built but OFF. */
     public const PLACE_DEFAULTS = ['cart' => true, 'reminder_1' => true, 'reminder_2' => true, 'popup' => false];
 
@@ -104,6 +118,10 @@ final class GiftOffers
      */
     public const TEXTS = [
         // The email's Golden ticket (design A of abandoned-email-designs.html).
+        // The start of the subject line whenever the email carries the gift
+        // (the owner, 4 November: "mention Free Gift in the title ... very
+        // nicely and short"). Blank in the admin = the default.
+        'email_subject' => ['🎁 A free gift inside', '🎁 هدية مجانية بانتظاركِ'],
         'email_eyebrow' => ['ADDITIONAL GIFT FOR YOU', 'هدية إضافية لكِ'],
         'email_title' => ['Wait… this is for you', 'لحظة… هذه لكِ'],
         'email_body_cart' => ["Your bag is still here, and we've added a full-size gift to go with it. Free, just for you.", 'حقيبتكِ ما زالت هنا، وأضفنا إليها هدية بالحجم الكامل. مجاناً، لكِ وحدكِ.'],
@@ -220,7 +238,8 @@ final class GiftOffers
         $pick = static fn (mixed $v, array $opts, string $d): string => in_array($v, $opts, true) ? $v : $d;
 
         return [
-            'on' => (bool) ($saved['on'] ?? true),
+            'mode' => self::modeOf($saved),
+            'testers' => self::testersOf($saved),
             'places' => $places,
             'hold_hours' => self::clamp($saved['hold_hours'] ?? null, self::HOLD),
             'popup_minutes' => self::clamp($saved['popup_minutes'] ?? null, self::MINUTES),
@@ -243,12 +262,81 @@ final class GiftOffers
         return is_numeric($v) ? max($min, min($max, (int) $v)) : $default;
     }
 
-    /** Is this place switched on (master switch AND its own)? */
+    /**
+     * The saved mode. A row from before modes (2.60.639) carried `on`: false
+     * stays Off; anything else becomes Testing, never Live by itself.
+     */
+    public static function modeOf(array $saved): string
+    {
+        if (in_array($saved['mode'] ?? null, self::MODES, true)) {
+            return $saved['mode'];
+        }
+
+        return array_key_exists('on', $saved) && $saved['on'] === false ? 'off' : 'testing';
+    }
+
+    /** The Testing list: valid addresses only, no repeats, at most MAX_TESTERS, labels trimmed. */
+    public static function testersOf(array $saved): array
+    {
+        $out = [];
+        $seen = [];
+
+        foreach (is_array($saved['testers'] ?? null) ? $saved['testers'] : [] as $t) {
+            $ip = is_array($t) ? trim((string) ($t['ip'] ?? '')) : '';
+            $bin = $ip === '' ? null : \App\Support\IpRange::pack($ip);
+
+            if ($bin === null || isset($seen[$bin]) || count($out) >= self::MAX_TESTERS) {
+                continue;
+            }
+
+            $seen[$bin] = true;
+            $label = is_string($t['label'] ?? null) ? trim(mb_substr(str_replace(["\r", "\n"], ' ', $t['label']), 0, 60)) : '';
+            $out[] = ['ip' => $ip, 'label' => $label];
+        }
+
+        return $out;
+    }
+
+    /** Is this address on the Testing list? Compared packed, so "::1" and "0:0:0:0:0:0:0:1" are one. */
+    public function testerIp(?string $ip): bool
+    {
+        $bin = $ip === null || trim($ip) === '' ? null : \App\Support\IpRange::pack(trim($ip));
+
+        if ($bin === null) {
+            return false;
+        }
+
+        foreach ($this->config()['testers'] as $t) {
+            if (\App\Support\IpRange::pack($t['ip']) === $bin) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Does this shop request see gift offers at all? Live: yes. Testing: only
+     * from an address on the list ($request->ip(), the firewall's own answer;
+     * no proxy header is read). Off: no. No query: settings only.
+     */
+    public function visibleTo(?\Illuminate\Http\Request $request): bool
+    {
+        $mode = $this->config()['mode'];
+
+        if ($mode !== 'testing') {
+            return $mode === 'live';
+        }
+
+        return $request !== null && $this->testerIp((string) $request->ip());
+    }
+
+    /** Is this place switched on (not Off, AND its own switch)? Who sees it is visibleTo()'s. */
     public function placeOn(string $place): bool
     {
         $c = $this->config();
 
-        return $c['on'] && (bool) ($c['places'][$place] ?? false);
+        return $c['mode'] !== 'off' && (bool) ($c['places'][$place] ?? false);
     }
 
     /** A text in the language being drawn (or the one named), placeholders filled. */
@@ -455,6 +543,12 @@ final class GiftOffers
             return null;
         }
 
+        // Testing: an email carries the gift only for a cart or an order made
+        // from an address on the Testing list. One query, in Testing only.
+        if (! $test && $this->config()['mode'] === 'testing' && ! $this->testerIp($this->emailIp($ctx))) {
+            return null;
+        }
+
         $offer = isset($ctx['range_id']) ? (($r = $this->rangeById((int) $ctx['range_id'])) ? $this->resolve($r) : null) : $this->offerFor($fils);
 
         if ($offer === null) {
@@ -496,6 +590,28 @@ final class GiftOffers
         }
 
         return $this->emailView($offer, $token, $place, $expires);
+    }
+
+    /** The address an email's cart or order was made from (Testing's check), or null. */
+    private function emailIp(array $ctx): ?string
+    {
+        $order = $ctx['order'] ?? null;
+
+        if ($order instanceof Order) {
+            return $order->ip_address !== null ? (string) $order->ip_address : null;
+        }
+
+        if (! empty($ctx['cart_id'])) {
+            try {
+                $ip = DB::table('carts')->where('id', (int) $ctx['cart_id'])->value('ct_ip');
+            } catch (\Throwable) {
+                $ip = null;
+            }
+
+            return $ip !== null ? (string) $ip : null;
+        }
+
+        return null;
     }
 
     /**
@@ -569,6 +685,7 @@ final class GiftOffers
             'img' => \App\Services\Mail\Kit\MailKit::image($image !== '' ? $image : null, 200, false),
             'name' => $name,
             'brand' => (string) ($p->brand?->t('name') ?? $p->brand?->name ?? ''),
+            'subject_tag' => $this->text('email_subject'),
             'eyebrow' => $this->text('email_eyebrow'),
             'title' => $this->text('email_title'),
             'body' => $this->text($order ? 'email_body_order' : 'email_body_cart'),
@@ -581,6 +698,19 @@ final class GiftOffers
             'range_id' => (int) $offer['range']['id'],
             'place' => $place,
         ];
+    }
+
+    /**
+     * The subject with the gift's tag in front ("🎁 A free gift inside · Your
+     * basket is waiting"), only when the email carries the gift; otherwise the
+     * subject exactly as it was. The tag was resolved in the email's language
+     * when the offer was issued.
+     */
+    public static function subjectWith(string $subject, ?array $offer): string
+    {
+        $tag = trim((string) ($offer['subject_tag'] ?? ''));
+
+        return $offer === null || $tag === '' ? $subject : $tag . ' · ' . $subject;
     }
 
     /** "4:15 AM tomorrow", in the shop's time, in the language being drawn. */
@@ -621,7 +751,10 @@ final class GiftOffers
         $order = $orderPlace && $claim->order_id ? Order::query()->find($claim->order_id) : null;
         $endedUrl = $order !== null ? $this->payUrl($order, 'ended') : $cartUrl . '?gift=ended';
 
-        $over = $claim->status === 'used' || $claim->status === 'ended' || now()->greaterThanOrEqualTo(CarbonImmutable::parse($claim->expires_at));
+        $over = $claim->status === 'used' || $claim->status === 'ended' || now()->greaterThanOrEqualTo(CarbonImmutable::parse($claim->expires_at))
+            // Off, or Testing and this browser is not on the list: the same
+            // "This gift has ended" as any other link that gives nothing.
+            || (! $claim->is_test && ! $this->visibleTo($request));
 
         if ($over || ($orderPlace && $order === null)) {
             return [$endedUrl, 'ended'];
@@ -714,6 +847,12 @@ final class GiftOffers
         }
 
         if ($claim !== null && ($claim->status !== 'claimed' || (int) $claim->cart_id !== (int) $cart->id || now()->greaterThanOrEqualTo(CarbonImmutable::parse($claim->expires_at)))) {
+            $claim = null;
+        }
+
+        // Off, or Testing and this request is not on the list: no row, and
+        // Place order leaves the gift out.
+        if ($claim !== null && ! $claim->is_test && ! $this->visibleTo($request)) {
             $claim = null;
         }
 
@@ -915,6 +1054,14 @@ final class GiftOffers
      */
     public function orderPaid(Order $order): void
     {
+        // Off gives nothing; Testing only to an order made from a listed address.
+        // The request here may be a gateway's callback, so it is never asked.
+        $mode = $this->config()['mode'];
+
+        if ($mode === 'off' || ($mode === 'testing' && ! $this->testerIp($order->ip_address !== null ? (string) $order->ip_address : null))) {
+            return;
+        }
+
         try {
             $claims = DB::table('gift_offer_claims')
                 ->where('order_id', $order->id)
@@ -971,7 +1118,13 @@ final class GiftOffers
 
         $request = app()->bound('request') ? request() : null;
 
-        if ($request !== null && $request->hasSession() && $request->session()->has(\Illuminate\Support\Facades\Auth::guard('admin')->getName())) {
+        if (! $this->visibleTo($request)) {
+            return null;
+        }
+
+        // Signed in to the console: never in Live. In Testing the owner is the
+        // one testing, so a listed address sees it signed in or not.
+        if ($this->config()['mode'] === 'live' && $request !== null && $request->hasSession() && $request->session()->has(\Illuminate\Support\Facades\Auth::guard('admin')->getName())) {
             return null;
         }
 
@@ -1038,7 +1191,7 @@ final class GiftOffers
      */
     public function claimFromPopup(\Illuminate\Http\Request $request): ?string
     {
-        if (! $this->placeOn('popup')) {
+        if (! $this->placeOn('popup') || ! $this->visibleTo($request)) {
             return null;
         }
 

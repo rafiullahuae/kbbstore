@@ -53,9 +53,9 @@ class OrderPaymentReminder extends OrderMail
     {
         $replace = ['store' => $this->brandName(), 'number' => $this->orderNumber()];
 
-        return new Envelope(subject: $this->stage === 2
+        return new Envelope(subject: \App\Services\GiftOffers\GiftOffers::subjectWith($this->stage === 2
             ? __('email.reminder.second_subject', $replace)
-            : __('email.reminder.first_subject', $replace));
+            : __('email.reminder.first_subject', $replace), $this->giftOffer));
     }
 
     public function content(): Content

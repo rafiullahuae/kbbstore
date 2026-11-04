@@ -78,3 +78,31 @@ it('draws the gifts in an always-open box under Products in the owner app', func
         ->and($gifts)->toBeLessThan(strpos($js, '<h4 class="sh">Payment', $products))
         ->and($js)->not->toContain('<details class="card gifts"');
 });
+
+it('draws a gift offer\'s additional gift apart, gold, above Products, and leaves it out of the Free gifts box', function () {
+    /*
+     * The owner, 4 November: "when user placed order via gift offer with
+     * additional gift, the owner app and order details should have that
+     * product listed prominent so the inventory team can see". It used to sit
+     * inside "Free gifts" looking exactly like a sheet mask.
+     * MUTATION: drop 'offer' from OrdersController::show()'s gift rows, or
+     * draw `o.gifts` in the Free gifts box again -- RED.
+     */
+    $order = oagOrder(2);
+    OrderItem::create(['order_id' => $order->id, 'name' => 'Dokdo Toner 200ml', 'brand' => 'Round Lab', 'quantity' => 1, 'unit_price' => 0, 'subtotal' => 0, 'total' => 0,
+        'is_gift' => true, 'gift_range_label' => \App\Services\GiftOffers\GiftOffers::LINE_LABEL]);
+    $order->forceFill(['free_gift_count' => 3])->save();
+    [$c] = OA::enrol($this);
+
+    $gifts = OA::get($this, 'orders/' . $order->id, $c)->assertOk()->json('order.gifts');
+    $offer = array_values(array_filter($gifts, static fn ($g) => $g['offer']));
+
+    expect($gifts)->toHaveCount(3)->and($offer)->toHaveCount(1)->and($offer[0]['name'])->toBe('Dokdo Toner 200ml');
+
+    $js = (string) file_get_contents(resource_path('js/owner-app/orders.js'));
+    $css = (string) file_get_contents(resource_path('css/owner-app/owner-app.css'));
+    expect($js)->toContain('(o.gifts || []).filter((g) => g.offer)')->toContain('freeGifts.map(')
+        ->and(strpos($js, 'class="card goffer"'))->toBeLessThan(strpos($js, '<h4 class="sh">Products'))
+        ->and($js)->toContain('Additional gift · pack this too')
+        ->and($css)->toContain('.card.goffer {');
+});

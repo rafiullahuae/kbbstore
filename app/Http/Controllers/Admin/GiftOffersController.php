@@ -65,7 +65,73 @@ class GiftOffersController extends Controller
             'config.texts.*' => ['nullable', 'string', 'max:' . GiftOffers::TEXT_MAX],
         ]);
 
-        $this->offers->saveConfig((array) $request->input('config'));
+        // Mode, the Testing list and the place switches save on their own, at
+        // once (mode(), testers(), place()); the form's Save never moves them,
+        // so a draft opened before a switch cannot put it back.
+        $saved = $this->offers->freshConfig();
+        $config = (array) $request->input('config');
+        $config['mode'] = $saved['mode'];
+        $config['testers'] = $saved['testers'];
+        $config['places'] = $saved['places'];
+        $this->offers->saveConfig($config);
+
+        return response()->json($this->payload());
+    }
+
+    /**
+     * POST mode {mode}: Off / Testing / Live, saved at once (Free gifts'
+     * switch). Testing with nobody on the list puts the owner's own address
+     * on it and answers added_ip, so the click does what it says.
+     */
+    public function mode(Request $request): JsonResponse
+    {
+        $this->fresh();
+        $data = $request->validate(['mode' => ['required', 'string', Rule::in(GiftOffers::MODES)]]);
+        $config = $this->offers->freshConfig();
+        $config['mode'] = $data['mode'];
+        $added = null;
+
+        if ($data['mode'] === 'testing' && $config['testers'] === [] && ($ip = (string) $request->ip()) !== '' && \App\Support\IpRange::pack($ip) !== null) {
+            $config['testers'][] = ['ip' => $ip, 'label' => 'My device'];
+            $added = $ip;
+        }
+
+        $this->offers->saveConfig($config);
+
+        return response()->json($this->payload() + ($added !== null ? ['added_ip' => $added] : []));
+    }
+
+    /** POST testers {testers:[{ip,label}]}: the whole Testing list. An address that is not one is refused, not dropped. */
+    public function testers(Request $request): JsonResponse
+    {
+        $this->fresh();
+        $request->validate([
+            'testers' => ['present', 'array', 'max:' . GiftOffers::MAX_TESTERS],
+            'testers.*.ip' => ['required', 'string', 'max:45', function ($attr, $value, $fail) {
+                if (\App\Support\IpRange::pack(trim((string) $value)) === null) {
+                    $fail(trim((string) $value) . ' is not an IP address.');
+                }
+            }],
+            'testers.*.label' => ['nullable', 'string', 'max:60'],
+        ]);
+        $config = $this->offers->freshConfig();
+        $config['testers'] = (array) $request->input('testers', []);
+        $this->offers->saveConfig($config);
+
+        return response()->json($this->payload());
+    }
+
+    /** POST place {place, on}: one place's switch, saved at once. */
+    public function place(Request $request): JsonResponse
+    {
+        $this->fresh();
+        $data = $request->validate([
+            'place' => ['required', 'string', Rule::in(GiftOffers::PLACES)],
+            'on' => ['required', 'boolean'],
+        ]);
+        $config = $this->offers->freshConfig();
+        $config['places'][$data['place']] = (bool) $data['on'];
+        $this->offers->saveConfig($config);
 
         return response()->json($this->payload());
     }
@@ -384,6 +450,7 @@ class GiftOffersController extends Controller
                 'hold' => GiftOffers::HOLD, 'minutes' => GiftOffers::MINUTES, 'max_items' => GiftOffers::MAX_ITEMS, 'max_allocation' => GiftOffers::MAX_ALLOCATION,
             ],
             'live_clock' => GiftClock::available(),
+            'my_ip' => (string) (request()->ip() ?? ''),
             'can_manage' => ($admin = auth('admin')->user()) instanceof \App\Models\AdminUser
                 && \App\Support\AdminRoles::can($admin, 'giftoffers.manage'),
             'ranges' => $ranges->map(function ($r) use ($byRange, $products, $variants) {

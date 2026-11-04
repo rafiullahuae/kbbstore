@@ -230,6 +230,9 @@ class AdminOrderController extends Controller
                         'sku' => $i->sku,
                         'quantity' => (int) $i->quantity,
                         'range' => (string) ($i->gift_range_label ?? ''),
+                        // Marketing -> Gift offers: the additional full-size gift
+                        // the shopper claimed, drawn apart so it gets packed.
+                        'offer' => (string) ($i->gift_range_label ?? '') === \App\Services\GiftOffers\GiftOffers::LINE_LABEL,
                         'image' => ImageVariants::variantUrl((string) ($images[(int) ($i->product_variant_id ?? 0)] ?? $i->product?->image ?? ''), 200),
                     ])->values();
                 })()

@@ -204,6 +204,12 @@ button.pill { cursor: pointer; }
 .qb { position: absolute; top: -7px; inset-inline-end: -7px; min-width: 24px; height: 24px; padding: 0 6px; border-radius: var(--r-pill);
   display: grid; place-items: center; background: #E5383B; color: #fff; font: 800 12px/1 var(--font); font-variant-numeric: tabular-nums;
   white-space: nowrap; box-shadow: 0 0 0 2px var(--surface), 0 3px 8px -2px rgba(229,56,59,.55); }
+/* Marketing -> Gift offers: the additional full-size gift on an order, gold
+   and above Products so the packing team cannot miss it (the owner, 4 Nov). */
+.card.goffer { box-shadow: none; border: 2px dashed #C99A2E; background: #FFF7E6; }
+.card.goffer .sh { color: #8A6420; }
+.card.goffer .rm small { color: #6B4D12; }
+.gofree { display: inline-block; font: 800 11px/1 var(--font); letter-spacing: .05em; padding: 5px 8px; border-radius: var(--r-pill); background: #C99A2E; color: #fff; }
 .gfree { display: inline-block; font: 700 11px/1 var(--font); letter-spacing: .04em; padding: 5px 8px; border-radius: var(--r-pill); background: var(--good); color: #fff; }
 /* Lane OLG: EN / AR, the language an order was placed in. Small enough to sit
    inside a row's one-line .rm small without making the line any taller. */
