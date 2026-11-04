@@ -172,6 +172,19 @@ final class OrderPaymentEdit
         }
 
         $paid = (bool) ($in['paid'] ?? false);
+
+        /*
+         * Processing means "paid" for every method but cash on delivery: the
+         * payment panel, the receipt and the revenue figures all read it that
+         * way. So an unpaid card / Tabby / Tamara order does not move there
+         * from here -- record the payment (Paid) or leave the status alone.
+         * Found in Chromium: the move turned an unpaid Tabby order into
+         * "Paid with Tabby".
+         */
+        if ($to !== null && $method !== 'cod' && ! $paid) {
+            return ['ok' => false, 'message' => 'Only a Cash on delivery order, or one you mark as paid, moves to Processing here.'];
+        }
+
         $was = trim((string) $order->payment_method);
         $wasTitle = $order->paymentLabel();
         $title = (string) $methods[$method]['title'];
@@ -182,7 +195,9 @@ final class OrderPaymentEdit
         $newCod = ($method === 'cod' && ($in['cod_fee'] ?? true)) ? $this->codFeeSetting() : 0;
         $newFee = $gift + $other + $newCod;
 
-        if ($method === $was && $newFee === (int) $order->fee_total && ! $paid && $to === null) {
+        $newRef = $method !== 'cod' ? trim((string) ($in['reference'] ?? '')) : '';
+
+        if ($method === $was && $newFee === (int) $order->fee_total && ! $paid && $to === null && ($newRef === '' || $newRef === (string) $order->transaction_id)) {
             return ['ok' => false, 'message' => 'Nothing to change: the order already has that method and fee.'];
         }
 
@@ -200,11 +215,21 @@ final class OrderPaymentEdit
                 return ['ok' => false, 'message' => $why ?? 'That order could not be updated.'];
             }
 
-            $locked->forceFill([
-                'payment_method' => $method,
-                'payment_method_title' => $title,
-                'fee_total' => $newFee,
-            ])->save();
+            /*
+             * The owner, 4 November: "if i select card payment, then the system
+             * should ask the payment id (optional), same for tabby and tamara."
+             * Not paid yet: the ID he typed is kept on the order as its
+             * transaction ID. Paid: ManualPayment::record() writes it, as Mark
+             * as paid always has. Cash on delivery has none.
+             */
+            $ref = trim((string) ($in['reference'] ?? ''));
+            $fill = ['payment_method' => $method, 'payment_method_title' => $title, 'fee_total' => $newFee];
+
+            if (! $paid && $method !== 'cod' && $ref !== '') {
+                $fill['transaction_id'] = $ref;
+            }
+
+            $locked->forceFill($fill)->save();
             $this->recalc->recalc($locked);
             $locked->refresh();
 
@@ -216,6 +241,9 @@ final class OrderPaymentEdit
                 $parts[] = $newCod > $oldCod
                     ? sprintf('COD fee %s added', Money::plain($newCod - $oldCod, Money::minorExponent()))
                     : sprintf('COD fee %s removed', Money::plain($oldCod - $newCod, Money::minorExponent()));
+            }
+            if (! $paid && $method !== 'cod' && $ref !== '') {
+                $parts[] = 'payment ID ' . $ref;
             }
             if ((int) $locked->total !== $totalBefore) {
                 $parts[] = sprintf('total %s → %s', Money::plain($totalBefore, Money::minorExponent()), Money::plain((int) $locked->total, Money::minorExponent()));

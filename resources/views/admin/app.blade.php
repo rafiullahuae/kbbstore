@@ -16406,13 +16406,13 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
         '<div class="odfld"><label>Payment</label><div class="row" style="gap:14px;font-size:13px">'+
           '<label class="row" style="gap:6px;align-items:center"><input type="radio" name="odPmPaid" value="0" checked> Not paid yet</label>'+
           '<label class="row" style="gap:6px;align-items:center"><input type="radio" name="odPmPaid" value="1"> Paid — record it now</label></div></div>'+
+        '<div class="odfld" id="odPmRefBox"><label for="odPmRef">Payment ID / transaction ID <span class="odm-opt">optional</span></label>'+
+          '<input class="odinp" id="odPmRef" maxlength="191" autocomplete="off" placeholder="The ID from the card, Tabby or Tamara dashboard"></div>'+
         '<div id="odPmPaidBox" style="display:none">'+
-          '<div class="odfld"><label for="odPmRef">Payment reference / transaction ID <span class="odm-opt">optional</span></label>'+
-            '<input class="odinp" id="odPmRef" maxlength="191" autocomplete="off" placeholder="The ID from your gateway’s dashboard"></div>'+
           '<div class="odfld"><label for="odPmDate">Date paid</label>'+
             '<input class="odinp" id="odPmDate" type="datetime-local" value="'+odShopNowLocal(o)+'" max="'+odShopNowLocal(o)+'"></div>'+
         '</div>'+
-        (unpaid ? '<label class="row" style="gap:8px;align-items:center;font-size:13px;margin:6px 0"><input type="checkbox" id="odPmProc"> Move the order from <b>'+sesc(odStatusLabel(o.status))+'</b> to <b>Processing</b></label>'+
+        (unpaid ? '<label class="row" id="odPmProcRow" style="gap:8px;align-items:center;font-size:13px;margin:6px 0"><input type="checkbox" id="odPmProc"> Move the order from <b>'+sesc(odStatusLabel(o.status))+'</b> to <b>Processing</b></label>'+
           '<label class="row" id="odPmNotifyRow" style="gap:8px;align-items:center;font-size:13px;margin:0 0 6px 22px"><input type="checkbox" id="odPmNotify" checked> Email the customer</label>' : '')+
         '<p class="odm-err" id="odPmErr" role="alert"></p>'+
         '<div class="odm-acts"><button type="button" class="btn ghost" data-odx>Cancel</button>'+
@@ -16420,7 +16420,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
       '</div>');
     var sel = document.getElementById('odPmMethod'), fee = document.getElementById('odPmFee'), feeRow = document.getElementById('odPmFeeRow');
     var feeTxt = document.getElementById('odPmFeeTxt'), refused = document.getElementById('odPmRefused');
-    var paidBox = document.getElementById('odPmPaidBox'), proc = document.getElementById('odPmProc'), notifyRow = document.getElementById('odPmNotifyRow');
+    var paidBox = document.getElementById('odPmPaidBox'), proc = document.getElementById('odPmProc'), procRow = document.getElementById('odPmProcRow'), notifyRow = document.getElementById('odPmNotifyRow');
     var go = document.getElementById('odPmGo'), err = document.getElementById('odPmErr');
     var paid = function(){ var r = document.querySelector('input[name="odPmPaid"]:checked'); return !!r && r.value === '1'; };
     var sync = function(){
@@ -16431,18 +16431,24 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
         : 'Add the COD fee (AED '+pe.cod_fee_aed+')';
       refused.textContent = cod && pe.cod_refused ? 'This customer is on the COD refusals list (a delivery was refused). You can still choose Cash on delivery.' : '';
       paidBox.style.display = paid() ? '' : 'none';
+      /* Processing is "paid" for every method but cash, so the move is offered
+         only for COD or a payment being recorded (the server refuses it too). */
+      if(procRow){ var canProc = cod || paid(); procRow.style.display = canProc ? '' : 'none'; if(!canProc) proc.checked = false; }
+      /* Card, Tabby, Tamara (any method but cash): ask for the payment ID, paid or not. */
+      document.getElementById('odPmRefBox').style.display = (!cod || paid()) ? '' : 'none';
       if(notifyRow) notifyRow.style.display = proc && proc.checked ? '' : 'none';
     };
-    if(proc){ proc.checked = (o.status === 'failed' || o.status === 'pending'); proc.onchange = sync; }
-    sel.onchange = sync;
-    document.querySelectorAll('input[name="odPmPaid"]').forEach(function(r){ r.onchange = sync; });
+    if(proc){ proc.onchange = sync; }
+    var wasProc = function(){ if(proc && (sel.value === 'cod' || paid()) && (o.status === 'failed' || o.status === 'pending')) proc.checked = true; };
+    sel.onchange = function(){ wasProc(); sync(); };
+    document.querySelectorAll('input[name="odPmPaid"]').forEach(function(r){ r.onchange = function(){ wasProc(); sync(); }; });
     sync();
     setTimeout(function(){ sel.focus(); }, 30);
     go.onclick = async function(){
       var body = { payment_method: sel.value, paid: paid() };
       if(sel.value === 'cod') body.cod_fee = !!fee.checked;
+      if(sel.value !== 'cod' || body.paid){ var ref = document.getElementById('odPmRef').value.trim(); if(ref) body.reference = ref; }
       if(body.paid){
-        body.reference = document.getElementById('odPmRef').value.trim();
         body.paid_at = document.getElementById('odPmDate').value;
         if(!body.paid_at){ err.textContent = 'Enter the date the payment was made.'; return; }
       }

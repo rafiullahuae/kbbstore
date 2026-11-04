@@ -236,3 +236,42 @@ it('tells the order screen what may change, with the COD fee, and draws both con
         ->and(substr_count($blade, "require __DIR__.'/order-payment-edit.php';"))->toBe(0)
         ->and(substr_count((string) file_get_contents(base_path('routes/web.php')), "require __DIR__.'/order-payment-edit.php';"))->toBe(1);
 });
+
+it('keeps the payment ID typed for a card, Tabby or Tamara order that is not paid yet, and never for cash', function () {
+    /*
+     * The owner, 4 November: "if i select card payment, then the system
+     * should ask the payment id (optional), same for tabby and tamara."
+     * MUTATION: drop the transaction_id fill in changeMethod() -- the ID is
+     * lost. RED.
+     */
+    $order = opeOrder('pending', 'cod', ['fee_total' => 1000, 'total' => 23000]);
+
+    opeAs()->postJson("/admin-api/orders/{$order->id}/payment-method", ['payment_method' => 'stripe', 'reference' => 'pi_3Q9xyz'])->assertOk();
+    $order->refresh();
+    expect($order->payment_method)->toBe('stripe')->and($order->transaction_id)->toBe('pi_3Q9xyz')->and($order->paid_at)->toBeNull()
+        ->and($order->notes()->pluck('content')->implode(' | '))->toContain('payment ID pi_3Q9xyz');
+
+    // Only the ID changes: still accepted.
+    opeAs()->postJson("/admin-api/orders/{$order->id}/payment-method", ['payment_method' => 'stripe', 'reference' => 'pi_other'])->assertOk();
+    expect($order->fresh()->transaction_id)->toBe('pi_other');
+
+    // Cash on delivery keeps no ID, and a bad one is refused.
+    opeAs()->postJson("/admin-api/orders/{$order->id}/payment-method", ['payment_method' => 'cod', 'reference' => 'ignored'])->assertOk();
+    expect($order->fresh()->transaction_id)->toBe('pi_other');
+    opeAs()->postJson("/admin-api/orders/{$order->id}/payment-method", ['payment_method' => 'tabby', 'reference' => "bad\n<id>"])->assertStatus(422);
+});
+
+it('never moves an unpaid card, Tabby or Tamara order to Processing, where it would read as paid', function () {
+    /*
+     * Found in Chromium: Tabby, not paid, "Move to Processing" ticked by
+     * default -> the payment panel said "Paid with Tabby".
+     * MUTATION: drop the `$method !== 'cod' && ! $paid` refusal. RED.
+     */
+    $order = opeOrder('failed', 'tabby');
+
+    opeAs()->postJson("/admin-api/orders/{$order->id}/payment-method", ['payment_method' => 'stripe', 'status' => 'processing'])->assertStatus(422);
+    expect($order->fresh()->status)->toBe('failed')->and($order->fresh()->payment_method)->toBe('tabby');
+
+    opeAs()->postJson("/admin-api/orders/{$order->id}/payment-method", ['payment_method' => 'stripe', 'status' => 'processing', 'paid' => true, 'paid_at' => now()->subMinutes(5)->format('Y-m-d\\TH:i'), 'notify' => false])->assertOk();
+    expect($order->fresh()->status)->toBe('processing')->and($order->fresh()->paid_at)->not->toBeNull();
+});
