@@ -394,7 +394,7 @@ function renderDash(){
       ${kpi(I.orders,'#e0922f','var(--amber-soft)','Orders completed','—','of all orders placed')}
     </div>
     <div id="kbbRevCard"></div>
-    <div class="grid2" style="margin-top:16px">
+    <div style="margin-top:16px">
       <!-- LANE DH. This card was headed "System health" over a green pill
            reading "All core OK" and six hrow() string literals, hydrated by
            nothing: an App server that was operational, a "Database (SQLite)"
@@ -424,15 +424,6 @@ function renderDash(){
         <div class="row" style="margin-top:14px;gap:9px;flex-wrap:wrap">
           <button class="btn sm" id="shRun" onclick="kbbHealthRun()">Check now</button>
           <button class="btn ghost sm" onclick="go('debug')">Open Debug & Monitor →</button>
-        </div>
-      </div>
-      <div class="card pad">
-        <b style="font-size:14px">Build progress</b>
-        <div style="margin-top:14px;display:flex;flex-direction:column;gap:13px">
-          ${prog('Phase 0 · Foundation',100,'In preview')}
-          ${prog('Phase 1 · Catalog + Import',0,'Next')}
-          ${prog('Phase 2 · Storefront',0,'')}
-          ${prog('Phase 3 · Selling + Payments',0,'')}
         </div>
       </div>
     </div>
@@ -9020,6 +9011,7 @@ $('#drawerBg').onclick=closeDrawer;
  * reason -- and its icon spins so the wait reads as work.
  */
 let kbbPurging = false;
+function kbbReload(ms){ setTimeout(function(){ try { window.location.reload(); } catch (e) {} }, ms); }
 async function kbbPurge(btn){
   if (kbbPurging) return;
   kbbPurging = true;
@@ -9045,9 +9037,19 @@ async function kbbPurge(btn){
     // what it actually did, which is worth saying: "Caches cleared" on a run
     // that silently did nothing looks identical to one that worked.
     const n = (r && Array.isArray(r.ran)) ? r.ran.length : 0;
-    toast(n ? 'Cleared ' + n + ' cache' + (n === 1 ? '' : 's') + '.' : 'Caches cleared.');
+    toast(n ? 'Cleared ' + n + ' cache' + (n === 1 ? '' : 's') + '. Reloading…' : 'Caches cleared. Reloading…');
+    /*
+     * AND THEN THE SCREEN IS DRAWN AGAIN. The owner, 4 November: "the refresh
+     * button doesn't work" -- it cleared the caches and left the screen as it
+     * was, so a refresh button refreshed nothing he could see. The address
+     * keeps the screen (#carttracking), so the reload opens the same one with
+     * fresh data, and with the routes a new package just added.
+     */
+    kbbReload(400);
   } catch (e) {
     toast(e && e.message ? e.message : 'Could not clear the caches.', 'bad');
+    // Still a refresh: the screen is reloaded even when the server would not clear.
+    kbbReload(2200);
   } finally {
     kbbPurging = false;
     btn.disabled = false;
@@ -9074,9 +9076,15 @@ let toastT;function toast(m,kind){const t=$('#toast');const bad=kind==='bad';
   t.className='toast'+(bad?' bad':'');
   t.innerHTML=ic(bad?I.alert:I.check)+'<span>'+m+'</span>';
   t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),bad?4200:2400);}
-$$('#envtog button').forEach(b=>b.onclick=()=>{
+/* The Live / Sandbox label: Console -> Console preferences (the owner,
+   4 November). Still a label and nothing else; this browser remembers it. */
+function kbbEnvGet(){ try { return localStorage.getItem('kbb_env') === 'sandbox' ? 'sandbox' : 'live'; } catch (e) { return 'live'; } }
+document.body.dataset.env = kbbEnvGet();
+function kbbEnvBind(){
+$$('#envtog button').forEach(b=>{ b.classList.toggle('on', b.dataset.e === kbbEnvGet()); b.onclick=()=>{
   $$('#envtog button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
   document.body.dataset.env=b.dataset.e;
+  try { localStorage.setItem('kbb_env', b.dataset.e); } catch (e) {}
   /* LANE DD — "Switched to Sandbox" was a report of something that did not
      happen. The line above is the whole of what this button does: it sets an
      attribute on <body> that only the warning strip's CSS reads. There is one
@@ -9084,7 +9092,8 @@ $$('#envtog button').forEach(b=>b.onclick=()=>{
   toast(b.dataset.e==='sandbox'
     ? 'Label only — you are still editing the live shop'
     : 'Label only — you were already editing the live shop');
-});
+}; });
+}
 /* LANE DD — window.deploy and window.rollback are gone with the two buttons
    that were their only callers. See the note above renderSandbox(). */
 window.go=go;window.toast=toast;window.reportModal=reportModal;window.closeModal=closeModal;
@@ -9411,6 +9420,7 @@ function renderConsole(){
       <div class="pref"><div class="pl"><b>Rows per page</b><small>For lists & tables</small></div><select class="inp" data-pref="perpage">${optHTML({'25':'25','50':'50','100':'100'},consolePrefs.perpage)}</select></div>
       <div class="pref"><div class="pl"><b>Console language</b><small>Admin interface language</small></div><select class="inp" data-pref="lang">${optHTML({en:'English',ar:'العربية (RTL)'},consolePrefs.lang)}</select></div>
       <div class="pref"><div class="pl"><b>Reduced motion</b><small>Minimise animations</small></div><div class="tog${consolePrefs.reduce?' on':''}" data-pref="reduce"></div></div>
+      <div class="pref"><div class="pl"><b>Live / Sandbox label</b><small>A label only: there is one shop, and every change is saved to it straight away. Sandbox shows an amber reminder strip under the top bar.</small></div><div class="envtog" id="envtog"><button data-e="live"><span class="d"></span>Live</button><button data-e="sandbox"><span class="d"></span>Sandbox</button></div></div>
     </div>
     <div class="banner" style="margin-top:18px">${ic('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>')}<div>These are console-only preferences. Storefront design lives in <b>K-Beauty Bliss Theme</b>; store configuration lives in <b>Settings</b>.</div></div>
   </div>`;
@@ -9418,6 +9428,7 @@ function renderConsole(){
   $$('#content .seg button').forEach(b=>b.onclick=()=>{const sg=b.closest('.seg');$$('button',sg).forEach(x=>x.classList.remove('on'));b.classList.add('on');consolePrefs[sg.dataset.pref]=b.dataset.v;toast('Saved (preview)');});
   $$('#content .tog[data-pref]').forEach(t=>t.onclick=()=>{t.classList.toggle('on');consolePrefs[t.dataset.pref]=t.classList.contains('on');toast('Saved (preview)');});
   $$('#content select.inp').forEach(s=>s.onchange=()=>{consolePrefs[s.dataset.pref]=s.value;toast('Saved (preview)');});
+  kbbEnvBind();
 }
 
 /* ===== LANE J · Store · Mail — BEGIN =========================================
