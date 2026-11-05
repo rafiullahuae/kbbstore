@@ -3020,7 +3020,7 @@ html.side-closed .sidetog .sidetog-chev{transform:rotate(180deg)}
         confirm: it deletes derived files only and the worst case is one slow
         page while they rebuild.
       -->
-      <button class="iconbtn" id="purgeBtn" title="Refresh — clear all caches and reload this screen" aria-label="Refresh" onclick="kbbPurge(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 4.2v4.6h-4.6"/></svg></button>
+      <button class="iconbtn" id="purgeBtn" title="Refresh this screen" aria-label="Refresh this screen" onclick="kbbRefresh(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 4.2v4.6h-4.6"/></svg></button>
       <button class="iconbtn" onclick="go('debug')" title="Debug & Monitor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
       <div class="userchip"><div class="avatar">R</div><div><b>Rafi</b><small>Owner</small></div></div>
     </div>
@@ -12092,50 +12092,43 @@ $('#drawerBg').onclick=closeDrawer;
  * purge rebuilds what the first one just rebuilt, which is a slow page for no
  * reason -- and its icon spins so the wait reads as work.
  */
-let kbbPurging = false;
-function kbbReload(ms){ setTimeout(function(){ try { window.location.reload(); } catch (e) {} }, ms); }
-async function kbbPurge(btn){
-  if (kbbPurging) return;
-  kbbPurging = true;
-  btn.disabled = true;
+/*
+ * THE TOP BAR'S REFRESH: draw the screen you are on again, at once, with fresh
+ * data -- no page load. (The owner, 5 November: "i don't want to reload the
+ * page, i want an instant refresh, same like we have in owner app ... when
+ * click on it, it gives red error, 'api is not defined'.")
+ *
+ * WHY IT NEVER WORKED: this button cleared the server caches through api(),
+ * and api() is not global -- it lives inside the console's own script block,
+ * so from up here every press threw "api is not defined" and did nothing else.
+ * 2.60.643 then reloaded the whole page after the failure, which is what the
+ * owner saw.
+ *
+ * WHAT IT DOES NOW: asks window.go() -- the final, wrapped one, so screens a
+ * partial owns (Gift offers, Free gifts, ...) redraw too -- for the screen in
+ * the address bar, sub-address included (#orders/56187 redraws that order).
+ * Every screen fetches its own data when it is drawn, so that IS the refresh:
+ * one screen's requests, nothing else, the page itself never reloads.
+ *
+ * Clearing the server's caches is not part of a refresh: it makes the next
+ * page loads slower for everybody while they rebuild, and every update package
+ * already clears them itself. It stays one press away in Platform -> Cache.
+ */
+let kbbRefreshing = false;
+function kbbRefresh(btn){
+  if (kbbRefreshing) return;
+  kbbRefreshing = true;
   btn.classList.add('spin');
   try {
-    /*
-     * THE FULL /admin-api/ PATH, and it is not optional.
-     *
-     * fixAdminApiUrl() rewrites a URL only when it STARTS WITH '/admin-api/' --
-     * it prefixes the console's own directory, because the admin lives at a
-     * path the owner chooses. Anything else is passed through untouched, so
-     * '/cache/clear' was fetched from the site root and answered 404: the
-     * button reported "api not found" while the endpoint it wanted was sitting
-     * there working.
-     *
-     * The cache SCREEN does not hit this because it carries its own api()
-     * helper that prepends '/admin-api' itself. Two helpers with the same name
-     * and different contracts, one file apart.
-     */
-    const r = await api('/admin-api/cache/clear', {method:'POST', body: JSON.stringify({target:'all'})});
-    // The endpoint answers {ok, target, ran:[…], compiled:{…}} -- `ran` names
-    // what it actually did, which is worth saying: "Caches cleared" on a run
-    // that silently did nothing looks identical to one that worked.
-    const n = (r && Array.isArray(r.ran)) ? r.ran.length : 0;
-    toast(n ? 'Cleared ' + n + ' cache' + (n === 1 ? '' : 's') + '. Reloading…' : 'Caches cleared. Reloading…');
-    /*
-     * AND THEN THE SCREEN IS DRAWN AGAIN. The owner, 4 November: "the refresh
-     * button doesn't work" -- it cleared the caches and left the screen as it
-     * was, so a refresh button refreshed nothing he could see. The address
-     * keeps the screen (#carttracking), so the reload opens the same one with
-     * fresh data, and with the routes a new package just added.
-     */
-    kbbReload(400);
+    var h = String(window.location.hash || '').replace(/^#/, '');
+    var parts = h.split('/');
+    var id = /^[A-Za-z0-9_.-]{1,60}$/.test(parts[0] || '') ? parts[0] : (typeof cur === 'string' && cur ? cur : 'dash');
+    var sub = parts.length > 1 && /^[A-Za-z0-9_.-]{1,60}$/.test(parts[1]) ? parts[1] : undefined;
+    if (sub !== undefined) window.go(id, sub); else window.go(id);
   } catch (e) {
-    toast(e && e.message ? e.message : 'Could not clear the caches.', 'bad');
-    // Still a refresh: the screen is reloaded even when the server would not clear.
-    kbbReload(2200);
+    toast('Could not refresh this screen.', 'bad');
   } finally {
-    kbbPurging = false;
-    btn.disabled = false;
-    btn.classList.remove('spin');
+    setTimeout(function(){ btn.classList.remove('spin'); kbbRefreshing = false; }, 500);
   }
 }
 /* ── A FAILURE MAY NOT WEAR A SUCCESS TICK ─────────────────────────────────

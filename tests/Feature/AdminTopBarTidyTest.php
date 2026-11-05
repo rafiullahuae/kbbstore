@@ -8,20 +8,6 @@ declare(strict_types=1);
  * remove the phase 0 text etc."
  */
 
-it('reloads the screen after the refresh button clears the caches, and still reloads when the clear fails', function () {
-    /*
-     * The defect: the button cleared the caches and left the screen exactly as
-     * it was, so "refresh" refreshed nothing the owner could see.
-     * MUTATION: drop either kbbReload() call. RED.
-     */
-    $src = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
-    $fn = substr($src, (int) strpos($src, 'async function kbbPurge('));
-    $fn = substr($fn, 0, (int) strpos($fn, 'let toastT;'));
-
-    expect(substr_count($fn, 'kbbReload('))->toBe(2)
-        ->and($src)->toContain('function kbbReload(ms){ setTimeout(function(){ try { window.location.reload(); }');
-});
-
 it('moves the Live / Sandbox label switch from the top bar into Console preferences, once', function () {
     /*
      * MUTATION: leave the switch in the top bar, or draw it twice. RED.
