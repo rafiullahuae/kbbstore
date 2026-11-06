@@ -6,7 +6,7 @@ then the existing picture slider; exact current sizes; more content for SEO
 and offers; super light; editable; background colours moving continuously;
 multiple designs, desktop and mobile.
 
-**Status: round 3 previews sent (G Floating Cluster, H Glow Halo, I Wave Stage), floating product cut-outs, colour-cycling background, big words left with no box. Rounds 1-2 rejected.**
+**Status: round 3 previews with five best sellers (Anua mist mini, Medicube stick, Dr.Althea 345, Beauty of Joseon Relief Sun, COSRX Snail 96; build4.py, cut-outs in home-hero/products/). Waiting for G / H / I.**
 
 - Sizes measured on kbeautybliss.com: computer full width x 600px (548 at
   1024, 411 at 768), phone full width x 500px.
