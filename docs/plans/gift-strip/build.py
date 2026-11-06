@@ -31,8 +31,8 @@ BASE = '''
 .gs-bg{position:absolute;inset:0;border-radius:inherit;overflow:hidden;z-index:-1}
 .gs-mid{text-align:center;padding:0 18px;display:flex;flex-direction:column;align-items:center;gap:4px}
 .gs-eye{font-weight:800;font-size:12px;letter-spacing:.2em}
-.gs-h{margin:0;font-weight:900;font-size:clamp(20px,2.4vw,30px);line-height:1.1}
-.gs-sub{font-size:13.5px;opacity:.82}
+.gs-h{margin:0;font-weight:800;font-size:clamp(28px,3.4vw,44px);line-height:1;letter-spacing:.02em;white-space:nowrap}
+.gs-sub{font-weight:600;font-size:clamp(14px,1.4vw,18px);opacity:.9}
 .gs-link{font-weight:800;font-size:13px;text-decoration:none;margin-top:2px}
 .gs-side{position:relative;height:100%}
 .gs-p{position:absolute;bottom:12px;filter:drop-shadow(0 12px 12px rgba(40,20,40,.22));animation:gsBob 6s ease-in-out infinite}
@@ -47,7 +47,7 @@ BASE = '''
 .gs-r .gs-p:nth-child(2){right:22%;height:118%;--r:-4deg;bottom:4px;animation-delay:-3s;z-index:1}
 .gs-r .gs-p:nth-child(3){right:2%;height:62%;--r:10deg;animation-delay:-5s}
 @media (max-width:767px){body{padding-top:50px}.gs{height:112px;padding:0 4px;border-radius:18px;grid-template-columns:29% minmax(0,1fr) 29%}
- .gs-mid{padding:0 2px;gap:2px}.gs-eye{font-size:9.5px;letter-spacing:.16em}.gs-h{font-size:15.5px}.gs-sub{display:none}.gs-link{font-size:11.5px}
+ .gs-mid{padding:0 2px;gap:2px}.gs-eye{font-size:9.5px;letter-spacing:.16em}.gs-h{font-size:20px}.gs-sub{font-size:12.5px}.gs-link{font-size:11.5px}
  .gs-p img{height:auto;width:100%}
  .gs-l .gs-p:nth-child(1){left:2%;width:20%;height:auto}.gs-l .gs-p:nth-child(2){left:24%;width:30%;height:auto;bottom:4px}.gs-l .gs-p:nth-child(3){left:58%;width:30%;height:auto}
  .gs-r .gs-p:nth-child(1){right:66%;width:26%;height:auto}.gs-r .gs-p:nth-child(2){right:20%;width:52%;height:auto;bottom:30px}.gs-r .gs-p:nth-child(3){right:0;width:34%;height:auto}}
@@ -100,8 +100,8 @@ def doc(key):
     fx = '<div class="gs-fx"></div><div class="gs-shine"></div>' if key == 'S5' else ''
     html = ('<div class="gs-wrap"><section class="gs" aria-label="Free gifts"><div class="gs-bg">' + fx + '</div>'
             + side(L, 'gs-l')
-            + '<div class="gs-mid"><span class="gs-eye">FREE GIFTS</span><h2 class="gs-h">Free gifts with every order</h2>'
-              '<span class="gs-sub">Full-size products and minis, added for you at checkout</span><a class="gs-link" href="#">See the gifts &rarr;</a></div>'
+            + '<div class="gs-mid"><h2 class="gs-h">FREE GIFTS</h2>'
+              '<span class="gs-sub">with every order</span><a class="gs-link" href="#">See the gifts &rarr;</a></div>'
             + side(R, 'gs-r') + '</section></div>')
     return ('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             '<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">'
