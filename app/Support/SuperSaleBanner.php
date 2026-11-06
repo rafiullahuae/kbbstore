@@ -110,20 +110,10 @@ final class SuperSaleBanner
         'coupon' => ['COUPON CODE:', 'كود الخصم:', 'Words before the code'],
         'gifts' => ['Free gifts with every order', 'هدايا مجانية مع كل طلب', 'Gift row heading'],
         'free' => ['FREE', 'مجاناً', 'Chip at the end of the gift row'],
-        // The occasion templates' big number ("11.11"), drawn before the title
-        // only when it is not empty -- so Super Sale, which has none, is unchanged.
-        'num' => ['', '', 'Big number (occasion)'],
+        // (Lane SOT) The occasion templates' big number ("11.11", "2027"):
+        // drawn only by a template that has one (SaleTemplates::hasNum()).
+        'num' => ['', '', 'Big number'],
     ];
-
-    /**
-     * The occasion templates (the owner, 6 November: "convert into 11.11 Mega
-     * Sale ... select and switch the heading layout as per the occasion").
-     * 'super' is today's banner, byte for byte. Each other key adds the class
-     * ssb-t-<key> and its own constant CSS (templateCss()); the words stay the
-     * owner's, editable as before. 2.60.645 ships m1, 11.11 Midnight Neon,
-     * urgently; the rest of the set follows with the template picker.
-     */
-    public const TEMPLATES = ['super', 'm1'];
 
     /**
      * The text elements he can style: key => [label, selector, phone size (u),
@@ -145,6 +135,13 @@ final class SuperSaleBanner
         'gifts' => ['Gift row text', '.ssb-gi', 3.0, 2.0, 800, '#2E8F62', 'inline-flex', true, true],
         'free' => ['FREE chip', '.ssb-free', 2.7, 1.7, 800, '#2E8F62', 'inline-flex', true, true],
     ];
+
+    /**
+     * (Lane SOT) The look he picks: Super Sale (the default, the banner as it
+     * was) or one of the occasion templates App\Support\SaleTemplates draws.
+     * The config's `template` is one of these or the default.
+     */
+    public const TEMPLATES = ['super', 'm1', 'm2', 'm3', 'u1', 'u2', 'u3', 'n1', 'n2', 'n3'];
 
     /** Every property of an element, in the order styleAttr() prints them. */
     public const PROPS = ['s', 'w', 'c', 'x', 'y', 'v'];
@@ -355,44 +352,6 @@ final class SuperSaleBanner
      * shop page -- the editor adds it to the page it opens on (and the
      * console to its own), so a shopper does not carry it.
      */
-    /**
-     * The chosen occasion template's CSS: a constant per key, '' for Super
-     * Sale. Printed after css() in the banner's own <style>, so a page carries
-     * only the one template it shows. No image file, no font, no request: the
-     * dots and the glow are gradients. Colours are the banner's own colour
-     * variables, so anything the owner sets in the editor still wins.
-     */
-    public static function templateCss(string $key): string
-    {
-        return match ($key) {
-            'm1' => self::T_M1,
-            default => '',
-        };
-    }
-
-    /** 11.11 Mega Sale · A Midnight Neon (docs/plans/sale-occasions, approved 6 November). */
-    private const T_M1 = '.kbb-ssb.ssb-t-m1 .ssb-in{background:radial-gradient(60% 90% at 86% 20%,rgba(255,61,139,.55),transparent 60%),radial-gradient(50% 80% at 8% 110%,rgba(124,58,237,.55),transparent 60%),linear-gradient(120deg,#1a0a2e 0%,#2d0b45 55%,#4a0d4f 100%);'
-        .'--ssb-tag-cm:#F8D7E6;--ssb-tag-cd:#F8D7E6;--ssb-pay-cm:#fff;--ssb-pay-cd:#fff;--ssb-title-cm:#FFD36E;--ssb-title-cd:#FFD36E;--ssb-clabel-cm:#fff;--ssb-clabel-cd:#fff;--ssb-cvalue-cm:#D61F69;--ssb-cvalue-cd:#D61F69}'
-        .'.kbb-ssb.ssb-t-m1 .ssb-hero{position:relative}'
-        .'.kbb-ssb.ssb-t-m1 .ssb-hero::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle,#FFD36E 0 1.5px,transparent 2.5px) 0 0/46px 46px,radial-gradient(circle,#ff6fae 0 1.5px,transparent 2.5px) 23px 23px/46px 46px;opacity:.45;-webkit-mask:linear-gradient(90deg,transparent 0,#000 40%,#000 100%);mask:linear-gradient(90deg,transparent 0,#000 40%,#000 100%)}'
-        .'[dir=rtl].kbb-ssb.ssb-t-m1 .ssb-hero::before{-webkit-mask:linear-gradient(270deg,transparent 0,#000 40%,#000 100%);mask:linear-gradient(270deg,transparent 0,#000 40%,#000 100%)}'
-        .'.kbb-ssb.ssb-t-m1 .ssb-copy{position:relative;gap:calc(var(--u)*.9)}'
-        .'.kbb-ssb.ssb-t-m1 .ssb-super{--ssb-title-sm:6.4;text-shadow:0 0 calc(var(--u)*1.6) rgba(255,211,110,.55)}'
-        .'.kbb-ssb.ssb-t-m1 .ssb-num{display:block;font-weight:900;line-height:.9;letter-spacing:-.02em;white-space:nowrap;unicode-bidi:isolate;color:#ff4f9a;font-size:calc(var(--u)*11);text-shadow:0 0 calc(var(--u)*.6) #ff4f9a,0 0 calc(var(--u)*2.4) rgba(255,79,154,.8),0 0 calc(var(--u)*5) rgba(255,79,154,.5)}'
-        .'.kbb-ssb.ssb-t-m1 .ssb-model::before{content:"";position:absolute;left:8%;right:8%;bottom:0;height:78%;border-radius:50% 50% 0 0;background:radial-gradient(60% 60% at 50% 45%,rgba(255,79,154,.6),rgba(124,58,237,.25) 60%,transparent 72%)}'
-        .'.kbb-ssb.ssb-t-m1 .ssb-model picture{position:relative}'
-        .'.kbb-ssb.ssb-t-m1 .ssb-coupon b{border-color:#ff4f9a}'
-        .'.kbb-ssb.ssb-t-m1 .ssb-gifts{background:#fff}'
-        .'@media (min-width:901px){.kbb-ssb.ssb-t-m1:not(.ssb-fm) .ssb-copy{gap:calc(var(--u)*.55)}.kbb-ssb.ssb-t-m1:not(.ssb-fm) .ssb-super{font-size:calc(var(--u)*5)}'
-        // On a computer the number has a column of its own beside the words, so it can
-        // never sit on the title whatever its length or language; it is sized to the
-        // room that column has (cqw, inside @supports per the CSS landmine rule) and
-        // never larger than the approved 13u.
-        .'.kbb-ssb.ssb-t-m1:not(.ssb-fm) .ssb-copy{display:grid;grid-template-columns:max-content minmax(0,1fr);column-gap:calc(var(--u)*3);align-content:center}'
-        .'.kbb-ssb.ssb-t-m1:not(.ssb-fm) .ssb-copy>*{grid-column:1}'
-        .'.kbb-ssb.ssb-t-m1:not(.ssb-fm) .ssb-num{grid-column:2;grid-row:1/span 3;align-self:center;justify-self:center;font-size:calc(var(--u)*8.5)}}'
-        .'@supports (font-size:min(1cqw,1px)){@media (min-width:901px){.kbb-ssb.ssb-t-m1:not(.ssb-fm) .ssb-num{font-size:min(calc(var(--u)*13),calc((100cqw - var(--u)*82)/2.9))}}}';
-
     public static function cssForced(): string
     {
         [$phone, $desk] = self::deviceRules();
@@ -454,7 +413,7 @@ final class SuperSaleBanner
             $out['fy_'.$dev] = $y;
         }
         $out['st'] = ['en' => [], 'ar' => []];
-        $out['template'] = 'super';
+        $out['template'] = SaleTemplates::DEFAULT;
 
         return $out;
     }
@@ -463,7 +422,17 @@ final class SuperSaleBanner
      * The shipped value of one style property, per language and device: [el
      * => [s,c,w,x,y]] and '_' => [al,g]. Sizes and gaps in px at full width.
      */
-    public static function styleDefaults(string $lang, string $dev): array
+    public static function styleDefaults(string $lang, string $dev, string $template = SaleTemplates::DEFAULT): array
+    {
+        // Constants only, so asked once per process for each language,
+        // device and template: resolve() asks it for every property.
+        return self::$defaultsMemo[$lang.$dev.$template] ??= self::buildStyleDefaults($lang, $dev, $template);
+    }
+
+    /** @var array<string,array> */
+    private static array $defaultsMemo = [];
+
+    private static function buildStyleDefaults(string $lang, string $dev, string $template): array
     {
         $cap = self::UCAP[$dev];
         $out = [];
@@ -480,6 +449,21 @@ final class SuperSaleBanner
         if ($lang === 'ar') {
             foreach (self::AR_DEFAULTS[$dev] ?? [] as $el => $props) {
                 $out[$el] = $props + $out[$el];
+            }
+        }
+
+        // (Lane SOT) A template's own sizes and colours, which its stylesheet
+        // prints as the same properties' fallbacks (SaleTemplates::css()).
+        $own = SaleTemplates::style($template)[$dev];
+        if ($lang === 'ar') {
+            $own = array_replace_recursive($own, SaleTemplates::styleAr($template)[$dev]);
+        }
+        foreach ($own as $el => $props) {
+            foreach ($props as $p => $v) {
+                $out[$el][$p] = match ($p) {
+                    's', 'g' => round($v * $cap, 2),
+                    default => $v,
+                };
             }
         }
 
@@ -562,7 +546,14 @@ final class SuperSaleBanner
             $band = $d['band'];
         }
         $out['band'] = $band;
-        $out['template'] = in_array($in['template'] ?? null, self::TEMPLATES, true) ? $in['template'] : $d['template'];
+
+        // (Lane SOT) One of the templates, or the default: rule 5's select.
+        $tpl = $in['template'] ?? SaleTemplates::DEFAULT;
+        if (! SaleTemplates::has($tpl)) {
+            $rejected['template'] = 'Template';
+            $tpl = SaleTemplates::DEFAULT;
+        }
+        $out['template'] = $tpl;
 
         [$out['st'], $bad] = self::cleanStyle($in['st'] ?? null);
         foreach ($bad as $k => $label) {
@@ -592,7 +583,7 @@ final class SuperSaleBanner
                 }
                 foreach ($block as $el => $props) {
                     $el = (string) $el;
-                    if (! is_array($props) || ($el !== '_' && ! isset(self::ELEMENTS[$el]))) {
+                    if (! is_array($props) || ($el !== '_' && self::element($el) === null)) {
                         $bad["st.$lang.$dev.$el"] = 'Style';
                         continue;
                     }
@@ -603,7 +594,7 @@ final class SuperSaleBanner
                         }
                         $clean = self::cleanProp($el, $p, $v);
                         if ($clean === null) {
-                            $label = $el === '_' ? 'Copy block' : self::ELEMENTS[$el][0];
+                            $label = $el === '_' ? 'Copy block' : self::element($el)[0];
                             $bad["st.$lang.$dev.$el.$p"] = $label.' ('.strtoupper($lang).', '.($dev === 'd' ? 'computer' : 'phone').')';
                             continue;
                         }
@@ -640,7 +631,7 @@ final class SuperSaleBanner
      * One property as the page draws it: Arabic's own override, else the
      * English override, else the language's shipped value.
      */
-    public static function resolve(array $st, string $lang, string $dev, string $el, string $p): mixed
+    public static function resolve(array $st, string $lang, string $dev, string $el, string $p, string $template = SaleTemplates::DEFAULT): mixed
     {
         $own = $st[$lang][$dev][$el][$p] ?? null;
         if ($own !== null) {
@@ -650,7 +641,62 @@ final class SuperSaleBanner
             return $st['en'][$dev][$el][$p];
         }
 
-        return self::styleDefaults($lang, $dev)[$el][$p];
+        return self::styleDefaults($lang, $dev, $template)[$el][$p];
+    }
+
+    /**
+     * (Lane SOT) The chosen template's own stylesheet, printed after css() in
+     * the same <style>: constants only, '' for Super Sale.
+     */
+    public static function templateCss(string $key): string
+    {
+        return SaleTemplates::css($key);
+    }
+
+    /** (Lane SOT) An element's spec: the banner's own, or the templates' big number; null for anything else. */
+    public static function element(string $el): ?array
+    {
+        return self::ELEMENTS[$el] ?? ($el === 'num' ? SaleTemplates::NUM_ELEMENT : null);
+    }
+
+    /**
+     * (Lane SOT) The elements a template draws: the banner's, and the big
+     * number where the template has one.
+     *
+     * @return array<string,array>
+     */
+    public static function elementsOf(string $template): array
+    {
+        return SaleTemplates::hasNum($template) ? self::ELEMENTS + ['num' => SaleTemplates::NUM_ELEMENT] : self::ELEMENTS;
+    }
+
+    /**
+     * (Lane SOT) A config switched to a template, as the editor's picker does
+     * it: the template's words in both languages (title, tagline, number) and
+     * his colour overrides cleared, so its palette shows. Sizes, positions,
+     * pictures, coupon and gifts stay his. An unknown key changes nothing.
+     */
+    public static function withTemplate(array $c, string $template): array
+    {
+        if (! SaleTemplates::has($template)) {
+            return $c;
+        }
+        $c['template'] = $template;
+        foreach (SaleTemplates::WORDS[$template] as $k => [$en, $ar]) {
+            $c[$k.'_en'] = $en;
+            $c[$k.'_ar'] = $ar;
+        }
+        foreach (['en', 'ar'] as $lang) {
+            foreach (['m', 'd'] as $dev) {
+                foreach ($c['st'][$lang][$dev] ?? [] as $el => $props) {
+                    if (is_array($props)) {
+                        unset($c['st'][$lang][$dev][$el]['c']);
+                    }
+                }
+            }
+        }
+
+        return $c;
     }
 
     /**
@@ -664,36 +710,38 @@ final class SuperSaleBanner
     public static function styleAttr(array $c, string $lang): string
     {
         $st = $c['st'] ?? ['en' => [], 'ar' => []];
+        $tpl = SaleTemplates::has($c['template'] ?? null) ? $c['template'] : SaleTemplates::DEFAULT;
+        $els = self::elementsOf($tpl);
         $parts = [];
 
         foreach (['m', 'd'] as $dev) {
-            $def = self::styleDefaults($lang, $dev);
-            foreach (self::ELEMENTS as $el => $_) {
+            $def = self::styleDefaults($lang, $dev, $tpl);
+            foreach ($els as $el => $_) {
                 foreach (self::PROPS as $p) {
-                    $v = self::resolve($st, $lang, $dev, $el, $p);
+                    $v = self::resolve($st, $lang, $dev, $el, $p, $tpl);
                     if ($p === 'v' ? (bool) $v === (bool) $def[$el][$p] : (string) $v === (string) $def[$el][$p]) {
                         continue;
                     }
                     $parts[] = '--ssb-'.$el.'-'.$p.$dev.':'.match ($p) {
                         's' => self::num((float) $v / self::UCAP[$dev]),
                         'x', 'y' => self::num((float) $v).'px',
-                        'v' => $v ? self::ELEMENTS[$el][6] : 'none',
+                        'v' => $v ? $els[$el][6] : 'none',
                         default => (string) $v,
                     };
                 }
             }
-            $al = self::resolve($st, $lang, $dev, '_', 'al');
+            $al = self::resolve($st, $lang, $dev, '_', 'al', $tpl);
             if ($al !== $def['_']['al']) {
                 $parts[] = '--ssb-al-a'.$dev.':'.self::ALIGNS[$al][0];
                 $parts[] = '--ssb-al-t'.$dev.':'.self::ALIGNS[$al][1];
             }
-            $g = self::resolve($st, $lang, $dev, '_', 'g');
+            $g = self::resolve($st, $lang, $dev, '_', 'g', $tpl);
             if ((string) $g !== (string) $def['_']['g']) {
                 $parts[] = '--ssb-g'.$dev.':'.self::num((float) $g / self::UCAP[$dev]);
             }
             if ($dev === 'd') {
                 foreach (self::PAD_D as $p => $_) {
-                    $v = self::resolve($st, $lang, $dev, '_', $p);
+                    $v = self::resolve($st, $lang, $dev, '_', $p, $tpl);
                     if ((string) $v !== (string) $def['_'][$p]) {
                         $parts[] = '--ssb-'.$p.'d:'.self::num((float) $v / self::UCAP['d']);
                     }
@@ -754,7 +802,11 @@ final class SuperSaleBanner
             'model' => $c['model_on'] ? self::pictures($c, $lang) : null,
             'gifts' => $gifts,
             'style' => self::styleAttr($c, $lang),
-            'template' => (string) $c['template'],
+            // (Lane SOT) The template: '' and '' for Super Sale, so the
+            // default banner prints exactly what it printed before.
+            'cls' => SaleTemplates::cls($c['template']),
+            'num' => SaleTemplates::hasNum($c['template']) ? $t['num'] : '',
+            'template' => $c['template'],
         ];
     }
 
@@ -993,9 +1045,15 @@ final class SuperSaleBanner
             $elements[] = ['key' => $el, 'label' => $label];
         }
         $defaults = [];
+        $tplDefaults = [];
         foreach (['en', 'ar'] as $lang) {
             foreach (['m', 'd'] as $dev) {
                 $defaults[$lang][$dev] = self::styleDefaults($lang, $dev);
+                foreach (array_keys(SaleTemplates::TEMPLATES) as $tpl) {
+                    if ($tpl !== SaleTemplates::DEFAULT) {
+                        $tplDefaults[$tpl][$lang][$dev] = self::styleDefaults($lang, $dev, $tpl);
+                    }
+                }
             }
         }
 
@@ -1025,6 +1083,14 @@ final class SuperSaleBanner
                 'max_gifts' => self::MAX_GIFTS,
                 'css' => self::css(),
                 'css_forced' => self::cssForced(),
+                // (Lane SOT) The templates: the picker's list, each one's
+                // shipped style values and the big number's spec, and every
+                // template's rules for the preview (admin only; a shop page
+                // prints the chosen template's alone).
+                'templates' => SaleTemplates::forEditor(),
+                'template_defaults' => $tplDefaults,
+                'num_element' => ['key' => 'num', 'label' => SaleTemplates::NUM_ELEMENT[0], 'display' => SaleTemplates::NUM_ELEMENT[6]],
+                'css_templates' => SaleTemplates::editorCss(),
                 'gift_icon' => self::GIFT_ICON,
                 'logos' => [
                     'tabby' => self::sized(PaymentMarkArt::checkoutLogo('tabby'), 71, 28),

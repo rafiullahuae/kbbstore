@@ -300,7 +300,12 @@ final class StaticMemos
             .'to one call, like Shortcodes\' stack, not a memo that can cross a test.',
         \App\Support\SuperSaleBanner::class => 'css (Lane SSB) is the banner\'s stylesheet, built from the class\'s '
             .'constants only (BASE, PHONE, DESK, SHAPE_RULES, ELEMENTS) -- no database, no settings, no request -- so it '
-            .'holds the same bytes in every test; a cache of a constant, not state.',
+            .'holds the same bytes in every test; a cache of a constant, not state. defaultsMemo (Lane SOT) is '
+            .'styleDefaults() per language, device and template, built from ELEMENTS, AR_DEFAULTS and '
+            .'SaleTemplates\' constants alone: the same in every test.',
+        \App\Support\SaleTemplates::class => 'memo (Lane SOT) is each template\'s stylesheet, built from the class\'s '
+            .'constants only (BG, RULES, SIZES, COLOURS, the art) -- no database, no settings, no request -- so it holds '
+            .'the same bytes in every test; a cache of a constant, not state.',
         \App\Support\AdminSearchIndex::class => 'built is derived from class constants only (CURATED and '
             .'the SCHEMA/TABS of the SCHEMA_SCREENS classes) -- no database, no settings, no request -- so '
             .'no test can make it differ from what a fresh process would build.',
