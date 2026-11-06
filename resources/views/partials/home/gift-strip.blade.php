@@ -19,7 +19,7 @@
     it was saved and again when it was read.
 --}}@php $kgs = \App\Support\GiftStrip::forPage(app(\App\Services\SettingsService::class)->all(), request()); @endphp
 @if ($kgs !== null)
-<section class="{{ $kgs['cls'] }}" aria-label="{{ $kgs['h'] }}"><style>{!! $kgs['css'] !!}</style>@if ($kgs['icon']){!! \App\Support\GiftStrip::GIFT_SYMBOL !!}@endif<div class="wrap"><div class="kgs{{ $kgs['anim'] ? '' : ' kgs-still' }}"><div class="kgs-bg">@if ($kgs['style'] === 'S5')<div class="kgs-fx"></div><div class="kgs-shine"></div>@endif</div>
+<section class="{{ $kgs['cls'] }}{{ ($kgsOrd ?? '') !== '' ? ' '.$kgsOrd : '' }}" aria-label="{{ $kgs['h'] }}"><style>{!! $kgs['css'] !!}</style>@if ($kgs['icon']){!! \App\Support\GiftStrip::GIFT_SYMBOL !!}@endif<div class="wrap"><div class="kgs{{ $kgs['anim'] ? '' : ' kgs-still' }}"><div class="kgs-bg">@if ($kgs['style'] === 'S5')<div class="kgs-fx"></div><div class="kgs-shine"></div>@endif</div>
 @foreach (['l' => $kgs['left'], 'r' => $kgs['right']] as $kgsSide => $kgsItems)
 @if ($kgsSide === 'r')<div class="kgs-mid"><h2 class="kgs-h">{{ $kgs['h'] }}</h2><span class="kgs-sub">{{ $kgs['sub'] }}</span><a class="kgs-link" href="{{ $kgs['href'] }}">{{ $kgs['link'] }}</a></div>@endif
 <div class="kgs-side kgs-{{ $kgsSide }}">@foreach ($kgsItems as $kgsP)<div class="kgs-p" style="--h:{{ $kgsP['cm'] }}"><img src="{{ $kgsP['src'] }}" srcset="{{ $kgsP['srcset'] }}" sizes="{{ $kgsP['sizes'] }}" width="{{ $kgsP['w'] }}" height="{{ $kgsP['h'] }}" alt="{{ $kgsP['alt'] }}" loading="lazy" decoding="async">@if ($kgs['icon']){!! \App\Support\GiftStrip::GIFT_ICON !!}@endif</div>@endforeach</div>

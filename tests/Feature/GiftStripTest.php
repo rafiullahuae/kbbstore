@@ -418,13 +418,52 @@ it('sends the screen everything its preview is built from, and makes cut-outs on
 
 /* ═══════════════════════════════════════════════════ wired exactly once ═══ */
 
-it('sits under the hero band exactly once, and its route file declares its four endpoints', function () {
-    // The finished state (CLAUDE.md: pin the wiring, never its absence).
+it('sits directly under the main banner, one branch per kind of banner, and its route file declares its four endpoints', function () {
+    // The finished state (CLAUDE.md: pin the wiring, never its absence). Three
+    // include sites, one per place the main banner can be (picture banner, a
+    // standalone occasion banner, the hero), chosen once by $kgsAt -- so the
+    // page draws it once. MUTATION: drop a branch's @if and the page draws two.
     $home = file_get_contents(resource_path('views/store/home.blade.php'));
-    expect(substr_count($home, "@include('partials.home.gift-strip')"))->toBe(1)
-        ->and(strpos($home, "@include('partials.home.gift-strip')"))->toBeGreaterThan(strpos($home, "@unless (\$sections->bandHidden('hero'))"));
+    expect(substr_count($home, "@include('partials.home.gift-strip'"))->toBe(3)
+        ->and(substr_count($home, '$kgsAt = '))->toBe(1)
+        ->and(substr_count($home, "@if (\$kgsAt === 'solo')"))->toBe(1)
+        ->and(substr_count($home, "@if ((\$kgsAt ?? 'hero') === 'hero')"))->toBe(1);
 
     $uris = array_map(fn ($r) => implode('|', $r->methods()) . ' ' . $r->uri(), GiftStripAdminRoutes::registered());
     sort($uris);
     expect($uris)->toBe(['GET|HEAD admin-api/gift-strip', 'GET|HEAD admin-api/gift-strip/products', 'POST admin-api/gift-strip', 'POST admin-api/gift-strip/cutout']);
+});
+
+it('stays directly under the banner on a shop with its own section order', function () {
+    /*
+     * The live shop has its own section order, which makes .kbb-home a flex
+     * column where every section carries kbb-ord-N. A strip with no order
+     * class is order 0 and jumps ABOVE the banner -- the integrator caught it
+     * before 2.60.649 shipped. The strip now carries the order class of the
+     * section it sits under (here the hero, as there is no picture banner).
+     * MUTATION: drop the kgsOrd class from the partial and this is red.
+     */
+    $ps = [gstProduct('Order Gift A'), gstProduct('Order Gift B')];
+    gstGifts($ps);
+    foreach ($ps as $p) {
+        gstCut($p);
+    }
+    gstSave(['on' => true]);
+
+    $payload = [];
+    $order = 0;
+    foreach (['categories', 'hero', 'delivery', 'ticker'] as $key) {
+        $payload[$key] = ['desktop' => true, 'mobile' => true, 'order' => $order++, 'skin' => null];
+    }
+    foreach (\App\Services\HomepageSections::REGISTRY as $key => $row) {
+        if (! isset($payload[$key])) {
+            $payload[$key] = ['desktop' => true, 'mobile' => true, 'order' => $order++, 'skin' => $row[3]];
+        }
+    }
+    app(\App\Services\HomepageSections::class)->save($payload);
+    \App\Services\SettingsService::forgetMemo();
+
+    $html = $this->get('/')->assertOk()->getContent();
+    $heroOrd = 'kbb-ord-' . app(\App\Services\HomepageSections::class)->all()['hero']['order'];
+    expect(preg_match('/<section class="kgs-sec[^"]*\b' . preg_quote($heroOrd, '/') . '\b/', $html))->toBe(1);
 });

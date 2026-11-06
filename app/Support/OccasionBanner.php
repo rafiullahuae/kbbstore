@@ -292,6 +292,18 @@ final class OccasionBanner
     {
         $ready = array_values(array_filter($pool, static fn ($p) => $p['cut'] !== null));
         shuffle($ready);
+        // One of each PHOTO: two products sharing a picture (variants, a set and
+        // its single) drew the same jar twice side by side in the integrator's check.
+        $photos = [];
+        $ready = array_values(array_filter($ready, static function ($p) use (&$photos) {
+            $k = (string) $p['image'];
+            if ($k !== '' && isset($photos[$k])) {
+                return false;
+            }
+            $photos[$k] = true;
+
+            return true;
+        }));
         if (! $perBrand) {
             return array_slice($ready, 0, $n);
         }

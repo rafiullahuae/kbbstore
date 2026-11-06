@@ -380,3 +380,15 @@ it('hands the screen everything its in-browser preview needs, in one answer', fu
         ->and($screen)->not->toContain('setInterval')
         ->and($screen)->not->toContain('getBoundingClientRect');
 });
+
+it('never draws the same photo twice in one banner', function () {
+    // Defect: two pool products sharing one picture (a variant, a set and its
+    // single) put the same jar side by side. MUTATION: drop the photo filter in
+    // pick() and this is red.
+    $row = fn (int $id, string $img, int $brand) => ['id' => $id, 'image' => $img, 'brand_id' => $brand, 'brand' => 'B'.$brand, 'cut' => ['h' => 480], 'cm' => 10.0];
+    $pool = [$row(1, '/a.webp', 1), $row(2, '/a.webp', 2), $row(3, '/b.webp', 3), $row(4, '/c.webp', 4)];
+    for ($i = 0; $i < 20; $i++) {
+        $imgs = array_column(\App\Support\OccasionBanner::pick($pool, 5, true), 'image');
+        expect(count($imgs))->toBe(count(array_unique($imgs)))->and(count($imgs))->toBe(3);
+    }
+});
