@@ -834,3 +834,34 @@ it('draws the screen again when the owner comes back to it, without a refresh', 
     $screen = (string) file_get_contents(resource_path('views/admin/partials/gift-offers-screen.blade.php'));
     expect($screen)->toContain("st.drafts = {}; st.pick = null; st.msg = ''; st.data = null; st.cfg = null;");
 });
+
+it('arms the popup on a page that opens with an empty bag, so a product added there still brings the popup, and only Place order pauses it', function () {
+    /*
+     * The owner, 6 November: "i can't see any popups on my mobile, even the
+     * settings are on, products are also selected". Two faults, reproduced
+     * in Chromium as an iPhone: the watcher lived inside the cart panel, so a
+     * page that opened with an empty bag never had it (the panel redrawn by
+     * Add to bag runs no script); and ANY form submit -- Add to bag is one --
+     * paused it for the page.
+     * MUTATION: drop the watcher include from partials/drawers -- the empty-bag
+     * page has no kbbGoB. RED. Put back `function(){busy=1}` -- RED.
+     */
+    gfoRange(100, null, [[gfoProduct('Dokdo Toner'), 'primary', 50]]);
+    gfoProduct('Serum', ['price' => 40000, 'slug' => 'gfo-serum']);
+
+    // Off: nothing on the page, no query to know it.
+    $page = gfoShopper()->get('/shop/')->getContent();
+    expect($page)->not->toContain('w.kbbGoB');
+
+    gfoSet(['places' => ['popup' => true]]);
+    $page = gfoShopper()->get('/shop/')->getContent();
+    expect(substr_count($page, 'w.kbbGoB=1'))->toBe(1)
+        ->and($page)->not->toContain('<template data-kgo-pop');   // no gift yet: only the watcher
+
+    $watcher = (string) file_get_contents(resource_path('views/partials/gift-offers/watcher.blade.php'));
+    expect($watcher)->toContain("e.target.id==='kbbCheckoutForm')busy=1")->not->toContain('function(){busy=1}');
+
+    // Testing and not on the list: no watcher either.
+    gfoSet(['mode' => 'testing', 'testers' => [['ip' => '203.0.113.9', 'label' => '']], 'places' => ['popup' => true]]);
+    expect(gfoShopper()->get('/shop/')->getContent())->not->toContain('w.kbbGoB');
+});

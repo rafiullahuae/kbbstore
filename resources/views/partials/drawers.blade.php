@@ -12,7 +12,7 @@
 @php $cp = app(\App\Services\CartPanel::class); @endphp
 {!! $cp->typeStyle() !!}<aside class="drawer {{ $cp->bodyClass() }}" id="cart" style="{{ $cp->cssVariables() }}"
        data-cp="{{ json_encode($cp->jsConfig()) }}">
-    @include('partials.cart-drawer')
+    @include('partials.cart-drawer')@if (app(\App\Services\GiftOffers\GiftOffers::class)->popupArmed())@include('partials.gift-offers.watcher')@endif
 {{-- The "added" tick: Appearance → Cart panel → Behaviour → "When
          something is added" → Animated tick. (Lane PI-B)
 

@@ -1110,6 +1110,33 @@ final class GiftOffers
      * for an admin, for an empty basket, for a basket already holding a gift,
      * and when the basket's range gives nothing.
      */
+    /**
+     * Should this page carry the popup's small watcher even with no gift to
+     * show yet? (The owner, 6 Nov: "i can't see any popups on my mobile, even
+     * the settings are on".) The watcher used to arrive only with a page that
+     * loaded with something in the bag; a product added on the page itself
+     * redraws the cart panel without running scripts, so on THAT page leaving
+     * and coming back did nothing. Now, whenever the popup is on and this
+     * visitor may see it, the ~600-byte watcher is on the page from the start
+     * and finds the gift's <template> when the panel brings one. No query:
+     * settings and the request only.
+     */
+    public function popupArmed(): bool
+    {
+        if (! $this->placeOn('popup')) {
+            return false;
+        }
+
+        $request = app()->bound('request') ? request() : null;
+
+        if (! $this->visibleTo($request)) {
+            return false;
+        }
+
+        return ! ($this->config()['mode'] === 'live' && $request !== null && $request->hasSession()
+            && $request->session()->has(\Illuminate\Support\Facades\Auth::guard('admin')->getName()));
+    }
+
     public function popup(array $totals): ?array
     {
         if (! $this->placeOn('popup') || (int) ($totals['item_count'] ?? 0) < 1) {
