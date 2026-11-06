@@ -82,6 +82,8 @@ THEMES['u3'] = dict(occ='uae', name='National Day · C  Green & Gold Night', tag
 .kbb-ssb.occ-u3 .ssb-model picture{position:relative}
 .kbb-ssb.occ-u3 .ssb-gifts{background:#fff;box-shadow:inset 0 calc(var(--u)*.6) 0 #00732F,inset 0 calc(var(--u)*1.2) 0 #fff,inset 0 calc(var(--u)*1.8) 0 #000}
 ''')
+exec(open(os.path.join(D, 'themes_extra.py')).read())
+exec(open(os.path.join(D, 'themes_uae2.py')).read())
 THEMES['s0'] = dict(occ='super', name='Super Sale  (current, kept as it is)', css='')
 
 COMMON = '''
@@ -111,7 +113,7 @@ def variant(key):
     return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet"><style>html,body{margin:0;background:#fff;font-family:"Plus Jakarta Sans",system-ui,sans-serif}body{padding:0}' + style + '</style></head><body>' + h + '</body></html>'
 
 
-order = ['m1', 'm2', 'm3', 'u1', 'u2', 'u3', 's0']
+order = ['m1', 'm2', 'm3', 'u1', 'u2', 'u3', 'n1', 'n2', 'n3', 's0']
 docs = {k: variant(k) for k in order}
 names = {k: THEMES[k]['name'] for k in order}
 if len(sys.argv) > 1 and sys.argv[1] == 'shots':
@@ -141,8 +143,8 @@ h1{font-size:20px;margin:0 0 4px}.sub{color:var(--soft);margin:0 0 16px}
 .note{color:var(--soft);font-size:13px}
 </style></head><body><div class="wrap">
 <h1>Sale page header · occasions</h1>
-<p class="sub">Your live /super-sale/ banner with each occasion's design, live (same model photo, free gifts, Tabby/Tamara and coupon GLOW). Pick one letter for 11.11 and one for National Day; Super Sale stays as it is.</p>
-<div class="bar" id="bar"><button data-f="all" aria-pressed="true">All</button><button data-f="1111">11.11 Mega Sale</button><button data-f="uae">UAE National Day</button><button data-f="super">Super Sale</button></div>
+<p class="sub">Your live /super-sale/ banner with each occasion's design, live (same model photo, free gifts, Tabby/Tamara and coupon GLOW). Pick one letter for each occasion; Super Sale stays as it is.</p>
+<div class="bar" id="bar"><button data-f="all" aria-pressed="true">All</button><button data-f="1111">11.11 Mega Sale</button><button data-f="uae">UAE National Day</button><button data-f="ny">New Year Sale</button><button data-f="super">Super Sale</button></div>
 <div id="list"></div>
 <p class="note">Desktop is drawn at 1240px wide (scaled to fit this window); the phone at 390px. Arabic pages get the same design right-to-left.</p>
 </div>

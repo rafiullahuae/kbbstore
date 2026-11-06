@@ -2,8 +2,8 @@
 
 The owner, 6 November 2026: turn the custom Super Sale header into occasion
 designs, "select and switch the heading layout as per the occasion from the
-list". Now: 11.11 Mega Sale and UAE National Day Sale (Eid Al Etihad, 2 Dec,
-55th); Super Sale stays as it is. Desktop and mobile.
+list". Now: 11.11 Mega Sale, UAE National Day Sale (Eid Al Etihad, 2 Dec, 55th) and
+New Year Sale; Super Sale stays as it is. Desktop and mobile.
 
 **Status: previews sent, waiting for the owner to pick one letter per occasion.**
 
@@ -15,8 +15,15 @@ list". Now: 11.11 Mega Sale and UAE National Day Sale (Eid Al Etihad, 2 Dec,
 
 | Occasion | A | B | C |
 |---|---|---|---|
-| 11.11 Mega Sale | Midnight Neon | Pink Burst | Blush & Gold Ticket |
-| UAE National Day | Flag Ribbon (+55 badge) | Desert Gold (skyline) | Green & Gold Night |
+| 11.11 Mega Sale | Midnight Neon (no tagline, owner 6 Nov) | Pink Burst | Blush & Gold Ticket |
+| UAE National Day (redrawn twice; owner: layered flag + the actual skyline) | Skyline by Day | Golden Dusk Skyline | Flag Sky |
+| New Year Sale (owner: "new years are good") | Midnight Gold | Champagne Blush | Fireworks |
+
+National Day skyline (themes_uae2.py): flat silhouettes of Sheikh Zayed Grand
+Mosque, Dubai Frame, Emirates Towers, Museum of the Future, Burj Khalifa, a
+waving UAE flag, Ain Dubai, Burj Al Arab; paper-cut flag layers rising under
+it; the red hoist on the start edge. Themes live in build.py,
+themes_extra.py (New Year) and themes_uae2.py (National Day).
 
 Build plan once picked: an "Occasion" select in the banner editor (Super Sale /
 11.11 / National Day), each occasion its own default words (EN + AR) and
