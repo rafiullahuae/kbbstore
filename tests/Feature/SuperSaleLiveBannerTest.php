@@ -711,3 +711,60 @@ it('gives the computer its own room above the logos and below the coupon', funct
 it('puts the pay-later line on its own line under the logos', function () {
     expect(SuperSaleBanner::css())->toContain('.ssb-paytxt{letter-spacing:.03em;line-height:1.2;flex:0 0 100%}');
 });
+
+/* ═══════════════════════ 2.60.645: the 11.11 template (Midnight Neon) ═══ */
+
+it('turns the live banner into 11.11 Midnight Neon when the patch is applied, keeping the owner\'s coupon and backing up his words', function () {
+    /*
+     * The owner, 6 November: "give me the first 11.11 design patch, that is
+     * urgent to update on the website". The migration switches the template
+     * and the words (title MEGA SALE, the big 11.11, no line under the logos)
+     * and nothing else.
+     * MUTATION: drop 'template' => 'm1' from the migration -- no ssb-t-m1. RED.
+     */
+    app(SettingsService::class)->set(SuperSaleBanner::KEY, array_merge(SuperSaleBanner::defaults(), ['code' => 'GLOW', 'title_en' => 'SUPER SALE']));
+    ssbFlush();
+    $m = require database_path('migrations/2028_01_10_100000_super_sale_banner_1111_midnight_neon.php');
+    $m->up();
+    $m->up();   // twice: the backup is written once
+    ssbFlush();
+
+    $html = $this->get('/super-sale/')->assertOk()->getContent();
+    expect($html)->toContain('class="kbb-ssb ssb-t-m1"')
+        ->toContain('<span class="ssb-num" aria-hidden="true">11.11</span>')
+        ->toContain('<div class="ssb-super">MEGA SALE</div>')
+        ->toContain('<b>GLOW</b>')
+        ->not->toContain('class="ssb-tag"')
+        ->and(substr_count($html, '.kbb-ssb.ssb-t-m1 .ssb-in{'))->toBe(1);
+
+    $ar = $this->get('/ar/super-sale/')->assertOk()->getContent();
+    expect($ar)->toContain('تخفيضات ميجا')->toContain('>11.11</span>');
+
+    $backup = json_decode((string) DB::table('settings')->where('key', 'super_sale_banner_pre_1111')->value('value'), true);
+    expect($backup['title_en'] ?? null)->toBe('SUPER SALE')->and(DB::table('settings')->where('key', 'super_sale_banner_pre_1111')->count())->toBe(1);
+
+    // down() gives his words back and the Super Sale look with them.
+    $m->down();
+    ssbFlush();
+    $back = $this->get('/super-sale/')->assertOk()->getContent();
+    expect($back)->toContain('<div class="ssb-super">SUPER SALE</div>')->not->toContain('ssb-t-m1')->not->toContain('ssb-num');
+});
+
+it('keeps Super Sale byte-for-byte, refuses an unknown template, and escapes the big number', function () {
+    /*
+     * MUTATION: print templateCss() for 'super' too, or draw .ssb-num when the
+     * number is empty -- the default banner changes. RED.
+     */
+    expect(SuperSaleBanner::config([])['template'])->toBe('super')
+        ->and(SuperSaleBanner::templateCss('super'))->toBe('')
+        ->and(SuperSaleBanner::sanitize(['template' => 'evil'], false)[0]['template'])->toBe('super')
+        ->and(SuperSaleBanner::sanitize(['template' => 'm1'], false)[0]['template'])->toBe('m1');
+
+    $plain = $this->get('/super-sale/')->assertOk()->getContent();
+    expect($plain)->toContain('class="kbb-ssb" dir="ltr"')->not->toContain('ssb-num')->not->toContain('ssb-t-');
+
+    app(SettingsService::class)->set(SuperSaleBanner::KEY, array_merge(SuperSaleBanner::defaults(), ['template' => 'm1', 'num_en' => '<b>11.11</b>']));
+    ssbFlush();
+    $html = $this->get('/super-sale/')->assertOk()->getContent();
+    expect($html)->not->toContain('<b>11.11</b></span>');
+});

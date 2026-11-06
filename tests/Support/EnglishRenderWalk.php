@@ -2950,7 +2950,10 @@ KBB_BH_CSS;
              */
             'the live Super Sale banner in the header picture\'s place (Lane SSB)' => [
                 'pattern' => '#<div class="kbb-ph-i"><style id="kbb-ssb-css">[^<]*</style>\n'
-                    .'<div class="kbb-ssb" dir="ltr" data-ssb><div class="ssb-in">\n.*?</div></div>\n</div>\n#s',
+                    // 2.60.645: the owner asked for 11.11 Mega Sale on the live shop now
+                    // ("give me the first 11.11 design patch, that is urgent"), so the
+                    // banner ships on template m1 (Midnight Neon) and carries its class.
+                    .'<div class="kbb-ssb ssb-t-m1" dir="ltr" data-ssb><div class="ssb-in">\n.*?</div></div>\n</div>\n#s',
                 'hits' => 1,
             ],
             'the Super Sale title block, configured (Lane PH)' => [

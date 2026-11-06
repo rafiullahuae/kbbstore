@@ -110,7 +110,20 @@ final class SuperSaleBanner
         'coupon' => ['COUPON CODE:', 'كود الخصم:', 'Words before the code'],
         'gifts' => ['Free gifts with every order', 'هدايا مجانية مع كل طلب', 'Gift row heading'],
         'free' => ['FREE', 'مجاناً', 'Chip at the end of the gift row'],
+        // The occasion templates' big number ("11.11"), drawn before the title
+        // only when it is not empty -- so Super Sale, which has none, is unchanged.
+        'num' => ['', '', 'Big number (occasion)'],
     ];
+
+    /**
+     * The occasion templates (the owner, 6 November: "convert into 11.11 Mega
+     * Sale ... select and switch the heading layout as per the occasion").
+     * 'super' is today's banner, byte for byte. Each other key adds the class
+     * ssb-t-<key> and its own constant CSS (templateCss()); the words stay the
+     * owner's, editable as before. 2.60.645 ships m1, 11.11 Midnight Neon,
+     * urgently; the rest of the set follows with the template picker.
+     */
+    public const TEMPLATES = ['super', 'm1'];
 
     /**
      * The text elements he can style: key => [label, selector, phone size (u),
@@ -342,6 +355,44 @@ final class SuperSaleBanner
      * shop page -- the editor adds it to the page it opens on (and the
      * console to its own), so a shopper does not carry it.
      */
+    /**
+     * The chosen occasion template's CSS: a constant per key, '' for Super
+     * Sale. Printed after css() in the banner's own <style>, so a page carries
+     * only the one template it shows. No image file, no font, no request: the
+     * dots and the glow are gradients. Colours are the banner's own colour
+     * variables, so anything the owner sets in the editor still wins.
+     */
+    public static function templateCss(string $key): string
+    {
+        return match ($key) {
+            'm1' => self::T_M1,
+            default => '',
+        };
+    }
+
+    /** 11.11 Mega Sale · A Midnight Neon (docs/plans/sale-occasions, approved 6 November). */
+    private const T_M1 = '.kbb-ssb.ssb-t-m1 .ssb-in{background:radial-gradient(60% 90% at 86% 20%,rgba(255,61,139,.55),transparent 60%),radial-gradient(50% 80% at 8% 110%,rgba(124,58,237,.55),transparent 60%),linear-gradient(120deg,#1a0a2e 0%,#2d0b45 55%,#4a0d4f 100%);'
+        .'--ssb-tag-cm:#F8D7E6;--ssb-tag-cd:#F8D7E6;--ssb-pay-cm:#fff;--ssb-pay-cd:#fff;--ssb-title-cm:#FFD36E;--ssb-title-cd:#FFD36E;--ssb-clabel-cm:#fff;--ssb-clabel-cd:#fff;--ssb-cvalue-cm:#D61F69;--ssb-cvalue-cd:#D61F69}'
+        .'.kbb-ssb.ssb-t-m1 .ssb-hero{position:relative}'
+        .'.kbb-ssb.ssb-t-m1 .ssb-hero::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle,#FFD36E 0 1.5px,transparent 2.5px) 0 0/46px 46px,radial-gradient(circle,#ff6fae 0 1.5px,transparent 2.5px) 23px 23px/46px 46px;opacity:.45;-webkit-mask:linear-gradient(90deg,transparent 0,#000 40%,#000 100%);mask:linear-gradient(90deg,transparent 0,#000 40%,#000 100%)}'
+        .'[dir=rtl].kbb-ssb.ssb-t-m1 .ssb-hero::before{-webkit-mask:linear-gradient(270deg,transparent 0,#000 40%,#000 100%);mask:linear-gradient(270deg,transparent 0,#000 40%,#000 100%)}'
+        .'.kbb-ssb.ssb-t-m1 .ssb-copy{position:relative;gap:calc(var(--u)*.9)}'
+        .'.kbb-ssb.ssb-t-m1 .ssb-super{--ssb-title-sm:6.4;text-shadow:0 0 calc(var(--u)*1.6) rgba(255,211,110,.55)}'
+        .'.kbb-ssb.ssb-t-m1 .ssb-num{display:block;font-weight:900;line-height:.9;letter-spacing:-.02em;white-space:nowrap;unicode-bidi:isolate;color:#ff4f9a;font-size:calc(var(--u)*11);text-shadow:0 0 calc(var(--u)*.6) #ff4f9a,0 0 calc(var(--u)*2.4) rgba(255,79,154,.8),0 0 calc(var(--u)*5) rgba(255,79,154,.5)}'
+        .'.kbb-ssb.ssb-t-m1 .ssb-model::before{content:"";position:absolute;left:8%;right:8%;bottom:0;height:78%;border-radius:50% 50% 0 0;background:radial-gradient(60% 60% at 50% 45%,rgba(255,79,154,.6),rgba(124,58,237,.25) 60%,transparent 72%)}'
+        .'.kbb-ssb.ssb-t-m1 .ssb-model picture{position:relative}'
+        .'.kbb-ssb.ssb-t-m1 .ssb-coupon b{border-color:#ff4f9a}'
+        .'.kbb-ssb.ssb-t-m1 .ssb-gifts{background:#fff}'
+        .'@media (min-width:901px){.kbb-ssb.ssb-t-m1:not(.ssb-fm) .ssb-copy{gap:calc(var(--u)*.55)}.kbb-ssb.ssb-t-m1:not(.ssb-fm) .ssb-super{font-size:calc(var(--u)*5)}'
+        // On a computer the number has a column of its own beside the words, so it can
+        // never sit on the title whatever its length or language; it is sized to the
+        // room that column has (cqw, inside @supports per the CSS landmine rule) and
+        // never larger than the approved 13u.
+        .'.kbb-ssb.ssb-t-m1:not(.ssb-fm) .ssb-copy{display:grid;grid-template-columns:max-content minmax(0,1fr);column-gap:calc(var(--u)*3);align-content:center}'
+        .'.kbb-ssb.ssb-t-m1:not(.ssb-fm) .ssb-copy>*{grid-column:1}'
+        .'.kbb-ssb.ssb-t-m1:not(.ssb-fm) .ssb-num{grid-column:2;grid-row:1/span 3;align-self:center;justify-self:center;font-size:calc(var(--u)*8.5)}}'
+        .'@supports (font-size:min(1cqw,1px)){@media (min-width:901px){.kbb-ssb.ssb-t-m1:not(.ssb-fm) .ssb-num{font-size:min(calc(var(--u)*13),calc((100cqw - var(--u)*82)/2.9))}}}';
+
     public static function cssForced(): string
     {
         [$phone, $desk] = self::deviceRules();
@@ -403,6 +454,7 @@ final class SuperSaleBanner
             $out['fy_'.$dev] = $y;
         }
         $out['st'] = ['en' => [], 'ar' => []];
+        $out['template'] = 'super';
 
         return $out;
     }
@@ -510,6 +562,7 @@ final class SuperSaleBanner
             $band = $d['band'];
         }
         $out['band'] = $band;
+        $out['template'] = in_array($in['template'] ?? null, self::TEMPLATES, true) ? $in['template'] : $d['template'];
 
         [$out['st'], $bad] = self::cleanStyle($in['st'] ?? null);
         foreach ($bad as $k => $label) {
@@ -701,6 +754,7 @@ final class SuperSaleBanner
             'model' => $c['model_on'] ? self::pictures($c, $lang) : null,
             'gifts' => $gifts,
             'style' => self::styleAttr($c, $lang),
+            'template' => (string) $c['template'],
         ];
     }
 
