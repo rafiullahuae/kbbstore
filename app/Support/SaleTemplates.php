@@ -407,8 +407,11 @@ final class SaleTemplates
                 '&[dir=rtl] .ssb-hero::after{transform:scaleX(-1)}',
             );
             array_push($desk,
-                '& .ssb-hero::before{background-position:right calc(var(--u)*3) bottom calc(var(--u)*3);background-size:auto 76%}',
-                '&[dir=rtl] .ssb-hero::before{background-position:left calc(var(--u)*3) bottom calc(var(--u)*3)}',
+                // The skyline fades out under the words (2.60.646): on a narrower computer
+                // screen, or the editor's preview, it otherwise ran behind the title.
+                '& .ssb-hero::before{background-position:right calc(var(--u)*3) bottom calc(var(--u)*3);background-size:auto 76%;-webkit-mask:linear-gradient(90deg,transparent 40%,#000 56%);mask:linear-gradient(90deg,transparent 40%,#000 56%)}',
+                '&[dir=rtl] .ssb-hero::before{background-position:left calc(var(--u)*3) bottom calc(var(--u)*3);-webkit-mask:linear-gradient(270deg,transparent 40%,#000 56%);mask:linear-gradient(270deg,transparent 40%,#000 56%)}',
+                '@media (max-width:1180px){& .ssb-hero::before{-webkit-mask:linear-gradient(90deg,transparent 54%,#000 70%);mask:linear-gradient(90deg,transparent 54%,#000 70%)}&[dir=rtl] .ssb-hero::before{-webkit-mask:linear-gradient(270deg,transparent 54%,#000 70%);mask:linear-gradient(270deg,transparent 54%,#000 70%)}}',
             );
             array_push($phone,
                 '& .ssb-hero::before{background-position:right -26% bottom calc(var(--u)*2);background-size:auto 60%;-webkit-mask:linear-gradient(90deg,transparent 45%,#000 72%);mask:linear-gradient(90deg,transparent 45%,#000 72%)}',
