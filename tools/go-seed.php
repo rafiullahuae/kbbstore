@@ -79,7 +79,7 @@ foreach ([[10000, 29900, [[$dokdo, 'primary', 50], [$rice, 'backup', 30]]], [300
         DB::table('gift_offer_items')->insert(['range_id' => $rid, 'product_id' => $p->id, 'role' => $role, 'sort' => $j, 'allocation' => $alloc, 'used' => $j === 0 ? 3 : 0, 'created_at' => now(), 'updated_at' => now()]);
     }
 }
-$settings->set(\App\Services\GiftOffers\GiftOffers::KEY, ['places' => ['popup' => true]]);
+$settings->set(\App\Services\GiftOffers\GiftOffers::KEY, ['mode' => 'live', 'places' => ['popup' => true]]);
 app(\App\Services\GiftOffers\GiftOffers::class)->compile();
 
 // Checkout: cash on delivery and a UAE zone.

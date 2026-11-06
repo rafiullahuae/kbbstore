@@ -372,6 +372,9 @@ it('draws the R2 row only for a basket holding a live claim, and nothing at all 
     $page = gfoShopper($cart)->get('/cart/')->getContent();
     $drawer = gfoShopper($cart)->getJson('/api/cart/drawer')->json('html');
     expect($page)->toContain('class="kgo-r" data-kgo-row')->toContain('Dokdo Toner')->toContain('Complete your order in')
+        // The clock reads as a TIME, not a price (the owner, 6 Nov): a dark
+        // stopwatch pill with its own icon and monospace digits.
+        ->toContain('<span class="kgo-tw" role="timer"><svg viewBox="0 0 24 24"')->toContain('<span class="kgo-clk">')
         ->and(substr_count($page, 'w.kbbGoT=1') >= 1)->toBeTrue()
         ->and($drawer)->toContain('data-kgo-row');
 });
@@ -864,4 +867,52 @@ it('arms the popup on a page that opens with an empty bag, so a product added th
     // Testing and not on the list: no watcher either.
     gfoSet(['mode' => 'testing', 'testers' => [['ip' => '203.0.113.9', 'label' => '']], 'places' => ['popup' => true]]);
     expect(gfoShopper()->get('/shop/')->getContent())->not->toContain('w.kbbGoB');
+});
+
+it('says only what she gets on the popup, never who it is for (the owner: "remove only shoppers who leaves... this line")', function () {
+    // Defect: the w3 popup told the shopper "Only shoppers who almost leave
+    // get this one". Mutation: put the old line back in TEXTS and this is red.
+    $go = app(GiftOffers::class);
+    expect($go->text('w3_p', [], 'en'))->toBe('A full-size {p} is yours, free with this bag.')
+        ->and($go->text('w3_p', [], 'ar'))->toBe('{p} بالحجم الكامل لكِ، مجاناً مع هذه الحقيبة.');
+    expect(GiftOffers::TEXTS['w3_p'][0])->not->toContain('leave')->not->toContain('Only shoppers')
+        ->and(GiftOffers::TEXTS['w3_p'][1])->not->toContain('تغادر');
+});
+
+it('swaps a SAVED copy of the old popup line for the new one, and leaves a line the owner wrote alone', function () {
+    // The admin's Save stores every text, so the code's new default alone
+    // would never reach a shop that had saved once. Mutation: drop the
+    // migration's swap and the first expectation is red.
+    $old = 'Only shoppers who almost leave get this one: a full-size {p}, free with this bag.';
+    $oldAr = 'هذه الهدية فقط لمن كادت تغادر: {p} بالحجم الكامل، مجاناً مع هذه الحقيبة.';
+    DB::table('settings')->updateOrInsert(['key' => 'gift_offers'], ['value' => json_encode(['texts' => ['w3_p_en' => $old, 'w3_p_ar' => $oldAr, 'w1_h_en' => 'Mine']]), 'autoload' => true]);
+    $m = require database_path('migrations/2028_01_11_100000_gift_offers_popup_line_what_she_gets.php');
+    $m->up();
+    $m->up();
+    $t = json_decode((string) DB::table('settings')->where('key', 'gift_offers')->value('value'), true)['texts'];
+    expect($t['w3_p_en'])->toBe('A full-size {p} is yours, free with this bag.')
+        ->and($t['w3_p_ar'])->toBe('{p} بالحجم الكامل لكِ، مجاناً مع هذه الحقيبة.')
+        ->and($t['w1_h_en'])->toBe('Mine');
+
+    DB::table('settings')->where('key', 'gift_offers')->update(['value' => json_encode(['texts' => ['w3_p_en' => 'My own words']])]);
+    $m->up();
+    expect(json_decode((string) DB::table('settings')->where('key', 'gift_offers')->value('value'), true)['texts']['w3_p_en'])->toBe('My own words');
+});
+
+it('celebrates Claim with confetti over the whole screen that ignores taps, removes itself and stays still for reduced motion', function () {
+    // Defect: Claim showed only the green tick inside the card. Mutation:
+    // remove confetti() from celebrate() and this is red.
+    $js = (string) file_get_contents(resource_path('js/kbb/gift-offer-popup.js'));
+    $css = (string) file_get_contents(resource_path('views/partials/gift-offers/popup-css.blade.php'));
+    expect($js)->toContain('if (!reduce) confetti();')->toContain("cf.className = 'kgo-cf'")->toContain('removeChild(cf)')
+        ->not->toContain('getBoundingClientRect')->not->toContain('offsetWidth')
+        ->and($css)->toContain('.kgo-cf{position:fixed;inset:0;z-index:2147483001;pointer-events:none;overflow:hidden}')
+        ->toContain('@media (prefers-reduced-motion:reduce){.kgo-cf{display:none}}');
+    // Only transform and opacity move.
+    preg_match_all('/@keyframes kgo(rain|burst)\{(.*?)\}\}/', $css, $k);
+    expect($k[2])->toHaveCount(2);
+    foreach ($k[2] as $frames) {
+        preg_match_all('/([a-z-]+):/', preg_replace('/var\([^)]*\)|calc\([^)]*\)/', '', $frames), $props);
+        expect(array_diff(array_unique($props[1]), ['opacity', 'transform']))->toBe([]);
+    }
 });

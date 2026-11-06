@@ -153,7 +153,7 @@ final class GiftOffers
         'w2_c' => ['Yes, add my gift', 'نعم، أضيفي هديتي'],
         'w2_l' => ['Not today', 'ليس اليوم'],
         'w3_h' => ['Psst… a secret gift, just for you', 'سرّ صغير… هدية لكِ وحدكِ'],
-        'w3_p' => ['Only shoppers who almost leave get this one: a full-size {p}, free with this bag.', 'هذه الهدية فقط لمن كادت تغادر: {p} بالحجم الكامل، مجاناً مع هذه الحقيبة.'],
+        'w3_p' => ['A full-size {p} is yours, free with this bag.', '{p} بالحجم الكامل لكِ، مجاناً مع هذه الحقيبة.'],
         'w3_c' => ['Claim it now', 'احصلي عليها الآن'],
         'w3_l' => ['Maybe later', 'ربما لاحقاً'],
         'w4_h' => ["Don't leave your glow behind", 'لا تتركي إشراقتكِ خلفكِ'],

@@ -86,11 +86,41 @@
 
         function key(e) { if (e.key === 'Escape') close(true); }
 
+        // "When press Claim, the celebration should animate over the whole
+        // screen" (the owner, 6 Nov): ~110 pieces of confetti, a burst from
+        // the popup and a rain from the top, transform and opacity only, one
+        // layer that ignores taps and removes itself. Nothing is measured;
+        // reduced motion gets the green tick alone.
+        function confetti() {
+            var C = ['#c6395f', '#ff8fb1', '#ffd36e', '#1fa463', '#b48cff', '#ffffff', '#ff6b4a'];
+            var R = Math.random, html = '', i, c, wd, ht;
+            function piece(tag, extra) {
+                c = C[(R() * C.length) | 0];
+                wd = 6 + R() * 8; ht = R() < 0.3 ? wd : 10 + R() * 10;
+                return '<' + tag + ' style="--c:' + c + ';--w:' + wd.toFixed(1) + 'px;--h:' + ht.toFixed(1) + 'px;--br:' + (ht === wd ? '50%' : '2px')
+                    + ';--r:' + ((R() * 1440 - 720) | 0) + 'deg;' + extra + '"></' + tag + '>';
+            }
+            for (i = 0; i < 60; i++) {
+                var a = R() * Math.PI * 2, dist = 18 + R() * 32;
+                html += piece('b', '--bx:' + (Math.cos(a) * dist).toFixed(1) + 'vw;--by:' + (Math.sin(a) * dist - 12).toFixed(1) + 'vh;--d:' + (1.4 + R()).toFixed(2) + 's');
+            }
+            for (i = 0; i < 50; i++) {
+                html += piece('i', '--x:' + (R() * 100).toFixed(1) + 'vw;--dx:' + ((R() * 30 - 15) | 0) + 'vw;--d:' + (1.8 + R() * 1.4).toFixed(2) + 's;--dl:' + (R() * 0.6).toFixed(2) + 's');
+            }
+            var cf = d.createElement('div');
+            cf.className = 'kgo-cf';
+            cf.setAttribute('aria-hidden', 'true');
+            cf.innerHTML = html;
+            host.appendChild(cf);
+            setTimeout(function () { if (cf.parentNode) cf.parentNode.removeChild(cf); }, 3600);
+        }
+
         function celebrate(then) {
             var tk = host.querySelector('[data-kgo-tick]');
             if (tk) tk.hidden = false;
             var reduce = w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            setTimeout(then, reduce ? 400 : 1400);
+            if (!reduce) confetti();
+            setTimeout(then, reduce ? 400 : 2200);
         }
 
         function claim(btn) {
