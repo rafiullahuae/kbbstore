@@ -22,6 +22,7 @@ def cut(name, h=260):
 
 L = [('arencia.png', 'Arencia Vitamin C Booster Shot'), ('axisy.png', 'AXIS-Y Dark Spot Correcting Glow Serum'), ('deo.png', 'Medicube Vanilla & Pistachio Deodorant')]
 R = [('guasha.png', 'Medicube PDRN Gua Sha Neck Cream'), ('eye-mask.png', 'Medicube PDRN Pink Collagen Jelly Eye Mask'), ('peel-pad.png', 'Medicube Red Succinic Acid Peeling Pad')]
+REAL = {'arencia.png': 14, 'axisy.png': 14.5, 'deo.png': 11.5, 'guasha.png': 12, 'eye-mask.png': 12, 'peel-pad.png': 9}
 IMG = {n: cut(n) for n, _ in L + R}
 
 BASE = '''
@@ -39,18 +40,24 @@ BASE = '''
 .gs-p img{display:block;height:100%;width:auto}
 @keyframes gsBob{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}50%{transform:translateY(-6px) rotate(calc(var(--r,0deg) + 2deg))}}
 @media (prefers-reduced-motion:reduce){.gs-p,.gs-fx,.gs-shine{animation:none}}
-/* left: three, the middle one popping out above the box */
-.gs-l .gs-p:nth-child(1){left:6%;height:74%;--r:-10deg}
-.gs-l .gs-p:nth-child(2){left:27%;height:136%;--r:4deg;bottom:6px;animation-delay:-2s;z-index:1}
-.gs-l .gs-p:nth-child(3){left:53%;height:80%;--r:12deg;animation-delay:-4s}
-.gs-r .gs-p:nth-child(1){right:53%;height:84%;--r:-12deg;animation-delay:-1s}
-.gs-r .gs-p:nth-child(2){right:22%;height:118%;--r:-4deg;bottom:4px;animation-delay:-3s;z-index:1}
-.gs-r .gs-p:nth-child(3){right:2%;height:62%;--r:10deg;animation-delay:-5s}
-@media (max-width:767px){body{padding-top:50px}.gs{height:112px;padding:0 4px;border-radius:18px;grid-template-columns:29% minmax(0,1fr) 29%}
- .gs-mid{padding:0 2px;gap:2px}.gs-eye{font-size:9.5px;letter-spacing:.16em}.gs-h{font-size:20px}.gs-sub{font-size:12.5px}.gs-link{font-size:11.5px}
- .gs-p img{height:auto;width:100%}
- .gs-l .gs-p:nth-child(1){left:2%;width:20%;height:auto}.gs-l .gs-p:nth-child(2){left:24%;width:30%;height:auto;bottom:4px}.gs-l .gs-p:nth-child(3){left:58%;width:30%;height:auto}
- .gs-r .gs-p:nth-child(1){right:66%;width:26%;height:auto}.gs-r .gs-p:nth-child(2){right:20%;width:52%;height:auto;bottom:30px}.gs-r .gs-p:nth-child(3){right:0;width:34%;height:auto}}
+/* TRUE SIZES (owner, 6 Nov: "the size of the products are very important in real life").
+   Every gift is drawn at one scale, --k pixels per real centimetre, times its real height --h (cm):
+   Arencia Vitamin C Booster Shot 30 ml tube 14 · AXIS-Y Glow Serum 50 ml airless tube 14.5 ·
+   Medicube deodorant 83 g stick 11.5 · Medicube Gua Sha neck cream 50 ml 12 ·
+   Medicube eye mask 6-pair pack 12 · Medicube peeling pad 70-pad jar 9 (9.1 x 9 x 8.9 cm). */
+.gs{--k:10px}
+.gs-p{height:calc(var(--k) * var(--h))}
+.gs-p img{height:100%;width:auto}
+.gs-l .gs-p:nth-child(1){left:8%;bottom:10px;--r:-8deg}
+.gs-l .gs-p:nth-child(2){left:30%;bottom:6px;--r:4deg;animation-delay:-2s;z-index:1}
+.gs-l .gs-p:nth-child(3){left:56%;bottom:12px;--r:9deg;animation-delay:-4s}
+.gs-r .gs-p:nth-child(1){right:60%;bottom:10px;--r:-8deg;animation-delay:-1s}
+.gs-r .gs-p:nth-child(2){right:26%;bottom:22px;--r:-3deg;animation-delay:-3s;z-index:1}
+.gs-r .gs-p:nth-child(3){right:3%;bottom:12px;--r:6deg;animation-delay:-5s}
+@media (max-width:767px){body{padding-top:50px}.gs{--k:6px;height:84px;padding:0 4px;border-radius:18px;grid-template-columns:31% minmax(0,1fr) 31%}
+ .gs-mid{padding:0 2px;gap:2px}.gs-h{font-size:18px}.gs-sub{font-size:11.5px}.gs-link{font-size:11.5px}
+ .gs-l .gs-p:nth-child(1){left:3%;bottom:6px}.gs-l .gs-p:nth-child(2){left:31%;bottom:3px}.gs-l .gs-p:nth-child(3){left:64%;bottom:8px}
+ .gs-r .gs-p:nth-child(1){right:63%;bottom:12px;z-index:2}.gs-r .gs-p:nth-child(2){right:25%;bottom:6px;z-index:1}.gs-r .gs-p:nth-child(3){right:-3%;bottom:4px;z-index:2}}
 '''
 
 STYLES = {}
@@ -91,7 +98,7 @@ def side(items, cls):
     out = '<div class="gs-side %s">' % cls
     for i, (n, alt) in enumerate(items):
         src, w, h = IMG[n]
-        out += '<div class="gs-p"><img src="%s" alt="%s" width="%d" height="%d" loading="lazy" decoding="async"></div>' % (src, alt, w, h)
+        out += '<div class="gs-p" style="--h:%s"><img src="%s" alt="%s" width="%d" height="%d" loading="lazy" decoding="async"></div>' % (REAL[n], src, alt, w, h)
     return out + '</div>'
 
 
