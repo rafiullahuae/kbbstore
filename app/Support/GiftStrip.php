@@ -109,7 +109,23 @@ final class GiftStrip
         'anim' => true,
         'url' => self::DEFAULT_URL,
         'source' => 'live',
+        // The owner, 6 Nov: "the gift strip button should scroll down nicely to
+        // go to the gifts sections which have already on the homepage". So the
+        // link scrolls to that section; 'url' opens the page below instead (and
+        // is the fallback whenever that section is not on this page).
+        'go' => 'section',
     ];
+
+    /** The homepage free-gifts section's heading -- partials/home/free-gifts.blade.php's own id. */
+    public const SECTION_ANCHOR = 'fgh-h';
+
+    /**
+     * Where the scroll stops: the sticky header (measured on the live shop:
+     * 86px at 390, 93.5px at 1280) + the heading's offset inside its section
+     * (22 / 47) + 8px of air, so the section's top edge shows, not its middle.
+     * The header's own layout switches at 900px.
+     */
+    public const SECTION_SCROLL_CSS = '#fgh-h{scroll-margin-top:116px}@media (min-width:901px){#fgh-h{scroll-margin-top:150px}}';
 
     /**
      * The approved CSS. Scoped to kgs- classes; plain values and calc() only
@@ -246,6 +262,7 @@ final class GiftStrip
             'anim' => $bool('anim'),
             'url' => self::url($in['url'] ?? null),
             'source' => $source,
+            'go' => ($in['go'] ?? null) === 'url' ? 'url' : 'section',
             'texts' => $texts,
             'picks' => array_slice($picks, 0, self::MAX_PICKS),
             'heights' => $heights,
@@ -326,7 +343,7 @@ final class GiftStrip
      *
      * @param  array<string,mixed>  $settings  SettingsService::all()
      */
-    public static function forPage(array $settings, ?\Illuminate\Http\Request $request): ?array
+    public static function forPage(array $settings, ?\Illuminate\Http\Request $request, bool $sectionOnPage = false): ?array
     {
         $raw = $settings[self::KEY] ?? null;
 
@@ -390,16 +407,22 @@ final class GiftStrip
         $half = (int) ceil(count($items) / 2);
         $lang = $ar ? 'ar' : 'en';
 
+        // Scroll to the homepage's own gifts section when it is on this page:
+        // its row not hidden (the caller knows) and its homepage switch on.
+        // The strip only draws while gifts are running, which is when that
+        // section has rows. Otherwise the page link, as before.
+        $toSection = $cfg['go'] === 'section' && $sectionOnPage && (bool) ($gifts->config()['home']['on'] ?? false);
+
         return [
             'style' => $cfg['style'],
-            'css' => self::css($cfg['style']),
+            'css' => self::css($cfg['style']) . ($toSection ? self::SECTION_SCROLL_CSS : ''),
             'icon' => $cfg['icon'],
             'anim' => $cfg['anim'],
             'cls' => trim('kgs-sec' . ($cfg['desktop'] ? '' : ' kgs-nd') . ($cfg['mobile'] ? '' : ' kgs-nm')),
             'h' => $cfg['texts']['h_' . $lang],
             'sub' => $cfg['texts']['sub_' . $lang],
             'link' => $cfg['texts']['link_' . $lang],
-            'href' => str_starts_with($cfg['url'], '/') ? Url::to($cfg['url']) : $cfg['url'],
+            'href' => $toSection ? '#' . self::SECTION_ANCHOR : (str_starts_with($cfg['url'], '/') ? Url::to($cfg['url']) : $cfg['url']),
             'left' => array_slice($items, 0, $half),
             'right' => array_slice($items, $half),
         ];

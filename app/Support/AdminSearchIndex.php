@@ -576,7 +576,7 @@ final class AdminSearchIndex
         'giftstrip' => [
             // Lane GST: Appearance -> Free gifts strip.
             '' => [
-                'Design', 'Gift icon on each product', 'Link goes to', 'Live free gifts', 'Pick products',
+                'Design', 'Gift icon on each product', 'When the link is pressed', 'Page to open', 'Live free gifts', 'Pick products',
                 'Prepare cut-outs', 'Real height', 'White product',
             ],
         ],

@@ -467,3 +467,39 @@ it('stays directly under the banner on a shop with its own section order', funct
     $heroOrd = 'kbb-ord-' . app(\App\Services\HomepageSections::class)->all()['hero']['order'];
     expect(preg_match('/<section class="kgs-sec[^"]*\b' . preg_quote($heroOrd, '/') . '\b/', $html))->toBe(1);
 });
+
+it('scrolls down to the homepage free gifts section when its link is pressed, and opens the page when that section is not there', function () {
+    /*
+     * The owner, 6 Nov: "the gift strip button should scroll down nicely to go
+     * to the gifts sections which have already on the homepage". The defect
+     * would be a link that leaves the homepage for /super-sale/, or one that
+     * points at #fgh-h on a page where that section is hidden (a dead link).
+     * MUTATION: return the page URL from forPage() always and the first
+     * expectation is red; drop the $sectionOnPage check and the hidden case is red.
+     */
+    $ps = [gstProduct('Scroll Gift A'), gstProduct('Scroll Gift B')];
+    gstGifts($ps);
+    foreach ($ps as $p) {
+        gstCut($p);
+    }
+    gstSet(FreeGifts::KEY, ['on' => true, 'show_value' => false, 'countries' => 'all', 'basis' => 'after_discounts', 'home' => ['on' => true]]);
+    gstSave(['on' => true]);
+
+    $html = $this->get('/')->assertOk()->getContent();
+    $strip = gstSection($html);
+    expect($strip)->toContain('class="kgs-link" href="#fgh-h"')
+        ->toContain('#fgh-h{scroll-margin-top:116px}')
+        ->and(substr_count($html, 'id="fgh-h"'))->toBe(1)       // the target is on the page
+        ->and(strpos($html, 'class="kgs-sec'))->toBeLessThan(strpos($html, 'id="fgh-h"')); // and it is BELOW the strip
+
+    // He chose "Open a page": the page, and no scroll rule.
+    gstSave(['on' => true, 'go' => 'url']);
+    $strip = gstSection($this->get('/')->assertOk()->getContent());
+    expect($strip)->toContain('class="kgs-link" href="' . \App\Support\Url::to('/super-sale/') . '"')->not->toContain('scroll-margin-top');
+
+    // The homepage section switched off: never a link to a section that is not there.
+    gstSave(['on' => true, 'go' => 'section']);
+    gstSet(FreeGifts::KEY, ['on' => true, 'show_value' => false, 'countries' => 'all', 'basis' => 'after_discounts', 'home' => ['on' => false]]);
+    $html = $this->get('/')->assertOk()->getContent();
+    expect(gstSection($html))->not->toContain('#fgh-h')->and($html)->not->toContain('id="fgh-h"');
+});

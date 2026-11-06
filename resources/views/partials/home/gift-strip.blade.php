@@ -17,7 +17,7 @@
     height, lazy and async. The CSS is a constant chosen by a normalised key;
     every word and the href are escaped, and the href was scheme-checked when
     it was saved and again when it was read.
---}}@php $kgs = \App\Support\GiftStrip::forPage(app(\App\Services\SettingsService::class)->all(), request()); @endphp
+--}}@php $kgs = \App\Support\GiftStrip::forPage(app(\App\Services\SettingsService::class)->all(), request(), $kgsToSection ?? false); @endphp
 @if ($kgs !== null)
 <section class="{{ $kgs['cls'] }}{{ ($kgsOrd ?? '') !== '' ? ' '.$kgsOrd : '' }}" aria-label="{{ $kgs['h'] }}"><style>{!! $kgs['css'] !!}</style>@if ($kgs['icon']){!! \App\Support\GiftStrip::GIFT_SYMBOL !!}@endif<div class="wrap"><div class="kgs{{ $kgs['anim'] ? '' : ' kgs-still' }}"><div class="kgs-bg">@if ($kgs['style'] === 'S5')<div class="kgs-fx"></div><div class="kgs-shine"></div>@endif</div>
 @foreach (['l' => $kgs['left'], 'r' => $kgs['right']] as $kgsSide => $kgsItems)

@@ -37,7 +37,7 @@ use Illuminate\Http\Request;
 class GiftStripApiController extends Controller
 {
     /** The keys a save may carry. `snap` is the server's alone. */
-    private const KEYS = ['on', 'desktop', 'mobile', 'style', 'icon', 'anim', 'url', 'source', 'texts', 'picks', 'heights', 'white'];
+    private const KEYS = ['on', 'desktop', 'mobile', 'style', 'icon', 'anim', 'url', 'go', 'source', 'texts', 'picks', 'heights', 'white'];
 
     public function __construct(private SettingsService $settings, private FreeGifts $gifts) {}
 

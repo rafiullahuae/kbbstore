@@ -326,7 +326,9 @@
       + '<div class="gsa-card"><p class="gsa-title">Words and link</p><div class="gsa-grid">'
       + txt('h', 'Heading', false) + txt('h', 'Heading', true) + txt('sub', 'Under the heading', false) + txt('sub', 'Under the heading', true)
       + txt('link', 'Link text', false) + txt('link', 'Link text', true) + '</div>'
-      + '<div class="gsa-f" style="margin-top:10px" data-gsa-urlf><label for="gsa-url">Link goes to</label><input type="text" id="gsa-url" data-gsa-url maxlength="300" value="' + esc(values.url) + '">'
+      + '<p class="gsa-sub" style="margin:12px 0 6px">When the link is pressed</p><div class="gsa-bar" role="radiogroup" aria-label="When the link is pressed"><button type="button" class="gsa-btn" data-gsa-go="section" aria-pressed="' + (values.go !== 'url') + '">Scroll down to the free gifts section</button><button type="button" class="gsa-btn" data-gsa-go="url" aria-pressed="' + (values.go === 'url') + '">Open a page</button></div>'
+      + '<p class="gsa-help">Scrolling goes smoothly to the free gifts section already on the homepage. If that section is hidden, the link opens the page below instead.</p>'
+      + '<div class="gsa-f" style="margin-top:10px" data-gsa-urlf><label for="gsa-url">Page to open</label><input type="text" id="gsa-url" data-gsa-url maxlength="300" value="' + esc(values.url) + '">'
       + '<p class="gsa-help">A page of this shop starting with / (default ' + esc(P.default_url) + ', the Super Sale page with the gift row; Arabic shoppers get its /ar page), or an address starting with https://.</p></div></div>'
       + '<div class="gsa-card"><p class="gsa-title">Products</p><p class="gsa-sub">Up to three on each side. Set each product\'s real height in centimetres: they are drawn at one scale (10px per cm on a computer, 6px on a phone), so a 9 cm jar stands next to a 14 cm tube as it does on a shelf.</p>'
       + '<div class="gsa-bar" role="radiogroup" aria-label="Which products"><button type="button" class="gsa-btn" data-gsa-src="live" aria-pressed="' + !pick + '">Live free gifts</button><button type="button" class="gsa-btn" data-gsa-src="pick" aria-pressed="' + pick + '">Pick products</button></div>'
@@ -363,7 +365,7 @@
     try {
       var body = await api('/gift-strip', { settings: {
         on: values.on, desktop: values.desktop, mobile: values.mobile, style: values.style, icon: values.icon, anim: values.anim,
-        url: values.url, source: values.source, texts: values.texts, picks: values.picks, heights: heights, white: values.white
+        url: values.url, go: values.go === 'url' ? 'url' : 'section', source: values.source, texts: values.texts, picks: values.picks, heights: heights, white: values.white
       } });
       if (!ours()) { busy = false; return; }
       take(body); dirty = false; banner = null;
@@ -431,6 +433,7 @@
     if (b.hasAttribute('data-gsa-prep')) return prepare(0);
     if (b.hasAttribute('data-gsa-lang')) { lang = b.getAttribute('data-gsa-lang'); return render(); }
     if (b.hasAttribute('data-gsa-style')) { values.style = b.getAttribute('data-gsa-style'); touched(); return render(); }
+    if (b.hasAttribute('data-gsa-go')) { values.go = b.getAttribute('data-gsa-go'); touched(); return render(); }
     if (b.hasAttribute('data-gsa-src')) { values.source = b.getAttribute('data-gsa-src'); touched(); return render(); }
     if (b.hasAttribute('data-gsa-cut')) return prepare(parseInt(b.getAttribute('data-gsa-cut'), 10));
     if (b.hasAttribute('data-gsa-add')) {

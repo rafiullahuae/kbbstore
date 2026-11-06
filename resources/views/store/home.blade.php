@@ -211,7 +211,7 @@ $homeFirst = $sections->firstOnScreen();
      flex column and a section with no order class would jump ABOVE the banner. --}}@php $kgsAt = $bnSection !== null ? 'banner' : ($ohbSolo ? 'solo' : 'hero'); $kgsOrdBanner = $sections->orderIsDefault() ? '' : 'kbb-ord-'.$sections->all()['cards_banner']['order']; @endphp
 @if ($ohbSolo)<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:0"><div class="wrap">@include('partials.home.occasion-banner', ['ohb' => $ohbView])</div></section>
 @if ($kgsAt === 'solo')
-@include('partials.home.gift-strip', ['kgsOrd' => $kgsOrdBanner])
+@include('partials.home.gift-strip', ['kgsToSection' => ! $sections->hidden('freegifts'), 'kgsOrd' => $kgsOrdBanner])
 @endif
 @endif
 @if ($bnSection !== null)
@@ -228,7 +228,7 @@ $homeFirst = $sections->firstOnScreen();
      picture at 390 and at 1280. BannerSet::SECTION_STYLES keeps 8px for the
      cards row and gives the two picture kinds 0. --}}
 @unless ($ohbOnly)<section class="sec {{ $sections->classFor('cards_banner') }}" style="{{ $bnSection[0]->homeSectionStyle() }}"><div class="wrap">@include($bnSection[0]->homePartial(), ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>@endunless
-@include('partials.home.gift-strip', ['kgsOrd' => $kgsOrdBanner])
+@include('partials.home.gift-strip', ['kgsToSection' => ! $sections->hidden('freegifts'), 'kgsOrd' => $kgsOrdBanner])
 
 {{-- Lane TS: the trust strip, directly under the picture banner. --}}@if ($ktrHome !== null)
 @include('partials.trust-strip', ['v' => 'card', 'cls' => $ktrClsBanner])
@@ -571,7 +571,7 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
 </div></section>
 @endunless
 @if (($kgsAt ?? 'hero') === 'hero')
-@include('partials.home.gift-strip', ['kgsOrd' => $sections->orderIsDefault() ? '' : 'kbb-ord-'.$sections->all()['hero']['order']])
+@include('partials.home.gift-strip', ['kgsToSection' => ! $sections->hidden('freegifts'), 'kgsOrd' => $sections->orderIsDefault() ? '' : 'kbb-ord-'.$sections->all()['hero']['order']])
 @endif
 {{-- Lane TS: no picture banner, so the hero is the banner and the strip goes under it. --}}@if ($ktrHome !== null && ! $ktrAfterBanner)
 @include('partials.trust-strip', ['v' => 'card', 'cls' => $ktrClsHero])
