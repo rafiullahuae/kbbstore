@@ -573,6 +573,13 @@ final class AdminSearchIndex
                 'Two-column feature', 'About us', 'Customer reviews', 'Trust row',
             ],
         ],
+        'giftstrip' => [
+            // Lane GST: Appearance -> Free gifts strip.
+            '' => [
+                'Design', 'Gift icon on each product', 'Link goes to', 'Live free gifts', 'Pick products',
+                'Prepare cut-outs', 'Real height', 'White product',
+            ],
+        ],
         'hpcontent' => [
             // Lane HC: the one page for the whole homepage, and its editor.
             'All sections' => [

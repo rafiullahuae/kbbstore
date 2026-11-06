@@ -218,6 +218,7 @@ final class AdminNav
         ['sec' => 'Appearance', 'rows' => [
             ['id' => 'homepage', 'label' => 'Homepage', 'read' => 'admin-api/homepage', 'icon' => '<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>'],
             ['id' => 'hpcontent', 'label' => 'Homepage content', 'read' => 'admin-api/homepage-hub', 'late' => true, 'icon' => '<path d="M3 5h18v6H3z"/><path d="M3 15h9"/><path d="M3 19h6"/>'],
+            ['id' => 'giftstrip', 'label' => 'Free gifts strip', 'read' => 'admin-api/gift-strip', 'late' => true, 'icon' => '<path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/>'],
             ['id' => 'spotted', 'label' => '#KBeautyBliss Spotted', 'read' => 'admin-api/spotted', 'late' => true, 'icon' => '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/>'],
             ['id' => 'banners', 'label' => 'Banners', 'read' => 'admin-api/banners', 'late' => true, 'icon' => '<rect x="3" y="4" width="7" height="16" rx="2"/><rect x="14" y="4" width="7" height="16" rx="2"/>'],
             ['id' => 'gridsections', 'label' => 'Grid sections', 'read' => 'admin-api/grid-sections', 'late' => true, 'icon' => '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'],

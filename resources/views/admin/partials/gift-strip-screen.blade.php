@@ -157,7 +157,7 @@
   function addNavEntry() {
     window.kbbAddNavEntry({
       screen: SCREEN,
-      label: TITLE,
+      label: 'Free gifts strip',
       icon: '<path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 21V7"/><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/>',
       group: 'Appearance',
       after: ['hpcontent', 'homepage']
