@@ -248,7 +248,7 @@ it('reads a template\'s own sizes and colours as the shipped values, so an untou
 
     $m1 = SuperSaleBanner::styleDefaults('en', 'd', 'm1');
     expect($m1['title']['c'])->toBe('#FFD36E')->and($m1['title']['s'])->toBe(50.0)->and($m1['num']['s'])->toBe(130.0);
-    expect(SaleTemplates::css('m1'))->toContain('color:var(--ssb-title-cd,#FFD36E)')
+    expect(SaleTemplates::css('m1'))->toContain('color:var(--ssb-title-cd,#ffd36e)')
         ->toContain('font-size:calc(var(--u)*var(--ssb-title-sd,5))')
         ->not->toMatch('/--ssb-[a-z]+-[a-z]{1,2}[md]:/');   // never SETS one of his properties
 
@@ -321,6 +321,14 @@ it('keeps every template\'s CSS on the landmine rules: constants, no newer funct
         }
         expect($css)->not->toContain('<')->not->toContain('round(')->not->toContain('color-mix(')
             ->not->toContain('@import')->not->toMatch('#url\((?!"data:image/svg\+xml,)#');
+        // A stylesheet is page text: "coupon" and a capitalised word after it
+        // is what PublicPagesQuoteRealPricesTest reads as an offered code
+        // (`.ssb-coupon b{border-color:#C9952F` was "code C9952F" on the full
+        // suite). MUTATION: drop lowerHex() -> red.
+        preg_match_all('/\b(?:code|coupon|promo)\b(.{0,40})/is', $css, $w);
+        foreach ($w[1] as $window) {
+            expect(preg_match('/\b[A-Z][A-Z0-9]{3,19}\b/', $window))->toBe(0, $key.': '.$window);
+        }
         // Every rule is scoped to the banner wearing this template's class.
         preg_match_all('/(?:^|[{}])([^{}]+)\{/', $css, $m);
         expect(count($m[1]))->toBeGreaterThan(5);

@@ -323,9 +323,9 @@ final class SaleTemplates
         [$all, $phone, $desk] = self::rules($key);
         $root = '.kbb-ssb.ssb-t-'.$key;
 
-        return self::$memo[$key] = self::at($all, $root)
+        return self::$memo[$key] = self::lowerHex(self::at($all, $root)
             .'@media (max-width:900px){'.self::at($phone, $root.':not(.ssb-fd)').'}'
-            .'@media (min-width:901px){'.self::at($desk, $root.':not(.ssb-fm)').'}';
+            .'@media (min-width:901px){'.self::at($desk, $root.':not(.ssb-fm)').'}');
     }
 
     /** The editor's device preview of this template (.ssb-fm / .ssb-fd), never on a shop page. */
@@ -337,7 +337,19 @@ final class SaleTemplates
         [, $phone, $desk] = self::rules($key);
         $root = '.kbb-ssb.ssb-t-'.$key;
 
-        return self::at($phone, $root.'.ssb-fm').self::at($desk, $root.'.ssb-fd');
+        return self::lowerHex(self::at($phone, $root.'.ssb-fm').self::at($desk, $root.'.ssb-fd'));
+    }
+
+    /**
+     * Every colour in lower case. The page's text is read for advertised
+     * discount codes -- "coupon" followed by a capitalised word
+     * (PublicPagesQuoteRealPricesTest) -- and a stylesheet's text is the
+     * page's text: `.ssb-coupon b{border-color:#C9952F` reads as an offer of
+     * code C9952F. Lower case is the same colour to a browser.
+     */
+    private static function lowerHex(string $css): string
+    {
+        return (string) preg_replace_callback('/#[0-9A-Fa-f]{3,8}\b/', static fn (array $m): string => strtolower($m[0]), $css);
     }
 
     /**
