@@ -88,14 +88,17 @@ BASE = '''
 
 LAYOUTS = {}
 PLACE = '''
-.hz-p4{right:44%;top:40%;height:42%;z-index:2}
-.hz-p0{right:31%;top:28%;height:44%;z-index:1}
-.hz-p1{right:22%;top:8%;height:62%}
-.hz-p2{right:12.5%;top:16%;height:60%;z-index:1}
-.hz-p3{right:4.5%;top:30%;height:50%}
-@media (max-width:1023px){.hz-p4{right:43%;top:46%;height:34%}}
-@media (max-width:767px){.hz-p4{right:auto;left:3%;top:auto;bottom:3%;height:24%}.hz-p0{right:auto;left:17%;top:auto;bottom:3%;height:25%}.hz-p1{right:auto;left:40%;top:auto;bottom:5%;height:34%}
- .hz-p2{right:auto;left:57%;top:auto;bottom:2%;height:36%}.hz-p3{right:5%;top:auto;bottom:6%;height:30%}}
+/* true-to-life proportions (the owner, 6 Nov: "the mini is small in size. but u make it
+   larger then the medicube stick"): COSRX 100ml bottle and Dr.Althea tube tallest, Beauty of
+   Joseon tube a little shorter, Medicube stick about two thirds, Anua mist mini about half */
+.hz-p4{right:43%;top:42%;height:40%;z-index:2}
+.hz-p0{right:32.5%;top:46%;height:30%;z-index:3}
+.hz-p1{right:22%;top:12%;height:60%}
+.hz-p2{right:12.5%;top:11%;height:62%;z-index:1}
+.hz-p3{right:4%;top:20%;height:54%}
+@media (max-width:1023px){.hz-p4{right:42%;top:46%;height:36%}.hz-p0{top:52%;height:27%}}
+@media (max-width:767px){.hz-p4{right:auto;left:3%;top:auto;bottom:3%;height:24%}.hz-p0{right:auto;left:21%;top:auto;bottom:3%;height:18%;z-index:3}.hz-p1{right:auto;left:38%;top:auto;bottom:4%;height:35%}
+ .hz-p2{right:auto;left:57%;top:auto;bottom:3%;height:36%}.hz-p3{right:4%;top:auto;bottom:4%;height:31%}}
 '''
 
 # Computer: words left (big), products right. Phone: words top, products below.
