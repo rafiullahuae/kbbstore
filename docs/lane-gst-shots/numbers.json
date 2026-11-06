@@ -1,0 +1,272 @@
+{
+ "styles": {
+  "S1": {
+   "390": {
+    "shown": true,
+    "section_h": 106,
+    "strip_h": 84,
+    "product_heights_px": [
+     86,
+     89,
+     72,
+     76,
+     74,
+     59
+    ],
+    "icons": 6,
+    "h_font": "18px",
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "link_hit_first_try": true,
+    "console_errors": [],
+    "html_bytes": 165336
+   },
+   "1280": {
+    "shown": true,
+    "section_h": 172,
+    "strip_h": 130,
+    "product_heights_px": [
+     143,
+     149,
+     120,
+     126,
+     123,
+     99
+    ],
+    "icons": 6,
+    "h_font": "43.52px",
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "link_hit_first_try": true,
+    "console_errors": [],
+    "html_bytes": 165336
+   }
+  },
+  "S2": {
+   "390": {
+    "shown": true,
+    "section_h": 106,
+    "strip_h": 84,
+    "product_heights_px": [
+     86,
+     89,
+     72,
+     76,
+     74,
+     59
+    ],
+    "icons": 6,
+    "h_font": "18px",
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "link_hit_first_try": true,
+    "console_errors": [],
+    "html_bytes": 165583
+   },
+   "1280": {
+    "shown": true,
+    "section_h": 172,
+    "strip_h": 130,
+    "product_heights_px": [
+     143,
+     149,
+     120,
+     126,
+     123,
+     99
+    ],
+    "icons": 6,
+    "h_font": "43.52px",
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "link_hit_first_try": true,
+    "console_errors": [],
+    "html_bytes": 165583
+   }
+  },
+  "S3": {
+   "390": {
+    "shown": true,
+    "section_h": 106,
+    "strip_h": 84,
+    "product_heights_px": [
+     86,
+     89,
+     72,
+     76,
+     74,
+     59
+    ],
+    "icons": 6,
+    "h_font": "18px",
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "link_hit_first_try": true,
+    "console_errors": [],
+    "html_bytes": 165553
+   },
+   "1280": {
+    "shown": true,
+    "section_h": 172,
+    "strip_h": 130,
+    "product_heights_px": [
+     143,
+     149,
+     120,
+     126,
+     123,
+     99
+    ],
+    "icons": 6,
+    "h_font": "43.52px",
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "link_hit_first_try": true,
+    "console_errors": [],
+    "html_bytes": 165553
+   }
+  },
+  "S4": {
+   "390": {
+    "shown": true,
+    "section_h": 106,
+    "strip_h": 84,
+    "product_heights_px": [
+     86,
+     89,
+     72,
+     76,
+     74,
+     59
+    ],
+    "icons": 6,
+    "h_font": "18px",
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "link_hit_first_try": true,
+    "console_errors": [],
+    "html_bytes": 165590
+   },
+   "1280": {
+    "shown": true,
+    "section_h": 172,
+    "strip_h": 130,
+    "product_heights_px": [
+     143,
+     149,
+     120,
+     126,
+     123,
+     99
+    ],
+    "icons": 6,
+    "h_font": "43.52px",
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "link_hit_first_try": true,
+    "console_errors": [],
+    "html_bytes": 165590
+   }
+  },
+  "S5": {
+   "390": {
+    "shown": true,
+    "section_h": 106,
+    "strip_h": 84,
+    "product_heights_px": [
+     86,
+     89,
+     72,
+     76,
+     74,
+     59
+    ],
+    "icons": 6,
+    "h_font": "18px",
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "link_hit_first_try": true,
+    "console_errors": [],
+    "html_bytes": 165887
+   },
+   "1280": {
+    "shown": true,
+    "section_h": 172,
+    "strip_h": 130,
+    "product_heights_px": [
+     143,
+     149,
+     120,
+     126,
+     123,
+     99
+    ],
+    "icons": 6,
+    "h_font": "43.52px",
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "link_hit_first_try": true,
+    "console_errors": [],
+    "html_bytes": 165887
+   }
+  }
+ },
+ "off_390": {
+  "html_bytes": 157316,
+  "has_kgs": false,
+  "scrollWidth": 390,
+  "console_errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+ },
+ "off_1280": {
+  "html_bytes": 157316,
+  "has_kgs": false,
+  "scrollWidth": 1280,
+  "console_errors": []
+ },
+ "cutouts_ms_for_six": 3389,
+ "admin_requests_while_typing": 0,
+ "admin_preview_redrawn": true,
+ "link_click_390": "http://127.0.0.1:12201/super-sale/",
+ "link_click_1280": "http://127.0.0.1:12201/super-sale/",
+ "ar_390": {
+  "shown": true,
+  "section_h": 106,
+  "strip_h": 84,
+  "product_heights_px": [
+   86,
+   89,
+   72,
+   76,
+   74,
+   59
+  ],
+  "icons": 6,
+  "h_font": "18px",
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "link_hit_first_try": true,
+  "console_errors": []
+ },
+ "ar_1280": {
+  "shown": true,
+  "section_h": 172,
+  "strip_h": 130,
+  "product_heights_px": [
+   143,
+   149,
+   120,
+   126,
+   123,
+   99
+  ],
+  "icons": 6,
+  "h_font": "43.52px",
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "link_hit_first_try": true,
+  "console_errors": []
+ },
+ "admin_console_errors": []
+}
