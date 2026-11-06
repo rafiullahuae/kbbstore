@@ -8,7 +8,7 @@ html = html.replace('src="/img-cache', 'src="https://kbeautybliss.com/img-cache'
 THEMES = {}
 
 # ------------------------------------------------------------------ 11.11
-THEMES['m1'] = dict(occ='1111', name='11.11 · A  Midnight Neon', tag='ONE DAY ONLY · 11 NOVEMBER', title='MEGA SALE', num='11.11', css='''
+THEMES['m1'] = dict(occ='1111', name='11.11 · A  Midnight Neon', tag='', title='MEGA SALE', num='11.11', css='''
 .kbb-ssb.occ-m1 .ssb-in{background:radial-gradient(60% 90% at 86% 20%,rgba(255,61,139,.55),transparent 60%),radial-gradient(50% 80% at 8% 110%,rgba(124,58,237,.55),transparent 60%),linear-gradient(120deg,#1a0a2e 0%,#2d0b45 55%,#4a0d4f 100%);
  --ssb-tag-cm:#F8D7E6;--ssb-tag-cd:#F8D7E6;--ssb-pay-cm:#fff;--ssb-pay-cd:#fff;--ssb-title-cm:#FFD36E;--ssb-title-cd:#FFD36E;--ssb-clabel-cm:#fff;--ssb-clabel-cd:#fff;--ssb-cvalue-cm:#D61F69;--ssb-cvalue-cd:#D61F69}
 .kbb-ssb.occ-m1 .ssb-hero{position:relative}
@@ -99,7 +99,8 @@ def variant(key):
     h = html
     if t['occ'] != 'super':
         h = h.replace('<div class="kbb-ssb" ', '<div class="kbb-ssb occ-' + key + '" ', 1)
-        h = h.replace('<span class="ssb-tag">PERFECT SKINCARE TO GLOW</span>', '<span class="ssb-tag">' + t['tag'] + '</span>')
+        # The owner, 6 Nov: "remove the line only one day, 11 november" -- an empty line is not drawn at all.
+        h = h.replace('<span class="ssb-tag">PERFECT SKINCARE TO GLOW</span>', ('<span class="ssb-tag">' + t['tag'] + '</span>') if t['tag'] else '')
         title = '<div class="ssb-super">' + t['title'] + '</div>'
         if t.get('num'):
             title = '<span class="occ-num" aria-hidden="true">' + t['num'] + '</span>' + title
