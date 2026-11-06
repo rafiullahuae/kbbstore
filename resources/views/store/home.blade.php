@@ -559,6 +559,7 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
   @endunless
 </div></section>
 @endunless
+@include('partials.home.gift-strip')
 {{-- Lane TS: no picture banner, so the hero is the banner and the strip goes under it. --}}@if ($ktrHome !== null && ! $ktrAfterBanner)
 @include('partials.trust-strip', ['v' => 'card', 'cls' => $ktrClsHero])
 @endif

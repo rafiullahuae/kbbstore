@@ -530,6 +530,13 @@ final class AdminCapabilities
         // five above, and its own capability for the same reason. (Lane WA)
         'wabutton.manage' => ['owner', 'manager', 'editor'],
 
+        // Appearance -> Free gifts strip (Lane GST): the homepage bar's design,
+        // words, link (an href on the homepage) and products, and the cut-out
+        // step that writes image files. Storefront appearance, so the same
+        // three roles, and its own capability so narrowing one never narrows
+        // another.
+        'giftstrip.manage' => ['owner', 'manager', 'editor'],
+
         // Appearance -> Coming Soon page (Lane CS): one switch that hides the
         // whole shop on an address (or on every address) behind a 503 page,
         // and the secret link that lets someone past it. A shop-wide
@@ -1903,6 +1910,10 @@ final class AdminCapabilities
         ['*', 'admin-api/page-wash', 'pagewash.manage'],
         // One line and no '/**' sibling: no sub-endpoint here either. (Lane WA)
         ['*', 'admin-api/whatsapp-button', 'wabutton.manage'],
+        // Appearance -> Free gifts strip (Lane GST). Both lines: '/**' does not
+        // match the bare path, and the screen's read IS the bare path.
+        ['*', 'admin-api/gift-strip', 'giftstrip.manage'],
+        ['*', 'admin-api/gift-strip/**', 'giftstrip.manage'],
         // Appearance -> Coming Soon page (Lane CS). Both lines: `/**` does not match the bare prefix.
         ['*', 'admin-api/coming-soon', 'comingsoon.manage'],
         ['*', 'admin-api/coming-soon/**', 'comingsoon.manage'],
