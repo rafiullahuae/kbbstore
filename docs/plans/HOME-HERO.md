@@ -6,7 +6,7 @@ then the existing picture slider; exact current sizes; more content for SEO
 and offers; super light; editable; background colours moving continuously;
 multiple designs, desktop and mobile.
 
-**Status: round 2 previews sent (D Mega Type, E Hero Product, F Poster Split). Round 1 (A-C) rejected: "don't follow the super sale style ... neither use small products grid or thumbnails ... i want everything big".**
+**Status: round 3 previews sent (G Floating Cluster, H Glow Halo, I Wave Stage), floating product cut-outs, colour-cycling background, big words left with no box. Rounds 1-2 rejected.**
 
 - Sizes measured on kbeautybliss.com: computer full width x 600px (548 at
   1024, 411 at 768), phone full width x 500px.
