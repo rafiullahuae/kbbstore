@@ -1049,6 +1049,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/homepage-live-admin.php';
         require __DIR__.'/homepage-hub-admin.php';
+        require __DIR__.'/occasion-banner-admin.php';
 
         // Storefront settings, grouped into tabs.
         Route::get('/ecommerce',  [\App\Http\Controllers\Admin\EcommerceApiController::class, 'show']);

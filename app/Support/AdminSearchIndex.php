@@ -892,6 +892,14 @@ final class AdminSearchIndex
             'Display' => ['Show gift prices', 'Countries', 'What counts', 'Texts'],
             'Homepage section' => ['Show on the homepage', 'Title', 'Button'],
         ],
+        // Appearance -> Occasion banner (Lane OHB).
+        'occbanner' => [
+            'Display' => ['Slider only', 'Banner only', 'Banner first, then the slider'],
+            'Design and live preview' => ['Layout', 'Occasion', 'Computer', 'Phone'],
+            'Words' => ['Eyebrow', 'Big number', 'Title', 'Offer line', 'Body', 'Button text', 'Button link'],
+            'Colours and movement' => ['Accent', 'Button', 'Animation'],
+            'Products' => ['Add best sellers, one per brand', 'Real height', 'White product', 'Prepare cut-outs', 'One per brand'],
+        ],
         // Growth & Marketing -> Gift offers (Lane GO).
         'giftoffers' => [
             'Settings' => ['Gift offers', 'Abandoned-cart email', 'Pending reminder', 'Exit popup', 'Timer in the email', 'Texts'],

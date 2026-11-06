@@ -389,7 +389,8 @@ it('renders the sidebar the console settled on, group by group and row by row', 
         'Content' => ['posts', 'htmlblocks', 'media', 'ugcsections', 'igembeds'],
         'Translation' => ['tr-settings', 'tr-progress', 'tr-strings', 'tr-machine'],
         // 'comingsoon' — Appearance → Coming Soon page (Lane CS), last, after Site layout.
-        'Appearance' => ['homepage', 'hpcontent', 'giftstrip', 'spotted', 'banners', 'gridsections', 'prodstyles', 'mobilehdr',
+        // 'occbanner' — Appearance → Occasion banner (Lane OHB), after Homepage content; then 'giftstrip' (Lane GST).
+        'Appearance' => ['homepage', 'hpcontent', 'occbanner', 'giftstrip', 'spotted', 'banners', 'gridsections', 'prodstyles', 'mobilehdr',
             'dividers', 'pagewash', 'wabutton', 'cartpanel', 'cartpage', 'checkoutpage', 'slimfooter', 'acctpanel',
             'header', 'mobilemenu', 'productpage', 'setap', 'bundles', 'layout', 'sitelayout', 'comingsoon'],
         'Pages' => ['pages-store', 'pages-user', 'pagebanners', 'pageheader'],

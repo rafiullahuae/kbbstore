@@ -697,6 +697,15 @@ final class AdminCapabilities
         'giftoffers.manage' => ['owner', 'manager'],
 
         /*
+         * Appearance -> Occasion banner (Lane OHB). occasionbanner.view reads
+         * the screen and searches the catalogue for its pool;
+         * occasionbanner.manage saves it and makes cut-outs. The homepage's
+         * editors, as Homepage content: owner, manager, editor.
+         */
+        'occasionbanner.view' => ['owner', 'manager', 'editor'],
+        'occasionbanner.manage' => ['owner', 'manager', 'editor'],
+
+        /*
          * Growth & Marketing -> Google Shopping feed (Lane SEO): read the feed's
          * address and contents, and switch the public feed on or off. The feed
          * itself is public by design (Merchant Center fetches it); this guards
@@ -2054,6 +2063,13 @@ final class AdminCapabilities
          * under the prefix -- the test send included -- giftoffers.manage.
          * Fails closed: a verb not listed is manage.
          */
+        /* Occasion banner (Lane OHB), routes/occasion-banner-admin.php. GETs
+           are occasionbanner.view; every other verb under the prefix is
+           occasionbanner.manage. Fails closed. */
+        ['GET', 'admin-api/occasion-banner', 'occasionbanner.view'],
+        ['GET', 'admin-api/occasion-banner/**', 'occasionbanner.view'],
+        ['*', 'admin-api/occasion-banner', 'occasionbanner.manage'],
+        ['*', 'admin-api/occasion-banner/**', 'occasionbanner.manage'],
         ['GET', 'admin-api/gift-offers', 'giftoffers.view'],
         ['GET', 'admin-api/gift-offers/**', 'giftoffers.view'],
         ['POST', 'admin-api/gift-offers/preview', 'giftoffers.view'],

@@ -204,7 +204,9 @@ $homeFirst = $sections->firstOnScreen();
      Nothing from a setting is interpolated into this file: the partial escapes
      the four operator strings itself and scheme-checks the button's URL before
      it becomes an href.
-     --}}@php $ktrHome = \App\Support\TrustStrip::place($settings->all(), 'ts_home'); $ktrAfterBanner = $bnSection !== null && ! $sections->hidden('cards_banner'); $ktrOrd = $sections->orderIsDefault() ? null : $sections->all(); $ktrClsBanner = trim(($ktrHome ?? '').($ktrOrd === null ? '' : ' kbb-ord-'.$ktrOrd['cards_banner']['order'])); $ktrClsHero = trim(($ktrHome ?? '').($ktrOrd === null ? '' : ' kbb-ord-'.$ktrOrd['hero']['order'])); @endphp@unless ($sections->hidden('cards_banner'))
+     --}}@php $ktrHome = \App\Support\TrustStrip::place($settings->all(), 'ts_home'); $ktrAfterBanner = $bnSection !== null && ! $sections->hidden('cards_banner'); $ktrOrd = $sections->orderIsDefault() ? null : $sections->all(); $ktrClsBanner = trim(($ktrHome ?? '').($ktrOrd === null ? '' : ' kbb-ord-'.$ktrOrd['cards_banner']['order'])); $ktrClsHero = trim(($ktrHome ?? '').($ktrOrd === null ? '' : ' kbb-ord-'.$ktrOrd['hero']['order'])); /* Lane OHB: Appearance -> Occasion banner. null (Slider only, the shipped state) adds nothing; read from the settings map, no query. */ $ohbView = \App\Support\OccasionBanner::view($settings->all()); $ohbOnly = $ohbView !== null && $ohbView['display'] === 'banner'; $ohbSolo = $ohbView !== null && ($ohbOnly || $bnSection === null || $bnSection[0]->kind() !== 'slider'); @endphp@unless ($sections->hidden('cards_banner'))
+@if ($ohbSolo)<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:0"><div class="wrap">@include('partials.home.occasion-banner', ['ohb' => $ohbView])</div></section>
+@endif
 @if ($bnSection !== null)
 {{-- THE PARTIAL IS THE SET'S OWN, AND IT IS A LOOKUP IN A CONSTANT — Lane BN2.
      `banner_sets.kind` chose between two banner types and BannerSet::homePartial()
@@ -218,7 +220,8 @@ $homeFirst = $sections->firstOnScreen();
      8px strip of page background between the header's bottom edge and the
      picture at 390 and at 1280. BannerSet::SECTION_STYLES keeps 8px for the
      cards row and gives the two picture kinds 0. --}}
-<section class="sec {{ $sections->classFor('cards_banner') }}" style="{{ $bnSection[0]->homeSectionStyle() }}"><div class="wrap">@include($bnSection[0]->homePartial(), ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>
+@unless ($ohbOnly)<section class="sec {{ $sections->classFor('cards_banner') }}" style="{{ $bnSection[0]->homeSectionStyle() }}"><div class="wrap">@include($bnSection[0]->homePartial(), ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>@endunless
+
 {{-- Lane TS: the trust strip, directly under the picture banner. --}}@if ($ktrHome !== null)
 @include('partials.trust-strip', ['v' => 'card', 'cls' => $ktrClsBanner])
 @endif
