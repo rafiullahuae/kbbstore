@@ -19,7 +19,7 @@ SRC = os.path.join(D, 'products')
 # The owner, 6 Nov: "i want the products from different brands. total 4-5 products, 1 from
 # each brand, keep the Anua mist mini, and medicube stick, choose rest any most selling in our
 # website." Best sellers (kbeautybliss.com/best-sellers/, 6 Nov): Dr.Althea 345 Relief Cream (3rd),
-# Beauty of Joseon Relief Sun (4th), COSRX Advanced Snail 96 Essence (8th). Cut out with products/cutout.py.
+# Beauty of Joseon Relief Sun (4th), COSRX Advanced Snail 96 Essence (8th). Cut out with ../gift-strip/tools/cutout2.py from the shop's full-size photos (6 Nov: no white rims).
 
 
 def cut(name, h=420):

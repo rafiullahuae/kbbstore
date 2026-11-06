@@ -15,6 +15,9 @@ from PIL import Image, ImageFilter
 
 src, out = sys.argv[1], sys.argv[2]
 thr = int(sys.argv[3]) if len(sys.argv) > 3 else 246
+# 'white' for a white product: its own rim is near-white, so step 2 would eat
+# into it; rely on the flood, the 1 px pull-in and the feather instead.
+white_item = len(sys.argv) > 4 and sys.argv[4] == 'white'
 im = Image.open(src).convert('RGB')
 a = np.asarray(im).astype(np.float32)
 h, w, _ = a.shape
@@ -42,7 +45,8 @@ band = np.asarray(fg.filter(ImageFilter.MinFilter(7))) < 128  # within ~3 px of 
 alpha = np.where(bg, 0.0, 1.0)
 # colour-to-alpha in the band: pure white -> 0, 40 below white or darker -> 1
 ca = np.clip((255.0 - mn) / 40.0, 0.0, 1.0)
-alpha = np.where(band & ~bg, np.minimum(alpha, ca), alpha)
+if not white_item:
+    alpha = np.where(band & ~bg, np.minimum(alpha, ca), alpha)
 # un-premultiply the white out of the rim
 A = alpha[..., None]
 rgb = np.where(A > 0.02, (a - (1.0 - A) * 255.0) / np.maximum(A, 0.02), a)
