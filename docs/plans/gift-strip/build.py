@@ -5,7 +5,7 @@
 # actually offer as gifts. show me multiple designs" ... "want a thin bar type
 # box, under the main banner on homepage for this".
 # The six live gifts (kbeautybliss.com/super-sale/ gift row, 6 Nov), cut out
-# with ../home-hero/products/cutout.py.
+# with tools/cutout2.py from the shop's full-size photos (6 Nov: no white rims).
 import base64, io, json, os
 from PIL import Image
 
