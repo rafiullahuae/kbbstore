@@ -80,7 +80,7 @@ class GiftStripApiController extends Controller
             ->where(static fn ($w) => $w->where('name', 'like', $like)->orWhere('sku', 'like', $like))
             ->where('status', 'publish')
             ->whereNotNull('image')->where('image', '!=', '')
-            ->orderBy('name')->limit(20)
+            ->orderBy('name')->orderBy('id')->limit(20)
             ->get(['id', 'name', 'image']);
 
         $cfg = $this->config();

@@ -3434,7 +3434,7 @@ const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],'concernsync
    opened the dashboard. Same fix, same condition, and the strings are copied
    from what each partial's own go() writes so the heading cannot depend on how
    the screen was reached. */
-'spotted':['Appearance','#KBeautyBliss Spotted'],'wabutton':['Appearance','WhatsApp button'],'giftstrip':['Appearance','Free gifts strip'],'occbanner':['Appearance','Occasion banner'],'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'imageseo':['Catalog','Image SEO'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'comingsoon':['Appearance','Coming Soon page'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background'],'searchterms':['Growth & Marketing','Search Terms'],'carttracking':['Overview','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],'seokeywords':['Store','SEO Keywords']};
+'occbanner':['Appearance','Occasion banner'],'giftstrip':['Appearance','Free gifts strip'],'spotted':['Appearance','#KBeautyBliss Spotted'],'wabutton':['Appearance','WhatsApp button'],'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'imageseo':['Catalog','Image SEO'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'comingsoon':['Appearance','Coming Soon page'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background'],'searchterms':['Growth & Marketing','Search Terms'],'carttracking':['Overview','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],'seokeywords':['Store','SEO Keywords']};
 let cur='dash';
 /* `sub` is an optional sub-tab within the screen — only Catalog has them, and
    only the Modules screen passes one (product_sorting links to the Reorder
@@ -25197,6 +25197,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 @include('admin.partials.homepage-content-screen')
 @include('admin.partials.homepage-hub')
 @include('admin.partials.occasion-banner-screen')
+@include('admin.partials.gift-strip-screen')
 
 {{-- Catalog → Build my routine (Lane FM). The role each product plays, which
      products are still untagged, the eight routines and the module's two
@@ -25559,7 +25560,6 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      the package puts it on the shop; this screen is how he changes or removes
      it. --}}
 @include('admin.partials.whatsapp-button-screen')
-@include('admin.partials.gift-strip-screen')
 
 {{-- Pages -> Page banners (Lane SS): the promo picture and strip on the custom
      pages, which page shows which, and the Super Sale product source. It

@@ -573,7 +573,6 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/site-layout-admin.php';
         require __DIR__.'/page-wash-admin.php';
         require __DIR__.'/whatsapp-button-admin.php';
-        require __DIR__.'/gift-strip-admin.php';
         require __DIR__.'/site-app-admin.php';   // App -> Site App (Lane PW)
         // Appearance → Coming Soon page (Lane CS): `comingsoon.manage`, owner only.
         require __DIR__.'/coming-soon-admin.php';
@@ -1050,6 +1049,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/homepage-live-admin.php';
         require __DIR__.'/homepage-hub-admin.php';
         require __DIR__.'/occasion-banner-admin.php';
+        require __DIR__.'/gift-strip-admin.php';
 
         // Storefront settings, grouped into tabs.
         Route::get('/ecommerce',  [\App\Http\Controllers\Admin\EcommerceApiController::class, 'show']);
