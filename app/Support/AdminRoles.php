@@ -236,6 +236,8 @@ final class AdminRoles
             'freegifts.manage' => 'Change Free gifts: switch it on, edit ranges and gifts, the gift-only flag and the texts',
             'giftoffers.view' => 'See Gift offers: the ranges, their gifts, the live preview and the report',
             'giftoffers.manage' => 'Change Gift offers: switch it and each place on, edit ranges, gifts, allocations, texts and the popup, send a test email',
+            'occasionbanner.view' => 'See Appearance → Occasion banner: its designs, words, colours and product pool',
+            'occasionbanner.manage' => 'Change the homepage Occasion banner: display, design, words, colours, products, and prepare product cut-outs',
             'marketing.feed' => 'Google Shopping feed: see its address and switch it on or off',
             'marketing.pixels.connect' => 'Marketing Pixels: connect Meta, Google and TikTok, paste their tokens and run the checks',
             'marketing.customcode' => 'Marketing Pixels: custom head, body and footer code on the shop (Full Admin only by default)',

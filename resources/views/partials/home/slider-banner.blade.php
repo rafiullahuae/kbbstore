@@ -129,6 +129,13 @@
     /** @var list<\App\Models\BannerCard> $cards */
     $bsUid = 'kbbs-'.(int) $set->id;
     $bsCount = count($cards);
+    /* Lane OHB: Appearance -> Occasion banner -> "Banner first, then the
+       slider" puts the banner in as slide 1 at this frame's own size. Null
+       (every other display, and the admin preview, which has no parent) is
+       0 here and every line below prints what it printed before. */
+    $ohbSlide = isset($ohbView) && is_array($ohbView) && ($ohbView['display'] ?? '') === 'both' ? $ohbView : null;
+    $ohbOff = $ohbSlide === null ? 0 : 1;
+    $bsCount += $ohbOff;
     $bsRtl = Locale::isRtl();
 
     /*
@@ -137,7 +144,7 @@
      * Banners::sliderDwell() is the one place that decides it, so the
      * stylesheet's `is-auto` class and the script's timer cannot disagree.
      */
-    $bsDwell = Banners::sliderDwell($set, $cards);
+    $bsDwell = Banners::sliderDwell($set, $ohbOff === 0 ? $cards : array_merge([$set], $cards));
 
     /*
      * The arrows and the bars are only drawn when there is somewhere to go.
@@ -902,9 +909,14 @@
                 'own' => $bsSrcsetFor($bsPhone['image']),
                 default => '',
             };
+            /* Lane OHB: the occasion banner, as the first slide. */
+            if ($bsI === 0 && $ohbSlide !== null) {
+                echo '<div class="kbbs-s" role="group" aria-roledescription="slide" aria-label="'.e(__('store.home.banner_slider_slide', ['n' => 1, 'total' => $bsCount])).'">'
+                    .view('partials.home.occasion-banner', ['ohb' => $ohbSlide])->render().'</div>';
+            }
           @endphp
           <div class="kbbs-s" role="group" aria-roledescription="slide"
-               aria-label="{{ __('store.home.banner_slider_slide', ['n' => $bsI + 1, 'total' => $bsCount]) }}">
+               aria-label="{{ __('store.home.banner_slider_slide', ['n' => $bsI + 1 + $ohbOff, 'total' => $bsCount]) }}">
             {{-- `draggable="false"` ON THE ANCHOR AS WELL AS ON THE PICTURE.
                  A link is draggable by default too, and it was the ANCHOR that
                  was still starting a drag after the <img> had been stopped:
@@ -984,9 +996,9 @@
     @if ($bsBars)
       <div class="kbbs-bars" role="group" aria-label="{{ __('store.home.banner_slider_bars') }}">
         @foreach ($cards as $bsI => $bsCard)
-          <button class="kbbs-bar{{ $bsI === 0 ? ' is-on' : '' }}" type="button"
-                  data-kbbs-go="{{ $bsI }}"
-                  aria-label="{{ __('store.home.banner_slider_go', ['n' => $bsI + 1]) }}"><span class="kbbs-line"><span class="kbbs-fill"></span></span></button>
+          @php if ($bsI === 0 && $ohbSlide !== null) { echo '<button class="kbbs-bar is-on" type="button" data-kbbs-go="0" aria-label="'.e(__('store.home.banner_slider_go', ['n' => 1])).'"><span class="kbbs-line"><span class="kbbs-fill"></span></span></button>'; } @endphp<button class="kbbs-bar{{ $bsI + $ohbOff === 0 ? ' is-on' : '' }}" type="button"
+                  data-kbbs-go="{{ $bsI + $ohbOff }}"
+                  aria-label="{{ __('store.home.banner_slider_go', ['n' => $bsI + 1 + $ohbOff]) }}"><span class="kbbs-line"><span class="kbbs-fill"></span></span></button>
         @endforeach
       </div>
     @endif
