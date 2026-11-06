@@ -5,7 +5,12 @@ designs, "select and switch the heading layout as per the occasion from the
 list". Now: 11.11 Mega Sale, UAE National Day Sale (Eid Al Etihad, 2 Dec, 55th) and
 New Year Sale; Super Sale stays as it is. Desktop and mobile.
 
-**Status: previews sent, waiting for the owner to pick one letter per occasion.**
+**Status: BUILT (Lane SOT, 6 Nov).** The owner asked for all nine as pre-made
+templates beside Super Sale: `App\Support\SaleTemplates` (one class
+`ssb-t-<key>` on the banner, the chosen template's own CSS only, words EN + AR),
+picked in the banner editor (Template, top of the panel). Super Sale stays the
+default and prints byte for byte as before. Shots and the 240-case alignment
+sweep: `docs/lane-sot-shots/`.
 
 - `sale-occasions/sale-occasions-preview.html`: live previews (the real live
   banner markup and CSS from SuperSaleBanner, with each theme's CSS on top).

@@ -1,0 +1,124 @@
+{
+ "admin-1280": {
+  "before": {
+   "cls": "kbb-ssb ssb-fd",
+   "title": "SUPER SALE",
+   "num": null,
+   "tag": "PERFECT SKINCARE TO GLOW",
+   "titleColor": "rgb(236, 58, 128)",
+   "bg": "radial-gradient(120% 120% at 88% 8%, rgb",
+   "style": null
+  },
+  "m1": {
+   "cls": "kbb-ssb ssb-t-m1 ssb-fd",
+   "title": "MEGA SALE",
+   "num": "11.11",
+   "tag": null,
+   "titleColor": "rgb(255, 211, 110)",
+   "bg": "radial-gradient(60% 90% at 86% 20%, rgba",
+   "style": null,
+   "pressed": "11.11 Mega Sale · Midnight Neon"
+  },
+  "u3": {
+   "cls": "kbb-ssb ssb-t-u3 ssb-fd",
+   "title": "NATIONAL DAY SALE",
+   "num": null,
+   "tag": "EID AL ETIHAD · 55 YEARS",
+   "titleColor": "rgb(255, 255, 255)",
+   "bg": "linear-gradient(rgb(0, 115, 47) 0%, rgb(",
+   "style": null,
+   "pressed": "UAE National Day · Flag Sky"
+  },
+  "n3": {
+   "cls": "kbb-ssb ssb-t-n3 ssb-fd",
+   "title": "NEW YEAR SALE",
+   "num": "2027",
+   "tag": "START THE YEAR GLOWING",
+   "titleColor": "rgb(245, 201, 105)",
+   "bg": "linear-gradient(120deg, rgb(29, 11, 58) ",
+   "style": null,
+   "pressed": "New Year · Fireworks"
+  },
+  "edited": {
+   "cls": "kbb-ssb ssb-t-n3 ssb-fd",
+   "title": "HAPPY 2027",
+   "num": "2027",
+   "tag": "START THE YEAR GLOWING",
+   "titleColor": "rgb(255, 255, 255)",
+   "bg": "linear-gradient(120deg, rgb(29, 11, 58) ",
+   "style": "--ssb-title-cd:#FFFFFF"
+  },
+  "requestsWhilePicking": [],
+  "saveMessage": "Saved. It is on the shop now.",
+  "afterReload": {
+   "cls": "kbb-ssb ssb-t-n3",
+   "title": "HAPPY 2027",
+   "num": "2027",
+   "tag": "START THE YEAR GLOWING",
+   "titleColor": "rgb(255, 255, 255)",
+   "bg": "linear-gradient(120deg, rgb(29, 11, 58) ",
+   "style": "--ssb-title-cd:#FFFFFF"
+  },
+  "console": {
+   "stage": "kbb-ssb ssb-t-u2 ssb-fd",
+   "title": "NATIONAL DAY SALE"
+  },
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "scrollWidth": 1280
+ },
+ "admin-390": {
+  "before": {
+   "cls": "kbb-ssb ssb-t-n3 ssb-fm",
+   "title": "HAPPY 2027",
+   "num": "2027",
+   "tag": "START THE YEAR GLOWING",
+   "titleColor": "rgb(245, 201, 105)",
+   "bg": "linear-gradient(120deg, rgb(29, 11, 58) ",
+   "style": "--ssb-title-cd:#FFFFFF"
+  },
+  "m1": {
+   "cls": "kbb-ssb ssb-t-m1 ssb-fm",
+   "title": "MEGA SALE",
+   "num": "11.11",
+   "tag": null,
+   "titleColor": "rgb(255, 211, 110)",
+   "bg": "radial-gradient(60% 90% at 86% 20%, rgba",
+   "style": null,
+   "pressed": "11.11 Mega Sale · Midnight Neon"
+  },
+  "u3": {
+   "cls": "kbb-ssb ssb-t-u3 ssb-fm",
+   "title": "NATIONAL DAY SALE",
+   "num": null,
+   "tag": "EID AL ETIHAD · 55 YEARS",
+   "titleColor": "rgb(255, 255, 255)",
+   "bg": "linear-gradient(rgb(0, 115, 47) 0%, rgb(",
+   "style": null,
+   "pressed": "UAE National Day · Flag Sky"
+  },
+  "n3": {
+   "cls": "kbb-ssb ssb-t-n3 ssb-fm",
+   "title": "NEW YEAR SALE",
+   "num": "2027",
+   "tag": "START THE YEAR GLOWING",
+   "titleColor": "rgb(245, 201, 105)",
+   "bg": "linear-gradient(120deg, rgb(29, 11, 58) ",
+   "style": null,
+   "pressed": "New Year · Fireworks"
+  },
+  "edited": {
+   "cls": "kbb-ssb ssb-t-n3 ssb-fm",
+   "title": "HAPPY 2027",
+   "num": "2027",
+   "tag": "START THE YEAR GLOWING",
+   "titleColor": "rgb(255, 255, 255)",
+   "bg": "linear-gradient(120deg, rgb(29, 11, 58) ",
+   "style": "--ssb-title-cm:#FFFFFF"
+  },
+  "requestsWhilePicking": [],
+  "errors": [],
+  "scrollWidth": 390
+ }
+}

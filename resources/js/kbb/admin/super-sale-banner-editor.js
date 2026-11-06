@@ -46,6 +46,60 @@ function ensureStyles(spec) {
         st.textContent = text;
         document.head.appendChild(st);
     }
+    // (Lane SOT) Every template's rules, so the picker previews any of them
+    // with no request. They go AFTER the banner's own stylesheet -- which a
+    // shop page prints in the body, after anything in the head -- or a rule
+    // of the banner's would outrank the template's equal one.
+    if (spec.css_templates && !document.getElementById('kbb-ssb-css-tpl')) {
+        const st = document.createElement('style');
+        st.id = 'kbb-ssb-css-tpl';
+        st.textContent = spec.css_templates;
+        const base = document.getElementById('kbb-ssb-css');
+        if (base && base.parentNode !== document.head) base.after(st);
+        else document.head.appendChild(st);
+    }
+}
+
+/* ------------------------------------------------- the occasion templates */
+
+/** (Lane SOT) The template a config is drawn with: one of the list, or Super Sale. */
+export function templateOf(spec, c) {
+    const list = spec.templates || [];
+    return list.find((t) => t.key === c.template) || list.find((t) => t.key === 'super') || { key: 'super', num: false };
+}
+
+/** The shipped style values under this config's template (SuperSaleBanner::styleDefaults() with a template). */
+export function defaultsFor(spec, c) {
+    const t = templateOf(spec, c);
+    return (spec.template_defaults && spec.template_defaults[t.key]) || spec.style_defaults;
+}
+
+/** The elements drawn: the banner's, and the big number where the template has one (SuperSaleBanner::elementsOf()). */
+export function elementsFor(spec, c) {
+    return templateOf(spec, c).num && spec.num_element ? [...spec.elements, spec.num_element] : spec.elements;
+}
+
+/**
+ * Switch a config to a template, as SuperSaleBanner::withTemplate() does: its
+ * words in both languages, and his colour overrides cleared so its palette
+ * shows. Sizes, positions, pictures, coupon and gifts stay his.
+ */
+export function applyTemplate(spec, c, key) {
+    const t = (spec.templates || []).find((x) => x.key === key);
+    if (!t) return c;
+    c.template = key;
+    for (const lang of ['en', 'ar']) {
+        for (const [k, v] of Object.entries(t.words[lang] || {})) c[`${k}_${lang}`] = v;
+    }
+    normalise(c);
+    for (const lang of ['en', 'ar']) {
+        for (const dev of ['m', 'd']) {
+            const block = c.st[lang][dev];
+            if (!block) continue;
+            for (const el of Object.keys(block)) delete block[el].c;
+        }
+    }
+    return c;
 }
 const LANGS = { en: 'English', ar: 'العربية' };
 const clone = (o) => JSON.parse(JSON.stringify(o));
@@ -132,32 +186,33 @@ export function resolve(st, defaults, lang, dev, el, p) {
 /** App\Support\SuperSaleBanner::styleAttr(), in JavaScript. */
 export function styleAttr(c, spec, lang) {
     const st = c.st || { en: {}, ar: {} };
+    const defs = defaultsFor(spec, c);
     const parts = [];
     for (const dev of ['m', 'd']) {
-        const def = spec.style_defaults[lang][dev];
-        for (const { key: el } of spec.elements) {
+        const def = defs[lang][dev];
+        for (const { key: el } of elementsFor(spec, c)) {
             for (const p of PROPS) {
-                const v = resolve(st, spec.style_defaults, lang, dev, el, p);
+                const v = resolve(st, defs, lang, dev, el, p);
                 const same = p === 'v' ? Boolean(v) === Boolean(def[el][p]) : String(v) === String(def[el][p]);
                 if (same) continue;
                 let out;
                 if (p === 's') out = num(Number(v) / spec.ucap[dev]);
                 else if (p === 'x' || p === 'y') out = `${num(v)}px`;
-                else if (p === 'v') out = v ? spec.element_display[el] : 'none';
+                else if (p === 'v') out = v ? (el === 'num' ? spec.num_element.display : spec.element_display[el]) : 'none';
                 else out = String(v);
                 parts.push(`--ssb-${el}-${p}${dev}:${out}`);
             }
         }
-        const al = resolve(st, spec.style_defaults, lang, dev, '_', 'al');
+        const al = resolve(st, defs, lang, dev, '_', 'al');
         if (al !== def._.al) {
             parts.push(`--ssb-al-a${dev}:${spec.align_css[al][0]}`);
             parts.push(`--ssb-al-t${dev}:${spec.align_css[al][1]}`);
         }
-        const g = resolve(st, spec.style_defaults, lang, dev, '_', 'g');
+        const g = resolve(st, defs, lang, dev, '_', 'g');
         if (String(g) !== String(def._.g)) parts.push(`--ssb-g${dev}:${num(Number(g) / spec.ucap[dev])}`);
         if (dev === 'd') {
             for (const p of ['pt', 'pb']) {
-                const v = resolve(st, spec.style_defaults, lang, dev, '_', p);
+                const v = resolve(st, defs, lang, dev, '_', p);
                 if (String(v) !== String(def._[p])) parts.push(`--ssb-${p}d:${num(Number(v) / spec.ucap.d)}`);
             }
         }
@@ -201,7 +256,9 @@ export function buildBanner(ctx, c, lang, force) {
     const spec = ctx.spec;
     const ar = lang === 'ar';
     const t = (k) => String(c[`${k}_${lang}`] || '');
-    const root = h('div', { class: `kbb-ssb${force ? ` ssb-f${force}` : ''}`, dir: ar ? 'rtl' : 'ltr', 'data-ssb': '' });
+    const tpl = templateOf(spec, c);
+    const occ = tpl.key === 'super' ? '' : ` ssb-t-${tpl.key}`;
+    const root = h('div', { class: `kbb-ssb${occ}${force ? ` ssb-f${force}` : ''}`, dir: ar ? 'rtl' : 'ltr', 'data-ssb': '' });
     const style = styleAttr(c, spec, lang);
     if (style) root.setAttribute('style', style);
 
@@ -215,6 +272,7 @@ export function buildBanner(ctx, c, lang, force) {
         copy.appendChild(pay);
     }
     if (t('tagline')) copy.appendChild(h('span', { class: 'ssb-tag', text: t('tagline') }));
+    if (tpl.num && t('num')) copy.appendChild(h('span', { class: 'ssb-num', 'aria-hidden': 'true', text: t('num') }));
     if (t('title')) copy.appendChild(h('div', { class: 'ssb-super', text: t('title') }));
     if (String(c.code || '')) {
         copy.appendChild(h('span', { class: 'ssb-coupon' }, t('coupon') ? h('span', { text: t('coupon') }) : null, h('b', { text: String(c.code) })));
@@ -277,6 +335,16 @@ export function controls(ctx, st, on) {
     };
     const section = (title, open, ...kids) => h('details', { class: 'ssb-ed-sec', open }, h('summary', { text: title }), ...kids);
 
+    /* -- (Lane SOT) the template: pick one, then edit anything below */
+    const current = templateOf(spec, c);
+    const picker = h('div', { class: 'ssb-ed-tpls', role: 'group', 'aria-label': 'Templates' },
+        ...(spec.templates || []).map((t) => h('button', {
+            type: 'button', class: 'ssb-ed-tpl', 'aria-pressed': String(t.key === current.key), title: t.label,
+            onclick: () => { if (t.key === c.template) return; applyTemplate(spec, c, t.key); on.redraw(); changed(); },
+        }, h('span', { class: 'ssb-ed-sw', style: `background:${t.swatch}` }), h('span', { text: t.label }))));
+    const template = section(`Template — ${current.label || 'Super Sale'}`, true, picker,
+        h('small', { class: 'ssb-ed-help', text: 'Picking a template fills in its words (English and Arabic) and its colours. Your sizes, positions, picture, coupon and gifts stay. Edit any word or colour below.' }));
+
     /* -- the banner */
     const banner = section('Banner', true,
         check('on', 'Show the live banner (off = the header picture, as before)'),
@@ -290,9 +358,9 @@ export function controls(ctx, st, on) {
 
     /* -- the words */
     const words = section(`Words — ${LANGS[lang]}`, false,
-        ...ctx.texts.map((t) => field(t.label, h('input', {
+        ...ctx.texts.filter((t) => t.key !== 'num' || current.num).map((t) => field(t.label, h('input', {
             class: 'ssb-ed-in', maxlength: String(spec.max_text), dir: lang === 'ar' ? 'rtl' : 'ltr', lang,
-            value: String(c[`${t.key}_${lang}`] ?? ''), placeholder: lang === 'ar' ? t.ar : t.en,
+            value: String(c[`${t.key}_${lang}`] ?? ''), placeholder: current.words && current.words[lang] && t.key in current.words[lang] ? current.words[lang][t.key] : (lang === 'ar' ? t.ar : t.en),
             oninput: (e) => { c[`${t.key}_${lang}`] = e.currentTarget.value; changed(); },
         }))),
         h('small', { class: 'ssb-ed-help', text: 'Empty a line and it is not drawn.' }));
@@ -309,7 +377,7 @@ export function controls(ctx, st, on) {
         if (v === null) delete c.st[lang][dev][el][p];
         else c.st[lang][dev][el][p] = v;
     };
-    const value = (el, p) => resolve(c.st, spec.style_defaults, lang, dev, el, p);
+    const value = (el, p) => resolve(c.st, defaultsFor(spec, c), lang, dev, el, p);
     const state = (el, props) => {
         if (props.some((p) => own(el, p) !== null)) return lang === 'ar' ? 'Arabic only' : 'Changed';
         if (lang === 'ar' && props.some((p) => (c.st.en && c.st.en[dev] && c.st.en[dev][el] && c.st.en[dev][el][p] != null))) return 'Same as English';
@@ -352,7 +420,7 @@ export function controls(ctx, st, on) {
         h('small', { class: 'ssb-ed-help', text: lang === 'ar'
             ? 'Arabic takes each value from English until you change it here; “Same as English” puts it back.'
             : 'Sizes are in px at full width and shrink with a narrower screen. “Reset” puts the shipped value back.' }),
-        ...spec.elements.map((e) => elementRow(e.key, e.label)));
+        ...elementsFor(spec, c).map((e) => elementRow(e.key, e.label)));
 
     const aligns = {};
     Object.entries(spec.aligns).forEach(([k, l]) => { aligns[k] = l; });
@@ -366,12 +434,12 @@ export function controls(ctx, st, on) {
     /* -- the pictures */
     const rect = dev === 'd' && c.mode_d === 'rect';
     const slot = rect ? (lang === 'ar' ? 'model_d_ar' : 'model_d') : (lang === 'ar' ? 'model_ar' : 'model');
-    const current = safeSrc(c[slot]);
+    const mine = safeSrc(c[slot]);
     const inherited = lang === 'ar'
         ? (safeSrc(c[rect ? 'model_d' : 'model']) || (rect ? '' : safeSrc(ctx.shipped.url)))
         : (rect ? '' : safeSrc(ctx.shipped.url));
-    const shown = current || inherited;
-    const picNote = current
+    const shown = mine || inherited;
+    const picNote = mine
         ? (c.alpha && c.alpha[slot] ? 'Your picture — transparent background.' : 'Your picture. Its transparency is checked when you save.')
         : (lang === 'ar' ? 'Same as English.' : (rect ? 'No rectangle picture yet — the computer shows the single picture until you add one.' : 'The shipped picture: the lady, transparent background.'));
     const pics = section(`Picture — ${where}`, false,
@@ -382,8 +450,8 @@ export function controls(ctx, st, on) {
             h('div', {},
                 h('p', { class: 'ssb-ed-help', text: picNote }),
                 h('div', { class: 'ssb-ed-row' },
-                    h('button', { type: 'button', class: 'ssb-ed-btn', text: current ? 'Change picture' : 'Add a picture', onclick: () => on.pick(slot) }),
-                    current ? h('button', { type: 'button', class: 'ssb-ed-btn', text: lang === 'ar' ? 'Same as English' : (rect ? 'Remove' : 'Use the shipped picture'), onclick: () => {
+                    h('button', { type: 'button', class: 'ssb-ed-btn', text: mine ? 'Change picture' : 'Add a picture', onclick: () => on.pick(slot) }),
+                    mine ? h('button', { type: 'button', class: 'ssb-ed-btn', text: lang === 'ar' ? 'Same as English' : (rect ? 'Remove' : 'Use the shipped picture'), onclick: () => {
                         c[slot] = ''; if (c.alpha) delete c.alpha[slot]; on.redraw(); changed();
                     } }) : null))),
         rect
@@ -401,7 +469,7 @@ export function controls(ctx, st, on) {
         field('Which gifts', select(c.band, bands, (v) => { c.band = v; })),
         h('small', { class: 'ssb-ed-help', text: `Your real gifts from Marketing › Free gifts, picked the way the cart’s gift box picks them.${ctx.gifts_mode !== 'live' ? ` Free gifts are ${ctx.gifts_mode} now.` : ''}` }));
 
-    return h('div', { class: 'ssb-ed-body' }, banner, words, styles, layout, pics, gifts);
+    return h('div', { class: 'ssb-ed-body' }, template, banner, words, styles, layout, pics, gifts);
 }
 
 /* -------------------------------------------------------- requests */
@@ -526,7 +594,11 @@ const CSS = '@media (min-width:1100px){html.ssb-ed-open body{margin-inline-end:4
     + '.ssb-ed-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}'
     + '.ssb-ed-chooser{border:1px solid #f0e8ec;border-radius:10px;padding:10px;margin:8px 0;background:#fffafc}.ssb-ed-grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}'
     + '.ssb-ed-thumb{border:1px solid #eee;border-radius:8px;padding:0;background:#fff;cursor:pointer;aspect-ratio:1}.ssb-ed-thumb img{width:100%;height:100%;object-fit:contain;border-radius:8px;display:block}'
-    + '.ssb-ed-off{opacity:.45}';
+    + '.ssb-ed-off{opacity:.45}'
+    + '.ssb-ed-tpls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:6px 0}'
+    + '.ssb-ed-tpl{display:flex;align-items:center;gap:8px;min-width:0;border:1px solid #ddd2d8;background:#fff;border-radius:9px;padding:5px 7px;font:inherit;font-size:12px;font-weight:600;line-height:1.25;text-align:start;cursor:pointer;color:inherit}'
+    + '.ssb-ed-tpl[aria-pressed="true"]{border-color:#e4457c;box-shadow:0 0 0 2px #e4457c33}'
+    + '.ssb-ed-sw{flex:none;width:34px;height:22px;border-radius:5px;box-shadow:inset 0 0 0 1px #0002}';
 
 let openPanelState = null;
 
