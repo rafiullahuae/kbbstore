@@ -6,14 +6,13 @@ then the existing picture slider; exact current sizes; more content for SEO
 and offers; super light; editable; background colours moving continuously;
 multiple designs, desktop and mobile.
 
-**Status: previews sent; waiting for the owner to pick a layout.**
+**Status: round 2 previews sent (D Mega Type, E Hero Product, F Poster Split). Round 1 (A-C) rejected: "don't follow the super sale style ... neither use small products grid or thumbnails ... i want everything big".**
 
 - Sizes measured on kbeautybliss.com: computer full width x 600px (548 at
   1024, 411 at 768), phone full width x 500px.
 - `home-hero/home-hero-preview.html`: live previews, 3 layouts x 4 occasions.
 - `home-hero/all-designs.jpg`: all twelve at 1280 and 390.
-- `home-hero/build.py`: the CSS and markup (layouts A Spotlight, B Offer
-  Stack, C Product Showcase; occasion palettes in OCC).
+- `home-hero/build2.py`: round 2 (current). `build.py`: round 1, rejected.
 
 Moving colour: two oversized gradient layers animated with transform and
 opacity only (composited, no repaint of the box), stopped under
