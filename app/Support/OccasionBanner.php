@@ -122,6 +122,27 @@ final class OccasionBanner
 
     public const TABLET_SCALE = 0.92;
 
+    /**
+     * ARRANGE (Lane DND; the owner, 7 November 2026: "drag n drop etc anywhere
+     * the product images inside the slider ... change the size of the image by
+     * drag ... in desktop and mobile both").
+     *
+     * A position belongs to a PLACE (slot 1-5 of SLOTS), never to a product:
+     * the products are picked at random on every page view, so whichever one
+     * lands in a place stands where the owner put that place. Stored per
+     * layout and per device (d = computer, 768px and up; m = phone) as
+     * percentages of the banner box: x and y of the product's BOTTOM-CENTRE
+     * (x from the left on the English shop, mirrored on /ar; y from the top)
+     * and, only once he has resized it, h = its height in % of the banner's.
+     * Without h the product keeps its true size (place()), so a mini stays
+     * smaller than a stick.
+     *
+     * [min, max] per number; anything outside is clamped, anything else refused.
+     */
+    public const POS_RANGE = ['x' => [-20.0, 120.0], 'y' => [0.0, 130.0], 'h' => [5.0, 140.0]];
+
+    public const POS_DEVICES = ['d', 'm'];
+
     /** The live slider's frame (kbbs-1 on kbeautybliss.com, 6 Nov): 2560/1371 capped at 600; phone exactly 500. */
     public const FRAME = ['ratio' => '2560 / 1371', 'max' => 600, 'phone' => 500];
 
@@ -142,6 +163,7 @@ final class OccasionBanner
             'count' => 5,
             'per_brand' => true,
             'pool' => [],
+            'pos' => [],
         ];
     }
 
@@ -195,6 +217,115 @@ final class OccasionBanner
             }
         }
         $out['pool'] = array_values($pool);
+        $out['pos'] = self::cleanPos($in['pos'] ?? null);
+
+        return $out;
+    }
+
+    /**
+     * The arranged places: only the three layouts, the two devices, places
+     * 1..count(SLOTS) and the fields x, y (both required) and h (optional);
+     * numbers clamped to POS_RANGE and kept to one decimal. Everything else is
+     * dropped, and an empty branch is not stored.
+     *
+     * @return array<string,array<string,array<int,array{x: float, y: float, h?: float}>>>
+     */
+    public static function cleanPos(mixed $in): array
+    {
+        $out = [];
+        if (! is_array($in)) {
+            return $out;
+        }
+        foreach (array_keys(self::LAYOUTS) as $layout) {
+            $l = $in[$layout] ?? null;
+            if (! is_array($l)) {
+                continue;
+            }
+            foreach (self::POS_DEVICES as $dev) {
+                $rows = $l[$dev] ?? null;
+                if (! is_array($rows)) {
+                    continue;
+                }
+                $keep = [];
+                foreach ($rows as $slot => $row) {
+                    $n = is_int($slot) || (is_string($slot) && preg_match('/^[1-9]$/', $slot) === 1) ? (int) $slot : 0;
+                    if ($n < 1 || $n > count(self::SLOTS) || ! is_array($row)) {
+                        continue;
+                    }
+                    $x = self::posNum($row['x'] ?? null, 'x');
+                    $y = self::posNum($row['y'] ?? null, 'y');
+                    if ($x === null || $y === null) {
+                        continue;
+                    }
+                    $cell = ['x' => $x, 'y' => $y];
+                    $h = self::posNum($row['h'] ?? null, 'h');
+                    if ($h !== null) {
+                        $cell['h'] = $h;
+                    }
+                    $keep[$n] = $cell;
+                }
+                if ($keep !== []) {
+                    ksort($keep);
+                    $out[$layout][$dev] = $keep;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    private static function posNum(mixed $v, string $k): ?float
+    {
+        if (! is_int($v) && ! is_float($v) && ! (is_string($v) && is_numeric(trim($v)))) {
+            return null;
+        }
+        $f = (float) $v;
+        if (! is_finite($f)) {
+            return null;
+        }
+        [$lo, $hi] = self::POS_RANGE[$k];
+
+        return round(max($lo, min($hi, $f)), 1) + 0.0;
+    }
+
+    /** A number for the stylesheet: at most one decimal, no "-0", no trailing ".0". Only ever a float from cleanPos(). */
+    private static function num(float $v): string
+    {
+        $s = number_format($v, 1, '.', '');
+        $s = str_ends_with($s, '.0') ? substr($s, 0, -2) : $s;
+
+        return $s === '-0' ? '0' : $s;
+    }
+
+    /**
+     * The arranged places of ONE layout as CSS, printed after css() in the
+     * banner's own <style>. '' when nothing is arranged, so the page is byte
+     * for byte what it was. The place's box becomes 0 wide at x and centres
+     * its picture on that line (a flex box overflows evenly both ways), so the
+     * BOTTOM-CENTRE stands at x/y whatever the product's width -- no
+     * transform, which the floating animation owns, and nothing newer than
+     * flexbox. Computer rules from 768px up, phone rules under 768px; /ar
+     * mirrors x.
+     *
+     * @param  array<string,array<int,array{x: float, y: float, h?: float}>>  $pos  cleanPos()[layout]
+     */
+    public static function posCss(array $pos): string
+    {
+        $out = '';
+        foreach (['d' => '@media (min-width:768px){', 'm' => '@media (max-width:767px){'] as $dev => $open) {
+            $rules = '';
+            foreach ($pos[$dev] ?? [] as $n => $p) {
+                $sel = '.ohb-s'.((int) $n - 1);
+                $x = self::num((float) $p['x']);
+                $rules .= $sel.'{left:'.$x.'%;right:auto;bottom:'.self::num(100 - (float) $p['y']).'%;width:0;display:flex;justify-content:center'
+                    .(isset($p['h']) ? ';height:'.self::num((float) $p['h']).'%' : '').'}'
+                    .'[dir=rtl] '.$sel.'{left:auto;right:'.$x.'%}'
+                    .$sel.' img{flex:none}';
+            }
+            if ($rules !== '') {
+                $out .= $open.$rules.'}';
+            }
+        }
 
         return $out;
     }
@@ -412,6 +543,7 @@ final class OccasionBanner
             'href' => $c['link'] === '' ? '' : Url::to($c['link']),
             'animate' => $c['animate'],
             'products' => $products,
+            'pos_css' => self::posCss($c['pos'][$c['layout']] ?? []),
         ];
     }
 
@@ -520,6 +652,7 @@ final class OccasionBanner
             'css' => self::css(),
             'pool_max' => self::POOL_MAX,
             'cm' => self::CM,
+            'pos_range' => self::POS_RANGE,
         ];
     }
 }

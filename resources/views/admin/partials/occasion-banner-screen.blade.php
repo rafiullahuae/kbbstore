@@ -23,6 +23,17 @@
     another screen: every repaint checks ours() (CLAUDE.md, the Marketing
     Emails landmine).
 
+    ARRANGE (Lane DND, the owner 7 Nov 2026: "drag n drop etc anywhere the
+    product images inside the slider ... change the size of the image by drag
+    ... in desktop and mobile both"). "Arrange products" lays a handle over
+    every product in both preview frames: drag to move, a corner dot to resize
+    (proportions kept), arrow keys to nudge (Shift x10), + / - to resize,
+    numbers to type, Reset place / Reset layout, Undo and Ctrl+Z. A position
+    belongs to a PLACE (slot 1-5), not a product -- products are random per
+    view (OccasionBanner::POS_RANGE). Pointer Events with pointer capture on
+    the overlay, ONE rAF-throttled move step, no timer; the preview gets the
+    same CSS the shop prints (posCss, a twin of OccasionBanner::posCss()).
+
     Registered with ONE line in admin/app.blade.php:
         @include('admin.partials.occasion-banner-screen')
     It adds its own sidebar row (Appearance, after Homepage content) and wraps
@@ -71,6 +82,18 @@
 .obx-res{display:grid;gap:6px;max-height:320px;overflow:auto}
 .obx-msg{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--accent-soft)}
 .obx-msg.bad{background:#fde8e8;color:#8a1c1c}
+.obx-ov{position:absolute;inset:0;z-index:1;touch-action:none}
+.obx-hd{position:absolute;box-sizing:border-box;margin:0;padding:0;border:1.5px dashed rgba(60,20,50,.55);border-radius:6px;background:rgba(255,255,255,.06);cursor:move;touch-action:none;-webkit-user-select:none;user-select:none;font:inherit;color:inherit}
+.obx-hd:hover{border-color:var(--accent);background:rgba(255,255,255,.14)}
+.obx-hd:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.obx-hd.on{border:2px solid var(--accent);background:rgba(255,255,255,.18);z-index:9}
+.obx-hd.own{border-style:solid}
+.obx-hn{position:absolute;left:-1px;top:-1px;min-width:16px;height:16px;padding:0 3px;box-sizing:border-box;border-radius:5px 0 6px 0;background:var(--accent);color:#fff;font-size:10.5px;font-weight:700;line-height:16px;text-align:center;pointer-events:none}
+.obx-hk{position:absolute;z-index:20;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#fff;border:2px solid var(--accent);box-sizing:border-box;cursor:nesw-resize;touch-action:none;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.obx-hk::before{content:"";position:absolute;inset:-10px}
+.obx-hk.l{cursor:nwse-resize}
+.obx-arr{display:grid;gap:8px;padding:10px 12px;border:1px dashed var(--border);border-radius:12px}
+.obx-arr .obx-in.sm{width:76px}
 .obx-bar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
 @media (max-width:560px){.obx-it{grid-template-columns:44px minmax(0,1fr)}.obx-ctl{grid-column:1 / -1;justify-content:flex-start}}
 </style>
@@ -80,7 +103,8 @@
   'use strict';
   var SCREEN = 'occbanner', GROUP = 'Appearance', TITLE = 'Occasion banner';
   var st = { data: null, cfg: null, saved: '', busy: false, msg: '', bad: false, lang: 'en', rot: 0,
-    q: '', res: [], qt: 0, qctl: null, prep: null, raf: 0 };
+    q: '', res: [], qt: 0, qctl: null, prep: null, raf: 0, placed: [],
+    dnd: { on: false, sel: null, drag: null, raf: 0, undo: [], typing: false } };
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function cookie(n) { var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)'); return m ? decodeURIComponent(m.pop()) : ''; }
@@ -113,7 +137,7 @@
   function slim(c) {
     var o = clone(c);
     o.pool = (o.pool || []).map(function (p) { return { id: p.id, cm: +p.cm || 0, white: !!p.white }; });
-    return o;
+    return normPos(o);
   }
 
   /* ---------------------------------------------- the banner, as the shop draws it
@@ -143,7 +167,7 @@
     if (c.layout === 'G') h += '<span class="ohb-dot ohb-d1"></span><span class="ohb-dot ohb-d2"></span><span class="ohb-dot ohb-d3"></span>';
     else if (c.layout === 'H') h += '<div class="ohb-halo"></div>';
     else h += '<div class="ohb-wave"></div><div class="ohb-wave w2"></div>';
-    place(pick()).forEach(function (x) {
+    st.placed.forEach(function (x) {
       var s = C.slots[x.slot], u = x.p.cut_url;
       h += '<div class="ohb-p ohb-s' + x.slot + '" style="--h:' + x.h + ';--r:' + s.r[li] + 'deg;animation-delay:' + s.d[li] + 's"><img src="' + esc(u.src) + '" srcset="' + esc(u.srcset) + '" width="' + (+u.w) + '" height="' + (+u.h) + '" alt=""></div>';
     });
@@ -157,19 +181,280 @@
     return h + '</div></div>';
   }
   function frameDoc() {
-    return '<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0}body{font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}</style><style>' + cat().css.replace(/<\//g, '<\\/') + '</style></head><body></body></html>';
+    return '<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0}body{font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}</style><style>' + cat().css.replace(/<\//g, '<\\/') + '</style><style id="obx-pos"></style></head><body></body></html>';
   }
   function paintPreview() {
     st.raf = 0;
     if (!ours() || !st.cfg) return;
+    st.placed = place(pick());
     document.querySelectorAll('[data-obx-frame]').forEach(function (f) {
       var d = f.contentDocument;
       if (!d || !d.body) return;
       d.documentElement.setAttribute('dir', st.lang === 'ar' ? 'rtl' : 'ltr');
       d.body.innerHTML = banner(st.lang);
     });
+    framePos(); drawOv();
   }
   function later() { if (!st.raf) st.raf = window.requestAnimationFrame(paintPreview); }
+
+  /* ------------------------------------------------------- arrange (Lane DND)
+     Positions are % of the banner box: x / y of the product's bottom-centre
+     (x from the left, mirrored on Arabic; y from the top) and h, its height,
+     only once resized. They belong to a PLACE (slot 1-5), never to a product. */
+  var FR = { d: { W: 1280, H: 600, name: 'Computer' }, m: { W: 390, H: 500, name: 'Phone' } }, LAYS = ['G', 'H', 'I'];
+  /* The preview boxes' own sizes in px, as .obx-d / .obx-m set them (and under 760px): known, so nothing is measured. */
+  var BOX = { d: [640, 300, 320, 150], m: [234, 300, 156, 200] };
+  function boxPx(dev) { var b = BOX[dev], small = window.matchMedia && window.matchMedia('(max-width:760px)').matches; return small ? [b[2], b[3]] : [b[0], b[1]]; }
+  function r1(v) { return Math.round(v * 10) / 10; }
+  function numf(v) { var s = r1(v).toFixed(1); if (s.slice(-2) === '.0') s = s.slice(0, -2); return s === '-0' ? '0' : s; }
+  function lim(k, v) { var R = cat().pos_range[k]; return r1(Math.max(R[0], Math.min(R[1], v))); }
+  /* One canonical shape (layout -> device -> place -> {x, y, h?}), so "unsaved" compares like with like. */
+  function normPos(c) {
+    var o = {}, p = c.pos && typeof c.pos === 'object' ? c.pos : {};
+    LAYS.forEach(function (L) {
+      var l = p[L];
+      if (!l || typeof l !== 'object') return;
+      ['d', 'm'].forEach(function (dv) {
+        var r = l[dv];
+        if (!r || typeof r !== 'object') return;
+        Object.keys(r).forEach(function (k) {
+          var q = r[k];
+          if (!q || !isFinite(+q.x) || !isFinite(+q.y)) return;
+          var cell = { x: +q.x, y: +q.y };
+          if (q.h != null && q.h !== '' && isFinite(+q.h)) cell.h = +q.h;
+          o[L] = o[L] || {}; o[L][dv] = o[L][dv] || {}; o[L][dv][String(k)] = cell;
+        });
+      });
+    });
+    c.pos = o;
+    return c;
+  }
+  function getP(dev, n) { var l = st.cfg.pos[st.cfg.layout]; return (l && l[dev] && l[dev][n]) || null; }
+  function setP(dev, n, v) {
+    var P = st.cfg.pos, L = st.cfg.layout;
+    if (v) { P[L] = P[L] || {}; P[L][dev] = P[L][dev] || {}; P[L][dev][n] = v; return; }
+    if (P[L] && P[L][dev]) { delete P[L][dev][n]; if (!Object.keys(P[L][dev]).length) delete P[L][dev]; if (!Object.keys(P[L]).length) delete P[L]; }
+  }
+  function put(dev, n, x, y, h) {
+    var v = { x: lim('x', x), y: lim('y', y) };
+    if (h != null) v.h = lim('h', h);
+    setP(dev, n, v);
+  }
+  /* Where a placed product stands now: its own place if arranged, else the design's, at its true size. */
+  function geom(dev, x) {
+    var C = cat(), s = C.slots[x.slot], F = FR[dev], u = x.p.cut_url, ratio = (+u.w || 1) / Math.max(1, +u.h || 1);
+    var dh = dev === 'd' ? x.h : x.h * C.phone_scale, c = getP(dev, x.slot + 1);
+    var h = c && c.h != null ? c.h : dh, w = h * F.H * ratio / F.W, cx, cy;
+    if (c) { cx = c.x; cy = c.y; }
+    else if (dev === 'd') { cx = 100 - s.end - w / 2; cy = 100 - s.bottom; }
+    else { cx = s.ps !== null ? s.ps + w / 2 : 100 - s.pe - w / 2; cy = 100 - s.pb; }
+    return { x: r1(cx), y: r1(cy), h: r1(h), w: w, dh: r1(dh), own: !!c, ownH: !!(c && c.h != null) };
+  }
+  function placedFor(n) { return st.placed.filter(function (x) { return x.slot + 1 === n; })[0] || null; }
+  /* The twin of OccasionBanner::posCss(): what the shop prints for this layout. */
+  function posCss() {
+    var l = st.cfg.pos[st.cfg.layout] || {}, out = '';
+    [['d', '@media (min-width:768px){'], ['m', '@media (max-width:767px){']].forEach(function (D) {
+      var rules = '', rows = l[D[0]] || {};
+      Object.keys(rows).sort().forEach(function (n) {
+        var p = rows[n], sel = '.ohb-s' + (+n - 1), x = numf(p.x);
+        rules += sel + '{left:' + x + '%;right:auto;bottom:' + numf(100 - p.y) + '%;width:0;display:flex;justify-content:center' + (p.h != null ? ';height:' + numf(p.h) + '%' : '') + '}'
+          + '[dir=rtl] ' + sel + '{left:auto;right:' + x + '%}' + sel + ' img{flex:none}';
+      });
+      if (rules) out += D[1] + rules + '}';
+    });
+    /* While arranging, the products hold still so a handle sits on its product. */
+    return out + (st.dnd.on ? '.ohb-p{animation:none!important;transform:rotate(var(--r,0deg))}' : '');
+  }
+  function framePos() {
+    var css = posCss();
+    document.querySelectorAll('[data-obx-frame]').forEach(function (f) { var d = f.contentDocument, el = d && d.getElementById('obx-pos'); if (el && el.textContent !== css) el.textContent = css; });
+  }
+  /* Every handle of one frame. A smaller box sits ABOVE a larger one, so every
+     product can be grabbed even where the boxes overlap (the transparent
+     corners of a tall bottle would otherwise cover a mini). */
+  function boxes(dev) {
+    var bs = st.placed.map(function (x) {
+      var g = geom(dev, x), cx = st.lang === 'ar' ? 100 - g.x : g.x;
+      return { n: x.slot + 1, g: g, l: cx - g.w / 2, r: cx + g.w / 2, t: g.y - g.h, a: g.w * g.h };
+    });
+    bs.slice().sort(function (a, b) { return b.a - a.a; }).forEach(function (b, i) { b.z = i + 1; });
+    bs.forEach(function (b) { b.style = 'left:' + b.l.toFixed(2) + '%;top:' + b.t.toFixed(2) + '%;width:' + b.g.w.toFixed(2) + '%;height:' + b.g.h.toFixed(2) + '%;z-index:' + b.z; });
+    return bs;
+  }
+  function hdLabel(dev, n, g) { return 'Place ' + n + ', ' + FR[dev].name.toLowerCase() + ': across ' + numf(g.x) + '%, down ' + numf(g.y) + '%, size ' + numf(g.h) + '%' + (g.ownH ? '' : ' (true size)') + '. Arrow keys move it, plus and minus resize it.'; }
+  function isSel(dev, n) { return !!(st.dnd.sel && st.dnd.sel.dev === dev && st.dnd.sel.n === n); }
+  /* The chosen place's two corner dots, above every box. */
+  function gripHtml(dev, bs) {
+    var b = bs.filter(function (q) { return isSel(dev, q.n); })[0];
+    if (!b) return '';
+    /* Kept inside the frame, so a product taller or wider than the banner can still be resized. */
+    var top = Math.max(2, Math.min(98, b.t)), at = function (x) { return 'left:' + Math.max(2, Math.min(98, x)).toFixed(2) + '%;top:' + top.toFixed(2) + '%'; };
+    return '<i class="obx-hk l" data-dnd="size" data-c="l" data-dev="' + dev + '" data-n="' + b.n + '" style="' + at(b.l) + '"></i>'
+      + '<i class="obx-hk r" data-dnd="size" data-c="r" data-dev="' + dev + '" data-n="' + b.n + '" style="' + at(b.r) + '"></i>';
+  }
+  function ovHtml(dev) {
+    if (!st.dnd.on || !can()) return '';
+    var bs = boxes(dev), h = '<div class="obx-ov" data-dnd-ov="' + dev + '">';
+    bs.forEach(function (b) {
+      h += '<button type="button" class="obx-hd' + (isSel(dev, b.n) ? ' on' : '') + (b.g.own ? ' own' : '') + '" data-dnd="move" data-dev="' + dev + '" data-n="' + b.n + '" style="' + b.style + '" aria-label="' + esc(hdLabel(dev, b.n, b.g)) + '"><span class="obx-hn">' + b.n + '</span></button>';
+    });
+    return h + gripHtml(dev, bs) + '</div>';
+  }
+  /* Repaint the handles in place (focus and pointer capture survive); rebuild only when the set of places changed. */
+  function drawOv() {
+    document.querySelectorAll('[data-dnd-ov]').forEach(function (ov) {
+      var dev = ov.getAttribute('data-dnd-ov'), hs = ov.querySelectorAll('.obx-hd'), bs = boxes(dev);
+      var same = hs.length === bs.length && bs.every(function (b, i) { return +hs[i].getAttribute('data-n') === b.n; });
+      if (!same) { ov.outerHTML = ovHtml(dev); return; }
+      bs.forEach(function (b, i) {
+        var el = hs[i];
+        if (el.getAttribute('style') !== b.style) el.setAttribute('style', b.style);
+        el.classList.toggle('on', isSel(dev, b.n)); el.classList.toggle('own', b.g.own);
+        el.setAttribute('aria-label', hdLabel(dev, b.n, b.g));
+      });
+      ov.querySelectorAll('.obx-hk').forEach(function (k) { k.remove(); });
+      ov.insertAdjacentHTML('beforeend', gripHtml(dev, bs));
+    });
+  }
+  function panelHtml() {
+    var S = st.dnd.sel, x = S && placedFor(S.n), L = st.cfg.layout, R = cat().pos_range;
+    var h = '<p class="obx-sub"><b>Places, not products:</b> the products are picked at random on every visit, so whichever product lands in place 3 stands where you put place 3, at its true size unless you resized that place.</p>';
+    h += '<p class="obx-sub">Drag a product to move it. Drag a corner dot to resize it (it keeps its shape). Arrow keys move the chosen one (Shift: 10 times further), + and − resize it, Ctrl+Z undoes. Computer and phone are arranged separately, and each layout keeps its own.</p>';
+    if (x) {
+      var g = geom(S.dev, x);
+      h += '<div class="obx-row"><b style="font-size:13px">Place ' + S.n + ' · ' + FR[S.dev].name + '</b>'
+        + '<label class="obx-col">Across <input class="obx-in sm" type="number" step="0.5" min="' + R.x[0] + '" max="' + R.x[1] + '" value="' + numf(g.x) + '" data-dn="x"> %</label>'
+        + '<label class="obx-col">Down <input class="obx-in sm" type="number" step="0.5" min="' + R.y[0] + '" max="' + R.y[1] + '" value="' + numf(g.y) + '" data-dn="y"> %</label>'
+        + '<label class="obx-col">Size <input class="obx-in sm" type="number" step="0.5" min="' + R.h[0] + '" max="' + R.h[1] + '" value="' + (g.ownH ? numf(g.h) : '') + '" placeholder="' + numf(g.dh) + '" data-dn="h" title="Height, % of the banner. Empty: the product\'s true size"> %</label>'
+        + '<button class="obx-btn ghost" data-dnd-a="one"' + (g.own ? '' : ' disabled') + '>Reset this place</button></div>';
+    } else {
+      h += '<p class="obx-sub">Click a product in either preview to choose it.</p>';
+    }
+    h += '<div class="obx-row"><button class="obx-btn ghost" data-dnd-a="undo"' + (st.dnd.undo.length ? '' : ' disabled') + '>Undo</button>'
+      + '<button class="obx-btn ghost" data-dnd-a="all"' + (st.cfg.pos[L] ? '' : ' disabled') + '>Reset layout ' + esc(L) + ' to the design</button></div>';
+    return h;
+  }
+  function panelSync() {
+    var p = document.querySelector('[data-dnd-panel]');
+    if (!p) return;
+    var f = document.activeElement && p.contains(document.activeElement) && document.activeElement.getAttribute('data-dn');
+    if (!f) { p.innerHTML = panelHtml(); return; }
+    /* The owner is typing in one box: refresh the others and the buttons, not the box under his cursor. */
+    var S = st.dnd.sel, x = S && placedFor(S.n);
+    if (!x) return;
+    var g = geom(S.dev, x);
+    p.querySelectorAll('[data-dn]').forEach(function (i) { var k = i.getAttribute('data-dn'); if (k !== f) i.value = k === 'h' ? (g.ownH ? numf(g.h) : '') : numf(g[k]); });
+    var o = p.querySelector('[data-dnd-a="one"]'); if (o) o.disabled = !g.own;
+    var u = p.querySelector('[data-dnd-a="undo"]'); if (u) u.disabled = !st.dnd.undo.length;
+    var a = p.querySelector('[data-dnd-a="all"]'); if (a) a.disabled = !st.cfg.pos[st.cfg.layout];
+  }
+  function live() { framePos(); drawOv(); panelSync(); barSync(); }
+  function pushUndo() { st.dnd.undo.push(JSON.stringify(st.cfg.pos)); if (st.dnd.undo.length > 60) st.dnd.undo.shift(); }
+  function undo() { if (!st.dnd.undo.length) return; st.cfg.pos = JSON.parse(st.dnd.undo.pop()); live(); }
+
+  function onDown(e) {
+    var t = e.target && e.target.closest ? e.target.closest('[data-dnd]') : null;
+    if (!t || !st.dnd.on || !ours() || !can() || e.button > 0) return;
+    var ov = t.closest('[data-dnd-ov]'), dev = t.getAttribute('data-dev'), n = +t.getAttribute('data-n'), x = placedFor(n);
+    var hd = ov && ov.querySelector('.obx-hd[data-n="' + n + '"]');
+    if (!x || !ov || !hd) return;
+    e.preventDefault();
+    var r = boxPx(dev);
+    pushUndo();
+    st.dnd.sel = { dev: dev, n: n };
+    st.dnd.drag = { id: e.pointerId, ov: ov, kind: t.getAttribute('data-dnd'), c: t.getAttribute('data-c'), dev: dev, n: n, x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, W: r[0], H: r[1], g: geom(dev, x), moved: false };
+    try { ov.setPointerCapture(e.pointerId); } catch (err) {}
+    try { hd.focus({ preventScroll: true }); } catch (err) {}
+    drawOv(); panelSync();
+  }
+  function onMove(e) {
+    var d = st.dnd.drag;
+    if (!d || e.pointerId !== d.id) return;
+    d.lx = e.clientX; d.ly = e.clientY;
+    if (!st.dnd.raf) st.dnd.raf = window.requestAnimationFrame(dragStep);
+  }
+  /* The one move step: at most once a frame, whatever the pointer's rate. */
+  function dragStep() {
+    st.dnd.raf = 0;
+    var d = st.dnd.drag;
+    if (!d || !ours()) return;
+    if (!d.moved && Math.abs(d.lx - d.x0) + Math.abs(d.ly - d.y0) < 2) return;
+    var dx = (d.lx - d.x0) / d.W * 100, dy = (d.ly - d.y0) / d.H * 100, g = d.g;
+    if (d.kind === 'move') put(d.dev, d.n, g.x + (st.lang === 'ar' ? -dx : dx), g.y + dy, g.ownH ? g.h : null);
+    else {
+      var s1 = (g.h - dy) / g.h, s2 = (g.w + 2 * (d.c === 'l' ? -dx : dx)) / g.w, sc = Math.abs(s1 - 1) > Math.abs(s2 - 1) ? s1 : s2;
+      put(d.dev, d.n, g.x, g.y, g.h * sc);
+    }
+    d.moved = true;
+    live();
+  }
+  function onUp(e) {
+    var d = st.dnd.drag;
+    if (!d || e.pointerId !== d.id) return;
+    if (st.dnd.raf) { window.cancelAnimationFrame(st.dnd.raf); dragStep(); }
+    st.dnd.drag = null;
+    try { d.ov.releasePointerCapture(d.id); } catch (err) {}
+    if (!d.moved) st.dnd.undo.pop();
+    if (ours()) { panelSync(); barSync(); }
+  }
+  function onKey(e) {
+    if (!st.dnd.on || !ours() || !can()) return;
+    var t = e.target, tag = t && t.tagName;
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (e.key === 'z' || e.key === 'Z')) {
+      if ((tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') && !t.hasAttribute('data-dn')) return;
+      e.preventDefault(); undo(); return;
+    }
+    var hd = t && t.closest ? t.closest('.obx-hd') : null;
+    if (!hd || e.ctrlKey || e.metaKey || e.altKey) return;
+    var dev = hd.getAttribute('data-dev'), n = +hd.getAttribute('data-n'), x = placedFor(n);
+    if (!x) return;
+    var g = geom(dev, x), step = e.shiftKey ? 5 : 0.5, mx = st.lang === 'ar' ? -1 : 1, k = e.key;
+    var dx = k === 'ArrowLeft' ? -step * mx : k === 'ArrowRight' ? step * mx : 0, dy = k === 'ArrowUp' ? -step : k === 'ArrowDown' ? step : 0;
+    var grow = k === '+' || k === '=' ? (e.shiftKey ? 1.2 : 1.05) : k === '-' || k === '_' ? 1 / (e.shiftKey ? 1.2 : 1.05) : 0;
+    if (!dx && !dy && !grow) return;
+    e.preventDefault();
+    pushUndo();
+    st.dnd.sel = { dev: dev, n: n };
+    put(dev, n, g.x + dx, g.y + dy, grow ? g.h * grow : (g.ownH ? g.h : null));
+    live();
+  }
+  function onFocus(e) {
+    var hd = e.target && e.target.closest ? e.target.closest('.obx-hd') : null;
+    if (!hd || !ours()) return;
+    var dev = hd.getAttribute('data-dev'), n = +hd.getAttribute('data-n');
+    if (st.dnd.sel && st.dnd.sel.dev === dev && st.dnd.sel.n === n) return;
+    st.dnd.sel = { dev: dev, n: n }; drawOv(); panelSync();
+  }
+  /* The typed numbers: live as he types, one undo step per box he edits. */
+  function onNum(e) {
+    var el = e.target, k = el && el.getAttribute && el.getAttribute('data-dn');
+    if (!k || !ours() || !st.dnd.sel || !can()) return;
+    if (e.type === 'change') { st.dnd.typing = false; panelSync(); return; }
+    var S = st.dnd.sel, x = placedFor(S.n);
+    if (!x) return;
+    var g = geom(S.dev, x), v = el.value.trim() === '' ? null : parseFloat(el.value);
+    if (k !== 'h' && (v === null || !isFinite(v))) return;
+    if (k === 'h' && v !== null && !isFinite(v)) return;
+    if (!st.dnd.typing) { pushUndo(); st.dnd.typing = true; }
+    put(S.dev, S.n, k === 'x' ? v : g.x, k === 'y' ? v : g.y, k === 'h' ? v : (g.ownH ? g.h : null));
+    live();
+  }
+  function onArr(e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-dnd-a]') : null;
+    if (!b || !ours() || !can()) return;
+    var a = b.getAttribute('data-dnd-a'), S = st.dnd.sel;
+    if (a === 'undo') return undo();
+    pushUndo();
+    if (a === 'one' && S) setP(S.dev, S.n, null);
+    else if (a === 'all') delete st.cfg.pos[st.cfg.layout];
+    live();
+  }
+  function barSync() {
+    var bar = document.querySelector('.obx-bar .obx-sub'); if (bar) bar.innerHTML = dirty() ? '<b>Unsaved changes.</b> The shop shows them after Save.' : 'Saved.';
+    var sb = document.querySelector('[data-a="save"]'); if (sb) sb.disabled = st.busy || !can() || !dirty();
+    var rb = document.querySelector('[data-a="reset"]'); if (rb) rb.disabled = !dirty();
+  }
 
   /* ------------------------------------------------------------------- render */
   function render() {
@@ -177,6 +462,7 @@
     if (!c || !ours()) return;
     if (!st.data) { c.innerHTML = '<div data-screen="' + SCREEN + '" class="obx"><p class="obx-sub">' + (st.msg ? esc(st.msg) : 'Loading the occasion banner…') + '</p></div>'; return; }
     var C = cat(), cf = st.cfg, ro = can() ? '' : ' disabled';
+    st.placed = place(pick());
     var h = '<div data-screen="' + SCREEN + '" class="obx">';
     h += '<div class="obx-bar"><span class="obx-sub">' + (dirty() ? '<b>Unsaved changes.</b> The shop shows them after Save.' : 'Saved. This is what the homepage shows.') + '</span>'
       + '<span class="obx-row"><button class="obx-btn ghost" data-a="reset"' + (dirty() ? '' : ' disabled') + '>Discard</button><button class="obx-btn" data-a="save"' + (st.busy || !can() || !dirty() ? ' disabled' : '') + '>' + (st.busy ? 'Saving…' : 'Save') + '</button></span></div>';
@@ -191,9 +477,10 @@
     C.layouts.forEach(function (l) { h += '<button class="obx-opt" aria-pressed="' + (cf.layout === l.key) + '" data-a="layout" data-v="' + l.key + '"' + ro + '><b>' + esc(l.name) + '</b></button>'; });
     h += '</div><b style="font-size:12.5px">Occasion</b><div class="obx-list">';
     C.templates.forEach(function (t) { var k = t.colours; h += '<button class="obx-opt" aria-pressed="' + (cf.template === t.key) + '" data-a="template" data-v="' + t.key + '"' + ro + '><span class="obx-sw" style="background:linear-gradient(115deg,' + k.c1 + ',' + k.a1 + ' 45%,' + k.b2 + ');border-bottom:4px solid ' + k.acc + '"></span><b>' + esc(t.name) + '</b></button>'; });
-    h += '</div><div class="obx-row"><span style="font-size:12.5px;font-weight:600">Preview in</span><button class="obx-pill" aria-pressed="' + (st.lang === 'en') + '" data-a="lang" data-v="en">English</button><button class="obx-pill" aria-pressed="' + (st.lang === 'ar') + '" data-a="lang" data-v="ar">العربية</button><button class="obx-pill" data-a="shuffle">Other products</button></div>';
-    h += '<div class="obx-pv"><div class="obx-fr"><span>Computer · 1280 × 600</span><div class="obx-box obx-d"><iframe data-obx-frame sandbox="allow-same-origin" title="Computer preview" tabindex="-1"></iframe></div></div>'
-      + '<div class="obx-fr"><span>Phone · 390 × 500</span><div class="obx-box obx-m"><iframe data-obx-frame sandbox="allow-same-origin" title="Phone preview" tabindex="-1"></iframe></div></div></div>';
+    h += '</div><div class="obx-row"><span style="font-size:12.5px;font-weight:600">Preview in</span><button class="obx-pill" aria-pressed="' + (st.lang === 'en') + '" data-a="lang" data-v="en">English</button><button class="obx-pill" aria-pressed="' + (st.lang === 'ar') + '" data-a="lang" data-v="ar">العربية</button><button class="obx-pill" data-a="shuffle">Other products</button>' + (can() ? '<button class="obx-pill" aria-pressed="' + st.dnd.on + '" data-a="arrange" title="Move and resize the products in the previews, for computer and phone">Arrange products</button>' : '') + '</div>';
+    h += '<div class="obx-pv"><div class="obx-fr"><span>Computer · 1280 × 600</span><div class="obx-box obx-d"><iframe data-obx-frame sandbox="allow-same-origin" title="Computer preview" tabindex="-1"></iframe>' + ovHtml('d') + '</div></div>'
+      + '<div class="obx-fr"><span>Phone · 390 × 500</span><div class="obx-box obx-m"><iframe data-obx-frame sandbox="allow-same-origin" title="Phone preview" tabindex="-1"></iframe>' + ovHtml('m') + '</div></div></div>';
+    if (st.dnd.on && can()) h += '<div class="obx-arr" data-dnd-panel>' + panelHtml() + '</div>';
     if (!ready().length) h += '<p class="obx-sub">No product has a cut-out yet, so the preview shows the words only. Add products below and press <b>Prepare cut-outs</b>.</p>';
     h += '</section>';
 
@@ -267,7 +554,7 @@
   function save() {
     st.busy = true; say(''); render();
     api('POST', '', { config: slim(st.cfg) }).then(function (j) {
-      st.busy = false; st.cfg = j.config; st.full = JSON.stringify(j.config); st.saved = JSON.stringify(slim(st.cfg)); say('Saved. The homepage shows it now.');
+      st.busy = false; st.cfg = normPos(j.config); st.full = JSON.stringify(st.cfg); st.saved = JSON.stringify(slim(st.cfg)); say('Saved. The homepage shows it now.');
       try { window.toast('Occasion banner saved'); } catch (e) {}
       if (ours()) { render(); }
     }).catch(function (e) { st.busy = false; say('Not saved: ' + e.message, true); if (ours()) render(); });
@@ -322,7 +609,8 @@
     if (!b || !document.querySelector('#content').contains(b)) return;
     var a = b.getAttribute('data-a'), v = b.getAttribute('data-v');
     if (a === 'save') return save();
-    if (a === 'reset') { st.cfg = JSON.parse(st.full); say(''); return render(); }
+    if (a === 'reset') { st.cfg = normPos(JSON.parse(st.full)); st.dnd.undo = []; say(''); return render(); }
+    if (a === 'arrange') { st.dnd.on = !st.dnd.on && can(); st.dnd.drag = null; return render(); }
     if (a === 'display') st.cfg.display = v;
     else if (a === 'layout') st.cfg.layout = v;
     else if (a === 'template') setTemplate(v);
@@ -363,16 +651,25 @@
     else if (k === 'count') st.cfg.count = +v;
     else st.cfg[k] = v;
     /* Typing repaints only the preview (next frame); a change of a box redraws the bar too. */
-    if (e.type === 'input' && el.tagName !== 'SELECT' && el.type !== 'checkbox') { later(); var bar = document.querySelector('.obx-bar .obx-sub'); if (bar) bar.innerHTML = dirty() ? '<b>Unsaved changes.</b> The shop shows them after Save.' : 'Saved.'; var sb = document.querySelector('[data-a="save"]'); if (sb) sb.disabled = st.busy || !can() || !dirty(); var rb = document.querySelector('[data-a="reset"]'); if (rb) rb.disabled = !dirty(); return; }
+    if (e.type === 'input' && el.tagName !== 'SELECT' && el.type !== 'checkbox') { later(); barSync(); return; }
     if (e.type === 'change') render();
   }
   document.addEventListener('click', onClick);
   document.addEventListener('input', onField);
   document.addEventListener('change', onField);
+  document.addEventListener('pointerdown', onDown);
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp);
+  document.addEventListener('pointercancel', onUp);
+  document.addEventListener('keydown', onKey);
+  document.addEventListener('focusin', onFocus);
+  document.addEventListener('input', onNum);
+  document.addEventListener('change', onNum);
+  document.addEventListener('click', onArr);
 
   var previousGo = window.go;
   window.go = function (id) {
-    if (id !== SCREEN) { clearTimeout(st.qt); if (st.prep) st.prep.stop = true; return previousGo.apply(this, arguments); }
+    if (id !== SCREEN) { clearTimeout(st.qt); if (st.prep) st.prep.stop = true; st.dnd.drag = null; if (st.dnd.raf) { window.cancelAnimationFrame(st.dnd.raf); st.dnd.raf = 0; } return previousGo.apply(this, arguments); }
     document.querySelectorAll('.side .nav-item').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-go') === SCREEN); });
     var group = document.querySelector('#nav .nav-group[data-sec="' + GROUP + '"]');
     if (group) group.classList.add('open');
@@ -383,10 +680,10 @@
     if (side) side.classList.remove('open');
     var c = document.querySelector('#content');
     if (c) c.textContent = '';
-    st.data = null; st.cfg = null; st.res = []; st.q = ''; say('');
+    st.data = null; st.cfg = null; st.res = []; st.q = ''; st.dnd.sel = null; st.dnd.undo = []; say('');
     render();
     api('GET', '').then(function (j) {
-      st.data = j; st.cfg = j.config; st.full = JSON.stringify(j.config); st.saved = JSON.stringify(slim(j.config));
+      st.data = j; st.cfg = normPos(j.config); st.full = JSON.stringify(st.cfg); st.saved = JSON.stringify(slim(j.config));
       if (ours()) render();
     }).catch(function (e) { say('The occasion banner could not be loaded: ' + e.message, true); if (ours()) render(); });
     return undefined;
