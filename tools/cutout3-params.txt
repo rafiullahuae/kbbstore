@@ -1,0 +1,10 @@
+arencia tol=20 close=7 smooth=3
+deo tol=20 close=7 smooth=3
+guasha tol=20 close=7 smooth=3
+eyemask tol=20 close=7 smooth=3
+anua tol=20 close=7 smooth=3 pull=1.5
+peelpad tol=6 close=9 smooth=3 grab=1
+axisy tol=3 close=9 smooth=3 grab=1
+althea tol=3 close=9 smooth=3 grab=1
+cosrx tol=3 close=9 smooth=3 grab=1
+boj tol=3 close=9 smooth=3 grab=1 open=5

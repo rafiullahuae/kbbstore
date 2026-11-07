@@ -78,8 +78,9 @@ it('makes two sizes on request, reads them from the disk, and never takes a path
     expect($r['ok'])->toBeTrue();
     $c = ProductCutouts::for('/uploads/pco-test/red.jpg');
     expect($c['h'])->toBe(480)
-        ->and($c['src'])->toEndWith('/img-cache/cut/480/uploads/pco-test/red.jpg.webp')
-        ->and($c['srcset'])->toContain('/img-cache/cut/240/uploads/pco-test/red.jpg.webp ')->toContain(', ');
+        // ?v= the file's time (Lane CUT): the path stays when a cut-out is remade or hand-made
+        ->and($c['src'])->toMatch('#/img-cache/cut/480/uploads/pco-test/red\.jpg\.webp\?v=\d+$#')
+        ->and($c['srcset'])->toMatch('#/img-cache/cut/240/uploads/pco-test/red\.jpg\.webp\?v=\d+ #')->toContain(', ');
 
     ProductCutouts::forget('/uploads/pco-test/red.jpg');
     expect(ProductCutouts::for('/uploads/pco-test/red.jpg'))->toBeNull();

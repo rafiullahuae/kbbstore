@@ -431,7 +431,9 @@ it('sits directly under the main banner, one branch per kind of banner, and its 
 
     $uris = array_map(fn ($r) => implode('|', $r->methods()) . ' ' . $r->uri(), GiftStripAdminRoutes::registered());
     sort($uris);
-    expect($uris)->toBe(['GET|HEAD admin-api/gift-strip', 'GET|HEAD admin-api/gift-strip/products', 'POST admin-api/gift-strip', 'POST admin-api/gift-strip/cutout']);
+    // cutout/upload and cutout/automatic: the owner's own cut-out (Lane CUT)
+    expect($uris)->toBe(['GET|HEAD admin-api/gift-strip', 'GET|HEAD admin-api/gift-strip/products', 'POST admin-api/gift-strip', 'POST admin-api/gift-strip/cutout',
+        'POST admin-api/gift-strip/cutout/automatic', 'POST admin-api/gift-strip/cutout/upload']);
 });
 
 it('stays directly under the banner on a shop with its own section order', function () {

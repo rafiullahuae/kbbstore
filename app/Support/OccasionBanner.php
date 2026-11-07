@@ -224,6 +224,10 @@ final class OccasionBanner
             }
             if ($w !== []) {
                 $cut = ['p' => $c['p'], 'w' => $w];
+                $v = (int) ($c['v'] ?? 0);
+                if ($v > 0) {
+                    $cut['v'] = $v;
+                }
             }
         }
 
@@ -247,14 +251,19 @@ final class OccasionBanner
             return null;
         }
         $w = [];
+        $v = 0;
         foreach (ProductCutouts::HEIGHTS as $h) {
-            $size = @getimagesize(public_path(ProductCutouts::DIR.'/'.$h.'/'.$rel.'.webp'));
+            $file = public_path(ProductCutouts::DIR.'/'.$h.'/'.$rel.'.webp');
+            $size = @getimagesize($file);
             if (is_array($size) && $size[0] > 0) {
                 $w[$h] = (int) $size[0];
+                $v = max($v, (int) @filemtime($file));
             }
         }
 
-        return $w === [] ? null : ['p' => implode('/', array_map('rawurlencode', explode('/', $rel))), 'w' => $w];
+        // v: the files' time, so a remade or hand-made cut-out at the same path
+        // is not served from a visitor's year-long cache (ProductCutouts::for).
+        return $w === [] ? null : ['p' => implode('/', array_map('rawurlencode', explode('/', $rel))), 'w' => $w] + ($v > 0 ? ['v' => $v] : []);
     }
 
     /** The stored config, read from the request's settings map. No query. */
@@ -272,14 +281,15 @@ final class OccasionBanner
     public static function cutUrls(array $cut): array
     {
         $base = Url::base().'/'.ProductCutouts::DIR.'/';
+        $q = (int) ($cut['v'] ?? 0) > 0 ? '?v='.(int) $cut['v'] : '';
         $parts = [];
         $top = 0;
         foreach ($cut['w'] as $h => $w) {
-            $parts[] = $base.$h.'/'.$cut['p'].'.webp '.$w.'w';
+            $parts[] = $base.$h.'/'.$cut['p'].'.webp'.$q.' '.$w.'w';
             $top = max($top, (int) $h);
         }
 
-        return ['src' => $base.$top.'/'.$cut['p'].'.webp', 'srcset' => implode(', ', $parts), 'w' => (int) $cut['w'][$top], 'h' => $top];
+        return ['src' => $base.$top.'/'.$cut['p'].'.webp'.$q, 'srcset' => implode(', ', $parts), 'w' => (int) $cut['w'][$top], 'h' => $top];
     }
 
     /**

@@ -111,7 +111,50 @@ class GiftStripApiController extends Controller
         $cfg['snap'] = $this->snapshot($cfg);
         $this->settings->set(GiftStrip::KEY, $cfg);
 
-        return response()->json(['ok' => true, 'ms' => (int) ($made['ms'] ?? 0), 'cut' => ProductCutouts::for(trim((string) $p->image))]);
+        return response()->json(['ok' => true, 'ms' => (int) ($made['ms'] ?? 0), 'cut' => ProductCutouts::for(trim((string) $p->image)), 'own' => ! empty($made['own'])]);
+    }
+
+    /**
+     * "Upload cut-out": the owner's own transparent PNG or WebP for one
+     * product, validated from its bytes and re-encoded through GD by
+     * ProductCutouts::upload(). Cut out / Re-cut / Prepare put it back from
+     * then on rather than cutting over it; only "Use automatic" replaces it.
+     */
+    public function upload(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'id' => ['required', 'integer', 'min:1'],
+            'file' => ['required', 'file', 'max:' . (ProductCutouts::UPLOAD_MAX_BYTES / 1024)],
+        ], [
+            'file.max' => 'That file is larger than 4 MB. Save it smaller and try again.',
+            'file.required' => 'No file arrived -- choose a PNG or WebP and try again.',
+        ]);
+        $p = Product::query()->whereKey((int) $data['id'])->first(['id', 'name', 'image']);
+        if ($p === null || trim((string) $p->image) === '') {
+            return response()->json(['ok' => false, 'error' => 'That product has no photo.'], 422);
+        }
+        $r = ProductCutouts::upload(trim((string) $p->image), (string) $request->file('file')->getRealPath());
+        if (! $r['ok']) {
+            return response()->json(['ok' => false, 'error' => 'Not used: ' . ($r['reason'] ?? 'unknown')], 422);
+        }
+
+        return response()->json(['ok' => true, 'cut' => ProductCutouts::for(trim((string) $p->image)), 'own' => true]);
+    }
+
+    /** "Use automatic": drop the hand-made cut-out for this product and cut one automatically. */
+    public function automatic(Request $request): JsonResponse
+    {
+        $data = $request->validate(['id' => ['required', 'integer', 'min:1'], 'white' => ['sometimes', 'boolean']]);
+        $p = Product::query()->whereKey((int) $data['id'])->first(['id', 'name', 'image']);
+        if ($p === null || trim((string) $p->image) === '') {
+            return response()->json(['ok' => false, 'error' => 'That product has no photo.'], 422);
+        }
+        $made = ProductCutouts::automatic(trim((string) $p->image), (bool) ($data['white'] ?? false));
+        if (! ($made['ok'] ?? false)) {
+            return response()->json(['ok' => false, 'error' => 'Not cut out: ' . ($made['reason'] ?? 'unknown')], 422);
+        }
+
+        return response()->json(['ok' => true, 'cut' => ProductCutouts::for(trim((string) $p->image)), 'own' => false]);
     }
 
     private function config(): array
@@ -150,6 +193,7 @@ class GiftStripApiController extends Controller
             'name' => (string) $p->name,
             'thumb' => $image,
             'cut' => $cut,
+            'own' => $cut !== null && ProductCutouts::isOwn($image),
             'cm' => GiftStrip::heightFor($cfg, (int) $p->id, (string) $p->name),
             'white' => in_array((int) $p->id, $cfg['white'], true),
             'live' => $live,

@@ -135,21 +135,73 @@ final class OccasionBannerController extends Controller
             return response()->json(['ok' => false, 'message' => 'Not cut out: '.($r['reason'] ?? 'unknown reason').'.', 'product' => $this->card($p)], 422);
         }
 
-        // Keep the stored pool's snapshot in step, if the product is in it.
+        $this->resnap($p, $img, isset($data['white']) ? (bool) $data['white'] : null);
+
+        return response()->json(['ok' => true, 'ms' => $r['ms'] ?? 0, 'product' => $this->card($p)]);
+    }
+
+    /**
+     * "Upload cut-out": the owner's own transparent PNG or WebP for one
+     * product. ProductCutouts::upload() validates it from its bytes and
+     * re-encodes it through GD; from then on Prepare / Remake put it back
+     * rather than cutting over it.
+     */
+    public function upload(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'id' => ['required', 'integer', 'min:1'],
+            'file' => ['required', 'file', 'max:'.(ProductCutouts::UPLOAD_MAX_BYTES / 1024)],
+        ], [
+            'file.max' => 'That file is larger than 4 MB. Save it smaller and try again.',
+            'file.required' => 'No file arrived -- choose a PNG or WebP and try again.',
+        ]);
+        $p = Product::query()->select(['id', 'name', 'brand_id', 'image'])->with('brand:id,name')->find((int) $data['id']);
+        $img = $p === null ? '' : self::imagePath((string) $p->image);
+        if ($img === '') {
+            return response()->json(['ok' => false, 'message' => 'That product has no photo.'], 422);
+        }
+        $r = ProductCutouts::upload($img, (string) $request->file('file')->getRealPath());
+        if (! $r['ok']) {
+            return response()->json(['ok' => false, 'message' => 'Not used: '.($r['reason'] ?? 'unknown reason').'.'], 422);
+        }
+        $this->resnap($p, $img, null);
+
+        return response()->json(['ok' => true, 'product' => $this->card($p)]);
+    }
+
+    /** "Use automatic": drop the hand-made cut-out for this product and cut one automatically. */
+    public function automatic(Request $request): JsonResponse
+    {
+        $data = $request->validate(['id' => ['required', 'integer', 'min:1'], 'white' => ['sometimes', 'boolean']]);
+        $p = Product::query()->select(['id', 'name', 'brand_id', 'image'])->with('brand:id,name')->find((int) $data['id']);
+        $img = $p === null ? '' : self::imagePath((string) $p->image);
+        if ($img === '') {
+            return response()->json(['ok' => false, 'message' => 'That product has no photo.'], 422);
+        }
+        $r = ProductCutouts::automatic($img, (bool) ($data['white'] ?? false));
+        $this->resnap($p, $img, isset($data['white']) ? (bool) $data['white'] : null);
+        if (! $r['ok']) {
+            return response()->json(['ok' => false, 'message' => 'Not cut out: '.($r['reason'] ?? 'unknown reason').'.', 'product' => $this->card($p)], 422);
+        }
+
+        return response()->json(['ok' => true, 'product' => $this->card($p)]);
+    }
+
+    /** Keep the stored pool's snapshot in step, if the product is in it. */
+    private function resnap(Product $p, string $img, ?bool $white): void
+    {
         $c = $this->stored();
         $changed = false;
         foreach ($c['pool'] as $i => $item) {
             if ($item['id'] === $p->id) {
                 $c['pool'][$i]['cut'] = OccasionBanner::cutSnapshot($img);
-                $c['pool'][$i]['white'] = (bool) ($data['white'] ?? $item['white']);
+                $c['pool'][$i]['white'] = $white ?? $item['white'];
                 $changed = true;
             }
         }
         if ($changed) {
             $this->settings->set(OccasionBanner::KEY, $c);
         }
-
-        return response()->json(['ok' => true, 'ms' => $r['ms'] ?? 0, 'product' => $this->card($p)]);
     }
 
     /** The stored setting, normalised. */
@@ -199,6 +251,7 @@ final class OccasionBannerController extends Controller
     {
         foreach ($c['pool'] as $i => $item) {
             $c['pool'][$i]['cut_url'] = $item['cut'] === null ? null : OccasionBanner::cutUrls($item['cut']);
+            $c['pool'][$i]['cut_own'] = $item['cut'] !== null && ProductCutouts::isOwn((string) $item['image']);
         }
 
         return $c;
@@ -217,6 +270,7 @@ final class OccasionBannerController extends Controller
             'image' => $img,
             'cut' => $cut,
             'cut_url' => $cut === null ? null : OccasionBanner::cutUrls($cut),
+            'cut_own' => $cut !== null && ProductCutouts::isOwn($img),
         ];
     }
 
