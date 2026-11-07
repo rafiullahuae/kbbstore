@@ -327,12 +327,12 @@
         + '<label class="obx-col">Across <input class="obx-in sm" type="number" step="0.5" min="' + R.x[0] + '" max="' + R.x[1] + '" value="' + numf(g.x) + '" data-dn="x"> %</label>'
         + '<label class="obx-col">Down <input class="obx-in sm" type="number" step="0.5" min="' + R.y[0] + '" max="' + R.y[1] + '" value="' + numf(g.y) + '" data-dn="y"> %</label>'
         + '<label class="obx-col">Size <input class="obx-in sm" type="number" step="0.5" min="' + R.h[0] + '" max="' + R.h[1] + '" value="' + (g.ownH ? numf(g.h) : '') + '" placeholder="' + numf(g.dh) + '" data-dn="h" title="Height, % of the banner. Empty: the product\'s true size"> %</label>'
-        + '<button class="obx-btn ghost" data-dnd-a="one"' + (g.own ? '' : ' disabled') + '>Reset this place</button></div>';
+        + '<button class="obx-btn ghost" data-dnd-a="one" data-kbb-sure="Put this place back where the design has it? Its size goes back to true size too."' + (g.own ? '' : ' disabled') + '>Reset this place</button></div>';
     } else {
       h += '<p class="obx-sub">Click a product in either preview to choose it.</p>';
     }
     h += '<div class="obx-row"><button class="obx-btn ghost" data-dnd-a="undo"' + (st.dnd.undo.length ? '' : ' disabled') + '>Undo</button>'
-      + '<button class="obx-btn ghost" data-dnd-a="all"' + (st.cfg.pos[L] ? '' : ' disabled') + '>Reset layout ' + esc(L) + ' to the design</button></div>';
+      + '<button class="obx-btn ghost" data-dnd-a="all" data-kbb-sure="Put every product of layout ' + esc(L) + ' back where the design has it, on computer and phone? Your arrangement of this layout will be lost (until you press Discard instead of Save)."' + (st.cfg.pos[L] ? '' : ' disabled') + '>Reset layout ' + esc(L) + ' to the design</button></div>';
     return h;
   }
   function panelSync() {

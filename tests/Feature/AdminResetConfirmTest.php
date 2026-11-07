@@ -152,7 +152,9 @@ it('routes every reset-to-default control in the admin through the dialog', func
     // "Restore selected", both in reset-guard's KNOWN list.
     // ▲ Lane NA: +1, "Reset to newest first" on Catalog -> New Arrivals, which
     // asks for itself (data-kbb-asks + window.kbbConfirm).
-    expect(count($controls))->toBe(60);
+    // ▲ Lane DND: +2, Appearance -> Occasion banner -> Arrange products: "Reset
+    // this place" and "Reset layout X to the design", both data-kbb-sure.
+    expect(count($controls))->toBe(62);
 });
 
 it('names a control that still exists for every row of the list', function () {
