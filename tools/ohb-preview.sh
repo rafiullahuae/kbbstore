@@ -1,6 +1,7 @@
 #!/bin/sh
 # Boot a preview for the Lane OHB screenshots (Appearance -> Occasion banner).
 #   sh tools/ohb-preview.sh [port]      default port 11900 (walks up to a free one)
+#   OHB_SEED=tools/dnd-seed.php   (Lane DND: the shipped hand-made cut-outs)
 #   OHB_DISPLAY=both|banner|slider OHB_LAYOUT=G|H|I OHB_TEMPLATE=1111|uae|ny|super
 #
 # Modelled on tools/sot-preview.sh: its own directory, its own port range, the
@@ -56,7 +57,7 @@ export KBB_PUBLIC_PATH="$ROOT" APP_ENV=local APP_DEBUG=true \
   APP_PACKAGES_CACHE="$DIR/compiled/packages.php"
 
 php "$APP/artisan" migrate --force >"$DIR/migrate.log" 2>&1 || { tail -30 "$DIR/migrate.log"; exit 1; }
-php "$APP/artisan" tinker --execute="require '$APP/tools/ohb-seed.php';" >>"$DIR/migrate.log" 2>&1 \
+php "$APP/artisan" tinker --execute="require '$APP/${OHB_SEED:-tools/ohb-seed.php}';" >>"$DIR/migrate.log" 2>&1 \
   || { tail -30 "$DIR/migrate.log"; exit 1; }
 tail -12 "$DIR/migrate.log"
 rm -f "$DIR/compiled/routes.php"

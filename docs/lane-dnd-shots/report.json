@@ -1,0 +1,365 @@
+{
+ "shopBefore": {
+  "390": {
+   "htmlBytes": 155788,
+   "styleBytes": 6466,
+   "scrollWidth": 390,
+   "scripts": 13,
+   "banner": {
+    "w": 390,
+    "h": 500
+   },
+   "products": [
+    {
+     "cls": "ohb-p ohb-s0",
+     "cx": 30.1,
+     "bottom": 97.9,
+     "h": 19.8
+    },
+    {
+     "cls": "ohb-p ohb-s1",
+     "cx": 45.2,
+     "bottom": 96.5,
+     "h": 33.4
+    },
+    {
+     "cls": "ohb-p ohb-s2",
+     "cx": 64.1,
+     "bottom": 97.3,
+     "h": 35.4
+    },
+    {
+     "cls": "ohb-p ohb-s3",
+     "cx": 90.4,
+     "bottom": 96.5,
+     "h": 29.8
+    },
+    {
+     "cls": "ohb-p ohb-s4",
+     "cx": 8.2,
+     "bottom": 97.5,
+     "h": 25
+    }
+   ],
+   "errors": []
+  },
+  "1280": {
+   "htmlBytes": 155820,
+   "styleBytes": 6466,
+   "scrollWidth": 1280,
+   "scripts": 13,
+   "banner": {
+    "w": 1280,
+    "h": 600
+   },
+   "products": [
+    {
+     "cls": "ohb-p ohb-s0",
+     "cx": 58.5,
+     "bottom": 78.5,
+     "h": 42.2
+    },
+    {
+     "cls": "ohb-p ohb-s1",
+     "cx": 74.5,
+     "bottom": 72.7,
+     "h": 50.9
+    },
+    {
+     "cls": "ohb-p ohb-s2",
+     "cx": 83.3,
+     "bottom": 73.6,
+     "h": 63.1
+    },
+    {
+     "cls": "ohb-p ohb-s3",
+     "cx": 93.1,
+     "bottom": 74.7,
+     "h": 50.9
+    },
+    {
+     "cls": "ohb-p ohb-s4",
+     "cx": 53.7,
+     "bottom": 82.9,
+     "h": 43.1
+    }
+   ],
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ]
+  }
+ },
+ "admin1280": {
+  "pointerTypes": [
+   "mouse"
+  ],
+  "requestsWhileArranging": 7,
+  "moves": [
+   {
+    "dev": "d",
+    "n": 3,
+    "kind": "move",
+    "before": "Place 3, computer: across 83.3%, down 73%, size 62% (true size). Arrow keys move it, plus and minus resize it.",
+    "after": "Place 3, computer: across 59.9%, down 83%, size 62% (true size). Arrow keys move it, plus and minus resize it."
+   },
+   {
+    "dev": "d",
+    "n": 5,
+    "kind": "move",
+    "before": "Place 5, computer: across 53.5%, down 82%, size 49.6% (true size). Arrow keys move it, plus and minus resize it.",
+    "after": "Place 5, computer: across 64.4%, down 68.7%, size 49.6% (true size). Arrow keys move it, plus and minus resize it."
+   },
+   {
+    "dev": "d",
+    "n": 2,
+    "kind": "size",
+    "before": "Place 2, computer: across 73.6%, down 72%, size 59.9% (true size). Arrow keys move it, plus and minus resize it.",
+    "after": "Place 2, computer: across 73.6%, down 72%, size 76.7%. Arrow keys move it, plus and minus resize it."
+   },
+   {
+    "dev": "m",
+    "n": 1,
+    "kind": "move",
+    "before": "Place 1, phone: across 35.2%, down 97%, size 21.6% (true size). Arrow keys move it, plus and minus resize it.",
+    "after": "Place 1, phone: across 52.3%, down 83.7%, size 21.6% (true size). Arrow keys move it, plus and minus resize it."
+   },
+   {
+    "dev": "m",
+    "n": 4,
+    "kind": "move",
+    "before": "Place 4, phone: across 88.8%, down 96%, size 32.4% (true size). Arrow keys move it, plus and minus resize it.",
+    "after": "Place 4, phone: across 63.2%, down 89.3%, size 32.4% (true size). Arrow keys move it, plus and minus resize it."
+   },
+   {
+    "dev": "m",
+    "n": 3,
+    "kind": "size",
+    "before": "Place 3, phone: across 63.7%, down 97%, size 36% (true size). Arrow keys move it, plus and minus resize it.",
+    "after": "Place 3, phone: across 63.7%, down 97%, size 77.5%. Arrow keys move it, plus and minus resize it."
+   }
+  ],
+  "keyboard": {
+   "before": "Place 4, phone: across 63.2%, down 89.3%, size 32.4% (true size). Arrow keys move it, plus and minus resize it.",
+   "shiftUp": "Place 4, phone: across 63.2%, down 84.3%, size 32.4% (true size). Arrow keys move it, plus and minus resize it.",
+   "afterCtrlZ": "Place 4, phone: across 63.2%, down 89.3%, size 32.4% (true size). Arrow keys move it, plus and minus resize it."
+  },
+  "panel": "Places, not products: the products are picked at random on every visit, so whichever product lands in place 3 stands where you put place 3, at its true size unless you resized that place.\n\nDrag a product to move it. Drag a corner dot to resize it (it keeps its shape). Arrow keys move the chosen one (Shift: 10 times further), + and − resize it, Ctrl+Z undoes. Computer and phone are arranged separat",
+  "saved": {
+   "G": {
+    "d": {
+     "2": {
+      "x": 73.6,
+      "y": 72,
+      "h": 76.7
+     },
+     "3": {
+      "x": 59.9,
+      "y": 83
+     },
+     "5": {
+      "x": 64.4,
+      "y": 68.7
+     }
+    },
+    "m": {
+     "1": {
+      "x": 52.3,
+      "y": 83.7
+     },
+     "3": {
+      "x": 63.7,
+      "y": 97,
+      "h": 77.5
+     },
+     "4": {
+      "x": 63.2,
+      "y": 89.3
+     }
+    }
+   }
+  },
+  "scrollWidth": 1280,
+  "errors": []
+ },
+ "admin390": {
+  "pointerTypes": [
+   "mouse",
+   "touch"
+  ],
+  "requestsWhileArranging": 7,
+  "moves": [
+   {
+    "dev": "d",
+    "n": 3,
+    "kind": "move",
+    "before": "Place 3, computer: across 59.9%, down 83%, size 62% (true size). Arrow keys move it, plus and minus resize it.",
+    "after": "Place 3, computer: across 36.5%, down 93%, size 62% (true size). Arrow keys move it, plus and minus resize it."
+   },
+   {
+    "dev": "d",
+    "n": 5,
+    "kind": "move",
+    "before": "Place 5, computer: across 64.4%, down 68.7%, size 49.6% (true size). Arrow keys move it, plus and minus resize it.",
+    "after": "Place 5, computer: across 75.3%, down 55.4%, size 49.6% (true size). Arrow keys move it, plus and minus resize it."
+   },
+   {
+    "dev": "d",
+    "n": 2,
+    "kind": "size",
+    "before": "Place 2, computer: across 73.6%, down 72%, size 76.7%. Arrow keys move it, plus and minus resize it.",
+    "after": "Place 2, computer: across 73.6%, down 72%, size 93.5%. Arrow keys move it, plus and minus resize it."
+   },
+   {
+    "dev": "m",
+    "n": 1,
+    "kind": "move",
+    "before": "Place 1, phone: across 52.3%, down 83.7%, size 21.6% (true size). Arrow keys move it, plus and minus resize it.",
+    "after": "Place 1, phone: across 65.1%, down 73.7%, size 21.6% (true size). Arrow keys move it, plus and minus resize it."
+   },
+   {
+    "dev": "m",
+    "n": 4,
+    "kind": "move",
+    "before": "Place 4, phone: across 63.2%, down 89.3%, size 32.4% (true size). Arrow keys move it, plus and minus resize it.",
+    "after": "Place 4, phone: across 44%, down 84.3%, size 32.4% (true size). Arrow keys move it, plus and minus resize it."
+   },
+   {
+    "dev": "m",
+    "n": 3,
+    "kind": "size",
+    "before": "Place 3, phone: across 63.7%, down 97%, size 77.5%. Arrow keys move it, plus and minus resize it.",
+    "after": "Place 3, phone: across 63.7%, down 97%, size 108.6%. Arrow keys move it, plus and minus resize it."
+   }
+  ],
+  "keyboard": {
+   "before": "Place 4, phone: across 44%, down 84.3%, size 32.4% (true size). Arrow keys move it, plus and minus resize it.",
+   "shiftUp": "Place 4, phone: across 44%, down 79.3%, size 32.4% (true size). Arrow keys move it, plus and minus resize it.",
+   "afterCtrlZ": "Place 4, phone: across 44%, down 84.3%, size 32.4% (true size). Arrow keys move it, plus and minus resize it."
+  },
+  "panel": "Places, not products: the products are picked at random on every visit, so whichever product lands in place 3 stands where you put place 3, at its true size unless you resized that place.\n\nDrag a product to move it. Drag a corner dot to resize it (it keeps its shape). Arrow keys move the chosen one (Shift: 10 times further), + and − resize it, Ctrl+Z undoes. Computer and phone are arranged separat",
+  "saved": {
+   "G": {
+    "d": {
+     "2": {
+      "x": 73.6,
+      "y": 72,
+      "h": 93.5
+     },
+     "3": {
+      "x": 36.5,
+      "y": 93
+     },
+     "5": {
+      "x": 75.3,
+      "y": 55.4
+     }
+    },
+    "m": {
+     "1": {
+      "x": 65.1,
+      "y": 73.7
+     },
+     "3": {
+      "x": 63.7,
+      "y": 97,
+      "h": 108.6
+     },
+     "4": {
+      "x": 44,
+      "y": 84.3
+     }
+    }
+   }
+  },
+  "scrollWidth": 390,
+  "errors": []
+ },
+ "shopAfter": {
+  "390": {
+   "htmlBytes": 156760,
+   "styleBytes": 7427,
+   "scrollWidth": 390,
+   "scripts": 13,
+   "banner": {
+    "w": 390,
+    "h": 500
+   },
+   "products": [
+    {
+     "cls": "ohb-p ohb-s0",
+     "cx": 65.1,
+     "bottom": 74.6,
+     "h": 19.8
+    },
+    {
+     "cls": "ohb-p ohb-s1",
+     "cx": 45,
+     "bottom": 96.5,
+     "h": 35.7
+    },
+    {
+     "cls": "ohb-p ohb-s2",
+     "cx": 63.7,
+     "bottom": 98.9,
+     "h": 112.4
+    },
+    {
+     "cls": "ohb-p ohb-s3",
+     "cx": 44,
+     "bottom": 84.8,
+     "h": 24.9
+    },
+    {
+     "cls": "ohb-p ohb-s4",
+     "cx": 17.2,
+     "bottom": 98.8,
+     "h": 25.1
+    }
+   ],
+   "errors": []
+  },
+  "1280": {
+   "htmlBytes": 156688,
+   "styleBytes": 7427,
+   "scrollWidth": 1280,
+   "scripts": 13,
+   "banner": {
+    "w": 1280,
+    "h": 600
+   },
+   "products": [
+    {
+     "cls": "ohb-p ohb-s0",
+     "cx": 58.9,
+     "bottom": 78.4,
+     "h": 41.9
+    },
+    {
+     "cls": "ohb-p ohb-s1",
+     "cx": 73.6,
+     "bottom": 73.4,
+     "h": 96.4
+    },
+    {
+     "cls": "ohb-p ohb-s2",
+     "cx": 36.5,
+     "bottom": 93.6,
+     "h": 61.1
+    },
+    {
+     "cls": "ohb-p ohb-s3",
+     "cx": 92.5,
+     "bottom": 74.9,
+     "h": 51.3
+    },
+    {
+     "cls": "ohb-p ohb-s4",
+     "cx": 75.3,
+     "bottom": 56.1,
+     "h": 51
+    }
+   ],
+   "errors": []
+  }
+ }
+}
