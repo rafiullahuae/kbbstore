@@ -23,7 +23,7 @@ declare(strict_types=1);
 |     POST /admin-api/gift-strip            save (and rebuild the snapshot)
 |     GET  /admin-api/gift-strip/products   "Pick products" search
 |     POST /admin-api/gift-strip/cutout     make one product's cut-out
-|     POST /admin-api/gift-strip/cutout/upload     the owner's own cut-out
+|     POST /admin-api/gift-strip/cutout/from-media the owner's own cut-out (a Media Library file)
 |     POST /admin-api/gift-strip/cutout/automatic  back to the automatic one
 |
 | CAPABILITY. `giftstrip.manage` (owner, manager, editor -- storefront
@@ -59,9 +59,9 @@ Route::post('/gift-strip/cutout', [GiftStripApiController::class, 'cutout'])
 
 // The owner's own cut-out (a transparent PNG/WebP, max 4 MB) and "Use
 // automatic" (Lane CUT). giftstrip.manage, like the rest of the prefix.
-Route::post('/gift-strip/cutout/upload', [GiftStripApiController::class, 'upload'])
+Route::post('/gift-strip/cutout/from-media', [GiftStripApiController::class, 'fromMedia'])
     ->middleware('throttle:30,1')
-    ->name('admin.gift-strip.cutout.upload');
+    ->name('admin.gift-strip.cutout.from-media');
 
 Route::post('/gift-strip/cutout/automatic', [GiftStripApiController::class, 'automatic'])
     ->middleware('throttle:30,1')

@@ -235,7 +235,7 @@
       h += item(p, '<label>Real height <input class="obx-in sm" type="number" min="' + C.cm[0] + '" max="' + C.cm[1] + '" step="0.5" value="' + (p.cm || '') + '" placeholder="cm" data-k="pool.' + i + '.cm"' + ro + '> cm</label>'
         + '<label><input type="checkbox" data-k="pool.' + i + '.white"' + (p.white ? ' checked' : '') + ro + '> White product</label>'
         + (p.cut_url ? '<span class="obx-ok">' + (p.cut_own ? 'Hand-made cut-out' : 'Cut-out ready') + '</span><button class="obx-btn ghost" data-a="remake" data-i="' + i + '"' + (st.prep ? ' disabled' : ro) + (p.cut_own ? ' title="Puts the hand-made cut-out back; Use automatic replaces it"' : '') + '>Remake</button>' : '<span class="obx-no">Cut-out missing</span>')
-        + '<button class="obx-btn ghost" data-a="upl" data-i="' + i + '" title="Your own cut-out: a PNG or WebP with a transparent background, up to 4 MB"' + (st.prep ? ' disabled' : ro) + '>Upload cut-out</button><input type="file" accept="image/png,image/webp" hidden data-obx-file="' + i + '">'
+        + '<button class="obx-btn ghost" data-a="upl" data-i="' + i + '" title="Your own cut-out from the Media Library: a PNG or WebP with a transparent background, up to 4 MB"' + (st.prep ? ' disabled' : ro) + '>Upload cut-out</button>'
         + (p.cut_own ? '<button class="obx-btn ghost" data-a="auto" data-i="' + i + '"' + (st.prep ? ' disabled' : ro) + '>Use automatic</button>' : '')
         + '<button class="obx-btn ghost" data-a="remove" data-i="' + i + '"' + ro + '>Remove</button>');
     });
@@ -292,33 +292,27 @@
     step(0);
   }
 
-  /* The owner's own cut-out (file) or back to the automatic one (null): one request, on a click. */
-  function ownCut(row, file) {
+  /* The owner's own cut-out (a Media Library file) or back to the automatic one (null): one request, on a click. */
+  // The owner's own cut-out comes from the shared Media Library (the admin's
+  // one image upload path): the server turns the picked file into the cut-out.
+  function pickCut(row) {
+    if (st.prep || !can() || typeof window.kbbPickMedia !== 'function') return;
+    window.kbbPickMedia({ title: 'Choose a cut-out (PNG or WebP with a transparent background)', folder: 'cutouts', okLabel: 'Use as cut-out',
+      onPick: function (urls) { if (urls && urls[0]) ownCut(row, String(urls[0])); } });
+  }
+  function ownCut(row, url) {
     if (st.prep || !can()) return;
-    if (file && file.size > 4 * 1024 * 1024) { say('That file is larger than 4 MB. Save it smaller and try again.', true); return render(); }
     st.prep = { done: 0, at: 0, total: 1, stop: false, log: [] }; say(''); render();
     var req;
-    if (file) {
-      var fd = new FormData(); fd.append('id', String(row.id)); fd.append('file', file);
-      req = fetch(root() + '/admin-api/occasion-banner/cutout/upload', { method: 'POST', body: fd, credentials: 'same-origin', headers: { Accept: 'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN') } }).then(function (r) {
-        return r.json().catch(function () { return {}; }).then(function (j) {
-          if (!r.ok || j.ok === false) {
-            var m = j.message || '';
-            if (r.status === 403) m = 'Your role cannot change this.';
-            if (r.status === 404 && !m) m = 'The upload endpoint is not in the compiled route table yet. Apply the package and reload.';
-            if (r.status === 422 && j.errors) m = j.errors[Object.keys(j.errors)[0]][0];
-            throw new Error(m || ('The server answered ' + r.status + '.'));
-          }
-          return j;
-        });
-      });
+    if (url) {
+      req = api('POST', '/cutout/from-media', { id: row.id, url: url });
     } else {
       req = api('POST', '/cutout/automatic', { id: row.id, white: !!row.white });
     }
     req.then(function (j) {
       st.cfg.pool.forEach(function (x) { if (x.id === row.id) { x.cut = j.product.cut; x.cut_url = j.product.cut_url; x.cut_own = !!j.product.cut_own; } });
-      say(file ? 'Your cut-out is in use for ' + row.name + '.' : 'Automatic cut-out made for ' + row.name + '.');
-    }).catch(function (e) { say((file ? 'Not uploaded: ' : 'Not cut out: ') + e.message, true); })
+      say(url ? 'Your cut-out is in use for ' + row.name + '.' : 'Automatic cut-out made for ' + row.name + '.');
+    }).catch(function (e) { say((url ? 'Not used: ' : 'Not cut out: ') + e.message, true); })
       .then(function () { st.prep = null; if (ours()) render(); });
   }
 
@@ -336,7 +330,7 @@
     else if (a === 'shuffle') st.rot++;
     else if (a === 'add') { var p = st.res.filter(function (x) { return String(x.id) === b.getAttribute('data-id'); })[0]; if (p) addProduct(p); }
     else if (a === 'remove') st.cfg.pool.splice(+b.getAttribute('data-i'), 1);
-    else if (a === 'upl') { var fi = b.parentNode.querySelector('[data-obx-file="' + b.getAttribute('data-i') + '"]'); if (fi) fi.click(); return; }
+    else if (a === 'upl') { var row = st.cfg && st.cfg.pool[+b.getAttribute('data-i')]; if (row) pickCut(row); return; }
     else if (a === 'auto') { var ra = st.cfg.pool[+b.getAttribute('data-i')]; if (ra) return ownCut(ra, null); return; }
     else if (a === 'remake') { var r = st.cfg.pool[+b.getAttribute('data-i')]; if (r) return prepare([{ id: r.id, name: r.name, white: r.white, remake: true }]); }
     else if (a === 'prep') return prepare(st.cfg.pool.filter(function (x) { return !x.cut_url; }).map(function (x) { return { id: x.id, name: x.name, white: x.white }; }));
@@ -352,11 +346,6 @@
   function onField(e) {
     if (!ours() || !st.cfg) return;
     var el = e.target, k = el.getAttribute && el.getAttribute('data-k');
-    if (e.type === 'change' && el.hasAttribute && el.hasAttribute('data-obx-file') && document.querySelector('#content').contains(el)) {
-      var row = st.cfg.pool[+el.getAttribute('data-obx-file')];
-      if (row && el.files && el.files[0]) ownCut(row, el.files[0]);
-      return;
-    }
     if (!k || !document.querySelector('#content').contains(el)) return;
     var v = el.type === 'checkbox' ? el.checked : el.value, parts = k.split('.');
     if (k === 'q') {

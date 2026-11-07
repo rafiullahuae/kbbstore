@@ -233,6 +233,22 @@ final class ProductCutouts
      *
      * @return array{ok: bool, reason?: string, w?: int, h?: int}
      */
+    /**
+     * The owner's own cut-out, from a file in the shared Media Library (the
+     * admin's ONE image upload path): $url is what kbbPickMedia handed back.
+     * Only a file the library keeps -- under uploads/ (or the old wp-content/uploads/), never img-cache,
+     * never "..", never another host -- and then the same checks as upload().
+     */
+    public static function fromMedia(string $image, string $url): array
+    {
+        $rel = self::relative($url);
+        if ($rel === null || ! (str_starts_with($rel, 'uploads/') || str_starts_with($rel, 'wp-content/uploads/'))) {
+            return ['ok' => false, 'reason' => 'choose a picture from the Media Library'];
+        }
+
+        return self::upload($image, public_path($rel));
+    }
+
     public static function upload(string $image, string $file): array
     {
         $rel = self::relative($image);

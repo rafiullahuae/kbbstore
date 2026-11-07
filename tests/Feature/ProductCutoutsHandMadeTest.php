@@ -26,7 +26,17 @@ use App\Services\SettingsService;
 use App\Support\AdminCapabilities;
 use App\Support\OccasionBanner;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
+
+/** Put a file in the Media Library's folder (public/uploads/cutouts) and return its library URL. */
+function pcohLib(string $src, string $name): string
+{
+    $dir = public_path('uploads/cutouts');
+    @mkdir($dir, 0755, true);
+    $name = uniqid('pcoh-') . '-' . $name;
+    copy($src, $dir . '/' . $name);
+
+    return '/uploads/cutouts/' . $name;
+}
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\Support\GiftStripAdminRoutes;
@@ -195,8 +205,9 @@ it('takes the owner\'s transparent PNG, re-encodes it as WebP at 480 and 240 tal
     clearstatcache();
     $before = ProductCutouts::for($p->image)['src'];
 
-    $file = new UploadedFile(pcohPng(sys_get_temp_dir() . '/my-cut-' . uniqid() . '.png'), 'my-cut.png', 'image/png', null, true);
-    $body = $this->actingAs(pcohAdmin(), 'admin')->post('/admin-api/gift-strip/cutout/upload', ['id' => $p->id, 'file' => $file], ['Accept' => 'application/json'])
+    // He uploads (or picks) it in the shared Media Library; the screen sends its URL.
+    $url = pcohLib(pcohPng(sys_get_temp_dir() . '/my-cut-' . uniqid() . '.png'), 'my-cut.png');
+    $body = $this->actingAs(pcohAdmin(), 'admin')->postJson('/admin-api/gift-strip/cutout/from-media', ['id' => $p->id, 'url' => $url])
         ->assertOk()->json();
 
     $served = pcohServed($p->image);
@@ -227,35 +238,42 @@ it('refuses an upload that is not an image, and leaves the cut-out as it was', f
     file_put_contents($fake, "<?php echo 'x'; ?>\n" . str_repeat('A', 2000));
     $admin = pcohAdmin();
 
-    $r = $this->actingAs($admin, 'admin')->post('/admin-api/gift-strip/cutout/upload',
-        ['id' => $p->id, 'file' => new UploadedFile($fake, 'cut.png', 'image/png', null, true)], ['Accept' => 'application/json']);
+    $r = $this->actingAs($admin, 'admin')->postJson('/admin-api/gift-strip/cutout/from-media', ['id' => $p->id, 'url' => pcohLib($fake, 'cut.png')]);
     $r->assertStatus(422);
     expect($r->json('error'))->toContain('not a PNG or WebP');
 
     // A real image, but a photo on white -- it would ship as a white box.
-    $flat = new UploadedFile(pcohPng(sys_get_temp_dir() . '/pcoh-flat-' . uniqid() . '.png', false), 'flat.png', 'image/png', null, true);
-    $this->actingAs($admin, 'admin')->post('/admin-api/gift-strip/cutout/upload', ['id' => $p->id, 'file' => $flat], ['Accept' => 'application/json'])
+    $flat = pcohLib(pcohPng(sys_get_temp_dir() . '/pcoh-flat-' . uniqid() . '.png', false), 'flat.png');
+    $this->actingAs($admin, 'admin')->postJson('/admin-api/gift-strip/cutout/from-media', ['id' => $p->id, 'url' => $flat])
         ->assertStatus(422)->assertJsonPath('ok', false);
+
+    // Only a Media Library file: never a path outside it, the cache, another host, or "..".
+    foreach (['/img-cache/cut/480/x.webp', '/uploads/../.env', 'https://evil.example/uploads/a.png', '/build/assets/a.png', '/storage/x.png'] as $bad) {
+        $this->actingAs($admin, 'admin')->postJson('/admin-api/occasion-banner/cutout/from-media', ['id' => $p->id, 'url' => $bad])->assertStatus(422);
+        $this->actingAs($admin, 'admin')->postJson('/admin-api/gift-strip/cutout/from-media', ['id' => $p->id, 'url' => $bad])->assertStatus(422);
+    }
 
     expect(md5_file(pcohServed($p->image)))->toBe($was)->and(ProductCutouts::isOwn($p->image))->toBeFalse();
     @unlink($fake);
 });
 
-it('refuses an upload larger than 4 MB on both screens', function () {
+it('refuses a library file larger than 4 MB on both screens', function () {
     /*
      * The defect: a 20 MB PNG decoded by GD on a shared host is a worker gone
-     * for seconds and a memory limit hit. MUTATION: raise the 'max:' rule in
-     * either controller (or drop UPLOAD_MAX_BYTES's check) and that screen's
-     * request is accepted -- red.
+     * for seconds and a memory limit hit. MUTATION: drop UPLOAD_MAX_BYTES's
+     * check in ProductCutouts::upload() and both requests are accepted -- red.
      */
     $p = pcohProduct('Too Big');
     $admin = pcohAdmin();
-    $big = UploadedFile::fake()->create('big.png', 4097, 'image/png');
-    $this->actingAs($admin, 'admin')->post('/admin-api/gift-strip/cutout/upload', ['id' => $p->id, 'file' => $big], ['Accept' => 'application/json'])
-        ->assertStatus(422)->assertJsonValidationErrors(['file' => '4 MB']);
-    $this->actingAs($admin, 'admin')->post('/admin-api/occasion-banner/cutout/upload', ['id' => $p->id, 'file' => UploadedFile::fake()->create('big.webp', 4097, 'image/webp')], ['Accept' => 'application/json'])
-        ->assertStatus(422)->assertJsonValidationErrors(['file' => '4 MB']);
+    $tmp = sys_get_temp_dir() . '/pcoh-big-' . uniqid() . '.png';
+    file_put_contents($tmp, str_repeat("\0", ProductCutouts::UPLOAD_MAX_BYTES + 1));
+    $big = pcohLib($tmp, 'big.png');
+    $this->actingAs($admin, 'admin')->postJson('/admin-api/gift-strip/cutout/from-media', ['id' => $p->id, 'url' => $big])
+        ->assertStatus(422)->assertJsonPath('error', 'Not used: the file is larger than 4 MB');
+    $this->actingAs($admin, 'admin')->postJson('/admin-api/occasion-banner/cutout/from-media', ['id' => $p->id, 'url' => $big])
+        ->assertStatus(422);
     expect(ProductCutouts::isOwn($p->image))->toBeFalse();
+    @unlink($tmp);
 
     // and the service's own limit, for any caller that skips the validator
     $huge = sys_get_temp_dir() . '/pcoh-huge-' . uniqid() . '.png';
@@ -269,7 +287,7 @@ it('keeps the occasion banner\'s stored snapshot in step with an upload, so the 
      * The banner draws from a snapshot of each cut-out's widths, not the disk.
      * The defect: an upload of a different shape drawn at the automatic one's
      * width -- squashed -- and from the visitor's cached copy. MUTATION: drop
-     * resnap() from OccasionBannerController::upload() and the width is red.
+     * resnap() from OccasionBannerController::fromMedia() and the width is red.
      */
     $p = pcohProduct('Medicube Deodorant');
     ProductCutouts::make((string) $p->image);
@@ -277,8 +295,8 @@ it('keeps the occasion banner\'s stored snapshot in step with an upload, so the 
     SettingsService::forgetMemo();
     Setting::flushMap();
 
-    $file = new UploadedFile(pcohPng(sys_get_temp_dir() . '/pcoh-b-' . uniqid() . '.png'), 'b.png', 'image/png', null, true);
-    $j = $this->actingAs(pcohAdmin(), 'admin')->post('/admin-api/occasion-banner/cutout/upload', ['id' => $p->id, 'file' => $file], ['Accept' => 'application/json'])
+    $url = pcohLib(pcohPng(sys_get_temp_dir() . '/pcoh-b-' . uniqid() . '.png'), 'b.png');
+    $j = $this->actingAs(pcohAdmin(), 'admin')->postJson('/admin-api/occasion-banner/cutout/from-media', ['id' => $p->id, 'url' => $url])
         ->assertOk()->json();
     SettingsService::forgetMemo();
     Setting::flushMap();
@@ -293,9 +311,9 @@ it('keeps the occasion banner\'s stored snapshot in step with an upload, so the 
 it('puts both new endpoints behind each screen\'s manage capability', function () {
     // Fails closed: a path no rule names is refused. MUTATION: move the routes
     // outside the two prefixes and these resolve to null.
-    expect(AdminCapabilities::forPath('POST', 'admin-api/gift-strip/cutout/upload'))->toBe('giftstrip.manage')
+    expect(AdminCapabilities::forPath('POST', 'admin-api/gift-strip/cutout/from-media'))->toBe('giftstrip.manage')
         ->and(AdminCapabilities::forPath('POST', 'admin-api/gift-strip/cutout/automatic'))->toBe('giftstrip.manage')
-        ->and(AdminCapabilities::forPath('POST', 'admin-api/occasion-banner/cutout/upload'))->toBe('occasionbanner.manage')
+        ->and(AdminCapabilities::forPath('POST', 'admin-api/occasion-banner/cutout/from-media'))->toBe('occasionbanner.manage')
         ->and(AdminCapabilities::forPath('POST', 'admin-api/occasion-banner/cutout/automatic'))->toBe('occasionbanner.manage');
 });
 

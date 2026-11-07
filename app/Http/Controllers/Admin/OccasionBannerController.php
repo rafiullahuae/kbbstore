@@ -146,21 +146,18 @@ final class OccasionBannerController extends Controller
      * re-encodes it through GD; from then on Prepare / Remake put it back
      * rather than cutting over it.
      */
-    public function upload(Request $request): JsonResponse
+    public function fromMedia(Request $request): JsonResponse
     {
         $data = $request->validate([
             'id' => ['required', 'integer', 'min:1'],
-            'file' => ['required', 'file', 'max:'.(ProductCutouts::UPLOAD_MAX_BYTES / 1024)],
-        ], [
-            'file.max' => 'That file is larger than 4 MB. Save it smaller and try again.',
-            'file.required' => 'No file arrived -- choose a PNG or WebP and try again.',
+            'url' => ['required', 'string', 'max:500'],
         ]);
         $p = Product::query()->select(['id', 'name', 'brand_id', 'image'])->with('brand:id,name')->find((int) $data['id']);
         $img = $p === null ? '' : self::imagePath((string) $p->image);
         if ($img === '') {
             return response()->json(['ok' => false, 'message' => 'That product has no photo.'], 422);
         }
-        $r = ProductCutouts::upload($img, (string) $request->file('file')->getRealPath());
+        $r = ProductCutouts::fromMedia($img, (string) $data['url']);
         if (! $r['ok']) {
             return response()->json(['ok' => false, 'message' => 'Not used: '.($r['reason'] ?? 'unknown reason').'.'], 422);
         }

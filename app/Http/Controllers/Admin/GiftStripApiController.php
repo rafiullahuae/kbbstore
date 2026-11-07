@@ -120,20 +120,17 @@ class GiftStripApiController extends Controller
      * ProductCutouts::upload(). Cut out / Re-cut / Prepare put it back from
      * then on rather than cutting over it; only "Use automatic" replaces it.
      */
-    public function upload(Request $request): JsonResponse
+    public function fromMedia(Request $request): JsonResponse
     {
         $data = $request->validate([
             'id' => ['required', 'integer', 'min:1'],
-            'file' => ['required', 'file', 'max:' . (ProductCutouts::UPLOAD_MAX_BYTES / 1024)],
-        ], [
-            'file.max' => 'That file is larger than 4 MB. Save it smaller and try again.',
-            'file.required' => 'No file arrived -- choose a PNG or WebP and try again.',
+            'url' => ['required', 'string', 'max:500'],
         ]);
         $p = Product::query()->whereKey((int) $data['id'])->first(['id', 'name', 'image']);
         if ($p === null || trim((string) $p->image) === '') {
             return response()->json(['ok' => false, 'error' => 'That product has no photo.'], 422);
         }
-        $r = ProductCutouts::upload(trim((string) $p->image), (string) $request->file('file')->getRealPath());
+        $r = ProductCutouts::fromMedia(trim((string) $p->image), (string) $data['url']);
         if (! $r['ok']) {
             return response()->json(['ok' => false, 'error' => 'Not used: ' . ($r['reason'] ?? 'unknown')], 422);
         }

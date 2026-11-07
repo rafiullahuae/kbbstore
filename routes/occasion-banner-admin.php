@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Route;
 |   occasionbanner.view    GET  occasion-banner, occasion-banner/products,
 |                               occasion-banner/suggest
 |   occasionbanner.manage  POST occasion-banner, occasion-banner/cutout,
-|                               occasion-banner/cutout/upload,
+|                               occasion-banner/cutout/from-media,
 |                               occasion-banner/cutout/automatic
 |
 | Shipped with 2028_01_10_100100_clear_caches_occasion_banner.php.
@@ -34,6 +34,6 @@ Route::prefix('occasion-banner')->group(function () {
     Route::post('/', [OccasionBannerController::class, 'save']);
     Route::post('/cutout', [OccasionBannerController::class, 'cutout'])->middleware('throttle:120,1,occasion-banner-cutout');
     // The owner's own cut-out, and back to the automatic one (Lane CUT).
-    Route::post('/cutout/upload', [OccasionBannerController::class, 'upload'])->middleware('throttle:30,1,occasion-banner-cutout-upload');
+    Route::post('/cutout/from-media', [OccasionBannerController::class, 'fromMedia'])->middleware('throttle:30,1,occasion-banner-cutout-media');
     Route::post('/cutout/automatic', [OccasionBannerController::class, 'automatic'])->middleware('throttle:30,1,occasion-banner-cutout-auto');
 });
