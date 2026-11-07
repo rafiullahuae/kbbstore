@@ -36,10 +36,32 @@ use App\Support\Url;
  * READING. for() answers from the disk (is_file + the image header), never
  * from a column that could disagree with it. No file, null: the caller shows
  * nothing rather than a white box.
+ *
+ * HAND-MADE CUT-OUTS WIN (the owner, 6 November 2026, on the automatic ones
+ * in 2.60.649: "completely shit results"). A hand-made cut-out is installed at
+ * the SAME served path as an automatic one, so the shop, the banner's stored
+ * snapshot and every URL stay exactly as they are; what changes is that
+ * make() -- "Prepare cut-outs", "Re-cut", "Remake" -- re-installs the hand-made
+ * copy instead of cutting over it. Its master copy lives outside img-cache,
+ * under a name derived from the photo's path (sha1), never the uploader's:
+ *
+ *   storage/app/cutouts/{240,480}/<sha1>.webp   the owner's upload (wins)
+ *   resources/cutouts/{240,480}/<sha1>.webp     shipped by a package, listed
+ *                                               in resources/cutouts/index.json
+ *   storage/app/cutouts/auto/<sha1>             "Use automatic": the shipped
+ *                                               one is set aside for this photo
+ *
+ * Only automatic() -- the admin's "Use automatic" -- cuts over a hand-made one.
  */
 final class ProductCutouts
 {
     public const DIR = 'img-cache/cut';
+
+    /** An owner's upload: PNG or WebP with transparency, at most this many bytes. */
+    public const UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
+
+    /** Refused before decoding: a small file can declare a huge canvas. */
+    private const UPLOAD_MAX_PIXELS = 25_000_000;
 
     public const HEIGHTS = [240, 480];
 
@@ -63,12 +85,14 @@ final class ProductCutouts
         }
 
         $found = [];
+        $v = 0;
         foreach (self::HEIGHTS as $h) {
             $file = public_path(self::DIR . '/' . $h . '/' . $rel . '.webp');
             if (is_file($file)) {
                 $size = @getimagesize($file);
                 if (is_array($size) && $size[0] > 0 && $size[1] > 0) {
                     $found[$h] = [$size[0], $size[1]];
+                    $v = max($v, (int) @filemtime($file));
                 }
             }
         }
@@ -79,7 +103,11 @@ final class ProductCutouts
 
         $base = Url::base();
         $enc = implode('/', array_map('rawurlencode', explode('/', $rel)));
-        $url = static fn (int $h): string => $base . '/' . self::DIR . '/' . $h . '/' . $enc . '.webp';
+        // ?v= the file's time: the files are served for a year, and a remade or
+        // hand-made cut-out keeps its path, so without it a visitor who saw the
+        // automatic one keeps seeing it.
+        $q = $v > 0 ? '?v=' . $v : '';
+        $url = static fn (int $h): string => $base . '/' . self::DIR . '/' . $h . '/' . $enc . '.webp' . $q;
         $parts = [];
         foreach ($found as $h => [$w]) {
             $parts[] = $url($h) . ' ' . $w . 'w';
@@ -102,13 +130,24 @@ final class ProductCutouts
      * @param  int  $threshold  how white the background must be (240..254)
      * @return array{ok: bool, reason?: string, w?: int, h?: int, ms?: int}
      */
-    public static function make(string $image, bool $whiteItem = false, int $threshold = 246): array
+    public static function make(string $image, bool $whiteItem = false, int $threshold = 246, bool $automatic = false): array
     {
         $t0 = microtime(true);
         $rel = self::relative($image);
 
         if ($rel === null) {
             return ['ok' => false, 'reason' => 'not a photo on this site'];
+        }
+
+        // A hand-made cut-out is put back, never cut over. Only automatic()
+        // passes $automatic, after the owner pressed "Use automatic".
+        if (! $automatic && ($own = self::ownFiles($rel)) !== null) {
+            if (! self::install($rel, $own)) {
+                return ['ok' => false, 'reason' => 'could not write the cut-out'];
+            }
+            $size = @getimagesize($own[480]);
+
+            return ['ok' => true, 'own' => true, 'w' => (int) ($size[0] ?? 0), 'h' => (int) ($size[1] ?? 0), 'ms' => (int) round((microtime(true) - $t0) * 1000)];
         }
 
         $ext = strtolower(pathinfo($rel, PATHINFO_EXTENSION));
@@ -175,6 +214,267 @@ final class ProductCutouts
         foreach (self::HEIGHTS as $h) {
             @unlink(public_path(self::DIR . '/' . $h . '/' . $rel . '.webp'));
         }
+    }
+
+    /** Is the cut-out for this image a hand-made one (uploaded or shipped)? Disk only. */
+    public static function isOwn(string $image): bool
+    {
+        $rel = self::relative($image);
+
+        return $rel !== null && self::ownFiles($rel) !== null;
+    }
+
+    /**
+     * The owner's own cut-out for one image: a PNG or WebP with transparency.
+     * Validated from its bytes, decoded by GD (so nothing but pixels survives),
+     * trimmed to what is not transparent, re-encoded as WebP at 480 and 240
+     * tall under a name derived from the PHOTO's path, then installed where
+     * the shop reads it.
+     *
+     * @return array{ok: bool, reason?: string, w?: int, h?: int}
+     */
+    public static function upload(string $image, string $file): array
+    {
+        $rel = self::relative($image);
+        if ($rel === null) {
+            return ['ok' => false, 'reason' => 'this product\'s photo is not on this site'];
+        }
+        if (! is_file($file) || ($bytes = (int) @filesize($file)) < 1) {
+            return ['ok' => false, 'reason' => 'no file arrived'];
+        }
+        if ($bytes > self::UPLOAD_MAX_BYTES) {
+            return ['ok' => false, 'reason' => 'the file is larger than 4 MB'];
+        }
+        $info = @getimagesize($file);
+        $type = is_array($info) ? (int) $info[2] : 0;
+        if (! in_array($type, [IMAGETYPE_PNG, IMAGETYPE_WEBP], true)) {
+            return ['ok' => false, 'reason' => 'the file is not a PNG or WebP image'];
+        }
+        if ($info[0] < 16 || $info[1] < 16 || $info[0] * $info[1] > self::UPLOAD_MAX_PIXELS) {
+            return ['ok' => false, 'reason' => 'the image is too small or too large (at most 25 megapixels)'];
+        }
+        if (! function_exists('imagewebp')) {
+            return ['ok' => false, 'reason' => 'this server cannot write WebP'];
+        }
+        $im = $type === IMAGETYPE_PNG ? @imagecreatefrompng($file) : @imagecreatefromwebp($file);
+        if (! $im) {
+            return ['ok' => false, 'reason' => 'the image could not be read'];
+        }
+        if (! imageistruecolor($im)) {
+            imagepalettetotruecolor($im);
+        }
+        imagealphablending($im, false);
+        imagesavealpha($im, true);
+
+        $box = self::opaqueBox($im);
+        if ($box === null) {
+            imagedestroy($im);
+
+            return ['ok' => false, 'reason' => 'the image has no transparent background -- save the cut-out as a PNG or WebP with transparency'];
+        }
+        [$x0, $y0, $cw, $ch] = $box;
+
+        $key = sha1($rel);
+        $written = [];
+        foreach (self::HEIGHTS as $th) {
+            $tw = max(1, (int) round($cw * $th / $ch));
+            $out = imagecreatetruecolor($tw, $th);
+            imagealphablending($out, false);
+            imagesavealpha($out, true);
+            imagefill($out, 0, 0, imagecolorallocatealpha($out, 0, 0, 0, 127));
+            imagecopyresampled($out, $im, 0, 0, $x0, $y0, $tw, $th, $cw, $ch);
+            $dest = self::uploadedRoot() . '/' . $th . '/' . $key . '.webp';
+            if (! is_dir(dirname($dest))) {
+                @mkdir(dirname($dest), 0755, true);
+            }
+            $ok = @imagewebp($out, $dest, self::QUALITY);
+            imagedestroy($out);
+            if (! $ok) {
+                imagedestroy($im);
+                foreach ($written as $f) {
+                    @unlink($f);
+                }
+
+                return ['ok' => false, 'reason' => 'could not write the cut-out'];
+            }
+            $written[$th] = $dest;
+        }
+        imagedestroy($im);
+
+        @unlink(self::uploadedRoot() . '/auto/' . $key);
+        if (! self::install($rel, $written)) {
+            return ['ok' => false, 'reason' => 'could not write the cut-out'];
+        }
+        $size = @getimagesize($written[480]);
+
+        return ['ok' => true, 'w' => (int) ($size[0] ?? 0), 'h' => (int) ($size[1] ?? 0)];
+    }
+
+    /**
+     * "Use automatic": the owner's upload is deleted, a shipped hand-made one
+     * is set aside for this photo, and the automatic cut-out is made.
+     *
+     * @return array{ok: bool, reason?: string, w?: int, h?: int, ms?: int}
+     */
+    public static function automatic(string $image, bool $whiteItem = false): array
+    {
+        $rel = self::relative($image);
+        if ($rel === null) {
+            return ['ok' => false, 'reason' => 'not a photo on this site'];
+        }
+        $key = sha1($rel);
+        foreach (self::HEIGHTS as $h) {
+            @unlink(self::uploadedRoot() . '/' . $h . '/' . $key . '.webp');
+        }
+        if (self::filesIn(self::shippedRoot(), $key) !== null) {
+            $off = self::uploadedRoot() . '/auto/' . $key;
+            if (! is_dir(dirname($off))) {
+                @mkdir(dirname($off), 0755, true);
+            }
+            @file_put_contents($off, $rel);
+        }
+        self::forget($image);
+
+        return self::make($image, $whiteItem, 246, true);
+    }
+
+    /**
+     * Put every shipped hand-made cut-out where the shop reads it, over the
+     * automatic one -- unless the owner uploaded his own or chose automatic
+     * for that photo. Run by the migration that ships them.
+     *
+     * @param  list<string>|null  $rels  photo paths; null reads resources/cutouts/index.json
+     * @return list<string>  the photo paths installed
+     */
+    public static function installShipped(?array $rels = null): array
+    {
+        if ($rels === null) {
+            $index = @file_get_contents(self::shippedRoot() . '/index.json');
+            $rels = is_string($index) ? json_decode($index, true) : null;
+        }
+        $done = [];
+        foreach (is_array($rels) ? $rels : [] as $rel) {
+            if (! is_string($rel) || self::relative('/' . $rel) !== $rel) {
+                continue;
+            }
+            $own = self::ownFiles($rel);
+            if ($own !== null && self::install($rel, $own)) {
+                $done[] = $rel;
+            }
+        }
+
+        return $done;
+    }
+
+    /**
+     * The hand-made master copies for a photo path, upload first, or null.
+     *
+     * @return array<int,string>|null  height => file
+     */
+    private static function ownFiles(string $rel): ?array
+    {
+        $key = sha1($rel);
+        $up = self::filesIn(self::uploadedRoot(), $key);
+        if ($up !== null) {
+            return $up;
+        }
+        if (is_file(self::uploadedRoot() . '/auto/' . $key)) {
+            return null;
+        }
+
+        return self::filesIn(self::shippedRoot(), $key);
+    }
+
+    /** @return array<int,string>|null */
+    private static function filesIn(string $root, string $key): ?array
+    {
+        $out = [];
+        foreach (self::HEIGHTS as $h) {
+            $f = $root . '/' . $h . '/' . $key . '.webp';
+            if (! is_file($f)) {
+                return null;
+            }
+            $out[$h] = $f;
+        }
+
+        return $out;
+    }
+
+    /** Copy master copies to the served path; false if any copy failed. */
+    private static function install(string $rel, array $files): bool
+    {
+        foreach ($files as $h => $src) {
+            $dest = public_path(self::DIR . '/' . $h . '/' . $rel . '.webp');
+            if (! is_dir(dirname($dest))) {
+                @mkdir(dirname($dest), 0755, true);
+            }
+            if (! @copy($src, $dest)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function uploadedRoot(): string
+    {
+        return storage_path('app/cutouts');
+    }
+
+    private static function shippedRoot(): string
+    {
+        return resource_path('cutouts');
+    }
+
+    /**
+     * The box [x, y, w, h] of what is not fully transparent, or null when the
+     * image has no transparency to speak of (a photo on a white background
+     * uploaded by mistake would otherwise ship as a white box).
+     *
+     * @param  \GdImage  $im
+     * @return array{0:int,1:int,2:int,3:int}|null
+     */
+    private static function opaqueBox($im): ?array
+    {
+        // Sampled on a copy at most 400px, so a 5000px upload costs the same.
+        $W = imagesx($im);
+        $H = imagesy($im);
+        $s = min(1.0, 400 / max($W, $H));
+        $w = max(1, (int) round($W * $s));
+        $h = max(1, (int) round($H * $s));
+        $sm = imagecreatetruecolor($w, $h);
+        imagealphablending($sm, false);
+        imagesavealpha($sm, true);
+        imagecopyresampled($sm, $im, 0, 0, 0, 0, $w, $h, $W, $H);
+        $x0 = $w;
+        $y0 = $h;
+        $x1 = -1;
+        $y1 = -1;
+        $clear = 0;
+        for ($y = 0; $y < $h; $y++) {
+            for ($x = 0; $x < $w; $x++) {
+                $a = (imagecolorat($sm, $x, $y) >> 24) & 127;
+                if ($a >= 120) {
+                    $clear++;
+
+                    continue;
+                }
+                $x0 = min($x0, $x);
+                $x1 = max($x1, $x);
+                $y0 = min($y0, $y);
+                $y1 = max($y1, $y);
+            }
+        }
+        imagedestroy($sm);
+        if ($x1 < 0 || $clear < $w * $h * 0.02) {
+            return null;
+        }
+        $bx = (int) floor($x0 / $s);
+        $by = (int) floor($y0 / $s);
+        $bw = min($W - $bx, (int) ceil(($x1 + 1) / $s) - $bx);
+        $bh = min($H - $by, (int) ceil(($y1 + 1) / $s) - $by);
+
+        return [$bx, $by, max(1, $bw), max(1, $bh)];
     }
 
     /**

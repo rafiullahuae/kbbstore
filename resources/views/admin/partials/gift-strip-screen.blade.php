@@ -285,9 +285,12 @@
       + '<div style="min-width:0"><div class="gsa-nm">' + esc(p.name) + '</div><div class="gsa-meta">'
       + '<label>Real height <input type="number" min="' + data.preview.h_min + '" max="' + data.preview.h_max + '" step="0.5" data-gsa-h="' + p.id + '" value="' + esc(values.heights[p.id]) + '"> cm</label>'
       + '<label title="Tick for a white product, so its own white edge is kept when it is cut out"><input type="checkbox" data-gsa-w="' + p.id + '"' + (values.white.indexOf(p.id) > -1 ? ' checked' : '') + '> White product</label>'
-      + (p.cut ? '<span class="gsa-ok">Cut-out ready</span>' : '<span class="gsa-no">Needs a cut-out — not shown until it has one</span>')
+      + (p.cut ? '<span class="gsa-ok">' + (p.own ? 'Hand-made cut-out' : 'Cut-out ready') + '</span>' : '<span class="gsa-no">Needs a cut-out — not shown until it has one</span>')
       + '</div></div><div class="gsa-acts">'
-      + '<button type="button" class="gsa-btn sm" data-gsa-cut="' + p.id + '"' + (cutting ? ' disabled' : '') + '>' + (p.cut ? 'Re-cut' : 'Cut out') + '</button>'
+      + '<button type="button" class="gsa-btn sm" data-gsa-cut="' + p.id + '"' + (cutting ? ' disabled' : '') + (p.own ? ' title="Puts the hand-made cut-out back; Use automatic replaces it"' : '') + '>' + (p.cut ? 'Re-cut' : 'Cut out') + '</button>'
+      + '<button type="button" class="gsa-btn sm" data-gsa-upl="' + p.id + '"' + (cutting ? ' disabled' : '') + ' title="Your own cut-out: a PNG or WebP with a transparent background, up to 4 MB">Upload cut-out</button>'
+      + '<input type="file" accept="image/png,image/webp" hidden data-gsa-file="' + p.id + '">'
+      + (p.own ? '<button type="button" class="gsa-btn sm" data-gsa-auto="' + p.id + '"' + (cutting ? ' disabled' : '') + '>Use automatic</button>' : '')
       + (pick ? '<button type="button" class="gsa-btn sm" data-gsa-up="' + i + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Move up">↑</button>'
         + '<button type="button" class="gsa-btn sm" data-gsa-down="' + i + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="Move down">↓</button>'
         + '<button type="button" class="gsa-btn sm" data-gsa-rm="' + p.id + '">Remove</button>' : '')
@@ -381,7 +384,31 @@
   async function cutOne(p) {
     var body = await api('/gift-strip/cutout', { id: p.id, white: values.white.indexOf(p.id) > -1 });
     p.cut = body.cut || null;
+    p.own = !!body.own;
     return p;
+  }
+
+  /* The owner's own cut-out, or back to the automatic one: one request, on a click. */
+  async function ownCut(id, file) {
+    var p = rows().filter(function (x) { return x.id === id; })[0];
+    if (!p || cutting) return;
+    if (file && file.size > 4 * 1024 * 1024) { banner = 'That file is larger than 4 MB. Save it smaller and try again.'; return render(); }
+    cutting = true; banner = null; render();
+    try {
+      var body;
+      if (file) {
+        var fd = new FormData(); fd.append('id', String(id)); fd.append('file', file);
+        var r = await fetch(root() + '/admin-api/gift-strip/cutout/upload', { method: 'POST', body: fd, credentials: 'same-origin', headers: { Accept: 'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN') } });
+        try { body = await r.json(); } catch (e) { body = null; }
+        if (!r.ok) { var err = new Error('upload -> ' + r.status); err.status = r.status; err.body = body && body.errors ? { error: body.errors[Object.keys(body.errors)[0]][0] } : body; throw err; }
+      } else {
+        body = await api('/gift-strip/cutout/automatic', { id: id, white: values.white.indexOf(id) > -1 });
+      }
+      p.cut = body.cut || null; p.own = !!body.own;
+      banner = file ? 'Your cut-out is in use for ' + p.name + '.' : 'Automatic cut-out made for ' + p.name + '.';
+    } catch (e) { banner = explain(e, file ? 'Not uploaded.' : 'Not cut out.'); }
+    cutting = false;
+    if (ours()) render();
   }
 
   async function prepare(only) {
@@ -436,6 +463,8 @@
     if (b.hasAttribute('data-gsa-go')) { values.go = b.getAttribute('data-gsa-go'); touched(); return render(); }
     if (b.hasAttribute('data-gsa-src')) { values.source = b.getAttribute('data-gsa-src'); touched(); return render(); }
     if (b.hasAttribute('data-gsa-cut')) return prepare(parseInt(b.getAttribute('data-gsa-cut'), 10));
+    if (b.hasAttribute('data-gsa-upl')) { var fi = b.parentNode.querySelector('[data-gsa-file="' + b.getAttribute('data-gsa-upl') + '"]'); if (fi) fi.click(); return; }
+    if (b.hasAttribute('data-gsa-auto')) return ownCut(parseInt(b.getAttribute('data-gsa-auto'), 10), null);
     if (b.hasAttribute('data-gsa-add')) {
       var id = parseInt(b.getAttribute('data-gsa-add'), 10);
       if (values.picks.indexOf(id) === -1 && values.picks.length < data.preview.max_picks) values.picks.push(id);
@@ -477,6 +506,11 @@
     if (t.hasAttribute('data-gsa-b')) {
       values[t.getAttribute('data-gsa-b')] = t.checked; touched();
       return (t.getAttribute('data-gsa-b') === 'desktop' || t.getAttribute('data-gsa-b') === 'mobile') ? render() : schedule();
+    }
+    if (t.hasAttribute('data-gsa-file')) {
+      var f = t.files && t.files[0];
+      if (f) ownCut(parseInt(t.getAttribute('data-gsa-file'), 10), f);
+      return;
     }
     if (t.hasAttribute('data-gsa-w')) {
       var id = parseInt(t.getAttribute('data-gsa-w'), 10);

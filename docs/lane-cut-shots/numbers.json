@@ -1,0 +1,195 @@
+{
+ "save": 200,
+ "auto-25": 200,
+ "auto-26": 200,
+ "auto-27": 200,
+ "auto-28": 200,
+ "auto-29": 200,
+ "auto-30": 200,
+ "strip-before-auto-390": {
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "console_errors": 0,
+  "imgs": [
+   {
+    "src": "240/wp-content/uploads/2026/04/Arencia-Vitamin-C-Booster-Shot.webp.webp?v=1794010441",
+    "w": 31,
+    "h": 86
+   },
+   {
+    "src": "240/wp-content/uploads/2024/10/AXIS-Y-Dark-Spot-Correcting-Glow-Serum.webp.webp?v=1794010442",
+    "w": 35,
+    "h": 89
+   },
+   {
+    "src": "240/wp-content/uploads/2026/09/medicube-Vanilla-Pistachio-Deodorant-1.webp.webp?v=1794010442",
+    "w": 35,
+    "h": 72
+   },
+   {
+    "src": "240/wp-content/uploads/2026/09/medicube-PDRN-Collagen-Gua-Sha-Neck-Wrinkle-Cream.webp.webp?v=1794010443",
+    "w": 46,
+    "h": 76
+   },
+   {
+    "src": "240/uploads/products/medicube-medicube-pdrn-pink-collagen-jelly-eye-mask-6-pairs.webp.webp?v=1794010444",
+    "w": 76,
+    "h": 74
+   },
+   {
+    "src": "240/wp-content/uploads/2024/12/Medicube-Red-Succinic-Acid-Peeling-Pad.webp.webp?v=1794010444",
+    "w": 59,
+    "h": 59
+   }
+  ]
+ },
+ "strip-before-auto-1280": {
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "console_errors": 0,
+  "imgs": [
+   {
+    "src": "480/wp-content/uploads/2026/04/Arencia-Vitamin-C-Booster-Shot.webp.webp?v=1794010441",
+    "w": 53,
+    "h": 143
+   },
+   {
+    "src": "480/wp-content/uploads/2024/10/AXIS-Y-Dark-Spot-Correcting-Glow-Serum.webp.webp?v=1794010442",
+    "w": 59,
+    "h": 149
+   },
+   {
+    "src": "240/wp-content/uploads/2026/09/medicube-Vanilla-Pistachio-Deodorant-1.webp.webp?v=1794010442",
+    "w": 58,
+    "h": 120
+   },
+   {
+    "src": "480/wp-content/uploads/2026/09/medicube-PDRN-Collagen-Gua-Sha-Neck-Wrinkle-Cream.webp.webp?v=1794010443",
+    "w": 77,
+    "h": 126
+   },
+   {
+    "src": "480/uploads/products/medicube-medicube-pdrn-pink-collagen-jelly-eye-mask-6-pairs.webp.webp?v=1794010444",
+    "w": 127,
+    "h": 123
+   },
+   {
+    "src": "240/wp-content/uploads/2024/12/Medicube-Red-Succinic-Acid-Peeling-Pad.webp.webp?v=1794010444",
+    "w": 98,
+    "h": 99
+   }
+  ]
+ },
+ "prepare-25": [
+  200,
+  true
+ ],
+ "prepare-26": [
+  200,
+  true
+ ],
+ "prepare-27": [
+  200,
+  true
+ ],
+ "prepare-28": [
+  200,
+  true
+ ],
+ "prepare-29": [
+  200,
+  true
+ ],
+ "prepare-30": [
+  200,
+  true
+ ],
+ "strip-after-handmade-390": {
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "console_errors": 0,
+  "imgs": [
+   {
+    "src": "240/wp-content/uploads/2026/04/Arencia-Vitamin-C-Booster-Shot.webp.webp?v=1794010448",
+    "w": 32,
+    "h": 86
+   },
+   {
+    "src": "240/wp-content/uploads/2024/10/AXIS-Y-Dark-Spot-Correcting-Glow-Serum.webp.webp?v=1794010448",
+    "w": 35,
+    "h": 89
+   },
+   {
+    "src": "240/wp-content/uploads/2026/09/medicube-Vanilla-Pistachio-Deodorant-1.webp.webp?v=1794010448",
+    "w": 35,
+    "h": 72
+   },
+   {
+    "src": "240/wp-content/uploads/2026/09/medicube-PDRN-Collagen-Gua-Sha-Neck-Wrinkle-Cream.webp.webp?v=1794010448",
+    "w": 46,
+    "h": 76
+   },
+   {
+    "src": "240/uploads/products/medicube-medicube-pdrn-pink-collagen-jelly-eye-mask-6-pairs.webp.webp?v=1794010448",
+    "w": 76,
+    "h": 74
+   },
+   {
+    "src": "240/wp-content/uploads/2024/12/Medicube-Red-Succinic-Acid-Peeling-Pad.webp.webp?v=1794010449",
+    "w": 59,
+    "h": 59
+   }
+  ]
+ },
+ "strip-after-handmade-1280": {
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "console_errors": 0,
+  "imgs": [
+   {
+    "src": "480/wp-content/uploads/2026/04/Arencia-Vitamin-C-Booster-Shot.webp.webp?v=1794010448",
+    "w": 53,
+    "h": 143
+   },
+   {
+    "src": "480/wp-content/uploads/2024/10/AXIS-Y-Dark-Spot-Correcting-Glow-Serum.webp.webp?v=1794010448",
+    "w": 59,
+    "h": 149
+   },
+   {
+    "src": "240/wp-content/uploads/2026/09/medicube-Vanilla-Pistachio-Deodorant-1.webp.webp?v=1794010448",
+    "w": 58,
+    "h": 120
+   },
+   {
+    "src": "240/wp-content/uploads/2026/09/medicube-PDRN-Collagen-Gua-Sha-Neck-Wrinkle-Cream.webp.webp?v=1794010448",
+    "w": 77,
+    "h": 126
+   },
+   {
+    "src": "480/uploads/products/medicube-medicube-pdrn-pink-collagen-jelly-eye-mask-6-pairs.webp.webp?v=1794010448",
+    "w": 127,
+    "h": 123
+   },
+   {
+    "src": "240/wp-content/uploads/2024/12/Medicube-Red-Succinic-Acid-Peeling-Pad.webp.webp?v=1794010449",
+    "w": 98,
+    "h": 99
+   }
+  ]
+ },
+ "admin-1280": {
+  "scrollWidth": 1280,
+  "upload_buttons": 6,
+  "auto_buttons": 6,
+  "handmade_labels": 6
+ },
+ "admin-390": {
+  "scrollWidth": 390,
+  "upload_buttons": 6,
+  "auto_buttons": 6,
+  "handmade_labels": 6
+ },
+ "after_use_automatic": "Cut-out ready",
+ "after_upload": "Hand-made cut-out"
+}
