@@ -1,0 +1,48 @@
+{
+  "390": {
+    "scrollWidth": {
+      "panel": 390,
+      "added": 390,
+      "end": 390
+    },
+    "rowHeight": 158,
+    "clientRefusal": "!The actual price cannot be more than the cut price.",
+    "addMs": 148,
+    "removeConfirm": "Remove \"Yuja Niacin Mini Toner\"? It leaves this list and the picker. 1 past order keeps it as it was.Keep itRemove",
+    "pickedState": "✓ Added · Masks",
+    "quickRequests": [
+      "GET /admin-api/free-gifts/quick",
+      "POST /admin-api/free-gifts/quick",
+      "POST /admin-api/free-gifts/quick/50",
+      "POST /admin-api/free-gifts/quick"
+    ],
+    "errors": [],
+    "shopSearchShowsGift": [],
+    "shopShowsGift": [],
+    "apiSearchShowsGift": false
+  },
+  "1280": {
+    "scrollWidth": {
+      "panel": 1280,
+      "added": 1280,
+      "end": 1280
+    },
+    "rowHeight": 66,
+    "clientRefusal": "!The actual price cannot be more than the cut price.",
+    "addMs": 221,
+    "removeConfirm": "Remove \"Yuja Niacin Mini Toner\"? It leaves this list and the picker. 1 past order keeps it as it was.Keep itRemove",
+    "pickedState": "✓ Added · Masks",
+    "quickRequests": [
+      "GET /admin-api/free-gifts/quick",
+      "POST /admin-api/free-gifts/quick",
+      "POST /admin-api/free-gifts/quick/48",
+      "POST /admin-api/free-gifts/quick"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "shopSearchShowsGift": [],
+    "shopShowsGift": [],
+    "apiSearchShowsGift": false
+  }
+}
