@@ -522,7 +522,7 @@
       h += item(p, '<label>Real height <input class="obx-in sm" type="number" min="' + C.cm[0] + '" max="' + C.cm[1] + '" step="0.5" value="' + (p.cm || '') + '" placeholder="cm" data-k="pool.' + i + '.cm"' + ro + '> cm</label>'
         + '<label><input type="checkbox" data-k="pool.' + i + '.white"' + (p.white ? ' checked' : '') + ro + '> White product</label>'
         + (p.cut_url ? '<span class="obx-ok">' + (p.cut_own ? 'Hand-made cut-out' : 'Cut-out ready') + '</span><button class="obx-btn ghost" data-a="remake" data-i="' + i + '"' + (st.prep ? ' disabled' : ro) + (p.cut_own ? ' title="Puts the hand-made cut-out back; Use automatic replaces it"' : '') + '>Remake</button>' : '<span class="obx-no">Cut-out missing</span>')
-        + '<button class="obx-btn ghost" data-a="upl" data-i="' + i + '" title="Your own cut-out from the Media Library: a PNG or WebP with a transparent background, up to 4 MB"' + (st.prep ? ' disabled' : ro) + '>Upload cut-out</button>'
+        + '<button class="obx-btn ghost" data-a="upl" data-i="' + i + '" title="Your own cut-out: drop a transparent PNG or WebP here, or press to pick one from the Media Library (up to 4 MB)"' + (st.prep ? ' disabled' : ro) + '>Upload cut-out</button>'
         + (p.cut_own ? '<button class="obx-btn ghost" data-a="auto" data-i="' + i + '"' + (st.prep ? ' disabled' : ro) + '>Use automatic</button>' : '')
         + '<button class="obx-btn ghost" data-a="remove" data-i="' + i + '"' + ro + '>Remove</button>');
     });
@@ -531,6 +531,12 @@
     var keep = document.activeElement && document.activeElement.getAttribute && document.activeElement.getAttribute('data-k');
     c.innerHTML = h;
     c.querySelectorAll('[data-obx-frame]').forEach(function (f) { f.srcdoc = frameDoc(); f.onload = later; });
+    /* The cut-out buttons also take a dropped photo (the shared upload kit):
+       Media Library first, then it becomes this product's cut-out. */
+    if (typeof window.kbbImageDropOn === 'function' && can()) c.querySelectorAll('[data-a="upl"]').forEach(function (b) {
+      var row = st.cfg.pool[+b.getAttribute('data-i')];
+      if (row) window.kbbImageDropOn(b, { folder: 'cutouts', onUrl: function (url) { ownCut(row, url); }, onFail: function (m) { say(m, true); render(); } });
+    });
     if (keep) { var g = c.querySelector('[data-k="' + keep + '"]'); if (g) { g.focus(); if (g.setSelectionRange && g.type !== 'number' && g.type !== 'color' && g.type !== 'checkbox') { var l = g.value.length; try { g.setSelectionRange(l, l); } catch (e) {} } } }
   }
   function item(p, ctl) {

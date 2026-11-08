@@ -288,7 +288,7 @@
       + (p.cut ? '<span class="gsa-ok">' + (p.own ? 'Hand-made cut-out' : 'Cut-out ready') + '</span>' : '<span class="gsa-no">Needs a cut-out — not shown until it has one</span>')
       + '</div></div><div class="gsa-acts">'
       + '<button type="button" class="gsa-btn sm" data-gsa-cut="' + p.id + '"' + (cutting ? ' disabled' : '') + (p.own ? ' title="Puts the hand-made cut-out back; Use automatic replaces it"' : '') + '>' + (p.cut ? 'Re-cut' : 'Cut out') + '</button>'
-      + '<button type="button" class="gsa-btn sm" data-gsa-upl="' + p.id + '"' + (cutting ? ' disabled' : '') + ' title="Your own cut-out from the Media Library: a PNG or WebP with a transparent background, up to 4 MB">Upload cut-out</button>'
+      + '<button type="button" class="gsa-btn sm" data-gsa-upl="' + p.id + '"' + (cutting ? ' disabled' : '') + ' title="Your own cut-out: drop a transparent PNG or WebP here, or press to pick one from the Media Library (up to 4 MB)">Upload cut-out</button>'
       + (p.own ? '<button type="button" class="gsa-btn sm" data-gsa-auto="' + p.id + '"' + (cutting ? ' disabled' : '') + '>Use automatic</button>' : '')
       + (pick ? '<button type="button" class="gsa-btn sm" data-gsa-up="' + i + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Move up">↑</button>'
         + '<button type="button" class="gsa-btn sm" data-gsa-down="' + i + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="Move down">↓</button>'
@@ -342,6 +342,7 @@
       + '</div>';
     paintPreview();
     drawResults();
+    dropCuts();
   }
 
   function drawResults() {
@@ -392,6 +393,17 @@
   // one image upload path, AdminMediaPickerEverywhereTest / MediaUploadTest):
   // he uploads or picks a transparent PNG/WebP there, and the server turns
   // THAT file into this product's cut-out (checked and re-encoded by GD).
+  /* The cut-out buttons also take a dropped photo (the shared upload kit): it
+     goes into the Media Library, then becomes this product's cut-out. Bound
+     after each paint; kbbDropZone is idempotent per element (new nodes each paint). */
+  function dropCuts() {
+    if (typeof window.kbbImageDropOn !== 'function') return;
+    document.querySelectorAll('#content [data-gsa-upl]').forEach(function (b) {
+      if (b.kbbDrop) return; b.kbbDrop = 1;
+      window.kbbImageDropOn(b, { folder: 'cutouts', onUrl: function (url) { ownCut(parseInt(b.getAttribute('data-gsa-upl'), 10), url); },
+        onFail: function (m) { banner = m; render(); } });
+    });
+  }
   function pickCut(id) {
     if (cutting || typeof window.kbbPickMedia !== 'function') return;
     window.kbbPickMedia({ title: 'Choose a cut-out (PNG or WebP with a transparent background)', folder: 'cutouts', okLabel: 'Use as cut-out',

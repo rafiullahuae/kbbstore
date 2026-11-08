@@ -311,7 +311,16 @@ select.fg-in{padding-inline-end:28px}
 .fg-photo{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .fg-photo .fg-th{width:56px;height:56px}
 /* Gift-only products (Lane GP): quick add, the list, inline edit. */
-.fg-qa,.fg-qr.ed{display:grid;grid-template-columns:56px minmax(0,1.4fr) minmax(0,1.4fr) auto;gap:10px;align-items:end}
+.fg-qa,.fg-qr.ed{display:grid;grid-template-columns:100px minmax(140px,1fr) minmax(220px,300px) max-content;gap:12px;align-items:center}
+.fg-qa .fg-in,.fg-qr.ed .fg-in{min-width:0;width:100%}
+/* The row decides by ITS OWN width, not the window's: one line wherever it fits,
+   the stacked phone form wherever it does not (a narrow window, a zoomed one). */
+[data-fk-panel="quick"]{container-type:inline-size}
+@container (max-width:680px){
+  .fg-qa,.fg-qr.ed{grid-template-columns:100px minmax(0,1fr);align-items:start}
+  .fg-qa>.fg-q2,.fg-qr.ed>.fg-q2,.fg-qa>.fg-qgo,.fg-qr.ed>.fg-qgo{grid-column:1/-1}
+  .fg-qa>.fg-qgo .btn,.fg-qr.ed>.fg-qgo .btn{flex:1 1 auto;justify-content:center}
+}
 .fg-qa{padding:12px;border:1px solid var(--accent);border-radius:13px;background:var(--accent-soft)}
 .fg-qa .fg-field,.fg-qr .fg-field{margin:0}
 .fg-q2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -331,8 +340,9 @@ select.fg-in{padding-inline-end:28px}
 .fg-pkq:not(:empty){margin-bottom:12px}
 .fg-pkq .fg-qa{margin-top:0!important}
 @media(max-width:700px){
-  .fg-qa,.fg-qr.ed{grid-template-columns:56px minmax(0,1fr)}
+  .fg-qa,.fg-qr.ed{grid-template-columns:100px minmax(0,1fr);align-items:start}
   .fg-qa>.fg-q2,.fg-qr.ed>.fg-q2,.fg-qa>.fg-qgo,.fg-qr.ed>.fg-qgo{grid-column:1/-1}
+  .fg-qa>.fg-qgo .btn,.fg-qr.ed>.fg-qgo .btn{flex:1 1 auto;justify-content:center}
   .fg-qr{grid-template-columns:40px minmax(0,1fr) auto}
   .fg-qr>.fg-quse{grid-column:2/-1}
   .fg-qr>.fg-qgo{grid-column:1/-1;justify-content:flex-start}
@@ -2156,8 +2166,13 @@ select.fg-in{padding-inline-end:28px}
       }).catch(function (e) { f.busy = false; f.err = explain(e, editing ? 'Not saved.' : 'Not added.'); quickRepaint(); });
     }
     var kids = [
-      el('button', { type: 'button', class: 'fg-qp', 'data-fk': key + 'photo', 'aria-label': f.image ? 'Change the photo' : 'Choose a photo from the Media Library', title: 'Media Library', onclick: function () { pickQuickPhoto(f); } },
-        [f.thumb ? el('img', { src: f.thumb, alt: '', width: 56, height: 56 }) : el('span', { text: '+ Photo' })]),
+      /* The shared image box (upload kit): drop a photo, Upload, or Library --
+         the same control everywhere in the admin (the owner, 8 Nov). */
+      typeof window.kbbImageField === 'function'
+        ? (function () { var fld = window.kbbImageField({ value: f.thumb || f.image || '', folder: 'gifts', width: 100, label: 'Gift photo',
+            onChange: function (url) { f.image = url; f.thumb = url; f.err = null; } }); fld.setAttribute('data-fk', key + 'photo'); return fld; })()
+        : el('button', { type: 'button', class: 'fg-qp', 'data-fk': key + 'photo', 'aria-label': f.image ? 'Change the photo' : 'Choose a photo from the Media Library', title: 'Media Library', onclick: function () { pickQuickPhoto(f); } },
+          [f.thumb ? el('img', { src: f.thumb, alt: '', width: 56, height: 56 }) : el('span', { text: '+ Photo' })]),
       inp('name', 'Product name', { maxlength: 160, placeholder: editing ? null : 'e.g. Centella Mini Mask' }),
       f.priced ? el('div', { class: 'fg-q2' }, [
         inp('cut', 'Cut price (AED)', { inputmode: 'decimal', maxlength: 12, placeholder: '45.00' }),
