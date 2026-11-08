@@ -610,6 +610,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // Growth & Marketing → Free gifts (Lane FG): spend ranges, their gifts,
         // the gift-only flag, display and texts. freegifts.view / freegifts.manage.
         require __DIR__.'/free-gifts-admin.php';
+        require __DIR__.'/free-gifts-quick-admin.php';
 
         // Growth & Marketing -> Gift offers (Lane GO): the extra full-size gift
         // in the abandoned-cart and pending-order emails and the exit popup.
