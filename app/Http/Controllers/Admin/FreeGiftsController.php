@@ -29,10 +29,10 @@ use Illuminate\Validation\ValidationException;
  */
 class FreeGiftsController extends Controller
 {
-    private const MAX_RANGES = 20;
+    public const MAX_RANGES = 20;
 
     // 60: main gifts and their backups (the owner, 23 October).
-    private const MAX_GIFTS = 60;
+    public const MAX_GIFTS = 60;
 
     /** A gift with this many units or fewer reads "Low" (Overview, Ranges, Gift products). Stated on screen. */
     public const LOW_STOCK = 20;

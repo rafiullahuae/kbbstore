@@ -337,6 +337,15 @@ select.fg-in{padding-inline-end:28px}
   .fg-qr>.fg-quse{grid-column:2/-1}
   .fg-qr>.fg-qgo{grid-column:1/-1;justify-content:flex-start}
 }
+/* Templates (Lane GT): save row, live state, the list. */
+.fg-tpl-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:12px}
+.fg-tpl-live{margin:10px 0 0;font-size:13px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fg-tpl-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--border-2,var(--border))}
+.fg-tpl-r b{font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.fg-tpl-r small{display:block;font-size:11.5px;color:var(--ink-soft);margin-top:3px;overflow-wrap:anywhere}
+.fg-tpl-r .fg-tpl-sum{color:var(--ink-2,var(--ink))}
+.fg-tpl-go{flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:700px){.fg-tpl-r{grid-template-columns:minmax(0,1fr)}.fg-tpl-go{justify-content:flex-start}}
 /* Display */
 .fg-disp{display:grid;gap:14px;grid-template-columns:minmax(0,1fr) 380px;align-items:start}
 .fg-tx{display:grid;gap:0}
@@ -532,7 +541,9 @@ select.fg-in{padding-inline-end:28px}
     tester: { ip: '', label: '', err: null },
     create: { open: false, name: '', brand_id: '', stock: '', price: '', image: '', thumb: '', brands: null, busy: false, err: null, made: null },
     /* Lane GP: the gift-only products panel. rows null = not asked yet. */
-    quick: { rows: null, loading: false, err: null, add: null, edit: null, confirm: null, rowErr: null }
+    quick: { rows: null, loading: false, err: null, add: null, edit: null, confirm: null, rowErr: null },
+    /* Lane GT: the templates card. rows null = not asked yet. */
+    tpl: null
   };
   var live = [];     // { node, fn } repainted in place while typing
   var LS_RANGE = 'kbb.freegifts.range';
@@ -695,7 +706,7 @@ select.fg-in{padding-inline-end:28px}
     var c = document.querySelector('#content');
     if (c) c.textContent = '';
     st.drafts = {}; st.cfg = null; st.errors = {}; st.confirm = null; st.removed = {}; st.picker = null; st.stats = null; st.sel = null; st.stale = false;
-    st.quick = quickFresh();
+    st.quick = quickFresh(); st.tpl = tplFresh();
     render();
     run(function () { return api('GET', ''); }, 'Free gifts could not be loaded.');
     loadStats();
@@ -966,7 +977,7 @@ select.fg-in{padding-inline-end:28px}
     if (!st.data) { wrap.appendChild(card(null, st.busy ? 'Loading…' : 'Nothing to show.')); return; }
     var panel = el('div', { role: 'tabpanel', 'aria-labelledby': 'fg-tab-' + st.tab, class: 'fg-wrap', style: 'padding:0' });
     wrap.appendChild(panel);
-    ({ overview: renderOverview, ranges: function (p) { renderRanges(p); p.appendChild(quickPanel()); }, products: renderProducts, display: renderDisplay, home: renderHome, clicks: renderClicks })[st.tab](panel);
+    ({ overview: renderOverview, ranges: function (p) { renderRanges(p); p.appendChild(quickPanel()); p.insertBefore(tplPanel(), p.lastChild); }, products: renderProducts, display: renderDisplay, home: renderHome, clicks: renderClicks })[st.tab](panel);
     if (st.picker) { wrap.appendChild(pickerModal()); paintResults(); }
     if (focusKey) { var f = wrap.querySelector('[data-fk="' + focusKey + '"]'); if (f) f.focus(); }
   }
@@ -2226,6 +2237,132 @@ select.fg-in{padding-inline-end:28px}
     if (st.data) st.data.gift_products = st.data.gift_products.filter(function (o) { return o.id !== id; });
     var pk = st.picker;
     if (pk) { if (pk.rows) pk.rows = pk.rows.filter(function (o) { return o.id !== id; }); if (pk.initial) pk.initial = pk.initial.filter(function (o) { return o.id !== id; }); paintResults(); }
+  }
+
+  /* ------------------------------------------------------ templates (Lane GT)
+     The owner, 8 Nov: "save as template the whole gifts ranges in one single
+     template, and from the list i should be able to select and live
+     instantly". The list is asked ONCE per visit (GET /templates); every
+     write answers with the fresh list, and Make live also answers with the
+     whole screen's data, so the ranges redraw in place from that one answer.
+     Nothing polls, nothing times. Every destructive button asks through the
+     admin's one "Are you sure?" box (data-kbb-sure, reset-guard); a late
+     answer only paints while this screen is on show (ours()). "Live" and
+     "edited since" compare the template's live_rev with the revision the
+     screen already holds, so a range save needs no request of its own. */
+  var tplNode = null;
+  function tplFresh() { return { rows: null, loading: false, err: null, name: '', busy: false, ren: null }; }
+  function tplPanel() {
+    if (!st.tpl) st.tpl = tplFresh();
+    tplNode = el('section', { class: 'card fg-card', 'data-fk-panel': 'tpl', 'aria-label': 'Templates' });
+    fillTpl();
+    loadTpl();
+    return tplNode;
+  }
+  function loadTpl() {
+    var t = st.tpl;
+    if (t.rows || t.loading) return;
+    t.loading = true; t.err = null;
+    api('GET', '/templates').then(function (d) { t.rows = d.templates || []; t.loading = false; if (t === st.tpl) paintTpl(); })
+      .catch(function (e) { t.loading = false; t.err = explain(e, 'The templates could not be loaded.'); if (t === st.tpl) paintTpl(); });
+  }
+  function paintTpl() { if (ours() && tplNode && tplNode.isConnected) fillTpl(); }
+  function tplWrite(method, path, body, ok) {
+    var t = st.tpl;
+    if (t.busy) return;
+    t.busy = true; t.err = null; paintTpl();
+    api(method, path, body).then(function (d) {
+      t.busy = false;
+      if (t !== st.tpl) return;
+      t.rows = d.templates || t.rows;
+      ok(d);
+      paintTpl();
+    }).catch(function (e) { t.busy = false; if (t !== st.tpl) return; t.err = explain(e, 'Not done.'); paintTpl(); });
+  }
+  function tplApply(row) {
+    var t = st.tpl;
+    if (t.busy) return;
+    var mine = ++st.seq;
+    t.busy = true; t.err = null; paintTpl();
+    api('POST', '/templates/' + row.id + '/apply', {}).then(function (d) {
+      t.busy = false;
+      if (t !== st.tpl) return;
+      t.rows = d.templates || t.rows;
+      if (mine === st.seq && d.data && d.data.config) {
+        st.data = d.data; st.drafts = {}; st.errors = {}; st.removed = {}; st.confirm = null; st.sel = null; st.stale = false; st.banner = null;
+      }
+      render();
+      say('"' + row.name + '" is live: ' + plural(d.ranges, 'range', 'ranges') + '.' + (d.skipped ? ' ' + plural(d.skipped, 'gift was', 'gifts were') + ' left out: the product was deleted or changed.' : '') + (d.before ? ' The ranges it replaced are saved as "' + d.before + '".' : ''), d.skipped ? 'bad' : undefined);
+    }).catch(function (e) { t.busy = false; if (t !== st.tpl) return; t.err = explain(e, 'Not made live. Nothing was changed.'); paintTpl(); });
+  }
+  function fillTpl() {
+    var t = st.tpl, n = tplNode, ro = !can(), rev = st.data ? st.data.revision : null;
+    var had = document.activeElement && n.contains(document.activeElement) ? document.activeElement.getAttribute('data-fk') : null;
+    n.textContent = '';
+    n.appendChild(el('h3', { class: 'fg-h', text: 'Templates' + (t.rows ? ' (' + t.rows.length + ')' : '') }));
+    n.appendChild(el('p', { class: 'fg-sub', text: 'Save every range and its gifts as one template, and make any template live with one click. Making one live first keeps the ranges it replaces as a "Before …" template (the last ' + 5 + ' are kept), so you can always go back.' }));
+    var liveRow = (t.rows || []).filter(function (r) { return r.live_rev; })[0] || null;
+    if (t.rows) n.appendChild(el('p', { class: 'fg-tpl-live', 'data-fk': 'tpl-state' }, liveRow
+      ? [el('span', { text: 'Live now: ' }), el('b', { text: liveRow.name }), liveRow.live_rev === rev ? pill('green', 'Live') : pill('amber', 'Edited since')]
+      : [el('span', { text: 'The live ranges are not saved as a template.' })]));
+    if (!ro) {
+      var dirty = dirtyRanges().length;
+      var inp = el('input', { class: 'fg-in', type: 'text', value: t.name, maxlength: 60, placeholder: 'e.g. Eid ranges', 'data-fk': 'tpl-name', autocomplete: 'off', 'aria-label': 'Template name' });
+      inp.addEventListener('input', function () { t.name = inp.value; });
+      var save = function () {
+        var name = t.name.trim();
+        if (!name) { t.err = 'Give the template a name.'; paintTpl(); return; }
+        tplWrite('POST', '/templates', { name: name }, function () { t.name = ''; say('Saved the live ranges as "' + name + '".'); });
+      };
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); save(); } });
+      n.appendChild(el('div', { class: 'fg-tpl-add' }, [inp,
+        el('button', { type: 'button', class: 'btn sm', 'data-fk': 'tpl-save', disabled: t.busy || !(st.data && st.data.ranges.length), text: 'Save as template', onclick: save })]));
+      if (dirty) n.appendChild(el('div', { class: 'fg-msg warn' }, [el('i', { text: '!' }), el('span', { text: 'A range has unsaved changes. Templates take the SAVED ranges: save the range first to include them.' })]));
+    }
+    if (t.err) n.appendChild(el('div', { class: 'fg-msg err', role: 'alert', style: 'margin-top:10px' }, [el('i', { text: '!' }), el('span', { text: t.err })]));
+    var list = el('div', { class: 'fg-ql', role: 'list', 'aria-label': 'Templates', 'aria-busy': String(!!(t.loading || t.busy)) });
+    if (!t.rows) { if (t.loading) list.appendChild(el('div', { class: 'fg-empty', text: 'Loading…' })); }
+    else if (!t.rows.length) list.appendChild(el('div', { class: 'fg-empty', text: 'No templates yet.' + (ro ? '' : ' Name the ranges you have now and press Save as template.') }));
+    else t.rows.forEach(function (r) { list.appendChild(tplRow(r, ro, rev)); });
+    n.appendChild(list);
+    if (had) { var f = n.querySelector('[data-fk="' + had + '"]'); if (f) f.focus(); }
+  }
+  function tplRow(r, ro, rev) {
+    var t = st.tpl, live = !!r.live_rev;
+    var head = el('div', {}, [
+      el('span', { class: 'fg-row', style: 'gap:6px' }, [el('b', { text: r.name }), r.auto ? pill('grey', 'Auto') : null, live ? (r.live_rev === rev ? pill('green', 'Live') : pill('amber', 'Edited since')) : null]),
+      el('small', { class: 'fg-tpl-sum', text: r.summary }),
+      el('small', { text: plural(r.ranges, 'range', 'ranges') + (r.saved_at ? ' · saved ' + r.saved_at : '') })
+    ]);
+    if (t.ren && t.ren.id === r.id) {
+      var ri = el('input', { class: 'fg-in', type: 'text', value: t.ren.name, maxlength: 60, 'data-fk': 'tpl-ren-in', 'aria-label': 'New name for ' + r.name });
+      ri.addEventListener('input', function () { t.ren.name = ri.value; var b = n2.querySelector('[data-fk="tpl-ren-go"]'); if (b) b.setAttribute('data-kbb-sure', 'Rename "' + r.name + '" to "' + ri.value.trim() + '"?'); });
+      var n2 = el('div', { class: 'fg-tpl-r', role: 'listitem', 'aria-label': 'Rename ' + r.name }, [
+        ri,
+        el('div', { class: 'fg-qgo' }, [
+          el('button', { type: 'button', class: 'btn sm', 'data-fk': 'tpl-ren-go', disabled: t.busy, 'data-kbb-sure': 'Rename "' + r.name + '" to "' + t.ren.name.trim() + '"?', text: 'Save name', onclick: function () {
+            var name = t.ren.name.trim();
+            if (!name) { t.err = 'Give the template a name.'; paintTpl(); return; }
+            tplWrite('POST', '/templates/' + r.id + '/rename', { name: name }, function () { t.ren = null; say('Renamed to "' + name + '".'); });
+          } }),
+          el('button', { type: 'button', class: 'btn ghost sm', 'data-fk': 'tpl-ren-x', text: 'Cancel', onclick: function () { t.ren = null; paintTpl(); } })
+        ])
+      ]);
+      ri.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); t.ren = null; paintTpl(); } });
+      return n2;
+    }
+    return el('div', { class: 'fg-tpl-r', role: 'listitem' }, [head, ro ? null : el('div', { class: 'fg-qgo fg-tpl-go' }, [
+      el('button', { type: 'button', class: 'btn sm', 'data-fk': 'tpl-apply-' + r.id, disabled: t.busy, text: 'Make live',
+        'data-kbb-sure': 'Make "' + r.name + '" live? Every live range is replaced by its ' + plural(r.ranges, 'range', 'ranges') + ' at once, on the shop too. The ranges you have now are kept as a "Before …" template.' + (dirtyRanges().length ? ' Unsaved range edits on this screen are dropped.' : ''),
+        onclick: function () { tplApply(r); } }),
+      el('button', { type: 'button', class: 'btn ghost sm', 'data-fk': 'tpl-over-' + r.id, disabled: t.busy || !(st.data && st.data.ranges.length), text: 'Save',
+        'data-kbb-sure': 'Save the live ranges over "' + r.name + '"? What it holds now is replaced.',
+        onclick: function () { tplWrite('PUT', '/templates/' + r.id, {}, function () { say('Saved the live ranges over "' + r.name + '".'); }); } }),
+      el('button', { type: 'button', class: 'btn ghost sm', 'data-fk': 'tpl-ren-' + r.id, disabled: t.busy, text: 'Rename', onclick: function () { t.ren = { id: r.id, name: r.name }; t.err = null; paintTpl(); var x = document.querySelector('[data-fk="tpl-ren-in"]'); if (x) { x.focus(); x.select(); } } }),
+      el('button', { type: 'button', class: 'btn ghost sm', style: 'color:#b8362d', 'data-fk': 'tpl-del-' + r.id, disabled: t.busy, text: 'Delete',
+        'data-kbb-sure': 'Delete the template "' + r.name + '"? The live ranges are not changed.',
+        onclick: function () { tplWrite('DELETE', '/templates/' + r.id, undefined, function () { say('Deleted "' + r.name + '".'); }); } })
+    ])]);
   }
 
   /* --------------------------------------------------------------- display */
