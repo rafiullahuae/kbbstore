@@ -1,0 +1,80 @@
+{
+  "390": {
+    "scrollWidth": {
+      "card": 390,
+      "saved": 390,
+      "applied": 390,
+      "deleted": 390
+    },
+    "rangesSaved": [
+      "AED 100 – 299",
+      "AED 300 – 499",
+      "AED 500 – 999",
+      "AED 1,000 – 1,999",
+      "AED 2,000+"
+    ],
+    "rangesChanged": [
+      "AED 100 – 299",
+      "AED 300 – 499",
+      "AED 500 – 999",
+      "AED 1,000 – 1,999"
+    ],
+    "confirmText": "Make \"Everyday set (phone)\" live? Every live range is replaced by its 5 ranges at once, on the shop too. The ranges you have now are kept as a \"Before …\" template.",
+    "applyMs": 135,
+    "applyRequests": [
+      "POST /admin-api/free-gifts/templates/3/apply"
+    ],
+    "reloads": 0,
+    "rangesAfterApply": [
+      "AED 100 – 299",
+      "AED 300 – 499",
+      "AED 500 – 999",
+      "AED 1,000 – 1,999",
+      "AED 2,000+"
+    ],
+    "state": "Live now: Everyday set (phone)Live",
+    "renameConfirm": "Rename \"Before Everyday set (phone) · 2026-11-08 11:34:03\" to \"Without the top range (phone)\"?",
+    "deleteConfirm": "Delete the template \"Without the top range (phone)\"? The live ranges are not changed.",
+    "errors": []
+  },
+  "1280": {
+    "scrollWidth": {
+      "card": 1280,
+      "saved": 1280,
+      "applied": 1280,
+      "deleted": 1280
+    },
+    "rangesSaved": [
+      "AED 100 – 299",
+      "AED 300 – 499",
+      "AED 500 – 999",
+      "AED 1,000 – 1,999",
+      "AED 2,000+"
+    ],
+    "rangesChanged": [
+      "AED 100 – 299",
+      "AED 300 – 499",
+      "AED 500 – 999",
+      "AED 1,000 – 1,999"
+    ],
+    "confirmText": "Make \"Everyday set\" live? Every live range is replaced by its 5 ranges at once, on the shop too. The ranges you have now are kept as a \"Before …\" template.",
+    "applyMs": 180,
+    "applyRequests": [
+      "POST /admin-api/free-gifts/templates/1/apply"
+    ],
+    "reloads": 0,
+    "rangesAfterApply": [
+      "AED 100 – 299",
+      "AED 300 – 499",
+      "AED 500 – 999",
+      "AED 1,000 – 1,999",
+      "AED 2,000+"
+    ],
+    "state": "Live now: Everyday setLive",
+    "renameConfirm": "Rename \"Before Everyday set · 2026-11-08 11:33:54\" to \"Without the top range\"?",
+    "deleteConfirm": "Delete the template \"Without the top range\"? The live ranges are not changed.",
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found) /favicon.ico"
+    ]
+  }
+}
