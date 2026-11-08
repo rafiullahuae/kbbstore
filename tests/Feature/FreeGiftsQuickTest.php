@@ -42,12 +42,12 @@ beforeEach(function () {
     app(FreeGifts::class)->compile();
 });
 
-function gpAdmin(string $role = 'owner'): AdminUser
+function fgqAdmin(string $role = 'owner'): AdminUser
 {
     return AdminUser::create(['name' => 'GP ' . $role, 'email' => 'gp-' . $role . '-' . uniqid() . '@example.test', 'password' => 'password-long-enough', 'role' => $role]);
 }
 
-function gpMedia(string $path = 'uploads/products/gp-mask.webp'): string
+function fgqMedia(string $path = 'uploads/products/gp-mask.webp'): string
 {
     Media::create(['filename' => basename($path), 'original_name' => basename($path), 'path' => $path, 'mime' => 'image/webp', 'size' => 1000, 'width' => 600, 'height' => 600]);
 
@@ -55,19 +55,19 @@ function gpMedia(string $path = 'uploads/products/gp-mask.webp'): string
     return Media::urlFor($path);
 }
 
-function gpPost(array $body, ?AdminUser $as = null, string $path = '/admin-api/free-gifts/quick')
+function fgqPost(array $body, ?AdminUser $as = null, string $path = '/admin-api/free-gifts/quick')
 {
-    return test()->actingAs($as ?? gpAdmin(), 'admin')->postJson($path, $body);
+    return test()->actingAs($as ?? fgqAdmin(), 'admin')->postJson($path, $body);
 }
 
-function gpCreate(string $name, string $cut = '45', ?string $now = '29.90', ?string $image = null): Product
+function fgqCreate(string $name, string $cut = '45', ?string $now = '29.90', ?string $image = null): Product
 {
-    $r = gpPost(['name' => $name, 'cut' => $cut, 'now' => $now, 'image' => $image])->assertCreated();
+    $r = fgqPost(['name' => $name, 'cut' => $cut, 'now' => $now, 'image' => $image])->assertCreated();
 
     return Product::query()->findOrFail((int) $r->json('id'));
 }
 
-function gpProduct(string $name, array $o = []): Product
+function fgqProduct(string $name, array $o = []): Product
 {
     return Product::create(array_merge([
         'slug' => Str::slug($name) . '-' . Str::random(6), 'name' => $name, 'status' => 'publish', 'is_visible' => true,
@@ -75,7 +75,7 @@ function gpProduct(string $name, array $o = []): Product
     ], $o));
 }
 
-function gpRange(int $min, ?int $max, array $gifts): int
+function fgqRange(int $min, ?int $max, array $gifts): int
 {
     $id = DB::table('free_gift_ranges')->insertGetId([
         'min_fils' => $min * 100, 'max_fils' => $max === null ? null : $max * 100, 'label_en' => 'Gifts', 'label_ar' => 'هدايا',
@@ -91,7 +91,7 @@ function gpRange(int $min, ?int $max, array $gifts): int
     return $id;
 }
 
-function gpGiftsOn(): void
+function fgqGiftsOn(): void
 {
     app(SettingsService::class)->set(FreeGifts::KEY, ['on' => true, 'show_value' => false, 'countries' => 'all', 'basis' => 'after_discounts']);
     SettingsService::forgetMemo();
@@ -113,9 +113,9 @@ it('adds a gift-only product with its photo and both prices, hidden, in stock, a
      * skips it, or not in "Add gift" until the page is reloaded.
      * MUTATION: drop 'gift_only' => true in FreeGiftsQuickController::store(). RED.
      */
-    $owner = gpAdmin();
-    $url = gpMedia();
-    $r = gpPost(['name' => '  Centella   Mini Mask ', 'image' => $url, 'cut' => '45', 'now' => '29.90'], $owner)->assertCreated();
+    $owner = fgqAdmin();
+    $url = fgqMedia();
+    $r = fgqPost(['name' => '  Centella   Mini Mask ', 'image' => $url, 'cut' => '45', 'now' => '29.90'], $owner)->assertCreated();
     $p = Product::query()->findOrFail((int) $r->json('id'));
 
     expect($p->gift_only)->toBeTrue()
@@ -137,7 +137,7 @@ it('adds a gift-only product with its photo and both prices, hidden, in stock, a
     expect(array_column($pick, 'id'))->toContain($p->id);
 
     // An actual price equal to the cut price (or left empty) is no sale at all.
-    $same = gpCreate('Toner Mini', '20', '');
+    $same = fgqCreate('Toner Mini', '20', '');
     expect((int) $same->price)->toBe(2000)->and($same->sale_price)->toBeNull();
 });
 
@@ -150,7 +150,7 @@ it('validates the name, both prices and the photo, and writes nothing on a refus
      * MUTATION: drop the Media::where('path') exists check in image(). RED
      * (the unregistered uploads/ file is accepted).
      */
-    $owner = gpAdmin();
+    $owner = fgqAdmin();
     $before = Product::withTrashed()->count();
     $bad = [
         [['name' => 'A', 'cut' => '10'], 'name'],
@@ -171,14 +171,14 @@ it('validates the name, both prices and the photo, and writes nothing on a refus
         [['name' => 'Mask', 'cut' => '10', 'image' => 'https://kbeautybliss.com/uploads/products/stray.webp'], 'image'],
     ];
     foreach ($bad as [$body, $field]) {
-        gpPost($body, $owner)->assertStatus(422)->assertJsonValidationErrors($field);
+        fgqPost($body, $owner)->assertStatus(422)->assertJsonValidationErrors($field);
     }
     expect(Product::withTrashed()->count())->toBe($before);
 
     // The library's file is accepted whichever host the picker's URL names,
     // and what is stored is the library's own URL for it.
-    gpMedia('wp-content/uploads/2024/01/gp-old.jpg');
-    $r = gpPost(['name' => 'Old Mask', 'cut' => '10', 'image' => 'https://cdn.other.example/wp-content/uploads/2024/01/gp-old.jpg'], $owner)->assertCreated();
+    fgqMedia('wp-content/uploads/2024/01/gp-old.jpg');
+    $r = fgqPost(['name' => 'Old Mask', 'cut' => '10', 'image' => 'https://cdn.other.example/wp-content/uploads/2024/01/gp-old.jpg'], $owner)->assertCreated();
     expect(Product::query()->find($r->json('id'))->image)->toBe(Media::urlFor('wp-content/uploads/2024/01/gp-old.jpg'));
 });
 
@@ -203,9 +203,9 @@ it('keeps a quick gift-only product off every shop listing, search, feed, api an
     MerchantFeedRoutes::wire();
     $brand = Brand::create(['slug' => 'gp-glowbrand', 'name' => 'Glowbrand']);
     $cat = Category::create(['slug' => 'gp-serums', 'name' => 'Serums']);
-    $normal = gpProduct('Glowbrand Radiance Serum', ['brand_id' => $brand->id, 'category_id' => $cat->id, 'sku' => 'GP-N', 'image' => '/wp-content/uploads/gp-n.jpg']);
+    $normal = fgqProduct('Glowbrand Radiance Serum', ['brand_id' => $brand->id, 'category_id' => $cat->id, 'sku' => 'GP-N', 'image' => '/wp-content/uploads/gp-n.jpg']);
     $normal->categories()->attach($cat->id);
-    $gift = gpCreate('Glowbrand Radiance Gift Mini');
+    $gift = fgqCreate('Glowbrand Radiance Gift Mini');
     // Even a gift-only product with a brand and a category (one switched to
     // gift only from the catalogue) stays off their pages.
     $gift->forceFill(['brand_id' => $brand->id, 'category_id' => $cat->id, 'sku' => 'GP-G', 'image' => '/wp-content/uploads/gp-g.jpg'])->save();
@@ -252,7 +252,7 @@ it('keeps a quick gift-only product off every shop listing, search, feed, api an
     expect($cart->fresh()->items()->where('product_id', $gift->id)->count())->toBe(0);
 
     // The occasion banner's product search (an admin picker for shop cards).
-    $admin = gpAdmin();
+    $admin = fgqAdmin();
     $both('occasion banner search', test()->actingAs($admin, 'admin')->getJson('/admin-api/occasion-banner/products?q=Radiance')->assertOk()->getContent());
 });
 
@@ -273,10 +273,10 @@ it('is given as a gift and lands on the order at AED 0, with its name on the lin
     ShippingMethod::create(['shipping_zone_id' => $zone->id, 'type' => 'flat_rate', 'title' => 'Standard delivery', 'cost' => 2000, 'enabled' => true, 'position' => 0]);
     PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
 
-    $gift = gpCreate('Snail Gift Mini', '35', '19');
-    gpRange(100, null, [[$gift, 2]]);
-    gpGiftsOn();
-    $serum = gpProduct('Snail Essence', ['price' => 15000]);
+    $gift = fgqCreate('Snail Gift Mini', '35', '19');
+    fgqRange(100, null, [[$gift, 2]]);
+    fgqGiftsOn();
+    $serum = fgqProduct('Snail Essence', ['price' => 15000]);
     $cart = Cart::create(['token' => (string) Str::uuid(), 'currency' => 'AED', 'status' => 'active', 'shipping_country' => 'AE', 'last_activity_at' => now()]);
     $cart->items()->create(['product_id' => $serum->id, 'quantity' => 1, 'unit_price' => 15000]);
 
@@ -314,14 +314,14 @@ it('edits the name, photo and both prices inline, and only ever a gift-only prod
      * the product already had came from the old shop.
      * MUTATION: drop where('gift_only', true) in ownedOrFail(). RED.
      */
-    $owner = gpAdmin();
-    $gift = gpCreate('Rice Mini', '30', '20');
+    $owner = fgqAdmin();
+    $gift = fgqCreate('Rice Mini', '30', '20');
     $gift->forceFill(['sale_starts_at' => now()->addYear(), 'image' => 'https://old.example/wp-content/uploads/rice.jpg'])->save();
-    $url = gpMedia('uploads/products/gp-rice2.webp');
+    $url = fgqMedia('uploads/products/gp-rice2.webp');
 
     // Name only: the old photo is kept as it was, not re-checked.
-    gpPost(['name' => 'Rice Mini Mask', 'image' => 'https://old.example/wp-content/uploads/rice.jpg', 'cut' => '30', 'now' => '20'], $owner, '/admin-api/free-gifts/quick/' . $gift->id)->assertOk();
-    $r = gpPost(['name' => 'Rice Mini Mask', 'image' => $url, 'cut' => '50', 'now' => '35.50'], $owner, '/admin-api/free-gifts/quick/' . $gift->id)->assertOk();
+    fgqPost(['name' => 'Rice Mini Mask', 'image' => 'https://old.example/wp-content/uploads/rice.jpg', 'cut' => '30', 'now' => '20'], $owner, '/admin-api/free-gifts/quick/' . $gift->id)->assertOk();
+    $r = fgqPost(['name' => 'Rice Mini Mask', 'image' => $url, 'cut' => '50', 'now' => '35.50'], $owner, '/admin-api/free-gifts/quick/' . $gift->id)->assertOk();
     $gift->refresh();
 
     expect($gift->name)->toBe('Rice Mini Mask')
@@ -334,12 +334,12 @@ it('edits the name, photo and both prices inline, and only ever a gift-only prod
         ->and(collect($r->json('products'))->firstWhere('id', $gift->id)['now'])->toBe('35.50');
 
     // A normal product is not this screen's to change.
-    $normal = gpProduct('Shop Serum');
-    gpPost(['name' => 'Hacked', 'cut' => '1'], $owner, '/admin-api/free-gifts/quick/' . $normal->id)->assertNotFound();
+    $normal = fgqProduct('Shop Serum');
+    fgqPost(['name' => 'Hacked', 'cut' => '1'], $owner, '/admin-api/free-gifts/quick/' . $normal->id)->assertNotFound();
     expect($normal->fresh()->name)->toBe('Shop Serum')->and((int) $normal->fresh()->price)->toBe(15000);
 
     // Bad prices on edit are refused too, and change nothing.
-    gpPost(['name' => 'Rice Mini Mask', 'cut' => '10', 'now' => '11'], $owner, '/admin-api/free-gifts/quick/' . $gift->id)->assertStatus(422);
+    fgqPost(['name' => 'Rice Mini Mask', 'cut' => '10', 'now' => '11'], $owner, '/admin-api/free-gifts/quick/' . $gift->id)->assertStatus(422);
     expect((int) $gift->fresh()->price)->toBe(5000);
 });
 
@@ -349,9 +349,9 @@ it('removes by soft delete, keeps past orders whole, and refuses while the produ
      * (its line points at a row that is gone) or silently empties a live range.
      * MUTATION: replace $product->delete() with forceDelete() in destroy(). RED.
      */
-    $owner = gpAdmin();
-    $gift = gpCreate('Mugwort Mini');
-    $range = gpRange(100, 299, [[$gift, 1]]);
+    $owner = fgqAdmin();
+    $gift = fgqCreate('Mugwort Mini');
+    $range = fgqRange(100, 299, [[$gift, 1]]);
 
     $refused = test()->actingAs($owner, 'admin')->deleteJson('/admin-api/free-gifts/quick/' . $gift->id)->assertStatus(409);
     expect($refused->json('error'))->toContain('AED 100 – 299')
@@ -377,7 +377,7 @@ it('removes by soft delete, keeps past orders whole, and refuses while the produ
     expect(array_column($pick, 'id'))->not->toContain($gift->id);
 
     // A normal product cannot be deleted through this door.
-    $normal = gpProduct('Shop Toner');
+    $normal = fgqProduct('Shop Toner');
     test()->actingAs($owner, 'admin')->deleteJson('/admin-api/free-gifts/quick/' . $normal->id)->assertNotFound();
     expect(Product::query()->find($normal->id))->not->toBeNull();
 });
@@ -397,9 +397,9 @@ it('reads with freegifts.view, writes with freegifts.manage, and refuses everyon
     test()->getJson('/admin-api/free-gifts/quick')->assertUnauthorized();
     test()->postJson('/admin-api/free-gifts/quick', ['name' => 'Guest Gift', 'cut' => '5'])->assertUnauthorized();
 
-    $support = gpAdmin('support');
+    $support = fgqAdmin('support');
     test()->actingAs($support, 'admin')->getJson('/admin-api/free-gifts/quick')->assertForbidden();
-    gpPost(['name' => 'Support Gift', 'cut' => '5'], $support)->assertForbidden();
+    fgqPost(['name' => 'Support Gift', 'cut' => '5'], $support)->assertForbidden();
 
     expect(\App\Support\AdminCapabilities::forPath('GET', 'admin-api/free-gifts/quick'))->toBe('freegifts.view')
         ->and(\App\Support\AdminCapabilities::forPath('POST', 'admin-api/free-gifts/quick'))->toBe('freegifts.manage')
@@ -407,7 +407,7 @@ it('reads with freegifts.view, writes with freegifts.manage, and refuses everyon
         ->and(\App\Support\AdminCapabilities::forPath('DELETE', 'admin-api/free-gifts/quick/5'))->toBe('freegifts.manage')
         ->and(Product::query()->whereIn('name', ['Guest Gift', 'Support Gift'])->exists())->toBeFalse();
 
-    test()->actingAs(gpAdmin('manager'), 'admin')->getJson('/admin-api/free-gifts/quick')->assertOk();
+    test()->actingAs(fgqAdmin('manager'), 'admin')->getJson('/admin-api/free-gifts/quick')->assertOk();
 });
 
 it('lists 3 or 40 gift-only products in the same number of queries', function () {
@@ -416,7 +416,7 @@ it('lists 3 or 40 gift-only products in the same number of queries', function ()
      * panel slows down every time the owner adds a gift.
      * MUTATION: read each row's orders inside the map() in rows(). RED.
      */
-    $owner = gpAdmin();
+    $owner = fgqAdmin();
     $count = function () use ($owner): int {
         test()->actingAs($owner, 'admin')->getJson('/admin-api/free-gifts/quick')->assertOk();
         DB::flushQueryLog();
@@ -430,10 +430,10 @@ it('lists 3 or 40 gift-only products in the same number of queries', function ()
     $brand = Brand::create(['slug' => 'gp-qb', 'name' => 'QB']);
     $order = Order::create(['order_number' => 'GPQ-' . Str::random(6), 'email' => 'b@example.com', 'status' => 'processing', 'currency' => 'AED',
         'subtotal' => 0, 'discount_total' => 0, 'shipping_total' => 0, 'tax_total' => 0, 'fee_total' => 0, 'total' => 0, 'payment_method' => 'cod']);
-    $range = gpRange(100, null, []);
+    $range = fgqRange(100, null, []);
     $make = function (int $n) use ($brand, $order, $range) {
         for ($i = 0; $i < $n; $i++) {
-            $p = gpProduct('Quick ' . Str::random(5), ['gift_only' => true, 'brand_id' => $brand->id]);
+            $p = fgqProduct('Quick ' . Str::random(5), ['gift_only' => true, 'brand_id' => $brand->id]);
             $order->items()->create(['product_id' => $p->id, 'name' => $p->name, 'quantity' => 1, 'unit_price' => 0, 'subtotal' => 0, 'total' => 0, 'is_gift' => true]);
             DB::table('free_gift_range_items')->insert(['range_id' => $range, 'product_id' => $p->id, 'quantity' => 1, 'sort' => $i]);
         }
