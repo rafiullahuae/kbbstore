@@ -51,11 +51,14 @@ class FreeGiftTemplates
 
     public function __construct(private FreeGifts $gifts) {}
 
+    /**
+     * Asked fresh every time (admin-only callers, one cheap schema read): a
+     * process-level memo outlives the migration that creates the table, which
+     * StaticMemoIsolationTest forbids and SqlDialectGuardTest caught as a 500.
+     */
     public static function ready(): bool
     {
-        static $ready = null;
-
-        return $ready ??= Schema::hasTable('free_gift_templates');
+        return Schema::hasTable('free_gift_templates');
     }
 
     /**

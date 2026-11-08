@@ -25392,6 +25392,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      screen locked, so the order below is load-bearing rather than merely
      tidy. --}}
 @include('admin.partials.upload-kit')
+@include('admin.partials.image-field')
 @include('admin.partials.ugc-library-screen')
 {{-- LANE S7 · the SEO back office.
 
