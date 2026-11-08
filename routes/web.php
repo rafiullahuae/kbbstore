@@ -611,6 +611,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // the gift-only flag, display and texts. freegifts.view / freegifts.manage.
         require __DIR__.'/free-gifts-admin.php';
         require __DIR__.'/free-gifts-quick-admin.php';
+        require __DIR__.'/free-gift-templates-admin.php';
 
         // Growth & Marketing -> Gift offers (Lane GO): the extra full-size gift
         // in the abandoned-cart and pending-order emails and the exit popup.
