@@ -246,36 +246,29 @@ it('drops the set price by exactly what a member dropped by', function () {
 
 /* ══════════════════════════ and it never moves under a shopper ═══ */
 
-it('charges a basket and an order what was agreed, not what the set costs now', function () {
+it('reprices a basket set to today\'s rule and never charges a total the page did not show', function () {
     /*
      * ═══════════════════════════════════════════════════════════════════════
-     * ▲ THE WHOLE RISK OF A DERIVED PRICE, PINNED. ▲
+     * ▲ THE OWNER REVERSED THE SNAPSHOT ON 10 NOVEMBER 2026 (Lane RP). ▲
      * ═══════════════════════════════════════════════════════════════════════
      *
-     * A price that works itself out on every read could work itself out
-     * differently between the moment a shopper put the set in their basket and
-     * the moment they paid. It does not, and that is a property of this
-     * application rather than of App\Support\SetPricing — both were read
-     * first-hand before the feature was built:
+     * This test used to pin the opposite: a set in the basket at AED 115.00
+     * stayed at AED 115.00 after a member was cut, and the order charged it.
+     * That snapshot is what charged order #56680 yesterday's AED 85 for a
+     * product the owner had raised to AED 89 that morning, and his decision
+     * was "sure proceed" -- every open basket line carries today's price,
+     * computed exactly as adding it now would (CartService::refreshPrices()).
      *
-     *   `cart_items.unit_price` is written by CartService::add() and rewritten
-     *   only by updateQuantity(). The column's own comment in
-     *   0001_01_01_000000_create_kbb_schema.php:270 reads "Snapshot so a price
-     *   change mid-session cannot silently alter the cart."
+     * What did NOT change is the half this test was really protecting: a
+     * derived price must never move UNDER A SHOPPER WITHOUT THEM SEEING IT.
+     * So Place order, posted straight at a basket whose price moved since the
+     * page was drawn, writes nothing; the checkout then shows the new figure;
+     * and the order that follows charges exactly that.
      *
-     *   `order_items.unit_price` is copied FROM that snapshot in
-     *   Store\CheckoutController — `'unit_price' => $item->unit_price` — beside
-     *   the name, brand and sku snapshots on the same row.
-     *
-     * So: a set goes in a basket at AED 115.00, a member is then cut by AED 20
-     * underneath it, and the basket and the order both still say AED 115.00
-     * while the shop's own page now offers the set at AED 95.00.
-     *
-     * MUTATION NOTE. Change CartService::add() to store the product's live
-     * effectivePrice() at read time instead of the snapshot — or change
-     * CheckoutController's `'unit_price' => $item->unit_price` to
-     * `$item->product->effectivePrice()` — and this is red. RUN (the second
-     * one; it is the one that would reach a customer's card).
+     * MUTATION NOTE. Delete the hasUnseenPriceChange() refusal in
+     * CheckoutController::place() and the first post writes an order (red);
+     * delete the refreshPrices() call in CheckoutController::loadCart() and
+     * the order is written at AED 115.00 (red).
      */
     $toner = spxProduct('Toner', 9000);
     $set = spxSet([[$toner, 1], [spxProduct('Serum', 5000), 1]], [
@@ -301,9 +294,8 @@ it('charges a basket and an order what was agreed, not what the set costs now', 
 
     app(CartService::class)->add($cart, Product::find($set->id), 1);
 
-    $agreed = (int) $cart->fresh(['items'])->items->first()->unit_price;
-
-    expect($agreed)->toBe(11500, 'The basket line is written at the price on the page that day.');
+    expect((int) $cart->fresh(['items'])->items->first()->unit_price)
+        ->toBe(11500, 'The basket line is written at the price on the page that day.');
 
     // The shop cuts the toner AFTER the set is in the basket.
     $toner->price = 7000;
@@ -313,10 +305,7 @@ it('charges a basket and an order what was agreed, not what the set costs now', 
     expect(Product::find($set->id)->effectivePrice())
         ->toBe(9500, 'The shop now offers the set for less, which is the feature.');
 
-    expect((int) $cart->fresh(['items'])->items->first()->unit_price)
-        ->toBe($agreed, 'A basket already holding the set must not reprice itself underneath the shopper.');
-
-    $this->withCredentials()
+    $place = fn () => $this->withCredentials()
         ->withoutMiddleware(Illuminate\Cookie\Middleware\EncryptCookies::class)
         ->withUnencryptedCookie(CartService::COOKIE, $cart->token)
         ->post('/checkout/place', [
@@ -329,14 +318,25 @@ it('charges a basket and an order what was agreed, not what the set costs now', 
             'billing_state' => 'Dubai',
             'billing_country' => 'AE',
             'payment_method' => 'cod',
-        ])->assertRedirect();
+        ]);
+
+    $place()->assertRedirect();
+
+    expect(Order::count())->toBe(0, 'A price that moved since the page was drawn must not be charged unseen.');
+    expect((int) $cart->fresh(['items'])->items->first()->unit_price)->toBe(9500);
+
+    $this->withCredentials()
+        ->withoutMiddleware(Illuminate\Cookie\Middleware\EncryptCookies::class)
+        ->withUnencryptedCookie(CartService::COOKIE, $cart->token)
+        ->get('/checkout')
+        ->assertOk()
+        ->assertSee('Price updated from AED 115 to AED 95');
+
+    $place()->assertRedirect();
 
     $line = Order::latest('id')->first()->items->first();
 
-    expect((int) $line->unit_price)->toBe(
-        $agreed,
-        'The placed order must charge the price the shopper agreed to, not the price the rule works out today.'
-    );
+    expect((int) $line->unit_price)->toBe(9500, 'The order charges the price the checkout showed.');
 });
 
 /* ══════════════════════════════════════════════════════ the query shape ═══ */

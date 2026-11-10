@@ -150,6 +150,11 @@ class CheckoutController extends Controller
             $cart = $this->loadCart($request);
         }
 
+        // (Lane RP) loadCart() has brought every line to today's price; this
+        // page shows any "Price updated" note still waiting, including one
+        // place() held back for it.
+        $this->carts->takePriceNotes();
+
         if (! $cart || $cart->items->isEmpty()) {
             /*
              * THE REQUEST IS HANDED OVER, AND THIS IS THE LINE LANE N MEASURED.
@@ -517,6 +522,26 @@ class CheckoutController extends Controller
             return $request->expectsJson()
                 ? $this->bagGone($request)
                 : redirect(Url::redirect('/cart/', $request))->withErrors('Your bag is empty.');
+        }
+
+        /*
+         * NEVER CHARGE A TOTAL THE PAGE DID NOT SHOW. (Lane RP, order #56680)
+         *
+         * loadCart() above has just brought every line to today's price. If
+         * that moved anything -- or something moved earlier (the panel on
+         * another page, another tab) that no cart or checkout page has drawn
+         * since -- the page this press came from showed a different total.
+         * The order is NOT written: the shopper is told, and the checkout is
+         * drawn again at the new prices with a note on each line that moved.
+         *
+         * Before the coupon check, because a minimum spend is measured on the
+         * repriced subtotal. Nothing has been written, claimed or sent to a
+         * gateway yet, so there is nothing to undo; the basket keeps its new
+         * prices and the next press places the order at them -- the amount the
+         * redrawn page shows, which is the amount every gateway is sent.
+         */
+        if ($this->carts->hasUnseenPriceChange($cart)) {
+            return $this->pricesChanged($request);
         }
 
         /*
@@ -1367,6 +1392,36 @@ class CheckoutController extends Controller
                 'selectedMethod' => null,
                 'payNotice' => null,
             ])->render(),
+        ], 422);
+    }
+
+    /**
+     * place()'s answer when a price moved under the page. (Lane RP)
+     *
+     * IN THE SHAPE THE PAGE ALREADY UNDERSTANDS, so no script changes and the
+     * checkout stays byte-identical: `bag_gone` is the existing "your basket
+     * changed elsewhere" answer, which both the placing overlay and the card
+     * form print as a sentence with a link under it (window.KBB.refused). The
+     * link reopens the checkout, which draws the new total with a "Price
+     * updated from ... to ..." note on each line -- the notes are left in the
+     * session for exactly that page. `reason` tells the two cases apart for
+     * anything that needs to. A form post goes back to that page directly.
+     */
+    private function pricesChanged(Request $request): RedirectResponse|JsonResponse
+    {
+        $message = __('store.wording.msg_prices_changed');
+
+        if (! $request->expectsJson()) {
+            return back()->withInput()->withErrors($message);
+        }
+
+        return response()->json([
+            'ok' => false,
+            'code' => 'bag_gone',
+            'reason' => 'prices_changed',
+            'error' => $message,
+            'url' => Url::to('/checkout/'),
+            'link' => __('store.wording.price_review_link'),
         ], 422);
     }
 
@@ -2311,6 +2366,14 @@ class CheckoutController extends Controller
             // (Lane VPA) name each line's shade now, for the mini cart.
             app(\App\Support\VariantLabels::class)->fill($cart->items);
         }
+
+        /*
+         * EVERY LINE AT TODAY'S PRICE (Lane RP, order #56680) -- on every
+         * checkout read, and so also inside place() before the order is priced.
+         * After SetEagerLoad, which a set's price is read from. No query unless
+         * a price actually moved. See CartService::refreshPrices().
+         */
+        $this->carts->refreshPrices($cart);
 
         return $cart;
     }
