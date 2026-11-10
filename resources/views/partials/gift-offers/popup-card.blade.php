@@ -12,6 +12,10 @@
         Marketing -> Gift offers -> Live preview shows.
 --}}
 @php
+    // Gives per order (Lane GQ): ×N in the chips (S3, and S5 when N > 1), and a
+    // lone ×N chip under the name in the other styles when N > 1. At ×1 every
+    // style prints exactly what it printed before.
+    $goQty = (int) ($p['qty'] ?? 1);
     $goName = e($p['name']);
     $goText = str_replace('{p}', '<b>' . $goName . '</b>', e($p['p']));
     $goImg = $p['img'] !== '' ? '<img src="' . e($p['img']) . '"' . ($p['srcset'] !== '' ? ' srcset="' . e($p['srcset']) . '" sizes="120px"' : '') . ' alt="' . $goName . '" width="120" height="140" decoding="async">' : '';
@@ -23,9 +27,9 @@
         'S5' => '<div class="kgo-goldbar"><span>' . e($p['t']['gold']) . '</span><b class="kgo-clk" data-kgo-m>' . $goMm . ':00</b></div>',
         default => '<div class="kgo-cream"><small>' . e($p['t']['clock']) . '</small><b class="kgo-clk" data-kgo-m>' . $goMm . ':00</b></div>',
     };
-    $goChips = '<div class="kgo-chips"><span class="kgo-c1">' . e($p['t']['free']) . '</span><span class="kgo-c2">' . e($p['t']['chip_full']) . ($p['style'] === 'S5' ? ' · ' . e($p['worth']) : '') . '</span>' . ($p['style'] === 'S5' ? '' : '<span class="kgo-c3">×1</span>') . '</div>';
+    $goChips = '<div class="kgo-chips"><span class="kgo-c1">' . e($p['t']['free']) . '</span><span class="kgo-c2">' . e($p['t']['chip_full']) . ($p['style'] === 'S5' ? ' · ' . e($p['worth']) : '') . '</span>' . ($p['style'] === 'S5' && $goQty < 2 ? '' : '<span class="kgo-c3">×' . $goQty . '</span>') . '</div>';
     $goWorth = '<span class="kgo-worth"><s>' . e($p['worth']) . '</s><em>' . e($p['t']['free']) . '</em> ' . e($p['t']['full']) . '</span>';
-    $goUnder = '<div class="kgo-pname">' . $goName . '</div>' . (in_array($p['style'], ['S3', 'S5'], true) ? $goChips : '');
+    $goUnder = '<div class="kgo-pname">' . $goName . '</div>' . (in_array($p['style'], ['S3', 'S5'], true) ? $goChips : ($goQty > 1 ? '<div class="kgo-chips"><span class="kgo-c3">×' . $goQty . '</span></div>' : ''));
     $goPhoto = $p['style'] === 'S5'
         ? '<div class="kgo-frame"><div class="kgo-ph">' . $goImg . '</div>' . ($p['brand'] !== '' ? '<div class="kgo-brand">' . e($p['brand']) . '</div>' : '') . $goUnder . '</div>'
         : (in_array($p['style'], ['S3'], true) ? '' : $goWorth) . '<div class="kgo-ph">' . $goImg . '</div>' . $goUnder;

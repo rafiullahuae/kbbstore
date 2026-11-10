@@ -1,0 +1,115 @@
+{
+  "admin": {
+    "selects_1280": 4,
+    "values_1280": [
+      "1",
+      "1",
+      "2",
+      "1"
+    ],
+    "box_text_1280": "PRIMARY Relief Sun : Rice + Probiotics SPF50+ 50ml Beauty of Joseon · AED 65 38 in stock For this offer given 6 · left 44 · enough for 22 orders Gives per order ×1 ×2 ×3 ×4 ×5 2 pcs to each order, at AED 0. Each order uses 2 of this offer's units; with fewer than 2 left, the next backup is given. ↑ ↓ Remove",
+    "scrollWidth_1280": 1280,
+    "selects_390": 4,
+    "values_390": [
+      "1",
+      "1",
+      "2",
+      "1"
+    ],
+    "box_text_390": "PRIMARY Relief Sun : Rice + Probiotics SPF50+ 50ml Beauty of Joseon · AED 65 38 in stock For this offer given 6 · left 44 · enough for 22 orders Gives per order ×1 ×2 ×3 ×4 ×5 2 pcs to each order, at AED 0. Each order uses 2 of this offer's units; with fewer than 2 left, the next backup is given. ↑ ↓ Remove",
+    "scrollWidth_390": 390,
+    "after_select_3": "PRIMARY Relief Sun : Rice + Probiotics SPF50+ 50ml Beauty of Joseon · AED 65 38 in stock For this offer given 6 · left 44 · enough for 14 orders Gives per order ×1 ×2 ×3 ×4 ×5 3 pcs to each order, at AED 0. Each order uses 3 of this offer's units; with fewer than 3 left, the next backup is given. ↑ ↓ Remove",
+    "console_errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  "emails": {
+    "cart_ticket_has_x2": true,
+    "email-abandoned-cart-ticket-x2_scrollWidth_390": 390,
+    "email-abandoned-cart-ticket-x2_scrollWidth_1280": 1280,
+    "popup-preview-A-S3-x2_scrollWidth_390": 390,
+    "popup-preview-A-S3-x2_scrollWidth_1280": 1280,
+    "popup-preview-A-S5-x2_scrollWidth_390": 390,
+    "popup-preview-A-S5-x2_scrollWidth_1280": 1280,
+    "popup-preview-A-S1-x2_scrollWidth_390": 390,
+    "popup-preview-A-S1-x2_scrollWidth_1280": 1280,
+    "confirm_order": "24878",
+    "confirm_gift_line_quantity": 2,
+    "confirm_prints": "2× Relief Sun",
+    "email-order-confirmation-x2_scrollWidth_390": 390,
+    "email-order-confirmation-x2_scrollWidth_1280": 1280
+  },
+  "rows": {
+    "cart_390": {
+      "h": 93,
+      "w": 360,
+      "name": "Relief Sun : Rice + Probiotics SPF50+ 50ml",
+      "chips": [
+        "Free",
+        "Full size",
+        "×2"
+      ]
+    },
+    "scrollWidth_cart_390": 390,
+    "panel_chips_390": [
+      "Free",
+      "Full size",
+      "×2"
+    ],
+    "checkout_390": {
+      "h": 93,
+      "chips": [
+        "Free",
+        "Full size",
+        "×2"
+      ]
+    },
+    "scrollWidth_checkout_390": 390,
+    "cart_1280": {
+      "h": 93,
+      "w": 596,
+      "name": "Relief Sun : Rice + Probiotics SPF50+ 50ml",
+      "chips": [
+        "Free",
+        "Full size",
+        "×2"
+      ]
+    },
+    "scrollWidth_cart_1280": 1280,
+    "panel_chips_1280": [
+      "Free",
+      "Full size",
+      "×2"
+    ],
+    "checkout_1280": {
+      "h": 93,
+      "chips": [
+        "Free",
+        "Full size",
+        "×2"
+      ]
+    },
+    "scrollWidth_checkout_1280": 1280
+  },
+  "popup": {
+    "preview_S3_has_x2": true,
+    "preview_S5_has_x2": true,
+    "preview_S1_has_x2": true,
+    "shop_chips_390": [
+      "FREE",
+      "FULL SIZE",
+      "×2"
+    ],
+    "shop_scrollWidth_390": 390,
+    "shop_chips_1280": [
+      "FREE",
+      "FULL SIZE",
+      "×2"
+    ],
+    "shop_scrollWidth_1280": 1280
+  },
+  "console": {
+    "errors_390": [],
+    "errors_1280": []
+  }
+}
