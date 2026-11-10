@@ -49,6 +49,11 @@ use Illuminate\Support\Str;
  * on cart and checkout" -- and CartCheckoutAddressRowOffTest pins the default.
  */
 beforeEach(function () {
+    // (Lane RP, order #56680) Basket lines now carry today's price, computed
+    // as CartService::add() would. The lines in this file are written by hand
+    // at the full unit price whatever the quantity, and its arithmetic assumes
+    // no quantity tier -- so the tier is off here, where the figures say it is.
+    app(\App\Services\SettingsService::class)->set('bundles_enabled', false);
     // These pin the cart and checkout as they were before 2.60.495, which is
     // one press away: Appearance -> Checkout page -> 13 October layout -> "Put
     // the old layout back". The 13 October layout is CheckoutLayout13Test's.

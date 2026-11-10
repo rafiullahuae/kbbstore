@@ -119,6 +119,8 @@ it('charges the raised price: a line added at AED 85 and repriced to AED 89 tota
     // The checkout the shopper opens that night shows 89 and says so.
     rpAs($cart)->get('/checkout')->assertOk()
         ->assertSee('Price updated from AED 85 to AED 89')
+        // The summary opens folded, so the band above the form names it too.
+        ->assertSee('<div class="woocommerce-info" role="status">Anua PDRN Capsule Mist Mini: Price updated from AED 85 to AED 89</div>', false)
         ->assertSee('role="status"', false);
 
     expect(rpUnit($cart))->toBe(8900);
@@ -180,7 +182,7 @@ it('never charges the stale amount when the price moves between the checkout pag
      * back to the checkout), the checkout then draws 89 with the note, and the
      * next press places at 89 -- the total every gateway is sent.
      *
-     * MUTATION: delete the hasUnseenPriceChange() refusal in place() and the
+     * MUTATION: delete the pricesMovedSinceDrawn() refusal in place() and the
      * first press writes an order at 8900 the page never showed -- red.
      */
     rpShip();
@@ -213,9 +215,9 @@ it('refuses too when the price moved in the panel on another page that the check
     /*
      * Another tab: the panel on a product page refreshed the basket and wrote
      * 89, so place() itself finds nothing to move -- and would charge 89 under
-     * a checkout drawn at 85. The note carried in the session is what catches
-     * it. MUTATION: make hasUnseenPriceChange() read only this request's moves
-     * and the order is written -- red.
+     * a checkout drawn at 85. The prices the checkout drew, kept in the
+     * session, are what catch it. MUTATION: refuse only when place()'s own
+     * refresh moved something and the order is written -- red.
      */
     rpShip();
     $mist = rpProduct('Mist', 8500);
@@ -229,6 +231,23 @@ it('refuses too when the price moved in the panel on another page that the check
 
     rpAs($cart)->post('/checkout/place', rpPlaceBody())->assertRedirect();
     expect(Order::count())->toBe(0);
+});
+
+it('places a basket no checkout has drawn straight at today\'s price', function () {
+    /*
+     * Nothing on a page to contradict, so nothing to refuse: the order is
+     * written at the price adding it now would charge, never the snapshot.
+     * MUTATION: write the order from the line before refreshPrices() -- red.
+     */
+    rpShip();
+    $mist = rpProduct('Mist', 8500);
+    $cart = rpCart();
+    app(CartService::class)->add($cart, $mist, 1);
+    rpReprice($mist, 8900);
+
+    rpAs($cart)->post('/checkout/place', rpPlaceBody())->assertRedirect();
+
+    expect((int) Order::latest('id')->firstOrFail()->items->first()->unit_price)->toBe(8900);
 });
 
 /* ═══════════════════════════ what it leaves alone ════════════════════════ */

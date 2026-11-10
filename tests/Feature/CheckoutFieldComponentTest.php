@@ -50,6 +50,11 @@ use App\Services\CartService;
 use App\Services\SettingsService;
 
 beforeEach(function () {
+    // (Lane RP, order #56680) Basket lines now carry today's price, computed
+    // as CartService::add() would. The lines in this file are written by hand
+    // at the full unit price whatever the quantity, and its arithmetic assumes
+    // no quantity tier -- so the tier is off here, where the figures say it is.
+    app(\App\Services\SettingsService::class)->set('bundles_enabled', false);
     PaymentProvider::query()->delete();
     app(\App\Services\Payments\GatewayCredentials::class)->forget();
     PaymentProvider::create([
@@ -76,7 +81,7 @@ function cfcCart(?Coupon $coupon = null): Cart
         'name' => 'Ginseng Serum',
         'status' => 'publish',
         'is_visible' => true,
-        'price' => 200,
+        'price' => 20000, // (Lane RP) In fils, as the line beside it: baskets now carry today's price (order #56680).
         'stock_status' => 'instock',
     ]);
 

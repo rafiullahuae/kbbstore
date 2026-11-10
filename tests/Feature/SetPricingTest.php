@@ -265,7 +265,7 @@ it('reprices a basket set to today\'s rule and never charges a total the page di
      * page was drawn, writes nothing; the checkout then shows the new figure;
      * and the order that follows charges exactly that.
      *
-     * MUTATION NOTE. Delete the hasUnseenPriceChange() refusal in
+     * MUTATION NOTE. Delete the pricesMovedSinceDrawn() refusal in
      * CheckoutController::place() and the first post writes an order (red);
      * delete the refreshPrices() call in CheckoutController::loadCart() and
      * the order is written at AED 115.00 (red).
@@ -297,7 +297,15 @@ it('reprices a basket set to today\'s rule and never charges a total the page di
     expect((int) $cart->fresh(['items'])->items->first()->unit_price)
         ->toBe(11500, 'The basket line is written at the price on the page that day.');
 
-    // The shop cuts the toner AFTER the set is in the basket.
+    $checkout = fn () => $this->withCredentials()
+        ->withoutMiddleware(Illuminate\Cookie\Middleware\EncryptCookies::class)
+        ->withUnencryptedCookie(CartService::COOKIE, $cart->token)
+        ->get('/checkout');
+
+    // The shopper has the checkout open at AED 115.00 ...
+    $checkout()->assertOk()->assertDontSee('Price updated');
+
+    // ... and the shop cuts the toner underneath it.
     $toner->price = 7000;
     $toner->save();
     SetPricing::forget();
@@ -325,12 +333,7 @@ it('reprices a basket set to today\'s rule and never charges a total the page di
     expect(Order::count())->toBe(0, 'A price that moved since the page was drawn must not be charged unseen.');
     expect((int) $cart->fresh(['items'])->items->first()->unit_price)->toBe(9500);
 
-    $this->withCredentials()
-        ->withoutMiddleware(Illuminate\Cookie\Middleware\EncryptCookies::class)
-        ->withUnencryptedCookie(CartService::COOKIE, $cart->token)
-        ->get('/checkout')
-        ->assertOk()
-        ->assertSee('Price updated from AED 115 to AED 95');
+    $checkout()->assertOk()->assertSee('Price updated from AED 115 to AED 95');
 
     $place()->assertRedirect();
 

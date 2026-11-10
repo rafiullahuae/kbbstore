@@ -546,19 +546,24 @@ it('keeps the set\'s own product page flat, three members or twelve', function (
 
 /* ══════════════════════════════════ and a placed order does not move ═══ */
 
-it('leaves a basket and a placed order exactly where they were agreed', function () {
+it('brings a basket set down with its members, and never charges a figure the checkout did not show', function () {
     /*
-     * ▲ THE WHOLE RISK OF A PRICE THAT MOVES ON ITS OWN, and the reason this
-     *   is safe: it cannot move UNDER A SHOPPER. `cart_items.unit_price` is a
-     *   snapshot written when the line is added, and `order_items.unit_price`
-     *   is copied from it at checkout. SetPricingTest pins this for the
-     *   discount modes; a hand-typed price that follows its members is a new
-     *   way for the catalogue figure to move after a line exists, so it is
-     *   pinned again here, for the mode that moves.
+     * ▲ THE OWNER REVERSED THE SNAPSHOT ON 10 NOVEMBER 2026 (Lane RP). This
+     *   pinned `cart_items.unit_price` as a snapshot that held the price a line
+     *   was filled at. That snapshot is what charged order #56680 yesterday's
+     *   AED 85 after the owner raised the product to AED 89, and his decision
+     *   was "sure proceed": every open basket line carries today's price,
+     *   computed exactly as adding it now would (CartService::refreshPrices()).
      *
-     * MUTATION NOTE. Make CheckoutController write
-     * `$item->product->effectivePrice()` instead of `$item->unit_price` and
-     * this is red: the order charges 14500 for a basket agreed at 18000. RUN.
+     *   The half this test was guarding still holds: the price never moves
+     *   UNDER A SHOPPER UNSEEN. With the checkout open at AED 180, the member
+     *   cut, Place order writes nothing; the checkout then shows AED 165 with
+     *   its note, and the order charges exactly that.
+     *
+     * MUTATION NOTE. Delete the pricesMovedSinceDrawn() refusal in
+     * CheckoutController::place() and the first press writes an order (red);
+     * delete the refreshPrices() call in CheckoutController::loadCart() and
+     * the order charges 18000 (red).
      */
     $toner = sfxProduct('Toner', 12000);
     $set = sfxSet([[$toner, 1], [sfxProduct('Serum', 8000), 1]], [
@@ -583,40 +588,46 @@ it('leaves a basket and a placed order exactly where they were agreed', function
     ]);
 
     app(CartService::class)->add($cart, Product::find($set->id), 1);
+    expect((int) $cart->fresh(['items'])->items->first()->unit_price)->toBe(18000);
 
-    $agreed = (int) $cart->fresh(['items'])->items->first()->unit_price;
-    expect($agreed)->toBe(18000);
+    $as = fn () => test()
+        ->withCredentials()
+        ->withoutMiddleware(Illuminate\Cookie\Middleware\EncryptCookies::class)
+        ->withUnencryptedCookie(CartService::COOKIE, $cart->token);
+    $place = fn () => $as()->post('/checkout/place', [
+        'billing_email' => 'buyer@example.com',
+        'billing_phone' => '+971500000000',
+        'billing_first_name' => 'Aisha',
+        'billing_last_name' => 'Khan',
+        'billing_address_1' => '12 Marina Walk',
+        'billing_city' => 'Dubai',
+        'billing_state' => 'Dubai',
+        'billing_country' => 'AE',
+        'payment_method' => 'cod',
+    ]);
 
-    // The toner comes down 1500 AFTER the set is in the basket.
+    app(CartService::class)->forget();
+    $as()->get('/checkout')->assertOk();
+
+    // The toner comes down 1500 while the checkout is open.
     $toner->update(['price' => 10500]);
     SetPricing::forget();
 
     expect(Product::find($set->id)->effectivePrice())
         ->toBe(16500, 'The shop now offers the set for less, which is the feature.');
 
-    expect((int) $cart->fresh(['items'])->items->first()->unit_price)->toBe(
-        $agreed,
-        'A basket holds the price it was filled at.'
-    );
+    app(CartService::class)->forget();
+    $place()->assertRedirect();
+    expect(Order::count())->toBe(0, 'A figure the checkout did not show is never charged.');
 
-    test()
-        ->withCredentials()
-        ->withoutMiddleware(Illuminate\Cookie\Middleware\EncryptCookies::class)
-        ->withUnencryptedCookie(CartService::COOKIE, $cart->token)
-        ->post('/checkout/place', [
-            'billing_email' => 'buyer@example.com',
-            'billing_phone' => '+971500000000',
-            'billing_first_name' => 'Aisha',
-            'billing_last_name' => 'Khan',
-            'billing_address_1' => '12 Marina Walk',
-            'billing_city' => 'Dubai',
-            'billing_state' => 'Dubai',
-            'billing_country' => 'AE',
-            'payment_method' => 'cod',
-        ])->assertRedirect();
+    app(CartService::class)->forget();
+    $as()->get('/checkout')->assertOk()->assertSee('Price updated from AED 180 to AED 165');
+
+    app(CartService::class)->forget();
+    $place()->assertRedirect();
 
     expect((int) Order::latest('id')->first()->items->first()->unit_price)->toBe(
-        $agreed,
-        'The placed order must charge the price the shopper agreed to, not the price the rule works out today.'
+        16500,
+        'The placed order charges the price the checkout showed.'
     );
 });

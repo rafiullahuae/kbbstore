@@ -1,0 +1,120 @@
+{
+  "panel-390": {
+    "note": "Price updated from AED 85 to AED 89",
+    "noteClass": "kc-var",
+    "fontSize": "11.5px",
+    "color": "rgb(117, 108, 116)",
+    "scrollWidth": 390,
+    "width": 390,
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  "cart-390": {
+    "note": "Price updated from AED 85 to AED 89",
+    "noteClass": "cvar",
+    "fontSize": "11.5px",
+    "color": "rgb(117, 108, 116)",
+    "scrollWidth": 390,
+    "width": 390,
+    "errors": []
+  },
+  "checkout-390": {
+    "note": "Anua PDRN Capsule Mist Mini: Price updated from AED 85 to AED 89",
+    "noteClass": "woocommerce-info",
+    "fontSize": "13px",
+    "color": "rgb(42, 34, 40)",
+    "scrollWidth": 390,
+    "width": 390,
+    "errors": [],
+    "visible": [
+      {
+        "w": 350,
+        "h": 63.6875,
+        "y": 71,
+        "in": "woocommerce-info"
+      },
+      {
+        "w": 0,
+        "h": 0,
+        "y": 0,
+        "in": "co-var"
+      },
+      {
+        "w": 180.296875,
+        "h": 29.875,
+        "y": 82.25,
+        "in": "kc-var"
+      }
+    ]
+  },
+  "place-390": {
+    "status": 422,
+    "body": {
+      "ok": false,
+      "code": "bag_gone",
+      "reason": "prices_changed",
+      "error": "A price in your bag has changed since this page was opened, so nothing has been charged. Please check the new total before you pay.",
+      "url": "/checkout/",
+      "link": "See the new total"
+    }
+  },
+  "panel-1280": {
+    "note": "Price updated from AED 85 to AED 89",
+    "noteClass": "kc-var",
+    "fontSize": "11.5px",
+    "color": "rgb(117, 108, 116)",
+    "scrollWidth": 1280,
+    "width": 1280,
+    "errors": []
+  },
+  "cart-1280": {
+    "note": "Price updated from AED 85 to AED 89",
+    "noteClass": "cvar",
+    "fontSize": "11.5px",
+    "color": "rgb(117, 108, 116)",
+    "scrollWidth": 1280,
+    "width": 1280,
+    "errors": []
+  },
+  "checkout-1280": {
+    "note": "Anua PDRN Capsule Mist Mini: Price updated from AED 85 to AED 89",
+    "noteClass": "woocommerce-info",
+    "fontSize": "13px",
+    "color": "rgb(42, 34, 40)",
+    "scrollWidth": 1280,
+    "width": 1280,
+    "errors": [],
+    "visible": [
+      {
+        "w": 1000,
+        "h": 44.84375,
+        "y": 83,
+        "in": "woocommerce-info"
+      },
+      {
+        "w": 0,
+        "h": 0,
+        "y": 0,
+        "in": "co-var"
+      },
+      {
+        "w": 243.34375,
+        "h": 14.9375,
+        "y": 78.25,
+        "in": "kc-var"
+      }
+    ]
+  },
+  "place-1280": {
+    "status": 422,
+    "body": {
+      "ok": false,
+      "code": "bag_gone",
+      "reason": "prices_changed",
+      "error": "A price in your bag has changed since this page was opened, so nothing has been charged. Please check the new total before you pay.",
+      "url": "/checkout/",
+      "link": "See the new total"
+    }
+  }
+}

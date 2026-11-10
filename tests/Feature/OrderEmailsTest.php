@@ -98,7 +98,7 @@ function orderMailCart(int $unitPriceFils = 20000, array $product = []): Cart
         'name' => 'Rice Toner',
         'status' => 'publish',
         'is_visible' => true,
-        'price' => $unitPriceFils / 100,
+        'price' => $unitPriceFils, // (Lane RP) In fils, as the line beside it: baskets now carry today's price (order #56680).
         'stock_status' => 'instock',
     ], $product));
 

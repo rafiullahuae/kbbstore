@@ -154,6 +154,7 @@ class CheckoutController extends Controller
         // page shows any "Price updated" note still waiting, including one
         // place() held back for it.
         $this->carts->takePriceNotes();
+        $this->carts->rememberDrawnPrices($cart);
 
         if (! $cart || $cart->items->isEmpty()) {
             /*
@@ -324,6 +325,12 @@ class CheckoutController extends Controller
              * renders nothing at all for an empty array. (Lane SEC)
              */
             'setStockNotices' => $setStockNotices,
+            /*
+             * (Lane RP) "Anua PDRN Capsule Mist Mini: Price updated from AED 85
+             * to AED 89", one per line loadCart() repriced. Empty -- and the
+             * view prints nothing -- whenever no price moved.
+             */
+            'priceNotices' => $this->carts->priceNotices($cart),
             'cart' => $cart,
             'items' => $cart->items,
             'totals' => $totals,
@@ -527,12 +534,12 @@ class CheckoutController extends Controller
         /*
          * NEVER CHARGE A TOTAL THE PAGE DID NOT SHOW. (Lane RP, order #56680)
          *
-         * loadCart() above has just brought every line to today's price. If
-         * that moved anything -- or something moved earlier (the panel on
-         * another page, another tab) that no cart or checkout page has drawn
-         * since -- the page this press came from showed a different total.
-         * The order is NOT written: the shopper is told, and the checkout is
-         * drawn again at the new prices with a note on each line that moved.
+         * loadCart() above has just brought every line to today's price. If a
+         * line now differs from the price the checkout last drew for it --
+         * moved by that refresh, or earlier by the panel on another page or in
+         * another tab -- the page this press came from showed a different
+         * total. The order is NOT written: the shopper is told, and the
+         * checkout is drawn again at the new prices with the note.
          *
          * Before the coupon check, because a minimum spend is measured on the
          * repriced subtotal. Nothing has been written, claimed or sent to a
@@ -540,7 +547,7 @@ class CheckoutController extends Controller
          * prices and the next press places the order at them -- the amount the
          * redrawn page shows, which is the amount every gateway is sent.
          */
-        if ($this->carts->hasUnseenPriceChange($cart)) {
+        if ($this->carts->pricesMovedSinceDrawn($cart)) {
             return $this->pricesChanged($request);
         }
 
@@ -3370,6 +3377,9 @@ class CheckoutController extends Controller
         $state = $data['state'] ?? null;
 
         [$rates, $chosen, $totals] = $this->rateContext($cart, $country, $state);
+
+        // (Lane RP) These figures replace the ones on the page.
+        $this->carts->rememberDrawnPrices($cart);
 
         $totalFils = (int) ($totals['total'] ?? 0);
         $gateways = $this->gateways($totalFils, $country);

@@ -550,32 +550,89 @@ class CartService
     }
 
     /**
-     * Does any line of this basket carry a price change the shopper has not
-     * yet been shown on the cart page or the checkout? That is: one
-     * refreshPrices() made on THIS request, or one an earlier request made
-     * (the panel on another page, another tab) that no cart or checkout page
-     * has drawn since.
+     * One sentence per moved line, named: "Anua PDRN Capsule Mist Mini: Price
+     * updated from AED 85 to AED 89". For the checkout's notice band, where
+     * the order summary opens folded. Empty when nothing moved.
      *
-     * CheckoutController::place() asks this after refreshing, and refuses to
-     * charge while it is true: the page the shopper pressed Place order on
-     * did not show the total the order would be written at.
+     * @return list<string>
      */
-    public function hasUnseenPriceChange(Cart $cart): bool
+    public function priceNotices(?Cart $cart): array
     {
-        $this->scopePriceChanges();
+        if ($cart === null) {
+            return [];
+        }
 
-        if ($this->priceChanges === [] && $this->sessionNotes() === []) {
+        $out = [];
+
+        foreach ($cart->items as $item) {
+            $note = $this->priceNote($item);
+
+            if ($note !== null) {
+                $name = trim((string) ($item->product?->t('name') ?? $item->product?->name ?? ''));
+                $out[] = $name === '' ? $note : $name . ': ' . $note;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * The checkout has just drawn this basket: remember the price it showed on
+     * each line, so Place order can tell whether it is about to charge
+     * something else. Called by CheckoutController::page() and by every
+     * fragment that redraws the lines. One small session entry, written only
+     * when it differs from the one already there.
+     */
+    public function rememberDrawnPrices(?Cart $cart): void
+    {
+        $session = $this->session();
+
+        if ($cart === null || $session === null) {
+            return;
+        }
+
+        $drawn = ['cart' => (int) $cart->getKey(), 'lines' => []];
+
+        foreach ($cart->items as $item) {
+            $drawn['lines'][(int) $item->id] = (int) $item->unit_price;
+        }
+
+        if ($session->get(self::PRICES_DRAWN) !== $drawn) {
+            $session->put(self::PRICES_DRAWN, $drawn);
+        }
+    }
+
+    /**
+     * Would this basket, as refreshPrices() has just left it, charge a line at
+     * a price other than the one the checkout last showed for it?
+     *
+     * CheckoutController::place() asks this and refuses to write the order
+     * while it is true. It covers the price moving between the page and the
+     * press, whether place()'s own refresh moved it or the panel on another
+     * page did in the meantime. A basket no checkout has drawn in this session
+     * has no figure to contradict, so it answers false and the order is simply
+     * written at today's prices.
+     */
+    public function pricesMovedSinceDrawn(Cart $cart): bool
+    {
+        $drawn = $this->session()?->get(self::PRICES_DRAWN);
+
+        if (! is_array($drawn) || (int) ($drawn['cart'] ?? 0) !== (int) $cart->getKey() || ! is_array($drawn['lines'] ?? null)) {
             return false;
         }
 
         foreach ($cart->items as $item) {
-            if ($this->priceNote($item) !== null) {
+            $shown = $drawn['lines'][(int) $item->id] ?? null;
+
+            if ($shown !== null && (int) $shown !== (int) $item->unit_price) {
                 return true;
             }
         }
 
         return false;
     }
+
+    private const PRICES_DRAWN = 'kbb_prices_drawn';
 
     /**
      * The cart page, the checkout, or place()'s redraw is about to show the

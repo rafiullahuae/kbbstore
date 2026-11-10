@@ -24,6 +24,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
+    // (Lane RP, order #56680) Basket lines now carry today's price, computed
+    // as CartService::add() would. The lines in this file are written by hand
+    // at the full unit price whatever the quantity, and its arithmetic assumes
+    // no quantity tier -- so the tier is off here, where the figures say it is.
+    app(\App\Services\SettingsService::class)->set('bundles_enabled', false);
     // Registered here too when the integrator's require is not in place, for
     // the same reason CheckoutLineUpdateTest does it.
     if (! Route::has('checkout.couponUpdate')) {

@@ -148,6 +148,10 @@ function cwVariant(Product $parent, ?int $price, ?int $salePrice = null): Produc
 function cwCart(): Cart
 {
     app(CartPage::class)->save(['layout' => 'squeeze']);
+    // (Lane RP, order #56680) Baskets now carry today's price, computed as
+    // CartService::add() would; the lines here are written by hand at the full
+    // unit price whatever the quantity, so the quantity tier is off.
+    app(\App\Services\SettingsService::class)->set('bundles_enabled', false);
 
     return Cart::create([
         'token' => (string) Str::uuid(),
@@ -259,9 +263,14 @@ it('never strikes a figure below what is being charged', function () {
      * regular price — the option was repriced downward after it went in the
      * basket — has a compare-at below the line. There is no honest strike to
      * draw, so none is drawn.
+     *
+     * (Lane RP) Since order #56680 an open line is brought to today's price
+     * whenever it is drawn, so this shape survives only on a line the refresh
+     * leaves alone: an option that has sold out. That is the line used here.
      */
     $parent = cwParent('cw-below');
     $variant = cwVariant($parent, 19000, 14000);
+    $variant->forceFill(['stock_status' => 'outofstock'])->save();
 
     $cart = cwCart();
     // Paid AED 200 for a line whose regular price is now AED 190.
@@ -315,9 +324,9 @@ it('says nothing about a markdown whose window has shut', function () {
 
     $cart = cwCart();
     // The basket a shopper left open across the end of the sale: the line was
-    // snapshotted at the markdown, and the window has since shut. This is the
-    // shape that tells the window check from no check at all — a line already
-    // charged the regular price renders the same either way.
+    // written at the markdown, and the window has since shut. (Lane RP) It is
+    // now brought to the regular price when drawn -- what effectivePrice()
+    // charges -- and nothing is struck beside it.
     $cart->items()->create([
         'product_id' => $parent->id,
         'product_variant_id' => $variant->id,
@@ -327,8 +336,8 @@ it('says nothing about a markdown whose window has shut', function () {
 
     $lines = cwLines(cwPage($cart));
 
-    expect($lines)->toBe(['AED 140']);
-    expect($lines[0])->not->toContain('AED 190');
+    expect($lines)->toBe(['AED 190']);
+    expect($lines[0])->not->toContain('AED 140');
 });
 
 it('never fetches a variation\'s parent to answer whether it is on sale', function () {
@@ -442,6 +451,9 @@ it('never counts a line into the order value at less than it cost', function () 
      */
     $parent = cwParent('cw-max-parent');
     $variant = cwVariant($parent, 19000, 14000);
+    // (Lane RP) Sold out, so the refresh leaves the AED 200 line as it was --
+    // see 'never strikes a figure below what is being charged'.
+    $variant->forceFill(['stock_status' => 'outofstock'])->save();
 
     $simple = Product::create([
         'slug' => 'cw-max-simple', 'name' => 'TONER', 'status' => 'publish', 'is_visible' => true,
