@@ -6,7 +6,9 @@
 # (a port nobody else is on, a nonce proving the server answering is ours).
 set -e
 APP=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-DIR=$APP/storage/framework/testing/lane-go-preview
+# GO_LANE / GO_SEED (Lane GQ): another lane can boot its own copy with its own
+# seed (tools/gq-seed.php) without touching this one's database. Defaults: Lane GO.
+DIR=$APP/storage/framework/testing/${GO_LANE:-lane-go}-preview
 ROOT=$DIR/webroot
 DB=$DIR/preview.sqlite
 PORT=$(python3 - "${1:-9530}" <<'KBBPORTPY'
@@ -50,7 +52,7 @@ export KBB_PUBLIC_PATH="$ROOT" APP_ENV=local APP_DEBUG=true \
   APP_PACKAGES_CACHE="$DIR/compiled/packages.php"
 
 php "$APP/artisan" migrate --force >"$DIR/migrate.log" 2>&1 || { tail -30 "$DIR/migrate.log"; exit 1; }
-php "$APP/artisan" tinker --execute="require '$APP/tools/go-seed.php';" >>"$DIR/migrate.log" 2>&1 \
+php "$APP/artisan" tinker --execute="require '$APP/tools/${GO_SEED:-go-seed.php}';" >>"$DIR/migrate.log" 2>&1 \
   || { tail -30 "$DIR/migrate.log"; exit 1; }
 tail -4 "$DIR/migrate.log"
 rm -f "$DIR/compiled/routes.php"

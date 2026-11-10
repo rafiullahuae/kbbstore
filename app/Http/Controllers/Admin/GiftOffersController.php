@@ -149,6 +149,10 @@ class GiftOffersController extends Controller
             'items.*.variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
             'items.*.role' => ['required', Rule::in(['primary', 'backup'])],
             'items.*.allocation' => ['required', 'integer', 'min:0', 'max:' . GiftOffers::MAX_ALLOCATION],
+            // Gives per order (Lane GQ): not refused, normalised -- one of
+            // GiftOffers::QTYS or the default 1 (rule 5: a select stores one of
+            // its own options or the default).
+            'items.*.qty' => ['nullable'],
         ], [
             'max.gte' => 'The range\'s top must be at least its start.',
         ]);
@@ -192,7 +196,7 @@ class GiftOffersController extends Controller
 
             foreach ($items as $sort => $item) {
                 $key = (int) $item['product_id'] . ':' . (int) ($item['variant_id'] ?? 0);
-                $values = ['role' => $item['role'], 'sort' => $sort, 'allocation' => (int) $item['allocation'], 'updated_at' => now()];
+                $values = ['role' => $item['role'], 'sort' => $sort, 'allocation' => (int) $item['allocation'], 'qty' => GiftOffers::qtyOf($item['qty'] ?? null), 'updated_at' => now()];
 
                 if (isset($existing[$key]) && ! isset($keep[$existing[$key]->id])) {
                     DB::table('gift_offer_items')->where('id', $existing[$key]->id)->update($values);
@@ -447,7 +451,7 @@ class GiftOffersController extends Controller
             'choices' => [
                 'places' => GiftOfferStats::PLACES, 'designs' => GiftOffers::DESIGNS, 'styles' => GiftOffers::STYLES,
                 'words' => GiftOffers::WORDS, 'audiences' => GiftOffers::AUDIENCES, 'timers' => GiftOffers::TIMERS, 'windows' => GiftOffers::WINDOWS,
-                'hold' => GiftOffers::HOLD, 'minutes' => GiftOffers::MINUTES, 'max_items' => GiftOffers::MAX_ITEMS, 'max_allocation' => GiftOffers::MAX_ALLOCATION,
+                'hold' => GiftOffers::HOLD, 'minutes' => GiftOffers::MINUTES, 'max_items' => GiftOffers::MAX_ITEMS, 'max_allocation' => GiftOffers::MAX_ALLOCATION, 'qtys' => GiftOffers::QTYS,
             ],
             'live_clock' => GiftClock::available(),
             'my_ip' => (string) (request()->ip() ?? ''),
@@ -471,6 +475,7 @@ class GiftOffersController extends Controller
                         'variant_id' => $i->variant_id === null ? null : (int) $i->variant_id,
                         'role' => $i->role === 'primary' ? 'primary' : 'backup',
                         'allocation' => (int) $i->allocation,
+                        'qty' => GiftOffers::qtyOf((int) ($i->qty ?? 1)),
                         'used' => (int) $i->used,
                         'left' => max(0, (int) $i->allocation - (int) $i->used),
                         'product' => $this->productRow($products[$i->product_id] ?? null, $i->variant_id ? ($variants[(int) $i->variant_id] ?? null) : null),

@@ -3,7 +3,7 @@
 # with the preview's own environment. Usage: sh tools/go-tinker.sh <file.php> [port]
 set -e
 APP=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-DIR=$APP/storage/framework/testing/lane-go-preview
+DIR=$APP/storage/framework/testing/${GO_LANE:-lane-go}-preview
 export APP_URL="http://127.0.0.1:${2:-9530}"
 export KBB_PUBLIC_PATH="$DIR/webroot" APP_ENV=local APP_DEBUG=true \
   DB_CONNECTION=sqlite DB_DATABASE="$DIR/preview.sqlite" SESSION_DRIVER=file CACHE_STORE=file MAIL_MAILER=log \

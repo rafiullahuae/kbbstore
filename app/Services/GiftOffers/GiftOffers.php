@@ -106,6 +106,29 @@ final class GiftOffers
 
     public const MAX_ALLOCATION = 100000;
 
+    /**
+     * Gives per order (Lane GQ; the owner, 10 November 2026: "i need x2 in gift
+     * offers ... we need to give 2 pcs for this product"). How many units ONE
+     * claim of an item gives. The admin's select offers exactly these; anything
+     * else stores the default, 1. Allocation and "given / left" count UNITS, so
+     * a ×2 item spends 2 per order.
+     */
+    public const QTYS = [1, 2, 3, 4, 5];
+
+    /** One of QTYS, or 1. Accepts the select's string ("2") as well as an int. */
+    public static function qtyOf(mixed $v): int
+    {
+        $n = is_int($v) ? $v : (is_string($v) && preg_match('/^[0-9]{1,2}$/', $v) ? (int) $v : 0);
+
+        return in_array($n, self::QTYS, true) ? $n : 1;
+    }
+
+    /** The quantity a claim row was issued with (1 for a row from before the column). */
+    public static function claimQty(object $claim): int
+    {
+        return self::qtyOf(isset($claim->qty) ? (int) $claim->qty : 1);
+    }
+
     public const MAX_RANGES = 30;
 
     public const MAX_ITEMS = 12;
@@ -369,8 +392,9 @@ final class GiftOffers
     /**
      * Rebuild the compiled ranges from the two tables: two queries, on a save
      * in the admin and when an order spends an allocation. Each item is
-     * [item id, product id, variant id (0 = none), allocation left], primary
-     * first then the backups, each group in the owner's order.
+     * [item id, product id, variant id (0 = none), allocation left, gives per
+     * order], primary first then the backups, each group in the owner's order.
+     * (A row compiled before Lane GQ has no fifth value: it reads as 1.)
      */
     public function compile(): array
     {
@@ -379,7 +403,9 @@ final class GiftOffers
             $items = $ranges->isEmpty() ? collect() : DB::table('gift_offer_items')
                 ->whereIn('range_id', $ranges->pluck('id')->all())
                 ->orderByRaw("CASE WHEN role = 'primary' THEN 0 ELSE 1 END")->orderBy('sort')->orderBy('id')
-                ->get(['id', 'range_id', 'product_id', 'variant_id', 'allocation', 'used'])
+                // Every column (Lane GQ): a server whose qty migration has not run yet
+                // still compiles, each item reading as ×1.
+                ->get()
                 ->groupBy('range_id');
         } catch (\Throwable) {
             // The package landed without its migration: nothing to offer, and nothing stored.
@@ -393,7 +419,7 @@ final class GiftOffers
                 'min' => (int) $r->min_fils,
                 'max' => $r->max_fils === null ? null : (int) $r->max_fils,
                 'items' => array_values(array_map(static fn ($i) => [
-                    (int) $i->id, (int) $i->product_id, (int) ($i->variant_id ?? 0), max(0, (int) $i->allocation - (int) $i->used),
+                    (int) $i->id, (int) $i->product_id, (int) ($i->variant_id ?? 0), max(0, (int) $i->allocation - (int) $i->used), self::qtyOf((int) ($i->qty ?? 1)),
                 ], ($items[$r->id] ?? collect())->all())),
             ];
         }
@@ -439,17 +465,26 @@ final class GiftOffers
     /**
      * THE PRODUCT A RANGE GIVES NOW, or null when it gives nothing.
      *
-     * Items whose allocation is spent are dropped first; what is left goes to
-     * FreeGifts::linesFor() as one full-size slot, every item a main gift in
-     * the owner's order -- so the primary when it can be given, else the
-     * first backup that can. One query for the products (memoised per
-     * request by FreeGifts), none for a variation unless one is named.
+     * Items that cannot give their FULL quantity from what is left of their
+     * allocation are dropped first; what is left goes to FreeGifts::linesFor()
+     * as main gifts of their own quantity, in the owner's order, and the
+     * first whose shelf can give ALL of its units is the gift -- so the
+     * primary when it can be given, else the first backup that can.
      *
-     * @return array{range:array,item_id:int,product:Product,variant:mixed,product_id:int,variant_id:?int,value:int}|null
+     * NEVER A SHORT GIFT (Lane GQ). A ×2 item with one unit of allocation or
+     * one on the shelf is skipped for the next backup that can give its own
+     * full quantity: the owner promised two, and one is not what he promised.
+     * With every item at ×1 this picks exactly what it picked before (the
+     * first item with allocation left whose shelf has a unit).
+     *
+     * One query for the products (memoised per request by FreeGifts), none
+     * for a variation unless one is named.
+     *
+     * @return array{range:array,item_id:int,product:Product,variant:mixed,product_id:int,variant_id:?int,value:int,qty:int}|null
      */
     public function resolve(array $range): ?array
     {
-        $items = array_values(array_filter($range['items'] ?? [], static fn (array $i) => $i[3] > 0));
+        $items = array_values(array_filter($range['items'] ?? [], static fn (array $i) => $i[3] > 0 && $i[3] >= self::qtyOf($i[4] ?? 1)));
 
         if ($items === []) {
             return null;
@@ -459,20 +494,24 @@ final class GiftOffers
             'id' => $range['id'],
             'min' => $range['min'],
             'max' => $range['max'],
-            'needs' => ['mask' => 0, 'mini' => 0, 'full' => 1],
-            'gifts' => array_map(static fn (array $i) => array_merge([$i[1], 1, 'full', 'primary'], $i[2] > 0 ? [$i[2]] : []), $items),
+            'needs' => null,
+            'gifts' => array_map(static fn (array $i) => array_merge([$i[1], self::qtyOf($i[4] ?? 1), 'full', 'primary'], $i[2] > 0 ? [$i[2]] : []), $items),
         ]);
 
-        $line = $lines[0] ?? null;
-
-        if ($line === null) {
-            return null;
-        }
-
-        $variantId = (int) ($line['variant_id'] ?? 0);
-
         foreach ($items as $i) {
-            if ($i[1] === (int) $line['product_id'] && $i[2] === $variantId) {
+            $qty = self::qtyOf($i[4] ?? 1);
+
+            foreach ($lines as $line) {
+                $variantId = (int) ($line['variant_id'] ?? 0);
+
+                if ($i[1] !== (int) $line['product_id'] || $i[2] !== $variantId) {
+                    continue;
+                }
+
+                if ((int) $line['quantity'] < $qty) {
+                    break;
+                }
+
                 return [
                     'range' => $range,
                     'item_id' => $i[0],
@@ -480,7 +519,9 @@ final class GiftOffers
                     'variant' => $line['variant'] ?? null,
                     'product_id' => (int) $line['product_id'],
                     'variant_id' => $variantId > 0 ? $variantId : null,
+                    // What the gift is worth: one unit's price x the units given.
                     'value' => (int) $line['value'],
+                    'qty' => $qty,
                 ];
             }
         }
@@ -575,6 +616,7 @@ final class GiftOffers
                 'variant_id' => $offer['variant_id'],
                 'value_fils' => max(0, $offer['value']),
                 'cart_id' => $ctx['cart_id'] ?? null,
+            ] + (($offer['qty'] ?? 1) > 1 ? ['qty' => (int) $offer['qty']] : []) + [
                 'order_id' => $order instanceof Order ? $order->id : null,
                 'status' => 'issued',
                 'is_test' => $test,
@@ -693,7 +735,7 @@ final class GiftOffers
             'clock_label' => $this->text('clock_label'),
             'held' => $held,
             'worth' => $this->text('email_worth', ['price' => Money::plain(max(0, (int) $offer['value']))]),
-            'chips' => [$this->text('chip_free'), $this->text('chip_full'), '×1'],
+            'chips' => [$this->text('chip_free'), $this->text('chip_full'), '×' . self::qtyOf($offer['qty'] ?? 1)],
             'expires' => $expires,
             'range_id' => (int) $offer['range']['id'],
             'place' => $place,
@@ -799,13 +841,19 @@ final class GiftOffers
         return $url . (str_contains($url, '?') ? '&' : '?') . 'gift=' . $gift;
     }
 
-    /** The claimed product is published, in stock, and its allocation is not spent (tests skip allocation). */
+    /**
+     * The claimed product is published, in stock for ALL the claim's units, and
+     * its allocation has that many left (tests skip allocation). A ×2 claim
+     * with one unit left is not giveable: it is never cut down to one.
+     */
     public function stillGiveable(object $claim): bool
     {
+        $qty = self::claimQty($claim);
+
         if (! $claim->is_test) {
             $left = DB::table('gift_offer_items')->where('id', $claim->item_id)->selectRaw('allocation - used as l')->value('l');
 
-            if ($left === null || (int) $left < 1) {
+            if ($left === null || (int) $left < $qty) {
                 return false;
             }
         }
@@ -817,10 +865,10 @@ final class GiftOffers
         }
 
         if ($claim->variant_id) {
-            return FreeGifts::variantAvailable($p, \App\Models\ProductVariant::query()->find($claim->variant_id)) > 0;
+            return FreeGifts::variantAvailable($p, \App\Models\ProductVariant::query()->find($claim->variant_id)) >= $qty;
         }
 
-        return $p->status === 'publish' && $p->type !== 'variable' && $p->stock_status === 'instock' && (! $p->manage_stock || (int) $p->stock > 0);
+        return $p->status === 'publish' && $p->type !== 'variable' && $p->stock_status === 'instock' && (! $p->manage_stock || (int) $p->stock >= $qty);
     }
 
     /**
@@ -926,6 +974,7 @@ final class GiftOffers
 
         return ['goRow' => [
             'name' => (string) ($p->t('name') ?: $p->name),
+            'qty' => self::claimQty($claim),
             'img' => $image !== '' ? ImageVariants::variantUrl($image, 200) : '',
             'left' => $left,
             'total' => $claim->place === 'popup' ? $total : max($total, $left),
@@ -981,15 +1030,19 @@ final class GiftOffers
      * AED 0 `is_gift` line marked with this offer, the allocation spent ONCE
      * (a conditional UPDATE that cannot go below zero) and the claim closed.
      * Inside a savepoint: a shelf or allocation that ran dry since the claim
-     * leaves the gift out and nothing else. Returns the units written (0/1).
+     * leaves the gift out and nothing else. Returns the units written (0, or
+     * the claim's quantity: a ×2 claim writes ONE line of quantity 2 and
+     * spends 2 of the allocation, all or nothing).
      * MUST run inside the caller's transaction.
      */
     public function attach(Order $order, object $claim): int
     {
+        $qty = self::claimQty($claim);
+
         try {
-            return DB::transaction(function () use ($order, $claim): int {
+            return DB::transaction(function () use ($order, $claim, $qty): int {
                 if (! $claim->is_test) {
-                    $spent = DB::table('gift_offer_items')->where('id', $claim->item_id)->whereColumn('used', '<', 'allocation')->increment('used');
+                    $spent = DB::table('gift_offer_items')->where('id', $claim->item_id)->whereRaw('used + ? <= allocation', [$qty])->increment('used', $qty);
 
                     if ($spent !== 1) {
                         throw new \App\Services\StockUnavailable('gift offer allocation spent');
@@ -1003,7 +1056,7 @@ final class GiftOffers
                 app(\App\Services\StockClaim::class)->claim([[
                     'product_id' => (int) $p->id,
                     'variant_id' => $v?->id,
-                    'quantity' => 1,
+                    'quantity' => $qty,
                     'label' => $name,
                 ]], (int) $order->id);
 
@@ -1014,7 +1067,7 @@ final class GiftOffers
                     'name' => $name,
                     'brand' => $p->brand?->name,
                     'sku' => $v?->sku ?: $p->sku,
-                    'quantity' => 1,
+                    'quantity' => $qty,
                     'unit_price' => 0,
                     'subtotal' => 0,
                     'total' => 0,
@@ -1032,7 +1085,7 @@ final class GiftOffers
                     DB::afterCommit(fn () => $this->compile());
                 }
 
-                return 1;
+                return $qty;
             });
         } catch (\App\Services\StockUnavailable) {
             return 0;
@@ -1192,6 +1245,7 @@ final class GiftOffers
             'audience' => $c['popup']['audience'],
             'minutes' => $minutes,
             'name' => FreeGifts::giftName((string) ($p->t('name') ?: $p->name), $v),
+            'qty' => self::qtyOf($offer['qty'] ?? 1),
             'brand' => (string) ($p->brand?->name ?? ''),
             'img' => $image !== '' ? ImageVariants::variantUrl($image, 400) : '',
             'srcset' => $image !== '' ? ImageVariants::srcsetFor($image) : '',
@@ -1244,6 +1298,7 @@ final class GiftOffers
             'variant_id' => $offer['variant_id'],
             'value_fils' => max(0, $offer['value']),
             'cart_id' => $cart->id,
+        ] + (($offer['qty'] ?? 1) > 1 ? ['qty' => (int) $offer['qty']] : []) + [
             'status' => 'claimed',
             'is_test' => false,
             'locale' => Locale::isDefault() ? 'en' : 'ar',
