@@ -9,7 +9,7 @@
 #   story      1080 x 1920   Instagram / Facebook story
 #   post       1080 x 1350   Instagram feed post (4:5)
 #   square     1080 x 1080   Instagram / Facebook square post
-#   web-desk   2560 x 1200   homepage slider, computer (shown 1280 x 600, 2x)
+#   web-desk   3840 x 1200   homepage slider, computer (a 1920 x 600 box at 2x; centre-cropped)
 #   web-phone  1200 x 1540   homepage slider, phone   (shown 390 x 500, ~3x)
 #
 # Products are the shop's own photographs, cut out (assets/): Isntree Onion
@@ -22,12 +22,15 @@ OUT = os.path.join(D, 'out')
 os.makedirs(OUT, exist_ok=True)
 LOTUS = open(os.path.join(D, 'assets', 'lotus.svg')).read().replace('class="lgx-i" ', '').replace('width="35" height="26" ', '')
 
-FONTS = '<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Great+Vibes&family=Montserrat:wght@500;600;700&display=block" rel="stylesheet">'
+# The reference's own type: Cormorant Upright (Get / Gifts, the descending f), Cormorant
+# Garamond italic (Free), Pinyon Script (the line under it). The button and the small
+# line are the WEBSITE's: Outfit and the shop's pink pill (kbb.css .btn, --pink #C6395F).
+FONTS = '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Upright:wght@700&family=Cormorant+Garamond:ital,wght@1,700&family=Pinyon+Script&family=Outfit:wght@500;600;700&display=block" rel="stylesheet">'
 
 # The scene (gift box + products) is drawn on a 1000 x 800 board and scaled.
 SCENE = '''
 <div class="scene" style="--sc:{sc};left:{x}px;top:{y}px">
-  <svg class="spark" style="left:70px;top:150px;width:34px" viewBox="0 0 24 24"><path d="M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6z"/></svg>
+  <svg class="spark s1" style="left:70px;top:150px;width:34px" viewBox="0 0 24 24"><path d="M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6z"/></svg>
   <svg class="spark" style="left:905px;top:250px;width:26px" viewBox="0 0 24 24"><path d="M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6z"/></svg>
   <svg class="spark" style="left:860px;top:90px;width:18px" viewBox="0 0 24 24"><path d="M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6z"/></svg>
   <svg class="spark" style="left:150px;top:300px;width:16px" viewBox="0 0 24 24"><path d="M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6z"/></svg>
@@ -63,7 +66,7 @@ SCENE = '''
 BASE_CSS = '''
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:%(w)dpx;height:%(h)dpx;overflow:hidden}
-body{position:relative;font-family:Montserrat,system-ui,sans-serif;color:#2b1d24;
+body{position:relative;font-family:Outfit,system-ui,sans-serif;color:#2b1d24;
   background:radial-gradient(70%% 55%% at 50%% 38%%,#fff1f5 0%%,#fde0ea 55%%,#f9cddd 100%%)}
 .glow{position:absolute;border-radius:50%%;filter:blur(40px);opacity:.7}
 .logo{position:absolute;display:flex;align-items:center;gap:calc(var(--lg)*.28)}
@@ -72,12 +75,12 @@ body{position:relative;font-family:Montserrat,system-ui,sans-serif;color:#2b1d24
 .logo b{display:block;font-weight:700;font-size:var(--lg);letter-spacing:.06em;line-height:1}
 .logo b em{font-style:normal;color:#d63a74}
 .logo small{display:block;margin-top:calc(var(--lg)*.18);font-size:calc(var(--lg)*.36);letter-spacing:.14em;font-weight:600;color:#d63a74;text-align:center}
-.h{position:absolute;font-family:'Playfair Display',serif;font-weight:700;line-height:1;white-space:nowrap;letter-spacing:-.01em}
-.h em{font-style:normal;color:#e8457f}
-.sc{position:absolute;font-family:'Great Vibes',cursive;color:#c8336c;line-height:1;white-space:nowrap}
-.cta{position:absolute;display:flex;align-items:center;gap:.45em;background:#fff;border-radius:999px;font-weight:600;
-  box-shadow:0 .35em .9em -.3em rgba(196,58,108,.45);padding:.42em 1.05em .42em .8em;white-space:nowrap;color:#1f1a1c}
-.cta svg{width:1.05em;height:1.05em}
+.h{position:absolute;font-family:'Cormorant Upright',serif;font-weight:700;line-height:1;white-space:nowrap;color:#231a1f}
+.h em{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:700;color:#e3317a}
+.sc{position:absolute;font-family:'Pinyon Script',cursive;color:#c8336c;line-height:1.1;white-space:nowrap}
+.cta{position:absolute;display:inline-flex;align-items:center;gap:.64em;background:#C6395F;color:#fff;border-radius:99px;font-weight:700;
+  padding:1em 1.86em;white-space:nowrap;line-height:1;box-shadow:0 .9em 1.6em -.9em rgba(198,57,95,.75)}
+.cta svg{width:1.1em;height:1.1em}
 .pay{position:absolute;font-weight:600;letter-spacing:.16em;color:#4a3a40;white-space:nowrap}
 .scene{position:absolute;width:1000px;height:800px;transform:scale(var(--sc));transform-origin:0 0}
 .scene .p{position:absolute;transform:rotate(var(--r,0deg));filter:drop-shadow(0 18px 18px rgba(120,30,60,.22))}
@@ -105,7 +108,7 @@ def logo(x, y, size, center_w=None):
     return ('<div class="logo" style="%s">%s<div><b>K-BEAUTY <em>BLISS</em></b><small>— KOREAN SKINCARE &amp; MAKEUP —</small></div></div>' % (st, LOTUS))
 
 
-LINK = '<svg viewBox="0 0 24 24" fill="none" stroke="#1d86f0" stroke-width="2.6" stroke-linecap="round"><path d="M10 14a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 10a5 5 0 0 0-7.1 0l-3 3a5 5 0 0 0 7.1 7.1l1.1-1.1"/></svg>'
+ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
 
 
 def centered(w, cls, y, size, html_, extra=''):
@@ -115,38 +118,44 @@ def centered(w, cls, y, size, html_, extra=''):
 def vertical(w, h, L):
     """Story / posts / phone banner: everything stacked and centred."""
     b = '<div class="glow" style="left:%dpx;top:%dpx;width:%dpx;height:%dpx;background:#fff"></div>' % (w * .15, h * .42, w * .7, w * .5)
-    b += logo(0, L['logo'], L['lg'], center_w=w)
     b += centered(w, 'h', L['h'], L['hs'], 'Get <em>Free</em> Gifts')
     b += centered(w, 'sc', L['s'], L['ss'], 'Grab yours before they&rsquo;re gone')
     sw = 1000 * L['sc']
     b += SCENE.format(sc=L['sc'], x=round((w - sw) / 2), y=L['scene'])
     if L.get('cta'):
-        b += '<div style="position:absolute;left:0;width:%dpx;top:%dpx;display:flex;justify-content:center"><div class="cta" style="position:static;font-size:%dpx">%sShop Now ✨</div></div>' % (w, L['cta'], L['cs'], LINK)
+        b += '<div style="position:absolute;left:0;width:%dpx;top:%dpx;display:flex;justify-content:center"><div class="cta" style="position:static;font-size:%dpx">Shop Now%s</div></div>' % (w, L['cta'], L['cs'], ARROW)
     b += centered(w, 'pay', L['pay'], L['ps'], 'SHOP NOW, PAY LATER WITH TABBY OR TAMARA')
     return b
 
 
 def wide(w, h):
-    """Desktop banner: words on the left, the gift box on the right."""
-    b = '<div class="glow" style="left:1250px;top:250px;width:1100px;height:800px;background:#fff"></div>'
-    x = 190
-    b += logo(x, 190, 46)
-    b += '<div class="h" style="left:%dpx;top:330px;font-size:190px">Get <em>Free</em> Gifts</div>' % x
-    b += '<div class="sc" style="left:%dpx;top:560px;font-size:104px">Grab yours before they&rsquo;re gone</div>' % (x + 8)
-    b += '<div class="cta" style="left:%dpx;top:745px;font-size:52px">%sShop Now ✨</div>' % (x, LINK)
-    b += '<div class="pay" style="left:%dpx;top:905px;font-size:30px">SHOP NOW, PAY LATER WITH TABBY OR TAMARA</div>' % (x + 6)
-    b += SCENE.format(sc=1.27, x=1300, y=110)
+    """Desktop slider picture, 3840 x 1200 = a 1920 x 600 box at 2x. The slider
+    crops it from the CENTRE (object-fit: cover): every screen sees the full
+    height and smaller screens lose the left and right edges -- at 1024 wide the
+    visible middle is ~2240 of 3840. So the words and the box all sit in the
+    centre 2200 (x 820..3020), inside the website frame on every screen."""
+    b = '<div class="glow" style="left:1700px;top:200px;width:1400px;height:900px;background:#fff"></div>'
+    x = 860
+    b += '<div class="h" style="left:%dpx;top:250px;font-size:206px">Get <em>Free</em> Gifts</div>' % x
+    b += '<div class="sc" style="left:%dpx;top:490px;font-size:96px">Grab yours before they&rsquo;re gone</div>' % (x + 10)
+    b += '<div class="cta" style="left:%dpx;top:690px;font-size:40px">Shop Now%s</div>' % (x + 10, ARROW)
+    b += '<div class="pay" style="left:%dpx;top:880px;font-size:26px">SHOP NOW, PAY LATER WITH TABBY OR TAMARA</div>' % (x + 14)
+    b += SCENE.format(sc=1.1, x=1880, y=170)
+    # the scene's left sparkle would sit on the headline here
+    b += '<style>.s1{display:none}</style>'
     return b
 
 
 FORMATS = {
-    'story': (1080, 1920, dict(logo=150, lg=40, h=300, hs=142, s=470, ss=72, scene=600, sc=1.0, cta=1520, cs=54, pay=1660, ps=24)),
-    'post': (1080, 1350, dict(logo=70, lg=34, h=180, hs=124, s=330, ss=62, scene=430, sc=.86, cta=None, pay=1250, ps=22)),
-    'square': (1080, 1080, dict(logo=48, lg=30, h=136, hs=104, s=262, ss=52, scene=336, sc=.74, cta=None, pay=1012, ps=20)),
-    'web-phone': (1200, 1540, dict(logo=86, lg=38, h=200, hs=136, s=362, ss=68, scene=480, sc=.98, cta=1300, cs=50, pay=1440, ps=22)),
+    'story': (1080, 1920, dict(h=250, hs=150, s=420, ss=76, scene=560, sc=1.0, cta=1480, cs=36, pay=1640, ps=24)),
+    'post': (1080, 1350, dict(h=96, hs=132, s=246, ss=64, scene=350, sc=.9, cta=None, pay=1236, ps=22)),
+    'square': (1080, 1080, dict(h=70, hs=114, s=196, ss=56, scene=290, sc=.76, cta=None, pay=1000, ps=20)),
+    # phone slider, 1200 x 1540 (390 x 500 at ~3x); kept 90px clear of every
+    # edge a narrower or wider phone may crop (360 trims ~46px a side, 430 ~72px top/bottom)
+    'web-phone': (1200, 1540, dict(h=150, hs=150, s=322, ss=74, scene=450, sc=.98, cta=1255, cs=34, pay=1400, ps=22)),
 }
 
 for name, (w, h, L) in FORMATS.items():
     open(os.path.join(OUT, name + '.html'), 'w').write(page(name, w, h, vertical(w, h, L)))
-open(os.path.join(OUT, 'web-desk.html'), 'w').write(page('web-desk', 2560, 1200, wide(2560, 1200)))
+open(os.path.join(OUT, 'web-desk.html'), 'w').write(page('web-desk', 3840, 1200, wide(3840, 1200)))
 print('ok')
