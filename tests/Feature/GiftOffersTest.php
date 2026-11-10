@@ -434,9 +434,14 @@ it('writes the gift onto the order at AED 0, spends the allocation once, and lea
     gfoFresh();
     DB::table('gift_offer_items')->where('id', $item)->update(['used' => 0, 'allocation' => 5]);
     app(GiftOffers::class)->compile();
-    $cart3 = gfoCart([[gfoProduct('Serum 3', ['price' => 40000]), 1]]);
+    $serum3 = gfoProduct('Serum 3', ['price' => 40000]);
+    $cart3 = gfoCart([[$serum3, 1]]);
     $claimInto($cart3);
-    $cart3->items()->update(['unit_price' => 10000]);
+    // (Lane RP, order #56680) Basket lines carry today's price now, so the bag
+    // falls below the range the way it can on the shop: the product is marked
+    // down after the gift was claimed. Writing the line alone is undone by the
+    // refresh at Place order.
+    $serum3->forceFill(['price' => 10000])->save();
     $place($cart3);
     expect(Order::query()->latest('id')->first()->gifts()->count())->toBe(0)
         ->and((int) DB::table('gift_offer_items')->where('id', $item)->value('used'))->toBe(0);

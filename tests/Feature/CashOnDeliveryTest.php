@@ -83,7 +83,7 @@ function codCart(int $unitPriceFils = 20000, ?int $stock = null): Cart
         'name' => 'Test Serum',
         'status' => 'publish',
         'is_visible' => true,
-        'price' => $unitPriceFils / 100,
+        'price' => $unitPriceFils, // (Lane RP) In fils, as the line beside it: baskets now carry today's price (order #56680).
         'stock_status' => 'instock',
         'manage_stock' => $stock !== null,
         'stock' => $stock,

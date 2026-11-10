@@ -187,6 +187,11 @@ class CartDrawerComposer
         // already loaded the lines and skipped it. (Lane SET)
         if ($cart !== null) {
             \App\Support\SetEagerLoad::on($cart->items->pluck('product'));
+            // (Lane RP, order #56680) Every line at today's price. After the
+            // set members, which a set's price is read from. In memory, no
+            // query, unless a price actually moved -- and on /cart and
+            // /checkout the controller has already done it, so nothing moves.
+            $this->carts->refreshPrices($cart);
         }
 
         [$browsed, $wish] = $this->lists($cart);

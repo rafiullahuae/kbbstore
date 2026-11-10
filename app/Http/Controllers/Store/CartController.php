@@ -86,7 +86,12 @@ class CartController extends Controller
             }
         }
 
-        return view('store.cart', $this->payload($this->loadCart($request), $request));
+        $cart = $this->loadCart($request);
+
+        // (Lane RP) This page shows any "Price updated" note still waiting.
+        $this->carts->takePriceNotes();
+
+        return view('store.cart', $this->payload($cart, $request));
     }
 
     public function add(Request $request): JsonResponse
@@ -528,6 +533,13 @@ class CartController extends Controller
          * no explanation of why a second line went with it.
          */
         $this->setStockNotices = array_merge($this->setStockNotices, $took);
+
+        /*
+         * EVERY LINE AT TODAY'S PRICE (Lane RP, order #56680). After the
+         * reconciler, so a line it took out is not repriced. No query unless
+         * a price actually moved; CartService::refreshPrices() says why.
+         */
+        $this->carts->refreshPrices($cart);
 
         return $cart;
     }

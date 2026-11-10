@@ -26,8 +26,12 @@ use Illuminate\Support\Str;
  * customers by their account, and a guest basket merges into the account on login
  * rather than being thrown away.
  *
- * Prices are snapshotted onto the line at add time, so a price change mid-session
- * cannot silently alter what someone is about to pay.
+ * Prices are written onto the line at add time AND brought up to the catalogue's
+ * current price every time the basket is shown or bought — refreshPrices().
+ * They used to be a snapshot that nothing refreshed, and order #56680 paid
+ * yesterday's AED 85 for a mist the owner had raised to AED 89 that morning.
+ * The shopper is told on the page (priceNote()), and place() refuses to charge
+ * a total the page did not show.
  */
 class CartService
 {
@@ -111,6 +115,33 @@ class CartService
      */
     private bool $resolvedMiss = false;
 
+    /**
+     * What refreshPrices() moved in THIS request, keyed by cart line id:
+     * [from, to] in fils. Read by priceNote() for the "Price updated" line.
+     * Empty on every request where nothing moved, which is what keeps every
+     * page byte-identical when the owner has not touched a price.
+     *
+     * @var array<int, array{from:int, to:int}>
+     */
+    private array $priceChanges = [];
+
+    /**
+     * The request $priceChanges belongs to. The service is scoped, which is
+     * one per request under PHP-FPM -- but the suite drives many requests
+     * through one application, and a note must never outlive its request.
+     */
+    private ?object $priceRequest = null;
+
+    private function scopePriceChanges(): void
+    {
+        $request = app()->bound('request') ? app('request') : null;
+
+        if ($request !== $this->priceRequest) {
+            $this->priceRequest = $request;
+            $this->priceChanges = [];
+        }
+    }
+
     /** The active cart for this request, created on demand. */
     public function current(Request $request, bool $create = true): ?Cart
     {
@@ -183,6 +214,7 @@ class CartService
         $this->resolved = null;
         $this->resolvedMiss = false;
         $this->displayLoaded = false;
+        $this->priceChanges = [];
     }
 
     /**
@@ -323,6 +355,342 @@ class CartService
         }
 
         return app(BundleService::class)->unitFor($base, $quantity);
+    }
+
+    /**
+     * Bring every line of this basket to the price adding it NOW would charge.
+     * (Lane RP — order #56680)
+     *
+     * ── THE DEFECT ─────────────────────────────────────────────────────────
+     * `cart_items.unit_price` was written by add() and updateQuantity() and by
+     * nothing else, so it was a snapshot nobody refreshed. A shopper put the
+     * Anua PDRN Capsule Mist Mini in the bag at AED 85, the owner raised it to
+     * AED 89 that morning, and that night the order was written from the line
+     * — `'unit_price' => $item->unit_price` in CheckoutController::place() —
+     * and the card was charged AED 85. The owner: "sure proceed, but make sure
+     * no breakage etc in anything existing."
+     *
+     * ── THE RULE ───────────────────────────────────────────────────────────
+     * The line becomes exactly unitPriceFor($product, $variant, $qty): sale
+     * prices, scheduled sales, quantity tiers and set pricing, the one place
+     * that already decides what a line costs. Up or down, never past it.
+     *
+     * Called by the three readers that draw a basket — CartController::
+     * loadCart() (cart page and every cart JSON answer), CheckoutController::
+     * loadCart() (checkout page and its fragments) and CartDrawerComposer (the
+     * panel on every page) — and AGAIN by CheckoutController::place() before
+     * the order is priced, which is the guarantee: nothing drawn earlier is
+     * trusted.
+     *
+     * ── WHAT IT LEAVES ALONE, deliberately ─────────────────────────────────
+     *   - a line whose product or chosen option is gone, or is not `instock`
+     *     (the test add() itself uses), or is not published: the cart already
+     *     has its own answer for those (StockClaim refuses at Place order, the
+     *     sold-out dialog trims) and a price read off such a row is not one the
+     *     shop is offering. Untouched, exactly as before this lane.
+     *   - an answer of zero or less — a variable parent with nothing priced
+     *     under it reads 0. That is missing data, not a free product.
+     *   - gifts. Free gifts and gift offers are never cart_items rows: place()
+     *     writes them straight onto the order at 0, so they cannot be repriced.
+     *   - manual orders. ManualOrderBuilder prices its own draft cart and never
+     *     goes through these readers, so a price the admin typed stays his.
+     *   - the buy-together bundle and coupons are not prices on the line; both
+     *     are computed by totals() FROM unit_price, so they follow on their own.
+     *
+     * ── WHAT IT COSTS ──────────────────────────────────────────────────────
+     * Every caller has already loaded the lines, their products and options,
+     * so the comparison is in memory: NO QUERY when nothing moved, which is
+     * every basket on every page until the owner edits a price. When something
+     * did move, ONE statement writes every moved line. The option's own
+     * `product` is pointed at the line's already-loaded product first, which is
+     * what stops ProductVariant::effectivePrice() fetching its parent per line.
+     *
+     * @return array<int, array{from:int, to:int}>  keyed by line id; empty when nothing moved
+     */
+    public function refreshPrices(?Cart $cart): array
+    {
+        $this->scopePriceChanges();
+
+        if ($cart === null) {
+            return [];
+        }
+
+        $cart->loadMissing('items.product', 'items.variant');
+
+        $moved = [];
+
+        foreach ($cart->items as $item) {
+            $product = $item->product;
+
+            if ($product === null) {
+                continue;
+            }
+
+            $variant = null;
+
+            if ($item->product_variant_id !== null) {
+                $variant = $item->variant;
+
+                if ($variant === null) {
+                    continue;
+                }
+
+                if (! $variant->relationLoaded('product') && (int) $variant->product_id === (int) $product->getKey()) {
+                    $variant->setRelation('product', $product);
+                }
+            }
+
+            if (($variant?->stock_status ?? $product->stock_status) !== 'instock') {
+                continue;
+            }
+
+            // Only when the column was selected: the line readers' narrow
+            // column lists carry no `status`, and a guess is not a reason to
+            // skip a price.
+            $status = $product->getAttributes()['status'] ?? null;
+
+            if ($status !== null && $status !== 'publish') {
+                continue;
+            }
+
+            $now = $this->unitPriceFor($product, $variant, max(1, (int) $item->quantity));
+            $was = (int) $item->unit_price;
+
+            if ($now <= 0 || $now === $was) {
+                continue;
+            }
+
+            $moved[(int) $item->id] = ['from' => $was, 'to' => $now];
+        }
+
+        if ($moved === []) {
+            return [];
+        }
+
+        /*
+         * ONE STATEMENT for every moved line. The values are integers this
+         * method computed and cast, never request input, so they are written
+         * into the CASE directly.
+         */
+        $case = 'CASE id';
+
+        foreach ($moved as $id => $change) {
+            $case .= ' WHEN ' . (int) $id . ' THEN ' . (int) $change['to'];
+        }
+
+        DB::table('cart_items')
+            ->where('cart_id', $cart->getKey())
+            ->whereIn('id', array_keys($moved))
+            ->update(['unit_price' => DB::raw($case . ' END'), 'updated_at' => now()]);
+
+        foreach ($cart->items as $item) {
+            if (isset($moved[(int) $item->id])) {
+                $item->unit_price = $moved[(int) $item->id]['to'];
+                $item->syncOriginalAttribute('unit_price');
+            }
+        }
+
+        $this->rememberPriceChanges($moved);
+
+        return $moved;
+    }
+
+    /**
+     * "Price updated from AED 85 to AED 89" for this line, or null.
+     *
+     * Null for every line refreshPrices() did not move — which is every line
+     * of every basket until the owner edits a price — so the views that ask
+     * print nothing and stay byte-identical.
+     *
+     * A move is remembered in the session until the cart page or the checkout
+     * has shown it (forgetPriceNotes()), because the panel on every page
+     * refreshes too: a basket repriced while the shopper read a product page,
+     * with the panel shut, would otherwise reach the cart already at the new
+     * price with nothing saying it moved (takePriceNotes()). A remembered note
+     * is only printed while the line still holds the price it moved TO, so a
+     * quantity change that reprices the line again retires it.
+     */
+    public function priceNote(CartItem $item): ?string
+    {
+        $this->scopePriceChanges();
+
+        $note = $this->priceChanges[(int) $item->id] ?? $this->sessionNotes()[(int) $item->id] ?? null;
+
+        if ($note === null || (int) $note['to'] !== (int) $item->unit_price || (int) $note['from'] === (int) $note['to']) {
+            return null;
+        }
+
+        $dp = Money::decimalsToDistinguish((int) $note['from'], (int) $note['to']);
+
+        return __('store.wording.price_updated', [
+            'from' => Money::plain((int) $note['from'], $dp),
+            'to' => Money::plain((int) $note['to'], $dp),
+        ]);
+    }
+
+    /**
+     * The note as the line views print it: one small line in the class that
+     * surface already uses for its small text under the name (`kc-var` in the
+     * panel, `cvar` on the cart page, `co-var` on the checkout), or '' -- zero
+     * bytes -- for every line that did not move.
+     *
+     * The sentence is escaped here; the class is a constant each view passes.
+     * An echo rather than an `if` in the views because two of the three spots
+     * sit straight after another directive, where Blade would not see one.
+     */
+    public function priceNoteHtml(CartItem $item, string $class): string
+    {
+        $note = $this->priceNote($item);
+
+        if ($note === null) {
+            return '';
+        }
+
+        return '<div class="' . e($class) . '" role="status">' . e($note) . '</div>';
+    }
+
+    /**
+     * One sentence per moved line, named: "Anua PDRN Capsule Mist Mini: Price
+     * updated from AED 85 to AED 89". For the checkout's notice band, where
+     * the order summary opens folded. Empty when nothing moved.
+     *
+     * @return list<string>
+     */
+    public function priceNotices(?Cart $cart): array
+    {
+        if ($cart === null) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach ($cart->items as $item) {
+            $note = $this->priceNote($item);
+
+            if ($note !== null) {
+                $name = trim((string) ($item->product?->t('name') ?? $item->product?->name ?? ''));
+                $out[] = $name === '' ? $note : $name . ': ' . $note;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * The checkout has just drawn this basket: remember the price it showed on
+     * each line, so Place order can tell whether it is about to charge
+     * something else. Called by CheckoutController::page() and by every
+     * fragment that redraws the lines. One small session entry, written only
+     * when it differs from the one already there.
+     */
+    public function rememberDrawnPrices(?Cart $cart): void
+    {
+        $session = $this->session();
+
+        if ($cart === null || $session === null) {
+            return;
+        }
+
+        $drawn = ['cart' => (int) $cart->getKey(), 'lines' => []];
+
+        foreach ($cart->items as $item) {
+            $drawn['lines'][(int) $item->id] = (int) $item->unit_price;
+        }
+
+        if ($session->get(self::PRICES_DRAWN) !== $drawn) {
+            $session->put(self::PRICES_DRAWN, $drawn);
+        }
+    }
+
+    /**
+     * Would this basket, as refreshPrices() has just left it, charge a line at
+     * a price other than the one the checkout last showed for it?
+     *
+     * CheckoutController::place() asks this and refuses to write the order
+     * while it is true. It covers the price moving between the page and the
+     * press, whether place()'s own refresh moved it or the panel on another
+     * page did in the meantime. A basket no checkout has drawn in this session
+     * has no figure to contradict, so it answers false and the order is simply
+     * written at today's prices.
+     */
+    public function pricesMovedSinceDrawn(Cart $cart): bool
+    {
+        $drawn = $this->session()?->get(self::PRICES_DRAWN);
+
+        if (! is_array($drawn) || (int) ($drawn['cart'] ?? 0) !== (int) $cart->getKey() || ! is_array($drawn['lines'] ?? null)) {
+            return false;
+        }
+
+        foreach ($cart->items as $item) {
+            $shown = $drawn['lines'][(int) $item->id] ?? null;
+
+            if ($shown !== null && (int) $shown !== (int) $item->unit_price) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private const PRICES_DRAWN = 'kbb_prices_drawn';
+
+    /**
+     * The cart page, the checkout, or place()'s redraw is about to show the
+     * notes: hold them for this render and stop carrying them in the session.
+     * Costs nothing when there are none, which is every request.
+     */
+    public function takePriceNotes(): void
+    {
+        $this->scopePriceChanges();
+
+        $notes = $this->sessionNotes();
+
+        if ($notes === []) {
+            return;
+        }
+
+        $this->priceChanges = $this->priceChanges + $notes;
+        $this->session()?->forget(self::PRICE_NOTES);
+    }
+
+    private const PRICE_NOTES = 'kbb_price_notes';
+
+    /** @param array<int, array{from:int, to:int}> $moved */
+    private function rememberPriceChanges(array $moved): void
+    {
+        foreach ($moved as $id => $change) {
+            // A line that moved twice in one request reads from where it began.
+            $this->priceChanges[$id] = [
+                'from' => $this->priceChanges[$id]['from'] ?? $this->sessionNotes()[$id]['from'] ?? $change['from'],
+                'to' => $change['to'],
+            ];
+        }
+
+        $session = $this->session();
+
+        if ($session !== null) {
+            // This request's moves win over an older note for the same line.
+            $session->put(self::PRICE_NOTES, $this->priceChanges + $this->sessionNotes());
+        }
+    }
+
+    /** @return array<int, array{from:int, to:int}> */
+    private function sessionNotes(): array
+    {
+        $notes = $this->session()?->get(self::PRICE_NOTES);
+
+        return is_array($notes) ? $notes : [];
+    }
+
+    private function session(): ?\Illuminate\Contracts\Session\Session
+    {
+        try {
+            $request = app('request');
+
+            return $request->hasSession() ? $request->session() : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function create(?int $customerId = null): Cart
