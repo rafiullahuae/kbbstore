@@ -37,7 +37,7 @@ use Illuminate\Support\Str;
  * line; and Place order refuses to charge a total its page did not show.
  */
 
-function rpProduct(string $name, int $fils, array $extra = []): Product
+function rprfProduct(string $name, int $fils, array $extra = []): Product
 {
     return Product::create(array_merge([
         'slug' => 'rp-' . Str::slug($name) . '-' . Str::lower(Str::random(6)),
@@ -46,13 +46,13 @@ function rpProduct(string $name, int $fils, array $extra = []): Product
     ], $extra));
 }
 
-function rpCart(): Cart
+function rprfCart(): Cart
 {
     return Cart::create(['token' => (string) Str::uuid(), 'currency' => 'AED', 'status' => 'active', 'shipping_country' => 'AE', 'last_activity_at' => now()]);
 }
 
 /** One request as the shopper holding this basket, from a clean service. */
-function rpAs(Cart $cart)
+function rprfAs(Cart $cart)
 {
     app(CartService::class)->forget();
 
@@ -60,7 +60,7 @@ function rpAs(Cart $cart)
         ->withUnencryptedCookie(CartService::COOKIE, $cart->token);
 }
 
-function rpShip(): void
+function rprfShip(): void
 {
     $zone = ShippingZone::create(['name' => 'UAE', 'position' => 0]);
     ShippingZoneLocation::create(['shipping_zone_id' => $zone->id, 'type' => 'country', 'code' => 'AE']);
@@ -68,7 +68,7 @@ function rpShip(): void
     PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
 }
 
-function rpPlaceBody(): array
+function rprfPlaceBody(): array
 {
     return [
         'billing_email' => 'buyer@example.com', 'billing_phone' => '+971500000000',
@@ -78,20 +78,20 @@ function rpPlaceBody(): array
     ];
 }
 
-function rpReprice(Product $p, int $fils): void
+function rprfReprice(Product $p, int $fils): void
 {
     $p->forceFill(['price' => $fils])->save();
 }
 
-function rpUnit(Cart $cart): int
+function rprfUnit(Cart $cart): int
 {
     return (int) DB::table('cart_items')->where('cart_id', $cart->id)->orderBy('id')->value('unit_price');
 }
 
 /** The queries one GET costs. */
-function rpQueries(Cart $cart, string $path): int
+function rprfQueries(Cart $cart, string $path): int
 {
-    $req = rpAs($cart);
+    $req = rprfAs($cart);
     DB::enableQueryLog();
     DB::flushQueryLog();
     $req->get($path)->assertOk();
@@ -108,25 +108,25 @@ it('charges the raised price: a line added at AED 85 and repriced to AED 89 tota
      * Order #56680 exactly. MUTATION: remove the refreshPrices() call from
      * CheckoutController::loadCart() and the order is written at 8500 (red).
      */
-    rpShip();
-    $mist = rpProduct('Anua PDRN Capsule Mist Mini', 8500);
-    $cart = rpCart();
+    rprfShip();
+    $mist = rprfProduct('Anua PDRN Capsule Mist Mini', 8500);
+    $cart = rprfCart();
     app(CartService::class)->add($cart, $mist, 1);
-    expect(rpUnit($cart))->toBe(8500);
+    expect(rprfUnit($cart))->toBe(8500);
 
-    rpReprice($mist, 8900);
+    rprfReprice($mist, 8900);
 
     // The checkout the shopper opens that night shows 89 and says so.
-    rpAs($cart)->get('/checkout')->assertOk()
+    rprfAs($cart)->get('/checkout')->assertOk()
         ->assertSee('Price updated from AED 85 to AED 89')
         // The summary opens folded, so the band above the form names it too.
         ->assertSee('<div class="woocommerce-info" role="status">Anua PDRN Capsule Mist Mini: Price updated from AED 85 to AED 89</div>', false)
         ->assertSee('role="status"', false);
 
-    expect(rpUnit($cart))->toBe(8900);
+    expect(rprfUnit($cart))->toBe(8900);
     expect(app(CartService::class)->totals(Cart::find($cart->id), 'AE')['subtotal'])->toBe(8900);
 
-    rpAs($cart)->post('/checkout/place', rpPlaceBody())->assertRedirect();
+    rprfAs($cart)->post('/checkout/place', rprfPlaceBody())->assertRedirect();
 
     $order = Order::latest('id')->firstOrFail();
     expect((int) $order->items->first()->unit_price)->toBe(8900)
@@ -136,40 +136,40 @@ it('charges the raised price: a line added at AED 85 and repriced to AED 89 tota
 
 it('lowers the price the other way: a cut from AED 89 to AED 79 reaches the basket and the order', function () {
     /* MUTATION: return early when $now < $was in refreshPrices() -- red. */
-    rpShip();
-    $mist = rpProduct('Mist', 8900);
-    $cart = rpCart();
+    rprfShip();
+    $mist = rprfProduct('Mist', 8900);
+    $cart = rprfCart();
     app(CartService::class)->add($cart, $mist, 1);
 
-    rpReprice($mist, 7900);
+    rprfReprice($mist, 7900);
 
-    rpAs($cart)->get('/cart')->assertOk()->assertSee('Price updated from AED 89 to AED 79');
-    expect(rpUnit($cart))->toBe(7900);
+    rprfAs($cart)->get('/cart')->assertOk()->assertSee('Price updated from AED 89 to AED 79');
+    expect(rprfUnit($cart))->toBe(7900);
 
-    rpAs($cart)->get('/checkout')->assertOk()->assertDontSee('Price updated from');
-    rpAs($cart)->post('/checkout/place', rpPlaceBody())->assertRedirect();
+    rprfAs($cart)->get('/checkout')->assertOk()->assertDontSee('Price updated from');
+    rprfAs($cart)->post('/checkout/place', rprfPlaceBody())->assertRedirect();
 
     expect((int) Order::latest('id')->firstOrFail()->total)->toBe(7900 + 2000);
 });
 
 it('follows a sale, a scheduled sale ending and a quantity tier, exactly as adding it now would', function () {
     /* MUTATION: price with effectivePrice() instead of unitPriceFor() -- the tier case is red. */
-    $p = rpProduct('Toner', 10000);
-    $cart = rpCart();
+    $p = rprfProduct('Toner', 10000);
+    $cart = rprfCart();
     app(CartService::class)->add($cart, $p, 1);
 
     $p->forceFill(['sale_price' => 8000, 'sale_starts_at' => now()->subDay(), 'sale_ends_at' => now()->addDay()])->save();
-    rpAs($cart)->get('/cart')->assertOk();
-    expect(rpUnit($cart))->toBe(8000);
+    rprfAs($cart)->get('/cart')->assertOk();
+    expect(rprfUnit($cart))->toBe(8000);
 
     $p->forceFill(['sale_ends_at' => now()->subMinute()])->save();
-    rpAs($cart)->get('/cart')->assertOk();
-    expect(rpUnit($cart))->toBe(10000);
+    rprfAs($cart)->get('/cart')->assertOk();
+    expect(rprfUnit($cart))->toBe(10000);
 
     $line = Cart::find($cart->id)->items()->first();
     DB::table('cart_items')->where('id', $line->id)->update(['quantity' => 3]);
-    rpAs($cart)->get('/cart')->assertOk();
-    expect(rpUnit($cart))->toBe(app(CartService::class)->unitPriceFor(Product::find($p->id), null, 3));
+    rprfAs($cart)->get('/cart')->assertOk();
+    expect(rprfUnit($cart))->toBe(app(CartService::class)->unitPriceFor(Product::find($p->id), null, 3));
 });
 
 /* ═════════════════════════ place order, never stale ═════════════════════ */
@@ -185,27 +185,27 @@ it('never charges the stale amount when the price moves between the checkout pag
      * MUTATION: delete the pricesMovedSinceDrawn() refusal in place() and the
      * first press writes an order at 8900 the page never showed -- red.
      */
-    rpShip();
-    $mist = rpProduct('Mist', 8500);
-    $cart = rpCart();
+    rprfShip();
+    $mist = rprfProduct('Mist', 8500);
+    $cart = rprfCart();
     app(CartService::class)->add($cart, $mist, 1);
 
-    rpAs($cart)->get('/checkout')->assertOk()->assertDontSee('Price updated from');
+    rprfAs($cart)->get('/checkout')->assertOk()->assertDontSee('Price updated from');
 
-    rpReprice($mist, 8900);
+    rprfReprice($mist, 8900);
 
-    $answer = rpAs($cart)->postJson('/checkout/place', rpPlaceBody())->assertStatus(422);
+    $answer = rprfAs($cart)->postJson('/checkout/place', rprfPlaceBody())->assertStatus(422);
     expect($answer->json('ok'))->toBeFalse()
         ->and($answer->json('code'))->toBe('bag_gone')
         ->and($answer->json('reason'))->toBe('prices_changed')
         ->and($answer->json('error'))->toContain('nothing has been charged')
         ->and($answer->json('url'))->toEndWith('/checkout/');
     expect(Order::count())->toBe(0);
-    expect(rpUnit($cart))->toBe(8900);
+    expect(rprfUnit($cart))->toBe(8900);
 
-    rpAs($cart)->get('/checkout')->assertOk()->assertSee('Price updated from AED 85 to AED 89');
+    rprfAs($cart)->get('/checkout')->assertOk()->assertSee('Price updated from AED 85 to AED 89');
 
-    $placed = rpAs($cart)->postJson('/checkout/place', rpPlaceBody());
+    $placed = rprfAs($cart)->postJson('/checkout/place', rprfPlaceBody());
     $placed->assertOk();
     expect(Order::count())->toBe(1)
         ->and((int) Order::first()->total)->toBe(8900 + 2000);
@@ -219,17 +219,17 @@ it('refuses too when the price moved in the panel on another page that the check
      * session, are what catch it. MUTATION: refuse only when place()'s own
      * refresh moved something and the order is written -- red.
      */
-    rpShip();
-    $mist = rpProduct('Mist', 8500);
-    $cart = rpCart();
+    rprfShip();
+    $mist = rprfProduct('Mist', 8500);
+    $cart = rprfCart();
     app(CartService::class)->add($cart, $mist, 1);
-    rpAs($cart)->get('/checkout')->assertOk();
+    rprfAs($cart)->get('/checkout')->assertOk();
 
-    rpReprice($mist, 8900);
-    rpAs($cart)->get('/')->assertOk()->assertSee('Price updated from AED 85 to AED 89');
-    expect(rpUnit($cart))->toBe(8900);
+    rprfReprice($mist, 8900);
+    rprfAs($cart)->get('/')->assertOk()->assertSee('Price updated from AED 85 to AED 89');
+    expect(rprfUnit($cart))->toBe(8900);
 
-    rpAs($cart)->post('/checkout/place', rpPlaceBody())->assertRedirect();
+    rprfAs($cart)->post('/checkout/place', rprfPlaceBody())->assertRedirect();
     expect(Order::count())->toBe(0);
 });
 
@@ -239,13 +239,13 @@ it('places a basket no checkout has drawn straight at today\'s price', function 
      * written at the price adding it now would charge, never the snapshot.
      * MUTATION: write the order from the line before refreshPrices() -- red.
      */
-    rpShip();
-    $mist = rpProduct('Mist', 8500);
-    $cart = rpCart();
+    rprfShip();
+    $mist = rprfProduct('Mist', 8500);
+    $cart = rprfCart();
     app(CartService::class)->add($cart, $mist, 1);
-    rpReprice($mist, 8900);
+    rprfReprice($mist, 8900);
 
-    rpAs($cart)->post('/checkout/place', rpPlaceBody())->assertRedirect();
+    rprfAs($cart)->post('/checkout/place', rprfPlaceBody())->assertRedirect();
 
     expect((int) Order::latest('id')->firstOrFail()->items->first()->unit_price)->toBe(8900);
 });
@@ -254,8 +254,8 @@ it('places a basket no checkout has drawn straight at today\'s price', function 
 
 it('keeps free gifts at AED 0 on the order whatever the gift product costs today', function () {
     /* MUTATION: price the gift lines through unitPriceFor() in place() -- red. */
-    rpShip();
-    $gift = rpProduct('Gift Mini', 3000);
+    rprfShip();
+    $gift = rprfProduct('Gift Mini', 3000);
     DB::table('free_gift_ranges')->delete();
     $id = DB::table('free_gift_ranges')->insertGetId([
         'min_fils' => 100, 'max_fils' => null, 'label_en' => 'Gifts', 'label_ar' => 'هدايا',
@@ -268,14 +268,14 @@ it('keeps free gifts at AED 0 on the order whatever the gift product costs today
     Setting::flushMap();
     Money::forgetConfig();
 
-    $serum = rpProduct('Serum', 15000);
-    $cart = rpCart();
+    $serum = rprfProduct('Serum', 15000);
+    $cart = rprfCart();
     app(CartService::class)->add($cart, $serum, 1);
-    rpReprice($serum, 16000);
-    rpReprice($gift, 3500);
+    rprfReprice($serum, 16000);
+    rprfReprice($gift, 3500);
 
-    rpAs($cart)->get('/checkout')->assertOk();
-    rpAs($cart)->post('/checkout/place', rpPlaceBody())->assertRedirect();
+    rprfAs($cart)->get('/checkout')->assertOk();
+    rprfAs($cart)->post('/checkout/place', rprfPlaceBody())->assertRedirect();
 
     $order = Order::latest('id')->firstOrFail();
     expect($order->gifts)->toHaveCount(1)
@@ -286,22 +286,22 @@ it('keeps free gifts at AED 0 on the order whatever the gift product costs today
 
 it('leaves an out-of-stock or unpublished line, and a zero answer, exactly as the cart had it', function () {
     /* MUTATION: drop the instock test in refreshPrices() -- the first case is red. */
-    $gone = rpProduct('Sold Out', 5000);
-    $cart = rpCart();
+    $gone = rprfProduct('Sold Out', 5000);
+    $cart = rprfCart();
     app(CartService::class)->add($cart, $gone, 1);
 
     $gone->forceFill(['price' => 6000, 'stock_status' => 'outofstock'])->save();
     app(CartService::class)->refreshPrices(Cart::find($cart->id));
-    expect(rpUnit($cart))->toBe(5000);
+    expect(rprfUnit($cart))->toBe(5000);
 
     $gone->forceFill(['stock_status' => 'instock', 'status' => 'draft'])->save();
     app(CartService::class)->forget();
     app(CartService::class)->refreshPrices(Cart::with('items.product', 'items.variant')->find($cart->id));
-    expect(rpUnit($cart))->toBe(5000);
+    expect(rprfUnit($cart))->toBe(5000);
 
     $gone->forceFill(['status' => 'publish', 'price' => 0])->save();
     app(CartService::class)->refreshPrices(Cart::with('items.product', 'items.variant')->find($cart->id));
-    expect(rpUnit($cart))->toBe(5000);
+    expect(rprfUnit($cart))->toBe(5000);
 });
 
 it('prices a buy-together bundle off the refreshed line exactly as it prices a fresh one', function () {
@@ -315,23 +315,23 @@ it('prices a buy-together bundle off the refreshed line exactly as it prices a f
     Setting::flushMap();
     SettingsService::forgetMemo();
 
-    $a = rpProduct('A', 5000);
-    $b = rpProduct('B', 6000);
-    $c = rpProduct('C', 7000);
+    $a = rprfProduct('A', 5000);
+    $b = rprfProduct('B', 6000);
+    $c = rprfProduct('C', 7000);
 
-    $old = rpCart();
+    $old = rprfCart();
     $ids = [];
     foreach ([$a, $b, $c] as $p) {
         $ids[] = app(CartService::class)->add($old, $p, 1)->id;
     }
     app(CartService::class)->group($old, $ids);
 
-    rpReprice($a, 5500);
+    rprfReprice($a, 5500);
     app(CartService::class)->forget();
     $oldCart = Cart::find($old->id);
     app(CartService::class)->refreshPrices($oldCart);
 
-    $fresh = rpCart();
+    $fresh = rprfCart();
     $fids = [];
     foreach ([Product::find($a->id), $b, $c] as $p) {
         $fids[] = app(CartService::class)->add($fresh, $p, 1)->id;
@@ -359,31 +359,31 @@ it('costs no query when nothing moved and one statement when any number of lines
      * and the variant costs a query per read -- the "nothing moved" count is
      * red; write the moved lines one save() each and the 3-moved case is red.
      */
-    rpShip();
-    $products = [rpProduct('One', 5000), rpProduct('Two', 6000), rpProduct('Three', 7000)];
-    $parent = rpProduct('Shade Parent', 9000, ['type' => 'variable']);
+    rprfShip();
+    $products = [rprfProduct('One', 5000), rprfProduct('Two', 6000), rprfProduct('Three', 7000)];
+    $parent = rprfProduct('Shade Parent', 9000, ['type' => 'variable']);
     $shade = ProductVariant::create(['product_id' => $parent->id, 'sku' => 'RP-SHADE-1', 'price' => 9000, 'stock_status' => 'instock']);
 
-    $cart = rpCart();
+    $cart = rprfCart();
     foreach ($products as $p) {
         app(CartService::class)->add($cart, $p, 1);
     }
     app(CartService::class)->add($cart, Product::find($parent->id), 1, $shade);
 
     foreach (['/cart', '/checkout'] as $path) {
-        rpQueries($cart, $path);                       // warm: nothing to move
-        $still = rpQueries($cart, $path);
+        rprfQueries($cart, $path);                       // warm: nothing to move
+        $still = rprfQueries($cart, $path);
 
-        rpReprice($products[0], (int) Product::find($products[0]->id)->price + 100);
-        $oneMoved = rpQueries($cart, $path);
+        rprfReprice($products[0], (int) Product::find($products[0]->id)->price + 100);
+        $oneMoved = rprfQueries($cart, $path);
 
         foreach ($products as $p) {
-            rpReprice($p, (int) Product::find($p->id)->price + 100);
+            rprfReprice($p, (int) Product::find($p->id)->price + 100);
         }
         $shade->forceFill(['price' => (int) $shade->fresh()->price + 100])->save();
-        $allMoved = rpQueries($cart, $path);
+        $allMoved = rprfQueries($cart, $path);
 
-        $again = rpQueries($cart, $path);
+        $again = rprfQueries($cart, $path);
 
         expect($oneMoved)->toBe($still + 1, $path . ': one UPDATE for one moved line')
             ->and($allMoved)->toBe($still + 1, $path . ': still one UPDATE for four moved lines')
@@ -398,28 +398,28 @@ it('prints nothing at all when no price moved, on the panel, the cart page and t
      * The page a shopper gets on every day the owner does not touch a price.
      * MUTATION: print the note's wrapper unconditionally -- red.
      */
-    rpShip();
-    $cart = rpCart();
-    app(CartService::class)->add($cart, rpProduct('Mist', 8500), 1);
+    rprfShip();
+    $cart = rprfCart();
+    app(CartService::class)->add($cart, rprfProduct('Mist', 8500), 1);
 
     foreach (['/', '/cart', '/checkout'] as $path) {
-        rpAs($cart)->get($path)->assertOk()->assertDontSee('Price updated');
+        rprfAs($cart)->get($path)->assertOk()->assertDontSee('Price updated');
     }
     expect(app(CartService::class)->priceNoteHtml(Cart::find($cart->id)->items->first(), 'cvar'))->toBe('');
 });
 
 it('says it once on each surface, in the line\'s own small text, and then stops', function () {
     /* MUTATION: never call takePriceNotes() and the third /cart still shows it -- red. */
-    $mist = rpProduct('Mist', 8500);
-    $cart = rpCart();
+    $mist = rprfProduct('Mist', 8500);
+    $cart = rprfCart();
     app(CartService::class)->add($cart, $mist, 1);
-    rpReprice($mist, 8900);
+    rprfReprice($mist, 8900);
 
-    rpAs($cart)->get('/')->assertOk()
+    rprfAs($cart)->get('/')->assertOk()
         ->assertSee('<div class="kc-var" role="status">Price updated from AED 85 to AED 89</div>', false);
-    rpAs($cart)->get('/cart')->assertOk()
+    rprfAs($cart)->get('/cart')->assertOk()
         ->assertSee('<div class="cvar" role="status">Price updated from AED 85 to AED 89</div>', false);
-    rpAs($cart)->get('/cart')->assertOk()->assertDontSee('Price updated from');
+    rprfAs($cart)->get('/cart')->assertOk()->assertDontSee('Price updated from');
 });
 
 it('ships the Arabic beside the English, and the migration carries the class\'s own words', function () {
