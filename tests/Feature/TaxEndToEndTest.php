@@ -61,6 +61,10 @@ use App\Support\VatDisplay;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
+    // (Lane RP, order #56680) Basket lines now carry today's price, computed
+    // as CartService::add() would. e2eCart() writes n units at the full unit
+    // price and this file's arithmetic assumes no quantity tier, so it is off.
+    app(SettingsService::class)->set('bundles_enabled', false);
     // Lane PCY (12 October): Cash on delivery is offered in the UAE only by
     // default now, at the owner's request. This file tests delivery pricing,
     // totals and tax on Gulf orders, not which countries COD is offered in,
