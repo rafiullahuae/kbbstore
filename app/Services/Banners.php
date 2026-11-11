@@ -8,6 +8,7 @@ use App\Models\BannerCard;
 use App\Models\BannerSet;
 use App\Models\Media as MediaUrl;
 use App\Support\Color;
+use App\Support\Locale;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -313,6 +314,8 @@ class Banners
             'image', 'alt', 'heading', 'body', 'button_label', 'button_url',
             'image_w', 'image_h', 'position',
             'image_m', 'image_m_w', 'image_m_h',
+            // The Arabic pictures (2.60.659), swapped in below on /ar.
+            'image_ar', 'image_ar_w', 'image_ar_h', 'image_m_ar', 'image_m_ar_w', 'image_m_ar_h',
             // Lane HB, the words on a slider picture.
             'box_on', 'box_pos', 'eyebrow', 'sticker', 'sticker_ring',
             'eyebrow_ar', 'heading_ar', 'body_ar', 'button_label_ar', 'sticker_ar', 'sticker_ring_ar',
@@ -362,8 +365,33 @@ class Banners
 
         $cards = [];
 
+        /*
+         * THE ARABIC PICTURES (2.60.659; the owner, 11 Nov 2026: "why you
+         * didn't translate the banner?"). On /ar a slide with its own Arabic
+         * picture is drawn with it, by putting it in the `image` columns here
+         * -- so the slider's preloads, srcsets and phone crops follow it with
+         * no change of their own. An Arabic desktop picture without an Arabic
+         * phone one leaves the phone slot empty, so the phone crops the Arabic
+         * desktop picture rather than showing English words. No Arabic picture:
+         * exactly as before. Same query, no extra read.
+         */
+        $arabic = ! Locale::isDefault() && Locale::current() === 'ar';
+
         foreach ($rows as $row) {
             $row = (array) $row;
+
+            // Only on a slide with its words box OFF (the owner, 11 Nov: "if the
+            // text box is ON, then the translation should be done through the
+            // box") -- a box slide keeps one picture and translates its words.
+            if ($arabic && ! (bool) $row['c_box_on'] && trim((string) ($row['c_image_ar'] ?? '')) !== '') {
+                $hasPhoneAr = trim((string) ($row['c_image_m_ar'] ?? '')) !== '';
+                $row['c_image'] = $row['c_image_ar'];
+                $row['c_image_w'] = $row['c_image_ar_w'];
+                $row['c_image_h'] = $row['c_image_ar_h'];
+                $row['c_image_m'] = $hasPhoneAr ? $row['c_image_m_ar'] : '';
+                $row['c_image_m_w'] = $hasPhoneAr ? $row['c_image_m_ar_w'] : null;
+                $row['c_image_m_h'] = $hasPhoneAr ? $row['c_image_m_ar_h'] : null;
+            }
 
             $card = new BannerCard;
 

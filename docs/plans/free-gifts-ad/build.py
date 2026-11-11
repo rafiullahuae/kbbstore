@@ -25,7 +25,7 @@ LOTUS = open(os.path.join(D, 'assets', 'lotus.svg')).read().replace('class="lgx-
 # The reference's own type: Cormorant Upright (Get / Gifts, the descending f), Cormorant
 # Garamond italic (Free), Pinyon Script (the line under it). The button and the small
 # line are the WEBSITE's: Outfit and the shop's pink pill (kbb.css .btn, --pink #C6395F).
-FONTS = '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Upright:wght@700&family=Cormorant+Garamond:ital,wght@1,700&family=Pinyon+Script&family=Outfit:wght@500;600;700&display=block" rel="stylesheet">'
+FONTS = '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Upright:wght@700&family=Cormorant+Garamond:ital,wght@1,700&family=Pinyon+Script&family=Outfit:wght@500;600;700&family=Amiri:wght@700&family=Aref+Ruqaa:wght@700&family=Cairo:wght@600;700&display=block" rel="stylesheet">'
 
 # The scene (gift box + products) is drawn on a 1000 x 800 board and scaled.
 SCENE = '''
@@ -82,6 +82,9 @@ body{position:relative;font-family:Outfit,system-ui,sans-serif;color:#2b1d24;
   padding:1em 1.86em;white-space:nowrap;line-height:1;box-shadow:0 .9em 1.6em -.9em rgba(198,57,95,.75)}
 .cta svg{width:1.1em;height:1.1em}
 .pay{position:absolute;font-weight:600;letter-spacing:.16em;color:#4a3a40;white-space:nowrap}
+.ar .h{font-family:Amiri,serif;line-height:1.25}.ar .h em{font-family:Amiri,serif;font-style:normal}
+.ar .sc{font-family:'Aref Ruqaa',serif;line-height:1.3}
+.ar .cta,.ar .pay{font-family:Cairo,sans-serif}.ar .pay{letter-spacing:0;font-weight:700}.ar .cta svg{transform:scaleX(-1)}
 .scene{position:absolute;width:1000px;height:800px;transform:scale(var(--sc));transform-origin:0 0}
 .scene .p{position:absolute;transform:rotate(var(--r,0deg));filter:drop-shadow(0 18px 18px rgba(120,30,60,.22))}
 .scene .em{filter:drop-shadow(0 14px 16px rgba(120,30,60,.25))}
@@ -96,8 +99,8 @@ body{position:relative;font-family:Outfit,system-ui,sans-serif;color:#2b1d24;
 '''
 
 
-def page(name, w, h, body):
-    return ('<!doctype html><html><head><meta charset="utf-8">' + FONTS + '<style>' + (BASE_CSS % {'w': w, 'h': h}) + '</style></head><body>' + body
+def page(name, w, h, body, ar=False):
+    return ('<!doctype html><html' + (' lang="ar" dir="rtl" class="ar"' if ar else '') + '><head><meta charset="utf-8">' + FONTS + '<style>' + (BASE_CSS % {'w': w, 'h': h}) + '</style></head><body>' + body
             + '</body></html>')
 
 
@@ -115,32 +118,53 @@ def centered(w, cls, y, size, html_, extra=''):
     return '<div class="%s" style="left:0;width:%dpx;text-align:center;top:%dpx;font-size:%dpx;%s">%s</div>' % (cls, w, y, size, extra, html_)
 
 
-def vertical(w, h, L):
+# The words, English and Arabic (the shop's Arabic speaks to her, as the site does).
+WORDS = {
+    False: dict(h='Get <em>Free</em> Gifts', s='Grab yours before they&rsquo;re gone', cta='Shop Now', pay='SHOP NOW, PAY LATER WITH TABBY OR TAMARA'),
+    True: dict(h='احصلي على هدايا <em>مجانية</em>', s='اطلبيها قبل أن تنفد', cta='تسوّقي الآن', pay='تسوّقي الآن وادفعي لاحقًا مع تابي أو تمارا'),
+}
+
+
+def vertical(w, h, L, ar=False):
     """Story / posts / phone banner: everything stacked and centred."""
+    W = WORDS[ar]
     b = '<div class="glow" style="left:%dpx;top:%dpx;width:%dpx;height:%dpx;background:#fff"></div>' % (w * .15, h * .42, w * .7, w * .5)
-    b += centered(w, 'h', L['h'], L['hs'], 'Get <em>Free</em> Gifts')
-    b += centered(w, 'sc', L['s'], L['ss'], 'Grab yours before they&rsquo;re gone')
+    b += centered(w, 'h', L['h'] - (12 if ar else 0), round(L['hs'] * (.8 if ar else 1)), W['h'])
+    b += centered(w, 'sc', L['s'] - (8 if ar else 0), round(L['ss'] * (.82 if ar else 1)), W['s'])
     sw = 1000 * L['sc']
     b += SCENE.format(sc=L['sc'], x=round((w - sw) / 2), y=L['scene'])
     if L.get('cta'):
-        b += '<div style="position:absolute;left:0;width:%dpx;top:%dpx;display:flex;justify-content:center"><div class="cta" style="position:static;font-size:%dpx">Shop Now%s</div></div>' % (w, L['cta'], L['cs'], ARROW)
-    b += centered(w, 'pay', L['pay'], L['ps'], 'SHOP NOW, PAY LATER WITH TABBY OR TAMARA')
+        b += '<div style="position:absolute;left:0;width:%dpx;top:%dpx;display:flex;justify-content:center"><div class="cta" style="position:static;font-size:%dpx">%s%s</div></div>' % (w, L['cta'], L['cs'], W['cta'], ARROW)
+    b += centered(w, 'pay', L['pay'], round(L['ps'] * (1.2 if ar else 1)), W['pay'])
     return b
 
 
-def wide(w, h):
+def wide(w, h, ar=False):
     """Desktop slider picture, 3840 x 1200 = a 1920 x 600 box at 2x. The slider
     crops it from the CENTRE (object-fit: cover): every screen sees the full
     height and smaller screens lose the left and right edges -- at 1024 wide the
     visible middle is ~2240 of 3840. So the words and the box all sit in the
-    centre 2200 (x 820..3020), inside the website frame on every screen."""
-    b = '<div class="glow" style="left:1700px;top:200px;width:1400px;height:900px;background:#fff"></div>'
-    x = 860
-    b += '<div class="h" style="left:%dpx;top:250px;font-size:206px">Get <em>Free</em> Gifts</div>' % x
-    b += '<div class="sc" style="left:%dpx;top:490px;font-size:96px">Grab yours before they&rsquo;re gone</div>' % (x + 10)
-    b += '<div class="cta" style="left:%dpx;top:690px;font-size:40px">Shop Now%s</div>' % (x + 10, ARROW)
-    b += '<div class="pay" style="left:%dpx;top:880px;font-size:26px">SHOP NOW, PAY LATER WITH TABBY OR TAMARA</div>' % (x + 14)
-    b += SCENE.format(sc=1.1, x=1880, y=170)
+    centre 2200 (x 820..3020), inside the website frame on every screen.
+    Arabic is the mirror: words on the right, the gift box on the left.
+    The pay line sits 300px clear of the foot (owner, 11 Nov: it was hiding
+    under the slider's bar)."""
+    W = WORDS[ar]
+    if not ar:
+        b = '<div class="glow" style="left:1700px;top:200px;width:1400px;height:900px;background:#fff"></div>'
+        x = 860
+        b += '<div class="h" style="left:%dpx;top:240px;font-size:206px">%s</div>' % (x, W['h'])
+        b += '<div class="sc" style="left:%dpx;top:480px;font-size:96px">%s</div>' % (x + 10, W['s'])
+        b += '<div class="cta" style="left:%dpx;top:660px;font-size:40px">%s%s</div>' % (x + 10, W['cta'], ARROW)
+        b += '<div class="pay" style="left:%dpx;top:820px;font-size:26px">%s</div>' % (x + 14, W['pay'])
+        b += SCENE.format(sc=1.1, x=1880, y=170)
+    else:
+        b = '<div class="glow" style="left:740px;top:200px;width:1400px;height:900px;background:#fff"></div>'
+        r = 860  # right margin, mirroring the English left one
+        b += '<div class="h" style="right:%dpx;top:220px;font-size:150px">%s</div>' % (r, W['h'])
+        b += '<div class="sc" style="right:%dpx;top:470px;font-size:84px">%s</div>' % (r + 10, W['s'])
+        b += '<div class="cta" style="right:%dpx;top:660px;font-size:40px">%s%s</div>' % (r + 10, W['cta'], ARROW)
+        b += '<div class="pay" style="right:%dpx;top:820px;font-size:32px">%s</div>' % (r + 14, W['pay'])
+        b += SCENE.format(sc=1.1, x=w - 1880 - 1100, y=170)
     # the scene's left sparkle would sit on the headline here
     b += '<style>.s1{display:none}</style>'
     return b
@@ -152,10 +176,13 @@ FORMATS = {
     'square': (1080, 1080, dict(h=70, hs=114, s=196, ss=56, scene=290, sc=.76, cta=None, pay=1000, ps=20)),
     # phone slider, 1200 x 1540 (390 x 500 at ~3x); kept 90px clear of every
     # edge a narrower or wider phone may crop (360 trims ~46px a side, 430 ~72px top/bottom)
-    'web-phone': (1200, 1540, dict(h=150, hs=150, s=322, ss=74, scene=450, sc=.98, cta=1255, cs=34, pay=1400, ps=22)),
+    'web-phone': (1200, 1540, dict(h=130, hs=150, s=300, ss=74, scene=420, sc=.98, cta=1215, cs=34, pay=1330, ps=22)),
 }
 
 for name, (w, h, L) in FORMATS.items():
     open(os.path.join(OUT, name + '.html'), 'w').write(page(name, w, h, vertical(w, h, L)))
 open(os.path.join(OUT, 'web-desk.html'), 'w').write(page('web-desk', 3840, 1200, wide(3840, 1200)))
+open(os.path.join(OUT, 'web-desk-ar.html'), 'w').write(page('web-desk-ar', 3840, 1200, wide(3840, 1200, True), True))
+w, h, L = FORMATS['web-phone']
+open(os.path.join(OUT, 'web-phone-ar.html'), 'w').write(page('web-phone-ar', w, h, vertical(w, h, L, True), True))
 print('ok')

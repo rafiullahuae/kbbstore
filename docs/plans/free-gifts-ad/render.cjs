@@ -2,7 +2,7 @@
 const { chromium } = require('playwright');
 const path = require('path');
 const OUT = path.join(__dirname, 'out');
-const SIZES = { story: [1080, 1920], post: [1080, 1350], square: [1080, 1080], 'web-desk': [3840, 1200], 'web-phone': [1200, 1540] };
+const SIZES = { story: [1080, 1920], post: [1080, 1350], square: [1080, 1080], 'web-desk': [3840, 1200], 'web-phone': [1200, 1540], 'web-desk-ar': [3840, 1200], 'web-phone-ar': [1200, 1540] };
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   for (const [n, [w, h]] of Object.entries(SIZES)) {

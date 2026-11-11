@@ -656,6 +656,9 @@ class BannerApiController extends Controller
             // column cannot take a URL, an absolute path or a scheme this
             // shop has not checked, whichever of the two fields it arrives in.
             'image_m' => ['sometimes', 'nullable', 'string', 'max:400'],
+            // 2.60.659. The Arabic pictures, through the same gate.
+            'image_ar' => ['sometimes', 'nullable', 'string', 'max:400'],
+            'image_m_ar' => ['sometimes', 'nullable', 'string', 'max:400'],
             'alt' => ['sometimes', 'nullable', 'string', 'max:255'],
             'heading' => ['sometimes', 'nullable', 'string', 'max:190'],
             'body' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -788,6 +791,8 @@ class BannerApiController extends Controller
         foreach ([
             'image' => ['image_w', 'image_h'],
             'image_m' => ['image_m_w', 'image_m_h'],
+            'image_ar' => ['image_ar_w', 'image_ar_h'],
+            'image_m_ar' => ['image_m_ar_w', 'image_m_ar_h'],
         ] as $field => [$widthColumn, $heightColumn]) {
             if (! array_key_exists($field, $data)) {
                 continue;
@@ -1129,6 +1134,11 @@ class BannerApiController extends Controller
             'image_m_url' => $card->image_m === '' ? '' : Banners::imageUrl($card->image_m),
             'image_m_w' => $card->image_m_w,
             'image_m_h' => $card->image_m_h,
+            // 2.60.659. The Arabic pictures, for their thumbnails and pickers.
+            'image_ar' => (string) $card->image_ar,
+            'image_ar_url' => (string) $card->image_ar === '' ? '' : Banners::imageUrl((string) $card->image_ar),
+            'image_m_ar' => (string) $card->image_m_ar,
+            'image_m_ar_url' => (string) $card->image_m_ar === '' ? '' : Banners::imageUrl((string) $card->image_m_ar),
             'alt' => $card->alt,
             'heading' => $card->heading,
             'body' => $card->body,

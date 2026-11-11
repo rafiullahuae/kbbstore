@@ -27,6 +27,9 @@ class BannerCard extends Model
         // three above. A slider draws it below 768px; a cards banner has one
         // frame shape and ignores it.
         'image_m', 'image_m_w', 'image_m_h',
+        // 2.60.659 (owner, 11 Nov 2026). The Arabic pictures, drawn on /ar in
+        // place of the two above when set -- Banners::load() swaps them.
+        'image_ar', 'image_ar_w', 'image_ar_h', 'image_m_ar', 'image_m_ar_w', 'image_m_ar_h',
         // Lane HB. The words on a slider picture -- App\Support\BannerTextBox.
         'box_on', 'box_pos', 'eyebrow', 'sticker', 'sticker_ring',
         'eyebrow_ar', 'heading_ar', 'body_ar', 'button_label_ar', 'sticker_ar', 'sticker_ring_ar',
@@ -39,6 +42,10 @@ class BannerCard extends Model
         'position' => 'int',
         'image_m_w' => 'int',
         'image_m_h' => 'int',
+        'image_ar_w' => 'int',
+        'image_ar_h' => 'int',
+        'image_m_ar_w' => 'int',
+        'image_m_ar_h' => 'int',
         'box_on' => 'bool',
     ];
 
