@@ -216,7 +216,8 @@ it('draws a control for every card column the editor can write, exactly once', f
      */
     $owned = array_values(array_diff(
         (new BannerCard)->getFillable(),
-        ['banner_set_id', 'image_w', 'image_h', 'image_m_w', 'image_m_h'],
+        // 2.60.659: the Arabic pictures' measured pairs, for the same reason.
+        ['banner_set_id', 'image_w', 'image_h', 'image_m_w', 'image_m_h', 'image_ar_w', 'image_ar_h', 'image_m_ar_w', 'image_m_ar_h'],
     ));
 
     sort($owned);
