@@ -178,7 +178,12 @@ class CollectionController extends Controller
              * emits byte-for-byte the SQL this line used to, tie-break
              * included -- pinned by comparing toSql().
              */
-            'popular' => \App\Support\RepeatPurchase::applyTo($query),
+            /*
+             * 2.60.660 (the owner, 11 Nov 2026): the units sold in the last
+             * three months, top 150, highest first -- RecentBestSellers. A shop
+             * with no sale in that window keeps the ordering below.
+             */
+            'popular' => \App\Support\RecentBestSellers::applyTo($query) ?? \App\Support\RepeatPurchase::applyTo($query),
             'on_sale' => $query
                 ->whereNotNull('sale_price')
                 ->where('sale_price', '>', 0)

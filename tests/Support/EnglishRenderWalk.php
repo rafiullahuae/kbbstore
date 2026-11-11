@@ -2362,12 +2362,16 @@ MM504,
             'a sold-out card: the Sold out pill on the photo (Lane PX)' => [
                 'pattern' => '#( {8})( {8}<button class="qv-btn" type="button" aria-label="Quick view" data-kbb-qv="(?:1|10|19)">)#',
                 'with' => '$1<span class="kbb-soldout">Sold out</span>$2',
-                'hits' => 13,
+                // 13 -> 11 (2.60.660): two of these cards were on /best-sellers/, which
+                // now draws only what sold in the last three months.
+                'hits' => 11,
             ],
             'a sold-out card: the button says Sold out (Lane PX)' => [
                 'pattern' => '#(data-kbb-qv="(?:1|10|19)">(?:(?!kbb-card-cart).)*?<a class="kbb-card-cart)(" href="[^"]*">)View product</a>#s',
                 'with' => '$1 kbb-card-soldout$2Sold out</a>',
-                'hits' => 13,
+                // 13 -> 11 (2.60.660): two of these cards were on /best-sellers/, which
+                // now draws only what sold in the last three months.
+                'hits' => 11,
             ],
 
             /*
@@ -4484,7 +4488,13 @@ KBB_BH_CSS;
                  * on it. Twelve tiles fewer on one page, the homepage; the -N%
                  * count falls by the seven of those twelve that were reduced.
                  */
-                'hits' => 71,
+                /*
+                 * 2.60.660: /best-sellers/ draws the units sold in the last
+                 * three months only (the owner, 11 Nov 2026), so this fixture's
+                 * page holds 23 fewer tiles -- the products with no order in the
+                 * window. One page; nothing else moved.
+                 */
+                'hits' => 48,
             ],
             /*
              * 110 -> 119 (Lane PS). The product page's "You may also like"
@@ -4519,7 +4529,13 @@ KBB_BH_CSS;
                  * sellers off — two tiles fewer on that one page, cut whole
                  * below the same way.
                  */
-                'hits' => 109,
+                /*
+                 * 2.60.660: /best-sellers/ draws the units sold in the last
+                 * three months only (the owner, 11 Nov 2026), so this fixture's
+                 * page holds 23 fewer tiles -- the products with no order in the
+                 * window. One page; nothing else moved.
+                 */
+                'hits' => 86,
             ],
 
             /*
@@ -4571,7 +4587,13 @@ KBB_BH_CSS;
                 // eight tiles the old carousel no longer draws was reduced.
                 // 32 -> 34 (Lane RP2): the brand line's note again; two of the
                 // twelve tiles the three blocks add there are reduced.
-                'hits' => 34,
+                /*
+                 * 2.60.660: /best-sellers/ draws the units sold in the last
+                 * three months only (the owner, 11 Nov 2026), so this fixture's
+                 * page holds 23 fewer tiles -- the products with no order in the
+                 * window. One page; nothing else moved.
+                 */
+                'hits' => 29,
             ],
             /*
              * THE CHECKOUT'S ADDRESS PICKER ROW GOES (Lane CK, 6 October). The
