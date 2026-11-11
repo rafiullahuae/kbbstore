@@ -40,10 +40,10 @@ function inject([css, pieces, key, state, left, total]) {
     const lg = f.querySelector('legend'), th = f.querySelector('.fgb-th'), list = f.querySelector('.fgb-list');
     if (pieces.legendSide) f.insertAdjacentHTML('beforeend', pieces.legendSide);
     if (pieces.top) lg.insertAdjacentHTML('afterend', pieces.top);
-    if (pieces.mid && th) th.insertAdjacentHTML('beforebegin', pieces.mid);
-    if (pieces.tile && th) th.insertAdjacentHTML('afterbegin', pieces.tile);
+    if (pieces.mid && th) th.insertAdjacentHTML('afterend', pieces.mid);
+    if (pieces.tile && th) { const tg = th.querySelector(':scope > .fgb-tg'); if (tg) tg.insertAdjacentHTML('beforebegin', pieces.tile); else th.insertAdjacentHTML('beforeend', pieces.tile); }
     if (pieces.after && th) th.insertAdjacentHTML('afterend', pieces.after);
-    if (pieces.row && list) list.insertAdjacentHTML('afterbegin', pieces.row);
+    if (pieces.row && list) list.insertAdjacentHTML('beforeend', pieces.row);
   });
 }
 

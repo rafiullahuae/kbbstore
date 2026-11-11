@@ -1,4 +1,5 @@
-// The five "bonus gift inside the Free gifts box" designs (Lane GB, owner 10 Nov 2026):
+// The five "bonus gift inside the Free gifts box" designs (Lane GB, owner 10 Nov 2026;
+// 11 Nov: "i wanted the additional gift product at the last, not as 1st"):
 // "the additional free gift product should inside the gifts box with upper side live
 // timer ... i don't want additional separate box for it as we have currently."
 //
@@ -32,7 +33,7 @@ const BASE_CSS = `.gbm .gbm-hd{transform-origin:12px 13px;animation:gbmhd 4s ste
 const D = {
   A: {
     name: 'A · Timer bar on top',
-    line: 'A slim pink bar under the title, "Your bonus gift is held for 14:52", with a line along its foot that shrinks as time runs; the bonus is the first photo in the row, ringed in pink, with a BONUS tag and ×2, and one line under the row names it.',
+    line: 'A slim pink bar under the title, "Your bonus gift is held for 14:52", with a line along its foot that shrinks as time runs; the bonus is the LAST photo in the row, ringed in pink, with a BONUS tag and ×2, and one line under the row names it.',
     css: `.gbA-bar{position:relative;display:flex;align-items:center;gap:6px;margin:5px 0 1px;padding:5px 9px 7px;border-radius:8px;background:#fff1f4;color:#a12d4f;font-size:11.5px;font-weight:700;line-height:1.3;overflow:hidden}.gbA-bar svg{flex:none}.gbA-bar>span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gbA-bar .gbm-clk{flex:none;font-size:13px;color:#2a2228}.gbA-ln{position:absolute;left:0;right:0;bottom:0;height:3px;background:#c6395f;transform-origin:0 50%;transition:transform 1s linear}[dir=rtl] .gbA-ln{transform-origin:100% 50%}
 .gbA .fgb-th{padding-bottom:5px}.gbA-t{box-shadow:0 0 0 2px #fff,0 0 0 3.5px #c6395f}.gbA-t b{background:#c6395f!important}.gbA-tag{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);z-index:1;padding:1px 5px;border-radius:4px;background:#c6395f;color:#fff;font-size:8px;font-weight:800;letter-spacing:.06em;line-height:1.35}
 .gbA-cap{margin-top:7px;font-size:11.5px;line-height:1.3;color:#2a2228;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gbA-cap b{color:#a12d4f}
@@ -45,7 +46,7 @@ const D = {
   },
   B: {
     name: 'B · Timer pill on the border',
-    line: 'A dark stopwatch pill sits ON the green border, opposite "Free gifts for you", like a second label; inside, the bonus is a wide cream first card (photo, name, Free · Full size · ×2), with the regular gift photos below it.',
+    line: 'A dark stopwatch pill sits ON the green border, opposite "Free gifts for you", like a second label; inside, the regular gift photos come first and the bonus is a wide cream card at the foot of the box (photo, name, Free · Full size · ×2).',
     css: `fieldset.gbB{position:relative}.gbB-pill{position:absolute;top:-12px;inset-inline-end:9px;display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 6px;border-radius:999px;background:#2a2228;color:#fff;font-size:12px;line-height:1.2;box-shadow:0 0 0 3px var(--fg-surface,#fff)}.gbB-pill .gbm-clk{font-size:12.5px}
 .gbB-card{display:grid;grid-template-columns:42px minmax(0,1fr);gap:9px;align-items:center;margin-top:8px;padding:7px 9px;border-radius:10px;background:#fffaf2;border:1px solid #f1e4cc}.gbB-card .fgb-t{width:42px!important;height:42px!important;border-color:#f1e4cc}.gbB-card .fgb-t b{background:#8a6a2c}.gbB-nm{min-width:0;display:grid;gap:3px}.gbB-nm b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:12.5px;font-weight:800;line-height:1.25;max-height:2.5em}.gbB-ch{display:flex;gap:4px;flex-wrap:wrap}.gbB-ch i{font-style:normal;font-size:9.5px;font-weight:800;border-radius:6px;padding:1px 6px;background:#fbf1de;color:#8a6a2c;white-space:nowrap}.gbB-ch i.g{background:#8a6a2c;color:#fffaf2}
 .gbB.low .gbB-pill{background:#d1213f}.gbB.low .gbB-card{border-color:#f3c3cb}
@@ -57,7 +58,7 @@ const D = {
   },
   C: {
     name: 'C · Countdown strip + ringed photo',
-    line: 'A charcoal countdown strip inside the box above the photos ("Bonus gift held · 14:52"); the bonus photo leads the row inside a pink ring that shrinks as time runs out, with ×2, and its name on one line under the row.',
+    line: 'A charcoal countdown strip inside the box above the photos ("Bonus gift held · 14:52"); the bonus photo ends the row inside a pink ring that shrinks as time runs out, with ×2, and its name on one line under the row.',
     css: `.gbC-s{display:flex;align-items:center;gap:7px;margin:5px 0 1px;padding:5px 9px;border-radius:8px;background:#2a2228;color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;line-height:1.3}.gbC-s>span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gbC-s .gbm-clk{flex:none;font-size:14px;letter-spacing:.04em}
 .gbC .fgb-th{align-items:center}.gbC-t{margin:5px 7px 5px 5px}.gbC-r{position:absolute;inset:-5px;border-radius:50%;pointer-events:none}.gbC-r::before{content:"";position:absolute;inset:0;border-radius:50%;border:2.5px solid #f6dbe2}.gbC-h{position:absolute;top:0;width:50%;height:100%;overflow:hidden}.gbC-hr{right:0}.gbC-hl{left:0}.gbC-h i{position:absolute;top:0;width:200%;height:100%;box-sizing:border-box;border-radius:50%;border:2.5px solid transparent;transition:transform 1s linear}.gbC-hr i{right:0;border-top-color:#c6395f;border-right-color:#c6395f}.gbC-hl i{left:0;border-bottom-color:#c6395f;border-left-color:#c6395f}.gbC-t.fgb-t,.gbC-t.fgb-t img{border-radius:50%!important}.gbC-t b{background:#c6395f!important;z-index:1}
 .gbC-cap{margin-top:5px;font-size:11.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#2a2228}.gbC-cap b{color:#c6395f;font-weight:800}
@@ -69,19 +70,20 @@ const D = {
     }; },
   },
   D: {
-    name: 'D · Two-part box',
-    line: 'One outline, two parts: a cream band right under the title ("BONUS GIFT" and a dark clock chip, then the photo, name and Free · Full size · ×2 chips), a dashed green divider, then the regular gifts exactly as today.',
-    css: `.gbD-b{margin:4px -11px 0;padding:7px 11px 9px;background:#fffaf2;border-top:1px solid #f1e4cc;border-bottom:1px dashed #2e8f62}.gbD-h{display:flex;align-items:center;gap:6px;color:#8a6a2c;font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}.gbD-h>span:not(.gbD-k){flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gbD-k{display:inline-flex;align-items:center;gap:4px;padding:3px 7px 3px 5px;border-radius:8px;background:#2a2228;color:#fff;font-size:10px;letter-spacing:.02em;text-transform:none}.gbD-k .gbm-clk{font-size:13px}
+    name: 'D · Two-part box (bonus at the foot)',
+    line: 'One outline, two parts: under the title a slim cream line ("BONUS GIFT" and a dark clock chip), then the regular gifts exactly as today, a dashed green divider, and the bonus at the foot (photo, name and Free · Full size · ×2 chips).',
+    css: `.gbD-b{margin:4px -11px 0;padding:6px 11px;background:#fffaf2;border-top:1px solid #f1e4cc;border-bottom:1px solid #f1e4cc}.gbD-f{margin:8px -11px -2px;padding:8px 11px 4px;background:#fffaf2;border-top:1px dashed #2e8f62}.gbD-g{margin-top:0!important}.gbD-h{display:flex;align-items:center;gap:6px;color:#8a6a2c;font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}.gbD-h>span:not(.gbD-k){flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gbD-k{display:inline-flex;align-items:center;gap:4px;padding:3px 7px 3px 5px;border-radius:8px;background:#2a2228;color:#fff;font-size:10px;letter-spacing:.02em;text-transform:none}.gbD-k .gbm-clk{font-size:13px}
 .gbD-g{display:grid;grid-template-columns:42px minmax(0,1fr);gap:9px;align-items:center;margin-top:6px}.gbD-g .fgb-t{width:42px!important;height:42px!important;border-color:#f1e4cc}.gbD-g .fgb-t b{background:#8a6a2c}.gbD-g b.n{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:12.5px;font-weight:800;line-height:1.25;max-height:2.5em}.gbD-ch{display:flex;gap:4px;margin-top:3px}.gbD-ch i{font-style:normal;font-size:9.5px;font-weight:800;border-radius:6px;padding:1px 6px;background:#fbf1de;color:#8a6a2c;white-space:nowrap}.gbD-ch i.g{background:#8a6a2c;color:#fffaf2}
-.gbD .fgb-w{margin-top:7px}.gbD.low .gbD-k{background:#d1213f}.gbD.low .gbD-b{background:#fff4f5}
+.gbD .fgb-w{margin-top:7px}.gbD.low .gbD-k{background:#d1213f}.gbD.low .gbD-b,.gbD.low .gbD-f{background:#fff4f5}
 .gbD-x.gbm-x{margin:4px -11px 0;border-radius:0;border-bottom:1px dashed #2e8f62;background:#faf8f8}`,
     build: (d, s) => s === 'ended' ? { top: endedLine('gbD-x') } : {
-      top: `<div class="gbD-b"><div class="gbD-h">${GIFT}<span>Bonus gift</span><span class="gbD-k" role="timer">${WATCH}<span class="gbm-clk" data-gbm-clk>${clock(d.left)}</span></span></div><div class="gbD-g">${tile(d, 'gbD-t')}<span style="min-width:0"><b class="n">${esc(d.name)}</b><span class="gbD-ch"><i class="g">Free</i><i>Full size</i><i>×${d.qty}</i></span></span></div></div>`,
+      top: `<div class="gbD-b"><div class="gbD-h">${GIFT}<span>Bonus gift</span><span class="gbD-k" role="timer">${WATCH}<span class="gbm-clk" data-gbm-clk>${clock(d.left)}</span></span></div></div>`,
+      mid: `<div class="gbD-f"><div class="gbD-g">${tile(d, 'gbD-t')}<span style="min-width:0"><b class="n">${esc(d.name)}</b><span class="gbD-ch"><i class="g">Free</i><i>Full size</i><i>×${d.qty}</i></span></span></div></div>`,
     },
   },
   E: {
     name: 'E · Flip-clock header',
-    line: 'Centred under the title: "BONUS GIFT RESERVED FOR" over a small flip-clock (each digit its own dark tile, sliding in as it changes); the bonus leads the photo row in a gold frame with a gold ×2, its name on one line below.',
+    line: 'Centred under the title: "BONUS GIFT RESERVED FOR" over a small flip-clock (each digit its own dark tile, sliding in as it changes); the bonus ends the photo row in a gold frame with a gold ×2, its name on one line below.',
     css: `.gbE-h{margin:6px 0 1px;text-align:center}.gbE-l{display:block;font-size:9.5px;font-weight:800;letter-spacing:.09em;color:#8a6a2c;text-transform:uppercase}.gbE-d{display:inline-flex;align-items:center;gap:2px;margin-top:3px;direction:ltr}.gbE-d i{display:inline-grid;place-items:center;width:17px;height:23px;border-radius:5px;background:#2a2228;color:#fff;font:800 14px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-style:normal;box-shadow:inset 0 -11.5px 0 rgba(255,255,255,.07)}.gbE-d i.in{animation:gbEin .35s ease-out}.gbE-d i.in2{animation:gbEin2 .35s ease-out}@keyframes gbEin{from{transform:translateY(-35%);opacity:0}}@keyframes gbEin2{from{transform:translateY(-35%);opacity:0}}.gbE-d u{text-decoration:none;font-weight:800;color:#2a2228;padding:0 1px}
 .gbE-t{border:2px solid #c9a36a!important}.gbE-t b{background:#b8862a!important}.gbE-cap{margin-top:6px;font-size:11.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gbE-cap b{color:#8a6a2c}
 .gbE.low .gbE-d i{background:#d1213f}.gbE.low .gbE-l{color:#d1213f}`,

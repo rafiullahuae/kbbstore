@@ -6,15 +6,15 @@ i don't want additional separate box for it as we have currently."*
 
 These are previews only. No shop code changed. Each design is drawn INTO the real Free gifts
 box (`partials/free-gifts/box.blade.php`) on the preview shop, and the separate gift-offer row
-(`partials/gift-offers/row.blade.php`) is hidden. The claimed gift is Relief Sun ×2.
+(`partials/gift-offers/row.blade.php`) is hidden. Revised 11 Nov 2026: the bonus gift sits LAST in every design ("i wanted the additional gift product at the last, not as 1st"); the timer stays on top. The claimed gift is Relief Sun ×2.
 
 | | Design | What it is |
 |---|---|---|
-| A | Timer bar on top | A slim pink bar under the title reads "Your bonus gift is held for 14:52", with a line along its bottom that shrinks as time runs out. The bonus is the first photo in the row, with a pink ring, a BONUS tag and ×2. One line under the row gives its name. |
-| B | Timer pill on the border | A dark stopwatch pill sits on the green border opposite "Free gifts for you". The bonus is a wide cream card (photo, name, Bonus · Free / Full size / ×2) above the regular photos. |
-| C | Countdown strip + ringed photo | A charcoal strip reads "Bonus gift held for you · 14:52". The bonus photo leads the row inside a pink ring that shrinks as time runs out. One line gives its name. |
-| D | Two-part box | One outline in two parts: a cream band ("BONUS GIFT" + clock chip, then photo, name and chips), a dashed green divider, then the regular gifts as they are today. |
-| E | Flip-clock header | "BONUS GIFT RESERVED FOR" sits over small dark digit tiles that slide in as they change. The bonus leads the row in a gold frame with a gold ×2. One line gives its name. |
+| A | Timer bar on top | A slim pink bar under the title reads "Your bonus gift is held for 14:52", with a line along its bottom that shrinks as time runs out. The bonus is the LAST photo in the row, with a pink ring, a BONUS tag and ×2. One line under the row gives its name. |
+| B | Timer pill on the border | A dark stopwatch pill sits on the green border opposite "Free gifts for you". The regular photos come first; the bonus is a wide cream card at the foot (photo, name, Bonus · Free / Full size / ×2). |
+| C | Countdown strip + ringed photo | A charcoal strip reads "Bonus gift held for you · 14:52". The bonus photo ends the row inside a pink ring that shrinks as time runs out. One line gives its name. |
+| D | Two-part box | One outline: a slim cream line under the title ("BONUS GIFT" + clock chip), the regular gifts as they are today, a dashed green divider, then the bonus at the foot (photo, name and chips). |
+| E | Flip-clock header | "BONUS GIFT RESERVED FOR" sits over small dark digit tiles that slide in as they change. The bonus ends the row in a gold frame with a gold ×2. One line gives its name. |
 
 Every design has three states. **Live** shows the timer. **Under 2 minutes** turns the timer red.
 **Expired** replaces the timer with a grey line, "Your bonus gift has expired", and removes the bonus photo.
