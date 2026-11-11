@@ -220,8 +220,7 @@ $homeFirst = $sections->firstOnScreen();
 {{-- The free-gifts strip (Lane GST) sits DIRECTLY under the main banner, the way the trust strip does:
      under the picture banner when there is one, under a standalone occasion banner, else under the hero.
      It carries that section's order class, because a shop with its own section order makes .kbb-home a
-     flex column and a section with no order class would jump ABOVE the banner. --}}
-@if ($ohbSolo)<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:0"><div class="wrap">@include('partials.home.occasion-banner', ['ohb' => $ohbView])</div></section>
+     flex column and a section with no order class would jump ABOVE the banner. (Its classes are worked out above, with the trust strip's.) --}}@if ($ohbSolo)<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:0"><div class="wrap">@include('partials.home.occasion-banner', ['ohb' => $ohbView])</div></section>
 @if ($kgsAt === 'solo')
 @include('partials.home.gift-strip', ['kgsToSection' => ! $sections->hidden('freegifts'), 'kgsOrd' => $kgsOrdBanner])
 @endif
