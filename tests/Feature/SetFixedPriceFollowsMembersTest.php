@@ -546,7 +546,7 @@ it('keeps the set\'s own product page flat, three members or twelve', function (
 
 /* ══════════════════════════════════ and a placed order does not move ═══ */
 
-it('brings a basket set down with its members, and never charges a figure the checkout did not show', function () {
+it('brings a basket set down with its members, and charges it silently at Place order', function () {
     /*
      * ▲ THE OWNER REVERSED THE SNAPSHOT ON 10 NOVEMBER 2026 (Lane RP). This
      *   pinned `cart_items.unit_price` as a snapshot that held the price a line
@@ -555,15 +555,13 @@ it('brings a basket set down with its members, and never charges a figure the ch
      *   was "sure proceed": every open basket line carries today's price,
      *   computed exactly as adding it now would (CartService::refreshPrices()).
      *
-     *   The half this test was guarding still holds: the price never moves
-     *   UNDER A SHOPPER UNSEEN. With the checkout open at AED 180, the member
-     *   cut, Place order writes nothing; the checkout then shows AED 165 with
-     *   its note, and the order charges exactly that.
+     *   Silently (the owner, 11 Nov 2026: "no i don't need any price increase
+     *   etc text anywhere"): with the checkout open at AED 180 and the member
+     *   cut, Place order charges AED 165, with no note and no refusal.
      *
-     * MUTATION NOTE. Delete the pricesMovedSinceDrawn() refusal in
-     * CheckoutController::place() and the first press writes an order (red);
-     * delete the refreshPrices() call in CheckoutController::loadCart() and
-     * the order charges 18000 (red).
+     * MUTATION NOTE. Delete the refreshPrices() call in
+     * CheckoutController::loadCart() and the order charges 18000 (red);
+     * refuse a moved price at Place order and no order is written (red).
      */
     $toner = sfxProduct('Toner', 12000);
     $set = sfxSet([[$toner, 1], [sfxProduct('Serum', 8000), 1]], [
@@ -618,16 +616,10 @@ it('brings a basket set down with its members, and never charges a figure the ch
 
     app(CartService::class)->forget();
     $place()->assertRedirect();
-    expect(Order::count())->toBe(0, 'A figure the checkout did not show is never charged.');
-
-    app(CartService::class)->forget();
-    $as()->get('/checkout')->assertOk()->assertSee('Price updated from AED 180 to AED 165');
-
-    app(CartService::class)->forget();
-    $place()->assertRedirect();
+    expect(Order::count())->toBe(1, 'Place order is not refused: the price moves silently.');
 
     expect((int) Order::latest('id')->first()->items->first()->unit_price)->toBe(
         16500,
-        'The placed order charges the price the checkout showed.'
+        'The placed order charges today\'s price.'
     );
 });

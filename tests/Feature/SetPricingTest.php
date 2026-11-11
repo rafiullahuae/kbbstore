@@ -246,7 +246,7 @@ it('drops the set price by exactly what a member dropped by', function () {
 
 /* ══════════════════════════ and it never moves under a shopper ═══ */
 
-it('reprices a basket set to today\'s rule and never charges a total the page did not show', function () {
+it('reprices a basket set to today\'s rule and charges it silently at Place order', function () {
     /*
      * ═══════════════════════════════════════════════════════════════════════
      * ▲ THE OWNER REVERSED THE SNAPSHOT ON 10 NOVEMBER 2026 (Lane RP). ▲
@@ -259,16 +259,14 @@ it('reprices a basket set to today\'s rule and never charges a total the page di
      * was "sure proceed" -- every open basket line carries today's price,
      * computed exactly as adding it now would (CartService::refreshPrices()).
      *
-     * What did NOT change is the half this test was really protecting: a
-     * derived price must never move UNDER A SHOPPER WITHOUT THEM SEEING IT.
-     * So Place order, posted straight at a basket whose price moved since the
-     * page was drawn, writes nothing; the checkout then shows the new figure;
-     * and the order that follows charges exactly that.
+     * And silently (the owner, 11 Nov 2026: "no i don't need any price
+     * increase etc text anywhere"): no note, no refusal -- Place order, posted
+     * at a basket whose set price moved since the page was drawn, writes the
+     * order at today's AED 95.00.
      *
-     * MUTATION NOTE. Delete the pricesMovedSinceDrawn() refusal in
-     * CheckoutController::place() and the first post writes an order (red);
-     * delete the refreshPrices() call in CheckoutController::loadCart() and
-     * the order is written at AED 115.00 (red).
+     * MUTATION NOTE. Delete the refreshPrices() call in
+     * CheckoutController::loadCart() and the order is written at AED 115.00
+     * (red); refuse a moved price at Place order and no order is written (red).
      */
     $toner = spxProduct('Toner', 9000);
     $set = spxSet([[$toner, 1], [spxProduct('Serum', 5000), 1]], [
@@ -330,16 +328,11 @@ it('reprices a basket set to today\'s rule and never charges a total the page di
 
     $place()->assertRedirect();
 
-    expect(Order::count())->toBe(0, 'A price that moved since the page was drawn must not be charged unseen.');
-    expect((int) $cart->fresh(['items'])->items->first()->unit_price)->toBe(9500);
-
-    $checkout()->assertOk()->assertSee('Price updated from AED 115 to AED 95');
-
-    $place()->assertRedirect();
+    expect(Order::count())->toBe(1, 'Place order is not refused: the price moves silently.');
 
     $line = Order::latest('id')->first()->items->first();
 
-    expect((int) $line->unit_price)->toBe(9500, 'The order charges the price the checkout showed.');
+    expect((int) $line->unit_price)->toBe(9500, 'The order charges today\'s price.');
 });
 
 /* ══════════════════════════════════════════════════════ the query shape ═══ */

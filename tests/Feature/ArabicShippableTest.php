@@ -75,9 +75,6 @@ it('carries exactly the drafts and corrections the classes hold', function () {
     // And wording.msg_cod_unavailable (Lane CODR, 1 November 2026): carried
     // by 2028_01_03_100050, and CodRefusalsTest pins that copy to this class.
     unset($want['store.wording.msg_cod_unavailable']);
-    // And the three "Price updated" sentences (Lane RP, order #56680): carried
-    // by 2028_01_19_100000, and CartPriceRefreshTest pins that copy to this class.
-    unset($want['store.wording.price_updated'], $want['store.wording.msg_prices_changed'], $want['store.wording.price_review_link']);
     expect($rows)->toBe($want);
 
     $fixes = shipConst(base_path('database/migrations/2027_11_02_100100_correct_lane_ar2_arabic_drafts.php'), 'FIXES');

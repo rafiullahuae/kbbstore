@@ -86,12 +86,7 @@ class CartController extends Controller
             }
         }
 
-        $cart = $this->loadCart($request);
-
-        // (Lane RP) This page shows any "Price updated" note still waiting.
-        $this->carts->takePriceNotes();
-
-        return view('store.cart', $this->payload($cart, $request));
+        return view('store.cart', $this->payload($this->loadCart($request), $request));
     }
 
     public function add(Request $request): JsonResponse

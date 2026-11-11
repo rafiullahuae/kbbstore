@@ -91,10 +91,6 @@
      after the conditional's compiled closing tag. Indented and on its own line
      it added a blank line to every checkout in the shop, which is how
      StorefrontEnglishUnchangedTest found it. --}}@if ((($setStockNotices ?? [])) !== [])<div class="co-notices" style="max-width:1040px;margin:0 auto;padding:16px 20px 0">@include('partials.set-stock-notice')</div>@endif
-{{-- PRICE UPDATED (Lane RP, order #56680). The order summary opens folded on
-     this page, so a note under the line alone would go unseen: the same band
-     says which product moved and from what to what. Zero bytes when nothing
-     moved, for the reason given in the comment above. --}}@if (($priceNotices ?? []) !== [])<div class="co-notices" style="max-width:1040px;margin:0 auto;padding:16px 20px 0">@foreach ($priceNotices as $kbbPriceNotice)<div class="woocommerce-info" role="status">{{ $kbbPriceNotice }}</div>@endforeach</div>@endif
 
     <form name="checkout" method="post" class="checkout woocommerce-checkout" action="{{ Url::to('/checkout/place') }}" enctype="multipart/form-data" id="kbbCheckoutForm">
         @csrf

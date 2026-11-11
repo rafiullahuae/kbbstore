@@ -33,8 +33,12 @@ use Illuminate\Support\Str;
  * The owner: "sure proceed, but make sure no breakage etc in anything
  * existing." So every line is brought to unitPriceFor() -- what adding it now
  * would charge -- whenever the basket is drawn (panel, cart page, checkout and
- * their JSON answers) and AGAIN inside place(); the shopper is told on the
- * line; and Place order refuses to charge a total its page did not show.
+ * their JSON answers) and AGAIN inside place().
+ *
+ * SILENTLY. The owner, 11 Nov 2026: "no i don't need any price increase etc
+ * text anywhere. jxt silently everything should be updated." No note on any
+ * line, no band on the checkout, no refusal at Place order: the basket simply
+ * shows, and the order simply charges, today's price.
  */
 
 function rprfProduct(string $name, int $fils, array $extra = []): Product
@@ -116,12 +120,8 @@ it('charges the raised price: a line added at AED 85 and repriced to AED 89 tota
 
     rprfReprice($mist, 8900);
 
-    // The checkout the shopper opens that night shows 89 and says so.
-    rprfAs($cart)->get('/checkout')->assertOk()
-        ->assertSee('Price updated from AED 85 to AED 89')
-        // The summary opens folded, so the band above the form names it too.
-        ->assertSee('<div class="woocommerce-info" role="status">Anua PDRN Capsule Mist Mini: Price updated from AED 85 to AED 89</div>', false)
-        ->assertSee('role="status"', false);
+    // The checkout the shopper opens that night simply shows 89 -- no note.
+    rprfAs($cart)->get('/checkout')->assertOk()->assertDontSee('Price updated');
 
     expect(rprfUnit($cart))->toBe(8900);
     expect(app(CartService::class)->totals(Cart::find($cart->id), 'AE')['subtotal'])->toBe(8900);
@@ -143,7 +143,7 @@ it('lowers the price the other way: a cut from AED 89 to AED 79 reaches the bask
 
     rprfReprice($mist, 7900);
 
-    rprfAs($cart)->get('/cart')->assertOk()->assertSee('Price updated from AED 89 to AED 79');
+    rprfAs($cart)->get('/cart')->assertOk()->assertDontSee('Price updated');
     expect(rprfUnit($cart))->toBe(7900);
 
     rprfAs($cart)->get('/checkout')->assertOk()->assertDontSee('Price updated from');
@@ -174,50 +174,38 @@ it('follows a sale, a scheduled sale ending and a quantity tier, exactly as addi
 
 /* ═════════════════════════ place order, never stale ═════════════════════ */
 
-it('never charges the stale amount when the price moves between the checkout page and Place order', function () {
+it('places silently at today\'s price when the price moves between the checkout page and Place order', function () {
     /*
      * The page was drawn at AED 85; the owner then raised it; the shopper
-     * presses Place order. Nothing is written, the answer says why in the
-     * shape the overlay and the card form already read (a sentence and a link
-     * back to the checkout), the checkout then draws 89 with the note, and the
-     * next press places at 89 -- the total every gateway is sent.
+     * presses Place order. The order is written at 89 -- no refusal, no note
+     * (the owner: "jxt silently everything should be updated").
      *
-     * MUTATION: delete the pricesMovedSinceDrawn() refusal in place() and the
-     * first press writes an order at 8900 the page never showed -- red.
+     * MUTATION: put back a "prices changed" refusal in place() and the press
+     * answers 422 with no order -- red. Write the order from the stale line
+     * and the total reads 8500 -- red.
      */
     rprfShip();
     $mist = rprfProduct('Mist', 8500);
     $cart = rprfCart();
     app(CartService::class)->add($cart, $mist, 1);
 
-    rprfAs($cart)->get('/checkout')->assertOk()->assertDontSee('Price updated from');
+    rprfAs($cart)->get('/checkout')->assertOk();
 
     rprfReprice($mist, 8900);
 
-    $answer = rprfAs($cart)->postJson('/checkout/place', rprfPlaceBody())->assertStatus(422);
-    expect($answer->json('ok'))->toBeFalse()
-        ->and($answer->json('code'))->toBe('bag_gone')
-        ->and($answer->json('reason'))->toBe('prices_changed')
-        ->and($answer->json('error'))->toContain('nothing has been charged')
-        ->and($answer->json('url'))->toEndWith('/checkout/');
-    expect(Order::count())->toBe(0);
-    expect(rprfUnit($cart))->toBe(8900);
-
-    rprfAs($cart)->get('/checkout')->assertOk()->assertSee('Price updated from AED 85 to AED 89');
-
     $placed = rprfAs($cart)->postJson('/checkout/place', rprfPlaceBody());
     $placed->assertOk();
+    expect($placed->json('reason'))->toBeNull();
     expect(Order::count())->toBe(1)
-        ->and((int) Order::first()->total)->toBe(8900 + 2000);
+        ->and((int) Order::first()->total)->toBe(8900 + 2000)
+        ->and((int) Order::first()->items->first()->unit_price)->toBe(8900);
 });
 
-it('refuses too when the price moved in the panel on another page that the checkout never showed', function () {
+it('places silently too when the panel on another page moved the price first', function () {
     /*
-     * Another tab: the panel on a product page refreshed the basket and wrote
-     * 89, so place() itself finds nothing to move -- and would charge 89 under
-     * a checkout drawn at 85. The prices the checkout drew, kept in the
-     * session, are what catch it. MUTATION: refuse only when place()'s own
-     * refresh moved something and the order is written -- red.
+     * Another tab: the panel on a product page refreshed the basket to 89.
+     * Place order then simply charges 89. MUTATION: refuse a total the
+     * checkout drew at 85 and no order is written -- red.
      */
     rprfShip();
     $mist = rprfProduct('Mist', 8500);
@@ -226,11 +214,12 @@ it('refuses too when the price moved in the panel on another page that the check
     rprfAs($cart)->get('/checkout')->assertOk();
 
     rprfReprice($mist, 8900);
-    rprfAs($cart)->get('/')->assertOk()->assertSee('Price updated from AED 85 to AED 89');
+    rprfAs($cart)->get('/')->assertOk();
     expect(rprfUnit($cart))->toBe(8900);
 
     rprfAs($cart)->post('/checkout/place', rprfPlaceBody())->assertRedirect();
-    expect(Order::count())->toBe(0);
+    expect(Order::count())->toBe(1)
+        ->and((int) Order::first()->total)->toBe(8900 + 2000);
 });
 
 it('places a basket no checkout has drawn straight at today\'s price', function () {
@@ -391,48 +380,28 @@ it('costs no query when nothing moved and one statement when any number of lines
     }
 });
 
-/* ═════════════════════════════ the words ═════════════════════════════════ */
+/* ═════════════════════════════ no words ══════════════════════════════════ */
 
-it('prints nothing at all when no price moved, on the panel, the cart page and the checkout', function () {
+it('never says a word about the price on the panel, the cart page or the checkout -- it just shows today\'s', function () {
     /*
-     * The page a shopper gets on every day the owner does not touch a price.
-     * MUTATION: print the note's wrapper unconditionally -- red.
+     * The owner: "no i don't need any price increase etc text anywhere."
+     * A repriced basket reads exactly like any other, at the new price.
+     * MUTATION: print a "Price updated" line under a repriced line, or a band
+     * on the checkout -- red.
      */
     rprfShip();
-    $cart = rprfCart();
-    app(CartService::class)->add($cart, rprfProduct('Mist', 8500), 1);
-
-    foreach (['/', '/cart', '/checkout'] as $path) {
-        rprfAs($cart)->get($path)->assertOk()->assertDontSee('Price updated');
-    }
-    expect(app(CartService::class)->priceNoteHtml(Cart::find($cart->id)->items->first(), 'cvar'))->toBe('');
-});
-
-it('says it once on each surface, in the line\'s own small text, and then stops', function () {
-    /* MUTATION: never call takePriceNotes() and the third /cart still shows it -- red. */
     $mist = rprfProduct('Mist', 8500);
     $cart = rprfCart();
     app(CartService::class)->add($cart, $mist, 1);
     rprfReprice($mist, 8900);
 
-    rprfAs($cart)->get('/')->assertOk()
-        ->assertSee('<div class="kc-var" role="status">Price updated from AED 85 to AED 89</div>', false);
-    rprfAs($cart)->get('/cart')->assertOk()
-        ->assertSee('<div class="cvar" role="status">Price updated from AED 85 to AED 89</div>', false);
-    rprfAs($cart)->get('/cart')->assertOk()->assertDontSee('Price updated from');
-});
-
-it('ships the Arabic beside the English, and the migration carries the class\'s own words', function () {
-    /* MUTATION: change one Arabic sentence in ArabicWording and not the migration -- red. */
-    $m = require database_path('migrations/2028_01_19_100000_arabic_cart_price_updated.php');
-    $rows = (new ReflectionClassConstant($m, 'ROWS'))->getValue();
-
-    foreach (['price_updated', 'msg_prices_changed', 'price_review_link'] as $k) {
-        expect($rows['store.wording.' . $k])->toBe([
-            \App\Support\ArabicWording::ENGLISH['wording.' . $k],
-            \App\Support\ArabicWording::ARABIC['wording.' . $k],
-        ]);
+    foreach (['/', '/cart', '/checkout', '/cart'] as $path) {
+        $html = rprfAs($cart)->get($path)->assertOk()->getContent();
+        expect($html)->not->toContain('Price updated')
+            ->and($html)->not->toContain('تم تحديث السعر')
+            ->and($html)->not->toContain('role="status">Price')
+            ->and($html)->not->toContain('class="co-notices"');
     }
-
-    expect(__('store.wording.price_updated', ['from' => 'AED 85', 'to' => 'AED 89']))->toBe('Price updated from AED 85 to AED 89');
+    expect(rprfUnit($cart))->toBe(8900)
+        ->and(method_exists(CartService::class, 'priceNote'))->toBeFalse();
 });
