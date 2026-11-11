@@ -505,3 +505,61 @@ it('scrolls down to the homepage free gifts section when its link is pressed, an
     $html = $this->get('/')->assertOk()->getContent();
     expect(gstSection($html))->not->toContain('#fgh-h')->and($html)->not->toContain('id="fgh-h"');
 });
+
+/* ═══ 2.60.659: its own row in Appearance → Homepage sections ═══════════════ */
+
+it('is its own row in the homepage section list, directly under the banner until moved', function () {
+    /*
+     * The owner, 11 Nov 2026: "for this section, i don't have any option to
+     * change the position on homepage." MUTATION: drop `giftstrip` from the
+     * registry and the row is missing -- red; drop it from FOLLOWS and a
+     * saved order puts it at the registry's slot rather than under the banner.
+     */
+    $keys = array_keys(app(\App\Services\HomepageSections::class)->all());
+    expect($keys[array_search('cards_banner', $keys, true) + 1])->toBe('giftstrip');
+
+    // A shop that saved its order before this row existed: still under the banner.
+    $saved = [];
+    foreach (array_reverse(array_keys(\App\Services\HomepageSections::REGISTRY)) as $i => $k) {
+        if ($k !== 'giftstrip') {
+            $saved[$k] = ['order' => $i];
+        }
+    }
+    gstSet('homepage_sections', $saved);
+    $keys = array_keys(app(\App\Services\HomepageSections::class)->all());
+    expect($keys[array_search('cards_banner', $keys, true) + 1])->toBe('giftstrip');
+});
+
+it('moves to where the owner puts it, and is not drawn when he switches its row off', function () {
+    /*
+     * MUTATION: keep the banner's order class on the strip (as before) and the
+     * moved strip stays under the banner -- red. Ignore hidden('giftstrip')
+     * and the switched-off strip still draws -- red.
+     */
+    $a = gstProduct('Order gift');
+    gstGifts([$a]);
+    gstCut($a);
+    gstSave(['on' => true]);
+
+    $saved = [];
+    foreach (array_keys(\App\Services\HomepageSections::REGISTRY) as $i => $k) {
+        $saved[$k] = ['order' => $k === 'giftstrip' ? 999 : $i];
+    }
+    gstSet('homepage_sections', $saved);
+
+    $all = app(\App\Services\HomepageSections::class)->all();
+    expect(array_key_last($all))->toBe('giftstrip');
+    $n = $all['giftstrip']['order'];
+
+    $html = $this->get('/')->assertOk()->getContent();
+    expect(gstSection($html))->toContain('kbb-ord-'.$n.'"')
+        ->and($html)->toContain('.kbb-home>.kbb-ord-'.$n.'{order:'.$n.'}');
+
+    $saved['giftstrip'] += ['desktop' => false, 'mobile' => false];
+    gstSet('homepage_sections', $saved);
+    expect(gstSection($this->get('/')->assertOk()->getContent()))->toBe('');
+
+    $saved['giftstrip']['desktop'] = true;
+    gstSet('homepage_sections', $saved);
+    expect(gstSection($this->get('/')->assertOk()->getContent()))->toContain(' m-off');
+});

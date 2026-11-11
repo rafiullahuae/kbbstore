@@ -208,7 +208,19 @@ $homeFirst = $sections->firstOnScreen();
 {{-- The free-gifts strip (Lane GST) sits DIRECTLY under the main banner, the way the trust strip does:
      under the picture banner when there is one, under a standalone occasion banner, else under the hero.
      It carries that section's order class, because a shop with its own section order makes .kbb-home a
-     flex column and a section with no order class would jump ABOVE the banner. --}}@php $kgsAt = $bnSection !== null ? 'banner' : ($ohbSolo ? 'solo' : 'hero'); $kgsOrdBanner = $sections->orderIsDefault() ? '' : 'kbb-ord-'.$sections->all()['cards_banner']['order']; @endphp
+     flex column and a section with no order class would jump ABOVE the banner. --}}@php
+    /* 2.60.659: the strip is its own row in Appearance -> Homepage sections. Its classes are
+       classFor('giftstrip') -- its own order, Desktop/Mobile and width -- and '' on a shop that has
+       not touched them. Never moved, under the hero or a standalone occasion banner it keeps that
+       section's order, exactly as before ("never moved" = still the row right after Banners).
+       Off on both devices there: not drawn at all. */
+    $kgsAt = $sections->hidden('giftstrip') ? 'none' : ($bnSection !== null ? 'banner' : ($ohbSolo ? 'solo' : 'hero'));
+    $kgsOwn = trim($sections->classFor('giftstrip'));
+    $kgsAll = $sections->all(); $kgsKeys = array_keys($kgsAll);
+    $kgsUnmoved = array_search('giftstrip', $kgsKeys, true) === array_search('cards_banner', $kgsKeys, true) + 1;
+    $kgsHost = $sections->orderIsDefault() || ! $kgsUnmoved ? null : 'kbb-ord-'.$kgsAll[$kgsAt === 'hero' ? 'hero' : 'cards_banner']['order'];
+    $kgsOrdBanner = $kgsHost === null ? $kgsOwn : trim(preg_replace('/\bkbb-ord-\d+\b/', $kgsHost, $kgsOwn));
+@endphp
 @if ($ohbSolo)<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:0"><div class="wrap">@include('partials.home.occasion-banner', ['ohb' => $ohbView])</div></section>
 @if ($kgsAt === 'solo')
 @include('partials.home.gift-strip', ['kgsToSection' => ! $sections->hidden('freegifts'), 'kgsOrd' => $kgsOrdBanner])
@@ -228,7 +240,9 @@ $homeFirst = $sections->firstOnScreen();
      picture at 390 and at 1280. BannerSet::SECTION_STYLES keeps 8px for the
      cards row and gives the two picture kinds 0. --}}
 @unless ($ohbOnly)<section class="sec {{ $sections->classFor('cards_banner') }}" style="{{ $bnSection[0]->homeSectionStyle() }}"><div class="wrap">@include($bnSection[0]->homePartial(), ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>@endunless
+@if ($kgsAt === 'banner')
 @include('partials.home.gift-strip', ['kgsToSection' => ! $sections->hidden('freegifts'), 'kgsOrd' => $kgsOrdBanner])
+@endif
 
 {{-- Lane TS: the trust strip, directly under the picture banner. --}}@if ($ktrHome !== null)
 @include('partials.trust-strip', ['v' => 'card', 'cls' => $ktrClsBanner])
@@ -571,7 +585,7 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
 </div></section>
 @endunless
 @if (($kgsAt ?? 'hero') === 'hero')
-@include('partials.home.gift-strip', ['kgsToSection' => ! $sections->hidden('freegifts'), 'kgsOrd' => $sections->orderIsDefault() ? '' : 'kbb-ord-'.$sections->all()['hero']['order']])
+@include('partials.home.gift-strip', ['kgsToSection' => ! $sections->hidden('freegifts'), 'kgsOrd' => $kgsOrdBanner])
 @endif
 {{-- Lane TS: no picture banner, so the hero is the banner and the strip goes under it. --}}@if ($ktrHome !== null && ! $ktrAfterBanner)
 @include('partials.trust-strip', ['v' => 'card', 'cls' => $ktrClsHero])

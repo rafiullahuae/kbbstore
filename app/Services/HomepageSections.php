@@ -99,6 +99,17 @@ class HomepageSections
          */
         'topstrip'    => ['Top strip', 'The thin coloured line under the header: delivery and the free-delivery threshold. Phones only by default. Words, colours, size and link: Homepage content → Top strip.', false, null],
         'cards_banner' => ['Banners', 'The picture banner at the top of the page: one image per slide, sliding when there is more than one. Build the sets in Appearance → Banners and pick which one shows; nothing shows until you do.', false, null],
+        /*
+         * 2.60.659 -- the owner, 11 Nov 2026: "for this section, i don't have
+         * any option to change the position on homepage." The free gifts strip
+         * was drawn wherever the banner was and carried the banner's order
+         * class, so this list could not move it. It is its own row now: right
+         * under the banner by default (FOLLOWS), movable with the arrows, with
+         * Desktop / Mobile switches like any section. It draws only while
+         * Appearance -> Free gifts strip is switched on (MAY_BE_ABSENT), and as
+         * a thin strip it never takes a divider (STRIPS).
+         */
+        'giftstrip'   => ['Free gifts strip', 'The “FREE GIFTS with every order” strip with the floating products, under the banner unless you move it. Design, words and its own on/off: Appearance → Free gifts strip.', false, null],
         'countries'   => ['Countries strip', 'The UAE flag, “UAE’s Authentic K-Beauty Store” and the Korean flag, under the banner. Phones only by default. Its words, colours and sizes are the Flag bar’s: Appearance → Header → Flag bar.', false, null],
         'hero'        => ['Hero slider', 'The rotating coloured panels with a headline and a button. Drawn only when the Banners section above has no pictures to show — a shop with a picture banner has one banner, not two.', false, null],
         'delivery'    => ['Delivery strip', '1-3 days delivery, free over AED 199.', false, null],
@@ -446,7 +457,7 @@ class HomepageSections
     public const MOBILE_ONLY_BY_DEFAULT = ['topstrip', 'countries'];
 
     /** Thin strips: never "the first section", never given a divider. */
-    public const STRIPS = ['topstrip', 'countries'];
+    public const STRIPS = ['topstrip', 'countries', 'giftstrip'];
 
     public const OFF_BY_DEFAULT = [
         'delivery', 'ticker', 'categories', 'recommended', 'routine', 'quiz',
@@ -735,7 +746,7 @@ class HomepageSections
     // (Lane SBC) `sbc` under `concerns`, after it in this list so the host
     // is already placed: Trending, Skin concerns, Shop by Concern.
     // (Lane FGH) `freegifts` under `sbc`, after it so the host is placed.
-    public const FOLLOWS = ['concerns' => 'trending', 'sbc' => 'concerns', 'freegifts' => 'sbc'];
+    public const FOLLOWS = ['concerns' => 'trending', 'sbc' => 'concerns', 'freegifts' => 'sbc', 'giftstrip' => 'cards_banner'];
 
     /**
      * Put each FOLLOWS key the saved payload has no position for directly
@@ -1113,7 +1124,7 @@ class HomepageSections
      */
     // (Lane FGH) `freegifts` too: its <section> is drawn only while the free
     // gifts homepage switch is on and a range is published.
-    public const MAY_BE_ABSENT = ['cards_banner', 'freegifts'];
+    public const MAY_BE_ABSENT = ['cards_banner', 'freegifts', 'giftstrip'];
 
     /**
      * The keys of MAY_BE_ABSENT this request has confirmed ARE in the document.
