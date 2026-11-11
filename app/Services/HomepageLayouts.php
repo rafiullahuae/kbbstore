@@ -72,7 +72,7 @@ class HomepageLayouts
                 // Lane HC: the two phone-only strips, at their REGISTRY positions.
                 // (Lane FGH) `freegifts` under `sbc` in every preset, on: it draws
                 // only while the free gifts homepage switch is on.
-                'topstrip', 'cards_banner', 'countries', 'hero', 'delivery', 'ticker', 'categories', 'bundles', 'bestselling', 'recommended',
+                'topstrip', 'cards_banner', 'giftstrip', 'countries', 'hero', 'delivery', 'ticker', 'categories', 'bundles', 'bestselling', 'recommended',
                 'routine', 'quiz', 'brands', 'spotted', 'videos', 'igembeds', 'trending', 'concerns', 'sbc', 'freegifts', 'bestsellers', 'flash',
                 'blog', 'under54', 'feature', 'about', 'reviews', 'trust', 'newsletter',
                 // Row 55 (Lane HA): the four new sections, at their REGISTRY
@@ -217,6 +217,13 @@ class HomepageLayouts
         if (! in_array('countries', $list, true)) {
             $at = array_search('cards_banner', $list, true);
             array_splice($list, $at === false ? 0 : $at + 1, 0, ['countries']);
+        }
+
+        // 2.60.659: the free gifts strip sits right under the banner in every
+        // preset, as it does on the page; a preset that names it keeps its spot.
+        if (! in_array('giftstrip', $list, true)) {
+            $at = array_search('cards_banner', $list, true);
+            array_splice($list, $at === false ? 0 : $at + 1, 0, ['giftstrip']);
         }
 
         if (! in_array('topstrip', $list, true)) {

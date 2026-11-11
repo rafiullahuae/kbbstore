@@ -204,23 +204,23 @@ $homeFirst = $sections->firstOnScreen();
      Nothing from a setting is interpolated into this file: the partial escapes
      the four operator strings itself and scheme-checks the button's URL before
      it becomes an href.
-     --}}@php $ktrHome = \App\Support\TrustStrip::place($settings->all(), 'ts_home'); $ktrAfterBanner = $bnSection !== null && ! $sections->hidden('cards_banner'); $ktrOrd = $sections->orderIsDefault() ? null : $sections->all(); $ktrClsBanner = trim(($ktrHome ?? '').($ktrOrd === null ? '' : ' kbb-ord-'.$ktrOrd['cards_banner']['order'])); $ktrClsHero = trim(($ktrHome ?? '').($ktrOrd === null ? '' : ' kbb-ord-'.$ktrOrd['hero']['order'])); /* Lane OHB: Appearance -> Occasion banner. null (Slider only, the shipped state) adds nothing; read from the settings map, no query. */ $ohbView = \App\Support\OccasionBanner::view($settings->all()); $ohbOnly = $ohbView !== null && $ohbView['display'] === 'banner'; $ohbSolo = $ohbView !== null && ($ohbOnly || $bnSection === null || $bnSection[0]->kind() !== 'slider'); @endphp@unless ($sections->hidden('cards_banner'))
-{{-- The free-gifts strip (Lane GST) sits DIRECTLY under the main banner, the way the trust strip does:
-     under the picture banner when there is one, under a standalone occasion banner, else under the hero.
-     It carries that section's order class, because a shop with its own section order makes .kbb-home a
-     flex column and a section with no order class would jump ABOVE the banner. --}}@php
+     --}}@php $ktrHome = \App\Support\TrustStrip::place($settings->all(), 'ts_home'); $ktrAfterBanner = $bnSection !== null && ! $sections->hidden('cards_banner'); $ktrOrd = $sections->orderIsDefault() ? null : $sections->all(); $ktrClsBanner = trim(($ktrHome ?? '').($ktrOrd === null ? '' : ' kbb-ord-'.$ktrOrd['cards_banner']['order'])); $ktrClsHero = trim(($ktrHome ?? '').($ktrOrd === null ? '' : ' kbb-ord-'.$ktrOrd['hero']['order'])); /* Lane OHB: Appearance -> Occasion banner. null (Slider only, the shipped state) adds nothing; read from the settings map, no query. */ $ohbView = \App\Support\OccasionBanner::view($settings->all()); $ohbOnly = $ohbView !== null && $ohbView['display'] === 'banner'; $ohbSolo = $ohbView !== null && ($ohbOnly || $bnSection === null || $bnSection[0]->kind() !== 'slider'); @endphp@php
     /* 2.60.659: the strip is its own row in Appearance -> Homepage sections. Its classes are
        classFor('giftstrip') -- its own order, Desktop/Mobile and width -- and '' on a shop that has
        not touched them. Never moved, under the hero or a standalone occasion banner it keeps that
        section's order, exactly as before ("never moved" = still the row right after Banners).
        Off on both devices there: not drawn at all. */
-    $kgsAt = $sections->hidden('giftstrip') ? 'none' : ($bnSection !== null ? 'banner' : ($ohbSolo ? 'solo' : 'hero'));
+    $kgsAt = $sections->hidden('giftstrip') ? 'none' : ($sections->hidden('cards_banner') ? 'hero' : ($bnSection !== null ? 'banner' : ($ohbSolo ? 'solo' : 'hero')));
     $kgsOwn = trim($sections->classFor('giftstrip'));
     $kgsAll = $sections->all(); $kgsKeys = array_keys($kgsAll);
     $kgsUnmoved = array_search('giftstrip', $kgsKeys, true) === array_search('cards_banner', $kgsKeys, true) + 1;
     $kgsHost = $sections->orderIsDefault() || ! $kgsUnmoved ? null : 'kbb-ord-'.$kgsAll[$kgsAt === 'hero' ? 'hero' : 'cards_banner']['order'];
     $kgsOrdBanner = $kgsHost === null ? $kgsOwn : trim(preg_replace('/\bkbb-ord-\d+\b/', $kgsHost, $kgsOwn));
-@endphp
+@endphp@unless ($sections->hidden('cards_banner'))
+{{-- The free-gifts strip (Lane GST) sits DIRECTLY under the main banner, the way the trust strip does:
+     under the picture banner when there is one, under a standalone occasion banner, else under the hero.
+     It carries that section's order class, because a shop with its own section order makes .kbb-home a
+     flex column and a section with no order class would jump ABOVE the banner. --}}
 @if ($ohbSolo)<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:0"><div class="wrap">@include('partials.home.occasion-banner', ['ohb' => $ohbView])</div></section>
 @if ($kgsAt === 'solo')
 @include('partials.home.gift-strip', ['kgsToSection' => ! $sections->hidden('freegifts'), 'kgsOrd' => $kgsOrdBanner])

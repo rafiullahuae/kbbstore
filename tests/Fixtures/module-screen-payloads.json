@@ -5943,6 +5943,10 @@
         "label": "Banners"
       },
       {
+        "key": "giftstrip",
+        "label": "Free gifts strip"
+      },
+      {
         "key": "countries",
         "label": "Countries strip"
       },

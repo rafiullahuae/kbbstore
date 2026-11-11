@@ -58,7 +58,8 @@ it('puts back the shipped row-55 page when Signature is re-applied, not every se
     // ▲ Lane IGE: `igembeds` ships on, after Spotted; it renders nothing until a post is pasted.
     // ▲ Lane CX: `concerns` (Shop by skin concern) ships on, under Trending, as the owner asked.
     // ▲ Lane FGH: `freegifts` ships on, under Shop by Concern; it draws nothing until the gifts' homepage switch is on.
-    expect($shipped)->toBe(['topstrip', 'cards_banner', 'countries', 'hero', 'bundles', 'bestselling', 'brands', 'spotted',
+    // 2.60.659: + the free gifts strip under the banner.
+    expect($shipped)->toBe(['topstrip', 'cards_banner', 'giftstrip', 'countries', 'hero', 'bundles', 'bestselling', 'brands', 'spotted',
         'igembeds', 'trending', 'concerns', 'freegifts', 'blog', 'under54', 'feature', 'about']);
 });
 

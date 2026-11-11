@@ -962,7 +962,7 @@ class HomepageSections
      */
     public function firstOnScreen(): array
     {
-        $skip = ['topstrip', 'cards_banner', 'countries', 'hero', 'delivery', 'ticker', 'categories'];
+        $skip = ['topstrip', 'cards_banner', 'giftstrip', 'countries', 'hero', 'delivery', 'ticker', 'categories'];
         $first = [];
 
         foreach (['desktop', 'mobile'] as $device) {

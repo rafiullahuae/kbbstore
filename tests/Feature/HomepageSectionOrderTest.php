@@ -436,8 +436,9 @@ it('refuses to show a nested section anywhere the page will not draw it', functi
      */
     // ▲ Lane HC: the two strips are registry keys too — `topstrip` first,
     // `countries` under the banner — and fall in registry order like the rest.
-    expect(array_slice($keys, 0, 7))->toBe(['newsletter', 'trust', 'topstrip', 'cards_banner', 'countries', 'hero', 'delivery']);
-    expect($keys[7])->toBe('ticker');
+    // 2.60.659: and the free gifts strip under the banner, which it FOLLOWS.
+    expect(array_slice($keys, 0, 8))->toBe(['newsletter', 'trust', 'topstrip', 'cards_banner', 'giftstrip', 'countries', 'hero', 'delivery']);
+    expect($keys[8])->toBe('ticker');
 
     // Renumbered to the effective position, so the console posting this list
     // straight back is a no-op rather than a second, different order.

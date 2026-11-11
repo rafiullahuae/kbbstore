@@ -105,7 +105,8 @@ it('puts the delivery strip second in the two presets that asked for it elsewher
      * behind the hero, ahead of the ticker — is unchanged, one place along.
      */
     expect(fwPreviewKeys('conversion'))->toBe([
-        'topstrip', 'hero', 'delivery', 'ticker', 'cards_banner', 'countries', 'flash', 'under54',
+        // 2.60.659: + the free gifts strip under the banner.
+        'topstrip', 'hero', 'delivery', 'ticker', 'cards_banner', 'giftstrip', 'countries', 'flash',
     ]);
 
     expect(array_slice(fwPreviewKeys('boutique'), 0, 4))->toBe(['topstrip', 'hero', 'delivery', 'categories']);
@@ -175,7 +176,8 @@ it('counts the same sections it always did, and names the same ones off', functi
     // ▲ Lane CX: +1 each — Shop by skin concern (`concerns`) ships on, under
     // Trending, in every preset (the owner asked for it there).
     // ▲ Lane FGH: +1 in each, the Free gifts row under Shop by Concern.
-    $expected = ['signature' => 16, 'conversion' => 24, 'editorial' => 24, 'boutique' => 16];
+    // ▲ 2.60.659: +1 in each, the Free gifts strip under the banner.
+    $expected = ['signature' => 17, 'conversion' => 25, 'editorial' => 25, 'boutique' => 17];
 
     foreach (app(HomepageLayouts::class)->summaries() as $summary) {
         expect($summary['count'])->toBe($expected[$summary['key']], $summary['key'] . ' changed its section count');

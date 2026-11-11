@@ -467,6 +467,12 @@ it('sends every module screen the payload it sent before the shared schema', fun
      * untouched and SeoBackOfficePayloadTest's fixture needed no edit at all.
      */
     /*
+     * ── 2.60.659: ONE ROW ADDED TO dividers.sections[] ─────────────────────
+     * `giftstrip` (Free gifts strip), written into the fixture by hand directly
+     * after `cards_banner`, where HomepageSections::REGISTRY now has it (the
+     * owner asked to move the strip on the homepage). No other leaf moved.
+     */
+    /*
      * ── LANE IGR: ONE ROW REMOVED FROM dividers.sections[] ─────────────────
      *
      * `instagram` (Instagram Profile), the retired Instagram API module's
