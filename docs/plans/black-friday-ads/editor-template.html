@@ -2,6 +2,7 @@
 <title>Black Friday Ad Editor</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 {FONT}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&family=Montserrat:ital,wght@0,400;0,600;0,800;0,900;1,800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,700&family=Bebas+Neue&family=DM+Serif+Display&family=Cairo:wght@400;700;900&display=swap">
 <style>
 /* Layout: the ad on the left at working size, its controls on the right; one ad, one size, one product set at a time. */
 :root{--bg:#F1EEF0;--fg:#1F1B1E;--muted:#6B6268;--line:#DCD6DA;--panel:#FFFFFF;--on:#1F1B1E;--on-fg:#FFFFFF;--sel:#2F7BFF;--ok:#127A45;--warn:#9A5B12;--sans:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -21,7 +22,12 @@ h1{margin:0;font-size:clamp(20px,2.6vw,26px);font-weight:800;letter-spacing:-.01
 .stagewrap{display:flex;justify-content:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
 .stage{width:min(100%,var(--sw,520px));touch-action:none;user-select:none;-webkit-user-select:none}
 .stage .bf{border-radius:8px}
-.stage .pl{position:absolute;inset:0}
+.stage .pl{position:absolute;inset:0;pointer-events:none}.stage .pl .bp.ed{pointer-events:auto}
+.stage [data-k]{cursor:pointer}.stage [data-k].ksel{outline:2px dashed var(--sel);outline-offset:3px;cursor:move}
+.elx{display:grid;gap:10px}.elx[aria-disabled="true"] .row,.elx[aria-disabled="true"] .btns{opacity:.45}
+.crow{display:flex;gap:8px;align-items:center}.crow input[type=color]{width:44px;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:2px}
+input[type=text]{font:500 14px var(--sans);padding:8px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%}
+.btn.sm{padding:6px 10px;font-size:12px}
 .stage .bp.ed{cursor:move;outline:1px dashed transparent;outline-offset:2px}
 .stage .bp.ed:hover{outline-color:rgba(47,123,255,.45)}
 .stage .bp.ed.on{outline:2px solid var(--sel)}
@@ -77,6 +83,31 @@ select{font:500 14px var(--sans);padding:8px;border-radius:9px;border:1px solid 
     <div class="row"><label for="shs">Shadow style</label><select id="shs" disabled><option value="soft">Soft</option><option value="sharp">Sharp</option><option value="glow">Glow (the ad's colour)</option></select></div>
     <div class="btns"><button class="btn" id="smaller" disabled>Smaller</button><button class="btn" id="bigger" disabled>Bigger</button><button class="btn" id="front" disabled>To front</button><button class="btn" id="del" disabled>Remove</button></div>
     <div class="btns"><button class="btn" id="add">Add a product</button><button class="btn" id="play">Play</button></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:2px 0">
+    <div class="elx" id="elx" aria-disabled="true">
+      <div class="pk-h"><h2>Text, button &amp; design</h2><span class="hint">Tap anything on the ad</span></div>
+      <div class="row"><label for="el">Item</label><select id="el"></select></div>
+      <label class="pk-all"><input type="checkbox" id="el-all" checked> Change all 3 sizes of this ad together (not position)</label>
+      <div class="row" id="el-t-row"><label for="el-t">Text</label><input type="text" id="el-t" maxlength="60" autocomplete="off"></div>
+      <div class="grid2" id="el-font-row">
+        <div class="row"><label for="el-f">Font</label><select id="el-f"><option value="">As designed</option><option value="inter">Inter</option><option value="poppins">Poppins</option><option value="montserrat">Montserrat</option><option value="playfair">Playfair Display</option><option value="dmserif">DM Serif Display</option><option value="bebas">Bebas Neue</option><option value="cairo">Cairo (Arabic)</option></select></div>
+        <div class="row"><label for="el-w">Weight</label><select id="el-w"><option value="">As designed</option><option>400</option><option>500</option><option>600</option><option>700</option><option>800</option><option>900</option></select></div>
+      </div>
+      <label class="pk-all" id="el-it-row"><input type="checkbox" id="el-it"> Italic</label>
+      <div class="row"><label for="el-s">Size <span id="el-sv">100%</span></label><input id="el-s" type="range" min="30" max="250" step="1" value="100"></div>
+      <div class="row" id="el-ls-row"><label for="el-ls">Letter spacing <span id="el-lsv">0</span></label><input id="el-ls" type="range" min="-10" max="40" step="1" value="0"></div>
+      <div class="row"><label for="el-r">Rotation <span id="el-rv">0°</span></label><input id="el-r" type="range" min="-180" max="180" step="1" value="0"></div>
+      <div class="grid2">
+        <div class="row" id="el-c-row"><label for="el-c">Text colour</label><div class="crow"><input type="color" id="el-c"><button class="btn sm" id="el-c0" type="button">As designed</button></div></div>
+        <div class="row" id="el-b-row"><label for="el-b">Fill colour</label><div class="crow"><input type="color" id="el-b"><button class="btn sm" id="el-b0" type="button">As designed</button></div></div>
+      </div>
+      <div class="row" id="el-rad-row"><label for="el-rad">Rounded corners <span id="el-radv">as designed</span></label><input id="el-rad" type="range" min="-1" max="80" step="1" value="-1"></div>
+      <div class="row"><label for="el-o">Opacity <span id="el-ov">100%</span></label><input id="el-o" type="range" min="0" max="100" step="1" value="100"></div>
+      <label class="pk-all"><input type="checkbox" id="el-show" checked> Show on the ad</label>
+      <p class="hint" style="margin:0">Drag it on the ad to move it; arrow keys nudge (Shift for more).</p>
+      <div class="btns"><button class="btn" id="el-reset" type="button">Reset this item</button><button class="btn" id="el-resetall" type="button">Reset all text &amp; design</button></div>
+    </div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:2px 0">
     <div class="pk-h"><h2>Products</h2><span class="hint">Tap to add to this set</span></div>
     <label class="pk-all"><input type="checkbox" id="pk-all"> Add to all 3 sets of this ad and size</label>
     <div class="pk" id="pk" role="group" aria-label="Products to add"></div>
@@ -106,10 +137,12 @@ select{font:500 14px var(--sans);padding:8px;border-radius:9px;border:1px solid 
 (function(){
 var DATA = /*DATA*/;
 var POOL = Object.keys(DATA.names);
-var sel = {ad:0, fmt:'post', fr:0}, cur = null, layouts = {}, anims = {}, saved = {}, db = null, dbTried = false;
+var sel = {ad:0, fmt:'post', fr:0}, cur = null, layouts = {}, anims = {}, designs = {}, saved = {}, loading = {}, db = null, dbTried = false, curEl = null;
 var ANIM0 = {in:'fade', idle:'none', sec:3, len:10};
 function anim(){ var k = key(sel.ad, sel.fmt); if (!anims[k]) anims[k] = clone(ANIM0); return anims[k]; }
-function snapOf(k){ return JSON.stringify({f: layouts[k], a: anims[k] || ANIM0}); }
+function defOf(k){ return DATA.ads[+k.slice(1,3) - 1].f[k.split('-')[1]].def; }
+function snapOf(k){ return JSON.stringify({f: layouts[k] || defOf(k), a: anims[k] || ANIM0, d: designs[k] || {}}); }
+function defSnap(k){ return JSON.stringify({f: defOf(k), a: ANIM0, d: {}}); }
 var stage = document.getElementById('stage'), statusEl = document.getElementById('status');
 function key(a, f){ return DATA.ads[a].id + '-' + f; }
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
@@ -121,7 +154,8 @@ function items(){ return lay(sel.ad, sel.fmt)[sel.fr]; }
 var REMOVED = {cosrx:'celimax', reliefsun:'dalba', axisy:'anuacream', dralthea:'hairoil', isntree:'balmpink', patch:'glowvanilla'};
 function swapRemoved(it){ var to = REMOVED[it.p]; if (!to || !DATA.aspect[to]) return it;
   var h = it.w / (DATA.aspect[it.p] || .5), cx = it.x + it.w / 2, n = Object.assign({}, it); n.p = to; n.w = h * DATA.aspect[to]; n.x = cx - n.w / 2; return n; }
-function dirty(k){ if (!layouts[k]) return false; return snapOf(k) !== (saved[k] || JSON.stringify({f: DATA.ads[+k.slice(1,3)-1].f[k.split('-')[1]].def, a: ANIM0})); }
+function dirty(k){ if (!layouts[k] && !anims[k] && !designs[k]) return false; return snapOf(k) !== (saved[k] || defSnap(k)); }
+function allKeys(){ var o = {}; [layouts, anims, designs].forEach(function(m){ Object.keys(m).forEach(function(k){ o[k] = 1; }); }); return Object.keys(o); }
 
 // ── chips ──
 function chips(host, list, val, on){
@@ -152,7 +186,9 @@ function draw(){
     var rh = document.createElement('span'); rh.className = 'rh'; rh.dataset.r = '1'; el.appendChild(rh);
     pl.appendChild(el);
   });
-  side();
+  applyDesign(stage.querySelector('.bf'), designs[key(sel.ad, sel.fmt)] || {});
+  if (curEl){ var se = stage.querySelector('[data-k="' + curEl + '"]'); if (se) se.classList.add('ksel'); }
+  side(); scheduleDraft();
 }
 var accent = function(){ return (DATA.ads[sel.ad].acc || '#E8306F') + 'B3'; };   // the ad's own colour, 70%
 function shadow(it){
@@ -169,11 +205,100 @@ function place(el, it){
   el.style.filter = shadow(it);
 }
 
+// ── text, button & design (owner, 12 Nov: "give me all controls of text, button etc") ──
+// Per ad and size: designs[key][item] = {t text, f font, w weight, it italic, s size %, ls spacing, r rotation,
+// c text colour, b fill colour, rad corners, o opacity, x/y move (cqw), hide}. Applied over the ad as drawn.
+var T = 1, FL = 2, RD = 4, FT = 8;
+var ELS = [['t1','Title line 1 (BLACK)',T|FT],['t2','Title line 2 (FRIDAY)',T|FT],['fga','FREE GIFTS line',T|FT],['fgb','"with Every Order" line',T|FT],
+  ['fgi','Gift icon circle',FL],['fg','Free-gifts block (icon + both lines)',FT],['btn','Button',T|FT|FL|RD],['pay','Tabby / Tamara logos',0],
+  ['rib','Corner ribbon',T|FT|FL],['gift','Gift box',0],['heart','Heart',0],['card','White card',FL|RD],['glow','Glow behind the gift',0],['bg','Background',FL]];
+var ELF = {}; ELS.forEach(function(e){ ELF[e[0]] = e; });
+var FONTS = {inter:'Inter,sans-serif', poppins:'Poppins,sans-serif', montserrat:'Montserrat,sans-serif', playfair:'"Playfair Display",serif', dmserif:'"DM Serif Display",serif', bebas:'"Bebas Neue",sans-serif', cairo:'Cairo,sans-serif'};
+var HEX = /^#[0-9a-fA-F]{6}$/;
+function num(v, lo, hi){ v = +v; return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : undefined; }
+function cleanDesign(d){ var out = {}; if (!d || typeof d !== 'object') return out;
+  Object.keys(d).forEach(function(k){ if (!ELF[k] || !d[k] || typeof d[k] !== 'object') return; var e = d[k], o = {};
+    if (typeof e.t === 'string') o.t = e.t.slice(0, 60); if (FONTS[e.f]) o.f = e.f; if ([400,500,600,700,800,900].indexOf(+e.w) >= 0) o.w = +e.w;
+    if (e.it === true) o.it = true; if (e.hide === true) o.hide = true; if (HEX.test(e.c)) o.c = e.c; if (HEX.test(e.b)) o.b = e.b;
+    [['s',30,250],['ls',-10,40],['r',-180,180],['rad',0,80],['o',0,100],['x',-100,100],['y',-200,200]].forEach(function(q){ var v = num(e[q[0]], q[1], q[2]); if (v !== undefined && e[q[0]] !== undefined && e[q[0]] !== null) o[q[0]] = v; });
+    if (Object.keys(o).length) out[k] = o; });
+  return out; }
+function elData(k, make, dk){ dk = dk || key(sel.ad, sel.fmt); if (!designs[dk]){ if (!make) return null; designs[dk] = {}; } if (!designs[dk][k] && make) designs[dk][k] = {}; return designs[dk][k] || null; }
+function applyEl(el, e){
+  var k = el.dataset.k, f = ELF[k] ? ELF[k][2] : 0;
+  if (!el.dataset.orig) el.dataset.orig = el.getAttribute('style') || '';
+  el.setAttribute('style', el.dataset.orig);
+  if (el.dataset.ot === undefined){ var tx0 = el.querySelector('[data-tx]') || el; el.dataset.ot = (f & T) ? tx0.textContent : ''; }
+  if (f & T){ var tx = el.querySelector('[data-tx]') || el; tx.textContent = e.t != null ? e.t : el.dataset.ot; }
+  if (!e) return;
+  if (k !== 'bg'){ el.style.translate = (e.x || 0) + 'cqw ' + (e.y || 0) + 'cqw'; el.style.rotate = (e.r || 0) + 'deg'; el.style.scale = String((e.s || 100) / 100); }
+  if (e.f) el.style.fontFamily = FONTS[e.f]; if (e.w) el.style.fontWeight = e.w; if (e.it) el.style.fontStyle = 'italic';
+  if (e.ls != null) el.style.letterSpacing = (e.ls / 100) + 'em';
+  if (e.c){ el.style.color = e.c; if (k === 't2'){ el.style.backgroundImage = 'none'; el.style.webkitTextFillColor = e.c; } }
+  if (e.b) el.style.background = e.b;
+  if (e.rad != null) el.style.borderRadius = (e.rad / 10) + 'cqw';
+  if (e.o != null) el.style.opacity = e.o / 100;
+  if (e.hide) el.style.visibility = 'hidden';
+}
+function applyDesign(root, D){ if (!root) return; root.querySelectorAll('[data-k]').forEach(function(el){ if (D[el.dataset.k] || el.dataset.orig) applyEl(el, D[el.dataset.k] || null); });
+  if (root.dataset.k && (D.bg || root.dataset.orig)) applyEl(root, D.bg || null); }
+var elSel = document.getElementById('el'), elAll = document.getElementById('el-all');
+(function(){ var o = document.createElement('option'); o.value = ''; o.textContent = 'Tap something on the ad, or choose…'; elSel.appendChild(o);
+  ELS.forEach(function(e){ var o2 = document.createElement('option'); o2.value = e[0]; o2.textContent = e[1]; elSel.appendChild(o2); }); })();
+elSel.onchange = function(){ curEl = elSel.value || null; cur = null; draw(); };
+function hexOf(c){ var m = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/.exec(c || ''); if (!m || m[4] === '0') return null; return '#' + [m[1], m[2], m[3]].map(function(v){ return (+v).toString(16).padStart(2, '0'); }).join(''); }
+// one change: this size, and (unless it is a move) the other two sizes of this ad when "together" is on
+function setEl(prop, val){ if (!curEl) return;
+  var ks = [key(sel.ad, sel.fmt)]; if (elAll.checked && prop !== 'x' && prop !== 'y') ['post','square','story'].forEach(function(f){ var k2 = key(sel.ad, f); if (ks.indexOf(k2) < 0) ks.push(k2); });
+  ks.forEach(function(k2){ var o = elData(curEl, true, k2); if (val === undefined || val === null || val === '') delete o[prop]; else o[prop] = val; if (!Object.keys(o).length) delete designs[k2][curEl]; });
+  var ke = stage.querySelector('[data-k="' + curEl + '"]'); if (ke) applyEl(ke, elData(curEl, false)); sideEl(); scheduleDraft();
+  var k = key(sel.ad, sel.fmt); if (!statusEl.dataset.hold) setStatus(dirty(k) ? 'Not saved yet' : 'Saved', dirty(k) ? 'warn' : 'ok'); }
+function bindRange(id, prop, lbl, fmt){ var r = document.getElementById(id); r.oninput = function(){ var v = +r.value; setEl(prop, v); }; }
+document.getElementById('el-t').oninput = function(e){ setEl('t', e.target.value); };
+document.getElementById('el-f').onchange = function(e){ setEl('f', e.target.value); };
+document.getElementById('el-w').onchange = function(e){ setEl('w', e.target.value ? +e.target.value : ''); };
+document.getElementById('el-it').onchange = function(e){ setEl('it', e.target.checked ? true : ''); };
+document.getElementById('el-s').oninput = function(e){ setEl('s', +e.target.value === 100 ? '' : +e.target.value); };
+document.getElementById('el-ls').oninput = function(e){ setEl('ls', +e.target.value); };
+document.getElementById('el-r').oninput = function(e){ var v = +e.target.value; if (e.shiftKey) v = Math.round(v / 15) * 15; setEl('r', v || ''); };
+document.getElementById('el-o').oninput = function(e){ setEl('o', +e.target.value === 100 ? '' : +e.target.value); };
+document.getElementById('el-rad').oninput = function(e){ setEl('rad', +e.target.value < 0 ? '' : +e.target.value); };
+document.getElementById('el-c').oninput = function(e){ setEl('c', e.target.value); };
+document.getElementById('el-b').oninput = function(e){ setEl('b', e.target.value); };
+document.getElementById('el-c0').onclick = function(){ setEl('c', ''); };
+document.getElementById('el-b0').onclick = function(){ setEl('b', ''); };
+document.getElementById('el-show').onchange = function(e){ setEl('hide', e.target.checked ? '' : true); };
+document.getElementById('el-reset').onclick = function(){ if (!curEl) return;
+  var ks = [key(sel.ad, sel.fmt)]; if (elAll.checked) ['post','square','story'].forEach(function(f){ ks.push(key(sel.ad, f)); });
+  ks.forEach(function(k2){ var o = designs[k2] && designs[k2][curEl]; if (!o) return; if (k2 === key(sel.ad, sel.fmt) || !elAll.checked) delete designs[k2][curEl]; else { var keep = {}; if (o.x != null) keep.x = o.x; if (o.y != null) keep.y = o.y; if (Object.keys(keep).length) designs[k2][curEl] = keep; else delete designs[k2][curEl]; } });
+  draw(); };
+document.getElementById('el-resetall').onclick = function(){ if (!confirm('Put every text, button and colour on this ad and size back as designed? (Products stay.)')) return; designs[key(sel.ad, sel.fmt)] = {}; curEl = null; draw(); };
+function setV(id, v){ var x = document.getElementById(id); if (x.type === 'checkbox'){ if (x.checked !== v) x.checked = v; } else if (String(x.value) !== String(v)) x.value = v; }
+function sideEl(){
+  var box = document.getElementById('elx'), f = curEl && ELF[curEl] ? ELF[curEl][2] : 0, e = (curEl && elData(curEl, false)) || {};
+  box.setAttribute('aria-disabled', curEl ? 'false' : 'true'); setV('el', curEl || '');
+  box.querySelectorAll('input,select,button').forEach(function(x){ if (x.id !== 'el' && x.id !== 'el-resetall') x.disabled = !curEl; });
+  document.getElementById('el-t-row').hidden = !(f & T); document.getElementById('el-font-row').hidden = !(f & FT); document.getElementById('el-it-row').hidden = !(f & FT);
+  document.getElementById('el-ls-row').hidden = !(f & FT); document.getElementById('el-c-row').hidden = !(f & T); document.getElementById('el-b-row').hidden = !(f & FL); document.getElementById('el-rad-row').hidden = !(f & RD);
+  if (!curEl) return;
+  var ke = stage.querySelector('[data-k="' + curEl + '"]');
+  if (f & T){ var ot = ke ? ke.dataset.ot : ''; setV('el-t', e.t != null ? e.t : (ot || (ke ? (ke.querySelector('[data-tx]') || ke).textContent : ''))); }
+  setV('el-f', e.f || ''); setV('el-w', e.w ? String(e.w) : ''); setV('el-it', !!e.it);
+  setV('el-s', e.s || 100); document.getElementById('el-sv').textContent = (e.s || 100) + '%';
+  setV('el-ls', e.ls || 0); document.getElementById('el-lsv').textContent = String(e.ls || 0);
+  setV('el-r', e.r || 0); document.getElementById('el-rv').textContent = (e.r || 0) + '°';
+  setV('el-o', e.o != null ? e.o : 100); document.getElementById('el-ov').textContent = (e.o != null ? e.o : 100) + '%';
+  setV('el-rad', e.rad != null ? e.rad : -1); document.getElementById('el-radv').textContent = e.rad != null ? String(e.rad) : 'as designed';
+  setV('el-show', !e.hide);
+  if (ke){ var cs = getComputedStyle(ke); setV('el-c', e.c || hexOf(cs.color) || '#000000'); setV('el-b', e.b || hexOf(cs.backgroundColor) || (DATA.ads[sel.ad].acc || '#E8306F').slice(0, 7)); }
+}
+
 // ── the side panel ──
 var prodSel = document.getElementById('prod'), rot = document.getElementById('rot');
 function addOption(p){ var o = document.createElement('option'); o.value = p; o.textContent = DATA.names[p]; prodSel.appendChild(o); }
 POOL.forEach(addOption);
 function side(){
+  sideEl();
   var it = cur != null ? items()[cur] : null;
   document.getElementById('selTitle').textContent = it ? DATA.names[it.p] : 'Nothing selected';
   document.getElementById('selHint').textContent = it ? 'Drag to move, drag the blue corner to resize.' : 'Tap a product on the ad.';
@@ -289,7 +414,13 @@ document.getElementById('reset').onclick = function(){ lay(sel.ad, sel.fmt)[sel.
 // ── drag to move, corner to resize (pointer events; nothing is measured on a shop page -- this is the editor) ──
 var drag = null;
 stage.addEventListener('pointerdown', function(e){
-  var el = e.target.closest('.bp.ed'); if (!el){ cur = null; draw(); return; }
+  var el = e.target.closest('.bp.ed');
+  if (!el){ cur = null; var ke = e.target.closest('[data-k]'); if (!ke || !stage.contains(ke)){ curEl = null; draw(); return; }
+    curEl = ke.dataset.k; var ed0 = elData(curEl, false) || {}, bf0 = stage.querySelector('.bf');
+    drag = {k: curEl, sx: e.clientX, sy: e.clientY, x: ed0.x || 0, y: ed0.y || 0, px: 100 / bf0.getBoundingClientRect().width};
+    stage.setPointerCapture(e.pointerId); e.preventDefault();
+    stage.querySelectorAll('.ksel').forEach(function(x){ x.classList.remove('ksel'); }); ke.classList.add('ksel'); side(); return; }
+  curEl = null; stage.querySelectorAll('.ksel').forEach(function(x){ x.classList.remove('ksel'); });
   var i = +el.dataset.i; cur = i; var it = items()[i];
   var bf = stage.querySelector('.bf'), px = 100 / bf.getBoundingClientRect().width;
   var rb = el.getBoundingClientRect();
@@ -298,7 +429,10 @@ stage.addEventListener('pointerdown', function(e){
   stage.querySelectorAll('.bp.ed').forEach(function(x){ x.classList.toggle('on', +x.dataset.i === i); }); side();
 });
 stage.addEventListener('pointermove', function(e){
-  if (!drag) return; var it = items()[drag.i], dx = (e.clientX - drag.sx) * drag.px, dy = (e.clientY - drag.sy) * drag.px;
+  if (!drag) return;
+  if (drag.k){ if (drag.k === 'bg') return; var o = elData(drag.k, true); o.x = Math.round((drag.x + (e.clientX - drag.sx) * drag.px) * 100) / 100; o.y = Math.round((drag.y + (e.clientY - drag.sy) * drag.px) * 100) / 100;
+    var ke = stage.querySelector('[data-k="' + drag.k + '"]'); if (ke) applyEl(ke, o); return; }
+  var it = items()[drag.i], dx = (e.clientX - drag.sx) * drag.px, dy = (e.clientY - drag.sy) * drag.px;
   if (drag.rot){ var ang = Math.atan2(e.clientY - drag.cy, e.clientX - drag.cx) * 180 / Math.PI + 90; ang = ((ang + 540) % 360) - 180; if (e.shiftKey) ang = Math.round(ang / 15) * 15; it.r = Math.round(ang); }
   else if (drag.h){ it.w = Math.max(3, drag.w + Math.max(dx, dy * (DATA.aspect[it.p] || .5))); }
   else { it.x = drag.x + dx; it.y = drag.y + dy; }
@@ -306,10 +440,13 @@ stage.addEventListener('pointermove', function(e){
   var el = stage.querySelector('.bp[data-i="' + drag.i + '"]'); if (el) place(el, it);
   if (drag.rot){ document.getElementById('rot').value = it.r; document.getElementById('rotv').textContent = it.r + '°'; }
 });
-function end(){ if (drag){ drag = null; statusEl.dataset.hold = ''; side(); } }
+function end(){ if (drag){ drag = null; statusEl.dataset.hold = ''; side(); scheduleDraft(); } }
 stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
 document.addEventListener('keydown', function(e){
-  if (cur == null || /input|select|textarea/i.test(document.activeElement.tagName)) return;
+  if (/input|select|textarea/i.test(document.activeElement.tagName)) return;
+  if (cur == null && curEl && curEl !== 'bg'){ var dd = e.shiftKey ? 1 : .25, mm = {ArrowLeft:[-dd,0],ArrowRight:[dd,0],ArrowUp:[0,-dd],ArrowDown:[0,dd]}[e.key]; if (!mm) return; e.preventDefault();
+    var o = elData(curEl, true); o.x = Math.round(((o.x || 0) + mm[0]) * 100) / 100; o.y = Math.round(((o.y || 0) + mm[1]) * 100) / 100; var ke = stage.querySelector('[data-k="' + curEl + '"]'); if (ke) applyEl(ke, o); side(); scheduleDraft(); return; }
+  if (cur == null) return;
   var it = items()[cur], d = e.shiftKey ? 1 : .25, m = {ArrowLeft:[-d,0],ArrowRight:[d,0],ArrowUp:[0,-d],ArrowDown:[0,d]}[e.key];
   if (!m) return; e.preventDefault(); it.x += m[0]; it.y += m[1]; var el = stage.querySelector('.bp[data-i="' + cur + '"]'); if (el) place(el, it); side();
 });
@@ -339,33 +476,61 @@ document.getElementById('play').onclick = function(){
 };
 
 // ── saving: the page's db, read back by Claude for the export ──
-function getDb(){ if (dbTried) return Promise.resolve(db); dbTried = true;
-  return (window.claude && window.claude.use ? window.claude.use('db') : Promise.resolve(null)).then(function(d){ db = d; return d; }).catch(function(){ return null; }); }
+// ONE request for the store, shared: a second caller used to get null while the first was still
+// waiting, and its saved layouts then showed as the default (the "reset" the owner saw, 12 Nov).
+var dbP = null;
+function getDb(){ if (!dbP) dbP = (window.claude && window.claude.use ? window.claude.use('db') : Promise.resolve(null)).then(function(d){ db = d; return d; }).catch(function(){ return null; }); return dbP; }
 function loadThen(fn){
-  var k = key(sel.ad, sel.fmt); cur = null; fn();
-  if (saved[k] !== undefined) return;
-  getDb().then(function(d){
-    if (!d) return;
-    var t = setTimeout(function(){}, 10000);
-    d.doc('layouts/' + k).get().then(function(snap){
-      clearTimeout(t);
-      saved[k] = '';
-      if (snap.exists){ var b = snap.data(); if (b && Array.isArray(b.frames) && b.frames.length === 3){ layouts[k] = clone(b.frames).map(function(fr){ return fr.map(swapRemoved); }); anims[k] = Object.assign(clone(ANIM0), b.anim || {}); saved[k] = snapOf(k); } }
-      if (key(sel.ad, sel.fmt) === k) draw();
-    }).catch(function(){ clearTimeout(t); });
-  });
+  cur = null; fn();
+  ['post', 'square', 'story'].forEach(function(f){ loadKey(key(sel.ad, f)); });   // all 3 sizes, so "change together" has them
 }
+// Never overwrite what the owner is doing (owner, 12 Nov: "when i press save, don't reset anything"):
+// a saved layout that arrives after an edit is recorded as the saved state, but the edit stays.
+function loadKey(k){
+  if (loading[k]) return loading[k];
+  var before = snapOf(k);
+  loading[k] = getDb().then(function(d){
+    var apply = function(b){
+      var dbSnap = '';
+      if (b && Array.isArray(b.frames) && b.frames.length === 3){
+        var L = clone(b.frames).map(function(fr){ return fr.map(swapRemoved); }), A = Object.assign(clone(ANIM0), b.anim || {}), D = cleanDesign(b.design);
+        dbSnap = JSON.stringify({f: L, a: A, d: D});
+        if (snapOf(k) === before){ layouts[k] = L; anims[k] = A; designs[k] = D; }
+      }
+      saved[k] = dbSnap;
+      var dr = readDraft(k);
+      if (dr && (!b || (dr.t || 0) > (b.updated || 0)) && snapOf(k) === (dbSnap || before)){
+        layouts[k] = dr.f; anims[k] = Object.assign(clone(ANIM0), dr.a || {}); designs[k] = cleanDesign(dr.d);
+        if (k === key(sel.ad, sel.fmt)){ statusEl.dataset.hold = '1'; setStatus('Your unsaved changes are back. Press Save to keep them.', 'warn'); setTimeout(function(){ statusEl.dataset.hold = ''; }, 4000); }
+      }
+      if (k === key(sel.ad, sel.fmt)) draw();
+    };
+    if (!d){ apply(null); return; }
+    return d.doc('layouts/' + k).get().then(function(snap){ apply(snap.exists ? snap.data() : null); });
+  }).catch(function(){ delete loading[k]; });
+  return loading[k];
+}
+// unsaved work survives a reload of this page (this browser only)
+var DRAFT = 'bfads-draft-v1', draftT = 0;
+function readDrafts(){ try { return JSON.parse(localStorage.getItem(DRAFT) || '{}') || {}; } catch (e){ return {}; } }
+function readDraft(k){ var o = readDrafts()[k]; return o && Array.isArray(o.f) && o.f.length === 3 ? o : null; }
+function scheduleDraft(){ clearTimeout(draftT); draftT = setTimeout(function(){
+  try { var o = readDrafts(); allKeys().forEach(function(k){ if (saved[k] === undefined) return; if (dirty(k)) o[k] = {f: layouts[k] || defOf(k), a: anims[k] || ANIM0, d: designs[k] || {}, t: Date.now()}; else delete o[k]; });
+    localStorage.setItem(DRAFT, JSON.stringify(o)); } catch (e){} }, 500); }
+function dropDraft(k){ try { var o = readDrafts(); delete o[k]; localStorage.setItem(DRAFT, JSON.stringify(o)); } catch (e){} }
 function saveKey(k){
   return getDb().then(function(d){
     if (!d) throw {code: 'unavailable'};
     if (!layouts[k]) lay(+k.slice(1,3) - 1, k.split('-')[1]);
-    return d.doc('layouts/' + k).set({frames: layouts[k], anim: anims[k] || ANIM0, updated: Date.now()}).then(function(){ saved[k] = snapOf(k); });
+    return d.doc('layouts/' + k).set({frames: layouts[k], anim: anims[k] || ANIM0, design: designs[k] || {}, updated: Date.now()}).then(function(){ saved[k] = snapOf(k); dropDraft(k); });
   });
 }
 document.getElementById('save').onclick = function(){
-  var k = key(sel.ad, sel.fmt); setStatus('Saving…'); statusEl.dataset.hold = '1';
-  saveKey(k).then(function(){ statusEl.dataset.hold = ''; setStatus('Saved', 'ok'); })
-    .catch(function(e){ statusEl.dataset.hold = '1'; setStatus(e && e.code === 'unavailable' ? 'Saving is not available here. Open this page signed in to claude.ai.' : 'Not saved: ' + ((e && e.message) || 'try again'), 'warn'); });
+  // Every ad and size with changes, in one press; nothing on screen is redrawn or reset.
+  var ks = allKeys().filter(dirty); if (ks.indexOf(key(sel.ad, sel.fmt)) < 0) ks.push(key(sel.ad, sel.fmt));
+  setStatus('Saving…'); statusEl.dataset.hold = '1';
+  Promise.all(ks.map(saveKey)).then(function(){ statusEl.dataset.hold = ''; setStatus(ks.length > 1 ? 'Saved ' + ks.length + ' layouts' : 'Saved', 'ok'); })
+    .catch(function(e){ statusEl.dataset.hold = '1'; setStatus(e && e.code === 'unavailable' ? 'Saving is not available here. Open this page signed in to claude.ai. Your changes are kept in this browser.' : 'Not saved: ' + ((e && e.message) || 'try again') + '. Your changes are kept.', 'warn'); });
 };
 document.getElementById('copyall').onclick = function(){
   var src = lay(sel.ad, sel.fmt), jobs = [];
@@ -377,6 +542,8 @@ document.getElementById('copyall').onclick = function(){
       dst[f] = src[f].map(function(it, n){ return {p: keep[n] || it.p, x: it.x, y: it.y, w: it.w, r: it.r, sh: it.sh, ss: it.ss}; });
     }
     anims[key(ai, sel.fmt)] = clone(anim());
+    var sd = designs[key(sel.ad, sel.fmt)] || {}, dd = designs[key(ai, sel.fmt)] = designs[key(ai, sel.fmt)] || {};
+    Object.keys(sd).forEach(function(k){ var o = Object.assign({}, dd[k] || {}); ['x','y','s','r','f','w','it','ls','rad','o','hide'].forEach(function(p){ if (sd[k][p] === undefined) delete o[p]; else o[p] = sd[k][p]; }); dd[k] = o; });
     jobs.push(saveKey(key(ai, sel.fmt)));
   });
   jobs.push(saveKey(key(sel.ad, sel.fmt)));

@@ -367,20 +367,20 @@ def ad4(i, sch, fmt, frame=None, bare=False, data=None):
             if bare:
                 continue
             prods += f'<i class="bp p-{p}{cls}" style="left:{c(left + x * u)};top:{c(top + y * u)};width:{U(w)};height:{U(h)};transform:rotate({rot}deg)"></i>'
-    return f'''<div class="bf v2 v4" style="aspect-ratio:{W}/{H};background:radial-gradient(38% 26% at 16% 18%,{acc}22,transparent 70%),radial-gradient(44% 30% at 86% 86%,{acc}1c,transparent 70%),radial-gradient(70% 55% at 50% 42%,{b1},{b2})">
+    return f'''<div class="bf v2 v4" data-k="bg" style="aspect-ratio:{W}/{H};background:radial-gradient(38% 26% at 16% 18%,{acc}22,transparent 70%),radial-gradient(44% 30% at 86% 86%,{acc}1c,transparent 70%),radial-gradient(70% 55% at 50% 42%,{b1},{b2})">
 <i class="bsp" style="left:{c(W * .1)};top:{c(H * .08)};width:{c(24)};height:{c(24)}">{STAR.format(c=spk)}</i><i class="bsp" style="left:{c(W * .88)};top:{c(H * .07)};width:{c(18)};height:{c(18)}">{STAR.format(c=spk)}</i>
-<div class="bglow" style="left:{c(left + cw / 2 - 160 * u)};top:{c(gy - 10 * u)};width:{U(320)};height:{U(240)};background:radial-gradient(closest-side,{acc}44,transparent)"></div>
-<div class="bc" style="left:{c(left)};top:{c(top)};width:{c(cw)};height:{c(ch)};border-radius:{U(28)};background:linear-gradient(180deg,color-mix(in srgb,{card} 94%,#000) 0%,{card} 38%);box-shadow:inset 0 0 0 {U(1.2)} rgba(0,0,0,.05),0 {U(34)} {U(70)} rgba(0,0,0,.16),0 {U(8)} {U(18)} rgba(0,0,0,.1)">
-<div class="bh" style="left:{U(250)};top:{U(300)};width:{U(250)};height:{U(230)}">{heart(n, hc)}</div>
+<div class="bglow" data-k="glow" style="left:{c(left + cw / 2 - 160 * u)};top:{c(gy - 10 * u)};width:{U(320)};height:{U(240)};background:radial-gradient(closest-side,{acc}44,transparent)"></div>
+<div class="bc" data-k="card" style="left:{c(left)};top:{c(top)};width:{c(cw)};height:{c(ch)};border-radius:{U(28)};background:linear-gradient(180deg,color-mix(in srgb,{card} 94%,#000) 0%,{card} 38%);box-shadow:inset 0 0 0 {U(1.2)} rgba(0,0,0,.05),0 {U(34)} {U(70)} rgba(0,0,0,.16),0 {U(8)} {U(18)} rgba(0,0,0,.1)">
+<div class="bh" data-k="heart" style="left:{U(250)};top:{U(300)};width:{U(250)};height:{U(230)}">{heart(n, hc)}</div>
 <div class="bs" style="left:{U(26)};top:{U(196)};width:{U(22)};height:{U(22)}">{STAR.format(c=spk)}</div>
 <div class="bs" style="left:{U(398)};top:{U(395)};width:{U(22)};height:{U(22)}">{STAR.format(c=spk)}</div>
-<div class="bt bx" style="top:{U(136)};color:{tc};font-size:{U(76)}">BLACK</div>
-<div class="bt bx bgr" style="top:{U(208)};font-size:{U(76)};background-image:linear-gradient(180deg,color-mix(in srgb,{acc} 72%,#fff) 0%,{acc} 55%,color-mix(in srgb,{acc} 88%,#000) 100%)">FRIDAY</div>
-<div class="bt fg2" style="top:{U(300)};gap:{U(13)}"><span class="fg2i" style="width:{U(58)};height:{U(58)};background:radial-gradient(circle at 35% 30%,color-mix(in srgb,{acc} 70%,#fff),{acc} 70%);box-shadow:0 0 0 {U(6)} {acc}22,0 0 {U(24)} {acc}99">{GIFT_ICON}</span><span class="fg2t"><span class="fg2a" style="font-size:{U(32)};color:{acc}">FREE GIFTS</span><span class="fg2b" style="font-size:{U(24)};color:{tc}">with Every Order</span></span></div>
-<div class="bb" style="left:{U(36)};right:{U(36)};top:{U(434)};height:{U(76)};border-radius:{U(16)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 82%,#fff),{acc} 52%,color-mix(in srgb,{acc} 86%,#000));color:{btc};font-size:{U(29)};font-weight:700;box-shadow:inset 0 {U(1.5)} 0 rgba(255,255,255,.35),0 {U(12)} {U(26)} {acc}55">{BTN_TEXT[i % len(BTN_TEXT)]}</div>
-<div class="bpay" style="top:{U(522)};gap:{U(14)};height:{U(28)}"><img src="{PAY_TABBY}" alt="tabby"><img src="{PAY_TAMARA}" alt="tamara"></div>
-</div><div class="bg" style="left:{c(gx)};top:{c(gy)};width:{U(190)};height:{U(218)};filter:drop-shadow(0 {U(12)} {U(16)} rgba(0,0,0,.2))">{gift(n, gl, gm, gd)}</div>{prods}
-<div class="brib" style="left:{c(RIB_D - RIB_W / 2)};top:{c(RIB_D - RIB_H / 2)};width:{c(RIB_W)};height:{c(RIB_H)};font-size:{c(RIB_F)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 80%,#fff),{acc} 55%,color-mix(in srgb,{acc} 85%,#000));box-shadow:0 {c(5)} {c(14)} rgba(0,0,0,.22)">K-Beauty Bliss Specials{HEART_ICON}</div></div>'''
+<div class="bt bx" data-k="t1" style="top:{U(136)};color:{tc};font-size:{U(76)}">BLACK</div>
+<div class="bt bx bgr" data-k="t2" style="top:{U(208)};font-size:{U(76)};background-image:linear-gradient(180deg,color-mix(in srgb,{acc} 72%,#fff) 0%,{acc} 55%,color-mix(in srgb,{acc} 88%,#000) 100%)">FRIDAY</div>
+<div class="bt fg2" data-k="fg" style="top:{U(300)};gap:{U(13)}"><span class="fg2i" data-k="fgi" style="width:{U(58)};height:{U(58)};background:radial-gradient(circle at 35% 30%,color-mix(in srgb,{acc} 70%,#fff),{acc} 70%);box-shadow:0 0 0 {U(6)} {acc}22,0 0 {U(24)} {acc}99">{GIFT_ICON}</span><span class="fg2t"><span class="fg2a" data-k="fga" style="font-size:{U(32)};color:{acc}">FREE GIFTS</span><span class="fg2b" data-k="fgb" style="font-size:{U(24)};color:{tc}">with Every Order</span></span></div>
+<div class="bb" data-k="btn" style="left:{U(36)};right:{U(36)};top:{U(434)};height:{U(76)};border-radius:{U(16)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 82%,#fff),{acc} 52%,color-mix(in srgb,{acc} 86%,#000));color:{btc};font-size:{U(29)};font-weight:700;box-shadow:inset 0 {U(1.5)} 0 rgba(255,255,255,.35),0 {U(12)} {U(26)} {acc}55">{BTN_TEXT[i % len(BTN_TEXT)]}</div>
+<div class="bpay" data-k="pay" style="top:{U(522)};gap:{U(14)};height:{U(28)}"><img src="{PAY_TABBY}" alt="tabby"><img src="{PAY_TAMARA}" alt="tamara"></div>
+</div><div class="bg" data-k="gift" style="left:{c(gx)};top:{c(gy)};width:{U(190)};height:{U(218)};filter:drop-shadow(0 {U(12)} {U(16)} rgba(0,0,0,.2))">{gift(n, gl, gm, gd)}</div>{prods}
+<div class="brib" data-k="rib" style="left:{c(RIB_D - RIB_W / 2)};top:{c(RIB_D - RIB_H / 2)};width:{c(RIB_W)};height:{c(RIB_H)};font-size:{c(RIB_F)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 80%,#fff),{acc} 55%,color-mix(in srgb,{acc} 85%,#000));box-shadow:0 {c(5)} {c(14)} rgba(0,0,0,.22)"><span data-tx>K-Beauty Bliss Specials</span>{HEART_ICON}</div></div>'''
 
 # The corner ribbon (owner, 12 Nov: "a diagonal left upper corner strip with text. K-Beauty Bliss
 # Specials + heart icon"), across the card's top-left corner, clear of the title and the gift.
