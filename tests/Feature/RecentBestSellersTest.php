@@ -30,7 +30,7 @@ afterEach(function () {
     RepeatPurchase::forget();
 });
 
-function rbsProduct(string $name, int $totalSales = 0, array $extra = []): Product
+function rcbsProduct(string $name, int $totalSales = 0, array $extra = []): Product
 {
     return Product::create(array_merge([
         'slug' => 'rbs-' . Str::random(10), 'name' => $name, 'status' => 'publish', 'is_visible' => true,
@@ -39,7 +39,7 @@ function rbsProduct(string $name, int $totalSales = 0, array $extra = []): Produ
 }
 
 /** @param array<int, array{0: Product, 1: int}> $lines */
-function rbsOrder(array $lines, int $daysAgo = 5, string $status = 'completed', bool $gift = false): Order
+function rcbsOrder(array $lines, int $daysAgo = 5, string $status = 'completed', bool $gift = false): Order
 {
     $order = Order::create([
         'order_number' => 'RBS-' . Str::random(10), 'email' => Str::random(6) . '@example.test',
@@ -65,19 +65,19 @@ it('ranks /best-sellers/ by units sold in the last three months, highest first, 
      * and `$old` (total_sales 900) leads -- red. Count gift lines or cancelled
      * orders and `$gifted` / `$cancelled` appear -- red.
      */
-    $old = rbsProduct('Last year hit', 900);
-    $top = rbsProduct('Now top', 1);
-    $second = rbsProduct('Now second', 2);
-    $gifted = rbsProduct('Only ever gifted');
-    $cancelled = rbsProduct('Only cancelled');
-    $never = rbsProduct('Never sold', 50);
+    $old = rcbsProduct('Last year hit', 900);
+    $top = rcbsProduct('Now top', 1);
+    $second = rcbsProduct('Now second', 2);
+    $gifted = rcbsProduct('Only ever gifted');
+    $cancelled = rcbsProduct('Only cancelled');
+    $never = rcbsProduct('Never sold', 50);
 
-    rbsOrder([[$old, 500]], 120);
-    rbsOrder([[$top, 3]], 2);
-    rbsOrder([[$top, 4], [$second, 2]], 80);
-    rbsOrder([[$second, 3]], 30);
-    rbsOrder([[$gifted, 9]], 3, 'completed', true);
-    rbsOrder([[$cancelled, 9]], 3, 'cancelled');
+    rcbsOrder([[$old, 500]], 120);
+    rcbsOrder([[$top, 3]], 2);
+    rcbsOrder([[$top, 4], [$second, 2]], 80);
+    rcbsOrder([[$second, 3]], 30);
+    rcbsOrder([[$gifted, 9]], 3, 'completed', true);
+    rcbsOrder([[$cancelled, 9]], 3, 'cancelled');
 
     expect(RecentBestSellers::ranked())->toBe([$top->id => 7, $second->id => 5]);
 
@@ -94,12 +94,12 @@ it('ranks /best-sellers/ by units sold in the last three months, highest first, 
 
 it('caps the list at 150 and counts only products the shop still shows', function () {
     /* MUTATION: drop the limit and 155 are ranked -- red; drop the visibility join and the hidden one is ranked -- red. */
-    $hidden = rbsProduct('Hidden seller', 0, ['is_visible' => false]);
+    $hidden = rcbsProduct('Hidden seller', 0, ['is_visible' => false]);
     $lines = [[$hidden, 999]];
     for ($i = 0; $i < 155; $i++) {
-        $lines[] = [rbsProduct('Seller ' . $i), $i + 1];
+        $lines[] = [rcbsProduct('Seller ' . $i), $i + 1];
     }
-    rbsOrder($lines, 10);
+    rcbsOrder($lines, 10);
 
     $ranked = RecentBestSellers::ranked();
     expect($ranked)->toHaveCount(RecentBestSellers::MAX)
@@ -110,9 +110,9 @@ it('caps the list at 150 and counts only products the shop still shows', functio
 });
 
 it('keeps the old ordering on a shop with no sale in the window, so the page is never empty', function () {
-    $a = rbsProduct('Lifetime A', 999999);
-    $b = rbsProduct('Lifetime B', 999998);
-    rbsOrder([[$a, 1]], 200);
+    $a = rcbsProduct('Lifetime A', 999999);
+    $b = rcbsProduct('Lifetime B', 999998);
+    rcbsOrder([[$a, 1]], 200);
 
     expect(RecentBestSellers::ranked())->toBe([])
         ->and(RecentBestSellers::applyTo(Product::query()->visible()))->toBeNull();
@@ -122,8 +122,8 @@ it('keeps the old ordering on a shop with no sale in the window, so the page is 
 });
 
 it('measures once per hour and issues SQL MySQL accepts', function () {
-    $p = rbsProduct('Shape');
-    rbsOrder([[$p, 2]], 1);
+    $p = rcbsProduct('Shape');
+    rcbsOrder([[$p, 2]], 1);
 
     $sql = SqlShape::capture(function () use ($p) {
         expect(RecentBestSellers::ranked()[$p->id] ?? null)->toBe(2);
@@ -141,12 +141,12 @@ it('measures once per hour and issues SQL MySQL accepts', function () {
 
 /* ═══ 2.60.661: Catalog → Best Sellers — drag to order, the cross to remove ═══ */
 
-function rbsAdmin(string $role = 'owner'): \App\Models\AdminUser
+function rcbsAdmin(string $role = 'owner'): \App\Models\AdminUser
 {
     return \App\Models\AdminUser::create(['name' => 'RBS', 'email' => 'rbs-'.$role.'-'.uniqid().'@x.test', 'password' => 'secret-secret', 'role' => $role]);
 }
 
-function rbsPage(): string
+function rcbsPage(): string
 {
     \App\Services\SettingsService::forgetMemo();
     \App\Models\Setting::flushMap();
@@ -162,12 +162,12 @@ it('shows the owner\'s order and leaves out what he crossed, and Reset gives the
      * the page keeps rank order -- red; ignore KEY_REMOVED and the crossed
      * product is still drawn -- red.
      */
-    $a = rbsProduct('Rank one');
-    $b = rbsProduct('Rank two');
-    $c = rbsProduct('Rank three');
-    rbsOrder([[$a, 9], [$b, 5], [$c, 2]], 3);
+    $a = rcbsProduct('Rank one');
+    $b = rcbsProduct('Rank two');
+    $c = rcbsProduct('Rank three');
+    rcbsOrder([[$a, 9], [$b, 5], [$c, 2]], 3);
 
-    $owner = rbsAdmin();
+    $owner = rcbsAdmin();
     $grid = $this->actingAs($owner, 'admin')->getJson('/admin-api/best-sellers')->assertOk()->json('items');
     expect(array_column($grid, 'id'))->toBe([$a->id, $b->id, $c->id])
         ->and(array_column($grid, 'units'))->toBe([9, 5, 2]);
@@ -180,13 +180,13 @@ it('shows the owner\'s order and leaves out what he crossed, and Reset gives the
     expect(array_column($saved, 'id'))->toBe([$c->id, $b->id, $a->id])
         ->and(array_column($saved, 'excluded'))->toBe([false, false, true]);
 
-    $html = rbsPage();
+    $html = rcbsPage();
     expect(strpos($html, 'Rank three'))->toBeLessThan(strpos($html, 'Rank two'))
         ->and($html)->not->toContain('Rank one');
 
     // A product that starts selling later joins after his arrangement.
-    $d = rbsProduct('Newcomer');
-    rbsOrder([[$d, 50]], 1);
+    $d = rcbsProduct('Newcomer');
+    rcbsOrder([[$d, 50]], 1);
     RecentBestSellers::forget();
     expect(RecentBestSellers::ids())->toBe([$c->id, $b->id, $d->id]);
 
@@ -203,23 +203,23 @@ it('has its own capability, fails closed for other roles, and refuses junk', fun
     }
     foreach (['support', 'editor'] as $role) {
         foreach ($calls as [$m, $uri]) {
-            $this->actingAs(rbsAdmin($role), 'admin')->json($m, $uri)->assertForbidden();
+            $this->actingAs(rcbsAdmin($role), 'admin')->json($m, $uri)->assertForbidden();
         }
     }
-    $this->actingAs(rbsAdmin('manager'), 'admin')->getJson('/admin-api/best-sellers')->assertOk();
-    $this->actingAs(rbsAdmin(), 'admin')->postJson('/admin-api/best-sellers/save', ['order' => ['x'], 'excluded' => []])->assertStatus(422);
+    $this->actingAs(rcbsAdmin('manager'), 'admin')->getJson('/admin-api/best-sellers')->assertOk();
+    $this->actingAs(rcbsAdmin(), 'admin')->postJson('/admin-api/best-sellers/save', ['order' => ['x'], 'excluded' => []])->assertStatus(422);
 });
 
 it('costs the shop page no extra query for the arrangement', function () {
     // MUTATION: read the two settings with a query of their own -- red.
-    $p = rbsProduct('Budget');
-    rbsOrder([[$p, 2]], 1);
+    $p = rcbsProduct('Budget');
+    rcbsOrder([[$p, 2]], 1);
     RecentBestSellers::ranked();
     $count = function () {
-        rbsPage();
+        rcbsPage();
         DB::flushQueryLog();
         DB::enableQueryLog();
-        rbsPage();
+        rcbsPage();
         $n = count(DB::getQueryLog());
         DB::disableQueryLog();
 
