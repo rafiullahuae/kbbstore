@@ -268,16 +268,20 @@ AD2_CSS = '''.bf.v2 .fl{display:inline-flex;align-items:center;gap:.45em;font-we
 # motive is to run all those versions in one ad, so user can see different
 # products in the same ad time to time.") ═══
 from PIL import Image as _Im
-for _p in ['guasha', 'isntree', 'marymay', 'axisy', 'eyemask', 'patch', 'reliefsun', 'cosrx', 'dralthea', 'deodorant', 'anua']:   # the cleaned cut-outs (no white fringe)
+for _p in ['guasha', 'isntree', 'marymay', 'axisy', 'eyemask', 'patch', 'reliefsun', 'cosrx', 'dralthea', 'deodorant', 'anua',
+           'balmred', 'balmpink', 'celimax', 'dalba', 'glowvanilla', 'anuacream', 'hairoil']:   # the cleaned cut-outs (no white fringe)
     _f = os.path.join(D, 'assets', _p + '.webp')
     _w, _h = _Im.open(_f).size
     ASPECT[_p] = _w / _h
-PRODUCTS += ['reliefsun', 'cosrx', 'dralthea', 'deodorant']
+PRODUCTS += ['reliefsun', 'cosrx', 'dralthea', 'deodorant', 'balmred', 'balmpink', 'celimax', 'dalba', 'glowvanilla', 'anuacream', 'hairoil']
 # One real size per product, in card units of height: the same in every ad.
 SIZE = {'guasha': 290, 'isntree': 212, 'marymay': 228, 'axisy': 196, 'anua': 190, 'eyemask': 165,
-        'patch': 95, 'reliefsun': 205, 'cosrx': 208, 'dralthea': 196, 'deodorant': 200}
-TALL = ['isntree', 'cosrx', 'reliefsun', 'deodorant', 'axisy', 'dralthea']     # above the title, right
-NARROW = ['marymay', 'axisy', 'cosrx', 'reliefsun', 'deodorant', 'marymay']    # beside the button, left
+        'patch': 95, 'reliefsun': 205, 'cosrx': 208, 'dralthea': 196, 'deodorant': 205,
+        'balmred': 205, 'balmpink': 205, 'celimax': 222, 'dalba': 232, 'glowvanilla': 232, 'anuacream': 228, 'hairoil': 232}
+# The owner's list, 12 Nov: keep the gua sha, Anua mist mini, Mary&May, the deodorant and the eye
+# patches; add the products he sent (balms, celimax, d'Alba, Glow Vanilla, Anua cream, hair oil).
+TALL = ['celimax', 'dalba', 'anuacream', 'hairoil', 'glowvanilla', 'marymay']     # above the title, right
+NARROW = ['balmpink', 'marymay', 'balmred', 'deodorant', 'anuacream', 'celimax']  # beside the button, left
 SHORT = ['anua', 'eyemask', 'anua', 'eyemask', 'anua', 'eyemask']              # beside the free-gifts line, right
 FRAME_S = 3.2   # seconds each product set shows
 
@@ -289,7 +293,7 @@ def frames_for(i):
     out = []
     for f in range(3):
         if l2[f] == r1[f]:
-            l2[f] = 'marymay' if r1[f] != 'marymay' else 'axisy'
+            l2[f] = 'balmpink' if r1[f] != 'balmpink' else 'deodorant'
         out.append(['guasha', r1[f], r2[f], l2[f]])   # post and square draw the first three
     return out
 
@@ -492,9 +496,10 @@ for i, (rid, sch) in enumerate(ROT, 1):
         fm[fmt] = {'base': base, 'W': W, 'H': H, 'def': [dd[f] for f in range(3)]}
     ed_ads.append({'id': rid, 'label': sch[1], 'acc': sch[4], 'f': fm})
 EDDATA = json.dumps({'ads': ed_ads, 'aspect': {k: round(v, 4) for k, v in ASPECT.items()},
-                     'names': {'guasha': 'medicube Gua Sha cream', 'isntree': 'Isntree sunscreen', 'marymay': 'Mary&May PDRN', 'axisy': 'AXIS-Y serum',
-                               'eyemask': 'medicube eye patches', 'patch': 'medicube patch', 'anua': 'Anua mist mini', 'reliefsun': 'BoJ Relief Sun',
-                               'cosrx': 'COSRX Snail essence', 'dralthea': 'Dr.Althea 345', 'deodorant': 'medicube deodorant'}}, ensure_ascii=False).replace('</', '<\\/')
+                     'names': {'guasha': 'medicube Gua Sha cream', 'anua': 'Anua mist mini', 'marymay': 'Mary&May PDRN serum', 'deodorant': 'medicube deodorant',
+                               'eyemask': 'medicube eye patches', 'balmred': 'medicube EGF balm (red)', 'balmpink': 'medicube PDRN balm (pink)',
+                               'celimax': 'celimax Retinal Shot', 'dalba': "d'Alba First Spray Serum", 'glowvanilla': 'medicube Glow Vanilla mist',
+                               'anuacream': 'Anua PDRN cream', 'hairoil': 'medicube Rosemary hair oil'}}, ensure_ascii=False).replace('</', '<\\/')
 editor = open(os.path.join(D, 'editor-template.html')).read()
 editor = editor.replace('/*AD_CSS*/', AD_CSS + AD2_CSS + AD4_CSS.replace('.bf.v4 .rf{', '.bf.v4 .rf-x{') + prod_css()).replace('/*DATA*/', EDDATA).replace('{FONT}', FONT)
 open(os.path.join(D, 'editor.html'), 'w').write(editor)
