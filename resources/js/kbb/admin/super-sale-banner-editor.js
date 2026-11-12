@@ -88,6 +88,8 @@ export function applyTemplate(spec, c, key) {
     const t = (spec.templates || []).find((x) => x.key === key);
     if (!t) return c;
     c.template = key;
+    // Black Friday ships with the gold arch behind the picture (SuperSaleBanner::withTemplate()).
+    if (key[0] === 'b') c.arch = true;
     for (const lang of ['en', 'ar']) {
         for (const [k, v] of Object.entries(t.words[lang] || {})) c[`${k}_${lang}`] = v;
     }
@@ -257,7 +259,7 @@ export function buildBanner(ctx, c, lang, force) {
     const ar = lang === 'ar';
     const t = (k) => String(c[`${k}_${lang}`] || '');
     const tpl = templateOf(spec, c);
-    const occ = tpl.key === 'super' ? '' : ` ssb-t-${tpl.key}`;
+    const occ = (tpl.key === 'super' ? '' : ` ssb-t-${tpl.key}`) + (c.arch && c.model_on ? ' ssb-arch' : '');
     const root = h('div', { class: `kbb-ssb${occ}${force ? ` ssb-f${force}` : ''}`, dir: ar ? 'rtl' : 'ltr', 'data-ssb': '' });
     const style = styleAttr(c, spec, lang);
     if (style) root.setAttribute('style', style);
@@ -273,7 +275,7 @@ export function buildBanner(ctx, c, lang, force) {
     }
     if (t('tagline')) copy.appendChild(h('span', { class: 'ssb-tag', text: t('tagline') }));
     if (tpl.num && t('num')) copy.appendChild(h('span', { class: 'ssb-num', 'aria-hidden': 'true', text: t('num') }));
-    if (t('title')) copy.appendChild(h('div', { class: 'ssb-super', text: t('title') }));
+    if (t('title')) copy.appendChild(h('div', tpl.key[0] === 'b' ? { class: 'ssb-super', 'data-t': t('title'), text: t('title') } : { class: 'ssb-super', text: t('title') }));
     if (String(c.code || '')) {
         copy.appendChild(h('span', { class: 'ssb-coupon' }, t('coupon') ? h('span', { text: t('coupon') }) : null, h('b', { text: String(c.code) })));
     }
@@ -351,6 +353,7 @@ export function controls(ctx, st, on) {
         check('logos', 'tabby and tamara logos'),
         check('model_on', 'The picture'),
         check('gifts_on', 'The free gifts row'),
+        check('arch', 'Gold arch behind the picture'),
         field('Coupon code (both languages)', h('input', {
             class: 'ssb-ed-in', maxlength: '24', value: String(c.code || ''), placeholder: 'GLOW',
             oninput: (e) => { c.code = e.currentTarget.value; changed(); },

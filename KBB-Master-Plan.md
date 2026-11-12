@@ -192,6 +192,39 @@ its phase.
   scheduler line in Cloudways → Application → Cron Job Management → Advanced.
   Exact line and health check: `docs/HANDOVER.md` §2
 
+## Mobile app — planning ledger  *(opened 12 November 2026, kept running)*
+
+The owner, 12 Nov: "keep updating the master file, so we will have easy planning
+while building the mobile app, which we will proceed soon with." One row per
+shop feature the app has to mirror, with where its data comes from today. The
+installed web apps already exist (App → Site App, App → Owner App, 2.60.404+);
+this ledger is for the native shopping app.
+
+**Ground rules the app inherits.** `/api/*` is public: every endpoint returns an
+allowlist, never a model (`Product::toApi()`, `SettingController::PUBLIC_KEYS`,
+`tests/Feature/ApiSecurityTest.php`). Prices are always today's: the cart
+re-prices every line on read and at Place order (2.60.658), so the app shows
+what the server says, never a cached price. Every shopper-facing word exists in
+English and Arabic (`App\Support\ArabicWording`, `store.*` keys); the app reads
+them, it does not re-write them. Pictures come with their img-cache sizes
+(`ImageVariants::srcsetFor`); ask for the size the screen needs.
+
+| Feature | What the shop does | Data / source today | App note |
+|---|---|---|---|
+| Cart prices (2.60.658) | Every line silently at today's price; no notices | `CartService::refreshPrices()` on every cart read and in place() | Never trust a stored line price; re-read the cart before checkout |
+| Free gifts + gift offers (2.60.65x) | Ranges by basket value, the gift box in panel/cart/checkout, claimed bonus gift with a timer | `FreeGifts`, `GiftOffers`; `partials/free-gifts/box` | Gift box design pick (A–E, bonus gift LAST) still open |
+| Homepage slider (2.60.659) | Slides with phone + desktop pictures; Arabic pictures when the slide has no words box | `Banners::load()` swaps `image_ar` / `image_m_ar` on /ar | App picks the Arabic picture the same way: no box + Arabic picture set |
+| Free gifts strip (2.60.659) | Its own homepage row, movable (Appearance → Homepage) | `HomepageSections` key `giftstrip` | Section order for the app's home = `HomepageSections::all()` |
+| Best Sellers (2.60.660–661) | Units sold in the last 3 months, top 150, owner's drag order and removals | `RecentBestSellers::ids()` (hourly cache + two settings) | One list for web and app; needs a public ids/products endpoint |
+| New Arrivals | Auto-kept category, owner order and exclusions | `NewArrivals` | Same: read the category's order |
+| Super Sale banner (2.60.662) | Occasion templates incl. Black Friday (Black & Gold, Neon Night 27.11, Red Tag), gold arch switch, logo-style light on the title | `SuperSaleBanner::view()`, `SaleTemplates` | App can draw from the same config (template key, words, coupon, gifts) |
+| Payments | Tamara, Tabby, Stripe card, Apple/Google Pay, COD (UAE only) | `GatewayRegistry::availableFor()`; payments are FROZEN (CLAUDE.md) | App checkout must use the same per-country list |
+
+**Open for the app:** a public read endpoint for Best Sellers and New Arrivals
+order (allowlisted cards), and for the homepage section order; the slider's
+pictures with their Arabic twins. Add a row here with every package that
+changes something a shopper sees.
+
 ## The plugin, inventoried — *v2.39.0, verified 2.44.0*
 
 7,359 lines, one file. **29 modules in 8 groups. 13 on by default, 16 off.**

@@ -53,6 +53,10 @@ final class SaleTemplates
         'n1' => ['New Year · Midnight Gold', 'New Year', 'radial-gradient(55% 90% at 55% 30%,rgba(245,201,105,.35),transparent 65%),linear-gradient(120deg,#0b1026,#231a3d)'],
         'n2' => ['New Year · Champagne Blush', 'New Year', 'linear-gradient(118deg,#fde4ec,#fff6f1 50%,#fbe7d8)'],
         'n3' => ['New Year · Fireworks', 'New Year', 'linear-gradient(120deg,#1d0b3a,#3a1466 55%,#6a1f6e)'],
+        // Black Friday (2.60.662): designs A, B and C of docs/plans/black-friday, the owner's picks.
+        'b1' => ['Black Friday · Black & Gold', 'Black Friday', 'radial-gradient(60% 90% at 78% 35%,rgba(233,196,106,.45),transparent 62%),linear-gradient(120deg,#050505,#241b0c)'],
+        'b2' => ['Black Friday · Neon Night', 'Black Friday', 'radial-gradient(60% 90% at 80% 30%,rgba(255,61,139,.6),transparent 62%),linear-gradient(120deg,#000,#1b0a16)'],
+        'b3' => ['Black Friday · Red Tag', 'Black Friday', 'repeating-linear-gradient(125deg,#121212 0 7px,#5a0f17 7px 10px)'],
     ];
 
     /**
@@ -71,6 +75,10 @@ final class SaleTemplates
         'n1' => ['title' => ['NEW YEAR SALE', 'تخفيضات العام الجديد'], 'tagline' => ['NEW YEAR, NEW GLOW', 'عام جديد، إشراقة جديدة'], 'num' => ['2027', '2027']],
         'n2' => ['title' => ['NEW YEAR SALE', 'تخفيضات العام الجديد'], 'tagline' => ['CHEERS TO GLOWING SKIN', 'احتفلي ببشرة متوهّجة'], 'num' => ['2027', '2027']],
         'n3' => ['title' => ['NEW YEAR SALE', 'تخفيضات العام الجديد'], 'tagline' => ['START THE YEAR GLOWING', 'ابدئي العام بإشراقة'], 'num' => ['2027', '2027']],
+        // The UAE's Arabic name for the day is "White Friday" (الجمعة البيضاء); every word stays his to edit.
+        'b1' => ['title' => ['BLACK FRIDAY', 'الجمعة البيضاء'], 'tagline' => ['THE BIGGEST SALE OF THE YEAR', 'أكبر تخفيضات العام'], 'num' => ['', '']],
+        'b2' => ['title' => ['BLACK FRIDAY', 'الجمعة البيضاء'], 'tagline' => ['', ''], 'num' => ['27.11', '27.11']],
+        'b3' => ['title' => ['BLACK FRIDAY', 'الجمعة البيضاء'], 'tagline' => ['LIMITED TIME DEALS', 'عروض لفترة محدودة'], 'num' => ['SALE', 'تخفيضات']],
     ];
 
     /**
@@ -85,6 +93,7 @@ final class SaleTemplates
     private const NUM = [
         'm1' => [11.0, 13.0, '#FF4F9A'], 'm2' => [11.0, 13.0, '#FFFFFF'], 'm3' => [11.0, 13.0, '#C9952F'],
         'n1' => [11.0, 11.5, '#F5C969'], 'n2' => [11.0, 11.5, '#D9A441'], 'n3' => [11.0, 11.5, '#FFFFFF'],
+        'b2' => [11.0, 13.0, '#FF4F9A'], 'b3' => [7.4, 10.0, '#FFFFFF'],
     ];
 
     /** Each family's sizes, in u: the title per device, the tagline on a phone, the copy's line gap per device. */
@@ -92,6 +101,7 @@ final class SaleTemplates
         'm' => ['title' => [6.4, 5.0], 'tag' => 2.7, 'g' => [0.9, 0.55]],
         'u' => ['title' => [6.6, 4.2], 'tag' => 2.7, 'g' => [0.9, 0.55]],
         'n' => ['title' => [6.2, 4.4], 'tag' => 2.7, 'g' => [0.9, 0.55]],
+        'b' => ['title' => [6.4, 5.0], 'tag' => 2.7, 'g' => [0.9, 0.55]],
     ];
 
     /**
@@ -112,6 +122,9 @@ final class SaleTemplates
         'n1' => ['tag' => '#F5D78E', 'pay' => '#FFFFFF', 'title' => '#FFFFFF', 'clabel' => '#FFFFFF', 'cvalue' => '#9A6B12'],
         'n2' => ['tag' => '#9A6B12', 'title' => '#E2336F', 'cvalue' => '#9A6B12'],
         'n3' => ['tag' => '#FFD1E6', 'pay' => '#FFFFFF', 'title' => '#F5C969', 'clabel' => '#FFFFFF', 'cvalue' => '#C3306A'],
+        'b1' => ['tag' => '#E7D3A1', 'pay' => '#FFFFFF', 'title' => '#F1CF7A', 'clabel' => '#FFFFFF', 'cvalue' => '#1A1408'],
+        'b2' => ['tag' => '#F8D7E6', 'pay' => '#FFFFFF', 'title' => '#FFFFFF', 'clabel' => '#FFFFFF', 'cvalue' => '#E8306F'],
+        'b3' => ['tag' => '#FF5A5F', 'pay' => '#FFFFFF', 'title' => '#FFFFFF', 'clabel' => '#FFFFFF', 'cvalue' => '#D7192F'],
     ];
 
     /** The hero's ground per template (mirrored for Arabic by mirror()). */
@@ -125,13 +138,32 @@ final class SaleTemplates
         'n1' => 'radial-gradient(55% 90% at 55% 30%,rgba(245,201,105,.22),transparent 65%),linear-gradient(120deg,#0b1026 0%,#141a3a 55%,#231a3d 100%)',
         'n2' => '{CONFETTI} 0 0/300px 200px,radial-gradient(80% 110% at 85% 10%,#fff,transparent 55%),linear-gradient(118deg,#fde4ec 0%,#fff6f1 50%,#fbe7d8 100%)',
         'n3' => 'linear-gradient(120deg,#1d0b3a 0%,#3a1466 55%,#6a1f6e 100%)',
+        'b1' => 'radial-gradient(55% 90% at 78% 35%,rgba(233,196,106,.28),transparent 62%),radial-gradient(40% 70% at 10% 100%,rgba(233,196,106,.16),transparent 60%),linear-gradient(120deg,#050505 0%,#14110b 55%,#241b0c 100%)',
+        'b2' => 'radial-gradient(55% 90% at 80% 30%,rgba(255,61,139,.42),transparent 62%),radial-gradient(45% 80% at 5% 110%,rgba(255,61,139,.22),transparent 60%),linear-gradient(120deg,#000000 0%,#0d0a10 55%,#1b0a16 100%)',
+        'b3' => 'repeating-linear-gradient(125deg,transparent 0 26px,rgba(215,25,47,.22) 26px 40px) 62% 0/60% 100% no-repeat,linear-gradient(120deg,#070707 0%,#121212 60%,#1d0b0d 100%)',
     ];
 
     /** A plain ground printed first, for a browser that cannot read the one after it. */
     private const BG_PLAIN = ['m2' => 'linear-gradient(115deg,#e8306f 0%,#ff4f93 45%,#ff8a5c 100%)'];
 
     /** The dotted sky of 11.11 A and New Year A: [colour one, colour two, step px, opacity]. */
-    private const DOTS = ['m1' => ['#FFD36E', '#ff6fae', 46, '.45', '1.5px', '2.5px'], 'n1' => ['#F5D78E', '#fff', 44, '.5', '1.4px', '2.4px']];
+    private const DOTS = ['m1' => ['#FFD36E', '#ff6fae', 46, '.45', '1.5px', '2.5px'], 'n1' => ['#F5D78E', '#fff', 44, '.5', '1.4px', '2.4px'],
+        'b1' => ['#F1CF7A', '#F1CF7A', 52, '.5', '1.2px', '2px'], 'b2' => ['#ff6fae', '#fff', 46, '.4', '1.5px', '2.5px']];
+
+    /**
+     * THE LIGHT ACROSS THE TITLE (Black Friday, 2.60.662). The owner: "put the
+     * light animation effect etc which we have on the main site logo". The
+     * logo's shine, kbb.css .lgx-lt: a soft band that waits, then crosses once
+     * at the end of each 7s period. Here it is the title's own letters
+     * (content:attr(data-t), clipped to the text), so the band lights the words
+     * and never the box around them. Transform-free, one paint layer, no
+     * script; off where text clipping is unknown and for reduced motion.
+     */
+    private const SHINE = [
+        '& .ssb-super{position:relative}',
+        '& .ssb-super::after{content:attr(data-t);position:absolute;inset:0;pointer-events:none;color:transparent;text-shadow:none;background:linear-gradient(100deg,transparent 42%,rgba(255,250,240,.85) 50%,transparent 58%) 0 0/250% 100% no-repeat;-webkit-background-clip:text;background-clip:text;animation:ssb-sh 7s linear infinite}',
+        '@media (prefers-reduced-motion:reduce){& .ssb-super::after{animation:none;display:none}}',
+    ];
 
     /**
      * Each template's own rules: 'a' every device, 'm' the phone, 'd' the
@@ -208,6 +240,42 @@ final class SaleTemplates
             ],
             'm' => ['& .ssb-hero::before{inset-inline-start:52%;opacity:.8}'],
         ],
+        'b1' => [
+            'a' => [
+                '& .ssb-copy{position:relative}',
+                '& .ssb-super{text-shadow:0 0 calc(var(--u)*1.4) rgba(241,207,122,.45)}',
+                '& .ssb-tag{letter-spacing:.18em}',
+                '& .ssb-model::before{content:"";position:absolute;left:8%;right:8%;bottom:0;height:78%;border-radius:50% 50% 0 0;background:radial-gradient(60% 60% at 50% 45%,rgba(241,207,122,.55),rgba(184,134,46,.15) 60%,transparent 72%)}',
+                '& .ssb-model picture{position:relative}',
+                '& .ssb-coupon b{border-color:#F1CF7A;background:#F1CF7A}',
+                '& .ssb-gifts{background:#fff;border-top-color:#F1CF7A}',
+            ],
+        ],
+        'b2' => [
+            'a' => [
+                '& .ssb-copy{position:relative}',
+                '& .ssb-super{text-shadow:0 0 calc(var(--u)*1.4) rgba(255,255,255,.35)}',
+                '& .ssb-num{text-shadow:0 0 calc(var(--u)*.6) #ff4f9a,0 0 calc(var(--u)*2.4) rgba(255,79,154,.85),0 0 calc(var(--u)*5) rgba(255,79,154,.5)}',
+                '& .ssb-model::before{content:"";position:absolute;left:8%;right:8%;bottom:0;height:78%;border-radius:50% 50% 0 0;background:radial-gradient(60% 60% at 50% 45%,rgba(255,79,154,.55),rgba(255,79,154,.12) 60%,transparent 72%)}',
+                '& .ssb-model picture{position:relative}',
+                '& .ssb-coupon b{border-color:#ff4f9a}',
+                '& .ssb-gifts{background:#fff}',
+            ],
+        ],
+        'b3' => [
+            'a' => [
+                '& .ssb-super{text-shadow:calc(var(--u)*.35) calc(var(--u)*.35) 0 #D7192F}',
+                '&[dir=rtl] .ssb-super{text-shadow:calc(var(--u)*-.35) calc(var(--u)*.35) 0 #D7192F}',
+                '& .ssb-num{width:max-content;max-width:100%;background:#D7192F;padding:0 .14em .04em;border-radius:.08em;transform:rotate(-4deg);text-shadow:none;box-shadow:0 calc(var(--u)*.6) calc(var(--u)*1.6) rgba(215,25,47,.45)}',
+                '&[dir=rtl] .ssb-num{transform:rotate(4deg)}',
+                '& .ssb-tag{letter-spacing:.16em;font-weight:800}',
+                '& .ssb-coupon b{border-color:#D7192F}',
+                '& .ssb-model::before{content:"";position:absolute;left:8%;right:8%;bottom:0;height:78%;border-radius:50% 50% 0 0;background:radial-gradient(60% 60% at 50% 45%,rgba(215,25,47,.45),transparent 72%)}',
+                '& .ssb-model picture{position:relative}',
+                '& .ssb-gifts{background:#fff;border-top-color:#D7192F}',
+            ],
+            'm' => ['& .ssb-num{transform:rotate(-3deg)}', '&[dir=rtl] .ssb-num{transform:rotate(3deg)}'],
+        ],
     ];
 
     /**
@@ -239,10 +307,19 @@ final class SaleTemplates
         return is_string($key) && in_array($key, SuperSaleBanner::TEMPLATES, true) && isset(self::TEMPLATES[$key]);
     }
 
-    /** The family: 'm' (11.11), 'u' (National Day), 'n' (New Year), or '' for Super Sale. */
+    /** The family: 'm' (11.11), 'u' (National Day), 'n' (New Year), 'b' (Black Friday), or '' for Super Sale. */
     public static function family(string $key): string
     {
         return $key === self::DEFAULT || ! self::has($key) ? '' : $key[0];
+    }
+
+    /** The shine's one keyframes, printed beside a Black Friday banner (SuperSaleBanner::view()). */
+    public const SHINE_KEYFRAMES = '@keyframes ssb-sh{0%,55%{background-position:100% 0}100%{background-position:0 0}}';
+
+    /** Does the template light its title the way the site logo is lit? (Black Friday) */
+    public static function shines(string $key): bool
+    {
+        return self::family($key) === 'b';
     }
 
     /** Does the template draw the big number? */
@@ -430,6 +507,10 @@ final class SaleTemplates
                     'd' => $desk[] = $r,
                 };
             }
+        }
+
+        if ($fam === 'b') {
+            array_push($all, ...self::SHINE);
         }
 
         // The sizes and colours: each the var() fallback of his own control.

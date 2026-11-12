@@ -151,8 +151,11 @@ it('prints the chosen template\'s stylesheet only, after the banner\'s own, and 
         sotSet(SuperSaleBanner::withTemplate(SuperSaleBanner::defaults(), $key));
         $block = sotBlock($this->get('/super-sale/')->assertOk()->getContent());
 
-        expect($block)->toContain('<style id="kbb-ssb-css">'.SuperSaleBanner::css().SuperSaleBanner::templateCss($key).'</style>')
-            ->and($block)->toContain('<div class="kbb-ssb ssb-t-'.$key.'" dir="ltr" data-ssb>')
+        // 2.60.662: a Black Friday banner also carries the gold arch (on when the
+        // template is picked) and the title light's keyframes, after the template's own.
+        $bf = SaleTemplates::family($key) === 'b';
+        expect($block)->toContain('<style id="kbb-ssb-css">'.SuperSaleBanner::css().SuperSaleBanner::templateCss($key).($bf ? SuperSaleBanner::ARCH_CSS.SaleTemplates::SHINE_KEYFRAMES : '').'</style>')
+            ->and($block)->toContain('<div class="kbb-ssb ssb-t-'.$key.($bf ? ' ssb-arch' : '').'" dir="ltr" data-ssb>')
             ->and(strlen(SaleTemplates::css($key)))->toBeLessThan(9000);
         foreach (array_diff($keys, [$key]) as $other) {
             expect($block)->not->toContain('ssb-t-'.$other);

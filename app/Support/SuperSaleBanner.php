@@ -141,7 +141,7 @@ final class SuperSaleBanner
      * was) or one of the occasion templates App\Support\SaleTemplates draws.
      * The config's `template` is one of these or the default.
      */
-    public const TEMPLATES = ['super', 'm1', 'm2', 'm3', 'u1', 'u2', 'u3', 'n1', 'n2', 'n3'];
+    public const TEMPLATES = ['super', 'm1', 'm2', 'm3', 'u1', 'u2', 'u3', 'n1', 'n2', 'n3', 'b1', 'b2', 'b3'];
 
     /** Every property of an element, in the order styleAttr() prints them. */
     public const PROPS = ['s', 'w', 'c', 'x', 'y', 'v'];
@@ -394,7 +394,9 @@ final class SuperSaleBanner
     /** The shape that ships: ON, because the owner approved this banner for this page. */
     public static function defaults(): array
     {
-        $out = ['on' => true, 'code' => 'GLOW', 'logos' => true, 'model_on' => true, 'band' => 'all', 'gifts_on' => true];
+        // `arch` (2.60.662): the gold arch behind the picture, off unless switched on
+        // or a Black Friday template is picked -- every banner today draws as before.
+        $out = ['on' => true, 'code' => 'GLOW', 'logos' => true, 'model_on' => true, 'band' => 'all', 'gifts_on' => true, 'arch' => false];
 
         foreach (self::TEXTS as $k => [$en, $ar]) {
             $out[$k.'_en'] = $en;
@@ -485,7 +487,7 @@ final class SuperSaleBanner
         $out = [];
         $rejected = [];
 
-        foreach (['on', 'logos', 'model_on', 'gifts_on'] as $k) {
+        foreach (['on', 'logos', 'model_on', 'gifts_on', 'arch'] as $k) {
             $out[$k] = array_key_exists($k, $in) ? filter_var($in[$k], FILTER_VALIDATE_BOOLEAN) : $d[$k];
         }
 
@@ -648,6 +650,15 @@ final class SuperSaleBanner
      * (Lane SOT) The chosen template's own stylesheet, printed after css() in
      * the same <style>: constants only, '' for Super Sale.
      */
+    /**
+     * THE GOLD ARCH behind the picture (2.60.662): option D's line, a switch of
+     * its own (Appearance -> Super Sale banner -> Banner -> "Gold arch behind the
+     * picture"). It draws on the picture's ::before, which a template may already
+     * paint with a glow: this adds the line and keeps that glow. A constant; no
+     * setting is printed into it.
+     */
+    public const ARCH_CSS = '.kbb-ssb.ssb-arch .ssb-model::before{content:"";position:absolute;left:5%;right:5%;bottom:0;height:84%;pointer-events:none;border:calc(var(--u)*.3) solid #ebc7a8;border-bottom:0;border-radius:50% 50% 0 0}.kbb-ssb.ssb-arch .ssb-model picture{position:relative}';
+
     public static function templateCss(string $key): string
     {
         return SaleTemplates::css($key);
@@ -682,6 +693,12 @@ final class SuperSaleBanner
             return $c;
         }
         $c['template'] = $template;
+        // Black Friday ships with the gold arch behind the picture (the owner, 12 Nov
+        // 2026: "the gold curved line behind the girl picture ... from the option D");
+        // the Banner section's switch takes it off.
+        if (SaleTemplates::family($template) === 'b') {
+            $c['arch'] = true;
+        }
         foreach (SaleTemplates::WORDS[$template] as $k => [$en, $ar]) {
             $c[$k.'_en'] = $en;
             $c[$k.'_ar'] = $ar;
@@ -804,9 +821,13 @@ final class SuperSaleBanner
             'style' => self::styleAttr($c, $lang),
             // (Lane SOT) The template: '' and '' for Super Sale, so the
             // default banner prints exactly what it printed before.
-            'cls' => SaleTemplates::cls($c['template']),
+            'cls' => SaleTemplates::cls($c['template']).($c['arch'] && $c['model_on'] ? ' ssb-arch' : ''),
             'num' => SaleTemplates::hasNum($c['template']) ? $t['num'] : '',
             'template' => $c['template'],
+            // 2.60.662: the arch's rules print only on a banner that draws it; the
+            // title carries its own words for the light across it (Black Friday).
+            'arch_css' => ($c['arch'] && $c['model_on'] ? self::ARCH_CSS : '').(SaleTemplates::shines($c['template']) ? SaleTemplates::SHINE_KEYFRAMES : ''),
+            'shine' => SaleTemplates::shines($c['template']),
         ];
     }
 
@@ -1090,7 +1111,7 @@ final class SuperSaleBanner
                 'templates' => SaleTemplates::forEditor(),
                 'template_defaults' => $tplDefaults,
                 'num_element' => ['key' => 'num', 'label' => SaleTemplates::NUM_ELEMENT[0], 'display' => SaleTemplates::NUM_ELEMENT[6]],
-                'css_templates' => SaleTemplates::editorCss(),
+                'css_templates' => SaleTemplates::editorCss().self::ARCH_CSS.SaleTemplates::SHINE_KEYFRAMES,
                 'gift_icon' => self::GIFT_ICON,
                 'logos' => [
                     'tabby' => self::sized(PaymentMarkArt::checkoutLogo('tabby'), 71, 28),

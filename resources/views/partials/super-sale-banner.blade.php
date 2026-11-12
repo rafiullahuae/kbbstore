@@ -21,13 +21,13 @@
     number's line above the title. Super Sale, the default, adds nothing: the
     class, the stylesheet and the number all print as ''.
 --}}
-<style id="kbb-ssb-css">{!! \App\Support\SuperSaleBanner::css() !!}{!! \App\Support\SuperSaleBanner::templateCss($ssb['template']) !!}</style>
+<style id="kbb-ssb-css">{!! \App\Support\SuperSaleBanner::css() !!}{!! \App\Support\SuperSaleBanner::templateCss($ssb['template']) !!}{!! $ssb['arch_css'] ?? '' !!}</style>
 <div class="kbb-ssb{{ $ssb['cls'] }}" dir="{{ $ssb['ar'] ? 'rtl' : 'ltr' }}" data-ssb{{ '' }}@if ($ssb['style'] !== '') style="{{ $ssb['style'] }}"@endif><div class="ssb-in">
 <div class="ssb-hero"><div class="ssb-copy">
 @if ($ssb['logos'] || $ssb['t']['pay'] !== '')<div class="ssb-pay">{!! $ssb['tabby'] !!}{!! $ssb['tamara'] !!}@if ($ssb['t']['pay'] !== '')<span class="ssb-paytxt">{{ $ssb['t']['pay'] }}</span>@endif</div>@endif
 @if ($ssb['t']['tagline'] !== '')<span class="ssb-tag">{{ $ssb['t']['tagline'] }}</span>@endif
 @if ($ssb['num'] !== '')<span class="ssb-num" aria-hidden="true">{{ $ssb['num'] }}</span>@endif
-@if ($ssb['t']['title'] !== '')<div class="ssb-super">{{ $ssb['t']['title'] }}</div>@endif
+@if ($ssb['t']['title'] !== '')<div class="ssb-super"@if ($ssb['shine'] ?? false) data-t="{{ $ssb['t']['title'] }}"@endif>{{ $ssb['t']['title'] }}</div>@endif
 @if ($ssb['code'] !== '')<span class="ssb-coupon">@if ($ssb['t']['coupon'] !== '')<span>{{ $ssb['t']['coupon'] }}</span>@endif<b>{{ $ssb['code'] }}</b></span>@endif
 </div>@if ($ssb['model'])@php($ssbM = $ssb['model'])<div class="ssb-model {{ $ssbM['cls'] }}"><picture>@if ($ssbM['two'])<source media="(min-width: 901px)" srcset="{{ $ssbM['d']['srcset'] !== '' ? $ssbM['d']['srcset'] : $ssbM['d']['src'] }}"@if ($ssbM['d']['srcset'] !== '') sizes="340px"@endif>@endif<img src="{{ $ssbM['m']['src'] }}"@if ($ssbM['m']['srcset'] !== '') srcset="{{ $ssbM['m']['srcset'] }}" sizes="(max-width: 900px) 130px, 200px"@endif alt="" width="381" height="500" fetchpriority="high" decoding="async"></picture></div>@endif</div>
 @if ($ssb['gifts'] !== [])<div class="ssb-gifts"><span class="ssb-gi">{!! \App\Support\SuperSaleBanner::GIFT_ICON !!}@if ($ssb['t']['gifts'] !== '')<span>{{ $ssb['t']['gifts'] }}</span>@endif</span><span class="ssb-circs">@foreach ($ssb['gifts'] as $ssbG)<span class="ssb-c"><img src="{{ $ssbG['src'] }}"@if ($ssbG['srcset'] !== '') srcset="{{ $ssbG['srcset'] }}" sizes="(max-width: 900px) 36px, 62px"@endif alt="{{ $ssbG['alt'] }}" width="62" height="62" loading="lazy" decoding="async"></span>@endforeach</span>@if ($ssb['t']['free'] !== '')<span class="ssb-free">{{ $ssb['t']['free'] }}</span>@endif</div>@endif
