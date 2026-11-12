@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Black Friday Ad Editor</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 {FONT}
@@ -35,7 +36,15 @@ h1{margin:0;font-size:clamp(20px,2.6vw,26px);font-weight:800;letter-spacing:-.01
 @keyframes a-up{from{opacity:0;translate:0 6cqw}to{opacity:1;translate:0 0}}
 @keyframes a-float{0%,100%{translate:0 0}50%{translate:0 -1.2cqw}}
 @keyframes a-sway{0%,100%{rotate:-2deg}50%{rotate:2deg}}
+[hidden]{display:none!important}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pk-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.pk-h h2{margin:0;font-size:14px;font-weight:800}
+.pk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pk button{display:grid;gap:4px;justify-items:center;padding:6px 4px 7px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:600 11px/1.25 var(--sans);cursor:pointer;text-align:center;position:relative}
+.pk button i{display:block;width:100%;aspect-ratio:1;background-size:contain;background-position:center;background-repeat:no-repeat}
+.pk button.in{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
+.pk button.in::after{content:"in this set";position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;color:#fff;background:var(--sel);border-radius:99px;padding:1px 6px}
+.pk-all{display:flex;gap:8px;align-items:center;font-size:12px;font-weight:600}
 .side{display:grid;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
 .side h2{margin:0;font-size:14px;font-weight:800}
 .row{display:grid;gap:6px}.row label{font-size:12px;font-weight:700;color:var(--muted)}
@@ -65,6 +74,9 @@ select{font:500 14px var(--sans);padding:8px;border-radius:9px;border:1px solid 
     <div class="row"><label for="shs">Shadow style</label><select id="shs" disabled><option value="soft">Soft</option><option value="sharp">Sharp</option><option value="glow">Glow (the ad's colour)</option></select></div>
     <div class="btns"><button class="btn" id="smaller" disabled>Smaller</button><button class="btn" id="bigger" disabled>Bigger</button><button class="btn" id="front" disabled>To front</button><button class="btn" id="del" disabled>Remove</button></div>
     <div class="btns"><button class="btn" id="add">Add a product</button><button class="btn" id="play">Play</button></div>
+    <div class="pk-h"><h2>Products</h2><span class="hint">Tap to add to this set</span></div>
+    <label class="pk-all"><input type="checkbox" id="pk-all"> Add to all 3 sets of this ad and size</label>
+    <div class="pk" id="pk" role="group" aria-label="Products to add"></div>
     <hr style="border:0;border-top:1px solid var(--line);margin:2px 0">
     <h2>Animation · this ad and size</h2>
     <div class="grid2">
@@ -118,7 +130,7 @@ function drawChips(){
 
 // ── the ad ──
 function draw(){
-  drawChips();
+  drawChips(); if (pkEl) drawPk();
   var f = DATA.ads[sel.ad].f[sel.fmt];
   stage.style.setProperty('--sw', sel.fmt === 'story' ? '380px' : (sel.fmt === 'square' ? '560px' : '520px'));
   stage.innerHTML = f.base;
@@ -186,6 +198,21 @@ document.getElementById('del').onclick = function(){ var l = items(); if (cur ==
 document.getElementById('add').onclick = function(){ var l = items(), have = l.map(function(x){ return x.p; });
   var p = POOL.filter(function(q){ return have.indexOf(q) < 0; })[0] || 'anua';
   l.push({p: p, x: 40, y: 40, w: 12, r: 0}); cur = l.length - 1; changed(); };
+// Product list (owner, 12 Nov: "give me products list to choose and import in any version"):
+// a tile per product; tap adds it to the set on show (or all three) at the set's own standard height.
+var pkEl = document.getElementById('pk'), pkAll = document.getElementById('pk-all');
+function stdW(l, p){ var hs = l.filter(function(x){ return x.p !== 'guasha'; }).map(function(x){ return x.w / (DATA.aspect[x.p] || .5); });
+  var h = hs.length ? hs.reduce(function(a, b){ return a + b; }, 0) / hs.length : 24; return Math.max(4, Math.min(40, h * (DATA.aspect[p] || .5))); }
+function addTo(l, p){ var i = l.findIndex(function(x){ return x.p === p; }); if (i >= 0) return i;
+  var w = stdW(l, p), n = l.length; l.push({p: p, x: Math.max(2, 50 - w / 2 + (n % 3 - 1) * 8), y: 30 + (n % 4) * 6, w: w, r: 0}); return l.length - 1; }
+function drawPk(){ var have = items().map(function(x){ return x.p; });
+  pkEl.querySelectorAll('button').forEach(function(b){ var on = have.indexOf(b.dataset.p) >= 0; b.classList.toggle('in', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }); }
+POOL.forEach(function(p){ var b = document.createElement('button'); b.type = 'button'; b.dataset.p = p; b.title = DATA.names[p];
+  var i = document.createElement('i'); i.className = 'p-' + p; b.appendChild(i); b.appendChild(document.createTextNode(DATA.names[p]));
+  b.onclick = function(){ var sets = lay(sel.ad, sel.fmt);
+    if (pkAll.checked) sets.forEach(function(l){ addTo(l, p); });
+    cur = addTo(items(), p); changed(); setStatus(DATA.names[p] + (pkAll.checked ? ' is in all 3 sets.' : ' added. Drag it into place, then Save.')); };
+  pkEl.appendChild(b); });
 document.getElementById('reset').onclick = function(){ lay(sel.ad, sel.fmt)[sel.fr] = clone(DATA.ads[sel.ad].f[sel.fmt].def[sel.fr]); cur = null; changed(); };
 
 // ── drag to move, corner to resize (pointer events; nothing is measured on a shop page -- this is the editor) ──
