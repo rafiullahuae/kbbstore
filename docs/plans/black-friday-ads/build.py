@@ -31,7 +31,6 @@ S = [
   ('gold-products', 'Gold Luxe · products',    '#141210', '#FFFFFF', '#E9B949', '#1A1408', '#F6E7C1', 'rgba(233,185,73,.22)', '#F6E7C1', '#FFF0C2', '#F3CF72', '#B8862E', '#6E5019', '#F1CF7A', ('#FBF6EA', '#E8DCC0'), True),
 ]
 F = {'post': (1080, 1350), 'square': (1080, 1080), 'story': (1080, 1920)}
-PRODUCTS = ['isntree', 'guasha', 'marymay', 'axisy']
 
 def gift(n, gl, gm, gd):
     return f'''<svg viewBox="0 0 200 230" width="100%" height="100%" aria-hidden="true"><defs>
@@ -102,6 +101,97 @@ def prod_css():
         out += f'.p-{p}{{background-image:url(data:image/webp;base64,{b})}}'
     return out
 
+
+# ════════════════════════ SET 2 (owner, 12 Nov: "designs are good, need to
+# improve more, overall ... keep these existing to compare ... products in the
+# square, story etc, in all versions, but only in few from each. spread the
+# products images ... focus more on products ... little bit more large size") ═══
+ASPECT = {'isntree': 409 / 819, 'guasha': 424 / 797, 'marymay': 234 / 1100, 'axisy': 251 / 823, 'eyemask': 900 / 874, 'patch': 671 / 383}
+PRODUCTS = ['isntree', 'guasha', 'marymay', 'axisy', 'eyemask', 'patch']
+# Four places around the card, in the reference's units (card = 460 x 561):
+# [x, y, height, rotation] -- left middle, right top, bottom-left corner, right lower.
+SLOTS = [(-86, 190, 240, -13), (404, -62, 225, 11), (-104, 495, 185, -8), (386, 232, 192, 9)]
+# key, label, scheme (index into S), products per slot or None
+S2 = [
+  ('red-spread',     'Classic Red · products',   0, ['guasha', 'marymay', 'eyemask', 'isntree']),
+  ('red-clean',      'Classic Red',              0, None),
+  ('pink-spread',    'Shop Pink · products',     1, ['isntree', 'axisy', 'eyemask', 'guasha']),
+  ('gold-spread',    'Gold Luxe · products',     2, ['marymay', 'guasha', 'patch', 'axisy']),
+  ('rose-clean',     'Rose Gold',                3, None),
+  ('purple-spread',  'Neon Purple · products',   4, ['axisy', 'isntree', 'eyemask', 'marymay']),
+  ('blue-clean',     'Electric Blue',            5, None),
+  ('emerald-spread', 'Emerald · products',       6, ['guasha', 'axisy', 'patch', 'isntree']),
+  ('white-spread',   'White Card · products',    8, ['isntree', 'marymay', 'eyemask', 'guasha']),
+  ('blush-clean',    'Blush Cream',              9, None),
+]
+
+GIFT_ICON = '<svg viewBox="0 0 24 24" width="1.05em" height="1.05em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>'
+FREE = 'Free Gifts with Every Order'
+
+def freeline(i, acc, pill, pillt, tc, light, U):
+    """The owner, 12 Nov: "remove the date and replace this line with Free Gifts
+    with Every Order, in some stylish designs" -- four treatments, in turn."""
+    style = (i - 1) % 4
+    if style == 0:   # a ribbon with notched ends
+        return (f'<span class="fl fl-rb" style="font-size:{U(14.5)};padding:{U(10)} {U(26)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 80%,#fff),{acc});'
+                f'color:#fff;box-shadow:0 {U(6)} {U(14)} {acc}55">{GIFT_ICON}{FREE}</span>')
+    if style == 1:   # a dashed ticket
+        return (f'<span class="fl fl-tk" style="font-size:{U(18)};padding:{U(9)} {U(20)};border:{U(2)} dashed {acc};border-radius:{U(12)};'
+                f'color:color-mix(in srgb,{acc} {"100" if light else "62"}%,{"#000" if light else "#fff"});background:{acc}14">{GIFT_ICON}{FREE}</span>')
+    if style == 2:   # a glass pill with a coloured gift icon
+        return (f'<span class="fl fl-gl" style="font-size:{U(18)};padding:{U(10)} {U(22)};border-radius:99px;background:{pill};color:{pillt};'
+                f'box-shadow:inset 0 0 0 {U(1)} rgba(255,255,255,.18)"><b style="color:{acc}">{GIFT_ICON}</b>{FREE}</span>')
+    return (f'<span class="fl fl-sc" style="font-size:{U(21)};color:{tc}"><i style="background:{acc}"></i>'  # italic, ruled
+            f'<b style="color:{acc}">{GIFT_ICON}</b><em>{FREE}</em><i style="background:{acc}"></i></span>')
+
+def ad2(i, s2, fmt):
+    key, label, si, prods = s2
+    _, _, card, tc, acc, btc, sub, pill, pillt, gl, gm, gd, hc, spk, (b1, b2), _ = S[si]
+    W, H = F[fmt]
+    top_extra, bot_extra, side = (112 + 46, 175, 100) if prods else (112, 0, 0)
+    total = top_extra + 561 + bot_extra
+    wf = {'post': .70, 'square': .66, 'story': .74}[fmt] if prods else (0.84 if fmt == 'story' else 0.8)
+    u = min(W * wf / 460, H * (0.74 if fmt == 'story' else 0.88) / total)
+    c = lambda v: f'{v / W * 100:.3f}cqw'
+    U = lambda v: c(v * u)
+    cw, ch = 460 * u, 561 * u
+    left = (W - cw) / 2
+    top = (H - total * u) / 2 + top_extra * u
+    n = f'v{i}{fmt[0]}'
+    gx, gy = left + cw / 2 - 95 * u, top - 112 * u
+    light = card.upper() in ('#FFFFFF', '#FFF1F4')
+    pr = ''
+    if prods:
+        for p, (x, y, h, r) in zip(prods, SLOTS):
+            hh = h * {'patch': .55, 'eyemask': .86}.get(p, 1) * (1.08 if fmt == 'story' else 1)   # wide packs: lower, so not larger than the tubes
+            w = hh * ASPECT[p]
+            pr += f'<i class="bp p-{p}" style="left:{c(left + x * u)};top:{c(top + y * u)};width:{U(w)};height:{U(hh)};transform:rotate({r}deg)"></i>'
+    glow_card = 'rgba(255,255,255,.07)' if not light else 'rgba(0,0,0,.05)'
+    return f'''<div class="bf v2" style="aspect-ratio:{W}/{H};background:radial-gradient(38% 26% at 16% 18%,{acc}2e,transparent 70%),radial-gradient(44% 30% at 86% 86%,{acc}26,transparent 70%),radial-gradient(70% 55% at 50% 42%,{b1},{b2})">
+<i class="bsp" style="left:{c(W * .1)};top:{c(H * .1)};width:{c(26)};height:{c(26)}">{STAR.format(c=spk)}</i><i class="bsp" style="left:{c(W * .86)};top:{c(H * .16)};width:{c(18)};height:{c(18)}">{STAR.format(c=spk)}</i><i class="bsp" style="left:{c(W * .08)};top:{c(H * .86)};width:{c(16)};height:{c(16)}">{STAR.format(c=spk)}</i>
+<div class="bglow" style="left:{c(left + cw / 2 - 160 * u)};top:{c(gy - 10 * u)};width:{U(320)};height:{U(240)};background:radial-gradient(closest-side,{acc}55,transparent)"></div>
+<div class="bc" style="left:{c(left)};top:{c(top)};width:{c(cw)};height:{c(ch)};border-radius:{U(28)};background:linear-gradient(180deg,color-mix(in srgb,{card} 90%,{'#000' if light else '#fff'}) 0%,{card} 38%);box-shadow:inset 0 0 0 {U(1.2)} {glow_card},0 {U(34)} {U(70)} rgba(0,0,0,.32),0 {U(8)} {U(18)} rgba(0,0,0,.18)">
+<div class="bh" style="left:{U(250)};top:{U(300)};width:{U(250)};height:{U(230)}">{heart(n, hc)}</div>
+<div class="bs" style="left:{U(22)};top:{U(176)};width:{U(26)};height:{U(26)}">{STAR.format(c=spk)}</div>
+<div class="bs" style="left:{U(374)};top:{U(366)};width:{U(13)};height:{U(13)}">{STAR.format(c=spk)}</div>
+<div class="bs" style="left:{U(376)};top:{U(384)};width:{U(30)};height:{U(30)}">{STAR.format(c=spk)}</div>
+<div class="bt" style="top:{U(124)}">{freeline(i, acc, pill, pillt, tc, light, U)}</div>
+<div class="bt bx" style="top:{U(186)};color:{tc};font-size:{U(72)}">BLACK</div>
+<div class="bt bx bgr" style="top:{U(254)};font-size:{U(72)};background-image:linear-gradient(180deg,color-mix(in srgb,{acc} 72%,#fff) 0%,{acc} 55%,color-mix(in srgb,{acc} 88%,#000) 100%)">FRIDAY</div>
+<div class="bt bl" style="top:{U(340)};color:{sub};font-size:{U(23)}">Black Friday Perks To<br>Enjoy Now!</div>
+<div class="bb" style="left:{U(36)};right:{U(36)};top:{U(448)};height:{U(77)};border-radius:{U(16)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 82%,#fff),{acc} 52%,color-mix(in srgb,{acc} 86%,#000));color:{btc};font-size:{U(23)};box-shadow:inset 0 {U(1.5)} 0 rgba(255,255,255,.35),0 {U(12)} {U(26)} {acc}66">See All Perks</div>
+</div><div class="bg" style="left:{c(gx)};top:{c(gy)};width:{U(190)};height:{U(218)};filter:drop-shadow(0 {U(12)} {U(16)} rgba(0,0,0,.28))">{gift(n, gl, gm, gd)}</div>{pr}</div>'''
+
+AD2_CSS = '''.bf.v2 .fl{display:inline-flex;align-items:center;gap:.45em;font-weight:700;white-space:nowrap;line-height:1}
+.bf.v2 .fl b{display:inline-flex}
+.bf.v2 .fl-rb{text-transform:uppercase;letter-spacing:.04em;clip-path:polygon(0 0,100% 0,95% 50%,100% 100%,0 100%,5% 50%)}
+.bf.v2 .fl-tk{letter-spacing:.01em}
+.bf.v2 .fl-gl{font-weight:600}
+.bf.v2 .fl-sc{font-weight:600;gap:.5em}.bf.v2 .fl-sc em{font-style:italic;letter-spacing:.01em}.bf.v2 .fl-sc i{display:block;width:1.6em;height:.09em;border-radius:1em;opacity:.8}
+.bf.v2 .bsp{position:absolute;opacity:.7}.bf.v2 .bglow{position:absolute;filter:blur(1.2cqw)}
+.bf.v2 .bgr{-webkit-background-clip:text;background-clip:text;color:transparent}
+.bf.v2 .bp{filter:drop-shadow(0 1.1cqw 1.3cqw rgba(0,0,0,.35)) drop-shadow(0 .2cqw .3cqw rgba(0,0,0,.2))}'''
+
 FONT = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800;900&display=swap">'
 
 # ── the 1080px files ──
@@ -114,11 +204,20 @@ for i, s in enumerate(S, 1):
         open(os.path.join(OUT, f'{i:02d}-{s[0]}-{fmt}.html'), 'w').write(
             f'<!doctype html><html><head><meta charset="utf-8">{FONT}<style>*{{margin:0;padding:0;box-sizing:border-box}}html,body{{width:{W}px;height:{H}px;overflow:hidden}}{AD_CSS}{prod_css() if s[15] else ""}</style></head><body>{ad(i, s, fmt)}</body></html>')
 
+for i, s2 in enumerate(S2, 1):
+    for fmt, (W, H) in F.items():
+        open(os.path.join(OUT, f'v2-{i:02d}-{s2[0]}-{fmt}.html'), 'w').write(
+            f'<!doctype html><html><head><meta charset="utf-8">{FONT}<style>*{{margin:0;padding:0;box-sizing:border-box}}html,body{{width:{W}px;height:{H}px;overflow:hidden}}{AD_CSS}{AD2_CSS}{prod_css() if s2[3] else ""}</style></head><body>{ad2(i, s2, fmt)}</body></html>')
+
 # ── the live page ──
 cards = {fmt: '' for fmt in F}
 for i, s in enumerate(S, 1):
     for fmt in F:
         cards[fmt] += f'<figure class="opt"><figcaption><b>{i:02d}</b> {s[1]}</figcaption>{ad(i, s, fmt)}</figure>'
+cards2 = {fmt: '' for fmt in F}
+for i, s2 in enumerate(S2, 1):
+    for fmt in F:
+        cards2[fmt] += f'<figure class="opt"><figcaption><b>N{i:02d}</b> {s2[1]}</figcaption>{ad2(i, s2, fmt)}</figure>'
 page = f'''<title>Black Friday Ads</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 {FONT}
@@ -140,20 +239,27 @@ h1{{margin:0;font-size:clamp(22px,3vw,30px);font-weight:800;letter-spacing:-.01e
 .opt{{margin:0;display:grid;gap:8px;min-width:0}}
 .opt figcaption{{font-size:14px;font-weight:600}}.opt figcaption b{{color:var(--muted);font-variant-numeric:tabular-nums;margin-right:4px}}
 .opt .bf{{border-radius:12px;box-shadow:0 1px 0 var(--line)}}
-{AD_CSS}{prod_css()}
+{AD_CSS}{AD2_CSS}{prod_css()}
+.tabs+.tabs{{margin-top:-8px}}
 </style>
 <div class="wrap">
-<header><h1>Black Friday ads</h1><p class="lead">Your reference ad in ten colour schemes, plus three with products in the gift (11–13). Live previews; pick the numbers you want and they are exported at full size: post 1080×1350, square 1080×1080, story 1080×1920.</p></header>
-<div class="tabs" role="group" aria-label="Size">
-<button type="button" data-f="post" aria-pressed="true">Post · 4:5</button><button type="button" data-f="square" aria-pressed="false">Square · 1:1</button><button type="button" data-f="story" aria-pressed="false">Story · 9:16</button></div>
-<section class="grid post" data-g="post">{cards['post']}</section>
-<section class="grid square" data-g="square" hidden>{cards['square']}</section>
-<section class="grid story" data-g="story" hidden>{cards['story']}</section>
+<header><h1>Black Friday ads</h1><p class="lead">New designs (N01–N10): richer light and finish, and six with your products spread around the card, larger, in every size. The first set (01–13) is kept to compare. Live previews; pick the numbers and they are exported at full size: post 1080×1350, square 1080×1080, story 1080×1920.</p></header>
+<div class="tabs" role="group" aria-label="Set" data-k="set">
+<button type="button" data-v="v2" aria-pressed="true">New designs</button><button type="button" data-v="v1" aria-pressed="false">First set</button></div>
+<div class="tabs" role="group" aria-label="Size" data-k="fmt">
+<button type="button" data-v="post" aria-pressed="true">Post · 4:5</button><button type="button" data-v="square" aria-pressed="false">Square · 1:1</button><button type="button" data-v="story" aria-pressed="false">Story · 9:16</button></div>
+<section class="grid post" data-g="v2-post">{cards2['post']}</section>
+<section class="grid square" data-g="v2-square" hidden>{cards2['square']}</section>
+<section class="grid story" data-g="v2-story" hidden>{cards2['story']}</section>
+<section class="grid post" data-g="v1-post" hidden>{cards['post']}</section>
+<section class="grid square" data-g="v1-square" hidden>{cards['square']}</section>
+<section class="grid story" data-g="v1-story" hidden>{cards['story']}</section>
 </div>
 <script>
-document.querySelector('.tabs').addEventListener('click',function(e){{var b=e.target.closest('button');if(!b)return;
-document.querySelectorAll('.tabs button').forEach(function(x){{x.setAttribute('aria-pressed',x===b?'true':'false')}});
-document.querySelectorAll('[data-g]').forEach(function(g){{g.hidden=g.dataset.g!==b.dataset.f}});}});
+var pick={{set:'v2',fmt:'post'}};
+document.querySelectorAll('.tabs').forEach(function(t){{t.addEventListener('click',function(e){{var b=e.target.closest('button');if(!b)return;
+pick[t.dataset.k]=b.dataset.v;t.querySelectorAll('button').forEach(function(x){{x.setAttribute('aria-pressed',x===b?'true':'false')}});
+document.querySelectorAll('[data-g]').forEach(function(g){{g.hidden=g.dataset.g!==pick.set+'-'+pick.fmt}});}});}});
 </script>'''
 open(os.path.join(D, 'gallery.html'), 'w').write(page)
 print('ok', len(S), 'options;', os.path.getsize(os.path.join(D, 'gallery.html')) // 1024, 'KB')
