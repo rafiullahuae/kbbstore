@@ -219,7 +219,7 @@ function place(el, it, ai){
 // c text colour, b fill colour, rad corners, o opacity, x/y move (cqw), hide}. Applied over the ad as drawn.
 var T = 1, FL = 2, RD = 4, FT = 8;
 var ELS = [['t1','Title line 1 (BLACK)',T|FT],['t2','Title line 2 (FRIDAY)',T|FT],['fga','FREE GIFTS line',T|FT],['fgb','"with Every Order" line',T|FT],
-  ['fgi','Gift icon circle',FL],['fg','Free-gifts block (icon + both lines)',FT],['btn','Button',T|FT|FL|RD],['pay','Tabby / Tamara logos',0],
+  ['arl','Arabic line (pill)',T|FT|FL|RD],['fgi','Gift icon circle',FL],['fg','Free-gifts block (icon + both lines)',FT],['btn','Button',T|FT|FL|RD],['pay','Tabby / Tamara logos',0],
   ['rib','Corner ribbon',T|FT|FL],['gift','Gift box',0],['heart','Heart',0],['card','White card',FL|RD],['glow','Glow behind the gift',0],['bg','Background',FL]];
 var ELF = {}; ELS.forEach(function(e){ ELF[e[0]] = e; });
 var FONTS = {inter:'Inter,sans-serif', poppins:'Poppins,sans-serif', montserrat:'Montserrat,sans-serif', playfair:'"Playfair Display",serif', dmserif:'"DM Serif Display",serif', bebas:'"Bebas Neue",sans-serif', cairo:'Cairo,sans-serif'};

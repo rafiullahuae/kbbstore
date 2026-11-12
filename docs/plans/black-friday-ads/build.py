@@ -377,6 +377,7 @@ def ad4(i, sch, fmt, frame=None, bare=False, data=None):
 <div class="bt bx" data-k="t1" style="top:{U(136)};color:{tc};font-size:{U(76)}">BLACK</div>
 <div class="bt bx bgr" data-k="t2" style="top:{U(208)};font-size:{U(76)};background-image:linear-gradient(180deg,color-mix(in srgb,{acc} 72%,#fff) 0%,{acc} 55%,color-mix(in srgb,{acc} 88%,#000) 100%)">FRIDAY</div>
 <div class="bt fg2" data-k="fg" style="top:{U(300)};gap:{U(13)}"><span class="fg2i" data-k="fgi" style="width:{U(58)};height:{U(58)};background:radial-gradient(circle at 35% 30%,color-mix(in srgb,{acc} 70%,#fff),{acc} 70%);box-shadow:0 0 0 {U(6)} {acc}22,0 0 {U(24)} {acc}99">{GIFT_ICON}</span><span class="fg2t"><span class="fg2a" data-k="fga" style="font-size:{U(32)};color:{acc}">FREE GIFTS</span><span class="fg2b" data-k="fgb" style="font-size:{U(24)};color:{tc}">with Every Order</span></span></div>
+<div class="bt arl" dir="rtl" lang="ar" style="top:{U(374)};height:{U(40)}"><span class="pill" data-k="arl" style="font:700 {U(17.5)} Cairo,sans-serif;color:{acc};padding:{U(4)} {U(14)};background:{acc}14;box-shadow:inset 0 0 0 {U(1.4)} {acc}66"><span data-tx>{ARABIC_LINE}</span></span></div>
 <div class="bb" data-k="btn" style="left:{U(36)};right:{U(36)};top:{U(434)};height:{U(76)};border-radius:{U(16)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 82%,#fff),{acc} 52%,color-mix(in srgb,{acc} 86%,#000));color:{btc};font-size:{U(29)};font-weight:700;box-shadow:inset 0 {U(1.5)} 0 rgba(255,255,255,.35),0 {U(12)} {U(26)} {acc}55">{BTN_TEXT[i % len(BTN_TEXT)]}</div>
 <div class="bpay" data-k="pay" style="top:{U(522)};gap:{U(14)};height:{U(28)}"><img src="{PAY_TABBY}" alt="tabby"><img src="{PAY_TAMARA}" alt="tamara"></div>
 </div><div class="bg" data-k="gift" style="left:{c(gx)};top:{c(gy)};width:{U(190)};height:{U(218)};filter:drop-shadow(0 {U(12)} {U(16)} rgba(0,0,0,.2))">{gift(n, gl, gm, gd)}</div>{prods}
@@ -388,6 +389,10 @@ def ad4(i, sch, fmt, frame=None, bare=False, data=None):
 # Owner, 12 Nov: "button text: Shop Now, Get the Deals, Grab the Deals, See all Offers ... mix n use"
 # and "down side the button, put tabby and tamara logos" (the shop's own badges, resources/payment-logos).
 BTN_TEXT = ['Shop Now', 'Grab the Deals', 'See All Offers', 'Get the Deals']
+# Owner, 12 Nov: "add one line below gifts line, with some style in arabic" -- "make it short, Black
+# Friday Deals are live" (or "Exclusive Deals are live"); he picked B, the soft pill, from the
+# previews (arabic_preview.py). Wording editable per ad in the editor (Text, button & design).
+ARABIC_LINE = 'عروض بلاك فرايدي بدأت الآن'
 import base64 as _b64
 def _svg_uri(n):
     return 'data:image/svg+xml;base64,' + _b64.b64encode(open(f'../../../resources/payment-logos/{n}.svg', 'rb').read()).decode()
@@ -397,6 +402,7 @@ HEART_ICON = '<svg viewBox="0 0 24 24" width="1.05em" height="1.05em" aria-hidde
 CYC = 3 * FRAME_S
 AD4_CSS = (f'''.bf.v4 .brib{{position:absolute;transform:rotate(-45deg);z-index:5;display:flex;align-items:center;justify-content:center;gap:.35em;color:#fff;font-weight:800;letter-spacing:.02em;white-space:nowrap;z-index:2;border-top:1px solid rgba(255,255,255,.35)}}
 .bf.v4 .bpay{{position:absolute;left:0;right:0;display:flex;justify-content:center;align-items:center}}.bf.v4 .bpay img{{height:100%;width:auto;display:block;border-radius:22%/50%}}
+.bf.v4 .arl{{display:flex;align-items:center;justify-content:center;line-height:1.2;white-space:nowrap}}.bf.v4 .arl span{{font-weight:inherit}}.bf.v4 .arl .pill{{display:inline-block;border-radius:99px}}
 .bf.v4 .fg2{{display:flex;flex-direction:row;align-items:center;justify-content:center;line-height:1.1}}
 .bf.v4 .fg2i{{display:inline-grid;place-items:center;border-radius:50%;color:#fff;flex:none}}.bf.v4 .fg2i svg{{width:52%;height:52%}}
 .bf.v4 .fg2t{{display:flex;flex-direction:column;align-items:flex-start;gap:.08em;text-align:left}}
@@ -412,7 +418,7 @@ REMOVED = {'cosrx': 'celimax', 'reliefsun': 'dalba', 'axisy': 'anuacream', 'dral
 S2 = [(a, b, c, [REMOVED.get(p, p) for p in d] if d else d) for a, b, c, d in S2]
 S3 = [(a, b, c, [REMOVED.get(p, p) for p in d], e) for a, b, c, d, e in S3]
 
-FONT = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800;900&display=swap">'
+FONT = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800;900&family=Cairo:wght@700&display=swap">'
 
 # ── the 1080px files ──
 os.makedirs(OUT, exist_ok=True)
