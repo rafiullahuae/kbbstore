@@ -44,6 +44,9 @@ h1{margin:0;font-size:clamp(20px,2.6vw,26px);font-weight:800;letter-spacing:-.01
 .pk button i{display:block;width:100%;aspect-ratio:1;background-size:contain;background-position:center;background-repeat:no-repeat}
 .pk button.in{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 .pk button.in::after{content:"in this set";position:absolute;top:4px;right:4px;font-size:9px;font-weight:800;color:#fff;background:var(--sel);border-radius:99px;padding:1px 6px}
+ .pk button .x{position:absolute;top:3px;left:4px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font:700 13px/20px var(--sans);cursor:pointer;padding:0}
+.up{display:grid;gap:8px;padding:10px;border:1px dashed var(--line);border-radius:10px}.up[hidden]{display:none}
+.up .btn{justify-self:start}
 .pk-all{display:flex;gap:8px;align-items:center;font-size:12px;font-weight:600}
 .side{display:grid;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
 .side h2{margin:0;font-size:14px;font-weight:800}
@@ -77,6 +80,12 @@ select{font:500 14px var(--sans);padding:8px;border-radius:9px;border:1px solid 
     <div class="pk-h"><h2>Products</h2><span class="hint">Tap to add to this set</span></div>
     <label class="pk-all"><input type="checkbox" id="pk-all"> Add to all 3 sets of this ad and size</label>
     <div class="pk" id="pk" role="group" aria-label="Products to add"></div>
+    <div class="up" id="up" hidden>
+      <label class="btn" for="up-file" style="cursor:pointer">Upload your own picture</label>
+      <input id="up-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+      <label class="pk-all"><input type="checkbox" id="up-bg" checked> Remove a plain white or light background</label>
+      <p class="hint" style="margin:0">PNG with a see-through background works best. It joins the list above for every ad, size and set.</p>
+    </div>
     <hr style="border:0;border-top:1px solid var(--line);margin:2px 0">
     <h2>Animation · this ad and size</h2>
     <div class="grid2">
@@ -162,7 +171,8 @@ function place(el, it){
 
 // ── the side panel ──
 var prodSel = document.getElementById('prod'), rot = document.getElementById('rot');
-POOL.forEach(function(p){ var o = document.createElement('option'); o.value = p; o.textContent = DATA.names[p]; prodSel.appendChild(o); });
+function addOption(p){ var o = document.createElement('option'); o.value = p; o.textContent = DATA.names[p]; prodSel.appendChild(o); }
+POOL.forEach(addOption);
 function side(){
   var it = cur != null ? items()[cur] : null;
   document.getElementById('selTitle').textContent = it ? DATA.names[it.p] : 'Nothing selected';
@@ -207,12 +217,73 @@ function addTo(l, p){ var i = l.findIndex(function(x){ return x.p === p; }); if 
   var w = stdW(l, p), n = l.length; l.push({p: p, x: Math.max(2, 50 - w / 2 + (n % 3 - 1) * 8), y: 30 + (n % 4) * 6, w: w, r: 0}); return l.length - 1; }
 function drawPk(){ var have = items().map(function(x){ return x.p; });
   pkEl.querySelectorAll('button').forEach(function(b){ var on = have.indexOf(b.dataset.p) >= 0; b.classList.toggle('in', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }); }
-POOL.forEach(function(p){ var b = document.createElement('button'); b.type = 'button'; b.dataset.p = p; b.title = DATA.names[p];
+function addTile(p, up){ var b = document.createElement('button'); b.type = 'button'; b.dataset.p = p; b.title = DATA.names[p];
   var i = document.createElement('i'); i.className = 'p-' + p; b.appendChild(i); b.appendChild(document.createTextNode(DATA.names[p]));
-  b.onclick = function(){ var sets = lay(sel.ad, sel.fmt);
+  b.onclick = function(e){ if (e.target.classList.contains('x')) return; var sets = lay(sel.ad, sel.fmt);
     if (pkAll.checked) sets.forEach(function(l){ addTo(l, p); });
     cur = addTo(items(), p); changed(); setStatus(DATA.names[p] + (pkAll.checked ? ' is in all 3 sets.' : ' added. Drag it into place, then Save.')); };
-  pkEl.appendChild(b); });
+  if (up){ var x = document.createElement('span'); x.className = 'x'; x.setAttribute('role', 'button'); x.setAttribute('aria-label', 'Delete ' + DATA.names[p]); x.textContent = '×'; x.onclick = function(){ dropUpload(p, b); }; b.appendChild(x); }
+  pkEl.appendChild(b); }
+POOL.forEach(function(p){ addTile(p, false); });
+
+// ── your own pictures (owner, 12 Nov: "allow me to upload our own images") ──
+// Stored as artifact assets (editors only); each one's name and shape in db uploads/<asset id>, so it
+// is in the list on every visit and Claude can read it for the export. A plain light background is
+// taken off in this browser before upload: flood from the picture's border through colours close to
+// its corners, so nothing inside the product is ever touched.
+var upCss = document.createElement('style'); document.head.appendChild(upCss);
+var assetsNs = null, upEl = document.getElementById('up'), upFile = document.getElementById('up-file');
+function registerUpload(id, rec){ var p = 'u' + id; if (DATA.names[p]) return p;
+  DATA.names[p] = String(rec.name || 'My picture').slice(0, 60); DATA.aspect[p] = +rec.aspect || .6; POOL.push(p);
+  upCss.textContent += '.p-' + p + '{background-image:url(/_blob/' + id + ')}';
+  addOption(p); addTile(p, true); return p; }
+function loadUploads(){ getDb().then(function(d){ if (!d) return; return d.collection('uploads').get().then(function(q){
+  q.docs.forEach(function(sn){ var r = sn.data(); if (r && /^[0-9a-f]{32}$/.test(sn.id)) registerUpload(sn.id, r); }); draw(); }); }).catch(function(){}); }
+function cutBackground(cv){ var w = cv.width, h = cv.height, cx = cv.getContext('2d'), im = cx.getImageData(0, 0, w, h), d = im.data;
+  if (d[3] < 250 || d[(w - 1) * 4 + 3] < 250 || d[((h - 1) * w) * 4 + 3] < 250) return;        // already see-through
+  var c = [0, (w - 1), (h - 1) * w, h * w - 1].map(function(i){ return [d[i * 4], d[i * 4 + 1], d[i * 4 + 2]]; });
+  var bg = [0, 1, 2].map(function(k){ return c.map(function(v){ return v[k]; }).sort(function(a, b){ return a - b; })[1]; });
+  if (bg[0] + bg[1] + bg[2] < 600) return;                                                 // not a light backdrop: leave it
+  var seen = new Uint8Array(w * h), st = [], T = 22;
+  function near(i){ return Math.max(Math.abs(d[i * 4] - bg[0]), Math.abs(d[i * 4 + 1] - bg[1]), Math.abs(d[i * 4 + 2] - bg[2])) <= T; }
+  for (var x = 0; x < w; x++){ st.push(x, (h - 1) * w + x); } for (var y = 0; y < h; y++){ st.push(y * w, y * w + w - 1); }
+  while (st.length){ var i = st.pop(); if (seen[i] || !near(i)) continue; seen[i] = 1; d[i * 4 + 3] = 0;
+    var px = i % w; if (px > 0) st.push(i - 1); if (px < w - 1) st.push(i + 1); if (i >= w) st.push(i - w); if (i < w * (h - 1)) st.push(i + w); }
+  for (var j = 0; j < w * h; j++){ if (seen[j]) continue; var px2 = j % w;                 // soften the one-pixel rim
+    if ((px2 > 0 && seen[j - 1]) || (px2 < w - 1 && seen[j + 1]) || (j >= w && seen[j - w]) || (j < w * (h - 1) && seen[j + w])) d[j * 4 + 3] = 150; }
+  cx.putImageData(im, 0, 0); }
+function trim(cv){ var w = cv.width, h = cv.height, d = cv.getContext('2d').getImageData(0, 0, w, h).data, x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 8){ if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return cv; var o = document.createElement('canvas'); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1; o.getContext('2d').drawImage(cv, -x0, -y0); return o; }
+upFile.onchange = function(){ var f = upFile.files && upFile.files[0]; upFile.value = ''; if (!f || !assetsNs) return;
+  if (!/^image\/(png|jpeg|webp)$/.test(f.type)){ setStatus('Choose a PNG, JPG or WebP picture.', 'warn'); return; }
+  setStatus('Preparing ' + f.name + '…'); statusEl.dataset.hold = '1';
+  var url = URL.createObjectURL(f), img = new Image();
+  img.onerror = function(){ URL.revokeObjectURL(url); statusEl.dataset.hold = ''; setStatus('That picture could not be opened.', 'warn'); };
+  img.onload = function(){ URL.revokeObjectURL(url);
+    var k = Math.min(1, 1000 / Math.max(img.naturalWidth, img.naturalHeight)), cv = document.createElement('canvas');
+    cv.width = Math.max(1, Math.round(img.naturalWidth * k)); cv.height = Math.max(1, Math.round(img.naturalHeight * k));
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    if (document.getElementById('up-bg').checked) cutBackground(cv);
+    cv = trim(cv);
+    var name = f.name.replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ').trim().slice(0, 60) || 'My picture', aspect = +(cv.width / cv.height).toFixed(4);
+    cv.toBlob(function(blob){
+      assetsNs.upload(blob, {type: 'image/png'}).then(function(r){
+        return getDb().then(function(d){ if (!d) throw {code: 'unavailable'}; return d.doc('uploads/' + r.id).set({name: name, aspect: aspect, added: Date.now()}); })
+          .then(function(){ var p = registerUpload(r.id, {name: name, aspect: aspect}); cur = addTo(items(), p); statusEl.dataset.hold = ''; changed(); setStatus(name + ' uploaded and added. Drag it into place, then Save.', 'ok'); });
+      }).catch(function(e){ statusEl.dataset.hold = ''; setStatus('Not uploaded: ' + ({too_large: 'the picture is too big', quota_or_state: 'storage is full', rate_limited: 'too many at once, try again in a moment'}[e && e.code] || (e && e.message) || 'try again'), 'warn'); });
+    }, 'image/png'); };
+  img.src = url; };
+function dropUpload(p, tile){ var id = p.slice(1);
+  if (!confirm('Delete "' + DATA.names[p] + '" from the list? Ads that use it will show it no more.')) return;
+  getDb().then(function(d){ return d ? d.doc('uploads/' + id).delete() : null; })
+    .then(function(){ return assetsNs ? assetsNs.delete(id) : null; })
+    .then(function(){ tile.remove(); POOL.splice(POOL.indexOf(p), 1); var o = prodSel.querySelector('option[value="' + p + '"]'); if (o) o.remove();
+      Object.keys(layouts).forEach(function(k){ layouts[k] = layouts[k].map(function(fr){ return fr.filter(function(it){ return it.p !== p; }); }); });
+      cur = null; changed(); setStatus('Deleted. Save the ads that used it.', 'ok'); })
+    .catch(function(e){ setStatus('Not deleted: ' + ((e && e.message) || 'try again'), 'warn'); }); }
+(window.claude && window.claude.use ? window.claude.use('assets') : Promise.resolve(null)).then(function(a){ assetsNs = a; upEl.hidden = !a; }).catch(function(){});
+loadUploads();
 document.getElementById('reset').onclick = function(){ lay(sel.ad, sel.fmt)[sel.fr] = clone(DATA.ads[sel.ad].f[sel.fmt].def[sel.fr]); cur = null; changed(); };
 
 // ── drag to move, corner to resize (pointer events; nothing is measured on a shop page -- this is the editor) ──
