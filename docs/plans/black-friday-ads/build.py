@@ -374,18 +374,20 @@ def ad4(i, sch, fmt, frame=None, bare=False, data=None):
 <div class="bh" style="left:{U(250)};top:{U(300)};width:{U(250)};height:{U(230)}">{heart(n, hc)}</div>
 <div class="bs" style="left:{U(26)};top:{U(196)};width:{U(22)};height:{U(22)}">{STAR.format(c=spk)}</div>
 <div class="bs" style="left:{U(398)};top:{U(395)};width:{U(22)};height:{U(22)}">{STAR.format(c=spk)}</div>
-<div class="brib" style="left:{U(-72)};top:{U(61)};width:{U(300)};height:{U(34)};font-size:{U(14.5)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 80%,#fff),{acc} 55%,color-mix(in srgb,{acc} 85%,#000));box-shadow:0 {U(4)} {U(10)} rgba(0,0,0,.18)">K-Beauty Bliss Specials{HEART_ICON}</div>
 <div class="bt bx" style="top:{U(136)};color:{tc};font-size:{U(76)}">BLACK</div>
 <div class="bt bx bgr" style="top:{U(208)};font-size:{U(76)};background-image:linear-gradient(180deg,color-mix(in srgb,{acc} 72%,#fff) 0%,{acc} 55%,color-mix(in srgb,{acc} 88%,#000) 100%)">FRIDAY</div>
 <div class="bt fg2" style="top:{U(302)}"><span class="fg2a" style="font-size:{U(36)};color:{acc}">{GIFT_ICON}FREE GIFTS</span><span class="fg2b" style="font-size:{U(27)};color:{tc}">with Every Order</span></div>
 <div class="bb" style="left:{U(36)};right:{U(36)};top:{U(448)};height:{U(80)};border-radius:{U(16)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 82%,#fff),{acc} 52%,color-mix(in srgb,{acc} 86%,#000));color:{btc};font-size:{U(29)};font-weight:700;box-shadow:inset 0 {U(1.5)} 0 rgba(255,255,255,.35),0 {U(12)} {U(26)} {acc}55">See All Perks</div>
-</div><div class="bg" style="left:{c(gx)};top:{c(gy)};width:{U(190)};height:{U(218)};filter:drop-shadow(0 {U(12)} {U(16)} rgba(0,0,0,.2))">{gift(n, gl, gm, gd)}</div>{prods}</div>'''
+</div><div class="bg" style="left:{c(gx)};top:{c(gy)};width:{U(190)};height:{U(218)};filter:drop-shadow(0 {U(12)} {U(16)} rgba(0,0,0,.2))">{gift(n, gl, gm, gd)}</div>{prods}
+<div class="brib" style="left:{c(RIB_D - RIB_W / 2)};top:{c(RIB_D - RIB_H / 2)};width:{c(RIB_W)};height:{c(RIB_H)};font-size:{c(RIB_F)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 80%,#fff),{acc} 55%,color-mix(in srgb,{acc} 85%,#000));box-shadow:0 {c(5)} {c(14)} rgba(0,0,0,.22)">K-Beauty Bliss Specials{HEART_ICON}</div></div>'''
 
 # The corner ribbon (owner, 12 Nov: "a diagonal left upper corner strip with text. K-Beauty Bliss
 # Specials + heart icon"), across the card's top-left corner, clear of the title and the gift.
+# On the AD's own top-left corner (owner: "in the overall corner strip, not on the inner box").
+RIB_D, RIB_W, RIB_H, RIB_F = 184, 800, 62, 27   # canvas px at 1080 wide: centre on the corner's diagonal, length, band, type
 HEART_ICON = '<svg viewBox="0 0 24 24" width="1.05em" height="1.05em" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.2 0 3.6 1.2 4.2 2.4h2c.6-1.2 2-2.4 4.2-2.4 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>'
 CYC = 3 * FRAME_S
-AD4_CSS = (f'''.bf.v4 .brib{{position:absolute;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;gap:.35em;color:#fff;font-weight:800;letter-spacing:.02em;white-space:nowrap;z-index:2;border-top:1px solid rgba(255,255,255,.35)}}
+AD4_CSS = (f'''.bf.v4 .brib{{position:absolute;transform:rotate(-45deg);z-index:5;display:flex;align-items:center;justify-content:center;gap:.35em;color:#fff;font-weight:800;letter-spacing:.02em;white-space:nowrap;z-index:2;border-top:1px solid rgba(255,255,255,.35)}}
 .bf.v4 .fg2{{display:flex;flex-direction:column;align-items:center;gap:.12em;line-height:1.1}}
 .bf.v4 .fg2a{{display:inline-flex;align-items:center;gap:.3em;font-weight:900;letter-spacing:.03em}}.bf.v4 .fg2b{{font-weight:600;letter-spacing:.005em}}
 .bf.v4 .rf{{opacity:0;animation:bfcyc {CYC}s linear infinite both}}
