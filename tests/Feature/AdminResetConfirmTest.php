@@ -154,7 +154,9 @@ it('routes every reset-to-default control in the admin through the dialog', func
     // asks for itself (data-kbb-asks + window.kbbConfirm).
     // ▲ Lane DND: +2, Appearance -> Occasion banner -> Arrange products: "Reset
     // this place" and "Reset layout X to the design", both data-kbb-sure.
-    expect(count($controls))->toBe(62);
+    // ▲ 2.60.661: +1, "Reset to the ranking" on Catalog -> Best Sellers,
+    // data-kbb-sure (the guard asks, then re-clicks on Yes).
+    expect(count($controls))->toBe(63);
 });
 
 it('names a control that still exists for every row of the list', function () {

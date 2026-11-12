@@ -109,7 +109,9 @@
   var CARD_KEYS = ['image', 'image_m', 'alt', 'heading', 'body', 'button_label', 'button_url', 'position', 'status',
     /* Lane HB. The words on a slider picture. */
     'box_on', 'box_pos', 'eyebrow', 'sticker', 'sticker_ring',
-    'eyebrow_ar', 'heading_ar', 'body_ar', 'button_label_ar', 'sticker_ar', 'sticker_ring_ar'];
+    'eyebrow_ar', 'heading_ar', 'body_ar', 'button_label_ar', 'sticker_ar', 'sticker_ring_ar',
+    /* 2.60.659. The Arabic pictures, drawn on /ar in place of the two above. */
+    'image_ar', 'image_m_ar'];
 
   /* Lane HB. Typing into any of these switches the picture's words on, so
      "write words on a picture" is all it takes for them to show. */
@@ -198,6 +200,7 @@
          hands over a URL; the server turns it into a stored path on Save. */
       row.image_url = c.image_url;
       row.image_m_url = c.image_m_url;   /* the phone picture's thumbnail (SEC) */
+      row.image_ar_url = c.image_ar_url; row.image_m_ar_url = c.image_m_ar_url;   /* Arabic (2.60.659) */
       draft.cards[c.id] = row;
     });
   }
@@ -260,7 +263,7 @@
      card.<id>.<column>, and the two picture thumbnails the picker hands back,
      so a restored picture shows the file that was picked and not the saved
      one. */
-  var CARD_DRAFT_KEYS = CARD_KEYS.concat(['image_url', 'image_m_url']);
+  var CARD_DRAFT_KEYS = CARD_KEYS.concat(['image_url', 'image_m_url', 'image_ar_url', 'image_m_ar_url']);
 
   if (window.kbbDrafts) window.kbbDrafts.track({
     id: 'banners', screen: SCREEN,
@@ -1128,6 +1131,20 @@
                     ? '<button class="bns-btn" data-bns-clearm="' + esc(c.id) + '">Remove the phone one</button>'
                     : '')
               : '')
+          /* ARABIC PICTURES (2.60.659): drawn on /ar in place of the two
+             above; empty means the Arabic shop shows the English ones. Only
+             while "Show words on this picture" is OFF -- with the box on, the
+             Arabic is the box's own words (the owner, 11 Nov 2026). */
+          + (pictures && !d.box_on
+              ? '</div><div class="bns-row">'
+                + (d.image_ar_url ? '<img src="' + esc(d.image_ar_url) + '" alt="" style="height:34px;border-radius:6px">' : '')
+                + '<button class="bns-btn" data-bns-picar="' + esc(c.id) + '" data-bns-f="image_ar">' + (d.image_ar ? 'Change Arabic picture' : 'Choose the Arabic picture') + ' · 1920 × 550</button>'
+                + (d.image_ar ? '<button class="bns-btn" data-bns-clearar="' + esc(c.id) + '" data-bns-f="image_ar">Remove Arabic</button>' : '')
+                + (d.image_m_ar_url ? '<img src="' + esc(d.image_m_ar_url) + '" alt="" style="height:34px;border-radius:6px">' : '')
+                + '<button class="bns-btn" data-bns-picar="' + esc(c.id) + '" data-bns-f="image_m_ar">' + (d.image_m_ar ? 'Change Arabic phone picture' : 'Choose the Arabic phone picture') + ' · 500 × 600</button>'
+                + (d.image_m_ar ? '<button class="bns-btn" data-bns-clearar="' + esc(c.id) + '" data-bns-f="image_m_ar">Remove Arabic phone</button>' : '')
+                + '</div><div class="bns-row">'
+              : '')
           + '<select class="bns-sel bns-narrow" data-bns-card="' + esc(c.id) + '" data-bns-k="status">'
             + '<option value="publish"' + (d.status === 'publish' ? ' selected' : '') + '>Showing</option>'
             + '<option value="draft"' + (d.status === 'draft' ? ' selected' : '') + '>Hidden</option>'
@@ -1535,7 +1552,9 @@
         schedulePreview();
       };
       el.oninput = apply;
-      el.onchange = apply;
+      /* The Arabic picture buttons show only while the words box is off
+         (2.60.659), so turning it on or off redraws the row. */
+      el.onchange = key === 'box_on' ? function(){ apply(); render(); } : apply;
     });
 
     document.querySelectorAll('[data-bns-delcard]').forEach(function(b){
@@ -1647,6 +1666,31 @@
         markDirty();
         schedulePreview();
         render();
+      };
+    });
+
+    /* The Arabic pictures (2.60.659): the same shared picker as the two above. */
+    document.querySelectorAll('[data-bns-picar]').forEach(function(b){
+      b.onclick = function(){
+        if (typeof window.kbbPickMedia !== 'function') { say('The media picker is not available on this page.'); return; }
+        var id = b.dataset.bnsPicar, f = b.dataset.bnsF === 'image_m_ar' ? 'image_m_ar' : 'image_ar';
+        window.kbbPickMedia({
+          title: f === 'image_ar' ? 'Choose the Arabic picture — 1920 × 550' : 'Choose the Arabic phone picture — 500 × 600',
+          folder: 'banners',
+          onPick: function(urls){
+            if (!urls || !urls.length) return;
+            draft.cards[id][f] = String(urls[0]);
+            draft.cards[id][f + '_url'] = String(urls[0]);
+            markDirty(); schedulePreview(); render();
+          }
+        });
+      };
+    });
+    document.querySelectorAll('[data-bns-clearar]').forEach(function(b){
+      b.onclick = function(){
+        var id = b.dataset.bnsClearar, f = b.dataset.bnsF === 'image_m_ar' ? 'image_m_ar' : 'image_ar';
+        draft.cards[id][f] = ''; draft.cards[id][f + '_url'] = '';
+        markDirty(); schedulePreview(); render();
       };
     });
 

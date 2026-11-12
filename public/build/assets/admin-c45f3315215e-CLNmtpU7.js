@@ -239,16 +239,20 @@
     if (!p.in_stock) return '<span class="go-stock out">Out of stock</span>';
     return '<span class="go-stock in">' + (p.stock == null ? 'In stock' : fmt(p.stock) + ' in stock') + '</span>';
   }
+  /* Gives per order (Lane GQ): the select's own options; anything else reads as ×1. */
+  function qtys() { return (st.data && st.data.choices && st.data.choices.qtys) || [1, 2, 3, 4, 5]; }
+  function qtyOf(n) { n = Number(n); return qtys().indexOf(n) >= 0 ? n : 1; }
   function boxes(id, v, giving) {
     if (!v.items.length) return '<p class="go-sub">No product yet: search below and add the primary first. With no product, this range offers nothing.</p>';
     var ro = !can();
     return '<div class="go-boxes">' + v.items.map(function (it, i) {
       var p = it.product, primary = it.role === 'primary';
       var img = p && p.thumb ? '<img src="' + esc(p.thumb) + '" alt="" width="64" height="64" loading="lazy">' : '<span class="go-noimg"></span>';
-      var used = it.used || 0, left = Math.max(0, (Number(it.allocation) || 0) - used);
+      var used = it.used || 0, left = Math.max(0, (Number(it.allocation) || 0) - used), qty = qtyOf(it.qty);
       return '<div class="go-box' + (primary ? ' primary' : '') + (giving && it.id === giving ? ' giving' : '') + '">' + img +
         '<div class="go-bn"><span class="go-role' + (primary ? ' p' : '') + '">' + (primary ? 'Primary' : 'Backup ' + i) + '</span><b>' + esc(p ? p.name : 'Product #' + it.product_id) + '</b><small>' + esc(p ? p.brand : '') + (p && p.price ? ' · ' + esc(p.price) : '') + '</small>' + stockText(p) + '</div>' +
-        '<label class="go-alloc">For this offer <input class="go-in" type="number" min="0" max="100000" data-k="al:' + id + ':' + i + '" value="' + esc(it.allocation) + '"' + (ro ? ' disabled' : '') + '> <span>given ' + fmt(used) + ' · left ' + fmt(left) + '</span></label>' +
+        '<label class="go-alloc">For this offer <input class="go-in" type="number" min="0" max="100000" data-k="al:' + id + ':' + i + '" value="' + esc(it.allocation) + '"' + (ro ? ' disabled' : '') + '> <span>given ' + fmt(used) + ' · left ' + fmt(left) + (qty > 1 ? ' · enough for ' + fmt(Math.floor(left / qty)) + ' order' + (Math.floor(left / qty) === 1 ? '' : 's') : '') + '</span></label>' +
+        '<label class="go-alloc go-qty">Gives per order <select class="go-in" data-k="qt:' + id + ':' + i + '"' + (ro ? ' disabled' : '') + '>' + qtys().map(function (n) { return '<option value="' + n + '"' + (n === qty ? ' selected' : '') + '>×' + n + '</option>'; }).join('') + '</select>' + (qty > 1 ? ' <span>' + qty + ' pcs to each order, at AED 0. Each order uses ' + qty + ' of this offer\'s units; with fewer than ' + qty + ' left, the next backup is given.</span>' : '') + '</label>' +
         '<div class="go-acts">' + (primary ? '' : '<button type="button" class="go-mini" data-it="primary" data-r="' + id + '" data-i="' + i + '"' + (ro ? ' disabled' : '') + '>Make primary</button>') +
           '<button type="button" class="go-mini" data-it="up" data-r="' + id + '" data-i="' + i + '"' + (ro || i < 2 || primary ? ' disabled' : '') + ' aria-label="Move up">↑</button>' +
           '<button type="button" class="go-mini" data-it="down" data-r="' + id + '" data-i="' + i + '"' + (ro || primary || i === v.items.length - 1 ? ' disabled' : '') + ' aria-label="Move down">↓</button>' +
@@ -413,14 +417,14 @@
     if (!found) return;
     if (d.items.some(function (it) { return it.product_id === found.id && String(it.variant_id || '') === String(found.variant_id || ''); })) { say('That product is already in this range.'); return; }
     if (d.items.length >= st.data.choices.max_items) { say('At most ' + st.data.choices.max_items + ' products per range.'); return; }
-    d.items.push({ id: null, product_id: found.id, variant_id: found.variant_id || null, role: d.items.length ? 'backup' : 'primary', allocation: 50, used: 0,
+    d.items.push({ id: null, product_id: found.id, variant_id: found.variant_id || null, role: d.items.length ? 'backup' : 'primary', allocation: 50, qty: 1, used: 0,
       product: { name: found.name, brand: found.brand, thumb: found.thumb, stock: found.stock, in_stock: found.in_stock, status: found.status, price: found.price } });
     render();
   }
   function saveRange(id) {
     var d = draftOf(id);
     var body = { min: Number(d.min) || 0, max: d.max === '' || d.max == null ? null : Number(d.max), enabled: !!d.enabled,
-      items: d.items.map(function (it) { return { product_id: it.product_id, variant_id: it.variant_id || null, role: it.role, allocation: Math.max(0, Math.round(Number(it.allocation) || 0)) }; }) };
+      items: d.items.map(function (it) { return { product_id: it.product_id, variant_id: it.variant_id || null, role: it.role, allocation: Math.max(0, Math.round(Number(it.allocation) || 0)), qty: qtyOf(it.qty) }; }) };
     run(function () { return api(id === 'new' ? 'POST' : 'PUT', id === 'new' ? '/ranges' : '/ranges/' + id, body); }, 'The range was not saved.', function () {
       delete st.drafts[id]; st.pick = null; st.msg = 'Saved.'; st.msgKind = 'ok'; say('Range saved.');
     });
@@ -505,6 +509,7 @@
     if (parts[0] === 'q') { if (st.pick) { st.pick.q = v.trim(); search(parts[1]); } return; }
     if (parts[0] === 'min' || parts[0] === 'max') { draftOf(parts[1])[parts[0]] = v === '' ? (parts[0] === 'max' ? null : 0) : Number(v); return; }
     if (parts[0] === 'al') { draftOf(parts[1]).items[Number(parts[2])].allocation = v; return; }
+    if (parts[0] === 'qt') { draftOf(parts[1]).items[Number(parts[2])].qty = qtyOf(v); if (e.type === 'change') render(); return; }
     if (parts[0] === 'pv') { st.pv[parts[1]] = v; if (parts[1] === 'range' && v) st.pv.bag = ''; if (e.type === 'change') { st.pv.html = ''; render(); } return; }
     if (parts[0] === 'ts') { st.test[parts[1]] = v; return; }
     if (k === 'tip') { st.tester.ip = v; return; }

@@ -62,7 +62,11 @@
     picker: null,    // the open "Add gift" panel
     pvLang: 'en', pvRange: null,
     tester: { ip: '', label: '', err: null },
-    create: { open: false, name: '', brand_id: '', stock: '', price: '', image: '', thumb: '', brands: null, busy: false, err: null, made: null }
+    create: { open: false, name: '', brand_id: '', stock: '', price: '', image: '', thumb: '', brands: null, busy: false, err: null, made: null },
+    /* Lane GP: the gift-only products panel. rows null = not asked yet. */
+    quick: { rows: null, loading: false, err: null, add: null, edit: null, confirm: null, rowErr: null },
+    /* Lane GT: the templates card. rows null = not asked yet. */
+    tpl: null
   };
   var live = [];     // { node, fn } repainted in place while typing
   var LS_RANGE = 'kbb.freegifts.range';
@@ -225,6 +229,7 @@
     var c = document.querySelector('#content');
     if (c) c.textContent = '';
     st.drafts = {}; st.cfg = null; st.errors = {}; st.confirm = null; st.removed = {}; st.picker = null; st.stats = null; st.sel = null; st.stale = false;
+    st.quick = quickFresh(); st.tpl = tplFresh();
     render();
     run(function () { return api('GET', ''); }, 'Free gifts could not be loaded.');
     loadStats();
@@ -495,7 +500,7 @@
     if (!st.data) { wrap.appendChild(card(null, st.busy ? 'Loading…' : 'Nothing to show.')); return; }
     var panel = el('div', { role: 'tabpanel', 'aria-labelledby': 'fg-tab-' + st.tab, class: 'fg-wrap', style: 'padding:0' });
     wrap.appendChild(panel);
-    ({ overview: renderOverview, ranges: renderRanges, products: renderProducts, display: renderDisplay, home: renderHome, clicks: renderClicks })[st.tab](panel);
+    ({ overview: renderOverview, ranges: function (p) { renderRanges(p); p.appendChild(quickPanel()); p.insertBefore(tplPanel(), p.lastChild); }, products: renderProducts, display: renderDisplay, home: renderHome, clicks: renderClicks })[st.tab](panel);
     if (st.picker) { wrap.appendChild(pickerModal()); paintResults(); }
     if (focusKey) { var f = wrap.querySelector('[data-fk="' + focusKey + '"]'); if (f) f.focus(); }
   }
@@ -1436,6 +1441,16 @@
       clearTimeout(p.timer); fetchPicker(p.q.trim().length >= 2 ? p.q.trim() : '');
     } });
     resultsNode = el('div', { class: 'fg-res-l', 'aria-live': 'polite' });
+    /* Lane GP: "+ New gift-only product" -- the quick form, right here; the
+       product it makes is put at the top of the results, ready to add. */
+    pkQuickNode = el('div', { class: 'fg-pkq' });
+    fillPkQuick();
+    var newBtn = can() ? el('button', { type: 'button', class: 'fg-usedb' + (p.quick ? ' on' : ''), 'aria-expanded': String(!!p.quick), 'data-fk': 'pk-new', text: '+ New gift-only product', onclick: function () {
+      p.quick = !p.quick;
+      newBtn.className = 'fg-usedb' + (p.quick ? ' on' : ''); newBtn.setAttribute('aria-expanded', String(p.quick));
+      fillPkQuick();
+      var f = document.querySelector('[data-fk="pq-name"]'); if (f) f.focus();
+    } }) : null;
     pkFootNode = el('span', { class: 'fg-sub', style: 'margin:0' });
     pkStNode = el('div', { class: 'fg-pk-st', role: 'status', 'aria-live': 'polite', 'data-fk': 'pk-st' });
     var boxRow = kindRow(p.box);
@@ -1462,8 +1477,8 @@
         el('div', { class: 'fg-row' }, [el('span', { class: 'fg-pk-lab', text: 'New picks go to' }), into]),
         el('div', { class: 'fg-row' }, [el('span', { class: 'fg-pk-lab', text: 'Type' }), kseg]),
         el('div', { class: 'fg-row' }, [el('span', { class: 'fg-pk-lab', text: 'Show' }), seg])
-      ]), el('div', { class: 'fg-pk-tip' }, [el('p', { class: 'fg-sub', style: 'margin:0', text: 'A product tagged before goes to its own box. Types are internal only.' }), usedBtn]), pkStNode]),
-      el('div', { class: 'modal-b' }, [resultsNode]),
+      ]), el('div', { class: 'fg-pk-tip' }, [el('p', { class: 'fg-sub', style: 'margin:0', text: 'A product tagged before goes to its own box. Types are internal only.' }), el('span', { class: 'fg-row', style: 'gap:8px' }, [usedBtn, newBtn])]), pkStNode]),
+      el('div', { class: 'modal-b' }, [pkQuickNode, resultsNode]),
       el('div', { class: 'fg-pk-foot' }, [pkFootNode, el('button', { type: 'button', class: 'btn sm', text: 'Done', onclick: function () { closePicker(); } })])
     ]);
     var bg = el('div', { class: 'modal-bg on', onclick: function (e) { if (e.target === bg) closePicker(); } }, [dlg]);
@@ -1563,6 +1578,319 @@
         el('button', { type: 'button', class: 'btn ghost sm', text: 'Cancel', onclick: function () { c.open = false; render(); } })
       ])
     ]);
+  }
+
+  /* ------------------------------------------- gift-only products (Lane GP)
+     The owner, 8 Nov: "a quick products addition, those will not show on the
+     shop pages, just for gifts ... product name, product image, cut price,
+     actual price. and i need the list there also". Each one is a real product
+     with the Gift only flag: hidden everywhere on the shop, never in the bag,
+     given at AED 0 like any gift. The list is asked ONCE per visit (GET
+     /quick) and every write answers with the fresh list, so nothing polls
+     and nothing asks twice. A late answer only paints while this screen is
+     on show (ours() and a connected node). The photo comes from the shared
+     Media Library (window.kbbPickMedia); there is no file input here. */
+  var QMONEY = /^\d{1,9}(\.\d{1,2})?$/;
+  var quickNode = null, pkQuickNode = null;
+  function quickFresh() { return { rows: null, loading: false, err: null, add: null, edit: null, confirm: null, rowErr: null, removing: false }; }
+  function quickBlank() { return { name: '', image: '', thumb: '', cut: '', now: '', busy: false, err: null, priced: true }; }
+  function quickPanel() {
+    quickNode = el('section', { class: 'card fg-card', 'data-fk-panel': 'quick', 'aria-label': 'Gift-only products' });
+    fillQuick();
+    loadQuick();
+    return quickNode;
+  }
+  function loadQuick() {
+    var q = st.quick;
+    if (q.rows || q.loading) return;
+    q.loading = true; q.err = null;
+    api('GET', '/quick').then(function (d) { q.rows = d.products || []; q.loading = false; if (q === st.quick) paintQuick(); })
+      .catch(function (e) { q.loading = false; q.err = explain(e, 'The gift-only products could not be loaded.'); if (q === st.quick) paintQuick(); });
+  }
+  function paintQuick() { if (ours() && quickNode && quickNode.isConnected) fillQuick(); }
+  function paintPkQuick() { if (ours() && st.picker && pkQuickNode && pkQuickNode.isConnected) fillPkQuick(); }
+  function quickRepaint() { paintQuick(); paintPkQuick(); }
+  function fillPkQuick() {
+    pkQuickNode.textContent = '';
+    if (st.picker && st.picker.quick && can()) pkQuickNode.appendChild(quickForm(null, 'pq-'));
+  }
+  function fillQuick() {
+    var q = st.quick, n = quickNode, ro = !can();
+    var had = document.activeElement && n.contains(document.activeElement) ? document.activeElement.getAttribute('data-fk') : null;
+    n.textContent = '';
+    n.appendChild(el('h3', { class: 'fg-h', text: 'Gift-only products' + (q.rows ? ' (' + q.rows.length + ')' : '') }));
+    n.appendChild(el('p', { class: 'fg-sub', text: 'Quick products just for gifts. They never show on the shop, in search, listings or /api, and cannot be bought; your normal products are not touched. Added here, they are in "Add gift" at once. Cut price is the struck-through "worth"; actual price is shown beside it.' }));
+    if (!ro) n.appendChild(quickForm(null, 'qa-'));
+    if (q.err) n.appendChild(el('div', { class: 'fg-msg err', role: 'alert', style: 'margin-top:10px' }, [el('i', { text: '!' }), el('span', { text: q.err })]));
+    var list = el('div', { class: 'fg-ql', role: 'list', 'aria-label': 'Gift-only products', 'aria-busy': String(!!q.loading) });
+    if (!q.rows) { if (q.loading) list.appendChild(el('div', { class: 'fg-empty', text: 'Loading…' })); }
+    else if (!q.rows.length) list.appendChild(el('div', { class: 'fg-empty', text: 'No gift-only products yet.' + (ro ? '' : ' Add the first one above.') }));
+    else q.rows.forEach(function (p) { list.appendChild(q.edit && q.edit.id === p.id ? quickForm(p, 'qe-') : quickRow(p, ro)); });
+    n.appendChild(list);
+    if (had) { var f = n.querySelector('[data-fk="' + had + '"]'); if (f) f.focus(); }
+  }
+  function quickCheck(f) {
+    if (f.name.trim().length < 2) return ['name', 'Give it a name (2 letters or more).'];
+    if (!f.priced) return null;
+    var c = f.cut.trim(), n = f.now.trim();
+    if (!QMONEY.test(c)) return ['cut', 'Enter the cut price, like 45 or 45.50.'];
+    if (n !== '' && !QMONEY.test(n)) return ['now', 'The actual price must be a number, like 29 or 29.90.'];
+    if (n !== '' && Math.round(parseFloat(n) * 100) > Math.round(parseFloat(c) * 100)) return ['now', 'The actual price cannot be more than the cut price.'];
+    return null;
+  }
+  function pickQuickPhoto(f) {
+    if (typeof window.kbbPickMedia !== 'function') { say('The Media Library is not available on this page.', 'bad'); return; }
+    window.kbbPickMedia({ title: 'Choose the gift’s photo', folder: 'products', onPick: function (urls) {
+      if (!urls || !urls.length) return;
+      f.image = String(urls[0]); f.thumb = String(urls[0]); f.err = null;
+      quickRepaint();
+    } });
+  }
+  /* p null: the add form (key qa- on the panel, pq- in the picker); p: its inline edit (qe-). */
+  function quickForm(p, key) {
+    var q = st.quick, editing = !!p;
+    if (!editing && !q.add) q.add = quickBlank();
+    var f = editing ? q.edit : q.add;
+    function inp(prop, label, extra) {
+      var i = el('input', Object.assign({ class: 'fg-in', type: 'text', value: f[prop], 'data-fk': key + prop, autocomplete: 'off' }, extra || {}));
+      i.addEventListener('input', function () { f[prop] = i.value; });
+      return field(label, i);
+    }
+    function cancel() { q.edit = null; paintQuick(); var b = document.querySelector('[data-fk="qr-edit-' + p.id + '"]'); if (b) b.focus(); }
+    function go() {
+      if (f.busy) return;
+      var bad = quickCheck(f);
+      if (bad) { f.err = bad[1]; quickRepaint(); var x = document.querySelector('[data-fk="' + key + bad[0] + '"]'); if (x) x.focus(); return; }
+      f.busy = true; f.err = null; quickRepaint();
+      api('POST', editing ? '/quick/' + p.id : '/quick', { name: f.name.trim(), image: f.image || null, cut: f.priced ? f.cut.trim() : null, now: f.priced ? f.now.trim() : null }).then(function (d) {
+        q.rows = d.products || [];
+        var row = q.rows.filter(function (r) { return r.id === d.id; })[0];
+        if (editing) q.edit = null; else q.add = quickBlank();
+        if (key === 'pq-' && st.picker) st.picker.quick = false;
+        if (row) quickSync(row, !editing);
+        quickRepaint();
+        if (key === 'pq-') {
+          if (pkStNode && row) pkStNode.textContent = 'Created "' + row.name + '". Tap it below to add it to this range.';
+          var r = row && document.querySelector('[data-fk="res-' + row.id + '"]'); if (r) r.focus();
+        } else {
+          say((editing ? 'Saved "' : 'Added "') + (row ? row.name : f.name.trim()) + (editing ? '".' : '". Pick it with "Add gift".'));
+          var x = document.querySelector('[data-fk="' + (editing ? 'qr-edit-' + p.id : 'qa-name') + '"]'); if (x) x.focus();
+        }
+      }).catch(function (e) { f.busy = false; f.err = explain(e, editing ? 'Not saved.' : 'Not added.'); quickRepaint(); });
+    }
+    var kids = [
+      /* The shared image box (upload kit): drop a photo, Upload, or Library --
+         the same control everywhere in the admin (the owner, 8 Nov). */
+      typeof window.kbbImageField === 'function'
+        ? (function () { var fld = window.kbbImageField({ value: f.thumb || f.image || '', folder: 'gifts', width: 100, label: 'Gift photo',
+            onChange: function (url) { f.image = url; f.thumb = url; f.err = null; } }); fld.setAttribute('data-fk', key + 'photo'); return fld; })()
+        : el('button', { type: 'button', class: 'fg-qp', 'data-fk': key + 'photo', 'aria-label': f.image ? 'Change the photo' : 'Choose a photo from the Media Library', title: 'Media Library', onclick: function () { pickQuickPhoto(f); } },
+          [f.thumb ? el('img', { src: f.thumb, alt: '', width: 56, height: 56 }) : el('span', { text: '+ Photo' })]),
+      inp('name', 'Product name', { maxlength: 160, placeholder: editing ? null : 'e.g. Centella Mini Mask' }),
+      f.priced ? el('div', { class: 'fg-q2' }, [
+        inp('cut', 'Cut price (AED)', { inputmode: 'decimal', maxlength: 12, placeholder: '45.00' }),
+        inp('now', 'Actual price (AED)', { inputmode: 'decimal', maxlength: 12, placeholder: 'Same as cut' })
+      ]) : el('small', { class: 'fg-sub', style: 'margin:0', text: 'Has options: its prices are in the product editor.' }),
+      el('div', { class: 'fg-qgo' }, [
+        el('button', { type: 'button', class: 'btn sm', 'data-fk': key + 'save', disabled: f.busy, text: f.busy ? 'Saving…' : (editing ? 'Save' : 'Add gift-only product'), onclick: go }),
+        editing ? el('button', { type: 'button', class: 'btn ghost sm', 'data-fk': key + 'cancel', text: 'Cancel', onclick: cancel }) : null
+      ])
+    ];
+    if (f.err) kids.push(el('div', { class: 'fg-msg err', role: 'alert' }, [el('i', { text: '!' }), el('span', { text: f.err })]));
+    var box = el('div', editing ? { class: 'fg-qr ed', role: 'listitem', 'aria-label': 'Edit ' + p.name } : { class: 'fg-qa', role: 'group', 'aria-label': 'Add a gift-only product', style: 'margin-top:12px' }, kids);
+    box.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); go(); }
+      else if (e.key === 'Escape' && editing) { e.preventDefault(); e.stopPropagation(); cancel(); }
+    });
+    return box;
+  }
+  function quickRow(p, ro) {
+    var q = st.quick, byId = {};
+    (st.data ? st.data.ranges : []).forEach(function (r) { byId[r.id] = r; });
+    var labels = p.used_in.map(function (id) { return byId[id] ? byId[id].label : null; }).filter(Boolean);
+    var priced = p.type !== 'variable';
+    var kids = [
+      thumb(p),
+      el('div', {}, [el('b', { text: p.name }), el('span', { class: 'fg-row', style: 'gap:6px;margin-top:3px' }, [pill('blue', 'Gift only'), priced ? null : pill('grey', 'Has options')])]),
+      el('span', { class: 'fg-qpr' }, priced ? [p.now !== p.cut ? el('s', { text: 'AED ' + p.cut }) : null, el('b', { text: 'AED ' + p.now })] : [el('small', { text: '—' })]),
+      el('small', { class: 'fg-quse', text: (labels.length ? 'In ' + labels.join(', ') : 'Not in a range') + (p.orders ? ' · ' + plural(p.orders, 'order', 'orders') : '') }),
+      ro ? el('span') : el('div', { class: 'fg-qgo' }, [
+        el('button', { type: 'button', class: 'btn ghost sm', 'data-fk': 'qr-edit-' + p.id, text: 'Edit', 'aria-label': 'Edit ' + p.name, onclick: function () {
+          q.edit = { id: p.id, name: p.name, image: p.image, thumb: p.thumb, cut: p.cut, now: p.now, busy: false, err: null, priced: priced };
+          q.confirm = null; paintQuick();
+          var x = document.querySelector('[data-fk="qe-name"]'); if (x) x.focus();
+        } }),
+        el('button', { type: 'button', class: 'btn ghost sm', style: 'color:#b8362d', 'data-fk': 'qr-del-' + p.id, text: 'Remove…', 'aria-label': 'Remove ' + p.name, onclick: function () {
+          q.confirm = p.id; q.rowErr = null; paintQuick();
+          var k = document.querySelector('[data-fk="qr-keep-' + p.id + '"]'); if (k) k.focus();
+        } })
+      ])
+    ];
+    if (q.confirm === p.id) kids.push(el('div', { class: 'fg-confirm', role: 'alertdialog', 'aria-label': 'Confirm remove' }, [
+      el('span', { text: q.rowErr || ('Remove "' + p.name + '"? It leaves this list and the picker.' + (p.orders ? ' ' + plural(p.orders, 'past order keeps', 'past orders keep') + ' it as it was.' : '')) }),
+      el('span', { class: 'fg-row' }, [
+        el('button', { type: 'button', class: 'btn ghost sm', 'data-fk': 'qr-keep-' + p.id, text: q.rowErr ? 'OK' : 'Keep it', onclick: function () { q.confirm = null; q.rowErr = null; paintQuick(); var b = document.querySelector('[data-fk="qr-del-' + p.id + '"]'); if (b) b.focus(); } }),
+        q.rowErr ? null : el('button', { type: 'button', class: 'btn danger sm', 'data-fk': 'qr-rm-' + p.id, disabled: q.removing, text: q.removing ? 'Removing…' : 'Remove', onclick: function () {
+          q.removing = true; paintQuick();
+          api('DELETE', '/quick/' + p.id).then(function (d) {
+            q.removing = false; q.rows = d.products || []; q.confirm = null;
+            quickDrop(p.id); say('Removed "' + p.name + '".'); paintQuick();
+          }).catch(function (e) { q.removing = false; q.rowErr = explain(e, 'Not removed.'); paintQuick(); });
+        } })
+      ])
+    ]));
+    return el('div', { class: 'fg-qr', role: 'listitem' }, kids);
+  }
+  /* A save or a new product, carried into everything this screen already
+     holds -- the ranges' gifts, unsaved drafts, Gift products, the open
+     picker -- so nothing has to be asked again. */
+  function quickSync(row, isNew) {
+    function patch(o) { if (o && o.id === row.id && !o.variant_id) { o.name = row.name; o.image = row.image; o.thumb = row.thumb; o.price = row.price; } }
+    if (st.data) {
+      var found = false;
+      st.data.gift_products.forEach(function (o) { if (o.id === row.id) { patch(o); found = true; } });
+      if (!found) st.data.gift_products.push(Object.assign({}, row, { used_in: [] }));
+      st.data.ranges.forEach(function (r) { r.gifts.forEach(function (g) { patch(g.product); }); });
+    }
+    Object.keys(st.drafts).forEach(function (k) { ((st.drafts[k] || {}).gifts || []).forEach(function (g) { patch(g.product); }); });
+    var pk = st.picker;
+    if (!pk) return;
+    var lists = [];
+    [pk.rows, pk.initial].forEach(function (l) { if (l && lists.indexOf(l) < 0) lists.push(l); });
+    lists.forEach(function (l) { l.forEach(patch); if (isNew) l.unshift(Object.assign({}, row)); });
+    if (isNew && !lists.length) pk.rows = [Object.assign({}, row)];
+    paintResults(); repaint();
+  }
+  function quickDrop(id) {
+    if (st.data) st.data.gift_products = st.data.gift_products.filter(function (o) { return o.id !== id; });
+    var pk = st.picker;
+    if (pk) { if (pk.rows) pk.rows = pk.rows.filter(function (o) { return o.id !== id; }); if (pk.initial) pk.initial = pk.initial.filter(function (o) { return o.id !== id; }); paintResults(); }
+  }
+
+  /* ------------------------------------------------------ templates (Lane GT)
+     The owner, 8 Nov: "save as template the whole gifts ranges in one single
+     template, and from the list i should be able to select and live
+     instantly". The list is asked ONCE per visit (GET /templates); every
+     write answers with the fresh list, and Make live also answers with the
+     whole screen's data, so the ranges redraw in place from that one answer.
+     Nothing polls, nothing times. Every destructive button asks through the
+     admin's one "Are you sure?" box (data-kbb-sure, reset-guard); a late
+     answer only paints while this screen is on show (ours()). "Live" and
+     "edited since" compare the template's live_rev with the revision the
+     screen already holds, so a range save needs no request of its own. */
+  var tplNode = null;
+  function tplFresh() { return { rows: null, loading: false, err: null, name: '', busy: false, ren: null }; }
+  function tplPanel() {
+    if (!st.tpl) st.tpl = tplFresh();
+    tplNode = el('section', { class: 'card fg-card', 'data-fk-panel': 'tpl', 'aria-label': 'Templates' });
+    fillTpl();
+    loadTpl();
+    return tplNode;
+  }
+  function loadTpl() {
+    var t = st.tpl;
+    if (t.rows || t.loading) return;
+    t.loading = true; t.err = null;
+    api('GET', '/templates').then(function (d) { t.rows = d.templates || []; t.loading = false; if (t === st.tpl) paintTpl(); })
+      .catch(function (e) { t.loading = false; t.err = explain(e, 'The templates could not be loaded.'); if (t === st.tpl) paintTpl(); });
+  }
+  function paintTpl() { if (ours() && tplNode && tplNode.isConnected) fillTpl(); }
+  function tplWrite(method, path, body, ok) {
+    var t = st.tpl;
+    if (t.busy) return;
+    t.busy = true; t.err = null; paintTpl();
+    api(method, path, body).then(function (d) {
+      t.busy = false;
+      if (t !== st.tpl) return;
+      t.rows = d.templates || t.rows;
+      ok(d);
+      paintTpl();
+    }).catch(function (e) { t.busy = false; if (t !== st.tpl) return; t.err = explain(e, 'Not done.'); paintTpl(); });
+  }
+  function tplApply(row) {
+    var t = st.tpl;
+    if (t.busy) return;
+    var mine = ++st.seq;
+    t.busy = true; t.err = null; paintTpl();
+    api('POST', '/templates/' + row.id + '/apply', {}).then(function (d) {
+      t.busy = false;
+      if (t !== st.tpl) return;
+      t.rows = d.templates || t.rows;
+      if (mine === st.seq && d.data && d.data.config) {
+        st.data = d.data; st.drafts = {}; st.errors = {}; st.removed = {}; st.confirm = null; st.sel = null; st.stale = false; st.banner = null;
+      }
+      render();
+      say('"' + row.name + '" is live: ' + plural(d.ranges, 'range', 'ranges') + '.' + (d.skipped ? ' ' + plural(d.skipped, 'gift was', 'gifts were') + ' left out: the product was deleted or changed.' : '') + (d.before ? ' The ranges it replaced are saved as "' + d.before + '".' : ''), d.skipped ? 'bad' : undefined);
+    }).catch(function (e) { t.busy = false; if (t !== st.tpl) return; t.err = explain(e, 'Not made live. Nothing was changed.'); paintTpl(); });
+  }
+  function fillTpl() {
+    var t = st.tpl, n = tplNode, ro = !can(), rev = st.data ? st.data.revision : null;
+    var had = document.activeElement && n.contains(document.activeElement) ? document.activeElement.getAttribute('data-fk') : null;
+    n.textContent = '';
+    n.appendChild(el('h3', { class: 'fg-h', text: 'Templates' + (t.rows ? ' (' + t.rows.length + ')' : '') }));
+    n.appendChild(el('p', { class: 'fg-sub', text: 'Save every range and its gifts as one template, and make any template live with one click. Making one live first keeps the ranges it replaces as a "Before …" template (the last ' + 5 + ' are kept), so you can always go back.' }));
+    var liveRow = (t.rows || []).filter(function (r) { return r.live_rev; })[0] || null;
+    if (t.rows) n.appendChild(el('p', { class: 'fg-tpl-live', 'data-fk': 'tpl-state' }, liveRow
+      ? [el('span', { text: 'Live now: ' }), el('b', { text: liveRow.name }), liveRow.live_rev === rev ? pill('green', 'Live') : pill('amber', 'Edited since')]
+      : [el('span', { text: 'The live ranges are not saved as a template.' })]));
+    if (!ro) {
+      var dirty = dirtyRanges().length;
+      var inp = el('input', { class: 'fg-in', type: 'text', value: t.name, maxlength: 60, placeholder: 'e.g. Eid ranges', 'data-fk': 'tpl-name', autocomplete: 'off', 'aria-label': 'Template name' });
+      inp.addEventListener('input', function () { t.name = inp.value; });
+      var save = function () {
+        var name = t.name.trim();
+        if (!name) { t.err = 'Give the template a name.'; paintTpl(); return; }
+        tplWrite('POST', '/templates', { name: name }, function () { t.name = ''; say('Saved the live ranges as "' + name + '".'); });
+      };
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); save(); } });
+      n.appendChild(el('div', { class: 'fg-tpl-add' }, [inp,
+        el('button', { type: 'button', class: 'btn sm', 'data-fk': 'tpl-save', disabled: t.busy || !(st.data && st.data.ranges.length), text: 'Save as template', onclick: save })]));
+      if (dirty) n.appendChild(el('div', { class: 'fg-msg warn' }, [el('i', { text: '!' }), el('span', { text: 'A range has unsaved changes. Templates take the SAVED ranges: save the range first to include them.' })]));
+    }
+    if (t.err) n.appendChild(el('div', { class: 'fg-msg err', role: 'alert', style: 'margin-top:10px' }, [el('i', { text: '!' }), el('span', { text: t.err })]));
+    var list = el('div', { class: 'fg-ql', role: 'list', 'aria-label': 'Templates', 'aria-busy': String(!!(t.loading || t.busy)) });
+    if (!t.rows) { if (t.loading) list.appendChild(el('div', { class: 'fg-empty', text: 'Loading…' })); }
+    else if (!t.rows.length) list.appendChild(el('div', { class: 'fg-empty', text: 'No templates yet.' + (ro ? '' : ' Name the ranges you have now and press Save as template.') }));
+    else t.rows.forEach(function (r) { list.appendChild(tplRow(r, ro, rev)); });
+    n.appendChild(list);
+    if (had) { var f = n.querySelector('[data-fk="' + had + '"]'); if (f) f.focus(); }
+  }
+  function tplRow(r, ro, rev) {
+    var t = st.tpl, live = !!r.live_rev;
+    var head = el('div', {}, [
+      el('span', { class: 'fg-row', style: 'gap:6px' }, [el('b', { text: r.name }), r.auto ? pill('grey', 'Auto') : null, live ? (r.live_rev === rev ? pill('green', 'Live') : pill('amber', 'Edited since')) : null]),
+      el('small', { class: 'fg-tpl-sum', text: r.summary }),
+      el('small', { text: plural(r.ranges, 'range', 'ranges') + (r.saved_at ? ' · saved ' + r.saved_at : '') })
+    ]);
+    if (t.ren && t.ren.id === r.id) {
+      var ri = el('input', { class: 'fg-in', type: 'text', value: t.ren.name, maxlength: 60, 'data-fk': 'tpl-ren-in', 'aria-label': 'New name for ' + r.name });
+      ri.addEventListener('input', function () { t.ren.name = ri.value; var b = n2.querySelector('[data-fk="tpl-ren-go"]'); if (b) b.setAttribute('data-kbb-sure', 'Rename "' + r.name + '" to "' + ri.value.trim() + '"?'); });
+      var n2 = el('div', { class: 'fg-tpl-r', role: 'listitem', 'aria-label': 'Rename ' + r.name }, [
+        ri,
+        el('div', { class: 'fg-qgo' }, [
+          el('button', { type: 'button', class: 'btn sm', 'data-fk': 'tpl-ren-go', disabled: t.busy, 'data-kbb-sure': 'Rename "' + r.name + '" to "' + t.ren.name.trim() + '"?', text: 'Save name', onclick: function () {
+            var name = t.ren.name.trim();
+            if (!name) { t.err = 'Give the template a name.'; paintTpl(); return; }
+            tplWrite('POST', '/templates/' + r.id + '/rename', { name: name }, function () { t.ren = null; say('Renamed to "' + name + '".'); });
+          } }),
+          el('button', { type: 'button', class: 'btn ghost sm', 'data-fk': 'tpl-ren-x', text: 'Cancel', onclick: function () { t.ren = null; paintTpl(); } })
+        ])
+      ]);
+      ri.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); t.ren = null; paintTpl(); } });
+      return n2;
+    }
+    return el('div', { class: 'fg-tpl-r', role: 'listitem' }, [head, ro ? null : el('div', { class: 'fg-qgo fg-tpl-go' }, [
+      el('button', { type: 'button', class: 'btn sm', 'data-fk': 'tpl-apply-' + r.id, disabled: t.busy, text: 'Make live',
+        'data-kbb-sure': 'Make "' + r.name + '" live? Every live range is replaced by its ' + plural(r.ranges, 'range', 'ranges') + ' at once, on the shop too. The ranges you have now are kept as a "Before …" template.' + (dirtyRanges().length ? ' Unsaved range edits on this screen are dropped.' : ''),
+        onclick: function () { tplApply(r); } }),
+      el('button', { type: 'button', class: 'btn ghost sm', 'data-fk': 'tpl-over-' + r.id, disabled: t.busy || !(st.data && st.data.ranges.length), text: 'Save',
+        'data-kbb-sure': 'Save the live ranges over "' + r.name + '"? What it holds now is replaced.',
+        onclick: function () { tplWrite('PUT', '/templates/' + r.id, {}, function () { say('Saved the live ranges over "' + r.name + '".'); }); } }),
+      el('button', { type: 'button', class: 'btn ghost sm', 'data-fk': 'tpl-ren-' + r.id, disabled: t.busy, text: 'Rename', onclick: function () { t.ren = { id: r.id, name: r.name }; t.err = null; paintTpl(); var x = document.querySelector('[data-fk="tpl-ren-in"]'); if (x) { x.focus(); x.select(); } } }),
+      el('button', { type: 'button', class: 'btn ghost sm', style: 'color:#b8362d', 'data-fk': 'tpl-del-' + r.id, disabled: t.busy, text: 'Delete',
+        'data-kbb-sure': 'Delete the template "' + r.name + '"? The live ranges are not changed.',
+        onclick: function () { tplWrite('DELETE', '/templates/' + r.id, undefined, function () { say('Deleted "' + r.name + '".'); }); } })
+    ])]);
   }
 
   /* --------------------------------------------------------------- display */

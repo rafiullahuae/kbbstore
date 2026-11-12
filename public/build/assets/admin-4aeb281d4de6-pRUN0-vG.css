@@ -245,6 +245,52 @@ select.fg-in{padding-inline-end:28px}
 .fg-create{border:1px solid var(--accent);border-radius:13px;padding:16px;display:grid;gap:14px;background:var(--surface)}
 .fg-photo{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .fg-photo .fg-th{width:56px;height:56px}
+/* Gift-only products (Lane GP): quick add, the list, inline edit. */
+.fg-qa,.fg-qr.ed{display:grid;grid-template-columns:100px minmax(140px,1fr) minmax(220px,300px) max-content;gap:12px;align-items:center}
+.fg-qa .fg-in,.fg-qr.ed .fg-in{min-width:0;width:100%}
+/* The row decides by ITS OWN width, not the window's: one line wherever it fits,
+   the stacked phone form wherever it does not (a narrow window, a zoomed one). */
+[data-fk-panel="quick"]{container-type:inline-size}
+@container (max-width:680px){
+  .fg-qa,.fg-qr.ed{grid-template-columns:100px minmax(0,1fr);align-items:start}
+  .fg-qa>.fg-q2,.fg-qr.ed>.fg-q2,.fg-qa>.fg-qgo,.fg-qr.ed>.fg-qgo{grid-column:1/-1}
+  .fg-qa>.fg-qgo .btn,.fg-qr.ed>.fg-qgo .btn{flex:1 1 auto;justify-content:center}
+}
+.fg-qa{padding:12px;border:1px solid var(--accent);border-radius:13px;background:var(--accent-soft)}
+.fg-qa .fg-field,.fg-qr .fg-field{margin:0}
+.fg-q2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fg-qp{width:56px;height:56px;border:1px dashed var(--accent);border-radius:11px;background:var(--surface);padding:0;cursor:pointer;display:grid;place-items:center;overflow:hidden;font:inherit;font-size:10.5px;font-weight:700;color:var(--accent-ink);text-align:center;line-height:1.2}
+.fg-qp img{width:100%;height:100%;object-fit:cover;display:block}
+.fg-qgo{display:flex;gap:6px;align-items:center}
+.fg-ql{display:grid;gap:0;margin-top:12px}
+.fg-qr{display:grid;grid-template-columns:40px minmax(0,2fr) minmax(0,1fr) minmax(0,1.2fr) auto;gap:12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--border-2,var(--border))}
+.fg-qr b{font-size:13px;font-weight:600;overflow-wrap:anywhere;display:block}
+.fg-qr small{font-size:11.5px;color:var(--ink-soft)}
+.fg-qpr{font-size:13px;white-space:nowrap}
+.fg-qpr s{color:var(--ink-faint);margin-inline-end:6px;font-size:12px}
+.fg-qpr b{display:inline!important;color:var(--accent-ink)}
+.fg-qr .fg-qgo{justify-content:flex-end}
+.fg-qr.ed{padding:12px 4px}
+.fg-qa>.fg-msg,.fg-qr>.fg-msg,.fg-qr>.fg-confirm{grid-column:1/-1}
+.fg-pkq:not(:empty){margin-bottom:12px}
+.fg-pkq .fg-qa{margin-top:0!important}
+@media(max-width:700px){
+  .fg-qa,.fg-qr.ed{grid-template-columns:100px minmax(0,1fr);align-items:start}
+  .fg-qa>.fg-q2,.fg-qr.ed>.fg-q2,.fg-qa>.fg-qgo,.fg-qr.ed>.fg-qgo{grid-column:1/-1}
+  .fg-qa>.fg-qgo .btn,.fg-qr.ed>.fg-qgo .btn{flex:1 1 auto;justify-content:center}
+  .fg-qr{grid-template-columns:40px minmax(0,1fr) auto}
+  .fg-qr>.fg-quse{grid-column:2/-1}
+  .fg-qr>.fg-qgo{grid-column:1/-1;justify-content:flex-start}
+}
+/* Templates (Lane GT): save row, live state, the list. */
+.fg-tpl-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:12px}
+.fg-tpl-live{margin:10px 0 0;font-size:13px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fg-tpl-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--border-2,var(--border))}
+.fg-tpl-r b{font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.fg-tpl-r small{display:block;font-size:11.5px;color:var(--ink-soft);margin-top:3px;overflow-wrap:anywhere}
+.fg-tpl-r .fg-tpl-sum{color:var(--ink-2,var(--ink))}
+.fg-tpl-go{flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:700px){.fg-tpl-r{grid-template-columns:minmax(0,1fr)}.fg-tpl-go{justify-content:flex-start}}
 /* Display */
 .fg-disp{display:grid;gap:14px;grid-template-columns:minmax(0,1fr) 380px;align-items:start}
 .fg-tx{display:grid;gap:0}

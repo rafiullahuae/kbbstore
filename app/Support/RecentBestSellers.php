@@ -66,14 +66,12 @@ final class RecentBestSellers
      */
     public static function applyTo(Builder $query): ?Builder
     {
-        $ranked = self::ranked();
-
-        if ($ranked === []) {
+        if (self::ranked() === []) {
             return null;
         }
 
         $table = $query->getModel()->getTable();
-        $ids = array_map('intval', array_keys($ranked));
+        $ids = self::ids();
         $case = 'CASE ' . $table . '.id';
         $rank = 0;
 
@@ -90,6 +88,120 @@ final class RecentBestSellers
     public static function forget(): void
     {
         Cache::forget(self::CACHE_KEY);
+    }
+
+    /*
+     * ── THE OWNER'S HAND ON THE LIST (2.60.661) ───────────────────────────
+     * The owner, 12 Nov 2026: "allow us to adjust the position of any product
+     * on this page manually with drag n drop function, and with cross icon if
+     * any product we want to remove. same like on the new arrival backend".
+     *
+     * Two settings, read from the settings map the page already loads (no
+     * query): ORDER, the ids as he arranged them, and REMOVED, the ids he
+     * crossed out. The shop's list is the ranking without REMOVED, in ORDER;
+     * a product that joins the ranking after he arranged it comes after his
+     * arrangement, by rank, until he places it. Catalog -> Best Sellers.
+     */
+    public const KEY_ORDER = 'best_sellers_order';
+
+    public const KEY_REMOVED = 'best_sellers_removed';
+
+    /** The ids the shop shows, in the order it shows them. @return list<int> */
+    public static function ids(): array
+    {
+        $ranked = array_map('intval', array_keys(self::ranked()));
+        $removed = array_flip(self::listSetting(self::KEY_REMOVED));
+        $live = array_values(array_filter($ranked, static fn (int $id): bool => ! isset($removed[$id])));
+        $in = array_flip($live);
+        $out = [];
+
+        foreach (self::listSetting(self::KEY_ORDER) as $id) {
+            if (isset($in[$id])) {
+                $out[$id] = $id;
+            }
+        }
+
+        foreach ($live as $id) {
+            $out[$id] = $id;
+        }
+
+        return array_values($out);
+    }
+
+    /**
+     * The admin grid: the shop's list, then the crossed-out products still in
+     * the ranking (grey), each with its units sold.
+     *
+     * @return list<array{id:int,name:string,image:string,units:int,excluded:bool,sold_out:bool,url:string}>
+     */
+    public static function grid(): array
+    {
+        $ranked = self::ranked();
+        $shown = self::ids();
+        $flip = array_flip($shown);
+        $removed = array_values(array_filter(array_map('intval', array_keys($ranked)), static fn (int $id): bool => ! isset($flip[$id])));
+        $all = array_merge($shown, $removed);
+
+        if ($all === []) {
+            return [];
+        }
+
+        $rows = \App\Models\Product::query()->whereIn('id', $all)
+            ->get(['id', 'slug', 'name', 'image', 'created_at', 'stock_status'])->keyBy('id');
+        $out = [];
+
+        foreach ($all as $id) {
+            if (! isset($rows[$id])) {
+                continue;
+            }
+            $card = \App\Services\NewArrivals::card($rows[$id], ! isset($flip[$id]));
+            unset($card['date']);
+            $out[] = $card + ['units' => (int) ($ranked[$id] ?? 0)];
+        }
+
+        return $out;
+    }
+
+    /**
+     * The grid's Save: every id on the grid in the grid's order, and the ones
+     * crossed out. A removal of a product the grid did not show stays.
+     *
+     * @param  list<int>  $order
+     * @param  list<int>  $excluded
+     */
+    public static function save(array $order, array $excluded): void
+    {
+        $order = array_values(array_unique(array_filter(array_map('intval', $order), static fn (int $i): bool => $i > 0)));
+        $onGrid = array_flip($order);
+        $marked = array_values(array_intersect(array_unique(array_map('intval', $excluded)), $order));
+        $keep = array_values(array_filter(self::listSetting(self::KEY_REMOVED), static fn (int $id): bool => ! isset($onGrid[$id])));
+        $flip = array_flip($marked);
+        $settings = app(\App\Services\SettingsService::class);
+
+        $settings->set(self::KEY_REMOVED, array_values(array_unique(array_merge($keep, $marked))));
+        $settings->set(self::KEY_ORDER, array_values(array_filter($order, static fn (int $id): bool => ! isset($flip[$id]))));
+    }
+
+    /** Back to the plain ranking: no arrangement, nothing removed. */
+    public static function reset(): void
+    {
+        $settings = app(\App\Services\SettingsService::class);
+        $settings->set(self::KEY_ORDER, []);
+        $settings->set(self::KEY_REMOVED, []);
+    }
+
+    /** @return list<int> a stored list of ids, whatever shape it was saved in */
+    private static function listSetting(string $key): array
+    {
+        $raw = app(\App\Services\SettingsService::class)->get($key, []);
+
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+
+        return is_array($raw)
+            ? array_values(array_filter(array_map('intval', $raw), static fn (int $i): bool => $i > 0))
+            : [];
     }
 
     /** @return array<int, int> */

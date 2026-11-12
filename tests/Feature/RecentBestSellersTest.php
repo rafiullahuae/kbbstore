@@ -138,3 +138,95 @@ it('measures once per hour and issues SQL MySQL accepts', function () {
     DB::disableQueryLog();
     expect($hits)->toBe(0);
 });
+
+/* ═══ 2.60.661: Catalog → Best Sellers — drag to order, the cross to remove ═══ */
+
+function rbsAdmin(string $role = 'owner'): \App\Models\AdminUser
+{
+    return \App\Models\AdminUser::create(['name' => 'RBS', 'email' => 'rbs-'.$role.'-'.uniqid().'@x.test', 'password' => 'secret-secret', 'role' => $role]);
+}
+
+function rbsPage(): string
+{
+    \App\Services\SettingsService::forgetMemo();
+    \App\Models\Setting::flushMap();
+
+    return (string) test()->get('/best-sellers/')->assertOk()->getContent();
+}
+
+it('shows the owner\'s order and leaves out what he crossed, and Reset gives the ranking back', function () {
+    /*
+     * The owner, 12 Nov 2026: "allow us to adjust the position of any product
+     * on this page manually with drag n drop function, and with cross icon if
+     * any product we want to remove." MUTATION: ignore KEY_ORDER in ids() and
+     * the page keeps rank order -- red; ignore KEY_REMOVED and the crossed
+     * product is still drawn -- red.
+     */
+    $a = rbsProduct('Rank one');
+    $b = rbsProduct('Rank two');
+    $c = rbsProduct('Rank three');
+    rbsOrder([[$a, 9], [$b, 5], [$c, 2]], 3);
+
+    $owner = rbsAdmin();
+    $grid = $this->actingAs($owner, 'admin')->getJson('/admin-api/best-sellers')->assertOk()->json('items');
+    expect(array_column($grid, 'id'))->toBe([$a->id, $b->id, $c->id])
+        ->and(array_column($grid, 'units'))->toBe([9, 5, 2]);
+
+    // Drag c to the top, cross out a, Save.
+    $saved = $this->actingAs($owner, 'admin')->postJson('/admin-api/best-sellers/save', [
+        'order' => [$c->id, $a->id, $b->id], 'excluded' => [$a->id],
+    ])->assertOk()->json('items');
+    // The grid answers with the crossed one greyed at the end.
+    expect(array_column($saved, 'id'))->toBe([$c->id, $b->id, $a->id])
+        ->and(array_column($saved, 'excluded'))->toBe([false, false, true]);
+
+    $html = rbsPage();
+    expect(strpos($html, 'Rank three'))->toBeLessThan(strpos($html, 'Rank two'))
+        ->and($html)->not->toContain('Rank one');
+
+    // A product that starts selling later joins after his arrangement.
+    $d = rbsProduct('Newcomer');
+    rbsOrder([[$d, 50]], 1);
+    RecentBestSellers::forget();
+    expect(RecentBestSellers::ids())->toBe([$c->id, $b->id, $d->id]);
+
+    $this->actingAs($owner, 'admin')->postJson('/admin-api/best-sellers/reset')->assertOk();
+    \App\Services\SettingsService::forgetMemo();
+    expect(RecentBestSellers::ids())->toBe([$d->id, $a->id, $b->id, $c->id]);
+});
+
+it('has its own capability, fails closed for other roles, and refuses junk', function () {
+    // MUTATION: delete the admin-api/best-sellers rules in AdminCapabilities -- red.
+    $calls = [['GET', '/admin-api/best-sellers'], ['POST', '/admin-api/best-sellers/save'], ['POST', '/admin-api/best-sellers/reset']];
+    foreach ($calls as [$m, $uri]) {
+        expect(\App\Support\AdminCapabilities::forPath($m, ltrim($uri, '/')))->toBe('catalog.best_sellers');
+    }
+    foreach (['support', 'editor'] as $role) {
+        foreach ($calls as [$m, $uri]) {
+            $this->actingAs(rbsAdmin($role), 'admin')->json($m, $uri)->assertForbidden();
+        }
+    }
+    $this->actingAs(rbsAdmin('manager'), 'admin')->getJson('/admin-api/best-sellers')->assertOk();
+    $this->actingAs(rbsAdmin(), 'admin')->postJson('/admin-api/best-sellers/save', ['order' => ['x'], 'excluded' => []])->assertStatus(422);
+});
+
+it('costs the shop page no extra query for the arrangement', function () {
+    // MUTATION: read the two settings with a query of their own -- red.
+    $p = rbsProduct('Budget');
+    rbsOrder([[$p, 2]], 1);
+    RecentBestSellers::ranked();
+    $count = function () {
+        rbsPage();
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        rbsPage();
+        $n = count(DB::getQueryLog());
+        DB::disableQueryLog();
+
+        return $n;
+    };
+    $before = $count();
+    app(\App\Services\SettingsService::class)->set(RecentBestSellers::KEY_ORDER, [$p->id]);
+    app(\App\Services\SettingsService::class)->set(RecentBestSellers::KEY_REMOVED, [999999]);
+    expect($count())->toBe($before);
+});

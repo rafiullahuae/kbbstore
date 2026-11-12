@@ -72,6 +72,7 @@
 .go-stock.in{color:#1f7a4c}
 .go-alloc{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:#5e545a}
 .go-alloc input{width:90px}
+.go-alloc select{width:auto;min-width:72px}
 .go-acts{grid-column:1/-1;display:flex;gap:4px;flex-wrap:wrap}
 .go-mini{font:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer}
 .go-mini:hover{background:var(--surface-2)}
