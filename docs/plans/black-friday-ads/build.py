@@ -377,17 +377,26 @@ def ad4(i, sch, fmt, frame=None, bare=False, data=None):
 <div class="bt bx" style="top:{U(136)};color:{tc};font-size:{U(76)}">BLACK</div>
 <div class="bt bx bgr" style="top:{U(208)};font-size:{U(76)};background-image:linear-gradient(180deg,color-mix(in srgb,{acc} 72%,#fff) 0%,{acc} 55%,color-mix(in srgb,{acc} 88%,#000) 100%)">FRIDAY</div>
 <div class="bt fg2" style="top:{U(300)};gap:{U(13)}"><span class="fg2i" style="width:{U(58)};height:{U(58)};background:radial-gradient(circle at 35% 30%,color-mix(in srgb,{acc} 70%,#fff),{acc} 70%);box-shadow:0 0 0 {U(6)} {acc}22,0 0 {U(24)} {acc}99">{GIFT_ICON}</span><span class="fg2t"><span class="fg2a" style="font-size:{U(32)};color:{acc}">FREE GIFTS</span><span class="fg2b" style="font-size:{U(24)};color:{tc}">with Every Order</span></span></div>
-<div class="bb" style="left:{U(36)};right:{U(36)};top:{U(448)};height:{U(80)};border-radius:{U(16)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 82%,#fff),{acc} 52%,color-mix(in srgb,{acc} 86%,#000));color:{btc};font-size:{U(29)};font-weight:700;box-shadow:inset 0 {U(1.5)} 0 rgba(255,255,255,.35),0 {U(12)} {U(26)} {acc}55">See All Perks</div>
+<div class="bb" style="left:{U(36)};right:{U(36)};top:{U(434)};height:{U(76)};border-radius:{U(16)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 82%,#fff),{acc} 52%,color-mix(in srgb,{acc} 86%,#000));color:{btc};font-size:{U(29)};font-weight:700;box-shadow:inset 0 {U(1.5)} 0 rgba(255,255,255,.35),0 {U(12)} {U(26)} {acc}55">{BTN_TEXT[i % len(BTN_TEXT)]}</div>
+<div class="bpay" style="top:{U(522)};gap:{U(14)};height:{U(28)}"><img src="{PAY_TABBY}" alt="tabby"><img src="{PAY_TAMARA}" alt="tamara"></div>
 </div><div class="bg" style="left:{c(gx)};top:{c(gy)};width:{U(190)};height:{U(218)};filter:drop-shadow(0 {U(12)} {U(16)} rgba(0,0,0,.2))">{gift(n, gl, gm, gd)}</div>{prods}
 <div class="brib" style="left:{c(RIB_D - RIB_W / 2)};top:{c(RIB_D - RIB_H / 2)};width:{c(RIB_W)};height:{c(RIB_H)};font-size:{c(RIB_F)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 80%,#fff),{acc} 55%,color-mix(in srgb,{acc} 85%,#000));box-shadow:0 {c(5)} {c(14)} rgba(0,0,0,.22)">K-Beauty Bliss Specials{HEART_ICON}</div></div>'''
 
 # The corner ribbon (owner, 12 Nov: "a diagonal left upper corner strip with text. K-Beauty Bliss
 # Specials + heart icon"), across the card's top-left corner, clear of the title and the gift.
 # On the AD's own top-left corner (owner: "in the overall corner strip, not on the inner box").
+# Owner, 12 Nov: "button text: Shop Now, Get the Deals, Grab the Deals, See all Offers ... mix n use"
+# and "down side the button, put tabby and tamara logos" (the shop's own badges, resources/payment-logos).
+BTN_TEXT = ['Shop Now', 'Grab the Deals', 'See All Offers', 'Get the Deals']
+import base64 as _b64
+def _svg_uri(n):
+    return 'data:image/svg+xml;base64,' + _b64.b64encode(open(f'../../../resources/payment-logos/{n}.svg', 'rb').read()).decode()
+PAY_TABBY, PAY_TAMARA = _svg_uri('tabby-badge'), _svg_uri('tamara-badge')
 RIB_D, RIB_W, RIB_H, RIB_F = 184, 800, 62, 27   # canvas px at 1080 wide: centre on the corner's diagonal, length, band, type
 HEART_ICON = '<svg viewBox="0 0 24 24" width="1.05em" height="1.05em" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.2 0 3.6 1.2 4.2 2.4h2c.6-1.2 2-2.4 4.2-2.4 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>'
 CYC = 3 * FRAME_S
 AD4_CSS = (f'''.bf.v4 .brib{{position:absolute;transform:rotate(-45deg);z-index:5;display:flex;align-items:center;justify-content:center;gap:.35em;color:#fff;font-weight:800;letter-spacing:.02em;white-space:nowrap;z-index:2;border-top:1px solid rgba(255,255,255,.35)}}
+.bf.v4 .bpay{{position:absolute;left:0;right:0;display:flex;justify-content:center;align-items:center}}.bf.v4 .bpay img{{height:100%;width:auto;display:block;border-radius:22%/50%}}
 .bf.v4 .fg2{{display:flex;flex-direction:row;align-items:center;justify-content:center;line-height:1.1}}
 .bf.v4 .fg2i{{display:inline-grid;place-items:center;border-radius:50%;color:#fff;flex:none}}.bf.v4 .fg2i svg{{width:52%;height:52%}}
 .bf.v4 .fg2t{{display:flex;flex-direction:column;align-items:flex-start;gap:.08em;text-align:left}}
