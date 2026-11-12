@@ -1,8 +1,7 @@
 <meta charset="utf-8">
 <title>Black Friday Ad Editor</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-{FONT}
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&family=Montserrat:ital,wght@0,400;0,600;0,800;0,900;1,800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,700&family=Bebas+Neue&family=DM+Serif+Display&family=Cairo:wght@400;700;900&display=swap">
+<style id="fontcss">/*FONTS*/</style>
 <style>
 /* Layout: the ad on the left at working size, its controls on the right; one ad, one size, one product set at a time. */
 :root{--bg:#F1EEF0;--fg:#1F1B1E;--muted:#6B6268;--line:#DCD6DA;--panel:#FFFFFF;--on:#1F1B1E;--on-fg:#FFFFFF;--sel:#2F7BFF;--ok:#127A45;--warn:#9A5B12;--sans:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -22,7 +21,7 @@ h1{margin:0;font-size:clamp(20px,2.6vw,26px);font-weight:800;letter-spacing:-.01
 .stagewrap{display:flex;justify-content:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
 .stage{width:min(100%,var(--sw,520px));touch-action:none;user-select:none;-webkit-user-select:none}
 .stage .bf{border-radius:8px}
-.stage .pl{position:absolute;inset:0;pointer-events:none}.stage .pl .bp.ed{pointer-events:auto}
+.bf .pl{position:absolute;inset:0}.stage .pl{position:absolute;inset:0;pointer-events:none}.stage .pl .bp.ed{pointer-events:auto}
 .stage [data-k]{cursor:pointer}.stage [data-k].ksel{outline:2px dashed var(--sel);outline-offset:3px;cursor:move}
 .elx{display:grid;gap:10px}.elx[aria-disabled="true"] .row,.elx[aria-disabled="true"] .btns{opacity:.45}
 .crow{display:flex;gap:8px;align-items:center}.crow input[type=color]{width:44px;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:2px}
@@ -127,12 +126,22 @@ select{font:500 14px var(--sans);padding:8px;border-radius:9px;border:1px solid 
     </div>
     <div class="row" id="an-custom-row" hidden><label for="an-custom">Video length in seconds</label><input id="an-custom" type="number" min="2" max="60" step="1" value="12" style="font:500 14px var(--sans);padding:8px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"></div>
     <hr style="border:0;border-top:1px solid var(--line);margin:2px 0">
+    <div class="dl">
+      <div class="pk-h"><h2>Download · full HD</h2><span class="hint" id="dl-size"></span></div>
+      <div class="row"><label for="dl-fmt">Format</label><select id="dl-fmt"><option value="png">PNG · best quality</option><option value="jpg">JPG · smaller file</option></select></div>
+      <div class="btns"><button class="btn" id="dl-one" type="button">This picture</button><button class="btn" id="dl-sets" type="button">This ad · 3 sets</button></div>
+      <div class="btns"><button class="btn" id="dl-ad" type="button">This ad · all sizes (9)</button><button class="btn" id="dl-all" type="button">All 6 ads (54)</button></div>
+      <div class="st" id="dl-st" role="status"></div>
+    </div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:2px 0">
     <div class="btns"><button class="btn pri" id="save">Save</button><button class="btn" id="copyall">Copy to all colours</button><button class="btn" id="reset">Reset this set</button></div>
     <div class="st" id="status" role="status"></div>
     <p class="note">Copy to all colours puts this size's positions, sizes, angles, shadows and animation on the other five colours, keeping their own products, and saves them. Video length is what the exported video runs; the sets repeat to fill it.</p>
   </aside>
 </div>
 </div>
+<script>/*LIB_H2I*/</script>
+<script>/*LIB_ZIP*/</script>
 <script>
 (function(){
 var DATA = /*DATA*/;
@@ -188,21 +197,21 @@ function draw(){
   });
   applyDesign(stage.querySelector('.bf'), designs[key(sel.ad, sel.fmt)] || {});
   if (curEl){ var se = stage.querySelector('[data-k="' + curEl + '"]'); if (se) se.classList.add('ksel'); }
-  side(); scheduleDraft();
+  side(); scheduleDraft(); dlSize();
 }
-var accent = function(){ return (DATA.ads[sel.ad].acc || '#E8306F') + 'B3'; };   // the ad's own colour, 70%
-function shadow(it){
+var accent = function(ai){ return (DATA.ads[ai == null ? sel.ad : ai].acc || '#E8306F') + 'B3'; };   // the ad's own colour, 70%
+function shadow(it, ai){
   var s = it.sh == null ? 55 : it.sh, a = s / 100;
   if (!s) return 'none';
   if (it.ss === 'sharp') return 'drop-shadow(0 ' + (.5 * a).toFixed(2) + 'cqw ' + (.25 * a).toFixed(2) + 'cqw rgba(0,0,0,' + (.55 * a).toFixed(2) + '))';
-  if (it.ss === 'glow') return 'drop-shadow(0 0 ' + (2.2 * a).toFixed(2) + 'cqw ' + accent() + ')';
+  if (it.ss === 'glow') return 'drop-shadow(0 0 ' + (2.2 * a).toFixed(2) + 'cqw ' + accent(ai) + ')';
   return 'drop-shadow(0 ' + (1.4 * a).toFixed(2) + 'cqw ' + (1.6 * a).toFixed(2) + 'cqw rgba(0,0,0,' + (.42 * a).toFixed(2) + ')) drop-shadow(0 ' + (.2 * a).toFixed(2) + 'cqw ' + (.3 * a).toFixed(2) + 'cqw rgba(0,0,0,' + (.22 * a).toFixed(2) + '))';
 }
-function place(el, it){
+function place(el, it, ai){
   var a = DATA.aspect[it.p] || .5;
   el.style.left = it.x + 'cqw'; el.style.top = it.y + 'cqw'; el.style.width = it.w + 'cqw'; el.style.height = (it.w / a) + 'cqw';
   el.style.transform = 'rotate(' + (it.r || 0) + 'deg)';
-  el.style.filter = shadow(it);
+  el.style.filter = shadow(it, ai);
 }
 
 // ── text, button & design (owner, 12 Nov: "give me all controls of text, button etc") ──
@@ -409,6 +418,52 @@ function dropUpload(p, tile){ var id = p.slice(1);
     .catch(function(e){ setStatus('Not deleted: ' + ((e && e.message) || 'try again'), 'warn'); }); }
 (window.claude && window.claude.use ? window.claude.use('assets') : Promise.resolve(null)).then(function(a){ assetsNs = a; upEl.hidden = !a; }).catch(function(){});
 loadUploads();
+
+// ── download, full HD (owner, 12 Nov: "give me download function along with each version in full HD quality") ──
+// Each picture is drawn at its real size (post 1080x1350, square 1080x1080, story 1080x1920) from the
+// same markup, products, text and colours as on screen, unsaved changes included, with the page's own
+// embedded fonts. Several pictures go out as one zip. html-to-image and JSZip are inline (vendor/).
+var dlNs, dlBusy = false, dlSt = document.getElementById('dl-st'), SIZES = {post: [1080, 1350], square: [1080, 1080], story: [1080, 1920]};
+(window.claude && window.claude.use ? window.claude.use('downloads') : Promise.resolve(null)).then(function(d){ dlNs = d; }).catch(function(){ dlNs = null; });
+function dlSize(){ var f = DATA.ads[sel.ad].f[sel.fmt]; document.getElementById('dl-size').textContent = f.W + ' × ' + f.H + ' px'; }
+function fileName(ai, fmt, fr, ext){ return 'KBB-BlackFriday-' + DATA.ads[ai].id + '-' + DATA.ads[ai].label.replace(/[^A-Za-z0-9]+/g, '') + '-' + fmt + '-set' + (fr + 1) + '.' + ext; }
+function renderAd(ai, fmt, fr, ext){
+  var k = key(ai, fmt);
+  return loadKey(k).then(function(){
+    var f = DATA.ads[ai].f[fmt], host = document.createElement('div');
+    host.style.cssText = 'position:fixed;left:-' + (f.W + 200) + 'px;top:0;width:' + f.W + 'px;pointer-events:none';
+    host.innerHTML = f.base;
+    var bf = host.querySelector('.bf'), pl = bf.querySelector('.pl');
+    lay(ai, fmt)[fr].forEach(function(it){ if (!DATA.names[it.p]) return; var el = document.createElement('i'); el.className = 'bp p-' + it.p; place(el, it, ai); pl.appendChild(el); });
+    applyDesign(bf, designs[k] || {});
+    document.body.appendChild(host);
+    var o = {width: f.W, height: f.H, canvasWidth: f.W, canvasHeight: f.H, pixelRatio: 1, skipAutoScale: true, cacheBust: false,
+             fontEmbedCSS: document.getElementById('fontcss').textContent, backgroundColor: '#ffffff'};
+    var job = document.fonts.ready.then(function(){ return ext === 'jpg' ? htmlToImage.toJpeg(bf, Object.assign({quality: .95}, o)).then(function(u){ return fetch(u).then(function(r){ return r.blob(); }); }) : htmlToImage.toBlob(bf, o); });
+    return job.then(function(b){ host.remove(); return b; }, function(e){ host.remove(); throw e; });
+  });
+}
+function giveFile(name, blob){
+  if (dlNs) return dlNs.save({filename: name, data: blob});
+  var a = document.createElement('a'), u = URL.createObjectURL(blob); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 4000); return Promise.resolve();
+}
+function runDownload(list, zipName){
+  if (dlBusy) return; dlBusy = true; var ext = document.getElementById('dl-fmt').value, n = 0;
+  document.querySelectorAll('.dl .btn').forEach(function(b){ b.disabled = true; });
+  dlSt.className = 'st'; dlSt.textContent = 'Drawing 1 of ' + list.length + '…';
+  var zip = list.length > 1 ? new JSZip() : null, one = null;
+  var chain = list.reduce(function(pr, j){ return pr.then(function(){ return renderAd(j[0], j[1], j[2], ext).then(function(b){ n++; dlSt.textContent = 'Drawing ' + Math.min(n + 1, list.length) + ' of ' + list.length + '…'; if (zip) zip.file(fileName(j[0], j[1], j[2], ext), b); else one = b; }); }); }, Promise.resolve());
+  chain.then(function(){ if (!zip) return giveFile(fileName(list[0][0], list[0][1], list[0][2], ext), one);
+      dlSt.textContent = 'Packing ' + list.length + ' pictures…'; return zip.generateAsync({type: 'blob', compression: 'STORE'}).then(function(z){ return giveFile(zipName, z); }); })
+    .then(function(){ dlSt.className = 'st ok'; dlSt.textContent = list.length > 1 ? list.length + ' pictures ready' : 'Picture ready'; })
+    .catch(function(e){ dlSt.className = 'st warn'; dlSt.textContent = e && e.code === 'cancelled' ? 'Download cancelled' : 'Not downloaded: ' + ((e && (e.message || e.code)) || 'try again'); })
+    .then(function(){ dlBusy = false; document.querySelectorAll('.dl .btn').forEach(function(b){ b.disabled = false; }); });
+}
+var FMTS = ['post', 'square', 'story'];
+document.getElementById('dl-one').onclick = function(){ stopPlay(); runDownload([[sel.ad, sel.fmt, sel.fr]]); };
+document.getElementById('dl-sets').onclick = function(){ stopPlay(); runDownload([0, 1, 2].map(function(f){ return [sel.ad, sel.fmt, f]; }), 'KBB-BlackFriday-' + DATA.ads[sel.ad].id + '-' + sel.fmt + '.zip'); };
+document.getElementById('dl-ad').onclick = function(){ stopPlay(); var l = []; FMTS.forEach(function(fm){ [0, 1, 2].forEach(function(f){ l.push([sel.ad, fm, f]); }); }); runDownload(l, 'KBB-BlackFriday-' + DATA.ads[sel.ad].id + '-all-sizes.zip'); };
+document.getElementById('dl-all').onclick = function(){ stopPlay(); var l = []; DATA.ads.forEach(function(a, ai){ FMTS.forEach(function(fm){ [0, 1, 2].forEach(function(f){ l.push([ai, fm, f]); }); }); }); runDownload(l, 'KBB-BlackFriday-all-ads.zip'); };
 document.getElementById('reset').onclick = function(){ lay(sel.ad, sel.fmt)[sel.fr] = clone(DATA.ads[sel.ad].f[sel.fmt].def[sel.fr]); cur = null; changed(); };
 
 // ── drag to move, corner to resize (pointer events; nothing is measured on a shop page -- this is the editor) ──

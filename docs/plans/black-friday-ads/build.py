@@ -528,6 +528,9 @@ EDDATA = json.dumps({'ads': ed_ads, 'aspect': {k: round(v, 4) for k, v in ASPECT
                                'anuacream': 'Anua PDRN cream', 'hairoil': 'medicube Rosemary hair oil'}}, ensure_ascii=False).replace('</', '<\\/')
 editor = open(os.path.join(D, 'editor-template.html')).read()
 editor = editor.replace('/*AD_CSS*/', AD_CSS + AD2_CSS + AD4_CSS.replace('.bf.v4 .rf{', '.bf.v4 .rf-x{') + prod_css()).replace('/*DATA*/', EDDATA).replace('{FONT}', FONT)
+import fonts as _fonts
+_lib = lambda f: open(os.path.join(D, 'vendor', f)).read().replace('</script', '<\\/script')
+editor = editor.replace('/*FONTS*/', _fonts.css()).replace('/*LIB_H2I*/', _lib('html-to-image-1.11.11.min.js')).replace('/*LIB_ZIP*/', _lib('jszip-3.10.1.min.js'))
 open(os.path.join(D, 'editor.html'), 'w').write(editor)
 print('editor', os.path.getsize(os.path.join(D, 'editor.html')) // 1024, 'KB')
 print('ok', len(S), 'options;', os.path.getsize(os.path.join(D, 'gallery.html')) // 1024, 'KB')
