@@ -258,6 +258,130 @@ AD2_CSS = '''.bf.v2 .fl{display:inline-flex;align-items:center;gap:.45em;font-we
 .bf.v2 .bgr{-webkit-background-clip:text;background-clip:text;color:transparent}
 .bf.v2 .bp{filter:drop-shadow(0 1.1cqw 1.3cqw rgba(0,0,0,.35)) drop-shadow(0 .2cqw .3cqw rgba(0,0,0,.2))}'''
 
+
+# ═══ SET 4 · ROTATING (owner, 12 Nov: "don't overlap the product images on one
+# another. also keep different products in different versions ... randomly 1-2
+# products change. get from our best sellers ... the product sizes has the
+# issues ... keep little bit medicube gua sha [bigger] bcz that's the main
+# product. also remove the bottom line of black friday, and bring free gift
+# line, make it big in two lines, increase the button font size" ... "the
+# motive is to run all those versions in one ad, so user can see different
+# products in the same ad time to time.") ═══
+from PIL import Image as _Im
+for _p in ['reliefsun', 'cosrx', 'dralthea', 'deodorant', 'anua']:
+    _f = os.path.join(D, 'assets', _p + '.webp')
+    _w, _h = _Im.open(_f).size
+    ASPECT[_p] = _w / _h
+PRODUCTS += ['reliefsun', 'cosrx', 'dralthea', 'deodorant']
+# One real size per product, in card units of height: the same in every ad.
+SIZE = {'guasha': 290, 'isntree': 212, 'marymay': 228, 'axisy': 196, 'anua': 190, 'eyemask': 165,
+        'patch': 95, 'reliefsun': 205, 'cosrx': 208, 'dralthea': 196, 'deodorant': 200}
+TALL = ['isntree', 'cosrx', 'reliefsun', 'deodorant', 'axisy', 'dralthea']     # above the title, right
+NARROW = ['marymay', 'axisy', 'cosrx', 'reliefsun', 'deodorant', 'marymay']    # beside the button, left
+SHORT = ['anua', 'eyemask', 'anua', 'eyemask', 'anua', 'eyemask']              # beside the free-gifts line, right
+FRAME_S = 3.2   # seconds each product set shows
+
+def frames_for(i):
+    """Three product sets for ad i: the gua sha always; each step changes one or two of the others."""
+    r1 = [TALL[(i + f) % 6] for f in range(3)]
+    l2 = [NARROW[(i + 3) % 6], NARROW[(i + 3) % 6], NARROW[(i + 4) % 6]]
+    r2 = [SHORT[i % 6], SHORT[(i + 1) % 6], SHORT[(i + 1) % 6]]
+    out = []
+    for f in range(3):
+        if l2[f] == r1[f]:
+            l2[f] = 'marymay' if r1[f] != 'marymay' else 'axisy'
+        out.append(['guasha', r1[f], r2[f], l2[f]])   # post and square draw the first three
+    return out
+
+# Where text sits on the card (card units, 460 x 561): how far a product may reach in.
+def reach_at(y0, y1):
+    rows = [(-999, 0, 999), (0, 126, 120), (126, 292, 76), (292, 410, 96), (410, 446, 86), (446, 532, 26), (532, 999, 999)]
+    return min(r for a, b, r in rows if y0 < b and y1 > a)
+
+def place(p, side, yc, k, W, H, left, top, cw, u, taken, rot):
+    """A product at its own size x k, inside the frame, clear of the words and of every product placed before."""
+    m = W * .03
+    h = SIZE[p] * k
+    w = h * ASPECT[p]
+    for _ in range(40):
+        y = (122 - h) if yc is None else yc - h / 2         # None: stands above the title
+        ymin, ymax = (m - top) / u, (H - m - top) / u
+        y = min(max(y, ymin), ymax - h)
+        r = reach_at(y, y + h)
+        if side == 'L':
+            x = max((m - left) / u, r - w if r < 900 else -w * .35)
+            fits = x + w <= r
+        else:
+            x = min((W - m - left) / u - w, 460 - r if r < 900 else 460 - w * .65)
+            fits = x >= 460 - r
+        clash = any(not (x + w + 8 <= a or a2 + 8 <= x or y + h + 8 <= b or b2 + 8 <= y) for a, b, a2, b2 in taken)
+        if fits and not clash:
+            taken.append((x, y, x + w, y + h))
+            return x, y, w, h
+        if h < SIZE[p] * k * .85:          # "standard sizes ... don't put too small": stop here
+            break
+        h *= .95; w *= .95
+    taken.append((x, y, x + w, y + h))
+    return x, y, w, h
+
+ZONES = {  # side, vertical centre (card units; None = above the title), rotation -- one per product of a set
+    'post':   [('L', 300, -7), ('R', None, 9), ('R', 330, 8), ('L', 560, -4)],
+    'square': [('L', 300, -7), ('R', None, 9), ('R', 318, 8), ('L', 560, -4)],
+    'story':  [('L', 650, -4), ('R', None, 9), ('R', 650, 5), ('L', 260, -6)],
+}
+KSCALE = {'post': 1.0, 'square': 1.25, 'story': .78}   # one size scale per format: every product keeps its own size
+
+def ad4(i, sch, fmt, frame=None, bare=False, data=None):
+    key, label, card, tc, acc, btc, sub, pill, pillt, gl, gm, gd, hc, spk, (b1, b2), _ = sch
+    W, H = F[fmt]
+    total = 112 + 561 + (215 if fmt == 'story' else 0)
+    # post (owner, 12 Nov: "in square and instagram ads, keep the product images more big"): the card a
+    # little narrower so the products beside it can be clearly larger; square already has the room.
+    u = min(W * {'story': 0.84, 'post': 0.74, 'square': 0.8}[fmt] / 460, H * (0.80 if fmt == 'story' else 0.88) / total)
+    c = lambda v: f'{v / W * 100:.3f}cqw'
+    U = lambda v: c(v * u)
+    cw, ch = 460 * u, 561 * u
+    left = (W - cw) / 2
+    top = (H - total * u) / 2 + 112 * u
+    n = f'r{i}{fmt[0]}'
+    gx, gy = left + cw / 2 - 95 * u, top - 112 * u
+    sets = frames_for(i)
+    prods = ''
+    for f, ps in enumerate(sets):
+        if frame is not None and f != frame:
+            continue
+        taken = [(135, -112, 325, 106)]            # the gift
+        cls = '' if frame is not None else f' rf rf{f}'
+        for p, (side, yc, rot) in zip(ps, ZONES[fmt]):
+            x, y, w, h = place(p, side, yc, KSCALE[fmt], W, H, left, top, cw, u, taken, rot)
+            if data is not None:
+                data.setdefault(f, []).append({'p': p, 'x': round((left + x * u) / W * 100, 3), 'y': round((top + y * u) / W * 100, 3),
+                                               'w': round(w * u / W * 100, 3), 'r': rot})
+            if bare:
+                continue
+            prods += f'<i class="bp p-{p}{cls}" style="left:{c(left + x * u)};top:{c(top + y * u)};width:{U(w)};height:{U(h)};transform:rotate({rot}deg)"></i>'
+    return f'''<div class="bf v2 v4" style="aspect-ratio:{W}/{H};background:radial-gradient(38% 26% at 16% 18%,{acc}22,transparent 70%),radial-gradient(44% 30% at 86% 86%,{acc}1c,transparent 70%),radial-gradient(70% 55% at 50% 42%,{b1},{b2})">
+<i class="bsp" style="left:{c(W * .1)};top:{c(H * .08)};width:{c(24)};height:{c(24)}">{STAR.format(c=spk)}</i><i class="bsp" style="left:{c(W * .88)};top:{c(H * .07)};width:{c(18)};height:{c(18)}">{STAR.format(c=spk)}</i>
+<div class="bglow" style="left:{c(left + cw / 2 - 160 * u)};top:{c(gy - 10 * u)};width:{U(320)};height:{U(240)};background:radial-gradient(closest-side,{acc}44,transparent)"></div>
+<div class="bc" style="left:{c(left)};top:{c(top)};width:{c(cw)};height:{c(ch)};border-radius:{U(28)};background:linear-gradient(180deg,color-mix(in srgb,{card} 94%,#000) 0%,{card} 38%);box-shadow:inset 0 0 0 {U(1.2)} rgba(0,0,0,.05),0 {U(34)} {U(70)} rgba(0,0,0,.16),0 {U(8)} {U(18)} rgba(0,0,0,.1)">
+<div class="bh" style="left:{U(250)};top:{U(300)};width:{U(250)};height:{U(230)}">{heart(n, hc)}</div>
+<div class="bs" style="left:{U(30)};top:{U(150)};width:{U(24)};height:{U(24)}">{STAR.format(c=spk)}</div>
+<div class="bs" style="left:{U(398)};top:{U(395)};width:{U(22)};height:{U(22)}">{STAR.format(c=spk)}</div>
+<div class="bt bx" style="top:{U(136)};color:{tc};font-size:{U(76)}">BLACK</div>
+<div class="bt bx bgr" style="top:{U(208)};font-size:{U(76)};background-image:linear-gradient(180deg,color-mix(in srgb,{acc} 72%,#fff) 0%,{acc} 55%,color-mix(in srgb,{acc} 88%,#000) 100%)">FRIDAY</div>
+<div class="bt fg2" style="top:{U(302)}"><span class="fg2a" style="font-size:{U(36)};color:{acc}">{GIFT_ICON}FREE GIFTS</span><span class="fg2b" style="font-size:{U(27)};color:{tc}">with Every Order</span></div>
+<div class="bb" style="left:{U(36)};right:{U(36)};top:{U(448)};height:{U(80)};border-radius:{U(16)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 82%,#fff),{acc} 52%,color-mix(in srgb,{acc} 86%,#000));color:{btc};font-size:{U(29)};font-weight:700;box-shadow:inset 0 {U(1.5)} 0 rgba(255,255,255,.35),0 {U(12)} {U(26)} {acc}55">See All Perks</div>
+</div><div class="bg" style="left:{c(gx)};top:{c(gy)};width:{U(190)};height:{U(218)};filter:drop-shadow(0 {U(12)} {U(16)} rgba(0,0,0,.2))">{gift(n, gl, gm, gd)}</div>{prods}</div>'''
+
+CYC = 3 * FRAME_S
+AD4_CSS = (f'''.bf.v4 .fg2{{display:flex;flex-direction:column;align-items:center;gap:.12em;line-height:1.1}}
+.bf.v4 .fg2a{{display:inline-flex;align-items:center;gap:.3em;font-weight:900;letter-spacing:.03em}}.bf.v4 .fg2b{{font-weight:600;letter-spacing:.005em}}
+.bf.v4 .rf{{opacity:0;animation:bfcyc {CYC}s linear infinite both}}
+.bf.v4 .rf0{{animation-delay:-0.6s}}.bf.v4 .rf1{{animation-delay:{FRAME_S - 0.6:.1f}s}}.bf.v4 .rf2{{animation-delay:{2 * FRAME_S - 0.6:.1f}s}}
+@keyframes bfcyc{{0%{{opacity:0}}6%{{opacity:1}}33.3%{{opacity:1}}39%{{opacity:0}}100%{{opacity:0}}}}
+@media (prefers-reduced-motion:reduce){{.bf.v4 .rf{{animation:none}}.bf.v4 .rf0{{opacity:1}}}}''')
+ROT = [('R01', LIGHT['white']), ('R02', LIGHT['blush']), ('R03', LIGHT['ivory']), ('R04', LIGHT['lavender']), ('R05', LIGHT['mint']), ('R06', LIGHT['peach'])]
+
 FONT = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800;900&display=swap">'
 
 # ── the 1080px files ──
@@ -280,11 +404,21 @@ for i, s3 in enumerate(S3, 1):
         open(os.path.join(OUT, f'v3-{i:02d}-{s3[0]}-{fmt}.html'), 'w').write(
             f'<!doctype html><html><head><meta charset="utf-8">{FONT}<style>*{{margin:0;padding:0;box-sizing:border-box}}html,body{{width:{W}px;height:{H}px;overflow:hidden}}{AD_CSS}{AD2_CSS}{prod_css()}</style></head><body>{ad2(i + 20, s3, fmt)}</body></html>')
 
+for i, (rid, sch) in enumerate(ROT, 1):
+    for fmt, (W, H) in F.items():
+        for fr in range(3):
+            open(os.path.join(OUT, f'v4-{i:02d}-{sch[0]}-{fmt}-f{fr}.html'), 'w').write(
+                f'<!doctype html><html><head><meta charset="utf-8">{FONT}<style>*{{margin:0;padding:0;box-sizing:border-box}}html,body{{width:{W}px;height:{H}px;overflow:hidden}}{AD_CSS}{AD2_CSS}{AD4_CSS}{prod_css()}</style></head><body>{ad4(i, sch, fmt, fr)}</body></html>')
+
 # ── the live page ──
 cards = {fmt: '' for fmt in F}
 for i, s in enumerate(S, 1):
     for fmt in F:
         cards[fmt] += f'<figure class="opt"><figcaption><b>{i:02d}</b> {s[1]}</figcaption>{ad(i, s, fmt)}</figure>'
+cards4 = {fmt: '' for fmt in F}
+for i, (rid, sch) in enumerate(ROT, 1):
+    for fmt in F:
+        cards4[fmt] += f'<figure class="opt"><figcaption><b>{rid}</b> {sch[1]} · products change</figcaption>{ad4(i, sch, fmt)}</figure>'
 cards3 = {fmt: '' for fmt in F}
 for i, s3 in enumerate(S3, 1):
     for fmt in F:
@@ -314,16 +448,19 @@ h1{{margin:0;font-size:clamp(22px,3vw,30px);font-weight:800;letter-spacing:-.01e
 .opt{{margin:0;display:grid;gap:8px;min-width:0}}
 .opt figcaption{{font-size:14px;font-weight:600}}.opt figcaption b{{color:var(--muted);font-variant-numeric:tabular-nums;margin-right:4px}}
 .opt .bf{{border-radius:12px;box-shadow:0 1px 0 var(--line)}}
-{AD_CSS}{AD2_CSS}{prod_css()}
+{AD_CSS}{AD2_CSS}{AD4_CSS}{prod_css()}
 .tabs+.tabs{{margin-top:-8px}}
 </style>
 <div class="wrap">
-<header><h1>Black Friday ads</h1><p class="lead">Light versions (L01–L08): light cards on light backgrounds, the card at full size, larger products around it in three arrangements. New designs (N01–N10): richer light and finish, and six with your products spread around the card, larger, in every size. The first set (01–13) is kept to compare. Live previews; pick the numbers and they are exported at full size: post 1080×1350, square 1080×1080, story 1080×1920.</p></header>
+<header><h1>Black Friday ads</h1><p class="lead">Rotating products (R01–R06): one ad whose products change every few seconds, one or two at a time, the gua sha always there; every product at one size everywhere, none overlapping, none cut. They are exported as video. Light versions (L01–L08): light cards on light backgrounds, the card at full size, larger products around it in three arrangements. New designs (N01–N10): richer light and finish, and six with your products spread around the card, larger, in every size. The first set (01–13) is kept to compare. Live previews; pick the numbers and they are exported at full size: post 1080×1350, square 1080×1080, story 1080×1920.</p></header>
 <div class="tabs" role="group" aria-label="Set" data-k="set">
-<button type="button" data-v="v3" aria-pressed="true">Light · products around</button><button type="button" data-v="v2" aria-pressed="false">New designs</button><button type="button" data-v="v1" aria-pressed="false">First set</button></div>
+<button type="button" data-v="v4" aria-pressed="true">Rotating products</button><button type="button" data-v="v3" aria-pressed="false">Light · products around</button><button type="button" data-v="v2" aria-pressed="false">New designs</button><button type="button" data-v="v1" aria-pressed="false">First set</button></div>
 <div class="tabs" role="group" aria-label="Size" data-k="fmt">
 <button type="button" data-v="post" aria-pressed="true">Post · 4:5</button><button type="button" data-v="square" aria-pressed="false">Square · 1:1</button><button type="button" data-v="story" aria-pressed="false">Story · 9:16</button></div>
-<section class="grid post" data-g="v3-post">{cards3['post']}</section>
+<section class="grid post" data-g="v4-post">{cards4['post']}</section>
+<section class="grid square" data-g="v4-square" hidden>{cards4['square']}</section>
+<section class="grid story" data-g="v4-story" hidden>{cards4['story']}</section>
+<section class="grid post" data-g="v3-post" hidden>{cards3['post']}</section>
 <section class="grid square" data-g="v3-square" hidden>{cards3['square']}</section>
 <section class="grid story" data-g="v3-story" hidden>{cards3['story']}</section>
 <section class="grid post" data-g="v2-post" hidden>{cards2['post']}</section>
@@ -334,10 +471,32 @@ h1{{margin:0;font-size:clamp(22px,3vw,30px);font-weight:800;letter-spacing:-.01e
 <section class="grid story" data-g="v1-story" hidden>{cards['story']}</section>
 </div>
 <script>
-var pick={{set:'v3',fmt:'post'}};
+var pick={{set:'v4',fmt:'post'}};
 document.querySelectorAll('.tabs').forEach(function(t){{t.addEventListener('click',function(e){{var b=e.target.closest('button');if(!b)return;
 pick[t.dataset.k]=b.dataset.v;t.querySelectorAll('button').forEach(function(x){{x.setAttribute('aria-pressed',x===b?'true':'false')}});
 document.querySelectorAll('[data-g]').forEach(function(g){{g.hidden=g.dataset.g!==pick.set+'-'+pick.fmt}});}});}});
 </script>'''
 open(os.path.join(D, 'gallery.html'), 'w').write(page)
+
+# ── the live editor (owner, 12 Nov: "give me the live editor, i will drag to resize the images and also
+#    positioning in all versions" ... "need minimum 4 products"). Layouts save to the page's db;
+#    Claude reads them back to export the files. ──
+import json
+ed_ads = []
+for i, (rid, sch) in enumerate(ROT, 1):
+    fm = {}
+    for fmt, (W, H) in F.items():
+        dd = {}
+        base = ad4(i, sch, fmt, bare=True, data=dd)
+        base = base[:base.rfind('</div>')] + '<div class="pl"></div></div>'
+        fm[fmt] = {'base': base, 'W': W, 'H': H, 'def': [dd[f] for f in range(3)]}
+    ed_ads.append({'id': rid, 'label': sch[1], 'f': fm})
+EDDATA = json.dumps({'ads': ed_ads, 'aspect': {k: round(v, 4) for k, v in ASPECT.items()},
+                     'names': {'guasha': 'medicube Gua Sha cream', 'isntree': 'Isntree sunscreen', 'marymay': 'Mary&May PDRN', 'axisy': 'AXIS-Y serum',
+                               'eyemask': 'medicube eye patches', 'patch': 'medicube patch', 'anua': 'Anua mist mini', 'reliefsun': 'BoJ Relief Sun',
+                               'cosrx': 'COSRX Snail essence', 'dralthea': 'Dr.Althea 345', 'deodorant': 'medicube deodorant'}}, ensure_ascii=False).replace('</', '<\\/')
+editor = open(os.path.join(D, 'editor-template.html')).read()
+editor = editor.replace('/*AD_CSS*/', AD_CSS + AD2_CSS + AD4_CSS.replace('.bf.v4 .rf{', '.bf.v4 .rf-x{') + prod_css()).replace('/*DATA*/', EDDATA).replace('{FONT}', FONT)
+open(os.path.join(D, 'editor.html'), 'w').write(editor)
+print('editor', os.path.getsize(os.path.join(D, 'editor.html')) // 1024, 'KB')
 print('ok', len(S), 'options;', os.path.getsize(os.path.join(D, 'gallery.html')) // 1024, 'KB')
