@@ -144,13 +144,46 @@ def freeline(i, acc, pill, pillt, tc, light, U):
     return (f'<span class="fl fl-sc" style="font-size:{U(21)};color:{tc}"><i style="background:{acc}"></i>'  # italic, ruled
             f'<b style="color:{acc}">{GIFT_ICON}</b><em>{FREE}</em><i style="background:{acc}"></i></span>')
 
+# ═══ SET 3 (owner, 12 Nov: "add the products in different styles in the light
+# colour versions and keep the background also light colours, don't reduce the
+# size of the box. just add the products in little large sizes surroundings") ═══
+def light(key, label, card, tc, acc, sub, gift, heart_c, bg):
+    gl, gm, gd = gift
+    return (key, label, card, tc, acc, '#FFFFFF', sub, 'rgba(0,0,0,.055)', tc, gl, gm, gd, heart_c, acc, bg, True)
+LIGHT = {
+    'white':    light('white', 'White & Red', '#FFFFFF', '#141214', '#F0091E', '#3A3638', ('#FFC2C8', '#FF6B78', '#D92B3D'), '#FFD3D8', ('#FFF7F8', '#F8E3E6')),
+    'blush':    light('blush', 'Blush Pink', '#FFF5F8', '#2A2228', '#E8306F', '#4A3A44', ('#FFD0E0', '#FF7FA8', '#D9356F'), '#FFCADB', ('#FFFAFC', '#F8DFE9')),
+    'ivory':    light('ivory', 'Ivory Gold', '#FFFDF7', '#2A2116', '#C9962F', '#5A4A32', ('#FFF0C2', '#F3CF72', '#B8862E'), '#F4E2B8', ('#FFFCF5', '#F1E7CF')),
+    'lavender': light('lavender', 'Lavender', '#FCF9FF', '#251E33', '#8B3FD9', '#4B4060', ('#E9CCFF', '#C77DFF', '#8B2FD6'), '#E7D6FA', ('#FCFAFF', '#EAE0F8')),
+    'mint':     light('mint', 'Mint', '#F7FFFB', '#12261D', '#0E9A57', '#33493F', ('#C9F5DF', '#4ED39A', '#0E9A57'), '#CDEFDC', ('#F8FFFB', '#DCF1E6')),
+    'peach':    light('peach', 'Peach', '#FFF9F5', '#2B1C14', '#F2662A', '#5A4236', ('#FFD9BF', '#FF9A55', '#E45A12'), '#FFDCC7', ('#FFFBF8', '#FAE4D6')),
+}
+# Product placements around a FULL-SIZE card [x, y, height, rotation], card = 460 x 561.
+# Each reaches only a card's edge strip (never the words or the button) and may bleed
+# off the frame, which reads as a bold crop rather than a mistake.
+EDGES   = [(-118, 150, 290, -10), (400, 112, 285, 9), (-128, 470, 205, -8), (372, -96, 215, 13)]
+CORNERS = [(-150, -60, 300, -16), (402, 370, 300, 12), (-120, 455, 210, -6), (395, -70, 230, 15)]
+SIDES   = [(-150, 120, 340, -7), (410, 110, 335, 7), (-125, 490, 185, -9), (385, 455, 175, 10)]
+S3 = [
+  ('l-white-edges',    'White & Red · products around',  LIGHT['white'],    ['guasha', 'marymay', 'eyemask', 'axisy'], EDGES),
+  ('l-blush-corners',  'Blush Pink · products in corners', LIGHT['blush'],  ['isntree', 'guasha', 'patch', 'marymay'], CORNERS),
+  ('l-ivory-sides',    'Ivory Gold · tall pair',          LIGHT['ivory'],    ['guasha', 'isntree', 'eyemask', 'patch'], SIDES),
+  ('l-lavender-edges', 'Lavender · products around',      LIGHT['lavender'], ['isntree', 'axisy', 'eyemask', 'marymay'], EDGES),
+  ('l-mint-corners',   'Mint · products in corners',      LIGHT['mint'],     ['axisy', 'isntree', 'eyemask', 'guasha'], CORNERS),
+  ('l-peach-sides',    'Peach · tall pair',               LIGHT['peach'],    ['isntree', 'guasha', 'patch', 'axisy'], SIDES),
+  ('l-white-corners',  'White & Red · products in corners', LIGHT['white'],  ['marymay', 'isntree', 'eyemask', 'guasha'], CORNERS),
+  ('l-blush-sides',    'Blush Pink · tall pair',          LIGHT['blush'],    ['guasha', 'isntree', 'eyemask', 'axisy'], SIDES),
+]
+
 def ad2(i, s2, fmt):
-    key, label, si, prods = s2
-    _, _, card, tc, acc, btc, sub, pill, pillt, gl, gm, gd, hc, spk, (b1, b2), _ = S[si]
+    key, label, si, prods = s2[:4]
+    slots = s2[4] if len(s2) > 4 else SLOTS
+    full = len(s2) > 4            # set 3: the card keeps its full size; products overlap its edges
+    _, _, card, tc, acc, btc, sub, pill, pillt, gl, gm, gd, hc, spk, (b1, b2), _ = S[si] if isinstance(si, int) else si
     W, H = F[fmt]
-    top_extra, bot_extra, side = (112 + 46, 175, 100) if prods else (112, 0, 0)
+    top_extra, bot_extra, side = (112 + 46, 175, 100) if prods and not full else (112, 0, 0)
     total = top_extra + 561 + bot_extra
-    wf = {'post': .70, 'square': .66, 'story': .74}[fmt] if prods else (0.84 if fmt == 'story' else 0.8)
+    wf = {'post': .70, 'square': .66, 'story': .74}[fmt] if prods and not full else (0.84 if fmt == 'story' else 0.8)
     u = min(W * wf / 460, H * (0.74 if fmt == 'story' else 0.88) / total)
     c = lambda v: f'{v / W * 100:.3f}cqw'
     U = lambda v: c(v * u)
@@ -162,7 +195,7 @@ def ad2(i, s2, fmt):
     light = card.upper() in ('#FFFFFF', '#FFF1F4')
     pr = ''
     if prods:
-        for p, (x, y, h, r) in zip(prods, SLOTS):
+        for p, (x, y, h, r) in zip(prods, slots):
             hh = h * {'patch': .55, 'eyemask': .86}.get(p, 1) * (1.08 if fmt == 'story' else 1)   # wide packs: lower, so not larger than the tubes
             w = hh * ASPECT[p]
             pr += f'<i class="bp p-{p}" style="left:{c(left + x * u)};top:{c(top + y * u)};width:{U(w)};height:{U(hh)};transform:rotate({r}deg)"></i>'
@@ -209,11 +242,20 @@ for i, s2 in enumerate(S2, 1):
         open(os.path.join(OUT, f'v2-{i:02d}-{s2[0]}-{fmt}.html'), 'w').write(
             f'<!doctype html><html><head><meta charset="utf-8">{FONT}<style>*{{margin:0;padding:0;box-sizing:border-box}}html,body{{width:{W}px;height:{H}px;overflow:hidden}}{AD_CSS}{AD2_CSS}{prod_css() if s2[3] else ""}</style></head><body>{ad2(i, s2, fmt)}</body></html>')
 
+for i, s3 in enumerate(S3, 1):
+    for fmt, (W, H) in F.items():
+        open(os.path.join(OUT, f'v3-{i:02d}-{s3[0]}-{fmt}.html'), 'w').write(
+            f'<!doctype html><html><head><meta charset="utf-8">{FONT}<style>*{{margin:0;padding:0;box-sizing:border-box}}html,body{{width:{W}px;height:{H}px;overflow:hidden}}{AD_CSS}{AD2_CSS}{prod_css()}</style></head><body>{ad2(i + 20, s3, fmt)}</body></html>')
+
 # ── the live page ──
 cards = {fmt: '' for fmt in F}
 for i, s in enumerate(S, 1):
     for fmt in F:
         cards[fmt] += f'<figure class="opt"><figcaption><b>{i:02d}</b> {s[1]}</figcaption>{ad(i, s, fmt)}</figure>'
+cards3 = {fmt: '' for fmt in F}
+for i, s3 in enumerate(S3, 1):
+    for fmt in F:
+        cards3[fmt] += f'<figure class="opt"><figcaption><b>L{i:02d}</b> {s3[1]}</figcaption>{ad2(i + 20, s3, fmt)}</figure>'
 cards2 = {fmt: '' for fmt in F}
 for i, s2 in enumerate(S2, 1):
     for fmt in F:
@@ -243,12 +285,15 @@ h1{{margin:0;font-size:clamp(22px,3vw,30px);font-weight:800;letter-spacing:-.01e
 .tabs+.tabs{{margin-top:-8px}}
 </style>
 <div class="wrap">
-<header><h1>Black Friday ads</h1><p class="lead">New designs (N01–N10): richer light and finish, and six with your products spread around the card, larger, in every size. The first set (01–13) is kept to compare. Live previews; pick the numbers and they are exported at full size: post 1080×1350, square 1080×1080, story 1080×1920.</p></header>
+<header><h1>Black Friday ads</h1><p class="lead">Light versions (L01–L08): light cards on light backgrounds, the card at full size, larger products around it in three arrangements. New designs (N01–N10): richer light and finish, and six with your products spread around the card, larger, in every size. The first set (01–13) is kept to compare. Live previews; pick the numbers and they are exported at full size: post 1080×1350, square 1080×1080, story 1080×1920.</p></header>
 <div class="tabs" role="group" aria-label="Set" data-k="set">
-<button type="button" data-v="v2" aria-pressed="true">New designs</button><button type="button" data-v="v1" aria-pressed="false">First set</button></div>
+<button type="button" data-v="v3" aria-pressed="true">Light · products around</button><button type="button" data-v="v2" aria-pressed="false">New designs</button><button type="button" data-v="v1" aria-pressed="false">First set</button></div>
 <div class="tabs" role="group" aria-label="Size" data-k="fmt">
 <button type="button" data-v="post" aria-pressed="true">Post · 4:5</button><button type="button" data-v="square" aria-pressed="false">Square · 1:1</button><button type="button" data-v="story" aria-pressed="false">Story · 9:16</button></div>
-<section class="grid post" data-g="v2-post">{cards2['post']}</section>
+<section class="grid post" data-g="v3-post">{cards3['post']}</section>
+<section class="grid square" data-g="v3-square" hidden>{cards3['square']}</section>
+<section class="grid story" data-g="v3-story" hidden>{cards3['story']}</section>
+<section class="grid post" data-g="v2-post" hidden>{cards2['post']}</section>
 <section class="grid square" data-g="v2-square" hidden>{cards2['square']}</section>
 <section class="grid story" data-g="v2-story" hidden>{cards2['story']}</section>
 <section class="grid post" data-g="v1-post" hidden>{cards['post']}</section>
@@ -256,7 +301,7 @@ h1{{margin:0;font-size:clamp(22px,3vw,30px);font-weight:800;letter-spacing:-.01e
 <section class="grid story" data-g="v1-story" hidden>{cards['story']}</section>
 </div>
 <script>
-var pick={{set:'v2',fmt:'post'}};
+var pick={{set:'v3',fmt:'post'}};
 document.querySelectorAll('.tabs').forEach(function(t){{t.addEventListener('click',function(e){{var b=e.target.closest('button');if(!b)return;
 pick[t.dataset.k]=b.dataset.v;t.querySelectorAll('button').forEach(function(x){{x.setAttribute('aria-pressed',x===b?'true':'false')}});
 document.querySelectorAll('[data-g]').forEach(function(g){{g.hidden=g.dataset.g!==pick.set+'-'+pick.fmt}});}});}});
