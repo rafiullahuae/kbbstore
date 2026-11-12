@@ -268,7 +268,7 @@ AD2_CSS = '''.bf.v2 .fl{display:inline-flex;align-items:center;gap:.45em;font-we
 # motive is to run all those versions in one ad, so user can see different
 # products in the same ad time to time.") ═══
 from PIL import Image as _Im
-for _p in ['reliefsun', 'cosrx', 'dralthea', 'deodorant', 'anua']:
+for _p in ['guasha', 'isntree', 'marymay', 'axisy', 'eyemask', 'patch', 'reliefsun', 'cosrx', 'dralthea', 'deodorant', 'anua']:   # the cleaned cut-outs (no white fringe)
     _f = os.path.join(D, 'assets', _p + '.webp')
     _w, _h = _Im.open(_f).size
     ASPECT[_p] = _w / _h
@@ -490,7 +490,7 @@ for i, (rid, sch) in enumerate(ROT, 1):
         base = ad4(i, sch, fmt, bare=True, data=dd)
         base = base[:base.rfind('</div>')] + '<div class="pl"></div></div>'
         fm[fmt] = {'base': base, 'W': W, 'H': H, 'def': [dd[f] for f in range(3)]}
-    ed_ads.append({'id': rid, 'label': sch[1], 'f': fm})
+    ed_ads.append({'id': rid, 'label': sch[1], 'acc': sch[4], 'f': fm})
 EDDATA = json.dumps({'ads': ed_ads, 'aspect': {k: round(v, 4) for k, v in ASPECT.items()},
                      'names': {'guasha': 'medicube Gua Sha cream', 'isntree': 'Isntree sunscreen', 'marymay': 'Mary&May PDRN', 'axisy': 'AXIS-Y serum',
                                'eyemask': 'medicube eye patches', 'patch': 'medicube patch', 'anua': 'Anua mist mini', 'reliefsun': 'BoJ Relief Sun',

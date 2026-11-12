@@ -26,6 +26,16 @@ h1{margin:0;font-size:clamp(20px,2.6vw,26px);font-weight:800;letter-spacing:-.01
 .stage .bp.ed.on{outline:2px solid var(--sel)}
 .stage .hd{position:absolute;right:-9px;bottom:-9px;width:18px;height:18px;border-radius:50%;background:var(--sel);border:2px solid #fff;cursor:nwse-resize;box-shadow:0 1px 4px rgba(0,0,0,.3);display:none}
 .stage .bp.ed.on .hd{display:block}
+.stage .rh{position:absolute;left:50%;top:-34px;width:20px;height:20px;margin-left:-10px;border-radius:50%;background:#fff;border:2px solid var(--sel);cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.3);display:none}
+.stage .rh::after{content:"";position:absolute;left:50%;top:18px;width:2px;height:14px;margin-left:-1px;background:var(--sel)}
+.stage .bp.ed.on .rh{display:block}
+.stage.playing .hd,.stage.playing .rh{display:none!important}.stage.playing .bp.ed{outline:0!important}
+@keyframes a-fade{from{opacity:0}to{opacity:1}}
+@keyframes a-pop{0%{opacity:0;scale:.6}70%{opacity:1;scale:1.06}100%{scale:1}}
+@keyframes a-up{from{opacity:0;translate:0 6cqw}to{opacity:1;translate:0 0}}
+@keyframes a-float{0%,100%{translate:0 0}50%{translate:0 -1.2cqw}}
+@keyframes a-sway{0%,100%{rotate:-2deg}50%{rotate:2deg}}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .side{display:grid;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
 .side h2{margin:0;font-size:14px;font-weight:800}
 .row{display:grid;gap:6px}.row label{font-size:12px;font-weight:700;color:var(--muted)}
@@ -41,7 +51,7 @@ select{font:500 14px var(--sans);padding:8px;border-radius:9px;border:1px solid 
 /*AD_CSS*/
 </style>
 <div class="wrap">
-<header><h1>Black Friday ad editor</h1><p class="lead">Pick an ad, a size and one of its three product sets. Drag a product to move it, drag its blue corner to resize it. Every set keeps at least four products. Save keeps your layout; it is what the final post, square and story files and the rotating video are made from.</p></header>
+<header><h1>Black Friday ad editor</h1><p class="lead">Pick an ad, a size and one of its three product sets. Drag a product to move it, drag its blue corner to resize it, drag the round handle above it to turn it (hold Shift for 15° steps). Every set keeps at least four products. Save keeps your layout; it is what the final post, square and story files and the rotating video are made from.</p></header>
 <div class="bar" id="ads" role="group" aria-label="Ad"><span class="lbl">Ad</span></div>
 <div class="bar" id="fmts" role="group" aria-label="Size"><span class="lbl">Size</span></div>
 <div class="bar" id="frames" role="group" aria-label="Product set"><span class="lbl">Set</span></div>
@@ -50,13 +60,24 @@ select{font:500 14px var(--sans);padding:8px;border-radius:9px;border:1px solid 
   <aside class="side">
     <div><h2 id="selTitle">Nothing selected</h2><p class="hint" id="selHint">Tap a product on the ad.</p></div>
     <div class="row"><label for="prod">Product</label><select id="prod" disabled></select></div>
-    <div class="row"><label for="rot">Rotation <span id="rotv">0°</span></label><input id="rot" type="range" min="-30" max="30" step="1" value="0" disabled></div>
+    <div class="row"><label for="rot">Rotation <span id="rotv">0°</span></label><input id="rot" type="range" min="-180" max="180" step="1" value="0" disabled></div>
+    <div class="row"><label for="sh">Shadow <span id="shv">55</span></label><input id="sh" type="range" min="0" max="100" step="1" value="55" disabled></div>
+    <div class="row"><label for="shs">Shadow style</label><select id="shs" disabled><option value="soft">Soft</option><option value="sharp">Sharp</option><option value="glow">Glow (the ad's colour)</option></select></div>
     <div class="btns"><button class="btn" id="smaller" disabled>Smaller</button><button class="btn" id="bigger" disabled>Bigger</button><button class="btn" id="front" disabled>To front</button><button class="btn" id="del" disabled>Remove</button></div>
     <div class="btns"><button class="btn" id="add">Add a product</button><button class="btn" id="play">Play</button></div>
     <hr style="border:0;border-top:1px solid var(--line);margin:2px 0">
+    <h2>Animation · this ad and size</h2>
+    <div class="grid2">
+      <div class="row"><label for="an-in">Products change by</label><select id="an-in"><option value="fade">Crossfade</option><option value="pop">Pop in</option><option value="up">Slide up</option><option value="none">Instant</option></select></div>
+      <div class="row"><label for="an-idle">While showing</label><select id="an-idle"><option value="none">Still</option><option value="float">Gentle float</option><option value="sway">Sway</option></select></div>
+      <div class="row"><label for="an-sec">Seconds per set</label><select id="an-sec"><option>1.5</option><option>2</option><option>2.5</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select></div>
+      <div class="row"><label for="an-len">Video length</label><select id="an-len"><option value="5">5 seconds</option><option value="10" selected>10 seconds</option><option value="15">15 seconds</option><option value="20">20 seconds</option><option value="30">30 seconds</option><option value="custom">Other…</option></select></div>
+    </div>
+    <div class="row" id="an-custom-row" hidden><label for="an-custom">Video length in seconds</label><input id="an-custom" type="number" min="2" max="60" step="1" value="12" style="font:500 14px var(--sans);padding:8px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg)"></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:2px 0">
     <div class="btns"><button class="btn pri" id="save">Save</button><button class="btn" id="copyall">Copy to all colours</button><button class="btn" id="reset">Reset this set</button></div>
     <div class="st" id="status" role="status"></div>
-    <p class="note">Copy to all colours puts this size's positions and sizes, set by set, on the other five colours, keeping their own products. It saves them too.</p>
+    <p class="note">Copy to all colours puts this size's positions, sizes, angles, shadows and animation on the other five colours, keeping their own products, and saves them. Video length is what the exported video runs; the sets repeat to fill it.</p>
   </aside>
 </div>
 </div>
@@ -64,14 +85,17 @@ select{font:500 14px var(--sans);padding:8px;border-radius:9px;border:1px solid 
 (function(){
 var DATA = /*DATA*/;
 var POOL = Object.keys(DATA.names);
-var sel = {ad:0, fmt:'post', fr:0}, cur = null, layouts = {}, saved = {}, db = null, dbTried = false;
+var sel = {ad:0, fmt:'post', fr:0}, cur = null, layouts = {}, anims = {}, saved = {}, db = null, dbTried = false;
+var ANIM0 = {in:'fade', idle:'none', sec:3, len:10};
+function anim(){ var k = key(sel.ad, sel.fmt); if (!anims[k]) anims[k] = clone(ANIM0); return anims[k]; }
+function snapOf(k){ return JSON.stringify({f: layouts[k], a: anims[k] || ANIM0}); }
 var stage = document.getElementById('stage'), statusEl = document.getElementById('status');
 function key(a, f){ return DATA.ads[a].id + '-' + f; }
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
 function setStatus(t, cls){ statusEl.textContent = t; statusEl.className = 'st ' + (cls || ''); }
 function lay(a, f){ var k = key(a, f); if (!layouts[k]) layouts[k] = clone(DATA.ads[a].f[f].def); return layouts[k]; }
 function items(){ return lay(sel.ad, sel.fmt)[sel.fr]; }
-function dirty(k){ return JSON.stringify(layouts[k]) !== (saved[k] || JSON.stringify(DATA.ads[+k.slice(1,3)-1].f[k.split('-')[1]].def)); }
+function dirty(k){ if (!layouts[k]) return false; return snapOf(k) !== (saved[k] || JSON.stringify({f: DATA.ads[+k.slice(1,3)-1].f[k.split('-')[1]].def, a: ANIM0})); }
 
 // ── chips ──
 function chips(host, list, val, on){
@@ -99,14 +123,24 @@ function draw(){
     el.className = 'bp ed p-' + it.p + (i === cur ? ' on' : ''); el.dataset.i = i;
     place(el, it);
     var hd = document.createElement('span'); hd.className = 'hd'; hd.dataset.h = '1'; el.appendChild(hd);
+    var rh = document.createElement('span'); rh.className = 'rh'; rh.dataset.r = '1'; el.appendChild(rh);
     pl.appendChild(el);
   });
   side();
+}
+var accent = function(){ return (DATA.ads[sel.ad].acc || '#E8306F') + 'B3'; };   // the ad's own colour, 70%
+function shadow(it){
+  var s = it.sh == null ? 55 : it.sh, a = s / 100;
+  if (!s) return 'none';
+  if (it.ss === 'sharp') return 'drop-shadow(0 ' + (.5 * a).toFixed(2) + 'cqw ' + (.25 * a).toFixed(2) + 'cqw rgba(0,0,0,' + (.55 * a).toFixed(2) + '))';
+  if (it.ss === 'glow') return 'drop-shadow(0 0 ' + (2.2 * a).toFixed(2) + 'cqw ' + accent() + ')';
+  return 'drop-shadow(0 ' + (1.4 * a).toFixed(2) + 'cqw ' + (1.6 * a).toFixed(2) + 'cqw rgba(0,0,0,' + (.42 * a).toFixed(2) + ')) drop-shadow(0 ' + (.2 * a).toFixed(2) + 'cqw ' + (.3 * a).toFixed(2) + 'cqw rgba(0,0,0,' + (.22 * a).toFixed(2) + '))';
 }
 function place(el, it){
   var a = DATA.aspect[it.p] || .5;
   el.style.left = it.x + 'cqw'; el.style.top = it.y + 'cqw'; el.style.width = it.w + 'cqw'; el.style.height = (it.w / a) + 'cqw';
   el.style.transform = 'rotate(' + (it.r || 0) + 'deg)';
+  el.style.filter = shadow(it);
 }
 
 // ── the side panel ──
@@ -116,13 +150,25 @@ function side(){
   var it = cur != null ? items()[cur] : null;
   document.getElementById('selTitle').textContent = it ? DATA.names[it.p] : 'Nothing selected';
   document.getElementById('selHint').textContent = it ? 'Drag to move, drag the blue corner to resize.' : 'Tap a product on the ad.';
-  ['prod','rot','smaller','bigger','front','del'].forEach(function(id){ document.getElementById(id).disabled = !it; });
+  ['prod','rot','sh','shs','smaller','bigger','front','del'].forEach(function(id){ document.getElementById(id).disabled = !it; });
+  if (it){ var sv = it.sh == null ? 55 : it.sh; document.getElementById('sh').value = sv; document.getElementById('shv').textContent = sv; document.getElementById('shs').value = it.ss || 'soft'; }
+  var A = anim(); document.getElementById('an-in').value = A.in; document.getElementById('an-idle').value = A.idle; document.getElementById('an-sec').value = String(A.sec);
+  var std = [5,10,15,20,30].indexOf(+A.len) >= 0; document.getElementById('an-len').value = std ? String(A.len) : 'custom';
+  document.getElementById('an-custom-row').hidden = std; if (!std) document.getElementById('an-custom').value = A.len;
   document.getElementById('del').disabled = !it || items().length <= 4;
   if (it){ prodSel.value = it.p; rot.value = it.r || 0; document.getElementById('rotv').textContent = (it.r || 0) + '°'; }
   var k = key(sel.ad, sel.fmt);
   if (!statusEl.dataset.hold) setStatus(dirty(k) ? 'Not saved yet' : (saved[k] ? 'Saved' : 'Default layout'), dirty(k) ? 'warn' : 'ok');
 }
 function changed(){ statusEl.dataset.hold = ''; draw(); }
+document.getElementById('sh').oninput = function(e){ var it = items()[cur]; if (!it) return; it.sh = +e.target.value; document.getElementById('shv').textContent = it.sh;
+  var el = stage.querySelector('.bp[data-i="' + cur + '"]'); if (el) place(el, it); side(); };
+document.getElementById('shs').onchange = function(e){ var it = items()[cur]; if (!it) return; it.ss = e.target.value; changed(); };
+document.getElementById('an-in').onchange = function(e){ anim().in = e.target.value; side(); };
+document.getElementById('an-idle').onchange = function(e){ anim().idle = e.target.value; side(); };
+document.getElementById('an-sec').onchange = function(e){ anim().sec = +e.target.value; side(); };
+document.getElementById('an-len').onchange = function(e){ var v = e.target.value; if (v === 'custom'){ document.getElementById('an-custom-row').hidden = false; anim().len = +document.getElementById('an-custom').value || 12; } else anim().len = +v; side(); };
+document.getElementById('an-custom').oninput = function(e){ var n = Math.round(+e.target.value); if (n >= 2 && n <= 60){ anim().len = n; side(); } };
 prodSel.onchange = function(){ var it = items()[cur]; if (!it) return; it.p = prodSel.value; changed(); };
 rot.oninput = function(){ var it = items()[cur]; if (!it) return; it.r = +rot.value; document.getElementById('rotv').textContent = it.r + '°';
   var el = stage.querySelector('.bp[data-i="' + cur + '"]'); if (el) place(el, it); side(); };
@@ -143,16 +189,19 @@ stage.addEventListener('pointerdown', function(e){
   var el = e.target.closest('.bp.ed'); if (!el){ cur = null; draw(); return; }
   var i = +el.dataset.i; cur = i; var it = items()[i];
   var bf = stage.querySelector('.bf'), px = 100 / bf.getBoundingClientRect().width;
-  drag = {i: i, h: !!e.target.dataset.h, sx: e.clientX, sy: e.clientY, x: it.x, y: it.y, w: it.w, px: px};
+  var rb = el.getBoundingClientRect();
+  drag = {i: i, h: !!e.target.dataset.h, rot: !!e.target.dataset.r, cx: rb.left + rb.width / 2, cy: rb.top + rb.height / 2, sx: e.clientX, sy: e.clientY, x: it.x, y: it.y, w: it.w, px: px};
   stage.setPointerCapture(e.pointerId); e.preventDefault();
   stage.querySelectorAll('.bp.ed').forEach(function(x){ x.classList.toggle('on', +x.dataset.i === i); }); side();
 });
 stage.addEventListener('pointermove', function(e){
   if (!drag) return; var it = items()[drag.i], dx = (e.clientX - drag.sx) * drag.px, dy = (e.clientY - drag.sy) * drag.px;
-  if (drag.h){ it.w = Math.max(3, drag.w + Math.max(dx, dy * (DATA.aspect[it.p] || .5))); }
+  if (drag.rot){ var ang = Math.atan2(e.clientY - drag.cy, e.clientX - drag.cx) * 180 / Math.PI + 90; ang = ((ang + 540) % 360) - 180; if (e.shiftKey) ang = Math.round(ang / 15) * 15; it.r = Math.round(ang); }
+  else if (drag.h){ it.w = Math.max(3, drag.w + Math.max(dx, dy * (DATA.aspect[it.p] || .5))); }
   else { it.x = drag.x + dx; it.y = drag.y + dy; }
   it.x = Math.round(it.x * 100) / 100; it.y = Math.round(it.y * 100) / 100; it.w = Math.round(it.w * 100) / 100;
   var el = stage.querySelector('.bp[data-i="' + drag.i + '"]'); if (el) place(el, it);
+  if (drag.rot){ document.getElementById('rot').value = it.r; document.getElementById('rotv').textContent = it.r + '°'; }
 });
 function end(){ if (drag){ drag = null; statusEl.dataset.hold = ''; side(); } }
 stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
@@ -164,11 +213,26 @@ document.addEventListener('keydown', function(e){
 
 // ── play: the three sets in turn, as the video will ──
 var playT = 0;
-function stopPlay(){ if (playT){ clearInterval(playT); playT = 0; document.getElementById('play').textContent = 'Play'; } }
+function stopPlay(){ if (playT){ clearInterval(playT); playT = 0; document.getElementById('play').textContent = 'Play'; } stage.classList.remove('playing'); stage.querySelectorAll('.bp.ed').forEach(function(el){ el.style.animation = ''; }); }
+function animate(){
+  var A = anim(), inA = {fade:'a-fade .6s ease both', pop:'a-pop .55s cubic-bezier(.3,1.4,.5,1) both', up:'a-up .6s ease both', none:''}[A.in];
+  var idle = {float:'a-float 2.6s ease-in-out infinite', sway:'a-sway 3s ease-in-out infinite', none:''}[A.idle];
+  stage.querySelectorAll('.bp.ed').forEach(function(el, n){
+    var parts = [];
+    if (inA) parts.push(inA.replace(' both', ' ' + (n * .08).toFixed(2) + 's both'));
+    if (idle) parts.push(idle.replace(' infinite', ' ' + (n * .35).toFixed(2) + 's infinite'));
+    el.style.animation = parts.join(',');
+  });
+}
+var playStart = 0;
 document.getElementById('play').onclick = function(){
   if (playT){ stopPlay(); return; }
-  document.getElementById('play').textContent = 'Stop'; cur = null;
-  playT = setInterval(function(){ sel.fr = (sel.fr + 1) % 3; draw(); }, 2200);
+  var A = anim(); document.getElementById('play').textContent = 'Stop'; cur = null; stage.classList.add('playing');
+  playStart = Date.now(); sel.fr = 0; draw(); animate();
+  playT = setInterval(function(){
+    if ((Date.now() - playStart) / 1000 >= A.len){ stopPlay(); setStatus('Played ' + A.len + ' s, as the video will run', 'ok'); return; }
+    sel.fr = (sel.fr + 1) % 3; draw(); animate();
+  }, A.sec * 1000);
 };
 
 // ── saving: the page's db, read back by Claude for the export ──
@@ -183,7 +247,7 @@ function loadThen(fn){
     d.doc('layouts/' + k).get().then(function(snap){
       clearTimeout(t);
       saved[k] = '';
-      if (snap.exists){ var b = snap.data(); if (b && Array.isArray(b.frames) && b.frames.length === 3){ layouts[k] = clone(b.frames); saved[k] = JSON.stringify(b.frames); } }
+      if (snap.exists){ var b = snap.data(); if (b && Array.isArray(b.frames) && b.frames.length === 3){ layouts[k] = clone(b.frames); anims[k] = Object.assign(clone(ANIM0), b.anim || {}); saved[k] = snapOf(k); } }
       if (key(sel.ad, sel.fmt) === k) draw();
     }).catch(function(){ clearTimeout(t); });
   });
@@ -191,7 +255,8 @@ function loadThen(fn){
 function saveKey(k){
   return getDb().then(function(d){
     if (!d) throw {code: 'unavailable'};
-    return d.doc('layouts/' + k).set({frames: layouts[k], updated: Date.now()}).then(function(){ saved[k] = JSON.stringify(layouts[k]); });
+    if (!layouts[k]) lay(+k.slice(1,3) - 1, k.split('-')[1]);
+    return d.doc('layouts/' + k).set({frames: layouts[k], anim: anims[k] || ANIM0, updated: Date.now()}).then(function(){ saved[k] = snapOf(k); });
   });
 }
 document.getElementById('save').onclick = function(){
@@ -206,8 +271,9 @@ document.getElementById('copyall').onclick = function(){
     var dst = lay(ai, sel.fmt);
     for (var f = 0; f < 3; f++){
       var keep = dst[f].map(function(x){ return x.p; });
-      dst[f] = src[f].map(function(it, n){ return {p: keep[n] || it.p, x: it.x, y: it.y, w: it.w, r: it.r}; });
+      dst[f] = src[f].map(function(it, n){ return {p: keep[n] || it.p, x: it.x, y: it.y, w: it.w, r: it.r, sh: it.sh, ss: it.ss}; });
     }
+    anims[key(ai, sel.fmt)] = clone(anim());
     jobs.push(saveKey(key(ai, sel.fmt)));
   });
   jobs.push(saveKey(key(sel.ad, sel.fmt)));
