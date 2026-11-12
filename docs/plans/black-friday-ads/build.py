@@ -97,7 +97,8 @@ AD_CSS = '''.bf{position:relative;width:100%;container-type:inline-size;overflow
 def prod_css():
     out = ''
     for p in PRODUCTS:
-        b = base64.b64encode(open(os.path.join(ASSETS, p + '.webp'), 'rb').read()).decode()
+        f = os.path.join(D, 'assets', p + '.webp')
+        b = base64.b64encode(open(f if os.path.exists(f) else os.path.join(ASSETS, p + '.webp'), 'rb').read()).decode()
         out += f'.p-{p}{{background-image:url(data:image/webp;base64,{b})}}'
     return out
 
@@ -106,8 +107,8 @@ def prod_css():
 # improve more, overall ... keep these existing to compare ... products in the
 # square, story etc, in all versions, but only in few from each. spread the
 # products images ... focus more on products ... little bit more large size") ═══
-ASPECT = {'isntree': 409 / 819, 'guasha': 424 / 797, 'marymay': 234 / 1100, 'axisy': 251 / 823, 'eyemask': 900 / 874, 'patch': 671 / 383}
-PRODUCTS = ['isntree', 'guasha', 'marymay', 'axisy', 'eyemask', 'patch']
+ASPECT = {'anua': 529 / 669, 'isntree': 409 / 819, 'guasha': 424 / 797, 'marymay': 234 / 1100, 'axisy': 251 / 823, 'eyemask': 900 / 874, 'patch': 671 / 383}
+PRODUCTS = ['isntree', 'guasha', 'marymay', 'axisy', 'eyemask', 'patch', 'anua']
 # Four places around the card, in the reference's units (card = 460 x 561):
 # [x, y, height, rotation] -- left middle, right top, bottom-left corner, right lower.
 SLOTS = [(-86, 190, 240, -13), (404, -62, 225, 11), (-104, 495, 185, -8), (386, 232, 192, 9)]
@@ -165,14 +166,14 @@ EDGES   = [(-118, 150, 290, -10), (400, 112, 285, 9), (-128, 470, 205, -8), (372
 CORNERS = [(-150, -60, 300, -16), (402, 370, 300, 12), (-120, 455, 210, -6), (395, -70, 230, 15)]
 SIDES   = [(-150, 120, 340, -7), (410, 110, 335, 7), (-125, 490, 185, -9), (385, 455, 175, 10)]
 S3 = [
-  ('l-white-edges',    'White & Red · products around',  LIGHT['white'],    ['guasha', 'marymay', 'eyemask', 'axisy'], EDGES),
-  ('l-blush-corners',  'Blush Pink · products in corners', LIGHT['blush'],  ['isntree', 'guasha', 'patch', 'marymay'], CORNERS),
-  ('l-ivory-sides',    'Ivory Gold · tall pair',          LIGHT['ivory'],    ['guasha', 'isntree', 'eyemask', 'patch'], SIDES),
-  ('l-lavender-edges', 'Lavender · products around',      LIGHT['lavender'], ['isntree', 'axisy', 'eyemask', 'marymay'], EDGES),
-  ('l-mint-corners',   'Mint · products in corners',      LIGHT['mint'],     ['axisy', 'isntree', 'eyemask', 'guasha'], CORNERS),
-  ('l-peach-sides',    'Peach · tall pair',               LIGHT['peach'],    ['isntree', 'guasha', 'patch', 'axisy'], SIDES),
-  ('l-white-corners',  'White & Red · products in corners', LIGHT['white'],  ['marymay', 'isntree', 'eyemask', 'guasha'], CORNERS),
-  ('l-blush-sides',    'Blush Pink · tall pair',          LIGHT['blush'],    ['guasha', 'isntree', 'eyemask', 'axisy'], SIDES),
+  ('l-white-edges',    'White & Red · products around',  LIGHT['white'],    ['guasha', 'marymay', 'eyemask', 'anua'], EDGES),
+  ('l-blush-corners',  'Blush Pink · products in corners', LIGHT['blush'],  ['anua', 'guasha', 'patch', 'marymay'], CORNERS),
+  ('l-ivory-sides',    'Ivory Gold · tall pair',          LIGHT['ivory'],    ['guasha', 'isntree', 'eyemask', 'anua'], SIDES),
+  ('l-lavender-edges', 'Lavender · products around',      LIGHT['lavender'], ['anua', 'axisy', 'eyemask', 'guasha'], EDGES),
+  ('l-mint-corners',   'Mint · products in corners',      LIGHT['mint'],     ['axisy', 'anua', 'eyemask', 'guasha'], CORNERS),
+  ('l-peach-sides',    'Peach · tall pair',               LIGHT['peach'],    ['anua', 'guasha', 'patch', 'axisy'], SIDES),
+  ('l-white-corners',  'White & Red · products in corners', LIGHT['white'],  ['marymay', 'guasha', 'eyemask', 'anua'], CORNERS),
+  ('l-blush-sides',    'Blush Pink · tall pair',          LIGHT['blush'],    ['guasha', 'anua', 'eyemask', 'axisy'], SIDES),
 ]
 
 def ad2(i, s2, fmt):
@@ -196,9 +197,41 @@ def ad2(i, s2, fmt):
     pr = ''
     if prods:
         for p, (x, y, h, r) in zip(prods, slots):
-            hh = h * {'patch': .55, 'eyemask': .86}.get(p, 1) * (1.08 if fmt == 'story' else 1)   # wide packs: lower, so not larger than the tubes
+            hh = h * {'patch': .55, 'eyemask': .86, 'anua': .78}.get(p, 1) * (1.08 if fmt == 'story' else 1)   # wide packs: lower, so not larger than the tubes
             w = hh * ASPECT[p]
-            pr += f'<i class="bp p-{p}" style="left:{c(left + x * u)};top:{c(top + y * u)};width:{U(w)};height:{U(hh)};transform:rotate({r}deg)"></i>'
+            px, py, pw, ph = left + x * u, top + y * u, w * u, hh * u
+            if full:
+                # Set 3 (owner, 12 Nov: "the products must not cut. so only enlarge it
+                # until the products fit in"): inside the frame with a margin that
+                # covers the rotation, and only as large as reaches the card's edge
+                # strip -- never the words or the button.
+                m = W * .035
+                left_side = px + pw / 2 < W / 2
+                clear = py + ph < top + 112 * u or py > top + 528 * u      # above the words / below the button
+                on_button = py < top + 530 * u and py + ph > top + 444 * u   # beside the button's rows
+                reach = (150 if clear else (32 if on_button else 74)) * u   # how far into the card it may come
+                if left_side:
+                    px = max(px, m)
+                    limit = left + reach - px                               # its right edge stops here
+                else:
+                    px = min(px, W - m - pw)
+                    limit = px + pw - (left + cw - reach)                   # widest it may be from its left edge
+                    limit = (px + pw) - max(px, left + cw - reach)
+                if left_side and pw > limit > 0:
+                    k = limit / pw
+                    pw, ph = pw * k, ph * k
+                if not left_side:
+                    over = (left + cw - reach) - px                         # >0: starts outside the strip; fine
+                    if px < left + cw - reach:
+                        pass
+                    else:
+                        pass
+                    px = max(px, left + cw - reach)                         # never further in than the strip
+                    pw2 = min(pw, W - m - px)
+                    k = pw2 / pw
+                    pw, ph = pw * k, ph * k
+                py = min(max(py, m), H - m - ph)
+            pr += f'<i class="bp p-{p}" style="left:{c(px)};top:{c(py)};width:{c(pw)};height:{c(ph)};transform:rotate({r}deg)"></i>'
     glow_card = 'rgba(255,255,255,.07)' if not light else 'rgba(0,0,0,.05)'
     return f'''<div class="bf v2" style="aspect-ratio:{W}/{H};background:radial-gradient(38% 26% at 16% 18%,{acc}2e,transparent 70%),radial-gradient(44% 30% at 86% 86%,{acc}26,transparent 70%),radial-gradient(70% 55% at 50% 42%,{b1},{b2})">
 <i class="bsp" style="left:{c(W * .1)};top:{c(H * .1)};width:{c(26)};height:{c(26)}">{STAR.format(c=spk)}</i><i class="bsp" style="left:{c(W * .86)};top:{c(H * .16)};width:{c(18)};height:{c(18)}">{STAR.format(c=spk)}</i><i class="bsp" style="left:{c(W * .08)};top:{c(H * .86)};width:{c(16)};height:{c(16)}">{STAR.format(c=spk)}</i>
