@@ -95,6 +95,11 @@ function clone(o){ return JSON.parse(JSON.stringify(o)); }
 function setStatus(t, cls){ statusEl.textContent = t; statusEl.className = 'st ' + (cls || ''); }
 function lay(a, f){ var k = key(a, f); if (!layouts[k]) layouts[k] = clone(DATA.ads[a].f[f].def); return layouts[k]; }
 function items(){ return lay(sel.ad, sel.fmt)[sel.fr]; }
+// Products the owner removed (12 Nov) never come back from an older save: each becomes a kept
+// product at the same height, centre and angle.
+var REMOVED = {cosrx:'celimax', reliefsun:'dalba', axisy:'anuacream', dralthea:'hairoil', isntree:'balmpink', patch:'glowvanilla'};
+function swapRemoved(it){ var to = REMOVED[it.p]; if (!to || !DATA.aspect[to]) return it;
+  var h = it.w / (DATA.aspect[it.p] || .5), cx = it.x + it.w / 2, n = Object.assign({}, it); n.p = to; n.w = h * DATA.aspect[to]; n.x = cx - n.w / 2; return n; }
 function dirty(k){ if (!layouts[k]) return false; return snapOf(k) !== (saved[k] || JSON.stringify({f: DATA.ads[+k.slice(1,3)-1].f[k.split('-')[1]].def, a: ANIM0})); }
 
 // ── chips ──
@@ -247,7 +252,7 @@ function loadThen(fn){
     d.doc('layouts/' + k).get().then(function(snap){
       clearTimeout(t);
       saved[k] = '';
-      if (snap.exists){ var b = snap.data(); if (b && Array.isArray(b.frames) && b.frames.length === 3){ layouts[k] = clone(b.frames); anims[k] = Object.assign(clone(ANIM0), b.anim || {}); saved[k] = snapOf(k); } }
+      if (snap.exists){ var b = snap.data(); if (b && Array.isArray(b.frames) && b.frames.length === 3){ layouts[k] = clone(b.frames).map(function(fr){ return fr.map(swapRemoved); }); anims[k] = Object.assign(clone(ANIM0), b.anim || {}); saved[k] = snapOf(k); } }
       if (key(sel.ad, sel.fmt) === k) draw();
     }).catch(function(){ clearTimeout(t); });
   });

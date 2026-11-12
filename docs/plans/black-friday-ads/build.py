@@ -72,7 +72,7 @@ def ad(i, s, fmt):
     pr = ''
     if prods:
         # Four of the shop's own products standing in the open gift, fanned.
-        for (p, dx, h, r) in [('isntree', -66, 150, -12), ('guasha', -24, 178, -4), ('marymay', 24, 188, 5), ('axisy', 64, 152, 12)]:
+        for (p, dx, h, r) in [('balmpink', -66, 150, -12), ('guasha', -24, 178, -4), ('marymay', 24, 188, 5), ('anuacream', 64, 152, 12)]:
             pr += f'<i class="bp p-{p}" style="left:{c(left + cw / 2 + dx * u - h * u * .26)};top:{c(gy + 104 * u - h * u)};width:{c(h * u * .52)};height:{c(h * u)};transform:rotate({r}deg)"></i>'
     return f'''<div class="bf" style="aspect-ratio:{W}/{H};background:radial-gradient(70% 55% at 50% 40%,{b1},{b2})">
 <div class="bc" style="left:{c(left)};top:{c(top)};width:{c(cw)};height:{c(ch)};border-radius:{U(26)};background:{card};box-shadow:0 {U(30)} {U(60)} rgba(0,0,0,.28),0 {U(6)} {U(16)} rgba(0,0,0,.18)">
@@ -280,21 +280,24 @@ SIZE = {'guasha': 290, 'isntree': 212, 'marymay': 228, 'axisy': 196, 'anua': 190
         'balmred': 205, 'balmpink': 205, 'celimax': 222, 'dalba': 232, 'glowvanilla': 232, 'anuacream': 228, 'hairoil': 232}
 # The owner's list, 12 Nov: keep the gua sha, Anua mist mini, Mary&May, the deodorant and the eye
 # patches; add the products he sent (balms, celimax, d'Alba, Glow Vanilla, Anua cream, hair oil).
-TALL = ['celimax', 'dalba', 'anuacream', 'hairoil', 'glowvanilla', 'marymay']     # above the title, right
-NARROW = ['balmpink', 'marymay', 'balmred', 'deodorant', 'anuacream', 'celimax']  # beside the button, left
-SHORT = ['anua', 'eyemask', 'anua', 'eyemask', 'anua', 'eyemask']              # beside the free-gifts line, right
+TALL = ['celimax', 'dalba', 'anuacream', 'hairoil', 'glowvanilla', 'marymay', 'balmred', 'deodorant']   # above the title, right
+NARROW = ['balmpink', 'marymay', 'balmred', 'deodorant', 'anuacream', 'celimax', 'balmpink', 'marymay']  # beside the button, left
+SHORT = ['anua', 'eyemask', 'glowvanilla', 'anua', 'hairoil', 'eyemask', 'anua', 'dalba']             # beside the free-gifts line, right
 FRAME_S = 3.2   # seconds each product set shows
 
 def frames_for(i):
-    """Three product sets for ad i: the gua sha always; each step changes one or two of the others."""
-    r1 = [TALL[(i + f) % 6] for f in range(3)]
-    l2 = [NARROW[(i + 3) % 6], NARROW[(i + 3) % 6], NARROW[(i + 4) % 6]]
-    r2 = [SHORT[i % 6], SHORT[(i + 1) % 6], SHORT[(i + 1) % 6]]
+    """Three product sets for ad i -- mix and match (owner, 12 Nov): the gua sha always, the other
+    three drawn from the whole list so every ad and every set is a different combination."""
     out = []
     for f in range(3):
-        if l2[f] == r1[f]:
-            l2[f] = 'balmpink' if r1[f] != 'balmpink' else 'deodorant'
-        out.append(['guasha', r1[f], r2[f], l2[f]])   # post and square draw the first three
+        n = (i * 3 + f)
+        pick = ['guasha']
+        for lst, step in ((TALL, 5), (SHORT, 3), (NARROW, 7)):
+            j = n * step
+            while lst[j % len(lst)] in pick:
+                j += 1
+            pick.append(lst[j % len(lst)])
+        out.append(pick)
     return out
 
 # Where text sits on the card (card units, 460 x 561): how far a product may reach in.
@@ -369,22 +372,32 @@ def ad4(i, sch, fmt, frame=None, bare=False, data=None):
 <div class="bglow" style="left:{c(left + cw / 2 - 160 * u)};top:{c(gy - 10 * u)};width:{U(320)};height:{U(240)};background:radial-gradient(closest-side,{acc}44,transparent)"></div>
 <div class="bc" style="left:{c(left)};top:{c(top)};width:{c(cw)};height:{c(ch)};border-radius:{U(28)};background:linear-gradient(180deg,color-mix(in srgb,{card} 94%,#000) 0%,{card} 38%);box-shadow:inset 0 0 0 {U(1.2)} rgba(0,0,0,.05),0 {U(34)} {U(70)} rgba(0,0,0,.16),0 {U(8)} {U(18)} rgba(0,0,0,.1)">
 <div class="bh" style="left:{U(250)};top:{U(300)};width:{U(250)};height:{U(230)}">{heart(n, hc)}</div>
-<div class="bs" style="left:{U(30)};top:{U(150)};width:{U(24)};height:{U(24)}">{STAR.format(c=spk)}</div>
+<div class="bs" style="left:{U(26)};top:{U(196)};width:{U(22)};height:{U(22)}">{STAR.format(c=spk)}</div>
 <div class="bs" style="left:{U(398)};top:{U(395)};width:{U(22)};height:{U(22)}">{STAR.format(c=spk)}</div>
+<div class="brib" style="left:{U(-72)};top:{U(61)};width:{U(300)};height:{U(34)};font-size:{U(14.5)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 80%,#fff),{acc} 55%,color-mix(in srgb,{acc} 85%,#000));box-shadow:0 {U(4)} {U(10)} rgba(0,0,0,.18)">K-Beauty Bliss Specials{HEART_ICON}</div>
 <div class="bt bx" style="top:{U(136)};color:{tc};font-size:{U(76)}">BLACK</div>
 <div class="bt bx bgr" style="top:{U(208)};font-size:{U(76)};background-image:linear-gradient(180deg,color-mix(in srgb,{acc} 72%,#fff) 0%,{acc} 55%,color-mix(in srgb,{acc} 88%,#000) 100%)">FRIDAY</div>
 <div class="bt fg2" style="top:{U(302)}"><span class="fg2a" style="font-size:{U(36)};color:{acc}">{GIFT_ICON}FREE GIFTS</span><span class="fg2b" style="font-size:{U(27)};color:{tc}">with Every Order</span></div>
 <div class="bb" style="left:{U(36)};right:{U(36)};top:{U(448)};height:{U(80)};border-radius:{U(16)};background:linear-gradient(180deg,color-mix(in srgb,{acc} 82%,#fff),{acc} 52%,color-mix(in srgb,{acc} 86%,#000));color:{btc};font-size:{U(29)};font-weight:700;box-shadow:inset 0 {U(1.5)} 0 rgba(255,255,255,.35),0 {U(12)} {U(26)} {acc}55">See All Perks</div>
 </div><div class="bg" style="left:{c(gx)};top:{c(gy)};width:{U(190)};height:{U(218)};filter:drop-shadow(0 {U(12)} {U(16)} rgba(0,0,0,.2))">{gift(n, gl, gm, gd)}</div>{prods}</div>'''
 
+# The corner ribbon (owner, 12 Nov: "a diagonal left upper corner strip with text. K-Beauty Bliss
+# Specials + heart icon"), across the card's top-left corner, clear of the title and the gift.
+HEART_ICON = '<svg viewBox="0 0 24 24" width="1.05em" height="1.05em" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.2 0 3.6 1.2 4.2 2.4h2c.6-1.2 2-2.4 4.2-2.4 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>'
 CYC = 3 * FRAME_S
-AD4_CSS = (f'''.bf.v4 .fg2{{display:flex;flex-direction:column;align-items:center;gap:.12em;line-height:1.1}}
+AD4_CSS = (f'''.bf.v4 .brib{{position:absolute;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;gap:.35em;color:#fff;font-weight:800;letter-spacing:.02em;white-space:nowrap;z-index:2;border-top:1px solid rgba(255,255,255,.35)}}
+.bf.v4 .fg2{{display:flex;flex-direction:column;align-items:center;gap:.12em;line-height:1.1}}
 .bf.v4 .fg2a{{display:inline-flex;align-items:center;gap:.3em;font-weight:900;letter-spacing:.03em}}.bf.v4 .fg2b{{font-weight:600;letter-spacing:.005em}}
 .bf.v4 .rf{{opacity:0;animation:bfcyc {CYC}s linear infinite both}}
 .bf.v4 .rf0{{animation-delay:-0.6s}}.bf.v4 .rf1{{animation-delay:{FRAME_S - 0.6:.1f}s}}.bf.v4 .rf2{{animation-delay:{2 * FRAME_S - 0.6:.1f}s}}
 @keyframes bfcyc{{0%{{opacity:0}}6%{{opacity:1}}33.3%{{opacity:1}}39%{{opacity:0}}100%{{opacity:0}}}}
 @media (prefers-reduced-motion:reduce){{.bf.v4 .rf{{animation:none}}.bf.v4 .rf0{{opacity:1}}}}''')
 ROT = [('R01', LIGHT['white']), ('R02', LIGHT['blush']), ('R03', LIGHT['ivory']), ('R04', LIGHT['lavender']), ('R05', LIGHT['mint']), ('R06', LIGHT['peach'])]
+
+# The owner removed these (12 Nov); every older set shows a kept product in their place.
+REMOVED = {'cosrx': 'celimax', 'reliefsun': 'dalba', 'axisy': 'anuacream', 'dralthea': 'hairoil', 'isntree': 'balmpink', 'patch': 'glowvanilla'}
+S2 = [(a, b, c, [REMOVED.get(p, p) for p in d] if d else d) for a, b, c, d in S2]
+S3 = [(a, b, c, [REMOVED.get(p, p) for p in d], e) for a, b, c, d, e in S3]
 
 FONT = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800;900&display=swap">'
 
