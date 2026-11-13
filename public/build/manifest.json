@@ -348,6 +348,10 @@
     "file": "assets/admin-996ce3f59fda-DfVdhmwN.js",
     "src": "admin-console/996ce3f59fdadb5adb05c66d46139142b62efbbf.js"
   },
+  "admin-console/9b8f85da547639007e5ffa4afd6f92f2114920d8.js": {
+    "file": "assets/admin-9b8f85da5476-CcAWR-b3.js",
+    "src": "admin-console/9b8f85da547639007e5ffa4afd6f92f2114920d8.js"
+  },
   "admin-console/9c3ec50547cef9ea3cfc79b57cbaf639f7039f2c.js": {
     "file": "assets/admin-9c3ec50547ce-BZ0UJQLy.js",
     "src": "admin-console/9c3ec50547cef9ea3cfc79b57cbaf639f7039f2c.js"
@@ -568,7 +572,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb-product.css": {
-    "file": "assets/kbb-product-DfZ52O6M.css",
+    "file": "assets/kbb-product-lle01qiX.css",
     "src": "resources/css/kbb/kbb-product.css",
     "isEntry": true
   },
