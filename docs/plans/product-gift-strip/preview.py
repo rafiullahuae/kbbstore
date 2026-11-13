@@ -63,7 +63,10 @@ OPTS = [
     # owner, 13 Nov: "i need 5 more options totally different and colorful, keep these also to compare"
     ('I', 'Rainbow flow', 'Bold rainbow of pink, orange, yellow, teal and violet flowing across; white words.'),
     ('J', 'Neon night', 'Deep purple strip, the words glowing neon pink and cyan with a soft pulse.'),
-    ('K', 'Confetti party + shine', 'Your pick: sunny yellow-to-coral, confetti falling down the sides, now with a glossy top and a bright shine sweeping across.'),
+    ('K', 'Confetti party', 'Your pick, as you first saw it: sunny yellow-to-coral with confetti falling, no shine.'),
+    ('KA', 'Confetti + Rose shimmer shine', 'K with the exact shine from A: a soft band of light sweeping every 3.2 s.'),
+    ('KB', 'Confetti + Berry shine', 'K with the exact shine from B: the faintest, gentlest glide, every 3.2 s.'),
+    ('KL', 'Confetti + Holographic sheen', 'K with the exact sheen from L: a thin glint passing smoothly, every 3 s.'),
     ('L', 'Holographic', 'Iridescent holo foil (pink, mint, lilac, sky) with a glitter sheen sliding over.'),
     ('M', 'Gift tag + arrows', 'Two-part: a teal gift tag that wiggles, then a hot-pink panel with arrows running toward the words.'),
 ]
@@ -76,7 +79,7 @@ def strip(L, lang):
         one = f'<span class="kfg-i">{GIFT}</span><span class="kfg-t">{txt}</span><span class="kfg-sep">✦</span>'
         return f'<div class="kfg kfg-{L}"{d}><div class="kfg-run">{one * 4}</div></div>'
     extra = '<i class="tw t1">✦</i><i class="tw t2">✦</i><i class="tw t3">✦</i><i class="tw t4">✦</i>' if L == 'H' else ''
-    if L == 'K':
+    if L.startswith('K'):
         extra = ''.join(f'<i class="cf c{n}"></i>' for n in range(1, 11))
     if L == 'L':
         extra = '<i class="gl g1">✦</i><i class="gl g2">✦</i><i class="gl g3">✦</i>'
@@ -86,7 +89,8 @@ def strip(L, lang):
     inner = f'<span class="kfg-i">{GIFT}</span><span class="kfg-t">{txt}</span>'
     if L == 'F':
         inner = f'<span class="kfg-pill">{inner}</span>'
-    return f'<div class="kfg kfg-{L}"{d}>{extra}{inner}</div>'
+    kcls = ' kfg-K' if L.startswith('K') and L != 'K' else ''
+    return f'<div class="kfg kfg-{L}{kcls}"{d}>{extra}{inner}</div>'
 
 
 CSS = '''
@@ -141,7 +145,10 @@ CSS = '''
 .kfg-J .kfg-i{color:#7FF3FF;filter:drop-shadow(0 0 4px #31D8FF)}
 @keyframes kfgNeon{0%,100%{opacity:1}45%{opacity:.82}50%{opacity:1}55%{opacity:.9}}
 /* K confetti party */
-.kfg-K{background:linear-gradient(90deg,#FFD43B,#FF9F6E 55%,#FF6F91);color:#3A1230;box-shadow:0 6px 16px rgba(255,111,145,.3),inset 0 1px 0 rgba(255,255,255,.6)}.kfg-K::before{content:"";position:absolute;inset:0 0 50% 0;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0));z-index:0;pointer-events:none}.kfg-K::after{content:"";position:absolute;inset:-30% auto -30% -40%;width:32%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.85),transparent);transform:translateX(-120%) skewX(-18deg);animation:kfgSweep 2.8s ease-in-out infinite;z-index:0;pointer-events:none}
+.kfg-K{background:linear-gradient(90deg,#FFD43B,#FF9F6E 55%,#FF6F91);color:#3A1230;box-shadow:0 6px 16px rgba(255,111,145,.25)}
+.kfg-KA::after{content:"";position:absolute;inset:-20% auto -20% -40%;width:35%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent);transform:translateX(-120%) skewX(-18deg);animation:kfgSweep 3.2s ease-in-out infinite;z-index:0;pointer-events:none}
+.kfg-KB::after{content:"";position:absolute;inset:-20% auto -20% -40%;width:35%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-120%) skewX(-18deg);animation:kfgSweep 3.2s ease-in-out infinite;z-index:0;pointer-events:none}
+.kfg-KL::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.85) 45%,transparent 60%) 0 0/250% 100%;animation:kfgSheen 3s linear infinite;z-index:0;pointer-events:none}
 .kfg-K>.kfg-i,.kfg-K>.kfg-t{position:relative;z-index:1}
 .kfg-K .cf{position:absolute;top:-8px;width:6px;height:9px;border-radius:2px;animation:kfgFall 2.6s linear infinite;z-index:0;opacity:.9}
 .kfg-K .c1{left:2%;background:#7B5CFF}.kfg-K .c2{left:6%;background:#2EC4B6;animation-delay:.5s;animation-duration:2.2s}.kfg-K .c3{left:10%;background:#fff;animation-delay:1.2s}
@@ -202,7 +209,7 @@ details{{margin-top:10px}}summary{{cursor:pointer;font-size:13px;font-weight:600
 {"".join(IMGCSS)}
 </style></head><body><div class="wrap">
 <h1>Free gifts strip: product page</h1>
-<p class="lead">Thirteen live options (I&ndash;M are the new colourful ones) for "Free gifts with every order. Limited time offer!", each shown in its place: above the tabby/tamara cards, with more space above and below. The page around each strip is a photo of the real product page; the strip itself is live, so the movement is exactly what shoppers would see. Pick a letter.</p>
+<p class="lead">Sixteen live options (KA, KB and KL are K with each of the softer shines) (I&ndash;M are the new colourful ones) for "Free gifts with every order. Limited time offer!", each shown in its place: above the tabby/tamara cards, with more space above and below. The page around each strip is a photo of the real product page; the strip itself is live, so the movement is exactly what shoppers would see. Pick a letter.</p>
 <div class="bar" role="group" aria-label="Language"><span>Language</span><button class="chip" type="button" data-l="en" aria-pressed="true">English</button><button class="chip" type="button" data-l="ar" aria-pressed="false">العربية (/ar pages)</button></div>
 <div class="bar" role="group" aria-label="Wording"><span>Wording</span>{"".join(f'<button class="chip" type="button" data-w="{i}" aria-pressed="{str(i == 0).lower()}">{i + 1}. {w[0]}</button>' for i, w in enumerate(WORDS))}</div>
 <div class="grid">{cards}</div></div>
