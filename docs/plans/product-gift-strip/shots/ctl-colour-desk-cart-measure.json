@@ -1,0 +1,76 @@
+{
+  "ctl-colour-desk-cart-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "dir": "ltr",
+    "strip": {
+      "top": 865,
+      "left": 22,
+      "width": 346,
+      "height": 62,
+      "radius": "14px"
+    },
+    "fontFamily": "Outfit",
+    "line1": "15.5px",
+    "line2": "13.5px",
+    "icon": {
+      "w": 42,
+      "side": "left"
+    },
+    "gapAbove": 24,
+    "aboveIs": "pm-sec pm-price",
+    "gapBelow": 24,
+    "belowIs": "pdp-paylater pm-sec pm-paylater",
+    "animations": 11,
+    "clickable": {
+      "checked": 4,
+      "ok": 2,
+      "bad": [
+        "Share <- kbw-b",
+        "INPUT <-  bb-desc"
+      ]
+    },
+    "brandClickNavigated": true,
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "requests": 33
+  },
+  "ctl-colour-desk-cart-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "dir": "ltr",
+    "strip": {
+      "top": 854,
+      "left": 676,
+      "width": 582,
+      "height": 62,
+      "radius": "14px"
+    },
+    "fontFamily": "Outfit",
+    "line1": "15.5px",
+    "line2": "13.5px",
+    "icon": {
+      "w": 42,
+      "side": "left"
+    },
+    "gapAbove": 24,
+    "aboveIs": "pts-del",
+    "gapBelow": 24,
+    "belowIs": "pm-sec pm-cart",
+    "animations": 11,
+    "clickable": {
+      "checked": 4,
+      "ok": 0,
+      "bad": [
+        "− <- null",
+        "+ <- null",
+        "Add to cart <- null",
+        "Authenticity Guaranteed <- null"
+      ]
+    },
+    "brandClickNavigated": true,
+    "consoleErrors": [],
+    "requests": 33
+  }
+}
