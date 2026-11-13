@@ -177,6 +177,7 @@ exactly, in both directions, so the document cannot drift from the code.
 | `resources/views/store/skin-quiz.blade.php` | `.toast` | `left: 50%` | centre |
 | `resources/views/invoices/document.blade.php` | `.bc i.b` | `border-left-style: solid` | barcode |
 | `resources/views/invoices/document.blade.php` | `.bc i.b` | `border-left-color: #000` | barcode |
+| `resources/css/kbb/kbb-product.css` | `.pdp-gs::after` | `left: 0` | glint |
 <!-- rtl-audit:physical:end -->
 
 ### The reasons in full

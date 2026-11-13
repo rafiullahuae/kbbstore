@@ -2041,6 +2041,8 @@ html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
 /* The glint: the approved `background-position 150% → -100%` over a 250%
    wide gradient, drawn as a 250%-wide layer moved by transform instead, so it
    runs on the compositor (ShopAnimationsCompositorOnlyTest) — the same pixels. */
+/* RTL-PHYSICAL (left:0): the holographic glint is a 250%-wide layer slid by translateX, which is
+   physical in both directions; anchoring it at the inline start would push it off the strip on /ar. */
 .pdp-gs::after{content:"";position:absolute;inset-block:0;left:0;width:250%;pointer-events:none;z-index:0;
     background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.85) 45%,transparent 60%);
     transform:translateX(-90%);animation:pgsSheen 6s linear infinite}

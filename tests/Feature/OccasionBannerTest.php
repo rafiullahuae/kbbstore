@@ -105,7 +105,10 @@ it('draws nothing while Display is Slider only, which is what it ships as', func
         ->and(OccasionBanner::defaults()['display'])->toBe('slider');
 
     ohbSet(['display' => 'slider', 'pool' => ohbPool(5)]);
-    expect(ohbHome())->not->toContain('ohb');
+    // Not the bare letters 'ohb': the homepage carries a random CSRF token and an asset hash, and
+    // one in ~800 runs a token spelled them (failed the 2.60.663 integration run, passed 5/5 alone).
+    // A random token holds no quote and no dot, so these two still catch the banner's markup or CSS.
+    expect(ohbHome())->not->toContain('class="ohb')->not->toContain('.ohb-');
 });
 
 /* ═══════════════════════════════════ normalising ═══════════════════════════ */
