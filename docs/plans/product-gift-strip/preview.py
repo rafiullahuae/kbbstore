@@ -10,7 +10,7 @@ option is seen exactly where it would sit. Nothing ships until he picks a letter
 
   python3 preview.py <dir with fg2-*.png>   -> preview.html
 """
-import base64, io, os, sys
+import base64, io, json, os, sys
 from PIL import Image
 
 D = os.path.dirname(os.path.abspath(__file__))
@@ -30,11 +30,25 @@ def img(name, w):
     return f'<div class="ph {cls}" role="img" aria-label="Product page"></div>'
 
 
-GIFT = ('<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" '
+GIFT = ('<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" '
         'stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/>'
         '<path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>')
-EN = '<b>Free gifts with every order.</b> <span class="kfg-l">Limited time offer!</span>'
-AR = '<b>هدايا مجانية مع كل طلب.</b> <span class="kfg-l">عرض لفترة محدودة!</span>'
+# owner, 13 Nov: "keep the icon little big, text left align, give me some good text ideas that covers
+# the box" -- five two-line wordings, bold line + lighter line, switchable on the page.
+WORDS = [
+    ('Free gifts with every order', 'Limited time offer. Don\'t miss out!',
+     'هدايا مجانية مع كل طلب', 'عرض لفترة محدودة. لا تفوّت الفرصة!'),
+    ('A free K-beauty gift in every order', 'Our little thank-you. Limited time only!',
+     'هدية تجميل كورية مجانية مع كل طلب', 'لمسة شكر منّا. لفترة محدودة فقط!'),
+    ('Shop today, unwrap a free gift', 'With every order, for a limited time.',
+     'تسوّق اليوم واحصل على هدية مجانية', 'مع كل طلب، لفترة محدودة.'),
+    ('Every order comes with free gifts', 'Treat your skin. Offer ends soon!',
+     'كل طلب يصلك مع هدايا مجانية', 'دلّل بشرتك. العرض ينتهي قريبًا!'),
+    ('Free beauty gifts, on us', 'With every order. Hurry, limited time!',
+     'هدايا تجميل مجانية علينا', 'مع كل طلب. أسرع، لفترة محدودة!'),
+]
+EN = f'<b class="w1">{WORDS[0][0]}</b><span class="kfg-l w2">{WORDS[0][1]}</span>'
+AR = f'<b class="w1">{WORDS[0][2]}</b><span class="kfg-l w2">{WORDS[0][3]}</span>'
 
 # (letter, name, note)
 OPTS = [
@@ -49,7 +63,7 @@ OPTS = [
     # owner, 13 Nov: "i need 5 more options totally different and colorful, keep these also to compare"
     ('I', 'Rainbow flow', 'Bold rainbow of pink, orange, yellow, teal and violet flowing across; white words.'),
     ('J', 'Neon night', 'Deep purple strip, the words glowing neon pink and cyan with a soft pulse.'),
-    ('K', 'Confetti party', 'Sunny yellow-to-coral strip with colourful confetti falling through it.'),
+    ('K', 'Confetti party + shine', 'Your pick: sunny yellow-to-coral, confetti falling down the sides, now with a glossy top and a bright shine sweeping across.'),
     ('L', 'Holographic', 'Iridescent holo foil (pink, mint, lilac, sky) with a glitter sheen sliding over.'),
     ('M', 'Gift tag + arrows', 'Two-part: a teal gift tag that wiggles, then a hot-pink panel with arrows running toward the words.'),
 ]
@@ -76,9 +90,9 @@ def strip(L, lang):
 
 
 CSS = '''
-.kfg{--p:#C8365E;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 14px;border-radius:12px;font:600 14.5px/1.3 Outfit,system-ui,sans-serif;text-align:center;isolation:isolate}
+.kfg{--p:#C8365E;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:flex-start;gap:12px;min-height:60px;padding:10px 16px 10px 12px;border-radius:14px;font:600 14.5px/1.3 Outfit,system-ui,sans-serif;text-align:start;isolation:isolate}
 .kfg[dir=rtl]{font-family:Cairo,Outfit,sans-serif}
-.kfg b{font-weight:700;white-space:nowrap}.kfg-l{white-space:nowrap}.kfg-i{display:inline-grid;place-items:center;flex:none}.kfg-t{min-width:0}
+.kfg b{font-weight:700;font-size:15.5px;line-height:1.25}.kfg-l{font-weight:500;font-size:13.5px;opacity:.92}.kfg-i{display:inline-grid;place-items:center;flex:none;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)}.kfg-t{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}.kfg-B .kfg-i,.kfg-I .kfg-i,.kfg-M .kfg-tag .kfg-i{background:rgba(255,255,255,.2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}.kfg-C .kfg-i,.kfg-J .kfg-i{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
 /* A rose shimmer */
 .kfg-A{background:linear-gradient(90deg,#FBE3EA,#F7CFDA 50%,#FBE3EA);color:#9E2347;box-shadow:inset 0 0 0 1px #F2B8C8}
 .kfg-A::after,.kfg-B::after{content:"";position:absolute;inset:-20% auto -20% -40%;width:35%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent);transform:translateX(-120%) skewX(-18deg);animation:kfgSweep 3.2s ease-in-out infinite;z-index:-1}
@@ -96,7 +110,7 @@ CSS = '''
 /* D ticker */
 .kfg-D{background:linear-gradient(90deg,#F9D6E0,#FBE7ED);color:#9E2347;justify-content:flex-start;padding:10px 0;box-shadow:inset 0 0 0 1px #F2B8C8}
 .kfg-run{display:flex;align-items:center;gap:8px;white-space:nowrap;width:max-content;animation:kfgRun 16s linear infinite}
-.kfg-run>*{flex:none}.kfg-sep{color:var(--p);margin:0 10px}
+.kfg-run>*{flex:none}.kfg-D .kfg-t{flex-direction:row;gap:6px;align-items:baseline}.kfg-D .kfg-i{width:34px;height:34px}.kfg-sep{color:var(--p);margin:0 10px}
 @keyframes kfgRun{to{transform:translateX(-50%)}}
 .kfg-D[dir=rtl] .kfg-run{animation-name:kfgRunR}@keyframes kfgRunR{to{transform:translateX(50%)}}
 /* E glowing border */
@@ -107,7 +121,7 @@ CSS = '''
 /* F candy stripes */
 .kfg-F{background:repeating-linear-gradient(-45deg,#F4B7C8 0 12px,#FBE3EA 12px 24px);background-size:34px 34px;animation:kfgStripe 1.6s linear infinite;padding:8px 10px}
 @keyframes kfgStripe{to{background-position:34px 0}}
-.kfg-F .kfg-pill{display:inline-flex;align-items:center;gap:8px;background:#fff;color:#9E2347;border-radius:99px;padding:6px 14px;box-shadow:0 2px 8px rgba(158,35,71,.15)}
+.kfg-F .kfg-pill{display:flex;flex:1;align-items:center;gap:10px;background:#fff;color:#9E2347;border-radius:14px;padding:6px 14px 6px 6px;box-shadow:0 2px 8px rgba(158,35,71,.15)}
 /* G aurora */
 .kfg-G{background:linear-gradient(110deg,#F9C5D5,#FDE1C8,#E5D4F7,#F9C5D5,#FDE1C8) 0 0/300% 100%;color:#5A1F35;animation:kfgAur 7s ease-in-out infinite alternate}
 @keyframes kfgAur{to{background-position:100% 0}}
@@ -127,12 +141,12 @@ CSS = '''
 .kfg-J .kfg-i{color:#7FF3FF;filter:drop-shadow(0 0 4px #31D8FF)}
 @keyframes kfgNeon{0%,100%{opacity:1}45%{opacity:.82}50%{opacity:1}55%{opacity:.9}}
 /* K confetti party */
-.kfg-K{background:linear-gradient(90deg,#FFD43B,#FF9F6E 55%,#FF6F91);color:#3A1230}
+.kfg-K{background:linear-gradient(90deg,#FFD43B,#FF9F6E 55%,#FF6F91);color:#3A1230;box-shadow:0 6px 16px rgba(255,111,145,.3),inset 0 1px 0 rgba(255,255,255,.6)}.kfg-K::before{content:"";position:absolute;inset:0 0 50% 0;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0));z-index:0;pointer-events:none}.kfg-K::after{content:"";position:absolute;inset:-30% auto -30% -40%;width:32%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.85),transparent);transform:translateX(-120%) skewX(-18deg);animation:kfgSweep 2.8s ease-in-out infinite;z-index:0;pointer-events:none}
 .kfg-K>.kfg-i,.kfg-K>.kfg-t{position:relative;z-index:1}
 .kfg-K .cf{position:absolute;top:-8px;width:6px;height:9px;border-radius:2px;animation:kfgFall 2.6s linear infinite;z-index:0;opacity:.9}
-.kfg-K .c1{left:3%;background:#7B5CFF}.kfg-K .c2{left:8%;background:#2EC4B6;animation-delay:.5s;animation-duration:2.2s}.kfg-K .c3{left:13%;background:#fff;animation-delay:1.2s}
-.kfg-K .c4{left:18%;background:#FF4F8B;animation-delay:.2s;animation-duration:3s}.kfg-K .c5{left:23%;background:#1E88E5;animation-delay:1.6s}.kfg-K .c6{left:77%;background:#fff;animation-delay:.8s;animation-duration:2.3s}
-.kfg-K .c7{left:82%;background:#7B5CFF;animation-delay:2s}.kfg-K .c8{left:87%;background:#2EC4B6;animation-delay:.4s;animation-duration:2.8s}.kfg-K .c9{left:92%;background:#FF4F8B;animation-delay:1.4s}.kfg-K .c10{left:96%;background:#1E88E5;animation-delay:.9s;animation-duration:2.4s}
+.kfg-K .c1{left:2%;background:#7B5CFF}.kfg-K .c2{left:6%;background:#2EC4B6;animation-delay:.5s;animation-duration:2.2s}.kfg-K .c3{left:10%;background:#fff;animation-delay:1.2s}
+.kfg-K .c4{left:72%;background:#FF4F8B;animation-delay:.2s;animation-duration:3s}.kfg-K .c5{left:77%;background:#1E88E5;animation-delay:1.6s}.kfg-K .c6{left:81%;background:#fff;animation-delay:.8s;animation-duration:2.3s}
+.kfg-K .c7{left:85%;background:#7B5CFF;animation-delay:2s}.kfg-K .c8{left:89%;background:#2EC4B6;animation-delay:.4s;animation-duration:2.8s}.kfg-K .c9{left:93%;background:#FF4F8B;animation-delay:1.4s}.kfg-K .c10{left:97%;background:#1E88E5;animation-delay:.9s;animation-duration:2.4s}
 @keyframes kfgFall{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(80px) rotate(320deg)}}
 /* L holographic */
 .kfg-L{background:linear-gradient(115deg,#FFC6E5,#C8F7E4 25%,#D9C8FF 50%,#BDE6FF 75%,#FFC6E5) 0 0/250% 100%;color:#4A1D5C;animation:kfgHolo 5s ease-in-out infinite alternate;box-shadow:inset 0 0 0 1px rgba(255,255,255,.8),0 4px 14px rgba(150,120,220,.25)}
@@ -142,10 +156,10 @@ CSS = '''
 .kfg-L .g1{left:7%;top:20%}.kfg-L .g2{right:8%;bottom:18%;animation-delay:.7s}.kfg-L .g3{right:22%;top:14%;animation-delay:1.3s}
 /* M gift tag + arrows */
 .kfg-M{padding:0;gap:0;align-items:stretch;background:linear-gradient(90deg,#FF3D7F,#FF6F61);color:#fff;box-shadow:0 6px 16px rgba(255,61,127,.28)}
-.kfg-M .kfg-tag{display:grid;place-items:center;flex:none;width:52px;background:#14B8A6;color:#fff;clip-path:polygon(0 0,82% 0,100% 50%,82% 100%,0 100%)}
+.kfg-M .kfg-tag{display:grid;place-items:center;flex:none;width:64px;background:#14B8A6;color:#fff;clip-path:polygon(0 0,82% 0,100% 50%,82% 100%,0 100%)}
 .kfg-M .kfg-tag .kfg-i{animation:kfgWig 1.6s ease-in-out infinite}
 @keyframes kfgWig{0%,60%,100%{transform:rotate(0)}70%{transform:rotate(-14deg)}80%{transform:rotate(12deg)}90%{transform:rotate(-6deg)}}
-.kfg-M .kfg-mt{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px 10px 6px}
+.kfg-M .kfg-mt{flex:1;display:flex;align-items:center;justify-content:flex-start;gap:10px;padding:10px 14px 10px 6px}
 .kfg-M .kfg-arr{display:inline-flex;flex:none;color:#FFE066;animation:kfgArr 1.2s ease-in-out infinite}
 .kfg-M[dir=rtl] .kfg-tag{clip-path:polygon(18% 0,100% 0,100% 100%,18% 100%,0 50%)}.kfg-M[dir=rtl] .kfg-arr{transform:scaleX(-1);animation-name:kfgArrR}
 @keyframes kfgArr{0%,100%{transform:translateX(-3px);opacity:.6}50%{transform:translateX(3px);opacity:1}}
@@ -190,11 +204,20 @@ details{{margin-top:10px}}summary{{cursor:pointer;font-size:13px;font-weight:600
 <h1>Free gifts strip: product page</h1>
 <p class="lead">Thirteen live options (I&ndash;M are the new colourful ones) for "Free gifts with every order. Limited time offer!", each shown in its place: above the tabby/tamara cards, with more space above and below. The page around each strip is a photo of the real product page; the strip itself is live, so the movement is exactly what shoppers would see. Pick a letter.</p>
 <div class="bar" role="group" aria-label="Language"><span>Language</span><button class="chip" type="button" data-l="en" aria-pressed="true">English</button><button class="chip" type="button" data-l="ar" aria-pressed="false">العربية (/ar pages)</button></div>
+<div class="bar" role="group" aria-label="Wording"><span>Wording</span>{"".join(f'<button class="chip" type="button" data-w="{i}" aria-pressed="{str(i == 0).lower()}">{i + 1}. {w[0]}</button>' for i, w in enumerate(WORDS))}</div>
 <div class="grid">{cards}</div></div>
 <script>
 document.querySelectorAll('[data-l]').forEach(function(b){{ b.onclick = function(){{
   document.querySelectorAll('[data-l]').forEach(function(x){{ x.setAttribute('aria-pressed', String(x === b)); }});
   document.body.classList.toggle('is-ar', b.dataset.l === 'ar'); }}; }});
+var WORDS = {json.dumps(WORDS, ensure_ascii=False)};
+document.querySelectorAll('[data-w]').forEach(function(b){{ b.onclick = function(){{
+  document.querySelectorAll('[data-w]').forEach(function(x){{ x.setAttribute('aria-pressed', String(x === b)); }});
+  var w = WORDS[+b.dataset.w];
+  document.querySelectorAll('.l-en .w1').forEach(function(e){{ e.textContent = w[0]; }});
+  document.querySelectorAll('.l-en .w2').forEach(function(e){{ e.textContent = w[1]; }});
+  document.querySelectorAll('.l-ar .w1').forEach(function(e){{ e.textContent = w[2]; }});
+  document.querySelectorAll('.l-ar .w2').forEach(function(e){{ e.textContent = w[3]; }}); }}; }});
 </script></body></html>'''
 
 
