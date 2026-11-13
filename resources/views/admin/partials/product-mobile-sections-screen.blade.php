@@ -528,3 +528,8 @@
      screen's wrap of paintProductPage(), so its tab lands directly after
      "Mobile sections" and admin/app.blade.php is not touched. --}}
 @include('admin.partials.product-desktop-sections-screen')
+{{-- Appearance → Product page → Free gifts strip (Lane GS): its switch,
+     laptop position, words, colours, effects and sizes. Included here, after
+     Desktop sections, the way that tab is, so admin/app.blade.php is not
+     touched. --}}
+@include('admin.partials.product-gift-strip-screen')

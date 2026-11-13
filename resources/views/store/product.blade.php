@@ -250,6 +250,10 @@
          `--pm-…:<int>` built from literal keys; wrapperClass() is literal class
          names. Both go through {{ }} regardless. */
     $kbbMsec = app(\App\Services\ProductMobileSections::class);
+    /* (Lane GS) The free gifts strip: the laptop anchor it is drawn at
+       (partials/product/gift-strip.blade.php). The phone order is its
+       Mobile sections row. */
+    $kbbGsAt = app(\App\Services\ProductGiftStrip::class)->anchor();
 
     /* THE LAPTOP ORDER OF THE FOUR BLOCKS UNDER THE TWO COLUMNS. (Lane RF)
        App\Services\ProductDesktopSections. While the order is the default it
@@ -537,6 +541,7 @@
         <h1 class="bb-title" id="bbTitle">{{ $name }}</h1>
         @include('partials.product.share-button')
       </div></div><!--/pm-->
+@if ($kbbGsAt === 'price')@include('partials.product.gift-strip')@endif
       <div class="pm-sec pm-price"><div class="bb-pricerow" id="bbPriceRow">
         <div class="bb-price" id="bbPrice">@if ($onSale)<s>{!! Money::format($kbbWas, $kbbSaleDp) !!}</s>@endif<span class="now">@if ($kbbHeadline !== null){!! $kbbHeadline !!}@else{!! Money::format($price, $kbbSaleDp) !!}@endif</span>@if ($onSale && $off)<span class="off">{{ \App\Support\Bidi::number('-' . $off . '%') }}</span>@endif</div>
       <div class="cap-area" id="capArea">
@@ -609,6 +614,7 @@
              when the directive prints nothing, and this file already records
              what that costs. --}}
       @if ($product->short_description && $kbbBlurb !== '' && ! $kbbShortBelow)<div class="pm-sec pm-short"><input class="bb-morebox" type="checkbox" id="bbMore">@if ($kbbBlurbBlocks)<div class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</div>@else<p class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</p>@endif<label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label></div><!--/pm-->@endif
+@if ($kbbGsAt === 'paylater')@include('partials.product.gift-strip')@endif
 @include('partials.product.paylater')
 
       <form class="cart kbb-cart-form" data-product_id="{{ $product->id }}" method="post">
@@ -878,6 +884,7 @@
         @endif
 </div><!--/pm-->
 @include('partials.product.delivery-box')
+@if ($kbbGsAt === 'cart')@include('partials.product.gift-strip')@endif
         <div class="pm-sec pm-cart"><div class="buyrow">
           <div class="{{ $modules->classFor('quantity') }} qty"><button type="button" data-q="-1">−</button><span id="qtyVal">1</span><button type="button" data-q="1">+</button><input type="hidden" name="quantity" id="qtyInput" value="1"></div>
           <button class="addcart" id="mainAdd" type="submit" @disabled($out)><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg> {{ $out ? __('store.product.sold_out_tag') : __('store.product_card.add_to_cart') }}</button>
@@ -885,7 +892,8 @@
         @unless ($modules->hidden('buynow'))
 <button class="buynow" type="submit" data-buynow="1" @disabled($out)>{{ __('store.product.buy_now') }}</button>
 @endunless
-</div><!--/pm-->@include('partials.product.trust-share-stack')
+</div><!--/pm-->@if ($kbbGsAt === 'aftercart')@include('partials.product.gift-strip')@endif
+@include('partials.product.trust-share-stack')
       </form>
 
       {{-- "Tell me when this is back" (Lane EN).

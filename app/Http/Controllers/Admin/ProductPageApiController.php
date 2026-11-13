@@ -12,6 +12,7 @@ use App\Services\BuyTogetherSettings;
 use App\Services\ModuleSchema;
 use App\Services\ProductDesktopSections;
 use App\Services\ProductLayout;
+use App\Services\ProductGiftStrip;
 use App\Services\ProductMobileSections;
 use App\Services\ProductSections;
 use App\Services\ProductTrustShare;
@@ -91,7 +92,22 @@ class ProductPageApiController extends Controller
              * other half's values.
              */
             'dsections' => app(ProductDesktopSections::class)->payload(),
+            /*
+             * THE EIGHTH HALF: the Free gifts strip.               (Lane GS)
+             * Its options, and its phone switch — which LIVES on the Mobile
+             * sections row `giftstrip` and is only drawn here too.
+             */
+            'giftstrip' => self::giftPayload(),
         ]);
+    }
+
+    /** @return array{options: list<array<string, mixed>>, phone: bool} */
+    private static function giftPayload(): array
+    {
+        return [
+            'options' => app(ProductGiftStrip::class)->tabs(),
+            'phone' => app(ProductMobileSections::class)->sectionOn('giftstrip'),
+        ];
     }
 
     /**
@@ -160,9 +176,10 @@ class ProductPageApiController extends Controller
             'msections' => ['sometimes', 'array', 'min:1'],
             'together' => ['sometimes', 'array', 'min:1'],
             'dsections' => ['sometimes', 'array', 'min:1'],
+            'giftstrip' => ['sometimes', 'array', 'min:1'],
         ]);
 
-        if (! isset($data['sections']) && ! isset($data['layout']) && ! isset($data['also']) && ! isset($data['trust']) && ! isset($data['msections']) && ! isset($data['together']) && ! isset($data['dsections'])) {
+        if (! isset($data['sections']) && ! isset($data['layout']) && ! isset($data['also']) && ! isset($data['trust']) && ! isset($data['msections']) && ! isset($data['together']) && ! isset($data['dsections']) && ! isset($data['giftstrip'])) {
             return response()->json(['ok' => false, 'error' => 'Nothing to save.'], 422);
         }
 
@@ -328,6 +345,47 @@ class ProductPageApiController extends Controller
             }
         }
 
+        /*
+         * The Free gifts strip (Lane GS), validated before anything is
+         * written like every half above:
+         *
+         *   options  an unknown key refused; known ones through ModuleSchema's
+         *            casts (a select stores one of its own options or the
+         *            default, a number is clamped, a colour is #hex or the
+         *            default, text is stripped of tags and capped)
+         *   phone    a boolean → the Mobile sections row `giftstrip`
+         */
+        $gift = null;
+
+        if (isset($data['giftstrip'])) {
+            $g = $data['giftstrip'];
+            $unknown = array_diff(array_keys($g), ['options', 'phone']);
+
+            if ($unknown !== []) {
+                return response()->json(['ok' => false, 'error' => 'Unknown part: '.implode(', ', $unknown)], 422);
+            }
+
+            $gift = [];
+
+            if (array_key_exists('options', $g)) {
+                $unknown = is_array($g['options']) ? array_diff(array_keys($g['options']), array_keys(ProductGiftStrip::SCHEMA)) : ['options'];
+
+                if ($unknown !== []) {
+                    return response()->json(['ok' => false, 'error' => 'Unknown setting: '.implode(', ', $unknown)], 422);
+                }
+
+                $gift['options'] = $g['options'];
+            }
+
+            if (array_key_exists('phone', $g)) {
+                if (! is_bool($g['phone']) && ! in_array($g['phone'], [0, 1, '0', '1'], true)) {
+                    return response()->json(['ok' => false, 'error' => 'The phone switch must be on or off.'], 422);
+                }
+
+                $gift['phone'] = (bool) $g['phone'];
+            }
+        }
+
         $saved = 0;
 
         if (isset($data['sections'])) {
@@ -454,6 +512,23 @@ class ProductPageApiController extends Controller
             \Illuminate\Support\Facades\Cache::forget(BuyTogetherPairs::CACHE_KEY);
         }
 
+        if (is_array($gift)) {
+            if (isset($gift['options'])) {
+                app(ProductGiftStrip::class)->save($gift['options']);
+                $saved += count($gift['options']);
+            }
+
+            if (array_key_exists('phone', $gift)) {
+                $msec = app(ProductMobileSections::class);
+                $clean = $msec->validate(['on' => ['giftstrip' => $gift['phone']]]);
+
+                if (is_array($clean)) {
+                    $msec->saveLayout($clean);
+                    $saved++;
+                }
+            }
+        }
+
         return response()->json([
             'ok' => true,
             'saved' => $saved,
@@ -471,6 +546,7 @@ class ProductPageApiController extends Controller
             'msections' => app(ProductMobileSections::class)->payload(),
             'together' => self::togetherPayload(),
             'dsections' => app(ProductDesktopSections::class)->payload(),
+            'giftstrip' => self::giftPayload(),
         ]);
     }
 

@@ -1300,6 +1300,10 @@ final class InterfaceStrings
             'product.share_open' => 'Share',
             'product.paylater_tabby' => 'Split your purchase into monthly payments',
             'product.paylater_tamara' => 'Installments up to 6 months, no late fees!',
+            // (Lane GS) The free gifts strip's two lines, while ProductGiftStrip's
+            // Arabic boxes are empty.
+            'product.gift_strip_1' => 'Free gifts with every order',
+            'product.gift_strip_2' => 'Limited time offer. Don\'t miss out!',
             'product.read_more' => 'Read more ↓',
             /*
              * THE THREE TAB HEADINGS, which were English literals inside

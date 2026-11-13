@@ -3717,11 +3717,18 @@ KBB_BH_CSS;
              *             cards and the share button); ProductMobileSectionsTest
              *             pins those by element.
              */
+            /*
+             * (Lane GS, advanced deliberately) `--pm-o-giftstrip:5`: the free
+             * gifts strip the owner asked for, a phone section directly above
+             * Tabby & Tamara, so every later section's position moves up one.
+             * The strip itself sits inside the PDP2 head cut above (before
+             * `<form class="cart`); ProductGiftStripTest pins it by element.
+             */
             'the product page wrapper as a column of sections (Lane QA)' => [
                 'pattern' => '#(?<=<div class="wrap) pdp-page pm-off-trust pm-off-buytogether pm-rate-m-beside pd-rate-d-beside" '
-                    .'style="--pm-gap:18px;--pm-o-gallery:1;--pm-o-title:2;--pm-o-short:3;--pm-o-price:4;--pm-o-paylater:5;'
-                    .'--pm-o-bundles:6;--pm-o-ready:7;--pm-o-cart:8;--pm-o-delivery:9;--pm-o-auth:10;--pm-o-trust:11;'
-                    .'--pm-o-paychips:12;--pm-o-buytogether:13;--pm-o-details:14;--pm-o-reviews:15;--pm-o-related:16;'
+                    .'style="--pm-gap:18px;--pm-o-gallery:1;--pm-o-title:2;--pm-o-short:3;--pm-o-price:4;--pm-o-giftstrip:5;--pm-o-paylater:6;'
+                    .'--pm-o-bundles:7;--pm-o-ready:8;--pm-o-cart:9;--pm-o-delivery:10;--pm-o-auth:11;--pm-o-trust:12;'
+                    .'--pm-o-paychips:13;--pm-o-buytogether:14;--pm-o-details:15;--pm-o-reviews:16;--pm-o-related:17;'
                     .'--pm-dm-short:-8px;--pm-dm-cart:-6px(?=">)#',
                 'hits' => 1,
                 'perPage' => 1,

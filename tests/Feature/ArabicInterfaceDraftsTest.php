@@ -755,7 +755,9 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // order search and steps, and Profile & password (AccountAreaStrings::ROWS).
     // Published live by 2027_12_18_100000_account_area_arabic; a fresh install
     // seeds them as drafts with the rest.
-    expect($ui['drafts'])->toBe(1625 + count(\App\Support\ArabicWording::ENGLISH) - 1 + 10 + 2 + 1 + 24 + count(\App\Services\Translation\AccountAreaStrings::ROWS), 'the shipped Arabic is not showing as drafts to review')
+    // +2 (Lane GS): the free gifts strip's two lines on the product page.
+    // Published live by 2028_01_24_100700_arabic_product_gift_strip.
+    expect($ui['drafts'])->toBe(1625 + count(\App\Support\ArabicWording::ENGLISH) - 1 + 10 + 2 + 1 + 24 + 2 + count(\App\Services\Translation\AccountAreaStrings::ROWS), 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

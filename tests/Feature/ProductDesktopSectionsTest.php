@@ -160,9 +160,9 @@ it('prints nothing onto the page in the default order, saved or not', function (
      * RED (` pds-on pds-ar-related` appears).
      */
     $expected = '<div class="wrap pdp-page pm-off-trust pm-off-buytogether pm-rate-m-beside pd-rate-d-beside" style="'
-        .'--pm-gap:18px;--pm-o-gallery:1;--pm-o-title:2;--pm-o-short:3;--pm-o-price:4;--pm-o-paylater:5;--pm-o-bundles:6;'
-        .'--pm-o-ready:7;--pm-o-cart:8;--pm-o-delivery:9;--pm-o-auth:10;--pm-o-trust:11;--pm-o-paychips:12;'
-        .'--pm-o-buytogether:13;--pm-o-details:14;--pm-o-reviews:15;--pm-o-related:16;--pm-dm-short:-8px;--pm-dm-cart:-6px">';
+        .'--pm-gap:18px;--pm-o-gallery:1;--pm-o-title:2;--pm-o-short:3;--pm-o-price:4;--pm-o-giftstrip:5;--pm-o-paylater:6;--pm-o-bundles:7;'
+        .'--pm-o-ready:8;--pm-o-cart:9;--pm-o-delivery:10;--pm-o-auth:11;--pm-o-trust:12;--pm-o-paychips:13;'
+        .'--pm-o-buytogether:14;--pm-o-details:15;--pm-o-reviews:16;--pm-o-related:17;--pm-dm-short:-8px;--pm-dm-cart:-6px">';
 
     $product = pdsProduct();
     $before = pdsPage($product);

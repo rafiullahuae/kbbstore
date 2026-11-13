@@ -1189,6 +1189,8 @@ final class ArabicInterfaceDrafts
             'store.product.share_open' => 'مشاركة',
             'store.product.paylater_tabby' => 'قسّم مشترياتك على دفعات شهرية',
             'store.product.paylater_tamara' => 'أقساط حتى 6 أشهر، بدون رسوم تأخير!',
+            'store.product.gift_strip_1' => 'هدايا مجانية مع كل طلب',
+            'store.product.gift_strip_2' => 'عرض لفترة محدودة. لا تفوّت الفرصة!',
             'store.product.read_more' => 'اقرأ المزيد ↓',
             'store.product.tab_description' => 'الوصف',
             'store.product.tab_ingredients' => 'المكونات',

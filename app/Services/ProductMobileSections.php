@@ -95,6 +95,9 @@ class ProductMobileSections
         'title' => ['Title', 'The brand line and the product name, with the share icon on the right.', true],
         'short' => ['Short description', 'The blurb with “Read more”. On a set it stays under “What is in this set”.', true],
         'price' => ['Price row', 'Struck-through price, live price and the discount capsule, with the rating on the right.', true],
+        /* (Lane GS) "keep above tabby tamara section by default." Its words,
+           colours and effects: the Free gifts strip tab. */
+        'giftstrip' => ['Free gifts strip', '“Free gifts with every order” with the confetti and the shine. Its words, colours and effects: the Free gifts strip tab.', true],
         'paylater' => ['Tabby & Tamara', 'Two small cards side by side: monthly payments with tabby, instalments with tamara.', true],
         'bundles' => ['Bundle section', '“Choose your option” — the bundles, a variable product’s options, or on a set “What is in this set”.', true],
         'ready' => ['Ready to ship', 'The stock line and the dispatch countdown.', true],
@@ -133,6 +136,16 @@ class ProductMobileSections
      * Mobile switch he had already saved, so nothing he chose there moves.
      */
     private const ASKED_OFF = ['trust', 'buytogether'];
+
+    /**
+     * (Lane GS) A section added after his layout was saved goes where he asked
+     * for it, not to the end of the page: key => the section it is drawn
+     * directly above. A saved order without `giftstrip` gets it straight above
+     * Tabby & Tamara — "keep above tabby tamara section by default".
+     *
+     * @var array<string, string>
+     */
+    public const INSERT_BEFORE = ['giftstrip' => 'paylater'];
 
     /** The bounds of every spacing value on this screen, in px. */
     public const SPACE_MIN = 0;
@@ -338,11 +351,7 @@ class ProductMobileSections
             }
         }
 
-        foreach (array_keys(self::SECTIONS) as $key) {
-            if (! in_array($key, $order, true)) {
-                $order[] = $key;
-            }
-        }
+        $order = self::withMissing($order);
 
         $savedOn = is_array($saved['on'] ?? null) ? $saved['on'] : [];
         $old = $this->settings->get('product_sections');
@@ -461,11 +470,7 @@ class ProductMobileSections
                 $order[] = $key;
             }
 
-            foreach (array_keys(self::SECTIONS) as $key) {
-                if (! in_array($key, $order, true)) {
-                    $order[] = $key;
-                }
-            }
+            $order = self::withMissing($order);
         }
 
         $on = $current['on'];
@@ -508,6 +513,41 @@ class ProductMobileSections
     {
         $this->settings->set(self::LAYOUT_KEY, $clean);
         $this->layoutMemo = null;
+    }
+
+    /**
+     * Every section exactly once: the ones the list lacks are appended in the
+     * default order, except an INSERT_BEFORE section, which goes directly
+     * above its neighbour (or at the end when that neighbour is missing too).
+     *
+     * @param  list<string>  $order  known keys, no repeats
+     * @return list<string>
+     */
+    private static function withMissing(array $order): array
+    {
+        foreach (array_keys(self::SECTIONS) as $key) {
+            if (in_array($key, $order, true) || isset(self::INSERT_BEFORE[$key])) {
+                continue;
+            }
+
+            $order[] = $key;
+        }
+
+        foreach (self::INSERT_BEFORE as $key => $before) {
+            if (in_array($key, $order, true)) {
+                continue;
+            }
+
+            $at = array_search($before, $order, true);
+
+            if ($at === false) {
+                $order[] = $key;
+            } else {
+                array_splice($order, $at, 0, [$key]);
+            }
+        }
+
+        return $order;
     }
 
     /** A spacing value: an integer clamped into bounds, or null for "the shared gap". */

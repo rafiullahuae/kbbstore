@@ -169,12 +169,13 @@ it('ships his order, his switches and one even gap, written onto the page as int
     $wrapper = pmsWrapper($html);
 
     expect($wrapper)->toBe('<div class="wrap pdp-page pm-off-trust pm-off-buytogether pm-rate-m-beside pd-rate-d-beside" style="'
-        .'--pm-gap:18px;--pm-o-gallery:1;--pm-o-title:2;--pm-o-short:3;--pm-o-price:4;--pm-o-paylater:5;--pm-o-bundles:6;'
-        .'--pm-o-ready:7;--pm-o-cart:8;--pm-o-delivery:9;--pm-o-auth:10;--pm-o-trust:11;--pm-o-paychips:12;'
-        .'--pm-o-buytogether:13;--pm-o-details:14;--pm-o-reviews:15;--pm-o-related:16;--pm-dm-short:-8px;--pm-dm-cart:-6px">');
+        .'--pm-gap:18px;--pm-o-gallery:1;--pm-o-title:2;--pm-o-short:3;--pm-o-price:4;--pm-o-giftstrip:5;--pm-o-paylater:6;--pm-o-bundles:7;'
+        .'--pm-o-ready:8;--pm-o-cart:9;--pm-o-delivery:10;--pm-o-auth:11;--pm-o-trust:12;--pm-o-paychips:13;'
+        .'--pm-o-buytogether:14;--pm-o-details:15;--pm-o-reviews:16;--pm-o-related:17;--pm-dm-short:-8px;--pm-dm-cart:-6px">');
 
     expect(array_keys(ProductMobileSections::SECTIONS))->toBe([
-        'gallery', 'title', 'short', 'price', 'paylater', 'bundles', 'ready', 'cart',
+        // Lane GS: the free gifts strip, directly above Tabby & Tamara as he asked.
+        'gallery', 'title', 'short', 'price', 'giftstrip', 'paylater', 'bundles', 'ready', 'cart',
         'delivery', 'auth', 'trust', 'paychips', 'buytogether', 'details', 'reviews', 'related',
     ]);
 });
@@ -195,7 +196,14 @@ it('orders and switches every section only inside the phone breakpoint, and has 
 
     foreach (array_keys(ProductMobileSections::SECTIONS) as $key) {
         expect($phone)->toContain('order:var(--pm-o-'.$key.',');
-        expect($phone)->toContain('margin-block'.($key === 'buytogether' || in_array($key, ['details', 'reviews', 'related', 'delivery', 'auth'], true) ? '' : '-start').':var(--pm-dm-'.$key.',0px)');
+        if ($key === 'giftstrip') {
+            // Lane GS: blank in the list means the strip's own "Space above"
+            // (Free gifts strip tab), not the even gap -- he asked for more
+            // space around it -- so its fallback is that value, not 0px.
+            expect($phone)->toContain('margin-block:var(--pm-dm-giftstrip,calc(var(--gs-mt,24px) - var(--pm-gap,18px)))');
+        } else {
+            expect($phone)->toContain('margin-block'.($key === 'buytogether' || in_array($key, ['details', 'reviews', 'related', 'delivery', 'auth'], true) ? '' : '-start').':var(--pm-dm-'.$key.',0px)');
+        }
         expect((bool) preg_match('/\.pm-off-'.$key.'[ >][^{]*[,{]/', $phone))->toBeTrue("no off rule for {$key}");
     }
 
@@ -309,7 +317,7 @@ it('re-validates a stored row on the way out, so a hand-written one cannot break
 
     $layout = app(ProductMobileSections::class)->layout();
     expect(array_slice($layout['order'], 0, 3))->toBe(['title', 'gallery', 'short']);
-    expect($layout['order'])->toHaveCount(16);
+    expect($layout['order'])->toHaveCount(17); // Lane GS: + the free gifts strip
     expect($layout['on']['gallery'])->toBeFalse();
     expect($layout['space']['price'])->toBe(48);
     expect($layout['space']['title'])->toBeNull();
@@ -543,7 +551,7 @@ it('wires the Mobile sections tab into the console exactly once and serves it fr
     test()->actingAs(pmsAdmin(), 'admin');
     $body = test()->getJson('/admin-api/product-page')->assertOk()->json();
 
-    expect($body['msections']['list'])->toHaveCount(16);
+    expect($body['msections']['list'])->toHaveCount(17); // Lane GS: + the free gifts strip
     expect(array_column($body['msections']['list'], 'key'))->toBe(array_keys(ProductMobileSections::SECTIONS));
     expect($body['msections']['options'][0]['label'])->toBe('Mobile sections');
     expect($body['msections']['space'])->toBe(['min' => 0, 'max' => 48]);
