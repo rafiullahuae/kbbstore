@@ -83,7 +83,7 @@
 
   function body() {
     var phone = '<div class="mmrow">' + lbl('On phones', 'The strip’s row on the Mobile sections tab — drag it there to move it on the phone page. It sits directly above Tabby & Tamara.') + tog('data-gsa-dev', 'phone', W.phone, 'Show on phones') + '</div>';
-    var card1 = '<div class="card mmcard"><div class="mmhd"><b>Free gifts strip</b><span>The “Free gifts with every order” strip on every product page, with falling confetti and a slow holographic shine. Changes show on the sample now and on the shop after Save changes.</span></div>'
+    var card1 = '<div class="card mmcard"><div class="mmhd"><b>Product gifts strip</b><span>The “Free gifts with every order” strip on every product page, with falling confetti and a slow holographic shine. Changes show on the sample now and on the shop after Save changes.</span></div>'
       + '<div class="gsa-prev"><small>Sample (English words; the confetti shows on the shop)</small><div id="gsaSample">' + sample() + '</div></div>'
       + '<div class="mmbody">' + row('on') + phone + ['desk', 'line1', 'line2', 'line1_ar', 'line2_ar'].map(row).join('') + '</div></div>';
     var card2 = '<div class="card mmcard"><div class="mmhd"><b>Colours</b><span>The shipped colours are the approved design: yellow #FFD43B → coral #FF9F6E → pink #FF6F91, dark plum words.</span></div>'
@@ -102,7 +102,7 @@
 
     var strip = document.querySelector('#ppStrip .ectabs');
     if (strip && !strip.querySelector('[data-gsatab]')) {
-      strip.insertAdjacentHTML('beforeend', '<button class="ectab' + (ours ? ' on' : '') + '" data-gsatab="' + TAB + '">Free gifts strip<span class="ecn">' + fields().length + '</span></button>');
+      strip.insertAdjacentHTML('beforeend', '<button class="ectab' + (ours ? ' on' : '') + '" data-gsatab="' + TAB + '">Product gifts strip<span class="ecn">' + fields().length + '</span></button>');
       strip.querySelector('[data-gsatab]').onclick = function () { PPTAB = TAB; window.paintProductPage(); };
     }
 
@@ -110,7 +110,7 @@
       var col = document.getElementById('ppCol');
       if (col) col.innerHTML = body();
       var lede = document.getElementById('ppLede');
-      if (lede) lede.textContent = 'The free gifts strip on the product page: on or off, where it sits, its words, colours, effects and sizes. The preview shows saved changes after you press Save changes.';
+      if (lede) lede.textContent = 'The free gifts strip on the PRODUCT page (the homepage strip is Appearance → Free gifts strip): on or off, where it sits, its words, colours, effects and sizes. The preview shows saved changes after you press Save changes.';
       var acts = document.getElementById('ppActs');
       if (acts) acts.innerHTML = '<button class="btn" id="gsaDiscard">Discard</button>';
       if (DIRTY) { var d = document.getElementById('ppDirty'); if (d) { d.style.visibility = 'visible'; d.textContent = 'Unsaved changes'; } }

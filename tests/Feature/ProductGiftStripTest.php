@@ -89,9 +89,9 @@ it('ships on, directly above Tabby & Tamara, with his default words and no style
 
     expect($strip)->not->toBe('')
         ->and($strip)->toContain('<b>Free gifts with every order</b>')
-        ->and($strip)->toContain('<span class="gs-l">Limited time offer. Don&#039;t miss out!</span>')
+        ->and($strip)->toContain('<span class="pgs-l">Limited time offer. Don&#039;t miss out!</span>')
         ->and(substr_count($strip, '<i class="cf c'))->toBe(10)
-        ->and($strip)->toContain('<span class="gs-i"><svg viewBox="0 0 24 24" width="24" height="24"')
+        ->and($strip)->toContain('<span class="pgs-i"><svg viewBox="0 0 24 24" width="24" height="24"')
         ->and($strip)->not->toContain('style=')
         ->and(substr_count($html, 'class="pdp-gs '))->toBe(1);
 
@@ -133,7 +133,7 @@ it('draws no bytes at all when switched off, and hides on a phone only through i
     $p = gsProduct();
     gsSet(['pgs_on' => false]);
     $html = gsPage($p);
-    expect($html)->not->toContain('pdp-gs')->and($html)->not->toContain('gs-i');
+    expect($html)->not->toContain('pdp-gs')->and($html)->not->toContain('pgs-i');
 
     gsSet(['pgs_on' => true]);
     $clean = app(ProductMobileSections::class)->validate(['on' => ['giftstrip' => false]]);
@@ -166,7 +166,7 @@ it('moves on a laptop to the anchor he picks, and hides there on "Not shown"', f
         $html = gsPage($p);
         $at = strpos($html, 'class="pdp-gs ');
         expect($at)->toBeLessThan(strpos($html, $before))
-            ->and(gsStrip($html))->toContain('gs-d-'.$desk);
+            ->and(gsStrip($html))->toContain('pgs-d-'.$desk);
         // still exactly one strip
         expect(substr_count($html, 'class="pdp-gs '))->toBe(1);
     }
@@ -176,8 +176,8 @@ it('moves on a laptop to the anchor he picks, and hides there on "Not shown"', f
     expect(strpos($html, 'class="pdp-gs '))->toBeGreaterThan(strpos($html, 'pm-sec pm-cart'));
 
     gsSet(['pgs_desk' => 'off']);
-    expect(gsStrip(gsPage($p)))->toContain('gs-d-off');
-    expect(file_get_contents(resource_path('css/kbb/kbb-product.css')))->toContain('.pdp .pm-giftstrip.gs-d-off{display:none}');
+    expect(gsStrip(gsPage($p)))->toContain('pgs-d-off');
+    expect(file_get_contents(resource_path('css/kbb/kbb-product.css')))->toContain('.pdp .pm-giftstrip.pgs-d-off{display:none}');
 });
 
 it('prints only validated values: hostile colours, numbers, selects and HTML are clamped, defaulted or escaped', function () {
@@ -204,10 +204,10 @@ it('prints only validated values: hostile colours, numbers, selects and HTML are
 
     preg_match('/<div class="pdp-gs pm-sec pm-giftstrip([^"]*)" style="([^"]*)"/', $strip, $m);
     expect($m[1] ?? null)->toBe('');        // unknown speed / anchor → the defaults, no class
-    expect($m[2] ?? null)->toBe('--gs-c2:#AABBCC;--gs-ib:rgba(0,0,0,.55);--gs-h:120px;--gs-r:0px;--gs-fs1:24px'); // fs2 13.26 → 13.5, the design's own: not printed
+    expect($m[2] ?? null)->toBe('--pgs-c2:#AABBCC;--pgs-ib:rgba(0,0,0,.55);--pgs-h:120px;--pgs-r:0px;--pgs-fs1:24px'); // fs2 13.26 → 13.5, the design's own: not printed
     // Everything printed into the style is a var name, a #hex, an integer px or the rgba.
     foreach (explode(';', $m[2]) as $decl) {
-        expect($decl)->toMatch('/^--gs-[a-z0-9]+:(#[0-9A-F]{6}|\d+(\.5)?px|rgba\(\d{1,3},\d{1,3},\d{1,3},\.55\))$/');
+        expect($decl)->toMatch('/^--pgs-[a-z0-9]+:(#[0-9A-F]{6}|\d+(\.5)?px|rgba\(\d{1,3},\d{1,3},\d{1,3},\.55\))$/');
     }
 });
 
@@ -215,10 +215,10 @@ it('switches confetti, shine, speed and icon with literal classes and no extra m
     $p = gsProduct();
     gsSet(['pgs_confetti' => false, 'pgs_icon' => false, 'pgs_speed' => 'slow']);
     $strip = gsStrip(gsPage($p));
-    expect($strip)->not->toContain('class="cf')->and($strip)->not->toContain('gs-i')->and($strip)->toContain('gs-sp-slow');
+    expect($strip)->not->toContain('class="cf')->and($strip)->not->toContain('pgs-i')->and($strip)->toContain('pgs-sp-slow');
 
     gsSet(['pgs_shine' => false]);
-    expect(gsStrip(gsPage($p)))->toContain('gs-noshine')->not->toContain('gs-sp-');
+    expect(gsStrip(gsPage($p)))->toContain('pgs-noshine')->not->toContain('pgs-sp-');
 });
 
 it('adds no query and no settings-map read to the product page', function () {
@@ -293,7 +293,7 @@ it('keeps the migration, the drafts and the interface strings saying the same wo
 
 it('animates only transform, opacity and background-position, and stops under reduced motion', function () {
     $css = (string) file_get_contents(resource_path('css/kbb/kbb-product.css'));
-    preg_match_all('/@keyframes gs\w+\{(.*?)\}\}/s', $css, $m);
+    preg_match_all('/@keyframes pgs\w+\{(.*?)\}\}/s', $css, $m);
     expect($m[1])->toHaveCount(2);
     foreach ($m[1] as $frames) {
         preg_match_all('/([a-z-]+):/', $frames, $props);

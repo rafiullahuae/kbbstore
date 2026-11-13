@@ -200,7 +200,7 @@ it('orders and switches every section only inside the phone breakpoint, and has 
             // Lane GS: blank in the list means the strip's own "Space above"
             // (Free gifts strip tab), not the even gap -- he asked for more
             // space around it -- so its fallback is that value, not 0px.
-            expect($phone)->toContain('margin-block:var(--pm-dm-giftstrip,calc(var(--gs-mt,24px) - var(--pm-gap,18px)))');
+            expect($phone)->toContain('margin-block:var(--pm-dm-giftstrip,calc(var(--pgs-mt,24px) - var(--pm-gap,18px)))');
         } else {
             expect($phone)->toContain('margin-block'.($key === 'buytogether' || in_array($key, ['details', 'reviews', 'related', 'delivery', 'auth'], true) ? '' : '-start').':var(--pm-dm-'.$key.',0px)');
         }

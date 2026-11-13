@@ -7,7 +7,7 @@ namespace App\Services;
 use App\Support\Locale;
 
 /**
- * Appearance → Product page → Free gifts strip.                     (Lane GS)
+ * Appearance → Product page → Product gifts strip.                     (Lane GS)
  *
  * The owner, 13 November 2026, after live previews of fifteen designs:
  *
@@ -41,7 +41,7 @@ use App\Support\Locale;
  *
  * ── RULE 5: NOTHING FROM A SETTING REACHES THE PAGE BUT INTEGERS AND HEX ───
  *
- *   style()   `--gs-…:<int>px`, `#RRGGBB` and one `rgba(<int>,<int>,<int>,.55)`
+ *   style()   `--pgs-…:<int>px`, `#RRGGBB` and one `rgba(<int>,<int>,<int>,.55)`
  *             built here from a validated hex — and only the values that
  *             differ from the design, so the default strip carries no style.
  *   classes() literal class names from this file and a select's own keys.
@@ -113,7 +113,7 @@ class ProductGiftStrip
     ];
 
     public const TABS = [
-        'giftstrip' => ['Free gifts strip',
+        'giftstrip' => ['Product gifts strip',
             'The “Free gifts with every order” strip on the product page: on or off, where it sits, its words in English and Arabic, its colours, effects and sizes.',
             ['on', 'desk', 'line1', 'line2', 'line1_ar', 'line2_ar', 'c1', 'c2', 'c3', 'ink', 'icon_bg', 'icon', 'confetti', 'shine', 'speed', 'height', 'fs1', 'fs2', 'radius', 'above', 'below']],
     ];
@@ -303,13 +303,13 @@ class ProductGiftStrip
         $out = [];
 
         if (! $this->flag('shine')) {
-            $out[] = 'gs-noshine';
+            $out[] = 'pgs-noshine';
         } elseif (($s = $this->choice('speed')) !== 'normal') {
-            $out[] = 'gs-sp-'.$s;
+            $out[] = 'pgs-sp-'.$s;
         }
 
         if ($this->desk() !== 'paylater') {
-            $out[] = 'gs-d-'.$this->desk();
+            $out[] = 'pgs-d-'.$this->desk();
         }
 
         return $out === [] ? '' : ' '.implode(' ', $out);
@@ -330,7 +330,7 @@ class ProductGiftStrip
             $hex = self::hex((string) $all[$k], (string) $def[$k]);
 
             if ($hex !== strtoupper((string) $def[$k])) {
-                $out[] = '--gs-'.$k.':'.$hex;
+                $out[] = '--pgs-'.$k.':'.$hex;
             }
         }
 
@@ -338,7 +338,7 @@ class ProductGiftStrip
 
         if ($icon !== strtoupper((string) $def['icon_bg'])) {
             [$r, $g, $b] = sscanf(substr($icon, 1), '%2x%2x%2x');
-            $out[] = '--gs-ib:rgba('.(int) $r.','.(int) $g.','.(int) $b.',.55)';
+            $out[] = '--pgs-ib:rgba('.(int) $r.','.(int) $g.','.(int) $b.',.55)';
         }
 
         $px = ['height' => 'h', 'radius' => 'r', 'above' => 'mt', 'below' => 'mb'];
@@ -348,7 +348,7 @@ class ProductGiftStrip
             $v = max((int) $f['options']['min'], min((int) $f['options']['max'], (int) $all[$k]));
 
             if ($v !== (int) $def[$k]) {
-                $out[] = '--gs-'.$var.':'.$v.'px';
+                $out[] = '--pgs-'.$var.':'.$v.'px';
             }
         }
 
@@ -356,7 +356,7 @@ class ProductGiftStrip
             $v = self::halfPx($all[$k], self::fields()[$k]);
 
             if ($v !== (float) $def[$k]) {
-                $out[] = '--gs-'.$k.':'.rtrim(rtrim(number_format($v, 1, '.', ''), '0'), '.').'px';
+                $out[] = '--pgs-'.$k.':'.rtrim(rtrim(number_format($v, 1, '.', ''), '0'), '.').'px';
             }
         }
 

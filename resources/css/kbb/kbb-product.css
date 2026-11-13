@@ -2067,7 +2067,7 @@ html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
    Design KL of docs/plans/product-gift-strip/preview.py, copied: the K strip
    (yellow → coral, confetti at the two ends) with L's holographic glint at
    6 s. App\Services\ProductGiftStrip prints only the values that differ from
-   the design, as `--gs-…` on the strip itself — integers, half pixels and
+   the design, as `--pgs-…` on the strip itself — integers, half pixels and
    #RRGGBB — so every fallback below IS the design. The words take the page's
    own font (Outfit; the Arabic face on /ar).
 
@@ -2082,25 +2082,25 @@ html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
    order; under a reordered buy column (`pdsb-on`) it keeps beside its anchor.
    ═══════════════════════════════════════════════════════════════════════════ */
 .pdp-gs{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:flex-start;gap:12px;
-    min-height:var(--gs-h,60px);padding:10px 16px 10px 12px;border-radius:var(--gs-r,14px);
+    min-height:var(--pgs-h,60px);padding:10px 16px 10px 12px;border-radius:var(--pgs-r,14px);
     font-weight:600;font-size:14.5px;line-height:1.3;text-align:start;isolation:isolate;
-    background:linear-gradient(90deg,var(--gs-c1,#FFD43B),var(--gs-c2,#FF9F6E) 55%,var(--gs-c3,#FF6F91));
-    color:var(--gs-ink,#3A1230);box-shadow:0 6px 16px rgba(255,111,145,.25)}
-.pdp-gs b{font-weight:700;font-size:var(--gs-fs1,15.5px);line-height:1.25}
-.pdp-gs .gs-l{font-weight:500;font-size:var(--gs-fs2,13.5px);opacity:.92}
-.pdp-gs .gs-i{display:inline-grid;place-items:center;flex:none;width:42px;height:42px;border-radius:50%;
-    background:var(--gs-ib,rgba(255,255,255,.55));box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)}
-.pdp-gs .gs-t{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
-.pdp-gs>.gs-i,.pdp-gs>.gs-t{position:relative;z-index:1}
+    background:linear-gradient(90deg,var(--pgs-c1,#FFD43B),var(--pgs-c2,#FF9F6E) 55%,var(--pgs-c3,#FF6F91));
+    color:var(--pgs-ink,#3A1230);box-shadow:0 6px 16px rgba(255,111,145,.25)}
+.pdp-gs b{font-weight:700;font-size:var(--pgs-fs1,15.5px);line-height:1.25}
+.pdp-gs .pgs-l{font-weight:500;font-size:var(--pgs-fs2,13.5px);opacity:.92}
+.pdp-gs .pgs-i{display:inline-grid;place-items:center;flex:none;width:42px;height:42px;border-radius:50%;
+    background:var(--pgs-ib,rgba(255,255,255,.55));box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)}
+.pdp-gs .pgs-t{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+.pdp-gs>.pgs-i,.pdp-gs>.pgs-t{position:relative;z-index:1}
 .pdp-gs::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
     background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.85) 45%,transparent 60%) 0 0/250% 100%;
-    animation:gsSheen 6s linear infinite}
-.pdp-gs.gs-sp-slow::after{animation-duration:9s}
-.pdp-gs.gs-sp-fast::after{animation-duration:3.5s}
-.pdp-gs.gs-noshine::after{content:none}
-@keyframes gsSheen{from{background-position:150% 0}to{background-position:-100% 0}}
+    animation:pgsSheen 6s linear infinite}
+.pdp-gs.pgs-sp-slow::after{animation-duration:9s}
+.pdp-gs.pgs-sp-fast::after{animation-duration:3.5s}
+.pdp-gs.pgs-noshine::after{content:none}
+@keyframes pgsSheen{from{background-position:150% 0}to{background-position:-100% 0}}
 .pdp-gs .cf{position:absolute;top:-8px;width:6px;height:9px;border-radius:2px;z-index:0;opacity:.9;
-    animation:gsFall 2.6s linear infinite}
+    animation:pgsFall 2.6s linear infinite}
 .pdp-gs .c1{inset-inline-start:2%;background:#7B5CFF}
 .pdp-gs .c2{inset-inline-start:6%;background:#2EC4B6;animation-delay:.5s;animation-duration:2.2s}
 .pdp-gs .c3{inset-inline-start:10%;background:#fff;animation-delay:1.2s}
@@ -2111,17 +2111,17 @@ html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
 .pdp-gs .c8{inset-inline-start:89%;background:#2EC4B6;animation-delay:.4s;animation-duration:2.8s}
 .pdp-gs .c9{inset-inline-start:93%;background:#FF4F8B;animation-delay:1.4s}
 .pdp-gs .c10{inset-inline-start:97%;background:#1E88E5;animation-delay:.9s;animation-duration:2.4s}
-@keyframes gsFall{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(calc(var(--gs-h,60px) + 20px)) rotate(320deg)}}
+@keyframes pgsFall{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(calc(var(--pgs-h,60px) + 20px)) rotate(320deg)}}
 @media (prefers-reduced-motion:reduce){.pdp-gs::after,.pdp-gs .cf{animation:none}}
 @media (max-width:880px){
   .pdp-page .pm-giftstrip{order:var(--pm-o-giftstrip,5);
-      margin-block:var(--pm-dm-giftstrip,calc(var(--gs-mt,24px) - var(--pm-gap,18px))) calc(var(--gs-mb,24px) - var(--pm-gap,18px))}
+      margin-block:var(--pm-dm-giftstrip,calc(var(--pgs-mt,24px) - var(--pm-gap,18px))) calc(var(--pgs-mb,24px) - var(--pm-gap,18px))}
   .pm-off-giftstrip .pm-giftstrip{display:none}
 }
 @media (min-width:881px){
-  .pdp .pm-giftstrip{margin-block:var(--gs-mt,24px) var(--gs-mb,24px)}
-  .pdp .pm-giftstrip.gs-d-off{display:none}
-  .pdp-page.pdsb-on .pm-giftstrip{order:var(--pdsb-o-paylater,4);margin-block:var(--gs-mt,24px) var(--gs-mb,24px)}
-  .pdp-page.pdsb-on .pm-giftstrip.gs-d-price{order:var(--pdsb-o-price,2)}
-  .pdp-page.pdsb-on .pm-giftstrip.gs-d-cart,.pdp-page.pdsb-on .pm-giftstrip.gs-d-aftercart{order:var(--pdsb-o-cart,8)}
+  .pdp .pm-giftstrip{margin-block:var(--pgs-mt,24px) var(--pgs-mb,24px)}
+  .pdp .pm-giftstrip.pgs-d-off{display:none}
+  .pdp-page.pdsb-on .pm-giftstrip{order:var(--pdsb-o-paylater,4);margin-block:var(--pgs-mt,24px) var(--pgs-mb,24px)}
+  .pdp-page.pdsb-on .pm-giftstrip.pgs-d-price{order:var(--pdsb-o-price,2)}
+  .pdp-page.pdsb-on .pm-giftstrip.pgs-d-cart,.pdp-page.pdsb-on .pm-giftstrip.pgs-d-aftercart{order:var(--pdsb-o-cart,8)}
 }
