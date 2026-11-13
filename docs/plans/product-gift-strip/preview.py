@@ -46,6 +46,12 @@ OPTS = [
     ('F', 'Candy stripes', 'Pink candy stripes drift slowly behind a white pill holding the words.'),
     ('G', 'Aurora', 'Pink, peach and lavender colours flow gently behind the words, always moving.'),
     ('H', 'Twinkle', 'Blush strip with little ✦ sparkles twinkling around the words; the gift shines.'),
+    # owner, 13 Nov: "i need 5 more options totally different and colorful, keep these also to compare"
+    ('I', 'Rainbow flow', 'Bold rainbow of pink, orange, yellow, teal and violet flowing across; white words.'),
+    ('J', 'Neon night', 'Deep purple strip, the words glowing neon pink and cyan with a soft pulse.'),
+    ('K', 'Confetti party', 'Sunny yellow-to-coral strip with colourful confetti falling through it.'),
+    ('L', 'Holographic', 'Iridescent holo foil (pink, mint, lilac, sky) with a glitter sheen sliding over.'),
+    ('M', 'Gift tag + arrows', 'Two-part: a teal gift tag that wiggles, then a hot-pink panel with arrows running toward the words.'),
 ]
 
 
@@ -56,6 +62,13 @@ def strip(L, lang):
         one = f'<span class="kfg-i">{GIFT}</span><span class="kfg-t">{txt}</span><span class="kfg-sep">✦</span>'
         return f'<div class="kfg kfg-{L}"{d}><div class="kfg-run">{one * 4}</div></div>'
     extra = '<i class="tw t1">✦</i><i class="tw t2">✦</i><i class="tw t3">✦</i><i class="tw t4">✦</i>' if L == 'H' else ''
+    if L == 'K':
+        extra = ''.join(f'<i class="cf c{n}"></i>' for n in range(1, 11))
+    if L == 'L':
+        extra = '<i class="gl g1">✦</i><i class="gl g2">✦</i><i class="gl g3">✦</i>'
+    if L == 'M':
+        return (f'<div class="kfg kfg-M"{d}><span class="kfg-tag"><span class="kfg-i">{GIFT}</span></span>'
+                f'<span class="kfg-mt"><span class="kfg-arr" aria-hidden="true"><svg viewBox="0 0 30 16" width="30" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2l6 6-6 6M12 2l6 6-6 6M21 2l6 6-6 6"/></svg></span><span class="kfg-t">{txt}</span></span></div>')
     inner = f'<span class="kfg-i">{GIFT}</span><span class="kfg-t">{txt}</span>'
     if L == 'F':
         inner = f'<span class="kfg-pill">{inner}</span>'
@@ -104,6 +117,39 @@ CSS = '''
 .kfg-H .tw{position:absolute;font-style:normal;color:#E9B44C;font-size:11px;animation:kfgTw 2.4s ease-in-out infinite;opacity:0}
 .kfg-H .t1{left:5%;top:18%}.kfg-H .t2{left:14%;bottom:12%;animation-delay:.6s;color:var(--p)}.kfg-H .t3{right:6%;top:16%;animation-delay:1.2s}.kfg-H .t4{right:15%;bottom:14%;animation-delay:1.8s;color:var(--p)}
 @keyframes kfgTw{0%,100%{opacity:0;transform:scale(.4) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(45deg)}}
+/* I rainbow flow */
+.kfg-I{background:linear-gradient(90deg,#FF4F8B,#FF8A3D,#FFC93C,#2EC4B6,#7B5CFF,#FF4F8B) 0 0/300% 100%;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25);animation:kfgFlow 6s linear infinite;box-shadow:0 6px 16px rgba(123,92,255,.25)}
+@keyframes kfgFlow{to{background-position:300% 0}}
+/* J neon night */
+.kfg-J{background:radial-gradient(120% 140% at 50% 0,#3B1A6B,#1A0B33);color:#FFE3F3;box-shadow:inset 0 0 0 1.5px #FF4FB8,0 0 14px rgba(255,79,184,.35)}
+.kfg-J b{color:#FF7AD1;text-shadow:0 0 6px #FF4FB8,0 0 14px rgba(255,79,184,.7);animation:kfgNeon 2.4s ease-in-out infinite}
+.kfg-J .kfg-l{color:#7FF3FF;text-shadow:0 0 6px #31D8FF,0 0 12px rgba(49,216,255,.6)}
+.kfg-J .kfg-i{color:#7FF3FF;filter:drop-shadow(0 0 4px #31D8FF)}
+@keyframes kfgNeon{0%,100%{opacity:1}45%{opacity:.82}50%{opacity:1}55%{opacity:.9}}
+/* K confetti party */
+.kfg-K{background:linear-gradient(90deg,#FFD43B,#FF9F6E 55%,#FF6F91);color:#3A1230}
+.kfg-K>.kfg-i,.kfg-K>.kfg-t{position:relative;z-index:1}
+.kfg-K .cf{position:absolute;top:-8px;width:6px;height:9px;border-radius:2px;animation:kfgFall 2.6s linear infinite;z-index:0;opacity:.9}
+.kfg-K .c1{left:3%;background:#7B5CFF}.kfg-K .c2{left:8%;background:#2EC4B6;animation-delay:.5s;animation-duration:2.2s}.kfg-K .c3{left:13%;background:#fff;animation-delay:1.2s}
+.kfg-K .c4{left:18%;background:#FF4F8B;animation-delay:.2s;animation-duration:3s}.kfg-K .c5{left:23%;background:#1E88E5;animation-delay:1.6s}.kfg-K .c6{left:77%;background:#fff;animation-delay:.8s;animation-duration:2.3s}
+.kfg-K .c7{left:82%;background:#7B5CFF;animation-delay:2s}.kfg-K .c8{left:87%;background:#2EC4B6;animation-delay:.4s;animation-duration:2.8s}.kfg-K .c9{left:92%;background:#FF4F8B;animation-delay:1.4s}.kfg-K .c10{left:96%;background:#1E88E5;animation-delay:.9s;animation-duration:2.4s}
+@keyframes kfgFall{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(80px) rotate(320deg)}}
+/* L holographic */
+.kfg-L{background:linear-gradient(115deg,#FFC6E5,#C8F7E4 25%,#D9C8FF 50%,#BDE6FF 75%,#FFC6E5) 0 0/250% 100%;color:#4A1D5C;animation:kfgHolo 5s ease-in-out infinite alternate;box-shadow:inset 0 0 0 1px rgba(255,255,255,.8),0 4px 14px rgba(150,120,220,.25)}
+.kfg-L::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.85) 45%,transparent 60%) 0 0/250% 100%;animation:kfgSheen 3s linear infinite;z-index:-1}
+@keyframes kfgHolo{to{background-position:100% 0}}@keyframes kfgSheen{from{background-position:150% 0}to{background-position:-100% 0}}
+.kfg-L .gl{position:absolute;font-style:normal;color:#fff;font-size:10px;text-shadow:0 0 4px #fff;animation:kfgTw 2s ease-in-out infinite;opacity:0}
+.kfg-L .g1{left:7%;top:20%}.kfg-L .g2{right:8%;bottom:18%;animation-delay:.7s}.kfg-L .g3{right:22%;top:14%;animation-delay:1.3s}
+/* M gift tag + arrows */
+.kfg-M{padding:0;gap:0;align-items:stretch;background:linear-gradient(90deg,#FF3D7F,#FF6F61);color:#fff;box-shadow:0 6px 16px rgba(255,61,127,.28)}
+.kfg-M .kfg-tag{display:grid;place-items:center;flex:none;width:52px;background:#14B8A6;color:#fff;clip-path:polygon(0 0,82% 0,100% 50%,82% 100%,0 100%)}
+.kfg-M .kfg-tag .kfg-i{animation:kfgWig 1.6s ease-in-out infinite}
+@keyframes kfgWig{0%,60%,100%{transform:rotate(0)}70%{transform:rotate(-14deg)}80%{transform:rotate(12deg)}90%{transform:rotate(-6deg)}}
+.kfg-M .kfg-mt{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px 10px 6px}
+.kfg-M .kfg-arr{display:inline-flex;flex:none;color:#FFE066;animation:kfgArr 1.2s ease-in-out infinite}
+.kfg-M[dir=rtl] .kfg-tag{clip-path:polygon(18% 0,100% 0,100% 100%,18% 100%,0 50%)}.kfg-M[dir=rtl] .kfg-arr{transform:scaleX(-1);animation-name:kfgArrR}
+@keyframes kfgArr{0%,100%{transform:translateX(-3px);opacity:.6}50%{transform:translateX(3px);opacity:1}}
+@keyframes kfgArrR{0%,100%{transform:scaleX(-1) translateX(-3px);opacity:.6}50%{transform:scaleX(-1) translateX(3px);opacity:1}}
 @media (prefers-reduced-motion:reduce){.kfg,.kfg *,.kfg::before,.kfg::after{animation:none!important}}
 '''
 
@@ -142,7 +188,7 @@ details{{margin-top:10px}}summary{{cursor:pointer;font-size:13px;font-weight:600
 {"".join(IMGCSS)}
 </style></head><body><div class="wrap">
 <h1>Free gifts strip: product page</h1>
-<p class="lead">Eight live options for "Free gifts with every order. Limited time offer!", each shown in its place: above the tabby/tamara cards, with more space above and below. The page around each strip is a photo of the real product page; the strip itself is live, so the movement is exactly what shoppers would see. Pick a letter.</p>
+<p class="lead">Thirteen live options (I&ndash;M are the new colourful ones) for "Free gifts with every order. Limited time offer!", each shown in its place: above the tabby/tamara cards, with more space above and below. The page around each strip is a photo of the real product page; the strip itself is live, so the movement is exactly what shoppers would see. Pick a letter.</p>
 <div class="bar" role="group" aria-label="Language"><span>Language</span><button class="chip" type="button" data-l="en" aria-pressed="true">English</button><button class="chip" type="button" data-l="ar" aria-pressed="false">العربية (/ar pages)</button></div>
 <div class="grid">{cards}</div></div>
 <script>
