@@ -30,7 +30,7 @@ use Illuminate\Support\Str;
  *   - print `$all['c1']` raw in style() → RED on the hostile-colour case.
  *   - `{!! $kbbGs1 !!}` in the partial → RED on the HTML-in-text case.
  */
-function gsAdmin(): AdminUser
+function pgsTAdmin(): AdminUser
 {
     return AdminUser::create([
         'name' => 'Strip Owner',
@@ -40,7 +40,7 @@ function gsAdmin(): AdminUser
     ]);
 }
 
-function gsProduct(): Product
+function pgsTProduct(): Product
 {
     return Product::create([
         'slug' => 'gs-'.Str::lower(Str::random(8)),
@@ -55,7 +55,7 @@ function gsProduct(): Product
     ])->fresh();
 }
 
-function gsSet(array $values): void
+function pgsTSet(array $values): void
 {
     foreach ($values as $key => $value) {
         app(SettingsService::class)->set($key, $value);
@@ -68,7 +68,7 @@ function gsSet(array $values): void
     app()->forgetInstance(ProductMobileSections::class);
 }
 
-function gsPage(Product $p, string $prefix = ''): string
+function pgsTPage(Product $p, string $prefix = ''): string
 {
     SettingsService::forgetMemo();
     app()->forgetScopedInstances();
@@ -77,15 +77,15 @@ function gsPage(Product $p, string $prefix = ''): string
 }
 
 /** The strip element, or '' when there is none. */
-function gsStrip(string $html): string
+function pgsTStrip(string $html): string
 {
     return preg_match('#<div class="pdp-gs pm-sec pm-giftstrip[^"]*"[^>]*>.*?</div><!--/pm-->#s', $html, $m) === 1 ? $m[0] : '';
 }
 
 it('ships on, directly above Tabby & Tamara, with his default words and no style of its own', function () {
     // THE DEFECT: the strip he chose missing, or anywhere but above Tabby & Tamara.
-    $html = gsPage(gsProduct());
-    $strip = gsStrip($html);
+    $html = pgsTPage(pgsTProduct());
+    $strip = pgsTStrip($html);
 
     expect($strip)->not->toBe('')
         ->and($strip)->toContain('<b>Free gifts with every order</b>')
@@ -107,17 +107,17 @@ it('ships on, directly above Tabby & Tamara, with his default words and no style
 });
 
 it('still shows in its place when Tabby & Tamara is switched off', function () {
-    gsSet(['pdpms_tabby_on' => false, 'pdpms_tamara_on' => false]);
-    $html = gsPage(gsProduct());
+    pgsTSet(['pdpms_tabby_on' => false, 'pdpms_tamara_on' => false]);
+    $html = pgsTPage(pgsTProduct());
 
     expect($html)->not->toContain('pm-paylater')
-        ->and(gsStrip($html))->not->toBe('');
+        ->and(pgsTStrip($html))->not->toBe('');
 });
 
 it('reads Arabic on /ar, from the published strings, right to left', function () {
-    gsSet([Locale::SETTING_ENABLED => '1', Locale::SETTING_RTL => '1']);
-    $html = gsPage(gsProduct(), '/ar');
-    $strip = gsStrip($html);
+    pgsTSet([Locale::SETTING_ENABLED => '1', Locale::SETTING_RTL => '1']);
+    $html = pgsTPage(pgsTProduct(), '/ar');
+    $strip = pgsTStrip($html);
 
     expect($strip)->toContain('<b>هدايا مجانية مع كل طلب</b>')
         ->and($strip)->toContain('عرض لفترة محدودة. لا تفوّت الفرصة!')
@@ -125,22 +125,22 @@ it('reads Arabic on /ar, from the published strings, right to left', function ()
         ->and($html)->toMatch('/<html[^>]*dir="rtl"/');
 
     // His own Arabic wins once typed.
-    gsSet(['pgs_line1_ar' => 'هدية لك']);
-    expect(gsStrip(gsPage(gsProduct(), '/ar')))->toContain('<b>هدية لك</b>');
+    pgsTSet(['pgs_line1_ar' => 'هدية لك']);
+    expect(pgsTStrip(pgsTPage(pgsTProduct(), '/ar')))->toContain('<b>هدية لك</b>');
 });
 
 it('draws no bytes at all when switched off, and hides on a phone only through its Mobile sections row', function () {
-    $p = gsProduct();
-    gsSet(['pgs_on' => false]);
-    $html = gsPage($p);
+    $p = pgsTProduct();
+    pgsTSet(['pgs_on' => false]);
+    $html = pgsTPage($p);
     expect($html)->not->toContain('pdp-gs')->and($html)->not->toContain('pgs-i');
 
-    gsSet(['pgs_on' => true]);
+    pgsTSet(['pgs_on' => true]);
     $clean = app(ProductMobileSections::class)->validate(['on' => ['giftstrip' => false]]);
     app(ProductMobileSections::class)->saveLayout($clean);
-    gsSet([]);
-    $html = gsPage($p);
-    expect($html)->toContain('pm-off-giftstrip')->and(gsStrip($html))->not->toBe('');
+    pgsTSet([]);
+    $html = pgsTPage($p);
+    expect($html)->toContain('pm-off-giftstrip')->and(pgsTStrip($html))->not->toBe('');
     expect(file_get_contents(resource_path('css/kbb/kbb-product.css')))->toContain('.pm-off-giftstrip .pm-giftstrip{display:none}');
 });
 
@@ -148,7 +148,7 @@ it('puts the strip above Tabby & Tamara in a phone layout saved before it existe
     // THE DEFECT: the live shop has a saved Mobile sections layout; a new key
     // appended to it would put the strip at the foot of the phone page.
     $old = array_values(array_diff(array_keys(ProductMobileSections::SECTIONS), ['giftstrip']));
-    gsSet([ProductMobileSections::LAYOUT_KEY => ['order' => $old, 'on' => [], 'space' => []]]);
+    pgsTSet([ProductMobileSections::LAYOUT_KEY => ['order' => $old, 'on' => [], 'space' => []]]);
 
     $order = app(ProductMobileSections::class)->layout()['order'];
     expect(array_search('giftstrip', $order, true) + 1)->toBe(array_search('paylater', $order, true));
@@ -159,29 +159,29 @@ it('puts the strip above Tabby & Tamara in a phone layout saved before it existe
 });
 
 it('moves on a laptop to the anchor he picks, and hides there on "Not shown"', function () {
-    $p = gsProduct();
+    $p = pgsTProduct();
 
     foreach (['price' => 'pm-sec pm-price', 'cart' => 'pm-sec pm-cart'] as $desk => $before) {
-        gsSet(['pgs_desk' => $desk]);
-        $html = gsPage($p);
+        pgsTSet(['pgs_desk' => $desk]);
+        $html = pgsTPage($p);
         $at = strpos($html, 'class="pdp-gs ');
         expect($at)->toBeLessThan(strpos($html, $before))
-            ->and(gsStrip($html))->toContain('pgs-d-'.$desk);
+            ->and(pgsTStrip($html))->toContain('pgs-d-'.$desk);
         // still exactly one strip
         expect(substr_count($html, 'class="pdp-gs '))->toBe(1);
     }
 
-    gsSet(['pgs_desk' => 'aftercart']);
-    $html = gsPage($p);
+    pgsTSet(['pgs_desk' => 'aftercart']);
+    $html = pgsTPage($p);
     expect(strpos($html, 'class="pdp-gs '))->toBeGreaterThan(strpos($html, 'pm-sec pm-cart'));
 
-    gsSet(['pgs_desk' => 'off']);
-    expect(gsStrip(gsPage($p)))->toContain('pgs-d-off');
+    pgsTSet(['pgs_desk' => 'off']);
+    expect(pgsTStrip(pgsTPage($p)))->toContain('pgs-d-off');
     expect(file_get_contents(resource_path('css/kbb/kbb-product.css')))->toContain('.pdp .pm-giftstrip.pgs-d-off{display:none}');
 });
 
 it('prints only validated values: hostile colours, numbers, selects and HTML are clamped, defaulted or escaped', function () {
-    gsSet([
+    pgsTSet([
         'pgs_c1' => 'red;}body{display:none',
         'pgs_c2' => '#abc',
         'pgs_ink' => 'javascript:alert(1)',
@@ -196,8 +196,8 @@ it('prints only validated values: hostile colours, numbers, selects and HTML are
         'pgs_line1' => '<img src=x onerror=alert(1)>Gifts & more',
         'pgs_line2' => '"><script>alert(1)</script>',
     ]);
-    $html = gsPage(gsProduct());
-    $strip = gsStrip($html);
+    $html = pgsTPage(pgsTProduct());
+    $strip = pgsTStrip($html);
 
     expect($strip)->not->toContain('<img')->and($strip)->not->toContain('<script')
         ->and($strip)->not->toContain('onerror')->and($strip)->not->toContain('body{');
@@ -212,19 +212,19 @@ it('prints only validated values: hostile colours, numbers, selects and HTML are
 });
 
 it('switches confetti, shine, speed and icon with literal classes and no extra markup', function () {
-    $p = gsProduct();
-    gsSet(['pgs_confetti' => false, 'pgs_icon' => false, 'pgs_speed' => 'slow']);
-    $strip = gsStrip(gsPage($p));
+    $p = pgsTProduct();
+    pgsTSet(['pgs_confetti' => false, 'pgs_icon' => false, 'pgs_speed' => 'slow']);
+    $strip = pgsTStrip(pgsTPage($p));
     expect($strip)->not->toContain('class="cf')->and($strip)->not->toContain('pgs-i')->and($strip)->toContain('pgs-sp-slow');
 
-    gsSet(['pgs_shine' => false]);
-    expect(gsStrip(gsPage($p)))->toContain('pgs-noshine')->not->toContain('pgs-sp-');
+    pgsTSet(['pgs_shine' => false]);
+    expect(pgsTStrip(pgsTPage($p)))->toContain('pgs-noshine')->not->toContain('pgs-sp-');
 });
 
 it('adds no query and no settings-map read to the product page', function () {
     // THE DEFECT: a strip that asks the database, or re-reads the settings map.
-    $p = gsProduct();
-    gsPage($p); // warm
+    $p = pgsTProduct();
+    pgsTPage($p); // warm
 
     $count = static function () use ($p): array {
         $reads = 0;
@@ -235,25 +235,25 @@ it('adds no query and no settings-map read to the product page', function () {
         });
         DB::flushQueryLog();
         DB::enableQueryLog();
-        gsPage($p);
+        pgsTPage($p);
         $q = count(DB::getQueryLog());
         DB::disableQueryLog();
 
         return [$q, $reads];
     };
 
-    gsSet(['pgs_on' => false]);
-    gsPage($p);
+    pgsTSet(['pgs_on' => false]);
+    pgsTPage($p);
     [$off] = $count();
-    gsSet(['pgs_on' => true, 'pgs_c1' => '#112233', 'pgs_desk' => 'cart']);
-    gsPage($p);
+    pgsTSet(['pgs_on' => true, 'pgs_c1' => '#112233', 'pgs_desk' => 'cart']);
+    pgsTPage($p);
     [$on, $reads] = $count();
 
     expect($on)->toBe($off)->and($reads)->toBeLessThanOrEqual(1);
 });
 
 it('saves through the product page endpoint, refusing unknown keys, and writes the phone switch to Mobile sections', function () {
-    test()->actingAs(gsAdmin(), 'admin');
+    test()->actingAs(pgsTAdmin(), 'admin');
 
     $body = test()->getJson('/admin-api/product-page')->assertOk()->json();
     expect($body['giftstrip']['phone'])->toBeTrue()
@@ -269,7 +269,7 @@ it('saves through the product page endpoint, refusing unknown keys, and writes t
     ]])->assertOk()->json();
 
     expect($r['ok'])->toBeTrue()->and($r['giftstrip']['phone'])->toBeFalse();
-    gsSet([]);
+    pgsTSet([]);
     $all = app(ProductGiftStrip::class)->all();
     expect($all['c1'])->toBe('#00FF00')->and($all['height'])->toBe(120)->and($all['speed'])->toBe('fast')->and($all['desk'])->toBe('paylater');
     expect(app(ProductMobileSections::class)->sectionOn('giftstrip'))->toBeFalse();
