@@ -64,9 +64,9 @@ OPTS = [
     ('I', 'Rainbow flow', 'Bold rainbow of pink, orange, yellow, teal and violet flowing across; white words.'),
     ('J', 'Neon night', 'Deep purple strip, the words glowing neon pink and cyan with a soft pulse.'),
     ('K', 'Confetti party', 'Your pick, as you first saw it: sunny yellow-to-coral with confetti falling, no shine.'),
-    ('KA', 'Confetti + Rose shimmer shine', 'K with the exact shine from A: a soft band of light sweeping every 3.2 s.'),
-    ('KB', 'Confetti + Berry shine', 'K with the exact shine from B: the faintest, gentlest glide, every 3.2 s.'),
-    ('KL', 'Confetti + Holographic sheen', 'K with the exact sheen from L: a thin glint passing smoothly, every 3 s.'),
+    ('KA', 'Confetti + Rose shimmer shine', 'K with the exact shine from A: a soft band of light sweeping slowly, every 6.5 s.'),
+    ('KB', 'Confetti + Berry shine', 'K with the exact shine from B: the faintest, gentlest glide, slowly, every 6.5 s.'),
+    ('KL', 'Confetti + Holographic sheen', 'K with the exact sheen from L: a thin glint passing slowly, every 6 s.'),
     ('L', 'Holographic', 'Iridescent holo foil (pink, mint, lilac, sky) with a glitter sheen sliding over.'),
     ('M', 'Gift tag + arrows', 'Two-part: a teal gift tag that wiggles, then a hot-pink panel with arrows running toward the words.'),
 ]
@@ -146,9 +146,9 @@ CSS = '''
 @keyframes kfgNeon{0%,100%{opacity:1}45%{opacity:.82}50%{opacity:1}55%{opacity:.9}}
 /* K confetti party */
 .kfg-K{background:linear-gradient(90deg,#FFD43B,#FF9F6E 55%,#FF6F91);color:#3A1230;box-shadow:0 6px 16px rgba(255,111,145,.25)}
-.kfg-KA::after{content:"";position:absolute;inset:-20% auto -20% -40%;width:35%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent);transform:translateX(-120%) skewX(-18deg);animation:kfgSweep 3.2s ease-in-out infinite;z-index:0;pointer-events:none}
-.kfg-KB::after{content:"";position:absolute;inset:-20% auto -20% -40%;width:35%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-120%) skewX(-18deg);animation:kfgSweep 3.2s ease-in-out infinite;z-index:0;pointer-events:none}
-.kfg-KL::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.85) 45%,transparent 60%) 0 0/250% 100%;animation:kfgSheen 3s linear infinite;z-index:0;pointer-events:none}
+.kfg-KA::after{content:"";position:absolute;inset:-20% auto -20% -40%;width:35%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent);transform:translateX(-120%) skewX(-18deg);animation:kfgSweep 6.5s ease-in-out infinite;z-index:0;pointer-events:none}
+.kfg-KB::after{content:"";position:absolute;inset:-20% auto -20% -40%;width:35%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-120%) skewX(-18deg);animation:kfgSweep 6.5s ease-in-out infinite;z-index:0;pointer-events:none}
+.kfg-KL::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.85) 45%,transparent 60%) 0 0/250% 100%;animation:kfgSheen 6s linear infinite;z-index:0;pointer-events:none}
 .kfg-K>.kfg-i,.kfg-K>.kfg-t{position:relative;z-index:1}
 .kfg-K .cf{position:absolute;top:-8px;width:6px;height:9px;border-radius:2px;animation:kfgFall 2.6s linear infinite;z-index:0;opacity:.9}
 .kfg-K .c1{left:2%;background:#7B5CFF}.kfg-K .c2{left:6%;background:#2EC4B6;animation-delay:.5s;animation-duration:2.2s}.kfg-K .c3{left:10%;background:#fff;animation-delay:1.2s}
