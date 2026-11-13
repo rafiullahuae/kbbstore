@@ -1,0 +1,4 @@
+# Made by build.py / tools -- recreate, do not commit. dist/ad-studio.html IS committed (the owner keeps that file).
+/ad-studio.html
+fontcache/
+__pycache__/
