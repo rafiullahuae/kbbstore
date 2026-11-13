@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>KBB Ad Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style id="fontcss">/*FONTS*/</style>
+<style>
+/* Layout: the ad on the left at working size; a tabbed options panel on the right (under it on phones).
+   One design, one size and one product set on show at a time. Everything works offline. */
+:root{--bg:#F1EEF0;--fg:#1F1B1E;--muted:#6B6268;--line:#DCD6DA;--panel:#FFFFFF;--soft:#F7F5F6;--on:#1F1B1E;--on-fg:#FFFFFF;--sel:#2F7BFF;--ok:#127A45;--warn:#9A5B12;--sans:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151315;--fg:#F3EFF2;--muted:#A79DA4;--line:#2E2A2D;--panel:#1F1C1F;--soft:#262226;--on:#F3EFF2;--on-fg:#151315;--sel:#6EA8FF;--ok:#4ED39A;--warn:#F2B35B;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151315;--fg:#F3EFF2;--muted:#A79DA4;--line:#2E2A2D;--panel:#1F1C1F;--soft:#262226;--on:#F3EFF2;--on-fg:#151315;--sel:#6EA8FF;--ok:#4ED39A;--warn:#F2B35B;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.4 var(--sans);padding:12px max(16px,env(safe-area-inset-right,0px)) 32px max(16px,env(safe-area-inset-left,0px));overflow-x:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+[hidden]{display:none!important}
+.app{max-width:1240px;margin:0 auto;display:grid;gap:12px}
+.top{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.top h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+.top h1 small{font-weight:600;color:var(--muted);font-size:12px;margin-left:6px}
+#pname{flex:1 1 140px;min-width:0;max-width:280px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--panel);font-weight:600}
+.tb{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.btn{padding:7px 11px;border-radius:9px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-weight:600;font-size:13px;line-height:1.2;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.pri{background:var(--on);color:var(--on-fg);border-color:var(--on)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.sm{padding:5px 8px;font-size:12px}
+.btn.ic{padding:6px 9px;font-size:15px;line-height:1}
+.btn:focus-visible,.chip:focus-visible,.tab:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--sel);outline-offset:1px}
+.st{font-size:12.5px;font-weight:700;color:var(--muted);min-height:1.2em}.st.ok{color:var(--ok)}.st.warn{color:var(--warn)}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+@media (max-width:860px){.main{grid-template-columns:minmax(0,1fr)}}
+.work{display:grid;gap:8px;min-width:0}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{padding:6px 11px;border-radius:99px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-weight:600;font-size:12.5px}
+.chip[aria-pressed="true"]{background:var(--on);color:var(--on-fg);border-color:var(--on)}
+.sep{width:1px;height:20px;background:var(--line);margin:0 2px}
+.stagewrap{display:flex;justify-content:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;min-width:0}
+.stage{width:min(100%,var(--sw,470px));touch-action:none;user-select:none;-webkit-user-select:none;position:relative}
+.stage .cv{border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:14px;min-width:0;overflow:hidden}
+.tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-bottom:1px solid var(--line);background:var(--soft)}
+.tab{border:0;background:none;padding:9px 0 8px;font-size:11px;letter-spacing:-.01em;font-weight:700;color:var(--muted);cursor:pointer;display:grid;justify-items:center;gap:2px;border-bottom:2px solid transparent;min-width:0}
+.tab svg{width:18px;height:18px}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--fg);background:var(--panel)}
+.pane{padding:12px;display:grid;gap:10px;max-height:calc(100vh - 150px);overflow:auto;min-width:0}
+@media (max-width:860px){.pane{max-height:64vh}.hint{font-size:11.5px}}
+.pane h3{margin:0;font-size:13px;font-weight:800}
+.row{display:grid;gap:4px;min-width:0}
+.row>label,.lbl{font-size:11.5px;font-weight:700;color:var(--muted)}
+.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+input[type=text],input[type=search],input[type=number],select,textarea{width:100%;min-width:0;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:13px}
+textarea{resize:vertical;min-height:52px}
+input[type=range]{width:100%;min-width:0;margin:2px 0}
+input[type=color]{width:36px;height:30px;padding:2px;border:1px solid var(--line);border-radius:7px;background:var(--bg);flex:none}
+.crow{display:flex;gap:6px;align-items:center;min-width:0}
+.ck{display:flex;gap:6px;align-items:center;font-size:12.5px;font-weight:600}
+details{border:1px solid var(--line);border-radius:10px;background:var(--soft)}
+details>summary{cursor:pointer;padding:8px 10px;font-weight:800;font-size:13px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details>summary::-webkit-details-marker{display:none}
+details>summary::after{content:"+";font-weight:700;color:var(--muted)}
+details[open]>summary::after{content:"–"}
+details>.in{padding:2px 10px 10px;display:grid;gap:9px}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.note{font-size:12px;color:var(--muted);line-height:1.45;margin:0}
+.tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.tg button{border:1px solid var(--line);border-radius:9px;background:var(--bg);padding:4px;cursor:pointer;display:grid;gap:4px;text-align:left;min-width:0}
+.tg button:hover{border-color:var(--sel)}
+.tg button[aria-current="true"]{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
+.tg .nm{font-size:11px;font-weight:700;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tg .cv{border-radius:5px;pointer-events:none}
+.cats{display:flex;flex-wrap:wrap;gap:5px}
+.cats .chip{padding:4px 9px;font-size:11.5px}
+.mine{display:grid;gap:6px}
+.mine .it{display:flex;gap:6px;align-items:center;min-width:0}
+.mine .it span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;font-weight:600}
+.pk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.pk button{position:relative;display:grid;gap:3px;justify-items:center;padding:5px 3px;border-radius:9px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-size:10.5px;font-weight:600;line-height:1.2;text-align:center;min-width:0}
+.pk button i{display:block;width:100%;aspect-ratio:1;background-size:contain;background-position:center;background-repeat:no-repeat}
+.pk button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.pk button.in{border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
+.pk .x{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font:700 12px/18px var(--sans);text-align:center}
+.icg{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
+.icg button{aspect-ratio:1;border:1px solid var(--line);border-radius:7px;background:var(--bg);cursor:pointer;padding:4px;display:grid;place-items:center;min-width:0}
+.icg svg{width:100%;height:100%;color:var(--fg)}
+.layers{display:grid;gap:3px}
+.ly{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:center;padding:4px 6px;border-radius:7px;border:1px solid transparent;cursor:pointer;font-size:12.5px}
+.ly:hover{background:var(--bg)}
+.ly.on{border-color:var(--sel);background:var(--bg)}
+.ly .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.ly .n.off{opacity:.45;text-decoration:line-through}
+.ly .a{display:flex;gap:2px}
+.ly .a button{border:0;background:none;cursor:pointer;padding:2px 5px;border-radius:5px;font-size:12px;color:var(--muted)}
+.ly .a button:hover{background:var(--line);color:var(--fg)}
+.ly .a button[aria-pressed="true"]{color:var(--fg)}
+.empty{font-size:12.5px;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--bg);padding:5px 0;cursor:pointer;font-size:12px;font-weight:700;min-width:0}
+.seg button[aria-pressed="true"]{background:var(--on);color:var(--on-fg)}
+.guide{position:absolute;pointer-events:none;background:#FF2D87;z-index:30}
+.guide.v{top:0;bottom:0;width:1px}.guide.h{left:0;right:0;height:1px}
+/* ── the ad canvas: every size in container units, so one markup is the live preview at any width AND the full-HD file ── */
+.cv{position:relative;width:100%;container-type:inline-size;overflow:hidden;font-family:Poppins,Cairo,sans-serif;isolation:isolate;line-height:1.15}
+.cv .bgl,.cv .bgp{position:absolute;inset:0}
+.cv .bgl{background-size:cover;background-position:center}
+.cv .el{position:absolute}
+.cv .el .sf{position:absolute;inset:0}
+.cv .el .tc{position:relative;display:flex;align-items:center;justify-content:center}
+.cv .el.box .tc{position:absolute;inset:0}
+.cv .tx{display:inline-block;max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere}
+.cv .el.nw .tx{white-space:pre;max-width:none;overflow-wrap:normal}
+.cv .el.box .tx{overflow-wrap:normal}
+.cv .el.one .tx{white-space:pre}
+.cv .el svg,.cv .el img.ii{display:block;width:100%;height:100%;object-fit:contain}
+.cv .lg{display:flex;align-items:center;gap:.4em;white-space:nowrap}
+.cv .lg svg{width:1.5em;height:1.12em;flex:none}
+.cv .lg img{display:block;max-width:100%;object-fit:contain}
+.cv .py{display:flex;justify-content:center;align-items:center;height:100%}
+.cv .py img{height:100%;width:auto;display:block}
+.cv .pl{position:absolute;inset:0;pointer-events:none}
+.cv .bp{position:absolute;display:block;background-size:contain;background-repeat:no-repeat;background-position:center bottom}
+/* editing affordances (never drawn into a download) */
+.stage .el{cursor:pointer}.stage .el.lk{pointer-events:none}
+.stage .pl .bp{pointer-events:auto;cursor:move}
+.stage .el.sel,.stage .bp.sel{outline:2px dashed var(--sel);outline-offset:2px;cursor:move}
+.stage .hd,.stage .hw,.stage .rh{position:absolute;width:16px;height:16px;border-radius:50%;background:var(--sel);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);z-index:40}
+.stage .hd{right:-10px;bottom:-10px;cursor:nwse-resize}
+.stage .hw{right:-10px;top:50%;margin-top:-8px;cursor:ew-resize;border-radius:4px}
+.stage .rh{left:50%;top:-30px;margin-left:-8px;background:#fff;border-color:var(--sel);cursor:grab}
+.stage.playing .hd,.stage.playing .hw,.stage.playing .rh{display:none}.stage.playing .sel{outline:0}
+@keyframes a-fade{from{opacity:0}to{opacity:1}}
+@keyframes a-pop{0%{opacity:0;scale:.6}70%{opacity:1;scale:1.06}100%{scale:1}}
+@keyframes a-up{from{opacity:0;translate:0 6cqw}to{opacity:1;translate:0 0}}
+@keyframes a-float{0%,100%{translate:0 0}50%{translate:0 -1.2cqw}}
+@keyframes a-sway{0%,100%{rotate:-2deg}50%{rotate:2deg}}
+/*PRODUCT_CSS*/
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>KBB Ad Studio<small id="mode"></small></h1>
+    <input id="pname" type="text" maxlength="60" aria-label="Design name" value="Untitled design">
+    <div class="tb">
+      <button class="btn ic" id="undo" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+      <button class="btn ic" id="redo" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+      <button class="btn pri" id="save" title="Save (Ctrl+S)">Save</button>
+      <span class="st" id="status" role="status" aria-live="polite"></span>
+    </div>
+  </header>
+  <div class="main">
+    <section class="work" aria-label="Ad">
+      <div class="bar">
+        <span id="fmts" class="bar" role="group" aria-label="Size"></span><span class="sep"></span>
+        <span id="sets" class="bar" role="group" aria-label="Product set"></span><span class="sep"></span>
+        <button class="chip" id="play" type="button">▶ Play</button>
+      </div>
+      <div class="stagewrap"><div class="stage" id="stage"></div></div>
+      <p class="hint">Tap anything on the ad to edit it. Drag to move · blue corner to resize · round handle to turn (Shift = 15° steps) · arrows nudge · Delete removes · Ctrl+Z / Ctrl+Y undo and redo · Ctrl+D duplicates.</p>
+    </section>
+    <aside class="side" aria-label="Options">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-tab="tpl" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Templates</button>
+        <button class="tab" role="tab" data-tab="edit" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5h16v2M9 19h6M12 5v14"/></svg>Edit</button>
+        <button class="tab" role="tab" data-tab="prod" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6v4H9zM8 7h8l1 14H7z"/></svg>Products</button>
+        <button class="tab" role="tab" data-tab="style" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="9" r="1.3" fill="currentColor"/><circle cx="14" cy="7.5" r="1.3" fill="currentColor"/><circle cx="16.5" cy="12" r="1.3" fill="currentColor"/><path d="M12 21a3 3 0 0 1 0-6h1"/></svg>Style</button>
+        <button class="tab" role="tab" data-tab="motion" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Motion</button>
+        <button class="tab" role="tab" data-tab="export" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Export</button>
+      </div>
+
+      <div class="pane" data-pane="tpl" role="tabpanel">
+        <input type="search" id="tq" placeholder="Search 50+ templates — Eid, SPF, flash sale…" aria-label="Search templates">
+        <div class="cats" id="cats"></div>
+        <div class="tg" id="tg"></div>
+        <details id="mine-d"><summary>My saved designs <span class="lbl" id="mine-n"></span></summary><div class="in"><div class="mine" id="mine"></div>
+          <div class="btns"><button class="btn sm" id="saveas" type="button">Save as a copy</button></div></div></details>
+      </div>
+
+      <div class="pane" data-pane="edit" role="tabpanel" hidden>
+        <details open><summary>Add</summary><div class="in">
+          <div class="btns">
+            <button class="btn sm" data-add="heading" type="button">Heading</button><button class="btn sm" data-add="text" type="button">Text</button>
+            <button class="btn sm" data-add="btn" type="button">Button</button><button class="btn sm" data-add="arabic" type="button">عربي</button>
+            <button class="btn sm" data-add="logo" type="button">Logo</button><button class="btn sm" data-add="pay" type="button">tabby/tamara</button>
+            <label class="btn sm" for="add-img">Image…</label><input id="add-img" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          </div>
+          <div class="g2"><div class="row"><label for="add-badge">Badge</label><select id="add-badge"><option value="">Add a badge…</option><option value="burst">Burst</option><option value="circle">Circle</option><option value="pill">Pill</option><option value="star">Star</option><option value="heart">Heart</option><option value="banner">Banner</option><option value="ribbon">Corner ribbon</option></select></div>
+          <div class="row"><label for="add-shape">Shape</label><select id="add-shape"><option value="">Add a shape…</option><option value="rect">Rectangle</option><option value="circle">Circle</option><option value="ellipse">Oval</option><option value="ring">Ring</option><option value="arch">Arch</option><option value="blob">Blob</option><option value="ticket">Ticket</option><option value="line">Line</option></select></div></div>
+          <div class="row"><span class="lbl">Icon</span><div class="icg" id="icg"></div></div>
+        </div></details>
+        <details open id="sel-d"><summary><span id="sel-t">Nothing selected</span></summary><div class="in" id="props">
+          <p class="empty" id="sel-empty">Tap a text, button, badge or shape on the ad — or pick one under Layers.</p>
+          <div class="btns" data-need="any"><button class="btn sm" id="dup" type="button">Duplicate</button><button class="btn sm" id="del" type="button">Delete</button><button class="btn sm" id="fwd" type="button">Forward</button><button class="btn sm" id="bwd" type="button">Back</button><button class="btn sm" id="eres" type="button">Reset</button></div>
+          <div class="row" data-show="text btn shape logo"><label for="p-txt">Text</label><textarea id="p-txt" data-p="txt" maxlength="200" rows="2"></textarea></div>
+          <div class="g2" data-show="text btn shape logo"><div class="row"><label for="p-fn">Font</label><select id="p-fn" data-p="fn"></select></div>
+            <div class="row"><label for="p-fw">Weight</label><select id="p-fw" data-p="fw"><option>400</option><option>500</option><option>600</option><option>700</option><option>800</option><option>900</option></select></div></div>
+          <div class="g2" data-show="text btn shape logo"><div class="row"><label for="p-fs">Text size <span id="v-fs"></span></label><input id="p-fs" type="range" data-p="fs" min="1" max="45" step=".1"></div>
+            <div class="row"><label for="p-col">Text colour</label><div class="crow"><input id="p-col" type="color" data-p="col"><div class="seg" id="p-al" style="flex:1"><button data-v="l" type="button" aria-label="Align left">L</button><button data-v="c" type="button" aria-label="Centre">C</button><button data-v="r" type="button" aria-label="Align right">R</button></div></div></div></div>
+          <div class="btns" data-show="text btn shape logo"><label class="ck"><input type="checkbox" data-p="fi"> Italic</label><label class="ck"><input type="checkbox" data-p="up"> CAPS</label><label class="ck" title="Keeps each line on one line, making the text smaller if it is too long"><input type="checkbox" data-p="nw"> Fit each line</label></div>
+          <div class="g2" data-show="text btn shape"><div class="row"><label for="p-ls">Letter spacing</label><input id="p-ls" type="range" data-p="ls" min="-10" max="60" step="1"></div>
+            <div class="row"><label for="p-lh">Line height</label><input id="p-lh" type="range" data-p="lh" min="70" max="200" step="1"></div></div>
+          <div class="g2" data-show="icon"><div class="row"><label for="p-ic">Icon</label><select id="p-ic" data-p="ic"></select></div><div class="row"><label for="p-icol">Colour</label><input id="p-icol" type="color" data-p="col"></div></div>
+          <div class="row" data-show="pay"><label for="p-pay">Shows</label><select id="p-pay" data-p="pay"><option value="both">tabby + tamara</option><option value="tabby">tabby</option><option value="tamara">tamara</option></select></div>
+          <div class="row" data-show="text btn shape"><label for="p-sh">Shape behind</label><select id="p-sh" data-p="sh"></select></div>
+          <div class="g2" data-show="fill"><div class="row"><label for="p-fill">Fill</label><div class="crow"><input id="p-fill" type="color" data-p="fill"><button class="btn sm" id="p-fill0" type="button">None</button></div></div>
+            <div class="row"><label for="p-fill2">2nd colour (gradient)</label><div class="crow"><input id="p-fill2" type="color" data-p="fill2"><button class="btn sm" id="p-fill20" type="button">Off</button></div></div></div>
+          <div class="g2" data-show="fill"><div class="row"><label for="p-rad">Corners</label><input id="p-rad" type="range" data-p="rad" min="0" max="20" step=".1"></div>
+            <div class="row"><label for="p-pd">Padding</label><input id="p-pd" type="range" data-p="pd" min="0" max="6" step=".1"></div></div>
+          <div class="g3" data-show="border"><div class="row"><label for="p-bc">Border</label><input id="p-bc" type="color" data-p="bc"></div><div class="row"><label for="p-bw">Width</label><input id="p-bw" type="range" data-p="bw" min="0" max="20" step=".5"></div>
+            <div class="row"><label for="p-bs">Line</label><select id="p-bs" data-p="bs"><option value="solid">Solid</option><option value="dashed">Dashed</option><option value="dotted">Dotted</option></select></div></div>
+          <div class="g3" data-need="any"><div class="row"><label for="p-op">Opacity</label><input id="p-op" type="range" data-p="op" min="0" max="100" step="1"></div>
+            <div class="row"><label for="p-shd">Shadow</label><input id="p-shd" type="range" data-p="shd" min="0" max="100" step="1"></div>
+            <div class="row"><label for="p-r">Turn <span id="v-r"></span></label><input id="p-r" type="range" data-g="r" min="-180" max="180" step="1"></div></div>
+          <div class="g4" data-need="geo"><div class="row"><label for="p-x">X</label><input id="p-x" type="number" data-g="x" step=".5"></div><div class="row"><label for="p-y">Y</label><input id="p-y" type="number" data-g="y" step=".5"></div>
+            <div class="row"><label for="p-w">W</label><input id="p-w" type="number" data-g="w" step=".5" min=".5"></div><div class="row"><label for="p-h">H</label><input id="p-h" type="number" data-g="h" step=".5" min="0"></div></div>
+          <div class="btns" data-need="any"><label class="ck"><input type="checkbox" id="p-hd"> Hide in this size only</label><button class="btn sm" id="match" type="button" title="Place it in Post, Square and Story the way it sits here">Same place in all sizes</button></div>
+          <p class="note" data-need="any">Text, colours and fonts are shared by Post, Square and Story; position and size are per size.</p>
+        </div></details>
+        <details open><summary>Layers</summary><div class="in"><div class="layers" id="layers"></div></div></details>
+      </div>
+
+      <div class="pane" data-pane="prod" role="tabpanel" hidden>
+        <div id="psel">
+          <h3 id="ps-t">No product selected</h3>
+          <p class="note" id="ps-h">Tap a product on the ad to move, resize or swap it.</p>
+        </div>
+        <div class="g2" data-pneed><div class="row"><label for="ps-p">Product</label><select id="ps-p"></select></div>
+          <div class="row"><label for="ps-r">Turn <span id="ps-rv"></span></label><input id="ps-r" type="range" min="-180" max="180" step="1"></div></div>
+        <div class="g2" data-pneed><div class="row"><label for="ps-sh">Shadow</label><input id="ps-sh" type="range" min="0" max="100" step="1"></div>
+          <div class="row"><label for="ps-ss">Shadow style</label><select id="ps-ss"><option value="soft">Soft</option><option value="sharp">Sharp</option><option value="glow">Glow</option></select></div></div>
+        <div class="btns" data-pneed><button class="btn sm" id="ps-sm" type="button">Smaller</button><button class="btn sm" id="ps-bg" type="button">Bigger</button><button class="btn sm" id="ps-fr" type="button">To front</button><button class="btn sm" id="ps-del" type="button">Remove</button></div>
+        <h3>Add products</h3>
+        <div class="btns"><label class="ck"><input type="checkbox" id="pk-sets"> all 3 sets</label><label class="ck"><input type="checkbox" id="pk-fmts"> all 3 sizes</label></div>
+        <div class="pk" id="pk"></div>
+        <details><summary>Upload your own picture</summary><div class="in">
+          <label class="btn sm" for="up-file" style="justify-self:start">Choose a picture…</label><input id="up-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          <label class="ck"><input type="checkbox" id="up-bg" checked> Remove a plain white or light background</label>
+          <p class="note">PNG with a see-through background works best. It joins the list for every design.</p></div></details>
+        <div class="btns"><button class="btn sm" id="ps-reset" type="button">Reset this set to the template</button></div>
+      </div>
+
+      <div class="pane" data-pane="style" role="tabpanel" hidden>
+        <details open><summary>Background</summary><div class="in">
+          <div class="g2"><div class="row"><label for="bg-k">Type</label><select id="bg-k"><option value="solid">Solid colour</option><option value="linear">Gradient</option><option value="radial">Radial glow</option><option value="image">Picture</option></select></div>
+            <div class="row"><label for="bg-ang">Angle</label><input id="bg-ang" type="range" min="0" max="360" step="5"></div></div>
+          <div class="g2"><div class="row"><label for="bg-c1">Colour 1</label><input id="bg-c1" type="color"></div><div class="row"><label for="bg-c2">Colour 2</label><input id="bg-c2" type="color"></div></div>
+          <div class="g3"><div class="row"><label for="bg-pat">Pattern</label><select id="bg-pat"></select></div><div class="row"><label for="bg-pc">Colour</label><input id="bg-pc" type="color"></div><div class="row"><label for="bg-po">Strength</label><input id="bg-po" type="range" min="0" max="60" step="1"></div></div>
+          <div class="btns"><label class="btn sm" for="bg-file">Upload picture…</label><input id="bg-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><button class="btn sm" id="bg-noimg" type="button">Remove picture</button></div>
+          <div class="row"><label for="bg-ov">Darken picture</label><input id="bg-ov" type="range" min="0" max="80" step="1"></div>
+        </div></details>
+        <details open><summary>Brand kit</summary><div class="in">
+          <div class="g2"><div class="row"><label for="br-c1">Main colour</label><input id="br-c1" type="color"></div><div class="row"><label for="br-c2">Second colour</label><input id="br-c2" type="color"></div></div>
+          <div class="btns"><label class="btn sm" for="br-file">Upload logo…</label><input id="br-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><button class="btn sm" id="br-nologo" type="button">Use the lotus logo</button></div>
+          <label class="ck"><input type="checkbox" id="br-on"> Use my brand colours on every template</label>
+          <div class="btns"><button class="btn sm" id="br-apply" type="button">Apply brand colours to this design</button></div>
+          <p class="note">Your logo appears in every template's logo spot. Brand colours recolour buttons, ribbons, badges and accents.</p>
+        </div></details>
+      </div>
+
+      <div class="pane" data-pane="motion" role="tabpanel" hidden>
+        <p class="note">Products change set by set — the same as the video you export.</p>
+        <div class="g2">
+          <div class="row"><label for="an-in">Products change by</label><select id="an-in"><option value="fade">Crossfade</option><option value="pop">Pop in</option><option value="up">Slide up</option><option value="none">Instant</option></select></div>
+          <div class="row"><label for="an-idle">While showing</label><select id="an-idle"><option value="none">Still</option><option value="float">Gentle float</option><option value="sway">Sway</option></select></div>
+          <div class="row"><label for="an-sec">Seconds per set</label><select id="an-sec"><option>1.5</option><option>2</option><option>2.5</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
+          <div class="row"><label for="an-len">Video length</label><select id="an-len"><option value="5">5 s</option><option value="10">10 s</option><option value="15">15 s</option><option value="20">20 s</option><option value="30">30 s</option></select></div>
+        </div>
+        <div class="btns"><button class="btn" id="play2" type="button">▶ Play</button></div>
+      </div>
+
+      <div class="pane" data-pane="export" role="tabpanel" hidden>
+        <h3>Pictures · full HD <span class="lbl" id="dl-size"></span></h3>
+        <div class="seg" id="dl-fmt"><button data-v="png" type="button" aria-pressed="true">PNG · best</button><button data-v="jpg" type="button" aria-pressed="false">JPG · smaller</button></div>
+        <div class="btns dl"><button class="btn sm" id="dl-one" type="button">This picture</button><button class="btn sm" id="dl-sets" type="button">This size · 3 sets</button><button class="btn sm" id="dl-all" type="button">All sizes · 9</button></div>
+        <h3>Video</h3>
+        <div class="btns dl"><button class="btn sm" id="dl-vid" type="button">Record video of this size</button></div>
+        <p class="note" id="vid-note">Records the products changing (Motion tab) in real time — keep this tab open until it finishes.</p>
+        <div class="st" id="dl-st" role="status"></div>
+        <h3>Project file</h3>
+        <div class="btns"><button class="btn sm" id="xp" type="button">Export project (.json)</button><label class="btn sm" for="xp-in">Import project…</label><input id="xp-in" type="file" accept="application/json,.json" hidden></div>
+        <p class="note">The project file holds your saved designs, uploaded pictures and brand kit, so your work can move to another computer.</p>
+        <p class="note" id="where"></p>
+      </div>
+    </aside>
+  </div>
+</div>
+<script>/*LIB_H2I*/</script>
+<script>/*LIB_ZIP*/</script>
+<script>/*TEMPLATES*/</script>
+<script>/*APP*/</script>
+</body>
+</html>
