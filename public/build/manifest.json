@@ -200,6 +200,10 @@
     "file": "assets/admin-53e3e5791940-R-fTYrrd.css",
     "src": "admin-console/53e3e57919402620b49bb07705730b357f2f64e5.css"
   },
+  "admin-console/5b13ffc25bd211b9c3305a78d5e3e6101554a1d6.js": {
+    "file": "assets/admin-5b13ffc25bd2-D5x9yFcU.js",
+    "src": "admin-console/5b13ffc25bd211b9c3305a78d5e3e6101554a1d6.js"
+  },
   "admin-console/5d02c0ce35ee77604f0cbcbd1709c262a04f7bfe.js": {
     "file": "assets/admin-5d02c0ce35ee-C70OyeC-.js",
     "src": "admin-console/5d02c0ce35ee77604f0cbcbd1709c262a04f7bfe.js"
@@ -243,10 +247,6 @@
   "admin-console/6a198633649138d49cc848559521823cfab138f5.js": {
     "file": "assets/admin-6a1986336491-Bx11Vy_o.js",
     "src": "admin-console/6a198633649138d49cc848559521823cfab138f5.js"
-  },
-  "admin-console/6a6377960f13970e877f10d718bd2119a8c692e1.js": {
-    "file": "assets/admin-6a6377960f13-Gsx1AaH2.js",
-    "src": "admin-console/6a6377960f13970e877f10d718bd2119a8c692e1.js"
   },
   "admin-console/6c0aad2fd01b17c2e7b103ed36ffceeedb8a08d7.js": {
     "file": "assets/admin-6c0aad2fd01b-dDu9yvxr.js",
@@ -572,7 +572,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb-product.css": {
-    "file": "assets/kbb-product-35UqT-ps.css",
+    "file": "assets/kbb-product-DYvUrhcc.css",
     "src": "resources/css/kbb/kbb-product.css",
     "isEntry": true
   },

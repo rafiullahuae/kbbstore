@@ -291,13 +291,13 @@ it('keeps the migration, the drafts and the interface strings saying the same wo
     }
 });
 
-it('animates only transform, opacity and background-position, and stops under reduced motion', function () {
+it('animates only transform, and stops under reduced motion', function () {
     $css = (string) file_get_contents(resource_path('css/kbb/kbb-product.css'));
     preg_match_all('/@keyframes pgs\w+\{(.*?)\}\}/s', $css, $m);
     expect($m[1])->toHaveCount(2);
     foreach ($m[1] as $frames) {
         preg_match_all('/([a-z-]+):/', $frames, $props);
-        expect(array_unique($props[1]))->each->toBeIn(['transform', 'background-position']);
+        expect(array_unique($props[1]))->each->toBeIn(['transform']); // compositor only
     }
     expect($css)->toContain('@media (prefers-reduced-motion:reduce){.pdp-gs::after,.pdp-gs .cf{animation:none}}');
     // No newer CSS function beside var() (CLAUDE.md landmine).

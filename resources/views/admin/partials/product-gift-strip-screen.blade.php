@@ -36,8 +36,8 @@
 .gsa-s b{font-weight:700;line-height:1.25}.gsa-s .l{font-weight:500;opacity:.92}
 .gsa-s .i{display:inline-grid;place-items:center;flex:none;width:42px;height:42px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.6);position:relative;z-index:1}
 .gsa-s .t{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px;position:relative;z-index:1}
-.gsa-s.sh::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.85) 45%,transparent 60%) 0 0/250% 100%;animation:gsaSheen var(--d,6s) linear infinite}
-@keyframes gsaSheen{from{background-position:150% 0}to{background-position:-100% 0}}
+.gsa-s.sh::after{content:"";position:absolute;inset-block:0;left:0;width:250%;pointer-events:none;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.85) 45%,transparent 60%);transform:translateX(-90%);animation:gsaSheen var(--d,6s) linear infinite}
+@keyframes gsaSheen{from{transform:translateX(-90%)}to{transform:translateX(60%)}}
 @media (prefers-reduced-motion:reduce){.gsa-s.sh::after{animation:none}}
 .gsa-col{display:inline-flex;align-items:center;gap:8px}
 .gsa-col input[type=color]{inline-size:38px;block-size:30px;padding:0;border:1px solid #dfe5ec;border-radius:7px;background:#fff;cursor:pointer}
@@ -247,6 +247,10 @@
         body: JSON.stringify(payload) });
       var j = null;
       try { j = await r.json(); } catch (e2) { j = null; }
+      if (r.status === 404 && (!j || (!j.message && !j.error))) {
+        if (msg) { msg.style.visibility = 'visible'; msg.textContent = 'The Product page endpoint is not in this server\'s compiled route table yet. Clear the route cache (Platform → Cache) and reload.'; }
+        return;
+      }
       if (j && j.ok) {
         if (j.giftstrip) PP.giftstrip = j.giftstrip;
         if (j.msections) PP.msections = j.msections;
