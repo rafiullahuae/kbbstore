@@ -1,0 +1,68 @@
+[
+ {
+  "width": 390,
+  "button": "Buy 4 items together",
+  "request": {
+   "items": [
+    {
+     "product_id": 45,
+     "variant_id": null
+    },
+    {
+     "product_id": 48,
+     "variant_id": null
+    },
+    {
+     "product_id": 25,
+     "variant_id": null
+    },
+    {
+     "product_id": 47,
+     "variant_id": null
+    }
+   ],
+   "main_id": 44
+  },
+  "status": 200,
+  "cartLines": [
+   "Dr. Althea 345 Relief Cream + Mist Spray Set",
+   "Dr. Althea - 345 Relief Cream Mist Mini",
+   "Heartleaf 77% Soothing Toner 250ml",
+   "Dr. Althea - 0.1% Gentle Retinol Serum"
+  ],
+  "errors": []
+ },
+ {
+  "width": 1280,
+  "button": "Buy 4 items together",
+  "request": {
+   "items": [
+    {
+     "product_id": 45,
+     "variant_id": null
+    },
+    {
+     "product_id": 48,
+     "variant_id": null
+    },
+    {
+     "product_id": 25,
+     "variant_id": null
+    },
+    {
+     "product_id": 47,
+     "variant_id": null
+    }
+   ],
+   "main_id": 44
+  },
+  "status": 200,
+  "cartLines": [
+   "Dr. Althea 345 Relief Cream + Mist Spray Set",
+   "Dr. Althea - 345 Relief Cream Mist Mini",
+   "Heartleaf 77% Soothing Toner 250ml",
+   "Dr. Althea - 0.1% Gentle Retinol Serum"
+  ],
+  "errors": []
+ }
+]
