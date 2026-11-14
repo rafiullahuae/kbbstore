@@ -51,6 +51,7 @@ Route::post('/checkout/session', [CheckoutController::class, 'session'])
  * secret only keeps unsigned noise off the handler.
  */
 require __DIR__.'/payments-webhooks.php';
+require __DIR__.'/quiqup-webhooks.php';   // Quiqup status webhooks: URL secret + HMAC + timestamp window (Lane QQB)
 
 /*
  * The content-security-policy violation endpoint. In the api group for the

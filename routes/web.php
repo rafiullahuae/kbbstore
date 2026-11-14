@@ -394,6 +394,10 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // world-readable.
         require __DIR__.'/payments-admin.php';
 
+        // Store -> Quiqup settings, Orders -> Schedule with Quiqup / labels / cancel / re-book (Lane QQB).
+        // Inside admin-api for the same reason as payments: it reads encrypted keys.
+        require __DIR__.'/quiqup-admin.php';
+
         // Capture and refund settlement. Same group, same reason, only more
         // so: these endpoints move money. Capture takes a customer's funds;
         // the settlement read exposes what an authorisation is still worth.

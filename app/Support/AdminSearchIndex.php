@@ -210,6 +210,10 @@ final class AdminSearchIndex
         'newarrivals' => [
             '' => ['Keep New Arrivals automatically', 'How many products', 'Only products added in the last', 'Always show', 'Never show', 'Display', 'Reset to newest first', 'new in', 'exclude', 'include'],
         ],
+        // Store → Quiqup (Lane QQB): delivery scheduling, the Off / Internal testing / Live switch and its tabs.
+        'quiqup' => [
+            '' => ['Quiqup', 'Delivery', 'Courier', 'Schedule with Quiqup', 'Internal testing', 'Go Live', 'Connection', 'API key', 'Webhook', 'Pickup & defaults', 'Pickup address', 'Test customers', 'Statuses', 'Activity', 'Labels', 'Tracking'],
+        ],
         // Catalog → Best Sellers (2.60.661).
         'bestsellers' => [
             '' => ['Display', 'Reset to the ranking', 'best sellers', 'last three months', 'remove', 'order'],
