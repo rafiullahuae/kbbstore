@@ -137,7 +137,7 @@
   function body() {
     var phone = '<div class="mmrow">' + lbl('On phones', 'The strip’s row on the Mobile sections tab — drag it there to move it on the phone page. It sits directly above Tabby & Tamara.') + tog('data-gsa-dev', 'phone', W.phone, 'Show on phones') + '</div>';
     lookCss();
-    var card1 = '<div class="card mmcard"><div class="mmhd"><b>Product gifts strip</b><span>“Free gifts with every order. Limited time only!” on every product page, on one line that sizes itself to the screen. Changes show on the sample now and on the shop after Save changes.</span></div>'
+    var card1 = '<div class="card mmcard"><div class="mmhd"><b>Product gifts strip</b><span>“Free gifts with every order. Limited time offer!” on every product page, on one line that sizes itself to the screen. Changes show on the sample now and on the shop after Save changes.</span></div>'
       + '<div class="gsa-prev"><div id="gsaSample">' + samples() + '</div></div>'
       + '<div class="mmbody">' + row('on') + phone + ['desk', 'style', 'line1', 'line2', 'line1_ar', 'line2_ar'].map(row).join('') + '</div></div>';
     var card2 = '<div class="card mmcard"><div class="mmhd"><b>Colours</b><span>Empty = the chosen style’s own colour, shown in the picker. Pick a colour to change it; “Style’s own” puts it back.</span></div>'
