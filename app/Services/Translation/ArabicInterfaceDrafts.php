@@ -1236,7 +1236,7 @@ final class ArabicInterfaceDrafts
             'store.fbt.total' => 'الإجمالي: :amount',
             'store.fbt.add_selected' => 'أضف المحدد إلى السلة',
             // Lane RB — "Buy these together".
-            'store.buy_together.heading' => 'اشترِها معًا',
+            'store.buy_together.heading' => 'يُشترى معًا عادةً',
             'store.buy_together.button' => 'اشترِ :count منتجات معًا',
             'store.buy_together.button_one' => 'أضف منتجًا واحدًا إلى السلة',
             'store.buy_together.button_none' => 'اختر منتجًا واحدًا على الأقل',

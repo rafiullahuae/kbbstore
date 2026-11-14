@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Http\Controllers\Store\ProductController;
 use App\Models\Product;
+use App\Support\ProductRange;
 use App\Support\ProductViews;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -32,6 +33,17 @@ use Illuminate\Support\Facades\Cache;
  *      products than there are categories.
  *   4. THE SHOP'S BEST SELLERS for whatever is still missing — a category with
  *      nothing in it, or a product with no pairing at all.
+ *
+ *   ▲ FREQUENTLY BOUGHT TOGETHER (Lane FBT, 14 November 2026). The owner: "if
+ *   the product page which is open is also in a set then that set should be
+ *   shown, and if it is from a same range of brand then those range products
+ *   should be shown. And if it has a matching moisturizer or toner or eye
+ *   cream those should be shown". So, between 1 and 2: a SET the product is
+ *   in, then products of the SAME RANGE (App\Support\ProductRange — read from
+ *   the name), and inside each category the same range, then the same brand
+ *   first. His own category pairs, where he set them, still lead. pick() has
+ *   the exact order. Both new sources are two more SELECTs inside the same
+ *   union: the query count is unchanged, cold or warm.
  *
  *   Never the same product twice, never the product on the page twice, never a
  *   hidden, draft, scheduled or deleted product. A companion that needs an
@@ -70,6 +82,12 @@ class BuyTogether
     /** Best sellers kept for the top-up. */
     public const FALLBACK_POOL = 12;
 
+    /**
+     * Candidates kept for the same range (Lane FBT). Wider than a category's
+     * pool: the LIKE on the range word narrows, ProductRange::key() decides.
+     */
+    public const RANGE_POOL = 12;
+
     public function __construct(
         private BuyTogetherSettings $settings,
         private BuyTogetherPairs $pairs,
@@ -81,6 +99,18 @@ class BuyTogether
     {
         if ($productId > 0) {
             Cache::forget(self::CACHE_PREFIX.$productId);
+        }
+    }
+
+    /** Drop the cached pools of every member of one set. (Lane FBT) */
+    public static function forgetMembersOf(int $setId): void
+    {
+        if ($setId < 1) {
+            return;
+        }
+
+        foreach (\App\Models\ProductSetItem::query()->where('set_product_id', $setId)->pluck('member_product_id') as $id) {
+            self::forget((int) $id);
         }
     }
 
@@ -196,10 +226,17 @@ class BuyTogether
      */
     public function companions(Product $product, array $c): Collection
     {
-        $slots = $this->slots($product);
+        $anchor = $this->pairs->anchorFor($product);
+        $slots = $anchor === null ? [] : $this->pairs->pairsFor($anchor);
+        // His own category pairs for this shelf (the "Category pairs" list)
+        // lead the section: his hand beats the algorithm.
+        $lead = $anchor !== null && array_key_exists($anchor, $this->pairs->overrides());
+        $range = $this->rangeOf($product, $c);
         $fingerprint = md5(json_encode([
             $c['rule'], $c['count'], $c['hide_oos'], $c['same_brand'],
             $slots, $product->brand_id === null ? null : (int) $product->brand_id,
+            // (Lane FBT) the sets and range sources.
+            ! empty($c['sets']), $range,
         ]) ?: '');
         $key = self::CACHE_PREFIX.(int) $product->id;
 
@@ -209,7 +246,7 @@ class BuyTogether
             $pools = $hit['pools'];
             $rows = $this->hydrate($pools, $c);
         } else {
-            $rows = $this->cold($product, $c, $slots);
+            $rows = $this->cold($product, $c, $slots, $range);
             $pools = [];
 
             foreach ($rows as $row) {
@@ -219,7 +256,7 @@ class BuyTogether
             Cache::put($key, ['fp' => $fingerprint, 'pools' => $pools], self::TTL);
         }
 
-        $chosen = $this->pick($product, $c, $slots, $pools, $rows->keyBy(fn ($p) => (int) $p->id));
+        $chosen = $this->pick($product, $c, $slots, $pools, $rows->keyBy(fn ($p) => (int) $p->id), $range, $lead);
 
         \App\Support\SetPricing::prime($chosen);
 
@@ -281,15 +318,31 @@ class BuyTogether
 
         $slots = $this->slots($main);
         $rest = array_values(array_diff($ids, array_keys($allowed)));
+        // (Lane FBT) and the two routes added since: a set the main product
+        // is in, and a product of its brand whose name carries its range word.
+        $sets = ! empty($c['sets']);
+        $range = $this->rangeOf($main, $c);
 
-        if ($rest !== [] && $slots !== []) {
+        if ($rest !== [] && ($slots !== [] || $sets || $range !== null)) {
             $q = Product::query()->visible()
                 ->whereIn('products.id', $rest)
                 ->where(fn ($w) => $w->whereNull('products.type')->orWhere('products.type', '!=', 'variable'))
-                ->where(fn ($w) => $w->whereIn('products.category_id', $slots)
-                    ->orWhereExists(fn ($e) => $e->selectRaw('1')->from('category_product as btc')
-                        ->whereColumn('btc.product_id', 'products.id')
-                        ->whereIn('btc.category_id', $slots)));
+                ->where(function ($w) use ($slots, $sets, $range, $main) {
+                    if ($slots !== []) {
+                        $w->orWhereIn('products.category_id', $slots)
+                            ->orWhereExists(fn ($e) => $e->selectRaw('1')->from('category_product as btc')
+                                ->whereColumn('btc.product_id', 'products.id')
+                                ->whereIn('btc.category_id', $slots));
+                    }
+
+                    if ($sets) {
+                        $w->orWhereExists(fn ($e) => $this->setOf($e, $main));
+                    }
+
+                    if ($range !== null) {
+                        $w->orWhere(fn ($r) => $this->inRange($r, $main, $range));
+                    }
+                });
 
             foreach ($q->pluck('products.id') as $id) {
                 $allowed[(int) $id] = true;
@@ -326,8 +379,41 @@ class BuyTogether
     }
 
     /**
-     * Choose, from the pools, in his order: one per category, a second round,
-     * then the best sellers. Random shuffles each pool on every call.
+     * The range of the product on the page, when the section looks for one:
+     * App\Support\ProductRange's key, from its brand and name. Null with the
+     * source off, with no brand (a range lives inside one brand), or when the
+     * name names none. The brand is the one the product page already loaded.
+     *
+     * @param  array<string, mixed>  $c
+     */
+    public function rangeOf(Product $product, array $c): ?string
+    {
+        if (empty($c['range']) || $product->brand_id === null) {
+            return null;
+        }
+
+        $product->loadMissing('brand:id,name,slug');
+
+        return ProductRange::key($product->brand?->name, (string) $product->name);
+    }
+
+    /**
+     * Choose, from the pools. (Lane FBT, 14 November 2026 — "Frequently
+     * bought together"; the rule before it was the category round alone.)
+     *
+     *   1. His own category pairs, when he set them for this product's shelf —
+     *      one per category. His hand beats the algorithm.
+     *   2. A SET the product is in (one).
+     *   3. The SAME RANGE — up to half of what is left to fill, at least one.
+     *   4. One per complementary category (a toner: moisturiser, eye cream,
+     *      serum, sunscreen), each pool already ordered same range → same
+     *      brand → any brand when "Matching products first" is on.
+     *   5. The rest of the sets, the rest of the range, a second round of the
+     *      categories, then the shop's best sellers.
+     *
+     * Random shuffles each pool on every call. A range candidate counts only
+     * when its own name gives the same range key (the SQL only narrowed by a
+     * LIKE on the range word).
      *
      * @param  array<string, mixed>  $c
      * @param  list<int>  $slots
@@ -335,24 +421,37 @@ class BuyTogether
      * @param  Collection<int, Product>  $byId
      * @return Collection<int, Product>
      */
-    public function pick(Product $product, array $c, array $slots, array $pools, Collection $byId): Collection
+    public function pick(Product $product, array $c, array $slots, array $pools, Collection $byId, ?string $range = null, bool $hisPairsLead = false): Collection
     {
         $want = max(2, (int) $c['count']) - 1;
         $taken = [(int) $product->id => true];
         $out = [];
         $random = $c['rule'] === 'random';
 
-        $order = [];
-
-        foreach ($slots as $i => $_) {
-            $ids = array_values(array_map('intval', $pools['c'.$i] ?? []));
+        $pool = function (string $src) use ($pools, $random): array {
+            $ids = array_values(array_map('intval', $pools[$src] ?? []));
 
             if ($random) {
                 shuffle($ids);
             }
 
-            $order[$i] = $ids;
+            return $ids;
+        };
+
+        $order = [];
+
+        foreach ($slots as $i => $_) {
+            $order[$i] = $pool('c'.$i);
         }
+
+        $sets = $pool('s');
+        $brandName = $product->relationLoaded('brand') ? $product->brand?->name : null;
+        $same = $range === null ? [] : array_values(array_filter(
+            $pool('r'),
+            fn (int $id) => $byId->has($id)
+                && (int) $byId[$id]->brand_id === (int) $product->brand_id
+                && ProductRange::key($brandName, (string) $byId[$id]->name) === $range,
+        ));
 
         $takeFrom = function (array $ids) use (&$taken, &$out, $byId): bool {
             foreach ($ids as $id) {
@@ -367,7 +466,13 @@ class BuyTogether
             return false;
         };
 
-        for ($round = 0; $round < 2 && count($out) < $want; $round++) {
+        $takeUpTo = function (array $ids, int $n) use (&$out, $want, $takeFrom): void {
+            for ($k = 0; $k < $n && count($out) < $want && $takeFrom($ids); $k++) {
+                // one at a time, in the pool's order
+            }
+        };
+
+        $round = function () use ($order, &$out, $want, $takeFrom): void {
             foreach ($order as $ids) {
                 if (count($out) >= $want) {
                     break;
@@ -375,7 +480,22 @@ class BuyTogether
 
                 $takeFrom($ids);
             }
+        };
+
+        if ($hisPairsLead) {
+            $round();
         }
+
+        $takeUpTo($sets, 1);
+        $takeUpTo($same, max(1, intdiv($want - count($out), 2)));
+
+        if (! $hisPairsLead) {
+            $round();
+        }
+
+        $takeUpTo($sets, $want);
+        $takeUpTo($same, $want);
+        $round();
 
         $fallback = array_values(array_map('intval', $pools['f'] ?? []));
 
@@ -393,9 +513,24 @@ class BuyTogether
      * @param  list<int>  $slots
      * @return Collection<int, Product>
      */
-    public function cold(Product $product, array $c, array $slots): Collection
+    public function cold(Product $product, array $c, array $slots, ?string $range = null): Collection
     {
         $parts = [];
+
+        // (Lane FBT) The sets this product is in, and its range.
+        if (! empty($c['sets'])) {
+            $parts[] = $this->ordered(
+                $this->part($product, $c, 's', self::POOL)->whereExists(fn ($e) => $this->setOf($e, $product)),
+                $c, $product, null,
+            );
+        }
+
+        if ($range !== null) {
+            $parts[] = $this->ordered(
+                $this->part($product, $c, 'r', self::RANGE_POOL)->where(fn ($w) => $this->inRange($w, $product, $range)),
+                $c, $product, null,
+            );
+        }
 
         foreach ($slots as $i => $categoryId) {
             $q = $this->part($product, $c, 'c'.$i, self::POOL)
@@ -404,7 +539,7 @@ class BuyTogether
                         ->whereColumn('btc.product_id', 'products.id')
                         ->where('btc.category_id', $categoryId)));
 
-            $parts[] = $this->ordered($q, $c, $product);
+            $parts[] = $this->ordered($q, $c, $product, $range);
         }
 
         // The top-up: the shop's best sellers, whatever the rule.
@@ -421,6 +556,25 @@ class BuyTogether
         $rows->load('brand:id,name,slug');
 
         return $rows;
+    }
+
+    /** `EXISTS` body: the row is a set that holds $member. */
+    private function setOf($e, Product $member)
+    {
+        return $e->selectRaw('1')->from('product_set_items as btsi')
+            ->whereColumn('btsi.set_product_id', 'products.id')
+            ->where('btsi.member_product_id', (int) $member->id);
+    }
+
+    /**
+     * Same brand, and the range's word in the name. A LIKE narrows; pick()
+     * confirms each candidate's own key. The word is letters and digits only
+     * (ProductRange::needle), so it carries no wildcard.
+     */
+    private function inRange($w, Product $product, string $range)
+    {
+        return $w->where('products.brand_id', (int) $product->brand_id)
+            ->whereRaw('LOWER(products.name) LIKE ?', ['%'.ProductRange::needle($range).'%']);
     }
 
     /**
@@ -474,10 +628,19 @@ class BuyTogether
     }
 
     /** The rule's ORDER BY, after "same brand first" when that is on. */
-    private function ordered(Builder $q, array $c, Product $product): Builder
+    private function ordered(Builder $q, array $c, Product $product, ?string $range = null): Builder
     {
         if ($c['same_brand'] && $product->brand_id !== null) {
-            $q->orderByRaw('CASE WHEN products.brand_id = ? THEN 0 ELSE 1 END', [(int) $product->brand_id]);
+            // (Lane FBT) "a matching moisturizer": the same range first, then
+            // the same brand, then any brand.
+            if ($range !== null) {
+                $q->orderByRaw(
+                    'CASE WHEN products.brand_id = ? AND LOWER(products.name) LIKE ? THEN 0 WHEN products.brand_id = ? THEN 1 ELSE 2 END',
+                    [(int) $product->brand_id, '%'.ProductRange::needle($range).'%', (int) $product->brand_id],
+                );
+            } else {
+                $q->orderByRaw('CASE WHEN products.brand_id = ? THEN 0 ELSE 1 END', [(int) $product->brand_id]);
+            }
         }
 
         match ((string) $c['rule']) {

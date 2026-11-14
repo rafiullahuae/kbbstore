@@ -89,12 +89,17 @@ class BuyTogetherPairs
         'sunscreen' => ['moisturizer', 'toner', 'cleansing_oil', 'mask'],
         'cleanser' => ['toner', 'serum', 'moisturizer', 'sunscreen'],
         'cleansing_oil' => ['cleanser', 'toner', 'moisturizer', 'sunscreen'],
-        'toner' => ['serum', 'moisturizer', 'sunscreen', 'mask'],
-        'serum' => ['moisturizer', 'sunscreen', 'toner', 'cleanser'],
-        'moisturizer' => ['serum', 'sunscreen', 'toner', 'cleanser'],
+        // (Lane FBT, 14 Nov 2026) The routine around a toner, a serum and a
+        // moisturiser, his words: "if it has a matching moisturizer or toner
+        // or eye cream those should be shown". A toner suggests the
+        // moisturiser and eye cream that follow it; a moisturiser the toner,
+        // serum and eye cream; a serum the moisturiser, toner and eye cream.
+        'toner' => ['moisturizer', 'eye', 'serum', 'sunscreen'],
+        'serum' => ['moisturizer', 'toner', 'eye', 'sunscreen'],
+        'moisturizer' => ['toner', 'serum', 'eye', 'sunscreen'],
         'mask' => ['toner', 'serum', 'moisturizer', 'sunscreen'],
         'exfoliator' => ['toner', 'serum', 'moisturizer', 'sunscreen'],
-        'eye' => ['serum', 'moisturizer', 'sunscreen', 'mask'],
+        'eye' => ['moisturizer', 'toner', 'serum', 'mask'],
         'lip' => ['moisturizer', 'sunscreen', 'mask', 'eye'],
         // A shampoo goes with a conditioner: one more from its own shelf first.
         'hair' => ['hair', 'mask', 'lip', 'sunscreen'],

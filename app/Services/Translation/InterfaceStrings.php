@@ -1345,7 +1345,8 @@ final class InterfaceStrings
              * script counts in the page's own language. The rest are what the
              * one-request add answers with.
              */
-            'buy_together.heading' => 'Buy these together',
+            // (Lane FBT) renamed by the owner, 14 Nov 2026.
+            'buy_together.heading' => 'Frequently bought together',
             'buy_together.button' => 'Buy :count items together',
             'buy_together.button_one' => 'Add 1 item to cart',
             'buy_together.button_none' => 'Tick at least one product',

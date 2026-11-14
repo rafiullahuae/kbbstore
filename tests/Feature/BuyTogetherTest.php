@@ -278,8 +278,10 @@ it('prefers the same brand inside each shelf when asked', function () {
     $s['self']->forceFill(['brand_id' => $brand->id])->save();
     btProduct('Moist Same Brand', [$s['cats']['moist']], 5, ['brand_id' => $brand->id]);
 
-    expect(btNames($s['self'])[1])->toBe('Moist Best');
-    expect(btNames($s['self'], ['same_brand' => true])[1])->toBe('Moist Same Brand');
+    // (Lane FBT) ON by default since the owner asked for "a matching
+    // moisturizer", 14 Nov 2026; off is the old any-brand order.
+    expect(btNames($s['self'])[1])->toBe('Moist Same Brand');
+    expect(btNames($s['self'], ['same_brand' => false])[1])->toBe('Moist Best');
 });
 
 it('fills an empty shelf, and a product with no pairing, from the shop\'s best sellers — never twice', function () {
@@ -406,7 +408,8 @@ it('draws the cart rail\'s cards with a green tick on each, a plus between them,
         ->toContain('data-many="Buy :count items together"')
         ->toContain('data-one="Add 1 item to cart"')
         ->toContain('data-none="Tick at least one product"')
-        ->toContain('>Buy these together</h2>');
+        // (Lane FBT) the owner renamed it, 14 Nov 2026.
+        ->toContain('>Frequently bought together</h2>');
     // The cart rail's sizing, from the cart page's own settings.
     expect($html)->toContain('--cpg-per:4.50')->toContain('--bt-d-card:calc(');
 });
@@ -791,7 +794,8 @@ it('serves the tab from the product page endpoint, with both device switches rea
         // Lane RE added the three tiers and the coupon switch to the same tab.
         // Lane RH added the master switch over the total and the discount, and
         // the row's two device switches -- appended, so the payload is additive.
-        ->toBe(['on', 'count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar', 'tier_3', 'tier_4', 'tier_5', 'coupons', 'discount_on', 'row_phone', 'row_laptop']);
+        // Lane FBT appended the sets and range sources.
+        ->toBe(['on', 'count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar', 'tier_3', 'tier_4', 'tier_5', 'coupons', 'discount_on', 'row_phone', 'row_laptop', 'sets', 'range']);
     expect($body['phone'])->toBeFalse()->and($body['laptop'])->toBeTrue()->and($body['max_pairs'])->toBe(5);
 
     $sun = collect($body['pairs'])->firstWhere('name', 'Sunscreens');

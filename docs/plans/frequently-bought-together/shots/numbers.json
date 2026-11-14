@@ -1,0 +1,333 @@
+{
+ "before-en": [
+  {
+   "lang": "en",
+   "width": 390,
+   "url": "http://127.0.0.1:9447/product/pdp-heartleaf-toner/",
+   "errors": [],
+   "heading": "Buy these together",
+   "headingPx": "14px",
+   "sectionW": 390,
+   "sectionH": 259,
+   "cardW": 79,
+   "names": [
+    "Heartleaf 77% Soothing Toner 250ml",
+    "Mugwort Calming Serum 50ml",
+    "1025 Dokdo Lotion 200ml",
+    "Birch Moisture Sunscreen SPF45"
+   ],
+   "clickable": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "scrollWidth": 390,
+   "imgs": [],
+   "bg": [
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "lang": "en",
+   "width": 1280,
+   "url": "http://127.0.0.1:9447/product/pdp-heartleaf-toner/",
+   "errors": [],
+   "heading": "Buy these together",
+   "headingPx": "17px",
+   "sectionW": 1236,
+   "sectionH": 240,
+   "cardW": 116,
+   "names": [
+    "Heartleaf 77% Soothing Toner 250ml",
+    "Mugwort Calming Serum 50ml",
+    "1025 Dokdo Lotion 200ml",
+    "Birch Moisture Sunscreen SPF45"
+   ],
+   "clickable": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "scrollWidth": 1280,
+   "imgs": [],
+   "bg": [
+    false,
+    false,
+    false,
+    false
+   ]
+  }
+ ],
+ "before-ar": [
+  {
+   "lang": "ar",
+   "width": 390,
+   "url": "http://127.0.0.1:9447/ar/product/pdp-heartleaf-toner/",
+   "errors": [],
+   "heading": "اشترِها معًا",
+   "headingPx": "14px",
+   "sectionW": 390,
+   "sectionH": 259,
+   "cardW": 79,
+   "names": [
+    "تونر هارتليف المهدّئ ٧٧٪ ٢٥٠ مل",
+    "Mugwort Calming Serum 50ml",
+    "1025 Dokdo Lotion 200ml",
+    "Birch Moisture Sunscreen SPF45"
+   ],
+   "clickable": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "scrollWidth": 390,
+   "imgs": [],
+   "bg": [
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "lang": "ar",
+   "width": 1280,
+   "url": "http://127.0.0.1:9447/ar/product/pdp-heartleaf-toner/",
+   "errors": [],
+   "heading": "اشترِها معًا",
+   "headingPx": "17px",
+   "sectionW": 1236,
+   "sectionH": 240,
+   "cardW": 116,
+   "names": [
+    "تونر هارتليف المهدّئ ٧٧٪ ٢٥٠ مل",
+    "Mugwort Calming Serum 50ml",
+    "1025 Dokdo Lotion 200ml",
+    "Birch Moisture Sunscreen SPF45"
+   ],
+   "clickable": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "scrollWidth": 1280,
+   "imgs": [],
+   "bg": [
+    false,
+    false,
+    false,
+    false
+   ]
+  }
+ ],
+ "after-en": [
+  {
+   "lang": "en",
+   "width": 390,
+   "url": "http://127.0.0.1:9347/product/pdp-heartleaf-toner/",
+   "errors": [],
+   "heading": "Frequently bought together",
+   "headingPx": "14px",
+   "sectionW": 390,
+   "sectionH": 259,
+   "cardW": 79,
+   "names": [
+    "Heartleaf 77% Soothing Toner 250ml",
+    "Heartleaf Soothing Duo Set",
+    "Heartleaf Pore Control Cleansing Oil 200ml",
+    "Heartleaf 70% Intense Calming Cream 50ml"
+   ],
+   "clickable": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "scrollWidth": 390,
+   "imgs": [],
+   "bg": [
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "lang": "en",
+   "width": 1280,
+   "url": "http://127.0.0.1:9347/product/pdp-heartleaf-toner/",
+   "errors": [],
+   "heading": "Frequently bought together",
+   "headingPx": "17px",
+   "sectionW": 1236,
+   "sectionH": 252,
+   "cardW": 116,
+   "names": [
+    "Heartleaf 77% Soothing Toner 250ml",
+    "Heartleaf Soothing Duo Set",
+    "Heartleaf Pore Control Cleansing Oil 200ml",
+    "Heartleaf 70% Intense Calming Cream 50ml"
+   ],
+   "clickable": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "scrollWidth": 1280,
+   "imgs": [],
+   "bg": [
+    false,
+    false,
+    false,
+    false
+   ]
+  }
+ ],
+ "after-ar": [
+  {
+   "lang": "ar",
+   "width": 390,
+   "url": "http://127.0.0.1:9347/ar/product/pdp-heartleaf-toner/",
+   "errors": [],
+   "heading": "يُشترى معًا عادةً",
+   "headingPx": "14px",
+   "sectionW": 390,
+   "sectionH": 259,
+   "cardW": 79,
+   "names": [
+    "تونر هارتليف المهدّئ ٧٧٪ ٢٥٠ مل",
+    "Heartleaf Soothing Duo Set",
+    "Heartleaf Pore Control Cleansing Oil 200ml",
+    "Heartleaf 70% Intense Calming Cream 50ml"
+   ],
+   "clickable": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "scrollWidth": 390,
+   "imgs": [],
+   "bg": [
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
+   "lang": "ar",
+   "width": 1280,
+   "url": "http://127.0.0.1:9347/ar/product/pdp-heartleaf-toner/",
+   "errors": [],
+   "heading": "يُشترى معًا عادةً",
+   "headingPx": "17px",
+   "sectionW": 1236,
+   "sectionH": 252,
+   "cardW": 116,
+   "names": [
+    "تونر هارتليف المهدّئ ٧٧٪ ٢٥٠ مل",
+    "Heartleaf Soothing Duo Set",
+    "Heartleaf Pore Control Cleansing Oil 200ml",
+    "Heartleaf 70% Intense Calming Cream 50ml"
+   ],
+   "clickable": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "scrollWidth": 1280,
+   "imgs": [],
+   "bg": [
+    false,
+    false,
+    false,
+    false
+   ]
+  }
+ ],
+ "speed": {
+  "method": "tools/fbt-speed.php (copy of tools/amp-speed.php): in-process, 1 warm-up + 15 runs, median; two alternating rounds; catalogue from tools/fbt-seed.php; the full test suite was running on the same machine",
+  "before": [
+   {
+    "product": {
+     "median_ms": 28.4,
+     "queries": 14,
+     "settings_reads": 6
+    },
+    "category": {
+     "median_ms": 20.6,
+     "queries": 5,
+     "settings_reads": 5
+    },
+    "brand": {
+     "median_ms": 22,
+     "queries": 8,
+     "settings_reads": 6
+    }
+   },
+   {
+    "product": {
+     "median_ms": 28.6,
+     "queries": 14,
+     "settings_reads": 6
+    },
+    "category": {
+     "median_ms": 20.1,
+     "queries": 5,
+     "settings_reads": 5
+    },
+    "brand": {
+     "median_ms": 24.5,
+     "queries": 8,
+     "settings_reads": 6
+    }
+   }
+  ],
+  "after": [
+   {
+    "product": {
+     "median_ms": 27.1,
+     "queries": 14,
+     "settings_reads": 6
+    },
+    "category": {
+     "median_ms": 19.3,
+     "queries": 5,
+     "settings_reads": 5
+    },
+    "brand": {
+     "median_ms": 25.8,
+     "queries": 8,
+     "settings_reads": 6
+    }
+   },
+   {
+    "product": {
+     "median_ms": 27.6,
+     "queries": 14,
+     "settings_reads": 6
+    },
+    "category": {
+     "median_ms": 17,
+     "queries": 5,
+     "settings_reads": 5
+    },
+    "brand": {
+     "median_ms": 21.1,
+     "queries": 8,
+     "settings_reads": 6
+    }
+   }
+  ]
+ }
+}
