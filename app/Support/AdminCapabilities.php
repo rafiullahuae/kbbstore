@@ -149,6 +149,14 @@ final class AdminCapabilities
         // again. Owner only, like the Payments screen it sits on.
         'codrefusals.view' => ['owner'],
         'codrefusals.manage' => ['owner'],
+        // Store -> Quiqup and Schedule with Quiqup (Lane QQB, QUIQUP-PLAN §3.5).
+        // `view` reads the screen, the sheet's preview and a shipment;
+        // `ship` books, cancels, re-books and prints labels -- each one is a
+        // billed courier, so not support; `settings` holds the API key and
+        // the status mapping, owner only.
+        'quiqup.view' => ['owner', 'manager', 'support'],
+        'quiqup.ship' => ['owner', 'manager'],
+        'quiqup.settings' => ['owner'],
         // Store -> SEO Keywords (Lane KW). Reading the keyword bank and each
         // page's keywords is a manager's job as much as the owner's; changing
         // what the storefront publishes -- a sync, an undo, a hand edit, the
@@ -1428,6 +1436,26 @@ final class AdminCapabilities
          * which would have left the shop's own packing staff unable to print.
          */
         ['GET', 'admin-api/orders-bulk-documents', 'invoices.view'],
+        /*
+         * Store -> Quiqup (Lane QQB, routes/quiqup-admin.php). Every path is
+         * named exactly -- no wildcard -- so a path added later is owner-only
+         * until somebody maps it. GET settings is a read (secrets come back
+         * as {filled, last4}); every write and the test call are settings.
+         */
+        ['GET', 'admin-api/quiqup-settings', 'quiqup.view'],
+        ['POST', 'admin-api/quiqup-settings', 'quiqup.settings'],
+        ['POST', 'admin-api/quiqup-test', 'quiqup.settings'],
+        ['GET', 'admin-api/quiqup-activity', 'quiqup.view'],
+        ['POST', 'admin-api/quiqup-mode', 'quiqup.settings'],
+        ['POST', 'admin-api/quiqup-test-order', 'quiqup.settings'],
+        ['POST', 'admin-api/quiqup-preview', 'quiqup.view'],
+        ['GET', 'admin-api/quiqup-shipment', 'quiqup.view'],
+        ['POST', 'admin-api/quiqup-refresh', 'quiqup.view'],
+        ['POST', 'admin-api/quiqup-schedule', 'quiqup.ship'],
+        ['POST', 'admin-api/quiqup-step', 'quiqup.ship'],
+        ['POST', 'admin-api/quiqup-cancel', 'quiqup.ship'],
+        ['POST', 'admin-api/quiqup-rebook', 'quiqup.ship'],
+        ['GET', 'admin-api/quiqup-labels', 'quiqup.ship'],
         ['GET', 'admin-api/orders-export', 'orders.export'],
         ['POST', 'admin-api/orders-bulk-delete', 'orders.delete'],
         ['POST', 'admin-api/orders-bulk-restore', 'orders.delete'],

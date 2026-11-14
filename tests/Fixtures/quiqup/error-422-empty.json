@@ -1,0 +1,22 @@
+{
+  "api_error": {
+    "code": "",
+    "message": "",
+    "human": "",
+    "description": "",
+    "http_status_code": 422,
+    "attribute_errors": []
+  },
+  "error": "",
+  "error_detail": "",
+  "errors": [
+    {
+      "detail": ""
+    }
+  ],
+  "error_details": [
+    {
+      "detail": ""
+    }
+  ]
+}

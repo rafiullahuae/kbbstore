@@ -1,0 +1,22 @@
+{
+  "api_error": {
+    "code": "",
+    "message": "CanSubmitJobPolicy failed policy check",
+    "human": "CanSubmitJobPolicy failed policy check",
+    "description": "",
+    "http_status_code": 422,
+    "attribute_errors": []
+  },
+  "error": "CanSubmitJobPolicy failed policy check",
+  "error_detail": "CanSubmitJobPolicy failed policy check",
+  "errors": [
+    {
+      "detail": "CanSubmitJobPolicy failed policy check"
+    }
+  ],
+  "error_details": [
+    {
+      "detail": "CanSubmitJobPolicy failed policy check"
+    }
+  ]
+}

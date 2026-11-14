@@ -305,3 +305,17 @@ Schedule::command('kbb:order-emirates')
 Schedule::command('kbb:new-arrivals-sync')
     ->everyMinute()
     ->withoutOverlapping(5);
+
+/*
+| ── QUIQUP DELIVERIES (Lane QQB, QUIQUP-PLAN §6.3) ─────────────────────────
+|
+| Re-applies a webhook event whose apply failed, finishes bookings a closed
+| tab left queued, and polls Quiqup for shipments that are due -- the backup
+| to webhooks, never the primary. No queue worker exists on the live host, so
+| this tick is the only background worker. One indexed EXISTS a minute when
+| nothing is due; at most 30 Quiqup calls an hour whatever the backlog.
+*/
+Schedule::command('kbb:quiqup-sync')
+    ->everyMinute()
+    ->withoutOverlapping(5)
+    ->runInBackground();

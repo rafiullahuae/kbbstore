@@ -1,0 +1,9 @@
+{
+  "order": {
+    "id": 10000001,
+    "uuid": "00000000-0000-4000-8000-000000000001",
+    "state": "pending",
+    "partner_order_id": "PARTNER-ORDER-ID",
+    "tracking_url": "https://track-parcel.quiqup.com/00000000-0000-4000-8000-000000000001"
+  }
+}

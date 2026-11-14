@@ -1,0 +1,27 @@
+{
+  "api_error": {
+    "attribute_errors": [
+      {
+        "detail": "[order][references] a unique reference with the same label and value already exists for this account"
+      }
+    ],
+    "code": "duplicate_order_reference",
+    "description": "A unique order reference already exists for this account.",
+    "http_status_code": 422,
+    "human": "[order][references] a unique reference with the same label and value already exists for this account",
+    "id": 1010,
+    "message": "[order][references] a unique reference with the same label and value already exists for this account"
+  },
+  "error": "[order][references] a unique reference with the same label and value already exists for this account",
+  "error_detail": "[order][references] a unique reference with the same label and value already exists for this account",
+  "error_details": [
+    {
+      "detail": "[order][references] a unique reference with the same label and value already exists for this account"
+    }
+  ],
+  "errors": [
+    {
+      "detail": "[order][references] a unique reference with the same label and value already exists for this account"
+    }
+  ]
+}

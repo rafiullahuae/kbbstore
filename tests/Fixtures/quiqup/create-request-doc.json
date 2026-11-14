@@ -1,0 +1,49 @@
+{
+  "kind": "partner_same_day",
+  "payment_mode": "pre_paid",
+  "partner_order_id": "PARTNER-ORDER-ID",
+  "origin": {
+    "contact_name": "Warehouse contact",
+    "contact_phone": "+971500000000",
+    "address": {
+      "address1": "Example Warehouse, Street 1",
+      "address2": "Al Quoz Industrial Area 4",
+      "country": "AE",
+      "town": "Dubai"
+    }
+  },
+  "destination": {
+    "contact_name": "Customer name",
+    "contact_phone": "+971599999999",
+    "contact_email": "customer@example.com",
+    "notes": "",
+    "address": {
+      "address1": "1st Road",
+      "address2": "104G",
+      "country": "AE",
+      "town": "Dubai"
+    }
+  },
+  "products": [
+    {
+      "sku": "SKU-RUN-001",
+      "quantity": 1,
+      "description": "Running shoe red",
+      "barcode": "1234654-kt",
+      "selling_price": 58.3,
+      "hs_code": "64041100",
+      "country_of_origin": "CN",
+      "weight": 0.8,
+      "height": 12,
+      "width": 20,
+      "length": 30
+    }
+  ],
+  "items": [
+    {
+      "name": "Parcel 1",
+      "quantity": 1,
+      "parcel_barcode": ""
+    }
+  ]
+}
