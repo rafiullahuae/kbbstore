@@ -1,0 +1,60 @@
+{
+  "testenv-live-disabled-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "disabled-1280": {
+    "disabled": true,
+    "text": "Live (real courier) — test orders onlyA real Quiqup courier collects your test orders. Quiqup bills a delivery once it is picked up. Not available yet: verify the live API key with Test connection, save the live webhook signing secret."
+  },
+  "testenv-staging-selected-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "testenv-confirm-dialog-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "dialog-1280": "Book your test orders with a real courier?A real Quiqup courier will collect your test orders. Quiqup bills a delivery once it is picked up.Your test orders go to Quiqup production (api-ae.quiqup.com) with your live key ••••51c0.Every other order is still refused while Internal testing is on.Test orders already booked on staging keep updating from staging.Keep the test systemUse a real courier",
+  "testenv-live-selected-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "hero-1280": "Quiqup deliveries Internal testing · real courierInternal testing · real courier for your test orders. Only your test orders can be booked; they go to Quiqup production with your live key and a real courier collects them (Quiqup bills a delivery once it is picked up). Every other shopper sees the shop exactly as before.OffInternal testingLive",
+  "testenv-live-selected-full-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "hit-1280": true,
+  "console-errors-1280": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "testenv-live-disabled-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "disabled-390": {
+    "disabled": true,
+    "text": "Live (real courier) — test orders onlyA real Quiqup courier collects your test orders. Quiqup bills a delivery once it is picked up. Not available yet: verify the live API key with Test connection."
+  },
+  "testenv-staging-selected-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "testenv-confirm-dialog-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "dialog-390": "Book your test orders with a real courier?A real Quiqup courier will collect your test orders. Quiqup bills a delivery once it is picked up.Your test orders go to Quiqup production (api-ae.quiqup.com) with your live key ••••9d1e.Every other order is still refused while Internal testing is on.Test orders already booked on staging keep updating from staging.Keep the test systemUse a real courier",
+  "testenv-live-selected-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "hero-390": "Quiqup deliveries Internal testing · real courierInternal testing · real courier for your test orders. Only your test orders can be booked; they go to Quiqup production with your live key and a real courier collects them (Quiqup bills a delivery once it is picked up). Every other shopper sees the shop exactly as before.OffInternal testingLive",
+  "testenv-live-selected-full-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "hit-390": true,
+  "console-errors-390": []
+}

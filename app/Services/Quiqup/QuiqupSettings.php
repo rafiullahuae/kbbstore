@@ -63,9 +63,10 @@ final class QuiqupSettings
      * THE MODE (the owner, 14 Nov 2026): Off -> Internal testing -> Live.
      *
      *   off      nothing is booked; bookings already made keep syncing.
-     *   testing  on the live website, against Quiqup's STAGING host and key,
-     *            and only for test orders (isTestOrder()): the owner's own
-     *            orders, by email, phone or a per-order flag.
+     *   testing  on the live website, only for test orders (isTestOrder()):
+     *            the owner's own orders, by email, phone or a per-order flag.
+     *            Booked on Quiqup's STAGING host and key by default, or with a
+     *            real courier on production (TESTING_ENV_LABELS).
      *   live     the production host and key, every order.
      *
      * Going live is gated by checklist(); every change is audited and kept
@@ -77,6 +78,19 @@ final class QuiqupSettings
 
     public const MODE_LABELS = ['off' => 'Off', 'testing' => 'Internal testing', 'live' => 'Live'];
 
+    /**
+     * WHERE INTERNAL TESTING BOOKS (the owner, 14 Nov 2026: "if quiqup has
+     * staging/test api, then i would love to use test apis, so we can check
+     * everything instant"). Staging is the default; Live books the owner's
+     * TEST orders with a real, billed courier and is gated by liveMissing().
+     * Non-test orders are refused in Internal testing either way. Written
+     * only by setTestingEnv(); a stored value outside ENVS reads as staging.
+     */
+    public const TESTING_ENV_LABELS = [
+        'sandbox' => 'Quiqup test system (staging)',
+        'live' => 'Live (real courier) — test orders only',
+    ];
+
     public function mode(): string
     {
         $m = $this->options()['mode'] ?? 'off';
@@ -84,10 +98,32 @@ final class QuiqupSettings
         return in_array($m, self::MODES, true) ? $m : 'off';
     }
 
-    /** The environment NEW bookings use: live only in Live mode. */
+    /**
+     * The environment NEW bookings use: live in Live mode; in Internal
+     * testing, the one "Internal testing books on" names; staging otherwise.
+     * A shipment keeps the env it was created with (shipments.env).
+     */
     public function env(): string
     {
-        return $this->mode() === 'live' ? 'live' : 'sandbox';
+        $o = $this->options();
+
+        return self::envFor(in_array($o['mode'] ?? 'off', self::MODES, true) ? (string) $o['mode'] : 'off', self::cleanTestingEnv($o['testing_env'] ?? null));
+    }
+
+    private static function envFor(string $mode, string $testingEnv): string
+    {
+        return $mode === 'live' ? 'live' : ($mode === 'testing' ? $testingEnv : 'sandbox');
+    }
+
+    /** Where Internal testing books: 'sandbox' (default) or 'live'. */
+    public function testingEnv(): string
+    {
+        return self::cleanTestingEnv($this->options()['testing_env'] ?? null);
+    }
+
+    private static function cleanTestingEnv(mixed $v): string
+    {
+        return is_string($v) && in_array($v, self::ENVS, true) ? $v : 'sandbox';
     }
 
     public function row(string $env): QuiqupConfig
@@ -179,6 +215,8 @@ final class QuiqupSettings
             // Written only by setMode().
             'mode' => 'off',
             'mode_log' => [],
+            // Written only by setTestingEnv().
+            'testing_env' => 'sandbox',
         ];
     }
 
@@ -245,6 +283,9 @@ final class QuiqupSettings
             'mode' => $this->mode(),
             'mode_labels' => self::MODE_LABELS,
             'mode_log' => array_reverse($this->options()['mode_log'] ?? []),
+            'testing_env' => $this->testingEnv(),
+            'testing_env_labels' => self::TESTING_ENV_LABELS,
+            'testing_live_missing' => $this->liveMissing(),
             'checklist' => $this->checklist(),
             'env' => $env,
             'configured' => $this->configured($env),
@@ -330,7 +371,7 @@ final class QuiqupSettings
         }
 
         if (isset($in['options']) && is_array($in['options'])) {
-            unset($in['options']['mode'], $in['options']['mode_log']);
+            unset($in['options']['mode'], $in['options']['mode_log'], $in['options']['testing_env']);
             $clean = self::cleanOptions($in['options'], $this->options());
             $row = $this->row(self::OPTIONS_ROW);
             $row->options = $clean;
@@ -527,9 +568,32 @@ final class QuiqupSettings
      */
     public function checklist(): array
     {
+        // Delivered on EITHER environment counts (staging, or a real courier
+        // when Internal testing books on Live); the detail says which.
+        $envs = \App\Models\Shipment::query()->where('test', true)->where('state', 'delivery_complete')
+            ->distinct()->pluck('env')->all();
+        $where = array_values(array_filter([
+            in_array('sandbox', $envs, true) ? 'on staging' : null,
+            in_array('live', $envs, true) ? 'with a real courier' : null,
+        ]));
+        $endToEnd = $where !== [];
+
+        return [...$this->liveBasics(), ['key' => 'test_order', 'label' => 'At least one test order delivered end to end in Internal testing', 'ok' => $endToEnd,
+            'detail' => $endToEnd ? 'Done — ' . implode(' and ', $where) . '.' : 'Book one of your own orders in Internal testing and drive it to Delivered (in staging Quiqdash, or with a real courier).',
+            'envs' => array_values(array_intersect(self::ENVS, $envs))]];
+    }
+
+    /**
+     * What a real courier needs before ANY booking can go to production: the
+     * first three Go-Live checks. Also the gate for "Internal testing books
+     * on: Live".
+     *
+     * @return list<array{key: string, label: string, ok: bool, detail: string}>
+     */
+    private function liveBasics(): array
+    {
         $live = $this->row('live');
         $p = $this->options()['pickup'];
-        $endToEnd = \App\Models\Shipment::query()->where('test', true)->where('state', 'delivery_complete')->exists();
 
         return [
             ['key' => 'live_key', 'label' => 'Live API key saved and verified with Test connection', 'ok' => $this->configured('live') && $live->verified_at !== null,
@@ -538,9 +602,75 @@ final class QuiqupSettings
                 'detail' => 'Register the Live webhook address in production Quiqdash, then paste its signing secret.'],
             ['key' => 'pickup', 'label' => 'Pickup address and contact set', 'ok' => $p['contact_name'] !== '' && $p['contact_phone'] !== '' && $p['address1'] !== '',
                 'detail' => 'Pickup & defaults → Pickup.'],
-            ['key' => 'test_order', 'label' => 'At least one test order delivered end to end in Internal testing', 'ok' => $endToEnd,
-                'detail' => $endToEnd ? 'Done.' : 'Book one of your own orders in Internal testing and drive it to Delivered in staging Quiqdash.'],
         ];
+    }
+
+    /**
+     * Why Internal testing cannot book on Live yet: the short labels of the
+     * live prerequisites still missing. Empty = ready.
+     *
+     * @return list<string>
+     */
+    public function liveMissing(): array
+    {
+        $short = ['live_key' => 'verify the live API key with Test connection', 'live_webhook' => 'save the live webhook signing secret', 'pickup' => 'set the pickup address'];
+
+        return array_values(array_map(fn ($c) => $short[$c['key']], array_filter($this->liveBasics(), fn ($c) => ! $c['ok'])));
+    }
+
+    /**
+     * Change where Internal testing books. Live needs $confirm and every
+     * live prerequisite; each change is audited by the caller and kept in
+     * mode_log as {kind: books_on, from, to}.
+     *
+     * @return array{from: string, to: string}
+     */
+    public function setTestingEnv(mixed $to, bool $confirm, string $by): array
+    {
+        if (! is_string($to) || ! in_array($to, self::ENVS, true)) {
+            throw new \InvalidArgumentException('Choose the Quiqup test system (staging) or Live (real courier).');
+        }
+
+        $from = $this->testingEnv();
+
+        if ($from === $to) {
+            return ['from' => $from, 'to' => $to];
+        }
+
+        if ($to === 'live') {
+            if (! $confirm) {
+                throw new \InvalidArgumentException('Confirm the change first: a real Quiqup courier will collect your test orders.');
+            }
+
+            $missing = $this->liveMissing();
+            if ($missing !== []) {
+                throw new \InvalidArgumentException('Live (real courier) is not ready: ' . implode('; ', $missing) . '.');
+            }
+        }
+
+        $o = $this->options();
+        $o['testing_env'] = $to;
+        $log = is_array($o['mode_log'] ?? null) ? $o['mode_log'] : [];
+        $log[] = ['at' => now()->toIso8601String(), 'by' => mb_substr($by, 0, 100), 'kind' => 'books_on', 'from' => $from, 'to' => $to];
+        $o['mode_log'] = array_slice($log, -20);
+
+        $row = $this->row(self::OPTIONS_ROW);
+        $row->options = $o;
+        $row->save();
+        $this->markActive(self::envFor((string) $o['mode'], $to));
+
+        return ['from' => $from, 'to' => $to];
+    }
+
+    private function markActive(string $env): void
+    {
+        foreach (self::ENVS as $e) {
+            $r = $this->row($e);
+            $r->active = $e === $env;
+            if ($r->exists || $e === $env) {
+                $r->save();
+            }
+        }
     }
 
     /**
@@ -572,8 +702,12 @@ final class QuiqupSettings
             }
         }
 
-        if ($to === 'testing' && ! $this->configured('sandbox')) {
+        if ($to === 'testing' && $this->testingEnv() === 'sandbox' && ! $this->configured('sandbox')) {
             throw new \InvalidArgumentException('Add your staging API key under Connection → Sandbox first.');
+        }
+
+        if ($to === 'testing' && $this->testingEnv() === 'live' && ($missing = $this->liveMissing()) !== []) {
+            throw new \InvalidArgumentException('Internal testing is set to book with a real courier, which is not ready: ' . implode('; ', $missing) . '.');
         }
 
         $o = $this->options();
@@ -586,14 +720,7 @@ final class QuiqupSettings
         $row->options = $o;
         $row->save();
 
-        $env = $to === 'live' ? 'live' : 'sandbox';
-        foreach (self::ENVS as $e) {
-            $r = $this->row($e);
-            $r->active = $e === $env;
-            if ($r->exists || $e === $env) {
-                $r->save();
-            }
-        }
+        $this->markActive(self::envFor($to, self::cleanTestingEnv($o['testing_env'] ?? null)));
 
         return ['from' => $from, 'to' => $to];
     }

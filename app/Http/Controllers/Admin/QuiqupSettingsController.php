@@ -91,6 +91,12 @@ final class QuiqupSettingsController extends Controller
     {
         $by = (string) (auth('admin')->user()?->name ?? 'admin');
 
+        // "Internal testing books on": the same capability (quiqup.settings),
+        // the same confirm-then-audit shape, no new route.
+        if ($request->has('testing_env')) {
+            return $this->testingEnv($request, $by);
+        }
+
         try {
             $r = $this->settings->setMode((string) $request->input('mode'), $request->boolean('confirm'), $by);
         } catch (\InvalidArgumentException $e) {
@@ -100,6 +106,36 @@ final class QuiqupSettingsController extends Controller
         if ($r['from'] !== $r['to']) {
             try {
                 app(SecurityModule::class)->record('quiqup.mode', 'Store → Quiqup mode: ' . QuiqupSettings::MODE_LABELS[$r['from']] . ' → ' . QuiqupSettings::MODE_LABELS[$r['to']], [
+                    'subject' => 'quiqup', 'severity' => $r['to'] === 'live' ? 'alert' : 'notice',
+                    'before' => $r['from'], 'after' => $r['to'],
+                ]);
+            } catch (\Throwable) {
+                // The mode log in options keeps the change either way.
+            }
+        }
+
+        return response()->json(['ok' => true, 'from' => $r['from'], 'to' => $r['to']] + $this->settings->publicView() + [
+            'shipping_methods' => $this->recentShippingMethods(),
+        ]);
+    }
+
+    /**
+     * Staging (default) or a real courier for Internal testing's test orders.
+     * Live needs `confirm` and the live key verified, the live webhook secret
+     * and the pickup address; every change is an audit line.
+     */
+    private function testingEnv(Request $request, string $by): JsonResponse
+    {
+        try {
+            $r = $this->settings->setTestingEnv($request->input('testing_env'), $request->boolean('confirm'), $by);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage(), 'testing_live_missing' => $this->settings->liveMissing()], 422);
+        }
+
+        if ($r['from'] !== $r['to']) {
+            $L = QuiqupSettings::TESTING_ENV_LABELS;
+            try {
+                app(SecurityModule::class)->record('quiqup.testing_env', 'Store → Quiqup: Internal testing books on ' . $L[$r['from']] . ' → ' . $L[$r['to']], [
                     'subject' => 'quiqup', 'severity' => $r['to'] === 'live' ? 'alert' : 'notice',
                     'before' => $r['from'], 'after' => $r['to'],
                 ]);

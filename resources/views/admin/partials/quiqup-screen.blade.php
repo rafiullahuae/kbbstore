@@ -9,7 +9,7 @@
         GET  /admin-api/quiqup-settings    secrets come back as {filled, last4} only
         POST /admin-api/quiqup-settings
         POST /admin-api/quiqup-test        verifies a key (a Go-Live check)
-        POST /admin-api/quiqup-mode        {mode, confirm}
+        POST /admin-api/quiqup-mode        {mode, confirm} or {testing_env, confirm}
         GET  /admin-api/quiqup-activity
 
     One GET when the screen opens; one request per press. No polling, no
@@ -112,6 +112,19 @@
 .qq-sk{background:linear-gradient(90deg,var(--surface-2,#f2f4fb) 25%,var(--surface-3,#eef1f9) 50%,var(--surface-2,#f2f4fb) 75%);background-size:200% 100%;animation:qqsk 1.2s ease-in-out infinite;border-radius:10px}
 @keyframes qqsk{to{background-position:-200% 0}}
 @media (prefers-reduced-motion:reduce){.qq-sk,.qq-spin{animation:none}}
+.qq-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.qq-opt{display:grid;grid-template-columns:20px minmax(0,1fr);gap:4px 10px;align-items:start;text-align:start;border:1px solid var(--border,#e6e9f2);background:var(--surface,#fff);border-radius:var(--r-sm,12px);padding:12px 14px;font:inherit;color:var(--ink,#101729);cursor:pointer;min-height:44px;transition:border-color .15s,background .15s}
+.qq-opt::before{content:"";width:18px;height:18px;border-radius:50%;border:2px solid var(--border,#c9cfdd);margin-top:1px;box-sizing:border-box}
+.qq-opt b{font-size:13.5px;font-weight:700}
+.qq-opt small{grid-column:2;color:var(--ink-soft,#626c80);font-size:12.5px;line-height:1.45}
+.qq-opt[aria-checked=true]{border-color:var(--amber,#e0922f);background:var(--amber-soft,#fdf2e2)}
+.qq-opt[aria-checked=true]::before{border:5px solid #9a5b0e}
+.qq-opt[data-qq-books=live][aria-checked=true]{border-color:var(--accent,#15a85a);background:var(--accent-soft,#e7f7ee)}
+.qq-opt[data-qq-books=live][aria-checked=true]::before{border-color:var(--accent-ink,#0b6e3a)}
+.qq-opt:focus-visible{outline:2px solid var(--accent,#15a85a);outline-offset:2px}
+.qq-opt[disabled]{cursor:not-allowed;background:var(--surface-2,#f2f4fb);color:var(--ink-soft,#626c80)}
+.qq-opt[disabled]::before{background:var(--surface-3,#eef1f9)}
+.qq-opt .qq-why{color:#9a5b0e;font-weight:600}
 .qq-log{display:grid;gap:6px;font-size:12.5px;color:var(--ink-soft,#626c80);margin-top:10px}
 /* Toasts and dialog: shared with partials/quiqup-orders. */
 .qq-toasts{position:fixed;inset-block-start:16px;inset-inline-end:16px;display:grid;gap:8px;z-index:10050;width:min(420px,calc(100vw - 32px));pointer-events:none}
@@ -226,28 +239,54 @@
   }
   var MODE_TEXT = {
     off: 'Off. Nothing is booked with Quiqup; bookings already made keep updating.',
-    testing: 'Internal testing. Runs on this website against Quiqup\'s STAGING system with your staging key. Only your test orders can be booked, and only they will show delivery steps. Every other shopper sees the shop exactly as before.',
+    testing: 'Internal testing · Quiqup test system. Runs on this website against Quiqup\'s STAGING system with your staging key: no courier comes and nothing is billed. Only your test orders can be booked, and only they will show delivery steps. Every other shopper sees the shop exactly as before.',
+    testing_live: 'Internal testing · real courier for your test orders. Only your test orders can be booked; they go to Quiqup production with your live key and a real courier collects them (Quiqup bills a delivery once it is picked up). Every other shopper sees the shop exactly as before.',
     live: 'Live. Every order can be booked with Quiqup\'s production system, and customers see their delivery steps.'
   };
+
+  /* The mode's own words, with where Internal testing books. */
+  function modeKey(d) { return d.mode === 'testing' && d.testing_env === 'live' ? 'testing_live' : d.mode; }
+  function modeChip(d) { return d.mode === 'testing' && d.testing_env === 'live' ? 'Internal testing · real courier' : d.mode_labels[d.mode]; }
+  var BOOKS_SHORT = { sandbox: 'Quiqup test system', live: 'real courier' };
 
   function spin(on, label) { return on ? '<span class="qq-spin" aria-hidden="true"></span>' + label : label; }
 
   function hero() {
     var d = S.data, m = d ? d.mode : 'off';
     var h = '<section class="qq-hero" aria-label="Quiqup mode"><div><h2>Quiqup deliveries ' +
-      (d ? '<span class="qq-chip ' + m + '">' + esc(d.mode_labels[m]) + '</span>' : '') + '</h2>' +
-      '<p>' + (d ? esc(MODE_TEXT[m]) : 'Loading…') + '</p></div>';
+      (d ? '<span class="qq-chip ' + m + '">' + esc(modeChip(d)) + '</span>' : '') + '</h2>' +
+      '<p>' + (d ? esc(MODE_TEXT[modeKey(d)]) : 'Loading…') + '</p></div>';
     if (d) {
       h += '<div class="qq-seg" role="radiogroup" aria-label="Mode">' + ['off', 'testing', 'live'].map(function (k) {
         return '<button type="button" role="radio" data-m="' + k + '" aria-checked="' + (m === k) + '" data-qq-mode="' + k + '"' + (S.busy ? ' disabled' : '') + '>' +
           (S.busy === 'mode:' + k ? spin(true, '') : '') + esc(d.mode_labels[k]) + '</button>';
       }).join('') + '</div>';
     }
-    h += '</section>';
-    if (d && !d.envs.sandbox.api_key.filled) {
+    h += '</section>' + booksOn();
+    if (d && !d.envs.sandbox.api_key.filled && !(d.mode === 'testing' && d.testing_env === 'live')) {
       h += '<div class="qq-banner warn" role="note"><span aria-hidden="true">⚑</span><div><b>Add your staging API key</b> to start. Quiqdash (staging) → Organization → API keys → expiry <b>Never</b>, then paste it in the Sandbox card below. Nothing is sent to Quiqup until then.</div></div>';
     }
     return h;
+  }
+
+  /* "Internal testing books on": shown only while Internal testing is on.
+     Live is disabled, with the reason, until the live key is verified, the
+     live webhook secret saved and the pickup address set. */
+  function booksOn() {
+    var d = S.data;
+    if (!d || d.mode !== 'testing') return '';
+    var cur = d.testing_env === 'live' ? 'live' : 'sandbox', miss = d.testing_live_missing || [], L = d.testing_env_labels || {};
+    var opt = function (env, text, off) {
+      return '<button type="button" class="qq-opt" role="radio" data-qq-books="' + env + '" aria-checked="' + (cur === env) + '"' + (off || S.busy ? ' disabled' : '') + '>' +
+        '<b>' + (S.busy === 'books:' + env ? spin(true, '') : '') + esc(L[env]) + '</b><small>' + text + '</small></button>';
+    };
+    var why = miss.length ? '<span class="qq-why">Not available yet: ' + esc(miss.join(', ')) + '.</span>' : '';
+    return '<section class="qq-card qq-books" aria-labelledby="qq_books_h"><h3 id="qq_books_h">Internal testing books on</h3>' +
+      '<p class="qq-help">Only your test orders are booked in Internal testing; every other order is still refused.</p>' +
+      '<div class="qq-opts" role="radiogroup" aria-labelledby="qq_books_h">' +
+      opt('sandbox', 'Instant checks: no courier, no charges. Move each order through its steps in staging Quiqdash.', false) +
+      opt('live', (cur === 'live' && why ? why + ' ' : '') + 'A real Quiqup courier collects your test orders. Quiqup bills a delivery once it is picked up.' + (cur !== 'live' && why ? ' ' + why : ''), cur !== 'live' && miss.length > 0) +
+      '</div></section>';
   }
 
   function tabs() {
@@ -266,10 +305,10 @@
   function connTab() {
     var d = S.data;
     return '<div class="qq-envs">' + ['sandbox', 'live'].map(function (env) {
-      var e = d.envs[env], t = S.test[env], used = (env === 'live') === (d.mode === 'live');
+      var e = d.envs[env], t = S.test[env], used = env === d.env;
       return '<section class="qq-card qq-env ' + env + '" aria-labelledby="qq_h_' + env + '"><h3 id="qq_h_' + env + '">' + (env === 'live' ? 'Live · production' : 'Sandbox · staging') +
         ' <span class="qq-chip ' + (env === 'live' ? 'live' : 'testing') + '">' + esc(e.host) + '</span>' + (used && d.mode !== 'off' ? ' <span class="qq-chip info">In use</span>' : '') + '</h3>' +
-        '<p class="qq-help">' + (env === 'live' ? 'Used only in Live mode. Every booking is a real, billed courier.' : 'Used in Internal testing. Bookings go to Quiqup\'s staging system: no real courier comes.') + '</p>' +
+        '<p class="qq-help">' + (env === 'live' ? 'Used in Live mode, and for your test orders when Internal testing books with a real courier. Every booking is a real, billed courier.' : 'Used in Internal testing. Bookings go to Quiqup\'s staging system: no real courier comes.') + '</p>' +
         '<div class="qq-grid">' +
           secretField(env, 'api_key', 'API key', 'Quiqdash → Organization → API keys, expiry <b>Never</b>.') +
           secretField(env, 'webhook_secret', 'Webhook signing secret', 'Quiqdash → Integrations → Webhooks → your subscription → eye icon.') +
@@ -388,6 +427,7 @@
     if (!log.length) return '';
     var L = S.data.mode_labels;
     return '<section class="qq-card"><h3>Mode history</h3><div class="qq-log">' + log.slice(0, 6).map(function (e) {
+      if (e.kind === 'books_on') return '<div>' + esc(when(e.at)) + ' · <b>' + esc(e.by) + '</b> · Internal testing books on: ' + esc(BOOKS_SHORT[e.from] || e.from) + ' → ' + esc(BOOKS_SHORT[e.to] || e.to) + '</div>';
       return '<div>' + esc(when(e.at)) + ' · <b>' + esc(e.by) + '</b> · ' + esc(L[e.from] || e.from) + ' → ' + esc(L[e.to] || e.to) + '</div>';
     }).join('') + '</div></section>';
   }
@@ -504,7 +544,9 @@
         (ready ? '' : '<p><b>Not ready yet.</b> Every item above needs a tick before Live can be switched on.</p>');
       buttons = [{ label: 'Not now', value: false }, { label: 'Go Live', value: true, cls: 'go', disabled: !ready }];
     } else if (to === 'testing') {
-      html = '<h3>Switch to Internal testing?</h3><p>Bookings go to Quiqup <b>staging</b> (' + esc(d.envs.sandbox.host) + ') with your staging key. Only your test orders can be booked and only they show delivery steps; every other shopper sees the shop exactly as before.</p>' +
+      html = '<h3>Switch to Internal testing?</h3>' + (d.testing_env === 'live'
+        ? '<p>Your test orders are booked with a <b>real courier</b> on Quiqup production (' + esc(d.envs.live.host) + '). <b>A real Quiqup courier will collect your test orders. Quiqup bills a delivery once it is picked up.</b></p><p>Only your test orders can be booked and only they show delivery steps; every other shopper sees the shop exactly as before.</p>'
+        : '<p>Bookings go to Quiqup <b>staging</b> (' + esc(d.envs.sandbox.host) + ') with your staging key. Only your test orders can be booked and only they show delivery steps; every other shopper sees the shop exactly as before.</p>') +
         (from === 'live' ? '<p>Live bookings already made keep updating from production.</p>' : '');
       buttons = [{ label: 'Cancel', value: false }, { label: from === 'live' ? 'Leave Live' : 'Start testing', value: true, cls: 'pri' }];
     } else {
@@ -513,8 +555,25 @@
     }
     var yes = await dialog(html, buttons);
     if (!yes || !ours()) return;
-    var r = await run('mode:' + to, 'quiqup-mode', { mode: to, confirm: true }, 'Mode: ' + L[to], MODE_TEXT[to]);
+    var r = await run('mode:' + to, 'quiqup-mode', { mode: to, confirm: true }, 'Mode: ' + L[to], to === 'testing' && d.testing_env === 'live' ? MODE_TEXT.testing_live : MODE_TEXT[to]);
     if (r && r.status === 422 && r.body.checklist && ours()) { S.data.checklist = r.body.checklist; render(); }
+  }
+
+  async function setBooksOn(to) {
+    var d = S.data;
+    if (!d || d.mode !== 'testing' || to === d.testing_env || S.busy) return;
+    if (to === 'live') {
+      var yes = await dialog('<h3>Book your test orders with a real courier?</h3>' +
+        '<p><b>A real Quiqup courier will collect your test orders. Quiqup bills a delivery once it is picked up.</b></p><ul>' +
+        '<li>Your test orders go to Quiqup <b>production</b> (' + esc(d.envs.live.host) + ') with your live key ••••' + esc(d.envs.live.api_key.last4 || '—') + '.</li>' +
+        '<li>Every other order is still refused while Internal testing is on.</li>' +
+        '<li>Test orders already booked on staging keep updating from staging.</li></ul>',
+        [{ label: 'Keep the test system', value: false }, { label: 'Use a real courier', value: true, cls: 'go' }]);
+      if (!yes || !ours()) return;
+    }
+    var r = await run('books:' + to, 'quiqup-mode', { testing_env: to, confirm: to === 'live' }, 'Internal testing books on: ' + BOOKS_SHORT[to],
+      to === 'live' ? 'Your next test order is booked with a real courier.' : 'Instant checks on staging: no courier, no charges.');
+    if (r && r.status === 422 && r.body.testing_live_missing && ours()) { S.data.testing_live_missing = r.body.testing_live_missing; render(); }
   }
 
   function addTag(kind) {
@@ -555,6 +614,7 @@
     var b;
     if ((b = t.closest('[data-qq-tab]'))) { S.tab = b.getAttribute('data-qq-tab'); S.err = {}; render(); if (S.tab === 'act') loadActivity(); return; }
     if ((b = t.closest('[data-qq-mode]'))) { setMode(b.getAttribute('data-qq-mode')); return; }
+    if ((b = t.closest('[data-qq-books]'))) { setBooksOn(b.getAttribute('data-qq-books')); return; }
     if ((b = t.closest('[data-qq-save]'))) { save(b.getAttribute('data-qq-save')); return; }
     if ((b = t.closest('[data-qq-savekeys]'))) { saveKeys(b.getAttribute('data-qq-savekeys')); return; }
     if ((b = t.closest('[data-qq-test]'))) { test(b.getAttribute('data-qq-test')); return; }

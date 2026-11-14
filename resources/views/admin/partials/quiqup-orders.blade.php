@@ -174,7 +174,7 @@
       return;
     }
     var c = counts();
-    el.querySelector('[data-qqo-mode]').innerHTML = chip(d.mode === 'live' ? 'live' : d.mode === 'testing' ? 'testing' : 'off', d.mode === 'live' ? 'LIVE' : d.mode === 'testing' ? 'INTERNAL TESTING · STAGING' : 'OFF');
+    el.querySelector('[data-qqo-mode]').innerHTML = chip(d.mode === 'live' ? 'live' : d.mode === 'testing' ? 'testing' : 'off', d.mode === 'live' ? 'LIVE' : d.mode === 'testing' ? (d.env === 'live' ? 'INTERNAL TESTING · REAL COURIER' : 'INTERNAL TESTING · STAGING') : 'OFF');
     defs.innerHTML = '<label>Service for all<select data-qqo-def="service"' + (SH.phase !== 'review' ? ' disabled' : '') + '><option value="">Per order</option>' + Object.keys(d.services).map(function (k) { return '<option value="' + k + '"' + (SH.defs.service === k ? ' selected' : '') + '>' + e(d.services[k]) + '</option>'; }).join('') + '</select></label>' +
       '<label>Parcels<input type="number" min="1" max="10" data-qqo-def="parcels" value="' + e(SH.defs.parcels || d.parcels) + '"' + (SH.phase !== 'review' ? ' disabled' : '') + '></label>' +
       '<label class="qqo-inl"><input type="checkbox" data-qqo-def="allow_shipped"' + (SH.defs.allow_shipped ? ' checked' : '') + (SH.phase !== 'review' ? ' disabled' : '') + '> Include orders already marked shipped</label>' +
@@ -368,7 +368,7 @@
   function cardHtml() {
     var e = Q().esc, c = card, s = c.shipment;
     var h = '<div class="card pad qqo-card" data-qqo-card><div class="qq-card" style="border:0;box-shadow:none;padding:0;margin:0"><h3>Delivery · Quiqup ' +
-      (s ? chip(s.env === 'live' ? 'live' : 'testing', s.env === 'live' ? 'LIVE' : 'STAGING') : '') + (c.is_test ? chip('testing', 'Test order') : '') + '</h3>';
+      (s ? chip(s.env === 'live' ? 'live' : 'testing', s.env === 'live' ? (s.test ? 'REAL COURIER · TEST' : 'LIVE') : 'STAGING') : '') + (c.is_test ? chip('testing', 'Test order') : '') + '</h3>';
     if (!s) {
       h += '<p class="qq-help">Not booked. Tick it on Store → Orders and choose Schedule with Quiqup.</p>';
     } else {
