@@ -382,7 +382,7 @@ it('renders the sidebar the console settled on, group by group and row by row', 
         // 'bestsellers' — Catalog → Best Sellers (2.60.661), after New Arrivals.
         'Catalog' => ['catalog', 'product-tabs', 'sets', 'product-editor', 'imageseo', 'concernsync', 'newarrivals', 'bestsellers', 'recentlocalise', 'routines', 'category-tree', 'brands-manager', 'pagination'],
         // 'inquiries' — Store → Inquiries (Lane CT), after Quiz Leads.
-        'Store' => ['modules', 'megamenu', 'ecommerce', 'tax', 'payship', 'shipping', 'import',
+        'Store' => ['modules', 'megamenu', 'ecommerce', 'tax', 'payship', 'shipping', 'quiqup', 'import',
             'order-new', 'coupon-editor', 'payments', 'tabbycaptures', 'paygw', 'security', 'firewall', 'analytics', 'search', 'seo', 'seokeywords',
             'store-settings', 'customers', 'quiz-leads', 'inquiries'],
         'Emails' => ['emails', 'emails-sending', 'emails-customer', 'emails-branding', 'emails-sent', 'mail'],

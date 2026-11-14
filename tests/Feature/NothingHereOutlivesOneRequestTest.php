@@ -190,7 +190,11 @@ it('has nothing that outlives a single request', function () {
     // 15 with 2.60.633: `kbb:category-brand-sync`, daily at 03:17 -- brings a
     // category linked to a brand (Medicube) level with it in two set-based
     // statements, exits. Nothing is held between runs.
-    expect(substr_count($console, 'Schedule::command('))->toBe(15, 'the set of scheduled commands has changed');
+    // 16 with Lane QQB: `kbb:quiqup-sync`, every minute -- re-applies Quiqup
+    // events, finishes queued bookings, polls due shipments (one indexed
+    // EXISTS when nothing is due, 30 Quiqup calls an hour at most), exits.
+    // Nothing is held between runs.
+    expect(substr_count($console, 'Schedule::command('))->toBe(16, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {

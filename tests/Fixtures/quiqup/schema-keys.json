@@ -1,0 +1,94 @@
+{
+  "_source": "docs/plans/quiqup/api-docs/qq-orders.yaml components.schemas (generated, do not edit)",
+  "OrderRequest": [
+    "billing_identifier",
+    "destination",
+    "disallowed_payment_types",
+    "items",
+    "kind",
+    "metadata",
+    "notes",
+    "origin",
+    "partner_order_id",
+    "payment_amount",
+    "payment_mode",
+    "products",
+    "ready_for_collection",
+    "reason",
+    "registration_numbers",
+    "required_documents",
+    "scheduled_for",
+    "service_kind",
+    "uuid"
+  ],
+  "OrderRequest.required": [
+    "origin",
+    "destination",
+    "items"
+  ],
+  "OrderRequestAddress": [
+    "address",
+    "contact_email",
+    "contact_name",
+    "contact_phone",
+    "emirate",
+    "notes",
+    "state"
+  ],
+  "OrderRequestAddress.required": [
+    "contact_name",
+    "contact_phone",
+    "address"
+  ],
+  "Address": [
+    "address1",
+    "address2",
+    "apartment_number",
+    "building_name",
+    "city",
+    "coordinates",
+    "coords",
+    "country",
+    "ksa_national_address",
+    "notes",
+    "postcode",
+    "state",
+    "town"
+  ],
+  "OrderRequestItem": [
+    "metadata",
+    "name",
+    "parcel_barcode",
+    "quantity"
+  ],
+  "OrderRequestProduct": [
+    "barcode",
+    "country_of_origin",
+    "dangerous_goods",
+    "description",
+    "height",
+    "hs_code",
+    "length",
+    "quantity",
+    "selling_price",
+    "sku",
+    "weight",
+    "width"
+  ],
+  "CancelOrdersRequest": [
+    "order_ids",
+    "reason"
+  ],
+  "OrderRequestKind": [
+    "partner_next_day",
+    "partner_same_day",
+    "partner_return",
+    "partner_standard",
+    "partner_on_demand",
+    "partner_4hr",
+    "partner_store",
+    "partner_fulfillment",
+    "partner_q_commerce",
+    "partner_export"
+  ]
+}

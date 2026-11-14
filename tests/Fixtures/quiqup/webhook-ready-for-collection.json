@@ -1,0 +1,117 @@
+{
+  "action": "update",
+  "type": "order",
+  "sent_at": "2026-09-03T09:14:07Z",
+  "payload": {
+    "id": 26000001,
+    "client_order_id": 26000001,
+    "uuid": "00000000-0000-0000-0000-000000000000",
+    "state": "ready_for_collection",
+    "state_updated_at": "2026-09-03T09:14:06.812345Z",
+    "kind": "",
+    "service_kind": "partner_next_day",
+    "partner_order_id": "YOUR-REFERENCE",
+    "external_order_id": "",
+    "business_partner_id": "001000000000000AAA",
+    "business_contact_id": "",
+    "core_api_user_id": 100001,
+    "brand_name": "Example Brand",
+    "billing_identifier": "",
+    "payment_mode": "pre_paid",
+    "payment_amount": 0,
+    "total_amount": 0,
+    "currency": "AED",
+    "allowed_payment_types": ["cash", "card"],
+    "required_documents": [],
+    "region": "Dubai",
+    "region_name": "Dubai",
+    "created_at": "2026-09-03T09:09:22.123456Z",
+    "submitted_at": "2026-09-03T09:09:22.100000Z",
+    "scheduled_for": null,
+    "collection_after": "2026-09-03T10:00:00Z",
+    "collection_before": "2026-09-03T12:00:00Z",
+    "delivery_after": "2026-09-03T09:14:06.812345Z",
+    "delivery_before": "2026-09-04T15:00:00Z",
+    "delivered_at": null,
+    "failed_at": null,
+    "cancelled_at": null,
+    "collection_attempts": 0,
+    "delivery_attempts": 0,
+    "delivery_failure_reason": "",
+    "item_quantity_count": 1,
+    "weight": 5,
+    "weight_unit": "kg",
+    "fragile": false,
+    "display_items_info": false,
+    "sku_info": "",
+    "notes": "",
+    "metadata": {},
+    "mission_id": "",
+    "courier_id": 0,
+    "otp_code": "",
+    "tracking_url": "https://track-parcel.quiqup.com/00000000-0000-0000-0000-000000000000",
+    "origin": {
+      "id": 1001,
+      "contact_name": "Warehouse contact",
+      "contact_phone": "+971500000000",
+      "arrived_at": null,
+      "finished_at": null,
+      "tracking_token": "00000000000000000000000000000000",
+      "tracking_url": "https://track-parcel.quiqup.com/00000000-0000-0000-0000-000000000000",
+      "notes": "",
+      "signature": {
+        "url": ""
+      },
+      "address": {
+        "id": 2001,
+        "address1": "1st Road",
+        "address2": "104G",
+        "town": "Dubai",
+        "building_name": "",
+        "apartment_number": "",
+        "country": "AE",
+        "coordinates": {
+          "lat": 25.056,
+          "lng": 55.1631
+        }
+      }
+    },
+    "destination": {
+      "id": 1002,
+      "contact_name": "Customer name",
+      "contact_phone": "+971599999999",
+      "arrived_at": null,
+      "finished_at": null,
+      "tracking_token": "00000000000000000000000000000000",
+      "tracking_url": "https://track-parcel.quiqup.com/00000000-0000-0000-0000-000000000000",
+      "notes": "",
+      "signature": {
+        "url": ""
+      },
+      "address": {
+        "id": 2002,
+        "address1": "2nd Road",
+        "address2": "104G",
+        "town": "Abu Dhabi",
+        "building_name": "",
+        "apartment_number": "",
+        "country": "AE",
+        "coordinates": {
+          "lat": 24.4539,
+          "lng": 54.3773
+        }
+      }
+    },
+    "items": [
+      {
+        "id": "30000001",
+        "name": "Parcel 1",
+        "quantity": 1,
+        "sku": "",
+        "weight": 5,
+        "parcel_barcode": "26000001-1",
+        "parcel_barcode_generated_by": ""
+      }
+    ]
+  }
+}

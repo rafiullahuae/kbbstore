@@ -255,6 +255,9 @@ final class AdminRoles
         ['shipping', 'Shipping & payments', [
             'codrefusals.view' => 'Refused deliveries: see who cash on delivery is hidden from',
             'codrefusals.manage' => 'Refused deliveries: switch it on or off, and allow cash on delivery again',
+            'quiqup.view' => 'Quiqup: see deliveries, the activity screen and a booking before it is sent',
+            'quiqup.ship' => 'Quiqup: book, cancel and re-book couriers, and print labels (each booking is billed)',
+            'quiqup.settings' => 'Quiqup: the API key, webhook, pickup address and status mapping (Full Admin only by default)',
             'store.shipping' => 'Shipping rates and rules',
             'payments.manage' => 'Payment gateways and their keys',
             'payments.stripe_webhook' => 'Stripe: see webhook status and set the webhook up automatically',

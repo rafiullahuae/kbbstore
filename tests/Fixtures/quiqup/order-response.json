@@ -1,0 +1,87 @@
+{
+  "order": {
+    "allowed_payment_types": [
+      "cash",
+      "card"
+    ],
+    "billing_identifier": null,
+    "brand_name": "Example Brand",
+    "collection_attempts": 0,
+    "collection_time": {
+      "collection_after": "2026-10-06T16:47:00.000+04:00",
+      "collection_before": "2026-10-06T18:47:00.000+04:00"
+    },
+    "created_at": "2026-10-06T16:46:56.000+04:00",
+    "delivery_attempts": 0,
+    "delivery_time": {
+      "delivery_after": "2026-10-06T16:46:56.000+04:00",
+      "delivery_before": "2026-10-07T23:00:00.000+04:00"
+    },
+    "destination": {
+      "address": {
+        "address1": "1st Road",
+        "address2": "104G",
+        "coordinates": {
+          "lat": 25.2048,
+          "lng": 55.2708
+        },
+        "country": "UAE",
+        "id": "2000002",
+        "town": "Dubai"
+      },
+      "contact_email": "customer@example.com",
+      "contact_name": "Customer name",
+      "contact_phone": "+971500000000",
+      "id": "3000002",
+      "tracking_url": "https://track-ae.quiqup.com/00000000000000000000000000000002",
+      "zone": {
+        "sector": "Business Bay"
+      }
+    },
+    "id": 10000001,
+    "item_quantity_count": 1,
+    "items": [
+      {
+        "id": "4000001",
+        "name": "Parcel 1",
+        "parcel_barcode": "10000001-1",
+        "parcel_barcode_generated_by": "quiqup",
+        "quantity": 1
+      }
+    ],
+    "kind": "partner_same_day",
+    "origin": {
+      "address": {
+        "address1": "Example Warehouse, Street 1",
+        "address2": "Al Quoz Industrial Area 4",
+        "coordinates": {
+          "lat": 25.135,
+          "lng": 55.23
+        },
+        "country": "UAE",
+        "id": "2000001",
+        "town": "Dubai"
+      },
+      "contact_name": "Warehouse contact",
+      "contact_phone": "+971500000000",
+      "id": "3000001",
+      "tracking_url": "https://track-ae.quiqup.com/00000000000000000000000000000001"
+    },
+    "partner_order_id": "PARTNER-ORDER-ID",
+    "payment_amount": "0.0",
+    "payment_mode": "pre_paid",
+    "region_name": "Dubai",
+    "required_documents": [],
+    "service_kind": "partner_same_day",
+    "state": "pending",
+    "state_updated_at": "2026-10-06T16:46:56.000+04:00",
+    "submitted_at": "2026-10-06T16:46:56.000+04:00",
+    "tracking_url": "https://track-parcel.quiqup.com/00000000-0000-4000-8000-000000000001",
+    "user": {
+      "email": "merchant@example.com",
+      "fullname": "Example Merchant",
+      "id": 15
+    },
+    "uuid": "00000000-0000-4000-8000-000000000001"
+  }
+}
