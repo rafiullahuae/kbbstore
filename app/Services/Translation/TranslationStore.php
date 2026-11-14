@@ -591,6 +591,28 @@ final class TranslationStore
         if ($value !== null && self::isRichField($group, $field)) {
             // See RICH_FIELDS. On the way in, on the server, every time.
             $value = \App\Support\RichText::clean($value);
+
+            /*
+             * (Lane ARDX, 14 Nov 2026) AND WITH ITS ENGLISH'S BLANK LINES AND
+             * LIST BREAKS. Every writer of Arabic product copy comes through
+             * here (the editor, Translate & categorise's Claude drafts and
+             * inline edits, Translation -> Strings), and the owner's "the
+             * spacing and line breaking spacing has issues" was copy whose
+             * blank lines had been dropped on the way in -- a model returning
+             * `<div></div>` for `<div>&nbsp;</div>` passes the tag-for-tag
+             * check and still loses the line. Lined up only when that is
+             * certain; no word changes (BlockStructure::align() checks it);
+             * otherwise stored exactly as given. Plain-newline copy is left to
+             * wpautop at render time.
+             */
+            if ($englishSource !== null && $value !== ''
+                && ! \App\Support\RichText::needsAutop($englishSource) && ! \App\Support\RichText::needsAutop($value)) {
+                $aligned = \App\Support\BlockStructure::align($englishSource, $value);
+
+                if ($aligned['changed']) {
+                    $value = $aligned['html'];
+                }
+            }
         }
 
         $attributes = [

@@ -18,6 +18,15 @@
     still be in #content (and `away` false), as concern-sync-screen does.
 
     Endpoints: routes/recent-localise-admin.php, capability `catalog.localise`.
+
+    ARABIC SPACING (Lane ARDX, 14 Nov 2026) -- the fourth tab. The owner: "in
+    arabic version, the spacing and line breaking spacing has issues ...
+    fix this permanently". Check = a dry run (GET admin-api/ar-structure):
+    which Arabic rows would get their blank lines / list breaks back to match
+    the English, and which need a person. Apply writes them with a backup;
+    each batch can be undone. Its own capability `catalog.ar_structure`
+    (routes/ar-structure-admin.php). One GET per Check, one POST per
+    Apply/Undo; no timer. Same ours() guard.
 --}}
 @verbatim
 <style>
@@ -87,6 +96,7 @@
   var rv = null, rvPage = 0; // review page
   var sug = null, picks = {}, sugNext = 0, rulesOnly = false;
   var scope = { mode: 'count', count: 100, days: 14 };
+  var sp = null, spScope = 'recent', spRecent = 50; // Arabic spacing tab (Lane ARDX)
   try { var saved = JSON.parse(localStorage.getItem('kbb.rlz.scope') || 'null'); if (saved && saved.mode) scope = saved; } catch (e) {}
 
   function esc(s) {
@@ -118,6 +128,72 @@
     if (!r.ok) { var err = new Error((j && j.message) || ('HTTP ' + r.status)); err.status = r.status; throw err; }
     return j;
   }
+  async function spApi(method, path, body) {
+    var r = await fetch(base() + '/admin-api/ar-structure' + path, {
+      method: method,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN') },
+      credentials: 'same-origin',
+      body: body ? JSON.stringify(body) : undefined
+    });
+    var j = null;
+    try { j = await r.json(); } catch (e) { j = null; }
+    if (!r.ok) { var err = new Error((j && j.message) || ('HTTP ' + r.status)); err.status = r.status; throw err; }
+    return j;
+  }
+  function spBody() { return spScope === 'recent' ? { recent: Number(spRecent) } : {}; }
+  async function spCheck() {
+    busy = 'sp'; msg = null; paint();
+    try { var j = await spApi('GET', spScope === 'recent' ? '?recent=' + encodeURIComponent(spRecent) : ''); if (!ours()) return; sp = j; }
+    catch (e) { if (!ours()) return; msg = { t: 'err', s: why(e) }; }
+    busy = ''; paint();
+  }
+  async function spApply() {
+    if (!sp || !sp.fixable_count) return;
+    if (!window.confirm('Put back the blank lines and list breaks in ' + sp.fixable_count + ' Arabic field(s)? No word changes. Every row is backed up first and the batch can be undone.')) return;
+    busy = 'spa'; paint();
+    try {
+      var j = await spApi('POST', '/apply', spBody());
+      if (!ours()) return;
+      msg = { t: 'ok', s: j.batch ? ('Repaired ' + num(j.changed) + ' Arabic field(s). Backup batch ' + j.batch + '.') : 'Nothing to repair.' };
+      busy = ''; await spCheck(); return;
+    } catch (e) { if (!ours()) return; msg = { t: 'err', s: why(e) }; }
+    busy = ''; paint();
+  }
+  async function spUndo(batch) {
+    if (!window.confirm('Undo batch ' + batch + '? Rows edited since are kept.')) return;
+    busy = 'spu'; paint();
+    try {
+      var j = await spApi('POST', '/undo', { batch: batch });
+      if (!ours()) return;
+      msg = { t: 'ok', s: 'Undo: ' + num(j.restored) + ' field(s) put back, ' + num(j.kept) + ' kept (edited since).' };
+      busy = ''; await spCheck(); return;
+    } catch (e) { if (!ours()) return; msg = { t: 'err', s: why(e) }; }
+    busy = ''; paint();
+  }
+  function spacingView() {
+    var html = '<div class="rlz-card"><b>Arabic spacing</b><p class="rlz-note">Puts back the blank lines and list breaks the Arabic copy lost, so each Arabic description is laid out exactly like its English. Only empty lines and list breaks move — never a word (checked on every row). Anything that cannot be lined up with certainty is listed below and left alone.</p>'
+      + '<div class="rlz-row" style="margin-top:10px"><label><input type="radio" name="rlzSp" value="recent"' + (spScope === 'recent' ? ' checked' : '') + '> Newest</label><input type="number" id="rlzSpN" min="1" max="5000" value="' + esc(spRecent) + '"> <span class="rlz-meta">products</span>'
+      + '<label style="margin-left:8px"><input type="radio" name="rlzSp" value="all"' + (spScope === 'all' ? ' checked' : '') + '> All products</label>'
+      + '<button type="button" class="rlz-btn ghost" data-rlz-spcheck' + (busy ? ' disabled' : '') + '>' + (busy === 'sp' ? 'Checking…' : 'Check (dry run)') + '</button></div>';
+    if (sp) {
+      html += '<div class="rlz-stats"><div class="rlz-stat"><b>' + num(sp.rows) + '</b><span>Arabic fields read</span></div>'
+        + '<div class="rlz-stat"><b>' + num(sp.aligned) + '</b><span>already match the English</span></div>'
+        + '<div class="rlz-stat"><b>' + num(sp.fixable_count) + '</b><span>will be repaired</span></div>'
+        + '<div class="rlz-stat"><b>' + num(sp.human_count) + '</b><span>need a person</span></div></div>'
+        + '<div class="rlz-row" style="margin-top:12px"><button type="button" class="rlz-btn" data-rlz-spapply' + (busy || !sp.fixable_count ? ' disabled' : '') + '>' + (busy === 'spa' ? 'Repairing…' : 'Apply ' + num(sp.fixable_count) + ' repair' + (sp.fixable_count === 1 ? '' : 's')) + '</button></div>';
+      if (sp.fixable.length) html += '<p class="rlz-note"><b>Will be repaired</b> (P = a line of text, B = blank line, L3 = a list of 3)</p><ul class="rlz-rej">' + sp.fixable.map(function (f) {
+        return '<li>#' + esc(f.product_id) + ' ' + esc(f.slug) + ' — ' + esc(FIELD[f.field] || f.field) + ': <code>' + esc(f.before) + '</code> → <code>' + esc(f.after) + '</code><br><span class="rlz-meta">' + esc(f.changes.join('; ')) + '</span></li>';
+      }).join('') + '</ul>';
+      if (sp.human.length) html += '<p class="rlz-note"><b>Left alone — check by eye</b></p><ul class="rlz-rej">' + sp.human.map(function (h) {
+        return '<li>#' + esc(h.product_id) + ' ' + esc(h.slug) + ' — ' + esc(FIELD[h.field] || h.field) + ': ' + esc(h.why) + '</li>';
+      }).join('') + '</ul>';
+      if (sp.batches && sp.batches.length) html += '<p class="rlz-note"><b>Earlier repairs</b></p><ul class="rlz-rej">' + sp.batches.map(function (b) {
+        return '<li>' + esc(b.at) + ' — ' + num(b.rows) + ' field(s) ' + (b.undone ? '(undone)' : '<button type="button" class="rlz-btn ghost" style="padding:3px 10px;font-size:12px" data-rlz-spundo="' + esc(b.batch) + '"' + (busy ? ' disabled' : '') + '>Undo</button>') + '</li>';
+      }).join('') + '</ul>';
+    }
+    return html + '</div>';
+  }
+
   function why(e) {
     if (e && e.status === 403) return 'Your role cannot use this screen. An owner or manager can.';
     if (e && e.status === 404) return 'This screen is not in the server’s route table yet. Clear the route cache and reload.';
@@ -338,15 +414,16 @@
       }
       html += '<p class="rlz-note">Claude is told: Gulf-friendly Modern Standard Arabic for women shoppers; brand and INCI names stay in Latin; numbers and units unchanged; HTML tags untouched. Every answer is checked tag-for-tag and number-for-number; a failing one is not saved. Only the text is sent — no price, stock, SKU or customer data.</p></div>';
 
-      html += '<div class="rlz-tabs">' + [['list', 'Products'], ['review', 'Review Arabic'], ['concerns', 'Skin concerns']].map(function (x) {
+      html += '<div class="rlz-tabs">' + [['list', 'Products'], ['review', 'Review Arabic'], ['concerns', 'Skin concerns'], ['spacing', 'Arabic spacing']].map(function (x) {
         return '<button type="button" class="rlz-tab' + (tab === x[0] ? ' on' : '') + '" data-rlz-tab="' + x[0] + '">' + x[1] + '</button>';
       }).join('') + '</div>';
 
       if (tab === 'list') html += listView();
       else if (tab === 'review') html += reviewView();
+      else if (tab === 'spacing') html += spacingView();
       else html += concernsView();
 
-      if (tab !== 'concerns') html += '<div class="rlz-foot"><span><b>' + num(t.draft) + '</b> Arabic draft' + (t.draft === 1 ? '' : 's') + ' across these ' + num(t.products) + ' products</span>'
+      if (tab !== 'concerns' && tab !== 'spacing') html += '<div class="rlz-foot"><span><b>' + num(t.draft) + '</b> Arabic draft' + (t.draft === 1 ? '' : 's') + ' across these ' + num(t.products) + ' products</span>'
         + '<button type="button" class="rlz-btn" data-rlz-approve' + (busy || !t.draft ? ' disabled' : '') + '>' + (busy === 'approve' ? 'Publishing…' : 'Approve all for these ' + num(t.products) + ' products') + '</button></div>';
     }
 
@@ -355,7 +432,7 @@
 
   document.addEventListener('click', function (e) {
     if (!ours()) return;
-    var b = e.target.closest && e.target.closest('[data-rlz-scan],[data-rlz-run],[data-rlz-stop],[data-rlz-retry],[data-rlz-tab],[data-rlz-rv],[data-rlz-save],[data-rlz-approve],[data-rlz-sug],[data-rlz-apply1],[data-rlz-applyall]');
+    var b = e.target.closest && e.target.closest('[data-rlz-scan],[data-rlz-run],[data-rlz-stop],[data-rlz-retry],[data-rlz-tab],[data-rlz-rv],[data-rlz-save],[data-rlz-approve],[data-rlz-sug],[data-rlz-apply1],[data-rlz-applyall],[data-rlz-spcheck],[data-rlz-spapply],[data-rlz-spundo]');
     if (!b || b.disabled) return;
     if (b.hasAttribute('data-rlz-retry')) { e.preventDefault(); retry(); }
     else if (b.hasAttribute('data-rlz-scan')) {
@@ -366,7 +443,14 @@
     }
     else if (b.hasAttribute('data-rlz-run')) translate();
     else if (b.hasAttribute('data-rlz-stop')) { if (run) run.stop = true; b.disabled = true; b.textContent = 'Stopping after this step…'; }
-    else if (b.hasAttribute('data-rlz-tab')) { tab = b.getAttribute('data-rlz-tab'); if (tab === 'review' && !rv) review(0); else paint(); }
+    else if (b.hasAttribute('data-rlz-tab')) { tab = b.getAttribute('data-rlz-tab'); if (tab === 'review' && !rv) review(0); else if (tab === 'spacing' && !sp) spCheck(); else paint(); }
+    else if (b.hasAttribute('data-rlz-spcheck')) {
+      var sn = host().querySelector('#rlzSpN'), sm = host().querySelector('input[name=rlzSp]:checked');
+      spScope = sm ? sm.value : 'recent'; spRecent = Math.max(1, Math.min(5000, parseInt(sn && sn.value, 10) || 50));
+      spCheck();
+    }
+    else if (b.hasAttribute('data-rlz-spapply')) spApply();
+    else if (b.hasAttribute('data-rlz-spundo')) spUndo(b.getAttribute('data-rlz-spundo'));
     else if (b.hasAttribute('data-rlz-rv')) review(Number(b.getAttribute('data-rlz-rv')));
     else if (b.hasAttribute('data-rlz-save')) { var k = b.getAttribute('data-rlz-save').split(':'); saveField(k[0], k[1], b); }
     else if (b.hasAttribute('data-rlz-approve')) approveAll();
@@ -421,7 +505,7 @@
     h.innerHTML = '<div class="wrap"><div class="page-head"><h2>' + LABEL + '</h2>'
       + '<p>The newest products: put them into Arabic properly — HTML descriptions included — review side by side, approve in one go, and file each into the right skin-concern collections.</p></div>'
       + '<div class="rlz" data-rlz></div></div>';
-    st = null; scan = null; run = null; rv = null; sug = null; picks = {}; sugNext = 0; msg = null; busy = ''; tab = 'list';
+    st = null; scan = null; run = null; rv = null; sp = null; sug = null; picks = {}; sugNext = 0; msg = null; busy = ''; tab = 'list';
     paint();
     load();
     return undefined;
