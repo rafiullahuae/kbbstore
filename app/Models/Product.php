@@ -48,6 +48,10 @@ class Product extends Model
 
         // "Buy these together" caches its candidates the same way. (Lane RB)
         static::saved(static fn (self $p) => \App\Services\BuyTogether::forget((int) $p->getKey()));
+        // (Lane FBT) A set is offered on its members' pages: saving one drops
+        // their lists too. Members added in the same save follow within the
+        // list's ten minutes.
+        static::saved(static fn (self $p) => $p->isSet() ? \App\Services\BuyTogether::forgetMembersOf((int) $p->getKey()) : null);
         // The three recommendation blocks cache their lists per product
         // (App\Services\ProductRecs). Saving the product -- its brand, its
         // category, its picks -- drops that product's lists at once.

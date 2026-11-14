@@ -77,14 +77,35 @@ class BuyTogetherSettings
         'hide_oos' => ['bool', 'Hide sold-out products', true,
             'Off shows a sold-out match greyed out with its tick cleared, so it cannot be added. Hidden and draft products are never shown.'],
 
-        'same_brand' => ['bool', 'Prefer the same brand', false,
-            'Inside each matching category, products from the same brand as the one on the page come first.'],
+        /*
+         * ── FREQUENTLY BOUGHT TOGETHER (Lane FBT, 14 November 2026) ────────
+         *
+         * The owner: "The buy these together section should be named
+         * frequently bought together and it should show related products e.g
+         * if the product page which is open is also in a set then that set
+         * should be shown, and if it is from a same range of brand then those
+         * range products should be shown. And if it has a matching
+         * moisturizer or toner or eye cream those should be shown".
+         *
+         * ▲ ALL THREE SHIP ON — he asked for them (the 30 September
+         * reversal). `same_brand` moved from off to on for the same reason:
+         * "a MATCHING moisturizer" is one from the same range, then the same
+         * brand; migration 2028_01_25_100000 moves a stored "off" once.
+         */
+        'same_brand' => ['bool', 'Matching products first in each category', true,
+            'Inside each matching category (a toner page: moisturiser, eye cream …), the same range first, then the same brand, then any brand.'],
+
+        'sets' => ['bool', 'Show the sets this product is in', true,
+            'First: a set (Catalog → Sets) that contains the product on the page.'],
+
+        'range' => ['bool', 'Show products from the same range', true,
+            'Next: products of the same brand and range — another “Anua Heartleaf …” on an Anua Heartleaf page. The range is the first word of the product name after the brand.'],
 
         'show_total' => ['bool', 'Show the total above the button', true,
             '“Total: AED 215” — the sum of the ticked products, updated as boxes are ticked and cleared.'],
 
         'title' => ['text', 'Heading', '',
-            'Leave empty for the standard heading, “Buy these together”.'],
+            'Leave empty for the standard heading, “Frequently bought together”.'],
 
         'title_ar' => ['text', 'Heading — Arabic', '',
             'Leave empty for the standard Arabic heading. Your English heading is never shown on the Arabic page.'],
@@ -186,7 +207,7 @@ class BuyTogetherSettings
     public const TABS = [
         'together' => ['Buy these together',
             'The bundle box under the buy column: the product on the page plus one match from each category that goes with it, a tick on each, and one pink button that adds every ticked product.',
-            ['on', 'count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar', 'tier_3', 'tier_4', 'tier_5', 'coupons', 'discount_on', 'row_phone', 'row_laptop']],
+            ['on', 'count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar', 'tier_3', 'tier_4', 'tier_5', 'coupons', 'discount_on', 'row_phone', 'row_laptop', 'sets', 'range']],
     ];
 
     public const POLICY = [
