@@ -881,6 +881,25 @@ final class ProductTabs
                 ? (string) ($product->t('description') ?: $product->t('short_description'))
                 : (string) ($product->t($spec['field']) ?? '');
 
+            /*
+             * (Lane ARDX, 14 Nov 2026) A translated body is drawn with its
+             * English's blank lines and list breaks -- the owner's "in arabic
+             * version, the spacing and line breaking spacing has issues"
+             * (/ar/product/medicube-vanilla-deodrant-and-body-mist-duo/). Only
+             * when this page is not English and the body really is a
+             * translation of the column read here; BlockStructure::forDisplay()
+             * changes no word, reads nothing, and returns the copy as it is
+             * when the two cannot be lined up. English pages never reach it.
+             */
+            if (! Locale::isDefault() && method_exists($product, 'getAttribute')) {
+                $englishField = $key === 'description' && trim((string) ($product->getAttribute('description') ?? '')) === '' ? 'short_description' : $spec['field'];
+                $english = (string) ($product->getAttribute($englishField) ?? '');
+
+                if ($english !== '' && $body !== $english && ! RichText::needsAutop($english) && ! RichText::needsAutop($body)) {
+                    $body = BlockStructure::forDisplay($english, $body);
+                }
+            }
+
             $out[] = [
                 'key' => 'builtin:' . $key,
                 'title' => (string) __($spec['string']),
@@ -1073,6 +1092,12 @@ final class ProductTabs
 
         $translated = $model->t($field);
 
-        return is_string($translated) && $translated !== '' ? $translated : $value;
+        if (! is_string($translated) || $translated === '') {
+            return $value;
+        }
+
+        // (Lane ARDX) An authored tab's translated body keeps its English's
+        // blank lines and list breaks, as the built-in tabs' do.
+        return $field === 'body' && $translated !== $value ? BlockStructure::forDisplay($value, $translated) : $translated;
     }
 }

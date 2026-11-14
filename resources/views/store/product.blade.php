@@ -225,7 +225,9 @@
          A blurb with nothing to trim comes back byte for byte. And a blurb
          that was NOTHING BUT empty lines now prints no box and no "Read more"
          at all ($kbbBlurb === '' in both @ifs below). */
-    $kbbBlurb = \App\Support\RichText::forShortDescription($product->t('short_description'));
+    /* (Lane ARDX, 14 Nov 2026) On /ar the blurb keeps its English's blank
+       lines (BlockStructure::translated(); an English page gets t() exactly). */
+    $kbbBlurb = \App\Support\RichText::forShortDescription(\App\Support\BlockStructure::translated($product, 'short_description'));
     $kbbBlurbBlocks = \App\Support\RichText::hasBlocks($kbbBlurb);
 
     /* ═══════════════════════════════════════════════════════════════════════

@@ -166,6 +166,7 @@ final class AdminRoles
             'catalog.new_arrivals' => 'Keep the New Arrivals collection: on/off, how many, how recent, include/exclude products and their order (Catalog → New Arrivals)',
             'catalog.best_sellers' => 'Arrange the Best Sellers page: drag the order, remove products with the cross (Catalog → Best Sellers)',
             'catalog.localise' => 'Translate recent products into Arabic and file them under Shop by Skin (Catalog → Translate & categorise)',
+            'catalog.ar_structure' => 'Put back the blank lines and list breaks the Arabic product copy lost, with a backup and undo (Catalog → Translate & categorise → Arabic spacing)',
         ]],
         ['inventory', 'Inventory', [
             'sets.stock' => 'Decide whether selling a set takes stock from its items',

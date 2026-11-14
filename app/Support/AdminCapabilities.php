@@ -341,6 +341,10 @@ final class AdminCapabilities
         // key (it spends his money), Approve all publishes Arabic to the shop,
         // and Apply adds products to the concern collections. Owner, manager.
         'catalog.localise' => ['owner', 'manager'],
+        // Catalog -> Translate & categorise -> Arabic spacing (Lane ARDX). Its own
+        // capability: Apply rewrites stored Arabic copy across the catalogue
+        // (blank lines only, backed up, undoable). Owner, manager.
+        'catalog.ar_structure' => ['owner', 'manager'],
 
         /*
          * Content -> Shoppable video (Lane V2, Phase 20). The UGC library: the
@@ -1825,6 +1829,9 @@ final class AdminCapabilities
         // Lane LT. Every path under the prefix, reads and writes alike.
         ['*', 'admin-api/recent-localise', 'catalog.localise'],
         ['*', 'admin-api/recent-localise/**', 'catalog.localise'],
+        // Lane ARDX. Every path under the prefix, reads and writes alike.
+        ['*', 'admin-api/ar-structure', 'catalog.ar_structure'],
+        ['*', 'admin-api/ar-structure/**', 'catalog.ar_structure'],
         ['*', 'admin-api/media', 'content.manage'],
         ['*', 'admin-api/media/**', 'content.manage'],
         ['*', 'admin-api/blocks', 'content.manage'],
