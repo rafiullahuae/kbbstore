@@ -206,13 +206,13 @@
   @include('partials.account.chrome', ['kacTitle' => __('store.orders.order_number', ['number' => $order->order_number]), 'kacBack' => '/my-account/orders/', 'kacBackLabel' => __('store.account.all_orders'), 'kacActive' => 'orders'])
   @php $kacTone = \App\Support\OrderProgress::tone($status); $kacSteps = \App\Support\OrderProgress::steps($order); @endphp
   <div class="kac-status">
-    <div class="kac-band kac-t-{{ $kacTone }}"><span>{!! \App\Support\AccountIcons::svg(\App\Support\AccountIcons::forTone($kacTone), 17) !!}{{ __(\App\Support\OrderProgress::bandKey($status)) }}</span><span class="kbbod-pill {{ $statusClass }}">{{ \App\Support\OrderStatusLabel::for($status) }}</span></div>
+    <div class="kac-band kac-t-{{ $kacTone }}"><span>{!! \App\Support\AccountIcons::svg(\App\Support\AccountIcons::forTone($kacTone), 17) !!}{{ empty($timeline) ? __(\App\Support\OrderProgress::bandKey($status)) : $timeline['label'] }}</span><span class="kbbod-pill {{ $statusClass }}">{{ \App\Support\OrderStatusLabel::for($status) }}</span></div>
     <div class="kac-sb">
       <p class="kac-meta kbbod-when">
           {{ __('store.orders.placed_on', ['date' => (class_exists(\App\Support\LocalDate::class) ? \App\Support\LocalDate::format($order->created_at, 'j F Y') : (($kbbD = $order->created_at) ? $kbbD->format('j F Y') : ''))]) }}
           @if ($items->count()) · {{ trans_choice('store.cart.item_count', $items->count()) }} @endif · <b>{!! $receiptMoney((int) $order->total) !!}</b>
       </p>
-      @if ($kacSteps !== [])@include('partials.account.steps', ['steps' => $kacSteps])@endif
+      @if (! empty($timeline))@include('partials.account.delivery-timeline', ['tl' => $timeline, 'live' => $tlLive ?? null])@elseif ($kacSteps !== [])@include('partials.account.steps', ['steps' => $kacSteps])@endif
       <div class="kac-acts">
         @if ($kacTone !== 'off' && ! empty($trackUrl))<a class="kac-btn p" href="{{ $trackUrl }}">{!! \App\Support\AccountIcons::svg('truck', 17) !!}{{ __('store.orders.track_this') }}</a>@endif
         <a class="kac-btn" href="{{ Url::to('/shop/') }}">{!! \App\Support\AccountIcons::svg('bag', 17) !!}{{ __('store.orders.continue_shopping') }}</a>

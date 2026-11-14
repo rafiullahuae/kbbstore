@@ -36,6 +36,9 @@ final class ShipmentSync
 
     private const TS = 'Y-m-d H:i:s.u';
 
+    /** A courier moment older than this is history, not news: no push. */
+    public const PUSH_FRESH_HOURS = 6;
+
     public function __construct(private QuiqupSettings $settings) {}
 
     /**
@@ -146,11 +149,11 @@ final class ShipmentSync
      */
     public function applyEvent(ShipmentEvent $event): void
     {
-        DB::transaction(function () use ($event) {
+        $moved = DB::transaction(function () use ($event) {
             $fresh = ShipmentEvent::query()->whereKey($event->getKey())->lockForUpdate()->first();
 
             if ($fresh === null || $fresh->applied_at !== null) {
-                return;
+                return null;
             }
 
             $shipment = Shipment::query()->whereKey($fresh->shipment_id)->lockForUpdate()->first();
@@ -158,7 +161,7 @@ final class ShipmentSync
             if ($shipment === null) {
                 $fresh->forceFill(['applied_at' => now()])->save();
 
-                return;
+                return null;
             }
 
             $newer = $shipment->state_at === null || ($fresh->state_at !== null && $fresh->state_at->greaterThan($shipment->state_at));
@@ -167,7 +170,7 @@ final class ShipmentSync
                 // Late or out of order: kept for the history, moves nothing.
                 $fresh->forceFill(['applied_at' => now()])->save();
 
-                return;
+                return null;
             }
 
             $facts = is_array($fresh->facts) ? $fresh->facts : [];
@@ -209,7 +212,55 @@ final class ShipmentSync
             $this->moveOrder($shipment, $state, $fresh->state_at);
 
             $fresh->forceFill(['applied_at' => now()])->save();
+
+            return [(int) $shipment->order_id, $state, (int) ($fresh->attempts ?? $shipment->attempts ?? 0), $fresh->state_at];
         });
+
+        if (is_array($moved)) {
+            $this->notifyCustomer(...$moved);
+        }
+    }
+
+    /**
+     * (Quiqup P3) Web Push for the moments the owner ticked "Push" for on
+     * Statuses -- out for delivery and a missed attempt by default (§6.2).
+     * After the commit, never inside it; a moment older than PUSH_FRESH_HOURS
+     * (a poll catching up on yesterday) is not announced; a failure here never
+     * fails the apply.
+     */
+    private function notifyCustomer(int $orderId, string $state, int $attempts, ?\DateTimeInterface $at): void
+    {
+        try {
+            if ($at === null || CarbonImmutable::instance($at)->lt(now()->subHours(self::PUSH_FRESH_HOURS))) {
+                return;
+            }
+
+            $row = $this->settings->options()['statuses'][$state] ?? null;
+
+            if (! is_array($row) || ! ($row['push'] ?? false) || \App\Support\DeliveryTimeline::label($state, 1, null) === '') {
+                return;
+            }
+
+            $order = Order::query()->whereKey($orderId)->first();
+
+            if ($order === null || ! \App\Support\DeliveryTimeline::visible($order)) {
+                return;
+            }
+
+            $wording = json_encode($row);
+            app(\App\Services\Push\PushAutomations::class)->delivery($order, $state, $attempts, static function (string $locale) use ($state, $attempts, $wording): string {
+                $was = app()->getLocale();
+                app()->setLocale($locale === 'ar' ? 'ar' : 'en');
+
+                try {
+                    return \App\Support\DeliveryTimeline::label($state, $attempts, $wording);
+                } finally {
+                    app()->setLocale($was);
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error('quiqup: delivery push failed', ['order' => $orderId, 'state' => $state, 'error' => mb_substr($e->getMessage(), 0, 200)]);
+        }
     }
 
     /**

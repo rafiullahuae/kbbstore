@@ -293,9 +293,27 @@ function budgetSeed(): array
         ]);
     }
 
+    /*
+     * (Quiqup P3) A second order of the same shopper, booked with the courier
+     * and out for delivery: the delivery timeline's own budget cases below.
+     */
+    $shipped = $order->replicate()->fill(['order_number' => 'BUD00002', 'status' => 'shipped', 'ship_state' => 'out_for_delivery', 'ship_state_at' => now()->subHour()]);
+    $shipped->save();
+    \App\Models\QuiqupConfig::query()->updateOrCreate(['id' => 'sandbox'], ['active' => true, 'options' => \App\Services\Quiqup\QuiqupSettings::defaults()]);
+    $shipment = \App\Models\Shipment::create([
+        'order_id' => $shipped->id, 'env' => 'sandbox', 'request_uuid' => (string) Str::uuid(), 'active_key' => $shipped->id,
+        'service_kind' => 'partner_next_day', 'payment_mode' => 'paid_on_delivery', 'job' => 'created',
+        'state' => 'out_for_delivery', 'state_at' => now()->subHour(), 'tracking_url' => 'https://track-parcel.quiqup.com/0b9e2a4c-1f7d-4e55-9a3b-6c1d2e3f4a5b',
+    ]);
+    foreach (['ready_for_collection' => 30, 'collected' => 20, 'at_depot' => 10, 'out_for_delivery' => 1] as $state => $hoursAgo) {
+        DB::table('shipment_events')->insert(['shipment_id' => $shipment->id, 'state' => $state, 'state_at' => now()->subHours($hoursAgo)->format('Y-m-d H:i:s.u'),
+            'source' => 'webhook', 'received_at' => now(), 'applied_at' => now()]);
+    }
+
     return [
         'customer' => $customer,
         'order' => $order,
+        'shipped' => $shipped,
         'cart' => $cart,
         'brand' => Brand::query()->first(),
         'category' => Category::query()->first(),
@@ -550,6 +568,20 @@ function budgetPages(array $seed): array
         'account order'     => ['/my-account/orders/' . $seed['order']->id, $seed['customer']->id, 7],
         'account addresses' => ['/my-account/edit-address', $seed['customer']->id, 6],
         'track order'       => ['/track-my-order', null, 5],
+        /*
+         * (Quiqup P3) NEW CASES, not a raised one: the delivery timeline on the
+         * two pages it appears on. The plain cases above are an order with no
+         * shipment and must not move (it costs no query: DeliveryTimeline::
+         * visible() reads orders.ship_state). With a shipment, exactly ONE more
+         * query -- the shipment, its events and the owner's step wording in a
+         * single statement. Raised deliberately; flagged in the lane report.
+         * Measured on SQLite: account order 5 -> 6 with a shipment; track
+         * lookup 5 -> 6. Ceilings are measured + this file's standard two; the
+         * exact +1 is pinned in QuiqupTimelineTest.
+         */
+        'account order with shipment' => ['/my-account/orders/' . $seed['shipped']->id, $seed['customer']->id, 8],
+        'track order looked up' => ['/track-my-order?order=BUD00001&email=budget%40example.com', null, 7],
+        'track order with shipment' => ['/track-my-order?order=BUD00002&email=budget%40example.com', null, 8],
         /*
          * 30 -> 22 (Lane CW).
          *

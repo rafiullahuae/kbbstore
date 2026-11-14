@@ -232,7 +232,7 @@ class AccountController extends Controller
             'items' => $order->items,
             // (Lane ACC) "Track this order": the same signed link the order emails carry.
             'trackUrl' => \App\Support\OrderLinks::trackUrl($order),
-        ]);
+        ] + self::timeline($order, \App\Support\Url::to('/my-account/orders/' . $order->getKey() . '/live')));
     }
 
     public function forgot(): View
@@ -305,7 +305,8 @@ class AccountController extends Controller
                     : (in_array((string) $signed->status, ['cancelled', 'refunded', 'failed'], true) || $signed->trashed() ? 'closed' : null);
             }
 
-            return view('store.account.track', ['order' => $signed, 'payNotice' => $notice] + $data);
+            return view('store.account.track', ['order' => $signed, 'payNotice' => $notice]
+                + self::timeline($signed, self::trackLive($signed, (string) $request->query('t', ''))) + $data);
         }
 
         if ($number === '' || $email === '') {
@@ -339,11 +340,33 @@ class AccountController extends Controller
             // Their own order, so this attempt should not count against them.
             RateLimiter::clear($key);
             $data['order'] = $candidate;
+            $data += self::timeline($candidate, self::trackLive($candidate, \App\Support\OrderLinks::token(\App\Support\OrderLinks::TRACK, $candidate, \App\Support\OrderLinks::TRACK_TTL)));
         } else {
             $data['notFound'] = true;
         }
 
         return view('store.account.track', $data);
+    }
+
+    /**
+     * (Quiqup P3) The delivery road map for a VERIFIED order, and its refresh
+     * URL while the parcel is moving. Empty for an order with no shipment --
+     * DeliveryTimeline::visible() reads the order's own ship_state, so that
+     * page costs no query and renders exactly as before. One query otherwise.
+     *
+     * @return array{timeline?: array, tlLive?: ?string}
+     */
+    private static function timeline(Order $order, string $live): array
+    {
+        $tl = \App\Support\DeliveryTimeline::for($order);
+
+        return $tl === null ? [] : ['timeline' => $tl, 'tlLive' => $tl['moving'] ? $live : null];
+    }
+
+    /** The guest refresh URL: the signed track token only, never number + email (plan §5.3). */
+    private static function trackLive(Order $order, string $token): string
+    {
+        return \App\Support\Url::to('/track-my-order/live') . '?' . http_build_query(['order' => (string) $order->order_number, 't' => $token]);
     }
 
     /** The signed-in shopper, or null. Never the `web` guard — see the class docblock. */
