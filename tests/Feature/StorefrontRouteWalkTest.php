@@ -372,11 +372,15 @@ function walkExpectations(array $seed): array
         // --- Account ----------------------------------------------------
         'my-account'               => ['status' => 200],
         'track-my-order'           => ['status' => 200],
+        // Quiqup P3: the timeline refresh. A guest with no signed token gets the same 404 a forged one does (no oracle).
+        'track-my-order/live'      => ['status' => 404],
         'my-account/forgot'        => ['status' => 200],
         // Guest-facing: guarded pages bounce, and the same URLs are walked
         // again signed in by the test below this one.
         'my-account/orders'              => ['status' => 302, 'auth' => 200],
         'my-account/orders/{id}'         => ['params' => ['id' => fn () => (string) $order->id], 'status' => 302, 'auth' => 200],
+        // Quiqup P3: its own auth:customer; signed in, an order with no shipment has no timeline to refresh (404).
+        'my-account/orders/{id}/live'    => ['params' => ['id' => fn () => (string) $order->id], 'status' => 302, 'auth' => 404],
         'my-account/edit-address'        => ['status' => 302, 'auth' => 200],
         'my-account/edit-address/{id}'   => ['params' => ['id' => fn () => (string) $address->id], 'status' => 302, 'auth' => 200],
         // (Lane ACC) Profile & password: signed-in only, like the orders and the address book.
