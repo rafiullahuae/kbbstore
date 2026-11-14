@@ -15,7 +15,7 @@ fs.mkdirSync(OUT, { recursive: true });
   if (process.env.HTTPS_PROXY && BASE.startsWith('https')) opts.proxy = { server: process.env.HTTPS_PROXY };
   const browser = await chromium.launch(opts);
   for (const slug of SLUGS) for (const loc of LOCS) for (const w of [390, 1280]) {
-    const ctx = await browser.newContext({ viewport: { width: w, height: 900 }, ignoreHTTPSErrors: true, bypassCSP: true });
+    const ctx = await browser.newContext({ viewport: { width: w, height: 2400 }, ignoreHTTPSErrors: true, bypassCSP: true });
     const page = await ctx.newPage(); const errors = [];
     page.on('pageerror', (e) => errors.push(String(e)));
     const url = BASE + (loc === 'ar' ? '/ar' : '') + '/product/' + slug + '/';
@@ -32,8 +32,11 @@ fs.mkdirSync(OUT, { recursive: true });
         .find((e) => e && e.getClientRects().length && e.getBoundingClientRect().height > 0);
       if (c) c.setAttribute('data-ardx', '1');
     });
+    // the sticky header and the floating chat button are not part of the copy
+    await page.evaluate(() => { for (const e of document.querySelectorAll('body *')) { const p = getComputedStyle(e).position; if (p === 'fixed' || p === 'sticky') e.style.visibility = 'hidden'; } });
     const sel = '[data-ardx]';
     const el = await page.$(sel);
+    if (!el) { console.log('SKIP (no product page served)', url); await ctx.close(); continue; }
     await el.scrollIntoViewIfNeeded();
     await page.waitForTimeout(300);
     const file = `${OUT}/${PREFIX}-${loc}-${slug}-${w}.png`;
