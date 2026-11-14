@@ -1,0 +1,64 @@
+[
+ {
+  "lang": "en",
+  "width": 390,
+  "url": "http://127.0.0.1:9447/product/fbt3-345-relief-cream/",
+  "errors": [],
+  "heading": "Frequently bought together",
+  "headingPx": "14px",
+  "sectionW": 390,
+  "sectionH": 259,
+  "cardW": 79,
+  "names": [
+   "Dr.Althea - 345 Relief Cream",
+   "Dr. Althea 345 Relief Cream + Mist Spray Set",
+   "Dr.Althea - 345 Relief Cream Mist Spray",
+   "Dr. Althea - 0.1% Gentle Retinol Serum"
+  ],
+  "clickable": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "scrollWidth": 390,
+  "imgs": [],
+  "bg": [
+   false,
+   false,
+   false,
+   false
+  ]
+ },
+ {
+  "lang": "en",
+  "width": 1280,
+  "url": "http://127.0.0.1:9447/product/fbt3-345-relief-cream/",
+  "errors": [],
+  "heading": "Frequently bought together",
+  "headingPx": "17px",
+  "sectionW": 1236,
+  "sectionH": 252,
+  "cardW": 116,
+  "names": [
+   "Dr.Althea - 345 Relief Cream",
+   "Dr. Althea 345 Relief Cream + Mist Spray Set",
+   "Dr.Althea - 345 Relief Cream Mist Spray",
+   "Dr. Althea - 0.1% Gentle Retinol Serum"
+  ],
+  "clickable": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "scrollWidth": 1280,
+  "imgs": [],
+  "bg": [
+   false,
+   false,
+   false,
+   false
+  ]
+ }
+]

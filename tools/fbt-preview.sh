@@ -94,13 +94,16 @@ export KBB_PUBLIC_PATH="$ROOT" APP_ENV=local APP_DEBUG=true \
   APP_PACKAGES_CACHE="$DIR/compiled/packages.php"
 mkdir -p "$DIR/compiled"
 
+# (Lane FBT3) KBB_FBT_SEED picks another seed (tools/fbt3-seed.php: the Dr. Althea 345 row).
+SEED=${KBB_FBT_SEED:-$APP/tools/fbt-seed.php}
+case "$SEED" in /*) ;; *) SEED="$APP/$SEED" ;; esac
 php "$APP/artisan" migrate --force >"$DIR/migrate.log" 2>&1 || { tail -30 "$DIR/migrate.log"; exit 1; }
 # </dev/null ON BOTH ARMS. `artisan tinker <file>` runs the file and then drops
 # into its REPL, which BLOCKS on stdin for ever whenever a terminal is attached:
 # the log says the seed is done and the server never comes up. (Lane UG3 found
 # it in its own copy; Lane FIN swept the other eleven.)
-php "$APP/artisan" tinker "$APP/tools/fbt-seed.php" >>"$DIR/migrate.log" 2>&1 </dev/null \
-  || php "$APP/artisan" tinker --execute="require '$APP/tools/fbt-seed.php';" >>"$DIR/migrate.log" 2>&1 </dev/null \
+php "$APP/artisan" tinker "$SEED" >>"$DIR/migrate.log" 2>&1 </dev/null \
+  || php "$APP/artisan" tinker --execute="require '$SEED';" >>"$DIR/migrate.log" 2>&1 </dev/null \
   || { tail -30 "$DIR/migrate.log"; exit 1; }
 
 # ── THE COMPILED ROUTE TABLE HAS TO GO, OR THE BLOCK ABOVE DOES NOTHING ─────

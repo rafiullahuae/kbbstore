@@ -208,16 +208,24 @@ it('leaves a page whose product is in no set exactly as before: the product firs
         ->and($patch)->not->toHaveKey('page_id');
 });
 
-it('keeps the product first when the only set holding it is sold out', function () {
+it('keeps the product first when the only set holding it is sold out -- and leaves that set out', function () {
     // A sold-out set (drawn greyed, "Hide sold-out products" off) cannot be
     // bought, so it cannot stand in for the product.
+    //
+    // (Lane FBT3, 14 November 2026) And it is no longer drawn BESIDE the
+    // product either: the owner, on the 345 Relief Cream's page, "i'm getting
+    // the product itself and also the 2nd product in the same row, both are
+    // in the set". A card inside a shown set is never drawn, and the page's
+    // product cannot give its place up to a set nobody can buy, so the set
+    // gives way. 2.60.667 drew it greyed after the patch.
     $s = slShop();
     $s['set']->forceFill(['stock_status' => 'outofstock'])->save();
     slOn(['hide_oos' => false]);
     Cache::flush();
 
     $ids = slSection($s['patch'])['products']->pluck('id')->all();
-    expect($ids[0])->toBe($s['patch']->id)->and($ids)->toContain($s['set']->id);
+    expect($ids[0])->toBe($s['patch']->id)->and($ids)->not->toContain($s['set']->id)
+        ->and($ids)->toHaveCount(4);
 });
 
 it('groups a set-led press for the discount, validated against the page product -- never widened', function () {

@@ -15,6 +15,8 @@ const BASE = process.env.FBT_BASE || 'http://127.0.0.1:9347';
 const OUT = process.env.FBT_OUT || 'docs/plans/frequently-bought-together/shots';
 const TAG = process.env.FBT_TAG || 'after';
 const AR = process.env.FBT_AR === '1';
+// (Lane FBT3) which product page; the toner by default.
+const PATH = process.env.FBT_PATH || '/product/pdp-heartleaf-toner/';
 const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 
 (async () => {
@@ -28,7 +30,7 @@ const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
     const errors = [];
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
     page.on('pageerror', (e) => errors.push(String(e)));
-    const url = BASE + (AR ? '/ar' : '') + '/product/pdp-heartleaf-toner/';
+    const url = BASE + (AR ? '/ar' : '') + PATH;
     await page.goto(url, { waitUntil: 'networkidle' });
     const sec = await page.$('.kbb-fbt');
     const row = { lang, width, url, errors };

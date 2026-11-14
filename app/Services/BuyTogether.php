@@ -88,6 +88,17 @@ class BuyTogether
      */
     public const RANGE_POOL = 12;
 
+    /**
+     * (Lane FBT3) A row that MAY be a set: SetMembership::isSetLike() decides
+     * in PHP, this only narrows which rows carry their description.
+     */
+    private const SET_LIKE_SQL = "(products.type = 'set' OR LOWER(products.name) LIKE '%set%' OR LOWER(products.name) LIKE '%duo%'"
+        ." OR LOWER(products.name) LIKE '%trio%' OR LOWER(products.name) LIKE '%kit%' OR LOWER(products.name) LIKE '%bundle%'"
+        ." OR LOWER(products.name) LIKE '%routine%')";
+
+    /** (Lane FBT3) How many wider picks may refill a row a set emptied. */
+    public const REFILL = 12;
+
     public function __construct(
         private BuyTogetherSettings $settings,
         private BuyTogetherPairs $pairs,
@@ -278,6 +289,8 @@ class BuyTogether
             $slots, $product->brand_id === null ? null : (int) $product->brand_id,
             // (Lane FBT) the sets and range sources.
             ! empty($c['sets']), $range,
+            // (Lane FBT3) entries carry the set links since.
+            'links-1',
         ]) ?: '');
         $key = self::CACHE_PREFIX.(int) $product->id;
 
@@ -285,6 +298,7 @@ class BuyTogether
 
         if (is_array($hit) && ($hit['fp'] ?? null) === $fingerprint && is_array($hit['pools'] ?? null)) {
             $pools = $hit['pools'];
+            $links = is_array($hit['links'] ?? null) ? $hit['links'] : [];
             $rows = $this->hydrate($pools, $c);
         } else {
             $rows = $this->cold($product, $c, $slots, $range);
@@ -294,28 +308,175 @@ class BuyTogether
                 $pools[(string) $row->getAttribute('bt_src')][] = (int) $row->id;
             }
 
-            Cache::put($key, ['fp' => $fingerprint, 'pools' => $pools], self::TTL);
+            $links = $this->links($product, $rows, $pools);
+
+            // The 's' pool is "a set holding this product": what the LIKE
+            // found and SetMembership did not confirm is not one.
+            if (isset($pools['s'])) {
+                $pools['s'] = array_values(array_filter(
+                    $pools['s'],
+                    fn (int $id) => in_array((int) $product->id, $links[$id] ?? [], true),
+                ));
+            }
+            Cache::put($key, ['fp' => $fingerprint, 'pools' => $pools, 'links' => $links], self::TTL);
         }
 
         $byId = $rows->keyBy(fn ($p) => (int) $p->id);
         $chosen = $this->pick($product, $c, $slots, $pools, $byId, $range, $lead);
         $set = null;
-        $holders = array_flip(array_map('intval', $pools['s'] ?? []));
-        $leads = fn (Product $p): bool => isset($holders[(int) $p->id]) && $p->stock_status === 'instock';
 
-        if ($holders !== [] && $chosen->contains($leads)) {
-            $wide = $this->pick($product, ['count' => (int) $c['count'] + 1] + $c, $slots, $pools, $byId, $range, $lead);
-            $set = $wide->first($leads);
+        /*
+         * ▲ NO CARD BESIDE A SET THAT HOLDS IT (Lane FBT3, 14 November 2026).
+         * Live, on the 345 Relief Cream's page: [the cream, "345 Relief Cream
+         * + Mist Spray Set", "345 Relief Cream Mist Spray", a retinol serum]
+         * under "Buy 4 items together" -- the set's contents NOT recorded, so
+         * 2.60.667 never knew the cream and the mist spray were in it. $links
+         * reads membership from the recording, the set's name and its
+         * description (App\Support\SetMembership). A row that draws no linked
+         * set is left exactly as it was picked.
+         */
+        $touched = isset($links[(int) $product->id])
+            || $chosen->contains(fn (Product $p) => isset($links[(int) $p->id]));
 
-            if ($set !== null) {
-                $chosen = $wide->reject(fn (Product $p) => isset($holders[(int) $p->id]))
-                    ->take(max(2, (int) $c['count']) - 1)->values();
+        if ($touched) {
+            $want = max(2, (int) $c['count']) - 1;
+
+            // Wider and wider picks (PHP over the same pools, no query) until
+            // the row is full again after what was taken out -- or the pools
+            // run dry.
+            for ($extra = 1; $extra <= self::REFILL; $extra++) {
+                $wide = $this->pick($product, ['count' => (int) $c['count'] + $extra] + $c, $slots, $pools, $byId, $range, $lead);
+                [$set, $chosen] = $this->arrange($product, $wide, $links, $want);
+
+                if ($chosen->count() >= $want || $wide->count() < $want + $extra) {
+                    break;
+                }
             }
         }
 
         \App\Support\SetPricing::prime($set === null ? $chosen : collect([$set])->concat($chosen));
 
         return ['mates' => $chosen, 'set' => $set];
+    }
+
+    /**
+     * The row with no card beside a set that holds it.          (Lane FBT3)
+     *
+     *   - A set (in stock) holding the page's product LEADS in its place, and
+     *     the page product is not drawn (2.60.667's rule, now on every signal).
+     *   - Every other card inside a shown set is taken out -- set first: a set
+     *     drawn after one of its own members takes that member's place.
+     *   - Never two sets holding the same product, and never a set holding the
+     *     page product beside it (one sold out, so it cannot lead): either puts
+     *     one product in front of the shopper twice.
+     *
+     * $wide is in the pick's order; the first $want survivors are the mates.
+     *
+     * @param  Collection<int, Product>  $wide
+     * @param  array<int, list<int>>  $links  set id => member ids
+     * @return array{0: ?Product, 1: Collection<int, Product>}
+     */
+    public function arrange(Product $product, Collection $wide, array $links, int $want): array
+    {
+        $page = (int) $product->id;
+        $lead = $wide->first(fn (Product $p) => in_array($page, $links[(int) $p->id] ?? [], true) && $p->stock_status === 'instock');
+
+        $covered = [];
+        $shownSet = [];
+        $first = $lead === null ? $page : (int) $lead->id;
+
+        foreach (array_merge([$page], $links[$first] ?? []) as $id) {
+            $covered[(int) $id] = true;
+        }
+
+        $out = [];
+
+        foreach ($wide as $p) {
+            $id = (int) $p->id;
+
+            if ($lead !== null && $id === (int) $lead->id) {
+                continue;
+            }
+
+            if (isset($covered[$id])) {
+                continue;
+            }
+
+            $members = $links[$id] ?? [];
+
+            if ($members !== []) {
+                if (array_intersect_key(array_flip($members), $covered) !== []) {
+                    continue;
+                }
+
+                // Its members already drawn give their places to it.
+                $out = array_values(array_filter($out, fn (Product $q) => ! in_array((int) $q->id, $members, true)));
+
+                foreach ($members as $m) {
+                    $covered[(int) $m] = true;
+                }
+            }
+
+            $out[] = $p;
+        }
+
+        return [$lead, collect(array_slice($out, 0, max(0, $want)))];
+    }
+
+    /**
+     * Which shown products are inside which set. The cold path only, and NO
+     * query: the union already brought each set-like row's description and
+     * recorded members (part()), and the page's own product is loaded in
+     * full. App\Support\SetMembership decides, in PHP; the answer is cached
+     * with the pools.
+     *
+     * @param  Collection<int, Product>  $rows
+     * @param  array<string, list<int>>  $pools
+     * @return array<int, list<int>>  set id => member ids among the page and the rows
+     */
+    private function links(Product $product, Collection $rows, array $pools): array
+    {
+        $recordedSets = array_flip(array_map('intval', $pools['s'] ?? []));
+        $page = (int) $product->id;
+        $all = $rows->keyBy(fn ($p) => (int) $p->id);
+        $all->put($page, $product);
+        $describe = fn (Product $p): array => [
+            'brand_id' => $p->brand_id === null ? null : (int) $p->brand_id,
+            'brand' => $p->relationLoaded('brand') ? $p->brand?->name : null,
+            'name' => (string) $p->name,
+        ];
+        $sets = [];
+
+        foreach ($all as $id => $p) {
+            if (! isset($recordedSets[$id]) && ! \App\Support\SetMembership::isSetLike($p->getAttributes()['type'] ?? null, (string) $p->name)) {
+                continue;
+            }
+
+            if ($id === $page) {
+                $description = $p->getAttributes()['description'] ?? null;
+                $recorded = $p->relationLoaded('setItems') ? $p->setItems->pluck('member_product_id')->all() : [];
+            } else {
+                $description = $p->getAttributes()['bt_desc'] ?? null;
+                $recorded = explode(',', (string) ($p->getAttributes()['bt_members'] ?? ''));
+            }
+
+            $sets[$id] = $describe($p) + [
+                'description' => is_string($description) ? $description : null,
+                'recorded' => array_values(array_filter(array_map('intval', $recorded))),
+            ];
+        }
+
+        if ($sets === []) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach (\App\Support\SetMembership::links($sets, $all->map($describe)->all()) as $sid => $members) {
+            $out[(int) $sid] = array_map('intval', array_keys($members));
+        }
+
+        return $out;
     }
 
     /**
@@ -574,8 +735,19 @@ class BuyTogether
 
         // (Lane FBT) The sets this product is in, and its range.
         if (! empty($c['sets'])) {
+            // (Lane FBT3) and a set of its brand whose name or description
+            // carries its name, word for word in order -- live, no set's
+            // contents are recorded. The LIKE only narrows: links() confirms
+            // each one with SetMembership and choose() drops the rest.
+            $like = $this->holderPattern($product);
             $parts[] = $this->ordered(
-                $this->part($product, $c, 's', self::POOL)->whereExists(fn ($e) => $this->setOf($e, $product)),
+                $this->part($product, $c, 's', self::POOL)->where(fn ($w) => $w
+                    ->whereExists(fn ($e) => $this->setOf($e, $product))
+                    ->when($like !== null, fn ($w) => $w->orWhere(fn ($n) => $n
+                        ->where('products.brand_id', (int) $product->brand_id)
+                        ->whereRaw(self::SET_LIKE_SQL)
+                        ->where(fn ($t) => $t->whereRaw('LOWER(products.name) LIKE ?', [$like])
+                            ->orWhereRaw('LOWER(products.description) LIKE ?', [$like]))))),
                 $c, $product, null,
             );
         }
@@ -611,6 +783,23 @@ class BuyTogether
         $rows->load('brand:id,name,slug');
 
         return $rows;
+    }
+
+    /**
+     * (Lane FBT3) "%345%relief%cream%": the page product's core name (brand
+     * and sizes dropped), its words in order. Letters and digits only, so the
+     * pattern carries no wildcard of its own. Null without a brand or a core.
+     */
+    private function holderPattern(Product $product): ?string
+    {
+        if ($product->brand_id === null) {
+            return null;
+        }
+
+        $product->loadMissing('brand:id,name,slug');
+        $core = \App\Support\SetMembership::core($product->brand?->name, (string) $product->name);
+
+        return $core === null ? null : '%'.implode('%', $core).'%';
     }
 
     /** `EXISTS` body: the row is a set that holds $member. */
@@ -669,6 +858,11 @@ class BuyTogether
         $q = Product::query()
             ->select($columns)
             ->selectRaw("'{$src}' as bt_src")
+            // (Lane FBT3) A set-like row brings what SetMembership reads --
+            // its description and its recorded members -- in the SAME query;
+            // every other row brings two NULLs. Constants only, no binding.
+            ->selectRaw('CASE WHEN '.self::SET_LIKE_SQL.' THEN products.description END as bt_desc')
+            ->selectRaw('CASE WHEN '.self::SET_LIKE_SQL.' THEN (SELECT GROUP_CONCAT(btm.member_product_id) FROM product_set_items btm WHERE btm.set_product_id = products.id) END as bt_members')
             ->visible()
             ->where('products.id', '!=', (int) $product->id)
             // A companion is bought as it stands: nothing to choose.

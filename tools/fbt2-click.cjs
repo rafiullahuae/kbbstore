@@ -15,6 +15,8 @@ const path = require('path');
 const BASE = process.env.FBT_BASE || 'http://127.0.0.1:9347';
 const OUT = process.env.FBT_OUT || 'docs/plans/frequently-bought-together/shots/v2';
 const TAG = process.env.FBT_TAG || 'after';
+// (Lane FBT3) which product page; the toner by default.
+const PATH = process.env.FBT_PATH || '/product/pdp-heartleaf-toner/';
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
@@ -30,7 +32,7 @@ const TAG = process.env.FBT_TAG || 'after';
     const errors = [];
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
     page.on('pageerror', (e) => errors.push(String(e)));
-    await page.goto(BASE + '/product/pdp-heartleaf-toner/', { waitUntil: 'networkidle' });
+    await page.goto(BASE + PATH, { waitUntil: 'networkidle' });
     const sec = await page.$('.kbb-fbt');
     await sec.scrollIntoViewIfNeeded();
     await page.waitForTimeout(1200);
