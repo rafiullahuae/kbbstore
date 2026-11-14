@@ -103,12 +103,12 @@ it('ships on, directly above Tabby & Tamara, in the flowing underline, with the 
 
     expect($strip)->not->toBe('')
         ->and($strip)->toContain('pgs-g-line pgs-s-underline')
-        ->and($strip)->toContain('<span class="pgs-t"><b>Free gifts with every order.</b> <span class="pgs-l">Limited time only!</span></span>')
+        ->and($strip)->toContain('<span class="pgs-t"><b>Free gifts with every order.</b> <span class="pgs-l">Limited time offer!</span></span>')
         ->and($strip)->toContain('<i class="pgs-u" aria-hidden="true"></i>')
         ->and($strip)->not->toContain('class="cf')
         ->and($strip)->toContain('<svg viewBox="0 0 24 24" width="24" height="24"')
         // Only the words' width: every other value is the style's own.
-        ->and($strip)->toContain('style="--pgs-w:'.ProductGiftStrip::emWidth('Free gifts with every order.', 'Limited time only!').'"')
+        ->and($strip)->toContain('style="--pgs-w:'.ProductGiftStrip::emWidth('Free gifts with every order.', 'Limited time offer!').'"')
         ->and(substr_count($html, 'class="pdp-gs '))->toBe(1);
 
     $at = strpos($html, '<div class="pdp-gs ');
@@ -133,8 +133,8 @@ it('measures the words the way the CSS divides them: Outfit widths, bold, and Ar
     // Measured in Chromium on the product page: 20.38 em for the English line
     // (bold + regular), 19.55 em for the Arabic. The estimate may be a little
     // wide (the words then sit a touch smaller), never narrow (they would clip).
-    $en = ProductGiftStrip::emWidth('Free gifts with every order.', 'Limited time only!');
-    $ar = ProductGiftStrip::emWidth('هدايا مجانية مع كل طلب.', 'لفترة محدودة فقط!');
+    $en = ProductGiftStrip::emWidth('Free gifts with every order.', 'Limited time offer!');
+    $ar = ProductGiftStrip::emWidth('هدايا مجانية مع كل طلب.', 'عرض لفترة محدودة!');
     expect($en)->toBeGreaterThanOrEqual(2038)->toBeLessThan(2038 * 1.05)
         ->and($ar)->toBeGreaterThanOrEqual(1955)->toBeLessThan(1955 * 1.25)
         ->and(ProductGiftStrip::emWidth('', ''))->toBe(100);
@@ -153,10 +153,10 @@ it('reads the new Arabic on /ar, from the published strings, right to left', fun
     $html = pgsTPage(pgsTProduct(), '/ar');
     $strip = pgsTStrip($html);
 
-    expect($strip)->toContain('<b>هدايا مجانية مع كل طلب.</b> <span class="pgs-l">لفترة محدودة فقط!</span>')
+    expect($strip)->toContain('<b>هدايا مجانية مع كل طلب.</b> <span class="pgs-l">عرض لفترة محدودة!</span>')
         ->and($strip)->not->toContain('Free gifts')
         ->and($strip)->not->toContain('لا تفوّت')
-        ->and($strip)->toContain('--pgs-w:'.ProductGiftStrip::emWidth('هدايا مجانية مع كل طلب.', 'لفترة محدودة فقط!'))
+        ->and($strip)->toContain('--pgs-w:'.ProductGiftStrip::emWidth('هدايا مجانية مع كل طلب.', 'عرض لفترة محدودة!'))
         ->and($html)->toMatch('/<html[^>]*dir="rtl"/');
 
     pgsTSet(['pgs_line1_ar' => 'هدية لك']);
@@ -165,18 +165,23 @@ it('reads the new Arabic on /ar, from the published strings, right to left', fun
 
 it('moves an Arabic row Lane GS published to the new words, and leaves one he typed alone', function () {
     $mig = require database_path('migrations/2028_01_25_100000_product_gift_strip_one_line_arabic.php');
+    // and 2.60.665's, which moves the second part to "عرض لفترة محدودة!" (owner, 14 Nov: "keep this text only")
+    $mig2 = require database_path('migrations/2028_01_26_100000_product_gift_strip_offer_wording.php');
     $q = fn (string $f) => DB::table('translations')->where('locale', 'ar')->where('group', 'ui')->where('item_id', 0)->where('field', $f);
 
     $q('store.product.gift_strip_1')->update(['value' => 'هدايا مجانية مع كل طلب']); // Lane GS's wording
     $q('store.product.gift_strip_2')->update(['value' => 'نص كتبه المالك']);          // his own
     $mig->up();
+    $mig2->up();
 
     expect($q('store.product.gift_strip_1')->value('value'))->toBe('هدايا مجانية مع كل طلب.')
         ->and($q('store.product.gift_strip_2')->value('value'))->toBe('نص كتبه المالك');
 
     $q('store.product.gift_strip_2')->delete();
     $mig->up();
-    expect($q('store.product.gift_strip_2')->value('value'))->toBe('لفترة محدودة فقط!');
+    expect($q('store.product.gift_strip_2')->value('value'))->toBe('لفترة محدودة فقط!'); // 2.60.664's wording
+    $mig2->up();
+    expect($q('store.product.gift_strip_2')->value('value'))->toBe('عرض لفترة محدودة!');
 });
 
 it('draws no bytes at all when switched off — no strip and no <style> — and hides on a phone only through its Mobile sections row', function () {
@@ -368,12 +373,13 @@ it('saves through the product page endpoint, refusing unknown keys, and hands th
 });
 
 it('keeps the migration, the drafts and the interface strings saying the same words', function () {
-    $mig = (string) file_get_contents(database_path('migrations/2028_01_25_100000_product_gift_strip_one_line_arabic.php'));
+    $mig = (string) file_get_contents(database_path('migrations/2028_01_25_100000_product_gift_strip_one_line_arabic.php'))
+        .(string) file_get_contents(database_path('migrations/2028_01_26_100000_product_gift_strip_offer_wording.php'));
     $strings = \App\Services\Translation\InterfaceStrings::flat();
     $drafts = (string) file_get_contents((new ReflectionClass(\App\Services\Translation\ArabicInterfaceDrafts::class))->getFileName());
 
     expect($strings['store.product.gift_strip_1'])->toBe('Free gifts with every order.')
-        ->and($strings['store.product.gift_strip_2'])->toBe('Limited time only!')
+        ->and($strings['store.product.gift_strip_2'])->toBe('Limited time offer!')
         ->and(ProductGiftStrip::defaults()['line1'])->toBe($strings['store.product.gift_strip_1'])
         ->and(ProductGiftStrip::defaults()['line2'])->toBe($strings['store.product.gift_strip_2']);
 
@@ -381,7 +387,7 @@ it('keeps the migration, the drafts and the interface strings saying the same wo
         expect($mig)->toContain(var_export($strings[$k], true));
     }
 
-    foreach (['هدايا مجانية مع كل طلب.', 'لفترة محدودة فقط!'] as $ar) {
+    foreach (['هدايا مجانية مع كل طلب.', 'عرض لفترة محدودة!'] as $ar) {
         expect($mig)->toContain("'$ar'")->and($drafts)->toContain("'$ar'");
     }
 });
@@ -420,4 +426,24 @@ it('animates only transform and opacity (bar the two letter-clipped shines), and
     $outside = (string) preg_replace('/@supports \(font-size:1cqi\)\{(?:[^{}]*\{[^{}]*\})*\}/', '', $all);
     $outside = (string) preg_replace('/@container[^{]*\{(?:[^{}]*\{[^{}]*\})*\}/', '', $outside);
     expect($outside)->not->toContain('cqi')->not->toContain('clamp(');
+});
+
+
+it('moves a saved 2.60.664 default to "Limited time offer!" and never touches words he typed', function () {
+    /*
+     * THE DEFECT: saving the Product gifts strip tab stores the default words verbatim, so a shop
+     * that saved under 2.60.664 would keep "Limited time only!" for ever after the default moved --
+     * the owner said "keep this text only: Free gifts with every order. Limited time offer!".
+     * MUTATION: drop the settings block from 2028_01_26_100000 and the first expectation is red.
+     */
+    $mig = require database_path('migrations/2028_01_26_100000_product_gift_strip_offer_wording.php');
+    $settings = app(\App\Services\SettingsService::class);
+
+    $settings->set('pgs_line2', 'Limited time only!');
+    $mig->up();
+    expect($settings->get('pgs_line2'))->toBe('Limited time offer!');
+
+    $settings->set('pgs_line2', 'Ends Sunday');
+    $mig->up();
+    expect($settings->get('pgs_line2'))->toBe('Ends Sunday');
 });

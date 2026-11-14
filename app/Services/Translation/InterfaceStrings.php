@@ -1303,7 +1303,7 @@ final class InterfaceStrings
             // (Lane GS, GS2) The free gifts strip's two parts of its one line,
             // while ProductGiftStrip's Arabic boxes are empty.
             'product.gift_strip_1' => 'Free gifts with every order.',
-            'product.gift_strip_2' => 'Limited time only!',
+            'product.gift_strip_2' => 'Limited time offer!',
             'product.read_more' => 'Read more ↓',
             /*
              * THE THREE TAB HEADINGS, which were English literals inside
