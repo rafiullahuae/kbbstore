@@ -66,7 +66,7 @@ final class BlockStructure
     private const INLINE_CONTEXT = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'strong', 'span', 'a', 'em', 'i', 'u', 'font', 'small', 'label', 'li', 'dt', 'dd'];
 
     /**
-     * @return list<array{kind: string, start: int, end: int, ctx?: bool, rm?: array{0: int, 1: int}|null, items?: list<array{0: int, 1: int}>, tag?: string, open?: string}>
+     * @return list<array{kind: string, start: int, end: int, bold?: bool, rm?: array{0: int, 1: int}|null, items?: list<array{0: int, 1: int}>, tag?: string, open?: string}>
      */
     public static function lines(string $html): array
     {
@@ -79,21 +79,11 @@ final class BlockStructure
         $table = null;        // [depth, start]
         $run = self::emptyRun();
 
-        $context = static function () use (&$stack): bool {
-            foreach ($stack as $s) {
-                if (in_array($s[0], self::INLINE_CONTEXT, true)) {
-                    return true;
-                }
-            }
-
-            return false;
-        };
-
-        $flush = static function (?array $blank = null) use (&$run, &$lines, $context): void {
+        $flush = static function (?array $blank = null) use (&$run, &$lines): void {
             if ($run['vis']) {
                 $lines[] = ['kind' => 'P', 'start' => $run['start'], 'end' => $run['end'], 'bold' => $run['bold']];
             } elseif ($blank !== null) {
-                $lines[] = ['kind' => 'B', 'start' => $blank[0], 'end' => $blank[1], 'rm' => $blank[2] ?? null, 'ctx' => $context()];
+                $lines[] = ['kind' => 'B', 'start' => $blank[0], 'end' => $blank[1], 'rm' => $blank[2] ?? null];
             }
             $run = self::emptyRun();
         };
@@ -514,7 +504,7 @@ final class BlockStructure
         $s = str_ireplace(['&nbsp;', '&#160;', '&#xa0;'], "\u{00A0}", $s);
         $s = (string) preg_replace('/<(\/?[a-zA-Z][a-zA-Z0-9]*)\b(?![^>]*\bkbb-bl\b)[^>]*>/', '<$1>', $s);
         $s = (string) preg_replace('/<([a-zA-Z][a-zA-Z0-9]*)\b[^>]*\bkbb-bl\b[^>]*>/', '<$1 K>', $s);
-        $s = (string) preg_replace('/[^<>]*[^\s<>\x{00A0}\x{200B}-\x{200F}\x{2066}-\x{2069}\x{FEFF}][^<>]*/u', 'T', $s);
+        $s = (string) preg_replace('/(?<=>|^)[^<>]*[^\s<>\x{00A0}\x{200B}-\x{200F}\x{2066}-\x{2069}\x{FEFF}][^<>]*(?=<|$)/u', 'T', $s);
         $s = (string) preg_replace('/(?<=>|^)[\s\x{00A0}\x{200B}-\x{200F}\x{2066}-\x{2069}\x{FEFF}]*\x{00A0}[\s\x{00A0}\x{200B}-\x{200F}\x{2066}-\x{2069}\x{FEFF}]*(?=<|$)/u', 'N', $s);
 
         return strtolower((string) preg_replace('/[\s\x{200B}-\x{200F}\x{2066}-\x{2069}\x{FEFF}]+/u', '', $s));

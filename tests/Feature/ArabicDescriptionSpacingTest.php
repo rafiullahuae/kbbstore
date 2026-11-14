@@ -113,3 +113,22 @@ it('falls back to a blank after a list only when the English is spaced that way 
     $plain = '<p>A</p><ul><li>a</li></ul><p>B</p><p>C</p><p>D</p>';
     expect(BlockStructure::forDisplay($plain, $ar))->toBe($ar);
 });
+
+it('takes the fast path only when the two bodies really draw the same lines', function () {
+    // key() is how align() skips the line reader for the ~98% of bodies that already match. A first cut
+    // collapsed every tag to "<t>" and called the live k-beauty dark-spots bundle (English: blank lines
+    // around four pictures; Arabic: the pictures inside one-line blanks) "the same" -- the T pass also
+    // matched the tag names. MUTATION: make key() return a constant -> this case and six others are red.
+    foreach (glob(base_path('tests/Fixtures/arabic-spacing/*.json')) as $file) {
+        $f = json_decode((string) file_get_contents($file), true);
+
+        if (BlockStructure::key($f['en']) === BlockStructure::key($f['ar'])) {
+            expect(BlockStructure::shape($f['en']))->toBe(BlockStructure::shape($f['ar']), basename($file));
+        }
+    }
+
+    $k = ardsFixture('k-beauty-dark-spots-care-bundle');
+    expect(BlockStructure::key($k['en']))->not->toBe(BlockStructure::key($k['ar']))
+        ->and(BlockStructure::key('<p>A</p><p>&nbsp;</p><ul><li>b</li></ul>'))->toBe(BlockStructure::key("<p>أ</p><p>\u{00A0}</p><ul><li>ب</li></ul>"))
+        ->and(BlockStructure::key('<p>A</p><p>&nbsp;</p>'))->not->toBe(BlockStructure::key('<p>A</p><p></p>'));
+});
