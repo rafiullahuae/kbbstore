@@ -1242,6 +1242,8 @@ use App\Http\Controllers\Store\CustomerAuthController;
 // the route-level middleware was fighting the controller's own logic.
 Route::get('/my-account', [\App\Http\Controllers\Store\AccountController::class, 'index'])->name('account');
 Route::get('/track-my-order', [\App\Http\Controllers\Store\AccountController::class, 'track'])->name('account.track');
+// Quiqup delivery timeline refresh: /track-my-order/live (signed, throttled) and /my-account/orders/{id}/live (auth:customer inside). Top level on purpose. (Quiqup P3)
+require __DIR__.'/quiqup-timeline.php';
 Route::get('/my-account/forgot', [\App\Http\Controllers\Store\AccountController::class, 'forgot'])->name('account.forgot');
 
 Route::middleware('auth:customer')->group(function () {
