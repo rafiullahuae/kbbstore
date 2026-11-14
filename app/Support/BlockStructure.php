@@ -88,6 +88,52 @@ final class BlockStructure
             $run = self::emptyRun();
         };
 
+        /*
+         * Close the element at $found (and everything inside it). $explicit
+         * false is the browser closing a paragraph because a block opened
+         * inside it (`<p class="kbb-bl"><figure>` is an empty blank line and
+         * then a picture, exactly as the shop draws it); such a blank is not
+         * removable as a range (its stray `</p>` stays behind).
+         */
+        $close = static function (int $found, int $endAt, bool $explicit) use (&$stack, &$lines, &$run, &$bold, $flush): void {
+            $open = $stack[$found];
+            $name = $open[0];
+
+            if (in_array($name, self::BLOCKS, true)) {
+                $emptyInside = count($lines) === $open[2] && ! $run['vis'];
+                $range = $emptyInside && $explicit ? [$open[1], $endAt] : null;
+
+                if ($open[3] && $emptyInside) {
+                    $flush([$open[1], $endAt, $range]);
+                } elseif ($run['nbsp'] && ! $run['vis']) {
+                    $flush([$open[1], $endAt, $range]);
+                } elseif ($name === 'p' && $emptyInside) {
+                    // An empty paragraph is drawn as a blank line (markBlankLines()).
+                    $flush([$open[1], $endAt, $range]);
+                } else {
+                    $flush();
+                }
+            }
+
+            for ($i = count($stack) - 1; $i >= $found; $i--) {
+                if (in_array($stack[$i][0], self::BOLD, true) || in_array($stack[$i][0], self::HEADINGS, true)) {
+                    $bold = max(0, $bold - 1);
+                }
+                array_pop($stack);
+            }
+        };
+
+        // A block opening inside an open paragraph closes it first (HTML parsing).
+        $closeParagraph = static function (int $at) use (&$stack, $close): void {
+            for ($i = count($stack) - 1; $i >= 0; $i--) {
+                if ($stack[$i][0] === 'p') {
+                    $close($i, $at, false);
+
+                    return;
+                }
+            }
+        };
+
         foreach ($m[0] as [$raw, $at]) {
             $at = (int) $at;
             $len = strlen($raw);
@@ -155,6 +201,7 @@ final class BlockStructure
 
             if ($name === 'ul' || $name === 'ol') {
                 if (! $closing) {
+                    $closeParagraph($at);
                     $flush();
                     $list = ['start' => $at, 'depth' => 1, 'items' => [], 'tag' => $name, 'open' => $raw];
                 }
@@ -163,6 +210,7 @@ final class BlockStructure
 
             if ($name === 'table') {
                 if (! $closing) {
+                    $closeParagraph($at);
                     $flush();
                     $table = [1, $at];
                 }
@@ -180,6 +228,7 @@ final class BlockStructure
             }
 
             if ($name === 'hr') {
+                $closeParagraph($at);
                 $flush();
                 $lines[] = ['kind' => 'R', 'start' => $at, 'end' => $at + $len];
                 continue;
@@ -204,6 +253,7 @@ final class BlockStructure
 
             if (! $closing) {
                 if ($isBlock) {
+                    $closeParagraph($at);
                     $flush();
                 }
                 $stack[] = [$name, $at, count($lines), (bool) preg_match('/\bclass\s*=\s*["\'][^"\']*\bkbb-bl\b/i', $raw)];
@@ -225,30 +275,7 @@ final class BlockStructure
                 continue;
             }
 
-            $open = $stack[$found];
-
-            if ($isBlock) {
-                $emptyInside = count($lines) === $open[2] && ! $run['vis'];
-                $range = $emptyInside ? [$open[1], $at + $len] : null;
-
-                if ($open[3] && $emptyInside) {
-                    $flush([$open[1], $at + $len, $range]);
-                } elseif ($run['nbsp'] && ! $run['vis']) {
-                    $flush([$open[1], $at + $len, $range]);
-                } elseif ($name === 'p' && $emptyInside) {
-                    // An empty paragraph is drawn as a blank line (markBlankLines()).
-                    $flush([$open[1], $at + $len, $range]);
-                } else {
-                    $flush();
-                }
-            }
-
-            for ($i = count($stack) - 1; $i >= $found; $i--) {
-                if (in_array($stack[$i][0], self::BOLD, true) || in_array($stack[$i][0], self::HEADINGS, true)) {
-                    $bold = max(0, $bold - 1);
-                }
-                array_pop($stack);
-            }
+            $close($found, $at + $len, true);
         }
 
         if ($list !== null) {

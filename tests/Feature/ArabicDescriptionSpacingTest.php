@@ -114,6 +114,20 @@ it('falls back to a blank after a list only when the English is spaced that way 
     expect(BlockStructure::forDisplay($plain, $ar))->toBe($ar);
 });
 
+it('reads a paragraph the browser closes at a picture as the blank line it draws (live k-beauty bundle)', function () {
+    // The Arabic writes each picture INSIDE `<p class="kbb-bl">`; the browser closes the paragraph at the
+    // <figure>, so the shop draws blank line, picture -- exactly the English's lines. A reader that did not
+    // model that called four lines "missing" and a repair would have ADDED four blank lines the page does
+    // not need. MUTATION: drop the $closeParagraph($at) call before a block opens -> red.
+    $k = ardsFixture('k-beauty-dark-spots-care-bundle');
+
+    expect(preg_match('#class="kbb-bl"\s*>\s*<figure#', $k['ar']))->toBe(1)
+        ->and(BlockStructure::shape($k['ar']))->toBe(BlockStructure::shape($k['en']))
+        ->and(BlockStructure::align($k['en'], $k['ar'])['changed'])->toBeFalse()
+        ->and(BlockStructure::shape('<p>Text<ul><li>a</li></ul>'))->toBe('P L1')
+        ->and(BlockStructure::shape('<p>A</p><p class="kbb-bl"><figure><img src="x"></figure></p><p>B</p>'))->toBe('P B P P');
+});
+
 it('takes the fast path only when the two bodies really draw the same lines', function () {
     // key() is how align() skips the line reader for the ~98% of bodies that already match. A first cut
     // collapsed every tag to "<t>" and called the live k-beauty dark-spots bundle (English: blank lines

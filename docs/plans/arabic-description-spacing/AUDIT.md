@@ -28,23 +28,22 @@ the INCI Ingredients tab, kept in English on purpose).
 
 | | Bodies | Products |
 |---|---:|---:|
-| Arabic lines match the English exactly | 1,688 | 857 |
-| **Differ** | **20** | **18** |
+| Arabic lines match the English exactly | 1,689 | 858 |
+| **Differ** | **19** | **18** |
 | — the command repairs them (blank lines / list split only) | 4 | 4 |
-| — need a person: the English was rewritten or extended after the Arabic was written | 16 | 15 |
+| — need a person: the English was rewritten or extended after the Arabic was written | 15 | 15 |
 | **50 newest products** | 50 compared | 1 differs (`medicube-egf-nad-firming-glow-set`, content drift) |
 
 By defect class (one body can be in several):
 
 | Class | Bodies | Products |
 |---|---:|---:|
-| fewer blank lines in AR than EN | 13 | 13 |
+| fewer blank lines in AR than EN | 12 | 12 |
 | fewer text lines in AR (heading glued to text / paragraphs merged / `<br>` lost) | 13 | 13 |
 | fewer lists in AR (merged list, or a list the English gained later) | 9 | 9 |
 | picture count differs (same lines; the English gained or lost a picture) | 4 | 4 |
 | more text lines in AR | 1 | 1 |
 | more lists in AR | 1 | 1 |
-| differs only in list sizes (bullets added/removed in English later; spacing identical) | 1 | 1 |
 | stray `&nbsp;` (more in AR than EN) | 0 | 0 |
 | tab missing on /ar | 1 | 1 |
 
@@ -60,7 +59,9 @@ two missing blanks and moved ~200 other Arabic pages away from their English. Th
    English *of that day*. The owner then re-spaced / extended the English (the duo's list split in two with
    blank lines; Dr.Melaxin and nine Medicube pages gained whole sections; short descriptions gained "limited
    offer" / "shipping time" blocks). Nothing re-lines the Arabic up when the English changes. Every one of
-   the 20 differing bodies is this shape.
+   the 15 drift bodies is this shape. (The k-beauty bundle's Arabic even copied the RENDERED English's
+   `kbb-bl` class onto its picture paragraphs; the browser closes those at the picture, so it draws
+   the same lines as the English and is counted as matching.)
 2. **No writer checked blank lines.** Every Arabic write goes through `TranslationStore::put()`, which only
    sanitised. `HtmlStructure` (Claude drafts) compares tags but not text, so `<div>&nbsp;</div>` answered
    as `<div></div>` passes and loses a line; the editor, the review screen's inline edit and Translation →
@@ -81,16 +82,15 @@ two missing blanks and moved ~200 other Arabic pages away from their English. Th
 | 8 | [medicube-vanilla-pistachio-deodorant](https://kbeautybliss.com/ar/product/medicube-vanilla-pistachio-deodorant/) | 7 | Description | `P L5 P B P L2 P L3 P B P B P` | `P L3 P P L1 P P P` | leaves it: the English has 10 blocks (7 lines of text, 3 list groups) and the translation 8 (6 lines of text, 2 list groups) |
 | 9 | [medicube-egf-nad-firming-gel-mask](https://kbeautybliss.com/ar/product/medicube-egf-nad-firming-gel-mask/) | 7 | Description | `P L5 P B P L2 P L4 P B P B P` | `P L6 P P L4 P P P` | leaves it: the English has 10 blocks (7 lines of text, 3 list groups) and the translation 8 (6 lines of text, 2 list groups) |
 | 10 | [medicube-age-r-booster-pro](https://kbeautybliss.com/ar/product/medicube-age-r-booster-pro/) | 6 | Short description | `P P P P` | `P` | leaves it: the English has 4 blocks (4 lines of text, 0 list groups) and the translation 1 (1 lines of text, 0 list groups) |
-| 11 | [k-beauty-dark-spots-care-bundle](https://kbeautybliss.com/ar/product/k-beauty-dark-spots-care-bundle/) | 6 | Description | `P P B P B P B P B P B P P P P P P P P` | `P P P P P P B P P P P P P P P` | leaves it: list sizes only |
-| 12 | [k-beauty-dark-spots-care-bundle](https://kbeautybliss.com/ar/product/k-beauty-dark-spots-care-bundle/) | 6 | Short description | `P L1 P` | `P P` | leaves it: the English has 3 blocks (2 lines of text, 1 list groups) and the translation 2 (2 lines of text, 0 list groups) |
-| 13 | [medicube-egf-nad-firming-glow-set](https://kbeautybliss.com/ar/product/medicube-egf-nad-firming-glow-set/) | 5 | Description | `P L3 B P L8 B P B P L3` | `P L8 B P B P L3` | leaves it: the English has 7 blocks (4 lines of text, 3 list groups) and the translation 5 (3 lines of text, 2 list groups) |
-| 14 | [medicube-collagen-booster-set](https://kbeautybliss.com/ar/product/medicube-collagen-booster-set/) | 4 | Short description | `P P P` | `P` | leaves it: the English has 3 blocks (3 lines of text, 0 list groups) and the translation 1 (1 lines of text, 0 list groups) |
-| 15 | [medicube-age-r-booster-pro-pink-edition](https://kbeautybliss.com/ar/product/medicube-age-r-booster-pro-pink-edition/) | 4 | Short description | `P P P` | `P` | leaves it: the English has 3 blocks (3 lines of text, 0 list groups) and the translation 1 (1 lines of text, 0 list groups) |
-| 16 | [medicube-collagen-booster-set-pink-edition](https://kbeautybliss.com/ar/product/medicube-collagen-booster-set-pink-edition/) | 4 | Short description | `P P P` | `P` | leaves it: the English has 3 blocks (3 lines of text, 0 list groups) and the translation 1 (1 lines of text, 0 list groups) |
-| 17 | [medicube-rosemary-pdrn-hair-recovery-set](https://kbeautybliss.com/ar/product/medicube-rosemary-pdrn-hair-recovery-set/) | 4 | Short description | `P P P L3` | `P L3` | leaves it: the English has 4 blocks (3 lines of text, 1 list groups) and the translation 2 (1 lines of text, 1 list groups) |
-| 18 | [sebum-sweeper-pore-cleansing-silicone-brush](https://kbeautybliss.com/ar/product/sebum-sweeper-pore-cleansing-silicone-brush/) | 4 | Short description | `P L5 P B P L2 B P L5 B P B P` | `P L5 P P L2 P L5 P P` | repairs it: put back 1 blank line(s) before line 4; put back 1 blank line(s) before line 6; put back 1 blank line(s) before line 8; put back 1 blank line(s) before line 9 |
-| 19 | [medicube-egf-nad-firming-serum](https://kbeautybliss.com/ar/product/medicube-egf-nad-firming-serum/) | 1 | Description | `P L5 P L4 P B P L4 P L2 B P B P` | `P L5 P L4 P B P L4 P L2 P B P` | repairs it: put back 1 blank line(s) before line 10 |
-| 20 | [lilyeve-grow-turn-brush-steam-booster](https://kbeautybliss.com/ar/product/lilyeve-grow-turn-brush-steam-booster/) | 1 | Short description | `P B P` | `P P` | repairs it: put back 1 blank line(s) before line 2 |
+| 11 | [medicube-egf-nad-firming-glow-set](https://kbeautybliss.com/ar/product/medicube-egf-nad-firming-glow-set/) | 5 | Description | `P L3 B P L8 B P B P L3` | `P L8 B P B P L3` | leaves it: the English has 7 blocks (4 lines of text, 3 list groups) and the translation 5 (3 lines of text, 2 list groups) |
+| 12 | [medicube-collagen-booster-set](https://kbeautybliss.com/ar/product/medicube-collagen-booster-set/) | 4 | Short description | `P P P` | `P` | leaves it: the English has 3 blocks (3 lines of text, 0 list groups) and the translation 1 (1 lines of text, 0 list groups) |
+| 13 | [medicube-age-r-booster-pro-pink-edition](https://kbeautybliss.com/ar/product/medicube-age-r-booster-pro-pink-edition/) | 4 | Short description | `P P P` | `P` | leaves it: the English has 3 blocks (3 lines of text, 0 list groups) and the translation 1 (1 lines of text, 0 list groups) |
+| 14 | [medicube-collagen-booster-set-pink-edition](https://kbeautybliss.com/ar/product/medicube-collagen-booster-set-pink-edition/) | 4 | Short description | `P P P` | `P` | leaves it: the English has 3 blocks (3 lines of text, 0 list groups) and the translation 1 (1 lines of text, 0 list groups) |
+| 15 | [medicube-rosemary-pdrn-hair-recovery-set](https://kbeautybliss.com/ar/product/medicube-rosemary-pdrn-hair-recovery-set/) | 4 | Short description | `P P P L3` | `P L3` | leaves it: the English has 4 blocks (3 lines of text, 1 list groups) and the translation 2 (1 lines of text, 1 list groups) |
+| 16 | [sebum-sweeper-pore-cleansing-silicone-brush](https://kbeautybliss.com/ar/product/sebum-sweeper-pore-cleansing-silicone-brush/) | 4 | Short description | `P L5 P B P L2 B P L5 B P B P` | `P L5 P P L2 P L5 P P` | repairs it: put back 1 blank line(s) before line 4; put back 1 blank line(s) before line 6; put back 1 blank line(s) before line 8; put back 1 blank line(s) before line 9 |
+| 17 | [k-beauty-dark-spots-care-bundle](https://kbeautybliss.com/ar/product/k-beauty-dark-spots-care-bundle/) | 2 | Short description | `P L1 P` | `P P` | leaves it: the English has 3 blocks (2 lines of text, 1 list groups) and the translation 2 (2 lines of text, 0 list groups) |
+| 18 | [medicube-egf-nad-firming-serum](https://kbeautybliss.com/ar/product/medicube-egf-nad-firming-serum/) | 1 | Description | `P L5 P L4 P B P L4 P L2 B P B P` | `P L5 P L4 P B P L4 P L2 P B P` | repairs it: put back 1 blank line(s) before line 10 |
+| 19 | [lilyeve-grow-turn-brush-steam-booster](https://kbeautybliss.com/ar/product/lilyeve-grow-turn-brush-steam-booster/) | 1 | Short description | `P B P` | `P P` | repairs it: put back 1 blank line(s) before line 2 |
 
 ### The 50 newest products
 
@@ -110,11 +110,11 @@ two missing blanks and moved ~200 other Arabic pages away from their English. Th
    list's own close/open tags) or the removal of an element with no words, and the result's text (all
    whitespace removed) must equal the input's or the input comes back untouched.
 2. **Display (every page, now):** `ProductTabs` (built-in and authored tabs) and the product blurb draw the
-   Arabic lined up with its English. When that is not certain (the 16 content-drift bodies) it falls back to
+   Arabic lined up with its English. When that is not certain (the 15 content-drift bodies) it falls back to
    2.60.665's "blank after a list", but only if the English itself spaces its lists that way. English pages
    never reach it (byte-identical; `StorefrontEnglishUnchangedTest`). No query, no setting read
-   (`ArabicStructureRepairTest` counts the queries); 20 µs median per translated body when the two already
-   match (184 of 253 live pairs take this regex fast path), ~0.1–0.3 ms when lining up, 0.8 ms worst
+   (`ArabicStructureRepairTest` counts the queries); 15–25 µs median per translated body when the two already
+   match (a regex fast path; 508 of 859 live pairs, the rest mostly the pages 2.60.665 had altered), ~0.2–0.5 ms when lining up, under 1 ms worst
    (4.8 KB body, CLI without opcache). `RichText.php` and `ProductController.php` are back to their
    pre-2.60.665 bytes.
 3. **Writers (permanent):** `TranslationStore::put()` lines every rich Arabic write up with the English it
@@ -128,7 +128,7 @@ two missing blanks and moved ~200 other Arabic pages away from their English. Th
    - `--undo=<batch>` puts back rows still holding what the repair wrote; `--batches` lists them.
 
    On the live database it is expected to repair the 4 bodies above (and anything the render-time fetch
-   could not see, e.g. custom tabs hidden on a product); the 16 drift bodies need re-translating from the
+   could not see, e.g. custom tabs hidden on a product); the 15 drift bodies need re-translating from the
    current English (they are listed by the dry run as "need a person").
 
 ## Pictures
