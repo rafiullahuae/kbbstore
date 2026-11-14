@@ -206,7 +206,7 @@ class BuyTogetherSettings
 
     public const TABS = [
         'together' => ['Buy these together',
-            'The bundle box under the buy column: the product on the page plus one match from each category that goes with it, a tick on each, and one pink button that adds every ticked product.',
+            'The bundle box under the buy column: the product on the page, then a set it is in, products of its range and one match from each category that goes with it, a tick on each, and one pink button that adds every ticked product.',
             ['on', 'count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar', 'tier_3', 'tier_4', 'tier_5', 'coupons', 'discount_on', 'row_phone', 'row_laptop', 'sets', 'range']],
     ];
 
