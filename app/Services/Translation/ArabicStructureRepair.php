@@ -185,9 +185,12 @@ final class ArabicStructureRepair
             return [];
         }
 
+        // A handful of batches ever (one per Apply): grouped in SQL, newest
+        // first by the batch's own last row id, which cannot tie.
         return DB::table(self::BACKUPS)
-            ->selectRaw('batch, count(*) as n, min(created_at) as at, max(undone_at) as undone')
-            ->groupBy('batch')->orderByDesc('at')->limit($limit)->get()
+            ->selectRaw('batch, count(*) as n, min(created_at) as at, max(undone_at) as undone, max(id) as last_id')
+            ->groupBy('batch')->get()
+            ->sortByDesc('last_id')->take($limit)->values()
             ->map(static fn ($r) => ['batch' => (string) $r->batch, 'rows' => (int) $r->n, 'at' => (string) $r->at, 'undone' => $r->undone !== null])
             ->all();
     }
