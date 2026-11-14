@@ -908,6 +908,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/new-arrivals-admin.php';   // Catalog -> New Arrivals (Lane NA)
         require __DIR__.'/best-sellers-admin.php';   // Catalog -> Best Sellers (2.60.661)
         require __DIR__.'/recent-localise-admin.php';   // Catalog -> Translate & categorise (Lane LT)
+        require __DIR__.'/ar-structure-admin.php';      // Catalog -> Translate & categorise -> Arabic spacing (Lane ARDX)
 
         // Content → HTML Blocks: reusable snippets placed into pages and posts
         // with [kbb_block slug="…"].
