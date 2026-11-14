@@ -113,6 +113,7 @@
                         <div class="kbbtr-row"><span>{{ __('email.refunded.row_order_total') }}</span><span>{!! Money::format((int) $order->total, \App\Services\Mail\OrderEmailPresenter::ledgerWidth($order)) !!}</span></div>
                     </div>
                 </div>
+@if (! empty($timeline))@include('partials.account.delivery-timeline', ['tl' => $timeline, 'live' => $tlLive ?? null])@endif
                 <p class="acw-fine">{!! __('store.track.signed_up', ['link' => '<a href="' . e(Url::to('/my-account/orders/')) . '">' . e(__('store.track.signed_up_link')) . '</a>']) !!}</p>
             @endif
         </div>

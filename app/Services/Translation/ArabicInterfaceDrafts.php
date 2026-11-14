@@ -168,6 +168,7 @@ final class ArabicInterfaceDrafts
             self::laneAeCustomerLanguage(),
             self::uaeNumberRequest(),
             AccountAreaStrings::arabic(),
+            DeliveryTimelineStrings::arabic(),
         ));
     }
 

@@ -1406,6 +1406,10 @@ final class EnglishRenderWalk
             'my-account/orders/{id}' => ['params' => ['id' => fn () => (string) $order->id], 'render' => true, 'auth' => true],
             'my-account/edit-address' => ['render' => true, 'auth' => true],
             'my-account/edit-address/{id}' => ['params' => ['id' => fn () => (string) $address->id], 'render' => true, 'auth' => true],
+            ...(Route::has('account.order.live') ? [
+                'my-account/orders/{id}/live' => ['render' => false, 'why' => 'added after BASE_COMMIT (Quiqup P3): JSON refresh of the delivery timeline; QuiqupTimelineTest pins it'],
+                'track-my-order/live' => ['render' => false, 'why' => 'added after BASE_COMMIT (Quiqup P3): JSON refresh of the delivery timeline, signed token only; QuiqupTimelineTest pins it'],
+            ] : []),
             'my-account/profile' => ['render' => false, 'why' => 'added after BASE_COMMIT (Lane ACC): Profile & password; AccountAreaRedesignTest pins it'],
             'my-account/verify' => $redirect,
             'newsletter/confirm/{id}' => ['params' => ['id' => '999999'], 'render' => true],

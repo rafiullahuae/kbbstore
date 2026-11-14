@@ -1,0 +1,598 @@
+{
+  "track-moving-en-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "now:Out for delivery",
+      "wait:Delivered"
+    ],
+    "live": true,
+    "scripts": 11,
+    "liveLinkHit": true,
+    "fontStep": "13.5px",
+    "requests": 9
+  },
+  "track-delivered-en-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "done:Out for delivery",
+      "done:Delivered"
+    ],
+    "live": false,
+    "scripts": 10,
+    "liveLinkHit": null,
+    "fontStep": "13.5px",
+    "requests": 8
+  },
+  "track-missed-en-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "done:Out for delivery",
+      "warn now:Delivery attempt 1 missed, we will try again",
+      "wait:Delivered"
+    ],
+    "live": true,
+    "scripts": 11,
+    "liveLinkHit": true,
+    "fontStep": "13.5px",
+    "requests": 8
+  },
+  "track-moving-ar-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "rtl",
+    "dotSide": "right",
+    "steps": [
+      "done:تم الطلب",
+      "done:تم التأكيد",
+      "done:تم حجز الشحن",
+      "done:تم الاستلام من المندوب",
+      "done:في مركز التوزيع",
+      "now:خرج للتوصيل",
+      "wait:تم التوصيل"
+    ],
+    "live": true,
+    "scripts": 12,
+    "liveLinkHit": true,
+    "fontStep": "13.5px",
+    "requests": 11
+  },
+  "track-delivered-ar-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "rtl",
+    "dotSide": "right",
+    "steps": [
+      "done:تم الطلب",
+      "done:تم التأكيد",
+      "done:تم حجز الشحن",
+      "done:تم الاستلام من المندوب",
+      "done:في مركز التوزيع",
+      "done:خرج للتوصيل",
+      "done:تم التوصيل"
+    ],
+    "live": false,
+    "scripts": 11,
+    "liveLinkHit": null,
+    "fontStep": "13.5px",
+    "requests": 10
+  },
+  "track-missed-ar-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "rtl",
+    "dotSide": "right",
+    "steps": [
+      "done:تم الطلب",
+      "done:تم التأكيد",
+      "done:تم حجز الشحن",
+      "done:تم الاستلام من المندوب",
+      "done:في مركز التوزيع",
+      "done:خرج للتوصيل",
+      "warn now:تعذّر التوصيل (المحاولة 1)، سنحاول مجدداً",
+      "wait:تم التوصيل"
+    ],
+    "live": true,
+    "scripts": 12,
+    "liveLinkHit": true,
+    "fontStep": "13.5px",
+    "requests": 10
+  },
+  "track-noshipment-en-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "ltr",
+    "dotSide": null,
+    "steps": null,
+    "live": null,
+    "scripts": 10,
+    "liveLinkHit": null,
+    "fontStep": null
+  },
+  "account-list-en-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "ltr",
+    "dotSide": null,
+    "steps": null,
+    "live": null,
+    "scripts": 10,
+    "liveLinkHit": null,
+    "fontStep": null
+  },
+  "account-moving-en-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "now:Out for delivery",
+      "wait:Delivered"
+    ],
+    "live": true,
+    "scripts": 11,
+    "liveLinkHit": true,
+    "fontStep": "13.5px"
+  },
+  "account-delivered-en-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "done:Out for delivery",
+      "done:Delivered"
+    ],
+    "live": false,
+    "scripts": 10,
+    "liveLinkHit": null,
+    "fontStep": "13.5px"
+  },
+  "account-missed-en-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "done:Out for delivery",
+      "warn now:Delivery attempt 1 missed, we will try again",
+      "wait:Delivered"
+    ],
+    "live": true,
+    "scripts": 11,
+    "liveLinkHit": true,
+    "fontStep": "13.5px"
+  },
+  "account-list-ar-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "rtl",
+    "dotSide": null,
+    "steps": null,
+    "live": null,
+    "scripts": 11,
+    "liveLinkHit": null,
+    "fontStep": null
+  },
+  "account-moving-ar-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "rtl",
+    "dotSide": "right",
+    "steps": [
+      "done:تم الطلب",
+      "done:تم التأكيد",
+      "done:تم حجز الشحن",
+      "done:تم الاستلام من المندوب",
+      "done:في مركز التوزيع",
+      "now:خرج للتوصيل",
+      "wait:تم التوصيل"
+    ],
+    "live": true,
+    "scripts": 12,
+    "liveLinkHit": true,
+    "fontStep": "13.5px"
+  },
+  "account-delivered-ar-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "rtl",
+    "dotSide": "right",
+    "steps": [
+      "done:تم الطلب",
+      "done:تم التأكيد",
+      "done:تم حجز الشحن",
+      "done:تم الاستلام من المندوب",
+      "done:في مركز التوزيع",
+      "done:خرج للتوصيل",
+      "done:تم التوصيل"
+    ],
+    "live": false,
+    "scripts": 11,
+    "liveLinkHit": null,
+    "fontStep": "13.5px"
+  },
+  "account-missed-ar-1280": {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "dir": "rtl",
+    "dotSide": "right",
+    "steps": [
+      "done:تم الطلب",
+      "done:تم التأكيد",
+      "done:تم حجز الشحن",
+      "done:تم الاستلام من المندوب",
+      "done:في مركز التوزيع",
+      "done:خرج للتوصيل",
+      "warn now:تعذّر التوصيل (المحاولة 1)، سنحاول مجدداً",
+      "wait:تم التوصيل"
+    ],
+    "live": true,
+    "scripts": 12,
+    "liveLinkHit": true,
+    "fontStep": "13.5px"
+  },
+  "live-link-click-1280": {
+    "opened": "https://track-parcel.quiqup.com/0b9e2a4c-1f7d-4e55-9a3b-6c1d2e3f4a5b"
+  },
+  "errors-1280": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "track-moving-en-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "now:Out for delivery",
+      "wait:Delivered"
+    ],
+    "live": true,
+    "scripts": 11,
+    "liveLinkHit": true,
+    "fontStep": "13.5px",
+    "requests": 9
+  },
+  "track-delivered-en-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "done:Out for delivery",
+      "done:Delivered"
+    ],
+    "live": false,
+    "scripts": 10,
+    "liveLinkHit": null,
+    "fontStep": "13.5px",
+    "requests": 8
+  },
+  "track-missed-en-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "done:Out for delivery",
+      "warn now:Delivery attempt 1 missed, we will try again",
+      "wait:Delivered"
+    ],
+    "live": true,
+    "scripts": 11,
+    "liveLinkHit": true,
+    "fontStep": "13.5px",
+    "requests": 8
+  },
+  "track-moving-ar-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "rtl",
+    "dotSide": "right",
+    "steps": [
+      "done:تم الطلب",
+      "done:تم التأكيد",
+      "done:تم حجز الشحن",
+      "done:تم الاستلام من المندوب",
+      "done:في مركز التوزيع",
+      "now:خرج للتوصيل",
+      "wait:تم التوصيل"
+    ],
+    "live": true,
+    "scripts": 12,
+    "liveLinkHit": true,
+    "fontStep": "13.5px",
+    "requests": 11
+  },
+  "track-delivered-ar-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "rtl",
+    "dotSide": "right",
+    "steps": [
+      "done:تم الطلب",
+      "done:تم التأكيد",
+      "done:تم حجز الشحن",
+      "done:تم الاستلام من المندوب",
+      "done:في مركز التوزيع",
+      "done:خرج للتوصيل",
+      "done:تم التوصيل"
+    ],
+    "live": false,
+    "scripts": 11,
+    "liveLinkHit": null,
+    "fontStep": "13.5px",
+    "requests": 10
+  },
+  "track-missed-ar-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "rtl",
+    "dotSide": "right",
+    "steps": [
+      "done:تم الطلب",
+      "done:تم التأكيد",
+      "done:تم حجز الشحن",
+      "done:تم الاستلام من المندوب",
+      "done:في مركز التوزيع",
+      "done:خرج للتوصيل",
+      "warn now:تعذّر التوصيل (المحاولة 1)، سنحاول مجدداً",
+      "wait:تم التوصيل"
+    ],
+    "live": true,
+    "scripts": 12,
+    "liveLinkHit": true,
+    "fontStep": "13.5px",
+    "requests": 10
+  },
+  "track-noshipment-en-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "ltr",
+    "dotSide": null,
+    "steps": null,
+    "live": null,
+    "scripts": 10,
+    "liveLinkHit": null,
+    "fontStep": null
+  },
+  "account-list-en-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "ltr",
+    "dotSide": null,
+    "steps": null,
+    "live": null,
+    "scripts": 10,
+    "liveLinkHit": null,
+    "fontStep": null
+  },
+  "account-moving-en-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "now:Out for delivery",
+      "wait:Delivered"
+    ],
+    "live": true,
+    "scripts": 11,
+    "liveLinkHit": true,
+    "fontStep": "13.5px"
+  },
+  "account-delivered-en-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "done:Out for delivery",
+      "done:Delivered"
+    ],
+    "live": false,
+    "scripts": 10,
+    "liveLinkHit": null,
+    "fontStep": "13.5px"
+  },
+  "account-missed-en-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "done:Out for delivery",
+      "warn now:Delivery attempt 1 missed, we will try again",
+      "wait:Delivered"
+    ],
+    "live": true,
+    "scripts": 11,
+    "liveLinkHit": true,
+    "fontStep": "13.5px"
+  },
+  "account-list-ar-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "rtl",
+    "dotSide": null,
+    "steps": null,
+    "live": null,
+    "scripts": 11,
+    "liveLinkHit": null,
+    "fontStep": null
+  },
+  "account-moving-ar-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "rtl",
+    "dotSide": "right",
+    "steps": [
+      "done:تم الطلب",
+      "done:تم التأكيد",
+      "done:تم حجز الشحن",
+      "done:تم الاستلام من المندوب",
+      "done:في مركز التوزيع",
+      "now:خرج للتوصيل",
+      "wait:تم التوصيل"
+    ],
+    "live": true,
+    "scripts": 12,
+    "liveLinkHit": true,
+    "fontStep": "13.5px"
+  },
+  "account-delivered-ar-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "rtl",
+    "dotSide": "right",
+    "steps": [
+      "done:تم الطلب",
+      "done:تم التأكيد",
+      "done:تم حجز الشحن",
+      "done:تم الاستلام من المندوب",
+      "done:في مركز التوزيع",
+      "done:خرج للتوصيل",
+      "done:تم التوصيل"
+    ],
+    "live": false,
+    "scripts": 11,
+    "liveLinkHit": null,
+    "fontStep": "13.5px"
+  },
+  "account-missed-ar-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "rtl",
+    "dotSide": "right",
+    "steps": [
+      "done:تم الطلب",
+      "done:تم التأكيد",
+      "done:تم حجز الشحن",
+      "done:تم الاستلام من المندوب",
+      "done:في مركز التوزيع",
+      "done:خرج للتوصيل",
+      "warn now:تعذّر التوصيل (المحاولة 1)، سنحاول مجدداً",
+      "wait:تم التوصيل"
+    ],
+    "live": true,
+    "scripts": 12,
+    "liveLinkHit": true,
+    "fontStep": "13.5px"
+  },
+  "live-link-click-390": {
+    "opened": "https://track-parcel.quiqup.com/0b9e2a4c-1f7d-4e55-9a3b-6c1d2e3f4a5b"
+  },
+  "errors-390": [],
+  "refresh-before-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "now:Out for delivery",
+      "wait:Delivered"
+    ],
+    "live": true,
+    "scripts": 11,
+    "liveLinkHit": true,
+    "fontStep": "13.5px"
+  },
+  "refresh-after-390": {
+    "width": 390,
+    "scrollWidth": 390,
+    "dir": "ltr",
+    "dotSide": "left",
+    "steps": [
+      "done:Placed",
+      "done:Confirmed",
+      "done:Booked with courier",
+      "done:Picked up by courier",
+      "done:At the delivery hub",
+      "done:Out for delivery",
+      "done:Delivered"
+    ],
+    "live": true,
+    "scripts": 11,
+    "liveLinkHit": null,
+    "fontStep": "13.5px"
+  },
+  "refresh-calls": [
+    "http://127.0.0.1:8961/track-my-order/live",
+    304,
+    "http://127.0.0.1:8961/track-my-order/live",
+    200
+  ]
+}

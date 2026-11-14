@@ -106,6 +106,8 @@ final class InterfaceStrings
                 self::storeOrders(),
                 // Lane ACC: the redesigned account area, English and Arabic in one list.
                 AccountAreaStrings::english(),
+                // Quiqup P3: the delivery timeline and its push messages, English and Arabic in one list.
+                DeliveryTimelineStrings::english(),
                 self::storeAddresses(),
                 self::storeTrack(),
                 self::storeQuiz(),

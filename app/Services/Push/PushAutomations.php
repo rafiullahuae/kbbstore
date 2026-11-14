@@ -90,14 +90,7 @@ final class PushAutomations
             return 0;
         }
         $orderId = (int) $order->getKey();
-        $subs = DB::table('site_app_push_subscriptions as s')->where('s.status', 'active')
-            ->where(function ($q) use ($order, $orderId) {
-                $q->whereIn('s.id', DB::table('site_app_push_orders')->where('order_id', $orderId)->select('subscription_id'));
-                if ($order->customer_id) {
-                    $q->orWhere('s.customer_id', (int) $order->customer_id);
-                }
-            })
-            ->get(['s.id', 's.locale', 's.customer_id', 's.region', 's.city', 's.country']);
+        $subs = $this->orderPhones($order);
         if ($subs->isEmpty()) {
             return 0;
         }
@@ -128,6 +121,82 @@ final class PushAutomations
                 }
             };
             // After the response the operator is waiting for, never inside it.
+            app()->runningInConsole() ? $run() : app()->terminating($run);
+        }
+
+        return count($ids);
+    }
+
+    /**
+     * The phones that may hear about this order: the one that placed it and
+     * the shopper's own, active subscriptions only (opted in by allowing
+     * notifications on the Site App prompt).
+     */
+    private function orderPhones(Order $order): \Illuminate\Support\Collection
+    {
+        $orderId = (int) $order->getKey();
+
+        return DB::table('site_app_push_subscriptions as s')->where('s.status', 'active')
+            ->where(function ($q) use ($order, $orderId) {
+                $q->whereIn('s.id', DB::table('site_app_push_orders')->where('order_id', $orderId)->select('subscription_id'));
+                if ($order->customer_id) {
+                    $q->orWhere('s.customer_id', (int) $order->customer_id);
+                }
+            })
+            ->get(['s.id', 's.locale', 's.customer_id', 's.region', 's.city', 's.country']);
+    }
+
+    /* ------------------------------------------------------ delivery moments */
+
+    /**
+     * (Quiqup P3, QUIQUP-PLAN §6.2/§6.4) A courier moment the owner ticked
+     * "Push" for on Store -> Quiqup -> Statuses -- out for delivery and a
+     * missed attempt by default. Same phones and the same "Order updates"
+     * switch as orderStatus(); once per (order, state, attempt, phone), so a
+     * webhook and the poll reporting the same moment send one message.
+     *
+     * $step: state => the step's words per language, already resolved.
+     *
+     * @param  callable(string $locale): string  $step
+     */
+    public function delivery(Order $order, string $state, int $attempt, callable $step): int
+    {
+        if (! $this->rules->get('order_on')) {
+            return 0;
+        }
+        $subs = $this->orderPhones($order);
+        if ($subs->isEmpty()) {
+            return 0;
+        }
+
+        $orderId = (int) $order->getKey();
+        $number = (string) $order->order_number;
+        $guest = '/track-my-order/?'.http_build_query(['order' => $number, 't' => \App\Support\OrderLinks::token(\App\Support\OrderLinks::TRACK, $order, \App\Support\OrderLinks::TRACK_TTL)]);
+        $bodyKey = in_array($state, ['out_for_delivery', 'delivery_failed'], true) ? 'delivery_'.$state.'_body' : 'delivery_body';
+        $rows = [];
+        foreach ($subs as $s) {
+            $locale = (string) $s->locale;
+            $rows[] = [
+                'kind' => 'order', 'ref' => $orderId, 'subscription_id' => (int) $s->id,
+                'emirate' => PushAudience::emirateOf($s->region, $s->city, $s->country),
+                'title' => mb_substr(self::say('delivery_title', ['order' => $number, 'step' => $step($locale)], $locale), 0, 80),
+                'body' => mb_substr(self::say($bodyKey, ['order' => $number], $locale), 0, 200),
+                // Their own order page when signed in on that phone; else the signed tracking page.
+                'url' => $s->customer_id && (int) $s->customer_id === (int) $order->customer_id ? '/my-account/orders/'.$orderId : $guest,
+                'dedupe' => 'd:'.$orderId.':'.$state.':'.$attempt.':'.$s->id,
+            ];
+        }
+        $ids = $this->sender->queue($rows);
+
+        if ($ids !== []) {
+            $sender = $this->sender;
+            $run = static function () use ($sender, $ids): void {
+                try {
+                    $sender->deliver($ids);
+                } catch (\Throwable) {
+                    // Still queued: the next kbb:push-step sends it.
+                }
+            };
             app()->runningInConsole() ? $run() : app()->terminating($run);
         }
 

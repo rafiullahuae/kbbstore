@@ -18,7 +18,7 @@
     $kacSide = $kacTone === 'done' && $order->completed_at ? (class_exists(\App\Support\LocalDate::class) ? \App\Support\LocalDate::format($order->completed_at, 'j M') : $order->completed_at->format('j M')) : ($kacTone === 'off' ? $kacDate : '');
 @endphp
 <a class="kac-row" href="{{ \App\Support\Url::to('/my-account/orders/' . $order->id) }}">
-    <div class="kac-band kac-t-{{ $kacTone }}"><span>{!! \App\Support\AccountIcons::svg(\App\Support\AccountIcons::forTone($kacTone), 17) !!}{{ __(\App\Support\OrderProgress::bandKey((string) $order->status)) }}</span>@if ($kacSide !== '')<span>{{ $kacSide }}</span>@endif</div>
+    <div class="kac-band kac-t-{{ $kacTone }}"><span>{!! \App\Support\AccountIcons::svg(\App\Support\AccountIcons::forTone($kacTone), 17) !!}{{ \App\Support\DeliveryTimeline::bandLabel($order) ?? __(\App\Support\OrderProgress::bandKey((string) $order->status)) }}</span>@if ($kacSide !== '')<span>{{ $kacSide }}</span>@endif</div>
     <div class="kac-rb">
         <div class="kac-l1"><span class="kac-no">{{ __('store.orders.order_number', ['number' => $order->order_number]) }}</span><span class="kac-dt">{{ $kacDate }}</span></div>
         @if ($kacShown->isNotEmpty())
