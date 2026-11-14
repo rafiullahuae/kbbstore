@@ -18,7 +18,7 @@ use Illuminate\Console\Command;
  * (and the open admin page) is the only thing that does background work:
  *
  *   1. re-apply events whose apply failed (applied_at NULL, <= 50)
- *   2. finish creates a closed tab left queued (<= 5) -- P2
+ *   2. finish creates a closed tab left queued (<= 5)
  *   3. poll shipments whose next_poll_at is due (30 calls/h ceiling)
  *
  * IDLE COST: one indexed query. Every piece of owed work sets
@@ -51,7 +51,7 @@ final class QuiqupSync extends Command
 
         if ($this->option('dry')) {
             $rows = Shipment::query()->whereNotNull('next_poll_at')->where('next_poll_at', '<=', now()->format('Y-m-d H:i:s.u'))
-                ->orderBy('next_poll_at')->limit(100)->get(['order_id', 'qq_id', 'job', 'state', 'next_poll_at']);
+                ->orderBy('next_poll_at')->orderBy('id')->limit(100)->get(['order_id', 'qq_id', 'job', 'state', 'next_poll_at']);
             foreach ($rows as $r) {
                 $this->line(sprintf('order %d  quiqup %s  %s/%s  due %s', $r->order_id, $r->qq_id ?? '-', $r->job, $r->state ?? '-', $r->next_poll_at));
             }
@@ -71,10 +71,10 @@ final class QuiqupSync extends Command
         return self::SUCCESS;
     }
 
-    /** Step 2 (P2). Returns how many queued bookings it sent. */
+    /** Step 2: finish what a closed tab left queued, 5 a tick. */
     protected function finishQueued(): int
     {
-        return 0;
+        return app(\App\Services\Quiqup\ShipmentCreator::class)->runDue(5);
     }
 
     private function refreshOne(QuiqupPoller $poller, int $orderId): int

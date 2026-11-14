@@ -1,0 +1,146 @@
+{
+  "settings-connection-testing-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "settings-pickup-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "settings-test-customers-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "settings-statuses-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "settings-activity-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "golive-not-ready-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "toast-saved-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "toast-test-ok-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "golive-ready-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "mode-live-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "mode-off-confirm-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "mode-off-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "mode-testing-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "orders-selection-bar-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "sheet-review-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "sheet-rows-1280": 8,
+  "sheet-results-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "order-delivery-card-1280": {
+    "width": 1280,
+    "scrollWidth": 1280
+  },
+  "console-errors-1280": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "settings-connection-testing-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "settings-pickup-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "settings-test-customers-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "settings-statuses-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "settings-activity-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "golive-not-ready-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "toast-saved-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "toast-test-ok-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "golive-ready-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "mode-live-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "mode-off-confirm-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "mode-off-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "mode-testing-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "orders-selection-bar-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "sheet-review-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "sheet-rows-390": 8,
+  "sheet-results-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "order-delivery-card-390": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "console-errors-390": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

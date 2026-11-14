@@ -114,15 +114,15 @@
 @media (prefers-reduced-motion:reduce){.qq-sk,.qq-spin{animation:none}}
 .qq-log{display:grid;gap:6px;font-size:12.5px;color:var(--ink-soft,#626c80);margin-top:10px}
 /* Toasts and dialog: shared with partials/quiqup-orders. */
-.qq-toasts{position:fixed;inset-block-end:16px;inset-inline-end:16px;display:grid;gap:8px;z-index:10050;width:min(420px,calc(100vw - 32px));pointer-events:none}
+.qq-toasts{position:fixed;inset-block-start:16px;inset-inline-end:16px;display:grid;gap:8px;z-index:10050;width:min(420px,calc(100vw - 32px));pointer-events:none}
 .qq-toast{pointer-events:auto;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;background:var(--surface,#fff);color:var(--ink,#101729);border:1px solid var(--border,#e6e9f2);border-inline-start:4px solid var(--accent,#15a85a);border-radius:var(--r-sm,12px);padding:12px 12px 12px 14px;box-shadow:var(--sh-l);font-size:13.5px;line-height:1.45;animation:qqin .22s var(--ease)}
 .qq-toast.bad{border-inline-start-color:var(--red,#e3493f)}
 .qq-toast.warn{border-inline-start-color:var(--amber,#e0922f)}
 .qq-toast b{display:block;margin-bottom:2px}
 .qq-toast .qq-tx{overflow-wrap:anywhere}
 .qq-toast button{border:0;background:none;cursor:pointer;color:var(--ink-soft,#626c80);font-size:16px;width:28px;height:28px;border-radius:50%}
-@keyframes qqin{from{opacity:0;transform:translateY(8px)}}
-.qq-dlg{border:0;border-radius:var(--r,18px);padding:0;width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 24px);box-shadow:var(--sh-l);background:var(--surface,#fff);color:var(--ink,#101729)}
+@keyframes qqin{from{opacity:0;transform:translateY(-8px)}}
+.qq-dlg{position:fixed;inset:0;margin:auto;height:fit-content;border:0;border-radius:var(--r,18px);padding:0;width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 24px);box-shadow:var(--sh-l);background:var(--surface,#fff);color:var(--ink,#101729)}
 .qq-dlg::backdrop{background:rgba(16,23,41,.45)}
 .qq-dlg-b{padding:20px 22px;overflow:auto;max-height:calc(100vh - 110px)}
 .qq-dlg h3{margin:0 0 6px;font-size:18px}

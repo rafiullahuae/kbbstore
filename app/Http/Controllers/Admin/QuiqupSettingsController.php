@@ -151,6 +151,7 @@ final class QuiqupSettingsController extends Controller
                 ->orWhereIn('shipments.state', ['delivery_failed', 'returned_to_origin', 'return_to_origin', 'on_hold', 'collection_failed'])
                 ->orWhere(fn ($q2) => $q2->where('shipments.state', 'pending')->where('shipments.updated_at', '<', now()->subMinutes(15))))
             ->orderByDesc('shipments.updated_at')
+            ->orderByDesc('shipments.id')
             ->limit(50)
             ->get(['shipments.id', 'shipments.order_id', 'shipments.env', 'shipments.qq_id', 'shipments.job', 'shipments.state', 'shipments.state_at',
                 'shipments.attempts', 'shipments.last_reason', 'shipments.last_error', 'shipments.tracking_url', 'shipments.updated_at', 'orders.order_number']);
@@ -200,10 +201,13 @@ final class QuiqupSettingsController extends Controller
             ->whereNotNull('shipping_method')
             ->where('created_at', '>=', now()->subDays(90))
             ->groupBy('shipping_method')
-            ->orderByRaw('COUNT(*) DESC')
-            ->limit(20)
-            ->pluck('shipping_method')
-            ->map(fn ($m) => mb_substr((string) $m, 0, 100))
+            ->select('shipping_method', DB::raw('COUNT(*) as n'))
+            ->get()
+            // A handful of distinct titles: ordered and cut in PHP, with the
+            // title as the tie-break, so the list is stable.
+            ->sortBy([['n', 'desc'], ['shipping_method', 'asc']])
+            ->take(20)
+            ->map(fn ($r) => mb_substr((string) $r->shipping_method, 0, 100))
             ->filter(fn ($m) => $m !== '')
             ->values()
             ->all();

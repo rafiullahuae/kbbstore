@@ -247,6 +247,7 @@ final class ShipmentSync
             ->whereNull('applied_at')
             ->where('received_at', '>=', now()->subDay()->format(self::TS))
             ->orderBy('state_at')
+            ->orderBy('id')
             ->limit($limit)
             ->get();
 

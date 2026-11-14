@@ -46,6 +46,7 @@ final class QuiqupPoller
             ->whereNotNull('next_poll_at')
             ->where('next_poll_at', '<=', now()->format('Y-m-d H:i:s.u'))
             ->orderBy('next_poll_at')
+            ->orderBy('id')
             ->limit($limit)
             ->get();
 

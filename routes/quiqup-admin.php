@@ -33,3 +33,15 @@ Route::post('/quiqup-test', [QuiqupSettingsController::class, 'test']);
 Route::get('/quiqup-activity', [QuiqupSettingsController::class, 'activity']);
 Route::post('/quiqup-mode', [QuiqupSettingsController::class, 'mode']);
 Route::post('/quiqup-test-order', [QuiqupSettingsController::class, 'testOrder']);
+
+// P2 -- Store -> Orders -> Schedule with Quiqup, labels, the Delivery card
+use App\Http\Controllers\Admin\QuiqupShipController;
+
+Route::post('/quiqup-preview', [QuiqupShipController::class, 'preview']);
+Route::post('/quiqup-schedule', [QuiqupShipController::class, 'schedule']);
+Route::post('/quiqup-step', [QuiqupShipController::class, 'step']);
+Route::post('/quiqup-cancel', [QuiqupShipController::class, 'cancel']);
+Route::post('/quiqup-rebook', [QuiqupShipController::class, 'rebook']);
+Route::get('/quiqup-labels', [QuiqupShipController::class, 'labels']);
+Route::get('/quiqup-shipment', [QuiqupShipController::class, 'shipment']);
+Route::post('/quiqup-refresh', [QuiqupShipController::class, 'refresh']);

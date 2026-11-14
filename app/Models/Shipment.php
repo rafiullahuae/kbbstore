@@ -51,6 +51,7 @@ class Shipment extends Model
             'attempts' => 'int',
             'tries' => 'int',
             'generation' => 'int',
+            'test' => 'bool',
         ];
     }
 
