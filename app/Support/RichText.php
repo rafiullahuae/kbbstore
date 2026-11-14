@@ -707,6 +707,37 @@ final class RichText
      * and this only takes content OUT of a paragraph, adding a constant class.
      * A body with no blank paragraph comes back byte for byte.
      */
+    /**
+     * A translated body keeps the blank line the English one has after a list.
+     *                                                                (2.60.665)
+     *
+     * THE DEFECT, ON THE LIVE SHOP (14 November 2026). /ar/product/medicube-
+     * vanilla-deodrant-and-body-mist-duo/: "طريقة الاستخدام :" sat right under the
+     * last bullet, and "الخطوة 2" right under step 1's list -- the owner: "in
+     * arabic version, the spacing and line breaking spacing has issues". The
+     * English copy has `<div class="kbb-bl"></div>` (one line, see
+     * markBlankLines()) in both places; the Arabic translation dropped them, so
+     * a heading after a list had no space at all.
+     *
+     * For a non-default locale only (English pages stay byte for byte): after a
+     * closing list -- and any wrapper `</div>`s right after it -- that is
+     * followed by more copy, put the one-line blank back unless one is already
+     * there. Nothing stored changes; the permanent repair of the stored Arabic
+     * is a separate job. Adds only a constant element.
+     */
+    public static function spaceAfterLists(string $html): string
+    {
+        if (stripos($html, '</ul>') === false && stripos($html, '</ol>') === false) {
+            return $html;
+        }
+
+        return (string) preg_replace(
+            '#(</(?:ul|ol)>(?:\s*</div>)*)(\s*)(?=<(?!/|div class="kbb-bl"|p class="kbb-bl"|br\b)[a-z]|[^\s<])#i',
+            '$1<div class="kbb-bl"></div>$2',
+            $html,
+        );
+    }
+
     public static function markBlankLines(string $html): string
     {
         if (! preg_match('#<(p|div|ul|ol)\\b#i', $html)) {

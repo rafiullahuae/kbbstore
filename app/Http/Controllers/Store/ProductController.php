@@ -840,6 +840,12 @@ class ProductController extends Controller
             // not a line plus two paragraph margins (RichText::markBlankLines()).
             $trimmed = \App\Support\RichText::markBlankLines($trimmed);
 
+            // 2.60.665: a translation that dropped the blank line after a list
+            // gets it back on its own pages (RichText::spaceAfterLists()).
+            if (! \App\Support\Locale::isDefault()) {
+                $trimmed = \App\Support\RichText::spaceAfterLists($trimmed);
+            }
+
             if ($trimmed !== '') {
                 $tabs[$i]['body'] = $trimmed;
             }
