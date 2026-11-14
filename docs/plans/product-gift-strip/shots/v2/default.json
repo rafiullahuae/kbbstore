@@ -1,0 +1,70 @@
+{
+ "en-390": {
+  "stripW": 346,
+  "stripH": 43.7,
+  "font": 14.58,
+  "lines": 1,
+  "need": 294.6,
+  "have": 294.6,
+  "overflow": false,
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "blocked": [],
+  "animations": [
+   "pgsFlow"
+  ],
+  "errors": [],
+  "requests": 12
+ },
+ "ar-390": {
+  "stripW": 346,
+  "stripH": 44.3,
+  "font": 15,
+  "lines": 1,
+  "need": 284.8,
+  "have": 284.8,
+  "overflow": false,
+  "scrollWidth": 390,
+  "innerWidth": 390,
+  "blocked": [],
+  "animations": [
+   "pgsFlow"
+  ],
+  "errors": [],
+  "requests": 14
+ },
+ "en-1280": {
+  "stripW": 582,
+  "stripH": 44.3,
+  "font": 15,
+  "lines": 1,
+  "need": 303.1,
+  "have": 303.1,
+  "overflow": false,
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "blocked": [],
+  "animations": [
+   "pgsFlow"
+  ],
+  "errors": [],
+  "requests": 12
+ },
+ "ar-1280": {
+  "stripW": 582,
+  "stripH": 44.3,
+  "font": 15,
+  "lines": 1,
+  "need": 284.8,
+  "have": 284.8,
+  "overflow": false,
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "blocked": [],
+  "animations": [
+   "pgsFlow"
+  ],
+  "errors": [],
+  "requests": 14
+ }
+}

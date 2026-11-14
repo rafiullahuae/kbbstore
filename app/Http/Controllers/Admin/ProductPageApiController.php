@@ -101,12 +101,19 @@ class ProductPageApiController extends Controller
         ]);
     }
 
-    /** @return array{options: list<array<string, mixed>>, phone: bool} */
+    /**
+     * The strip's options, its phone switch, and (Lane GS2) `look`: every
+     * style's group, own colours, markup and CSS for the Style select and the
+     * live sample — constants of ProductGiftStrip, admin only.
+     *
+     * @return array{options: list<array<string, mixed>>, phone: bool, look: array<string, mixed>}
+     */
     private static function giftPayload(): array
     {
         return [
             'options' => app(ProductGiftStrip::class)->tabs(),
             'phone' => app(ProductMobileSections::class)->sectionOn('giftstrip'),
+            'look' => ProductGiftStrip::adminPayload(),
         ];
     }
 
