@@ -1,0 +1,267 @@
+openapi: 3.1.0
+info:
+  title: Authentication
+  version: '1.0'
+  contact:
+    email: apisupport@quiqup.com
+  license:
+    name: Proprietary
+    url: https://quiqup.com/terms
+  description: >
+    Exchange a `client_id` and `client_secret` for a Bearer access token.
+
+
+    **One credential set covers both APIs.** The same OAuth2 client credentials,
+    and the same Quiqdash
+
+    Bearer key, authenticate against the Fulfilment host and the Last-mile host.
+    There is no separate
+
+    fulfilment credential to request.
+
+
+    Most integrations do not need the exchange at all. A Bearer token generated
+    in Quiqdash under
+
+    Organization -> API keys grants identical access with no token endpoint
+    involved. Client credentials
+
+    exist for middleware and carrier platforms whose setup screens require a
+    Client ID and Client Secret.
+servers:
+  - url: https://api.staging.quiqup.com
+    description: Last-mile, staging
+  - url: https://api-ae.quiqup.com
+    description: Last-mile, production
+  - url: https://platform-api.staging.quiqup.com
+    description: Fulfilment, staging
+  - url: https://platform-api.quiqup.com
+    description: Fulfilment, production
+tags:
+  - name: Auth
+    description: Auth endpoints.
+paths:
+  /oauth/token:
+    post:
+      summary: Authorization token
+      tags:
+        - Auth
+      operationId: authorization-token
+      deprecated: false
+      security: []
+      description: >
+        Every endpoint on both APIs supports OAuth 2.0. For background, see
+
+        [oAuth 2.0](https://oauth.net/2/).
+
+
+        To send authenticated requests:
+
+
+        1. Exchange your `client_id` and `client_secret` for an access token.
+        Client credentials, and the
+           tokens exchanged from them, differ between staging and production. They do **not** differ
+           between Fulfilment and Last-mile. A Bearer token generated in Quiqdash needs none of this:
+           generate it on the dashboard of the environment you will call. Its lifetime is the
+           **Expiration** chosen at creation, one of Never, 1 Day, 7 Days, 30 Days or 60 Days. See
+           [Which credentials cross environments](/docs/environments#which-credentials-cross-environments).
+        2. The response carries an access token and a refresh token. The
+        lifetimes are stated once, in
+           [Token lifetime](/docs/authentication#token-lifetime). Read `expires_in` from the response rather
+           than hard-coding it.
+        3. Handle renewal. Before the access token expires, or on a 401, either
+        send
+           `grant_type=refresh_token` with the refresh token, or exchange the client id and secret again.
+           A refresh token works once, see [Refreshing](/docs/authentication#refreshing).
+
+        ## Which host
+
+
+        Call the token endpoint on the host you are about to use. Within one
+        environment the token is
+
+        accepted on both, so a single exchange is enough for an integration that
+        spans the two APIs.
+
+
+        ## Aggregator or platform integration?
+
+
+        Three options:
+
+
+        1. **Billing identifiers.** Avoids Client ID and Client Secret entirely.
+        You use your own API keys
+           and pass a billing identifier, which maps the order to a specific customer. You remain the
+           author of these orders; the client owns them. A client with several brands can only see each
+           brand in its own dashboard.
+        2. **API keys per account.** The client gets its own keys and becomes
+        both author and owner. Again,
+           a client with multiple brands has one account per brand.
+        3. **Master account keys plus billing identifiers per brand.** A
+        combination of the two. The client
+           gets keys and Quiqup configures billing IDs per brand.
+
+        Billing IDs can come from the client, from the platform, or from Quiqup.
+        How an identifier behaves
+
+        on an order is described in
+        [billing_identifier](/docs/lastmile/create-an-order#billing_identifier).
+      requestBody:
+        required: true
+        description: >-
+          Send the parameters in the body, form-encoded or as JSON. The endpoint
+          also reads them from the query string, but a `client_secret` in a URL
+          ends up in server, proxy and browser logs, so do not send it that way.
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - grant_type
+              properties:
+                grant_type:
+                  type: string
+                  default: client_credentials
+                  enum:
+                    - client_credentials
+                    - refresh_token
+                client_id:
+                  type: string
+                  description: Required for `client_credentials`.
+                client_secret:
+                  type: string
+                  description: Required for `client_credentials`.
+                refresh_token:
+                  type: string
+                  description: Required for `refresh_token`. Single use.
+            examples:
+              client_credentials:
+                value:
+                  grant_type: client_credentials
+                  client_id: your_client_id
+                  client_secret: your_client_secret
+              refresh_token:
+                value:
+                  grant_type: refresh_token
+                  refresh_token: your_refresh_token
+          application/json:
+            schema:
+              type: object
+              required:
+                - grant_type
+              properties:
+                grant_type:
+                  type: string
+                  default: client_credentials
+                  enum:
+                    - client_credentials
+                    - refresh_token
+                client_id:
+                  type: string
+                  description: Required for `client_credentials`.
+                client_secret:
+                  type: string
+                  description: Required for `client_credentials`.
+                refresh_token:
+                  type: string
+                  description: Required for `refresh_token`.
+            examples:
+              client_credentials:
+                value:
+                  grant_type: client_credentials
+                  client_id: your_client_id
+                  client_secret: your_client_secret
+      responses:
+        '200':
+          description: >
+            `expires_in` is how many **seconds** the returned `access_token` is
+            valid for. After that,
+
+            refresh it with the `refresh_token`, or request this endpoint again
+            with the client id and secret.
+
+
+            **Check the body, not the status.** A `client_id` that does not
+            exist is rejected with
+
+            `{"error": "invalid_client", "error_description": "..."}` and no
+            `access_token`, and that
+
+            response is HTTP 200 on staging and HTTP 401 on production. A wrong
+            secret for a real client id
+
+            is a 401. Branch on the presence of `access_token`, not on the
+            status code.
+
+            A request with no `grant_type` returns 401 with
+            `unsupported_grant_type`. A refresh token
+
+            that was already used, or has expired, is rejected with
+            `invalid_grant`.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - title: Token issued
+                    type: object
+                    required:
+                      - access_token
+                    properties:
+                      access_token:
+                        type: string
+                      token_type:
+                        type: string
+                        default: bearer
+                      expires_in:
+                        type: integer
+                      refresh_token:
+                        type: string
+                      created_at:
+                        type: integer
+                  - title: Credentials rejected, still HTTP 200
+                    type: object
+                    required:
+                      - error
+                    properties:
+                      error:
+                        type: string
+                      error_description:
+                        type: string
+              examples:
+                issued:
+                  summary: Token issued, seven days
+                  value:
+                    access_token: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.example.signature
+                    token_type: Bearer
+                    expires_in: 604800
+                    refresh_token: EXAMPLEREFRESHTOKEN0123456789ABCDEF0123456789AB
+                    created_at: 1616571253
+                rejected:
+                  summary: Unknown client id, 200 on staging
+                  value:
+                    error: invalid_client
+                    error_description: Client authentication failed.
+                invalid_grant:
+                  summary: Refresh token already used or expired
+                  value:
+                    error: invalid_grant
+                    error_description: >-
+                      The provided authorization grant is invalid, expired or
+                      revoked.
+        '401':
+          description: >-
+            `unsupported_grant_type`. The `grant_type` was missing or not
+            recognised.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  error_description:
+                    type: string
+                  created_at:
+                    type: integer
+components: {}

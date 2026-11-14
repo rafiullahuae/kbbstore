@@ -1,0 +1,27 @@
+# llms.txt
+
+## Table of contents
+
+ - [Which API do I need](https://developer-docs.quiqup.com/docs/choose.md)
+ - [Environments](https://developer-docs.quiqup.com/docs/environments.md)
+ - [Authentication](https://developer-docs.quiqup.com/docs/authentication.md)
+ - [Getting help](https://developer-docs.quiqup.com/docs/getting-help.md)
+ - [Error responses](https://developer-docs.quiqup.com/docs/errors.md)
+ - [Order lifecycle](https://developer-docs.quiqup.com/docs/order-lifecycle.md)
+ - [Common questions](https://developer-docs.quiqup.com/docs/faq.md)
+ - [Troubleshooting](https://developer-docs.quiqup.com/docs/troubleshooting.md)
+ - [Inbound](https://developer-docs.quiqup.com/docs/fulfilment/inbound.md)
+ - [Webhooks](https://developer-docs.quiqup.com/docs/webhooks.md)
+ - [Inventory](https://developer-docs.quiqup.com/docs/fulfilment/inventory.md)
+ - [Fulfilment orders](https://developer-docs.quiqup.com/docs/fulfilment/orders.md)
+ - [Products](https://developer-docs.quiqup.com/docs/fulfilment/products.md)
+ - [Integration Orders](https://developer-docs.quiqup.com/docs/lastmile/integration-orders.md)
+ - [Create an order](https://developer-docs.quiqup.com/docs/lastmile/create-an-order.md)
+ - [Testing on staging](https://developer-docs.quiqup.com/docs/lastmile/testing.md)
+ - [Start here](https://developer-docs.quiqup.com/docs.md)
+ - [Fulfilment](https://developer-docs.quiqup.com/docs/fulfilment.md)
+ - [Last-mile](https://developer-docs.quiqup.com/docs/lastmile.md)
+ - [Fulfilment API](https://developer-docs.quiqup.com/openapi.md): The Fulfilment API runs fulfilment with Quiqup: Quiqup stores your stock in its warehouse, picks and packs it, and ships it to your customers. You load your products, book stock into the warehouse with an inbound, read your inventory, and create fulfilment orders. **Hosts.** Staging is `https://platform-api.staging.quiqup.com` and production is `https://platform-api.quiqup.com`. Every path is under `/api/fulfilment/`. Staging credentials only work on staging. **Authentication.** Send `Authorization: Bearer <token>` on every request, with a Quiqdash API key or an access token from `/oauth/token`. The same credential works on the Last-mile API. See [Authentication](/docs/authentication). **Errors.** An error returns a JSON body with `code`, `message` and `details`, and `details.fields` names each field that failed validation. The two bulk product calls answer a rejected file differently. See [Error responses](/docs/errors). **Guides.** [Fulfilment](/docs/fulfilment) walks through products, inbounds, inventory and orders in the order you meet them.
+ - [Authentication](https://developer-docs.quiqup.com/apis/auth.md): Exchange a `client_id` and `client_secret` for a Bearer access token. **One credential set covers both APIs.** The same OAuth2 client credentials, and the same Quiqdash Bearer key, authenticate against the Fulfilment host and the Last-mile host. There is no separate fulfilment credential to request. Most integrations do not need the exchange at all. A Bearer token generated in Quiqdash under Organization -> API keys grants identical access with no token endpoint involved. Client credentials exist for middleware and carrier platforms whose setup screens require a Client ID and Client Secret.
+ - [Last-mile Orders API](https://developer-docs.quiqup.com/apis/orders.md): Create and manage Last-mile orders on `api-ae.quiqup.com`. The order operations in this reference are generated from the API's own code, so they always describe what the API accepts and returns. For a walkthrough, see [Create an order](/docs/lastmile/create-an-order). Two responses are not JSON: the label download returns a PDF, and the webhook is a request Quiqup sends to you, shown as a callback on Create an order. See [Webhooks](/docs/webhooks).
+
