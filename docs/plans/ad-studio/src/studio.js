@@ -515,6 +515,7 @@
   function dragEnd() { if (!drag) return; drag = null; clearGuides(); end(); draw(); }
   stage.addEventListener('pointerup', dragEnd); stage.addEventListener('pointercancel', dragEnd);
   document.addEventListener('keydown', function (ev) {
+    if (document.body.dataset.mode === 'video') return;           // Video mode has its own shortcuts
     var inField = /input|select|textarea/i.test((document.activeElement || {}).tagName || '');
     var mod = ev.ctrlKey || ev.metaKey, k = ev.key.toLowerCase();
     if (mod && k === 's') { ev.preventDefault(); saveNow(); return; }
@@ -976,8 +977,16 @@
     Store.listProjects().then(function (l) { return Promise.all(l.filter(function (p) { return IMGID.test(p.id); }).map(function (p) { return Store.getProject(p.id); })); }).then(function (ds) {
       ds = ds.filter(Boolean); if (!ds.some(function (d) { return d.id === doc.id; })) ds.push(clone(doc)); else ds = ds.map(function (d) { return d.id === doc.id ? clone(doc) : d; });
       return Promise.all(Object.keys(images).map(function (id) { var im = images[id]; return Store.toData(im.src).then(function (data) { return { id: id, name: im.name, aspect: im.aspect, kind: im.kind, data: data }; }).catch(function () { return null; }); }))
-        .then(function (ims) { var out = { app: 'kbb-ad-studio', v: 1, exported: new Date().toISOString(), brand: brand, projects: ds, images: ims.filter(Boolean) };
-          return Store.save('KBB-Ad-Studio-project-' + new Date().toISOString().slice(0, 10) + '.json', new Blob([JSON.stringify(out)], { type: 'application/json' })).then(function () { setStatus('Project exported: ' + ds.length + ' design(s), ' + out.images.length + ' picture(s)', 'ok'); }); });
+        .then(function (ims) { var out = { app: 'kbb-ad-studio', v: 1, exported: new Date().toISOString(), brand: brand, projects: ds, images: ims.filter(Boolean) }, day = new Date().toISOString().slice(0, 10);
+          // video projects carry their clips as files, so a project with any of them travels as a .zip (project.json + media/)
+          return (window.KBB_VIDEO ? window.KBB_VIDEO.exportPart() : Promise.resolve(null)).then(function (vx) {
+            if (!vx || !vx.projects.length) return Store.save('KBB-Ad-Studio-project-' + day + '.json', new Blob([JSON.stringify(out)], { type: 'application/json' })).then(function () { setStatus('Project exported: ' + ds.length + ' design(s), ' + out.images.length + ' picture(s)', 'ok'); });
+            out.video = { v: 1, projects: vx.projects, media: vx.media.map(function (m) { return m.meta; }) };
+            var z = new JSZip(); z.file('project.json', JSON.stringify(out)); vx.media.forEach(function (m) { z.file(m.meta.file, m.blob); });
+            setStatus('Packing ' + vx.media.length + ' clip(s)…');
+            return z.generateAsync({ type: 'blob', compression: 'STORE' }).then(function (b) { return Store.save('KBB-Ad-Studio-project-' + day + '.zip', b); })
+              .then(function () { setStatus('Project exported: ' + ds.length + ' design(s), ' + out.images.length + ' picture(s), ' + vx.projects.length + ' video(s) with ' + vx.media.length + ' clip(s)', 'ok'); });
+          }); });
     }).catch(function (e) { setStatus('Not exported: ' + ((e && e.message) || 'try again'), 'warn'); });
   };
   function importProject(text) {
@@ -1008,12 +1017,20 @@
   }
   $('xp-in').onchange = function () {
     var f = this.files && this.files[0]; this.value = ''; if (!f) return;
-    if (f.size > 200e6) { setStatus('That file is too large', 'warn'); return; }
-    setStatus('Importing…');
-    f.text().then(importProject).then(function (docs) {
+    var isZip = /\.zip$/i.test(f.name) || /zip/.test(f.type);
+    if (f.size > (isZip ? 4e9 : 200e6)) { setStatus('That file is too large', 'warn'); return; }
+    setStatus('Importing…'); var nv = 0;
+    var job = !isZip ? f.text().then(importProject) : JSZip.loadAsync(f).then(function (z) {
+      var pj = z.file('project.json'); if (!pj) throw new Error('That .zip is not a KBB Ad Studio project');
+      return pj.async('string').then(function (text) {
+        if (text.length > 200e6) throw new Error('That file is too large');
+        return importProject(text).then(function (docs) { var o = JSON.parse(text); return (window.KBB_VIDEO && o.video ? window.KBB_VIDEO.importPart(o.video, z) : Promise.resolve(0)).then(function (n) { nv = n; return docs; }); });
+      });
+    });
+    job.then(function (docs) {
       buildPk(); thumbsDirty(); listMine();
       if (docs.length) { end(); begin(); doc = docs[0]; end(); lastSaved = JSON.stringify(doc); $('pname').value = doc.name; st.sel = null; st.psel = null; draw(); }
-      setStatus('Imported ' + docs.length + ' design(s)', 'ok');
+      setStatus('Imported ' + docs.length + ' design(s)' + (nv ? ' and ' + nv + ' video project(s) — see Video' : ''), 'ok');
     }).catch(function (e) { setStatus('Not imported: ' + ((e && e.message) || 'try again'), 'warn'); });
   };
 
@@ -1038,5 +1055,6 @@
   });
 
   // test hooks (read-only views + the same actions the buttons run)
-  window.KBB_STUDIO = { get doc() { return doc; }, st: st, templates: KT.LIST, useTemplate: function (id) { useTemplate(tplById[id]); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; } };
+  window.KBB_STUDIO = { shared: { Store: Store, D: D, ICONS: ICONS, iconSvg: iconSvg, FONTS: FONTS, images: images, brand: function () { return brand; }, IMGID: IMGID }, stopPlay: function () { stopPlay(); },
+    get doc() { return doc; }, st: st, templates: KT.LIST, useTemplate: function (id) { useTemplate(tplById[id]); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; } };
 })();

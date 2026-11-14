@@ -1,8 +1,8 @@
 # KBB Ad Studio -- builds ONE self-contained offline HTML file:
 #   python3 build.py  ->  ad-studio.html (not committed) + dist/ad-studio.html (committed: the owner's file)
 #
-# Inlined, so the file makes zero network requests: the fonts (fonts.py, cached in fontcache/), the two
-# vendored libraries (html-to-image 1.11.11, JSZip 3.10.1), the 12 product cut-outs (assets/products,
+# Inlined, so the file makes zero network requests: the fonts (fonts.py, cached in fontcache/), the three
+# vendored libraries (html-to-image 1.11.11, JSZip 3.10.1, mp4-muxer 5.2.1 for the Video mode's MP4 export), the 12 product cut-outs (assets/products,
 # copied from ../black-friday-ads/assets), the tabby / tamara badges (resources/payment-logos), the
 # templates (src/templates.js) and the editor (src/studio.js).
 import base64, json, os, shutil, sys
@@ -46,6 +46,10 @@ parts = {
     '/*PRODUCT_CSS*/': '',
     '/*LIB_H2I*/': safe(lib('html-to-image-1.11.11.min.js'), 'html-to-image'),
     '/*LIB_ZIP*/': safe(lib('jszip-3.10.1.min.js'), 'JSZip'),
+    '/*LIB_MP4*/': safe(lib('mp4-muxer-5.2.1.min.js'), 'mp4-muxer'),
+    '/*VIDEO_CSS*/': open(os.path.join(D, 'src', 'video.css')).read(),
+    '/*VIDEO_HTML*/': open(os.path.join(D, 'src', 'video.html')).read(),
+    '/*VIDEO*/': safe(open(os.path.join(D, 'src', 'video.js')).read(), 'the video editor'),
     '/*TEMPLATES*/': safe(open(os.path.join(D, 'src', 'templates.js')).read(), 'templates'),
     '/*APP*/': safe(app, 'the editor'),
 }

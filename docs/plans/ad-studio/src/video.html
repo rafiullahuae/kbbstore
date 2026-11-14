@@ -1,0 +1,159 @@
+  <div class="vmain" id="vmain" hidden>
+    <div class="v-top">
+      <input id="v-name" type="text" maxlength="60" aria-label="Video name" value="Untitled video">
+      <div class="tb">
+        <button class="btn sm" id="v-new" type="button" title="Start a new video (this one is kept)">New</button>
+        <button class="btn ic" id="v-undo" type="button" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+        <button class="btn ic" id="v-redo" type="button" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+        <button class="btn pri" id="v-save" type="button" title="Save (Ctrl+S) — it also saves itself">Save</button>
+        <span class="st" id="v-status" role="status" aria-live="polite"></span>
+      </div>
+    </div>
+    <div class="v-grid">
+      <section class="v-work" aria-label="Video">
+        <div class="bar">
+          <span class="bar" id="v-ab" role="group" aria-label="Artboard size">
+            <button class="chip" data-ab="story" type="button" title="1080 × 1920">9:16 Reel</button><button class="chip" data-ab="post" type="button" title="1080 × 1350">4:5 Post</button><button class="chip" data-ab="square" type="button" title="1080 × 1080">1:1</button><button class="chip" data-ab="wide" type="button" title="1920 × 1080">16:9</button><button class="chip" data-ab="custom" type="button">Custom</button>
+          </span>
+          <span class="v-cust" id="v-cust" hidden><input id="v-cw" type="number" min="240" max="3840" step="2" aria-label="Width in pixels"><span>×</span><input id="v-ch" type="number" min="240" max="3840" step="2" aria-label="Height in pixels"></span>
+          <span class="sep"></span>
+          <span class="lbl">Empty space</span>
+          <span class="seg v-mini" id="v-bgk" role="group" aria-label="Fill empty space with"><button data-v="blur" type="button">Blur</button><button data-v="color" type="button">Colour</button></span>
+          <input type="color" id="v-bgc" aria-label="Background colour">
+          <span class="lbl" id="v-abl"></span>
+        </div>
+        <div class="v-stage"><canvas id="v-cv" width="540" height="960" aria-label="Video preview — drag a text or sticker to move it, drag the picture to frame it"></canvas></div>
+        <div class="v-trans">
+          <button class="btn ic" id="v-start" type="button" title="To the start (Home)" aria-label="To the start">⏮</button>
+          <button class="btn ic" id="v-prev" type="button" title="Back one frame (←)" aria-label="Back one frame">◂</button>
+          <button class="btn ic v-play" id="v-play" type="button" title="Play / pause (Space)" aria-label="Play">▶</button>
+          <button class="btn ic" id="v-next" type="button" title="Forward one frame (→)" aria-label="Forward one frame">▸</button>
+          <button class="btn ic" id="v-end" type="button" title="To the end (End)" aria-label="To the end">⏭</button>
+          <span class="v-tc" id="v-tc">00:00.00 / 00:00.00</span>
+          <span class="sep"></span>
+          <button class="btn sm" id="v-split" type="button" title="Cut the clip at the playhead (S)">✂ Split</button>
+          <button class="btn sm" id="v-dup" type="button" title="Duplicate (Ctrl+D)">Duplicate</button>
+          <button class="btn sm" id="v-del" type="button" title="Delete (Del)">Delete</button>
+        </div>
+      </section>
+
+      <div class="v-tlw">
+        <div class="v-tlbar"><span class="lbl">Timeline</span><span class="v-zw"><span aria-hidden="true">−</span><input id="v-zoom" type="range" min="0" max="100" value="52" aria-label="Timeline zoom"><span aria-hidden="true">+</span><span class="lbl" id="v-zoomv"></span></span></div>
+        <div class="v-tl" id="v-tl"><div class="v-tlin" id="v-tlin"></div></div>
+        <p class="hint">Drag a clip to reorder · drag its edges to trim · tap the ruler to move the playhead · Space play · S split · Del delete · ←/→ frame (Shift = 1 s) · Ctrl+Z / Ctrl+Y · Ctrl+wheel zooms.</p>
+      </div>
+
+      <aside class="side v-side" aria-label="Video options">
+        <div class="v-tabs" role="tablist">
+          <button class="v-tab" role="tab" data-vt="media" aria-selected="true" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>Media</button>
+          <button class="v-tab" role="tab" data-vt="clip" aria-selected="false" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2v14a2 2 0 0 0 2 2h14M18 22V8a2 2 0 0 0-2-2H2"/></svg>Clip</button>
+          <button class="v-tab" role="tab" data-vt="text" aria-selected="false" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5h16v2M9 19h6M12 5v14"/></svg>Text</button>
+          <button class="v-tab" role="tab" data-vt="stick" aria-selected="false" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17l-6.1 3.4 1.5-6.8L2.2 9l6.9-.7z"/></svg>Stickers</button>
+          <button class="v-tab" role="tab" data-vt="audio" aria-selected="false" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Audio</button>
+          <button class="v-tab" role="tab" data-vt="export" aria-selected="false" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Export</button>
+        </div>
+
+        <div class="v-pane" data-vp="media" role="tabpanel">
+          <label class="btn pri v-imp" for="v-file">＋ Import videos, pictures, music…</label>
+          <input id="v-file" type="file" multiple accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm,image/png,image/jpeg,image/webp,audio/mpeg,audio/mp4,audio/wav,audio/x-m4a,.mp3,.m4a,.wav" hidden>
+          <p class="note">Or drop files anywhere on the editor. MP4 · MOV · WebM, PNG · JPG · WebP, MP3 · M4A · WAV. Nothing leaves this computer.</p>
+          <div class="v-bin" id="v-bin"></div>
+          <details><summary>My video projects</summary><div class="in"><div class="mine" id="v-mine"></div></div></details>
+          <p class="note" id="v-where"></p>
+        </div>
+
+        <div class="v-pane" data-vp="clip" role="tabpanel" hidden>
+          <p class="empty" id="vc-none">Tap a clip on the timeline (or the picture) to crop, frame or mute it.</p>
+          <div id="vc-props" class="v-props" hidden>
+            <h3 id="vc-name"></h3>
+            <div class="row"><span class="lbl">Frame</span><div class="seg" id="vc-fit"><button data-v="fill" type="button">Fill · crop to frame</button><button data-v="fit" type="button">Fit · whole picture</button></div></div>
+            <div class="g2"><div class="row"><label for="vc-zoom">Zoom <span id="vc-zoomv"></span></label><input id="vc-zoom" type="range" min="20" max="500" step="1"></div>
+              <div class="row"><label for="vc-rot">Turn <span id="vc-rotv"></span></label><input id="vc-rot" type="range" min="-180" max="180" step="1"></div></div>
+            <div class="g2"><div class="row"><label for="vc-px">Move left / right</label><input id="vc-px" type="range" min="-100" max="100" step=".5"></div>
+              <div class="row"><label for="vc-py">Move up / down</label><input id="vc-py" type="range" min="-100" max="100" step=".5"></div></div>
+            <div class="btns"><button class="btn sm" id="vc-r90" type="button">Turn 90°</button><button class="btn sm" id="vc-reset" type="button">Reset framing</button></div>
+            <div class="g2"><div class="row"><label for="vc-a">Starts at (s in the file)</label><input id="vc-a" type="number" min="0" step=".05"></div>
+              <div class="row"><label for="vc-b">Ends at (s in the file)</label><input id="vc-b" type="number" min="0" step=".05"></div></div>
+            <div id="vc-aud" class="v-props">
+              <label class="ck"><input type="checkbox" id="vc-mute"> Remove this clip's sound</label>
+              <div class="row"><label for="vc-vol">Clip volume <span id="vc-volv"></span></label><input id="vc-vol" type="range" min="0" max="200" step="1"></div>
+            </div>
+            <p class="note">Drag the picture to move it inside the frame · mouse wheel zooms. Split, duplicate and delete are under the preview.</p>
+          </div>
+        </div>
+
+        <div class="v-pane" data-vp="text" role="tabpanel" hidden>
+          <div class="btns"><button class="btn sm pri" id="vt-add-en" type="button">＋ English text</button><button class="btn sm pri" id="vt-add-ar" type="button" lang="ar">＋ نص عربي</button></div>
+          <div class="row"><span class="lbl">Styles · tap to add, or to restyle the selected text</span>
+            <div class="v-sty" id="vt-presets"><button data-k="bold" type="button">BOLD</button><button data-k="pill" type="button">Pill</button><button data-k="outline" type="button">OUTLINE</button><button data-k="serif" type="button">Serif</button><button data-k="soft" type="button">Soft</button><button data-k="gold" type="button" lang="ar">ذهبي</button></div></div>
+          <p class="empty" id="vt-none">Add a text, or tap one on the video.</p>
+          <div id="vt-props" class="v-props" hidden>
+            <div class="row"><label for="vt-txt">Text</label><textarea id="vt-txt" maxlength="300" rows="2"></textarea></div>
+            <div class="g2"><div class="row"><label for="vt-fn">Font</label><select id="vt-fn"></select></div>
+              <div class="row"><label for="vt-fw">Weight</label><select id="vt-fw"><option>400</option><option>500</option><option>600</option><option>700</option><option>800</option><option>900</option></select></div></div>
+            <div class="g2"><div class="row"><label for="vt-fs">Size</label><input id="vt-fs" type="range" min="1" max="30" step=".1"></div>
+              <div class="row"><label for="vt-tc">Colour · align</label><div class="crow"><input id="vt-tc" type="color"><div class="seg" id="vt-al" style="flex:1"><button data-v="l" type="button" aria-label="Align left">L</button><button data-v="c" type="button" aria-label="Centre">C</button><button data-v="r" type="button" aria-label="Align right">R</button></div></div></div></div>
+            <div class="btns"><label class="ck"><input type="checkbox" id="vt-fi"> Italic</label><label class="ck"><input type="checkbox" id="vt-up"> CAPS</label><label class="ck"><input type="checkbox" id="vt-pill"> Background pill</label><input id="vt-pc" type="color" aria-label="Pill colour"></div>
+            <div class="g2"><div class="row"><label for="vt-ol">Outline</label><div class="crow"><input id="vt-ol" type="range" min="0" max="20" step=".5"><input id="vt-oc" type="color" aria-label="Outline colour"></div></div>
+              <div class="row"><label for="vt-sh">Shadow</label><input id="vt-sh" type="range" min="0" max="100" step="1"></div></div>
+            <div class="v-time">
+              <div class="g2"><div class="row"><label for="vt-s">Shows from (s)</label><input id="vt-s" type="number" min="0" step=".1"></div><div class="row"><label for="vt-e">Until (s)</label><input id="vt-e" type="number" min="0" step=".1"></div></div>
+              <div class="g2"><div class="row"><label for="vt-ain">Comes in</label><select id="vt-ain"></select></div><div class="row"><label for="vt-aout">Goes out</label><select id="vt-aout"></select></div></div>
+              <div class="g2"><div class="row"><label for="vt-op">Opacity</label><input id="vt-op" type="range" min="0" max="100" step="1"></div><div class="row"><label for="vt-r">Turn</label><input id="vt-r" type="range" min="-180" max="180" step="1"></div></div>
+            </div>
+            <p class="note">Drag the text on the video to place it; drag its bar on the timeline to time it. Arabic runs right-to-left by itself.</p>
+          </div>
+        </div>
+
+        <div class="v-pane" data-vp="stick" role="tabpanel" hidden>
+          <div id="vs-props" class="v-props v-selbox" hidden>
+            <h3 id="vs-name"></h3>
+            <div class="g2"><div class="row"><label for="vs-w">Size</label><input id="vs-w" type="range" min="2" max="120" step=".5"></div>
+              <div class="row" id="vs-colr"><label for="vs-col">Colour</label><input id="vs-col" type="color"></div></div>
+            <div id="vs-badge" class="g3"><div class="row"><label for="vs-btxt">Badge text</label><input id="vs-btxt" type="text" maxlength="40"></div><div class="row"><label for="vs-shape">Shape</label><select id="vs-shape"></select></div><div class="row"><label for="vs-btc">Text colour</label><input id="vs-btc" type="color"></div></div>
+            <div class="row" id="vs-payr"><label for="vs-pay">Shows</label><select id="vs-pay"><option value="both">tabby + tamara</option><option value="tabby">tabby</option><option value="tamara">tamara</option></select></div>
+            <div class="v-time">
+              <div class="g2"><div class="row"><label for="vs-s">Shows from (s)</label><input id="vs-s" type="number" min="0" step=".1"></div><div class="row"><label for="vs-e">Until (s)</label><input id="vs-e" type="number" min="0" step=".1"></div></div>
+              <div class="g2"><div class="row"><label for="vs-ain">Comes in</label><select id="vs-ain"></select></div><div class="row"><label for="vs-aout">Goes out</label><select id="vs-aout"></select></div></div>
+              <div class="g2"><div class="row"><label for="vs-op">Opacity</label><input id="vs-op" type="range" min="0" max="100" step="1"></div><div class="row"><label for="vs-r">Turn</label><input id="vs-r" type="range" min="-180" max="180" step="1"></div></div>
+            </div>
+          </div>
+          <div class="btns"><button class="btn sm" id="vs-addlogo" type="button">Logo</button><button class="btn sm" id="vs-addpay" type="button">tabby / tamara</button></div>
+          <div class="row"><span class="lbl">Badges</span><div class="btns" id="vs-badges"></div></div>
+          <div class="row"><span class="lbl">Icons</span><div class="icg" id="vs-icons"></div></div>
+          <div class="row"><span class="lbl">Products</span><div class="pk" id="vs-prods"></div></div>
+          <details id="vs-mine-d" hidden><summary>My pictures (from Ads)</summary><div class="in"><div class="pk" id="vs-mine"></div></div></details>
+          <p class="note">Logo and badge colours follow the brand kit (Ads → Style).</p>
+        </div>
+
+        <div class="v-pane" data-vp="audio" role="tabpanel" hidden>
+          <div class="btns"><label class="btn sm pri" for="va-file">♪ Import music…</label><input id="va-file" type="file" accept="audio/mpeg,audio/mp4,audio/wav,audio/x-m4a,audio/aac,.mp3,.m4a,.wav,.aac" hidden><button class="btn sm" id="va-allmute" type="button">Remove sound from all clips</button></div>
+          <p class="empty" id="va-none">No music yet — MP3, M4A or WAV. Each clip's own sound is on the Clip tab.</p>
+          <div id="va-props" class="v-props" hidden>
+            <h3 id="va-name"></h3>
+            <canvas id="va-wave" class="v-wave" width="600" height="60"></canvas>
+            <div class="g2"><div class="row"><label for="va-vol">Music volume <span id="va-volv"></span></label><input id="va-vol" type="range" min="0" max="200" step="1"></div>
+              <div class="row"><label for="va-o">Starts at (s in the video)</label><input id="va-o" type="number" step=".1"></div></div>
+            <div class="g2"><div class="row"><label for="va-a">Use from (s in the song)</label><input id="va-a" type="number" min="0" step=".1"></div>
+              <div class="row"><label for="va-b">Until (s in the song)</label><input id="va-b" type="number" min="0" step=".1"></div></div>
+            <div class="g2"><div class="row"><label for="va-fi">Fade in (s)</label><input id="va-fi" type="range" min="0" max="10" step=".1"></div>
+              <div class="row"><label for="va-fo">Fade out (s)</label><input id="va-fo" type="range" min="0" max="10" step=".1"></div></div>
+            <div class="btns"><button class="btn sm" id="va-rm" type="button">Remove music</button></div>
+          </div>
+        </div>
+
+        <div class="v-pane" data-vp="export" role="tabpanel" hidden>
+          <h3>Video file</h3>
+          <p class="note" id="vx-what"></p>
+          <div class="g2"><div class="row"><label for="vx-fps">Frames per second</label><select id="vx-fps"><option>24</option><option>25</option><option>30</option><option>60</option></select></div>
+            <div class="row"><label for="vx-q">Quality</label><select id="vx-q"><option value="std">Standard · smaller</option><option value="high">High</option></select></div></div>
+          <label class="ck"><input type="checkbox" id="vx-noaudio"> Export without any sound</label>
+          <div class="btns"><button class="btn pri" id="vx-go" type="button">Export video</button><button class="btn" id="vx-png" type="button">Save this frame · PNG</button></div>
+          <div class="v-prog"><progress id="vx-bar" max="1" value="0" hidden></progress><button class="btn sm" id="vx-cancel" type="button" hidden>Cancel</button></div>
+          <div class="st" id="vx-st" role="status" aria-live="polite"></div>
+          <p class="note">Made inside this browser — nothing is uploaded. Chrome and Edge make MP4 (H.264) faster than real time; Safari and Firefox record WebM in real time. The size follows the artboard.</p>
+          <p class="note">Backup / move to another computer: Ads → Export → Export project. When you have video projects it saves a .zip with the clips inside.</p>
+        </div>
+      </aside>
+    </div>
+  </div>

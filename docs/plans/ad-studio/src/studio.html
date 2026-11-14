@@ -140,21 +140,23 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
 @keyframes a-float{0%,100%{translate:0 0}50%{translate:0 -1.2cqw}}
 @keyframes a-sway{0%,100%{rotate:-2deg}50%{rotate:2deg}}
 /*PRODUCT_CSS*/
+/*VIDEO_CSS*/
 </style>
 </head>
 <body>
 <div class="app">
   <header class="top">
     <h1>KBB Ad Studio<small id="mode"></small></h1>
-    <input id="pname" type="text" maxlength="60" aria-label="Design name" value="Untitled design">
-    <div class="tb">
+    <div class="seg modesw" id="modesw" role="group" aria-label="Mode"><button data-m="ads" type="button" aria-pressed="true">Ads</button><button data-m="video" type="button" aria-pressed="false">Video</button></div>
+    <input id="pname" class="ads-only" type="text" maxlength="60" aria-label="Design name" value="Untitled design">
+    <div class="tb ads-only">
       <button class="btn ic" id="undo" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
       <button class="btn ic" id="redo" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
       <button class="btn pri" id="save" title="Save (Ctrl+S)">Save</button>
       <span class="st" id="status" role="status" aria-live="polite"></span>
     </div>
   </header>
-  <div class="main">
+  <div class="main" id="ads-main">
     <section class="work" aria-label="Ad">
       <div class="bar">
         <span id="fmts" class="bar" role="group" aria-label="Size"></span><span class="sep"></span>
@@ -283,16 +285,19 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
         <p class="note" id="vid-note">Records the products changing (Motion tab) in real time — keep this tab open until it finishes.</p>
         <div class="st" id="dl-st" role="status"></div>
         <h3>Project file</h3>
-        <div class="btns"><button class="btn sm" id="xp" type="button">Export project (.json)</button><label class="btn sm" for="xp-in">Import project…</label><input id="xp-in" type="file" accept="application/json,.json" hidden></div>
-        <p class="note">The project file holds your saved designs, uploaded pictures and brand kit, so your work can move to another computer.</p>
+        <div class="btns"><button class="btn sm" id="xp" type="button">Export project</button><label class="btn sm" for="xp-in">Import project…</label><input id="xp-in" type="file" accept="application/json,.json,application/zip,.zip" hidden></div>
+        <p class="note">The project file holds your saved designs, uploaded pictures and brand kit — and your video projects with their clips (then it is a .zip) — so your work can move to another computer.</p>
         <p class="note" id="where"></p>
       </div>
     </aside>
   </div>
+/*VIDEO_HTML*/
 </div>
 <script>/*LIB_H2I*/</script>
 <script>/*LIB_ZIP*/</script>
+<script>/*LIB_MP4*/</script>
 <script>/*TEMPLATES*/</script>
 <script>/*APP*/</script>
+<script>/*VIDEO*/</script>
 </body>
 </html>
