@@ -296,7 +296,7 @@ final class ShipmentCreator
             'order_id' => $s->order_id,
             'author' => 'Quiqup',
             'is_customer_note' => false,
-            'content' => mb_substr($text . ($s->env === 'live' ? '' : ' [STAGING]'), 0, 1000),
+            'content' => mb_substr($text . ($s->env === 'live' ? ($s->test ? ' [TEST ORDER · REAL COURIER]' : '') : ' [STAGING]'), 0, 1000),
         ]);
     }
 }

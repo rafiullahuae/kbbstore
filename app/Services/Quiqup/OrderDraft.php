@@ -61,6 +61,10 @@ final class OrderDraft
         $mode = $this->settings->mode();
         $env = $this->settings->env();
         $configured = $this->settings->configured($env);
+        // Internal testing with a real courier: the live prerequisites must
+        // still hold (a replaced live key is unverified until tested again).
+        $notReady = $mode === 'testing' && $env === 'live' ? $this->settings->liveMissing() : [];
+        $configured = $configured && $notReady === [];
 
         $out = [];
 
@@ -120,7 +124,9 @@ final class OrderDraft
         }
 
         if (! $configured) {
-            $block('mode', $env === 'live' ? 'No live API key is saved.' : 'Add your staging API key in Store → Quiqup → Connection.');
+            $block('mode', $mode === 'testing' && $env === 'live'
+                ? 'Internal testing books with a real courier, which is not ready: verify the live key, save the live webhook secret and the pickup address — or switch back to the Quiqup test system in Store → Quiqup.'
+                : ($env === 'live' ? 'No live API key is saved.' : 'Add your staging API key in Store → Quiqup → Connection.'));
         }
 
         if ($live !== null) {

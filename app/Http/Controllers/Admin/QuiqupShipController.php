@@ -111,7 +111,8 @@ final class QuiqupShipController extends Controller
 
         if ($s !== null) {
             if ($s->env !== $this->settings->env()) {
-                return response()->json(['ok' => false, 'message' => 'This booking was made in ' . ($s->env === 'live' ? 'Live' : 'Internal testing') . '; re-book it in that mode.'], 422);
+                return response()->json(['ok' => false, 'message' => 'This booking was made ' . ($s->env === 'live' ? 'with a real courier (production)' : 'on Quiqup\'s test system (staging)')
+                    . '; switch Store → Quiqup back to book there before re-booking it.'], 422);
             }
 
             $c = $this->creator->cancel($s, 'Re-booked by the shop', $this->by());
