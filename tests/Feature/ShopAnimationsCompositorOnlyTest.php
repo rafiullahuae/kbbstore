@@ -28,6 +28,7 @@
  * plus-lighter. The list may shrink; it must not grow without a reason here.
  */
 
+use App\Services\ProductGiftStrip;
 use App\Services\WhatsAppButton;
 
 const ANM_COMPOSITOR_EXCEPTIONS = [
@@ -46,6 +47,10 @@ const ANM_COMPOSITOR_EXCEPTIONS = [
     'kft-sheen-text', 'kft-sheen-text-rtl',
     // The glossy logo option: the same, a gradient clipped to the letters.
     'lgx-dr',
+    // The product page gifts strip's Rose shimmer words and Black & gold
+    // styles (Lane GS2): a shine clipped to the letters, as above. Options
+    // only; the shipped style is the flowing underline, a transform.
+    'pgsTextShine',
 ];
 
 function anmShopAnimationCss(): array
@@ -65,6 +70,9 @@ function anmShopAnimationCss(): array
         'kbb.css' => $strip((string) file_get_contents(resource_path('css/kbb/kbb.css'))),
         'kbb-product.css' => $strip((string) file_get_contents(resource_path('css/kbb/kbb-product.css'))),
         'WhatsAppButton' => $strip($wa),
+        // The free gifts strip's 27 styles live in constants, printed one at a
+        // time beside the strip (Lane GS2) -- every one of them is read here.
+        'ProductGiftStrip' => ProductGiftStrip::adminCss(),
     ];
 }
 

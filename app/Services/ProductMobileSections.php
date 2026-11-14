@@ -97,7 +97,7 @@ class ProductMobileSections
         'price' => ['Price row', 'Struck-through price, live price and the discount capsule, with the rating on the right.', true],
         /* (Lane GS) "keep above tabby tamara section by default." Its words,
            colours and effects: the Product gifts strip tab. */
-        'giftstrip' => ['Free gifts strip', '“Free gifts with every order” with the confetti and the shine. Its words, colours and effects: the Product gifts strip tab.', true],
+        'giftstrip' => ['Free gifts strip', '“Free gifts with every order. Limited time only!” in one line. Its style, words, colours and effects: the Product gifts strip tab.', true],
         'paylater' => ['Tabby & Tamara', 'Two small cards side by side: monthly payments with tabby, instalments with tamara.', true],
         'bundles' => ['Bundle section', '“Choose your option” — the bundles, a variable product’s options, or on a set “What is in this set”.', true],
         'ready' => ['Ready to ship', 'The stock line and the dispatch countdown.', true],
