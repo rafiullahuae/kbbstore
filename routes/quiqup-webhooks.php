@@ -7,8 +7,8 @@ declare(strict_types=1);
 | Quiqup webhook receiver (Lane QQB, QUIQUP-PLAN §5.2)
 |------------------------------------------------------------------------------
 |
-| NOT WIRED by the lane (CLAUDE.md: lanes do not edit routes). The integrator
-| adds ONE line to routes/api.php, beside payments-webhooks.php -- the api group
+| Mounted by the integrator (2.60.665) with ONE line in routes/api.php, beside
+| payments-webhooks.php -- the api group
 | carries no CSRF (Quiqup is a server with no session) and already applies
 | SecurityHeaders:
 |

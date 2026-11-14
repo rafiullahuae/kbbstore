@@ -7,9 +7,9 @@ declare(strict_types=1);
 | Store -> Quiqup, and Schedule with Quiqup on Store -> Orders (Lane QQB)
 |------------------------------------------------------------------------------
 |
-| NOT WIRED by the lane. The integrator adds ONE line inside the EXISTING
+| Mounted by the integrator (2.60.665) with ONE line inside the EXISTING
 | admin-api group in routes/web.php (auth:admin + NoStoreAdminApi), beside
-| orders-admin.php:
+| payments-admin.php:
 |
 |     require __DIR__.'/quiqup-admin.php';
 |
