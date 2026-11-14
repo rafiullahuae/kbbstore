@@ -33,6 +33,7 @@
 .qq-hero p{margin:0;color:var(--ink-soft,#626c80);font-size:13.5px;line-height:1.5}
 .qq-chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:700;letter-spacing:.03em;white-space:nowrap}
 .qq-chip::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.qq-guide ol{margin:8px 0 0;padding-inline-start:20px;display:grid;gap:7px}.qq-guide li{line-height:1.5}.qq-guide .qq-step{display:flex;gap:12px;align-items:flex-start}.qq-guide .qq-n{flex:none;display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--surface-3,#eef1f9);font-weight:700}.qq-guide .qq-n.ok{background:var(--accent-soft,#e7f7ee);color:var(--accent-ink,#0b6e3a)}.qq-guide h3{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.qq-guide code{word-break:break-all}.qq-guide .qq-warn{border-inline-start:3px solid #e2a23b;padding:8px 12px;background:var(--amber-soft,#fdf2e2);border-radius:10px;margin-top:10px}
 .qq-chip.off{background:var(--surface-3,#eef1f9);color:var(--ink-soft,#626c80)}
 .qq-chip.testing{background:var(--amber-soft,#fdf2e2);color:#9a5b0e}
 .qq-chip.live{background:var(--accent-soft,#e7f7ee);color:var(--accent-ink,#0b6e3a)}
@@ -290,7 +291,7 @@
   }
 
   function tabs() {
-    return '<div class="qq-tabs" role="tablist">' + [['conn', 'Connection'], ['pick', 'Pickup & defaults'], ['test', 'Test customers'], ['stat', 'Statuses'], ['act', 'Activity']].map(function (t) {
+    return '<div class="qq-tabs" role="tablist">' + [['guide', 'Setup guide'], ['conn', 'Connection'], ['pick', 'Pickup & defaults'], ['test', 'Test customers'], ['stat', 'Statuses'], ['act', 'Activity']].map(function (t) {
       return '<button type="button" role="tab" id="qqtab-' + t[0] + '" aria-selected="' + (S.tab === t[0]) + '" tabindex="' + (S.tab === t[0] ? 0 : -1) + '" data-qq-tab="' + t[0] + '">' + t[1] + '</button>';
     }).join('') + '</div>';
   }
@@ -300,6 +301,66 @@
     return '<div class="qq-f"><label for="qq_' + env + '_' + key + '">' + label + ' ' + (m.filled ? '<span class="qq-chip live">Saved ••••' + esc(m.last4) + '</span>' : '<span class="qq-chip off">Not set</span>') + '</label>' +
       '<input type="password" autocomplete="off" spellcheck="false" id="qq_' + env + '_' + key + '" placeholder="' + (m.filled ? 'Type to replace' : 'Paste it here') + '">' +
       '<small>' + help + '</small></div>';
+  }
+
+  /* Setup guide (owner, 14 Nov 2026: "you didn't mention from where to get api, on which url etc. i need a
+     complete guide ... make this guide available in the quiqup tab too"). Every address and menu name is
+     a constant from developer-docs.quiqup.com (Authentication, Environments, Webhooks, Testing on staging,
+     read 14 Nov 2026; saved in docs/plans/quiqup/api-docs). Only the ticks and the two webhook addresses
+     come from the shop's own data, and those go through esc(). */
+  function guideTab() {
+    var d = S.data, sb = d.envs.sandbox, lv = d.envs.live, p = (d.options || {}).pickup || {};
+    var done = function (ok, yes, no) { return ok ? '<span class="qq-chip live">' + yes + '</span>' : '<span class="qq-chip off">' + no + '</span>'; };
+    var step = function (n, ok, title, chip, body) {
+      return '<section class="qq-card"><div class="qq-step"><span class="qq-n' + (ok ? ' ok' : '') + '" aria-hidden="true">' + (ok ? '✓' : n) + '</span><div style="min-width:0;flex:1">' +
+        '<h3>' + title + ' ' + chip + '</h3>' + body + '</div></div></section>';
+    };
+    var hook = function (e) {
+      return e.webhook_url ? '<div class="qq-copy"><code>' + esc(e.webhook_url) + '</code><button type="button" class="qq-btn" data-qq-copy="' + esc(e.webhook_url) + '">Copy</button></div>'
+        : '<p class="qq-help">Your address appears here after you save anything once on the Connection tab.</p>';
+    };
+    var STG = 'https://quiqdash-beta.staging.quiqup.com', PRD = 'https://business-ae-beta.quiqup.com';
+    var a = function (u, t) { return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + t + '</a>'; };
+    var keyOk = !!(sb.api_key && sb.api_key.filled), verOk = !!sb.verified_at, secOk = !!(sb.webhook_secret && sb.webhook_secret.filled),
+        hookOk = !!sb.last_webhook_at, pickOk = !!(p.address1 && p.contact_phone), liveOk = !!(lv.api_key && lv.api_key.filled && lv.verified_at && lv.webhook_secret && lv.webhook_secret.filled);
+    return '<div class="qq-guide">' +
+      '<section class="qq-card"><h3>How the shop connects to Quiqup</h3><p class="qq-help">The shop talks to Quiqup\'s official API with an <b>API key</b> you create in Quiqup\'s dashboard (Quiqdash). Your Quiqdash email and password are never used by the shop and never typed here. Quiqup has two separate systems:</p>' +
+        '<ol><li><b>Staging (test system)</b>: dashboard ' + a(STG, 'quiqdash-beta.staging.quiqup.com') + ', API <code>api.staging.quiqup.com</code>. No courier comes, nothing is billed. Build and test here first.</li>' +
+        '<li><b>Production (live)</b>: dashboard ' + a(PRD, 'business-ae-beta.quiqup.com') + ', API <code>api-ae.quiqup.com</code>. Real couriers, billed once a parcel is picked up.</li></ol>' +
+        '<p class="qq-help">The same Quiqdash login works on both dashboards, but keys, orders and webhooks are separate: a staging key only works on staging, a live key only on live.</p></section>' +
+      step(1, false, 'Ask Quiqup to switch on your account', '<span class="qq-chip info">Once</span>',
+        '<ol><li>Email your Quiqup account manager (commercial) and ask for <b>staging access for Last-mile</b> on your account, and which services you have: Same Day, Next Day, 4-hour.</li>' +
+        '<li>Technical questions about the API or webhooks: ' + a('mailto:apisupport@quiqup.com', 'apisupport@quiqup.com') + '.</li>' +
+        '<li>For going live later they need: commercial terms agreed, trade licence, bank card and finance details, and the services enabled on the <b>production</b> account.</li></ol>') +
+      step(2, keyOk && verOk, 'Create your staging API key', done(keyOk && verOk, 'Saved and verified', keyOk ? 'Saved, press Test connection' : 'Not yet'),
+        '<ol><li>Open ' + a(STG, 'quiqdash-beta.staging.quiqup.com') + ' and sign in with your Quiqup login.</li>' +
+        '<li>Click your account name at the bottom of the left menu. On a new account it reads <b>Create Team</b>: press it (keys live inside a team, even if you work alone).</li>' +
+        '<li>Open the same menu again and choose <b>Manage</b>, then the <b>API keys</b> tab, then <b>Add new key</b>.</li>' +
+        '<li>Name it <code>kbeautybliss staging</code>. Set <b>Expiration</b> to <b>Never</b>.</li>' +
+        '<li>Copy the key, open the <b>Connection</b> tab here, paste it into <b>Sandbox · staging → API key</b>, press <b>Save</b>, then <b>Test connection</b>.</li></ol>' +
+        '<div class="qq-warn"><b>Choose Never.</b> A key made with 1, 7, 30 or 60 days stops working on that day and every booking fails. That is the most common Quiqup setup mistake.</div>') +
+      step(3, secOk, 'Connect live status updates (webhook) on staging', done(secOk, hookOk ? 'Saved · updates arriving' : 'Secret saved', 'Not yet'),
+        '<p class="qq-help">This is how Quiqup tells your website the moment a status changes (out for delivery, failed attempt, delivered…).</p><ol>' +
+        '<li>Copy your staging webhook address:</li></ol>' + hook(sb) + '<ol start="2">' +
+        '<li>In ' + a(STG, 'staging Quiqdash') + ' open <b>Integrations → Webhooks</b>, tab <b>Subscriptions</b>, press <b>New subscription</b>.</li>' +
+        '<li><b>Target URL</b>: paste the address. <b>Events</b>: Quick select → <b>All order events</b> (19 events). Leave Custom headers empty. <b>Active</b>: on. Save.</li>' +
+        '<li>On the new subscription press the <b>eye icon</b> to show its signing secret, copy it, and paste it into <b>Connection → Sandbox · staging → Webhook signing secret</b>, then <b>Save</b>.</li>' +
+        '<li>Press <b>Send test</b> on the subscription in Quiqdash: “Last webhook” on the Connection tab should change.</li></ol>') +
+      step(4, pickOk, 'Pickup address and services', done(pickOk, 'Set', 'Not yet'),
+        '<ol><li>Open the <b>Pickup & defaults</b> tab: the address the courier collects from, contact name and phone (with +971).</li><li>Tick only the services your account manager confirmed, and set your cut-off times.</li></ol>') +
+      step(5, d.mode !== 'off', 'Test on your own website', done(d.mode !== 'off', d.mode === 'live' ? 'Live' : 'Internal testing', 'Mode is Off'),
+        '<ol><li><b>Test customers</b> tab: add your own email or phone.</li><li>Switch the mode at the top to <b>Internal testing</b>. Only your test orders can be booked; shoppers see nothing new.</li>' +
+        '<li>Place an order on the website yourself. In <b>Store → Orders</b> tick it, choose <b>Schedule with Quiqup…</b>, press Schedule.</li>' +
+        '<li>Move it through its steps in ' + a(STG, 'staging Quiqdash') + ': <b>Orders</b> → select it → <b>Admin Actions → Bulk Change State</b> (e.g. collected → out for delivery → delivered, and once to delivery failed). Watch its Delivery card on the order update each time.</li>' +
+        '<li>Try a cancel, and print a label from the order or the Orders bar.</li></ol>') +
+      step(6, liveOk, 'Live key and live webhook', done(liveOk, 'Ready', 'Not yet'),
+        '<ol><li>When Quiqup has activated production: open ' + a(PRD, 'business-ae-beta.quiqup.com') + ' and repeat step 2 there (key named <code>kbeautybliss live</code>, expiry <b>Never</b>). Paste it into <b>Connection → Live · production → API key</b>, Save, Test connection.</li>' +
+        '<li>Repeat step 3 in the <b>production</b> dashboard with your live webhook address (staging subscriptions do not carry over):</li></ol>' + hook(lv) +
+        '<ol start="3"><li>Optional: <b>Internal testing books on → Live (real courier)</b> sends only your test orders with a real courier, billed once picked up.</li></ol>') +
+      step(7, d.mode === 'live', 'Go Live', done(d.mode === 'live', 'Live', 'Not yet'),
+        '<ol><li>Press <b>Live</b> at the top. A checklist must show four ticks: live key verified, live webhook secret saved, pickup set, one test order delivered.</li>' +
+        '<li>Confirm. From then every order can be scheduled and customers see their delivery steps. You can go back to Internal testing or Off with one click.</li></ol>') +
+      '</div>';
   }
 
   function connTab() {
@@ -436,7 +497,7 @@
     var h = host();
     if (!h) return;
     if (!S.data) { h.innerHTML = '<div class="qq-hero"><div style="width:100%">' + skeleton(1) + '</div></div>' + skeleton(4); return; }
-    var body = S.tab === 'pick' ? pickTab() : S.tab === 'test' ? testTab() : S.tab === 'stat' ? statTab() : S.tab === 'act' ? actTab() : connTab() + modeLog();
+    var body = S.tab === 'guide' ? guideTab() : S.tab === 'pick' ? pickTab() : S.tab === 'test' ? testTab() : S.tab === 'stat' ? statTab() : S.tab === 'act' ? actTab() : connTab() + modeLog();
     var focusId = document.activeElement && document.activeElement.id;
     h.innerHTML = hero() + tabs() + '<div role="tabpanel" aria-labelledby="qqtab-' + S.tab + '">' + body + '</div>';
     if (focusId) { var f = document.getElementById(focusId); if (f) f.focus(); }
@@ -599,7 +660,10 @@
     var r = await call('quiqup-settings');
     if (!ours()) return;
     if (r.status !== 200 || !r.body.ok) { if (!quiet) { host().innerHTML = '<div class="qq-banner warn">' + esc(fail(r.status, r.body, 'open Store → Quiqup')) + '</div>'; } return; }
-    S.data = r.body; render();
+    S.data = r.body;
+    // A shop with no staging key yet opens on the Setup guide.
+    if (S.tab === 'conn' && !(S.data.envs && S.data.envs.sandbox && S.data.envs.sandbox.api_key && S.data.envs.sandbox.api_key.filled)) S.tab = 'guide';
+    render();
   }
 
   function copyText(value, button) {

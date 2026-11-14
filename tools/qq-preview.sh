@@ -40,6 +40,9 @@ mkdir -p "$DIR/views/admin"
 python3 - "$APP/resources/views/admin/app.blade.php" "$DIR/views/admin/app.blade.php" <<'VIEWS'
 import sys
 s = open(sys.argv[1]).read()
+if "@include('admin.partials.quiqup-screen')" in s:  # wired by the integrator (2.60.668): use it as it is
+    open(sys.argv[2], 'w').write(s)
+    raise SystemExit(0)
 inc = "@include('admin.partials.order-release-hold')"
 assert s.count(inc) == 1
 s = s.replace(inc, inc + "\n@include('admin.partials.quiqup-screen')\n@include('admin.partials.quiqup-orders')", 1)
@@ -62,9 +65,11 @@ require_once $base.'/tools/qq-preview-fake.php';
 $kbbApp->booted(function ($app) {
     \\Illuminate\\Support\\Facades\\View::prependLocation('%s');
     $app->bind(\\App\\Services\\Quiqup\\QuiqupClient::class, fn ($a) => new \\QqPreviewFake($a->make(\\App\\Services\\Quiqup\\QuiqupSettings::class)));
-    \\Illuminate\\Support\\Facades\\Route::middleware(['web', 'auth:admin', \\App\\Http\\Middleware\\NoStoreAdminApi::class])
-        ->prefix('admin-api')
-        ->group(base_path('routes/quiqup-admin.php'));
+    if (! str_contains((string) file_get_contents(base_path('routes/web.php')), "/quiqup-admin.php'")) {
+        \\Illuminate\\Support\\Facades\\Route::middleware(['web', 'auth:admin', \\App\\Http\\Middleware\\NoStoreAdminApi::class])
+            ->prefix('admin-api')
+            ->group(base_path('routes/quiqup-admin.php'));
+    }
 });
 
 $kbbApp->handleRequest(Request::capture());""" % sys.argv[2]
