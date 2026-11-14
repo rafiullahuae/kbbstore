@@ -302,6 +302,12 @@ final class BlockStructure
             return $same;
         }
 
+        // The usual case, in a few regex passes: the same tags and the same
+        // blank lines in both, so nothing to line up (lines() is not run).
+        if (self::key($english) === self::key($translation)) {
+            return $same;
+        }
+
         $en = self::trimEdges(self::lines($english));
         $ar = self::trimEdges(self::lines($translation));
 
@@ -472,6 +478,24 @@ final class BlockStructure
         }
 
         return self::words($out) === self::words($translation) ? $out : $translation;
+    }
+
+    /**
+     * Everything lines() reads, and nothing else: tag names (a one-line blank's
+     * class kept), and each run of text as T (has words), N (only non-breaking
+     * spaces) or nothing (whitespace). Two bodies with the same key draw the
+     * same lines.
+     */
+    public static function key(string $html): string
+    {
+        $s = (string) preg_replace('/<!--.*?-->/s', '', $html);
+        $s = str_ireplace(['&nbsp;', '&#160;', '&#xa0;'], "\u{00A0}", $s);
+        $s = (string) preg_replace('/<(\/?[a-zA-Z][a-zA-Z0-9]*)\b(?![^>]*\bkbb-bl\b)[^>]*>/', '<$1>', $s);
+        $s = (string) preg_replace('/<([a-zA-Z][a-zA-Z0-9]*)\b[^>]*\bkbb-bl\b[^>]*>/', '<$1 K>', $s);
+        $s = (string) preg_replace('/[^<>]*[^\s<>\x{00A0}\x{200B}-\x{200F}\x{2066}-\x{2069}\x{FEFF}][^<>]*/u', 'T', $s);
+        $s = (string) preg_replace('/(?<=>|^)[\s\x{00A0}\x{200B}-\x{200F}\x{2066}-\x{2069}\x{FEFF}]*\x{00A0}[\s\x{00A0}\x{200B}-\x{200F}\x{2066}-\x{2069}\x{FEFF}]*(?=<|$)/u', 'N', $s);
+
+        return strtolower((string) preg_replace('/[\s\x{200B}-\x{200F}\x{2066}-\x{2069}\x{FEFF}]+/u', '', $s));
     }
 
     /** The visible words, all whitespace removed: what "no word changed" compares. */
