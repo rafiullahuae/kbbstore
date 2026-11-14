@@ -173,6 +173,32 @@ it('draws an unrepaired row lined up on /ar, leaves the English page alone, and 
     expect($arQueries)->toBe($alignedQueries);
 });
 
+it('draws the short description lined up too (live sebum-sweeper brush: four blank lines lost)', function () {
+    // The live /ar blurb ran "Key Benefits" list, "Made in Korea", the next heading and the next list
+    // together; its English has a blank line between each. MUTATION: print t('short_description') in
+    // store/product.blade.php instead of BlockStructure::translated() -> red.
+    ArabicShop::on();
+    $f = ardxFixture('sebum-sweeper-pore-cleansing-silicone-brush-short');
+    $p = ardxProduct('<p>Body</p>', null, ['short_description' => ardxStored($f['en'])]);
+    DB::table('translations')->insert(['locale' => 'ar', 'group' => 'products', 'item_id' => $p->id, 'field' => 'short_description',
+        'value' => $f['ar'], 'status' => 'published', 'source' => 'manual', 'created_at' => now(), 'updated_at' => now()]);
+    TranslationStore::flush();
+
+    $blurb = function (string $html): string {
+        preg_match('#<div class="pm-sec pm-short[^"]*"><input[^>]*>(?:<div|<p) class="[^"]*bb-desc">(.*?)</(?:div|p)><label class="bb-more"#s', $html, $m);
+
+        return $m[1] ?? '';
+    };
+
+    $ar = $blurb($this->get('/ar/product/'.$p->slug.'/')->assertOk()->getContent());
+    expect(BlockStructure::shape($f['ar']))->toBe('P L5 P P L2 P L5 P P')
+        ->and(BlockStructure::shape($ar))->toBe(BlockStructure::shape($f['en']))
+        ->and(BlockStructure::words($ar))->toBe(BlockStructure::words($f['ar']));
+
+    $en = $blurb($this->get('/product/'.$p->slug.'/')->assertOk()->getContent());
+    expect(BlockStructure::shape($en))->toBe(BlockStructure::shape($f['en']))->and($en)->not->toContain('مزيل');
+});
+
 it('admin: dry run, apply and undo behind their own capability, failing closed', function () {
     foreach (ArStructureAdminRoutes::registered() as $route) {
         foreach ($route->methods() as $m) {

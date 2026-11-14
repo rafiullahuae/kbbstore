@@ -445,6 +445,28 @@ final class BlockStructure
     }
 
     /**
+     * A model's rich field as this page prints it: the translation lined up
+     * with its own English column on a translated page, and exactly t() on an
+     * English page (no work, same bytes). Used for the product blurb.
+     */
+    public static function translated(object $model, string $field): string
+    {
+        $value = (string) ($model->t($field) ?? '');
+
+        if (Locale::isDefault() || $value === '' || ! method_exists($model, 'getAttribute')) {
+            return $value;
+        }
+
+        $english = (string) ($model->getAttribute($field) ?? '');
+
+        if ($english === '' || $english === $value || RichText::needsAutop($english) || RichText::needsAutop($value)) {
+            return $value;
+        }
+
+        return self::forDisplay($english, $value);
+    }
+
+    /**
      * The fallback for a translation that cannot be lined up (its English has a
      * different number of lines -- e.g. it was edited after the Arabic was
      * written): the 2.60.665 render-time fix, RichText::spaceAfterLists(), made
