@@ -133,14 +133,32 @@ class BuyTogether
             return $out;
         }
 
-        $mates = $this->companions($product, $c);
+        $picked = $this->choose($product, $c);
+        $mates = $picked['mates'];
 
+        // (With a set leading, `mates` is everything else: a set alone is
+        // nothing to buy "together", so no section.)
         if ($mates->isEmpty()) {
             return $out;
         }
 
-        $out['products'] = collect([$product])->concat($mates)->values();
+        /*
+         * ▲ A SET THAT HOLDS THIS PRODUCT LEADS IN ITS PLACE (14 November
+         * 2026). The owner, on the Anua PDRN patch's page, which drew the
+         * patch, then the PDRN set that CONTAINS the patch, then two more --
+         * and "Buy 4 items together" put the patch in the bag twice: "if any
+         * product has set. then it should not show itself in the together
+         * purchase list. bcz it's already in the set." So the set is the first
+         * card and the page's own product is not drawn; the button counts and
+         * adds what is drawn. `page_id` stays the page's product: the view
+         * count and the bundle check (`main_id`) are about the page.
+         */
+        $out['products'] = collect([$picked['set'] ?? $product])->concat($mates)->values();
         $out['heading'] = BuyTogetherSettings::heading($c);
+
+        if ($picked['set'] !== null) {
+            $out['page_id'] = (int) $product->id;
+        }
 
         return $out;
     }
@@ -226,6 +244,29 @@ class BuyTogether
      */
     public function companions(Product $product, array $c): Collection
     {
+        $picked = $this->choose($product, $c);
+
+        return $picked['set'] === null ? $picked['mates'] : collect([$picked['set']])->concat($picked['mates'])->values();
+    }
+
+    /**
+     * The companions, and the SET that leads in the page product's place when
+     * the section shows one that holds it.
+     *
+     * A set comes from the 's' pool, which only ever holds "a set containing
+     * this product" (setOf()). When pick() draws one that can be bought, the
+     * pick is taken again one wider -- PHP over the same pools, no query -- so
+     * the set fills the page product's slot and the section still draws "How
+     * many products". ONE such set only: a second holds the product too and
+     * would put it in the bag twice, which is the defect. A sold-out set
+     * (drawn greyed when "Hide sold-out products" is off) cannot lead, and
+     * then the page's product stays first, as before.
+     *
+     * @param  array<string, mixed>  $c
+     * @return array{mates: Collection<int, Product>, set: ?Product}
+     */
+    private function choose(Product $product, array $c): array
+    {
         $anchor = $this->pairs->anchorFor($product);
         $slots = $anchor === null ? [] : $this->pairs->pairsFor($anchor);
         // His own category pairs for this shelf (the "Category pairs" list)
@@ -256,11 +297,25 @@ class BuyTogether
             Cache::put($key, ['fp' => $fingerprint, 'pools' => $pools], self::TTL);
         }
 
-        $chosen = $this->pick($product, $c, $slots, $pools, $rows->keyBy(fn ($p) => (int) $p->id), $range, $lead);
+        $byId = $rows->keyBy(fn ($p) => (int) $p->id);
+        $chosen = $this->pick($product, $c, $slots, $pools, $byId, $range, $lead);
+        $set = null;
+        $holders = array_flip(array_map('intval', $pools['s'] ?? []));
+        $leads = fn (Product $p): bool => isset($holders[(int) $p->id]) && $p->stock_status === 'instock';
 
-        \App\Support\SetPricing::prime($chosen);
+        if ($holders !== [] && $chosen->contains($leads)) {
+            $wide = $this->pick($product, ['count' => (int) $c['count'] + 1] + $c, $slots, $pools, $byId, $range, $lead);
+            $set = $wide->first($leads);
 
-        return $chosen;
+            if ($set !== null) {
+                $chosen = $wide->reject(fn (Product $p) => isset($holders[(int) $p->id]))
+                    ->take(max(2, (int) $c['count']) - 1)->values();
+            }
+        }
+
+        \App\Support\SetPricing::prime($set === null ? $chosen : collect([$set])->concat($chosen));
+
+        return ['mates' => $chosen, 'set' => $set];
     }
 
     /**

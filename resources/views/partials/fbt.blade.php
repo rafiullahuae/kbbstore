@@ -65,6 +65,14 @@
     (App\Services\BuyTogetherPricing::unitOff()). The basket prices the bundle
     again, on the server, whatever this page said.
 
+    ── A SET THAT HOLDS THE PAGE'S PRODUCT LEADS (14 November 2026) ──────────
+    "if any product has set. then it should not show itself in the together
+    purchase list. bcz it's already in the set." BuyTogether::forProduct()
+    then hands the set as the first card and leaves the page's product out, so
+    the button counts and adds only what is drawn. data-bt stays the PAGE's
+    product (`page_id`): its view count, and the `main_id` the bundle check
+    validates companions against -- the page product's own list, not the set's.
+
     Fully qualified class names and no `use`: this partial is conditionally
     included, and a `use` inside an @if is a parse error.
 --}}
@@ -143,7 +151,7 @@
         : ($btChecked === 1 ? __('store.buy_together.button_one') : __('store.buy_together.button', ['count' => $btChecked]));
     $btTotalHtml = $btWrap($btPay, 'bt-num');
 @endphp
-<section class="kbb-fbt bt{{ $btMore ? ' bt-more' : '' }} {{ $modules->classFor('fbt') }}" data-bt="{{ $btMain->id }}" aria-labelledby="btTitle"
+<section class="kbb-fbt bt{{ $btMore ? ' bt-more' : '' }} {{ $modules->classFor('fbt') }}" data-bt="{{ $kbbBt['page_id'] ?? $btMain->id }}" aria-labelledby="btTitle"
          style="{{ \App\Services\BuyTogether::cardStyle() }};--bt-per:{{ min(4, $btItems->count()) }};--bt-n:{{ $btItems->count() }}"
          data-tiers="{{ json_encode($btTiers) }}"
          data-many="{{ __('store.buy_together.button', ['count' => ':count']) }}"

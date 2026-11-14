@@ -144,11 +144,15 @@ it('shows the set the product is in first, then its own range, then a matching r
      */
     $s = fbtShop();
 
+    // (14 November 2026) The set holds the toner, so it LEADS in the toner's
+    // place -- "it should not show itself ... bcz it's already in the set"
+    // (FrequentlyBoughtTogetherSetLeadTest) -- and the section still draws
+    // four: the eye cream fills the slot the toner left.
     expect(fbtNames($s['self']))->toBe([
-        'Anua - Heartleaf 77% Soothing Toner 250ml',
-        'Anua - Heartleaf Glow Duo Set',                 // (a) the set it is in
+        'Anua - Heartleaf Glow Duo Set',                 // (a) the set it is in, in its place
         'Anua - Heartleaf Pore Control Cleansing Oil',   // (b) its range
         'Anua - Heartleaf 70% Intense Calming Cream',    // (c) matching moisturiser: same range first
+        'Anua - Peach 77 Niacin Eye Cream',
     ]);
 });
 
@@ -187,8 +191,10 @@ it('lets his own category pairs lead when he has set them for the shelf', functi
     fbtFlush();
 
     $names = fbtNames($s['self']);
-    expect($names[1])->toBe('Big Sun Best')
-        ->and($names[2])->toBe('Anua - Heartleaf Glow Duo Set');
+    // (14 November 2026) The set that holds the toner is the first card, in
+    // the toner's place; his pair leads everything after it.
+    expect($names[0])->toBe('Anua - Heartleaf Glow Duo Set')
+        ->and($names[1])->toBe('Big Sun Best');
 });
 
 it('never offers a sold-out or hidden range product, nor the product itself', function () {
@@ -198,11 +204,15 @@ it('never offers a sold-out or hidden range product, nor the product itself', fu
     expect($names)->not->toContain('Anua - Heartleaf Quercetinol Pore Deep Cleansing Foam')
         ->not->toContain('Anua - Heartleaf Silky Moisture Sun Cream')
         ->and(array_count_values($names))->each->toBe(1)
-        ->and($names[0])->toBe('Anua - Heartleaf 77% Soothing Toner 250ml');
+        // (14 November 2026) The set holding the toner leads in its place.
+        ->and($names[0])->toBe('Anua - Heartleaf Glow Duo Set')
+        ->and($names)->not->toContain('Anua - Heartleaf 77% Soothing Toner 250ml');
 
-    // A set that is hidden is not offered either.
+    // A set that is hidden is not offered either -- and the toner is back first.
     $s['set']->forceFill(['is_visible' => false])->save();
-    expect(fbtNames($s['self']))->not->toContain('Anua - Heartleaf Glow Duo Set');
+    $names = fbtNames($s['self']);
+    expect($names)->not->toContain('Anua - Heartleaf Glow Duo Set')
+        ->and($names[0])->toBe('Anua - Heartleaf 77% Soothing Toner 250ml');
 });
 
 it('keeps a same-word product of ANOTHER brand out of the range', function () {
