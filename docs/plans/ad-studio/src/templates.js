@@ -440,6 +440,199 @@ var KBB_T = (function () {
     return { bg: bgOf(P, Object.assign({ bgk: 'linear' }, O)), els: els, slots: slots };
   };
 
+  // ── UAE NATIONAL DAY · six totally different looks (owner, 15 Nov 2026: "5-7 national day ads, include
+  //    minimum 4 or 5 latest products. must be uae colors with some how flag type, and big offer stuff.
+  //    make these versions totally different from each other"). Flag colours only as plain shapes and
+  //    stripes (no emblem, no coat of arms, no photographs); the offer is an editable placeholder. ──
+  var UAE = { red: '#EF3340', green: '#00843D', white: '#FFFFFF', black: '#0B0B0B' };
+  function band(id, c, g, nm) { return shp(id, 'rect', { fill: c, name: nm || 'Flag stripe' }, g); }
+  function ndCta(T, P, g, o) { return btn('cta', T.cta, Object.assign({ fill: P.acc, col: P.btnTxt || '#FFFFFF', sh: 'pill', fs: 3.8 }, o || {}), g); }
+  function ndTrust(T, col, g, o) { return tx('trust', T.trust, Object.assign({ fn: 'poppins', fw: 600, fs: 2.3, lh: 130, col: col, name: 'Urgency / trust line' }, o || {}), g); }
+  function ndAr(T, col, g, o) { return tx('ar', T.ar, Object.assign({ fn: 'cairo', fw: 700, fs: 3.3, lh: 140, col: col, name: 'Arabic line' }, o || {}), g); }
+  function solidBg(c1, c2, k, pat, pc, po) { return { k: k || 'solid', c1: c1, c2: c2 || c1, ang: 180, pat: pat || 'none', pc: pc || '#000000', po: po || 0, img: '', ov: 0 }; }
+
+  // ND1 ── THE FLAG: the whole canvas is the flag -- red hoist with the sale words standing up it,
+  //        green / white / black bands; the offer on green, the products on white, the button on black
+  FAM.ndflag = function (f, T, P, O) {
+    var H = FH[f], els = [], R = v(f, 21, 21, 22);
+    var gB = v(f, 44, 36, 56), wB = v(f, 90, 72, 126);
+    els.push(band('sg', UAE.green, G(R, 0, 100 - R, gB), 'Green band'));
+    els.push(band('sw', UAE.white, G(R, gB, 100 - R, wB - gB), 'White band'));
+    els.push(band('sb', UAE.black, G(R, wB, 100 - R, H - wB), 'Black band'));
+    els.push(band('sr', UAE.red, G(0, 0, R, H), 'Red band'));
+    var X = R + 4, W = 100 - R - 7, vl = H * .88, vs = v(f, 15, 14, 16);
+    els.push(tx('vert', T.vert, { fn: 'bebas', fw: 400, fs: vs, lh: 92, ls: 4, col: '#FFFFFF', name: 'Upright words' }, G(R / 2 - vl / 2, H / 2 - vs * .46, vl, 0, -90)));
+    els.push(tx('kick', T.kick, { fn: 'montserrat', fw: 800, fs: 2.6, ls: 14, col: '#FFFFFF', name: 'Kicker' }, G(X, v(f, 5, 3.5, 13), W, 0)));
+    els.push(tx('h1', T.h1, { fn: 'bebas', fw: 400, fs: v(f, 14, 11.5, 15), lh: 92, ls: 1, col: '#FFFFFF', name: 'Offer' }, G(X, v(f, 9.5, 7.3, 18), W, 0)));
+    els.push(tx('sub', T.sub, { fn: 'poppins', fw: 600, fs: 2.6, lh: 130, col: '#E3F3EA', name: 'Supporting line' }, G(X, v(f, 24.5, 18.6, 34), W, 0)));
+    els.push(ndAr(T, '#FFFFFF', G(X, v(f, 30.5, 24, 41), W, 0), { sh: 'pill', fill: '#FFFFFF26', pd: .7 }));
+    els.push(prods());
+    els.push(ndCta(T, P, v(f, G(X + 6, 93.5, W - 12, 8.4), G(X, 75, 40, 7.6), G(X + 4, 133, W - 8, 9))));
+    els.push(pay('pay', v(f, G(X + W / 2 - 19, 104.5, 38, 3.4), G(X + 44, 77.1, 28, 3.4), G(X + W / 2 - 21, 146.5, 42, 3.8))));
+    els.push(ndTrust(T, '#CFCFCF', v(f, G(X, 110.5, W, 0), G(X, 85, W, 0), G(X, 154, W, 0))));
+    els.push(logo('logo', { col: '#FFFFFF', fs: 2.6 }, v(f, G(X, 117, W, 0), G(X, 91.5, W, 0), G(X, 164, W, 0, 0, 1.1))));
+    var xs = [X + W * .1, X + W * .3, X + W * .5, X + W * .7, X + W * .9], bb = wB - 2, ph = v(f, 38, 30, 60), mw = W * .19;
+    return { bg: solidBg(UAE.white), els: els,
+      slots: xs.map(function (x, i) { return slot(x, bb - (i % 2 ? 0 : 1), ph * (i === 2 ? 1 : .9), mw, 0); }) };
+  };
+
+  // ND2 ── FIFTY-FIVE: a white typographic poster -- a giant black "55" beside "YEARS UNITED",
+  //        flag strips across the top and the foot, the offer in big red type, products in a line
+  FAM.ndfifty = function (f, T, P, O) {
+    var H = FH[f], els = [], sh = v(f, 6, 4.5, 7);
+    function strip(p, y) {
+      els.push(band(p + 'g', UAE.green, G(24, y, 76, sh / 3)));
+      els.push(band(p + 'w', '#F4F4F2', G(24, y + sh / 3, 76, sh / 3)));
+      els.push(band(p + 'b', UAE.black, G(24, y + sh * 2 / 3, 76, sh / 3)));
+      els.push(band(p + 'r', UAE.red, G(0, y, 24, sh), 'Red block'));
+    }
+    strip('t', 0); strip('f', H - sh);
+    els.push(logo('logo', { col: '#111111', fs: 2.7 }, G(25, v(f, 8, 6.2, 11), 50, 0)));
+    els.push(tx('kick', T.kick, { fn: 'montserrat', fw: 800, fs: 2.6, ls: 16, col: UAE.green, name: 'Kicker' }, G(6, v(f, 13, 10.5, 17.5), 88, 0)));
+    var ns = v(f, 40, 30, 50);
+    els.push(tx('num', T.num, { fn: 'bebas', fw: 400, fs: ns, lh: 86, col: '#111111', al: 'r', name: 'Big number' }, G(4, v(f, 16.5, 13.4, 22), 48, 0)));
+    els.push(tx('h2', T.h2, { fn: 'bebas', fw: 400, fs: v(f, 10, 7.6, 12), lh: 92, ls: 2, col: UAE.red, al: 'l', name: 'Years line' }, G(54, v(f, 22.5, 17, 29), 42, 0)));
+    els.push(ndAr(T, UAE.green, G(54, v(f, 42, 31.8, 53), 42, 0), { al: 'l', fs: v(f, 3.2, 2.7, 3.6) }));
+    els.push(tx('h1', T.h1, { fn: 'bebas', fw: 400, fs: v(f, 14, 11, 16), lh: 92, ls: 1, col: UAE.red, name: 'Offer' }, G(5, v(f, 52.5, 39.5, 69), 90, 0)));
+    els.push(tx('sub', T.sub, { fn: 'poppins', fw: 600, fs: 2.5, lh: 130, col: '#4A4A4A', name: 'Supporting line' }, G(6, v(f, 66, 50.5, 85), 88, 0)));
+    els.push(shp('floor', 'rect', { fill: '#111111', rad: 1, name: 'Shelf' }, v(f, G(8, 98, 84, .8), G(10, 77.5, 80, .7), G(6, 135, 88, 1))));
+    els.push(prods());
+    els.push(ndCta(T, P, v(f, G(26, 101.5, 48, 8), G(28, 80, 44, 7), G(20, 139.5, 60, 9.2)), { fill: UAE.black }));
+    els.push(pay('pay', v(f, G(31, 111, 38, 3.4), G(34, 88.5, 32, 2.9), G(29, 152, 42, 3.8))));
+    els.push(ndTrust(T, '#555555', v(f, G(6, 115.5, 88, 0), G(6, 91.8, 88, 0), G(6, 158.5, 88, 0)), { fs: v(f, 2.2, 1.9, 2.5) }));
+    var by = v(f, 97.6, 77.2, 134.6), ph = v(f, 26, 22, 42), xs = [16, 33, 50, 67, 84];
+    return { bg: solidBg('#FFFFFF', '#EEEDEA', 'radial'), els: els,
+      slots: xs.map(function (x, i) { return slot(x, by, ph * (i === 2 ? 1.08 : 1), 15, 0); }) };
+  };
+
+  // ND3 ── THE SASH: a sand poster crossed by a diagonal flag sash, the offer written along its white
+  //        stripe, the products lined up on a podium beneath it
+  FAM.ndsash = function (f, T, P, O) {
+    var H = FH[f], els = [], a = -14, s = v(f, 10, 8.5, 11), ra = a * Math.PI / 180;
+    var C = v(f, { x: 50, y: 56 }, { x: 50, y: 50 }, { x: 50, y: 74 }), d = { x: Math.cos(ra), y: Math.sin(ra) }, n = { x: -Math.sin(ra), y: Math.cos(ra) }, L = 190;
+    [['zg', UAE.green, -1], ['zw', UAE.white, 0], ['zb', UAE.black, 1]].forEach(function (q) {
+      var cx = C.x + n.x * q[2] * s, cy = C.y + n.y * q[2] * s;
+      els.push(shp(q[0], 'rect', { fill: q[1], name: 'Sash stripe', shd: q[2] === 1 ? 25 : 0 }, G(cx - L / 2, cy - s / 2, L, s, a)));
+    });
+    var t = (2 - C.x) / d.x, rc = { x: C.x + d.x * t, y: C.y + d.y * t }, RL = v(f, 34, 30, 36);
+    els.push(shp('zr', 'rect', { fill: UAE.red, name: 'Sash red' }, G(rc.x - RL / 2, rc.y - s * 1.5, RL, s * 3, a)));
+    var t2 = (v(f, 59, 58, 59) - C.x) / d.x, oc = { x: C.x + d.x * t2, y: C.y + d.y * t2 }, ow = v(f, 62, 58, 62), os = s * 1.02;
+    els.push(tx('h2', T.h2, { fn: 'bebas', fw: 400, fs: os, lh: 92, ls: 2, col: '#0B0B0B', name: 'Offer on the sash' }, G(oc.x - ow / 2, oc.y - os * .46, ow, 0, a)));
+    els.push(logo('logo', { col: '#1A1A1A', fs: 2.6 }, G(25, v(f, 3.5, 2.6, 8), 50, 0)));
+    els.push(tx('kick', T.kick, { fn: 'montserrat', fw: 800, fs: 2.5, ls: 16, col: UAE.green, name: 'Kicker' }, G(6, v(f, 8.5, 7, 14.5), 88, 0)));
+    els.push(tx('h1', T.h1, { fn: 'playfair', fw: 900, fs: v(f, 8.6, 6.6, 10), lh: 102, ls: -1, col: '#111111', name: 'Headline' }, G(6, v(f, 12.5, 10.6, 19.5), 88, 0)));
+    els.push(ndAr(T, UAE.red, G(14, v(f, 31, 25.3, 41.5), 72, 0), { fs: v(f, 3.3, 2.9, 3.8) }));
+    els.push(shp('pod', 'ellipse', { fill: '#E2D3B6', name: 'Podium' }, v(f, G(12, 98, 76, 7), G(28, 82, 68, 6), G(8, 136, 84, 9))));
+    els.push(prods());
+    els.push(ndCta(T, P, v(f, G(26, 106.5, 48, 8), G(4, 88.5, 36, 7), G(20, 147, 60, 9.2)), { fill: UAE.red }));
+    els.push(pay('pay', v(f, G(31, 116, 38, 3.4), G(44, 90.3, 30, 3.2), G(29, 159.5, 42, 3.8))));
+    els.push(ndTrust(T, '#6A5B45', v(f, G(6, 120.6, 88, 0), G(74, 90, 24, 0), G(6, 166, 88, 0)), { fs: v(f, 2.1, 1.7, 2.4), lh: v(f, 130, 120, 130) }));
+    var sl = v(f,
+      [slot(22, 102, 26, 13), slot(36, 102.5, 30, 14), slot(50, 103, 34, 15), slot(64, 102.5, 30, 14), slot(78, 102, 26, 13)],
+      [slot(40, 85.5, 19, 11), slot(51, 86, 21, 12), slot(62, 86.5, 23, 13), slot(73, 86, 21, 12), slot(84, 85.5, 19, 11)],
+      [slot(20, 141, 36, 16), slot(35, 141.5, 42, 17), slot(50, 142, 46, 18), slot(65, 141.5, 42, 17), slot(80, 141, 36, 16)]);
+    return { bg: solidBg('#FBF7EF', '#EEE2CA', 'linear', 'dots', '#C9B48D', 18), els: els, slots: sl };
+  };
+
+  // ND4 ── DESERT NIGHT: a green night sky over sand dunes, a flag planted on the crest, a red burst
+  //        with the offer, the products standing along the dune
+  FAM.nddunes = function (f, T, P, O) {
+    var H = FH[f], els = [];
+    els.push(shp('moon', 'circle', { fill: '#FFFFFF', op: 14, name: 'Moon glow' }, v(f, G(-14, -12, 52, 52), G(-12, -14, 42, 42), G(-20, -10, 70, 70))));
+    var dy = v(f, 78, 60, 116);
+    els.push(shp('d1', 'ellipse', { fill: '#E7C48D', name: 'Dune' }, G(-40, dy, 110, 70)));
+    els.push(shp('d2', 'ellipse', { fill: '#D6A262', name: 'Dune' }, G(28, dy + v(f, 6, 5, 8), 120, 70)));
+    els.push(shp('d3', 'ellipse', { fill: '#C38B4C', name: 'Dune' }, G(-30, dy + v(f, 24, 20, 30), 160, 80)));
+    var px = v(f, 9, 7, 10), pt = dy + v(f, -16, -14, -22);
+    els.push(shp('pole', 'rect', { fill: '#EDEDED', rad: .3, name: 'Flag pole' }, G(px, pt, .9, dy + 7 - pt)));
+    els.push(ico('flag', 'uae', { name: 'Flag' }, G(px + .45, pt - 1.6, 13, 13)));
+    els.push(shp('badge', 'burst', { fill: UAE.red, txt: T.badge, fn: 'bebas', fw: 400, fs: v(f, 6, 5, 6.6), lh: 88, col: '#FFFFFF', shd: 35, name: 'Offer burst' }, v(f, G(64, 5, 32, 32, 10), G(70, 4, 26, 26, 10), G(60, 9, 36, 36, 10))));
+    var X = v(f, 6, 6, 8), W = v(f, 56, 60, 84);
+    els.push(logo('logo', { col: '#FFFFFF', al: 'l', fs: 2.6 }, G(X, v(f, 5, 4, 7), 50, 0)));
+    els.push(tx('kick', T.kick, { fn: 'montserrat', fw: 800, fs: 2.5, ls: 14, col: '#BFE8CF', al: 'l', name: 'Kicker' }, G(X, v(f, 11, 9, 22), W, 0)));
+    els.push(tx('h1', T.h1, { fn: 'playfair', fw: 900, fs: v(f, 10, 7.4, 12), lh: 100, ls: -1, col: '#FFFFFF', al: 'l', name: 'Headline' }, G(X, v(f, 15, 12.5, 26.5), W, 0)));
+    els.push(tx('sub', T.sub, { fn: 'poppins', fw: 500, fs: 2.7, lh: 135, col: '#DDF2E5', al: 'l', name: 'Supporting line' }, G(X, v(f, 37.5, 28, 54), W, 0)));
+    els.push(ndAr(T, '#FFFFFF', G(X, v(f, 45, 36.2, 63), W, 0), { al: 'l', sh: 'pill', fill: '#EF334033', pd: .7 }));
+    els.push(prods());
+    var fh = v(f, 19, 16, 26);
+    els.push(shp('foot', 'rect', { fill: UAE.black, name: 'Foot band' }, G(0, H - fh, 100, fh)));
+    els.push(shp('fr', 'rect', { fill: UAE.red, name: 'Foot band red' }, G(0, H - fh, 100, .9)));
+    els.push(ndCta(T, P, v(f, G(6, 110, 44, 8.4), G(6, 88, 40, 7.4), G(20, 155.5, 60, 9.2)), { fill: UAE.green }));
+    els.push(pay('pay', v(f, G(56, 110.4, 38, 3.4), G(54, 88.4, 36, 3.2), G(29, 167.5, 42, 3.6))));
+    els.push(ndTrust(T, '#BDBDBD', v(f, G(54, 115, 42, 0), G(52, 92.6, 44, 0), G(6, 172.5, 88, 0)), { fs: v(f, 2.1, 1.8, 2.2) }));
+    var cr = dy - 1.5;
+    var sl = v(f,
+      [slot(28, cr + 12, 28, 14, -3), slot(44, cr + 8, 34, 15), slot(60, cr + 6, 38, 16), slot(76, cr + 8, 32, 15), slot(91, cr + 12, 26, 13, 4)],
+      [slot(28, cr + 12, 24, 13, -3), slot(43, cr + 8, 28, 14), slot(58, cr + 6, 32, 15), slot(73, cr + 8, 28, 14), slot(88, cr + 12, 22, 12, 4)],
+      [slot(26, cr + 18, 36, 16, -3), slot(42, cr + 12, 44, 17), slot(58, cr + 9, 50, 18), slot(74, cr + 12, 42, 17), slot(89, cr + 18, 34, 15, 4)]);
+    return { bg: solidBg('#00843D', '#002B14', 'linear', 'sparkle', '#FFFFFF', 45), els: els, slots: sl };
+  };
+
+  // ND5 ── CITY LIGHTS: a night skyline (one tall tapering tower, plain blocks) under red, green and
+  //        white fireworks; the offer on a white ticket; products in front of the city
+  FAM.ndcity = function (f, T, P, O) {
+    var H = FH[f], els = [], gy = v(f, 92, 74, 134);   // ground line
+    [['fw1', UAE.red, G(64, 3, 22, 22)], ['fw2', '#FFFFFF', G(84, v(f, 16, 12, 22), 15, 15)], ['fw3', '#3DDC84', G(60, v(f, 28, 23, 34), 16, 16)]].forEach(function (q) {
+      els.push(shp(q[0], 'ring', { fill: 'transparent', bc: q[1], bw: v(f, 9, 8, 10), bs: 'dotted', op: 75, name: 'Firework' }, q[2]));
+      els.push(ico(q[0] + 's', 'sparkle', { col: q[1], op: 80, name: 'Firework spark' }, G(q[2].x + q[2].w * .38, q[2].y + q[2].h * .38, q[2].w * .24, q[2].h * .24)));
+    });
+    var blocks = [[0, 14, 16], [13, 9, 26], [21, 12, 13], [32, 10, 21], [41, 13, 15], [53, 8, 30], [60, 12, 18], [87, 13, 24]];
+    var sc = v(f, 1, .8, 1.3);
+    blocks.forEach(function (b, i) { els.push(shp('bk' + i, 'rect', { fill: i % 2 ? '#010604' : '#03100A', name: 'Building' }, G(b[0], gy - b[2] * sc, b[1] + .2, b[2] * sc + 1))); });
+    [[72, 16, 24], [73.8, 12.4, 20], [75.4, 9.2, 16], [76.8, 6.4, 13], [78, 4, 10], [79.55, .9, 11]].reduce(function (y, t, i) {
+      var h = t[2] * sc; els.push(shp('tw' + i, 'rect', { fill: '#000000', rad: i === 5 ? .4 : 0, name: 'Tower' }, G(t[0], y - h, t[1], h + .5))); return y - h;
+    }, gy);
+    els.push(shp('ground', 'rect', { fill: '#000000', name: 'Ground' }, G(0, gy, 100, H - gy)));
+    els.push(band('gg', UAE.green, G(0, gy, 100, .9))); els.push(band('gw', '#FFFFFF', G(0, gy + .9, 100, .9))); els.push(band('gr', UAE.red, G(0, gy + 1.8, 100, .9)));
+    els.push(logo('logo', { col: '#FFFFFF', al: 'l', fs: 2.6 }, G(6, v(f, 4.5, 3.5, 7), 50, 0)));
+    els.push(tx('kick', T.kick, { fn: 'montserrat', fw: 800, fs: 2.5, ls: 16, col: '#9FE3BC', al: 'l', name: 'Kicker' }, G(6, v(f, 10, 8, 14), 60, 0)));
+    els.push(tx('h1', T.h1, { fn: 'bebas', fw: 400, fs: v(f, 15, 12, 17), lh: 90, ls: 2, col: '#FFFFFF', al: 'l', name: 'Headline' }, G(6, v(f, 14, 11.5, 18.5), 60, 0)));
+    els.push(shp('tick', 'ticket', { fill: '#FFFFFF', txt: T.h2, fn: 'bebas', fw: 400, fs: v(f, 6.4, 5.2, 7.2), lh: 92, ls: 2, col: UAE.red, shd: 30, name: 'Offer ticket' }, v(f, G(6, 43, 56, 10), G(6, 34.5, 48, 8.5), G(6, 52, 62, 11.5))));
+    els.push(ndAr(T, '#FFFFFF', G(6, v(f, 55, 44.6, 66.5), 56, 0), { al: 'l' }));
+    els.push(prods());
+    els.push(ndCta(T, P, v(f, G(26, 98, 48, 8.4), G(6, 81, 40, 7.4), G(20, 143, 60, 9.2)), { fill: UAE.red }));
+    els.push(pay('pay', v(f, G(31, 109, 38, 3.4), G(54, 82.9, 38, 3.4), G(29, 156, 42, 3.8))));
+    els.push(ndTrust(T, '#A8A8A8', v(f, G(6, 114.5, 88, 0), G(6, 91, 88, 0), G(6, 163, 88, 0)), { fs: v(f, 2.2, 1.9, 2.4) }));
+    var b = gy + .2, sl = v(f,
+      [slot(12, b, 24, 13, -4), slot(28, b, 30, 14), slot(70, b, 30, 14), slot(86, b, 24, 13, 4), slot(52, b, 26, 13)],
+      [slot(12, b, 18, 11, -4), slot(26, b, 23, 12), slot(72, b, 23, 12), slot(88, b, 18, 11, 4), slot(57, b, 20, 11)],
+      [slot(12, b, 36, 16, -4), slot(29, b, 44, 18), slot(71, b, 44, 18), slot(88, b, 36, 16, 4), slot(54, b, 34, 14)]);
+    return { bg: solidBg('#14603A', '#02140B', 'linear', 'sparkle', '#FFFFFF', 30), els: els, slots: sl };
+  };
+
+  // ND6 ── STRIPE FRAME: the flag's bands run round the edge as a frame (red hoist, then green, white
+  //        and black), and the newest arrivals sit in their own tiles, each marked NEW
+  FAM.ndframe = function (f, T, P, O) {
+    var H = FH[f], els = [], R = 9, sq = f === 'square';
+    els.push(band('fg', UAE.green, G(R, 0, 100 - R, H), 'Frame green'));
+    els.push(band('fw', '#FFFFFF', G(R + 2.4, 2.4, 100 - R - 4.8, H - 4.8), 'Frame white'));
+    els.push(band('fb', UAE.black, G(R + 3.9, 3.9, 100 - R - 7.8, H - 7.8), 'Frame black'));
+    els.push(shp('panel', 'rect', { fill: '#FFFCF6', name: 'Panel' }, G(R + 5.3, 5.3, 100 - R - 10.6, H - 10.6)));
+    els.push(band('fr', UAE.red, G(0, 0, R, H), 'Red hoist'));
+    els.push(ico('star', 'star8', { col: '#FFFFFF', op: 90, name: 'Decoration' }, G(R / 2 - 2.6, v(f, 6, 5, 8), 5.2, 5.2)));
+    var X = R + 9, W = 100 - R - 18;
+    els.push(logo('logo', { col: '#111111', al: 'l', fs: 2.5 }, G(X, v(f, 9, 8.2, 11), 40, 0)));
+    els.push(tx('kick', T.kick, { fn: 'montserrat', fw: 800, fs: 2.4, ls: 14, col: UAE.green, al: 'l', name: 'Kicker' }, G(X, v(f, 14.5, 13, 18), W, 0)));
+    els.push(tx('h1', T.h1, { fn: 'montserrat', fw: 900, fs: v(f, 6.4, 5.2, 7.4), lh: 104, ls: -1, col: '#111111', al: 'l', name: 'Headline' }, G(X, v(f, 18.5, 16.6, 23), W, 0)));
+    els.push(tx('h2', T.h2, { fn: 'bebas', fw: 400, fs: v(f, 6.6, 5.4, 7.6), lh: 100, ls: 2, col: '#FFFFFF', al: 'l', sh: 'pill', fill: UAE.red, pd: .9, name: 'Offer chip' }, G(X, v(f, 33.5, 29.4, 40.5), W * .62, 0)));
+    els.push(ndAr(T, UAE.green, G(X + W * .6, v(f, 34.4, 30.2, 41.6), W * .4, 0), { al: 'r', fs: v(f, 3.3, 2.9, 3.8) }));
+    // the tiles: 2 x 2 (post, story), 4 in a row (square)
+    var tiles = [], tw, th, i;
+    if (sq) { tw = (W - 4.5) / 4; th = 34; for (i = 0; i < 4; i++) tiles.push({ x: X + i * (tw + 1.5), y: 38.5 }); }
+    else { tw = (W - 3) / 2; th = v(f, 27.5, 0, 46); for (i = 0; i < 4; i++) tiles.push({ x: X + (i % 2) * (tw + 3), y: v(f, 43.5, 0, 50.5) + Math.floor(i / 2) * (th + 3) }); }
+    tiles.forEach(function (q, j) {
+      els.push(shp('tile' + j, 'rect', { fill: '#FFFFFF', bc: '#E7E1D6', bw: 2, rad: 2.4, shd: 12, name: 'Tile' }, G(q.x, q.y, tw, th)));
+      els.push(tx('new' + j, T.tag, { fn: 'montserrat', fw: 800, fs: 1.8, ls: 10, col: '#FFFFFF', al: 'l', sh: 'pill', fill: UAE.green, pd: .5, name: 'Tile label' }, G(q.x + 1.6, q.y + 1.6, tw * .6, 0)));
+    });
+    els.push(prods());
+    var cy = v(f, 104.5, 77.5, 157.5);
+    els.push(ndCta(T, P, v(f, G(X, cy, 40, 8), G(X, cy, 38, 7), G(X, cy, 44, 9)), { fill: UAE.black }));
+    els.push(pay('pay', v(f, G(X + 44, cy + 2.2, 30, 3.4), G(X + 41, cy + 1.9, 30, 3.2), G(X + 47, cy + 2.6, 26, 3.6))));
+    els.push(ndTrust(T, '#5A5A5A', v(f, G(X, cy + 10, W, 0), G(X, cy + 9, W, 0), G(X, cy + 11.5, W, 0)), { al: 'l', fs: v(f, 2.1, 1.8, 2.3) }));
+    var sl = tiles.map(function (q) { return slot(q.x + tw / 2, q.y + th - 2.2, th * .78, tw * .62, 0); });
+    return { bg: solidBg('#FFFCF6'), els: els, slots: sl };
+  };
+
   // ── palettes ──
   function pal(bg1, bg2, ink, sub, acc, acc2, card, extra) {
     return Object.assign({ bg1: bg1, bg2: bg2, ink: ink, sub: sub, acc: acc, acc2: acc2, card: card, btnTxt: '#FFFFFF' }, extra || {});
@@ -498,7 +691,7 @@ var KBB_T = (function () {
   function rot(n) { return PP.slice(n % PP.length).concat(PP.slice(0, n % PP.length)); }
   var RIB = 'K-Beauty Bliss ♥';
   var L = [];
-  function add(cat, id, name, fam, P, T, O, tags) { L.push({ id: id, name: name, cat: cat, fam: fam, P: P, T: T, O: O || {}, tags: tags || '', pp: rot(L.length * 2) }); }
+  function add(cat, id, name, fam, P, T, O, tags, pool) { L.push({ id: id, name: name, cat: cat, fam: fam, P: P, T: T, O: O || {}, tags: tags || '', pp: pool || rot(L.length * 2) }); }
 
   // UAE & Gulf occasions
   add('uae', 'ramadan-kareem', 'Ramadan Kareem', 'arch', PAL.night, { kick: 'RAMADAN KAREEM', h1: 'Glow Through\nRamadan', h2: 'Up to 25% off selected K-beauty', ar: AR.ramadan, cta: 'Shop the Ramadan Edit', trust: 'Fast delivery across the UAE' }, { hf: 'playfair', hs: 8.6, hw: 700, pat: 'lattice', po: 10, bgk: 'radial' }, 'ramadan iftar suhoor night lantern moon');
@@ -565,6 +758,20 @@ var KBB_T = (function () {
   add('product', 'vegan-clean', 'Clean K-Beauty', 'podium', PAL.sage, { kick: 'THOUGHTFUL PICKS', h1: 'Clean K-Beauty', h2: 'Thoughtfully made favourites', ar: 'جمال كوري نظيف', cta: 'Shop the Edit', trust: 'Check each product page for details' }, { hf: 'playfair', hs: 8.6, hw: 700 }, 'clean vegan gentle');
   add('product', 'hair-body', 'Hair & Body', 'card', PAL.peach, { kick: 'BEYOND THE FACE', h1: 'Hair &\nBody Care', h2: 'Head-to-toe K-beauty', ar: 'عناية الشعر والجسم', cta: 'Shop Hair & Body', trust: 'Fast delivery across the UAE', rib: 'K-Beauty Bliss ♥' }, { icon: 'leaf', hf: 'playfair', hs: 10, hw: 700 }, 'hair body care oil');
   add('product', 'pay-later-hero', 'Treat Now, Pay Later', 'type', PAL.tealPay, { kick: 'SPLIT IN 4 · NO INTEREST', word: 'SPLIT', h1: 'Treat Now, Pay Later', h2: 'With tabby or tamara at checkout', ar: AR.pay, cta: 'Shop Now', trust: 'Subject to provider approval' }, { wop: 30 }, 'tabby tamara pay later');
+
+  // UAE National Day 2026 -- the 55th, 2 December. Six looks, each with the shop's NEWEST products (cut-outs
+  // from kbeautybliss.com/shop/?orderby=date, 15 Nov 2026). Appended last so no older template's product
+  // rotation moves.
+  var ND = pal('#FFFFFF', '#EEEEEE', '#0B0B0B', '#4A4A4A', '#EF3340', '#00843D', '#FFFFFF', { rib: '#00843D', logo: '#0B0B0B' });
+  var NEWEST = ['nbz9', 'bdeye', 'eospeach', 'anuaeye', 'azelaic', 'bdserum', 'nbz5', 'eosbutter'];
+  function newest(n) { return NEWEST.slice(n).concat(NEWEST.slice(0, n)); }
+  var NDT = 'national day uae union 55 2 december flag sale new arrivals';
+  add('uae', 'nd-flag', 'National Day · The Flag', 'ndflag', ND, { vert: 'NATIONAL DAY SALE', kick: 'UAE NATIONAL DAY · 2 DECEMBER', h1: 'UP TO 55% OFF', sub: 'On the newest K-beauty arrivals', ar: 'عيد الاتحاد الـ 55', cta: 'Shop National Day', trust: 'Selected products · while stocks last' }, {}, NDT, newest(0));
+  add('uae', 'nd-fifty', 'National Day · 55 Years, 55% Off', 'ndfifty', ND, { kick: 'UAE NATIONAL DAY · 2 DECEMBER', num: '55', h2: 'YEARS\nUNITED', ar: 'عيد الاتحاد الـ 55', h1: 'UP TO 55% OFF', sub: 'Selected K-beauty favourites, new arrivals included', cta: 'Shop the Sale', trust: 'Limited time · while stocks last' }, {}, NDT + ' fifty five years', newest(2));
+  add('uae', 'nd-sash', 'National Day · Flag Sash', 'ndsash', ND, { kick: 'CELEBRATING 55 YEARS', h1: 'National Day\nSale', h2: 'UP TO 55% OFF', ar: 'اليوم الوطني الإماراتي', cta: 'Shop Now', trust: 'Selected products · while stocks last' }, {}, NDT + ' sash', newest(4));
+  add('uae', 'nd-dunes', 'National Day · Desert Night', 'nddunes', ND, { kick: 'UAE NATIONAL DAY', h1: 'Proud\nto Glow', sub: 'New K-beauty arrivals at\nNational Day prices', ar: 'كل عام والإمارات بخير', badge: 'UP TO\n55%\nOFF', cta: 'Shop National Day', trust: 'Selected products · while stocks last' }, {}, NDT + ' desert dunes', newest(1));
+  add('uae', 'nd-city', 'National Day · City Lights', 'ndcity', ND, { kick: 'UAE NATIONAL DAY · 2 DEC', h1: 'National Day\nSale', h2: 'UP TO 55% OFF', ar: 'عيد الاتحاد الـ 55', cta: 'Shop the Sale', trust: 'Limited time · while stocks last' }, {}, NDT + ' skyline fireworks city', newest(3));
+  add('uae', 'nd-frame', 'National Day · New In Frame', 'ndframe', ND, { kick: 'NEW IN FOR NATIONAL DAY', h1: 'Fresh Arrivals,\nNational Day Prices', h2: 'UP TO 55% OFF', ar: 'وصل حديثاً', tag: 'NEW', cta: 'Shop New In', trust: 'Selected products · while stocks last' }, {}, NDT + ' new in arrivals frame', newest(5));
 
   var CATS = [['all', 'All'], ['uae', 'UAE & Gulf'], ['global', 'Global occasions'], ['sale', 'Sales & offers'], ['product', 'Products & routines']];
   return { FAM: FAM, LIST: L, CATS: CATS, FH: FH, PAL: PAL };
