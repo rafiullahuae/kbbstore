@@ -220,7 +220,7 @@ it('shows each cart\'s gift box taps on its Cart Tracking row, its page and the 
 
     $detail = test()->actingAs($owner, 'admin')->getJson('/admin-api/cart-tracking/carts/' . $cart->id)->assertOk();
     expect($detail->json('gifts.total'))->toBe(4)
-        ->and(array_column($detail->json('trail'), 'title'))->toContain('Gift box: Gifts Criteria (bag panel)')
+        ->and(array_column($detail->json('trail'), 'title'))->toContain('Gift box: All gifts (bag panel)')
         ->and(collect($detail->json('trail'))->firstWhere('code', 63)['detail'])->toBe('AED 500 – 999');
 
     OA::wire($this->app);
