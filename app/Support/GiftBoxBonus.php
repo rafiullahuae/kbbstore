@@ -46,9 +46,9 @@ final class GiftBoxBonus
 {
     private const WATCH = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="13" r="8"/><path d="M10 2h4M12 2v3"/><path class="gbm-hd" d="M12 13V9"/></svg>';
 
-    private const BASE_CSS = '.gbm [data-gbm-bonus]{transition:opacity .4s ease,transform .4s ease}.gbm .gbm-out,.gbm.gbm-out{opacity:0;transform:scale(.88)}.gbm.gbm-solo{transition:opacity .4s ease,transform .4s ease}.gbm.gbm-solo.gbm-out{transform:scale(.97)}.gbm .gbm-hd{transform-origin:12px 13px;animation:gbmhd 4s steps(8) infinite}@keyframes gbmhd{to{transform:rotate(360deg)}}'
+    private const BASE_CSS = '.gbm [data-gbm-bonus]{transition:opacity .4s ease,transform .4s ease}.gbm .gbm-out,.gbm.gbm-out{opacity:0;transform:scale(.88)}.gbm.gbm-solo{transition:opacity .4s ease,transform .4s ease}.gbm.gbm-solo.gbm-out{transform:scale(.97)}.gbm .gbm-hd{transform-origin:12px 13px;animation:gbmhd 4s steps(8) infinite}@keyframes gbmhd{to{transform:rotate(360deg)}}.gbm .fgb-th[hidden]~[data-gbm-bonus]{display:none}.gbm .gbm-lk{display:inline-block;padding:1px 6px;border-radius:6px;background:#2a2228;color:#fff;font:700 10.5px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-style:normal;font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;white-space:nowrap}.gbm.low .gbm-lk{background:#d1213f}'
         . '.gbm-clk{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;font-weight:800;letter-spacing:.03em;direction:ltr;unicode-bidi:isolate}'
-        . '.gbm-bl{margin-top:4px;color:#a12d4f;font-size:11px;font-weight:700;line-height:1.3}'
+
         . '@media (prefers-reduced-motion:reduce){.gbm .gbm-hd,.gbm *,.gbm{animation:none!important;transition:none!important}}';
 
     private const CSS = [
@@ -77,6 +77,29 @@ final class GiftBoxBonus
      * marker the server draws for no gifts, or simply removed.
      */
     public const SCRIPT = "<script>(function(w,d){if(w.kbbGbmT)return;w.kbbGbmT=1;function f(s){var h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return(h?h+':':'')+(m<10?'0':'')+m+':'+(x<10?'0':'')+x}function end(b){b.removeAttribute('data-gbm-left');b.classList.remove('low');var solo=b.classList.contains('gbm-solo'),g=solo?[b]:[].slice.call(b.querySelectorAll('[data-gbm-bonus]'));g.forEach(function(e){e.classList.add('gbm-out')});setTimeout(function(){if(!solo){g.forEach(function(e){e.remove()});return}if(b.hasAttribute('data-fgs')){var t=d.createElement('template');t.setAttribute('data-fgs','0');if(b.classList.contains('fgb-page'))t.setAttribute('data-fgp','');b.replaceWith(t)}else b.remove()},450)}var iv=setInterval(function(){var bs=d.querySelectorAll('[data-gbm-left]'),live=0;for(var i=0;i<bs.length;i++){var b=bs[i];if(!b.gbmEnd)b.gbmEnd=Date.now()+(+b.getAttribute('data-gbm-left'))*1000;var s=Math.max(0,Math.round((b.gbmEnd-Date.now())/1000)),T=+b.getAttribute('data-gbm-total')||1,P=s/T,t=f(s),c=b.querySelectorAll('[data-gbm-clk]'),l=b.querySelectorAll('[data-gbm-line]'),a=P*360,k;for(k=0;k<c.length;k++)c[k].textContent=t;for(k=0;k<l.length;k++)l[k].style.transform='scaleX('+P.toFixed(3)+')';var r=b.querySelector('[data-gbm-ring=r]'),q=b.querySelector('[data-gbm-ring=l]');if(r)r.style.transform='rotate('+(Math.min(a,180)-135)+'deg)';if(q)q.style.transform='rotate('+(Math.max(a-180,0)-135)+'deg)';var fl=b.querySelector('[data-gbm-flip]');if(fl){var ds=fl.querySelectorAll('i'),ch=t.replace(/:/g,'');if(ds.length===ch.length)for(k=0;k<ds.length;k++)if(ds[k].textContent!==ch[k]){ds[k].textContent=ch[k];ds[k].className=ds[k].className==='in'?'in2':'in'}}b.classList.toggle('low',s>0&&s<=120);if(s<=0)end(b);else live++}if(!live){clearInterval(iv);w.kbbGbmT=0}},1000)})(window,document)</script>";
+
+    /**
+     * "VIEW ALL" (the owner, 15 Nov: "when press view all, then the bonus product
+     * should also show there in single row with small numbers timer"): the bonus
+     * as the LAST row of the open list, the same row shape as every other gift
+     * (photo, name, and where "Free" sits, a small ticking clock). It carries
+     * data-gbm-bonus, so the one clock script ticks it and takes it out with the
+     * rest at zero, silently. The same in all five designs.
+     */
+    public static function listRow(array $b, int $px): string
+    {
+        $px = max(16, min(96, $px));
+        $name = e((string) ($b['name'] ?? ''));
+        $qty = max(1, (int) ($b['qty'] ?? 1));
+        $img = (string) ($b['img'] ?? '');
+        $pic = $img !== ''
+            ? '<img src="' . e($img) . '" alt="' . $name . '" width="' . $px . '" height="' . $px . '" loading="lazy" decoding="async">'
+            : '<span class="fgb-ph" role="img" aria-label="' . $name . '">' . e(mb_strtoupper(mb_substr(html_entity_decode($name, ENT_QUOTES), 0, 2))) . '</span>';
+
+        return '<div class="fgb-lr gbm-lr" data-gbm-bonus><span class="fgb-t">' . $pic . '</span><span class="fgb-ln"><span class="fgb-nm">'
+            . ($qty > 1 ? '<em>' . $qty . '× </em>' : '') . $name . '</span></span><span class="fgb-lv"><i class="gbm-lk" role="timer" aria-label="'
+            . e((string) ($b['held'] ?? '')) . '"><span data-gbm-clk>' . self::clock((int) ($b['left'] ?? 0)) . '</span></i></span></div>';
+    }
 
     /** mm:ss, or h:mm:ss from an hour up (the row's own format). */
     public static function clock(int $s): string
@@ -141,12 +164,6 @@ final class GiftBoxBonus
                 $cap('gbE-cap', (string) ($b['bonus'] ?? ''), true),
             ],
         };
-
-        // Below the range's minimum: Place order would leave the gift out, so say so (the row did).
-        $below = (string) ($b['below'] ?? '');
-        if ($below !== '') {
-            $after .= '<div class="gbm-bl" data-gbm-bonus>' . e($below) . '</div>';
-        }
 
         return [
             'design' => $design,

@@ -1013,7 +1013,13 @@ final class GiftOffers
 
         $go = $row['goRow'];
 
-        if ((int) $go['left'] <= 0) {
+        // Ended, or the basket is below the range's minimum (the owner, 15 Nov:
+        // "if user reduced the cart ... i need it should silently removed ... and
+        // if the same user increase the cart again, it should add silently also"):
+        // nothing is drawn, no "add AED X" line. The claim is kept, so the next
+        // redraw above the minimum brings it back; forPlace() already leaves it
+        // off an order placed below the minimum.
+        if ((int) $go['left'] <= 0 || (string) ($go['below'] ?? '') !== '') {
             return [$box, []];
         }
 

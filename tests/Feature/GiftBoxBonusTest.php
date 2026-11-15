@@ -191,7 +191,9 @@ it('puts no timer row above the gifts: the live clock is ON the bonus gift, wher
 
     expect($top)->not->toContain('gbm')->not->toContain('timer')->not->toContain('Complete your order in')
         ->and($box)->toContain('data-gbm-bonus><i class="gbA-tag" role="timer" aria-label="Bonus gift held for"><span class="gbm-clk" data-gbm-clk>')
-        ->and(substr_count($box, 'role="timer"'))->toBe(1)
+        // one clock on the photo row, one on the bonus's row inside View all (hidden until opened)
+        ->and(substr_count($box, 'role="timer"'))->toBe(2)
+        ->and(substr_count($top, 'role="timer"'))->toBe(0)
         ->and($box)->not->toContain('kgo-tw')->not->toContain('>BONUS<');
 });
 
@@ -418,4 +420,59 @@ it('keeps the bonus in the box when the live check redraws it', function () {
 
     $html = (string) gbbShopper($cart)->getJson('/api/cart/gifts?s=stale')->assertOk()->json('html');
     expect($html)->toContain('alt="Mask One"')->toContain('alt="Relief Sun"')->toContain('data-gbm-left=');
+});
+
+it('shows the bonus as the last row of View all, with its own small clock', function () {
+    /*
+     * The defect (the owner, 15 Nov: "when press view all, then the bonus product should also show there
+     * in single row with small numbers timer"): View all opened a list of the regular gifts only, so the
+     * bonus vanished the moment the shopper opened the box.
+     * MUTATION: drop the GiftBoxBonus::listRow() call from partials/free-gifts/box.blade.php -- RED.
+     */
+    gbbGifts([gbbProduct('Mask One')]);
+    gbbOffer(gbbProduct('Relief Sun'));
+    $cart = gbbCart();
+    gbbClaim($cart);
+
+    foreach (gbbSurfaces($cart) as $where => $html) {
+        $box = gbbBoxes($html)[0] ?? '';
+        preg_match('~<div class="fgb-list">(.*?)</div><(?:span class="gbx-ft"|button)~s', $box, $m);
+        $list = $m[1] ?? '';
+        expect($list)->toContain('Mask One')
+            ->and(preg_match('~<div class="fgb-lr gbm-lr" data-gbm-bonus>.*?2× </em>Relief Sun.*?<i class="gbm-lk" role="timer"[^>]*><span data-gbm-clk>\d\d?:\d\d(:\d\d)?</span></i>~s', $list))->toBe(1, $where)
+            // the bonus row is the LAST row of the list
+            ->and(strrpos($list, 'fgb-lr') === strpos($list, 'fgb-lr gbm-lr'))->toBeTrue($where);
+    }
+});
+
+it('hides the bonus silently while the basket is below its minimum, and brings it back above it', function () {
+    /*
+     * The defect (the owner, 15 Nov: "if user reduced the cart, then the bonus product still showing with
+     * weird line that add 'aed' to keep this product ... i need it should silently removed ... and if the
+     * same user increase the cart again, it should add silently also"): below the range's minimum the box
+     * kept the bonus and printed "Add AED X more to keep this gift".
+     * MUTATION: drop the `below` condition in GiftOffers::intoBox() -- the first loop is RED.
+     */
+    gbbGifts([gbbProduct('Mask One', ['price' => 100])]);
+    gbbOffer(gbbProduct('Relief Sun'));
+    $cart = gbbCart();
+    gbbClaim($cart);
+
+    // Basket down to AED 50 (the bonus range starts at AED 100): no bonus, no line, no row.
+    $cart->items()->update(['unit_price' => 5000]);
+    Product::query()->where('name', 'Serum')->update(['price' => 5000]);
+    gbbFresh();
+    foreach (gbbSurfaces($cart->fresh()) as $where => $html) {
+        foreach (['data-gbm-bonus', 'Relief Sun', 'kgo-', 'gbm-bl', 'more to keep'] as $gone) {
+            expect(str_contains($html, $gone))->toBeFalse("$where still shows \"$gone\"");
+        }
+    }
+
+    // Back up to AED 400: the claim was kept, so the bonus is back in the box, silently.
+    $cart->items()->update(['unit_price' => 40000]);
+    Product::query()->where('name', 'Serum')->update(['price' => 40000]);
+    gbbFresh();
+    foreach (gbbSurfaces($cart->fresh()) as $where => $html) {
+        expect(str_contains($html, 'data-gbm-bonus') && str_contains($html, 'Relief Sun'))->toBeTrue("$where lost the bonus");
+    }
 });
