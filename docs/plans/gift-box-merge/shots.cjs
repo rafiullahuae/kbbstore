@@ -16,7 +16,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { D, BASE_CSS, TICK } = require('./designs.cjs');
 
-const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+const CHROME = process.env.GB_CHROME || ['/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'].find((f) => fs.existsSync(f));
 const BASE = process.env.GO_BASE || 'http://127.0.0.1:9590';
 const APP = path.resolve(__dirname, '../../..');
 const OUT = path.join(__dirname, 'shots');
@@ -25,9 +25,9 @@ const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Geck
 // which would leave the ring and the line all but full in every shot.
 const TOTAL = 1200;
 const STATES = { live: 892, low: 98, ended: 0 };
-const result = { data: null, boxes: {}, scrollWidth: {}, console: [] };
+const result = { data: null, boxes: {}, scrollWidth: {}, timer: {}, console: [] };
 fs.mkdirSync(OUT, { recursive: true });
-const tinker = (env) => execSync(`sh ${APP}/tools/go-tinker.sh ${APP}/tools/go-claim.php ${new URL(BASE).port}`, { env: { ...process.env, GO_LANE: 'lane-gb', ...env }, encoding: 'utf8' });
+const tinker = (env) => execSync(`sh ${APP}/tools/go-tinker.sh ${APP}/tools/go-claim.php ${new URL(BASE).port}`, { env: { ...process.env, GO_LANE: process.env.GO_LANE || 'lane-gb', ...env }, encoding: 'utf8' });
 
 // In the page: hide the separate gift-offer row(s), draw the design into every Free gifts box.
 function inject([css, pieces, key, state, left, total]) {
@@ -113,7 +113,7 @@ async function openPage(page, which) {
 
     for (const [key, des] of Object.entries(D)) {
       for (const which of ['panel', 'cart', 'checkout']) {
-        const states = which === 'panel' || (which === 'cart' && vw === 1280) ? ['live', 'low', 'ended'] : ['live'];
+        const states = ['live', 'low', 'ended'];
         for (const st of states) {
           await openPage(page, which);
           const dd = { ...d, left: STATES[st], total: TOTAL };
@@ -121,6 +121,22 @@ async function openPage(page, which) {
           await page.waitForTimeout(450);
           result.boxes[`${key}-${which}-${vw}-${st}`] = await shoot(page, `${OUT}/${key}-${which}-${vw}-${st}.png`, vw, which === 'panel');
           result.scrollWidth[`${key}-${which}-${vw}-${st}`] = await page.evaluate(() => document.documentElement.scrollWidth);
+          // The timer on the bonus gift: its text size, and how much of the PRODUCT
+          // photo it covers (the drawn product inside the tile, i.e. the img box).
+          // Also: nothing of ours sits above the photo row any more.
+          result.timer[`${key}-${which}-${vw}-${st}`] = await page.evaluate(() => {
+            const f = [...document.querySelectorAll('fieldset.gbm')].find((e) => e.getBoundingClientRect().width > 0);
+            if (!f) return null;
+            const th = f.querySelector('.fgb-th').getBoundingClientRect();
+            const above = [...f.querySelectorAll('.gbm-x, [role=timer], .gbm-t, .gbB-card, .gbD-f')].filter((e) => e.getBoundingClientRect().bottom <= th.top + 1).length;
+            const t = f.querySelector('[role=timer]');
+            if (!t) return { timer: false, ended: !!f.querySelector('.gbm-x'), bonusTile: !!f.querySelector('.gbm-t'), above };
+            const txt = t.querySelector('[data-gbm-clk]') || t.querySelector('i') || t;
+            const im = f.querySelector('.gbm-t img').getBoundingClientRect(), r = t.getBoundingClientRect();
+            const ox = Math.max(0, Math.min(im.right, r.right) - Math.max(im.left, r.left)), oy = Math.max(0, Math.min(im.bottom, r.bottom) - Math.max(im.top, r.top));
+            return { timer: true, text: t.textContent.trim(), fontPx: parseFloat(getComputedStyle(txt).fontSize), tagW: Math.round(r.width * 10) / 10, tagH: Math.round(r.height * 10) / 10,
+              coversPhotoPct: Math.round((ox * oy) / (im.width * im.height) * 1000) / 10, coversPhotoPx: Math.round(oy * 10) / 10, last: !f.querySelector('.gbm-t ~ .fgb-t'), above };
+          });
           if ((which === 'panel' && vw === 390) || (which === 'cart' && vw === 1280)) {
             // Keep the drawn box for preview.html, its pictures inlined.
             const html = await page.evaluate(async () => {
@@ -143,15 +159,14 @@ async function openPage(page, which) {
   }
 
   /* ---------------- contact sheets: one image per design */
-  const sheet = await browser.newPage({ viewport: { width: 2050, height: 900 } });
+  const sheet = await browser.newPage({ viewport: { width: 2200, height: 900 } });
   const img = (f) => `data:image/png;base64,${fs.readFileSync(path.join(OUT, f)).toString('base64')}`;
   for (const [key, des] of Object.entries(D)) {
     const cell = (f, cap) => `<figure><img src="${img(f)}"><figcaption>${cap}</figcaption></figure>`;
     const html = `<html><body style="margin:0;padding:24px;background:#f3eff1;font:14px system-ui;color:#2a2228">
       <h1 style="margin:0 0 4px;font-size:24px">${des.name}</h1><p style="margin:0 0 16px;max-width:1500px;font-size:16px;color:#5e545a">${des.line}</p>
       <style>figure{margin:0;background:#fff;border-radius:10px;padding:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)}figure img{display:block;max-width:100%}figcaption{font-size:12px;font-weight:700;color:#756c74;margin-top:6px}.r{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;margin-bottom:14px}figure img{max-width:none}</style>
-      <div class="r">${cell(`${key}-panel-390-live.png`, 'Cart panel · 390 · live')}${cell(`${key}-panel-390-low.png`, 'Cart panel · 390 · under 2 min')}${cell(`${key}-panel-390-ended.png`, 'Cart panel · 390 · expired')}${cell(`${key}-cart-390-live.png`, 'Cart page · 390')}${cell(`${key}-checkout-390-live.png`, 'Checkout summary · 390')}</div>
-      <div class="r">${cell(`${key}-panel-1280-live.png`, 'Cart panel · 1280')}${cell(`${key}-cart-1280-live.png`, 'Cart page · 1280 · live')}${cell(`${key}-cart-1280-low.png`, 'Cart page · 1280 · under 2 min')}${cell(`${key}-cart-1280-ended.png`, 'Cart page · 1280 · expired')}${cell(`${key}-checkout-1280-live.png`, 'Checkout summary · 1280')}</div></body></html>`;
+      ${['panel', 'cart', 'checkout'].map((w) => `<div class="r">${[390, 1280].map((vw) => ['live', 'low', 'ended'].map((st) => cell(`${key}-${w}-${vw}-${st}.png`, `${{ panel: 'Cart panel', cart: 'Cart page', checkout: 'Checkout summary' }[w]} · ${vw} · ${{ live: 'live', low: 'under 2 min', ended: 'expired' }[st]}`)).join('')).join('')}</div>`).join('')}</body></html>`;
     await sheet.setContent(html, { waitUntil: 'load' });
     await sheet.screenshot({ path: path.join(__dirname, `contact-${key}.jpg`), type: 'jpeg', quality: 82, fullPage: true });
   }
@@ -164,13 +179,13 @@ async function openPage(page, which) {
   let body = '';
   for (const [key, des] of Object.entries(D)) {
     const c = captured[key];
-    body += `<section><h2>${des.name}</h2><p>${des.line}</p><div class="row">${col(c.live.phone, phoneW, `Phone · cart panel (${phoneW}px) · live, ticking`)}${col(c.low.phone, phoneW, 'Phone · under 2 minutes')}${col(c.ended.phone, phoneW, 'Phone · expired')}${col(c.live.desk, deskW, `Desktop · cart page (${deskW}px) · live, ticking`)}</div></section>`;
+    body += `<section><h2>${des.name}</h2><p>${des.line}</p><div class="row">${col(c.live.phone, phoneW, `Phone · cart panel (${phoneW}px) · live, ticking`)}${col(c.low.phone, phoneW, 'Phone · under 2 minutes')}${col(c.ended.phone, phoneW, 'Phone · expired (the bonus is simply gone)')}${col(c.live.phone.replace(/data-gbm-left="\d+"/, 'data-gbm-left="10" data-gbm-demo'), phoneW, 'Phone · watch it end (10 s), then it vanishes')}${col(c.live.desk, deskW, `Desktop · cart page (${deskW}px) · live, ticking`)}</div></section>`;
   }
   const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bonus Gift Box Previews</title>
 <style>:root{--bg:#f3eff1;--card:#fff;--ink:#2a2228;--mut:#5e545a}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1f1a1d;--card:#fff;--ink:#f3eff1;--mut:#c9bfc5}}:root[data-theme="dark"]{--bg:#1f1a1d;--card:#fff;--ink:#f3eff1;--mut:#c9bfc5}
 *{box-sizing:border-box}body{margin:0;padding:24px 16px 48px;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}h1{margin:0 0 4px;font-size:24px}header p,section>p{margin:0 0 14px;color:var(--mut);max-width:900px}section{margin:28px 0 0}h2{margin:0 0 4px;font-size:18px}
 .row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}.pv{min-width:0;max-width:100%}.cap{font-size:12px;font-weight:700;color:var(--mut);margin-bottom:6px}.surf{max-width:100%;background:var(--card);border-radius:12px;padding:6px 12px 22px;color:#2a2228;font-family:"Jost",system-ui,sans-serif}</style>
-<style>${css}</style></head><body><header><h1>Bonus gift inside the Free gifts box</h1><p>Five ways to draw the gift claimed from the exit popup INSIDE the Free gifts box, with its live timer on top and no separate box. Each is drawn into a copy of the real box from the preview shop (Relief Sun ×2, 4 range gifts). Live boxes tick here; red under 2 minutes; the expired state is what replaces the timer when it reaches zero.</p></header>${body}<script>${TICK}</script></body></html>`;
+<style>${css}</style></head><body><header><h1>Bonus gift inside the Free gifts box</h1><p>Five ways to draw the gift claimed from the exit popup INSIDE the Free gifts box, with its live timer ON the bonus gift, where the word BONUS was (no timer row above the gifts any more), and no separate box. Each is drawn into a copy of the real box from the preview shop (Relief Sun ×2, 4 range gifts). Live boxes tick here; red under 2 minutes; when the time runs out the bonus gift, its timer and its name fade and are removed: nothing is left behind, no line, no gap. The "watch it end" box shows it happen.</p></header>${body}<script>${TICK}</script></body></html>`;
   fs.writeFileSync(path.join(__dirname, 'preview.html'), page);
   fs.writeFileSync(path.join(__dirname, 'result.json'), JSON.stringify(result, null, 1));
   await browser.close();
