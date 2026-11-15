@@ -337,6 +337,13 @@ it('answers an expired, a forged and an unknown link the same way, and the cart 
         ->and(Cart::query()->whereNotNull('gift_offer_claim_id')->count())->toBe(0);
 
     $cart = gfoCart([[gfoProduct('Serum', ['price' => 40000]), 1]]);
+
+    // The bonus-in-the-box default says nothing (the owner, 15 Nov: "removed completely ... silently
+    // without anything showing behind like Ended etc."); with that switch off the old note still shows.
+    // MUTATION: drop the goEnded branch at the top of GiftOffers::intoBox() -- the first line is RED.
+    expect(gfoShopper($cart)->get('/cart/?gift=ended')->getContent())->not->toContain('This gift has ended.')->not->toContain('kgo-end');
+    gfoSet(['box' => ['merge' => false]]);
+    gfoFresh();
     expect(gfoShopper($cart)->get('/cart/?gift=ended')->getContent())->toContain('This gift has ended.');
 });
 

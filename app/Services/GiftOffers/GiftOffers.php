@@ -994,16 +994,21 @@ final class GiftOffers
      * No query and no settings read for a basket without a claim (row() is []
      * and this returns at once); with one, config() was already read by
      * liveClaim(). An expired claim never reaches here: liveClaim() drops it,
-     * and forPlace() keeps it off the order. "This gift has ended." (an ended
-     * claim LINK opened, ?gift=ended) is not a bonus in the box and still
-     * draws as before.
+     * and forPlace() keeps it off the order. With the switch on, "This gift
+     * has ended." (an ended claim LINK opened, ?gift=ended) is not drawn
+     * either: the owner, 15 Nov, "removed completely ... silently without
+     * anything showing behind like Ended etc."
      *
      * @return array{0: array, 1: array} [box view data, row view data]
      */
     public function intoBox(array $box, array $row): array
     {
-        if (! isset($row['goRow']) || ! $this->config()['box']['merge']) {
+        if ((! isset($row['goRow']) && ! isset($row['goEnded'])) || ! $this->config()['box']['merge']) {
             return [$box, $row];
+        }
+
+        if (! isset($row['goRow'])) {
+            return [$box, []];
         }
 
         $go = $row['goRow'];
