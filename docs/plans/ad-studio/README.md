@@ -7,11 +7,57 @@ requests: fonts, libraries, product cut-outs and the tabby / tamara badges are a
 ```bash
 python3 build.py                      # -> ad-studio.html + dist/ad-studio.html
 node tools/check-templates.cjs        # every template × 3 sizes: inside the canvas, no overlaps, 0 errors, 0 requests
-node tools/check-editor.cjs           # the editor, storage and downloads
+node tools/check-editor.cjs           # the editor, storage, downloads, multi-select, groups, align, backgrounds, colours (rewrites shots/editor-390-edit.png)
 node tools/check-video.cjs            # Video mode (rewrites shots/video/*.png -- revert those)
 node tools/shots.cjs post,square,story noeditor     # shots/templates-{post,square,story}.jpg
 node tools/nd-shots.cjs [out.jpg] [set] [ids-regex] # National Day contact sheet
+node tools/editing-shots.cjs          # shots/editing/*-{1280,390}.png: multi-select, group in Layers, Background panel, colour control
 ```
+
+## Editing (15 Nov 2026)
+
+**Pick several** like Canva / Figma: Shift-, Ctrl- or Cmd-click adds or removes; drag a box on the empty ad to pick
+everything it touches; Ctrl+A picks all (locked and hidden items stay out); on a phone, the **☐ Select** chip
+makes plain taps add / remove. The pick gets one box: drag to move it all (smart pink guides snap to the ad's edges
+and centre and to every other item's edges and centre; hold Alt to place freely), the four corners scale it all,
+the round handle turns it all (Shift = 15° steps). The **arrange bar** over the ad aligns left / centre / right /
+top / middle / bottom (to the selection, or to the ad), spaces 3+ evenly across or down, and matches width / height
+to the first item picked. Multi panel (Edit tab): group, ungroup, duplicate, delete, lock, hide, forward, back,
+opacity, text colour and fill for all.
+
+**Groups**: Ctrl+G. A tap picks the whole group, which moves, scales and turns as one; double-click enters it to
+edit one item (dashed outline), Esc leaves. Layers shows it folded open / shut with its items under it; Layers also
+takes Shift (range) and Ctrl/Cmd (add / remove) clicks, the ⠿ grip drags a row (onto a group's item = into the
+group), double-click a name to rename. Groups save with the design and the project file; downloads draw exactly as
+ungrouped (the group is editing structure only).
+
+**Background** (Style tab): None (see-through PNG; JPG / video get white) · Solid · Linear · Radial (up to 8 colour
+stops: tap the bar to add, drag to move, Remove, Reverse; angle; radial centre) · Picture (Fill / Fit / Tile,
+position, scale, blur, brightness, contrast, colour, an overlay colour with its own opacity, the colour behind) ·
+a pattern on top (dots, grid, stripes, rays, lattice, waves, sparkles, petals) with colour and strength. A template's
+own background opens in these controls with its real values.
+
+**Colour control** (every colour swatch: text, icons, fills + 2nd gradient colour and angle, borders, shadows,
+buttons, background): picker, hex (#RRGGBB or #RRGGBBAA), opacity, eyedropper (Chrome / Edge), recent colours, the
+colours already in this design, the brand palette. **Colours in this design** (Style tab): tap one, choose its new
+colour, and every use changes (each keeps its own opacity) -- or only in the picked items. Every one of these is a
+single Ctrl+Z.
+
+| Shortcut | Does |
+|---|---|
+| Click · Shift/Ctrl/Cmd+click | pick one · add / remove |
+| Drag on the empty ad | marquee pick |
+| Ctrl/Cmd+A | pick everything |
+| Arrows · Shift+arrows | nudge 1 px · 10 px (of the full-HD file) |
+| Alt while dragging | no snapping |
+| Shift while turning | 15° steps |
+| Ctrl/Cmd+G · Shift+Ctrl/Cmd+G | group · ungroup |
+| Double-click a group · Esc | edit inside it · leave it (Esc again clears the pick) |
+| Ctrl/Cmd+C · X · V · D | copy · cut · paste · duplicate |
+| Ctrl/Cmd+] · [ | forward · back |
+| Delete / Backspace | delete the pick |
+| Ctrl/Cmd+Z · Ctrl/Cmd+Y (or Shift+Ctrl/Cmd+Z) | undo · redo (a whole drag, align or colour change is one step) |
+| Ctrl/Cmd+S | save |
 
 A template is data in `src/templates.js`: a layout family (`FAM.<name>`, called once per size) + palette +
 texts + options + a product pool. Families must return the same element ids in the same order for every

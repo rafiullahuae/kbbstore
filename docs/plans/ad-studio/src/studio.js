@@ -27,7 +27,8 @@
   var SHAPES = { none: 'None', rect: 'Rectangle', pill: 'Pill', circle: 'Circle', ellipse: 'Oval', ring: 'Ring', arch: 'Arch', burst: 'Burst', star: 'Star', heart: 'Heart', banner: 'Banner', ticket: 'Ticket', blob: 'Blob', glow: 'Soft glow', petal: 'Petal', silk: 'Silk ribbon' };
   var BORDERED = { rect: 1, pill: 1, circle: 1, ellipse: 1, ring: 1, arch: 1 };
   var TYPES = { text: 'Text', btn: 'Button', shape: 'Shape', icon: 'Icon', img: 'Picture', pay: 'tabby / tamara', logo: 'Logo', prods: 'Products' };
-  var PATS = { none: 'None', dots: 'Dots', grid: 'Grid', stripes: 'Stripes', rays: 'Rays', lattice: 'Lattice', waves: 'Waves', sparkle: 'Sparkles' };
+  var PATS = { none: 'None', dots: 'Dots', grid: 'Grid', stripes: 'Stripes', rays: 'Rays', lattice: 'Lattice', waves: 'Waves', sparkle: 'Sparkles', petals: 'Petals' };
+  var BGK = ['none', 'solid', 'linear', 'radial', 'image'], FITS = ['cover', 'contain', 'tile'];
   var HEX = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/, ID = /^[a-z][a-z0-9_]{0,31}$/i, IMGID = /^[A-Za-z0-9][A-Za-z0-9_-]{5,63}$/;
   var DATAURL = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/]+=*$/;
   function poly(n, r1, r2_, rot) { var p = []; for (var i = 0; i < n * 2; i++) { var a = (i / (n * 2)) * Math.PI * 2 + (rot || 0), r = i % 2 ? r2_ : r1; p.push((50 + Math.sin(a) * r).toFixed(1) + '% ' + (50 - Math.cos(a) * r).toFixed(1) + '%'); } return 'polygon(' + p.join(',') + ')'; }
@@ -93,7 +94,8 @@
     if ([400, 500, 600, 700, 800, 900].indexOf(+e.fw) >= 0) o.fw = +e.fw;
     ['fi', 'up', 'hide', 'lock', 'nw'].forEach(function (b) { if (e[b] === true) o[b] = true; });
     NUMP.forEach(function (q) { if (e[q[0]] != null) { var n = num(e[q[0]], q[1], q[2]); if (n !== undefined) o[q[0]] = n; } });
-    ['col', 'fill', 'fill2', 'bc'].forEach(function (c) { var v = col(e[c]); if (v) o[c] = v; });
+    ['col', 'fill', 'fill2', 'bc', 'shc'].forEach(function (c) { var v = col(e[c]); if (v) o[c] = v; });
+    if (typeof e.gp === 'string' && ID.test(e.gp) && e.t !== 'prods') o.gp = e.gp;
     if (e.al === 'l' || e.al === 'c' || e.al === 'r') o.al = e.al;
     if (has(SHAPES, e.sh)) o.sh = e.sh;
     if (e.bs === 'solid' || e.bs === 'dashed' || e.bs === 'dotted') o.bs = e.bs;
@@ -123,19 +125,47 @@
       var ss = raw.sets && Array.isArray(raw.sets[f]) ? raw.sets[f] : [];
       d.sets[f] = [0, 1, 2].map(function (i) { return (Array.isArray(ss[i]) ? ss[i] : []).slice(0, 16).map(cleanItem).filter(Boolean); });
     });
-    var b = raw.bg || {};
-    d.bg = { k: ['solid', 'linear', 'radial', 'image'].indexOf(b.k) >= 0 ? b.k : 'radial', c1: col(b.c1, '#FFFFFF'), c2: col(b.c2, '#EEEEEE'), ang: num(b.ang, 0, 360, 160), pat: has(PATS, b.pat) ? b.pat : 'none', pc: col(b.pc, '#000000'), po: num(b.po, 0, 100, 12), img: IMGID.test(b.img) && (!imgs || has(imgs, b.img)) ? b.img : '', ov: num(b.ov, 0, 90, 0) };
-    if (d.bg.k === 'image' && !d.bg.img) d.bg.k = 'radial';
+    d.bg = cleanBg(raw.bg, imgs);
+    // groups: members carry gp; a group needs two members and its members sit together in the stack
+    var rg = raw.groups && typeof raw.groups === 'object' && !Array.isArray(raw.groups) ? raw.groups : {};
+    d.groups = {};
+    d.els.forEach(function (e) { if (e.gp && !has(d.groups, e.gp)) d.groups[e.gp] = { name: str(has(rg, e.gp) && rg[e.gp] ? rg[e.gp].name : '', 40) || 'Group' }; });
+    normGroups(d);
     var a = raw.anim || {};
     d.anim = { in: ['fade', 'pop', 'up', 'none'].indexOf(a.in) >= 0 ? a.in : 'fade', idle: ['none', 'float', 'sway'].indexOf(a.idle) >= 0 ? a.idle : 'none', sec: [1.5, 2, 2.5, 3, 4, 5, 6].indexOf(+a.sec) >= 0 ? +a.sec : 3, len: [5, 10, 15, 20, 30].indexOf(+a.len) >= 0 ? +a.len : 10 };
     return d;
+  }
+  // a background: kind + colours, gradient stops, radial centre, picture fit/position/scale/filters/overlay, pattern
+  function cleanBg(b, imgs) {
+    b = b && typeof b === 'object' ? b : {};
+    var o = { k: BGK.indexOf(b.k) >= 0 ? b.k : 'radial', c1: col(b.c1, '#FFFFFF'), c2: col(b.c2, '#EEEEEE'), ang: num(b.ang, 0, 360, 160), pat: has(PATS, b.pat) ? b.pat : 'none', pc: col(b.pc, '#000000'), po: num(b.po, 0, 100, 12), img: IMGID.test(b.img) && (!imgs || has(imgs, b.img)) ? b.img : '', ov: num(b.ov, 0, 90, 0),
+      rx: num(b.rx, 0, 100, 50), ry: num(b.ry, 0, 100, 38), fit: FITS.indexOf(b.fit) >= 0 ? b.fit : 'cover', ix: num(b.ix, 0, 100, 50), iy: num(b.iy, 0, 100, 50), isc: num(b.isc, 20, 400, 100),
+      blur: num(b.blur, 0, 20, 0), bri: num(b.bri, 0, 200, 100), con: num(b.con, 0, 200, 100), sat: num(b.sat, 0, 200, 100), oc: col(b.oc, '') };
+    if (Array.isArray(b.stops)) { var s = b.stops.slice(0, 8).map(function (x) { return x && HEX.test(x.c) ? { c: x.c, p: num(x.p, 0, 100, 0) } : null; }).filter(Boolean).sort(function (a, c) { return a.p - c.p; }); if (s.length >= 2) o.stops = s; }
+    if (o.k === 'image' && !o.img) o.k = 'radial';
+    return o;
+  }
+  // a group's members sit together in the stack (at the place of its top member); lone or empty groups dissolve
+  function normGroups(d) {
+    if (!d.groups || typeof d.groups !== 'object') d.groups = {};
+    var cnt = Object.create(null);
+    d.els.forEach(function (e) { if (e.gp) cnt[e.gp] = (cnt[e.gp] || 0) + 1; });
+    d.els.forEach(function (e) { if (e.gp && (cnt[e.gp] < 2 || e.t === 'prods')) delete e.gp; });
+    Object.keys(d.groups).forEach(function (g) { if (!(cnt[g] >= 2)) delete d.groups[g]; });
+    d.els.forEach(function (e) { if (e.gp && !has(d.groups, e.gp)) d.groups[e.gp] = { name: 'Group' }; });
+    var out = [], seen = Object.create(null);
+    for (var i = d.els.length - 1; i >= 0; i--) {
+      var e = d.els[i]; if (!e.gp) { out.push(e); continue; } if (seen[e.gp]) continue; seen[e.gp] = 1;
+      var m = d.els.filter(function (x) { return x.gp === e.gp; }); for (var j = m.length - 1; j >= 0; j--) out.push(m[j]);
+    }
+    d.els = out.reverse();
   }
   function cleanBrand(b) { b = b || {}; return { c1: HEX.test(b.c1) ? b.c1.slice(0, 7) : '#E8306F', c2: HEX.test(b.c2) ? b.c2.slice(0, 7) : '#1F1B1E', logo: IMGID.test(b.logo) ? b.logo : '', on: b.on === true }; }
 
   // ── state ──
   var images = Object.create(null);   // id -> {name, aspect, kind: prod|bg|logo|img, src} (no prototype: ids come from storage)
   var brand = cleanBrand({});
-  var doc = null, st = { fmt: 'post', set: 0, sel: null, psel: null, tab: 'tpl', cat: 'all', q: '' };
+  var doc = null, st = { fmt: 'post', set: 0, sel: null, psel: null, ms: [], grp: null, pick: false, alto: 'sel', gopen: Object.create(null), gsi: 0, bgv: null, tab: 'tpl', cat: 'all', q: '' };
   var lastSaved = '', hist = [], fut = [], pending = null;
 
   // ── storage adapter ──
@@ -288,18 +318,35 @@
       case 'rays': return ['repeating-conic-gradient(from 0deg at 50% 45%,' + c + ' 0 5deg,transparent 5deg 15deg)', 'auto'];
       case 'lattice': return ['repeating-linear-gradient(45deg,' + c + ' 0 .18cqw,transparent .18cqw 5cqw),repeating-linear-gradient(-45deg,' + c + ' 0 .18cqw,transparent .18cqw 5cqw)', 'auto'];
       case 'waves': return ['radial-gradient(circle at 50% 100%,transparent 36%,' + c + ' 38% 44%,transparent 46%)', '8cqw 4cqw'];
+      case 'petals': return ['url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><g fill="' + c + '" transform="translate(20 20)">' + [0, 72, 144, 216, 288].map(function (a) { return '<ellipse rx="3.4" ry="7.2" cy="-7.6" transform="rotate(' + a + ')"/>'; }).join('') + '</g></svg>') + '")', '9cqw 9cqw'];
       case 'sparkle': return ['radial-gradient(circle at 12% 18%,' + c + ' .35cqw,transparent .5cqw),radial-gradient(circle at 78% 9%,' + c + ' .5cqw,transparent .7cqw),radial-gradient(circle at 88% 62%,' + c + ' .3cqw,transparent .45cqw),radial-gradient(circle at 30% 76%,' + c + ' .45cqw,transparent .6cqw),radial-gradient(circle at 55% 40%,' + c + ' .25cqw,transparent .4cqw),radial-gradient(circle at 6% 52%,' + c + ' .3cqw,transparent .45cqw),radial-gradient(circle at 64% 90%,' + c + ' .35cqw,transparent .5cqw)', '100% 60cqw'];
     }
     return null;
   }
+  function gradList(bg) { return bg.stops && bg.stops.length > 1 ? bg.stops.map(function (s) { return s.c + ' ' + s.p + '%'; }).join(',') : bg.c1 + ',' + bg.c2; }
+  function gradStops(bg) { return bg.stops && bg.stops.length > 1 ? bg.stops : [{ c: bg.c1, p: 0 }, { c: bg.c2, p: 100 }]; }
   function bgPaint(layer, bg) {
     var s = layer.style;
-    if (bg.k === 'image' && images[bg.img]) { s.backgroundColor = bg.c1; s.backgroundImage = (bg.ov ? 'linear-gradient(rgba(0,0,0,' + bg.ov / 100 + '),rgba(0,0,0,' + bg.ov / 100 + ')),' : '') + 'url("' + images[bg.img].src + '")'; s.backgroundSize = 'cover'; }
+    if (bg.k === 'image' && images[bg.img]) {
+      s.backgroundColor = bg.c1;
+      var im = mk('i', 'bgi'), q = im.style, f = [];
+      q.backgroundImage = 'url("' + images[bg.img].src + '")'; q.backgroundPosition = bg.ix + '% ' + bg.iy + '%';
+      if (bg.fit === 'tile') { q.backgroundSize = (bg.isc * .3).toFixed(2) + 'cqw auto'; q.backgroundRepeat = 'repeat'; }
+      else { q.backgroundSize = bg.fit; q.backgroundRepeat = 'no-repeat'; if (bg.isc !== 100) { q.transform = 'scale(' + bg.isc / 100 + ')'; q.transformOrigin = bg.ix + '% ' + bg.iy + '%'; } }
+      if (bg.blur) { f.push('blur(' + (bg.blur * .1).toFixed(2) + 'cqw)'); q.inset = (-bg.blur * .3).toFixed(2) + 'cqw'; }
+      if (bg.bri !== 100) f.push('brightness(' + bg.bri + '%)'); if (bg.con !== 100) f.push('contrast(' + bg.con + '%)'); if (bg.sat !== 100) f.push('saturate(' + bg.sat + '%)');
+      if (f.length) q.filter = f.join(' ');
+      layer.appendChild(im);
+      var oc = bg.oc && bg.oc !== 'transparent' ? bg.oc : bg.ov ? 'rgba(0,0,0,' + bg.ov / 100 + ')' : '';
+      if (oc) { var o = mk('i', 'bgo'); o.style.background = oc; layer.appendChild(o); }
+    }
+    else if (bg.k === 'none') s.background = 'transparent';
     else if (bg.k === 'solid') s.background = bg.c1;
-    else if (bg.k === 'linear') s.background = 'linear-gradient(' + bg.ang + 'deg,' + bg.c1 + ',' + bg.c2 + ')';
-    else s.background = 'radial-gradient(120% 90% at 50% 38%,' + bg.c1 + ',' + bg.c2 + ')';
+    else if (bg.k === 'linear') s.background = 'linear-gradient(' + bg.ang + 'deg,' + gradList(bg) + ')';
+    else s.background = 'radial-gradient(120% 90% at ' + bg.rx + '% ' + bg.ry + '%,' + gradList(bg) + ')';
   }
-  function shadowCss(a) { a = a / 100; return a ? 'drop-shadow(0 ' + (1.2 * a).toFixed(2) + 'cqw ' + (1.8 * a).toFixed(2) + 'cqw rgba(0,0,0,' + (.38 * a).toFixed(2) + '))' : ''; }
+  function rgbaOf(c, a) { var n = parseInt(c.slice(1, 7), 16), k = c.length === 9 ? parseInt(c.slice(7), 16) / 255 : 1; return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + (a * k).toFixed(2) + ')'; }
+  function shadowCss(a, c) { a = a / 100; return a ? 'drop-shadow(0 ' + (1.2 * a).toFixed(2) + 'cqw ' + (1.8 * a).toFixed(2) + 'cqw ' + (c && HEX.test(c) ? rgbaOf(c, .38 * a) : 'rgba(0,0,0,' + (.38 * a).toFixed(2) + ')') + ')' : ''; }
   function prodShadow(it, accent) {
     var a = (it.sh == null ? 55 : it.sh) / 100; if (!a) return 'none';
     if (it.ss === 'sharp') return 'drop-shadow(0 ' + (.5 * a).toFixed(2) + 'cqw ' + (.25 * a).toFixed(2) + 'cqw rgba(0,0,0,' + (.55 * a).toFixed(2) + '))';
@@ -371,7 +418,7 @@
       n.appendChild(lg);
     }
     if (e.op != null && e.op < 100) n.style.opacity = e.op / 100;
-    if (e.shd) n.style.filter = shadowCss(e.shd);
+    if (e.shd) n.style.filter = shadowCss(e.shd, e.shc);
     if (e.lock && mode === 'edit') n.classList.add('lk');
     placeEl(n, e, g);
     return n;
@@ -379,6 +426,7 @@
   // mode: 'edit' | 'thumb' | 'file' ; part: undefined (all) | 'under' | 'over' (video layers)
   function renderCanvas(d, f, set, mode, part) {
     var cv = mk('div', 'cv'); cv.style.aspectRatio = PX[f][0] + '/' + PX[f][1];
+    if (mode === 'edit' && d.bg.k === 'none') cv.classList.add('clear');      // a see-through background shows as a checkerboard while editing
     if (part !== 'over') {
       var bgl = mk('div', 'bgl'); bgPaint(bgl, d.bg); cv.appendChild(bgl);
       var pc = patCss(d.bg.pat, d.bg.pc);
@@ -422,25 +470,14 @@
     var cv = renderCanvas(doc, st.fmt, st.set, 'edit');
     stage.textContent = ''; stage.appendChild(cv); fitText(cv);
     markSel();
-    chipsTop(); panelSel(); panelProd(); layers(); panelStyle(); panelMotion(); drawPk(); dirtyMark();
+    chipsTop(); panelSel(); panelProd(); layers(); abarSync(); panelStyle(); panelMotion(); drawPk(); dirtyMark();
     $('dl-size').textContent = PX[st.fmt][0] + ' × ' + PX[st.fmt][1] + ' px';
-  }
-  function markSel() {
-    stage.querySelectorAll('.sel').forEach(function (n) { n.classList.remove('sel'); n.querySelectorAll('.hd,.hw,.rh').forEach(function (h) { h.remove(); }); });
-    var n = null, isText = false;
-    if (st.psel != null) n = stage.querySelector('.bp[data-i="' + st.psel + '"]');
-    else if (st.sel) { n = stage.querySelector('.el[data-id="' + st.sel + '"]'); var e = selEl(); isText = e && !doc.geo[st.fmt][e.id].h && (e.t === 'text' || e.t === 'logo'); }
-    if (!n) return;
-    n.classList.add('sel');
-    var hd = mk('span', 'hd'); hd.dataset.h = 'c'; n.appendChild(hd);
-    if (isText) { var hw = mk('span', 'hw'); hw.dataset.h = 'w'; n.appendChild(hw); }
-    var rh = mk('span', 'rh'); rh.dataset.h = 'r'; n.appendChild(rh);
   }
   function chipsTop() {
     var fh = $('fmts'); fh.textContent = '';
-    FMTS.forEach(function (f) { var b = mk('button', 'chip', FLAB[f]); b.type = 'button'; b.setAttribute('aria-pressed', String(f === st.fmt)); b.onclick = function () { stopPlay(); st.fmt = f; st.psel = null; draw(); }; fh.appendChild(b); });
+    FMTS.forEach(function (f) { var b = mk('button', 'chip', FLAB[f]); b.type = 'button'; b.setAttribute('aria-pressed', String(f === st.fmt)); b.onclick = function () { stopPlay(); st.fmt = f; dropProdSel(); draw(); }; fh.appendChild(b); });
     var sh = $('sets'); sh.textContent = '';
-    [0, 1, 2].forEach(function (i) { var b = mk('button', 'chip', 'Set ' + (i + 1)); b.type = 'button'; b.setAttribute('aria-pressed', String(i === st.set)); b.onclick = function () { stopPlay(); st.set = i; st.psel = null; draw(); }; sh.appendChild(b); });
+    [0, 1, 2].forEach(function (i) { var b = mk('button', 'chip', 'Set ' + (i + 1)); b.type = 'button'; b.setAttribute('aria-pressed', String(i === st.set)); b.onclick = function () { stopPlay(); st.set = i; dropProdSel(); draw(); }; sh.appendChild(b); });
   }
 
   // ── history: one entry per finished change (a whole drag or slider move is one step) ──
@@ -453,40 +490,154 @@
   function act(fn) { begin(); fn(); end(); draw(); }
   function undo() { end(); if (!hist.length) return; fut.push(JSON.stringify(doc)); doc = JSON.parse(hist.pop()); afterJump(); }
   function redo() { end(); if (!fut.length) return; hist.push(JSON.stringify(doc)); doc = JSON.parse(fut.pop()); afterJump(); }
-  function afterJump() { if (st.sel && !selEl()) st.sel = null; st.psel = null; $('pname').value = doc.name; draw(); undoBtns(); scheduleDraft(); }
+  function dropProdSel() { setSel(selKeys().filter(function (k) { return !isPk(k); })); }
+  function afterJump() { if (st.grp && !members(st.grp).length) st.grp = null; dropProdSel(); $('pname').value = doc.name; draw(); undoBtns(); scheduleDraft(); }
   function undoBtns() { $('undo').disabled = !hist.length; $('redo').disabled = !fut.length; }
   var draftT = 0;
   function scheduleDraft() { clearTimeout(draftT); draftT = setTimeout(function () { Store.draft({ doc: doc, t: Date.now(), saved: lastSaved === JSON.stringify(doc) }); }, 500); }
   function dirtyMark() { var dirty = JSON.stringify(doc) !== lastSaved; $('save').textContent = dirty ? 'Save •' : 'Saved'; }
 
-  // ── pointer: select, move, resize, rotate (this is the editor, not a shop page: measuring is fine here) ──
-  var drag = null, guides = [];
+  // ── selection: one item or many. A key is an element id, or 'p:<i>' for product i of the set on show.
+  //    st.sel / st.psel hold a single pick (what the panels edit); st.ms holds a multi-pick (2+ keys). ──
+  function isPk(k) { return k.indexOf('p:') === 0; }
+  function elById(id) { for (var i = 0; i < doc.els.length; i++) if (doc.els[i].id === id) return doc.els[i]; return null; }
+  function keyOk(k) { return isPk(k) ? /^p:\d{1,3}$/.test(k) && !!curItems()[+k.slice(2)] : !!elById(k); }
+  function selKeys() { if (st.ms.length > 1) return st.ms.slice(); if (st.sel) return [st.sel]; if (st.psel != null) return ['p:' + st.psel]; return []; }
+  function setSel(keys) {
+    var seen = Object.create(null), l = [];
+    (keys || []).forEach(function (k) { if (typeof k === 'string' && !seen[k] && keyOk(k)) { seen[k] = 1; l.push(k); } });
+    if (l.length > 1) l = l.filter(function (k) { return k !== 'prods'; });            // the Products layer is picked on its own
+    st.ms = l.length > 1 ? l : []; st.sel = null; st.psel = null;
+    if (l.length === 1) { if (isPk(l[0])) st.psel = +l[0].slice(2); else st.sel = l[0]; }
+  }
+  function selEls() { return selKeys().filter(function (k) { return !isPk(k); }).map(elById).filter(Boolean); }
+  function members(gp) { return doc.els.filter(function (e) { return e.gp === gp; }); }
+  function ids(l) { return l.map(function (e) { return e.id; }); }
+  // tapping an item picks its whole group -- unless that group is open for editing (double-click)
+  function expandKey(k) { if (isPk(k)) return [k]; var e = elById(k); if (!e || !e.gp || e.gp === st.grp) return [k]; return ids(members(e.gp)); }
+  // the group the selection is exactly (all of one group's members), or ''
+  function selGroup() { var els = selEls(), g = els.length > 1 && els[0].gp; if (!g || selKeys().length !== els.length) return ''; return els.every(function (e) { return e.gp === g; }) && members(g).length === els.length ? g : ''; }
+  function geoOf(k) { return isPk(k) ? curItems()[+k.slice(2)] : doc.geo[st.fmt][k]; }
+  function nodeOf(k) { return isPk(k) ? stage.querySelector('.bp[data-i="' + (+k.slice(2)) + '"]') : stage.querySelector('.el[data-id="' + k + '"]'); }
+  function cvW() { var c = stage.querySelector('.cv'); return c ? c.clientWidth || 1 : 1; }
+  function r3(n) { return Math.round(n * 1000) / 1000; }
+  // an item's box in canvas units (cqw): x / y top-left before turning, w, h, r
+  function itemBox(k) {
+    if (isPk(k)) { var it = curItems()[+k.slice(2)]; return { x: it.x, y: it.y, w: it.w, h: it.w / aspectOf(it.p), r: it.r || 0 }; }
+    var g = doc.geo[st.fmt][k], h = g.h;
+    if (!h) { var n = nodeOf(k); h = n ? n.offsetHeight / cvW() * 100 : 0; }
+    return { x: g.x, y: g.y, w: g.w, h: h, r: g.r || 0 };
+  }
+  function aabb(b) { var a = b.r * Math.PI / 180, c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a)), cx = b.x + b.w / 2, cy = b.y + b.h / 2, hw = (b.w * c + b.h * s) / 2, hh = (b.w * s + b.h * c) / 2; return { x0: cx - hw, y0: cy - hh, x1: cx + hw, y1: cy + hh }; }
+  function union(l) { return l.reduce(function (u, a) { return u ? { x0: Math.min(u.x0, a.x0), y0: Math.min(u.y0, a.y0), x1: Math.max(u.x1, a.x1), y1: Math.max(u.y1, a.y1) } : a; }, null); }
+  function boxOfKeys(keys) { return union(keys.map(function (k) { return aabb(itemBox(k)); })); }
+  function placeKey(k) { var n = nodeOf(k); if (!n) return; if (isPk(k)) placeProd(n, curItems()[+k.slice(2)], accentOf(doc)); else placeEl(n, elById(k), doc.geo[st.fmt][k]); }
+  function posBox(b, u) { b.style.left = u.x0 + 'cqw'; b.style.top = u.y0 + 'cqw'; b.style.width = (u.x1 - u.x0) + 'cqw'; b.style.height = (u.y1 - u.y0) + 'cqw'; }
+  // the units an arrange command moves: a whole group counts as one
+  function selUnits() {
+    var us = [], byG = Object.create(null);
+    selKeys().filter(function (k) { return k !== 'prods'; }).forEach(function (k) {
+      var e = !isPk(k) && elById(k);
+      if (e && e.gp && e.gp !== st.grp) { if (!byG[e.gp]) { byG[e.gp] = []; us.push(byG[e.gp]); } byG[e.gp].push(k); } else us.push([k]);
+    });
+    return us.map(function (ks) { return { ks: ks, b: boxOfKeys(ks) }; });
+  }
+  function movable(keys) { return keys.filter(function (k) { if (k === 'prods') return false; var e = !isPk(k) && elById(k); return !e || !e.lock; }); }
+
+  function markSel() {
+    stage.querySelectorAll('.sel,.msel').forEach(function (n) { n.classList.remove('sel'); n.classList.remove('msel'); n.querySelectorAll('.hd,.hw,.rh').forEach(function (h) { h.remove(); }); });
+    stage.querySelectorAll('.msbox,.gbox').forEach(function (n) { n.remove(); });
+    var cv = stage.querySelector('.cv'); if (!cv) return;
+    if (st.grp) { var gm = members(st.grp).filter(function (e) { return nodeOf(e.id); }); if (gm.length) { var gb = mk('div', 'gbox'); posBox(gb, boxOfKeys(ids(gm))); cv.appendChild(gb); } else st.grp = null; }
+    var keys = selKeys();
+    if (keys.length > 1) {
+      var vis = keys.filter(function (k) { return nodeOf(k); }); if (!vis.length) return;
+      vis.forEach(function (k) { nodeOf(k).classList.add('msel'); });
+      var b = mk('div', 'msbox'); posBox(b, boxOfKeys(vis));
+      ['nw', 'ne', 'sw', 'se'].forEach(function (h) { var x = mk('span', 'mh'); x.dataset.h = h; b.appendChild(x); });
+      var r = mk('span', 'mr'); r.dataset.h = 'mr'; b.appendChild(r); cv.appendChild(b);
+      return;
+    }
+    var n = null, isText = false;
+    if (st.psel != null) n = stage.querySelector('.bp[data-i="' + st.psel + '"]');
+    else if (st.sel) { n = stage.querySelector('.el[data-id="' + st.sel + '"]'); var e = selEl(); isText = e && !doc.geo[st.fmt][e.id].h && (e.t === 'text' || e.t === 'logo'); }
+    if (!n) return;
+    n.classList.add('sel');
+    var hd = mk('span', 'hd'); hd.dataset.h = 'c'; n.appendChild(hd);
+    if (isText) { var hw = mk('span', 'hw'); hw.dataset.h = 'w'; n.appendChild(hw); }
+    var rh = mk('span', 'rh'); rh.dataset.h = 'r'; n.appendChild(rh);
+  }
+  function afterSel() { markSel(); panelSel(); panelProd(); layers(); abarSync(); }
+
+  // ── pointer: select (tap, Shift/Ctrl/Cmd+tap, marquee), move, resize, rotate -- one item or many
+  //    (this is the editor, not a shop page: measuring is fine here) ──
+  var drag = null, guides = [], lastTap = { k: '', t: 0 };
   function cvRect() { return stage.querySelector('.cv').getBoundingClientRect(); }
   function clearGuides() { guides.forEach(function (g) { g.remove(); }); guides = []; }
-  function guide(cls, pos) { var g = mk('div', 'guide ' + cls); if (cls === 'v') g.style.left = pos; else g.style.top = pos; stage.querySelector('.cv').appendChild(g); guides.push(g); }
+  function guide(cls, pos) { var g = mk('div', 'guide ' + cls); if (cls === 'v') g.style.left = pos + 'cqw'; else g.style.top = pos + 'cqw'; stage.querySelector('.cv').appendChild(g); guides.push(g); }
+  // snap targets: the artboard's edges and centre, and every other item's edges and centre
+  function snapTargets(keys) {
+    var skip = Object.create(null), H = HU(st.fmt), tx = [0, 50, 100], ty = [0, H / 2, H]; keys.forEach(function (k) { skip[k] = 1; });
+    var add = function (k) { var a = aabb(itemBox(k)); tx.push(a.x0, (a.x0 + a.x1) / 2, a.x1); ty.push(a.y0, (a.y0 + a.y1) / 2, a.y1); };
+    stage.querySelectorAll('.cv .el').forEach(function (n) { var id = n.dataset.id; if (!skip[id] && doc.geo[st.fmt][id]) add(id); });
+    stage.querySelectorAll('.cv .bp').forEach(function (n) { var k = 'p:' + n.dataset.i; if (!skip[k] && curItems()[+n.dataset.i]) add(k); });
+    return { x: tx, y: ty };
+  }
+  function snap1(edges, targets, thr) { var best = null; edges.forEach(function (e) { targets.forEach(function (t) { var d = t - e; if (Math.abs(d) < thr && (!best || Math.abs(d) < Math.abs(best.d))) best = { d: d, t: t }; }); }); return best; }
+  function snapshot(k) { var b = itemBox(k); if (!isPk(k)) { var g = doc.geo[st.fmt][k]; b.k = g.k || 1; b.gh = g.h; } return b; }
   stage.addEventListener('pointerdown', function (ev) {
-    if (playT) return;
+    if (playT || !stage.querySelector('.cv') || ev.button > 0) return;
     var t = ev.target, h = t.dataset && t.dataset.h, cvr = cvRect(), px = 100 / cvr.width;
-    var bp = t.closest('.bp'), en = t.closest('.el');
-    if (h && st.psel != null && bp) { }
-    else if (bp) { st.psel = +bp.dataset.i; st.sel = null; }
-    else if (en && !h) { st.sel = en.dataset.id; st.psel = null; }
-    else if (!h) { st.sel = null; st.psel = null; markSel(); panelSel(); panelProd(); layers(); return; }
-    begin();
-    if (st.psel != null) {
-      var it = curItems()[st.psel], node = stage.querySelector('.bp[data-i="' + st.psel + '"]'), rb = node.getBoundingClientRect();
-      drag = { kind: 'p', h: h, it: it, node: node, sx: ev.clientX, sy: ev.clientY, x: it.x, y: it.y, w: it.w, px: px, cx: rb.left + rb.width / 2, cy: rb.top + rb.height / 2 };
-      if (!h && st.tab !== 'prod') showTab('prod');
-    } else {
-      var e = selEl(), g = doc.geo[st.fmt][e.id], n = stage.querySelector('.el[data-id="' + e.id + '"]'), r = n.getBoundingClientRect();
-      drag = { kind: 'e', h: h, e: e, g: g, node: n, sx: ev.clientX, sy: ev.clientY, x: g.x, y: g.y, w: g.w, gh: g.h, k: g.k || 1, px: px, cx: r.left + r.width / 2, cy: r.top + r.height / 2, nh: n.offsetHeight * px };
-      if (!h && st.tab !== 'edit') showTab('edit');
+    var add = ev.shiftKey || ev.ctrlKey || ev.metaKey || st.pick;
+    if (h && t.closest('.msbox')) {                                  // the selection box: scale / turn everything in it
+      var keys = movable(selKeys()); if (!keys.length) return;
+      begin(); var start = {}; keys.forEach(function (k) { start[k] = snapshot(k); });
+      var u = union(keys.map(function (k) { return aabb(start[k]); })), cx = (u.x0 + u.x1) / 2, cy = (u.y0 + u.y1) / 2;
+      drag = { kind: 'x', h: h, keys: keys, start: start, u: u, px: px, cvr: cvr, cx: cx, cy: cy, a0: Math.atan2((ev.clientY - cvr.top) * px - cy, (ev.clientX - cvr.left) * px - cx) };
+      stage.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
     }
-    markSel(); panelSel(); panelProd(); layers();
+    var bp = t.closest('.bp'), en = t.closest('.el');
+    if (h) {                                                         // a single item's own handles
+      begin();
+      if (st.psel != null) {
+        var it = curItems()[st.psel], node = stage.querySelector('.bp[data-i="' + st.psel + '"]'), rb = node.getBoundingClientRect();
+        drag = { kind: 'p', h: h, it: it, node: node, sx: ev.clientX, sy: ev.clientY, x: it.x, y: it.y, w: it.w, px: px, cx: rb.left + rb.width / 2, cy: rb.top + rb.height / 2 };
+      } else {
+        var e = selEl(); if (!e) return; var g = doc.geo[st.fmt][e.id], n = stage.querySelector('.el[data-id="' + e.id + '"]'), r = n.getBoundingClientRect();
+        drag = { kind: 'e', h: h, e: e, g: g, node: n, sx: ev.clientX, sy: ev.clientY, x: g.x, y: g.y, w: g.w, gh: g.h, k: g.k || 1, px: px, cx: r.left + r.width / 2, cy: r.top + r.height / 2, nh: n.offsetHeight * px };
+      }
+      stage.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
+    }
+    var key = bp ? 'p:' + bp.dataset.i : en ? en.dataset.id : null;
+    if (!key) {                                                      // empty canvas: draw a marquee
+      var cv = stage.querySelector('.cv'), q = mk('div', 'mq'); cv.appendChild(q);
+      drag = { kind: 'q', q: q, add: add, base: add ? selKeys() : [], x: (ev.clientX - cvr.left) * px, y: (ev.clientY - cvr.top) * px, px: px, cvr: cvr, rect: null };
+      stage.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
+    }
+    var ke = !isPk(key) && elById(key), now = Date.now(), dbl = !add && ke && ke.gp && lastTap.k === key && now - lastTap.t < 450;
+    lastTap = { k: key, t: now };
+    if (dbl) { st.grp = ke.gp; setStatus('Editing inside the group — Esc leaves it', 'ok'); }   // double-tap a group: edit one of its items
+    else if (!ke || ke.gp !== st.grp) st.grp = null;                                              // a tap outside the open group closes it
+    var ks = expandKey(key), cur = selKeys(), collapse = null;
+    if (dbl) setSel([key]);
+    else if (add) {
+      if (ks.every(function (k) { return cur.indexOf(k) >= 0; })) { setSel(cur.filter(function (k) { return ks.indexOf(k) < 0; })); afterSel(); ev.preventDefault(); return; }
+      setSel(cur.concat(ks));
+    } else if (cur.length > 1 && ks.every(function (k) { return cur.indexOf(k) >= 0; })) collapse = ks;   // keep the pick to drag it; a plain tap narrows it
+    else setSel(ks);
+    var mk_ = movable(selKeys()), st0 = {}; mk_.forEach(function (k) { st0[k] = itemBox(k); });
+    begin();
+    drag = { kind: 'm', keys: mk_, start: st0, u: mk_.length ? union(mk_.map(function (k) { return aabb(st0[k]); })) : null, tg: snapTargets(mk_), sx: ev.clientX, sy: ev.clientY, px: px, moved: false, collapse: collapse };
+    var one = selKeys().length === 1;
+    if (one && st.psel != null) { if (st.tab !== 'prod') showTab('prod'); } else if (st.tab !== 'edit') showTab('edit');
+    afterSel();
     stage.setPointerCapture(ev.pointerId); ev.preventDefault();
   });
   stage.addEventListener('pointermove', function (ev) {
     if (!drag) return;
+    if (drag.kind === 'm') return moveDrag(ev);
+    if (drag.kind === 'q') return marqueeDrag(ev);
+    if (drag.kind === 'x') return xfDrag(ev);
     var dx = (ev.clientX - drag.sx) * drag.px, dy = (ev.clientY - drag.sy) * drag.px;
     if (drag.h === 'r') {
       var ang = Math.atan2(ev.clientY - drag.cy, ev.clientX - drag.cx) * 180 / Math.PI + 90; ang = ((ang + 540) % 360) - 180;
@@ -494,45 +645,187 @@
       if (drag.kind === 'p') { drag.it.r = ang; placeProd(drag.node, drag.it, accentOf(doc)); } else { drag.g.r = ang; placeEl(drag.node, drag.e, drag.g); }
       return;
     }
-    if (drag.kind === 'p') {
-      var it = drag.it;
-      if (drag.h === 'c') { var a = aspectOf(it.p); it.w = r2(Math.max(2, drag.w + Math.max(dx, dy * a))); }
-      else { it.x = r2(drag.x + dx); it.y = r2(drag.y + dy); }
-      placeProd(drag.node, it, accentOf(doc)); return;
-    }
+    if (drag.kind === 'p') { var it = drag.it, a = aspectOf(it.p); it.w = r2(Math.max(2, drag.w + Math.max(dx, dy * a))); placeProd(drag.node, it, accentOf(doc)); return; }
     var g = drag.g, e = drag.e;
     if (drag.h === 'c') {
       if (!drag.gh && (e.t === 'text' || e.t === 'logo')) { var s = Math.max(.15, (drag.w + dx) / drag.w); g.w = r2(drag.w * s); g.k = r2(Math.max(.2, Math.min(5, drag.k * s))); }
       else if (e.t === 'icon' || e.t === 'img' || e.t === 'pay' || ev.shiftKey || e.sh === 'circle') { var s2 = Math.max(.1, (drag.w + Math.max(dx, dy * drag.w / (drag.gh || 1))) / drag.w); g.w = r2(drag.w * s2); g.h = r2(drag.gh * s2); }
       else { g.w = r2(Math.max(1, drag.w + dx)); g.h = r2(Math.max(.5, drag.gh + dy)); }
     } else if (drag.h === 'w') g.w = r2(Math.max(3, drag.w + dx));
-    else {
-      clearGuides(); var nx = drag.x + dx, ny = drag.y + dy, hh = drag.gh || drag.nh, H = HU(st.fmt);
-      if (!ev.altKey) {
-        if (Math.abs(nx + drag.w / 2 - 50) < .8) { nx = 50 - drag.w / 2; guide('v', '50%'); }
-        if (Math.abs(ny + hh / 2 - H / 2) < .8) { ny = H / 2 - hh / 2; guide('h', '50%'); }
-      }
-      g.x = r2(nx); g.y = r2(ny);
-    }
-    placeEl(drag.node, e, g); if (drag.h) fitText(drag.node.parentNode);
+    placeEl(drag.node, e, g); fitText(drag.node.parentNode);
   });
-  function dragEnd() { if (!drag) return; drag = null; clearGuides(); end(); draw(); }
+  // move: everything picked, with smart guides to the artboard and to every other item (Alt = no snapping)
+  function moveDrag(ev) {
+    if (!drag.moved && Math.abs(ev.clientX - drag.sx) + Math.abs(ev.clientY - drag.sy) < 3) return;
+    drag.moved = true; if (!drag.u) return;
+    var dx = (ev.clientX - drag.sx) * drag.px, dy = (ev.clientY - drag.sy) * drag.px, u = drag.u;
+    clearGuides();
+    if (!ev.altKey) {
+      var thr = 6 * drag.px, sx = snap1([u.x0 + dx, (u.x0 + u.x1) / 2 + dx, u.x1 + dx], drag.tg.x, thr), sy = snap1([u.y0 + dy, (u.y0 + u.y1) / 2 + dy, u.y1 + dy], drag.tg.y, thr);
+      if (sx) { dx += sx.d; guide('v', sx.t); } if (sy) { dy += sy.d; guide('h', sy.t); }
+    }
+    drag.keys.forEach(function (k) { var b = drag.start[k], o = geoOf(k); o.x = r3(b.x + dx); o.y = r3(b.y + dy); placeKey(k); });
+    var mb = stage.querySelector('.msbox'); if (mb) posBox(mb, { x0: u.x0 + dx, y0: u.y0 + dy, x1: u.x1 + dx, y1: u.y1 + dy });
+    var gb = stage.querySelector('.gbox'); if (gb && st.grp) posBox(gb, boxOfKeys(ids(members(st.grp))));
+  }
+  function marqueeDrag(ev) {
+    var x = (ev.clientX - drag.cvr.left) * drag.px, y = (ev.clientY - drag.cvr.top) * drag.px;
+    if (Math.abs(x - drag.x) + Math.abs(y - drag.y) < 3 * drag.px) return;
+    drag.rect = { x0: Math.min(x, drag.x), y0: Math.min(y, drag.y), x1: Math.max(x, drag.x), y1: Math.max(y, drag.y) }; posBox(drag.q, drag.rect);
+  }
+  function marqueeEnd(d) {
+    if (!d.rect) { if (!d.add) { st.grp = null; setSel([]); } return; }
+    var hit = [], R = d.rect; st.grp = null;
+    var touch = function (k) { var a = aabb(itemBox(k)); return a.x0 < R.x1 && a.x1 > R.x0 && a.y0 < R.y1 && a.y1 > R.y0; };
+    stage.querySelectorAll('.cv .el:not(.lk)').forEach(function (n) { if (touch(n.dataset.id)) hit = hit.concat(expandKey(n.dataset.id)); });
+    stage.querySelectorAll('.cv .bp').forEach(function (n) { if (touch('p:' + n.dataset.i)) hit.push('p:' + n.dataset.i); });
+    setSel(d.base.concat(hit));
+    if (selKeys().length && st.tab !== 'edit' && !(selKeys().length === 1 && st.psel != null)) showTab('edit');
+  }
+  // the selection box's handles: corners scale everything about the opposite corner, the round one turns it about its centre
+  function xfDrag(ev) {
+    var P = { x: (ev.clientX - drag.cvr.left) * drag.px, y: (ev.clientY - drag.cvr.top) * drag.px }, u = drag.u;
+    if (drag.h === 'mr') {
+      var ang = (Math.atan2(P.y - drag.cy, P.x - drag.cx) - drag.a0) * 180 / Math.PI; if (ev.shiftKey) ang = Math.round(ang / 15) * 15;
+      var ca = Math.cos(ang * Math.PI / 180), sa = Math.sin(ang * Math.PI / 180);
+      drag.keys.forEach(function (k) {
+        var b = drag.start[k], o = geoOf(k), cx = b.x + b.w / 2 - drag.cx, cy = b.y + b.h / 2 - drag.cy, nx = drag.cx + cx * ca - cy * sa, ny = drag.cy + cx * sa + cy * ca;
+        o.r = Math.round((((b.r + ang) % 360) + 540) % 360 - 180); o.x = r3(nx - b.w / 2); o.y = r3(ny - b.h / 2); placeKey(k);
+      });
+    } else {
+      var A = { x: drag.h.indexOf('w') >= 0 ? u.x1 : u.x0, y: drag.h.indexOf('n') >= 0 ? u.y1 : u.y0 }, C = { x: drag.h.indexOf('w') >= 0 ? u.x0 : u.x1, y: drag.h.indexOf('n') >= 0 ? u.y0 : u.y1 };
+      var vx = C.x - A.x, vy = C.y - A.y, s = Math.max(.05, ((P.x - A.x) * vx + (P.y - A.y) * vy) / (vx * vx + vy * vy || 1));
+      drag.keys.forEach(function (k) {
+        var b = drag.start[k], o = geoOf(k), cx = A.x + (b.x + b.w / 2 - A.x) * s, cy = A.y + (b.y + b.h / 2 - A.y) * s, w = Math.max(.3, b.w * s);
+        o.w = r3(w); o.x = r3(cx - w / 2); o.y = r3(cy - b.h * s / 2);
+        if (!isPk(k)) { if (b.gh) o.h = r3(b.gh * s); o.k = r3(Math.max(.2, Math.min(5, b.k * s))); }
+        placeKey(k);
+      });
+      fitText(stage.querySelector('.cv'));
+    }
+    var mb = stage.querySelector('.msbox'); if (mb) posBox(mb, boxOfKeys(drag.keys));
+  }
+  function dragEnd() {
+    if (!drag) return; var d = drag; drag = null; clearGuides();
+    if (d.kind === 'q') { d.q.remove(); marqueeEnd(d); afterSel(); return; }
+    if (d.kind === 'm' && !d.moved && d.collapse) setSel(d.collapse);
+    end(); draw();
+  }
   stage.addEventListener('pointerup', dragEnd); stage.addEventListener('pointercancel', dragEnd);
+
+  // ── commands on the selection: delete, duplicate, copy / paste, group, order, lock / hide, align, distribute, match ──
+  var clip = null, pasteN = 0;
+  function takeSel() {           // the picked elements (with all 3 sizes' places) and products, ready to paste
+    var els = selEls().filter(function (e) { return e.t !== 'prods'; }), its = selKeys().filter(isPk).map(function (k) { return clone(curItems()[+k.slice(2)]); });
+    if (!els.length && !its.length) return null;
+    var whole = Object.create(null), names = {};
+    els.forEach(function (e) { if (e.gp && members(e.gp).every(function (m) { return els.indexOf(m) >= 0; })) { whole[e.gp] = 1; names[e.gp] = doc.groups[e.gp] ? doc.groups[e.gp].name : 'Group'; } });
+    var geo = {}; FMTS.forEach(function (f) { geo[f] = {}; els.forEach(function (e) { geo[f][e.id] = clone(doc.geo[f][e.id]); }); });
+    return { els: els.map(function (e) { var c = clone(e); if (c.gp && !whole[c.gp]) delete c.gp; return c; }), keep: els.filter(function (e) { return e.gp && !whole[e.gp]; }).map(function (e) { return e.id; }), geo: geo, its: its, names: names };
+  }
+  // put copies in: off = shift in canvas units; at = stack position (null = on top); partial-group copies stay in their group
+  function putCopies(c, off, at, rename) {
+    var keys = [], gmap = Object.create(null), add = [];
+    c.els.forEach(function (c0) {
+      var e = clone(c0), old = e.id; e.id = uid('e'); if (rename) e.name = ((c0.name || TYPES[c0.t]) + ' copy').slice(0, 40);
+      if (e.gp) { if (!gmap[e.gp]) { gmap[e.gp] = uid('g'); doc.groups[gmap[e.gp]] = { name: str(c.names[e.gp], 40) || 'Group' }; } e.gp = gmap[e.gp]; }
+      else if (at != null && c.keep.indexOf(old) >= 0) { var src = elById(old); if (src && src.gp) e.gp = src.gp; }
+      FMTS.forEach(function (f) { var g = clone(c.geo[f][old]); g.x = r3(g.x + off); g.y = r3(g.y + off); doc.geo[f][e.id] = cleanGeo(g); });
+      add.push(e); keys.push(e.id);
+    });
+    if (at == null) doc.els = doc.els.concat(add); else Array.prototype.splice.apply(doc.els, [at, 0].concat(add));
+    var l = curItems(); c.its.forEach(function (it) { var n = clone(it); n.x = r3(n.x + off); n.y = r3(n.y + off); if (prodOk(n.p) && l.length < 16) { l.push(n); keys.push('p:' + (l.length - 1)); } });
+    normGroups(doc); st.grp = null; setSel(keys);
+  }
+  function copySel() { var c = takeSel(); if (!c) return false; clip = c; pasteN = 0; setStatus('Copied ' + (c.els.length + c.its.length) + ' item(s) — Ctrl+V pastes', 'ok'); return true; }
+  function paste() { if (!clip) return; pasteN++; var c = clip; act(function () { putCopies(c, 2 * pasteN, null, false); }); }
+  function removeSel() {
+    var keys = selKeys(), pis = keys.filter(isPk).map(function (k) { return +k.slice(2); }).sort(function (a, b) { return b - a; }), del = keys.filter(function (k) { return !isPk(k) && k !== 'prods'; });
+    if (!pis.length && !del.length) return;
+    act(function () { var l = curItems(); pis.forEach(function (i) { l.splice(i, 1); }); doc.els = doc.els.filter(function (x) { return del.indexOf(x.id) < 0; }); FMTS.forEach(function (f) { del.forEach(function (id) { delete doc.geo[f][id]; }); }); normGroups(doc); setSel([]); });
+  }
+  function duplicate() {
+    var c = takeSel(); if (!c) return;
+    var top = -1; c.els.forEach(function (e) { top = Math.max(top, doc.els.indexOf(elById(e.id))); });
+    act(function () { putCopies(c, 2, c.els.length ? top + 1 : null, true); });
+  }
+  function groupSel() {
+    var els = selEls().filter(function (e) { return e.t !== 'prods'; });
+    if (els.length < 2) { setStatus('Pick two or more items to group (products stay on the Products layer)', 'warn'); return; }
+    act(function () { var gid = uid('g'); doc.groups[gid] = { name: 'Group ' + (Object.keys(doc.groups).length + 1) }; els.forEach(function (e) { e.gp = gid; }); normGroups(doc); st.grp = null; setSel(ids(els)); });
+    setStatus('Grouped ' + els.length + ' items — Shift+Ctrl+G ungroups', 'ok');
+  }
+  function ungroupSel() {
+    var gs = []; selEls().forEach(function (e) { if (e.gp && gs.indexOf(e.gp) < 0) gs.push(e.gp); }); if (!gs.length) return;
+    act(function () { doc.els.forEach(function (e) { if (gs.indexOf(e.gp) >= 0) delete e.gp; }); gs.forEach(function (g) { delete doc.groups[g]; }); st.grp = null; });
+    setStatus('Ungrouped', 'ok');
+  }
+  // forward / back by one: a whole group moves as one; inside an open group, only among its own items
+  function zMove(d) {
+    var sel = ids(selEls()); if (!sel.length) return;
+    act(function () {
+      var inG = st.grp && sel.every(function (id) { return elById(id).gp === st.grp; }), units = [];
+      doc.els.forEach(function (e) { var last = units[units.length - 1]; if (!inG && e.gp && last && last[0].gp === e.gp) last.push(e); else units.push([e]); });
+      var on = function (u) { return u.some(function (e) { return sel.indexOf(e.id) >= 0; }); }, ok = function (u) { return !inG || u[0].gp === st.grp; };
+      var sw = function (i, j) { var t = units[i]; units[i] = units[j]; units[j] = t; };
+      if (d > 0) { for (var i = units.length - 2; i >= 0; i--) if (on(units[i]) && !on(units[i + 1]) && ok(units[i + 1])) sw(i, i + 1); }
+      else { for (var j = 1; j < units.length; j++) if (on(units[j]) && !on(units[j - 1]) && ok(units[j - 1])) sw(j, j - 1); }
+      doc.els = [].concat.apply([], units); normGroups(doc);
+    });
+  }
+  function toggleAll(p) { var els = selEls(); if (!els.length) return; var on = els.some(function (e) { return !e[p]; }); act(function () { els.forEach(function (e) { if (on) e[p] = true; else delete e[p]; }); }); }
+  function selectAll() {
+    var keys = doc.els.filter(function (e) { return e.t !== 'prods' && !e.hide && !e.lock && !doc.geo[st.fmt][e.id].hd; }).map(function (e) { return e.id; });
+    var pr = doc.els.filter(function (e) { return e.t === 'prods'; })[0]; if (pr && !pr.hide && !doc.geo[st.fmt][pr.id].hd) curItems().forEach(function (_, i) { keys.push('p:' + i); });
+    st.grp = null; setSel(keys); if (st.tab !== 'edit') showTab('edit'); afterSel();
+  }
+  function nudge(dx, dy) { var keys = movable(selKeys()); if (!keys.length) return; act(function () { keys.forEach(function (k) { var o = geoOf(k); o.x = r3(o.x + dx); o.y = r3(o.y + dy); }); }); }
+  function alignSel(how) {
+    var us = selUnits(); if (!us.length) return;
+    var H = HU(st.fmt), ref = st.alto === 'art' || us.length === 1 ? { x0: 0, y0: 0, x1: 100, y1: H } : union(us.map(function (u) { return u.b; }));
+    act(function () { us.forEach(function (u) {
+      var b = u.b, dx = 0, dy = 0;
+      if (how === 'l') dx = ref.x0 - b.x0; else if (how === 'c') dx = (ref.x0 + ref.x1 - b.x0 - b.x1) / 2; else if (how === 'r') dx = ref.x1 - b.x1;
+      else if (how === 't') dy = ref.y0 - b.y0; else if (how === 'm') dy = (ref.y0 + ref.y1 - b.y0 - b.y1) / 2; else if (how === 'b') dy = ref.y1 - b.y1;
+      movable(u.ks).forEach(function (k) { var o = geoOf(k); o.x = r3(o.x + dx); o.y = r3(o.y + dy); });
+    }); });
+  }
+  function distribute(ax) {
+    var us = selUnits(); if (us.length < 3) { setStatus('Pick three or more items to space them evenly', 'warn'); return; }
+    var a0 = ax === 'h' ? 'x0' : 'y0', a1 = ax === 'h' ? 'x1' : 'y1';
+    us.sort(function (p, q) { return p.b[a0] + p.b[a1] - q.b[a0] - q.b[a1]; });
+    var total = us.reduce(function (s, u) { return s + u.b[a1] - u.b[a0]; }, 0), gap = (us[us.length - 1].b[a1] - us[0].b[a0] - total) / (us.length - 1), pos = us[0].b[a0];
+    act(function () { us.forEach(function (u) { var d = pos - u.b[a0]; pos += u.b[a1] - u.b[a0] + gap; movable(u.ks).forEach(function (k) { var o = geoOf(k); if (ax === 'h') o.x = r3(o.x + d); else o.y = r3(o.y + d); }); }); });
+  }
+  function matchSize(dim) {           // to the first item picked
+    var keys = movable(selKeys()); if (keys.length < 2) return; var ref = itemBox(keys[0]);
+    act(function () { keys.slice(1).forEach(function (k) {
+      if (isPk(k)) { var it = curItems()[+k.slice(2)]; it.w = r3(dim === 'w' ? ref.w : ref.h * aspectOf(it.p)); return; }
+      var g = doc.geo[st.fmt][k]; if (dim === 'w') g.w = r3(ref.w); else if (g.h) g.h = r3(ref.h);
+    }); });
+  }
+
   document.addEventListener('keydown', function (ev) {
     if (document.body.dataset.mode === 'video') return;           // Video mode has its own shortcuts
     var inField = /input|select|textarea/i.test((document.activeElement || {}).tagName || '');
     var mod = ev.ctrlKey || ev.metaKey, k = ev.key.toLowerCase();
     if (mod && k === 's') { ev.preventDefault(); saveNow(); return; }
+    if (ev.key === 'Escape' && CC.isOpen()) { CC.close(); return; }
     if (inField) return;
     if (mod && k === 'z' && !ev.shiftKey) { ev.preventDefault(); undo(); return; }
     if (mod && (k === 'y' || (k === 'z' && ev.shiftKey))) { ev.preventDefault(); redo(); return; }
+    if (mod && k === 'a') { ev.preventDefault(); selectAll(); return; }
+    if (mod && k === 'c') { if (copySel()) ev.preventDefault(); return; }
+    if (mod && k === 'x') { if (copySel()) { ev.preventDefault(); removeSel(); } return; }
+    if (mod && k === 'v') { if (clip) { ev.preventDefault(); paste(); } return; }
+    if (mod && k === 'g') { ev.preventDefault(); if (ev.shiftKey) ungroupSel(); else groupSel(); return; }
     if (mod && k === 'd') { ev.preventDefault(); duplicate(); return; }
-    if (ev.key === 'Delete' || ev.key === 'Backspace') { if (st.sel || st.psel != null) { ev.preventDefault(); removeSel(); } return; }
-    if (ev.key === 'Escape') { st.sel = null; st.psel = null; draw(); return; }
-    var d = ev.shiftKey ? 1 : .25, m = { ArrowLeft: [-d, 0], ArrowRight: [d, 0], ArrowUp: [0, -d], ArrowDown: [0, d] }[ev.key];
-    if (!m || (!st.sel && st.psel == null)) return;
-    ev.preventDefault();
-    act(function () { var o = st.psel != null ? curItems()[st.psel] : doc.geo[st.fmt][st.sel]; o.x = r2(o.x + m[0]); o.y = r2(o.y + m[1]); });
+    if (mod && (ev.key === ']' || ev.key === '[')) { ev.preventDefault(); zMove(ev.key === ']' ? 1 : -1); return; }
+    if (ev.key === 'Delete' || ev.key === 'Backspace') { if (selKeys().length) { ev.preventDefault(); removeSel(); } return; }
+    if (ev.key === 'Escape') { if (st.grp) { var g = st.grp; st.grp = null; setSel(ids(members(g))); } else setSel([]); draw(); return; }
+    var d = (ev.shiftKey ? 10 : 1) * 100 / PX[st.fmt][0], m = { ArrowLeft: [-d, 0], ArrowRight: [d, 0], ArrowUp: [0, -d], ArrowDown: [0, d] }[ev.key];   // 1 px, Shift = 10 px of the full-HD file
+    if (!m || !selKeys().length) return;
+    ev.preventDefault(); nudge(m[0], m[1]);
   });
 
   // ── Edit tab: selected element ──
@@ -542,9 +835,26 @@
   function show(sel, on) { document.querySelectorAll(sel).forEach(function (n) { n.hidden = !on; }); }
   function setV(n, v) { if (n.type === 'checkbox') n.checked = !!v; else if (String(n.value) !== String(v)) n.value = v; }
   function hex6(c, d) { return c && HEX.test(c) ? c.slice(0, 7) : d; }
+  // a colour swatch button shows its colour over a checkerboard (so see-through reads as see-through)
+  function paintSw(b, v) { var ok = typeof v === 'string' && (HEX.test(v) || v === 'transparent'); b.firstElementChild.style.setProperty('--c', ok ? v : 'transparent'); b.title = ok ? v : 'None'; }
+  var DEFCOL = { col: '#111111', fill: 'transparent', fill2: 'transparent', bc: '#000000', shc: '#000000' };
   function panelSel() {
-    var e = selEl(), props = $('props');
-    $('sel-t').textContent = e ? (e.name || TYPES[e.t]) + (e.t === 'prods' ? '' : ' · ' + TYPES[e.t]) : 'Nothing selected';
+    var keys = selKeys(), multi = keys.length > 1, e = multi ? null : selEl(), props = $('props');
+    $('multi').hidden = !multi;
+    if (multi) {
+      var gs = selGroup(), els = selEls();
+      $('sel-t').textContent = gs ? (doc.groups[gs].name || 'Group') + ' · group of ' + keys.length : keys.length + ' items selected';
+      $('sel-empty').hidden = true;
+      props.querySelectorAll('[data-need],[data-show]').forEach(function (n) { n.hidden = true; });
+      $('m-grp').disabled = els.length < 2 || !!gs; $('m-ungrp').disabled = !els.some(function (x) { return x.gp; });
+      $('m-lock').textContent = els.length && els.every(function (x) { return x.lock; }) ? 'Unlock' : 'Lock';
+      $('m-hide').textContent = els.length && els.every(function (x) { return x.hide; }) ? 'Show' : 'Hide';
+      setV($('m-op'), els.length ? Math.round(els.reduce(function (a, x) { return a + (x.op == null ? 100 : x.op); }, 0) / els.length) : 100);
+      var fc = els.filter(function (x) { return x.col; })[0], ff = els.filter(function (x) { return x.fill; })[0];
+      paintSw(props.querySelector('[data-mp="col"]'), fc ? fc.col : '#111111'); paintSw(props.querySelector('[data-mp="fill"]'), ff ? ff.fill : 'transparent');
+      return;
+    }
+    $('sel-t').textContent = e ? (e.name || TYPES[e.t]) + (e.t === 'prods' ? '' : ' · ' + TYPES[e.t]) + (e.gp && doc.groups[e.gp] ? ' (in ' + doc.groups[e.gp].name + ')' : '') : 'Nothing selected';
     $('sel-empty').hidden = !!e;
     props.querySelectorAll('[data-need]').forEach(function (n) { n.hidden = !e || (n.dataset.need === 'geo' && e.t === 'prods'); });
     props.querySelectorAll('[data-show]').forEach(function (n) {
@@ -562,6 +872,7 @@
       else if (v == null) v = { fs: 4, ls: 0, lh: 115, rad: 0, pd: e.t === 'text' ? 0 : 1, op: 100, shd: 0, bw: 0, fw: 700, fn: 'poppins', sh: 'none', bs: 'solid', pay: 'both', ic: 'sparkle', txt: '' }[p];
       if (v != null) setV(n, v);
     });
+    props.querySelectorAll('[data-cp]').forEach(function (b) { paintSw(b, e[b.dataset.cp] || DEFCOL[b.dataset.cp]); });
     $('v-fs').textContent = (e.fs || 4).toFixed(1);
     props.querySelectorAll('[data-g]').forEach(function (n) { setV(n, g[n.dataset.g] || 0); });
     $('v-r').textContent = (g.r || 0) + '°';
@@ -598,24 +909,41 @@
   $('props').addEventListener('change', function () { end(); layers(); });
   function redrawStageOnly() { var cv = renderCanvas(doc, st.fmt, st.set, 'edit'); stage.textContent = ''; stage.appendChild(cv); fitText(cv); markSel(); dirtyMark(); }
   $('p-al').addEventListener('click', function (ev) { var b = ev.target.closest('button'), e = selEl(); if (!b || !e) return; act(function () { e.al = b.dataset.v; FMTS.forEach(function (f) { delete doc.geo[f][e.id].al; }); }); });
+  // colour swatches: the one colour control (hex, opacity, eyedropper, recent, this design's colours, brand)
+  $('props').addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-cp],[data-mp]'); if (!b) return;
+    if (b.dataset.cp) {
+      var e = selEl(), p = b.dataset.cp; if (!e) return;
+      CC.open(b, e[p] || (p === 'fill2' ? e.fill || '#FFFFFF' : DEFCOL[p]), function (v, fin) {
+        begin(); var raw = {}; raw[p] = v; var c = cleanEl(Object.assign({}, e, raw), images); if (c && c[p]) e[p] = c[p];
+        if (p === 'fill' && e.t === 'text' && (!e.sh || e.sh === 'none')) e.sh = 'rect';
+        redrawStageOnly(); paintSw(b, e[p]); if (fin) { end(); panelSel(); layers(); }
+      });
+      return;
+    }
+    var els = selEls(), mp = b.dataset.mp, first = els.filter(function (x) { return x[mp]; })[0];
+    CC.open(b, first ? first[mp] : mp === 'col' ? '#111111' : '#FFFFFF', function (v, fin) {
+      begin();
+      els.forEach(function (x) {
+        if (mp === 'col' && /^(text|btn|shape|logo|icon)$/.test(x.t)) x.col = v;
+        if (mp === 'fill' && (x.t === 'shape' || x.t === 'btn' || (x.t === 'text' && x.sh && x.sh !== 'none'))) { x.fill = v; delete x.fill2; }
+      });
+      redrawStageOnly(); paintSw(b, v); if (fin) { end(); panelSel(); }
+    });
+  });
+  // a multi-pick: the same commands, for all of it
+  $('m-grp').onclick = groupSel; $('m-ungrp').onclick = ungroupSel; $('m-dup').onclick = duplicate; $('m-del').onclick = removeSel;
+  $('m-lock').onclick = function () { toggleAll('lock'); }; $('m-hide').onclick = function () { toggleAll('hide'); };
+  $('m-fwd').onclick = function () { zMove(1); }; $('m-bwd').onclick = function () { zMove(-1); };
+  $('m-op').addEventListener('input', function () { var v = num(this.value, 0, 100, 100); begin(); selEls().forEach(function (x) { if (v >= 100) delete x.op; else x.op = v; }); redrawStageOnly(); });
+  $('m-op').addEventListener('change', function () { end(); });
   $('p-fill0').onclick = function () { var e = selEl(); if (e) act(function () { e.fill = 'transparent'; delete e.fill2; }); };
   $('p-fill20').onclick = function () { var e = selEl(); if (e) act(function () { delete e.fill2; }); };
-  function removeSel() {
-    if (st.psel != null) { act(function () { curItems().splice(st.psel, 1); st.psel = null; }); return; }
-    var e = selEl(); if (!e || e.t === 'prods') return;
-    act(function () { doc.els = doc.els.filter(function (x) { return x !== e; }); FMTS.forEach(function (f) { delete doc.geo[f][e.id]; }); st.sel = null; });
-  }
-  function duplicate() {
-    var e = selEl(); if (!e || e.t === 'prods') return;
-    act(function () { var c = clone(e); c.id = uid('e'); c.name = (e.name || TYPES[e.t]) + ' copy'; doc.els.splice(doc.els.indexOf(e) + 1, 0, c);
-      FMTS.forEach(function (f) { var g = clone(doc.geo[f][e.id]); g.x = r2(g.x + 2); g.y = r2(g.y + 2); doc.geo[f][c.id] = g; }); st.sel = c.id; });
-  }
-  function moveZ(d) { var e = selEl(); if (!e) return; var i = doc.els.indexOf(e), j = i + d; if (j < 0 || j >= doc.els.length) return; act(function () { doc.els.splice(i, 1); doc.els.splice(j, 0, e); }); }
-  $('dup').onclick = duplicate; $('del').onclick = removeSel; $('fwd').onclick = function () { moveZ(1); }; $('bwd').onclick = function () { moveZ(-1); };
+  $('dup').onclick = duplicate; $('del').onclick = removeSel; $('fwd').onclick = function () { zMove(1); }; $('bwd').onclick = function () { zMove(-1); };
   $('match').onclick = function () { var e = selEl(); if (!e) return; act(function () { var g = doc.geo[st.fmt][e.id], H = HU(st.fmt); FMTS.forEach(function (f) { if (f === st.fmt) return; var o = clone(g); o.y = r2((g.y + (g.h || 0) / 2) / H * HU(f) - (g.h || 0) / 2); doc.geo[f][e.id] = cleanGeo(o); }); }); setStatus('Placed the same way in all 3 sizes', 'ok'); };
   $('eres').onclick = function () { var e = selEl(), t = tplById[doc.tpl]; if (!e || !t) return; var src = fromTemplate(t), o = src.els.filter(function (x) { return x.id === e.id; })[0];
     if (!o) { setStatus('This item is not part of the template', 'warn'); return; }
-    act(function () { var i = doc.els.indexOf(e); doc.els[i] = o; FMTS.forEach(function (f) { doc.geo[f][o.id] = src.geo[f][o.id]; }); }); };
+    act(function () { var i = doc.els.indexOf(e); if (e.gp) o.gp = e.gp; doc.els[i] = o; FMTS.forEach(function (f) { doc.geo[f][o.id] = src.geo[f][o.id]; }); normGroups(doc); }); };
 
   // ── Edit tab: add ──
   function addEl(e, gw, gh) {
@@ -623,7 +951,7 @@
       e.id = uid('e'); var top = doc.els.length;
       doc.els.splice(top, 0, e);
       FMTS.forEach(function (f) { doc.geo[f][e.id] = { x: r2(50 - gw / 2), y: r2(HU(f) / 2 - (gh || 6) / 2), w: gw, h: gh || 0, r: 0, k: 1 }; });
-      st.sel = e.id; st.psel = null;
+      st.grp = null; setSel([e.id]);
     });
     showTab('edit');
   }
@@ -641,7 +969,7 @@
   }; });
   $('add-badge').onchange = function (ev) {
     var k = ev.target.value, a = accNow(); ev.target.value = ''; if (!k) return;
-    if (k === 'ribbon') { act(function () { var e = { id: uid('e'), t: 'text', name: 'Corner ribbon', txt: 'K-Beauty Bliss ♥', fn: 'poppins', fw: 800, fs: 2.4, ls: 4, col: contrast(a), sh: 'rect', fill: a, shd: 30, cr: 'acc' }; doc.els.push(e); FMTS.forEach(function (f) { doc.geo[f][e.id] = { x: -20, y: 13.9, w: 74, h: 6.2, r: -45, k: 1 }; }); st.sel = e.id; }); return; }
+    if (k === 'ribbon') { act(function () { var e = { id: uid('e'), t: 'text', name: 'Corner ribbon', txt: 'K-Beauty Bliss ♥', fn: 'poppins', fw: 800, fs: 2.4, ls: 4, col: contrast(a), sh: 'rect', fill: a, shd: 30, cr: 'acc' }; doc.els.push(e); FMTS.forEach(function (f) { doc.geo[f][e.id] = { x: -20, y: 13.9, w: 74, h: 6.2, r: -45, k: 1 }; }); st.grp = null; setSel([e.id]); }); return; }
     var wide = k === 'pill' || k === 'banner';
     addEl({ t: 'shape', name: 'Badge', sh: k, fill: a, txt: wide ? 'NEW IN' : 'UP TO\n30% OFF', fn: 'bebas', fw: 400, fs: wide ? 4.2 : 4.4, lh: 95, col: contrast(a), shd: 30, cr: 'acc' }, wide ? 30 : 20, wide ? 8 : 20);
   };
@@ -655,22 +983,94 @@
   $('add-img').onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return;
     readPicture(f, { cut: false, max: 1400, kind: 'img' }).then(function (r) { var w = r.aspect >= 1 ? 40 : 40 * r.aspect; addEl({ t: 'img', name: r.name, img: r.id }, r2(w), r2(w / r.aspect)); }).catch(pictureError); };
 
-  // ── layers ──
+  // ── layers: top of the stack first; groups fold open / shut; Shift = a range, Ctrl/Cmd = add or remove;
+  //    drag the ⠿ grip to reorder (into or out of a group); double-click a name to rename ──
+  function rowKeys(k) { return k.indexOf('g:') === 0 ? ids(members(k.slice(2))) : [k]; }
   function layers() {
     var host = $('layers'); host.textContent = '';
-    doc.els.slice().reverse().forEach(function (e) {
-      var row = mk('div', 'ly' + (e.id === st.sel ? ' on' : '')), g = doc.geo[st.fmt][e.id];
-      var label = e.name || TYPES[e.t]; if (e.txt && e.t !== 'logo') label += ' — ' + e.txt.replace(/\s+/g, ' ').slice(0, 22);
-      var nm = mk('span', 'n' + (e.hide || g.hd ? ' off' : ''), label); row.appendChild(nm);
+    var on = Object.create(null); selKeys().forEach(function (k) { on[k] = 1; });
+    var done = Object.create(null);
+    function acts(row, label, list) {
       var a = mk('span', 'a');
       function b(txt, title, pressed, fn) { var x = mk('button', null, txt); x.type = 'button'; x.title = title; x.setAttribute('aria-label', title + ': ' + label); if (pressed != null) x.setAttribute('aria-pressed', String(pressed)); x.onclick = function (ev) { ev.stopPropagation(); fn(); }; a.appendChild(x); }
-      b(e.hide ? '◌' : '●', e.hide ? 'Show' : 'Hide', !e.hide, function () { act(function () { if (e.hide) delete e.hide; else e.hide = true; }); });
-      b(e.lock ? '🔒' : '🔓', e.lock ? 'Unlock' : 'Lock', !!e.lock, function () { act(function () { if (e.lock) delete e.lock; else e.lock = true; }); });
-      b('▲', 'Bring forward', null, function () { st.sel = e.id; moveZ(1); });
-      b('▼', 'Send backward', null, function () { st.sel = e.id; moveZ(-1); });
+      var hid = list.every(function (e) { return e.hide; }), lk = list.every(function (e) { return e.lock; });
+      b(hid ? '◌' : '●', hid ? 'Show' : 'Hide', !hid, function () { act(function () { list.forEach(function (e) { if (hid) delete e.hide; else e.hide = true; }); }); });
+      b(lk ? '🔒' : '🔓', lk ? 'Unlock' : 'Lock', lk, function () { act(function () { list.forEach(function (e) { if (lk) delete e.lock; else e.lock = true; }); }); });
+      b('▲', 'Bring forward', null, function () { setSel(ids(list)); zMove(1); });
+      b('▼', 'Send backward', null, function () { setSel(ids(list)); zMove(-1); });
       row.appendChild(a);
-      row.onclick = function () { st.sel = e.id; st.psel = null; markSel(); panelSel(); layers(); };
+    }
+    function grip(row) { var gr = mk('span', 'gr', '⠿'); gr.title = 'Drag to reorder'; gr.setAttribute('aria-hidden', 'true'); gr.addEventListener('pointerdown', function (ev) { layerDrag(ev, row); }); row.insertBefore(gr, row.firstChild); }
+    function elRow(e, child) {
+      var g = doc.geo[st.fmt][e.id], row = mk('div', 'ly' + (child ? ' ch' : '') + (on[e.id] ? ' on' : '')); row.dataset.k = e.id;
+      var label = e.name || TYPES[e.t]; if (e.txt && e.t !== 'logo') label += ' — ' + e.txt.replace(/\s+/g, ' ').slice(0, 22);
+      var nm = mk('span', 'n' + (e.hide || g.hd ? ' off' : ''), label); nm.title = 'Double-click to rename'; row.appendChild(nm);
+      acts(row, label, [e]); grip(row);
+      row.onclick = function (ev) { rowClick(ev, row, child ? e.gp : null); };
       host.appendChild(row);
+    }
+    doc.els.slice().reverse().forEach(function (e) {
+      if (!e.gp) { elRow(e, false); return; }
+      if (done[e.gp]) return; done[e.gp] = 1;
+      var gid = e.gp, list = members(gid), open = st.gopen[gid] !== false, gname = (doc.groups[gid] && doc.groups[gid].name) || 'Group';
+      var row = mk('div', 'ly grp' + (list.every(function (x) { return on[x.id]; }) ? ' on' : '')); row.dataset.k = 'g:' + gid;
+      var tg = mk('button', 'gt', open ? '▾' : '▸'); tg.type = 'button'; tg.setAttribute('aria-expanded', String(open)); tg.setAttribute('aria-label', (open ? 'Fold ' : 'Unfold ') + gname);
+      tg.onclick = function (ev) { ev.stopPropagation(); st.gopen[gid] = !open; layers(); };
+      var nm = mk('span', 'n', gname + ' · ' + list.length); nm.title = 'Double-click to rename'; row.appendChild(tg); row.appendChild(nm);
+      acts(row, gname, list); grip(row);
+      row.onclick = function (ev) { rowClick(ev, row, null); };
+      host.appendChild(row);
+      if (open) list.slice().reverse().forEach(function (m) { elRow(m, true); });
+    });
+  }
+  var lastRow = { k: '', t: 0 };
+  function startRename(k) {
+    var nm = $('layers').querySelector('.ly[data-k="' + k + '"] .n'); if (!nm) return;
+    if (k.indexOf('g:') === 0) { var gid = k.slice(2); rename(nm, (doc.groups[gid] && doc.groups[gid].name) || 'Group', function (v) { if (doc.groups[gid]) doc.groups[gid].name = v; }); }
+    else { var e = elById(k); if (e) rename(nm, e.name || TYPES[e.t], function (v) { e.name = v; }); }
+  }
+  function rowClick(ev, row, grp) {
+    var k = row.dataset.k, ks = rowKeys(k), cur = selKeys(), now = Date.now(), mods = ev.shiftKey || ev.ctrlKey || ev.metaKey;
+    if (!mods && lastRow.k === k && now - lastRow.t < 450 && ev.target.closest('.n')) { lastRow = { k: '', t: 0 }; startRename(k); return; }
+    lastRow = { k: k, t: now };
+    if (ev.shiftKey && st.lanchor) {
+      var order = Array.prototype.map.call($('layers').querySelectorAll('.ly'), function (r) { return r.dataset.k; }), i = order.indexOf(st.lanchor), j = order.indexOf(k);
+      if (i >= 0 && j >= 0) { var l = []; order.slice(Math.min(i, j), Math.max(i, j) + 1).forEach(function (x) { l = l.concat(rowKeys(x)); }); st.grp = null; setSel(l); afterSel(); return; }
+    }
+    if (ev.ctrlKey || ev.metaKey) { st.grp = null; setSel(ks.every(function (x) { return cur.indexOf(x) >= 0; }) ? cur.filter(function (x) { return ks.indexOf(x) < 0; }) : cur.concat(ks)); }
+    else { st.grp = grp; setSel(ks); }
+    st.lanchor = k; afterSel();
+  }
+  function rename(nm, old, set) {
+    var inp = mk('input'); inp.type = 'text'; inp.maxLength = 40; inp.value = old; inp.className = 'rn'; inp.setAttribute('aria-label', 'New name');
+    nm.textContent = ''; nm.appendChild(inp); inp.focus(); inp.select();
+    var fin_ = false; function fin(keep) { if (fin_) return; fin_ = true; var v = str(inp.value, 40).trim(); if (keep && v && v !== old) act(function () { set(v); }); else layers(); }
+    inp.onkeydown = function (ev) { ev.stopPropagation(); if (ev.key === 'Enter') fin(true); if (ev.key === 'Escape') fin(false); };
+    inp.onblur = function () { fin(true); }; inp.onclick = function (ev) { ev.stopPropagation(); };
+  }
+  // reorder by dragging a row's grip: above / below the row under the pointer; onto a group's item = into that group
+  function layerDrag(ev, src) {
+    ev.preventDefault(); ev.stopPropagation();
+    var host = $('layers'), ld = { src: src, target: null, above: false };
+    src.classList.add('drag');
+    function clear() { host.querySelectorAll('.dropa,.dropb').forEach(function (r) { r.classList.remove('dropa'); r.classList.remove('dropb'); }); }
+    function mv(e) {
+      var hit = document.elementFromPoint(e.clientX, e.clientY), t = hit && hit.closest && hit.closest('#layers .ly'); clear(); ld.target = null;
+      if (!t || t === src) return; var r = t.getBoundingClientRect(); ld.above = e.clientY < r.top + r.height / 2; ld.target = t; t.classList.add(ld.above ? 'dropb' : 'dropa');
+    }
+    function up() { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); document.removeEventListener('pointercancel', up); clear(); src.classList.remove('drag'); if (ld.target) dropLayer(ld); }
+    document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
+  }
+  function dropLayer(ld) {
+    var sk = ld.src.dataset.k, isG = sk.indexOf('g:') === 0, moving = rowKeys(sk), t = ld.target, tk = t.dataset.k;
+    if (isG && t.classList.contains('ch')) { var te0 = elById(tk); if (te0 && te0.gp) tk = 'g:' + te0.gp; }      // a group drops beside a group, never inside one
+    if (rowKeys(tk).some(function (k) { return moving.indexOf(k) >= 0; })) return;
+    act(function () {
+      var mvEls = doc.els.filter(function (e) { return moving.indexOf(e.id) >= 0; }), rest = doc.els.filter(function (e) { return moving.indexOf(e.id) < 0; }), idx, join = null;
+      if (tk.indexOf('g:') === 0) { var m = rest.filter(function (e) { return e.gp === tk.slice(2); }); if (!m.length) return; idx = ld.above ? rest.indexOf(m[m.length - 1]) + 1 : rest.indexOf(m[0]); }
+      else { var te = elById(tk); if (!te) return; idx = rest.indexOf(te) + (ld.above ? 1 : 0); if (te.gp && t.classList.contains('ch')) join = te.gp; }
+      if (!isG) mvEls.forEach(function (e) { if (join && e.t !== 'prods') e.gp = join; else delete e.gp; });
+      Array.prototype.splice.apply(rest, [idx, 0].concat(mvEls)); doc.els = rest; normGroups(doc);
     });
   }
 
@@ -697,7 +1097,7 @@
     act(function () {
       var fs = $('pk-fmts').checked ? FMTS : [st.fmt], ss = $('pk-sets').checked ? [0, 1, 2] : [st.set];
       fs.forEach(function (f) { ss.forEach(function (s) { addTo(doc.sets[f][s], p, f); }); });
-      st.psel = addTo(curItems(), p, st.fmt); st.sel = null;
+      setSel(['p:' + addTo(curItems(), p, st.fmt)]);
     });
     setStatus(prodName(p) + ' added — drag it into place', 'ok');
   }
@@ -717,9 +1117,9 @@
   $('ps-ss').onchange = function () { var it = pItem(); if (it) act(function () { it.ss = $('ps-ss').value === 'sharp' || $('ps-ss').value === 'glow' ? $('ps-ss').value : 'soft'; }); };
   function grow(k) { var it = pItem(); if (!it) return; act(function () { var a = aspectOf(it.p), cx = it.x + it.w / 2, by = it.y + it.w / a; it.w = r2(Math.max(2, it.w * k)); it.x = r2(cx - it.w / 2); it.y = r2(by - it.w / a); }); }
   $('ps-sm').onclick = function () { grow(1 / 1.08); }; $('ps-bg').onclick = function () { grow(1.08); };
-  $('ps-fr').onclick = function () { var l = curItems(); if (st.psel == null) return; act(function () { l.push(l.splice(st.psel, 1)[0]); st.psel = l.length - 1; }); };
+  $('ps-fr').onclick = function () { var l = curItems(); if (st.psel == null) return; act(function () { l.push(l.splice(st.psel, 1)[0]); setSel(['p:' + (l.length - 1)]); }); };
   $('ps-del').onclick = removeSel;
-  $('ps-reset').onclick = function () { var t = tplById[doc.tpl]; if (!t) { setStatus('This design has no template to reset from', 'warn'); return; } var src = fromTemplate(t); act(function () { doc.sets[st.fmt][st.set] = src.sets[st.fmt][st.set]; st.psel = null; }); };
+  $('ps-reset').onclick = function () { var t = tplById[doc.tpl]; if (!t) { setStatus('This design has no template to reset from', 'warn'); return; } var src = fromTemplate(t); act(function () { doc.sets[st.fmt][st.set] = src.sets[st.fmt][st.set]; dropProdSel(); }); };
 
   // ── pictures: products (white background taken off in this browser), images, backgrounds, logos ──
   var upCss = mk('style'); document.head.appendChild(upCss);
@@ -769,26 +1169,171 @@
     readPicture(f, { cut: $('up-bg').checked, max: 1000, kind: 'prod' }).then(function (r) { buildPk(); addProduct('u_' + r.id); }).catch(pictureError); };
   function dropUpload(p) {
     var id = p.slice(2); if (!confirm('Delete "' + prodName(p) + '" from the list? Designs that use it will no longer show it.')) return;
-    Store.delImage(id).then(function () { act(function () { FMTS.forEach(function (f) { doc.sets[f] = doc.sets[f].map(function (l) { return l.filter(function (it) { return it.p !== p; }); }); }); st.psel = null; }); delete images[id]; buildPk(); draw(); setStatus('Deleted', 'ok'); })
+    Store.delImage(id).then(function () { act(function () { FMTS.forEach(function (f) { doc.sets[f] = doc.sets[f].map(function (l) { return l.filter(function (it) { return it.p !== p; }); }); }); dropProdSel(); }); delete images[id]; buildPk(); draw(); setStatus('Deleted', 'ok'); })
       .catch(function (e) { setStatus('Not deleted: ' + ((e && e.message) || 'try again'), 'warn'); });
   }
 
-  // ── Style tab: background + brand kit ──
+  // ── colours: the design's own colours, the brand palette, and the one colour control every swatch opens ──
+  var COLP = ['col', 'fill', 'fill2', 'bc', 'shc'];
+  function docColours(d) {
+    var n = Object.create(null), see = function (v) { if (typeof v === 'string' && HEX.test(v)) { var k = v.slice(0, 7).toUpperCase(); n[k] = (n[k] || 0) + 1; } };
+    d.els.forEach(function (e) { COLP.forEach(function (p) { see(e[p]); }); });
+    var b = d.bg; if (b.k !== 'none') { if (b.k === 'linear' || b.k === 'radial') gradStops(b).forEach(function (s) { see(s.c); }); else see(b.c1); }
+    if (b.pat !== 'none' && b.po) see(b.pc); if (b.k === 'image') see(b.oc);
+    return Object.keys(n).sort(function (a, c) { return n[c] - n[a]; }).map(function (c) { return { c: c, n: n[c] }; });
+  }
+  var KBB_PAL = ['#E8306F', '#1F1B1E', '#FFFFFF', '#F7D6DF', '#C9A24A', '#F3EDE6', '#00843D', '#EF3340', '#000000'];
+  function brandPalette() { var l = [brand.c1, brand.c2]; KBB_PAL.forEach(function (c) { if (l.indexOf(c) < 0) l.push(c); }); return l; }
+  // replace one colour (any opacity of it) everywhere -- or only in the picked items -- keeping each use's own opacity
+  function replaceIn(d, from, to, only) {
+    var n = 0, f6 = from.slice(0, 7).toUpperCase();
+    var sw = function (v) { if (typeof v !== 'string' || !HEX.test(v) || v.slice(0, 7).toUpperCase() !== f6) return v; n++; return to.length === 9 ? to : to.slice(0, 7) + v.slice(7); };
+    d.els.forEach(function (e) { if (only && !only[e.id]) return; COLP.forEach(function (p) { if (e[p]) e[p] = sw(e[p]); }); });
+    if (!only) { var b = d.bg; b.c1 = sw(b.c1); b.c2 = sw(b.c2); b.pc = sw(b.pc); if (b.oc) b.oc = sw(b.oc); if (b.stops) b.stops.forEach(function (s) { s.c = sw(s.c); }); }
+    return n;
+  }
+  var CC = (function () {
+    var pop = $('ccp'), pick = $('cc-pick'), hexIn = $('cc-hex'), al = $('cc-a'), cur = { h: '#FFFFFF', a: 100 }, cb = null, anchor = null, live = false, recent = [];
+    try { recent = (JSON.parse(localStorage.getItem('kbbas:recent')) || []).filter(function (c) { return typeof c === 'string' && HEX.test(c); }).slice(0, 18); } catch (e) { recent = []; }
+    function parse(v) { return typeof v === 'string' && HEX.test(v) ? { h: v.slice(0, 7).toUpperCase(), a: v.length === 9 ? Math.round(parseInt(v.slice(7), 16) / 2.55) : 100 } : { h: '#FFFFFF', a: v === 'transparent' ? 0 : 100 }; }
+    function val() { return cur.h + (cur.a >= 100 ? '' : ('0' + Math.round(cur.a * 255 / 100).toString(16)).slice(-2).toUpperCase()); }
+    function sync(keepHex) { pick.value = cur.h.toLowerCase(); if (!keepHex) hexIn.value = val(); al.value = cur.a; $('cc-av').textContent = cur.a + '%'; pop.style.setProperty('--c', cur.h); }
+    function emit(fin) { if (!cb) return; live = !fin; cb(val(), fin); if (fin) remember(val()); }
+    function remember(v) { recent = [v].concat(recent.filter(function (x) { return x !== v; })).slice(0, 18); try { localStorage.setItem('kbbas:recent', JSON.stringify(recent)); } catch (e) {} fill(); }
+    function sws(host, list) {
+      host.textContent = ''; host.previousElementSibling.hidden = !list.length;
+      list.forEach(function (c) { var b = mk('button'); b.type = 'button'; b.title = c; b.setAttribute('aria-label', 'Use ' + c); b.style.setProperty('--c', c); b.onclick = function () { cur = parse(c); sync(); emit(true); }; host.appendChild(b); });
+    }
+    function fill() { sws($('cc-rec'), recent); sws($('cc-doc'), doc ? docColours(doc).map(function (x) { return x.c; }).slice(0, 18) : []); sws($('cc-brand'), brandPalette()); }
+    function place() {
+      if (window.innerWidth <= 600) { pop.style.left = ''; pop.style.top = ''; return; }        // phones: a sheet along the bottom (CSS)
+      var r = anchor.getBoundingClientRect(), W = pop.offsetWidth, H = pop.offsetHeight, x = Math.min(window.innerWidth - W - 8, Math.max(8, r.left)), y = r.bottom + 6;
+      if (y + H > window.innerHeight - 8) y = Math.max(8, r.top - H - 6);
+      pop.style.left = x + 'px'; pop.style.top = y + 'px';
+    }
+    function close() { if (pop.hidden) return; pop.hidden = true; if (live) emit(true); cb = null; if (anchor) anchor.setAttribute('aria-expanded', 'false'); anchor = null; }
+    pick.addEventListener('input', function () { cur.h = pick.value.toUpperCase(); sync(); emit(false); });
+    pick.addEventListener('change', function () { emit(true); });
+    hexIn.addEventListener('input', function () { var v = hexIn.value.trim(); if (v[0] !== '#') v = '#' + v; if (/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(v)) { cur = parse(v.toUpperCase()); sync(true); emit(false); } });
+    hexIn.addEventListener('change', function () { sync(); emit(true); });
+    hexIn.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); sync(); emit(true); } });
+    al.addEventListener('input', function () { cur.a = num(al.value, 0, 100, 100); sync(); emit(false); });
+    al.addEventListener('change', function () { emit(true); });
+    var eye = $('cc-eye');
+    if (!window.EyeDropper) eye.hidden = true;
+    else eye.onclick = function () { try { new window.EyeDropper().open().then(function (r) { var v = String(r && r.sRGBHex || '').toUpperCase(); if (/^#[0-9A-F]{6}$/.test(v)) { cur = { h: v, a: cur.a }; sync(); emit(true); } }).catch(function () {}); } catch (e) {} };
+    $('cc-x').onclick = close;
+    document.addEventListener('pointerdown', function (ev) { if (!pop.hidden && !pop.contains(ev.target) && !(anchor && anchor.contains(ev.target))) close(); }, true);
+    return {
+      open: function (a, v, fn) { if (anchor === a && !pop.hidden) { close(); return; } close(); anchor = a; cb = fn; cur = parse(v); live = false; sync(); fill(); pop.hidden = false; place(); a.setAttribute('aria-expanded', 'true'); },
+      close: close, isOpen: function () { return !pop.hidden; }
+    };
+  })();
+
+  // ── Style tab: background (none / solid / linear / radial / picture, + a pattern on top) + colours + brand kit ──
   var patSel = $('bg-pat'); Object.keys(PATS).forEach(function (k) { var o = mk('option', null, PATS[k]); o.value = k; patSel.appendChild(o); });
+  var gbar = $('gbar');
   function panelStyle() {
-    var b = doc.bg; setV($('bg-k'), b.k); setV($('bg-ang'), b.ang); setV($('bg-c1'), hex6(b.c1, '#FFFFFF')); setV($('bg-c2'), hex6(b.c2, '#EEEEEE'));
-    setV(patSel, b.pat); setV($('bg-pc'), hex6(b.pc, '#000000')); setV($('bg-po'), b.po); setV($('bg-ov'), b.ov);
-    $('bg-noimg').disabled = !b.img; $('bg-ov').closest('.row').hidden = b.k !== 'image';
+    var b = doc.bg, kv = st.bgv || b.k, stops = gradStops(b);
+    if (st.gsi >= stops.length) st.gsi = stops.length - 1;
+    $('bg-kind').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.v === kv)); });
+    document.querySelectorAll('[data-bgk]').forEach(function (n) { n.hidden = n.dataset.bgk.split(' ').indexOf(kv) < 0; });
+    document.querySelectorAll('[data-bgc]').forEach(function (s) { var p = s.dataset.bgc; paintSw(s, p === 'stop' ? stops[st.gsi].c : p === 'oc' ? (b.oc || (b.ov ? '#000000' + ('0' + Math.round(b.ov * 255 / 100).toString(16)).slice(-2).toUpperCase() : 'transparent')) : b[p]); });
+    document.querySelectorAll('[data-bg]').forEach(function (n) { setV(n, b[n.dataset.bg]); });
+    $('bg-angv').textContent = b.ang + '°';
+    drawGbar(stops);
+    setV($('gs-p'), stops[st.gsi].p); $('gs-pv').textContent = Math.round(stops[st.gsi].p) + '%'; $('gs-del').disabled = stops.length <= 2;
+    $('bg-fit').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.v === b.fit)); });
+    setV(patSel, b.pat);
+    $('bg-noimg').disabled = !b.img;
+    dcols();
     setV($('br-c1'), brand.c1); setV($('br-c2'), brand.c2); $('br-on').checked = brand.on; $('br-nologo').disabled = !brand.logo;
   }
-  function bgSet(p, v) { begin(); var raw = Object.assign({}, doc.bg); raw[p] = v; doc.els && (doc.bg = cleanDoc({ els: [], bg: raw }, images).bg); redrawStageOnly(); }
-  [['bg-k', 'k'], ['bg-ang', 'ang', 1], ['bg-c1', 'c1'], ['bg-c2', 'c2'], ['bg-pat', 'pat'], ['bg-pc', 'pc'], ['bg-po', 'po', 1], ['bg-ov', 'ov', 1]].forEach(function (q) {
-    var n = $(q[0]); n.addEventListener('input', function () { if (q[1] === 'k' && n.value === 'image' && !doc.bg.img) { setStatus('Upload a picture first', 'warn'); panelStyle(); return; } bgSet(q[1], q[2] ? +n.value : (n.type === 'color' ? n.value.toUpperCase() : n.value)); });
+  function drawGbar(stops) {
+    gbar.style.setProperty('--g', 'linear-gradient(90deg,' + stops.map(function (s) { return s.c + ' ' + s.p + '%'; }).join(',') + ')');
+    gbar.textContent = '';
+    stops.forEach(function (s, i) { var m = mk('button', 'gs' + (i === st.gsi ? ' on' : '')); m.type = 'button'; m.dataset.i = i; m.style.left = s.p + '%'; m.style.setProperty('--c', s.c); m.setAttribute('aria-label', 'Colour stop ' + (i + 1) + ' at ' + Math.round(s.p) + '%'); gbar.appendChild(m); });
+  }
+  // every background write: a whole cleaned background, so a bad value can never reach the canvas
+  function bgSet(patch, fin) { begin(); doc.bg = cleanBg(Object.assign({}, doc.bg, patch), images); redrawStageOnly(); if (fin) { end(); panelStyle(); } }
+  function setStops(list, selObj, fin) {
+    list = list.slice().sort(function (a, c) { return a.p - c.p; }); st.gsi = Math.max(0, list.indexOf(selObj));
+    bgSet({ stops: list.map(function (s) { return { c: s.c, p: Math.round(s.p * 10) / 10 }; }), c1: list[0].c, c2: list[list.length - 1].c }, fin);
+  }
+  function mixHex(a, c, t) { var x = parseInt(a.slice(1, 7), 16), y = parseInt(c.slice(1, 7), 16), m = function (s) { return Math.round((x >> s & 255) * (1 - t) + (y >> s & 255) * t); }; return '#' + ((1 << 24) + (m(16) << 16) + (m(8) << 8) + m(0)).toString(16).slice(1).toUpperCase(); }
+  $('bg-kind').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b) return; var v = b.dataset.v;
+    if (v === 'image' && !doc.bg.img) { st.bgv = 'image'; panelStyle(); setStatus('Upload a picture for the background', 'warn'); return; }
+    st.bgv = null; act(function () { doc.bg = cleanBg(Object.assign({}, doc.bg, { k: v }), images); });
+  });
+  gbar.addEventListener('pointerdown', function (ev) {
+    var r = gbar.getBoundingClientRect(), p = Math.max(0, Math.min(100, (ev.clientX - r.left) / r.width * 100)), list = gradStops(doc.bg).map(function (s) { return { c: s.c, p: s.p }; }), m = ev.target.closest('.gs'), o;
+    if (m) { o = list[+m.dataset.i]; st.gsi = +m.dataset.i; }
+    else {                                                         // a new stop, in the colour the gradient already has there
+      if (list.length >= 8) { setStatus('Up to 8 colour stops', 'warn'); return; }
+      var i = 0; while (i < list.length - 1 && list[i + 1].p < p) i++; var a = list[i], c = list[Math.min(i + 1, list.length - 1)];
+      o = { c: p <= a.p ? a.c : p >= c.p ? c.c : mixHex(a.c, c.c, (p - a.p) / ((c.p - a.p) || 1)), p: p }; list.push(o); setStops(list, o, false);
+    }
+    drawGbar(gradStops(doc.bg)); setV($('gs-p'), o.p); $('gs-pv').textContent = Math.round(o.p) + '%';
+    paintSw(document.querySelector('[data-bgc="stop"]'), o.c);
+    gbar.setPointerCapture(ev.pointerId); ev.preventDefault();
+    var mv = function (e) { o.p = Math.max(0, Math.min(100, (e.clientX - r.left) / r.width * 100)); setStops(list, o, false); drawGbar(gradStops(doc.bg)); $('gs-pv').textContent = Math.round(o.p) + '%'; };
+    var up = function () { gbar.removeEventListener('pointermove', mv); gbar.removeEventListener('pointerup', up); gbar.removeEventListener('pointercancel', up); end(); panelStyle(); };
+    gbar.addEventListener('pointermove', mv); gbar.addEventListener('pointerup', up); gbar.addEventListener('pointercancel', up);
+  });
+  $('gs-p').addEventListener('input', function () { var list = gradStops(doc.bg).map(function (s) { return { c: s.c, p: s.p }; }), o = list[st.gsi]; o.p = num(this.value, 0, 100, 0); setStops(list, o, false); drawGbar(gradStops(doc.bg)); $('gs-pv').textContent = Math.round(o.p) + '%'; });
+  $('gs-p').addEventListener('change', function () { end(); panelStyle(); });
+  $('gs-del').onclick = function () { var list = gradStops(doc.bg).map(function (s) { return { c: s.c, p: s.p }; }); if (list.length <= 2) return; list.splice(st.gsi, 1); setStops(list, list[Math.max(0, st.gsi - 1)], true); };
+  $('gs-rev').onclick = function () { var list = gradStops(doc.bg).map(function (s) { return { c: s.c, p: 100 - s.p }; }); setStops(list, list[0], true); };
+  document.querySelectorAll('[data-bg]').forEach(function (n) {
+    n.addEventListener('input', function () { var o = {}; o[n.dataset.bg] = n.tagName === 'SELECT' ? n.value : +n.value; if (n.dataset.bg === 'ang') $('bg-angv').textContent = n.value + '°'; bgSet(o, false); });
     n.addEventListener('change', function () { end(); panelStyle(); });
   });
+  $('bg-fit').addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) bgSet({ fit: b.dataset.v }, true); });
+  $('style-pane').addEventListener('click', function (ev) {
+    var s = ev.target.closest('[data-bgc]'); if (!s) return; var p = s.dataset.bgc, b = doc.bg;
+    var v0 = p === 'stop' ? gradStops(b)[st.gsi].c : p === 'oc' ? b.oc || (b.ov ? '#000000' + ('0' + Math.round(b.ov * 255 / 100).toString(16)).slice(-2).toUpperCase() : '#00000066') : b[p];
+    CC.open(s, v0, function (v, fin) {
+      if (p === 'stop') { var list = gradStops(doc.bg).map(function (x) { return { c: x.c, p: x.p }; }), o = list[st.gsi]; o.c = v; setStops(list, o, fin); }
+      else { var o2 = {}; o2[p] = v; if (p === 'oc') o2.ov = 0; bgSet(o2, fin); }
+      paintSw(s, v); if (!fin) drawGbar(gradStops(doc.bg));
+    });
+  });
   $('bg-file').onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return;
-    readPicture(f, { cut: false, max: 2000, kind: 'bg' }).then(function (r) { act(function () { doc.bg.img = r.id; doc.bg.k = 'image'; }); }).catch(pictureError); };
-  $('bg-noimg').onclick = function () { act(function () { doc.bg.img = ''; doc.bg.k = 'radial'; }); };
+    readPicture(f, { cut: false, max: 2000, kind: 'bg' }).then(function (r) { st.bgv = null; act(function () { doc.bg.img = r.id; doc.bg.k = 'image'; }); }).catch(pictureError); };
+  $('bg-noimg').onclick = function () { st.bgv = null; act(function () { doc.bg.img = ''; doc.bg.k = 'radial'; }); };
+  // "Colours in this design": tap one, pick its new colour -- everywhere, or only in the picked items
+  function dcols() {
+    var h = $('dcols'); h.textContent = '';
+    docColours(doc).forEach(function (x) { var b = mk('button'); b.type = 'button'; b.dataset.c = x.c; b.title = x.c + ' · used ' + x.n + '×'; b.setAttribute('aria-label', 'Replace ' + x.c + ' (used ' + x.n + ' times)'); b.style.setProperty('--c', x.c); h.appendChild(b); });
+  }
+  $('dcols').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b) return; var from = b.dataset.c, only = null;
+    if ($('rc-sel').checked) { only = Object.create(null); selEls().forEach(function (e) { only[e.id] = 1; if (e.gp && e.gp !== st.grp) members(e.gp).forEach(function (m) { only[m.id] = 1; }); }); if (!Object.keys(only).length) { setStatus('Pick items on the ad first, or untick "Only in the selection"', 'warn'); return; } }
+    CC.open(b, from, function (v, fin) {
+      begin(); var base = JSON.parse(pending), n = replaceIn(base, from, v, only); doc = base; redrawStageOnly();
+      if (fin) { end(); draw(); setStatus('Changed ' + n + ' use' + (n === 1 ? '' : 's') + ' of ' + from + ' to ' + v + ' — Ctrl+Z to undo', 'ok'); }
+    });
+  });
+
+  // ── the arrange bar (over the ad) and the touch "Select" toggle ──
+  function abarSync() {
+    var keys = selKeys().filter(function (k) { return k !== 'prods'; }), us = keys.length ? selUnits() : [], els = selEls().filter(function (e) { return e.t !== 'prods'; });
+    $('abar').querySelectorAll('button').forEach(function (b) { b.disabled = !keys.length; });   // always on show (no jump under the pointer), idle with nothing picked
+    if (!keys.length) return;
+    var one = us.length < 2;
+    $('alto').querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === (one ? 'art' : st.alto))); b.disabled = one; });
+    $('abar').querySelectorAll('[data-ds]').forEach(function (b) { b.disabled = us.length < 3; });
+    $('abar').querySelectorAll('[data-mt]').forEach(function (b) { b.disabled = keys.length < 2; });
+    $('ab-grp').disabled = els.length < 2 || !!selGroup(); $('ab-ungrp').disabled = !els.some(function (e) { return e.gp; });
+  }
+  $('abar').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b || b.disabled) return;
+    if (b.dataset.al) alignSel(b.dataset.al); else if (b.dataset.ds) distribute(b.dataset.ds); else if (b.dataset.mt) matchSize(b.dataset.mt);
+    else if (b.parentNode.id === 'alto') { st.alto = b.dataset.v; abarSync(); }
+    else if (b.id === 'ab-grp') groupSel(); else if (b.id === 'ab-ungrp') ungroupSel();
+  });
+  $('pick').onclick = function () { st.pick = !st.pick; this.setAttribute('aria-pressed', String(st.pick)); this.textContent = st.pick ? '☑ Select: on' : '☐ Select'; setStatus(st.pick ? 'Tap items to add or remove them · tap the empty ad to clear' : '', 'ok'); };
   function saveBrand() { return Store.putKV('brand', brand).catch(function () {}); }
   $('br-c1').onchange = function () { brand.c1 = this.value.toUpperCase(); saveBrand(); if (brand.on) thumbsDirty(); };
   $('br-c2').onchange = function () { brand.c2 = this.value.toUpperCase(); saveBrand(); if (brand.on) thumbsDirty(); };
@@ -820,7 +1365,7 @@
   function stopPlay() { if (!playT) return; clearInterval(playT); playT = 0; stage.classList.remove('playing'); $('play').textContent = '▶ Play'; $('play2').textContent = '▶ Play'; draw(); }
   function play() {
     if (playT) { stopPlay(); return; }
-    var A = doc.anim; st.sel = null; st.psel = null; st.set = 0; draw(); stage.classList.add('playing'); animateProds();
+    var A = doc.anim; st.grp = null; setSel([]); st.set = 0; draw(); stage.classList.add('playing'); animateProds();
     $('play').textContent = '■ Stop'; $('play2').textContent = '■ Stop'; playStart = Date.now();
     playT = setInterval(function () {
       if ((Date.now() - playStart) / 1000 >= A.len) { stopPlay(); setStatus('Played ' + A.len + ' s — as the video will run', 'ok'); return; }
@@ -848,7 +1393,7 @@
   $('tq').addEventListener('input', function () { st.q = this.value; filterThumbs(); });
   function useTemplate(t) {
     stopPlay();
-    act(function () { var d = fromTemplate(t); d.id = doc.id; d.name = t.name; doc = d; st.sel = null; st.psel = null; st.set = 0; });
+    act(function () { var d = fromTemplate(t); d.id = doc.id; d.name = t.name; doc = d; st.grp = null; setSel([]); st.set = 0; });
     $('pname').value = doc.name; filterThumbs(); setStatus(t.name + ' applied — Ctrl+Z to go back', 'ok');
   }
 
@@ -889,7 +1434,7 @@
   function openProject(id) {
     Store.getProject(id).then(function (raw) {
       var d = cleanDoc(raw, images); if (!d) { setStatus('That design could not be read', 'warn'); return; }
-      end(); begin(); doc = d; end(); lastSaved = JSON.stringify(doc); st.sel = null; st.psel = null; st.set = 0; $('pname').value = doc.name; draw(); listMine(); setStatus('Opened ' + doc.name, 'ok');
+      end(); begin(); doc = d; end(); lastSaved = JSON.stringify(doc); st.grp = null; setSel([]); st.set = 0; $('pname').value = doc.name; draw(); listMine(); setStatus('Opened ' + doc.name, 'ok');
     });
   }
   window.addEventListener('beforeunload', function () { clearTimeout(draftT); Store.draft({ doc: doc, t: Date.now(), saved: lastSaved === JSON.stringify(doc) }); });
@@ -902,7 +1447,7 @@
   function host(f, cv) { var h = mk('div'); h.style.cssText = 'position:fixed;left:-' + (PX[f][0] + 300) + 'px;top:0;width:' + PX[f][0] + 'px;pointer-events:none'; h.appendChild(cv); document.body.appendChild(h); fitText(cv); return h; }
   function renderFile(f, set, ext) {
     var cv = renderCanvas(doc, f, set, 'file'), h = host(f, cv);
-    var job = document.fonts.ready.then(function () { return ext === 'jpg' ? htmlToImage.toJpeg(cv, Object.assign({ quality: .95 }, h2iOpts(f))).then(function (u) { return fetch(u).then(function (r) { return r.blob(); }); }) : htmlToImage.toBlob(cv, h2iOpts(f)); });
+    var job = document.fonts.ready.then(function () { return ext === 'jpg' ? htmlToImage.toJpeg(cv, Object.assign({ quality: .95 }, h2iOpts(f))).then(function (u) { return fetch(u).then(function (r) { return r.blob(); }); }) : htmlToImage.toBlob(cv, h2iOpts(f, doc.bg.k === 'none')); });   // 'None' background = a see-through PNG
     return job.then(function (b) { h.remove(); return b; }, function (e) { h.remove(); throw e; });
   }
   function busy(on) { dlBusy = on; document.querySelectorAll('.dl .btn').forEach(function (b) { b.disabled = on; }); }
@@ -1033,7 +1578,7 @@
     });
     job.then(function (docs) {
       buildPk(); thumbsDirty(); listMine();
-      if (docs.length) { end(); begin(); doc = docs[0]; end(); lastSaved = JSON.stringify(doc); $('pname').value = doc.name; st.sel = null; st.psel = null; draw(); }
+      if (docs.length) { end(); begin(); doc = docs[0]; end(); lastSaved = JSON.stringify(doc); $('pname').value = doc.name; st.grp = null; setSel([]); draw(); }
       setStatus('Imported ' + docs.length + ' design(s)' + (nv ? ' and ' + nv + ' video project(s) — see Video' : ''), 'ok');
     }).catch(function (e) { setStatus('Not imported: ' + ((e && e.message) || 'try again'), 'warn'); });
   };
@@ -1060,5 +1605,6 @@
 
   // test hooks (read-only views + the same actions the buttons run)
   window.KBB_STUDIO = { shared: { Store: Store, D: D, ICONS: ICONS, iconSvg: iconSvg, FONTS: FONTS, images: images, brand: function () { return brand; }, IMGID: IMGID }, stopPlay: function () { stopPlay(); },
-    get doc() { return doc; }, st: st, templates: KT.LIST, useTemplate: function (id) { useTemplate(tplById[id]); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; } };
+    get doc() { return doc; }, st: st, templates: KT.LIST, useTemplate: function (id) { useTemplate(tplById[id]); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; },
+    selKeys: selKeys, setSel: function (k) { setSel(k); afterSel(); }, itemBox: itemBox, aabb: aabb, docColours: function () { return docColours(doc); } };
 })();

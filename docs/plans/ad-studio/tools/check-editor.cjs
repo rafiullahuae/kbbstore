@@ -56,7 +56,8 @@ async function dl(p, click) { const [d] = await Promise.all([p.waitForEvent('dow
   await p.locator('#layers .ly', { hasText: 'Kicker' }).locator('button[title="Show"]').click(); ok(await p.locator('#stage .el[data-id="kick"]').count() === 1, 'layers: show brings it back');
   await p.locator('#layers .ly', { hasText: 'Kicker' }).locator('button[title="Lock"]').click(); ok(await p.locator('#stage .el.lk[data-id="kick"]').count() === 1, 'layers: lock makes it untouchable on the ad');
   // background + brand
-  await p.click('.tab[data-tab="style"]'); await p.selectOption('#bg-k', 'solid'); await p.locator('#bg-c1').evaluate((n) => { n.value = '#123456'; n.dispatchEvent(new Event('input', { bubbles: true })); n.dispatchEvent(new Event('change', { bubbles: true })); });
+  await p.click('.tab[data-tab="style"]'); await p.click('#bg-kind button[data-v="solid"]'); await p.click('[data-bgk="solid"] .sw');
+  await p.fill('#cc-hex', '#123456'); await p.press('#cc-hex', 'Enter'); await p.click('#cc-x');
   ok(await p.evaluate(() => window.KBB_STUDIO.doc.bg.c1) === '#123456' && await p.evaluate(() => window.KBB_STUDIO.doc.bg.k) === 'solid', 'background colour set');
   await p.setInputFiles('#bg-file', path.join(FIX, 'backdrop.jpg')); await p.waitForFunction(() => window.KBB_STUDIO.doc.bg.k === 'image');
   ok(true, 'background picture uploaded');
@@ -144,8 +145,190 @@ async function dl(p, click) { const [d] = await Promise.all([p.waitForEvent('dow
   }
   ok(sw.every((x) => x.endsWith(':390')), '390px: scrollWidth on every tab ' + sw.join(' '));
   await o3.p.click('.tab[data-tab="edit"]'); await o3.p.click('#stage .el[data-id="h1"]'); await o3.p.screenshot({ path: path.join(ROOT, 'shots', 'editor-390-edit.png') });
+  // touch: the "Select" toggle makes plain taps add to the selection
+  await o3.p.keyboard.press('Escape'); await o3.p.click('#pick'); await o3.p.click('#stage .el[data-id="h1"]'); await o3.p.click('#stage .el[data-id="cta"]');
+  ok((await o3.p.evaluate(() => window.KBB_STUDIO.selKeys())).length === 2 && await o3.p.locator('#stage .msbox').count() === 1, 'phone: Select toggle + two taps pick two items');
+  ok(await o3.p.evaluate(() => document.documentElement.scrollWidth) === 390, '390px: no sideways scroll with the arrange bar showing');
   ok(o3.errs.length === 0, 'phone: no console errors');
   await ph.close();
+
+  // ── multi-select, groups, align / distribute / match, snapping, layers, copy / paste, undo, backgrounds, colours ──
+  {
+    const mc = await b.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
+    const { p: q, errs: qe, net: qn } = await open(mc);
+    const S = (fn, a) => q.evaluate(fn, a);
+    const keys = () => S(() => window.KBB_STUDIO.selKeys());
+    const g = (id) => S((id) => Object.assign({}, window.KBB_STUDIO.doc.geo.post[id]), id);
+    const box = (k) => S((k) => window.KBB_STUDIO.aabb(window.KBB_STUDIO.itemBox(k)), k);
+    const nEls = () => S(() => window.KBB_STUDIO.doc.els.length);
+    const near = (a, c, t) => Math.abs(a - c) <= (t || .02);
+    await S(() => window.KBB_STUDIO.useTemplate('flash-sale'));
+    await q.click('.tab[data-tab="edit"]');
+    // pick: Shift adds, Ctrl removes, marquee, Ctrl+A
+    await q.click('#stage .el[data-id="h1"]'); await q.click('#stage .el[data-id="cta"]', { modifiers: ['Shift'] });
+    ok(JSON.stringify(await keys()) === '["h1","cta"]' && await q.locator('#stage .msbox').count() === 1 && await q.locator('#stage .msbox .mh').count() === 4 && await q.isVisible('#abar') && await q.isVisible('#multi'), 'Shift+click picks two: one box with 4 corner handles, the arrange bar and the multi panel');
+    await q.click('#stage .el[data-id="cta"]', { modifiers: ['Control'] }); ok(JSON.stringify(await keys()) === '["h1"]', 'Ctrl+click takes one out again');
+    const cvb = await q.locator('#stage .cv').boundingBox();
+    await q.mouse.move(cvb.x + 3, cvb.y + 3); await q.mouse.down(); await q.mouse.move(cvb.x + cvb.width * .6, cvb.y + 130, { steps: 5 }); await q.mouse.up();
+    let k = await keys(); ok(['logo', 'kick', 'h1'].every((x) => k.includes(x)) && !k.includes('cta'), 'dragging a box on the empty ad picks what it touches: ' + k.join(','));
+    await q.mouse.click(cvb.x + 3, cvb.y + 3); ok((await keys()).length === 0, 'a tap on the empty ad clears the pick');
+    await q.keyboard.press('Control+a'); k = await keys();
+    ok(k.length === await S(() => { const d = window.KBB_STUDIO.doc; return d.els.filter((e) => e.t !== 'prods' && !e.hide && !e.lock).length + d.sets.post[0].length; }) && k.some((x) => x.startsWith('p:')), 'Ctrl+A picks every item, products included (' + k.length + ')');
+    // move together (one undo step); Shift+arrow = 10 px of the 1080 px file
+    await S(() => window.KBB_STUDIO.setSel(['h1', 'cta']));
+    const h0 = await g('h1'), c0 = await g('cta'), hb = await q.locator('#stage .el[data-id="h1"]').boundingBox();
+    await q.keyboard.down('Alt'); await q.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await q.mouse.down(); await q.mouse.move(hb.x + hb.width / 2 + 30, hb.y + hb.height / 2 + 20, { steps: 6 }); await q.mouse.up(); await q.keyboard.up('Alt');
+    let h1 = await g('h1'), c1 = await g('cta');
+    ok(h1.x - h0.x > 4 && near(h1.x - h0.x, c1.x - c0.x, .001) && near(h1.y - h0.y, c1.y - c0.y, .001) && JSON.stringify(await keys()) === '["h1","cta"]', 'dragging one of two moves both by the same amount (' + (h1.x - h0.x).toFixed(2) + ', ' + (h1.y - h0.y).toFixed(2) + ' cqw)');
+    await q.keyboard.press('Control+z'); h1 = await g('h1'); c1 = await g('cta'); ok(h1.x === h0.x && h1.y === h0.y && c1.x === c0.x && c1.y === c0.y, 'one Ctrl+Z puts both back');
+    await q.keyboard.press('Shift+ArrowRight'); h1 = await g('h1'); c1 = await g('cta');
+    ok(near(h1.x - h0.x, 1000 / 1080, .002) && near(c1.x - c0.x, 1000 / 1080, .002), 'Shift+→ moves both 10 px (' + ((h1.x - h0.x) * 10.8).toFixed(2) + ' px)');
+    await q.keyboard.press('ArrowLeft'); h1 = await g('h1'); ok(near((h1.x - h0.x) * 10.8, 9, .03), '← moves 1 px');
+    await q.keyboard.press('Control+z'); await q.keyboard.press('Control+z'); h1 = await g('h1'); ok(h1.x === h0.x, 'each nudge is one undo step');
+    // align + distribute + match, each one undo step
+    await S(() => window.KBB_STUDIO.setSel(['h1', 'cta', 'pay']));
+    await q.click('#abar [data-al="l"]'); let bx = await Promise.all(['h1', 'cta', 'pay'].map(box));
+    ok(near(bx[0].x0, bx[1].x0) && near(bx[1].x0, bx[2].x0), 'Align left (to the selection): three left edges at ' + bx.map((x) => x.x0.toFixed(2)).join(' / '));
+    await q.click('#alto button[data-v="art"]'); await q.click('#abar [data-al="r"]'); bx = await Promise.all(['h1', 'cta', 'pay'].map(box));
+    ok(bx.every((x) => near(x.x1, 100)), 'Align right to the ad: right edges at 100');
+    await q.click('#abar [data-al="c"]'); bx = await Promise.all(['h1', 'cta', 'pay'].map(box)); ok(bx.every((x) => near((x.x0 + x.x1) / 2, 50)), 'Align centre to the ad');
+    await q.click('#alto button[data-v="sel"]');
+    await q.keyboard.press('Control+z'); await q.keyboard.press('Control+z'); await q.keyboard.press('Control+z');
+    ok((await g('h1')).x === h0.x && (await g('cta')).x === c0.x, 'three aligns, three Ctrl+Z, back where they were');
+    await S(() => window.KBB_STUDIO.setSel(['h2', 'ar', 'cta'])); await q.click('#abar [data-ds="v"]');
+    bx = (await Promise.all(['h2', 'ar', 'cta'].map(box))).sort((a, c) => a.y0 - c.y0);
+    ok(near(bx[1].y0 - bx[0].y1, bx[2].y0 - bx[1].y1, .02), 'Distribute vertically: equal gaps ' + (bx[1].y0 - bx[0].y1).toFixed(2) + ' / ' + (bx[2].y0 - bx[1].y1).toFixed(2));
+    await q.keyboard.press('Control+z');
+    await S(() => window.KBB_STUDIO.setSel(['cta', 'pay'])); await q.click('#abar [data-mt="w"]'); ok((await g('pay')).w === (await g('cta')).w, 'Match width: to the first picked');
+    await q.click('#abar [data-mt="h"]'); ok((await g('pay')).h === (await g('cta')).h, 'Match height'); await q.keyboard.press('Control+z'); await q.keyboard.press('Control+z');
+    // smart guides: dragging one item near the ad's centre snaps it there and shows the guide
+    await S(() => window.KBB_STUDIO.setSel([]));
+    const db = await q.locator('#stage .el[data-id="deco"]').boundingBox(), dd = await box('deco'), pxc = cvb.width / 100;
+    await q.mouse.move(db.x + db.width / 2, db.y + db.height / 2); await q.mouse.down();
+    await q.mouse.move(db.x + db.width / 2 + (50.5 - (dd.x0 + dd.x1) / 2) * pxc, db.y + db.height / 2 + 2, { steps: 8 });
+    const gv = await q.locator('#stage .guide.v').count(); await q.mouse.up(); const dn = await box('deco');
+    ok(gv >= 1 && near((dn.x0 + dn.x1) / 2, 50, .05), 'smart guide: dropped 0.5 off the centre, it snaps to the centre (' + ((dn.x0 + dn.x1) / 2).toFixed(3) + ') with a guide shown');
+    await q.keyboard.press('Control+z');
+    // scale and turn together with the selection box
+    await S(() => window.KBB_STUDIO.setSel(['h1', 'cta']));
+    let s0 = { h: await g('h1'), c: await g('cta') }, se = await q.locator('#stage .msbox .mh[data-h="se"]').boundingBox();
+    await q.mouse.move(se.x + se.width / 2, se.y + se.height / 2); await q.mouse.down(); await q.mouse.move(se.x + 40, se.y + 60, { steps: 6 }); await q.mouse.up();
+    let s1 = { h: await g('h1'), c: await g('cta') }, fh = s1.h.w / s0.h.w, fc = s1.c.w / s0.c.w;
+    ok(fh > 1.02 && near(fh, fc, .005) && near(s1.c.h / s0.c.h, fc, .005) && near(s1.h.k / s0.h.k, fh, .01), 'corner handle scales both by the same factor (' + fh.toFixed(3) + ', ' + fc.toFixed(3) + ') text size included');
+    await q.keyboard.press('Control+z'); ok((await g('h1')).w === s0.h.w && (await g('cta')).w === s0.c.w, 'one Ctrl+Z undoes the scale');
+    const mr = await q.locator('#stage .msbox .mr').boundingBox(), mb = await q.locator('#stage .msbox').boundingBox();
+    await q.mouse.move(mr.x + mr.width / 2, mr.y + mr.height / 2); await q.mouse.down(); await q.mouse.move(mb.x + mb.width + 80, mb.y + mb.height / 2, { steps: 8 }); await q.mouse.up();
+    s1 = { h: await g('h1'), c: await g('cta') };
+    ok(s1.h.r !== 0 && s1.h.r === s1.c.r, 'round handle turns both by the same angle (' + s1.h.r + '°)');
+    await q.keyboard.press('Control+z'); ok((await g('h1')).r === 0 && (await g('cta')).r === 0, 'one Ctrl+Z undoes the turn');
+    // group / ungroup
+    await q.keyboard.press('Control+g');
+    let G = await S(() => { const d = window.KBB_STUDIO.doc; return { groups: Object.keys(d.groups), gp: d.els.filter((e) => e.gp).map((e) => e.id + ':' + e.gp) }; });
+    ok(G.groups.length === 1 && G.gp.length === 2, 'Ctrl+G groups them ' + JSON.stringify(G));
+    ok(await q.locator('#layers .ly.grp').count() === 1 && /Group 1 · 2/.test(await q.textContent('#layers .ly.grp')) && await q.locator('#layers .ly.ch').count() === 2, 'the group shows in Layers with its two items under it');
+    await q.click('#layers .ly.grp .gt'); ok(await q.locator('#layers .ly.ch').count() === 0, 'the group folds shut in Layers'); await q.click('#layers .ly.grp .gt');
+    await q.mouse.click(cvb.x + 3, cvb.y + 3); await q.click('#stage .el[data-id="h1"]');
+    ok((await keys()).length === 2, 'tapping one item of a group picks the whole group');
+    await q.dblclick('#stage .el[data-id="h1"]'); ok(JSON.stringify(await keys()) === '["h1"]' && await S(() => window.KBB_STUDIO.st.grp) && await q.locator('#stage .gbox').count() === 1, 'double-click enters the group: one item picked, the group outlined');
+    await q.keyboard.press('Escape'); ok((await keys()).length === 2 && !(await S(() => window.KBB_STUDIO.st.grp)), 'Esc leaves the group: the group is picked again');
+    const gb0 = { h: await g('h1'), c: await g('cta') }, hb2 = await q.locator('#stage .el[data-id="cta"]').boundingBox();
+    await q.mouse.move(hb2.x + 10, hb2.y + hb2.height / 2); await q.mouse.down(); await q.mouse.move(hb2.x + 10, hb2.y + hb2.height / 2 - 25, { steps: 5 }); await q.mouse.up();
+    ok(near((await g('h1')).y - gb0.h.y, (await g('cta')).y - gb0.c.y, .001) && (await g('h1')).y < gb0.h.y - 2, 'the group moves as one');
+    await q.keyboard.press('Control+z');
+    // the group survives save -> reload, and draws (and downloads) exactly as the same items ungrouped
+    const shotG = await S(() => window.KBB_STUDIO.renderFile('post', 0, 'png').then((bl) => bl.arrayBuffer()).then((a) => crypto.subtle.digest('SHA-256', a)).then((h) => Array.from(new Uint8Array(h)).join('.')));
+    await q.keyboard.press('Control+s'); await q.waitForFunction(() => /Saved/.test(document.getElementById('status').textContent));
+    await q.reload(); await q.waitForFunction(() => document.documentElement.dataset.ready === '1');
+    G = await S(() => { const d = window.KBB_STUDIO.doc; return { groups: Object.keys(d.groups).length, gp: d.els.filter((e) => e.gp).length }; });
+    ok(G.groups === 1 && G.gp === 2, 'save -> reload: the group comes back');
+    await q.click('.tab[data-tab="edit"]'); await q.click('#stage .el[data-id="h1"]'); await q.keyboard.press('Control+Shift+g');
+    ok(await S(() => Object.keys(window.KBB_STUDIO.doc.groups).length === 0 && !window.KBB_STUDIO.doc.els.some((e) => e.gp)), 'Shift+Ctrl+G ungroups');
+    const shotU = await S(() => window.KBB_STUDIO.renderFile('post', 0, 'png').then((bl) => bl.arrayBuffer()).then((a) => crypto.subtle.digest('SHA-256', a)).then((h) => Array.from(new Uint8Array(h)).join('.')));
+    ok(shotG === shotU, 'the full-HD PNG is the same picture grouped or not');
+    await q.keyboard.press('Control+z'); ok(await S(() => Object.keys(window.KBB_STUDIO.doc.groups).length === 1), 'Ctrl+Z regroups');
+    // copy / paste / duplicate / delete / lock on many
+    await S(() => window.KBB_STUDIO.setSel(['h2', 'ar', 'p:0'])); const n0 = await nEls(), np0 = await S(() => window.KBB_STUDIO.doc.sets.post[0].length);
+    await q.keyboard.press('Control+c'); await q.keyboard.press('Control+v');
+    ok(await nEls() === n0 + 2 && await S(() => window.KBB_STUDIO.doc.sets.post[0].length) === np0 + 1 && (await keys()).length === 3 && !(await keys()).includes('h2'), 'Ctrl+C / Ctrl+V pastes 2 items + 1 product, and picks the copies');
+    await q.keyboard.press('Control+d'); ok(await nEls() === n0 + 4, 'Ctrl+D duplicates the pick');
+    await q.keyboard.press('Delete'); ok(await nEls() === n0 + 2, 'Delete removes the whole pick');
+    await q.keyboard.press('Control+z'); await q.keyboard.press('Control+z'); await q.keyboard.press('Control+z'); ok(await nEls() === n0 && await S(() => window.KBB_STUDIO.doc.sets.post[0].length) === np0, 'undo steps back through delete, duplicate and paste');
+    await S(() => window.KBB_STUDIO.setSel(['h2', 'ar'])); await q.click('#m-lock');
+    ok(await S(() => ['h2', 'ar'].every((id) => window.KBB_STUDIO.doc.els.find((e) => e.id === id).lock)), 'Lock locks both'); await q.keyboard.press('Control+z');
+    await q.locator('#m-op').evaluate((n) => { n.value = '40'; n.dispatchEvent(new Event('input', { bubbles: true })); n.dispatchEvent(new Event('change', { bubbles: true })); });
+    ok(await S(() => ['h2', 'ar'].every((id) => window.KBB_STUDIO.doc.els.find((e) => e.id === id).op === 40)), 'Opacity for all'); await q.keyboard.press('Control+z');
+    // layers: click, Shift-range, Ctrl-toggle, drag to reorder, rename
+    await S(() => window.KBB_STUDIO.setSel([]));
+    await S(() => window.KBB_STUDIO.setSel(['h1', 'cta'])); await q.keyboard.press('Control+Shift+g');   // ungrouped again for the layer tests
+    await q.click('#layers .ly[data-k="trust"] .n'); await q.click('#layers .ly[data-k="cta"] .n', { modifiers: ['Shift'] });
+    k = await keys(); ok(['trust', 'pay', 'cta'].every((x) => k.includes(x)) && k.length === 3, 'Layers: Shift-click picks the range ' + k.join(','));
+    await q.click('#layers .ly[data-k="pay"] .n', { modifiers: ['Control'] }); ok(!(await keys()).includes('pay') && (await keys()).length === 2, 'Layers: Ctrl-click takes one out');
+    await S(() => window.KBB_STUDIO.setSel([])); await q.locator('#layers .ly[data-k="band2"]').scrollIntoViewIfNeeded();
+    const ord0 = await S(() => window.KBB_STUDIO.doc.els.map((e) => e.id).join(','));
+    const gr = await q.locator('#layers .ly[data-k="trust"] .gr').boundingBox(), tgt = await q.locator('#layers .ly[data-k="band2"]').boundingBox();
+    await q.mouse.move(gr.x + 3, gr.y + 5); await q.mouse.down(); await q.mouse.move(gr.x + 3, tgt.y + tgt.height - 3, { steps: 8 }); await q.mouse.up();
+    const ord1 = await S(() => window.KBB_STUDIO.doc.els.map((e) => e.id));
+    ok(ord1.indexOf('trust') === 0 && ord1[1] === 'band2', 'Layers: dragging "trust" below the bottom layer puts it at the back: ' + ord1.slice(0, 3).join(','));
+    await q.keyboard.press('Control+z'); ok(await S(() => window.KBB_STUDIO.doc.els.map((e) => e.id).join(',')) === ord0, 'one Ctrl+Z undoes the reorder');
+    await q.dblclick('#layers .ly[data-k="h2"] .n'); await q.fill('#layers .rn', 'Offer line'); await q.press('#layers .rn', 'Enter');
+    ok(await S(() => window.KBB_STUDIO.doc.els.find((e) => e.id === 'h2').name) === 'Offer line' && /Offer line/.test(await q.textContent('#layers .ly[data-k="h2"]')), 'Layers: double-click renames');
+    // the colour control: hex, opacity, recent, this design's colours, brand palette, eyedropper when the browser has one
+    await S(() => window.KBB_STUDIO.setSel(['h1'])); await q.click('#props [data-show~="text"] [data-cp="col"]');
+    ok(await q.isVisible('#ccp') && await q.locator('#cc-brand button').count() >= 9 && await q.locator('#cc-doc button').count() >= 3, 'colour control opens with brand palette and this design\'s colours');
+    ok(await q.isVisible('#cc-eye') === await S(() => !!window.EyeDropper), 'eyedropper offered exactly when the browser has one (' + await S(() => !!window.EyeDropper) + ')');
+    await q.fill('#cc-hex', '12ab34'); await q.press('#cc-hex', 'Enter');
+    ok(await S(() => window.KBB_STUDIO.doc.els.find((e) => e.id === 'h1').col) === '#12AB34' && await q.$eval('#stage .el[data-id="h1"]', (n) => getComputedStyle(n).color) === 'rgb(18, 171, 52)', 'hex typed -> the text turns #12AB34');
+    await q.locator('#cc-a').evaluate((n) => { n.value = '50'; n.dispatchEvent(new Event('input', { bubbles: true })); n.dispatchEvent(new Event('change', { bubbles: true })); });
+    ok(await S(() => window.KBB_STUDIO.doc.els.find((e) => e.id === 'h1').col) === '#12AB3480', 'opacity 50% -> #12AB3480');
+    ok(await q.locator('#cc-rec button[title="#12AB3480"]').count() === 1, 'the colour joins Recent');
+    await q.click('#cc-x'); ok(!(await q.isVisible('#ccp')), 'the control closes');
+    await q.keyboard.press('Control+z'); ok(await S(() => window.KBB_STUDIO.doc.els.find((e) => e.id === 'h1').col) === '#12AB34', 'Ctrl+Z steps the opacity back');
+    await q.keyboard.press('Control+z');
+    // replace a colour across the design, then only in the pick
+    await q.click('.tab[data-tab="style"]');
+    const dc = await S(() => window.KBB_STUDIO.docColours()), from = dc[0].c;
+    await q.click('#dcols button[data-c="' + from + '"]'); await q.fill('#cc-hex', '#0A0B0C'); await q.press('#cc-hex', 'Enter'); await q.click('#cc-x');
+    let dc2 = await S(() => window.KBB_STUDIO.docColours());
+    ok(!dc2.some((x) => x.c === from) && dc2.find((x) => x.c === '#0A0B0C').n >= dc[0].n, 'replace colour: ' + from + ' (used ' + dc[0].n + '×) is gone, #0A0B0C used ' + (dc2.find((x) => x.c === '#0A0B0C') || {}).n + '×');
+    await q.keyboard.press('Control+z'); ok((await S(() => window.KBB_STUDIO.docColours())).some((x) => x.c === from), 'one Ctrl+Z brings the old colour back everywhere');
+    const hc = (await S(() => window.KBB_STUDIO.doc.els.find((e) => e.id === 'h2').col)).slice(0, 7).toUpperCase(), others0 = await S((c) => window.KBB_STUDIO.doc.els.filter((e) => e.id !== 'h2' && ['col', 'fill', 'fill2', 'bc'].some((p) => (e[p] || '').slice(0, 7).toUpperCase() === c)).length, hc);
+    await S(() => window.KBB_STUDIO.setSel(['h2'])); await q.check('#rc-sel'); await q.click('#dcols button[data-c="' + hc + '"]'); await q.fill('#cc-hex', '#ABCDEF'); await q.press('#cc-hex', 'Enter'); await q.click('#cc-x');
+    const others1 = await S((c) => window.KBB_STUDIO.doc.els.filter((e) => e.id !== 'h2' && ['col', 'fill', 'fill2', 'bc'].some((p) => (e[p] || '').slice(0, 7).toUpperCase() === c)).length, hc);
+    ok(await S(() => window.KBB_STUDIO.doc.els.find((e) => e.id === 'h2').col.slice(0, 7)) === '#ABCDEF' && others1 === others0, 'replace colour in the pick only: h2 changed, the other ' + others0 + ' use(s) of ' + hc + ' untouched');
+    await q.uncheck('#rc-sel'); await q.keyboard.press('Control+z');
+    // backgrounds: a template's own gradient shows in the controls; stops, angle, radial centre, picture with fit / filters / overlay, none = see-through PNG
+    await S(() => window.KBB_STUDIO.useTemplate('nd-lilac'));
+    const tb = await S(() => window.KBB_STUDIO.doc.bg), marks = await q.$$eval('#gbar .gs', (l) => l.map((m) => m.style.getPropertyValue('--c')));
+    ok(tb.k === 'linear' && await q.getAttribute('#bg-kind button[data-v="linear"]', 'aria-pressed') === 'true' && JSON.stringify(marks) === JSON.stringify([tb.c1, tb.c2]) && await q.inputValue('#bg-ang') === String(tb.ang), 'a template\'s gradient opens in the controls: 2 stops ' + marks.join(' → ') + ', angle ' + tb.ang + '°');
+    const gbb = await q.locator('#gbar').boundingBox(); await q.mouse.click(gbb.x + gbb.width / 2, gbb.y + gbb.height / 2);
+    let bg = await S(() => window.KBB_STUDIO.doc.bg);
+    ok(bg.stops && bg.stops.length === 3 && near(bg.stops[1].p, 50, 1.5) && (await q.$eval('#stage .bgl', (n) => n.style.background)).split('%').length - 1 >= 3, 'tapping the gradient bar adds a third stop: ' + JSON.stringify(bg.stops));
+    await q.click('[data-bgk~="linear"] [data-bgc="stop"]'); await q.fill('#cc-hex', '#FFD700'); await q.press('#cc-hex', 'Enter'); await q.click('#cc-x');
+    ok((await S(() => window.KBB_STUDIO.doc.bg.stops[1].c)) === '#FFD700' && /255, 215, 0/.test(await q.$eval('#stage .bgl', (n) => n.style.background)), 'the middle stop recoloured gold, drawn on the ad');
+    await q.locator('#bg-ang').evaluate((n) => { n.value = '45'; n.dispatchEvent(new Event('input', { bubbles: true })); n.dispatchEvent(new Event('change', { bubbles: true })); });
+    ok(/45deg/.test(await q.$eval('#stage .bgl', (n) => n.style.background)), 'angle 45°');
+    await q.click('#gs-del'); ok((await S(() => window.KBB_STUDIO.doc.bg.stops.length)) === 2, 'a stop removed');
+    await q.click('#bg-kind button[data-v="radial"]'); await q.locator('#bg-rx').evaluate((n) => { n.value = '30'; n.dispatchEvent(new Event('input', { bubbles: true })); n.dispatchEvent(new Event('change', { bubbles: true })); });
+    ok(/radial-gradient\(120% 90% at 30% 38%/.test(await q.$eval('#stage .bgl', (n) => n.style.background)), 'radial: centre moved to 30%');
+    await q.setInputFiles('#bg-file', path.join(FIX, 'backdrop.jpg')); await q.waitForFunction(() => window.KBB_STUDIO.doc.bg.k === 'image');
+    await q.click('#bg-fit button[data-v="tile"]');
+    await q.locator('#bg-blur').evaluate((n) => { n.value = '6'; n.dispatchEvent(new Event('input', { bubbles: true })); n.dispatchEvent(new Event('change', { bubbles: true })); });
+    await q.locator('#bg-sat').evaluate((n) => { n.value = '40'; n.dispatchEvent(new Event('input', { bubbles: true })); n.dispatchEvent(new Event('change', { bubbles: true })); });
+    await q.click('[data-bgk="image"] [data-bgc="oc"]'); await q.fill('#cc-hex', '#FF000080'); await q.press('#cc-hex', 'Enter'); await q.click('#cc-x');
+    const bi = await q.$eval('#stage .bgl .bgi', (n) => ({ rep: n.style.backgroundRepeat, f: n.style.filter })), bo = await q.$eval('#stage .bgl .bgo', (n) => getComputedStyle(n).backgroundColor);
+    ok(bi.rep === 'repeat' && /blur\(/.test(bi.f) && /saturate\(40%\)/.test(bi.f) && /^rgba\(255, 0, 0, 0\.(5|49)/.test(bo), 'picture background: tiled, blurred, desaturated, red overlay at 50% ' + JSON.stringify([bi, bo]));
+    const pf = await S(() => window.KBB_STUDIO.renderFile('post', 0, 'png').then((bl) => createImageBitmap(bl)).then((im) => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); return [im.width, Array.from(x.getImageData(5, 650, 1, 1).data)]; }));
+    ok(pf[0] === 1080 && pf[1][0] > pf[1][2] + 40, 'the full-HD PNG carries the picture background with its red overlay ' + JSON.stringify(pf));
+    await q.click('#bg-kind button[data-v="none"]');
+    ok(await q.locator('#stage .cv.clear').count() === 1, 'None: the ad shows a checkerboard while editing');
+    const alpha = await S(() => window.KBB_STUDIO.renderFile('post', 0, 'png').then((bl) => createImageBitmap(bl)).then((im) => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); return [[2, 2], [1077, 2], [2, 1347], [1077, 1347], [540, 2]].map((p) => x.getImageData(p[0], p[1], 1, 1).data[3]); }));
+    ok(alpha.some((a) => a === 0), 'None: the full-HD PNG is see-through where nothing is drawn (corner alphas ' + alpha.join(',') + ')');
+    await q.keyboard.press('Control+z'); ok(await S(() => window.KBB_STUDIO.doc.bg.k) === 'image', 'Ctrl+Z brings the picture background back');
+    await q.click('#bg-kind button[data-v="linear"]'); await q.selectOption('#bg-pat', 'petals');
+    ok(/svg/.test(await q.$eval('#stage .bgp', (n) => n.style.backgroundImage)), 'pattern presets include petals (SVG, inline)');
+    ok(qe.length === 0 && qn.length === 0, 'multi-select session: no console errors, no network ' + qe.slice(0, 3).join(' | ') + qn.join(' '));
+    await mc.close();
+  }
 
   // ── claude.ai artifact runtime: the same file with window.claude.use (an in-memory mock of db/assets/downloads)
   // served over http like the artifact viewer, with /_blob/<id> answered the way the runtime does
