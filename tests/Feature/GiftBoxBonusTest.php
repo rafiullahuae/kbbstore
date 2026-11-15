@@ -215,9 +215,10 @@ it('draws nothing of an expired bonus, and the order does not get it', function 
     gbbFresh();
 
     foreach (gbbSurfaces($cart) as $where => $html) {
-        expect($html)->not->toContain('gbm', $where)->not->toContain('kgo-', $where)->not->toContain('Relief Sun', $where)
-            ->not->toContain('Ended', $where)->not->toContain('has ended', $where)->not->toContain('time is up', $where)
-            ->and(gbbBoxes($html))->not->toBe([], $where);   // the regular box is still there
+        foreach (['gbm', 'kgo-', 'Relief Sun', 'Ended', 'has ended', 'time is up'] as $gone) {
+            expect(str_contains($html, $gone))->toBeFalse("$where still shows \"$gone\"");
+        }
+        expect(gbbBoxes($html))->not->toBe([], $where);   // the regular box is still there
     }
 
     gbbShopper($cart)->post('/checkout/place', [
