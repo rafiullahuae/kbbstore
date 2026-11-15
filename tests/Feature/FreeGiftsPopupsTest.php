@@ -296,7 +296,7 @@ it('opens the gift list when a photo in the box is tapped, exactly as View all d
         ->toContain('.gbx .fgb-th button.fgb-t:focus:not(:focus-visible){outline:0}');
 });
 
-it('draws "Gifts Criteria" as a text link exactly like View all, with its gift icon', function () {
+it('draws the criteria button as a text link exactly like View all: its own editable text, then an arrow', function () {
     // What it looked like: a green pill beside a plain "View all".
     // MUTATION: restore the pill's border/background/radius -- red.
     gbxBands(3);
@@ -308,7 +308,17 @@ it('draws "Gifts Criteria" as a text link exactly like View all, with its gift i
         expect($tg[1])->toContain($same)->and($cr[1])->toContain($same);
     }
     expect($cr[1])->not->toContain('border-radius')->not->toContain('#f3faf6')
-        ->and($html)->toMatch('#<button type="button" class="gbx-cr"[^>]*><svg viewBox="0 0 24 24" width="13" height="13"#');
+        // (owner, 15 Nov: "replace it with All gifts + arrow icon and give option to edit the text too")
+        // MUTATION: put EXTRA_TEXTS['crit'] back on the button, or drop the arrow -- red.
+        ->and($html)->toMatch('#<button type="button" class="gbx-cr"[^>]*><span>All gifts</span><svg class="gbx-ca" viewBox="0 0 24 24" width="12" height="12"[^>]*><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>#');
+
+    // The owner's own wording, from Free gifts -> Display -> Texts -> "Gifts criteria button".
+    $c = app(\App\Services\SettingsService::class)->get(\App\Services\FreeGifts::KEY);
+    $c['texts']['crit_btn_en'] = 'See every gift';
+    app(\App\Services\SettingsService::class)->set(\App\Services\FreeGifts::KEY, $c);
+    \App\Services\SettingsService::forgetMemo();
+    \App\Models\Setting::flushMap();
+    expect(gbxBox())->toContain('<span>See every gift</span><svg class="gbx-ca"');
 });
 
 it('gives the criteria popup a big, clearly visible close, mirrored in Arabic by inset-inline-end', function () {

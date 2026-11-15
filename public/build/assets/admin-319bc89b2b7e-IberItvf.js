@@ -8,7 +8,7 @@
   var TABS = [['overview', 'Overview'], ['ranges', 'Ranges & gifts'], ['products', 'Gift products'], ['display', 'Display'], ['home', 'Homepage section'], ['clicks', 'Clicks']];
   /* [key, label, help]; grouped as the shopper meets them. */
   var TEXT_GROUPS = [
-    ['The box', [['title', 'Box title', ''], ['view_all', 'Open button', ''], ['hide', 'Close button', ''], ['free', 'On each gift', '']]],
+    ['The box', [['title', 'Box title', ''], ['view_all', 'Open button', ''], ['hide', 'Close button', ''], ['crit_btn', 'Gifts criteria button (beside View all)', ''], ['free', 'On each gift', '']]],
     ['Gift count after the wording', [['count_one', '1 gift', ''], ['count_two', '2 gifts', 'Keep :count in English'], ['count_few', '3 to 10 gifts', 'Keep :count'], ['count_many', '11 gifts or more', 'Keep :count']]],
     ['Elsewhere', [['line', 'Checkout summary line', 'Keep :count'], ['tag', 'Emails, invoice, packing slip', ''], ['availability', 'Basket reminder email, under the gifts', ''], ['basket_cta', 'Basket reminder email, last line in the gift box', ''], ['email_added', 'Paid order emails: gift box heading', ''], ['email_added_note', 'Paid order emails: line under the gifts', '']]],
     ['Under the box', [['urgency', 'Urgency line: cart panel, cart page, checkout, basket reminder email', 'One line, up to 80 characters. Switch it off under Gift box look']]]

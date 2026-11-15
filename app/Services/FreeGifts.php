@@ -95,6 +95,9 @@ final class FreeGifts
         'free' => ['FREE', 'مجاناً'],
         'view_all' => ['View all', 'عرض الكل'],
         'hide' => ['Hide', 'إخفاء'],
+        // The button beside View all that opens the gift criteria (the owner, 15 Nov:
+        // "replace it with All gifts + arrow icon and give option to edit the text too").
+        'crit_btn' => ['All gifts', 'كل الهدايا'],
         'line' => ['Free gifts (:count)', 'هدايا مجانية (:count)'],
         'tag' => ['Free gift', 'هدية مجانية'],
         // The basket reminder email (Lane FGE, owner 24 October: "write one
