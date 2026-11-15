@@ -776,6 +776,194 @@ final class RichText
         }, $html);
     }
 
+    /**
+     * Every heading in an English tab body marked `kbb-hd`, so the space under
+     * it is the same under every heading.                          (Lane LN15)
+     *
+     * THE DEFECT, ON THE LIVE SHOP (15 November 2026). "in long description in
+     * english. there'es some spacing issues under headings. plz note, must be
+     * equal spacing under each heading." Measured in Chromium on 210 product
+     * pages (docs/plans/new-products-15-nov): the gap between a heading line
+     * and the first line under it was 0px, 6px, 11px or 18px depending only on
+     * how the copy was typed -- `<p><b>How to use:</b></p>` kept its paragraph
+     * margin (11px), `<div><b>Benefits:</b></div><div><ul>` the list's own 6px,
+     * `<p><b>About brand: …</b></p><div>` nothing, and the newest product
+     * (VT PDRN Reedle Shot hair serum) an empty line under "Recommended for:"
+     * alone (18px). 91 of 210 products had two different gaps on one page.
+     *
+     * THE RULE: a heading sits directly on the text under it -- no gap -- as on
+     * every description the owner writes himself (each Enter a new line with
+     * no space, 2.60.504); the space between sections stays ABOVE the heading.
+     * kbb-product.css draws it from this class: no margin under the heading,
+     * none on top of what follows, and an empty line typed straight under a
+     * heading is not drawn.
+     *
+     * A heading is a paragraph, div, section or h2-h6 holding nothing but a few words
+     * (80 characters at most) that are all bold -- or all in the h2-h6 -- with
+     * no other block, list, picture or line break inside it. A bold label
+     * followed by text on the same line ("Size: 20 ml") is not one, nor is
+     * anything inside the old shop's designed blocks (.kbb-eblock), which lay
+     * themselves out.
+     *
+     * English pages only (Store\ProductController::tabs()): the Arabic pages
+     * are drawn exactly as they were. Nothing stored changes; this only adds a
+     * constant class to an opening tag, and a body with no heading comes back
+     * byte for byte.
+     */
+    public static function markHeadings(string $html): string
+    {
+        if (! preg_match('#<(?:b|strong|h[2-6])\b#i', $html)) {
+            return $html;
+        }
+
+        $skip = self::designedBlocks($html);
+
+        $out = (string) preg_replace_callback(
+            '#<(p|div|section|h[2-6])\b([^>]*)>((?:(?!<(?:p|div|h[1-6]|ul|ol|li|table|section|figure|img|br|hr|picture|video|iframe|svg)\b|</(?:p|div|section|h[1-6])>).)*)</\1>#is',
+            static function (array $m) use ($skip, $html): string {
+                [$all, $at] = $m[0];
+                $tag = strtolower($m[1][0]);
+                $attrs = $m[2][0];
+                $inner = $m[3][0];
+
+                foreach ($skip as [$from, $to]) {
+                    if ($at >= $from && $at < $to) {
+                        return $all;
+                    }
+                }
+                if (preg_match('#\bclass\s*=\s*["\'][^"\']*\b(?:kbb-bl|kbb-hd|kbb-eblock[\w-]*)\b#i', $attrs)) {
+                    return $all;
+                }
+
+                $text = preg_replace('/^' . self::BLANK . '+|' . self::BLANK . '+$/u', '', html_entity_decode(strip_tags($inner), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                if ($text === null || $text === '' || mb_strlen($text) > 80 || ! preg_match('/\p{L}/u', $text)) {
+                    return $all;
+                }
+
+                if ($tag[0] !== 'h') {
+                    // Every word bold: take the bold runs out and nothing visible may be left.
+                    $rest = $inner;
+                    do {
+                        $before = $rest;
+                        $rest = (string) preg_replace('#<(b|strong)\b[^>]*>(?:(?!<(?:b|strong)\b).)*?</\1>#is', '', $rest);
+                    } while ($rest !== $before);
+                    if ($rest === $inner) {
+                        return $all;
+                    }
+                    $left = html_entity_decode(strip_tags($rest), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                    if (preg_replace('/' . self::BLANK . '+/u', '', $left) !== '') {
+                        return $all;
+                    }
+                }
+
+                // A heading with nothing under it has no space under it to set.
+                $after = substr($html, $at + strlen($all));
+                if (preg_replace('/' . self::BLANK . '+/u', '', html_entity_decode(strip_tags($after), ENT_QUOTES | ENT_HTML5, 'UTF-8')) === ''
+                    && ! preg_match('#<(?:img|picture|video|iframe|table|svg)\b#i', $after)) {
+                    return $all;
+                }
+
+                $open = preg_match('#\bclass\s*=\s*"#i', $attrs)
+                    ? '<' . $m[1][0] . preg_replace('#\bclass\s*=\s*"#i', '$0kbb-hd ', $attrs, 1) . '>'
+                    : '<' . $m[1][0] . ' class="kbb-hd"' . $attrs . '>';
+
+                return $open . substr($all, strlen('<' . $m[1][0] . $attrs . '>'));
+            },
+            $html,
+            -1,
+            $count,
+            PREG_OFFSET_CAPTURE
+        );
+
+        /*
+         * The old shop's copy also writes a heading as bare bold text on its own
+         * line, straight inside a wrapper: `<div><strong>Benefits:</strong><ul>`.
+         * The same few bold words count when they start a line (the body's start,
+         * or after a block's opening or closing tag or a <br>, empty bold tags
+         * allowed between) and a block opens right after them, or right after
+         * the paragraph they end (`<p>Made in Korea<br><b>How to Use:</b></p>
+         * <ul>`). The class goes on the bold tag, and the stylesheet's rule for
+         * what follows a heading reaches the block. Bold inside a paragraph
+         * already marked is left alone: the paragraph is the heading.
+         */
+        $src = $out;
+        $skip = self::designedBlocks($src);
+        $out = (string) preg_replace_callback(
+            '#(?:(?<=>)|^)(\s*(?:<(?:b|strong)\b[^>]*>\s*</(?:b|strong)>\s*)*)<(b|strong)\b([^>]*)>((?:(?!<(?:b|strong|p|div|h[1-6]|ul|ol|li|table|section|img|br)\b|</(?:b|strong)>).)*)</\2>(?=\s*(?:</p>\s*)?<(?:ul|ol|div|p|section|table|h[2-6])\b)#is',
+            static function (array $m) use ($skip, $src, &$count): string {
+                [$all, $at] = $m[0];
+                $attrs = $m[3][0];
+
+                // It must start a line: the tag just before it opens or closes a block, or is a <br>.
+                $lt = strrpos(substr($src, 0, $at), '<');
+                if ($at > 0 && ($lt === false || ! preg_match('#^<(?:/?(?:p|div|section|ul|ol|h[1-6]|table|blockquote|figure)|br)\b#i', substr($src, $lt, $at - $lt)))) {
+                    return $all;
+                }
+                if ($lt !== false && str_contains(substr($src, $lt, $at - $lt), 'kbb-hd')) {
+                    return $all;
+                }
+
+                foreach ($skip as [$from, $to]) {
+                    if ($at >= $from && $at < $to) {
+                        return $all;
+                    }
+                }
+                if (preg_match('#\bclass\s*=\s*["\'][^"\']*\bkbb-hd\b#i', $attrs)) {
+                    return $all;
+                }
+
+                $text = preg_replace('/^' . self::BLANK . '+|' . self::BLANK . '+$/u', '', html_entity_decode(strip_tags($m[4][0]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                if ($text === null || $text === '' || mb_strlen($text) > 80 || ! preg_match('/\p{L}/u', $text)) {
+                    return $all;
+                }
+
+                $count++;
+                $open = preg_match('#\bclass\s*=\s*"#i', $attrs)
+                    ? '<' . $m[2][0] . preg_replace('#\bclass\s*=\s*"#i', '$0kbb-hd ', $attrs, 1) . '>'
+                    : '<' . $m[2][0] . ' class="kbb-hd"' . $attrs . '>';
+
+                return $m[1][0] . $open . substr($all, strlen($m[1][0]) + strlen('<' . $m[2][0] . $attrs . '>'));
+            },
+            $out,
+            -1,
+            $n,
+            PREG_OFFSET_CAPTURE
+        );
+
+        return $count > 0 ? $out : $html;
+    }
+
+    /**
+     * Where the old shop's designed blocks (.kbb-eblock, App\Support\
+     * GlobalSections) sit in a body, as [start, end) byte ranges.
+     *
+     * @return list<array{0: int, 1: int}>
+     */
+    private static function designedBlocks(string $html): array
+    {
+        $ranges = [];
+        if (stripos($html, 'kbb-eblock') === false || ! preg_match_all('#<div\b[^>]*\bclass\s*=\s*"[^"]*\bkbb-eblock\b[^"]*"[^>]*>#i', $html, $eb, PREG_OFFSET_CAPTURE)) {
+            return $ranges;
+        }
+
+        foreach ($eb[0] as [, $at]) {
+            $depth = 0;
+            $end = strlen($html);
+            if (preg_match_all('#<(/?)div\b[^>]*>#i', $html, $dv, PREG_OFFSET_CAPTURE | PREG_SET_ORDER, $at)) {
+                foreach ($dv as $d) {
+                    $depth += $d[1][0] === '/' ? -1 : 1;
+                    if ($depth === 0) {
+                        $end = $d[0][1];
+                        break;
+                    }
+                }
+            }
+            $ranges[] = [$at, $end];
+        }
+
+        return $ranges;
+    }
+
     private static function trimBlank(string $html, bool $trailing): string
     {
         if (trim($html) === '') {
