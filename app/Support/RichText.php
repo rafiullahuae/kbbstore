@@ -782,14 +782,15 @@ final class RichText
      *
      * THE DEFECT, ON THE LIVE SHOP (15 November 2026). "in long description in
      * english. there'es some spacing issues under headings. plz note, must be
-     * equal spacing under each heading." Measured in Chromium on 210 product
+     * equal spacing under each heading." Measured in Chromium on all 875 product
      * pages (docs/plans/new-products-15-nov): the gap between a heading line
      * and the first line under it was 0px, 6px, 11px or 18px depending only on
      * how the copy was typed -- `<p><b>How to use:</b></p>` kept its paragraph
      * margin (11px), `<div><b>Benefits:</b></div><div><ul>` the list's own 6px,
      * `<p><b>About brand: …</b></p><div>` nothing, and the newest product
      * (VT PDRN Reedle Shot hair serum) an empty line under "Recommended for:"
-     * alone (18px). 91 of 210 products had two different gaps on one page.
+     * alone (18px). 223 products had two different gaps on one page; after
+     * this, 2.
      *
      * THE RULE: a heading sits directly on the text under it -- no gap -- as on
      * every description the owner writes himself (each Enter a new line with
@@ -800,7 +801,9 @@ final class RichText
      *
      * A heading is a paragraph, div, section or h2-h6 holding nothing but a few words
      * (80 characters at most) that are all bold -- or all in the h2-h6 -- with
-     * no other block, list, picture or line break inside it. A bold label
+     * no other block, list, picture or line break inside it (one <br> at its
+     * very end draws nothing and is allowed: `<p><strong>How to Use:<br>
+     * </strong></p>`). A bold label
      * followed by text on the same line ("Size: 20 ml") is not one, nor is
      * anything inside the old shop's designed blocks (.kbb-eblock), which lay
      * themselves out.
@@ -819,7 +822,7 @@ final class RichText
         $skip = self::designedBlocks($html);
 
         $out = (string) preg_replace_callback(
-            '#<(p|div|section|h[2-6])\b([^>]*)>((?:(?!<(?:p|div|h[1-6]|ul|ol|li|table|section|figure|img|br|hr|picture|video|iframe|svg)\b|</(?:p|div|section|h[1-6])>).)*)</\1>#is',
+            '#<(p|div|section|h[2-6])\b([^>]*)>((?:(?!<(?:p|div|h[1-6]|ul|ol|li|table|section|figure|img|hr|picture|video|iframe|svg)\b|</(?:p|div|section|h[1-6])>)(?:<br\b[^>]*>(?=(?:\s|</(?:b|strong|span|em|i|u)>)*</\1>)|(?!<br\b).))*)</\1>#is',
             static function (array $m) use ($skip, $html): string {
                 [$all, $at] = $m[0];
                 $tag = strtolower($m[1][0]);
@@ -880,16 +883,20 @@ final class RichText
          * line, straight inside a wrapper: `<div><strong>Benefits:</strong><ul>`.
          * The same few bold words count when they start a line (the body's start,
          * or after a block's opening or closing tag or a <br>, empty bold tags
-         * allowed between) and a block opens right after them, or right after
+         * allowed between) and a block opens right after them (a <br> between
+         * allowed: `<b>Key Benefits: </b><br><ul>`), or right after
          * the paragraph they end (`<p>Made in Korea<br><b>How to Use:</b></p>
          * <ul>`). The class goes on the bold tag, and the stylesheet's rule for
          * what follows a heading reaches the block. Bold inside a paragraph
-         * already marked is left alone: the paragraph is the heading.
+         * already marked is left alone: the paragraph is the heading. The bold
+         * may open with the blank line typed above the heading
+         * (`<strong><div class="kbb-bl"></div>How to Use :</strong>`, medicube
+         * Vanilla duo): that line is the space above it and stays.
          */
         $src = $out;
         $skip = self::designedBlocks($src);
         $out = (string) preg_replace_callback(
-            '#(?:(?<=>)|^)(\s*(?:<(?:b|strong)\b[^>]*>\s*</(?:b|strong)>\s*)*)<(b|strong)\b([^>]*)>((?:(?!<(?:b|strong|p|div|h[1-6]|ul|ol|li|table|section|img|br)\b|</(?:b|strong)>).)*)</\2>(?=\s*(?:</p>\s*)?<(?:ul|ol|div|p|section|table|h[2-6])\b)#is',
+            '#(?:(?<=>)|^)(\s*(?:<(?:b|strong)\b[^>]*>\s*</(?:b|strong)>\s*)*)<(b|strong)\b([^>]*)>((?:<div class="kbb-bl"></div>)?(?:(?!<(?:b|strong|p|div|h[1-6]|ul|ol|li|table|section|img|br)\b|</(?:b|strong)>).)*)</\2>(?=\s*(?:<br\b[^>]*>\s*)?(?:</p>\s*)?<(?:ul|ol|div|p|section|table|h[2-6])\b)#is',
             static function (array $m) use ($skip, $src, &$count): string {
                 [$all, $at] = $m[0];
                 $attrs = $m[3][0];
@@ -930,7 +937,22 @@ final class RichText
             PREG_OFFSET_CAPTURE
         );
 
-        return $count > 0 ? $out : $html;
+        if ($count === 0) {
+            return $html;
+        }
+
+        /*
+         * An empty line typed as bold (`<b><br></b>`) opening the block straight
+         * under a heading is the same typed-in gap as a blank paragraph there
+         * (medicube Vanilla duo: 18px under "What this set includes:" and "How
+         * to Use :"). It is marked kbb-hd-br and not drawn. Only that exact
+         * shape: a bold tag holding a line break and nothing else.
+         */
+        return (string) preg_replace(
+            '#(<(\w+)\b[^>]*\bkbb-hd\b[^>]*>(?:(?!</\2>).)*</\2>\s*<(?:div|section|p)\b[^>]*>\s*)<(b|strong)>(\s*<br\s*/?>\s*</\3>)#is',
+            '$1<$3 class="kbb-hd-br">$4',
+            $out
+        );
     }
 
     /**
