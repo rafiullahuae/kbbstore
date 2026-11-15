@@ -306,6 +306,14 @@ it('draws each of the five designs with its clock on the bonus and only its own 
     expect(GiftBoxBonus::parts($b + ['design' => 'B'])['tile'])->toBe('')
         ->and(GiftBoxBonus::parts($b + ['design' => 'D'])['tile'])->toBe('')
         ->and(GiftBoxBonus::parts($b + ['design' => 'C'])['after'])->toContain('<b>+ Bonus</b> 2× Relief &lt;Sun&gt;');
+
+    // The one-line name (A, C, E) never widens the page: measured on /ar/cart/
+    // at 390 it pushed scrollWidth to 421 (its nowrap text set the cart
+    // column's min-content). width:0 + min-width:100% takes it out of that.
+    // MUTATION: drop width:0;min-width:100% from .gbA-cap. RED.
+    foreach (['A', 'C', 'E'] as $d) {
+        expect(GiftBoxBonus::parts($b + ['design' => $d])['css'])->toContain('.gb' . $d . '-cap{width:0;min-width:100%;box-sizing:border-box;');
+    }
 });
 
 it('stores one of its own five designs or A, and a real on/off, whatever the admin is sent', function () {
