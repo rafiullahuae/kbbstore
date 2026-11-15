@@ -1159,6 +1159,8 @@ select.fg-in{padding-inline-end:28px}
   var X_MODES = [['off', 'Off', 'Nobody sees the popups. The box is exactly as before.'], ['testing', 'Testing', 'Only the IPs on the Testing list see them.'], ['live', 'Live', 'Every shopper sees them.']];
   var X_POPS = [['off', 'Off · photos are not clickable'], ['A', 'A · Compact card (slides up on a phone)'], ['B', 'B · Photo on top, pink FREE badge'], ['C', 'C · Card inside the box, under the photo'], ['D', 'D · Minimal luxe, value struck then FREE']];
   var X_CRITS = [['1', '1 · Stacked cards'], ['2', '2 · Compact ladder'], ['3', '3 · Tabs by amount']];
+  /* (Lane GCR) The owner, 15 November: "give us the switch to show only rows or complete tabs", then "by default, keep the rows". */
+  var X_CRIT_SHOWS = [['rows', 'Simple rows (as on the homepage)'], ['tabs', 'Complete tabs (the design below)']];
   var X_TABS = [['T5', 'T5 · Count under the amount, “Your basket” on the line'], ['T1', 'T1 · Green fill']];
   var X_GLOWS = [['none', 'None'], ['G1', 'G1 · Soft pink halo'], ['G2', 'G2 · Thin pink ring'], ['G3', 'G3 · White ring, blush glow'], ['G4', 'G4 · Pink and champagne']];
   function saveExtras(body, msg) {
@@ -1167,7 +1169,7 @@ select.fg-in{padding-inline-end:28px}
     });
   }
   function extrasCard(d) {
-    var x = d.config.extras || { mode: 'off', pop: 'off', crit_on: true, crit: '1', glow: 'none', panel_gap: 12, link_m: 10, link_d: 10, tabs: 'T5' }, ro = !can();
+    var x = d.config.extras || { mode: 'off', pop: 'off', crit_on: true, crit: '1', glow: 'none', panel_gap: 12, link_m: 10, link_d: 10, tabs: 'T5', crit_show: 'rows' }, ro = !can();
     var g = el('div', { class: 'fg-modes', role: 'radiogroup', 'aria-label': 'Gift box popups mode', 'data-fk': 'x-modes' }, X_MODES.map(function (m) {
       return el('button', { type: 'button', role: 'radio', class: 'fg-mode m-' + m[0], 'aria-checked': String(x.mode === m[0]), 'data-fk': 'x-mode-' + m[0], tabindex: x.mode === m[0] ? '0' : '-1',
         'data-kbb-sure': x.mode === m[0] ? null : m[2] + ' Switch Gift box popups to ' + m[1] + '?',
@@ -1192,6 +1194,7 @@ select.fg-in{padding-inline-end:28px}
       x.mode === 'testing' ? el('p', { class: 'fg-sub', style: 'margin:8px 0 0', text: 'Testing uses the same list as free gifts: “IPs that can see it in Testing” above (' + plural((d.config.testers || []).length, 'IP', 'IPs') + ').' }) : null,
       el('div', { class: 'fg-grid2', style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px' }, [
         pick('pop', X_POPS, 'Photo popup', 'What a tap on a gift photo opens.'),
+        pick('crit_show', X_CRIT_SHOWS, 'Gifts Criteria popup shows', 'Simple rows: every spend band as a row with its gift photos, as on the homepage, nothing to click. Complete tabs: the design picked under “Gifts Criteria popup”.'),
         pick('crit', X_CRITS, 'Gifts Criteria popup', 'How the spend bands are laid out.'),
         pick('glow', X_GLOWS, 'Photo glow', 'A soft glow around the gift photos.'),
         pick('tabs', X_TABS, 'Range boxes', 'The spend-band boxes in the “Tabs by amount” popup.')

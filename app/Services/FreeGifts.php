@@ -145,7 +145,7 @@ final class FreeGifts
      * ships at it, and panel_gap -- the space above the box in the cart panel,
      * 0-40px -- ships at 12. Both moved because he asked.
      */
-    public const EXTRAS = ['mode' => 'off', 'pop' => 'off', 'crit_on' => true, 'crit' => '1', 'glow' => 'none', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10, 'tabs' => 'T5'];
+    public const EXTRAS = ['mode' => 'off', 'pop' => 'off', 'crit_on' => true, 'crit' => '1', 'glow' => 'none', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10, 'tabs' => 'T5', 'crit_show' => 'rows'];
 
     /*
      * ▲ 2.60.621 (the owner: "I want to reduce the font size of View all and
@@ -175,6 +175,19 @@ final class FreeGifts
      * pink pill sitting on the box's top line.
      */
     public const EXTRA_TABS = ['T1', 'T5'];
+
+    /*
+     * ▲ (Lane GCR, 15 November) What the "Gifts Criteria" popup shows. The
+     * owner: "give us option to open as same popup, but with same section
+     * which we have on homepage, only the rows having gifts icons etc,
+     * without any arrow button or further clicks ... give us the switch to
+     * show only rows or complete tabs as we have currently", then "by
+     * default, keep the rows which we have on homepage without any arrow or
+     * further clicks." So 'rows' (the homepage section's rows, nothing to
+     * click) is the default because he asked; 'tabs' is the popup exactly as
+     * it was, in whichever Criteria design is picked.
+     */
+    public const EXTRA_CRIT_SHOWS = ['rows', 'tabs'];
 
     /** The popups' own words, constants (escaped where printed). */
     public const EXTRA_TEXTS = [
@@ -557,14 +570,14 @@ final class FreeGifts
      * each design one of its own options or the default, the criteria switch
      * a bool. The admin saves through this, so nothing else reaches the row.
      *
-     * @return array{mode:string,pop:string,crit_on:bool,crit:string,glow:string,panel_gap:int,link_m:int,link_d:int,tabs:string}
+     * @return array{mode:string,pop:string,crit_on:bool,crit:string,glow:string,panel_gap:int,link_m:int,link_d:int,tabs:string,crit_show:string}
      */
     public static function extrasOf(mixed $saved): array
     {
         $saved = is_array($saved) ? $saved : [];
         $out = self::EXTRAS;
 
-        foreach (['mode' => self::MODES, 'pop' => self::EXTRA_POPS, 'crit' => self::EXTRA_CRITS, 'glow' => self::EXTRA_GLOWS, 'tabs' => self::EXTRA_TABS] as $key => $options) {
+        foreach (['mode' => self::MODES, 'pop' => self::EXTRA_POPS, 'crit' => self::EXTRA_CRITS, 'glow' => self::EXTRA_GLOWS, 'tabs' => self::EXTRA_TABS, 'crit_show' => self::EXTRA_CRIT_SHOWS] as $key => $options) {
             $v = $saved[$key] ?? null;
             $v = is_int($v) ? (string) $v : $v;
             if (is_string($v) && in_array($v, $options, true)) {
