@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Product Labels — previews</title>
+<style>
+/* ===== the preview document itself ===== */
+:root{--doc-bg:#eef0f5;--doc-ink:#101729;--doc-soft:#626c80;--doc-line:#dfe3ec}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--doc-bg);color:var(--doc-ink);line-height:1.45}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input,select{font-family:inherit}
+.doc{max-width:1240px;margin:0 auto;padding:24px 16px 80px}
+.doc-h{padding:6px 0 18px}
+.doc-h small{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--doc-soft)}
+.doc-h h1{font-size:26px;letter-spacing:-.02em;margin:4px 0 6px}
+.doc-h p{font-size:14px;color:var(--doc-soft);max-width:760px}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 0}
+.toc a{font-size:12.5px;font-weight:600;color:var(--doc-ink);text-decoration:none;background:#fff;border:1px solid var(--doc-line);border-radius:99px;padding:6px 12px}
+.sec{margin-top:34px;scroll-margin-top:10px}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.sec-h .n{font-size:12px;font-weight:800;color:#fff;background:var(--doc-ink);border-radius:7px;padding:2px 8px}
+.sec-h h2{font-size:19px;letter-spacing:-.01em}
+.sec-h p{flex-basis:100%;font-size:13px;color:var(--doc-soft);max-width:820px}
+.note{background:#fff;border:1px solid var(--doc-line);border-left:4px solid #3f6fe0;border-radius:10px;padding:13px 15px;font-size:13px;color:#2b3448;margin-top:14px}
+.note b{color:var(--doc-ink)}
+.note ul{margin:6px 0 0 18px}
+.note li{margin:3px 0}
+.choose{background:#101729;color:#eef1f9;border-radius:14px;padding:16px 18px;margin-top:16px}
+.choose h3{font-size:14px;margin-bottom:8px}
+.choose ol{list-style:none;display:grid;gap:7px}
+.choose li{font-size:13px;color:#c6cee0}
+.choose li b{color:#fff}
+.choose .k{display:inline-block;min-width:22px;text-align:center;font-weight:800;color:#101729;background:#7fe3a8;border-radius:6px;padding:0 5px;margin-inline-end:6px}
+
+/* ===== ADMIN CONSOLE — tokens copied from resources/views/admin/app.blade.php ===== */
+.adm{
+  --bg:#f6f7fb;--surface:#fff;--surface-2:#f2f4fb;--surface-3:#eef1f9;--border:#e6e9f2;--border-2:#eef0f6;
+  --ink:#101729;--ink-2:#3c465c;--ink-soft:#626c80;--ink-faint:#97a0b2;
+  --accent:#15a85a;--accent-strong:#0f8f4b;--accent-soft:#e7f7ee;--accent-ink:#0b6e3a;
+  --green:#15a85a;--amber:#e0922f;--red:#e3493f;--blue:#3f6fe0;--violet:#7b6cf0;
+  --amber-soft:#fdf2e2;--red-soft:#fdeceb;--blue-soft:#eaf0fd;--violet-soft:#efedfd;
+  --r:18px;--r-sm:12px;--r-xs:9px;
+  --sh-s:0 1px 2px rgba(16,24,40,.05);
+  --sh:0 1px 2px rgba(16,24,40,.05),0 14px 32px -16px rgba(16,24,40,.16);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  background:var(--bg);color:var(--ink);font-size:13px;border:1px solid var(--doc-line);border-radius:16px;overflow:hidden;
+  box-shadow:0 20px 50px -30px rgba(16,24,40,.35)
+}
+.adm .app{display:grid;grid-template-columns:232px minmax(0,1fr)}
+.adm .side{background:rgba(255,255,255,.72);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.adm .brand{display:flex;align-items:center;gap:11px;padding:18px 18px 12px}
+.adm .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px}
+.adm .brand b{font-size:14.5px;font-weight:700;line-height:1.1;display:block}
+.adm .brand small{display:block;font-size:10.5px;color:var(--ink-soft)}
+.adm .nav{padding:6px 12px 18px}
+.adm .nav-sec{margin-top:12px}
+.adm .nav-sec h6{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);padding:0 10px 6px}
+.adm .nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;font-size:13px;font-weight:500;color:var(--ink-2);width:100%;text-align:left}
+.adm .nav-item svg{width:17px;height:17px;flex-shrink:0;color:var(--ink-soft)}
+.adm .nav-item.on{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.adm .nav-item.on svg{color:var(--accent)}
+.adm .nav-item .tag{margin-left:auto;font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--accent);color:#fff}
+.adm .nav-item.dim{opacity:.55}
+.adm .main{min-width:0;display:flex;flex-direction:column}
+.adm .top{display:flex;align-items:center;gap:12px;padding:13px 22px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.6)}
+.adm .top h1{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.adm .top .crumb{font-size:11.5px;color:var(--ink-soft);font-weight:500}
+.adm .top .sp{flex:1}
+.adm .burger{display:none;width:36px;height:36px;border:1px solid var(--border);border-radius:10px;background:#fff;place-items:center}
+.adm .burger svg{width:18px;height:18px}
+.adm .content{padding:22px;min-width:0}
+.adm .page-head{margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.adm .page-head .t{flex:1;min-width:220px}
+.adm .page-head h2{font-size:20px;font-weight:700;letter-spacing:-.015em}
+.adm .page-head p{font-size:13px;color:var(--ink-soft);margin-top:3px;max-width:640px}
+.adm .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-s)}
+.adm .card.pad{padding:18px}
+.adm .sec-title{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 10px}
+.adm .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:linear-gradient(120deg,var(--accent),var(--accent-strong));color:#fff;font-weight:600;font-size:13px;padding:10px 16px;border-radius:11px;box-shadow:0 6px 14px -6px rgba(21,168,90,.55);white-space:nowrap}
+.adm .btn svg{width:16px;height:16px}
+.adm .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--border);box-shadow:none}
+.adm .btn.sm{padding:6px 11px;font-size:12px;border-radius:9px}
+.adm .btn.danger{background:#fff;color:#b8362d;border:1px solid #f3cfcb;box-shadow:none}
+.adm .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.adm .pill .d{width:6px;height:6px;border-radius:50%;background:currentColor}
+.adm .pill.green{background:var(--accent-soft);color:var(--accent-ink)}
+.adm .pill.amber{background:var(--amber-soft);color:#9a6512}
+.adm .pill.red{background:var(--red-soft);color:#b8362d}
+.adm .pill.blue{background:var(--blue-soft);color:#2f53b0}
+.adm .pill.grey{background:var(--surface-3);color:var(--ink-soft)}
+.adm .tog{width:40px;height:23px;border-radius:99px;background:#d4dae6;position:relative;transition:.2s var(--ease);flex-shrink:0;display:inline-block}
+.adm .tog::after{content:"";position:absolute;top:2.5px;left:2.5px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.2s var(--ease)}
+.adm .tog.on{background:var(--accent)}
+.adm .tog.on::after{transform:translateX(17px)}
+.adm .seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.adm .seg button{font-size:12px;font-weight:600;color:var(--ink-soft);padding:6px 12px;border-radius:7px}
+.adm .seg button.on{background:var(--surface);color:var(--accent-ink);box-shadow:var(--sh-s)}
+.adm .fld{margin-bottom:14px;min-width:0}
+.adm .fld>label{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.adm .fld input[type=text],.adm .fld input[type=date],.adm .fld input[type=number],.adm .fld select,.adm .inp{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;background:var(--surface);color:var(--ink)}
+.adm .fld input:focus,.adm .inp:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.adm .hint{font-size:11.5px;color:var(--ink-faint);margin-top:5px}
+.adm table{width:100%;border-collapse:collapse}
+.adm th{text-align:left;font-size:11px;font-weight:600;color:var(--ink-soft);padding:10px 12px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.adm td{padding:12px;border-bottom:1px solid var(--border-2);font-size:13px;vertical-align:middle}
+.adm tr:last-child td{border-bottom:0}
+.adm .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.adm .tabs button{font-size:13px;font-weight:600;color:var(--ink-soft);padding:9px 12px;border-bottom:2px solid transparent;white-space:nowrap}
+.adm .tabs button.on{color:var(--accent-ink);border-color:var(--accent)}
+.adm .muted{color:var(--ink-soft)}
+.adm .faint{color:var(--ink-faint)}
+.adm .mono{font-family:var(--mono);font-size:11.5px}
+
+/* labels list */
+.lrow-name{min-width:130px}.lrow-name b{display:block;font-size:13.5px;white-space:nowrap}.c-cnt{white-space:nowrap}.c-cnt .faint{display:block}.where{flex-wrap:nowrap}
+.ibtn{width:30px;height:30px;border:1px solid var(--border);border-radius:9px;display:grid;place-items:center;color:var(--ink-soft);background:#fff}.ibtn svg{width:15px;height:15px}.ibtn.del:hover{color:#b8362d;border-color:#f3cfcb}
+.lrow-name small{display:block;font-size:11.5px;color:var(--ink-soft)}
+.prio{display:inline-flex;align-items:center;gap:4px}
+.prio b{min-width:20px;text-align:center}
+.prio button{width:22px;height:20px;border:1px solid var(--border);border-radius:6px;display:grid;place-items:center;color:var(--ink-soft);background:#fff}
+.prio button svg{width:11px;height:11px}
+.ract{display:flex;gap:5px;justify-content:flex-end}
+.ltab td{padding:12px 9px}.ltab th{padding:10px 9px}
+.where{display:flex;gap:4px;flex-wrap:wrap}
+.lempty{padding:30px;text-align:center;color:var(--ink-soft)}
+
+/* editor */
+.ed{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.shapes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.shape{border:1px solid var(--border);border-radius:12px;padding:10px 8px 9px;background:#fff;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+.shape.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.shape .sw{position:relative;width:100%;height:54px;border-radius:9px;background:linear-gradient(135deg,#fde7ef,#f3eefc);overflow:hidden}
+.shape .klb-stack{max-width:none;inset-inline-start:12px}
+.shape small{font-size:11.5px;font-weight:600;color:var(--ink-2)}
+.swatches{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.swatch{width:26px;height:26px;border-radius:8px;border:2px solid #fff;box-shadow:0 0 0 1px var(--border)}
+.swatch.on{box-shadow:0 0 0 2px var(--ink)}
+.swatches input[type=color]{width:34px;height:28px;border:1px solid var(--border);border-radius:8px;padding:2px;background:#fff}
+.edprev{position:sticky;top:12px}
+.edprev .pv{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cw{font-size:11px;font-weight:600;margin-top:6px}
+
+/* picker */
+.pk-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.pk{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:start}
+.pk.only-p{grid-template-columns:minmax(0,1fr)}
+.pk.only-p .pk-cats{display:none}
+.pk.only-c{grid-template-columns:minmax(0,1fr)}
+.pk.only-c .pk-prods{display:none}
+.panel{border:1px solid var(--border);border-radius:14px;background:#fff;min-width:0}
+.panel-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border-2);flex-wrap:wrap}
+.panel-h b{font-size:13px}
+.panel-h .sp{flex:1}
+.sbox{position:relative;padding:12px 14px 8px}
+.sbox svg{position:absolute;left:26px;top:23px;width:17px;height:17px;color:var(--ink-faint)}
+.sbox .inp{padding-left:38px;font-size:14px;height:44px}
+.kb{font-size:11px;color:var(--ink-faint);padding:0 14px 8px;display:flex;gap:10px;flex-wrap:wrap}
+.kb kbd{font-family:var(--mono);font-size:10px;border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:0 4px;background:var(--surface-2);color:var(--ink-2)}
+.rmeta{display:flex;align-items:center;gap:8px;padding:6px 14px 8px;font-size:12px;color:var(--ink-soft);flex-wrap:wrap}
+.rmeta .sp{flex:1}
+.rmeta button{font-weight:600;color:var(--accent-ink);font-size:12px}
+.rlist{max-height:440px;overflow-y:auto;border-top:1px solid var(--border-2)}
+.r{display:grid;grid-template-columns:20px 40px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border-2);cursor:pointer}
+.r:hover{background:var(--surface-2)}
+.r.hi{background:var(--accent-soft)}
+.r input{width:16px;height:16px;accent-color:var(--accent)}
+.r .th{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;font-size:10px;font-weight:800;color:rgba(42,34,40,.45)}
+.r .nm{font-size:13px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.r .mt{font-size:11.5px;color:var(--ink-soft);margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.r .ar{font-size:11.5px;color:var(--ink-faint);direction:rtl;text-align:right;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.r .pr{font-size:12px;font-weight:700;text-align:right;white-space:nowrap}
+.r .pr s{display:block;font-weight:400;color:var(--ink-faint);font-size:11px}
+.r mark{background:#fff3b0;color:inherit;border-radius:3px;padding:0 1px}
+.r .inlbl{font-size:10px;font-weight:700;color:var(--accent-ink);background:var(--accent-soft);border-radius:99px;padding:1px 7px;margin-inline-start:6px;white-space:nowrap}
+.more{display:block;width:100%;padding:11px;font-size:12.5px;font-weight:600;color:var(--accent-ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:12px 14px}
+.chipx{display:inline-flex;align-items:center;gap:6px;max-width:100%;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--border);border-radius:99px;padding:4px 6px 4px 11px}
+.chipx span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:240px}
+.chipx button{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;color:var(--ink-soft);flex-shrink:0}
+.chipx button:hover{background:var(--red-soft);color:#b8362d}
+.chipx.ex{background:var(--red-soft);border-color:#f3cfcb;color:#8a2a22}
+.tree{max-height:440px;overflow-y:auto;padding:6px 6px 10px}
+.tn{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;font-size:13px}
+.tn:hover{background:var(--surface-2)}
+.tn .cv{width:18px;height:18px;display:grid;place-items:center;color:var(--ink-soft);flex-shrink:0}
+.tn .cv svg{width:12px;height:12px;transition:.15s}
+.tn.open .cv svg{transform:rotate(90deg)}
+.tn input{width:16px;height:16px;accent-color:var(--accent);flex-shrink:0}
+.tn .cn2{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tn .cn2 small{display:inline-block;color:var(--ink-faint);font-size:11px;margin-left:8px}
+.tn .ct{font-size:11px;font-weight:700;color:var(--ink-soft);background:var(--surface-3);border-radius:99px;padding:1px 8px}
+.tn.inc{color:var(--ink-soft)}
+.tn.inc .cn2::after{content:" · included";font-size:11px;color:var(--accent-ink);font-weight:600}
+.tsw{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2);font-weight:600;cursor:pointer}
+.sum{margin-top:14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 16px;border-radius:14px;background:linear-gradient(120deg,#0f8f4b,#15a85a);color:#fff}
+.sum .big{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.sum .lab{font-size:13px;font-weight:600}
+.sum .br{font-size:12px;opacity:.88;flex-basis:100%}
+.sum .sp{flex:1}
+.sum .btn.ghost{color:var(--ink)}
+.exw{position:relative}
+.exdd{position:absolute;left:14px;right:14px;top:56px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--sh);z-index:5;max-height:300px;overflow-y:auto;display:none}
+.exdd.on{display:block}
+.exdd .r{grid-template-columns:40px minmax(0,1fr)}
+.pvgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:12px 14px}
+.pvgrid div{font-size:11px;line-height:1.25;color:var(--ink-2)}
+.pvgrid .th{aspect-ratio:1;border-radius:9px;margin-bottom:5px;display:grid;place-items:center;font-size:10px;font-weight:800;color:rgba(42,34,40,.45)}
+.speed{font-family:var(--mono);font-size:11px;color:var(--accent-ink);background:var(--accent-soft);border-radius:6px;padding:1px 6px}
+
+/* ===== SHOP — tokens and card copied from kbb.css / kbb-grid-skins.css ===== */
+.shop{--ink:#2A2228;--ink-2:#5E545A;--muted:#8C828A;--pink:#E0567B;--pink-deep:#C13E63;--sale:#E23A4E;--line:rgba(42,34,40,.10);--line-2:rgba(42,34,40,.06);
+  font-family:"Outfit","Poppins",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:#fff;border:1px solid var(--doc-line);border-radius:16px;padding:18px;min-width:0}
+.shop *{font-family:inherit}
+.looks{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.looks button{font-size:13px;font-weight:700;border:1px solid var(--line);border-radius:99px;padding:7px 13px;background:#fff;color:var(--ink)}
+.looks button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.looks .sp{flex:1}
+.cmp{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.cmp h4{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:8px;color:var(--ink-2)}
+.cmp h4 i{font-style:normal;display:inline-block;background:var(--ink);color:#fff;border-radius:6px;padding:0 7px;margin-inline-end:5px}
+.kbb-pgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.kbb-card{border:1px solid rgba(42,34,40,.06);border-radius:14px;overflow:hidden;color:#2A2228;background:#fff;display:flex;flex-direction:column;height:100%;min-width:0}
+.kbb-card-thumb{position:relative;aspect-ratio:1;overflow:hidden}
+.kbb-card-shot{position:absolute;inset:0;display:grid;place-items:center}
+.kbb-card-shot svg{width:46%;height:auto}
+.kbb-card .cb{padding:10px;flex:1;display:flex;flex-direction:column}
+.kbb-card .cn{font-size:13px;font-weight:600;line-height:1.3;color:#2A2228;text-decoration:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:34px}
+.kbb-card-brand{display:block;color:#756C74;font-weight:700;font-size:10px;letter-spacing:.1em;margin-bottom:2px}
+.kbb-card-rate{margin-top:4px;display:flex;align-items:center;gap:4px;font-size:12px}
+.kbb-cstar{color:#E3DADF}.kbb-cstar.on{color:#FFB400}
+.kbb-card-rc{color:#756C74;font-size:11px}
+.kbb-card .cp{font-size:13px;color:#C13E63;font-weight:700;margin-top:auto;padding-top:4px}
+.kbb-card-reg{color:#796C75;font-weight:500;text-decoration:line-through;font-size:12px;margin-inline-start:5px}
+.kbb-card-cart{margin-top:8px;display:block;text-align:center;background:#C6395F;color:#fff;border-radius:9px;padding:8px;font-weight:600;font-size:12px;text-decoration:none}
+.kbb-card-cart.out{background:#F3EEF0;color:#8C828A}
+/* the theme's automatic pills (kbb-grid-skins.css) */
+.kbb-badge{position:absolute;top:9px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;color:#fff;z-index:3;box-shadow:0 2px 8px rgba(0,0,0,.18);line-height:1.35}
+.kbb-badge-sale{inset-inline-end:9px;background:linear-gradient(135deg,#ff6f91,#C13E63)}
+.kbb-badge-oos{inset-inline-end:9px;background:#8C828A}
+
+/* ===== the proposed custom labels: one stack at top-start ===== */
+.klb-stack{position:absolute;top:9px;inset-inline-start:9px;display:flex;flex-direction:column;align-items:flex-start;gap:5px;z-index:3;max-width:calc(100% - 56px)}
+.klb-stack.after-sash{top:46px}
+/* a pill in the other corner (sale / sold out): the labels keep clear of it */
+.has-end .klb-stack{max-width:calc(100% - 78px)}
+.has-end .klb-stack .klb{overflow:hidden;text-overflow:ellipsis}
+.klb{display:inline-flex;align-items:center;gap:5px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35}
+/* A — pill (the theme's own badge shape) */
+.klb.A{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+/* B — ribbon, flush to the photo's edge with a notched tail */
+.klb.B{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:5px 18px 5px 10px;margin-inline-start:-9px;border-radius:0;clip-path:polygon(0 0,100% 0,calc(100% - 7px) 50%,100% 100%,0 100%);box-shadow:none}
+[dir=rtl] .klb.B{padding:5px 10px 5px 18px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,7px 50%)}
+/* C — corner sash across the top-start corner (first label), the rest as small pills under it */
+.klb-sash{position:absolute;top:15px;left:-34px;width:130px;transform:rotate(-45deg);text-align:center;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 0;z-index:3;box-shadow:0 2px 6px rgba(0,0,0,.18);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+[dir=rtl] .klb-sash{left:auto;right:-34px;transform:rotate(45deg)}
+.klb.C{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:5px}
+/* D — soft tag: tinted fill, coloured text, a dot */
+.klb.D{font-size:10.5px;font-weight:600;padding:3px 9px 3px 7px;border-radius:7px;border:1px solid}
+.klb.D::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+/* inline use (product page title row) */
+.klb.inl{margin-inline-start:0}
+.klb.B.inl{margin-inline-start:0}
+
+/* product page */
+.pdp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+.pdp-g{position:relative;aspect-ratio:1;border-radius:18px;overflow:hidden}
+.pdp-g .klb-stack{top:14px;inset-inline-start:14px;gap:6px}
+.pdp-g .klb-stack.after-sash{top:58px}
+.pdp-g .klb.A,.pdp-g .klb.B,.pdp-g .klb.C{font-size:11px;padding:5px 11px}
+.pdp-g .klb.B{padding:6px 22px 6px 14px;margin-inline-start:-14px}
+.pdp-g .klb.D{font-size:12px;padding:4px 10px 4px 8px}
+.pdp-g .klb-sash{font-size:10.5px;top:22px;left:-38px;width:160px;padding:5px 0}
+[dir=rtl] .pdp-g .klb-sash{left:auto;right:-38px}
+.pdp-g .auto{position:absolute;top:14px;inset-inline-end:14px;font-size:11px;font-weight:800;color:#fff;padding:5px 10px;border-radius:7px;background:#E23A4E;box-shadow:0 3px 9px rgba(0,0,0,.16)}
+.pdp-g .kbb-card-shot svg{width:40%}
+.pdp-th{display:flex;gap:8px;margin-top:10px}
+.pdp-th span{width:58px;height:58px;border-radius:10px;border:1px solid var(--line)}
+.pdp-th span:first-child{border:2px solid var(--pink)}
+.pdp-i .br{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--pink-deep)}
+.pdp-i h3{font-size:24px;font-weight:600;line-height:1.25;margin:6px 0 10px;letter-spacing:-.01em}
+.pdp-i .chipsrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.pdp-i .rt{font-size:13px;color:var(--muted);margin-bottom:12px}
+.pdp-i .pz{font-size:22px;font-weight:700;color:#C13E63}
+.pdp-i .pz s{font-size:15px;color:#796C75;font-weight:500;margin-inline-start:8px}
+.pdp-i .pz .off{font-size:12px;color:#fff;background:#E23A4E;border-radius:6px;padding:2px 7px;margin-inline-start:8px;vertical-align:3px}
+.pdp-i .add{display:block;margin-top:16px;background:#C6395F;color:#fff;border-radius:12px;padding:14px;text-align:center;font-weight:700;font-size:14px}
+.pdp-i ul{margin:14px 0 0 18px;font-size:13px;color:var(--ink-2)}
+[dir=rtl] .pdp-i ul{margin:14px 18px 0 0}
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:99px;padding:2px}
+.lang button{font-size:12px;font-weight:700;padding:5px 11px;border-radius:99px;color:var(--ink-2)}
+.lang button.on{background:var(--pink-deep);color:#fff}
+.sub-h{font-size:13px;font-weight:800;color:var(--ink-2);margin:22px 0 10px;letter-spacing:.02em}
+.sub-h small{font-weight:500;color:var(--muted)}
+
+/* ===== responsive ===== */
+@media (max-width:1100px){
+  .pk{grid-template-columns:minmax(0,1fr)}
+  .ed{grid-template-columns:minmax(0,1fr)}
+  .edprev{position:static}
+}
+@media (max-width:900px){
+  .adm .app{grid-template-columns:minmax(0,1fr)}
+  .adm .side{display:none}
+  .adm .burger{display:grid}
+  .kbb-pgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .cmp{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .pdp{grid-template-columns:minmax(0,1fr);gap:16px}
+  .pvgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media (max-width:700px){
+  .adm .content{padding:14px}
+  .adm .top{padding:12px 14px}
+  .adm .card.pad{padding:14px}
+  .shop{padding:12px}
+  /* the label table becomes one card per label */
+  .ltab thead{display:none}
+  .ltab,.ltab tbody,.ltab tr,.ltab td{display:block;width:100%}
+  .ltab tr{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 10px;padding:12px 14px;border-bottom:1px solid var(--border-2)}
+  .ltab td{padding:0;border:0}
+  .ltab td.c-chip{grid-row:1/3}
+  .ltab td.c-name{grid-column:2}
+  .ltab td.c-on{grid-column:3;grid-row:1}
+  .ltab td.c-cnt,.ltab td.c-where,.ltab td.c-when,.ltab td.c-prio{grid-column:2/4;font-size:12px}
+  .ltab td.c-cnt::before{content:"Products: ";color:var(--ink-faint)}
+  .ltab td.c-act{grid-column:1/4}
+  .ltab .ract{justify-content:flex-start}
+  .two{grid-template-columns:minmax(0,1fr)}
+  .shapes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .r{grid-template-columns:20px 36px minmax(0,1fr);padding:9px 12px}
+  .r .th{width:36px;height:36px}
+  .r .pr{grid-column:3;text-align:left}
+  .r .pr s{display:inline;margin-inline-start:6px}
+  .pvgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .kbb-card .cn{font-size:12.5px}
+  .pdp-i h3{font-size:19px}
+  .chipx span{max-width:200px}
+}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<header class="doc-h">
+  <small>KBB Storefront · plan · 15 November 2026 · preview only, nothing is built yet</small>
+  <h1>Labels: the previews</h1>
+  <p>"Best Seller", "New Arrival", "Ramadan Pick" — as many labels as you like, each on the products you choose: picked one by one, by category, or both at once. Everything below is clickable: the search and the category tree run on 300 sample K-beauty products so you can feel the speed before anything is built.</p>
+  <nav class="toc">
+    <a href="#s-admin">1 · Labels page</a><a href="#s-editor">2 · Label editor</a><a href="#s-picker">3 · Choosing products</a><a href="#s-shop">4 · How it looks in the shop</a><a href="#s-choose">What to choose</a>
+  </nav>
+</header>
+
+<!-- ============ 1. ADMIN LIST ============ -->
+<section class="sec" id="s-admin">
+  <div class="sec-h"><span class="n">1</span><h2>The Labels page</h2>
+    <p>Proposed home: <b>Catalog → Labels</b> (beside New Arrivals and Best Sellers). The automatic badges you already have (sold out / sale / new / bestseller) keep working and keep their screen; this page links to it.</p></div>
+  <div class="adm">
+    <div class="app">
+      <aside class="side">
+        <div class="brand"><span class="logo">K</span><div><b>KBB Console</b><small>kbeautybliss.com</small></div></div>
+        <nav class="nav">
+          <div class="nav-sec"><h6>Overview</h6>
+            <button class="nav-item dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</button></div>
+          <div class="nav-sec"><h6>Catalog</h6>
+            <button class="nav-item dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg>Catalog</button>
+            <button class="nav-item dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5L12 14.5 7.5 16.8l.9-5L4.8 8.3l5-.7z"/></svg>New Arrivals</button>
+            <button class="nav-item dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/></svg>Best Sellers</button>
+            <button class="nav-item on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>Labels<span class="tag">new</span></button>
+            <button class="nav-item dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Categories</button>
+            <button class="nav-item dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4 12 22l-8.6-8.6a5 5 0 0 1 7.1-7.1L12 7.8l1.5-1.5a5 5 0 0 1 7.1 7.1z"/></svg>Brands</button></div>
+          <div class="nav-sec"><h6>Growth &amp; Marketing</h6>
+            <button class="nav-item dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/></svg>Product Labels <span class="faint" style="margin-left:auto;font-size:10px">auto</span></button></div>
+        </nav>
+      </aside>
+      <div class="main">
+        <div class="top"><button class="burger" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+          <div><div class="crumb">Catalog</div><h1>Labels</h1></div><div class="sp"></div></div>
+        <div class="content">
+          <div class="page-head"><div class="t"><h2>Labels</h2><p>Badges you create and put on the products you choose. A product can carry up to two; the lower priority number shows first.</p></div>
+            <button class="btn" id="newLabel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>New label</button></div>
+          <div class="tabs"><button class="on">Your labels <span class="pill grey" id="lblCount">0</span></button><button>Automatic badges →</button></div>
+          <div class="card"><table class="ltab"><thead><tr><th>Badge</th><th>Label</th><th>Products</th><th>Shows on</th><th>When</th><th>Priority</th><th>On</th><th></th></tr></thead><tbody id="ltBody"></tbody></table></div>
+          <p class="hint" style="margin-top:10px">Counts are live: a product added to a chosen category tomorrow gets the label automatically. Priority arrows reorder; nothing is saved in this preview.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. EDITOR ============ -->
+<section class="sec" id="s-editor">
+  <div class="sec-h"><span class="n">2</span><h2>Label editor</h2>
+    <p>Opens from "New label" or a row's Edit. Everything you type redraws the preview on the right at once. Path: <b>Catalog → Labels → New label</b> (or <b>Edit</b> on a row).</p></div>
+  <div class="adm"><div class="content">
+    <div class="page-head"><div class="t"><div class="faint" style="font-size:11.5px;font-weight:600">Catalog → Labels</div><h2 id="edTitle">Edit label</h2></div></div>
+    <div class="ed">
+      <div class="card pad">
+        <div class="sec-title">Name &amp; text</div>
+        <div class="two">
+          <div class="fld"><label for="fName">Name (English, admin only)</label><input type="text" id="fName" maxlength="40"></div>
+          <div class="fld"><label for="fNameAr">Name (Arabic)</label><input type="text" id="fNameAr" dir="rtl" maxlength="40"></div>
+          <div class="fld"><label for="fText">Text on the badge · English</label><input type="text" id="fText" maxlength="22"><div class="hint">Up to 22 characters so it fits a phone card.</div></div>
+          <div class="fld"><label for="fTextAr">Text on the badge · Arabic</label><input type="text" id="fTextAr" dir="rtl" maxlength="22"><div class="hint">Shown on /ar pages. Empty = the English text.</div></div>
+        </div>
+        <div class="sec-title" style="margin-top:6px">Style</div>
+        <div class="fld"><label>Shape</label><div class="shapes" id="shapes"></div></div>
+        <div class="two">
+          <div class="fld"><label>Badge colour</label><div class="swatches" id="bgSw"></div></div>
+          <div class="fld"><label>Text colour</label><div class="swatches" id="fgSw"></div><div class="cw" id="contrast"></div></div>
+        </div>
+        <div class="sec-title" style="margin-top:6px">Where and when</div>
+        <div class="fld"><label>Shows on</label><div class="seg" id="whereSeg"><button data-v="cards">Product cards</button><button data-v="page">Product page</button><button data-v="both">Both</button></div></div>
+        <div class="two">
+          <div class="fld"><label for="fStart">Starts (optional)</label><input type="date" id="fStart"></div>
+          <div class="fld"><label for="fEnd">Ends (optional)</label><input type="date" id="fEnd"></div>
+        </div>
+        <div class="two">
+          <div class="fld"><label for="fPrio">Priority</label><input type="number" id="fPrio" min="1" max="99"><div class="hint">1 shows first. Two labels with the same number: the newer one first.</div></div>
+          <div class="fld"><label>Status</label><div style="display:flex;align-items:center;gap:10px;height:40px"><button class="tog" id="fOn" aria-label="On"></button><span id="whenTxt" class="muted"></span></div></div>
+        </div>
+      </div>
+      <div class="card pad edprev">
+        <div class="sec-title">Live preview</div>
+        <div class="pv" id="edPrev"></div>
+        <p class="hint" style="margin-top:10px">Left: a product card. Right: the same label on /ar. The product page shows it on the main photo and beside the title.</p>
+      </div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ============ 3. PICKER ============ -->
+<section class="sec" id="s-picker">
+  <div class="sec-h"><span class="n">3</span><h2>Choosing the products</h2>
+    <p>Same editor, lower half. Pick products one by one, tick whole categories, or both together. The green bar always says how many products will carry the label. Try typing <b>snail essence</b>, <b>essence snail</b>, <b>أنوا</b>, <b>سيروم</b>, <b>spf</b>, <b>COS-</b> or <b>cica cream</b>.</p></div>
+  <div class="adm"><div class="content">
+    <div class="pk-top">
+      <div class="seg" id="modeSeg"><button data-v="products">Pick products</button><button data-v="categories">By categories</button><button data-v="both">Both together</button></div>
+      <label class="tsw" style="margin-left:auto"><input type="checkbox" id="x10"> Feel the full catalogue (3,000 products)</label>
+    </div>
+    <div class="pk" id="pk">
+      <div class="panel pk-prods">
+        <div class="panel-h"><b>Products</b><span class="sp"></span><div class="seg" id="showSeg"><button data-v="all" class="on">All</button><button data-v="sel">Picked only</button></div></div>
+        <div class="sbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+          <input class="inp" id="q" type="search" autocomplete="off" placeholder="Name, brand, SKU or Arabic — any words, any order" aria-label="Search products"></div>
+        <div class="kb"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> pick / unpick</span><span><kbd>Shift</kbd>+<kbd>Enter</kbd> pick all found</span><span><kbd>Esc</kbd> clear</span></div>
+        <div class="rmeta"><span id="rCount"></span><span class="speed" id="rSpeed"></span><span class="sp"></span><button id="pickAll">Pick all found</button><button id="unpickAll">Unpick found</button></div>
+        <div class="rlist" id="rList" role="listbox" aria-label="Products"></div>
+        <div class="panel-h" style="border-top:1px solid var(--border-2);border-bottom:0"><b>Picked</b><span class="pill grey" id="pCount">0</span><span class="sp"></span><button class="btn ghost sm" id="clearPicks">Clear</button></div>
+        <div class="chips" id="pChips"></div>
+      </div>
+      <div class="panel pk-cats">
+        <div class="panel-h"><b>Categories</b><span class="sp"></span><label class="tsw"><button class="tog on" id="subTog" aria-label="Include sub-categories"></button>Include sub-categories</label></div>
+        <div class="sbox" style="padding-bottom:4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+          <input class="inp" id="cq" type="search" autocomplete="off" placeholder="Filter categories" aria-label="Filter categories" style="height:38px;font-size:13px"></div>
+        <div class="tree" id="tree"></div>
+      </div>
+    </div>
+    <div class="panel exw" style="margin-top:14px">
+      <div class="panel-h"><b>Exclude these products</b><span class="pill red" id="xCount">0</span><span class="muted" style="font-size:12px">— for "all of Sun care except these three"</span></div>
+      <div class="sbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+        <input class="inp" id="xq" type="search" autocomplete="off" placeholder="Search the products this label covers" aria-label="Search products to exclude"></div>
+      <div class="exdd" id="xDD"></div>
+      <div class="chips" id="xChips"></div>
+    </div>
+    <div class="sum"><div><div class="big" id="sTotal">0</div></div><div class="lab">products will show <span id="sName">this label</span></div><span class="sp"></span>
+      <button class="btn ghost sm" id="pvBtn">See them</button><button class="btn ghost sm" id="saveBtn">Save label</button>
+      <div class="br" id="sBreak"></div></div>
+    <div class="panel" id="pvPanel" style="margin-top:10px;display:none"><div class="panel-h"><b>First 24 of the products that will carry it</b></div><div class="pvgrid" id="pvGrid"></div></div>
+
+    <div class="note"><b>How the real picker stays this smooth — and why this way.</b>
+      <ul>
+        <li><b>A small search index, sent once.</b> When the label editor opens it loads one compact list of every product: id, name, brand, SKU, published Arabic name, categories, price and a 64px thumbnail path. About 3,000 products ≈ 100 KB gzipped, built once on the server and cached until a product, brand, category or Arabic name changes; the browser keeps it too (ETag), so the second visit downloads nothing.</li>
+        <li><b>Then every keystroke is answered in the browser</b> — no request per keystroke, not even a debounced one, so typing never waits on the network. The timer next to the count is the real time each search takes (about 1 ms at 300 and under ~10 ms at 3,000 on this machine — tick "Feel the full catalogue").</li>
+        <li><b>Why not the existing search endpoints?</b> The admin's current product searches (Product tabs, New Arrivals, Catalog) each do <code>LIKE '%word%'</code> over name/SKU and stop at 20–30 rows; they cannot match words in any order, do not see the Arabic name, and a round trip per pause would feel slower than this on Cloudways. The index also reuses the shop's own Arabic normalisation (أ/إ/آ → ا, ة → ه) and synonym groups (spf → sunscreen, cica → centella) so "wide range upon searching a word" is the same range the shop search gives.</li>
+        <li><b>The list draws 50 rows at a time</b> ("Show 50 more"), so even "pick all 1,200 found" never builds a huge page. Categories and counts come from the same index, so the green total is computed instantly, with no request.</li>
+        <li><b>Saving sends rules, not product lists:</b> the picked ids, the ticked categories, "include sub-categories" and the excluded ids. One request, on Save only.</li>
+        <li>If the catalogue ever grows past ~20,000 products the same box switches to one debounced request (250 ms) against an indexed search table, with no change to how it looks.</li>
+      </ul>
+    </div>
+  </div></div>
+</section>
+
+<!-- ============ 4. SHOP ============ -->
+<section class="sec" id="s-shop">
+  <div class="sec-h"><span class="n">4</span><h2>How labels look in the shop</h2>
+    <p>Four looks. In each, your labels stack in the top-start corner (top-left in English, top-right on /ar), up to two per card; the automatic sale pill keeps its own corner, so "Best Seller" and "-20%" never fight for the same spot.</p></div>
+  <div class="shop" id="shop">
+    <div class="looks"><span style="font-size:13px;font-weight:700;margin-inline-end:4px">Look:</span>
+      <button data-l="A">A · Pill</button><button data-l="B">B · Ribbon</button><button data-l="C">C · Corner sash</button><button data-l="D">D · Soft tag</button>
+      <span class="sp"></span><div class="lang" id="lang"><button data-v="en" class="on">English</button><button data-v="ar">العربية</button></div></div>
+    <div class="sub-h">Side by side — the same product with an automatic sale badge and your "Best Seller" label</div>
+    <div class="cmp" id="cmp"></div>
+    <div class="sub-h">Shop grid with look <span id="lookName">A</span> <small>— 4 across on a computer, 2 on a phone, as the shop draws them</small></div>
+    <div class="kbb-pgrid" id="grid"></div>
+    <div class="sub-h">Product page with look <span id="lookName2">A</span> <small>— on the main photo and beside the title</small></div>
+    <div id="pdp"></div>
+  </div>
+  <div class="note"><b>Next to the automatic badges (proposal E below).</b> A custom label takes the top-start corner. The automatic <i>sale</i> pill (-20%) stays top-end where it is today; the automatic <i>New</i> / <i>Bestseller</i> pills give way when a product has a custom label, so a card never shows "Bestseller" and "Best Seller" twice. <i>Sold out</i> always wins the top-end corner. Nothing changes on a product that carries no custom label — the shop is byte-identical until the first label is saved.</div>
+</section>
+
+<section class="sec" id="s-choose">
+  <div class="choose">
+    <h3>What to choose (reply with the letters, e.g. "A, E, I, K")</h3>
+    <ol>
+      <li><span class="k">A</span><b>Pill</b> — the shop's own badge shape. <span class="k">B</span><b>Ribbon</b> — flush to the photo edge. <span class="k">C</span><b>Corner sash</b> — diagonal across the corner. <span class="k">D</span><b>Soft tag</b> — pastel, quieter. <i>(Or "per label": each label picks its own shape in the editor — that control is already drawn above.)</i></li>
+      <li><span class="k">E</span><b>Custom labels first</b>, automatic sale stays in the other corner, automatic New/Bestseller give way (recommended). <span class="k">F</span>Custom labels <b>replace every</b> automatic badge on that product. <span class="k">G</span>Automatic badges first, custom labels after.</li>
+      <li><span class="k">H</span>One label per card (highest priority wins). <span class="k">I</span><b>Up to two</b> (recommended). <span class="k">J</span>Up to three.</li>
+      <li><span class="k">K</span><b>Catalog → Labels</b>, and the automatic badges stay at Growth &amp; Marketing → Product Labels with a link between them (recommended). <span class="k">L</span>One screen, Catalog → Labels, with two tabs: <i>Your labels</i> and <i>Automatic badges</i>; the old sidebar entry goes.</li>
+    </ol>
+  </div>
+</section>
+</div>
+
+<script type="application/json" id="pl-data">{"cats":[[1,0,"Skincare","العناية بالبشرة"],[2,1,"Cleansers","منظفات"],[3,2,"Oil & balm cleansers","زيوت وبلسم التنظيف"],[4,2,"Foam & gel cleansers","غسول رغوي وجل"],[5,1,"Toners & mists","تونر وبخاخ"],[6,1,"Serums & ampoules","سيروم وأمبولات"],[7,1,"Moisturisers","مرطبات"],[8,1,"Sun care","واقيات الشمس"],[9,1,"Masks","أقنعة"],[10,9,"Sheet masks","أقنعة ورقية"],[11,9,"Wash-off & sleeping masks","أقنعة الغسل والنوم"],[12,1,"Eye care","العناية بالعين"],[13,1,"Acne & spot care","علاج حب الشباب"],[14,1,"Exfoliators & pads","مقشرات وأقراص"],[15,0,"Makeup","مكياج"],[16,15,"Cushions & BB","كوشن وبي بي"],[17,15,"Lips","الشفاه"],[18,15,"Eyes","العيون"],[19,0,"Hair & body","الشعر والجسم"],[20,19,"Hair care","العناية بالشعر"],[21,19,"Body care","العناية بالجسم"],[22,0,"Sets & gifts","مجموعات وهدايا"],[23,0,"Lip care","العناية بالشفاه"]],"brands":[["COSRX","كوسركس"],["Anua","أنوا"],["Beauty of Joseon","بيوتي أوف جوسون"],["SKIN1004","سكين 1004"],["Round Lab","راوند لاب"],["Torriden","توريدن"],["Isntree","إيزنتري"],["Some By Mi","سوم باي مي"],["Laneige","لانيج"],["Innisfree","إنيسفري"],["Missha","ميشا"],["Klairs","كليرس"],["Medicube","ميديكيوب"],["Axis-Y","أكسس واي"],["Dr.Jart+","دكتور جارت"],["Etude","إتود"],["Banila Co","بانيلا كو"],["Purito","بوريتو"],["Mixsoon","ميكسون"],["Numbuzin","نمبوزين"],["Biodance","بيودانس"],["TirTir","تيرتير"],["Ma:nyo","مانيو"],["Heimish","هيميش"],["Rom&nd","روماند"],["Peripera","بيريبيرا"],["Mise en Scene","ميزانسين"],["Illiyoon","إليون"]],"products":[{"id":1001,"n":"COSRX Advanced Snail 96 Mucin Power Essence 150ml","b":0,"s":"COS-1001","a":"إيسنس Advanced Snail 96 Mucin Power من كوسركس","c":[6],"p":35,"sp":0,"r":4.3,"rc":189,"new":0,"oos":0},{"id":1002,"n":"COSRX Low pH Good Morning Gel Cleanser 150ml","b":0,"s":"COS-1002","a":"غسول جل Low pH Good Morning من كوسركس","c":[4],"p":81,"sp":0,"r":4.8,"rc":488,"new":0,"oos":0},{"id":1003,"n":"COSRX Snail Mucin 92% All in One Cream 50ml","b":0,"s":"COS-1003","a":"كريم Snail Mucin 92% All in One من كوسركس","c":[7],"p":149,"sp":0,"r":4.4,"rc":637,"new":0,"oos":0},{"id":1004,"n":"COSRX Acne Pimple Master Spot Patch 24 patches","b":0,"s":"COS-1004","a":"لصقات حب الشباب Acne Pimple Master من كوسركس","c":[13],"p":131,"sp":0,"r":4.9,"rc":726,"new":0,"oos":0},{"id":1005,"n":"COSRX BHA Blackhead Power Exfoliating Liquid 100ml","b":0,"s":"COS-1005","a":"مقشر سائل BHA Blackhead Power من كوسركس","c":[14],"p":164,"sp":0,"r":4.6,"rc":519,"new":0,"oos":0},{"id":1006,"n":"COSRX The Vitamin C 23 Serum 50ml","b":0,"s":"COS-1006","a":"سيروم The Vitamin C 23 من كوسركس","c":[6],"p":87,"sp":0,"r":4.8,"rc":299,"new":0,"oos":0},{"id":1007,"n":"COSRX Propolis Light Ampoule 55ml","b":0,"s":"COS-1007","a":"أمبولة Propolis Light من كوسركس","c":[6],"p":95,"sp":0,"r":4.9,"rc":501,"new":0,"oos":0},{"id":1008,"n":"COSRX Hyaluronic Acid Hydra Toner 250ml","b":0,"s":"COS-1008","a":"تونر Hyaluronic Acid Hydra من كوسركس","c":[5],"p":43,"sp":0,"r":4.6,"rc":457,"new":0,"oos":0},{"id":1009,"n":"Anua Heartleaf 77% Soothing Toner 150ml","b":1,"s":"ANU-1009","a":"تونر Heartleaf 77% Soothing من أنوا","c":[5],"p":162,"sp":125,"r":4.3,"rc":597,"new":0,"oos":0},{"id":1010,"n":"Anua Heartleaf Pore Control Cleansing Oil 200ml","b":1,"s":"ANU-1010","a":"زيت منظف Heartleaf Pore Control من أنوا","c":[3],"p":58,"sp":0,"r":4.3,"rc":328,"new":0,"oos":0},{"id":1011,"n":"Anua Niacinamide 10% + TXA Serum 30ml","b":1,"s":"ANU-1011","a":"سيروم Niacinamide 10% + TXA من أنوا","c":[6],"p":109,"sp":0,"r":4.2,"rc":815,"new":0,"oos":0},{"id":1012,"n":"Anua Heartleaf Quercetinol Pore Deep Foam Cleanser 100ml","b":1,"s":"ANU-1012","a":"غسول رغوي Heartleaf Quercetinol Pore Deep من أنوا","c":[4],"p":124,"sp":0,"r":4.5,"rc":454,"new":0,"oos":0},{"id":1013,"n":"Anua Peach 70% Niacinamide Serum 30ml","b":1,"s":"ANU-1013","a":"سيروم Peach 70% Niacinamide من أنوا","c":[6],"p":91,"sp":0,"r":4.3,"rc":528,"new":0,"oos":0},{"id":1014,"n":"Anua Heartleaf 70% Intense Calming Cream 80ml","b":1,"s":"ANU-1014","a":"كريم Heartleaf 70% Intense Calming من أنوا","c":[7],"p":90,"sp":0,"r":4.9,"rc":99,"new":0,"oos":0},{"id":1015,"n":"Anua Rice 70% Glow Milky Toner 150ml","b":1,"s":"ANU-1015","a":"تونر Rice 70% Glow Milky من أنوا","c":[5],"p":92,"sp":66,"r":5,"rc":198,"new":0,"oos":0},{"id":1016,"n":"Anua Heartleaf 77% Toner Pads 60 pads","b":1,"s":"ANU-1016","a":"أقراص تونر Heartleaf 77% Toner من أنوا","c":[14],"p":99,"sp":0,"r":4.1,"rc":829,"new":0,"oos":0},{"id":1017,"n":"Beauty of Joseon Relief Sun: Rice + Probiotics Sunscreen 50ml SPF50+","b":2,"s":"BEA-1017","a":"واقي شمس Relief Sun: Rice + Probiotics من بيوتي أوف جوسون","c":[8],"p":159,"sp":0,"r":4.8,"rc":247,"new":1,"oos":0},{"id":1018,"n":"Beauty of Joseon Glow Deep Rice + Arbutin Serum 50ml","b":2,"s":"BEA-1018","a":"سيروم Glow Deep Rice + Arbutin من بيوتي أوف جوسون","c":[6],"p":46,"sp":38,"r":4.2,"rc":667,"new":0,"oos":0},{"id":1019,"n":"Beauty of Joseon Dynasty Cream 80ml","b":2,"s":"BEA-1019","a":"كريم Dynasty من بيوتي أوف جوسون","c":[7],"p":68,"sp":0,"r":4.2,"rc":336,"new":0,"oos":0},{"id":1020,"n":"Beauty of Joseon Revive Eye Ginseng + Retinal Eye Cream 30ml","b":2,"s":"BEA-1020","a":"كريم العين Revive Eye Ginseng + Retinal من بيوتي أوف جوسون","c":[12],"p":103,"sp":91,"r":4.6,"rc":829,"new":1,"oos":0},{"id":1021,"n":"Beauty of Joseon Ginseng Cleansing Oil 150ml","b":2,"s":"BEA-1021","a":"زيت منظف Ginseng Cleansing من بيوتي أوف جوسون","c":[3],"p":61,"sp":0,"r":4.6,"rc":611,"new":0,"oos":0},{"id":1022,"n":"Beauty of Joseon Glow Ginseng + Snail Mucin Serum 50ml","b":2,"s":"BEA-1022","a":"سيروم Glow Ginseng + Snail Mucin من بيوتي أوف جوسون","c":[6],"p":64,"sp":0,"r":4.1,"rc":692,"new":0,"oos":0},{"id":1023,"n":"Beauty of Joseon Matte Sun Stick: Mugwort + Camelia Sun Stick 20g","b":2,"s":"BEA-1023","a":"ستيك واقي شمس Matte Sun Stick: Mugwort + Camelia من بيوتي أوف جوسون","c":[8],"p":105,"sp":76,"r":4.9,"rc":117,"new":0,"oos":0},{"id":1024,"n":"Beauty of Joseon Red Bean Refreshing Pore Clay Mask 100ml","b":2,"s":"BEA-1024","a":"قناع طين Red Bean Refreshing Pore من بيوتي أوف جوسون","c":[11],"p":40,"sp":0,"r":4.9,"rc":893,"new":0,"oos":0},{"id":1025,"n":"SKIN1004 Madagascar Centella Ampoule 100ml","b":3,"s":"SKI-1025","a":"أمبولة Madagascar Centella من سكين 1004","c":[6],"p":94,"sp":0,"r":4.7,"rc":793,"new":0,"oos":0},{"id":1026,"n":"SKIN1004 Hyalu-Cica Water-Fit Sun Sunscreen 50ml","b":3,"s":"SKI-1026","a":"واقي شمس Hyalu-Cica Water-Fit Sun من سكين 1004","c":[8],"p":92,"sp":0,"r":4.6,"rc":316,"new":0,"oos":0},{"id":1027,"n":"SKIN1004 Centella Light Cleansing Oil 200ml","b":3,"s":"SKI-1027","a":"زيت منظف Centella Light Cleansing من سكين 1004","c":[3],"p":82,"sp":0,"r":4.4,"rc":178,"new":0,"oos":0},{"id":1028,"n":"SKIN1004 Centella Toning Toner 250ml","b":3,"s":"SKI-1028","a":"تونر Centella Toning من سكين 1004","c":[5],"p":174,"sp":0,"r":4.9,"rc":826,"new":0,"oos":0},{"id":1029,"n":"SKIN1004 Poremizing Fresh Ampoule 55ml","b":3,"s":"SKI-1029","a":"أمبولة Poremizing Fresh من سكين 1004","c":[6],"p":54,"sp":0,"r":4.6,"rc":694,"new":0,"oos":0},{"id":1030,"n":"SKIN1004 Centella Soothing Cream 80ml","b":3,"s":"SKI-1030","a":"كريم Centella Soothing من سكين 1004","c":[7],"p":61,"sp":0,"r":4.2,"rc":596,"new":0,"oos":0},{"id":1031,"n":"Round Lab 1025 Dokdo Toner 150ml","b":4,"s":"ROU-1031","a":"تونر 1025 Dokdo من راوند لاب","c":[5],"p":106,"sp":0,"r":4.4,"rc":675,"new":1,"oos":0},{"id":1032,"n":"Round Lab Birch Juice Moisturizing Sunscreen 50ml","b":4,"s":"ROU-1032","a":"واقي شمس Birch Juice Moisturizing من راوند لاب","c":[8],"p":111,"sp":94,"r":4.3,"rc":212,"new":0,"oos":0},{"id":1033,"n":"Round Lab 1025 Dokdo Foam Cleanser 150ml","b":4,"s":"ROU-1033","a":"غسول رغوي 1025 Dokdo من راوند لاب","c":[4],"p":46,"sp":0,"r":4.8,"rc":823,"new":0,"oos":0},{"id":1034,"n":"Round Lab Soybean Nourishing Cream 50ml","b":4,"s":"ROU-1034","a":"كريم Soybean Nourishing من راوند لاب","c":[7],"p":169,"sp":144,"r":4.6,"rc":651,"new":0,"oos":1},{"id":1035,"n":"Round Lab Pine Calming Cica Ampoule 100ml","b":4,"s":"ROU-1035","a":"أمبولة Pine Calming Cica من راوند لاب","c":[6],"p":54,"sp":39,"r":4.1,"rc":8,"new":0,"oos":0},{"id":1036,"n":"Torriden DIVE-IN Low Molecular Hyaluronic Acid Serum 30ml","b":5,"s":"TOR-1036","a":"سيروم DIVE-IN Low Molecular Hyaluronic Acid من توريدن","c":[6],"p":62,"sp":46,"r":4.7,"rc":218,"new":0,"oos":0},{"id":1037,"n":"Torriden DIVE-IN Hyaluronic Acid Toner 500ml","b":5,"s":"TOR-1037","a":"تونر DIVE-IN Hyaluronic Acid من توريدن","c":[5],"p":94,"sp":0,"r":4.8,"rc":357,"new":0,"oos":0},{"id":1038,"n":"Torriden DIVE-IN Sheet Mask 10 sheets","b":5,"s":"TOR-1038","a":"قناع ورقي DIVE-IN من توريدن","c":[10],"p":67,"sp":0,"r":5,"rc":137,"new":0,"oos":0},{"id":1039,"n":"Torriden Solid-In Ceramide Cream 80ml","b":5,"s":"TOR-1039","a":"كريم Solid-In Ceramide من توريدن","c":[7],"p":52,"sp":43,"r":4.2,"rc":70,"new":0,"oos":0},{"id":1040,"n":"Torriden DIVE-IN Watery Moisture Sunscreen 50ml SPF50+","b":5,"s":"TOR-1040","a":"واقي شمس DIVE-IN Watery Moisture من توريدن","c":[8],"p":113,"sp":0,"r":5,"rc":67,"new":0,"oos":0},{"id":1041,"n":"Isntree Hyaluronic Acid Watery Sun Sunscreen 50ml","b":6,"s":"ISN-1041","a":"واقي شمس Hyaluronic Acid Watery Sun من إيزنتري","c":[8],"p":36,"sp":28,"r":4.1,"rc":210,"new":0,"oos":0},{"id":1042,"n":"Isntree Green Tea Fresh Toner 250ml","b":6,"s":"ISN-1042","a":"تونر Green Tea Fresh من إيزنتري","c":[5],"p":142,"sp":0,"r":4.9,"rc":866,"new":0,"oos":0},{"id":1043,"n":"Isntree Clear Skin 8% AHA Essence 150ml","b":6,"s":"ISN-1043","a":"إيسنس Clear Skin 8% AHA من إيزنتري","c":[6],"p":115,"sp":0,"r":4.4,"rc":447,"new":0,"oos":0},{"id":1044,"n":"Isntree Onion Newpair Gel Cream 100ml","b":6,"s":"ISN-1044","a":"كريم جل Onion Newpair من إيزنتري","c":[7],"p":136,"sp":0,"r":4.6,"rc":656,"new":0,"oos":0},{"id":1045,"n":"Some By Mi AHA BHA PHA 30 Days Miracle Toner 250ml","b":7,"s":"SOM-1045","a":"تونر AHA BHA PHA 30 Days Miracle من سوم باي مي","c":[5],"p":173,"sp":0,"r":4.5,"rc":861,"new":0,"oos":0},{"id":1046,"n":"Some By Mi Red Tea Tree Spot Patch 36 patches","b":7,"s":"SOM-1046","a":"لصقات حب الشباب Red Tea Tree Spot من سوم باي مي","c":[13],"p":46,"sp":0,"r":4.9,"rc":637,"new":0,"oos":0},{"id":1047,"n":"Some By Mi Retinol Intense Reactivating Serum 50ml","b":7,"s":"SOM-1047","a":"سيروم Retinol Intense Reactivating من سوم باي مي","c":[6],"p":145,"sp":108,"r":4.8,"rc":93,"new":0,"oos":0},{"id":1048,"n":"Some By Mi Snail Truecica Miracle Repair Cream 80ml","b":7,"s":"SOM-1048","a":"كريم Snail Truecica Miracle Repair من سوم باي مي","c":[7],"p":124,"sp":0,"r":4.5,"rc":398,"new":0,"oos":0},{"id":1049,"n":"Laneige Lip Sleeping Mask Berry Lip Sleeping Mask 20g","b":8,"s":"LAN-1049","a":"قناع شفاه ليلي Lip Sleeping Mask Berry من لانيج","c":[23],"p":157,"sp":0,"r":4.7,"rc":390,"new":0,"oos":0},{"id":1050,"n":"Laneige Water Sleeping Mask 70ml","b":8,"s":"LAN-1050","a":"قناع ليلي Water Sleeping من لانيج","c":[11],"p":117,"sp":0,"r":4.9,"rc":739,"new":0,"oos":0},{"id":1051,"n":"Laneige Cream Skin Refiner Toner 250ml","b":8,"s":"LAN-1051","a":"تونر Cream Skin Refiner من لانيج","c":[5],"p":158,"sp":120,"r":4.9,"rc":1,"new":0,"oos":0},{"id":1052,"n":"Laneige Water Bank Blue Hyaluronic Cream 50ml","b":8,"s":"LAN-1052","a":"كريم Water Bank Blue Hyaluronic من لانيج","c":[7],"p":38,"sp":0,"r":4.9,"rc":155,"new":0,"oos":0},{"id":1053,"n":"Laneige Neo Matte Cushion 15g Refill","b":8,"s":"LAN-1053","a":"كوشن Neo Matte من لانيج","c":[16],"p":133,"sp":96,"r":4.6,"rc":14,"new":0,"oos":0},{"id":1054,"n":"Innisfree Green Tea Seed Hyaluronic Serum 30ml","b":9,"s":"INN-1054","a":"سيروم Green Tea Seed Hyaluronic من إنيسفري","c":[6],"p":140,"sp":107,"r":4.7,"rc":859,"new":0,"oos":0},{"id":1055,"n":"Innisfree Volcanic Pore Clay Mask 100ml","b":9,"s":"INN-1055","a":"قناع طين Volcanic Pore من إنيسفري","c":[11],"p":144,"sp":0,"r":4.7,"rc":537,"new":0,"oos":1},{"id":1056,"n":"Innisfree Daily UV Defense Sunscreen 50ml","b":9,"s":"INN-1056","a":"واقي شمس Daily UV Defense من إنيسفري","c":[8],"p":121,"sp":0,"r":4.6,"rc":225,"new":0,"oos":0},{"id":1057,"n":"Innisfree Retinol Cica Repair Ampoule 100ml","b":9,"s":"INN-1057","a":"أمبولة Retinol Cica Repair من إنيسفري","c":[6],"p":123,"sp":0,"r":4.2,"rc":814,"new":1,"oos":0},{"id":1058,"n":"Missha Time Revolution First Treatment Essence 150ml","b":10,"s":"MIS-1058","a":"إيسنس Time Revolution First Treatment من ميشا","c":[6],"p":92,"sp":0,"r":4.7,"rc":724,"new":0,"oos":0},{"id":1059,"n":"Missha M Perfect Cover BB Cream 50ml","b":10,"s":"MIS-1059","a":"بي بي كريم M Perfect Cover من ميشا","c":[16],"p":105,"sp":0,"r":4.4,"rc":779,"new":0,"oos":0},{"id":1060,"n":"Missha All Around Safe Block Aqua Sun Sunscreen 50ml","b":10,"s":"MIS-1060","a":"واقي شمس All Around Safe Block Aqua Sun من ميشا","c":[8],"p":162,"sp":0,"r":4.2,"rc":647,"new":0,"oos":0},{"id":1061,"n":"Missha Magic Cushion Cover Lasting Cushion 15g Refill","b":10,"s":"MIS-1061","a":"كوشن Magic Cushion Cover Lasting من ميشا","c":[16],"p":168,"sp":0,"r":4.1,"rc":69,"new":0,"oos":0},{"id":1062,"n":"Klairs Supple Preparation Facial Toner 150ml","b":11,"s":"KLA-1062","a":"تونر Supple Preparation Facial من كليرس","c":[5],"p":157,"sp":0,"r":4.3,"rc":178,"new":1,"oos":0},{"id":1063,"n":"Klairs Freshly Juiced Vitamin Drop Serum 30ml","b":11,"s":"KLA-1063","a":"سيروم Freshly Juiced Vitamin Drop من كليرس","c":[6],"p":113,"sp":86,"r":4.5,"rc":204,"new":1,"oos":1},{"id":1064,"n":"Klairs Midnight Blue Calming Cream 80ml","b":11,"s":"KLA-1064","a":"كريم Midnight Blue Calming من كليرس","c":[7],"p":48,"sp":0,"r":4.5,"rc":727,"new":0,"oos":0},{"id":1065,"n":"Klairs Rich Moist Soothing Cream 80ml","b":11,"s":"KLA-1065","a":"كريم Rich Moist Soothing من كليرس","c":[7],"p":133,"sp":0,"r":4.6,"rc":868,"new":0,"oos":0},{"id":1066,"n":"Medicube Zero Pore Pad 2.0 Toner Pads 60 pads","b":12,"s":"MED-1066","a":"أقراص تونر Zero Pore Pad 2.0 من ميديكيوب","c":[14],"p":135,"sp":0,"r":4.8,"rc":154,"new":1,"oos":0},{"id":1067,"n":"Medicube Collagen Night Wrapping Sleeping Mask 70ml","b":12,"s":"MED-1067","a":"قناع ليلي Collagen Night Wrapping من ميديكيوب","c":[11],"p":126,"sp":0,"r":4.5,"rc":348,"new":0,"oos":0},{"id":1068,"n":"Medicube PDRN Pink Peptide Serum 30ml","b":12,"s":"MED-1068","a":"سيروم PDRN Pink Peptide من ميديكيوب","c":[6],"p":44,"sp":34,"r":4.3,"rc":180,"new":0,"oos":0},{"id":1069,"n":"Medicube Deep Vita C Ampoule 100ml","b":12,"s":"MED-1069","a":"أمبولة Deep Vita C من ميديكيوب","c":[6],"p":42,"sp":36,"r":4.9,"rc":39,"new":0,"oos":0},{"id":1070,"n":"Axis-Y Dark Spot Correcting Glow Serum 30ml","b":13,"s":"AXI-1070","a":"سيروم Dark Spot Correcting Glow من أكسس واي","c":[6],"p":91,"sp":0,"r":4.8,"rc":10,"new":0,"oos":0},{"id":1071,"n":"Axis-Y Mugwort Pore Clarifying Wash Off Clay Mask 100ml","b":13,"s":"AXI-1071","a":"قناع طين Mugwort Pore Clarifying Wash Off من أكسس واي","c":[11],"p":125,"sp":0,"r":4,"rc":155,"new":0,"oos":0},{"id":1072,"n":"Axis-Y Artichoke Intensive Skin Barrier Ampoule 55ml","b":13,"s":"AXI-1072","a":"أمبولة Artichoke Intensive Skin Barrier من أكسس واي","c":[6],"p":70,"sp":0,"r":4.8,"rc":286,"new":0,"oos":0},{"id":1073,"n":"Dr.Jart+ Cicapair Tiger Grass Color Correcting Cream 80ml","b":14,"s":"DRJ-1073","a":"كريم Cicapair Tiger Grass Color Correcting من دكتور جارت","c":[7],"p":70,"sp":0,"r":4.9,"rc":610,"new":0,"oos":0},{"id":1074,"n":"Dr.Jart+ Ceramidin Skin Barrier Moisturizing Cream 80ml","b":14,"s":"DRJ-1074","a":"كريم Ceramidin Skin Barrier Moisturizing من دكتور جارت","c":[7],"p":150,"sp":0,"r":4.8,"rc":873,"new":0,"oos":0},{"id":1075,"n":"Dr.Jart+ Every Sun Day Mild Sunscreen 50ml","b":14,"s":"DRJ-1075","a":"واقي شمس Every Sun Day Mild من دكتور جارت","c":[8],"p":135,"sp":0,"r":4.9,"rc":146,"new":0,"oos":0},{"id":1076,"n":"Etude SoonJung 2x Barrier Intensive Cream 80ml","b":15,"s":"ETU-1076","a":"كريم SoonJung 2x Barrier Intensive من إتود","c":[7],"p":149,"sp":0,"r":4.8,"rc":745,"new":1,"oos":0},{"id":1077,"n":"Etude SoonJung pH 6.5 Whip Foam Cleanser 150ml","b":15,"s":"ETU-1077","a":"غسول رغوي SoonJung pH 6.5 Whip من إتود","c":[4],"p":62,"sp":51,"r":4.8,"rc":564,"new":0,"oos":0},{"id":1078,"n":"Etude Fixing Tint Lip Tint 5g","b":15,"s":"ETU-1078","a":"تينت شفاه Fixing Tint من إتود","c":[17],"p":149,"sp":121,"r":4.5,"rc":347,"new":0,"oos":0},{"id":1079,"n":"Etude Play Color Eyes Eye Palette 10g","b":15,"s":"ETU-1079","a":"باليت ظلال Play Color Eyes من إتود","c":[18],"p":107,"sp":0,"r":4.5,"rc":220,"new":0,"oos":0},{"id":1080,"n":"Banila Co Clean It Zero Original Cleansing Balm 100ml","b":16,"s":"BAN-1080","a":"بلسم منظف Clean It Zero Original من بانيلا كو","c":[3],"p":77,"sp":0,"r":4.6,"rc":496,"new":0,"oos":0},{"id":1081,"n":"Banila Co Clean It Zero Purifying Cleansing Balm 50ml","b":16,"s":"BAN-1081","a":"بلسم منظف Clean It Zero Purifying من بانيلا كو","c":[3],"p":79,"sp":0,"r":4.6,"rc":572,"new":0,"oos":0},{"id":1082,"n":"Banila Co Clean It Zero Pore Clarifying Foam Cleanser 100ml","b":16,"s":"BAN-1082","a":"غسول رغوي Clean It Zero Pore Clarifying من بانيلا كو","c":[4],"p":64,"sp":49,"r":4.6,"rc":787,"new":0,"oos":0},{"id":1083,"n":"Purito Daily Go-To Sunscreen 50ml SPF50+","b":17,"s":"PUR-1083","a":"واقي شمس Daily Go-To Sunscreen من بوريتو","c":[8],"p":84,"sp":0,"r":4.1,"rc":139,"new":1,"oos":0},{"id":1084,"n":"Purito Centella Unscented Serum 50ml","b":17,"s":"PUR-1084","a":"سيروم Centella Unscented من بوريتو","c":[6],"p":88,"sp":73,"r":4.4,"rc":411,"new":0,"oos":0},{"id":1085,"n":"Purito Dermide Cica Barrier Sleeping Mask 70ml","b":17,"s":"PUR-1085","a":"قناع ليلي Dermide Cica Barrier Sleeping من بوريتو","c":[11],"p":73,"sp":0,"r":4.1,"rc":182,"new":0,"oos":0},{"id":1086,"n":"Mixsoon Bean Essence 100ml","b":18,"s":"MIX-1086","a":"إيسنس Bean Essence من ميكسون","c":[6],"p":120,"sp":0,"r":4.8,"rc":706,"new":0,"oos":0},{"id":1087,"n":"Mixsoon Centella Asiatica Essence 150ml","b":18,"s":"MIX-1087","a":"إيسنس Centella Asiatica من ميكسون","c":[6],"p":131,"sp":108,"r":4.7,"rc":801,"new":0,"oos":0},{"id":1088,"n":"Mixsoon Soondy Centella Cleansing Foam Cleanser 100ml","b":18,"s":"MIX-1088","a":"غسول رغوي Soondy Centella Cleansing من ميكسون","c":[4],"p":76,"sp":0,"r":4,"rc":92,"new":0,"oos":0},{"id":1089,"n":"Numbuzin No.3 Skin Softening Serum 30ml","b":19,"s":"NUM-1089","a":"سيروم No.3 Skin Softening من نمبوزين","c":[6],"p":161,"sp":0,"r":4.5,"rc":215,"new":0,"oos":0},{"id":1090,"n":"Numbuzin No.5 Vitamin Concentrated Serum 30ml","b":19,"s":"NUM-1090","a":"سيروم No.5 Vitamin Concentrated من نمبوزين","c":[6],"p":61,"sp":0,"r":4.7,"rc":523,"new":0,"oos":0},{"id":1091,"n":"Numbuzin No.3 Super Glowing Essence Toner 500ml","b":19,"s":"NUM-1091","a":"تونر No.3 Super Glowing Essence من نمبوزين","c":[5],"p":39,"sp":0,"r":4.5,"rc":552,"new":0,"oos":0},{"id":1092,"n":"Biodance Bio-Collagen Real Deep Sheet Mask 1 sheet","b":20,"s":"BIO-1092","a":"قناع ورقي Bio-Collagen Real Deep من بيودانس","c":[10],"p":41,"sp":0,"r":5,"rc":761,"new":0,"oos":0},{"id":1093,"n":"Biodance Hydro Cera-nol Real Deep Sheet Mask 1 sheet","b":20,"s":"BIO-1093","a":"قناع ورقي Hydro Cera-nol Real Deep من بيودانس","c":[10],"p":66,"sp":0,"r":4.6,"rc":395,"new":1,"oos":0},{"id":1094,"n":"Biodance Skin Barrier Hydrating Toner 150ml","b":20,"s":"BIO-1094","a":"تونر Skin Barrier Hydrating من بيودانس","c":[5],"p":126,"sp":0,"r":4.3,"rc":669,"new":0,"oos":0},{"id":1095,"n":"TirTir Mask Fit Red Cushion 15g","b":21,"s":"TIR-1095","a":"كوشن Mask Fit Red من تيرتير","c":[16],"p":122,"sp":91,"r":4.4,"rc":389,"new":1,"oos":0},{"id":1096,"n":"TirTir Mask Fit All Cover Cushion 15g","b":21,"s":"TIR-1096","a":"كوشن Mask Fit All Cover من تيرتير","c":[16],"p":144,"sp":0,"r":4.1,"rc":275,"new":0,"oos":0},{"id":1097,"n":"TirTir Milk Skin Toner 250ml","b":21,"s":"TIR-1097","a":"تونر Milk Skin من تيرتير","c":[5],"p":79,"sp":0,"r":4.1,"rc":332,"new":0,"oos":0},{"id":1098,"n":"Ma:nyo Pure Cleansing Oil 200ml","b":22,"s":"MAN-1098","a":"زيت منظف Pure Cleansing من مانيو","c":[3],"p":106,"sp":0,"r":4.4,"rc":560,"new":0,"oos":0},{"id":1099,"n":"Ma:nyo Bifida Biome Complex Ampoule 55ml","b":22,"s":"MAN-1099","a":"أمبولة Bifida Biome Complex من مانيو","c":[6],"p":100,"sp":0,"r":5,"rc":583,"new":0,"oos":0},{"id":1100,"n":"Heimish All Clean Balm Cleansing Balm 100ml","b":23,"s":"HEI-1100","a":"بلسم منظف All Clean Balm من هيميش","c":[3],"p":42,"sp":0,"r":4,"rc":756,"new":0,"oos":0},{"id":1101,"n":"Heimish Artless Glow Base BB Cream 50ml","b":23,"s":"HEI-1101","a":"بي بي كريم Artless Glow Base من هيميش","c":[16],"p":128,"sp":0,"r":4.3,"rc":127,"new":0,"oos":0},{"id":1102,"n":"Rom&nd Juicy Lasting Lip Tint 5g","b":24,"s":"ROM-1102","a":"تينت شفاه Juicy Lasting من روماند","c":[17],"p":122,"sp":0,"r":4,"rc":742,"new":0,"oos":0},{"id":1103,"n":"Rom&nd Glasting Water Lip Tint 5g","b":24,"s":"ROM-1103","a":"تينت شفاه Glasting Water من روماند","c":[17],"p":169,"sp":124,"r":4,"rc":884,"new":0,"oos":0},{"id":1104,"n":"Rom&nd Han All Fix Mascara 8g","b":24,"s":"ROM-1104","a":"ماسكارا Han All Fix من روماند","c":[18],"p":108,"sp":0,"r":4.7,"rc":711,"new":1,"oos":0},{"id":1105,"n":"Rom&nd Better Than Palette Eye Palette 10g","b":24,"s":"ROM-1105","a":"باليت ظلال Better Than Palette من روماند","c":[18],"p":121,"sp":0,"r":4.1,"rc":258,"new":0,"oos":0},{"id":1106,"n":"Peripera Ink Velvet Lip Tint 5g","b":25,"s":"PER-1106","a":"تينت شفاه Ink Velvet من بيريبيرا","c":[17],"p":130,"sp":0,"r":4.2,"rc":837,"new":0,"oos":0},{"id":1107,"n":"Peripera Ink Black Cara Mascara 8g","b":25,"s":"PER-1107","a":"ماسكارا Ink Black Cara من بيريبيرا","c":[18],"p":136,"sp":119,"r":4.2,"rc":309,"new":0,"oos":0},{"id":1108,"n":"Mise en Scene Perfect Serum Original Hair Serum 80ml","b":26,"s":"MIS-1108","a":"سيروم شعر Perfect Serum Original من ميزانسين","c":[20],"p":100,"sp":0,"r":4.4,"rc":496,"new":0,"oos":0},{"id":1109,"n":"Mise en Scene Damage Care Shampoo 680ml","b":26,"s":"MIS-1109","a":"شامبو Damage Care من ميزانسين","c":[20],"p":59,"sp":51,"r":4.3,"rc":896,"new":0,"oos":0},{"id":1110,"n":"Illiyoon Ceramide Ato Concentrate Cream 50ml","b":27,"s":"ILL-1110","a":"كريم Ceramide Ato Concentrate من إليون","c":[7],"p":102,"sp":0,"r":4,"rc":487,"new":0,"oos":0},{"id":1111,"n":"Illiyoon Ceramide Ato Body Lotion 350ml","b":27,"s":"ILL-1111","a":"لوشن الجسم Ceramide Ato من إليون","c":[21],"p":65,"sp":54,"r":4.4,"rc":116,"new":0,"oos":1},{"id":1112,"n":"Illiyoon Fresh Moisture Body Wash 500ml","b":27,"s":"ILL-1112","a":"غسول الجسم Fresh Moisture من إليون","c":[21],"p":163,"sp":0,"r":4.9,"rc":602,"new":0,"oos":0},{"id":1113,"n":"Laneige Lip Glowy Balm Lip Balm 10g","b":8,"s":"LAN-1113","a":"مرطب شفاه Lip Glowy Balm من لانيج","c":[23],"p":74,"sp":0,"r":4.5,"rc":0,"new":0,"oos":0},{"id":1114,"n":"COSRX Snail Essentials Starter Set 4 pcs","b":0,"s":"COS-1114","a":"مجموعة Snail Essentials من كوسركس","c":[22,22],"p":43,"sp":0,"r":4.1,"rc":199,"new":0,"oos":0},{"id":1115,"n":"Anua Heartleaf Trial Kit Starter Set 3 pcs","b":1,"s":"ANU-1115","a":"مجموعة Heartleaf Trial Kit من أنوا","c":[22,22],"p":69,"sp":0,"r":4.7,"rc":675,"new":0,"oos":0},{"id":1116,"n":"Beauty of Joseon Glow Routine Mini Starter Set 3 pcs","b":2,"s":"BEA-1116","a":"مجموعة Glow Routine Mini من بيوتي أوف جوسون","c":[22,22],"p":60,"sp":0,"r":4.5,"rc":363,"new":0,"oos":0},{"id":1117,"n":"SKIN1004 Centella Travel Kit Starter Set 3 pcs","b":3,"s":"SKI-1117","a":"مجموعة Centella Travel Kit من سكين 1004","c":[22,22],"p":112,"sp":0,"r":4.9,"rc":367,"new":0,"oos":0},{"id":1118,"n":"COSRX Advanced Snail 96 Mucin Power Essence (Mini) 100ml","b":0,"s":"COS-1118-1","a":"إيسنس Advanced Snail 96 Mucin Power من كوسركس (ميني)","c":[6],"p":139,"sp":0,"r":4.2,"rc":864,"new":0,"oos":0},{"id":1119,"n":"COSRX Low pH Good Morning Gel Cleanser (Mini) 150ml","b":0,"s":"COS-1119-1","a":"غسول جل Low pH Good Morning من كوسركس (ميني)","c":[4],"p":114,"sp":0,"r":4.9,"rc":164,"new":0,"oos":0},{"id":1120,"n":"COSRX Snail Mucin 92% All in One Cream (Mini) 80ml","b":0,"s":"COS-1120-1","a":"كريم Snail Mucin 92% All in One من كوسركس (ميني)","c":[7],"p":143,"sp":0,"r":4.7,"rc":550,"new":1,"oos":0},{"id":1121,"n":"COSRX Acne Pimple Master Spot Patch (Mini) 36 patches","b":0,"s":"COS-1121-1","a":"لصقات حب الشباب Acne Pimple Master من كوسركس (ميني)","c":[13],"p":141,"sp":0,"r":4,"rc":496,"new":0,"oos":1},{"id":1122,"n":"COSRX BHA Blackhead Power Exfoliating Liquid (Mini) 100ml","b":0,"s":"COS-1122-1","a":"مقشر سائل BHA Blackhead Power من كوسركس (ميني)","c":[14],"p":168,"sp":0,"r":4.5,"rc":774,"new":0,"oos":0},{"id":1123,"n":"COSRX The Vitamin C 23 Serum (Mini) 30ml","b":0,"s":"COS-1123-1","a":"سيروم The Vitamin C 23 من كوسركس (ميني)","c":[6],"p":43,"sp":0,"r":4.4,"rc":629,"new":0,"oos":0},{"id":1124,"n":"COSRX Propolis Light Ampoule (Mini) 100ml","b":0,"s":"COS-1124-1","a":"أمبولة Propolis Light من كوسركس (ميني)","c":[6],"p":46,"sp":0,"r":4.4,"rc":283,"new":0,"oos":1},{"id":1125,"n":"COSRX Hyaluronic Acid Hydra Toner (Mini) 150ml","b":0,"s":"COS-1125-1","a":"تونر Hyaluronic Acid Hydra من كوسركس (ميني)","c":[5],"p":91,"sp":0,"r":4.8,"rc":738,"new":1,"oos":0},{"id":1126,"n":"Anua Heartleaf 77% Soothing Toner (Mini) 500ml","b":1,"s":"ANU-1126-1","a":"تونر Heartleaf 77% Soothing من أنوا (ميني)","c":[5],"p":115,"sp":0,"r":4.1,"rc":105,"new":0,"oos":1},{"id":1127,"n":"Anua Heartleaf Pore Control Cleansing Oil (Mini) 150ml","b":1,"s":"ANU-1127-1","a":"زيت منظف Heartleaf Pore Control من أنوا (ميني)","c":[3],"p":74,"sp":0,"r":4.2,"rc":872,"new":0,"oos":0},{"id":1128,"n":"Anua Niacinamide 10% + TXA Serum (Mini) 50ml","b":1,"s":"ANU-1128-1","a":"سيروم Niacinamide 10% + TXA من أنوا (ميني)","c":[6],"p":57,"sp":0,"r":4.7,"rc":255,"new":0,"oos":0},{"id":1129,"n":"Anua Heartleaf Quercetinol Pore Deep Foam Cleanser (Mini) 150ml","b":1,"s":"ANU-1129-1","a":"غسول رغوي Heartleaf Quercetinol Pore Deep من أنوا (ميني)","c":[4],"p":90,"sp":63,"r":4.2,"rc":560,"new":0,"oos":1},{"id":1130,"n":"Anua Peach 70% Niacinamide Serum (Mini) 50ml","b":1,"s":"ANU-1130-1","a":"سيروم Peach 70% Niacinamide من أنوا (ميني)","c":[6],"p":167,"sp":121,"r":4.7,"rc":614,"new":0,"oos":0},{"id":1131,"n":"Anua Heartleaf 70% Intense Calming Cream (Mini) 50ml","b":1,"s":"ANU-1131-1","a":"كريم Heartleaf 70% Intense Calming من أنوا (ميني)","c":[7],"p":167,"sp":125,"r":4.2,"rc":329,"new":0,"oos":0},{"id":1132,"n":"Anua Rice 70% Glow Milky Toner (Mini) 500ml","b":1,"s":"ANU-1132-1","a":"تونر Rice 70% Glow Milky من أنوا (ميني)","c":[5],"p":40,"sp":32,"r":5,"rc":138,"new":0,"oos":0},{"id":1133,"n":"Anua Heartleaf 77% Toner Pads (Mini) 70 pads","b":1,"s":"ANU-1133-1","a":"أقراص تونر Heartleaf 77% Toner من أنوا (ميني)","c":[14],"p":53,"sp":0,"r":4.7,"rc":650,"new":0,"oos":0},{"id":1134,"n":"Beauty of Joseon Relief Sun: Rice + Probiotics Sunscreen (Mini) 50ml","b":2,"s":"BEA-1134-1","a":"واقي شمس Relief Sun: Rice + Probiotics من بيوتي أوف جوسون (ميني)","c":[8],"p":56,"sp":0,"r":4.4,"rc":248,"new":0,"oos":0},{"id":1135,"n":"Beauty of Joseon Glow Deep Rice + Arbutin Serum (Mini) 30ml","b":2,"s":"BEA-1135-1","a":"سيروم Glow Deep Rice + Arbutin من بيوتي أوف جوسون (ميني)","c":[6],"p":146,"sp":0,"r":4.7,"rc":731,"new":0,"oos":0},{"id":1136,"n":"Beauty of Joseon Dynasty Cream (Mini) 50ml","b":2,"s":"BEA-1136-1","a":"كريم Dynasty من بيوتي أوف جوسون (ميني)","c":[7],"p":35,"sp":0,"r":5,"rc":599,"new":0,"oos":0},{"id":1137,"n":"Beauty of Joseon Revive Eye Ginseng + Retinal Eye Cream (Mini) 25ml","b":2,"s":"BEA-1137-1","a":"كريم العين Revive Eye Ginseng + Retinal من بيوتي أوف جوسون (ميني)","c":[12],"p":91,"sp":0,"r":4.4,"rc":483,"new":1,"oos":0},{"id":1138,"n":"Beauty of Joseon Ginseng Cleansing Oil (Mini) 200ml","b":2,"s":"BEA-1138-1","a":"زيت منظف Ginseng Cleansing من بيوتي أوف جوسون (ميني)","c":[3],"p":35,"sp":0,"r":4.5,"rc":348,"new":0,"oos":0},{"id":1139,"n":"Beauty of Joseon Glow Ginseng + Snail Mucin Serum (Mini) 30ml","b":2,"s":"BEA-1139-1","a":"سيروم Glow Ginseng + Snail Mucin من بيوتي أوف جوسون (ميني)","c":[6],"p":61,"sp":0,"r":4.1,"rc":21,"new":0,"oos":0},{"id":1140,"n":"Beauty of Joseon Matte Sun Stick: Mugwort + Camelia Sun Stick (Mini) 20g","b":2,"s":"BEA-1140-1","a":"ستيك واقي شمس Matte Sun Stick: Mugwort + Camelia من بيوتي أوف جوسون (ميني)","c":[8],"p":148,"sp":0,"r":4.7,"rc":667,"new":0,"oos":0},{"id":1141,"n":"Beauty of Joseon Red Bean Refreshing Pore Clay Mask (Mini) 100ml","b":2,"s":"BEA-1141-1","a":"قناع طين Red Bean Refreshing Pore من بيوتي أوف جوسون (ميني)","c":[11],"p":162,"sp":0,"r":4.4,"rc":26,"new":0,"oos":0},{"id":1142,"n":"SKIN1004 Madagascar Centella Ampoule (Mini) 55ml","b":3,"s":"SKI-1142-1","a":"أمبولة Madagascar Centella من سكين 1004 (ميني)","c":[6],"p":39,"sp":0,"r":4.7,"rc":180,"new":1,"oos":1},{"id":1143,"n":"SKIN1004 Hyalu-Cica Water-Fit Sun Sunscreen (Mini) 50ml SPF50+","b":3,"s":"SKI-1143-1","a":"واقي شمس Hyalu-Cica Water-Fit Sun من سكين 1004 (ميني)","c":[8],"p":132,"sp":0,"r":4.9,"rc":737,"new":0,"oos":0},{"id":1144,"n":"SKIN1004 Centella Light Cleansing Oil (Mini) 150ml","b":3,"s":"SKI-1144-1","a":"زيت منظف Centella Light Cleansing من سكين 1004 (ميني)","c":[3],"p":113,"sp":0,"r":4.1,"rc":322,"new":0,"oos":0},{"id":1145,"n":"SKIN1004 Centella Toning Toner (Mini) 150ml","b":3,"s":"SKI-1145-1","a":"تونر Centella Toning من سكين 1004 (ميني)","c":[5],"p":107,"sp":0,"r":4.6,"rc":453,"new":0,"oos":0},{"id":1146,"n":"SKIN1004 Poremizing Fresh Ampoule (Mini) 100ml","b":3,"s":"SKI-1146-1","a":"أمبولة Poremizing Fresh من سكين 1004 (ميني)","c":[6],"p":155,"sp":110,"r":4.7,"rc":882,"new":0,"oos":1},{"id":1147,"n":"SKIN1004 Centella Soothing Cream (Mini) 50ml","b":3,"s":"SKI-1147-1","a":"كريم Centella Soothing من سكين 1004 (ميني)","c":[7],"p":65,"sp":51,"r":4.7,"rc":554,"new":0,"oos":0},{"id":1148,"n":"Round Lab 1025 Dokdo Toner (Mini) 500ml","b":4,"s":"ROU-1148-1","a":"تونر 1025 Dokdo من راوند لاب (ميني)","c":[5],"p":40,"sp":0,"r":4.9,"rc":398,"new":0,"oos":0},{"id":1149,"n":"Round Lab Birch Juice Moisturizing Sunscreen (Mini) 50ml SPF50+","b":4,"s":"ROU-1149-1","a":"واقي شمس Birch Juice Moisturizing من راوند لاب (ميني)","c":[8],"p":124,"sp":94,"r":4.7,"rc":72,"new":0,"oos":0},{"id":1150,"n":"Round Lab 1025 Dokdo Foam Cleanser (Mini) 100ml","b":4,"s":"ROU-1150-1","a":"غسول رغوي 1025 Dokdo من راوند لاب (ميني)","c":[4],"p":38,"sp":0,"r":4.2,"rc":541,"new":1,"oos":0},{"id":1151,"n":"Round Lab Soybean Nourishing Cream (Mini) 80ml","b":4,"s":"ROU-1151-1","a":"كريم Soybean Nourishing من راوند لاب (ميني)","c":[7],"p":122,"sp":0,"r":4.6,"rc":315,"new":0,"oos":0},{"id":1152,"n":"Round Lab Pine Calming Cica Ampoule (Mini) 55ml","b":4,"s":"ROU-1152-1","a":"أمبولة Pine Calming Cica من راوند لاب (ميني)","c":[6],"p":170,"sp":0,"r":5,"rc":789,"new":1,"oos":0},{"id":1153,"n":"Torriden DIVE-IN Low Molecular Hyaluronic Acid Serum (Mini) 50ml","b":5,"s":"TOR-1153-1","a":"سيروم DIVE-IN Low Molecular Hyaluronic Acid من توريدن (ميني)","c":[6],"p":105,"sp":0,"r":4.1,"rc":524,"new":0,"oos":0},{"id":1154,"n":"Torriden DIVE-IN Hyaluronic Acid Toner (Mini) 250ml","b":5,"s":"TOR-1154-1","a":"تونر DIVE-IN Hyaluronic Acid من توريدن (ميني)","c":[5],"p":121,"sp":0,"r":4.4,"rc":102,"new":0,"oos":0},{"id":1155,"n":"Torriden DIVE-IN Sheet Mask (Mini) 1 sheet","b":5,"s":"TOR-1155-1","a":"قناع ورقي DIVE-IN من توريدن (ميني)","c":[10],"p":42,"sp":0,"r":4.7,"rc":591,"new":0,"oos":0},{"id":1156,"n":"Torriden Solid-In Ceramide Cream (Mini) 50ml","b":5,"s":"TOR-1156-1","a":"كريم Solid-In Ceramide من توريدن (ميني)","c":[7],"p":120,"sp":0,"r":4.1,"rc":405,"new":0,"oos":0},{"id":1157,"n":"Torriden DIVE-IN Watery Moisture Sunscreen (Mini) 50ml","b":5,"s":"TOR-1157-1","a":"واقي شمس DIVE-IN Watery Moisture من توريدن (ميني)","c":[8],"p":128,"sp":0,"r":4,"rc":119,"new":0,"oos":0},{"id":1158,"n":"Isntree Hyaluronic Acid Watery Sun Sunscreen (Mini) 50ml SPF50+","b":6,"s":"ISN-1158-1","a":"واقي شمس Hyaluronic Acid Watery Sun من إيزنتري (ميني)","c":[8],"p":122,"sp":98,"r":4.4,"rc":669,"new":0,"oos":0},{"id":1159,"n":"Isntree Green Tea Fresh Toner (Mini) 150ml","b":6,"s":"ISN-1159-1","a":"تونر Green Tea Fresh من إيزنتري (ميني)","c":[5],"p":47,"sp":37,"r":4.9,"rc":596,"new":0,"oos":0},{"id":1160,"n":"Isntree Clear Skin 8% AHA Essence (Mini) 100ml","b":6,"s":"ISN-1160-1","a":"إيسنس Clear Skin 8% AHA من إيزنتري (ميني)","c":[6],"p":155,"sp":0,"r":4.3,"rc":614,"new":0,"oos":0},{"id":1161,"n":"Isntree Onion Newpair Gel Cream (Mini) 100ml","b":6,"s":"ISN-1161-1","a":"كريم جل Onion Newpair من إيزنتري (ميني)","c":[7],"p":106,"sp":0,"r":4.7,"rc":531,"new":0,"oos":0},{"id":1162,"n":"Some By Mi AHA BHA PHA 30 Days Miracle Toner (Mini) 150ml","b":7,"s":"SOM-1162-1","a":"تونر AHA BHA PHA 30 Days Miracle من سوم باي مي (ميني)","c":[5],"p":137,"sp":106,"r":4.1,"rc":766,"new":0,"oos":0},{"id":1163,"n":"Some By Mi Red Tea Tree Spot Patch (Mini) 24 patches","b":7,"s":"SOM-1163-1","a":"لصقات حب الشباب Red Tea Tree Spot من سوم باي مي (ميني)","c":[13],"p":157,"sp":0,"r":4.7,"rc":89,"new":0,"oos":0},{"id":1164,"n":"Some By Mi Retinol Intense Reactivating Serum (Mini) 30ml","b":7,"s":"SOM-1164-1","a":"سيروم Retinol Intense Reactivating من سوم باي مي (ميني)","c":[6],"p":35,"sp":0,"r":4.4,"rc":163,"new":1,"oos":0},{"id":1165,"n":"Some By Mi Snail Truecica Miracle Repair Cream (Mini) 50ml","b":7,"s":"SOM-1165-1","a":"كريم Snail Truecica Miracle Repair من سوم باي مي (ميني)","c":[7],"p":99,"sp":0,"r":4.6,"rc":566,"new":1,"oos":0},{"id":1166,"n":"Laneige Lip Sleeping Mask Berry Lip Sleeping Mask (Mini) 20g","b":8,"s":"LAN-1166-1","a":"قناع شفاه ليلي Lip Sleeping Mask Berry من لانيج (ميني)","c":[23],"p":65,"sp":0,"r":4.1,"rc":211,"new":0,"oos":0},{"id":1167,"n":"Laneige Water Sleeping Mask (Mini) 70ml","b":8,"s":"LAN-1167-1","a":"قناع ليلي Water Sleeping من لانيج (ميني)","c":[11],"p":168,"sp":125,"r":4.8,"rc":369,"new":0,"oos":0},{"id":1168,"n":"Laneige Cream Skin Refiner Toner (Mini) 150ml","b":8,"s":"LAN-1168-1","a":"تونر Cream Skin Refiner من لانيج (ميني)","c":[5],"p":41,"sp":0,"r":4.4,"rc":334,"new":0,"oos":0},{"id":1169,"n":"Laneige Water Bank Blue Hyaluronic Cream (Mini) 80ml","b":8,"s":"LAN-1169-1","a":"كريم Water Bank Blue Hyaluronic من لانيج (ميني)","c":[7],"p":134,"sp":0,"r":4.3,"rc":800,"new":0,"oos":1},{"id":1170,"n":"Laneige Neo Matte Cushion (Mini) 15g","b":8,"s":"LAN-1170-1","a":"كوشن Neo Matte من لانيج (ميني)","c":[16],"p":108,"sp":86,"r":4.4,"rc":648,"new":0,"oos":1},{"id":1171,"n":"Innisfree Green Tea Seed Hyaluronic Serum (Mini) 50ml","b":9,"s":"INN-1171-1","a":"سيروم Green Tea Seed Hyaluronic من إنيسفري (ميني)","c":[6],"p":169,"sp":0,"r":4.8,"rc":461,"new":0,"oos":0},{"id":1172,"n":"Innisfree Volcanic Pore Clay Mask (Mini) 100ml","b":9,"s":"INN-1172-1","a":"قناع طين Volcanic Pore من إنيسفري (ميني)","c":[11],"p":131,"sp":0,"r":4.3,"rc":614,"new":0,"oos":0},{"id":1173,"n":"Innisfree Daily UV Defense Sunscreen (Mini) 50ml SPF50+","b":9,"s":"INN-1173-1","a":"واقي شمس Daily UV Defense من إنيسفري (ميني)","c":[8],"p":139,"sp":0,"r":4.7,"rc":777,"new":0,"oos":0},{"id":1174,"n":"Innisfree Retinol Cica Repair Ampoule (Mini) 55ml","b":9,"s":"INN-1174-1","a":"أمبولة Retinol Cica Repair من إنيسفري (ميني)","c":[6],"p":92,"sp":0,"r":4.2,"rc":665,"new":0,"oos":0},{"id":1175,"n":"Missha Time Revolution First Treatment Essence (Mini) 100ml","b":10,"s":"MIS-1175-1","a":"إيسنس Time Revolution First Treatment من ميشا (ميني)","c":[6],"p":99,"sp":82,"r":4.1,"rc":412,"new":0,"oos":1},{"id":1176,"n":"Missha M Perfect Cover BB Cream (Mini) 50ml","b":10,"s":"MIS-1176-1","a":"بي بي كريم M Perfect Cover من ميشا (ميني)","c":[16],"p":61,"sp":0,"r":4.7,"rc":750,"new":0,"oos":0},{"id":1177,"n":"Missha All Around Safe Block Aqua Sun Sunscreen (Mini) 50ml SPF50+","b":10,"s":"MIS-1177-1","a":"واقي شمس All Around Safe Block Aqua Sun من ميشا (ميني)","c":[8],"p":90,"sp":79,"r":4.8,"rc":489,"new":0,"oos":0},{"id":1178,"n":"Missha Magic Cushion Cover Lasting Cushion (Mini) 15g","b":10,"s":"MIS-1178-1","a":"كوشن Magic Cushion Cover Lasting من ميشا (ميني)","c":[16],"p":154,"sp":130,"r":4.5,"rc":892,"new":0,"oos":0},{"id":1179,"n":"Klairs Supple Preparation Facial Toner (Mini) 500ml","b":11,"s":"KLA-1179-1","a":"تونر Supple Preparation Facial من كليرس (ميني)","c":[5],"p":56,"sp":0,"r":4.4,"rc":445,"new":1,"oos":0},{"id":1180,"n":"Klairs Freshly Juiced Vitamin Drop Serum (Mini) 50ml","b":11,"s":"KLA-1180-1","a":"سيروم Freshly Juiced Vitamin Drop من كليرس (ميني)","c":[6],"p":106,"sp":0,"r":4.9,"rc":336,"new":0,"oos":0},{"id":1181,"n":"Klairs Midnight Blue Calming Cream (Mini) 50ml","b":11,"s":"KLA-1181-1","a":"كريم Midnight Blue Calming من كليرس (ميني)","c":[7],"p":105,"sp":0,"r":4.7,"rc":411,"new":0,"oos":0},{"id":1182,"n":"Klairs Rich Moist Soothing Cream (Mini) 50ml","b":11,"s":"KLA-1182-1","a":"كريم Rich Moist Soothing من كليرس (ميني)","c":[7],"p":79,"sp":63,"r":4.4,"rc":346,"new":0,"oos":0},{"id":1183,"n":"Medicube Zero Pore Pad 2.0 Toner Pads (Mini) 70 pads","b":12,"s":"MED-1183-1","a":"أقراص تونر Zero Pore Pad 2.0 من ميديكيوب (ميني)","c":[14],"p":159,"sp":119,"r":4.8,"rc":238,"new":0,"oos":0},{"id":1184,"n":"Medicube Collagen Night Wrapping Sleeping Mask (Mini) 70ml","b":12,"s":"MED-1184-1","a":"قناع ليلي Collagen Night Wrapping من ميديكيوب (ميني)","c":[11],"p":130,"sp":0,"r":4.3,"rc":112,"new":0,"oos":0},{"id":1185,"n":"Medicube PDRN Pink Peptide Serum (Mini) 50ml","b":12,"s":"MED-1185-1","a":"سيروم PDRN Pink Peptide من ميديكيوب (ميني)","c":[6],"p":141,"sp":122,"r":4.1,"rc":816,"new":0,"oos":0},{"id":1186,"n":"Medicube Deep Vita C Ampoule (Mini) 55ml","b":12,"s":"MED-1186-1","a":"أمبولة Deep Vita C من ميديكيوب (ميني)","c":[6],"p":110,"sp":0,"r":4.6,"rc":2,"new":0,"oos":0},{"id":1187,"n":"Axis-Y Dark Spot Correcting Glow Serum (Mini) 50ml","b":13,"s":"AXI-1187-1","a":"سيروم Dark Spot Correcting Glow من أكسس واي (ميني)","c":[6],"p":98,"sp":0,"r":4.5,"rc":42,"new":0,"oos":0},{"id":1188,"n":"Axis-Y Mugwort Pore Clarifying Wash Off Clay Mask (Mini) 100ml","b":13,"s":"AXI-1188-1","a":"قناع طين Mugwort Pore Clarifying Wash Off من أكسس واي (ميني)","c":[11],"p":171,"sp":0,"r":4.4,"rc":190,"new":0,"oos":0},{"id":1189,"n":"Axis-Y Artichoke Intensive Skin Barrier Ampoule (Mini) 100ml","b":13,"s":"AXI-1189-1","a":"أمبولة Artichoke Intensive Skin Barrier من أكسس واي (ميني)","c":[6],"p":142,"sp":0,"r":5,"rc":182,"new":0,"oos":0},{"id":1190,"n":"Dr.Jart+ Cicapair Tiger Grass Color Correcting Cream (Mini) 50ml","b":14,"s":"DRJ-1190-1","a":"كريم Cicapair Tiger Grass Color Correcting من دكتور جارت (ميني)","c":[7],"p":121,"sp":0,"r":4.8,"rc":793,"new":0,"oos":0},{"id":1191,"n":"Dr.Jart+ Ceramidin Skin Barrier Moisturizing Cream (Mini) 50ml","b":14,"s":"DRJ-1191-1","a":"كريم Ceramidin Skin Barrier Moisturizing من دكتور جارت (ميني)","c":[7],"p":105,"sp":89,"r":4.6,"rc":344,"new":0,"oos":0},{"id":1192,"n":"Dr.Jart+ Every Sun Day Mild Sunscreen (Mini) 50ml SPF50+","b":14,"s":"DRJ-1192-1","a":"واقي شمس Every Sun Day Mild من دكتور جارت (ميني)","c":[8],"p":172,"sp":149,"r":4.7,"rc":548,"new":0,"oos":0},{"id":1193,"n":"Etude SoonJung 2x Barrier Intensive Cream (Mini) 50ml","b":15,"s":"ETU-1193-1","a":"كريم SoonJung 2x Barrier Intensive من إتود (ميني)","c":[7],"p":148,"sp":0,"r":4.6,"rc":533,"new":0,"oos":0},{"id":1194,"n":"Etude SoonJung pH 6.5 Whip Foam Cleanser (Mini) 100ml","b":15,"s":"ETU-1194-1","a":"غسول رغوي SoonJung pH 6.5 Whip من إتود (ميني)","c":[4],"p":117,"sp":0,"r":4.9,"rc":617,"new":0,"oos":0},{"id":1195,"n":"Etude Fixing Tint Lip Tint (Mini) 5g","b":15,"s":"ETU-1195-1","a":"تينت شفاه Fixing Tint من إتود (ميني)","c":[17],"p":141,"sp":0,"r":4.1,"rc":627,"new":0,"oos":0},{"id":1196,"n":"Etude Play Color Eyes Eye Palette (Mini) 10g","b":15,"s":"ETU-1196-1","a":"باليت ظلال Play Color Eyes من إتود (ميني)","c":[18],"p":38,"sp":31,"r":4.6,"rc":9,"new":0,"oos":0},{"id":1197,"n":"Banila Co Clean It Zero Original Cleansing Balm (Mini) 50ml","b":16,"s":"BAN-1197-1","a":"بلسم منظف Clean It Zero Original من بانيلا كو (ميني)","c":[3],"p":109,"sp":89,"r":4.6,"rc":14,"new":0,"oos":0},{"id":1198,"n":"Banila Co Clean It Zero Purifying Cleansing Balm (Mini) 100ml","b":16,"s":"BAN-1198-1","a":"بلسم منظف Clean It Zero Purifying من بانيلا كو (ميني)","c":[3],"p":80,"sp":0,"r":4.6,"rc":459,"new":0,"oos":0},{"id":1199,"n":"Banila Co Clean It Zero Pore Clarifying Foam Cleanser (Mini) 150ml","b":16,"s":"BAN-1199-1","a":"غسول رغوي Clean It Zero Pore Clarifying من بانيلا كو (ميني)","c":[4],"p":162,"sp":0,"r":4.5,"rc":830,"new":0,"oos":0},{"id":1200,"n":"Purito Daily Go-To Sunscreen (Mini) 50ml","b":17,"s":"PUR-1200-1","a":"واقي شمس Daily Go-To Sunscreen من بوريتو (ميني)","c":[8],"p":55,"sp":0,"r":4.1,"rc":718,"new":0,"oos":0},{"id":1201,"n":"Purito Centella Unscented Serum (Mini) 30ml","b":17,"s":"PUR-1201-1","a":"سيروم Centella Unscented من بوريتو (ميني)","c":[6],"p":115,"sp":0,"r":4.7,"rc":85,"new":0,"oos":0},{"id":1202,"n":"Purito Dermide Cica Barrier Sleeping Mask (Mini) 70ml","b":17,"s":"PUR-1202-1","a":"قناع ليلي Dermide Cica Barrier Sleeping من بوريتو (ميني)","c":[11],"p":146,"sp":0,"r":4.7,"rc":526,"new":0,"oos":0},{"id":1203,"n":"Mixsoon Bean Essence (Mini) 150ml","b":18,"s":"MIX-1203-1","a":"إيسنس Bean Essence من ميكسون (ميني)","c":[6],"p":104,"sp":0,"r":4.7,"rc":249,"new":0,"oos":0},{"id":1204,"n":"Mixsoon Centella Asiatica Essence (Mini) 100ml","b":18,"s":"MIX-1204-1","a":"إيسنس Centella Asiatica من ميكسون (ميني)","c":[6],"p":107,"sp":0,"r":4.6,"rc":560,"new":0,"oos":0},{"id":1205,"n":"Mixsoon Soondy Centella Cleansing Foam Cleanser (Mini) 150ml","b":18,"s":"MIX-1205-1","a":"غسول رغوي Soondy Centella Cleansing من ميكسون (ميني)","c":[4],"p":161,"sp":0,"r":4.2,"rc":741,"new":0,"oos":0},{"id":1206,"n":"Numbuzin No.3 Skin Softening Serum (Mini) 50ml","b":19,"s":"NUM-1206-1","a":"سيروم No.3 Skin Softening من نمبوزين (ميني)","c":[6],"p":60,"sp":44,"r":4.3,"rc":623,"new":0,"oos":1},{"id":1207,"n":"Numbuzin No.5 Vitamin Concentrated Serum (Mini) 50ml","b":19,"s":"NUM-1207-1","a":"سيروم No.5 Vitamin Concentrated من نمبوزين (ميني)","c":[6],"p":155,"sp":0,"r":4.1,"rc":35,"new":0,"oos":0},{"id":1208,"n":"Numbuzin No.3 Super Glowing Essence Toner (Mini) 250ml","b":19,"s":"NUM-1208-1","a":"تونر No.3 Super Glowing Essence من نمبوزين (ميني)","c":[5],"p":35,"sp":0,"r":4.4,"rc":272,"new":0,"oos":0},{"id":1209,"n":"Biodance Bio-Collagen Real Deep Sheet Mask (Mini) 10 sheets","b":20,"s":"BIO-1209-1","a":"قناع ورقي Bio-Collagen Real Deep من بيودانس (ميني)","c":[10],"p":67,"sp":60,"r":4.8,"rc":637,"new":0,"oos":0},{"id":1210,"n":"Biodance Hydro Cera-nol Real Deep Sheet Mask (Mini) 10 sheets","b":20,"s":"BIO-1210-1","a":"قناع ورقي Hydro Cera-nol Real Deep من بيودانس (ميني)","c":[10],"p":63,"sp":0,"r":4,"rc":660,"new":0,"oos":0},{"id":1211,"n":"Biodance Skin Barrier Hydrating Toner (Mini) 500ml","b":20,"s":"BIO-1211-1","a":"تونر Skin Barrier Hydrating من بيودانس (ميني)","c":[5],"p":62,"sp":0,"r":4.6,"rc":353,"new":0,"oos":0},{"id":1212,"n":"TirTir Mask Fit Red Cushion (Mini) 15g Refill","b":21,"s":"TIR-1212-1","a":"كوشن Mask Fit Red من تيرتير (ميني)","c":[16],"p":142,"sp":0,"r":4,"rc":536,"new":0,"oos":0},{"id":1213,"n":"TirTir Mask Fit All Cover Cushion (Mini) 15g Refill","b":21,"s":"TIR-1213-1","a":"كوشن Mask Fit All Cover من تيرتير (ميني)","c":[16],"p":165,"sp":0,"r":4.9,"rc":24,"new":0,"oos":0},{"id":1214,"n":"TirTir Milk Skin Toner (Mini) 150ml","b":21,"s":"TIR-1214-1","a":"تونر Milk Skin من تيرتير (ميني)","c":[5],"p":136,"sp":104,"r":4.8,"rc":437,"new":0,"oos":0},{"id":1215,"n":"Ma:nyo Pure Cleansing Oil (Mini) 150ml","b":22,"s":"MAN-1215-1","a":"زيت منظف Pure Cleansing من مانيو (ميني)","c":[3],"p":80,"sp":59,"r":4.6,"rc":737,"new":0,"oos":0},{"id":1216,"n":"Ma:nyo Bifida Biome Complex Ampoule (Mini) 100ml","b":22,"s":"MAN-1216-1","a":"أمبولة Bifida Biome Complex من مانيو (ميني)","c":[6],"p":99,"sp":0,"r":4.5,"rc":267,"new":0,"oos":0},{"id":1217,"n":"Heimish All Clean Balm Cleansing Balm (Mini) 50ml","b":23,"s":"HEI-1217-1","a":"بلسم منظف All Clean Balm من هيميش (ميني)","c":[3],"p":83,"sp":0,"r":4.2,"rc":179,"new":0,"oos":0},{"id":1218,"n":"Heimish Artless Glow Base BB Cream (Mini) 50ml","b":23,"s":"HEI-1218-1","a":"بي بي كريم Artless Glow Base من هيميش (ميني)","c":[16],"p":172,"sp":142,"r":4.6,"rc":570,"new":0,"oos":0},{"id":1219,"n":"Rom&nd Juicy Lasting Lip Tint (Mini) 5g","b":24,"s":"ROM-1219-1","a":"تينت شفاه Juicy Lasting من روماند (ميني)","c":[17],"p":165,"sp":0,"r":4.3,"rc":716,"new":0,"oos":0},{"id":1220,"n":"Rom&nd Glasting Water Lip Tint (Mini) 5g","b":24,"s":"ROM-1220-1","a":"تينت شفاه Glasting Water من روماند (ميني)","c":[17],"p":136,"sp":0,"r":4.4,"rc":294,"new":0,"oos":0},{"id":1221,"n":"Rom&nd Han All Fix Mascara (Mini) 8g","b":24,"s":"ROM-1221-1","a":"ماسكارا Han All Fix من روماند (ميني)","c":[18],"p":154,"sp":0,"r":4.9,"rc":292,"new":0,"oos":0},{"id":1222,"n":"Rom&nd Better Than Palette Eye Palette (Mini) 10g","b":24,"s":"ROM-1222-1","a":"باليت ظلال Better Than Palette من روماند (ميني)","c":[18],"p":95,"sp":67,"r":5,"rc":760,"new":0,"oos":0},{"id":1223,"n":"Peripera Ink Velvet Lip Tint (Mini) 5g","b":25,"s":"PER-1223-1","a":"تينت شفاه Ink Velvet من بيريبيرا (ميني)","c":[17],"p":81,"sp":0,"r":4.6,"rc":731,"new":0,"oos":0},{"id":1224,"n":"Peripera Ink Black Cara Mascara (Mini) 8g","b":25,"s":"PER-1224-1","a":"ماسكارا Ink Black Cara من بيريبيرا (ميني)","c":[18],"p":171,"sp":0,"r":4.8,"rc":167,"new":0,"oos":0},{"id":1225,"n":"Mise en Scene Perfect Serum Original Hair Serum (Mini) 80ml","b":26,"s":"MIS-1225-1","a":"سيروم شعر Perfect Serum Original من ميزانسين (ميني)","c":[20],"p":102,"sp":0,"r":4.3,"rc":878,"new":0,"oos":1},{"id":1226,"n":"Mise en Scene Damage Care Shampoo (Mini) 500ml","b":26,"s":"MIS-1226-1","a":"شامبو Damage Care من ميزانسين (ميني)","c":[20],"p":44,"sp":0,"r":4.7,"rc":282,"new":0,"oos":0},{"id":1227,"n":"Illiyoon Ceramide Ato Concentrate Cream (Mini) 80ml","b":27,"s":"ILL-1227-1","a":"كريم Ceramide Ato Concentrate من إليون (ميني)","c":[7],"p":42,"sp":0,"r":4.2,"rc":161,"new":0,"oos":0},{"id":1228,"n":"Illiyoon Ceramide Ato Body Lotion (Mini) 528ml","b":27,"s":"ILL-1228-1","a":"لوشن الجسم Ceramide Ato من إليون (ميني)","c":[21],"p":57,"sp":43,"r":4.2,"rc":347,"new":0,"oos":0},{"id":1229,"n":"Illiyoon Fresh Moisture Body Wash (Mini) 500ml","b":27,"s":"ILL-1229-1","a":"غسول الجسم Fresh Moisture من إليون (ميني)","c":[21],"p":122,"sp":0,"r":4.3,"rc":221,"new":0,"oos":0},{"id":1230,"n":"Laneige Lip Glowy Balm Lip Balm (Mini) 10g","b":8,"s":"LAN-1230-1","a":"مرطب شفاه Lip Glowy Balm من لانيج (ميني)","c":[23],"p":51,"sp":41,"r":4.6,"rc":158,"new":0,"oos":0},{"id":1231,"n":"COSRX Snail Essentials Starter Set (Mini) 3 pcs","b":0,"s":"COS-1231-1","a":"مجموعة Snail Essentials من كوسركس (ميني)","c":[22,22],"p":62,"sp":45,"r":4.8,"rc":475,"new":0,"oos":0},{"id":1232,"n":"Anua Heartleaf Trial Kit Starter Set (Mini) 4 pcs","b":1,"s":"ANU-1232-1","a":"مجموعة Heartleaf Trial Kit من أنوا (ميني)","c":[22,22],"p":136,"sp":101,"r":4.2,"rc":184,"new":0,"oos":0},{"id":1233,"n":"Beauty of Joseon Glow Routine Mini Starter Set (Mini) 4 pcs","b":2,"s":"BEA-1233-1","a":"مجموعة Glow Routine Mini من بيوتي أوف جوسون (ميني)","c":[22,22],"p":64,"sp":0,"r":4.7,"rc":500,"new":0,"oos":0},{"id":1234,"n":"SKIN1004 Centella Travel Kit Starter Set (Mini) 4 pcs","b":3,"s":"SKI-1234-1","a":"مجموعة Centella Travel Kit من سكين 1004 (ميني)","c":[22,22],"p":77,"sp":0,"r":4.3,"rc":186,"new":0,"oos":0},{"id":1235,"n":"COSRX Advanced Snail 96 Mucin Power Essence Refill 150ml","b":0,"s":"COS-1235-2","a":"إيسنس Advanced Snail 96 Mucin Power من كوسركس (عبوة إعادة تعبئة)","c":[6],"p":147,"sp":0,"r":4,"rc":98,"new":0,"oos":0},{"id":1236,"n":"COSRX Low pH Good Morning Gel Cleanser Refill 150ml","b":0,"s":"COS-1236-2","a":"غسول جل Low pH Good Morning من كوسركس (عبوة إعادة تعبئة)","c":[4],"p":162,"sp":0,"r":4.1,"rc":789,"new":0,"oos":0},{"id":1237,"n":"COSRX Snail Mucin 92% All in One Cream Refill 50ml","b":0,"s":"COS-1237-2","a":"كريم Snail Mucin 92% All in One من كوسركس (عبوة إعادة تعبئة)","c":[7],"p":153,"sp":0,"r":4.7,"rc":576,"new":0,"oos":0},{"id":1238,"n":"COSRX Acne Pimple Master Spot Patch Refill 24 patches","b":0,"s":"COS-1238-2","a":"لصقات حب الشباب Acne Pimple Master من كوسركس (عبوة إعادة تعبئة)","c":[13],"p":154,"sp":117,"r":4.3,"rc":310,"new":0,"oos":0},{"id":1239,"n":"COSRX BHA Blackhead Power Exfoliating Liquid Refill 100ml","b":0,"s":"COS-1239-2","a":"مقشر سائل BHA Blackhead Power من كوسركس (عبوة إعادة تعبئة)","c":[14],"p":46,"sp":0,"r":4.2,"rc":659,"new":0,"oos":0},{"id":1240,"n":"COSRX The Vitamin C 23 Serum Refill 50ml","b":0,"s":"COS-1240-2","a":"سيروم The Vitamin C 23 من كوسركس (عبوة إعادة تعبئة)","c":[6],"p":156,"sp":115,"r":5,"rc":808,"new":0,"oos":0},{"id":1241,"n":"COSRX Propolis Light Ampoule Refill 55ml","b":0,"s":"COS-1241-2","a":"أمبولة Propolis Light من كوسركس (عبوة إعادة تعبئة)","c":[6],"p":58,"sp":0,"r":4.1,"rc":229,"new":0,"oos":0},{"id":1242,"n":"COSRX Hyaluronic Acid Hydra Toner Refill 500ml","b":0,"s":"COS-1242-2","a":"تونر Hyaluronic Acid Hydra من كوسركس (عبوة إعادة تعبئة)","c":[5],"p":65,"sp":0,"r":4.3,"rc":492,"new":0,"oos":0},{"id":1243,"n":"Anua Heartleaf 77% Soothing Toner Refill 250ml","b":1,"s":"ANU-1243-2","a":"تونر Heartleaf 77% Soothing من أنوا (عبوة إعادة تعبئة)","c":[5],"p":37,"sp":0,"r":4.1,"rc":549,"new":0,"oos":1},{"id":1244,"n":"Anua Heartleaf Pore Control Cleansing Oil Refill 200ml","b":1,"s":"ANU-1244-2","a":"زيت منظف Heartleaf Pore Control من أنوا (عبوة إعادة تعبئة)","c":[3],"p":148,"sp":0,"r":4.2,"rc":619,"new":0,"oos":0},{"id":1245,"n":"Anua Niacinamide 10% + TXA Serum Refill 30ml","b":1,"s":"ANU-1245-2","a":"سيروم Niacinamide 10% + TXA من أنوا (عبوة إعادة تعبئة)","c":[6],"p":161,"sp":0,"r":4.3,"rc":654,"new":0,"oos":0},{"id":1246,"n":"Anua Heartleaf Quercetinol Pore Deep Foam Cleanser Refill 100ml","b":1,"s":"ANU-1246-2","a":"غسول رغوي Heartleaf Quercetinol Pore Deep من أنوا (عبوة إعادة تعبئة)","c":[4],"p":134,"sp":0,"r":4.1,"rc":630,"new":0,"oos":0},{"id":1247,"n":"Anua Peach 70% Niacinamide Serum Refill 30ml","b":1,"s":"ANU-1247-2","a":"سيروم Peach 70% Niacinamide من أنوا (عبوة إعادة تعبئة)","c":[6],"p":60,"sp":0,"r":4.7,"rc":812,"new":0,"oos":0},{"id":1248,"n":"Anua Heartleaf 70% Intense Calming Cream Refill 80ml","b":1,"s":"ANU-1248-2","a":"كريم Heartleaf 70% Intense Calming من أنوا (عبوة إعادة تعبئة)","c":[7],"p":171,"sp":0,"r":4.6,"rc":889,"new":0,"oos":0},{"id":1249,"n":"Anua Rice 70% Glow Milky Toner Refill 250ml","b":1,"s":"ANU-1249-2","a":"تونر Rice 70% Glow Milky من أنوا (عبوة إعادة تعبئة)","c":[5],"p":49,"sp":44,"r":4.4,"rc":0,"new":0,"oos":0},{"id":1250,"n":"Anua Heartleaf 77% Toner Pads Refill 60 pads","b":1,"s":"ANU-1250-2","a":"أقراص تونر Heartleaf 77% Toner من أنوا (عبوة إعادة تعبئة)","c":[14],"p":135,"sp":0,"r":4,"rc":471,"new":0,"oos":0},{"id":1251,"n":"Beauty of Joseon Relief Sun: Rice + Probiotics Sunscreen Refill 50ml SPF50+","b":2,"s":"BEA-1251-2","a":"واقي شمس Relief Sun: Rice + Probiotics من بيوتي أوف جوسون (عبوة إعادة تعبئة)","c":[8],"p":40,"sp":0,"r":4.8,"rc":727,"new":0,"oos":0},{"id":1252,"n":"Beauty of Joseon Glow Deep Rice + Arbutin Serum Refill 50ml","b":2,"s":"BEA-1252-2","a":"سيروم Glow Deep Rice + Arbutin من بيوتي أوف جوسون (عبوة إعادة تعبئة)","c":[6],"p":81,"sp":0,"r":4.4,"rc":80,"new":0,"oos":0},{"id":1253,"n":"Beauty of Joseon Dynasty Cream Refill 80ml","b":2,"s":"BEA-1253-2","a":"كريم Dynasty من بيوتي أوف جوسون (عبوة إعادة تعبئة)","c":[7],"p":123,"sp":0,"r":4.4,"rc":539,"new":0,"oos":0},{"id":1254,"n":"Beauty of Joseon Revive Eye Ginseng + Retinal Eye Cream Refill 30ml","b":2,"s":"BEA-1254-2","a":"كريم العين Revive Eye Ginseng + Retinal من بيوتي أوف جوسون (عبوة إعادة تعبئة)","c":[12],"p":153,"sp":0,"r":4.4,"rc":357,"new":0,"oos":0},{"id":1255,"n":"Beauty of Joseon Ginseng Cleansing Oil Refill 150ml","b":2,"s":"BEA-1255-2","a":"زيت منظف Ginseng Cleansing من بيوتي أوف جوسون (عبوة إعادة تعبئة)","c":[3],"p":61,"sp":0,"r":5,"rc":800,"new":0,"oos":0},{"id":1256,"n":"Beauty of Joseon Glow Ginseng + Snail Mucin Serum Refill 50ml","b":2,"s":"BEA-1256-2","a":"سيروم Glow Ginseng + Snail Mucin من بيوتي أوف جوسون (عبوة إعادة تعبئة)","c":[6],"p":68,"sp":0,"r":4.8,"rc":344,"new":0,"oos":0},{"id":1257,"n":"Beauty of Joseon Matte Sun Stick: Mugwort + Camelia Sun Stick Refill 20g","b":2,"s":"BEA-1257-2","a":"ستيك واقي شمس Matte Sun Stick: Mugwort + Camelia من بيوتي أوف جوسون (عبوة إعادة تعبئة)","c":[8],"p":172,"sp":0,"r":4.4,"rc":830,"new":0,"oos":0},{"id":1258,"n":"Beauty of Joseon Red Bean Refreshing Pore Clay Mask Refill 100ml","b":2,"s":"BEA-1258-2","a":"قناع طين Red Bean Refreshing Pore من بيوتي أوف جوسون (عبوة إعادة تعبئة)","c":[11],"p":79,"sp":0,"r":4.8,"rc":548,"new":0,"oos":0},{"id":1259,"n":"SKIN1004 Madagascar Centella Ampoule Refill 100ml","b":3,"s":"SKI-1259-2","a":"أمبولة Madagascar Centella من سكين 1004 (عبوة إعادة تعبئة)","c":[6],"p":126,"sp":0,"r":4.3,"rc":589,"new":0,"oos":0},{"id":1260,"n":"SKIN1004 Hyalu-Cica Water-Fit Sun Sunscreen Refill 50ml","b":3,"s":"SKI-1260-2","a":"واقي شمس Hyalu-Cica Water-Fit Sun من سكين 1004 (عبوة إعادة تعبئة)","c":[8],"p":129,"sp":109,"r":4.6,"rc":713,"new":0,"oos":0},{"id":1261,"n":"SKIN1004 Centella Light Cleansing Oil Refill 200ml","b":3,"s":"SKI-1261-2","a":"زيت منظف Centella Light Cleansing من سكين 1004 (عبوة إعادة تعبئة)","c":[3],"p":112,"sp":0,"r":4.2,"rc":762,"new":0,"oos":0},{"id":1262,"n":"SKIN1004 Centella Toning Toner Refill 500ml","b":3,"s":"SKI-1262-2","a":"تونر Centella Toning من سكين 1004 (عبوة إعادة تعبئة)","c":[5],"p":105,"sp":0,"r":4.8,"rc":841,"new":0,"oos":0},{"id":1263,"n":"SKIN1004 Poremizing Fresh Ampoule Refill 55ml","b":3,"s":"SKI-1263-2","a":"أمبولة Poremizing Fresh من سكين 1004 (عبوة إعادة تعبئة)","c":[6],"p":150,"sp":0,"r":4.4,"rc":284,"new":0,"oos":0},{"id":1264,"n":"SKIN1004 Centella Soothing Cream Refill 80ml","b":3,"s":"SKI-1264-2","a":"كريم Centella Soothing من سكين 1004 (عبوة إعادة تعبئة)","c":[7],"p":88,"sp":0,"r":4.1,"rc":515,"new":0,"oos":0},{"id":1265,"n":"Round Lab 1025 Dokdo Toner Refill 250ml","b":4,"s":"ROU-1265-2","a":"تونر 1025 Dokdo من راوند لاب (عبوة إعادة تعبئة)","c":[5],"p":98,"sp":0,"r":4.8,"rc":460,"new":0,"oos":0},{"id":1266,"n":"Round Lab Birch Juice Moisturizing Sunscreen Refill 50ml","b":4,"s":"ROU-1266-2","a":"واقي شمس Birch Juice Moisturizing من راوند لاب (عبوة إعادة تعبئة)","c":[8],"p":87,"sp":0,"r":4.9,"rc":822,"new":0,"oos":0},{"id":1267,"n":"Round Lab 1025 Dokdo Foam Cleanser Refill 150ml","b":4,"s":"ROU-1267-2","a":"غسول رغوي 1025 Dokdo من راوند لاب (عبوة إعادة تعبئة)","c":[4],"p":53,"sp":47,"r":4.7,"rc":198,"new":0,"oos":0},{"id":1268,"n":"Round Lab Soybean Nourishing Cream Refill 50ml","b":4,"s":"ROU-1268-2","a":"كريم Soybean Nourishing من راوند لاب (عبوة إعادة تعبئة)","c":[7],"p":158,"sp":0,"r":4.1,"rc":432,"new":0,"oos":0},{"id":1269,"n":"Round Lab Pine Calming Cica Ampoule Refill 100ml","b":4,"s":"ROU-1269-2","a":"أمبولة Pine Calming Cica من راوند لاب (عبوة إعادة تعبئة)","c":[6],"p":83,"sp":0,"r":4.5,"rc":636,"new":0,"oos":0},{"id":1270,"n":"Torriden DIVE-IN Low Molecular Hyaluronic Acid Serum Refill 30ml","b":5,"s":"TOR-1270-2","a":"سيروم DIVE-IN Low Molecular Hyaluronic Acid من توريدن (عبوة إعادة تعبئة)","c":[6],"p":126,"sp":0,"r":4.5,"rc":836,"new":0,"oos":0},{"id":1271,"n":"Torriden DIVE-IN Hyaluronic Acid Toner Refill 150ml","b":5,"s":"TOR-1271-2","a":"تونر DIVE-IN Hyaluronic Acid من توريدن (عبوة إعادة تعبئة)","c":[5],"p":101,"sp":0,"r":4.2,"rc":404,"new":1,"oos":0},{"id":1272,"n":"Torriden DIVE-IN Sheet Mask Refill 10 sheets","b":5,"s":"TOR-1272-2","a":"قناع ورقي DIVE-IN من توريدن (عبوة إعادة تعبئة)","c":[10],"p":158,"sp":112,"r":4.9,"rc":2,"new":0,"oos":0},{"id":1273,"n":"Torriden Solid-In Ceramide Cream Refill 80ml","b":5,"s":"TOR-1273-2","a":"كريم Solid-In Ceramide من توريدن (عبوة إعادة تعبئة)","c":[7],"p":50,"sp":0,"r":4.5,"rc":189,"new":0,"oos":0},{"id":1274,"n":"Torriden DIVE-IN Watery Moisture Sunscreen Refill 50ml SPF50+","b":5,"s":"TOR-1274-2","a":"واقي شمس DIVE-IN Watery Moisture من توريدن (عبوة إعادة تعبئة)","c":[8],"p":154,"sp":138,"r":4.7,"rc":228,"new":0,"oos":0},{"id":1275,"n":"Isntree Hyaluronic Acid Watery Sun Sunscreen Refill 50ml","b":6,"s":"ISN-1275-2","a":"واقي شمس Hyaluronic Acid Watery Sun من إيزنتري (عبوة إعادة تعبئة)","c":[8],"p":141,"sp":0,"r":4.8,"rc":29,"new":0,"oos":0},{"id":1276,"n":"Isntree Green Tea Fresh Toner Refill 500ml","b":6,"s":"ISN-1276-2","a":"تونر Green Tea Fresh من إيزنتري (عبوة إعادة تعبئة)","c":[5],"p":100,"sp":88,"r":4.1,"rc":368,"new":0,"oos":0},{"id":1277,"n":"Isntree Clear Skin 8% AHA Essence Refill 150ml","b":6,"s":"ISN-1277-2","a":"إيسنس Clear Skin 8% AHA من إيزنتري (عبوة إعادة تعبئة)","c":[6],"p":173,"sp":0,"r":4.1,"rc":580,"new":0,"oos":0},{"id":1278,"n":"Isntree Onion Newpair Gel Cream Refill 100ml","b":6,"s":"ISN-1278-2","a":"كريم جل Onion Newpair من إيزنتري (عبوة إعادة تعبئة)","c":[7],"p":150,"sp":0,"r":4,"rc":706,"new":0,"oos":0},{"id":1279,"n":"Some By Mi AHA BHA PHA 30 Days Miracle Toner Refill 500ml","b":7,"s":"SOM-1279-2","a":"تونر AHA BHA PHA 30 Days Miracle من سوم باي مي (عبوة إعادة تعبئة)","c":[5],"p":168,"sp":0,"r":4.1,"rc":128,"new":0,"oos":0},{"id":1280,"n":"Some By Mi Red Tea Tree Spot Patch Refill 36 patches","b":7,"s":"SOM-1280-2","a":"لصقات حب الشباب Red Tea Tree Spot من سوم باي مي (عبوة إعادة تعبئة)","c":[13],"p":47,"sp":0,"r":4.7,"rc":519,"new":0,"oos":0},{"id":1281,"n":"Some By Mi Retinol Intense Reactivating Serum Refill 50ml","b":7,"s":"SOM-1281-2","a":"سيروم Retinol Intense Reactivating من سوم باي مي (عبوة إعادة تعبئة)","c":[6],"p":58,"sp":0,"r":4.4,"rc":132,"new":0,"oos":0},{"id":1282,"n":"Some By Mi Snail Truecica Miracle Repair Cream Refill 80ml","b":7,"s":"SOM-1282-2","a":"كريم Snail Truecica Miracle Repair من سوم باي مي (عبوة إعادة تعبئة)","c":[7],"p":112,"sp":90,"r":4.6,"rc":108,"new":0,"oos":0},{"id":1283,"n":"Laneige Lip Sleeping Mask Berry Lip Sleeping Mask Refill 20g","b":8,"s":"LAN-1283-2","a":"قناع شفاه ليلي Lip Sleeping Mask Berry من لانيج (عبوة إعادة تعبئة)","c":[23],"p":122,"sp":0,"r":4.1,"rc":295,"new":0,"oos":0},{"id":1284,"n":"Laneige Water Sleeping Mask Refill 70ml","b":8,"s":"LAN-1284-2","a":"قناع ليلي Water Sleeping من لانيج (عبوة إعادة تعبئة)","c":[11],"p":162,"sp":0,"r":4.8,"rc":395,"new":0,"oos":0},{"id":1285,"n":"Laneige Cream Skin Refiner Toner Refill 500ml","b":8,"s":"LAN-1285-2","a":"تونر Cream Skin Refiner من لانيج (عبوة إعادة تعبئة)","c":[5],"p":90,"sp":0,"r":4.8,"rc":87,"new":0,"oos":0},{"id":1286,"n":"Laneige Water Bank Blue Hyaluronic Cream Refill 50ml","b":8,"s":"LAN-1286-2","a":"كريم Water Bank Blue Hyaluronic من لانيج (عبوة إعادة تعبئة)","c":[7],"p":83,"sp":0,"r":4.7,"rc":770,"new":1,"oos":0},{"id":1287,"n":"Laneige Neo Matte Cushion Refill 15g Refill","b":8,"s":"LAN-1287-2","a":"كوشن Neo Matte من لانيج (عبوة إعادة تعبئة)","c":[16],"p":80,"sp":0,"r":4,"rc":737,"new":0,"oos":1},{"id":1288,"n":"Innisfree Green Tea Seed Hyaluronic Serum Refill 30ml","b":9,"s":"INN-1288-2","a":"سيروم Green Tea Seed Hyaluronic من إنيسفري (عبوة إعادة تعبئة)","c":[6],"p":120,"sp":0,"r":4.9,"rc":677,"new":0,"oos":0},{"id":1289,"n":"Innisfree Volcanic Pore Clay Mask Refill 100ml","b":9,"s":"INN-1289-2","a":"قناع طين Volcanic Pore من إنيسفري (عبوة إعادة تعبئة)","c":[11],"p":114,"sp":0,"r":5,"rc":431,"new":1,"oos":0},{"id":1290,"n":"Innisfree Daily UV Defense Sunscreen Refill 50ml","b":9,"s":"INN-1290-2","a":"واقي شمس Daily UV Defense من إنيسفري (عبوة إعادة تعبئة)","c":[8],"p":93,"sp":0,"r":4.5,"rc":422,"new":0,"oos":1},{"id":1291,"n":"Innisfree Retinol Cica Repair Ampoule Refill 100ml","b":9,"s":"INN-1291-2","a":"أمبولة Retinol Cica Repair من إنيسفري (عبوة إعادة تعبئة)","c":[6],"p":58,"sp":44,"r":4.4,"rc":415,"new":0,"oos":0},{"id":1292,"n":"Missha Time Revolution First Treatment Essence Refill 150ml","b":10,"s":"MIS-1292-2","a":"إيسنس Time Revolution First Treatment من ميشا (عبوة إعادة تعبئة)","c":[6],"p":72,"sp":0,"r":4.3,"rc":285,"new":0,"oos":0},{"id":1293,"n":"Missha M Perfect Cover BB Cream Refill 50ml","b":10,"s":"MIS-1293-2","a":"بي بي كريم M Perfect Cover من ميشا (عبوة إعادة تعبئة)","c":[16],"p":75,"sp":0,"r":4.7,"rc":730,"new":0,"oos":1},{"id":1294,"n":"Missha All Around Safe Block Aqua Sun Sunscreen Refill 50ml","b":10,"s":"MIS-1294-2","a":"واقي شمس All Around Safe Block Aqua Sun من ميشا (عبوة إعادة تعبئة)","c":[8],"p":153,"sp":0,"r":4.4,"rc":354,"new":0,"oos":0},{"id":1295,"n":"Missha Magic Cushion Cover Lasting Cushion Refill 15g Refill","b":10,"s":"MIS-1295-2","a":"كوشن Magic Cushion Cover Lasting من ميشا (عبوة إعادة تعبئة)","c":[16],"p":165,"sp":0,"r":4.5,"rc":174,"new":0,"oos":0},{"id":1296,"n":"Klairs Supple Preparation Facial Toner Refill 250ml","b":11,"s":"KLA-1296-2","a":"تونر Supple Preparation Facial من كليرس (عبوة إعادة تعبئة)","c":[5],"p":100,"sp":0,"r":4.8,"rc":462,"new":0,"oos":0},{"id":1297,"n":"Klairs Freshly Juiced Vitamin Drop Serum Refill 30ml","b":11,"s":"KLA-1297-2","a":"سيروم Freshly Juiced Vitamin Drop من كليرس (عبوة إعادة تعبئة)","c":[6],"p":171,"sp":0,"r":4.4,"rc":552,"new":1,"oos":0},{"id":1298,"n":"Klairs Midnight Blue Calming Cream Refill 80ml","b":11,"s":"KLA-1298-2","a":"كريم Midnight Blue Calming من كليرس (عبوة إعادة تعبئة)","c":[7],"p":118,"sp":0,"r":4.7,"rc":720,"new":0,"oos":0},{"id":1299,"n":"Klairs Rich Moist Soothing Cream Refill 80ml","b":11,"s":"KLA-1299-2","a":"كريم Rich Moist Soothing من كليرس (عبوة إعادة تعبئة)","c":[7],"p":127,"sp":97,"r":4.7,"rc":692,"new":0,"oos":0},{"id":1300,"n":"Medicube Zero Pore Pad 2.0 Toner Pads Refill 60 pads","b":12,"s":"MED-1300-2","a":"أقراص تونر Zero Pore Pad 2.0 من ميديكيوب (عبوة إعادة تعبئة)","c":[14],"p":70,"sp":0,"r":4.9,"rc":433,"new":0,"oos":0}]}</script>
+<script>
+(function(){
+'use strict';
+var D = JSON.parse(document.getElementById('pl-data').textContent);
+var $ = function(s){ return document.querySelector(s); };
+var esc = function(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+
+/* ---------- catalogue ---------- */
+var CATS = D.cats.map(function(c){ return {id:c[0], parent:c[1], name:c[2], ar:c[3]}; });
+var CAT = {}; CATS.forEach(function(c){ CAT[c.id] = c; c.kids = []; });
+CATS.forEach(function(c){ if (c.parent) CAT[c.parent].kids.push(c.id); });
+var BRANDS = D.brands;
+var BASE = D.products;
+var P = [];               // the active catalogue (300, or ×10)
+var catDirect = {}, catAll = {};
+
+function ancestors(id){ var out = []; var c = CAT[id]; while (c && c.parent){ out.push(c.parent); c = CAT[c.parent]; } return out; }
+
+/* the shop's search normalisation: case, accents, Arabic letter forms, tashkeel */
+function norm(s){
+  return String(s).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'')
+    .replace(/[ً-ٰٟـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/ؤ/g,'و').replace(/ئ/g,'ي')
+    .replace(/[^\p{L}\p{N}%+.\-]+/gu,' ').replace(/\s+/g,' ').trim();
+}
+/* SearchTerms::GROUPS, as the shop search uses them, plus their Arabic */
+var SYN = [['moisturiser','moisturizer','cream','lotion','كريم'],['sunscreen','sun cream','suncream','sun','spf','uv','واقي','شمس'],['cleanser','face wash','facewash','cleansing','foam','غسول'],['serum','ampoule','essence','سيروم','امبوله','ايسنس'],['toner','tonic','تونر'],['mask','sheet mask','قناع'],['lip balm','lipbalm','lip mask'],['eye cream','eyecream','eye care'],['exfoliant','exfoliator','exfoliating','peeling','scrub','bha','aha'],['acne','blemish','pimple','breakout','spot'],['brightening','whitening','radiance','glow','vitamin'],['hydrating','moisturising','moisturizing','hydration','hyaluronic','hyalu'],['centella','cica','madecassoside'],['retinol','retinoid','retinal'],['snail','mucin'],['sleeping mask','sleeping pack','overnight mask','sleeping']].map(function(g){ return g.map(norm); });
+var SYNMAP = {}; SYN.forEach(function(g){ g.forEach(function(w){ if (w.indexOf(' ') < 0) SYNMAP[w] = g; }); });
+
+function buildCatalogue(times){
+  P = [];
+  for (var k = 0; k < times; k++) {
+    BASE.forEach(function(p){
+      var q = k === 0 ? p : Object.assign({}, p, {id: p.id + k * 10000, s: p.s + '-' + (k + 1), n: p.n.replace(/(\d+(ml|g|pcs|pads|patches|sheets?))/, function(m){ return m + ' · lot ' + (k + 1); })});
+      P.push(q);
+    });
+  }
+  P.forEach(function(p, i){
+    p.i = i;
+    var b = BRANDS[p.b];
+    p.brand = b[0];
+    var catNames = p.c.map(function(c){ return CAT[c].name + ' ' + CAT[c].ar; }).join(' ');
+    p.hn = ' ' + norm(p.n) + ' ';
+    p.h = ' ' + norm(p.n + ' ' + b[0] + ' ' + b[1] + ' ' + p.s + ' ' + p.a + ' ' + catNames) + ' ';
+    p.grad = grad(p.brand + p.n);
+  });
+  catDirect = {}; catAll = {};
+  CATS.forEach(function(c){ catDirect[c.id] = []; catAll[c.id] = []; });
+  P.forEach(function(p){
+    var seen = {};
+    p.c.forEach(function(c){
+      catDirect[c].push(p.i);
+      [c].concat(ancestors(c)).forEach(function(a){ if (!seen[a]) { seen[a] = 1; catAll[a].push(p.i); } });
+    });
+  });
+}
+
+/* the shop's pastel gradient fallback (App\Support\Gradient), approximated */
+function grad(s){
+  var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  var a = h % 360, b = (a + 40 + (h >> 8) % 60) % 360;
+  return 'linear-gradient(135deg,hsl(' + a + ',70%,93%),hsl(' + b + ',65%,86%))';
+}
+function initials(s){ return s.split(/\s+/).slice(0,2).map(function(w){ return w[0]; }).join('').toUpperCase(); }
+
+/* ---------- search: every word must match, in any order ---------- */
+function alts(tok){
+  var a = [tok];
+  if (tok.length > 3 && /s$/.test(tok)) a.push(tok.slice(0, -1));
+  if (/^ال/.test(tok) && tok.length > 3) a.push(tok.slice(2));
+  if (SYNMAP[tok]) a = a.concat(SYNMAP[tok]);
+  else if (tok.length >= 4) SYN.forEach(function(g){ g.forEach(function(w){ if (w.indexOf(tok) === 0 && w.indexOf(' ') < 0) a = a.concat(g); }); });
+  return a;
+}
+function search(q, pool){
+  var nq = norm(q);
+  if (!nq) return pool.slice();
+  var toks = nq.split(' ').map(alts);
+  var out = [];
+  for (var i = 0; i < pool.length; i++) {
+    var p = pool[i], score = 0, ok = true;
+    for (var t = 0; t < toks.length; t++) {
+      var al = toks[t], best = 0;
+      for (var j = 0; j < al.length; j++) {
+        var w = al[j], s = 0;
+        if (p.hn.indexOf(' ' + w) >= 0) s = j === 0 ? 4 : 3;
+        else if (p.h.indexOf(' ' + w) >= 0) s = j === 0 ? 3 : 2;
+        else if (p.h.indexOf(w) >= 0) s = 1;
+        if (s > best) best = s;
+      }
+      if (!best) { ok = false; break; }
+      score += best;
+    }
+    if (ok) { if (p.hn.indexOf(nq) >= 0) score += 5; out.push([score, p]); }
+  }
+  out.sort(function(a, b){ return b[0] - a[0] || (a[1].n < b[1].n ? -1 : 1); });
+  return out.map(function(x){ return x[1]; });
+}
+function hl(text, q){
+  var toks = norm(q).split(' ').filter(function(t){ return t.length > 1 && /[a-z0-9]/.test(t); });
+  var s = esc(text);
+  toks.forEach(function(t){
+    var re = new RegExp('(' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig');
+    s = s.replace(re, '<mark>$1</mark>');
+  });
+  return s;
+}
+
+/* ---------- labels ---------- */
+var COLOURS = ['#C13E63','#E0567B','#E23A4E','#F08A5D','#BE8E2E','#1B9E77','#2E7D6B','#3F6FE0','#7B6CF0','#2A2228'];
+var TEXTS = ['#FFFFFF','#2A2228','#FFF3C4'];
+var nextId = 6;
+function mk(o){ return Object.assign({id: nextId++, nameAr:'', textAr:'', fg:'#FFFFFF', shape:'A', where:'both', start:'', end:'', prio:1, on:true, mode:'both', picks:[], cats:[], sub:true, excl:[]}, o); }
+var LABELS = [
+  mk({id:1, name:'Best Seller', nameAr:'الأكثر مبيعاً', text:'Best Seller', textAr:'الأكثر مبيعاً', bg:'#C13E63', shape:'A', prio:1, mode:'both', picks:[1001,1009,1017,1025,1036,1049,1053,1066,1092,1098], cats:[], excl:[]}),
+  mk({id:2, name:'New Arrival', nameAr:'وصل حديثاً', text:'New Arrival', textAr:'وصل حديثاً', bg:'#1B9E77', shape:'B', prio:2, mode:'categories', cats:[16,17], excl:[]}),
+  mk({id:3, name:'Ramadan Pick', nameAr:'اختيار رمضان', text:'Ramadan Pick', textAr:'اختيار رمضان', bg:'#BE8E2E', fg:'#FFFFFF', shape:'D', where:'cards', start:'2027-02-08', end:'2027-03-09', prio:3, mode:'both', picks:[1017,1020], cats:[22], excl:[]}),
+  mk({id:4, name:'Award Winner', nameAr:'حائز على جائزة', text:'Award Winner', textAr:'حائز على جائزة', bg:'#2A2228', fg:'#FFF3C4', shape:'C', where:'page', prio:4, mode:'products', picks:[1001,1017,1025,1049]}),
+  mk({id:5, name:'Sun-care week', nameAr:'أسبوع الوقاية', text:'Sun Week', textAr:'أسبوع الشمس', bg:'#F08A5D', shape:'A', prio:5, on:false, mode:'categories', cats:[8], excl:[1041]}),
+];
+var cur = null; // the label being edited (a working copy)
+
+function resolve(l){
+  var set = new Set();
+  if (l.mode !== 'categories') l.picks.forEach(function(id){ var p = byId(id); if (p) set.add(p.i); });
+  if (l.mode !== 'products') l.cats.forEach(function(c){ (l.sub ? catAll[c] : catDirect[c]).forEach(function(i){ set.add(i); }); });
+  var ex = 0;
+  l.excl.forEach(function(id){ var p = byId(id); if (p && set.delete(p.i)) ex++; });
+  return {set:set, ex:ex};
+}
+var ID = {};
+function reindexIds(){ ID = {}; P.forEach(function(p){ ID[p.id] = p; }); }
+function byId(id){ return ID[id]; }
+
+function today(){ return '2026-11-15'; }
+function whenOf(l){
+  var t = today();
+  if (l.start && l.start > t) return ['blue', 'Starts ' + fmtD(l.start)];
+  if (l.end && l.end < t) return ['grey', 'Ended ' + fmtD(l.end)];
+  if (l.end) return ['green', 'Until ' + fmtD(l.end)];
+  return ['green', 'Always'];
+}
+function fmtD(d){ var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; var p = d.split('-'); return (+p[2]) + ' ' + m[+p[1] - 1] + ' ' + p[0]; }
+
+/* ---------- badge rendering ---------- */
+function mix(hex, t){ // blend with white, t = 0..1 of white
+  var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  var f = function(c){ return Math.round(c + (255 - c) * t); };
+  return '#' + [f(r), f(g), f(b)].map(function(c){ return c.toString(16).padStart(2, '0'); }).join('');
+}
+function dark(hex, t){ var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; var f = function(c){ return Math.round(c * (1 - t)); }; return '#' + [f(r), f(g), f(b)].map(function(c){ return c.toString(16).padStart(2, '0'); }).join(''); }
+function txt(l, ar){ return ar && l.textAr ? l.textAr : (l.text || l.name || 'Label'); }
+function badge(l, shape, ar, extra){
+  var t = esc(txt(l, ar));
+  if (shape === 'D') return '<span class="klb D ' + (extra || '') + '" style="background:' + mix(l.bg, .88) + ';color:' + dark(l.bg, .18) + ';border-color:' + mix(l.bg, .6) + '">' + t + '</span>';
+  return '<span class="klb ' + shape + ' ' + (extra || '') + '" style="background:' + l.bg + ';color:' + l.fg + '">' + t + '</span>';
+}
+function stack(labels, shape, ar){
+  if (!labels.length) return '';
+  var h = '', rest = labels;
+  if (shape === 'C') {
+    h += '<span class="klb-sash" style="background:' + labels[0].bg + ';color:' + labels[0].fg + '">' + esc(txt(labels[0], ar)) + '</span>';
+    rest = labels.slice(1);
+    if (rest.length) h += '<div class="klb-stack after-sash">' + rest.map(function(l){ return badge(l, 'C', ar); }).join('') + '</div>';
+    return h;
+  }
+  return '<div class="klb-stack">' + rest.map(function(l){ return badge(l, shape, ar); }).join('') + '</div>';
+}
+var BOTTLE = {
+  tube:'<svg viewBox="0 0 60 100"><rect x="18" y="4" width="24" height="12" rx="3" fill="rgba(255,255,255,.9)"/><path d="M14 16h32l-4 80H18z" fill="rgba(255,255,255,.75)"/><rect x="20" y="40" width="20" height="26" rx="3" fill="rgba(42,34,40,.10)"/></svg>',
+  bottle:'<svg viewBox="0 0 60 100"><rect x="23" y="2" width="14" height="14" rx="2" fill="rgba(42,34,40,.35)"/><rect x="12" y="16" width="36" height="82" rx="10" fill="rgba(255,255,255,.78)"/><rect x="18" y="44" width="24" height="28" rx="3" fill="rgba(42,34,40,.10)"/></svg>',
+  jar:'<svg viewBox="0 0 60 100"><rect x="6" y="38" width="48" height="12" rx="4" fill="rgba(42,34,40,.30)"/><rect x="8" y="50" width="44" height="40" rx="9" fill="rgba(255,255,255,.8)"/><rect x="16" y="60" width="28" height="16" rx="3" fill="rgba(42,34,40,.10)"/></svg>'
+};
+function shapeOf(p){ var c = p.c[0]; return [7,11,16,23].indexOf(c) >= 0 ? 'jar' : [3,4,8,12,13,20,21].indexOf(c) >= 0 ? 'tube' : 'bottle'; }
+function money(v){ return 'AED ' + v.toFixed(2); }
+function stars(r){ var h = ''; for (var s = 1; s <= 5; s++) h += '<span class="kbb-cstar' + (s <= Math.round(r) ? ' on' : '') + '">★</span>'; return h; }
+
+function card(p, labels, shape, ar, opts){
+  opts = opts || {};
+  var off = p.sp ? Math.round((1 - p.sp / p.p) * 100) : 0;
+  var end = p.oos ? '<span class="kbb-badge kbb-badge-oos">' + (ar ? 'نفدت الكمية' : 'Sold out') + '</span>'
+          : (off >= 1 && opts.sale !== false) ? '<span class="kbb-badge kbb-badge-sale">-' + off + '%</span>' : '';
+  var name = ar ? p.a : p.n.replace(p.brand + ' ', '');
+  var brand = ar ? BRANDS[p.b][1] : p.brand.toUpperCase();
+  return '<div class="kbb-card"><div class="kbb-card-thumb' + (end ? ' has-end' : '') + '" style="background:' + p.grad + '"><a class="kbb-card-shot">' + BOTTLE[shapeOf(p)] + '</a>' +
+    stack(labels, shape, ar) + end + '</div><div class="cb"><a class="cn"><span class="kbb-card-brand">' + esc(brand) + '</span><span>' + esc(name) + '</span></a>' +
+    (p.rc ? '<div class="kbb-card-rate"><span>' + stars(p.r) + '</span> <span class="kbb-card-rc">(' + p.rc + ')</span></div>' : '') +
+    '<div class="cp"><span>' + money(p.sp || p.p) + '</span>' + (p.sp ? '<span class="kbb-card-reg">' + money(p.p) + '</span>' : '') + '</div>' +
+    (p.oos ? '<a class="kbb-card-cart out">' + (ar ? 'نفدت الكمية' : 'Sold out') + '</a>' : '<a class="kbb-card-cart">' + (ar ? 'أضف إلى السلة' : 'Add to cart') + '</a>') + '</div></div>';
+}
+
+/* ---------- 1. list ---------- */
+function drawList(){
+  var rows = LABELS.slice().sort(function(a, b){ return a.prio - b.prio || b.id - a.id; });
+  $('#lblCount').textContent = rows.length;
+  if (!rows.length) { $('#ltBody').innerHTML = '<tr><td class="lempty" colspan="8">No labels yet — "New label" makes the first one.</td></tr>'; return; }
+  $('#ltBody').innerHTML = rows.map(function(l){
+    var r = resolve(l), w = whenOf(l);
+    var where = l.where === 'both' ? '<span class="pill grey">Cards</span><span class="pill grey">Page</span>' : l.where === 'cards' ? '<span class="pill grey">Cards</span>' : '<span class="pill grey">Page</span>';
+    var hp = []; if (l.mode !== 'categories' && l.picks.length) hp.push(l.picks.length + ' picked'); if (l.mode !== 'products' && l.cats.length) hp.push(l.cats.length + ' categor' + (l.cats.length === 1 ? 'y' : 'ies')); var how = hp.join(' + ') || 'none yet';
+    return '<tr data-id="' + l.id + '"><td class="c-chip"><div style="position:relative;width:96px;height:30px">' + badge(l, l.shape === 'C' ? 'A' : l.shape, false, 'inl') + '</div></td>' +
+      '<td class="c-name lrow-name"><b>' + esc(l.name) + '</b><small dir="rtl" style="text-align:start">' + esc(l.nameAr) + '</small></td>' +
+      '<td class="c-cnt"><b>' + r.set.size.toLocaleString() + '</b> <span class="faint" style="font-size:11.5px">· ' + how + (l.excl.length ? ' − ' + l.excl.length + ' excluded' : '') + '</span></td>' +
+      '<td class="c-where"><div class="where">' + where + '</div></td>' +
+      '<td class="c-when"><span class="pill ' + w[0] + '"><span class="d"></span>' + w[1] + '</span></td>' +
+      '<td class="c-prio"><span class="prio"><button data-a="up" aria-label="Higher"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 15 6-6 6 6"/></svg></button><b>' + l.prio + '</b><button data-a="down" aria-label="Lower"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"/></svg></button></span></td>' +
+      '<td class="c-on"><button class="tog' + (l.on ? ' on' : '') + '" data-a="on" aria-label="On"></button></td>' +
+      '<td class="c-act"><div class="ract"><button class="btn ghost sm" data-a="edit">Edit</button><button class="ibtn" data-a="dup" title="Duplicate" aria-label="Duplicate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button><button class="ibtn del" data-a="del" title="Delete" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button></div></td></tr>';
+  }).join('');
+}
+$('#ltBody').addEventListener('click', function(e){
+  var b = e.target.closest('[data-a]'); if (!b) return;
+  var id = +b.closest('tr').dataset.id, l = LABELS.find(function(x){ return x.id === id; }), a = b.dataset.a;
+  if (a === 'on') l.on = !l.on;
+  if (a === 'up') l.prio = Math.max(1, l.prio - 1);
+  if (a === 'down') l.prio = Math.min(99, l.prio + 1);
+  if (a === 'del') LABELS = LABELS.filter(function(x){ return x !== l; });
+  if (a === 'dup') LABELS.push(Object.assign(JSON.parse(JSON.stringify(l)), {id: nextId++, name: l.name + ' (copy)', on:false, prio: l.prio + 1}));
+  if (a === 'edit') { edit(l); document.getElementById('s-editor').scrollIntoView({behavior:'smooth'}); }
+  drawList(); drawShop();
+});
+$('#newLabel').addEventListener('click', function(){
+  edit(mk({name:'', text:'', bg:'#7B6CF0', prio: LABELS.length + 1, mode:'products'}), true);
+  document.getElementById('s-editor').scrollIntoView({behavior:'smooth'});
+  setTimeout(function(){ $('#fName').focus({preventScroll:true}); }, 400);
+});
+
+/* ---------- 2. editor ---------- */
+var SHAPES = [['A','Pill'],['B','Ribbon'],['C','Corner sash'],['D','Soft tag']];
+function edit(l, isNew){
+  cur = JSON.parse(JSON.stringify(l)); cur._new = !!isNew;
+  $('#edTitle').textContent = isNew ? 'New label' : 'Edit label · ' + l.name;
+  $('#fName').value = cur.name; $('#fNameAr').value = cur.nameAr; $('#fText').value = cur.text; $('#fTextAr').value = cur.textAr;
+  $('#fStart').value = cur.start; $('#fEnd').value = cur.end; $('#fPrio').value = cur.prio;
+  drawEditor(); drawPicker(true);
+}
+function drawEditor(){
+  $('#shapes').innerHTML = SHAPES.map(function(s){
+    var demo = s[0] === 'C' ? '<span class="klb-sash" style="background:' + cur.bg + ';color:' + cur.fg + ';top:12px;left:-40px">' + esc(txt(cur)) + '</span>' : '<div class="klb-stack" style="top:15px">' + badge(cur, s[0], false) + '</div>';
+    return '<button class="shape' + (cur.shape === s[0] ? ' on' : '') + '" data-s="' + s[0] + '"><span class="sw">' + demo + '</span><small>' + s[0] + ' · ' + s[1] + '</small></button>';
+  }).join('');
+  $('#bgSw').innerHTML = COLOURS.map(function(c){ return '<button class="swatch' + (cur.bg.toUpperCase() === c ? ' on' : '') + '" data-c="' + c + '" style="background:' + c + '" aria-label="' + c + '"></button>'; }).join('') + '<input type="color" id="bgPick" value="' + cur.bg + '" aria-label="Any colour">';
+  $('#fgSw').innerHTML = TEXTS.map(function(c){ return '<button class="swatch' + (cur.fg.toUpperCase() === c ? ' on' : '') + '" data-c="' + c + '" style="background:' + c + '" aria-label="' + c + '"></button>'; }).join('') + '<input type="color" id="fgPick" value="' + cur.fg + '" aria-label="Any colour">';
+  var cr = contrast(cur.bg, cur.fg);
+  $('#contrast').innerHTML = cur.shape === 'D' ? '<span style="color:#626c80">Soft tag uses the badge colour for its text.</span>' : cr >= 4.5 ? '<span style="color:#0b6e3a">✓ Easy to read (' + cr.toFixed(1) + ':1)</span>' : cr >= 3 ? '<span style="color:#9a6512">Readable at badge size (' + cr.toFixed(1) + ':1)</span>' : '<span style="color:#b8362d">Hard to read (' + cr.toFixed(1) + ':1) — pick another text colour</span>';
+  [].forEach.call(document.querySelectorAll('#whereSeg button'), function(b){ b.classList.toggle('on', b.dataset.v === cur.where); });
+  $('#fOn').classList.toggle('on', cur.on);
+  var w = whenOf(cur); $('#whenTxt').innerHTML = (cur.on ? 'On' : 'Off') + ' · <span class="pill ' + w[0] + '">' + w[1] + '</span>';
+  var p = P[0 + 16], sample = [cur];
+  $('#edPrev').innerHTML = '<div>' + card(p, cur.where === 'page' ? [] : sample, cur.shape, false) + '</div><div dir="rtl">' + card(p, cur.where === 'page' ? [] : sample, cur.shape, true) + '</div>' +
+    '<div style="grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:#626c80;font-weight:600">Product page title row: ' + (cur.where === 'cards' ? '<i>not shown (cards only)</i>' : badge(cur, cur.shape === 'C' ? 'A' : cur.shape, false, 'inl')) + '</div>';
+}
+function lum(hex){ var n = parseInt(hex.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255].map(function(c){ c /= 255; return c <= .03928 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4); }).reduce(function(a, c, i){ return a + c * [.2126,.7152,.0722][i]; }, 0); }
+function contrast(a, b){ var x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+document.getElementById('s-editor').addEventListener('click', function(e){
+  var s = e.target.closest('[data-s]'); if (s) { cur.shape = s.dataset.s; drawEditor(); return; }
+  var c = e.target.closest('#bgSw [data-c]'); if (c) { cur.bg = c.dataset.c; drawEditor(); return; }
+  c = e.target.closest('#fgSw [data-c]'); if (c) { cur.fg = c.dataset.c; drawEditor(); return; }
+  var w = e.target.closest('#whereSeg [data-v]'); if (w) { cur.where = w.dataset.v; drawEditor(); return; }
+  if (e.target.closest('#fOn')) { cur.on = !cur.on; drawEditor(); }
+});
+document.getElementById('s-editor').addEventListener('input', function(e){
+  var t = e.target;
+  if (t.id === 'bgPick') { cur.bg = t.value.toUpperCase(); }
+  else if (t.id === 'fgPick') { cur.fg = t.value.toUpperCase(); }
+  else if (t.id === 'fName') { cur.name = t.value; $('#sName').textContent = '“' + (t.value || 'this label') + '”'; }
+  else if (t.id === 'fNameAr') cur.nameAr = t.value;
+  else if (t.id === 'fText') cur.text = t.value;
+  else if (t.id === 'fTextAr') cur.textAr = t.value;
+  else if (t.id === 'fStart') cur.start = t.value;
+  else if (t.id === 'fEnd') cur.end = t.value;
+  else if (t.id === 'fPrio') cur.prio = Math.max(1, Math.min(99, +t.value || 1));
+  else return;
+  // keep the field being typed in: redraw only the parts that do not own focus
+  if (t.id === 'bgPick' || t.id === 'fgPick') { drawPreviewOnly(); return; }
+  drawEditor();
+});
+function drawPreviewOnly(){ var a = document.activeElement && document.activeElement.id; drawEditor(); if (a) { var el = document.getElementById(a); if (el) el.focus(); } }
+
+/* ---------- 3. picker ---------- */
+var PAGE = 50, shown = PAGE, hi = 0, found = [], showSel = false;
+function drawPicker(reset){
+  [].forEach.call(document.querySelectorAll('#modeSeg button'), function(b){ b.classList.toggle('on', b.dataset.v === cur.mode); });
+  $('#pk').className = 'pk' + (cur.mode === 'products' ? ' only-p' : cur.mode === 'categories' ? ' only-c' : '');
+  $('#subTog').classList.toggle('on', cur.sub);
+  $('#sName').textContent = '“' + (cur.name || 'this label') + '”';
+  if (reset) { $('#q').value = ''; $('#xq').value = ''; shown = PAGE; hi = 0; }
+  runSearch(); drawTree(); drawChips(); drawSum();
+}
+function runSearch(){
+  var t0 = performance.now();
+  var pool = showSel ? cur.picks.map(byId).filter(Boolean) : P;
+  found = search($('#q').value, pool);
+  var ms = performance.now() - t0;
+  $('#rSpeed').textContent = ms < 1 ? '<1 ms' : ms.toFixed(1) + ' ms';
+  if (hi >= found.length) hi = 0;
+  drawResults();
+}
+function drawResults(){
+  var q = $('#q').value, picked = new Set(cur.picks), inCat = cur.mode === 'both' ? resolveCats() : null;
+  $('#rCount').innerHTML = '<b>' + found.length.toLocaleString() + '</b> ' + (q ? 'found' : (showSel ? 'picked' : 'products'));
+  var rows = found.slice(0, shown).map(function(p, k){
+    var cats = p.c.map(function(c){ return CAT[c].name; }).join(', ');
+    return '<div class="r' + (k === hi ? ' hi' : '') + '" role="option" aria-selected="' + picked.has(p.id) + '" data-id="' + p.id + '" data-k="' + k + '">' +
+      '<input type="checkbox" tabindex="-1"' + (picked.has(p.id) ? ' checked' : '') + ' aria-label="Pick">' +
+      '<span class="th" style="background:' + p.grad + '">' + esc(initials(p.brand)) + '</span>' +
+      '<div style="min-width:0"><div class="nm">' + hl(p.n, q) + (inCat && inCat.has(p.i) ? '<span class="inlbl">in a ticked category</span>' : '') + '</div>' +
+      '<div class="mt">' + esc(p.brand) + ' · <span class="mono">' + hl(p.s, q) + '</span> · ' + esc(cats) + '</div><div class="ar">' + esc(p.a) + '</div></div>' +
+      '<div class="pr">' + money(p.sp || p.p) + (p.sp ? '<s>' + money(p.p) + '</s>' : '') + '</div></div>';
+  }).join('');
+  var rest = found.length - shown;
+  $('#rList').innerHTML = rows + (rest > 0 ? '<button class="more" id="moreBtn">Show ' + Math.min(PAGE, rest) + ' more · ' + rest.toLocaleString() + ' left</button>' : '') +
+    (!found.length ? '<div class="lempty">Nothing matches “' + esc(q) + '”. Every word has to match somewhere — name, brand, SKU, Arabic or category.</div>' : '');
+}
+function resolveCats(){ var s = new Set(); cur.cats.forEach(function(c){ (cur.sub ? catAll[c] : catDirect[c]).forEach(function(i){ s.add(i); }); }); return s; }
+function toggle(id){
+  var k = cur.picks.indexOf(id);
+  if (k >= 0) cur.picks.splice(k, 1); else cur.picks.push(id);
+}
+$('#q').addEventListener('input', function(){ shown = PAGE; hi = 0; runSearch(); });
+$('#q').addEventListener('keydown', function(e){
+  var max = Math.min(shown, found.length) - 1;
+  if (e.key === 'ArrowDown') { e.preventDefault(); hi = Math.min(max, hi + 1); moveHi(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); hi = Math.max(0, hi - 1); moveHi(); }
+  else if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); pickAll(true); }
+  else if (e.key === 'Enter') { e.preventDefault(); if (found[hi]) { toggle(found[hi].id); drawResults(); drawChips(); drawSum(); } }
+  else if (e.key === 'Escape') { this.value = ''; shown = PAGE; hi = 0; runSearch(); }
+});
+function moveHi(){
+  var rows = document.querySelectorAll('#rList .r');
+  [].forEach.call(rows, function(r){ r.classList.toggle('hi', +r.dataset.k === hi); });
+  if (rows[hi]) rows[hi].scrollIntoView({block:'nearest'});
+}
+$('#rList').addEventListener('click', function(e){
+  if (e.target.id === 'moreBtn') { shown += PAGE; drawResults(); return; }
+  var r = e.target.closest('.r'); if (!r) return;
+  hi = +r.dataset.k; toggle(+r.dataset.id); drawResults(); drawChips(); drawSum();
+});
+function pickAll(on){
+  var have = new Set(cur.picks);
+  found.forEach(function(p){ if (on && !have.has(p.id)) { cur.picks.push(p.id); have.add(p.id); } });
+  if (!on) { var f = new Set(found.map(function(p){ return p.id; })); cur.picks = cur.picks.filter(function(id){ return !f.has(id); }); }
+  if (cur.mode === 'categories') cur.mode = 'both';
+  drawPicker(false);
+}
+$('#pickAll').addEventListener('click', function(){ pickAll(true); });
+$('#unpickAll').addEventListener('click', function(){ pickAll(false); });
+$('#clearPicks').addEventListener('click', function(){ cur.picks = []; drawPicker(false); });
+$('#showSeg').addEventListener('click', function(e){ var b = e.target.closest('[data-v]'); if (!b) return; showSel = b.dataset.v === 'sel'; [].forEach.call(this.children, function(x){ x.classList.toggle('on', x === b); }); shown = PAGE; hi = 0; runSearch(); });
+$('#modeSeg').addEventListener('click', function(e){ var b = e.target.closest('[data-v]'); if (!b) return; cur.mode = b.dataset.v; drawPicker(false); });
+$('#subTog').addEventListener('click', function(e){ e.preventDefault(); cur.sub = !cur.sub; drawPicker(false); });
+
+var CHIPMAX = 40, chipsAll = false;
+function drawChips(){
+  $('#pCount').textContent = cur.picks.length;
+  var list = cur.picks.map(byId).filter(Boolean), more = chipsAll ? 0 : Math.max(0, list.length - CHIPMAX);
+  $('#pChips').innerHTML = (list.length ? list.slice(0, chipsAll ? list.length : CHIPMAX).map(function(p){ return '<span class="chipx"><span>' + esc(p.n) + '</span><button data-rm="' + p.id + '" aria-label="Remove">✕</button></span>'; }).join('') : '<span class="faint" style="font-size:12px">Nothing picked yet — tick products in the list above.</span>') +
+    (more ? '<button class="chipx" id="chipsMore" style="padding-right:11px">+' + more + ' more</button>' : '');
+  var xl = cur.excl.map(byId).filter(Boolean);
+  $('#xCount').textContent = xl.length;
+  $('#xChips').innerHTML = xl.length ? xl.map(function(p){ return '<span class="chipx ex"><span>' + esc(p.n) + '</span><button data-xrm="' + p.id + '" aria-label="Remove">✕</button></span>'; }).join('') : '<span class="faint" style="font-size:12px">None. Search above to leave a product out even though its category is ticked.</span>';
+}
+$('#pChips').addEventListener('click', function(e){
+  if (e.target.id === 'chipsMore') { chipsAll = true; drawChips(); return; }
+  var b = e.target.closest('[data-rm]'); if (!b) return; toggle(+b.dataset.rm); drawResults(); drawChips(); drawSum();
+});
+$('#xChips').addEventListener('click', function(e){
+  var b = e.target.closest('[data-xrm]'); if (!b) return; cur.excl = cur.excl.filter(function(id){ return id !== +b.dataset.xrm; }); drawResults(); drawChips(); drawSum();
+});
+
+/* category tree */
+var openCats = {1: true};
+function drawTree(){
+  var cq = norm($('#cq').value), ticked = new Set(cur.cats), html = '';
+  function inherited(id){ return cur.sub && ancestors(id).some(function(a){ return ticked.has(a); }); }
+  function matches(c){ return !cq || norm(c.name + ' ' + c.ar).indexOf(cq) >= 0 || c.kids.some(function(k){ return matches(CAT[k]); }); }
+  function walk(id, depth){
+    var c = CAT[id]; if (!matches(c)) return;
+    var inc = inherited(id), on = ticked.has(id) || inc, open = cq || openCats[id];
+    var n = (cur.sub ? catAll : catDirect)[id].length;
+    html += '<div class="tn' + (open ? ' open' : '') + (inc && !ticked.has(id) ? ' inc' : '') + '" style="padding-inline-start:' + (8 + depth * 20) + 'px" data-c="' + id + '">' +
+      (c.kids.length ? '<button class="cv" data-t="' + id + '" aria-label="Open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m9 6 6 6-6 6"/></svg></button>' : '<span class="cv"></span>') +
+      '<input type="checkbox"' + (on ? ' checked' : '') + (inc && !ticked.has(id) ? ' disabled' : '') + ' aria-label="' + esc(c.name) + '">' +
+      '<span class="cn2">' + esc(c.name) + '<small dir="rtl">' + esc(c.ar) + '</small></span><span class="ct">' + n.toLocaleString() + '</span></div>';
+    if (open) c.kids.forEach(function(k){ walk(k, depth + 1); });
+  }
+  CATS.filter(function(c){ return !c.parent; }).forEach(function(c){ walk(c.id, 0); });
+  $('#tree').innerHTML = html || '<div class="lempty">No category called that.</div>';
+}
+$('#tree').addEventListener('click', function(e){
+  var t = e.target.closest('[data-t]');
+  if (t) { var id = +t.dataset.t; openCats[id] = !openCats[id]; drawTree(); return; }
+  var row = e.target.closest('.tn'); if (!row) return;
+  var cb = row.querySelector('input'); if (cb.disabled) return;
+  var cid = +row.dataset.c, k = cur.cats.indexOf(cid);
+  if (k >= 0) cur.cats.splice(k, 1); else { cur.cats.push(cid); if (cur.sub) cur.cats = cur.cats.filter(function(x){ return ancestors(x).indexOf(cid) < 0; }); }
+  if (cur.mode === 'products') cur.mode = 'both';
+  drawPicker(false);
+});
+$('#cq').addEventListener('input', drawTree);
+
+/* exclude */
+$('#xq').addEventListener('input', function(){
+  var q = this.value, set = resolve(Object.assign({}, cur, {excl: []})).set;
+  if (!norm(q)) { $('#xDD').classList.remove('on'); return; }
+  var pool = []; set.forEach(function(i){ pool.push(P[i]); });
+  var res = search(q, pool).filter(function(p){ return cur.excl.indexOf(p.id) < 0; }).slice(0, 12);
+  $('#xDD').innerHTML = res.length ? res.map(function(p){ return '<div class="r" data-x="' + p.id + '"><span class="th" style="background:' + p.grad + '">' + esc(initials(p.brand)) + '</span><div style="min-width:0"><div class="nm">' + hl(p.n, q) + '</div><div class="mt">' + esc(p.brand) + ' · ' + esc(p.s) + '</div></div></div>'; }).join('') : '<div class="lempty">None of the products this label covers match.</div>';
+  $('#xDD').classList.add('on');
+});
+$('#xDD').addEventListener('click', function(e){ var r = e.target.closest('[data-x]'); if (!r) return; cur.excl.push(+r.dataset.x); $('#xq').value = ''; this.classList.remove('on'); drawResults(); drawChips(); drawSum(); });
+document.addEventListener('pointerdown', function(e){ if (!e.target.closest('.exw')) $('#xDD').classList.remove('on'); });
+
+function drawSum(){
+  var r = resolve(cur), picks = cur.mode === 'categories' ? 0 : cur.picks.length, fromCats = cur.mode === 'products' ? 0 : resolveCats().size;
+  var overlap = cur.mode === 'both' ? (picks + fromCats - (r.set.size + r.ex)) : 0;
+  $('#sTotal').textContent = r.set.size.toLocaleString();
+  var parts = [];
+  if (cur.mode !== 'categories') parts.push(picks + ' picked');
+  if (cur.mode !== 'products') parts.push(fromCats.toLocaleString() + ' from ' + cur.cats.length + ' categor' + (cur.cats.length === 1 ? 'y' : 'ies') + (cur.sub ? ' (with sub-categories)' : ''));
+  var s = parts.join(' + ');
+  if (overlap > 0) s += ' − ' + overlap + ' counted twice';
+  if (r.ex) s += ' − ' + r.ex + ' excluded';
+  $('#sBreak').textContent = s;
+  if ($('#pvPanel').style.display !== 'none') drawPv();
+}
+function drawPv(){
+  var r = resolve(cur), list = []; r.set.forEach(function(i){ if (list.length < 24) list.push(P[i]); });
+  $('#pvGrid').innerHTML = list.map(function(p){ return '<div><span class="th" style="background:' + p.grad + '">' + esc(initials(p.brand)) + '</span>' + esc(p.n) + '</div>'; }).join('') || '<div class="faint">No products yet.</div>';
+}
+$('#pvBtn').addEventListener('click', function(){ var on = $('#pvPanel').style.display === 'none'; $('#pvPanel').style.display = on ? 'block' : 'none'; this.textContent = on ? 'Hide them' : 'See them'; if (on) drawPv(); });
+$('#saveBtn').addEventListener('click', function(){
+  var copy = JSON.parse(JSON.stringify(cur)); delete copy._new;
+  if (!copy.name) copy.name = copy.text || 'Untitled label';
+  var k = LABELS.findIndex(function(l){ return l.id === copy.id; });
+  if (k >= 0) LABELS[k] = copy; else LABELS.push(copy);
+  cur._new = false;
+  drawList(); drawShop();
+  this.textContent = 'Saved ✓'; var b = this; setTimeout(function(){ b.textContent = 'Save label'; }, 1400);
+});
+$('#x10').addEventListener('change', function(){ buildCatalogue(this.checked ? 10 : 1); reindexIds(); drawPicker(false); drawList(); });
+
+/* ---------- 4. shop ---------- */
+var look = 'A', ar = false;
+function labelsFor(p, ctx){ // what the shop would draw: on, in date, right place, by priority, at most two
+  var t = today();
+  return LABELS.filter(function(l){
+    return l.on && (!l.start || l.start <= t) && (!l.end || l.end >= t) && (l.where === 'both' || l.where === ctx) && resolve(l).set.has(p.i);
+  }).sort(function(a, b){ return a.prio - b.prio || b.id - a.id; }).slice(0, 2);
+}
+var BS = LABELS[0], NA = LABELS[1], AW = LABELS[3];
+function drawShop(){
+  [].forEach.call(document.querySelectorAll('.looks [data-l]'), function(b){ b.classList.toggle('on', b.dataset.l === look); });
+  $('#lookName').textContent = look; $('#lookName2').textContent = look;
+  var shop = $('#shop'); shop.setAttribute('dir', ar ? 'rtl' : 'ltr');
+  var hero = P.filter(function(p){ return p.sp && !p.oos; })[2];
+  $('#cmp').innerHTML = SHAPES.map(function(s){ return '<div><h4><i>' + s[0] + '</i>' + s[1] + '</h4>' + card(hero, [BS], s[0], ar) + '</div>'; }).join('');
+  // a grid of eight that shows each case once
+  var sale = P.filter(function(p){ return p.sp && !p.oos; }), plain = P.filter(function(p){ return !p.sp && !p.oos; });
+  var cases = [
+    [sale[2], [BS]],                  // sale + one label
+    [plain[3], [BS, NA]],             // two labels
+    [plain[8], [NA]],                 // one label
+    [plain[12], []],                  // no label: unchanged
+    [sale[5], [BS, NA]],              // sale + two labels
+    [P.filter(function(p){ return p.oos; })[0], [NA]], // sold out + label
+    [plain[20], [{bg:'#7B6CF0', fg:'#FFFFFF', text:'Limited Edition', textAr:'إصدار محدود', name:'Limited Edition'}]],
+    [plain[26], []]
+  ];
+  $('#grid').innerHTML = cases.map(function(c){ return card(c[0], c[1], look, ar); }).join('');
+  // product page: Best Seller + Award Winner, with a sale
+  var p = sale[2], labs = [BS, AW], off = Math.round((1 - p.sp / p.p) * 100);
+  var name = ar ? p.a : p.n;
+  $('#pdp').innerHTML = '<div class="pdp"><div><div class="pdp-g" style="background:' + p.grad + '"><a class="kbb-card-shot">' + BOTTLE[shapeOf(p)] + '</a>' + stack(labs, look, ar) + '<span class="auto">-' + off + '%</span></div>' +
+    '<div class="pdp-th"><span style="background:' + p.grad + '"></span><span style="background:' + grad('x' + p.n) + '"></span><span style="background:' + grad('y' + p.n) + '"></span></div></div>' +
+    '<div class="pdp-i"><div class="br">' + esc(ar ? BRANDS[p.b][1] : p.brand) + '</div><h3>' + esc(name) + '</h3>' +
+    '<div class="chipsrow">' + labs.map(function(l){ return badge(l, look === 'C' ? 'A' : look, ar, 'inl'); }).join('') + '</div>' +
+    '<div class="rt"><span>' + stars(p.r) + '</span> ' + p.r + ' · ' + p.rc + (ar ? ' تقييم' : ' reviews') + '</div>' +
+    '<div class="pz">' + money(p.sp) + '<s>' + money(p.p) + '</s><span class="off">-' + off + '%</span></div>' +
+    '<a class="add">' + (ar ? 'أضف إلى السلة' : 'Add to cart') + '</a>' +
+    '<ul><li>' + (ar ? 'منتج كوري أصلي' : 'Authentic Korean skincare') + '</li><li>' + (ar ? 'توصيل في نفس اليوم داخل دبي' : 'Same-day delivery in Dubai') + '</li></ul></div></div>';
+}
+$('#shop').addEventListener('click', function(e){
+  var b = e.target.closest('[data-l]'); if (b) { look = b.dataset.l; drawShop(); return; }
+  var g = e.target.closest('#lang [data-v]'); if (g) { ar = g.dataset.v === 'ar'; [].forEach.call(g.parentNode.children, function(x){ x.classList.toggle('on', x === g); }); drawShop(); }
+});
+
+/* ---------- boot ---------- */
+buildCatalogue(1); reindexIds();
+drawList();
+edit(LABELS[0]);
+drawShop();
+// allow the screenshot script to preset a state through the hash
+var h = location.hash.slice(1).split('&').reduce(function(o, kv){ var p = kv.split('='); if (p[0]) o[p[0]] = decodeURIComponent(p[1] || ''); return o; }, {});
+if (h.look) { look = h.look; }
+if (h.lang === 'ar') { ar = true; [].forEach.call(document.querySelectorAll('#lang button'), function(x){ x.classList.toggle('on', x.dataset.v === 'ar'); }); }
+drawShop();
+})();
+</script>
+</body>
+</html>
