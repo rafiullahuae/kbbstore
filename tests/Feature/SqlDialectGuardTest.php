@@ -948,6 +948,19 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         // Lane VPA: a variable product's options (variants, their attribute
         // values and the axes' swatch terms) -- joins across four tables.
         'admin-api/product-variants/{id}' => '/admin-api/product-variants/' . $product->id,
+        // Catalog -> Labels (Lane LBL): one label with a product, a category and an
+        // excluded product, so the read takes its targets and their counts.
+        'admin-api/labels/{id}' => '/admin-api/labels/' . (function () use ($product, $category): int {
+            $id = (int) \Illuminate\Support\Facades\DB::table('product_labels')->insertGetId([
+                'name' => 'Best Seller', 'text' => 'Best Seller', 'created_at' => now(), 'updated_at' => now(),
+            ]);
+            \Illuminate\Support\Facades\DB::table('product_label_targets')->insert([
+                ['label_id' => $id, 'kind' => 'product', 'target_id' => $product->id, 'with_children' => false],
+                ['label_id' => $id, 'kind' => 'category', 'target_id' => $category->id, 'with_children' => true],
+            ]);
+
+            return $id;
+        })(),
         /*
          * Reads one image and then resolves WHERE IT IS USED, which walks every
          * product, brand and category — three cursor()ed queries whose results
