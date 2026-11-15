@@ -542,6 +542,9 @@
       <div class="bb-head">
         <h1 class="bb-title" id="bbTitle">{{ $name }}</h1>
         @include('partials.product.share-button')
+@php /* (Lane LBL) Catalog -> Labels beside the title, as chips; nothing at all for a product with no label. */ $kbbPlbChips = \App\Services\CustomLabels::forProduct((int) $product->id, 'page'); @endphp
+@if ($kbbPlbChips !== [])        {!! \App\Services\CustomLabels::chipsHtml($kbbPlbChips) !!}
+@endif
       </div></div><!--/pm-->
 @if ($kbbGsAt === 'price')@include('partials.product.gift-strip')@endif
       <div class="pm-sec pm-price"><div class="bb-pricerow" id="bbPriceRow">

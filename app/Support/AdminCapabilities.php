@@ -336,6 +336,9 @@ final class AdminCapabilities
         // in one press. Owner and manager; every other role fails closed.
         'catalog.new_arrivals' => ['owner', 'manager'],
         'catalog.best_sellers' => ['owner', 'manager'],
+        // Catalog -> Labels (Lane LBL): the owner's own product labels and the
+        // rules that put them on products. Owner and manager; fails closed.
+        'labels.manage' => ['owner', 'manager'],
         // Catalog -> Translate & categorise (Lane LT). Its own capability: a
         // run sends the newest products' copy to the Claude API on the owner's
         // key (it spends his money), Approve all publishes Arabic to the shop,
@@ -1826,6 +1829,9 @@ final class AdminCapabilities
         ['*', 'admin-api/new-arrivals/**', 'catalog.new_arrivals'],
         ['*', 'admin-api/best-sellers', 'catalog.best_sellers'],
         ['*', 'admin-api/best-sellers/**', 'catalog.best_sellers'],
+        // Lane LBL, routes/product-labels-admin.php: every path, reads and writes alike.
+        ['*', 'admin-api/labels', 'labels.manage'],
+        ['*', 'admin-api/labels/**', 'labels.manage'],
         // Lane LT. Every path under the prefix, reads and writes alike.
         ['*', 'admin-api/recent-localise', 'catalog.localise'],
         ['*', 'admin-api/recent-localise/**', 'catalog.localise'],

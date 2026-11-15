@@ -263,6 +263,43 @@
         : null;
 
     /*
+     * (Lane LBL) CATALOG -> LABELS: the owner's own badges, option E.
+     *
+     * They take the top-START corner, stacked, at most two by priority. The
+     * automatic sale pill keeps the top-END corner and the sold-out pill its
+     * own; the automatic New / Bestseller give way, so a card never says
+     * "Bestseller" and "Best Seller" at once. With Growth & Marketing ->
+     * Product Labels on, its badge stays only when it is the sold-out or sale
+     * one, moved to the end corner.
+     *
+     * One read of a map the request already holds -- no query, nothing per
+     * card (App\Services\CustomLabels). [] while no label is on, and then this
+     * block changes nothing: $kbbStart is exactly what it was.
+     */
+    $kbbPlb = \App\Services\CustomLabels::forProduct((int) $product->id, 'cards');
+
+    if ($kbbPlb !== []) {
+        $kbbPlbEnd = $kbbEnd !== null;
+
+        if ($rank !== null) {
+            $kbbStart .= \App\Services\CustomLabels::stackHtml($kbbPlb, 'plb-r' . ($kbbPlbEnd ? ' plb-e' : ''));
+        } else {
+            $kbbStart = null;
+
+            if ($kbbLabel !== null) {
+                $kbbAuto = app(\App\Services\ProductLabels::class)->all();
+
+                if (($kbbAuto['oos_on'] && $product->stock_status !== 'instock') || ($kbbAuto['sale_on'] && $kbbOff >= 1)) {
+                    $kbbStart = '<span class="lbl plb-x" style="background:' . e($kbbLabel['colour']) . '">' . e($kbbLabel['text']) . '</span>';
+                    $kbbPlbEnd = true;
+                }
+            }
+
+            $kbbStart .= \App\Services\CustomLabels::stackHtml($kbbPlb, $kbbPlbEnd ? 'plb-e' : '');
+        }
+    }
+
+    /*
      * CAN THIS TILE PUT IT IN THE BASKET ON ITS OWN?
      *
      * Product::isDirectlyBuyable() is one expression read by this tile AND by

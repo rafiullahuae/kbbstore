@@ -165,6 +165,7 @@ final class AdminRoles
             'concerns.sync' => 'Find products in no skin-concern collection, get suggestions (Claude API or built-in rules) and add them (Catalog → Shop by Concern)',
             'catalog.new_arrivals' => 'Keep the New Arrivals collection: on/off, how many, how recent, include/exclude products and their order (Catalog → New Arrivals)',
             'catalog.best_sellers' => 'Arrange the Best Sellers page: drag the order, remove products with the cross (Catalog → Best Sellers)',
+            'labels.manage' => 'Make product labels and choose the products that carry them (Catalog → Labels)',
             'catalog.localise' => 'Translate recent products into Arabic and file them under Shop by Skin (Catalog → Translate & categorise)',
             'catalog.ar_structure' => 'Put back the blank lines and list breaks the Arabic product copy lost, with a backup and undo (Catalog → Translate & categorise → Arabic spacing)',
         ]],
