@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Store;
 use App\Http\Controllers\Controller;
 use App\Services\CartService;
 use App\Services\FreeGifts;
+use App\Services\GiftOffers\GiftOffers;
 use App\Services\SettingsService;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -51,6 +52,14 @@ class CartGiftsController extends Controller
 
         if ($sig !== null && hash_equals($sig, (string) $request->query('s', ''))) {
             return response()->noContent(204, $headers);
+        }
+
+        // (Lane GBX2) A box that really changed is redrawn WITH the basket's live
+        // bonus gift inside it, as the page drew it -- otherwise the swap would
+        // drop the bonus. Only here, past the 204: an unchanged box costs nothing more.
+        if ($sig !== null) {
+            $offers = app(GiftOffers::class);
+            [$box] = $offers->intoBox($box, $offers->row($totals));
         }
 
         return response()->json([

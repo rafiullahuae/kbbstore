@@ -169,7 +169,11 @@
     ['email_body_order', 'Pending reminders: text'], ['email_button_order', 'Pending reminders: button'], ['email_worth', 'Line under the button (keep :price)'],
     ['clock_label', 'Above the clock (email and cart row)'], ['held', 'Fixed end time / clock alt text (keep :time)'], ['today', 'Today'], ['tomorrow', 'Tomorrow'], ['chip_free', 'Chip: Free'], ['chip_full', 'Chip: Full size']
   ];
-  var ROW_TEXTS = [['row_free', 'Row chip: Free'], ['row_full', 'Row chip: Full size'], ['row_below', 'Bag below the range (keep :amount)'], ['row_over', 'When the time is up'], ['ended', 'An ended or unavailable gift'], ['pay_note', 'Order-pay page, under the row']];
+  var ROW_TEXTS = [['row_free', 'Row chip: Free'], ['row_full', 'Row chip: Full size'], ['row_below', 'Bag below the range (keep :amount)'], ['row_over', 'When the time is up'], ['ended', 'An ended or unavailable gift'], ['pay_note', 'Order-pay page, under the row'], ['box_bonus', 'Gift box: before the bonus gift\'s name (A, E)'], ['box_plus', 'Gift box: before the bonus gift\'s name (C)'], ['box_held', 'Gift box: the clock, for screen readers']];
+  /* (Lane GBX2) The bonus gift inside the Free gifts box: the owner's five
+     approved designs (docs/plans/gift-box-merge/). The server stores one of
+     these letters or the default (GiftOffers::BOX_DESIGNS / BOX_DESIGN). */
+  var BOX_DESIGNS = [['A', 'Pink timer tag', 'The bonus is the last photo, ringed in pink; its pink tag reads the live clock. One line under the row names it.'], ['B', 'Cream card', 'A cream card at the foot of the box: photo, name, then a dark clock chip, Free · Full size · ×N.'], ['C', 'Ringed photo', 'The last photo inside a pink ring that shrinks as time runs out; the clock is a pill on the ring.'], ['D', 'Two-part box', 'A dashed green divider, then the bonus at the foot with a dark clock chip.'], ['E', 'Gold frame', 'The last photo in a gold frame; a gold tag holds small flip digits.']];
   var POP_TEXTS = [['wait', 'Big word'], ['pop_full', 'After FREE'], ['pop_held', 'S1 pill'], ['pop_held_for', 'S2 bar'], ['pop_minutes', 'S4 minutes'], ['pop_seconds', 'S4 seconds'], ['pop_gold', 'S5 strip'], ['pop_box', 'C: before opening'], ['pop_tap', 'C: tap to open'], ['pop_added', 'Green tick'], ['pop_opening', 'Under the tick'], ['pop_close', 'Close button (screen readers)']];
   /* Off / Testing / Live (the owner, 4 November: "the same TEST / LIVE / OFF
      function" as Free gifts). Each saves at once and asks Yes / No first in the
@@ -350,6 +354,10 @@
         '<label class="go-f"><span>Timer in the email</span><select class="go-in" data-k="timer"' + (ro ? ' disabled' : '') + '><option value="live"' + (c.timer === 'live' ? ' selected' : '') + '>Live moving clock</option><option value="fixed"' + (c.timer === 'fixed' ? ' selected' : '') + '>Fixed end time ("Held until 4:15 AM tomorrow")</option></select><small>' + (st.data.live_clock ? 'The live clock is a small picture the server draws when the email is opened; Outlook on a computer shows it still.' : 'This server cannot draw the clock (no GD), so the fixed end time is used.') + '</small></label>' +
         '<label class="go-f"><span>Pending reminder 2</span><select class="go-in" data-k="window"' + (ro ? ' disabled' : '') + '><option value="each"' + (c.window === 'each' ? ' selected' : '') + '>A fresh window of its own</option><option value="first"' + (c.window === 'first' ? ' selected' : '') + '>The same window as reminder 1</option></select><small>With "the same window", reminder 2 carries no gift once reminder 1\'s has ended.</small></label>' +
       '</div>' +
+      '<h3 class="go-h" style="font-size:13.5px">Bonus gift in the Free gifts box</h3>' +
+      '<p class="go-sub">In the cart panel, on the cart page and in the checkout summary, a claimed gift sits inside the Free gifts box as its last gift, with the live clock on it; when the time ends it leaves the box silently. Off: the separate gift row as before.</p>' +
+      '<div class="go-g2"><div class="go-f">' + sw(!(c.box && c.box.merge === false), 'Show bonus gift inside the Free gifts box', 'box:merge', ro) + '</div>' +
+        '<label class="go-f"><span>Design</span><select class="go-in" data-k="box:design"' + (ro ? ' disabled' : '') + '>' + BOX_DESIGNS.map(function (o) { return '<option value="' + o[0] + '"' + ((c.box && c.box.design) === o[0] ? ' selected' : '') + '>' + esc(o[0] + ' · ' + o[1]) + '</option>'; }).join('') + '</select><small>' + esc((BOX_DESIGNS.filter(function (o) { return o[0] === (c.box && c.box.design); })[0] || BOX_DESIGNS[0])[2]) + '</small></label></div>' +
       '<h3 class="go-h" style="font-size:13.5px">Email texts</h3>' + txtRows(EMAIL_TEXTS) +
       '<h3 class="go-h" style="font-size:13.5px">Cart row texts</h3>' + txtRows(ROW_TEXTS) +
       '<p class="go-sub">The reminders\' own schedule, subject and message stay where they were: <button type="button" class="btn ghost sm" data-goto="carttracking">Cart Tracking → Reminder emails</button> <button type="button" class="btn ghost sm" data-goto="emails-customer">Emails → Customer emails</button></p>' +
@@ -583,6 +591,7 @@
   function setCfg(key, value) {
     var c = st.cfg;
     if (key.indexOf('t:') === 0) c.texts[key.slice(2)] = value;
+    else if (key === 'box:design') { c.box = c.box || {}; c.box.design = value; render(); }
     else if (key === 'hold_hours' || key === 'popup_minutes') c[key] = value === '' ? value : Number(value);
     else c[key] = value;
     st.msg = ''; schedulePreview();
@@ -604,6 +613,7 @@
         return;
       }
       if (k.indexOf('renabled:') === 0) { var dr = draftOf(k.slice(9)); dr.enabled = !dr.enabled; }
+      if (k === 'box:merge') { st.cfg.box = st.cfg.box || {}; st.cfg.box.merge = st.cfg.box.merge === false; }
       st.msg = ''; schedulePreview(); render(); return;
     }
     if ((b = e.target.closest('[data-mode]'))) {

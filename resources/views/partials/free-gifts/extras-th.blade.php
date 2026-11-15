@@ -24,6 +24,7 @@
 @endphp
 {!! '<button type="button" class="fgb-t" aria-label="' . e($kbbFgRow['name']) . '"' . ($gbxPop === 'C' ? ' aria-expanded="false"' : ' aria-haspopup="dialog"') . ' onclick="' . e($gbxOn) . '">' . substr($gbxTile, strlen('<span class="fgb-t">')) !!}@if ($kbbFgRow['quantity'] > 1)<b>×{{ $kbbFgRow['quantity'] }}</b>@endif</button>@endforeach
 @endif
+{!! $kbbFgBonusTile ?? '' !!}{{-- (Lane GBX2) the bonus gift, LAST, after every photo and before C's cards (their index is the photo's) --}}
 @if ($gbxPop === 'C')@php
     $gbxAr = ! \App\Support\Locale::isDefault();
     $gbxT = \App\Services\FreeGifts::EXTRA_TEXTS[$gbxAr ? 'ar' : 'en'];
