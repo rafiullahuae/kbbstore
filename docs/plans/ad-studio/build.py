@@ -2,8 +2,8 @@
 #   python3 build.py  ->  ad-studio.html (not committed) + dist/ad-studio.html (committed: the owner's file)
 #
 # Inlined, so the file makes zero network requests: the fonts (fonts.py, cached in fontcache/), the three
-# vendored libraries (html-to-image 1.11.11, JSZip 3.10.1, mp4-muxer 5.2.1 for the Video mode's MP4 export), the 12 product cut-outs (assets/products,
-# copied from ../black-friday-ads/assets), the tabby / tamara badges (resources/payment-logos), the
+# vendored libraries (html-to-image 1.11.11, JSZip 3.10.1, mp4-muxer 5.2.1 for the Video mode's MP4 export), the 20 product cut-outs (assets/products: 12
+# copied from ../black-friday-ads/assets, 8 of the shop's newest cut by cutout.py), the tabby / tamara badges (resources/payment-logos), the
 # templates (src/templates.js) and the editor (src/studio.js).
 import base64, json, os, shutil, sys
 from PIL import Image
@@ -14,7 +14,12 @@ import fonts as _fonts
 NAMES = {'guasha': 'medicube Gua Sha cream', 'anua': 'Anua mist mini', 'marymay': 'Mary&May PDRN serum', 'deodorant': 'medicube deodorant',
          'eyemask': 'medicube eye patches', 'balmred': 'medicube EGF balm (red)', 'balmpink': 'medicube PDRN balm (pink)',
          'celimax': 'celimax Retinal Shot', 'dalba': "d'Alba First Spray Serum", 'glowvanilla': 'medicube Glow Vanilla mist',
-         'anuacream': 'Anua PDRN cream', 'hairoil': 'medicube Rosemary hair oil'}
+         'anuacream': 'Anua PDRN cream', 'hairoil': 'medicube Rosemary hair oil',
+         # the shop's newest (15 Nov 2026, for the National Day ads) -- cut by cutout.py from assets/src/<slug>.webp
+         'anuaeye': 'Anua PDRN Caffeine eye cream', 'eospeach': 'eos 24H Moisture lotion (jasmine peach)',
+         'eosbutter': 'eos Cashmere whipped oil butter', 'bdeye': 'Biodance Collagen Peptide eye cream',
+         'bdserum': 'Biodance Caviar PDRN serum', 'azelaic': 'medicube Azelaic Acid foam cleanser',
+         'nbz9': 'numbuzin No.9 NAD+ sun essence', 'nbz5': 'numbuzin No.5 Glutathione mask set'}
 
 
 def b64(path):
