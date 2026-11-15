@@ -1,14 +1,16 @@
 // The National Day contact sheet (owner, 15 Nov 2026): every nd-* template in post, square and story.
-//   node tools/nd-shots.cjs [out.jpg] [set]   -> shots/national-day.jpg (set 0, 1 or 2 = the product set)
+//   node tools/nd-shots.cjs [out.jpg] [set] [ids]   -> shots/national-day.jpg (set 0, 1 or 2 = the product set)
+//   ids: a regular expression over template ids (default: every nd-* template), e.g. the second round:
+//   node tools/nd-shots.cjs shots/national-day-2.jpg 0 '^nd-(gold|garden|lilac|velvet|sky)$'
 const { chromium } = require('playwright');
 const path = require('path');
 const ROOT = path.join(__dirname, '..'), FILE = path.join(ROOT, 'ad-studio.html');
-const OUT = process.argv[2] || path.join(ROOT, 'shots', 'national-day.jpg'), SET = +(process.argv[3] || 0);
+const OUT = process.argv[2] || path.join(ROOT, 'shots', 'national-day.jpg'), SET = +(process.argv[3] || 0), IDS = process.argv[4] || '^nd-';
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   const p = await b.newPage({ viewport: { width: 1400, height: 1000 }, deviceScaleFactor: 1 });
   await p.goto('file://' + FILE); await p.waitForFunction(() => document.documentElement.dataset.ready === '1');
-  const list = await p.evaluate(() => window.KBB_STUDIO.templates.filter((t) => /^nd-/.test(t.id)).map((t) => ({ id: t.id, name: t.name })));
+  const list = await p.evaluate((re) => window.KBB_STUDIO.templates.filter((t) => new RegExp(re).test(t.id)).map((t) => ({ id: t.id, name: t.name })), IDS);
   const rows = [];
   for (const t of list) {
     const r = { name: t.name, imgs: [] };
