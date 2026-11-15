@@ -150,7 +150,7 @@ it('draws one popup per photo, in the photos\' order, with brand, cut price, pri
 
 it('draws C as cards inside the box, and the criteria in each design, in both languages', function () {
     gbxBands(3);
-    gbxSave(['mode' => 'live', 'pop' => 'C', 'crit' => '2']);
+    gbxSave(['mode' => 'live', 'pop' => 'C', 'crit' => '2', 'crit_show' => 'tabs']);
     $html = gbxBox();
     expect(substr_count($html, '<div class="gbx-k" hidden'))->toBe(3)
         ->and(substr_count($html, 'aria-expanded="false" onclick="var b=this.closest('))->toBe(3)
@@ -160,7 +160,7 @@ it('draws C as cards inside the box, and the criteria in each design, in both la
         // Every band, the basket's own marked.
         ->and($html)->toContain('2 Masks')->toContain('1 Full Size Product + 2 Masks')->toContain('<em>Your basket</em>');
 
-    gbxSave(['mode' => 'live', 'crit' => '3']);
+    gbxSave(['mode' => 'live', 'crit' => '3', 'crit_show' => 'tabs']);
     $ar = gbxBox(GBX_STRANGER, 'ar');
     expect($ar)->toContain('شروط الهدايا')->toContain('type="radio"')->toContain('منتج بالحجم الكامل + قناعان');
     app()->setLocale('en');
@@ -222,7 +222,7 @@ it('saves from the admin, refuses a value that is not an option, and fails close
     test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['tabs' => 'T3'])->assertStatus(422);
 
     $r = test()->actingAs($owner, 'admin')->postJson('/admin-api/free-gifts/extras', ['mode' => 'testing', 'pop' => 'D', 'glow' => 'G1', 'crit' => '2', 'crit_on' => false])->assertOk();
-    expect($r->json('config.extras'))->toBe(['mode' => 'testing', 'pop' => 'D', 'crit_on' => false, 'crit' => '2', 'glow' => 'G1', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10, 'tabs' => 'T5'])
+    expect($r->json('config.extras'))->toBe(['mode' => 'testing', 'pop' => 'D', 'crit_on' => false, 'crit' => '2', 'glow' => 'G1', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10, 'tabs' => 'T5', 'crit_show' => 'rows'])
         // The one Testing list, untouched (it already had the owner's IP).
         ->and($r->json('config.testers'))->toBe([['ip' => GBX_TESTER, 'label' => 'Owner']])
         // The free gifts Mode is its own switch.
@@ -315,7 +315,7 @@ it('gives the criteria popup a big, clearly visible close, mirrored in Arabic by
     // MUTATION: drop the .gbx-cp .gbx-x rule -- red (a 36px ghost on white).
     gbxBands(3);
     foreach (['1', '2', '3'] as $d) {
-        gbxSave(['mode' => 'live', 'crit' => $d]);
+        gbxSave(['mode' => 'live', 'crit' => $d, 'crit_show' => 'tabs']);
         // ▲ 2.60.621: in em with the popup's fluid size, never under 36px.
         expect(gbxBox())->toContain('.gbx-cp .gbx-x{top:.75em;inset-inline-end:.75em;width:2.7em;height:2.7em;min-width:36px;min-height:36px;background:#221A20;color:#fff')
             ->toContain('.gbx-cp .gbx-x span{font-size:1.35em}')
@@ -332,7 +332,7 @@ it('keeps the tabs\' popup one fixed size: two rows of gifts that scroll sideway
     // 390, 340 at 320, 441 at 430 and 1280 (docs/gbx-feature-shots/v4).
     // MUTATION: put the grid back on grid-template-columns:repeat(4,...) -- red.
     gbxBands(3);
-    gbxSave(['mode' => 'live', 'crit' => '3']);
+    gbxSave(['mode' => 'live', 'crit' => '3', 'crit_show' => 'tabs']);
     $html = gbxBox();
     expect($html)->toContain('.gbx-grid{display:grid;grid-template-rows:repeat(2,7.1em);grid-template-columns:repeat(var(--gc,3),calc((100% - 2.3 * .7em) / 3.3));')
         ->toContain('overflow-x:auto;overflow-y:hidden;')
@@ -357,7 +357,7 @@ it('fills the first row of gifts before the second, on phone and computer', func
     // 390 and 4+0 at 1280; 7 read 4+3 and scroll sideways at 390.
     // MUTATION: put grid-auto-flow:column back, or drop the style="--gc..." -- red.
     gbxBands(3);
-    gbxSave(['mode' => 'live', 'crit' => '3']);
+    gbxSave(['mode' => 'live', 'crit' => '3', 'crit_show' => 'tabs']);
     $html = gbxBox();
     expect($html)->not->toContain('grid-auto-flow:column')
         ->toContain('@media (min-width:601px){.gbx-grid{grid-template-columns:repeat(var(--gd,4),calc((100% - 3.3 * .7em) / 4.3))}}');
@@ -378,7 +378,7 @@ it('opens the criteria popup still, and shows 3.2 gifts across when a range scro
     // MUTATION: put .gbx-cp:popover-open{animation:gbx-in ...} back, or drop
     // the gbx-s3 class -- red.
     gbxBands(3);
-    gbxSave(['mode' => 'live', 'crit' => '3']);
+    gbxSave(['mode' => 'live', 'crit' => '3', 'crit_show' => 'tabs']);
     $html = gbxBox();
     expect($html)->not->toContain('gbx-in')->not->toContain('translateY(6px)')
         ->toContain('.gbx-tp>div{animation:gbx-fade .18s ease-out}')
@@ -404,7 +404,7 @@ it('draws the range boxes as the owner picked (B2 + T5) by default, and T1 bring
         ->and(FreeGifts::extrasOf(['tabs' => 'T9'])['tabs'])->toBe('T5')
         ->and(FreeGifts::extrasOf(['tabs' => 'T1'])['tabs'])->toBe('T1');
     gbxBands(3);
-    gbxSave(['mode' => 'live', 'crit' => '3']);
+    gbxSave(['mode' => 'live', 'crit' => '3', 'crit_show' => 'tabs']);
     $html = gbxBox();
     expect($html)->toContain('<div class="gbx-3 gbx-t5">')
         ->toContain('.gbx-t5 .gbx-tabs i{position:absolute;top:0;left:50%;transform:translate(-50%,-55%);')
@@ -415,7 +415,7 @@ it('draws the range boxes as the owner picked (B2 + T5) by default, and T1 bring
     // Every box carries its band's own count under the amount.
     expect(substr_count($html, '</small></span><b class="gbx-tk"'))->toBe(substr_count($html, '<input type="radio"'));
 
-    gbxSave(['mode' => 'live', 'crit' => '3', 'tabs' => 'T1']);
+    gbxSave(['mode' => 'live', 'crit' => '3', 'tabs' => 'T1', 'crit_show' => 'tabs']);
     $t1 = gbxBox();
     expect($t1)->toContain('<div class="gbx-3">')->not->toContain('.gbx-t5 ')
         ->toContain('.gbx-tabs input:checked+span{background:#2e8f62;border-color:#2e8f62;color:#fff}')
@@ -438,7 +438,7 @@ it('opens the range row with the "Your basket" range in the middle, and the row 
     // MUTATION: drop the scrollIntoView from the Gifts Criteria onclick -- red;
     // put position:sticky back on .gbx-yb -- red.
     gbxBands(3);
-    gbxSave(['mode' => 'live', 'crit' => '3']);
+    gbxSave(['mode' => 'live', 'crit' => '3', 'crit_show' => 'tabs']);
     $html = gbxBox();
     expect($html)->toContain("p.showPopover();p.querySelector('.gbx-x').focus();var y=p.querySelector('.gbx-yb');if(y)y.scrollIntoView({block:'nearest',inline:'center'})")
         ->not->toContain('gbx-yb{position:sticky')->not->toContain('scrollLeft')->not->toContain('getBoundingClientRect');
@@ -460,7 +460,7 @@ it('leaves no box around Gifts Criteria after a tap or a click, and keeps the ri
     // and close; solid after Enter and Escape.
     // MUTATION: put p.gbxFrom=this back, or drop :focus:not(:focus-visible) -- red.
     gbxBands(3);
-    gbxSave(['mode' => 'live', 'crit' => '3']);
+    gbxSave(['mode' => 'live', 'crit' => '3', 'crit_show' => 'tabs']);
     $html = gbxBox();
     expect($html)->toContain('p.gbxFrom=event.detail?null:this;')
         ->not->toContain('p.gbxFrom=this;')
@@ -479,7 +479,7 @@ it('never shifts the tabs\' popup sideways: each radio stays inside its own tab,
     // Arabic), 0 after the fix on every tab at 320-1280.
     // MUTATION: drop position:relative from the label -- red.
     gbxBands(3);
-    gbxSave(['mode' => 'live', 'crit' => '3']);
+    gbxSave(['mode' => 'live', 'crit' => '3', 'crit_show' => 'tabs']);
     $html = gbxBox();
     expect($html)->toContain('.gbx-tabs label{position:relative;flex:none;cursor:pointer}.gbx-tabs input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;pointer-events:none}')
         ->toMatch('/\.gbx-cp\{[^}]*overflow:hidden;overflow:clip\}/');
@@ -490,7 +490,7 @@ it('scales the whole criteria popup with the screen, fonts included', function (
     // etc if low res phone": 11.5px at 320, 14px at 390, 15px from 417.
     // MUTATION: a fixed font-size on .gbx-cp -- red.
     gbxBands(3);
-    gbxSave(['mode' => 'live', 'crit' => '1']);
+    gbxSave(['mode' => 'live', 'crit' => '1', 'crit_show' => 'tabs']);
     expect(gbxBox())->toContain('.gbx-cp{font-size:15px;font-size:clamp(11px,3.6vw,15px);width:min(37em,calc(100vw - 48px));')
         ->toContain('.gbx-c1,.gbx-c2{height:min(31em,88vh)}');
 });
@@ -529,7 +529,7 @@ it('turns the photo click off on a shop that already saved the popups, and touch
     SettingsService::forgetMemo();
     Setting::flushMap();
     $x = app(FreeGifts::class)->freshConfig();
-    expect($x['extras'])->toBe(['mode' => 'testing', 'pop' => 'off', 'crit_on' => true, 'crit' => '3', 'glow' => 'G2', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10, 'tabs' => 'T5'])
+    expect($x['extras'])->toBe(['mode' => 'testing', 'pop' => 'off', 'crit_on' => true, 'crit' => '3', 'glow' => 'G2', 'panel_gap' => 12, 'link_m' => 10, 'link_d' => 10, 'tabs' => 'T5', 'crit_show' => 'rows'])
         ->and($x['mode'])->toBe('live')->and($x['testers'])->toBe([['ip' => GBX_TESTER, 'label' => 'Owner']]);
 
     // No popups saved yet: the row is left exactly as it was.

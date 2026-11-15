@@ -152,6 +152,8 @@ class FreeGiftsController extends Controller
             'glow' => ['sometimes', 'string', Rule::in(FreeGifts::EXTRA_GLOWS)],
             // (2.60.624) The range boxes in the tabs design.
             'tabs' => ['sometimes', 'string', Rule::in(FreeGifts::EXTRA_TABS)],
+            // (Lane GCR) Gifts Criteria popup: the homepage rows or the complete tabs.
+            'crit_show' => ['sometimes', 'string', Rule::in(FreeGifts::EXTRA_CRIT_SHOWS)],
             'crit_on' => ['sometimes', 'boolean'],
             // (2.60.620) The space above the box in the cart panel: a whole number of px.
             'panel_gap' => ['sometimes', 'integer', 'min:0', 'max:' . FreeGifts::PANEL_GAP_MAX],
