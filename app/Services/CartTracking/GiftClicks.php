@@ -50,7 +50,7 @@ final class GiftClicks
     public const ACTIONS = [
         ['va', 'View all'],
         ['hd', 'Hide'],
-        ['cr', 'Gifts Criteria'],
+        ['cr', 'All gifts'],
         ['rg', 'Range tapped'],
         ['ph', 'Gift photo tapped'],
     ];
