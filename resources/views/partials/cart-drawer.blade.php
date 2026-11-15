@@ -216,8 +216,12 @@
                         </div>
                     </div>
                 @endforeach
-@include('partials.free-gifts.box', app(\App\Services\FreeGifts::class)->box($totals))
-@include('partials.gift-offers.row', app(\App\Services\GiftOffers\GiftOffers::class)->row($totals))
+@php
+    // (Lane GBX2) A live bonus gift goes INTO the Free gifts box, last; the separate row then draws nothing (GiftOffers::intoBox()).
+    [$kbbGbBox, $kbbGbRow] = app(\App\Services\GiftOffers\GiftOffers::class)->intoBox(app(\App\Services\FreeGifts::class)->box($totals), app(\App\Services\GiftOffers\GiftOffers::class)->row($totals));
+@endphp
+@include('partials.free-gifts.box', $kbbGbBox)
+@include('partials.gift-offers.row', $kbbGbRow)
 @include('partials.gift-offers.popup', ['goPop' => app(\App\Services\GiftOffers\GiftOffers::class)->popup($totals)])
             </div>
             <div class="dfoot">

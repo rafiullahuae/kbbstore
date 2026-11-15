@@ -24,5 +24,9 @@
     </div>
 </div>
 @endif
-@include('partials.free-gifts.box', app(\App\Services\FreeGifts::class)->box($totals)){{-- Lane FG: the free gifts box, IN the free-delivery slot because that slot is the one the country-change answer redraws (CheckoutController::rates() renders this partial), so a UAE-only gift follows the country with no new script. Nothing at all while the switch is off. --}}
-@include('partials.gift-offers.row', app(\App\Services\GiftOffers\GiftOffers::class)->row($totals))
+@php
+    // (Lane GBX2) A live bonus gift goes INTO the Free gifts box, last; the separate row then draws nothing (GiftOffers::intoBox()).
+    [$kbbGbBox, $kbbGbRow] = app(\App\Services\GiftOffers\GiftOffers::class)->intoBox(app(\App\Services\FreeGifts::class)->box($totals), app(\App\Services\GiftOffers\GiftOffers::class)->row($totals));
+@endphp
+@include('partials.free-gifts.box', $kbbGbBox){{-- Lane FG: the free gifts box, IN the free-delivery slot because that slot is the one the country-change answer redraws (CheckoutController::rates() renders this partial), so a UAE-only gift follows the country with no new script. Nothing at all while the switch is off. --}}
+@include('partials.gift-offers.row', $kbbGbRow)

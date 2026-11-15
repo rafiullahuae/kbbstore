@@ -352,7 +352,12 @@ it('draws the R2 row only for a basket holding a live claim, and nothing at all 
      * has no gift, or a query to find out.
      * MUTATION: in GiftOffers::liveClaim() drop the `! $cart->gift_offer_claim_id`
      * early return -- the basket without a claim pays a query. RED.
+     *
+     * (Lane GBX2) The separate R2 row is what Settings -> "Show bonus gift
+     * inside the Free gifts box" OFF draws; the merged default is pinned in
+     * GiftBoxBonusTest.
      */
+    gfoSet(['box' => ['merge' => false]]);
     gfoRange(100, null, [[gfoProduct('Dokdo Toner'), 'primary', 50]]);
     $cart = gfoCart([[gfoProduct('Serum', ['price' => 40000]), 1]]);
 
@@ -695,14 +700,14 @@ it('gives nothing anywhere when Off: no email box, no claim, no cart row', funct
     $token = gfoTokenOf(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], null));
     gfoShopper($cart)->get('/gift-offer/c/' . $token);
     gfoFresh();
-    expect(gfoShopper($cart)->get('/cart/')->getContent())->toContain('data-kgo-row');
+    expect(gfoShopper($cart)->get('/cart/')->getContent())->toContain('data-gbm-left');   // (Lane GBX2) the bonus inside the box, the default
 
     gfoSet(['mode' => 'off']);
     $before = DB::table('gift_offer_claims')->count();
     expect(GiftOffers::forBasket([['unit_price' => 40000, 'quantity' => 1]], $cart->id))->toBeNull()
         ->and(GiftOffers::forOrder(gfoPendingOrder(), 1))->toBeNull()
         ->and(DB::table('gift_offer_claims')->count())->toBe($before)
-        ->and(gfoShopper($cart)->get('/cart/')->getContent())->not->toContain('data-kgo-row');
+        ->and(gfoShopper($cart)->get('/cart/')->getContent())->not->toContain('data-kgo-row')->not->toContain('data-gbm-left');
 
     // A link sent while it was on says the gift has ended.
     gfoSet(['mode' => 'live']);

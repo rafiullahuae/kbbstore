@@ -100,6 +100,19 @@ final class GiftOffers
 
     public const AUDIENCES = ['bag', 'checkout'];
 
+    /**
+     * THE BONUS GIFT INSIDE THE FREE GIFTS BOX (Lane GBX2; the owner, 10-15
+     * November 2026: "the additional free gift product should inside the gifts
+     * box ... i don't want additional separate box for it", "at the last", "in
+     * place of word bonus, i need the timer", "if time end, it will removed
+     * completely from the box silently"). Previews: docs/plans/gift-box-merge/.
+     * Marketing -> Gift offers -> Settings -> "Bonus gift in the Free gifts box".
+     */
+    public const BOX_DESIGNS = ['A', 'B', 'C', 'D', 'E'];
+
+    /** The design the merged box ships with until the owner picks one -- change this one line. */
+    public const BOX_DESIGN = 'A';
+
     public const HOLD = [8, 1, 72];
 
     public const MINUTES = [15, 5, 120];
@@ -163,6 +176,10 @@ final class GiftOffers
         'row_full' => ['Full size', 'حجم كامل'],
         'row_below' => ['Add :amount more to keep this gift', 'أضيفي :amount لتحتفظي بهذه الهدية'],
         'row_over' => ['Your time is up, so the gift has left your bag.', 'انتهى الوقت، فغادرت الهدية حقيبتكِ.'],
+        // The bonus gift inside the Free gifts box (BOX_DESIGNS): its name line and the clock's screen-reader label.
+        'box_bonus' => ['Bonus:', 'هدية إضافية:'],
+        'box_plus' => ['+ Bonus', '+ هدية إضافية'],
+        'box_held' => ['Bonus gift held for', 'الهدية الإضافية محجوزة لمدة'],
         'ended' => ['This gift has ended.', 'انتهت هذه الهدية.'],
         'pay_note' => ['Pay within the time and your free gift is added to this order.', 'ادفعي خلال الوقت المحدد وستُضاف هديتكِ المجانية إلى هذا الطلب.'],
         // The popup.
@@ -273,6 +290,11 @@ final class GiftOffers
                 'style' => $pick($pop['style'] ?? null, self::STYLES, 'S3'),
                 'words' => $pick(is_int($pop['words'] ?? null) ? (string) $pop['words'] : ($pop['words'] ?? null), self::WORDS, '3'),
                 'audience' => $pick($pop['audience'] ?? null, self::AUDIENCES, 'bag'),
+            ],
+            'box' => [
+                // ON unless switched off in the admin (the owner asked for it, 10 November).
+                'merge' => is_bool($saved['box']['merge'] ?? null) ? $saved['box']['merge'] : true,
+                'design' => $pick($saved['box']['design'] ?? null, self::BOX_DESIGNS, self::BOX_DESIGN),
             ],
             'texts' => $texts,
         ];
@@ -958,6 +980,47 @@ final class GiftOffers
         }
 
         return $claim === null ? ['goEnded' => $this->text('ended')] : $this->rowView($claim, $this->text('pay_note'));
+    }
+
+    /**
+     * THE BONUS GIFT GOES INTO THE FREE GIFTS BOX (Lane GBX2). Takes what the
+     * cart panel, the cart page and the checkout summary already computed --
+     * FreeGifts::box() and row() -- and, with Settings -> "Show bonus gift
+     * inside the Free gifts box" on (the default), moves a live claim into the
+     * box as kbbFgBonus (drawn LAST, its clock where the BONUS tag was) and
+     * leaves the separate row empty. Off: both returned untouched, so the page
+     * is byte for byte what it was.
+     *
+     * No query and no settings read for a basket without a claim (row() is []
+     * and this returns at once); with one, config() was already read by
+     * liveClaim(). An expired claim never reaches here: liveClaim() drops it,
+     * and forPlace() keeps it off the order. "This gift has ended." (an ended
+     * claim LINK opened, ?gift=ended) is not a bonus in the box and still
+     * draws as before.
+     *
+     * @return array{0: array, 1: array} [box view data, row view data]
+     */
+    public function intoBox(array $box, array $row): array
+    {
+        if (! isset($row['goRow']) || ! $this->config()['box']['merge']) {
+            return [$box, $row];
+        }
+
+        $go = $row['goRow'];
+
+        if ((int) $go['left'] <= 0) {
+            return [$box, []];
+        }
+
+        $box['kbbFgBonus'] = $go + [
+            'design' => $this->config()['box']['design'],
+            'bonus' => $this->text('box_bonus'),
+            'plus' => $this->text('box_plus'),
+            'held' => $this->text('box_held'),
+            'size' => $this->text('pop_full'),
+        ];
+
+        return [$box, []];
     }
 
     private function rowView(object $claim, string $below): array

@@ -288,9 +288,12 @@ it('prints ×2 on the cart row, the abandoned-cart ticket, the order email, the 
     $mail = (new \App\Mail\CartRecoveryReminder('Your basket', 'Hi Layla', [['name' => 'Serum', 'slug' => 'serum', 'quantity' => 1, 'unit_price' => 40000]], 'https://example.test/cart/', 'https://example.test/u', $offer))->render();
     expect($mail)->toContain('>×2</span>')->not->toContain('>×1</span>');
 
+    // (Lane GBX2) The claimed gift now sits INSIDE the Free gifts box (design A
+    // by default): ×2 on its photo and "2× name" on its line.
     $page = gqShopper($cart)->get('/cart/')->getContent();
-    expect($page)->toContain('<i>×2</i>')->not->toContain('<i>×1</i>');
-    expect(gqShopper($cart)->getJson('/api/cart/drawer')->json('html'))->toContain('<i>×2</i>');
+    expect($page)->toContain('<img src="/media/numbuzin-eye-patches.webp" alt="numbuzin Eye Patches" width="42" height="42" loading="lazy" decoding="async"><b>×2</b>')
+        ->toContain('</b> 2× numbuzin Eye Patches · full size')->not->toContain('<b>×1</b>');
+    expect(gqShopper($cart)->getJson('/api/cart/drawer')->json('html'))->toContain('</b> 2× numbuzin Eye Patches');
 
     gqPlace($cart)->assertRedirect();
     $order = Order::query()->latest('id')->first();
