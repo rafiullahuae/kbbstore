@@ -22,8 +22,9 @@ use Illuminate\Support\ServiceProvider;
  *    response (CustomLabels::markDirty()). Stock and sales writes are skipped:
  *    they cannot move a product in or out of a label.
  *
- * Registered in bootstrap/providers.php rather than in AppServiceProvider so
- * this lane leaves that shared file alone.
+ * Registered from AppServiceProvider::register(), like OwnerAppServiceProvider:
+ * UpdateGuard forbids bootstrap/ to a package, so a provider listed in
+ * bootstrap/providers.php would never reach the live server.
  */
 final class CustomLabelsServiceProvider extends ServiceProvider
 {

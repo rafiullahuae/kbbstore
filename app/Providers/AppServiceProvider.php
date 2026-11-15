@@ -31,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
         // reason -- bootstrap/ never ships in a package.
         $this->app->register(MarketingPixelsServiceProvider::class);
 
+        // Catalog -> Labels (Lane LBL): the label map's rebuild hooks and the
+        // badge stylesheet. Here for the same reason -- bootstrap/ never ships.
+        $this->app->register(\App\Providers\CustomLabelsServiceProvider::class);
+
         /*
          * Update services need filesystem paths, and Laravel cannot guess a
          * string constructor argument — asking the container for BackupService
