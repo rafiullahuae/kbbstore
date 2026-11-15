@@ -104,6 +104,33 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
 .seg button{flex:1;border:0;background:var(--bg);padding:5px 0;cursor:pointer;font-size:12px;font-weight:700;min-width:0}
 .seg button[aria-pressed="true"]{background:var(--on);color:var(--on-fg)}
 .guide{position:absolute;pointer-events:none;background:#FF2D87;z-index:30}
+/* multi-select, groups, arrange bar, layers tree, colour control, gradient bar */
+.abar{display:flex;flex-wrap:wrap;gap:4px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 6px}
+.abar .btn.ic{padding:5px 6px}.abar .btn.ic svg{width:16px;height:16px;display:block}
+.abar .seg button{padding:5px 8px;font-size:11.5px;white-space:nowrap}.abar .btn:disabled,.abar .seg button:disabled{opacity:.4;cursor:default}
+.abar .btn.sm{padding:5px 7px}
+.ly{grid-template-columns:auto minmax(0,1fr) auto}
+.ly.grp{grid-template-columns:auto auto minmax(0,1fr) auto}
+.ly .gr{cursor:grab;color:var(--muted);font-size:12px;padding:0 2px;touch-action:none;user-select:none}
+.ly .gt{border:0;background:none;cursor:pointer;padding:0 3px;font-size:12px;color:var(--fg)}
+.ly.grp .n{font-weight:800}
+.ly.ch{margin-left:16px;border-left:2px solid var(--line);border-radius:0 7px 7px 0}
+.ly.drag{opacity:.45}.ly.dropb{box-shadow:inset 0 2px 0 var(--sel)}.ly.dropa{box-shadow:inset 0 -2px 0 var(--sel)}
+.ly .rn{padding:2px 5px;font-size:12.5px}
+.sw{width:36px;height:30px;padding:3px;border:1px solid var(--line);border-radius:7px;background:var(--bg);cursor:pointer;flex:none}
+.sw i,.sws button,.gbar .gs{background-image:linear-gradient(var(--c),var(--c)),repeating-conic-gradient(#C9C4C8 0 25%,#FFFFFF 0 50%);background-size:auto,8px 8px}
+.sw i{display:block;width:100%;height:100%;border-radius:4px}
+.sws{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px}
+.sws button{aspect-ratio:1;border:1px solid var(--line);border-radius:5px;padding:0;cursor:pointer;min-width:0}
+.sws button:hover{outline:2px solid var(--sel);outline-offset:1px}
+.ccp{position:fixed;z-index:200;width:268px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);padding:10px;display:grid;gap:7px}
+.ccp #cc-hex{flex:1;font-family:ui-monospace,Menlo,Consolas,monospace;text-transform:uppercase}
+.ccp #cc-a{accent-color:var(--c)}
+@media (max-width:600px){.ccp{left:8px;right:8px;bottom:8px;top:auto;width:auto}}
+.gbar{position:relative;height:24px;border-radius:7px;border:1px solid var(--line);cursor:copy;margin:2px 9px 6px;touch-action:none;background-image:var(--g),repeating-conic-gradient(#C9C4C8 0 25%,#FFFFFF 0 50%);background-size:auto,8px 8px}
+.gbar .gs{position:absolute;top:50%;width:16px;height:30px;margin:-15px 0 0 -8px;border-radius:5px;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.45);cursor:ew-resize;padding:0}
+.gbar .gs.on{box-shadow:0 0 0 2px var(--sel),0 0 0 4px #fff}
+.in0{display:grid;gap:9px}
 .guide.v{top:0;bottom:0;width:1px}.guide.h{left:0;right:0;height:1px}
 /* ── the ad canvas: every size in container units, so one markup is the live preview at any width AND the full-HD file ── */
 .cv{position:relative;width:100%;container-type:inline-size;overflow:hidden;font-family:Poppins,Cairo,sans-serif;isolation:isolate;line-height:1.15}
@@ -133,7 +160,17 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
 .stage .hd{right:-10px;bottom:-10px;cursor:nwse-resize}
 .stage .hw{right:-10px;top:50%;margin-top:-8px;cursor:ew-resize;border-radius:4px}
 .stage .rh{left:50%;top:-30px;margin-left:-8px;background:#fff;border-color:var(--sel);cursor:grab}
-.stage.playing .hd,.stage.playing .hw,.stage.playing .rh{display:none}.stage.playing .sel{outline:0}
+.stage.playing .hd,.stage.playing .hw,.stage.playing .rh,.stage.playing .msbox,.stage.playing .gbox{display:none}.stage.playing .sel,.stage.playing .msel{outline:0}
+.stage .el.msel,.stage .bp.msel{outline:1px dashed var(--sel);outline-offset:1px}
+.stage .msbox{position:absolute;outline:1.5px solid var(--sel);pointer-events:none;z-index:35}
+.stage .msbox .mh{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;background:#fff;border:2px solid var(--sel);border-radius:3px;pointer-events:auto;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.stage .msbox .mh[data-h=nw]{left:0;top:0;cursor:nwse-resize}.stage .msbox .mh[data-h=ne]{left:100%;top:0;cursor:nesw-resize}
+.stage .msbox .mh[data-h=sw]{left:0;top:100%;cursor:nesw-resize}.stage .msbox .mh[data-h=se]{left:100%;top:100%;cursor:nwse-resize}
+.stage .msbox .mr{position:absolute;left:50%;top:-30px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#fff;border:2px solid var(--sel);pointer-events:auto;cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.stage .gbox{position:absolute;outline:1px dashed var(--muted);outline-offset:4px;pointer-events:none;z-index:34}
+.stage .mq{position:absolute;border:1px solid var(--sel);background:rgba(47,123,255,.12);pointer-events:none;z-index:36}
+.stage .cv.clear{background:repeating-conic-gradient(#D9D4D8 0 25%,#FFFFFF 0 50%) 0 0/16px 16px}
+.cv .bgl>i{position:absolute;inset:0;display:block}
 @keyframes a-fade{from{opacity:0}to{opacity:1}}
 @keyframes a-pop{0%{opacity:0;scale:.6}70%{opacity:1;scale:1.06}100%{scale:1}}
 @keyframes a-up{from{opacity:0;translate:0 6cqw}to{opacity:1;translate:0 0}}
@@ -162,9 +199,27 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
         <span id="fmts" class="bar" role="group" aria-label="Size"></span><span class="sep"></span>
         <span id="sets" class="bar" role="group" aria-label="Product set"></span><span class="sep"></span>
         <button class="chip" id="play" type="button">▶ Play</button>
+        <button class="chip" id="pick" type="button" aria-pressed="false" title="Tap items to add or remove them from the selection (for touch screens)">☐ Select</button>
+      </div>
+      <div class="abar" id="abar" role="toolbar" aria-label="Arrange the selection">
+        <button class="btn ic" type="button" data-al="l" title="Align left" aria-label="Align left"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="1.6" height="14"/><rect x="4" y="3" width="10" height="3.5" rx=".8"/><rect x="4" y="9.5" width="6" height="3.5" rx=".8"/></svg></button>
+        <button class="btn ic" type="button" data-al="c" title="Align centres" aria-label="Align centres"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="7.2" y="1" width="1.6" height="14"/><rect x="2" y="3" width="12" height="3.5" rx=".8"/><rect x="4" y="9.5" width="8" height="3.5" rx=".8"/></svg></button>
+        <button class="btn ic" type="button" data-al="r" title="Align right" aria-label="Align right"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="13.4" y="1" width="1.6" height="14"/><rect x="2" y="3" width="10" height="3.5" rx=".8"/><rect x="6" y="9.5" width="6" height="3.5" rx=".8"/></svg></button>
+        <button class="btn ic" type="button" data-al="t" title="Align top" aria-label="Align top"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="14" height="1.6"/><rect x="3" y="4" width="3.5" height="10" rx=".8"/><rect x="9.5" y="4" width="3.5" height="6" rx=".8"/></svg></button>
+        <button class="btn ic" type="button" data-al="m" title="Align middles" aria-label="Align middles"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="7.2" width="14" height="1.6"/><rect x="3" y="2" width="3.5" height="12" rx=".8"/><rect x="9.5" y="4" width="3.5" height="8" rx=".8"/></svg></button>
+        <button class="btn ic" type="button" data-al="b" title="Align bottom" aria-label="Align bottom"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="13.4" width="14" height="1.6"/><rect x="3" y="2" width="3.5" height="10" rx=".8"/><rect x="9.5" y="6" width="3.5" height="6" rx=".8"/></svg></button>
+        <span class="sep"></span>
+        <button class="btn ic" type="button" data-ds="h" title="Space evenly across (3 or more)" aria-label="Distribute horizontally"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="1.4" height="14"/><rect x="13.6" y="1" width="1.4" height="14"/><rect x="5.6" y="4" width="4.8" height="8" rx=".8"/></svg></button>
+        <button class="btn ic" type="button" data-ds="v" title="Space evenly down (3 or more)" aria-label="Distribute vertically"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="14" height="1.4"/><rect x="1" y="13.6" width="14" height="1.4"/><rect x="4" y="5.6" width="8" height="4.8" rx=".8"/></svg></button>
+        <button class="btn ic" type="button" data-mt="w" title="Same width as the first picked" aria-label="Match width"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h12M4.5 5.5 2 8l2.5 2.5M11.5 5.5 14 8l-2.5 2.5"/></svg></button>
+        <button class="btn ic" type="button" data-mt="h" title="Same height as the first picked" aria-label="Match height"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2v12M5.5 4.5 8 2l2.5 2.5M5.5 11.5 8 14l2.5-2.5"/></svg></button>
+        <span class="sep"></span>
+        <span class="seg" id="alto" role="group" aria-label="Align to"><button type="button" data-v="sel" aria-pressed="true">To selection</button><button type="button" data-v="art" aria-pressed="false">To ad</button></span>
+        <span class="sep"></span>
+        <button class="btn sm" type="button" id="ab-grp" title="Group (Ctrl+G)">Group</button><button class="btn sm" type="button" id="ab-ungrp" title="Ungroup (Shift+Ctrl+G)">Ungroup</button>
       </div>
       <div class="stagewrap"><div class="stage" id="stage"></div></div>
-      <p class="hint">Tap anything on the ad to edit it. Drag to move · blue corner to resize · round handle to turn (Shift = 15° steps) · arrows nudge · Delete removes · Ctrl+Z / Ctrl+Y undo and redo · Ctrl+D duplicates.</p>
+      <p class="hint">Tap anything on the ad to edit it · Shift/Ctrl-tap or drag a box on the empty ad to pick several · drag to move (snaps to guides; Alt = free) · corners resize · round handle turns (Shift = 15°) · arrows nudge 1 px (Shift = 10 px) · Ctrl+G groups, double-click enters a group, Esc leaves · Ctrl+A / C / V / D / Z / Y.</p>
     </section>
     <aside class="side" aria-label="Options">
       <div class="tabs" role="tablist">
@@ -197,27 +252,35 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
           <div class="row"><span class="lbl">Icon</span><div class="icg" id="icg"></div></div>
         </div></details>
         <details open id="sel-d"><summary><span id="sel-t">Nothing selected</span></summary><div class="in" id="props">
-          <p class="empty" id="sel-empty">Tap a text, button, badge or shape on the ad — or pick one under Layers.</p>
+          <p class="empty" id="sel-empty">Tap a text, button, badge or shape on the ad — or pick one under Layers. Shift/Ctrl-tap or drag a box to pick several.</p>
+          <div class="in0" id="multi" hidden>
+            <div class="btns"><button class="btn sm" id="m-grp" type="button" title="Ctrl+G">Group</button><button class="btn sm" id="m-ungrp" type="button" title="Shift+Ctrl+G">Ungroup</button><button class="btn sm" id="m-dup" type="button" title="Ctrl+D">Duplicate</button><button class="btn sm" id="m-del" type="button" title="Delete">Delete</button><button class="btn sm" id="m-lock" type="button">Lock</button><button class="btn sm" id="m-hide" type="button">Hide</button><button class="btn sm" id="m-fwd" type="button" title="Ctrl+]">Forward</button><button class="btn sm" id="m-bwd" type="button" title="Ctrl+[">Back</button></div>
+            <div class="g3"><div class="row"><label for="m-op">Opacity (all)</label><input id="m-op" type="range" min="0" max="100" step="1"></div>
+              <div class="row"><span class="lbl">Text colour (all)</span><button class="sw" type="button" data-mp="col" aria-label="Text colour for all" aria-expanded="false"><i></i></button></div>
+              <div class="row"><span class="lbl">Fill (all)</span><button class="sw" type="button" data-mp="fill" aria-label="Fill for all" aria-expanded="false"><i></i></button></div></div>
+            <p class="note">Drag to move them together · box corners scale · round handle turns · the bar above the ad aligns and spaces them.</p>
+          </div>
           <div class="btns" data-need="any"><button class="btn sm" id="dup" type="button">Duplicate</button><button class="btn sm" id="del" type="button">Delete</button><button class="btn sm" id="fwd" type="button">Forward</button><button class="btn sm" id="bwd" type="button">Back</button><button class="btn sm" id="eres" type="button">Reset</button></div>
           <div class="row" data-show="text btn shape logo"><label for="p-txt">Text</label><textarea id="p-txt" data-p="txt" maxlength="200" rows="2"></textarea></div>
           <div class="g2" data-show="text btn shape logo"><div class="row"><label for="p-fn">Font</label><select id="p-fn" data-p="fn"></select></div>
             <div class="row"><label for="p-fw">Weight</label><select id="p-fw" data-p="fw"><option>400</option><option>500</option><option>600</option><option>700</option><option>800</option><option>900</option></select></div></div>
           <div class="g2" data-show="text btn shape logo"><div class="row"><label for="p-fs">Text size <span id="v-fs"></span></label><input id="p-fs" type="range" data-p="fs" min="1" max="45" step=".1"></div>
-            <div class="row"><label for="p-col">Text colour</label><div class="crow"><input id="p-col" type="color" data-p="col"><div class="seg" id="p-al" style="flex:1"><button data-v="l" type="button" aria-label="Align left">L</button><button data-v="c" type="button" aria-label="Centre">C</button><button data-v="r" type="button" aria-label="Align right">R</button></div></div></div></div>
+            <div class="row"><span class="lbl">Text colour</span><div class="crow"><button class="sw" type="button" data-cp="col" aria-label="Text colour" aria-expanded="false"><i></i></button><div class="seg" id="p-al" style="flex:1"><button data-v="l" type="button" aria-label="Align left">L</button><button data-v="c" type="button" aria-label="Centre">C</button><button data-v="r" type="button" aria-label="Align right">R</button></div></div></div></div>
           <div class="btns" data-show="text btn shape logo"><label class="ck"><input type="checkbox" data-p="fi"> Italic</label><label class="ck"><input type="checkbox" data-p="up"> CAPS</label><label class="ck" title="Keeps each line on one line, making the text smaller if it is too long"><input type="checkbox" data-p="nw"> Fit each line</label></div>
           <div class="g2" data-show="text btn shape"><div class="row"><label for="p-ls">Letter spacing</label><input id="p-ls" type="range" data-p="ls" min="-10" max="60" step="1"></div>
             <div class="row"><label for="p-lh">Line height</label><input id="p-lh" type="range" data-p="lh" min="70" max="200" step="1"></div></div>
-          <div class="g2" data-show="icon"><div class="row"><label for="p-ic">Icon</label><select id="p-ic" data-p="ic"></select></div><div class="row"><label for="p-icol">Colour</label><input id="p-icol" type="color" data-p="col"></div></div>
+          <div class="g2" data-show="icon"><div class="row"><label for="p-ic">Icon</label><select id="p-ic" data-p="ic"></select></div><div class="row"><span class="lbl">Colour</span><button class="sw" type="button" data-cp="col" aria-label="Icon colour" aria-expanded="false"><i></i></button></div></div>
           <div class="row" data-show="pay"><label for="p-pay">Shows</label><select id="p-pay" data-p="pay"><option value="both">tabby + tamara</option><option value="tabby">tabby</option><option value="tamara">tamara</option></select></div>
           <div class="row" data-show="text btn shape"><label for="p-sh">Shape behind</label><select id="p-sh" data-p="sh"></select></div>
-          <div class="g2" data-show="fill"><div class="row"><label for="p-fill">Fill</label><div class="crow"><input id="p-fill" type="color" data-p="fill"><button class="btn sm" id="p-fill0" type="button">None</button></div></div>
-            <div class="row"><label for="p-fill2">2nd colour (gradient)</label><div class="crow"><input id="p-fill2" type="color" data-p="fill2"><button class="btn sm" id="p-fill20" type="button">Off</button></div></div></div>
+          <div class="g2" data-show="fill"><div class="row"><span class="lbl">Fill</span><div class="crow"><button class="sw" type="button" data-cp="fill" aria-label="Fill colour" aria-expanded="false"><i></i></button><button class="btn sm" id="p-fill0" type="button">None</button></div></div>
+            <div class="row"><span class="lbl">2nd colour (gradient)</span><div class="crow"><button class="sw" type="button" data-cp="fill2" aria-label="Second fill colour" aria-expanded="false"><i></i></button><button class="btn sm" id="p-fill20" type="button">Off</button></div></div></div>
+          <div class="row" data-show="fill"><label for="p-gang">Gradient angle</label><input id="p-gang" type="range" data-p="gang" min="0" max="360" step="5"></div>
           <div class="g2" data-show="fill"><div class="row"><label for="p-rad">Corners</label><input id="p-rad" type="range" data-p="rad" min="0" max="20" step=".1"></div>
             <div class="row"><label for="p-pd">Padding</label><input id="p-pd" type="range" data-p="pd" min="0" max="6" step=".1"></div></div>
-          <div class="g3" data-show="border"><div class="row"><label for="p-bc">Border</label><input id="p-bc" type="color" data-p="bc"></div><div class="row"><label for="p-bw">Width</label><input id="p-bw" type="range" data-p="bw" min="0" max="20" step=".5"></div>
+          <div class="g3" data-show="border"><div class="row"><span class="lbl">Border</span><button class="sw" type="button" data-cp="bc" aria-label="Border colour" aria-expanded="false"><i></i></button></div><div class="row"><label for="p-bw">Width</label><input id="p-bw" type="range" data-p="bw" min="0" max="20" step=".5"></div>
             <div class="row"><label for="p-bs">Line</label><select id="p-bs" data-p="bs"><option value="solid">Solid</option><option value="dashed">Dashed</option><option value="dotted">Dotted</option></select></div></div>
           <div class="g3" data-need="any"><div class="row"><label for="p-op">Opacity</label><input id="p-op" type="range" data-p="op" min="0" max="100" step="1"></div>
-            <div class="row"><label for="p-shd">Shadow</label><input id="p-shd" type="range" data-p="shd" min="0" max="100" step="1"></div>
+            <div class="row"><label for="p-shd">Shadow</label><div class="crow"><input id="p-shd" type="range" data-p="shd" min="0" max="100" step="1"><button class="sw" type="button" data-cp="shc" aria-label="Shadow colour" aria-expanded="false" style="width:28px;height:24px"><i></i></button></div></div>
             <div class="row"><label for="p-r">Turn <span id="v-r"></span></label><input id="p-r" type="range" data-g="r" min="-180" max="180" step="1"></div></div>
           <div class="g4" data-need="geo"><div class="row"><label for="p-x">X</label><input id="p-x" type="number" data-g="x" step=".5"></div><div class="row"><label for="p-y">Y</label><input id="p-y" type="number" data-g="y" step=".5"></div>
             <div class="row"><label for="p-w">W</label><input id="p-w" type="number" data-g="w" step=".5" min=".5"></div><div class="row"><label for="p-h">H</label><input id="p-h" type="number" data-g="h" step=".5" min="0"></div></div>
@@ -247,14 +310,31 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
         <div class="btns"><button class="btn sm" id="ps-reset" type="button">Reset this set to the template</button></div>
       </div>
 
-      <div class="pane" data-pane="style" role="tabpanel" hidden>
+      <div class="pane" data-pane="style" id="style-pane" role="tabpanel" hidden>
         <details open><summary>Background</summary><div class="in">
-          <div class="g2"><div class="row"><label for="bg-k">Type</label><select id="bg-k"><option value="solid">Solid colour</option><option value="linear">Gradient</option><option value="radial">Radial glow</option><option value="image">Picture</option></select></div>
-            <div class="row"><label for="bg-ang">Angle</label><input id="bg-ang" type="range" min="0" max="360" step="5"></div></div>
-          <div class="g2"><div class="row"><label for="bg-c1">Colour 1</label><input id="bg-c1" type="color"></div><div class="row"><label for="bg-c2">Colour 2</label><input id="bg-c2" type="color"></div></div>
-          <div class="g3"><div class="row"><label for="bg-pat">Pattern</label><select id="bg-pat"></select></div><div class="row"><label for="bg-pc">Colour</label><input id="bg-pc" type="color"></div><div class="row"><label for="bg-po">Strength</label><input id="bg-po" type="range" min="0" max="60" step="1"></div></div>
-          <div class="btns"><label class="btn sm" for="bg-file">Upload picture…</label><input id="bg-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><button class="btn sm" id="bg-noimg" type="button">Remove picture</button></div>
-          <div class="row"><label for="bg-ov">Darken picture</label><input id="bg-ov" type="range" min="0" max="80" step="1"></div>
+          <div class="seg" id="bg-kind" role="group" aria-label="Background"><button data-v="none" type="button" title="See-through (PNG)">None</button><button data-v="solid" type="button">Solid</button><button data-v="linear" type="button">Linear</button><button data-v="radial" type="button">Radial</button><button data-v="image" type="button">Picture</button></div>
+          <p class="note" data-bgk="none">See-through: PNG downloads keep it transparent (JPG and video get white).</p>
+          <div class="row" data-bgk="solid"><span class="lbl">Colour</span><button class="sw" type="button" data-bgc="c1" aria-label="Background colour" aria-expanded="false"><i></i></button></div>
+          <div class="in0" data-bgk="linear radial">
+            <span class="lbl">Colour stops · tap the bar to add one, drag a stop to move it</span>
+            <div class="gbar" id="gbar"></div>
+            <div class="crow"><button class="sw" type="button" data-bgc="stop" aria-label="Stop colour" aria-expanded="false"><i></i></button><div class="row" style="flex:1"><label for="gs-p">Stop at <span id="gs-pv"></span></label><input id="gs-p" type="range" min="0" max="100" step="1"></div><button class="btn sm" id="gs-del" type="button">Remove</button></div>
+          </div>
+          <div class="g2" data-bgk="linear"><div class="row"><label for="bg-ang">Angle <span id="bg-angv"></span></label><input id="bg-ang" type="range" min="0" max="360" step="1" data-bg="ang"></div><div class="row"><span class="lbl">Direction</span><button class="btn sm" id="gs-rev" type="button">Reverse</button></div></div>
+          <div class="g2" data-bgk="radial"><div class="row"><label for="bg-rx">Centre across</label><input id="bg-rx" type="range" min="0" max="100" step="1" data-bg="rx"></div><div class="row"><label for="bg-ry">Centre down</label><input id="bg-ry" type="range" min="0" max="100" step="1" data-bg="ry"></div></div>
+          <div class="in0" data-bgk="image">
+            <div class="btns"><label class="btn sm" for="bg-file">Upload picture…</label><input id="bg-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><button class="btn sm" id="bg-noimg" type="button">Remove picture</button></div>
+            <div class="seg" id="bg-fit" role="group" aria-label="Picture fit"><button data-v="cover" type="button">Fill</button><button data-v="contain" type="button">Fit</button><button data-v="tile" type="button">Tile</button></div>
+            <div class="g3"><div class="row"><label for="bg-ix">Across</label><input id="bg-ix" type="range" min="0" max="100" step="1" data-bg="ix"></div><div class="row"><label for="bg-iy">Down</label><input id="bg-iy" type="range" min="0" max="100" step="1" data-bg="iy"></div><div class="row"><label for="bg-isc">Scale</label><input id="bg-isc" type="range" min="20" max="400" step="1" data-bg="isc"></div></div>
+            <div class="g4"><div class="row"><label for="bg-blur">Blur</label><input id="bg-blur" type="range" min="0" max="20" step=".5" data-bg="blur"></div><div class="row"><label for="bg-bri">Bright</label><input id="bg-bri" type="range" min="0" max="200" step="1" data-bg="bri"></div><div class="row"><label for="bg-con">Contrast</label><input id="bg-con" type="range" min="0" max="200" step="1" data-bg="con"></div><div class="row"><label for="bg-sat">Colour</label><input id="bg-sat" type="range" min="0" max="200" step="1" data-bg="sat"></div></div>
+            <div class="g2"><div class="row"><span class="lbl">Overlay (colour + opacity)</span><button class="sw" type="button" data-bgc="oc" aria-label="Overlay colour" aria-expanded="false"><i></i></button></div><div class="row"><span class="lbl">Behind the picture</span><button class="sw" type="button" data-bgc="c1" aria-label="Colour behind the picture" aria-expanded="false"><i></i></button></div></div>
+          </div>
+          <div class="g3"><div class="row"><label for="bg-pat">Pattern</label><select id="bg-pat" data-bg="pat"></select></div><div class="row"><span class="lbl">Colour</span><button class="sw" type="button" data-bgc="pc" aria-label="Pattern colour" aria-expanded="false"><i></i></button></div><div class="row"><label for="bg-po">Strength</label><input id="bg-po" type="range" min="0" max="100" step="1" data-bg="po"></div></div>
+        </div></details>
+        <details open><summary>Colours in this design</summary><div class="in">
+          <div class="sws" id="dcols"></div>
+          <label class="ck"><input type="checkbox" id="rc-sel"> Only in the picked items</label>
+          <p class="note">Tap a colour to change it everywhere it is used — texts, shapes, borders, shadows, buttons and the background. Ctrl+Z undoes it.</p>
         </div></details>
         <details open><summary>Brand kit</summary><div class="in">
           <div class="g2"><div class="row"><label for="br-c1">Main colour</label><input id="br-c1" type="color"></div><div class="row"><label for="br-c2">Second colour</label><input id="br-c2" type="color"></div></div>
@@ -292,6 +372,13 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
     </aside>
   </div>
 /*VIDEO_HTML*/
+</div>
+<div class="ccp" id="ccp" role="dialog" aria-label="Colour" hidden>
+  <div class="crow"><input type="color" id="cc-pick" aria-label="Pick a colour"><input type="text" id="cc-hex" maxlength="9" spellcheck="false" autocomplete="off" aria-label="Hex colour (#RRGGBB or #RRGGBBAA)"><button class="btn ic" id="cc-eye" type="button" title="Pick a colour from the screen" aria-label="Eyedropper"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22l1-4 9.5-9.5 3 3L6 21zM14 5l2-2a2.1 2.1 0 0 1 3 0l2 2a2.1 2.1 0 0 1 0 3l-2 2"/><path d="M12.5 6.5l5 5"/></svg></button><button class="btn ic" id="cc-x" type="button" aria-label="Close">×</button></div>
+  <div class="row"><label for="cc-a">Opacity <span id="cc-av"></span></label><input id="cc-a" type="range" min="0" max="100" step="1"></div>
+  <span class="lbl">Recent</span><div class="sws" id="cc-rec"></div>
+  <span class="lbl">In this design</span><div class="sws" id="cc-doc"></div>
+  <span class="lbl">Brand</span><div class="sws" id="cc-brand"></div>
 </div>
 <script>/*LIB_H2I*/</script>
 <script>/*LIB_ZIP*/</script>
