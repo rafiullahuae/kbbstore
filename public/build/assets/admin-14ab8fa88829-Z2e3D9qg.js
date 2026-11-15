@@ -802,7 +802,7 @@
       f.addEventListener('change', go); t.addEventListener('change', go);
       bar.appendChild(el('span', { class: 'gc-dates' }, [f, '–', t]));
     }
-    wrap.appendChild(card('Gift box clicks', 'How often shoppers use the gift box in the cart panel, on the cart page and at checkout: View all, Gifts Criteria, the ranges they look at inside it, a tap on a gift photo, and Hide. Each number is taps; “carts” under it counts each basket once a day.', [bar,
+    wrap.appendChild(card('Gift box clicks', 'How often shoppers use the gift box in the cart panel, on the cart page and at checkout: View all, All gifts, the ranges they look at inside it (Complete tabs only), a tap on a gift photo, and Hide. Each number is taps; “carts” under it counts each basket once a day.', [bar,
       d ? el('p', { class: 'fg-sub', style: 'margin-top:8px', text: 'Showing ' + d.from + ' to ' + d.to + (q.busy ? ' · updating…' : '') + '.' }) : null]));
     if (q.err) wrap.appendChild(el('div', { class: 'fg-note', role: 'alert', text: q.err }));
     if (!d) { wrap.appendChild(card(null, q.busy ? 'Loading…' : 'Nothing to show.')); return; }
