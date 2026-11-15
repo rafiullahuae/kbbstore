@@ -150,16 +150,17 @@ it('lays an imported description out the way WordPress did', function () {
 
     $panel = piaDescriptionPanel($this->get('/product/' . $p->slug . '/')->assertOk()->getContent());
 
+    // Lane LN15 advanced this pin: an English heading carries kbb-hd (RichText::markHeadings()).
     expect($panel)
-        ->toContain("<p><strong>WHAT'S INCLUDED IN THE SET :</strong></p>")
+        ->toContain("<p class=\"kbb-hd\"><strong>WHAT'S INCLUDED IN THE SET :</strong></p>")
         ->toContain("<p><strong>1. MEDICUBE AGE-R BOOSTER PRO X2 PINK</strong><br>\nThe Age-R Booster Pro")
-        ->toContain('<p><strong>Benefits:</strong></p>')
+        ->toContain('<p class="kbb-hd"><strong>Benefits:</strong></p>')
         ->toContain("<ul>\n<li>Boosts absorption</li>")
         ->toContain("<p>Use the booster on clean skin.<br>\nFinish with sunscreen.</p>")
-        ->toContain('<h3>About brand: medicube</h3>')
+        ->toContain('<h3 class="kbb-hd">About brand: medicube</h3>')
         // Never a <p> round a block, never a <br> beside one.
         ->not->toContain('<p><ul>')->not->toContain('<p><h3>')->not->toContain('</ul><br>')
-        ->and(substr_count($panel, '<p>'))->toBe(6)
+        ->and(substr_count($panel, '<p>') + substr_count($panel, '<p class="kbb-hd">'))->toBe(6)
         ->and(substr_count($panel, '<li>'))->toBe(3);
 });
 

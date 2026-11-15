@@ -1524,6 +1524,38 @@ html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
 .details .dcontent:not(:has(.kbb-bl)) :is(p,div):not(:first-child):not(:is(h1,h2,h3,h4,h5,h6,b,strong) + *):has(> :is(strong,b):only-child){margin-block-start:.75em}
 .details .dcontent:not(:has(.kbb-bl)) :is(section,div,.dcontent) > :is(strong,b):not(:first-child):has(+ :is(ul,ol,p,div,section)){display:block;margin-block-start:.75em}
 .details .dcontent:not(:has(.kbb-bl)) section:not(:first-child){margin-block-start:.75em}
+/* Lane LN15 -- the owner, 15 Nov 2026: "spacing issues under headings ... must be
+   equal spacing under each heading". Measured on all 875 English product pages, the gap
+   under a heading was 0, 6, 11 or 18px by how the copy happened to be typed. ONE
+   rule now: a heading sits directly on its text, as on every description the owner
+   writes (single Enter = no gap, 2.60.504); the space between sections stays above
+   the heading. RichText::markHeadings() marks the headings (English pages only, so
+   /ar draws exactly as before); here: no margin under one, none on top of what
+   follows it (or on that block's first child, four deep -- `<div><ul>`; or, for a
+   heading that ends its wrapper, up to four deep -- `<section><div>Benefits:</div>
+   </section><ul>`, `<p>Made in Korea<br><b>How to Use:</b></p><ul>` -- on what follows
+   the wrapper, three deep), and an empty line typed straight under one is not drawn
+   (a blank paragraph, or a bold line break: `kbb-hd-br`).
+   `:not(#kbb-hd)` matches everything and only lifts the rule above the "bold line
+   after text" margin (line 1524, which otherwise puts .75em between a heading and the
+   sub-heading under it). */
+.details .dcontent .kbb-hd{margin-block-end:0}
+.details .dcontent .kbb-hd + :not(#kbb-hd),
+.details .dcontent .kbb-hd + br + :not(#kbb-hd),
+.details .dcontent .kbb-hd + * > :first-child,
+.details .dcontent .kbb-hd + * > :first-child > :first-child,
+.details .dcontent .kbb-hd + * > :first-child > :first-child > :first-child,
+.details .dcontent .kbb-hd + * > :first-child > :first-child > :first-child > :first-child{margin-block-start:0}
+.details .dcontent .kbb-hd + .kbb-bl,
+.details .dcontent .kbb-hd + * > .kbb-bl:first-child{height:0}
+.details .dcontent .kbb-hd-br{display:none}
+/* The wrapper rules need :has(); kept in rules of their own, so a browser without it
+   drops only these and still draws the rules above. */
+.details .dcontent :is(p,section,div):has(> .kbb-hd:last-child,> :last-child > .kbb-hd:last-child,> :last-child > :last-child > .kbb-hd:last-child,> :last-child > :last-child > :last-child > .kbb-hd:last-child) + :not(#kbb-hd),
+.details .dcontent :is(p,section,div):has(> .kbb-hd:last-child,> :last-child > .kbb-hd:last-child,> :last-child > :last-child > .kbb-hd:last-child,> :last-child > :last-child > :last-child > .kbb-hd:last-child) + * > :first-child,
+.details .dcontent :is(p,section,div):has(> .kbb-hd:last-child,> :last-child > .kbb-hd:last-child,> :last-child > :last-child > .kbb-hd:last-child,> :last-child > :last-child > :last-child > .kbb-hd:last-child) + * > :first-child > :first-child,
+.details .dcontent :is(p,section,div):has(> .kbb-hd:last-child,> :last-child > .kbb-hd:last-child,> :last-child > :last-child > .kbb-hd:last-child,> :last-child > :last-child > :last-child > .kbb-hd:last-child) + * > :first-child > :first-child > :first-child{margin-block-start:0}
+.details .dcontent p:has(> .kbb-hd:last-child){margin-block-end:0}
 .pdp .bb-desc :is(p,div,ul,ol){margin-block-end:.6em}
 .pdp .bb-desc :is(ul,ol){margin-inline-start:18px}
 .pdp .bb-desc > :last-child{margin-block-end:0}

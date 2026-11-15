@@ -411,8 +411,9 @@ it('renders every tab body without its leading blank lines, in both prints, and 
     $p = rgProduct(['description' => $raw]);
     $html = rgPage($p);
 
-    expect(substr_count($html, '<div class="dcontent clamp"><p><strong>Benefits:</strong></p>'))->toBe(1);
-    expect(substr_count($html, '<div class="dcontent open"><p><strong>Benefits:</strong></p>'))->toBe(1);
+    // Lane LN15 advanced this pin: an English heading carries kbb-hd (RichText::markHeadings()).
+    expect(substr_count($html, '<div class="dcontent clamp"><p class="kbb-hd"><strong>Benefits:</strong></p>'))->toBe(1);
+    expect(substr_count($html, '<div class="dcontent open"><p class="kbb-hd"><strong>Benefits:</strong></p>'))->toBe(1);
     expect($html)->not->toContain('<div class="dcontent clamp"><p>&nbsp;</p>');
     expect(Product::find($p->id)->description)->toBe($raw);
 });

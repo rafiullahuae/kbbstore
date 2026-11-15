@@ -840,6 +840,12 @@ class ProductController extends Controller
             // not a line plus two paragraph margins (RichText::markBlankLines()).
             $trimmed = \App\Support\RichText::markBlankLines($trimmed);
 
+            // Lane LN15: the same space under every heading (RichText::
+            // markHeadings()), on English pages only -- Arabic is drawn as it was.
+            if (\App\Support\Locale::isDefault()) {
+                $trimmed = \App\Support\RichText::markHeadings($trimmed);
+            }
+
             if ($trimmed !== '') {
                 $tabs[$i]['body'] = $trimmed;
             }

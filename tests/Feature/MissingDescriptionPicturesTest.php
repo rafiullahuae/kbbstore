@@ -77,7 +77,8 @@ it('draws the product page tab without the missing picture, and stores nothing',
 
     $html = (string) $this->get('/product/'.$p->slug.'/')->assertOk()->getContent();
 
-    expect(substr_count($html, '<div class="dcontent clamp"><p><strong>Benefits:</strong></p>'))->toBe(1)
+    // Lane LN15 advanced this pin: an English heading carries kbb-hd (RichText::markHeadings()).
+    expect(substr_count($html, '<div class="dcontent clamp"><p class="kbb-hd"><strong>Benefits:</strong></p>'))->toBe(1)
         ->and($html)->not->toContain('never-copied.jpg')
         ->and(Product::find($p->id)->description)->toBe($raw);
 });
