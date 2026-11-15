@@ -21,103 +21,183 @@
   },
   "A-panel-390-live": {
    "w": 278.3,
-   "h": 197.7
+   "h": 170.8
   },
   "A-panel-390-low": {
    "w": 278.3,
-   "h": 197.7
+   "h": 170.8
   },
   "A-panel-390-ended": {
    "w": 278.3,
-   "h": 173.8
+   "h": 136.9
   },
   "A-cart-390-live": {
    "w": 332,
-   "h": 199
+   "h": 172.1
+  },
+  "A-cart-390-low": {
+   "w": 332,
+   "h": 172.1
+  },
+  "A-cart-390-ended": {
+   "w": 332,
+   "h": 138.1
   },
   "A-checkout-390-live": {
    "w": 316,
-   "h": 197.1
+   "h": 170.2
+  },
+  "A-checkout-390-low": {
+   "w": 316,
+   "h": 170.2
+  },
+  "A-checkout-390-ended": {
+   "w": 316,
+   "h": 136.3
   },
   "B-panel-390-live": {
    "w": 278.3,
-   "h": 211.4
+   "h": 214.6
   },
   "B-panel-390-low": {
    "w": 278.3,
-   "h": 211.4
+   "h": 214.6
   },
   "B-panel-390-ended": {
    "w": 278.3,
-   "h": 168.8
+   "h": 136.9
   },
   "B-cart-390-live": {
    "w": 332,
-   "h": 213.6
+   "h": 215.9
+  },
+  "B-cart-390-low": {
+   "w": 332,
+   "h": 215.9
+  },
+  "B-cart-390-ended": {
+   "w": 332,
+   "h": 138.1
   },
   "B-checkout-390-live": {
    "w": 316,
-   "h": 210.3
+   "h": 214
+  },
+  "B-checkout-390-low": {
+   "w": 316,
+   "h": 214
+  },
+  "B-checkout-390-ended": {
+   "w": 316,
+   "h": 136.3
   },
   "C-panel-390-live": {
    "w": 278.3,
-   "h": 200
+   "h": 175.8
   },
   "C-panel-390-low": {
    "w": 278.3,
-   "h": 200
+   "h": 175.8
   },
   "C-panel-390-ended": {
    "w": 278.3,
-   "h": 168.8
+   "h": 136.9
   },
   "C-cart-390-live": {
    "w": 332,
-   "h": 201.3
+   "h": 177.1
+  },
+  "C-cart-390-low": {
+   "w": 332,
+   "h": 177.1
+  },
+  "C-cart-390-ended": {
+   "w": 332,
+   "h": 138.1
   },
   "C-checkout-390-live": {
    "w": 316,
-   "h": 199.4
+   "h": 175.2
+  },
+  "C-checkout-390-low": {
+   "w": 316,
+   "h": 175.2
+  },
+  "C-checkout-390-ended": {
+   "w": 316,
+   "h": 136.3
   },
   "D-panel-390-live": {
    "w": 278.3,
-   "h": 253.9
+   "h": 209.6
   },
   "D-panel-390-low": {
    "w": 278.3,
-   "h": 253.9
+   "h": 209.6
   },
   "D-panel-390-ended": {
    "w": 278.3,
-   "h": 172.8
+   "h": 136.9
   },
   "D-cart-390-live": {
    "w": 332,
-   "h": 247.9
+   "h": 199.1
+  },
+  "D-cart-390-low": {
+   "w": 332,
+   "h": 199.1
+  },
+  "D-cart-390-ended": {
+   "w": 332,
+   "h": 138.1
   },
   "D-checkout-390-live": {
    "w": 316,
-   "h": 252.1
+   "h": 209
+  },
+  "D-checkout-390-low": {
+   "w": 316,
+   "h": 209
+  },
+  "D-checkout-390-ended": {
+   "w": 316,
+   "h": 136.3
   },
   "E-panel-390-live": {
    "w": 278.3,
-   "h": 204.1
+   "h": 170.8
   },
   "E-panel-390-low": {
    "w": 278.3,
-   "h": 204.1
+   "h": 170.8
   },
   "E-panel-390-ended": {
    "w": 278.3,
-   "h": 168.8
+   "h": 136.9
   },
   "E-cart-390-live": {
    "w": 332,
-   "h": 206.3
+   "h": 172.1
+  },
+  "E-cart-390-low": {
+   "w": 332,
+   "h": 172.1
+  },
+  "E-cart-390-ended": {
+   "w": 332,
+   "h": 138.1
   },
   "E-checkout-390-live": {
    "w": 316,
-   "h": 203
+   "h": 170.2
+  },
+  "E-checkout-390-low": {
+   "w": 316,
+   "h": 170.2
+  },
+  "E-checkout-390-ended": {
+   "w": 316,
+   "h": 136.3
   },
   "before-panel-1280": {
    "w": 348,
@@ -133,31 +213,39 @@
   },
   "A-panel-1280-live": {
    "w": 348,
-   "h": 197.7
+   "h": 170.8
   },
   "A-panel-1280-low": {
    "w": 348,
-   "h": 197.7
+   "h": 170.8
   },
   "A-panel-1280-ended": {
    "w": 348,
-   "h": 173.8
+   "h": 136.9
   },
   "A-cart-1280-live": {
    "w": 568,
-   "h": 199
+   "h": 172.1
   },
   "A-cart-1280-low": {
    "w": 568,
-   "h": 199
+   "h": 172.1
   },
   "A-cart-1280-ended": {
    "w": 568,
-   "h": 175.1
+   "h": 138.1
   },
   "A-checkout-1280-live": {
    "w": 312,
-   "h": 197.1
+   "h": 170.2
+  },
+  "A-checkout-1280-low": {
+   "w": 312,
+   "h": 170.2
+  },
+  "A-checkout-1280-ended": {
+   "w": 312,
+   "h": 136.3
   },
   "B-panel-1280-live": {
    "w": 348,
@@ -169,7 +257,7 @@
   },
   "B-panel-1280-ended": {
    "w": 348,
-   "h": 168.8
+   "h": 136.9
   },
   "B-cart-1280-live": {
    "w": 568,
@@ -181,95 +269,127 @@
   },
   "B-cart-1280-ended": {
    "w": 568,
-   "h": 170.1
+   "h": 138.1
   },
   "B-checkout-1280-live": {
    "w": 312,
-   "h": 210.3
+   "h": 214
+  },
+  "B-checkout-1280-low": {
+   "w": 312,
+   "h": 214
+  },
+  "B-checkout-1280-ended": {
+   "w": 312,
+   "h": 136.3
   },
   "C-panel-1280-live": {
    "w": 348,
-   "h": 200
+   "h": 175.8
   },
   "C-panel-1280-low": {
    "w": 348,
-   "h": 200
+   "h": 175.8
   },
   "C-panel-1280-ended": {
    "w": 348,
-   "h": 168.8
+   "h": 136.9
   },
   "C-cart-1280-live": {
    "w": 568,
-   "h": 201.3
+   "h": 177.1
   },
   "C-cart-1280-low": {
    "w": 568,
-   "h": 201.3
+   "h": 177.1
   },
   "C-cart-1280-ended": {
    "w": 568,
-   "h": 170.1
+   "h": 138.1
   },
   "C-checkout-1280-live": {
    "w": 312,
-   "h": 199.4
+   "h": 175.2
+  },
+  "C-checkout-1280-low": {
+   "w": 312,
+   "h": 175.2
+  },
+  "C-checkout-1280-ended": {
+   "w": 312,
+   "h": 136.3
   },
   "D-panel-1280-live": {
    "w": 348,
-   "h": 245.4
+   "h": 197.9
   },
   "D-panel-1280-low": {
    "w": 348,
-   "h": 245.4
+   "h": 197.9
   },
   "D-panel-1280-ended": {
    "w": 348,
-   "h": 172.8
+   "h": 136.9
   },
   "D-cart-1280-live": {
    "w": 568,
-   "h": 247.9
+   "h": 199.1
   },
   "D-cart-1280-low": {
    "w": 568,
-   "h": 247.9
+   "h": 199.1
   },
   "D-cart-1280-ended": {
    "w": 568,
-   "h": 174.1
+   "h": 138.1
   },
   "D-checkout-1280-live": {
    "w": 312,
-   "h": 252.1
+   "h": 209
+  },
+  "D-checkout-1280-low": {
+   "w": 312,
+   "h": 209
+  },
+  "D-checkout-1280-ended": {
+   "w": 312,
+   "h": 136.3
   },
   "E-panel-1280-live": {
    "w": 348,
-   "h": 204.1
+   "h": 170.8
   },
   "E-panel-1280-low": {
    "w": 348,
-   "h": 204.1
+   "h": 170.8
   },
   "E-panel-1280-ended": {
    "w": 348,
-   "h": 168.8
+   "h": 136.9
   },
   "E-cart-1280-live": {
    "w": 568,
-   "h": 206.3
+   "h": 172.1
   },
   "E-cart-1280-low": {
    "w": 568,
-   "h": 206.3
+   "h": 172.1
   },
   "E-cart-1280-ended": {
    "w": 568,
-   "h": 170.1
+   "h": 138.1
   },
   "E-checkout-1280-live": {
    "w": 312,
-   "h": 203
+   "h": 170.2
+  },
+  "E-checkout-1280-low": {
+   "w": 312,
+   "h": 170.2
+  },
+  "E-checkout-1280-ended": {
+   "w": 312,
+   "h": 136.3
   }
  },
  "scrollWidth": {
@@ -277,27 +397,47 @@
   "A-panel-390-low": 390,
   "A-panel-390-ended": 390,
   "A-cart-390-live": 390,
+  "A-cart-390-low": 390,
+  "A-cart-390-ended": 390,
   "A-checkout-390-live": 390,
+  "A-checkout-390-low": 390,
+  "A-checkout-390-ended": 390,
   "B-panel-390-live": 390,
   "B-panel-390-low": 390,
   "B-panel-390-ended": 390,
   "B-cart-390-live": 390,
+  "B-cart-390-low": 390,
+  "B-cart-390-ended": 390,
   "B-checkout-390-live": 390,
+  "B-checkout-390-low": 390,
+  "B-checkout-390-ended": 390,
   "C-panel-390-live": 390,
   "C-panel-390-low": 390,
   "C-panel-390-ended": 390,
   "C-cart-390-live": 390,
+  "C-cart-390-low": 390,
+  "C-cart-390-ended": 390,
   "C-checkout-390-live": 390,
+  "C-checkout-390-low": 390,
+  "C-checkout-390-ended": 390,
   "D-panel-390-live": 390,
   "D-panel-390-low": 390,
   "D-panel-390-ended": 390,
   "D-cart-390-live": 390,
+  "D-cart-390-low": 390,
+  "D-cart-390-ended": 390,
   "D-checkout-390-live": 390,
+  "D-checkout-390-low": 390,
+  "D-checkout-390-ended": 390,
   "E-panel-390-live": 390,
   "E-panel-390-low": 390,
   "E-panel-390-ended": 390,
   "E-cart-390-live": 390,
+  "E-cart-390-low": 390,
+  "E-cart-390-ended": 390,
   "E-checkout-390-live": 390,
+  "E-checkout-390-low": 390,
+  "E-checkout-390-ended": 390,
   "A-panel-1280-live": 1280,
   "A-panel-1280-low": 1280,
   "A-panel-1280-ended": 1280,
@@ -305,6 +445,8 @@
   "A-cart-1280-low": 1280,
   "A-cart-1280-ended": 1280,
   "A-checkout-1280-live": 1280,
+  "A-checkout-1280-low": 1280,
+  "A-checkout-1280-ended": 1280,
   "B-panel-1280-live": 1280,
   "B-panel-1280-low": 1280,
   "B-panel-1280-ended": 1280,
@@ -312,6 +454,8 @@
   "B-cart-1280-low": 1280,
   "B-cart-1280-ended": 1280,
   "B-checkout-1280-live": 1280,
+  "B-checkout-1280-low": 1280,
+  "B-checkout-1280-ended": 1280,
   "C-panel-1280-live": 1280,
   "C-panel-1280-low": 1280,
   "C-panel-1280-ended": 1280,
@@ -319,6 +463,8 @@
   "C-cart-1280-low": 1280,
   "C-cart-1280-ended": 1280,
   "C-checkout-1280-live": 1280,
+  "C-checkout-1280-low": 1280,
+  "C-checkout-1280-ended": 1280,
   "D-panel-1280-live": 1280,
   "D-panel-1280-low": 1280,
   "D-panel-1280-ended": 1280,
@@ -326,13 +472,859 @@
   "D-cart-1280-low": 1280,
   "D-cart-1280-ended": 1280,
   "D-checkout-1280-live": 1280,
+  "D-checkout-1280-low": 1280,
+  "D-checkout-1280-ended": 1280,
   "E-panel-1280-live": 1280,
   "E-panel-1280-low": 1280,
   "E-panel-1280-ended": 1280,
   "E-cart-1280-live": 1280,
   "E-cart-1280-low": 1280,
   "E-cart-1280-ended": 1280,
-  "E-checkout-1280-live": 1280
+  "E-checkout-1280-live": 1280,
+  "E-checkout-1280-low": 1280,
+  "E-checkout-1280-ended": 1280
+ },
+ "timer": {
+  "A-panel-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10.5,
+   "tagW": 42.7,
+   "tagH": 16.1,
+   "coversPhotoPct": 5.3,
+   "coversPhotoPx": 2.1,
+   "last": true,
+   "above": 0
+  },
+  "A-panel-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10.5,
+   "tagW": 42.7,
+   "tagH": 16.1,
+   "coversPhotoPct": 5.3,
+   "coversPhotoPx": 2.1,
+   "last": true,
+   "above": 0
+  },
+  "A-panel-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "A-cart-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10.5,
+   "tagW": 42.7,
+   "tagH": 16.1,
+   "coversPhotoPct": 5.3,
+   "coversPhotoPx": 2.1,
+   "last": true,
+   "above": 0
+  },
+  "A-cart-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10.5,
+   "tagW": 42.7,
+   "tagH": 16.1,
+   "coversPhotoPct": 5.3,
+   "coversPhotoPx": 2.1,
+   "last": true,
+   "above": 0
+  },
+  "A-cart-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "A-checkout-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10.5,
+   "tagW": 42.7,
+   "tagH": 16.1,
+   "coversPhotoPct": 5.3,
+   "coversPhotoPx": 2.1,
+   "last": true,
+   "above": 0
+  },
+  "A-checkout-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10.5,
+   "tagW": 42.7,
+   "tagH": 16.1,
+   "coversPhotoPct": 5.3,
+   "coversPhotoPx": 2.1,
+   "last": true,
+   "above": 0
+  },
+  "A-checkout-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "B-panel-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "B-panel-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "B-panel-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "B-cart-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "B-cart-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "B-cart-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "B-checkout-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "B-checkout-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "B-checkout-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "C-panel-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10.5,
+   "tagW": 45.2,
+   "tagH": 16.2,
+   "coversPhotoPct": 5.4,
+   "coversPhotoPx": 2.2,
+   "last": true,
+   "above": 0
+  },
+  "C-panel-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10.5,
+   "tagW": 45.2,
+   "tagH": 16.2,
+   "coversPhotoPct": 5.4,
+   "coversPhotoPx": 2.2,
+   "last": true,
+   "above": 0
+  },
+  "C-panel-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "C-cart-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10.5,
+   "tagW": 45.2,
+   "tagH": 16.2,
+   "coversPhotoPct": 5.4,
+   "coversPhotoPx": 2.2,
+   "last": true,
+   "above": 0
+  },
+  "C-cart-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10.5,
+   "tagW": 45.2,
+   "tagH": 16.2,
+   "coversPhotoPct": 5.4,
+   "coversPhotoPx": 2.2,
+   "last": true,
+   "above": 0
+  },
+  "C-cart-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "C-checkout-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10.5,
+   "tagW": 45.2,
+   "tagH": 16.2,
+   "coversPhotoPct": 5.4,
+   "coversPhotoPx": 2.2,
+   "last": true,
+   "above": 0
+  },
+  "C-checkout-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10.5,
+   "tagW": 45.2,
+   "tagH": 16.2,
+   "coversPhotoPct": 5.4,
+   "coversPhotoPx": 2.2,
+   "last": true,
+   "above": 0
+  },
+  "C-checkout-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "D-panel-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "D-panel-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "D-panel-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "D-cart-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 18.5,
+   "last": true,
+   "above": 0
+  },
+  "D-cart-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 18.5,
+   "last": true,
+   "above": 0
+  },
+  "D-cart-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "D-checkout-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "D-checkout-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "D-checkout-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "E-panel-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10,
+   "tagW": 53,
+   "tagH": 17,
+   "coversPhotoPct": 5.2,
+   "coversPhotoPx": 2,
+   "last": true,
+   "above": 0
+  },
+  "E-panel-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10,
+   "tagW": 53,
+   "tagH": 17,
+   "coversPhotoPct": 5.2,
+   "coversPhotoPx": 2,
+   "last": true,
+   "above": 0
+  },
+  "E-panel-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "E-cart-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10,
+   "tagW": 53,
+   "tagH": 17,
+   "coversPhotoPct": 5.2,
+   "coversPhotoPx": 2,
+   "last": true,
+   "above": 0
+  },
+  "E-cart-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10,
+   "tagW": 53,
+   "tagH": 17,
+   "coversPhotoPct": 5.2,
+   "coversPhotoPx": 2,
+   "last": true,
+   "above": 0
+  },
+  "E-cart-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "E-checkout-390-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10,
+   "tagW": 53,
+   "tagH": 17,
+   "coversPhotoPct": 5.2,
+   "coversPhotoPx": 2,
+   "last": true,
+   "above": 0
+  },
+  "E-checkout-390-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10,
+   "tagW": 53,
+   "tagH": 17,
+   "coversPhotoPct": 5.2,
+   "coversPhotoPx": 2,
+   "last": true,
+   "above": 0
+  },
+  "E-checkout-390-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "A-panel-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10.5,
+   "tagW": 42.7,
+   "tagH": 16.1,
+   "coversPhotoPct": 5.3,
+   "coversPhotoPx": 2.1,
+   "last": true,
+   "above": 0
+  },
+  "A-panel-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10.5,
+   "tagW": 42.7,
+   "tagH": 16.1,
+   "coversPhotoPct": 5.3,
+   "coversPhotoPx": 2.1,
+   "last": true,
+   "above": 0
+  },
+  "A-panel-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "A-cart-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10.5,
+   "tagW": 42.7,
+   "tagH": 16.1,
+   "coversPhotoPct": 5.3,
+   "coversPhotoPx": 2.1,
+   "last": true,
+   "above": 0
+  },
+  "A-cart-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10.5,
+   "tagW": 42.7,
+   "tagH": 16.1,
+   "coversPhotoPct": 5.3,
+   "coversPhotoPx": 2.1,
+   "last": true,
+   "above": 0
+  },
+  "A-cart-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "A-checkout-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10.5,
+   "tagW": 42.7,
+   "tagH": 16.1,
+   "coversPhotoPct": 5.3,
+   "coversPhotoPx": 2.1,
+   "last": true,
+   "above": 0
+  },
+  "A-checkout-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10.5,
+   "tagW": 42.7,
+   "tagH": 16.1,
+   "coversPhotoPct": 5.3,
+   "coversPhotoPx": 2.1,
+   "last": true,
+   "above": 0
+  },
+  "A-checkout-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "B-panel-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 18.5,
+   "last": true,
+   "above": 0
+  },
+  "B-panel-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 18.5,
+   "last": true,
+   "above": 0
+  },
+  "B-panel-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "B-cart-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 18.5,
+   "last": true,
+   "above": 0
+  },
+  "B-cart-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 18.5,
+   "last": true,
+   "above": 0
+  },
+  "B-cart-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "B-checkout-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "B-checkout-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "B-checkout-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "C-panel-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10.5,
+   "tagW": 45.2,
+   "tagH": 16.2,
+   "coversPhotoPct": 5.4,
+   "coversPhotoPx": 2.2,
+   "last": true,
+   "above": 0
+  },
+  "C-panel-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10.5,
+   "tagW": 45.2,
+   "tagH": 16.2,
+   "coversPhotoPct": 5.4,
+   "coversPhotoPx": 2.2,
+   "last": true,
+   "above": 0
+  },
+  "C-panel-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "C-cart-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10.5,
+   "tagW": 45.2,
+   "tagH": 16.2,
+   "coversPhotoPct": 5.4,
+   "coversPhotoPx": 2.2,
+   "last": true,
+   "above": 0
+  },
+  "C-cart-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10.5,
+   "tagW": 45.2,
+   "tagH": 16.2,
+   "coversPhotoPct": 5.4,
+   "coversPhotoPx": 2.2,
+   "last": true,
+   "above": 0
+  },
+  "C-cart-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "C-checkout-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10.5,
+   "tagW": 45.2,
+   "tagH": 16.2,
+   "coversPhotoPct": 5.4,
+   "coversPhotoPx": 2.2,
+   "last": true,
+   "above": 0
+  },
+  "C-checkout-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10.5,
+   "tagW": 45.2,
+   "tagH": 16.2,
+   "coversPhotoPct": 5.4,
+   "coversPhotoPx": 2.2,
+   "last": true,
+   "above": 0
+  },
+  "C-checkout-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "D-panel-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 18.5,
+   "last": true,
+   "above": 0
+  },
+  "D-panel-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 18.5,
+   "last": true,
+   "above": 0
+  },
+  "D-panel-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "D-cart-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 18.5,
+   "last": true,
+   "above": 0
+  },
+  "D-cart-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 18.5,
+   "last": true,
+   "above": 0
+  },
+  "D-cart-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "D-checkout-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "D-checkout-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 11,
+   "tagW": 61.8,
+   "tagH": 18.5,
+   "coversPhotoPct": 0,
+   "coversPhotoPx": 11.6,
+   "last": true,
+   "above": 0
+  },
+  "D-checkout-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "E-panel-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10,
+   "tagW": 53,
+   "tagH": 17,
+   "coversPhotoPct": 5.2,
+   "coversPhotoPx": 2,
+   "last": true,
+   "above": 0
+  },
+  "E-panel-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10,
+   "tagW": 53,
+   "tagH": 17,
+   "coversPhotoPct": 5.2,
+   "coversPhotoPx": 2,
+   "last": true,
+   "above": 0
+  },
+  "E-panel-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "E-cart-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10,
+   "tagW": 53,
+   "tagH": 17,
+   "coversPhotoPct": 5.2,
+   "coversPhotoPx": 2,
+   "last": true,
+   "above": 0
+  },
+  "E-cart-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10,
+   "tagW": 53,
+   "tagH": 17,
+   "coversPhotoPct": 5.2,
+   "coversPhotoPx": 2,
+   "last": true,
+   "above": 0
+  },
+  "E-cart-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  },
+  "E-checkout-1280-live": {
+   "timer": true,
+   "text": "14:52",
+   "fontPx": 10,
+   "tagW": 53,
+   "tagH": 17,
+   "coversPhotoPct": 5.2,
+   "coversPhotoPx": 2,
+   "last": true,
+   "above": 0
+  },
+  "E-checkout-1280-low": {
+   "timer": true,
+   "text": "01:38",
+   "fontPx": 10,
+   "tagW": 53,
+   "tagH": 17,
+   "coversPhotoPct": 5.2,
+   "coversPhotoPx": 2,
+   "last": true,
+   "above": 0
+  },
+  "E-checkout-1280-ended": {
+   "timer": false,
+   "ended": false,
+   "bonusTile": false,
+   "above": 0
+  }
  },
  "console": [
   "390 Failed to load resource: the server responded with a status of 404 (Not Found)"
