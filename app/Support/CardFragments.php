@@ -267,6 +267,11 @@ final class CardFragments
             // (Lane VPA) the card's shade dots and size chips: a new stock
             // state, swatch colour or option picture is a new card.
             ($row['type'] ?? null) === 'variable' ? $swatches->signature($p) : null,
+            // (Lane LBL) Catalog -> Labels: the ids this card shows NOW, after
+            // the date window -- a label put on, taken off, or starting or
+            // ending today is a new card. Their look is in the settings hash
+            // ($shop): every label save writes a new build number there.
+            \App\Services\CustomLabels::cardKey((int) $p->id),
         ]));
     }
 }

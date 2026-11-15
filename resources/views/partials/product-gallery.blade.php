@@ -79,8 +79,32 @@
              swapping to a placeholder shot can reveal it again. --}}
         <span class="cap" id="gcap" data-brand="{{ $brandName }}" @if ($mainImage) hidden @endif>{{ $brandName }}<br>{{ (class_exists(\App\Support\ArabicWording::class) ? \App\Support\ArabicWording::of($mainShot['label'] ?? 'Front') : (string) ($mainShot['label'] ?? 'Front')) }}</span>
 
-        @php $kbbLabel = app(\App\Services\ProductLabels::class)->for($product); @endphp
-        @if (! $modules->hidden('badge') && $kbbLabel)
+        @php $kbbLabel = app(\App\Services\ProductLabels::class)->for($product); $kbbPlbPage = \App\Services\CustomLabels::forProduct((int) $product->id, 'page'); @endphp
+        @if ($kbbPlbPage !== [])
+            {{-- (Lane LBL) Catalog -> Labels on the main photo, top-start, at
+                 most two. The badge this corner drew before stays UNDER them
+                 when it is a sold-out, sale or the product's own badge; an
+                 automatic New / Bestseller gives way (option E). Never on a
+                 product with no label, so that page is byte-identical. --}}
+            @php
+                $kbbPlbTail = '';
+                if (! $modules->hidden('badge')) {
+                    $kbbPlbCls = e($modules->classFor('badge'));
+                    $kbbPlbAutoOn = app(\App\Services\SettingsService::class)->moduleEnabled('product_labels', false);
+                    if ($kbbLabel) {
+                        $kbbPlbAuto = app(\App\Services\ProductLabels::class)->all();
+                        if (($kbbPlbAuto['oos_on'] && $product->stock_status !== 'instock') || ($kbbPlbAuto['sale_on'] && $onSale && $off)) {
+                            $kbbPlbTail = '<span class="' . $kbbPlbCls . ' lbl" style="background:' . e($kbbLabel['colour']) . '">' . e($kbbLabel['text']) . '</span>';
+                        }
+                    } elseif (! $kbbPlbAutoOn && $product->badge_text) {
+                        $kbbPlbTail = '<span class="' . $kbbPlbCls . ' lbl" style="background:' . e($product->badge_colour ?: '#1b9e77') . '">' . e($product->badge_text) . '</span>';
+                    } elseif (! $kbbPlbAutoOn && $onSale && $off) {
+                        $kbbPlbTail = '<span class="' . $kbbPlbCls . ' lbl lbl-off">' . e(\App\Support\Bidi::number('-' . $off . '%')) . '</span>';
+                    }
+                }
+            @endphp
+            {!! \App\Services\CustomLabels::stackHtml($kbbPlbPage, '', $kbbPlbTail) !!}
+        @elseif (! $modules->hidden('badge') && $kbbLabel)
             <span class="{{ $modules->classFor('badge') }} lbl" style="top:14px;left:14px;background:{{ $kbbLabel['colour'] }}">{{ $kbbLabel['text'] }}</span>
         @elseif (! $modules->hidden('badge') && ! app(\App\Services\SettingsService::class)->moduleEnabled('product_labels', false) && $product->badge_text)
             <span class="{{ $modules->classFor('badge') }} lbl" style="top:14px;left:14px;background:{{ $product->badge_colour ?: '#1b9e77' }}">{{ $product->badge_text }}</span>

@@ -380,7 +380,7 @@ it('renders the sidebar the console settled on, group by group and row by row', 
         // 'notfoundpage' — Safety → 404 page (Lane NF), after Demo Content.
         'Safety' => ['debug', 'sandbox', 'democontent', 'notfoundpage'],
         // 'bestsellers' — Catalog → Best Sellers (2.60.661), after New Arrivals.
-        'Catalog' => ['catalog', 'product-tabs', 'sets', 'product-editor', 'imageseo', 'concernsync', 'newarrivals', 'bestsellers', 'recentlocalise', 'routines', 'category-tree', 'brands-manager', 'pagination'],
+        'Catalog' => ['catalog', 'product-tabs', 'sets', 'product-editor', 'imageseo', 'concernsync', 'newarrivals', 'bestsellers', 'catlabels', 'recentlocalise', 'routines', 'category-tree', 'brands-manager', 'pagination'],
         // 'inquiries' — Store → Inquiries (Lane CT), after Quiz Leads.
         'Store' => ['modules', 'megamenu', 'ecommerce', 'tax', 'payship', 'shipping', 'quiqup', 'import',
             'order-new', 'coupon-editor', 'payments', 'tabbycaptures', 'paygw', 'security', 'firewall', 'analytics', 'search', 'seo', 'seokeywords',

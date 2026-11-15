@@ -218,6 +218,10 @@ final class AdminSearchIndex
         'bestsellers' => [
             '' => ['Display', 'Reset to the ranking', 'best sellers', 'last three months', 'remove', 'order'],
         ],
+        // Catalog → Labels (Lane LBL).
+        'catlabels' => [
+            '' => ['New label', 'Your labels', 'Automatic badges', 'Shape', 'Badge colour', 'Text colour', 'Shows on', 'Priority', 'Pick products', 'By categories', 'Both together', 'Include sub-categories', 'Exclude these products', 'Save label'],
+        ],
         // Catalog → Translate & categorise (Lane LT).
         'recentlocalise' => [
             '' => ['Scan', 'Review Arabic', 'Skin concerns', 'Apply all ticked', 'Retry them', 'Rules only (no API)'],

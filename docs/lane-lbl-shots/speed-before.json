@@ -1,0 +1,56 @@
+{
+    "/product/lbl-1-snail-probiotics-cica-51ml-1/": {
+        "status": 200,
+        "ms": 23.5,
+        "queries": 10,
+        "settings_queries": 0,
+        "settings_map_reads": 1,
+        "html_bytes": 173827,
+        "markers": 0
+    },
+    "/collections/skincare-lbl/": {
+        "status": 200,
+        "ms": 22.7,
+        "queries": 4,
+        "settings_queries": 0,
+        "settings_map_reads": 1,
+        "html_bytes": 98886,
+        "markers": 0
+    },
+    "/brands/cosrx/": {
+        "status": 200,
+        "ms": 20.1,
+        "queries": 4,
+        "settings_queries": 0,
+        "settings_map_reads": 1,
+        "html_bytes": 96523,
+        "markers": 0
+    },
+    "/ar/collections/skincare-lbl/": {
+        "status": 200,
+        "ms": 26,
+        "queries": 4,
+        "settings_queries": 0,
+        "settings_map_reads": 1,
+        "html_bytes": 113138,
+        "markers": 0
+    },
+    "/shop/": {
+        "status": 200,
+        "ms": 20.1,
+        "queries": 3,
+        "settings_queries": 0,
+        "settings_map_reads": 1,
+        "html_bytes": 97885,
+        "markers": 0
+    },
+    "/": {
+        "status": 200,
+        "ms": 42.2,
+        "queries": 0,
+        "settings_queries": 0,
+        "settings_map_reads": 1,
+        "html_bytes": 138450,
+        "markers": 0
+    }
+}
