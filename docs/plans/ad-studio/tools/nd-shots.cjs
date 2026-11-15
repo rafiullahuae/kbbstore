@@ -23,7 +23,7 @@ const OUT = process.argv[2] || path.join(ROOT, 'shots', 'national-day.jpg'), SET
   const html = `<!doctype html><meta charset="utf-8"><style>body{margin:0;padding:24px;background:#EDEAEC;font:600 15px Inter,system-ui,sans-serif;color:#1F1B1E;width:1090px}
     h1{font-size:24px;margin:0 0 4px}p{margin:0 0 16px;color:#6B6268;font-weight:500}h2{font-size:17px;margin:20px 0 8px}
     .r{display:flex;gap:16px;align-items:flex-start}.r img{display:block;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.18)}</style>
-    <h1>KBB Ad Studio · UAE National Day · ${list.length} templates × 3 sizes</h1><p>Post 1080×1350 · square 1080×1080 · story 1080×1920, with the shop's newest products (set ${SET + 1}). Offers are editable placeholders.</p>` +
+    <h1>KBB Ad Studio · UAE National Day · Mega Offer · ${list.length} templates × 3 sizes</h1><p>Post 1080×1350 · square 1080×1080 · story 1080×1920, with the shop's newest products (set ${SET + 1}). Offers are editable placeholders.</p>` +
     rows.map((r) => `<h2>${esc(r.name)}</h2><div class="r"><img src="data:image/jpeg;base64,${r.imgs[0]}" style="width:380px"><img src="data:image/jpeg;base64,${r.imgs[1]}" style="width:380px"><img src="data:image/jpeg;base64,${r.imgs[2]}" style="width:280px"></div>`).join('');
   const s = await b.newPage({ viewport: { width: 1138, height: 900 } });
   await s.setContent(html); await s.screenshot({ path: OUT, type: 'jpeg', quality: 82, fullPage: true });

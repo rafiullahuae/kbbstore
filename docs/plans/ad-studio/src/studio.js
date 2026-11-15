@@ -24,7 +24,7 @@
 
   // ── fixed lists (the allowlists every stored value is checked against) ──
   var FONTS = { inter: 'Inter', poppins: 'Poppins', montserrat: 'Montserrat', playfair: 'Playfair Display', dmserif: 'DM Serif Display', bebas: 'Bebas Neue', dancing: 'Dancing Script', cairo: 'Cairo' };
-  var SHAPES = { none: 'None', rect: 'Rectangle', pill: 'Pill', circle: 'Circle', ellipse: 'Oval', ring: 'Ring', arch: 'Arch', burst: 'Burst', star: 'Star', heart: 'Heart', banner: 'Banner', ticket: 'Ticket', blob: 'Blob' };
+  var SHAPES = { none: 'None', rect: 'Rectangle', pill: 'Pill', circle: 'Circle', ellipse: 'Oval', ring: 'Ring', arch: 'Arch', burst: 'Burst', star: 'Star', heart: 'Heart', banner: 'Banner', ticket: 'Ticket', blob: 'Blob', glow: 'Soft glow', petal: 'Petal', silk: 'Silk ribbon' };
   var BORDERED = { rect: 1, pill: 1, circle: 1, ellipse: 1, ring: 1, arch: 1 };
   var TYPES = { text: 'Text', btn: 'Button', shape: 'Shape', icon: 'Icon', img: 'Picture', pay: 'tabby / tamara', logo: 'Logo', prods: 'Products' };
   var PATS = { none: 'None', dots: 'Dots', grid: 'Grid', stripes: 'Stripes', rays: 'Rays', lattice: 'Lattice', waves: 'Waves', sparkle: 'Sparkles' };
@@ -33,7 +33,9 @@
   function poly(n, r1, r2_, rot) { var p = []; for (var i = 0; i < n * 2; i++) { var a = (i / (n * 2)) * Math.PI * 2 + (rot || 0), r = i % 2 ? r2_ : r1; p.push((50 + Math.sin(a) * r).toFixed(1) + '% ' + (50 - Math.cos(a) * r).toFixed(1) + '%'); } return 'polygon(' + p.join(',') + ')'; }
   function heartPoly() { var p = []; for (var i = 0; i < 48; i++) { var t = i / 48 * Math.PI * 2, x = 16 * Math.pow(Math.sin(t), 3), y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t); p.push((50 + x * 3.05).toFixed(1) + '% ' + (44 - y * 3.05).toFixed(1) + '%'); } return 'polygon(' + p.join(',') + ')'; }
   function blobPoly() { var p = []; for (var i = 0; i < 48; i++) { var a = i / 48 * Math.PI * 2, r = 46 * (1 + .07 * Math.sin(3 * a + .6) + .05 * Math.cos(5 * a)); p.push((50 + Math.cos(a) * r).toFixed(1) + '% ' + (50 + Math.sin(a) * r).toFixed(1) + '%'); } return 'polygon(' + p.join(',') + ')'; }
-  var CLIP = { burst: poly(14, 50, 41), star: poly(5, 50, 21), heart: heartPoly(), blob: blobPoly(),
+  // a satin ribbon: a band whose centre line is one sine wave and whose width swells and narrows like a fold
+  function silkPoly() { var t = [], b = []; for (var i = 0; i <= 40; i++) { var x = i * 2.5, a = x / 100 * Math.PI * 2, c = 50 + 30 * Math.sin(a), w = 13 + 7 * Math.cos(a * 1.5 + .8); t.push(x + '% ' + (c - w).toFixed(1) + '%'); b.unshift(x + '% ' + (c + w).toFixed(1) + '%'); } return 'polygon(' + t.concat(b).join(',') + ')'; }
+  var CLIP = { burst: poly(14, 50, 41), star: poly(5, 50, 21), heart: heartPoly(), blob: blobPoly(), silk: silkPoly(),
     banner: 'polygon(0 0,100% 0,95% 50%,100% 100%,0 100%,5% 50%)',
     ticket: 'polygon(0 0,100% 0,100% 40%,96% 50%,100% 60%,100% 100%,0 100%,0 60%,4% 50%,0 40%)' };
   function svgPoly(n, r1, r2_) { var p = []; for (var i = 0; i < n * 2; i++) { var a = i / (n * 2) * Math.PI * 2, r = i % 2 ? r2_ : r1; p.push((12 + Math.sin(a) * r).toFixed(2) + ',' + (12 - Math.cos(a) * r).toFixed(2)); } return '<polygon points="' + p.join(' ') + '" fill="currentColor"/>'; }
@@ -329,6 +331,8 @@
       var sf = mk('div', 'sf'), k = e.sh;
       sf.style.background = fillCss(e);
       if (k === 'circle' || k === 'ellipse') sf.style.borderRadius = '50%';
+      else if (k === 'glow') sf.style.background = e.fill === 'transparent' ? 'transparent' : 'radial-gradient(closest-side,' + e.fill + ',' + (e.fill2 || e.fill.slice(0, 7) + '00') + ')';
+      else if (k === 'petal') sf.style.borderRadius = '100% 0';
       else if (k === 'ring') { sf.style.borderRadius = '50%'; sf.style.background = 'transparent'; sf.style.border = ((e.bw || 3) / 10) + 'cqw ' + (e.bs || 'solid') + ' ' + (e.bc || e.fill || '#FFFFFF'); }
       else if (k === 'pill') sf.style.borderRadius = '999px';
       else if (k === 'rect') sf.style.borderRadius = (e.rad || 0) + 'cqw';
