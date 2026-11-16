@@ -283,3 +283,35 @@ anything work on everything."*
   Bilingual, Fun), searchable, favourites per company.
 * **Edit anything**: per-line and per-word overrides of text, size, colour, font, position, animation
   and emphasis, on top of the global style; drag a caption on the canvas to move it; reset to style.
+
+## Work Abroad, image-first — queued 16 Nov
+
+The owner: *"not just for study abroad, i need work abroad also, for different occupations, and i don't want
+generic text ad. i want to focus more on the images, specially the pictures of the workers, employees in
+specific uniform etc, like plumber, teacher, helper, drivers, nurse, and other all occupations."*
+
+* **Occupation library** (data, EN/AR): 80+ occupations — trades (plumber, electrician, welder, carpenter,
+  mason, painter, AC/HVAC technician, pipe fitter, steel fixer, scaffolder, crane/forklift operator),
+  transport (light/heavy driver, bus driver, delivery rider, warehouse), care & health (nurse, caregiver,
+  elderly care, doctor, pharmacist, lab tech), hospitality (chef, cook, kitchen helper, waiter, barista,
+  housekeeping, hotel front desk, cleaner), services (security guard, salesperson, cashier, beautician,
+  barber, tailor), education (teacher, nanny/au pair), agriculture/food (farm worker, fruit picker,
+  butcher, baker, meat/fish processing), industry (factory/production, packing, machine operator,
+  mechanic, auto electrician), office/IT (IT, engineer, accountant, admin) — each with uniform/PPE
+  description, tools, colours, icon, keywords, and which countries commonly recruit (editable).
+* **Image-first Work Abroad templates (40+, Ad Studio, 3 sizes)**: big worker photo or cut-out as the
+  hero (uniform visible), occupation title, destination flag/landmark scene behind, "We're hiring",
+  "Work in Poland as a welder", job card, duo/trio collage of occupations, uniform close-up, team shot,
+  benefits/salary/visa-type badges as EDITABLE placeholders (never invented numbers or promises),
+  apply/WhatsApp CTA; a reel recipe per family too. Occupation picker swaps photo, title, tools/icons and
+  accents in one click (like the country picker).
+* **Where the worker photos come from:**
+  1. **Stock photo search inside KBB Studio** (on his Mac, online only when he searches, after
+     permission): Pexels and Unsplash (free commercial licences), with his own free API keys entered once
+     in Settings; results saved into `library/people/<occupation>/` with the licence and photographer
+     recorded; filters for people, orientation, region/ethnicity keywords.
+  2. **Offline AI-generated worker photos** (the local image model from Brief → Designs): prompts built
+     from the occupation library (uniform, tools, setting, region), several candidates per click,
+     regenerate; best at portrait/half-body; obvious flaws (hands/tools/text) rejected or flagged.
+  3. **His own photos** of real workers/clients (best for trust), auto-tagged by occupation.
+  Background removal (round 2, Lane L) cuts any of these out onto country scenes.
