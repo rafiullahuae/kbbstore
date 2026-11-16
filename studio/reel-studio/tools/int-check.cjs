@@ -164,7 +164,7 @@ async function engineChecks(e) {
   const list = await wsState();
   const kbb = list.find((w) => w.id === 'kbb'), pc = list.find((w) => w.id === 'planet-careers');
   ok(kbb && kbb.primary === '#C6395F' && kbb.heading === 'Playfair Display' && kbb.captions === 'soft-beauty', `KBB seeded from brands/kbb/kit.json (${JSON.stringify(kbb)})`);
-  ok(pc && pc.primary === '#0b2545' && pc.captions === 'bold-outline' && pc.industries.includes('immigration'), `Planet Careers seeded from its kit (${JSON.stringify(pc)})`);
+  ok(pc && pc.primary === '#002768' && pc.captions === 'info-card' && pc.industries.includes('immigration'), `Planet Careers seeded from its kit (${JSON.stringify(pc)})`);
   const switchTo = async (name) => {
     await page.click('.ws-switch');
     await page.locator('.ws-item', { hasText: name }).first().click();
@@ -195,6 +195,7 @@ async function engineChecks(e) {
 
     // Auto captions: the button in the "Do it for me" bar, whisper-base on WASM (chosen in the Captions panel)
     await page.click('.side-tab[data-side="captions"]');
+    await page.evaluate(() => document.querySelectorAll('.rs-cap-settings').forEach((d) => { d.open = true; }));   // the model/language pickers live under ⚙ Settings since the captions round
     await page.locator('.rs-cap select.rs-cap-in').nth(0).selectOption('base');
     await page.locator('.rs-cap select.rs-cap-in').nth(1).selectOption('en');
     t = Date.now();
@@ -366,6 +367,7 @@ async function engineChecks(e) {
     await page.setInputFiles('.home-drop input[type=file]', path.join(MEDIA, 'kbb-ar-916.mp4'));
     await page.waitForSelector('.tl-item'); await waitEd(() => kbbEditor.project.media[0]?.dur > 0);
     await page.click('.side-tab[data-side="captions"]');
+    await page.evaluate(() => document.querySelectorAll('.rs-cap-settings').forEach((d) => { d.open = true; }));   // the model/language pickers live under ⚙ Settings since the captions round
     await page.locator('.rs-cap select.rs-cap-in').nth(0).selectOption('base');
     await page.locator('.rs-cap select.rs-cap-in').nth(1).selectOption('ar');
     const t = Date.now();
