@@ -182,8 +182,23 @@ must be capable of all complex tasks etc."*
   connected, a "Smart brief" toggle sends ONLY the brief text and the catalogue names it needs (never
   files or customer data) to the Claude API for richer understanding and copy; asks once per session;
   key stored locally by the engine, never in projects or exports; one-click Disconnect.
-* **No AI-generated images** (not chosen): visuals come from his photos, product cut-outs, brand assets,
-  country packs and designed backgrounds.
+* **AI-generated visuals, offline — the owner, 16 Nov:** *"visuals should also come from the ai / auto
+  generation etc. as per the industries or scope of work we have. like backgrounds, artwork, icons, color
+  schemes etc."* So the studio generates its own visuals ON THE MAC, no account, no internet after a
+  one-time permitted download:
+  - **AI images** (backgrounds, scenes, textures, artwork) from a local image model on the Mac GPU
+    (WebGPU ONNX, an SD-Turbo-class model, ~2 GB once; seconds per image), prompted automatically from
+    the brief + industry + brand palette (e.g. "soft pink silk with petals, luxury beauty, UAE National
+    Day accents"; "Toronto skyline at golden hour, clean, education"), plus a local upscaler to full HD;
+    he can also type his own prompt and regenerate.
+  - **Generated artwork and backgrounds without the model** (instant): gradients, mesh/blob, patterns,
+    abstract shapes, frames, ribbons, confetti, light effects — procedural and always on-brand.
+  - **Icons**: a large offline open-licence icon set (MIT/ISC, e.g. Lucide/Tabler) restyled automatically
+    (stroke, fill, duotone, brand colours, badges), chosen by meaning from the brief.
+  - **Colour schemes**: generated per brief from the brand kit, industry, mood, occasion and country
+    flag colours, contrast-checked; save favourites to the company.
+  - Generated images are checked like everything else (no text baked into images, product never covered,
+    contrast with the copy) and stored in the company's library for reuse.
 * The same brief reader drives **Brief → Reel** (recipe + copy + captions + music) so one brief can give
   matching ads and a reel.
 * Round: after round 1 integration (editor + captions + automation).
