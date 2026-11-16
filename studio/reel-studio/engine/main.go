@@ -368,7 +368,7 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		}
 		ents, err := os.ReadDir(abs)
 		if err != nil {
-			jsonErr(w, 404, "not found")
+			writeJSON(w, []any{}) // a folder that isn't there yet is simply empty (no error noise in the browser)
 			return
 		}
 		out := []map[string]any{}
@@ -393,10 +393,10 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		}
 		st, err := os.Stat(abs)
 		if err != nil {
-			jsonErr(w, 404, "not found")
+			writeJSON(w, map[string]any{"exists": false})
 			return
 		}
-		writeJSON(w, map[string]any{"size": st.Size(), "dir": st.IsDir(), "mtime": st.ModTime().UnixMilli()})
+		writeJSON(w, map[string]any{"exists": true, "size": st.Size(), "dir": st.IsDir(), "mtime": st.ModTime().UnixMilli()})
 
 	case "/api/write":
 		if r.Method != http.MethodPut && r.Method != http.MethodPost {

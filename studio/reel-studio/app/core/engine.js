@@ -16,6 +16,9 @@
 //   await engine.askPermission({what, size, host, url, scope}) -> bool   (the dialog is the app's: setPermissionUI)
 //   await engine.fetchModel(repo, file, {size, what, onProgress}) -> 'models/<repo>/<file>' (local path)
 //   engine.stop()                                 -> shuts the engine down (the "Stop" button)
+//   await engine.modelsStatus() / installModels([manifestModel]) / pauseModels() / resumeModels() / modelInstalled(id)
+//                                                 -> the first-run setup (models/manifest.json); progress arrives on
+//                                                    bus 'engine:models' with the same shape as modelsStatus()
 //
 // Network: ONLY through the engine's /net/*, which refuses unless askPermission() said yes for that exact URL
 // (scope 'exact') or that Hugging Face repo (scope 'repo') this session, and only to the allowlist
@@ -58,6 +61,7 @@ class EngineClient {
   _listen() {
     if (this.events || typeof EventSource !== 'function') return;
     this.events = new EventSource('/api/events?t=' + enc(token()));
+    this.events.addEventListener('models', (e) => bus.emit('engine:models', JSON.parse(e.data)));
     this.events.addEventListener('progress', (e) => {
       const d = JSON.parse(e.data);
       bus.emit('engine:progress', d);
@@ -71,7 +75,7 @@ class EngineClient {
     catch (e) { if (e.status === 404) return []; throw e; }
   }
   async exists(path) {
-    try { await this._fetch('/api/stat?path=' + enc(path)); return true; } catch { return false; }
+    try { return !!(await (await this._fetch('/api/stat?path=' + enc(path))).json()).exists; } catch { return false; }
   }
   async readFile(path, as = 'json') {
     const r = await this._fetch('/' + path.split('/').map(enc).join('/'));
@@ -131,6 +135,22 @@ class EngineClient {
     await new Promise((res, rej) => this.waiters.set(r.id, { res, rej, onProgress }));
     return dest;
   }
+
+  // ── first-run model setup (models/manifest.json; the engine downloads, resumes, verifies) ──
+  /** { free, models:[{id, repo, purpose, owner, required, size, installed, have, partial}], installer:{state, message, total, done, speed, eta, files} } */
+  async modelsStatus() { return (await this._fetch('/api/models')).json(); }
+  /** ONE Allow covers every listed model: grants each repo for this session, then starts the install */
+  async installModels(models) {
+    for (const m of models) {
+      await this._fetch('/api/permission', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: `https://huggingface.co/${m.repo}/`, scope: 'repo', what: m.purpose }) });
+      this.grants.add('repo https://huggingface.co/' + m.repo + '/');
+    }
+    return (await this._fetch('/api/models/install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: models.map((m) => m.id) }) })).json();
+  }
+  async pauseModels() { return (await this._fetch('/api/models/pause', { method: 'POST' })).json(); }
+  async resumeModels() { return (await this._fetch('/api/models/resume', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).json(); }
+  /** is a manifest model fully installed? (modules check this before loading one) */
+  async modelInstalled(id) { try { return !!(await this.modelsStatus()).models.find((m) => m.id === id)?.installed; } catch { return false; } }
 
   async stop() { try { this.events?.close(); await this._fetch('/api/stop', { method: 'POST' }); } catch {} }
 }
