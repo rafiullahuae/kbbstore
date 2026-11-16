@@ -192,6 +192,22 @@ its phase.
   scheduler line in Cloudways → Application → Cron Job Management → Advanced.
   Exact line and health check: `docs/HANDOVER.md` §2
 
+## ▲ SEPARATE PROJECT — KBB Studio (NOT the website)  *(opened 16 November 2026)*
+
+The owner, 16 Nov: *"this kbb studio is a different project than KBB laravel website. don't mix it. and
+always keep different in the master plan."* KBB Studio is the owner's own offline creative tool for his
+Mac: **Ad Studio** (static ads, `docs/plans/ad-studio/`, to move under `studio/`) and **Reel Studio**
+(video reels editor with auto captions, auto reel, music/SFX, recipes, brand kits for KBB and a separate
+immigration consultancy — plan in `studio/reel-studio/PLAN.md`). It shares no code with the shop, never
+ships in a website update package, never touches `app/`, `resources/`, `routes/`, `database/` or
+`public/`, and its progress is tracked here, in this section only — never mixed into the website phases
+below.
+
+| Date | Studio item | State |
+|---|---|---|
+| 15–16 Nov | Ad Studio: 69 templates, National Day sets, multi-select/groups/align, backgrounds and colour controls | Done (artifact) |
+| 16 Nov | Reel Studio: plan; round 1 lanes R1 engine+editor, R2 captions, R3 automation+recipes+brand kits | In progress |
+
 ## Mobile app — planning ledger  *(opened 12 November 2026, kept running)*
 
 The owner, 12 Nov: "keep updating the master file, so we will have easy planning
