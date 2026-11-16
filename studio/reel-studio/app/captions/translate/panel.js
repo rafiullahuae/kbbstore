@@ -116,7 +116,7 @@ export function mountTranslate(el, ctx, apply) {
       getBtn.hidden = false;
       getBtn.textContent = `⬇ Get ${langName(tgt)} (${entry ? fmtMB(Math.max(0, entry.size - (entry.have || 0))) : 'download'})`;
       status.replaceChildren(h('span', {}, `Offline · ${eng.label} — not downloaded yet`), plan.eng ? h('span', {}, ` (${ENGINES[plan.eng].label} is installed and will be used)`) : null);
-    } else status.textContent = `Offline · ${eng.label} ✓${backTxt}`;
+    } else status.textContent = `Offline · ${eng.label}${plan.alt ? " + " + ENGINES[plan.alt].label + " (best of two)" : ""} ✓${backTxt}`;
   }
   const autoSrc = () => sourceLangOf({ ...TC.sourceOf(cap()), lang: TC.sourceOf(cap()).lang || cap().lang });
   function renderSrc() {
@@ -129,7 +129,7 @@ export function mountTranslate(el, ctx, apply) {
   async function getLang() {
     const src = srcSel.value === 'auto' ? autoSrc() : srcSel.value, tgt = tgtSel.value;
     const plan = await planFor(ctx, src, tgt);
-    const ids = [plan.best, ...(candidatesFor(tgt, src).slice(0, 1))].filter(Boolean);
+    const ids = plan.want;
     running = new AbortController(); progress.hidden = false; goBtn.disabled = true;
     try { await installFor(ctx, ids, setProg); ctx.toast?.(`${langName(tgt)} is ready offline`, 'ok'); }
     catch (e) { ctx.toast?.(e.denied ? 'Download not allowed' : 'Download failed: ' + e.message, e.denied ? 'warn' : 'error'); }
@@ -216,7 +216,7 @@ export function mountTranslate(el, ctx, apply) {
     const shown = c.tr.active === lang ? (c.tr.mode === 'replace' ? 'replaces the captions' : 'shown with the original') : c.tracks?.[lang] ? 'second track' : 'not on the video';
     const todo = T.sents.filter((s) => s.flags?.length && !s.approved).length;
     reviewHead.replaceChildren(
-      h('div', { class: 'rs-cap-row' }, h('b', {}, `${langName(src)} → ${langName(lang)}`), h('span', { class: 'rs-cap-muted' }, `· ${shown} · ${ENGINES[T.engine]?.label || T.engine}`)),
+      h('div', { class: 'rs-cap-row' }, h('b', {}, `${langName(src)} → ${langName(lang)}`), h('span', { class: 'rs-cap-muted' }, `· ${shown} · ${ENGINES[T.engine]?.label || T.engine}${T.alt ? " + " + (ENGINES[T.alt]?.label || T.alt) + ", best of two per sentence" : ""}`)),
       h('div', { class: 'rs-cap-row' },
         h('label', { class: 'rs-cap-check' }, onlyBox, ` Only lines to check (${todo})`),
         h('button', { class: 'rs-cap-btn', 'data-x': 'approve-all', disabled: !todo, onclick: () => apply(TC.approve(lang)) }, '✓ Approve all'),

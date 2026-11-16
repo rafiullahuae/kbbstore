@@ -17,7 +17,7 @@ const BACK = { 'en-ar': 'mt-ar-en', 'en-hi': 'mt-hi-en', 'ar-en': 'mt-en-ar', 'h
   const page = await browser.newPage(); page.setDefaultTimeout(0);
   await page.goto(`http://127.0.0.1:${server.address().port}/app/captions/translate/dev/index.html`);
   await page.waitForFunction(() => window.TR?.ready);
-  const cands = fs.readdirSync(EV).filter((f) => /^(opus|m2m100|qwen)\.json$/.test(f)).map((f) => JSON.parse(fs.readFileSync(path.join(EV, f))));
+  const cands = fs.readdirSync(EV).filter((f) => /^(opus|m2m100)-mask\.json$/.test(f)).map((f) => JSON.parse(fs.readFileSync(path.join(EV, f))));
   const out = {};
   for (const pair of PAIRS) {
     const [s, t] = pair.split('-');

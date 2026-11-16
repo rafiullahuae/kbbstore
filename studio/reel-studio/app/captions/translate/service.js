@@ -22,6 +22,8 @@ export const ROUTES = {
   'en-ur': ['mt-m2m100'], 'ur-en': ['mt-m2m100', 'mt-mul-en'],
   'en-hi': ['mt-m2m100', 'mt-en-hi'], 'hi-en': ['mt-m2m100', 'mt-hi-en'],
 };
+/** Directions translated by TWO engines and picked per sentence by back-translation (pipeline.translateTrack alt). */
+export const DUAL = { 'en-ar': 'mt-en-ar' };
 /** Engines the studio ships in models/manifest.json (group "Translation"); the rest were evaluated and not chosen. */
 export const SHIPPED = new Set(['mt-m2m100', 'mt-en-ar', 'mt-ar-en', 'mt-en-hi', 'mt-hi-en', 'mt-mul-en']);
 
@@ -52,7 +54,11 @@ export async function planFor(ctx, src, tgt, inst) {
   const fwd = eng || best;
   const backC = candidatesFor(tgt, src).sort((a, b) => (a === fwd) - (b === fwd) || (ENGINES[a].kind !== 'marian') - (ENGINES[b].kind !== 'marian'));
   const back = backC.find(has) || null;
-  return { best, eng, needInstall: !has(best) ? best : null, back, cands };
+  const altId = DUAL[`${src}-${tgt}`];
+  const alt = altId && altId !== fwd && has(altId) && back && back !== altId ? altId : null;
+  // what "Get <language>" downloads: the best engine, the second engine for this direction, an independent checker
+  const want = [...new Set([best, altId, backC.find((id) => id !== best && ENGINES[id].kind === 'marian') || backC[0]].filter(Boolean))];
+  return { best, eng, needInstall: !has(best) ? best : null, back, alt, want, cands };
 }
 
 function waitInstalled(engine, bus, id, onProgress) {
@@ -90,10 +96,11 @@ export async function installFor(ctx, ids, onProgress) {
   return { downloaded: need };
 }
 
-let shared = null, sharedBack = null;
+let shared = null, sharedBack = null, sharedAlt = null;
 const translator = () => (shared ||= new Translator());
 const backTranslator = () => (sharedBack ||= new Translator());
-export function disposeTranslators() { shared?.dispose(); sharedBack?.dispose(); shared = sharedBack = null; }
+const altTranslator = () => (sharedAlt ||= new Translator());
+export function disposeTranslators() { shared?.dispose(); sharedBack?.dispose(); sharedAlt?.dispose(); shared = sharedBack = sharedAlt = null; }
 
 /**
  * One click: translate the captions into `tgt` and apply them in `mode` ('replace' | 'bilingual' | 'track').
@@ -135,7 +142,9 @@ export async function translateCaptions(ctx, tgt, mode = 'replace', opts = {}) {
     const bt = backTranslator(); await bt.load(ENGINES[plan.back]);
     back = { eng: ENGINES[plan.back], tr: bt };
   }
-  const result = await translateTrack({ ...source, lang: src }, { src, tgt, eng, tr, back, glossary, onProgress, signal: opts.signal });
+  let alt = null;
+  if (back && plan.alt && opts.dual !== false) { const at = altTranslator(); await at.load(ENGINES[plan.alt]); alt = { eng: ENGINES[plan.alt], tr: at }; }
+  const result = await translateTrack({ ...source, lang: src }, { src, tgt, eng, tr, back, alt, glossary, onProgress, signal: opts.signal });
   const cmd = applyTranslation(result, mode);
   if (mode === 'track' && ctx.ops && ctx.history) {
     const items = trackItemCmds(ctx, tgt);

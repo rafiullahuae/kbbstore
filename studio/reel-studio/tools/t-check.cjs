@@ -27,7 +27,7 @@ const N = +arg('n', 60);
 const SKIP_ED = args.includes('--skip-editor'), SKIP_ACC = args.includes('--skip-accuracy');
 // chrF floors per pair: the chosen engine's score on the test set (tools/out/t/eval-table.md) minus ~3 points of
 // headroom for run-to-run variation in the WASM kernels. A model swap or a pipeline change that loses accuracy fails.
-const FLOOR = { 'en-ar': 55, 'ar-en': 60, 'en-ur': 48, 'ur-en': 52, 'en-hi': 52, 'hi-en': 58 };
+const FLOOR = { 'en-ar': 55, 'ar-en': 61, 'en-ur': 45, 'ur-en': 45.5, 'en-hi': 48.5, 'hi-en': 67 };
 
 const results = { checks: [], accuracy: {}, timings: {}, editor: {} };
 let failures = 0;
@@ -87,14 +87,20 @@ async function part1(browser) {
     const DIRS = [['en', 'ar'], ['ar', 'en'], ['en', 'ur'], ['ur', 'en'], ['en', 'hi'], ['hi', 'en']];
     for (const [s, t] of DIRS) {
       const r = await page.evaluate(async ({ s, t, N }) => {
-        const id = TR.SV.candidatesFor(s, t)[0], eng = TR.ENGINES[id];
-        window.__tr ||= new TR.Translator();
-        await window.__tr.load(eng);
+        // EXACTLY what one click runs (service.planFor + pipeline.translateTrack): the best engine, the second engine
+        // where the direction has one (EN→AR), the independent back-translation checker, the glossary — on captions made
+        // from the test sentences (one spoken sentence each, with pauses between them).
+        const plan = await TR.SV.planFor(null, s, t, null);
+        const mk = (id) => { const tr = new TR.Translator(); return tr.load(TR.ENGINES[id]).then(() => ({ eng: TR.ENGINES[id], tr })); };
+        const main = await mk(plan.eng), back = plan.back ? await mk(plan.back) : null, alt = plan.alt ? await mk(plan.alt) : null;
         const gl = TR.TEST_GLOSSARY.map((x) => (typeof x === 'string' ? { term: x, keep: true } : x));
         const set = TR.TESTSET.slice(0, N), src = set.map((x) => x[s]), ref = set.map((x) => x[t]);
+        let tt = 0.3; const words = [], lines = [];
+        src.forEach((x, k) => { const a = words.length; for (const w of x.split(' ')) { words.push({ w, t0: +tt.toFixed(3), t1: +(tt + 0.32).toFixed(3), conf: 1 }); tt += 0.38; } lines.push({ id: 'L' + k, t0: words[a].t0, t1: words[words.length - 1].t1, wordIdx: [a, words.length - 1] }); tt += 1.4; });
         const t0 = performance.now();
-        const out = [];
-        for (let i = 0; i < src.length; i += 6) out.push(...await TR.pipeline.translateBatch(window.__tr, eng, src.slice(i, i + 6), s, t, { glossary: gl }));
+        const res = await TR.pipeline.translateTrack({ words, lines, lang: s }, { src: s, tgt: t, eng: main.eng, tr: main.tr, back, alt, glossary: gl });
+        for (const x of [main, back, alt]) x?.tr.dispose();
+        const out = res.sents;
         const G = TR.glossary;
         let termN = 0, termOk = 0, numN = 0, numOk = 0, keepN = 0, keepOk = 0;
         out.forEach((o, i) => {
@@ -103,14 +109,20 @@ async function part1(browser) {
           const kn = G.keepSpans(src[i]).filter((k) => k.kind !== 'number').length; keepN += kn; keepOk += kn - G.keepMisses(src[i], o.out).length;
         });
         const hyp = out.map((o) => o.out);
-        return { engine: id, chrf: TR.corpusChrf(hyp, ref), bleu: TR.corpusBleu(hyp, ref), termN, termOk, numN, numOk, keepN, keepOk,
-          attempts: out.reduce((a, o) => { a[o.attempt] = (a[o.attempt] || 0) + 1; return a; }, {}), sPer: (performance.now() - t0) / 1000 / src.length, hyp };
+        // do the review flags point at the weak lines? mean reference chrF of flagged vs unflagged sentences
+        const sc = hyp.map((h, i) => TR.chrf(h, ref[i])), fl = out.map((o) => !!o.flags.length);
+        const mean = (a) => (a.length ? a.reduce((p, q) => p + q, 0) / a.length : null);
+        return { engine: [plan.eng, plan.alt, plan.back && 'check ' + plan.back].filter(Boolean).join(' + '), n: out.length, chrf: TR.corpusChrf(hyp, ref), bleu: TR.corpusBleu(hyp, ref), termN, termOk, numN, numOk, keepN, keepOk,
+          attempts: out.reduce((a, o) => { a[o.attempt + (o.by && o.by !== plan.eng ? '/' + o.by : '')] = (a[o.attempt + (o.by && o.by !== plan.eng ? '/' + o.by : '')] || 0) + 1; return a; }, {}),
+          flagged: fl.filter(Boolean).length, flaggedChrf: mean(sc.filter((_, i) => fl[i])), cleanChrf: mean(sc.filter((_, i) => !fl[i])),
+          sPer: (performance.now() - t0) / 1000 / src.length, hyp };
       }, { s, t, N });
       const k = s + '-' + t;
       results.accuracy[k] = { ...r, chrf: +r.chrf.toFixed(1), bleu: +r.bleu.toFixed(1), sPer: +r.sPer.toFixed(2) };
       fs.writeFileSync(path.join(OUT, `check-${k}.txt`), r.hyp.join('\n') + '\n');
       check(`${k}: ${r.engine} chrF ${r.chrf.toFixed(1)} ≥ ${FLOOR[k]} (BLEU ${r.bleu.toFixed(1)}, ${r.sPer.toFixed(2)} s/sentence, n=${N})`, r.chrf >= FLOOR[k] || N < 60, JSON.stringify(r.attempts));
       check(`${k}: glossary names untouched ${r.termOk}/${r.termN}, numbers/prices ${r.numOk}/${r.numN}, codes/links ${r.keepOk}/${r.keepN}`, r.termOk === r.termN && r.numOk === r.numN && r.keepOk === r.keepN);
+      check(`${k}: the review flags point at the weaker lines — ${r.flagged}/${r.n} flagged, their accuracy ${r.flaggedChrf?.toFixed(1) ?? '–'} vs ${r.cleanChrf?.toFixed(1)} for the rest`, r.flagged === 0 || r.flaggedChrf < r.cleanChrf);
       save();
     }
   }

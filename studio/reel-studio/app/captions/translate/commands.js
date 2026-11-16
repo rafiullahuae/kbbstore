@@ -61,7 +61,7 @@ function trackStyle(spec, lang) {
 export const applyTranslation = (result, mode, label) => captionsCommand('translate', label || `Translate captions → ${result.lang.toUpperCase()}`, (cap) => {
   const tr0 = syncReplaced(cap) || {};
   const source = tr0.source || sourceOf(cap);
-  const T = { lang: result.lang, src: result.src, engine: result.engine, back: result.back, words: result.words, lines: result.lines, sents: result.sents, at: Date.now() };
+  const T = { lang: result.lang, src: result.src, engine: result.engine, alt: result.alt || null, back: result.back, words: result.words, lines: result.lines, sents: result.sents, at: Date.now() };
   return showTranslation({ ...cap, tr: { ...tr0, source, langs: { ...(tr0.langs || {}), [result.lang]: T } } }, result.lang, mode);
 });
 
@@ -95,7 +95,7 @@ export const editSentence = (lang, i, out, opts = {}) => captionsCommand('transl
   const T = tr0?.langs?.[lang]; if (!T?.sents?.[i]) return cap;
   const sents = T.sents.slice();
   const prev = sents[i];
-  const q = assess(prev.text, out, lang, opts.glossary || [], opts.back ?? null);
+  const q = assess(prev.text, out, lang, opts.glossary || [], opts.back ?? null, T.src);
   sents[i] = { ...prev, out: String(out).replace(/\s+/g, ' ').trim(), ...q, back: opts.back ?? null, edited: !opts.retranslated, approved: !!opts.approved };
   const lay = relayout(tr0.source, sents);
   const nT = { ...T, sents, ...lay };

@@ -250,7 +250,7 @@ function layoutOneWord(src, sents) {
 
 // ------------------------------------------------------------------ 5. quality
 /** Per-sentence checks (no model): { flags:[…], score (0-100, higher = safer) }. back = back-translation or null. */
-export function assess(srcText, out, tgt, glossary, back = null) {
+export function assess(srcText, out, tgt, glossary, back = null, src = null) {
   const flags = [];
   const terms = glossaryMisses(srcText, out, glossary, tgt), nums = numberMisses(srcText, out), keep = keepMisses(srcText, out);
   if (terms.length) flags.push({ k: 'terms', msg: 'Name missing: ' + terms.join(', ') });
@@ -265,51 +265,74 @@ export function assess(srcText, out, tgt, glossary, back = null) {
   let bt = null;
   if (back != null) {
     bt = Math.round(chrf(back, srcText));
-    if (bt < BT_FLAG) flags.push({ k: 'meaning', msg: `Back-translation differs (${bt}/100)` });
+    const lim = btFlagFor(src, tgt);
+    if (bt < lim) flags.push({ k: 'meaning', msg: `Back-translation differs (${bt}/100, below ${lim})` });
   }
   const score = Math.max(0, Math.min(100, (bt ?? 70) - flags.filter((f) => f.k !== 'meaning').length * 25));
   return { flags, score, bt };
 }
-/** Back-translation chrF below this flags a line for review (set from the test set: see README, translation). */
-export const BT_FLAG = 45;
+/**
+ * Back-translation chrF below this flags a line for review, per direction. Set from the test set (tools/t-select.cjs):
+ * the mean back-translation chrF of sentences whose real accuracy was poor (reference chrF < 40) vs good (>= 60) was
+ * en-ar 54 / 69, en-hi 43 / 60, en-ur 30 / 48, ar-en 48 / 62, hi-en 25 / 44 — the limit sits just above the "poor" mean.
+ */
+export const BT_FLAG = { 'en-ar': 56, 'en-hi': 45, 'en-ur': 33, 'ar-en': 50, 'hi-en': 28, 'ur-en': 33 };
+export const btFlagFor = (src, tgt) => BT_FLAG[`${src}-${tgt}`] ?? 40;
 
 // ------------------------------------------------------------------ the whole track
 /**
- * Translate a caption track. opts: { src, tgt, eng, tr, back: { eng, tr } | null, glossary, onProgress(f, label), signal,
- *   batch (sentences per call, default 4) }.
- * Returns { lang, src, engine, words, lines, sents:[{ text, out, idx, chunks, flags, score, bt, attempt }], ms }.
+ * Translate a caption track. opts: { src, tgt, eng, tr, back: { eng, tr } | null, alt: { eng, tr } | null, glossary,
+ *   onProgress(f, label), signal, batch (sentences per call, default 4) }.
+ * alt (a second engine, used for EN→AR): every sentence is translated by BOTH engines, both are back-translated, and
+ * the one whose back-translation is closer to the original is kept — measured on the test set this "two engines,
+ * pick by round trip" gives EN→AR chrF 58.0 against 55.6 / 54.5 for either engine alone (tools/out/t/select.json).
+ * Returns { lang, src, engine, words, lines, sents:[{ text, out, idx, chunks, flags, score, bt, attempt, by }], ms }.
  */
 export async function translateTrack(cap, opts) {
   const { src, tgt, eng, tr, back = null, glossary = [], onProgress = () => {}, signal, batch = 4 } = opts;
+  const alt = back ? opts.alt || null : null;
   const t0 = performance.now();
   const sents = sentencesOf(cap);
-  const total = sents.length * (back ? 2 : 1) || 1;
+  const total = sents.length * ((back ? 2 : 1) + (alt ? 2 : 0)) || 1;
   let done = 0;
+  const stop = () => { if (signal?.aborted) throw Object.assign(new Error('Cancelled'), { name: 'AbortError' }); };
+  const step = (n, label) => { done += n; onProgress(done / total, label); };
   for (let i = 0; i < sents.length; i += batch) {
-    if (signal?.aborted) throw Object.assign(new Error('Cancelled'), { name: 'AbortError' });
+    stop();
     const part = sents.slice(i, i + batch);
     const r = await translateBatch(tr, eng, part.map((s) => s.text), src, tgt, { glossary });
-    part.forEach((s, k) => Object.assign(s, { out: r[k].out, attempt: r[k].attempt }));
-    done += part.length;
-    onProgress(done / total, `Translating ${Math.min(sents.length, i + batch)} / ${sents.length}`);
+    part.forEach((s, k) => Object.assign(s, { out: r[k].out, attempt: r[k].attempt, by: eng.id }));
+    step(part.length, `Translating ${Math.min(sents.length, i + batch)} / ${sents.length}`);
   }
+  const backOf = async (texts) => (await back.tr.tr(texts, { ...requestFor(back.eng, tgt, src), max: 256 })).texts;
   if (back) {
     for (let i = 0; i < sents.length; i += batch) {
-      if (signal?.aborted) throw Object.assign(new Error('Cancelled'), { name: 'AbortError' });
+      stop();
       const part = sents.slice(i, i + batch);
-      const r = await back.tr.tr(part.map((s) => maskForBack(s.out, glossary, tgt)), { ...requestFor(back.eng, tgt, src), max: 256 });
-      part.forEach((s, k) => { s.back = r.texts[k]; });
-      done += part.length;
-      onProgress(done / total, `Checking ${Math.min(sents.length, i + batch)} / ${sents.length}`);
+      const r = await backOf(part.map((s) => s.out));
+      part.forEach((s, k) => { s.back = r[k]; });
+      step(part.length, `Checking ${Math.min(sents.length, i + batch)} / ${sents.length}`);
     }
   }
-  for (const s of sents) Object.assign(s, assess(s.text, s.out, tgt, glossary, s.back ?? null));
+  if (alt) {
+    for (let i = 0; i < sents.length; i += batch) {
+      stop();
+      const part = sents.slice(i, i + batch);
+      const r = await translateBatch(alt.tr, alt.eng, part.map((s) => s.text), src, tgt, { glossary });
+      const b = await backOf(r.map((x) => x.out));
+      part.forEach((s, k) => {
+        // keep the second reading only when its round trip is closer AND it is not worse on names / numbers
+        const okA = !assess(s.text, s.out, tgt, glossary).flags.length, okB = !assess(s.text, r[k].out, tgt, glossary).flags.length;
+        if ((okB || !okA) && chrf(b[k], s.text) > chrf(s.back, s.text)) Object.assign(s, { out: r[k].out, attempt: r[k].attempt, back: b[k], by: alt.eng.id });
+      });
+      step(part.length * 2, `Comparing ${Math.min(sents.length, i + batch)} / ${sents.length}`);
+    }
+  }
+  for (const s of sents) Object.assign(s, assess(s.text, s.out, tgt, glossary, s.back ?? null, src));
   const lay = layout(cap, sents);
-  return { lang: tgt, src, engine: eng.id, back: back?.eng.id || null, ...lay, sents: sents.map(slim), ms: Math.round(performance.now() - t0) };
+  return { lang: tgt, src, engine: eng.id, alt: alt?.eng.id || null, back: back?.eng.id || null, ...lay, sents: sents.map(slim), ms: Math.round(performance.now() - t0) };
 }
-// back-translation sees the target spelling of fixed terms; names stay as they are
-const maskForBack = (out) => out;
-const slim = (s) => ({ text: s.text, out: s.out, idx: s.idx, chunks: s.chunks, flags: s.flags, score: s.score, bt: s.bt, attempt: s.attempt, back: s.back });
+const slim = (s) => ({ text: s.text, out: s.out, idx: s.idx, chunks: s.chunks, flags: s.flags, score: s.score, bt: s.bt, attempt: s.attempt, back: s.back, by: s.by });
 
 /** Re-lay a stored translation after one sentence was edited / re-translated (no model call). */
 export function relayout(source, sents) { return layout(source, sents); }
