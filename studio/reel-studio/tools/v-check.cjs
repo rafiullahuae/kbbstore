@@ -124,7 +124,7 @@ async function staticChecks() {
       ed.history.apply(ed.ops.batch('Captions', [C.setCaptions({ style: 'word-box', lang, words: words.map((w) => ({ w: w.w, t0: w.t0, t1: w.t1, conf: 1 })) }, p.canvas),
         ed.ops.addItems([{ trackId: tr.id, item: P.createItem('caption', { t0: 0, in: 0, out: P.projectDuration(p), x: 0, y: 0, w: p.canvas.w, h: p.canvas.h, name: 'Captions' }) }])]));
     }, meta);
-    await page.click('.side-tab[data-side="viral"]');
+    await page.click('.side-tab[data-side="mod:viral"]');
     await page.waitForSelector('.vx details');
     return meta;
   };
@@ -137,7 +137,7 @@ async function staticChecks() {
   let meta = await openClip('v-en-916');
   const src = path.join(MEDIA, 'v-en-916.mp4'), srcAudio = audio(src);
   const btns = await ev(() => [...document.querySelectorAll('.doit-btn')].map((b) => b.dataset.mod));
-  ok(['viral-hook', 'viral-natural', 'viral-tighten', 'viral-loop', 'viral-cta'].every((x) => btns.includes(x)) && await page.locator('.side-tab[data-side="viral"]').count() === 1,
+  ok(['viral-hook', 'viral-natural', 'viral-tighten', 'viral-loop', 'viral-cta'].every((x) => btns.includes(x)) && await page.locator('.side-tab[data-side="mod:viral"]').count() === 1,
     `"Do it for me" has 🪝 Hook builder · 🎣 Add a hook · ⚡ Tighten · 🔁 Loop · 📣 CTA, and the right column a 🔥 Viral tab (${await page.locator('.vx details').count()} sections)`);
   const base = await snapshot();
 
@@ -365,7 +365,7 @@ async function staticChecks() {
   ok(pcp.id === 'shake-impact' && pcp.sound === 'hook-stamp-thud', `🎣 Add a hook (Planet Careers): ${pcp.id} + ${pcp.sound}`);
   await page.click('.doit-btn[data-mod="viral-cta"]'); await page.waitForFunction(() => kbbEditor.project.tracks.some((t) => t.items.some((i) => i.type === 'viral.cta')));
   const pcta = await ev(() => kbbEditor.project.tracks.flatMap((t) => t.items).find((i) => i.type === 'viral.cta').style);
-  ok(pcta.kind === 'comment' && /VISA/.test(pcta.title) && pcta.colors.primary === '#0b2545', `📣 CTA (Planet Careers): “${pcta.title}” in navy ${pcta.colors.primary}`);
+  ok(pcta.kind === 'comment' && /VISA/.test(pcta.title) && pcta.colors.primary.toLowerCase() === '#002768', `📣 CTA (Planet Careers): “${pcta.title}” in navy ${pcta.colors.primary}`);
   await ev(async () => { const P = await import('/app/core/project.js'); kbbEditor.seek(P.projectDuration(kbbEditor.project) - 1.5); }); await page.waitForTimeout(500);
   await section('cta'); await shot('16-pc-cta');
 
@@ -394,7 +394,7 @@ async function staticChecks() {
   ok(Math.abs(arDur - arExp) < 0.05 && probe(x.file).streams.some((s) => s.codec_type === 'audio'), `Arabic export: ${r3(arDur)} s (timeline ${r3(arExp)} s), picture + sound — ${x.note}`);
   for (let i = 0; i < 12 && (await ev(() => kbbEditor.history.canUndo)); i++) await undo();
   ok((await snapshot()).json === arBase.json || true, 'Arabic run undone');
-  await page.click('.side-tab[data-side="viral"]');
+  await page.click('.side-tab[data-side="mod:viral"]');
   await page.evaluate(() => { for (const d of document.querySelectorAll('.vx details')) d.open = false; document.querySelector('.vx').scrollIntoView(); });
   await page.waitForTimeout(300);
   await shot('18-viral-tab-overview');
