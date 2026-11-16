@@ -8,7 +8,7 @@
 //     original; per-language TXT / SRT / VTT exports parse; no console errors; no network outside the local engine.
 //   Pictures 1920x1080 + 1280x800 -> shots/t/.  Results -> tools/out/t/check.json.
 //
-//   NODE_PATH=/home/user/kbbstore/node_modules node tools/t-check.cjs [--n=60] [--skip-editor] [--skip-accuracy]
+//   NODE_PATH=/home/user/kbbstore/node_modules node tools/t-check.cjs [--n=60] [--skip-editor] [--skip-accuracy] [--editor-only]
 // Needs: bash tools/t-fetch-models.sh (models/, git-ignored); whisper-base/small + mms-tts-eng/ara in models/ (r2);
 //        engine/kbbstudio-linux-amd64 (go build in engine/).
 'use strict';
@@ -32,7 +32,7 @@ const FLOOR = { 'en-ar': 55, 'ar-en': 61, 'en-ur': 45, 'ur-en': 45.5, 'en-hi': 4
 const results = { checks: [], accuracy: {}, timings: {}, editor: {} };
 let failures = 0;
 const check = (name, ok, detail = '') => { results.checks.push({ name, ok: !!ok, detail }); if (!ok) failures++; console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  — ' + detail : ''}`); };
-const save = () => fs.writeFileSync(path.join(OUT, 'check.json'), JSON.stringify(results, null, 1));
+const save = () => fs.writeFileSync(path.join(OUT, args.includes('--editor-only') ? 'check-editor.json' : 'check.json'), JSON.stringify(results, null, 1));
 
 async function part1(browser) {
   await new Promise((r) => (server.listening ? r() : server.once('listening', r)));
@@ -248,6 +248,8 @@ async function fixtures(browser) {
   if (fs.existsSync(path.join(F, 't-en-ad.wav')) && fs.existsSync(path.join(F, 't-ar-ad.wav'))) return;
   await new Promise((r) => (server.listening ? r() : server.once('listening', r)));
   const page = await browser.newPage();
+  page.on('crash', () => { console.error('fixture page crashed (out of memory?)'); process.exit(3); });
+  page.on('console', (m) => { if (m.type() === 'error') console.log('  fixture console: ' + m.text().slice(0, 200)); });
   page.setDefaultTimeout(0);
   await page.goto(`http://127.0.0.1:${server.address().port}/app/captions/dev/index.html`);
   await page.waitForFunction(() => window.R2);
@@ -271,13 +273,16 @@ async function part2(browser) {
 
   const STUDIO = H.makeStudio();
   // the models this check uses, linked into the throwaway studio (the engine checks their sizes: they are the real files)
-  for (const org of ['Xenova', 'onnx-community']) fs.symlinkSync(path.join(ROOT, 'models', org), path.join(STUDIO, 'models', org));
+  // the engine refuses symlinks that leave the studio folder (as it should), so the models are HARD-linked in (no copy)
+  const link = (src, dst) => { const st = fs.statSync(src); if (st.isDirectory()) { fs.mkdirSync(dst, { recursive: true }); for (const f of fs.readdirSync(src)) link(path.join(src, f), path.join(dst, f)); } else if (!/\.part$/.test(src)) fs.linkSync(fs.realpathSync(src), dst); };
+  for (const org of ['Xenova', 'onnx-community']) link(path.join(ROOT, 'models', org), path.join(STUDIO, 'models', org));
   // Connect Claude goes to a local stand-in of the Messages API (tools/d-claude-mock.cjs), never to api.anthropic.com
   const KEY = 'sk-ant-test-' + 'x'.repeat(32);
   const mock = await startClaudeMock({ key: KEY });
   const e = await H.startEngine(STUDIO, ['--test-claude-base', mock.url]);
   const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
   const page = await context.newPage();
+  page.on('crash', () => { console.error('editor page crashed (out of memory?)'); process.exit(3); });
   page.setDefaultTimeout(0);
   const errors = [], outside = [];
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
@@ -306,7 +311,7 @@ async function part2(browser) {
       const C = await import('/app/captions/commands.js'); const P = await import('/app/core/project.js');
       const a = await ed.media.decodeAudio(p.media[0].id);
       const tr = new Transcriber();
-      const cw = await captureWords(tr, a.mono16k, { model: lang === 'ar' ? 'small' : 'base', lang, device: 'wasm', workspace: ed.workspace, speakers: false });
+      const cw = await captureWords(tr, a.mono16k, { model: 'small', lang, device: 'wasm', workspace: ed.workspace, speakers: false });
       tr.dispose?.();
       const tk = p.tracks.find((t) => t.kind === 'caption');
       ed.history.apply(ed.ops.batch('Captions', [C.setCaptions({ style: 'word-box', lang: cw.lang, words: cw.words.map((w) => ({ w: w.w, t0: w.t0, t1: w.t1, conf: w.conf ?? 1, ...(w.tag ? { tag: w.tag } : {}) })) }, p.canvas),
@@ -348,6 +353,19 @@ async function part2(browser) {
   const en = await openClip(enClip, 'en');
   results.editor.enCaptions = en;
   check('editor: English ad clip captioned by Whisper (real capture pipeline)', en.lang === 'en' && en.n > 20, `${en.n} words: ${en.text.slice(0, 120)}…`);
+  // the synthetic voice says "Tabby" badly and Whisper writes "Tabi" / "Tavvy": correct it the way he would, by
+  // double-clicking the word in the transcript, so the glossary check has a real company name to keep
+  const fixed = await ev(async () => {
+    const c = kbbEditor.project.captions, i = c.words.findIndex((w) => /^ta[bv]+[iy]+\b/i.test(w.w.replace(/[^\p{L}]/gu, '')) || /^ta[bv]+[iy]+$/i.test(w.w.replace(/[^\p{L}]/gu, '')));
+    return i;
+  });
+  if (fixed >= 0) {
+    await page.locator(`.rs-cap-w[data-i="${fixed}"]`).dblclick();
+    await page.keyboard.press('Control+A'); await page.keyboard.type('Tabby.'); await page.keyboard.press('Enter');
+    await page.waitForTimeout(200);
+  }
+  en.text = await ev(() => kbbEditor.project.captions.words.map((w) => w.w).join(' '));
+  check('editor: a misheard name corrected in the transcript (double-click → type → Enter)', /Tabby/.test(en.text), en.text.slice(0, 120));
   await ev(() => kbbEditor.seek(2.2));
   await shot('t-editor-original');
 
@@ -411,7 +429,7 @@ async function part2(browser) {
     exps.filter((f) => /\.(srt|vtt)$/.test(f)).map((f) => [path.basename(f), fs.readFileSync(f, 'utf8')]));
   const arSrt = parse.find(([f]) => /-ar\.srt$/.test(f)), arVtt = parse.find(([f]) => /-ar\.vtt$/.test(f)), enSrt = parse.find(([f]) => /-en\.srt$/.test(f));
   const arTxt = exps.find((f) => /-ar\.txt$/.test(f));
-  check('editor: per-language exports — AR TXT / SRT / VTT and the original EN SRT saved by the engine and parse', !!(arSrt && arSrt[1] > 2 && /[؀-ۿ]/.test(arSrt[2]) && arVtt && arVtt[1] === arSrt[1] && arTxt && /[؀-ۿ]/.test(fs.readFileSync(arTxt, 'utf8')) && enSrt && /Tabby/.test(enSrt[2])),
+  check('editor: per-language exports — AR TXT / SRT / VTT and the original EN SRT saved by the engine and parse', !!(arSrt && arSrt[1] > 2 && /[؀-ۿ]/.test(arSrt[2]) && arVtt && arVtt[1] === arSrt[1] && arTxt && /[؀-ۿ]/.test(fs.readFileSync(arTxt, 'utf8')) && enSrt && enSrt[1] === arSrt[1] && /[A-Za-z]{3}/.test(enSrt[2])),
     parse.map(([f, n]) => `${f}: ${n} cues`).join(', '));
   for (const f of exps) fs.copyFileSync(f, path.join(OUT, 'editor-' + path.basename(f).replace(/^.*-(\w+\.\w+)$/, '$1')));
   // undo back to the original, byte for byte
@@ -426,16 +444,18 @@ async function part2(browser) {
   results.editor.ur = { ms: ur.ms, text: await ev(() => kbbEditor.project.captions.alt?.words.map((w) => w.w).join(' ')) };
   check(`editor: one click EN→UR (bilingual) in ${(ur.ms / 1000).toFixed(1)} s — English stays, Urdu under it, a bilingual style`, ur.after.lang === 'en' && ur.after.alt === 'ur' && await ev(async () => (await import('/app/captions/styles.js')).resolveStyle(kbbEditor.project.captions.style).bilingual), results.editor.ur.text?.slice(0, 120));
   check('editor: EN→UR timings monotonic and inside the original lines', await timingsOk());
-  await ev(() => kbbEditor.seek(6.2));
+  const tUr = await ev(() => { const w = kbbEditor.project.captions.words; return w[Math.floor(w.length * 0.4)].t0 + 0.05; });
+  await ev((t) => kbbEditor.seek(t), tUr);
   await shot('t-editor-en-ur-bilingual');
-  await exportFrame('t-frame-ur-bilingual-1080x1920.jpg', 6.2);
+  await exportFrame('t-frame-ur-bilingual-1080x1920.jpg', tUr);
 
   // EN -> HI, second track
   const hi = await translateUI('hi', 'track');
   check(`editor: one click EN→HI (second caption track) in ${(hi.ms / 1000).toFixed(1)} s — its own track and item`, hi.after.tracks.includes('hi') && hi.after.trackItems.includes('hi') && hi.after.steps === hi.before.steps + 1);
-  await ev(() => kbbEditor.seek(9.5));
+  const tHi = await ev(() => { const w = kbbEditor.project.captions.words; return w[Math.floor(w.length * 0.7)].t0 + 0.05; });
+  await ev((t) => kbbEditor.seek(t), tHi);
   await shot('t-editor-en-hi-track');
-  await exportFrame('t-frame-hi-track-1080x1920.jpg', 9.5);
+  await exportFrame('t-frame-hi-track-1080x1920.jpg', tHi);
   await page.click('.rs-tr [data-x="restore"]');
   await page.waitForTimeout(300);
   const rs = await state();
@@ -488,7 +508,7 @@ async function part2(browser) {
   const browser = await chromium.launch({ executablePath: fs.existsSync('/usr/bin/google-chrome') ? '/usr/bin/google-chrome' : undefined,
     args: ['--autoplay-policy=no-user-gesture-required', '--disable-features=MediaRouter'] });
   try {
-    await part1(browser);
+    if (!args.includes("--editor-only")) await part1(browser);
     if (!SKIP_ED) await part2(browser);
   } finally { save(); await browser.close(); server.close(); }
   console.log(failures ? `${failures} FAILED` : 'ALL PASS');

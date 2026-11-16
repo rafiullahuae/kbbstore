@@ -55,7 +55,7 @@ export function mountTranslate(el, ctx, apply) {
   const status = h('div', { class: 'rs-tr-status rs-cap-muted' });
   const goBtn = h('button', { class: 'rs-cap-btn primary', 'data-x': 'translate', onclick: () => run() }, '🌐 Translate');
   const claudeBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'claude', disabled: true, title: CLAUDE_NOTE, onclick: () => run('claude') }, '✨ Best quality (Claude)');
-  const claudeNote = h('div', { class: 'rs-cap-muted rs-tr-claude', 'data-k': 'claude-note' }, '✨ ' + CLAUDE_NOTE);
+  const claudeNote = h('div', { class: 'rs-cap-muted rs-tr-claude', 'data-k': 'claude-note' }, '✨ Claude: add your key in ⚙ Configure → Connect Claude (optional)');
   const refreshClaude = () => claudeStatus(ctx).then((cl) => { claudeBtn.disabled = !cl.connected || !!running; claudeBtn.title = cl.note; claudeNote.hidden = cl.connected; }, () => {});
   refreshClaude();
   const restoreBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'restore', onclick: restore }, '↺ Restore original');
