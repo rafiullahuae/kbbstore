@@ -203,8 +203,15 @@ async function engineChecks(e, dir) {
   await ed(() => { const it = kbbEditor.project.tracks.flatMap((t) => t.items).find((i) => i.type === 'text'); kbbEditor.seek(it.t0 + 0.5); kbbEditor.sel = new Set([it.id]); kbbEditor.inspector.render(true); kbbEditor.timeline.renderSelection(); kbbEditor.preview.drawOverlay(); });
   await shot('inspector-text', 1280, 800);
   await ed(() => kbbEditor.select([]));
+  // integration round: the slots are filled. Auto captions with no speech model asks ONE question first; "Not now"
+  // downloads nothing (the gate), and the editor carries on.
+  ok(await page.locator('.doit-btn.soon').count() === 0, '"Do it for me": every slot is filled by a module (captions + automation)');
   await page.click('.doit-btn[data-mod="auto-captions"]');
-  ok(await page.locator('.toast:has-text("coming in the next update")').count() === 1, '"Do it for me" slots say "coming in the next update" until a module registers');
+  const asked = await page.waitForSelector('.modal-back .perm', { timeout: 30000 }).then(() => true, () => false);
+  ok(asked, 'Auto captions without the speech model asks before downloading (one question, with the size)');
+  if (asked) await page.locator('.modal-foot button', { hasText: 'Not now' }).click();
+  ok(await page.waitForSelector('.toast:has-text("Nothing was downloaded")', { timeout: 10000 }).then(() => true, () => false) && !fs.existsSync(path.join(dir, 'models', 'onnx-community')), '"Not now": nothing downloaded, a plain message instead');
+  await page.click('.side-tab[data-side="inspector"]');
 
   // playback: Space plays (the clock moves), Space pauses
   await ed(() => kbbEditor.seek(0));
