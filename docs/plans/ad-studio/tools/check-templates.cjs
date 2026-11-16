@@ -18,7 +18,11 @@ const jo = process.argv.indexOf('--json');
     const S = window.KBB_STUDIO, out = [];
     // measure at a large stage so rounding is negligible
     document.getElementById('stage').style.setProperty('width', '900px');
+    let cur = '';
     for (const t of S.templates) {
+      // each template is checked in its own company (KBB, or Planet Careers for the study / visa set)
+      const want = t.co === 'pc' ? 'planet-careers' : 'kbb';
+      if (S.setCompany && want !== cur) { await S.setCompany(want, true); cur = want; }
       S.useTemplate(t.id);
       for (const f of ['post', 'square', 'story']) {
         S.st.fmt = f; S.draw();
@@ -47,13 +51,15 @@ const jo = process.argv.indexOf('--json');
           texts.forEach((t) => { if (t.id === 'word') return; /* the big word sits behind the hero product on purpose */ const o = inter(pr, t); if (o > .06 * area(t)) issues.push('product covers text: ' + t.id + ' (' + Math.round(o / area(t) * 100) + '%)'); });
           if (pr.x1 < 0 || pr.x0 > W || pr.y1 < 0 || pr.y0 > H) issues.push('product off canvas');
         });
-        out.push({ id: t.id, cat: t.cat, fam: t.fam, fmt: f, issues });
+        out.push({ id: t.id, cat: t.cat, fam: t.fam, co: t.co || 'kbb', fmt: f, issues });
       }
     }
     return out;
   });
   const bad = res.filter((r) => r.issues.length);
   const cats = {}; res.forEach((r) => { if (r.fmt === 'post') cats[r.cat] = (cats[r.cat] || 0) + 1; });
+  const byCo = {}; res.forEach((r) => { if (r.fmt === 'post') byCo[r.co] = (byCo[r.co] || 0) + 1; });
+  console.log('by company', JSON.stringify(byCo));
   console.log('templates', res.length / 3, 'renders', res.length, 'by category', JSON.stringify(cats));
   console.log('renders with issues', bad.length); bad.forEach((r) => console.log(' ', r.id, r.fmt, '|', r.issues.join('; ')));
   console.log('console errors', errs.length, errs.slice(0, 5)); console.log('network requests', net.length, net.slice(0, 5));

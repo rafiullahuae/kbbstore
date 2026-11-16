@@ -11,6 +11,24 @@
   'use strict';
   var D = /*DATA*/;
   var KT = window.KBB_T;
+  // ── built-in art (flags, country outlines, landmark silhouettes, company marks): constant SVG markup made at
+  //    build time, packed gzip + base64 (≈140 KB instead of 370), unpacked once at start. An element names a piece
+  //    by id ("flag:gb"); nothing stored or imported is ever used as markup. ──
+  var ART = Object.create(null), artMemo = Object.create(null), ARTID = /^(flag|map|lm|mark):[a-z0-9-]{2,24}$/;
+  function loadArt() {
+    try {
+      if (!D.art || !window.DecompressionStream) return Promise.resolve();
+      var bin = atob(D.art), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text().then(function (t) { var o = JSON.parse(t); Object.keys(o).forEach(function (k) { if (ARTID.test(k) && typeof o[k] === 'string') ART[k] = o[k]; }); }).catch(function () {});
+    } catch (e) { return Promise.resolve(); }
+  }
+  // mono art (outlines, landmarks) is drawn in #0b2545 and recoloured here; colours are validated hex only
+  function artSrc(id, c) {
+    var k = id + '|' + (c || ''); if (artMemo[k]) return artMemo[k];
+    var svg = ART[id]; if (!svg) return '';
+    if (c && /^#[0-9a-fA-F]{6}/.test(c) && /^(map|lm):/.test(id)) svg = svg.split('#0b2545').join(c.slice(0, 7));
+    return (artMemo[k] = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg))));
+  }
   // the product pictures, once: one class per product (the data lives in D, not twice)
   (function () { var css = ''; Object.keys(D.prods).forEach(function (p) { if (/^[a-z0-9]+$/.test(p)) css += '.p-' + p + '{background-image:url("' + D.prods[p].src + '")}'; }); var s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); })();
   var FMTS = ['post', 'square', 'story'], PX = { post: [1080, 1350], square: [1080, 1080], story: [1080, 1920] };
@@ -26,8 +44,8 @@
   var FONTS = { inter: 'Inter', poppins: 'Poppins', montserrat: 'Montserrat', playfair: 'Playfair Display', dmserif: 'DM Serif Display', bebas: 'Bebas Neue', dancing: 'Dancing Script', cairo: 'Cairo' };
   var SHAPES = { none: 'None', rect: 'Rectangle', pill: 'Pill', circle: 'Circle', ellipse: 'Oval', ring: 'Ring', arch: 'Arch', burst: 'Burst', star: 'Star', heart: 'Heart', banner: 'Banner', ticket: 'Ticket', blob: 'Blob', glow: 'Soft glow', petal: 'Petal', silk: 'Silk ribbon' };
   var BORDERED = { rect: 1, pill: 1, circle: 1, ellipse: 1, ring: 1, arch: 1 };
-  var TYPES = { text: 'Text', btn: 'Button', shape: 'Shape', icon: 'Icon', img: 'Picture', pay: 'tabby / tamara', logo: 'Logo', prods: 'Products' };
-  var PATS = { none: 'None', dots: 'Dots', grid: 'Grid', stripes: 'Stripes', rays: 'Rays', lattice: 'Lattice', waves: 'Waves', sparkle: 'Sparkles', petals: 'Petals' };
+  var TYPES = { text: 'Text', btn: 'Button', shape: 'Shape', icon: 'Icon', img: 'Picture', art: 'Flag / landmark / map', pay: 'tabby / tamara', logo: 'Logo', prods: 'Products' };
+  var PATS = { none: 'None', dots: 'Dots', grid: 'Grid', stripes: 'Stripes', rays: 'Rays', lattice: 'Lattice', waves: 'Waves', sparkle: 'Sparkles', petals: 'Petals', globe: 'Globe lines', routes: 'Flight routes' };
   var BGK = ['none', 'solid', 'linear', 'radial', 'image'], FITS = ['cover', 'contain', 'tile'];
   var HEX = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/, ID = /^[a-z][a-z0-9_]{0,31}$/i, IMGID = /^[A-Za-z0-9][A-Za-z0-9_-]{5,63}$/;
   var DATAURL = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/]+=*$/;
@@ -73,6 +91,26 @@
     people: ['People', '<g' + SW + '><circle cx="8.5" cy="8" r="3.5"/><path d="M2 20c.6-3.6 3.2-5.5 6.5-5.5S14.4 16.4 15 20"/><circle cx="17" cy="9" r="2.8"/><path d="M16.5 14.5c2.8 0 4.8 1.8 5.5 5"/></g>'],
     quote: ['Quote marks', '<path fill="currentColor" d="M3 21v-7.4C3 8.4 5.6 4.6 10.2 3l1 2.2C8.4 6.6 7.2 8.6 7.1 11.2H11V21zm11 0v-7.4c0-5.2 2.6-9 7.2-10.6l1 2.2c-2.8 1.4-4 3.4-4.1 6H22V21z"/>'],
     stars5: ['Five stars (decoration)', (function () { var s = ''; for (var i = 0; i < 5; i++) s += '<path transform="translate(' + (i * 24.6) + ' 0)" fill="currentColor" d="M12 1.5l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.6 5.6 21.1 7 14l-5.3-5 7.2-.9z"/>'; return s; })(), '0 0 122 24'],
+    // study / visa / travel (Planet Careers, 16 Nov 2026)
+    plane: ['Plane', '<path fill="currentColor" d="M21.5 15.2v-1.9L13.6 8.4V3.2a1.6 1.6 0 0 0-3.2 0v5.2l-7.9 4.9v1.9l7.9-2.4v5.1l-2.2 1.6v1.5l3.8-1.1 3.8 1.1v-1.5l-2.2-1.6v-5.1z"/>'],
+    passport: ['Passport', '<path fill="currentColor" fill-rule="evenodd" d="M5.5 2h12A1.5 1.5 0 0 1 19 3.5v17a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4 20.5v-17A1.5 1.5 0 0 1 5.5 2zM11.5 6.2a4.3 4.3 0 1 0 0 8.6 4.3 4.3 0 0 0 0-8.6zm0 1.4c.5.7.9 1.7 1 2.9H10.5c.1-1.2.5-2.2 1-2.9zm-1.6.3a6.4 6.4 0 0 0-.7 2.6H7.9a3 3 0 0 1 2-2.6zm3.2 0a3 3 0 0 1 2 2.6h-1.3a6.4 6.4 0 0 0-.7-2.6zM7.9 11.6h1.3c.1 1 .3 1.9.7 2.6a3 3 0 0 1-2-2.6zm2.6 0h2c-.1 1.2-.5 2.2-1 2.9-.5-.7-.9-1.7-1-2.9zm3.3 0h1.3a3 3 0 0 1-2 2.6c.4-.7.6-1.6.7-2.6zM8 17h7v1.4H8z"/>'],
+    globe: ['Globe', '<g' + SW + ' stroke-width="1.8"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.7 2.6 4 5.8 4 9.5s-1.3 6.9-4 9.5c-2.7-2.6-4-5.8-4-9.5s1.3-6.9 4-9.5zM4.2 7h15.6M4.2 17h15.6"/></g>'],
+    grad: ['Graduation cap', '<path fill="currentColor" d="M12 3 1 8.5 12 14l9-4.5V16h2V8.5z"/><path fill="currentColor" d="M5.5 12.2v4.3c0 1.9 2.9 3.5 6.5 3.5s6.5-1.6 6.5-3.5v-4.3L12 15.5z"/>'],
+    brief: ['Briefcase', '<path fill="currentColor" fill-rule="evenodd" d="M9 3h6a1.5 1.5 0 0 1 1.5 1.5V6H20a2 2 0 0 1 2 2v4.2a3 3 0 0 1-2 2.8l-6 1.6v-.8a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v.8L4 15a3 3 0 0 1-2-2.8V8a2 2 0 0 1 2-2h3.5V4.5A1.5 1.5 0 0 1 9 3zm.5 1.8V6h5V4.8zM2 15.7c.5.4 1.2.7 1.9.9l6.1 1.6V19a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-.8l6.1-1.6c.7-.2 1.4-.5 1.9-.9V19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/>'],
+    home: ['Home', '<path fill="currentColor" d="M12 2.6 1.5 11.2l1.3 1.6L4 11.8V21h6v-6h4v6h6v-9.2l1.2 1 1.3-1.6z"/>'],
+    book: ['Book', '<g' + SW + '><path d="M3 4.5C6 3.6 9 3.8 12 6c3-2.2 6-2.4 9-1.5v14.4c-3-.9-6-.7-9 1.5-3-2.2-6-2.4-9-1.5zM12 6v14.4"/></g>'],
+    cal: ['Calendar', '<g' + SW + '><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></g><path fill="currentColor" d="M7 12.5h3v3H7z"/>'],
+    mic: ['Microphone', '<g' + SW + '><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5v4M8.5 21.5h7"/></g>'],
+    pin: ['Map pin', '<path fill="currentColor" fill-rule="evenodd" d="M12 1.8a7.6 7.6 0 0 1 7.6 7.6c0 5.4-7.6 12.8-7.6 12.8S4.4 14.8 4.4 9.4A7.6 7.6 0 0 1 12 1.8zm0 4.4a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4z"/>'],
+    phone: ['Phone', '<path fill="currentColor" d="M6.6 2.5 9.4 6c.5.6.5 1.4 0 2L8 9.6a12.3 12.3 0 0 0 6.4 6.4l1.6-1.4c.6-.5 1.4-.5 2 0l3.5 2.8c.6.5.7 1.4.2 2l-1.5 2c-.6.8-1.6 1.1-2.6.9C9.9 20.6 3.4 14.1 1.7 6.4c-.2-1 .1-2 .9-2.6l2-1.5c.6-.5 1.5-.4 2 .2z"/>'],
+    chat: ['Chat', '<path fill="currentColor" d="M12 2.5C6.5 2.5 2 6.4 2 11.3c0 2.6 1.3 4.9 3.3 6.5L4.5 21.5l4.3-2.2c1 .3 2.1.4 3.2.4 5.5 0 10-3.9 10-8.4S17.5 2.5 12 2.5z"/>'],
+    mail: ['Email', '<g' + SW + '><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="m3 6 9 7 9-7"/></g>'],
+    doc: ['Document', '<g' + SW + '><path d="M6 2.5h8l5 5v14H6zM14 2.5v5h5M9 12h7M9 15.5h7M9 19h4"/></g>'],
+    award: ['Award', '<g' + SW + '><circle cx="12" cy="9" r="6.5"/><path d="m8.5 14.5-1.8 7 5.3-2.6 5.3 2.6-1.8-7"/></g><path fill="currentColor" d="m12 5.6 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3L8.7 8l2.3-.3z"/>'],
+    lang: ['Language', '<g' + SW + '><path d="M2.5 5h9M7 3v2c0 4.5-2 7.6-4.5 9M4.8 8.6c1.2 2.4 3.4 4.3 6.2 5.4M12 21l4.5-11 4.5 11M13.6 17h5.8"/></g>'],
+    shield: ['Shield check', '<path fill="currentColor" fill-rule="evenodd" d="M12 1.5 3.5 4.8v6.1c0 5.3 3.6 10 8.5 11.6 4.9-1.6 8.5-6.3 8.5-11.6V4.8zm4.4 7.3-5.6 6.3-3.3-3.1 1.3-1.4 1.9 1.8 4.3-4.9z"/>'],
+    xmark: ['Cross', '<g' + SW + ' stroke-width="2.6"><path d="M6 6l12 12M18 6 6 18"/></g>'],
+    route: ['Route', '<g' + SW + ' stroke-dasharray="2.2 2.4"><path d="M5 19C5 12 19 13 19 6"/></g><circle cx="5" cy="19" r="2.4" fill="currentColor"/><path fill="currentColor" d="M19 1.5a3.6 3.6 0 0 1 3.6 3.6c0 2.6-3.6 6.2-3.6 6.2s-3.6-3.6-3.6-6.2A3.6 3.6 0 0 1 19 1.5z"/>'],
     percent2: ['Discount', '<circle cx="12" cy="12" r="11" fill="currentColor"/><g fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"><path d="M16 8l-8 8"/><circle cx="8.6" cy="8.6" r="1.6"/><circle cx="15.4" cy="15.4" r="1.6"/></g>']
   };
   function iconSvg(name) { var ic = Object.prototype.hasOwnProperty.call(ICONS, name) ? ICONS[name] : ICONS.sparkle; return '<svg viewBox="' + (ic[2] || '0 0 24 24') + '" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" aria-hidden="true">' + ic[1] + '</svg>'; }
@@ -92,7 +130,7 @@
     if (typeof e.txt === 'string') o.txt = e.txt.slice(0, 200);
     if (has(FONTS, e.fn)) o.fn = e.fn;
     if ([400, 500, 600, 700, 800, 900].indexOf(+e.fw) >= 0) o.fw = +e.fw;
-    ['fi', 'up', 'hide', 'lock', 'nw'].forEach(function (b) { if (e[b] === true) o[b] = true; });
+    ['fi', 'up', 'hide', 'lock', 'nw', 'ph'].forEach(function (b) { if (e[b] === true) o[b] = true; });
     NUMP.forEach(function (q) { if (e[q[0]] != null) { var n = num(e[q[0]], q[1], q[2]); if (n !== undefined) o[q[0]] = n; } });
     ['col', 'fill', 'fill2', 'bc', 'shc'].forEach(function (c) { var v = col(e[c]); if (v) o[c] = v; });
     if (typeof e.gp === 'string' && ID.test(e.gp) && e.t !== 'prods') o.gp = e.gp;
@@ -104,6 +142,9 @@
     if (e.cr === 'acc' || e.cr === 'acc2' || e.cr === 'card') o.cr = e.cr;
     if (e.tr === 'acc') o.tr = e.tr;
     if (e.t === 'img') { if (!IMGID.test(e.img) || (imgs && !has(imgs, e.img))) return null; o.img = e.img; }
+    if (e.t === 'art') { if (typeof e.art !== 'string' || !ARTID.test(e.art)) return null; o.art = e.art; }
+    if (['c1', 'c2', 'c3', 'ca'].indexOf(e.cy) >= 0) o.cy = e.cy;                 // takes the country's flag colour
+    if (typeof e.cyk === 'string' && /^[nda]{1,3}$/.test(e.cyk)) o.cyk = e.cyk;     // holds the country's name
     return o;
   }
   function prodOk(p) { return has(D.prods, p) || (/^u_[A-Za-z0-9][A-Za-z0-9_-]{5,63}$/.test(p) && has(images, p.slice(2))); }
@@ -114,7 +155,9 @@
   }
   function cleanDoc(raw, imgs) {
     if (!raw || typeof raw !== 'object' || !Array.isArray(raw.els)) return null;
-    var d = { v: 1, id: IMGID.test(raw.id) ? raw.id : uid('d'), name: str(raw.name, 60) || 'Untitled design', tpl: typeof raw.tpl === 'string' && /^[a-z0-9-]{1,40}$/.test(raw.tpl) ? raw.tpl : '', els: [], geo: {}, sets: {} };
+    var d = { v: 1, id: typeof raw.id === 'string' && IMGID.test(raw.id) ? raw.id : uid('d'), name: str(raw.name, 60) || 'Untitled design', tpl: typeof raw.tpl === 'string' && /^[a-z0-9-]{1,40}$/.test(raw.tpl) ? raw.tpl : '', els: [], geo: {}, sets: {} };
+    if (typeof raw.co === 'string' && /^[a-z0-9-]{1,40}$/.test(raw.co)) d.co = raw.co;
+    if (typeof raw.cty === 'string' && KT.CTRY[raw.cty]) d.cty = raw.cty;
     var seen = {};
     raw.els.slice(0, 120).forEach(function (e) { var c = cleanEl(e, imgs); if (c && !seen[c.id]) { seen[c.id] = 1; d.els.push(c); } });
     if (!d.els.some(function (e) { return e.t === 'prods'; })) d.els.push({ id: 'prods', t: 'prods', name: 'Products' });
@@ -160,13 +203,53 @@
     }
     d.els = out.reverse();
   }
+  function coOf(v) { return typeof v === 'string' && /^[a-z0-9-]{1,40}$/.test(v) ? v : 'kbb'; }
   function cleanBrand(b) { b = b || {}; return { c1: HEX.test(b.c1) ? b.c1.slice(0, 7) : '#E8306F', c2: HEX.test(b.c2) ? b.c2.slice(0, 7) : '#1F1B1E', logo: IMGID.test(b.logo) ? b.logo : '', on: b.on === true }; }
 
   // ── state ──
+  var tplById = {}; KT.LIST.forEach(function (t) { tplById[t.id] = t; });
   var images = Object.create(null);   // id -> {name, aspect, kind: prod|bg|logo|img, src} (no prototype: ids come from storage)
   var brand = cleanBrand({});
   var doc = null, st = { fmt: 'post', set: 0, sel: null, psel: null, ms: [], grp: null, pick: false, alto: 'sel', gopen: Object.create(null), gsi: 0, bgv: null, tab: 'tpl', cat: 'all', q: '' };
   var lastSaved = '', hist = [], fut = [], pending = null;
+
+  // ── companies (the owner, 16 Nov 2026: "create an environment 'Planet Careers' ... allow me options to create any
+  //    new company etc, and i will be able to switch between one to another"). A company is a brand kit in the
+  //    shape of studio/reel-studio/brands/kit.schema.json, plus what this studio keeps for it (studio: its
+  //    template set, favourite templates and brand-kit switches). KBB and Planet Careers are seeded from their
+  //    kit.json; every company's designs carry its id (doc.co). Stored in kv 'companies' / 'company'. ──
+  var SLUG = /^[a-z0-9-]{1,40}$/, TSETS = { kbb: 'Beauty & retail (KBB)', 'planet-careers': 'Study & visa consultancy (Planet Careers)' };
+  function fontKey(f, d) { var fam = String(f && f.family || f || '').toLowerCase(); var k = Object.keys(FONTS).filter(function (x) { return FONTS[x].toLowerCase() === fam || x === fam; })[0]; return k || d; }
+  function strs(a, n, len) { return (Array.isArray(a) ? a : []).filter(function (x) { return typeof x === 'string'; }).slice(0, n).map(function (x) { return x.slice(0, len); }); }
+  function cleanCompany(raw, base) {
+    raw = raw && typeof raw === 'object' ? raw : {}; base = base || {};
+    var c = raw.colors || {}, bc = base.colors || {}, ec = raw.endCard || {}, ct = raw.contact || {}, stu = raw.studio || {}, fo = raw.fonts || {};
+    function hx(v, d) { return HEX.test(v) ? v.slice(0, 7).toUpperCase() : d; }
+    var o = { v: 1, id: SLUG.test(raw.id) ? raw.id : base.id || uid('co').toLowerCase(), name: str(raw.name, 40).trim() || base.name || 'New company', fullName: str(raw.fullName, 60).trim(), industry: str(raw.industry, 80), industries: strs(raw.industries, 8, 30),
+      colors: { primary: hx(c.primary, bc.primary || '#0B2545'), secondary: hx(c.secondary, bc.secondary || '#13A89E'), accent: hx(c.accent, bc.accent || '#F2C14E'), text: hx(c.text, '#FFFFFF'), bg: hx(c.bg, hx(c.primary, '#0B2545')), soft: hx(c.soft, bc.soft || '#EEF3F6'), ink: hx(c.ink, bc.ink || '#0A1B30') },
+      fonts: { heading: { family: FONTS[fontKey(fo.heading, 'montserrat')] }, body: { family: FONTS[fontKey(fo.body, 'inter')] }, arabic: { family: 'Cairo' } },
+      logos: { mark: typeof (raw.logos || {}).mark === 'string' && ARTID.test(raw.logos.mark) && raw.logos.mark.indexOf('mark:') === 0 ? raw.logos.mark : '' },
+      contact: {}, contactLine: str(raw.contactLine, 120),
+      endCard: { title: str(ec.title, 60), sub: str(ec.sub, 120), cta: strs(ec.cta, 5, 60), ctaAr: strs(ec.ctaAr, 5, 60), payments: strs(ec.payments, 4, 60).map(function (p) { return /tamara/i.test(p) ? 'tamara' : /tabby/i.test(p) ? 'tabby' : ''; }).filter(function (p, i, a) { return p && a.indexOf(p) === i; }) },
+      defaults: { aspect: ['9:16', '1:1', '4:5', '16:9'].indexOf((raw.defaults || {}).aspect) >= 0 ? raw.defaults.aspect : '4:5' },
+      studio: { tplSet: has(TSETS, stu.tplSet) ? stu.tplSet : base.studio ? base.studio.tplSet : 'planet-careers', favs: strs(stu.favs, 200, 40).filter(function (id) { return has(tplById, id); }), brand: cleanBrand(stu.brand || base.studio && base.studio.brand), builtin: !!base.builtin } };
+    if (raw.gradient) o.gradient = strs(raw.gradient, 4, 9).filter(function (x) { return HEX.test(x); });
+    ['website', 'phone', 'whatsapp', 'email', 'instagram', 'tiktok', 'address'].forEach(function (k) { var v = str(ct[k], 80).trim(); if (v) o.contact[k] = v; });
+    o.mark = o.logos.mark; return o;
+  }
+  // the two seeds, from their kit.json (KBB: the lotus logo and tabby / tamara; Planet Careers: its mark, no pay badges)
+  var SEEDS = {};
+  (function () {
+    var k = D.kits || {};
+    SEEDS.kbb = cleanCompany(Object.assign({}, k.kbb || { id: 'kbb', name: 'KBB', fullName: 'K-Beauty Bliss' }, { studio: { tplSet: 'kbb', brand: {} } }), { id: 'kbb', builtin: true, studio: { tplSet: 'kbb' } });
+    SEEDS.kbb.studio.builtin = true;
+    var pc = Object.assign({}, k['planet-careers'] || { id: 'planet-careers', name: 'Planet Careers' }); pc.logos = { mark: 'mark:pc' }; pc.endCard = Object.assign({}, pc.endCard, { payments: [] });
+    pc.studio = { tplSet: 'planet-careers', brand: { on: false } };
+    SEEDS['planet-careers'] = cleanCompany(pc, { id: 'planet-careers', builtin: true, studio: { tplSet: 'planet-careers' } }); SEEDS['planet-careers'].studio.builtin = true;
+  })();
+  var cos = [SEEDS.kbb, SEEDS['planet-careers']], co = SEEDS.kbb;
+  function coById(id) { return cos.filter(function (c) { return c.id === id; })[0] || null; }
+  function saveCos() { return Store.putKV('companies', cos.map(function (c) { var o = clone(c); if (c.id === 'kbb') delete o.studio.brand; return o; })).catch(function () {}); }
 
   // ── storage adapter ──
   var Store = (function () {
@@ -206,10 +289,10 @@
         });
       },
       listProjects: function () {
-        if (cdb) return cdb.collection('projects').get().then(function (q) { return q.docs.map(function (s) { var v = s.data() || {}; return { id: s.id, name: str(v.name, 60), updated: +v.updated || 0 }; }); });
-        if (idb) return tx('projects', 'readonly', function (s) { return s.getAll(); }).then(function (a) { return (a || []).map(function (p) { return { id: p.id, name: str(p.name, 60), updated: +p.updated || 0 }; }); });
+        if (cdb) return cdb.collection('projects').get().then(function (q) { return q.docs.map(function (s) { var v = s.data() || {}; return { id: s.id, name: str(v.name, 60), updated: +v.updated || 0, co: coOf(v.co) }; }); });
+        if (idb) return tx('projects', 'readonly', function (s) { return s.getAll(); }).then(function (a) { return (a || []).map(function (p) { return { id: p.id, name: str(p.name, 60), updated: +p.updated || 0, co: coOf(p.co || p.doc && p.doc.co) }; }); });
         var src = kind === 'local' ? (lsGet('projects') || {}) : mem.projects;
-        return Promise.resolve(Object.keys(src).map(function (k) { return { id: k, name: str(src[k].name, 60), updated: +src[k].updated || 0 }; }));
+        return Promise.resolve(Object.keys(src).map(function (k) { return { id: k, name: str(src[k].name, 60), updated: +src[k].updated || 0, co: coOf(src[k].co || src[k].doc && src[k].doc.co) }; }));
       },
       getProject: function (id) {
         if (cdb) return cdb.doc('projects/' + id).get().then(function (s) { if (!s.exists) return null; try { return JSON.parse(s.data().json); } catch (e) { return null; } });
@@ -217,8 +300,8 @@
         var src = kind === 'local' ? (lsGet('projects') || {}) : mem.projects; return Promise.resolve(src[id] ? src[id].doc : null);
       },
       putProject: function (d) {
-        var rec = { id: d.id, name: d.name, updated: Date.now() };
-        if (cdb) return cdb.doc('projects/' + d.id).set({ name: d.name, updated: rec.updated, json: JSON.stringify(d) });
+        var rec = { id: d.id, name: d.name, updated: Date.now(), co: coOf(d.co) };
+        if (cdb) return cdb.doc('projects/' + d.id).set({ name: d.name, updated: rec.updated, co: rec.co, json: JSON.stringify(d) });
         if (idb) return tx('projects', 'readwrite', function (s) { return s.put(Object.assign(rec, { doc: d })); });
         if (kind === 'local') { var all = lsGet('projects') || {}; all[d.id] = Object.assign(rec, { doc: d }); if (!lsSet('projects', all)) return Promise.reject(new Error('This browser is out of space')); return Promise.resolve(); }
         mem.projects[d.id] = Object.assign(rec, { doc: d }); return Promise.resolve();
@@ -264,11 +347,12 @@
         if (kind === 'local') lsSet('kv:' + k, v); else mem.kv[k] = v; return Promise.resolve();
       },
       // a draft of the design on screen: this browser only, survives a reload before Save
-      draft: function (d) { try { localStorage.setItem('kbbas:draft', JSON.stringify(d)); } catch (e) { if (idb) tx('kv', 'readwrite', function (s) { return s.put({ id: 'draft', v: d }); }).catch(function () {}); } },
-      readDraft: function () {
-        var d = null; try { d = JSON.parse(localStorage.getItem('kbbas:draft')); } catch (e) {}
+      // (one draft per company: KBB keeps the original key)
+      draft: function (d, c) { var k = !c || c === 'kbb' ? 'draft' : 'draft:' + c; try { localStorage.setItem('kbbas:' + k, JSON.stringify(d)); } catch (e) { if (idb) tx('kv', 'readwrite', function (s) { return s.put({ id: k, v: d }); }).catch(function () {}); } },
+      readDraft: function (c) {
+        var k = !c || c === 'kbb' ? 'draft' : 'draft:' + c, d = null; try { d = JSON.parse(localStorage.getItem('kbbas:' + k)); } catch (e) {}
         if (d || !idb) return Promise.resolve(d);
-        return tx('kv', 'readonly', function (s) { return s.get('draft'); }).then(function (r) { return r ? r.v : null; }).catch(function () { return null; });
+        return tx('kv', 'readonly', function (s) { return s.get(k); }).then(function (r) { return r ? r.v : null; }).catch(function () { return null; });
       },
       save: function (name, blob) {
         if (cdl) return cdl.save({ filename: name, data: blob });
@@ -281,7 +365,6 @@
   })();
 
   // ── templates -> designs ──
-  var tplById = {}; KT.LIST.forEach(function (t) { tplById[t.id] = t; });
   function aspectOf(p) { return D.prods[p] ? D.prods[p].a : (images[p.slice(2)] ? images[p.slice(2)].aspect : .5); }
   function itemFromSlot(s, p) { var a = aspectOf(p), h = s.h, w = h * a; if (w > s.mw) { w = s.mw; h = w / a; } return { p: p, x: r2(s.cx - w / 2), y: r2(s.by - h), w: r2(w), r: s.r || 0, sh: 55, ss: 'soft' }; }
   function brandPal(P) {
@@ -290,11 +373,15 @@
     Q.disc = brand.c1 + '2E'; return Q;
   }
   function contrast(hex) { var n = parseInt(hex.slice(1, 7), 16), r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255; return (r * 299 + g * 587 + b * 114) / 1000 > 160 ? '#111111' : '#FFFFFF'; }
-  function fromTemplate(t) {
-    var P = brandPal(t.P), d = { v: 1, id: uid('d'), name: t.name, tpl: t.id, els: [], geo: {}, sets: {}, anim: { in: 'fade', idle: 'none', sec: 3, len: 10 } };
+  // c = the company it is made for (default: the one open), cty = the country (country templates only)
+  function fromTemplate(t, c, cty) {
+    c = c || co;
+    var kit = t.co === 'pc', C = kit ? KT.CTRY[cty] || KT.CTRY[t.cty] || null : null;
+    var P = kit ? KT.kitPal(c.colors, fontKey(c.fonts.heading, 'montserrat'), fontKey(c.fonts.body, 'inter')) : c.id === 'kbb' ? brandPal(t.P) : brandPal(t.P);
+    var d = { v: 1, id: uid('d'), name: t.name, tpl: t.id, els: [], geo: {}, sets: {}, anim: { in: 'fade', idle: 'none', sec: 3, len: 10 } };
     FMTS.forEach(function (f, fi) {
-      var r = KT.FAM[t.fam](f, t.T, P, t.O);
-      if (fi === 0) { d.bg = r.bg; d.els = r.els.map(function (e) { var c = Object.assign({}, e); delete c.g; return c; }); }
+      var r = KT.FAM[t.fam](f, t.T, P, t.O, C);
+      if (fi === 0) { d.bg = r.bg; d.els = r.els.map(function (e) { var x = Object.assign({}, e); delete x.g; return x; }); }
       d.geo[f] = {};
       r.els.forEach(function (e, i) {
         var g = Object.assign({}, e.g), p = d.els[i];       // a family may size or align one element differently per size
@@ -304,6 +391,15 @@
       var n = r.slots.length;
       d.sets[f] = [0, 1, 2].map(function (s) { return r.slots.map(function (sl, j) { return itemFromSlot(sl, t.pp[(s * n + j) % t.pp.length]); }); });
     });
+    if (kit) { if (C) d.cty = C.code; d.els.forEach(function (e) { KT.tokens(e, C, c); }); }
+    if (c.id !== 'kbb') {
+      // another company: its name in the logo spot, its contact line, no pay badges unless its kit has them
+      d.els.forEach(function (e) {
+        if (e.t === 'logo') { e.txt = c.fullName || c.name; if (!kit) e.fn = fontKey(c.fonts.heading, e.fn); }
+        if (e.t === 'pay') { var py = c.endCard.payments; if (!py.length) e.hide = true; else e.pay = py.length > 1 ? 'both' : py[0]; }
+      });
+    }
+    d.co = c.id;
     return cleanDoc(d, images);
   }
 
@@ -319,6 +415,8 @@
       case 'lattice': return ['repeating-linear-gradient(45deg,' + c + ' 0 .18cqw,transparent .18cqw 5cqw),repeating-linear-gradient(-45deg,' + c + ' 0 .18cqw,transparent .18cqw 5cqw)', 'auto'];
       case 'waves': return ['radial-gradient(circle at 50% 100%,transparent 36%,' + c + ' 38% 44%,transparent 46%)', '8cqw 4cqw'];
       case 'petals': return ['url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><g fill="' + c + '" transform="translate(20 20)">' + [0, 72, 144, 216, 288].map(function (a) { return '<ellipse rx="3.4" ry="7.2" cy="-7.6" transform="rotate(' + a + ')"/>'; }).join('') + '</g></svg>') + '")', '9cqw 9cqw'];
+      case 'globe': return ['url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><g fill="none" stroke="' + c + '" stroke-width=".7"><circle cx="100" cy="100" r="96"/><ellipse cx="100" cy="100" rx="40" ry="96"/><ellipse cx="100" cy="100" rx="74" ry="96"/><path d="M100 4v192M4 100h192M14 52h172M14 148h172"/></g></svg>') + '")', '60cqw 60cqw'];
+      case 'routes': return ['url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><g fill="none" stroke="' + c + '" stroke-width=".9" stroke-dasharray="3 4"><path d="M10 160C60 60 140 40 190 70"/><path d="M20 30C80 70 120 150 195 140"/></g><g fill="' + c + '"><circle cx="10" cy="160" r="2.5"/><circle cx="190" cy="70" r="2.5"/><circle cx="20" cy="30" r="2.5"/><circle cx="195" cy="140" r="2.5"/></g></svg>') + '")', '50cqw 50cqw'];
       case 'sparkle': return ['radial-gradient(circle at 12% 18%,' + c + ' .35cqw,transparent .5cqw),radial-gradient(circle at 78% 9%,' + c + ' .5cqw,transparent .7cqw),radial-gradient(circle at 88% 62%,' + c + ' .3cqw,transparent .45cqw),radial-gradient(circle at 30% 76%,' + c + ' .45cqw,transparent .6cqw),radial-gradient(circle at 55% 40%,' + c + ' .25cqw,transparent .4cqw),radial-gradient(circle at 6% 52%,' + c + ' .3cqw,transparent .45cqw),radial-gradient(circle at 64% 90%,' + c + ' .35cqw,transparent .5cqw)', '100% 60cqw'];
     }
     return null;
@@ -404,7 +502,8 @@
       tc.appendChild(t); n.appendChild(tc);
     }
     if (e.t === 'icon') { n.innerHTML = iconSvg(e.ic); n.style.color = e.col || '#111111'; }            // constant markup only
-    if (e.t === 'img') { var im = mk('img', 'ii'); im.alt = ''; im.draggable = false; if (images[e.img]) im.src = images[e.img].src; n.appendChild(im); }
+    if (e.t === 'img') { var im = mk('img', 'ii'); im.alt = ''; im.draggable = false; if (images[e.img]) im.src = images[e.img].src; if (e.sh && e.sh !== 'none') crop(im, e, g); n.appendChild(im); }
+    if (e.t === 'art') { var ai = mk('img', 'ii'); ai.alt = ''; ai.draggable = false; var as = artSrc(e.art, e.col); if (as) ai.src = as; if (e.sh && e.sh !== 'none' || e.art.indexOf('flag:') === 0) crop(ai, e, g); n.appendChild(ai); }
     if (e.t === 'pay') {
       var py = mk('div', 'py'); py.style.gap = (g.h * .35) + 'cqw';
       if (e.pay !== 'tamara') { var a1 = mk('img'); a1.src = D.pay.tabby; a1.alt = 'tabby'; py.appendChild(a1); }
@@ -414,6 +513,7 @@
     if (e.t === 'logo') {
       var lg = mk('div', 'lg'), al2 = g.al || e.al || 'c'; lg.style.justifyContent = al2 === 'l' ? 'flex-start' : al2 === 'r' ? 'flex-end' : 'center';
       if (brand.logo && images[brand.logo]) { var li = mk('img'); li.src = images[brand.logo].src; li.alt = ''; li.style.height = '2.4em'; lg.appendChild(li); }
+      else if (co.id !== 'kbb') { var mk_ = co.mark ? artSrc(co.mark + (lum6(e.col) > .6 ? '-light' : '')) || artSrc(co.mark) : ''; if (mk_) { var mi = mk('img'); mi.src = mk_; mi.alt = ''; mi.style.height = '1.9em'; lg.appendChild(mi); } lg.appendChild(mk('span', null, e.txt || co.fullName || co.name)); }
       else { var sv = mk('span'); sv.innerHTML = iconSvg('lotus'); var svg = sv.firstChild; svg.setAttribute('viewBox', '0 0 24 18'); lg.appendChild(svg); lg.appendChild(mk('span', null, e.txt || 'K-Beauty Bliss')); }
       n.appendChild(lg);
     }
@@ -423,6 +523,16 @@
     placeEl(n, e, g);
     return n;
   }
+  // a flag, landmark or photo cropped to its shape: fills its box (cover), round / arch / rounded corners or a clip
+  function crop(im, e, g) {
+    var q = im.style, k = e.sh || 'rect'; q.objectFit = 'cover';
+    if (k === 'circle' || k === 'ellipse') q.borderRadius = '50%';
+    else if (k === 'arch') q.borderRadius = (g.w / 2) + 'cqw ' + (g.w / 2) + 'cqw ' + (e.rad || 0) + 'cqw ' + (e.rad || 0) + 'cqw';
+    else if (k === 'rect' || k === 'pill') q.borderRadius = k === 'pill' ? '999px' : (e.rad || 0) + 'cqw';
+    else if (CLIP[k]) q.clipPath = CLIP[k];
+    if (e.bw && !CLIP[k]) q.border = (e.bw / 10) + 'cqw ' + (e.bs || 'solid') + ' ' + (e.bc || '#FFFFFF');
+  }
+  function lum6(c) { if (!c || !HEX.test(c)) return 0; var n = parseInt(c.slice(1, 7), 16); return ((n >> 16 & 255) * 299 + (n >> 8 & 255) * 587 + (n & 255) * 114) / 255000; }
   // mode: 'edit' | 'thumb' | 'file' ; part: undefined (all) | 'under' | 'over' (video layers)
   function renderCanvas(d, f, set, mode, part) {
     var cv = mk('div', 'cv'); cv.style.aspectRatio = PX[f][0] + '/' + PX[f][1];
@@ -470,7 +580,7 @@
     var cv = renderCanvas(doc, st.fmt, st.set, 'edit');
     stage.textContent = ''; stage.appendChild(cv); fitText(cv);
     markSel();
-    chipsTop(); panelSel(); panelProd(); layers(); abarSync(); panelStyle(); panelMotion(); drawPk(); dirtyMark();
+    chipsTop(); panelSel(); panelProd(); layers(); abarSync(); panelStyle(); panelMotion(); drawPk(); dirtyMark(); ctyBar();
     $('dl-size').textContent = PX[st.fmt][0] + ' × ' + PX[st.fmt][1] + ' px';
   }
   function chipsTop() {
@@ -494,7 +604,7 @@
   function afterJump() { if (st.grp && !members(st.grp).length) st.grp = null; dropProdSel(); $('pname').value = doc.name; draw(); undoBtns(); scheduleDraft(); }
   function undoBtns() { $('undo').disabled = !hist.length; $('redo').disabled = !fut.length; }
   var draftT = 0;
-  function scheduleDraft() { clearTimeout(draftT); draftT = setTimeout(function () { Store.draft({ doc: doc, t: Date.now(), saved: lastSaved === JSON.stringify(doc) }); }, 500); }
+  function scheduleDraft() { clearTimeout(draftT); draftT = setTimeout(function () { Store.draft({ doc: doc, t: Date.now(), saved: lastSaved === JSON.stringify(doc) }, co.id); }, 500); }
   function dirtyMark() { var dirty = JSON.stringify(doc) !== lastSaved; $('save').textContent = dirty ? 'Save •' : 'Saved'; }
 
   // ── selection: one item or many. A key is an element id, or 'p:<i>' for product i of the set on show.
@@ -649,7 +759,7 @@
     var g = drag.g, e = drag.e;
     if (drag.h === 'c') {
       if (!drag.gh && (e.t === 'text' || e.t === 'logo')) { var s = Math.max(.15, (drag.w + dx) / drag.w); g.w = r2(drag.w * s); g.k = r2(Math.max(.2, Math.min(5, drag.k * s))); }
-      else if (e.t === 'icon' || e.t === 'img' || e.t === 'pay' || ev.shiftKey || e.sh === 'circle') { var s2 = Math.max(.1, (drag.w + Math.max(dx, dy * drag.w / (drag.gh || 1))) / drag.w); g.w = r2(drag.w * s2); g.h = r2(drag.gh * s2); }
+      else if (e.t === 'icon' || e.t === 'img' || e.t === 'art' || e.t === 'pay' || ev.shiftKey || e.sh === 'circle') { var s2 = Math.max(.1, (drag.w + Math.max(dx, dy * drag.w / (drag.gh || 1))) / drag.w); g.w = r2(drag.w * s2); g.h = r2(drag.gh * s2); }
       else { g.w = r2(Math.max(1, drag.w + dx)); g.h = r2(Math.max(.5, drag.gh + dy)); }
     } else if (drag.h === 'w') g.w = r2(Math.max(3, drag.w + dx));
     placeEl(drag.node, e, g); fitText(drag.node.parentNode);
@@ -857,6 +967,7 @@
     $('sel-t').textContent = e ? (e.name || TYPES[e.t]) + (e.t === 'prods' ? '' : ' · ' + TYPES[e.t]) + (e.gp && doc.groups[e.gp] ? ' (in ' + doc.groups[e.gp].name + ')' : '') : 'Nothing selected';
     $('sel-empty').hidden = !!e;
     props.querySelectorAll('[data-need]').forEach(function (n) { n.hidden = !e || (n.dataset.need === 'geo' && e.t === 'prods'); });
+    $('ph-row').hidden = true;
     props.querySelectorAll('[data-show]').forEach(function (n) {
       var on = !!e && n.dataset.show.split(' ').indexOf(e.t) >= 0;
       if (n.dataset.show === 'fill') on = !!e && (e.t === 'shape' || e.t === 'btn' || (e.t === 'text' && e.sh && e.sh !== 'none'));
@@ -879,6 +990,7 @@
     $('p-hd').checked = !!g.hd;
     $('p-al').querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String((g.al || e.al || 'c') === b.dataset.v)); });
     $('del').disabled = e.t === 'prods'; $('dup').disabled = e.t === 'prods';
+    $('ph-row').hidden = !e.ph;
     $('eres').disabled = !doc.tpl || !tplById[doc.tpl];
   }
   function propVal(n, p) {
@@ -963,7 +1075,7 @@
       case 'text': addEl({ t: 'text', name: 'Text', txt: 'Add your text', fn: 'poppins', fw: 500, fs: 3.6, col: '#333333', al: 'c', lh: 130 }, 70); break;
       case 'btn': addEl({ t: 'btn', name: 'Button', txt: 'Shop Now', fn: 'poppins', fw: 700, fs: 3.8, col: contrast(a), al: 'c', sh: 'pill', fill: a, shd: 35, cr: 'acc' }, 48, 8.4); break;
       case 'arabic': addEl({ t: 'text', name: 'Arabic line', txt: 'تسوّقي الآن', fn: 'cairo', fw: 700, fs: 4, col: a, al: 'c', lh: 140, sh: 'pill', fill: a + '1A', pd: .7, tr: 'acc' }, 70); break;
-      case 'logo': addEl({ t: 'logo', name: 'Logo', txt: 'K-Beauty Bliss', fn: 'playfair', fw: 700, fs: 3, col: '#111111', al: 'c' }, 40); break;
+      case 'logo': addEl({ t: 'logo', name: 'Logo', txt: co.id === 'kbb' ? 'K-Beauty Bliss' : co.fullName || co.name, fn: co.id === 'kbb' ? 'playfair' : fontKey(co.fonts.heading, 'montserrat'), fw: 700, fs: 3, col: '#111111', al: 'c' }, 40); break;
       case 'pay': addEl({ t: 'pay', name: 'Tabby / Tamara', pay: 'both' }, 38, 3.4); break;
     }
   }; });
@@ -982,6 +1094,22 @@
   Object.keys(ICONS).forEach(function (k) { if (k === 'lotus') return; var b = mk('button'); b.type = 'button'; b.title = ICONS[k][0]; b.setAttribute('aria-label', 'Add ' + ICONS[k][0]); b.innerHTML = iconSvg(k); b.onclick = function () { addEl({ t: 'icon', name: ICONS[k][0], ic: k, col: accNow() }, k === 'stars5' ? 28 : 12, k === 'stars5' ? 5.6 : 12); }; icg.appendChild(b); });
   $('add-img').onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return;
     readPicture(f, { cut: false, max: 1400, kind: 'img' }).then(function (r) { var w = r.aspect >= 1 ? 40 : 40 * r.aspect; addEl({ t: 'img', name: r.name, img: r.id }, r2(w), r2(w / r.aspect)); }).catch(pictureError); };
+  // flags, country outlines and landmark silhouettes (and the company marks) -- by name from the built-in list
+  function artName(id) { var m = /^(flag|map|lm|mark):(.+)$/.exec(id) || [], c = KT.CTRY[m[2]]; if (m[1] === 'lm') { var l = KT.CTRY_LIST.filter(function (x) { return x.lm === m[2]; })[0]; return 'Landmark · ' + (l ? l.lmName : m[2]); } return (m[1] === 'flag' ? 'Flag · ' : m[1] === 'map' ? 'Outline · ' : 'Mark · ') + (c ? c.name : m[2]); }
+  function artOptions(sel, first) {
+    if (first) { var o0 = mk('option', null, first); o0.value = ''; sel.appendChild(o0); }
+    [['flag', 'Flags'], ['map', 'Country outlines'], ['lm', 'Landmarks']].forEach(function (g) {
+      var og = document.createElement('optgroup'); og.label = g[1];
+      KT.CTRY_LIST.forEach(function (c) { var id = g[0] + ':' + (g[0] === 'lm' ? c.lm : c.code), o = mk('option', null, artName(id).split(' · ')[1]); o.value = id; og.appendChild(o); });
+      sel.appendChild(og);
+    });
+  }
+  artOptions($('add-art'), 'Add a flag, outline or landmark…'); artOptions($('p-art'));
+  $('add-art').onchange = function (ev) {
+    var id = ev.target.value; ev.target.value = ''; if (!ARTID.test(id)) return;
+    var fl = id.indexOf('flag:') === 0;
+    addEl({ t: 'art', name: artName(id), art: id, col: fl ? undefined : co.colors.primary, sh: fl ? 'rect' : undefined, rad: fl ? 1 : undefined }, fl ? 24 : 36, fl ? 18 : 36);
+  };
 
   // ── layers: top of the stack first; groups fold open / shut; Shift = a range, Ctrl/Cmd = add or remove;
   //    drag the ⠿ grip to reorder (into or out of a group); double-click a name to rename ──
@@ -1334,7 +1462,7 @@
     else if (b.id === 'ab-grp') groupSel(); else if (b.id === 'ab-ungrp') ungroupSel();
   });
   $('pick').onclick = function () { st.pick = !st.pick; this.setAttribute('aria-pressed', String(st.pick)); this.textContent = st.pick ? '☑ Select: on' : '☐ Select'; setStatus(st.pick ? 'Tap items to add or remove them · tap the empty ad to clear' : '', 'ok'); };
-  function saveBrand() { return Store.putKV('brand', brand).catch(function () {}); }
+  function saveBrand() { if (co.id !== 'kbb') { co.studio.brand = brand; return saveCos(); } return Store.putKV('brand', brand).catch(function () {}); }
   $('br-c1').onchange = function () { brand.c1 = this.value.toUpperCase(); saveBrand(); if (brand.on) thumbsDirty(); };
   $('br-c2').onchange = function () { brand.c2 = this.value.toUpperCase(); saveBrand(); if (brand.on) thumbsDirty(); };
   $('br-on').onchange = function () { brand.on = this.checked; saveBrand(); thumbsDirty(); setStatus(brand.on ? 'Templates now use your brand colours' : 'Templates use their own colours', 'ok'); };
@@ -1375,27 +1503,81 @@
   $('play').onclick = play; $('play2').onclick = play;
 
   // ── templates browser ──
-  var thumbsBuilt = false, tgEl = $('tg');
-  function thumbsDirty() { thumbsBuilt = false; if (st.tab === 'tpl') buildThumbs(); }
-  function buildCats() { var h = $('cats'); h.textContent = ''; KT.CATS.forEach(function (c) { var n = c[0] === 'all' ? KT.LIST.length : KT.LIST.filter(function (t) { return t.cat === c[0]; }).length; var b = mk('button', 'chip', c[1] + ' · ' + n); b.type = 'button'; b.setAttribute('aria-pressed', String(st.cat === c[0])); b.onclick = function () { st.cat = c[0]; buildCats(); filterThumbs(); }; h.appendChild(b); }); }
+  // ── templates browser: this company's set (or another, or all) · category · favourites · country · size · search ──
+  var thumbsBuilt = '', tgEl = $('tg');
+  st.tset = ''; st.tcty = ''; st.tsize = 'post';
+  function setOf() { return st.tset || co.studio.tplSet; }
+  function inSet(t) { var s = setOf(); return s === 'all' || (s === 'planet-careers' ? t.co === 'pc' : t.co !== 'pc'); }
+  function visList() { return KT.LIST.filter(function (t) { return inSet(t) && (!st.tcty || !!t.cty); }); }
+  function isFav(id) { return co.studio.favs.indexOf(id) >= 0; }
+  function thumbsDirty() { thumbsBuilt = ''; if (st.tab === 'tpl') buildThumbs(); }
+  function buildCats() {
+    var h = $('cats'), l = visList(), s = setOf(); h.textContent = '';
+    var cs = [['all', 'All']].concat(s === 'kbb' ? KT.CATS.slice(1) : s === 'planet-careers' ? KT.PCCATS : KT.CATS.slice(1).concat(KT.PCCATS), [['fav', '★ Favourites']]);
+    function count(c) { return c === 'all' ? l.length : c === 'fav' ? l.filter(function (t) { return isFav(t.id); }).length : l.filter(function (t) { return t.cat === c; }).length; }
+    if (!cs.some(function (c) { return c[0] === st.cat && (count(c[0]) || c[0] === 'all' || c[0] === 'fav'); })) st.cat = 'all';
+    cs.forEach(function (c) { var n = count(c[0]); if (!n && c[0] !== 'all' && c[0] !== 'fav') return;
+      var b = mk('button', 'chip', c[1] + ' · ' + n); b.type = 'button'; b.dataset.cat = c[0]; b.setAttribute('aria-pressed', String(st.cat === c[0])); b.onclick = function () { st.cat = c[0]; buildCats(); filterThumbs(); }; h.appendChild(b); });
+    $('tq').placeholder = 'Search ' + l.length + ' templates — ' + (s === 'planet-careers' ? 'study visa, Canada, IELTS…' : 'Eid, SPF, flash sale…');
+  }
   function buildThumbs() {
-    if (thumbsBuilt) return; thumbsBuilt = true; tgEl.textContent = '';
-    KT.LIST.forEach(function (t) {
-      var b = mk('button'); b.type = 'button'; b.dataset.id = t.id; b.dataset.cat = t.cat; b.dataset.q = (t.name + ' ' + t.tags + ' ' + t.cat + ' ' + t.fam).toLowerCase();
-      b.title = t.name; b.setAttribute('aria-label', 'Use template: ' + t.name);
-      var d = fromTemplate(t); b.appendChild(renderCanvas(d, 'post', 0, 'thumb')); b.appendChild(mk('span', 'nm', t.name));
-      b.onclick = function () { useTemplate(t); };
+    var key = [co.id, setOf(), st.tcty, st.tsize, JSON.stringify(brand), JSON.stringify(co.colors), co.name, co.contactLine].join('|');
+    if (thumbsBuilt === key) { filterThumbs(); return; } thumbsBuilt = key; tgEl.textContent = '';
+    tgEl.dataset.size = st.tsize;
+    var allC = KT.CTRY_LIST.map(function (c) { return c.name + ' ' + c.dn; }).join(' ');
+    visList().forEach(function (t) {
+      var C = KT.CTRY[st.tcty || t.cty], b = mk('button'); b.type = 'button'; b.dataset.id = t.id; b.dataset.cat = t.cat;
+      b.dataset.q = (t.name + ' ' + t.tags + ' ' + t.cat + ' ' + t.fam + (t.cty ? ' country ' + allC : '')).toLowerCase();
+      b.title = t.name + (C ? ' · ' + C.name : ''); b.setAttribute('aria-label', 'Use template: ' + t.name);
+      var d = fromTemplate(t, co, st.tcty || t.cty); b.appendChild(renderCanvas(d, st.tsize, 0, 'thumb')); b.appendChild(mk('span', 'nm', (isFav(t.id) ? '★ ' : '') + t.name));
+      b.onclick = function () { useTemplate(t, st.tcty); };
       tgEl.appendChild(b);
     });
     fitText(tgEl); filterThumbs();
   }
-  function filterThumbs() { var q = st.q.trim().toLowerCase(); tgEl.querySelectorAll('button').forEach(function (b) { b.hidden = !((st.cat === 'all' || b.dataset.cat === st.cat) && (!q || q.split(/\s+/).every(function (w) { return b.dataset.q.indexOf(w) >= 0; }))); b.setAttribute('aria-current', String(b.dataset.id === doc.tpl)); }); }
+  function filterThumbs() { var q = st.q.trim().toLowerCase(); tgEl.querySelectorAll('button').forEach(function (b) { b.hidden = !((st.cat === 'all' || (st.cat === 'fav' ? isFav(b.dataset.id) : b.dataset.cat === st.cat)) && (!q || q.split(/\s+/).every(function (w) { return b.dataset.q.indexOf(w) >= 0; }))); b.setAttribute('aria-current', String(b.dataset.id === doc.tpl)); }); favBtn(); }
   $('tq').addEventListener('input', function () { st.q = this.value; filterThumbs(); });
-  function useTemplate(t) {
+  function favBtn() { var t = doc && tplById[doc.tpl], b = $('fav'); b.disabled = !t; b.textContent = t && isFav(t.id) ? '★ Favourite' : '☆ Add to favourites'; b.setAttribute('aria-pressed', String(!!t && isFav(t.id))); }
+  $('fav').onclick = function () {
+    var t = tplById[doc.tpl]; if (!t) return; var l = co.studio.favs, i = l.indexOf(t.id);
+    if (i >= 0) l.splice(i, 1); else l.push(t.id);
+    saveCos(); thumbsBuilt = ''; buildCats(); buildThumbs(); setStatus(i >= 0 ? t.name + ' removed from ' + co.name + "'s favourites" : t.name + ' is one of ' + co.name + "'s favourites", 'ok');
+  };
+  (function () {
+    var s = $('tf-set'); [['', "This company's templates"], ['kbb', 'KBB · beauty & retail'], ['planet-careers', 'Planet Careers · study & visas'], ['all', 'All templates']].forEach(function (o) { var x = mk('option', null, o[1]); x.value = o[0]; s.appendChild(x); });
+    s.onchange = function () { st.tset = this.value; st.cat = 'all'; buildCats(); thumbsDirty(); };
+    var c = $('tf-cty'); var x0 = mk('option', null, 'Any country'); x0.value = ''; c.appendChild(x0);
+    KT.CTRY_LIST.forEach(function (k) { var x = mk('option', null, k.name); x.value = k.code; c.appendChild(x); });
+    c.onchange = function () { st.tcty = this.value; buildCats(); thumbsDirty(); };
+    var z = $('tf-size'); FMTS.forEach(function (f) { var x = mk('option', null, FLAB[f]); x.value = f; z.appendChild(x); });
+    z.onchange = function () { st.tsize = this.value; thumbsDirty(); };
+  })();
+  function useTemplate(t, cty) {
     stopPlay();
-    act(function () { var d = fromTemplate(t); d.id = doc.id; d.name = t.name; doc = d; st.grp = null; setSel([]); st.set = 0; });
+    act(function () { var d = fromTemplate(t, co, cty || (doc && doc.tpl === t.id && doc.cty) || ''); d.id = doc.id; d.name = t.name; doc = d; st.grp = null; setSel([]); st.set = 0; });
     $('pname').value = doc.name; filterThumbs(); setStatus(t.name + ' applied — Ctrl+Z to go back', 'ok');
   }
+
+  // ── country picker: one click swaps the flag, outline and landmark, the flag colours and the country's name
+  //    (English and Arabic) everywhere in the design -- the owner's own edits to everything else stay ──
+  function swapCountry(code) {
+    var A = KT.CTRY[doc.cty], B = KT.CTRY[code]; if (!B || !A || A === B) return;
+    var pairs = { n: [A.name, B.name], d: [A.dn, B.dn], a: [A.ar, B.ar] };
+    doc.els.forEach(function (e) {
+      if (e.t === 'art') { var m = /^(flag|map):([a-z]{2})$/.exec(e.art); if (m && m[2] === A.code) e.art = m[1] + ':' + B.code; if (e.art === 'lm:' + A.lm) e.art = 'lm:' + B.lm; }
+      if (e.cy) { var c = e.cy === 'ca' ? B.acc : B.colors[+e.cy.slice(1) - 1]; if (c) { var k = e.t === 'shape' || e.t === 'btn' ? 'fill' : 'col'; var old = e[k]; e[k] = c + (old && old.length === 9 ? old.slice(7) : ''); } }
+      if (typeof e.txt === 'string') {
+        var t = e.txt;
+        (e.cyk || '').split('').forEach(function (k) { if (pairs[k]) t = t.split(pairs[k][0]).join(pairs[k][1]); });
+        if (t.indexOf(A.ar) >= 0) t = t.split(A.ar).join(B.ar);               // Arabic names cannot be mistaken for anything else
+        e.txt = t.slice(0, 200);
+      }
+    });
+    doc.cty = B.code;
+  }
+  function setCountry(code) { if (!doc.cty || !KT.CTRY[code] || code === doc.cty) return; var from = KT.CTRY[doc.cty].name; act(function () { swapCountry(code); }); setStatus(from + ' → ' + KT.CTRY[code].name + ' — Ctrl+Z to go back', 'ok'); }
+  (function () { var s = $('cty'); KT.CTRY_LIST.forEach(function (k) { var x = mk('option', null, k.name); x.value = k.code; s.appendChild(x); }); s.onchange = function () { setCountry(this.value); }; })();
+  function ctyBar() { var on = !!(doc && doc.cty); $('ctyw').hidden = !on; if (on) setV($('cty'), doc.cty); }
 
   // ── tabs ──
   function showTab(k) {
@@ -1420,6 +1602,7 @@
   $('saveas').onclick = function () { end(); doc.id = uid('d'); doc.name = (doc.name + ' copy').slice(0, 60); $('pname').value = doc.name; saveNow(); };
   function listMine() {
     return Store.listProjects().then(function (l) {
+      l = l.filter(function (p) { return p.co === co.id; });              // each company sees its own designs
       var h = $('mine'); h.textContent = ''; l.sort(function (a, b) { return b.updated - a.updated; }); $('mine-n').textContent = l.length ? '(' + l.length + ')' : '';
       if (!l.length) h.appendChild(mk('p', 'empty', 'Nothing saved yet. Save keeps the design on this computer.'));
       l.forEach(function (p) {
@@ -1437,7 +1620,7 @@
       end(); begin(); doc = d; end(); lastSaved = JSON.stringify(doc); st.grp = null; setSel([]); st.set = 0; $('pname').value = doc.name; draw(); listMine(); setStatus('Opened ' + doc.name, 'ok');
     });
   }
-  window.addEventListener('beforeunload', function () { clearTimeout(draftT); Store.draft({ doc: doc, t: Date.now(), saved: lastSaved === JSON.stringify(doc) }); });
+  window.addEventListener('beforeunload', function () { clearTimeout(draftT); Store.draft({ doc: doc, t: Date.now(), saved: lastSaved === JSON.stringify(doc) }, co.id); });
 
   // ── downloads: full HD, drawn from the same markup with the page's own embedded fonts ──
   var dlBusy = false, dlSt = $('dl-st'), dlExt = 'png';
@@ -1538,7 +1721,7 @@
           }); });
     }).catch(function (e) { setStatus('Not exported: ' + ((e && e.message) || 'try again'), 'warn'); });
   };
-  function importProject(text) {
+  function importProject(text, noBrand) {
     var o; try { o = JSON.parse(text); } catch (e) { return Promise.reject(new Error('That file is not a project file')); }
     if (!o || o.app !== 'kbb-ad-studio' || !Array.isArray(o.projects)) return Promise.reject(new Error('That file is not a KBB Ad Studio project'));
     var map = Object.create(null), ims = Array.isArray(o.images) ? o.images.slice(0, 200) : [];
@@ -1560,8 +1743,8 @@
         return r;
       }
       var docs = o.projects.slice(0, 200).map(function (p) { return cleanDoc(remap(p), images); }).filter(Boolean);
-      if (o.brand) { var b = cleanBrand(o.brand); b.logo = map[b.logo] || ''; brand = b; saveBrand(); }
-      return docs.reduce(function (p, d) { return p.then(function () { return Store.putProject(d); }); }, Promise.resolve()).then(function () { return docs; });
+      if (o.brand && !noBrand) { var b = cleanBrand(o.brand); b.logo = map[b.logo] || ''; brand = b; saveBrand(); }
+      return docs.reduce(function (p, d) { return p.then(function () { return Store.putProject(d); }); }, Promise.resolve()).then(function () { docs.imap = map; return docs; });
     });
   }
   $('xp-in').onchange = function () {
@@ -1583,6 +1766,126 @@
     }).catch(function (e) { setStatus('Not imported: ' + ((e && e.message) || 'try again'), 'warn'); });
   };
 
+  // ── companies: the switcher in the top bar, + New company, Edit company, export / import one company as .json ──
+  function firstTpl(c) { var s = c.studio.tplSet; return KT.LIST.filter(function (t) { return s === 'planet-careers' ? t.co === 'pc' : t.id === 'black-friday'; })[0] || KT.LIST[0]; }
+  function coBar() {
+    var s = $('co-sel'); s.textContent = '';
+    cos.forEach(function (c) { var o = mk('option', null, c.name); o.value = c.id; s.appendChild(o); });
+    var n = mk('option', null, '＋ New company…'); n.value = '__new'; s.appendChild(n);
+    var im = mk('option', null, 'Import company…'); im.value = '__imp'; s.appendChild(im);
+    s.value = co.id; document.documentElement.dataset.co = co.id;
+    $('br-nologo').textContent = co.id === 'kbb' ? 'Use the lotus logo' : co.mark ? 'Use the built-in mark' : 'No logo picture';
+  }
+  function setCompany(id, quiet) {
+    var c = coById(id); if (!c) return Promise.resolve(false);
+    if (c === co && doc) { coBar(); return Promise.resolve(true); }
+    stopPlay(); end(); clearTimeout(draftT);
+    if (doc) Store.draft({ doc: doc, t: Date.now(), saved: lastSaved === JSON.stringify(doc) }, co.id);
+    co = c; Store.putKV('company', c.id).catch(function () {});
+    var b = c.id === 'kbb' ? Store.getKV('brand').then(function (x) { brand = cleanBrand(x || {}); }).catch(function () { brand = cleanBrand({}); }) : Promise.resolve(brand = c.studio.brand);
+    return b.then(function () { return Store.readDraft(c.id); }).then(function (dr) {
+      var d = dr && cleanDoc(dr.doc, images); if (d && (d.co || 'kbb') !== c.id) d = null;
+      hist = []; fut = []; pending = null;
+      if (d) { doc = d; lastSaved = dr.saved ? JSON.stringify(d) : ''; } else { doc = fromTemplate(firstTpl(c)); lastSaved = ''; }
+      st.grp = null; setSel([]); st.set = 0; st.tset = ''; st.cat = 'all'; setV($('tf-set'), '');
+      $('pname').value = doc.name; coBar(); buildCats(); thumbsBuilt = ''; undoBtns(); draw(); if (st.tab === 'tpl') buildThumbs(); listMine();
+      if (!quiet) setStatus('Now working on ' + c.name, 'ok');
+      return true;
+    });
+  }
+  $('co-sel').onchange = function () {
+    var v = this.value; this.value = co.id;
+    if (v === '__new') return openCo(null);
+    if (v === '__imp') return $('co-in').click();
+    setCompany(v);
+  };
+  $('co-edit').onclick = function () { openCo(co); };
+  // the company form (new or edit): the brand kit fields of kit.schema.json the ads use
+  var coEditing = null;
+  (function () { ['co-fh', 'co-fb'].forEach(function (id) { Object.keys(FONTS).forEach(function (k) { if (k === 'cairo') return; var o = mk('option', null, FONTS[k]); o.value = k; $(id).appendChild(o); }); });
+    Object.keys(TSETS).forEach(function (k) { var o = mk('option', null, TSETS[k]); o.value = k; $('co-set').appendChild(o); }); })();
+  function openCo(c) {
+    coEditing = c; var base = c || cleanCompany({ name: 'New company', studio: { tplSet: 'planet-careers' } });
+    $('co-h').textContent = c ? 'Edit company · ' + c.name : 'New company';
+    setV($('co-name'), c ? c.name : ''); setV($('co-full'), base.fullName); setV($('co-ind'), base.industry);
+    ['primary', 'secondary', 'accent', 'soft', 'ink'].forEach(function (k) { setV($('co-c-' + k), base.colors[k].toLowerCase()); });
+    setV($('co-fh'), fontKey(base.fonts.heading, 'montserrat')); setV($('co-fb'), fontKey(base.fonts.body, 'inter'));
+    setV($('co-cl'), base.contactLine); ['website', 'phone', 'whatsapp', 'email', 'instagram'].forEach(function (k) { setV($('co-' + k), base.contact[k] || ''); });
+    setV($('co-cta'), base.endCard.cta[0] || ''); setV($('co-cta-ar'), base.endCard.ctaAr[0] || '');
+    $('co-tabby').checked = base.endCard.payments.indexOf('tabby') >= 0; $('co-tamara').checked = base.endCard.payments.indexOf('tamara') >= 0;
+    setV($('co-set'), base.studio.tplSet);
+    $('co-del').hidden = !c || c.studio.builtin; $('co-xp').hidden = !c;
+    $('co-st').textContent = ''; $('codlg').hidden = false; $('co-name').focus();
+  }
+  function closeCo() { $('codlg').hidden = true; coEditing = null; }
+  $('co-cancel').onclick = closeCo;
+  $('codlg').addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { ev.stopPropagation(); closeCo(); } });
+  $('co-save').onclick = function () {
+    var name = $('co-name').value.trim(); if (!name) { $('co-st').textContent = 'Give the company a name'; $('co-name').focus(); return; }
+    var old = coEditing, id = old ? old.id : name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32) || 'company';
+    if (!old) { var id0 = id, n = 2; while (coById(id)) id = id0 + '-' + n++; }
+    var raw = { id: id, name: name, fullName: $('co-full').value, industry: $('co-ind').value, colors: {}, fonts: { heading: { family: FONTS[$('co-fh').value] }, body: { family: FONTS[$('co-fb').value] } },
+      logos: { mark: old ? old.logos.mark : '' }, contactLine: $('co-cl').value, contact: {}, gradient: old && old.gradient,
+      endCard: { title: old ? old.endCard.title : '', sub: old ? old.endCard.sub : '', cta: [$('co-cta').value].concat(old ? old.endCard.cta.slice(1) : []).filter(Boolean), ctaAr: [$('co-cta-ar').value].concat(old ? old.endCard.ctaAr.slice(1) : []).filter(Boolean), payments: ['tabby', 'tamara'].filter(function (p) { return $('co-' + p).checked; }) },
+      studio: { tplSet: $('co-set').value, favs: old ? old.studio.favs : [], brand: old ? old.studio.brand : { c1: $('co-c-primary').value, c2: $('co-c-secondary').value, on: $('co-set').value === 'kbb' } } };
+    ['primary', 'secondary', 'accent', 'soft', 'ink'].forEach(function (k) { raw.colors[k] = $('co-c-' + k).value; });
+    raw.colors.bg = raw.colors.primary;
+    ['website', 'phone', 'whatsapp', 'email', 'instagram'].forEach(function (k) { raw.contact[k] = $('co-' + k).value; });
+    var c = cleanCompany(raw, old ? { id: old.id, builtin: old.studio.builtin, studio: old.studio, colors: old.colors } : null);
+    c.studio.builtin = old ? old.studio.builtin : false;
+    if (old) { cos[cos.indexOf(old)] = c; if (old === co) { co = c; if (c.id !== 'kbb') brand = c.studio.brand; } } else cos.push(c);
+    saveCos(); closeCo();
+    if (old && co === c) { coBar(); thumbsDirty(); buildCats(); draw(); setStatus(c.name + ' saved — new designs and the template previews use it', 'ok'); }
+    else setCompany(c.id).then(function () { setStatus(c.name + ' created — pick a template to start', 'ok'); });
+  };
+  $('co-del').onclick = function () {
+    var c = coEditing; if (!c || c.studio.builtin) return;
+    if (!confirm('Delete ' + c.name + ' and its saved designs from this computer? Export it first to keep a copy.')) return;
+    Store.listProjects().then(function (l) { return Promise.all(l.filter(function (p) { return p.co === c.id; }).map(function (p) { return Store.delProject(p.id); })); })
+      .then(function () { cos.splice(cos.indexOf(c), 1); saveCos(); closeCo(); co = null; return setCompany('kbb'); }).then(function () { setStatus(c.name + ' deleted', 'ok'); });
+  };
+  // one company -> one .json: its kit (kit.schema.json fields), its studio settings, logo, saved designs and their pictures
+  function exportCompany(c) {
+    end(); var used = Object.create(null);
+    return Store.listProjects().then(function (l) { return Promise.all(l.filter(function (p) { return p.co === c.id && IMGID.test(p.id); }).map(function (p) { return Store.getProject(p.id); })); }).then(function (ds) {
+      ds = ds.filter(Boolean).map(function (d) { return d.id === doc.id ? clone(doc) : d; });
+      if (doc && (doc.co || 'kbb') === c.id && !ds.some(function (d) { return d.id === doc.id; })) ds.push(clone(doc));
+      ds.forEach(function (d) { (d.els || []).forEach(function (e) { if (e.t === 'img') used[e.img] = 1; }); if (d.bg && d.bg.img) used[d.bg.img] = 1; FMTS.forEach(function (f) { ((d.sets || {})[f] || []).forEach(function (l) { l.forEach(function (it) { if (it.p.indexOf('u_') === 0) used[it.p.slice(2)] = 1; }); }); }); });
+      var b = c.id === co.id ? brand : c.studio.brand; if (b.logo) used[b.logo] = 1;
+      return Promise.all(Object.keys(used).filter(function (id) { return images[id]; }).map(function (id) { var im = images[id]; return Store.toData(im.src).then(function (data) { return { id: id, name: im.name, aspect: im.aspect, kind: im.kind, data: data }; }).catch(function () { return null; }); })).then(function (ims) {
+        var kit = clone(c); delete kit.studio; delete kit.mark;
+        var out = { app: 'kbb-studio', kind: 'company', v: 1, exported: new Date().toISOString(), kit: kit, studio: { tplSet: c.studio.tplSet, favs: c.studio.favs, brand: b }, projects: ds, images: ims.filter(Boolean) };
+        return Store.save('KBB-Studio-company-' + c.id + '.json', new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' })).then(function () { setStatus(c.name + ' exported: kit, ' + ds.length + ' design(s), ' + out.images.length + ' picture(s)', 'ok'); return out; });
+      });
+    }).catch(function (e) { setStatus('Not exported: ' + ((e && e.message) || 'try again'), 'warn'); });
+  }
+  $('co-xp').onclick = function () { if (coEditing) exportCompany(coEditing); };
+  function importCompany(text) {
+    var o; try { o = JSON.parse(text); } catch (e) { return Promise.reject(new Error('That file is not a company file')); }
+    if (!o || o.app !== 'kbb-studio' || o.kind !== 'company' || !o.kit || typeof o.kit !== 'object') return Promise.reject(new Error('That file is not a KBB Studio company'));
+    var old = SLUG.test(o.kit.id) ? coById(o.kit.id) : null, st0 = o.studio && typeof o.studio === 'object' ? o.studio : {};
+    var c = cleanCompany(Object.assign({}, o.kit, { studio: { tplSet: st0.tplSet, favs: st0.favs, brand: st0.brand } }), old ? { id: old.id, builtin: old.studio.builtin, studio: old.studio } : null);
+    c.studio.builtin = old ? old.studio.builtin : false; if (old && old.studio.builtin) c.logos.mark = c.mark = old.mark;
+    var projects = (Array.isArray(o.projects) ? o.projects : []).map(function (p) { var q = p && typeof p === 'object' ? Object.assign({}, p) : {}; q.co = c.id; return q; });
+    return importProject(JSON.stringify({ app: 'kbb-ad-studio', v: 1, projects: projects, images: o.images || [] }), true).then(function (docs) {
+      var lg = st0.brand && st0.brand.logo; c.studio.brand.logo = lg && docs.imap[lg] || '';
+      if (old) cos[cos.indexOf(old)] = c; else cos.push(c);
+      if (c.id === 'kbb') { Store.putKV('brand', c.studio.brand).catch(function () {}); }
+      if (co === old) co = null;
+      saveCos(); return setCompany(c.id, true).then(function () { setStatus('Imported ' + c.name + ' with ' + docs.length + ' design(s)', 'ok'); return c; });
+    });
+  }
+  $('co-imp2').onclick = function () { $('co-in').click(); };
+  $('co-in').onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return; closeCo();
+    if (f.size > 200e6) { setStatus('That file is too large', 'warn'); return; }
+    f.text().then(importCompany).catch(function (e) { setStatus('Not imported: ' + ((e && e.message) || 'try again'), 'warn'); }); };
+  // a photo slot (success stories, testimonials, the team): pick a picture and it takes the slot's place and shape
+  $('ph-file').onchange = function () { var f = this.files && this.files[0]; this.value = ''; var e = selEl(); if (!f || !e || !e.ph) return;
+    readPicture(f, { cut: false, max: 1400, kind: 'img' }).then(function (r) {
+      act(function () { var i = doc.els.indexOf(e); if (i < 0) return; var o = { id: e.id, t: 'img', name: 'Photo', img: r.id, sh: e.sh === 'arch' || e.sh === 'rect' || e.sh === 'pill' ? e.sh : 'circle', rad: e.rad, bw: e.bw, bc: e.bc, bs: e.bs, shd: e.shd }; if (e.gp) o.gp = e.gp; doc.els[i] = cleanEl(o, images); });
+      setStatus('Photo placed — drag the picture to move it', 'ok');
+    }).catch(pictureError); };
+
   // ── start ──
   function where() {
     var k = Store.kind();
@@ -1591,20 +1894,26 @@
   }
   Store.init().then(function () {
     where();
-    return Store.listImages().then(function (l) { l.forEach(registerImage); }).catch(function () {})
-      .then(function () { return Store.getKV('brand').then(function (b) { if (b) brand = cleanBrand(b); }).catch(function () {}); })
-      .then(function () { return Store.readDraft(); });
+    return Promise.all([loadArt(), Store.listImages().then(function (l) { l.forEach(registerImage); }).catch(function () {})])
+      .then(function () { return Store.getKV('companies').then(function (l) { (Array.isArray(l) ? l : []).slice(0, 50).forEach(function (r) {
+        var old = r && SLUG.test(r.id) ? coById(r.id) : null, c = cleanCompany(r, old ? { id: old.id, builtin: true, studio: old.studio, colors: old.colors } : null);
+        c.studio.builtin = !!old; if (old) { if (old.mark) c.logos.mark = c.mark = old.mark; cos[cos.indexOf(old)] = c; } else if (!coById(c.id)) cos.push(c);
+      }); }).catch(function () {}); })
+      .then(function () { return Store.getKV('company').then(function (id) { co = coById(id) || cos[0]; }).catch(function () {}); })
+      .then(function () { if (co.id !== 'kbb') { brand = co.studio.brand; return; } return Store.getKV('brand').then(function (b) { if (b) brand = cleanBrand(b); }).catch(function () {}); })
+      .then(function () { return Store.readDraft(co.id); });
   }).then(function (dr) {
-    var d = dr && cleanDoc(dr.doc, images);
+    var d = dr && cleanDoc(dr.doc, images); if (d && (d.co || 'kbb') !== co.id) d = null;
     if (d) { doc = d; lastSaved = dr.saved ? JSON.stringify(d) : ''; if (!dr.saved) setStatus('Your last session is back — press Save to keep it', 'warn'); }
-    else { doc = fromTemplate(tplById['black-friday'] || KT.LIST[0]); lastSaved = ''; }
+    else { doc = fromTemplate(firstTpl(co)); lastSaved = ''; }
     $('pname').value = doc.name;
-    buildPk(); buildCats(); undoBtns(); draw(); showTab('tpl'); listMine();
+    coBar(); buildPk(); buildCats(); undoBtns(); draw(); showTab('tpl'); listMine();
     document.documentElement.dataset.ready = '1';
   });
 
   // test hooks (read-only views + the same actions the buttons run)
   window.KBB_STUDIO = { shared: { Store: Store, D: D, ICONS: ICONS, iconSvg: iconSvg, FONTS: FONTS, images: images, brand: function () { return brand; }, IMGID: IMGID }, stopPlay: function () { stopPlay(); },
-    get doc() { return doc; }, st: st, templates: KT.LIST, useTemplate: function (id) { useTemplate(tplById[id]); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; },
+    get doc() { return doc; }, st: st, templates: KT.LIST, useTemplate: function (id, cty) { useTemplate(tplById[id], cty); },
+    setCompany: setCompany, company: function () { return co; }, companies: function () { return cos; }, setCountry: setCountry, countries: KT.CTRY_LIST, exportCompany: function (id) { return exportCompany(coById(id) || co); }, importCompany: importCompany, art: function () { return Object.keys(ART).length; }, fromTemplate: function (id, cty) { return fromTemplate(tplById[id], co, cty); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; },
     selKeys: selKeys, setSel: function (k) { setSel(k); afterSel(); }, itemBox: itemBox, aabb: aabb, docColours: function () { return docColours(doc); } };
 })();

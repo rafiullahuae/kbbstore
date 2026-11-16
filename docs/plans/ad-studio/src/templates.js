@@ -1027,6 +1027,7 @@ var KBB_T = (function () {
   add('uae', 'nd-velvet', 'National Day · Velvet Spotlight', 'ndvelvet', ND, ndT({ kick: 'INDULGE IN GLOW', ar: 'كل عام والإمارات بخير', cta: 'Shop the Offer' }), {}, NDT + ' velvet burgundy wine gold spotlight luxury', ['bdserum', 'eospeach', 'nbz9', 'eosbutter', 'nbz5', 'anuaeye', 'azelaic', 'bdeye']);
   add('uae', 'nd-sky', 'National Day · Arch Sky', 'ndsky', ND, ndT({ kick: 'A FRESH NEW GLOW', ar: ARU, cta: 'Get the Deals' }), {}, NDT + ' minimal pearl arch window sky modern', ['nbz9', 'anuaeye', 'bdserum', 'azelaic', 'nbz5', 'bdeye', 'eosbutter', 'eospeach']);
 
+/*PC*/
   var CATS = [['all', 'All'], ['uae', 'UAE & Gulf'], ['global', 'Global occasions'], ['sale', 'Sales & offers'], ['product', 'Products & routines']];
-  return { FAM: FAM, LIST: L, CATS: CATS, FH: FH, PAL: PAL };
+  return { FAM: FAM, LIST: L, CATS: CATS, FH: FH, PAL: PAL, PCCATS: PCCATS, CTRY: CTRY, CTRY_LIST: CTRY_LIST, kitPal: kitPal, tokens: tokens };
 })();

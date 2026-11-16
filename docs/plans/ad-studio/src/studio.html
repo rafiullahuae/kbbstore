@@ -176,6 +176,18 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
 @keyframes a-up{from{opacity:0;translate:0 6cqw}to{opacity:1;translate:0 0}}
 @keyframes a-float{0%,100%{translate:0 0}50%{translate:0 -1.2cqw}}
 @keyframes a-sway{0%,100%{rotate:-2deg}50%{rotate:2deg}}
+.cosw{display:flex;gap:6px;align-items:center;min-width:0}
+#co-sel{max-width:170px;padding:6px 8px;border:1px solid var(--line);border-radius:9px;background:var(--panel);font-weight:700;font-size:13px}
+.tf{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,.9fr);gap:6px}
+.ctyw{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:700;color:var(--muted)}
+.ctyw select{width:auto;max-width:160px;padding:4px 6px}
+.tg[data-size="story"]{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))}
+.codlg{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px}
+.codlg .box{width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.codlg h2{margin:0;font-size:16px}
+.codlg .cols{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.codlg .cols input{width:100%}
+@media (max-width:600px){.codlg .cols{grid-template-columns:repeat(3,minmax(0,1fr))}}
 /*PRODUCT_CSS*/
 /*VIDEO_CSS*/
 </style>
@@ -185,6 +197,7 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
   <header class="top">
     <h1>KBB Ad Studio<small id="mode"></small></h1>
     <div class="seg modesw" id="modesw" role="group" aria-label="Mode"><button data-m="ads" type="button" aria-pressed="true">Ads</button><button data-m="video" type="button" aria-pressed="false">Video</button></div>
+    <div class="cosw ads-only" role="group" aria-label="Company"><select id="co-sel" aria-label="Company"></select><button class="btn sm" id="co-edit" type="button" title="Brand kit, contact line, template set">Edit company</button><input id="co-in" type="file" accept="application/json,.json" hidden></div>
     <input id="pname" class="ads-only" type="text" maxlength="60" aria-label="Design name" value="Untitled design">
     <div class="tb ads-only">
       <button class="btn ic" id="undo" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
@@ -200,6 +213,7 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
         <span id="sets" class="bar" role="group" aria-label="Product set"></span><span class="sep"></span>
         <button class="chip" id="play" type="button">▶ Play</button>
         <button class="chip" id="pick" type="button" aria-pressed="false" title="Tap items to add or remove them from the selection (for touch screens)">☐ Select</button>
+        <span class="ctyw" id="ctyw" hidden><label for="cty">Country</label><select id="cty" title="Swaps the flag, outline, landmark, flag colours and the country's name in one click"></select></span>
       </div>
       <div class="abar" id="abar" role="toolbar" aria-label="Arrange the selection">
         <button class="btn ic" type="button" data-al="l" title="Align left" aria-label="Align left"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="1.6" height="14"/><rect x="4" y="3" width="10" height="3.5" rx=".8"/><rect x="4" y="9.5" width="6" height="3.5" rx=".8"/></svg></button>
@@ -233,7 +247,9 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
 
       <div class="pane" data-pane="tpl" role="tabpanel">
         <input type="search" id="tq" placeholder="Search 50+ templates — Eid, SPF, flash sale…" aria-label="Search templates">
+        <div class="tf"><select id="tf-set" aria-label="Template set"></select><select id="tf-cty" aria-label="Country"></select><select id="tf-size" aria-label="Preview size"></select></div>
         <div class="cats" id="cats"></div>
+        <div class="btns"><button class="btn sm" id="fav" type="button" aria-pressed="false">☆ Add to favourites</button></div>
         <div class="tg" id="tg"></div>
         <details id="mine-d"><summary>My saved designs <span class="lbl" id="mine-n"></span></summary><div class="in"><div class="mine" id="mine"></div>
           <div class="btns"><button class="btn sm" id="saveas" type="button">Save as a copy</button></div></div></details>
@@ -249,6 +265,7 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
           </div>
           <div class="g2"><div class="row"><label for="add-badge">Badge</label><select id="add-badge"><option value="">Add a badge…</option><option value="burst">Burst</option><option value="circle">Circle</option><option value="pill">Pill</option><option value="star">Star</option><option value="heart">Heart</option><option value="banner">Banner</option><option value="ribbon">Corner ribbon</option></select></div>
           <div class="row"><label for="add-shape">Shape</label><select id="add-shape"><option value="">Add a shape…</option><option value="rect">Rectangle</option><option value="circle">Circle</option><option value="ellipse">Oval</option><option value="ring">Ring</option><option value="arch">Arch</option><option value="blob">Blob</option><option value="ticket">Ticket</option><option value="petal">Petal</option><option value="silk">Silk ribbon</option><option value="glow">Soft glow</option><option value="line">Line</option></select></div></div>
+          <div class="row"><label for="add-art">Flags · outlines · landmarks</label><select id="add-art"></select></div>
           <div class="row"><span class="lbl">Icon</span><div class="icg" id="icg"></div></div>
         </div></details>
         <details open id="sel-d"><summary><span id="sel-t">Nothing selected</span></summary><div class="in" id="props">
@@ -270,8 +287,10 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
           <div class="g2" data-show="text btn shape"><div class="row"><label for="p-ls">Letter spacing</label><input id="p-ls" type="range" data-p="ls" min="-10" max="60" step="1"></div>
             <div class="row"><label for="p-lh">Line height</label><input id="p-lh" type="range" data-p="lh" min="70" max="200" step="1"></div></div>
           <div class="g2" data-show="icon"><div class="row"><label for="p-ic">Icon</label><select id="p-ic" data-p="ic"></select></div><div class="row"><span class="lbl">Colour</span><button class="sw" type="button" data-cp="col" aria-label="Icon colour" aria-expanded="false"><i></i></button></div></div>
+          <div class="g2" data-show="art"><div class="row"><label for="p-art">Picture</label><select id="p-art" data-p="art"></select></div><div class="row"><span class="lbl">Colour (outlines, landmarks)</span><button class="sw" type="button" data-cp="col" aria-label="Art colour" aria-expanded="false"><i></i></button></div></div>
+          <div class="btns" id="ph-row" hidden><label class="btn sm pri" for="ph-file">Put a photo here…</label><input id="ph-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><span class="note">It takes this slot's place and shape.</span></div>
           <div class="row" data-show="pay"><label for="p-pay">Shows</label><select id="p-pay" data-p="pay"><option value="both">tabby + tamara</option><option value="tabby">tabby</option><option value="tamara">tamara</option></select></div>
-          <div class="row" data-show="text btn shape"><label for="p-sh">Shape behind</label><select id="p-sh" data-p="sh"></select></div>
+          <div class="row" data-show="text btn shape art img"><label for="p-sh">Shape behind / crop</label><select id="p-sh" data-p="sh"></select></div>
           <div class="g2" data-show="fill"><div class="row"><span class="lbl">Fill</span><div class="crow"><button class="sw" type="button" data-cp="fill" aria-label="Fill colour" aria-expanded="false"><i></i></button><button class="btn sm" id="p-fill0" type="button">None</button></div></div>
             <div class="row"><span class="lbl">2nd colour (gradient)</span><div class="crow"><button class="sw" type="button" data-cp="fill2" aria-label="Second fill colour" aria-expanded="false"><i></i></button><button class="btn sm" id="p-fill20" type="button">Off</button></div></div></div>
           <div class="row" data-show="fill"><label for="p-gang">Gradient angle</label><input id="p-gang" type="range" data-p="gang" min="0" max="360" step="5"></div>
@@ -373,6 +392,23 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
   </div>
 /*VIDEO_HTML*/
 </div>
+<div class="codlg" id="codlg" role="dialog" aria-modal="true" aria-labelledby="co-h" hidden><div class="box">
+  <h2 id="co-h">Company</h2>
+  <div class="g2"><div class="row"><label for="co-name">Short name (switcher)</label><input type="text" id="co-name" maxlength="40"></div><div class="row"><label for="co-full">Full name (logo spot)</label><input type="text" id="co-full" maxlength="60"></div></div>
+  <div class="g2"><div class="row"><label for="co-ind">Industry</label><input type="text" id="co-ind" maxlength="80" placeholder="e.g. Immigration consultancy"></div><div class="row"><label for="co-set">Template set</label><select id="co-set"></select></div></div>
+  <span class="lbl">Brand colours · main · second · accent · light · ink</span>
+  <div class="cols"><input type="color" id="co-c-primary" aria-label="Main colour"><input type="color" id="co-c-secondary" aria-label="Second colour"><input type="color" id="co-c-accent" aria-label="Accent colour"><input type="color" id="co-c-soft" aria-label="Light colour"><input type="color" id="co-c-ink" aria-label="Ink colour"></div>
+  <div class="g2"><div class="row"><label for="co-fh">Heading font</label><select id="co-fh"></select></div><div class="row"><label for="co-fb">Body font</label><select id="co-fb"></select></div></div>
+  <div class="row"><label for="co-cl">Contact line (printed on the ads)</label><input type="text" id="co-cl" maxlength="120" placeholder="+971 … · WhatsApp · website.com"></div>
+  <div class="g2"><div class="row"><label for="co-website">Website</label><input type="text" id="co-website" maxlength="80"></div><div class="row"><label for="co-phone">Phone</label><input type="text" id="co-phone" maxlength="80"></div>
+    <div class="row"><label for="co-whatsapp">WhatsApp</label><input type="text" id="co-whatsapp" maxlength="80"></div><div class="row"><label for="co-email">Email</label><input type="text" id="co-email" maxlength="80"></div>
+    <div class="row"><label for="co-instagram">Instagram</label><input type="text" id="co-instagram" maxlength="80"></div></div>
+  <div class="g2"><div class="row"><label for="co-cta">Default button (English)</label><input type="text" id="co-cta" maxlength="60"></div><div class="row"><label for="co-cta-ar">Default button (Arabic)</label><input type="text" id="co-cta-ar" maxlength="60" dir="rtl"></div></div>
+  <div class="btns"><span class="lbl">Payment badges</span><label class="ck"><input type="checkbox" id="co-tabby"> tabby</label><label class="ck"><input type="checkbox" id="co-tamara"> tamara</label></div>
+  <p class="note">The logo picture and the "use my colours on every template" switch are in Style → Brand kit, for the company you are in.</p>
+  <div class="st" id="co-st" role="status"></div>
+  <div class="btns"><button class="btn pri" id="co-save" type="button">Save company</button><button class="btn" id="co-cancel" type="button">Cancel</button><button class="btn sm" id="co-xp" type="button">Export company (.json)</button><button class="btn sm" id="co-imp2" type="button">Import company…</button><button class="btn sm" id="co-del" type="button">Delete company</button></div>
+</div></div>
 <div class="ccp" id="ccp" role="dialog" aria-label="Colour" hidden>
   <div class="crow"><input type="color" id="cc-pick" aria-label="Pick a colour"><input type="text" id="cc-hex" maxlength="9" spellcheck="false" autocomplete="off" aria-label="Hex colour (#RRGGBB or #RRGGBBAA)"><button class="btn ic" id="cc-eye" type="button" title="Pick a colour from the screen" aria-label="Eyedropper"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22l1-4 9.5-9.5 3 3L6 21zM14 5l2-2a2.1 2.1 0 0 1 3 0l2 2a2.1 2.1 0 0 1 0 3l-2 2"/><path d="M12.5 6.5l5 5"/></svg></button><button class="btn ic" id="cc-x" type="button" aria-label="Close">×</button></div>
   <div class="row"><label for="cc-a">Opacity <span id="cc-av"></span></label><input id="cc-a" type="range" min="0" max="100" step="1"></div>

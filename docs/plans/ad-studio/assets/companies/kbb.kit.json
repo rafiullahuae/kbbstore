@@ -1,0 +1,144 @@
+{
+ "v": 1,
+ "id": "kbb",
+ "name": "KBB",
+ "fullName": "K-Beauty Bliss",
+ "industry": "Beauty / K-beauty retail",
+ "industries": [
+  "beauty",
+  "retail"
+ ],
+ "colors": {
+  "primary": "#C6395F",
+  "secondary": "#2A2228",
+  "accent": "#BE8E2E",
+  "text": "#ffffff",
+  "bg": "#000000",
+  "soft": "#FFF0F4",
+  "ink": "#2A2228"
+ },
+ "gradient": [
+  "#C6395F",
+  "#E8789A",
+  "#FFF0F4"
+ ],
+ "fonts": {
+  "heading": {
+   "family": "Playfair Display",
+   "fallback": "Georgia, serif",
+   "files": [
+    {
+     "file": "fonts/playfair-display.woff2",
+     "weight": "400 900"
+    }
+   ]
+  },
+  "body": {
+   "family": "Poppins",
+   "fallback": "Arial, sans-serif",
+   "files": [
+    {
+     "file": "fonts/poppins-400.woff2",
+     "weight": 400
+    },
+    {
+     "file": "fonts/poppins-600.woff2",
+     "weight": 600
+    },
+    {
+     "file": "fonts/poppins-700.woff2",
+     "weight": 700
+    }
+   ]
+  },
+  "arabic": {
+   "family": "Cairo",
+   "fallback": "Tahoma, sans-serif",
+   "files": [
+    {
+     "file": "fonts/cairo-arabic.woff2",
+     "weight": "200 1000",
+     "unicodeRange": "U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0898-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC"
+    },
+    {
+     "file": "fonts/cairo-latin.woff2",
+     "weight": "200 1000"
+    }
+   ]
+  }
+ },
+ "logos": {
+  "mark": "logo-mark.svg",
+  "full": "logo.svg",
+  "light": "logo-white.svg",
+  "markLight": "logo-mark-white.svg",
+  "markPaths": {
+   "viewBox": [
+    780,
+    582
+   ],
+   "paths": [
+    {
+     "d": "M154 103Q399 122 439 424Q194 343 154 103ZM521 2Q407 136 471 389Q640 185 521 2ZM548 387Q642 239 778 249Q738 393 548 387ZM2 481Q190 313 434 475Q189 595 2 481ZM534 456Q707 461 737 544Q613 589 534 456Z",
+     "fill": "#C6395F"
+    }
+   ]
+  }
+ },
+ "intro": {
+  "style": "bloom",
+  "dur": 1.2,
+  "sfx": "sparkle"
+ },
+ "outro": {
+  "style": "reveal",
+  "dur": 1.5,
+  "sfx": "ding"
+ },
+ "endCard": {
+  "title": "K-Beauty Bliss",
+  "sub": "Authentic Korean skincare, delivered across the UAE",
+  "cta": [
+   "Shop now at kbeautybliss.com",
+   "Link in bio",
+   "Order today"
+  ],
+  "ctaAr": [
+   "تسوقي الآن",
+   "الرابط في البايو",
+   "اطلبي اليوم"
+  ],
+  "payments": [
+   "pay/tabby-badge.svg",
+   "pay/tamara-badge.svg"
+  ],
+  "style": "gradient"
+ },
+ "contact": {
+  "website": "kbeautybliss.com",
+  "phone": "",
+  "whatsapp": "",
+  "email": "",
+  "instagram": "",
+  "address": "UAE"
+ },
+ "contactLine": "kbeautybliss.com",
+ "defaults": {
+  "captionStyle": "soft-beauty",
+  "captionStyleAr": "arabic-first",
+  "musicMoods": [
+   "luxury",
+   "upbeat-pop",
+   "calm-spa"
+  ],
+  "favRecipes": [
+   "kbb-unboxing",
+   "kbb-texture-demo",
+   "kbb-flash-sale",
+   "kbb-routine-steps"
+  ],
+  "aspect": "9:16"
+ },
+ "motif": "lotus",
+ "notes": "Logo = the shop lotus (LogoLockup paths). Colours from the shop stylesheet (--pink #C6395F, --pink-ink #A82F53, --pink-soft #FFF0F4, --ink #2A2228, --gold #BE8E2E). Payment badges copied from Ad Studio for the end card. Edit contact details in the app."
+}
