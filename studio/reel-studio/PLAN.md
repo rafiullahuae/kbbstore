@@ -358,3 +358,23 @@ where i need to enter the logins, apis etc."*
 * **Configure page** (⚙ in the top bar and on home): companies & brand kits, Connect Claude, photo sources
   (Pexels/Unsplash), models, folders, social handles/contact lines, language defaults, about/version — all
   keys stored privately by the engine, tested with a Test button, never written into projects or exports.
+
+## Word-perfect caption sync — queued 16 Nov (next free lane, before the complete zip)
+
+The owner: *"i need the best audio sync. along with the user speech, must be same as user speak, should not
+delay the captions or come fast as the user speaks, every word should sense itself and sync with the user
+original sync time frame etc."*
+
+* Whisper's word times are approximate (attention-based). Add a second, precise pass: **forced alignment**
+  of the transcript to the audio with an offline CTC model (permissive licence only — e.g. wav2vec2
+  English, XLSR-53 Arabic/Urdu/Hindi fine-tunes under Apache-2.0; NOT MMS, which is non-commercial),
+  run in a worker; then snap each word's start/end to the nearest acoustic onset/offset (energy + spectral
+  flux) within a small window; keep words monotonic with no overlaps.
+* Fix every source of drift: container start offsets and AAC priming, clip trims, speed changes and
+  ramps, jump-cut tightening, reel re-ordering — captions follow the media time of each word through
+  every edit; preview and export use the same clock.
+* Controls: global "caption timing" nudge (±ms) per project, optional lead (show each word a few ms
+  early for readability), per-word drag on a waveform in the transcript.
+* Measured, not asserted: on clips with KNOWN word times (synthetic speech with exact timings, plus
+  real speech aligned by hand), target median |error| ≤ 30 ms and 95th percentile ≤ 80 ms for word
+  starts, in EN, AR and UR; report before/after vs Whisper-only.
