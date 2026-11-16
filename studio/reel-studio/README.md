@@ -115,7 +115,8 @@ switched off and nothing goes online.
 | `library/sfx/` | sound effects (28, free to use) |
 | `library/people/<occupation>/` | worker photos you saved from the 📷 Photos tab, each with a `.json` beside it (photographer, licence, source link) |
 | `library/occupations/` | the 100 occupations (English / Arabic, uniforms, tools, search words) the Photos tab and the Ad Studio use |
-| `settings/` | your Pexels / Unsplash keys (only the engine reads this; never put it in a shared folder) |
+| `settings/` | your Pexels / Unsplash / Claude keys and preferences (only the engine reads this; never put it in a shared folder) |
+| `workspaces/<company>/designs/` | saved designs, AI pictures (`images/`, each with its prompt and licence) and saved colour schemes |
 | `brands/` | the brand kits: colours, fonts, logos, end cards (KBB, Planet Careers, and any company you add) |
 | `models/` | the speech models, downloaded once by the setup |
 
@@ -170,6 +171,52 @@ step you can undo with **⌘Z**.
 * **Trending-sound cue sheet** — tap or type the tempo of the sound you will add in Instagram/TikTok (or let the
   studio measure it), and the cuts move onto its beats; a cue sheet and a click guide track are saved in `exports/`.
 
+## 9. Brief → Designs (ad pictures from your own words)
+
+On the home screen, **🖼 Brief → Designs**: type what you want, in English or Arabic, the way you would tell a designer —
+*"National Day: 30% off Anua and BoJ, story and post, luxury"*, *"Work abroad: welders wanted for Poland, apply on
+WhatsApp"* — and press **✨ Make designs**.
+
+* **What I understood** shows how the studio read it: the occasion, the offer, the brands and products (from the KBB
+  catalogue — a brand without a product photo yet is named in the words and flagged), the country, intake and jobs for
+  Planet Careers, audience, tone, languages, sizes and the button. It reads briefs offline; the optional *Writing* model
+  (⚙ Configure → Models) and **Smart brief (Claude)** help with long, free-form briefs, and the offline reader checks
+  whatever they say (no invented discounts, products or promises).
+* You get **6–8 different designs** (spotlight, editorial frame, split, big number, offer badge, floating card, arch,
+  tiles, poster, diagonal band) in your company's colours, fonts and logo, in **story 1080×1920, post 1080×1350 and
+  square 1080×1080**, with English and Arabic lines. Every one passes the design rules in every size: text contrast
+  4.5:1 or more (measured on the real pixels), nothing in the Instagram/TikTok button areas, no text smaller than 24 px,
+  no overlaps, products never cropped, one clear headline and one button.
+* **Click a design** to edit it: click anything to select it, drag to move, drag the yellow corner to resize, change the
+  words, size, font, colours (scheme colours or any colour), swap a product or a picture, change the colour scheme or the
+  artwork. The rules are re-checked as you go. **⌘Z** undoes. **💾 Save** keeps it in `workspaces/<company>/designs/`.
+* **⬇ Export**: PNG or JPG, **Full HD** or **4K**, this size or every size → `workspaces/<company>/exports/designs/`.
+* **🎬 Make a matching reel** starts a reel with the same brief, the matching recipe and this design saved as a picture.
+* **Visuals** (right): **🖼 AI pictures** — backgrounds, scenes and worker photos made **on your Mac** by an open picture
+  model (install *Pictures (AI)*, about 1 GB, once): pick an idea or type your own, 2–6 pictures per click, **Lock seed**
+  to get the same picture again, click one to use it (it is enlarged ×2 and saved with its prompt in
+  `workspaces/<company>/designs/images/`). The words of the ad are never drawn into a picture, and product photos are
+  always the real ones. **🎨 Colours** — schemes made for this brief (your kit, the occasion, the mood, the country's
+  flag), all contrast-checked; ★ saves one to the company. **✳ Icons** — 1,539 open icons, picked by meaning, in line /
+  duotone / badge styles. **✦ Artwork** — gradients, mesh, ribbons, confetti, light, patterns, frames, always in your
+  colours.
+* In the reel editor, the **🖼 Designs** tab lists your saved designs; **+ Add to reel** puts one at the playhead.
+
+## 10. ⚙ Configure (one page for everything you enter)
+
+**⚙ Configure** (top bar, on the home screen and in the editor): **Companies** (edit kit: logo, colours, fonts) ·
+**Contact & social** (website, phone, WhatsApp, email, Instagram, TikTok …, the button wording in English and Arabic) ·
+**Connect Claude** · **Photo sources** (your Pexels and Unsplash keys) · **Models** (installed / available with sizes,
+download, remove) · **Folders & storage** (sizes, *Open in Finder*) · **Languages** (caption language, translation
+targets, ad copy languages) · **About**.
+
+**Connect Claude (optional).** Without it everything works offline. With it: *Smart brief* and *Best quality*
+translation. Paste your key (console.anthropic.com → API keys), **Save**, **Test**. The key is kept by the studio in
+`settings/` (only your Mac user can read it), never in a project, a design, an export or a log; the page shows only its
+last four characters. The studio asks once per session before anything goes to Claude, and then sends **only the brief
+text and the catalogue names** (or the caption lines to translate). **Disconnect** deletes the key. Default model: Claude
+Sonnet 5.5 (Opus 5.5 and Haiku 5.5 can be picked).
+
 ## Keyboard
 
 Space play/pause · J K L back/stop/forward · S split · Delete remove · Shift+Delete ripple delete ·
@@ -203,4 +250,14 @@ Space play/pause · J K L back/stop/forward · S split · Delete remove · Shift
   `r2-check.cjs`, `r3-check.cjs`, `c-media.cjs` + `c-fetch-models.cjs` + `c-check.cjs` (content / Create tab),
   `package-mac.sh` (→ `dist/KBB Studio.zip`, models excluded).
   `r2-check.cjs`, `k-check.cjs` + `k-editor.cjs` (captions round), `r3-check.cjs`, `package-mac.sh` (→ `dist/KBB Studio.zip`, models excluded).
+* `app/designs/` — Brief → Designs: `lib/brief.js` (rule reader + `validateSpec`), `llm.js` (local Qwen / Claude),
+  `lib/copy.js`, `lib/palette.js`, `layouts.js` (10 families, the Ad Studio's family idea ported to canvas px),
+  `render.js` (one canvas renderer for thumbnails, editor, rules and export), `rules.js` (the scorer), `generate.js`,
+  `art.js`, `icons.js` (vendored Lucide), `imagegen/` (SDXS worker, prompts, picture check), `screen.js`, `editor.js`.
+  Checked by `tools/d-check.cjs` (+ `d-claude-mock.cjs`, `d-briefs.mjs`; `d-gen-probe.cjs` / `d-imagegen-probe.cjs` for
+  contact sheets and the model alone).
+* `app/settings/` — ⚙ Configure (`configure.js`) and the Claude client (`claude.js`: `claudeStatus()`, `claudeRun({task})`
+  for other modules; tasks `test`, `brief`, `translate`). The engine side is `engine/settings.go`: the key in
+  `settings/claude.json` (0600), calls only to `https://api.anthropic.com/v1/messages` after the per-session grant,
+  `anthropic-version: 2026-10-21`, structured JSON output, refusal fallback on Sonnet/Opus 5.5.
 * The app name lives in `app/core/config.js` `APP_NAME` (and `appName` in `engine/main.go`, the launcher's file name).

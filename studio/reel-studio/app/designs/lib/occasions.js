@@ -1,0 +1,42 @@
+// KBB Studio · Designs · occasions the brief reader knows (EN / AR words), with their colours, mood, art and wording.
+// Colours are the occasion's own (flags, seasons); the design keeps the company's kit in front and uses these as accents.
+export const OCCASIONS = [
+  { id: 'uae-national-day', en: 'UAE National Day', ar: 'اليوم الوطني', words: ['national day', 'union day', 'eid al etihad', 'eid al-etihad', 'uae day', '2 dec', 'december 2', 'اليوم الوطني', 'عيد الاتحاد', 'الاتحاد'], colors: ['#EF3340', '#00843D', '#FFFFFF', '#000000'], mood: 'proud', art: ['ribbons', 'confetti', 'light'], icon: 'flag', country: 'ae',
+    head: { en: ['National Day Glow', 'Celebrate the Union', 'Proud & Glowing', 'Our Gift for National Day', 'United in Glow', 'National Day Offer'], ar: ['عروض اليوم الوطني', 'احتفلي باليوم الوطني', 'هدية اليوم الوطني', 'إشراقة اليوم الوطني'] } },
+  { id: 'saudi-national-day', en: 'Saudi National Day', ar: 'اليوم الوطني السعودي', words: ['saudi national day', 'ksa national day', 'اليوم الوطني السعودي'], colors: ['#006C35', '#FFFFFF'], mood: 'proud', art: ['ribbons', 'light'], icon: 'flag', country: 'sa',
+    head: { en: ['Saudi National Day', 'Celebrate Saudi National Day'], ar: ['اليوم الوطني السعودي'] } },
+  { id: 'ramadan', en: 'Ramadan', ar: 'رمضان', words: ['ramadan', 'ramzan', 'iftar', 'suhoor', 'رمضان', 'إفطار'], colors: ['#1B2A4A', '#D4A64A', '#F5E6C8'], mood: 'calm', art: ['lanterns', 'stars', 'light'], icon: 'moon',
+    head: { en: ['Ramadan Kareem', 'A Glowing Ramadan', 'Ramadan Offers'], ar: ['رمضان كريم', 'عروض رمضان'] } },
+  { id: 'eid-al-fitr', en: 'Eid al-Fitr', ar: 'عيد الفطر', words: ['eid al fitr', 'eid al-fitr', 'eid ul fitr', 'عيد الفطر'], colors: ['#0F5257', '#D4A64A', '#FFF4DE'], mood: 'warm', art: ['stars', 'confetti', 'light'], icon: 'moon-star',
+    head: { en: ['Eid Mubarak', 'Eid Glow Edit', 'Eid Offers'], ar: ['عيد مبارك', 'عروض العيد'] } },
+  { id: 'eid-al-adha', en: 'Eid al-Adha', ar: 'عيد الأضحى', words: ['eid al adha', 'eid al-adha', 'eid ul adha', 'عيد الأضحى'], colors: ['#3C2A4D', '#D4A64A', '#FFF4DE'], mood: 'warm', art: ['stars', 'light'], icon: 'moon-star',
+    head: { en: ['Eid Mubarak', 'Eid al-Adha Offers'], ar: ['عيد أضحى مبارك', 'عروض عيد الأضحى'] } },
+  { id: 'eid', en: 'Eid', ar: 'العيد', words: ['eid', 'عيد'], colors: ['#0F5257', '#D4A64A', '#FFF4DE'], mood: 'warm', art: ['stars', 'confetti'], icon: 'moon-star',
+    head: { en: ['Eid Mubarak', 'Eid Glow Edit'], ar: ['عيد مبارك', 'عروض العيد'] } },
+  { id: 'white-friday', en: 'White Friday', ar: 'الجمعة البيضاء', words: ['white friday', 'black friday', 'الجمعة البيضاء', 'الجمعة السوداء', 'cyber monday'], colors: ['#111111', '#FFFFFF', '#E8C547'], mood: 'bold', art: ['bold-shapes', 'rays'], icon: 'zap',
+    head: { en: ['White Friday', 'The Biggest Sale', 'White Friday Deals'], ar: ['الجمعة البيضاء', 'أكبر تخفيضات'] } },
+  { id: '11-11', en: '11.11 Sale', ar: 'تخفيضات 11.11', words: ['11.11', 'singles day', '11/11'], colors: ['#FF2D55', '#FFD60A', '#1C1C1E'], mood: 'bold', art: ['confetti', 'bold-shapes'], icon: 'zap',
+    head: { en: ['11.11 Sale', 'Double Eleven Deals'], ar: ['تخفيضات 11.11'] } },
+  { id: 'valentines', en: "Valentine's Day", ar: 'عيد الحب', words: ['valentine', "valentine's", 'galentine', 'عيد الحب'], colors: ['#D7263D', '#F7C1CB', '#FFFFFF'], mood: 'romantic', art: ['hearts', 'light'], icon: 'heart',
+    head: { en: ['Made with Love', 'Love Your Skin', "Valentine's Gifts"], ar: ['هدايا الحب', 'أحبّي بشرتك'] } },
+  { id: 'mothers-day', en: "Mother's Day", ar: 'عيد الأم', words: ["mother's day", 'mothers day', 'mom', 'عيد الأم', 'الأم'], colors: ['#E8789A', '#FFF0F4', '#8E5572'], mood: 'warm', art: ['petals', 'light'], icon: 'heart',
+    head: { en: ["For Mum, With Love", "Mother's Day Gifts"], ar: ['هدية لأمي', 'هدايا عيد الأم'] } },
+  { id: 'new-year', en: 'New Year', ar: 'رأس السنة', words: ['new year', 'nye', 'رأس السنة', 'العام الجديد'], colors: ['#0B0B2B', '#D4AF37', '#FFFFFF'], mood: 'festive', art: ['confetti', 'light', 'stars'], icon: 'sparkles',
+    head: { en: ['New Year, New Glow', 'Hello New Year'], ar: ['عام جديد بإشراقة جديدة'] } },
+  { id: 'summer', en: 'Summer', ar: 'الصيف', words: ['summer', 'sun season', 'الصيف', 'صيف'], colors: ['#FFB703', '#219EBC', '#FFF3D6'], mood: 'playful', art: ['rays', 'blobs'], icon: 'sun',
+    head: { en: ['Summer Glow', 'Sun-Ready Skin'], ar: ['إشراقة الصيف'] } },
+  { id: 'back-to-school', en: 'Back to school', ar: 'العودة إلى المدارس', words: ['back to school', 'العودة للمدارس', 'العودة إلى المدارس'], colors: ['#3A86FF', '#FFBE0B', '#FFFFFF'], mood: 'playful', art: ['pattern', 'blobs'], icon: 'backpack',
+    head: { en: ['Back to School', 'Ready, Set, Learn'], ar: ['العودة إلى المدارس'] } },
+  { id: 'christmas', en: 'Christmas', ar: 'الكريسماس', words: ['christmas', 'xmas', 'festive season', 'الكريسماس'], colors: ['#B3001B', '#0B6E4F', '#F5F1E3'], mood: 'festive', art: ['stars', 'confetti'], icon: 'gift',
+    head: { en: ['Festive Glow', 'Holiday Gifts'], ar: ['هدايا الأعياد'] } },
+];
+
+export const TONES = {
+  luxury: ['luxury', 'luxurious', 'premium', 'elegant', 'classy', 'chic', 'high end', 'high-end', 'gold', 'فاخر', 'فخم', 'راقي'],
+  playful: ['fun', 'playful', 'cute', 'colorful', 'colourful', 'cheerful', 'vibrant', 'مرح'],
+  bold: ['bold', 'loud', 'big', 'strong', 'impact', 'punchy', 'جريء'],
+  urgent: ['urgent', 'hurry', 'last chance', 'ends', 'today only', 'limited', 'deadline', 'last day', 'flash', 'عاجل', 'آخر فرصة', 'لفترة محدودة'],
+  professional: ['professional', 'corporate', 'trust', 'clean', 'formal', 'serious', 'مهني', 'احترافي'],
+  calm: ['calm', 'soft', 'minimal', 'gentle', 'pastel', 'serene', 'هادئ', 'ناعم'],
+  warm: ['warm', 'friendly', 'family', 'heartfelt', 'cozy', 'دافئ'],
+};

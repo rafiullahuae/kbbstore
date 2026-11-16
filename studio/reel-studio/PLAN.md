@@ -203,6 +203,17 @@ must be capable of all complex tasks etc."*
   matching ads and a reel.
 * Round: after round 1 integration (editor + captions + automation).
 
+**Built 16 Nov (Brief → Designs lane):** `app/designs/` -- rule reader EN/AR + local Qwen / Claude (validated, never
+trusted), 10 layout families (the Ad Studio's family-per-format idea ported to one canvas renderer shared by thumbnails,
+editor, rule checker and export), design rules enforced and scored on real pixels, 6–8 passing designs per brief in
+story/post/square, design editor (undo, swap, recolour, move/resize), PNG/JPG Full HD + 4K, "Make a matching reel";
+offline AI pictures with **SDXS-512-DreamShaper** (CreativeML Open RAIL++-M, 983 MB, one step; chosen over SD-Turbo whose
+Stability Community Licence needs registration and ends above US$1M revenue) on WebGPU / WASM + Swin2SR x2, procedural
+artwork, Lucide icons (ISC) by meaning, colour schemes per brief. `app/settings/` -- **⚙ Configure** (companies,
+contact & social, Connect Claude, photo sources, models, folders, languages, about); engine `settings.go` keeps the
+Claude key in `settings/` (0600) and is the only thing that calls `api.anthropic.com` (typed tasks `brief`,
+`translate`, `test`). `tools/d-check.cjs`, `shots/d/`.
+
 ## Models: one first-run setup, saved in the app folder — decided 16 Nov
 
 The owner chose option 1 ("the 1 is fine, but no any errors should come while downloading, and the data
@@ -323,3 +334,79 @@ figure families, photo search terms, AI prompt template, suggested countries) ·
 the per-URL gate, keys in `settings/` (Go tests) · `app/stock/` 📷 Photos tab (`tools/stock-check.cjs` against
 `tools/stock-mock.cjs`, `shots/stock/`) · six recipes in `app/auto/recipes/work-abroad.js`. Still to come: source 2 (the
 local image model -- the prompts are ready in occupations.json).
+
+## Round 3a — translation, animated themes, hover previews — started 16 Nov
+
+The owner: *"i need the capability to translate cross caption script ... english ... to urdu, arabic etc.
+with one click it should translate auto and apply in captions, same vice versa. i need super accuracy ...
+daily basis"*, *"animations to use in videos over the ad like if video is related to europe, the europe
+theme ... throughout ... super nice animations, themes etc. across each industry"*, and *"from the
+template, the preview should play upon mouse hover, so i can be sure before import to the project."*
+
+* **Translation lane** (`app/captions/translate/`): one-click caption translation EN↔AR/UR/HI and more,
+  replace / bilingual / second track; offline models chosen by measured accuracy on a real ad-sentence
+  test set (permissive licences only — no NLLB), glossary/do-not-translate per company, numbers and
+  prices preserved, sentence-level translation re-split to caption timing, per-line quality flags,
+  side-by-side review, per-language exports; "Best quality (Claude)" only through Connect Claude.
+* **Themes lane** (`app/themes/`): 30+ animated themes that run through the whole video (Europe and each
+  country pack, travel, study, work abroad, beauty, luxury, offers, seasonal, corporate, food, fitness,
+  real estate), face- and caption-safe, beat-reactive, brand-coloured, with matching intro/outro,
+  transitions, text and SFX; auto-suggested. Plus hover-to-play previews on every gallery (templates,
+  formats, themes, looks, transitions, music/SFX).
+
+## Working mode and the Configure page — the owner, 16 Nov
+
+*"why you waited for me? ... i need you to work all the time on this project. don't stop. i didn't checked
+the previous versions, so the next i need the complete studio version including all the phases and
+functions, also along with it, give me clear list which u need from me, and i need one configure page
+where i need to enter the logins, apis etc."*
+
+* Work continues without waiting for him between rounds; decisions he hasn't made take the recommended
+  option and are listed in the hand-over.
+* The next zip he receives is the COMPLETE studio (rounds 1–3: editor, captions + translation, automation,
+  viral, look & sound, content, themes + hover previews, Work Abroad + Photos, Brief → Designs with offline
+  AI visuals, Configure page) with one "What I need from you" list.
+* **Configure page** (⚙ in the top bar and on home): companies & brand kits, Connect Claude, photo sources
+  (Pexels/Unsplash), models, folders, social handles/contact lines, language defaults, about/version — all
+  keys stored privately by the engine, tested with a Test button, never written into projects or exports.
+
+## Word-perfect caption sync — queued 16 Nov (next free lane, before the complete zip)
+
+The owner: *"i need the best audio sync. along with the user speech, must be same as user speak, should not
+delay the captions or come fast as the user speaks, every word should sense itself and sync with the user
+original sync time frame etc."*
+
+* Whisper's word times are approximate (attention-based). Add a second, precise pass: **forced alignment**
+  of the transcript to the audio with an offline CTC model (permissive licence only — e.g. wav2vec2
+  English, XLSR-53 Arabic/Urdu/Hindi fine-tunes under Apache-2.0; NOT MMS, which is non-commercial),
+  run in a worker; then snap each word's start/end to the nearest acoustic onset/offset (energy + spectral
+  flux) within a small window; keep words monotonic with no overlaps.
+* Fix every source of drift: container start offsets and AAC priming, clip trims, speed changes and
+  ramps, jump-cut tightening, reel re-ordering — captions follow the media time of each word through
+  every edit; preview and export use the same clock.
+* Controls: global "caption timing" nudge (±ms) per project, optional lead (show each word a few ms
+  early for readability), per-word drag on a waveform in the transcript.
+* Measured, not asserted: on clips with KNOWN word times (synthetic speech with exact timings, plus
+  real speech aligned by hand), target median |error| ≤ 30 ms and 95th percentile ≤ 80 ms for word
+  starts, in EN, AR and UR; report before/after vs Whisper-only.
+
+## Cutaways: show something while talking — queued 16 Nov (same next lane as word-perfect sync)
+
+The owner: *"option if i need to cut the video only, and place some media images or another video in place
+of, but the voice and captions remain same. like to show something in the video while talking. i should be
+able to mark it start end and create a separate slide which will sync in the video while preview and then
+export."*
+
+* Mark In / Out on the timeline (I and O keys, or drag a range on the ruler; or select caption words and
+  "Mark these words") → **Replace picture** with: an image, another video (its own sound muted by default,
+  optional mix), a product/country/occupation asset, or a **new slide** made in a slide designer (title,
+  bullet points, price/offer, logo, background from brand kit, icons, animated text presets, themes).
+* The original voice, music and captions stay exactly where they are; only the picture changes for that
+  range. Cutaways live on the overlay track as linked items: they follow ripple edits, trims, tightening and
+  reel re-ordering of the clip underneath; ripple-delete of the range removes them together.
+* Fit options: fill (Ken Burns), fit with blurred background, picture-in-picture (speaker in a corner
+  bubble), split screen; transitions in/out from the Look transitions; per-cutaway duration handles.
+* "Auto cutaways": suggest ranges from spoken keywords (product names, prices, countries, occupations)
+  using the b-roll matcher, as editable proposals.
+* Measured: preview = export frame diff < 6/255; audio waveform of the export identical to without the
+  cutaway; captions' times unchanged; cutaway edges within one frame of the marks.

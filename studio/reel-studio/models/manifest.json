@@ -316,8 +316,8 @@
   {
    "id": "upscaler",
    "repo": "Xenova/swin2SR-classical-sr-x2-64",
-   "purpose": "Pictures: sharpens and enlarges small photos 2x (next update)",
-   "owner": "auto",
+   "purpose": "Pictures (upscale): sharpens and enlarges AI pictures and small photos 2x, for full-HD designs",
+   "owner": "designs",
    "required": false,
    "size": 32429086,
    "files": [
@@ -336,7 +336,57 @@
      "size": 32428109,
      "sha256": "87af85bb5296d997e9162a60e9732af04ca7c41a210bdbd902ed8c760539ba81"
     }
-   ]
+   ],
+   "group": "Image AI",
+   "licence": "Apache-2.0"
+  },
+  {
+   "id": "image-ai",
+   "repo": "creador/sdxs-512-dreamshaper-onnx",
+   "purpose": "Pictures (AI): makes backgrounds, scenes, artwork and worker photos offline on the Mac's GPU, for Brief to Designs",
+   "owner": "designs",
+   "required": false,
+   "size": 983290710,
+   "files": [
+    {
+     "path": "manifest.json",
+     "size": 803,
+     "gitBlobSha1": "a6203d91b7ed1ed7de07f7f757f31775265259da"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 3642034,
+     "gitBlobSha1": "74eeb70250e8d12af2e35143c6ce8c79f80c7218"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 314,
+     "gitBlobSha1": "e48d741dd2181b55d8562a8890ad55bee27c2f25"
+    },
+    {
+     "path": "text_encoder_fp16.onnx",
+     "size": 246315807,
+     "sha256": "76dae5ad8080f53edda5743a69583d8a446a0bc6b2316c43b13477e41db9ae93"
+    },
+    {
+     "path": "unet_fp16.onnx",
+     "size": 631778188,
+     "sha256": "ada19736853c36825524d73eadf4ef91e827e5f5e6a90c2315f52a08bdc4650b"
+    },
+    {
+     "path": "taesd_decoder_fp16.onnx",
+     "size": 2468339,
+     "sha256": "4e3b6894e1d10aa4e3c9cf5426b505e7da42c7dc3455226b9fe7f9c506b245bd"
+    },
+    {
+     "path": "vae_large_decoder_fp16.onnx",
+     "size": 99085225,
+     "sha256": "b53bb46ab03cd86aa43bb146c963fa2270c5b66771be1dd2d82462cdbfa00276"
+    }
+   ],
+   "group": "Image AI",
+   "licence": "CreativeML Open RAIL++-M (use restrictions apply)",
+   "licenceUrl": "https://huggingface.co/spaces/CompVis/stable-diffusion-license"
   },
   {
    "id": "mt-m2m100",
@@ -377,7 +427,8 @@
      "sha256": "007654bcabb6cea6fd3bde34ce933137b431330b3755781145d7b6906270b45a"
     }
    ],
-   "group": "Translation"
+   "group": "Translation",
+   "licence": "MIT"
   },
   {
    "id": "mt-ar-en",
@@ -418,7 +469,8 @@
      "sha256": "cdb25ae736afe9d48035b0ea311ab4b25f315810fab7f3c6f6cb0d8d87af35fa"
     }
    ],
-   "group": "Translation"
+   "group": "Translation",
+   "licence": "CC-BY-4.0 (Helsinki-NLP OPUS-MT)"
   },
   {
    "id": "mt-en-ar",
@@ -459,7 +511,8 @@
      "sha256": "c0e553b0c26611780c70417c9b4c1ca7169e9cdb18ba9e649197efb017af9f02"
     }
    ],
-   "group": "Translation"
+   "group": "Translation",
+   "licence": "CC-BY-4.0 (Helsinki-NLP OPUS-MT)"
   },
   {
    "id": "mt-hi-en",
@@ -500,7 +553,8 @@
      "sha256": "52655659006c8ce742cc761282d49b3be4e73bfbf080f1b6a546aa96170d5813"
     }
    ],
-   "group": "Translation"
+   "group": "Translation",
+   "licence": "CC-BY-4.0 (Helsinki-NLP OPUS-MT)"
   },
   {
    "id": "mt-en-hi",
@@ -541,7 +595,8 @@
      "sha256": "8baba43a14b15ca4543d30ab36e7d34f2e516fb9af7e0b83b77a5e6a6f66d198"
     }
    ],
-   "group": "Translation"
+   "group": "Translation",
+   "licence": "CC-BY-4.0 (Helsinki-NLP OPUS-MT)"
   },
   {
    "id": "mt-mul-en",
@@ -582,7 +637,8 @@
      "sha256": "6add167a0cd3f78aa298b8f927d2e8645e33cb17df11e92967f0c5b5703c8c4d"
     }
    ],
-   "group": "Translation"
+   "group": "Translation",
+   "licence": "CC-BY-4.0 (Helsinki-NLP OPUS-MT)"
   }
  ]
 }

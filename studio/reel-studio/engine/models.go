@@ -47,6 +47,8 @@ type mModel struct {
 	Required bool    `json:"required"`
 	Size     int64   `json:"size"`
 	Files    []mFile `json:"files"`
+	Group    string  `json:"group,omitempty"`   // e.g. "Image AI" (the Configure page groups by it)
+	Licence  string  `json:"licence,omitempty"` // shown beside the model
 }
 type manifest struct {
 	Revision string   `json:"revision"`
@@ -162,7 +164,7 @@ func (s *server) modelStatus() map[string]any {
 			}
 		}
 		list = append(list, map[string]any{"id": md.ID, "repo": md.Repo, "purpose": md.Purpose, "owner": md.Owner, "required": md.Required,
-			"size": md.Size, "files": len(md.Files), "installed": installed, "have": have, "partial": part})
+			"size": md.Size, "files": len(md.Files), "installed": installed, "have": have, "partial": part, "group": md.Group, "licence": md.Licence})
 	}
 	out["models"] = list
 	s.inst.mu.Lock()

@@ -7,3 +7,4 @@ workspaces/*/projects/
 workspaces/*/exports/
 tools/out/
 dist/
+/settings/

@@ -82,4 +82,4 @@ export function canvasGrab(project, t, p, ev, api) {
 }
 
 /** module entry files the editor tries to import at start (missing files are fine) */
-export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../look/index.js', '../audio/index.js', '../viral/index.js', '../content/index.js', '../stock/index.js'];
+export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../look/index.js', '../audio/index.js', '../viral/index.js', '../content/index.js', '../stock/index.js', '../designs/index.js'];
