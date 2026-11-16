@@ -6,6 +6,7 @@ Everything here works offline. Nothing is fetched at run time.
 |---|---|---|---|
 | Starter music, 27 tracks | `library/music/*.m4a`, `library.json` | Composed and rendered by `tools/r3-music.cjs` (deterministic synth written for KBB Studio) | Original work, owned by the owner. Free to use commercially; no attribution needed |
 | Sound effects, 28 | `library/sfx/*.m4a`, `library.json` | Synthesised by `tools/r3-sfx.cjs` | Original work, same terms |
+| Sound hooks, 21 | `library/sfx/hooks/*.m4a`, `library.json` | Synthesised by `tools/v-sfx.cjs` (Lane V) | Original work, same terms |
 | Your own music | `library/music/user/` | Whatever you drop in | Your responsibility. Use only tracks you have the rights to |
 | Face detector runtime | `vendor/mediapipe/tasks-vision-0.10.21/` | npm `@mediapipe/tasks-vision@0.10.21` (Google) | Apache-2.0. See `vendor/mediapipe/LICENSE.txt` |
 | Face detector model | `vendor/mediapipe/models/blaze_face_short_range.tflite` | MediaPipe model zoo, BlazeFace short range (float16, v1) | Apache-2.0. See `vendor/mediapipe/LICENSE.txt` |
