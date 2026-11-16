@@ -202,3 +202,14 @@ must be capable of all complex tasks etc."*
 * The same brief reader drives **Brief → Reel** (recipe + copy + captions + music) so one brief can give
   matching ads and a reel.
 * Round: after round 1 integration (editor + captions + automation).
+
+## Models: one first-run setup, saved in the app folder — decided 16 Nov
+
+The owner chose option 1 ("the 1 is fine, but no any errors should come while downloading, and the data
+must be saved inside the app folder"). On first launch a Setup screen lists every model (captions,
+brief language model, image model + upscaler, face detector) with sizes and free disk space, and
+downloads them all after one "Allow" into `models/` inside the KBB Studio folder — never browser storage.
+The downloader is built not to fail: disk-space check first, resumable `.part` files (HTTP Range) across
+retries and restarts, automatic retries with backoff, size + checksum verification with re-fetch, atomic
+rename, 2–3 files in parallel with progress/speed/time left, pause/resume, plain-English messages, and the
+app never loads a model that is not complete. After setup the studio needs no internet.
