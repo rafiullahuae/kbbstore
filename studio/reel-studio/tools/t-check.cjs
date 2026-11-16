@@ -339,7 +339,14 @@ async function part2(browser) {
   const ar = await translateUI('ar', 'replace');
   results.editor.ar = { ms: ar.ms, text: ar.after.text };
   check(`editor: one click EN→AR (replace) in ${(ar.ms / 1000).toFixed(1)} s — captions now Arabic, one undo step`, ar.after.lang === 'ar' && /[؀-ۿ]{3}/.test(ar.after.text) && ar.after.steps === ar.before.steps + 1, ar.after.text.slice(0, 140));
-  check('editor: EN→AR keeps "Tabby" and "Planet Careers" exactly, and the 20%', /Tabby/.test(ar.after.text) && /Planet Careers/.test(ar.after.text) && /20%/.test(ar.after.text) === /20%/.test(en.text), '');
+  const kept = await ev(async ({ src, out }) => {
+    const G = await import('/app/captions/translate/glossary.js');
+    const gl = G.glossaryFor(kbbEditor.workspace);
+    const terms = G.glossaryHits(src, gl).map((h) => G.termIn(h.g, 'ar'));
+    return { terms, termsOk: terms.every((t) => out.includes(t)), nums: G.numbersIn(src), numMiss: G.numberMisses(src, out) };
+  }, { src: en.text, out: ar.after.text });
+  check(`editor: EN→AR keeps the company's names exactly (${kept.terms.join(', ') || 'none spoken'}) and every number (${kept.nums.join(', ') || 'none'})`,
+    kept.termsOk && !kept.numMiss.length && kept.terms.length > 0, JSON.stringify(kept));
   check('editor: EN→AR word timings monotonic and inside the original lines', await timingsOk());
   await page.waitForSelector('.rs-tr-row');
   const rows = await page.locator('.rs-tr-row').count();

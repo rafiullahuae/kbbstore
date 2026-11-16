@@ -93,34 +93,36 @@ export function targetScriptShare(text, tgt, glossaryOut = []) {
 
 /**
  * Translate sentences src -> tgt with the loaded engine. Returns [{ out, attempt, missing:{terms, numbers, keep}, repaired }].
- * attempt: 'masked' (normal), 'plain' (masks lost -> plain sentence came out right), 'repaired' (missing pieces put back).
+ * PLAIN FIRST: the sentence as written gives the most fluent translation (measured: masking every name and number
+ * up front cost M2M-100 several chrF points — "دفع في 4 الفائدة-مرافق" for "Pay in 4 interest-free instalments").
+ * Only a sentence whose plain translation lost a glossary name, a number / price or a code is asked again with
+ * those spans MASKED as placeholders; whichever reading keeps more of them wins; anything still missing is put back
+ * at the end of the sentence and the line is flagged ('repaired'). attempt: 'plain' | 'masked' | 'repaired'.
  */
 export async function translateBatch(tr, eng, texts, src, tgt, { glossary = [] } = {}) {
   const keepNames = glossary.filter((g) => g.keep !== false && !g[tgt]).map((g) => g.term);
-  const masked = texts.map((t) => mask(t, glossary, tgt));
-  const raw = await runEngine(tr, eng, masked.map((m) => m.text), src, tgt, keepNames);
-  const res = [];
-  const retry = [];
-  raw.forEach((r, i) => {
-    const u = unmask(westernDigits(r), masked[i].slots);
-    res.push({ out: u.text, attempt: 'masked', lost: u.missing });
-    if (u.missing.length || !u.text) retry.push(i);
-  });
-  if (retry.length) {   // a placeholder was dropped: ask again with the plain sentence and keep whichever checks out
-    const plain = await runEngine(tr, eng, retry.map((i) => texts[i]), src, tgt, keepNames);
+  const misses = (src0, out) => ({ terms: glossaryMisses(src0, out, glossary, tgt), numbers: numberMisses(src0, out), keep: keepMisses(src0, out) });
+  const count = (m) => m.terms.length + m.numbers.length + m.keep.length;
+  const plain = await runEngine(tr, eng, texts, src, tgt, keepNames);
+  const res = plain.map((r, i) => { const out = westernDigits(r).trim(); return { out, attempt: 'plain', missing: misses(texts[i], out), lost: [] }; });
+  const retry = res.map((r, i) => (count(r.missing) || !r.out || hasLoop(r.out) ? i : -1)).filter((i) => i >= 0);
+  if (retry.length) {
+    const masked = retry.map((i) => mask(texts[i], glossary, tgt));
+    const again = await runEngine(tr, eng, masked.map((m) => m.text), src, tgt, keepNames);
     retry.forEach((i, k) => {
-      const p = westernDigits(plain[k]).trim();
-      const missP = glossaryMisses(texts[i], p, glossary, tgt).length + numberMisses(texts[i], p).length + keepMisses(texts[i], p).length;
-      if (p && missP === 0) res[i] = { out: p, attempt: 'plain', lost: [] };
+      const u = unmask(westernDigits(again[k]), masked[k].slots);
+      const m = misses(texts[i], u.text);
+      const better = u.text && !hasLoop(u.text) && (count(m) < count(res[i].missing) || !res[i].out || hasLoop(res[i].out));
+      if (better) res[i] = { out: u.text, attempt: 'masked', missing: m, lost: u.missing };
     });
   }
   return res.map((r, i) => {
     let out = r.out;
     // last resort: whatever is still missing goes back at the end of the sentence (flagged for review)
-    const missing = { terms: glossaryMisses(texts[i], out, glossary, tgt), numbers: numberMisses(texts[i], out), keep: keepMisses(texts[i], out) };
+    const missing = misses(texts[i], out);
     const add = [];
     for (const sl of r.lost || []) if (!out.includes(sl.out)) add.push(sl.out);
-    for (const n of missing.numbers) if (!add.some((a) => a.replace(/,/g, '').includes(n))) add.push(n);
+    for (const n of missing.numbers) if (!add.some((x) => westernDigits(x).replace(/,/g, '').includes(n))) add.push(keepSpans(texts[i]).find((k) => k.kind === 'number' && k.text.replace(/,/g, '').includes(n))?.text || n);
     for (const k of missing.keep) if (!add.includes(k)) add.push(k);
     for (const h of missing.terms) { const g = glossary.find((x) => x.term.toLowerCase() === h.toLowerCase()); const o = g ? (g[tgt] || g.term) : h; if (!add.includes(o)) add.push(o); }
     if (add.length) {

@@ -75,6 +75,35 @@ One press each, and **⌘Z** takes any of them back in one step. Pressing one ag
 * **🛡️ Claim safety** — flags "guaranteed visa", "100 % approval", "cures acne", "no side effects", whitening … and
   offers safer wording (a guide, not legal advice).
 
+### Translate captions (🌐 Translate, in the 💬 Captions tab)
+
+One click turns the captions into another language, on your Mac, offline: **English ⇄ Arabic, Urdu, Hindi**, and
+also French, German, Spanish, Italian, Portuguese, Russian, Turkish, Chinese, Tagalog, Bengali, Malayalam, Tamil and
+Persian (any of them to any other). The captions' own language is picked up automatically (**From: Auto**).
+
+1. **💬 Captions → 🌐 Translate**, pick the language (**To**) and how it goes on the video:
+   * **Replace captions** — the video shows the translation instead of the original;
+   * **Bilingual (both)** — original and translation together (a bilingual style is chosen for you);
+   * **Add as a second track** — the translation on its own caption track at the top, the original stays below.
+2. Press **🌐 Translate**. The first time for a language the studio asks once to download its translation model
+   (**⬇ Get Arabic** etc. does the same ahead of time; 0.6–0.8 GB, saved in `models/`).
+3. The review list shows every sentence **side by side: original | translation**. Lines worth a second look are
+   marked in orange (a name or number had to be put back, the back-translation reads differently, it repeats itself,
+   it came out much shorter or longer). Click a translation to **edit** it (Enter keeps it), **↻** translates that line
+   again, **✓** approves it, **✓ Approve all** clears the marks. Edits go straight into the captions.
+4. **⌘Z** undoes the whole translation in one step; **↺ Restore original** puts the original captions back at any time
+   (the translations stay listed and can be shown again: **Replace / Bilingual / 2nd track**).
+5. **Export** (bottom of the list): TXT, SRT or VTT of the original or of any translated language, into
+   `workspaces/<company>/exports/` (file names end in `-ar`, `-ur`, `-en` …).
+
+Accuracy helpers, always on: brand and product names (your company's **Glossary & do-not-translate** list, seeded with
+the KBB brands and Planet Careers' programme names; "Schengen" gets its standard spelling in each language), numbers,
+prices, percentages, dates, codes, links and emoji stay **exactly** as written; whole sentences are translated (not
+caption lines), then cut back into the original lines so the timing stays natural and word-by-word highlights still
+move word by word; Arabic and Urdu read right to left, Urdu in Nastaliq (Noto Nastaliq Urdu), Hindi in Devanagari.
+**✨ Best quality (Claude)** will use your Claude key once *Connect Claude* arrives (with Brief → Designs); until then it is
+switched off and nothing goes online.
+
 ## 5. Where your things are
 
 | Folder inside KBB Studio | What is in it |

@@ -40,7 +40,11 @@ if (typeof document !== 'undefined' && !document.querySelector('link[data-rs-tra
 export function mountTranslate(el, ctx, apply) {
   const P = () => ctx.project;
   const cap = () => P().captions || { words: [], lines: [] };
-  const prefs = { tgt: P().meta?.translate?.tgt || 'ar', mode: P().meta?.translate?.mode || 'replace', onlyFlagged: false, view: null };
+  // the last language / mode he used, per browser (a convenience only — never a project change, so ⌘Z stays one step)
+  const REM = 'kbb.translate.last';
+  const remember = (tgt, mode) => { try { localStorage.setItem(REM, JSON.stringify({ tgt, mode })); } catch { /* private mode */ } };
+  let last = {}; try { last = JSON.parse(localStorage.getItem(REM) || '{}') || {}; } catch { last = {}; }
+  const prefs = { tgt: LANG[last.tgt] ? last.tgt : 'ar', mode: ['replace', 'bilingual', 'track'].includes(last.mode) ? last.mode : 'replace', onlyFlagged: false, view: null };
   let running = null, statusTok = 0;
 
   el.classList.add('rs-tr');
@@ -142,13 +146,10 @@ export function mountTranslate(el, ctx, apply) {
       prefs.view = tgt;
       const n = result.sents.filter((s) => s.flags.length).length;
       ctx.toast?.(`Translated into ${langName(tgt)} · ${result.sents.length} sentences${n ? ` · ${n} to check` : ''}`, n ? 'warn' : 'ok');
-      saveMeta(tgt, mode);
+      remember(tgt, mode);
     } catch (e) {
       if (e.name !== 'AbortError') ctx.toast?.(e.denied ? 'Download not allowed — translation needs its model once.' : 'Translation failed: ' + e.message, e.denied ? 'warn' : 'error');
     } finally { running = null; progress.hidden = true; render(); }
-  }
-  function saveMeta(tgt, mode) {
-    if (ctx.ops?.setProject) ctx.history.apply(ctx.ops.setProject({ meta: { ...(P().meta || {}), translate: { tgt, mode } } }, 'Translate settings'));
   }
 
   function restore() {

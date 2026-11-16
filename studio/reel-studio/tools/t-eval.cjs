@@ -71,7 +71,7 @@ const PLAN = {
           } catch (e) { return { error: e.message }; }
         }, { engId, chunk, s, t, mask: MASK });
         if (r.error) { console.log('  ERR ' + r.error); D.error = r.error; break; }
-        D.out.push(...r.texts); D.ms += r.ms;
+        D.out.push(...r.texts); D.ms += r.ms; if (r.attempts) (D.attempts ||= []).push(...r.attempts);
         fs.writeFileSync(file, JSON.stringify(res, null, 1));
         console.log(`  ${dk} ${D.out.length}/${N}  ${(D.ms / D.out.length / 1000).toFixed(2)} s/sentence  e.g. ${r.texts[0]}`);
       }
