@@ -5,6 +5,9 @@
 //   media.url(m) / media.element(mediaId)      -> URL / a cached <video>/<img>/<audio> for live preview
 //   await media.frameAt(mediaId, t, w)         -> ImageBitmap of the frame at source time t, w px wide
 //   await media.thumbs(mediaId, {count, h})    -> [{t, bitmap}] (cached; the timeline's scrub proxies)
+//   media.audio = {src}                         optional: the media's sound REPLACED by this file (same timeline as the
+//                                                 source; e.g. a cleaned voice) — decodeAudio, the mixer and the preview
+//                                                 monitor all use it instead of the sound inside the source file
 //   await media.decodeAudio(mediaId)           -> { mono16k: Float32Array, pcm48k: {sampleRate, length, channels:[L,R]},
 //                                                   buffer: AudioBuffer@48k } (null when the media has no sound)
 //   await media.peaks(mediaId, perSecond=50)   -> Float32Array of 0..1 peaks (computed in a worker)
@@ -111,6 +114,14 @@ export class MediaStore {
     this.els.set(id, el);
     return el;
   }
+  /** the <audio> element playing a media's replacement sound (media.audio.src), or null */
+  audioElement(m) {
+    if (!m?.audio?.src) return null;
+    const key = 'audio:' + m.audio.src;
+    let el = this.els.get(key);
+    if (!el) { el = document.createElement('audio'); el.preload = 'auto'; el.src = this.url({ src: m.audio.src }); this.els.set(key, el); }
+    return el;
+  }
   release(id) {
     for (const map of [this.els, this.grab]) {
       const el = map.get(id); if (el && el.tagName !== 'IMG') { el.removeAttribute('src'); el.load(); } map.delete(id);
@@ -157,10 +168,11 @@ export class MediaStore {
 
   /** decode the media's sound once: 16 kHz mono (speech models) and 48 kHz stereo PCM (mixdown) */
   decodeAudio(id, mHint) {
-    if (this.audioCache.has(id)) return this.audioCache.get(id);
+    const m0 = mHint || this.media(id), key = id + (m0?.audio?.src ? '|' + m0.audio.src : '');
+    if (this.audioCache.has(key)) return this.audioCache.get(key);
     const p = (async () => {
-      const m = mHint || this.media(id); if (!m || m.kind === 'image') return null;
-      const bytes = await (await fetch(this.url(m))).arrayBuffer();
+      const m = m0; if (!m || m.kind === 'image') return null;
+      const bytes = await (await fetch(m.audio?.src ? this.url({ src: m.audio.src }) : this.url(m))).arrayBuffer();
       let b48;
       try { b48 = await new OfflineAudioContext(2, 1, 48000).decodeAudioData(bytes.slice(0)); } catch { return null; }
       if (!b48 || !b48.length) return null;
@@ -170,12 +182,12 @@ export class MediaStore {
       const L = b48.getChannelData(0), R = b48.numberOfChannels > 1 ? b48.getChannelData(1) : L;
       return { mono16k, pcm48k: { sampleRate: 48000, length: b48.length, channels: [L, R] }, buffer: b48 };
     })();
-    this.audioCache.set(id, p);
+    this.audioCache.set(key, p);
     return p;
   }
 
   peaks(id, perSecond = 50) {
-    const key = id + ':' + perSecond;
+    const key = id + ':' + perSecond + ':' + (this.media(id)?.audio?.src || '');
     if (this.peakCache.has(key)) return this.peakCache.get(key);
     const p = this.decodeAudio(id).then((a) => {
       if (!a) return null;

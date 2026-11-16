@@ -102,6 +102,17 @@ export async function mixAudio(project, media, T) {
   return any ? ctx.startRendering() : null;
 }
 
+/**
+ * registerMixPost(id, async fn(buffer, project) -> AudioBuffer | null) — a whole-mix pass on the export's sound after
+ * mixAudio() (platform loudness target, true-peak limiter). Runs in order of registration; null keeps the buffer.
+ */
+const mixPosts = new Map();
+export function registerMixPost(id, fn) { mixPosts.set(id, fn); }
+export async function postMix(abuf, project) {
+  for (const [id, fn] of mixPosts) { try { abuf = (await fn(abuf, project)) || abuf; } catch (e) { console.warn('[export] mix pass', id, e); } }
+  return abuf;
+}
+
 const cancelled = () => Object.assign(new Error('Export cancelled'), { cancelled: true });
 
 export async function exportMp4(project, media, opts = {}) {
@@ -126,7 +137,8 @@ export async function exportMp4(project, media, opts = {}) {
   if (document.fonts) await document.fonts.ready;
 
   progress(0.01, wantAudio ? 'Mixing the sound…' : 'Preparing…');
-  const abuf = wantAudio && ac ? await mixAudio(project, media, T) : null;
+  const mixed = wantAudio && ac ? await mixAudio(project, media, T) : null;
+  const abuf = mixed ? await postMix(mixed, project) : null;
   check();
 
   const muxer = new Muxer({

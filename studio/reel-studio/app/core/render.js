@@ -12,6 +12,10 @@
 //                                   transform and before the layer draws (e.g. punch-in zoom: scale about centre).
 //                                   Return a CSS filter string to add to ctx.filter, or nothing.
 //   registerOverlay(id, fn, z=0)    a whole-frame pass after all tracks: fn(ctx, t, project, env) (end cards, flashes).
+//   registerSourceFx(type, fn)      per-item effect that REPLACES the clip's source picture before it is cropped and
+//                                   drawn: fn(src, item, t, project, fx, env) -> drawable | null (null = leave it).
+//                                   Used for GPU work on the source frame (colour looks, skin touch-up, background
+//                                   removal) so it runs identically in the preview and the export.
 //
 // env = { w, h, scale, preview, source(item, srcT) -> CanvasImageSource|null, box:{x,y,w,h}, track, local (s into item) }
 
@@ -33,6 +37,17 @@ export async function prepareRender(project) {
   for (const [id, fn] of prepares) { try { await fn(project); } catch (e) { warnOnce('prepare:' + id, e); } }
 }
 export function registerFx(type, fn) { fxs.set(type, fn); }
+const sourceFxs = new Map();
+export function registerSourceFx(type, fn) { sourceFxs.set(type, fn); }
+/** the source picture after every registered source fx in item.fx (in order) */
+export function processSource(src, item, t, project, env) {
+  if (!src || !sourceFxs.size || !item.fx || !item.fx.length) return src;
+  for (const fx of item.fx) {
+    const fn = sourceFxs.get(fx.type); if (!fn) continue;
+    try { const out = fn(src, item, t, project, fx, env); if (out) src = out; } catch (err) { warnOnce('srcfx:' + fx.type, err); }
+  }
+  return src;
+}
 export function registerOverlay(id, fn, z = 0) {
   const i = overlays.findIndex((o) => o.id === id); if (i >= 0) overlays.splice(i, 1);
   overlays.push({ id, fn, z }); overlays.sort((a, b) => a.z - b.z);
@@ -167,7 +182,7 @@ function warnOnce(key, err) { if (warned.has(key)) return; warned.add(key); cons
 
 /** clip: a video or image source, cover-fitted into its box, with crop and Ken Burns zoom */
 registerLayer('clip', (ctx, item, t, project, env) => {
-  const src = env.source(item, srcTime(item, t));
+  const src = processSource(env.source(item, srcTime(item, t)), item, t, project, env);
   const { w, h } = env.box;
   if (!src) { if (env.preview) { ctx.fillStyle = '#1b1b22'; ctx.fillRect(0, 0, w, h); } return; }
   const sw = src.videoWidth || src.displayWidth || src.naturalWidth || src.width;

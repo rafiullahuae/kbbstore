@@ -163,7 +163,7 @@ input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
 /* inspector */
 .inspector { background: var(--panel); border-left: 1px solid var(--line); overflow: auto; padding: 0 0 20px; }
 .inspector.side { display: flex; flex-direction: column; overflow: hidden; padding: 0; min-height: 0; }
-.side-tabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); flex: none; }
+.side-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border-bottom: 1px solid var(--line); flex: none; }
 .side-tab { border: 0; background: transparent; padding: 9px 4px 7px; font-size: 12px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; cursor: pointer; }
 .side-tab.on { color: var(--text); border-bottom-color: var(--ws); }
 .side-body { flex: 1; min-height: 0; overflow: auto; padding-bottom: 20px; }

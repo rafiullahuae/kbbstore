@@ -35,7 +35,7 @@ export class Editor {
     this.offs = [];
     this.build();
     this.offs.push(bus.on('project:change', () => this.changed()));
-    this.offs.push(bus.on('modules:changed', () => this.renderDoit()));
+    this.offs.push(bus.on('modules:changed', () => { this.renderDoit(); this.renderSideTabs(); }));
     this.offs.push(bus.on('toast', (e) => toast(e.text, e.kind)));
     this.keyHandler = (e) => this.onKey(e);
     document.addEventListener('keydown', this.keyHandler);
@@ -55,6 +55,7 @@ export class Editor {
     document.removeEventListener('keydown', this.keyHandler);
     window.removeEventListener('pagehide', this.unloadHandler);
     this.capPanel?.destroy?.();
+    for (const rec of this.modBodies.values()) rec.inst?.destroy?.();
     this.preview.destroy(); this.timeline.destroy();
     for (const m of this.project.media) this.media.release(m.id);
     if (window.kbbEditor === this) delete window.kbbEditor;
@@ -108,7 +109,9 @@ export class Editor {
     this.sideTabs = h('nav.side-tabs', { role: 'tablist' },
       h('button.side-tab.on', { role: 'tab', dataset: { side: 'inspector' }, on: { click: () => this.showSide('inspector') } }, '⚙ Inspector'),
       h('button.side-tab', { role: 'tab', dataset: { side: 'captions' }, on: { click: () => this.showSide('captions') } }, '💬 Captions'));
+    this.modBodies = new Map();   // right-column tabs that modules add (registerModule({tab}))
     this.inspEl = h('aside.inspector.side', this.sideTabs, this.inspBody, this.capBody);
+    this.renderSideTabs();
     this.tlEl = h('section.timeline');
     this.root.appendChild(h('div.editor', top, h('div.doit-row', h('span.doit-lbl', 'Do it for me'), this.doit, this.progressLine),
       h('div.work', this.binEl, this.previewEl, this.inspEl), this.tlEl));
@@ -121,7 +124,7 @@ export class Editor {
 
   renderDoit() {
     clear(this.doit);
-    const extra = listModules().filter((m) => !SLOTS.some((s) => s.id === m.id));
+    const extra = listModules().filter((m) => !SLOTS.some((s) => s.id === m.id) && !m.tab);   // tab modules live in the right column
     for (const s of [...SLOTS, ...extra]) {
       const mod = getModule(s.id);
       this.doit.appendChild(h('button.doit-btn' + (mod ? '' : '.soon'), {
@@ -144,11 +147,28 @@ export class Editor {
     } finally { this.setProgress(null, null); }
   }
 
-  /** right column: 'inspector' | 'captions' */
+  /** one tab per module that asks for one (after Inspector and Captions), in tab.order */
+  renderSideTabs() {
+    if (!this.sideTabs) return;
+    const mods = listModules().filter((m) => m.tab && m.panel).sort((a, b) => (a.tab.order ?? 50) - (b.tab.order ?? 50));
+    for (const m of mods) {
+      if (this.sideTabs.querySelector(`[data-side="mod:${m.id}"]`)) continue;
+      this.sideTabs.appendChild(h('button.side-tab', { role: 'tab', dataset: { side: 'mod:' + m.id }, on: { click: () => this.showSide('mod:' + m.id) } }, m.tab.label || m.label));
+      const body = h('div.side-body.mod-body', { hidden: true, dataset: { mod: m.id } });
+      this.modBodies.set(m.id, { body, mounted: false, inst: null });
+      this.inspEl.appendChild(body);
+    }
+  }
+
+  /** right column: 'inspector' | 'captions' | 'mod:<module id>' */
   showSide(which) {
     for (const b of this.sideTabs.children) b.classList.toggle('on', b.dataset.side === which);
     this.inspBody.hidden = which !== 'inspector';
     this.capBody.hidden = which !== 'captions';
+    for (const [id, rec] of this.modBodies) {
+      rec.body.hidden = which !== 'mod:' + id;
+      if (!rec.body.hidden && !rec.mounted) { rec.mounted = true; rec.inst = getModule(id).panel(rec.body, this.context()); }
+    }
     if (which === 'captions' && !this.capMounted) {
       const mod = getModule('auto-captions');
       if (mod?.panel) { this.capMounted = true; this.capPanel = mod.panel(this.capBody, this.context()); }
@@ -159,6 +179,7 @@ export class Editor {
 
   openModulePanel(id) {
     if (id === 'auto-captions') { this.showSide('captions'); return; }
+    if (this.modBodies.has(id)) { this.showSide('mod:' + id); return; }
     const mod = getModule(id); if (!mod?.panel) return;
     const el = h('div.mod-panel');
     modal({ title: mod.label || id, body: el, wide: true });
