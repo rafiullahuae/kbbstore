@@ -262,3 +262,24 @@ any unavoidable edit to app/editor or app/core is kept minimal and listed in the
 
 Then **Round 3 — Brief → Designs** (local image model, artwork, icons, colour schemes) and **Connect
 Claude** (optional), as already planned.
+
+## Captions round — queued 16 Nov (starts the moment a round-2 lane frees up)
+
+The owner: *"need to work on the captions capturing more, like option to remove the music text when music
+comes etc. and give me the full script also after detecting the captions. i need also more options for
+captions templates, and also can be edit the style / text / size etc in case needed. don't stop on
+anything work on everything."*
+
+* Capture more: stronger speech detection (VAD-gated decoding, re-read of missed speech, overlap stitching
+  checks), lower drop rate in noisy/music sections, punctuation and casing, numbers/currency/visa terms
+  vocabulary (brand + product names from the KBB catalogue, country/visa terms for Planet Careers).
+* Non-speech handling: Whisper's "[Music]", "♪", "(applause)", "[Laughter]", hallucinated repeats and
+  "Thanks for watching" in silence are detected; options: **Hide music/sound tags** (default on),
+  **Show a ♪ icon instead**, **Keep as text**; captions auto-hide while music plays with no speech.
+* **Full script** after detection: a Script view (paragraphs, speaker turns if detectable, timestamps
+  optional), editable and synced back to captions, export TXT / SRT / VTT / DOCX-free plain formats and
+  copy-to-clipboard; EN and AR (and bilingual side by side).
+* **More caption templates**: 30+ more, grouped (Viral, Minimal, Luxury, Bold, Corporate, Arabic,
+  Bilingual, Fun), searchable, favourites per company.
+* **Edit anything**: per-line and per-word overrides of text, size, colour, font, position, animation
+  and emphasis, on top of the global style; drag a caption on the canvas to move it; reset to style.
