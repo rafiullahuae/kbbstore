@@ -114,11 +114,15 @@ export async function generate(spec, ws, cat, opts = {}) {
     for (let pj = 0; pj < Math.min(3, palettes.length) && !accepted; pj++) {
       const palette = palettes[(i + pj * 2) % palettes.length];
       const useImage = opts.image && (family === 'poster' || family === 'card' || family === 'arch');
-      const hero = heroFor(spec, cat, palette, { image: useImage ? opts.image : null, workerPhoto: opts.workerPhoto });
+      // products are always the real cut-outs: with products, an AI picture becomes the BACKGROUND, never the hero
+      const prodHero = heroFor(spec, cat, palette, { workerPhoto: opts.workerPhoto });
+      const asBg = useImage && prodHero?.kind === 'products';
+      const hero = asBg ? prodHero : heroFor(spec, cat, palette, { image: useImage ? opts.image : null, workerPhoto: opts.workerPhoto });
       let textK = 1, heroK = 1;
       for (let attempt = 0; attempt < 6; attempt++) {
         tried++;
         const D = assemble(spec, ws, cat, { family, palette, copy: copies[i % copies.length], lang, sizes, hero, icons, seed: seed0 + i * 31 + pj, textK, heroK });
+        if (asBg) D.bgImage = { src: opts.image, op: 1 };
         if (opts.keepEls) for (const [id, v] of Object.entries(opts.keepEls)) { const el = D.els.find((e) => e.id === id); if (el) Object.assign(el, v); }
         await prepare(D);
         let ok = true, worst = 100, colourFixes = 0;

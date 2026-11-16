@@ -187,11 +187,11 @@ export async function openDesigns(root, { home, brief: initial = '', auto = fals
           seedIn.value = c.seed;
           msg.textContent = 'Saving…';
           let cv = c.canvas, up = false;
-          if (st.upscaler) { try { msg.textContent = 'Upscaling ×2…'; cv = await IG.upscale(c.canvas); up = true; } catch (e) { console.warn('[designs] upscale', e); } }
+          try { msg.textContent = 'Enlarging ×2…'; cv = st.upscaler || st.device === 'wasm' ? await IG.upscale(c.canvas) : IG.smoothUpscale(c.canvas); up = cv.dataset.method; } catch (e) { console.warn('[designs] upscale', e); }
           const path = await IG.save(ws.id, cv, { prompt: c.prompt, seed: c.seed, upscaled: up, flags: c.flags });
           const kind = list[+sel.value]?.kind;
           if (kind === 'worker') S.workerPhoto = path; else S.image = path;
-          msg.textContent = `Saved (${cv.width}×${cv.height}) · used in the designs`;
+          msg.textContent = `Saved (${cv.width}×${cv.height}${up === 'swin2sr' ? ', AI-upscaled' : up === 'smooth' ? ', enlarged' : ''}) · used in the designs`;
           run({ keepSpec: true });
         });
         return box;

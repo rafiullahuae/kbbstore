@@ -67,9 +67,20 @@ export async function generate(prompt, { n = 4, seed = null, quality = 'fast', d
 export function unload() { if (W) { W.terminate(); W = null; } loadedDevice = null; for (const p of pend.values()) p.rej(new Error('stopped')); pend.clear(); }
 
 /** Swin2SR x2 in its own short-lived worker; on the CPU the picture model is released first so both never sit in memory */
+/** a smooth 2x enlargement (no model): the CPU fallback -- Swin2SR's fp16 graph needs the Mac's GPU (on WASM it stops
+ *  with an ORT allocation error), so on a Mac without WebGPU pictures are enlarged this way and say so */
+export function smoothUpscale(canvas) {
+  const c = document.createElement('canvas'); c.width = canvas.width * 2; c.height = canvas.height * 2;
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(canvas, 0, 0, c.width, c.height);
+  c.dataset.method = 'smooth';
+  return c;
+}
 export async function upscale(canvas, { device } = {}) {
   const dev = device || ((await gpuOK()) ? 'webgpu' : 'wasm');
-  if (dev === 'wasm') unload();
+  if (dev === 'wasm') return smoothUpscale(canvas);
+  try { const c = await swin(canvas, dev); c.dataset.method = 'swin2sr'; return c; } catch (e) { console.warn('[designs] Swin2SR upscale failed, smooth enlargement instead:', e.message); return smoothUpscale(canvas); }
+}
+export async function swin(canvas, dev) {
   const d = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
   const p = paths();
   const w = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
@@ -77,6 +88,7 @@ export async function upscale(canvas, { device } = {}) {
     const r = await new Promise((res, rej) => {
       w.onmessage = (e) => { if (e.data.progress || e.data.image) return; e.data.error ? rej(new Error(e.data.error)) : res(e.data.result); };
       w.onerror = (e) => rej(new Error(e.message || 'upscaler failed'));
+      setTimeout(() => rej(new Error('the upscaler took too long')), 120000);
       w.postMessage({ id: 1, op: 'upscale', w: d.width, h: d.height, data: d.data.buffer, models: p.models, vendor: p.vendor, device: dev }, [d.data.buffer]);
     });
     const c = document.createElement('canvas'); c.width = r.w; c.height = r.h;

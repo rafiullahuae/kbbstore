@@ -49,7 +49,7 @@ function gaussian(seed, n) {
 }
 
 async function session(url, device) {
-  return ort.InferenceSession.create(url, { executionProviders: device === 'webgpu' ? ['webgpu'] : ['wasm'], graphOptimizationLevel: 'all' });
+  return ort.InferenceSession.create(url, { executionProviders: device === 'webgpu' ? ['webgpu'] : ['wasm'], graphOptimizationLevel: 'all', logSeverityLevel: 3 });
 }
 const inType = (s, name) => {
   const md = s.inputMetadata; // ORT ≥1.22 lists {name, type} per input; older builds: assume fp16 (the shipped graphs are)
@@ -120,7 +120,7 @@ self.onmessage = async (e) => {
       if (!T) T = await import(m.vendor + 'transformers.min.js');
       T.env.allowRemoteModels = false; T.env.allowLocalModels = true; T.env.localModelPath = m.models; T.env.useBrowserCache = false;
       T.env.backends.onnx.wasm.wasmPaths = m.vendor;
-      if (!up) up = await T.pipeline('image-to-image', 'Xenova/swin2SR-classical-sr-x2-64', { device: m.device, dtype: 'fp16' });
+      if (!up) up = await T.pipeline('image-to-image', 'Xenova/swin2SR-classical-sr-x2-64', { device: m.device, dtype: 'fp16', session_options: { logSeverityLevel: 3 } });
       const raw = new T.RawImage(new Uint8ClampedArray(m.data), m.w, m.h, 4);
       const out = await up(raw.rgb());
       const o = out.rgba ? out.rgba() : out;
