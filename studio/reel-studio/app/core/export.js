@@ -8,7 +8,7 @@
 // OfflineAudioContext (volume, track volume, speed, fades).
 
 import { Muxer, ArrayBufferTarget } from '../../vendor/mp4-muxer-5.2.2.mjs';
-import { renderFrame, activeItems } from './render.js';
+import { renderFrame, activeItems, prepareRender, evalProp } from './render.js';
 import { projectDuration, findMedia, itemDur, srcTime } from './project.js';
 
 export const QUALITY = {
@@ -53,6 +53,14 @@ export function audibleItems(project) {
   return out;
 }
 
+const gainFade = (item, t, d, fi, fo) => {
+  const lt = t - item.t0;
+  let f = 1;
+  if (fi > 0 && lt < fi) f *= Math.max(0, lt / fi);
+  if (fo > 0 && lt > d - fo) f *= Math.max(0, (d - lt) / fo);
+  return f;
+};
+
 /** mix the whole timeline to a 48 kHz stereo AudioBuffer (null when nothing is audible) */
 export async function mixAudio(project, media, T) {
   const list = audibleItems(project);
@@ -71,11 +79,23 @@ export async function mixAudio(project, media, T) {
     s.buffer = buf; s.playbackRate.value = sp;
     s.connect(g); g.connect(ctx.destination);
     const v = item.volume * (track.volume ?? 1), d = itemDur(item);
-    // fades as exact linear ramps (gain is piecewise linear between these points)
     const fi = Math.min(item.fadeIn || 0, d), fo = Math.min(item.fadeOut || 0, d);
-    g.gain.setValueAtTime(fi > 0 ? 0 : v, item.t0 < 0 ? 0 : item.t0);
-    if (fi > 0) g.gain.linearRampToValueAtTime(v, Math.max(0, item.t0 + fi));
-    if (fo > 0) { g.gain.setValueAtTime(v, Math.max(0, item.t0 + d - fo)); g.gain.linearRampToValueAtTime(0, Math.max(0, item.t0 + d)); }
+    if (item.kf?.volume?.length && d > 0) {
+      // keyframed volume (music ducked under speech) x fades, as one gain curve at 200 points/s — the same
+      // numbers the preview uses (evalProp + fadeAt), so what he hears is what is exported
+      const n = Math.max(2, Math.ceil(d * 200) + 1), curve = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        const t = item.t0 + (d * i) / (n - 1);
+        curve[i] = Math.max(0, evalProp(item, 'volume', t)) * (track.volume ?? 1) * gainFade(item, t, d, fi, fo);
+      }
+      g.gain.value = curve[0];      // no other event may sit inside the curve's time range
+      g.gain.setValueCurveAtTime(curve, Math.max(0, item.t0), d);
+    } else {
+      // fades as exact linear ramps (gain is piecewise linear between these points)
+      g.gain.setValueAtTime(fi > 0 ? 0 : v, item.t0 < 0 ? 0 : item.t0);
+      if (fi > 0) g.gain.linearRampToValueAtTime(v, Math.max(0, item.t0 + fi));
+      if (fo > 0) { g.gain.setValueAtTime(v, Math.max(0, item.t0 + d - fo)); g.gain.linearRampToValueAtTime(0, Math.max(0, item.t0 + d)); }
+    }
     s.start(start, off, len);
     any = true;
   }
@@ -102,6 +122,7 @@ export async function exportMp4(project, media, opts = {}) {
   const wantAudio = audibleItems(project).length > 0 && opts.audio !== false;
   const { video: vc, audio: ac } = await pickCodecs(W, H, fps, bitrate, wantAudio);
   if (!vc) throw new Error(`This browser has no H.264 encoder for ${W}×${H}`);
+  await prepareRender(project);              // badge images, brand-kit + caption fonts: everything layers draw
   if (document.fonts) await document.fonts.ready;
 
   progress(0.01, wantAudio ? 'Mixing the sound…' : 'Preparing…');
