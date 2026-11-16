@@ -15,23 +15,23 @@ WHISPER = ["config.json", "generation_config.json", "preprocessor_config.json", 
 # the OPUS-MT directions the studio ships (set from the evaluation; see ROUTES in app/captions/translate/service.js)
 TRANSLATION_PAIRS = ["ar-en", "en-ar", "hi-en", "en-hi", "mul-en"]
 SPEC = [
-    ("whisper-small", "onnx-community/whisper-small_timestamped", "Captions (accurate): speech to text with word timing, best for Arabic", "captions", True, WHISPER),
-    ("whisper-base", "onnx-community/whisper-base_timestamped", "Captions (fast): speech to text with word timing, quicker on older Macs", "captions", True, WHISPER),
+    ("whisper-small", "onnx-community/whisper-small_timestamped", "Captions (accurate): speech to text with word timing, best for Arabic", "captions", True, WHISPER, {"group": "Speech", "licence": "MIT"}),
+    ("whisper-base", "onnx-community/whisper-base_timestamped", "Captions (fast): speech to text with word timing, quicker on older Macs", "captions", True, WHISPER, {"group": "Speech", "licence": "MIT"}),
     ("brief-llm", "onnx-community/Qwen2.5-0.5B-Instruct", "Writing: turns your brief into hooks, titles and on-screen text, offline (Brief to Designs, next update)", "auto", False,
-     ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/model_q4f16.onnx"]),
+     ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/model_q4f16.onnx"], {"group": "Writing", "licence": "Apache-2.0"}),
     ("image-understanding", "onnx-community/Florence-2-base-ft", "Looking: describes what is in your video to suggest a recipe (next update)", "auto", False,
-     ["config.json", "generation_config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/vision_encoder_fp16.onnx", "onnx/encoder_model_fp16.onnx", "onnx/embed_tokens_fp16.onnx", "onnx/decoder_model_merged_q4.onnx"]),
+     ["config.json", "generation_config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/vision_encoder_fp16.onnx", "onnx/encoder_model_fp16.onnx", "onnx/embed_tokens_fp16.onnx", "onnx/decoder_model_merged_q4.onnx"], {"group": "Video understanding", "licence": "MIT"}),
     # Lane C (round 2, app/content). The tagger is REQUIRED: auto-tagging on import is what lets b-roll match your
     # photos and clips by what is in them (CLIP zero-shot against the studio's own tag list; MIT, int8, 156 MB).
     # Post copy runs a local instruct model: Qwen2.5-1.5B (Apache-2.0) 4-bit/fp16 on the Mac GPU (WebGPU), and
     # Qwen2.5-0.5B (Apache-2.0) int8 on the CPU (WASM) when there is no WebGPU. Both optional: a rule-based writer
     # covers the post copy when neither is installed.
     ("media-tagger", "Xenova/clip-vit-base-patch32", "B-roll: tags your photos and clips on import (what is in them) so b-roll matches your words", "content", True,
-     ["config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/vision_model_quantized.onnx", "onnx/text_model_quantized.onnx"]),
+     ["config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/vision_model_quantized.onnx", "onnx/text_model_quantized.onnx"], {"group": "B-roll tagging", "licence": "MIT"}),
     ("copy-llm", "onnx-community/Qwen2.5-1.5B-Instruct", "Writing: Instagram/TikTok captions, keywords, hashtags and comment prompts in English and Arabic, offline on the Mac's GPU", "content", False,
-     ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/model_q4f16.onnx"]),
+     ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/model_q4f16.onnx"], {"group": "Writing", "licence": "Apache-2.0"}),
     ("copy-llm-lite", "onnx-community/Qwen2.5-0.5B-Instruct", "Writing (no-GPU fallback): the same post copy on the CPU when the browser has no WebGPU", "content", False,
-     ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/model_quantized.onnx"]),
+     ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/model_quantized.onnx"], {"group": "Writing", "licence": "Apache-2.0"}),
     ("upscaler", "Xenova/swin2SR-classical-sr-x2-64", "Pictures (upscale): sharpens and enlarges AI pictures and small photos 2x, for full-HD designs", "designs", False,
      ["config.json", "preprocessor_config.json", "onnx/model_fp16.onnx"], {"group": "Image AI", "licence": "Apache-2.0"}),
     # Round 3 (Brief -> Designs): the offline picture model. SDXS-512-DreamShaper (IDKiro, CreativeML Open RAIL++-M:
