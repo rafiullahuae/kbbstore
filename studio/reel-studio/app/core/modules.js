@@ -9,6 +9,8 @@
 //     icon: '💬',                        // optional
 //     run: async (ctx) => { ... },       // ctx = EditorContext (below); return nothing or a short message
 //     panel: (el, ctx) => { ... },      // optional: render a settings/review panel into el (right-hand drawer)
+//     tab: { label: '🎨 Look', order }, // optional: the panel ALSO lives as a tab of the editor's right column
+//                                        (mounted once on first open, kept alive; panel may return {destroy()})
 //   });
 //
 // EditorContext (what a module gets):
@@ -48,4 +50,4 @@ export const getModule = (id) => registry.get(id) || null;
 export const listModules = () => [...registry.values()];
 
 /** module entry files the editor tries to import at start (missing files are fine) */
-export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js'];
+export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../look/index.js', '../audio/index.js'];

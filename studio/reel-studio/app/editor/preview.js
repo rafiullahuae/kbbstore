@@ -68,17 +68,22 @@ export class Preview {
         used.add(el);
         const want = srcTime(item, t);
         const audible = playing && !track.muted && !item.muted && m.hasAudio && rate === 1;
-        el.muted = !audible;
-        el.volume = Math.max(0, Math.min(1, evalProp(item, 'volume', t) * (track.volume ?? 1) * fadeAt(item, t)));   // kf.volume = ducking
-        if (playing) {
-          el.playbackRate = (item.speed || 1) * rate;
-          if (Math.abs(el.currentTime - want) > 0.25 || el.paused && el.readyState < 2) el.currentTime = want;
-          if (el.paused) el.play().catch(() => {});
-        } else {
-          if (!el.paused) el.pause();
-          if (Math.abs(el.currentTime - want) > 0.5 / (p.canvas.fps || 30)) {
-            this.pending++;
-            seekExact(el, want).then(() => { this.pending--; this.draw(); });
+        // a media whose sound was replaced (media.audio, e.g. a cleaned voice) plays it from a second element
+        const alt = this.ed.media.audioElement?.(m);
+        if (alt) used.add(alt);
+        for (const x of alt ? [el, alt] : [el]) {
+          x.muted = !audible || (alt && x === el);
+          x.volume = Math.max(0, Math.min(1, evalProp(item, 'volume', t) * (track.volume ?? 1) * fadeAt(item, t)));   // kf.volume = ducking
+          if (playing) {
+            x.playbackRate = (item.speed || 1) * rate;
+            if (Math.abs(x.currentTime - want) > 0.25 || x.paused && x.readyState < 2) x.currentTime = want;
+            if (x.paused) x.play().catch(() => {});
+          } else {
+            if (!x.paused) x.pause();
+            if (x === el && Math.abs(el.currentTime - want) > 0.5 / (p.canvas.fps || 30)) {
+              this.pending++;
+              seekExact(el, want).then(() => { this.pending--; this.draw(); });
+            } else if (x !== el && Math.abs(x.currentTime - want) > 0.05) x.currentTime = want;
           }
         }
       }
