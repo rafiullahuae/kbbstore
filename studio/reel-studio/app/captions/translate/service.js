@@ -5,27 +5,25 @@
 
 import { Translator } from './client.js';
 import { ENGINES, engineCovers } from './engines.js';
-import { translateTrack, translateBatch, assess } from './pipeline.js';
+import { translateTrack, translateBatch, assess, sentencesOf, layout } from './pipeline.js';
+import { translateWithClaude } from './claude.js';
 import { glossaryFor } from './glossary.js';
 import { sourceLangOf, LANG, langName } from './langs.js';
 import { applyTranslation, editSentence, sourceOf } from './commands.js';
 import { requestFor } from './engines.js';
 import { createTrack, createItem, projectDuration } from '../../core/project.js';
 
-// The engine per direction, best first (measured on the 60-sentence ad test set, tools/out/t/eval-table.md).
-// A pair not listed goes through M2M-100 (any of its 100 languages to any other).
+// The engine per direction, best first, measured on the 60-sentence ad test set (tools/t-eval.cjs; README
+// "Translation"): M2M-100 418M wins all six EN<->AR/UR/HI directions (chrF 45-70 vs OPUS-MT 30-62). OPUS-MT stays as
+// the fallback and as the fast, INDEPENDENT back-translation checker (planFor). Every other pair goes through M2M-100
+// (any of its 100 languages to any other) — the European OPUS-MT pairs were not measured on our set, so not shipped.
 export const ROUTES = {
-  'en-ar': ['mt-m2m100', 'mt-en-ar'], 'ar-en': ['mt-ar-en', 'mt-m2m100'],
-  'en-ur': ['mt-m2m100', 'mt-en-mul'], 'ur-en': ['mt-m2m100', 'mt-mul-en'],
-  'en-hi': ['mt-m2m100', 'mt-en-hi'], 'hi-en': ['mt-hi-en', 'mt-m2m100'],
-  'en-fr': ['mt-en-fr', 'mt-m2m100'], 'fr-en': ['mt-fr-en', 'mt-m2m100'], 'en-de': ['mt-en-de', 'mt-m2m100'], 'de-en': ['mt-de-en', 'mt-m2m100'],
-  'en-es': ['mt-en-es', 'mt-m2m100'], 'es-en': ['mt-es-en', 'mt-m2m100'], 'en-it': ['mt-en-it', 'mt-m2m100'], 'it-en': ['mt-it-en', 'mt-m2m100'],
-  'en-ru': ['mt-en-ru', 'mt-m2m100'], 'ru-en': ['mt-ru-en', 'mt-m2m100'], 'en-zh': ['mt-en-zh', 'mt-m2m100'], 'zh-en': ['mt-zh-en', 'mt-m2m100'],
-  'tr-en': ['mt-tr-en', 'mt-m2m100'],
+  'en-ar': ['mt-m2m100', 'mt-en-ar'], 'ar-en': ['mt-m2m100', 'mt-ar-en'],
+  'en-ur': ['mt-m2m100'], 'ur-en': ['mt-m2m100', 'mt-mul-en'],
+  'en-hi': ['mt-m2m100', 'mt-en-hi'], 'hi-en': ['mt-m2m100', 'mt-hi-en'],
 };
-/** Engines the studio actually ships in models/manifest.json (the rest were evaluated and not chosen). */
-export const SHIPPED = new Set(['mt-m2m100', 'mt-en-ar', 'mt-ar-en', 'mt-en-hi', 'mt-hi-en', 'mt-mul-en', 'mt-en-mul',
-  'mt-en-fr', 'mt-fr-en', 'mt-en-de', 'mt-de-en', 'mt-en-es', 'mt-es-en', 'mt-en-it', 'mt-it-en', 'mt-en-ru', 'mt-ru-en', 'mt-en-zh', 'mt-zh-en', 'mt-tr-en']);
+/** Engines the studio ships in models/manifest.json (group "Translation"); the rest were evaluated and not chosen. */
+export const SHIPPED = new Set(['mt-m2m100', 'mt-en-ar', 'mt-ar-en', 'mt-en-hi', 'mt-hi-en', 'mt-mul-en']);
 
 /** Engines able to do src -> tgt, best first. */
 export function candidatesFor(src, tgt) {
@@ -49,7 +47,10 @@ export async function planFor(ctx, src, tgt, inst) {
   const cands = candidatesFor(src, tgt);
   const best = cands[0];
   const eng = cands.find(has) || null;
-  const backC = candidatesFor(tgt, src);
+  // the back-translation check is most telling from a DIFFERENT model than the one that translated (its mistakes are
+  // not the same), and the small OPUS-MT ones are 5-7x faster: those first, the same model as a last resort
+  const fwd = eng || best;
+  const backC = candidatesFor(tgt, src).sort((a, b) => (a === fwd) - (b === fwd) || (ENGINES[a].kind !== 'marian') - (ENGINES[b].kind !== 'marian'));
   const back = backC.find(has) || null;
   return { best, eng, needInstall: !has(best) ? best : null, back, cands };
 }
@@ -107,6 +108,7 @@ export async function translateCaptions(ctx, tgt, mode = 'replace', opts = {}) {
   const src = opts.src || sourceLangOf({ ...source, lang: source.lang || cap.lang });
   if (src === tgt) throw new Error(`The captions are already in ${langName(tgt)}.`);
   const onProgress = opts.onProgress || (() => {});
+  if (opts.engineId === 'claude') return translateCaptionsClaude(ctx, source, src, tgt, mode, opts);
   let plan = await planFor(ctx, src, tgt);
   const engineId = opts.engineId || (plan.needInstall && opts.install !== false ? plan.best : plan.eng);
   if (!engineId) throw new Error(`No translation model for ${langName(src)} → ${langName(tgt)} yet — press “Get this language”.`);
@@ -131,6 +133,20 @@ export async function translateCaptions(ctx, tgt, mode = 'replace', opts = {}) {
     const items = trackItemCmds(ctx, tgt);
     ctx.history.apply(ctx.ops.batch(`Translate captions → ${tgt.toUpperCase()} (second track)`, [cmd, ...items]));
   } else ctx.history.apply(cmd);
+  return { result, cmd };
+}
+
+/** "Best quality (Claude)": the same sentences, glossary, checks and re-split, translated through Connect Claude
+ *  (claude.js — a hook until Connect Claude exists; it refuses while not connected and makes no request). */
+async function translateCaptionsClaude(ctx, source, src, tgt, mode, opts) {
+  const glossary = glossaryFor(ctx.workspace);
+  const sents = sentencesOf({ ...source, lang: src });
+  opts.onProgress?.(0.1, 'Asking Claude…');
+  const outs = await translateWithClaude(ctx, { src, tgt, sentences: sents.map((s) => s.text), glossary });
+  sents.forEach((s, i) => Object.assign(s, { out: String(outs[i] || '').trim(), attempt: 'claude' }, assess(s.text, String(outs[i] || ''), tgt, glossary, null)));
+  const result = { lang: tgt, src, engine: 'claude', back: null, ...layout(source, sents), sents: sents.map(({ text, out, idx, chunks, flags, score, bt, attempt }) => ({ text, out, idx, chunks, flags, score, bt, attempt })) };
+  const cmd = applyTranslation(result, mode);
+  ctx.history.apply(mode === 'track' && ctx.ops ? ctx.ops.batch(`Translate captions → ${tgt.toUpperCase()} (second track)`, [cmd, ...trackItemCmds(ctx, tgt)]) : cmd);
   return { result, cmd };
 }
 

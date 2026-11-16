@@ -51,7 +51,7 @@ export function mountTranslate(el, ctx, apply) {
   const status = h('div', { class: 'rs-tr-status rs-cap-muted' });
   const goBtn = h('button', { class: 'rs-cap-btn primary', 'data-x': 'translate', onclick: () => run() }, '🌐 Translate');
   const cl = claudeStatus(ctx);
-  const claudeBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'claude', disabled: !cl.connected, title: cl.note }, '✨ Best quality (Claude)');
+  const claudeBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'claude', disabled: !cl.connected, title: cl.note, onclick: () => run('claude') }, '✨ Best quality (Claude)');
   const restoreBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'restore', onclick: restore }, '↺ Restore original');
   const getBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'get', hidden: true, onclick: getLang }, '⬇ Get this language');
   const bar = h('div', { class: 'rs-cap-bar' }, h('i'));
@@ -83,6 +83,7 @@ export function mountTranslate(el, ctx, apply) {
       h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'From'), srcSel, h('span', {}, '→'), tgtSel),
       h('div', { class: 'rs-cap-row' }, modeSel, goBtn),
       h('div', { class: 'rs-cap-row' }, getBtn, restoreBtn, claudeBtn),
+      cl.connected ? null : h('div', { class: 'rs-cap-muted rs-tr-claude', 'data-k': 'claude-note' }, '✨ ' + cl.note),
       status, progress, glossBox),
     langChips, reviewHead, review, exports);
 
@@ -129,14 +130,15 @@ export function mountTranslate(el, ctx, apply) {
     finally { running = null; progress.hidden = true; renderStatus(); }
   }
 
-  async function run() {
+  async function run(engineId) {
     if (running) return;
+    if (typeof engineId !== 'string') engineId = undefined;
     const tgt = tgtSel.value, mode = modeSel.value;
     running = new AbortController();
     progress.hidden = false; goBtn.disabled = true; setProg(0, 'Starting…');
     try {
       const src = srcSel.value === 'auto' ? undefined : srcSel.value;
-      const { result } = await translateCaptions(ctx, tgt, mode, { src, onProgress: setProg, signal: running.signal });
+      const { result } = await translateCaptions(ctx, tgt, mode, { src, engineId, onProgress: setProg, signal: running.signal });
       prefs.view = tgt;
       const n = result.sents.filter((s) => s.flags.length).length;
       ctx.toast?.(`Translated into ${langName(tgt)} · ${result.sents.length} sentences${n ? ` · ${n} to check` : ''}`, n ? 'warn' : 'ok');

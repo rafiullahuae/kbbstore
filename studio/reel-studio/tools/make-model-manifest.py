@@ -12,6 +12,8 @@ WHISPER = ["config.json", "generation_config.json", "preprocessor_config.json", 
            "onnx/encoder_model_fp16.onnx", "onnx/decoder_model_merged_q4.onnx"]
 # The face finder (auto-reframe) is NOT here: app/auto uses MediaPipe BlazeFace, vendored with the app
 # (vendor/mediapipe/models/blaze_face_short_range.tflite, 230 KB), so it needs no download.
+# the OPUS-MT directions the studio ships (set from the evaluation; see ROUTES in app/captions/translate/service.js)
+TRANSLATION_PAIRS = ["ar-en", "en-ar", "hi-en", "en-hi", "mul-en"]
 SPEC = [
     ("whisper-small", "onnx-community/whisper-small_timestamped", "Captions (accurate): speech to text with word timing, best for Arabic", "captions", True, WHISPER),
     ("whisper-base", "onnx-community/whisper-base_timestamped", "Captions (fast): speech to text with word timing, quicker on older Macs", "captions", True, WHISPER),
@@ -34,6 +36,21 @@ SPEC = [
      ["config.json", "preprocessor_config.json", "onnx/model_fp16.onnx"]),
 ]
 
+# Translation lane (round 3a): caption translation, OPTIONAL, one entry per direction so he downloads only the languages
+# he uses (Translate tab -> "Get <language>"). Chosen by measured accuracy on the 60-sentence ad test set
+# (tools/t-eval.cjs; table in README "Translation"; routes in app/captions/translate/service.js ROUTES). int8 encoder +
+# merged decoder: WASM on any Mac. M2M-100 418M is MIT; OPUS-MT (Helsinki-NLP) is CC-BY-4.0 (attribution in the README).
+MT = ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json",
+      "onnx/encoder_model_quantized.onnx", "onnx/decoder_model_merged_quantized.onnx"]
+LN = {"en": "English", "ar": "Arabic", "ur": "Urdu", "hi": "Hindi", "fr": "French", "de": "German", "es": "Spanish", "it": "Italian",
+      "ru": "Russian", "zh": "Chinese", "tr": "Turkish", "mul": "Urdu and other languages"}
+SPEC.append(("mt-m2m100", "Xenova/m2m100_418M", "Translation (all languages): captions between English, Arabic, Urdu, Hindi, French, German, Spanish, "
+             "Italian, Portuguese, Russian, Turkish, Chinese, Tagalog, Bengali, Malayalam, Tamil, Persian, offline (M2M-100)", "translate", False, MT))
+for pair in TRANSLATION_PAIRS:
+    a, b = pair.split("-")
+    SPEC.append(("mt-" + pair, "Xenova/opus-mt-" + pair, f"Translation ({LN[a]} to {LN[b]}): a small fast model for this direction, offline (OPUS-MT)",
+                 "translate", False, MT))
+
 src, dst = sys.argv[1], sys.argv[2]
 out = {"v": 1, "revision": "main",
        "note": "Models the studio downloads ONCE, after one Allow, into models/<repo>/<path>. Each file has its size and "
@@ -50,8 +67,11 @@ for mid, repo, purpose, owner, required, files in SPEC:
         else:
             f["gitBlobSha1"] = e["oid"]
         fl.append(f)
-    out["models"].append({"id": mid, "repo": repo, "purpose": purpose, "owner": owner, "required": required,
-                          "size": sum(x["size"] for x in fl), "files": fl})
+    e = {"id": mid, "repo": repo, "purpose": purpose, "owner": owner, "required": required,
+         "size": sum(x["size"] for x in fl), "files": fl}
+    if owner == "translate":
+        e["group"] = "Translation"
+    out["models"].append(e)
 with open(dst, "w") as fh:
     json.dump(out, fh, indent=1)
 for m in out["models"]:

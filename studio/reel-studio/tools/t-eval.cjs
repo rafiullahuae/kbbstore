@@ -24,6 +24,7 @@ const PLAN = {
   'opus-mul': { 'en-ar': 'mt-en-mul', 'ar-en': 'mt-mul-en', 'en-hi': 'mt-en-mul', 'hi-en': 'mt-mul-en' },
   m2m100: Object.fromEntries(DIRS.map(([a, b]) => [a + '-' + b, 'mt-m2m100'])),
   qwen: Object.fromEntries(DIRS.map(([a, b]) => [a + '-' + b, 'mt-qwen'])),
+  qwen05: Object.fromEntries(DIRS.map(([a, b]) => [a + '-' + b, 'mt-qwen05'])),
   madlad: Object.fromEntries(DIRS.map(([a, b]) => [a + '-' + b, 'mt-madlad'])),
 };
 

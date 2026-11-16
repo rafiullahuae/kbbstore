@@ -16,6 +16,7 @@ export const ENGINES = {
   'mt-en-ru': opus('en-ru'), 'mt-ru-en': opus('ru-en'), 'mt-en-zh': opus('en-zh'), 'mt-zh-en': opus('zh-en'), 'mt-tr-en': opus('tr-en'),
   'mt-m2m100': { id: 'mt-m2m100', kind: 'm2m', repo: 'Xenova/m2m100_418M', dtype: 'q8', licence: 'MIT', label: 'M2M-100 418M (100 languages)' },
   'mt-madlad': { id: 'mt-madlad', kind: 'madlad', repo: 'Kutalia/madlad400-3b-mt-onnx', dtype: 'q8', licence: 'Apache-2.0', label: 'MADLAD-400 3B' },
+  'mt-qwen05': { id: 'mt-qwen05', kind: 'llm', repo: 'onnx-community/Qwen2.5-0.5B-Instruct', dtype: 'q8', licence: 'Apache-2.0', label: 'Qwen2.5 0.5B Instruct (local LLM)' },
   'mt-qwen': { id: 'mt-qwen', kind: 'llm', repo: 'onnx-community/Qwen2.5-1.5B-Instruct', dtype: 'q8', licence: 'Apache-2.0', label: 'Qwen2.5 1.5B Instruct (local LLM)' },
 };
 
