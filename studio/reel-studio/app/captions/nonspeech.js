@@ -125,13 +125,16 @@ export function classifyAudio(x) {
   const { db, zcr, hf, hop: fh } = frameFeatures(x);
   const n = db.length, dur = x.length / SR;
   const floor = pct(db, 0.1), peak = pct(db, 0.98);
-  const thr = Math.max(floor + Math.max(8, 0.25 * (peak - floor)), -58);
+  const thr = Math.max(floor + Math.max(8, 0.25 * (peak - floor)), -58);   // speech-vs-gap level (pauses)
+  // "something is playing": an absolute-ish level, so a bed of music under the whole clip still counts as sound
+  // (relative to the clip's own floor, music that never stops WOULD be the floor and read as silence)
+  const qthr = Math.max(-55, Math.min(-42, floor + 12));
   const W = 50, H = 12;                       // 1 s windows, 0.24 s hop
   const m = Math.max(1, Math.floor((n - W) / H) + 1);
   const sp = new Float32Array(m), loud = new Uint8Array(m);
   for (let k = 0; k < m; k++) {
     const a = k * H, b = Math.min(n, a + W);
-    let e = 0, z = 0, on = 0; for (let f = a; f < b; f++) { e += Math.pow(10, db[f] / 10); z += zcr[f]; if (db[f] > thr) on++; }
+    let e = 0, z = 0, on = 0; for (let f = a; f < b; f++) { e += Math.pow(10, db[f] / 10); z += zcr[f]; if (db[f] > qthr) on++; }
     const len = b - a, meanE = e / len, meanZ = z / len;
     let low = 0, hz = 0, flux = 0;
     for (let f = a; f < b; f++) {
@@ -157,7 +160,7 @@ export function classifyAudio(x) {
     }
     return out;
   };
-  const music = runs((k) => loud[k] && sp[k] < 0.32).filter((r) => r[1] - r[0] >= 1.5);
+  const music = bridge(runs((k) => loud[k] && sp[k] < 0.32), 0.6).filter((r) => r[1] - r[0] >= 1.5);
   const silence = runs((k) => !loud[k]).filter((r) => r[1] - r[0] >= 0.6);
   const speech = runs((k) => loud[k] && sp[k] >= 0.32);
   // pauses at frame resolution (20 ms): where a decoding window can end without cutting a word
@@ -167,10 +170,19 @@ export function classifyAudio(x) {
     if (q && p0 < 0) p0 = f;
     if (!q && p0 >= 0) { if ((f - p0) * fh >= 0.2) pauses.push([+(p0 * fh).toFixed(2), +(f * fh).toFixed(2)]); p0 = -1; }
   }
-  return { hop: H_S, off: (W * fh) / 2, speechiness: sp, loud, silence, speech, music, pauses, floorDb: floor, thrDb: thr, dur };
+  // a music-only stretch is also a fine place to end a decoding window (nobody is talking there)
+  // (a cut point only: music is never SKIPPED, someone may be talking over it)
+  const cuts = [...pauses, ...music.filter((r) => r[1] - r[0] >= 2).map((r) => [+(r[0] + 0.5).toFixed(2), +(r[1] - 0.5).toFixed(2)])].sort((x, y) => x[0] - y[0]);
+  return { hop: H_S, off: (W * fh) / 2, speechiness: sp, loud, silence, speech, music, pauses, cuts, floorDb: floor, thrDb: thr, quietDb: qthr, dur };
 }
 
 const clamp = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+/** merge runs whose gap is under `gap` seconds (a one-window blip inside a stretch of music) */
+function bridge(rs, gap) {
+  const out = [];
+  for (const r of rs) { const l = out[out.length - 1]; if (l && r[0] - l[1] < gap) l[1] = r[1]; else out.push(r.slice()); }
+  return out;
+}
 
 /** Mean speechiness and loud share over [t0,t1] (seconds). */
 export function evidence(an, t0, t1) {
@@ -267,11 +279,27 @@ export function findHallucinations(words, an, opts = {}) {
  * ordinary word, where captions hide (or show ♪).
  */
 export function cleanNonSpeech(words0, an, opts = {}) {
-  const tagged = tagWords(words0);
+  const tagged = tagWords(snapOnsets(words0, an));
   const drop = findHallucinations(tagged, an, opts);
   const words = [], dropped = [];
   tagged.forEach((w, i) => { if (drop.has(i)) dropped.push({ w: w.w, t0: w.t0, t1: w.t1, why: drop.get(i) }); else words.push(w); });
   return { words, dropped, music: musicOnly(words, an) };
+}
+
+/**
+ * Whisper often stretches the first word after music or silence back over the whole quiet part ("Book" 20.1–26.5 s
+ * when it is said at 26.1 s), so the caption would show seconds early. A word longer than 1.2 s that STARTS inside a
+ * silent or music-only stretch which ends before the word does, starts where that stretch ends.
+ */
+export function snapOnsets(words, an) {
+  if (!an) return words;
+  const quiet = bridge([...an.silence, ...an.music].sort((a, b) => a[0] - b[0]), 0.6);
+  return words.map((w) => {
+    if (w.tag || w.t1 - w.t0 <= 1.2) return w;
+    const r = quiet.find((q) => q[0] <= w.t0 + 0.6 && q[1] > w.t0 && q[1] < w.t1 - 0.1);
+    if (!r) return w;
+    return { ...w, t0: +Math.min(w.t1 - 0.12, r[1]).toFixed(3), conf: Math.min(w.conf ?? 1, 0.8) };
+  });
 }
 
 /** Loud, speech-less stretches that hold no ordinary (non-tag) word; plus every stretch a [Music] tag covers. */

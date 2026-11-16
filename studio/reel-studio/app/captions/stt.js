@@ -231,10 +231,14 @@ export function planWindows(dur, an) {
     if (long) { s = Math.max(s, long[1] - 0.3); if (lo !== -Infinity) lo = Math.max(lo, s); }
     if (s >= dur - 0.05) break;
     if (s + WIN >= dur) { out.push({ s, e: dur, lo, hi: Infinity, cut: false }); break; }
-    const cands = pauses.filter((p) => { const m = (p[0] + p[1]) / 2; return m > s + WIN - 8 && m < s + WIN - 0.3; });
+    // a long (3 s+) silence anywhere in this window ends it right there (the planner then steps over the silence);
+    // otherwise the latest pause in the window's last 8 s
+    const longP = pauses.find((p) => p[0] > s + 2 && p[0] < s + WIN - 1 && p[1] - p[0] >= 3);
+    const cands = longP ? [longP] : (an?.cuts || pauses).filter((p) => { const m = (p[0] + p[1]) / 2; return m > s + WIN - 8 && m < s + WIN - 0.3; });
     if (cands.length) {
-      const p = cands[cands.length - 1], m = +((p[0] + p[1]) / 2).toFixed(2);
-      out.push({ s, e: Math.min(dur, p[1], s + WIN), lo, hi: m, cut: true });
+      const p = cands[cands.length - 1];
+      const e = Math.min(dur, p[1], p[0] + 1, s + WIN), m = +Math.min((p[0] + p[1]) / 2, e).toFixed(2);
+      out.push({ s, e, lo, hi: m, cut: true });
       lo = m; s = Math.max(s + 1, p[0]);
     } else {
       const next = s + HOP, seam = s + HOP + (WIN - HOP) / 2;

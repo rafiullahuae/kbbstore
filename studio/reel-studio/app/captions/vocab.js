@@ -50,10 +50,10 @@ export const OCCUPATIONS = [
 /** The vocabulary for a workspace: [{term, ar?}] — company list first (it wins), then its seed. */
 export function vocabFor(ws) {
   const out = [], seen = new Set();
-  const add = (term, ar) => { const k = String(term || '').trim(); if (!k || seen.has(k.toLowerCase())) return; seen.add(k.toLowerCase()); out.push(ar ? { term: k, ar } : { term: k }); };
+  const add = (term, ar, own) => { const k = String(term || '').trim(); if (!k || seen.has(k.toLowerCase())) return; seen.add(k.toLowerCase()); const v = ar ? { term: k, ar } : { term: k }; if (own) v.own = true; out.push(v); };
   if (!ws) return out;
   const own = ws.captions?.vocab;
-  for (const t of Array.isArray(own) ? own : String(own || '').split(/[\n,]/)) add(t);
+  for (const t of Array.isArray(own) ? own : String(own || '').split(/[\n,]/)) add(t, null, true);
   add(ws.name); add(ws.fullName);
   if (typeof ws.contact === 'string' && /\.\w{2,}/.test(ws.contact)) add(ws.contact);
   if (ws.contact?.website) add(ws.contact.website);
@@ -76,8 +76,11 @@ export function promptFor(vocab, lang = 'en', maxWords = 48) {
   if (!vocab || !vocab.length) return '';
   const pick = [];
   let words = 0;
-  const score = (t) => (/[A-Z].*[A-Z]|\d|[.&'-]/.test(t) ? 2 : /^[A-Z]/.test(t) ? 1 : 0);
-  const list = vocab.map((v, i) => ({ v, i, s: score(v.term) })).sort((a, b) => b.s - a.s || a.i - b.i);
+  // the company's own words first; then brand-like words (capitals inside, digits, dots); never short acronyms
+  // ("SPF", "PR": Whisper knows them, and a prompt full of capitals makes it shout ordinary words: "VISA")
+  const score = (v) => (v.own ? 9 : /[A-Z].*[a-z].*[A-Z]|\d|[.&'-]/.test(v.term) ? 2 : /^[A-Z]/.test(v.term) ? 1 : 0);
+  const list = vocab.filter((v) => v.own || !(/^[A-Z0-9]{2,5}$/.test(v.term) || v.term.replace(/[^\p{L}]/gu, '').length < 4))
+    .map((v, i) => ({ v, i, s: score(v) })).sort((a, b) => b.s - a.s || a.i - b.i);
   for (const { v } of list) {
     const t = lang === 'ar' && v.ar ? v.ar : v.term;
     const n = t.split(/\s+/).length;
@@ -143,7 +146,9 @@ export function correctTerms(words, vocab, { lang } = {}) {
       const span = words.slice(i, i + L);
       if (span.some((w) => w.tag)) continue;
       const raw = span.map((w) => w.w).join(' ');
-      const f = fold(raw);
+      // a possessive / plural tail ("Torridan's", "Joseon's") is matched without it and kept on the result
+      const poss = /(['’]s|s['’])[^\p{L}\p{N}]*$/u.exec(span[L - 1].w)?.[1] || '';
+      const f = fold(poss ? raw.slice(0, raw.length - span[L - 1].w.length) + span[L - 1].w.replace(/(['’]s|s['’])([^\p{L}\p{N}]*)$/u, '$2') : raw);
       if (f.length < 4) continue;
       if (L === 1 && COMMON.has(f)) continue;
       let hit = byFold.get(f);
@@ -162,14 +167,14 @@ export function correctTerms(words, vocab, { lang } = {}) {
       const lead = span[0].w.match(/^[^\p{L}\p{N}]*/u)[0], trail = span[L - 1].w.match(/[^\p{L}\p{N}]*$/u)[0];
       const target = hit.t.trim().split(/\s+/);
       const same = target.length === L && span.every((w, k) => fold(w.w) === fold(target[k])) && span.map((w) => w.w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')).join(' ') === hit.t;
-      if (same || (fold(raw) === hit.f && raw.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '') === hit.t)) { out.push(...span); i += L; done = true; break; }
+      if (same || lead + hit.t + poss + trail === raw || (fold(raw) === hit.f && raw.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '') === hit.t)) { out.push(...span); i += L; done = true; break; }
       if (L === 1 && target.length > 1 && !byFold.has(f)) continue; // one word becoming several needs an exact letter match
       const t0 = span[0].t0, t1 = span[L - 1].t1, conf = Math.min(...span.map((w) => w.conf ?? 1));
       const tot = target.reduce((s, x) => s + x.length, 0);
       let t = t0;
       target.forEach((x, k) => {
         const d = (t1 - t0) * x.length / tot;
-        const w = { ...span[Math.min(k, L - 1)], w: (k === 0 ? lead : '') + x + (k === target.length - 1 ? trail : ''), t0: +t.toFixed(3), t1: +(t + d).toFixed(3), conf };
+        const w = { ...span[Math.min(k, L - 1)], w: (k === 0 ? lead : '') + x + (k === target.length - 1 ? poss + trail : ''), t0: +t.toFixed(3), t1: +(t + d).toFixed(3), conf };
         out.push(w); t += d;
       });
       fixes.push({ from: raw, to: hit.t, t0 });

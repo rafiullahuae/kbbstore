@@ -70,6 +70,13 @@
 
 /* ---- captions round (16 Nov): sound tags, vocabulary, overrides, script, gallery ---- */
 .rs-cap-head { display: flex; flex-direction: column; gap: 6px; }
+/* a short window: the whole panel scrolls rather than squeezing the transcript to nothing */
+.rs-cap { overflow-y: auto; }
+.rs-cap-pane { min-height: 300px; }
+.rs-cap-settings { flex: 1 1 auto; min-width: 0; }
+.rs-cap-settings > summary { cursor: pointer; color: var(--c-mute); padding: 6px 2px; list-style-position: inside; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rs-cap-settings[open] { flex-basis: 100%; display: flex; flex-direction: column; gap: 6px; background: var(--c-bg2); border: 1px solid var(--c-line); border-radius: 8px; padding: 4px 8px 8px; }
+.rs-cap-tagchip { font-size: 11px; }
 .rs-cap-vocabbox summary { cursor: pointer; color: var(--c-mute); }
 .rs-cap-vocabbox[open] { display: flex; flex-direction: column; gap: 6px; }
 .rs-cap-vocab { width: 100%; resize: vertical; font: 12px/1.4 ui-monospace, Menlo, monospace; }

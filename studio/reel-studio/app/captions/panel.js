@@ -234,6 +234,7 @@ export function mountCaptionPanel(el, ctx) {
   function renderList() {
     const c = cap();
     tagSel.value = c.soundTags || DEFAULT_TAG_MODE;
+    tagChip.textContent = '· ♪ ' + (TAG_MODES.find((m) => m.id === tagSel.value)?.label || '');
     list.replaceChildren();
     if (!c.words.length) {
       list.append(h('div', { class: 'rs-cap-empty' }, 'No captions yet. Press ', h('b', {}, 'Auto captions'), ' — or add a first word: ',
@@ -372,10 +373,16 @@ export function mountCaptionPanel(el, ctx) {
     if (t === 'transcript') renderList();
   }
 
-  el.append(h('div', { class: 'rs-cap-head' },
-    h('div', { class: 'rs-cap-row' }, goBtn, modelSel, langSel), progress,
-    h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Music & sound tags'), tagSel), vocabBox),
-  tabs, transcriptPane, scriptPane, stylePane);
+  // compact header: the button + one Settings fold (model, language, music & sound tags, vocabulary), so the
+  // transcript keeps the room on a 1280x800 screen; the current tag setting shows on the fold's label
+  const tagChip = h('span', { class: 'rs-cap-muted rs-cap-tagchip' });
+  const settings = h('details', { class: 'rs-cap-settings' },
+    h('summary', {}, '⚙ Settings ', tagChip),
+    h('div', { class: 'rs-cap-row' }, modelSel, langSel),
+    h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Music & sound tags'), tagSel),
+    vocabBox);
+  el.append(h('div', { class: 'rs-cap-head' }, h('div', { class: 'rs-cap-row' }, goBtn, settings), progress),
+    tabs, transcriptPane, scriptPane, stylePane);
 
   let queued = false;
   const refresh = () => {
@@ -384,6 +391,7 @@ export function mountCaptionPanel(el, ctx) {
       queued = false;
       if (sel >= cap().words.length) sel = cap().words.length - 1;
       tagSel.value = cap().soundTags || DEFAULT_TAG_MODE;
+      tagChip.textContent = '· ♪ ' + (TAG_MODES.find((m) => m.id === tagSel.value)?.label || '');
       if (tab === 'transcript') renderList();
       else if (tab === 'script') { if (!scriptPane.contains(document.activeElement)) script?.render(); }
       else { renderForm(); gallery.mark(resolveStyle(currentSpec()).id); }
