@@ -81,5 +81,12 @@ export function canvasGrab(project, t, p, ev, api) {
   return null;
 }
 
+// Single-key shortcuts a module adds (no modifier; keys the editor itself does not use, e.g. I / O to mark a range):
+// registerKey({ key: 'i', label: 'Mark in', run(ctx) }). Case-insensitive; listed in the editor's shortcut sheet.
+const keys = new Map();
+export function registerKey(k) { keys.set(String(k.key).toLowerCase(), k); }
+export const keyBinding = (key) => keys.get(String(key).toLowerCase()) || null;
+export const listKeys = () => [...keys.values()];
+
 /** module entry files the editor tries to import at start (missing files are fine) */
-export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../look/index.js', '../audio/index.js', '../viral/index.js', '../content/index.js', '../stock/index.js', '../designs/index.js'];
+export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../look/index.js', '../audio/index.js', '../viral/index.js', '../content/index.js', '../stock/index.js', '../designs/index.js', '../sync/index.js', '../cutaways/index.js'];
