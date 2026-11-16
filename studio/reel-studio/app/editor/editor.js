@@ -35,8 +35,9 @@ export class Editor {
     this.offs = [];
     this.build();
     this.offs.push(bus.on('project:change', () => this.changed()));
-    this.offs.push(bus.on('modules:changed', () => this.renderDoit()));
+    this.offs.push(bus.on('modules:changed', () => { this.renderDoit(); this.renderSideTabs(); }));
     this.offs.push(bus.on('toast', (e) => toast(e.text, e.kind)));
+    this.offs.push(bus.on('timeline:redraw', () => this.timeline.render()));   // a module's timeline strip has new data
     this.keyHandler = (e) => this.onKey(e);
     document.addEventListener('keydown', this.keyHandler);
     this.unloadHandler = () => { if (this.history.version !== this.savedVersion) this.save(); };
@@ -55,6 +56,7 @@ export class Editor {
     document.removeEventListener('keydown', this.keyHandler);
     window.removeEventListener('pagehide', this.unloadHandler);
     this.capPanel?.destroy?.();
+    for (const s of this.sideMods?.values() || []) s.handle?.destroy?.();
     this.preview.destroy(); this.timeline.destroy();
     for (const m of this.project.media) this.media.release(m.id);
     if (window.kbbEditor === this) delete window.kbbEditor;
@@ -109,6 +111,7 @@ export class Editor {
       h('button.side-tab.on', { role: 'tab', dataset: { side: 'inspector' }, on: { click: () => this.showSide('inspector') } }, '⚙ Inspector'),
       h('button.side-tab', { role: 'tab', dataset: { side: 'captions' }, on: { click: () => this.showSide('captions') } }, '💬 Captions'));
     this.inspEl = h('aside.inspector.side', this.sideTabs, this.inspBody, this.capBody);
+    this.sideMods = new Map();   // modules with their own right-column tab (core/modules.js `tab`)
     this.tlEl = h('section.timeline');
     this.root.appendChild(h('div.editor', top, h('div.doit-row', h('span.doit-lbl', 'Do it for me'), this.doit, this.progressLine),
       h('div.work', this.binEl, this.previewEl, this.inspEl), this.tlEl));
@@ -117,6 +120,18 @@ export class Editor {
     this.inspector = new Inspector(this, this.inspBody);
     this.timeline = new Timeline(this, this.tlEl);
     this.renderDoit();
+    this.renderSideTabs();
+  }
+
+  /** one right-column tab per module that asks for one (mod.tab + mod.panel); added once, in registration order */
+  renderSideTabs() {
+    for (const m of listModules()) {
+      if (!m.tab || !m.panel || this.sideMods.has(m.id)) continue;
+      const body = h('div.side-body.mod-side', { hidden: true, dataset: { side: m.id } });
+      this.sideMods.set(m.id, { body, handle: null, mounted: false });
+      this.inspEl.appendChild(body);
+      this.sideTabs.appendChild(h('button.side-tab', { role: 'tab', dataset: { side: m.id }, on: { click: () => this.showSide(m.id) } }, `${m.tab.icon || m.icon || ''} ${m.tab.label || m.label || m.id}`.trim()));
+    }
   }
 
   renderDoit() {
@@ -149,6 +164,10 @@ export class Editor {
     for (const b of this.sideTabs.children) b.classList.toggle('on', b.dataset.side === which);
     this.inspBody.hidden = which !== 'inspector';
     this.capBody.hidden = which !== 'captions';
+    for (const [id, s] of this.sideMods) {
+      s.body.hidden = which !== id;
+      if (which === id && !s.mounted) { s.mounted = true; try { s.handle = getModule(id).panel(s.body, this.context()) || null; } catch (e) { console.warn('[module]', id, e); } }
+    }
     if (which === 'captions' && !this.capMounted) {
       const mod = getModule('auto-captions');
       if (mod?.panel) { this.capMounted = true; this.capPanel = mod.panel(this.capBody, this.context()); }
@@ -159,6 +178,7 @@ export class Editor {
 
   openModulePanel(id) {
     if (id === 'auto-captions') { this.showSide('captions'); return; }
+    if (this.sideMods.has(id)) { this.showSide(id); return; }
     const mod = getModule(id); if (!mod?.panel) return;
     const el = h('div.mod-panel');
     modal({ title: mod.label || id, body: el, wide: true });

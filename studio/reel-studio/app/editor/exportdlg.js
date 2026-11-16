@@ -6,6 +6,7 @@ import { ASPECTS, clone, projectDuration } from '../core/project.js';
 import { engine, fmtBytes } from '../core/engine.js';
 import { h, modal, seg, field, toast, fmtDur } from './ui.js';
 import { reflowTo } from './items.js';
+import { runExportChecks } from '../core/modules.js';
 
 let busy = false;
 
@@ -33,7 +34,17 @@ export function exportDialog(ed) {
   const bar = h('progress.xbar', { max: 1, value: 0, hidden: true });
   const stat = h('div.xstat');
   const results = h('div.xresults');
+  // problems registered modules find before the export (safe zones, risky claims ...), each with a Fix where it has one
+  const checks = h('div.xchecks');
+  const runChecks = async () => {
+    const list = await runExportChecks(p, ed.context());
+    checks.replaceChildren(...list.map((c) => h('div.xcheck.' + (c.level || 'warn'), h('b', c.level === 'error' ? '⛔' : '⚠️'), h('span', c.text),
+      c.fix ? h('button.btn.small', { on: { click: async () => { await c.fix(); runChecks(); } } }, c.fixLabel || 'Fix') : null)));
+    ed.lastExportChecks = list.map((c) => ({ check: c.check, level: c.level, text: c.text }));
+  };
+  runChecks();
   const body = h('div.export-form',
+    checks,
     field('File name', name),
     field('Size', seg([['720', '720p'], ['1080', '1080p (best for reels)'], ['1440', '1440p']], '1080', (v) => { opt.size = +v; upd(); })),
     field('Frame rate', seg([['30', '30 fps'], ['60', '60 fps']], String(opt.fps), (v) => { opt.fps = +v; upd(); })),

@@ -5,6 +5,7 @@ import { ops } from '../core/history.js';
 import { findMedia, findTrack, itemDur, itemEnd, createTrack, VISUAL_KINDS } from '../core/project.js';
 import { h, clear, toast, fmtDur } from './ui.js';
 import { fits } from './items.js';
+import { listTimelineStrips } from '../core/modules.js';
 
 const HEAD_W = 176;
 const ROW_H = { video: 66, overlay: 50, text: 42, caption: 42, music: 50, sfx: 42 };
@@ -112,6 +113,12 @@ export class Timeline {
     }
     ruler.appendChild(lane);
     this.content.appendChild(ruler);
+    // strips modules draw under the ruler (core/modules.js registerTimelineStrip), e.g. the retention heat map
+    for (const st of listTimelineStrips()) {
+      const sl = h('div.strip-lane', { style: { width: W + 'px' } });
+      try { st.draw(sl, { project: p, pps, width: W }); } catch (e) { console.warn('[strip]', st.id, e); }
+      this.content.appendChild(h('div.tl-strip', { dataset: { strip: st.id } }, h('div.tl-corner.strip-head', { title: st.title || st.label || '' }, st.label || ''), sl));
+    }
     // rows
     this.rows = [];
     for (const track of this.rowsOrder()) {
@@ -238,7 +245,7 @@ export class Timeline {
     if (tgt.closest('.tl-head') || tgt.closest('.tl-corner')) return;
     const mk = tgt.closest('.marker');
     if (mk) { const m = ed.project.markers.find((x) => x.id === mk.dataset.marker); if (m) ed.seek(m.t); return; }
-    if (tgt.closest('.tl-ruler') || tgt.closest('.tl-playhead')) { e.preventDefault(); ed.pause(); ed.seek(this.timeAt(e.clientX)); this.track(e, (ev) => ed.seek(this.timeAt(ev.clientX))); return; }
+    if (tgt.closest('.tl-ruler') || tgt.closest('.tl-strip') || tgt.closest('.tl-playhead')) { e.preventDefault(); ed.pause(); ed.seek(this.timeAt(e.clientX)); this.track(e, (ev) => ed.seek(this.timeAt(ev.clientX))); return; }
     const itEl = tgt.closest('.tl-item');
     if (itEl) {
       e.preventDefault();
