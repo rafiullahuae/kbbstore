@@ -1,0 +1,227 @@
+{
+ "v": 1,
+ "revision": "main",
+ "note": "Models the studio downloads ONCE, after one Allow, into models/<repo>/<path>. Each file has its size and sha256 (large LFS files) or gitBlobSha1 (small text files). R2/R3 add entries; the engine installer reads this.",
+ "models": [
+  {
+   "id": "whisper-small",
+   "repo": "onnx-community/whisper-small",
+   "purpose": "Captions: speech to text, most accurate (best for Arabic)",
+   "owner": "captions",
+   "required": true,
+   "size": 412526691,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 2227,
+     "gitBlobSha1": "b0447377b1ade057f991a6a0870d2a91de762f7f"
+    },
+    {
+     "path": "generation_config.json",
+     "size": 3893,
+     "gitBlobSha1": "703dc78ee83e87fca3ace72170253cdfe4cd2d13"
+    },
+    {
+     "path": "preprocessor_config.json",
+     "size": 339,
+     "gitBlobSha1": "91876762a536a746d268353c5cba57286e76b058"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 2480466,
+     "gitBlobSha1": "1e95340ff836fad1b5932e800fb7b8c5e6d78a74"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 282683,
+     "gitBlobSha1": "d13b786c04765fb1a06492b53587752cd67665ea"
+    },
+    {
+     "path": "onnx/encoder_model_fp16.onnx",
+     "size": 176607756,
+     "sha256": "5549cd8666ff4b694ceb128bfa48b95bdcceec29075cf2c2212f90002cc058de"
+    },
+    {
+     "path": "onnx/decoder_model_merged_q4.onnx",
+     "size": 233149327,
+     "sha256": "795c61b344576719c2b249cc9911c78b4cc552c8c6a5407be21a3380a0791b13"
+    }
+   ]
+  },
+  {
+   "id": "whisper-base",
+   "repo": "onnx-community/whisper-base",
+   "purpose": "Captions: speech to text, fast",
+   "owner": "captions",
+   "required": true,
+   "size": 208840059,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 2243,
+     "gitBlobSha1": "ce7faf5d5e56e82d4800e55f524582a525639ff7"
+    },
+    {
+     "path": "generation_config.json",
+     "size": 3832,
+     "gitBlobSha1": "a57cdbf036979f80bb7ff092a0fee6256a81d329"
+    },
+    {
+     "path": "preprocessor_config.json",
+     "size": 339,
+     "gitBlobSha1": "91876762a536a746d268353c5cba57286e76b058"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 2480466,
+     "gitBlobSha1": "1e95340ff836fad1b5932e800fb7b8c5e6d78a74"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 282682,
+     "gitBlobSha1": "25be523be5ac50a7671a77f55acba082459d6314"
+    },
+    {
+     "path": "onnx/encoder_model.onnx",
+     "size": 82468078,
+     "sha256": "a9f3b752833b49e880dec91ee5b6d936112be7c3ea07c221024ba493439f46fe"
+    },
+    {
+     "path": "onnx/decoder_model_merged_q4.onnx",
+     "size": 123602419,
+     "sha256": "09f83b71ceedc97dab1d90b914715dc532a646a147abda11d83c64867b7c319c"
+    }
+   ]
+  },
+  {
+   "id": "brief-llm",
+   "repo": "onnx-community/Qwen2.5-0.5B-Instruct",
+   "purpose": "Writing: turns your brief into hooks, titles and on-screen text, offline",
+   "owner": "auto",
+   "required": false,
+   "size": 490044024,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 678,
+     "gitBlobSha1": "eea21cd6f7909a44509a193b7fcdac194766c904"
+    },
+    {
+     "path": "generation_config.json",
+     "size": 242,
+     "gitBlobSha1": "f602853d6100c43666f46c67b1c354fa15fe0b93"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 7031673,
+     "gitBlobSha1": "d24314ef7f0afd1b678c2e24c767e19f24f86b0e"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 7849,
+     "gitBlobSha1": "24afe3594154cfee05edda73aeadf3daae0a53ba"
+    },
+    {
+     "path": "onnx/model_q4f16.onnx",
+     "size": 483003582,
+     "sha256": "b11c1dd99efd57e6c6e5bc4443a019931a5fbd5dd500d48644d8225f5ce0b2cb"
+    }
+   ]
+  },
+  {
+   "id": "image-understanding",
+   "repo": "onnx-community/Florence-2-base-ft",
+   "purpose": "Looking: describes what is in your video to suggest a recipe",
+   "owner": "auto",
+   "required": false,
+   "size": 416355730,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 5432,
+     "gitBlobSha1": "f73f68ab97b370d4e70759c1be2967d891726ad8"
+    },
+    {
+     "path": "generation_config.json",
+     "size": 292,
+     "gitBlobSha1": "44ad5ddf0872b609295be720feab64296f6bb238"
+    },
+    {
+     "path": "preprocessor_config.json",
+     "size": 2673,
+     "gitBlobSha1": "f0262fff97911d278f7ae3b3447f04c74a3c032c"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 2297961,
+     "gitBlobSha1": "c6919f318f277e660b557212ed1edaf28b037fc8"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 197658,
+     "gitBlobSha1": "c6d6ca1e273fdccf972eeca8f0b75672f8ee575f"
+    },
+    {
+     "path": "onnx/vision_encoder_fp16.onnx",
+     "size": 183930536,
+     "sha256": "a7abcd77199c5d0089cf985ede4dd8089acd84f30fb3fb1462d5930345c688b3"
+    },
+    {
+     "path": "onnx/encoder_model_fp16.onnx",
+     "size": 86747414,
+     "sha256": "0d1d929f282963e983b8ac5ac4957f19a8fa48233eab41166951b769e5cf2fd2"
+    },
+    {
+     "path": "onnx/embed_tokens_fp16.onnx",
+     "size": 78780290,
+     "sha256": "da2607930eea5e21e4a2bd5fd069de550f1acc30316a4e8f824551a95232ba39"
+    },
+    {
+     "path": "onnx/decoder_model_merged_q4.onnx",
+     "size": 64393474,
+     "sha256": "be7a2f33e65f8d65538024772fda4d1c5a7752d60a7159aadf53f9f4798b90fa"
+    }
+   ]
+  },
+  {
+   "id": "upscaler",
+   "repo": "Xenova/swin2SR-classical-sr-x2-64",
+   "purpose": "Pictures: sharpens and enlarges small photos 2x",
+   "owner": "auto",
+   "required": false,
+   "size": 32429086,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 825,
+     "gitBlobSha1": "c7bd8d56c27649ec45614f2c95a21ee2f07a64ee"
+    },
+    {
+     "path": "preprocessor_config.json",
+     "size": 152,
+     "gitBlobSha1": "539dbfb6265f0ece81a881579565e88b90668fc4"
+    },
+    {
+     "path": "onnx/model_fp16.onnx",
+     "size": 32428109,
+     "sha256": "87af85bb5296d997e9162a60e9732af04ca7c41a210bdbd902ed8c760539ba81"
+    }
+   ]
+  },
+  {
+   "id": "face-detector",
+   "repo": "opencv/face_detection_yunet",
+   "purpose": "Reframe: finds faces so 16:9 video can be turned into 9:16 (YuNet, MIT)",
+   "owner": "auto",
+   "required": true,
+   "size": 232589,
+   "files": [
+    {
+     "path": "face_detection_yunet_2023mar.onnx",
+     "size": 232589,
+     "sha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4"
+    }
+   ]
+  }
+ ]
+}

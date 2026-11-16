@@ -2,6 +2,7 @@
 engine/kbbstudio-linux-*
 models/*
 !models/.keep
+!models/manifest.json
 workspaces/*/projects/
 workspaces/*/exports/
 tools/out/

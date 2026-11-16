@@ -62,6 +62,8 @@ type server struct {
 	shutdown chan struct{}
 	stopOnce sync.Once
 	client   *http.Client
+	inst     *installer
+	testBase string // test-only stand-in for huggingface.co (the check scripts' local server); never set by the launcher
 }
 
 type job struct {
@@ -81,6 +83,7 @@ func main() {
 	port := flag.Int("port", 0, "port (0 = a random free port)")
 	noBrowser := flag.Bool("no-browser", false, "do not open a browser")
 	idle := flag.Duration("idle", 20*time.Second, "stop this long after the last tab closes")
+	testBase := flag.String("test-hf-base", "", "TESTS ONLY: download models from this http://127.0.0.1:<port> server instead of huggingface.co")
 	flag.Parse()
 
 	real, err := filepath.EvalSymlinks(*dir)
@@ -104,13 +107,23 @@ func main() {
 		grants: map[string]bool{}, subs: map[chan []byte]bool{}, jobs: map[string]*job{},
 		idle: *idle, shutdown: make(chan struct{}),
 	}
+	s.inst = &installer{s: s, State: "idle"}
+	if *testBase != "" {
+		if !strings.HasPrefix(*testBase, "http://127.0.0.1:") {
+			log.Fatal("-test-hf-base must be http://127.0.0.1:<port>")
+		}
+		s.testBase = *testBase
+	}
 	s.client = &http.Client{
 		Timeout: 0,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) > 10 {
 				return errors.New("too many redirects")
 			}
-			if req.URL.Scheme != "https" || !netHosts[req.URL.Hostname()] {
+			if s.testBase != "" && strings.HasPrefix(req.URL.String(), s.testBase) {
+				return nil
+			}
+			if req.URL.Scheme != "https" || !redirectOK(req.URL.Hostname()) {
 				return fmt.Errorf("redirect to %s refused (not on the allowlist)", req.URL.Hostname())
 			}
 			return nil
@@ -148,6 +161,13 @@ func main() {
 	s.mu.Unlock()
 	_ = srv.Shutdown(ctx)
 	fmt.Printf("%s stopped.\n", appName)
+}
+
+// redirectOK: Hugging Face hands file downloads to its own CDNs (cdn-lfs.huggingface.co, cas-bridge.xethub.hf.co and,
+// since 2026, <region>.aws.cdn.hf.co). A request must START at an allowlisted host; its redirects may only go to
+// those hosts or to subdomains of HF's own hf.co / huggingface.co.
+func redirectOK(host string) bool {
+	return netHosts[host] || strings.HasSuffix(host, ".hf.co") || strings.HasSuffix(host, ".huggingface.co")
 }
 
 func (s *server) stop() { s.stopOnce.Do(func() { close(s.shutdown) }) }
@@ -485,6 +505,35 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		s.mu.Unlock()
 		go s.download(j, abs)
 		writeJSON(w, j)
+
+	case "/api/models":
+		writeJSON(w, s.modelStatus())
+
+	case "/api/models/install", "/api/models/resume":
+		var b struct{ IDs []string }
+		if r.Method != http.MethodPost {
+			jsonErr(w, 405, "POST only")
+			return
+		}
+		_ = json.NewDecoder(io.LimitReader(r.Body, 65536)).Decode(&b)
+		if len(b.IDs) == 0 {
+			s.inst.mu.Lock()
+			b.IDs = append([]string(nil), s.inst.IDs...)
+			s.inst.mu.Unlock()
+		}
+		if err := s.installModels(b.IDs); err != nil {
+			jsonErr(w, 400, err.Error())
+			return
+		}
+		writeJSON(w, s.modelStatus())
+
+	case "/api/models/pause":
+		if r.Method != http.MethodPost {
+			jsonErr(w, 405, "POST only")
+			return
+		}
+		s.pauseModels()
+		writeJSON(w, s.modelStatus())
 
 	case "/api/events":
 		s.events(w, r)
