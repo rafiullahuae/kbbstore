@@ -55,6 +55,7 @@ export class Editor {
     document.removeEventListener('keydown', this.keyHandler);
     window.removeEventListener('pagehide', this.unloadHandler);
     this.capPanel?.destroy?.();
+    for (const tab of this.modTabs.values()) tab.panel?.destroy?.();
     this.preview.destroy(); this.timeline.destroy();
     for (const m of this.project.media) this.media.release(m.id);
     if (window.kbbEditor === this) delete window.kbbEditor;
@@ -108,7 +109,14 @@ export class Editor {
     this.sideTabs = h('nav.side-tabs', { role: 'tablist' },
       h('button.side-tab.on', { role: 'tab', dataset: { side: 'inspector' }, on: { click: () => this.showSide('inspector') } }, '⚙ Inspector'),
       h('button.side-tab', { role: 'tab', dataset: { side: 'captions' }, on: { click: () => this.showSide('captions') } }, '💬 Captions'));
-    this.inspEl = h('aside.inspector.side', this.sideTabs, this.inspBody, this.capBody);
+    // modules that ask for a tab (core/modules.js `tab`) get one beside Captions, mounted on first open
+    this.modTabs = new Map();
+    for (const m of listModules().filter((x) => x.tab && x.panel)) {
+      const body = h('div.side-body.mod-body', { hidden: true, dataset: { modTab: m.id } });
+      this.modTabs.set(m.id, { body, mounted: false });
+      this.sideTabs.appendChild(h('button.side-tab', { role: 'tab', dataset: { side: m.id }, on: { click: () => this.showSide(m.id) } }, m.tab));
+    }
+    this.inspEl = h('aside.inspector.side', this.sideTabs, this.inspBody, this.capBody, ...[...this.modTabs.values()].map((x) => x.body));
     this.tlEl = h('section.timeline');
     this.root.appendChild(h('div.editor', top, h('div.doit-row', h('span.doit-lbl', 'Do it for me'), this.doit, this.progressLine),
       h('div.work', this.binEl, this.previewEl, this.inspEl), this.tlEl));
@@ -149,6 +157,10 @@ export class Editor {
     for (const b of this.sideTabs.children) b.classList.toggle('on', b.dataset.side === which);
     this.inspBody.hidden = which !== 'inspector';
     this.capBody.hidden = which !== 'captions';
+    for (const [id, tab] of this.modTabs) {
+      tab.body.hidden = which !== id;
+      if (which === id && !tab.mounted) { tab.mounted = true; tab.panel = getModule(id).panel(tab.body, this.context()); }
+    }
     if (which === 'captions' && !this.capMounted) {
       const mod = getModule('auto-captions');
       if (mod?.panel) { this.capMounted = true; this.capPanel = mod.panel(this.capBody, this.context()); }
@@ -159,6 +171,7 @@ export class Editor {
 
   openModulePanel(id) {
     if (id === 'auto-captions') { this.showSide('captions'); return; }
+    if (this.modTabs.has(id)) { this.showSide(id); return; }
     const mod = getModule(id); if (!mod?.panel) return;
     const el = h('div.mod-panel');
     modal({ title: mod.label || id, body: el, wide: true });

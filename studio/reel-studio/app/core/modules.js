@@ -23,6 +23,11 @@
 //   ctx.toast(text, kind)  short message;     ctx.progress(label, 0..1 | null) a progress line in the bar
 //   ctx.openPanel(id)      open a module's panel
 //
+// Optional, generic (round 2):
+//     tab: '✨ Create',                  // the module's panel also lives as a TAB in the editor's right column
+//                                       // (mounted once on first open, kept alive; panel may return {destroy})
+//     home: (el, home) => { ... },      // a card on the home screen; home = { workspace, open(project, files?), rerender() }
+//
 // Modules are loaded by the editor from app/captions/index.js and app/auto/index.js when those files exist; each
 // file imports registerModule and registers itself. Until a slot is registered the editor shows
 // "coming in the next update".
@@ -48,4 +53,4 @@ export const getModule = (id) => registry.get(id) || null;
 export const listModules = () => [...registry.values()];
 
 /** module entry files the editor tries to import at start (missing files are fine) */
-export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js'];
+export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../content/index.js'];

@@ -1,4 +1,5 @@
 import { FONT_FAMILIES } from './fonts.js';
+import { EXTRA_STYLES } from './styles-extra.js';
 
 // Caption styles as DATA. The renderer (render.js) reads only these fields, so every style is
 // fully editable from the panel: project.captions.style = { id, ...overrides } (or just the id).
@@ -78,7 +79,7 @@ function merge(a, b) {
   return out;
 }
 
-export const STYLES = RAW.map((s) => merge(D, s));
+export const STYLES = [...RAW, ...EXTRA_STYLES].map((s) => merge(D, s));
 export const STYLE_IDS = STYLES.map((s) => s.id);
 const BY_ID = Object.fromEntries(STYLES.map((s) => [s.id, s]));
 export const DEFAULT_STYLE_ID = 'word-box';

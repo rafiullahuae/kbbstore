@@ -1,0 +1,333 @@
+{
+ "v": 1,
+ "note": "KBB product cut-outs (transparent WebP) from the shop catalogue, copied from docs/plans/ad-studio/assets/products. Read offline by app/content (b-roll, covers, formats).",
+ "products": [
+  {
+   "id": "guasha",
+   "brand": "medicube",
+   "name": "Gua Sha cream",
+   "file": "guasha.webp",
+   "w": 424,
+   "h": 797,
+   "keywords": [
+    "contour",
+    "cream",
+    "face",
+    "gua",
+    "lifting",
+    "massage",
+    "medicube",
+    "sha"
+   ]
+  },
+  {
+   "id": "anua",
+   "brand": "Anua",
+   "name": "Heartleaf mist mini",
+   "file": "anua.webp",
+   "w": 524,
+   "h": 664,
+   "keywords": [
+    "anua",
+    "heartleaf",
+    "hydrating",
+    "mini",
+    "mist",
+    "spray",
+    "toner"
+   ]
+  },
+  {
+   "id": "marymay",
+   "brand": "Mary&May",
+   "name": "PDRN serum",
+   "file": "marymay.webp",
+   "w": 161,
+   "h": 737,
+   "keywords": [
+    "ampoule",
+    "glow",
+    "mary",
+    "may",
+    "pdrn",
+    "serum"
+   ]
+  },
+  {
+   "id": "deodorant",
+   "brand": "medicube",
+   "name": "Deodorant",
+   "file": "deodorant.webp",
+   "w": 270,
+   "h": 798,
+   "keywords": [
+    "body",
+    "deodorant",
+    "fresh",
+    "medicube"
+   ]
+  },
+  {
+   "id": "eyemask",
+   "brand": "medicube",
+   "name": "Eye patches",
+   "file": "eyemask.webp",
+   "w": 900,
+   "h": 874,
+   "keywords": [
+    "eye",
+    "mask",
+    "medicube",
+    "patch",
+    "patches",
+    "puffiness"
+   ]
+  },
+  {
+   "id": "balmred",
+   "brand": "medicube",
+   "name": "EGF balm (red)",
+   "file": "balmred.webp",
+   "w": 239,
+   "h": 900,
+   "keywords": [
+    "balm",
+    "egf",
+    "medicube",
+    "moisturiser",
+    "red",
+    "stick"
+   ]
+  },
+  {
+   "id": "balmpink",
+   "brand": "medicube",
+   "name": "PDRN balm (pink)",
+   "file": "balmpink.webp",
+   "w": 237,
+   "h": 900,
+   "keywords": [
+    "balm",
+    "glow",
+    "medicube",
+    "pdrn",
+    "pink",
+    "stick"
+   ]
+  },
+  {
+   "id": "celimax",
+   "brand": "celimax",
+   "name": "Retinal Shot",
+   "file": "celimax.webp",
+   "w": 275,
+   "h": 738,
+   "keywords": [
+    "celimax",
+    "retinal",
+    "retinol",
+    "serum",
+    "shot",
+    "wrinkles"
+   ]
+  },
+  {
+   "id": "dalba",
+   "brand": "d'Alba",
+   "name": "First Spray Serum",
+   "file": "dalba.webp",
+   "w": 223,
+   "h": 810,
+   "keywords": [
+    "d'alba",
+    "first",
+    "glow",
+    "mist",
+    "serum",
+    "spray",
+    "truffle"
+   ]
+  },
+  {
+   "id": "glowvanilla",
+   "brand": "medicube",
+   "name": "Glow Vanilla mist",
+   "file": "glowvanilla.webp",
+   "w": 348,
+   "h": 900,
+   "keywords": [
+    "body",
+    "fragrance",
+    "glow",
+    "medicube",
+    "mist",
+    "vanilla"
+   ]
+  },
+  {
+   "id": "anuacream",
+   "brand": "Anua",
+   "name": "PDRN cream",
+   "file": "anuacream.webp",
+   "w": 248,
+   "h": 899,
+   "keywords": [
+    "anua",
+    "cream",
+    "hydrating",
+    "moisturiser",
+    "pdrn"
+   ]
+  },
+  {
+   "id": "hairoil",
+   "brand": "medicube",
+   "name": "Rosemary hair oil",
+   "file": "hairoil.webp",
+   "w": 333,
+   "h": 900,
+   "keywords": [
+    "hair",
+    "medicube",
+    "oil",
+    "rosemary",
+    "scalp"
+   ]
+  },
+  {
+   "id": "anuaeye",
+   "brand": "Anua",
+   "name": "PDRN Caffeine eye cream",
+   "file": "anuaeye.webp",
+   "w": 175,
+   "h": 900,
+   "keywords": [
+    "anua",
+    "caffeine",
+    "cream",
+    "eye",
+    "pdrn",
+    "puffiness"
+   ]
+  },
+  {
+   "id": "eospeach",
+   "brand": "eos",
+   "name": "24H Moisture lotion (jasmine peach)",
+   "file": "eospeach.webp",
+   "w": 434,
+   "h": 900,
+   "keywords": [
+    "24h",
+    "body",
+    "eos",
+    "jasmine",
+    "lotion",
+    "moisture",
+    "moisturiser",
+    "peach"
+   ]
+  },
+  {
+   "id": "eosbutter",
+   "brand": "eos",
+   "name": "Cashmere whipped body butter",
+   "file": "eosbutter.webp",
+   "w": 900,
+   "h": 742,
+   "keywords": [
+    "body",
+    "butter",
+    "cashmere",
+    "eos",
+    "moisturiser",
+    "vanilla",
+    "whipped"
+   ]
+  },
+  {
+   "id": "bdeye",
+   "brand": "Biodance",
+   "name": "Collagen Peptide eye cream",
+   "file": "bdeye.webp",
+   "w": 218,
+   "h": 900,
+   "keywords": [
+    "biodance",
+    "collagen",
+    "cream",
+    "eye",
+    "peptide"
+   ]
+  },
+  {
+   "id": "bdserum",
+   "brand": "Biodance",
+   "name": "Caviar PDRN serum",
+   "file": "bdserum.webp",
+   "w": 131,
+   "h": 900,
+   "keywords": [
+    "ampoule",
+    "biodance",
+    "caviar",
+    "pdrn",
+    "serum"
+   ]
+  },
+  {
+   "id": "azelaic",
+   "brand": "medicube",
+   "name": "Azelaic Acid foam cleanser",
+   "file": "azelaic.webp",
+   "w": 382,
+   "h": 900,
+   "keywords": [
+    "acid",
+    "acne",
+    "azelaic",
+    "cleanser",
+    "foam",
+    "medicube",
+    "niacinamide",
+    "pores",
+    "wash"
+   ]
+  },
+  {
+   "id": "nbz9",
+   "brand": "numbuzin",
+   "name": "No.9 NAD+ sun essence",
+   "file": "nbz9.webp",
+   "w": 314,
+   "h": 900,
+   "keywords": [
+    "essence",
+    "nad",
+    "no.9",
+    "numbuzin",
+    "spf",
+    "sun",
+    "sunscreen"
+   ]
+  },
+  {
+   "id": "nbz5",
+   "brand": "numbuzin",
+   "name": "No.5 Glutathione mask set",
+   "file": "nbz5.webp",
+   "w": 850,
+   "h": 900,
+   "keywords": [
+    "brightening",
+    "glutathione",
+    "mask",
+    "no.5",
+    "numbuzin",
+    "set",
+    "sheet",
+    "vitamin"
+   ]
+  }
+ ]
+}

@@ -204,6 +204,116 @@
    ]
   },
   {
+   "id": "media-tagger",
+   "repo": "Xenova/clip-vit-base-patch32",
+   "purpose": "B-roll: tags your photos and clips on import (what is in them) so b-roll matches your words",
+   "owner": "content",
+   "required": true,
+   "size": 155851446,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 4524,
+     "gitBlobSha1": "e79bad158b04c235740f9b2ec320b17f4030f7a5"
+    },
+    {
+     "path": "preprocessor_config.json",
+     "size": 520,
+     "gitBlobSha1": "e0675735fd0052745f2f7b7291e4aa7859389998"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 2224119,
+     "gitBlobSha1": "bc1f77d20440541dd073ebae6f6c401087c7d34e"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 775,
+     "gitBlobSha1": "c9b2a711cbdd039529fa5a66f1965e13eb14451d"
+    },
+    {
+     "path": "onnx/vision_model_quantized.onnx",
+     "size": 89117001,
+     "sha256": "583fd1110a514667812fee7d684952aaf82a99b959760c8d7dca7e0ab9839299"
+    },
+    {
+     "path": "onnx/text_model_quantized.onnx",
+     "size": 64504507,
+     "sha256": "73baab855d406190da9faa498cfedf65f15cf309f4cc7385b7b032e6d08e5c3a"
+    }
+   ]
+  },
+  {
+   "id": "copy-llm",
+   "repo": "onnx-community/Qwen2.5-1.5B-Instruct",
+   "purpose": "Writing: Instagram/TikTok captions, keywords, hashtags and comment prompts in English and Arabic, offline on the Mac's GPU",
+   "owner": "content",
+   "required": false,
+   "size": 1228919513,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 809,
+     "gitBlobSha1": "161d78e5bcb1c12c3f45614bae0e35e7a49ad5b7"
+    },
+    {
+     "path": "generation_config.json",
+     "size": 242,
+     "gitBlobSha1": "f602853d6100c43666f46c67b1c354fa15fe0b93"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 7031673,
+     "gitBlobSha1": "d24314ef7f0afd1b678c2e24c767e19f24f86b0e"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 7849,
+     "gitBlobSha1": "24afe3594154cfee05edda73aeadf3daae0a53ba"
+    },
+    {
+     "path": "onnx/model_q4f16.onnx",
+     "size": 1221878940,
+     "sha256": "19dec9f63488016185ba997d5e4492b5ac5b4f7ef1abb45243a91de958838dcd"
+    }
+   ]
+  },
+  {
+   "id": "copy-llm-lite",
+   "repo": "onnx-community/Qwen2.5-0.5B-Instruct",
+   "purpose": "Writing (no-GPU fallback): the same post copy on the CPU when the browser has no WebGPU",
+   "owner": "content",
+   "required": false,
+   "size": 519136999,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 678,
+     "gitBlobSha1": "eea21cd6f7909a44509a193b7fcdac194766c904"
+    },
+    {
+     "path": "generation_config.json",
+     "size": 242,
+     "gitBlobSha1": "f602853d6100c43666f46c67b1c354fa15fe0b93"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 7031673,
+     "gitBlobSha1": "d24314ef7f0afd1b678c2e24c767e19f24f86b0e"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 7849,
+     "gitBlobSha1": "24afe3594154cfee05edda73aeadf3daae0a53ba"
+    },
+    {
+     "path": "onnx/model_quantized.onnx",
+     "size": 512096557,
+     "sha256": "41834041ab1b29eff9fc592f1a29a1844133aea35832ea9fa91682be13016100"
+    }
+   ]
+  },
+  {
    "id": "upscaler",
    "repo": "Xenova/swin2SR-classical-sr-x2-64",
    "purpose": "Pictures: sharpens and enlarges small photos 2x (next update)",
