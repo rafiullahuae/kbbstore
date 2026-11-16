@@ -163,6 +163,9 @@ export function correctTerms(words, vocab, { lang } = {}) {
           const d = editDistance(f, x.f, max);
           if (d < bd) { bd = d; best = x; }
         }
+        // An Arabic word that opens with the article "ال" is an ordinary word, not a brand transliteration: Whisper's
+        // "اليون" (a mishearing of "اليوم", today) became the brand إيليون (Illiyoon) one letter away (16 Nov).
+        if (best && f.startsWith('ال') && !best.f.startsWith('ال')) best = null;
         if (best && bd <= max && bd / best.f.length <= 0.22) hit = best;
       }
       if (!hit) continue;

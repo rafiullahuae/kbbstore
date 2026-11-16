@@ -74,6 +74,8 @@ const saveUrl = (url, file) => fs.writeFileSync(file, Buffer.from(url.split(',')
       fix('Apply for the Shengen visa and the Chancenkarta today.', pcv),
       fix('Study in Germeny or Portugall this year', pcv),
       fix('the weather is nice and the serum is light', vocab),
+      fix('عرض اليون فقط', vocab), // Whisper's mishearing of اليوم (today) must not become إيليون (Illiyoon)
+      fix('سيروم إيليوم الجديد', vocab),
     ];
     out.vocabN = [vocab.length, pcv.length];
     out.promptEn = V.promptFor(vocab, 'en'); out.promptAr = V.promptFor(pcv, 'ar');
@@ -92,7 +94,8 @@ const saveUrl = (url, file) => fs.writeFileSync(file, Buffer.from(url.split(',')
     u.multi.filter(([, t]) => t).length === 7 && u.multi[0][1] === '' && u.multi[u.multi.length - 1][1] === '' && u.plain.every((x) => x === null), JSON.stringify(u.multi));
   check('repeated-phrase hallucination collapsed to one copy', u.loopDropped === 15 && u.loopKept === 'so I said I am going to go home', `${u.loopDropped} dropped → "${u.loopKept}"`);
   check('near-miss spellings corrected from the company vocabulary', u.fix[0] === 'I love COSRX and the Medicube toner.' && u.fix[1] === 'the Torriden serum from Beauty of Joseon'
-    && u.fix[2] === 'Apply for the Schengen visa and the Chancenkarte today.' && u.fix[3] === 'Study in Germany or Portugal this year' && u.fix[4] === 'the weather is nice and the serum is light', JSON.stringify(u.fix));
+    && u.fix[2] === 'Apply for the Schengen visa and the Chancenkarte today.' && u.fix[3] === 'Study in Germany or Portugal this year' && u.fix[4] === 'the weather is nice and the serum is light'
+    && u.fix[5] === 'عرض اليون فقط' && u.fix[6] === 'سيروم إيليون الجديد', JSON.stringify(u.fix));
   check('script edit aligned word by word, unchanged words keep their timing', u.alignKeep && u.align.map((x) => x[0]).join(' ') === 'welcome back to our lovely channel today!', JSON.stringify(u.align));
   console.log(`  vocabulary: KBB ${u.vocabN[0]} terms, Planet Careers ${u.vocabN[1]} terms; prompt EN "${u.promptEn.slice(0, 90)}…"`);
 
