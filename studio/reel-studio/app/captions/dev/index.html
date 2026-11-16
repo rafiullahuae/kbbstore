@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Captions harness</title>
+<link rel="stylesheet" href="../captions.css">
+<style>
+  html, body { margin: 0; background: #15151b; color: #eee; font: 14px/1.4 system-ui, sans-serif; }
+  #stage { display: flex; gap: 16px; padding: 16px; }
+  #preview { width: 360px; height: 640px; border-radius: 10px; background: #000; }
+  #panel { width: 440px; height: 760px; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="preview" width="1080" height="1920"></canvas><div id="panel"></div></div>
+<script type="module" src="./harness.js"></script>
+</body>
+</html>

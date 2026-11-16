@@ -1,0 +1,67 @@
+/* Caption panel — scoped under .rs-cap; colours follow the editor's tokens when it defines them. */
+.rs-cap {
+  --c-bg: var(--panel-bg, #1b1b22); --c-bg2: var(--panel-bg2, #24242d); --c-fg: var(--fg, #ececf1);
+  --c-mute: var(--fg-mute, #9a9aa8); --c-line: var(--line, #34343f); --c-acc: var(--accent, #e8508b);
+  display: flex; flex-direction: column; gap: 10px; height: 100%; box-sizing: border-box; padding: 12px;
+  background: var(--c-bg); color: var(--c-fg); font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden;
+}
+.rs-cap *, .rs-cap *::before { box-sizing: border-box; }
+.rs-cap-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rs-cap-muted { color: var(--c-mute); }
+.rs-cap-in { background: var(--c-bg2); color: var(--c-fg); border: 1px solid var(--c-line); border-radius: 6px; padding: 5px 7px; font: inherit; min-width: 0; }
+.rs-cap-btn { background: var(--c-bg2); color: var(--c-fg); border: 1px solid var(--c-line); border-radius: 6px; padding: 5px 9px; font: inherit; cursor: pointer; }
+.rs-cap-btn:hover:not(:disabled) { border-color: var(--c-mute); }
+.rs-cap-btn:disabled { opacity: .45; cursor: default; }
+.rs-cap-btn.primary { background: var(--c-acc); border-color: transparent; color: #fff; font-weight: 600; padding: 7px 12px; }
+.rs-cap-btn.ghost { background: transparent; }
+.rs-cap-btn.danger { color: #ff8a8a; }
+.rs-cap-progress { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center; margin-top: 8px; }
+.rs-cap-progress[hidden] { display: none; }
+.rs-cap-barlabel { grid-column: 1; color: var(--c-mute); }
+.rs-cap-bar { grid-column: 1; height: 6px; background: var(--c-bg2); border-radius: 3px; overflow: hidden; }
+.rs-cap-bar i { display: block; height: 100%; width: 0; background: var(--c-acc); transition: width .2s; }
+.rs-cap-progress .rs-cap-btn { grid-column: 2; grid-row: 1 / span 2; }
+.rs-cap-tabs { display: flex; border-bottom: 1px solid var(--c-line); }
+.rs-cap-tabs button { flex: 1; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--c-mute); padding: 7px; font: inherit; font-weight: 600; cursor: pointer; }
+.rs-cap-tabs button[aria-selected="true"] { color: var(--c-fg); border-bottom-color: var(--c-acc); }
+.rs-cap-pane { display: flex; flex-direction: column; gap: 8px; min-height: 0; flex: 1; overflow: auto; }
+.rs-cap-pane[hidden] { display: none; }
+.rs-cap-tools { display: flex; flex-direction: column; gap: 6px; }
+.rs-cap-tools input[placeholder] { flex: 1 1 6em; }
+.rs-cap-legend { margin-left: auto; font-size: 11px; }
+.rs-cap-legend b { font-weight: 500; padding: 0 4px; border-radius: 3px; }
+.rs-cap-sel { background: var(--c-bg2); border: 1px solid var(--c-line); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.rs-cap-sel[hidden] { display: none; }
+.rs-cap-selword { font-weight: 700; }
+.rs-cap-list { display: flex; flex-direction: column; gap: 2px; }
+.rs-cap-empty { color: var(--c-mute); padding: 16px 4px; }
+.rs-cap-line { display: grid; grid-template-columns: 52px 1fr; gap: 2px 8px; padding: 6px 4px; border-radius: 6px; }
+.rs-cap-line:hover { background: var(--c-bg2); }
+.rs-cap-time { background: none; border: 0; color: var(--c-mute); font: 11px/1.9 ui-monospace, Menlo, monospace; text-align: left; cursor: pointer; padding: 0; }
+.rs-cap-text { font-size: 14px; line-height: 1.7; }
+.rs-cap-text[dir="rtl"] { font-family: "Cairo", system-ui, sans-serif; font-size: 15px; }
+.rs-cap-w { border-radius: 4px; padding: 1px 2px; cursor: pointer; outline: none; }
+.rs-cap-w:hover { background: rgba(255,255,255,.08); }
+.rs-cap-w.filler, .rs-cap-legend .filler { background: rgba(255, 170, 0, .22); color: #ffcf70; }
+.rs-cap-w.lowconf, .rs-cap-legend .lowconf { text-decoration: underline wavy #ff6b6b; text-underline-offset: 3px; }
+.rs-cap-w.now { background: rgba(232, 80, 139, .35); }
+.rs-cap-w.sel { box-shadow: 0 0 0 1.5px var(--c-acc); }
+.rs-cap-w.editing { background: #fff; color: #111; box-shadow: 0 0 0 2px var(--c-acc); cursor: text; }
+.rs-cap-emoji { grid-column: 2; display: flex; gap: 4px; flex-wrap: wrap; }
+.rs-cap-chip { background: transparent; border: 1px dashed var(--c-line); border-radius: 12px; padding: 0 7px; font-size: 13px; cursor: pointer; color: var(--c-fg); }
+.rs-cap-chip.on { border-style: solid; border-color: var(--c-acc); }
+.rs-cap-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.rs-cap-tile { position: relative; background: none; border: 2px solid transparent; border-radius: 10px; padding: 0; cursor: pointer; color: var(--c-fg); text-align: center; font: 11px/1.25 system-ui, sans-serif; }
+.rs-cap-tile canvas { display: block; width: 100%; aspect-ratio: 9 / 16; height: auto; border-radius: 8px; }
+.rs-cap-tile span { display: block; padding: 4px 2px 2px; }
+.rs-cap-tile em { position: absolute; top: 4px; left: 4px; right: 4px; font-style: normal; font-size: 9px; background: rgba(0,0,0,.65); border-radius: 4px; padding: 1px 3px; }
+.rs-cap-tile.on { border-color: var(--c-acc); }
+.rs-cap-form { display: grid; grid-template-columns: 1fr; gap: 6px; border-top: 1px solid var(--c-line); padding-top: 8px; }
+.rs-cap-formhead { display: flex; gap: 6px; align-items: center; }
+.rs-cap-formhead b { margin-right: auto; }
+.rs-cap-field { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 8px; }
+.rs-cap-field > span:first-child { color: var(--c-mute); }
+.rs-cap-pair { display: flex; gap: 6px; align-items: center; }
+.rs-cap-pair input[type="range"] { flex: 1; }
+.rs-cap input[type="color"] { width: 34px; height: 24px; padding: 0; border: 1px solid var(--c-line); border-radius: 4px; background: none; }
+.rs-cap input[type="range"] { accent-color: var(--c-acc); }
