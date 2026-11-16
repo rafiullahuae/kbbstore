@@ -27,7 +27,8 @@ function makeStudio() {
 
 function startEngine(dir, extra = []) {
   return new Promise((res, rej) => {
-    const p = spawn(BIN, ['--dir', dir, '--no-browser', '--idle', '600s', ...extra], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const args = ['--dir', dir, '--no-browser', ...(extra.includes('--idle') ? [] : ['--idle', '600s']), ...extra];
+    const p = spawn(BIN, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     let buf = '';
     p.stdout.on('data', async (d) => {
       buf += d;

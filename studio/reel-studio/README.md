@@ -8,10 +8,20 @@ asks you first and you say yes (only for the one-time download of the captions m
 1. Copy the **KBB Studio** folder anywhere on your Mac (Documents is fine).
 2. **First time only:** right-click **Start KBB Studio.command** → **Open** → **Open**.
    (macOS asks once because the studio is not from the App Store. After that a normal double-click works.)
+   On macOS 15 (Sequoia) and newer, if it only offers "Done": open **System Settings → Privacy & Security**,
+   scroll down to *"Start KBB Studio.command" was blocked* and press **Open Anyway**, then double-click again.
 3. A small Terminal window opens and the studio opens in your browser. **Google Chrome is recommended**
    (fastest export, iPhone HEVC videos). Safari 17 or newer also works.
 4. Keep the Terminal window open while you work. When you close the studio's browser tab, the studio stops by
    itself after a few seconds. You can also press **Stop** (top right in the studio).
+
+## First run: the AI models
+
+The first time, the studio lists the AI models it uses (captions, writing, looking at your video, photo
+sharpening, face finding), their size and your free disk space. Press **Allow and download** once; they are
+saved in the `models` folder and never downloaded again. A dropped connection carries on where it stopped, even
+after a restart; every file is checked before it is used. **Later** skips it for today (⚙ Models on the home
+screen opens it again).
 
 ## Where your things are
 

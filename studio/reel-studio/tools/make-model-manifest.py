@@ -5,9 +5,9 @@
 import json, os, sys
 
 SPEC = [
-    ("whisper-small", "onnx-community/whisper-small", "Captions: speech to text, most accurate (best for Arabic)", "captions", True,
+    ("whisper-small", "onnx-community/whisper-small", "Captions (accurate): speech to text, best for Arabic", "captions", True,
      ["config.json", "generation_config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/encoder_model_fp16.onnx", "onnx/decoder_model_merged_q4.onnx"]),
-    ("whisper-base", "onnx-community/whisper-base", "Captions: speech to text, fast", "captions", True,
+    ("whisper-base", "onnx-community/whisper-base", "Captions (fast): speech to text, quicker on older Macs", "captions", True,
      ["config.json", "generation_config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/encoder_model.onnx", "onnx/decoder_model_merged_q4.onnx"]),
     ("brief-llm", "onnx-community/Qwen2.5-0.5B-Instruct", "Writing: turns your brief into hooks, titles and on-screen text, offline", "auto", False,
      ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/model_q4f16.onnx"]),

@@ -6,7 +6,7 @@
   {
    "id": "whisper-small",
    "repo": "onnx-community/whisper-small",
-   "purpose": "Captions: speech to text, most accurate (best for Arabic)",
+   "purpose": "Captions (accurate): speech to text, best for Arabic",
    "owner": "captions",
    "required": true,
    "size": 412526691,
@@ -51,7 +51,7 @@
   {
    "id": "whisper-base",
    "repo": "onnx-community/whisper-base",
-   "purpose": "Captions: speech to text, fast",
+   "purpose": "Captions (fast): speech to text, quicker on older Macs",
    "owner": "captions",
    "required": true,
    "size": 208840059,

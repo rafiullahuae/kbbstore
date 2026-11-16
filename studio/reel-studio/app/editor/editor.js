@@ -260,11 +260,11 @@ export class Editor {
     this.select(newIds);
   }
 
-  copy() {
+  copy(quiet = false) {
     const hits = this.selectedItems(); if (!hits.length) return;
     const t0 = Math.min(...hits.map((x) => x.item.t0));
     this.clipboard = hits.map(({ track, item }) => ({ trackId: track.id, item: clone(item), rel: item.t0 - t0 }));
-    toast(`Copied ${hits.length} item${hits.length > 1 ? 's' : ''}`);
+    if (!quiet) toast(`Copied ${hits.length} item${hits.length > 1 ? 's' : ''}`);
   }
   paste(at = this.t) {
     if (!this.clipboard?.length) return;
@@ -280,7 +280,7 @@ export class Editor {
   }
   duplicate() {
     const hits = this.selectedItems(); if (!hits.length) return;
-    this.copy();
+    this.copy(true);
     const end = Math.max(...hits.map((x) => itemEnd(x.item)));
     this.paste(end);
   }
