@@ -208,6 +208,7 @@ below.
 | 15–16 Nov | Ad Studio: 69 templates, National Day sets, multi-select/groups/align, backgrounds and colour controls | Done (artifact) |
 | 16 Nov | Reel Studio: plan; round 1 lanes R1 engine+editor, R2 captions, R3 automation+recipes+brand kits | In progress |
 | 16 Nov | Owner: app name "KBB Studio"; companies as switchable workspaces (seed: KBB, **Planet Careers** — the immigration/study-visa consultancy); "+ New company"; country packs (Europe, UK, Canada, Australia, NZ, USA, Ireland, UAE and other majors: flags, themes, landmarks, stickers, recipes). Image-ad templates for Planet Careers in Ad Studio queued for the next free lane. | In progress |
+| 16 Nov | Owner: **Brief → Designs** (type a brief, get 6–8 professional editable ads; same reader drives Brief → Reel). Offline by default and fully capable (rule parser + a small local language model on the Mac GPU, downloaded once after permission); optional "Connect Claude" with his key, off by default; no AI-generated images. | Planned (after round 1) |
 
 ## Mobile app — planning ledger  *(opened 12 November 2026, kept running)*
 

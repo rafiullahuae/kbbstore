@@ -157,3 +157,33 @@ No console errors; every action undoable; nothing blocks the UI over 50 ms (work
 works with a 60 s 1080p iPhone HEVC clip and an Arabic voice-over; 390-wide layout not required (Mac
 app), but 1280×800 and 1920×1080 must both be clean. Tests: a headless Chromium check script per module
 (like Ad Studio's check-*.cjs). No network at run time except through the engine's permission gate.
+
+## Brief → Designs (and Brief → Reel) — decided 16 Nov
+
+The owner: *"if we need any ad design, in our own wording to explain, the system need to pick, analyse,
+and design the ads accordingly ... i need professional work, not just basic designs"*, then: *"by default
+no api, but keep option to connect the claude api, with super easy integration. but the offline version
+must be capable of all complex tasks etc."*
+
+* **Offline by default, and fully capable.** The brief is understood on the Mac with no account:
+  1. a fast rule/keyword parser (occasions, % / AED offers, brands and products from the KBB catalogue,
+     countries/visa types for Planet Careers, sizes, languages, tone, CTA) for everyday briefs;
+  2. for free-form or complex briefs, a **small local language model running in the browser on the Mac's
+     GPU** (WebGPU; e.g. a 1.5–3B instruct model, ~1–2 GB, downloaded once after he allows it), turning
+     the brief into the same structured spec and writing EN/AR headline and offer copy variants. No
+     internet after the download.
+* **Design engine:** ~60 professional layout families per industry (beauty/retail; consultancy/
+  education) + the existing 69 Ad Studio templates as smart layouts; design rules enforced and scored
+  (hierarchy, grid, contrast ≥ 4.5:1 for text, safe zones, min text size, no product cropping, no
+  overlaps); 6–8 distinct variants per brief across story/post/square; brand kit of the active company;
+  products as cut-outs from the catalogue; country packs for Planet Careers; learns from kept/downloaded
+  designs. Every result fully editable in the editor; full-HD/4K export.
+* **Optional "Connect Claude"** (Settings → Connect Claude: paste key → Test → done). Off by default; when
+  connected, a "Smart brief" toggle sends ONLY the brief text and the catalogue names it needs (never
+  files or customer data) to the Claude API for richer understanding and copy; asks once per session;
+  key stored locally by the engine, never in projects or exports; one-click Disconnect.
+* **No AI-generated images** (not chosen): visuals come from his photos, product cut-outs, brand assets,
+  country packs and designed backgrounds.
+* The same brief reader drives **Brief → Reel** (recipe + copy + captions + music) so one brief can give
+  matching ads and a reel.
+* Round: after round 1 integration (editor + captions + automation).
