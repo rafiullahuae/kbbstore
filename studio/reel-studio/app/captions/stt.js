@@ -113,26 +113,41 @@ export class Transcriber {
       if (opts.debugDrop) words = words.filter((w) => !opts.debugDrop.some(([a, b]) => (w.t0 + w.t1) / 2 > a && (w.t0 + w.t1) / 2 < b));
       words.sort((a, b) => a.t0 - b.t0);
       // Second listen. Measured before this existed: whisper-small dropped 16 s of clear speech in one 29 s window.
-      const holes = [];
-      const edges = [0, ...words.flatMap((w) => [w.t0, w.t1]), dur];
-      for (let g = 0; g < edges.length; g += 2) {
-        const a = edges[g], b = edges[g + 1];
-        if (b - a >= 2.5 && voiced(audio.subarray(Math.floor(a * SR), Math.floor(b * SR))) >= 0.3) holes.push([a, b]);
-      }
-      if (an) for (const h of uncoveredSpeech(words, an)) holes.push(h);
-      holes.sort((x, y) => x[0] - y[0]);
-      const merged = [];
-      for (const h of holes) { const l = merged[merged.length - 1]; if (l && h[0] <= l[1]) l[1] = Math.max(l[1], h[1]); else merged.push(h.slice()); }
-      for (const [a, b] of merged.slice(0, 40)) {
-        if (signal?.aborted) throw abortError();
-        // at least 3 s of audio around a short hole: Whisper is unreliable on a one-second clip
-        const pad = Math.max(0.2, (3 - (b - a)) / 2);
-        const s0 = Math.max(0, a - pad), s1 = Math.min(dur, b + pad, s0 + WIN);
-        const got = (await run(s0, s1)).filter((w) => { const mid = (w.t0 + w.t1) / 2; return mid > a && mid < b; });
-        // never put back a word the first pass already has at the same moment
-        const fresh = got.filter((w) => !words.some((x) => Math.abs(x.t0 - w.t0) < 0.25 && x.w.toLowerCase() === w.w.toLowerCase()));
-        words.push(...fresh);
-        stats.reread++; stats.recovered += fresh.length;
+      // A long hole is listened to again in pieces of ≤ 8 s split at pauses (asked to read 11 s again, small skips part
+      // of it a second time), and the holes are looked for again after each pass (at most 3 passes, 40 re-reads).
+      const findHoles = () => {
+        words.sort((a, b) => a.t0 - b.t0);
+        const holes = [];
+        const edges = [0, ...words.flatMap((w) => [w.t0, w.t1]), dur];
+        for (let g = 0; g < edges.length; g += 2) {
+          const a = edges[g], b = edges[g + 1];
+          if (b - a >= 2.5 && voiced(audio.subarray(Math.floor(a * SR), Math.floor(b * SR))) >= 0.3) holes.push([a, b]);
+        }
+        if (an) for (const h of uncoveredSpeech(words, an)) holes.push(h);
+        holes.sort((x, y) => x[0] - y[0]);
+        const merged = [];
+        for (const h of holes) { const l = merged[merged.length - 1]; if (l && h[0] <= l[1]) l[1] = Math.max(l[1], h[1]); else merged.push(h.slice()); }
+        return merged.flatMap((h) => splitHole(h, an?.pauses || []));
+      };
+      const tried = new Set();
+      for (let pass = 0; pass < 3 && stats.reread < 40; pass++) {
+        const todo = findHoles().filter((h) => !tried.has(h[0].toFixed(1) + '-' + h[1].toFixed(1)));
+        if (!todo.length) break;
+        let found = 0;
+        for (const [a, b] of todo) {
+          if (signal?.aborted) throw abortError();
+          if (stats.reread >= 40) break;
+          tried.add(a.toFixed(1) + '-' + b.toFixed(1));
+          // at least 3 s of audio around a short hole: Whisper is unreliable on a one-second clip
+          const pad = Math.max(0.3, (3 - (b - a)) / 2);
+          const s0 = Math.max(0, a - pad), s1 = Math.min(dur, b + pad, s0 + WIN);
+          const got = (await run(s0, s1)).filter((w) => { const mid = (w.t0 + w.t1) / 2; return mid > a && mid < b; });
+          // never put back a word the first pass already has at the same moment
+          const fresh = got.filter((w) => !words.some((x) => Math.abs(x.t0 - w.t0) < 0.25 && x.w.toLowerCase() === w.w.toLowerCase()));
+          words.push(...fresh);
+          stats.reread++; stats.recovered += fresh.length; found += fresh.length;
+        }
+        if (!found) break;
       }
       this.repaired = stats.reread;
       words.sort((a, b) => a.t0 - b.t0);
@@ -248,6 +263,21 @@ export function planWindows(dur, an) {
   }
   if (!out.length) out.push({ s: 0, e: Math.max(dur, 0.01), lo: -Infinity, hi: Infinity, cut: false });
   out[out.length - 1].hi = Infinity;
+  return out;
+}
+
+/** Cut a hole longer than 8 s into pieces of ≤ 8 s, at the pause nearest each 6 s step. */
+export function splitHole([a, b], pauses) {
+  const out = [];
+  let s = a;
+  while (b - s > 8) {
+    const want = s + 6;
+    const p = pauses.filter((q) => { const m = (q[0] + q[1]) / 2; return m > s + 3 && m < s + 8; })
+      .sort((x, y) => Math.abs((x[0] + x[1]) / 2 - want) - Math.abs((y[0] + y[1]) / 2 - want))[0];
+    const cut = p ? (p[0] + p[1]) / 2 : s + 6;
+    out.push([s, cut]); s = cut;
+  }
+  out.push([s, b]);
   return out;
 }
 

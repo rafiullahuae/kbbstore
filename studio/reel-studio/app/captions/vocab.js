@@ -29,7 +29,10 @@ export const KBB_BRANDS = [
 ];
 const KBB_TERMS = ['K-Beauty', 'K-Beauty Bliss', 'kbeautybliss.com', 'niacinamide', 'centella', 'hyaluronic acid', 'retinol', 'snail mucin',
   'ceramide', 'peptide', 'propolis', 'ginseng', 'mugwort', 'heartleaf', 'sunscreen', 'SPF', 'toner', 'essence', 'serum', 'ampoule', 'cushion',
-  'cleansing oil', 'double cleanse', 'glass skin', 'Tabby', 'Tamara', 'AED', 'dirhams', 'UAE', 'Dubai', 'Abu Dhabi', 'Sharjah'];
+  'cleansing oil', 'double cleanse', 'glass skin'];
+// Spelled right by the post-pass only, never put in Whisper's prompt (it knows them, and a prompted place name
+// gets inserted where it was not said: measured, 'ask what you can Abu do').
+const KBB_POST = ['Tabby', 'Tamara', 'AED', 'dirhams', 'UAE', 'Dubai', 'Abu Dhabi', 'Sharjah'];
 const PC_TERMS = ['Planet Careers', 'Schengen', 'visa', 'student visa', 'work permit', 'residence permit', 'blue card', 'EU Blue Card',
   'Chancenkarte', 'Opportunity Card', 'PR', 'permanent residency', 'IELTS', 'TOEFL', 'PTE', 'Duolingo', 'APS', 'blocked account',
   'Sperrkonto', 'Uni-Assist', 'intake', 'bachelor', 'master', 'MBA', 'PhD', 'scholarship', 'DAAD', 'Erasmus', 'Stipendium Hungaricum',
@@ -50,7 +53,7 @@ export const OCCUPATIONS = [
 /** The vocabulary for a workspace: [{term, ar?}] — company list first (it wins), then its seed. */
 export function vocabFor(ws) {
   const out = [], seen = new Set();
-  const add = (term, ar, own) => { const k = String(term || '').trim(); if (!k || seen.has(k.toLowerCase())) return; seen.add(k.toLowerCase()); const v = ar ? { term: k, ar } : { term: k }; if (own) v.own = true; out.push(v); };
+  const add = (term, ar, own, post) => { const k = String(term || '').trim(); if (!k || seen.has(k.toLowerCase())) return; seen.add(k.toLowerCase()); const v = ar ? { term: k, ar } : { term: k }; if (own) v.own = true; if (post) v.post = true; out.push(v); };
   if (!ws) return out;
   const own = ws.captions?.vocab;
   for (const t of Array.isArray(own) ? own : String(own || '').split(/[\n,]/)) add(t, null, true);
@@ -58,7 +61,7 @@ export function vocabFor(ws) {
   if (typeof ws.contact === 'string' && /\.\w{2,}/.test(ws.contact)) add(ws.contact);
   if (ws.contact?.website) add(ws.contact.website);
   const ind = String(ws.industry || '') + ' ' + (ws.industries || []).join(' ') + ' ' + (ws.brandRef || '') + ' ' + ws.id;
-  if (/beaut|cosmet|skin|kbb/i.test(ind)) { for (const [en, ar] of KBB_BRANDS) add(en, ar); for (const t of KBB_TERMS) add(t); }
+  if (/beaut|cosmet|skin|kbb/i.test(ind)) { for (const [en, ar] of KBB_BRANDS) add(en, ar); for (const t of KBB_TERMS) add(t); for (const t of KBB_POST) add(t, null, false, true); }
   if (/immigra|visa|study|consult|career|recruit|planet/i.test(ind)) {
     for (const t of PC_TERMS) add(t);
     for (const c of COUNTRIES) add(c.name, c.nameAr);
@@ -79,7 +82,7 @@ export function promptFor(vocab, lang = 'en', maxWords = 48) {
   // the company's own words first; then brand-like words (capitals inside, digits, dots); never short acronyms
   // ("SPF", "PR": Whisper knows them, and a prompt full of capitals makes it shout ordinary words: "VISA")
   const score = (v) => (v.own ? 9 : /[A-Z].*[a-z].*[A-Z]|\d|[.&'-]/.test(v.term) ? 2 : /^[A-Z]/.test(v.term) ? 1 : 0);
-  const list = vocab.filter((v) => v.own || !(/^[A-Z0-9]{2,5}$/.test(v.term) || v.term.replace(/[^\p{L}]/gu, '').length < 4))
+  const list = vocab.filter((v) => v.own || !v.post && !(/^[A-Z0-9]{2,5}$/.test(v.term) || v.term.replace(/[^\p{L}]/gu, '').length < 4))
     .map((v, i) => ({ v, i, s: score(v) })).sort((a, b) => b.s - a.s || a.i - b.i);
   for (const { v } of list) {
     const t = lang === 'ar' && v.ar ? v.ar : v.term;
