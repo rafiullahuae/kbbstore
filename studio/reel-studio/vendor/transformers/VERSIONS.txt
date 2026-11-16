@@ -1,3 +1,4 @@
 @huggingface/transformers 3.8.1 (Apache-2.0) dist/transformers.min.js
 onnxruntime-web 1.22.0-dev.20250409-89f8206ba4 (MIT) dist/ort-wasm-simd-threaded.jsep.{mjs,wasm}
 From the npm registry, 16 Nov 2026. Loaded with env.backends.onnx.wasm.wasmPaths pointing here, so nothing is fetched from a CDN.
+onnxruntime-web 1.22.0-dev.20250409-89f8206ba4 (MIT) dist/ort.webgpu.min.mjs -- the plain ORT API (InferenceSession, Tensor) for app/designs/imagegen (SDXS); same build as the jsep wasm above, so both share one runtime binary.

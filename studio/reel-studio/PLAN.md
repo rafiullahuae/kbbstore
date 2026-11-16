@@ -203,6 +203,17 @@ must be capable of all complex tasks etc."*
   matching ads and a reel.
 * Round: after round 1 integration (editor + captions + automation).
 
+**Built 16 Nov (Brief → Designs lane):** `app/designs/` -- rule reader EN/AR + local Qwen / Claude (validated, never
+trusted), 10 layout families (the Ad Studio's family-per-format idea ported to one canvas renderer shared by thumbnails,
+editor, rule checker and export), design rules enforced and scored on real pixels, 6–8 passing designs per brief in
+story/post/square, design editor (undo, swap, recolour, move/resize), PNG/JPG Full HD + 4K, "Make a matching reel";
+offline AI pictures with **SDXS-512-DreamShaper** (CreativeML Open RAIL++-M, 983 MB, one step; chosen over SD-Turbo whose
+Stability Community Licence needs registration and ends above US$1M revenue) on WebGPU / WASM + Swin2SR x2, procedural
+artwork, Lucide icons (ISC) by meaning, colour schemes per brief. `app/settings/` -- **⚙ Configure** (companies,
+contact & social, Connect Claude, photo sources, models, folders, languages, about); engine `settings.go` keeps the
+Claude key in `settings/` (0600) and is the only thing that calls `api.anthropic.com` (typed tasks `brief`,
+`translate`, `test`). `tools/d-check.cjs`, `shots/d/`.
+
 ## Models: one first-run setup, saved in the app folder — decided 16 Nov
 
 The owner chose option 1 ("the 1 is fine, but no any errors should come while downloading, and the data

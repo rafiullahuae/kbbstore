@@ -36,6 +36,7 @@ export async function renderHome(root, { onOpen, onDropFiles }) {
       h('div.brand', h('span.logo-dot', '▶'), h('b', APP_NAME)),
       workspaceSwitcher({ onSwitch: rerender }),
       h('div.grow'),
+      h('button.btn.ghost#configure-btn', { title: 'Companies, keys, Claude, models, folders, languages', on: { click: () => import('../settings/configure.js').then((m) => m.openConfigure('companies', { onClose: rerender })) } }, '⚙ Configure'),
       h('button.btn.ghost', { title: 'Download the AI models (once)', on: { click: () => openSetup() } }, '⚙ Models'),
       h('button.btn.ghost.stop-btn', { on: { click: () => stopStudio() } }, '⏻ Stop')),
     h('main.home-main',

@@ -49,22 +49,24 @@ var (
 )
 
 type server struct {
-	root      string // real path of the studio folder
-	token     string
-	addr      string
-	mu        sync.Mutex
-	grants    map[string]bool // "exact <url>" or "repo <prefix>"
-	clients   int
-	subs      map[chan []byte]bool
-	idleT     *time.Timer
-	idle      time.Duration
-	jobs      map[string]*job
-	shutdown  chan struct{}
-	stopOnce  sync.Once
-	client    *http.Client
-	inst      *installer
-	testBase  string // test-only stand-in for huggingface.co (the check scripts' local server); never set by the launcher
-	photoBase string // test-only stand-in for the photo hosts (tools/stock-mock.cjs); never set by the launcher
+	root       string // real path of the studio folder
+	token      string
+	addr       string
+	mu         sync.Mutex
+	grants     map[string]bool // "exact <url>" or "repo <prefix>"
+	clients    int
+	subs       map[chan []byte]bool
+	idleT      *time.Timer
+	idle       time.Duration
+	jobs       map[string]*job
+	shutdown   chan struct{}
+	stopOnce   sync.Once
+	client     *http.Client
+	inst       *installer
+	testBase   string // test-only stand-in for huggingface.co (the check scripts' local server); never set by the launcher
+	photoBase  string // test-only stand-in for the photo hosts (tools/stock-mock.cjs); never set by the launcher
+	claudeBase string // test-only stand-in for api.anthropic.com (tools/d-claude-mock.cjs); never set by the launcher
+	noBrowser  bool   // -no-browser (the test runs): /api/open does not pop Finder windows either
 }
 
 type job struct {
@@ -86,6 +88,7 @@ func main() {
 	idle := flag.Duration("idle", 20*time.Second, "stop this long after the last tab closes")
 	testBase := flag.String("test-hf-base", "", "TESTS ONLY: download models from this http://127.0.0.1:<port> server instead of huggingface.co")
 	photoBase := flag.String("test-photo-base", "", "TESTS ONLY: send Pexels / Unsplash requests to this http://127.0.0.1:<port> mock server")
+	claudeBase := flag.String("test-claude-base", "", "TESTS ONLY: send Claude API calls to this http://127.0.0.1:<port> mock server")
 	flag.Parse()
 
 	real, err := filepath.EvalSymlinks(*dir)
@@ -110,6 +113,14 @@ func main() {
 		idle: *idle, shutdown: make(chan struct{}),
 	}
 	s.inst = &installer{s: s, State: "idle"}
+	s.noBrowser = *noBrowser
+	if *claudeBase != "" {
+		if !strings.HasPrefix(*claudeBase, "http://127.0.0.1:") {
+			log.Fatal("-test-claude-base must be http://127.0.0.1:<port>")
+		}
+		s.claudeBase = *claudeBase
+		log.Printf("TEST MODE: Claude calls go to %s, not to api.anthropic.com", s.claudeBase)
+	}
 	if *testBase != "" {
 		if !strings.HasPrefix(*testBase, "http://127.0.0.1:") {
 			log.Fatal("-test-hf-base must be http://127.0.0.1:<port>")
@@ -462,7 +473,9 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			return
 		}
 		u, err := url.Parse(g.URL)
-		if err != nil || u.Scheme != "https" || !netHosts[u.Hostname()] || u.User != nil || u.Port() != "" {
+		// the one Claude URL may be granted (exactly), but it is not a /net host: only the engine's own calls reach it
+		isClaude := g.URL == claudeURL && g.Scope == "exact"
+		if err != nil || u.Scheme != "https" || !netHosts[u.Hostname()] && !isClaude || u.User != nil || u.Port() != "" {
 			jsonErr(w, 403, "that host is not on the allowlist")
 			return
 		}
@@ -573,7 +586,9 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		go func() { time.Sleep(200 * time.Millisecond); s.stop() }()
 
 	default:
-		jsonErr(w, 404, "no such endpoint")
+		if !s.settingsAPI(w, r, p) { // engine/settings.go: Claude, preferences, folders, model removal
+			jsonErr(w, 404, "no such endpoint")
+		}
 	}
 }
 
