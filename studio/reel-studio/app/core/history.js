@@ -32,12 +32,18 @@ export class History {
   apply(cmd) {
     if (!cmd) return;
     const p = this.get();
+    const st = hooks.length ? hooks.map((h) => { try { return h.before ? h.before(p) : null; } catch { return null; } }) : null;
     cmd.do(p);
+    const extra = st ? followUps(p, st, cmd) : null;
+    if (extra) cmd = Object.assign(composite(cmd.label, [cmd, extra]), { key: cmd.key, extra });
     if (this.txn) { this.txn.push(cmd); return this._changed(cmd, 'apply', false); }
     const now = performance.now();
     const top = this.undoStack[this.undoStack.length - 1];
     if (cmd.key && top && top.key === cmd.key && now - this.lastAt < COALESCE_MS) {
-      this.undoStack[this.undoStack.length - 1] = { label: cmd.label, key: cmd.key, do: cmd.do, undo: top.undo };
+      // a follow-up a hook added to a LATER step of the drag is undone too (newest first), then the first step's undo
+      const extras = [...(top.extras || []), ...(cmd.extra ? [cmd.extra] : [])], first = top.first || top;
+      this.undoStack[this.undoStack.length - 1] = { label: cmd.label, key: cmd.key, do: cmd.do, extras, first,
+        undo: extras.length ? (q) => { for (let i = extras.length - 1; i >= 0; i--) extras[i].undo(q); first.undo(q); } : top.undo };
     } else {
       this.undoStack.push(cmd);
       if (this.undoStack.length > this.limit) this.undoStack.shift();
@@ -80,6 +86,22 @@ export class History {
     const p = this.get(); if (p) p.modified = new Date().toISOString();
     if (emit) this.bus.emit('project:change', { cmd, kind });
   }
+}
+
+// ── follow-up hooks ──
+// registerHistoryHook({ id, before(project) -> state, after(project, state, cmd) -> cmd | null })
+// A hook sees every applied command (never undo/redo) and may return ONE follow-up command that is applied right away
+// and becomes part of the same undo step — e.g. captions and cutaways that follow the media time of the clip under
+// them through trims, splits, ripples and re-ordering. Follow-ups must set absolute values (snapshot before/after),
+// so the drag coalescing above stays exact. A hook that throws is skipped.
+const hooks = [];
+export function registerHistoryHook(h) { const i = hooks.findIndex((x) => x.id === h.id); if (i >= 0) hooks.splice(i, 1); hooks.push(h); }
+function followUps(p, st, cmd) {
+  const out = [];
+  hooks.forEach((h, i) => {
+    try { const c = h.after(p, st[i], cmd); if (c) { c.do(p); out.push(c); } } catch (e) { console.warn('[history-hook]', h.id, e); }
+  });
+  return out.length ? (out.length === 1 ? out[0] : composite('Follow', out)) : null;
 }
 
 function composite(label, cmds) {

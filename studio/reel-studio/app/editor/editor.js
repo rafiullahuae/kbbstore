@@ -6,7 +6,7 @@ import { MediaStore } from '../core/media.js';
 import { engine } from '../core/engine.js';
 import { APP_NAME, projectDir } from '../core/config.js';
 import { ASPECTS, projectDuration, findItem, findTrack, itemDur, itemEnd, uid, clone, groupMembers, createTrack } from '../core/project.js';
-import { SLOTS, getModule, listModules } from '../core/modules.js';
+import { SLOTS, getModule, listModules, keyBinding, listKeys } from '../core/modules.js';
 import { h, $, clear, toast, modal, seg, isTyping, fmtTime } from './ui.js';
 import { workspaceSwitcher, state as wsState } from './workspaces.js';
 import { Preview } from './preview.js';
@@ -405,7 +405,7 @@ export class Editor {
       case '-': case '_': done(); this.timeline.zoom(0.8); break;
       case '\\': done(); this.timeline.fit(); break;
       case '?': done(); this.shortcuts(); break;
-      default:
+      default: { const kb = !e.altKey && keyBinding(k); if (kb) { done(); kb.run(this.context()); } }
     }
   }
 
@@ -417,6 +417,7 @@ export class Editor {
       ['⌘G / ⇧⌘G', 'Group / ungroup'], ['↑ ↓ (Alt + ← →)', 'Nudge selected 1 px (Shift: 10 px)'], ['M', 'Add marker'],
       ['+ / − / \\', 'Timeline zoom in / out / fit'], ['⌘S', 'Save now'], ['⌘E', 'Export'], ['Esc', 'Clear selection'],
       ['Drag on the video', 'Box-select (starts over the video too)'], ['Shift / ⌘ click', 'Add to / remove from selection'], ['Alt + drag', 'Always box-select'],
+      ...listKeys().map((x) => [x.key.toUpperCase(), x.label]),
     ];
     modal({ title: 'Keyboard shortcuts', wide: true, body: h('div.keys', rows.map(([a, b]) => h('div.key-row', h('kbd', a), h('span', b)))) });
   }

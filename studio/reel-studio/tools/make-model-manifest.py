@@ -43,6 +43,11 @@ SPEC = [
     ("image-ai", "creador/sdxs-512-dreamshaper-onnx", "Pictures (AI): makes backgrounds, scenes, artwork and worker photos offline on the Mac's GPU, for Brief to Designs", "designs", False,
      ["manifest.json", "tokenizer.json", "tokenizer_config.json", "text_encoder_fp16.onnx", "unet_fp16.onnx", "taesd_decoder_fp16.onnx", "vae_large_decoder_fp16.onnx"],
      {"group": "Image AI", "licence": "CreativeML Open RAIL++-M (use restrictions apply)", "licenceUrl": "https://huggingface.co/spaces/CompVis/stable-diffusion-license"}),
+    # Word-perfect caption sync (Lane S): forced alignment of the caption words to the voice with a CTC speech model.
+    # wav2vec2-xlsr-multilingual-56 (voidful, Apache-2.0; ONNX export by NewComer00, Apache-2.0), 4-bit weights: ONE
+    # model for English, Arabic, Persian letters (Urdu folds onto them) and Hindi. Not MMS (non-commercial).
+    ("word-sync", "NewComer00/wav2vec2-xlsr-multilingual-56-ONNX", "Captions (word-perfect sync): finds the exact moment each caption word is said, in English, Arabic, Urdu and Hindi", "captions", True,
+     ["config.json", "preprocessor_config.json", "vocab.json", "tokenizer_config.json", "special_tokens_map.json", "onnx/model_q4.onnx"], {"licence": "Apache-2.0"}),
 ]
 
 # Translation lane (round 3a): caption translation, OPTIONAL, one entry per direction so he downloads only the languages
