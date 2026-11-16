@@ -206,6 +206,13 @@ input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
 .tl-ruler { position: sticky; top: 0; z-index: 4; display: flex; height: 28px; background: var(--panel2); border-bottom: 1px solid var(--line); }
 .tl-corner { position: sticky; left: 0; z-index: 5; width: 176px; flex: none; background: var(--panel2); border-right: 1px solid var(--line); font-size: 12px; color: var(--muted); display: flex; align-items: center; padding-left: 12px; font-variant-numeric: tabular-nums; }
 .ruler-lane { position: relative; cursor: ew-resize; }
+.tl-strip { position: sticky; top: 28px; z-index: 4; display: flex; height: 14px; background: var(--panel2); border-bottom: 1px solid var(--line); }
+.tl-strip .tl-corner { font-size: 10px; }
+.strip-lane { position: relative; cursor: ew-resize; overflow: hidden; }
+.xchecks { display: grid; gap: 6px; margin-bottom: 10px; }
+.xcheck { display: flex; gap: 8px; align-items: center; border: 1px solid var(--line2); border-left: 4px solid var(--warn); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+.xcheck.error { border-left-color: var(--err); }
+.xcheck span { flex: 1; }
 .tick { position: absolute; bottom: 0; height: 10px; border-left: 1px solid var(--line2); }
 .tick span { position: absolute; left: 4px; bottom: 9px; font-size: 10.5px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tick.minor { height: 5px; border-color: var(--line); }

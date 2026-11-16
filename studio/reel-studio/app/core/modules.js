@@ -25,6 +25,14 @@
 //   ctx.toast(text, kind)  short message;     ctx.progress(label, 0..1 | null) a progress line in the bar
 //   ctx.openPanel(id)      open a module's panel
 //
+// Optional extras a module may use (generic hooks; the editor knows nothing about the modules that use them):
+//   tab: { label, icon }   with panel(): the panel gets its OWN tab in the editor's right column (mounted once, kept
+//                          alive) instead of a pop-up; panel may return { destroy() }.
+//   registerTimelineStrip({ id, label, draw(el, { project, pps, width }) })   a thin strip under the timeline ruler
+//                          (e.g. a heat map); draw() fills `el` (width px wide, t * pps = x) on every timeline render.
+//   registerExportCheck({ id, run(project, ctx) -> [{ level:'warn'|'error', text, fix?(), fixLabel? }] })   problems the
+//                          Export dialog lists before exporting (with a Fix button when fix() is given).
+//
 // Modules are loaded by the editor from app/captions/index.js and app/auto/index.js when those files exist; each
 // file imports registerModule and registers itself. Until a slot is registered the editor shows
 // "coming in the next update".
@@ -49,5 +57,17 @@ export function registerModule(mod) {
 export const getModule = (id) => registry.get(id) || null;
 export const listModules = () => [...registry.values()];
 
+const strips = new Map();
+export function registerTimelineStrip(strip) { strips.set(strip.id, strip); bus.emit('modules:changed', { id: strip.id }); }
+export const listTimelineStrips = () => [...strips.values()];
+const exportChecks = new Map();
+export function registerExportCheck(check) { exportChecks.set(check.id, check); }
+/** every registered export check's findings (a check that throws is skipped, never blocks the export) */
+export async function runExportChecks(project, ctx) {
+  const out = [];
+  for (const c of exportChecks.values()) { try { for (const f of (await c.run(project, ctx)) || []) out.push({ ...f, check: c.id }); } catch (e) { console.warn('[export-check]', c.id, e); } }
+  return out;
+}
+
 /** module entry files the editor tries to import at start (missing files are fine) */
-export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../look/index.js', '../audio/index.js'];
+export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../look/index.js', '../audio/index.js', '../viral/index.js'];

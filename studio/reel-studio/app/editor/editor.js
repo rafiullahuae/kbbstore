@@ -37,6 +37,7 @@ export class Editor {
     this.offs.push(bus.on('project:change', () => this.changed()));
     this.offs.push(bus.on('modules:changed', () => { this.renderDoit(); this.renderSideTabs(); }));
     this.offs.push(bus.on('toast', (e) => toast(e.text, e.kind)));
+    this.offs.push(bus.on('timeline:redraw', () => this.timeline.render()));   // a module's timeline strip has new data
     this.keyHandler = (e) => this.onKey(e);
     document.addEventListener('keydown', this.keyHandler);
     this.unloadHandler = () => { if (this.history.version !== this.savedVersion) this.save(); };
@@ -120,6 +121,7 @@ export class Editor {
     this.inspector = new Inspector(this, this.inspBody);
     this.timeline = new Timeline(this, this.tlEl);
     this.renderDoit();
+    this.renderSideTabs();
   }
 
   renderDoit() {
@@ -153,7 +155,7 @@ export class Editor {
     const mods = listModules().filter((m) => m.tab && m.panel).sort((a, b) => (a.tab.order ?? 50) - (b.tab.order ?? 50));
     for (const m of mods) {
       if (this.sideTabs.querySelector(`[data-side="mod:${m.id}"]`)) continue;
-      this.sideTabs.appendChild(h('button.side-tab', { role: 'tab', dataset: { side: 'mod:' + m.id }, on: { click: () => this.showSide('mod:' + m.id) } }, m.tab.label || m.label));
+      this.sideTabs.appendChild(h('button.side-tab', { role: 'tab', dataset: { side: 'mod:' + m.id }, on: { click: () => this.showSide('mod:' + m.id) } }, `${m.tab.icon || ''} ${m.tab.label || m.label || m.id}`.trim()));
       const body = h('div.side-body.mod-body', { hidden: true, dataset: { mod: m.id } });
       this.modBodies.set(m.id, { body, mounted: false, inst: null });
       this.inspEl.appendChild(body);
