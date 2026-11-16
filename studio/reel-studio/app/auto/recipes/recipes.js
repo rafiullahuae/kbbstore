@@ -6,6 +6,7 @@
 //   overlays:[...], endCard:{template, cta:[en], ctaAr:[ar], payments?}, keywords:{en, ar}, scene:{motion, faces, cuts} }
 // workspaces: which company sees it first ('kbb', 'planet-careers', '*' = everyone). industries drive the same for new companies.
 import { COUNTRIES } from '../countries/countries.js';
+import { WORK_ABROAD_RECIPES } from './work-abroad.js';
 
 const P = (part, share, hint, overlay) => ({ part, share, hint, ...(overlay ? { overlay } : {}) });
 const BEAUTY = { workspaces: ['kbb'], industries: ['beauty', 'retail'] };
@@ -241,7 +242,7 @@ export function countryRecipes() {
   }));
 }
 
-export const RECIPES = [...BASE_RECIPES, ...countryRecipes()];
+export const RECIPES = [...BASE_RECIPES, ...countryRecipes(), ...WORK_ABROAD_RECIPES];
 export const recipeById = id => RECIPES.find(r => r.id === id) || null;
 /** a workspace's industry tags: its own `industries` (from its brand kit) plus anything its industry text names */
 const industryText = (ws = {}) => (String(ws.industry || '') + ' ' + (ws.industries || []).join(' ')).toLowerCase();

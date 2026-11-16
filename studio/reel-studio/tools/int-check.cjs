@@ -40,7 +40,7 @@ async function staticChecks() {
   const ids = new Set(S.STYLES.map((s) => s.id));
   const bad = [];
   for (const r of R.RECIPES) for (const lang of ['en', 'ar']) { const id = CS.captionStyleFor(r, lang); if (!ids.has(id)) bad.push(`${r.id}/${lang}=${id}`); }
-  ok(R.RECIPES.length === 64 && !bad.length, `all ${R.RECIPES.length} recipes map to a real caption style in EN and AR (${ids.size} styles)${bad.length ? ': ' + bad.join(', ') : ''}`);
+  ok(R.RECIPES.length === 70 && !bad.length, `all ${R.RECIPES.length} recipes map to a real caption style in EN and AR (${ids.size} styles)${bad.length ? ': ' + bad.join(', ') : ''}`);
   const E = await import(path.join(ROOT, 'app/auto/recipes/engine.js'));
   const unknown = R.RECIPES.filter((r) => !ids.has(E.resolveRecipe(r, {}).captionStyle) || !ids.has(E.resolveRecipe(r, { lang: 'ar' }).captionStyle));
   ok(!unknown.length, 'resolveRecipe() hands out only real caption style ids');

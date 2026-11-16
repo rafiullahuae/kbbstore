@@ -49,21 +49,22 @@ var (
 )
 
 type server struct {
-	root     string // real path of the studio folder
-	token    string
-	addr     string
-	mu       sync.Mutex
-	grants   map[string]bool // "exact <url>" or "repo <prefix>"
-	clients  int
-	subs     map[chan []byte]bool
-	idleT    *time.Timer
-	idle     time.Duration
-	jobs     map[string]*job
-	shutdown chan struct{}
-	stopOnce sync.Once
-	client   *http.Client
-	inst     *installer
-	testBase string // test-only stand-in for huggingface.co (the check scripts' local server); never set by the launcher
+	root      string // real path of the studio folder
+	token     string
+	addr      string
+	mu        sync.Mutex
+	grants    map[string]bool // "exact <url>" or "repo <prefix>"
+	clients   int
+	subs      map[chan []byte]bool
+	idleT     *time.Timer
+	idle      time.Duration
+	jobs      map[string]*job
+	shutdown  chan struct{}
+	stopOnce  sync.Once
+	client    *http.Client
+	inst      *installer
+	testBase  string // test-only stand-in for huggingface.co (the check scripts' local server); never set by the launcher
+	photoBase string // test-only stand-in for the photo hosts (tools/stock-mock.cjs); never set by the launcher
 }
 
 type job struct {
@@ -84,6 +85,7 @@ func main() {
 	noBrowser := flag.Bool("no-browser", false, "do not open a browser")
 	idle := flag.Duration("idle", 20*time.Second, "stop this long after the last tab closes")
 	testBase := flag.String("test-hf-base", "", "TESTS ONLY: download models from this http://127.0.0.1:<port> server instead of huggingface.co")
+	photoBase := flag.String("test-photo-base", "", "TESTS ONLY: send Pexels / Unsplash requests to this http://127.0.0.1:<port> mock server")
 	flag.Parse()
 
 	real, err := filepath.EvalSymlinks(*dir)
@@ -114,22 +116,16 @@ func main() {
 		}
 		s.testBase = *testBase
 	}
+	if *photoBase != "" {
+		if !strings.HasPrefix(*photoBase, "http://127.0.0.1:") {
+			log.Fatal("-test-photo-base must be http://127.0.0.1:<port>")
+		}
+		s.photoBase = *photoBase
+		log.Printf("TEST MODE: photo searches go to %s, not to Pexels / Unsplash", s.photoBase)
+	}
 	s.client = &http.Client{
-		Timeout: 0,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			if len(via) > 10 {
-				return errors.New("too many redirects")
-			}
-			if s.testBase != "" && strings.HasPrefix(req.URL.String(), s.testBase) {
-				return nil
-			}
-			if req.URL.Scheme != "https" || req.URL.Port() != "" || !redirectOK(req.URL.Hostname()) {
-				log.Printf("download: redirect to %s refused (not on the allowlist)", req.URL.Hostname())
-				return fmt.Errorf("redirect to %s refused (not on the allowlist)", req.URL.Hostname())
-			}
-			log.Printf("download: redirect to %s", req.URL.Hostname())
-			return nil
-		},
+		Timeout:       0,
+		CheckRedirect: s.checkRedirect,
 	}
 	// nobody connected within 5 minutes (browser never opened?): stop
 	s.idleT = time.AfterFunc(5*time.Minute, s.stop)
@@ -169,6 +165,23 @@ func main() {
 // since 2026, <region>.aws.cdn.hf.co such as us.aws.cdn.hf.co). A request must START at an allowlisted host; its
 // redirects may only go to those hosts or to subdomains of HF's own hf.co / huggingface.co, by DNS name (never an
 // IP literal) and on the default https port.
+// checkRedirect: every redirect /net follows must stay on the allowlist (https, default port, redirectOK); the test-only
+// local servers are the one exception. (Go itself drops the Authorization header when a redirect changes host.)
+func (s *server) checkRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) > 10 {
+		return errors.New("too many redirects")
+	}
+	if s.testBase != "" && strings.HasPrefix(req.URL.String(), s.testBase) || s.photoBase != "" && strings.HasPrefix(req.URL.String(), s.photoBase) {
+		return nil
+	}
+	if req.URL.Scheme != "https" || req.URL.Port() != "" || !redirectOK(req.URL.Hostname()) {
+		log.Printf("download: redirect to %s refused (not on the allowlist)", req.URL.Hostname())
+		return fmt.Errorf("redirect to %s refused (not on the allowlist)", req.URL.Hostname())
+	}
+	log.Printf("download: redirect to %s", req.URL.Hostname())
+	return nil
+}
+
 func redirectOK(host string) bool {
 	if netHosts[host] {
 		return true
@@ -476,7 +489,12 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			jsonErr(w, 403, "not permitted: ask the owner first")
 			return
 		}
-		resp, err := s.client.Get(u)
+		req, err := s.netRequest(u) // the photo APIs get the owner's key here (photos.go); nothing else does
+		if err != nil {
+			jsonErr(w, 400, "bad url")
+			return
+		}
+		resp, err := s.client.Do(req)
 		if err != nil {
 			jsonErr(w, 502, err.Error())
 			return
@@ -514,6 +532,9 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		s.mu.Unlock()
 		go s.download(j, abs)
 		writeJSON(w, j)
+
+	case "/api/photo-keys":
+		s.photoKeysAPI(w, r)
 
 	case "/api/models":
 		writeJSON(w, s.modelStatus())

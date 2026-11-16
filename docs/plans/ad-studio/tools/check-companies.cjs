@@ -1,5 +1,5 @@
 // Companies + Planet Careers + the country picker, driven like the owner would, from the built file on file://:
-//  - KBB's 69 templates draw exactly as before companies existed (tools/kbb-baseline.json, 207 renders, 0 diffs)
+//  - KBB's 69 templates draw exactly as before companies existed (Planet Careers: 51 + 44 Work Abroad = 95; all 164) (tools/kbb-baseline.json, 207 renders, 0 diffs)
 //  - the switcher: KBB <-> Planet Careers is instant, each company has its own templates, designs, favourites
 //  - + New company (the form), its kit colours on the Planet Careers set, export -> import into a clean browser
 //  - the country picker on every country template: all 33 countries, flag / outline / landmark / name swap, undo
@@ -28,13 +28,13 @@ const vis = (p) => p.$$eval('#tg button:not([hidden])', (b) => b.map((x) => x.da
   let { p, errs, net } = await open(ctx);
   ok(await p.evaluate(() => window.KBB_STUDIO.company().id) === 'kbb', 'opens in KBB');
   ok(JSON.stringify(await p.$$eval('#co-sel option', (o) => o.map((x) => x.value))) === JSON.stringify(['kbb', 'planet-careers', '__new', '__imp']), 'switcher: KBB, Planet Careers, + New company, Import company');
-  ok((await vis(p)).length === 69 && (await vis(p)).every((id) => !/^pc-/.test(id)), 'KBB sees its own 69 templates');
+  ok((await vis(p)).length === 69 && (await vis(p)).every((id) => !/^(pc|wa)-/.test(id)), 'KBB sees its own 69 templates');
   ok(await p.evaluate(() => window.KBB_STUDIO.doc.els.some((e) => e.t === 'pay')), 'KBB designs keep tabby / tamara');
 
   // ── switch to Planet Careers
   const t0 = Date.now(); await p.selectOption('#co-sel', 'planet-careers'); await p.waitForFunction(() => window.KBB_STUDIO.company().id === 'planet-careers'); const ms = Date.now() - t0;
   ok(ms < 1500, 'switch to Planet Careers in ' + ms + ' ms');
-  const pcv = await vis(p); ok(pcv.length === 51 && pcv.every((id) => /^pc-/.test(id)), 'Planet Careers sees its own ' + pcv.length + ' templates');
+  const pcv = await vis(p); ok(pcv.length === 95 && pcv.every((id) => /^(pc|wa)-/.test(id)), 'Planet Careers sees its own ' + pcv.length + ' templates');
   const d0 = await p.evaluate(() => { const d = window.KBB_STUDIO.doc; return { co: d.co, tpl: d.tpl, logo: (d.els.find((e) => e.t === 'logo') || {}).txt, pay: d.els.filter((e) => e.t === 'pay' && !e.hide).length }; });
   ok(d0.co === 'planet-careers' && /^pc-/.test(d0.tpl) && d0.logo === 'Planet Careers' && d0.pay === 0, 'a Planet Careers design: its logo, no pay badges ' + JSON.stringify(d0));
   ok(await p.evaluate(() => { const i = document.querySelector('#stage .lg img'); return !!i && i.naturalWidth > 0; }), 'the Planet Careers mark draws in the logo spot');
@@ -49,7 +49,7 @@ const vis = (p) => p.$$eval('#tg button:not([hidden])', (b) => b.map((x) => x.da
   ok(await p.$eval('#tg button[data-id="pc-study-gb"] .cv', (c) => [...c.querySelectorAll('img.ii')].some((i) => /^data:image\/svg/.test(i.src))), 'thumbnails carry the flag art');
   await p.click('#tg button[data-id="pc-study-gb"]'); ok(await p.evaluate(() => window.KBB_STUDIO.doc.cty) === 'de', 'a template picked under Germany opens for Germany');
   await p.selectOption('#tf-cty', ''); await p.selectOption('#tf-size', 'story'); ok(await p.$eval('#tg', (g) => g.dataset.size) === 'story' && await p.$eval('#tg button .cv', (c) => Math.abs(c.clientHeight / c.clientWidth - 1920 / 1080) < .05), 'size filter previews in story 9:16');
-  await p.selectOption('#tf-size', 'post'); await p.selectOption('#tf-set', 'all'); ok((await vis(p)).length === 120, 'All templates: ' + (await vis(p)).length); await p.selectOption('#tf-set', '');
+  await p.selectOption('#tf-size', 'post'); await p.selectOption('#tf-set', 'all'); ok((await vis(p)).length === 164, 'All templates: ' + (await vis(p)).length); await p.selectOption('#tf-set', '');
 
   // ── country picker: every country, on every country template
   const sweep = await p.evaluate(async () => {

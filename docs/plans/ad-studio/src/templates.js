@@ -1029,5 +1029,5 @@ var KBB_T = (function () {
 
 /*PC*/
   var CATS = [['all', 'All'], ['uae', 'UAE & Gulf'], ['global', 'Global occasions'], ['sale', 'Sales & offers'], ['product', 'Products & routines']];
-  return { FAM: FAM, LIST: L, CATS: CATS, FH: FH, PAL: PAL, PCCATS: PCCATS, CTRY: CTRY, CTRY_LIST: CTRY_LIST, kitPal: kitPal, tokens: tokens };
+  return { FAM: FAM, LIST: L, CATS: CATS, FH: FH, PAL: PAL, PCCATS: PCCATS, CTRY: CTRY, CTRY_LIST: CTRY_LIST, kitPal: kitPal, tokens: tokens, OCC: OCC, OCCS: OCCS, OSECT: OCC_SECT, occTokens: occTokens };
 })();

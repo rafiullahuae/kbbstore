@@ -315,3 +315,11 @@ specific uniform etc, like plumber, teacher, helper, drivers, nurse, and other a
      regenerate; best at portrait/half-body; obvious flaws (hands/tools/text) rejected or flagged.
   3. **His own photos** of real workers/clients (best for trust), auto-tagged by occupation.
   Background removal (round 2, Lane L) cuts any of these out onto country scenes.
+
+**Built 16 Nov (Work Abroad lane):** `library/occupations/` (100 occupations EN/AR, uniforms, tools + 106 icons, 10
+figure families, photo search terms, AI prompt template, suggested countries) · Ad Studio: 44 image-first templates
+(11 families × 3 sizes, `src/templates-wa.js`), Occupation picker beside Country, worker photo slots + offline ✂ cut-out
+(`ad-studio-cutout.js`), `tools/check-occupations.cjs`, sheets `shots/work-abroad-*` · engine: Pexels/Unsplash hosts behind
+the per-URL gate, keys in `settings/` (Go tests) · `app/stock/` 📷 Photos tab (`tools/stock-check.cjs` against
+`tools/stock-mock.cjs`, `shots/stock/`) · six recipes in `app/auto/recipes/work-abroad.js`. Still to come: source 2 (the
+local image model -- the prompts are ready in occupations.json).
