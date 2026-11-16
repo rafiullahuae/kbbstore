@@ -3,7 +3,7 @@
 // sounds. Everything it places carries item.auto = 'theme', so applying another theme replaces it and never touches the
 // owner's own items (or Auto reel's).
 import { ops } from '../core/history.js';
-import { createItem, createTrack, projectDuration, itemEnd, findMedia, clone } from '../core/project.js';
+import { createItem, createTrack, projectDuration, itemEnd, itemDur, findMedia, clone } from '../core/project.js';
 import { themeById } from './themes.js';
 import { textItem } from '../look/text.js';
 import { libraryMedia } from '../auto/commands.js';
@@ -105,7 +105,7 @@ export function themeStyle(th, opts = {}, ws = null) {
 export async function applyTheme(ctx, id, opts = {}) {
   const th = themeById(id); if (!th) throw new Error('No such theme: ' + id);
   const p = ctx.project, W = p.canvas.w, H = p.canvas.h, ws = ctx.workspace || {};
-  const D = projectDuration(p) || 10;
+  const D = reelEnd(p) || projectDuration(p) || 10;
   const beats = opts.beats || await beatsOf(ctx);
   const faces = opts.faces || (opts.safe === false ? [] : await detectFaces(ctx));
   const style = themeStyle(th, { ...opts, beats, faces }, ws);
@@ -203,7 +203,7 @@ export function placeTitle(p, it, faces = []) {
 /** change the overlay's style (intensity, colours, a layer's toggle/density/speed/colour): one coalescing undo step */
 export function tuneTheme(ctx, patch, label = 'Theme') {
   const it = overlayOf(ctx.project); if (!it) throw new Error('No theme on this reel yet');
-  const D = projectDuration(ctx.project);
+  const D = reelEnd(ctx.project);
   const style = Object.assign(clone(it.style), patch);
   if (patch.colorMode) { const th = themeById(style.theme); if (th) style.colors = colorsFor(th, patch.colorMode, ctx.workspace); }
   const props = { style };
@@ -221,5 +221,34 @@ export function removeTheme(ctx) {
   const p = ctx.project, ids = themeItems(p).map((x) => x.item.id); if (!ids.length) return 0;
   const lanes = p.tracks.filter((t) => t.theme && t.items.every((i) => i.auto === TAG)).map((t) => ops.removeTrack(t.id, 'Remove theme'));
   ctx.history.apply(ops.batch('Remove theme', [ops.removeItems(ids, 'Remove theme'), ...lanes])); return ids.length;
+}
+/** where the reel ends: the last thing on it that the theme did not place (the overlay must not hold the reel open) */
+export function reelEnd(p) {
+  let end = 0;
+  for (const tr of p.tracks) for (const it of tr.items) if (it.auto !== TAG) end = Math.max(end, itemEnd(it));
+  return r3(end);
+}
+/**
+ * keep the theme on the reel after ANY edit (trim, silence removal, reorder, undo/redo): the overlay ends where the reel
+ * ends and the outro closes it. Their timing is derived from the reel, never chosen by the owner, so this re-derives it
+ * in place right after each change instead of adding an undo step (undo of the trim re-derives it back). Returns true
+ * when it moved something. Pure on the project; index.js runs it from the 'project:change' event.
+ */
+export function followReel(p) {
+  if (!p?.tracks) return false;
+  const ov = overlayOf(p); if (!ov) return false;
+  const D = reelEnd(p); if (!(D > 0)) return false;
+  let moved = false;
+  if (Math.abs(itemEnd(ov) - D) > 0.001) { ov.t0 = 0; ov.in = 0; ov.out = r3(D * (ov.speed || 1)); moved = true; }
+  const outro = themeItems(p).find((x) => x.item.type === 'theme.outro')?.item;
+  if (outro) {
+    const t0 = r3(Math.max(0, D - itemDur(outro))), dt = t0 - outro.t0;
+    if (Math.abs(dt) > 0.001) {
+      outro.t0 = t0; moved = true;
+      // the outro's sound goes with it (else it would hold a shortened reel open past its end)
+      for (const { item } of themeItems(p)) if (item.type === 'audio' && /^Theme SFX · outro/.test(item.name || '')) item.t0 = r3(Math.max(0, item.t0 + dt));
+    }
+  }
+  return moved;
 }
 export async function resyncBeats(ctx) { const beats = await beatsOf(ctx); tuneTheme(ctx, { beats }, 'Theme beats'); return beats.length; }

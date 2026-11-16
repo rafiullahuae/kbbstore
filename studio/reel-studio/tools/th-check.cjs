@@ -123,6 +123,26 @@ const FACE = { x: 0.5, y: 0.36, w: 0.34, h: 0.22 };
   ok(undo.n4 === undo.n1 - 0 || undo.n4 > undo.n0, `applying a second theme replaces the first (${undo.types.filter((x) => x === 'theme.overlay').length} overlay on the reel)`);
   ok(undo.types.filter((x) => x === 'theme.overlay').length === 1 && undo.types.includes('theme.sting') && undo.types.includes('theme.outro') && undo.types.includes('auto.transition') && undo.types.includes('look.text') && undo.types.includes('audio'), `a theme places: ${[...new Set(undo.types)].join(', ')}`);
 
+  // ── the theme follows the reel: trim the tail, the overlay ends at the new reel end (and the outro closes it); undo
+  //    brings both back, redo cuts them again. Without the project-change hook in themes/index.js the overlay keeps its
+  //    old end (and holds the reel open) until the next panel tweak.
+  const follow = await ev(() => {
+    const ed = window.kbbEditor, p = ed.project, TAG = 'theme', all = () => p.tracks.flatMap((t) => t.items);
+    const end = (i) => +(i.t0 + (i.out - i.in) / (i.speed || 1)).toFixed(3);
+    const reel = () => Math.max(...all().filter((i) => i.auto !== TAG).map(end));
+    const snap = () => ({ reel: reel(), ov: end(all().find((i) => i.type === 'theme.overlay')), outro: end(all().find((i) => i.type === 'theme.outro')), dur: +ed.duration().toFixed(3) });
+    const s0 = snap(), cut = 1.5;
+    // a trim: everything that runs to the reel's end (the last clip, the music, the caption item) loses 1.5 s at its tail
+    const list = all().filter((i) => i.auto !== TAG && Math.abs(end(i) - s0.reel) < 0.05).map((i) => ({ id: i.id, props: { out: +(i.out - cut * (i.speed || 1)).toFixed(3) } }));
+    ed.history.apply(ed.ops.setItems(list, 'Trim')); ed.history.seal();
+    const s1 = snap(); ed.history.undo(); const s2 = snap(); ed.history.redo(); const s3 = snap(); ed.history.undo();
+    return { n: list.length, s0, s1, s2, s3 };
+  });
+  numbers.follow = follow;
+  const fits = (s) => Math.abs(s.ov - s.reel) < 0.002 && Math.abs(s.outro - s.reel) < 0.002 && Math.abs(s.dur - s.reel) < 0.002;
+  ok(follow.n > 0 && fits(follow.s0) && fits(follow.s1) && follow.s1.reel < follow.s0.reel - 1.4, `trim ${follow.n} items by 1.5 s: reel ${follow.s0.reel} → ${follow.s1.reel} s, theme overlay ends at ${follow.s1.ov} s, outro at ${follow.s1.outro} s, reel length ${follow.s1.dur} s`);
+  ok(fits(follow.s2) && Math.abs(follow.s2.reel - follow.s0.reel) < 0.002 && fits(follow.s3) && Math.abs(follow.s3.reel - follow.s1.reel) < 0.002, `undo → overlay ends at ${follow.s2.ov} s = reel ${follow.s2.reel} s; redo → ${follow.s3.ov} s = reel ${follow.s3.reel} s`);
+
   // ── intensity and colours: subtle < normal < bold; brand kit colours replace the theme's ──
   const knobs = await ev(async ({ FACE }) => {
     const ed = window.kbbEditor, D = await import('/app/themes/draw.js');
