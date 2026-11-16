@@ -6,6 +6,7 @@ import { renderFrame, activeItems, boxAt, fadeAt, evalProp } from '../core/rende
 import { findItem, findMedia, srcTime, isActive, safeAreas } from '../core/project.js';
 import { ops } from '../core/history.js';
 import { seekExact } from '../core/media.js';
+import { canvasGrab } from '../core/modules.js';
 import { h, clear, fmtTime } from './ui.js';
 
 const SNAP_PX = 7;
@@ -192,6 +193,8 @@ export class Preview {
     const p0 = this.toCanvas(e);
     const hd = e.target.dataset?.h;
     if (hd) { const id = e.target.closest('.sel-box').dataset.id; return hd === 'rot' ? this.dragRotate(e, id, p0) : this.dragResize(e, id, hd, p0); }
+    const grab = e.altKey ? null : canvasGrab(ed.project, ed.t, p0, e, { apply: (cmd) => ed.apply(cmd) });
+    if (grab) { this.track(e, (ev) => { const p = this.toCanvas(ev); grab.move(p.x - p0.x, p.y - p0.y, ev); }, (ev) => { if (grab.end?.(ev) === false) { const hit = this.hitTest(p0); if (hit) ed.select([hit.item.id]); } }); return; }
     const multi = e.shiftKey || e.metaKey || e.ctrlKey;
     const hit = e.altKey ? null : this.hitTest(p0);
     if (hit && multi) { ed.select([hit.item.id], 'toggle'); return; }

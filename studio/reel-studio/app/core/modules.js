@@ -69,5 +69,15 @@ export async function runExportChecks(project, ctx) {
   return out;
 }
 
+// On-canvas grabs: a module may claim a pointer-down on the preview before the editor's own select/move, e.g. to
+// drag ONE caption line. grab(project, t, p {x,y canvas px}, ev, { apply(cmd) }) -> null (not mine) or
+// { move(dx, dy, ev), end(ev) }. The editor seals the undo step when the pointer goes up.
+const grabs = new Map();
+export function registerCanvasGrab(g) { grabs.set(g.id, g); }
+export function canvasGrab(project, t, p, ev, api) {
+  for (const g of grabs.values()) { try { const r = g.grab(project, t, p, ev, api); if (r) return r; } catch (e) { console.warn('[canvas-grab]', g.id, e); } }
+  return null;
+}
+
 /** module entry files the editor tries to import at start (missing files are fine) */
 export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../look/index.js', '../audio/index.js', '../viral/index.js'];

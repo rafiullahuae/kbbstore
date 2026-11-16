@@ -3,7 +3,7 @@
 // swaps project.captions between two immutable snapshots, so undo/redo is exact and cheap
 // (captions are a few thousand small objects at most).
 
-import { buildLines, finishTimes, newLineId } from './model.js';
+import { buildLines, finishTimes, newLineId, carryLineOverrides } from './model.js';
 import { resolveStyle } from './styles.js';
 
 const EMPTY = () => ({ style: 'word-box', lang: 'auto', words: [], lines: [] });
@@ -190,19 +190,91 @@ export const findReplace = (find, repl, opts = {}) => {
 export const setStyle = (spec, relayout = false, canvas, key) => captionsCommand('style', 'Caption style', (cap, p) => {
   const c = { ...cap, style: spec };
   if (relayout) {
-    c.lines = buildLines(c.words, spec, canvas || p.canvas);
+    c.lines = carryLineOverrides(cap.lines, buildLines(c.words, spec, canvas || p.canvas));
     if (cap.alt) c.alt = { ...cap.alt, style: spec, lines: buildLines(cap.alt.words, spec, canvas || p.canvas) };
   }
   return c;
 }, key);
 
-export const relayout = (canvas) => captionsCommand('relayout', 'Re-flow lines', (cap, p) => ({ ...cap, lines: buildLines(cap.words, cap.style, canvas || p.canvas) }));
+export const relayout = (canvas) => captionsCommand('relayout', 'Re-flow lines', (cap, p) => ({ ...cap, lines: carryLineOverrides(cap.lines, buildLines(cap.words, cap.style, canvas || p.canvas)) }));
 
 export const setLineEmoji = (lineId, emoji) => captionsCommand('emoji', emoji ? 'Add emoji' : 'Remove emoji', (cap) => {
   const c = clone(cap), L = c.lines.find((x) => x.id === lineId);
   if (!L) return cap;
   if (emoji) L.emoji = emoji; else delete L.emoji;
   return c;
+});
+
+// ---------------------------------------------------------------- captions round (16 Nov)
+
+/** "Music & sound tags": 'hide' | 'icon' | 'text' (per project, undoable). */
+export const setSoundTags = (mode) => captionsCommand('soundTags', 'Music & sound tags', (cap) => ({ ...cap, soundTags: mode }));
+
+const cleanOv = (o) => { const out = {}; for (const [k, v] of Object.entries(o || {})) if (v != null && v !== '') out[k] = v; return Object.keys(out).length ? out : null; };
+
+/** Merge `patch` into a line's overrides (a null value removes that key). key: coalesces slider / canvas drags. */
+export const setLineOverride = (lineId, patch, key) => captionsCommand('lineOv', patch && patch.pos && Object.keys(patch).length === 1 ? 'Move caption' : 'Line style', (cap) => {
+  const k = cap.lines.findIndex((L) => L.id === lineId); if (k < 0) return cap;
+  const c = { ...cap, lines: cap.lines.slice() };
+  const ov = cleanOv({ ...(cap.lines[k].ov || {}), ...patch });
+  const L = { ...cap.lines[k] };
+  if (ov) L.ov = ov; else delete L.ov;
+  c.lines[k] = L;
+  return c;
+}, key);
+
+/** Merge `patch` into word i's overrides (null removes a key). */
+export const setWordOverride = (i, patch, key) => captionsCommand('wordOv', 'Word style', (cap) => {
+  if (!cap.words[i]) return cap;
+  const c = { ...cap, words: cap.words.slice() };
+  const ov = cleanOv({ ...(cap.words[i].ov || {}), ...patch });
+  const w = { ...cap.words[i] };
+  if (ov) w.ov = ov; else delete w.ov;
+  c.words[i] = w;
+  return c;
+}, key);
+
+/** "Reset to style": drop the overrides of one line and its words (lineId), or of everything (no lineId). */
+export const resetOverrides = (lineId) => captionsCommand('resetOv', 'Reset to style', (cap) => {
+  const L0 = lineId ? cap.lines.find((L) => L.id === lineId) : null;
+  if (lineId && !L0) return cap;
+  const [a, b] = L0 ? L0.wordIdx : [0, cap.words.length - 1];
+  return {
+    ...cap,
+    lines: cap.lines.map((L) => { if ((L0 && L !== L0) || !L.ov) return L; const { ov: _o, ...rest } = L; return rest; }),
+    words: cap.words.map((w, i) => { if (i < a || i > b || !w.ov) return w; const { ov: _o, ...rest } = w; return rest; }),
+  };
+});
+
+/** Move every caption (the style's position), keeping lines that were moved on their own. */
+export const moveAll = (pos, key) => captionsCommand('moveAll', 'Move captions', (cap) => {
+  const spec = typeof cap.style === 'string' ? { id: cap.style } : { ...(cap.style || { id: 'word-box' }) };
+  spec.pos = { ...(resolveStyle(cap.style).pos || {}), ...pos };
+  return { ...cap, style: spec };
+}, key);
+
+/** Replace words[a..b] with `nw` (an edited script paragraph, already aligned to times). */
+export const replaceSpan = (a, b, nw, label = 'Edit script') => captionsCommand('span', label, (cap) => spliceWords(cap, a, b, nw.map((w) => ({ ...w }))));
+
+/** Put a word the cleaner removed back in (from captions.dropped). */
+export const restoreDropped = (k) => captionsCommand('restore', 'Restore word', (cap) => {
+  const d = cap.dropped && cap.dropped[k]; if (!d) return cap;
+  const at = cap.words.findIndex((w) => w.t0 > d.t0);
+  const pos = at < 0 ? cap.words.length : at;
+  const w = { w: d.w, t0: d.t0, t1: d.t1, conf: 0.5 };
+  let c;
+  if (!cap.words.length) c = retimed({ ...clone(cap), words: [w], lines: [{ id: newLineId(), t0: w.t0, t1: w.t1, wordIdx: [0, 0] }] });
+  else if (pos === 0) c = spliceWords(cap, 0, 0, [w, cap.words[0]]);
+  else c = spliceWords(cap, pos - 1, pos - 1, [cap.words[pos - 1], w]);
+  c.dropped = cap.dropped.filter((_, j) => j !== k);
+  return c;
+});
+
+export const setSpeakerName = (s, name) => captionsCommand('speaker', 'Speaker name', (cap) => {
+  const names = { ...(cap.speakerNames || {}) };
+  const v = String(name || '').trim().slice(0, 40);
+  if (v) names[s] = v; else delete names[s];
+  return { ...cap, speakerNames: names };
 });
 
 /** Second-language track for the bilingual style. */

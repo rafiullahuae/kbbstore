@@ -68,6 +68,7 @@ export function buildLines(words, style, canvas, opts = {}) {
       const gap = nw.t0 - words[b].t1;
       const nc = chars + 1 + nw.w.trim().length;
       if (gap > 0.6) break;                                 // a real pause ends the cue
+      if (!!nw.tag !== !!words[b].tag) break;               // a sound tag ([Music], ♪) never shares a cue with speech
       if (nc > budget || nw.t1 - words[a].t0 > maxDur) {    // over budget: back off to the best break
         let best = b, bestSc = breakScore(b);
         for (let k = b - 1; k >= a && k >= b - 4; k--) {
@@ -138,6 +139,19 @@ export function lineAt(lines, t) {
 /** Make a captions object from words (keeps style/lang/alt). */
 export function withWords(cap, words, canvas) {
   return { ...cap, words, lines: buildLines(words, cap.style, canvas) };
+}
+
+/** After re-flowing lines, give each new line the overrides (line.ov, emoji) of the old line it starts in. */
+export function carryLineOverrides(oldLines, newLines) {
+  if (!oldLines?.some((L) => L.ov || L.emoji)) return newLines;
+  return newLines.map((N) => {
+    const O = oldLines.find((L) => L.wordIdx[0] <= N.wordIdx[0] && N.wordIdx[0] <= L.wordIdx[1]);
+    if (!O || (!O.ov && !O.emoji)) return N;
+    const out = { ...N };
+    if (O.ov) out.ov = O.ov;
+    if (O.emoji && O.wordIdx[0] === N.wordIdx[0]) out.emoji = O.emoji;
+    return out;
+  });
 }
 
 /** Sanity: times monotonic, t1 >= t0, ranges valid. Returns a list of problems (empty = ok). */
