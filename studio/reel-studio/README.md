@@ -72,6 +72,32 @@ pick its colours and fonts, upload a logo if you have one, and write its contact
 Press **Create company**. It gets its own projects, exports and brand kit (saved in `brands/<company>/`), and the
 recipes that fit its industry. **✎ Edit company** changes any of it later. Switching company is instant.
 
+## 8. Create — the one-click content tools
+
+The **🚀 Create** tab (right column, beside Captions) and the **Create** card on the home screen. Every button is one
+step you can undo with **⌘Z**.
+
+* **Viral captions** — 1–3 words at a time in the middle of the screen, the spoken word in your company colour,
+  moved off faces and products, and product names, prices and countries popping up as their own items.
+* **Auto b-roll** — fills the long talking stretches with a matching shot: your own clips and photos (put them in
+  `workspaces/<company>/library/`; the studio looks at each picture once to know what is in it), KBB product shots,
+  or the country's landmark for Planet Careers.
+* **Proven formats** — before/after, "3 products for…", GRWM, texture close-up, dupe or worth it; visa approved,
+  documents in 30 s, myth vs fact, country A vs B, cost breakdown, student testimonial, day in the life. Each builds
+  the whole timeline; drop a clip on a slot (or pick it from the list) to fill it.
+* **Series kit** — "Visa Tip #12": opener, episode badge and the same look on every episode; the number counts up.
+* **Cover** — picks the best frame, adds a bold title, checks it still reads small on your grid, saves a 9:16 cover
+  and a 3:4 grid cover (PNG) in `exports/`.
+* **Post copy** — caption, search keywords, 5 hashtags and comment prompts in English and Arabic, written on your
+  Mac (install the optional *Writing* model in ⚙ Models for the best text; without it a built-in writer is used).
+* **Every shape** — the same edit as 9:16, 4:5, 1:1 and 16:9, re-laid out, exported in one go.
+* **Long video → shorts** — a 10–30 min webinar becomes 8–12 shorts of 20–60 s, each its own reel with a hook,
+  captions and your call to action; **Export all** saves them.
+* **Teleprompter & record** — your script scrolls over the camera; record as many takes as you like, the best one
+  (energy, fewest "umm"s, eyes on the lens) is marked for you.
+* **Trending-sound cue sheet** — tap or type the tempo of the sound you will add in Instagram/TikTok (or let the
+  studio measure it), and the cuts move onto its beats; a cue sheet and a click guide track are saved in `exports/`.
+
 ## Keyboard
 
 Space play/pause · J K L back/stop/forward · S split · Delete remove · Shift+Delete ripple delete ·
@@ -100,5 +126,6 @@ Space play/pause · J K L back/stop/forward · S split · Delete remove · Shift
 * `vendor/` — pinned third-party code with licences: transformers.js 3.8.1 + onnxruntime-web, MediaPipe tasks-vision
   0.10.21 + BlazeFace, mp4-muxer 5.2.2, mp4box.js 0.5.2, caption fonts (OFL). `library/LICENSES.md` lists the rest.
 * `tools/` — `int-media.cjs` + `int-check.cjs` (end-to-end), `check-r1.cjs`, `check-models.cjs [--real]`,
-  `r2-check.cjs`, `r3-check.cjs`, `package-mac.sh` (→ `dist/KBB Studio.zip`, models excluded).
+  `r2-check.cjs`, `r3-check.cjs`, `c-media.cjs` + `c-fetch-models.cjs` + `c-check.cjs` (content / Create tab),
+  `package-mac.sh` (→ `dist/KBB Studio.zip`, models excluded).
 * The app name lives in `app/core/config.js` `APP_NAME` (and `appName` in `engine/main.go`, the launcher's file name).

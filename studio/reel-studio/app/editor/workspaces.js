@@ -27,6 +27,8 @@ export async function loadWorkspaces() {
   if (engine.available) dirs = (await engine.listDir('workspaces')).filter((d) => d.dir);
   const list = [];
   for (const d of dirs) {
+    // a company folder can exist before its workspace.json (e.g. clips dropped into workspaces/kbb/library first)
+    if (!(await engine.exists(`${wsDir(d.name)}/workspace.json`))) continue;
     try { list.push(await engine.readFile(`${wsDir(d.name)}/workspace.json`, 'json')); } catch {}
   }
   // seed the two companies the owner named, once, from their brand kits

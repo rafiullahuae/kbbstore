@@ -69,6 +69,8 @@ export function planShorts(words, opts = {}) {
       const d = sents[b].t1 - sents[a].t0;
       if (d > max) break; if (d < min) continue;
       const r = scoreRun(sents, words, a, b, topic, opts.energy);
+      // a short that opens where its topic opens (or on a question) explains itself: it needs nothing said before it
+      if (a === tp.s0 || sents[a].question) r.score += 0.2;
       if (r.dangling) continue;
       runs.push({ ti, a, b, ...r });
     }

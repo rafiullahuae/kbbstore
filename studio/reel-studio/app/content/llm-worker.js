@@ -22,8 +22,10 @@ self.onmessage = async (e) => {
       self.postMessage({ id: m.id, result: { ok: true } });
     } else if (m.op === 'gen') {
       const t = performance.now();
-      const out = await gen(m.messages, { max_new_tokens: m.max || 320, do_sample: false, repetition_penalty: 1.08 });
-      const msg = out[0].generated_text; const text = Array.isArray(msg) ? msg[msg.length - 1].content : String(msg);
+      // the reply is STARTED for the model (m.prefix, e.g. '{"caption": "') so even a small model stays in the JSON shape
+      const prompt = gen.tokenizer.apply_chat_template(m.messages, { tokenize: false, add_generation_prompt: true }) + (m.prefix || '');
+      const out = await gen(prompt, { max_new_tokens: m.max || 320, do_sample: false, repetition_penalty: 1.1, return_full_text: false });
+      const text = (m.prefix || '') + String(out[0].generated_text);
       self.postMessage({ id: m.id, result: { text, ms: Math.round(performance.now() - t) } });
     }
   } catch (err) { self.postMessage({ id: m.id, error: String(err?.message || err) }); }

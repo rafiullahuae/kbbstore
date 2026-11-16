@@ -75,7 +75,9 @@ function wrapWords(g, words, maxW) {
  */
 export function drawCover(frame, face, title, ws, size, opts = {}) {
   const { w: W, h: H } = size, c = new OffscreenCanvas(W, H), g = c.getContext('2d', { willReadFrequently: true });
-  const pop = brandPop(ws), font = fontFor(ws);
+  // the keyword colour: the brand colour, lifted towards white until it reads on a dark plate (4.5:1)
+  let pop = brandPop(ws); const font = fontFor(ws);
+  for (let i = 0; i < 10 && contrast(pop, '#0b0b0f') < MIN_CONTRAST; i++) pop = mix(pop, '#ffffff', 0.15);
   // background: the frame, cover-fitted, nudged so the face sits in the upper-middle (or a brand gradient)
   if (frame) {
     const fw = frame.width, fh = frame.height, s = Math.max(W / fw, H / fh), vw = W / s, vh = H / s;
@@ -104,9 +106,13 @@ export function drawCover(frame, face, title, ws, size, opts = {}) {
   // the word to colour: the longest content word (the keyword), never the whole line
   const kw = words.map((w) => w.toUpperCase()).filter((w) => w.length > 3).sort((a, b) => b.length - a.length)[0];
   // scrim behind the title, darkened until white text AND the brand word both pass 4.5:1 on what is behind them
-  const sample = () => { const d = g.getImageData(Math.max(0, box.x | 0), Math.max(0, box.y | 0), Math.min(W, box.w | 0), Math.min(H, box.h | 0)).data; let r = 0, gg = 0, b = 0, n = 0, worst = 0;
-    for (let j = 0; j < d.length; j += 16) { r += d[j]; gg += d[j + 1]; b += d[j + 2]; n++; worst = Math.max(worst, lum(rgbHex(d[j], d[j + 1], d[j + 2]))); }
-    return { mean: rgbHex(r / n, gg / n, b / n), worst }; };
+  // what is behind the TEXT: the box inset by the padding (not the plate's rounded corners), judged by its bright end
+  // (98th percentile luminance, so one stray highlight pixel does not decide but a bright patch does)
+  const sample = () => { const ix = Math.max(0, (box.x + pad * 0.6) | 0), iy = Math.max(0, (box.y + pad * 0.6) | 0);
+    const d = g.getImageData(ix, iy, Math.max(1, Math.min(W - ix, (box.w - pad * 1.2) | 0)), Math.max(1, Math.min(H - iy, (box.h - pad * 1.2) | 0))).data; let r = 0, gg = 0, b = 0, n = 0; const ls = [];
+    for (let j = 0; j < d.length; j += 16) { r += d[j]; gg += d[j + 1]; b += d[j + 2]; n++; ls.push(lum(rgbHex(d[j], d[j + 1], d[j + 2]))); }
+    ls.sort((x, y) => x - y);
+    return { mean: rgbHex(r / n, gg / n, b / n), worst: ls[Math.floor(ls.length * 0.98)] || 0 }; };
   const base = g.getImageData(0, 0, W, H);
   let alpha = 0, plate = 'scrim', m;
   const popOk = contrast(pop, '#0b0b0f') >= MIN_CONTRAST;
@@ -146,6 +152,12 @@ export function drawCover(frame, face, title, ws, size, opts = {}) {
   metrics.readable = metrics.gridPx >= MIN_PX_AT_GRID && metrics.contrast >= MIN_CONTRAST && (metrics.popContrast == null || metrics.popContrast >= MIN_CONTRAST);
   metrics.overFace = fb ? !(box.y + box.h <= fb.y || box.y >= fb.y + fb.h) : false;
   return { canvas: c, metrics };
+}
+
+/** a + (b − a)·f in sRGB (hex colours) */
+function mix(a, b, f) {
+  const p = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
+  const x = p(a), y = p(b); return rgbHex(...x.map((v, i) => v + (y[i] - v) * f));
 }
 
 /** the 1/6-scale grid preview the readability check looks at (180×240) */

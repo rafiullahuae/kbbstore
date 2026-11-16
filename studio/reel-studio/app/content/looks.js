@@ -64,10 +64,15 @@ export function placeCues(project, st, lines, words, obstacles) {
 }
 
 const POP_BOXES = (W, H, title) => {
-  const bw = W * 0.42, bh = H * (H > W ? 0.16 : 0.24);
-  const xs = [title.x + (title.w - bw) / 2, title.x, title.x + title.w - bw], ys = [title.y + 0.02 * H, title.y + title.h * 0.25, title.y + title.h - bh];
+  // a grid of places in the title-safe area at full and at 60 % size (a big face leaves only small corners free)
   const out = [];
-  for (const y of ys) for (const x of xs) out.push({ x: r1(x), y: r1(y), w: r1(bw), h: r1(bh) });
+  for (const k of [1, 0.6]) {
+    const bw = W * 0.42 * k, bh = H * (H > W ? 0.16 : 0.24) * k;
+    for (let j = 0; j <= 4; j++) for (let i = 0; i <= 2; i++) out.push({ x: r1(title.x + (title.w - bw) * i / 2), y: r1(title.y + (title.h - bh) * j / 4), w: r1(bw), h: r1(bh), k });
+  }
+  // tall places down the sides (beside a face that fills the middle): a bottle stands up in them
+  const tw = W * 0.25, th = H * (H > W ? 0.3 : 0.5);
+  for (let j = 0; j <= 3; j++) for (const x of [title.x, title.x + title.w - tw]) out.push({ x: r1(x), y: r1(title.y + (title.h - th) * j / 3), w: r1(tw), h: r1(th), k: 0.8, tall: true });
   return out;
 };
 
@@ -125,26 +130,27 @@ export async function applyLook(ctx, opts = {}) {
     chosen.sort((a, b) => a.t0 - b.t0);
     const ot = ensureTrack(p, 'overlay', cmds), adds = [], pending = new Map();
     const W = p.canvas.w, H = p.canvas.h, title = safeAreas(p.canvas).title, color = brandPop(ws);
-    const capAt = (t) => { const s = segments.find((x) => t >= x.t0 - 0.05 && t <= x.t1 + 0.3) || { cy: 0.5 }; return cueRect(p.canvas, st, s.cy, 'WORD WORD WORD').rect; };
+    // the captions' band for every placement live during the pop (full safe width: a long cue can reach the edges)
+    const capsDuring = (a, b) => segments.filter((x) => x.t0 < b + 0.3 && x.t1 > a - 0.3).map((x) => { const r = cueRect(p.canvas, st, x.cy, 'WORD').rect; const sa = safeArea(W, H); return { x: sa.x, y: r.y - r.h * 0.15, w: sa.w, h: r.h * 1.3 }; });
     for (const h of chosen) {
       const t0 = Math.max(0, h.t0 - 0.08), dur = Math.min(2.2, Math.max(1.2, h.t1 - h.t0 + 1));
-      const obs = [capAt(h.t0), ...obstacles(h.t0 + 0.2), ...adds.filter((a) => a.t0 < t0 + dur && a.t0 + a.dur > t0).map((a) => a.box)];
-      const box = POP_BOXES(W, H, title).map((b) => ({ b, c: obs.reduce((s, o) => s + inter(b, o), 0) / area(b) + Math.abs(b.y - title.y) / H * 0.2 })).sort((a, b) => a.c - b.c)[0].b;
-      const group = uid('g'), items = [];
-      const label = (txt, y, size = 54) => popText(txt, { x: box.x - W * 0.04, y, w: box.w + W * 0.08, h: Math.round(size * 1.6) }, t0 + 0.05, dur - 0.05,
-        brandText(ws, { size, bg: color, color: contrast(color, '#111111') > contrast(color, '#ffffff') ? '#111111' : '#ffffff' }), { auto: POP_TAG, group, name: 'Pop · ' + txt });
+      const obs = [...capsDuring(t0, t0 + dur), ...obstacles(h.t0 + 0.2), ...obstacles(t0 + dur - 0.1), ...adds.filter((a) => a.t0 < t0 + dur && a.t0 + a.dur > t0).map((a) => a.box)];
+      const box = POP_BOXES(W, H, title).map((b) => ({ b, c: obs.reduce((s, o) => s + inter(b, o), 0) / area(b) + Math.abs(b.y - title.y) / H * 0.2 + (b.k < 0.7 ? 0.12 : 0) + (b.tall && h.kind !== 'product' && h.kind !== 'emoji' ? 0.25 : 0) })).sort((a, b) => a.c - b.c)[0].b;
+      const group = uid('g'), items = [], k = box.k;
+      const label = (txt, y, size = 54) => popText(txt, { x: box.x, y, w: box.w, h: Math.round(size * k * 1.6) }, t0 + 0.05, dur - 0.05,
+        brandText(ws, { size: Math.max(30, Math.round(size * k)), bg: color, color: contrast(color, '#111111') > contrast(color, '#ffffff') ? '#111111' : '#ffffff' }), { auto: POP_TAG, group, name: 'Pop · ' + txt });
       if (h.kind === 'product' && h.item?.src) {
         const m = await studioMedia(ctx, p, h.item.src, h.item.name, cmds, pending);
         items.push(popImage(m, { ...box, h: box.h * 0.78 }, t0, dur, { auto: POP_TAG, group, content: { product: h.item.id }, name: 'Pop · ' + h.item.name }));
-        items.push(label(h.item.brand + ' ' + h.item.name.split(' ').slice(0, 3).join(' '), box.y + box.h * 0.8, 40));
+        items.push(label(h.item.brand + ' ' + h.item.name.split(' ').slice(0, 2).join(' '), box.y + box.h * 0.8, 36));
       } else if (h.kind === 'country' && h.item?.flagSrc) {
         const m = await studioMedia(ctx, p, h.item.flagSrc, h.item.name + ' flag', cmds, pending);
         items.push(popImage(m, { ...box, h: box.h * 0.66 }, t0, dur, { auto: POP_TAG, group, name: 'Pop · ' + h.item.name }));
         items.push(label(h.item.name, box.y + box.h * 0.72, 46));
       } else if (h.kind === 'price') {
-        items.push(popText(h.label, { x: box.x, y: box.y + box.h * 0.2, w: box.w, h: box.h * 0.6 }, t0, dur, brandText(ws, { size: 88, bg: color, color: contrast(color, '#111111') > contrast(color, '#ffffff') ? '#111111' : '#ffffff' }), { auto: POP_TAG, group, rot: -5, name: 'Pop · ' + h.label }));
+        items.push(popText(h.label, { x: box.x, y: box.y + box.h * 0.2, w: box.w, h: box.h * 0.6 }, t0, dur, brandText(ws, { size: Math.round(88 * k), bg: color, color: contrast(color, '#111111') > contrast(color, '#ffffff') ? '#111111' : '#ffffff' }), { auto: POP_TAG, group, rot: -5, name: 'Pop · ' + h.label }));
       } else if (h.kind === 'number') {
-        items.push(popText(h.label, box, t0, dur, brandText(ws, { size: 150, font: 'Anton', weight: 400, color, stroke: '#000000', strokeW: 7 }), { auto: POP_TAG, group, name: 'Pop · ' + h.label }));
+        items.push(popText(h.label, box, t0, dur, brandText(ws, { size: Math.round(150 * k), font: 'Anton', weight: 400, color, stroke: '#000000', strokeW: 7 }), { auto: POP_TAG, group, name: 'Pop · ' + h.label }));
       } else if (h.kind === 'emoji') {
         const s = Math.min(box.w, box.h) * 0.9;
         items.push(createItem('sticker', { t0: r1(t0), in: 0, out: r1(dur), x: r1(box.x + (box.w - s) / 2), y: r1(box.y + (box.h - s) / 2), w: r1(s), h: r1(s), text: h.emoji, fx: [{ type: 'content.pop', dur: 0.28 }], fadeOut: 0.2, auto: POP_TAG, group, name: 'Pop · ' + h.emoji }));

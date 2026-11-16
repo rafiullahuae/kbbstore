@@ -1,7 +1,7 @@
 // KBB Studio · content · trending-sound cue sheet. Instagram / TikTok add the trending sound IN THE APP, from its
 // start; so the cuts must already sit on that sound's beats. Give the studio the sound's tempo (tap it, type the BPM,
 // or drop the sound in to have it measured) and it
-//   1. snaps every cut on the main track to the nearest beat (≤ ¼ beat away, ripple trim — one undo step),
+//   1. snaps every cut on the main track to the nearest beat (the nearest beat is never more than ½ beat away; ripple trim — one undo step),
 //   2. puts a marker on every beat that carries a cut ("Beat 9 · CUT"),
 //   3. exports a cue sheet (cues.csv + cues.txt) and a GUIDE TRACK (WAV clicks, the cut beats accented) that he can
 //      lay under the edit to hear it, then mute: the reel exported without it lines up with the sound in the app.
@@ -67,7 +67,21 @@ export async function measureSound(ctx, fileOrMediaId) {
   s.buffer = ab; s.connect(oc.destination); s.start();
   const pcm = (await oc.startRendering()).getChannelData(0);
   const g = await auto.call('beatGrid', { pcm, sr });
-  return { bpm: +g.bpm.toFixed(1), offset: +(g.beats[0] || 0).toFixed(3), beats: g.beats.length, dur: +ab.duration.toFixed(2) };
+  // the tracker gives the tempo; the PHASE is re-checked on the low end (the kick, not the hi-hat between kicks):
+  // slide the grid in 1/32-beat steps and keep the one whose beats carry the most low-frequency energy
+  const per = 60 / g.bpm, hop = Math.round(sr * 0.005), env = [];
+  let lp = 0; const a = 1 - Math.exp(-2 * Math.PI * 150 / sr);
+  for (let i = 0, acc = 0, n = 0; i < pcm.length; i++) { lp += a * (pcm[i] - lp); acc += lp * lp; if (++n === hop) { env.push(acc / n); acc = 0; n = 0; } }
+  let best = { e: -1, off: g.beats[0] || 0 };
+  for (let k = 0; k < 32; k++) {
+    const off = per * k / 32; let e = 0;
+    for (let t = off; t < ab.duration; t += per) { const j = Math.round(t * sr / hop); e += (env[j] || 0) + (env[j + 1] || 0) + (env[j + 2] || 0); }
+    if (e > best.e) best = { e, off };
+  }
+  // the first audible beat: the grid phase moved onto the first beat with sound
+  let off = best.off; const thr = Math.max(...env) * 0.05;
+  while (off + per < ab.duration && (env[Math.round(off * sr / hop)] || 0) + (env[Math.round(off * sr / hop) + 1] || 0) + (env[Math.round(off * sr / hop) + 2] || 0) < thr) off += per;
+  return { bpm: +g.bpm.toFixed(1), offset: +off.toFixed(3), beats: g.beats.length, dur: +ab.duration.toFixed(2) };
 }
 
 /** tap tempo: times (ms) of taps → bpm */
@@ -79,7 +93,7 @@ export function tapBpm(taps) {
 }
 
 /**
- * Make the cue sheet. opts: { bpm, offset=0, snap=true, maxShift (s, default ¼ beat), save=true, name }.
+ * Make the cue sheet. opts: { bpm, offset=0, snap=true, maxShift (s, default ½ beat: every cut lands on a beat), save=true, name }.
  * Returns { bpm, offset, beats, cuts:[{from,to,beat}], markers, files:{csv,txt,wav}, shifted }.
  */
 export async function cueSheet(ctx, opts = {}) {
@@ -87,7 +101,7 @@ export async function cueSheet(ctx, opts = {}) {
   const bpm = Math.max(40, Math.min(220, +opts.bpm || defaultBpm(p))), offset = Math.max(0, +opts.offset || 0);
   const T = projectDuration(p);
   if (T <= 0) throw new Error('The timeline is empty');
-  const beats = beatGrid(bpm, offset, T), maxShift = opts.maxShift ?? 60 / bpm / 4;
+  const beats = beatGrid(bpm, offset, T), maxShift = opts.maxShift ?? 60 / bpm / 2 + 1e-3;
   const ms = opts.snap === false ? 0 : maxShift;
   // a dry run on a copy gives the plan; the same snap then runs as ONE undoable step
   const plan = snapTimeline(structuredClone(p), beats, ms);
@@ -101,7 +115,7 @@ export async function cueSheet(ctx, opts = {}) {
   const T2 = projectDuration(ctx.project);
   const rows = [['#', 'time (s)', 'time', 'beat', 'bar', 'what']];
   const fmt = (t) => `${Math.floor(t / 60)}:${(t % 60).toFixed(2).padStart(5, '0')}`;
-  for (const c of plan) rows.push([rows.length, c.to.toFixed(3), fmt(c.to), c.beat ?? '', c.beat ? Math.floor((c.beat - 1) / 4) + 1 + '.' + (((c.beat - 1) % 4) + 1) : '', c.beat ? 'CUT on the beat' : 'cut (no beat within ¼ beat)']);
+  for (const c of plan) rows.push([rows.length, c.to.toFixed(3), fmt(c.to), c.beat ?? '', c.beat ? Math.floor((c.beat - 1) / 4) + 1 + '.' + (((c.beat - 1) % 4) + 1) : '', c.beat ? 'CUT on the beat' : 'cut (kept: its clip is too short to move)']);
   const csv = rows.map((r) => r.join(',')).join('\n') + '\n';
   const txt = `Trending sound cue sheet — ${p.name}\nTempo ${bpm} BPM · first beat ${offset.toFixed(2)} s · reel ${T2.toFixed(2)} s\n\n` +
     `In Instagram / TikTok: add the sound and start it at 0:00${offset ? ` (its first beat is at ${offset.toFixed(2)} s)` : ''}. Every cut below sits on its beat.\n\n` +

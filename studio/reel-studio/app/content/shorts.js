@@ -7,6 +7,7 @@ import { MediaStore } from '../core/media.js';
 import { exportMp4 } from '../core/export.js';
 import { exportsDir } from '../core/config.js';
 import { buildLines } from '../captions/model.js';
+import { safeArea } from '../captions/render.js';
 import { reframe, cropToItemKf } from '../auto/lib/video.js';
 import { planShorts } from './lib/shorts-plan.js';
 import { lookSpec } from './looks.js';
@@ -66,11 +67,21 @@ export async function makeShorts(ctx, opts = {}) {
         if (kf.x.length) { clip.kf = kf; Object.assign(clip, { x: kf.x[0][1], y: kf.y[0][1], w: kf.w[0][1], h: kf.h[0][1] }); }
       }
     }
+    // no speaker to follow in a landscape source (slides, a screen share): keep the WHOLE picture, full width in the
+    // upper middle on the company's dark colour, and put the captions under it instead of cropping the slide away
+    let capStyle;
+    if (!clip.kf?.x && media.w > media.h * 1.2) {
+      const h = Math.round(W * media.h / media.w);
+      Object.assign(clip, { x: 0, y: Math.round(H * 0.27), w: W, h });
+      q.canvas.bg = [ws.colors?.primary, ws.colors?.secondary, ws.colors?.ink].find((c) => c && contrast(c, '#ffffff') >= 7) || '#111111';
+      const sa = safeArea(W, H), cy = (H * 0.27 + h + H * 0.1) / H;
+      capStyle = { ...spec, pos: { y: +Math.min(0.95, (cy * H - sa.y) / sa.h).toFixed(3) } };
+    }
     const tr = (kind) => q.tracks.find((t) => t.kind === kind);
     tr('video').items.push(clip);
     const sw = words.filter((w) => w.t0 >= sIn - 0.02 && w.t1 <= sOut + 0.02).map((w) => ({ ...w, t0: r1(w.t0 - sIn), t1: r1(w.t1 - sIn) }));
     q.captions = { style: spec, lang: p.captions.lang || 'auto', words: sw, lines: buildLines(sw, spec, q.canvas) };
-    tr('caption').items.push(createItem('caption', { t0: 0, in: 0, out: r1(dur), x: 0, y: 0, w: W, h: H, name: 'Captions', auto: 'content.look' }));
+    tr('caption').items.push(createItem('caption', { t0: 0, in: 0, out: r1(dur), x: 0, y: 0, w: W, h: H, name: 'Captions', style: capStyle, auto: 'content.look' }));
     // the hook for the first seconds (top of the title-safe area) and the CTA at the end
     const hk = Math.min(3, dur * 0.15);
     tr('text').items.push(createItem('text', { t0: 0, in: 0, out: r1(hk), x: W * 0.08, y: H * 0.13, w: W * 0.84, h: H * 0.14, text: s.title, style: brandText(ws, { size: 70, color: '#ffffff', stroke: '#000000', strokeW: 6 }), fx: [{ type: 'content.pop', dur: 0.3 }], fadeOut: 0.2, auto: 'content.short', name: 'Hook' }));

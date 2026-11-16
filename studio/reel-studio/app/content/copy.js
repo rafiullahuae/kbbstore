@@ -102,11 +102,16 @@ function prompt(f, lang) {
   const facts = [`Company: ${f.ws.name} (${f.ws.industry || (f.pc ? 'study abroad / visa consultancy' : 'Korean skincare shop in the UAE')})`,
     f.series ? `Series episode: ${f.series.title}` : '', f.products.length ? `Products: ${f.products.join('; ')}` : '', f.countries.length ? `Countries: ${f.countries.map((c) => c.name).join(', ')}` : '',
     f.prices.length ? `Prices: ${f.prices.join(', ')}` : '', `Call to action: ${f.cta}`, `What is said in the video: "${f.text.slice(0, 900)}"`].filter(Boolean).join('\n');
+  const ex = lang === 'ar'
+    ? '{"caption": "بشرة ناعمة في ٧ أيام ✨\\nكريم كوري خفيف يرطب طول اليوم.\\nاطلبي الآن، الرابط في البايو 🛍️", "keywords": ["كريم مرطب", "عناية بالبشرة دبي"], "hashtags": ["#عناية_بالبشرة", "#دبي"], "comments": ["أي منتج تجربين أول؟"]}'
+    : '{"caption": "Soft skin in 7 days ✨\\nA light Korean cream that hydrates all day.\\nShop now, link in bio 🛍️", "keywords": ["korean moisturiser", "skincare dubai"], "hashtags": ["#KoreanSkincare", "#DubaiSkincare"], "comments": ["Which one would you try first?"]}';
   return [
-    { role: 'system', content: 'You write short, punchy social media post copy. You answer with ONE JSON object and nothing else.' },
-    { role: 'user', content: `${facts}\n\nWrite the Instagram / TikTok post for this video in ${L}. Rules: the caption has a hook line, one line of value and the call to action (max 300 characters, 1-3 emoji); 6 search keywords (short phrases people type in search); EXACTLY 5 hashtags targeted to the topic, the audience and the place (no generic ones like #love or #instagood); 3 comment prompts that make people reply. Never promise guaranteed results or visas.\nJSON keys: "caption" (string), "keywords" (array of 6 strings), "hashtags" (array of 5 strings), "comments" (array of 3 strings).` },
+    { role: 'system', content: `You write short, punchy Instagram and TikTok post copy in ${L}. You reply with ONE JSON object only, in this shape (an example of the shape; never copy its words):\n${ex}` },
+    { role: 'user', content: `${facts}\n\nWrite the post for this video in ${L}: "caption" = a hook line, one line of value, then the call to action (under 300 characters, 1-3 emoji); "keywords" = 6 short search phrases; "hashtags" = EXACTLY 5 hashtags for the topic, the audience and the place (no #love, #instagood); "comments" = 3 questions that make people comment. Never promise guaranteed results or visas.` },
   ];
 }
+/** the start of the reply, written for the model so even a small one stays in the JSON shape */
+export const REPLY_PREFIX = '{"caption": "';
 export function parseReply(text) {
   const s = String(text || ''), a = s.indexOf('{'), b = s.lastIndexOf('}');
   if (a < 0 || b <= a) return null;
@@ -116,15 +121,30 @@ const SAFE = [[/guarantee(d)?\s+(visa|approval|results?)/gi, 'real support for y
 const safe = (s) => SAFE.reduce((x, [r, w]) => x.replace(r, w), String(s));
 
 /** merge a model reply with the rules: every field validated, anything missing or broken comes from the rules */
-export function finish(reply, rules, lang) {
-  const okText = (s) => typeof s === 'string' && s.trim().length > 10 && (lang !== 'ar' || AR_RE.test(s));
+const EXAMPLE_WORDS = /soft skin in 7 days|light korean cream that hydrates|بشرة ناعمة في ٧ أيام|كريم كوري خفيف/i;
+/** a small model drifts: a caption must be about THIS reel (names a product, country, price, the company or a topic
+ *  word), must not repeat itself or copy the prompt's example, and must fit a post */
+export function grounded(text, f) {
+  const s = String(text || ''), low = s.toLowerCase();
+  if (!s.trim() || s.length > 700 || EXAMPLE_WORDS.test(s)) return false;
+  const sents = s.split(/[.!?؟\n]+/).map((x) => x.trim()).filter((x) => x.length > 12);
+  if (new Set(sents).size < sents.length) return false;
+  if (!f) return true;
+  const terms = [f.ws.name, ...f.products.flatMap((p) => p.split(' ').slice(0, 2)), ...f.countries.flatMap((c) => [c.name, c.nameAr]), ...f.prices, ...f.terms.slice(0, 6),
+    ...(f.pc ? ['visa', 'study', 'تأشيرة', 'الدراسة', 'فيزا'] : ['skin', 'serum', 'بشرة', 'البشرة', 'سيروم'])].filter((x) => x && String(x).length > 2);
+  return terms.some((t) => low.includes(String(t).toLowerCase()));
+}
+
+export function finish(reply, rules, lang, f = null) {
+  const okText = (s) => typeof s === 'string' && s.trim().length > 10 && (lang !== 'ar' || AR_RE.test(s)) && grounded(s, null);
   const arr = (a) => (Array.isArray(a) ? a.map(String).map((x) => x.trim()).filter(Boolean) : []);
-  const out = { caption: okText(reply?.caption) ? safe(reply.caption.trim()).slice(0, 600) : rules.caption, keywords: arr(reply?.keywords).slice(0, 8), hashtags: cleanTags(arr(reply?.hashtags)), comments: arr(reply?.comments).filter(okText).map(safe).slice(0, 3) };
+  const out = { caption: okText(reply?.caption) && grounded(reply.caption, f) ? safe(reply.caption.trim()).slice(0, 600) : rules.caption, keywords: arr(reply?.keywords).slice(0, 8), hashtags: cleanTags(arr(reply?.hashtags)), comments: arr(reply?.comments).filter(okText).map(safe).slice(0, 3) };
   const used = { caption: out.caption !== rules.caption, keywords: out.keywords.length >= 3, hashtags: out.hashtags.length >= 3, comments: out.comments.length >= 2 };
   if (!used.keywords) out.keywords = rules.keywords;
   if (out.hashtags.length < 5) out.hashtags = cleanTags([...out.hashtags, ...rules.hashtags]);
   if (!used.comments) out.comments = rules.comments;
   out.from = Object.values(used).some(Boolean) ? 'model' : 'rules';
+  out.fromModel = Object.keys(used).filter((k) => used[k]);
   return out;
 }
 
@@ -149,9 +169,9 @@ export async function writeCopy(ctx, opts = {}) {
     let reply = null, raw = '';
     if (res.model) {
       opts.onProgress?.(lang === 'ar' ? 'Writing the Arabic post…' : 'Writing the English post…', null);
-      try { const r = await call({ op: 'gen', messages: prompt(f, lang), max: lang === 'ar' ? 380 : 300 }); raw = r.text; reply = parseReply(raw); } catch (e) { console.warn('[content] writer:', e.message); }
+      try { const r = await call({ op: 'gen', messages: prompt(f, lang), prefix: REPLY_PREFIX, max: lang === 'ar' ? 420 : 320 }); raw = r.text; reply = parseReply(raw); } catch (e) { console.warn('[content] writer:', e.message); }
     }
-    res[lang] = { ...finish(reply, rules, lang), raw: raw.slice(0, 2000) };
+    res[lang] = { ...finish(reply, rules, lang, f), raw: raw.slice(0, 2000) };
   }
   res.ms = Math.round(performance.now() - t0);
   const p = ctx.project;

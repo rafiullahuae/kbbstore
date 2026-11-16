@@ -4,7 +4,7 @@
 //   KBB product shots       (brands/kbb/products, when a product or its category is named)
 //   Planet Careers country  (flag / landmark / map from the country pack, when a country is named)
 // ONE undo step; a second press replaces the earlier automatic b-roll (item.auto = 'content.broll'), never his own.
-import { findMedia, projectDuration, createItem, fitBox } from '../core/project.js';
+import { findMedia, projectDuration, createItem, safeAreas } from '../core/project.js';
 import { kindOf } from '../core/media.js';
 import { catalogueFor, brandPop } from './lib/catalogue.js';
 import { keywordHits, stem, STOP, normWord } from './lib/keywords.js';
@@ -127,10 +127,11 @@ export async function autoBroll(ctx, opts = {}) {
       const bg = a.source === 'country' ? (a.item.colors?.[0] || '#0b2545') : soft;
       const ink = a.source === 'country' ? '#ffffff' : (ws.colors?.ink || '#2a2228');
       adds.push(createItem('shape', { t0: pl.t0, in: 0, out: r1(dur), x: 0, y: 0, w: W, h: H, style: { shape: 'rect', fill: bg }, fadeIn: 0.1, fadeOut: 0.1, auto: BROLL_TAG, group, name: 'B-roll card' }));
-      const k = m.w && m.h ? m.w / m.h : 1, bw = W * (a.source === 'country' ? 0.6 : 0.56), bh = H * 0.5;
+      const TS = safeAreas(p.canvas).title, nameH = Math.min(TS.h * 0.14, H * 0.09);   // all inside the title-safe area
+      const k = m.w && m.h ? m.w / m.h : 1, bw = TS.w * 0.8, bh = TS.h - nameH - TS.h * 0.1;
       let iw = bw, ih = bw / k; if (ih > bh) { ih = bh; iw = ih * k; }
-      adds.push(createItem('clip', { media: m.id, t0: pl.t0, in: 0, out: r1(dur), x: r1((W - iw) / 2), y: r1(H * 0.42 - ih / 2), w: r1(iw), h: r1(ih), zoom: null, fx: [{ type: 'content.pop', dur: 0.3 }], fadeOut: 0.1, auto: BROLL_TAG, group, name: 'B-roll · ' + a.name, content: a.source === 'product' ? { product: a.item.id } : { country: a.item.code } }));
-      adds.push(createItem('text', { t0: r1(pl.t0 + 0.1), in: 0, out: r1(dur - 0.1), x: r1(W * 0.08), y: r1(H * 0.42 + bh / 2 + H * 0.02), w: r1(W * 0.84), h: r1(H * 0.09), text: a.source === 'product' ? a.item.brand + ' · ' + a.item.name : a.item.name,
+      adds.push(createItem('clip', { media: m.id, t0: pl.t0, in: 0, out: r1(dur), x: r1(TS.x + (TS.w - iw) / 2), y: r1(TS.y + TS.h * 0.03 + (bh - ih) / 2), w: r1(iw), h: r1(ih), zoom: null, fx: [{ type: 'content.pop', dur: 0.3 }], fadeOut: 0.1, auto: BROLL_TAG, group, name: 'B-roll · ' + a.name, content: a.source === 'product' ? { product: a.item.id } : { country: a.item.code } }));
+      adds.push(createItem('text', { t0: r1(pl.t0 + 0.1), in: 0, out: r1(dur - 0.1), x: r1(TS.x), y: r1(TS.y + TS.h - nameH), w: r1(TS.w), h: r1(nameH), text: a.source === 'product' ? a.item.brand + ' · ' + a.item.name : a.item.name,
         style: brandText(ws, { size: Math.round(Math.min(W, H) * 0.055), color: a.source === 'country' ? ink : '#ffffff', bg: a.source === 'country' ? null : pop, upper: a.source === 'country' }), fadeOut: 0.1, auto: BROLL_TAG, group, name: 'B-roll name' }));
     }
   }

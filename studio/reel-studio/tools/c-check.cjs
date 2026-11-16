@@ -106,6 +106,7 @@ function prepareStudio() {
   const errors = [], outside = [];
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', (err) => errors.push('pageerror: ' + err.message));
+  page.on('response', (r) => { if (r.status() >= 400) errors.push(`HTTP ${r.status()} ${r.url().replace(e.url, '')}`); });
   page.on('worker', (w) => w.on('console', (m) => { if (m.type() === 'error') errors.push('[worker] ' + m.text()); }));
   context.on('request', (r) => { const u = r.url(); if (!/^(http:\/\/127\.0\.0\.1:\d+\/|blob:|data:)/.test(u)) outside.push(u); });
   const ev = (fn, arg) => page.evaluate(fn, arg);
@@ -185,7 +186,7 @@ function prepareStudio() {
   ok(looks.r.look === 'v-pop' && looks.maxWordsDrawn <= 3 && looks.rects > 15, `look "v-pop": ${looks.r.cues} cues, every one 1–${looks.maxWordsDrawn} words, spoken word in the brand colour ${looks.active}`);
   ok(looks.onFace === 0 && looks.outSafe === 0, `measured on drawn pixels: 0 of ${looks.rects} cues touch the face, 0 leave the platform safe area (moved off the face in ${looks.r.moved} of ${looks.r.segments} placements)`);
   ok(looks.r.pops.some((x) => /price:AED 99/.test(x)) && looks.r.pops.some((x) => /product:Biodance/.test(x)) && looks.r.pops.some((x) => /30% OFF/.test(x)) && !looks.popClash.length && !looks.popOnCaption.length,
-    `keyword pops: ${looks.r.pops.join(', ')} — none on the face or over the captions`);
+    `keyword pops: ${looks.r.pops.join(', ')} — none on the face or over the captions${looks.popClash.length || looks.popOnCaption.length ? " — CLASH face: " + looks.popClash.join(",") + " captions: " + looks.popOnCaption.join(",") : ""}`);
   ok(looks.steps === 1 && looks.styleUndone !== looks.styleAfter, `the whole look is ONE undo step (undo → "${looks.styleUndone}", redo → "${looks.styleAfter}")`);
   // without a face in the way, the captions sit in the middle third
   const mid = await ev(async () => { const C = window.kbbContent, ed = window.kbbEditor; const r = await C.applyLook(ed.context(), { look: 'v-box', faces: {}, pops: false });
@@ -241,7 +242,7 @@ function prepareStudio() {
   ok(cb.y >= top34 && cb.y + cb.h <= top34 + 1440, `the 9:16 cover's title (y ${cb.y}–${cb.y + cb.h}) sits inside the grid's centre 3:4 crop (${top34}–${top34 + 1440})`);
   // independent contrast measurement: the PNG pixels under the title box, white text vs the brightest background around it
   await page.click('.cr-card[data-cr="cover"] .cr-go'); await page.waitForSelector('.cr-card[data-cr="cover"] .cr-covers img', { timeout: 60000 }); await page.waitForTimeout(300);
-  await page.locator('.cr-card[data-cr="cover"]').scrollIntoViewIfNeeded();
+  await page.locator('.cr-card[data-cr="cover"] .cr-out').evaluate((el) => el.scrollIntoView({ block: 'end' }));
   await shot('04-cover');
 
   // ── post copy: local LLM (WASM) and the rule-based writer ──
@@ -250,14 +251,14 @@ function prepareStudio() {
   const ar = /[؀-ۿ]/;
   const good = (x, lang) => x.hashtags.length >= 3 && x.hashtags.length <= 5 && x.hashtags.every((h) => /^#\S+$/.test(h)) && x.comments.length >= 2 && x.keywords.length >= 3 && (lang !== 'ar' || ar.test(x.caption));
   ok(cp.r.model?.id === 'copy-llm-lite' && cp.r.model.device === 'wasm' && good(cp.r.en, 'en') && good(cp.r.ar, 'ar') && cp.r.file,
-    `post copy by the local model ${cp.r.model?.id} (${cp.r.model?.device}) in ${secs(t)}: EN [${cp.r.en.from}] ${cp.r.en.hashtags.length} hashtags ${cp.r.en.hashtags.join(' ')} · AR [${cp.r.ar.from}] ${cp.r.ar.hashtags.length} hashtags ${cp.r.ar.hashtags.join(' ')}`);
+    `post copy by the local model ${cp.r.model?.id} (${cp.r.model?.device}) in ${secs(t)}: EN [model: ${cp.r.en.fromModel.join('+') || 'none, rules'}] ${cp.r.en.hashtags.length} hashtags ${cp.r.en.hashtags.join(' ')} · AR [model: ${cp.r.ar.fromModel.join('+') || 'none, rules'}] ${cp.r.ar.hashtags.length} hashtags ${cp.r.ar.hashtags.join(' ')}`);
   console.log('   EN caption:', JSON.stringify(cp.r.en.caption).slice(0, 240));
   console.log('   AR caption:', JSON.stringify(cp.r.ar.caption).slice(0, 240));
   console.log('   EN comments:', JSON.stringify(cp.r.en.comments));
   ok(good(cp.rules.en, 'en') && good(cp.rules.ar, 'ar') && cp.rules.en.hashtags.length === 5 && cp.rules.ar.hashtags.length === 5, `rule-based writer (no model): EN ${cp.rules.en.hashtags.join(' ')} · AR ${cp.rules.ar.hashtags.join(' ')}`);
   ok(fs.existsSync(T(cp.r.file)) && ar.test(fs.readFileSync(T(cp.r.file), 'utf8')), `post copy saved to ${cp.r.file}`);
   await page.click('.cr-card[data-cr="copy"] .cr-go'); await page.waitForSelector('.cr-card[data-cr="copy"] .cr-copy', { timeout: 300000 });
-  await page.locator('.cr-card[data-cr="copy"]').scrollIntoViewIfNeeded();
+  await page.locator('.cr-card[data-cr="copy"] .cr-copy').first().evaluate((el) => el.scrollIntoView({ block: 'start' }));
   await shot('05-post-copy');
 
   // ── series ──
@@ -312,7 +313,7 @@ function prepareStudio() {
     const meas = await C.measureSound(ctx, blob);
     // cut the main clip into four pieces at off-beat moments
     const vt = ed.project.tracks.find((t) => t.kind === 'video'), main = vt.items[0], P = await import('/app/core/project.js');
-    const cuts = [6.1, 13.37, 21.9];
+    const cuts = [6.0, 13.3, 21.95];
     const pieces = [0, ...cuts, main.out].slice(0, -1).map((a, i, arr) => ({ a, b: i < arr.length - 1 ? arr[i + 1] : main.out }));
     ed.apply(ops.batch('cuts', [ops.setItem(main.id, { out: cuts[0] }), ops.addItems(pieces.slice(1).map((pc) => ({ trackId: vt.id, item: { ...P.clone(main), id: P.uid('i'), t0: pc.a, in: pc.a, out: pc.b } })))]));
     const r = await C.cueSheet(ctx, { bpm: meas.bpm, offset: meas.offset });
@@ -320,7 +321,7 @@ function prepareStudio() {
     const grid = (t) => { const k = Math.round((t - meas.offset) / (60 / meas.bpm)); return Math.abs(meas.offset + k * 60 / meas.bpm - t); };
     return { meas, r: { ...r, wavUrl: null, csv: r.csv.split('\n').length, txt: null }, after, off: after.map(grid), markers: ed.project.markers.filter((m) => m.cue).length, end: P.projectDuration(ed.project) };
   });
-  ok(Math.abs(cue.meas.bpm - 128) <= 1.5, `trending sound measured: ${cue.meas.bpm} BPM (true 128), first beat ${cue.meas.offset} s (true 0.25)`);
+  ok(Math.abs(cue.meas.bpm - 128) <= 1.5 && Math.abs(cue.meas.offset - 0.25) < 0.03, `trending sound measured: ${cue.meas.bpm} BPM (true 128), first beat ${cue.meas.offset} s (true 0.25)`);
   ok(cue.after.length === 3 && cue.off.every((d) => d < 0.002) && cue.markers === 3 && cue.r.shifted === 3, `every cut snapped onto a beat (${cue.after.map((x) => x.toFixed(3)).join(', ')} s; off-grid ${Math.max(...cue.off).toFixed(4)} s), ${cue.markers} beat markers, reel ${cue.end.toFixed(2)} s`);
   const wavF = T(cue.r.files.wav), wb = fs.readFileSync(wavF), wsr = wb.readUInt32LE(24), smp = (wb.length - 44) / 2;
   const peaks = cue.after.map((tc) => { let mx = 0; for (let i = Math.round((tc - 0.005) * wsr); i < Math.round((tc + 0.05) * wsr) && i < smp; i++) mx = Math.max(mx, Math.abs(wb.readInt16LE(44 + i * 2))); return mx / 32767; });
