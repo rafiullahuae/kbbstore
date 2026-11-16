@@ -1,5 +1,5 @@
 PASS test reel: 2 clips (one cut), music with 17 beats, 6 caption lines, 9.0 s
-PASS right column has the ✨ Themes tab (⚙ Inspector · 💬 Captions · 🎨 Look · ✨ Themes · 🔊 Audio · 🔥 Viral · 🚀 Create · 📷 Photos · 🖼 Designs)
+PASS right column has the ✨ Themes tab (⚙ Inspector · 💬 Captions · 🎨 Look · ✨ Themes · ⏱ Sync · 🎞 Cutaways · 🔊 Audio · 🔥 Viral · 🚀 Create · 📷 Photos · 🖼 Designs)
 PASS 58 themes (≥ 30): Countries 33, Travel & study 4, Work abroad 4, Beauty 3, Luxury 1, Offers 2, Seasonal 7, Business 1, Food 1, Fitness 1, Real estate 1
 PASS German study-visa transcript → europe 13.5, country-de 13.5, study 9.5 (Europe/Germany first, Europe in the top 3)
 PASS KBB transcript → beauty-petals 16, beauty-lotus 5, beauty-glow 3 (petals/beauty first)
@@ -12,27 +12,27 @@ PASS colours → Brand kit: the theme draws in the company's primary #C6395F
 PASS 9:16: every theme applied (58 themes)
 PASS 1:1: every theme applied (58 themes)
 PASS 16:9: every theme applied (58 themes)
-PASS 522 frames rendered (3 per theme × 3 aspects) with no console error or render warning; median 1.45 ms / p95 6.62 ms per frame at 0.2×
+PASS 522 frames rendered (3 per theme × 3 aspects) with no console error or render warning; median 1.42 ms / p95 3.41 ms per frame at 0.2×
 PASS face box + caption boxes stay clear in every theme, frame and aspect (max alpha inside 0/255)
 PASS contact sheets (3 frames per theme on the sample clip): themes-01.jpg, themes-02.jpg, themes-03.jpg, themes-04.jpg, themes-05.jpg, themes-06.jpg
 PASS beat pulses: 32 beats in 4 themes, peak frame within ±1 frame of the beat (max |offset| 0.92 frames, pulse contrast ×4.93–×5.58)
-PASS preview frame vs export frame (Germany theme + sting + title + transition): 0.5 s 1.37/255, 1.5 s 2.77/255, 2.6 s 2.78/255 (< 6) at 270×480; the same reel without the theme: 2.54, 2.5, 2.6
+PASS preview frame vs export frame (Germany theme + sting + title + transition): 0.5 s 1.37/255, 1.5 s 2.97/255, 2.6 s 2.93/255 (< 6) at 270×480; the same reel without the theme: 2.72, 2.73, 2.74
 PASS the themed title is placed clear of the face and the captions for its whole duration (top 0.66·H, overlap 0 px²)
-PASS 1080×1920 export cost: 185.5 ms/frame without a theme; a theme adds europe +49.9, country-gb +63.1, new-year +51.6, beauty-petals +64.4 ms/frame (budget: < 60 % of a plain frame; measured on a software GPU shared with other jobs — a Mac's GPU is far faster)
+PASS 1080×1920 export cost: 138.3 ms/frame without a theme; a theme adds europe +37.2, country-gb +27.2, new-year +26.1, beauty-petals +26.2 ms/frame (budget: < 60 % of a plain frame; measured on a software GPU shared with other jobs — a Mac's GPU is far faster)
 PASS per-element controls: 7 elements (on/off, density, speed, colour); hiding “flag” is one undoable step and ⌘Z brings it back
 PASS the gallery shows all 58 themes, suggestions on top (country-de, europe, study)
-PASS hover Themes gallery: 58 tiles; started in 62 ms, 62 ms, 62 ms, 61 ms, 61 ms (≤ 300 ms), one at a time, stops on leave, the tile animates
+PASS hover Themes gallery: 58 tiles; started in 62 ms, 61 ms, 62 ms, 62 ms, 61 ms (≤ 300 ms), one at a time, stops on leave, the tile animates
 PASS hover Templates (recipes): 20 tiles; started in 66 ms, 61 ms, 61 ms (≤ 300 ms), one at a time, stops on leave
-PASS hover Music: 27 tiles; started in 101 ms, 97 ms (≤ 300 ms), one at a time, stops on leave
-PASS hover SFX: 28 tiles; started in 88 ms, 83 ms (≤ 300 ms), one at a time, stops on leave
+PASS hover Music: 27 tiles; started in 93 ms, 97 ms (≤ 300 ms), one at a time, stops on leave
+PASS hover SFX: 28 tiles; started in 86 ms, 85 ms (≤ 300 ms), one at a time, stops on leave
 PASS hover Colour looks: 19 tiles; started in 85 ms, 61 ms, 61 ms (≤ 300 ms), one at a time, stops on leave
-PASS hover Transitions: 10 tiles; started in 62 ms, 61 ms, 61 ms (≤ 300 ms), one at a time, stops on leave
+PASS hover Transitions: 10 tiles; started in 61 ms, 61 ms, 63 ms (≤ 300 ms), one at a time, stops on leave
 PASS hover Create → formats: 1 tiles; started in 61 ms (≤ 300 ms), one at a time, stops on leave
 PASS a hovered theme tile animates (two grabs 400 ms apart differ)
 PASS sweeping the mouse across 24 tiles: 0 requests, 1 previews started (one at a time, no storm)
 PASS music hover plays an audio preview (audio:library/music/velvet-hour.m4a); sound is off until 🔊 is pressed
 PASS keyboard: focusing a tile plays it (theme:country-ca), blur stops it
-PASS hover preview CPU: 1.29 ms of script per frame on average (worst 159.63 ms: a GPU look's first frame), 23.9 frames/s delivered on a hovered theme tile (the page itself ran at 24 frames/s while hovering, 61 without); 562 frames in all (SwiftShader, one preview at a time)
+PASS hover preview CPU: 1.24 ms of script per frame on average (worst 81.53 ms: a GPU look's first frame), 28.8 frames/s delivered on a hovered theme tile (the page itself ran at 29.5 frames/s while hovering, 61 without); 693 frames in all (SwiftShader, one preview at a time)
 PASS no console errors (0)
 PASS no request left 127.0.0.1 (0)
 
@@ -147,11 +147,11 @@ PASS no request left 127.0.0.1 (0)
  "apply": {
   "r": {
    "theme": "europe",
-   "overlay": "imwjp37to0o5wvj",
-   "sting": "imwjp37to0pbugy",
-   "outro": "imwjp37to0qxbdm",
+   "overlay": "imwjs9fi50oevvi",
+   "sting": "imwjs9fi50p1exo",
+   "outro": "imwjs9fi50q2jco",
    "transitions": 1,
-   "title": "imwjp37tp0s4vn6",
+   "title": "imwjs9fi50slqyi",
    "sfx": 4,
    "beats": 17,
    "faces": 1,
@@ -184,8 +184,8 @@ PASS no request left 127.0.0.1 (0)
  },
  "render": {
   "renders": 522,
-  "medianMs": 1.45,
-  "p95Ms": 6.62,
+  "medianMs": 1.42,
+  "p95Ms": 3.41,
   "scale": 0.2
  },
  "beats": [
@@ -447,7 +447,7 @@ PASS no request left 127.0.0.1 (0)
   }
  ],
  "previewVsExport": {
-  "note": "H.264 + Opus (this browser has no AAC encoder) · 540×960 · 30 fps · 120 frames in 9.9 s",
+  "note": "H.264 + Opus (this browser has no AAC encoder) · 540×960 · 30 fps · 120 frames in 8.3 s",
   "frames": [
    {
     "t": 0.5,
@@ -459,36 +459,36 @@ PASS no request left 127.0.0.1 (0)
     "t": 1.5,
     "w": 270,
     "h": 480,
-    "diff": 2.77
+    "diff": 2.97
    },
    {
     "t": 2.6,
     "w": 270,
     "h": 480,
-    "diff": 2.78
+    "diff": 2.93
    }
   ],
   "withoutTheme": [
    {
     "t": 0.5,
-    "diff": 2.54
+    "diff": 2.72
    },
    {
     "t": 1.5,
-    "diff": 2.5
+    "diff": 2.73
    },
    {
     "t": 2.6,
-    "diff": 2.6
+    "diff": 2.74
    }
   ]
  },
  "exportMsPerFrame": {
-  "none": 185.5,
-  "europe": 235.4,
-  "country-gb": 248.6,
-  "new-year": 237.1,
-  "beauty-petals": 249.9
+  "none": 138.3,
+  "europe": 175.5,
+  "country-gb": 165.5,
+  "new-year": 164.4,
+  "beauty-petals": 164.5
  },
  "sweep": {
   "tiles": 24,
@@ -500,11 +500,11 @@ PASS no request left 127.0.0.1 (0)
    "label": "Themes gallery",
    "count": 58,
    "lat": [
-    61.6,
-    61.6,
-    61.6,
-    61.3,
-    61.4
+    61.9,
+    61.4,
+    61.5,
+    62,
+    61.2
    ],
    "stopped": true,
    "single": true,
@@ -515,9 +515,9 @@ PASS no request left 127.0.0.1 (0)
    "label": "Templates (recipes)",
    "count": 20,
    "lat": [
-    65.7,
-    61.3,
-    61.3
+    66.2,
+    61.2,
+    61.1
    ],
    "stopped": true,
    "single": true,
@@ -527,8 +527,8 @@ PASS no request left 127.0.0.1 (0)
    "label": "Music",
    "count": 27,
    "lat": [
-    100.8,
-    96.6
+    93,
+    97.1
    ],
    "stopped": true,
    "single": true,
@@ -538,8 +538,8 @@ PASS no request left 127.0.0.1 (0)
    "label": "SFX",
    "count": 28,
    "lat": [
-    88.3,
-    83.1
+    85.8,
+    84.9
    ],
    "stopped": true,
    "single": true,
@@ -549,9 +549,9 @@ PASS no request left 127.0.0.1 (0)
    "label": "Colour looks",
    "count": 19,
    "lat": [
-    85.1,
-    60.8,
-    60.8
+    84.5,
+    60.5,
+    60.6
    ],
    "stopped": true,
    "single": true,
@@ -561,9 +561,9 @@ PASS no request left 127.0.0.1 (0)
    "label": "Transitions",
    "count": 10,
    "lat": [
-    61.7,
-    60.9,
-    60.9
+    61.4,
+    60.7,
+    63.1
    ],
    "stopped": true,
    "single": true,
@@ -580,11 +580,11 @@ PASS no request left 127.0.0.1 (0)
    "moving": true
   },
   "cpu": {
-   "frameMs": 1.29,
-   "maxFrameMs": 159.63,
-   "frames": 562,
-   "fps": 23.9,
-   "pageFps": 24,
+   "frameMs": 1.24,
+   "maxFrameMs": 81.53,
+   "frames": 693,
+   "fps": 28.8,
+   "pageFps": 29.5,
    "still": true,
    "idleFps": 61
   },
@@ -592,5 +592,5 @@ PASS no request left 127.0.0.1 (0)
   "focusPlay": "theme:country-ca",
   "focusStop": null
  },
- "seconds": 200
+ "seconds": 175
 }
