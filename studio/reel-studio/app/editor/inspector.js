@@ -157,7 +157,8 @@ export class Inspector {
       this.set(item, { fx }, 'Adjust');
     };
     const chips = h('div.chips', Object.keys(FILTER_PRESETS).map((name) => h('button.chip' + (item.look === name || (!item.look && name === 'none') ? '.on' : ''), {
-      on: { click: () => { this.set(item, { fx: structuredClone(FILTER_PRESETS[name]), look: name }, 'Filter'); this.seal(); this.render(true); } },
+      // a filter preset replaces only the colour filters: other effects on the clip (punch-ins, GPU looks) stay
+      on: { click: () => { const keep = (item.fx || []).filter((f) => !['brightness', 'contrast', 'saturate', 'hue', 'blur', 'grayscale', 'sepia', 'warmth'].includes(f.type)); this.set(item, { fx: [...keep, ...structuredClone(FILTER_PRESETS[name])], look: name }, 'Filter'); this.seal(); this.render(true); } },
     }, name[0].toUpperCase() + name.slice(1))));
     this.el.append(this.section('Look',
       chips,

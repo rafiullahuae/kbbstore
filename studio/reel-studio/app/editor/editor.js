@@ -124,7 +124,7 @@ export class Editor {
 
   renderDoit() {
     clear(this.doit);
-    const extra = listModules().filter((m) => !SLOTS.some((s) => s.id === m.id));
+    const extra = listModules().filter((m) => !SLOTS.some((s) => s.id === m.id) && !m.tab);   // tab modules live in the right column
     for (const s of [...SLOTS, ...extra]) {
       const mod = getModule(s.id);
       this.doit.appendChild(h('button.doit-btn' + (mod ? '' : '.soon'), {

@@ -112,9 +112,9 @@ export function processLook(src, item, t, project, env) {
   // working size: what the clip occupies on the output (preview: the monitor; export: the frame), never above the source
   const want = Math.max(256, Math.min(2160, Math.max(env.box.w, env.box.h) * (env.scale || 1)));
   const k = Math.min(1, want / Math.max(sw, sh)), W = Math.max(2, Math.round(sw * k)), H = Math.max(2, Math.round(sh * k));
-  // the source is sampled bilinearly at the working size — the same filtering drawImage gives a clip without effects,
-  // so everything the effects do not touch looks exactly as it would without them
-  const srcTex = g.upload('src', src, sw, sh);
+  // the source is sampled bilinearly at the working size (the filtering drawImage gives a clip without effects, so
+  // what the effects do not touch looks the same); only a strong downscale (the monitor) reads mipmaps
+  const srcTex = g.upload('src', src, sw, sh, k < 0.6);
   const faces = touch && (touch.strength ?? 0.35) > 0 && item.media ? facesAt(item.media, st) : null;
   const mask = bg && item.media ? segAt(item.media, st) : null;
   const needBlur = !!(faces?.length || (mask && bg.mode === 'blur') || (amount && (look.glow > 0 || look.clar > 0)));

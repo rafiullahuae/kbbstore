@@ -71,7 +71,7 @@ void main(){
     vec3 d = orig - low; float edge = exp(-dot(d, d) * 40.);
     c = orig - d * skin * .9 * edge;                                   // smooth the skin's mid detail (edges stay)
     vec3 m4 = .25 * (texture(src, uv + vec2(px.x, 0.)).rgb + texture(src, uv - vec2(px.x, 0.)).rgb + texture(src, uv + vec2(0., px.y)).rgb + texture(src, uv - vec2(0., px.y)).rgb);
-    c += (orig - m4) * skin * .7;                                      // ...but give the fine texture (pores) back
+    c += (orig - m4) * skin * .25;                                     // ...but give some fine texture (pores) back
     c = mix(c, max(c, low * 1.05 + .012), clamp(under * Tunder * 1.4, 0., 1.)); // soften the under-eye shadow
     c += (orig - low) * eye * Teye * .6 + eye * Teye * .035;             // brighter, crisper eyes
   }
@@ -196,10 +196,13 @@ class GL {
     return t;
   }
   /** upload a picture (video element, VideoFrame, ImageBitmap, canvas, image) */
-  upload(key, source, w, h) {
+  upload(key, source, w, h, mips = false) {
     const gl = this.gl, t = this.tex(key);
     gl.bindTexture(gl.TEXTURE_2D, t.t);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    // strong downscales (the preview monitor) read from mipmaps, so detail averages instead of aliasing
+    if (mips) gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mips ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
     t.w = w; t.h = h; return t;
   }
   /** upload one byte per pixel (masks) */
@@ -264,7 +267,12 @@ export function blurs(g, srcTex, w, h, { large = false } = {}) {
   const b1 = g.target('b1', w4, h4); g.run('blur', b1, { dir: [1 / d2.w, 0] }, { s: d2.tex });
   const bs = g.target('bs', w4, h4); g.run('blur', bs, { dir: [0, 1 / b1.h] }, { s: b1.tex });
   if (!large) return { small: bs.tex, large: bs.tex };
-  const d3 = g.target('d3', w4 / 4, h4 / 4); g.run('copy', d3, { px: [4 / w4, 4 / h4] }, { s: bs.tex });
+  // the large blur lives on a FIXED grid (96 px on the long side), halving down to it, so the preview monitor and
+  // the full-size export blur the background identically
+  let cur = bs, i = 0;
+  const L = 96 / Math.max(w, h), tw = Math.max(2, Math.round(w * L)), th = Math.max(2, Math.round(h * L));
+  while (cur.w > tw * 2 + 1) { const nx = g.target('hv' + (i++ % 2), cur.w / 2, cur.h / 2); g.run('copy', nx, { px: [1 / cur.w, 1 / cur.h] }, { s: cur.tex }); cur = nx; }
+  const d3 = g.target('d3', tw, th); g.run('copy', d3, { px: [1 / cur.w, 1 / cur.h] }, { s: cur.tex });
   const l1 = g.target('l1', d3.w, d3.h), l2 = g.target('l2', d3.w, d3.h);
   g.run('blur', l1, { dir: [1 / d3.w, 0] }, { s: d3.tex }); g.run('blur', l2, { dir: [0, 1 / d3.h] }, { s: l1.tex });
   g.run('blur', l1, { dir: [2 / d3.w, 0] }, { s: l2.tex }); g.run('blur', l2, { dir: [0, 2 / d3.h] }, { s: l1.tex });

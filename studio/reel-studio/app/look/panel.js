@@ -46,7 +46,7 @@ export function lookPanel(el, ctx, A) {
   const textEdit = h('div');
 
   function scopeText() {
-    const n = A.clipTargets(ctx).length, sel = (ctx.selection?.() || []).length;
+    const n = A.clipTargets(ctx).length, sel = (ctx.selection?.() || []).map((id) => findItem(ctx.project, id)?.item).filter((i) => i?.type === 'clip').length;
     targetNote.textContent = n ? (sel ? `Applies to the ${n} selected clip${n > 1 ? 's' : ''}` : `Applies to all ${n} clip${n > 1 ? 's' : ''} (select clips to narrow it)`) : 'Add a video to start';
   }
 
