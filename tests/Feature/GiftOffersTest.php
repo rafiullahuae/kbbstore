@@ -890,8 +890,9 @@ it('says only what she gets on the popup, never who it is for (the owner: "remov
     // Defect: the w3 popup told the shopper "Only shoppers who almost leave
     // get this one". Mutation: put the old line back in TEXTS and this is red.
     $go = app(GiftOffers::class);
-    expect($go->text('w3_p', [], 'en'))->toBe('A full-size {p} is yours, free with this bag.')
-        ->and($go->text('w3_p', [], 'ar'))->toBe('{p} بالحجم الكامل لكِ، مجاناً مع هذه الحقيبة.');
+    // (16 Nov) The owner's own line replaced it: "Grab a Bonus gift 🎁 'product_name' ( Qnty ... )".
+    expect($go->text('w3_p', [], 'en'))->toBe('Grab a Bonus gift 🎁 {p} ({q}) is yours, free with this bag.')
+        ->and($go->text('w3_p', [], 'ar'))->toBe('احصلي على هدية إضافية 🎁 {p} ({q}) لكِ، مجاناً مع هذه الحقيبة.');
     expect(GiftOffers::TEXTS['w3_p'][0])->not->toContain('leave')->not->toContain('Only shoppers')
         ->and(GiftOffers::TEXTS['w3_p'][1])->not->toContain('تغادر');
 });
@@ -932,4 +933,60 @@ it('celebrates Claim with confetti over the whole screen that ignores taps, remo
         preg_match_all('/([a-z-]+):/', preg_replace('/var\([^)]*\)|calc\([^)]*\)/', '', $frames), $props);
         expect(array_diff(array_unique($props[1]), ['opacity', 'transform']))->toBe([]);
     }
+});
+
+it('words the popup as the owner asked: "Grab a Bonus gift 🎁 <name> (2 x pairs) is yours", with no FULL SIZE', function () {
+    /*
+     * The defect (the owner, 16 Nov, a screenshot of the exit popup with "full-size" and the
+     * "FULL SIZE" chip circled): "i need to change the wording ... keep these wordings: Grab a
+     * Bonus gift 🎁 'product_name' ( Qnty or Qntys x pairs ) is yours, free with this bag."
+     * MUTATION: drop {q} from popupView()'s replacements -- "({q})" reaches the shopper. RED.
+     * MUTATION: point the popup's chip back at chip_full -- "FULL SIZE" is back. RED.
+     */
+    $range = DB::table('gift_offer_ranges')->insertGetId(['min_fils' => 10000, 'max_fils' => null, 'enabled' => true, 'sort' => 0, 'created_at' => now(), 'updated_at' => now()]);
+    $patches = gfoProduct('numbuzin No.9 NAD+ Collagen Under Eye Patches', ['price' => 4500]);
+    DB::table('gift_offer_items')->insert(['range_id' => $range, 'product_id' => $patches->id, 'role' => 'primary', 'sort' => 0, 'allocation' => 50, 'used' => 0, 'qty' => 2, 'created_at' => now(), 'updated_at' => now()]);
+    app(GiftOffers::class)->compile();
+    gfoSet(['places' => ['popup' => true], 'popup' => ['design' => 'A', 'style' => 'S3', 'words' => '3']]);
+
+    $go = app(GiftOffers::class);
+    $p = $go->popupView($go->offerFor(40000));
+    $html = view('partials.gift-offers.popup-card', ['p' => $p])->render();
+
+    expect($p['p'])->toBe('Grab a Bonus gift 🎁 {p} (2 x pairs) is yours, free with this bag.')
+        ->and($html)->toContain('Grab a Bonus gift 🎁 <b>numbuzin No.9 NAD+ Collagen Under Eye Patches</b> (2 x pairs) is yours, free with this bag.')
+        ->and($html)->not->toContain('full-size')->not->toContain('FULL SIZE')->not->toContain('kgo-c2')
+        ->and($go->qtyWords(1))->toBe('1 x pair')
+        // Arabic drops the x, which would flip beside the number in a right-to-left line
+        ->and($go->text('pop_qty', [], 'ar'))->toBe('{n} {u}');
+
+    // The owner's own wording and chip, from Gift offers -> Exit popup.
+    gfoSet(['places' => ['popup' => true], 'popup' => ['design' => 'A', 'style' => 'S3', 'words' => '3'],
+        'texts' => ['w3_p_en' => 'Take {p} ({q}) home free', 'pop_unit_many_en' => 'sets', 'pop_chip_full_en' => 'Full size']]);
+    $go = app(GiftOffers::class);
+    $html = view('partials.gift-offers.popup-card', ['p' => $go->popupView($go->offerFor(40000))])->render();
+    expect($html)->toContain('Take <b>numbuzin No.9 NAD+ Collagen Under Eye Patches</b> (2 x sets) home free')
+        ->toContain('<span class="kgo-c2">Full size</span>');
+});
+
+it('moves a SAVED copy of the old full-size popup line to the owner\'s new one, and leaves his own words alone', function () {
+    // MUTATION: drop the w3_p_en move from the migration -- the first expectation is RED.
+    DB::table('settings')->updateOrInsert(['key' => 'gift_offers'], ['value' => json_encode(['texts' => [
+        'w3_p_en' => 'A full-size {p} is yours, free with this bag.', 'w3_p_ar' => '{p} بالحجم الكامل لكِ، مجاناً مع هذه الحقيبة.', 'w1_h_en' => 'Mine',
+    ]]), 'autoload' => true]);
+    \App\Services\SettingsService::forgetMemo();
+    \App\Models\Setting::flushMap();
+    $m = require database_path('migrations/2028_02_16_100200_gift_offer_popup_bonus_wording.php');
+    $m->up();
+    $m->up();
+    $t = json_decode((string) DB::table('settings')->where('key', 'gift_offers')->value('value'), true)['texts'];
+    expect($t['w3_p_en'])->toBe('Grab a Bonus gift 🎁 {p} ({q}) is yours, free with this bag.')
+        ->and($t['w3_p_ar'])->toBe('احصلي على هدية إضافية 🎁 {p} ({q}) لكِ، مجاناً مع هذه الحقيبة.')
+        ->and($t['w1_h_en'])->toBe('Mine');
+
+    DB::table('settings')->where('key', 'gift_offers')->update(['value' => json_encode(['texts' => ['w3_p_en' => 'My own words']])]);
+    \App\Services\SettingsService::forgetMemo();
+    \App\Models\Setting::flushMap();
+    $m->up();
+    expect(json_decode((string) DB::table('settings')->where('key', 'gift_offers')->value('value'), true)['texts']['w3_p_en'])->toBe('My own words');
 });

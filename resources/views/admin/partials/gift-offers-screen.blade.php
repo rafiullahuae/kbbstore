@@ -167,14 +167,14 @@
   var EMAIL_TEXTS = [
     ['email_subject', 'Start of the subject line (only when the gift is in the email)'], ['email_eyebrow', 'Small line on top'], ['email_title', 'Heading'], ['email_body_cart', 'Abandoned-cart email: text'], ['email_button_cart', 'Abandoned-cart email: button'],
     ['email_body_order', 'Pending reminders: text'], ['email_button_order', 'Pending reminders: button'], ['email_worth', 'Line under the button (keep :price)'],
-    ['clock_label', 'Above the clock (email and cart row)'], ['held', 'Fixed end time / clock alt text (keep :time)'], ['today', 'Today'], ['tomorrow', 'Tomorrow'], ['chip_free', 'Chip: Free'], ['chip_full', 'Chip: Full size']
+    ['clock_label', 'Above the clock (email and cart row)'], ['held', 'Fixed end time / clock alt text (keep :time)'], ['today', 'Today'], ['tomorrow', 'Tomorrow'], ['chip_free', 'Chip: Free'], ['chip_full', 'Chip: Full size (emails)']
   ];
   var ROW_TEXTS = [['row_free', 'Row chip: Free'], ['row_full', 'Row chip: Full size'], ['row_below', 'Bag below the range (keep :amount)'], ['row_over', 'When the time is up'], ['ended', 'An ended or unavailable gift'], ['pay_note', 'Order-pay page, under the row'], ['box_bonus', 'Gift box: before the bonus gift\'s name (A, E)'], ['box_plus', 'Gift box: before the bonus gift\'s name (C)'], ['box_held', 'Gift box: the clock, for screen readers']];
   /* (Lane GBX2) The bonus gift inside the Free gifts box: the owner's five
      approved designs (docs/plans/gift-box-merge/). The server stores one of
      these letters or the default (GiftOffers::BOX_DESIGNS / BOX_DESIGN). */
   var BOX_DESIGNS = [['A', 'Pink timer tag', 'The bonus is the last photo, ringed in pink; its pink tag reads the live clock. One line under the row names it.'], ['B', 'Cream card', 'A cream card at the foot of the box: photo, name, then a dark clock chip, Free · Full size · ×N.'], ['C', 'Ringed photo', 'The last photo inside a pink ring that shrinks as time runs out; the clock is a pill on the ring.'], ['D', 'Two-part box', 'A dashed green divider, then the bonus at the foot with a dark clock chip.'], ['E', 'Gold frame', 'The last photo in a gold frame; a gold tag holds small flip digits.']];
-  var POP_TEXTS = [['wait', 'Big word'], ['pop_full', 'After FREE'], ['pop_held', 'S1 pill'], ['pop_held_for', 'S2 bar'], ['pop_minutes', 'S4 minutes'], ['pop_seconds', 'S4 seconds'], ['pop_gold', 'S5 strip'], ['pop_box', 'C: before opening'], ['pop_tap', 'C: tap to open'], ['pop_added', 'Green tick'], ['pop_opening', 'Under the tick'], ['pop_close', 'Close button (screen readers)']];
+  var POP_TEXTS = [['wait', 'Big word'], ['pop_full', 'After FREE'], ['pop_chip_full', 'Chip after FREE (type - for none)'], ['pop_qty', '{q}: number and unit (keep {n} and {u})'], ['pop_unit_one', '{q} unit, one ("1 x pair")'], ['pop_unit_many', '{q} unit, more ("2 x pairs")'], ['pop_held', 'S1 pill'], ['pop_held_for', 'S2 bar'], ['pop_minutes', 'S4 minutes'], ['pop_seconds', 'S4 seconds'], ['pop_gold', 'S5 strip'], ['pop_box', 'C: before opening'], ['pop_tap', 'C: tap to open'], ['pop_added', 'Green tick'], ['pop_opening', 'Under the tick'], ['pop_close', 'Close button (screen readers)']];
   /* Off / Testing / Live (the owner, 4 November: "the same TEST / LIVE / OFF
      function" as Free gifts). Each saves at once and asks Yes / No first in the
      console's "Are you sure?" box (partials/reset-guard, data-kbb-sure); the
@@ -377,7 +377,7 @@
       '<h3 class="go-h" style="font-size:13.5px">1 · Popup design</h3>' + opts(DESIGNS, 'design', p.design) +
       '<h3 class="go-h" style="font-size:13.5px">2 · Content style (the timer)</h3>' + opts(STYLES, 'style', p.style) +
       '<h3 class="go-h" style="font-size:13.5px">3 · Words</h3>' + opts(words.map(function (x) { return [x[0], x[1], x[2]]; }), 'words', w) +
-      '<p class="go-sub">Words ' + esc(w) + ', in both languages. {p} is the product\'s name, {m} the minutes.</p>' +
+      '<p class="go-sub">Words ' + esc(w) + ', in both languages. {p} is the product\'s name (it changes with the gift), {q} its quantity ("2 x pairs"), {m} the minutes.</p>' +
       txtRows([['w' + w + '_h', 'Line under the big word'], ['w' + w + '_p', 'Text'], ['w' + w + '_c', 'Button'], ['w' + w + '_l', 'Maybe later']]) +
       '<h3 class="go-h" style="font-size:13.5px">4 · Who sees it</h3>' + opts(AUDS, 'audience', p.audience) +
       '<h3 class="go-h" style="font-size:13.5px">Popup texts</h3>' + txtRows(POP_TEXTS) +

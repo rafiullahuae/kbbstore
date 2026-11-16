@@ -27,7 +27,10 @@
         'S5' => '<div class="kgo-goldbar"><span>' . e($p['t']['gold']) . '</span><b class="kgo-clk" data-kgo-m>' . $goMm . ':00</b></div>',
         default => '<div class="kgo-cream"><small>' . e($p['t']['clock']) . '</small><b class="kgo-clk" data-kgo-m>' . $goMm . ':00</b></div>',
     };
-    $goChips = '<div class="kgo-chips"><span class="kgo-c1">' . e($p['t']['free']) . '</span><span class="kgo-c2">' . e($p['t']['chip_full']) . ($p['style'] === 'S5' ? ' · ' . e($p['worth']) : '') . '</span>' . ($p['style'] === 'S5' && $goQty < 2 ? '' : '<span class="kgo-c3">×' . $goQty . '</span>') . '</div>';
+    // "-" in Popup texts -> "FULL SIZE" chip hides the words (the owner, 16 Nov, circled them); S5 keeps its worth.
+    $goFull = trim($p['t']['chip_full']) === '-' ? '' : e($p['t']['chip_full']);
+    $goC2 = $goFull . ($p['style'] === 'S5' ? ($goFull !== '' ? ' · ' : '') . e($p['worth']) : '');
+    $goChips = '<div class="kgo-chips"><span class="kgo-c1">' . e($p['t']['free']) . '</span>' . ($goC2 !== '' ? '<span class="kgo-c2">' . $goC2 . '</span>' : '') . ($p['style'] === 'S5' && $goQty < 2 ? '' : '<span class="kgo-c3">×' . $goQty . '</span>') . '</div>';
     $goWorth = '<span class="kgo-worth"><s>' . e($p['worth']) . '</s><em>' . e($p['t']['free']) . '</em> ' . e($p['t']['full']) . '</span>';
     $goUnder = '<div class="kgo-pname">' . $goName . '</div>' . (in_array($p['style'], ['S3', 'S5'], true) ? $goChips : ($goQty > 1 ? '<div class="kgo-chips"><span class="kgo-c3">×' . $goQty . '</span></div>' : ''));
     $goPhoto = $p['style'] === 'S5'

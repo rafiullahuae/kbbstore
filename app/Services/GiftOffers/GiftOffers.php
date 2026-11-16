@@ -193,7 +193,9 @@ final class GiftOffers
         'w2_c' => ['Yes, add my gift', 'نعم، أضيفي هديتي'],
         'w2_l' => ['Not today', 'ليس اليوم'],
         'w3_h' => ['Psst… a secret gift, just for you', 'سرّ صغير… هدية لكِ وحدكِ'],
-        'w3_p' => ['A full-size {p} is yours, free with this bag.', '{p} بالحجم الكامل لكِ، مجاناً مع هذه الحقيبة.'],
+        // The owner, 16 Nov: "keep these wordings: Grab a Bonus gift 🎁 'product_name' ( Qnty or
+        // Qntys x pairs ) is yours, free with this bag." {q} is the quantity with its unit below.
+        'w3_p' => ['Grab a Bonus gift 🎁 {p} ({q}) is yours, free with this bag.', 'احصلي على هدية إضافية 🎁 {p} ({q}) لكِ، مجاناً مع هذه الحقيبة.'],
         'w3_c' => ['Claim it now', 'احصلي عليها الآن'],
         'w3_l' => ['Maybe later', 'ربما لاحقاً'],
         'w4_h' => ["Don't leave your glow behind", 'لا تتركي إشراقتكِ خلفكِ'],
@@ -205,6 +207,14 @@ final class GiftOffers
         'w5_c' => ["Claim now, it's free", 'احصلي عليها الآن، مجاناً'],
         'w5_l' => ['Maybe later', 'ربما لاحقاً'],
         'pop_full' => ['full size', 'حجم كامل'],
+        // {q} in the popup's text: "1 x pair" / "2 x pairs" (the owner, 16 Nov).
+        // The popup's own chip after FREE, "-" = none (the owner, 16 Nov, circled "FULL SIZE" on
+        // the popup). The emails keep chip_full.
+        'pop_chip_full' => ['-', '-'],
+        // {n} the number, {u} the unit: "2 x pairs"; Arabic without the x, which flips beside a number.
+        'pop_qty' => ['{n} x {u}', '{n} {u}'],
+        'pop_unit_one' => ['pair', 'زوج'],
+        'pop_unit_many' => ['pairs', 'أزواج'],
         'pop_held' => ['Held for you', 'محجوزة لكِ'],
         'pop_held_for' => ['Your gift is held for', 'هديتكِ محجوزة لمدة'],
         'pop_minutes' => ['MINUTES', 'دقائق'],
@@ -395,6 +405,14 @@ final class GiftOffers
         }
 
         return $t;
+    }
+
+    /** The popup's {q}: "1 x pair" / "2 x pairs" in the language being drawn. */
+    public function qtyWords(int $qty): string
+    {
+        $qty = max(1, $qty);
+
+        return str_replace(['{n}', '{u}'], [(string) $qty, $this->text($qty === 1 ? 'pop_unit_one' : 'pop_unit_many')], $this->text('pop_qty'));
     }
 
     /* -------------------------------------------------------------- ranges */
@@ -1327,11 +1345,12 @@ final class GiftOffers
             'wait' => $this->text('wait'),
             'h' => $this->text('w' . $w . '_h'),
             // {p} is the product's name (printed bold by the view), {m} the minutes.
-            'p' => str_replace('{m}', (string) $minutes, $this->text('w' . $w . '_p')),
+            // {q} the quantity: "1 x pair", "2 x pairs" (units under Popup texts).
+            'p' => str_replace(['{m}', '{q}'], [(string) $minutes, $this->qtyWords(self::qtyOf($offer['qty'] ?? 1))], $this->text('w' . $w . '_p')),
             'c' => $this->text('w' . $w . '_c'),
             'l' => $this->text('w' . $w . '_l'),
             't' => array_map(fn (string $k) => $this->text($k), [
-                'free' => 'chip_free', 'full' => 'pop_full', 'chip_full' => 'chip_full', 'held' => 'pop_held', 'held_for' => 'pop_held_for',
+                'free' => 'chip_free', 'full' => 'pop_full', 'chip_full' => 'pop_chip_full', 'held' => 'pop_held', 'held_for' => 'pop_held_for',
                 'clock' => 'clock_label', 'minutes' => 'pop_minutes', 'seconds' => 'pop_seconds', 'gold' => 'pop_gold',
                 'box' => 'pop_box', 'tap' => 'pop_tap', 'added' => 'pop_added', 'opening' => 'pop_opening', 'close' => 'pop_close',
             ]) + ['hold_chip' => str_replace('{m}', (string) $minutes, $this->text('pop_hold_chip'))],
