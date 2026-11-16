@@ -97,23 +97,29 @@ export function mountCaptionPanel(el, ctx) {
 
   function lineOfWord(i) { return cap().lines.find((L) => L.wordIdx[0] <= i && i <= L.wordIdx[1]); }
 
+  // The bar keeps its place and size while words exist, selected or not: if it appeared above the transcript on the
+  // first click of a double-click, the words would move down and the second click would land on the bar instead.
   function renderSelBar() {
-    const c = cap(), w = c.words[sel];
-    selBar.hidden = !w;
-    if (!w) return;
-    const L = lineOfWord(sel);
+    const c = cap(), w0 = c.words[sel];
+    selBar.hidden = !c.words.length;
+    if (!c.words.length) return;
+    const w = w0 || { w: '', t0: 0, t1: 0 };
+    const L = w0 ? lineOfWord(sel) : null;
+    selBar.classList.toggle('idle', !w0);
     selBar.replaceChildren(
-      h('span', { class: 'rs-cap-selword', dir: 'auto' }, `“${w.w}”`), h('span', { class: 'rs-cap-muted' }, ` ${w.t0.toFixed(2)}–${w.t1.toFixed(2)} s`),
+      h('div', { class: 'rs-cap-selhead' }, w0
+        ? [h('span', { class: 'rs-cap-selword', dir: 'auto' }, `“${w.w}”`), h('span', { class: 'rs-cap-muted' }, ` ${w.t0.toFixed(2)}–${w.t1.toFixed(2)} s`)]
+        : h('span', { class: 'rs-cap-muted' }, 'Click a word to jump there · double-click to correct it')),
       h('div', { class: 'rs-cap-row' },
-        h('button', { class: 'rs-cap-btn', title: 'Word 0.05 s earlier', onclick: () => apply(C.nudgeWord(sel, -0.05)) }, '−0.05'),
-        h('button', { class: 'rs-cap-btn', title: 'Word 0.05 s later', onclick: () => apply(C.nudgeWord(sel, 0.05)) }, '+0.05'),
+        h('button', { class: 'rs-cap-btn', title: 'Word 0.05 s earlier', disabled: !w0, onclick: () => apply(C.nudgeWord(sel, -0.05)) }, '−0.05'),
+        h('button', { class: 'rs-cap-btn', title: 'Word 0.05 s later', disabled: !w0, onclick: () => apply(C.nudgeWord(sel, 0.05)) }, '+0.05'),
         h('button', { class: 'rs-cap-btn', title: 'Start a new line at this word', disabled: !L || L.wordIdx[0] === sel, onclick: () => apply(C.splitLine(sel)) }, 'Split here'),
         h('button', { class: 'rs-cap-btn', title: 'Join this line with the next', disabled: !L || L === c.lines[c.lines.length - 1], onclick: () => apply(C.mergeWithNext(L.id)) }, 'Merge next'),
-        h('button', { class: 'rs-cap-btn', title: 'Add a word after this one', onclick: () => addAfter(sel) }, '+ Word'),
-        h('button', { class: 'rs-cap-btn danger', title: 'Delete word', onclick: () => { apply(C.deleteWords(sel)); sel = Math.min(sel, cap().words.length - 1); } }, 'Delete')),
-      L ? h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Line'),
-        h('button', { class: 'rs-cap-btn', onclick: () => apply(C.nudgeLine(L.id, -0.1)) }, '−0.1 s'),
-        h('button', { class: 'rs-cap-btn', onclick: () => apply(C.nudgeLine(L.id, 0.1)) }, '+0.1 s')) : null);
+        h('button', { class: 'rs-cap-btn', title: 'Add a word after this one', disabled: !w0, onclick: () => addAfter(sel) }, '+ Word'),
+        h('button', { class: 'rs-cap-btn danger', title: 'Delete word', disabled: !w0, onclick: () => { apply(C.deleteWords(sel)); sel = Math.min(sel, cap().words.length - 1); } }, 'Delete')),
+      h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Line'),
+        h('button', { class: 'rs-cap-btn', disabled: !L, onclick: () => apply(C.nudgeLine(L.id, -0.1)) }, '−0.1 s'),
+        h('button', { class: 'rs-cap-btn', disabled: !L, onclick: () => apply(C.nudgeLine(L.id, 0.1)) }, '+0.1 s')));
   }
 
   function addAfter(i) {

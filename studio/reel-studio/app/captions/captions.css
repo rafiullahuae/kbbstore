@@ -33,6 +33,8 @@
 .rs-cap-sel { background: var(--c-bg2); border: 1px solid var(--c-line); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
 .rs-cap-sel[hidden] { display: none; }
 .rs-cap-selword { font-weight: 700; }
+.rs-cap-selhead { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 20px; height: 20px; }
+.rs-cap-btn:disabled { opacity: .45; cursor: default; }
 .rs-cap-list { display: flex; flex-direction: column; gap: 2px; }
 .rs-cap-empty { color: var(--c-mute); padding: 16px 4px; }
 .rs-cap-line { display: grid; grid-template-columns: 52px 1fr; gap: 2px 8px; padding: 6px 4px; border-radius: 6px; }

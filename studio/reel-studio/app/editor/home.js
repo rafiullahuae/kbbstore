@@ -53,7 +53,7 @@ export async function renderHome(root, { onOpen, onDropFiles }) {
         h('section.card.drop-card', drop),
         h('section.card.recent-card', h('h2', 'Recent'), recent)))));
 
-  loadRecipes().then((list) => {
+  loadRecipes(w).then((list) => {
     const groups = {};
     for (const r of list) (groups[r.group || 'Recipes'] ||= []).push(r);
     for (const [g, rs] of Object.entries(groups)) recipeSel.appendChild(h('optgroup', { label: g }, rs.map((r) => h('option', { value: r.id }, r.name))));

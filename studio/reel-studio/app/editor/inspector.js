@@ -111,7 +111,7 @@ export class Inspector {
   // ── one item ──
   itemPanel({ item, track }) {
     const ed = this.ed, m = item.media ? findMedia(ed.project, item.media) : null;
-    const title = { clip: m?.kind === 'image' ? 'Picture' : 'Video clip', audio: track.kind === 'sfx' ? 'Sound effect' : 'Music', text: 'Text', shape: 'Shape', sticker: 'Sticker', caption: 'Captions' }[item.type] || item.type;
+    const title = { clip: m?.kind === 'image' ? 'Picture' : 'Video clip', audio: track.kind === 'sfx' ? 'Sound effect' : 'Music', text: 'Text', shape: 'Shape', sticker: 'Sticker', caption: 'Captions', 'auto.transition': 'Transition', 'auto.pricetag': 'Price tag', 'auto.logo': 'Logo sting', 'auto.endcard': 'End card' }[item.type] || item.type;
     this.el.append(h('div.insp-head', h('b', title), h('small', (m?.name || item.name || '') + ' · ' + fmtDur(itemDur(item)) + (track.locked ? ' · 🔒 locked track' : ''))));
     if (item.type === 'text') this.textPanel(item);
     if (item.type === 'shape') this.shapePanel(item);
