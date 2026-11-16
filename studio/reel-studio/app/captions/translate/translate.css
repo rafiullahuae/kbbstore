@@ -1,0 +1,31 @@
+/* Translate tab (captions panel) — scoped under .rs-tr, uses the caption panel's tokens (.rs-cap). */
+.rs-tr { display: flex; flex-direction: column; gap: 8px; }
+.rs-tr-head { display: flex; flex-direction: column; gap: 6px; background: var(--c-bg2); border: 1px solid var(--c-line); border-radius: 8px; padding: 8px; }
+.rs-tr-head select[data-k="tgt"], .rs-tr-head select[data-k="mode"] { flex: 1 1 8em; }
+.rs-tr-head .rs-cap-btn.primary { flex: 0 0 auto; }
+.rs-tr-status { font-size: 12px; }
+.rs-tr-glossbox summary { cursor: pointer; color: var(--c-mute); }
+.rs-tr-gloss { width: 100%; margin: 6px 0; font: 12px/1.5 ui-monospace, Menlo, monospace; resize: vertical; }
+.rs-tr-langs .rs-cap-chip { font-weight: 600; }
+.rs-tr-revhead { display: flex; flex-direction: column; gap: 4px; }
+.rs-tr-review { display: flex; flex-direction: column; gap: 2px; }
+.rs-tr-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; padding: 6px 4px; border-radius: 6px; border-left: 3px solid transparent; }
+.rs-tr-row:hover { background: var(--c-bg2); }
+.rs-tr-row.flag { border-left-color: #ffb020; background: rgba(255, 176, 32, .08); }
+.rs-tr-row.ok { border-left-color: #3ccf8e; }
+.rs-tr-row.busy { opacity: .5; }
+.rs-tr-src { color: var(--c-mute); font-size: 13px; line-height: 1.55; }
+.rs-tr-out { font-size: 14px; line-height: 1.6; border-radius: 4px; padding: 0 3px; outline: none; min-height: 1.6em; }
+.rs-tr-out:hover { background: rgba(255,255,255,.05); }
+.rs-tr-out:focus { background: #fff; color: #111; box-shadow: 0 0 0 2px var(--c-acc); }
+.rs-tr-out[lang="ar"], .rs-tr-src[lang="ar"], .rs-tr-out[lang="fa"], .rs-tr-src[lang="fa"] { font-family: "Noto Naskh Arabic", "Cairo", system-ui, sans-serif; font-size: 15px; }
+.rs-tr-out[lang="ur"], .rs-tr-src[lang="ur"] { font-family: "Noto Nastaliq Urdu", "Noto Naskh Arabic", system-ui, sans-serif; font-size: 14px; line-height: 2.1; }
+.rs-tr-out[lang="hi"], .rs-tr-src[lang="hi"] { font-family: "Noto Sans Devanagari", system-ui, sans-serif; }
+.rs-tr-acts { display: flex; gap: 2px; align-items: center; flex-wrap: nowrap; }
+.rs-tr-acts .rs-cap-btn { padding: 2px 6px; }
+.rs-tr-acts .rs-cap-btn.on { color: #3ccf8e; border-color: #3ccf8e; }
+.rs-tr-flag { display: inline-block; min-width: 18px; text-align: center; font-size: 11px; line-height: 18px; border-radius: 9px; background: rgba(255, 176, 32, .25); color: #ffcf70; cursor: help; }
+.rs-tr-bt { font: 10px/18px ui-monospace, Menlo, monospace; color: var(--c-mute); padding: 0 3px; cursor: help; }
+.rs-tr-exports { border-top: 1px solid var(--c-line); padding-top: 8px; }
+/* the transcript tab marks lines the translation wants checked */
+.rs-cap-line.tr-flag { box-shadow: inset 3px 0 0 #ffb020; }

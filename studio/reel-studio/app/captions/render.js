@@ -44,7 +44,10 @@ function rr(ctx, x, y, w, h, r) {
   ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 }
 
-function fontFor(st, text) {
+const URDU_RE = /[ٹڈڑںےۓ]/;
+function fontFor(st, text, lang) {
+  // translation lane: Urdu reads in Nastaliq (Arabic-script fonts set it as Naskh, which Urdu readers find foreign)
+  if (isRtlText(text) && (lang === 'ur' || (!lang && URDU_RE.test(text)))) return st.fontUr || 'Noto Nastaliq Urdu';
   if (isRtlText(text)) return st.fontAr || 'Cairo';
   if (DEVA_RE.test(text)) return 'Noto Sans Devanagari';
   return st.font;
@@ -85,7 +88,7 @@ function layoutCue(ctx, cap, L, st, k, maxW, mode) {
   if (!words.length) return null;
   const all = words.map((w) => w.text).join(' ');
   const rtl = isRtlText(all);
-  const family = fontFor(st, all);
+  const family = fontFor(st, all, cap.lang);
   let px = st.size * k;
   const spacing = rtl ? 0 : st.tracking * k;
   const setSpacing = () => { if ('letterSpacing' in ctx) ctx.letterSpacing = spacing ? `${spacing}px` : '0px'; };
@@ -125,7 +128,7 @@ function layoutCue(ctx, cap, L, st, k, maxW, mode) {
     }
     return { words: ws, w };
   });
-  const rowH = px * st.lineHeight * maxScale;
+  const rowH = px * st.lineHeight * maxScale * (family === 'Noto Nastaliq Urdu' ? 1.45 : 1);   // Nastaliq's tall ascenders / deep descenders
   return { rows, px, rowH, height: rows.length * rowH, rtl, family, spacing, widest };
 }
 
@@ -335,8 +338,15 @@ function paintText(ctx, st, text, x, color, k, active, px) {
  * Where the caption blocks go at time t: [{ cap, L, st, lay, box:{x,y,w,h}, align, bx, bw, top }]. Shared by the
  * renderer and the on-canvas drag (hit test), so what you grab is exactly what is drawn.
  */
-export function captionBlocks(ctx, project, t, item) {
+/** The captions an item draws: the main track, or a translated second track (item.capTrack = 'ar', translation lane). */
+export function captionsFor(project, item) {
   const cap = project && project.captions;
+  if (item && item.capTrack) return (cap && cap.tracks && cap.tracks[item.capTrack]) || null;
+  return cap;
+}
+
+export function captionBlocks(ctx, project, t, item) {
+  const cap = captionsFor(project, item);
   if (!cap || !cap.words || !cap.words.length || !cap.lines) return [];
   const st0 = resolveStyle(item && item.style ? item.style : cap.style);
   const mode = cap.soundTags || DEFAULT_TAG_MODE;
@@ -394,7 +404,7 @@ export function captionBlocks(ctx, project, t, item) {
  * item.style (optional) overrides captions.style for that item.
  */
 export function drawCaptions(ctx, item, t, project, env) {
-  const cap = project && project.captions;
+  const cap = captionsFor(project, item);
   if (!cap || !cap.words || !cap.words.length || !cap.lines) return;
   ctx.save();
   if (env && env.box) ctx.translate(-env.box.x, -env.box.y);

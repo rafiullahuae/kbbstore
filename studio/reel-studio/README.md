@@ -75,6 +75,35 @@ One press each, and **⌘Z** takes any of them back in one step. Pressing one ag
 * **🛡️ Claim safety** — flags "guaranteed visa", "100 % approval", "cures acne", "no side effects", whitening … and
   offers safer wording (a guide, not legal advice).
 
+### Translate captions (🌐 Translate, in the 💬 Captions tab)
+
+One click turns the captions into another language, on your Mac, offline: **English ⇄ Arabic, Urdu, Hindi**, and
+also French, German, Spanish, Italian, Portuguese, Russian, Turkish, Chinese, Tagalog, Bengali, Malayalam, Tamil and
+Persian (any of them to any other). The captions' own language is picked up automatically (**From: Auto**).
+
+1. **💬 Captions → 🌐 Translate**, pick the language (**To**) and how it goes on the video:
+   * **Replace captions** — the video shows the translation instead of the original;
+   * **Bilingual (both)** — original and translation together (a bilingual style is chosen for you);
+   * **Add as a second track** — the translation on its own caption track at the top, the original stays below.
+2. Press **🌐 Translate**. The first time for a language the studio asks once to download its translation model
+   (**⬇ Get Arabic** etc. does the same ahead of time: about 0.6 GB for the shared model plus 0.1–0.25 GB per language, saved in `models/`).
+3. The review list shows every sentence **side by side: original | translation**. Lines worth a second look are
+   marked in orange (a name or number had to be put back, the back-translation reads differently, it repeats itself,
+   it came out much shorter or longer). Click a translation to **edit** it (Enter keeps it), **↻** translates that line
+   again, **✓** approves it, **✓ Approve all** clears the marks. Edits go straight into the captions.
+4. **⌘Z** undoes the whole translation in one step; **↺ Restore original** puts the original captions back at any time
+   (the translations stay listed and can be shown again: **Replace / Bilingual / 2nd track**).
+5. **Export** (bottom of the list): TXT, SRT or VTT of the original or of any translated language, into
+   `workspaces/<company>/exports/` (file names end in `-ar`, `-ur`, `-en` …).
+
+Accuracy helpers, always on: brand and product names (your company's **Glossary & do-not-translate** list, seeded with
+the KBB brands and Planet Careers' programme names; "Schengen" gets its standard spelling in each language), numbers,
+prices, percentages, dates, codes, links and emoji stay **exactly** as written; whole sentences are translated (not
+caption lines), then cut back into the original lines so the timing stays natural and word-by-word highlights still
+move word by word; Arabic and Urdu read right to left, Urdu in Nastaliq (Noto Nastaliq Urdu), Hindi in Devanagari.
+**✨ Best quality (Claude)** will use your Claude key once *Connect Claude* arrives (with Brief → Designs); until then it is
+switched off and nothing goes online.
+
 ## 5. Where your things are
 
 | Folder inside KBB Studio | What is in it |
@@ -231,4 +260,36 @@ Space play/pause · J K L back/stop/forward · S split · Delete remove · Shift
   for other modules; tasks `test`, `brief`, `translate`). The engine side is `engine/settings.go`: the key in
   `settings/claude.json` (0600), calls only to `https://api.anthropic.com/v1/messages` after the per-session grant,
   `anthropic-version: 2026-10-21`, structured JSON output, refusal fallback on Sonnet/Opus 5.5.
+* `app/captions/translate/` — caption translation (Translate tab). `pipeline.js` (sentences from caption words →
+  plain translation → masked retry for lost names/numbers (`glossary.js`: glossary, keep-exactly spans, `{n}` placeholders)
+  → re-split into the ORIGINAL lines by length with no dangling prepositions/postpositions → word times spread inside each
+  line → quality flags: back-translation chrF per direction, names, numbers, codes, length, loops, script), `service.js`
+  (ROUTES per pair, "best of two" for EN→AR, install through the engine, one-click flow), `commands.js` (one undoable
+  command each; `captions.tr` keeps the original), `panel.js` (side-by-side review, exports per language), `worker.js` +
+  `client.js` (transformers.js, models only from `models/`), `metrics.js` (chrF / BLEU, equal to sacreBLEU to 0.001),
+  `testset.js` (60 ad sentences, EN/AR/UR/HI references), `claude.js` (Best quality → `app/settings/claude.js`).
+  Render hooks in `captions/render.js`: Urdu in Noto Nastaliq Urdu, `item.capTrack` draws a translated second track.
+
+  **How the models were chosen** (`tools/t-eval.cjs`, headless Chromium with the studio's own runtime, WASM int8; chrF,
+  60 sentences — 30 KBB, 30 Planet Careers — through the studio pipeline; `tools/out/t/eval-table.md`):
+
+  | direction | M2M-100 418M (MIT) | OPUS-MT pair (CC-BY-4.0) | chosen |
+  |---|---|---|---|
+  | EN→AR | 54.5 (BLEU 28.7) | 55.6 `opus-mt-en-ar` | **both + pick by back-translation: 58.0** |
+  | AR→EN | **64.0** (BLEU 43.3) | 63.3 `opus-mt-ar-en` | M2M-100 |
+  | EN→UR | **48.2** (BLEU 22.4) | 33.9 `opus-mt-en-mul` | M2M-100 |
+  | UR→EN | **48.7** (BLEU 25.7) | 41.4 `opus-mt-mul-en` | M2M-100 |
+  | EN→HI | **51.5** (BLEU 29.2) | 41.5 `opus-mt-en-hi` | M2M-100 |
+  | HI→EN | **70.3** (BLEU 46.8) | 53.8 `opus-mt-hi-en` | M2M-100 |
+
+  Not chosen: **NLLB** (CC-BY-NC, excluded); **MADLAD-400 3B** int8 (Apache-2.0) cannot load in the browser — "failed to
+  allocate a buffer of size 1870804464" (the decoder alone is 1.87 GB, WASM is 4 GB; `tools/t-madlad-probe.cjs`);
+  **Qwen2.5-1.5B-Instruct** int8 (1.58 GB) crashes the WASM page while loading on this 15 GB test machine (WebGPU q4f16
+  on a Mac may run it, not measurable here); **Qwen2.5-0.5B** as a translator: chrF 12.7, ignores the instruction
+  (invents content, repeats itself), 51 s per sentence. "Best of two" was measured for every direction
+  (`tools/t-select.cjs`): it helps only EN→AR (58.0 vs 55.6), elsewhere M2M-100 alone is better. Masking names and
+  numbers up front cost fluency, so the pipeline translates plainly first and masks only sentences that lost something
+  (`{1}` placeholders survive OPUS-MT best, `tools/t-mask-probe.cjs`). OPUS-MT `ar-en`, `hi-en`, `en-hi`, `mul-en` ship as
+  fast independent back-translation checkers. Checks: `tools/t-check.cjs` (floors = measured score − ~3), models for it
+  `bash tools/t-fetch-models.sh`. OPUS-MT models © Helsinki-NLP / University of Helsinki, CC-BY-4.0.
 * The app name lives in `app/core/config.js` `APP_NAME` (and `appName` in `engine/main.go`, the launcher's file name).

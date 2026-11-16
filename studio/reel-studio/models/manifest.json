@@ -387,6 +387,258 @@
    "group": "Image AI",
    "licence": "CreativeML Open RAIL++-M (use restrictions apply)",
    "licenceUrl": "https://huggingface.co/spaces/CompVis/stable-diffusion-license"
+  },
+  {
+   "id": "mt-m2m100",
+   "repo": "Xenova/m2m100_418M",
+   "purpose": "Translation (all languages): captions between English, Arabic, Urdu, Hindi, French, German, Spanish, Italian, Portuguese, Russian, Turkish, Chinese, Tagalog, Bengali, Malayalam, Tamil, Persian, offline (M2M-100)",
+   "owner": "translate",
+   "required": false,
+   "size": 639976029,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 908,
+     "gitBlobSha1": "4f466cf3049e59ef8bb5de9b67f4275fa8f7257a"
+    },
+    {
+     "path": "generation_config.json",
+     "size": 233,
+     "gitBlobSha1": "434f8e78dc0d584e14d179bd47be7e329df86cb0"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 7988527,
+     "gitBlobSha1": "cd68f923c35fc0da05d4bb83125bdcbe6ff9211b"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 1813,
+     "gitBlobSha1": "b177ccaad20b2538951a05fcaf7093bd2b0a92b1"
+    },
+    {
+     "path": "onnx/encoder_model_quantized.onnx",
+     "size": 287856370,
+     "sha256": "13a94e354a9140764eb81102d77d3ec6952d796e6f113c651eeb3c3443da0386"
+    },
+    {
+     "path": "onnx/decoder_model_merged_quantized.onnx",
+     "size": 344128178,
+     "sha256": "007654bcabb6cea6fd3bde34ce933137b431330b3755781145d7b6906270b45a"
+    }
+   ],
+   "group": "Translation",
+   "licence": "MIT"
+  },
+  {
+   "id": "mt-ar-en",
+   "repo": "Xenova/opus-mt-ar-en",
+   "purpose": "Translation (Arabic to English): a small fast model for this direction, offline (OPUS-MT)",
+   "owner": "translate",
+   "required": false,
+   "size": 117621466,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 1376,
+     "gitBlobSha1": "82cd89d073952adcb4e56c229e4c1006e3fe432a"
+    },
+    {
+     "path": "generation_config.json",
+     "size": 293,
+     "gitBlobSha1": "7f73f68a58fae3741aadf300bd2d9db60cdd5704"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 6734647,
+     "gitBlobSha1": "3efa97e355ff9bf8abc2bdb4e948affba012389e"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 280,
+     "gitBlobSha1": "dd916cec62a3f5db9c621ef23c5f8a333651c121"
+    },
+    {
+     "path": "onnx/encoder_model_quantized.onnx",
+     "size": 51790238,
+     "sha256": "d9b0d612acff86cf87634b49bda566d1ef39b312837de549786ea18fecefc708"
+    },
+    {
+     "path": "onnx/decoder_model_merged_quantized.onnx",
+     "size": 59094632,
+     "sha256": "cdb25ae736afe9d48035b0ea311ab4b25f315810fab7f3c6f6cb0d8d87af35fa"
+    }
+   ],
+   "group": "Translation",
+   "licence": "CC-BY-4.0 (Helsinki-NLP OPUS-MT)"
+  },
+  {
+   "id": "mt-en-ar",
+   "repo": "Xenova/opus-mt-en-ar",
+   "purpose": "Translation (English to Arabic): a small fast model for this direction, offline (OPUS-MT)",
+   "owner": "translate",
+   "required": false,
+   "size": 117602786,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 1389,
+     "gitBlobSha1": "c4756a24ae0f5ceae268ac6c4d43ee8d4ffdd259"
+    },
+    {
+     "path": "generation_config.json",
+     "size": 293,
+     "gitBlobSha1": "9c739b102ea65f277241288c29dd73f659df93d2"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 6748848,
+     "gitBlobSha1": "074a6b5ead40759fdbbe61ce5ccaf194e073e35d"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 282,
+     "gitBlobSha1": "25f99fe795a1e3cea5b53e9b2d491a719a1d90c1"
+    },
+    {
+     "path": "onnx/encoder_model_quantized.onnx",
+     "size": 51773854,
+     "sha256": "53c354d87ced44b39085fe8a46a25f09ea4578d442dbce9663f3977228f8a04e"
+    },
+    {
+     "path": "onnx/decoder_model_merged_quantized.onnx",
+     "size": 59078120,
+     "sha256": "c0e553b0c26611780c70417c9b4c1ca7169e9cdb18ba9e649197efb017af9f02"
+    }
+   ],
+   "group": "Translation",
+   "licence": "CC-BY-4.0 (Helsinki-NLP OPUS-MT)"
+  },
+  {
+   "id": "mt-hi-en",
+   "repo": "Xenova/opus-mt-hi-en",
+   "purpose": "Translation (Hindi to English): a small fast model for this direction, offline (OPUS-MT)",
+   "owner": "translate",
+   "required": false,
+   "size": 115710176,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 1376,
+     "gitBlobSha1": "030de626749926b22833429e167ab75d585a670b"
+    },
+    {
+     "path": "generation_config.json",
+     "size": 293,
+     "gitBlobSha1": "0b5f1b662e9774abf4d925e1631b74a75ef871ce"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 6578153,
+     "gitBlobSha1": "c976a04ca70770b5b79960a0e8a5baa7000b0b4e"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 280,
+     "gitBlobSha1": "e4c19baa0ceebb999279fe1966854ea7705478a1"
+    },
+    {
+     "path": "onnx/encoder_model_quantized.onnx",
+     "size": 50916254,
+     "sha256": "dc5a1b084a83019bbb9798809dea5f2d16cc30a9a257238ec93120b3c2892ebf"
+    },
+    {
+     "path": "onnx/decoder_model_merged_quantized.onnx",
+     "size": 58213820,
+     "sha256": "52655659006c8ce742cc761282d49b3be4e73bfbf080f1b6a546aa96170d5813"
+    }
+   ],
+   "group": "Translation",
+   "licence": "CC-BY-4.0 (Helsinki-NLP OPUS-MT)"
+  },
+  {
+   "id": "mt-en-hi",
+   "repo": "Xenova/opus-mt-en-hi",
+   "purpose": "Translation (English to Hindi): a small fast model for this direction, offline (OPUS-MT)",
+   "owner": "translate",
+   "required": false,
+   "size": 116657642,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 1389,
+     "gitBlobSha1": "47a20aef8837b30a1cf9e653bf4c0af0bea8f0d1"
+    },
+    {
+     "path": "generation_config.json",
+     "size": 293,
+     "gitBlobSha1": "b0df89396a01c5b74d3798f21414b1a7885e2794"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 6679560,
+     "gitBlobSha1": "c482b5926001aaa959c2ad5dc8839d4e9de055f1"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 282,
+     "gitBlobSha1": "53a70bf5735179062864d11ebc9551908ff080a3"
+    },
+    {
+     "path": "onnx/encoder_model_quantized.onnx",
+     "size": 51337630,
+     "sha256": "3045cd6eaf06db96cff853204d6f0ffeb0c5af238a4f5a87a19fcaa94f7493c4"
+    },
+    {
+     "path": "onnx/decoder_model_merged_quantized.onnx",
+     "size": 58638488,
+     "sha256": "8baba43a14b15ca4543d30ab36e7d34f2e516fb9af7e0b83b77a5e6a6f66d198"
+    }
+   ],
+   "group": "Translation",
+   "licence": "CC-BY-4.0 (Helsinki-NLP OPUS-MT)"
+  },
+  {
+   "id": "mt-mul-en",
+   "repo": "Xenova/opus-mt-mul-en",
+   "purpose": "Translation (Urdu and other languages to English): a small fast model for this direction, offline (OPUS-MT)",
+   "owner": "translate",
+   "required": false,
+   "size": 118351723,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 1390,
+     "gitBlobSha1": "8eb78d90e099333fa5871c9f1deb99b65a837524"
+    },
+    {
+     "path": "generation_config.json",
+     "size": 293,
+     "gitBlobSha1": "1539d3988a8fb964c3ebe374f272874301f02cf7"
+    },
+    {
+     "path": "tokenizer.json",
+     "size": 6089424,
+     "gitBlobSha1": "be3b3f13def8d6ebc899f71b55d86928062394f0"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 282,
+     "gitBlobSha1": "386703f191a7fde448dd8819f8b5400a89f02967"
+    },
+    {
+     "path": "onnx/encoder_model_quantized.onnx",
+     "size": 52475294,
+     "sha256": "5ce609a524375dbdd9c66b62b82b41abc667799022667ce424f20c245bd56925"
+    },
+    {
+     "path": "onnx/decoder_model_merged_quantized.onnx",
+     "size": 59785040,
+     "sha256": "6add167a0cd3f78aa298b8f927d2e8645e33cb17df11e92967f0c5b5703c8c4d"
+    }
+   ],
+   "group": "Translation",
+   "licence": "CC-BY-4.0 (Helsinki-NLP OPUS-MT)"
   }
  ]
 }

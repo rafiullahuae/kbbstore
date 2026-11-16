@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>KBB Studio · translation harness</title></head>
+<body style="font:14px system-ui;background:#111;color:#eee">
+<p>Translation harness (tools/t-eval.cjs, tools/t-check.cjs drive this page).</p>
+<script type="module">
+  const [client, engines, langs, metrics, testset, glossary, pipeline] = await Promise.all([
+    import('../client.js'), import('../engines.js'), import('../langs.js'), import('../metrics.js'), import('../testset.js'),
+    import('../glossary.js').catch(() => null), import('../pipeline.js').catch(() => null)]);
+  window.TR = { ...client, ...engines, ...langs, ...metrics, ...testset, glossary, pipeline, ready: true };
+</script>
+</body></html>

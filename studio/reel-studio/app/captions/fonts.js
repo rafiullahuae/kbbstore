@@ -14,6 +14,10 @@ export const FONT_FILES = {
   'Playfair Display': [['playfair-display-latin-wght-normal.woff2', LATIN, '400 900']],
   'Cairo': [['cairo-arabic-wght-normal.woff2', ARABIC, '200 1000'], ['cairo-latin-wght-normal.woff2', LATIN, '200 1000']],
   'Noto Naskh Arabic': [['noto-naskh-arabic-arabic-wght-normal.woff2', ARABIC, '400 700'], ['noto-naskh-arabic-latin-wght-normal.woff2', LATIN, '400 700']],
+  // translation lane: Urdu captions in Nastaliq (the script Urdu readers expect), and a clean Arabic sans
+  'Noto Nastaliq Urdu': [['noto-nastaliq-urdu-arabic-400-normal.woff2', ARABIC, '400'], ['noto-nastaliq-urdu-latin-400-normal.woff2', LATIN, '400'],
+                         ['noto-nastaliq-urdu-arabic-700-normal.woff2', ARABIC, '700'], ['noto-nastaliq-urdu-latin-700-normal.woff2', LATIN, '700']],
+  'Noto Sans Arabic': [['noto-sans-arabic-arabic-wght-normal.woff2', ARABIC, '100 900'], ['noto-sans-arabic-latin-wght-normal.woff2', LATIN, '100 900']],
   'Noto Sans Devanagari': [['noto-sans-devanagari-devanagari-wght-normal.woff2', DEVA, '100 900'], ['noto-sans-devanagari-latin-wght-normal.woff2', LATIN, '100 900']],
   'Tajawal': [['tajawal-arabic-400-normal.woff2', ARABIC, '400'], ['tajawal-latin-400-normal.woff2', LATIN, '400'],
               ['tajawal-arabic-700-normal.woff2', ARABIC, '700'], ['tajawal-latin-700-normal.woff2', LATIN, '700']],
@@ -25,7 +29,7 @@ export const FONT_FILES = {
   'Bangers': [['bangers-latin-400-normal.woff2', LATIN, '400']],
 };
 export const FONT_FAMILIES = Object.keys(FONT_FILES);
-export const ARABIC_FONTS = ['Cairo', 'Tajawal', 'Noto Naskh Arabic', 'Amiri'];
+export const ARABIC_FONTS = ['Cairo', 'Tajawal', 'Noto Naskh Arabic', 'Noto Sans Arabic', 'Amiri', 'Noto Nastaliq Urdu'];
 
 let registered = null;
 function register() {
