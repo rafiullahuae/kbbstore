@@ -1,0 +1,8 @@
+# KBB Studio — runtime data that never belongs in the repository
+engine/kbbstudio-linux-*
+models/*
+!models/.keep
+workspaces/*/projects/
+workspaces/*/exports/
+tools/out/
+dist/
