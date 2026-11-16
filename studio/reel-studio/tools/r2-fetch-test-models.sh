@@ -9,7 +9,7 @@ for r in onnx-community/whisper-base_timestamped onnx-community/whisper-small_ti
   for f in config.json generation_config.json preprocessor_config.json tokenizer.json tokenizer_config.json \
            onnx/encoder_model_quantized.onnx onnx/decoder_model_merged_quantized.onnx; do get $r $f; done
 done
-for r in Xenova/mms-tts-eng Xenova/mms-tts-ara; do
+for r in Xenova/mms-tts-eng Xenova/mms-tts-ara Xenova/mms-tts-hin; do
   for f in config.json tokenizer.json tokenizer_config.json onnx/model.onnx; do get $r $f; done
 done
 mkdir -p "$M/_r2-test"
