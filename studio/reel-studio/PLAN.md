@@ -323,3 +323,22 @@ figure families, photo search terms, AI prompt template, suggested countries) ·
 the per-URL gate, keys in `settings/` (Go tests) · `app/stock/` 📷 Photos tab (`tools/stock-check.cjs` against
 `tools/stock-mock.cjs`, `shots/stock/`) · six recipes in `app/auto/recipes/work-abroad.js`. Still to come: source 2 (the
 local image model -- the prompts are ready in occupations.json).
+
+## Round 3a — translation, animated themes, hover previews — started 16 Nov
+
+The owner: *"i need the capability to translate cross caption script ... english ... to urdu, arabic etc.
+with one click it should translate auto and apply in captions, same vice versa. i need super accuracy ...
+daily basis"*, *"animations to use in videos over the ad like if video is related to europe, the europe
+theme ... throughout ... super nice animations, themes etc. across each industry"*, and *"from the
+template, the preview should play upon mouse hover, so i can be sure before import to the project."*
+
+* **Translation lane** (`app/captions/translate/`): one-click caption translation EN↔AR/UR/HI and more,
+  replace / bilingual / second track; offline models chosen by measured accuracy on a real ad-sentence
+  test set (permissive licences only — no NLLB), glossary/do-not-translate per company, numbers and
+  prices preserved, sentence-level translation re-split to caption timing, per-line quality flags,
+  side-by-side review, per-language exports; "Best quality (Claude)" only through Connect Claude.
+* **Themes lane** (`app/themes/`): 30+ animated themes that run through the whole video (Europe and each
+  country pack, travel, study, work abroad, beauty, luxury, offers, seasonal, corporate, food, fitness,
+  real estate), face- and caption-safe, beat-reactive, brand-coloured, with matching intro/outro,
+  transitions, text and SFX; auto-suggested. Plus hover-to-play previews on every gallery (templates,
+  formats, themes, looks, transitions, music/SFX).
