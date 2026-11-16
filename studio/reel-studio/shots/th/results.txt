@@ -1,0 +1,596 @@
+PASS test reel: 2 clips (one cut), music with 17 beats, 6 caption lines, 9.0 s
+PASS right column has the ✨ Themes tab (⚙ Inspector · 💬 Captions · 🎨 Look · ✨ Themes · 🔊 Audio · 🔥 Viral · 🚀 Create · 📷 Photos)
+PASS 58 themes (≥ 30): Countries 33, Travel & study 4, Work abroad 4, Beauty 3, Luxury 1, Offers 2, Seasonal 7, Business 1, Food 1, Fitness 1, Real estate 1
+PASS German study-visa transcript → europe 13.5, country-de 13.5, study 9.5 (Europe/Germany first, Europe in the top 3)
+PASS KBB transcript → beauty-petals 16, beauty-lotus 5, beauty-glow 3 (petals/beauty first)
+PASS in the editor, the reel's own captions suggest country-de, europe, study
+PASS apply Europe = ONE undo step: +9 items (overlay, sting, outro, 1 transition, title, 4 sounds); undo → 5 items, redo → 14
+PASS applying a second theme replaces the first (1 overlay on the reel)
+PASS a theme places: theme.overlay, theme.sting, theme.outro, auto.transition, look.text, audio
+PASS intensity: overlay coverage subtle 1399451 < normal 2360993 < bold 3123351
+PASS colours → Brand kit: the theme draws in the company's primary #C6395F
+PASS 9:16: every theme applied (58 themes)
+PASS 1:1: every theme applied (58 themes)
+PASS 16:9: every theme applied (58 themes)
+PASS 522 frames rendered (3 per theme × 3 aspects) with no console error or render warning; median 1.38 ms / p95 4.79 ms per frame at 0.2×
+PASS face box + caption boxes stay clear in every theme, frame and aspect (max alpha inside 0/255)
+PASS contact sheets (3 frames per theme on the sample clip): themes-01.jpg, themes-02.jpg, themes-03.jpg, themes-04.jpg, themes-05.jpg, themes-06.jpg
+PASS beat pulses: 32 beats in 4 themes, peak frame within ±1 frame of the beat (max |offset| 0.92 frames, pulse contrast ×4.93–×5.58)
+PASS preview frame vs export frame (Germany theme + sting + title + transition): 0.5 s 1.38/255, 1.5 s 2.77/255, 2.6 s 2.77/255 (< 6) at 270×480; the same reel without the theme: 2.54, 2.5, 2.6
+PASS the themed title is placed clear of the face and the captions for its whole duration (top 0.66·H, overlap 0 px²)
+PASS 1080×1920 export cost: 190.2 ms/frame without a theme; a theme adds europe +47.4, country-gb +63.7, new-year +57.3, beauty-petals +62 ms/frame (budget: < 60 % of a plain frame; measured on a software GPU shared with other jobs — a Mac's GPU is far faster)
+PASS per-element controls: 7 elements (on/off, density, speed, colour); hiding “flag” is one undoable step and ⌘Z brings it back
+PASS the gallery shows all 58 themes, suggestions on top (country-de, europe, study)
+PASS hover Themes gallery: 58 tiles; started in 61 ms, 62 ms, 62 ms, 62 ms, 61 ms (≤ 300 ms), one at a time, stops on leave, the tile animates
+PASS hover Templates (recipes): 20 tiles; started in 66 ms, 61 ms, 66 ms (≤ 300 ms), one at a time, stops on leave
+PASS hover Music: 27 tiles; started in 172 ms, 102 ms (≤ 300 ms), one at a time, stops on leave
+PASS hover SFX: 28 tiles; started in 88 ms, 94 ms (≤ 300 ms), one at a time, stops on leave
+PASS hover Colour looks: 19 tiles; started in 98 ms, 61 ms, 63 ms (≤ 300 ms), one at a time, stops on leave
+PASS hover Transitions: 10 tiles; started in 62 ms, 61 ms, 61 ms (≤ 300 ms), one at a time, stops on leave
+PASS hover Create → formats: 1 tiles; started in 67 ms (≤ 300 ms), one at a time, stops on leave
+PASS a hovered theme tile animates (two grabs 400 ms apart differ)
+PASS sweeping the mouse across 24 tiles: 0 requests, 1 previews started (one at a time, no storm)
+PASS music hover plays an audio preview (audio:library/music/velvet-hour.m4a); sound is off until 🔊 is pressed
+PASS keyboard: focusing a tile plays it (theme:country-ca), blur stops it
+PASS hover preview CPU: 1.28 ms of script per frame on average (worst 94.22 ms: a GPU look's first frame), 28.3 frames/s delivered on a hovered theme tile (the page itself ran at 29 frames/s while hovering, 61 without); 635 frames in all (SwiftShader, one preview at a time)
+PASS no console errors (0)
+PASS no request left 127.0.0.1 (0)
+
+{
+ "themes": {
+  "count": 58,
+  "groups": {
+   "Countries": 33,
+   "Travel & study": 4,
+   "Work abroad": 4,
+   "Beauty": 3,
+   "Luxury": 1,
+   "Offers": 2,
+   "Seasonal": 7,
+   "Business": 1,
+   "Food": 1,
+   "Fitness": 1,
+   "Real estate": 1
+  }
+ },
+ "suggest": {
+  "de": [
+   {
+    "id": "europe",
+    "name": "Europe",
+    "score": 13.5,
+    "why": [
+     "1 matching word in what is said",
+     "fits the company’s industry",
+     "7 mentions of European countries or cities"
+    ]
+   },
+   {
+    "id": "country-de",
+    "name": "Germany",
+    "score": 13.5,
+    "why": [
+     "7 matching words in what is said",
+     "fits the company’s industry"
+    ]
+   },
+   {
+    "id": "study",
+    "name": "Study",
+    "score": 9.5,
+    "why": [
+     "4 matching words in what is said",
+     "fits the company’s industry"
+    ]
+   }
+  ],
+  "kbb": [
+   {
+    "id": "beauty-petals",
+    "name": "Rose petals",
+    "score": 16,
+    "why": [
+     "7 matching words in what is said",
+     "fits the company’s industry",
+     "a K-Beauty Bliss look"
+    ]
+   },
+   {
+    "id": "beauty-lotus",
+    "name": "Lotus bloom (KBB)",
+    "score": 5,
+    "why": [
+     "1 matching word in what is said",
+     "fits the company’s industry",
+     "a K-Beauty Bliss look"
+    ]
+   },
+   {
+    "id": "beauty-glow",
+    "name": "Glossy glow",
+    "score": 3,
+    "why": [
+     "fits the company’s industry",
+     "a K-Beauty Bliss look"
+    ]
+   }
+  ],
+  "live": [
+   {
+    "id": "country-de",
+    "name": "Germany",
+    "score": 22,
+    "why": [
+     "4 matching words in what is said",
+     "the reel is about Germany"
+    ]
+   },
+   {
+    "id": "europe",
+    "name": "Europe",
+    "score": 14,
+    "why": [
+     "that country is in Europe",
+     "4 mentions of European countries or cities"
+    ]
+   },
+   {
+    "id": "study",
+    "name": "Study",
+    "score": 8,
+    "why": [
+     "4 matching words in what is said"
+    ]
+   }
+  ]
+ },
+ "apply": {
+  "r": {
+   "theme": "europe",
+   "overlay": "imwjotp4i0osfbo",
+   "sting": "imwjotp4i0pr07u",
+   "outro": "imwjotp4i0q1nuz",
+   "transitions": 1,
+   "title": "imwjotp4i0s2jbn",
+   "sfx": 4,
+   "beats": 17,
+   "faces": 1,
+   "duration": 9.000000000000005
+  },
+  "n0": 5,
+  "n1": 14,
+  "n2": 5,
+  "n3": 14,
+  "n4": 14,
+  "steps": 1,
+  "types": [
+   "theme.overlay",
+   "theme.sting",
+   "theme.outro",
+   "auto.transition",
+   "look.text",
+   "audio",
+   "audio",
+   "audio",
+   "audio"
+  ]
+ },
+ "knobs": {
+  "subtle": 1399451,
+  "normal": 2360993,
+  "bold": 3123351,
+  "brand": "#C6395F",
+  "ws": "#C6395F"
+ },
+ "render": {
+  "renders": 522,
+  "medianMs": 1.38,
+  "p95Ms": 4.79,
+  "scale": 0.2
+ },
+ "beats": [
+  {
+   "id": "europe",
+   "beat": 0.536,
+   "beatFrame": 16.08,
+   "peakFrame": 17,
+   "off": 0.92,
+   "contrast": 4.93
+  },
+  {
+   "id": "europe",
+   "beat": 1.071,
+   "beatFrame": 32.13,
+   "peakFrame": 33,
+   "off": 0.87,
+   "contrast": 4.99
+  },
+  {
+   "id": "europe",
+   "beat": 1.607,
+   "beatFrame": 48.21,
+   "peakFrame": 49,
+   "off": 0.79,
+   "contrast": 5.09
+  },
+  {
+   "id": "europe",
+   "beat": 2.143,
+   "beatFrame": 64.29,
+   "peakFrame": 65,
+   "off": 0.71,
+   "contrast": 5.19
+  },
+  {
+   "id": "europe",
+   "beat": 2.679,
+   "beatFrame": 80.37,
+   "peakFrame": 81,
+   "off": 0.63,
+   "contrast": 5.28
+  },
+  {
+   "id": "europe",
+   "beat": 3.214,
+   "beatFrame": 96.42,
+   "peakFrame": 97,
+   "off": 0.58,
+   "contrast": 5.35
+  },
+  {
+   "id": "europe",
+   "beat": 3.75,
+   "beatFrame": 112.5,
+   "peakFrame": 113,
+   "off": 0.5,
+   "contrast": 5.47
+  },
+  {
+   "id": "europe",
+   "beat": 4.286,
+   "beatFrame": 128.58,
+   "peakFrame": 129,
+   "off": 0.42,
+   "contrast": 5.58
+  },
+  {
+   "id": "beauty-petals",
+   "beat": 0.536,
+   "beatFrame": 16.08,
+   "peakFrame": 17,
+   "off": 0.92,
+   "contrast": 4.93
+  },
+  {
+   "id": "beauty-petals",
+   "beat": 1.071,
+   "beatFrame": 32.13,
+   "peakFrame": 33,
+   "off": 0.87,
+   "contrast": 4.99
+  },
+  {
+   "id": "beauty-petals",
+   "beat": 1.607,
+   "beatFrame": 48.21,
+   "peakFrame": 49,
+   "off": 0.79,
+   "contrast": 5.09
+  },
+  {
+   "id": "beauty-petals",
+   "beat": 2.143,
+   "beatFrame": 64.29,
+   "peakFrame": 65,
+   "off": 0.71,
+   "contrast": 5.19
+  },
+  {
+   "id": "beauty-petals",
+   "beat": 2.679,
+   "beatFrame": 80.37,
+   "peakFrame": 81,
+   "off": 0.63,
+   "contrast": 5.28
+  },
+  {
+   "id": "beauty-petals",
+   "beat": 3.214,
+   "beatFrame": 96.42,
+   "peakFrame": 97,
+   "off": 0.58,
+   "contrast": 5.35
+  },
+  {
+   "id": "beauty-petals",
+   "beat": 3.75,
+   "beatFrame": 112.5,
+   "peakFrame": 113,
+   "off": 0.5,
+   "contrast": 5.47
+  },
+  {
+   "id": "beauty-petals",
+   "beat": 4.286,
+   "beatFrame": 128.58,
+   "peakFrame": 129,
+   "off": 0.42,
+   "contrast": 5.58
+  },
+  {
+   "id": "offers",
+   "beat": 0.536,
+   "beatFrame": 16.08,
+   "peakFrame": 17,
+   "off": 0.92,
+   "contrast": 4.93
+  },
+  {
+   "id": "offers",
+   "beat": 1.071,
+   "beatFrame": 32.13,
+   "peakFrame": 33,
+   "off": 0.87,
+   "contrast": 4.99
+  },
+  {
+   "id": "offers",
+   "beat": 1.607,
+   "beatFrame": 48.21,
+   "peakFrame": 49,
+   "off": 0.79,
+   "contrast": 5.09
+  },
+  {
+   "id": "offers",
+   "beat": 2.143,
+   "beatFrame": 64.29,
+   "peakFrame": 65,
+   "off": 0.71,
+   "contrast": 5.19
+  },
+  {
+   "id": "offers",
+   "beat": 2.679,
+   "beatFrame": 80.37,
+   "peakFrame": 81,
+   "off": 0.63,
+   "contrast": 5.28
+  },
+  {
+   "id": "offers",
+   "beat": 3.214,
+   "beatFrame": 96.42,
+   "peakFrame": 97,
+   "off": 0.58,
+   "contrast": 5.32
+  },
+  {
+   "id": "offers",
+   "beat": 3.75,
+   "beatFrame": 112.5,
+   "peakFrame": 113,
+   "off": 0.5,
+   "contrast": 5.47
+  },
+  {
+   "id": "offers",
+   "beat": 4.286,
+   "beatFrame": 128.58,
+   "peakFrame": 129,
+   "off": 0.42,
+   "contrast": 5.58
+  },
+  {
+   "id": "fitness",
+   "beat": 0.536,
+   "beatFrame": 16.08,
+   "peakFrame": 17,
+   "off": 0.92,
+   "contrast": 4.96
+  },
+  {
+   "id": "fitness",
+   "beat": 1.071,
+   "beatFrame": 32.13,
+   "peakFrame": 33,
+   "off": 0.87,
+   "contrast": 4.99
+  },
+  {
+   "id": "fitness",
+   "beat": 1.607,
+   "beatFrame": 48.21,
+   "peakFrame": 49,
+   "off": 0.79,
+   "contrast": 4.99
+  },
+  {
+   "id": "fitness",
+   "beat": 2.143,
+   "beatFrame": 64.29,
+   "peakFrame": 65,
+   "off": 0.71,
+   "contrast": 5.19
+  },
+  {
+   "id": "fitness",
+   "beat": 2.679,
+   "beatFrame": 80.37,
+   "peakFrame": 81,
+   "off": 0.63,
+   "contrast": 5.28
+  },
+  {
+   "id": "fitness",
+   "beat": 3.214,
+   "beatFrame": 96.42,
+   "peakFrame": 97,
+   "off": 0.58,
+   "contrast": 5.34
+  },
+  {
+   "id": "fitness",
+   "beat": 3.75,
+   "beatFrame": 112.5,
+   "peakFrame": 113,
+   "off": 0.5,
+   "contrast": 5.47
+  },
+  {
+   "id": "fitness",
+   "beat": 4.286,
+   "beatFrame": 128.58,
+   "peakFrame": 129,
+   "off": 0.42,
+   "contrast": 5.53
+  }
+ ],
+ "previewVsExport": {
+  "note": "H.264 + Opus (this browser has no AAC encoder) · 540×960 · 30 fps · 120 frames in 9.7 s",
+  "frames": [
+   {
+    "t": 0.5,
+    "w": 270,
+    "h": 480,
+    "diff": 1.38
+   },
+   {
+    "t": 1.5,
+    "w": 270,
+    "h": 480,
+    "diff": 2.77
+   },
+   {
+    "t": 2.6,
+    "w": 270,
+    "h": 480,
+    "diff": 2.77
+   }
+  ],
+  "withoutTheme": [
+   {
+    "t": 0.5,
+    "diff": 2.54
+   },
+   {
+    "t": 1.5,
+    "diff": 2.5
+   },
+   {
+    "t": 2.6,
+    "diff": 2.6
+   }
+  ]
+ },
+ "exportMsPerFrame": {
+  "none": 190.2,
+  "europe": 237.6,
+  "country-gb": 253.9,
+  "new-year": 247.5,
+  "beauty-petals": 252.2
+ },
+ "sweep": {
+  "tiles": 24,
+  "requests": 0,
+  "starts": 1
+ },
+ "hover": {
+  "themes": {
+   "label": "Themes gallery",
+   "count": 58,
+   "lat": [
+    61.4,
+    61.8,
+    61.7,
+    61.5,
+    61.3
+   ],
+   "stopped": true,
+   "single": true,
+   "moving": true,
+   "animates": true
+  },
+  "templates": {
+   "label": "Templates (recipes)",
+   "count": 20,
+   "lat": [
+    65.8,
+    61.4,
+    65.5
+   ],
+   "stopped": true,
+   "single": true,
+   "moving": true
+  },
+  "music": {
+   "label": "Music",
+   "count": 27,
+   "lat": [
+    171.9,
+    101.9
+   ],
+   "stopped": true,
+   "single": true,
+   "moving": true
+  },
+  "sfx": {
+   "label": "SFX",
+   "count": 28,
+   "lat": [
+    88.2,
+    94.4
+   ],
+   "stopped": true,
+   "single": true,
+   "moving": true
+  },
+  "looks": {
+   "label": "Colour looks",
+   "count": 19,
+   "lat": [
+    97.6,
+    60.7,
+    63.2
+   ],
+   "stopped": true,
+   "single": true,
+   "moving": true
+  },
+  "transitions": {
+   "label": "Transitions",
+   "count": 10,
+   "lat": [
+    61.5,
+    60.8,
+    60.8
+   ],
+   "stopped": true,
+   "single": true,
+   "moving": true
+  },
+  "formats": {
+   "label": "Create → formats",
+   "count": 1,
+   "lat": [
+    66.5
+   ],
+   "stopped": true,
+   "single": true,
+   "moving": true
+  },
+  "cpu": {
+   "frameMs": 1.28,
+   "maxFrameMs": 94.22,
+   "frames": 635,
+   "fps": 28.3,
+   "pageFps": 29,
+   "still": true,
+   "idleFps": 61
+  },
+  "audioState": "audio:library/music/velvet-hour.m4a",
+  "focusPlay": "theme:country-ca",
+  "focusStop": null
+ },
+ "seconds": 201
+}

@@ -90,7 +90,7 @@ function countryTheme(c) {
     L('map', 'map', 'Map outline + pulse', { code: c.code, corner: 'tl', size: 0.2 }),
   ];
   if (fx.ribbons) layers.push(L('ribbons', 'ribbons', 'Flag ribbons', { colors: ['c0', 'c1', 'c2'], edge: 'top', count: 3 }));
-  if (c.landmark) layers.push(L('landmark', 'landmark', 'Landmark parallax', { id: c.landmark, side: 'both', height: 0.2 }));
+  if (c.landmark) layers.push(L('landmark', 'landmark', 'Landmark parallax', { lm: c.landmark, side: 'both', height: 0.2 }));
   if (fx.con) layers.push(L('stars', 'constellation', 'Southern Cross', { preset: fx.con, corner: 'tl', size: 0.18 }));
   if (fx.p) layers.push(L('particles', 'particles', { maple: 'Falling maple leaves', sakura: 'Sakura petals', snow: 'Snowflakes', shamrock: 'Shamrocks', tulip: 'Tulips', petal: 'Petals', leaf: 'Leaves', star5: 'Stars', star4: 'Sparkle glints', dust: 'Gold dust', bokeh: 'Warm bokeh' }[fx.p.shape] || 'Particles', fx.p));
   layers.push(L('stamps', 'stamps', 'Passport-stamp pops', { texts: fx.stamps || [c.name.toUpperCase()], every: 3.2 }));

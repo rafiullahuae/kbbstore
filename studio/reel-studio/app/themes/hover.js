@@ -19,7 +19,7 @@ import { loadAssets } from './draw.js';
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v === '1'; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, v ? '1' : '0'); } catch {} } };
 export const prefs = { get sound() { return store.get('kbbstudio.hover.sound', false); }, set sound(v) { store.set('kbbstudio.hover.sound', v); }, get mine() { return store.get('kbbstudio.hover.mine', false); }, set mine(v) { store.set('kbbstudio.hover.mine', v); } };
 
-const STATS = { active: null, starts: [], frames: 0, frameMs: 0, maxFrameMs: 0, stops: 0 };
+const STATS = { active: null, starts: [], frames: 0, frameMs: 0, maxFrameMs: 0, fps: 0, stops: 0 };
 if (typeof window !== 'undefined') window.__kbbHover = STATS;
 let cur = null;
 let io = null;
@@ -82,6 +82,8 @@ function start(el, spec, enterAt) {
     const a = now(), t = ((a - c.t0) / 1000) % dur;
     try { spec.draw(g, canvas.width, canvas.height, t); } catch (e) { console.warn('[hover]', spec.id, e); stop(); return; }
     const ms = now() - a; c.frames++; STATS.frames++;
+    if (c.last) { const fps = 1000 / Math.max(1, a - c.last); STATS.fps = STATS.fps ? STATS.fps * 0.9 + fps * 0.1 : fps; }
+    c.last = a;
     STATS.frameMs = STATS.frameMs ? STATS.frameMs * 0.9 + ms * 0.1 : ms; STATS.maxFrameMs = Math.max(STATS.maxFrameMs, ms);
     if (c.frames === 1) rec.latency = +(now() - c.enterAt).toFixed(1);
     c.raf = requestAnimationFrame(frame);
@@ -162,11 +164,13 @@ export function sampleFrame(t, variant = 0, w = 216, h = 384) {
   const user = prefs.mine ? userFrame(t, variant) : null;
   const x = c.getContext('2d');
   if (user) { const k = Math.max(w / user.width, h / user.height); x.drawImage(user, (w - user.width * k) / 2, (h - user.height * k) / 2, user.width * k, user.height * k); return c; }
-  const k = w / 216, sway = Math.sin(t * 1.6) * 5 * k, bob = Math.sin(t * 3) * 1.5 * k;
+  const k = Math.min(w / 216, h / 384), kb = Math.max(w / 216, h / 384), sway = Math.sin(t * 1.6) * 5 * k, bob = Math.sin(t * 3) * 1.5 * k;
   const g = x.createLinearGradient(0, 0, w, h);
   if (variant) { g.addColorStop(0, '#5a7fa8'); g.addColorStop(0.6, '#33465f'); g.addColorStop(1, '#1d2433'); } else { g.addColorStop(0, '#e8cfb2'); g.addColorStop(0.55, '#c99a78'); g.addColorStop(1, '#6b7d80'); }
   x.fillStyle = g; x.fillRect(0, 0, w, h);
-  for (let i = 0; i < 9; i++) { x.fillStyle = variant ? `hsla(${200 + i * 12},60%,70%,0.25)` : `hsla(${30 + i * 19},70%,75%,0.3)`; x.beginPath(); x.arc(((i * 53 + t * 6 * (i % 3 + 1)) % 236) * k - 10 * k, ((i * 97) % 220) * k, (10 + (i % 4) * 7) * k, 0, 7); x.fill(); }
+  for (let i = 0; i < 9; i++) { x.fillStyle = variant ? `hsla(${200 + i * 12},60%,70%,0.25)` : `hsla(${30 + i * 19},70%,75%,0.3)`; x.beginPath(); x.arc((((i * 53 + t * 6 * (i % 3 + 1)) % 236) / 216) * w - 10 * kb, (((i * 97) % 220) / 384) * h, (10 + (i % 4) * 7) * kb, 0, 7); x.fill(); }
+  // the person stands in a 9:16 box, centred, feet on the bottom edge (any aspect)
+  x.save(); x.translate((w - 216 * k) / 2, h - 384 * k); h = 384 * k;
   const cx = 108 * k + sway;
   x.fillStyle = variant ? '#2e2a3b' : '#7a3b52'; x.beginPath(); x.moveTo(cx - 80 * k, h); x.bezierCurveTo(cx - 80 * k, 270 * k, cx - 60 * k, 250 * k, cx - 28 * k, 248 * k); x.lineTo(cx + 28 * k, 248 * k); x.bezierCurveTo(cx + 60 * k, 250 * k, cx + 80 * k, 270 * k, cx + 80 * k, h); x.fill();
   x.fillStyle = '#d9a07e'; x.fillRect(cx - 13 * k, 205 * k + bob, 26 * k, 48 * k);
@@ -175,10 +179,17 @@ export function sampleFrame(t, variant = 0, w = 216, h = 384) {
   x.fillStyle = '#2b1a12'; for (const s of [-1, 1]) { x.beginPath(); x.arc(cx + s * 13 * k, 168 * k + bob, 3 * k, 0, 7); x.fill(); }
   x.fillStyle = '#b2484f'; x.beginPath(); x.ellipse(cx, 196 * k + bob, 9 * k, (2 + 3 * Math.abs(Math.sin(t * 9))) * k, 0, 0, 7); x.fill();
   if (!variant) { x.fillStyle = '#f6e1ea'; x.fillRect(150 * k, 300 * k, 26 * k, 62 * k); x.fillStyle = '#C6395F'; x.fillRect(150 * k, 290 * k, 26 * k, 12 * k); }
+  x.restore();
   return c;
 }
 /** where the sample person's face is (canvas-normalised, for the theme previews' face masks) */
-export const SAMPLE_FACE = { x: 0.5, y: 0.44, w: 0.36, h: 0.27 };
+export const SAMPLE_FACE = { x: 0.5, y: 0.43, w: 0.39, h: 0.29 };
+const sampleDims = (W, H) => (W >= H ? [Math.round(216 * W / H), 216] : [216, Math.round(216 * H / W)]);
+/** the sample face for a canvas shape (the sample is drawn at that shape, so the clip's cover fit maps it 1:1) */
+export function sampleFace(W, H) {
+  const [w, h] = sampleDims(W, H), k = Math.min(w / 216, h / 384), ox = (w - 216 * k) / 2, oy = h - 384 * k;
+  return { x: (ox + 108 * k) / w, y: (oy + 165 * k) / h, w: (84 * k) / w, h: (110 * k) / h };
+}
 
 const USER = { key: null, frames: [], busy: false };
 function userFrame(t, variant) {
@@ -203,7 +214,8 @@ export function miniProject(aspect = '9:16') {
 }
 const clipItem = (p, t0, out, variant = 0) => createItem('clip', { id: 'hp-clip-' + variant + '-' + t0, t0, in: 0, out, x: 0, y: 0, w: p.canvas.w, h: p.canvas.h, variant });
 export function drawMini(g, w, h, p, t) {
-  const src = (item) => (item.type === 'clip' ? sampleFrame(t, item.variant || 0) : null);
+  const [sw, sh] = sampleDims(p.canvas.w, p.canvas.h);
+  const src = (item) => (item.type === 'clip' ? sampleFrame(t, item.variant || 0, sw, sh) : null);
   g.save(); renderFrame(g, p, t, { scale: w / p.canvas.w, preview: false, source: src }); g.restore();
 }
 
@@ -211,7 +223,7 @@ export function drawMini(g, w, h, p, t) {
 export function themeSpec(id, { canvas, aspect = '9:16', opts = {}, ws = null, onStop } = {}) {
   const th = themeById(id); if (!th) return null;
   const p = miniProject(aspect), dur = 3.6, W = p.canvas.w, H = p.canvas.h;
-  const style = themeStyle(th, { intensity: 'normal', ...opts, beats: Array.from({ length: 16 }, (_, i) => +(0.25 + i * 0.5).toFixed(2)), faces: [SAMPLE_FACE] }, ws);
+  const style = themeStyle(th, { intensity: 'normal', ...opts, beats: Array.from({ length: 16 }, (_, i) => +(0.25 + i * 0.5).toFixed(2)), faces: [sampleFace(W, H)] }, ws);
   p.tracks[0].items.push(clipItem(p, 0, dur + 1));
   p.tracks[1].items.push(createItem('theme.overlay', { t0: 0, in: 0, out: dur + 1, x: 0, y: 0, w: W, h: H, auto: TAG, style }));
   if (opts.sting !== false) p.tracks[1].items.push(createItem('theme.sting', { t0: 0, in: 0, out: 0.9, x: 0, y: 0, w: W, h: H, style: { colors: style.colors, hero: th.sting?.hero, icons: (th.layers.find((l) => l.kind === 'icons')?.icons || []).slice(0, 1) } }));

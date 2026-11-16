@@ -57,7 +57,9 @@ const IMG = new Map(), MAPS = new Map(), ICONS = new Map(), LM = new Map();
 const loadImg = (key, src) => {
   if (IMG.has(key)) return IMG.get(key).ready;
   const img = new Image(), rec = { img, ok: false };
-  rec.ready = new Promise((res) => { img.onload = () => { rec.ok = true; res(); }; img.onerror = () => res(); });
+  // flag SVGs carry only a viewBox (no intrinsic size): rasterise once at 4:3 into a software canvas (slicing a GPU-backed
+  // picture into the software wave canvas would read it back from the GPU on every slice)
+  rec.ready = new Promise((res) => { img.onload = () => { try { const c = document.createElement('canvas'); c.width = 320; c.height = 240; c.getContext('2d', { willReadFrequently: true }).drawImage(img, 0, 0, 320, 240); rec.img = c; } catch {} rec.ok = true; res(); }; img.onerror = () => res(); });
   img.src = src; IMG.set(key, rec); return rec.ready;
 };
 const img = (key) => { const r = IMG.get(key); return r && r.ok ? r.img : null; };
@@ -235,17 +237,33 @@ E.starRing = (c, L, S, o) => {
   }
 };
 
+// static artwork (a country's map, the Europe outline with its capitals) is drawn ONCE per size and colour into a small
+// canvas and placed with one drawImage per frame — re-filling a 1,000-point outline every frame is the costliest thing a
+// theme could do (measured: 13 → 55 frames/s for a hovered country tile on a software GPU)
+const CACHE = new Map();
+function cached(c, key, x, y, w, h, draw) {
+  const m = c.getTransform(), k = Math.hypot(m.a, m.b) || 1, pw = Math.max(2, Math.ceil(w * k)), ph = Math.max(2, Math.ceil(h * k)), id = key + '@' + pw + 'x' + ph;
+  let cv = CACHE.get(id);
+  if (!cv) {
+    cv = document.createElement('canvas'); cv.width = pw; cv.height = ph; const g = cv.getContext('2d', { willReadFrequently: true }); g.scale(pw / w, ph / h); draw(g);
+    CACHE.set(id, cv); if (CACHE.size > 32) CACHE.delete(CACHE.keys().next().value);
+  } else { CACHE.delete(id); CACHE.set(id, cv); }
+  c.drawImage(cv, x, y, w, h);
+}
 const project2d = (lon, lat, box) => ({ x: box.x + ((lon + 11) / 52) * box.w, y: box.y + ((71 - lat) / 37) * box.h });
 const ROUTES = [['Dublin', 'Berlin'], ['Madrid', 'Paris'], ['Rome', 'Vienna'], ['Lisbon', 'Amsterdam'], ['Warsaw', 'Prague'], ['London', 'Stockholm'], ['Athens', 'Budapest'], ['Helsinki', 'Riga'], ['Valletta', 'Rome'], ['Brussels', 'Copenhagen'], ['Bern', 'Vilnius'], ['Nicosia', 'Athens']];
 E.routes = (c, L, S, o) => {
   const w = (S.land ? 0.34 : 0.5) * S.W * (L.size ? L.size / 0.42 : 1), h = w * 1.15;
   const m = S.u * 0.05, box = { x: /r/.test(L.corner || 'tl') ? S.W - m - w : m, y: S.land ? m : S.H * 0.075, w, h };
   const t = S.t * (o.speed ?? 1), col = S.col(o.color || 'soft'), acc = S.col('accent');
-  c.lineJoin = 'round'; c.beginPath();
-  EUROPE_OUTLINE.forEach(([lo, la], i) => { const p = project2d(lo, la, box); i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y); });
-  c.closePath(); c.globalAlpha = S.a * 0.1; c.fillStyle = S.col('primary'); c.fill(); c.globalAlpha = S.a * 0.42; c.strokeStyle = col; c.lineWidth = S.u * 0.0025; c.stroke();
-  const caps = Object.entries(CAPITALS);
-  for (const [, [lo, la]] of caps) { const p = project2d(lo, la, box); shape(c, 'dot', p.x, p.y, S.u * 0.0045, 0, col, S.a * 0.75, S); }
+  const pad = S.u * 0.01, local = { x: pad, y: pad, w, h };
+  c.globalAlpha = S.a;
+  cached(c, `eu:${S.col('primary')}:${col}:${Math.round(S.u)}`, box.x - pad, box.y - pad, w + 2 * pad, h + 2 * pad, (g) => {
+    g.lineJoin = 'round'; g.beginPath();
+    EUROPE_OUTLINE.forEach(([lo, la], i) => { const p = project2d(lo, la, local); i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y); });
+    g.closePath(); g.globalAlpha = 0.1; g.fillStyle = S.col('primary'); g.fill(); g.globalAlpha = 0.42; g.strokeStyle = col; g.lineWidth = S.u * 0.0025; g.stroke();
+    for (const [, [lo, la]] of Object.entries(CAPITALS)) { const p = project2d(lo, la, local); shape(g, 'dot', p.x, p.y, S.u * 0.0045, 0, col, 0.75, S); }
+  });
   const per = 1.7, nShow = Math.max(1, Math.round(3 * (o.density ?? 1)));
   for (let j = 0; j < nShow; j++) {
     const k = Math.floor(t / per) - j; if (k < 0) continue;
@@ -264,26 +282,36 @@ E.map = (c, L, S, o) => {
   const rec = MAPS.get(L.code); const { cx, cy, r } = corner(S, L.corner || 'tl', L.size || 0.2);
   const t = S.t * (o.speed ?? 1), col = S.col(o.color || 'soft');
   if (rec && rec.paths && rec.paths.length) {
-    c.save(); c.translate(cx - r, cy - r); c.scale((2 * r) / 200, (2 * r) / 200);
-    c.globalAlpha = S.a * 0.25; c.fillStyle = S.col('primary'); for (const p of rec.paths) c.fill(p);
-    c.globalAlpha = S.a * 0.85; c.strokeStyle = col; c.lineWidth = 2.2; c.lineJoin = 'round'; for (const p of rec.paths) c.stroke(p);
-    c.restore();
+    c.globalAlpha = S.a;
+    cached(c, `map:${L.code}:${S.col('primary')}:${col}`, cx - r, cy - r, 2 * r, 2 * r, (g) => {
+      g.scale((2 * r) / 200, (2 * r) / 200);
+      g.globalAlpha = 0.25; g.fillStyle = S.col('primary'); for (const p of rec.paths) g.fill(p);
+      g.globalAlpha = 0.85; g.strokeStyle = col; g.lineWidth = 2.2; g.lineJoin = 'round'; for (const p of rec.paths) g.stroke(p);
+    });
   }
   const ph = fr(t / 1.6); shape(c, 'dot', cx, cy, S.u * 0.008 * (1 + 0.6 * S.pulse), 0, S.col('accent'), S.a, S);
   c.globalAlpha = S.a * (1 - ph); c.strokeStyle = S.col('accent'); c.lineWidth = S.u * 0.003; c.beginPath(); c.arc(cx, cy, S.u * 0.01 + ph * r * 0.5, 0, TAU); c.stroke();
 };
 
+// the wave is drawn in a small software canvas (18 slices of a tiny bitmap), then placed with ONE drawImage — slicing
+// straight onto a big GPU-backed layer costs ~20× more on a software GPU
+let FLAG = null;
 E.flag = (c, L, S, o) => {
   const { cx, cy, r } = corner(S, L.corner || 'tr', L.size || 0.15), w = r * 2, h = w * 0.7, x0 = cx - r, y0 = cy - h / 2, t = S.t * (o.speed ?? 1);
   const im = img('flag:' + L.code), N = 18, amp = h * 0.07 * (1 + 0.6 * S.pulse);
   c.globalAlpha = S.a * 0.9; c.strokeStyle = 'rgba(255,255,255,0.9)'; c.lineWidth = S.u * 0.004; c.beginPath(); c.moveTo(x0 - S.u * 0.004, y0 - h * 0.1); c.lineTo(x0 - S.u * 0.004, y0 + h * 1.5); c.stroke();
+  const m = c.getTransform(), k = Math.hypot(m.a, m.b) || 1, pw = Math.max(8, Math.ceil(w * k)), ph = Math.max(8, Math.ceil((h + 2 * amp) * k));
+  if (!FLAG) { FLAG = document.createElement('canvas'); FLAG.g = FLAG.getContext('2d', { willReadFrequently: true }); }
+  if (FLAG.width !== pw || FLAG.height !== ph) { FLAG.width = pw; FLAG.height = ph; }
+  const g = FLAG.g; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, pw, ph); g.setTransform(k, 0, 0, k, 0, amp * k);
   for (let i = 0; i < N; i++) {
     const f = i / N, dy = Math.sin(t * 3.2 - f * 5.5) * amp * f, sx = (w / N) * i, sw = w / N + 0.6;
-    c.globalAlpha = S.a;
-    if (im) c.drawImage(im, (im.naturalWidth || 640) * f, 0, (im.naturalWidth || 640) / N + 1, im.naturalHeight || 480, x0 + sx, y0 + dy, sw, h);
-    else { const ex = S.colors.extra || [S.col('primary'), S.col('soft'), S.col('accent')]; ex.forEach((col, k) => { c.fillStyle = col; c.fillRect(x0 + sx, y0 + dy + (k * h) / ex.length, sw, h / ex.length + 0.5); }); }
-    const shade = Math.cos(t * 3.2 - f * 5.5) * 0.16 * f; c.globalAlpha = S.a * Math.abs(shade); c.fillStyle = shade > 0 ? '#ffffff' : '#000000'; c.fillRect(x0 + sx, y0 + dy, sw, h);
+    g.globalAlpha = 1;
+    if (im) g.drawImage(im, im.width * f, 0, im.width / N + 0.5, im.height, sx, dy, sw, h);
+    else { const ex = S.colors.extra || [S.col('primary'), S.col('soft'), S.col('accent')]; ex.forEach((col, j) => { g.fillStyle = col; g.fillRect(sx, dy + (j * h) / ex.length, sw, h / ex.length + 0.5); }); }
+    const shade = Math.cos(t * 3.2 - f * 5.5) * 0.16 * f; g.globalAlpha = Math.abs(shade); g.fillStyle = shade > 0 ? '#ffffff' : '#000000'; g.fillRect(sx, dy, sw, h);
   }
+  c.globalAlpha = S.a; c.drawImage(FLAG, x0, y0 - amp, pw / k, ph / k);
 };
 
 E.ribbons = (c, L, S, o) => {
@@ -302,7 +330,7 @@ E.ribbons = (c, L, S, o) => {
 };
 
 E.landmark = (c, L, S, o) => {
-  const lm = landmark(L.id); if (!lm) return;
+  const lm = landmark(L.lm); if (!lm) return;
   const t = S.t * (o.speed ?? 1), hh = (S.land ? 0.34 : L.height || 0.2) * S.H, k = hh / 200, col = S.col(o.color || 'soft');
   const draw = (x, kk, alpha) => {
     c.save(); c.translate(x, S.H - 200 * kk); c.scale(kk, kk); c.globalAlpha = S.a * alpha; c.fillStyle = col; for (const p of lm.d) c.fill(p);
@@ -661,7 +689,7 @@ export function avoidBoxes(project, style, t, measureCtx) {
 let LAYERS = [];
 function layerCanvas(w, h) {
   let rec = LAYERS.find((r) => r.c.width === w && r.c.height === h && !r.busy);
-  if (!rec) { const c = typeof document !== 'undefined' ? Object.assign(document.createElement('canvas'), { width: w, height: h }) : new OffscreenCanvas(w, h); rec = { c, x: c.getContext('2d') }; LAYERS.unshift(rec); LAYERS = LAYERS.slice(0, 4); }
+  if (!rec) { const c = typeof document !== 'undefined' ? Object.assign(document.createElement('canvas'), { width: w, height: h }) : new OffscreenCanvas(w, h); rec = { c, x: c.getContext('2d', { willReadFrequently: true }) }; LAYERS.unshift(rec); LAYERS = LAYERS.slice(0, 4); }
   return rec;
 }
 
