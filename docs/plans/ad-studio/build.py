@@ -42,6 +42,7 @@ for slug in ('kbb', 'planet-careers'):
     k = json.load(open(os.path.join(CO, slug + '.kit.json')))
     for f in k.get('fonts', {}).values():
         f.pop('files', None)
+    k.get('logos', {}).pop('markPaths', None)      # the video renderer's copy of the mark; this studio draws art:mark:*
     kits[slug] = k
 def mini(svg):
     return re.sub(r'>\s+<', '><', svg.strip())
@@ -50,10 +51,12 @@ for kind, sub in (('flag', 'flags'), ('map', 'maps'), ('lm', 'landmarks')):
     for f in sorted(os.listdir(os.path.join(CO, 'countries', sub))):
         if f.endswith('.svg'):
             art[kind + ':' + f[:-4]] = mini(open(os.path.join(CO, 'countries', sub, f)).read())
-mark = mini(open(os.path.join(CO, 'logo-mark.svg')).read())
-art['mark:pc'] = mark
-# for dark grounds: the planet lifted to a brighter blue so it does not sink into navy
-art['mark:pc-light'] = mark.replace('stop-color="#13315c"', 'stop-color="#2f7fc8"').replace('stop-color="#0b2545"', 'stop-color="#1d5aa0"')
+# Planet Careers: the company's own logo from theplanetcareers.com (studio/reel-studio/brands/planet-careers, made by its
+# source/make-logos.py -- the site's logo unmixed from its white ground and traced, never redrawn). The mark is the "A"
+# with the bull's head; -light = navy turned white for dark grounds (the red kept); -full = the whole logo, which the
+# logo element draws instead of mark + typed name.
+for name, f in (('pc', 'logo-mark'), ('pc-light', 'logo-mark-white'), ('pc-full', 'logo'), ('pc-full-light', 'logo-white')):
+    art['mark:' + name] = mini(open(os.path.join(CO, f + '.svg')).read())
 for k, v in art.items():
     assert '<script' not in v.lower() and 'href="http' not in v and 'on' + 'load' not in v.lower(), k
 ARTPACK = base64.b64encode(gzip.compress(json.dumps(art, separators=(',', ':'), ensure_ascii=False).encode(), 9, mtime=0)).decode()

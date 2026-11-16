@@ -41,7 +41,7 @@
   function r2(n) { return Math.round(n * 100) / 100; }
 
   // ── fixed lists (the allowlists every stored value is checked against) ──
-  var FONTS = { inter: 'Inter', poppins: 'Poppins', montserrat: 'Montserrat', playfair: 'Playfair Display', dmserif: 'DM Serif Display', bebas: 'Bebas Neue', dancing: 'Dancing Script', cairo: 'Cairo' };
+  var FONTS = { inter: 'Inter', poppins: 'Poppins', montserrat: 'Montserrat', playfair: 'Playfair Display', dmserif: 'DM Serif Display', bebas: 'Bebas Neue', dancing: 'Dancing Script', afacad: 'Afacad', cairo: 'Cairo' };
   var SHAPES = { none: 'None', rect: 'Rectangle', pill: 'Pill', circle: 'Circle', ellipse: 'Oval', ring: 'Ring', arch: 'Arch', burst: 'Burst', star: 'Star', heart: 'Heart', banner: 'Banner', ticket: 'Ticket', blob: 'Blob', glow: 'Soft glow', petal: 'Petal', silk: 'Silk ribbon' };
   var BORDERED = { rect: 1, pill: 1, circle: 1, ellipse: 1, ring: 1, arch: 1 };
   var TYPES = { text: 'Text', btn: 'Button', shape: 'Shape', icon: 'Icon', img: 'Picture', art: 'Flag / landmark / map', pay: 'tabby / tamara', logo: 'Logo', prods: 'Products' };
@@ -226,8 +226,8 @@
     var c = raw.colors || {}, bc = base.colors || {}, ec = raw.endCard || {}, ct = raw.contact || {}, stu = raw.studio || {}, fo = raw.fonts || {};
     function hx(v, d) { return HEX.test(v) ? v.slice(0, 7).toUpperCase() : d; }
     var o = { v: 1, id: SLUG.test(raw.id) ? raw.id : base.id || uid('co').toLowerCase(), name: str(raw.name, 40).trim() || base.name || 'New company', fullName: str(raw.fullName, 60).trim(), industry: str(raw.industry, 80), industries: strs(raw.industries, 8, 30),
-      colors: { primary: hx(c.primary, bc.primary || '#0B2545'), secondary: hx(c.secondary, bc.secondary || '#13A89E'), accent: hx(c.accent, bc.accent || '#F2C14E'), text: hx(c.text, '#FFFFFF'), bg: hx(c.bg, hx(c.primary, '#0B2545')), soft: hx(c.soft, bc.soft || '#EEF3F6'), ink: hx(c.ink, bc.ink || '#0A1B30') },
-      fonts: { heading: { family: FONTS[fontKey(fo.heading, 'montserrat')] }, body: { family: FONTS[fontKey(fo.body, 'inter')] }, arabic: { family: 'Cairo' } },
+      colors: { primary: hx(c.primary, bc.primary || '#002768'), secondary: hx(c.secondary, bc.secondary || '#BE0B32'), accent: hx(c.accent, bc.accent || '#BE0B32'), text: hx(c.text, '#FFFFFF'), bg: hx(c.bg, hx(c.primary, '#002768')), soft: hx(c.soft, bc.soft || '#EFF4FA'), ink: hx(c.ink, bc.ink || '#002768'), slate: hx(c.slate, bc.slate || '#556171') },
+      fonts: { heading: { family: FONTS[fontKey(fo.heading, 'afacad')] }, body: { family: FONTS[fontKey(fo.body, 'afacad')] }, arabic: { family: 'Cairo' } },
       logos: { mark: typeof (raw.logos || {}).mark === 'string' && ARTID.test(raw.logos.mark) && raw.logos.mark.indexOf('mark:') === 0 ? raw.logos.mark : '' },
       contact: {}, contactLine: str(raw.contactLine, 120),
       endCard: { title: str(ec.title, 60), sub: str(ec.sub, 120), cta: strs(ec.cta, 5, 60), ctaAr: strs(ec.ctaAr, 5, 60), payments: strs(ec.payments, 4, 60).map(function (p) { return /tamara/i.test(p) ? 'tamara' : /tabby/i.test(p) ? 'tabby' : ''; }).filter(function (p, i, a) { return p && a.indexOf(p) === i; }) },
@@ -377,7 +377,7 @@
   function fromTemplate(t, c, cty) {
     c = c || co;
     var kit = t.co === 'pc', C = kit ? KT.CTRY[cty] || KT.CTRY[t.cty] || null : null;
-    var P = kit ? KT.kitPal(c.colors, fontKey(c.fonts.heading, 'montserrat'), fontKey(c.fonts.body, 'inter')) : c.id === 'kbb' ? brandPal(t.P) : brandPal(t.P);
+    var P = kit ? KT.kitPal(c.colors, fontKey(c.fonts.heading, 'afacad'), fontKey(c.fonts.body, 'afacad')) : c.id === 'kbb' ? brandPal(t.P) : brandPal(t.P);
     var d = { v: 1, id: uid('d'), name: t.name, tpl: t.id, els: [], geo: {}, sets: {}, anim: { in: 'fade', idle: 'none', sec: 3, len: 10 } };
     FMTS.forEach(function (f, fi) {
       var r = KT.FAM[t.fam](f, t.T, P, t.O, C);
@@ -513,7 +513,13 @@
     if (e.t === 'logo') {
       var lg = mk('div', 'lg'), al2 = g.al || e.al || 'c'; lg.style.justifyContent = al2 === 'l' ? 'flex-start' : al2 === 'r' ? 'flex-end' : 'center';
       if (brand.logo && images[brand.logo]) { var li = mk('img'); li.src = images[brand.logo].src; li.alt = ''; li.style.height = '2.4em'; lg.appendChild(li); }
-      else if (co.id !== 'kbb') { var mk_ = co.mark ? artSrc(co.mark + (lum6(e.col) > .6 ? '-light' : '')) || artSrc(co.mark) : ''; if (mk_) { var mi = mk('img'); mi.src = mk_; mi.alt = ''; mi.style.height = '1.9em'; lg.appendChild(mi); } lg.appendChild(mk('span', null, e.txt || co.fullName || co.name)); }
+      else if (co.id !== 'kbb') {
+        // a company with its own full logo (Planet Careers: the site's logo, white-on-dark version on dark text colours) draws
+        // that picture alone -- the name is already in it; otherwise its mark beside the name in the heading font
+        var lt_ = lum6(e.col) > .6, full = co.mark ? artSrc(co.mark + '-full' + (lt_ ? '-light' : '')) : '';
+        if (full) { var fi = mk('img'); fi.src = full; fi.alt = e.txt || co.fullName || co.name; fi.style.height = '2.8em'; lg.appendChild(fi); }
+        else { var mk_ = co.mark ? artSrc(co.mark + (lt_ ? '-light' : '')) || artSrc(co.mark) : ''; if (mk_) { var mi = mk('img'); mi.src = mk_; mi.alt = ''; mi.style.height = '1.9em'; lg.appendChild(mi); } lg.appendChild(mk('span', null, e.txt || co.fullName || co.name)); }
+      }
       else { var sv = mk('span'); sv.innerHTML = iconSvg('lotus'); var svg = sv.firstChild; svg.setAttribute('viewBox', '0 0 24 18'); lg.appendChild(svg); lg.appendChild(mk('span', null, e.txt || 'K-Beauty Bliss')); }
       n.appendChild(lg);
     }
@@ -1809,7 +1815,7 @@
     $('co-h').textContent = c ? 'Edit company · ' + c.name : 'New company';
     setV($('co-name'), c ? c.name : ''); setV($('co-full'), base.fullName); setV($('co-ind'), base.industry);
     ['primary', 'secondary', 'accent', 'soft', 'ink'].forEach(function (k) { setV($('co-c-' + k), base.colors[k].toLowerCase()); });
-    setV($('co-fh'), fontKey(base.fonts.heading, 'montserrat')); setV($('co-fb'), fontKey(base.fonts.body, 'inter'));
+    setV($('co-fh'), fontKey(base.fonts.heading, 'afacad')); setV($('co-fb'), fontKey(base.fonts.body, 'afacad'));
     setV($('co-cl'), base.contactLine); ['website', 'phone', 'whatsapp', 'email', 'instagram'].forEach(function (k) { setV($('co-' + k), base.contact[k] || ''); });
     setV($('co-cta'), base.endCard.cta[0] || ''); setV($('co-cta-ar'), base.endCard.ctaAr[0] || '');
     $('co-tabby').checked = base.endCard.payments.indexOf('tabby') >= 0; $('co-tamara').checked = base.endCard.payments.indexOf('tamara') >= 0;

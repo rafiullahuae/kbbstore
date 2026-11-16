@@ -17,7 +17,8 @@
       "required": ["primary", "secondary", "accent", "text", "bg"],
       "properties": {
         "primary": { "$ref": "#/$defs/hex" }, "secondary": { "$ref": "#/$defs/hex" }, "accent": { "$ref": "#/$defs/hex" },
-        "text": { "$ref": "#/$defs/hex" }, "bg": { "$ref": "#/$defs/hex" }, "soft": { "$ref": "#/$defs/hex" }, "ink": { "$ref": "#/$defs/hex" }
+        "text": { "$ref": "#/$defs/hex" }, "bg": { "$ref": "#/$defs/hex" }, "soft": { "$ref": "#/$defs/hex" }, "ink": { "$ref": "#/$defs/hex" },
+        "slate": { "$ref": "#/$defs/hex", "description": "muted text for small print on light grounds" }
       }
     },
     "gradient": { "type": "array", "items": { "$ref": "#/$defs/hex" }, "minItems": 2 },
@@ -33,6 +34,10 @@
         "mark": { "type": "string", "description": "square-ish symbol, SVG" },
         "full": { "type": "string", "description": "mark + wordmark, SVG" },
         "light": { "type": "string", "description": "version for dark backgrounds" },
+        "markLight": { "type": "string", "description": "the mark for dark backgrounds" },
+        "appIcon": { "type": "string", "description": "square icon, SVG" }, "appIconLight": { "type": "string" },
+        "png": { "type": "object", "description": "raster copies with transparent backgrounds: {full, light, mark, markLight, appIcon, appIconLight}" },
+        "favicon": { "type": "string" },
         "markPaths": { "type": "object", "description": "the mark as vector paths so the renderer can draw it without loading an image: {viewBox:[w,h], paths:[{d, fill}]}" }
       }
     },
@@ -59,6 +64,8 @@
         "favRecipes": { "type": "array", "items": { "type": "string" } }, "aspect": { "enum": ["9:16", "1:1", "4:5", "16:9"] }
       }
     },
+    "captions": { "type": "object", "description": "caption look for this company: {style, font, colors:{text, bg, active, activeBg, accent, outline}}" },
+    "source": { "type": "object", "description": "where the identity came from (site, logo, colours, fonts), for the record" },
     "motif": { "type": "string", "description": "decorative motif the effects may use: lotus, eu-stars, …" },
     "packs": { "type": "object", "description": "optional content packs, e.g. countries: 'countries/countries.json'" },
     "notes": { "type": "string" }

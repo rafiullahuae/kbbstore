@@ -136,7 +136,7 @@ const vis = (p) => p.$$eval('#tg button:not([hidden])', (b) => b.map((x) => x.da
   const bad = path.join(TMP, 'bad.json'); fs.writeFileSync(bad, JSON.stringify({ app: 'kbb-studio', kind: 'company', v: 1, kit: { id: '../x', name: '<img src=x onerror=alert(1)>', colors: { primary: 'red;}' }, logos: { mark: 'javascript:alert(1)' } }, projects: [{ els: [{ id: 'a', t: 'art', art: '<svg onload=alert(1)>' }] }] }));
   await o2.p.setInputFiles('#co-in', bad); await o2.p.waitForTimeout(400);
   const hb = await o2.p.evaluate(() => { const c = window.KBB_STUDIO.companies().slice(-1)[0]; return { id: c.id, prim: c.colors.primary, mark: c.logos.mark, img: document.querySelectorAll('img[src="x"]').length, opt: [...document.querySelectorAll('#co-sel option')].some((o) => o.innerHTML.indexOf('<img') >= 0) }; });
-  ok(/^[a-z0-9-]+$/.test(hb.id) && hb.prim === '#0B2545' && hb.mark === '' && hb.img === 0 && !hb.opt, 'a hostile company file is cleaned: ' + JSON.stringify(hb));
+  ok(/^[a-z0-9-]+$/.test(hb.id) && hb.prim === '#002768' && hb.mark === '' && hb.img === 0 && !hb.opt, 'a hostile company file is cleaned: ' + JSON.stringify(hb));
   ok(o2.errs.length === 0, 'clean browser: no console errors ' + o2.errs.slice(0, 2).join(' | '));
   await ctx2.close();
 

@@ -1,8 +1,9 @@
   // ════ PLANET CAREERS · study, visa and immigration consultancy (owner, 16 Nov 2026: "create an environment
   //      'Planet Careers' ... european countries, UK, Canada, AUS, etc and other major countries need to be covered
   //      in terms of images ads, related stuff ... flags, themes etc." -- professional, not basic). Spliced into
-  //      templates.js by build.py. Every design is drawn from the company's kit (navy / teal / gold for Planet
-  //      Careers, the company's own colours for any other company on this set), never from a fixed palette.
+  //      templates.js by build.py. Every design is drawn from the company's kit (navy / red / white and Afacad for
+  //      Planet Careers, from theplanetcareers.com; the company's own colours for any other company on this set), never
+  //      from a fixed palette. kitPal turns the kit into roles, so text keeps 4.5:1 on its ground whatever the colours.
   //      Country templates take a country (C): flag, outline, landmark, flag colours and the name in English and
   //      Arabic. Facts the owner must verify are placeholders ("‹edit›"); no visa rule is ever written as fact. ════
   var CTRY = {}, CTRY_LIST = [];
@@ -48,12 +49,33 @@
   function rgbOf(h) { var n = parseInt(h.slice(1, 7), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
   function satOf(h) { var c = rgbOf(h), mx = Math.max.apply(null, c), mn = Math.min.apply(null, c); return mx ? (mx - mn) / mx * (mx / 255 > .25 ? 1 : .3) : 0; }
   function mix(a, b, t) { var x = rgbOf(a), y = rgbOf(b); return '#' + x.map(function (c, i) { return ('0' + Math.round(c + (y[i] - c) * t).toString(16)).slice(-2); }).join('').toUpperCase(); }
-  // a company's kit colours -> the palette every Planet Careers family draws with
+  // WCAG contrast ratio, hue, and a colour lifted toward white just far enough to reach a ratio on a ground
+  function relL(h) { return rgbOf(h).reduce(function (s, c, i) { c /= 255; return s + (c <= .04045 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4)) * [.2126, .7152, .0722][i]; }, 0); }
+  function cr(a, b) { var x = relL(a), y = relL(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+  function hueOf(h) { var c = rgbOf(h), mx = Math.max.apply(null, c), mn = Math.min.apply(null, c), d = mx - mn; if (d < 24) return -1; var r = c[0], g = c[1], b = c[2];
+    return (mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60; }
+  function hueGap(a, b) { var x = hueOf(a), y = hueOf(b); if (x < 0 || y < 0) return 0; var d = Math.abs(x - y); return d > 180 ? 360 - d : d; }
+  function lift(c, bg, r) { for (var t = 0; t <= 1; t += .02) { var m = mix(c, '#FFFFFF', t); if (cr(m, bg) >= r) return m; } return '#FFFFFF'; }
+  // a company's kit colours -> the roles every Planet Careers family draws with
+  //   nv / tl / gd   primary / secondary / accent (gd fills buttons, chips, badges; onGd is the text on it)
+  //   hl             text highlight on the night ground: the accent when it reads there at 4.5:1 (gold), else the light colour
+  //   kp             the accent does not read as text on the ground (Planet Careers' red on navy): kickers become accent pills
+  //   ic             icons, rings, flight paths on the night ground: the accent, lifted to 3:1 when it is darker than that
+  //   tlD / tlW      the secondary for washes and glows on dark / light grounds -- when its hue is far from the primary's
+  //                  (red on navy) the primary's own lighter shade, so the red stays a crisp accent and nothing turns purple
+  //   gdD            glows of the accent on dark; orn the greeting ornaments; my / fact the myth and fact labels
   function kitPal(c, fh, fb) {
-    var nv = c.primary, tl = c.secondary, gd = c.accent, on = readable(nv), light = lum(nv) > .62;
-    return { nv: nv, tl: tl, gd: gd, soft: c.soft || '#EEF3F6', ink: c.ink || '#0A1B30', nv2: mix(nv, tl, .2), dk: mix(nv, '#000000', .38), on: on,
-      sub: mix(on, nv, .3), tlL: light ? tl : mix(tl, '#FFFFFF', .35), onGd: lum(gd) > .55 ? (lum(c.ink || '#0A1B30') < .3 ? c.ink || '#0A1B30' : '#161616') : '#FFFFFF', onTl: readable(tl),
-      lsub: mix(c.ink || '#0A1B30', '#FFFFFF', .38), fh: fh || 'montserrat', fb: fb || 'inter' };
+    var nv = c.primary, tl = c.secondary, gd = c.accent, ink = c.ink || '#0A1B30', soft = c.soft || '#EEF3F6', on = readable(nv), light = lum(nv) > .62;
+    var near = hueGap(nv, tl) < 70, tlD = near ? tl : mix(nv, '#FFFFFF', .26), tlW = near ? tl : nv;
+    var hiOk = light || cr(gd, nv) >= 4.5, hl = hiOk ? gd : cr(soft, nv) >= 4.5 ? soft : on;
+    var tlL = light ? tl : mix(tl, '#FFFFFF', .35); if (!light && cr(tlL, nv) < 4.5) tlL = hl;
+    var lsub = c.slate || mix(ink, '#FFFFFF', .38); if (cr(lsub, '#FFFFFF') < 4.6) lsub = mix(lsub, ink, .35);
+    var hu = hueOf(gd), my = hu >= 0 && (hu < 20 || hu > 330) ? gd : '#C0392B';
+    return { nv: nv, tl: tl, gd: gd, soft: soft, ink: ink, nv2: mix(nv, tlD, .2), dk: mix(nv, '#000000', .38), on: on,
+      sub: mix(on, nv, .3), tlL: tlL, onGd: lum(gd) > .55 ? (lum(ink) < .3 ? ink : '#161616') : '#FFFFFF', onTl: readable(tl),
+      lsub: lsub, fh: fh || 'afacad', fb: fb || 'afacad',
+      hl: hl, kp: !hiOk, ic: cr(gd, nv) >= 3 ? gd : lift(gd, nv, 3.2), tlD: tlD, tlW: tlW, gdD: hiOk ? gd : tlD, orn: hiOk ? gd : soft,
+      wash: near ? mix(soft, tl, .25) : mix(soft, nv, .12), my: my, fact: hueGap(tl, my) < 40 ? nv : tl };
   }
   // {N} country name, {D} name in a sentence ("the UK"), {A} Arabic name, {CO} company, {CONTACT}, {WEB}, {CTA}
   function tokens(e, C, c) {
@@ -70,15 +92,21 @@
 
   // ── Planet Careers pieces ──
   function bgDark(P, pat, po) { return { k: 'radial', c1: P.nv2, c2: P.dk, stops: [{ c: P.nv2, p: 0 }, { c: P.nv, p: 48 }, { c: P.dk, p: 100 }], rx: 82, ry: 8, ang: 160, pat: pat || 'globe', pc: P.on, po: po == null ? 6 : po, img: '', ov: 0 }; }
-  function bgLight(P, pat, po) { return { k: 'linear', c1: '#FFFFFF', c2: P.soft, ang: 165, pat: pat || 'routes', pc: P.tl, po: po == null ? 22 : po, img: '', ov: 0 }; }
-  function pKick(P, txt, o, g) { return tx('kick', txt, Object.assign({ fn: P.fh, fw: 800, fs: 2.4, ls: 28, up: true, col: P.gd, name: 'Kicker' }, o || {}), g); }
+  function bgLight(P, pat, po) { return { k: 'linear', c1: '#FFFFFF', c2: P.soft, ang: 165, pat: pat || 'routes', pc: P.tlW, po: po == null ? 22 : po, img: '', ov: 0 }; }
+  // a kicker on the night ground (no colour given) is the highlight colour -- or, when the accent cannot be text there, an accent pill
+  function pKick(P, txt, o, g) {
+    var d = { fn: P.fh, fw: 800, fs: 2.4, ls: 28, up: true, col: P.hl, name: 'Kicker' };
+    if (P.kp && (!o || o.col == null)) Object.assign(d, { col: P.onGd, sh: 'pill', fill: P.gd, pd: .7, ls: 22, fs: 2.7 });
+    if (o && o.col == null) { o = Object.assign({}, o); delete o.col; }
+    return tx('kick', txt, Object.assign(d, o || {}), g);
+  }
   function pH1(P, txt, o, g) { return tx('h1', txt, Object.assign({ fn: P.fh, fw: 900, fs: 9.5, lh: 100, ls: -1, col: P.on, name: 'Headline' }, o || {}), g); }
   function pH2(P, txt, o, g) { return tx('h2', txt, Object.assign({ fn: P.fh, fw: 700, fs: 3.6, lh: 120, col: P.tlL, name: 'Second line' }, o || {}), g); }
   function pSub(P, id, txt, o, g) { return tx(id, txt, Object.assign({ fn: P.fb, fw: 500, fs: 2.9, lh: 135, col: P.sub, name: 'Supporting line' }, o || {}), g); }
-  function pAr(P, txt, o, g) { return tx('ar', txt, Object.assign({ fn: 'cairo', fw: 700, fs: 3.3, lh: 150, col: P.gd, name: 'Arabic line' }, o || {}), g); }
+  function pAr(P, txt, o, g) { return tx('ar', txt, Object.assign({ fn: 'cairo', fw: 700, fs: 3.3, lh: 150, col: P.hl, name: 'Arabic line' }, o || {}), g); }
   function pBtn(P, txt, o, g) { return btn('cta', txt, Object.assign({ fn: P.fh, fw: 800, fs: 3.3, ls: 2, col: P.onGd, fill: P.gd, sh: 'pill', shd: 30, cr: 'acc' }, o || {}), g); }
   function pContact(P, txt, o, g) { return tx('contact', txt, Object.assign({ fn: P.fb, fw: 600, fs: 2.4, lh: 130, col: P.on, name: 'Contact line' }, o || {}), g); }
-  function pNote(P, txt, o, g) { return tx('note', txt, Object.assign({ fn: P.fb, fw: 500, fs: 1.9, lh: 130, col: P.sub, op: 85, name: 'Check-the-rules note' }, o || {}), g); }
+  function pNote(P, txt, o, g) { return tx('note', txt, Object.assign({ fn: P.fb, fw: 500, fs: 1.9, lh: 130, col: P.sub, op: o && o.col ? 100 : 85, name: 'Check-the-rules note' }, o || {}), g); }   // small print on a light ground stays at full strength (4.5:1)
   function pLogo(P, o, g) { return logo('logo', Object.assign({ txt: 'Planet Careers', fn: P.fh, fw: 800, fs: 2.7, col: P.on }, o || {}), g); }
   function art(id, a, o, g) { return Object.assign({ id: id, t: 'art', art: a, name: 'Art' }, o || {}, { g: g }); }
   function flagC(id, C, g, o) { return art(id, 'flag:' + C.code, Object.assign({ sh: 'circle', bw: 5, bc: '#FFFFFF', shd: 35, name: 'Flag' }, o || {}), g); }
@@ -100,16 +128,16 @@
     });
   }
   function fadeB(P, y, h) { return shp('fade', 'rect', { fill: A(P.dk, '00'), fill2: P.dk, gang: 180, name: 'Bottom shade' }, G(0, y, 100, h)); }
-  function route(P, g, op) { return shp('route', 'ellipse', { fill: 'transparent', bc: P.gd, bw: 2.2, bs: 'dashed', op: op || 60, name: 'Flight path' }, g); }
-  function plane(P, g, r) { g.r = r || 0; return ico('plane', 'plane', { col: P.gd, name: 'Plane' }, g); }
+  function route(P, g, op) { return shp('route', 'ellipse', { fill: 'transparent', bc: P.ic, bw: 2.2, bs: 'dashed', op: op || 60, name: 'Flight path' }, g); }
+  function plane(P, g, r) { g.r = r || 0; return ico('plane', 'plane', { col: P.ic, name: 'Plane' }, g); }
   function none() { return []; }
 
   // PC1 ── HERO: a country's study (or work / PR) hero on the night-navy ground -- the flag in a white ring, the
-  //        name big, three points with gold ticks, the landmark rising behind the button, a gold flight path
+  //        name big, three points with accent ticks, the landmark rising behind the button, an accent flight path
   FAM.pchero = function (f, T, P, O, C) {
     var H = FH[f], k = v(f, 1, .9, 1.12), els = [], st = f === 'story';
-    els.push(glow('g1', A(P.tl, '59'), v(f, G(30, -32, 100, 86), G(40, -30, 84, 70), G(10, -18, 120, 96))));
-    els.push(art('lm', 'lm:' + C.lm, { col: mix(P.nv, P.tl, .5), op: 80, name: 'Landmark' }, v(f, G(42, 59, 66, 66), G(56, 50, 50, 50), G(14, 93.78, 84, 84))));
+    els.push(glow('g1', A(P.tlD, '59'), v(f, G(30, -32, 100, 86), G(40, -30, 84, 70), G(10, -18, 120, 96))));
+    els.push(art('lm', 'lm:' + C.lm, { col: mix(P.nv, P.tlD, .5), op: 80, name: 'Landmark' }, v(f, G(42, 59, 66, 66), G(56, 50, 50, 50), G(14, 93.78, 84, 84))));
     els.push(fadeB(P, H * .7, H * .3));
     els.push(route(P, v(f, G(38, 5, 84, 34, -12), G(46, 3, 70, 28, -12), G(18, 8, 100, 40, -12)), 55));
     els.push(plane(P, v(f, G(79, 5.5, 7, 7), G(83, 3, 6, 6), G(82, 9, 8, 8)), 70));
@@ -124,31 +152,31 @@
     else els.push(shp('card', 'rect', { fill: A(P.on, '12'), name: 'Glass card' }, G(0, 0, 1, 1, 0, 1)));
     if (!st) els[els.length - 1].g.hd = true;
     els = els.concat(top, rows, [arl]);
-    rowIcons(els, rows, rx, k, P.gd, 'check');
+    rowIcons(els, rows, rx, k, P.ic, 'check');
     els.push(pBtn(P, T.cta, {}, v(f, G(8, 96, 46, 8.4), G(8, 77.5, 40, 7.6), G(20, 141, 60, 9.4))));
     els.push(pContact(P, T.contact, { al: al }, v(f, G(8, 107.5, 62, 0), G(8, 88, 54, 0, 0, .9), G(8, 155, 84, 0, 0, 1.1))));
     els.push(pNote(P, T.note, { al: al }, v(f, G(8, 113.5, 62, 0), G(8, 93.5, 54, 0, 0, .9), G(8, 162, 84, 0, 0, 1.1))));
     return { bg: bgDark(P), els: els, slots: [] };
   };
 
-  // PC2 ── BOARDING PASS: a white ticket on soft teal -- FROM UAE → TO the country, the flag on the stub, a plane
+  // PC2 ── BOARDING PASS: a white ticket on a soft ground -- FROM UAE → TO the country, the flag on the stub, a plane
   //        between the cities, a barcode; "Next stop: …" above it
   FAM.pcpass = function (f, T, P, O, C) {
     var H = FH[f], k = v(f, 1, .88, 1.1), els = [], ink = P.ink;
     var t = v(f, G(7, 46, 86, 48), G(26, 26, 68, 46), G(7, 70, 86, 56));
-    els.push(glow('g1', A(P.tl, '40'), G(-30, -20, 90, 70)));
+    els.push(glow('g1', A(P.tlW, '40'), G(-30, -20, 90, 70)));
     els.push(route(P, v(f, G(-20, 22, 140, 70, -8), G(-10, 14, 120, 60, -8), G(-24, 34, 150, 90, -8)), 45));
     els.push(shp('ticket', 'ticket', { fill: '#FFFFFF', shd: 30, name: 'Boarding pass' }, t));
     var bh = t.h * .25;
     els.push(shp('band', 'rect', { fill: P.nv, fill2: P.nv2, gang: 90, rad: 0, name: 'Pass header' }, G(t.x + t.w * .035, t.y, t.w * .93, bh)));
     els.push(shp('perf', 'rect', { fill: 'transparent', bc: '#C9D2DA', bw: 2, bs: 'dashed', name: 'Perforation' }, G(t.x + t.w * .72, t.y + bh + 2, .2, t.h - bh - 4)));
     var cx = t.x + t.w * .05, cw = t.w * .62, k2 = k * t.w / 86;
-    els.push(tx('pass', T.pass || 'BOARDING PASS', { fn: P.fh, fw: 800, fs: 2.3, ls: 30, col: P.gd, al: 'l', name: 'Pass title' }, G(cx, t.y + bh * .3, cw, 0, 0, k2)));
+    els.push(tx('pass', T.pass || 'BOARDING PASS', { fn: P.fh, fw: 800, fs: 2.3, ls: 30, col: P.hl, al: 'l', name: 'Pass title' }, G(cx, t.y + bh * .3, cw, 0, 0, k2)));
     els.push(ico('pi', 'plane', { col: P.on, name: 'Pass plane' }, G(t.x + t.w * .62, t.y + bh * .22, bh * .56, bh * .56, 0)));
     els[els.length - 1].g.r = 90;
     var ry = t.y + bh + t.h * .08;
-    els.push(tx('fl', 'FROM', { fn: P.fb, fw: 700, fs: 1.8, ls: 20, col: '#7A8794', al: 'l', name: 'Label' }, G(cx, ry, 24, 0, 0, k2)));
-    els.push(tx('tl', 'TO', { fn: P.fb, fw: 700, fs: 1.8, ls: 20, col: '#7A8794', al: 'l', name: 'Label' }, G(cx + cw * .55, ry, 20, 0, 0, k2)));
+    els.push(tx('fl', 'FROM', { fn: P.fb, fw: 700, fs: 1.8, ls: 20, col: P.lsub, al: 'l', name: 'Label' }, G(cx, ry, 24, 0, 0, k2)));
+    els.push(tx('tl', 'TO', { fn: P.fb, fw: 700, fs: 1.8, ls: 20, col: P.lsub, al: 'l', name: 'Label' }, G(cx + cw * .55, ry, 20, 0, 0, k2)));
     els.push(tx('fv', T.from || 'UAE', { fn: P.fh, fw: 900, fs: 6, lh: 100, col: ink, al: 'l', name: 'From' }, G(cx, ry + 3.2 * k2, cw * .42, 0, 0, k2)));
     els.push(tx('tv', T.to || '{N}', { fn: P.fh, fw: 900, fs: 6, lh: 100, col: P.nv, al: 'l', cyk: 'n', name: 'To' }, G(cx + cw * .55, ry + 3.2 * k2, cw * .45, 0, 0, k2)));
     els.push(ico('arr', 'plane', { col: P.tl, name: 'Arrow plane' }, G(cx + cw * .43, ry + 3.6 * k2, 4.6 * k2, 4.6 * k2)));
@@ -156,7 +184,7 @@
     var ry2 = ry + t.h * .3;
     [['l1', 'v1', 'PASSENGER', T.pax || 'You'], ['l2', 'v2', 'PURPOSE', T.purpose || 'Study'], ['l3', 'v3', 'GATE', T.gate || 'Intake ‹edit›']].forEach(function (q, i) {
       var x = cx + i * cw * .36;
-      els.push(tx(q[0], q[2], { fn: P.fb, fw: 700, fs: 1.6, ls: 16, col: '#7A8794', al: 'l', name: 'Label' }, G(x, ry2, cw * .34, 0, 0, k2)));
+      els.push(tx(q[0], q[2], { fn: P.fb, fw: 700, fs: 1.6, ls: 16, col: P.lsub, al: 'l', name: 'Label' }, G(x, ry2, cw * .34, 0, 0, k2)));
       els.push(tx(q[1], q[3], { fn: P.fb, fw: 800, fs: 2.6, col: ink, al: 'l', name: q[2].charAt(0) + q[2].slice(1).toLowerCase() }, G(x, ry2 + 2.6 * k2, cw * .34, 0, 0, k2)));
     });
     var sx = t.x + t.w * .76, sw = t.w * .19;
@@ -177,13 +205,13 @@
     return { bg: bgLight(P), els: els, slots: [] };
   };
 
-  // PC3 ── POSTCARD ARCH: ivory-white ground, a tall arch window washed in soft teal with the landmark standing in
-  //        it, a gold hairline arch around it, flag-colour stripes at its sill; an elegant serif title
+  // PC3 ── POSTCARD ARCH: ivory-white ground, a tall arch window washed in the kit's soft colour with the landmark standing in
+  //        it, an accent hairline arch around it, flag-colour stripes at its sill; an elegant serif title
   FAM.pcarch = function (f, T, P, O, C) {
     var H = FH[f], k = v(f, 1, .9, 1.1), els = [], sq = f === 'square';
     var a = v(f, G(52, 22, 40, 74), G(56, 12, 36, 68), G(20, 50, 60, 68));
     els.push(shp('al', 'arch', { fill: 'transparent', bc: P.gd, bw: 3, name: 'Arch line' }, G(a.x - 2.2, a.y - 2.2, a.w + 4.4, a.h + 2.2)));
-    els.push(shp('arch', 'arch', { fill: mix(P.soft, P.tl, .25), fill2: P.soft, gang: 180, name: 'Arch window' }, a));
+    els.push(shp('arch', 'arch', { fill: P.wash, fill2: P.soft, gang: 180, name: 'Arch window' }, a));
     els.push(glow('ag', '#FFFFFFC0', G(a.x, a.y + a.h * .05, a.w, a.w * .9)));
     els.push(art('lm', 'lm:' + C.lm, { col: P.nv, name: 'Landmark' }, G(a.x - a.w * .05, a.y + a.h - a.w * 1.1, a.w * 1.1, a.w * 1.1)));
     stripes(els, 'st', C, a.x, a.y + a.h, a.w, 2.4, true);
@@ -206,14 +234,14 @@
     return { bg: { k: 'linear', c1: '#FFFDF8', c2: mix(P.soft, '#FFFFFF', .3), ang: 180, pat: 'none', pc: P.tl, po: 0, img: '', ov: 0 }, els: els, slots: [] };
   };
 
-  // PC4 ── MAP SPLIT: navy ground, the country's outline huge in teal with a gold pin; the flag as a rounded card;
+  // PC4 ── MAP SPLIT: navy ground, the country's outline huge in a lighter shade with an accent pin; the flag as a rounded card;
   //        the copy beside (post, square) or under it (story)
   FAM.pcmap = function (f, T, P, O, C) {
     var H = FH[f], k = v(f, 1, .9, 1.12), els = [], st = f === 'story';
-    els.push(glow('g1', A(P.tl, '4D'), v(f, G(30, 6, 90, 90), G(40, -4, 76, 76), G(-5, 10, 110, 100))));
+    els.push(glow('g1', A(P.tlD, '4D'), v(f, G(30, 6, 90, 90), G(40, -4, 76, 76), G(-5, 10, 110, 100))));
     var m = v(f, G(50, 16, 56, 56), G(57, 9, 44, 44), G(10, 18, 80, 80));
-    els.push(art('map', 'map:' + C.code, { col: mix(P.tl, P.nv, .25), name: 'Country outline' }, m));
-    els.push(ico('pin', 'pin', { col: P.gd, shd: 40, name: 'Pin' }, G(m.x + m.w * .45, m.y + m.h * .36, m.w * .12, m.w * .12)));
+    els.push(art('map', 'map:' + C.code, { col: P.tlD === P.tl ? mix(P.tl, P.nv, .25) : P.tlD, name: 'Country outline' }, m));
+    els.push(ico('pin', 'pin', { col: P.ic, shd: 40, name: 'Pin' }, G(m.x + m.w * .45, m.y + m.h * .36, m.w * .12, m.w * .12)));
     els.push(flagR('flag', C, v(f, G(70, 84, 22, 16.5), G(76, 66, 18, 13.5), G(66, 90, 24, 18)), { bw: 0, rad: 1.5 }));
     els.push(pLogo(P, { al: 'l' }, v(f, G(7, 5, 60, 0, 0, .95), G(6, 4, 60, 0, 0, .85), G(7, 6, 60, 0, 0, 1.1))));
     var X = v(f, 7, 6, 8), W = v(f, 46, 48, 84), al = 'l';
@@ -222,17 +250,17 @@
     var arl = pAr(P, T.ar, { al: al }, G(X, 0, W, 0, 0, k));
     column(top.concat(rows, [arl]), v(f, 30, 22, 100), v(f, 94, 74, 148), 1.8 * k);
     els = els.concat(top, rows, [arl]);
-    rowIcons(els, rows, X, k, P.gd, 'check');
+    rowIcons(els, rows, X, k, P.ic, 'check');
     els.push(pBtn(P, T.cta, {}, v(f, G(7, 101, 46, 8.2), G(6, 79, 40, 7.4), G(8, 153, 56, 9))));
     els.push(pContact(P, T.contact, { al: al }, v(f, G(7, 112, 86, 0), G(6, 89, 60, 0, 0, .9), G(8, 165, 84, 0, 0, 1.1))));
     els.push(pNote(P, T.note, { al: al }, v(f, G(7, 117.6, 86, 0), G(6, 94, 60, 0, 0, .9), G(8, 171.4, 84, 0, 0, 1.05))));
     return { bg: bgDark(P, 'grid', 4), els: els, slots: [] };
   };
 
-  // PC5 ── INTAKE: a calendar card with the month huge in gold, "Intake open", five destination flags under it
+  // PC5 ── INTAKE: a calendar card with the month huge, "Intake open", five destination flags under it
   FAM.pcintake = function (f, T, P, O) {
     var H = FH[f], k = v(f, 1, .9, 1.12), els = [], sq = f === 'square';
-    els.push(glow('g1', A(P.gd, '33'), v(f, G(-20, 10, 140, 90), G(-10, -10, 120, 90), G(-30, 20, 160, 110))));
+    els.push(glow('g1', A(P.gdD, '33'), v(f, G(-20, 10, 140, 90), G(-10, -10, 120, 90), G(-30, 20, 160, 110))));
     var c = v(f, G(16, 15, 68, 50), G(6, 16, 44, 54), G(12, 22, 76, 56));
     els.push(shp('card', 'rect', { fill: '#FFFFFF', rad: 3, shd: 45, name: 'Calendar card' }, c));
     els.push(shp('band', 'rect', { fill: P.tl, rad: 0, name: 'Calendar band' }, G(c.x, c.y, c.w, c.h * .2)));
@@ -257,27 +285,27 @@
     return { bg: bgDark(P, 'routes', 10), els: els, slots: [] };
   };
 
-  // PC6 ── STEPS: a gold timeline of 4 numbered steps (PR pathway, how it works, work permit process)
+  // PC6 ── STEPS: an accent timeline of 4 numbered steps (PR pathway, how it works, work permit process)
   FAM.pcsteps = function (f, T, P, O, C) {
     var H = FH[f], k = v(f, 1, .88, 1.12), els = [], st = f === 'story', light = !!O.light;
     var ink = light ? P.ink : P.on, sub = light ? P.lsub : P.sub;
-    if (C) els.push(art('lm', 'lm:' + C.lm, { col: light ? mix(P.soft, P.tl, .3) : mix(P.nv, P.tl, .35), op: 70, name: 'Landmark' }, v(f, G(58, 63, 50, 50), G(64, 50, 40, 40), G(46, 115, 62, 62))));
+    if (C) els.push(art('lm', 'lm:' + C.lm, { col: light ? mix(P.soft, P.tlW, .3) : mix(P.nv, P.tlD, .35), op: 70, name: 'Landmark' }, v(f, G(58, 63, 50, 50), G(64, 50, 40, 40), G(46, 115, 62, 62))));
     if (C) els.push(flagC('flag', C, v(f, G(80, 5, 12, 12), G(84, 4, 10, 10), G(78, 6, 14, 14)), { bw: 4 }));
     els.push(pLogo(P, { al: 'l', col: light ? P.nv : P.on }, v(f, G(7, 5, 60, 0, 0, .95), G(6, 4, 60, 0, 0, .85), G(7, 7, 60, 0, 0, 1.1))));
     var X = v(f, 7, 6, 8), W = v(f, 86, 88, 84);
-    var top = [pKick(P, T.kick, { al: 'l', col: light ? P.tl : P.gd }, G(X, 0, W, 0, 0, k)), pH1(P, T.h1, { al: 'l', fs: 8, col: ink, cyk: C ? 'n' : undefined }, G(X, 0, W - 14, 0, 0, k))];
+    var top = [pKick(P, T.kick, { al: 'l', col: light ? P.tl : null }, G(X, 0, W, 0, 0, k)), pH1(P, T.h1, { al: 'l', fs: 8, col: ink, cyk: C ? 'n' : undefined }, G(X, 0, W - 14, 0, 0, k))];
     var ty = column(top, v(f, 14, 11, 16), v(f, 38, 30, 44), 1.6 * k); els = els.concat(top);
     var steps = T.steps || [], n = steps.length, y0 = ty + v(f, 4, 3, 7), y1 = v(f, 96, 78, 132), sh = (y1 - y0) / n, d = v(f, 8, 6.8, 10);
-    els.push(shp('spine', 'rect', { fill: A(P.gd, '80'), name: 'Timeline' }, G(X + d / 2 - .25, y0 + d / 2, .5, sh * (n - 1))));
+    els.push(shp('spine', 'rect', { fill: A(light ? P.gd : P.ic, '80'), name: 'Timeline' }, G(X + d / 2 - .25, y0 + d / 2, .5, sh * (n - 1))));
     steps.forEach(function (s, i) {
       var y = y0 + i * sh;
-      els.push(shp('n' + i, 'circle', { fill: i === n - 1 ? P.gd : light ? P.nv : P.tl, txt: String(i + 1), fn: P.fh, fw: 900, fs: 3.6, col: i === n - 1 ? P.onGd : '#FFFFFF', shd: 20, name: 'Step ' + (i + 1) }, G(X, y, d, d)));
+      els.push(shp('n' + i, 'circle', { fill: i === n - 1 ? P.gd : light ? P.nv : P.tlD, txt: String(i + 1), fn: P.fh, fw: 900, fs: 3.6, col: i === n - 1 ? P.onGd : '#FFFFFF', shd: 20, name: 'Step ' + (i + 1) }, G(X, y, d, d)));
       var tt = tx('s' + i, s[0], { fn: P.fh, fw: 800, fs: 3.3, lh: 115, col: ink, al: 'l', name: 'Step ' + (i + 1) + ' title' }, G(X + d + 3, y - .2, W - d - 3, 0, 0, k));
       var td = tx('d' + i, s[1], { fn: P.fb, fw: 500, fs: 2.4, lh: 125, col: sub, al: 'l', name: 'Step ' + (i + 1) + ' detail' }, G(X + d + 3, y + 3.9 * k, W - d - 3, 0, 0, k));
       els.push(tt, td);
     });
     var fy = v(f, 101, 82, 140);
-    els.push(pAr(P, T.ar, { al: 'l', col: light ? P.tl : P.gd }, v(f, G(X, fy - 1, 40, 0, 0, k), G(52, fy - .5, 42, 0, 0, k), G(X, fy, 84, 0, 0, k))));
+    els.push(pAr(P, T.ar, { al: 'l', col: light ? P.tl : P.hl }, v(f, G(X, fy - 1, 40, 0, 0, k), G(52, fy - .5, 42, 0, 0, k), G(X, fy, 84, 0, 0, k))));
     els.push(pBtn(P, T.cta, light ? { fill: P.nv, col: P.on } : {}, v(f, G(X, 107.5, 44, 8), G(X, 87, 40, 7.2), G(X, 148, 56, 9))));
     els.push(pContact(P, T.contact, { al: 'l', col: ink }, v(f, G(54, 107.6, 40, 0, 0, .85), G(50, 87.2, 44, 0, 0, .8), G(X, 160.5, 84, 0, 0, 1.1))));
     els.push(pNote(P, T.note, { al: 'l', col: sub }, v(f, G(54, 112.8, 40, 0, 0, .85), G(50, 92.2, 44, 0, 0, .8), G(X, 167, 84, 0, 0, 1.05))));
@@ -318,18 +346,18 @@
     return { bg: bgDark(P, 'grid', 4), els: els, slots: [] };
   };
 
-  // PC8 ── VISA APPROVED: the client's photo in a gold ring (a slot to fill), a "VISA APPROVED" stamp, the
+  // PC8 ── VISA APPROVED: the client's photo in an accent ring (a slot to fill), a "VISA APPROVED" stamp, the
   //        quote, the name -- and the flag of where they are going
   FAM.pcstory = function (f, T, P, O, C) {
     var H = FH[f], k = v(f, 1, .9, 1.12), els = [], sq = f === 'square';
     var ph = v(f, G(27, 14, 46, 46), G(8, 18, 40, 40), G(22, 22, 56, 56));
-    els.push(glow('g1', A(P.tl, '66'), G(ph.x - ph.w * .4, ph.y - ph.w * .4, ph.w * 1.8, ph.w * 1.8)));
-    els.push(shp('ring', 'ring', { fill: 'transparent', bc: P.gd, bw: 6, name: 'Gold ring' }, G(ph.x - 2, ph.y - 2, ph.w + 4, ph.w + 4)));
-    els.push(shp('photo', 'circle', { fill: mix(P.nv, P.tl, .3), txt: 'CLIENT\nPHOTO', fn: P.fh, fw: 800, fs: 2.4, ls: 20, col: A(P.on, 'B3'), ph: true, name: 'Client photo (tap → Put a photo here)' }, ph));
+    els.push(glow('g1', A(P.tlD, '66'), G(ph.x - ph.w * .4, ph.y - ph.w * .4, ph.w * 1.8, ph.w * 1.8)));
+    els.push(shp('ring', 'ring', { fill: 'transparent', bc: P.ic, bw: 6, name: 'Photo ring' }, G(ph.x - 2, ph.y - 2, ph.w + 4, ph.w + 4)));
+    els.push(shp('photo', 'circle', { fill: mix(P.nv, P.tlD, .3), txt: 'CLIENT\nPHOTO', fn: P.fh, fw: 800, fs: 2.4, ls: 20, col: A(P.on, 'B3'), ph: true, name: 'Client photo (tap → Put a photo here)' }, ph));
     els.push(flagC('flag', C, G(ph.x + ph.w * .74, ph.y + ph.w * .7, ph.w * .3, ph.w * .3)));
     var sp = G(ph.x - ph.w * .12, ph.y + ph.w * .66, ph.w * .5, ph.w * .5);
-    els.push(shp('stamp', 'ring', { fill: 'transparent', bc: P.gd, bw: 4, bs: 'dashed', name: 'Stamp ring', op: 95 }, sp));
-    els.push(shp('stampc', 'circle', { fill: A(P.dk, 'E6'), txt: T.stamp || 'VISA\nAPPROVED', fn: P.fh, fw: 900, fs: 2.6, lh: 105, ls: 6, col: P.gd, name: 'Stamp' }, G(sp.x + sp.w * .08, sp.y + sp.w * .08, sp.w * .84, sp.w * .84, -14)));
+    els.push(shp('stamp', 'ring', { fill: 'transparent', bc: P.ic, bw: 4, bs: 'dashed', name: 'Stamp ring', op: 95 }, sp));
+    els.push(shp('stampc', 'circle', { fill: P.kp ? P.gd : A(P.dk, 'E6'), txt: T.stamp || 'VISA\nAPPROVED', fn: P.fh, fw: 900, fs: 2.6, lh: 105, ls: 6, col: P.kp ? P.onGd : P.gd, name: 'Stamp' }, G(sp.x + sp.w * .08, sp.y + sp.w * .08, sp.w * .84, sp.w * .84, -14)));
     var X = v(f, 8, 52, 8), W = v(f, 84, 42, 84), al = sq ? 'l' : 'c';
     var top = [pKick(P, T.kick, { al: al, ls: sq ? 16 : 28 }, G(X, 0, W, 0, 0, k)), pH1(P, T.h1, { al: al, fs: 8.6 }, G(X, 0, W, 0, 0, k)),
       tx('quote', T.quote, { fn: 'playfair', fw: 400, fi: true, fs: 3.6, lh: 132, col: P.on, al: al, name: 'Quote (use the client\'s real words)' }, G(X, 0, W, 0, 0, k)),
@@ -344,12 +372,12 @@
     return { bg: bgDark(P, 'sparkle', 30), els: els, slots: [] };
   };
 
-  // PC9 ── TESTIMONIAL: soft white card, big gold quote marks, five stars, the words, a small photo + name
+  // PC9 ── TESTIMONIAL: soft white card, big accent quote marks, five stars, the words, a small photo + name
   FAM.pcquote = function (f, T, P, O) {
     var H = FH[f], k = v(f, 1, .9, 1.12), els = [];
     var c = v(f, G(7, 18, 86, 80), G(7, 13, 86, 66), G(7, 30, 86, 108));
     els.push(shp('card', 'rect', { fill: '#FFFFFF', rad: 4, shd: 30, name: 'Card' }, c));
-    els.push(shp('bar', 'rect', { fill: P.tl, fill2: P.gd, gang: 90, rad: 0, name: 'Card top line' }, G(c.x + 6, c.y, c.w - 12, .9)));
+    els.push(shp('bar', 'rect', { fill: P.tlW, fill2: P.gd, gang: 90, rad: 0, name: 'Card top line' }, G(c.x + 6, c.y, c.w - 12, .9)));
     els.push(ico('qm', 'quote', { col: P.gd, name: 'Quote marks' }, G(c.x + 6, c.y + 6, v(f, 12, 10, 14), v(f, 12, 10, 14))));
     els.push(ico('stars', 'stars5', { col: P.gd, name: 'Stars (decoration)' }, G(c.x + c.w - 34, c.y + 8, 28, 5.6)));
     var X = c.x + 7, W = c.w - 14;
@@ -373,10 +401,10 @@
   // PC10 ── EVENT: webinar / expo -- a chip, the title, three info tiles (date, time, where), the speaker
   FAM.pcevent = function (f, T, P, O) {
     var H = FH[f], k = v(f, 1, .9, 1.12), els = [], sq = f === 'square';
-    els.push(glow('g1', A(P.gd, '2E'), G(-30, -30, 120, 90)));
+    els.push(glow('g1', A(P.gdD, '2E'), G(-30, -30, 120, 90)));
     els.push(route(P, v(f, G(40, 60, 90, 60, -18), G(50, 40, 70, 50, -18), G(30, 90, 110, 70, -18)), 35));
     els.push(pLogo(P, { al: 'l' }, v(f, G(7, 5, 60, 0, 0, .95), G(6, 4.5, 60, 0, 0, .85), G(7, 7, 60, 0, 0, 1.1))));
-    els.push(ico('evi', O.icon || 'mic', { col: P.gd, name: 'Event icon' }, v(f, G(80, 4, 12, 12), G(84, 3.5, 10, 10), G(78, 6, 14, 14))));
+    els.push(ico('evi', O.icon || 'mic', { col: P.ic, name: 'Event icon' }, v(f, G(80, 4, 12, 12), G(84, 3.5, 10, 10), G(78, 6, 14, 14))));
     var X = v(f, 7, 6, 8), W = v(f, 86, 88, 84);
     var top = [tx('chip', T.chip, { fn: P.fh, fw: 800, fs: 2.4, ls: 24, up: true, col: P.onGd, sh: 'pill', fill: P.gd, pd: .9, al: 'l', name: 'Event type' }, G(X, 0, W, 0, 0, k)),
       pH1(P, T.h1, { al: 'l', fs: 8.6 }, G(X, 0, W, 0, 0, k)), pSub(P, 'sub', T.sub, { al: 'l' }, G(X, 0, W, 0, 0, k))];
@@ -385,12 +413,12 @@
     [['DATE', T.date || '‹edit date›', 'cal'], ['TIME', T.time || '‹edit time›', 'clock'], [T.whereL || 'WHERE', T.where || '‹edit venue›', 'pin']].forEach(function (q, i) {
       var x = X + i * (tw + 2);
       els.push(shp('tile' + i, 'rect', { fill: A(P.on, '14'), bc: A(P.on, '33'), bw: 1.5, rad: 2.2, name: 'Info tile' }, G(x, tyy, tw, th)));
-      els.push(ico('ti' + i, q[2], { col: P.gd, name: 'Tile icon' }, G(x + 2.4, tyy + 2.4, 4.2, 4.2)));
+      els.push(ico('ti' + i, q[2], { col: P.ic, name: 'Tile icon' }, G(x + 2.4, tyy + 2.4, 4.2, 4.2)));
       els.push(tx('tl' + i, q[0], { fn: P.fb, fw: 700, fs: 1.8, ls: 18, col: P.sub, al: 'l', name: 'Tile label' }, G(x + 7.6, tyy + 3, tw - 9, 0, 0, k)));
       els.push(tx('tv' + i, q[1], { fn: P.fh, fw: 800, fs: 2.8, lh: 115, col: P.on, al: 'l', name: q[0].charAt(0) + q[0].slice(1).toLowerCase() }, G(x + 2.4, tyy + th * .52, tw - 4.8, 0, 0, k)));
     });
     var sy = tyy + th + v(f, 6, 4, 8), ps = v(f, 13, 11, 15);
-    els.push(shp('photo', 'circle', { fill: mix(P.nv, P.tl, .3), bc: P.gd, bw: 4, txt: 'PHOTO', fn: P.fh, fw: 800, fs: 1.7, ls: 10, col: A(P.on, 'B3'), ph: true, name: 'Speaker photo (tap → Put a photo here)' }, G(X, sy, ps, ps)));
+    els.push(shp('photo', 'circle', { fill: mix(P.nv, P.tlD, .3), bc: P.ic, bw: 4, txt: 'PHOTO', fn: P.fh, fw: 800, fs: 1.7, ls: 10, col: A(P.on, 'B3'), ph: true, name: 'Speaker photo (tap → Put a photo here)' }, G(X, sy, ps, ps)));
     els.push(tx('sp', T.speaker || 'Speaker name', { fn: P.fh, fw: 800, fs: 3, col: P.on, al: 'l', name: 'Speaker' }, G(X + ps + 3, sy + ps * .14, 56, 0, 0, k)));
     els.push(tx('spr', T.role || 'Senior consultant', { fn: P.fb, fw: 500, fs: 2.4, col: P.sub, al: 'l', name: 'Speaker role' }, G(X + ps + 3, sy + ps * .14 + 4.4 * k, 56, 0, 0, k)));
     els.push(pAr(P, T.ar, { al: 'l' }, v(f, G(X, sy + ps + 4, 86, 0, 0, k), G(52, 84, 42, 0, 0, k), G(X, sy + ps + 6, 84, 0, 0, k))));
@@ -404,11 +432,11 @@
   // PC11 ── DEADLINE: "Last chance" over four countdown tiles (days / hours / minutes / seconds -- edit them)
   FAM.pccount = function (f, T, P, O) {
     var H = FH[f], k = v(f, 1, .9, 1.12), els = [];
-    els.push(glow('g1', A('#E4572E', '33'), G(-20, v(f, 30, 20, 50), 140, 80)));
-    els.push(ico('clk', 'clock', { col: A(P.gd, '2E'), name: 'Big clock' }, v(f, G(52, 6, 56, 56), G(62, 4, 44, 44), G(40, 8, 70, 70))));
+    els.push(glow('g1', A(P.ic, '33'), G(-20, v(f, 30, 20, 50), 140, 80)));
+    els.push(ico('clk', 'clock', { col: A(P.ic, '2E'), name: 'Big clock' }, v(f, G(52, 6, 56, 56), G(62, 4, 44, 44), G(40, 8, 70, 70))));
     els.push(pLogo(P, { al: 'l' }, v(f, G(7, 5, 60, 0, 0, .95), G(6, 4.5, 60, 0, 0, .85), G(7, 7, 60, 0, 0, 1.1))));
     var X = v(f, 7, 6, 8), W = v(f, 86, 88, 84);
-    var top = [pKick(P, T.kick, { al: 'l', col: '#FF8A65' }, G(X, 0, W, 0, 0, k)), pH1(P, T.h1, { al: 'l', fs: 10 }, G(X, 0, W, 0, 0, k)), pSub(P, 'sub', T.sub, { al: 'l' }, G(X, 0, W, 0, 0, k))];
+    var top = [pKick(P, T.kick, { al: 'l' }, G(X, 0, W, 0, 0, k)), pH1(P, T.h1, { al: 'l', fs: 10 }, G(X, 0, W, 0, 0, k)), pSub(P, 'sub', T.sub, { al: 'l' }, G(X, 0, W, 0, 0, k))];
     var ty = column(top, v(f, 18, 14, 24), v(f, 60, 46, 76), 2 * k); els = els.concat(top);
     var n = 4, gap = 2.4, tw = (W - gap * 3) / 4, th = tw * 1.05, y = ty + v(f, 5, 4, 8);
     [['07', 'DAYS'], ['12', 'HOURS'], ['30', 'MINUTES'], ['00', 'SECONDS']].forEach(function (q, i) {
@@ -420,7 +448,7 @@
     });
     var by = y + th + v(f, 8, 6, 12);
     els.push(pAr(P, T.ar, { al: 'l' }, G(X, by, W, 0, 0, k)));
-    els.push(pBtn(P, T.cta, { fill: '#FF6B4A', col: '#FFFFFF' }, v(f, G(X, 108, 46, 8.2), G(X, 85, 40, 7.4), G(20, 150, 60, 9.4))));
+    els.push(pBtn(P, T.cta, {}, v(f, G(X, 108, 46, 8.2), G(X, 85, 40, 7.4), G(20, 150, 60, 9.4))));
     els.push(pContact(P, T.contact, { al: 'l' }, v(f, G(56, 108.6, 38, 0, 0, .85), G(50, 86, 44, 0, 0, .8), G(8, 163, 84, 0, 0, 1.1))));
     if (f === 'story') els[els.length - 1].al = 'c';
     els.push(pNote(P, T.note, { al: 'l' }, v(f, G(56, 113.8, 38, 0, 0, .85), G(50, 91.2, 44, 0, 0, .8), G(8, 169.5, 84, 0, 0, 1.05))));
@@ -440,7 +468,7 @@
     list.forEach(function (q, i) {
       var y = y0 + i * rh, C = CTRY[q[0]];
       els.push(shp('row' + i, 'rect', { fill: A(P.on, i % 2 ? '0D' : '17'), rad: 2, name: 'Row' }, G(rx, y, rw, rh - 1.4)));
-      els.push(tx('num' + i, '0' + (i + 1), { fn: 'bebas', fw: 400, fs: 5, col: P.gd, al: 'l', name: 'Number' }, G(rx + 2, y + (rh - 1.4) / 2 - 2.6, 8, 0, 0, k)));
+      els.push(tx('num' + i, '0' + (i + 1), { fn: 'bebas', fw: 400, fs: 5, col: P.hl, al: 'l', name: 'Number' }, G(rx + 2, y + (rh - 1.4) / 2 - 2.6, 8, 0, 0, k)));
       els.push(art('f' + i, 'flag:' + C.code, { sh: 'circle', bw: 3, bc: '#FFFFFF', name: 'Flag' }, G(rx + 9.5, y + (rh - 1.4 - s) / 2, s, s)));
       els.push(tx('cn' + i, C.name, { fn: P.fh, fw: 800, fs: 3.4, col: P.on, al: 'l', name: 'Country' }, G(rx + 11.5 + s, y + (rh - 1.4) / 2 - (sq ? 3.6 : 3.4) * k, rw - 14 - s, 0, 0, k)));
       els.push(tx('ct' + i, q[1], { fn: P.fb, fw: 500, fs: 2.2, col: P.sub, al: 'l', name: 'Tag' }, G(rx + 11.5 + s, y + (rh - 1.4) / 2 + .6 * k, rw - 14 - s, 0, 0, k)));
@@ -461,7 +489,7 @@
     var top = [pKick(P, T.kick, { al: 'l', col: P.tl }, G(X, 0, W, 0, 0, k)), pH1(P, T.h1, { al: 'l', fs: v(f, 8.4, 7, 9.4), col: P.ink }, G(X, 0, W, 0, 0, k))];
     var ty = column(top, v(f, 13, 11, 17), v(f, 34, 27, 42), 1.6 * k) + v(f, 3, 2.5, 5); els = els.concat(top);
     var cw = sq ? (W - 3) / 2 : W, ch = v(f, 31, 50, 44);
-    [[faq ? 'Q' : 'MYTH', T.a, faq ? P.nv : '#C0392B', faq ? 'chat' : 'xmark'], [faq ? 'A' : 'FACT', T.b, P.tl, faq ? 'shield' : 'check']].forEach(function (q, i) {
+    [[faq ? 'Q' : 'MYTH', T.a, faq ? P.nv : P.my, faq ? 'chat' : 'xmark'], [faq ? 'A' : 'FACT', T.b, faq ? P.tl : P.fact, faq ? 'shield' : 'check']].forEach(function (q, i) {
       var x = sq ? X + i * (cw + 3) : X, y = sq ? ty : ty + i * (ch + 3);
       els.push(shp('c' + i, 'rect', { fill: '#FFFFFF', bc: A(q[2], '40'), bw: 2, rad: 3, shd: 18, name: 'Card' }, G(x, y, cw, ch)));
       els.push(shp('cb' + i, 'rect', { fill: q[2], rad: 0, name: 'Card edge' }, G(x, y + 2, .9, ch - 4)));
@@ -484,16 +512,16 @@
   FAM.pcpeople = function (f, T, P, O) {
     var H = FH[f], k = v(f, 1, .9, 1.12), els = [], sq = f === 'square', office = !!O.office;
     var a = v(f, G(8, 16, 40, 52), G(6, 14, 40, 54), G(22, 18, 56, 72));
-    els.push(shp('al', 'arch', { fill: 'transparent', bc: P.gd, bw: 3, name: 'Arch line' }, G(a.x - 1.8, a.y - 1.8, a.w + 3.6, a.h + 1.8)));
+    els.push(shp('al', 'arch', { fill: 'transparent', bc: P.ic, bw: 3, name: 'Arch line' }, G(a.x - 1.8, a.y - 1.8, a.w + 3.6, a.h + 1.8)));
     if (office) {
-      els.push(shp('photo', 'arch', { fill: mix(P.nv, P.tl, .25), name: 'Office' }, a));
-      els.push(art('lm', 'lm:burj-khalifa', { col: mix(P.nv, P.tl, .55), name: 'Landmark' }, G(a.x + a.w * .08, a.y + a.h - a.w * .84, a.w * .84, a.w * .84)));
-      els.push(ico('pinb', 'pin', { col: P.gd, shd: 40, name: 'Pin' }, G(a.x + a.w * .38, a.y + a.h * .16, a.w * .24, a.w * .24)));
+      els.push(shp('photo', 'arch', { fill: mix(P.nv, P.tlD, .25), name: 'Office' }, a));
+      els.push(art('lm', 'lm:burj-khalifa', { col: mix(P.nv, P.tlD, .55), name: 'Landmark' }, G(a.x + a.w * .08, a.y + a.h - a.w * .84, a.w * .84, a.w * .84)));
+      els.push(ico('pinb', 'pin', { col: P.ic, shd: 40, name: 'Pin' }, G(a.x + a.w * .38, a.y + a.h * .16, a.w * .24, a.w * .24)));
     } else {
-      els.push(shp('photo', 'arch', { fill: mix(P.nv, P.tl, .3), txt: 'CONSULTANT\nPHOTO', fn: P.fh, fw: 800, fs: 2.4, ls: 16, col: A(P.on, 'B3'), ph: true, name: 'Consultant photo (tap → Put a photo here)' }, a));
+      els.push(shp('photo', 'arch', { fill: mix(P.nv, P.tlD, .3), txt: 'CONSULTANT\nPHOTO', fn: P.fh, fw: 800, fs: 2.4, ls: 16, col: A(P.on, 'B3'), ph: true, name: 'Consultant photo (tap → Put a photo here)' }, a));
       els.push(shp('lmx', 'rect', { fill: 'transparent', name: 'Spacer' }, G(0, 0, 1, 1)));
       els[els.length - 1].g.hd = true;
-      els.push(ico('pinb', 'award', { col: P.gd, name: 'Badge' }, G(a.x + a.w - a.w * .2, a.y + a.h - a.w * .26, a.w * .3, a.w * .3)));
+      els.push(ico('pinb', 'award', { col: P.ic, name: 'Badge' }, G(a.x + a.w - a.w * .2, a.y + a.h - a.w * .26, a.w * .3, a.w * .3)));
     }
     els.push(pLogo(P, { al: 'l' }, v(f, G(52, 6, 44, 0, 0, .9), G(52, 5, 44, 0, 0, .85), G(20, 6, 60, 0, 0, 1.1))));
     if (f === 'story') els[els.length - 1].al = 'c';
@@ -505,7 +533,7 @@
     var rows = rowsOf(P, T.rows, rx, rw, k, { fs: 2.8 });
     column(rows, v(f, 74, 72, 124), v(f, 100, 84, 150), 1.6 * k, true);
     els = els.concat(rows);
-    rowIcons(els, rows, rx, k, P.gd, null);
+    rowIcons(els, rows, rx, k, P.ic, null);
     var icn = T.icons || [];
     rows.forEach(function (r, i) { els[els.length - rows.length + i].ic = icn[i] || 'check'; });
     els.push(pBtn(P, T.cta, {}, v(f, G(8, 106, 46, 8.2), G(52, 86, 42, 7.2), G(20, 156, 60, 9.2))));
@@ -514,11 +542,11 @@
     return { bg: bgDark(P, 'globe', 6), els: els, slots: [] };
   };
 
-  // PC15 ── OFFER: the consultancy's own offer (free consultation, scholarships, family visas, language) -- a gold
+  // PC15 ── OFFER: the consultancy's own offer (free consultation, scholarships, family visas, language) -- an accent
   //         badge, the headline, points, five destination flags along the bottom
   FAM.pcoffer = function (f, T, P, O) {
     var H = FH[f], k = v(f, 1, .9, 1.12), els = [], sq = f === 'square';
-    els.push(glow('g1', A(P.tl, '4D'), v(f, G(20, -20, 100, 80), G(40, -20, 80, 70), G(0, -10, 120, 90))));
+    els.push(glow('g1', A(P.tlD, '4D'), v(f, G(20, -20, 100, 80), G(40, -20, 80, 70), G(0, -10, 120, 90))));
     els.push(ico('big', O.icon || 'grad', { col: A(P.on, '12'), name: 'Big icon' }, v(f, G(46, 28, 64, 64), G(58, 22, 48, 48), G(30, 40, 80, 80))));
     els.push(shp('badge', 'burst', { fill: P.gd, txt: T.badge || 'FREE', fn: 'bebas', fw: 400, fs: 6.4, lh: 90, col: P.onGd, shd: 30, name: 'Badge' }, v(f, G(72, 12, 20, 20, 12), G(76, 8, 17, 17, 12), G(70, 16, 22, 22, 12))));
     els.push(pLogo(P, { al: 'l' }, v(f, G(7, 5, 60, 0, 0, .95), G(6, 4.5, 60, 0, 0, .85), G(7, 7, 60, 0, 0, 1.1))));
@@ -528,7 +556,7 @@
     var arl = pAr(P, T.ar, { al: 'l' }, G(X, 0, W, 0, 0, k));
     column(top.concat(rows, [arl]), v(f, 22, 16, 44), v(f, 88, 72, 128), 1.9 * k);
     els = els.concat(top, rows, [arl]);
-    rowIcons(els, rows, X, k, P.gd, 'check');
+    rowIcons(els, rows, X, k, P.ic, 'check');
     var fl = T.flags || ['gb', 'ca', 'au', 'de', 'ie'], fs = v(f, 6.4, 5.4, 7.6), fx = v(f, 94 - fs * 5.6, 94 - fs * 5.6, 50 - fs * 2.8), fy = v(f, 93, 77, 135);
     fl.forEach(function (cc, i) { els.push(art('f' + i, 'flag:' + cc, { sh: 'circle', bw: 3, bc: '#FFFFFF', shd: 20, name: 'Flag' }, G(fx + i * fs * 1.12, fy, fs, fs))); });
     els.push(pBtn(P, T.cta, {}, v(f, G(X, 92, 44, 8.4), G(X, 76, 40, 7.4), G(20, 146, 60, 9.4))));
@@ -543,13 +571,13 @@
   //         target-score ring
   FAM.pcexam = function (f, T, P, O) {
     var H = FH[f], k = v(f, 1, .9, 1.12), els = [], sq = f === 'square';
-    els.push(glow('g1', A(P.gd, '2E'), G(-20, -20, 140, 90)));
+    els.push(glow('g1', A(P.gdD, '2E'), G(-20, -20, 140, 90)));
     els.push(pLogo(P, { al: 'l' }, v(f, G(7, 5, 60, 0, 0, .95), G(6, 4.5, 60, 0, 0, .85), G(7, 7, 60, 0, 0, 1.1))));
     var r = v(f, G(64, 14, 28, 28), G(70, 10, 24, 24), G(62, 16, 30, 30));
     els.push(shp('ringb', 'ring', { fill: 'transparent', bc: A(P.on, '26'), bw: 10, name: 'Score ring' }, r));
-    els.push(shp('ringg', 'ring', { fill: 'transparent', bc: P.gd, bw: 10, bs: 'dashed', name: 'Score ring (gold)' }, r));
+    els.push(shp('ringg', 'ring', { fill: 'transparent', bc: P.ic, bw: 10, bs: 'dashed', name: 'Score ring (accent)' }, r));
     els.push(tx('score', T.score || '‹7.5›', { fn: 'bebas', fw: 400, fs: 9, lh: 90, col: P.on, name: 'Target score (edit)' }, G(r.x, r.y + r.h * .24, r.w, 0, 0, r.w / 28)));
-    els.push(tx('scl', T.scl || 'TARGET', { fn: P.fb, fw: 700, fs: 1.6, ls: 20, col: P.gd, name: 'Score label' }, G(r.x, r.y + r.h * .66, r.w, 0, 0, r.w / 28)));
+    els.push(tx('scl', T.scl || 'TARGET', { fn: P.fb, fw: 700, fs: 1.6, ls: 20, col: P.hl, name: 'Score label' }, G(r.x, r.y + r.h * .66, r.w, 0, 0, r.w / 28)));
     if (O.flag) els.push(art('flag', 'flag:' + O.flag, { sh: 'circle', bw: 4, bc: '#FFFFFF', shd: 25, name: 'Flag' }, G(r.x - 2, r.y - 2, r.w * .32, r.w * .32)));
     var X = v(f, 7, 6, 8), W = v(f, 56, 62, 84);
     var top = [pKick(P, T.kick, { al: 'l' }, G(X, 0, W, 0, 0, k)), tx('word', T.word, { fn: P.fh, fw: 900, fs: 17, lh: 92, ls: -2, col: P.on, al: 'l', name: 'Test name' }, G(X, 0, W, 0, 0, k)), pH2(P, T.h2, { al: 'l' }, G(X, 0, W, 0, 0, k))];
@@ -557,13 +585,13 @@
     var sk = T.skills || ['Listening', 'Reading', 'Writing', 'Speaking'], cx = X, cy = ty + v(f, 4, 3, 6), cw = v(f, 41.5, 42, 41), chh = v(f, 7, 6.2, 8);
     sk.forEach(function (s, i) {
       var x = cx + (i % 2) * (cw + 3), y = cy + Math.floor(i / 2) * (chh + 2.6);
-      els.push(shp('sk' + i, 'pill', { fill: A(P.on, '14'), bc: A(P.tl, 'AA'), bw: 1.5, txt: s, fn: P.fh, fw: 700, fs: 2.6, col: P.on, name: 'Skill' }, G(x, y, cw, chh)));
+      els.push(shp('sk' + i, 'pill', { fill: A(P.on, '14'), bc: A(P.tlD === P.tl ? P.tl : P.ic, 'AA'), bw: 1.5, txt: s, fn: P.fh, fw: 700, fs: 2.6, col: P.on, name: 'Skill' }, G(x, y, cw, chh)));
     });
     var by = cy + 2 * chh + 2.6 + v(f, 5, 4, 8);
     var rows = rowsOf(P, T.rows, X, v(f, 86, 88, 84), k);
     column(rows, by, v(f, 100, 82, 140), 1.5 * k, true);
     els = els.concat(top, rows);
-    rowIcons(els, rows, X, k, P.gd, 'check');
+    rowIcons(els, rows, X, k, P.ic, 'check');
     els.push(pAr(P, T.ar, { al: 'l' }, v(f, G(54, 107, 40, 0, 0, k), G(50, 88, 44, 0, 0, k), G(8, 144, 84, 0, 0, k))));
     if (f === 'story') els[els.length - 1].al = 'c';
     els.push(pBtn(P, T.cta, {}, v(f, G(X, 107, 44, 8.2), G(X, 87, 40, 7.2), G(20, 152, 60, 9.2))));
@@ -572,24 +600,24 @@
     return { bg: bgDark(P, 'grid', 4), els: els, slots: [] };
   };
 
-  // PC17 ── GREETING: a consultancy's greeting (Eid, National Day, New Year) -- night-navy and gold, a motif on
-  //         a gold-ringed medallion, the greeting in serif and in Arabic, "from all of us at …"
+  // PC17 ── GREETING: a consultancy's greeting (Eid, National Day, New Year) -- night-navy, a motif on
+  //         a ringed medallion, the greeting in serif and in Arabic, "from all of us at …"
   FAM.pcgreet = function (f, T, P, O) {
     var H = FH[f], k = v(f, 1, .9, 1.12), els = [];
-    els.push(glow('g1', A(P.gd, '3D'), v(f, G(0, 0, 100, 80), G(10, -10, 80, 70), G(-10, 10, 120, 100))));
+    els.push(glow('g1', A(P.gdD, '3D'), v(f, G(0, 0, 100, 80), G(10, -10, 80, 70), G(-10, 10, 120, 100))));
     var m = v(f, G(34, 14, 32, 32), G(38, 7, 24, 24), G(30, 20, 40, 40));
-    els.push(shp('med', 'circle', { fill: P.nv2, fill2: P.dk, gang: 180, bc: P.gd, bw: 4, shd: 40, name: 'Medallion' }, m));
-    els.push(shp('medr', 'ring', { fill: 'transparent', bc: A(P.gd, '80'), bw: 1.5, name: 'Medallion ring' }, G(m.x - 2.6, m.y - 2.6, m.w + 5.2, m.w + 5.2)));
-    els.push(ico('mot', O.icon || 'moon', { col: P.gd, name: 'Motif' }, G(m.x + m.w * .22, m.y + m.w * .22, m.w * .56, m.w * .56)));
-    [[12, v(f, 20, 12, 26), 4], [84, v(f, 34, 22, 44), 3.4], [18, v(f, 56, 40, 80), 2.6], [80, v(f, 10, 6, 14), 2.4]].forEach(function (q, i) { els.push(spark('sp' + i, P.gd, G(q[0], q[1], q[2], q[2]), 80)); });
+    els.push(shp('med', 'circle', { fill: P.nv2, fill2: P.dk, gang: 180, bc: P.ic, bw: 4, shd: 40, name: 'Medallion' }, m));
+    els.push(shp('medr', 'ring', { fill: 'transparent', bc: A(P.orn, '80'), bw: 1.5, name: 'Medallion ring' }, G(m.x - 2.6, m.y - 2.6, m.w + 5.2, m.w + 5.2)));
+    els.push(ico('mot', O.icon || 'moon', { col: P.orn, name: 'Motif' }, G(m.x + m.w * .22, m.y + m.w * .22, m.w * .56, m.w * .56)));
+    [[12, v(f, 20, 12, 26), 4], [84, v(f, 34, 22, 44), 3.4], [18, v(f, 56, 40, 80), 2.6], [80, v(f, 10, 6, 14), 2.4]].forEach(function (q, i) { els.push(spark('sp' + i, P.orn, G(q[0], q[1], q[2], q[2]), 80)); });
     if (O.hang) [[14, 0, 1], [80, 0, .8]].forEach(function (q, i) {
       var hl = v(f, 12 + i * 5, 8 + i * 4, 18 + i * 8), sz = v(f, 7, 5.6, 9) * q[2];
-      els.push(shp('str' + i, 'rect', { fill: P.gd, op: 70, name: 'String' }, G(q[0] + sz / 2 - .15, 0, .3, hl)));
-      els.push(ico('lan' + i, 'lantern', { col: P.gd, name: 'Lantern' }, G(q[0], hl - 1, sz, sz * 1.3)));
+      els.push(shp('str' + i, 'rect', { fill: P.orn, op: 70, name: 'String' }, G(q[0] + sz / 2 - .15, 0, .3, hl)));
+      els.push(ico('lan' + i, 'lantern', { col: P.orn, name: 'Lantern' }, G(q[0], hl - 1, sz, sz * 1.3)));
     });
     var top = [tx('h1', T.h1, { fn: 'playfair', fw: 700, fs: v(f, 10, 8.4, 11), lh: 105, col: P.on, name: 'Greeting' }, G(6, 0, 88, 0, 0, k)),
-      tx('ar', T.ar, { fn: 'cairo', fw: 700, fs: 6, lh: 140, col: P.gd, name: 'Arabic greeting' }, G(6, 0, 88, 0, 0, k)),
-      tx('rule', '— ✦ —', { fn: P.fb, fw: 600, fs: 2.4, col: P.gd, name: 'Ornament' }, G(6, 0, 88, 0, 0, k)),
+      tx('ar', T.ar, { fn: 'cairo', fw: 700, fs: 6, lh: 140, col: P.hl, name: 'Arabic greeting' }, G(6, 0, 88, 0, 0, k)),
+      tx('rule', '— ✦ —', { fn: P.fb, fw: 600, fs: 2.4, col: P.ic, name: 'Ornament' }, G(6, 0, 88, 0, 0, k)),
       pSub(P, 'sub', T.sub, { al: 'c' }, G(8, 0, 84, 0, 0, k))];
     column(top, m.y + m.h + v(f, 5, 4, 8), v(f, 104, 84, 150), 2 * k);
     els = els.concat(top);
