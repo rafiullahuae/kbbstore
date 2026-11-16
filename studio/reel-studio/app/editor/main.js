@@ -8,7 +8,7 @@ import { h, modal } from './ui.js';
 import { loadWorkspaces, switchWorkspace, state as ws } from './workspaces.js';
 import { renderHome } from './home.js';
 import { Editor } from './editor.js';
-import { maybeFirstRun } from './setup.js';
+import { needsSetup, setupScreen } from './setup.js';
 
 const root = document.getElementById('app');
 document.title = APP_NAME;
@@ -56,12 +56,14 @@ async function boot() {
   }
   await loadWorkspaces();
   await loadModules();
+  // first run: the Setup screen (models download through the engine) comes before anything else
+  const st = await needsSetup();
+  if (st) await setupScreen(root, st);
   const m = /^#\/p\/([\w-]+)\/([\w-]+)/.exec(location.hash);
   if (m) {
     try { openProject(await engine.loadProject(m[1], m[2])); return; } catch { /* fall through to home */ }
   }
   goHome();
-  maybeFirstRun();
 }
 
 boot().catch((e) => {
